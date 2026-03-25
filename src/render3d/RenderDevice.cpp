@@ -3768,7 +3768,7 @@ public:
           m_imageAvailableSemaphore(VK_NULL_HANDLE), m_renderFinishedSemaphore(VK_NULL_HANDLE),
           m_inFlightFence(VK_NULL_HANDLE), m_immediateFence(VK_NULL_HANDLE), m_graphicsQueueFamilyIndex(kInvalidQueueFamilyIndex),
           m_presentQueueFamilyIndex(kInvalidQueueFamilyIndex), m_currentImageIndex(0),
-                    m_frameBegun(false), m_renderPassActive(false), m_pendingDepthClear(false),
+                    m_frameBegun(false), m_renderPassActive(false), m_pendingDepthClear(false), m_verticalSyncEnabled(false),
                     m_defaultTexture(nullptr)
     {
         m_bootstrap.backend = RenderBackendType::Vulkan;
@@ -4002,6 +4002,11 @@ public:
             return -1;
         }
 
+        const bool presentModeChanged = m_verticalSyncEnabled != vertSync;
+        if (presentModeChanged) {
+            m_verticalSyncEnabled = vertSync;
+        }
+
         if (m_renderPassActive) {
             vkCmdEndRenderPass(GetCurrentCommandBuffer());
             m_renderPassActive = false;
@@ -4058,6 +4063,10 @@ public:
             DbgLog("[Render][Vulkan] vkQueuePresentKHR failed: %d\n", static_cast<int>(result));
             m_bootstrap.initHr = static_cast<int>(result);
             return -1;
+        }
+
+        if (presentModeChanged) {
+            ResizeSwapChain();
         }
 
         return vertSync ? 1 : 0;
@@ -5742,8 +5751,22 @@ private:
 
     VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& presentModes) const
     {
+        if (m_verticalSyncEnabled) {
+            for (VkPresentModeKHR presentMode : presentModes) {
+                if (presentMode == VK_PRESENT_MODE_FIFO_KHR) {
+                    return presentMode;
+                }
+            }
+            return presentModes.empty() ? VK_PRESENT_MODE_FIFO_KHR : presentModes.front();
+        }
+
         for (VkPresentModeKHR presentMode : presentModes) {
-            if (presentMode == VK_PRESENT_MODE_FIFO_KHR) {
+            if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+                return presentMode;
+            }
+        }
+        for (VkPresentModeKHR presentMode : presentModes) {
+            if (presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
                 return presentMode;
             }
         }
@@ -6427,6 +6450,7 @@ private:
     bool m_frameBegun;
     bool m_renderPassActive;
     bool m_pendingDepthClear;
+    bool m_verticalSyncEnabled;
     VkClearColorValue m_pendingClearColor;
     ModernFixedFunctionState m_pipelineState;
     CTexture* m_boundTextures[kModernTextureSlotCount];

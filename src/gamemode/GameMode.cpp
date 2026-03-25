@@ -4014,7 +4014,9 @@ int  CGameMode::OnRun() {
         }
     }
 
-    Sleep(1);
+    if (!isVulkanBackend) {
+        Sleep(1);
+    }
     return 1;
 }
 void CGameMode::OnUpdate() {
