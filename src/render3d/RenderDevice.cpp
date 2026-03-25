@@ -1660,13 +1660,14 @@ class D3D12RenderDevice final : public IRenderDevice {
 public:
     static constexpr UINT kFrameCount = 2;
     static constexpr UINT kSrvSlotCount = 2;
+    static constexpr UINT kSrvHeapCapacity = 4096;
 
     D3D12RenderDevice()
         : m_hwnd(nullptr), m_renderWidth(0), m_renderHeight(0),
           m_factory(nullptr), m_device(nullptr), m_commandQueue(nullptr), m_swapChain(nullptr),
           m_rtvHeap(nullptr), m_dsvHeap(nullptr), m_srvHeap(nullptr), m_depthStencil(nullptr),
           m_commandAllocator(nullptr), m_commandList(nullptr), m_fence(nullptr),
-          m_fenceEvent(nullptr), m_fenceValue(0), m_frameIndex(0), m_rtvDescriptorSize(0), m_srvDescriptorSize(0),
+          m_fenceEvent(nullptr), m_fenceValue(0), m_frameIndex(0), m_rtvDescriptorSize(0), m_srvDescriptorSize(0), m_srvHeapCursor(0),
           m_rootSignature(nullptr),
           m_vertexShaderTlBlob(nullptr), m_vertexShaderLmBlob(nullptr), m_pixelShaderBlob(nullptr),
           m_constantBuffer(nullptr), m_constantBufferMapped(nullptr),
@@ -1803,7 +1804,7 @@ public:
         }
 
         D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{};
-        srvHeapDesc.NumDescriptors = kSrvSlotCount;
+        srvHeapDesc.NumDescriptors = kSrvHeapCapacity;
         srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
         srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
         hr = m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap));
@@ -2571,7 +2572,7 @@ private:
         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
         srvDesc.Texture2D.MipLevels = 1;
 
-        for (UINT index = 0; index < kSrvSlotCount; ++index) {
+        for (UINT index = 0; index < kSrvHeapCapacity; ++index) {
             m_device->CreateShaderResourceView(nullptr, &srvDesc, GetSrvCpuHandle(index));
         }
         return true;
@@ -2579,7 +2580,7 @@ private:
 
     void WriteNullSrvDescriptor(UINT index)
     {
-        if (!m_device || !m_srvHeap || index >= kSrvSlotCount) {
+        if (!m_device || !m_srvHeap || index >= kSrvHeapCapacity) {
             return;
         }
 
@@ -2593,7 +2594,7 @@ private:
 
     bool CopyTextureDescriptor(UINT index, CTexture* texture)
     {
-        if (!m_device || !m_srvHeap || index >= kSrvSlotCount || !texture) {
+        if (!m_device || !m_srvHeap || index >= kSrvHeapCapacity || !texture) {
             WriteNullSrvDescriptor(index);
             return false;
         }
@@ -2613,6 +2614,19 @@ private:
         srvDesc.Texture2D.MipLevels = textureDesc.MipLevels;
         srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
         m_device->CreateShaderResourceView(textureObject, &srvDesc, GetSrvCpuHandle(index));
+        return true;
+    }
+
+    bool ReserveSrvTable(UINT descriptorCount, UINT* outBaseIndex)
+    {
+        if (!outBaseIndex || descriptorCount == 0 || descriptorCount > kSrvHeapCapacity) {
+            return false;
+        }
+        if (m_srvHeapCursor + descriptorCount > kSrvHeapCapacity) {
+            return false;
+        }
+        *outBaseIndex = m_srvHeapCursor;
+        m_srvHeapCursor += descriptorCount;
         return true;
     }
 
@@ -2950,8 +2964,13 @@ private:
             indexBufferView.Format = DXGI_FORMAT_R16_UINT;
         }
 
-        const bool hasTexture0 = CopyTextureDescriptor(0, m_boundTextures[0]);
-        const bool hasTexture1 = CopyTextureDescriptor(1, m_boundTextures[1]);
+        UINT srvBaseIndex = 0;
+        if (!ReserveSrvTable(kSrvSlotCount, &srvBaseIndex)) {
+            return;
+        }
+
+        const bool hasTexture0 = CopyTextureDescriptor(srvBaseIndex + 0, m_boundTextures[0]);
+        const bool hasTexture1 = CopyTextureDescriptor(srvBaseIndex + 1, m_boundTextures[1]);
         ModernDrawConstants constants{};
         constants.screenWidth = static_cast<float>((std::max)(1, m_renderWidth));
         constants.screenHeight = static_cast<float>((std::max)(1, m_renderHeight));
@@ -2965,7 +2984,7 @@ private:
         m_commandList->SetGraphicsRootSignature(m_rootSignature);
         m_commandList->SetPipelineState(pipelineState);
         m_commandList->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
-        m_commandList->SetGraphicsRootDescriptorTable(1, GetSrvGpuHandle(0));
+        m_commandList->SetGraphicsRootDescriptorTable(1, GetSrvGpuHandle(srvBaseIndex));
         m_commandList->IASetPrimitiveTopology(topologyInfo.topology);
         m_commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
         if (hasIndices) {
@@ -3086,6 +3105,7 @@ private:
         const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = GetDsvHandle();
         m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, m_depthStencil ? &dsvHandle : nullptr);
         ApplyViewportAndScissor();
+        m_srvHeapCursor = 0;
         m_frameCommandsOpen = true;
         return true;
     }
@@ -3135,6 +3155,7 @@ private:
     UINT m_frameIndex;
     UINT m_rtvDescriptorSize;
     UINT m_srvDescriptorSize;
+    UINT m_srvHeapCursor;
     ID3D12RootSignature* m_rootSignature;
     ID3DBlob* m_vertexShaderTlBlob;
     ID3DBlob* m_vertexShaderLmBlob;
