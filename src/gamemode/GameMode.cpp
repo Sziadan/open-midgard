@@ -2233,6 +2233,21 @@ void EnsureBootstrapSelfActor(CGameMode& mode)
         pc->m_accessory3 = g_session.m_playerAccessory3;
     }
 
+    if (const CHARACTER_INFO* info = g_session.GetSelectedCharacterInfo()) {
+        actor->m_clevel = static_cast<u16>((std::max)(0, (std::min)(static_cast<int>(info->level), 0xFFFF)));
+        actor->m_Hp = static_cast<u16>((std::max)(0, (std::min)(static_cast<int>(info->hp), 0xFFFF)));
+        actor->m_MaxHp = static_cast<u16>((std::max)(0, (std::min)(static_cast<int>(info->maxhp), 0xFFFF)));
+        actor->m_Sp = static_cast<u16>((std::max)(0, (std::min)(static_cast<int>(info->sp), 0xFFFF)));
+        actor->m_MaxSp = static_cast<u16>((std::max)(0, (std::min)(static_cast<int>(info->maxsp), 0xFFFF)));
+
+        if (actor->m_Hp > actor->m_MaxHp) {
+            actor->m_Hp = actor->m_MaxHp;
+        }
+        if (actor->m_Sp > actor->m_MaxSp) {
+            actor->m_Sp = actor->m_MaxSp;
+        }
+    }
+
     actor->m_lastTlvertX = g_session.m_playerPosX;
     actor->m_lastTlvertY = g_session.m_playerPosY;
     actor->m_moveDestX = g_session.m_playerPosX;
@@ -3916,6 +3931,7 @@ CGameMode::~CGameMode() {
 void CGameMode::OnInit(const char* worldName) {
     RegisterDefaultGameModePacketHandlers(g_gameModePacketRouter);
     ClearRuntimeActors(*this);
+    m_groundItemList.clear();
 
     DbgLog("[Build] marker=%s pkt0078=%d pkt0209=%d\n",
         kGameModeBuildMarker,
@@ -3992,6 +4008,7 @@ void CGameMode::OnExit() {
     g_gameModePacketRouter.Clear();
     g_windowMgr.RemoveAllWindows();
     ClearRuntimeActors(*this);
+    m_groundItemList.clear();
     if (GetCapture() == g_hMainWnd) {
         ReleaseCapture();
     }

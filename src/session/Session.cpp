@@ -105,7 +105,9 @@ int NormalizeHeadValue(int head, int job)
 CSession::CSession() : m_aid(0), m_authCode(0), m_sex(0), m_charServerPort(0), m_pendingReturnToCharSelect(0),
     m_playerPosX(0), m_playerPosY(0), m_playerDir(0), m_playerJob(0), m_playerHead(0), m_playerBodyPalette(0),
     m_playerHeadPalette(0), m_playerWeapon(0), m_playerShield(0), m_playerAccessory(0), m_playerAccessory2(0),
-    m_playerAccessory3(0), m_serverTime(0), m_hasSelectedCharacterInfo(false)
+    m_playerAccessory3(0), m_serverTime(0), m_hasSelectedCharacterInfo(false), m_baseExpValue(0),
+    m_nextBaseExpValue(0), m_jobExpValue(0), m_nextJobExpValue(0), m_hasBaseExpValue(false),
+    m_hasNextBaseExpValue(false), m_hasJobExpValue(false), m_hasNextJobExpValue(false)
 {
     std::memset(m_userId, 0, sizeof(m_userId));
     std::memset(m_userPassword, 0, sizeof(m_userPassword));
@@ -175,6 +177,10 @@ void CSession::SetSelectedCharacterAppearance(const CHARACTER_INFO& info)
 {
     m_selectedCharacterInfo = info;
     m_hasSelectedCharacterInfo = true;
+    m_hasBaseExpValue = false;
+    m_hasNextBaseExpValue = false;
+    m_hasJobExpValue = false;
+    m_hasNextJobExpValue = false;
     m_playerJob = info.job;
     m_playerHead = info.head;
     m_playerBodyPalette = info.bodypalette;
@@ -193,6 +199,57 @@ void CSession::SetSelectedCharacterAppearance(const CHARACTER_INFO& info)
 const CHARACTER_INFO* CSession::GetSelectedCharacterInfo() const
 {
     return m_hasSelectedCharacterInfo ? &m_selectedCharacterInfo : nullptr;
+}
+
+CHARACTER_INFO* CSession::GetMutableSelectedCharacterInfo()
+{
+    return m_hasSelectedCharacterInfo ? &m_selectedCharacterInfo : nullptr;
+}
+
+void CSession::SetBaseExpValue(int value)
+{
+    m_baseExpValue = (std::max)(value, 0);
+    m_hasBaseExpValue = true;
+}
+
+void CSession::SetNextBaseExpValue(int value)
+{
+    m_nextBaseExpValue = (std::max)(value, 0);
+    m_hasNextBaseExpValue = true;
+}
+
+void CSession::SetJobExpValue(int value)
+{
+    m_jobExpValue = (std::max)(value, 0);
+    m_hasJobExpValue = true;
+}
+
+void CSession::SetNextJobExpValue(int value)
+{
+    m_nextJobExpValue = (std::max)(value, 0);
+    m_hasNextJobExpValue = true;
+}
+
+bool CSession::TryGetBaseExpPercent(int* outPercent) const
+{
+    if (!outPercent || !m_hasBaseExpValue || !m_hasNextBaseExpValue || m_nextBaseExpValue <= 0) {
+        return false;
+    }
+
+    const int percent = static_cast<int>((100LL * m_baseExpValue) / m_nextBaseExpValue);
+    *outPercent = (std::max)(0, (std::min)(percent, 100));
+    return true;
+}
+
+bool CSession::TryGetJobExpPercent(int* outPercent) const
+{
+    if (!outPercent || !m_hasJobExpValue || !m_hasNextJobExpValue || m_nextJobExpValue <= 0) {
+        return false;
+    }
+
+    const int percent = static_cast<int>((100LL * m_jobExpValue) / m_nextJobExpValue);
+    *outPercent = (std::max)(0, (std::min)(percent, 100));
+    return true;
 }
 
 void CSession::ClearInventoryItems()

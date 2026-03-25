@@ -46,6 +46,17 @@ struct ChatRoomInfo {
     std::string title;
 };
 
+struct GroundItemState {
+    u32 objectId = 0;
+    u32 itemId = 0;
+    u16 amount = 0;
+    u16 tileX = 0;
+    u16 tileY = 0;
+    u8 identified = 0;
+    u8 subX = 0;
+    u8 subY = 0;
+};
+
 //===========================================================================
 // CGameMode  –  Handles the main in-game world state
 //===========================================================================
@@ -117,6 +128,7 @@ public:
     std::map<u32, CellPos> m_actorPosList;
     std::map<u32, CGameActor*> m_runtimeActors;
         std::map<u32, u32> m_preservedOutOfSightActors;
+    std::map<u32, GroundItemState> m_groundItemList;
     std::list<u32> m_pickupReqItemNaidList;
     std::map<u32, u32> m_aidList;
     std::map<u32, ColorCellPos> m_partyPosList;

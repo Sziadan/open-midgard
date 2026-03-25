@@ -53,6 +53,13 @@ public:
     void SetPlayerPosDir(int x, int y, int dir);
     void SetSelectedCharacterAppearance(const CHARACTER_INFO& info);
     const CHARACTER_INFO* GetSelectedCharacterInfo() const;
+    CHARACTER_INFO* GetMutableSelectedCharacterInfo();
+    void SetBaseExpValue(int value);
+    void SetNextBaseExpValue(int value);
+    void SetJobExpValue(int value);
+    void SetNextJobExpValue(int value);
+    bool TryGetBaseExpPercent(int* outPercent) const;
+    bool TryGetJobExpPercent(int* outPercent) const;
     void ClearInventoryItems();
     void ClearEquipmentInventoryItems();
     void SetInventoryItem(const ITEM_INFO& itemInfo);
@@ -75,6 +82,14 @@ private:
     u32 m_serverTime;
     CHARACTER_INFO m_selectedCharacterInfo;
     bool m_hasSelectedCharacterInfo;
+    int m_baseExpValue;
+    int m_nextBaseExpValue;
+    int m_jobExpValue;
+    int m_nextJobExpValue;
+    bool m_hasBaseExpValue;
+    bool m_hasNextBaseExpValue;
+    bool m_hasJobExpValue;
+    bool m_hasNextJobExpValue;
     std::list<ITEM_INFO> m_inventoryItems;
 };
 

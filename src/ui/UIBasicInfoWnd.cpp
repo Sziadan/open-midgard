@@ -581,6 +581,16 @@ UIBasicInfoWnd::DisplayData UIBasicInfoWnd::BuildDisplayData() const
         }
     }
 
+    int liveBaseExpPercent = 0;
+    if (g_session.TryGetBaseExpPercent(&liveBaseExpPercent)) {
+        data.expPercent = liveBaseExpPercent;
+    }
+
+    int liveJobExpPercent = 0;
+    if (g_session.TryGetJobExpPercent(&liveJobExpPercent)) {
+        data.jobExpPercent = liveJobExpPercent;
+    }
+
     data.level = (std::max)(data.level, 0);
     data.jobLevel = (std::max)(data.jobLevel, 0);
     data.hp = (std::max)(data.hp, 0);

@@ -35,10 +35,25 @@ namespace {
 PendingDisconnectAction g_pendingDisconnectAction = PendingDisconnectAction::None;
 
 constexpr u32 kStatusSpeed = 0;
+constexpr u32 kStatusBaseExp = 1;
+constexpr u32 kStatusJobExp = 2;
 constexpr u32 kStatusHp = 5;
 constexpr u32 kStatusMaxHp = 6;
 constexpr u32 kStatusSp = 7;
 constexpr u32 kStatusMaxSp = 8;
+constexpr u32 kStatusStatusPoint = 9;
+constexpr u32 kStatusBaseLevel = 11;
+constexpr u32 kStatusSkillPoint = 12;
+constexpr u32 kStatusZeny = 20;
+constexpr u32 kStatusNextBaseExp = 22;
+constexpr u32 kStatusNextJobExp = 23;
+constexpr u32 kStatusStr = 13;
+constexpr u32 kStatusAgi = 14;
+constexpr u32 kStatusVit = 15;
+constexpr u32 kStatusInt = 16;
+constexpr u32 kStatusDex = 17;
+constexpr u32 kStatusLuk = 18;
+constexpr u32 kStatusJobLevel = 55;
 constexpr u32 kDeathFadeDurationMs = 510;
 constexpr u32 kDeathCorpseHoldMs = 1290;
 
@@ -47,6 +62,80 @@ u32 ReadLE32(const u8* data);
 
 void HandleIgnorePacket(CGameMode&, const PacketView&)
 {
+}
+
+u16 ClampToU16(u32 value)
+{
+    return static_cast<u16>((std::min)(value, static_cast<u32>(0xFFFFu)));
+}
+
+bool ApplySelfStatusUpdateToSession(u32 statusType, u32 value)
+{
+    CHARACTER_INFO* info = g_session.GetMutableSelectedCharacterInfo();
+    switch (statusType) {
+    case kStatusBaseExp:
+        g_session.SetBaseExpValue(static_cast<int>(value));
+        return true;
+    case kStatusJobExp:
+        g_session.SetJobExpValue(static_cast<int>(value));
+        return true;
+    case kStatusNextBaseExp:
+        g_session.SetNextBaseExpValue(static_cast<int>(value));
+        return true;
+    case kStatusNextJobExp:
+        g_session.SetNextJobExpValue(static_cast<int>(value));
+        return true;
+    default:
+        break;
+    }
+
+    if (!info) {
+        return false;
+    }
+
+    switch (statusType) {
+    case kStatusHp:
+        info->hp = static_cast<s16>(ClampToU16(value));
+        if (info->maxhp < info->hp) {
+            info->maxhp = info->hp;
+        }
+        return true;
+    case kStatusMaxHp:
+        info->maxhp = static_cast<s16>(ClampToU16(value));
+        if (info->hp > info->maxhp) {
+            info->hp = info->maxhp;
+        }
+        return true;
+    case kStatusSp:
+        info->sp = static_cast<s16>(ClampToU16(value));
+        if (info->maxsp < info->sp) {
+            info->maxsp = info->sp;
+        }
+        return true;
+    case kStatusMaxSp:
+        info->maxsp = static_cast<s16>(ClampToU16(value));
+        if (info->sp > info->maxsp) {
+            info->sp = info->maxsp;
+        }
+        return true;
+    case kStatusBaseLevel:
+        info->level = static_cast<s16>(ClampToU16(value));
+        return true;
+    case kStatusJobLevel:
+        info->joblevel = static_cast<int>(value);
+        return true;
+    case kStatusZeny:
+        info->money = static_cast<int>(value);
+        return true;
+    case kStatusStatusPoint:
+        info->sppoint = static_cast<s16>(ClampToU16(value));
+        return true;
+    case kStatusSkillPoint:
+        info->jobpoint = static_cast<s16>(ClampToU16(value));
+        return true;
+    default:
+        return false;
+    }
 }
 
 bool BuildNormalInventoryItem(const PacketView& packet, const u8* entry, ITEM_INFO& outItem)
@@ -233,6 +322,63 @@ void HandleItemPickupAck(CGameMode&, const PacketView& packet)
     g_session.AddInventoryItem(itemInfo);
 }
 
+void UpsertGroundItem(CGameMode& mode,
+    u32 objectId,
+    u16 itemId,
+    u8 identified,
+    u16 tileX,
+    u16 tileY,
+    u16 amount,
+    u8 subX,
+    u8 subY)
+{
+    GroundItemState& item = mode.m_groundItemList[objectId];
+    item.objectId = objectId;
+    item.itemId = itemId;
+    item.identified = identified;
+    item.tileX = tileX;
+    item.tileY = tileY;
+    item.amount = amount;
+    item.subX = subX;
+    item.subY = subY;
+}
+
+void HandleGroundItemEntry(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 17) {
+        return;
+    }
+
+    const u32 objectId = ReadLE32(packet.data + 2);
+    const u16 itemId = ReadLE16(packet.data + 6);
+    const u8 identified = packet.data[8];
+    const u16 tileX = ReadLE16(packet.data + 9);
+    const u16 tileY = ReadLE16(packet.data + 11);
+
+    if (packet.packetId == 0x009D) {
+        const u16 amount = ReadLE16(packet.data + 13);
+        const u8 subX = packet.data[15];
+        const u8 subY = packet.data[16];
+        UpsertGroundItem(mode, objectId, itemId, identified, tileX, tileY, amount, subX, subY);
+        return;
+    }
+
+    const u8 subX = packet.data[13];
+    const u8 subY = packet.data[14];
+    const u16 amount = ReadLE16(packet.data + 15);
+    UpsertGroundItem(mode, objectId, itemId, identified, tileX, tileY, amount, subX, subY);
+}
+
+void HandleGroundItemDisappear(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 6) {
+        return;
+    }
+
+    const u32 objectId = ReadLE32(packet.data + 2);
+    mode.m_groundItemList.erase(objectId);
+}
+
 void HandleItemRemove(CGameMode&, const PacketView& packet)
 {
     if (!packet.data) {
@@ -265,8 +411,9 @@ void HandleItemRemove(CGameMode&, const PacketView& packet)
 
 bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value)
 {
+    const bool updatedSession = ApplySelfStatusUpdateToSession(statusType, value);
     if (!mode.m_world || !mode.m_world->m_player) {
-        return false;
+        return updatedSession;
     }
 
     CPlayer* player = mode.m_world->m_player;
@@ -275,22 +422,61 @@ bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value)
         player->m_speed = value;
         return true;
     case kStatusHp:
-        player->m_Hp = static_cast<u16>((std::min)(value, static_cast<u32>(0xFFFFu)));
+        player->m_Hp = ClampToU16(value);
         return true;
     case kStatusMaxHp:
-        player->m_MaxHp = static_cast<u16>((std::min)(value, static_cast<u32>(0xFFFFu)));
+        player->m_MaxHp = ClampToU16(value);
         if (player->m_Hp > player->m_MaxHp) {
             player->m_Hp = player->m_MaxHp;
         }
         return true;
     case kStatusSp:
-        player->m_Sp = static_cast<u16>((std::min)(value, static_cast<u32>(0xFFFFu)));
+        player->m_Sp = ClampToU16(value);
         return true;
     case kStatusMaxSp:
-        player->m_MaxSp = static_cast<u16>((std::min)(value, static_cast<u32>(0xFFFFu)));
+        player->m_MaxSp = ClampToU16(value);
         if (player->m_Sp > player->m_MaxSp) {
             player->m_Sp = player->m_MaxSp;
         }
+        return true;
+    case kStatusBaseLevel:
+        player->m_clevel = ClampToU16(value);
+        return true;
+    case kStatusBaseExp:
+    case kStatusJobExp:
+        player->m_Exp = static_cast<int>(value);
+        return true;
+    default:
+        return updatedSession;
+    }
+}
+
+bool ApplySelfStatUpdate(CGameMode& mode, u32 statusType, u32 baseValue, u32 plusValue)
+{
+    if (!mode.m_world || !mode.m_world->m_player) {
+        return false;
+    }
+
+    const u16 totalValue = ClampToU16(baseValue + plusValue);
+    CPlayer* player = mode.m_world->m_player;
+    switch (statusType) {
+    case kStatusStr:
+        player->m_Str = totalValue;
+        return true;
+    case kStatusAgi:
+        player->m_Agi = totalValue;
+        return true;
+    case kStatusVit:
+        player->m_Vit = totalValue;
+        return true;
+    case kStatusInt:
+        player->m_Int = totalValue;
+        return true;
+    case kStatusDex:
+        player->m_Dex = totalValue;
+        return true;
+    case kStatusLuk:
+        player->m_Luk = totalValue;
         return true;
     default:
         return false;
@@ -318,6 +504,30 @@ void HandleSelfStatusParam(CGameMode& mode, const PacketView& packet)
             static_cast<unsigned int>(player ? player->m_MaxHp : 0),
             static_cast<unsigned int>(player ? player->m_Sp : 0),
             static_cast<unsigned int>(player ? player->m_MaxSp : 0));
+    }
+}
+
+void HandleSelfStatInfo(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 14) {
+        return;
+    }
+
+    const u32 statusType = ReadLE32(packet.data + 2);
+    const u32 baseValue = ReadLE32(packet.data + 6);
+    const u32 plusValue = ReadLE32(packet.data + 10);
+    if (ApplySelfStatUpdate(mode, statusType, baseValue, plusValue)) {
+        CPlayer* player = mode.m_world ? mode.m_world->m_player : nullptr;
+        DbgLog("[GameMode] self stat type=%u base=%u plus=%u str=%u agi=%u vit=%u int=%u dex=%u luk=%u\n",
+            statusType,
+            baseValue,
+            plusValue,
+            static_cast<unsigned int>(player ? player->m_Str : 0),
+            static_cast<unsigned int>(player ? player->m_Agi : 0),
+            static_cast<unsigned int>(player ? player->m_Vit : 0),
+            static_cast<unsigned int>(player ? player->m_Int : 0),
+            static_cast<unsigned int>(player ? player->m_Dex : 0),
+            static_cast<unsigned int>(player ? player->m_Luk : 0));
     }
 }
 
@@ -2943,7 +3153,10 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0095, HandleActorNameAck);
     router.Register(0x0195, HandleActorNameAck);
 
+    router.Register(0x009D, HandleGroundItemEntry);
+    router.Register(0x009E, HandleGroundItemEntry);
     router.Register(0x00A0, HandleItemPickupAck);
+    router.Register(0x00A1, HandleGroundItemDisappear);
     router.Register(0x00A3, HandleNormalInventoryList);
     router.Register(0x00A4, HandleEquipInventoryList);
     router.Register(0x00AF, HandleItemRemove);
@@ -2973,7 +3186,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0131, HandleIgnorePacket);
     router.Register(0x0132, HandleIgnorePacket);
     router.Register(0x013A, HandleIgnorePacket);
-    router.Register(0x0141, HandleIgnorePacket);
+    router.Register(0x0141, HandleSelfStatInfo);
     router.Register(0x0148, HandleActorResurrection);
     router.Register(0x0192, HandleIgnorePacket);
     router.Register(0x01C9, HandleIgnorePacket);
