@@ -47,7 +47,7 @@ Goal: ship Direct3D12 and Vulkan as real renderer options, selectable from the i
 - [x] Add DX12 debug-layer support in development builds.
 - [x] Add DX12-targeted logs for init, resize, and present failures.
 - [x] Validate alt-tab, minimize/restore, resize, and return-to-char-select on DX12.
-- [ ] Make DX12 a user-facing selectable backend once stable.
+- [x] Make DX12 a user-facing selectable backend once stable.
 
 ### Milestone 6 — Renderer UI Expansion
 - [ ] Expand the renderer selector to show Direct3D7, Direct3D11, Direct3D12, and Vulkan.
