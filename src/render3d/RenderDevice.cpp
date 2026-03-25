@@ -40,6 +40,7 @@ PFN_vkCreateInstance vkCreateInstance = nullptr;
 PFN_vkDestroyInstance vkDestroyInstance = nullptr;
 PFN_vkEnumeratePhysicalDevices vkEnumeratePhysicalDevices = nullptr;
 PFN_vkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = nullptr;
+PFN_vkGetPhysicalDeviceMemoryProperties vkGetPhysicalDeviceMemoryProperties = nullptr;
 PFN_vkEnumerateDeviceExtensionProperties vkEnumerateDeviceExtensionProperties = nullptr;
 PFN_vkCreateDevice vkCreateDevice = nullptr;
 PFN_vkDestroyDevice vkDestroyDevice = nullptr;
@@ -65,10 +66,20 @@ PFN_vkCreateFramebuffer vkCreateFramebuffer = nullptr;
 PFN_vkDestroyFramebuffer vkDestroyFramebuffer = nullptr;
 PFN_vkCreateRenderPass vkCreateRenderPass = nullptr;
 PFN_vkDestroyRenderPass vkDestroyRenderPass = nullptr;
+PFN_vkCreateBuffer vkCreateBuffer = nullptr;
+PFN_vkDestroyBuffer vkDestroyBuffer = nullptr;
+PFN_vkGetBufferMemoryRequirements vkGetBufferMemoryRequirements = nullptr;
+PFN_vkAllocateMemory vkAllocateMemory = nullptr;
+PFN_vkFreeMemory vkFreeMemory = nullptr;
+PFN_vkBindBufferMemory vkBindBufferMemory = nullptr;
+PFN_vkMapMemory vkMapMemory = nullptr;
+PFN_vkUnmapMemory vkUnmapMemory = nullptr;
 PFN_vkCmdSetViewport vkCmdSetViewport = nullptr;
 PFN_vkCmdSetScissor vkCmdSetScissor = nullptr;
 PFN_vkCmdBeginRenderPass vkCmdBeginRenderPass = nullptr;
 PFN_vkCmdEndRenderPass vkCmdEndRenderPass = nullptr;
+PFN_vkCmdPipelineBarrier vkCmdPipelineBarrier = nullptr;
+PFN_vkCmdCopyBufferToImage vkCmdCopyBufferToImage = nullptr;
 PFN_vkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR = nullptr;
 PFN_vkDestroySurfaceKHR vkDestroySurfaceKHR = nullptr;
 PFN_vkGetPhysicalDeviceSurfaceSupportKHR vkGetPhysicalDeviceSurfaceSupportKHR = nullptr;
@@ -114,6 +125,7 @@ bool LoadVulkanInstanceFunctions(VkInstance instance)
     vkDestroyInstance = reinterpret_cast<PFN_vkDestroyInstance>(vkGetInstanceProcAddr(instance, "vkDestroyInstance"));
     vkEnumeratePhysicalDevices = reinterpret_cast<PFN_vkEnumeratePhysicalDevices>(vkGetInstanceProcAddr(instance, "vkEnumeratePhysicalDevices"));
     vkGetPhysicalDeviceQueueFamilyProperties = reinterpret_cast<PFN_vkGetPhysicalDeviceQueueFamilyProperties>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceQueueFamilyProperties"));
+    vkGetPhysicalDeviceMemoryProperties = reinterpret_cast<PFN_vkGetPhysicalDeviceMemoryProperties>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceMemoryProperties"));
     vkEnumerateDeviceExtensionProperties = reinterpret_cast<PFN_vkEnumerateDeviceExtensionProperties>(vkGetInstanceProcAddr(instance, "vkEnumerateDeviceExtensionProperties"));
     vkCreateDevice = reinterpret_cast<PFN_vkCreateDevice>(vkGetInstanceProcAddr(instance, "vkCreateDevice"));
     vkCreateWin32SurfaceKHR = reinterpret_cast<PFN_vkCreateWin32SurfaceKHR>(vkGetInstanceProcAddr(instance, "vkCreateWin32SurfaceKHR"));
@@ -127,6 +139,7 @@ bool LoadVulkanInstanceFunctions(VkInstance instance)
     return vkDestroyInstance
         && vkEnumeratePhysicalDevices
         && vkGetPhysicalDeviceQueueFamilyProperties
+        && vkGetPhysicalDeviceMemoryProperties
         && vkEnumerateDeviceExtensionProperties
         && vkCreateDevice
         && vkCreateWin32SurfaceKHR
@@ -167,10 +180,20 @@ bool LoadVulkanDeviceFunctions(VkDevice device)
     vkDestroyFramebuffer = reinterpret_cast<PFN_vkDestroyFramebuffer>(vkGetDeviceProcAddr(device, "vkDestroyFramebuffer"));
     vkCreateRenderPass = reinterpret_cast<PFN_vkCreateRenderPass>(vkGetDeviceProcAddr(device, "vkCreateRenderPass"));
     vkDestroyRenderPass = reinterpret_cast<PFN_vkDestroyRenderPass>(vkGetDeviceProcAddr(device, "vkDestroyRenderPass"));
+    vkCreateBuffer = reinterpret_cast<PFN_vkCreateBuffer>(vkGetDeviceProcAddr(device, "vkCreateBuffer"));
+    vkDestroyBuffer = reinterpret_cast<PFN_vkDestroyBuffer>(vkGetDeviceProcAddr(device, "vkDestroyBuffer"));
+    vkGetBufferMemoryRequirements = reinterpret_cast<PFN_vkGetBufferMemoryRequirements>(vkGetDeviceProcAddr(device, "vkGetBufferMemoryRequirements"));
+    vkAllocateMemory = reinterpret_cast<PFN_vkAllocateMemory>(vkGetDeviceProcAddr(device, "vkAllocateMemory"));
+    vkFreeMemory = reinterpret_cast<PFN_vkFreeMemory>(vkGetDeviceProcAddr(device, "vkFreeMemory"));
+    vkBindBufferMemory = reinterpret_cast<PFN_vkBindBufferMemory>(vkGetDeviceProcAddr(device, "vkBindBufferMemory"));
+    vkMapMemory = reinterpret_cast<PFN_vkMapMemory>(vkGetDeviceProcAddr(device, "vkMapMemory"));
+    vkUnmapMemory = reinterpret_cast<PFN_vkUnmapMemory>(vkGetDeviceProcAddr(device, "vkUnmapMemory"));
     vkCmdSetViewport = reinterpret_cast<PFN_vkCmdSetViewport>(vkGetDeviceProcAddr(device, "vkCmdSetViewport"));
     vkCmdSetScissor = reinterpret_cast<PFN_vkCmdSetScissor>(vkGetDeviceProcAddr(device, "vkCmdSetScissor"));
     vkCmdBeginRenderPass = reinterpret_cast<PFN_vkCmdBeginRenderPass>(vkGetDeviceProcAddr(device, "vkCmdBeginRenderPass"));
     vkCmdEndRenderPass = reinterpret_cast<PFN_vkCmdEndRenderPass>(vkGetDeviceProcAddr(device, "vkCmdEndRenderPass"));
+    vkCmdPipelineBarrier = reinterpret_cast<PFN_vkCmdPipelineBarrier>(vkGetDeviceProcAddr(device, "vkCmdPipelineBarrier"));
+    vkCmdCopyBufferToImage = reinterpret_cast<PFN_vkCmdCopyBufferToImage>(vkGetDeviceProcAddr(device, "vkCmdCopyBufferToImage"));
     vkCreateSwapchainKHR = reinterpret_cast<PFN_vkCreateSwapchainKHR>(vkGetDeviceProcAddr(device, "vkCreateSwapchainKHR"));
     vkDestroySwapchainKHR = reinterpret_cast<PFN_vkDestroySwapchainKHR>(vkGetDeviceProcAddr(device, "vkDestroySwapchainKHR"));
     vkGetSwapchainImagesKHR = reinterpret_cast<PFN_vkGetSwapchainImagesKHR>(vkGetDeviceProcAddr(device, "vkGetSwapchainImagesKHR"));
@@ -200,10 +223,20 @@ bool LoadVulkanDeviceFunctions(VkDevice device)
         && vkDestroyFramebuffer
         && vkCreateRenderPass
         && vkDestroyRenderPass
+        && vkCreateBuffer
+        && vkDestroyBuffer
+        && vkGetBufferMemoryRequirements
+        && vkAllocateMemory
+        && vkFreeMemory
+        && vkBindBufferMemory
+        && vkMapMemory
+        && vkUnmapMemory
         && vkCmdSetViewport
         && vkCmdSetScissor
         && vkCmdBeginRenderPass
         && vkCmdEndRenderPass
+        && vkCmdPipelineBarrier
+        && vkCmdCopyBufferToImage
         && vkCreateSwapchainKHR
         && vkDestroySwapchainKHR
         && vkGetSwapchainImagesKHR
@@ -750,11 +783,54 @@ public:
 
     bool UpdateBackBufferFromMemory(const void* bgraPixels, int width, int height, int pitch) override
     {
-        (void)bgraPixels;
-        (void)width;
-        (void)height;
-        (void)pitch;
-        return false;
+        if (!bgraPixels || width <= 0 || height <= 0 || pitch <= 0) {
+            return false;
+        }
+
+        HDC dc = nullptr;
+        if (!AcquireBackBufferDC(&dc) || !dc) {
+            return false;
+        }
+
+        std::vector<unsigned int> packedPixels;
+        const void* sourcePixels = bgraPixels;
+        const int packedPitch = width * static_cast<int>(sizeof(unsigned int));
+        if (pitch != packedPitch) {
+            packedPixels.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
+            for (int row = 0; row < height; ++row) {
+                const unsigned char* srcRow = static_cast<const unsigned char*>(bgraPixels) + static_cast<size_t>(row) * static_cast<size_t>(pitch);
+                std::memcpy(packedPixels.data() + static_cast<size_t>(row) * static_cast<size_t>(width), srcRow, static_cast<size_t>(packedPitch));
+            }
+            sourcePixels = packedPixels.data();
+        }
+
+        BITMAPINFO bmi{};
+        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth = width;
+        bmi.bmiHeader.biHeight = -height;
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biCompression = BI_RGB;
+
+        const int blitResult = StretchDIBits(
+            dc,
+            0,
+            0,
+            width,
+            height,
+            0,
+            0,
+            width,
+            height,
+            sourcePixels,
+            &bmi,
+            DIB_RGB_COLORS,
+            SRCCOPY);
+        ReleaseBackBufferDC(dc);
+        if (blitResult == GDI_ERROR) {
+            return false;
+        }
+        return true;
     }
 
     bool BeginScene() override
@@ -3786,11 +3862,108 @@ public:
 
     bool UpdateBackBufferFromMemory(const void* bgraPixels, int width, int height, int pitch) override
     {
-        (void)bgraPixels;
-        (void)width;
-        (void)height;
-        (void)pitch;
-        return false;
+        if (!bgraPixels || width <= 0 || height <= 0 || pitch <= 0) {
+            return false;
+        }
+        if (width != m_renderWidth || height != m_renderHeight) {
+            return false;
+        }
+        if (!EnsureTransferFrameStarted()) {
+            return false;
+        }
+
+        const VkDeviceSize uploadSize = static_cast<VkDeviceSize>(width) * static_cast<VkDeviceSize>(height) * sizeof(unsigned int);
+        VkBuffer stagingBuffer = VK_NULL_HANDLE;
+        VkDeviceMemory stagingMemory = VK_NULL_HANDLE;
+        if (!CreateStagingBuffer(uploadSize, &stagingBuffer, &stagingMemory)) {
+            return false;
+        }
+
+        void* mapped = nullptr;
+        VkResult result = vkMapMemory(m_device, stagingMemory, 0, uploadSize, 0, &mapped);
+        if (result != VK_SUCCESS || !mapped) {
+            if (mapped) {
+                vkUnmapMemory(m_device, stagingMemory);
+            }
+            vkDestroyBuffer(m_device, stagingBuffer, nullptr);
+            vkFreeMemory(m_device, stagingMemory, nullptr);
+            m_bootstrap.initHr = static_cast<int>(result);
+            return false;
+        }
+
+        unsigned char* dstBytes = static_cast<unsigned char*>(mapped);
+        const size_t dstPitch = static_cast<size_t>(width) * sizeof(unsigned int);
+        for (int row = 0; row < height; ++row) {
+            const unsigned char* srcRow = static_cast<const unsigned char*>(bgraPixels) + static_cast<size_t>(row) * static_cast<size_t>(pitch);
+            std::memcpy(dstBytes + static_cast<size_t>(row) * dstPitch, srcRow, dstPitch);
+        }
+        vkUnmapMemory(m_device, stagingMemory);
+
+        VkImageMemoryBarrier toTransfer{};
+        toTransfer.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        toTransfer.srcAccessMask = 0;
+        toTransfer.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        toTransfer.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        toTransfer.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        toTransfer.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        toTransfer.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        toTransfer.image = m_swapChainImages[m_currentImageIndex];
+        toTransfer.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        toTransfer.subresourceRange.baseMipLevel = 0;
+        toTransfer.subresourceRange.levelCount = 1;
+        toTransfer.subresourceRange.baseArrayLayer = 0;
+        toTransfer.subresourceRange.layerCount = 1;
+        vkCmdPipelineBarrier(
+            GetCurrentCommandBuffer(),
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            0,
+            0, nullptr,
+            0, nullptr,
+            1, &toTransfer);
+
+        VkBufferImageCopy copyRegion{};
+        copyRegion.bufferOffset = 0;
+        copyRegion.bufferRowLength = static_cast<uint32_t>(width);
+        copyRegion.bufferImageHeight = static_cast<uint32_t>(height);
+        copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        copyRegion.imageSubresource.mipLevel = 0;
+        copyRegion.imageSubresource.baseArrayLayer = 0;
+        copyRegion.imageSubresource.layerCount = 1;
+        copyRegion.imageOffset = { 0, 0, 0 };
+        copyRegion.imageExtent.width = static_cast<uint32_t>(width);
+        copyRegion.imageExtent.height = static_cast<uint32_t>(height);
+        copyRegion.imageExtent.depth = 1;
+        vkCmdCopyBufferToImage(
+            GetCurrentCommandBuffer(),
+            stagingBuffer,
+            m_swapChainImages[m_currentImageIndex],
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            1,
+            &copyRegion);
+
+        VkImageMemoryBarrier toPresent{};
+        toPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        toPresent.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        toPresent.dstAccessMask = 0;
+        toPresent.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        toPresent.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        toPresent.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        toPresent.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        toPresent.image = m_swapChainImages[m_currentImageIndex];
+        toPresent.subresourceRange = toTransfer.subresourceRange;
+        vkCmdPipelineBarrier(
+            GetCurrentCommandBuffer(),
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            0,
+            0, nullptr,
+            0, nullptr,
+            1, &toPresent);
+
+        m_pendingReleaseBuffers.push_back(stagingBuffer);
+        m_pendingReleaseMemory.push_back(stagingMemory);
+        return true;
     }
 
     bool BeginScene() override { return EnsureFrameStarted(); }
@@ -4220,7 +4393,7 @@ private:
         createInfo.imageColorSpace = surfaceFormat.colorSpace;
         createInfo.imageExtent = extent;
         createInfo.imageArrayLayers = 1;
-        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         if (m_graphicsQueueFamilyIndex != m_presentQueueFamilyIndex) {
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
             createInfo.queueFamilyIndexCount = 2;
@@ -4462,6 +4635,8 @@ private:
             return;
         }
 
+        ReleasePendingTransferResources();
+
         if (!m_commandBuffers.empty()) {
             vkFreeCommandBuffers(m_device, m_commandPool, static_cast<uint32_t>(m_commandBuffers.size()), m_commandBuffers.data());
             m_commandBuffers.clear();
@@ -4488,37 +4663,12 @@ private:
             return false;
         }
 
-        VkResult result = vkWaitForFences(m_device, 1, &m_inFlightFence, VK_TRUE, UINT64_MAX);
+        VkResult result = BeginFrame();
         if (result != VK_SUCCESS) {
-            m_bootstrap.initHr = static_cast<int>(result);
-            return false;
-        }
-        result = vkResetFences(m_device, 1, &m_inFlightFence);
-        if (result != VK_SUCCESS) {
-            m_bootstrap.initHr = static_cast<int>(result);
-            return false;
-        }
-
-        result = vkAcquireNextImageKHR(m_device, m_swapChain, UINT64_MAX, m_imageAvailableSemaphore, VK_NULL_HANDLE, &m_currentImageIndex);
-        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-            ResizeSwapChain();
-            return false;
-        }
-        if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-            m_bootstrap.initHr = static_cast<int>(result);
             return false;
         }
 
         VkCommandBuffer commandBuffer = GetCurrentCommandBuffer();
-        vkResetCommandBuffer(commandBuffer, 0);
-
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
-        if (result != VK_SUCCESS) {
-            m_bootstrap.initHr = static_cast<int>(result);
-            return false;
-        }
 
         VkClearValue clearValue{};
         clearValue.color = m_pendingClearColor;
@@ -4549,6 +4699,144 @@ private:
         m_frameBegun = true;
         m_renderPassActive = true;
         return true;
+    }
+
+    bool EnsureTransferFrameStarted()
+    {
+        if (m_frameBegun) {
+            return !m_renderPassActive;
+        }
+
+        const VkResult result = BeginFrame();
+        if (result != VK_SUCCESS) {
+            return false;
+        }
+
+        m_frameBegun = true;
+        m_renderPassActive = false;
+        return true;
+    }
+
+    VkResult BeginFrame()
+    {
+        ReleasePendingTransferResources();
+
+        VkResult result = vkWaitForFences(m_device, 1, &m_inFlightFence, VK_TRUE, UINT64_MAX);
+        if (result != VK_SUCCESS) {
+            m_bootstrap.initHr = static_cast<int>(result);
+            return result;
+        }
+        result = vkResetFences(m_device, 1, &m_inFlightFence);
+        if (result != VK_SUCCESS) {
+            m_bootstrap.initHr = static_cast<int>(result);
+            return result;
+        }
+
+        result = vkAcquireNextImageKHR(m_device, m_swapChain, UINT64_MAX, m_imageAvailableSemaphore, VK_NULL_HANDLE, &m_currentImageIndex);
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+            ResizeSwapChain();
+            return result;
+        }
+        if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+            m_bootstrap.initHr = static_cast<int>(result);
+            return result;
+        }
+
+        VkCommandBuffer commandBuffer = GetCurrentCommandBuffer();
+        vkResetCommandBuffer(commandBuffer, 0);
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+        if (result != VK_SUCCESS) {
+            m_bootstrap.initHr = static_cast<int>(result);
+            return result;
+        }
+        return VK_SUCCESS;
+    }
+
+    uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
+    {
+        VkPhysicalDeviceMemoryProperties memoryProperties{};
+        vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memoryProperties);
+        for (uint32_t index = 0; index < memoryProperties.memoryTypeCount; ++index) {
+            if ((typeFilter & (1u << index)) != 0
+                && (memoryProperties.memoryTypes[index].propertyFlags & properties) == properties) {
+                return index;
+            }
+        }
+        return kInvalidQueueFamilyIndex;
+    }
+
+    bool CreateStagingBuffer(VkDeviceSize size, VkBuffer* outBuffer, VkDeviceMemory* outMemory)
+    {
+        if (!outBuffer || !outMemory || size == 0) {
+            return false;
+        }
+
+        *outBuffer = VK_NULL_HANDLE;
+        *outMemory = VK_NULL_HANDLE;
+
+        VkBufferCreateInfo bufferInfo{};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = size;
+        bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        VkResult result = vkCreateBuffer(m_device, &bufferInfo, nullptr, outBuffer);
+        if (result != VK_SUCCESS) {
+            m_bootstrap.initHr = static_cast<int>(result);
+            return false;
+        }
+
+        VkMemoryRequirements memoryRequirements{};
+        vkGetBufferMemoryRequirements(m_device, *outBuffer, &memoryRequirements);
+
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memoryRequirements.size;
+        allocInfo.memoryTypeIndex = FindMemoryType(
+            memoryRequirements.memoryTypeBits,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        if (allocInfo.memoryTypeIndex == kInvalidQueueFamilyIndex) {
+            vkDestroyBuffer(m_device, *outBuffer, nullptr);
+            *outBuffer = VK_NULL_HANDLE;
+            m_bootstrap.initHr = static_cast<int>(VK_ERROR_MEMORY_MAP_FAILED);
+            return false;
+        }
+
+        result = vkAllocateMemory(m_device, &allocInfo, nullptr, outMemory);
+        if (result != VK_SUCCESS) {
+            vkDestroyBuffer(m_device, *outBuffer, nullptr);
+            *outBuffer = VK_NULL_HANDLE;
+            m_bootstrap.initHr = static_cast<int>(result);
+            return false;
+        }
+
+        result = vkBindBufferMemory(m_device, *outBuffer, *outMemory, 0);
+        if (result != VK_SUCCESS) {
+            vkDestroyBuffer(m_device, *outBuffer, nullptr);
+            vkFreeMemory(m_device, *outMemory, nullptr);
+            *outBuffer = VK_NULL_HANDLE;
+            *outMemory = VK_NULL_HANDLE;
+            m_bootstrap.initHr = static_cast<int>(result);
+            return false;
+        }
+
+        return true;
+    }
+
+    void ReleasePendingTransferResources()
+    {
+        for (VkBuffer buffer : m_pendingReleaseBuffers) {
+            vkDestroyBuffer(m_device, buffer, nullptr);
+        }
+        m_pendingReleaseBuffers.clear();
+
+        for (VkDeviceMemory memory : m_pendingReleaseMemory) {
+            vkFreeMemory(m_device, memory, nullptr);
+        }
+        m_pendingReleaseMemory.clear();
     }
 
     void ResizeSwapChain()
@@ -4597,6 +4885,8 @@ private:
     std::vector<VkImageView> m_swapChainImageViews;
     std::vector<VkFramebuffer> m_framebuffers;
     std::vector<VkCommandBuffer> m_commandBuffers;
+    std::vector<VkBuffer> m_pendingReleaseBuffers;
+    std::vector<VkDeviceMemory> m_pendingReleaseMemory;
 
 #else
     VulkanRenderDevice()
