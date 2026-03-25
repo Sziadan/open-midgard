@@ -56,10 +56,10 @@ Goal: ship Direct3D12 and Vulkan as real renderer options, selectable from the i
 - [x] Keep fallback/active-backend state visible in the option window and title bar.
 
 ### Milestone 7 — Vulkan Bring-Up
-- [ ] Add `VulkanRenderDevice` shell to the routed render-device layer.
+- [x] Add `VulkanRenderDevice` shell to the routed render-device layer.
 - [ ] Implement Vulkan instance / device / surface / swapchain bring-up.
 - [ ] Implement Vulkan clear / resize / present path.
-- [ ] Fall back cleanly to D3D11 when Vulkan initialization fails.
+- [x] Fall back cleanly to D3D11 when Vulkan initialization fails.
 
 ### Milestone 8 — Vulkan Rendering Parity
 - [ ] Port transformed-vertex draw path to Vulkan.

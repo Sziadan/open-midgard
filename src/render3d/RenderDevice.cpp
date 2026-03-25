@@ -3321,6 +3321,206 @@ private:
     bool m_loggedSrvHeapExhausted;
 };
 
+class VulkanRenderDevice final : public IRenderDevice {
+public:
+    VulkanRenderDevice()
+        : m_hwnd(nullptr), m_renderWidth(0), m_renderHeight(0)
+    {
+        m_bootstrap.backend = RenderBackendType::Vulkan;
+        m_bootstrap.initHr = static_cast<int>(E_NOTIMPL);
+    }
+
+    RenderBackendType GetBackendType() const override
+    {
+        return RenderBackendType::Vulkan;
+    }
+
+    bool Initialize(HWND hwnd, RenderBackendBootstrapResult* outResult) override
+    {
+        Shutdown();
+        m_hwnd = hwnd;
+        RefreshRenderSize();
+
+        m_bootstrap.backend = RenderBackendType::Vulkan;
+        m_bootstrap.initHr = static_cast<int>(E_NOTIMPL);
+        DbgLog("[Render] Vulkan backend shell is present but initialization is not implemented yet.\n");
+
+        if (outResult) {
+            *outResult = m_bootstrap;
+        }
+        return false;
+    }
+
+    void Shutdown() override
+    {
+        m_hwnd = nullptr;
+        m_renderWidth = 0;
+        m_renderHeight = 0;
+        m_bootstrap.backend = RenderBackendType::Vulkan;
+        m_bootstrap.initHr = static_cast<int>(E_NOTIMPL);
+    }
+
+    void RefreshRenderSize() override
+    {
+        if (!m_hwnd) {
+            m_renderWidth = 0;
+            m_renderHeight = 0;
+            return;
+        }
+
+        RECT clientRect{};
+        GetClientRect(m_hwnd, &clientRect);
+        m_renderWidth = (std::max)(1L, clientRect.right - clientRect.left);
+        m_renderHeight = (std::max)(1L, clientRect.bottom - clientRect.top);
+    }
+
+    int GetRenderWidth() const override { return m_renderWidth; }
+    int GetRenderHeight() const override { return m_renderHeight; }
+    HWND GetWindowHandle() const override { return m_hwnd; }
+    IDirect3DDevice7* GetLegacyDevice() const override { return nullptr; }
+
+    int ClearColor(unsigned int color) override
+    {
+        (void)color;
+        return -1;
+    }
+
+    int ClearDepth() override
+    {
+        return -1;
+    }
+
+    int Present(bool vertSync) override
+    {
+        (void)vertSync;
+        return -1;
+    }
+
+    bool AcquireBackBufferDC(HDC* outDc) override
+    {
+        if (outDc) {
+            *outDc = nullptr;
+        }
+        return false;
+    }
+
+    void ReleaseBackBufferDC(HDC dc) override
+    {
+        (void)dc;
+    }
+
+    bool UpdateBackBufferFromMemory(const void* bgraPixels, int width, int height, int pitch) override
+    {
+        (void)bgraPixels;
+        (void)width;
+        (void)height;
+        (void)pitch;
+        return false;
+    }
+
+    bool BeginScene() override { return false; }
+    void EndScene() override {}
+
+    void SetTransform(D3DTRANSFORMSTATETYPE state, const D3DMATRIX* matrix) override
+    {
+        (void)state;
+        (void)matrix;
+    }
+
+    void SetRenderState(D3DRENDERSTATETYPE state, DWORD value) override
+    {
+        (void)state;
+        (void)value;
+    }
+
+    void SetTextureStageState(DWORD stage, D3DTEXTURESTAGESTATETYPE type, DWORD value) override
+    {
+        (void)stage;
+        (void)type;
+        (void)value;
+    }
+
+    void BindTexture(DWORD stage, CTexture* texture) override
+    {
+        (void)stage;
+        (void)texture;
+    }
+
+    void DrawPrimitive(D3DPRIMITIVETYPE primitiveType, DWORD vertexFormat,
+        const void* vertices, DWORD vertexCount, DWORD flags) override
+    {
+        (void)primitiveType;
+        (void)vertexFormat;
+        (void)vertices;
+        (void)vertexCount;
+        (void)flags;
+    }
+
+    void DrawIndexedPrimitive(D3DPRIMITIVETYPE primitiveType, DWORD vertexFormat,
+        const void* vertices, DWORD vertexCount, const unsigned short* indices,
+        DWORD indexCount, DWORD flags) override
+    {
+        (void)primitiveType;
+        (void)vertexFormat;
+        (void)vertices;
+        (void)vertexCount;
+        (void)indices;
+        (void)indexCount;
+        (void)flags;
+    }
+
+    void AdjustTextureSize(unsigned int* width, unsigned int* height) override
+    {
+        if (!width || !height) {
+            return;
+        }
+
+        *width = (std::max)(1u, *width);
+        *height = (std::max)(1u, *height);
+    }
+
+    void ReleaseTextureResource(CTexture* texture) override
+    {
+        (void)texture;
+    }
+
+    bool CreateTextureResource(CTexture* texture, unsigned int requestedWidth, unsigned int requestedHeight,
+        int pixelFormat, unsigned int* outSurfaceWidth, unsigned int* outSurfaceHeight) override
+    {
+        (void)texture;
+        (void)requestedWidth;
+        (void)requestedHeight;
+        (void)pixelFormat;
+        if (outSurfaceWidth) {
+            *outSurfaceWidth = 0;
+        }
+        if (outSurfaceHeight) {
+            *outSurfaceHeight = 0;
+        }
+        return false;
+    }
+
+    bool UpdateTextureResource(CTexture* texture, int x, int y, int w, int h,
+        const unsigned int* data, bool skipColorKey, int pitch) override
+    {
+        (void)texture;
+        (void)x;
+        (void)y;
+        (void)w;
+        (void)h;
+        (void)data;
+        (void)skipColorKey;
+        (void)pitch;
+        return false;
+    }
+
+private:
+    HWND m_hwnd;
+    int m_renderWidth;
+    int m_renderHeight;
+    RenderBackendBootstrapResult m_bootstrap;
+};
+
 class RoutedRenderDevice final : public IRenderDevice {
 public:
     RoutedRenderDevice()
@@ -3384,14 +3584,25 @@ public:
             break;
 
         case RenderBackendType::Vulkan:
-            DbgLog("[Render] Requested backend '%s' is not implemented yet. Falling back to Direct3D7.\n",
-                GetRenderBackendName(requestedBackend));
-            m_active = &m_legacy;
-            if (!m_legacy.Initialize(hwnd, &result)) {
-                if (outResult) {
-                    *outResult = result;
+            if (m_vulkan.Initialize(hwnd, &result)) {
+                m_active = &m_vulkan;
+            } else {
+                DbgLog("[Render] Failed to initialize backend '%s' (hr=0x%08X). Falling back to Direct3D11.\n",
+                    GetRenderBackendName(requestedBackend),
+                    static_cast<unsigned int>(result.initHr));
+                m_active = &m_d3d11;
+                if (!m_d3d11.Initialize(hwnd, &result)) {
+                    DbgLog("[Render] Failed to initialize backend '%s' (hr=0x%08X). Falling back to Direct3D7.\n",
+                        GetRenderBackendName(RenderBackendType::Direct3D11),
+                        static_cast<unsigned int>(result.initHr));
+                    m_active = &m_legacy;
+                    if (!m_legacy.Initialize(hwnd, &result)) {
+                        if (outResult) {
+                            *outResult = result;
+                        }
+                        return false;
+                    }
                 }
-                return false;
             }
             break;
 
@@ -3415,6 +3626,7 @@ public:
 
     void Shutdown() override
     {
+        m_vulkan.Shutdown();
         m_d3d12.Shutdown();
         m_d3d11.Shutdown();
         m_legacy.Shutdown();
@@ -3449,6 +3661,7 @@ private:
     LegacyRenderDevice m_legacy;
     D3D11RenderDevice m_d3d11;
     D3D12RenderDevice m_d3d12;
+    VulkanRenderDevice m_vulkan;
     IRenderDevice* m_active;
 };
 

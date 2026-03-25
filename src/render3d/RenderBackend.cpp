@@ -273,8 +273,13 @@ bool InitializeRenderBackend(HWND hwnd, RenderBackendBootstrapResult* outResult)
     switch (requestedBackend) {
     case RenderBackendType::Direct3D11:
     case RenderBackendType::Direct3D12:
-    case RenderBackendType::Vulkan:
         DbgLog("[Render] Requested backend '%s' is not implemented yet. Falling back to Direct3D7.\n",
+            GetRenderBackendName(requestedBackend));
+        result.backend = RenderBackendType::LegacyDirect3D7;
+        break;
+
+    case RenderBackendType::Vulkan:
+        DbgLog("[Render] Requested backend '%s' is not implemented yet. Falling back to Direct3D11, then Direct3D7 if needed.\n",
             GetRenderBackendName(requestedBackend));
         result.backend = RenderBackendType::LegacyDirect3D7;
         break;
