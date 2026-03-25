@@ -63,7 +63,7 @@ Goal: ship Direct3D12 and Vulkan as real renderer options, selectable from the i
 
 ### Milestone 8 — Vulkan Rendering Parity
 - [x] Port transformed-vertex draw path to Vulkan.
-- [ ] Port texture creation / upload / binding to Vulkan.
+- [x] Port texture creation / upload / binding to Vulkan.
 - [ ] Port alpha, blend, depth, and lightmap behavior to Vulkan.
 - [ ] Port overlay composition upload before present on Vulkan.
 - [ ] Validate login, char select, map load, world render, UI, and cursor on Vulkan.
