@@ -1670,9 +1670,6 @@ public:
           m_fenceEvent(nullptr), m_fenceValue(0), m_frameIndex(0), m_rtvDescriptorSize(0), m_srvDescriptorSize(0), m_srvHeapCursor(0),
           m_rootSignature(nullptr),
           m_vertexShaderTlBlob(nullptr), m_vertexShaderLmBlob(nullptr), m_pixelShaderBlob(nullptr),
-          m_constantBuffer(nullptr), m_constantBufferMapped(nullptr),
-          m_vertexBuffer(nullptr), m_vertexBufferMapped(nullptr), m_vertexBufferSize(0),
-          m_indexBuffer(nullptr), m_indexBufferMapped(nullptr), m_indexBufferSize(0),
             m_captureReadbackBuffer(nullptr), m_captureDc(nullptr), m_captureBitmap(nullptr), m_captureBits(nullptr),
             m_captureWidth(0), m_captureHeight(0), m_captureRowPitch(0),
           m_frameCommandsOpen(false)
@@ -1896,14 +1893,9 @@ public:
         ReleasePendingUploadBuffers();
         ReleaseCaptureResources();
         ReleaseCachedStates();
-        UnmapUploadBuffer(m_indexBuffer, &m_indexBufferMapped);
-        SafeRelease(m_indexBuffer);
-        m_indexBufferSize = 0;
-        UnmapUploadBuffer(m_vertexBuffer, &m_vertexBufferMapped);
-        SafeRelease(m_vertexBuffer);
-        m_vertexBufferSize = 0;
-        UnmapUploadBuffer(m_constantBuffer, &m_constantBufferMapped);
-        SafeRelease(m_constantBuffer);
+        ReleaseUploadPages(m_indexUploadPages);
+        ReleaseUploadPages(m_vertexUploadPages);
+        ReleaseUploadPages(m_constantUploadPages);
         SafeRelease(m_pixelShaderBlob);
         SafeRelease(m_vertexShaderLmBlob);
         SafeRelease(m_vertexShaderTlBlob);
@@ -2467,20 +2459,23 @@ private:
             return false;
         }
 
-        if (!CreateUploadBuffer(AlignTo(static_cast<UINT>(sizeof(ModernDrawConstants)), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT),
-                &m_constantBuffer,
-                &m_constantBufferMapped,
-                nullptr)
-            || !CreateNullSrvDescriptors()) {
+        if (!CreateNullSrvDescriptors()) {
             return false;
         }
 
         return true;
     }
 
+    struct UploadPage {
+        ID3D12Resource* resource;
+        void* mapped;
+        size_t size;
+        size_t cursor;
+    };
+
     bool CreateUploadBuffer(UINT size, ID3D12Resource** outResource, void** outMapped, UINT64* outGpuAddress)
     {
-        if (!outResource || !outMapped || !m_device || size == 0u) {
+        if ((!outResource || !outMapped) || !m_device || size == 0u) {
             return false;
         }
 
@@ -2526,6 +2521,95 @@ private:
         return true;
     }
 
+    void ReleaseUploadPages(std::vector<UploadPage>& pages)
+    {
+        for (UploadPage& page : pages) {
+            if (page.resource && page.mapped) {
+                D3D12_RANGE writtenRange{};
+                page.resource->Unmap(0, &writtenRange);
+            }
+            SafeRelease(page.resource);
+            page.mapped = nullptr;
+            page.size = 0;
+            page.cursor = 0;
+        }
+        pages.clear();
+    }
+
+    void ResetUploadPageCursors(std::vector<UploadPage>& pages)
+    {
+        for (UploadPage& page : pages) {
+            page.cursor = 0;
+        }
+    }
+
+    static size_t AlignUploadOffset(size_t value, size_t alignment)
+    {
+        if (alignment <= 1) {
+            return value;
+        }
+        const size_t mask = alignment - 1;
+        return (value + mask) & ~mask;
+    }
+
+    bool AllocateUploadSlice(std::vector<UploadPage>& pages,
+        size_t requiredSize,
+        size_t alignment,
+        size_t minimumPageSize,
+        void** outMapped,
+        UINT64* outGpuAddress)
+    {
+        if (!outMapped || !outGpuAddress || requiredSize == 0 || !m_device) {
+            return false;
+        }
+
+        for (UploadPage& page : pages) {
+            const size_t alignedOffset = AlignUploadOffset(page.cursor, alignment);
+            if (alignedOffset + requiredSize <= page.size) {
+                *outMapped = static_cast<unsigned char*>(page.mapped) + alignedOffset;
+                *outGpuAddress = page.resource->GetGPUVirtualAddress() + alignedOffset;
+                page.cursor = alignedOffset + requiredSize;
+                return true;
+            }
+        }
+
+        const size_t targetSize = (std::max)(minimumPageSize, requiredSize);
+        const size_t pageSize = AlignUploadOffset(targetSize, alignment);
+        ID3D12Resource* resource = nullptr;
+        void* mapped = nullptr;
+        if (!CreateUploadBuffer(static_cast<UINT>(pageSize), &resource, &mapped, nullptr)) {
+            return false;
+        }
+
+        pages.push_back({ resource, mapped, pageSize, 0 });
+        UploadPage& page = pages.back();
+        *outMapped = page.mapped;
+        *outGpuAddress = page.resource->GetGPUVirtualAddress();
+        page.cursor = requiredSize;
+        return true;
+    }
+
+    bool AllocateConstantBufferSlice(size_t requiredSize, void** outMapped, UINT64* outGpuAddress)
+    {
+        return AllocateUploadSlice(
+            m_constantUploadPages,
+            AlignUploadOffset(requiredSize, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT),
+            D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT,
+            64u * 1024u,
+            outMapped,
+            outGpuAddress);
+    }
+
+    bool AllocateVertexBufferSlice(size_t requiredSize, void** outMapped, UINT64* outGpuAddress)
+    {
+        return AllocateUploadSlice(m_vertexUploadPages, requiredSize, 16u, 4u * 1024u * 1024u, outMapped, outGpuAddress);
+    }
+
+    bool AllocateIndexBufferSlice(size_t requiredSize, void** outMapped, UINT64* outGpuAddress)
+    {
+        return AllocateUploadSlice(m_indexUploadPages, requiredSize, 4u, 512u * 1024u, outMapped, outGpuAddress);
+    }
+
     void UnmapUploadBuffer(ID3D12Resource* resource, void** mapped)
     {
         if (resource && mapped && *mapped) {
@@ -2533,31 +2617,6 @@ private:
             resource->Unmap(0, &writtenRange);
             *mapped = nullptr;
         }
-    }
-
-    bool EnsureUploadBuffer(ID3D12Resource** buffer, void** mapped, size_t* currentSize, size_t requiredSize)
-    {
-        if (!buffer || !mapped || !currentSize || requiredSize == 0) {
-            return false;
-        }
-        if (*buffer && *mapped && *currentSize >= requiredSize) {
-            return true;
-        }
-
-        UnmapUploadBuffer(*buffer, mapped);
-        SafeRelease(*buffer);
-
-        size_t newSize = 4096;
-        while (newSize < requiredSize) {
-            newSize *= 2;
-        }
-
-        if (!CreateUploadBuffer(static_cast<UINT>(newSize), buffer, mapped, nullptr)) {
-            *currentSize = 0;
-            return false;
-        }
-        *currentSize = newSize;
-        return true;
     }
 
     bool CreateNullSrvDescriptors()
@@ -2941,13 +3000,15 @@ private:
 
         const size_t vertexStride = isLightmap ? sizeof(lmtlvertex3d) : sizeof(tlvertex3d);
         const size_t vertexBytes = vertexStride * static_cast<size_t>(vertexCount);
-        if (!EnsureUploadBuffer(&m_vertexBuffer, &m_vertexBufferMapped, &m_vertexBufferSize, vertexBytes)) {
+        void* vertexUpload = nullptr;
+        UINT64 vertexGpuAddress = 0;
+        if (!AllocateVertexBufferSlice(vertexBytes, &vertexUpload, &vertexGpuAddress)) {
             return;
         }
-        std::memcpy(m_vertexBufferMapped, vertices, vertexBytes);
+        std::memcpy(vertexUpload, vertices, vertexBytes);
 
         D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
-        vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
+        vertexBufferView.BufferLocation = vertexGpuAddress;
         vertexBufferView.SizeInBytes = static_cast<UINT>(vertexBytes);
         vertexBufferView.StrideInBytes = static_cast<UINT>(vertexStride);
 
@@ -2955,11 +3016,13 @@ private:
         const bool hasIndices = drawIndices && drawIndexCount > 0;
         if (hasIndices) {
             const size_t indexBytes = static_cast<size_t>(drawIndexCount) * sizeof(unsigned short);
-            if (!EnsureUploadBuffer(&m_indexBuffer, &m_indexBufferMapped, &m_indexBufferSize, indexBytes)) {
+            void* indexUpload = nullptr;
+            UINT64 indexGpuAddress = 0;
+            if (!AllocateIndexBufferSlice(indexBytes, &indexUpload, &indexGpuAddress)) {
                 return;
             }
-            std::memcpy(m_indexBufferMapped, drawIndices, indexBytes);
-            indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
+            std::memcpy(indexUpload, drawIndices, indexBytes);
+            indexBufferView.BufferLocation = indexGpuAddress;
             indexBufferView.SizeInBytes = static_cast<UINT>(indexBytes);
             indexBufferView.Format = DXGI_FORMAT_R16_UINT;
         }
@@ -2976,14 +3039,20 @@ private:
         constants.screenHeight = static_cast<float>((std::max)(1, m_renderHeight));
         constants.alphaRef = static_cast<float>(m_pipelineState.alphaRef) / 255.0f;
         constants.flags = BuildModernDrawFlags(vertexFormat, m_pipelineState, hasTexture0, hasTexture1);
-        std::memset(m_constantBufferMapped, 0, AlignTo(static_cast<UINT>(sizeof(ModernDrawConstants)), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
-        std::memcpy(m_constantBufferMapped, &constants, sizeof(constants));
+        void* constantUpload = nullptr;
+        UINT64 constantGpuAddress = 0;
+        const size_t constantBytes = AlignTo(static_cast<UINT>(sizeof(ModernDrawConstants)), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+        if (!AllocateConstantBufferSlice(constantBytes, &constantUpload, &constantGpuAddress)) {
+            return;
+        }
+        std::memset(constantUpload, 0, constantBytes);
+        std::memcpy(constantUpload, &constants, sizeof(constants));
 
         ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvHeap };
         m_commandList->SetDescriptorHeaps(1, descriptorHeaps);
         m_commandList->SetGraphicsRootSignature(m_rootSignature);
         m_commandList->SetPipelineState(pipelineState);
-        m_commandList->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
+        m_commandList->SetGraphicsRootConstantBufferView(0, constantGpuAddress);
         m_commandList->SetGraphicsRootDescriptorTable(1, GetSrvGpuHandle(srvBaseIndex));
         m_commandList->IASetPrimitiveTopology(topologyInfo.topology);
         m_commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
@@ -3106,6 +3175,9 @@ private:
         m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, m_depthStencil ? &dsvHandle : nullptr);
         ApplyViewportAndScissor();
         m_srvHeapCursor = 0;
+        ResetUploadPageCursors(m_constantUploadPages);
+        ResetUploadPageCursors(m_vertexUploadPages);
+        ResetUploadPageCursors(m_indexUploadPages);
         m_frameCommandsOpen = true;
         return true;
     }
@@ -3160,14 +3232,9 @@ private:
     ID3DBlob* m_vertexShaderTlBlob;
     ID3DBlob* m_vertexShaderLmBlob;
     ID3DBlob* m_pixelShaderBlob;
-    ID3D12Resource* m_constantBuffer;
-    void* m_constantBufferMapped;
-    ID3D12Resource* m_vertexBuffer;
-    void* m_vertexBufferMapped;
-    size_t m_vertexBufferSize;
-    ID3D12Resource* m_indexBuffer;
-    void* m_indexBufferMapped;
-    size_t m_indexBufferSize;
+    std::vector<UploadPage> m_constantUploadPages;
+    std::vector<UploadPage> m_vertexUploadPages;
+    std::vector<UploadPage> m_indexUploadPages;
     ID3D12Resource* m_captureReadbackBuffer;
     HDC m_captureDc;
     HBITMAP m_captureBitmap;
