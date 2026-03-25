@@ -2008,9 +2008,30 @@ void RemoveRuntimeActor(CGameMode& mode, u32 gid)
 {
     ClearPreservedOutOfSightActor(mode, gid);
 
+    mode.m_actorPosList.erase(gid);
+    mode.m_aidList.erase(gid);
+    mode.m_actorNameList.erase(gid);
+    mode.m_actorNameReqTimer.erase(gid);
+    mode.m_actorNameListByGID.erase(gid);
+    mode.m_actorNameByGIDReqTimer.erase(gid);
+
+    if (mode.m_lastPcGid == gid) {
+        mode.m_lastPcGid = 0;
+    }
+    if (mode.m_lastMonGid == gid) {
+        mode.m_lastMonGid = 0;
+    }
+    if (mode.m_lastLockOnMonGid == gid) {
+        mode.m_lastLockOnMonGid = 0;
+    }
+
     const auto it = mode.m_runtimeActors.find(gid);
     if (it == mode.m_runtimeActors.end()) {
         return;
+    }
+
+    if (mode.m_world && mode.m_world->m_player == it->second) {
+        mode.m_world->m_player = nullptr;
     }
 
     if (it->second) {

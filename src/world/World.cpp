@@ -1036,14 +1036,10 @@ bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
     face->alphaSortKey = 0.0f;
 
     tlvertex3d* verts = face->m_verts;
-    verts[0].x = entry.renderLeft;
-    verts[0].y = entry.renderTop;
-    verts[1].x = entry.renderRight;
-    verts[1].y = entry.renderTop;
-    verts[2].x = entry.renderLeft;
-    verts[2].y = entry.renderBottom;
-    verts[3].x = entry.renderRight;
-    verts[3].y = entry.renderBottom;
+    for (int index = 0; index < 4; ++index) {
+        verts[index].x = entry.renderX[index];
+        verts[index].y = entry.renderY[index];
+    }
     for (int index = 0; index < 4; ++index) {
         verts[index].z = (std::max)(0.0f, entry.baseZ - kBillboardDepthBias);
         verts[index].oow = entry.baseOow;
@@ -1161,28 +1157,19 @@ bool BuildBillboardRenderEntry(CPc* actor,
         AddVec3(AddVec3(actor->m_pos, ScaleVec3(up, -fullBottomUnits)), ScaleVec3(right, fullRightUnits)),
     };
 
-    float fullMinX = projectedBase.x;
-    float fullMinY = projectedBase.y;
-    float fullMaxX = projectedBase.x;
-    float fullMaxY = projectedBase.y;
-    for (const vector3d& worldVert : fullWorldVerts) {
+    for (int index = 0; index < 4; ++index) {
+        const vector3d& worldVert = fullWorldVerts[index];
         tlvertex3d projected{};
         if (!ProjectPoint(g_renderer, viewMatrix, worldVert, &projected)) {
             return false;
         }
-        fullMinX = (std::min)(fullMinX, projected.x);
-        fullMinY = (std::min)(fullMinY, projected.y);
-        fullMaxX = (std::max)(fullMaxX, projected.x);
-        fullMaxY = (std::max)(fullMaxY, projected.y);
+        outEntry->renderX[index] = projected.x;
+        outEntry->renderY[index] = projected.y;
     }
 
     outEntry->actor = actor;
     outEntry->screenY = projectedBase.y;
     outEntry->depthKey = projectedBase.oow;
-    outEntry->renderLeft = fullMinX;
-    outEntry->renderTop = fullMinY;
-    outEntry->renderRight = fullMaxX;
-    outEntry->renderBottom = fullMaxY;
     outEntry->left = renderMinX;
     outEntry->top = renderMinY;
     outEntry->right = renderMaxX;
