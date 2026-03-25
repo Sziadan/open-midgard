@@ -46,7 +46,7 @@ Goal: ship Direct3D12 and Vulkan as real renderer options, selectable from the i
 ### Milestone 5 — Direct3D12 Stability And Diagnostics
 - [ ] Add DX12 debug-layer support in development builds.
 - [ ] Add DX12-targeted logs for init, resize, and present failures.
-- [ ] Validate alt-tab, minimize/restore, resize, and return-to-char-select on DX12.
+- [x] Validate alt-tab, minimize/restore, resize, and return-to-char-select on DX12.
 - [ ] Make DX12 a user-facing selectable backend once stable.
 
 ### Milestone 6 — Renderer UI Expansion
