@@ -278,6 +278,10 @@ const char* GetRendererEntryStateText(
         return "Not implemented";
     }
 
+    if (!IsRenderBackendSupported(entry)) {
+        return "Unsupported";
+    }
+
     if (entry == preferredBackend && entry != activeBackend) {
         return "Restart required";
     }
@@ -287,6 +291,26 @@ const char* GetRendererEntryStateText(
     }
 
     return "Available";
+}
+
+const char* GetRendererEntryPrefix(
+    RenderBackendType entry,
+    RenderBackendType preferredBackend,
+    RenderBackendType activeBackend)
+{
+    if (entry == preferredBackend && entry == activeBackend) {
+        return "*> ";
+    }
+
+    if (entry == preferredBackend) {
+        return "> ";
+    }
+
+    if (entry == activeBackend) {
+        return "* ";
+    }
+
+    return "";
 }
 
 void LoadDwordSetting(HKEY key, const char* valueName, int* target)
@@ -699,7 +723,7 @@ void UIOptionWnd::PromptForRendererRestart()
 
 void UIOptionWnd::SelectPreferredRenderBackend(RenderBackendType backend)
 {
-    if (!IsRenderBackendImplemented(backend)) {
+    if (!IsRenderBackendImplemented(backend) || !IsRenderBackendSupported(backend)) {
         return;
     }
 
@@ -819,12 +843,15 @@ void UIOptionWnd::OnDraw()
             const RenderBackendType entry = kRendererEntries[static_cast<size_t>(index)];
             const RECT entryRect = GetRendererEntryRect(index);
             const bool implemented = IsRenderBackendImplemented(entry);
+            const bool supported = implemented && IsRenderBackendSupported(entry);
             const bool selected = (entry == preferredBackend);
             const bool active = (entry == activeBackend);
 
             COLORREF fillColor = RGB(244, 239, 228);
             if (!implemented) {
                 fillColor = RGB(223, 216, 206);
+            } else if (!supported) {
+                fillColor = RGB(230, 214, 206);
             } else if (selected && active) {
                 fillColor = RGB(214, 228, 206);
             } else if (selected) {
@@ -838,8 +865,10 @@ void UIOptionWnd::OnDraw()
 
             const char* backendName = GetRenderBackendName(entry);
             const char* stateText = GetRendererEntryStateText(entry, preferredBackend, activeBackend);
-            SetTextColor(hdc, implemented ? RGB(0, 0, 0) : RGB(90, 82, 74));
-            TextOutA(hdc, entryRect.left + 4, entryRect.top + 1, backendName, static_cast<int>(std::strlen(backendName)));
+            const char* prefixText = GetRendererEntryPrefix(entry, preferredBackend, activeBackend);
+            std::string label = std::string(prefixText) + backendName;
+            SetTextColor(hdc, (implemented && supported) ? RGB(0, 0, 0) : RGB(90, 82, 74));
+            TextOutA(hdc, entryRect.left + 4, entryRect.top + 1, label.c_str(), static_cast<int>(label.size()));
 
             SIZE stateSize{};
             GetTextExtentPoint32A(hdc, stateText, static_cast<int>(std::strlen(stateText)), &stateSize);

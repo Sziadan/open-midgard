@@ -3,15 +3,38 @@
 #include "Device.h"
 #include "DebugLog.h"
 
+#include <d3d11.h>
+#include <d3d12.h>
+#include <dxgi1_4.h>
 #include <algorithm>
 #include <cctype>
 #include <cstring>
+
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "dxgi.lib")
 
 namespace {
 
 constexpr char kRenderBackendRegPath[] = "Software\\Gravity Soft\\Ragnarok Online";
 constexpr char kRenderBackendValueName[] = "RenderBackend";
 constexpr RenderBackendType kDefaultConfiguredBackend = RenderBackendType::Direct3D11;
+
+template <typename T>
+void SafeRelease(T*& value)
+{
+    if (value) {
+        value->Release();
+        value = nullptr;
+    }
+}
+
+struct RenderBackendSupportCache {
+    int d3d11;
+    int d3d12;
+};
+
+RenderBackendSupportCache g_supportCache = { -1, -1 };
 
 RenderBackendType ParseRenderBackendName(const char* value)
 {
@@ -65,6 +88,71 @@ int InitializeLegacyDirect3D7(HWND hwnd)
     return renderInitHr;
 }
 
+bool ProbeD3D11Support()
+{
+    const D3D_FEATURE_LEVEL featureLevels[] = {
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_1,
+        D3D_FEATURE_LEVEL_10_0,
+    };
+
+    ID3D11Device* device = nullptr;
+    ID3D11DeviceContext* context = nullptr;
+    D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
+    HRESULT hr = D3D11CreateDevice(
+        nullptr,
+        D3D_DRIVER_TYPE_HARDWARE,
+        nullptr,
+        D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+        featureLevels,
+        static_cast<UINT>(std::size(featureLevels)),
+        D3D11_SDK_VERSION,
+        &device,
+        &featureLevel,
+        &context);
+    if (FAILED(hr)) {
+        hr = D3D11CreateDevice(
+            nullptr,
+            D3D_DRIVER_TYPE_WARP,
+            nullptr,
+            D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+            featureLevels,
+            static_cast<UINT>(std::size(featureLevels)),
+            D3D11_SDK_VERSION,
+            &device,
+            &featureLevel,
+            &context);
+    }
+
+    SafeRelease(context);
+    SafeRelease(device);
+    return SUCCEEDED(hr);
+}
+
+bool ProbeD3D12Support()
+{
+    IDXGIFactory4* factory = nullptr;
+    HRESULT hr = CreateDXGIFactory2(0, IID_PPV_ARGS(&factory));
+    if (FAILED(hr) || !factory) {
+        SafeRelease(factory);
+        return false;
+    }
+
+    ID3D12Device* device = nullptr;
+    hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device));
+    if (FAILED(hr) || !device) {
+        IDXGIAdapter* warpAdapter = nullptr;
+        if (SUCCEEDED(factory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter))) && warpAdapter) {
+            hr = D3D12CreateDevice(warpAdapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device));
+        }
+        SafeRelease(warpAdapter);
+    }
+
+    SafeRelease(device);
+    SafeRelease(factory);
+    return SUCCEEDED(hr);
+}
+
 } // namespace
 
 const char* GetRenderBackendName(RenderBackendType backend)
@@ -90,6 +178,30 @@ bool IsRenderBackendImplemented(RenderBackendType backend)
     case RenderBackendType::Direct3D11:
     case RenderBackendType::Direct3D12:
         return true;
+
+    case RenderBackendType::Vulkan:
+    default:
+        return false;
+    }
+}
+
+bool IsRenderBackendSupported(RenderBackendType backend)
+{
+    switch (backend) {
+    case RenderBackendType::LegacyDirect3D7:
+        return true;
+
+    case RenderBackendType::Direct3D11:
+        if (g_supportCache.d3d11 < 0) {
+            g_supportCache.d3d11 = ProbeD3D11Support() ? 1 : 0;
+        }
+        return g_supportCache.d3d11 != 0;
+
+    case RenderBackendType::Direct3D12:
+        if (g_supportCache.d3d12 < 0) {
+            g_supportCache.d3d12 = ProbeD3D12Support() ? 1 : 0;
+        }
+        return g_supportCache.d3d12 != 0;
 
     case RenderBackendType::Vulkan:
     default:

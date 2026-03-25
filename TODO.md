@@ -51,7 +51,7 @@ Goal: ship Direct3D12 and Vulkan as real renderer options, selectable from the i
 
 ### Milestone 6 — Renderer UI Expansion
 - [x] Expand the renderer selector to show Direct3D7, Direct3D11, Direct3D12, and Vulkan.
-- [ ] Surface backend state per entry: active, selected, restart required, unsupported, not implemented.
+- [x] Surface backend state per entry: active, selected, restart required, unsupported, not implemented.
 - [x] Prevent unimplemented backends from behaving like real selections.
 - [x] Keep fallback/active-backend state visible in the option window and title bar.
 

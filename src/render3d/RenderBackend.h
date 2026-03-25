@@ -16,6 +16,7 @@ struct RenderBackendBootstrapResult {
 
 const char* GetRenderBackendName(RenderBackendType backend);
 bool IsRenderBackendImplemented(RenderBackendType backend);
+bool IsRenderBackendSupported(RenderBackendType backend);
 RenderBackendType GetConfiguredRenderBackend();
 bool SetConfiguredRenderBackend(RenderBackendType backend);
 RenderBackendType GetRequestedRenderBackend();
