@@ -87,13 +87,12 @@ bool DrawModeCursorToHdc(HDC hdc, int cursorActNum, u32 mouseAnimStartTick)
     CActRes* actRes = s_cache.resolved ? g_resMgr.GetAs<CActRes>(s_cache.actName.c_str()) : nullptr;
     CSprRes* sprRes = s_cache.resolved ? g_resMgr.GetAs<CSprRes>(s_cache.sprName.c_str()) : nullptr;
 
-    int action = cursorActNum;
-    if (!actRes || !sprRes || action < 0 || action >= static_cast<int>(actRes->actions.size())) {
-        action = 0;
-    }
-
     bool drewCustomCursor = false;
     if (actRes && sprRes) {
+        int action = cursorActNum;
+        if (action < 0 || action >= static_cast<int>(actRes->actions.size())) {
+            action = 0;
+        }
         const int motionCount = actRes->GetMotionCount(action);
         if (motionCount > 0) {
             const unsigned int elapsed = GetTickCount() - mouseAnimStartTick;
@@ -115,6 +114,37 @@ bool DrawModeCursorToHdc(HDC hdc, int cursorActNum, u32 mouseAnimStartTick)
     }
 
     return drewCustomCursor;
+}
+
+u32 GetModeCursorVisualFrame(int cursorActNum, u32 mouseAnimStartTick)
+{
+    static bool s_cacheInit = false;
+    static CursorResCache s_cache{};
+    if (!s_cacheInit) {
+        s_cache = ResolveCursorResources();
+        s_cacheInit = true;
+    }
+
+    CActRes* actRes = s_cache.resolved ? g_resMgr.GetAs<CActRes>(s_cache.actName.c_str()) : nullptr;
+    if (!actRes) {
+        return 0u;
+    }
+
+    int action = cursorActNum;
+    if (action < 0 || action >= static_cast<int>(actRes->actions.size())) {
+        action = 0;
+    }
+
+    const int motionCount = actRes->GetMotionCount(action);
+    if (motionCount <= 0) {
+        return static_cast<u32>(action & 0xFFFF);
+    }
+
+    const unsigned int elapsed = GetTickCount() - mouseAnimStartTick;
+    const float stateTicks = static_cast<float>(elapsed) * 0.041666668f;
+    const float motionDelay = (std::max)(0.0001f, actRes->GetDelay(action));
+    const int motionIndex = static_cast<int>(stateTicks / motionDelay) % motionCount;
+    return (static_cast<u32>(action & 0xFFFF) << 16) | static_cast<u32>(motionIndex & 0xFFFF);
 }
 
 void DrawModeCursor(int cursorActNum, u32 mouseAnimStartTick)

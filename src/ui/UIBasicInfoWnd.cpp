@@ -289,7 +289,9 @@ UIBasicInfoWnd::UIBasicInfoWnd()
       m_redRight(nullptr),
       m_blueLeft(nullptr),
       m_blueMid(nullptr),
-      m_blueRight(nullptr)
+      m_blueRight(nullptr),
+      m_lastDrawStateToken(0ull),
+      m_hasDrawStateToken(false)
 {
     Create(kFullWidth, kFullHeight);
     Move(0, 0);
@@ -315,6 +317,17 @@ void UIBasicInfoWnd::Move(int x, int y)
     if (m_controlsCreated) {
         LayoutChildren();
     }
+}
+
+bool UIBasicInfoWnd::IsUpdateNeed()
+{
+    if (m_show == 0) {
+        return false;
+    }
+    if (m_isDirty != 0 || !m_hasDrawStateToken) {
+        return true;
+    }
+    return BuildDisplayStateToken() != m_lastDrawStateToken;
 }
 
 int UIBasicInfoWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, int extra)
@@ -468,6 +481,9 @@ void UIBasicInfoWnd::OnDraw()
     if (!useShared) {
         ReleaseDC(g_hMainWnd, hdc);
     }
+    m_lastDrawStateToken = BuildDisplayStateToken();
+    m_hasDrawStateToken = true;
+    m_isDirty = 0;
 }
 
 void UIBasicInfoWnd::OnLBtnDblClk(int x, int y)
@@ -574,6 +590,43 @@ UIBasicInfoWnd::DisplayData UIBasicInfoWnd::BuildDisplayData() const
     data.weight = 0;
     data.maxWeight = 0;
     return data;
+}
+
+unsigned long long UIBasicInfoWnd::BuildDisplayStateToken() const
+{
+    const DisplayData data = BuildDisplayData();
+
+    unsigned long long hash = 1469598103934665603ull;
+    const auto mixValue = [&hash](unsigned long long value) {
+        hash ^= value;
+        hash *= 1099511628211ull;
+    };
+    const auto mixString = [&mixValue](const std::string& value) {
+        for (unsigned char ch : value) {
+            mixValue(static_cast<unsigned long long>(ch));
+        }
+        mixValue(0xFFull);
+    };
+
+    mixValue(static_cast<unsigned long long>(m_show));
+    mixValue(static_cast<unsigned long long>(m_x));
+    mixValue(static_cast<unsigned long long>(m_y));
+    mixValue(static_cast<unsigned long long>(m_w));
+    mixValue(static_cast<unsigned long long>(m_h));
+    mixString(data.name);
+    mixString(data.jobName);
+    mixValue(static_cast<unsigned long long>(data.level));
+    mixValue(static_cast<unsigned long long>(data.jobLevel));
+    mixValue(static_cast<unsigned long long>(data.hp));
+    mixValue(static_cast<unsigned long long>(data.maxHp));
+    mixValue(static_cast<unsigned long long>(data.sp));
+    mixValue(static_cast<unsigned long long>(data.maxSp));
+    mixValue(static_cast<unsigned long long>(data.money));
+    mixValue(static_cast<unsigned long long>(data.weight));
+    mixValue(static_cast<unsigned long long>(data.maxWeight));
+    mixValue(static_cast<unsigned long long>(data.expPercent));
+    mixValue(static_cast<unsigned long long>(data.jobExpPercent));
+    return hash;
 }
 
 void UIBasicInfoWnd::DrawCachedBitmap(HDC hdc, HBITMAP bitmap, int x, int y) const

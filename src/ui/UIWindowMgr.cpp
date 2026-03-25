@@ -145,6 +145,33 @@ std::vector<std::string> BuildWallpaperCandidates(const std::string& requestedWa
 
     return out;
 }
+
+bool HasDirtyWindowRecursive(UIWindow* window)
+{
+    if (!window || window->m_show == 0) {
+        return false;
+    }
+    if (window->IsUpdateNeed()) {
+        return true;
+    }
+    for (UIWindow* child : window->m_children) {
+        if (HasDirtyWindowRecursive(child)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void ClearDirtyWindowRecursive(UIWindow* window)
+{
+    if (!window) {
+        return;
+    }
+    window->m_isDirty = 0;
+    for (UIWindow* child : window->m_children) {
+        ClearDirtyWindowRecursive(child);
+    }
+}
 }
 
 UIWindowMgr g_windowMgr;
@@ -435,6 +462,16 @@ void UIWindowMgr::OnProcess() {
     }
 }
 
+bool UIWindowMgr::HasDirtyVisualState() const
+{
+    for (UIWindow* child : const_cast<UIWindowMgr*>(this)->m_children) {
+        if (HasDirtyWindowRecursive(child)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void UIWindowMgr::OnDraw() {
     if (!g_hMainWnd) {
         return;
@@ -450,6 +487,9 @@ void UIWindowMgr::OnDraw() {
         }
         if (m_itemWnd && m_itemWnd->m_show != 0) {
             m_itemWnd->DrawHoverOverlay(sharedDC, clientRect);
+        }
+        for (UIWindow* child : m_children) {
+            ClearDirtyWindowRecursive(child);
         }
         return;
     }
@@ -477,6 +517,9 @@ void UIWindowMgr::OnDraw() {
             }
             UIWindow::SetSharedDrawDC(previousSharedDC);
             GetRenderDevice().ReleaseBackBufferDC(backBufferDC);
+            for (UIWindow* child : m_children) {
+                ClearDirtyWindowRecursive(child);
+            }
             return;
         }
     }
@@ -541,6 +584,10 @@ void UIWindowMgr::OnDraw() {
         if (!presentedModernUiFrame) {
             BitBlt(targetDC, 0, 0, clientWidth, clientHeight, drawDC, 0, 0, SRCCOPY);
         }
+    }
+
+    for (UIWindow* child : m_children) {
+        ClearDirtyWindowRecursive(child);
     }
 
     ReleaseDC(g_hMainWnd, targetDC);

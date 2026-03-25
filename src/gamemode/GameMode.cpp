@@ -38,6 +38,7 @@
 #include <array>
 #include <cctype>
 #include <cmath>
+#include <cstdint>
 #include <map>
 #include <cstdio>
 #include <cstring>
@@ -112,6 +113,7 @@ void DrawLockedTargetName(CGameMode& mode, HDC hdc);
 void DrawLockedTargetArrow(CGameMode& mode, HDC hdc);
 void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc);
 void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc);
+std::string ResolveHoveredActorName(CGameMode& mode, CGameActor* actor);
 
 void ReleaseOverlayComposeSurface(HDC* composeDc, HBITMAP* composeBitmap, void** composeBits, int* composeWidth, int* composeHeight)
 {
@@ -195,6 +197,88 @@ void ConvertOverlayComposeBitsToAlpha(void* composeBits, int width, int height)
     }
 }
 
+void HashTokenValue(std::uint64_t* hash, std::uint64_t value)
+{
+    if (!hash) {
+        return;
+    }
+    *hash ^= value;
+    *hash *= 1099511628211ull;
+}
+
+void HashTokenString(std::uint64_t* hash, const std::string& value)
+{
+    if (!hash) {
+        return;
+    }
+    for (unsigned char ch : value) {
+        HashTokenValue(hash, static_cast<std::uint64_t>(ch));
+    }
+    HashTokenValue(hash, 0xFFull);
+}
+
+bool HasAnimatedLockedTargetOverlay(const CGameMode& mode)
+{
+    if (!mode.m_world || !mode.m_view || mode.m_lastLockOnMonGid == 0) {
+        return false;
+    }
+
+    const auto actorIt = mode.m_runtimeActors.find(mode.m_lastLockOnMonGid);
+    return actorIt != mode.m_runtimeActors.end() && actorIt->second && actorIt->second->m_isVisible;
+}
+
+std::uint64_t ComputeGameplayOverlayStateToken(CGameMode& mode, int cursorActNum, u32 mouseAnimStartTick, int clientWidth, int clientHeight)
+{
+    std::uint64_t hash = 1469598103934665603ull;
+    HashTokenValue(&hash, static_cast<std::uint64_t>(clientWidth));
+    HashTokenValue(&hash, static_cast<std::uint64_t>(clientHeight));
+    HashTokenValue(&hash, static_cast<std::uint64_t>(cursorActNum));
+    HashTokenValue(&hash, static_cast<std::uint64_t>(GetModeCursorVisualFrame(cursorActNum, mouseAnimStartTick)));
+
+    POINT cursorPos{};
+    if (g_hMainWnd && GetCursorPos(&cursorPos) && ScreenToClient(g_hMainWnd, &cursorPos)) {
+        HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(cursorPos.x)));
+        HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(cursorPos.y)));
+    }
+
+    if (mode.m_world && mode.m_view && mode.m_world->m_player) {
+        int labelX = 0;
+        int labelY = 0;
+        if (mode.m_world->GetPlayerScreenLabel(mode.m_view->GetViewMatrix(), mode.m_view->GetCameraLongitude(), &labelX, &labelY)) {
+            HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(labelX)));
+            HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(labelY)));
+        }
+
+        const CPlayer* player = mode.m_world->m_player;
+        HashTokenValue(&hash, static_cast<std::uint64_t>(player->m_gid));
+        HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_Hp)));
+        HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_MaxHp)));
+        HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_Sp)));
+        HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_MaxSp)));
+
+        CGameActor* hoveredActor = nullptr;
+        int hoveredLabelX = 0;
+        int hoveredLabelY = 0;
+        if (mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
+            mode.m_view->GetCameraLongitude(),
+            mode.m_oldMouseX,
+            mode.m_oldMouseY,
+            &hoveredActor,
+            &hoveredLabelX,
+            &hoveredLabelY)
+            && hoveredActor
+            && hoveredActor->m_gid != mode.m_lastLockOnMonGid) {
+            HashTokenValue(&hash, static_cast<std::uint64_t>(hoveredActor->m_gid));
+            HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hoveredLabelX)));
+            HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hoveredLabelY)));
+            HashTokenString(&hash, ResolveHoveredActorName(mode, hoveredActor));
+        }
+    }
+
+    HashTokenValue(&hash, static_cast<std::uint64_t>(mode.m_lastLockOnMonGid));
+    return hash;
+}
+
 bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStartTick)
 {
     if (!g_hMainWnd) {
@@ -219,6 +303,8 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
     static void* s_overlayComposeBits = nullptr;
     static int s_overlayComposeWidth = 0;
     static int s_overlayComposeHeight = 0;
+    static std::uint64_t s_overlayStateToken = 0ull;
+    static bool s_overlayTextureValid = false;
     const bool composeReady = EnsureOverlayComposeSurface(windowDc, clientWidth, clientHeight,
         &s_overlayComposeDc, &s_overlayComposeBitmap, &s_overlayComposeBits, &s_overlayComposeWidth, &s_overlayComposeHeight);
     ReleaseDC(g_hMainWnd, windowDc);
@@ -252,15 +338,36 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         }
         s_overlayTextureWidth = clientWidth;
         s_overlayTextureHeight = clientHeight;
+        s_overlayTextureValid = false;
+        s_overlayStateToken = 0ull;
     }
 
-    s_overlayTexture->Update(0,
-        0,
-        clientWidth,
-        clientHeight,
-        static_cast<unsigned int*>(s_overlayComposeBits),
-        true,
-        clientWidth * static_cast<int>(sizeof(unsigned int)));
+    const bool overlayIsAnimated = HasAnimatedLockedTargetOverlay(mode) || HasQueuedMsgEffects();
+    const bool uiDirty = g_windowMgr.HasDirtyVisualState();
+    const std::uint64_t overlayStateToken = ComputeGameplayOverlayStateToken(mode, cursorActNum, mouseAnimStartTick, clientWidth, clientHeight);
+    const bool needOverlayRefresh = !s_overlayTextureValid || overlayIsAnimated || uiDirty || overlayStateToken != s_overlayStateToken;
+
+    if (needOverlayRefresh) {
+        ClearOverlayComposeBits(s_overlayComposeBits, clientWidth, clientHeight);
+        DrawGameplayOverlayToHdc(mode, s_overlayComposeDc);
+
+        HDC previousSharedDc = UIWindow::GetSharedDrawDC();
+        UIWindow::SetSharedDrawDC(s_overlayComposeDc);
+        g_windowMgr.OnDraw();
+        UIWindow::SetSharedDrawDC(previousSharedDc);
+        DrawModeCursorToHdc(s_overlayComposeDc, cursorActNum, mouseAnimStartTick);
+
+        ConvertOverlayComposeBitsToAlpha(s_overlayComposeBits, clientWidth, clientHeight);
+        s_overlayTexture->Update(0,
+            0,
+            clientWidth,
+            clientHeight,
+            static_cast<unsigned int*>(s_overlayComposeBits),
+            true,
+            clientWidth * static_cast<int>(sizeof(unsigned int)));
+        s_overlayTextureValid = true;
+        s_overlayStateToken = overlayStateToken;
+    }
 
     RPFace* face = g_renderer.BorrowNullRP();
     if (!face) {

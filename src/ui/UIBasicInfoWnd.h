@@ -14,6 +14,7 @@ public:
 
     void SetShow(int show) override;
     void Move(int x, int y) override;
+    bool IsUpdateNeed() override;
     int SendMsg(UIWindow* sender, int msg, int wparam, int lparam, int extra) override;
     void OnCreate(int x, int y) override;
     void OnDraw() override;
@@ -57,6 +58,7 @@ private:
     void LayoutChildren();
     void SetMiniMode(bool miniMode);
     DisplayData BuildDisplayData() const;
+    unsigned long long BuildDisplayStateToken() const;
     void DrawCachedBitmap(HDC hdc, HBITMAP bitmap, int x, int y) const;
     void DrawBar(HDC hdc, int x, int y, int percent, bool redBar) const;
     void DrawExpBar(HDC hdc, int x, int y, int percent) const;
@@ -77,4 +79,6 @@ private:
     HBITMAP m_blueLeft;
     HBITMAP m_blueMid;
     HBITMAP m_blueRight;
+    unsigned long long m_lastDrawStateToken;
+    bool m_hasDrawStateToken;
 };

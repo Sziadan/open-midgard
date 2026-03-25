@@ -4,3 +4,4 @@
 
 void DrawQueuedMsgEffects(HDC hdc);
 void ClearQueuedMsgEffects();
+bool HasQueuedMsgEffects();

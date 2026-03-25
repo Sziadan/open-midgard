@@ -209,12 +209,37 @@ UIWindow::~UIWindow() {
     m_children.clear();
 }
 
-void UIWindow::Invalidate() {}
-void UIWindow::InvalidateWallPaper() {}
-void UIWindow::Resize(int w, int h) { m_w = w; m_h = h; }
+void UIWindow::Invalidate()
+{
+    m_isDirty = 1;
+    if (m_parent) {
+        m_parent->Invalidate();
+    }
+}
+
+void UIWindow::InvalidateWallPaper()
+{
+    Invalidate();
+}
+
+void UIWindow::Resize(int w, int h)
+{
+    if (m_w != w || m_h != h) {
+        m_w = w;
+        m_h = h;
+        Invalidate();
+    }
+}
 bool UIWindow::IsFrameWnd() { return false; }
 bool UIWindow::IsUpdateNeed() { return m_isDirty != 0; }
-void UIWindow::Move(int x, int y) { m_x = x; m_y = y; }
+void UIWindow::Move(int x, int y)
+{
+    if (m_x != x || m_y != y) {
+        m_x = x;
+        m_y = y;
+        Invalidate();
+    }
+}
 bool UIWindow::CanGetFocus() { return true; }
 bool UIWindow::GetTransBoxInfo(BOXINFO* info) { return false; }
 bool UIWindow::IsTransmitMouseInput() { return false; }
@@ -222,9 +247,22 @@ bool UIWindow::ShouldDoHitTest() { return true; }
 void UIWindow::DragAndDrop(int x, int y, const DRAG_INFO* const info) {}
 void UIWindow::StoreInfo() {}
 void UIWindow::SaveOriginalPos() {}
-void UIWindow::MoveDelta(int dx, int dy) { m_x += dx; m_y += dy; }
+void UIWindow::MoveDelta(int dx, int dy)
+{
+    if (dx != 0 || dy != 0) {
+        m_x += dx;
+        m_y += dy;
+        Invalidate();
+    }
+}
 u32  UIWindow::GetColor() { return 0xFFFFFFFF; }
-void UIWindow::SetShow(int show) { m_show = show; }
+void UIWindow::SetShow(int show)
+{
+    if (m_show != show) {
+        m_show = show;
+        Invalidate();
+    }
+}
 
 void UIWindow::OnCreate(int x, int y) {}
 void UIWindow::OnDestroy() {}
@@ -409,7 +447,11 @@ void UIBitmapButton::OnDraw()
 
 void UIBitmapButton::OnLBtnDown(int x, int y)
 {
-    m_state = IsPointInsideWindow(this, x, y) ? 1 : 0;
+    const int nextState = IsPointInsideWindow(this, x, y) ? 1 : 0;
+    if (m_state != nextState) {
+        m_state = nextState;
+        Invalidate();
+    }
 }
 
 void UIBitmapButton::OnMouseMove(int x, int y)
@@ -418,11 +460,16 @@ void UIBitmapButton::OnMouseMove(int x, int y)
     if (m_state == 1) {
         if (!inside) {
             m_state = 0;
+            Invalidate();
         }
         return;
     }
 
-    m_state = inside ? 2 : 0;
+    const int nextState = inside ? 2 : 0;
+    if (m_state != nextState) {
+        m_state = nextState;
+        Invalidate();
+    }
 }
 
 void UIBitmapButton::OnMouseHover(int x, int y)
@@ -431,7 +478,11 @@ void UIBitmapButton::OnMouseHover(int x, int y)
         return;
     }
 
-    m_state = IsPointInsideWindow(this, x, y) ? 2 : 0;
+    const int nextState = IsPointInsideWindow(this, x, y) ? 2 : 0;
+    if (m_state != nextState) {
+        m_state = nextState;
+        Invalidate();
+    }
 }
 
 void UIBitmapButton::OnLBtnUp(int x, int y)
@@ -439,11 +490,16 @@ void UIBitmapButton::OnLBtnUp(int x, int y)
     const bool inside = IsPointInsideWindow(this, x, y);
     if (m_state == 1 && inside) {
         m_state = 2;
+        Invalidate();
         if (m_parent) {
             m_parent->SendMsg(this, 6, m_id, 0, 0);
         }
     } else {
-        m_state = inside ? 2 : 0;
+        const int nextState = inside ? 2 : 0;
+        if (m_state != nextState) {
+            m_state = nextState;
+            Invalidate();
+        }
     }
 }
 
@@ -470,10 +526,15 @@ void UIEditCtrl::SetFrameColor(int r, int g, int b)
 
 void UIEditCtrl::SetText(const char* text)
 {
-    m_text = text ? text : "";
+    const std::string nextText = text ? text : "";
+    if (m_text == nextText) {
+        return;
+    }
+    m_text = nextText;
     if (m_maxchar > 0 && static_cast<int>(m_text.size()) > m_maxchar) {
         m_text.resize(static_cast<size_t>(m_maxchar));
     }
+    Invalidate();
 }
 
 const char* UIEditCtrl::GetText() const
@@ -484,11 +545,15 @@ const char* UIEditCtrl::GetText() const
 void UIEditCtrl::OnLBtnDown(int x, int y)
 {
     (void)x; (void)y;
-    m_hasFocus = true;
+    if (!m_hasFocus) {
+        m_hasFocus = true;
+        Invalidate();
+    }
 }
 
 void UIEditCtrl::OnChar(char c)
 {
+    const std::string before = m_text;
     if (c == '\b') {
         if (!m_text.empty()) {
             m_text.pop_back();
@@ -497,6 +562,9 @@ void UIEditCtrl::OnChar(char c)
         if (m_maxchar <= 0 || static_cast<int>(m_text.size()) < m_maxchar) {
             m_text += c;
         }
+    }
+    if (m_text != before) {
+        Invalidate();
     }
 }
 
@@ -591,7 +659,11 @@ void UICheckBox::SetBitmap(const char* onBitmap, const char* offBitmap)
 
 void UICheckBox::SetCheck(int checked)
 {
-    m_isChecked = checked != 0;
+    const int nextChecked = checked != 0;
+    if (m_isChecked != nextChecked) {
+        m_isChecked = nextChecked;
+        Invalidate();
+    }
 }
 
 void UICheckBox::OnDraw()
@@ -628,6 +700,7 @@ void UICheckBox::OnLBtnUp(int x, int y)
 {
     (void)x; (void)y;
     m_isChecked = !m_isChecked;
+    Invalidate();
     if (m_parent) {
         m_parent->SendMsg(this, 6, m_id, m_isChecked, 0);
     }

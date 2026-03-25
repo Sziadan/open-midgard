@@ -690,3 +690,8 @@ void ClearQueuedMsgEffects()
 {
     g_queuedMsgEffects.clear();
 }
+
+bool HasQueuedMsgEffects()
+{
+    return !g_queuedMsgEffects.empty();
+}

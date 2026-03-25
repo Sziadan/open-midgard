@@ -61,6 +61,7 @@ public:
     void Reset();
     void OnProcess();
     void OnDraw();
+    bool HasDirtyVisualState() const;
     void RenderWallPaper();
     void DrawWallpaperToDC(HDC targetDC, int width, int height);
     void SetWallpaper(CBitmapRes* bitmap);
