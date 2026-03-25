@@ -521,11 +521,11 @@ void UIOptionWnd::ApplyAudioSettings() const
 void UIOptionWnd::LayoutControls()
 {
     if (m_bgmOnCheckBox) {
-        m_bgmOnCheckBox->Move(m_x + m_w - 43, m_y + 22);
+        m_bgmOnCheckBox->Move(m_x + m_w - 31, m_y + 20);
         m_bgmOnCheckBox->SetShow(m_collapsed ? 0 : 1);
     }
     if (m_soundOnCheckBox) {
-        m_soundOnCheckBox->Move(m_x + m_w - 43, m_y + 41);
+        m_soundOnCheckBox->Move(m_x + m_w - 31, m_y + 39);
         m_soundOnCheckBox->SetShow(m_collapsed ? 0 : 1);
     }
     if (m_noCtrlCheckBox) {
@@ -650,13 +650,13 @@ RECT UIOptionWnd::GetRestartButtonRect() const
 
 RECT UIOptionWnd::GetBgmSliderRect() const
 {
-    RECT rc = { m_x + 71, m_y + 21, m_x + m_w - 44, m_y + 34 };
+    RECT rc = { m_x + 71, m_y + 21, m_x + m_w - 58, m_y + 34 };
     return rc;
 }
 
 RECT UIOptionWnd::GetSoundSliderRect() const
 {
-    RECT rc = { m_x + 71, m_y + 40, m_x + m_w - 44, m_y + 53 };
+    RECT rc = { m_x + 71, m_y + 40, m_x + m_w - 58, m_y + 53 };
     return rc;
 }
 
@@ -684,9 +684,9 @@ void UIOptionWnd::DrawSlider(HDC hdc, const RECT& sliderRect, int value, const c
 
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(0, 0, 0));
-    char text[32] = {};
-    std::snprintf(text, sizeof(text), "%s %d", label, value);
-    TextOutA(hdc, sliderRect.right + 4, sliderRect.top - 1, text, static_cast<int>(std::strlen(text)));
+    const int labelBaseX = static_cast<int>(sliderRect.left) - 48;
+    const int labelX = (std::max)(m_x + 18, labelBaseX);
+    TextOutA(hdc, labelX, sliderRect.top - 1, label, static_cast<int>(std::strlen(label)));
 }
 
 void UIOptionWnd::DrawHeaderButton(HDC hdc, const RECT& rect, const char* text) const
@@ -833,7 +833,7 @@ void UIOptionWnd::OnDraw()
 
     if (!m_collapsed) {
         DrawSlider(hdc, GetBgmSliderRect(), m_bgmVolume, "BGM");
-        DrawSlider(hdc, GetSoundSliderRect(), m_soundVolume, "S");
+        DrawSlider(hdc, GetSoundSliderRect(), m_soundVolume, "Sound");
 
         const RECT rendererRect = GetRendererRect();
         FillRectColor(hdc, rendererRect, RGB(244, 239, 228));

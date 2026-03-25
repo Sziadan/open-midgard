@@ -138,29 +138,42 @@ bool CDllMgr::LoadAll() {
     g_dllExports.GrannyGetWorldPoseComposite4x4Array = (P_GrannyGetWorldPoseComposite4x4Array)GetProc(GR, "GrannyGetWorldPoseComposite4x4Array");
 
     const char* MSS = "Mss32.dll";
-    g_dllExports.AIL_startup = (P_AIL_startup)GetProc(MSS, "_AIL_startup@0");
-    g_dllExports.AIL_open_digital_driver = (P_AIL_open_digital_driver)GetProc(MSS, "_AIL_open_digital_driver@44");
-    g_dllExports.AIL_allocate_sample_handle = (P_AIL_allocate_sample_handle)GetProc(MSS, "_AIL_allocate_sample_handle@4");
-    g_dllExports.AIL_init_sample = (P_AIL_init_sample)GetProc(MSS, "_AIL_init_sample@4");
-    g_dllExports.AIL_set_sample_file = (P_AIL_set_sample_file)GetProc(MSS, "_AIL_set_sample_file@12");
-    g_dllExports.AIL_set_sample_volume = (P_AIL_set_sample_volume)GetProc(MSS, "_AIL_set_sample_volume@8");
-    if (!g_dllExports.AIL_set_sample_volume) g_dllExports.AIL_set_sample_volume = (P_AIL_set_sample_volume)GetProc(MSS, "AIL_set_sample_volume");
-    g_dllExports.AIL_start_sample = (P_AIL_start_sample)GetProc(MSS, "_AIL_start_sample@4");
-    g_dllExports.AIL_stop_sample = (P_AIL_stop_sample)GetProc(MSS, "_AIL_stop_sample@4");
-    g_dllExports.AIL_release_sample_handle = (P_AIL_release_sample_handle)GetProc(MSS, "_AIL_release_sample_handle@4");
-    g_dllExports.AIL_pause_stream = (P_AIL_pause_stream)GetProc(MSS, "_AIL_pause_stream@8");
-    if (!g_dllExports.AIL_pause_stream) g_dllExports.AIL_pause_stream = (P_AIL_pause_stream)GetProc(MSS, "AIL_pause_stream");
-    g_dllExports.AIL_open_stream = (P_AIL_open_stream)GetProc(MSS, "_AIL_open_stream@12");
-    if (!g_dllExports.AIL_open_stream) g_dllExports.AIL_open_stream = (P_AIL_open_stream)GetProc(MSS, "AIL_open_stream");
-    g_dllExports.AIL_close_stream = (P_AIL_close_stream)GetProc(MSS, "_AIL_close_stream@4");
-    if (!g_dllExports.AIL_close_stream) g_dllExports.AIL_close_stream = (P_AIL_close_stream)GetProc(MSS, "AIL_close_stream");
-    g_dllExports.AIL_set_stream_volume = (P_AIL_set_stream_volume)GetProc(MSS, "_AIL_set_stream_volume@8");
-    if (!g_dllExports.AIL_set_stream_volume) g_dllExports.AIL_set_stream_volume = (P_AIL_set_stream_volume)GetProc(MSS, "AIL_set_stream_volume");
-    g_dllExports.AIL_set_stream_loop_count = (P_AIL_set_stream_loop_count)GetProc(MSS, "_AIL_set_stream_loop_count@8");
-    if (!g_dllExports.AIL_set_stream_loop_count) g_dllExports.AIL_set_stream_loop_count = (P_AIL_set_stream_loop_count)GetProc(MSS, "AIL_set_stream_loop_count");
-    g_dllExports.AIL_stream_volume = (P_AIL_stream_volume)GetProc(MSS, "_AIL_stream_volume@4");
-    if (!g_dllExports.AIL_stream_volume) g_dllExports.AIL_stream_volume = (P_AIL_stream_volume)GetProc(MSS, "AIL_stream_volume");
-    g_dllExports.AIL_shutdown = (P_AIL_shutdown)GetProc(MSS, "_AIL_shutdown@0");
+    auto getMilesProc = [&](const char* decorated, const char* undecorated) -> void* {
+        void* proc = nullptr;
+        if (decorated && *decorated) {
+            proc = GetProc(MSS, decorated);
+        }
+        if (!proc && undecorated && *undecorated) {
+            proc = GetProc(MSS, undecorated);
+        }
+        return proc;
+    };
+
+    g_dllExports.AIL_startup = (P_AIL_startup)getMilesProc("_AIL_startup@0", "AIL_startup");
+    g_dllExports.AIL_shutdown = (P_AIL_shutdown)getMilesProc("_AIL_shutdown@0", "AIL_shutdown");
+    g_dllExports.AIL_set_redist_directory = (P_AIL_set_redist_directory)getMilesProc("_AIL_set_redist_directory@4", "AIL_set_redist_directory");
+    g_dllExports.AIL_set_preference = (P_AIL_set_preference)getMilesProc("_AIL_set_preference@8", "AIL_set_preference");
+    g_dllExports.AIL_open_digital_driver = (P_AIL_open_digital_driver)getMilesProc("_AIL_open_digital_driver@16", "AIL_open_digital_driver");
+    if (!g_dllExports.AIL_open_digital_driver) {
+        g_dllExports.AIL_open_digital_driver = (P_AIL_open_digital_driver)getMilesProc("_AIL_open_digital_driver@44", "AIL_open_digital_driver");
+    }
+    g_dllExports.AIL_close_digital_driver = (P_AIL_close_digital_driver)getMilesProc("_AIL_close_digital_driver@4", "AIL_close_digital_driver");
+    g_dllExports.AIL_allocate_sample_handle = (P_AIL_allocate_sample_handle)getMilesProc("_AIL_allocate_sample_handle@4", "AIL_allocate_sample_handle");
+    g_dllExports.AIL_release_sample_handle = (P_AIL_release_sample_handle)getMilesProc("_AIL_release_sample_handle@4", "AIL_release_sample_handle");
+    g_dllExports.AIL_init_sample = (P_AIL_init_sample)getMilesProc("_AIL_init_sample@4", "AIL_init_sample");
+    g_dllExports.AIL_set_sample_file = (P_AIL_set_sample_file)getMilesProc("_AIL_set_sample_file@12", "AIL_set_sample_file");
+    g_dllExports.AIL_set_sample_volume = (P_AIL_set_sample_volume)getMilesProc("_AIL_set_sample_volume@8", "AIL_set_sample_volume");
+    g_dllExports.AIL_start_sample = (P_AIL_start_sample)getMilesProc("_AIL_start_sample@4", "AIL_start_sample");
+    g_dllExports.AIL_stop_sample = (P_AIL_stop_sample)getMilesProc("_AIL_stop_sample@4", "AIL_stop_sample");
+    g_dllExports.AIL_sample_status = (P_AIL_sample_status)getMilesProc("_AIL_sample_status@4", "AIL_sample_status");
+    g_dllExports.AIL_end_sample = (P_AIL_end_sample)getMilesProc("_AIL_end_sample@4", "AIL_end_sample");
+    g_dllExports.AIL_pause_stream = (P_AIL_pause_stream)getMilesProc("_AIL_pause_stream@8", "AIL_pause_stream");
+    g_dllExports.AIL_open_stream = (P_AIL_open_stream)getMilesProc("_AIL_open_stream@12", "AIL_open_stream");
+    g_dllExports.AIL_close_stream = (P_AIL_close_stream)getMilesProc("_AIL_close_stream@4", "AIL_close_stream");
+    g_dllExports.AIL_set_stream_volume = (P_AIL_set_stream_volume)getMilesProc("_AIL_set_stream_volume@8", "AIL_set_stream_volume");
+    g_dllExports.AIL_set_stream_loop_count = (P_AIL_set_stream_loop_count)getMilesProc("_AIL_set_stream_loop_count@8", "AIL_set_stream_loop_count");
+    g_dllExports.AIL_start_stream = (P_AIL_start_stream)getMilesProc("_AIL_start_stream@4", "AIL_start_stream");
+    g_dllExports.AIL_stream_volume = (P_AIL_stream_volume)getMilesProc("_AIL_stream_volume@4", "AIL_stream_volume");
 
     const char* BNK = "binkw32.dll";
     g_dllExports.BinkOpen = (P_BinkOpen)GetProc(BNK, "_BinkOpen@8");
