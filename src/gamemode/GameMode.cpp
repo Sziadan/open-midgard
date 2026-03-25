@@ -188,7 +188,13 @@ bool DrawD3D11OverlayFrame(CGameMode& mode, int cursorActNum, u32 mouseAnimStart
         return false;
     }
 
-    BitBlt(s_overlayComposeDc, 0, 0, clientWidth, clientHeight, windowDc, 0, 0, SRCCOPY);
+    HDC sceneDc = nullptr;
+    if (!GetRenderDevice().AcquireBackBufferDC(&sceneDc) || !sceneDc) {
+        ReleaseDC(g_hMainWnd, windowDc);
+        return false;
+    }
+
+    BitBlt(s_overlayComposeDc, 0, 0, clientWidth, clientHeight, sceneDc, 0, 0, SRCCOPY);
     DrawPlayerVitalsOverlay(mode, s_overlayComposeDc);
     DrawLockedTargetArrow(mode, s_overlayComposeDc);
     DrawLockedTargetName(mode, s_overlayComposeDc);
@@ -200,6 +206,7 @@ bool DrawD3D11OverlayFrame(CGameMode& mode, int cursorActNum, u32 mouseAnimStart
     g_windowMgr.OnDraw();
     DrawModeCursorToHdc(s_overlayComposeDc, cursorActNum, mouseAnimStartTick);
     UIWindow::SetSharedDrawDC(previousSharedDc);
+    GetRenderDevice().ReleaseBackBufferDC(sceneDc);
 
     BitBlt(windowDc, 0, 0, clientWidth, clientHeight, s_overlayComposeDc, 0, 0, SRCCOPY);
     ReleaseDC(g_hMainWnd, windowDc);

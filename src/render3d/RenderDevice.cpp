@@ -661,13 +661,15 @@ public:
         : m_hwnd(nullptr), m_renderWidth(0), m_renderHeight(0),
           m_swapChain(nullptr), m_device(nullptr), m_context(nullptr),
           m_renderTargetView(nullptr), m_depthStencilTexture(nullptr), m_depthStencilView(nullptr),
+          m_captureTexture(nullptr),
           m_vertexShaderTl(nullptr), m_vertexShaderLm(nullptr), m_pixelShader(nullptr),
           m_inputLayoutTl(nullptr), m_inputLayoutLm(nullptr), m_constantBuffer(nullptr),
           m_vertexBuffer(nullptr), m_vertexBufferSize(0), m_indexBuffer(nullptr), m_indexBufferSize(0),
           m_samplerState(nullptr), m_alphaRef(207), m_alphaTestEnable(TRUE),
           m_alphaBlendEnable(FALSE), m_depthEnable(TRUE), m_depthWriteEnable(TRUE),
           m_cullMode(D3DCULL_NONE), m_colorKeyEnable(TRUE), m_srcBlend(D3DBLEND_SRCALPHA),
-          m_destBlend(D3DBLEND_INVSRCALPHA)
+          m_destBlend(D3DBLEND_INVSRCALPHA),
+          m_captureDc(nullptr), m_captureBitmap(nullptr), m_captureBits(nullptr), m_captureWidth(0), m_captureHeight(0)
     {
         ResetTextureStageStates();
         m_boundTextures[0] = nullptr;
@@ -764,6 +766,7 @@ public:
     void Shutdown() override
     {
         ReleaseCachedStates();
+        ReleaseCaptureResources();
         SafeRelease(m_samplerState);
         SafeRelease(m_indexBuffer);
         m_indexBufferSize = 0;
@@ -840,23 +843,25 @@ public:
 
     int Present(bool vertSync) override
     {
-        return m_swapChain ? static_cast<int>(m_swapChain->Present(vertSync ? 1 : 0, 0)) : -1;
+        if (!m_swapChain) {
+            return -1;
+        }
+        CaptureRenderTargetSnapshot();
+        return static_cast<int>(m_swapChain->Present(vertSync ? 1 : 0, 0));
     }
 
     bool AcquireBackBufferDC(HDC* outDc) override
     {
-        if (!outDc || !m_hwnd) {
+        if (!outDc) {
             return false;
         }
-        *outDc = GetDC(m_hwnd);
+        *outDc = m_captureDc;
         return *outDc != nullptr;
     }
 
     void ReleaseBackBufferDC(HDC dc) override
     {
-        if (m_hwnd && dc) {
-            ReleaseDC(m_hwnd, dc);
-        }
+        (void)dc;
     }
 
     bool BeginScene() override
@@ -1483,6 +1488,7 @@ private:
         if (!m_swapChain || m_renderWidth <= 0 || m_renderHeight <= 0) {
             return;
         }
+        ReleaseCaptureResources();
         SafeRelease(m_depthStencilView);
         SafeRelease(m_depthStencilTexture);
         SafeRelease(m_renderTargetView);
@@ -1498,6 +1504,114 @@ private:
         RefreshRenderTarget();
     }
 
+    void ReleaseCaptureResources()
+    {
+        SafeRelease(m_captureTexture);
+        if (m_captureBitmap) {
+            DeleteObject(m_captureBitmap);
+            m_captureBitmap = nullptr;
+        }
+        if (m_captureDc) {
+            DeleteDC(m_captureDc);
+            m_captureDc = nullptr;
+        }
+        m_captureBits = nullptr;
+        m_captureWidth = 0;
+        m_captureHeight = 0;
+    }
+
+    bool EnsureCaptureResources()
+    {
+        if (!m_device || m_renderWidth <= 0 || m_renderHeight <= 0) {
+            return false;
+        }
+
+        const bool sizeMatches = m_captureTexture && m_captureDc && m_captureBitmap
+            && m_captureWidth == m_renderWidth && m_captureHeight == m_renderHeight;
+        if (sizeMatches) {
+            return true;
+        }
+
+        ReleaseCaptureResources();
+
+        D3D11_TEXTURE2D_DESC desc{};
+        desc.Width = static_cast<UINT>(m_renderWidth);
+        desc.Height = static_cast<UINT>(m_renderHeight);
+        desc.MipLevels = 1;
+        desc.ArraySize = 1;
+        desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        desc.SampleDesc.Count = 1;
+        desc.Usage = D3D11_USAGE_STAGING;
+        desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        HRESULT hr = m_device->CreateTexture2D(&desc, nullptr, &m_captureTexture);
+        if (FAILED(hr) || !m_captureTexture) {
+            ReleaseCaptureResources();
+            return false;
+        }
+
+        HDC screenDc = GetDC(nullptr);
+        if (!screenDc) {
+            ReleaseCaptureResources();
+            return false;
+        }
+
+        m_captureDc = CreateCompatibleDC(screenDc);
+        ReleaseDC(nullptr, screenDc);
+        if (!m_captureDc) {
+            ReleaseCaptureResources();
+            return false;
+        }
+
+        BITMAPINFO bmi{};
+        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth = m_renderWidth;
+        bmi.bmiHeader.biHeight = -m_renderHeight;
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biCompression = BI_RGB;
+        m_captureBitmap = CreateDIBSection(m_captureDc, &bmi, DIB_RGB_COLORS, &m_captureBits, nullptr, 0);
+        if (!m_captureBitmap || !m_captureBits) {
+            ReleaseCaptureResources();
+            return false;
+        }
+
+        SelectObject(m_captureDc, m_captureBitmap);
+        m_captureWidth = m_renderWidth;
+        m_captureHeight = m_renderHeight;
+        return true;
+    }
+
+    void CaptureRenderTargetSnapshot()
+    {
+        if (!m_context || !m_swapChain || !EnsureCaptureResources()) {
+            return;
+        }
+
+        ID3D11Texture2D* backBuffer = nullptr;
+        HRESULT hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+        if (FAILED(hr) || !backBuffer) {
+            SafeRelease(backBuffer);
+            return;
+        }
+
+        m_context->CopyResource(m_captureTexture, backBuffer);
+        SafeRelease(backBuffer);
+
+        D3D11_MAPPED_SUBRESOURCE mapped{};
+        hr = m_context->Map(m_captureTexture, 0, D3D11_MAP_READ, 0, &mapped);
+        if (FAILED(hr) || !mapped.pData || !m_captureBits) {
+            return;
+        }
+
+        const size_t dstPitch = static_cast<size_t>(m_captureWidth) * sizeof(unsigned int);
+        for (int row = 0; row < m_captureHeight; ++row) {
+            const unsigned char* srcRow = static_cast<const unsigned char*>(mapped.pData) + static_cast<size_t>(row) * static_cast<size_t>(mapped.RowPitch);
+            unsigned char* dstRow = static_cast<unsigned char*>(m_captureBits) + static_cast<size_t>(row) * dstPitch;
+            std::memcpy(dstRow, srcRow, dstPitch);
+        }
+        m_context->Unmap(m_captureTexture, 0);
+    }
+
     HWND m_hwnd;
     int m_renderWidth;
     int m_renderHeight;
@@ -1507,6 +1621,7 @@ private:
     ID3D11RenderTargetView* m_renderTargetView;
     ID3D11Texture2D* m_depthStencilTexture;
     ID3D11DepthStencilView* m_depthStencilView;
+    ID3D11Texture2D* m_captureTexture;
     ID3D11VertexShader* m_vertexShaderTl;
     ID3D11VertexShader* m_vertexShaderLm;
     ID3D11PixelShader* m_pixelShader;
@@ -1532,6 +1647,11 @@ private:
     std::vector<BlendStateEntry> m_blendStates;
     std::vector<DepthStateEntry> m_depthStates;
     std::vector<RasterizerStateEntry> m_rasterizerStates;
+    HDC m_captureDc;
+    HBITMAP m_captureBitmap;
+    void* m_captureBits;
+    int m_captureWidth;
+    int m_captureHeight;
 };
 
 class RoutedRenderDevice final : public IRenderDevice {
