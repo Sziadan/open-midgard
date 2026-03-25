@@ -429,13 +429,27 @@ void UIWindowMgr::OnDraw() {
         return;
     }
 
+    if (HDC sharedDC = UIWindow::GetSharedDrawDC()) {
+        RECT clientRect{};
+        GetClientRect(g_hMainWnd, &clientRect);
+        for (auto child : m_children) {
+            if (child && child->m_show != 0) {
+                child->OnDraw();
+            }
+        }
+        if (m_itemWnd && m_itemWnd->m_show != 0) {
+            m_itemWnd->DrawHoverOverlay(sharedDC, clientRect);
+        }
+        return;
+    }
+
     const bool hasMenuUi =
         (m_loginWnd && m_loginWnd->m_show != 0) ||
         (m_selectCharWnd && m_selectCharWnd->m_show != 0) ||
         (m_makeCharWnd && m_makeCharWnd->m_show != 0) ||
         (m_loadingWnd && m_loadingWnd->m_show != 0);
 
-    if (!hasMenuUi) {
+    if (!hasMenuUi && GetRenderDevice().GetLegacyDevice() != nullptr) {
         HDC backBufferDC = nullptr;
         if (GetRenderDevice().AcquireBackBufferDC(&backBufferDC) && backBufferDC) {
             RECT clientRect{};

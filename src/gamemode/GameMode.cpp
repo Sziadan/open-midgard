@@ -18,6 +18,7 @@
 #include "res/Sprite.h"
 #include "res/WorldRes.h"
 #include "session/Session.h"
+#include "ui/UIWindow.h"
 #include "ui/UIWindowMgr.h"
 #include "render/DrawUtil.h"
 #include "render/Prim.h"
@@ -102,6 +103,107 @@ void ResetGamePacketTrace(u32 startTick)
 {
     g_packetTraceStartTick = startTick;
     g_packetTraceLoggedIds.clear();
+}
+
+void DrawHoveredActorName(CGameMode& mode, HDC hdc);
+void DrawLockedTargetName(CGameMode& mode, HDC hdc);
+void DrawLockedTargetArrow(CGameMode& mode, HDC hdc);
+void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc);
+
+void ReleaseOverlayComposeSurface(HDC* composeDc, HBITMAP* composeBitmap, int* composeWidth, int* composeHeight)
+{
+    if (composeBitmap && *composeBitmap) {
+        DeleteObject(*composeBitmap);
+        *composeBitmap = nullptr;
+    }
+    if (composeDc && *composeDc) {
+        DeleteDC(*composeDc);
+        *composeDc = nullptr;
+    }
+    if (composeWidth) {
+        *composeWidth = 0;
+    }
+    if (composeHeight) {
+        *composeHeight = 0;
+    }
+}
+
+bool EnsureOverlayComposeSurface(HDC referenceDc, int width, int height,
+    HDC* composeDc, HBITMAP* composeBitmap, int* composeWidth, int* composeHeight)
+{
+    if (!referenceDc || !composeDc || !composeBitmap || !composeWidth || !composeHeight || width <= 0 || height <= 0) {
+        return false;
+    }
+
+    if (*composeDc && *composeBitmap && *composeWidth == width && *composeHeight == height) {
+        return true;
+    }
+
+    ReleaseOverlayComposeSurface(composeDc, composeBitmap, composeWidth, composeHeight);
+
+    *composeDc = CreateCompatibleDC(referenceDc);
+    if (!*composeDc) {
+        return false;
+    }
+
+    *composeBitmap = CreateCompatibleBitmap(referenceDc, width, height);
+    if (!*composeBitmap) {
+        ReleaseOverlayComposeSurface(composeDc, composeBitmap, composeWidth, composeHeight);
+        return false;
+    }
+
+    SelectObject(*composeDc, *composeBitmap);
+    *composeWidth = width;
+    *composeHeight = height;
+    return true;
+}
+
+bool DrawD3D11OverlayFrame(CGameMode& mode, int cursorActNum, u32 mouseAnimStartTick)
+{
+    if (!g_hMainWnd) {
+        return false;
+    }
+
+    HDC windowDc = GetDC(g_hMainWnd);
+    if (!windowDc) {
+        return false;
+    }
+
+    RECT clientRect{};
+    GetClientRect(g_hMainWnd, &clientRect);
+    const int clientWidth = clientRect.right - clientRect.left;
+    const int clientHeight = clientRect.bottom - clientRect.top;
+    if (clientWidth <= 0 || clientHeight <= 0) {
+        ReleaseDC(g_hMainWnd, windowDc);
+        return false;
+    }
+
+    static HDC s_overlayComposeDc = nullptr;
+    static HBITMAP s_overlayComposeBitmap = nullptr;
+    static int s_overlayComposeWidth = 0;
+    static int s_overlayComposeHeight = 0;
+    if (!EnsureOverlayComposeSurface(windowDc, clientWidth, clientHeight,
+        &s_overlayComposeDc, &s_overlayComposeBitmap, &s_overlayComposeWidth, &s_overlayComposeHeight)) {
+        ReleaseDC(g_hMainWnd, windowDc);
+        return false;
+    }
+
+    BitBlt(s_overlayComposeDc, 0, 0, clientWidth, clientHeight, windowDc, 0, 0, SRCCOPY);
+    DrawPlayerVitalsOverlay(mode, s_overlayComposeDc);
+    DrawLockedTargetArrow(mode, s_overlayComposeDc);
+    DrawLockedTargetName(mode, s_overlayComposeDc);
+    DrawHoveredActorName(mode, s_overlayComposeDc);
+    DrawQueuedMsgEffects(s_overlayComposeDc);
+
+    HDC previousSharedDc = UIWindow::GetSharedDrawDC();
+    UIWindow::SetSharedDrawDC(s_overlayComposeDc);
+    g_windowMgr.OnDraw();
+    DrawModeCursorToHdc(s_overlayComposeDc, cursorActNum, mouseAnimStartTick);
+    UIWindow::SetSharedDrawDC(previousSharedDc);
+
+    BitBlt(windowDc, 0, 0, clientWidth, clientHeight, s_overlayComposeDc, 0, 0, SRCCOPY);
+    ReleaseDC(g_hMainWnd, windowDc);
+    return true;
 }
 
 bool RequestReturnToCharSelect()
@@ -3700,17 +3802,19 @@ int  CGameMode::OnRun() {
         const DWORD flipStart = GetTickCount();
         g_renderer.Flip(false);
         const DWORD flipEnd = GetTickCount();
-        HDC windowDc = GetDC(g_hMainWnd);
-        if (windowDc) {
-            DrawPlayerVitalsOverlay(*this, windowDc);
-            DrawLockedTargetArrow(*this, windowDc);
-            DrawLockedTargetName(*this, windowDc);
-            DrawHoveredActorName(*this, windowDc);
-            DrawQueuedMsgEffects(windowDc);
-            ReleaseDC(g_hMainWnd, windowDc);
+        if (!DrawD3D11OverlayFrame(*this, m_cursorActNum, m_mouseAnimStartTick)) {
+            HDC windowDc = GetDC(g_hMainWnd);
+            if (windowDc) {
+                DrawPlayerVitalsOverlay(*this, windowDc);
+                DrawLockedTargetArrow(*this, windowDc);
+                DrawLockedTargetName(*this, windowDc);
+                DrawHoveredActorName(*this, windowDc);
+                DrawQueuedMsgEffects(windowDc);
+                ReleaseDC(g_hMainWnd, windowDc);
+            }
+            g_windowMgr.OnDraw();
+            DrawModeCursor(m_cursorActNum, m_mouseAnimStartTick);
         }
-        g_windowMgr.OnDraw();
-        DrawModeCursor(m_cursorActNum, m_mouseAnimStartTick);
 
         g_framePerfStats.frames += 1;
         g_framePerfStats.updateMs += static_cast<u64>(updateEnd - updateStart);
