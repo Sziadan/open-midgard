@@ -1,0 +1,24 @@
+.?AVImage@Gdiplus@@
+[ActLoad] action[%u] motion[%u] spriteCount=%u
+[ActLoad] FAIL: action[%u] motion[%u] spriteCount read failed
+[SprLoad] Calling ConvertPalette m_pal=%p
+[SprLoad] ConvertPalette done
+[SprLoad] FAIL: size<1024 for palette
+[SprLoad] LoadFromBuffer SUCCESS: %d indexed, %d rgba sprites
+[SprLoad] Reading %d indexed sprites...
+[SprLoad] Reading palette (ver>=0x101), size=%d
+Acolyte
+Archer
+data\sprite\cursors.act
+data\sprite\cursors.spr
+data\sprite\interface\cursors.act
+data\sprite\interface\cursors.spr
+GdipCloneImage
+GdipDisposeImage
+GdipGetImageHeight
+GdipGetImageWidth
+image
+Mage
+Merchant
+Novice
+Thief

@@ -1,0 +1,10 @@
+---
+description: "Use when inspecting assets, media files, or binary resources in this workspace. Avoid direct media viewing and analyze those files through byte-level inspection instead."
+---
+
+# Media File Handling
+
+- Never directly view or render media files while analyzing this workspace.
+- When media inspection is required, examine the file bytes, headers, or other binary metadata instead.
+- Use binary-safe inspection methods that do not modify the original asset.
+- If a request cannot be completed without direct visual or audio inspection, stop and ask the user how they want to proceed.

@@ -1,0 +1,7 @@
+Ref/
+HighPriest.exe.h
+HighPriest.exe.utf8.h
+
+.venv/
+.vscode/
+build/

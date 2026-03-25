@@ -1,0 +1,374 @@
+# Ragnarok High Priest 2008 Client Rebuild — TODO
+
+Progress: **33 / 145 modules** have src/ files (most are stubs)
+
+---
+
+## Packet Version Alignment Plan
+
+Goal: align the client to one intentional packet profile instead of the current mixed old/new behavior, while keeping compatibility with `Ref/RunningServer` and preserving the now-improved actor visibility work.
+
+### Phase A — Lock The Target Profile
+- [x] Choose the exact intended packet profile to emulate for client-originating packets.
+- [x] Record the decision in repo notes with the exact `packet_ver`, date window, and source references used.
+- [x] Define the migration boundary explicitly:
+	- [x] client-send packets must match the chosen profile
+	- [x] client receive table must be validated against the server's actual outgoing packet family
+	- [x] mixed-mode packet behavior is no longer acceptable except where explicitly documented
+
+### Phase B — Build A Packet Matrix
+- [x] Inventory every client-originating packet currently emitted by the rebuilt client.
+- [x] Inventory the exact opcode, fixed length, and struct layout currently used for each send packet.
+- [x] Build a comparison table against `Ref/RunningServer/packet_db.txt` for the chosen profile.
+- [x] Split the matrix into three buckets:
+	- [x] already correct
+	- [x] wrong opcode or wrong length
+	- [x] missing / not implemented / ambiguous
+- [ ] Build a second matrix for server-to-client packets actually observed in logs.
+- [ ] Mark which receive packets are governed by compiled eAthena actor-family behavior versus pure packet-db parsing.
+
+### Phase C — Add Versioned Packet Definitions
+- [x] Introduce one central place in the client that declares the intended packet profile.
+- [x] Stop scattering raw packet-version assumptions across `LoginMode`, `GameMode`, and helper send functions.
+- [x] Add named packet definitions for each migrated client-send packet instead of embedding magic numbers and ad hoc struct layouts.
+- [x] Ensure packet structs are checked for exact size on MSVC/Win32.
+- [x] Keep packet serialization explicit so field order and padding are visible and reviewable.
+
+### Phase D — Migrate Handshake / Session Bootstrap First
+- [x] Update zone enter / WantToConnection to the chosen profile.
+- [x] Update any packet-version-sensitive login or map-server bootstrap packets that must match the same profile.
+- [x] Confirm how the server infers packet version from the bootstrap packet family and layout.
+- [x] Verify the server still accepts login, char select, and map entry with the migrated handshake.
+- [x] Capture fresh logs proving what packet family the server now sends back after handshake.
+- [x] Keep server-move reconnect on the same zone-enter packet family as initial map entry.
+
+### Phase E — Migrate Core Gameplay Send Packets
+- [x] Action request
+- [x] Walk / move request
+- [ ] Use skill on target
+- [ ] Use item
+- [x] Name request
+- [x] Chat / broadcast packets that are version-sensitive
+- [ ] Any actor-interaction packets used during normal play (attack, sit/stand, pickup, drop, equip, unequip, NPC interaction)
+- [ ] Any remaining packets used during the current repro scenarios even if they are not yet fully implemented elsewhere
+
+### Phase F — Reconcile The Receive Side
+- [x] Re-validate `src/network/GronPacket.cpp` against the intended compatibility target after send-side migration.
+- [ ] Keep the receive table aligned with what the server actually sends, not with assumptions about what it ought to send.
+- [x] Add any still-missing receive packet sizes that can desync the stream on crowded maps.
+- [ ] For each added receive packet, decide whether it needs:
+	- [ ] full handler
+	- [x] safe ignore handler
+	- [ ] temporary trace-only handler
+- [x] Re-test that no unknown or invalid variable-length receive packets appear during login, map load, idle standing, walking, and crowded scenes.
+
+### Phase G — Remote Player Visibility Validation
+- [ ] Add focused tracing for remote-player bootstrap/hydration using GID-based logs.
+- [ ] Verify which packet first creates each remote player shell.
+- [ ] Verify which packet supplies job/class, sex, head/body style, move state, and visibility state.
+- [ ] Verify standing players are hydrated without requiring a later movement packet.
+- [ ] Verify moving players do not get misclassified as monsters or partial shells.
+- [ ] Reproduce with at least two remote players and repeated out-of-sight / in-sight transitions.
+
+### Phase H — Guardrails And Cleanup
+- [ ] Remove or consolidate temporary packet tracing once the migration is stable.
+- [ ] Document every intentional protocol deviation that remains.
+- [ ] Add assertions or helper checks so future packet edits cannot silently change struct sizes.
+- [ ] Add comments only where the protocol choice would otherwise be easy to break later.
+- [ ] Update repo memory / notes with the final chosen packet profile and known server behavior.
+
+### Phase I — Build / Deploy / Verify Each Step
+- [ ] After each meaningful migration step, build the client.
+- [ ] After each successful build, deploy to `D:\Spel\OldRO\HighPriest.exe`.
+- [ ] Keep one short verification checklist for every step:
+	- [ ] can login
+	- [ ] can reach char select
+	- [ ] can enter map
+	- [ ] can move
+	- [ ] can see monsters
+	- [ ] can see remote players standing still
+	- [ ] can see remote players moving
+- [ ] If a step breaks bootstrap, revert only that step and capture the exact packet mismatch before proceeding.
+
+### Recommended Execution Order
+- [ ] 1. Freeze target packet profile and write the packet matrix.
+- [ ] 2. Introduce central versioned packet definitions.
+- [ ] 3. Migrate handshake/bootstrap packets.
+- [ ] 4. Confirm server acceptance and observe returned actor packet family.
+- [ ] 5. Migrate core gameplay send packets.
+- [ ] 6. Reconcile receive packet sizes/handlers.
+- [ ] 7. Validate remote-player hydration thoroughly.
+- [ ] 8. Remove tracing and document the final state.
+
+---
+
+## Phase 0 — Fix Build
+- [x] Fix `Types.h` / `<windows.h>` include ordering (DWORD redefinition cascade)
+- [x] Rebuild from current workspace path and get clean compilation
+- [x] Verify zlib dependency links correctly
+
+---
+
+## Phase 1 — Core Infrastructure (already partly done)
+
+### Core (`src/core/`)
+- [x] Timer.h / Timer.cpp
+- [x] Hash.h / Hash.cpp
+- [x] GPak.h / GPak.cpp — GRF archive reader
+- [x] File.h / File.cpp — CFile, CMemFile, CMemMapFile, CFileMgr
+- [x] DllMgr.h / DllMgr.cpp
+- [x] Globals.h / Globals.cpp
+- [x] Locale.h / Locale.cpp
+- [x] Xml.h / Xml.cpp
+- [ ] Common.h / Common.cpp
+- [ ] Util.h / Util.cpp
+- [ ] RegMgr.h / RegMgr.cpp — Registry manager
+- [ ] SimpleAssert.h / SimpleAssert.cpp
+- [ ] ExceptionHandler.h / ExceptionHandler.cpp
+
+### Cipher / Encryption (`src/cipher/`)
+- [x] CDec.h / CDec.cpp — DES decryption
+- [ ] Cipher.h / Cipher.cpp
+- [ ] CipherImpl.h / CipherImpl.cpp
+- [ ] md5.h / md5.cpp
+- [ ] Padding.h / Padding.cpp
+
+### Entry Point (`src/main/`)
+- [x] WinMain.h / WinMain.cpp — Window init, registry, main loop
+
+---
+
+## Phase 2 — Rendering
+
+### 2D Rendering (`src/render/`)
+- [x] Renderer.h / Renderer.cpp — Texture management, render pipeline
+- [x] DrawUtil.h / DrawUtil.cpp
+- [x] DC.h / DC.cpp
+- [x] Prim.h / Prim.cpp
+
+### 3D Rendering (`src/render3d/`)
+- [x] Device.h / Device.cpp — DirectDraw / Direct3D init
+- [x] D3dutil.h / D3dutil.cpp
+- [ ] 3dActor.h / 3dActor.cpp — 3D actor rendering
+- [ ] 3dGround.h / 3dGround.cpp — 3D ground/terrain rendering
+- [ ] View.h / View.cpp — Camera / viewport
+- [ ] Skybox.h / Skybox.cpp
+- [ ] mesh.h / mesh.cpp
+- [ ] skin.h / skin.cpp
+- [ ] Model.h / Model.cpp
+- [ ] Picker.h / Picker.cpp — Mouse picking / raycasting
+
+### Resources (`src/res/`)
+- [x] Bitmap.h / Bitmap.cpp
+- [x] ImfRes.h / ImfRes.cpp
+- [x] PaletteRes.h / PaletteRes.cpp
+- [x] Res.h / Res.cpp
+- [x] Sprite.h / Sprite.cpp
+- [x] Texture.h / Texture.cpp
+- [x] Ijl.h / Ijl.cpp
+- [ ] Anim.h / Anim.cpp — Animation data
+- [ ] Action.h / Action.cpp — Action/motion data
+- [ ] Attr.h / Attr.cpp — Ground attributes
+
+### Effects
+- [ ] RagEffect.h / RagEffect.cpp
+- [ ] RagEffect2.h / RagEffect2.cpp
+- [ ] RagEffectPrim.h / RagEffectPrim.cpp
+- [ ] EZeffect.h / EZeffect.cpp
+
+---
+
+## Phase 3 — Networking & Packets
+
+### Network (`src/network/`)
+- [x] Connection.h / Connection.cpp — Winsock, packet queue, send/recv
+- [x] Packet.h
+- [x] PacketQueue.h / PacketQueue.cpp
+- [x] GronPacket.h / GronPacket.cpp — Packet definitions
+- [x] GameModePacket.h / GameModePacket.cpp — Game-mode packet handlers (enter/map, actor lifecycle, chat/system incl. broadcast/party/battlefield, color/category propagation, return-to-login)
+- [ ] EncClient.h / EncClient.cpp — Packet encryption client
+- [ ] CReAssemblyPacket.h / CReAssemblyPacket.cpp
+
+### Security / Packet Encryption
+- [ ] cSecureGamePack.h / cSecureGamePack.cpp
+- [ ] cKeyProtector.h / cKeyProtector.cpp
+- [ ] CSRCryptoR2Client.h / CSRCryptoR2Client.cpp
+- [ ] CSRCryptoR2PacketConfiguration.h / CSRCryptoR2PacketConfiguration.cpp
+- [ ] CSRPacketR2Client.h / CSRPacketR2Client.cpp
+- [ ] CSRPacketR2Var.h / CSRPacketR2Var.cpp
+- [ ] GenUserCode.h / GenUserCode.cpp
+- [ ] FindHack.h / FindHack.cpp
+- [ ] SequenceRandomGenerator.h / SequenceRandomGenerator.cpp
+
+---
+
+## Phase 4 — Lua Scripting VM
+
+> **Option A:** Port all 26 Lua 5.0 source files from Ref/  
+> **Option B:** Link against an external Lua 5.0 library (much simpler)
+
+- [ ] lapi.h / lapi.cpp
+- [ ] lauxlib.h / lauxlib.cpp
+- [ ] lbaselib.h / lbaselib.cpp
+- [ ] lcode.h / lcode.cpp
+- [ ] ldblib.h / ldblib.cpp
+- [ ] ldebug.h / ldebug.cpp
+- [ ] ldo.h / ldo.cpp
+- [ ] ldump.h / ldump.cpp
+- [ ] lfunc.h / lfunc.cpp
+- [ ] lgc.h / lgc.cpp
+- [ ] liolib.h / liolib.cpp
+- [ ] llex.h / llex.cpp
+- [ ] lmathlib.h / lmathlib.cpp
+- [ ] lmem.h / lmem.cpp
+- [ ] loadlib.h / loadlib.cpp
+- [ ] lobject.h / lobject.cpp
+- [ ] lparser.h / lparser.cpp
+- [ ] lstate.h / lstate.cpp
+- [ ] lstring.h / lstring.cpp
+- [ ] lstrlib.h / lstrlib.cpp
+- [ ] ltable.h / ltable.cpp
+- [ ] ltablib.h / ltablib.cpp
+- [ ] ltm.h / ltm.cpp
+- [ ] lundump.h / lundump.cpp
+- [ ] lvm.h / lvm.cpp
+- [ ] lzio.h / lzio.cpp
+- [ ] LuaBridge.h / LuaBridge.cpp — **exists but stub**
+
+---
+
+## Phase 5 — Game World & Actors
+
+### World (`src/world/`)
+- [ ] GameWorld.h / GameWorld.cpp — Spatial world management
+- [ ] Ground.h / Ground.cpp — Ground/map loading
+- [ ] World.h / World.cpp — **exists but stub**
+
+### Actors
+- [ ] GameActor.h / GameActor.cpp — **exists but stub**
+- [ ] GameActor3d.h / GameActor3d.cpp — 3D actor logic
+- [ ] GameActorMsgHandler.h / GameActorMsgHandler.cpp
+- [ ] Player.h / Player.cpp
+- [ ] Pc.h / Pc.cpp — Player character
+- [ ] Npc.h / Npc.cpp
+- [ ] MercenaryAI.h / MercenaryAI.cpp
+- [ ] Granny.h / Granny.cpp — **exists but stub**
+
+### Session
+- [ ] Session.h / Session.cpp — **exists but partial** (XML parsing works)
+- [ ] Session2.h / Session2.cpp
+
+---
+
+## Phase 6 — Game Modes & Login
+
+### Game Modes (`src/gamemode/`)
+- [ ] Mode.h / Mode.cpp — **exists but partial** (loop structure only)
+- [ ] LoginMode.h / LoginMode.cpp — **exists but stub**
+- [ ] GameMode.h / GameMode.cpp — **exists but stub**
+- [x] GameModePacket.h / GameModePacket.cpp
+- [ ] GameMode2.h / GameMode2.cpp
+
+### High Priest Mini-Games
+- [ ] HP_Battle.h / HP_Battle.cpp
+- [ ] HP_BuySell.h / HP_BuySell.cpp
+- [ ] HP_RestTravell.h / HP_RestTravell.cpp
+- [ ] HP_SaveLoad.h / HP_SaveLoad.cpp
+- [ ] HP_Tetris.h / HP_Tetris.cpp
+
+---
+
+## Phase 7 — UI System
+
+### UI Base Classes
+- [ ] UISys.h / UISys.cpp — Core UI system
+- [ ] UIControl.h / UIControl.cpp — Base control class
+- [ ] UIControl2.h / UIControl2.cpp
+- [ ] UIRectInfo.h / UIRectInfo.cpp
+- [ ] Control.h / Control.cpp
+- [ ] UIWindowMgr.h / UIWindowMgr.cpp — **exists but partial** (chat metadata sink + in-memory chat log + preview feed)
+- [ ] UIWindow.h / UIWindow.cpp — **exists but stub**
+
+### UI Windows
+- [ ] UIFrameWnd.h / UIFrameWnd.cpp — **exists but stub**
+- [ ] UIFrameWnd2.h / UIFrameWnd2.cpp
+- [ ] UIFrameWnd3.h / UIFrameWnd3.cpp
+- [ ] UIWaitWnd.h / UIWaitWnd.cpp — **exists but stub**
+- [ ] UIItemWnd.h / UIItemWnd.cpp
+- [ ] UIGuildWnd.h / UIGuildWnd.cpp
+- [ ] UIMessengerWnd.h / UIMessengerWnd.cpp
+- [ ] UIGronMessengerWnd.h / UIGronMessengerWnd.cpp
+- [ ] UIEmotionWnd.h / UIEmotionWnd.cpp
+- [ ] UIEmotionListWnd.h / UIEmotionListWnd.cpp
+- [ ] UIIllustWnd.h / UIIllustWnd.cpp
+- [ ] UIImeWnd.h / UIImeWnd.cpp
+- [ ] UIMetalWorkWnd.h / UIMetalWorkWnd.cpp
+
+---
+
+## Phase 8 — Game Data & Content
+
+### Skills & Items
+- [ ] Skill.h / Skill.cpp — **exists but stub**
+- [ ] SkillInfo.h / SkillInfo.cpp
+- [ ] Item.h / Item.cpp — **exists but stub**
+- [ ] ItemInfo.h / ItemInfo.cpp
+- [ ] GuildInfo.h / GuildInfo.cpp
+- [ ] Emblem.h / Emblem.cpp
+
+### Messages & Strings
+- [ ] MsgStrings.h / MsgStrings.cpp
+- [ ] Insult.h / Insult.cpp — Chat filter
+- [ ] TipOfTheDay.h / TipOfTheDay.cpp
+- [ ] SnapMgr.h / SnapMgr.cpp
+
+---
+
+## Phase 9 — Audio & Input
+
+### Audio (`src/audio/`)
+- [ ] Audio.h / Audio.cpp — **exists but partial**
+- [ ] Video.h / Video.cpp — **exists in src**
+- [ ] Sound.h / Sound.cpp
+- [ ] Wave.h / Wave.cpp
+- [ ] CBink.h / CBink.cpp — Bink video playback
+
+### Input (`src/input/`)
+- [ ] Input.h / Input.cpp — **exists but stub**
+
+---
+
+## Phase 10 — Localization
+
+- [ ] Language.h / Language.cpp
+- [ ] LanguageKeyProcess.h / LanguageKeyProcess.cpp
+- [ ] ftwbrk.h / ftwbrk.cpp — Word-break for Thai/CJK
+- [ ] VietnamLanguage.h / VietnamLanguage.cpp
+- [ ] VniInputMode.h / VniInputMode.cpp
+- [ ] telexInputMode.h / telexInputMode.cpp
+
+---
+
+## Phase 11 — Security (`src/security/`)
+- [ ] Security.h / Security.cpp — **exists but stub**
+- [ ] PathFinder.h / PathFinder.cpp — **exists in src**
+
+---
+
+## Summary
+
+| Phase | Description | Files Done | Files Total | % |
+|-------|-------------|-----------|-------------|---|
+| 0 | Fix Build | 0 | 3 | 0% |
+| 1 | Core Infrastructure | 9 | 22 | 41% |
+| 2 | Rendering | 12 | 26 | 46% |
+| 3 | Networking & Packets | 3 | 12 | 25% |
+| 4 | Lua VM | 0 | 27 | 0% |
+| 5 | World & Actors | 0 | 12 | 0% |
+| 6 | Game Modes & Login | 0 | 9 | 0% |
+| 7 | UI System | 0 | 18 | 0% |
+| 8 | Game Data & Content | 0 | 11 | 0% |
+| 9 | Audio & Input | 0 | 6 | 0% |
+| 10 | Localization | 0 | 6 | 0% |
+| 11 | Security | 0 | 2 | 0% |
+| **Total** | | **~24** | **~154** | **~16%** |
