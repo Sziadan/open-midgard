@@ -1081,6 +1081,11 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
         mode.m_preservedOutOfSightActors.erase(gid);
     }
 
+    bool ShouldPreserveOutOfSightActor(const CGameActor& actor)
+    {
+        return actor.m_isMoving != 0 || actor.m_path.m_cells.size() >= 2;
+    }
+
 void InitializeRuntimeActorDefaults(CGameActor* actor, u32 gid)
 {
     if (!actor) {
@@ -2579,9 +2584,14 @@ void HandleActorVanish(CGameMode& mode, const PacketView& packet)
 
     if (reason == 0) {
         if (CGameActor* actor = FindRuntimeActorForVanish(mode, gid)) {
-            mode.m_preservedOutOfSightActors[gid] = GetTickCount();
-            actor->m_isVisible = 0;
-            DbgLog("[GameMode] hide actor gid=%u for out-of-sight preserve\n", gid);
+            if (ShouldPreserveOutOfSightActor(*actor)) {
+                mode.m_preservedOutOfSightActors[gid] = GetTickCount();
+                actor->m_isVisible = 0;
+                DbgLog("[GameMode] hide actor gid=%u for out-of-sight preserve\n", gid);
+            } else {
+                DbgLog("[GameMode] remove stationary vanish gid=%u reason=0\n", gid);
+                RemoveRuntimeActor(mode, gid);
+            }
         }
     } else if (reason == 1) {
         if (CGameActor* actor = FindRuntimeActorForVanish(mode, gid)) {
