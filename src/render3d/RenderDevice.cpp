@@ -1660,7 +1660,7 @@ class D3D12RenderDevice final : public IRenderDevice {
 public:
     static constexpr UINT kFrameCount = 2;
     static constexpr UINT kSrvSlotCount = 2;
-    static constexpr UINT kSrvHeapCapacity = 4096;
+    static constexpr UINT kSrvHeapCapacity = 65536;
 
     D3D12RenderDevice()
         : m_hwnd(nullptr), m_renderWidth(0), m_renderHeight(0),
@@ -1670,9 +1670,9 @@ public:
           m_fenceEvent(nullptr), m_fenceValue(0), m_frameIndex(0), m_rtvDescriptorSize(0), m_srvDescriptorSize(0), m_srvHeapCursor(0),
           m_rootSignature(nullptr),
           m_vertexShaderTlBlob(nullptr), m_vertexShaderLmBlob(nullptr), m_pixelShaderBlob(nullptr),
-            m_captureReadbackBuffer(nullptr), m_captureDc(nullptr), m_captureBitmap(nullptr), m_captureBits(nullptr),
+                        m_captureReadbackBuffer(nullptr), m_captureDc(nullptr), m_captureBitmap(nullptr), m_captureBits(nullptr),
             m_captureWidth(0), m_captureHeight(0), m_captureRowPitch(0),
-          m_frameCommandsOpen(false)
+                    m_frameCommandsOpen(false), m_loggedSrvHeapExhausted(false)
     {
         ResetModernFixedFunctionState(&m_pipelineState);
         m_boundTextures[0] = nullptr;
@@ -2682,6 +2682,13 @@ private:
             return false;
         }
         if (m_srvHeapCursor + descriptorCount > kSrvHeapCapacity) {
+            if (!m_loggedSrvHeapExhausted) {
+                m_loggedSrvHeapExhausted = true;
+                DbgLog("[Render] D3D12 SRV heap exhausted: cursor=%u need=%u capacity=%u.\n",
+                    static_cast<unsigned int>(m_srvHeapCursor),
+                    static_cast<unsigned int>(descriptorCount),
+                    static_cast<unsigned int>(kSrvHeapCapacity));
+            }
             return false;
         }
         *outBaseIndex = m_srvHeapCursor;
@@ -3175,6 +3182,7 @@ private:
         m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, m_depthStencil ? &dsvHandle : nullptr);
         ApplyViewportAndScissor();
         m_srvHeapCursor = 0;
+        m_loggedSrvHeapExhausted = false;
         ResetUploadPageCursors(m_constantUploadPages);
         ResetUploadPageCursors(m_vertexUploadPages);
         ResetUploadPageCursors(m_indexUploadPages);
@@ -3247,6 +3255,7 @@ private:
     std::vector<PipelineStateEntry> m_pipelineStates;
     std::vector<ID3D12Resource*> m_pendingUploadBuffers;
     bool m_frameCommandsOpen;
+    bool m_loggedSrvHeapExhausted;
 };
 
 class RoutedRenderDevice final : public IRenderDevice {
