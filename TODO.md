@@ -99,7 +99,7 @@ Goal: ship true configurable 3D anti-aliasing for modern backends without affect
 - [x] Implement SMAA blend-weight calculation pass.
 - [x] Implement SMAA neighborhood blending pass.
 - [ ] Ensure the SMAA passes operate only on the 3D scene target and never on the final UI/cursor composite.
-- [ ] Expose SMAA in the option window only on backends where the full pass chain is implemented.
+- [x] Expose SMAA in the option window only on backends where the full pass chain is implemented.
 
 #### Phase C — Port The 3D AA Pipeline To D3D12
 - [x] Add a DX12 scene color target separate from the swapchain back buffer.

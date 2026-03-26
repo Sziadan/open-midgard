@@ -195,7 +195,7 @@ std::vector<AntiAliasingMode> GetSupportedAntiAliasingModesForBackend(RenderBack
     case RenderBackendType::Direct3D11:
     case RenderBackendType::Direct3D12:
     case RenderBackendType::Vulkan:
-        return { AntiAliasingMode::None, AntiAliasingMode::FXAA };
+        return { AntiAliasingMode::None, AntiAliasingMode::FXAA, AntiAliasingMode::SMAA };
 
     default:
         return {};

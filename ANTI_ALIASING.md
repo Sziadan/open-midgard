@@ -7,17 +7,17 @@ This client currently applies 3D anti-aliasing only on the modern renderer backe
 | Backend | Supported modes | Notes |
 | --- | --- | --- |
 | Direct3D7 | Off only | No modern 3D AA path. The option window hides the anti-aliasing row for this backend. |
-| Direct3D11 | Off, FXAA | The world renders into a scene target, FXAA resolves that scene, then overlays/UI compose on top. |
-| Direct3D12 | Off, FXAA | Matches the D3D11 scene-target-plus-resolve flow before overlay/UI composition. |
-| Vulkan | Off, FXAA | Uses a dedicated scene image and fullscreen post-process resolve before the overlay/UI pass. |
+| Direct3D11 | Off, FXAA, SMAA | The world renders into a scene target, resolves through the selected fullscreen AA chain, then overlays/UI compose on top. |
+| Direct3D12 | Off, FXAA, SMAA | Matches the D3D11 scene-target-plus-resolve flow before overlay/UI composition. |
+| Vulkan | Off, FXAA, SMAA | Uses a dedicated scene image and fullscreen post-process resolve before the overlay/UI pass. |
 
 ## Behavior Notes
 
 - Anti-aliasing support is backend-specific. Unsupported modes are hidden in the option window instead of being shown as disabled entries.
 - Switching to a backend that does not support the selected AA mode clamps the saved mode back to Off.
 - Changing the AA mode is restart-required. `GraphicsSettingsRequireRestart(...)` treats AA changes the same way as other renderer reinitialization settings.
-- `SMAA` now exists in the AA mode model and settings serialization, but it is not exposed as a supported backend option until the full pass chain is implemented.
-- `FXAA` remains the only production AA mode available on the modern backends.
+- `SMAA` is exposed on D3D11, D3D12, and Vulkan because those backends now implement the full three-pass resolve chain.
+- `Direct3D7` continues to hide the AA row because it has no modern post-process scene resolve path.
 
 ## SMAA Default
 
@@ -34,7 +34,7 @@ When SMAA ships, it will use a single production preset: `SMAA 1x High`.
 - Vulkan source for those passes lives in [src/render3d/shaders/vulkan_post_smaa.hlsl](d:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/render3d/shaders/vulkan_post_smaa.hlsl).
 - The Vulkan generated header for those shaders is emitted by [tools/update_vulkan_smaa_shaders.ps1](d:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/tools/update_vulkan_smaa_shaders.ps1).
 - D3D11, D3D12, and Vulkan now wire the full internal SMAA chain against their offscreen 3D scene targets: edge detection, blend-weight calculation, and neighborhood blending all run before the existing UI/overlay composition path.
-- SMAA remains hidden from the option window until the same full chain exists on the other supported modern backends and validation is complete.
+- The option window now exposes `SMAA` on the three modern backends and continues to hide unsupported modes elsewhere.
 
 ## Render Path Scope
 
