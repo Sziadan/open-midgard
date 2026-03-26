@@ -149,7 +149,6 @@ void DrawBitmapTransparent(HDC target, HBITMAP bmp, const RECT& dst)
     }
 
     HGDIOBJ old = SelectObject(srcDC, bmp);
-    const COLORREF colorKey = GetPixel(srcDC, 0, 0);
     TransparentBlt(target,
         dst.left,
         dst.top,
@@ -160,7 +159,7 @@ void DrawBitmapTransparent(HDC target, HBITMAP bmp, const RECT& dst)
         0,
         bm.bmWidth,
         bm.bmHeight,
-        colorKey);
+        RGB(255, 0, 255));
     SelectObject(srcDC, old);
     DeleteDC(srcDC);
 }
