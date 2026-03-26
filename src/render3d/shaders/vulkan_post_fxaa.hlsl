@@ -22,7 +22,7 @@ VSOutputPost VSMainPost(uint vertexId : SV_VertexID)
     clipPos.x = (vertexId == 2u) ? 3.0f : -1.0f;
     clipPos.y = (vertexId == 1u) ? 3.0f : -1.0f;
     output.pos = float4(clipPos, 0.0f, 1.0f);
-    output.uv = float2((clipPos.x + 1.0f) * 0.5f, 1.0f - ((clipPos.y + 1.0f) * 0.5f));
+    output.uv = float2((clipPos.x + 1.0f) * 0.5f, (clipPos.y + 1.0f) * 0.5f);
     return output;
 }
 
