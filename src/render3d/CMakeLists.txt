@@ -5,6 +5,8 @@ add_library(ro_render3d STATIC
     D3dutil.cpp
     Device.h
     Device.cpp
+    GraphicsSettings.h
+    GraphicsSettings.cpp
     ModernRenderState.h
     ModernRenderState.cpp
     RenderBackend.h

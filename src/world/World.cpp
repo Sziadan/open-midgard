@@ -1662,9 +1662,8 @@ vector2d ComputeGroundUvScale(const CTexture* texture)
         return vector2d{ 1.0f, 1.0f };
     }
 
-    unsigned int surfaceWidth = contentWidth;
-    unsigned int surfaceHeight = contentHeight;
-    g_3dDevice.AdjustTextureSize(&surfaceWidth, &surfaceHeight);
+    const unsigned int surfaceWidth = texture->m_w;
+    const unsigned int surfaceHeight = texture->m_h;
     if (surfaceWidth == 0 || surfaceHeight == 0) {
         return vector2d{ 1.0f, 1.0f };
     }

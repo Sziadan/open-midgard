@@ -3,6 +3,7 @@
 #include "Device.h"
 #include "D3dutil.h"
 #include "DebugLog.h"
+#include "GraphicsSettings.h"
 #include "ModernRenderState.h"
 #include "render/Renderer.h"
 #include "res/Texture.h"
@@ -42,6 +43,8 @@ PFN_vkDestroyInstance vkDestroyInstance = nullptr;
 PFN_vkEnumeratePhysicalDevices vkEnumeratePhysicalDevices = nullptr;
 PFN_vkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = nullptr;
 PFN_vkGetPhysicalDeviceMemoryProperties vkGetPhysicalDeviceMemoryProperties = nullptr;
+PFN_vkGetPhysicalDeviceFeatures vkGetPhysicalDeviceFeatures = nullptr;
+PFN_vkGetPhysicalDeviceProperties vkGetPhysicalDeviceProperties = nullptr;
 PFN_vkEnumerateDeviceExtensionProperties vkEnumerateDeviceExtensionProperties = nullptr;
 PFN_vkCreateDevice vkCreateDevice = nullptr;
 PFN_vkDestroyDevice vkDestroyDevice = nullptr;
@@ -153,6 +156,8 @@ bool LoadVulkanInstanceFunctions(VkInstance instance)
     vkEnumeratePhysicalDevices = reinterpret_cast<PFN_vkEnumeratePhysicalDevices>(vkGetInstanceProcAddr(instance, "vkEnumeratePhysicalDevices"));
     vkGetPhysicalDeviceQueueFamilyProperties = reinterpret_cast<PFN_vkGetPhysicalDeviceQueueFamilyProperties>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceQueueFamilyProperties"));
     vkGetPhysicalDeviceMemoryProperties = reinterpret_cast<PFN_vkGetPhysicalDeviceMemoryProperties>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceMemoryProperties"));
+    vkGetPhysicalDeviceFeatures = reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceFeatures"));
+    vkGetPhysicalDeviceProperties = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceProperties"));
     vkEnumerateDeviceExtensionProperties = reinterpret_cast<PFN_vkEnumerateDeviceExtensionProperties>(vkGetInstanceProcAddr(instance, "vkEnumerateDeviceExtensionProperties"));
     vkCreateDevice = reinterpret_cast<PFN_vkCreateDevice>(vkGetInstanceProcAddr(instance, "vkCreateDevice"));
     vkCreateWin32SurfaceKHR = reinterpret_cast<PFN_vkCreateWin32SurfaceKHR>(vkGetInstanceProcAddr(instance, "vkCreateWin32SurfaceKHR"));
@@ -167,6 +172,8 @@ bool LoadVulkanInstanceFunctions(VkInstance instance)
         && vkEnumeratePhysicalDevices
         && vkGetPhysicalDeviceQueueFamilyProperties
         && vkGetPhysicalDeviceMemoryProperties
+        && vkGetPhysicalDeviceFeatures
+        && vkGetPhysicalDeviceProperties
         && vkEnumerateDeviceExtensionProperties
         && vkCreateDevice
         && vkCreateWin32SurfaceKHR
@@ -832,6 +839,10 @@ public:
     {
         Shutdown();
         m_hwnd = hwnd;
+        const WindowMode windowMode = GetEffectiveWindowModeForBackend(
+            RenderBackendType::LegacyDirect3D7,
+            GetCachedGraphicsSettings().windowMode);
+        const unsigned int initFlags = windowMode == WindowMode::Fullscreen ? 1u : 0u;
         GUID deviceCandidates[] = {
             IID_IDirect3DTnLHalDevice,
             IID_IDirect3DHALDevice,
@@ -841,7 +852,7 @@ public:
         m_bootstrap.backend = RenderBackendType::LegacyDirect3D7;
         m_bootstrap.initHr = -1;
         for (GUID& deviceGuid : deviceCandidates) {
-            m_bootstrap.initHr = g_3dDevice.Init(hwnd, nullptr, &deviceGuid, nullptr, 0);
+            m_bootstrap.initHr = g_3dDevice.Init(hwnd, nullptr, &deviceGuid, nullptr, initFlags);
             if (m_bootstrap.initHr >= 0) {
                 break;
             }
@@ -1072,6 +1083,9 @@ public:
         if (!width || !height) {
             return;
         }
+        const unsigned int scale = static_cast<unsigned int>((std::max)(1, GetCachedGraphicsSettings().textureUpscaleFactor));
+        *width = (std::max)(1u, *width * scale);
+        *height = (std::max)(1u, *height * scale);
         g_3dDevice.AdjustTextureSize(width, height);
     }
 
@@ -1468,8 +1482,9 @@ public:
     void AdjustTextureSize(unsigned int* width, unsigned int* height) override
     {
         if (width && height) {
-            *width = (std::max)(1u, *width);
-            *height = (std::max)(1u, *height);
+            const unsigned int scale = static_cast<unsigned int>((std::max)(1, GetCachedGraphicsSettings().textureUpscaleFactor));
+            *width = (std::max)(1u, *width * scale);
+            *height = (std::max)(1u, *height * scale);
         }
     }
 
@@ -1484,9 +1499,13 @@ public:
         }
 
         ReleaseTextureMembers(texture);
+        unsigned int surfaceWidth = requestedWidth;
+        unsigned int surfaceHeight = requestedHeight;
+        AdjustTextureSize(&surfaceWidth, &surfaceHeight);
+
         D3D11_TEXTURE2D_DESC desc{};
-        desc.Width = (std::max)(1u, requestedWidth);
-        desc.Height = (std::max)(1u, requestedHeight);
+        desc.Width = (std::max)(1u, surfaceWidth);
+        desc.Height = (std::max)(1u, surfaceHeight);
         desc.MipLevels = 1;
         desc.ArraySize = 1;
         desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -1687,10 +1706,13 @@ private:
         }
 
         D3D11_SAMPLER_DESC samplerDesc{};
-        samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+        const int anisotropicLevel = GetCachedGraphicsSettings().anisotropicLevel;
+        const bool useAnisotropic = anisotropicLevel > 1;
+        samplerDesc.Filter = useAnisotropic ? D3D11_FILTER_ANISOTROPIC : D3D11_FILTER_MIN_MAG_MIP_LINEAR;
         samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
         samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
         samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+        samplerDesc.MaxAnisotropy = static_cast<UINT>(useAnisotropic ? anisotropicLevel : 1);
         samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
         hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerState);
         return SUCCEEDED(hr) && m_samplerState != nullptr;
@@ -2632,8 +2654,9 @@ public:
     void AdjustTextureSize(unsigned int* width, unsigned int* height) override
     {
         if (width && height) {
-            *width = (std::max)(1u, *width);
-            *height = (std::max)(1u, *height);
+            const unsigned int scale = static_cast<unsigned int>((std::max)(1, GetCachedGraphicsSettings().textureUpscaleFactor));
+            *width = (std::max)(1u, *width * scale);
+            *height = (std::max)(1u, *height * scale);
         }
     }
     void ReleaseTextureResource(CTexture* texture) override { ReleaseTextureMembers(texture); }
@@ -2646,11 +2669,14 @@ public:
         }
 
         ReleaseTextureMembers(texture);
+        unsigned int surfaceWidth = requestedWidth;
+        unsigned int surfaceHeight = requestedHeight;
+        AdjustTextureSize(&surfaceWidth, &surfaceHeight);
 
         D3D12_RESOURCE_DESC textureDesc{};
         textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        textureDesc.Width = static_cast<UINT64>((std::max)(1u, requestedWidth));
-        textureDesc.Height = static_cast<UINT>((std::max)(1u, requestedHeight));
+        textureDesc.Width = static_cast<UINT64>((std::max)(1u, surfaceWidth));
+        textureDesc.Height = static_cast<UINT>((std::max)(1u, surfaceHeight));
         textureDesc.DepthOrArraySize = 1;
         textureDesc.MipLevels = 1;
         textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -2913,13 +2939,16 @@ private:
         rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
         D3D12_STATIC_SAMPLER_DESC samplerDesc{};
-        samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+        const int anisotropicLevel = GetCachedGraphicsSettings().anisotropicLevel;
+        const bool useAnisotropic = anisotropicLevel > 1;
+        samplerDesc.Filter = useAnisotropic ? D3D12_FILTER_ANISOTROPIC : D3D12_FILTER_MIN_MAG_MIP_LINEAR;
         samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
         samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
         samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
         samplerDesc.ShaderRegister = 0;
         samplerDesc.RegisterSpace = 0;
         samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        samplerDesc.MaxAnisotropy = static_cast<UINT>(useAnisotropic ? anisotropicLevel : 1);
         samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
 
         D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
@@ -3769,7 +3798,7 @@ public:
           m_inFlightFence(VK_NULL_HANDLE), m_immediateFence(VK_NULL_HANDLE), m_graphicsQueueFamilyIndex(kInvalidQueueFamilyIndex),
           m_presentQueueFamilyIndex(kInvalidQueueFamilyIndex), m_currentImageIndex(0),
                     m_frameBegun(false), m_renderPassActive(false), m_pendingDepthClear(false), m_verticalSyncEnabled(false),
-                    m_defaultTexture(nullptr)
+                    m_defaultTexture(nullptr), m_samplerAnisotropySupported(false), m_maxSamplerAnisotropy(1.0f)
     {
         m_bootstrap.backend = RenderBackendType::Vulkan;
         m_bootstrap.initHr = static_cast<int>(E_NOTIMPL);
@@ -3949,6 +3978,8 @@ public:
         m_boundTextures[1] = nullptr;
         m_defaultTexture = nullptr;
         m_liveTextures.clear();
+        m_samplerAnisotropySupported = false;
+        m_maxSamplerAnisotropy = 1.0f;
     }
 
     void RefreshRenderSize() override
@@ -4214,8 +4245,9 @@ public:
             return;
         }
 
-        *width = (std::max)(1u, *width);
-        *height = (std::max)(1u, *height);
+        const unsigned int scale = static_cast<unsigned int>((std::max)(1, GetCachedGraphicsSettings().textureUpscaleFactor));
+        *width = (std::max)(1u, *width * scale);
+        *height = (std::max)(1u, *height * scale);
     }
 
     void ReleaseTextureResource(CTexture* texture) override
@@ -4233,10 +4265,13 @@ public:
         }
 
         ReleaseTextureMembers(texture);
+        unsigned int surfaceWidth = requestedWidth;
+        unsigned int surfaceHeight = requestedHeight;
+        AdjustTextureSize(&surfaceWidth, &surfaceHeight);
 
         VulkanTextureHandle* textureHandle = CreateTextureHandle(
-            static_cast<uint32_t>((std::max)(1u, requestedWidth)),
-            static_cast<uint32_t>((std::max)(1u, requestedHeight)));
+            static_cast<uint32_t>((std::max)(1u, surfaceWidth)),
+            static_cast<uint32_t>((std::max)(1u, surfaceHeight)));
         if (!textureHandle) {
             return false;
         }
@@ -4444,7 +4479,12 @@ private:
         samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         samplerInfo.minLod = 0.0f;
         samplerInfo.maxLod = 0.0f;
-        samplerInfo.maxAnisotropy = 1.0f;
+        const int anisotropicLevel = GetCachedGraphicsSettings().anisotropicLevel;
+        const bool useAnisotropic = m_samplerAnisotropySupported && anisotropicLevel > 1;
+        samplerInfo.anisotropyEnable = useAnisotropic ? VK_TRUE : VK_FALSE;
+        samplerInfo.maxAnisotropy = useAnisotropic
+            ? (std::min)(m_maxSamplerAnisotropy, static_cast<float>(anisotropicLevel))
+            : 1.0f;
         result = vkCreateSampler(m_device, &samplerInfo, nullptr, &m_sampler);
         if (result != VK_SUCCESS) {
             m_bootstrap.initHr = static_cast<int>(result);
@@ -5557,7 +5597,7 @@ private:
         return false;
     }
 
-    bool IsPhysicalDeviceSuitable(VkPhysicalDevice device, uint32_t* outGraphicsIndex, uint32_t* outPresentIndex) const
+    bool IsPhysicalDeviceSuitable(VkPhysicalDevice device, uint32_t* outGraphicsIndex, uint32_t* outPresentIndex)
     {
         if (!outGraphicsIndex || !outPresentIndex) {
             return false;
@@ -5613,7 +5653,17 @@ private:
         }
 
         const SwapChainSupportDetails support = QuerySwapChainSupport(device);
-        return !support.formats.empty() && !support.presentModes.empty();
+        if (support.formats.empty() || support.presentModes.empty()) {
+            return false;
+        }
+
+        VkPhysicalDeviceFeatures features{};
+        vkGetPhysicalDeviceFeatures(device, &features);
+        VkPhysicalDeviceProperties properties{};
+        vkGetPhysicalDeviceProperties(device, &properties);
+        m_samplerAnisotropySupported = features.samplerAnisotropy == VK_TRUE;
+        m_maxSamplerAnisotropy = properties.limits.maxSamplerAnisotropy > 1.0f ? properties.limits.maxSamplerAnisotropy : 1.0f;
+        return true;
     }
 
     bool CreateLogicalDevice()
@@ -5639,6 +5689,9 @@ private:
 
         const char* extensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
         VkPhysicalDeviceFeatures deviceFeatures{};
+        if (m_samplerAnisotropySupported) {
+            deviceFeatures.samplerAnisotropy = VK_TRUE;
+        }
 
         VkDeviceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -6455,6 +6508,8 @@ private:
     ModernFixedFunctionState m_pipelineState;
     CTexture* m_boundTextures[kModernTextureSlotCount];
     VulkanTextureHandle* m_defaultTexture;
+    bool m_samplerAnisotropySupported;
+    float m_maxSamplerAnisotropy;
     std::vector<CTexture*> m_liveTextures;
     std::vector<VkImage> m_swapChainImages;
     std::vector<VkImageLayout> m_swapChainImageLayouts;
@@ -6538,7 +6593,7 @@ private:
     void BindTexture(DWORD stage, CTexture* texture) override { (void)stage; (void)texture; }
     void DrawPrimitive(D3DPRIMITIVETYPE primitiveType, DWORD vertexFormat, const void* vertices, DWORD vertexCount, DWORD flags) override { (void)primitiveType; (void)vertexFormat; (void)vertices; (void)vertexCount; (void)flags; }
     void DrawIndexedPrimitive(D3DPRIMITIVETYPE primitiveType, DWORD vertexFormat, const void* vertices, DWORD vertexCount, const unsigned short* indices, DWORD indexCount, DWORD flags) override { (void)primitiveType; (void)vertexFormat; (void)vertices; (void)vertexCount; (void)indices; (void)indexCount; (void)flags; }
-    void AdjustTextureSize(unsigned int* width, unsigned int* height) override { if (width && height) { *width = (std::max)(1u, *width); *height = (std::max)(1u, *height); } }
+    void AdjustTextureSize(unsigned int* width, unsigned int* height) override { if (width && height) { const unsigned int scale = static_cast<unsigned int>((std::max)(1, GetCachedGraphicsSettings().textureUpscaleFactor)); *width = (std::max)(1u, *width * scale); *height = (std::max)(1u, *height * scale); } }
     void ReleaseTextureResource(CTexture* texture) override { (void)texture; }
     bool CreateTextureResource(CTexture* texture, unsigned int requestedWidth, unsigned int requestedHeight, int pixelFormat, unsigned int* outSurfaceWidth, unsigned int* outSurfaceHeight) override { (void)texture; (void)requestedWidth; (void)requestedHeight; (void)pixelFormat; if (outSurfaceWidth) { *outSurfaceWidth = 0; } if (outSurfaceHeight) { *outSurfaceHeight = 0; } return false; }
     bool UpdateTextureResource(CTexture* texture, int x, int y, int w, int h, const unsigned int* data, bool skipColorKey, int pitch) override { (void)texture; (void)x; (void)y; (void)w; (void)h; (void)data; (void)skipColorKey; (void)pitch; return false; }

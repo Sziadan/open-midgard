@@ -22,6 +22,7 @@
 #include "ui/UIWindowMgr.h"
 #include "render3d/Device.h"
 #include "render3d/RenderBackend.h"
+#include "render3d/GraphicsSettings.h"
 #include "render3d/RenderDevice.h"
 #include "render/Renderer.h"
 #include "world/World.h"
@@ -76,6 +77,35 @@ static unsigned int g_windowTitleFrameCount = 0;
 
 // Registry path used by the original client
 static const char g_regPath[] = "Software\\Gravity Soft\\Ragnarok Online";
+
+namespace {
+
+RECT GetPrimaryMonitorRect()
+{
+    RECT rect{ 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) };
+    POINT origin{ 0, 0 };
+    const HMONITOR monitor = MonitorFromPoint(origin, MONITOR_DEFAULTTOPRIMARY);
+    MONITORINFO monitorInfo{};
+    monitorInfo.cbSize = sizeof(monitorInfo);
+    if (monitor && GetMonitorInfoA(monitor, &monitorInfo)) {
+        rect = monitorInfo.rcMonitor;
+    }
+    return rect;
+}
+
+WindowMode GetStartupWindowMode()
+{
+    return GetEffectiveWindowModeForBackend(GetRequestedRenderBackend(), GetCachedGraphicsSettings().windowMode);
+}
+
+void ApplyConfiguredWindowSize()
+{
+    const GraphicsSettings& settings = GetCachedGraphicsSettings();
+    WINDOW_WIDTH = settings.width;
+    WINDOW_HEIGHT = settings.height;
+}
+
+} // namespace
 
 // ---------------------------------------------------------------------------
 // MSS (Miles Sound System) shim stubs
@@ -196,18 +226,18 @@ int ReadRegistry()
 {
     HKEY hKey = nullptr;
     if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, g_regPath, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+    {
+        ApplyConfiguredWindowSize();
         return 0;
+    }
 
     DWORD type = REG_DWORD, len = 4;
     RegQueryValueExA(hKey, "IsFullScreen",  nullptr, &type, reinterpret_cast<LPBYTE>(&g_isAppActive), &len);
     RegQueryValueExA(hKey, "Width",         nullptr, &type, reinterpret_cast<LPBYTE>(&WINDOW_WIDTH),  &len);
     RegQueryValueExA(hKey, "Height",        nullptr, &type, reinterpret_cast<LPBYTE>(&WINDOW_HEIGHT), &len);
 
-    // Override to always windowed for now
-    WINDOW_WIDTH  = 1920;
-    WINDOW_HEIGHT = 1080;
-
     RegCloseKey(hKey);
+    ApplyConfiguredWindowSize();
     return 1;
 }
 
@@ -333,19 +363,35 @@ bool InitApp(HINSTANCE hInstance, int nCmdShow)
     wc.lpszClassName= WINDOW_NAME;
     RegisterClassA(&wc);
 
-    RECT windowRect = { 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT };
-    AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
+    const WindowMode windowMode = GetStartupWindowMode();
+    const RECT monitorRect = GetPrimaryMonitorRect();
+    DWORD windowStyle = WS_OVERLAPPEDWINDOW;
+    int winLeft = monitorRect.left;
+    int winTop = monitorRect.top;
+    int windowWidth = WINDOW_WIDTH;
+    int windowHeight = WINDOW_HEIGHT;
 
-    int screenW = GetSystemMetrics(SM_CXSCREEN);
-    int winLeft = (screenW - WINDOW_WIDTH) / 2;
-    int winTop  = 0;
+    if (windowMode == WindowMode::Windowed) {
+        RECT windowRect = { 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT };
+        AdjustWindowRect(&windowRect, windowStyle, FALSE);
+        windowWidth = windowRect.right - windowRect.left;
+        windowHeight = windowRect.bottom - windowRect.top;
+        const int monitorWidth = monitorRect.right - monitorRect.left;
+        const int monitorHeight = monitorRect.bottom - monitorRect.top;
+        winLeft = monitorRect.left + (monitorWidth - windowWidth) / 2;
+        winTop = monitorRect.top + (monitorHeight - windowHeight) / 2;
+    } else {
+        windowStyle = WS_POPUP;
+        windowWidth = monitorRect.right - monitorRect.left;
+        windowHeight = monitorRect.bottom - monitorRect.top;
+    }
 
     g_hMainWnd = CreateWindowExA(
         0, WINDOW_NAME, WINDOW_NAME,
-        WS_OVERLAPPEDWINDOW,
+        windowStyle,
         winLeft, winTop,
-        windowRect.right  - windowRect.left,
-        windowRect.bottom - windowRect.top,
+        windowWidth,
+        windowHeight,
         nullptr, nullptr, hInstance, nullptr);
 
     if (!g_hMainWnd)

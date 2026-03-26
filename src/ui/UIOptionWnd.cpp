@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -34,17 +35,18 @@ constexpr char kOptionWndAttackSnapValue[] = "OptionWndAttackSnap";
 constexpr char kOptionWndSkillSnapValue[] = "OptionWndSkillSnap";
 constexpr char kOptionWndItemSnapValue[] = "OptionWndItemSnap";
 constexpr char kOptionWndCollapsedValue[] = "OptionWndCollapsed";
+constexpr char kOptionWndTabValue[] = "OptionWndTab";
 
-constexpr int kDefaultWidth = 280;
-constexpr int kDefaultHeight = 182;
+constexpr int kDefaultWidth = 308;
+constexpr int kDefaultHeight = 238;
 constexpr int kCollapsedHeight = 17;
 constexpr int kTitleBarHeight = 17;
 constexpr int kDefaultX = 185;
 constexpr int kDefaultY = 300;
 constexpr int kSliderMin = 0;
 constexpr int kSliderMax = 127;
-constexpr int kRendererEntryCount = 4;
-constexpr int kRendererRowHeight = 16;
+constexpr int kTabHeight = 18;
+constexpr int kGraphicsRowHeight = 24;
 
 constexpr int kCheckIdBgm = 401;
 constexpr int kCheckIdSound = 402;
@@ -53,7 +55,7 @@ constexpr int kCheckIdAttack = 404;
 constexpr int kCheckIdSkill = 405;
 constexpr int kCheckIdItem = 406;
 
-constexpr std::array<RenderBackendType, kRendererEntryCount> kRendererEntries = {
+constexpr std::array<RenderBackendType, 4> kRendererEntries = {
     RenderBackendType::LegacyDirect3D7,
     RenderBackendType::Direct3D11,
     RenderBackendType::Direct3D12,
@@ -265,53 +267,72 @@ int ClampSliderValue(int value)
     return (std::max)(kSliderMin, (std::min)(kSliderMax, value));
 }
 
-RenderBackendType NormalizePreferredBackend(RenderBackendType backend)
+RenderBackendType NormalizeSelectableBackend(RenderBackendType backend)
 {
-    return IsRenderBackendImplemented(backend) ? backend : RenderBackendType::Direct3D11;
+    if (IsRenderBackendImplemented(backend) && IsRenderBackendSupported(backend)) {
+        return backend;
+    }
+
+    for (RenderBackendType candidate : kRendererEntries) {
+        if (IsRenderBackendImplemented(candidate) && IsRenderBackendSupported(candidate)) {
+            return candidate;
+        }
+    }
+
+    return RenderBackendType::LegacyDirect3D7;
 }
 
-const char* GetRendererEntryStateText(
-    RenderBackendType entry,
-    RenderBackendType preferredBackend,
-    RenderBackendType activeBackend)
+const char* GetWindowModeName(WindowMode mode)
 {
-    if (!IsRenderBackendImplemented(entry)) {
-        return "Not implemented";
+    switch (mode) {
+    case WindowMode::Windowed:
+        return "Windowed";
+    case WindowMode::Fullscreen:
+        return "Fullscreen";
+    case WindowMode::BorderlessFullscreen:
+        return "Borderless";
+    default:
+        return "Windowed";
     }
-
-    if (!IsRenderBackendSupported(entry)) {
-        return "Unsupported";
-    }
-
-    if (entry == preferredBackend && entry != activeBackend) {
-        return "Restart required";
-    }
-
-    if (entry == activeBackend) {
-        return "Active";
-    }
-
-    return "Available";
 }
 
-const char* GetRendererEntryPrefix(
-    RenderBackendType entry,
-    RenderBackendType preferredBackend,
-    RenderBackendType activeBackend)
+const char* GetAntiAliasingName(AntiAliasingMode mode)
 {
-    if (entry == preferredBackend && entry == activeBackend) {
-        return "*> ";
+    switch (mode) {
+    case AntiAliasingMode::None:
+        return "Off";
+    case AntiAliasingMode::MSAA2X:
+        return "MSAA 2x";
+    case AntiAliasingMode::MSAA4X:
+        return "MSAA 4x";
+    case AntiAliasingMode::MSAA8X:
+        return "MSAA 8x";
+    default:
+        return "Off";
+    }
+}
+
+std::string FormatResolutionText(int width, int height)
+{
+    char buffer[32] = {};
+    std::snprintf(buffer, sizeof(buffer), "%dx%d", width, height);
+    return std::string(buffer);
+}
+
+std::string FormatMultiplierText(int value)
+{
+    char buffer[16] = {};
+    std::snprintf(buffer, sizeof(buffer), "%dx", value);
+    return std::string(buffer);
+}
+
+std::string FormatAnisotropicText(int level)
+{
+    if (level <= 1) {
+        return "Off";
     }
 
-    if (entry == preferredBackend) {
-        return "> ";
-    }
-
-    if (entry == activeBackend) {
-        return "* ";
-    }
-
-    return "";
+    return FormatMultiplierText(level);
 }
 
 void LoadDwordSetting(HKEY key, const char* valueName, int* target)
@@ -400,12 +421,16 @@ UIOptionWnd::UIOptionWnd()
       m_skillSnap(0),
       m_itemSnap(0),
       m_collapsed(0),
-    m_preferredRenderBackend(static_cast<int>(GetConfiguredRenderBackend())),
+      m_activeTab(TabId_Game),
       m_dragMode(DragMode_None),
       m_dragAnchorX(0),
       m_dragAnchorY(0),
       m_dragWindowStartX(0),
-      m_dragWindowStartY(0)
+      m_dragWindowStartY(0),
+      m_graphicsSettings(GetCachedGraphicsSettings()),
+      m_appliedGraphicsSettings(GetCachedGraphicsSettings()),
+      m_selectedRenderBackend(NormalizeSelectableBackend(GetConfiguredRenderBackend())),
+      m_appliedRenderBackend(GetActiveRenderBackend())
 {
     m_defCancelPushId = 135;
     Create(kDefaultWidth, kDefaultHeight);
@@ -458,6 +483,126 @@ void UIOptionWnd::EnsureResources()
     }
 }
 
+void UIOptionWnd::RefreshResolutionEntries()
+{
+    m_resolutionEntries.clear();
+
+    DEVMODEA displayMode{};
+    displayMode.dmSize = sizeof(displayMode);
+    for (DWORD modeIndex = 0; EnumDisplaySettingsA(nullptr, modeIndex, &displayMode); ++modeIndex) {
+        if (displayMode.dmPelsWidth < 640 || displayMode.dmPelsHeight < 480) {
+            continue;
+        }
+
+        bool exists = false;
+        for (const ResolutionEntry& entry : m_resolutionEntries) {
+            if (entry.width == static_cast<int>(displayMode.dmPelsWidth)
+                && entry.height == static_cast<int>(displayMode.dmPelsHeight)) {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists) {
+            m_resolutionEntries.push_back({ static_cast<int>(displayMode.dmPelsWidth), static_cast<int>(displayMode.dmPelsHeight) });
+        }
+    }
+
+    if (FindResolutionIndex(m_graphicsSettings.width, m_graphicsSettings.height) < 0) {
+        m_resolutionEntries.push_back({ m_graphicsSettings.width, m_graphicsSettings.height });
+    }
+
+    std::sort(m_resolutionEntries.begin(), m_resolutionEntries.end(), [](const ResolutionEntry& lhs, const ResolutionEntry& rhs) {
+        if (lhs.width != rhs.width) {
+            return lhs.width < rhs.width;
+        }
+        return lhs.height < rhs.height;
+    });
+}
+
+int UIOptionWnd::FindResolutionIndex(int width, int height) const
+{
+    for (size_t index = 0; index < m_resolutionEntries.size(); ++index) {
+        if (m_resolutionEntries[index].width == width && m_resolutionEntries[index].height == height) {
+            return static_cast<int>(index);
+        }
+    }
+    return -1;
+}
+
+std::vector<UIOptionWnd::GraphicsRowId> UIOptionWnd::GetVisibleGraphicsRows() const
+{
+    std::vector<GraphicsRowId> rows;
+    const RenderBackendType backend = m_selectedRenderBackend;
+    if (DoesBackendSupportResolutionSelection(backend)) {
+        rows.push_back(GraphicsRow_Resolution);
+    }
+    rows.push_back(GraphicsRow_Renderer);
+    if (!GetSupportedWindowModes().empty()) {
+        rows.push_back(GraphicsRow_WindowMode);
+    }
+    if (!GetSupportedAntiAliasingModes().empty()) {
+        rows.push_back(GraphicsRow_AntiAliasing);
+    }
+    if (DoesBackendSupportTextureUpscaling(backend)) {
+        rows.push_back(GraphicsRow_TextureUpscale);
+    }
+    if (!GetSupportedAnisotropicLevels().empty()) {
+        rows.push_back(GraphicsRow_AnisotropicFiltering);
+    }
+    return rows;
+}
+
+std::vector<RenderBackendType> UIOptionWnd::GetSupportedRenderBackends() const
+{
+    std::vector<RenderBackendType> backends;
+    for (RenderBackendType backend : kRendererEntries) {
+        if (IsRenderBackendImplemented(backend) && IsRenderBackendSupported(backend)) {
+            backends.push_back(backend);
+        }
+    }
+    if (backends.empty()) {
+        backends.push_back(RenderBackendType::LegacyDirect3D7);
+    }
+    return backends;
+}
+
+std::vector<WindowMode> UIOptionWnd::GetSupportedWindowModes() const
+{
+    std::vector<WindowMode> modes;
+    const WindowMode orderedModes[] = {
+        WindowMode::Windowed,
+        WindowMode::BorderlessFullscreen,
+        WindowMode::Fullscreen,
+    };
+    for (WindowMode mode : orderedModes) {
+        if (DoesBackendSupportWindowMode(m_selectedRenderBackend, mode)) {
+            modes.push_back(mode);
+        }
+    }
+    return modes;
+}
+
+std::vector<int> UIOptionWnd::GetSupportedAnisotropicLevels() const
+{
+    if (!DoesBackendSupportAnisotropicFiltering(m_selectedRenderBackend)) {
+        return {};
+    }
+    return { 1, 2, 4, 8, 16 };
+}
+
+std::vector<AntiAliasingMode> UIOptionWnd::GetSupportedAntiAliasingModes() const
+{
+    if (!DoesBackendSupportAntiAliasing(m_selectedRenderBackend)) {
+        return {};
+    }
+    return { AntiAliasingMode::None, AntiAliasingMode::MSAA2X, AntiAliasingMode::MSAA4X, AntiAliasingMode::MSAA8X };
+}
+
+RenderBackendType UIOptionWnd::NormalizeSelectedBackend(RenderBackendType backend) const
+{
+    return NormalizeSelectableBackend(backend);
+}
+
 void UIOptionWnd::LoadSettings()
 {
     HKEY key = nullptr;
@@ -473,10 +618,16 @@ void UIOptionWnd::LoadSettings()
         LoadDwordSetting(key, kOptionWndSkillSnapValue, &m_skillSnap);
         LoadDwordSetting(key, kOptionWndItemSnapValue, &m_itemSnap);
         LoadDwordSetting(key, kOptionWndCollapsedValue, &m_collapsed);
+        LoadDwordSetting(key, kOptionWndTabValue, &m_activeTab);
         RegCloseKey(key);
     }
 
     LoadSavedAudioSettingsFromRegistry(&m_bgmVolume, &m_soundVolume, &m_bgmEnabled, &m_soundEnabled);
+    m_graphicsSettings = GetCachedGraphicsSettings();
+    m_appliedGraphicsSettings = m_graphicsSettings;
+    m_selectedRenderBackend = NormalizeSelectedBackend(GetConfiguredRenderBackend());
+    m_appliedRenderBackend = GetActiveRenderBackend();
+    RefreshResolutionEntries();
 
     if (m_w <= 0) {
         m_w = kDefaultWidth;
@@ -508,10 +659,18 @@ void UIOptionWnd::LoadSettings()
     m_skillSnap = (m_skillSnap != 0) ? 1 : 0;
     m_itemSnap = (m_itemSnap != 0) ? 1 : 0;
     m_collapsed = (m_collapsed != 0) ? 1 : 0;
-    m_preferredRenderBackend = static_cast<int>(NormalizePreferredBackend(GetConfiguredRenderBackend()));
+    if (m_activeTab < 0 || m_activeTab >= TabId_Count) {
+        m_activeTab = TabId_Game;
+    }
     if (m_collapsed) {
         m_h = kCollapsedHeight;
     }
+}
+
+void UIOptionWnd::SaveGraphicsPreferences() const
+{
+    SaveGraphicsSettings(m_graphicsSettings);
+    SetConfiguredRenderBackend(m_selectedRenderBackend);
 }
 
 void UIOptionWnd::SaveSettings() const
@@ -536,7 +695,10 @@ void UIOptionWnd::SaveSettings() const
     SaveDwordSetting(key, kOptionWndSkillSnapValue, m_skillSnap);
     SaveDwordSetting(key, kOptionWndItemSnapValue, m_itemSnap);
     SaveDwordSetting(key, kOptionWndCollapsedValue, m_collapsed != 0 ? 1 : 0);
+    SaveDwordSetting(key, kOptionWndTabValue, m_activeTab);
     RegCloseKey(key);
+
+    SaveGraphicsPreferences();
 }
 
 void UIOptionWnd::ApplyAudioSettings() const
@@ -554,29 +716,41 @@ void UIOptionWnd::ApplyAudioSettings() const
 
 void UIOptionWnd::LayoutControls()
 {
+    const bool showAudio = !m_collapsed && m_activeTab == TabId_Audio;
+    const bool showGame = !m_collapsed && m_activeTab == TabId_Game;
+    const RECT contentRect = GetContentRect();
+
     if (m_bgmOnCheckBox) {
-        m_bgmOnCheckBox->Move(m_x + m_w - 66, m_y + 20);
-        m_bgmOnCheckBox->SetShow(m_collapsed ? 0 : 1);
+        const RECT sliderRect = GetBgmSliderRect();
+        m_bgmOnCheckBox->Move(sliderRect.right + 10, sliderRect.top - 2);
+        m_bgmOnCheckBox->SetShow(showAudio ? 1 : 0);
+        m_bgmOnCheckBox->SetCheck(m_bgmEnabled == 0);
     }
     if (m_soundOnCheckBox) {
-        m_soundOnCheckBox->Move(m_x + m_w - 66, m_y + 39);
-        m_soundOnCheckBox->SetShow(m_collapsed ? 0 : 1);
+        const RECT sliderRect = GetSoundSliderRect();
+        m_soundOnCheckBox->Move(sliderRect.right + 10, sliderRect.top - 2);
+        m_soundOnCheckBox->SetShow(showAudio ? 1 : 0);
+        m_soundOnCheckBox->SetCheck(m_soundEnabled == 0);
     }
     if (m_noCtrlCheckBox) {
-        m_noCtrlCheckBox->Move(m_x + 11, m_y + 160);
-        m_noCtrlCheckBox->SetShow(m_collapsed ? 0 : 1);
+        m_noCtrlCheckBox->Move(contentRect.left + 16, contentRect.top + 16);
+        m_noCtrlCheckBox->SetShow(showGame ? 1 : 0);
+        m_noCtrlCheckBox->SetCheck(m_noCtrl);
     }
     if (m_attackSnapCheckBox) {
-        m_attackSnapCheckBox->Move(m_x + 112, m_y + 160);
-        m_attackSnapCheckBox->SetShow(m_collapsed ? 0 : 1);
+        m_attackSnapCheckBox->Move(contentRect.left + 16, contentRect.top + 42);
+        m_attackSnapCheckBox->SetShow(showGame ? 1 : 0);
+        m_attackSnapCheckBox->SetCheck(m_attackSnap);
     }
     if (m_skillSnapCheckBox) {
-        m_skillSnapCheckBox->Move(m_x + 162, m_y + 160);
-        m_skillSnapCheckBox->SetShow(m_collapsed ? 0 : 1);
+        m_skillSnapCheckBox->Move(contentRect.left + 16, contentRect.top + 68);
+        m_skillSnapCheckBox->SetShow(showGame ? 1 : 0);
+        m_skillSnapCheckBox->SetCheck(m_skillSnap);
     }
     if (m_itemSnapCheckBox) {
-        m_itemSnapCheckBox->Move(m_x + 204, m_y + 160);
-        m_itemSnapCheckBox->SetShow(m_collapsed ? 0 : 1);
+        m_itemSnapCheckBox->Move(contentRect.left + 16, contentRect.top + 94);
+        m_itemSnapCheckBox->SetShow(showGame ? 1 : 0);
+        m_itemSnapCheckBox->SetCheck(m_itemSnap);
     }
 }
 
@@ -622,6 +796,12 @@ RECT UIOptionWnd::GetTitleBarRect() const
     return rc;
 }
 
+RECT UIOptionWnd::GetBodyRect() const
+{
+    RECT rc = { m_x, m_y + kTitleBarHeight, m_x + m_w, m_y + m_h };
+    return rc;
+}
+
 RECT UIOptionWnd::GetBaseButtonRect() const
 {
     RECT rc = { m_x + 3, m_y + 3, m_x + 14, m_y + 14 };
@@ -630,67 +810,91 @@ RECT UIOptionWnd::GetBaseButtonRect() const
 
 RECT UIOptionWnd::GetMiniButtonRect() const
 {
-    RECT rc = { m_x + 252, m_y + 3, m_x + 263, m_y + 14 };
+    RECT rc = { m_x + m_w - 28, m_y + 3, m_x + m_w - 17, m_y + 14 };
     return rc;
 }
 
 RECT UIOptionWnd::GetCloseButtonRect() const
 {
-    RECT rc = { m_x + 266, m_y + 3, m_x + 277, m_y + 14 };
+    RECT rc = { m_x + m_w - 14, m_y + 3, m_x + m_w - 3, m_y + 14 };
     return rc;
 }
 
-RECT UIOptionWnd::GetSkinRect() const
+RECT UIOptionWnd::GetTabRect(int tabIndex) const
 {
-    RECT rc = { m_x + 75, m_y + 64, m_x + 256, m_y + 80 };
-    return rc;
-}
-
-RECT UIOptionWnd::GetRendererRect() const
-{
-    RECT rc = { m_x + 75, m_y + 64, m_x + 256, m_y + 64 + 4 + (kRendererEntryCount * kRendererRowHeight) };
-    return rc;
-}
-
-RECT UIOptionWnd::GetRendererEntryRect(int index) const
-{
-    RECT rendererRect = GetRendererRect();
-    if (index < 0) {
-        index = 0;
-    } else if (index >= kRendererEntryCount) {
-        index = kRendererEntryCount - 1;
-    }
-
-    const int rowHeight = kRendererRowHeight;
+    RECT bodyRect = GetBodyRect();
+    const int margin = 10;
+    const int tabWidth = (bodyRect.right - bodyRect.left - margin * 2) / TabId_Count;
     RECT rc = {
-        rendererRect.left + 2,
-        rendererRect.top + 2 + (index * rowHeight),
-        rendererRect.right - 2,
-        rendererRect.top + 2 + ((index + 1) * rowHeight),
+        bodyRect.left + margin + tabIndex * tabWidth,
+        bodyRect.top + 6,
+        bodyRect.left + margin + (tabIndex + 1) * tabWidth - 2,
+        bodyRect.top + 6 + kTabHeight,
     };
+    return rc;
+}
+
+RECT UIOptionWnd::GetContentRect() const
+{
+    RECT bodyRect = GetBodyRect();
+    RECT rc = {
+        bodyRect.left + 10,
+        bodyRect.top + 6 + kTabHeight + 6,
+        bodyRect.right - 10,
+        bodyRect.bottom - 12,
+    };
+    return rc;
+}
+
+RECT UIOptionWnd::GetRowRect(int rowIndex) const
+{
+    RECT contentRect = GetContentRect();
+    RECT rc = {
+        contentRect.left + 4,
+        contentRect.top + 6 + rowIndex * kGraphicsRowHeight,
+        contentRect.right - 4,
+        contentRect.top + 6 + (rowIndex + 1) * kGraphicsRowHeight - 4,
+    };
+    return rc;
+}
+
+RECT UIOptionWnd::GetRowPrevButtonRect(int rowIndex) const
+{
+    RECT rowRect = GetRowRect(rowIndex);
+    RECT rc = { rowRect.right - 52, rowRect.top + 3, rowRect.right - 34, rowRect.bottom - 3 };
+    return rc;
+}
+
+RECT UIOptionWnd::GetRowNextButtonRect(int rowIndex) const
+{
+    RECT rowRect = GetRowRect(rowIndex);
+    RECT rc = { rowRect.right - 28, rowRect.top + 3, rowRect.right - 10, rowRect.bottom - 3 };
     return rc;
 }
 
 RECT UIOptionWnd::GetRestartButtonRect() const
 {
+    RECT contentRect = GetContentRect();
     RECT rc = {
-        m_x + 184,
-        m_y + 138,
-        m_x + 256,
-        m_y + 154,
+        contentRect.right - 92,
+        contentRect.bottom - 22,
+        contentRect.right - 8,
+        contentRect.bottom - 4,
     };
     return rc;
 }
 
 RECT UIOptionWnd::GetBgmSliderRect() const
 {
-    RECT rc = { m_x + 71, m_y + 21, m_x + m_w - 58, m_y + 34 };
+    RECT contentRect = GetContentRect();
+    RECT rc = { contentRect.left + 54, contentRect.top + 22, contentRect.right - 72, contentRect.top + 36 };
     return rc;
 }
 
 RECT UIOptionWnd::GetSoundSliderRect() const
 {
-    RECT rc = { m_x + 71, m_y + 40, m_x + m_w - 58, m_y + 53 };
+    RECT contentRect = GetContentRect();
+    RECT rc = { contentRect.left + 54, contentRect.top + 58, contentRect.right - 72, contentRect.top + 72 };
     return rc;
 }
 
@@ -718,9 +922,7 @@ void UIOptionWnd::DrawSlider(HDC hdc, const RECT& sliderRect, int value, const c
 
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(0, 0, 0));
-    const int labelBaseX = static_cast<int>(sliderRect.left) - 48;
-    const int labelX = (std::max)(m_x + 18, labelBaseX);
-    TextOutA(hdc, labelX, sliderRect.top - 1, label, static_cast<int>(std::strlen(label)));
+    TextOutA(hdc, sliderRect.left - 44, sliderRect.top - 1, label, static_cast<int>(std::strlen(label)));
 }
 
 void UIOptionWnd::DrawHeaderButton(HDC hdc, const RECT& rect, const char* text) const
@@ -729,51 +931,177 @@ void UIOptionWnd::DrawHeaderButton(HDC hdc, const RECT& rect, const char* text) 
     DrawRectFrame(hdc, rect, RGB(82, 63, 45));
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(0, 0, 0));
-    TextOutA(hdc, rect.left + 2, rect.top - 1, text, static_cast<int>(std::strlen(text)));
+    TextOutA(hdc, rect.left + 3, rect.top - 1, text, static_cast<int>(std::strlen(text)));
 }
 
-bool UIOptionWnd::HasPendingRendererRestart() const
+void UIOptionWnd::DrawTabButton(HDC hdc, const RECT& rect, const char* text, bool active) const
 {
-    const RenderBackendType preferredBackend = NormalizePreferredBackend(static_cast<RenderBackendType>(m_preferredRenderBackend));
-    return preferredBackend != GetActiveRenderBackend();
+    FillRectColor(hdc, rect, active ? RGB(240, 229, 206) : RGB(214, 199, 181));
+    DrawRectFrame(hdc, rect, active ? RGB(82, 63, 45) : RGB(118, 98, 80));
+    SetBkMode(hdc, TRANSPARENT);
+    SetTextColor(hdc, RGB(0, 0, 0));
+    TextOutA(hdc, rect.left + 10, rect.top + 3, text, static_cast<int>(std::strlen(text)));
 }
 
-void UIOptionWnd::PromptForRendererRestart()
+void UIOptionWnd::DrawSettingRow(HDC hdc, int rowIndex, const char* label, const std::string& value) const
+{
+    const RECT rowRect = GetRowRect(rowIndex);
+    FillRectColor(hdc, rowRect, RGB(244, 239, 228));
+    DrawRectFrame(hdc, rowRect, RGB(118, 98, 80));
+    SetBkMode(hdc, TRANSPARENT);
+    SetTextColor(hdc, RGB(0, 0, 0));
+    TextOutA(hdc, rowRect.left + 8, rowRect.top + 4, label, static_cast<int>(std::strlen(label)));
+
+    SIZE valueSize{};
+    GetTextExtentPoint32A(hdc, value.c_str(), static_cast<int>(value.size()), &valueSize);
+    const int valueX = rowRect.right - 60 - valueSize.cx;
+    TextOutA(hdc, valueX, rowRect.top + 4, value.c_str(), static_cast<int>(value.size()));
+
+    DrawHeaderButton(hdc, GetRowPrevButtonRect(rowIndex), "<");
+    DrawHeaderButton(hdc, GetRowNextButtonRect(rowIndex), ">");
+}
+
+bool UIOptionWnd::HasPendingGraphicsRestart() const
+{
+    return m_selectedRenderBackend != m_appliedRenderBackend
+        || GraphicsSettingsRequireRestart(m_appliedGraphicsSettings, m_graphicsSettings);
+}
+
+void UIOptionWnd::PromptForGraphicsRestart()
 {
     const int restartNow = MessageBoxA(
         g_hMainWnd,
-        "Renderer changes require a client restart. If you are currently in-game, the client will disconnect from the map server before it relaunches. Restart now?",
+        "Graphics changes require a client restart. If you are currently in-game, the client will disconnect from the map server before it relaunches. Restart now?",
         "Restart Required",
         MB_ICONQUESTION | MB_YESNO);
     if (restartNow == IDYES) {
         if (!RelaunchCurrentApplication()) {
             MessageBoxA(
                 g_hMainWnd,
-                "Failed to relaunch the client. The renderer setting was saved and will apply the next time you start the game.",
+                "Failed to relaunch the client. The graphics settings were saved and will apply the next time you start the game.",
                 "Restart Failed",
                 MB_ICONERROR | MB_OK);
         }
     }
 }
 
-void UIOptionWnd::SelectPreferredRenderBackend(RenderBackendType backend)
+void UIOptionWnd::CycleGraphicsSetting(GraphicsRowId rowId, int direction)
 {
-    if (!IsRenderBackendImplemented(backend) || !IsRenderBackendSupported(backend)) {
+    if (direction == 0) {
         return;
     }
 
-    const RenderBackendType preferredBackend = NormalizePreferredBackend(static_cast<RenderBackendType>(m_preferredRenderBackend));
-    if (backend == preferredBackend) {
-        return;
-    }
-
-    if (SetConfiguredRenderBackend(backend)) {
-        m_preferredRenderBackend = static_cast<int>(backend);
-        SaveSettings();
-
-        if (backend != GetActiveRenderBackend()) {
-            PromptForRendererRestart();
+    if (rowId == GraphicsRow_Resolution) {
+        if (m_resolutionEntries.empty()) {
+            RefreshResolutionEntries();
         }
+        if (!m_resolutionEntries.empty()) {
+            int index = FindResolutionIndex(m_graphicsSettings.width, m_graphicsSettings.height);
+            if (index < 0) {
+                index = 0;
+            }
+            index += direction > 0 ? 1 : -1;
+            if (index < 0) {
+                index = static_cast<int>(m_resolutionEntries.size()) - 1;
+            } else if (index >= static_cast<int>(m_resolutionEntries.size())) {
+                index = 0;
+            }
+            m_graphicsSettings.width = m_resolutionEntries[static_cast<size_t>(index)].width;
+            m_graphicsSettings.height = m_resolutionEntries[static_cast<size_t>(index)].height;
+        }
+    } else if (rowId == GraphicsRow_Renderer) {
+        const std::vector<RenderBackendType> backends = GetSupportedRenderBackends();
+        for (size_t index = 0; index < backends.size(); ++index) {
+            if (backends[index] == m_selectedRenderBackend) {
+                int nextIndex = static_cast<int>(index) + (direction > 0 ? 1 : -1);
+                if (nextIndex < 0) {
+                    nextIndex = static_cast<int>(backends.size()) - 1;
+                } else if (nextIndex >= static_cast<int>(backends.size())) {
+                    nextIndex = 0;
+                }
+                m_selectedRenderBackend = backends[static_cast<size_t>(nextIndex)];
+                m_graphicsSettings.windowMode = GetEffectiveWindowModeForBackend(m_selectedRenderBackend, m_graphicsSettings.windowMode);
+                if (!DoesBackendSupportAnisotropicFiltering(m_selectedRenderBackend)) {
+                    m_graphicsSettings.anisotropicLevel = 1;
+                }
+                if (!DoesBackendSupportAntiAliasing(m_selectedRenderBackend)) {
+                    m_graphicsSettings.antiAliasing = AntiAliasingMode::None;
+                }
+                break;
+            }
+        }
+    } else if (rowId == GraphicsRow_WindowMode) {
+        const std::vector<WindowMode> modes = GetSupportedWindowModes();
+        for (size_t index = 0; index < modes.size(); ++index) {
+            if (modes[index] == m_graphicsSettings.windowMode) {
+                int nextIndex = static_cast<int>(index) + (direction > 0 ? 1 : -1);
+                if (nextIndex < 0) {
+                    nextIndex = static_cast<int>(modes.size()) - 1;
+                } else if (nextIndex >= static_cast<int>(modes.size())) {
+                    nextIndex = 0;
+                }
+                m_graphicsSettings.windowMode = modes[static_cast<size_t>(nextIndex)];
+                break;
+            }
+        }
+    } else if (rowId == GraphicsRow_AntiAliasing) {
+        const std::vector<AntiAliasingMode> modes = GetSupportedAntiAliasingModes();
+        for (size_t index = 0; index < modes.size(); ++index) {
+            if (modes[index] == m_graphicsSettings.antiAliasing) {
+                int nextIndex = static_cast<int>(index) + (direction > 0 ? 1 : -1);
+                if (nextIndex < 0) {
+                    nextIndex = static_cast<int>(modes.size()) - 1;
+                } else if (nextIndex >= static_cast<int>(modes.size())) {
+                    nextIndex = 0;
+                }
+                m_graphicsSettings.antiAliasing = modes[static_cast<size_t>(nextIndex)];
+                break;
+            }
+        }
+    } else if (rowId == GraphicsRow_TextureUpscale) {
+        int nextValue = m_graphicsSettings.textureUpscaleFactor + (direction > 0 ? 1 : -1);
+        if (nextValue < 1) {
+            nextValue = 4;
+        } else if (nextValue > 4) {
+            nextValue = 1;
+        }
+        m_graphicsSettings.textureUpscaleFactor = nextValue;
+    } else if (rowId == GraphicsRow_AnisotropicFiltering) {
+        const std::vector<int> levels = GetSupportedAnisotropicLevels();
+        for (size_t index = 0; index < levels.size(); ++index) {
+            if (levels[index] == m_graphicsSettings.anisotropicLevel) {
+                int nextIndex = static_cast<int>(index) + (direction > 0 ? 1 : -1);
+                if (nextIndex < 0) {
+                    nextIndex = static_cast<int>(levels.size()) - 1;
+                } else if (nextIndex >= static_cast<int>(levels.size())) {
+                    nextIndex = 0;
+                }
+                m_graphicsSettings.anisotropicLevel = levels[static_cast<size_t>(nextIndex)];
+                break;
+            }
+        }
+    }
+
+    SaveSettings();
+}
+
+std::string UIOptionWnd::GetGraphicsRowValue(GraphicsRowId rowId) const
+{
+    switch (rowId) {
+    case GraphicsRow_Resolution:
+        return FormatResolutionText(m_graphicsSettings.width, m_graphicsSettings.height);
+    case GraphicsRow_Renderer:
+        return std::string(GetRenderBackendName(m_selectedRenderBackend));
+    case GraphicsRow_WindowMode:
+        return std::string(GetWindowModeName(m_graphicsSettings.windowMode));
+    case GraphicsRow_AntiAliasing:
+        return std::string(GetAntiAliasingName(m_graphicsSettings.antiAliasing));
+    case GraphicsRow_TextureUpscale:
+        return FormatMultiplierText(m_graphicsSettings.textureUpscaleFactor);
+    case GraphicsRow_AnisotropicFiltering:
+        return FormatAnisotropicText(m_graphicsSettings.anisotropicLevel);
+    default:
+        return std::string();
     }
 }
 
@@ -833,9 +1161,8 @@ void UIOptionWnd::OnDraw()
         OnCreate(clientW, clientH);
     }
 
-    RECT titleRect = GetTitleBarRect();
-    RECT bodyRect = { m_x, m_y + kTitleBarHeight, m_x + m_w, m_y + m_h };
-
+    const RECT titleRect = GetTitleBarRect();
+    const RECT bodyRect = GetBodyRect();
     if (m_frameBitmap) {
         DrawBitmapStretched(hdc, m_frameBitmap, titleRect);
     } else {
@@ -849,95 +1176,82 @@ void UIOptionWnd::OnDraw()
         } else {
             FillRectColor(hdc, bodyRect, RGB(231, 217, 197));
             DrawRectFrame(hdc, bodyRect, RGB(96, 76, 54));
-            RECT dividerRect = { m_x + 72, m_y + 62, m_x + m_w - 24, m_y + 154 };
-            FillRectColor(hdc, dividerRect, RGB(215, 199, 177));
-            DrawRectFrame(hdc, dividerRect, RGB(118, 98, 80));
         }
     }
 
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(255, 255, 255));
-    TextOutA(hdc, m_x + 17, m_y + 4, "Game option", 11);
+    TextOutA(hdc, m_x + 17, m_y + 4, "Options", 7);
     SetTextColor(hdc, RGB(0, 0, 0));
-    TextOutA(hdc, m_x + 16, m_y + 3, "Game option", 11);
+    TextOutA(hdc, m_x + 16, m_y + 3, "Options", 7);
 
     DrawHeaderButton(hdc, GetBaseButtonRect(), "B");
     DrawHeaderButton(hdc, GetMiniButtonRect(), "_");
     DrawHeaderButton(hdc, GetCloseButtonRect(), "X");
 
     if (!m_collapsed) {
-        DrawSlider(hdc, GetBgmSliderRect(), m_bgmVolume, "BGM");
-        DrawSlider(hdc, GetSoundSliderRect(), m_soundVolume, "Sound");
+        DrawTabButton(hdc, GetTabRect(TabId_Game), "Game", m_activeTab == TabId_Game);
+        DrawTabButton(hdc, GetTabRect(TabId_Graphics), "Graphics", m_activeTab == TabId_Graphics);
+        DrawTabButton(hdc, GetTabRect(TabId_Audio), "Audio", m_activeTab == TabId_Audio);
 
-        SetTextColor(hdc, RGB(0, 0, 0));
-        if (m_bgmOnCheckBox) {
-            TextOutA(hdc, m_bgmOnCheckBox->m_x + 18, m_bgmOnCheckBox->m_y - 1, "Mute", 4);
-        }
-        if (m_soundOnCheckBox) {
-            TextOutA(hdc, m_soundOnCheckBox->m_x + 18, m_soundOnCheckBox->m_y - 1, "Mute", 4);
-        }
+        const RECT contentRect = GetContentRect();
+        FillRectColor(hdc, contentRect, RGB(239, 232, 219));
+        DrawRectFrame(hdc, contentRect, RGB(118, 98, 80));
 
-        const RECT rendererRect = GetRendererRect();
-        FillRectColor(hdc, rendererRect, RGB(244, 239, 228));
-        DrawRectFrame(hdc, rendererRect, RGB(118, 98, 80));
-        const RenderBackendType preferredBackend = NormalizePreferredBackend(static_cast<RenderBackendType>(m_preferredRenderBackend));
-        const RenderBackendType activeBackend = GetActiveRenderBackend();
-        for (int index = 0; index < kRendererEntryCount; ++index) {
-            const RenderBackendType entry = kRendererEntries[static_cast<size_t>(index)];
-            const RECT entryRect = GetRendererEntryRect(index);
-            const bool implemented = IsRenderBackendImplemented(entry);
-            const bool supported = implemented && IsRenderBackendSupported(entry);
-            const bool selected = (entry == preferredBackend);
-            const bool active = (entry == activeBackend);
-
-            COLORREF fillColor = RGB(244, 239, 228);
-            if (!implemented) {
-                fillColor = RGB(223, 216, 206);
-            } else if (!supported) {
-                fillColor = RGB(230, 214, 206);
-            } else if (selected && active) {
-                fillColor = RGB(214, 228, 206);
-            } else if (selected) {
-                fillColor = RGB(235, 222, 196);
-            } else if (active) {
-                fillColor = RGB(222, 231, 214);
+        if (m_activeTab == TabId_Audio) {
+            DrawSlider(hdc, GetBgmSliderRect(), m_bgmVolume, "BGM");
+            DrawSlider(hdc, GetSoundSliderRect(), m_soundVolume, "Sound");
+            if (m_bgmOnCheckBox) {
+                TextOutA(hdc, m_bgmOnCheckBox->m_x + 18, m_bgmOnCheckBox->m_y - 1, "Mute", 4);
             }
-
-            FillRectColor(hdc, entryRect, fillColor);
-            DrawRectFrame(hdc, entryRect, RGB(158, 137, 113));
-
-            const char* backendName = GetRenderBackendName(entry);
-            const char* stateText = GetRendererEntryStateText(entry, preferredBackend, activeBackend);
-            const char* prefixText = GetRendererEntryPrefix(entry, preferredBackend, activeBackend);
-            std::string label = std::string(prefixText) + backendName;
-            const int textY = entryRect.top + 2;
-            SetTextColor(hdc, (implemented && supported) ? RGB(0, 0, 0) : RGB(90, 82, 74));
-            TextOutA(hdc, entryRect.left + 4, textY, label.c_str(), static_cast<int>(label.size()));
-
-            SIZE stateSize{};
-            GetTextExtentPoint32A(hdc, stateText, static_cast<int>(std::strlen(stateText)), &stateSize);
-            TextOutA(
-                hdc,
-                entryRect.right - stateSize.cx - 4,
-                textY,
-                stateText,
-                static_cast<int>(std::strlen(stateText)));
+            if (m_soundOnCheckBox) {
+                TextOutA(hdc, m_soundOnCheckBox->m_x + 18, m_soundOnCheckBox->m_y - 1, "Mute", 4);
+            }
+        } else if (m_activeTab == TabId_Game) {
+            if (m_noCtrlCheckBox) {
+                TextOutA(hdc, m_noCtrlCheckBox->m_x + 18, m_noCtrlCheckBox->m_y - 1, "Disable Ctrl+Click movement", 26);
+            }
+            if (m_attackSnapCheckBox) {
+                TextOutA(hdc, m_attackSnapCheckBox->m_x + 18, m_attackSnapCheckBox->m_y - 1, "Attack target snap", 18);
+            }
+            if (m_skillSnapCheckBox) {
+                TextOutA(hdc, m_skillSnapCheckBox->m_x + 18, m_skillSnapCheckBox->m_y - 1, "Skill target snap", 17);
+            }
+            if (m_itemSnapCheckBox) {
+                TextOutA(hdc, m_itemSnapCheckBox->m_x + 18, m_itemSnapCheckBox->m_y - 1, "Item target snap", 16);
+            }
+        } else if (m_activeTab == TabId_Graphics) {
+            const std::vector<GraphicsRowId> rows = GetVisibleGraphicsRows();
+            for (size_t index = 0; index < rows.size(); ++index) {
+                const char* label = "";
+                switch (rows[index]) {
+                case GraphicsRow_Resolution:
+                    label = "Resolution";
+                    break;
+                case GraphicsRow_Renderer:
+                    label = "Renderer";
+                    break;
+                case GraphicsRow_WindowMode:
+                    label = "Window mode";
+                    break;
+                case GraphicsRow_AntiAliasing:
+                    label = "Anti-aliasing";
+                    break;
+                case GraphicsRow_TextureUpscale:
+                    label = "Texture upscale";
+                    break;
+                case GraphicsRow_AnisotropicFiltering:
+                    label = "Anisotropic";
+                    break;
+                }
+                DrawSettingRow(hdc, static_cast<int>(index), label, GetGraphicsRowValue(rows[index]));
+            }
         }
 
-        if (preferredBackend != activeBackend) {
+        if (HasPendingGraphicsRestart()) {
             const RECT restartRect = GetRestartButtonRect();
-            FillRectColor(hdc, restartRect, RGB(222, 208, 190));
-            DrawRectFrame(hdc, restartRect, RGB(82, 63, 45));
-            TextOutA(hdc, restartRect.left + 10, restartRect.top + 3, "Restart", 7);
+            DrawHeaderButton(hdc, restartRect, "Restart");
         }
-
-        SetTextColor(hdc, RGB(0, 0, 0));
-        TextOutA(hdc, m_x + 76, m_y + 160, "Snap", 4);
-
-        TextOutA(hdc, m_x + 31, m_y + 160, "NoCtrl", 7);
-        TextOutA(hdc, m_x + 130, m_y + 160, "Attack", 6);
-        TextOutA(hdc, m_x + 180, m_y + 160, "Skill", 5);
-        TextOutA(hdc, m_x + 222, m_y + 160, "Item", 4);
     }
 
     DrawChildren();
@@ -969,32 +1283,49 @@ void UIOptionWnd::OnLBtnDown(int x, int y)
         return;
     }
 
-    if (!m_collapsed && HasPendingRendererRestart() && PointInRectXY(GetRestartButtonRect(), x, y)) {
-        PromptForRendererRestart();
-        return;
-    }
-
-    if (!m_collapsed && PointInRectXY(GetRendererRect(), x, y)) {
-        for (int index = 0; index < kRendererEntryCount; ++index) {
-            if (PointInRectXY(GetRendererEntryRect(index), x, y)) {
-                SelectPreferredRenderBackend(kRendererEntries[static_cast<size_t>(index)]);
+    if (!m_collapsed) {
+        for (int tabIndex = 0; tabIndex < TabId_Count; ++tabIndex) {
+            if (PointInRectXY(GetTabRect(tabIndex), x, y)) {
+                m_activeTab = tabIndex;
+                LayoutControls();
+                SaveSettings();
                 return;
             }
         }
-    }
 
-    if (!m_collapsed && PointInRectXY(GetBgmSliderRect(), x, y)) {
-        m_dragMode = DragMode_BgmSlider;
-        m_bgmVolume = SliderValueFromMouseX(x);
-        ApplyAudioSettings();
-        return;
-    }
+        if (HasPendingGraphicsRestart() && PointInRectXY(GetRestartButtonRect(), x, y)) {
+            PromptForGraphicsRestart();
+            return;
+        }
 
-    if (!m_collapsed && PointInRectXY(GetSoundSliderRect(), x, y)) {
-        m_dragMode = DragMode_SoundSlider;
-        m_soundVolume = SliderValueFromMouseX(x);
-        ApplyAudioSettings();
-        return;
+        if (m_activeTab == TabId_Graphics) {
+            const std::vector<GraphicsRowId> rows = GetVisibleGraphicsRows();
+            for (size_t index = 0; index < rows.size(); ++index) {
+                const int rowIndex = static_cast<int>(index);
+                if (PointInRectXY(GetRowPrevButtonRect(rowIndex), x, y)) {
+                    CycleGraphicsSetting(rows[index], -1);
+                    return;
+                }
+                if (PointInRectXY(GetRowNextButtonRect(rowIndex), x, y) || PointInRectXY(GetRowRect(rowIndex), x, y)) {
+                    CycleGraphicsSetting(rows[index], 1);
+                    return;
+                }
+            }
+        }
+
+        if (m_activeTab == TabId_Audio && PointInRectXY(GetBgmSliderRect(), x, y)) {
+            m_dragMode = DragMode_BgmSlider;
+            m_bgmVolume = SliderValueFromMouseX(x);
+            ApplyAudioSettings();
+            return;
+        }
+
+        if (m_activeTab == TabId_Audio && PointInRectXY(GetSoundSliderRect(), x, y)) {
+            m_dragMode = DragMode_SoundSlider;
+            m_soundVolume = SliderValueFromMouseX(x);
+            ApplyAudioSettings();
+            return;
+        }
     }
 
     if (y < m_y + kTitleBarHeight) {
@@ -1042,6 +1373,7 @@ void UIOptionWnd::OnLBtnUp(int x, int y)
 
 void UIOptionWnd::OnLBtnDblClk(int x, int y)
 {
+    (void)x;
     if (y < m_y + kTitleBarHeight) {
         SetCollapsed(!m_collapsed);
     }
@@ -1056,10 +1388,13 @@ int UIOptionWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, int 
         return 0;
     }
 
+    bool applyAudio = false;
     if (sender == m_bgmOnCheckBox) {
         m_bgmEnabled = (lparam != 0) ? 0 : 1;
+        applyAudio = true;
     } else if (sender == m_soundOnCheckBox) {
         m_soundEnabled = (lparam != 0) ? 0 : 1;
+        applyAudio = true;
     } else if (sender == m_noCtrlCheckBox) {
         m_noCtrl = (lparam != 0) ? 1 : 0;
     } else if (sender == m_attackSnapCheckBox) {
@@ -1072,7 +1407,9 @@ int UIOptionWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, int 
         return 0;
     }
 
-    ApplyAudioSettings();
+    if (applyAudio) {
+        ApplyAudioSettings();
+    }
     SaveSettings();
     return 1;
 }

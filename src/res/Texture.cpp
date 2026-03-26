@@ -2,6 +2,7 @@
 
 #include "render3d/D3dutil.h"
 #include "render3d/Device.h"
+#include "render3d/GraphicsSettings.h"
 #include "render3d/RenderDevice.h"
 
 #include <algorithm>
@@ -12,6 +13,11 @@
 namespace {
 
 constexpr bool kLogTexture = false;
+
+int GetTextureUpscaleFactor()
+{
+    return (std::max)(1, GetCachedGraphicsSettings().textureUpscaleFactor);
+}
 
 unsigned int CountTrailingZeros(unsigned int mask)
 {
@@ -237,7 +243,8 @@ bool CTexture::Create(unsigned int w, unsigned int h, PixelFormat format) {
     m_w = textureW;
     m_h = textureH;
     m_pf = format;
-    SetUVAdjust(w, h);
+    const unsigned int scale = static_cast<unsigned int>(GetTextureUpscaleFactor());
+    SetUVAdjust(w * scale, h * scale);
     return true;
 }
 bool CTexture::CreateBump(unsigned int w, unsigned int h) { return Create(w, h, PF_BUMP); }
@@ -267,11 +274,35 @@ void CTexture::ClearSurface(RECT* r, unsigned int col) { CSurface::ClearSurface(
 void CTexture::DrawSurface(int x, int y, int w, int h, unsigned int flags) { CSurface::DrawSurface(x, y, w, h, flags); }
 void CTexture::DrawSurfaceStretch(int x, int y, int w, int h) { CSurface::DrawSurfaceStretch(x, y, w, h); }
 void CTexture::Update(int x, int y, int w, int h, unsigned int* data, bool b, int p) {
-    if (!GetRenderDevice().UpdateTextureResource(this, x, y, w, h, data, b, p)) {
+    const int scale = GetTextureUpscaleFactor();
+    const int scaledX = x * scale;
+    const int scaledY = y * scale;
+    const int scaledW = w * scale;
+    const int scaledH = h * scale;
+
+    const unsigned int* uploadData = data;
+    int uploadPitch = p;
+    std::vector<unsigned int> scaledPixels;
+    if (scale > 1 && data && w > 0 && h > 0) {
+        const int srcPitch = p > 0 ? p : w * static_cast<int>(sizeof(unsigned int));
+        scaledPixels.resize(static_cast<size_t>(scaledW) * static_cast<size_t>(scaledH));
+        for (int dstY = 0; dstY < scaledH; ++dstY) {
+            const int srcY = dstY / scale;
+            const unsigned int* srcRow = reinterpret_cast<const unsigned int*>(reinterpret_cast<const unsigned char*>(data) + static_cast<size_t>(srcY) * static_cast<size_t>(srcPitch));
+            unsigned int* dstRow = scaledPixels.data() + static_cast<size_t>(dstY) * static_cast<size_t>(scaledW);
+            for (int dstX = 0; dstX < scaledW; ++dstX) {
+                dstRow[dstX] = srcRow[dstX / scale];
+            }
+        }
+        uploadData = scaledPixels.data();
+        uploadPitch = scaledW * static_cast<int>(sizeof(unsigned int));
+    }
+
+    if (!GetRenderDevice().UpdateTextureResource(this, scaledX, scaledY, scaledW, scaledH, uploadData, b, uploadPitch)) {
         return;
     }
-    m_updateWidth = (std::max)(m_updateWidth, static_cast<unsigned int>(x + w));
-    m_updateHeight = (std::max)(m_updateHeight, static_cast<unsigned int>(y + h));
+    m_updateWidth = (std::max)(m_updateWidth, static_cast<unsigned int>(scaledX + scaledW));
+    m_updateHeight = (std::max)(m_updateHeight, static_cast<unsigned int>(scaledY + scaledH));
 }
 
 void CTexture::UpdateSprite(int a, int b, int c, int d, SprImg& img, unsigned int* pal) { (void)a; (void)b; (void)c; (void)d; (void)img; (void)pal; }
