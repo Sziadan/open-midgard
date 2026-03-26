@@ -2104,6 +2104,28 @@ int ApproachSign(int delta)
     return 0;
 }
 
+int GetHeldMoveDirectionalExtensionCells(const CPlayer& player)
+{
+    if (player.m_speed <= 60) {
+        return kHeldMoveDirectionalExtensionCells + 2;
+    }
+    if (player.m_speed <= 90) {
+        return kHeldMoveDirectionalExtensionCells + 1;
+    }
+    return kHeldMoveDirectionalExtensionCells;
+}
+
+u32 GetHeldMoveDirectionalRetargetNearEndMs(const CPlayer& player)
+{
+    if (player.m_speed <= 60) {
+        return 150;
+    }
+    if (player.m_speed <= 90) {
+        return 120;
+    }
+    return kHeldMoveDirectionalRetargetNearEndMs;
+}
+
 bool ResolveEathenaChaseCell(CGameMode& mode,
     int sourceTileX,
     int sourceTileY,
@@ -2412,11 +2434,12 @@ bool ShouldPreserveCurrentHeldMove(const CGameMode& mode)
     }
 
     const u32 now = g_session.GetServerTime();
-    if (player->m_moveEndTime > now && player->m_moveEndTime - now <= kHeldMoveDirectionalRetargetNearEndMs) {
+    if (player->m_moveEndTime > now
+        && player->m_moveEndTime - now <= GetHeldMoveDirectionalRetargetNearEndMs(*player)) {
         return false;
     }
 
-    if ((std::max)(std::abs(heldDeltaX), std::abs(heldDeltaY)) > kHeldMoveDirectionalExtensionCells) {
+    if ((std::max)(std::abs(heldDeltaX), std::abs(heldDeltaY)) > GetHeldMoveDirectionalExtensionCells(*player)) {
         return false;
     }
 
