@@ -171,7 +171,7 @@ const char* GetEntryBitmapName(int index, int stateIndex)
 UIChooseWnd::UIChooseWnd()
     : m_controlsCreated(false),
       m_entryButtons{ nullptr, nullptr, nullptr, nullptr },
-      m_selectedIndex(MenuEntry_ReturnToGame)
+    m_selectedIndex(MenuEntry_ReturnToGame)
 {
     m_defPushId = 0;
     m_defCancelPushId = 0;
@@ -292,20 +292,21 @@ int UIChooseWnd::ActivateSelection()
         }
         return 0;
 
-    case MenuEntry_GameSettings: {
+    case MenuEntry_ReturnToGame:
         CloseMenu();
-        UIWindow* optionWnd = g_windowMgr.MakeWindow(UIWindowMgr::WID_OPTIONWND);
-        if (optionWnd) {
-            optionWnd->SetShow(1);
-        }
         return 1;
-    }
 
     case MenuEntry_ExitToWindows:
         CloseMenu();
         return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestExitToWindows, 0, 0, 0);
 
-    case MenuEntry_ReturnToGame:
+    case MenuEntry_ReturnToSavePoint:
+        if (g_modeMgr.SendMsg(CGameMode::GameMsg_RequestReturnToSavePoint, 0, 0, 0) != 0) {
+            CloseMenu();
+            return 1;
+        }
+        return 0;
+
     default:
         CloseMenu();
         return 1;

@@ -549,6 +549,17 @@ bool RequestReturnToCharSelect()
     return sent;
 }
 
+bool RequestReturnToSavePoint()
+{
+    PACKET_CZ_RESTART packet{};
+    packet.PacketType = PACKETID_CZ_RESTART;
+    packet.Type = 0;
+
+    return CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+}
+
 void RequestExitToWindows()
 {
     PACKET_CZ_QUITGAME packet{};
@@ -4503,6 +4514,9 @@ int CGameMode::SendMsg(int msg, int wparam, int lparam, int extra)
     case GameMsg_RequestExitToWindows:
         RequestExitToWindows();
         return 1;
+
+    case GameMsg_RequestReturnToSavePoint:
+        return RequestReturnToSavePoint() ? 1 : 0;
 
     case GameMsg_RButtonUp:
         m_canRotateView = 0;

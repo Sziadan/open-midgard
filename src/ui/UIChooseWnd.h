@@ -21,9 +21,9 @@ public:
 private:
     enum MenuEntry {
         MenuEntry_CharacterSelect = 0,
-        MenuEntry_GameSettings = 1,
+        MenuEntry_ReturnToGame = 1,
         MenuEntry_ExitToWindows = 2,
-        MenuEntry_ReturnToGame = 3,
+        MenuEntry_ReturnToSavePoint = 3,
         MenuEntry_Count = 4,
     };
 

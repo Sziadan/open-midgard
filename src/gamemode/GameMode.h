@@ -81,6 +81,7 @@ public:
         GameMsg_SubmitChat = 20006,
         GameMsg_RequestReturnToCharSelect = 20007,
         GameMsg_RequestExitToWindows = 20008,
+        GameMsg_RequestReturnToSavePoint = 20009,
     };
 
     CGameMode();
