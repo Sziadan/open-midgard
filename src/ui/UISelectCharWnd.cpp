@@ -164,6 +164,29 @@ void DrawBitmapTransparent(HDC target, HBITMAP bmp, const RECT& dst)
     DeleteDC(srcDC);
 }
 
+RECT MakeCenteredBitmapRect(HBITMAP bmp, const RECT& outerRect)
+{
+    RECT result = outerRect;
+    if (!bmp) {
+        return result;
+    }
+
+    BITMAP bm{};
+    if (!GetObjectA(bmp, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
+        return result;
+    }
+
+    const int outerWidth = outerRect.right - outerRect.left;
+    const int outerHeight = outerRect.bottom - outerRect.top;
+    const int insetX = (outerWidth - bm.bmWidth) / 2;
+    const int insetY = (outerHeight - bm.bmHeight) / 2;
+    result.left = outerRect.left + (std::max)(insetX, 0);
+    result.top = outerRect.top + (std::max)(insetY, 0);
+    result.right = result.left + bm.bmWidth;
+    result.bottom = result.top + bm.bmHeight;
+    return result;
+}
+
 std::string ToLowerAscii(std::string value)
 {
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
@@ -1071,7 +1094,7 @@ void UISelectCharWnd::OnDraw()
             kSlotHeight);
         HBITMAP slotBmp = (slotNumber == m_selectedSlot && m_slotSelectedBmp) ? m_slotSelectedBmp : m_slotBmp;
         if (slotBmp) {
-            DrawBitmapTransparent(hdc, slotBmp, slotRect);
+            DrawBitmapTransparent(hdc, slotBmp, MakeCenteredBitmapRect(slotBmp, slotRect));
         }
     }
 
