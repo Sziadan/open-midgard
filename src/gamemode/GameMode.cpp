@@ -1779,6 +1779,7 @@ constexpr u16 kPacketCzRequestTime = PacketProfile::ActiveMapServerSend::kTickSe
 constexpr u16 kPacketCzNotifyActorInit = PacketProfile::ActiveMapServerSend::kNotifyActorInit;
 constexpr u32 kHeldMoveRequestIntervalMs = 75;
 constexpr int kHeldMoveRetargetThresholdCells = 2;
+constexpr int kHeldMoveDirectionalExtensionCells = 4;
 constexpr u32 kMoveAckTimeoutMs = 1000;
 constexpr u32 kAttackChaseRequestIntervalMs = 1200;
 constexpr u32 kAttackRetryIntervalMs = 1200;
@@ -2397,9 +2398,30 @@ bool ShouldPreserveCurrentHeldMove(const CGameMode& mode)
         return false;
     }
 
-    return (std::max)(
-        std::abs(moveDestX - mode.m_heldMoveTargetCellX),
-        std::abs(moveDestY - mode.m_heldMoveTargetCellY)) <= kHeldMoveRetargetThresholdCells;
+    const int heldDeltaX = mode.m_heldMoveTargetCellX - moveDestX;
+    const int heldDeltaY = mode.m_heldMoveTargetCellY - moveDestY;
+    if ((std::max)(std::abs(heldDeltaX), std::abs(heldDeltaY)) <= kHeldMoveRetargetThresholdCells) {
+        return true;
+    }
+
+    const int currentDeltaX = moveDestX - player->m_moveSrcX;
+    const int currentDeltaY = moveDestY - player->m_moveSrcY;
+    if (currentDeltaX == 0 && currentDeltaY == 0) {
+        return false;
+    }
+
+    if ((std::max)(std::abs(heldDeltaX), std::abs(heldDeltaY)) > kHeldMoveDirectionalExtensionCells) {
+        return false;
+    }
+
+    const int currentSignX = ApproachSign(currentDeltaX);
+    const int currentSignY = ApproachSign(currentDeltaY);
+    const int heldSignX = ApproachSign(heldDeltaX);
+    const int heldSignY = ApproachSign(heldDeltaY);
+
+    const bool compatibleHeadingX = heldSignX == 0 || currentSignX == 0 || heldSignX == currentSignX;
+    const bool compatibleHeadingY = heldSignY == 0 || currentSignY == 0 || heldSignY == currentSignY;
+    return compatibleHeadingX && compatibleHeadingY;
 }
 
 void PumpHeldMoveRequest(CGameMode& mode)
