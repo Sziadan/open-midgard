@@ -912,21 +912,26 @@ int UISelectCharWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, 
 
     switch (wparam) {
     case 118:
+        PlayUiButtonSound();
         ActivateSelectedSlot();
         return 1;
 
     case 119:
+        PlayUiButtonSound();
         return g_modeMgr.SendMsg(CLoginMode::LoginMsg_ReturnToLogin, 0, 0, 0);
 
     case 137:
+        PlayUiButtonSound();
         ActivateCreate();
         return 1;
 
     case 145:
+        PlayUiButtonSound();
         ActivateDelete();
         return 1;
 
     case 218:
+        PlayUiButtonSound();
         g_windowMgr.SetLoginStatus("Character service billing is not implemented in this rebuild.");
         return 1;
 
@@ -951,15 +956,13 @@ void UISelectCharWnd::OnKeyDown(int virtualKey)
         ChangePage(1);
         break;
     case VK_RETURN:
-        PlayUiButtonSound();
-        ActivateSelectedSlot();
+        SendMsg(nullptr, 6, m_defPushId, 0, 0);
         break;
     case VK_DELETE:
-        ActivateDelete();
+        SendMsg(nullptr, 6, 145, 0, 0);
         break;
     case VK_ESCAPE:
-        PlayUiButtonSound();
-        g_modeMgr.SendMsg(CLoginMode::LoginMsg_ReturnToLogin, 0, 0, 0);
+        SendMsg(nullptr, 6, 119, 0, 0);
         break;
     default:
         break;

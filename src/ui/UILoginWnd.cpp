@@ -762,6 +762,7 @@ int UILoginWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, int e
     if (msg == 6) {
         switch (wparam) {
         case 120: // connect
+            PlayUiButtonSound();
             StoreRememberedUserId(
                 m_login ? m_login->GetText() : "",
                 m_saveAccountCheck && m_saveAccountCheck->m_isChecked != 0);
@@ -772,15 +773,19 @@ int UILoginWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, int e
             return g_modeMgr.SendMsg(CLoginMode::LoginMsg_RequestConnect, 0, 0, 0);
 
         case 119: // cancel
+            PlayUiButtonSound();
             return g_modeMgr.SendMsg(CLoginMode::LoginMsg_ReturnToLogin, 0, 0, 0);
 
         case 155: // exit
+            PlayUiButtonSound();
             return g_modeMgr.SendMsg(CLoginMode::LoginMsg_Quit, 0, 0, 0);
 
         case 201: // request
+            PlayUiButtonSound();
             return g_modeMgr.SendMsg(CLoginMode::LoginMsg_RequestAccount, 0, 0, 0);
 
         case 219: // intro
+            PlayUiButtonSound();
             return g_modeMgr.SendMsg(CLoginMode::LoginMsg_Intro, 0, 0, 0);
 
         default:
@@ -837,11 +842,9 @@ void UILoginWnd::OnKeyDown(int virtualKey)
 {
     if (virtualKey == VK_RETURN) {
         // Enter → fire Connect button (id 120)
-        PlayUiButtonSound();
         SendMsg(nullptr, 6, 120, 0, 0);
     } else if (virtualKey == VK_ESCAPE) {
         // Escape → fire Exit button (id 155)
-        PlayUiButtonSound();
         SendMsg(nullptr, 6, 155, 0, 0);
     } else if (virtualKey == VK_TAB) {
         // Tab → cycle focus between login and password fields

@@ -768,6 +768,7 @@ int UIMakeCharWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, in
 
     switch (wparam) {
     case 118: {
+        PlayUiButtonSound();
         int param[8] = { m_stats[0], m_stats[1], m_stats[2], m_stats[3], m_stats[4], m_stats[5], m_hairColor, m_hairIdx };
         g_modeMgr.SendMsg(CLoginMode::LoginMsg_SetCharParam, reinterpret_cast<int>(param), 0, 0);
         g_modeMgr.SendMsg(CLoginMode::LoginMsg_SetMakingCharName,
@@ -776,6 +777,7 @@ int UIMakeCharWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, in
     }
 
     case 119:
+        PlayUiButtonSound();
         return g_modeMgr.SendMsg(CLoginMode::LoginMsg_ReturnToCharSelect, 0, 0, 0);
 
     // Stat swaps (Ref IDs and directions)
@@ -807,10 +809,8 @@ int UIMakeCharWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, in
 void UIMakeCharWnd::OnKeyDown(int virtualKey)
 {
     if (virtualKey == VK_RETURN) {
-        PlayUiButtonSound();
         SendMsg(nullptr, 6, 118, 0, 0);
     } else if (virtualKey == VK_ESCAPE) {
-        PlayUiButtonSound();
         SendMsg(nullptr, 6, 119, 0, 0);
     }
 }

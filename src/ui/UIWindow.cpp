@@ -639,7 +639,6 @@ void UIBitmapButton::OnLBtnUp(int x, int y)
     if (m_state == 1 && inside) {
         m_state = 2;
         Invalidate();
-        PlayUiButtonSound();
         if (m_parent) {
             m_parent->SendMsg(this, 6, m_id, 0, 0);
         }
