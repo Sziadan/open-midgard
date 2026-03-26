@@ -19,6 +19,14 @@ This client currently applies 3D anti-aliasing only on the modern renderer backe
 - `SMAA` now exists in the AA mode model and settings serialization, but it is not exposed as a supported backend option until the full pass chain is implemented.
 - `FXAA` remains the only production AA mode available on the modern backends.
 
+## SMAA Default
+
+When SMAA ships, it will use a single production preset: `SMAA 1x High`.
+
+- `1x` avoids temporal history, motion-vector requirements, and extra resolve state that this client does not currently carry through its classic frame flow.
+- `High` is the default because it improves edge quality over FXAA without introducing an extra user-facing quality matrix before the full SMAA path is proven stable.
+- No separate SMAA quality selector will be exposed unless later validation shows a concrete need for lower or higher-cost variants.
+
 ## Render Path Scope
 
 The AA pass is intended to affect only the 3D scene content:

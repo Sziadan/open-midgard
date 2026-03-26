@@ -224,6 +224,22 @@ AntiAliasingMode GetEffectiveAntiAliasingModeForBackend(RenderBackendType backen
         : AntiAliasingMode::None;
 }
 
+SmaaPreset GetDefaultSmaaPreset()
+{
+    return SmaaPreset::High;
+}
+
+const char* GetSmaaPresetName(SmaaPreset preset)
+{
+    switch (preset) {
+    case SmaaPreset::High:
+        return "High";
+
+    default:
+        return "High";
+    }
+}
+
 void ClampGraphicsSettingsToBackend(RenderBackendType backend, GraphicsSettings* settings)
 {
     if (!settings) {

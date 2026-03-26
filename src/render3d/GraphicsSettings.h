@@ -16,6 +16,10 @@ enum class AntiAliasingMode {
     SMAA,
 };
 
+enum class SmaaPreset {
+    High = 0,
+};
+
 struct GraphicsSettings {
     int width;
     int height;
@@ -40,6 +44,8 @@ bool DoesBackendSupportAntiAliasing(RenderBackendType backend);
 std::vector<AntiAliasingMode> GetSupportedAntiAliasingModesForBackend(RenderBackendType backend);
 bool DoesBackendSupportAntiAliasingMode(RenderBackendType backend, AntiAliasingMode mode);
 AntiAliasingMode GetEffectiveAntiAliasingModeForBackend(RenderBackendType backend, AntiAliasingMode requestedMode);
+SmaaPreset GetDefaultSmaaPreset();
+const char* GetSmaaPresetName(SmaaPreset preset);
 void ClampGraphicsSettingsToBackend(RenderBackendType backend, GraphicsSettings* settings);
 WindowMode GetEffectiveWindowModeForBackend(RenderBackendType backend, WindowMode requestedMode);
 bool GraphicsSettingsRequireRestart(const GraphicsSettings& current, const GraphicsSettings& pending);
