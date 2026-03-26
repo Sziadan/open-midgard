@@ -16,7 +16,8 @@ This client currently applies 3D anti-aliasing only on the modern renderer backe
 - Anti-aliasing support is backend-specific. Unsupported modes are hidden in the option window instead of being shown as disabled entries.
 - Switching to a backend that does not support the selected AA mode clamps the saved mode back to Off.
 - Changing the AA mode is restart-required. `GraphicsSettingsRequireRestart(...)` treats AA changes the same way as other renderer reinitialization settings.
-- `SMAA` is not implemented yet, so `FXAA` is the only production AA mode available on the modern backends.
+- `SMAA` now exists in the AA mode model and settings serialization, but it is not exposed as a supported backend option until the full pass chain is implemented.
+- `FXAA` remains the only production AA mode available on the modern backends.
 
 ## Render Path Scope
 

@@ -88,7 +88,8 @@ void SanitizeGraphicsSettings(GraphicsSettings* settings)
     settings->textureUpscaleFactor = (std::max)(1, (std::min)(4, settings->textureUpscaleFactor));
     settings->anisotropicLevel = ClampToAllowedAnisotropy(settings->anisotropicLevel);
     if (settings->antiAliasing != AntiAliasingMode::None
-        && settings->antiAliasing != AntiAliasingMode::FXAA) {
+        && settings->antiAliasing != AntiAliasingMode::FXAA
+        && settings->antiAliasing != AntiAliasingMode::SMAA) {
         settings->antiAliasing = AntiAliasingMode::None;
     }
 }

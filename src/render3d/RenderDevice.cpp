@@ -694,6 +694,8 @@ const char* GetPostProcessPixelShaderEntryPoint(AntiAliasingMode mode)
     switch (mode) {
     case AntiAliasingMode::FXAA:
         return "PSMainFXAA";
+    case AntiAliasingMode::SMAA:
+        return nullptr;
 
     default:
         return nullptr;
@@ -730,6 +732,14 @@ bool GetVulkanPostShaderProgram(AntiAliasingMode mode, VulkanPostShaderProgram* 
         outProgram->vertexEntryPoint = "VSMainPost";
         outProgram->fragmentEntryPoint = "PSMainFXAA";
         return true;
+    case AntiAliasingMode::SMAA:
+        outProgram->vertexBytes = nullptr;
+        outProgram->vertexByteCount = 0;
+        outProgram->fragmentBytes = nullptr;
+        outProgram->fragmentByteCount = 0;
+        outProgram->vertexEntryPoint = nullptr;
+        outProgram->fragmentEntryPoint = nullptr;
+        return false;
 
     default:
         outProgram->vertexBytes = nullptr;
@@ -3387,6 +3397,8 @@ private:
         switch (mode) {
         case AntiAliasingMode::FXAA:
             return m_fxaaPixelShaderBlob;
+        case AntiAliasingMode::SMAA:
+            return nullptr;
 
         default:
             return nullptr;
@@ -5430,6 +5442,8 @@ private:
         switch (mode) {
         case AntiAliasingMode::FXAA:
             return m_postFxaaFragmentShaderModule;
+        case AntiAliasingMode::SMAA:
+            return VK_NULL_HANDLE;
 
         default:
             return VK_NULL_HANDLE;

@@ -303,6 +303,8 @@ const char* GetAntiAliasingName(AntiAliasingMode mode)
         return "Off";
     case AntiAliasingMode::FXAA:
         return "FXAA";
+    case AntiAliasingMode::SMAA:
+        return "SMAA";
     default:
         return "Off";
     }

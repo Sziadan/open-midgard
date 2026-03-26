@@ -13,6 +13,7 @@ enum class WindowMode {
 enum class AntiAliasingMode {
     None = 0,
     FXAA,
+    SMAA,
 };
 
 struct GraphicsSettings {
