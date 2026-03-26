@@ -113,7 +113,7 @@ Goal: ship true configurable 3D anti-aliasing for modern backends without affect
 #### Phase D — Port The 3D AA Pipeline To Vulkan
 - [x] Add a Vulkan scene color image separate from the swapchain image.
 - [x] Route Vulkan world rendering into the scene target before overlay composition.
-- [ ] Add Vulkan fullscreen post-process pipeline support for FXAA/SMAA.
+- [x] Add Vulkan fullscreen post-process pipeline support for FXAA/SMAA.
 - [x] Port the current FXAA implementation to Vulkan.
 - [x] Integrate the resolved scene into the existing Vulkan overlay/UI upload path without reintroducing the prior UI scaling issues.
 - [ ] Re-validate swapchain resize, present, alt-tab, cursor, and UI composition behavior with AA enabled on Vulkan.
