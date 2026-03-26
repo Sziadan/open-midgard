@@ -2776,11 +2776,11 @@ public:
     D3D12RenderDevice()
         : m_hwnd(nullptr), m_renderWidth(0), m_renderHeight(0),
           m_factory(nullptr), m_device(nullptr), m_commandQueue(nullptr), m_swapChain(nullptr),
-          m_rtvHeap(nullptr), m_dsvHeap(nullptr), m_srvHeap(nullptr), m_depthStencil(nullptr), m_postPipelineState(nullptr),
+                      m_rtvHeap(nullptr), m_dsvHeap(nullptr), m_srvHeap(nullptr), m_depthStencil(nullptr), m_postPipelineState(nullptr), m_smaaEdgePipelineState(nullptr), m_smaaBlendWeightPipelineState(nullptr), m_smaaNeighborhoodPipelineState(nullptr),
           m_commandAllocator(nullptr), m_commandList(nullptr), m_fence(nullptr),
           m_fenceEvent(nullptr), m_fenceValue(0), m_frameIndex(0), m_rtvDescriptorSize(0), m_srvDescriptorSize(0), m_srvHeapCursor(0),
           m_rootSignature(nullptr),
-          m_vertexShaderTlBlob(nullptr), m_vertexShaderLmBlob(nullptr), m_pixelShaderBlob(nullptr), m_postVertexShaderBlob(nullptr), m_fxaaPixelShaderBlob(nullptr),
+                    m_vertexShaderTlBlob(nullptr), m_vertexShaderLmBlob(nullptr), m_pixelShaderBlob(nullptr), m_postVertexShaderBlob(nullptr), m_fxaaPixelShaderBlob(nullptr), m_smaaEdgePixelShaderBlob(nullptr), m_smaaBlendWeightPixelShaderBlob(nullptr), m_smaaNeighborhoodPixelShaderBlob(nullptr),
                         m_captureReadbackBuffer(nullptr), m_captureDc(nullptr), m_captureBitmap(nullptr), m_captureBits(nullptr),
             m_captureWidth(0), m_captureHeight(0), m_captureRowPitch(0),
                     m_frameCommandsOpen(false), m_loggedSrvHeapExhausted(false), m_scenePresentDirty(false)
@@ -2791,6 +2791,8 @@ public:
         for (UINT index = 0; index < kFrameCount; ++index) {
             m_renderTargets[index] = nullptr;
             m_sceneRenderTargets[index] = nullptr;
+            m_smaaEdgeRenderTargets[index] = nullptr;
+            m_smaaBlendWeightRenderTargets[index] = nullptr;
         }
     }
 
@@ -2904,7 +2906,7 @@ public:
         m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
         D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{};
-        rtvHeapDesc.NumDescriptors = kFrameCount * 2;
+        rtvHeapDesc.NumDescriptors = kFrameCount * 4;
         rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
         hr = m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap));
         if (FAILED(hr) || !m_rtvHeap) {
@@ -3035,7 +3037,13 @@ public:
         ReleaseUploadPages(m_indexUploadPages);
         ReleaseUploadPages(m_vertexUploadPages);
         ReleaseUploadPages(m_constantUploadPages);
+        SafeRelease(m_smaaNeighborhoodPipelineState);
+        SafeRelease(m_smaaBlendWeightPipelineState);
+        SafeRelease(m_smaaEdgePipelineState);
         SafeRelease(m_postPipelineState);
+        SafeRelease(m_smaaNeighborhoodPixelShaderBlob);
+        SafeRelease(m_smaaBlendWeightPixelShaderBlob);
+        SafeRelease(m_smaaEdgePixelShaderBlob);
         SafeRelease(m_fxaaPixelShaderBlob);
         SafeRelease(m_postVertexShaderBlob);
         SafeRelease(m_pixelShaderBlob);
@@ -3105,9 +3113,9 @@ public:
             static_cast<float>(color & 0xFFu) / 255.0f,
             static_cast<float>((color >> 24) & 0xFFu) / 255.0f,
         };
-        const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = IsFxaaEnabled() ? GetCurrentSceneRtvHandle() : GetCurrentRtvHandle();
+        const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = IsScenePostProcessEnabled() ? GetCurrentSceneRtvHandle() : GetCurrentRtvHandle();
         m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-        m_scenePresentDirty = IsFxaaEnabled();
+        m_scenePresentDirty = IsScenePostProcessEnabled();
         return 0;
     }
     int ClearDepth() override
@@ -3117,7 +3125,7 @@ public:
         }
 
         m_commandList->ClearDepthStencilView(GetDsvHandle(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-        if (IsFxaaEnabled()) {
+        if (IsScenePostProcessEnabled()) {
             m_scenePresentDirty = true;
         }
         return 0;
@@ -3533,6 +3541,8 @@ private:
         for (UINT index = 0; index < kFrameCount; ++index) {
             SafeRelease(m_renderTargets[index]);
             SafeRelease(m_sceneRenderTargets[index]);
+            SafeRelease(m_smaaEdgeRenderTargets[index]);
+            SafeRelease(m_smaaBlendWeightRenderTargets[index]);
         }
 
         D3D12_CPU_DESCRIPTOR_HANDLE handle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -3545,7 +3555,7 @@ private:
             handle.ptr += static_cast<SIZE_T>(m_rtvDescriptorSize);
         }
 
-        if (IsFxaaEnabled()) {
+        if (IsScenePostProcessEnabled()) {
             if (!CreateSceneRenderTargets()) {
                 return false;
             }
@@ -3567,7 +3577,10 @@ private:
             || !CompileShaderBlob(shaderSource, "VSMainLM", "vs_5_0", &m_vertexShaderLmBlob)
             || !CompileShaderBlob(shaderSource, "PSMain", "ps_5_0", &m_pixelShaderBlob)
             || !CompileShaderBlob(shaderSource, "VSMainPost", "vs_5_0", &m_postVertexShaderBlob)
-            || !CompilePostProcessShaderBlob(shaderSource, kCompiledPostProcessAntiAliasingMode, "ps_5_0", &m_fxaaPixelShaderBlob)) {
+            || !CompilePostProcessShaderBlob(shaderSource, kCompiledPostProcessAntiAliasingMode, "ps_5_0", &m_fxaaPixelShaderBlob)
+            || !CompilePostProcessShaderBlob(shaderSource, AntiAliasingMode::SMAA, "ps_5_0", &m_smaaEdgePixelShaderBlob)
+            || !CompileShaderBlob(shaderSource, "PSMainSMAABlendWeight", "ps_5_0", &m_smaaBlendWeightPixelShaderBlob)
+            || !CompileShaderBlob(shaderSource, "PSMainSMAANeighborhood", "ps_5_0", &m_smaaNeighborhoodPixelShaderBlob)) {
             return false;
         }
 
@@ -3634,25 +3647,15 @@ private:
             return false;
         }
 
-        return CreatePostPipelineResources(kCompiledPostProcessAntiAliasingMode);
+        return CreatePostPipelineResources();
     }
 
-    ID3DBlob* GetPostPixelShaderBlob(AntiAliasingMode mode) const
+    bool CreateSinglePostPipelineState(ID3DBlob* postPixelShaderBlob, ID3D12PipelineState** outPipelineState)
     {
-        switch (mode) {
-        case AntiAliasingMode::FXAA:
-            return m_fxaaPixelShaderBlob;
-        case AntiAliasingMode::SMAA:
-            return nullptr;
-
-        default:
-            return nullptr;
+        if (!outPipelineState) {
+            return false;
         }
-    }
-
-    bool CreatePostPipelineResources(AntiAliasingMode mode)
-    {
-        ID3DBlob* postPixelShaderBlob = GetPostPixelShaderBlob(mode);
+        *outPipelineState = nullptr;
         if (!m_device || !m_rootSignature || !m_postVertexShaderBlob || !postPixelShaderBlob) {
             return false;
         }
@@ -3677,8 +3680,20 @@ private:
         desc.RTVFormats[0] = DXGI_FORMAT_B8G8R8A8_UNORM;
         desc.SampleDesc.Count = 1;
 
-        HRESULT hr = m_device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&m_postPipelineState));
-        return SUCCEEDED(hr) && m_postPipelineState != nullptr;
+        HRESULT hr = m_device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(outPipelineState));
+        return SUCCEEDED(hr) && *outPipelineState != nullptr;
+    }
+
+    bool CreatePostPipelineResources()
+    {
+        SafeRelease(m_smaaNeighborhoodPipelineState);
+        SafeRelease(m_smaaBlendWeightPipelineState);
+        SafeRelease(m_smaaEdgePipelineState);
+        SafeRelease(m_postPipelineState);
+        return CreateSinglePostPipelineState(m_fxaaPixelShaderBlob, &m_postPipelineState)
+            && CreateSinglePostPipelineState(m_smaaEdgePixelShaderBlob, &m_smaaEdgePipelineState)
+            && CreateSinglePostPipelineState(m_smaaBlendWeightPixelShaderBlob, &m_smaaBlendWeightPipelineState)
+            && CreateSinglePostPipelineState(m_smaaNeighborhoodPixelShaderBlob, &m_smaaNeighborhoodPipelineState);
     }
 
     bool IsFxaaEnabled() const
@@ -3686,10 +3701,35 @@ private:
         return GetCachedGraphicsSettings().antiAliasing == AntiAliasingMode::FXAA;
     }
 
+    bool IsSmaaEnabled() const
+    {
+        return GetCachedGraphicsSettings().antiAliasing == AntiAliasingMode::SMAA;
+    }
+
+    bool IsScenePostProcessEnabled() const
+    {
+        const AntiAliasingMode mode = GetCachedGraphicsSettings().antiAliasing;
+        return mode == AntiAliasingMode::FXAA || mode == AntiAliasingMode::SMAA;
+    }
+
     D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentSceneRtvHandle() const
     {
         D3D12_CPU_DESCRIPTOR_HANDLE handle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
         handle.ptr += static_cast<SIZE_T>(kFrameCount + m_frameIndex) * static_cast<SIZE_T>(m_rtvDescriptorSize);
+        return handle;
+    }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentSmaaEdgeRtvHandle() const
+    {
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
+        handle.ptr += static_cast<SIZE_T>((kFrameCount * 2) + m_frameIndex) * static_cast<SIZE_T>(m_rtvDescriptorSize);
+        return handle;
+    }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentSmaaBlendWeightRtvHandle() const
+    {
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
+        handle.ptr += static_cast<SIZE_T>((kFrameCount * 3) + m_frameIndex) * static_cast<SIZE_T>(m_rtvDescriptorSize);
         return handle;
     }
 
@@ -3731,6 +3771,38 @@ private:
             D3D12_CPU_DESCRIPTOR_HANDLE handle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
             handle.ptr += static_cast<SIZE_T>(kFrameCount + index) * static_cast<SIZE_T>(m_rtvDescriptorSize);
             m_device->CreateRenderTargetView(m_sceneRenderTargets[index], nullptr, handle);
+
+            if (IsSmaaEnabled()) {
+                hr = m_device->CreateCommittedResource(
+                    &heapProps,
+                    D3D12_HEAP_FLAG_NONE,
+                    &sceneDesc,
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    &clearValue,
+                    IID_PPV_ARGS(&m_smaaEdgeRenderTargets[index]));
+                if (FAILED(hr) || !m_smaaEdgeRenderTargets[index]) {
+                    return false;
+                }
+
+                handle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
+                handle.ptr += static_cast<SIZE_T>((kFrameCount * 2) + index) * static_cast<SIZE_T>(m_rtvDescriptorSize);
+                m_device->CreateRenderTargetView(m_smaaEdgeRenderTargets[index], nullptr, handle);
+
+                hr = m_device->CreateCommittedResource(
+                    &heapProps,
+                    D3D12_HEAP_FLAG_NONE,
+                    &sceneDesc,
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    &clearValue,
+                    IID_PPV_ARGS(&m_smaaBlendWeightRenderTargets[index]));
+                if (FAILED(hr) || !m_smaaBlendWeightRenderTargets[index]) {
+                    return false;
+                }
+
+                handle = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
+                handle.ptr += static_cast<SIZE_T>((kFrameCount * 3) + index) * static_cast<SIZE_T>(m_rtvDescriptorSize);
+                m_device->CreateRenderTargetView(m_smaaBlendWeightRenderTargets[index], nullptr, handle);
+            }
         }
 
         return true;
@@ -3738,7 +3810,16 @@ private:
 
     bool WriteSceneSrvDescriptors(UINT baseIndex)
     {
-        if (baseIndex + 1 >= kSrvHeapCapacity || !m_device || !m_sceneRenderTargets[m_frameIndex]) {
+        if (!m_sceneRenderTargets[m_frameIndex]) {
+            return false;
+        }
+
+        return WriteTextureSrvDescriptors(m_sceneRenderTargets[m_frameIndex], nullptr, baseIndex);
+    }
+
+    bool WriteTextureSrvDescriptors(ID3D12Resource* texture0, ID3D12Resource* texture1, UINT baseIndex)
+    {
+        if (baseIndex + 1 >= kSrvHeapCapacity || !m_device || !texture0) {
             return false;
         }
 
@@ -3749,22 +3830,60 @@ private:
         srvDesc.Texture2D.MostDetailedMip = 0;
         srvDesc.Texture2D.MipLevels = 1;
         srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-        m_device->CreateShaderResourceView(m_sceneRenderTargets[m_frameIndex], &srvDesc, GetSrvCpuHandle(baseIndex));
-        WriteNullSrvDescriptor(baseIndex + 1);
+
+        m_device->CreateShaderResourceView(texture0, &srvDesc, GetSrvCpuHandle(baseIndex));
+        if (texture1) {
+            m_device->CreateShaderResourceView(texture1, &srvDesc, GetSrvCpuHandle(baseIndex + 1));
+        } else {
+            WriteNullSrvDescriptor(baseIndex + 1);
+        }
+        return true;
+    }
+
+    bool DrawPostProcessPass(ID3D12PipelineState* pipelineState, ID3D12Resource* texture0, ID3D12Resource* texture1,
+        D3D12_RESOURCE_BARRIER* barriersBefore, UINT barrierCountBefore,
+        D3D12_RESOURCE_BARRIER* barriersAfter, UINT barrierCountAfter,
+        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, UINT64 constantGpuAddress)
+    {
+        if (!m_commandList || !pipelineState || !texture0 || !m_srvHeap || !m_rootSignature) {
+            return false;
+        }
+
+        UINT srvBaseIndex = 0;
+        if (!ReserveSrvTable(kSrvSlotCount, &srvBaseIndex) || !WriteTextureSrvDescriptors(texture0, texture1, srvBaseIndex)) {
+            return false;
+        }
+
+        if (barrierCountBefore > 0) {
+            m_commandList->ResourceBarrier(barrierCountBefore, barriersBefore);
+        }
+
+        ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvHeap };
+        m_commandList->SetDescriptorHeaps(1, descriptorHeaps);
+        m_commandList->SetGraphicsRootSignature(m_rootSignature);
+        m_commandList->SetPipelineState(pipelineState);
+        m_commandList->SetGraphicsRootConstantBufferView(0, constantGpuAddress);
+        m_commandList->SetGraphicsRootDescriptorTable(1, GetSrvGpuHandle(srvBaseIndex));
+        m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        m_commandList->IASetVertexBuffers(0, 0, nullptr);
+        m_commandList->IASetIndexBuffer(nullptr);
+        m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+        ApplyViewportAndScissor();
+        m_commandList->DrawInstanced(3, 1, 0, 0);
+
+        if (barrierCountAfter > 0) {
+            m_commandList->ResourceBarrier(barrierCountAfter, barriersAfter);
+        }
+
         return true;
     }
 
     bool EnsureScenePresentedToBackBuffer()
     {
-        if (!IsFxaaEnabled() || !m_scenePresentDirty) {
+        if (!IsScenePostProcessEnabled() || !m_scenePresentDirty) {
             return true;
         }
-        if (!EnsureFrameCommandsStarted() || !m_postPipelineState || !m_sceneRenderTargets[m_frameIndex]) {
-            return false;
-        }
-
-        UINT srvBaseIndex = 0;
-        if (!ReserveSrvTable(kSrvSlotCount, &srvBaseIndex) || !WriteSceneSrvDescriptors(srvBaseIndex)) {
+        if (!EnsureFrameCommandsStarted() || !m_sceneRenderTargets[m_frameIndex]) {
             return false;
         }
 
@@ -3780,35 +3899,53 @@ private:
         std::memset(constantUpload, 0, constantBytes);
         std::memcpy(constantUpload, &constants, sizeof(constants));
 
-        const D3D12_RESOURCE_BARRIER sceneToShader = TransitionBarrier(
-            m_sceneRenderTargets[m_frameIndex],
-            D3D12_RESOURCE_STATE_RENDER_TARGET,
-            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        m_commandList->ResourceBarrier(1, &sceneToShader);
+        if (IsSmaaEnabled()) {
+            if (!m_smaaEdgeRenderTargets[m_frameIndex] || !m_smaaBlendWeightRenderTargets[m_frameIndex]
+                || !m_smaaEdgePipelineState || !m_smaaBlendWeightPipelineState || !m_smaaNeighborhoodPipelineState) {
+                return false;
+            }
 
-        ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvHeap };
-        m_commandList->SetDescriptorHeaps(1, descriptorHeaps);
-        m_commandList->SetGraphicsRootSignature(m_rootSignature);
-        m_commandList->SetPipelineState(m_postPipelineState);
-        m_commandList->SetGraphicsRootConstantBufferView(0, constantGpuAddress);
-        m_commandList->SetGraphicsRootDescriptorTable(1, GetSrvGpuHandle(srvBaseIndex));
-        m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        m_commandList->IASetVertexBuffers(0, 0, nullptr);
-        m_commandList->IASetIndexBuffer(nullptr);
-        const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetCurrentRtvHandle();
-        m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-        ApplyViewportAndScissor();
-        m_commandList->DrawInstanced(3, 1, 0, 0);
+            D3D12_RESOURCE_BARRIER edgeBarriersBefore[1] = {
+                TransitionBarrier(m_sceneRenderTargets[m_frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
+            };
+            D3D12_RESOURCE_BARRIER edgeBarriersAfter[1] = {
+                TransitionBarrier(m_smaaEdgeRenderTargets[m_frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
+            };
+            if (!DrawPostProcessPass(m_smaaEdgePipelineState, m_sceneRenderTargets[m_frameIndex], nullptr,
+                edgeBarriersBefore, 1, edgeBarriersAfter, 1, GetCurrentSmaaEdgeRtvHandle(), constantGpuAddress)) {
+                return false;
+            }
 
-        const D3D12_RESOURCE_BARRIER sceneToRender = TransitionBarrier(
-            m_sceneRenderTargets[m_frameIndex],
-            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-            D3D12_RESOURCE_STATE_RENDER_TARGET);
-        m_commandList->ResourceBarrier(1, &sceneToRender);
+            D3D12_RESOURCE_BARRIER blendBarriersAfter[1] = {
+                TransitionBarrier(m_smaaBlendWeightRenderTargets[m_frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
+            };
+            if (!DrawPostProcessPass(m_smaaBlendWeightPipelineState, m_smaaEdgeRenderTargets[m_frameIndex], nullptr,
+                nullptr, 0, blendBarriersAfter, 1, GetCurrentSmaaBlendWeightRtvHandle(), constantGpuAddress)) {
+                return false;
+            }
 
-        const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = GetDsvHandle();
-        m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, m_depthStencil ? &dsvHandle : nullptr);
-        ApplyViewportAndScissor();
+            D3D12_RESOURCE_BARRIER neighborhoodBarriersAfter[3] = {
+                TransitionBarrier(m_smaaBlendWeightRenderTargets[m_frameIndex], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
+                TransitionBarrier(m_smaaEdgeRenderTargets[m_frameIndex], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
+                TransitionBarrier(m_sceneRenderTargets[m_frameIndex], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET)
+            };
+            if (!DrawPostProcessPass(m_smaaNeighborhoodPipelineState, m_sceneRenderTargets[m_frameIndex], m_smaaBlendWeightRenderTargets[m_frameIndex],
+                nullptr, 0, neighborhoodBarriersAfter, 3, GetCurrentRtvHandle(), constantGpuAddress)) {
+                return false;
+            }
+        } else {
+            D3D12_RESOURCE_BARRIER barriersBefore[1] = {
+                TransitionBarrier(m_sceneRenderTargets[m_frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
+            };
+            D3D12_RESOURCE_BARRIER barriersAfter[1] = {
+                TransitionBarrier(m_sceneRenderTargets[m_frameIndex], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET)
+            };
+            if (!DrawPostProcessPass(m_postPipelineState, m_sceneRenderTargets[m_frameIndex], nullptr,
+                barriersBefore, 1, barriersAfter, 1, GetCurrentRtvHandle(), constantGpuAddress)) {
+                return false;
+            }
+        }
+
         m_scenePresentDirty = false;
         return true;
     }
@@ -4422,7 +4559,7 @@ private:
             m_commandList->DrawInstanced(vertexCount, 1, 0, 0);
         }
 
-        if (IsFxaaEnabled()) {
+        if (IsScenePostProcessEnabled()) {
             m_scenePresentDirty = true;
         }
     }
@@ -4474,6 +4611,8 @@ private:
         for (UINT index = 0; index < kFrameCount; ++index) {
             SafeRelease(m_renderTargets[index]);
             SafeRelease(m_sceneRenderTargets[index]);
+            SafeRelease(m_smaaEdgeRenderTargets[index]);
+            SafeRelease(m_smaaBlendWeightRenderTargets[index]);
         }
     }
 
@@ -4533,7 +4672,7 @@ private:
             D3D12_RESOURCE_STATE_PRESENT,
             D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_commandList->ResourceBarrier(1, &barrier);
-        const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = IsFxaaEnabled() ? GetCurrentSceneRtvHandle() : GetCurrentRtvHandle();
+        const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = IsScenePostProcessEnabled() ? GetCurrentSceneRtvHandle() : GetCurrentRtvHandle();
         const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = GetDsvHandle();
         m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, m_depthStencil ? &dsvHandle : nullptr);
         ApplyViewportAndScissor();
@@ -4583,8 +4722,13 @@ private:
     ID3D12DescriptorHeap* m_srvHeap;
     ID3D12Resource* m_renderTargets[kFrameCount];
     ID3D12Resource* m_sceneRenderTargets[kFrameCount];
+    ID3D12Resource* m_smaaEdgeRenderTargets[kFrameCount];
+    ID3D12Resource* m_smaaBlendWeightRenderTargets[kFrameCount];
     ID3D12Resource* m_depthStencil;
     ID3D12PipelineState* m_postPipelineState;
+    ID3D12PipelineState* m_smaaEdgePipelineState;
+    ID3D12PipelineState* m_smaaBlendWeightPipelineState;
+    ID3D12PipelineState* m_smaaNeighborhoodPipelineState;
     ID3D12CommandAllocator* m_commandAllocator;
     ID3D12GraphicsCommandList* m_commandList;
     ID3D12Fence* m_fence;
@@ -4600,6 +4744,9 @@ private:
     ID3DBlob* m_pixelShaderBlob;
     ID3DBlob* m_postVertexShaderBlob;
     ID3DBlob* m_fxaaPixelShaderBlob;
+    ID3DBlob* m_smaaEdgePixelShaderBlob;
+    ID3DBlob* m_smaaBlendWeightPixelShaderBlob;
+    ID3DBlob* m_smaaNeighborhoodPixelShaderBlob;
     std::vector<UploadPage> m_constantUploadPages;
     std::vector<UploadPage> m_vertexUploadPages;
     std::vector<UploadPage> m_indexUploadPages;

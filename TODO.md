@@ -104,7 +104,7 @@ Goal: ship true configurable 3D anti-aliasing for modern backends without affect
 #### Phase C — Port The 3D AA Pipeline To D3D12
 - [x] Add a DX12 scene color target separate from the swapchain back buffer.
 - [x] Route DX12 world rendering into the scene target while keeping overlays/UI on the existing post-scene path.
-- [ ] Add a DX12 fullscreen post-process pass abstraction for FXAA/SMAA.
+- [x] Add a DX12 fullscreen post-process pass abstraction for FXAA/SMAA.
 - [x] Port the current FXAA implementation to DX12.
 - [ ] Hook the DX12 capture/snapshot path so overlays and UI compose over the AA-resolved scene, not the raw scene.
 - [ ] Re-validate resize, alt-tab, return-to-char-select, and restart-required behavior on DX12 with AA enabled.
