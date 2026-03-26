@@ -439,8 +439,10 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
 
     const float right = static_cast<float>(clientWidth) - 0.5f;
     const float bottom = static_cast<float>(clientHeight) - 0.5f;
-    const float maxU = s_overlayTexture->m_w != 0 ? static_cast<float>(clientWidth) / static_cast<float>(s_overlayTexture->m_w) : 1.0f;
-    const float maxV = s_overlayTexture->m_h != 0 ? static_cast<float>(clientHeight) / static_cast<float>(s_overlayTexture->m_h) : 1.0f;
+    const unsigned int overlayContentWidth = s_overlayTexture->m_surfaceUpdateWidth > 0 ? s_overlayTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(clientWidth);
+    const unsigned int overlayContentHeight = s_overlayTexture->m_surfaceUpdateHeight > 0 ? s_overlayTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(clientHeight);
+    const float maxU = s_overlayTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_overlayTexture->m_w) : 1.0f;
+    const float maxV = s_overlayTexture->m_h != 0 ? static_cast<float>(overlayContentHeight) / static_cast<float>(s_overlayTexture->m_h) : 1.0f;
 
     face->primType = D3DPT_TRIANGLESTRIP;
     face->verts = face->m_verts;
