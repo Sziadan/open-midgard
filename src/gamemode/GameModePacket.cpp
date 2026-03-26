@@ -94,14 +94,6 @@ void HandleAttackFailureForDistance(CGameMode& mode, const PacketView& packet)
     mode.m_attackChaseSourceCellY = sourceY;
     mode.m_attackChaseRange = attackRange;
     mode.m_hasAttackChaseHint = 1;
-
-    DbgLog("[GameMode] attack failure for distance gid=%u target=%d,%d source=%d,%d range=%d\n",
-        targetGid,
-        targetX,
-        targetY,
-        sourceX,
-        sourceY,
-        attackRange);
 }
 
 u16 ClampToU16(u32 value)
@@ -3000,14 +2992,6 @@ void HandleSelfMoveAck(CGameMode& mode, const PacketView& packet)
     if (mode.m_world && mode.m_world->m_player) {
         mode.m_world->m_player->m_isWaitingMoveAck = 0;
     }
-    DbgLog("[GameMode] self move ack start=%u src=%d,%d dst=%d,%d cell=%d,%d\n",
-        g_session.GetServerTime(),
-        sx,
-        sy,
-        dx,
-        dy,
-        cellX,
-        cellY);
     UpdateRuntimeActorPosition(mode, g_session.m_gid, dx, dy, sx, sy);
 }
 
@@ -3036,12 +3020,6 @@ void HandleActorSetPosition(CGameMode& mode, const PacketView& packet)
         size_t fixIndex = 0;
         size_t activeIndex = 0;
         if (ShouldIgnoreRedundantLocalFixPosition(*actor, x, y, &fixIndex, &activeIndex)) {
-            DbgLog("[GameMode] ignored self fixpos opcode=0x%04X pos=%d,%d activePathIndex=%zu fixPathIndex=%zu\n",
-                packet.packetId,
-                x,
-                y,
-                activeIndex,
-                fixIndex);
             return;
         }
     }
@@ -3050,31 +3028,12 @@ void HandleActorSetPosition(CGameMode& mode, const PacketView& packet)
     mode.m_aidList[gid] = GetTickCount();
     mode.m_actorPosList[gid] = CellPos{x, y};
     if (IsLocalPlayerActor(mode, gid)) {
-        const int prevX = g_session.m_playerPosX;
-        const int prevY = g_session.m_playerPosY;
-        int moveDestX = -1;
-        int moveDestY = -1;
-        int moving = 0;
-        if (mode.m_world && mode.m_world->m_player) {
-            moveDestX = mode.m_world->m_player->m_moveDestX;
-            moveDestY = mode.m_world->m_player->m_moveDestY;
-            moving = mode.m_world->m_player->m_isMoving ? 1 : 0;
-        }
         g_session.SetPlayerPosDir(x, y, g_session.m_playerDir);
         mode.m_attackChaseSourceCellX = x;
         mode.m_attackChaseSourceCellY = y;
         if (mode.m_world && mode.m_world->m_player) {
             mode.m_world->m_player->m_isWaitingMoveAck = 0;
         }
-        DbgLog("[GameMode] self set position opcode=0x%04X pos=%d,%d prev=%d,%d moveDest=%d,%d moving=%d\n",
-            packet.packetId,
-            x,
-            y,
-            prevX,
-            prevY,
-            moveDestX,
-            moveDestY,
-            moving);
     }
     ApplyRuntimeActorFixPosition(mode, gid, x, y);
 }

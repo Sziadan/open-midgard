@@ -1981,11 +1981,6 @@ bool SendMoveRequestPacket(int dstX, int dstY)
             }
         }
     }
-    DbgLog("[GameMode] move request opcode=0x%04X dst=%d,%d sent=%d\n",
-        kPacketCzRequestMove,
-        dstX,
-        dstY,
-        sent ? 1 : 0);
     return sent;
 }
 
@@ -2509,7 +2504,6 @@ void PumpAttackChaseRequest(CGameMode& mode)
 
         if (SendAttackRequestPacket(target->m_gid, kActionRequestContinuousAttack)) {
             mode.m_lastAttackRequestTick = now;
-            DbgLog("[GameMode] chase attack gid=%u\n", target->m_gid);
         }
         return;
     }
@@ -2523,7 +2517,6 @@ void PumpAttackChaseRequest(CGameMode& mode)
     if (mode.m_lastAttackRequestTick == 0 || now - mode.m_lastAttackRequestTick >= kAttackRetryIntervalMs) {
         if (SendAttackRequestPacket(target->m_gid, kActionRequestContinuousAttack)) {
             mode.m_lastAttackRequestTick = now;
-            DbgLog("[GameMode] chase refresh attack gid=%u\n", target->m_gid);
         }
     }
 
@@ -2568,15 +2561,6 @@ void PumpAttackChaseRequest(CGameMode& mode)
         chaseTileY,
         true)) {
         mode.m_lastMoveRequestTick = now;
-        DbgLog("[GameMode] server-led chase move gid=%u src=%d,%d target=%d,%d dst=%d,%d range=%d\n",
-            target->m_gid,
-            sourceTileX,
-            sourceTileY,
-            targetTileX,
-            targetTileY,
-            chaseTileX,
-            chaseTileY,
-            attackRange);
     }
 }
 
