@@ -778,11 +778,15 @@ void EmitCombatNumber(CGameActor* sourceActor, CGameActor* targetActor, int dama
     }
 
     const bool isLocalPlayerTarget = targetActor->m_gid == g_session.m_gid || targetActor->m_gid == g_session.m_aid;
+    const bool isLocalPlayerSource = sourceActor && (sourceActor->m_gid == g_session.m_gid || sourceActor->m_gid == g_session.m_aid);
+    const u32 numberColor = (isLocalPlayerTarget && !isLocalPlayerSource)
+        ? 0xFFFF4040u
+        : ResolveCombatNumberColor(damage, actionType);
 
     targetActor->SendMsg(sourceActor,
         88,
         numberValue,
-        static_cast<int>(isLocalPlayerTarget ? 0xFFFF4040u : ResolveCombatNumberColor(damage, actionType)),
+        static_cast<int>(numberColor),
         ResolveCombatNumberKind(damage, actionType));
 }
 
