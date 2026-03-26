@@ -7,6 +7,7 @@
 #include "ModernRenderState.h"
 #include "render/Renderer.h"
 #include "res/Texture.h"
+#include "VulkanSmaaShaders.generated.h"
 #include "VulkanShaders.generated.h"
 
 #include <d3d12.h>
@@ -695,7 +696,7 @@ const char* GetPostProcessPixelShaderEntryPoint(AntiAliasingMode mode)
     case AntiAliasingMode::FXAA:
         return "PSMainFXAA";
     case AntiAliasingMode::SMAA:
-        return nullptr;
+        return "PSMainSMAAEdge";
 
     default:
         return nullptr;
@@ -733,13 +734,13 @@ bool GetVulkanPostShaderProgram(AntiAliasingMode mode, VulkanPostShaderProgram* 
         outProgram->fragmentEntryPoint = "PSMainFXAA";
         return true;
     case AntiAliasingMode::SMAA:
-        outProgram->vertexBytes = nullptr;
-        outProgram->vertexByteCount = 0;
-        outProgram->fragmentBytes = nullptr;
-        outProgram->fragmentByteCount = 0;
-        outProgram->vertexEntryPoint = nullptr;
-        outProgram->fragmentEntryPoint = nullptr;
-        return false;
+        outProgram->vertexBytes = kVulkanPostSmaaVsSpirv;
+        outProgram->vertexByteCount = kVulkanPostSmaaVsSpirvSize;
+        outProgram->fragmentBytes = kVulkanPostSmaaEdgePsSpirv;
+        outProgram->fragmentByteCount = kVulkanPostSmaaEdgePsSpirvSize;
+        outProgram->vertexEntryPoint = "VSMainPost";
+        outProgram->fragmentEntryPoint = "PSMainSMAAEdge";
+        return true;
 
     default:
         outProgram->vertexBytes = nullptr;
@@ -868,6 +869,12 @@ float ComputeFxaaLuma(float3 rgb)
     return dot(rgb, float3(0.299f, 0.587f, 0.114f));
 }
 
+float ComputeSmaaColorDelta(float3 a, float3 b)
+{
+    const float3 delta = abs(a - b);
+    return max(delta.r, max(delta.g, delta.b));
+}
+
 float4 PSMainFXAA(VSOutputPost input) : SV_Target
 {
     float2 invResolution = float2(
@@ -915,6 +922,36 @@ float4 PSMainFXAA(VSOutputPost input) : SV_Target
     float lumaB = ComputeFxaaLuma(rgbB);
 
     return float4((lumaB < lumaMin || lumaB > lumaMax) ? rgbA : rgbB, centerSample.a);
+}
+
+float4 PSMainSMAAEdge(VSOutputPost input) : SV_Target
+{
+    const float2 invResolution = float2(
+        1.0f / max(g_screenWidth, 1.0f),
+        1.0f / max(g_screenHeight, 1.0f));
+
+    const float4 centerSample = g_texture0.Sample(g_sampler0, input.uv);
+    const float3 leftSample = g_texture0.Sample(g_sampler0, input.uv + float2(-1.0f, 0.0f) * invResolution).rgb;
+    const float3 topSample = g_texture0.Sample(g_sampler0, input.uv + float2(0.0f, -1.0f) * invResolution).rgb;
+    const float3 rightSample = g_texture0.Sample(g_sampler0, input.uv + float2(1.0f, 0.0f) * invResolution).rgb;
+    const float3 bottomSample = g_texture0.Sample(g_sampler0, input.uv + float2(0.0f, 1.0f) * invResolution).rgb;
+
+    const float lumaCenter = ComputeFxaaLuma(centerSample.rgb);
+    const float lumaLeft = ComputeFxaaLuma(leftSample);
+    const float lumaTop = ComputeFxaaLuma(topSample);
+    const float lumaRight = ComputeFxaaLuma(rightSample);
+    const float lumaBottom = ComputeFxaaLuma(bottomSample);
+
+    const float lumaHorizontal = max(abs(lumaCenter - lumaTop), abs(lumaCenter - lumaBottom));
+    const float lumaVertical = max(abs(lumaCenter - lumaLeft), abs(lumaCenter - lumaRight));
+    const float colorHorizontal = max(ComputeSmaaColorDelta(centerSample.rgb, topSample), ComputeSmaaColorDelta(centerSample.rgb, bottomSample));
+    const float colorVertical = max(ComputeSmaaColorDelta(centerSample.rgb, leftSample), ComputeSmaaColorDelta(centerSample.rgb, rightSample));
+
+    const float threshold = 0.050f;
+    const float horizontalEdge = step(threshold, max(lumaHorizontal, colorHorizontal));
+    const float verticalEdge = step(threshold, max(lumaVertical, colorVertical));
+
+    return float4(horizontalEdge, verticalEdge, 0.0f, centerSample.a);
 }
 )";
 }

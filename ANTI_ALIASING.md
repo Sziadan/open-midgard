@@ -27,6 +27,11 @@ When SMAA ships, it will use a single production preset: `SMAA 1x High`.
 - `High` is the default because it improves edge quality over FXAA without introducing an extra user-facing quality matrix before the full SMAA path is proven stable.
 - No separate SMAA quality selector will be exposed unless later validation shows a concrete need for lower or higher-cost variants.
 
+## Shader Assets
+
+- The first checked-in SMAA shader asset is the edge-detection pass source in [src/render3d/shaders/vulkan_post_smaa.hlsl](d:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/render3d/shaders/vulkan_post_smaa.hlsl).
+- The Vulkan generated header for that shader is emitted by [tools/update_vulkan_smaa_shaders.ps1](d:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/tools/update_vulkan_smaa_shaders.ps1).
+
 ## Render Path Scope
 
 The AA pass is intended to affect only the 3D scene content:
