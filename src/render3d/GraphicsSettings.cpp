@@ -87,9 +87,7 @@ void SanitizeGraphicsSettings(GraphicsSettings* settings)
     settings->textureUpscaleFactor = (std::max)(1, (std::min)(4, settings->textureUpscaleFactor));
     settings->anisotropicLevel = ClampToAllowedAnisotropy(settings->anisotropicLevel);
     if (settings->antiAliasing != AntiAliasingMode::None
-        && settings->antiAliasing != AntiAliasingMode::MSAA2X
-        && settings->antiAliasing != AntiAliasingMode::MSAA4X
-        && settings->antiAliasing != AntiAliasingMode::MSAA8X) {
+        && settings->antiAliasing != AntiAliasingMode::FXAA) {
         settings->antiAliasing = AntiAliasingMode::None;
     }
 }
@@ -191,8 +189,7 @@ bool DoesBackendSupportAnisotropicFiltering(RenderBackendType backend)
 
 bool DoesBackendSupportAntiAliasing(RenderBackendType backend)
 {
-    (void)backend;
-    return false;
+    return backend == RenderBackendType::Direct3D11;
 }
 
 WindowMode GetEffectiveWindowModeForBackend(RenderBackendType backend, WindowMode requestedMode)

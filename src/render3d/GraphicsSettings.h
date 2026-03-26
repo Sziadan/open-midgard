@@ -10,9 +10,7 @@ enum class WindowMode {
 
 enum class AntiAliasingMode {
     None = 0,
-    MSAA2X,
-    MSAA4X,
-    MSAA8X,
+    FXAA,
 };
 
 struct GraphicsSettings {

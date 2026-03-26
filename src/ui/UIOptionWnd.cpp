@@ -301,12 +301,8 @@ const char* GetAntiAliasingName(AntiAliasingMode mode)
     switch (mode) {
     case AntiAliasingMode::None:
         return "Off";
-    case AntiAliasingMode::MSAA2X:
-        return "MSAA 2x";
-    case AntiAliasingMode::MSAA4X:
-        return "MSAA 4x";
-    case AntiAliasingMode::MSAA8X:
-        return "MSAA 8x";
+    case AntiAliasingMode::FXAA:
+        return "FXAA";
     default:
         return "Off";
     }
@@ -595,7 +591,7 @@ std::vector<AntiAliasingMode> UIOptionWnd::GetSupportedAntiAliasingModes() const
     if (!DoesBackendSupportAntiAliasing(m_selectedRenderBackend)) {
         return {};
     }
-    return { AntiAliasingMode::None, AntiAliasingMode::MSAA2X, AntiAliasingMode::MSAA4X, AntiAliasingMode::MSAA8X };
+    return { AntiAliasingMode::None, AntiAliasingMode::FXAA };
 }
 
 RenderBackendType UIOptionWnd::NormalizeSelectedBackend(RenderBackendType backend) const
@@ -1235,7 +1231,7 @@ void UIOptionWnd::OnDraw()
                     label = "Window mode";
                     break;
                 case GraphicsRow_AntiAliasing:
-                    label = "Anti-aliasing";
+                    label = "3D AA";
                     break;
                 case GraphicsRow_TextureUpscale:
                     label = "Texture upscale";

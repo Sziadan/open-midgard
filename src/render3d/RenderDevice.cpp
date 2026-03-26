@@ -776,6 +776,76 @@ float4 PSMain(VSOutput input) : SV_Target
 
     return color;
 }
+
+struct VSOutputPost {
+    float4 pos : SV_Position;
+    float2 uv : TEXCOORD0;
+};
+
+VSOutputPost VSMainPost(uint vertexId : SV_VertexID)
+{
+    VSOutputPost output;
+    float2 clipPos;
+    clipPos.x = (vertexId == 2u) ? 3.0f : -1.0f;
+    clipPos.y = (vertexId == 1u) ? 3.0f : -1.0f;
+    output.pos = float4(clipPos, 0.0f, 1.0f);
+    output.uv = float2((clipPos.x + 1.0f) * 0.5f, 1.0f - ((clipPos.y + 1.0f) * 0.5f));
+    return output;
+}
+
+float ComputeFxaaLuma(float3 rgb)
+{
+    return dot(rgb, float3(0.299f, 0.587f, 0.114f));
+}
+
+float4 PSMainFXAA(VSOutputPost input) : SV_Target
+{
+    float2 invResolution = float2(
+        1.0f / max(g_screenWidth, 1.0f),
+        1.0f / max(g_screenHeight, 1.0f));
+
+    float4 centerSample = g_texture0.Sample(g_sampler0, input.uv);
+    float3 rgbM = centerSample.rgb;
+    float lumaM = ComputeFxaaLuma(rgbM);
+
+    float3 rgbNW = g_texture0.Sample(g_sampler0, input.uv + float2(-1.0f, -1.0f) * invResolution).rgb;
+    float3 rgbNE = g_texture0.Sample(g_sampler0, input.uv + float2(1.0f, -1.0f) * invResolution).rgb;
+    float3 rgbSW = g_texture0.Sample(g_sampler0, input.uv + float2(-1.0f, 1.0f) * invResolution).rgb;
+    float3 rgbSE = g_texture0.Sample(g_sampler0, input.uv + float2(1.0f, 1.0f) * invResolution).rgb;
+
+    float lumaNW = ComputeFxaaLuma(rgbNW);
+    float lumaNE = ComputeFxaaLuma(rgbNE);
+    float lumaSW = ComputeFxaaLuma(rgbSW);
+    float lumaSE = ComputeFxaaLuma(rgbSE);
+
+    float lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
+    float lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
+    float lumaRange = lumaMax - lumaMin;
+    float threshold = max(0.03125f, lumaMax * 0.125f);
+    if (lumaRange < threshold) {
+        return centerSample;
+    }
+
+    float2 dir;
+    dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));
+    dir.y = (lumaNW + lumaSW) - (lumaNE + lumaSE);
+
+    float dirReduce = max(
+        (lumaNW + lumaNE + lumaSW + lumaSE) * (0.25f / 8.0f),
+        1.0f / 128.0f);
+    float rcpDirMin = 1.0f / (min(abs(dir.x), abs(dir.y)) + dirReduce);
+    dir = clamp(dir * rcpDirMin, float2(-8.0f, -8.0f), float2(8.0f, 8.0f)) * invResolution;
+
+    float3 rgbA = 0.5f * (
+        g_texture0.Sample(g_sampler0, input.uv + dir * (1.0f / 3.0f - 0.5f)).rgb +
+        g_texture0.Sample(g_sampler0, input.uv + dir * (2.0f / 3.0f - 0.5f)).rgb);
+    float3 rgbB = rgbA * 0.5f + 0.25f * (
+        g_texture0.Sample(g_sampler0, input.uv + dir * -0.5f).rgb +
+        g_texture0.Sample(g_sampler0, input.uv + dir * 0.5f).rgb);
+    float lumaB = ComputeFxaaLuma(rgbB);
+
+    return float4((lumaB < lumaMin || lumaB > lumaMax) ? rgbA : rgbB, centerSample.a);
+}
 )";
 }
 
@@ -1197,13 +1267,13 @@ public:
     D3D11RenderDevice()
         : m_hwnd(nullptr), m_renderWidth(0), m_renderHeight(0),
           m_swapChain(nullptr), m_device(nullptr), m_context(nullptr),
-          m_renderTargetView(nullptr), m_depthStencilTexture(nullptr), m_depthStencilView(nullptr),
+                    m_renderTargetView(nullptr), m_swapChainRenderTargetView(nullptr), m_sceneTexture(nullptr), m_sceneRenderTargetView(nullptr), m_sceneShaderResourceView(nullptr), m_depthStencilTexture(nullptr), m_depthStencilView(nullptr),
           m_captureTexture(nullptr),
-          m_vertexShaderTl(nullptr), m_vertexShaderLm(nullptr), m_pixelShader(nullptr),
+                    m_vertexShaderTl(nullptr), m_vertexShaderLm(nullptr), m_pixelShader(nullptr), m_postVertexShader(nullptr), m_fxaaPixelShader(nullptr),
           m_inputLayoutTl(nullptr), m_inputLayoutLm(nullptr), m_constantBuffer(nullptr),
           m_vertexBuffer(nullptr), m_vertexBufferSize(0), m_indexBuffer(nullptr), m_indexBufferSize(0),
-                    m_samplerState(nullptr),
-          m_captureDc(nullptr), m_captureBitmap(nullptr), m_captureBits(nullptr), m_captureWidth(0), m_captureHeight(0)
+                                        m_samplerState(nullptr), m_postSamplerState(nullptr), m_postBlendState(nullptr), m_postDepthStencilState(nullptr), m_postRasterizerState(nullptr),
+                    m_captureDc(nullptr), m_captureBitmap(nullptr), m_captureBits(nullptr), m_captureWidth(0), m_captureHeight(0), m_scenePresentDirty(false)
     {
                 ResetModernFixedFunctionState(&m_pipelineState);
         m_boundTextures[0] = nullptr;
@@ -1301,6 +1371,11 @@ public:
     {
         ReleaseCachedStates();
         ReleaseCaptureResources();
+        ReleaseSceneRenderTargetResources();
+        SafeRelease(m_postRasterizerState);
+        SafeRelease(m_postDepthStencilState);
+        SafeRelease(m_postBlendState);
+        SafeRelease(m_postSamplerState);
         SafeRelease(m_samplerState);
         SafeRelease(m_indexBuffer);
         m_indexBufferSize = 0;
@@ -1309,11 +1384,14 @@ public:
         SafeRelease(m_constantBuffer);
         SafeRelease(m_inputLayoutLm);
         SafeRelease(m_inputLayoutTl);
+        SafeRelease(m_fxaaPixelShader);
+        SafeRelease(m_postVertexShader);
         SafeRelease(m_pixelShader);
         SafeRelease(m_vertexShaderLm);
         SafeRelease(m_vertexShaderTl);
         SafeRelease(m_depthStencilView);
         SafeRelease(m_depthStencilTexture);
+        SafeRelease(m_swapChainRenderTargetView);
         SafeRelease(m_renderTargetView);
         SafeRelease(m_context);
         SafeRelease(m_device);
@@ -1324,6 +1402,7 @@ public:
         ResetModernFixedFunctionState(&m_pipelineState);
         m_boundTextures[0] = nullptr;
         m_boundTextures[1] = nullptr;
+        m_scenePresentDirty = false;
     }
 
     void RefreshRenderSize() override
@@ -1364,6 +1443,7 @@ public:
         };
         m_context->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
         m_context->ClearRenderTargetView(m_renderTargetView, clearColor);
+        m_scenePresentDirty = IsFxaaEnabled();
         return 0;
     }
 
@@ -1371,6 +1451,9 @@ public:
     {
         if (m_context && m_depthStencilView) {
             m_context->ClearDepthStencilView(m_depthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+            if (IsFxaaEnabled()) {
+                m_scenePresentDirty = true;
+            }
         }
         return 0;
     }
@@ -1380,6 +1463,7 @@ public:
         if (!m_swapChain) {
             return -1;
         }
+        EnsureScenePresentedToBackBuffer();
         CaptureRenderTargetSnapshot();
         return static_cast<int>(m_swapChain->Present(vertSync ? 1 : 0, 0));
     }
@@ -1431,6 +1515,8 @@ public:
             m_context->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
             ApplyViewport();
         }
+
+        m_scenePresentDirty = false;
 
         return true;
     }
@@ -1626,13 +1712,19 @@ private:
         ID3DBlob* vertexShaderTlBlob = nullptr;
         ID3DBlob* vertexShaderLmBlob = nullptr;
         ID3DBlob* pixelShaderBlob = nullptr;
+        ID3DBlob* postVertexShaderBlob = nullptr;
+        ID3DBlob* fxaaPixelShaderBlob = nullptr;
         const bool compiled = CompileShaderBlob(shaderSource, "VSMainTL", "vs_4_0", &vertexShaderTlBlob)
             && CompileShaderBlob(shaderSource, "VSMainLM", "vs_4_0", &vertexShaderLmBlob)
-            && CompileShaderBlob(shaderSource, "PSMain", "ps_4_0", &pixelShaderBlob);
+            && CompileShaderBlob(shaderSource, "PSMain", "ps_4_0", &pixelShaderBlob)
+            && CompileShaderBlob(shaderSource, "VSMainPost", "vs_4_0", &postVertexShaderBlob)
+            && CompileShaderBlob(shaderSource, "PSMainFXAA", "ps_4_0", &fxaaPixelShaderBlob);
         if (!compiled) {
             SafeRelease(vertexShaderTlBlob);
             SafeRelease(vertexShaderLmBlob);
             SafeRelease(pixelShaderBlob);
+            SafeRelease(postVertexShaderBlob);
+            SafeRelease(fxaaPixelShaderBlob);
             return false;
         }
 
@@ -1641,6 +1733,8 @@ private:
             SafeRelease(vertexShaderTlBlob);
             SafeRelease(vertexShaderLmBlob);
             SafeRelease(pixelShaderBlob);
+            SafeRelease(postVertexShaderBlob);
+            SafeRelease(fxaaPixelShaderBlob);
             return false;
         }
 
@@ -1649,6 +1743,8 @@ private:
             SafeRelease(vertexShaderTlBlob);
             SafeRelease(vertexShaderLmBlob);
             SafeRelease(pixelShaderBlob);
+            SafeRelease(postVertexShaderBlob);
+            SafeRelease(fxaaPixelShaderBlob);
             return false;
         }
 
@@ -1657,6 +1753,28 @@ private:
             SafeRelease(vertexShaderTlBlob);
             SafeRelease(vertexShaderLmBlob);
             SafeRelease(pixelShaderBlob);
+            SafeRelease(postVertexShaderBlob);
+            SafeRelease(fxaaPixelShaderBlob);
+            return false;
+        }
+
+        hr = m_device->CreateVertexShader(postVertexShaderBlob->GetBufferPointer(), postVertexShaderBlob->GetBufferSize(), nullptr, &m_postVertexShader);
+        if (FAILED(hr) || !m_postVertexShader) {
+            SafeRelease(vertexShaderTlBlob);
+            SafeRelease(vertexShaderLmBlob);
+            SafeRelease(pixelShaderBlob);
+            SafeRelease(postVertexShaderBlob);
+            SafeRelease(fxaaPixelShaderBlob);
+            return false;
+        }
+
+        hr = m_device->CreatePixelShader(fxaaPixelShaderBlob->GetBufferPointer(), fxaaPixelShaderBlob->GetBufferSize(), nullptr, &m_fxaaPixelShader);
+        if (FAILED(hr) || !m_fxaaPixelShader) {
+            SafeRelease(vertexShaderTlBlob);
+            SafeRelease(vertexShaderLmBlob);
+            SafeRelease(pixelShaderBlob);
+            SafeRelease(postVertexShaderBlob);
+            SafeRelease(fxaaPixelShaderBlob);
             return false;
         }
 
@@ -1691,6 +1809,8 @@ private:
         SafeRelease(vertexShaderTlBlob);
         SafeRelease(vertexShaderLmBlob);
         SafeRelease(pixelShaderBlob);
+        SafeRelease(postVertexShaderBlob);
+        SafeRelease(fxaaPixelShaderBlob);
         if (FAILED(hr) || !m_inputLayoutLm) {
             return false;
         }
@@ -1715,7 +1835,44 @@ private:
         samplerDesc.MaxAnisotropy = static_cast<UINT>(useAnisotropic ? anisotropicLevel : 1);
         samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
         hr = m_device->CreateSamplerState(&samplerDesc, &m_samplerState);
-        return SUCCEEDED(hr) && m_samplerState != nullptr;
+        if (FAILED(hr) || !m_samplerState) {
+            return false;
+        }
+
+        D3D11_SAMPLER_DESC postSamplerDesc{};
+        postSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+        postSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+        postSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+        postSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+        postSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+        hr = m_device->CreateSamplerState(&postSamplerDesc, &m_postSamplerState);
+        if (FAILED(hr) || !m_postSamplerState) {
+            return false;
+        }
+
+        D3D11_BLEND_DESC postBlendDesc{};
+        postBlendDesc.RenderTarget[0].BlendEnable = FALSE;
+        postBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+        hr = m_device->CreateBlendState(&postBlendDesc, &m_postBlendState);
+        if (FAILED(hr) || !m_postBlendState) {
+            return false;
+        }
+
+        D3D11_DEPTH_STENCIL_DESC postDepthDesc{};
+        postDepthDesc.DepthEnable = FALSE;
+        postDepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+        postDepthDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+        hr = m_device->CreateDepthStencilState(&postDepthDesc, &m_postDepthStencilState);
+        if (FAILED(hr) || !m_postDepthStencilState) {
+            return false;
+        }
+
+        D3D11_RASTERIZER_DESC postRasterizerDesc{};
+        postRasterizerDesc.FillMode = D3D11_FILL_SOLID;
+        postRasterizerDesc.CullMode = D3D11_CULL_NONE;
+        postRasterizerDesc.DepthClipEnable = TRUE;
+        hr = m_device->CreateRasterizerState(&postRasterizerDesc, &m_postRasterizerState);
+        return SUCCEEDED(hr) && m_postRasterizerState != nullptr;
     }
 
     void ReleaseCachedStates()
@@ -1953,6 +2110,10 @@ private:
         } else {
             m_context->Draw(vertexCount, 0);
         }
+
+        if (IsFxaaEnabled()) {
+            m_scenePresentDirty = true;
+        }
     }
 
     bool RefreshRenderTarget()
@@ -1960,23 +2121,43 @@ private:
         if (!m_swapChain || !m_device) {
             return false;
         }
+        if ((m_renderWidth <= 0 || m_renderHeight <= 0) && m_hwnd) {
+            RECT clientRect{};
+            GetClientRect(m_hwnd, &clientRect);
+            m_renderWidth = (std::max)(1L, clientRect.right - clientRect.left);
+            m_renderHeight = (std::max)(1L, clientRect.bottom - clientRect.top);
+        }
         SafeRelease(m_renderTargetView);
+        ReleaseSceneRenderTargetResources();
+        SafeRelease(m_swapChainRenderTargetView);
         ID3D11Texture2D* backBuffer = nullptr;
         HRESULT hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
         if (FAILED(hr) || !backBuffer) {
             SafeRelease(backBuffer);
             return false;
         }
-        hr = m_device->CreateRenderTargetView(backBuffer, nullptr, &m_renderTargetView);
+        hr = m_device->CreateRenderTargetView(backBuffer, nullptr, &m_swapChainRenderTargetView);
         SafeRelease(backBuffer);
-        if (FAILED(hr) || !m_renderTargetView) {
+        if (FAILED(hr) || !m_swapChainRenderTargetView) {
             return false;
+        }
+        if (IsFxaaEnabled()) {
+            if (!CreateSceneRenderTargetResources()) {
+                return false;
+            }
+            m_renderTargetView = m_sceneRenderTargetView;
+        } else {
+            m_renderTargetView = m_swapChainRenderTargetView;
+        }
+        if (m_renderTargetView) {
+            m_renderTargetView->AddRef();
         }
         if (!CreateDepthStencilResources()) {
             return false;
         }
         m_context->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
         ApplyViewport();
+        m_scenePresentDirty = false;
         return true;
     }
 
@@ -1989,6 +2170,8 @@ private:
         SafeRelease(m_depthStencilView);
         SafeRelease(m_depthStencilTexture);
         SafeRelease(m_renderTargetView);
+        ReleaseSceneRenderTargetResources();
+        SafeRelease(m_swapChainRenderTargetView);
         HRESULT hr = m_swapChain->ResizeBuffers(0,
             static_cast<UINT>(m_renderWidth),
             static_cast<UINT>(m_renderHeight),
@@ -2084,6 +2267,10 @@ private:
             return;
         }
 
+        if (!EnsureScenePresentedToBackBuffer()) {
+            return;
+        }
+
         ID3D11Texture2D* backBuffer = nullptr;
         HRESULT hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
         if (FAILED(hr) || !backBuffer) {
@@ -2109,6 +2296,114 @@ private:
         m_context->Unmap(m_captureTexture, 0);
     }
 
+    bool IsFxaaEnabled() const
+    {
+        return GetCachedGraphicsSettings().antiAliasing == AntiAliasingMode::FXAA;
+    }
+
+    void ReleaseSceneRenderTargetResources()
+    {
+        SafeRelease(m_sceneShaderResourceView);
+        SafeRelease(m_sceneRenderTargetView);
+        SafeRelease(m_sceneTexture);
+    }
+
+    bool CreateSceneRenderTargetResources()
+    {
+        if (!m_device) {
+            return false;
+        }
+
+        int targetWidth = m_renderWidth;
+        int targetHeight = m_renderHeight;
+        if ((targetWidth <= 0 || targetHeight <= 0) && m_hwnd) {
+            RECT clientRect{};
+            GetClientRect(m_hwnd, &clientRect);
+            targetWidth = (std::max)(1L, clientRect.right - clientRect.left);
+            targetHeight = (std::max)(1L, clientRect.bottom - clientRect.top);
+        }
+        if (targetWidth <= 0 || targetHeight <= 0) {
+            return false;
+        }
+
+        D3D11_TEXTURE2D_DESC sceneDesc{};
+        sceneDesc.Width = static_cast<UINT>(targetWidth);
+        sceneDesc.Height = static_cast<UINT>(targetHeight);
+        sceneDesc.MipLevels = 1;
+        sceneDesc.ArraySize = 1;
+        sceneDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        sceneDesc.SampleDesc.Count = 1;
+        sceneDesc.Usage = D3D11_USAGE_DEFAULT;
+        sceneDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+
+        HRESULT hr = m_device->CreateTexture2D(&sceneDesc, nullptr, &m_sceneTexture);
+        if (FAILED(hr) || !m_sceneTexture) {
+            ReleaseSceneRenderTargetResources();
+            return false;
+        }
+
+        hr = m_device->CreateRenderTargetView(m_sceneTexture, nullptr, &m_sceneRenderTargetView);
+        if (FAILED(hr) || !m_sceneRenderTargetView) {
+            ReleaseSceneRenderTargetResources();
+            return false;
+        }
+
+        hr = m_device->CreateShaderResourceView(m_sceneTexture, nullptr, &m_sceneShaderResourceView);
+        if (FAILED(hr) || !m_sceneShaderResourceView) {
+            ReleaseSceneRenderTargetResources();
+            return false;
+        }
+
+        return true;
+    }
+
+    bool EnsureScenePresentedToBackBuffer()
+    {
+        if (!IsFxaaEnabled() || !m_scenePresentDirty) {
+            return true;
+        }
+        if (!m_context || !m_swapChainRenderTargetView || !m_sceneShaderResourceView
+            || !m_postVertexShader || !m_fxaaPixelShader || !m_constantBuffer
+            || !m_postSamplerState || !m_postBlendState || !m_postDepthStencilState || !m_postRasterizerState) {
+            return false;
+        }
+
+        ModernDrawConstants constants{};
+        constants.screenWidth = static_cast<float>((std::max)(1, m_renderWidth));
+        constants.screenHeight = static_cast<float>((std::max)(1, m_renderHeight));
+        if (!UploadBuffer(m_constantBuffer, &constants, sizeof(constants))) {
+            return false;
+        }
+
+        ID3D11ShaderResourceView* postViews[2] = { m_sceneShaderResourceView, nullptr };
+        const float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+        m_context->OMSetRenderTargets(1, &m_swapChainRenderTargetView, nullptr);
+        m_context->OMSetBlendState(m_postBlendState, blendFactor, 0xFFFFFFFFu);
+        m_context->OMSetDepthStencilState(m_postDepthStencilState, 0);
+        m_context->RSSetState(m_postRasterizerState);
+        ApplyViewport();
+
+        m_context->IASetInputLayout(nullptr);
+        m_context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+        m_context->IASetIndexBuffer(nullptr, DXGI_FORMAT_R16_UINT, 0);
+        m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        m_context->VSSetShader(m_postVertexShader, nullptr, 0);
+        m_context->PSSetShader(m_fxaaPixelShader, nullptr, 0);
+        m_context->VSSetConstantBuffers(0, 1, &m_constantBuffer);
+        m_context->PSSetConstantBuffers(0, 1, &m_constantBuffer);
+        m_context->PSSetSamplers(0, 1, &m_postSamplerState);
+        m_context->PSSetShaderResources(0, 2, postViews);
+        m_context->Draw(3, 0);
+
+        ID3D11ShaderResourceView* clearViews[2] = { nullptr, nullptr };
+        m_context->PSSetShaderResources(0, 2, clearViews);
+        m_context->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
+        ApplyViewport();
+        m_scenePresentDirty = false;
+        return true;
+    }
+
     HWND m_hwnd;
     int m_renderWidth;
     int m_renderHeight;
@@ -2116,12 +2411,18 @@ private:
     ID3D11Device* m_device;
     ID3D11DeviceContext* m_context;
     ID3D11RenderTargetView* m_renderTargetView;
+    ID3D11RenderTargetView* m_swapChainRenderTargetView;
+    ID3D11Texture2D* m_sceneTexture;
+    ID3D11RenderTargetView* m_sceneRenderTargetView;
+    ID3D11ShaderResourceView* m_sceneShaderResourceView;
     ID3D11Texture2D* m_depthStencilTexture;
     ID3D11DepthStencilView* m_depthStencilView;
     ID3D11Texture2D* m_captureTexture;
     ID3D11VertexShader* m_vertexShaderTl;
     ID3D11VertexShader* m_vertexShaderLm;
     ID3D11PixelShader* m_pixelShader;
+    ID3D11VertexShader* m_postVertexShader;
+    ID3D11PixelShader* m_fxaaPixelShader;
     ID3D11InputLayout* m_inputLayoutTl;
     ID3D11InputLayout* m_inputLayoutLm;
     ID3D11Buffer* m_constantBuffer;
@@ -2130,6 +2431,10 @@ private:
     ID3D11Buffer* m_indexBuffer;
     size_t m_indexBufferSize;
     ID3D11SamplerState* m_samplerState;
+    ID3D11SamplerState* m_postSamplerState;
+    ID3D11BlendState* m_postBlendState;
+    ID3D11DepthStencilState* m_postDepthStencilState;
+    ID3D11RasterizerState* m_postRasterizerState;
     ModernFixedFunctionState m_pipelineState;
     CTexture* m_boundTextures[2];
     std::vector<BlendStateEntry> m_blendStates;
@@ -2140,6 +2445,7 @@ private:
     void* m_captureBits;
     int m_captureWidth;
     int m_captureHeight;
+    bool m_scenePresentDirty;
 };
 
 class D3D12RenderDevice final : public IRenderDevice {
