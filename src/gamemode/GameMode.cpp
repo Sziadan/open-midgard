@@ -1780,6 +1780,7 @@ constexpr u16 kPacketCzNotifyActorInit = PacketProfile::ActiveMapServerSend::kNo
 constexpr u32 kHeldMoveRequestIntervalMs = 75;
 constexpr int kHeldMoveRetargetThresholdCells = 2;
 constexpr int kHeldMoveDirectionalExtensionCells = 4;
+constexpr u32 kHeldMoveDirectionalRetargetNearEndMs = 80;
 constexpr u32 kMoveAckTimeoutMs = 1000;
 constexpr u32 kAttackChaseRequestIntervalMs = 1200;
 constexpr u32 kAttackRetryIntervalMs = 1200;
@@ -2407,6 +2408,11 @@ bool ShouldPreserveCurrentHeldMove(const CGameMode& mode)
     const int currentDeltaX = moveDestX - player->m_moveSrcX;
     const int currentDeltaY = moveDestY - player->m_moveSrcY;
     if (currentDeltaX == 0 && currentDeltaY == 0) {
+        return false;
+    }
+
+    const u32 now = g_session.GetServerTime();
+    if (player->m_moveEndTime > now && player->m_moveEndTime - now <= kHeldMoveDirectionalRetargetNearEndMs) {
         return false;
     }
 
