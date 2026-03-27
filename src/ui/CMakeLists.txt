@@ -11,6 +11,8 @@ add_library(ro_ui STATIC
     UINewChatWnd.cpp
     UIBasicInfoWnd.h
     UIBasicInfoWnd.cpp
+    UINotifyLevelUpWnd.h
+    UINotifyLevelUpWnd.cpp
     UIItemWnd.h
     UIItemWnd.cpp
     UIChooseWnd.h

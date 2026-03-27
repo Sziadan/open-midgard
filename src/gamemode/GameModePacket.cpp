@@ -4,19 +4,24 @@
 #include "network/Packet.h"
 #include "GameMode.h"
 #include "core/Globals.h"
+#include "core/File.h"
 #include "pathfinder/PathFinder.h"
 #include "session/Session.h"
 #include "item/Item.h"
 #include "Mode.h"
 #include "DebugLog.h"
+#include "audio/Audio.h"
 #include "ui/UIWindowMgr.h"
 #include "world/GameActor.h"
 #include "world/World.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <cstdio>
 #include <map>
+#include <string>
+#include <vector>
 
 class CConnection {
 public:
@@ -59,6 +64,73 @@ constexpr u32 kDeathCorpseHoldMs = 1290;
 
 u16 ReadLE16(const u8* data);
 u32 ReadLE32(const u8* data);
+
+std::string ToLowerAsciiStatus(std::string value)
+{
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return value;
+}
+
+const char* ResolveLevelUpWavePath()
+{
+    static bool s_initialized = false;
+    static std::string s_path;
+    if (s_initialized) {
+        return s_path.empty() ? nullptr : s_path.c_str();
+    }
+    s_initialized = true;
+
+    const char* directCandidates[] = {
+        "wav\\levelup.wav",
+        "data\\wav\\levelup.wav",
+        "wav\\LEVELUP.WAV",
+        "data\\wav\\LEVELUP.WAV",
+        nullptr
+    };
+    for (int index = 0; directCandidates[index]; ++index) {
+        if (g_fileMgr.IsDataExist(directCandidates[index])) {
+            s_path = directCandidates[index];
+            return s_path.c_str();
+        }
+    }
+
+    std::vector<std::string> wavNames;
+    g_fileMgr.CollectDataNamesByExtension("wav", wavNames);
+    for (const std::string& candidate : wavNames) {
+        if (ToLowerAsciiStatus(candidate).find("levelup") != std::string::npos) {
+            s_path = candidate;
+            break;
+        }
+    }
+
+    return s_path.empty() ? nullptr : s_path.c_str();
+}
+
+void PlayBaseLevelUpPresentation(CGameMode& mode)
+{
+    if (mode.m_world && mode.m_world->m_player) {
+        LaunchLevelUpEffect(mode.m_world->m_player, false);
+    }
+
+    if (const char* wavePath = ResolveLevelUpWavePath()) {
+        if (CAudio* audio = CAudio::GetInstance()) {
+            audio->PlaySound(wavePath);
+        }
+    }
+
+    g_windowMgr.MakeWindow(UIWindowMgr::WID_NOTIFYLEVELUPWND);
+}
+
+void PlayJobLevelUpPresentation(CGameMode& mode)
+{
+    if (mode.m_world && mode.m_world->m_player) {
+        LaunchLevelUpEffect(mode.m_world->m_player, true);
+    }
+
+    g_windowMgr.MakeWindow(UIWindowMgr::WID_NOTIFYJOBLEVELUPWND);
+}
 
 void HandleIgnorePacket(CGameMode&, const PacketView&)
 {
@@ -474,6 +546,8 @@ bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value)
     case kStatusBaseLevel:
         player->m_clevel = ClampToU16(value);
         return true;
+    case kStatusJobLevel:
+        return updatedSession;
     case kStatusBaseExp:
     case kStatusJobExp:
         player->m_Exp = static_cast<int>(value);
@@ -485,8 +559,34 @@ bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value)
 
 bool ApplySelfStatUpdate(CGameMode& mode, u32 statusType, u32 baseValue, u32 plusValue)
 {
+    CHARACTER_INFO* info = g_session.GetMutableSelectedCharacterInfo();
+    if (info) {
+        switch (statusType) {
+        case kStatusStr:
+            info->Str = static_cast<u8>((std::min)(baseValue, static_cast<u32>(0xFFu)));
+            break;
+        case kStatusAgi:
+            info->Agi = static_cast<u8>((std::min)(baseValue, static_cast<u32>(0xFFu)));
+            break;
+        case kStatusVit:
+            info->Vit = static_cast<u8>((std::min)(baseValue, static_cast<u32>(0xFFu)));
+            break;
+        case kStatusInt:
+            info->Int = static_cast<u8>((std::min)(baseValue, static_cast<u32>(0xFFu)));
+            break;
+        case kStatusDex:
+            info->Dex = static_cast<u8>((std::min)(baseValue, static_cast<u32>(0xFFu)));
+            break;
+        case kStatusLuk:
+            info->Luk = static_cast<u8>((std::min)(baseValue, static_cast<u32>(0xFFu)));
+            break;
+        default:
+            break;
+        }
+    }
+
     if (!mode.m_world || !mode.m_world->m_player) {
-        return false;
+        return info != nullptr;
     }
 
     const u16 totalValue = ClampToU16(baseValue + plusValue);
@@ -527,6 +627,18 @@ void HandleSelfStatusParam(CGameMode& mode, const PacketView& packet)
         | (static_cast<u32>(packet.data[5]) << 8)
         | (static_cast<u32>(packet.data[6]) << 16)
         | (static_cast<u32>(packet.data[7]) << 24);
+
+    u32 previousValue = 0;
+    bool hadPreviousValue = false;
+    if (statusType == kStatusBaseLevel || statusType == kStatusJobLevel) {
+        if (const CHARACTER_INFO* info = g_session.GetSelectedCharacterInfo()) {
+            previousValue = (statusType == kStatusBaseLevel)
+                ? static_cast<u32>((std::max)(0, static_cast<int>(info->level)))
+                : static_cast<u32>((std::max)(0, info->joblevel));
+            hadPreviousValue = previousValue > 0;
+        }
+    }
+
     if (ApplySelfStatusUpdate(mode, statusType, value)) {
         CPlayer* player = mode.m_world ? mode.m_world->m_player : nullptr;
         DbgLog("[GameMode] self status type=%u value=%u hp=%u/%u sp=%u/%u\n",
@@ -536,6 +648,14 @@ void HandleSelfStatusParam(CGameMode& mode, const PacketView& packet)
             static_cast<unsigned int>(player ? player->m_MaxHp : 0),
             static_cast<unsigned int>(player ? player->m_Sp : 0),
             static_cast<unsigned int>(player ? player->m_MaxSp : 0));
+
+        if (hadPreviousValue && value > previousValue) {
+            if (statusType == kStatusBaseLevel) {
+                PlayBaseLevelUpPresentation(mode);
+            } else if (statusType == kStatusJobLevel) {
+                PlayJobLevelUpPresentation(mode);
+            }
+        }
     }
 }
 

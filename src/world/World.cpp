@@ -926,6 +926,78 @@ private:
     DWORD m_spawnTick;
 };
 
+class CLevelUpEffect : public CGameObject {
+public:
+    CLevelUpEffect(CGameActor* actor, bool jobLevel)
+        : m_actor(actor)
+        , m_origin(actor ? actor->m_pos : vector3d{})
+        , m_spawnTick(timeGetTime())
+        , m_jobLevel(jobLevel)
+    {
+    }
+
+    u8 OnProcess() override
+    {
+        return (timeGetTime() - m_spawnTick) < 2200u ? 1 : 0;
+    }
+
+    void Render(matrix* viewMatrix) override
+    {
+        if (!viewMatrix) {
+            return;
+        }
+
+        const DWORD elapsed = timeGetTime() - m_spawnTick;
+        const float timeSeconds = static_cast<float>(elapsed) * 0.001f;
+        if (timeSeconds <= 0.0f || timeSeconds > 2.4f) {
+            return;
+        }
+
+        vector3d center = m_actor ? m_actor->m_pos : m_origin;
+        center.y += 0.8f;
+
+        const COLORREF ringColor = m_jobLevel ? RGB(112, 214, 255) : RGB(255, 230, 120);
+        const float radius = m_jobLevel ? 2.5f : 3.2f;
+        const float height = m_jobLevel ? 3.2f : 4.2f;
+
+        RenderPortalEffectAtPosition(center,
+            *viewMatrix,
+            ringColor,
+            radius,
+            height,
+            timeSeconds,
+            m_jobLevel ? 0.2f : 0.0f,
+            false,
+            m_jobLevel ? PortalVisualStyle::Ready : PortalVisualStyle::Portal);
+
+        const float life = (std::min)(1.0f, timeSeconds / 2.2f);
+        const float fade = life < 0.75f ? 1.0f : (1.0f - (life - 0.75f) / 0.25f);
+        const unsigned int alpha = static_cast<unsigned int>((std::max)(0.0f, fade) * (m_jobLevel ? 148.0f : 208.0f));
+        if (alpha == 0u) {
+            return;
+        }
+
+        vector3d upperCenter = center;
+        upperCenter.y += 1.9f + std::sin(timeSeconds * 5.4f) * 0.12f;
+        SubmitTexturedBillboard(upperCenter,
+            *viewMatrix,
+            GetPortalRingTexture(),
+            radius * 3.5f,
+            radius * 2.2f,
+            PackPortalColor(alpha, ringColor),
+            D3DBLEND_ONE,
+            0.0f,
+            0.0f,
+            1 | 2);
+    }
+
+private:
+    CGameActor* m_actor;
+    vector3d m_origin;
+    DWORD m_spawnTick;
+    bool m_jobLevel;
+};
+
 vector3d NormalizeVec3(const vector3d& value);
 vector3d ScaleVec3(const vector3d& value, float scale);
 vector3d AddVec3(const vector3d& a, const vector3d& b);
@@ -3889,4 +3961,13 @@ void CWorld::RenderBackgroundObjects(const matrix& viewMatrix) const
         }
         actor->Render(viewMatrix);
     }
+}
+
+void LaunchLevelUpEffect(CGameActor* actor, bool jobLevel)
+{
+    if (!actor) {
+        return;
+    }
+
+    g_world.m_gameObjectList.push_back(new CLevelUpEffect(actor, jobLevel));
 }

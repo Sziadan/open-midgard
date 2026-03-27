@@ -13,6 +13,8 @@ class UIMakeCharWnd;
 class UIItemWnd;
 class UIQuestWnd;
 class UIBasicInfoWnd;
+class UINotifyLevelUpWnd;
+class UINotifyJobLevelUpWnd;
 class UIEquipWnd;
 class UIOptionWnd;
 class UIShortCutWnd;
@@ -51,7 +53,9 @@ public:
         WID_SAYDIALOGWND      = 9,
         WID_LOADINGWND        = 10,
         WID_OPTIONWND         = 13,
+        WID_NOTIFYLEVELUPWND  = 21,
         WID_CHOOSEWND         = 17,
+        WID_NOTIFYJOBLEVELUPWND = 49,
     };
 
     UIWindowMgr();
@@ -125,6 +129,8 @@ public:
     UIItemWnd* m_itemWnd;
     UIQuestWnd* m_questWnd;
     UIBasicInfoWnd* m_basicInfoWnd;
+    UINotifyLevelUpWnd* m_notifyLevelUpWnd;
+    UINotifyJobLevelUpWnd* m_notifyJobLevelUpWnd;
     UIEquipWnd* m_equipWnd;
     std::string m_loginStatus;
     std::string m_loginWallpaper;

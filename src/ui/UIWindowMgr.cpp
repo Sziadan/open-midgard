@@ -6,6 +6,7 @@
 #include "UIItemWnd.h"
 #include "UILoginWnd.h"
 #include "UIMakeCharWnd.h"
+#include "UINotifyLevelUpWnd.h"
 #include "UIOptionWnd.h"
 #include "UISelectCharWnd.h"
 #include "UIWaitWnd.h"
@@ -183,7 +184,7 @@ UIWindowMgr::UIWindowMgr()
       m_isDragAll(0), m_conversionMode(0),
       m_captureWindow(nullptr), m_editWindow(nullptr), m_modalWindow(nullptr), m_lastHitWindow(nullptr),
       m_loadingWnd(nullptr), m_minimapZoomWnd(nullptr), m_statusWnd(nullptr), m_chatWnd(nullptr),
-      m_loginWnd(nullptr), m_selectCharWnd(nullptr), m_makeCharWnd(nullptr), m_chooseWnd(nullptr), m_optionWnd(nullptr), m_itemWnd(nullptr), m_questWnd(nullptr), m_basicInfoWnd(nullptr), m_equipWnd(nullptr),
+      m_loginWnd(nullptr), m_selectCharWnd(nullptr), m_makeCharWnd(nullptr), m_chooseWnd(nullptr), m_optionWnd(nullptr), m_itemWnd(nullptr), m_questWnd(nullptr), m_basicInfoWnd(nullptr), m_notifyLevelUpWnd(nullptr), m_notifyJobLevelUpWnd(nullptr), m_equipWnd(nullptr),
       m_wallpaperSurface(nullptr), m_uiComposeDC(nullptr), m_uiComposeBitmap(nullptr), m_uiComposeBits(nullptr), m_uiComposeWidth(0), m_uiComposeHeight(0),
       m_composeCursorActNum(0), m_composeCursorStartTick(0), m_composeCursorEnabled(false)
 {
@@ -273,6 +274,26 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_children.push_front(m_basicInfoWnd);
         m_basicInfoWnd->SetShow(1);
         return m_basicInfoWnd;
+
+    case WID_NOTIFYLEVELUPWND:
+        if (!m_notifyLevelUpWnd) {
+            m_notifyLevelUpWnd = new UINotifyLevelUpWnd();
+            m_children.push_back(m_notifyLevelUpWnd);
+        }
+        m_children.remove(m_notifyLevelUpWnd);
+        m_children.push_back(m_notifyLevelUpWnd);
+        m_notifyLevelUpWnd->SetShow(1);
+        return m_notifyLevelUpWnd;
+
+    case WID_NOTIFYJOBLEVELUPWND:
+        if (!m_notifyJobLevelUpWnd) {
+            m_notifyJobLevelUpWnd = new UINotifyJobLevelUpWnd();
+            m_children.push_back(m_notifyJobLevelUpWnd);
+        }
+        m_children.remove(m_notifyJobLevelUpWnd);
+        m_children.push_back(m_notifyJobLevelUpWnd);
+        m_notifyJobLevelUpWnd->SetShow(1);
+        return m_notifyJobLevelUpWnd;
 
     case WID_ITEMWND:
         if (!m_itemWnd) {
@@ -404,6 +425,12 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
     if (window == m_basicInfoWnd) {
         m_basicInfoWnd = nullptr;
     }
+    if (window == m_notifyLevelUpWnd) {
+        m_notifyLevelUpWnd = nullptr;
+    }
+    if (window == m_notifyJobLevelUpWnd) {
+        m_notifyJobLevelUpWnd = nullptr;
+    }
     if (window == m_itemWnd) {
         m_itemWnd = nullptr;
     }
@@ -427,6 +454,8 @@ void UIWindowMgr::RemoveAllWindows()
     m_statusWnd = nullptr;
     m_chatWnd = nullptr;
     m_basicInfoWnd = nullptr;
+    m_notifyLevelUpWnd = nullptr;
+    m_notifyJobLevelUpWnd = nullptr;
     m_loginWnd = nullptr;
     m_selectCharWnd = nullptr;
     m_makeCharWnd = nullptr;
