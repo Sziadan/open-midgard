@@ -178,6 +178,29 @@ u32 ResolveLocalJobLevelUpEffectId(const CGameMode& mode)
     return kEffectIdJobLevelUp;
 }
 
+void SyncSessionAppearanceToLocalPlayer(CGameMode& mode)
+{
+    if (!mode.m_world || !mode.m_world->m_player) {
+        return;
+    }
+
+    CPlayer* player = mode.m_world->m_player;
+    player->m_job = g_session.m_playerJob;
+    player->m_headType = g_session.m_playerHead;
+    player->m_bodyPalette = g_session.m_playerBodyPalette;
+
+    if (CPc* pcActor = dynamic_cast<CPc*>(player)) {
+        pcActor->m_head = g_session.m_playerHead;
+        pcActor->m_headPalette = g_session.m_playerHeadPalette;
+        pcActor->m_weapon = g_session.m_playerWeapon;
+        pcActor->m_shield = g_session.m_playerShield;
+        pcActor->m_accessory = g_session.m_playerAccessory;
+        pcActor->m_accessory2 = g_session.m_playerAccessory2;
+        pcActor->m_accessory3 = g_session.m_playerAccessory3;
+        pcActor->InvalidateBillboard();
+    }
+}
+
 CGameActor* ResolveNotifyEffectActor(CGameMode& mode, u32 actorId)
 {
     if (mode.m_world && mode.m_world->m_player) {
@@ -469,6 +492,18 @@ bool BuildEquipInventoryItem(const PacketView& packet, const u8* entry, ITEM_INF
         outItem.m_isYours = ReadLE16(entry + 24);
     }
 
+    if (outItem.m_wearLocation != 0) {
+        DbgLog("[GameMode] equip inventory entry pkt=0x%04X index=%u item=%u location=0x%04X wear=0x%04X damaged=%u refine=%u yours=%u\n",
+            static_cast<unsigned int>(packet.packetId),
+            outItem.m_itemIndex,
+            outItem.GetItemId(),
+            static_cast<unsigned int>(outItem.m_location),
+            static_cast<unsigned int>(outItem.m_wearLocation),
+            static_cast<unsigned int>(outItem.m_isDamaged),
+            static_cast<unsigned int>(outItem.m_refiningLevel),
+            static_cast<unsigned int>(outItem.m_isYours));
+    }
+
     return outItem.m_itemIndex != 0;
 }
 
@@ -507,7 +542,7 @@ void HandleNormalInventoryList(CGameMode&, const PacketView& packet)
     }
 }
 
-void HandleEquipInventoryList(CGameMode&, const PacketView& packet)
+void HandleEquipInventoryList(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 4) {
         return;
@@ -536,6 +571,8 @@ void HandleEquipInventoryList(CGameMode&, const PacketView& packet)
         }
         g_session.AddInventoryItem(itemInfo);
     }
+    g_session.RebuildPlayerEquipmentAppearanceFromInventory();
+    SyncSessionAppearanceToLocalPlayer(mode);
 }
 
 void HandleItemPickupAck(CGameMode&, const PacketView& packet)
@@ -676,6 +713,8 @@ void HandleEquipItemAck(CGameMode& mode, const PacketView& packet)
 
     g_session.ClearInventoryWearLocationMask(wearLocation, itemIndex);
     g_session.SetInventoryItemWearLocation(itemIndex, wearLocation);
+    g_session.RebuildPlayerEquipmentAppearanceFromInventory();
+    SyncSessionAppearanceToLocalPlayer(mode);
     DbgLog("[GameMode] equip ack index=%u wear=0x%04X ok=%d\n",
         itemIndex,
         static_cast<unsigned int>(wearLocation),
@@ -704,6 +743,8 @@ void HandleUnequipItemAck(CGameMode& mode, const PacketView& packet)
     }
 
     g_session.SetInventoryItemWearLocation(itemIndex, 0);
+    g_session.RebuildPlayerEquipmentAppearanceFromInventory();
+    SyncSessionAppearanceToLocalPlayer(mode);
     DbgLog("[GameMode] unequip ack index=%u wear=0x%04X ok=%d\n",
         itemIndex,
         static_cast<unsigned int>(wearLocation),
@@ -3563,6 +3604,70 @@ void HandleActorSpriteChange(CGameMode& mode, const PacketView& packet)
     }
 
     if (billboardDirty) {
+        if (gid == g_session.m_gid || gid == g_session.m_aid) {
+            CHARACTER_INFO* info = g_session.GetMutableSelectedCharacterInfo();
+            switch (type) {
+            case kLookBase:
+                g_session.m_playerJob = static_cast<int>(value);
+                if (info) {
+                    info->job = static_cast<s16>(value & 0xFFFFu);
+                }
+                break;
+            case kLookHair:
+                g_session.m_playerHead = static_cast<int>(value);
+                if (info) {
+                    info->head = static_cast<s16>(value & 0xFFFFu);
+                }
+                break;
+            case kLookWeapon:
+                g_session.m_playerWeapon = static_cast<int>(value & 0xFFFFu);
+                g_session.m_playerShield = static_cast<int>((value >> 16) & 0xFFFFu);
+                if (info) {
+                    info->weapon = static_cast<s16>(g_session.m_playerWeapon & 0xFFFF);
+                    info->shield = static_cast<s16>(g_session.m_playerShield & 0xFFFF);
+                }
+                break;
+            case kLookHeadBottom:
+                g_session.m_playerAccessory = static_cast<int>(value);
+                if (info) {
+                    info->accessory = static_cast<s16>(value & 0xFFFFu);
+                }
+                break;
+            case kLookHeadTop:
+                g_session.m_playerAccessory2 = static_cast<int>(value);
+                if (info) {
+                    info->accessory2 = static_cast<s16>(value & 0xFFFFu);
+                }
+                break;
+            case kLookHeadMid:
+                g_session.m_playerAccessory3 = static_cast<int>(value);
+                if (info) {
+                    info->accessory3 = static_cast<s16>(value & 0xFFFFu);
+                }
+                break;
+            case kLookHairColor:
+                g_session.m_playerHeadPalette = static_cast<int>(value);
+                if (info) {
+                    info->headpalette = static_cast<s16>(value & 0xFFFFu);
+                }
+                break;
+            case kLookClothesColor:
+                g_session.m_playerBodyPalette = static_cast<int>(value);
+                if (info) {
+                    info->bodypalette = static_cast<s16>(value & 0xFFFFu);
+                }
+                break;
+            case kLookShield:
+                g_session.m_playerShield = static_cast<int>(value);
+                if (info) {
+                    info->shield = static_cast<s16>(value & 0xFFFFu);
+                }
+                break;
+            default:
+                break;
+            }
+        }
+
         if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
             pcActor->InvalidateBillboard();
         }

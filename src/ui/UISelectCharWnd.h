@@ -22,8 +22,11 @@ public:
         int curMotion = 0;
         int bodyPalette = 0;
         int headPalette = 0;
-        std::string actName[2];
-        std::string sprName[2];
+        int accessoryBottom = 0;
+        int accessoryMid = 0;
+        int accessoryTop = 0;
+        std::string actName[5];
+        std::string sprName[5];
         std::string imfName;
         std::string bodyPaletteName;
         std::string headPaletteName;

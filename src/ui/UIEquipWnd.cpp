@@ -400,17 +400,39 @@ bool BuildEquipPreviewPaletteOverride(const std::string& paletteName, std::array
     return true;
 }
 
+bool ApplyAttachPointDelta(const CMotion* baseMotion, const CMotion* attachedMotion, POINT* inOutPoint)
+{
+    if (!baseMotion || !attachedMotion || !inOutPoint || baseMotion->attachInfo.empty() || attachedMotion->attachInfo.empty()) {
+        return false;
+    }
+
+    const CAttachPointInfo& attached = attachedMotion->attachInfo.front();
+    const CAttachPointInfo& base = baseMotion->attachInfo.front();
+    if (attached.attr != base.attr) {
+        return false;
+    }
+
+    inOutPoint->x += base.x - attached.x;
+    inOutPoint->y += base.y - attached.y;
+    return true;
+}
+
 POINT GetEquipPreviewLayerPoint(int layerPriority,
     int resolvedLayer,
     CImfRes* imfRes,
     const CMotion* motion,
     const std::string& bodyActName,
+    const std::string& headActName,
     int curAction,
-    int curMotion)
+    int bodyMotionIndex,
+    int curMotion,
+    int headMotionIndex)
 {
     POINT point = imfRes->GetPoint(resolvedLayer, curAction, curMotion);
     if (layerPriority != 1 || !motion || motion->attachInfo.empty()) {
-        return point;
+        if (layerPriority < 2 || !motion || motion->attachInfo.empty()) {
+            return point;
+        }
     }
 
     CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
@@ -418,20 +440,71 @@ POINT GetEquipPreviewLayerPoint(int layerPriority,
         return point;
     }
 
-    const CMotion* bodyMotion = bodyActRes->GetMotion(curAction, curMotion);
+    const CMotion* bodyMotion = bodyActRes->GetMotion(curAction, bodyMotionIndex);
     if (!bodyMotion || bodyMotion->attachInfo.empty()) {
         return point;
     }
 
-    const CAttachPointInfo& headAttach = motion->attachInfo.front();
-    const CAttachPointInfo& bodyAttach = bodyMotion->attachInfo.front();
-    if (headAttach.attr != bodyAttach.attr) {
+    if (layerPriority == 1) {
+        ApplyAttachPointDelta(bodyMotion, motion, &point);
         return point;
     }
 
-    point.x += bodyAttach.x - headAttach.x;
-    point.y += bodyAttach.y - headAttach.y;
+    CActRes* headActRes = g_resMgr.GetAs<CActRes>(headActName.c_str());
+    if (!headActRes) {
+        return point;
+    }
+
+    const CMotion* headMotion = headActRes->GetMotion(curAction, headMotionIndex);
+    if (!headMotion) {
+        return point;
+    }
+
+    POINT headOffset{};
+    ApplyAttachPointDelta(bodyMotion, headMotion, &headOffset);
+    point.x += headOffset.x;
+    point.y += headOffset.y;
+    ApplyAttachPointDelta(headMotion, motion, &point);
     return point;
+}
+
+bool DrawEquipPreviewAccessoryMotion(HDC hdc,
+    int drawX,
+    int drawY,
+    int curAction,
+    int bodyMotionIndex,
+    int headMotionIndex,
+    const std::string& bodyActName,
+    const std::string& headActName,
+    const std::string& accessoryActName,
+    const std::string& accessorySprName)
+{
+    if (accessoryActName.empty() || accessorySprName.empty()) {
+        return false;
+    }
+
+    CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
+    CActRes* headActRes = g_resMgr.GetAs<CActRes>(headActName.c_str());
+    CActRes* accessoryActRes = g_resMgr.GetAs<CActRes>(accessoryActName.c_str());
+    CSprRes* accessorySprRes = g_resMgr.GetAs<CSprRes>(accessorySprName.c_str());
+    if (!bodyActRes || !headActRes || !accessoryActRes || !accessorySprRes) {
+        return false;
+    }
+
+    const CMotion* bodyMotion = bodyActRes->GetMotion(curAction, bodyMotionIndex);
+    const CMotion* headMotion = headActRes->GetMotion(curAction, headMotionIndex);
+    const CMotion* accessoryMotion = accessoryActRes->GetMotion(curAction, headMotionIndex);
+    if (!accessoryMotion) {
+        accessoryMotion = accessoryActRes->GetMotion(curAction, 0);
+    }
+    if (!bodyMotion || !headMotion || !accessoryMotion) {
+        return false;
+    }
+
+    POINT point{};
+    ApplyAttachPointDelta(bodyMotion, headMotion, &point);
+    ApplyAttachPointDelta(headMotion, accessoryMotion, &point);
+    return DrawActMotionToHdc(hdc, drawX + point.x, drawY + point.y, accessorySprRes, accessoryMotion, accessorySprRes->m_pal);
 }
 
 bool DrawEquipPreviewLayer(HDC hdc,
@@ -444,6 +517,9 @@ bool DrawEquipPreviewLayer(HDC hdc,
     const std::string& sprName,
     const std::string& imfName,
     const std::string& bodyActName,
+    const std::string& headActName,
+    int bodyMotionIndex,
+    int headMotionIndex,
     const std::string& paletteName)
 {
     CActRes* actRes = g_resMgr.GetAs<CActRes>(actName.c_str());
@@ -463,7 +539,16 @@ bool DrawEquipPreviewLayer(HDC hdc,
         return false;
     }
 
-    const POINT point = GetEquipPreviewLayerPoint(layerIndex, resolvedLayer, imfRes, motion, bodyActName, curAction, curMotion);
+    const POINT point = GetEquipPreviewLayerPoint(layerIndex,
+        resolvedLayer,
+        imfRes,
+        motion,
+        bodyActName,
+        headActName,
+        curAction,
+        bodyMotionIndex,
+        curMotion,
+        headMotionIndex);
 
     std::array<unsigned int, 256> paletteOverride{};
     unsigned int* palette = sprRes->m_pal;
@@ -482,6 +567,12 @@ bool DrawEquipPreviewPlayerSprite(HDC hdc, int drawX, int drawY)
     char bodySpr[260] = {};
     char headAct[260] = {};
     char headSpr[260] = {};
+    char accessoryBottomAct[260] = {};
+    char accessoryBottomSpr[260] = {};
+    char accessoryMidAct[260] = {};
+    char accessoryMidSpr[260] = {};
+    char accessoryTopAct[260] = {};
+    char accessoryTopSpr[260] = {};
     char imfName[260] = {};
     char bodyPalette[260] = {};
     char headPalette[260] = {};
@@ -495,6 +586,12 @@ bool DrawEquipPreviewPlayerSprite(HDC hdc, int drawX, int drawY)
     const std::string bodySprName = g_session.GetJobSprName(g_session.m_playerJob, sex, bodySpr);
     const std::string headActName = g_session.GetHeadActName(g_session.m_playerJob, &head, sex, headAct);
     const std::string headSprName = g_session.GetHeadSprName(g_session.m_playerJob, &head, sex, headSpr);
+    const std::string accessoryBottomActName = g_session.GetAccessoryActName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory, accessoryBottomAct);
+    const std::string accessoryBottomSprName = g_session.GetAccessorySprName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory, accessoryBottomSpr);
+    const std::string accessoryMidActName = g_session.GetAccessoryActName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory3, accessoryMidAct);
+    const std::string accessoryMidSprName = g_session.GetAccessorySprName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory3, accessoryMidSpr);
+    const std::string accessoryTopActName = g_session.GetAccessoryActName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory2, accessoryTopAct);
+    const std::string accessoryTopSprName = g_session.GetAccessorySprName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory2, accessoryTopSpr);
     const std::string imfPath = g_session.GetImfName(g_session.m_playerJob, head, sex, imfName);
     const std::string bodyPaletteName = g_session.m_playerBodyPalette > 0
         ? g_session.GetBodyPaletteName(g_session.m_playerJob, sex, g_session.m_playerBodyPalette, bodyPalette)
@@ -504,8 +601,17 @@ bool DrawEquipPreviewPlayerSprite(HDC hdc, int drawX, int drawY)
         : std::string();
 
     bool drew = false;
-    drew |= DrawEquipPreviewLayer(hdc, drawX, drawY, 0, curAction, curMotion, bodyActName, bodySprName, imfPath, bodyActName, bodyPaletteName);
-    drew |= DrawEquipPreviewLayer(hdc, drawX, drawY, 1, curAction, curMotion, headActName, headSprName, imfPath, bodyActName, headPaletteName);
+    drew |= DrawEquipPreviewLayer(hdc, drawX, drawY, 0, curAction, curMotion, bodyActName, bodySprName, imfPath, bodyActName, headActName, curMotion, curMotion, bodyPaletteName);
+    drew |= DrawEquipPreviewLayer(hdc, drawX, drawY, 1, curAction, curMotion, headActName, headSprName, imfPath, bodyActName, headActName, curMotion, curMotion, headPaletteName);
+    if (!accessoryBottomActName.empty() && !accessoryBottomSprName.empty()) {
+        drew |= DrawEquipPreviewAccessoryMotion(hdc, drawX, drawY, curAction, curMotion, curMotion, bodyActName, headActName, accessoryBottomActName, accessoryBottomSprName);
+    }
+    if (!accessoryMidActName.empty() && !accessoryMidSprName.empty()) {
+        drew |= DrawEquipPreviewAccessoryMotion(hdc, drawX, drawY, curAction, curMotion, curMotion, bodyActName, headActName, accessoryMidActName, accessoryMidSprName);
+    }
+    if (!accessoryTopActName.empty() && !accessoryTopSprName.empty()) {
+        drew |= DrawEquipPreviewAccessoryMotion(hdc, drawX, drawY, curAction, curMotion, curMotion, bodyActName, headActName, accessoryTopActName, accessoryTopSprName);
+    }
     return drew;
 }
 

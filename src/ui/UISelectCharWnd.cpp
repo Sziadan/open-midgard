@@ -362,15 +362,37 @@ bool BuildPaletteOverride(const std::string& paletteName, std::array<unsigned in
     return true;
 }
 
+bool ApplyAttachPointDelta(const CMotion* baseMotion, const CMotion* attachedMotion, POINT* inOutPoint)
+{
+    if (!baseMotion || !attachedMotion || !inOutPoint || baseMotion->attachInfo.empty() || attachedMotion->attachInfo.empty()) {
+        return false;
+    }
+
+    const CAttachPointInfo& attached = attachedMotion->attachInfo.front();
+    const CAttachPointInfo& base = baseMotion->attachInfo.front();
+    if (attached.attr != base.attr) {
+        return false;
+    }
+
+    inOutPoint->x += base.x - attached.x;
+    inOutPoint->y += base.y - attached.y;
+    return true;
+}
+
 POINT GetPreviewLayerPoint(const UISelectCharWnd::PreviewState& preview,
     int layerPriority,
     int resolvedLayer,
     CImfRes* imfRes,
-    const CMotion* motion)
+    const CMotion* motion,
+    int bodyMotionIndex,
+    int curMotion,
+    int headMotionIndex)
 {
-    POINT point = imfRes->GetPoint(resolvedLayer, preview.curAction, preview.curMotion);
+    POINT point = imfRes->GetPoint(resolvedLayer, preview.curAction, curMotion);
     if (layerPriority != 1 || !motion || motion->attachInfo.empty()) {
-        return point;
+        if (layerPriority < 2 || !motion || motion->attachInfo.empty()) {
+            return point;
+        }
     }
 
     CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(preview.actName[0].c_str());
@@ -378,25 +400,70 @@ POINT GetPreviewLayerPoint(const UISelectCharWnd::PreviewState& preview,
         return point;
     }
 
-    const CMotion* bodyMotion = bodyActRes->GetMotion(preview.curAction, preview.curMotion);
+    const CMotion* bodyMotion = bodyActRes->GetMotion(preview.curAction, bodyMotionIndex);
     if (!bodyMotion || bodyMotion->attachInfo.empty()) {
         return point;
     }
 
-    const CAttachPointInfo& headAttach = motion->attachInfo.front();
-    const CAttachPointInfo& bodyAttach = bodyMotion->attachInfo.front();
-    if (headAttach.attr != bodyAttach.attr) {
+    if (layerPriority == 1) {
+        ApplyAttachPointDelta(bodyMotion, motion, &point);
         return point;
     }
 
-    point.x += bodyAttach.x - headAttach.x;
-    point.y += bodyAttach.y - headAttach.y;
+    CActRes* headActRes = g_resMgr.GetAs<CActRes>(preview.actName[1].c_str());
+    if (!headActRes) {
+        return point;
+    }
+
+    const CMotion* headMotion = headActRes->GetMotion(preview.curAction, headMotionIndex);
+    if (!headMotion) {
+        return point;
+    }
+
+    POINT headOffset{};
+    ApplyAttachPointDelta(bodyMotion, headMotion, &headOffset);
+    point.x += headOffset.x;
+    point.y += headOffset.y;
+    ApplyAttachPointDelta(headMotion, motion, &point);
     return point;
+}
+
+bool DrawPreviewAccessoryMotion(HDC hdc,
+    const UISelectCharWnd::PreviewState& preview,
+    const std::string& accessoryActName,
+    const std::string& accessorySprName)
+{
+    if (accessoryActName.empty() || accessorySprName.empty()) {
+        return false;
+    }
+
+    CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(preview.actName[0].c_str());
+    CActRes* headActRes = g_resMgr.GetAs<CActRes>(preview.actName[1].c_str());
+    CActRes* accessoryActRes = g_resMgr.GetAs<CActRes>(accessoryActName.c_str());
+    CSprRes* accessorySprRes = g_resMgr.GetAs<CSprRes>(accessorySprName.c_str());
+    if (!bodyActRes || !headActRes || !accessoryActRes || !accessorySprRes) {
+        return false;
+    }
+
+    const CMotion* bodyMotion = bodyActRes->GetMotion(preview.curAction, preview.curMotion);
+    const CMotion* headMotion = headActRes->GetMotion(preview.curAction, preview.curMotion);
+    const CMotion* accessoryMotion = accessoryActRes->GetMotion(preview.curAction, preview.curMotion);
+    if (!accessoryMotion) {
+        accessoryMotion = accessoryActRes->GetMotion(preview.curAction, 0);
+    }
+    if (!bodyMotion || !headMotion || !accessoryMotion) {
+        return false;
+    }
+
+    POINT point{};
+    ApplyAttachPointDelta(bodyMotion, headMotion, &point);
+    ApplyAttachPointDelta(headMotion, accessoryMotion, &point);
+    return DrawActMotionToHdc(hdc, preview.x + point.x, preview.y + point.y, accessorySprRes, accessoryMotion, accessorySprRes->m_pal);
 }
 
 bool DrawPreviewLayer(HDC hdc, const UISelectCharWnd::PreviewState& preview, int layerIndex)
 {
-    if (layerIndex < 0 || layerIndex > 1) {
+    if (layerIndex < 0 || layerIndex > 4) {
         return false;
     }
 
@@ -407,17 +474,18 @@ bool DrawPreviewLayer(HDC hdc, const UISelectCharWnd::PreviewState& preview, int
         return false;
     }
 
-    int resolvedLayer = imfRes->GetLayer(layerIndex, preview.curAction, preview.curMotion);
+    const int layerMotion = (layerIndex == 0) ? preview.curMotion : preview.curMotion;
+    int resolvedLayer = imfRes->GetLayer(layerIndex, preview.curAction, layerMotion);
     if (resolvedLayer < 0) {
         resolvedLayer = layerIndex;
     }
 
-    const CMotion* motion = actRes->GetMotion(preview.curAction, preview.curMotion);
+    const CMotion* motion = actRes->GetMotion(preview.curAction, layerMotion);
     if (!motion || resolvedLayer >= static_cast<int>(motion->sprClips.size())) {
         return false;
     }
 
-    const POINT point = GetPreviewLayerPoint(preview, layerIndex, resolvedLayer, imfRes, motion);
+    const POINT point = GetPreviewLayerPoint(preview, layerIndex, resolvedLayer, imfRes, motion, preview.curMotion, layerMotion, preview.curMotion);
 
     std::array<unsigned int, 256> paletteOverride{};
     unsigned int* palette = sprRes->m_pal;
@@ -848,6 +916,9 @@ void UISelectCharWnd::BuildPreviewForSlot(int visibleIndex, const CHARACTER_INFO
     preview.curMotion = 0;
     preview.bodyPalette = info.bodypalette;
     preview.headPalette = info.headpalette;
+    preview.accessoryBottom = info.accessory;
+    preview.accessoryMid = info.accessory3;
+    preview.accessoryTop = info.accessory2;
 
     char path[260] = {};
     int head = info.head;
@@ -857,6 +928,12 @@ void UISelectCharWnd::BuildPreviewForSlot(int visibleIndex, const CHARACTER_INFO
     preview.sprName[0] = g_session.GetJobSprName(info.job, sex, path);
     preview.actName[1] = g_session.GetHeadActName(info.job, &head, sex, path);
     preview.sprName[1] = g_session.GetHeadSprName(info.job, &head, sex, path);
+    preview.actName[2] = g_session.GetAccessoryActName(info.job, &head, sex, preview.accessoryBottom, path);
+    preview.sprName[2] = g_session.GetAccessorySprName(info.job, &head, sex, preview.accessoryBottom, path);
+    preview.actName[3] = g_session.GetAccessoryActName(info.job, &head, sex, preview.accessoryMid, path);
+    preview.sprName[3] = g_session.GetAccessorySprName(info.job, &head, sex, preview.accessoryMid, path);
+    preview.actName[4] = g_session.GetAccessoryActName(info.job, &head, sex, preview.accessoryTop, path);
+    preview.sprName[4] = g_session.GetAccessorySprName(info.job, &head, sex, preview.accessoryTop, path);
     preview.imfName = g_session.GetImfName(info.job, head, sex, path);
 
     if (preview.bodyPalette > 0) {
@@ -896,6 +973,9 @@ void UISelectCharWnd::DrawPreview(HDC hdc, const PreviewState& preview) const
 
     DrawPreviewLayer(hdc, preview, 0);
     DrawPreviewLayer(hdc, preview, 1);
+    DrawPreviewAccessoryMotion(hdc, preview, preview.actName[2], preview.sprName[2]);
+    DrawPreviewAccessoryMotion(hdc, preview, preview.actName[3], preview.sprName[3]);
+    DrawPreviewAccessoryMotion(hdc, preview, preview.actName[4], preview.sprName[4]);
 }
 
 int UISelectCharWnd::HitSlot(int x, int y) const

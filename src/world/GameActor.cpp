@@ -1133,17 +1133,39 @@ bool BuildPaletteOverride(const std::string& paletteName, std::array<unsigned in
     return true;
 }
 
+bool ApplyAttachPointDelta(const CMotion* baseMotion, const CMotion* attachedMotion, POINT* inOutPoint)
+{
+    if (!baseMotion || !attachedMotion || !inOutPoint || baseMotion->attachInfo.empty() || attachedMotion->attachInfo.empty()) {
+        return false;
+    }
+
+    const CAttachPointInfo& attached = attachedMotion->attachInfo.front();
+    const CAttachPointInfo& base = baseMotion->attachInfo.front();
+    if (attached.attr != base.attr) {
+        return false;
+    }
+
+    inOutPoint->x += base.x - attached.x;
+    inOutPoint->y += base.y - attached.y;
+    return true;
+}
+
 POINT GetPlayerLayerPoint(int layerPriority,
     int resolvedLayer,
     CImfRes* imfRes,
     const CMotion* motion,
     const std::string& bodyActName,
+    const std::string& headActName,
     int curAction,
-    int curMotion)
+    int bodyMotionIndex,
+    int curMotion,
+    int headMotionIndex)
 {
     POINT point = imfRes->GetPoint(resolvedLayer, curAction, curMotion);
     if (layerPriority != 1 || !motion || motion->attachInfo.empty()) {
-        return point;
+        if (layerPriority < 2 || !motion || motion->attachInfo.empty()) {
+            return point;
+        }
     }
 
     CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
@@ -1151,20 +1173,71 @@ POINT GetPlayerLayerPoint(int layerPriority,
         return point;
     }
 
-    const CMotion* bodyMotion = bodyActRes->GetMotion(curAction, curMotion);
+    const CMotion* bodyMotion = bodyActRes->GetMotion(curAction, bodyMotionIndex);
     if (!bodyMotion || bodyMotion->attachInfo.empty()) {
         return point;
     }
 
-    const CAttachPointInfo& headAttach = motion->attachInfo.front();
-    const CAttachPointInfo& bodyAttach = bodyMotion->attachInfo.front();
-    if (headAttach.attr != bodyAttach.attr) {
+    if (layerPriority == 1) {
+        ApplyAttachPointDelta(bodyMotion, motion, &point);
         return point;
     }
 
-    point.x += bodyAttach.x - headAttach.x;
-    point.y += bodyAttach.y - headAttach.y;
+    CActRes* headActRes = g_resMgr.GetAs<CActRes>(headActName.c_str());
+    if (!headActRes) {
+        return point;
+    }
+
+    const CMotion* headMotion = headActRes->GetMotion(curAction, headMotionIndex);
+    if (!headMotion) {
+        return point;
+    }
+
+    POINT headOffset{};
+    ApplyAttachPointDelta(bodyMotion, headMotion, &headOffset);
+    point.x += headOffset.x;
+    point.y += headOffset.y;
+    ApplyAttachPointDelta(headMotion, motion, &point);
     return point;
+}
+
+bool DrawAttachedAccessoryMotion(HDC hdc,
+    int drawX,
+    int drawY,
+    int curAction,
+    int bodyMotionIndex,
+    int headMotionIndex,
+    const std::string& bodyActName,
+    const std::string& headActName,
+    const std::string& accessoryActName,
+    const std::string& accessorySprName)
+{
+    if (accessoryActName.empty() || accessorySprName.empty()) {
+        return false;
+    }
+
+    CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
+    CActRes* headActRes = g_resMgr.GetAs<CActRes>(headActName.c_str());
+    CActRes* accessoryActRes = g_resMgr.GetAs<CActRes>(accessoryActName.c_str());
+    CSprRes* accessorySprRes = g_resMgr.GetAs<CSprRes>(accessorySprName.c_str());
+    if (!bodyActRes || !headActRes || !accessoryActRes || !accessorySprRes) {
+        return false;
+    }
+
+    const CMotion* bodyMotion = bodyActRes->GetMotion(curAction, bodyMotionIndex);
+    const CMotion* headMotion = headActRes->GetMotion(curAction, headMotionIndex);
+    const CMotion* accessoryMotion = accessoryActRes->GetMotion(curAction, headMotionIndex);
+    if (!accessoryMotion) {
+        accessoryMotion = accessoryActRes->GetMotion(curAction, 0);
+    }
+    if (!bodyMotion || !headMotion || !accessoryMotion) {
+        return false;
+    }
+
+    POINT point{};
+    ApplyAttachPointDelta(bodyMotion, headMotion, &point);
+    ApplyAttachPointDelta(headMotion, accessoryMotion, &point);
+    return DrawActMotionToHdc(hdc, drawX + point.x, drawY + point.y, accessorySprRes, accessoryMotion, accessorySprRes->m_pal);
 }
 
 bool DrawPlayerLayer(HDC hdc,
@@ -1177,6 +1250,9 @@ bool DrawPlayerLayer(HDC hdc,
     const std::string& sprName,
     const std::string& imfName,
     const std::string& bodyActName,
+    const std::string& headActName,
+    int bodyMotionIndex,
+    int headMotionIndex,
     const std::string& paletteName)
 {
     CActRes* actRes = g_resMgr.GetAs<CActRes>(actName.c_str());
@@ -1222,7 +1298,16 @@ bool DrawPlayerLayer(HDC hdc,
         return false;
     }
 
-    const POINT point = GetPlayerLayerPoint(layerIndex, resolvedLayer, imfRes, motion, bodyActName, curAction, curMotion);
+    const POINT point = GetPlayerLayerPoint(layerIndex,
+        resolvedLayer,
+        imfRes,
+        motion,
+        bodyActName,
+        headActName,
+        curAction,
+        bodyMotionIndex,
+        curMotion,
+        headMotionIndex);
 
     std::array<unsigned int, 256> paletteOverride{};
     unsigned int* palette = sprRes->m_pal;
@@ -1251,6 +1336,12 @@ bool DrawPcBillboard(CDCBitmap& bitmap,
     char bodySpr[260] = {};
     char headAct[260] = {};
     char headSpr[260] = {};
+    char accessoryBottomAct[260] = {};
+    char accessoryBottomSpr[260] = {};
+    char accessoryMidAct[260] = {};
+    char accessoryMidSpr[260] = {};
+    char accessoryTopAct[260] = {};
+    char accessoryTopSpr[260] = {};
     char imfName[260] = {};
     char bodyPalette[260] = {};
     char headPalette[260] = {};
@@ -1265,6 +1356,12 @@ bool DrawPcBillboard(CDCBitmap& bitmap,
     const std::string bodySprName = g_session.GetJobSprName(displayJob, sex, bodySpr);
     const std::string headActName = g_session.GetHeadActName(displayJob, &head, sex, headAct);
     const std::string headSprName = g_session.GetHeadSprName(displayJob, &head, sex, headSpr);
+    const std::string accessoryBottomActName = g_session.GetAccessoryActName(displayJob, &head, sex, actor.m_accessory, accessoryBottomAct);
+    const std::string accessoryBottomSprName = g_session.GetAccessorySprName(displayJob, &head, sex, actor.m_accessory, accessoryBottomSpr);
+    const std::string accessoryMidActName = g_session.GetAccessoryActName(displayJob, &head, sex, actor.m_accessory3, accessoryMidAct);
+    const std::string accessoryMidSprName = g_session.GetAccessorySprName(displayJob, &head, sex, actor.m_accessory3, accessoryMidSpr);
+    const std::string accessoryTopActName = g_session.GetAccessoryActName(displayJob, &head, sex, actor.m_accessory2, accessoryTopAct);
+    const std::string accessoryTopSprName = g_session.GetAccessorySprName(displayJob, &head, sex, actor.m_accessory2, accessoryTopSpr);
     const std::string imfPath = g_session.GetImfName(displayJob, head, sex, imfName);
     const std::string bodyPaletteName = actor.m_bodyPalette > 0
         ? g_session.GetBodyPaletteName(displayJob, sex, actor.m_bodyPalette, bodyPalette)
@@ -1278,11 +1375,20 @@ bool DrawPcBillboard(CDCBitmap& bitmap,
         return false;
     }
 
-    const bool bodyOk = DrawPlayerLayer(hdc, drawX, drawY, 0, curAction, curMotion, bodyActName, bodySprName, imfPath, bodyActName, bodyPaletteName);
-    const bool headOk = DrawPlayerLayer(hdc, drawX, drawY, 1, curAction, headMotion, headActName, headSprName, imfPath, bodyActName, headPaletteName);
+    const bool bodyOk = DrawPlayerLayer(hdc, drawX, drawY, 0, curAction, curMotion, bodyActName, bodySprName, imfPath, bodyActName, headActName, curMotion, headMotion, bodyPaletteName);
+    const bool headOk = DrawPlayerLayer(hdc, drawX, drawY, 1, curAction, headMotion, headActName, headSprName, imfPath, bodyActName, headActName, curMotion, headMotion, headPaletteName);
+    const bool accessoryBottomOk = !accessoryBottomActName.empty() && !accessoryBottomSprName.empty()
+        ? DrawAttachedAccessoryMotion(hdc, drawX, drawY, curAction, curMotion, headMotion, bodyActName, headActName, accessoryBottomActName, accessoryBottomSprName)
+        : false;
+    const bool accessoryMidOk = !accessoryMidActName.empty() && !accessoryMidSprName.empty()
+        ? DrawAttachedAccessoryMotion(hdc, drawX, drawY, curAction, curMotion, headMotion, bodyActName, headActName, accessoryMidActName, accessoryMidSprName)
+        : false;
+    const bool accessoryTopOk = !accessoryTopActName.empty() && !accessoryTopSprName.empty()
+        ? DrawAttachedAccessoryMotion(hdc, drawX, drawY, curAction, curMotion, headMotion, bodyActName, headActName, accessoryTopActName, accessoryTopSprName)
+        : false;
     bitmap.ReleaseDC(hdc);
 
-    if (!bodyOk && !headOk) {
+    if (!bodyOk && !headOk && !accessoryBottomOk && !accessoryMidOk && !accessoryTopOk) {
         static std::map<int, bool> loggedBillboardFailures;
         if (loggedBillboardFailures.insert(std::make_pair(displayJob, true)).second) {
             DbgLog("[Actor] player billboard draw failed job=%d bodyAct='%s' bodySpr='%s' headAct='%s' headSpr='%s' imf='%s' bodyPal='%s' headPal='%s' action=%d motion=%d head=%d sex=%d\n",
@@ -1317,7 +1423,7 @@ bool DrawPcBillboard(CDCBitmap& bitmap,
         *outHeadPalette = actor.m_headPalette;
     }
 
-    return bodyOk || headOk;
+    return bodyOk || headOk || accessoryBottomOk || accessoryMidOk || accessoryTopOk;
 }
 
 bool ResolveNonPcSpritePaths(int job, char* actPath, char* sprPath)

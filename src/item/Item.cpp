@@ -24,6 +24,14 @@ std::string NormalizeDisplayToken(std::string value)
 	return value;
 }
 
+std::string ToLowerAscii(std::string value)
+{
+	std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+		return static_cast<char>(std::tolower(ch));
+	});
+	return value;
+}
+
 bool ParseHashPairLine(const std::string& line, unsigned int& outId, std::string& outValue)
 {
 	if (line.empty() || line[0] == '/' || line[0] == '#') {
@@ -92,6 +100,27 @@ std::filesystem::path MakeReferenceRoot()
 #endif
 }
 
+bool ParseItemDbPrefixColumns(const std::string& line, std::vector<std::string>& outColumns, size_t maxColumns)
+{
+	outColumns.clear();
+	if (line.empty() || line[0] == '/' || line[0] == '#') {
+		return false;
+	}
+
+	size_t start = 0;
+	while (outColumns.size() < maxColumns) {
+		const size_t comma = line.find(',', start);
+		if (comma == std::string::npos) {
+			outColumns.push_back(line.substr(start));
+			break;
+		}
+		outColumns.push_back(line.substr(start, comma - start));
+		start = comma + 1;
+	}
+
+	return outColumns.size() >= maxColumns;
+}
+
 } // namespace
 
 CItemMgr g_ttemmgr;
@@ -145,6 +174,7 @@ void CItemMgr::EnsureLoaded()
 	LoadDisplayTable();
 	LoadResourceTable();
 	LoadDescriptionTable();
+	LoadItemDbViewTable();
 	LoadCardPrefixTable();
 	LoadCardPostfixTable();
 	LoadCardItemTable();
@@ -271,6 +301,66 @@ std::string CItemMgr::GetResourceName(unsigned int itemId, bool identified)
 	return std::string();
 }
 
+int CItemMgr::GetItemType(unsigned int itemId)
+{
+	if (const ItemMetadata* metadata = GetMetadata(itemId)) {
+		return metadata->itemType;
+	}
+	return 0;
+}
+
+int CItemMgr::GetEquipLocation(unsigned int itemId)
+{
+	if (const ItemMetadata* metadata = GetMetadata(itemId)) {
+		return metadata->equipLocation;
+	}
+	return 0;
+}
+
+int CItemMgr::GetViewId(unsigned int itemId)
+{
+	if (const ItemMetadata* metadata = GetMetadata(itemId)) {
+		return metadata->viewId;
+	}
+	return 0;
+}
+
+std::string CItemMgr::GetVisibleHeadgearResourceNameByViewId(int viewId)
+{
+	EnsureLoaded();
+	if (viewId <= 0) {
+		return std::string();
+	}
+
+	const auto cached = m_visibleHeadgearResourceNamesByViewId.find(viewId);
+	if (cached != m_visibleHeadgearResourceNamesByViewId.end()) {
+		return cached->second;
+	}
+
+	constexpr int kVisibleHeadgearMask = 1 | 256 | 512;
+	std::string resolved;
+	for (const auto& entry : m_metadata) {
+		const ItemMetadata& metadata = entry.second;
+		if (metadata.viewId != viewId || (metadata.equipLocation & kVisibleHeadgearMask) == 0) {
+			continue;
+		}
+
+		const std::string& resourceName = !metadata.identifiedResourceName.empty()
+			? metadata.identifiedResourceName
+			: metadata.unidentifiedResourceName;
+		if (resourceName.empty()) {
+			continue;
+		}
+
+		if (resolved.empty()) {
+			resolved = resourceName;
+		}
+	}
+
+	m_visibleHeadgearResourceNamesByViewId[viewId] = resolved;
+	return resolved;
+}
+
 std::string CItemMgr::GetCardPrefixName(unsigned int itemId)
 {
 	EnsureLoaded();
@@ -308,6 +398,40 @@ bool CItemMgr::LoadDescriptionTable()
 {
 	return ParseDescriptionBlocks("num2itemdesctable.txt")
 		|| ParseDescriptionBlocks("idnum2itemdesctable.txt");
+}
+
+bool CItemMgr::LoadItemDbViewTable()
+{
+	const std::string path = ResolveServerItemDbPath();
+	if (path.empty()) {
+		return false;
+	}
+
+	std::ifstream input(path, std::ios::binary);
+	if (!input.is_open()) {
+		return false;
+	}
+
+	std::string line;
+	std::vector<std::string> columns;
+	while (std::getline(input, line)) {
+		line = TrimLine(line);
+		if (!ParseItemDbPrefixColumns(line, columns, 19)) {
+			continue;
+		}
+
+		const unsigned int itemId = static_cast<unsigned int>(std::strtoul(columns[0].c_str(), nullptr, 10));
+		if (itemId == 0) {
+			continue;
+		}
+
+		ItemMetadata& metadata = m_metadata[itemId];
+		metadata.itemType = std::atoi(columns[3].c_str());
+		metadata.equipLocation = static_cast<int>(std::strtol(columns[14].c_str(), nullptr, 0));
+		metadata.viewId = static_cast<int>(std::strtol(columns[18].c_str(), nullptr, 0));
+	}
+
+	return true;
 }
 
 bool CItemMgr::LoadCardPrefixTable()
@@ -451,6 +575,47 @@ std::string CItemMgr::ResolveReferencePath(const char* fileName) const
 	const std::filesystem::path candidate = root / fileName;
 	if (std::filesystem::exists(candidate)) {
 		return candidate.string();
+	}
+
+	return std::string();
+}
+
+std::string CItemMgr::ResolveServerItemDbPath() const
+{
+	const std::vector<std::filesystem::path> candidates = {
+#ifdef RO_SOURCE_ROOT
+		std::filesystem::path(RO_SOURCE_ROOT) / "Ref" / "RunningServer" / "db" / "item_db.txt",
+		std::filesystem::path(RO_SOURCE_ROOT) / "Ref" / "eAthena_src_2011" / "db" / "item_db.txt",
+#else
+		std::filesystem::current_path() / "Ref" / "RunningServer" / "db" / "item_db.txt",
+		std::filesystem::current_path() / "Ref" / "eAthena_src_2011" / "db" / "item_db.txt",
+#endif
+	};
+
+	for (const std::filesystem::path& candidate : candidates) {
+		if (std::filesystem::exists(candidate)) {
+			return candidate.string();
+		}
+	}
+
+	std::error_code ec;
+	const std::filesystem::path siblingRoot = std::filesystem::current_path().parent_path();
+	if (!siblingRoot.empty() && std::filesystem::exists(siblingRoot, ec)) {
+		for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(siblingRoot, ec)) {
+			if (ec || !entry.is_directory()) {
+				continue;
+			}
+
+			const std::string name = ToLowerAscii(entry.path().filename().string());
+			if (name.find("athena") == std::string::npos) {
+				continue;
+			}
+
+			const std::filesystem::path candidate = entry.path() / "db" / "item_db.txt";
+			if (std::filesystem::exists(candidate)) {
+				return candidate.string();
+			}
+		}
 	}
 
 	return std::string();

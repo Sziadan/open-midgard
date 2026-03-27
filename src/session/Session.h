@@ -69,6 +69,7 @@ public:
     void RemoveInventoryItem(unsigned int itemIndex, int amount);
     bool SetInventoryItemWearLocation(unsigned int itemIndex, int wearLocation);
     void ClearInventoryWearLocationMask(int wearMask, unsigned int exceptItemIndex = 0);
+    void RebuildPlayerEquipmentAppearanceFromInventory();
     const std::list<ITEM_INFO>& GetInventoryItems() const;
     const char* GetPlayerName() const;
     const char* GetJobName(int job) const;
@@ -80,11 +81,14 @@ public:
     char* GetJobSprName(int job, int sex, char* buf);
     char* GetHeadActName(int job, int* head, int sex, char* buf);
     char* GetHeadSprName(int job, int* head, int sex, char* buf);
+    char* GetAccessoryActName(int job, int* head, int sex, int accessory, char* buf);
+    char* GetAccessorySprName(int job, int* head, int sex, int accessory, char* buf);
     char* GetImfName(int job, int head, int sex, char* buf);
     char* GetBodyPaletteName(int job, int sex, int palNum, char* buf);
     char* GetHeadPaletteName(int head, int job, int sex, int palNum, char* buf);
     
 private:
+    void EnsureAccessoryNameTableLoaded();
     void InitJobHitWaveName();
     void InitWeaponHitWaveName();
     int NormalizeJob(int job) const;
@@ -100,6 +104,8 @@ private:
     bool m_hasJobExpValue;
     bool m_hasNextJobExpValue;
     std::list<ITEM_INFO> m_inventoryItems;
+    bool m_accessoryNameTableLoaded;
+    std::vector<std::string> m_accessoryNameTable;
     std::vector<std::string> m_jobHitWaveNameTable;
     std::vector<std::string> m_weaponHitWaveNameTable;
 };

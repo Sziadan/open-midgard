@@ -724,6 +724,17 @@ void CLoginMode::OnAcceptChar(const std::vector<u8>& raw)
     DbgLog("[Login] First char: name='%.24s' GID=%u slot=%d\n",
            reinterpret_cast<const char*>(m_charInfo[0].name),
            m_charInfo[0].GID, (int)m_charInfo[0].CharNum);
+    DbgLog("[Login] First char appearance: job=%d head=%d weapon=%d shield=%d accBottom=%d accMid=%d accTop=%d headPal=%d bodyPal=%d hairColor=%u\n",
+           static_cast<int>(m_charInfo[0].job),
+           static_cast<int>(m_charInfo[0].head),
+           static_cast<int>(m_charInfo[0].weapon),
+           static_cast<int>(m_charInfo[0].shield),
+           static_cast<int>(m_charInfo[0].accessory),
+           static_cast<int>(m_charInfo[0].accessory3),
+           static_cast<int>(m_charInfo[0].accessory2),
+           static_cast<int>(m_charInfo[0].headpalette),
+           static_cast<int>(m_charInfo[0].bodypalette),
+           static_cast<unsigned int>(m_charInfo[0].haircolor));
 
     m_selectedCharIndex = 0;
     m_nextSubMode = LoginSubMode_CharSelect;

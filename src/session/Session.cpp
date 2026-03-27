@@ -1,16 +1,19 @@
 #include "Session.h"
 #include "../core/ClientInfoLocale.h"
 #include "../core/Xml.h"
+#include "DebugLog.h"
 
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <filesystem>
 #include <mmsystem.h>
 
 namespace {
 
 constexpr const char* kHumanSpriteRoot = "data\\sprite\\\xC0\xCE\xB0\xA3\xC1\xB7\\";
+constexpr const char* kAccessorySpriteRoot = "data\\sprite\\\xBE\xC7\xBC\xBC\xBB\xE7\xB8\xAE\\";
 constexpr const char* kBodyDir = "\xB8\xF6\xC5\xEB";
 constexpr const char* kHeadDir = "\xB8\xD3\xB8\xAE\xC5\xEB";
 constexpr const char* kImfRoot = "data\\imf\\";
@@ -205,6 +208,32 @@ int NormalizeHeadValue(int head, int job)
     return head;
 }
 
+std::filesystem::path MakeReferenceSpriteRoot()
+{
+#ifdef RO_SOURCE_ROOT
+    return std::filesystem::path(RO_SOURCE_ROOT) / "Ref" / "GRF-Content" / "data" / "sprite";
+#else
+    return std::filesystem::current_path() / "Ref" / "GRF-Content" / "data" / "sprite";
+#endif
+}
+
+std::string ExtractLowByteString(const std::wstring& value)
+{
+    if (value.empty()) {
+        return std::string();
+    }
+
+    std::string out;
+    out.reserve(value.size());
+    for (wchar_t ch : value) {
+        if ((static_cast<unsigned int>(ch) & ~0xFFu) != 0) {
+            return std::string();
+        }
+        out.push_back(static_cast<char>(ch & 0xFF));
+    }
+    return out;
+}
+
 } // namespace
 
 CSession::CSession() : m_aid(0), m_authCode(0), m_sex(0), m_charServerPort(0), m_pendingReturnToCharSelect(0),
@@ -212,7 +241,8 @@ CSession::CSession() : m_aid(0), m_authCode(0), m_sex(0), m_charServerPort(0), m
     m_playerHeadPalette(0), m_playerWeapon(0), m_playerShield(0), m_playerAccessory(0), m_playerAccessory2(0),
     m_playerAccessory3(0), m_serverTime(0), m_hasSelectedCharacterInfo(false), m_baseExpValue(0),
     m_nextBaseExpValue(0), m_jobExpValue(0), m_nextJobExpValue(0), m_hasBaseExpValue(false),
-    m_hasNextBaseExpValue(false), m_hasJobExpValue(false), m_hasNextJobExpValue(false)
+    m_hasNextBaseExpValue(false), m_hasJobExpValue(false), m_hasNextJobExpValue(false),
+    m_accessoryNameTableLoaded(false)
 {
     std::memset(m_userId, 0, sizeof(m_userId));
     std::memset(m_userPassword, 0, sizeof(m_userPassword));
@@ -301,6 +331,20 @@ void CSession::SetSelectedCharacterAppearance(const CHARACTER_INFO& info)
     std::memset(m_playerName, 0, sizeof(m_playerName));
     std::memcpy(m_playerName, info.name, sizeof(info.name));
     m_playerName[sizeof(info.name)] = '\0';
+    DbgLog("[Session] selected char appearance gid=%u job=%d head=%d weapon=%d shield=%d accBottom=%d accMid=%d accTop=%d headPal=%d bodyPal=%d hairColor=%u slot=%u name='%.24s'\n",
+        info.GID,
+        static_cast<int>(info.job),
+        static_cast<int>(info.head),
+        static_cast<int>(info.weapon),
+        static_cast<int>(info.shield),
+        static_cast<int>(info.accessory),
+        static_cast<int>(info.accessory3),
+        static_cast<int>(info.accessory2),
+        static_cast<int>(info.headpalette),
+        static_cast<int>(info.bodypalette),
+        static_cast<unsigned int>(info.haircolor),
+        static_cast<unsigned int>(info.CharNum),
+        reinterpret_cast<const char*>(info.name));
 }
 
 const CHARACTER_INFO* CSession::GetSelectedCharacterInfo() const
@@ -457,6 +501,62 @@ void CSession::ClearInventoryWearLocationMask(int wearMask, unsigned int exceptI
     }
 }
 
+void CSession::RebuildPlayerEquipmentAppearanceFromInventory()
+{
+    int weapon = 0;
+    int shield = 0;
+    int accessoryBottom = 0;
+    int accessoryTop = 0;
+    int accessoryMid = 0;
+
+    for (const ITEM_INFO& item : m_inventoryItems) {
+        if (item.m_wearLocation == 0) {
+            continue;
+        }
+
+        const unsigned int itemId = item.GetItemId();
+        const int viewId = g_ttemmgr.GetViewId(itemId);
+
+        if ((item.m_wearLocation & 2) != 0) {
+            weapon = viewId > 0 ? viewId : static_cast<int>(itemId);
+        }
+        if ((item.m_wearLocation & 32) != 0) {
+            shield = viewId > 0 ? viewId : static_cast<int>(itemId);
+        }
+        if ((item.m_wearLocation & 1) != 0) {
+            accessoryBottom = viewId;
+        }
+        if ((item.m_wearLocation & 256) != 0) {
+            accessoryTop = viewId;
+        }
+        if ((item.m_wearLocation & 512) != 0) {
+            accessoryMid = viewId;
+        }
+    }
+
+    m_playerWeapon = weapon;
+    m_playerShield = shield;
+    m_playerAccessory = accessoryBottom;
+    m_playerAccessory2 = accessoryTop;
+    m_playerAccessory3 = accessoryMid;
+
+    if (CHARACTER_INFO* info = GetMutableSelectedCharacterInfo()) {
+        info->weapon = static_cast<s16>(weapon & 0xFFFF);
+        info->shield = static_cast<s16>(shield & 0xFFFF);
+        info->accessory = static_cast<s16>(accessoryBottom & 0xFFFF);
+        info->accessory2 = static_cast<s16>(accessoryTop & 0xFFFF);
+        info->accessory3 = static_cast<s16>(accessoryMid & 0xFFFF);
+    }
+
+    DbgLog("[Session] rebuilt inventory appearance weapon=%d shield=%d accBottom=%d accMid=%d accTop=%d items=%u\n",
+        weapon,
+        shield,
+        accessoryBottom,
+        accessoryMid,
+        accessoryTop,
+        static_cast<unsigned int>(m_inventoryItems.size()));
+}
+
 const std::list<ITEM_INFO>& CSession::GetInventoryItems() const
 {
     return m_inventoryItems;
@@ -586,6 +686,110 @@ char* CSession::GetHeadSprName(int job, int* head, int sex, char* buf)
     }
     const char* sexToken = GetSexToken(sex);
     std::sprintf(buf, "%s%s\\%s\\%d_%s.spr", kHumanSpriteRoot, kHeadDir, sexToken, resolvedHead, sexToken);
+    return buf;
+}
+
+void CSession::EnsureAccessoryNameTableLoaded()
+{
+    if (m_accessoryNameTableLoaded) {
+        return;
+    }
+
+    m_accessoryNameTableLoaded = true;
+    m_accessoryNameTable.clear();
+    m_accessoryNameTable.emplace_back();
+
+    const std::filesystem::path directory = MakeReferenceSpriteRoot()
+        / std::filesystem::path(L"\x00BE\x00C7\x00BC\x00BC\x00BB\x00E7\x00B8\x00AE")
+        / std::filesystem::path(L"\x00B3\x00B2");
+    if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory)) {
+        DbgLog("[Session] accessory directory missing\n");
+        return;
+    }
+
+    std::vector<std::string> names;
+    const std::string prefix = std::string(kMaleSex) + "_";
+    std::error_code ec;
+    for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(directory, ec)) {
+        if (ec || !entry.is_regular_file()) {
+            continue;
+        }
+
+        std::string stem = ExtractLowByteString(entry.path().stem().wstring());
+        if (stem.size() <= prefix.size() || stem.compare(0, prefix.size(), prefix) != 0) {
+            continue;
+        }
+
+        stem.erase(0, prefix.size());
+        if (!stem.empty()) {
+            names.push_back(std::move(stem));
+        }
+    }
+
+    std::sort(names.begin(), names.end());
+    names.erase(std::unique(names.begin(), names.end()), names.end());
+    m_accessoryNameTable.insert(m_accessoryNameTable.end(), names.begin(), names.end());
+    DbgLog("[Session] accessory name table loaded count=%u\n",
+        static_cast<unsigned int>(m_accessoryNameTable.size()));
+}
+
+char* CSession::GetAccessoryActName(int job, int* head, int sex, int accessory, char* buf)
+{
+    if (!buf) {
+        return buf;
+    }
+    if (accessory == 185) {
+        return GetHeadActName(job, head, sex, buf);
+    }
+    if (accessory <= 0) {
+        *buf = 0;
+        return buf;
+    }
+
+    const std::string resourceName = g_ttemmgr.GetVisibleHeadgearResourceNameByViewId(accessory);
+    if (resourceName.empty()) {
+        DbgLog("[Session] accessory act lookup failed accessory=%d tableSize=%u job=%d sex=%d head=%d\n",
+            accessory,
+            static_cast<unsigned int>(m_accessoryNameTable.size()),
+            job,
+            sex,
+            head ? *head : 0);
+        *buf = 0;
+        return buf;
+    }
+
+    const char* sexToken = GetSexToken(sex);
+    std::sprintf(buf, "%s%s\\%s_%s.act", kAccessorySpriteRoot, sexToken, sexToken, resourceName.c_str());
+    return buf;
+}
+
+char* CSession::GetAccessorySprName(int job, int* head, int sex, int accessory, char* buf)
+{
+    if (!buf) {
+        return buf;
+    }
+    if (accessory == 185) {
+        return GetHeadSprName(job, head, sex, buf);
+    }
+    if (accessory <= 0) {
+        *buf = 0;
+        return buf;
+    }
+
+    const std::string resourceName = g_ttemmgr.GetVisibleHeadgearResourceNameByViewId(accessory);
+    if (resourceName.empty()) {
+        DbgLog("[Session] accessory spr lookup failed accessory=%d tableSize=%u job=%d sex=%d head=%d\n",
+            accessory,
+            static_cast<unsigned int>(m_accessoryNameTable.size()),
+            job,
+            sex,
+            head ? *head : 0);
+        *buf = 0;
+        return buf;
+    }
+
+    const char* sexToken = GetSexToken(sex);
+    std::sprintf(buf, "%s%s\\%s_%s.spr", kAccessorySpriteRoot, sexToken, sexToken, resourceName.c_str());
     return buf;
 }
 
