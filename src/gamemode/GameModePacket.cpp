@@ -40,6 +40,8 @@ namespace {
 PendingDisconnectAction g_pendingDisconnectAction = PendingDisconnectAction::None;
 u32 g_lastLocalLevelUpEffectId = 0;
 u32 g_lastLocalLevelUpEffectTick = 0;
+u32 g_lastSelfLevelUpStatusTick = 0;
+u32 g_lastSelfLevelUpStatusType = 0;
 
 constexpr u32 kStatusSpeed = 0;
 constexpr u32 kStatusBaseExp = 1;
@@ -203,6 +205,9 @@ void HandleNotifyEffect(CGameMode& mode, const PacketView& packet)
     const u32 effectType = ReadLE32(packet.data + 6);
     CGameActor* actor = ResolveNotifyEffectActor(mode, actorId);
     if (!actor) {
+        DbgLog("[GameMode] notify effect unresolved actor=%u type=%u\n",
+            static_cast<unsigned int>(actorId),
+            static_cast<unsigned int>(effectType));
         return;
     }
 
@@ -231,10 +236,42 @@ void HandleNotifyEffect(CGameMode& mode, const PacketView& packet)
     }
 
     if (ShouldSuppressSelfNotifyEffect(actorId, effectId)) {
+        DbgLog("[GameMode] notify effect suppressed actor=%u type=%u effect=%u\n",
+            static_cast<unsigned int>(actorId),
+            static_cast<unsigned int>(effectType),
+            static_cast<unsigned int>(effectId));
         return;
     }
 
+    DbgLog("[GameMode] notify effect actor=%u type=%u effect=%u self=%d\n",
+        static_cast<unsigned int>(actorId),
+        static_cast<unsigned int>(effectType),
+        static_cast<unsigned int>(effectId),
+        actor == (mode.m_world ? static_cast<CGameActor*>(mode.m_world->m_player) : nullptr));
     LaunchLevelUpEffect(actor, effectId);
+}
+
+void HandleSkillCastCancel(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 6) {
+        return;
+    }
+
+    const u32 actorId = ReadLE32(packet.data + 2);
+    CGameActor* actor = ResolveNotifyEffectActor(mode, actorId);
+    DbgLog("[GameMode] skill cast cancel actor=%u resolved=%d recentLevelStatus=%u recentType=%u\n",
+        static_cast<unsigned int>(actorId),
+        actor ? 1 : 0,
+        static_cast<unsigned int>(GetTickCount() - g_lastSelfLevelUpStatusTick),
+        static_cast<unsigned int>(g_lastSelfLevelUpStatusType));
+
+    if (!actor) {
+        return;
+    }
+
+    actor->SendMsg(actor, 84, 0, 0, 0);
+    actor->SendMsg(actor, 87, 0, 0, 0);
+    actor->SendMsg(actor, 83, 0, 0, 0);
 }
 
 void HandleIgnorePacket(CGameMode&, const PacketView&)
@@ -756,16 +793,28 @@ void HandleSelfStatusParam(CGameMode& mode, const PacketView& packet)
 
         if (hadPreviousValue && value > previousValue) {
             if (statusType == kStatusBaseLevel) {
+                g_lastSelfLevelUpStatusTick = GetTickCount();
+                g_lastSelfLevelUpStatusType = statusType;
                 PlayBaseLevelUpPresentation(mode);
                 if (mode.m_world && mode.m_world->m_player) {
                     const u32 effectId = ResolveLocalBaseLevelUpEffectId(mode);
+                    DbgLog("[GameMode] local base level-up old=%u new=%u effect=%u\n",
+                        static_cast<unsigned int>(previousValue),
+                        static_cast<unsigned int>(value),
+                        static_cast<unsigned int>(effectId));
                     LaunchLevelUpEffect(mode.m_world->m_player, effectId);
                     RecordLocalLevelUpEffect(effectId);
                 }
             } else if (statusType == kStatusJobLevel) {
+                g_lastSelfLevelUpStatusTick = GetTickCount();
+                g_lastSelfLevelUpStatusType = statusType;
                 PlayJobLevelUpPresentation(mode);
                 if (mode.m_world && mode.m_world->m_player) {
                     const u32 effectId = ResolveLocalJobLevelUpEffectId(mode);
+                    DbgLog("[GameMode] local job level-up old=%u new=%u effect=%u\n",
+                        static_cast<unsigned int>(previousValue),
+                        static_cast<unsigned int>(value),
+                        static_cast<unsigned int>(effectId));
                     LaunchLevelUpEffect(mode.m_world->m_player, effectId);
                     RecordLocalLevelUpEffect(effectId);
                 }
@@ -3673,6 +3722,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0141, HandleSelfStatInfo);
     router.Register(0x0148, HandleActorResurrection);
     router.Register(0x019B, HandleNotifyEffect);
+    router.Register(0x01B9, HandleSkillCastCancel);
     router.Register(0x0192, HandleIgnorePacket);
     router.Register(0x01C9, HandleIgnorePacket);
     router.Register(0x01CF, HandleIgnorePacket);
