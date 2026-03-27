@@ -966,6 +966,10 @@ bool UIOptionWnd::HasPendingGraphicsRestart() const
 
 void UIOptionWnd::PromptForGraphicsRestart()
 {
+    // Persist pending graphics changes before prompting/relaunching so the
+    // restarted client actually boots with the selected resolution/backend.
+    SaveSettings();
+
     const int restartNow = MessageBoxA(
         g_hMainWnd,
         "Graphics changes require a client restart. If you are currently in-game, the client will disconnect from the map server before it relaunches. Restart now?",

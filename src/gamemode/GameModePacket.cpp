@@ -1551,20 +1551,26 @@ void StartSitStandAnimation(CGameActor* actor, bool sitting)
     StopActorMovementForAction(actor);
     actor->m_targetGid = 0;
     actor->m_attackMotion = -1.0f;
-    actor->m_stateStartTick = timeGetTime();
     actor->m_isSitting = sitting ? 1 : 0;
+    actor->m_stateId = 0;
+    actor->m_stateStartTick = 0;
+    actor->m_isMotionFinished = 0;
+    actor->m_isMotionFreezed = 0;
+    actor->m_motionType = 0;
 
-    if (actor->m_isPc) {
-        const int action = sitting ? 16 : 32;
-        actor->SetAction(action, 0, 1);
-        actor->m_stateId = kGameActorAttackStateId;
-        actor->ProcessMotion();
-        if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
-            pcActor->InvalidateBillboard();
-        }
-        return;
+    // Posture updates should snap directly to the steady sit/idle pose instead
+    // of entering a transient animation state like attack or pickup.
+    const int baseAction = (actor->m_isPc && sitting) ? 16 : 0;
+    const int resolvedAction = baseAction + actor->Get8Dir(actor->m_roty);
+    actor->m_baseAction = baseAction;
+    actor->m_curAction = resolvedAction;
+    actor->m_curMotion = 0;
+    actor->m_oldBaseAction = baseAction;
+    actor->m_oldMotion = 0;
+
+    if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
+        pcActor->InvalidateBillboard();
     }
-
     actor->m_stateId = 0;
 }
 

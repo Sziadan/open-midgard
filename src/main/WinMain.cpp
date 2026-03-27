@@ -546,9 +546,8 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
             }
         }
 
-        // Safe defaults when registry/setup are unavailable.
-        WINDOW_WIDTH = 1920;
-        WINDOW_HEIGHT = 1080;
+        // Preserve the graphics-settings fallback that ReadRegistry() already
+        // applied from HKCU when the legacy setup registry is unavailable.
         g_isAppActive = true;
     }
 
