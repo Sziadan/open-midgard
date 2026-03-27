@@ -59,6 +59,11 @@ constexpr u32 kStatusInt = 16;
 constexpr u32 kStatusDex = 17;
 constexpr u32 kStatusLuk = 18;
 constexpr u32 kStatusJobLevel = 55;
+constexpr u32 kNotifyEffectBaseLevelUp = 0;
+constexpr u32 kNotifyEffectJobLevelUp = 1;
+constexpr u32 kNotifyEffectBaseLevelUpSuperNovice = 7;
+constexpr u32 kNotifyEffectJobLevelUpSuperNovice = 8;
+constexpr u32 kNotifyEffectBaseLevelUpTaekwon = 9;
 constexpr u32 kDeathFadeDurationMs = 510;
 constexpr u32 kDeathCorpseHoldMs = 1290;
 
@@ -110,10 +115,6 @@ const char* ResolveLevelUpWavePath()
 
 void PlayBaseLevelUpPresentation(CGameMode& mode)
 {
-    if (mode.m_world && mode.m_world->m_player) {
-        LaunchLevelUpEffect(mode.m_world->m_player, false);
-    }
-
     if (const char* wavePath = ResolveLevelUpWavePath()) {
         if (CAudio* audio = CAudio::GetInstance()) {
             audio->PlaySound(wavePath);
@@ -125,11 +126,55 @@ void PlayBaseLevelUpPresentation(CGameMode& mode)
 
 void PlayJobLevelUpPresentation(CGameMode& mode)
 {
+    g_windowMgr.MakeWindow(UIWindowMgr::WID_NOTIFYJOBLEVELUPWND);
+}
+
+CGameActor* ResolveNotifyEffectActor(CGameMode& mode, u32 actorId)
+{
     if (mode.m_world && mode.m_world->m_player) {
-        LaunchLevelUpEffect(mode.m_world->m_player, true);
+        CPlayer* player = mode.m_world->m_player;
+        if (actorId == g_session.m_aid || actorId == g_session.m_gid || actorId == player->m_gid) {
+            return player;
+        }
     }
 
-    g_windowMgr.MakeWindow(UIWindowMgr::WID_NOTIFYJOBLEVELUPWND);
+    const auto it = mode.m_runtimeActors.find(actorId);
+    if (it != mode.m_runtimeActors.end()) {
+        return it->second;
+    }
+
+    return nullptr;
+}
+
+void HandleNotifyEffect(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 10) {
+        return;
+    }
+
+    const u32 actorId = ReadLE32(packet.data + 2);
+    const u32 effectType = ReadLE32(packet.data + 6);
+    CGameActor* actor = ResolveNotifyEffectActor(mode, actorId);
+    if (!actor) {
+        return;
+    }
+
+    switch (effectType) {
+    case kNotifyEffectBaseLevelUp:
+    case kNotifyEffectBaseLevelUpSuperNovice:
+    case kNotifyEffectBaseLevelUpTaekwon:
+        LaunchLevelUpEffect(actor, false);
+        break;
+    case kNotifyEffectJobLevelUp:
+    case kNotifyEffectJobLevelUpSuperNovice:
+        LaunchLevelUpEffect(actor, true);
+        break;
+    default:
+        DbgLog("[GameMode] unhandled notify effect type=%u actor=%u\n",
+            static_cast<unsigned int>(effectType),
+            static_cast<unsigned int>(actorId));
+        break;
+    }
 }
 
 void HandleIgnorePacket(CGameMode&, const PacketView&)
@@ -3557,6 +3602,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0132, HandleIgnorePacket);
     router.Register(0x0141, HandleSelfStatInfo);
     router.Register(0x0148, HandleActorResurrection);
+    router.Register(0x019B, HandleNotifyEffect);
     router.Register(0x0192, HandleIgnorePacket);
     router.Register(0x01C9, HandleIgnorePacket);
     router.Register(0x01CF, HandleIgnorePacket);

@@ -175,6 +175,7 @@ void FillPacketSizeTable()
     SetPacketSize(0x0194, 30);
     SetPacketSize(0x0195, 102);
     SetPacketSize(0x0192, 24);
+    SetPacketSize(0x019B, 10);
     SetPacketSize(0x01A2, 37);
     SetPacketSize(0x01A3, 5);
     SetPacketSize(0x01A4, 11);
