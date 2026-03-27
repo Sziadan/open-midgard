@@ -1569,6 +1569,9 @@ void StartSitStandAnimation(CGameActor* actor, bool sitting)
     actor->m_oldMotion = 0;
 
     if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
+        const int headMotion = (std::max)(0, (std::min)(pcActor->m_headDir, 2));
+        pcActor->m_curMotion = headMotion;
+        pcActor->m_oldMotion = headMotion;
         pcActor->InvalidateBillboard();
     }
     actor->m_stateId = 0;
@@ -2034,6 +2037,7 @@ struct RuntimeActorState {
     int clevel = 0;
     int xSize = 0;
     int ySize = 0;
+    int state = 0;
     int headType = 0;
     int guildId = 0;
     int emblemVersion = 0;
@@ -2297,7 +2301,9 @@ void BeginActorDeath(CGameMode& mode, CGameActor& actor, u32 gid)
         pcActor->InvalidateBillboard();
     }
 
-    if (!IsLocalPlayerActor(mode, gid)) {
+    // Monsters keep the existing corpse hold + fade timing, but PCs should
+    // remain visible on the ground until a later vanish/remove packet arrives.
+    if (!IsLocalPlayerActor(mode, gid) && actor.m_isPc == 0) {
         actor.m_willBeDead = 1;
     }
 }
@@ -2429,6 +2435,18 @@ void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
         pcActor->m_accessory2 = isPc ? state.headTop : 0;
         pcActor->m_accessory3 = isPc ? state.headMid : 0;
         pcActor->m_bodyPalette = isPc ? state.clothColor : 0;
+    }
+
+    if (state.state == 1) {
+        actor->SendMsg(actor, 28, 0, 0, 0);
+        if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
+            pcActor->InvalidateBillboard();
+        }
+    } else if (state.state == 2) {
+        StartSitStandAnimation(actor, true);
+    } else if (actor->m_isSitting != 0) {
+        StartSitStandAnimation(actor, false);
+    } else if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
         pcActor->InvalidateBillboard();
     }
 
@@ -2521,6 +2539,7 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
 
         auto decodeLegacyCandidate = [&](size_t shift, bool hasObjectType, RuntimeActorState& state) {
             const size_t levelOffset = isIdle ? (52u + shift) : (51u + shift);
+            const size_t stateOffset = isIdle ? (51u + shift) : 0u;
             const u16 option = ReadLE16(packet.data + 12 + shift);
             const u16 opt3 = ReadLE16(packet.data + 42 + shift);
 
@@ -2551,6 +2570,7 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
             state.sex = packet.data[45 + shift];
             state.xSize = packet.data[49 + shift];
             state.ySize = packet.data[50 + shift];
+            state.state = isIdle ? packet.data[stateOffset] : 0;
             state.clevel = ReadLE16(packet.data + levelOffset);
             DecodePosDir(packet.data + 46 + shift, state.tileX, state.tileY, state.dir);
             state.hasPosition = true;
@@ -2598,6 +2618,7 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
         const size_t posOffset = hasRobe ? 55u : 53u;
         const size_t xSizeOffset = hasRobe ? 58u : 56u;
         const size_t ySizeOffset = hasRobe ? 59u : 57u;
+        const size_t stateOffset = hasRobe ? 60u : 58u;
         const size_t levelOffset = hasRobe ? (isIdle ? 61u : 60u) : (isIdle ? 59u : 58u);
 
         const u32 option = ReadLE32(packet.data + 15);
@@ -2629,6 +2650,7 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
         outState.pkState = packet.data[karmaOffset];
         outState.sex = packet.data[sexOffset];
         outState.clevel = ReadLE16(packet.data + levelOffset);
+        outState.state = isIdle ? packet.data[stateOffset] : 0;
         outState.xSize = packet.data[xSizeOffset];
         outState.ySize = packet.data[ySizeOffset];
         DecodePosDir(packet.data + posOffset, outState.tileX, outState.tileY, outState.dir);
@@ -2666,6 +2688,7 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
     const size_t posOffset = 50;
     const size_t xSizeOffset = 53;
     const size_t ySizeOffset = 54;
+    const size_t stateOffset = 55;
     const size_t levelOffset = isIdle ? 56 : 55;
     const size_t fontOffset = isIdle ? 58 : 57;
 
@@ -2704,6 +2727,7 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
     outState.manner = ReadLE16(packet.data + mannerOffset);
     outState.karma = packet.data[karmaOffset];
     outState.clevel = ReadLE16(packet.data + levelOffset);
+    outState.state = isIdle ? packet.data[stateOffset] : 0;
     outState.charfont = hasFont ? ReadLE16(packet.data + fontOffset) : 0;
     outState.xSize = packet.data[xSizeOffset];
     outState.ySize = packet.data[ySizeOffset];
@@ -2934,8 +2958,22 @@ void HandleActorDirection(CGameMode& mode, const PacketView& packet)
     }
 
     actor->m_roty = PacketDirToRotationDegrees(dir);
+    if (actor->m_isSitting != 0) {
+        const int baseAction = (actor->m_isPc != 0) ? 16 : 0;
+        const int resolvedAction = baseAction + actor->Get8Dir(actor->m_roty);
+        actor->m_baseAction = baseAction;
+        actor->m_curAction = resolvedAction;
+        actor->m_oldBaseAction = baseAction;
+        actor->m_oldMotion = actor->m_curMotion;
+    }
+
     if (CPc* pc = dynamic_cast<CPc*>(actor)) {
-        pc->m_headDir = headDir;
+        pc->m_headDir = (std::max)(0, (std::min)(static_cast<int>(headDir), 2));
+        if (!pc->m_isMoving && (pc->m_isSitting != 0 || pc->m_baseAction == 0 || pc->m_baseAction == 16)) {
+            pc->m_curMotion = pc->m_headDir;
+            pc->m_oldMotion = pc->m_headDir;
+        }
+        pc->InvalidateBillboard();
     }
 
     if (IsLocalPlayerActor(mode, gid)) {
@@ -3107,6 +3145,9 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
     if (actor->m_isMoving) {
         actor->m_isSitting = 0;
         if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
+            pcActor->m_headDir = 0;
+            pcActor->m_curMotion = 0;
+            pcActor->m_oldMotion = 0;
             pcActor->InvalidateBillboard();
         }
     }

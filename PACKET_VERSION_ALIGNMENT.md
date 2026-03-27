@@ -40,6 +40,8 @@ Receive-side rule:
 | getcharnamerequest | `0x008C / 11` | `0x008C / 11` |
 | globalmessage | `0x00F3 / -1` | `0x00F3 / -1` |
 
+For `changedir`, `packet_ver 23` inherits the pre-Renewal Sakexe layout from `packet_ver 22` rather than defining a new override, so the effective byte positions remain `7:10` within the `11` byte packet.
+
 `Ref/eAthena_src_2011/map/clif.c` also shows that packet version is inferred from the WantToConnection opcode and layout, including `0x0072 (CZ_ENTER)` versus `0x0436 (CZ_ENTER2)`.
 
 ## Current Emitted Packet Matrix

@@ -70,6 +70,7 @@ constexpr u16 kUnequipItem = PacketVer23MapServerSend::kUnequipItem;
 constexpr u16 kNotifyActorInit = PacketVer23MapServerSend::kNotifyActorInit;
 constexpr u16 kTickSend = PacketVer23MapServerSend::kTickSend;
 constexpr u16 kWalkToXY = PacketVer23MapServerSend::kWalkToXY;
+constexpr u16 kChangeDir = PacketVer23MapServerSend::kChangeDir;
 constexpr u16 kGetCharNameRequest = PacketVer23MapServerSend::kGetCharNameRequest;
 constexpr u16 kGlobalMessage = PacketVer23MapServerSend::kGlobalMessage;
 }
@@ -154,6 +155,14 @@ struct PACKET_CZ_REQUEST_MOVE2 {
     u16 PacketType;    // 0x00A7 for packet_ver 23
     u8   padding[3];
     u8   Dest[3];
+};
+
+struct PACKET_CZ_CHANGE_DIRECTION2 {
+    u16 PacketType;    // 0x0085 for packet_ver 23
+    u8   padding0[5];
+    u8   HeadDir;
+    u8   padding1[2];
+    u8   Dir;
 };
 
 struct PACKET_CZ_REQNAME2 {
@@ -256,6 +265,7 @@ static_assert(sizeof(PACKET_CZ_ENTER) == 19, "PACKET_CZ_ENTER size mismatch");
 static_assert(sizeof(PACKET_CZ_ENTER2) == 19, "PACKET_CZ_ENTER2 size mismatch");
 static_assert(sizeof(PACKET_CZ_TICKSEND2) == 8, "PACKET_CZ_TICKSEND2 size mismatch");
 static_assert(sizeof(PACKET_CZ_REQUEST_MOVE2) == 8, "PACKET_CZ_REQUEST_MOVE2 size mismatch");
+static_assert(sizeof(PACKET_CZ_CHANGE_DIRECTION2) == 11, "PACKET_CZ_CHANGE_DIRECTION2 size mismatch");
 static_assert(sizeof(PACKET_CZ_REQNAME2) == 11, "PACKET_CZ_REQNAME2 size mismatch");
 static_assert(sizeof(PACKET_CZ_ACTION_REQUEST2) == 7, "PACKET_CZ_ACTION_REQUEST2 size mismatch");
 static_assert(sizeof(PACKET_CZ_USESKILLTOID2) == 10, "PACKET_CZ_USESKILLTOID2 size mismatch");

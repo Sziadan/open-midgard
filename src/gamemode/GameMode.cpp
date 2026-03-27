@@ -1895,6 +1895,7 @@ void LogFirstSeenUnhandledGamePacket(u16 packetId, int packetLength)
 }
 
 constexpr u16 kPacketCzRequestMove = PacketProfile::ActiveMapServerSend::kWalkToXY;
+constexpr u16 kPacketCzChangeDir = PacketProfile::ActiveMapServerSend::kChangeDir;
 constexpr u16 kPacketCzRequestTime = PacketProfile::ActiveMapServerSend::kTickSend;
 constexpr u16 kPacketCzNotifyActorInit = PacketProfile::ActiveMapServerSend::kNotifyActorInit;
 constexpr u32 kHeldMoveRequestIntervalMs = 75;
@@ -1952,6 +1953,140 @@ bool EncodeMoveDestination(int dstX, int dstY, u8 outDest[3])
     outDest[1] = static_cast<u8>(((dstX & 0x03) << 6) | ((dstY >> 4) & 0x3F));
     outDest[2] = static_cast<u8>((dstY & 0x0F) << 4);
     return true;
+}
+
+int ResolveDirFromCellDelta(int dx, int dy)
+{
+    if (dx == 0 && dy < 0) {
+        return 4;
+    }
+    if (dx > 0 && dy < 0) {
+        return 5;
+    }
+    if (dx > 0 && dy == 0) {
+        return 6;
+    }
+    if (dx > 0 && dy > 0) {
+        return 7;
+    }
+    if (dx == 0 && dy > 0) {
+        return 0;
+    }
+    if (dx < 0 && dy > 0) {
+        return 1;
+    }
+    if (dx < 0 && dy == 0) {
+        return 2;
+    }
+    if (dx < 0 && dy < 0) {
+        return 3;
+    }
+    return -1;
+}
+
+int NormalizePacketDir(int dir)
+{
+    int normalized = dir % 8;
+    if (normalized < 0) {
+        normalized += 8;
+    }
+    return normalized;
+}
+
+u8 NormalizeHeadDir(int headDir);
+
+int ResolveCurrentPacketBodyDir(const CGameMode& mode)
+{
+    int bodyDir = g_session.m_playerDir & 7;
+    if (mode.m_world && mode.m_world->m_player) {
+        const float rotationDegrees = mode.m_world->m_player->m_roty;
+        if (std::isfinite(rotationDegrees)) {
+            const int renderDir = static_cast<int>((std::floor((rotationDegrees + 22.5f) / 45.0f))) & 7;
+            bodyDir = (renderDir + 4) & 7;
+        }
+    }
+    return bodyDir;
+}
+
+bool ResolveRefTurnOnlyDirectionRequest(const CGameMode& mode, int targetDir, u8* outHeadDir, u8* outBodyDir)
+{
+    if (!outHeadDir || !outBodyDir || !mode.m_world || !mode.m_world->m_player) {
+        return false;
+    }
+
+    const int bodyDir = NormalizePacketDir(ResolveCurrentPacketBodyDir(mode));
+    int headDir = 0;
+    if (const CPc* playerPc = dynamic_cast<const CPc*>(mode.m_world->m_player)) {
+        headDir = NormalizeHeadDir(playerPc->m_headDir);
+    }
+
+    const int normalizedTargetDir = NormalizePacketDir(targetDir);
+    // Ref computes the octant delta from current body rotation minus target
+    // rotation. In packet-space that maps to currentDir - targetDir.
+    const int delta = NormalizePacketDir(bodyDir - normalizedTargetDir);
+
+    int resolvedBodyDir = bodyDir;
+    int resolvedHeadDir = 0;
+
+    switch (delta) {
+    case 0:
+    case 4:
+        resolvedBodyDir = normalizedTargetDir;
+        resolvedHeadDir = 0;
+        break;
+    case 1:
+        if (headDir != 1) {
+            resolvedBodyDir = bodyDir;
+            resolvedHeadDir = 1;
+        } else {
+            resolvedBodyDir = normalizedTargetDir;
+            resolvedHeadDir = 0;
+        }
+        break;
+    case 2:
+    case 3:
+        resolvedBodyDir = NormalizePacketDir(normalizedTargetDir + 1);
+        resolvedHeadDir = 1;
+        break;
+    case 7:
+        if (headDir != 2) {
+            resolvedBodyDir = bodyDir;
+            resolvedHeadDir = 2;
+        } else {
+            resolvedBodyDir = normalizedTargetDir;
+            resolvedHeadDir = 0;
+        }
+        break;
+    case 5:
+    case 6:
+        resolvedBodyDir = NormalizePacketDir(normalizedTargetDir - 1);
+        resolvedHeadDir = 2;
+        break;
+    default:
+        return false;
+    }
+
+    *outHeadDir = NormalizeHeadDir(resolvedHeadDir);
+    *outBodyDir = static_cast<u8>(NormalizePacketDir(resolvedBodyDir));
+    return true;
+}
+
+bool ShouldUseTurnOnlyGroundClick(const CGameMode& mode)
+{
+    if (!mode.m_world || !mode.m_world->m_player) {
+        return false;
+    }
+
+    const CGameActor* const player = mode.m_world->m_player;
+    const bool isShiftHeld = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+    const bool looksSeated = (player->m_isSitting != 0)
+        || (player->m_baseAction == 16)
+        || (player->m_curAction >= 16 && player->m_curAction < 24);
+    // Ref also routes this path while a chat-room window is active. We do not
+    // have chat-room UI/interaction wired yet, so keep this disabled for now
+    // and extend this helper when that feature is implemented.
+    const bool hasChatRoomContext = false;
+    return looksSeated || isShiftHeld || hasChatRoomContext;
 }
 
 bool WorldToAttrCell(const CWorld* world, float worldX, float worldZ, int* outTileX, int* outTileY);
@@ -2108,6 +2243,66 @@ bool SendMoveRequestPacket(int dstX, int dstY)
         }
     }
     return sent;
+}
+
+bool SendChangeDirRequestPacket(u8 headDir, u8 dir)
+{
+    PACKET_CZ_CHANGE_DIRECTION2 packet{};
+    packet.PacketType = kPacketCzChangeDir;
+    packet.padding0[0] = 0;
+    packet.padding0[1] = 0;
+    packet.padding0[2] = 0;
+    packet.padding0[3] = 0;
+    packet.padding0[4] = 0;
+    packet.HeadDir = headDir;
+    packet.padding1[0] = 0;
+    packet.padding1[1] = 0;
+    packet.Dir = static_cast<u8>(dir & 7);
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] change dir request opcode=0x%04X headdir=%u dir=%u sent=%d\n",
+        kPacketCzChangeDir,
+        static_cast<unsigned int>(headDir),
+        static_cast<unsigned int>(dir & 7),
+        sent ? 1 : 0);
+    return sent;
+}
+
+u8 NormalizeHeadDir(int headDir)
+{
+    return static_cast<u8>((std::max)(0, (std::min)(headDir, 2)));
+}
+
+void ApplyLocalPlayerDirection(CGameMode& mode, u8 headDir, u8 dir)
+{
+    if (!mode.m_world || !mode.m_world->m_player) {
+        return;
+    }
+
+    CGameActor* const player = mode.m_world->m_player;
+    player->m_roty = static_cast<float>(45 * (((dir & 7) + 4)));
+
+    if (player->m_isSitting != 0) {
+        const int baseAction = (player->m_isPc != 0) ? 16 : 0;
+        const int resolvedAction = baseAction + player->Get8Dir(player->m_roty);
+        player->m_baseAction = baseAction;
+        player->m_curAction = resolvedAction;
+        player->m_oldBaseAction = baseAction;
+        player->m_oldMotion = player->m_curMotion;
+    }
+
+    if (CPc* const playerPc = dynamic_cast<CPc*>(player)) {
+        playerPc->m_headDir = NormalizeHeadDir(headDir);
+        if (!playerPc->m_isMoving && (playerPc->m_isSitting != 0 || playerPc->m_baseAction == 0 || playerPc->m_baseAction == 16)) {
+            playerPc->m_curMotion = playerPc->m_headDir;
+            playerPc->m_oldMotion = playerPc->m_headDir;
+        }
+        playerPc->InvalidateBillboard();
+    }
+
+    g_session.SetPlayerPosDir(g_session.m_playerPosX, g_session.m_playerPosY, dir & 7);
 }
 
 bool LocalPlayerHasPendingMoveAck(const CGameMode& mode, u32 now)
@@ -2458,6 +2653,55 @@ bool TryRequestMoveFromScreenPoint(CGameMode& mode, int screenX, int screenY)
     }
 
     return TryRequestMoveToCell(mode, attrX, attrY);
+}
+
+bool TryRequestChangeDirToCell(CGameMode& mode, int attrX, int attrY)
+{
+    if (!mode.m_world || !mode.m_world->m_player) {
+        return false;
+    }
+
+    int sourceTileX = -1;
+    int sourceTileY = -1;
+    if (!ResolveMoveSourceTile(mode, &sourceTileX, &sourceTileY)) {
+        sourceTileX = g_session.m_playerPosX;
+        sourceTileY = g_session.m_playerPosY;
+    }
+
+    const int stepX = (attrX > sourceTileX) ? 1 : ((attrX < sourceTileX) ? -1 : 0);
+    const int stepY = (attrY > sourceTileY) ? 1 : ((attrY < sourceTileY) ? -1 : 0);
+    const int dir = ResolveDirFromCellDelta(stepX, stepY);
+    if (dir < 0) {
+        return false;
+    }
+
+    u8 headDir = 0;
+    u8 packetDir = 0;
+    if (!ResolveRefTurnOnlyDirectionRequest(mode, dir, &headDir, &packetDir)) {
+        return false;
+    }
+
+    const bool sent = SendChangeDirRequestPacket(headDir, packetDir);
+    if (sent) {
+        // eAthena broadcasts changedir without echoing it back to the sender.
+        ApplyLocalPlayerDirection(mode, headDir, packetDir);
+    }
+    return sent;
+}
+
+bool TryRequestChangeDirFromScreenPoint(CGameMode& mode, int screenX, int screenY)
+{
+    if (!mode.m_view) {
+        return false;
+    }
+
+    int attrX = -1;
+    int attrY = -1;
+    if (!mode.m_view->ScreenToHoveredAttrCell(screenX, screenY, &attrX, &attrY)) {
+        return false;
+    }
+
+    return TryRequestChangeDirToCell(mode, attrX, attrY);
 }
 
 constexpr u8 kActionRequestSingleAttack = 0x00;
@@ -5276,6 +5520,23 @@ int CGameMode::SendMsg(int msg, int wparam, int lparam, int extra)
 
     switch (msg) {
     case GameMsg_LButtonDown:
+        if (m_world && m_world->m_player) {
+            if (ShouldUseTurnOnlyGroundClick(*this)) {
+                ClearPickupIntent(*this);
+                m_lastMonGid = 0;
+                m_lastLockOnMonGid = 0;
+                m_isLeftButtonHeld = 0;
+                m_hasHeldMoveTarget = 0;
+                m_lastMoveRequestCellX = -1;
+                m_lastMoveRequestCellY = -1;
+                m_lastMoveRequestTick = 0;
+                m_lastAttackRequestTick = 0;
+                ClearAttackChaseHint(*this);
+                TryRequestChangeDirFromScreenPoint(*this, wparam, lparam);
+                return 1;
+            }
+        }
+
         if (TryRequestGroundItemFromScreenPoint(*this, wparam, lparam)) {
             m_isLeftButtonHeld = 0;
             m_hasHeldMoveTarget = 0;
@@ -5384,6 +5645,23 @@ int CGameMode::SendMsg(int msg, int wparam, int lparam, int extra)
         }
         if (command == "/stand") {
             return SendSitStandRequest(*this, false) ? 1 : 0;
+        }
+        if (command == "/doridori") {
+            if (!m_world || !m_world->m_player) {
+                return 0;
+            }
+            CPc* const playerPc = dynamic_cast<CPc*>(m_world->m_player);
+            if (!playerPc) {
+                return 0;
+            }
+
+            const u8 nextHeadDir = NormalizeHeadDir((playerPc->m_headDir + 1) % 3);
+            const u8 bodyDir = static_cast<u8>(g_session.m_playerDir & 7);
+            const bool sent = SendChangeDirRequestPacket(nextHeadDir, bodyDir);
+            if (sent) {
+                ApplyLocalPlayerDirection(*this, nextHeadDir, bodyDir);
+            }
+            return sent ? 1 : 0;
         }
         return SendGlobalChatMessage(g_session.GetPlayerName(), text) ? 1 : 0;
     }

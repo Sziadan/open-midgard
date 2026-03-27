@@ -1154,10 +1154,14 @@ void LogDeathMotionProgress(const CGameActor& actor)
         actor.m_stateStartTick != 0 ? (timeGetTime() - actor.m_stateStartTick) : 0);
 }
 
-int ResolveHeadMotionFromBodyAction(int bodyAction)
+int ResolveHeadMotionFromBodyAction(int bodyAction, int headDir)
 {
-    (void)bodyAction;
-    return 0;
+    const int normalizedHeadDir = (std::max)(0, (std::min)(headDir, 2));
+    const int bodyBand = bodyAction & ~7;
+    if (bodyBand == 0 || bodyBand == 16) {
+        return normalizedHeadDir;
+    }
+    return -1;
 }
 
 bool BuildPaletteOverride(const std::string& paletteName, std::array<unsigned int, 256>& outPalette)
@@ -2776,7 +2780,23 @@ void CItem::TriggerDropAnimation()
 }
 
 CPc::CPc()
-    : m_billboardTexture(nullptr)
+    : m_honor(0)
+    , m_virtue(0)
+    , m_headDir(0)
+    , m_head(0)
+    , m_headPalette(0)
+    , m_weapon(0)
+    , m_accessory(0)
+    , m_accessory2(0)
+    , m_accessory3(0)
+    , m_shield(0)
+    , m_shoe(0)
+    , m_shoe_count(0)
+    , m_renderWithoutLayer(0)
+    , m_gage(nullptr)
+    , m_pk_rank(0)
+    , m_pk_total(0)
+    , m_billboardTexture(nullptr)
     , m_billboardTextureOwned(0)
     , m_billboardTextureWidth(0)
     , m_billboardTextureHeight(0)
@@ -2938,7 +2958,10 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
             bodyAction = m_curAction;
             headMotion = m_curMotion;
         } else {
-            headMotion = ResolvePcMotionIndex(this, bodyAction, bodyActName);
+            headMotion = ResolveHeadMotionFromBodyAction(bodyAction, m_headDir);
+            if (headMotion < 0) {
+                headMotion = ResolvePcMotionIndex(this, bodyAction, bodyActName);
+            }
         }
     } else {
         CActRes* actRes = nullptr;
