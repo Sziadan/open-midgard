@@ -65,6 +65,7 @@ constexpr int kHoverNameFontHeight = 20;
 constexpr unsigned char kHoverNameFontBold = 1;
 constexpr int kHoverNameTextPadding = 4;
 constexpr int kHoverNameVerticalOffset = 22;
+constexpr u32 kPickupRetryIntervalMs = 250;
 constexpr int kPlayerVitalsBarWidth = 56;
 constexpr int kPlayerVitalsBarHeight = 4;
 constexpr int kPlayerVitalsBorderThickness = 1;
@@ -301,6 +302,9 @@ bool HasAnimatedLockedTargetOverlay(const CGameMode& mode)
     return actorIt != mode.m_runtimeActors.end() && actorIt->second && actorIt->second->m_isVisible;
 }
 
+std::string ResolveGroundItemHoverLabel(const CItem* item);
+void DrawHoveredGroundItemName(CGameMode& mode, HDC hdc);
+
 std::uint64_t ComputeGameplayOverlayStateToken(CGameMode& mode, int cursorActNum, u32 mouseAnimStartTick, int clientWidth, int clientHeight)
 {
     std::uint64_t hash = 1469598103934665603ull;
@@ -330,10 +334,27 @@ std::uint64_t ComputeGameplayOverlayStateToken(CGameMode& mode, int cursorActNum
         HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_Sp)));
         HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_MaxSp)));
 
+        CItem* hoveredGroundItem = nullptr;
+        int hoveredItemLabelX = 0;
+        int hoveredItemLabelY = 0;
+        if (mode.m_world->FindHoveredGroundItemScreen(mode.m_view->GetViewMatrix(),
+            mode.m_oldMouseX,
+            mode.m_oldMouseY,
+            &hoveredGroundItem,
+            &hoveredItemLabelX,
+            &hoveredItemLabelY)
+            && hoveredGroundItem) {
+            HashTokenValue(&hash, static_cast<std::uint64_t>(hoveredGroundItem->m_aid));
+            HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hoveredItemLabelX)));
+            HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hoveredItemLabelY)));
+            HashTokenString(&hash, ResolveGroundItemHoverLabel(hoveredGroundItem));
+        }
+
         CGameActor* hoveredActor = nullptr;
         int hoveredLabelX = 0;
         int hoveredLabelY = 0;
-        if (mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
+        if (!hoveredGroundItem
+            && mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
             mode.m_view->GetCameraLongitude(),
             mode.m_oldMouseX,
             mode.m_oldMouseY,
@@ -473,6 +494,7 @@ void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc)
     DrawPlayerVitalsOverlay(mode, targetDc);
     DrawLockedTargetArrow(mode, targetDc);
     DrawLockedTargetName(mode, targetDc);
+    DrawHoveredGroundItemName(mode, targetDc);
     DrawHoveredActorName(mode, targetDc);
     DrawQueuedMsgEffects(targetDc);
 }
@@ -1034,6 +1056,17 @@ void UpdateGameplayCursor(CGameMode& mode)
         &hoveredActor,
         nullptr,
         nullptr)) {
+        CItem* hoveredItem = nullptr;
+        if (mode.m_world->FindHoveredGroundItemScreen(mode.m_view->GetViewMatrix(),
+            mode.m_oldMouseX,
+            mode.m_oldMouseY,
+            &hoveredItem,
+            nullptr,
+            nullptr)
+            && hoveredItem) {
+            SetModeCursorAction(mode, CursorAction::Item);
+            return;
+        }
         SetModeCursorAction(mode, CursorAction::Arrow);
         return;
     }
@@ -1045,6 +1078,18 @@ void UpdateGameplayCursor(CGameMode& mode)
 
     if (IsNpcLikeHoverActor(hoveredActor)) {
         SetModeCursorAction(mode, CursorAction::Talk);
+        return;
+    }
+
+    CItem* hoveredItem = nullptr;
+    if (mode.m_world->FindHoveredGroundItemScreen(mode.m_view->GetViewMatrix(),
+        mode.m_oldMouseX,
+        mode.m_oldMouseY,
+        &hoveredItem,
+        nullptr,
+        nullptr)
+        && hoveredItem) {
+        SetModeCursorAction(mode, CursorAction::Item);
         return;
     }
 
@@ -1118,6 +1163,25 @@ COLORREF ResolveHoverNameColor(const CGameActor* actor)
     return IsNameYellow(actorId) ? RGB(255, 255, 0) : RGB(255, 255, 255);
 }
 
+std::string ResolveGroundItemHoverLabel(const CItem* item)
+{
+    if (!item) {
+        return std::string();
+    }
+
+    std::string itemName = item->m_itemName;
+    if (itemName.empty() && item->m_itemId != 0) {
+        itemName = g_ttemmgr.GetDisplayName(item->m_itemId, item->m_identified != 0);
+    }
+    if (itemName.empty()) {
+        itemName = "Item";
+    }
+
+    char amountText[64]{};
+    std::snprintf(amountText, sizeof(amountText), "%s: %u ea", itemName.c_str(), static_cast<unsigned int>(item->m_amount));
+    return amountText;
+}
+
 void DrawOutlinedScreenText(HDC hdc, int x, int y, const char* text, COLORREF color = RGB(255, 255, 255))
 {
     if (!hdc || !text || !*text) {
@@ -1139,9 +1203,52 @@ void DrawOutlinedScreenText(HDC hdc, int x, int y, const char* text, COLORREF co
     drawDc.TextOutA(x, y, text, textLen);
 }
 
+void DrawHoveredGroundItemName(CGameMode& mode, HDC hdc)
+{
+    if (!hdc || !mode.m_world || !mode.m_view) {
+        return;
+    }
+
+    CItem* hoveredItem = nullptr;
+    int labelX = 0;
+    int labelY = 0;
+    if (!mode.m_world->FindHoveredGroundItemScreen(mode.m_view->GetViewMatrix(),
+        mode.m_oldMouseX,
+        mode.m_oldMouseY,
+        &hoveredItem,
+        &labelX,
+        &labelY)) {
+        return;
+    }
+
+    const std::string label = ResolveGroundItemHoverLabel(hoveredItem);
+    if (label.empty()) {
+        return;
+    }
+
+    DrawDC drawDc(hdc);
+    drawDc.SetFont(FONT_DEFAULT, kHoverNameFontHeight, kHoverNameFontBold);
+    SIZE textSize{};
+    drawDc.GetTextExtentPoint32A(label.c_str(), static_cast<int>(label.size()), &textSize);
+    const int drawX = labelX - (textSize.cx / 2);
+    const int drawY = labelY - textSize.cy - kHoverNameTextPadding;
+    DrawOutlinedScreenText(hdc, drawX, drawY, label.c_str(), RGB(255, 255, 255));
+}
+
 void DrawHoveredActorName(CGameMode& mode, HDC hdc)
 {
     if (!hdc || !mode.m_world || !mode.m_view) {
+        return;
+    }
+
+    CItem* hoveredItem = nullptr;
+    if (mode.m_world->FindHoveredGroundItemScreen(mode.m_view->GetViewMatrix(),
+        mode.m_oldMouseX,
+        mode.m_oldMouseY,
+        &hoveredItem,
+        nullptr,
+        nullptr)
+        && hoveredItem) {
         return;
     }
 
@@ -1862,6 +1969,12 @@ void ClearAttackChaseHint(CGameMode& mode)
     mode.m_hasAttackChaseHint = 0;
 }
 
+void ClearPickupIntent(CGameMode& mode)
+{
+    mode.m_pickupReqItemNaidList.clear();
+    mode.m_lastPickupRequestTick = 0;
+}
+
 bool FindActivePathSegmentForChase(const CPathInfo& path, u32 now, size_t* outStartIndex)
 {
     if (!outStartIndex || path.m_cells.size() < 2) {
@@ -2239,6 +2352,35 @@ bool ResolveAttackChaseCell(CGameMode& mode, const CGameActor& target, int* outT
     return ResolveAttackChaseCell(mode, playerTileX, playerTileY, targetTileX, targetTileY, 1, target.m_gid, outTileX, outTileY);
 }
 
+bool ResolveGroundItemPickupCell(CGameMode& mode,
+    int sourceTileX,
+    int sourceTileY,
+    const GroundItemState& item,
+    int* outTileX,
+    int* outTileY)
+{
+    if (!outTileX || !outTileY) {
+        return false;
+    }
+
+    const int targetTileX = static_cast<int>(item.tileX);
+    const int targetTileY = static_cast<int>(item.tileY);
+    if (IsTargetWithinAttackRange(sourceTileX, sourceTileY, targetTileX, targetTileY, 1)) {
+        return false;
+    }
+
+    // Match the Ref/eAthena chase behavior we already use for attacks: path to
+    // an adjacent reachable cell, not onto the occupied target cell itself.
+    return ResolveEathenaChaseCell(mode,
+        sourceTileX,
+        sourceTileY,
+        targetTileX,
+        targetTileY,
+        0,
+        outTileX,
+        outTileY);
+}
+
 bool IsAttackTargetWithinRange(CGameMode& mode, const CGameActor& target, int attackRange)
 {
     int playerTileX = -1;
@@ -2341,6 +2483,138 @@ bool SendAttackRequestPacket(u32 targetGid, u8 action)
     return sent;
 }
 
+bool SendTakeItemRequestPacket(u32 objectAid)
+{
+    if (objectAid == 0) {
+        return false;
+    }
+
+    PACKET_CZ_TAKE_ITEM2 packet{};
+    packet.PacketType = PacketProfile::ActiveMapServerSend::kTakeItem;
+    packet.padding = 0;
+    packet.ObjectAID = objectAid;
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] take item aid=%u opcode=0x%04X sent=%d\n",
+        objectAid,
+        PacketProfile::ActiveMapServerSend::kTakeItem,
+        sent ? 1 : 0);
+    return sent;
+}
+
+bool IsGroundItemWithinPickupRange(CGameMode& mode, const GroundItemState& item)
+{
+    int playerTileX = -1;
+    int playerTileY = -1;
+    if (!ResolveAttackChaseSourceTile(mode, &playerTileX, &playerTileY)) {
+        return false;
+    }
+
+    return IsTargetWithinAttackRange(playerTileX,
+        playerTileY,
+        static_cast<int>(item.tileX),
+        static_cast<int>(item.tileY),
+        1);
+}
+
+bool IsCurrentMoveDestinationWithinPickupRange(CGameMode& mode, const GroundItemState& item)
+{
+    if (!mode.m_world || !mode.m_world->m_player) {
+        return false;
+    }
+
+    const CPlayer* player = mode.m_world->m_player;
+    if (!player->m_isMoving || player->m_moveDestX < 0 || player->m_moveDestY < 0) {
+        return false;
+    }
+
+    return IsTargetWithinAttackRange(player->m_moveDestX,
+        player->m_moveDestY,
+        static_cast<int>(item.tileX),
+        static_cast<int>(item.tileY),
+        1);
+}
+
+bool TryBeginGroundItemPickup(CGameMode& mode, u32 objectAid)
+{
+    const auto groundItemIt = mode.m_groundItemList.find(objectAid);
+    if (groundItemIt == mode.m_groundItemList.end()) {
+        return false;
+    }
+
+    const GroundItemState& groundItem = groundItemIt->second;
+    mode.m_pickupReqItemNaidList.clear();
+    mode.m_pickupReqItemNaidList.push_back(objectAid);
+    mode.m_lastMonGid = 0;
+    mode.m_lastLockOnMonGid = 0;
+    mode.m_isAutoMoveClickOn = 0;
+    mode.m_lastAttackRequestTick = 0;
+    ClearAttackChaseHint(mode);
+
+    const u32 now = GetTickCount();
+    if (IsGroundItemWithinPickupRange(mode, groundItem)) {
+        if (SendTakeItemRequestPacket(objectAid)) {
+            mode.m_lastPickupRequestTick = now;
+            return true;
+        }
+        return false;
+    }
+
+    if (IsCurrentMoveDestinationWithinPickupRange(mode, groundItem)) {
+        return true;
+    }
+
+    int sourceTileX = -1;
+    int sourceTileY = -1;
+    if (!ResolveAttackChaseSourceTile(mode, &sourceTileX, &sourceTileY)) {
+        return false;
+    }
+
+    int chaseTileX = -1;
+    int chaseTileY = -1;
+    if (!ResolveGroundItemPickupCell(mode,
+        sourceTileX,
+        sourceTileY,
+        groundItem,
+        &chaseTileX,
+        &chaseTileY)) {
+        return false;
+    }
+
+    if (TryRequestMoveToCell(mode,
+        sourceTileX,
+        sourceTileY,
+        chaseTileX,
+        chaseTileY,
+        true)) {
+        mode.m_lastMoveRequestTick = now;
+        return true;
+    }
+
+    return false;
+}
+
+bool TryRequestGroundItemFromScreenPoint(CGameMode& mode, int screenX, int screenY)
+{
+    if (!mode.m_world || !mode.m_view || mode.m_canRotateView) {
+        return false;
+    }
+
+    CItem* hoveredItem = nullptr;
+    if (!mode.m_world->FindHoveredGroundItemScreen(mode.m_view->GetViewMatrix(),
+        screenX,
+        screenY,
+        &hoveredItem,
+        nullptr,
+        nullptr)
+        || !hoveredItem) {
+        return false;
+    }
+
+    return TryBeginGroundItemPickup(mode, hoveredItem->m_aid);
+}
+
 bool RequestEquipInventoryItem(u16 itemIndex, u16 equipLocation)
 {
     if (itemIndex == 0 || equipLocation == 0) {
@@ -2421,6 +2695,7 @@ bool TryRequestAttackFromScreenPoint(CGameMode& mode, int screenX, int screenY)
     mode.m_lastMonGid = hoveredActor->m_gid;
     mode.m_lastLockOnMonGid = hoveredActor->m_gid;
     mode.m_isAutoMoveClickOn = 0;
+    ClearPickupIntent(mode);
     mode.m_lastMoveRequestCellX = -1;
     mode.m_lastMoveRequestCellY = -1;
     mode.m_heldMoveTargetCellX = -1;
@@ -2629,6 +2904,71 @@ void PumpAttackChaseRequest(CGameMode& mode)
     }
 }
 
+void PumpPendingPickupRequest(CGameMode& mode)
+{
+    if (!mode.m_world || !mode.m_world->m_player || mode.m_pickupReqItemNaidList.empty()) {
+        return;
+    }
+
+    const u32 objectAid = mode.m_pickupReqItemNaidList.front();
+    const auto groundItemIt = mode.m_groundItemList.find(objectAid);
+    if (groundItemIt == mode.m_groundItemList.end()) {
+        ClearPickupIntent(mode);
+        return;
+    }
+
+    const GroundItemState& groundItem = groundItemIt->second;
+    const u32 now = GetTickCount();
+    if (LocalPlayerHasPendingMoveAck(mode, now)) {
+        return;
+    }
+
+    if (IsGroundItemWithinPickupRange(mode, groundItem)) {
+        if (mode.m_lastPickupRequestTick != 0 && now - mode.m_lastPickupRequestTick < kPickupRetryIntervalMs) {
+            return;
+        }
+
+        if (SendTakeItemRequestPacket(objectAid)) {
+            mode.m_lastPickupRequestTick = now;
+        }
+        return;
+    }
+
+    if (IsCurrentMoveDestinationWithinPickupRange(mode, groundItem)) {
+        return;
+    }
+
+    if (mode.m_lastMoveRequestTick != 0 && now - mode.m_lastMoveRequestTick < kAttackChaseRequestIntervalMs) {
+        return;
+    }
+
+    int sourceTileX = -1;
+    int sourceTileY = -1;
+    if (!ResolveAttackChaseSourceTile(mode, &sourceTileX, &sourceTileY)) {
+        return;
+    }
+
+    int chaseTileX = -1;
+    int chaseTileY = -1;
+    if (!ResolveGroundItemPickupCell(mode,
+        sourceTileX,
+        sourceTileY,
+        groundItem,
+        &chaseTileX,
+        &chaseTileY)) {
+        return;
+    }
+
+    if (TryRequestMoveToCell(mode,
+        sourceTileX,
+        sourceTileY,
+        chaseTileX,
+        chaseTileY,
+        true)) {
+        mode.m_lastMoveRequestTick = now;
+    }
+}
+
 void ClearRuntimeActors(CGameMode& mode)
 {
     for (auto& entry : mode.m_runtimeActors) {
@@ -2808,6 +3148,85 @@ bool WorldToAttrCell(const CWorld* world, float worldX, float worldZ, int* outTi
     *outTileX = tileX;
     *outTileY = tileY;
     return true;
+}
+
+float NormalizeGroundItemSubOffset(u8 value)
+{
+    if (value <= 5) {
+        return (static_cast<float>(value) - 2.0f) / 5.0f;
+    }
+
+    return static_cast<float>(value) / 255.0f - 0.5f;
+}
+
+void SyncGroundItemsToWorld(CGameMode& mode)
+{
+    if (!mode.m_world) {
+        return;
+    }
+
+    auto existingIt = mode.m_world->m_itemList.begin();
+    while (existingIt != mode.m_world->m_itemList.end()) {
+        CItem* item = *existingIt;
+        if (!item || mode.m_groundItemList.find(item ? item->m_aid : 0) == mode.m_groundItemList.end()) {
+            delete item;
+            existingIt = mode.m_world->m_itemList.erase(existingIt);
+            continue;
+        }
+        ++existingIt;
+    }
+
+    const float zoom = mode.m_world->m_attr
+        ? static_cast<float>(mode.m_world->m_attr->m_zoom)
+        : (mode.m_world->m_ground ? mode.m_world->m_ground->m_zoom : 5.0f);
+
+    for (auto& entry : mode.m_groundItemList) {
+        GroundItemState& state = entry.second;
+        CItem* liveItem = nullptr;
+        for (CItem* candidate : mode.m_world->m_itemList) {
+            if (candidate && candidate->m_aid == state.objectId) {
+                liveItem = candidate;
+                break;
+            }
+        }
+
+        if (!liveItem) {
+            liveItem = new CItem();
+            if (!liveItem) {
+                continue;
+            }
+            liveItem->m_aid = state.objectId;
+            mode.m_world->m_itemList.push_back(liveItem);
+        }
+
+        const bool resourceChanged = liveItem->m_itemId != state.itemId
+            || liveItem->m_identified != state.identified;
+        liveItem->m_itemId = state.itemId;
+        liveItem->m_amount = state.amount;
+        liveItem->m_identified = state.identified;
+        liveItem->m_tileX = state.tileX;
+        liveItem->m_tileY = state.tileY;
+        liveItem->m_subX = state.subX;
+        liveItem->m_subY = state.subY;
+        liveItem->m_itemName = g_ttemmgr.GetDisplayName(state.itemId, state.identified != 0);
+        liveItem->m_resourceName = g_ttemmgr.GetResourceName(state.itemId, state.identified != 0);
+        liveItem->m_pos.x = TileToWorldCoordX(mode.m_world, state.tileX)
+            + NormalizeGroundItemSubOffset(state.subX) * zoom * 0.35f;
+        liveItem->m_pos.z = TileToWorldCoordZ(mode.m_world, state.tileY)
+            + NormalizeGroundItemSubOffset(state.subY) * zoom * 0.35f;
+        liveItem->m_pos.y = mode.m_world->m_attr
+            ? mode.m_world->m_attr->GetHeight(liveItem->m_pos.x, liveItem->m_pos.z)
+            : 0.0f;
+        liveItem->m_isVisible = 1;
+
+        if (resourceChanged) {
+            liveItem->InvalidateBillboard();
+        }
+        if (state.pendingDropAnimation) {
+            liveItem->TriggerDropAnimation();
+            state.pendingDropAnimation = 0;
+        }
+    }
 }
 
 void SyncBootstrapSelfActorWorldPos(CGameMode& mode)
@@ -4384,7 +4803,7 @@ CGameMode::CGameMode()
       m_lastCardItemIndex(0), m_SkillBallonSkillId(0), m_nameBalloonType(0),
     m_showTimeStartTick(0), m_recordChatNum(0), m_strikeNum(0), m_isCtrlLock(0),
     m_sentLoadEndAck(0), m_isLeftButtonHeld(0), m_lastMoveRequestCellX(-1), m_lastMoveRequestCellY(-1),
-        m_heldMoveTargetCellX(-1), m_heldMoveTargetCellY(-1), m_hasHeldMoveTarget(0), m_lastMoveRequestTick(0), m_lastAttackRequestTick(0),
+        m_heldMoveTargetCellX(-1), m_heldMoveTargetCellY(-1), m_hasHeldMoveTarget(0), m_lastMoveRequestTick(0), m_lastAttackRequestTick(0), m_lastPickupRequestTick(0),
         m_lastAttackChaseHintTick(0), m_attackChaseTargetGid(0), m_attackChaseTargetCellX(-1), m_attackChaseTargetCellY(-1),
         m_attackChaseSourceCellX(-1), m_attackChaseSourceCellY(-1), m_attackChaseRange(1), m_hasAttackChaseHint(0),
         m_mapLoadingStage(MapLoading_None), m_mapLoadingStartTick(0), m_mapLoadingAckTick(0), m_lastActorBootstrapPacketTick(0)
@@ -4721,6 +5140,7 @@ void CGameMode::OnUpdate() {
     const DWORD bootstrapStart = GetTickCount();
     EnsureBootstrapWorldAssets(*this);
     SyncBootstrapSelfActorWorldPos(*this);
+    SyncGroundItemsToWorld(*this);
     const DWORD bootstrapEnd = GetTickCount();
 
     DWORD actorUpdateEnd = bootstrapEnd;
@@ -4759,6 +5179,7 @@ void CGameMode::OnUpdate() {
 
     const DWORD heldMoveStart = GetTickCount();
     PumpAttackChaseRequest(*this);
+    PumpPendingPickupRequest(*this);
     PumpHeldMoveRequest(*this);
     const DWORD heldMoveEnd = GetTickCount();
 
@@ -4802,11 +5223,17 @@ int CGameMode::SendMsg(int msg, int wparam, int lparam, int extra)
 
     switch (msg) {
     case GameMsg_LButtonDown:
+        if (TryRequestGroundItemFromScreenPoint(*this, wparam, lparam)) {
+            m_isLeftButtonHeld = 0;
+            m_hasHeldMoveTarget = 0;
+            return 1;
+        }
         if (TryRequestAttackFromScreenPoint(*this, wparam, lparam)) {
             m_isLeftButtonHeld = 0;
             return 1;
         }
 
+        ClearPickupIntent(*this);
         m_lastMonGid = 0;
         m_lastLockOnMonGid = 0;
         m_leftBtnClickTick = GetTickCount();

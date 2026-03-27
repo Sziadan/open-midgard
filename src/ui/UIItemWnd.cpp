@@ -282,6 +282,39 @@ void DrawWindowText(HDC hdc, int x, int y, const std::string& text, COLORREF col
     SelectObject(hdc, oldFont);
 }
 
+void DrawWindowTextRect(HDC hdc, const RECT& rect, const std::string& text, COLORREF color, UINT format)
+{
+    if (!hdc || text.empty() || rect.right <= rect.left || rect.bottom <= rect.top) {
+        return;
+    }
+
+    static HFONT s_sharpUiFont = nullptr;
+    if (!s_sharpUiFont) {
+        s_sharpUiFont = CreateFontA(
+            -11,
+            0,
+            0,
+            0,
+            FW_NORMAL,
+            FALSE,
+            FALSE,
+            FALSE,
+            DEFAULT_CHARSET,
+            OUT_DEFAULT_PRECIS,
+            CLIP_DEFAULT_PRECIS,
+            NONANTIALIASED_QUALITY,
+            DEFAULT_PITCH | FF_DONTCARE,
+            "MS Sans Serif");
+    }
+
+    RECT drawRect = rect;
+    SetBkMode(hdc, TRANSPARENT);
+    SetTextColor(hdc, color);
+    HGDIOBJ oldFont = SelectObject(hdc, s_sharpUiFont ? s_sharpUiFont : GetStockObject(DEFAULT_GUI_FONT));
+    DrawTextA(hdc, text.c_str(), -1, &drawRect, format);
+    SelectObject(hdc, oldFont);
+}
+
 bool IsUsableTabType(int itemType)
 {
     return static_cast<unsigned int>(itemType) <= 2u || itemType == 18;
@@ -379,15 +412,15 @@ void DrawItemSlot(HDC hdc,
     }
 
     if (item->m_num > 1) {
-        char countText[16] = {};
-        std::snprintf(countText, sizeof(countText), "%d", item->m_num);
-        DrawWindowText(hdc,
-            cellRect.right - 24,
-            cellRect.bottom - 14,
-            countText,
-            RGB(34, 46, 80),
-            DT_RIGHT | DT_TOP | DT_SINGLELINE);
+        const std::string countText = std::to_string(item->m_num);
+        RECT countRect{ cellRect.left + 3, cellRect.bottom - 13, cellRect.right - 3, cellRect.bottom - 2 };
+        const UINT countFormat = DT_RIGHT | DT_BOTTOM | DT_SINGLELINE | DT_NOPREFIX;
+        RECT shadowRect = countRect;
+        OffsetRect(&shadowRect, 1, 1);
+        DrawWindowTextRect(hdc, shadowRect, countText, RGB(255, 255, 255), countFormat);
+        DrawWindowTextRect(hdc, countRect, countText, RGB(34, 46, 80), countFormat);
     }
+
 }
 
 void DrawItemHoverTooltip(HDC hdc, const RECT& clientRect, const RECT& itemRect, const ITEM_INFO& item)
@@ -602,6 +635,24 @@ void UIItemWnd::OnDraw()
     m_visibleItems.clear();
     m_hoverOverlayItem = nullptr;
     m_hoverOverlayRect = RECT{};
+
+    if (m_h > kMiniHeight) {
+        const int columns = GetItemColumns();
+        const int rows = GetItemRows();
+        const int firstIndex = m_viewOffset * columns;
+        const int slotCount = columns * rows;
+        for (int drawIndex = 0; drawIndex < slotCount; ++drawIndex) {
+            const int itemIndex = firstIndex + drawIndex;
+            if (itemIndex < 0 || itemIndex >= static_cast<int>(filteredItems.size())) {
+                continue;
+            }
+            const ITEM_INFO* item = filteredItems[itemIndex];
+            if (!item) {
+                continue;
+            }
+            GetItemIcon(*item);
+        }
+    }
 
     HDC hdc = UIWindow::GetSharedDrawDC();
     const bool useShared = hdc != nullptr;

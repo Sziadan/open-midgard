@@ -55,6 +55,7 @@ struct GroundItemState {
     u8 identified = 0;
     u8 subX = 0;
     u8 subY = 0;
+    u8 pendingDropAnimation = 0;
 };
 
 //===========================================================================
@@ -218,6 +219,7 @@ public:
     int m_hasHeldMoveTarget;
     u32 m_lastMoveRequestTick;
     u32 m_lastAttackRequestTick;
+    u32 m_lastPickupRequestTick;
     u32 m_lastAttackChaseHintTick;
     u32 m_attackChaseTargetGid;
     int m_attackChaseTargetCellX;

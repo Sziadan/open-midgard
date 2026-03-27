@@ -904,6 +904,15 @@ void UIEquipWnd::OnDraw()
     }
 
     EnsureCreated();
+    const std::vector<const ITEM_INFO*> slotItems = BuildSlotAssignments();
+    if (m_h > kMiniHeight) {
+        for (const ITEM_INFO* item : slotItems) {
+            if (!item) {
+                continue;
+            }
+            GetItemIcon(*item);
+        }
+    }
 
     HDC hdc = UIWindow::GetSharedDrawDC();
     const bool useShared = hdc != nullptr;
@@ -983,7 +992,6 @@ void UIEquipWnd::OnDraw()
             DrawWindowText(hdc, centerPanel.left + 14, centerPanel.top + 68, "No Preview", RGB(90, 90, 90));
         }
 
-        const std::vector<const ITEM_INFO*> slotItems = BuildSlotAssignments();
         for (size_t i = 0; i < kEquipSlots.size(); ++i) {
             RECT slotRect{
                 m_x + kEquipSlots[i].iconX,

@@ -575,7 +575,7 @@ void HandleEquipInventoryList(CGameMode& mode, const PacketView& packet)
     SyncSessionAppearanceToLocalPlayer(mode);
 }
 
-void HandleItemPickupAck(CGameMode&, const PacketView& packet)
+void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 23) {
         return;
@@ -597,10 +597,34 @@ void HandleItemPickupAck(CGameMode&, const PacketView& packet)
     itemInfo.m_slot[1] = ReadLE16(packet.data + 13);
     itemInfo.m_slot[2] = ReadLE16(packet.data + 15);
     itemInfo.m_slot[3] = ReadLE16(packet.data + 17);
-    itemInfo.m_wearLocation = ReadLE16(packet.data + 19);
+    itemInfo.m_location = ReadLE16(packet.data + 19);
+    itemInfo.m_wearLocation = 0;
     itemInfo.m_itemType = packet.data[21];
+    if (itemInfo.m_itemType == 10 || itemInfo.m_itemType == 16 || itemInfo.m_itemType == 17) {
+        itemInfo.m_wearLocation = 0x8000;
+    }
+    if (packet.packetLength >= 27) {
+        itemInfo.m_deleteTime = static_cast<int>(ReadLE32(packet.data + 23));
+    }
+    if (packet.packetLength >= 29) {
+        itemInfo.m_isYours = ReadLE16(packet.data + 27);
+    }
+
+    DbgLog("[GameMode] pickup ack pkt=0x%04X index=%u amount=%d item=%u type=%u location=0x%04X wear=0x%04X result=%d expire=%d yours=%u\n",
+        static_cast<unsigned int>(packet.packetId),
+        static_cast<unsigned int>(itemInfo.m_itemIndex),
+        itemInfo.m_num,
+        itemInfo.GetItemId(),
+        static_cast<unsigned int>(itemInfo.m_itemType),
+        static_cast<unsigned int>(itemInfo.m_location),
+        static_cast<unsigned int>(itemInfo.m_wearLocation),
+        result,
+        itemInfo.m_deleteTime,
+        static_cast<unsigned int>(itemInfo.m_isYours));
 
     g_session.AddInventoryItem(itemInfo);
+    mode.m_pickupReqItemNaidList.clear();
+    mode.m_lastPickupRequestTick = 0;
 }
 
 void UpsertGroundItem(CGameMode& mode,
@@ -611,7 +635,8 @@ void UpsertGroundItem(CGameMode& mode,
     u16 tileY,
     u16 amount,
     u8 subX,
-    u8 subY)
+    u8 subY,
+    bool playDropAnimation)
 {
     GroundItemState& item = mode.m_groundItemList[objectId];
     item.objectId = objectId;
@@ -622,6 +647,7 @@ void UpsertGroundItem(CGameMode& mode,
     item.amount = amount;
     item.subX = subX;
     item.subY = subY;
+    item.pendingDropAnimation = playDropAnimation ? 1 : 0;
 }
 
 void HandleGroundItemEntry(CGameMode& mode, const PacketView& packet)
@@ -640,14 +666,14 @@ void HandleGroundItemEntry(CGameMode& mode, const PacketView& packet)
         const u16 amount = ReadLE16(packet.data + 13);
         const u8 subX = packet.data[15];
         const u8 subY = packet.data[16];
-        UpsertGroundItem(mode, objectId, itemId, identified, tileX, tileY, amount, subX, subY);
+        UpsertGroundItem(mode, objectId, itemId, identified, tileX, tileY, amount, subX, subY, false);
         return;
     }
 
     const u8 subX = packet.data[13];
     const u8 subY = packet.data[14];
     const u16 amount = ReadLE16(packet.data + 15);
-    UpsertGroundItem(mode, objectId, itemId, identified, tileX, tileY, amount, subX, subY);
+    UpsertGroundItem(mode, objectId, itemId, identified, tileX, tileY, amount, subX, subY, true);
 }
 
 void HandleGroundItemDisappear(CGameMode& mode, const PacketView& packet)
@@ -658,6 +684,10 @@ void HandleGroundItemDisappear(CGameMode& mode, const PacketView& packet)
 
     const u32 objectId = ReadLE32(packet.data + 2);
     mode.m_groundItemList.erase(objectId);
+    mode.m_pickupReqItemNaidList.remove(objectId);
+    if (mode.m_pickupReqItemNaidList.empty()) {
+        mode.m_lastPickupRequestTick = 0;
+    }
 }
 
 void HandleItemRemove(CGameMode&, const PacketView& packet)
@@ -3850,6 +3880,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x009D, HandleGroundItemEntry);
     router.Register(0x009E, HandleGroundItemEntry);
     router.Register(0x00A0, HandleItemPickupAck);
+    router.Register(0x02D4, HandleItemPickupAck);
     router.Register(0x00A1, HandleGroundItemDisappear);
     router.Register(0x00A3, HandleNormalInventoryList);
     router.Register(0x00A4, HandleEquipInventoryList);
@@ -3901,6 +3932,8 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x02B9, HandleIgnorePacket);
     router.Register(0x02D1, HandleIgnorePacket);
     router.Register(0x02D2, HandleIgnorePacket);
+    router.Register(0x02D3, HandleIgnorePacket);
+    router.Register(0x02D5, HandleIgnorePacket);
     router.Register(0x02D7, HandleIgnorePacket);
     router.Register(0x02DA, HandleIgnorePacket);
     router.Register(0x02E1, HandleActorActionNotify);

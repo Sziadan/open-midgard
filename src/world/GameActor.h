@@ -391,8 +391,35 @@ public:
 
 class CItem : public CRenderObject {
 public:
+    CItem();
+    ~CItem() override;
+
+    u8 OnProcess() override;
+    void Render(matrix* viewMatrix) override;
+    int Get8Dir(float rot) override;
+
+    bool EnsureBillboardTexture();
+    void InvalidateBillboard();
+    void TriggerDropAnimation();
+
     std::string m_itemName;
+    std::string m_resourceName;
     u32 m_aid;
+    u32 m_itemId;
+    u16 m_amount;
+    u16 m_tileX;
+    u16 m_tileY;
+    u8 m_identified;
+    u8 m_subX;
+    u8 m_subY;
     int m_isJumping;
     float m_sfallingSpeed, m_sPosY;
+    CTexture* m_billboardTexture;
+    int m_billboardTextureOwned;
+    int m_billboardTextureWidth;
+    int m_billboardTextureHeight;
+    int m_billboardAnchorX;
+    int m_billboardAnchorY;
+    tagRECT m_billboardOpaqueBounds;
+    int m_cachedBillboardMotion;
 };

@@ -32,6 +32,7 @@ constexpr float kNearPlane = 10.0f;
 constexpr float kGroundSubmitNearPlane = 80.0f;
 constexpr float kAttrTileDepthBias = 0.0010f;
 constexpr float kPlayerBillboardWorldHeightScale = 2.0f;
+constexpr float kGroundItemScreenScale = 1.6f;
 constexpr unsigned short kGroundQuadIndices[6] = { 0, 1, 2, 0, 2, 3 };
 constexpr bool kSubmitGroundSideFaces = true;
 constexpr bool kDebugGroundFlatColors = false;
@@ -114,6 +115,78 @@ vector3d NormalizeVec3(const vector3d& value);
 vector3d ScaleVec3(const vector3d& value, float scale);
 vector3d AddVec3(const vector3d& a, const vector3d& b);
 bool ProjectPoint(const CRenderer& renderer, const matrix& viewMatrix, const vector3d& point, tlvertex3d* outVertex);
+bool GetGroundItemScreenRect(const matrix& viewMatrix,
+    const CItem& item,
+    RECT* outRect,
+    int* outCenterX,
+    int* outTopY,
+    int* outLabelY,
+    float* outDepth)
+{
+    if (outRect) {
+        std::memset(outRect, 0, sizeof(*outRect));
+    }
+    if (outCenterX) {
+        *outCenterX = 0;
+    }
+    if (outTopY) {
+        *outTopY = 0;
+    }
+    if (outLabelY) {
+        *outLabelY = 0;
+    }
+    if (outDepth) {
+        *outDepth = 1.0f;
+    }
+
+    if (!item.m_isVisible) {
+        return false;
+    }
+
+    CItem* mutableItem = const_cast<CItem*>(&item);
+    if (!mutableItem->EnsureBillboardTexture()
+        || item.m_billboardTextureWidth <= 0
+        || item.m_billboardTextureHeight <= 0) {
+        return false;
+    }
+
+    tlvertex3d projectedBase{};
+    if (!ProjectPoint(g_renderer, viewMatrix, item.m_pos, &projectedBase)) {
+        return false;
+    }
+
+    const float scaledAnchorX = static_cast<float>(item.m_billboardAnchorX) * kGroundItemScreenScale;
+    const float scaledAnchorY = static_cast<float>(item.m_billboardAnchorY) * kGroundItemScreenScale;
+    const float scaledWidth = static_cast<float>(item.m_billboardTextureWidth) * kGroundItemScreenScale;
+    const float scaledHeight = static_cast<float>(item.m_billboardTextureHeight) * kGroundItemScreenScale;
+    const float left = projectedBase.x - scaledAnchorX;
+    const float top = projectedBase.y - scaledAnchorY;
+    const float right = left + scaledWidth;
+    const float bottom = top + scaledHeight;
+    if (!std::isfinite(left) || !std::isfinite(top) || !std::isfinite(right) || !std::isfinite(bottom)) {
+        return false;
+    }
+
+    if (outRect) {
+        outRect->left = static_cast<LONG>(std::lround(left));
+        outRect->top = static_cast<LONG>(std::lround(top));
+        outRect->right = static_cast<LONG>(std::lround(right));
+        outRect->bottom = static_cast<LONG>(std::lround(bottom));
+    }
+    if (outCenterX) {
+        *outCenterX = static_cast<int>(std::lround((left + right) * 0.5f));
+    }
+    if (outTopY) {
+        *outTopY = static_cast<int>(std::lround(top));
+    }
+    if (outLabelY) {
+        *outLabelY = static_cast<int>(std::lround(top));
+    }
+    if (outDepth) {
+        *outDepth = projectedBase.z;
+    }
+    return true;
+}
 float GroundCoordX(int x, int width, float zoom);
 float GroundCoordZ(int y, int height, float zoom);
 
@@ -3578,6 +3651,11 @@ void CWorld::ClearFixedObjects()
         delete object;
     }
     m_gameObjectList.clear();
+
+    for (CItem* item : m_itemList) {
+        delete item;
+    }
+    m_itemList.clear();
 }
 
 void CWorld::ResetSceneGraph()
@@ -4048,6 +4126,13 @@ void CWorld::UpdateActors()
     InvalidateBillboardFrameCache();
     UpdateGameObjects();
 
+    for (CItem* item : m_itemList) {
+        if (!item) {
+            continue;
+        }
+        item->OnProcess();
+    }
+
     if (m_player) {
         m_player->ProcessState();
     }
@@ -4063,6 +4148,13 @@ void CWorld::UpdateActors()
 void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
 {
     RenderGameObjects(viewMatrix);
+
+    for (CItem* item : m_itemList) {
+        if (!item) {
+            continue;
+        }
+        item->Render(const_cast<matrix*>(&viewMatrix));
+    }
 
     for (CGameActor* actor : m_actorList) {
         if (!actor || !actor->m_isVisible) {
@@ -4278,6 +4370,95 @@ bool CWorld::FindHoveredActorScreen(const matrix& viewMatrix,
     }
 
     return false;
+}
+
+bool CWorld::GetGroundItemScreenMarker(const matrix& viewMatrix,
+    u32 aid,
+    int* outCenterX,
+    int* outTopY,
+    int* outLabelY) const
+{
+    if (outCenterX) {
+        *outCenterX = 0;
+    }
+    if (outTopY) {
+        *outTopY = 0;
+    }
+    if (outLabelY) {
+        *outLabelY = 0;
+    }
+
+    for (CItem* item : m_itemList) {
+        if (!item || item->m_aid != aid) {
+            continue;
+        }
+
+        return GetGroundItemScreenRect(viewMatrix, *item, nullptr, outCenterX, outTopY, outLabelY, nullptr);
+    }
+
+    return false;
+}
+
+bool CWorld::FindHoveredGroundItemScreen(const matrix& viewMatrix,
+    int screenX,
+    int screenY,
+    CItem** outItem,
+    int* outLabelX,
+    int* outLabelY) const
+{
+    if (outItem) {
+        *outItem = nullptr;
+    }
+    if (outLabelX) {
+        *outLabelX = 0;
+    }
+    if (outLabelY) {
+        *outLabelY = 0;
+    }
+
+    const POINT mousePoint{ screenX, screenY };
+    float bestDepth = 1.0f;
+    CItem* bestItem = nullptr;
+    int bestLabelX = 0;
+    int bestLabelY = 0;
+    for (CItem* item : m_itemList) {
+        if (!item) {
+            continue;
+        }
+
+        RECT rect{};
+        int centerX = 0;
+        int topY = 0;
+        float depth = 1.0f;
+        if (!GetGroundItemScreenRect(viewMatrix, *item, &rect, &centerX, &topY, &topY, &depth)) {
+            continue;
+        }
+        if (!PtInRect(&rect, mousePoint)) {
+            continue;
+        }
+
+        if (!bestItem || depth < bestDepth) {
+            bestItem = item;
+            bestDepth = depth;
+            bestLabelX = centerX;
+            bestLabelY = topY;
+        }
+    }
+
+    if (!bestItem) {
+        return false;
+    }
+
+    if (outItem) {
+        *outItem = bestItem;
+    }
+    if (outLabelX) {
+        *outLabelX = bestLabelX;
+    }
+    if (outLabelY) {
+        *outLabelY = bestLabelY;
+    }
+    return true;
 }
 
 void CWorld::RenderBackgroundObjects(const matrix& viewMatrix) const

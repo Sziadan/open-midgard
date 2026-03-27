@@ -45,6 +45,7 @@ constexpr u16 kWantToConnection = 0x0436;
 constexpr u16 kActionRequest = 0x0437;
 constexpr u16 kUseSkillToId = 0x0438;
 constexpr u16 kUseItem = 0x0439;
+constexpr u16 kTakeItem = 0x00F5;
 constexpr u16 kEquipItem = 0x00A9;
 constexpr u16 kUnequipItem = 0x00AB;
 constexpr u16 kWalkToXY = 0x00A7;
@@ -60,6 +61,7 @@ constexpr u16 kWantToConnection = PacketVer23MapServerSend::kWantToConnection;
 constexpr u16 kActionRequest = PacketVer23MapServerSend::kActionRequest;
 constexpr u16 kUseSkillToId = PacketVer23MapServerSend::kUseSkillToId;
 constexpr u16 kUseItem = PacketVer23MapServerSend::kUseItem;
+constexpr u16 kTakeItem = PacketVer23MapServerSend::kTakeItem;
 constexpr u16 kEquipItem = PacketVer23MapServerSend::kEquipItem;
 constexpr u16 kUnequipItem = PacketVer23MapServerSend::kUnequipItem;
 constexpr u16 kNotifyActorInit = PacketVer23MapServerSend::kNotifyActorInit;
@@ -176,6 +178,12 @@ struct PACKET_CZ_USEITEM2 {
     u32 TargetAID;
 };
 
+struct PACKET_CZ_TAKE_ITEM2 {
+    u16 PacketType;    // 0x00F5 for packet_ver 23 profile
+    u16 padding;
+    u32 ObjectAID;
+};
+
 struct PACKET_CZ_REQ_WEAR_EQUIP {
     u16 PacketType;    // 0x00A9
     u16 ItemIndex;
@@ -244,6 +252,7 @@ static_assert(sizeof(PACKET_CZ_REQNAME2) == 11, "PACKET_CZ_REQNAME2 size mismatc
 static_assert(sizeof(PACKET_CZ_ACTION_REQUEST2) == 7, "PACKET_CZ_ACTION_REQUEST2 size mismatch");
 static_assert(sizeof(PACKET_CZ_USESKILLTOID2) == 10, "PACKET_CZ_USESKILLTOID2 size mismatch");
 static_assert(sizeof(PACKET_CZ_USEITEM2) == 8, "PACKET_CZ_USEITEM2 size mismatch");
+static_assert(sizeof(PACKET_CZ_TAKE_ITEM2) == 8, "PACKET_CZ_TAKE_ITEM2 size mismatch");
 static_assert(sizeof(PACKET_CZ_REQ_WEAR_EQUIP) == 6, "PACKET_CZ_REQ_WEAR_EQUIP size mismatch");
 static_assert(sizeof(PACKET_CZ_REQ_TAKEOFF_EQUIP) == 4, "PACKET_CZ_REQ_TAKEOFF_EQUIP size mismatch");
 

@@ -12,6 +12,7 @@
 #include "render3d/RenderDevice.h"
 #include "res/ImfRes.h"
 #include "res/PaletteRes.h"
+#include "item/Item.h"
 #include "session/Session.h"
 
 #include <array>
@@ -30,6 +31,11 @@ constexpr int kPlayerBillboardComposeWidth = 128;
 constexpr int kPlayerBillboardComposeHeight = 128;
 constexpr int kPlayerBillboardAnchorX = 64;
 constexpr int kPlayerBillboardAnchorY = 110;
+constexpr int kItemBillboardComposeWidth = 96;
+constexpr int kItemBillboardComposeHeight = 96;
+constexpr int kItemBillboardAnchorX = 48;
+constexpr int kItemBillboardAnchorY = 72;
+constexpr float kGroundItemScreenScale = 1.6f;
 constexpr bool kLogActLoad = false;
 constexpr int kJobWarpNpc = 0x2D;
 constexpr int kJobWarpPortal = 0x80;
@@ -51,6 +57,10 @@ constexpr float kHitReactionKnockbackDist = 6.0f;
 constexpr int kMonsterJobMin = 1000;
 constexpr int kMercenaryJobMin = 6001;
 constexpr int kMercenaryJobMax = 6047;
+constexpr float kItemBillboardDepthBias = 0.00015f;
+constexpr float kItemProjectNearPlane = 10.0f;
+constexpr float kItemProjectSubmitNearPlane = 80.0f;
+constexpr const char* kLegacyItemSpriteRoot = "data\\sprite\\\xBE\xC6\xC0\xCC\xC5\xDB\\";
 
 #define LOG_ACT_LOAD(...) do { if constexpr (kLogActLoad) { DbgLog(__VA_ARGS__); } } while (0)
 
@@ -733,6 +743,38 @@ struct SharedNonPcBillboardValue {
 std::map<SharedNonPcBillboardKey, SharedNonPcBillboardValue>& GetSharedNonPcBillboardCache()
 {
     static std::map<SharedNonPcBillboardKey, SharedNonPcBillboardValue> cache;
+    return cache;
+}
+
+struct SharedItemBillboardKey {
+    u32 itemId = 0;
+    u8 identified = 0;
+    int motion = 0;
+
+    bool operator<(const SharedItemBillboardKey& other) const
+    {
+        if (itemId != other.itemId) {
+            return itemId < other.itemId;
+        }
+        if (identified != other.identified) {
+            return identified < other.identified;
+        }
+        return motion < other.motion;
+    }
+};
+
+struct SharedItemBillboardValue {
+    CTexture* texture = nullptr;
+    tagRECT opaqueBounds{};
+    int width = 0;
+    int height = 0;
+    int anchorX = kItemBillboardAnchorX;
+    int anchorY = kItemBillboardAnchorY;
+};
+
+std::map<SharedItemBillboardKey, SharedItemBillboardValue>& GetSharedItemBillboardCache()
+{
+    static std::map<SharedItemBillboardKey, SharedItemBillboardValue> cache;
     return cache;
 }
 
@@ -2288,6 +2330,449 @@ void CGameActor::DeleteTotalNumber(int kind)
         effect->SendMsg(this, 49, 0, 0, 0);
         effect->SendMsg(this, 53, 0, 0, 0);
     }
+}
+
+namespace {
+
+void ReleaseItemBillboardTexture(CItem& item)
+{
+    if (item.m_billboardTextureOwned && item.m_billboardTexture) {
+        delete item.m_billboardTexture;
+    }
+    item.m_billboardTexture = nullptr;
+    item.m_billboardTextureOwned = 0;
+}
+
+float DotVec3Item(const vector3d& a, const vector3d& b)
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+vector3d NormalizeVec3Item(const vector3d& value)
+{
+    const float lengthSq = DotVec3Item(value, value);
+    if (lengthSq <= 1.0e-12f) {
+        return vector3d{ 0.0f, 1.0f, 0.0f };
+    }
+
+    const float invLength = 1.0f / std::sqrt(lengthSq);
+    return vector3d{ value.x * invLength, value.y * invLength, value.z * invLength };
+}
+
+vector3d ScaleVec3Item(const vector3d& value, float scale)
+{
+    return vector3d{ value.x * scale, value.y * scale, value.z * scale };
+}
+
+vector3d AddVec3Item(const vector3d& a, const vector3d& b)
+{
+    return vector3d{ a.x + b.x, a.y + b.y, a.z + b.z };
+}
+
+bool ProjectItemPoint(const matrix& viewMatrix, const vector3d& point, tlvertex3d* outVertex)
+{
+    if (!outVertex) {
+        return false;
+    }
+
+    if (!std::isfinite(point.x) || !std::isfinite(point.y) || !std::isfinite(point.z)) {
+        return false;
+    }
+
+    const float clipZ = point.x * viewMatrix.m[0][2]
+        + point.y * viewMatrix.m[1][2]
+        + point.z * viewMatrix.m[2][2]
+        + viewMatrix.m[3][2];
+    if (!std::isfinite(clipZ) || clipZ <= kItemProjectSubmitNearPlane) {
+        return false;
+    }
+
+    const float oow = 1.0f / clipZ;
+    const float projectedX = point.x * viewMatrix.m[0][0]
+        + point.y * viewMatrix.m[1][0]
+        + point.z * viewMatrix.m[2][0]
+        + viewMatrix.m[3][0];
+    const float projectedY = point.x * viewMatrix.m[0][1]
+        + point.y * viewMatrix.m[1][1]
+        + point.z * viewMatrix.m[2][1]
+        + viewMatrix.m[3][1];
+    if (!std::isfinite(oow) || !std::isfinite(projectedX) || !std::isfinite(projectedY)) {
+        return false;
+    }
+
+    outVertex->x = g_renderer.m_xoffset + projectedX * g_renderer.m_hpc * oow;
+    outVertex->y = g_renderer.m_yoffset + projectedY * g_renderer.m_vpc * oow;
+    const float depth = (1500.0f / (1500.0f - kItemProjectNearPlane)) * ((1.0f / oow) - kItemProjectNearPlane) * oow;
+    if (!std::isfinite(outVertex->x) || !std::isfinite(outVertex->y) || !std::isfinite(depth)) {
+        return false;
+    }
+
+    outVertex->z = (std::min)(1.0f, (std::max)(0.0f, depth));
+    outVertex->oow = oow;
+    outVertex->specular = 0xFF000000u;
+    return true;
+}
+
+bool ResolveItemSpritePaths(const std::string& resourceName, std::string* outActName, std::string* outSprName)
+{
+    if (outActName) {
+        outActName->clear();
+    }
+    if (outSprName) {
+        outSprName->clear();
+    }
+    if (resourceName.empty()) {
+        return false;
+    }
+
+    const char* const roots[] = {
+        kLegacyItemSpriteRoot,
+        "sprite\\\xBE\xC6\xC0\xCC\xC5\xDB\\",
+        "data\\sprite\\item\\",
+        "sprite\\item\\",
+        "data\\sprite\\items\\",
+        "sprite\\items\\",
+        nullptr
+    };
+
+    for (int index = 0; roots[index]; ++index) {
+        const std::string actPath = std::string(roots[index]) + resourceName + ".act";
+        const std::string sprPath = std::string(roots[index]) + resourceName + ".spr";
+        if (g_resMgr.IsExist(actPath.c_str()) && g_resMgr.IsExist(sprPath.c_str())) {
+            if (outActName) {
+                *outActName = actPath;
+            }
+            if (outSprName) {
+                *outSprName = sprPath;
+            }
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool ResolveItemResources(CItem& item)
+{
+    if (!item.m_resourceName.empty()) {
+        std::string actPath;
+        std::string sprPath;
+        if (ResolveItemSpritePaths(item.m_resourceName, &actPath, &sprPath)) {
+            item.m_actRes = g_resMgr.GetAs<CActRes>(actPath.c_str());
+            item.m_sprRes = g_resMgr.GetAs<CSprRes>(sprPath.c_str());
+        } else {
+            item.m_actRes = nullptr;
+            item.m_sprRes = nullptr;
+        }
+    } else {
+        item.m_actRes = nullptr;
+        item.m_sprRes = nullptr;
+    }
+
+    if (item.m_actRes && item.m_sprRes) {
+        return true;
+    }
+
+    static std::map<std::string, bool> loggedMissingItems;
+    const std::string key = item.m_resourceName.empty()
+        ? std::string("item:") + std::to_string(item.m_itemId)
+        : item.m_resourceName;
+    if (loggedMissingItems.insert(std::make_pair(key, true)).second) {
+        DbgLog("[Item] missing floor item resources itemId=%u resource='%s'\n",
+            static_cast<unsigned int>(item.m_itemId),
+            item.m_resourceName.c_str());
+    }
+    return false;
+}
+
+bool EnsureItemBillboardTexture(CItem& item)
+{
+    if (!ResolveItemResources(item)) {
+        ReleaseItemBillboardTexture(item);
+        item.m_cachedBillboardMotion = -1;
+        return false;
+    }
+
+    const bool isVulkanBackend = GetRenderDevice().GetBackendType() == RenderBackendType::Vulkan;
+
+    const int motionCount = item.m_actRes->GetMotionCount(0);
+    if (motionCount <= 0) {
+        ReleaseItemBillboardTexture(item);
+        item.m_cachedBillboardMotion = -1;
+        return false;
+    }
+
+    int motion = item.m_curMotion;
+    if (motion < 0 || motion >= motionCount) {
+        motion = 0;
+    }
+
+    if (item.m_billboardTexture && item.m_cachedBillboardMotion == motion) {
+        return true;
+    }
+
+    if (isVulkanBackend) {
+        const SharedItemBillboardKey sharedKey{ item.m_itemId, item.m_identified, motion };
+        const auto& sharedCache = GetSharedItemBillboardCache();
+        const auto sharedIt = sharedCache.find(sharedKey);
+        if (sharedIt != sharedCache.end() && sharedIt->second.texture) {
+            if (item.m_billboardTexture != sharedIt->second.texture) {
+                ReleaseItemBillboardTexture(item);
+            }
+            item.m_billboardTexture = sharedIt->second.texture;
+            item.m_billboardTextureOwned = 0;
+            item.m_billboardTextureWidth = sharedIt->second.width;
+            item.m_billboardTextureHeight = sharedIt->second.height;
+            item.m_billboardAnchorX = sharedIt->second.anchorX;
+            item.m_billboardAnchorY = sharedIt->second.anchorY;
+            item.m_billboardOpaqueBounds = sharedIt->second.opaqueBounds;
+            item.m_cachedBillboardMotion = motion;
+            return true;
+        }
+    }
+
+    const CMotion* spriteMotion = item.m_actRes->GetMotion(0, motion);
+    if (!spriteMotion) {
+        spriteMotion = item.m_actRes->GetMotion(0, 0);
+        motion = 0;
+    }
+    if (!spriteMotion) {
+        ReleaseItemBillboardTexture(item);
+        item.m_cachedBillboardMotion = -1;
+        return false;
+    }
+
+    CDCBitmap composeSurface(kItemBillboardComposeWidth, kItemBillboardComposeHeight);
+    RECT clearRect{ 0, 0, kItemBillboardComposeWidth, kItemBillboardComposeHeight };
+    composeSurface.ClearSurface(&clearRect, 0x00000000u);
+    composeSurface.BltSprite(kItemBillboardAnchorX,
+        kItemBillboardAnchorY,
+        item.m_sprRes,
+        const_cast<CMotion*>(spriteMotion),
+        item.m_sprRes->m_pal);
+
+    tagRECT opaqueBounds{};
+    if (!FindOpaqueBounds(composeSurface.GetImageData(),
+            static_cast<int>(composeSurface.GetWidth()),
+            static_cast<int>(composeSurface.GetHeight()),
+            &opaqueBounds)) {
+        ReleaseItemBillboardTexture(item);
+        item.m_cachedBillboardMotion = -1;
+        return false;
+    }
+
+    std::vector<unsigned int> pixels(composeSurface.GetImageData(),
+        composeSurface.GetImageData() + static_cast<size_t>(composeSurface.GetWidth()) * static_cast<size_t>(composeSurface.GetHeight()));
+    UnpremultiplyPixels(pixels);
+
+    if (!item.m_billboardTexture
+        || !item.m_billboardTextureOwned
+        || item.m_billboardTextureWidth != kItemBillboardComposeWidth
+        || item.m_billboardTextureHeight != kItemBillboardComposeHeight) {
+        ReleaseItemBillboardTexture(item);
+        item.m_billboardTexture = new CTexture();
+        if (!item.m_billboardTexture) {
+            return false;
+        }
+        if (!item.m_billboardTexture->Create(kItemBillboardComposeWidth, kItemBillboardComposeHeight, PF_A8R8G8B8, false)) {
+            ReleaseItemBillboardTexture(item);
+            return false;
+        }
+        item.m_billboardTextureOwned = 1;
+        item.m_billboardTextureWidth = kItemBillboardComposeWidth;
+        item.m_billboardTextureHeight = kItemBillboardComposeHeight;
+    }
+
+    item.m_billboardTexture->Update(0,
+        0,
+        kItemBillboardComposeWidth,
+        kItemBillboardComposeHeight,
+        pixels.data(),
+        true,
+        kItemBillboardComposeWidth * static_cast<int>(sizeof(unsigned int)));
+    item.m_billboardAnchorX = kItemBillboardAnchorX;
+    item.m_billboardAnchorY = kItemBillboardAnchorY;
+    item.m_billboardOpaqueBounds = opaqueBounds;
+    item.m_cachedBillboardMotion = motion;
+
+    if (isVulkanBackend && item.m_billboardTexture) {
+        SharedItemBillboardValue value{};
+        value.texture = item.m_billboardTexture;
+        value.opaqueBounds = opaqueBounds;
+        value.width = item.m_billboardTextureWidth;
+        value.height = item.m_billboardTextureHeight;
+        value.anchorX = item.m_billboardAnchorX;
+        value.anchorY = item.m_billboardAnchorY;
+        GetSharedItemBillboardCache()[SharedItemBillboardKey{ item.m_itemId, item.m_identified, motion }] = value;
+        item.m_billboardTextureOwned = 0;
+    }
+
+    return true;
+}
+
+} // namespace
+
+bool CItem::EnsureBillboardTexture()
+{
+    return EnsureItemBillboardTexture(*this);
+}
+
+CItem::CItem()
+    : m_aid(0)
+    , m_itemId(0)
+    , m_amount(0)
+    , m_tileX(0)
+    , m_tileY(0)
+    , m_identified(0)
+    , m_subX(0)
+    , m_subY(0)
+    , m_isJumping(0)
+    , m_sfallingSpeed(0.0f)
+    , m_sPosY(0.0f)
+    , m_billboardTexture(nullptr)
+    , m_billboardTextureOwned(0)
+    , m_billboardTextureWidth(0)
+    , m_billboardTextureHeight(0)
+    , m_billboardAnchorX(kItemBillboardAnchorX)
+    , m_billboardAnchorY(kItemBillboardAnchorY)
+    , m_cachedBillboardMotion(-1)
+{
+    m_billboardOpaqueBounds.left = 0;
+    m_billboardOpaqueBounds.top = 0;
+    m_billboardOpaqueBounds.right = 0;
+    m_billboardOpaqueBounds.bottom = 0;
+    m_isVisible = 1;
+    m_isVisibleBody = 1;
+    m_shouldAddPickInfo = 1;
+    m_motionSpeed = 1.0f;
+    m_modifyFactorOfmotionSpeed = 1.0f;
+    m_modifyFactorOfmotionSpeed2 = 1.0f;
+    m_baseAction = 0;
+    m_curAction = 0;
+    m_curMotion = 0;
+    m_oldBaseAction = 0;
+    m_oldMotion = 0;
+    m_stateStartTick = timeGetTime();
+    m_pos = vector3d{ 0.0f, 0.0f, 0.0f };
+}
+
+CItem::~CItem()
+{
+    ReleaseItemBillboardTexture(*this);
+}
+
+u8 CItem::OnProcess()
+{
+    if (m_isJumping) {
+        m_sfallingSpeed += 0.18f;
+        m_sPosY -= m_sfallingSpeed;
+        if (m_sPosY <= 0.0f) {
+            if (m_sfallingSpeed > 0.45f) {
+                m_sPosY = -m_sPosY * 0.35f;
+                m_sfallingSpeed = -m_sfallingSpeed * 0.45f;
+            } else {
+                m_sPosY = 0.0f;
+                m_sfallingSpeed = 0.0f;
+                m_isJumping = 0;
+            }
+        }
+    }
+
+    if (ResolveItemResources(*this)) {
+        ProcessMotion();
+    } else {
+        m_curMotion = 0;
+    }
+
+    return 1;
+}
+
+void CItem::Render(matrix* viewMatrix)
+{
+    if (!viewMatrix || !m_isVisible || !EnsureBillboardTexture()) {
+        return;
+    }
+
+    vector3d base = m_pos;
+    if (g_world.m_attr) {
+        base.y = g_world.m_attr->GetHeight(base.x, base.z);
+    }
+    base.y += m_sPosY;
+
+    tlvertex3d projectedBase{};
+    if (!ProjectItemPoint(*viewMatrix, base, &projectedBase)) {
+        return;
+    }
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return;
+    }
+
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = m_billboardTexture;
+    face->mtPreset = 0;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = projectedBase.oow;
+
+    const float scaledAnchorX = static_cast<float>(m_billboardAnchorX) * kGroundItemScreenScale;
+    const float scaledAnchorY = static_cast<float>(m_billboardAnchorY) * kGroundItemScreenScale;
+    const float scaledWidth = static_cast<float>(m_billboardTextureWidth) * kGroundItemScreenScale;
+    const float scaledHeight = static_cast<float>(m_billboardTextureHeight) * kGroundItemScreenScale;
+    const float left = projectedBase.x - scaledAnchorX;
+    const float top = projectedBase.y - scaledAnchorY;
+    const float right = left + scaledWidth;
+    const float bottom = top + scaledHeight;
+
+    face->m_verts[0].x = left;
+    face->m_verts[0].y = top;
+    face->m_verts[1].x = right;
+    face->m_verts[1].y = top;
+    face->m_verts[2].x = left;
+    face->m_verts[2].y = bottom;
+    face->m_verts[3].x = right;
+    face->m_verts[3].y = bottom;
+
+    for (int index = 0; index < 4; ++index) {
+        face->m_verts[index].z = (std::max)(0.0f, projectedBase.z - kItemBillboardDepthBias);
+        face->m_verts[index].oow = projectedBase.oow;
+        face->m_verts[index].color = 0xFFFFFFFFu;
+        face->m_verts[index].specular = 0xFF000000u;
+    }
+
+    face->m_verts[0].tu = 0.0f;
+    face->m_verts[0].tv = 0.0f;
+    face->m_verts[1].tu = 1.0f;
+    face->m_verts[1].tv = 0.0f;
+    face->m_verts[2].tu = 0.0f;
+    face->m_verts[2].tv = 1.0f;
+    face->m_verts[3].tu = 1.0f;
+    face->m_verts[3].tv = 1.0f;
+    g_renderer.AddRP(face, 1);
+}
+
+int CItem::Get8Dir(float rot)
+{
+    (void)rot;
+    return 0;
+}
+
+void CItem::InvalidateBillboard()
+{
+    m_cachedBillboardMotion = -1;
+}
+
+void CItem::TriggerDropAnimation()
+{
+    m_isJumping = 1;
+    m_sPosY = 2.2f;
+    m_sfallingSpeed = -0.28f;
 }
 
 CPc::CPc()

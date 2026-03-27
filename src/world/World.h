@@ -277,6 +277,17 @@ public:
         CGameActor** outActor,
         int* outLabelX,
         int* outLabelY) const;
+    bool GetGroundItemScreenMarker(const matrix& viewMatrix,
+        u32 aid,
+        int* outCenterX,
+        int* outTopY,
+        int* outLabelY = nullptr) const;
+    bool FindHoveredGroundItemScreen(const matrix& viewMatrix,
+        int screenX,
+        int screenY,
+        CItem** outItem,
+        int* outLabelX,
+        int* outLabelY) const;
     void RenderBackgroundObjects(const matrix& viewMatrix) const;
 };
 
