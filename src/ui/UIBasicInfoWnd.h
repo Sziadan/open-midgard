@@ -62,7 +62,7 @@ private:
     void DrawCachedBitmap(HDC hdc, HBITMAP bitmap, int x, int y) const;
     void DrawBar(HDC hdc, int x, int y, int percent, bool redBar) const;
     void DrawExpBar(HDC hdc, int x, int y, int percent) const;
-    void DrawWindowText(HDC hdc, int x, int y, const char* text, COLORREF color, UINT format = DT_LEFT | DT_TOP | DT_SINGLELINE) const;
+    void DrawWindowText(HDC hdc, int x, int y, const char* text, COLORREF color, UINT format = DT_LEFT | DT_TOP | DT_SINGLELINE, HFONT font = nullptr, int height = 16) const;
     void LoadAssets();
     void ReleaseAssets();
 

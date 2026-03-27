@@ -3403,29 +3403,12 @@ void RemoveRuntimeActor(CGameMode& mode, u32 gid)
     mode.m_runtimeActors.erase(it);
 }
 
-const char* ChannelTag(u8 channel)
-{
-    switch (channel) {
-    case kChatChannelPlayer: return "player";
-    case kChatChannelWhisper: return "whisper";
-    case kChatChannelParty: return "party";
-    case kChatChannelBroadcast: return "broadcast";
-    case kChatChannelBattlefield: return "battlefield";
-    case kChatChannelSystem: return "system";
-    default: return "normal";
-    }
-}
-
 ChatEntry BuildChatEntry(const std::string& text, u32 color, u8 channel)
 {
     ChatEntry entry{};
     entry.color = color & 0x00FFFFFFu;
     entry.channel = channel;
-
-    char prefix[64] = {};
-    std::snprintf(prefix, sizeof(prefix), "[%s #%06X] ", ChannelTag(channel), entry.color);
-    entry.text = prefix;
-    entry.text += text;
+    entry.text = text;
     return entry;
 }
 

@@ -7,26 +7,121 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
 
 #include <windows.h>
 
+#pragma comment(lib, "msimg32.lib")
+
 namespace {
-constexpr size_t kMaxChatLines = 256;
-constexpr size_t kMaxVisibleLines = 12;
-constexpr u32 kVisibleLineLifetimeMs = 15000;
+constexpr size_t kMaxChatLines = 50;
 constexpr int kChatWindowMargin = 12;
 constexpr int kChatWindowWidth = 420;
 constexpr int kChatLineHeight = 16;
 constexpr int kChatInputHeight = 22;
 constexpr int kChatPanelPadding = 8;
+constexpr int kChatHistoryHeight = 192;
+constexpr int kChatMessageGap = 2;
 constexpr size_t kMaxInputChars = 180;
+constexpr size_t kMaxInputHistory = 5;
 COLORREF ToColorRef(u32 color)
 {
     return RGB((color >> 16) & 0xFFu, (color >> 8) & 0xFFu, color & 0xFFu);
 }
+
+void DrawBitmapTransparent(HDC target, HBITMAP bitmap, int x, int y, int width, int height)
+{
+    if (!target || !bitmap || width <= 0 || height <= 0) {
+        return;
+    }
+
+    HDC memDc = CreateCompatibleDC(target);
+    if (!memDc) {
+        return;
+    }
+
+    HGDIOBJ oldBitmap = SelectObject(memDc, bitmap);
+    TransparentBlt(target, x, y, width, height, memDc, 0, 0, width, height, RGB(255, 0, 255));
+    SelectObject(memDc, oldBitmap);
+    DeleteDC(memDc);
 }
 
-UINewChatWnd::UINewChatWnd() : m_lastDrawTick(0), m_inputActive(0)
+int MeasureWrappedTextHeight(HDC hdc, const std::string& text, int width)
+{
+    if (!hdc || width <= 0 || text.empty()) {
+        return kChatLineHeight;
+    }
+
+    RECT calcRect{ 0, 0, width, 0 };
+    DrawTextA(hdc, text.c_str(), -1, &calcRect, DT_LEFT | DT_TOP | DT_WORDBREAK | DT_EDITCONTROL | DT_CALCRECT | DT_NOPREFIX);
+    const int measuredHeight = calcRect.bottom - calcRect.top;
+    return (std::max)(kChatLineHeight, measuredHeight);
+}
+
+HBITMAP GetHistoryPanelPattern()
+{
+    static HBITMAP s_pattern = nullptr;
+    if (s_pattern) {
+        return s_pattern;
+    }
+
+    constexpr int kPatternSize = 4;
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = kPatternSize;
+    bmi.bmiHeader.biHeight = -kPatternSize;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    void* bits = nullptr;
+    s_pattern = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
+    if (!s_pattern || !bits) {
+        return nullptr;
+    }
+
+    auto* pixels = static_cast<u32*>(bits);
+    const u32 darkGrey = 0x00181818u;
+    const u32 transparentKey = 0x00FF00FFu;
+    for (int y = 0; y < kPatternSize; ++y) {
+        for (int x = 0; x < kPatternSize; ++x) {
+            const bool transparent = ((x + y) % 4) == 0;
+            pixels[y * kPatternSize + x] = transparent ? transparentKey : darkGrey;
+        }
+    }
+
+    return s_pattern;
+}
+
+void FillRectStippled(HDC target, const RECT& rect)
+{
+    if (!target || rect.right <= rect.left || rect.bottom <= rect.top) {
+        return;
+    }
+
+    HBITMAP pattern = GetHistoryPanelPattern();
+    if (!pattern) {
+        HBRUSH brush = CreateSolidBrush(RGB(24, 24, 24));
+        FillRect(target, &rect, brush);
+        DeleteObject(brush);
+        return;
+    }
+
+    constexpr int kPatternSize = 4;
+    for (int y = rect.top; y < rect.bottom; y += kPatternSize) {
+        for (int x = rect.left; x < rect.right; x += kPatternSize) {
+            const int drawWidth = (std::min)(kPatternSize, static_cast<int>(rect.right - x));
+            const int drawHeight = (std::min)(kPatternSize, static_cast<int>(rect.bottom - y));
+            DrawBitmapTransparent(target, pattern, x, y, drawWidth, drawHeight);
+        }
+    }
+}
+}
+
+UINewChatWnd::UINewChatWnd()
+    : m_lastDrawTick(0),
+      m_inputActive(0),
+      m_historyBrowseIndex(-1)
 {
 }
 
@@ -79,44 +174,72 @@ void UINewChatWnd::OnDraw()
         return;
     }
 
-    const bool shouldDrawPanel = m_inputActive != 0 || !m_visibleLines.empty();
-    if (shouldDrawPanel) {
-        RECT rc = { m_x, m_y, m_x + m_w, m_y + m_h };
-        HBRUSH bgBrush = CreateSolidBrush(m_inputActive ? RGB(30, 30, 36) : RGB(22, 22, 26));
-        FillRect(hdc, &rc, bgBrush);
-        DeleteObject(bgBrush);
-        FrameRect(hdc, &rc, static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH)));
+    RECT panelRc = { m_x, m_y, m_x + m_w, m_y + m_h };
+    RECT inputRc = {
+        m_x + kChatPanelPadding,
+        m_y + m_h - kChatInputHeight - kChatPanelPadding,
+        m_x + m_w - kChatPanelPadding,
+        m_y + m_h - kChatPanelPadding
+    };
+    RECT historyRc = {
+        inputRc.left,
+        m_y + kChatPanelPadding,
+        inputRc.right,
+        inputRc.top - kChatPanelPadding
+    };
+    FillRectStippled(hdc, historyRc);
+    FrameRect(hdc, &panelRc, static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH)));
 
-        SetBkMode(hdc, TRANSPARENT);
-        const int lineX = m_x + kChatPanelPadding;
-        int lineY = m_y + kChatPanelPadding;
-        for (const ChatLine& line : m_visibleLines) {
-            RECT textRc = { lineX, lineY, m_x + m_w - kChatPanelPadding, lineY + kChatLineHeight };
-            SetTextColor(hdc, ToColorRef(line.color));
-            DrawTextA(hdc, line.text.c_str(), -1, &textRc, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
-            lineY += kChatLineHeight;
+    SetBkMode(hdc, TRANSPARENT);
+    const int textInset = 4;
+    const int textWidth = (historyRc.right - historyRc.left) - (textInset * 2);
+    const size_t lineCount = m_visibleLines.size();
+    std::vector<int> measuredHeights(lineCount, kChatLineHeight);
+    int usedHeight = 0;
+    size_t firstVisibleIndex = lineCount;
+    for (size_t index = lineCount; index > 0; --index) {
+        const size_t lineIndex = index - 1;
+        const int measured = MeasureWrappedTextHeight(hdc, m_visibleLines[lineIndex].text, textWidth);
+        measuredHeights[lineIndex] = measured;
+        const int blockHeight = measured + ((usedHeight > 0) ? kChatMessageGap : 0);
+        if (usedHeight + blockHeight > kChatHistoryHeight) {
+            break;
         }
-
-        RECT inputRc = {
-            m_x + kChatPanelPadding,
-            m_y + m_h - kChatInputHeight - kChatPanelPadding,
-            m_x + m_w - kChatPanelPadding,
-            m_y + m_h - kChatPanelPadding
-        };
-        HBRUSH inputBg = CreateSolidBrush(m_inputActive ? RGB(245, 245, 220) : RGB(210, 210, 210));
-        FillRect(hdc, &inputRc, inputBg);
-        DeleteObject(inputBg);
-        FrameRect(hdc, &inputRc, static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)));
-
-        std::string drawText = m_inputText;
-        if (m_inputActive) {
-            drawText += '_';
-        }
-
-        RECT inputTextRc = { inputRc.left + 4, inputRc.top + 2, inputRc.right - 2, inputRc.bottom - 2 };
-        SetTextColor(hdc, RGB(16, 16, 16));
-        DrawTextA(hdc, drawText.c_str(), -1, &inputTextRc, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
+        usedHeight += blockHeight;
+        firstVisibleIndex = lineIndex;
     }
+    if (firstVisibleIndex == lineCount && lineCount > 0) {
+        firstVisibleIndex = lineCount - 1;
+        measuredHeights[firstVisibleIndex] = MeasureWrappedTextHeight(hdc, m_visibleLines[firstVisibleIndex].text, textWidth);
+    }
+
+    int lineY = historyRc.bottom - textInset - usedHeight;
+    for (size_t index = firstVisibleIndex; index < lineCount; ++index) {
+        const ChatLine& line = m_visibleLines[index];
+        const int textHeight = measuredHeights[index];
+        RECT textRc = {
+            historyRc.left + textInset,
+            lineY,
+            historyRc.right - textInset,
+            lineY + textHeight
+        };
+        SetTextColor(hdc, ToColorRef(line.color));
+        DrawTextA(hdc, line.text.c_str(), -1, &textRc, DT_LEFT | DT_TOP | DT_WORDBREAK | DT_EDITCONTROL | DT_NOPREFIX);
+        lineY += textHeight + kChatMessageGap;
+    }
+    HBRUSH inputBg = CreateSolidBrush(m_inputActive ? RGB(245, 245, 220) : RGB(210, 210, 210));
+    FillRect(hdc, &inputRc, inputBg);
+    DeleteObject(inputBg);
+    FrameRect(hdc, &inputRc, static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)));
+
+    std::string drawText = m_inputText;
+    if (m_inputActive) {
+        drawText += '_';
+    }
+
+    RECT inputTextRc = { inputRc.left + 4, inputRc.top + 2, inputRc.right - 2, inputRc.bottom - 2 };
+    SetTextColor(hdc, RGB(16, 16, 16));
+    DrawTextA(hdc, drawText.c_str(), -1, &inputTextRc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
     if (!useShared) {
         ReleaseDC(g_hMainWnd, hdc);
@@ -128,21 +251,12 @@ void UINewChatWnd::OnDraw()
 
 void UINewChatWnd::RefreshVisibleLines(u32 nowTick)
 {
+    (void)nowTick;
     std::vector<ChatLine> nextVisible;
-    nextVisible.reserve(kMaxVisibleLines);
-
-    for (auto it = m_lines.rbegin(); it != m_lines.rend(); ++it) {
-        const u32 age = nowTick - it->tick;
-        if (age > kVisibleLineLifetimeMs) {
-            continue;
-        }
-        nextVisible.push_back(*it);
-        if (nextVisible.size() >= kMaxVisibleLines) {
-            break;
-        }
+    nextVisible.reserve(m_lines.size());
+    for (const ChatLine& line : m_lines) {
+        nextVisible.push_back(line);
     }
-
-    std::reverse(nextVisible.begin(), nextVisible.end());
     if (nextVisible.size() != m_visibleLines.size()) {
         m_isDirty = 1;
     } else {
@@ -182,8 +296,46 @@ bool UINewChatWnd::HandleKeyDown(int virtualKey)
         return SubmitInput();
     }
 
+    if ((virtualKey == VK_UP || virtualKey == VK_DOWN) && m_inputActive == 0) {
+        SetInputActive(true);
+    }
+
+    if (virtualKey == VK_UP && m_inputActive != 0) {
+        if (m_inputHistory.empty()) {
+            return true;
+        }
+        if (m_historyBrowseIndex < 0) {
+            m_historyDraft = m_inputText;
+            m_historyBrowseIndex = 0;
+        } else if (m_historyBrowseIndex + 1 < static_cast<int>(m_inputHistory.size())) {
+            ++m_historyBrowseIndex;
+        }
+        m_inputText = m_inputHistory[static_cast<size_t>(m_historyBrowseIndex)];
+        m_isDirty = 1;
+        return true;
+    }
+
+    if (virtualKey == VK_DOWN && m_inputActive != 0) {
+        if (m_historyBrowseIndex < 0) {
+            return true;
+        }
+        --m_historyBrowseIndex;
+        if (m_historyBrowseIndex >= 0) {
+            m_inputText = m_inputHistory[static_cast<size_t>(m_historyBrowseIndex)];
+        } else {
+            m_inputText = m_historyDraft;
+            m_historyDraft.clear();
+        }
+        m_isDirty = 1;
+        return true;
+    }
+
     if (virtualKey == VK_BACK && m_inputActive != 0) {
         if (!m_inputText.empty()) {
+            if (m_historyBrowseIndex >= 0) {
+                m_historyBrowseIndex = -1;
+                m_historyDraft.clear();
+            }
             m_inputText.pop_back();
             m_isDirty = 1;
         }
@@ -216,6 +368,10 @@ bool UINewChatWnd::HandleChar(char c)
         return true;
     }
 
+    if (m_historyBrowseIndex >= 0) {
+        m_historyBrowseIndex = -1;
+        m_historyDraft.clear();
+    }
     m_inputText += c;
     m_isDirty = 1;
     return true;
@@ -235,9 +391,7 @@ void UINewChatWnd::Layout()
     RECT clientRect{};
     GetClientRect(g_hMainWnd, &clientRect);
 
-    const int visibleCount = m_inputActive != 0 ? static_cast<int>(kMaxVisibleLines) : static_cast<int>(m_visibleLines.size());
-    const int lineAreaHeight = (std::max)(1, visibleCount) * kChatLineHeight;
-    const int panelHeight = lineAreaHeight + kChatInputHeight + (kChatPanelPadding * 3);
+    const int panelHeight = kChatHistoryHeight + kChatInputHeight + (kChatPanelPadding * 3);
 
     Move(kChatWindowMargin, clientRect.bottom - panelHeight - kChatWindowMargin);
     Resize(kChatWindowWidth, panelHeight);
@@ -246,6 +400,10 @@ void UINewChatWnd::Layout()
 void UINewChatWnd::SetInputActive(bool active)
 {
     m_inputActive = active ? 1 : 0;
+    if (!m_inputActive) {
+        m_historyBrowseIndex = -1;
+        m_historyDraft.clear();
+    }
     m_isDirty = 1;
 }
 
@@ -269,10 +427,29 @@ bool UINewChatWnd::SubmitInput()
 
     const int sent = g_modeMgr.SendMsg(CGameMode::GameMsg_SubmitChat, reinterpret_cast<int>(text.c_str()), 0, 0);
     if (sent != 0) {
+        AddInputHistory(text);
         m_inputText.clear();
+        m_historyBrowseIndex = -1;
+        m_historyDraft.clear();
         m_isDirty = 1;
         return true;
     }
 
     return false;
+}
+
+void UINewChatWnd::AddInputHistory(const std::string& text)
+{
+    if (text.empty()) {
+        return;
+    }
+
+    auto existing = std::find(m_inputHistory.begin(), m_inputHistory.end(), text);
+    if (existing != m_inputHistory.end()) {
+        m_inputHistory.erase(existing);
+    }
+    m_inputHistory.insert(m_inputHistory.begin(), text);
+    if (m_inputHistory.size() > kMaxInputHistory) {
+        m_inputHistory.resize(kMaxInputHistory);
+    }
 }

@@ -483,7 +483,7 @@ void UISkillListWnd::OnDraw()
     HGDIOBJ oldFont = SelectObject(hdc, GetUiFont());
 
     DrawWindowChrome(hdc);
-    SelectObject(hdc, GetUiBoldFont());
+    SelectObject(hdc, GetUiFont());
     DrawTextLine(hdc, m_x + 10, m_y + 3, RGB(0, 0, 0), "Skill Tree");
     SelectObject(hdc, GetUiBoldFont());
     DrawTextLine(hdc, m_x + 13, m_y + m_h - 18, RGB(176, 145, 48),

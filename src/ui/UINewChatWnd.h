@@ -33,10 +33,14 @@ private:
     void RefreshVisibleLines(u32 nowTick);
     void SetInputActive(bool active);
     bool SubmitInput();
+    void AddInputHistory(const std::string& text);
 
     std::vector<ChatLine> m_lines;
     std::vector<ChatLine> m_visibleLines;
+    std::vector<std::string> m_inputHistory;
     std::string m_inputText;
+    std::string m_historyDraft;
     u32 m_lastDrawTick;
     int m_inputActive;
+    int m_historyBrowseIndex;
 };

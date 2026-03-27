@@ -103,6 +103,60 @@ std::string NormalizeSlash(std::string value)
     return value;
 }
 
+std::string NormalizeJobDisplayName(const std::string& raw)
+{
+    std::string out;
+    out.reserve(raw.size());
+
+    bool startOfWord = true;
+    bool previousWasSpace = false;
+    for (unsigned char ch : raw) {
+        if (ch == '_') {
+            if (!out.empty() && !previousWasSpace) {
+                out.push_back(' ');
+            }
+            startOfWord = true;
+            previousWasSpace = true;
+            continue;
+        }
+
+        if (std::isspace(ch)) {
+            if (!out.empty() && !previousWasSpace) {
+                out.push_back(' ');
+            }
+            startOfWord = true;
+            previousWasSpace = true;
+            continue;
+        }
+
+        if (std::isalpha(ch)) {
+            out.push_back(static_cast<char>(startOfWord ? std::toupper(ch) : std::tolower(ch)));
+        } else {
+            out.push_back(static_cast<char>(ch));
+        }
+
+        startOfWord = false;
+        previousWasSpace = false;
+    }
+
+    while (!out.empty() && out.back() == ' ') {
+        out.pop_back();
+    }
+    return out;
+}
+
+HFONT GetBasicInfoSmallFont()
+{
+    static HFONT s_font = nullptr;
+    if (s_font) {
+        return s_font;
+    }
+    s_font = CreateFontA(-10, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+        CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Tahoma");
+    return s_font;
+}
+
 void AddUniqueCandidate(std::vector<std::string>& out, const std::string& raw)
 {
     if (raw.empty()) {
@@ -467,18 +521,18 @@ void UIBasicInfoWnd::OnDraw()
 
         char text[128] = {};
         std::snprintf(text, sizeof(text), "HP      %3d  /  %3d", data.hp, data.maxHp);
-        DrawWindowText(hdc, m_x + 95, m_y + 30, text, RGB(0, 0, 0));
+        DrawWindowText(hdc, m_x + 95, m_y + 30, text, RGB(0, 0, 0), DT_LEFT | DT_TOP | DT_SINGLELINE, GetBasicInfoSmallFont(), 15);
 
         std::snprintf(text, sizeof(text), "SP      %3d  /  %3d", data.sp, data.maxSp);
-        DrawWindowText(hdc, m_x + 95, m_y + 51, text, RGB(0, 0, 0));
+        DrawWindowText(hdc, m_x + 95, m_y + 51, text, RGB(0, 0, 0), DT_LEFT | DT_TOP | DT_SINGLELINE, GetBasicInfoSmallFont(), 15);
 
         std::snprintf(text, sizeof(text), "Base Lv. %d", data.level);
-        DrawWindowText(hdc, m_x + 17, m_y + 71, text, RGB(0, 0, 0));
-        DrawExpBar(hdc, m_x + 84, m_y + 76, data.expPercent);
+        DrawWindowText(hdc, m_x + 17, m_y + 72, text, RGB(0, 0, 0));
+        DrawExpBar(hdc, m_x + 84, m_y + 77, data.expPercent);
 
         std::snprintf(text, sizeof(text), "Job Lv. %d", data.jobLevel);
-        DrawWindowText(hdc, m_x + 17, m_y + 81, text, RGB(0, 0, 0));
-        DrawExpBar(hdc, m_x + 84, m_y + 86, data.jobExpPercent);
+        DrawWindowText(hdc, m_x + 17, m_y + 82, text, RGB(0, 0, 0));
+        DrawExpBar(hdc, m_x + 84, m_y + 87, data.jobExpPercent);
 
         std::snprintf(text, sizeof(text), "Weight : %3d / %3d", data.weight, data.maxWeight);
         const COLORREF weightColor = (data.maxWeight > 0 && data.weight * 100 >= data.maxWeight * 50) ? RGB(255, 0, 0) : RGB(0, 0, 0);
@@ -610,6 +664,7 @@ UIBasicInfoWnd::DisplayData UIBasicInfoWnd::BuildDisplayData() const
     data.maxHp = (std::max)(data.maxHp, data.hp);
     data.sp = (std::max)(data.sp, 0);
     data.maxSp = (std::max)(data.maxSp, data.sp);
+    data.jobName = NormalizeJobDisplayName(data.jobName);
     data.weight = 0;
     data.maxWeight = 0;
     return data;
@@ -723,12 +778,12 @@ void UIBasicInfoWnd::DrawExpBar(HDC hdc, int x, int y, int percent) const
     DeleteObject(fillBrush);
 }
 
-void UIBasicInfoWnd::DrawWindowText(HDC hdc, int x, int y, const char* text, COLORREF color, UINT format) const
+void UIBasicInfoWnd::DrawWindowText(HDC hdc, int x, int y, const char* text, COLORREF color, UINT format, HFONT font, int height) const
 {
-    RECT rect = { x, y, m_x + m_w - 4, y + 16 };
+    RECT rect = { x, y, m_x + m_w - 4, y + height };
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, color);
-    HGDIOBJ oldFont = SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
+    HGDIOBJ oldFont = SelectObject(hdc, font ? font : GetStockObject(DEFAULT_GUI_FONT));
     DrawTextA(hdc, text ? text : "", -1, &rect, format);
     SelectObject(hdc, oldFont);
 }
