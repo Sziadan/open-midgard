@@ -54,6 +54,7 @@ public:
         WID_SAYDIALOGWND      = 9,
         WID_LOADINGWND        = 10,
         WID_OPTIONWND         = 13,
+        WID_EQUIPWND          = 14,
         WID_NOTIFYLEVELUPWND  = 21,
         WID_CHOOSEWND         = 17,
         WID_NOTIFYJOBLEVELUPWND = 49,
@@ -88,6 +89,7 @@ public:
 
     // Input routing
     void OnLBtnDown(int x, int y);
+    void OnLBtnDblClk(int x, int y);
     void OnLBtnUp(int x, int y);
     void OnMouseMove(int x, int y);
     void OnChar(char c);

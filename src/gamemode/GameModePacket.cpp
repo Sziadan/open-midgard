@@ -534,9 +534,7 @@ void HandleEquipInventoryList(CGameMode&, const PacketView& packet)
         if (!BuildEquipInventoryItem(packet, packet.data + offset, itemInfo)) {
             continue;
         }
-        if (itemInfo.m_wearLocation == 0) {
-            g_session.AddInventoryItem(itemInfo);
-        }
+        g_session.AddInventoryItem(itemInfo);
     }
 }
 
@@ -653,6 +651,63 @@ void HandleItemRemove(CGameMode&, const PacketView& packet)
     }
 
     g_session.RemoveInventoryItem(itemIndex, amount);
+}
+
+void HandleEquipItemAck(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 7) {
+        return;
+    }
+
+    const unsigned int itemIndex = ReadLE16(packet.data + 2);
+    const int wearLocation = static_cast<int>(ReadLE16(packet.data + 4));
+    const int result = packet.data[6];
+    if (mode.m_waitingWearEquipAck == itemIndex) {
+        mode.m_waitingWearEquipAck = 0;
+    }
+
+    if (result == 0 || itemIndex == 0 || wearLocation == 0) {
+        DbgLog("[GameMode] equip ack index=%u wear=0x%04X ok=%d\n",
+            itemIndex,
+            static_cast<unsigned int>(wearLocation),
+            result);
+        return;
+    }
+
+    g_session.ClearInventoryWearLocationMask(wearLocation, itemIndex);
+    g_session.SetInventoryItemWearLocation(itemIndex, wearLocation);
+    DbgLog("[GameMode] equip ack index=%u wear=0x%04X ok=%d\n",
+        itemIndex,
+        static_cast<unsigned int>(wearLocation),
+        result);
+}
+
+void HandleUnequipItemAck(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 7) {
+        return;
+    }
+
+    const unsigned int itemIndex = ReadLE16(packet.data + 2);
+    const int wearLocation = static_cast<int>(ReadLE16(packet.data + 4));
+    const int result = packet.data[6];
+    if (mode.m_waitingTakeoffEquipAck == itemIndex) {
+        mode.m_waitingTakeoffEquipAck = 0;
+    }
+
+    if (result == 0 || itemIndex == 0) {
+        DbgLog("[GameMode] unequip ack index=%u wear=0x%04X ok=%d\n",
+            itemIndex,
+            static_cast<unsigned int>(wearLocation),
+            result);
+        return;
+    }
+
+    g_session.SetInventoryItemWearLocation(itemIndex, 0);
+    DbgLog("[GameMode] unequip ack index=%u wear=0x%04X ok=%d\n",
+        itemIndex,
+        static_cast<unsigned int>(wearLocation),
+        result);
 }
 
 bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value)
@@ -3693,7 +3748,9 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00A1, HandleGroundItemDisappear);
     router.Register(0x00A3, HandleNormalInventoryList);
     router.Register(0x00A4, HandleEquipInventoryList);
+    router.Register(0x00AA, HandleEquipItemAck);
     router.Register(0x00AF, HandleItemRemove);
+    router.Register(0x00AC, HandleUnequipItemAck);
     router.Register(0x01EE, HandleNormalInventoryList);
     router.Register(0x01EF, HandleEquipInventoryList);
     router.Register(0x02D0, HandleEquipInventoryList);

@@ -67,6 +67,8 @@ public:
     void SetInventoryItem(const ITEM_INFO& itemInfo);
     void AddInventoryItem(const ITEM_INFO& itemInfo);
     void RemoveInventoryItem(unsigned int itemIndex, int amount);
+    bool SetInventoryItemWearLocation(unsigned int itemIndex, int wearLocation);
+    void ClearInventoryWearLocationMask(int wearMask, unsigned int exceptItemIndex = 0);
     const std::list<ITEM_INFO>& GetInventoryItems() const;
     const char* GetPlayerName() const;
     const char* GetJobName(int job) const;

@@ -296,6 +296,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
     }
 
+    case WM_LBUTTONDBLCLK:
+    {
+        const int x = GET_X_LPARAM(lParam);
+        const int y = GET_Y_LPARAM(lParam);
+        g_windowMgr.OnLBtnDblClk(x, y);
+        return 0;
+    }
+
     case WM_RBUTTONDOWN:
     {
         const int x = GET_X_LPARAM(lParam);
@@ -355,6 +363,7 @@ bool InitApp(HINSTANCE hInstance, int nCmdShow)
         g_multiSTOP = true;
 
     WNDCLASSA wc    = {};
+    wc.style        = CS_DBLCLKS;
     wc.lpfnWndProc  = WindowProc;
     wc.hInstance    = hInstance;
     wc.hIcon        = LoadIconA(hInstance, MAKEINTRESOURCEA(0x77));

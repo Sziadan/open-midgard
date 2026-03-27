@@ -3,6 +3,7 @@
 #include "UINewChatWnd.h"
 #include "UIBasicInfoWnd.h"
 #include "UIChooseWnd.h"
+#include "UIEquipWnd.h"
 #include "UIItemWnd.h"
 #include "UILoginWnd.h"
 #include "UISelectServerWnd.h"
@@ -306,6 +307,16 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_itemWnd->SetShow(1);
         return m_itemWnd;
 
+    case WID_EQUIPWND:
+        if (!m_equipWnd) {
+            m_equipWnd = new UIEquipWnd();
+            m_children.push_back(m_equipWnd);
+        }
+        m_children.remove(m_equipWnd);
+        m_children.push_back(m_equipWnd);
+        m_equipWnd->SetShow(1);
+        return m_equipWnd;
+
     case WID_LOGINWND:
         if (!m_loginWnd) {
             m_loginWnd = new UILoginWnd();
@@ -447,6 +458,9 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
     }
     if (window == m_itemWnd) {
         m_itemWnd = nullptr;
+    }
+    if (window == m_equipWnd) {
+        m_equipWnd = nullptr;
     }
 
     delete window;
@@ -837,6 +851,31 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
         }
         hit->OnLBtnDown(x, y);
     }
+}
+
+void UIWindowMgr::OnLBtnDblClk(int x, int y)
+{
+    UIWindow* hit = HitTestWindow(x, y);
+    if (!hit) {
+        return;
+    }
+
+    UIWindow* topLevel = hit;
+    while (topLevel && topLevel->m_parent) {
+        topLevel = topLevel->m_parent;
+    }
+    if (topLevel) {
+        auto found = std::find(m_children.begin(), m_children.end(), topLevel);
+        if (found != m_children.end() && std::next(found) != m_children.end()) {
+            m_children.erase(found);
+            m_children.push_back(topLevel);
+        }
+    }
+
+    if (hit->CanReceiveKeyInput()) {
+        m_editWindow = hit;
+    }
+    hit->OnLBtnDblClk(x, y);
 }
 
 void UIWindowMgr::OnLBtnUp(int x, int y)

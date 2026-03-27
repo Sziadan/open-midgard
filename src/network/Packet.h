@@ -45,6 +45,8 @@ constexpr u16 kWantToConnection = 0x0436;
 constexpr u16 kActionRequest = 0x0437;
 constexpr u16 kUseSkillToId = 0x0438;
 constexpr u16 kUseItem = 0x0439;
+constexpr u16 kEquipItem = 0x00A9;
+constexpr u16 kUnequipItem = 0x00AB;
 constexpr u16 kWalkToXY = 0x00A7;
 constexpr u16 kChangeDir = 0x0085;
 constexpr u16 kTickSend = 0x0089;
@@ -58,6 +60,8 @@ constexpr u16 kWantToConnection = PacketVer23MapServerSend::kWantToConnection;
 constexpr u16 kActionRequest = PacketVer23MapServerSend::kActionRequest;
 constexpr u16 kUseSkillToId = PacketVer23MapServerSend::kUseSkillToId;
 constexpr u16 kUseItem = PacketVer23MapServerSend::kUseItem;
+constexpr u16 kEquipItem = PacketVer23MapServerSend::kEquipItem;
+constexpr u16 kUnequipItem = PacketVer23MapServerSend::kUnequipItem;
 constexpr u16 kNotifyActorInit = PacketVer23MapServerSend::kNotifyActorInit;
 constexpr u16 kTickSend = PacketVer23MapServerSend::kTickSend;
 constexpr u16 kWalkToXY = PacketVer23MapServerSend::kWalkToXY;
@@ -172,6 +176,17 @@ struct PACKET_CZ_USEITEM2 {
     u32 TargetAID;
 };
 
+struct PACKET_CZ_REQ_WEAR_EQUIP {
+    u16 PacketType;    // 0x00A9
+    u16 ItemIndex;
+    u16 WearLocation;
+};
+
+struct PACKET_CZ_REQ_TAKEOFF_EQUIP {
+    u16 PacketType;    // 0x00AB
+    u16 ItemIndex;
+};
+
 // Legacy PCBANG login
 struct PACKET_CA_LOGIN_PCBANG {
     short PacketType;
@@ -229,5 +244,7 @@ static_assert(sizeof(PACKET_CZ_REQNAME2) == 11, "PACKET_CZ_REQNAME2 size mismatc
 static_assert(sizeof(PACKET_CZ_ACTION_REQUEST2) == 7, "PACKET_CZ_ACTION_REQUEST2 size mismatch");
 static_assert(sizeof(PACKET_CZ_USESKILLTOID2) == 10, "PACKET_CZ_USESKILLTOID2 size mismatch");
 static_assert(sizeof(PACKET_CZ_USEITEM2) == 8, "PACKET_CZ_USEITEM2 size mismatch");
+static_assert(sizeof(PACKET_CZ_REQ_WEAR_EQUIP) == 6, "PACKET_CZ_REQ_WEAR_EQUIP size mismatch");
+static_assert(sizeof(PACKET_CZ_REQ_TAKEOFF_EQUIP) == 4, "PACKET_CZ_REQ_TAKEOFF_EQUIP size mismatch");
 
 #pragma pack(pop)

@@ -2341,6 +2341,58 @@ bool SendAttackRequestPacket(u32 targetGid, u8 action)
     return sent;
 }
 
+bool RequestEquipInventoryItem(u16 itemIndex, u16 equipLocation)
+{
+    if (itemIndex == 0 || equipLocation == 0) {
+        return false;
+    }
+
+    PACKET_CZ_REQ_WEAR_EQUIP packet{};
+    packet.PacketType = PacketProfile::ActiveMapServerSend::kEquipItem;
+    packet.ItemIndex = itemIndex;
+    packet.WearLocation = equipLocation;
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    if (sent) {
+        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+            gameMode->m_waitingWearEquipAck = itemIndex;
+        }
+    }
+
+    DbgLog("[GameMode] equip request index=%u wear=0x%04X sent=%d\n",
+        static_cast<unsigned int>(itemIndex),
+        static_cast<unsigned int>(equipLocation),
+        sent ? 1 : 0);
+    return sent;
+}
+
+bool RequestUnequipInventoryItem(u16 itemIndex)
+{
+    if (itemIndex == 0) {
+        return false;
+    }
+
+    PACKET_CZ_REQ_TAKEOFF_EQUIP packet{};
+    packet.PacketType = PacketProfile::ActiveMapServerSend::kUnequipItem;
+    packet.ItemIndex = itemIndex;
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    if (sent) {
+        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+            gameMode->m_waitingTakeoffEquipAck = itemIndex;
+        }
+    }
+
+    DbgLog("[GameMode] unequip request index=%u sent=%d\n",
+        static_cast<unsigned int>(itemIndex),
+        sent ? 1 : 0);
+    return sent;
+}
+
 bool TryRequestAttackFromScreenPoint(CGameMode& mode, int screenX, int screenY)
 {
     if (!mode.m_world || !mode.m_view || mode.m_canRotateView) {
@@ -4855,6 +4907,14 @@ int CGameMode::SendMsg(int msg, int wparam, int lparam, int extra)
 
     case GameMsg_RequestReturnToSavePoint:
         return RequestReturnToSavePoint() ? 1 : 0;
+
+    case GameMsg_RequestEquipInventoryItem:
+        return RequestEquipInventoryItem(
+            static_cast<u16>(wparam),
+            static_cast<u16>(lparam)) ? 1 : 0;
+
+    case GameMsg_RequestUnequipInventoryItem:
+        return RequestUnequipInventoryItem(static_cast<u16>(wparam)) ? 1 : 0;
 
     case GameMsg_RButtonUp:
         m_canRotateView = 0;

@@ -1,9 +1,10 @@
-﻿#pragma once
+#pragma once
 
 #include "Types.h"
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 struct ITEM_INFO {
     int m_itemType = 0;
@@ -24,6 +25,7 @@ struct ITEM_INFO {
     void SetItemId(unsigned int itemId);
     unsigned int GetItemId() const;
     std::string GetDisplayName() const;
+    std::string GetEquipDisplayName() const;
     std::string GetDescription() const;
     std::string GetResourceName() const;
 };
@@ -31,7 +33,8 @@ struct ITEM_INFO {
 struct ItemMetadata {
     std::string unidentifiedDisplayName;
     std::string identifiedDisplayName;
-    std::string resourceName;
+    std::string unidentifiedResourceName;
+    std::string identifiedResourceName;
     std::string description;
 };
 
@@ -44,19 +47,30 @@ public:
     void EnsureLoaded();
     const ItemMetadata* GetMetadata(unsigned int itemId);
     std::string GetDisplayName(unsigned int itemId, bool identified);
+    std::string GetEquipDisplayName(const ITEM_INFO& item);
     std::string GetDescription(unsigned int itemId);
-    std::string GetResourceName(unsigned int itemId);
+    std::string GetResourceName(unsigned int itemId, bool identified);
+    std::string GetCardPrefixName(unsigned int itemId);
+    bool IsCardItem(unsigned int itemId);
+    bool IsPostfixCard(unsigned int itemId);
 
 private:
     bool LoadDisplayTable();
     bool LoadResourceTable();
     bool LoadDescriptionTable();
+    bool LoadCardPrefixTable();
+    bool LoadCardPostfixTable();
+    bool LoadCardItemTable();
     bool ParsePairTable(const char* fileName, void (*assignValue)(ItemMetadata&, std::string&&));
     bool ParseDescriptionBlocks(const char* fileName);
+    bool ParseIdSetTable(const char* fileName, std::unordered_set<unsigned int>& outSet);
     std::string ResolveReferencePath(const char* fileName) const;
 
     bool m_loaded;
     std::unordered_map<unsigned int, ItemMetadata> m_metadata;
+    std::unordered_map<unsigned int, std::string> m_cardPrefixNames;
+    std::unordered_set<unsigned int> m_cardPostfixIds;
+    std::unordered_set<unsigned int> m_cardItemIds;
 };
 
 extern CItemMgr g_ttemmgr;

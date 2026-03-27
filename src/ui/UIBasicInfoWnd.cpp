@@ -350,6 +350,9 @@ int UIBasicInfoWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, i
     case kButtonIdItems:
         g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMWND);
         return 1;
+    case kButtonIdEquip:
+        g_windowMgr.MakeWindow(UIWindowMgr::WID_EQUIPWND);
+        return 1;
     case kButtonIdOption:
         g_windowMgr.MakeWindow(UIWindowMgr::WID_OPTIONWND);
         return 1;

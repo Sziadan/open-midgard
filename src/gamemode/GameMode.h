@@ -82,6 +82,8 @@ public:
         GameMsg_RequestReturnToCharSelect = 20007,
         GameMsg_RequestExitToWindows = 20008,
         GameMsg_RequestReturnToSavePoint = 20009,
+        GameMsg_RequestEquipInventoryItem = 20010,
+        GameMsg_RequestUnequipInventoryItem = 20011,
     };
 
     CGameMode();

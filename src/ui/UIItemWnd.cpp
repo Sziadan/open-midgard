@@ -1,5 +1,6 @@
 #include "UIItemWnd.h"
 
+#include "gamemode/GameMode.h"
 #include "UIWindowMgr.h"
 #include "core/File.h"
 #include "item/Item.h"
@@ -705,6 +706,34 @@ void UIItemWnd::OnLBtnDblClk(int x, int y)
         SetMiniMode(m_h != kMiniHeight);
         return;
     }
+
+    UpdateHoveredItem(x, y);
+    if (m_hoveredItemIndex >= 0) {
+        const std::vector<const ITEM_INFO*> filteredItems = GetFilteredItems();
+        if (m_hoveredItemIndex < static_cast<int>(filteredItems.size())) {
+            const ITEM_INFO* item = filteredItems[m_hoveredItemIndex];
+            if (item && IsEquipTabType(item->m_itemType)) {
+                if (item->m_wearLocation != 0) {
+                    if (g_modeMgr.SendMsg(
+                            CGameMode::GameMsg_RequestUnequipInventoryItem,
+                            static_cast<int>(item->m_itemIndex),
+                            0,
+                            0) != 0) {
+                        return;
+                    }
+                } else if (item->m_location != 0) {
+                    if (g_modeMgr.SendMsg(
+                            CGameMode::GameMsg_RequestEquipInventoryItem,
+                            static_cast<int>(item->m_itemIndex),
+                            item->m_location,
+                            0) != 0) {
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
     UIFrameWnd::OnLBtnDblClk(x, y);
 }
 
@@ -897,6 +926,9 @@ std::vector<const ITEM_INFO*> UIItemWnd::GetFilteredItems() const
     const std::list<ITEM_INFO>& items = g_session.GetInventoryItems();
     out.reserve(items.size());
     for (const ITEM_INFO& item : items) {
+        if (item.m_wearLocation != 0) {
+            continue;
+        }
         if (ItemBelongsToTab(item, m_currentTab)) {
             out.push_back(&item);
         }

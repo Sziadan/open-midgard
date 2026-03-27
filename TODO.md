@@ -373,14 +373,14 @@ Goal: align the client to one intentional packet profile instead of the current 
 ### World (`src/world/`)
 - [ ] GameWorld.h / GameWorld.cpp — Spatial world management
 - [ ] Ground.h / Ground.cpp — Ground/map loading
-- [ ] World.h / World.cpp — **exists but stub**
+- [ ] World.h / World.cpp — **exists and is substantial, but still partial**
 
 ### Actors
-- [ ] GameActor.h / GameActor.cpp — **exists but stub**
-- [ ] GameActor3d.h / GameActor3d.cpp — 3D actor logic
+- [ ] GameActor.h / GameActor.cpp — **exists and is substantial, but still partial**
+- [ ] GameActor3d.h / GameActor3d.cpp — **implemented as `src/world/3dActor.*` (relocated)**
 - [ ] GameActorMsgHandler.h / GameActorMsgHandler.cpp
-- [ ] Player.h / Player.cpp
-- [ ] Pc.h / Pc.cpp — Player character
+- [ ] Player.h / Player.cpp — **implemented inside `src/world/GameActor.*` (not split yet)**
+- [ ] Pc.h / Pc.cpp — **implemented inside `src/world/GameActor.*` (not split yet)**
 - [ ] Npc.h / Npc.cpp
 - [ ] MercenaryAI.h / MercenaryAI.cpp
 - [ ] Granny.h / Granny.cpp — **exists but stub**
@@ -394,9 +394,9 @@ Goal: align the client to one intentional packet profile instead of the current 
 ## Phase 6 — Game Modes & Login
 
 ### Game Modes (`src/gamemode/`)
-- [ ] Mode.h / Mode.cpp — **exists but partial** (loop structure only)
-- [ ] LoginMode.h / LoginMode.cpp — **exists but stub**
-- [ ] GameMode.h / GameMode.cpp — **exists but stub**
+- [ ] Mode.h / Mode.cpp — **exists and is partial**
+- [ ] LoginMode.h / LoginMode.cpp — **exists and is partial (several flows still not implemented)**
+- [ ] GameMode.h / GameMode.cpp — **exists and is partial (core gameplay gaps remain)**
 - [x] GameModePacket.h / GameModePacket.cpp
 - [ ] GameMode2.h / GameMode2.cpp
 
@@ -417,15 +417,15 @@ Goal: align the client to one intentional packet profile instead of the current 
 - [ ] UIControl2.h / UIControl2.cpp
 - [ ] UIRectInfo.h / UIRectInfo.cpp
 - [ ] Control.h / Control.cpp
-- [ ] UIWindowMgr.h / UIWindowMgr.cpp — **exists but partial** (chat metadata sink + in-memory chat log + preview feed)
-- [ ] UIWindow.h / UIWindow.cpp — **exists but stub**
+- [ ] UIWindowMgr.h / UIWindowMgr.cpp — **exists and is partial** (chat metadata sink + in-memory chat log + preview feed)
+- [ ] UIWindow.h / UIWindow.cpp — **exists and is partial** (base behavior with many default handlers)
 
 ### UI Windows
 - [ ] UIFrameWnd.h / UIFrameWnd.cpp — **exists but stub**
 - [ ] UIFrameWnd2.h / UIFrameWnd2.cpp
 - [ ] UIFrameWnd3.h / UIFrameWnd3.cpp
 - [ ] UIWaitWnd.h / UIWaitWnd.cpp — **exists but stub**
-- [ ] UIItemWnd.h / UIItemWnd.cpp
+- [ ] UIItemWnd.h / UIItemWnd.cpp — **exists and is partial**
 - [ ] UIGuildWnd.h / UIGuildWnd.cpp
 - [ ] UIMessengerWnd.h / UIMessengerWnd.cpp
 - [ ] UIGronMessengerWnd.h / UIGronMessengerWnd.cpp
@@ -442,7 +442,7 @@ Goal: align the client to one intentional packet profile instead of the current 
 ### Skills & Items
 - [ ] Skill.h / Skill.cpp — **exists but stub**
 - [ ] SkillInfo.h / SkillInfo.cpp
-- [ ] Item.h / Item.cpp — **exists but stub**
+- [ ] Item.h / Item.cpp — **exists and is partial** (item metadata/resource/description loading implemented)
 - [ ] ItemInfo.h / ItemInfo.cpp
 - [ ] GuildInfo.h / GuildInfo.cpp
 - [ ] Emblem.h / Emblem.cpp
@@ -459,9 +459,9 @@ Goal: align the client to one intentional packet profile instead of the current 
 
 ### Audio (`src/audio/`)
 - [ ] Audio.h / Audio.cpp — **exists but partial**
-- [ ] Video.h / Video.cpp — **exists in src**
-- [ ] Sound.h / Sound.cpp
-- [ ] Wave.h / Wave.cpp
+- [ ] Video.h / Video.cpp — **exists and is partial**
+- [ ] Sound.h / Sound.cpp — **implemented inside `src/audio/Audio.*` (not split yet)**
+- [ ] Wave.h / Wave.cpp — **implemented inside `src/audio/Audio.*` (not split yet)**
 - [ ] CBink.h / CBink.cpp — Bink video playback
 
 ### Input (`src/input/`)
@@ -482,7 +482,7 @@ Goal: align the client to one intentional packet profile instead of the current 
 
 ## Phase 11 — Security (`src/security/`)
 - [ ] Security.h / Security.cpp — **exists but stub**
-- [ ] PathFinder.h / PathFinder.cpp — **exists in src**
+- [x] PathFinder.h / PathFinder.cpp — implemented (`src/pathfinder/PathFinder.*`)
 
 ---
 
@@ -501,5 +501,5 @@ Goal: align the client to one intentional packet profile instead of the current 
 | 8 | Game Data & Content | 0 | 11 | 0% |
 | 9 | Audio & Input | 0 | 6 | 0% |
 | 10 | Localization | 0 | 6 | 0% |
-| 11 | Security | 0 | 2 | 0% |
-| **Total** | | **~24** | **~154** | **~16%** |
+| 11 | Security | 1 | 2 | 50% |
+| **Total** | | **~25** | **~154** | **~16%** |

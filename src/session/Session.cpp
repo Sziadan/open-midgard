@@ -425,6 +425,38 @@ void CSession::RemoveInventoryItem(unsigned int itemIndex, int amount)
     }
 }
 
+bool CSession::SetInventoryItemWearLocation(unsigned int itemIndex, int wearLocation)
+{
+    for (ITEM_INFO& item : m_inventoryItems) {
+        if (item.m_itemIndex != itemIndex) {
+            continue;
+        }
+
+        item.m_wearLocation = wearLocation;
+        return true;
+    }
+
+    return false;
+}
+
+void CSession::ClearInventoryWearLocationMask(int wearMask, unsigned int exceptItemIndex)
+{
+    if (wearMask == 0) {
+        return;
+    }
+
+    for (ITEM_INFO& item : m_inventoryItems) {
+        if (item.m_itemIndex == exceptItemIndex) {
+            continue;
+        }
+        if ((item.m_wearLocation & wearMask) == 0) {
+            continue;
+        }
+
+        item.m_wearLocation &= ~wearMask;
+    }
+}
+
 const std::list<ITEM_INFO>& CSession::GetInventoryItems() const
 {
     return m_inventoryItems;
