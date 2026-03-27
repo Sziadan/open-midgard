@@ -37,11 +37,16 @@ public:
 
 namespace {
 
+constexpr int kUiChatEventMsg = 101;
+constexpr u32 kSystemNoticeColor = 0x0080C0FFu;
+
 PendingDisconnectAction g_pendingDisconnectAction = PendingDisconnectAction::None;
 u32 g_lastLocalLevelUpEffectId = 0;
 u32 g_lastLocalLevelUpEffectTick = 0;
 u32 g_lastSelfLevelUpStatusTick = 0;
 u32 g_lastSelfLevelUpStatusType = 0;
+
+void StartLocalPickupAnimation(CGameMode& mode, u32 objectAid);
 
 constexpr u32 kStatusSpeed = 0;
 constexpr u32 kStatusBaseExp = 1;
@@ -622,6 +627,13 @@ void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
         itemInfo.m_deleteTime,
         static_cast<unsigned int>(itemInfo.m_isYours));
 
+    const u32 pickedObjectAid = mode.m_pickupReqItemNaidList.empty()
+        ? 0
+        : mode.m_pickupReqItemNaidList.front();
+    if (pickedObjectAid != 0) {
+        StartLocalPickupAnimation(mode, pickedObjectAid);
+    }
+
     g_session.AddInventoryItem(itemInfo);
     mode.m_pickupReqItemNaidList.clear();
     mode.m_lastPickupRequestTick = 0;
@@ -1089,8 +1101,6 @@ enum : u8 {
     kChatChannelSystem = 6,
 };
 
-constexpr int kUiChatEventMsg = 101;
-
 struct ChatEntry {
     std::string text;
     u32 color;
@@ -1289,6 +1299,27 @@ void FaceActorTowardTarget(CGameActor* actor, CGameActor* target)
     }
 }
 
+void FaceActorTowardPosition(CGameActor* actor, const vector3d& targetPos)
+{
+    if (!actor) {
+        return;
+    }
+
+    const float dx = targetPos.x - actor->m_pos.x;
+    const float dz = targetPos.z - actor->m_pos.z;
+    if (dx == 0.0f && dz == 0.0f) {
+        return;
+    }
+
+    actor->m_roty = std::atan2(dx, -dz) * (180.0f / 3.14159265f);
+    if (actor->m_roty < 0.0f) {
+        actor->m_roty += 360.0f;
+    }
+    if (actor->m_roty >= 360.0f) {
+        actor->m_roty -= 360.0f;
+    }
+}
+
 void StopActorMovementForAction(CGameActor* actor)
 {
     if (!actor) {
@@ -1329,6 +1360,7 @@ void StartAttackAnimation(CGameActor* actor, CGameActor* target, int attackMT)
     }
 
     const int action = actor->m_isPc ? 80 : 16;
+    actor->m_isSitting = 0;
     actor->m_targetGid = target ? target->m_gid : 0;
     StopActorMovementForAction(actor);
     FaceActorTowardTarget(actor, target);
@@ -1342,6 +1374,134 @@ void StartAttackAnimation(CGameActor* actor, CGameActor* target, int attackMT)
     if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
         pcActor->InvalidateBillboard();
     }
+}
+
+void StartLocalPickupAnimation(CGameMode& mode, u32 objectAid)
+{
+    if (!mode.m_world || !mode.m_world->m_player || objectAid == 0) {
+        return;
+    }
+
+    CPlayer* player = mode.m_world->m_player;
+    player->m_isSitting = 0;
+    player->m_targetGid = 0;
+    StopActorMovementForAction(player);
+
+    for (CItem* item : mode.m_world->m_itemList) {
+        if (!item || item->m_aid != objectAid) {
+            continue;
+        }
+        FaceActorTowardPosition(player, item->m_pos);
+        break;
+    }
+
+    // Ref/eAthena ZC_NOTIFY_ACT uses type 1 for item pickup, type 2 for sit,
+    // and type 3 for stand. Our PC act bands are directional groups of 8, and
+    // 16 maps to sit in practice, so use the next directional band for pickup.
+    constexpr int kPlayerPickupAction = 24;
+    player->m_stateStartTick = timeGetTime();
+    player->m_attackMotion = -1.0f;
+    player->SetAction(kPlayerPickupAction, 0, 1);
+    player->m_stateId = kGameActorAttackStateId;
+    player->ProcessMotion();
+    player->InvalidateBillboard();
+}
+
+void StartSitStandAnimation(CGameActor* actor, bool sitting)
+{
+    if (!actor) {
+        return;
+    }
+
+    StopActorMovementForAction(actor);
+    actor->m_targetGid = 0;
+    actor->m_attackMotion = -1.0f;
+    actor->m_stateStartTick = timeGetTime();
+    actor->m_isSitting = sitting ? 1 : 0;
+
+    if (actor->m_isPc) {
+        const int action = sitting ? 16 : 32;
+        actor->SetAction(action, 0, 1);
+        actor->m_stateId = kGameActorAttackStateId;
+        actor->ProcessMotion();
+        if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
+            pcActor->InvalidateBillboard();
+        }
+        return;
+    }
+
+    actor->m_stateId = 0;
+}
+
+const char* ResolveSkillFailMessage(u16 skillId, u32 btype, u8 cause)
+{
+    if (skillId == 1 && cause == 0) {
+        switch (btype) {
+        case 0:
+            return "Basic skill failed.";
+        case 1:
+            return "Cannot use emotions.";
+        case 2:
+            return "Cannot sit.";
+        case 3:
+            return "Cannot chat.";
+        case 4:
+            return "Cannot form a party.";
+        case 5:
+            return "Cannot shout.";
+        case 6:
+            return "Cannot PK.";
+        case 7:
+            return "Cannot align.";
+        default:
+            break;
+        }
+    }
+
+    if (cause == 0) {
+        return "Action failed.";
+    }
+
+    switch (cause) {
+    case 1:
+        return "Not enough SP.";
+    case 2:
+        return "Not enough HP.";
+    case 4:
+        return "Action is still on cooldown.";
+    case 5:
+        return "Not enough Zeny.";
+    case 9:
+        return "Too much weight.";
+    default:
+        return "Action failed.";
+    }
+}
+
+void HandleSkillFailAck(CGameMode& mode, const PacketView& packet)
+{
+    (void)mode;
+    if (!packet.data || packet.packetLength < 10) {
+        return;
+    }
+
+    const u16 skillId = ReadLE16(packet.data + 2);
+    const u32 btype = ReadLE32(packet.data + 4);
+    const u8 result = packet.data[8];
+    const u8 cause = packet.data[9];
+    const char* message = ResolveSkillFailMessage(skillId, btype, cause);
+
+    DbgLog("[GameMode] skill fail ack opcode=0x%04X skill=%u num=%u result=%u cause=%u msg='%s'\n",
+        packet.packetId,
+        static_cast<unsigned int>(skillId),
+        static_cast<unsigned int>(btype),
+        static_cast<unsigned int>(result),
+        static_cast<unsigned int>(cause),
+        message);
+
+    g_windowMgr.SendMsg(kUiChatEventMsg,
+        reinterpret_cast<int>(message),
+        static_cast<int>(kSystemNoticeColor));
 }
 
 void HandleActorActionNotify(CGameMode& mode, const PacketView& packet)
@@ -1382,14 +1542,18 @@ void HandleActorActionNotify(CGameMode& mode, const PacketView& packet)
     (void)attackedMT;
 
     mode.m_aidList[srcGid] = GetTickCount();
-    mode.m_aidList[dstGid] = GetTickCount();
+    if (dstGid != 0) {
+        mode.m_aidList[dstGid] = GetTickCount();
+    }
 
-    if (!IsAttackNotifyType(actionType)) {
+    if (!IsAttackNotifyType(actionType) && actionType != 2 && actionType != 3) {
         return;
     }
 
     CGameActor* sourceActor = ResolveCombatActor(mode, srcGid, true);
-    CGameActor* targetActor = ResolveCombatActor(mode, dstGid, true);
+    CGameActor* targetActor = (dstGid != 0 && IsAttackNotifyType(actionType))
+        ? ResolveCombatActor(mode, dstGid, true)
+        : nullptr;
     if (!sourceActor) {
         return;
     }
@@ -1401,6 +1565,16 @@ void HandleActorActionNotify(CGameMode& mode, const PacketView& packet)
         static_cast<void*>(targetActor),
         sourceActor->m_isPc,
         targetActor ? targetActor->m_isPc : 0);
+
+    if (actionType == 2 || actionType == 3) {
+        StartSitStandAnimation(sourceActor, actionType == 2);
+        DbgLog("[GameMode] act notify posture opcode=0x%04X src=%u type=%u sitting=%d\n",
+            packet.packetId,
+            srcGid,
+            static_cast<unsigned int>(actionType),
+            actionType == 2 ? 1 : 0);
+        return;
+    }
 
     StartAttackAnimation(sourceActor, targetActor, attackMT);
     DbgLog("[GameMode] act notify stage=started src=%u action=%d motionSpeed=%.3f atkMotion=%.1f\n",
@@ -1863,6 +2037,7 @@ void InitializeRuntimeActorDefaults(CGameActor* actor, u32 gid)
     actor->m_healthState = 0;
     actor->m_effectState = 0;
     actor->m_pkState = 0;
+    actor->m_isSitting = 0;
     actor->m_clevel = 0;
     actor->m_xSize = 0;
     actor->m_ySize = 0;
@@ -2788,6 +2963,12 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
     }
 
     actor->m_isMoving = actor->m_moveEndTime > actor->m_moveStartTime;
+    if (actor->m_isMoving) {
+        actor->m_isSitting = 0;
+        if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
+            pcActor->InvalidateBillboard();
+        }
+    }
     if (!actor->m_isMoving) {
         actor->m_pos = actor->m_moveEndPos;
     } else if (isLocalPlayer && actor->m_path.m_cells.size() >= 2) {
@@ -3859,6 +4040,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x008A, HandleActorActionNotify);
     router.Register(0x0088, HandleActorSetPosition);
     router.Register(0x009C, HandleActorDirection);
+    router.Register(0x0110, HandleSkillFailAck);
     router.Register(0x0119, HandleActorStateChange);
     router.Register(0x011A, HandleIgnorePacket);
     router.Register(0x0139, HandleAttackFailureForDistance);

@@ -2803,6 +2803,7 @@ CPc::CPc()
     m_modifyFactorOfmotionSpeed = 1.0f;
     m_modifyFactorOfmotionSpeed2 = 1.0f;
     m_attackMotion = -1.0f;
+    m_isSitting = 0;
     m_curAction = 0;
     m_baseAction = 0;
     m_curMotion = 0;
@@ -2925,7 +2926,9 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
     const bool usePlayerStyleBillboard = isPlayerStyleActor;
     const int displayJob = ResolveDisplayJob(*this);
     const int sex = m_sex != 0 ? 1 : 0;
-    int bodyAction = (m_isMoving ? 8 : 0) + ResolvePcBodyActionFromView(cameraLongitude, actorRotationDegrees);
+    int bodyAction = m_isSitting
+        ? 16 + ResolvePcBodyActionFromView(cameraLongitude, actorRotationDegrees)
+        : (m_isMoving ? 8 : 0) + ResolvePcBodyActionFromView(cameraLongitude, actorRotationDegrees);
     int headMotion = 0;
     if (usePlayerStyleBillboard) {
         char bodyAct[260] = {};

@@ -85,6 +85,7 @@ public:
         GameMsg_RequestReturnToSavePoint = 20009,
         GameMsg_RequestEquipInventoryItem = 20010,
         GameMsg_RequestUnequipInventoryItem = 20011,
+        GameMsg_ToggleSitStand = 20012,
     };
 
     CGameMode();

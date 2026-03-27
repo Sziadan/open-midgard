@@ -209,6 +209,7 @@ public:
     int m_willBeDead, m_is99;
     char m_99;
     int m_bodyState, m_effectState, m_healthState, m_pkState;
+    int m_isSitting;
     float m_damageDestX, m_damageDestZ;
     u32 m_effectLaunchCnt, m_vanishTime;
     int m_actorType, m_bIsMemberAndVisible, m_gdid, m_emblemVersion;

@@ -2461,11 +2461,13 @@ bool TryRequestMoveFromScreenPoint(CGameMode& mode, int screenX, int screenY)
 }
 
 constexpr u8 kActionRequestSingleAttack = 0x00;
+constexpr u8 kActionRequestSitDown = 0x02;
+constexpr u8 kActionRequestStandUp = 0x03;
 constexpr u8 kActionRequestContinuousAttack = 0x07;
 
-bool SendAttackRequestPacket(u32 targetGid, u8 action)
+bool SendActionRequestPacket(u32 targetGid, u8 action)
 {
-    if (targetGid == 0) {
+    if ((targetGid == 0) && (action == kActionRequestSingleAttack || action == kActionRequestContinuousAttack)) {
         return false;
     }
 
@@ -2476,11 +2478,37 @@ bool SendAttackRequestPacket(u32 targetGid, u8 action)
     const bool sent = CRagConnection::instance()->SendPacket(
         reinterpret_cast<const char*>(&packet),
         static_cast<int>(sizeof(packet)));
-    DbgLog("[GameMode] attack request gid=%u action=%u sent=%d\n",
+    DbgLog("[GameMode] action request gid=%u action=%u opcode=0x%04X sent=%d\n",
         targetGid,
         static_cast<unsigned int>(action),
+        PacketProfile::ActiveMapServerSend::kActionRequest,
         sent ? 1 : 0);
     return sent;
+}
+
+bool SendAttackRequestPacket(u32 targetGid, u8 action)
+{
+    return SendActionRequestPacket(targetGid, action);
+}
+
+bool SendSitStandRequest(CGameMode& mode, bool sitDown)
+{
+    if (!mode.m_world || !mode.m_world->m_player) {
+        return false;
+    }
+
+    CPlayer* player = mode.m_world->m_player;
+    player->m_targetGid = 0;
+    const u8 action = sitDown ? kActionRequestSitDown : kActionRequestStandUp;
+    return SendActionRequestPacket(0, action);
+}
+
+bool SendSitStandToggleRequest(CGameMode& mode)
+{
+    return mode.m_world
+        && mode.m_world->m_player
+        ? SendSitStandRequest(mode, mode.m_world->m_player->m_isSitting == 0)
+        : false;
 }
 
 bool SendTakeItemRequestPacket(u32 objectAid)
@@ -5322,8 +5350,21 @@ int CGameMode::SendMsg(int msg, int wparam, int lparam, int extra)
         if (!text || *text == '\0') {
             return 0;
         }
+        std::string command = text;
+        std::transform(command.begin(), command.end(), command.begin(), [](unsigned char ch) {
+            return static_cast<char>(std::tolower(ch));
+        });
+        if (command == "/sit") {
+            return SendSitStandToggleRequest(*this) ? 1 : 0;
+        }
+        if (command == "/stand") {
+            return SendSitStandRequest(*this, false) ? 1 : 0;
+        }
         return SendGlobalChatMessage(g_session.GetPlayerName(), text) ? 1 : 0;
     }
+
+    case GameMsg_ToggleSitStand:
+        return SendSitStandToggleRequest(*this) ? 1 : 0;
 
     case GameMsg_RequestReturnToCharSelect:
         return RequestReturnToCharSelect() ? 1 : 0;

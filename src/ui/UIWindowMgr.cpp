@@ -13,6 +13,8 @@
 #include "UISelectCharWnd.h"
 #include "UIWaitWnd.h"
 #include "gamemode/CursorRenderer.h"
+#include "gamemode/GameMode.h"
+#include "gamemode/Mode.h"
 
 #include "core/File.h"
 #include "res/Bitmap.h"
@@ -992,6 +994,11 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
         if (chooseWnd) {
             chooseWnd->SetShow(1);
         }
+        return;
+    }
+
+    if (virtualKey == VK_INSERT && !hasFrontMenuUi) {
+        g_modeMgr.SendMsg(CGameMode::GameMsg_ToggleSitStand, 0, 0, 0);
         return;
     }
 
