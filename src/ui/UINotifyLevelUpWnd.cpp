@@ -12,9 +12,9 @@
 namespace {
 
 constexpr int kNotifyButtonId = 126;
-constexpr int kNotifyMarginRight = 8;
-constexpr int kNotifyMarginBottom = 84;
-constexpr int kNotifyStackGap = 4;
+constexpr int kNotifyMarginLeft = 0;
+constexpr int kNotifyMarginRight = 0;
+constexpr int kNotifyMarginBottom = 0;
 
 std::string ToLowerAscii(std::string value)
 {
@@ -212,11 +212,13 @@ void UINotifyLevelUpWnd::UpdateAnchor()
         return;
     }
 
-    int x = clientWidth - m_w - kNotifyMarginRight;
-    int y = clientHeight - m_h - kNotifyMarginBottom;
+    int x = 0;
     if (GetTargetWindowId() == UIWindowMgr::WID_NOTIFYJOBLEVELUPWND) {
-        y -= m_h + kNotifyStackGap;
+        x = kNotifyMarginLeft;
+    } else {
+        x = clientWidth - m_w - kNotifyMarginRight;
     }
+    int y = clientHeight - m_h - kNotifyMarginBottom;
 
     x = (std::max)(0, x);
     y = (std::max)(0, y);
