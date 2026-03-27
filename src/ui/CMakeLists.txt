@@ -3,6 +3,8 @@ add_library(ro_ui STATIC
     UIWindow.cpp
     UILoginWnd.h
     UILoginWnd.cpp
+    UISelectServerWnd.h
+    UISelectServerWnd.cpp
     UISelectCharWnd.h
     UISelectCharWnd.cpp
     UIMakeCharWnd.h

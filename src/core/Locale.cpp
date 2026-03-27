@@ -1,4 +1,5 @@
 #include "ClientInfoLocale.h"
+#include "../DebugLog.h"
 #include "Globals.h"
 #include "File.h"
 #include <fstream>
@@ -7,8 +8,12 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <cstring>
 
 namespace {
+
+std::vector<ClientInfoConnection> g_clientInfoConnections;
+int g_selectedClientInfoIndex = 0;
 
 std::string ToLowerAscii(std::string value)
 {
@@ -115,6 +120,163 @@ void ParseLoadingImages(XMLElement* element)
     EnsureDefaultLoadingScreens();
 }
 
+bool LoadDiskFile(const char* fileName, std::vector<char>* outBuffer)
+{
+    if (!fileName || !*fileName || !outBuffer) {
+        return false;
+    }
+
+    std::ifstream file(fileName, std::ios::binary | std::ios::ate);
+    if (!file.is_open()) {
+        return false;
+    }
+
+    const std::streamsize size = file.tellg();
+    if (size <= 0) {
+        return false;
+    }
+
+    outBuffer->resize(static_cast<size_t>(size));
+    file.seekg(0, std::ios::beg);
+    return file.read(outBuffer->data(), size).good();
+}
+
+bool BuildExecutableRelativePath(const char* relativePath, char* outPath, size_t outPathSize)
+{
+    if (!relativePath || !*relativePath || !outPath || outPathSize == 0) {
+        return false;
+    }
+
+    char modulePath[MAX_PATH] = {};
+    const DWORD length = GetModuleFileNameA(nullptr, modulePath, MAX_PATH);
+    if (length == 0 || length >= MAX_PATH) {
+        return false;
+    }
+
+    char* lastSlash = std::strrchr(modulePath, '\\');
+    if (!lastSlash) {
+        return false;
+    }
+    lastSlash[1] = '\0';
+
+    const int written = std::snprintf(outPath, outPathSize, "%s%s", modulePath, relativePath);
+    return written > 0 && static_cast<size_t>(written) < outPathSize;
+}
+
+bool TryLoadExecutableRelativeFile(const char* relativePath, std::vector<char>* outBuffer)
+{
+    char absolutePath[MAX_PATH] = {};
+    if (!BuildExecutableRelativePath(relativePath, absolutePath, sizeof(absolutePath))) {
+        return false;
+    }
+    return LoadDiskFile(absolutePath, outBuffer);
+}
+
+bool HasLocalDataDirectory()
+{
+    char dataPath[MAX_PATH] = {};
+    if (!BuildExecutableRelativePath("data", dataPath, sizeof(dataPath))) {
+        return false;
+    }
+
+    const DWORD attrs = GetFileAttributesA(dataPath);
+    return attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY) != 0;
+}
+
+bool ShouldPreferLocalDataFile(const char* fileName)
+{
+    if (!fileName || !*fileName || !HasLocalDataDirectory()) {
+        return false;
+    }
+
+    return _strnicmp(fileName, "data\\", 5) == 0 || _strnicmp(fileName, "data/", 5) == 0;
+}
+
+bool LoadClientInfoBytes(const char* fileName, std::vector<char>* outBuffer)
+{
+    if (!fileName || !*fileName || !outBuffer) {
+        return false;
+    }
+
+    outBuffer->clear();
+
+    if (ShouldPreferLocalDataFile(fileName)) {
+        if (TryLoadExecutableRelativeFile(fileName, outBuffer) || LoadDiskFile(fileName, outBuffer)) {
+            DbgLog("[ClientInfo] Loaded local file first: %s\n", fileName);
+            return true;
+        }
+    }
+
+    int size = 0;
+    unsigned char* bytes = g_fileMgr.GetData(fileName, &size);
+    if (bytes && size > 0) {
+        outBuffer->assign(reinterpret_cast<const char*>(bytes), reinterpret_cast<const char*>(bytes) + size);
+        delete[] bytes;
+        DbgLog("[ClientInfo] Loaded from GRF/fallback: %s size=%d\n", fileName, size);
+        return true;
+    }
+    delete[] bytes;
+
+    if (LoadDiskFile(fileName, outBuffer)) {
+        DbgLog("[ClientInfo] Loaded fallback disk path: %s\n", fileName);
+        return true;
+    }
+
+    return false;
+}
+
+void ParseAidList(XMLElement* parent, std::vector<u32>* outList)
+{
+    if (!outList) {
+        return;
+    }
+
+    outList->clear();
+    if (!parent) {
+        return;
+    }
+
+    for (XMLElement* entry = parent->FindChild("admin"); entry; entry = entry->FindNext("admin")) {
+        const std::string& contents = entry->GetContents();
+        if (contents.empty()) {
+            continue;
+        }
+        outList->push_back(static_cast<u32>(std::strtoul(contents.c_str(), nullptr, 10)));
+    }
+
+    std::sort(outList->begin(), outList->end());
+    outList->erase(std::unique(outList->begin(), outList->end()), outList->end());
+}
+
+void ParseClientInfoConnections(XMLElement* clientInfo)
+{
+    g_clientInfoConnections.clear();
+    if (!clientInfo) {
+        return;
+    }
+
+    for (XMLElement* connection = clientInfo->FindChild("connection"); connection; connection = connection->FindNext("connection")) {
+        ClientInfoConnection info;
+        info.display = GetChildContents(connection, "display");
+        info.desc = GetChildContents(connection, "desc");
+        info.address = GetChildContents(connection, "address");
+        info.port = GetChildContents(connection, "port");
+        info.registrationWeb = GetChildContents(connection, "registrationweb");
+
+        const std::string version = GetChildContents(connection, "version");
+        if (!version.empty()) {
+            info.version = std::atoi(version.c_str());
+        }
+
+        const std::string langType = GetChildContents(connection, "langtype");
+        if (!langType.empty()) {
+            info.langType = std::atoi(langType.c_str());
+        }
+
+        g_clientInfoConnections.push_back(info);
+    }
+}
+
 }
 
 //===========================================================================
@@ -161,23 +323,28 @@ static void SetOption(XMLElement* element) {
 //===========================================================================
 // Implementation
 //===========================================================================
-void InitClientInfo(const char* fileName) {
-    std::ifstream file(fileName, std::ios::binary | std::ios::ate);
-    if (!file.is_open()) return;
+bool InitClientInfo(const char* fileName) {
+    std::vector<char> buffer;
+    if (!LoadClientInfoBytes(fileName, &buffer) || buffer.empty()) {
+        DbgLog("[ClientInfo] Failed to load candidate: %s\n", fileName ? fileName : "(null)");
+        return false;
+    }
 
-    std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    std::vector<char> buffer(size);
-    if (file.read(buffer.data(), size)) {
-        g_xmlDocument.ReadDocument(buffer.data(), buffer.data() + size);
+    if (!g_xmlDocument.ReadDocument(buffer.data(), buffer.data() + buffer.size())) {
+        return false;
     }
 
     XMLElement* clientInfo = GetClientInfo();
+    if (!clientInfo) {
+        return false;
+    }
+
+    ParseClientInfoConnections(clientInfo);
+    DbgLog("[ClientInfo] Parsed %d connection entries from %s\n", static_cast<int>(g_clientInfoConnections.size()), fileName ? fileName : "(null)");
     SetOption(clientInfo);
-    
-    // Default selection
+    g_selectedClientInfoIndex = 0;
     SelectClientInfo(0);
+    return true;
 }
 
 XMLElement* GetClientInfo() {
@@ -197,6 +364,8 @@ void SelectClientInfo(int connectionIndex) {
 
     if (!connection) return;
 
+    g_selectedClientInfoIndex = current;
+
     SetOption(connection);
 
     XMLElement* addr = connection->FindChild("address");
@@ -213,6 +382,14 @@ void SelectClientInfo(int connectionIndex) {
 
     XMLElement* registration = connection->FindChild("registrationweb");
     if (registration) g_regstrationWeb = registration->GetContents();
+
+    ParseAidList(connection->FindChild("aid"), &s_dwAdminAID);
+    XMLElement* yellow = connection->FindChild("yellow");
+    if (yellow) {
+        ParseAidList(yellow, &s_dwYellowAID);
+    } else {
+        s_dwYellowAID = s_dwAdminAID;
+    }
 }
 
 void SelectClientInfo2(int connectionIndex, int subConnectionIndex) {
@@ -228,4 +405,29 @@ const std::vector<std::string>& GetLoadingScreenList() {
 
 void RefreshDefaultLoadingScreenList() {
     EnsureDefaultLoadingScreens();
+}
+
+const std::vector<ClientInfoConnection>& GetClientInfoConnections()
+{
+    return g_clientInfoConnections;
+}
+
+int GetClientInfoConnectionCount()
+{
+    return static_cast<int>(g_clientInfoConnections.size());
+}
+
+int GetSelectedClientInfoIndex()
+{
+    return g_selectedClientInfoIndex;
+}
+
+bool IsGravityAid(unsigned int aid)
+{
+    return std::binary_search(s_dwAdminAID.begin(), s_dwAdminAID.end(), static_cast<u32>(aid));
+}
+
+bool IsNameYellow(unsigned int aid)
+{
+    return std::binary_search(s_dwYellowAID.begin(), s_dwYellowAID.end(), static_cast<u32>(aid));
 }

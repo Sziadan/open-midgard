@@ -126,6 +126,7 @@ struct JobNameEntry {
 
 constexpr JobTokenEntry kJobTokens[] = {
     { 0,  "\xC3\xCA\xBA\xB8\xC0\xDA" },
+    { JT_G_MASTER, "\xBF\xEE\xBF\xB5\xC0\xDA" },
     { 1,  "\xB0\xCB\xBB\xE7" },
     { 2,  "\xB8\xB6\xB9\xFD\xBB\xE7" },
     { 3,  "\xB1\xC3\xBC\xF6" },
@@ -161,6 +162,14 @@ const char* GetJobToken(int job)
         }
     }
     return kJobTokens[0].token;
+}
+
+const char* GetJobCompositionToken(int job)
+{
+    if (job == JT_G_MASTER) {
+        return GetJobToken(0);
+    }
+    return GetJobToken(job);
 }
 
 const char* LookupGeneratedJobName(int job)
@@ -221,7 +230,7 @@ CSession::~CSession()
 
 bool CSession::InitAccountInfo()
 {
-    if (!m_accountInfo.empty()) return true;
+    m_accountInfo.clear();
 
     XMLElement* clientInfo = GetClientInfo();
     if (!clientInfo) return false;
@@ -428,6 +437,9 @@ const char* CSession::GetPlayerName() const
 
 const char* CSession::GetJobName(int job) const
 {
+    if (job == JT_G_MASTER) {
+        return "JT_G_MASTER";
+    }
     return LookupGeneratedJobName(job);
 }
 
@@ -492,6 +504,9 @@ void CSession::InitWeaponHitWaveName()
 
 int CSession::NormalizeJob(int job) const
 {
+    if (job == JT_G_MASTER) {
+        return job;
+    }
     return (job > 3950) ? (job - 3950) : job;
 }
 
@@ -547,7 +562,7 @@ char* CSession::GetImfName(int job, int head, int sex, char* buf)
     (void)head;
     const int normalizedJob = NormalizeJob(job);
     const char* sexToken = GetSexToken(sex);
-    const char* jobToken = GetJobToken(normalizedJob);
+    const char* jobToken = GetJobCompositionToken(normalizedJob);
     std::sprintf(buf, "%s%s_%s.imf", kImfRoot, jobToken, sexToken);
     return buf;
 }
@@ -556,7 +571,7 @@ char* CSession::GetBodyPaletteName(int job, int sex, int palNum, char* buf)
 {
     const int normalizedJob = NormalizeJob(job);
     const char* sexToken = GetSexToken(sex);
-    const char* jobToken = GetJobToken(normalizedJob);
+    const char* jobToken = GetJobCompositionToken(normalizedJob);
     std::sprintf(buf, "%s%s_%s_%d.pal", kBodyPaletteRoot, jobToken, sexToken, palNum);
     return buf;
 }

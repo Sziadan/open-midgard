@@ -430,7 +430,7 @@ UILoginWnd::UILoginWnd()
       m_login(nullptr),
       m_password(nullptr),
       m_cancelButton(nullptr),
-            m_saveAccountCheck(nullptr) {
+        m_saveAccountCheck(nullptr) {
     m_uiAssets.fill(nullptr);
 }
 

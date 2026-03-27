@@ -5,6 +5,7 @@
 #include "UIChooseWnd.h"
 #include "UIItemWnd.h"
 #include "UILoginWnd.h"
+#include "UISelectServerWnd.h"
 #include "UIMakeCharWnd.h"
 #include "UINotifyLevelUpWnd.h"
 #include "UIOptionWnd.h"
@@ -184,7 +185,7 @@ UIWindowMgr::UIWindowMgr()
       m_isDragAll(0), m_conversionMode(0),
       m_captureWindow(nullptr), m_editWindow(nullptr), m_modalWindow(nullptr), m_lastHitWindow(nullptr),
       m_loadingWnd(nullptr), m_minimapZoomWnd(nullptr), m_statusWnd(nullptr), m_chatWnd(nullptr),
-      m_loginWnd(nullptr), m_selectCharWnd(nullptr), m_makeCharWnd(nullptr), m_chooseWnd(nullptr), m_optionWnd(nullptr), m_itemWnd(nullptr), m_questWnd(nullptr), m_basicInfoWnd(nullptr), m_notifyLevelUpWnd(nullptr), m_notifyJobLevelUpWnd(nullptr), m_equipWnd(nullptr),
+    m_loginWnd(nullptr), m_selectServerWnd(nullptr), m_selectCharWnd(nullptr), m_makeCharWnd(nullptr), m_chooseWnd(nullptr), m_optionWnd(nullptr), m_itemWnd(nullptr), m_questWnd(nullptr), m_basicInfoWnd(nullptr), m_notifyLevelUpWnd(nullptr), m_notifyJobLevelUpWnd(nullptr), m_equipWnd(nullptr),
       m_wallpaperSurface(nullptr), m_uiComposeDC(nullptr), m_uiComposeBitmap(nullptr), m_uiComposeBits(nullptr), m_uiComposeWidth(0), m_uiComposeHeight(0),
       m_composeCursorActNum(0), m_composeCursorStartTick(0), m_composeCursorEnabled(false)
 {
@@ -316,6 +317,16 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_loginWnd->SetShow(1);
         return m_loginWnd;
 
+    case WID_SELECTSERVERWND:
+        if (!m_selectServerWnd) {
+            m_selectServerWnd = new UISelectServerWnd();
+            m_children.push_back(m_selectServerWnd);
+        }
+        m_children.remove(m_selectServerWnd);
+        m_children.push_back(m_selectServerWnd);
+        m_selectServerWnd->SetShow(1);
+        return m_selectServerWnd;
+
     case WID_WAITWND: {
         UIWaitWnd* waitWnd = new UIWaitWnd();
         waitWnd->SetShow(1);
@@ -404,6 +415,9 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
     if (window == m_loginWnd) {
         m_loginWnd = nullptr;
     }
+    if (window == m_selectServerWnd) {
+        m_selectServerWnd = nullptr;
+    }
     if (window == m_selectCharWnd) {
         m_selectCharWnd = nullptr;
     }
@@ -457,6 +471,7 @@ void UIWindowMgr::RemoveAllWindows()
     m_notifyLevelUpWnd = nullptr;
     m_notifyJobLevelUpWnd = nullptr;
     m_loginWnd = nullptr;
+    m_selectServerWnd = nullptr;
     m_selectCharWnd = nullptr;
     m_makeCharWnd = nullptr;
     m_chooseWnd = nullptr;
@@ -914,6 +929,12 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
 
     if (m_chooseWnd && m_chooseWnd->m_show != 0) {
         m_chooseWnd->OnKeyDown(virtualKey);
+        return;
+    }
+
+    if (m_selectServerWnd && m_selectServerWnd->m_show != 0
+        && (virtualKey == VK_UP || virtualKey == VK_DOWN)) {
+        m_selectServerWnd->OnKeyDown(virtualKey);
         return;
     }
 

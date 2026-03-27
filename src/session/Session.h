@@ -13,6 +13,8 @@ struct accountInfo {
     std::string port;
 };
 
+constexpr int JT_G_MASTER = 20002;
+
 class CSession
 {
 public:

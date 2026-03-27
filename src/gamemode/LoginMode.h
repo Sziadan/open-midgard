@@ -46,7 +46,8 @@ public:
         LoginMsg_RequestMakeCharacter = 10035,
         LoginMsg_RequestDeleteCharacter = 10036,
         LoginMsg_CreateCharacter = 10037,
-        LoginMsg_ReturnToCharSelect = 10038
+        LoginMsg_ReturnToCharSelect = 10038,
+        LoginMsg_SelectClientInfo = 10039
     };
 
     enum LoginSubMode {

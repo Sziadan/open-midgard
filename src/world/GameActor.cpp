@@ -2,6 +2,7 @@
 #include "MsgEffect.h"
 #include "World.h"
 #include "audio/Audio.h"
+#include "core/ClientInfoLocale.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
 #include "main/WinMain.h"
@@ -102,6 +103,28 @@ bool IsMonsterLikeWaveActor(const CGameActor& actor)
 bool ShouldPlayMotionWaveForActor(const CGameActor& actor)
 {
     return actor.m_isPc != 0 || IsMonsterLikeWaveActor(actor);
+}
+
+u32 ResolveClientInfoActorAid(const CGameActor& actor)
+{
+    if (actor.m_gid != 0 && (actor.m_gid == g_session.m_gid || actor.m_gid == g_session.m_aid)) {
+        return g_session.m_aid != 0 ? g_session.m_aid : actor.m_gid;
+    }
+
+    if (const CPc* pc = dynamic_cast<const CPc*>(&actor)) {
+        return pc->m_gid;
+    }
+    return actor.m_gid;
+}
+
+bool ShouldUseGameMasterAppearance(const CGameActor& actor)
+{
+    return actor.m_isPc != 0 && IsGravityAid(ResolveClientInfoActorAid(actor));
+}
+
+int ResolveDisplayJob(const CGameActor& actor)
+{
+    return ShouldUseGameMasterAppearance(actor) ? JT_G_MASTER : actor.m_job;
 }
 
 std::string NormalizeWaveEventPath(const char* eventName);
@@ -1160,6 +1183,20 @@ bool DrawPlayerLayer(HDC hdc,
     CSprRes* sprRes = g_resMgr.GetAs<CSprRes>(sprName.c_str());
     CImfRes* imfRes = g_resMgr.GetAs<CImfRes>(imfName.c_str());
     if (!actRes || !sprRes || !imfRes) {
+        static std::map<std::string, bool> loggedMissingResources;
+        const std::string key = actName + "|" + sprName + "|" + imfName;
+        if (loggedMissingResources.insert(std::make_pair(key, true)).second) {
+            DbgLog("[Actor] player layer resources missing act='%s' actExists=%d actRes=%p spr='%s' sprExists=%d sprRes=%p imf='%s' imfExists=%d imfRes=%p\n",
+                actName.c_str(),
+                g_resMgr.IsExist(actName.c_str()) ? 1 : 0,
+                actRes,
+                sprName.c_str(),
+                g_resMgr.IsExist(sprName.c_str()) ? 1 : 0,
+                sprRes,
+                imfName.c_str(),
+                g_resMgr.IsExist(imfName.c_str()) ? 1 : 0,
+                imfRes);
+        }
         return false;
     }
 
@@ -1170,6 +1207,18 @@ bool DrawPlayerLayer(HDC hdc,
 
     const CMotion* motion = actRes->GetMotion(curAction, curMotion);
     if (!motion || resolvedLayer >= static_cast<int>(motion->sprClips.size())) {
+        static std::map<std::string, bool> loggedMotionFailures;
+        char key[512] = {};
+        std::sprintf(key, "%s|layer=%d|action=%d|motion=%d|resolved=%d", actName.c_str(), layerIndex, curAction, curMotion, resolvedLayer);
+        if (loggedMotionFailures.insert(std::make_pair(key, true)).second) {
+            DbgLog("[Actor] player layer motion missing act='%s' layer=%d action=%d motion=%d resolvedLayer=%d clipCount=%d\n",
+                actName.c_str(),
+                layerIndex,
+                curAction,
+                curMotion,
+                resolvedLayer,
+                motion ? static_cast<int>(motion->sprClips.size()) : -1);
+        }
         return false;
     }
 
@@ -1206,21 +1255,22 @@ bool DrawPcBillboard(CDCBitmap& bitmap,
     char bodyPalette[260] = {};
     char headPalette[260] = {};
 
+    const int displayJob = ResolveDisplayJob(actor);
     const int sex = actor.m_sex != 0 ? 1 : 0;
     int head = actor.m_head;
     const int curAction = bodyAction;
     const int curMotion = headMotion;
 
-    const std::string bodyActName = g_session.GetJobActName(actor.m_job, sex, bodyAct);
-    const std::string bodySprName = g_session.GetJobSprName(actor.m_job, sex, bodySpr);
-    const std::string headActName = g_session.GetHeadActName(actor.m_job, &head, sex, headAct);
-    const std::string headSprName = g_session.GetHeadSprName(actor.m_job, &head, sex, headSpr);
-    const std::string imfPath = g_session.GetImfName(actor.m_job, head, sex, imfName);
+    const std::string bodyActName = g_session.GetJobActName(displayJob, sex, bodyAct);
+    const std::string bodySprName = g_session.GetJobSprName(displayJob, sex, bodySpr);
+    const std::string headActName = g_session.GetHeadActName(displayJob, &head, sex, headAct);
+    const std::string headSprName = g_session.GetHeadSprName(displayJob, &head, sex, headSpr);
+    const std::string imfPath = g_session.GetImfName(displayJob, head, sex, imfName);
     const std::string bodyPaletteName = actor.m_bodyPalette > 0
-        ? g_session.GetBodyPaletteName(actor.m_job, sex, actor.m_bodyPalette, bodyPalette)
+        ? g_session.GetBodyPaletteName(displayJob, sex, actor.m_bodyPalette, bodyPalette)
         : std::string();
     const std::string headPaletteName = actor.m_headPalette > 0
-        ? g_session.GetHeadPaletteName(head, actor.m_job, sex, actor.m_headPalette, headPalette)
+        ? g_session.GetHeadPaletteName(head, displayJob, sex, actor.m_headPalette, headPalette)
         : std::string();
 
     HDC hdc = nullptr;
@@ -1232,8 +1282,27 @@ bool DrawPcBillboard(CDCBitmap& bitmap,
     const bool headOk = DrawPlayerLayer(hdc, drawX, drawY, 1, curAction, headMotion, headActName, headSprName, imfPath, bodyActName, headPaletteName);
     bitmap.ReleaseDC(hdc);
 
+    if (!bodyOk && !headOk) {
+        static std::map<int, bool> loggedBillboardFailures;
+        if (loggedBillboardFailures.insert(std::make_pair(displayJob, true)).second) {
+            DbgLog("[Actor] player billboard draw failed job=%d bodyAct='%s' bodySpr='%s' headAct='%s' headSpr='%s' imf='%s' bodyPal='%s' headPal='%s' action=%d motion=%d head=%d sex=%d\n",
+                displayJob,
+                bodyActName.c_str(),
+                bodySprName.c_str(),
+                headActName.c_str(),
+                headSprName.c_str(),
+                imfPath.c_str(),
+                bodyPaletteName.c_str(),
+                headPaletteName.c_str(),
+                curAction,
+                curMotion,
+                head,
+                sex);
+        }
+    }
+
     if (outJob) {
-        *outJob = actor.m_job;
+        *outJob = displayJob;
     }
     if (outHead) {
         *outHead = head;
@@ -1381,7 +1450,7 @@ bool DrawNonPcBillboard(CDCBitmap& bitmap,
     bitmap.ReleaseDC(hdc);
 
     if (outJob) {
-        *outJob = actor.m_job;
+        *outJob = ResolveDisplayJob(actor);
     }
     return drawOk;
 }
@@ -2166,7 +2235,8 @@ void CPc::InvalidateBillboard()
     m_cachedBillboardSex = -1;
     m_cachedBillboardBodyPalette = -1;
     m_cachedBillboardHeadPalette = -1;
-    if (!m_isPc && m_cachedNonPcResourceJob != m_job) {
+    const int displayJob = ResolveDisplayJob(*this);
+    if ((!m_isPc || displayJob != m_job) && m_cachedNonPcResourceJob != displayJob) {
         m_cachedNonPcResourceJob = -1;
         m_cachedNonPcActRes = nullptr;
         m_cachedNonPcSprRes = nullptr;
@@ -2181,14 +2251,16 @@ bool ResolveCachedNonPcResourcesForActor(CPc& actor, CActRes** outActRes, CSprRe
         return false;
     }
 
-    if (actor.m_cachedNonPcResourceJob != actor.m_job
+    const int displayJob = ResolveDisplayJob(actor);
+
+    if (actor.m_cachedNonPcResourceJob != displayJob
         || !actor.m_cachedNonPcActRes
         || !actor.m_cachedNonPcSprRes) {
         char actPath[260] = {};
         char sprPath[260] = {};
-        const char* const jobName = g_session.GetJobName(actor.m_job);
-        if (!ResolveNonPcSpritePaths(actor.m_job, actPath, sprPath)) {
-            LogNonPcResourceMissingOnce(actor.m_job, jobName, actPath, sprPath, nullptr, nullptr);
+        const char* const jobName = g_session.GetJobName(displayJob);
+        if (!ResolveNonPcSpritePaths(displayJob, actPath, sprPath)) {
+            LogNonPcResourceMissingOnce(displayJob, jobName, actPath, sprPath, nullptr, nullptr);
             actor.m_cachedNonPcResourceJob = -1;
             actor.m_cachedNonPcActRes = nullptr;
             actor.m_cachedNonPcSprRes = nullptr;
@@ -2198,17 +2270,17 @@ bool ResolveCachedNonPcResourcesForActor(CPc& actor, CActRes** outActRes, CSprRe
         actor.m_cachedNonPcActRes = g_resMgr.GetAs<CActRes>(actPath);
         actor.m_cachedNonPcSprRes = g_resMgr.GetAs<CSprRes>(sprPath);
         if (!actor.m_cachedNonPcActRes || !actor.m_cachedNonPcSprRes) {
-            LogNonPcResourceMissingOnce(actor.m_job,
+            LogNonPcResourceMissingOnce(displayJob,
                 jobName,
                 actPath,
                 sprPath,
                 actor.m_cachedNonPcActRes,
                 actor.m_cachedNonPcSprRes);
         } else {
-            LogNonPcResourceResolvedOnce(actor.m_job, jobName, actPath, sprPath);
+            LogNonPcResourceResolvedOnce(displayJob, jobName, actPath, sprPath);
         }
         actor.m_cachedNonPcResourceJob = (actor.m_cachedNonPcActRes && actor.m_cachedNonPcSprRes)
-            ? actor.m_job
+            ? displayJob
             : -1;
     }
 
@@ -2229,9 +2301,10 @@ CActRes* ResolveRuntimeActorActRes(CRenderObject* object)
     }
 
     if (actor->m_isPc) {
+        const int displayJob = ResolveDisplayJob(*actor);
         const int sex = actor->m_sex != 0 ? 1 : 0;
         char bodyActPath[260] = {};
-        const std::string bodyActName = g_session.GetJobActName(actor->m_job, sex, bodyActPath);
+        const std::string bodyActName = g_session.GetJobActName(displayJob, sex, bodyActPath);
         actor->m_actRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
         return actor->m_actRes;
     }
@@ -2258,12 +2331,14 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
     const int actorDir = ResolvePcFacingDir(this);
     const float actorRotationDegrees = ActorRotationDegreesFromDir(actorDir);
     const bool isPlayerStyleActor = m_isPc != 0;
+    const bool usePlayerStyleBillboard = isPlayerStyleActor;
+    const int displayJob = ResolveDisplayJob(*this);
     const int sex = m_sex != 0 ? 1 : 0;
     int bodyAction = (m_isMoving ? 8 : 0) + ResolvePcBodyActionFromView(cameraLongitude, actorRotationDegrees);
     int headMotion = 0;
-    if (isPlayerStyleActor) {
+    if (usePlayerStyleBillboard) {
         char bodyAct[260] = {};
-        const std::string bodyActName = g_session.GetJobActName(m_job, sex, bodyAct);
+        const std::string bodyActName = g_session.GetJobActName(displayJob, sex, bodyAct);
         CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
         if (IsTransientActionActive(*this, bodyActRes, m_curAction)) {
             bodyAction = m_curAction;
@@ -2290,16 +2365,16 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
     if (m_billboardTexture
         && m_cachedBillboardBodyAction == bodyAction
         && m_cachedBillboardHeadMotion == headMotion
-        && m_cachedBillboardJob == m_job
-        && m_cachedBillboardHead == m_head
+        && m_cachedBillboardJob == displayJob
+        && m_cachedBillboardHead == (usePlayerStyleBillboard ? m_head : 0)
         && m_cachedBillboardSex == sex
-        && m_cachedBillboardBodyPalette == m_bodyPalette
-        && m_cachedBillboardHeadPalette == m_headPalette) {
+        && m_cachedBillboardBodyPalette == (usePlayerStyleBillboard ? m_bodyPalette : 0)
+        && m_cachedBillboardHeadPalette == (usePlayerStyleBillboard ? m_headPalette : 0)) {
         return true;
     }
 
-    if (isVulkanBackend && !isPlayerStyleActor) {
-        const SharedNonPcBillboardKey sharedKey{ m_job, bodyAction, headMotion };
+    if (isVulkanBackend && !usePlayerStyleBillboard) {
+        const SharedNonPcBillboardKey sharedKey{ displayJob, bodyAction, headMotion };
         const auto& sharedCache = GetSharedNonPcBillboardCache();
         const auto sharedIt = sharedCache.find(sharedKey);
         if (sharedIt != sharedCache.end() && sharedIt->second.texture) {
@@ -2315,7 +2390,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
             m_billboardOpaqueBounds = sharedIt->second.opaqueBounds;
             m_cachedBillboardBodyAction = bodyAction;
             m_cachedBillboardHeadMotion = headMotion;
-            m_cachedBillboardJob = m_job;
+            m_cachedBillboardJob = displayJob;
             m_cachedBillboardHead = 0;
             m_cachedBillboardSex = sex;
             m_cachedBillboardBodyPalette = 0;
@@ -2333,7 +2408,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
     int resolvedSex = -1;
     int resolvedBodyPalette = -1;
     int resolvedHeadPalette = -1;
-    const bool drawOk = isPlayerStyleActor
+    const bool drawOk = usePlayerStyleBillboard
         ? DrawPcBillboard(composeSurface,
             *this,
             kPlayerBillboardAnchorX,
@@ -2353,13 +2428,13 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
             headMotion,
             &resolvedJob);
     if (!drawOk) {
-        if (!isPlayerStyleActor) {
-            LogNonPcBillboardFailureOnce(m_job, g_session.GetJobName(m_job), bodyAction, headMotion);
+        if (!usePlayerStyleBillboard) {
+            LogNonPcBillboardFailureOnce(displayJob, g_session.GetJobName(displayJob), bodyAction, headMotion);
         }
         return false;
     }
 
-    if (!isPlayerStyleActor) {
+    if (!usePlayerStyleBillboard) {
         resolvedHead = 0;
         resolvedSex = sex;
         resolvedBodyPalette = 0;
@@ -2429,7 +2504,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
     m_cachedBillboardBodyPalette = resolvedBodyPalette;
     m_cachedBillboardHeadPalette = resolvedHeadPalette;
 
-    if (isVulkanBackend && !isPlayerStyleActor && m_billboardTexture) {
+    if (isVulkanBackend && !usePlayerStyleBillboard && m_billboardTexture) {
         SharedNonPcBillboardValue value{};
         value.texture = m_billboardTexture;
         value.opaqueBounds = opaqueBounds;
@@ -2438,7 +2513,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
         value.anchorX = m_billboardAnchorX;
         value.anchorY = m_billboardAnchorY;
 
-        GetSharedNonPcBillboardCache()[SharedNonPcBillboardKey{ m_job, bodyAction, headMotion }] = value;
+        GetSharedNonPcBillboardCache()[SharedNonPcBillboardKey{ displayJob, bodyAction, headMotion }] = value;
         m_billboardTextureOwned = 0;
     }
 

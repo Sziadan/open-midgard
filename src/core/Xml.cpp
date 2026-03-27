@@ -6,7 +6,7 @@
 // XMLElement
 //===========================================================================
 XMLElement::XMLElement(const char* name)
-    : m_name(name), m_start(nullptr), m_end(nullptr), m_next(nullptr), m_child(nullptr)
+    : m_name(name ? name : ""), m_start(nullptr), m_end(nullptr), m_next(nullptr), m_child(nullptr)
 {}
 
 XMLElement::~XMLElement() {
@@ -26,7 +26,7 @@ void XMLElement::Clear() {
 
 XMLElement* XMLElement::FindChild(const char* name) {
     for (XMLElement* c = m_child; c; c = c->m_next) {
-        if (c->m_name && std::strcmp(c->m_name, name) == 0)
+        if (name && c->m_name == name)
             return c;
     }
     return nullptr;
@@ -34,7 +34,7 @@ XMLElement* XMLElement::FindChild(const char* name) {
 
 XMLElement* XMLElement::FindNext(const char* name) {
     for (XMLElement* n = m_next; n; n = n->m_next) {
-        if (n->m_name && std::strcmp(n->m_name, name) == 0)
+        if (name && n->m_name == name)
             return n;
     }
     return nullptr;
@@ -122,7 +122,7 @@ const char* XMLDocument::ReadContents(XMLElement* element, const char* document,
                 char oldChar = *modifiableTagEnd;
                 *modifiableTagEnd = 0;
                 
-                if (element->m_name && std::strcmp(tagStart, element->m_name) == 0) {
+                if (!element->m_name.empty() && std::strcmp(tagStart, element->m_name.c_str()) == 0) {
                     *modifiableTagEnd = oldChar;
                     element->m_end = p;
                     return tagEnd + 1;

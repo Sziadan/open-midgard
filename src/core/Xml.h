@@ -19,7 +19,7 @@ public:
     void Clear();
 
 public:
-    const char* m_name;    // Pointer into the document buffer
+    std::string m_name;
     const char* m_start;   // Start of element data (after tag)
     const char* m_end;     // End of element data (before closing tag)
     std::string m_contents; // Cached/parsed contents

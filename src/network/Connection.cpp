@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstring>
 #include <map>
+#include <string>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -194,7 +195,23 @@ bool CConnection::Connect(const char* ip, int port)
 
     m_addr.sin_family = AF_INET;
     m_addr.sin_port = htons((u16)port);
-    m_addr.sin_addr.s_addr = inet_addr(ip);
+
+    addrinfo hints{};
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    addrinfo* result = nullptr;
+    char portText[16] = {};
+    std::snprintf(portText, sizeof(portText), "%d", port);
+    if (getaddrinfo(ip, portText, &hints, &result) != 0 || !result) {
+        Disconnect();
+        return false;
+    }
+
+    const sockaddr_in* resolved = reinterpret_cast<const sockaddr_in*>(result->ai_addr);
+    m_addr.sin_addr = resolved->sin_addr;
+    freeaddrinfo(result);
 
     u_long nonBlock = 1;
     ioctlsocket((SOCKET)m_socket, FIONBIO, &nonBlock);

@@ -121,6 +121,8 @@ void CLoginMode::OnInit(const char* worldName) {
         m_strErrorInfo = "Unable to load client info; using fallback account endpoint 127.0.0.1:6900.";
         g_accountAddr = "127.0.0.1";
         g_accountPort = "6900";
+    } else if (GetClientInfoConnectionCount() > 1) {
+        SetLoginStatus("Login: select a server before connecting.");
     }
 
     m_wallPaperBmpName = ChooseLoginWallpaperName();
@@ -134,7 +136,9 @@ void CLoginMode::OnInit(const char* worldName) {
     }
     m_selectedCharIndex = 0;
     m_selectedCharSlot = 0;
-    SetLoginStatus("Login: ready.");
+    if (GetClientInfoConnectionCount() <= 1) {
+        SetLoginStatus("Login: ready.");
+    }
 
     CAudio* audio = CAudio::GetInstance();
     if (audio) {
@@ -187,6 +191,20 @@ int CLoginMode::SendMsg(int msg, int wparam, int lparam, int extra) {
         m_nextSubMode = LoginSubMode_ConnectAccount;
         SetLoginStatus("Login: connect requested.");
         return 1;
+
+    case LoginMsg_SelectClientInfo:
+        if (wparam >= 0 && wparam < GetClientInfoConnectionCount()) {
+            SelectClientInfo(wparam);
+            const std::vector<ClientInfoConnection>& connections = GetClientInfoConnections();
+            const char* display = connections[wparam].display.empty()
+                ? connections[wparam].address.c_str()
+                : connections[wparam].display.c_str();
+            char status[160] = {};
+            std::snprintf(status, sizeof(status), "Login: selected server '%s'.", display ? display : "");
+            SetLoginStatus(status);
+            return 1;
+        }
+        return 0;
 
     case LoginMsg_SetPassword:
         CopyCString(m_userPassword, sizeof(m_userPassword), reinterpret_cast<const char*>(wparam));
@@ -329,7 +347,15 @@ void CLoginMode::OnChangeState(int newState) {
         if (loginWnd) {
             loginWnd->SetShow(1);
         }
-        SetLoginStatus("Login: ready.");
+        if (GetClientInfoConnectionCount() > 1) {
+            UIWindow* serverWnd = g_windowMgr.MakeWindow(UIWindowMgr::WID_SELECTSERVERWND);
+            if (serverWnd) {
+                serverWnd->SetShow(1);
+            }
+            SetLoginStatus("Login: select a server before connecting.");
+        } else {
+            SetLoginStatus("Login: ready.");
+        }
         break;
     }
 
@@ -529,18 +555,24 @@ void CLoginMode::SetLoginStatus(const char* status)
 
 bool CLoginMode::LoadClientInfoCandidates()
 {
-    const char* candidates[] = {
-        "clientinfo.xml",
-        "sclientinfo.xml",
-        "data\\clientinfo.xml",
-        "data\\sclientinfo.xml",
-        "System\\clientinfo.xml",
-        "System\\sclientinfo.xml"
-    };
+    const DWORD dataAttrs = GetFileAttributesA("data");
+    const bool hasDataFolder = dataAttrs != INVALID_FILE_ATTRIBUTES && (dataAttrs & FILE_ATTRIBUTE_DIRECTORY) != 0;
+
+    std::vector<const char*> candidates;
+    if (hasDataFolder) {
+        candidates.push_back("data\\clientinfo.xml");
+        candidates.push_back("data\\sclientinfo.xml");
+    }
+    candidates.push_back("data\\clientinfo.xml");
+    candidates.push_back("data\\sclientinfo.xml");
+    candidates.push_back("clientinfo.xml");
+    candidates.push_back("sclientinfo.xml");
+    candidates.push_back("System\\clientinfo.xml");
+    candidates.push_back("System\\sclientinfo.xml");
 
     for (const char* path : candidates) {
-        InitClientInfo(path);
-        if (!g_accountAddr.empty() && !g_accountPort.empty()) {
+        if (InitClientInfo(path)) {
+            g_session.InitAccountInfo();
             return true;
         }
     }

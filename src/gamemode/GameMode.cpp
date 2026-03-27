@@ -1105,7 +1105,20 @@ std::string ResolveHoveredActorName(CGameMode& mode, CGameActor* actor)
     return "Entity";
 }
 
-void DrawOutlinedScreenText(HDC hdc, int x, int y, const char* text)
+COLORREF ResolveHoverNameColor(const CGameActor* actor)
+{
+    if (!actor) {
+        return RGB(255, 255, 255);
+    }
+
+    u32 actorId = actor->m_gid;
+    if (actorId != 0 && (actorId == g_session.m_gid || actorId == g_session.m_aid)) {
+        actorId = g_session.m_aid != 0 ? g_session.m_aid : actorId;
+    }
+    return IsNameYellow(actorId) ? RGB(255, 255, 0) : RGB(255, 255, 255);
+}
+
+void DrawOutlinedScreenText(HDC hdc, int x, int y, const char* text, COLORREF color = RGB(255, 255, 255))
 {
     if (!hdc || !text || !*text) {
         return;
@@ -1122,7 +1135,7 @@ void DrawOutlinedScreenText(HDC hdc, int x, int y, const char* text)
     drawDc.TextOutA(x, y - 1, text, textLen);
     drawDc.TextOutA(x, y + 1, text, textLen);
 
-    drawDc.SetTextColor(RGB(255, 255, 255));
+    drawDc.SetTextColor(color);
     drawDc.TextOutA(x, y, text, textLen);
 }
 
@@ -1164,7 +1177,7 @@ void DrawHoveredActorName(CGameMode& mode, HDC hdc)
     if (hoveredActor == mode.m_world->m_player || hoveredActor->m_gid == g_session.m_gid) {
             drawY += kPlayerVitalsBarHeight * 2 + kPlayerVitalsBorderThickness * 3 + kPlayerVitalsNameTopPadding - 10;
     }
-    DrawOutlinedScreenText(hdc, drawX, drawY, label.c_str());
+    DrawOutlinedScreenText(hdc, drawX, drawY, label.c_str(), ResolveHoverNameColor(hoveredActor));
 }
 
 void DrawLockedTargetName(CGameMode& mode, HDC hdc)
@@ -1201,7 +1214,7 @@ void DrawLockedTargetName(CGameMode& mode, HDC hdc)
     drawDc.GetTextExtentPoint32A(label.c_str(), static_cast<int>(label.size()), &textSize);
     const int drawX = labelX - (textSize.cx / 2);
     const int drawY = labelY + kHoverNameTextPadding + kHoverNameVerticalOffset;
-    DrawOutlinedScreenText(hdc, drawX, drawY, label.c_str());
+    DrawOutlinedScreenText(hdc, drawX, drawY, label.c_str(), ResolveHoverNameColor(actorIt->second));
 }
 
 void DrawFallbackLockedTargetArrow(HDC hdc, int centerX, int tipY)

@@ -8,6 +8,7 @@ class UIMinimapZoomWnd;
 class UIStatusWnd;
 class UINewChatWnd;
 class UILoginWnd;
+class UISelectServerWnd;
 class UISelectCharWnd;
 class UIMakeCharWnd;
 class UIItemWnd;
@@ -122,6 +123,7 @@ public:
     UIStatusWnd* m_statusWnd;
     UINewChatWnd* m_chatWnd;
     UILoginWnd* m_loginWnd;
+    UISelectServerWnd* m_selectServerWnd;
     UISelectCharWnd* m_selectCharWnd;
     UIMakeCharWnd* m_makeCharWnd;
     UIChooseWnd* m_chooseWnd;
