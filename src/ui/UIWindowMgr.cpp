@@ -5,6 +5,7 @@
 #include "UIChooseWnd.h"
 #include "UIEquipWnd.h"
 #include "UIItemWnd.h"
+#include "UIMinimapWnd.h"
 #include "UISkillListWnd.h"
 #include "UILoginWnd.h"
 #include "UISelectServerWnd.h"
@@ -194,7 +195,7 @@ UIWindowMgr::UIWindowMgr()
       m_miniMapZoomFactor(1.0f), m_miniMapArgb(0), m_isDrawCompass(0),
       m_isDragAll(0), m_conversionMode(0),
       m_captureWindow(nullptr), m_editWindow(nullptr), m_modalWindow(nullptr), m_lastHitWindow(nullptr),
-      m_loadingWnd(nullptr), m_minimapZoomWnd(nullptr), m_statusWnd(nullptr), m_chatWnd(nullptr),
+      m_loadingWnd(nullptr), m_roMapWnd(nullptr), m_minimapZoomWnd(nullptr), m_statusWnd(nullptr), m_chatWnd(nullptr),
     m_loginWnd(nullptr), m_selectServerWnd(nullptr), m_selectCharWnd(nullptr), m_makeCharWnd(nullptr), m_chooseWnd(nullptr), m_optionWnd(nullptr), m_itemWnd(nullptr), m_questWnd(nullptr), m_basicInfoWnd(nullptr), m_notifyLevelUpWnd(nullptr), m_notifyJobLevelUpWnd(nullptr), m_equipWnd(nullptr), m_skillListWnd(nullptr),
       m_wallpaperSurface(nullptr), m_uiComposeDC(nullptr), m_uiComposeBitmap(nullptr), m_uiComposeBits(nullptr), m_uiComposeWidth(0), m_uiComposeHeight(0),
       m_composeCursorActNum(0), m_composeCursorStartTick(0), m_composeCursorEnabled(false)
@@ -464,6 +465,16 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_loadingWnd->SetShow(1);
         return m_loadingWnd;
 
+    case WID_ROMAPWND:
+        if (!m_roMapWnd) {
+            m_roMapWnd = new UIRoMapWnd();
+            m_children.push_back(m_roMapWnd);
+        }
+        m_children.remove(m_roMapWnd);
+        m_children.push_back(m_roMapWnd);
+        m_roMapWnd->SetShow(1);
+        return m_roMapWnd;
+
     case WID_SELECTCHARWND:
         if (!m_selectCharWnd) {
             m_selectCharWnd = new UISelectCharWnd();
@@ -529,6 +540,9 @@ bool UIWindowMgr::ToggleWindow(int windowId)
     case WID_OPTIONWND:
         window = m_optionWnd;
         break;
+    case WID_ROMAPWND:
+        window = m_roMapWnd;
+        break;
     default:
         window = nullptr;
         break;
@@ -585,6 +599,9 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
     if (window == m_loadingWnd) {
         m_loadingWnd = nullptr;
     }
+    if (window == m_roMapWnd) {
+        m_roMapWnd = nullptr;
+    }
     if (window == m_chatWnd) {
         m_chatWnd = nullptr;
     }
@@ -622,6 +639,7 @@ void UIWindowMgr::RemoveAllWindows()
     m_lastHitWindow = nullptr;
 
     m_loadingWnd = nullptr;
+    m_roMapWnd = nullptr;
     m_minimapZoomWnd = nullptr;
     m_statusWnd = nullptr;
     m_chatWnd = nullptr;
@@ -1115,6 +1133,12 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
         (m_selectCharWnd && m_selectCharWnd->m_show != 0) ||
         (m_makeCharWnd && m_makeCharWnd->m_show != 0);
     const bool isAltDown = (GetKeyState(VK_MENU) & 0x8000) != 0;
+    const bool isCtrlDown = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+
+    if (isCtrlDown && virtualKey == VK_TAB && !hasFrontMenuUi) {
+        ToggleWindow(WID_ROMAPWND);
+        return;
+    }
 
     if (isAltDown && !hasFrontMenuUi) {
         switch (virtualKey) {

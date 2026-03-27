@@ -419,6 +419,9 @@ int UIBasicInfoWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, i
     case kButtonIdOption:
         g_windowMgr.ToggleWindow(UIWindowMgr::WID_OPTIONWND);
         return 1;
+    case kButtonIdMap:
+        g_windowMgr.ToggleWindow(UIWindowMgr::WID_ROMAPWND);
+        return 1;
     default:
         return 1;
     }

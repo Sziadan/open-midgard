@@ -4,6 +4,7 @@
 
 // Forward declarations for all windows managed by UIWindowMgr
 class UILoadingWnd;
+class UIRoMapWnd;
 class UIMinimapZoomWnd;
 class UIStatusWnd;
 class UINewChatWnd;
@@ -59,6 +60,7 @@ public:
         WID_SKILLLISTWND      = 15,
         WID_NOTIFYLEVELUPWND  = 21,
         WID_CHOOSEWND         = 17,
+        WID_ROMAPWND          = 0x93,
         WID_NOTIFYJOBLEVELUPWND = 49,
     };
 
@@ -127,6 +129,7 @@ public:
 
     // Specialized windows
     UILoadingWnd* m_loadingWnd;
+    UIRoMapWnd* m_roMapWnd;
     UIMinimapZoomWnd* m_minimapZoomWnd;
     UIStatusWnd* m_statusWnd;
     UINewChatWnd* m_chatWnd;

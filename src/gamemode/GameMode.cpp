@@ -1771,6 +1771,7 @@ void FinishMapLoading(CGameMode& mode)
     g_windowMgr.HideLoadingScreen();
     g_windowMgr.ClearChatEvents();
     g_windowMgr.MakeWindow(UIWindowMgr::WID_BASICINFOWND);
+    g_windowMgr.MakeWindow(UIWindowMgr::WID_ROMAPWND);
     g_windowMgr.MakeWindow(UIWindowMgr::WID_SAYDIALOGWND);
     DbgLog("[GameMode] map loading finished world='%s' actors=%zu runtime=%zu\n",
         mode.m_rswName,
