@@ -303,6 +303,7 @@ CTexture* GetEffectTexture(const char* path)
     }
 
     static std::map<std::string, CTexture*> cache;
+    static std::map<std::string, bool> loggedMissing;
     const std::string key(path);
     const auto it = cache.find(key);
     if (it != cache.end()) {
@@ -310,6 +311,10 @@ CTexture* GetEffectTexture(const char* path)
     }
 
     CTexture* texture = g_texMgr.GetTexture(path, false);
+    if (!texture && !loggedMissing[key]) {
+        DbgLog("[World] missing effect texture '%s'\n", path);
+        loggedMissing[key] = true;
+    }
     cache.emplace(key, texture);
     return texture;
 }
@@ -1046,7 +1051,12 @@ private:
         const unsigned int alpha = static_cast<unsigned int>(210.0f * fadeOut);
         const int renderFlags = 1 | 2;
 
-        if (CTexture* wingTexture = GetAngelWingTexture()) {
+        CTexture* wingTexture = GetAngelWingTexture();
+        if (!wingTexture) {
+            wingTexture = GetPortalAuraTexture();
+        }
+
+        if (wingTexture) {
             for (int side = -1; side <= 1; side += 2) {
                 vector3d wingCenter = center;
                 wingCenter.x += static_cast<float>(side) * (0.82f + normalized * 0.32f);
@@ -1055,8 +1065,8 @@ private:
                 SubmitTexturedBillboard(wingCenter,
                     *viewMatrix,
                     wingTexture,
-                    2.8f,
-                    3.9f,
+                    2.8f + (wingTexture == GetPortalAuraTexture() ? 0.9f : 0.0f),
+                    3.9f + (wingTexture == GetPortalAuraTexture() ? 1.5f : 0.0f),
                     PackPortalColor(static_cast<unsigned int>(alpha * 0.95f), wingColor),
                     D3DBLEND_ONE,
                     0.0f,
@@ -1070,9 +1080,22 @@ private:
         SubmitTexturedBillboard(flashCenter,
             *viewMatrix,
             GetPortalParticleTexture(false),
-            1.8f + normalized * 0.8f,
-            4.8f + normalized * 1.1f,
+            2.8f + normalized * 1.0f,
+            6.2f + normalized * 1.5f,
             PackPortalColor(static_cast<unsigned int>(alpha * 0.8f), wingColor),
+            D3DBLEND_ONE,
+            0.0f,
+            0.0f,
+            renderFlags);
+
+        vector3d haloCenter = center;
+        haloCenter.y += 2.7f + normalized * 0.35f;
+        SubmitTexturedBillboard(haloCenter,
+            *viewMatrix,
+            GetPortalRingTexture(),
+            2.6f + normalized * 0.6f,
+            0.75f + normalized * 0.1f,
+            PackPortalColor(static_cast<unsigned int>(alpha * 0.7f), glowColor),
             D3DBLEND_ONE,
             0.0f,
             0.0f,
@@ -1192,7 +1215,12 @@ private:
         const unsigned int alpha = static_cast<unsigned int>((taekwonVariant ? 220.0f : 210.0f) * fadeOut);
         const int renderFlags = 1 | 2;
 
-        if (CTexture* wingTexture = GetAngelWingTexture()) {
+        CTexture* wingTexture = GetAngelWingTexture();
+        if (!wingTexture) {
+            wingTexture = GetPortalAuraTexture();
+        }
+
+        if (wingTexture) {
             for (int wingIndex = 0; wingIndex < 4; ++wingIndex) {
                 const float side = (wingIndex < 2) ? -1.0f : 1.0f;
                 const float row = (wingIndex % 2 == 0) ? 0.0f : 1.0f;
@@ -1203,8 +1231,8 @@ private:
                 SubmitTexturedBillboard(wingCenter,
                     *viewMatrix,
                     wingTexture,
-                    2.3f + row * 0.25f,
-                    3.0f + row * 0.45f,
+                    2.3f + row * 0.25f + (wingTexture == GetPortalAuraTexture() ? 0.8f : 0.0f),
+                    3.0f + row * 0.45f + (wingTexture == GetPortalAuraTexture() ? 1.2f : 0.0f),
                     PackPortalColor(static_cast<unsigned int>(alpha * 0.85f), taekwonVariant ? accentColor : glowColor),
                     D3DBLEND_ONE,
                     0.0f,
@@ -1221,6 +1249,19 @@ private:
             2.2f + normalized * 1.1f,
             5.0f + normalized * 1.1f,
             PackPortalColor(static_cast<unsigned int>(alpha * 0.78f), glowColor),
+            D3DBLEND_ONE,
+            0.0f,
+            0.0f,
+            renderFlags);
+
+        vector3d haloCenter = center;
+        haloCenter.y += 2.85f + normalized * 0.25f;
+        SubmitTexturedBillboard(haloCenter,
+            *viewMatrix,
+            GetPortalRingTexture(),
+            2.8f + normalized * 0.8f,
+            0.85f,
+            PackPortalColor(static_cast<unsigned int>(alpha * 0.72f), taekwonVariant ? accentColor : glowColor),
             D3DBLEND_ONE,
             0.0f,
             0.0f,
