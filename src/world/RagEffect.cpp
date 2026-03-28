@@ -394,7 +394,8 @@ void RenderBandRibbon(const CEffectPrim& prim,
     }
 
     const int sampleCount = static_cast<int>(band.heights.size());
-    const float groundY = ResolveGroundHeight(base) + prim.m_deltaPos2.y;
+    const vector3d center = prim.m_master ? prim.m_pos : base;
+    const float groundY = center.y + prim.m_deltaPos2.y;
     const float ringRadius = (std::max)(0.4f, prim.m_size + band.distance * radiusScale);
     const unsigned int topColor = PackColor(static_cast<unsigned int>((std::min)(255.0f, band.alpha)), prim.m_tintColor);
     const unsigned int bottomColor = PackColor(static_cast<unsigned int>((std::min)(255.0f, band.alpha * 0.28f)), prim.m_tintColor);
@@ -405,12 +406,21 @@ void RenderBandRibbon(const CEffectPrim& prim,
         const float angle1 = WrapAngle360(band.rotStart + (360.0f * static_cast<float>(nextIndex) / static_cast<float>(sampleCount)));
         const float radians0 = angle0 * (kPi / 180.0f);
         const float radians1 = angle1 * (kPi / 180.0f);
+        const float riseRadians = band.riseAngle * (kPi / 180.0f);
+        const float height0 = band.heights[static_cast<size_t>(sampleIndex)];
+        const float height1 = band.heights[static_cast<size_t>(nextIndex)];
+        const float radialLift0 = std::cos(riseRadians) * height0;
+        const float radialLift1 = std::cos(riseRadians) * height1;
+        const float verticalLift0 = std::sin(riseRadians) * height0;
+        const float verticalLift1 = std::sin(riseRadians) * height1;
+        const float outerRadius0 = ringRadius + radialLift0;
+        const float outerRadius1 = ringRadius + radialLift1;
 
         const vector3d quad[4] = {
-            vector3d{ base.x + std::cos(radians0) * ringRadius, groundY, base.z + std::sin(radians0) * ringRadius },
-            vector3d{ base.x + std::cos(radians1) * ringRadius, groundY, base.z + std::sin(radians1) * ringRadius },
-            vector3d{ base.x + std::cos(radians0) * ringRadius, groundY - band.heights[static_cast<size_t>(sampleIndex)], base.z + std::sin(radians0) * ringRadius },
-            vector3d{ base.x + std::cos(radians1) * ringRadius, groundY - band.heights[static_cast<size_t>(nextIndex)], base.z + std::sin(radians1) * ringRadius },
+            vector3d{ center.x + std::cos(radians0) * ringRadius, groundY, center.z + std::sin(radians0) * ringRadius },
+            vector3d{ center.x + std::cos(radians1) * ringRadius, groundY, center.z + std::sin(radians1) * ringRadius },
+            vector3d{ center.x + std::cos(radians0) * outerRadius0, groundY - verticalLift0, center.z + std::sin(radians0) * outerRadius0 },
+            vector3d{ center.x + std::cos(radians1) * outerRadius1, groundY - verticalLift1, center.z + std::sin(radians1) * outerRadius1 },
         };
         const unsigned int colors[4] = { bottomColor, bottomColor, topColor, topColor };
         const float uvs[4][2] = { { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f } };
@@ -602,12 +612,17 @@ void UpdateCastingBands(CEffectPrim* prim)
         return;
     }
 
+    if (prim->m_master) {
+        prim->m_pos = prim->m_master->ResolveBasePosition();
+    }
+
     for (EffectBandState& band : prim->m_bands) {
         if (!band.active) {
             continue;
         }
 
         ++band.process;
+        band.rotStart = WrapAngle360(band.rotStart + 5.0f);
         band.distance -= 0.05f;
         if (band.distance <= 0.0f) {
             band.distance = 10.0f;
