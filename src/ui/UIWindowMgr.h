@@ -86,6 +86,7 @@ public:
     void HideLoadingScreen();
     void SetComposeCursorState(int cursorActNum, u32 mouseAnimStartTick, bool enabled);
     void SendMsg(int msg, msgparam_t wparam, msgparam_t lparam);
+    void PushChatEvent(const char* text, u32 color, u8 channel, u32 tick = 0);
     void SetLoginStatus(const std::string& status);
     void SetLoginWallpaper(const std::string& wallpaperName);
     const std::string& GetLoginStatus() const;

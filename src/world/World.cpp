@@ -35,6 +35,11 @@ constexpr float kNearPlane = 10.0f;
 constexpr float kGroundSubmitNearPlane = 80.0f;
 constexpr float kAttrTileDepthBias = 0.0010f;
 constexpr float kPlayerBillboardWorldHeightScale = 2.0f;
+constexpr float kPlayerBillboardDepthWorldBiasScale = 0.35f;
+constexpr float kPlayerBillboardDepthWorldBiasMin = 0.75f;
+constexpr float kPlayerBillboardDepthWorldBiasMax = 3.0f;
+constexpr float kPlayerBillboardDepthHeightBiasFactor = 0.45f;
+constexpr float kPlayerBillboardTopDepthForwardBiasScale = 0.85f;
 constexpr float kGroundItemScreenScale = 1.6f;
 constexpr unsigned short kGroundQuadIndices[6] = { 0, 1, 2, 0, 2, 3 };
 constexpr bool kSubmitGroundSideFaces = true;
@@ -76,6 +81,7 @@ constexpr int kJobWarpPortal = 0x80;
 constexpr int kJobPreWarpPortal = 0x81;
 constexpr float kActorShadowPixelRatioScale = 0.14285715f;
 constexpr float kActorShadowSortBias = 0.00001f;
+constexpr float kEnemyHoverStickyPadding = 24.0f;
 
 enum class PortalVisualStyle {
     Ready,
@@ -116,9 +122,36 @@ bool ContainsIgnoreCaseAscii(const char* text, const char* needle)
     return false;
 }
 
+bool IsMonsterLikeHoverActor(const CGameActor* actor)
+{
+    if (!actor) {
+        return false;
+    }
+
+    const int job = actor->m_job;
+    return job >= 1000 && (job < 6001 || job > 6047);
+}
+
+bool IsUntargetableDeadHoverActor(const CGameActor* actor)
+{
+    if (!actor || actor->m_isPc != 0) {
+        return false;
+    }
+
+    return actor->m_stateId == kGameActorDeathStateId;
+}
+
+float ComputePointToRectDistanceSq(float x, float y, float left, float top, float right, float bottom)
+{
+    const float dx = x < left ? (left - x) : (x > right ? (x - right) : 0.0f);
+    const float dy = y < top ? (top - y) : (y > bottom ? (y - bottom) : 0.0f);
+    return dx * dx + dy * dy;
+}
+
 vector3d NormalizeVec3(const vector3d& value);
 vector3d ScaleVec3(const vector3d& value, float scale);
 vector3d AddVec3(const vector3d& a, const vector3d& b);
+vector3d CrossVec3(const vector3d& a, const vector3d& b);
 bool ProjectPoint(const CRenderer& renderer, const matrix& viewMatrix, const vector3d& point, tlvertex3d* outVertex);
 void SubmitScreenSpaceBillboard(const tlvertex3d& anchor,
     CTexture* texture,
@@ -890,13 +923,13 @@ void SubmitTexturedBillboard(const vector3d& center,
         return;
     }
 
-    vector3d up = NormalizeVec3(ScaleVec3(g_renderer.m_eyeUp, -1.0f));
-    vector3d right = NormalizeVec3(g_renderer.m_eyeRight);
-    if (std::fabs(up.x) < 0.0001f && std::fabs(up.y) < 0.0001f && std::fabs(up.z) < 0.0001f) {
-        up = vector3d{ 0.0f, -1.0f, 0.0f };
+    vector3d renderUp = NormalizeVec3(ScaleVec3(g_renderer.m_eyeUp, -1.0f));
+    vector3d renderRight = NormalizeVec3(g_renderer.m_eyeRight);
+    if (std::fabs(renderUp.x) < 0.0001f && std::fabs(renderUp.y) < 0.0001f && std::fabs(renderUp.z) < 0.0001f) {
+        renderUp = vector3d{ 0.0f, -1.0f, 0.0f };
     }
-    if (std::fabs(right.x) < 0.0001f && std::fabs(right.y) < 0.0001f && std::fabs(right.z) < 0.0001f) {
-        right = vector3d{ 1.0f, 0.0f, 0.0f };
+    if (std::fabs(renderRight.x) < 0.0001f && std::fabs(renderRight.y) < 0.0001f && std::fabs(renderRight.z) < 0.0001f) {
+        renderRight = vector3d{ 1.0f, 0.0f, 0.0f };
     }
 
     tlvertex3d baseVert{};
@@ -907,10 +940,10 @@ void SubmitTexturedBillboard(const vector3d& center,
     const float halfWidth = width * 0.5f;
     const float halfHeight = height * 0.5f;
     const vector3d worldVerts[4] = {
-        AddVec3(AddVec3(center, ScaleVec3(up, halfHeight)), ScaleVec3(right, -halfWidth)),
-        AddVec3(AddVec3(center, ScaleVec3(up, halfHeight)), ScaleVec3(right, halfWidth)),
-        AddVec3(AddVec3(center, ScaleVec3(up, -halfHeight)), ScaleVec3(right, -halfWidth)),
-        AddVec3(AddVec3(center, ScaleVec3(up, -halfHeight)), ScaleVec3(right, halfWidth)),
+        AddVec3(AddVec3(center, ScaleVec3(renderUp, halfHeight)), ScaleVec3(renderRight, -halfWidth)),
+        AddVec3(AddVec3(center, ScaleVec3(renderUp, halfHeight)), ScaleVec3(renderRight, halfWidth)),
+        AddVec3(AddVec3(center, ScaleVec3(renderUp, -halfHeight)), ScaleVec3(renderRight, -halfWidth)),
+        AddVec3(AddVec3(center, ScaleVec3(renderUp, -halfHeight)), ScaleVec3(renderRight, halfWidth)),
     };
 
     RPFace* face = g_renderer.BorrowNullRP();
@@ -1989,8 +2022,8 @@ bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
         verts[index].y = entry.renderY[index];
     }
     for (int index = 0; index < 4; ++index) {
-        verts[index].z = (std::max)(0.0f, entry.baseZ - kBillboardDepthBias);
-        verts[index].oow = entry.baseOow;
+        verts[index].z = (std::max)(0.0f, entry.renderZ[index] - kBillboardDepthBias);
+        verts[index].oow = entry.renderOow[index];
         verts[index].color = billboardColor;
         verts[index].specular = 0xFF000000u;
     }
@@ -2004,7 +2037,7 @@ bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
     verts[3].tu = 1.0f;
     verts[3].tv = 1.0f;
 
-    face->alphaSortKey = entry.baseOow;
+    face->alphaSortKey = entry.depthKey;
 
     g_renderer.AddRP(face, 1);
     return true;
@@ -2058,13 +2091,13 @@ bool BuildBillboardRenderEntry(CPc* actor,
     const float topUnits = (anchorY - topPixels) * unitsPerPixel;
     const float bottomUnits = (bottomPixels - anchorY) * unitsPerPixel;
 
-    vector3d up = NormalizeVec3(ScaleVec3(g_renderer.m_eyeUp, -1.0f));
-    vector3d right = NormalizeVec3(g_renderer.m_eyeRight);
-    if (std::fabs(up.x) < 0.0001f && std::fabs(up.y) < 0.0001f && std::fabs(up.z) < 0.0001f) {
-        up = vector3d{ 0.0f, -1.0f, 0.0f };
+    vector3d renderUp = NormalizeVec3(ScaleVec3(g_renderer.m_eyeUp, -1.0f));
+    vector3d renderRight = NormalizeVec3(g_renderer.m_eyeRight);
+    if (std::fabs(renderUp.x) < 0.0001f && std::fabs(renderUp.y) < 0.0001f && std::fabs(renderUp.z) < 0.0001f) {
+        renderUp = vector3d{ 0.0f, -1.0f, 0.0f };
     }
-    if (std::fabs(right.x) < 0.0001f && std::fabs(right.y) < 0.0001f && std::fabs(right.z) < 0.0001f) {
-        right = vector3d{ 1.0f, 0.0f, 0.0f };
+    if (std::fabs(renderRight.x) < 0.0001f && std::fabs(renderRight.y) < 0.0001f && std::fabs(renderRight.z) < 0.0001f) {
+        renderRight = vector3d{ 1.0f, 0.0f, 0.0f };
     }
 
     tlvertex3d projectedBase{};
@@ -2072,18 +2105,44 @@ bool BuildBillboardRenderEntry(CPc* actor,
         return false;
     }
 
-    const vector3d worldVerts[4] = {
-        AddVec3(AddVec3(actor->m_pos, ScaleVec3(up, topUnits)), ScaleVec3(right, -leftUnits)),
-        AddVec3(AddVec3(actor->m_pos, ScaleVec3(up, topUnits)), ScaleVec3(right, rightUnits)),
-        AddVec3(AddVec3(actor->m_pos, ScaleVec3(up, -bottomUnits)), ScaleVec3(right, -leftUnits)),
-        AddVec3(AddVec3(actor->m_pos, ScaleVec3(up, -bottomUnits)), ScaleVec3(right, rightUnits)),
+    vector3d eyeForward = NormalizeVec3(g_renderer.m_eyeForward);
+    if (std::fabs(eyeForward.x) < 0.0001f && std::fabs(eyeForward.y) < 0.0001f && std::fabs(eyeForward.z) < 0.0001f) {
+        eyeForward = vector3d{ 0.0f, 0.0f, 1.0f };
+    }
+    vector3d flatForward = vector3d{ eyeForward.x, 0.0f, eyeForward.z };
+    flatForward = NormalizeVec3(flatForward);
+    if (std::fabs(flatForward.x) < 0.0001f && std::fabs(flatForward.z) < 0.0001f) {
+        flatForward = vector3d{ 0.0f, 0.0f, 1.0f };
+    }
+    const vector3d depthUp = vector3d{ 0.0f, -1.0f, 0.0f };
+    vector3d depthRight = NormalizeVec3(CrossVec3(depthUp, flatForward));
+    if (std::fabs(depthRight.x) < 0.0001f && std::fabs(depthRight.y) < 0.0001f && std::fabs(depthRight.z) < 0.0001f) {
+        depthRight = vector3d{ 1.0f, 0.0f, 0.0f };
+    }
+    const float depthBiasWorld = (std::max)(kPlayerBillboardDepthWorldBiasMin,
+        (std::min)(kPlayerBillboardDepthWorldBiasMax, worldHeight * kPlayerBillboardDepthWorldBiasScale));
+    const vector3d depthAnchorBase = AddVec3(actor->m_pos, ScaleVec3(depthUp, topUnits * kPlayerBillboardDepthHeightBiasFactor));
+    tlvertex3d projectedDepthBase{};
+    const float baseTopForwardBiasWorld = depthBiasWorld * kPlayerBillboardTopDepthForwardBiasScale * kPlayerBillboardDepthHeightBiasFactor;
+    const vector3d depthBiasedBase = AddVec3(
+        AddVec3(depthAnchorBase, ScaleVec3(flatForward, -depthBiasWorld)),
+        ScaleVec3(eyeForward, -baseTopForwardBiasWorld));
+    if (!ProjectPoint(g_renderer, viewMatrix, depthBiasedBase, &projectedDepthBase)) {
+        projectedDepthBase = projectedBase;
+    }
+
+    const vector3d renderVerts[4] = {
+        AddVec3(AddVec3(actor->m_pos, ScaleVec3(renderUp, topUnits)), ScaleVec3(renderRight, -leftUnits)),
+        AddVec3(AddVec3(actor->m_pos, ScaleVec3(renderUp, topUnits)), ScaleVec3(renderRight, rightUnits)),
+        AddVec3(AddVec3(actor->m_pos, ScaleVec3(renderUp, -bottomUnits)), ScaleVec3(renderRight, -leftUnits)),
+        AddVec3(AddVec3(actor->m_pos, ScaleVec3(renderUp, -bottomUnits)), ScaleVec3(renderRight, rightUnits)),
     };
 
     float renderMinX = projectedBase.x;
     float renderMinY = projectedBase.y;
     float renderMaxX = projectedBase.x;
     float renderMaxY = projectedBase.y;
-    for (const vector3d& worldVert : worldVerts) {
+    for (const vector3d& worldVert : renderVerts) {
         tlvertex3d projected{};
         if (!ProjectPoint(g_renderer, viewMatrix, worldVert, &projected)) {
             return false;
@@ -2098,26 +2157,46 @@ bool BuildBillboardRenderEntry(CPc* actor,
     const float fullRightUnits = (textureWidth - anchorX) * unitsPerPixel;
     const float fullTopUnits = anchorY * unitsPerPixel;
     const float fullBottomUnits = (textureHeight - anchorY) * unitsPerPixel;
-    const vector3d fullWorldVerts[4] = {
-        AddVec3(AddVec3(actor->m_pos, ScaleVec3(up, fullTopUnits)), ScaleVec3(right, -fullLeftUnits)),
-        AddVec3(AddVec3(actor->m_pos, ScaleVec3(up, fullTopUnits)), ScaleVec3(right, fullRightUnits)),
-        AddVec3(AddVec3(actor->m_pos, ScaleVec3(up, -fullBottomUnits)), ScaleVec3(right, -fullLeftUnits)),
-        AddVec3(AddVec3(actor->m_pos, ScaleVec3(up, -fullBottomUnits)), ScaleVec3(right, fullRightUnits)),
+    const vector3d fullRenderVerts[4] = {
+        AddVec3(AddVec3(actor->m_pos, ScaleVec3(renderUp, fullTopUnits)), ScaleVec3(renderRight, -fullLeftUnits)),
+        AddVec3(AddVec3(actor->m_pos, ScaleVec3(renderUp, fullTopUnits)), ScaleVec3(renderRight, fullRightUnits)),
+        AddVec3(AddVec3(actor->m_pos, ScaleVec3(renderUp, -fullBottomUnits)), ScaleVec3(renderRight, -fullLeftUnits)),
+        AddVec3(AddVec3(actor->m_pos, ScaleVec3(renderUp, -fullBottomUnits)), ScaleVec3(renderRight, fullRightUnits)),
+    };
+    const vector3d fullDepthVerts[4] = {
+        AddVec3(AddVec3(actor->m_pos, ScaleVec3(depthUp, fullTopUnits)), ScaleVec3(depthRight, -fullLeftUnits)),
+        AddVec3(AddVec3(actor->m_pos, ScaleVec3(depthUp, fullTopUnits)), ScaleVec3(depthRight, fullRightUnits)),
+        AddVec3(AddVec3(actor->m_pos, ScaleVec3(depthUp, -fullBottomUnits)), ScaleVec3(depthRight, -fullLeftUnits)),
+        AddVec3(AddVec3(actor->m_pos, ScaleVec3(depthUp, -fullBottomUnits)), ScaleVec3(depthRight, fullRightUnits)),
     };
 
+    float minRenderOow = projectedDepthBase.oow;
     for (int index = 0; index < 4; ++index) {
-        const vector3d& worldVert = fullWorldVerts[index];
+        const vector3d& renderVert = fullRenderVerts[index];
         tlvertex3d projected{};
-        if (!ProjectPoint(g_renderer, viewMatrix, worldVert, &projected)) {
+        if (!ProjectPoint(g_renderer, viewMatrix, renderVert, &projected)) {
             return false;
         }
         outEntry->renderX[index] = projected.x;
         outEntry->renderY[index] = projected.y;
+        tlvertex3d projectedDepth{};
+        const float topForwardBiasWorld = index < 2
+            ? depthBiasWorld * kPlayerBillboardTopDepthForwardBiasScale
+            : 0.0f;
+        const vector3d depthBiasedVert = AddVec3(
+            AddVec3(fullDepthVerts[index], ScaleVec3(flatForward, -depthBiasWorld)),
+            ScaleVec3(eyeForward, -topForwardBiasWorld));
+        if (!ProjectPoint(g_renderer, viewMatrix, depthBiasedVert, &projectedDepth)) {
+            projectedDepth = projected;
+        }
+        outEntry->renderZ[index] = projectedDepth.z;
+        outEntry->renderOow[index] = projectedDepth.oow;
+        minRenderOow = (std::min)(minRenderOow, projectedDepth.oow);
     }
 
     outEntry->actor = actor;
     outEntry->screenY = projectedBase.y;
-    outEntry->depthKey = projectedBase.oow;
+    outEntry->depthKey = minRenderOow;
     outEntry->left = renderMinX;
     outEntry->top = renderMinY;
     outEntry->right = renderMaxX;
@@ -2126,8 +2205,8 @@ bool BuildBillboardRenderEntry(CPc* actor,
     outEntry->labelY = renderMaxY;
     outEntry->baseX = projectedBase.x;
     outEntry->baseY = projectedBase.y;
-    outEntry->baseZ = projectedBase.z;
-    outEntry->baseOow = projectedBase.oow;
+    outEntry->baseZ = projectedDepthBase.z;
+    outEntry->baseOow = projectedDepthBase.oow;
     return true;
 }
 
@@ -4822,24 +4901,63 @@ bool CWorld::FindHoveredActorScreen(const matrix& viewMatrix,
 
     const float mouseX = static_cast<float>(screenX);
     const float mouseY = static_cast<float>(screenY);
+    const BillboardScreenEntry* stickyEntry = nullptr;
+    CPc* stickyActor = nullptr;
+    float stickyDistanceSq = 0.0f;
+    bool hasStickyCandidate = false;
     for (auto it = m_billboardFrameEntries.rbegin(); it != m_billboardFrameEntries.rend(); ++it) {
-        if (mouseX < it->left || mouseX > it->right || mouseY < it->top || mouseY > it->bottom) {
-            continue;
-        }
-
         CPc* liveActor = FindLiveBillboardActor(*this, it->actor ? it->actor->m_gid : 0);
         if (!liveActor || !liveActor->m_isVisible) {
             continue;
         }
 
+        if (IsUntargetableDeadHoverActor(liveActor)) {
+            continue;
+        }
+
+        if (mouseX >= it->left && mouseX <= it->right && mouseY >= it->top && mouseY <= it->bottom) {
+            if (outActor) {
+                *outActor = liveActor;
+            }
+            if (outLabelX) {
+                *outLabelX = static_cast<int>(std::lround(it->baseX));
+            }
+            if (outLabelY) {
+                *outLabelY = static_cast<int>(std::lround(it->baseY));
+            }
+            return true;
+        }
+
+        if (!IsMonsterLikeHoverActor(liveActor)) {
+            continue;
+        }
+
+        const float stickyLeft = it->left - kEnemyHoverStickyPadding;
+        const float stickyTop = it->top - kEnemyHoverStickyPadding;
+        const float stickyRight = it->right + kEnemyHoverStickyPadding;
+        const float stickyBottom = it->bottom + kEnemyHoverStickyPadding;
+        if (mouseX < stickyLeft || mouseX > stickyRight || mouseY < stickyTop || mouseY > stickyBottom) {
+            continue;
+        }
+
+        const float distanceSq = ComputePointToRectDistanceSq(mouseX, mouseY, it->left, it->top, it->right, it->bottom);
+        if (!hasStickyCandidate || distanceSq < stickyDistanceSq) {
+            stickyEntry = &(*it);
+            stickyActor = liveActor;
+            stickyDistanceSq = distanceSq;
+            hasStickyCandidate = true;
+        }
+    }
+
+    if (hasStickyCandidate && stickyEntry && stickyActor) {
         if (outActor) {
-            *outActor = liveActor;
+            *outActor = stickyActor;
         }
         if (outLabelX) {
-            *outLabelX = static_cast<int>(std::lround(it->baseX));
+            *outLabelX = static_cast<int>(std::lround(stickyEntry->baseX));
         }
         if (outLabelY) {
-            *outLabelY = static_cast<int>(std::lround(it->baseY));
+            *outLabelY = static_cast<int>(std::lround(stickyEntry->baseY));
         }
         return true;
     }

@@ -174,6 +174,8 @@ public:
         float depthKey;
         float renderX[4];
         float renderY[4];
+        float renderZ[4];
+        float renderOow[4];
         float left;
         float top;
         float right;

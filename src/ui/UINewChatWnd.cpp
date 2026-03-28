@@ -17,7 +17,7 @@ namespace {
 constexpr size_t kMaxChatLines = 50;
 constexpr int kChatWindowMargin = 12;
 constexpr int kChatWindowWidth = 420;
-constexpr int kChatLineHeight = 16;
+constexpr int kChatLineHeight = 19;
 constexpr int kChatInputHeight = 22;
 constexpr int kChatPanelPadding = 8;
 constexpr int kChatHistoryHeight = 192;
@@ -56,6 +56,29 @@ int MeasureWrappedTextHeight(HDC hdc, const std::string& text, int width)
     DrawTextA(hdc, text.c_str(), -1, &calcRect, DT_LEFT | DT_TOP | DT_WORDBREAK | DT_EDITCONTROL | DT_CALCRECT | DT_NOPREFIX);
     const int measuredHeight = calcRect.bottom - calcRect.top;
     return (std::max)(kChatLineHeight, measuredHeight);
+}
+
+HFONT GetChatUiFont()
+{
+    static HFONT s_chatUiFont = nullptr;
+    if (!s_chatUiFont) {
+        s_chatUiFont = CreateFontA(
+            -13,
+            0,
+            0,
+            0,
+            FW_NORMAL,
+            FALSE,
+            FALSE,
+            FALSE,
+            DEFAULT_CHARSET,
+            OUT_DEFAULT_PRECIS,
+            CLIP_DEFAULT_PRECIS,
+            NONANTIALIASED_QUALITY,
+            DEFAULT_PITCH | FF_DONTCARE,
+            "MS Sans Serif");
+    }
+    return s_chatUiFont;
 }
 
 HBITMAP GetHistoryPanelPattern()
@@ -135,6 +158,9 @@ void UINewChatWnd::AddChatLine(const char* text, u32 color, u8 channel, u32 tick
 
     if (m_lines.size() >= kMaxChatLines) {
         m_lines.erase(m_lines.begin());
+        if (!m_visibleLines.empty()) {
+            m_visibleLines.erase(m_visibleLines.begin());
+        }
     }
 
     ChatLine line{};
@@ -143,7 +169,8 @@ void UINewChatWnd::AddChatLine(const char* text, u32 color, u8 channel, u32 tick
     line.channel = channel;
     line.tick = tick;
     m_lines.push_back(std::move(line));
-    m_isDirty = 1;
+    m_visibleLines = m_lines;
+    Invalidate();
 }
 
 const std::vector<ChatLine>& UINewChatWnd::GetLines() const
@@ -159,6 +186,35 @@ const std::vector<ChatLine>& UINewChatWnd::GetVisibleLines() const
 void UINewChatWnd::OnProcess()
 {
     Layout();
+    const auto& events = g_windowMgr.GetChatEvents();
+    std::vector<ChatLine> syncedLines;
+    const size_t start = events.size() > kMaxChatLines ? (events.size() - kMaxChatLines) : 0;
+    syncedLines.reserve(events.size() - start);
+    for (size_t i = start; i < events.size(); ++i) {
+        ChatLine line{};
+        line.text = events[i].text;
+        line.color = events[i].color;
+        line.channel = events[i].channel;
+        line.tick = events[i].tick;
+        syncedLines.push_back(std::move(line));
+    }
+    bool linesChanged = syncedLines.size() != m_lines.size();
+    if (!linesChanged) {
+        for (size_t i = 0; i < syncedLines.size(); ++i) {
+            if (syncedLines[i].text != m_lines[i].text ||
+                syncedLines[i].color != m_lines[i].color ||
+                syncedLines[i].channel != m_lines[i].channel ||
+                syncedLines[i].tick != m_lines[i].tick) {
+                linesChanged = true;
+                break;
+            }
+        }
+    }
+    if (linesChanged) {
+        m_lines.swap(syncedLines);
+        m_visibleLines = m_lines;
+        Invalidate();
+    }
     RefreshVisibleLines(GetTickCount());
 }
 
@@ -174,6 +230,9 @@ void UINewChatWnd::OnDraw()
         return;
     }
 
+    const int savedDc = SaveDC(hdc);
+    SelectObject(hdc, GetChatUiFont());
+
     RECT panelRc = { m_x, m_y, m_x + m_w, m_y + m_h };
     RECT inputRc = {
         m_x + kChatPanelPadding,
@@ -187,9 +246,21 @@ void UINewChatWnd::OnDraw()
         inputRc.right,
         inputRc.top - kChatPanelPadding
     };
+    const RECT topStrip = { panelRc.left, panelRc.top, panelRc.right, historyRc.top };
+    const RECT leftStrip = { panelRc.left, historyRc.top, historyRc.left, panelRc.bottom };
+    const RECT rightStrip = { historyRc.right, historyRc.top, panelRc.right, panelRc.bottom };
+    const RECT middleStrip = { panelRc.left, historyRc.bottom, panelRc.right, inputRc.top };
+    const RECT bottomStrip = { panelRc.left, inputRc.bottom, panelRc.right, panelRc.bottom };
+    FillRectStippled(hdc, topStrip);
+    FillRectStippled(hdc, leftStrip);
+    FillRectStippled(hdc, rightStrip);
+    FillRectStippled(hdc, middleStrip);
+    FillRectStippled(hdc, bottomStrip);
     FillRectStippled(hdc, historyRc);
     FrameRect(hdc, &panelRc, static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH)));
 
+    const int historyClipDc = SaveDC(hdc);
+    IntersectClipRect(hdc, historyRc.left, historyRc.top, historyRc.right, historyRc.bottom);
     SetBkMode(hdc, TRANSPARENT);
     const int textInset = 4;
     const int textWidth = (historyRc.right - historyRc.left) - (textInset * 2);
@@ -211,9 +282,13 @@ void UINewChatWnd::OnDraw()
     if (firstVisibleIndex == lineCount && lineCount > 0) {
         firstVisibleIndex = lineCount - 1;
         measuredHeights[firstVisibleIndex] = MeasureWrappedTextHeight(hdc, m_visibleLines[firstVisibleIndex].text, textWidth);
+        usedHeight = measuredHeights[firstVisibleIndex];
     }
 
     int lineY = historyRc.bottom - textInset - usedHeight;
+    if (lineY < historyRc.top + textInset) {
+        lineY = historyRc.top + textInset;
+    }
     for (size_t index = firstVisibleIndex; index < lineCount; ++index) {
         const ChatLine& line = m_visibleLines[index];
         const int textHeight = measuredHeights[index];
@@ -227,6 +302,7 @@ void UINewChatWnd::OnDraw()
         DrawTextA(hdc, line.text.c_str(), -1, &textRc, DT_LEFT | DT_TOP | DT_WORDBREAK | DT_EDITCONTROL | DT_NOPREFIX);
         lineY += textHeight + kChatMessageGap;
     }
+    RestoreDC(hdc, historyClipDc);
     HBRUSH inputBg = CreateSolidBrush(m_inputActive ? RGB(245, 245, 220) : RGB(210, 210, 210));
     FillRect(hdc, &inputRc, inputBg);
     DeleteObject(inputBg);
@@ -241,6 +317,7 @@ void UINewChatWnd::OnDraw()
     SetTextColor(hdc, RGB(16, 16, 16));
     DrawTextA(hdc, drawText.c_str(), -1, &inputTextRc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
+    RestoreDC(hdc, savedDc);
     if (!useShared) {
         ReleaseDC(g_hMainWnd, hdc);
     }
@@ -258,13 +335,13 @@ void UINewChatWnd::RefreshVisibleLines(u32 nowTick)
         nextVisible.push_back(line);
     }
     if (nextVisible.size() != m_visibleLines.size()) {
-        m_isDirty = 1;
+        Invalidate();
     } else {
         for (size_t i = 0; i < nextVisible.size(); ++i) {
             if (nextVisible[i].text != m_visibleLines[i].text ||
                 nextVisible[i].color != m_visibleLines[i].color ||
                 nextVisible[i].channel != m_visibleLines[i].channel) {
-                m_isDirty = 1;
+                Invalidate();
                 break;
             }
         }
@@ -276,7 +353,7 @@ void UINewChatWnd::ClearLines()
 {
     m_lines.clear();
     m_visibleLines.clear();
-    m_isDirty = 1;
+    Invalidate();
 }
 
 void UINewChatWnd::OnLBtnDown(int x, int y)
@@ -311,7 +388,7 @@ bool UINewChatWnd::HandleKeyDown(int virtualKey)
             ++m_historyBrowseIndex;
         }
         m_inputText = m_inputHistory[static_cast<size_t>(m_historyBrowseIndex)];
-        m_isDirty = 1;
+        Invalidate();
         return true;
     }
 
@@ -326,7 +403,7 @@ bool UINewChatWnd::HandleKeyDown(int virtualKey)
             m_inputText = m_historyDraft;
             m_historyDraft.clear();
         }
-        m_isDirty = 1;
+        Invalidate();
         return true;
     }
 
@@ -337,7 +414,7 @@ bool UINewChatWnd::HandleKeyDown(int virtualKey)
                 m_historyDraft.clear();
             }
             m_inputText.pop_back();
-            m_isDirty = 1;
+            Invalidate();
         }
         return true;
     }
@@ -373,7 +450,7 @@ bool UINewChatWnd::HandleChar(char c)
         m_historyDraft.clear();
     }
     m_inputText += c;
-    m_isDirty = 1;
+    Invalidate();
     return true;
 }
 
@@ -404,7 +481,7 @@ void UINewChatWnd::SetInputActive(bool active)
         m_historyBrowseIndex = -1;
         m_historyDraft.clear();
     }
-    m_isDirty = 1;
+    Invalidate();
 }
 
 bool UINewChatWnd::SubmitInput()
@@ -418,7 +495,7 @@ bool UINewChatWnd::SubmitInput()
     const size_t firstNonSpace = text.find_first_not_of(" \t\r\n");
     if (firstNonSpace == std::string::npos) {
         m_inputText.clear();
-        m_isDirty = 1;
+        Invalidate();
         return true;
     }
 
@@ -431,7 +508,7 @@ bool UINewChatWnd::SubmitInput()
         m_inputText.clear();
         m_historyBrowseIndex = -1;
         m_historyDraft.clear();
-        m_isDirty = 1;
+        Invalidate();
         return true;
     }
 

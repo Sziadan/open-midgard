@@ -82,9 +82,13 @@ constexpr float kLockedTargetMarkerNearPlane = 80.0f;
 constexpr float kLockedTargetMarkerRotationPerMs = 0.27f;
 constexpr int kLockedTargetArrowYOffset = 6;
 constexpr unsigned int kOverlayTransparentKey = 0x00FF00FFu;
+constexpr int kRoMapCornerEllipseSize = 10;
 constexpr float kLockedTargetArrowBouncePerMs = 0.0045f;
 constexpr float kLockedTargetArrowBouncePixels = 4.0f;
 constexpr u32 kHoverNameRequestCooldownMs = 1000;
+constexpr int kEnemyCursorMagnetRadius = 36;
+constexpr int kEnemyCursorMagnetMaxStep = 5;
+constexpr int kEnemyCursorMagnetDeadzone = 4;
 constexpr size_t kNearbyBackgroundLogCount = 12;
 constexpr float kRefCloseCameraDistance = 150.0f;
 constexpr float kRefIndoorCameraDistance = 420.0f;
@@ -186,9 +190,16 @@ void ResetGamePacketTrace(u32 startTick)
 void DrawHoveredActorName(CGameMode& mode, HDC hdc);
 void DrawLockedTargetName(CGameMode& mode, HDC hdc);
 void DrawLockedTargetArrow(CGameMode& mode, HDC hdc);
+bool QueueLockedTargetOverlayQuad(CGameMode& mode);
+bool QueueMsgEffectsOverlayQuad();
+void ApplyEnemyCursorMagnet(CGameMode& mode, POINT* cursorPos);
+bool IsMonsterLikeHoverActor(const CGameActor* actor);
 void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc);
 void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc);
 std::string ResolveHoveredActorName(CGameMode& mode, CGameActor* actor);
+const char* UiKorPrefix();
+std::string ResolveDataPath(const std::string& fileName, const char* ext, const std::vector<std::string>& directPrefixes);
+bool LoadBitmapFromGameData(const std::string& dataPath, HBITMAP* outBmp, int* outWidth, int* outHeight);
 
 void ReleaseOverlayComposeSurface(HDC* composeDc, HBITMAP* composeBitmap, void** composeBits, int* composeWidth, int* composeHeight)
 {
@@ -272,6 +283,29 @@ void ConvertOverlayComposeBitsToAlpha(void* composeBits, int width, int height)
     }
 }
 
+void ApplyRoundedOverlayMask(void* composeBits, int width, int height, int ellipseWidth, int ellipseHeight)
+{
+    if (!composeBits || width <= 0 || height <= 0 || ellipseWidth <= 0 || ellipseHeight <= 0) {
+        return;
+    }
+
+    HRGN clipRgn = CreateRoundRectRgn(0, 0, width + 1, height + 1, ellipseWidth, ellipseHeight);
+    if (!clipRgn) {
+        return;
+    }
+
+    unsigned int* pixels = static_cast<unsigned int*>(composeBits);
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            if (!PtInRegion(clipRgn, x, y)) {
+                pixels[static_cast<size_t>(y) * static_cast<size_t>(width) + static_cast<size_t>(x)] = kOverlayTransparentKey;
+            }
+        }
+    }
+
+    DeleteObject(clipRgn);
+}
+
 void HashTokenValue(std::uint64_t* hash, std::uint64_t value)
 {
     if (!hash) {
@@ -290,16 +324,6 @@ void HashTokenString(std::uint64_t* hash, const std::string& value)
         HashTokenValue(hash, static_cast<std::uint64_t>(ch));
     }
     HashTokenValue(hash, 0xFFull);
-}
-
-bool HasAnimatedLockedTargetOverlay(const CGameMode& mode)
-{
-    if (!mode.m_world || !mode.m_view || mode.m_lastLockOnMonGid == 0) {
-        return false;
-    }
-
-    const auto actorIt = mode.m_runtimeActors.find(mode.m_lastLockOnMonGid);
-    return actorIt != mode.m_runtimeActors.end() && actorIt->second && actorIt->second->m_isVisible;
 }
 
 std::string ResolveGroundItemHoverLabel(const CItem* item);
@@ -420,10 +444,13 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         s_overlayStateToken = 0ull;
     }
 
-    const bool overlayIsAnimated = HasAnimatedLockedTargetOverlay(mode) || HasQueuedMsgEffects();
+    const bool overlayIsAnimated = false;
     const bool uiDirty = g_windowMgr.HasDirtyVisualStateExcludingRoMap();
     const std::uint64_t overlayStateToken = ComputeGameplayOverlayStateToken(mode, cursorActNum, mouseAnimStartTick, clientWidth, clientHeight);
-    const bool needOverlayRefresh = !s_overlayTextureValid || overlayIsAnimated || uiDirty || overlayStateToken != s_overlayStateToken;
+    const bool needOverlayRefresh = !s_overlayTextureValid
+        || overlayIsAnimated
+        || uiDirty
+        || overlayStateToken != s_overlayStateToken;
 
     if (needOverlayRefresh) {
         ClearOverlayComposeBits(s_overlayComposeBits, clientWidth, clientHeight);
@@ -464,7 +491,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
     face->indices = nullptr;
     face->numIndices = 0;
     face->tex = s_overlayTexture;
-    face->mtPreset = 0;
+    face->mtPreset = 3;
     face->cullMode = D3DCULL_NONE;
     face->srcAlphaMode = D3DBLEND_SRCALPHA;
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
@@ -537,6 +564,7 @@ bool QueueRoMapOverlayQuad()
         if (!g_windowMgr.DrawRoMapToHdc(s_roMapComposeDc, 0, 0)) {
             return false;
         }
+        ApplyRoundedOverlayMask(s_roMapComposeBits, width, height, kRoMapCornerEllipseSize, kRoMapCornerEllipseSize);
         ConvertOverlayComposeBitsToAlpha(s_roMapComposeBits, width, height);
         s_roMapTexture->Update(0,
             0,
@@ -568,7 +596,7 @@ bool QueueRoMapOverlayQuad()
     face->indices = nullptr;
     face->numIndices = 0;
     face->tex = s_roMapTexture;
-    face->mtPreset = 0;
+    face->mtPreset = 3;
     face->cullMode = D3DCULL_NONE;
     face->srcAlphaMode = D3DBLEND_SRCALPHA;
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
@@ -682,6 +710,353 @@ bool QueueCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
     return true;
 }
 
+bool QueueLockedTargetOverlayQuad(CGameMode& mode)
+{
+    if (!g_hMainWnd || !mode.m_world || !mode.m_view || mode.m_lastLockOnMonGid == 0) {
+        return false;
+    }
+
+    HDC windowDc = GetDC(g_hMainWnd);
+    if (!windowDc) {
+        return false;
+    }
+
+    RECT clientRect{};
+    GetClientRect(g_hMainWnd, &clientRect);
+
+    auto actorIt = mode.m_runtimeActors.find(mode.m_lastLockOnMonGid);
+    if (actorIt == mode.m_runtimeActors.end() || !actorIt->second || !actorIt->second->m_isVisible) {
+        ReleaseDC(g_hMainWnd, windowDc);
+        return false;
+    }
+
+    int centerX = 0;
+    int labelY = 0;
+    if (!mode.m_world->GetActorScreenMarker(mode.m_view->GetViewMatrix(),
+        mode.m_view->GetCameraLongitude(),
+        mode.m_lastLockOnMonGid,
+        &centerX,
+        nullptr,
+        &labelY)) {
+        ReleaseDC(g_hMainWnd, windowDc);
+        return false;
+    }
+
+    RECT overlayRect{};
+    SetRectEmpty(&overlayRect);
+
+    const std::string label = ResolveHoveredActorName(mode, actorIt->second);
+    if (!label.empty()) {
+        DrawDC drawDc(windowDc);
+        drawDc.SetFont(FONT_DEFAULT, kHoverNameFontHeight, kHoverNameFontBold);
+        SIZE textSize{};
+        drawDc.GetTextExtentPoint32A(label.c_str(), static_cast<int>(label.size()), &textSize);
+        const int textX = centerX - (textSize.cx / 2);
+        const int textY = labelY + kHoverNameTextPadding + kHoverNameVerticalOffset;
+        RECT textRect{ textX - 2, textY - 2, textX + textSize.cx + 2, textY + textSize.cy + 2 };
+        UnionRect(&overlayRect, &overlayRect, &textRect);
+    }
+
+    static bool s_bitmapLoaded = false;
+    static HBITMAP s_bitmap = nullptr;
+    static int s_width = 0;
+    static int s_height = 0;
+    if (!s_bitmapLoaded) {
+        s_bitmapLoaded = true;
+        std::string bitmapPath = ResolveDataPath(kLockedTargetArrowBitmapName, "bmp", {
+            "",
+            std::string(UiKorPrefix()),
+            "texture\\",
+            std::string(UiKorPrefix()) + "basic_interface\\",
+            "data\\",
+            "data\\texture\\",
+            std::string("data\\") + UiKorPrefix(),
+            std::string("data\\") + UiKorPrefix() + "basic_interface\\"
+        });
+        if (!bitmapPath.empty()) {
+            LoadBitmapFromGameData(bitmapPath, &s_bitmap, &s_width, &s_height);
+        }
+    }
+
+    const u32 now = GetTickCount();
+    const int bounce = static_cast<int>(std::lround((0.5f + 0.5f * std::sin(static_cast<float>(now) * kLockedTargetArrowBouncePerMs))
+        * kLockedTargetArrowBouncePixels));
+    RECT arrowRect{};
+    if (s_bitmap && s_width > 0 && s_height > 0) {
+        const int scaledWidth = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(s_width) * kLockedTargetArrowScale)));
+        const int scaledHeight = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(s_height) * kLockedTargetArrowScale)));
+        const int drawX = centerX - (scaledWidth / 2);
+        const int drawY = labelY - kLockedTargetArrowBaseLift - scaledHeight - kLockedTargetArrowYOffset - bounce;
+        arrowRect = { drawX - 2, drawY - 2, drawX + scaledWidth + 2, drawY + scaledHeight + 2 };
+    } else {
+        const int tipY = labelY - kLockedTargetArrowBaseLift - bounce;
+        arrowRect = { centerX - 9, tipY - 13, centerX + 9, tipY + 2 };
+    }
+    UnionRect(&overlayRect, &overlayRect, &arrowRect);
+
+    InflateRect(&overlayRect, 4, 4);
+    RECT clippedRect{};
+    IntersectRect(&clippedRect, &overlayRect, &clientRect);
+    ReleaseDC(g_hMainWnd, windowDc);
+
+    const int width = clippedRect.right - clippedRect.left;
+    const int height = clippedRect.bottom - clippedRect.top;
+    if (width <= 0 || height <= 0) {
+        return false;
+    }
+
+    HDC composeReferenceDc = GetDC(g_hMainWnd);
+    if (!composeReferenceDc) {
+        return false;
+    }
+
+    static HDC s_targetComposeDc = nullptr;
+    static HBITMAP s_targetComposeBitmap = nullptr;
+    static void* s_targetComposeBits = nullptr;
+    static int s_targetComposeWidth = 0;
+    static int s_targetComposeHeight = 0;
+    const bool composeReady = EnsureOverlayComposeSurface(composeReferenceDc, width, height,
+        &s_targetComposeDc, &s_targetComposeBitmap, &s_targetComposeBits, &s_targetComposeWidth, &s_targetComposeHeight);
+    ReleaseDC(g_hMainWnd, composeReferenceDc);
+    if (!composeReady) {
+        return false;
+    }
+
+    static CTexture* s_targetTexture = nullptr;
+    static int s_targetTextureWidth = 0;
+    static int s_targetTextureHeight = 0;
+    if (!s_targetTexture || s_targetTextureWidth != width || s_targetTextureHeight != height) {
+        delete s_targetTexture;
+        s_targetTexture = new CTexture();
+        if (!s_targetTexture || !s_targetTexture->Create(width, height, PF_A8R8G8B8, false)) {
+            delete s_targetTexture;
+            s_targetTexture = nullptr;
+            s_targetTextureWidth = 0;
+            s_targetTextureHeight = 0;
+            return false;
+        }
+        s_targetTextureWidth = width;
+        s_targetTextureHeight = height;
+    }
+
+    ClearOverlayComposeBits(s_targetComposeBits, width, height);
+    const int savedDc = SaveDC(s_targetComposeDc);
+    SetViewportOrgEx(s_targetComposeDc, -clippedRect.left, -clippedRect.top, nullptr);
+    DrawLockedTargetArrow(mode, s_targetComposeDc);
+    DrawLockedTargetName(mode, s_targetComposeDc);
+    RestoreDC(s_targetComposeDc, savedDc);
+
+    ConvertOverlayComposeBitsToAlpha(s_targetComposeBits, width, height);
+    s_targetTexture->Update(0,
+        0,
+        width,
+        height,
+        static_cast<unsigned int*>(s_targetComposeBits),
+        true,
+        width * static_cast<int>(sizeof(unsigned int)));
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return false;
+    }
+
+    const float left = static_cast<float>(clippedRect.left) - 0.5f;
+    const float top = static_cast<float>(clippedRect.top) - 0.5f;
+    const float right = static_cast<float>(clippedRect.right) - 0.5f;
+    const float bottom = static_cast<float>(clippedRect.bottom) - 0.5f;
+    const unsigned int overlayContentWidth = s_targetTexture->m_surfaceUpdateWidth > 0 ? s_targetTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(width);
+    const unsigned int overlayContentHeight = s_targetTexture->m_surfaceUpdateHeight > 0 ? s_targetTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(height);
+    const float maxU = s_targetTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_targetTexture->m_w) : 1.0f;
+    const float maxV = s_targetTexture->m_h != 0 ? static_cast<float>(overlayContentHeight) / static_cast<float>(s_targetTexture->m_h) : 1.0f;
+
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = s_targetTexture;
+    face->mtPreset = 0;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = 1.5f;
+
+    face->m_verts[0] = { left, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+    face->m_verts[1] = { right, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
+    face->m_verts[2] = { left, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
+    face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
+    g_renderer.AddRP(face, 1 | 8);
+    return true;
+}
+
+bool QueueMsgEffectsOverlayQuad()
+{
+    if (!g_hMainWnd) {
+        return false;
+    }
+
+    RECT effectsRect{};
+    if (!GetQueuedMsgEffectsBounds(&effectsRect)) {
+        return false;
+    }
+
+    RECT clientRect{};
+    GetClientRect(g_hMainWnd, &clientRect);
+    RECT clippedRect{};
+    IntersectRect(&clippedRect, &effectsRect, &clientRect);
+    const int width = clippedRect.right - clippedRect.left;
+    const int height = clippedRect.bottom - clippedRect.top;
+    if (width <= 0 || height <= 0) {
+        return false;
+    }
+
+    HDC composeReferenceDc = GetDC(g_hMainWnd);
+    if (!composeReferenceDc) {
+        return false;
+    }
+
+    static HDC s_msgComposeDc = nullptr;
+    static HBITMAP s_msgComposeBitmap = nullptr;
+    static void* s_msgComposeBits = nullptr;
+    static int s_msgComposeWidth = 0;
+    static int s_msgComposeHeight = 0;
+    const bool composeReady = EnsureOverlayComposeSurface(composeReferenceDc, width, height,
+        &s_msgComposeDc, &s_msgComposeBitmap, &s_msgComposeBits, &s_msgComposeWidth, &s_msgComposeHeight);
+    ReleaseDC(g_hMainWnd, composeReferenceDc);
+    if (!composeReady) {
+        return false;
+    }
+
+    static CTexture* s_msgTexture = nullptr;
+    static int s_msgTextureWidth = 0;
+    static int s_msgTextureHeight = 0;
+    if (!s_msgTexture || s_msgTextureWidth != width || s_msgTextureHeight != height) {
+        delete s_msgTexture;
+        s_msgTexture = new CTexture();
+        if (!s_msgTexture || !s_msgTexture->Create(width, height, PF_A8R8G8B8, false)) {
+            delete s_msgTexture;
+            s_msgTexture = nullptr;
+            s_msgTextureWidth = 0;
+            s_msgTextureHeight = 0;
+            return false;
+        }
+        s_msgTextureWidth = width;
+        s_msgTextureHeight = height;
+    }
+
+    ClearOverlayComposeBits(s_msgComposeBits, width, height);
+    const int savedDc = SaveDC(s_msgComposeDc);
+    SetViewportOrgEx(s_msgComposeDc, -clippedRect.left, -clippedRect.top, nullptr);
+    DrawQueuedMsgEffects(s_msgComposeDc);
+    RestoreDC(s_msgComposeDc, savedDc);
+
+    ConvertOverlayComposeBitsToAlpha(s_msgComposeBits, width, height);
+    s_msgTexture->Update(0,
+        0,
+        width,
+        height,
+        static_cast<unsigned int*>(s_msgComposeBits),
+        true,
+        width * static_cast<int>(sizeof(unsigned int)));
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return false;
+    }
+
+    const float left = static_cast<float>(clippedRect.left) - 0.5f;
+    const float top = static_cast<float>(clippedRect.top) - 0.5f;
+    const float right = static_cast<float>(clippedRect.right) - 0.5f;
+    const float bottom = static_cast<float>(clippedRect.bottom) - 0.5f;
+    const unsigned int overlayContentWidth = s_msgTexture->m_surfaceUpdateWidth > 0 ? s_msgTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(width);
+    const unsigned int overlayContentHeight = s_msgTexture->m_surfaceUpdateHeight > 0 ? s_msgTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(height);
+    const float maxU = s_msgTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_msgTexture->m_w) : 1.0f;
+    const float maxV = s_msgTexture->m_h != 0 ? static_cast<float>(overlayContentHeight) / static_cast<float>(s_msgTexture->m_h) : 1.0f;
+
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = s_msgTexture;
+    face->mtPreset = 0;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = 1.7f;
+
+    face->m_verts[0] = { left, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+    face->m_verts[1] = { right, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
+    face->m_verts[2] = { left, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
+    face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
+    g_renderer.AddRP(face, 1 | 8);
+    return true;
+}
+
+void ApplyEnemyCursorMagnet(CGameMode& mode, POINT* cursorPos)
+{
+    if (!cursorPos || !mode.m_world || !mode.m_view || !g_hMainWnd) {
+        return;
+    }
+    if (mode.m_isLeftButtonHeld || mode.m_canRotateView) {
+        return;
+    }
+
+    CGameActor* hoveredActor = nullptr;
+    if (!mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
+        mode.m_view->GetCameraLongitude(),
+        cursorPos->x,
+        cursorPos->y,
+        &hoveredActor,
+        nullptr,
+        nullptr)
+        || !IsMonsterLikeHoverActor(hoveredActor)) {
+        return;
+    }
+
+    int centerX = 0;
+    int topY = 0;
+    int labelY = 0;
+    if (!mode.m_world->GetActorScreenMarker(mode.m_view->GetViewMatrix(),
+        mode.m_view->GetCameraLongitude(),
+        hoveredActor->m_gid,
+        &centerX,
+        &topY,
+        &labelY)) {
+        return;
+    }
+
+    const int targetY = (topY + labelY) / 2;
+    const int deltaX = centerX - cursorPos->x;
+    const int deltaY = targetY - cursorPos->y;
+    const int absX = (std::abs)(deltaX);
+    const int absY = (std::abs)(deltaY);
+    if (absX <= kEnemyCursorMagnetDeadzone && absY <= kEnemyCursorMagnetDeadzone) {
+        return;
+    }
+    if (absX > kEnemyCursorMagnetRadius || absY > kEnemyCursorMagnetRadius) {
+        return;
+    }
+
+    const int moveX = deltaX == 0 ? 0 : ((std::max)(1, (std::min)(kEnemyCursorMagnetMaxStep, absX / 3 + 1)) * (deltaX > 0 ? 1 : -1));
+    const int moveY = deltaY == 0 ? 0 : ((std::max)(1, (std::min)(kEnemyCursorMagnetMaxStep, absY / 3 + 1)) * (deltaY > 0 ? 1 : -1));
+    if (moveX == 0 && moveY == 0) {
+        return;
+    }
+
+    POINT adjustedClientPos{ cursorPos->x + moveX, cursorPos->y + moveY };
+    POINT adjustedScreenPos = adjustedClientPos;
+    if (!ClientToScreen(g_hMainWnd, &adjustedScreenPos)) {
+        return;
+    }
+
+    if (!SetCursorPos(adjustedScreenPos.x, adjustedScreenPos.y)) {
+        return;
+    }
+
+    *cursorPos = adjustedClientPos;
+}
+
 void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc)
 {
     if (!targetDc) {
@@ -689,11 +1064,8 @@ void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc)
     }
 
     DrawPlayerVitalsOverlay(mode, targetDc);
-    DrawLockedTargetArrow(mode, targetDc);
-    DrawLockedTargetName(mode, targetDc);
     DrawHoveredGroundItemName(mode, targetDc);
     DrawHoveredActorName(mode, targetDc);
-    DrawQueuedMsgEffects(targetDc);
 }
 
 bool ComposeModernOverlayFrame(CGameMode& mode, int cursorActNum, u32 mouseAnimStartTick)
@@ -728,6 +1100,7 @@ bool ComposeModernOverlayFrame(CGameMode& mode, int cursorActNum, u32 mouseAnimS
 
     BitBlt(s_overlayComposeDc, 0, 0, clientWidth, clientHeight, sceneDc, 0, 0, SRCCOPY);
     DrawGameplayOverlayToHdc(mode, s_overlayComposeDc);
+    DrawQueuedMsgEffects(s_overlayComposeDc);
 
     HDC previousSharedDc = UIWindow::GetSharedDrawDC();
     UIWindow::SetSharedDrawDC(s_overlayComposeDc);
@@ -3269,14 +3642,16 @@ bool ShouldPreserveCurrentHeldMove(const CGameMode& mode)
         return false;
     }
 
-    if ((std::max)(std::abs(heldDeltaX), std::abs(heldDeltaY)) > GetHeldMoveDirectionalExtensionCells(*player)) {
-        return false;
-    }
-
     const int currentSignX = ApproachSign(currentDeltaX);
     const int currentSignY = ApproachSign(currentDeltaY);
     const int heldSignX = ApproachSign(heldDeltaX);
     const int heldSignY = ApproachSign(heldDeltaY);
+
+    if ((std::max)(std::abs(heldDeltaX), std::abs(heldDeltaY)) > GetHeldMoveDirectionalExtensionCells(*player)
+        && (heldSignX != currentSignX && heldSignX != 0 && currentSignX != 0)
+        && (heldSignY != currentSignY && heldSignY != 0 && currentSignY != 0)) {
+        return false;
+    }
 
     const bool compatibleHeadingX = heldSignX == 0 || currentSignX == 0 || heldSignX == currentSignX;
     const bool compatibleHeadingY = heldSignY == 0 || currentSignY == 0 || heldSignY == currentSignY;
@@ -5489,6 +5864,8 @@ int  CGameMode::OnRun() {
         uiDrawStart = GetTickCount();
         queuedModernOverlayFrame = QueueModernOverlayQuad(*this, m_cursorActNum, m_mouseAnimStartTick);
         QueueRoMapOverlayQuad();
+        QueueLockedTargetOverlayQuad(*this);
+        QueueMsgEffectsOverlayQuad();
         QueueCursorOverlayQuad(m_cursorActNum, m_mouseAnimStartTick);
         uiDrawEnd = GetTickCount();
     }
@@ -5500,6 +5877,7 @@ int  CGameMode::OnRun() {
             HDC backBufferDc = nullptr;
             if (GetRenderDevice().AcquireBackBufferDC(&backBufferDc) && backBufferDc) {
                 DrawGameplayOverlayToHdc(*this, backBufferDc);
+                DrawQueuedMsgEffects(backBufferDc);
                 GetRenderDevice().ReleaseBackBufferDC(backBufferDc);
             }
         }
@@ -5553,6 +5931,7 @@ int  CGameMode::OnRun() {
             HDC windowDc = GetDC(g_hMainWnd);
             if (windowDc) {
                 DrawGameplayOverlayToHdc(*this, windowDc);
+                DrawQueuedMsgEffects(windowDc);
                 HDC previousSharedDc = UIWindow::GetSharedDrawDC();
                 UIWindow::SetSharedDrawDC(windowDc);
                 g_windowMgr.OnDraw();
@@ -5663,6 +6042,7 @@ void CGameMode::OnUpdate() {
         const DWORD hoverUpdateStart = GetTickCount();
         POINT cursorPos{};
         if (GetCursorPos(&cursorPos) && ScreenToClient(g_hMainWnd, &cursorPos)) {
+            ApplyEnemyCursorMagnet(*this, &cursorPos);
             m_oldMouseX = cursorPos.x;
             m_oldMouseY = cursorPos.y;
             m_view->UpdateHoverCellFromScreen(cursorPos.x, cursorPos.y);

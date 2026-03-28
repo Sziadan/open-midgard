@@ -82,6 +82,13 @@ constexpr u32 kLocalLevelUpNotifySuppressMs = 1200;
 constexpr u32 kDeathFadeDurationMs = 510;
 constexpr u32 kDeathCorpseHoldMs = 1290;
 
+struct RemoteMoveApplyTrace {
+    u32 lastClientTick = 0;
+    u32 lastServerTick = 0;
+};
+
+std::map<u32, RemoteMoveApplyTrace> g_remoteMoveApplyTraceByGid;
+
 u16 ReadLE16(const u8* data);
 u32 ReadLE32(const u8* data);
 float TileToWorldCoordX(const CWorld* world, int tileX);
@@ -1802,10 +1809,6 @@ void HandleActorActionNotify(CGameMode& mode, const PacketView& packet)
         ? static_cast<int>(ReadLE32(packet.data + 29))
         : static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 27)));
 
-    if (serverTick != 0) {
-        g_session.SetServerTime(serverTick);
-    }
-
     if (attackMT == 0) {
         attackMT = kDefaultAttackMotionTime;
     }
@@ -1817,7 +1820,22 @@ void HandleActorActionNotify(CGameMode& mode, const PacketView& packet)
     }
 
     if (!IsAttackNotifyType(actionType) && actionType != 2 && actionType != 3) {
+        static std::map<u32, bool> s_loggedUnsupportedActNotifyTypes;
+        const u32 unsupportedKey = (static_cast<u32>(packet.packetId) << 8) | static_cast<u32>(actionType);
+        if (!s_loggedUnsupportedActNotifyTypes[unsupportedKey]) {
+            s_loggedUnsupportedActNotifyTypes[unsupportedKey] = true;
+            DbgLog("[GameMode] unsupported act notify opcode=0x%04X type=%u src=%u dst=%u rawTick=%u\n",
+                packet.packetId,
+                static_cast<unsigned int>(actionType),
+                srcGid,
+                dstGid,
+                static_cast<unsigned int>(serverTick));
+        }
         return;
+    }
+
+    if (serverTick != 0) {
+        g_session.SetServerTime(serverTick);
     }
 
     CGameActor* sourceActor = ResolveCombatActor(mode, srcGid, true);
@@ -3220,12 +3238,25 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
 
     actor->m_isVisible = 1;
 
+    const bool traceRemoteMove = actor->m_isPc == 0;
+    const u32 clientTickNow = GetTickCount();
+    const u32 serverTickNow = g_session.GetServerTime();
+    const int prevSrcX = actor->m_moveSrcX;
+    const int prevSrcY = actor->m_moveSrcY;
+    const int prevDstX = actor->m_moveDestX;
+    const int prevDstY = actor->m_moveDestY;
+    const u32 prevMoveStart = actor->m_moveStartTime;
+    const u32 prevMoveEnd = actor->m_moveEndTime;
+    const int prevIsMoving = actor->m_isMoving;
+    const vector3d prevPos = actor->m_pos;
+
     if (actor->m_isMoving) {
         actor->ProcessState();
     }
 
     actor->UnRegisterPos();
     const bool isLocalPlayer = IsLocalPlayerActor(mode, gid);
+    const bool keepInterpolatedMoveStart = isLocalPlayer && actor->m_isMoving;
     actor->m_moveSrcX = srcX >= 0 ? srcX : actor->m_moveDestX;
     actor->m_moveSrcY = srcY >= 0 ? srcY : actor->m_moveDestY;
     actor->m_moveDestX = tileX;
@@ -3235,7 +3266,7 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
     actor->m_path.Reset();
 
     actor->m_moveStartPos = actor->m_pos;
-    if (isLocalPlayer && srcX >= 0 && srcY >= 0 && mode.m_world) {
+    if (!keepInterpolatedMoveStart && isLocalPlayer && srcX >= 0 && srcY >= 0 && mode.m_world) {
         const float srcWorldX = TileToWorldCoordX(mode.m_world, actor->m_moveSrcX);
         const float srcWorldZ = TileToWorldCoordZ(mode.m_world, actor->m_moveSrcY);
         actor->m_moveStartPos.x = srcWorldX;
@@ -3290,6 +3321,38 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
         actor->m_pos = actor->m_moveStartPos;
     }
     actor->RegisterPos();
+
+    if (traceRemoteMove) {
+        RemoteMoveApplyTrace& trace = g_remoteMoveApplyTraceByGid[gid];
+        const u32 clientDelta = trace.lastClientTick != 0 ? (clientTickNow - trace.lastClientTick) : 0;
+        const u32 serverDelta = trace.lastServerTick != 0 ? (serverTickNow - trace.lastServerTick) : 0;
+        DbgLog("[ActorMove] apply gid=%u pktSrc=%d,%d pktDst=%d,%d prevSrc=%d,%d prevDst=%d,%d prevMove=[%u..%u] prevMoving=%d prevPos=(%.2f,%.2f) serverNow=%u serverDelta=%u clientDelta=%u newMove=[%u..%u] newMoving=%d pathCells=%zu newPos=(%.2f,%.2f)\n",
+            gid,
+            srcX,
+            srcY,
+            tileX,
+            tileY,
+            prevSrcX,
+            prevSrcY,
+            prevDstX,
+            prevDstY,
+            static_cast<unsigned int>(prevMoveStart),
+            static_cast<unsigned int>(prevMoveEnd),
+            prevIsMoving,
+            prevPos.x,
+            prevPos.z,
+            static_cast<unsigned int>(serverTickNow),
+            static_cast<unsigned int>(serverDelta),
+            static_cast<unsigned int>(clientDelta),
+            static_cast<unsigned int>(actor->m_moveStartTime),
+            static_cast<unsigned int>(actor->m_moveEndTime),
+            actor->m_isMoving,
+            actor->m_path.m_cells.size(),
+            actor->m_pos.x,
+            actor->m_pos.z);
+        trace.lastClientTick = clientTickNow;
+        trace.lastServerTick = serverTickNow;
+    }
 }
 
 void ApplyRuntimeActorFixPosition(CGameMode& mode, u32 gid, int tileX, int tileY)
@@ -3418,14 +3481,29 @@ ChatEntry BuildChatEntry(const std::string& text, u32 color, u8 channel)
     return entry;
 }
 
+std::string ExtractChatTextWithAid(const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 8) {
+        return {};
+    }
+
+    std::string text = ExtractPacketString(packet, 8);
+    if (!text.empty()) {
+        return text;
+    }
+
+    // Some older traces suggest chat payloads may occasionally arrive without
+    // the actor-id field populated as expected, so keep a legacy fallback.
+    return ExtractPacketString(packet, 4);
+}
+
 void PropagateChatToUi(const ChatEntry& entry)
 {
     if (entry.text.empty()) {
         return;
     }
 
-    const int meta = static_cast<int>((entry.color & 0x00FFFFFFu) | (static_cast<u32>(entry.channel) << 24));
-    g_windowMgr.SendMsg(kUiChatEventMsg, reinterpret_cast<msgparam_t>(entry.text.c_str()), meta);
+    g_windowMgr.PushChatEvent(entry.text.c_str(), entry.color, entry.channel, GetTickCount());
 }
 
 void RecordChat(CGameMode& mode, const std::string& text, u32 color, u8 channel)
@@ -3469,7 +3547,7 @@ void HandleNotifyChat(CGameMode& mode, const PacketView& packet)
 
     const u32 aid = ReadLE32(packet.data + 4);
     mode.m_aidList[aid] = GetTickCount();
-    RecordChat(mode, ExtractPacketString(packet, 8), 0x00FFFFFF, kChatChannelNormal);
+    RecordChat(mode, ExtractChatTextWithAid(packet), 0x00FFFFFF, kChatChannelNormal);
 }
 
 void HandleNotifyPlayerChat(CGameMode& mode, const PacketView& packet)

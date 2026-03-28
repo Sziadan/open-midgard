@@ -40,6 +40,17 @@ constexpr bool kLogActLoad = false;
 constexpr int kJobWarpNpc = 0x2D;
 constexpr int kJobWarpPortal = 0x80;
 constexpr int kJobPreWarpPortal = 0x81;
+constexpr u32 kRemoteMoveStallLogThresholdMs = 250;
+
+struct MoveStallTraceState {
+    float lastPosX = 0.0f;
+    float lastPosZ = 0.0f;
+    u32 lastMoveWallTick = 0;
+    u32 lastLogWallTick = 0;
+    bool wasStalled = false;
+};
+
+std::map<u32, MoveStallTraceState> g_moveStallTraceByGid;
 constexpr int kJobHiddenWarpNpc = 0x8B;
 constexpr const char* kLegacyMonsterSpriteRoot = "data\\sprite\\\xB8\xF3\xBD\xBA\xC5\xCD\\";
 constexpr float kDefaultMotionDelay = 4.0f;
@@ -2099,6 +2110,7 @@ u8 CGameActor::ProcessState() {
 
     if (m_isMoving) {
         const u32 now = g_session.GetServerTime();
+        const u32 wallNow = timeGetTime();
         const vector3d prevPos = m_pos;
         if (m_path.m_cells.size() >= 2 && InterpolatePathPosition(*this, now, &m_pos)) {
             if (now >= m_moveEndTime) {
@@ -2124,6 +2136,58 @@ u8 CGameActor::ProcessState() {
             const float rotation = std::atan2(m_pos.x - prevPos.x, -(m_pos.z - prevPos.z)) * (180.0f / 3.14159265f);
             m_roty = NormalizeAngle360(rotation);
         }
+
+        if (m_gid != 0 && m_isPc == 0 && m_stateId != kDeathStateId) {
+            MoveStallTraceState& trace = g_moveStallTraceByGid[m_gid];
+            const bool movedThisFrame = prevPos.x != m_pos.x || prevPos.z != m_pos.z;
+            if (movedThisFrame) {
+                if (trace.wasStalled) {
+                    DbgLog("[ActorMove] resume gid=%u pos=(%.2f,%.2f)->(%.2f,%.2f) serverNow=%u move=[%u..%u] pathCells=%zu\n",
+                        m_gid,
+                        prevPos.x,
+                        prevPos.z,
+                        m_pos.x,
+                        m_pos.z,
+                        static_cast<unsigned int>(now),
+                        static_cast<unsigned int>(m_moveStartTime),
+                        static_cast<unsigned int>(m_moveEndTime),
+                        m_path.m_cells.size());
+                }
+                trace.lastPosX = m_pos.x;
+                trace.lastPosZ = m_pos.z;
+                trace.lastMoveWallTick = wallNow;
+                trace.lastLogWallTick = 0;
+                trace.wasStalled = false;
+            } else {
+                if (trace.lastMoveWallTick == 0) {
+                    trace.lastPosX = m_pos.x;
+                    trace.lastPosZ = m_pos.z;
+                    trace.lastMoveWallTick = wallNow;
+                }
+                const u32 stalledForMs = wallNow - trace.lastMoveWallTick;
+                const bool moveShouldStillAdvance = m_moveEndTime > m_moveStartTime && now < m_moveEndTime;
+                if (moveShouldStillAdvance
+                    && stalledForMs >= kRemoteMoveStallLogThresholdMs
+                    && (trace.lastLogWallTick == 0 || wallNow - trace.lastLogWallTick >= kRemoteMoveStallLogThresholdMs)) {
+                    DbgLog("[ActorMove] stall gid=%u pos=(%.2f,%.2f) serverNow=%u stalledFor=%u move=[%u..%u] remaining=%u pathCells=%zu state=%d\n",
+                        m_gid,
+                        m_pos.x,
+                        m_pos.z,
+                        static_cast<unsigned int>(now),
+                        static_cast<unsigned int>(stalledForMs),
+                        static_cast<unsigned int>(m_moveStartTime),
+                        static_cast<unsigned int>(m_moveEndTime),
+                        static_cast<unsigned int>(m_moveEndTime - now),
+                        m_path.m_cells.size(),
+                        m_stateId);
+                    trace.lastLogWallTick = wallNow;
+                    trace.wasStalled = true;
+                }
+            }
+        }
+    }
+    else if (m_gid != 0 && m_isPc == 0) {
+        g_moveStallTraceByGid.erase(m_gid);
     }
 
     switch (m_stateId) {

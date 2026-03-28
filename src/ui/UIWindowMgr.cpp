@@ -1048,15 +1048,22 @@ void UIWindowMgr::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam) {
     }
 
     const char* text = reinterpret_cast<const char*>(wparam);
+    const u32 color = static_cast<u32>(lparam) & 0x00FFFFFFu;
+    const u8 channel = static_cast<u8>((static_cast<u32>(lparam) >> 24) & 0xFFu);
+    PushChatEvent(text, color, channel, GetTickCount());
+}
+
+void UIWindowMgr::PushChatEvent(const char* text, u32 color, u8 channel, u32 tick)
+{
     if (!text || *text == '\0') {
         return;
     }
 
     UIChatEvent event{};
     event.text = text;
-    event.color = static_cast<u32>(lparam) & 0x00FFFFFFu;
-    event.channel = static_cast<u8>((static_cast<u32>(lparam) >> 24) & 0xFFu);
-    event.tick = GetTickCount();
+    event.color = color & 0x00FFFFFFu;
+    event.channel = channel;
+    event.tick = tick != 0 ? tick : GetTickCount();
 
     if (m_chatEvents.size() >= kMaxChatEvents) {
         m_chatEvents.erase(m_chatEvents.begin());
@@ -1064,8 +1071,7 @@ void UIWindowMgr::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam) {
     m_chatEvents.push_back(std::move(event));
 
     if (m_chatWnd) {
-        m_chatWnd->AddChatLine(event.text.c_str(), static_cast<u32>(lparam) & 0x00FFFFFFu,
-            static_cast<u8>((static_cast<u32>(lparam) >> 24) & 0xFFu), GetTickCount());
+        m_chatWnd->AddChatLine(event.text.c_str(), color, channel, event.tick);
     }
 }
 

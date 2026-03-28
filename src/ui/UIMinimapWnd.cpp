@@ -607,6 +607,17 @@ void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY)
     RECT bodyRect{ baseX, baseY + kTitleBarHeight, baseX + m_w, baseY + m_h };
     RECT mapRect{ baseX + kBodyInset, baseY + kMapTop, baseX + kBodyInset + kMapSize, baseY + kMapTop + kMapSize };
     RECT coordsRect{ baseX + 8, baseY + kCoordsTop, baseX + m_w - 8, baseY + kCoordsTop + kCoordsHeight };
+    const int savedDc = SaveDC(hdc);
+    HRGN clipRgn = CreateRoundRectRgn(
+        windowRect.left,
+        windowRect.top,
+        windowRect.right + 1,
+        windowRect.bottom + 1,
+        kWindowCornerRadius,
+        kWindowCornerRadius);
+    if (clipRgn) {
+        SelectClipRgn(hdc, clipRgn);
+    }
 
     if (m_bodyBitmap) {
         DrawBitmapTransparent(hdc, m_bodyBitmap, bodyRect);
@@ -700,11 +711,6 @@ void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY)
     DrawWindowText(hdc, baseX + m_w, baseX + 17, baseY + 2, "Mini Map", RGB(0, 0, 0), DT_LEFT | DT_TOP | DT_SINGLELINE);
 
     std::string mapName = StripExtension(GetCurrentMinimapBitmapName());
-    if (!mapName.empty()) {
-        RECT mapNameRect{ mapRect.left + 3, mapRect.top + 2, mapRect.right - 3, mapRect.top + 16 };
-        SetTextColor(hdc, RGB(255, 255, 255));
-        DrawTextA(hdc, mapName.c_str(), -1, &mapNameRect, DT_LEFT | DT_TOP | DT_SINGLELINE | DT_END_ELLIPSIS);
-    }
 
     auto drawWorldPoint = [&](int cellX, int cellY, COLORREF fillColor, COLORREF outlineColor, int radius) {
         POINT pt{};
@@ -730,32 +736,22 @@ void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY)
     POINT playerPoint{};
     if (BuildMarkerPoint(attrArea, drawRect, zoomedView, srcRect, m_mapBitmapWidth, m_mapBitmapHeight,
             g_session.m_playerPosX, g_session.m_playerPosY, &playerPoint)) {
-        DrawSmallMarker(hdc, playerPoint, RGB(245, 224, 126), RGB(92, 60, 16), 4);
-
-        int dirX = 0;
-        int dirY = -12;
-        switch (g_session.m_playerDir & 7) {
-        case 0: dirX = 0; dirY = -12; break;
-        case 1: dirX = 8; dirY = -8; break;
-        case 2: dirX = 12; dirY = 0; break;
-        case 3: dirX = 8; dirY = 8; break;
-        case 4: dirX = 0; dirY = 12; break;
-        case 5: dirX = -8; dirY = 8; break;
-        case 6: dirX = -12; dirY = 0; break;
-        case 7: dirX = -8; dirY = -8; break;
-        }
-
-        HPEN dirPen = CreatePen(PS_SOLID, 2, RGB(92, 60, 16));
-        HGDIOBJ oldPen = SelectObject(hdc, dirPen);
-        MoveToEx(hdc, playerPoint.x, playerPoint.y, nullptr);
-        LineTo(hdc, playerPoint.x + dirX, playerPoint.y + dirY);
-        SelectObject(hdc, oldPen);
-        DeleteObject(dirPen);
+        DrawSmallMarker(hdc, playerPoint, RGB(245, 224, 126), RGB(0, 0, 0), 4);
     }
 
     char coordsText[64] = {};
     std::snprintf(coordsText, sizeof(coordsText), "X : %d    Y : %d", g_session.m_playerPosX, g_session.m_playerPosY);
-    DrawWindowText(hdc, baseX + m_w, coordsRect.left, coordsRect.top, coordsText, RGB(0, 0, 0), DT_CENTER | DT_TOP | DT_SINGLELINE);
+    if (!mapName.empty()) {
+        DrawWindowText(hdc, coordsRect.right, coordsRect.left, coordsRect.top, mapName.c_str(),
+            RGB(0, 0, 0), DT_LEFT | DT_TOP | DT_SINGLELINE | DT_END_ELLIPSIS);
+    }
+    DrawWindowText(hdc, coordsRect.right, coordsRect.left + 78, coordsRect.top, coordsText,
+        RGB(0, 0, 0), DT_RIGHT | DT_TOP | DT_SINGLELINE);
+
+    RestoreDC(hdc, savedDc);
+    if (clipRgn) {
+        DeleteObject(clipRgn);
+    }
 
     HPEN borderPen = CreatePen(PS_SOLID, 1, RGB(57, 66, 86));
     HGDIOBJ oldPen = SelectObject(hdc, borderPen);

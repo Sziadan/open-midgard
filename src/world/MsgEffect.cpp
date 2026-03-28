@@ -386,6 +386,38 @@ bool DrawDigitSprite(HDC hdc, const QueuedMsgEffectDraw& draw)
     return true;
 }
 
+bool GetDigitDrawBounds(const QueuedMsgEffectDraw& draw, RECT* outRect)
+{
+    if (!outRect) {
+        return false;
+    }
+
+    RECT clipBox{};
+    if (ResolveDigitClipBox(draw.digit, &clipBox)) {
+        const float scale = ResolveDigitScale(draw.zoom);
+        const int nativeWidth = (std::max)(1, static_cast<int>(clipBox.right - clipBox.left));
+        const int nativeHeight = (std::max)(1, static_cast<int>(clipBox.bottom - clipBox.top));
+        const int outWidth = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeWidth) * scale)));
+        const int outHeight = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeHeight) * scale)));
+        const int originX = draw.screenX + ResolveDigitShiftPixels(draw) - outWidth / 2;
+        const int originY = draw.screenY - outHeight / 2;
+        outRect->left = originX - 1;
+        outRect->top = originY - 1;
+        outRect->right = originX + outWidth + 1;
+        outRect->bottom = originY + outHeight + 1;
+        return true;
+    }
+
+    const int fontHeight = (std::max)(14, (std::min)(32, static_cast<int>(std::lround(8.0f + draw.zoom * 4.0f))));
+    const int drawX = draw.screenX + ResolveDigitShiftPixels(draw) - fontHeight / 4;
+    const int drawY = draw.screenY - fontHeight / 2;
+    outRect->left = drawX - 2;
+    outRect->top = drawY - 2;
+    outRect->right = drawX + fontHeight + 2;
+    outRect->bottom = drawY + fontHeight + 2;
+    return true;
+}
+
 void DrawOutlinedDigit(HDC hdc, int x, int y, const char* text, COLORREF color, int fontHeight)
 {
     if (!hdc || !text || !*text) {
@@ -688,6 +720,35 @@ void DrawQueuedMsgEffects(HDC hdc)
     g_queuedMsgEffects.clear();
 }
 
+bool GetQueuedMsgEffectsBounds(RECT* outRect)
+{
+    if (!outRect) {
+        return false;
+    }
+
+    SetRectEmpty(outRect);
+    bool hasBounds = false;
+    for (const QueuedMsgEffectDraw& draw : g_queuedMsgEffects) {
+        RECT digitRect{};
+        if (!GetDigitDrawBounds(draw, &digitRect)) {
+            continue;
+        }
+        if (!hasBounds) {
+            *outRect = digitRect;
+            hasBounds = true;
+        } else {
+            RECT combined{};
+            UnionRect(&combined, outRect, &digitRect);
+            *outRect = combined;
+        }
+    }
+
+    if (hasBounds) {
+        InflateRect(outRect, 4, 4);
+    }
+    return hasBounds;
+}
+
 void ClearQueuedMsgEffects()
 {
     g_queuedMsgEffects.clear();
@@ -696,4 +757,18 @@ void ClearQueuedMsgEffects()
 bool HasQueuedMsgEffects()
 {
     return !g_queuedMsgEffects.empty();
+}
+
+bool HasActiveMsgEffects()
+{
+    for (CGameObject* object : g_world.m_gameObjectList) {
+        CMsgEffect* effect = dynamic_cast<CMsgEffect*>(object);
+        if (!effect) {
+            continue;
+        }
+        if (effect->m_isVisible && !effect->m_isDisappear) {
+            return true;
+        }
+    }
+    return false;
 }
