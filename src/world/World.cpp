@@ -1,5 +1,6 @@
 #include "World.h"
 #include "world/3dActor.h"
+#include "world/RagEffect.h"
 #include "DebugLog.h"
 #include "render/Prim.h"
 #include "render/Renderer.h"
@@ -1469,21 +1470,47 @@ void RenderPortalEffectAtPosition(const vector3d& sourcePos,
     }
 }
 
+bool DoesWorldPositionCoverAttrCell(const C3dAttr& attr, const vector3d& pos, float radius, int attrX, int attrY);
+
 class CFixedWorldEffect : public CGameObject {
 public:
     explicit CFixedWorldEffect(const C3dWorldRes::effectSrcInfo& source)
         : m_source(source)
         , m_spawnTick(timeGetTime())
+        , m_effect(CreateWorldRagEffect(source))
     {
+    }
+
+    ~CFixedWorldEffect() override
+    {
+        delete m_effect;
     }
 
     u8 OnProcess() override
     {
+        if (m_effect) {
+            return m_effect->OnProcess();
+        }
         return 1;
+    }
+
+    bool IsPortalLike() const
+    {
+        return IsPortalLikeEffect(m_source);
+    }
+
+    bool CoversAttrCell(const C3dAttr& attr, int attrX, int attrY) const
+    {
+        return IsPortalLike() && DoesWorldPositionCoverAttrCell(attr, m_source.pos, ResolveFixedEffectRadius(m_source), attrX, attrY);
     }
 
     void Render(matrix* viewMatrix) override
     {
+        if (m_effect) {
+            m_effect->Render(viewMatrix);
+            return;
+        }
+
         if (!viewMatrix) {
             return;
         }
@@ -1583,6 +1610,7 @@ public:
 private:
     C3dWorldRes::effectSrcInfo m_source;
     DWORD m_spawnTick;
+    CRagEffect* m_effect;
 };
 
 class CLevelUpEffect : public CGameObject {
@@ -2672,6 +2700,23 @@ int GroundTileFromWorldZ(float worldZ, int height, float zoom)
         return 0;
     }
     return static_cast<int>(std::floor(worldZ / zoom + static_cast<float>(height) * 0.5f));
+}
+
+bool DoesWorldPositionCoverAttrCell(const C3dAttr& attr, const vector3d& pos, float radius, int attrX, int attrY)
+{
+    if (attrX < 0 || attrY < 0 || attrX >= attr.m_width || attrY >= attr.m_height) {
+        return false;
+    }
+
+    const float zoom = static_cast<float>(attr.m_zoom);
+    if (zoom <= 0.0f) {
+        return false;
+    }
+
+    const int centerTileX = GroundTileFromWorldX(pos.x, attr.m_width, zoom);
+    const int centerTileY = GroundTileFromWorldZ(pos.z, attr.m_height, zoom);
+    const int tileRadius = (std::max)(0, static_cast<int>(std::ceil((std::max)(0.0f, radius) / zoom)));
+    return std::abs(attrX - centerTileX) <= tileRadius && std::abs(attrY - centerTileY) <= tileRadius;
 }
 
 int ClampInt(int value, int minValue, int maxValue)
@@ -4479,6 +4524,11 @@ bool CWorld::AppendBackgroundObjects(const C3dWorldRes& worldRes,
     m_bgDiffuseCol = diffuseCol;
     m_bgAmbientCol = ambientCol;
 
+    std::map<std::string, bool> unresolvedModelNames;
+    std::map<std::string, bool> failedModelLoads;
+    std::map<std::string, bool> failedModelRoots;
+    std::map<std::string, bool> failedModelAssigns;
+
     size_t actorIndex = 0;
     size_t processed = 0;
     for (const C3dWorldRes::actorInfo* actorInfo : worldRes.m_3dActors) {
@@ -4504,18 +4554,30 @@ bool CWorld::AppendBackgroundObjects(const C3dWorldRes& worldRes,
             "data\\model\\"
         });
         if (modelPath.empty()) {
-            DbgLog("[World] background object model unresolved raw='%s' name='%s'\n", actorInfo->modelName, actorInfo->name);
+            if (unresolvedModelNames.emplace(actorInfo->modelName, true).second) {
+                DbgLog("[World] background object model unresolved raw='%s' name='%s'\n", actorInfo->modelName, actorInfo->name);
+            }
+            continue;
+        }
+
+        if (failedModelLoads.find(modelPath) != failedModelLoads.end()) {
             continue;
         }
 
         C3dModelRes* modelRes = g_resMgr.GetAs<C3dModelRes>(modelPath.c_str());
         if (!modelRes) {
-            DbgLog("[World] background object model missing raw='%s' resolved='%s'\n", actorInfo->modelName, modelPath.c_str());
+            if (failedModelLoads.emplace(modelPath, true).second) {
+                DbgLog("[World] background object model load failed raw='%s' resolved='%s'\n", actorInfo->modelName, modelPath.c_str());
+            }
             continue;
         }
+
+        const std::string modelRootKey = modelPath + "|" + actorInfo->nodeName;
         const C3dNodeRes* rootNode = modelRes->FindNode(actorInfo->nodeName);
         if (!rootNode && modelRes->m_objectList.empty()) {
-            DbgLog("[World] background object root missing model='%s' node='%s'\n", modelPath.c_str(), actorInfo->nodeName);
+            if (failedModelRoots.emplace(modelRootKey, true).second) {
+                DbgLog("[World] background object root missing model='%s' node='%s'\n", modelPath.c_str(), actorInfo->nodeName);
+            }
             continue;
         }
         C3dActor* actor = new C3dActor();
@@ -4535,6 +4597,9 @@ bool CWorld::AppendBackgroundObjects(const C3dWorldRes& worldRes,
         actor->m_debugNodeName = actorInfo->nodeName;
 
         if (!actor->AssignModel(*modelRes)) {
+            if (failedModelAssigns.emplace(modelRootKey, true).second) {
+                DbgLog("[World] background object assign failed model='%s' node='%s'\n", modelPath.c_str(), actorInfo->nodeName);
+            }
             delete actor;
             continue;
         }
@@ -4703,6 +4768,32 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
 {
     RenderGameObjects(viewMatrix);
 
+    auto ensurePortalActorEffect = [](CPc* pc) {
+        if (!pc || !IsPortalActorJob(pc->m_job)) {
+            return;
+        }
+
+        const int desiredEffectId = pc->m_job == kJobPreWarpPortal
+            ? kRagEffectReadyPortal
+            : ((pc->m_job == kJobWarpPortal || pc->m_job == kJobWarpNpc) ? 321 : kRagEffectPortal);
+
+        for (CRagEffect* effect : pc->m_effectList) {
+            if (effect && effect->GetEffectType() == desiredEffectId) {
+                return;
+            }
+        }
+
+        DbgLog("[World] portal effect bootstrap gid=%u job=%d visible=%d effect=%d pos=(%.2f,%.2f,%.2f)\n",
+            pc->m_gid,
+            pc->m_job,
+            pc->m_isVisible,
+            desiredEffectId,
+            pc->m_pos.x,
+            pc->m_pos.y,
+            pc->m_pos.z);
+        pc->LaunchEffect(desiredEffectId, vector3d{ 0.0f, 0.0f, 0.0f }, 0.0f);
+    };
+
     for (CItem* item : m_itemList) {
         if (!item) {
             continue;
@@ -4711,58 +4802,27 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
     }
 
     for (CGameActor* actor : m_actorList) {
-        if (!actor || !actor->m_isVisible) {
+        if (!actor) {
+            continue;
+        }
+        CPc* pc = dynamic_cast<CPc*>(actor);
+        if (pc) {
+            ensurePortalActorEffect(pc);
+        }
+        if (!actor->m_isVisible) {
             continue;
         }
         if (actor == m_player) {
             continue;
         }
-
-        CPc* pc = dynamic_cast<CPc*>(actor);
-        if (!pc || !IsPortalActorJob(pc->m_job)) {
+        if (!pc) {
             continue;
         }
-
-        const DWORD tick = timeGetTime();
-        const float timeSeconds = static_cast<float>(tick) * 0.001f;
-        const COLORREF portalColor = pc->m_job == kJobPreWarpPortal
-            ? RGB(255, 172, 92)
-            : RGB(86, 196, 255);
-        const PortalVisualStyle portalStyle = pc->m_job == kJobPreWarpPortal
-            ? PortalVisualStyle::Ready
-            : (pc->m_job == kJobWarpPortal ? PortalVisualStyle::WarpZone : PortalVisualStyle::Portal);
-        RenderPortalEffectAtPosition(pc->m_pos,
-            viewMatrix,
-            portalColor,
-            pc->m_job == kJobWarpNpc ? 6.5f : 5.0f,
-            pc->m_job == kJobWarpNpc ? 6.0f : 5.0f,
-            timeSeconds,
-            static_cast<float>(pc->m_gid & 0xFFu) * 0.19f,
-            false,
-            portalStyle);
     }
 
     if (m_player) {
         CPc* pc = dynamic_cast<CPc*>(m_player);
-        if (pc && pc->m_isVisible && IsPortalActorJob(pc->m_job)) {
-            const DWORD tick = timeGetTime();
-            const float timeSeconds = static_cast<float>(tick) * 0.001f;
-            const COLORREF portalColor = pc->m_job == kJobPreWarpPortal
-                ? RGB(255, 172, 92)
-                : RGB(86, 196, 255);
-            const PortalVisualStyle portalStyle = pc->m_job == kJobPreWarpPortal
-                ? PortalVisualStyle::Ready
-                : (pc->m_job == kJobWarpPortal ? PortalVisualStyle::WarpZone : PortalVisualStyle::Portal);
-            RenderPortalEffectAtPosition(pc->m_pos,
-                viewMatrix,
-                portalColor,
-                pc->m_job == kJobWarpNpc ? 6.5f : 5.0f,
-                pc->m_job == kJobWarpNpc ? 6.0f : 5.0f,
-                timeSeconds,
-                static_cast<float>(pc->m_gid & 0xFFu) * 0.19f,
-                false,
-                portalStyle);
-        }
+        ensurePortalActorEffect(pc);
     }
 
     EnsureBillboardFrameCache(viewMatrix, cameraLongitude);
@@ -5056,6 +5116,42 @@ bool CWorld::FindHoveredGroundItemScreen(const matrix& viewMatrix,
     return true;
 }
 
+bool CWorld::HasWarpAtAttrCell(int attrX, int attrY) const
+{
+    if (!m_attr || attrX < 0 || attrY < 0 || attrX >= m_attr->m_width || attrY >= m_attr->m_height) {
+        return false;
+    }
+
+    auto actorCoversCell = [&](const CGameActor* actor) -> bool {
+        const CPc* pc = dynamic_cast<const CPc*>(actor);
+        if (!pc || !pc->m_isVisible || !IsPortalActorJob(pc->m_job)) {
+            return false;
+        }
+
+        const float radius = pc->m_job == kJobWarpNpc ? 6.5f : 5.0f;
+        return DoesWorldPositionCoverAttrCell(*m_attr, pc->m_pos, radius, attrX, attrY);
+    };
+
+    if (actorCoversCell(m_player)) {
+        return true;
+    }
+
+    for (const CGameActor* actor : m_actorList) {
+        if (actorCoversCell(actor)) {
+            return true;
+        }
+    }
+
+    for (const CGameObject* object : m_gameObjectList) {
+        const CFixedWorldEffect* effect = dynamic_cast<const CFixedWorldEffect*>(object);
+        if (effect && effect->CoversAttrCell(*m_attr, attrX, attrY)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void CWorld::RenderBackgroundObjects(const matrix& viewMatrix) const
 {
     for (const C3dActor* actor : m_bgObjList) {
@@ -5075,5 +5171,7 @@ void LaunchLevelUpEffect(CGameActor* actor, u32 effectId)
         return;
     }
 
-    g_world.m_gameObjectList.push_back(new CLevelUpEffect(actor, effectId));
+    if (!actor->LaunchEffect(static_cast<int>(effectId), vector3d{ 0.0f, 0.0f, 0.0f }, 0.0f)) {
+        g_world.m_gameObjectList.push_back(new CLevelUpEffect(actor, effectId));
+    }
 }

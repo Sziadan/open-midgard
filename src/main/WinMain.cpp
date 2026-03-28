@@ -24,6 +24,7 @@
 #include "render3d/RenderBackend.h"
 #include "render3d/GraphicsSettings.h"
 #include "render3d/RenderDevice.h"
+#include "render/Prim.h"
 #include "render/Renderer.h"
 #include "world/World.h"
 #include "res/GndRes.h"
@@ -31,6 +32,7 @@
 #include "res/ModelRes.h"
 #include "res/Sprite.h"
 #include "res/ActRes.h"
+#include "res/EzEffectRes.h"
 #include "res/PaletteRes.h"
 #include "res/ImfRes.h"
 #include "res/WorldRes.h"
@@ -455,6 +457,7 @@ static bool InitClientSystems()
     g_resMgr.RegisterType("rsm", "", new C3dModelRes());
     g_resMgr.RegisterType("spr", "", new CSprRes());
     g_resMgr.RegisterType("act", "", new CActRes());
+    g_resMgr.RegisterType("str", "effect\\", new CEZeffectRes());
     g_resMgr.RegisterType("pal", "", new CPaletteRes());
     g_resMgr.RegisterType("imf", "", new CImfRes());
     g_resMgr.RegisterType("rsw", "", new C3dWorldRes());
@@ -553,6 +556,10 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 
     // Floating-point control
     _controlfp(0x20000, 0x30000);
+
+    // The legacy client initializes shared trig lookup tables during startup.
+    // Several world/effect paths still rely on these helpers.
+    CreateTrigonometricTable();
 
     // Create the game window
     if (!InitApp(hInstance, nCmdShow))

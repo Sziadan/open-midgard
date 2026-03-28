@@ -7,6 +7,8 @@ add_library(ro_world STATIC
     World.cpp
     GameActor.h
     GameActor.cpp
+    RagEffect.h
+    RagEffect.cpp
     MsgEffect.h
     MsgEffect.cpp
     Granny.h

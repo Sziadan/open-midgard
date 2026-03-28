@@ -286,7 +286,9 @@ void HandleNotifyEffect(CGameMode& mode, const PacketView& packet)
         static_cast<unsigned int>(effectType),
         static_cast<unsigned int>(effectId),
         actor == (mode.m_world ? static_cast<CGameActor*>(mode.m_world->m_player) : nullptr));
-    LaunchLevelUpEffect(actor, effectId);
+    if (!actor->LaunchEffect(static_cast<int>(effectId), vector3d{ 0.0f, 0.0f, 0.0f }, 0.0f)) {
+        LaunchLevelUpEffect(actor, effectId);
+    }
 }
 
 void HandleSkillCastCancel(CGameMode& mode, const PacketView& packet)

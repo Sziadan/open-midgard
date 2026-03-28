@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 add_library(ro_res STATIC
     Bitmap.h Bitmap.cpp
+    EzEffectRes.h EzEffectRes.cpp
     GndRes.h GndRes.cpp
     ImfRes.h ImfRes.cpp
     ModelRes.h ModelRes.cpp

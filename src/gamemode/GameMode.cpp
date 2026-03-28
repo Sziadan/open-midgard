@@ -56,6 +56,7 @@ constexpr u32 kLoadingScreenMinShowMs = 700;
 constexpr u32 kLoadingActorQuietMs = 250;
 constexpr u32 kLoadingPostAckWaitMs = 450;
 constexpr u32 kLoadingAckRetryDelayMs = 900;
+constexpr u32 kLoadingActorFallbackMs = 3000;
 constexpr u32 kPacketTraceWindowMs = 8000;
 constexpr u32 kBootstrapLoadBudgetMs = 6;
 constexpr size_t kBootstrapTextureBatch = 2;
@@ -194,6 +195,7 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode);
 bool QueueMsgEffectsOverlayQuad();
 void ApplyEnemyCursorMagnet(CGameMode& mode, POINT* cursorPos);
 bool IsMonsterLikeHoverActor(const CGameActor* actor);
+bool IsWalkableAttrCell(const CGameMode& mode, int tileX, int tileY);
 void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc);
 void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc);
 std::string ResolveHoveredActorName(CGameMode& mode, CGameActor* actor);
@@ -1618,6 +1620,10 @@ void UpdateGameplayCursor(CGameMode& mode)
         return;
     }
 
+    int hoverAttrX = -1;
+    int hoverAttrY = -1;
+    const bool hasHoverAttrCell = mode.m_view->ScreenToHoveredAttrCell(mode.m_oldMouseX, mode.m_oldMouseY, &hoverAttrX, &hoverAttrY);
+
     CGameActor* hoveredActor = nullptr;
     if (!mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
         mode.m_view->GetCameraLongitude(),
@@ -1635,6 +1641,14 @@ void UpdateGameplayCursor(CGameMode& mode)
             nullptr)
             && hoveredItem) {
             SetModeCursorAction(mode, CursorAction::Item);
+            return;
+        }
+        if (hasHoverAttrCell && mode.m_world->HasWarpAtAttrCell(hoverAttrX, hoverAttrY)) {
+            SetModeCursorAction(mode, CursorAction::Portal);
+            return;
+        }
+        if (hasHoverAttrCell && !IsWalkableAttrCell(mode, hoverAttrX, hoverAttrY)) {
+            SetModeCursorAction(mode, CursorAction::Forbidden);
             return;
         }
         SetModeCursorAction(mode, CursorAction::Arrow);
@@ -1660,6 +1674,11 @@ void UpdateGameplayCursor(CGameMode& mode)
         nullptr)
         && hoveredItem) {
         SetModeCursorAction(mode, CursorAction::Item);
+        return;
+    }
+
+    if (hasHoverAttrCell && mode.m_world->HasWarpAtAttrCell(hoverAttrX, hoverAttrY)) {
+        SetModeCursorAction(mode, CursorAction::Portal);
         return;
     }
 
@@ -2414,9 +2433,19 @@ void AdvanceMapLoading(CGameMode& mode)
 
         const float settleProgress = (std::min)(1.0f, static_cast<float>(sinceAck) / static_cast<float>(kLoadingPostAckWaitMs));
         UpdateMapLoadingUi(mode, "Waiting for map actors...", 0.86f + settleProgress * 0.14f);
-        if (visibleFor >= kLoadingScreenMinShowMs
+        const bool quietWindowSatisfied = visibleFor >= kLoadingScreenMinShowMs
             && sinceAck >= kLoadingPostAckWaitMs
-            && sinceActor >= kLoadingActorQuietMs) {
+            && sinceActor >= kLoadingActorQuietMs;
+        const bool fallbackWaitSatisfied = sinceAck >= kLoadingActorFallbackMs;
+        if (quietWindowSatisfied || fallbackWaitSatisfied) {
+            if (!quietWindowSatisfied && fallbackWaitSatisfied) {
+                DbgLog("[GameMode] finishing map loading after actor wait timeout world='%s' sinceAck=%u sinceActor=%u runtime=%zu pos=%zu\n",
+                    mode.m_rswName,
+                    static_cast<unsigned int>(sinceAck),
+                    static_cast<unsigned int>(sinceActor),
+                    mode.m_runtimeActors.size(),
+                    mode.m_actorPosList.size());
+            }
             FinishMapLoading(mode);
         }
         return;

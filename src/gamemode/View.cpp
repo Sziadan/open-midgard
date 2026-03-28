@@ -32,6 +32,20 @@ struct ViewPerfStats {
 
 ViewPerfStats g_viewPerfStats;
 
+bool IsWalkableAttrCell(const C3dAttr* attr, int attrX, int attrY)
+{
+    if (!attr || attrX < 0 || attrY < 0 || attrX >= attr->m_width || attrY >= attr->m_height || attr->m_cells.empty()) {
+        return false;
+    }
+
+    const size_t cellIndex = static_cast<size_t>(attrY) * static_cast<size_t>(attr->m_width) + static_cast<size_t>(attrX);
+    if (cellIndex >= attr->m_cells.size()) {
+        return false;
+    }
+
+    return attr->m_cells[cellIndex].flag == 0;
+}
+
 CView::CameraConstraints DefaultCameraConstraints()
 {
     return CView::CameraConstraints{
@@ -653,7 +667,7 @@ void CView::OnRender()
     const DWORD groundEnd = GetTickCount();
 
     const DWORD hoverStart = groundEnd;
-    if (m_hoverAttrX >= 0 && m_hoverAttrY >= 0) {
+    if (m_hoverAttrX >= 0 && m_hoverAttrY >= 0 && IsWalkableAttrCell(m_world->m_attr, m_hoverAttrX, m_hoverAttrY)) {
         m_world->m_ground->RenderAttrTile(m_viewMatrix, m_hoverAttrX, m_hoverAttrY, 0x70FFFFFFu);
     }
     const DWORD hoverEnd = GetTickCount();

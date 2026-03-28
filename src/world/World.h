@@ -290,6 +290,7 @@ public:
         CItem** outItem,
         int* outLabelX,
         int* outLabelY) const;
+    bool HasWarpAtAttrCell(int attrX, int attrY) const;
     void RenderBackgroundObjects(const matrix& viewMatrix) const;
 };
 

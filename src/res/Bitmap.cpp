@@ -1,5 +1,6 @@
 #include "Bitmap.h"
 #include "DebugLog.h"
+#include "core/File.h"
 
 #include <gdiplus.h>
 #include <objidl.h>
@@ -385,6 +386,28 @@ bool LoadImageFromMemory(const unsigned char* buffer, int size, int& outW, int& 
     return true;
 }
 
+std::string ResolveAlphaBitmapPath(const char* fName)
+{
+    if (!fName || !*fName) {
+        return std::string();
+    }
+
+    std::string path(fName);
+    std::replace(path.begin(), path.end(), '/', '\\');
+    const size_t dot = path.find_last_of('.');
+    if (dot == std::string::npos) {
+        return std::string();
+    }
+
+    std::string stem = path.substr(0, dot);
+    if (stem.size() >= 2 && _stricmp(stem.c_str() + stem.size() - 2, "_a") == 0) {
+        return std::string();
+    }
+
+    const std::string alphaPath = stem + "_a.bmp";
+    return g_fileMgr.IsDataExist(alphaPath.c_str()) ? alphaPath : std::string();
+}
+
 bool ReadTgaPixel(const unsigned char* src, int bytesPerPixel, u32* outColor)
 {
     if (!src || !outColor) {
@@ -500,6 +523,12 @@ bool CBitmapRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, 
         const bool isGravity = HasRange(size, 0, 12)
             && std::memcmp(buffer, kGravityBmpSignature, sizeof(kGravityBmpSignature)) == 0;
         const bool loaded = LoadBMPData(buffer, size);
+        if (loaded) {
+            const std::string alphaPath = ResolveAlphaBitmapPath(fName);
+            if (!alphaPath.empty() && SetAlphaWithBMP(alphaPath.c_str())) {
+                m_isAlpha = 1;
+            }
+        }
         if (loaded && ShouldLogGroundBitmap(fName)) {
             LogBitmapSamples(fName, isGravity ? "gravity-bmp" : "standard-bmp", *this);
         }

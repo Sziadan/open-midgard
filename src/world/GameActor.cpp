@@ -1,5 +1,6 @@
 #include "GameActor.h"
 #include "MsgEffect.h"
+#include "RagEffect.h"
 #include "World.h"
 #include "audio/Audio.h"
 #include "core/ClientInfoLocale.h"
@@ -1578,6 +1579,9 @@ bool DrawNonPcBillboard(CDCBitmap& bitmap,
     CActRes* actRes = nullptr;
     CSprRes* sprRes = nullptr;
     if (!ResolveCachedNonPcResourcesForActor(const_cast<CPc&>(actor), &actRes, &sprRes)) {
+        if (IsPortalFallbackJob(actor.m_job)) {
+            return false;
+        }
         return DrawWarpPortalFallback(bitmap, actor, outJob);
     }
 
@@ -2092,8 +2096,60 @@ void CRenderObject::SetRenderInfo(RENDER_INFO_RECT* rect, float f1, float f2) {
 void CRenderObject::SetTlvert(float x, float y) {
 }
 
+CAbleToMakeEffect::CAbleToMakeEffect()
+    : m_efId(0)
+    , m_Sk_Level(0)
+    , m_isLoop(0)
+    , m_beginSpellEffect(nullptr)
+    , m_magicTargetEffect(nullptr)
+{
+}
+
+CAbleToMakeEffect::~CAbleToMakeEffect()
+{
+    DetachEffects();
+}
+
+CRagEffect* CAbleToMakeEffect::LaunchEffect(int effectId, vector3d deltaPos, float fRot)
+{
+    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+    if (!gameMode || !gameMode->m_world) {
+        return nullptr;
+    }
+
+    const float sinDeg = std::sin(fRot * (3.14159265f / 180.0f));
+    const float cosDeg = std::cos(fRot * (3.14159265f / 180.0f));
+    const vector3d rotatedDelta = {
+        deltaPos.x * cosDeg - deltaPos.z * sinDeg,
+        deltaPos.y,
+        deltaPos.z * cosDeg + deltaPos.x * sinDeg
+    };
+
+    CRagEffect* effect = new CRagEffect();
+    if (!effect) {
+        return nullptr;
+    }
+
+    effect->Init(this, effectId, rotatedDelta);
+    gameMode->m_world->m_gameObjectList.push_back(effect);
+    m_effectList.push_back(effect);
+    return effect;
+}
+
+void CAbleToMakeEffect::DetachEffects()
+{
+    for (CRagEffect* effect : m_effectList) {
+        if (effect) {
+            effect->DetachFromMaster();
+        }
+    }
+    m_beginSpellEffect = nullptr;
+    m_magicTargetEffect = nullptr;
+}
+
 CGameActor::~CGameActor()
 {
+    DetachEffects();
     for (CMsgEffect* effect : m_msgEffectList) {
         if (!effect) {
             continue;

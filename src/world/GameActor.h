@@ -165,6 +165,12 @@ public:
 
 class CAbleToMakeEffect : public CRenderObject {
 public:
+    CAbleToMakeEffect();
+    virtual ~CAbleToMakeEffect();
+
+    CRagEffect* LaunchEffect(int effectId, vector3d deltaPos = vector3d{ 0.0f, 0.0f, 0.0f }, float fRot = 0.0f);
+    void DetachEffects();
+
     int m_efId;
     int m_Sk_Level;
     int m_isLoop;
