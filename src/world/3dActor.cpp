@@ -659,10 +659,14 @@ void C3dNode::Render(const matrix& parentWorld, const matrix& viewMatrix, bool f
             renderFace->cullMode = D3DCULL_NONE;
             renderFace->srcAlphaMode = D3DBLEND_SRCALPHA;
             renderFace->destAlphaMode = D3DBLEND_INVSRCALPHA;
+            renderFace->alphaSortKey = 0.0f;
 
             const bool isAlpha = ((projected[0].color >> 24) & 0xFFu) < 0xFFu
                 || ((projected[1].color >> 24) & 0xFFu) < 0xFFu
                 || ((projected[2].color >> 24) & 0xFFu) < 0xFFu;
+            if (isAlpha) {
+                renderFace->alphaSortKey = (std::max)(projected[0].oow, (std::max)(projected[1].oow, projected[2].oow));
+            }
             g_renderer.AddRP(renderFace, isAlpha ? 1 : 0);
         }
     }

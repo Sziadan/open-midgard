@@ -2163,14 +2163,26 @@ bool BuildBillboardRenderEntry(CPc* actor,
         AddVec3(AddVec3(actor->m_pos, ScaleVec3(renderUp, -fullBottomUnits)), ScaleVec3(renderRight, -fullLeftUnits)),
         AddVec3(AddVec3(actor->m_pos, ScaleVec3(renderUp, -fullBottomUnits)), ScaleVec3(renderRight, fullRightUnits)),
     };
-    const vector3d fullDepthVerts[4] = {
-        AddVec3(AddVec3(actor->m_pos, ScaleVec3(depthUp, fullTopUnits)), ScaleVec3(depthRight, -fullLeftUnits)),
-        AddVec3(AddVec3(actor->m_pos, ScaleVec3(depthUp, fullTopUnits)), ScaleVec3(depthRight, fullRightUnits)),
-        AddVec3(AddVec3(actor->m_pos, ScaleVec3(depthUp, -fullBottomUnits)), ScaleVec3(depthRight, -fullLeftUnits)),
-        AddVec3(AddVec3(actor->m_pos, ScaleVec3(depthUp, -fullBottomUnits)), ScaleVec3(depthRight, fullRightUnits)),
-    };
+    const vector3d fullDepthTopCenter = AddVec3(actor->m_pos, ScaleVec3(depthUp, fullTopUnits));
+    const vector3d fullDepthBottomCenter = AddVec3(actor->m_pos, ScaleVec3(depthUp, -fullBottomUnits));
+    tlvertex3d projectedDepthTop{};
+    {
+        const vector3d depthBiasedTop = AddVec3(
+            AddVec3(fullDepthTopCenter, ScaleVec3(flatForward, -depthBiasWorld)),
+            ScaleVec3(eyeForward, -(depthBiasWorld * kPlayerBillboardTopDepthForwardBiasScale)));
+        if (!ProjectPoint(g_renderer, viewMatrix, depthBiasedTop, &projectedDepthTop)) {
+            projectedDepthTop = projectedDepthBase;
+        }
+    }
+    tlvertex3d projectedDepthBottom{};
+    {
+        const vector3d depthBiasedBottom = AddVec3(fullDepthBottomCenter, ScaleVec3(flatForward, -depthBiasWorld));
+        if (!ProjectPoint(g_renderer, viewMatrix, depthBiasedBottom, &projectedDepthBottom)) {
+            projectedDepthBottom = projectedBase;
+        }
+    }
 
-    float minRenderOow = projectedDepthBase.oow;
+    float minRenderOow = (std::min)(projectedDepthTop.oow, projectedDepthBottom.oow);
     for (int index = 0; index < 4; ++index) {
         const vector3d& renderVert = fullRenderVerts[index];
         tlvertex3d projected{};
@@ -2179,19 +2191,9 @@ bool BuildBillboardRenderEntry(CPc* actor,
         }
         outEntry->renderX[index] = projected.x;
         outEntry->renderY[index] = projected.y;
-        tlvertex3d projectedDepth{};
-        const float topForwardBiasWorld = index < 2
-            ? depthBiasWorld * kPlayerBillboardTopDepthForwardBiasScale
-            : 0.0f;
-        const vector3d depthBiasedVert = AddVec3(
-            AddVec3(fullDepthVerts[index], ScaleVec3(flatForward, -depthBiasWorld)),
-            ScaleVec3(eyeForward, -topForwardBiasWorld));
-        if (!ProjectPoint(g_renderer, viewMatrix, depthBiasedVert, &projectedDepth)) {
-            projectedDepth = projected;
-        }
+        const tlvertex3d& projectedDepth = index < 2 ? projectedDepthTop : projectedDepthBottom;
         outEntry->renderZ[index] = projectedDepth.z;
         outEntry->renderOow[index] = projectedDepth.oow;
-        minRenderOow = (std::min)(minRenderOow, projectedDepth.oow);
     }
 
     outEntry->actor = actor;
