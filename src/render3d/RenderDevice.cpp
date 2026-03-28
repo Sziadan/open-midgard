@@ -783,9 +783,9 @@ struct VSInputLM {
 
 struct VSOutput {
     float4 pos : SV_Position;
-    float4 color : COLOR0;
-    float2 uv0 : TEXCOORD0;
-    float2 uv1 : TEXCOORD1;
+    noperspective float4 color : COLOR0;
+    noperspective float2 uv0 : TEXCOORD0;
+    noperspective float2 uv1 : TEXCOORD1;
 };
 
 VSOutput VSMainTL(VSInputTL input)
@@ -1806,6 +1806,7 @@ private:
     struct BlendStateEntry { D3D11_BLEND_DESC desc; ID3D11BlendState* state; };
     struct DepthStateEntry { D3D11_DEPTH_STENCIL_DESC desc; ID3D11DepthStencilState* state; };
     struct RasterizerStateEntry { D3D11_RASTERIZER_DESC desc; ID3D11RasterizerState* state; };
+    struct SamplerStateEntry { D3D11_SAMPLER_DESC desc; ID3D11SamplerState* state; };
 
     bool CreateDepthStencilResources()
     {
@@ -2104,6 +2105,10 @@ private:
             SafeRelease(entry.state);
         }
         m_rasterizerStates.clear();
+        for (SamplerStateEntry& entry : m_samplerStates) {
+            SafeRelease(entry.state);
+        }
+        m_samplerStates.clear();
     }
 
     void ApplyViewport()
@@ -2189,6 +2194,37 @@ private:
             return nullptr;
         }
         m_rasterizerStates.push_back({ desc, state });
+        return state;
+    }
+
+    ID3D11SamplerState* GetSamplerState()
+    {
+        const ModernTextureStageState& stage0 = m_pipelineState.textureStages[0];
+        D3D11_SAMPLER_DESC desc{};
+        desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+        desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+        desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+        desc.MaxLOD = D3D11_FLOAT32_MAX;
+
+        const bool pointSample = stage0.minFilter == D3DTFN_POINT || stage0.magFilter == D3DTFG_POINT;
+        const bool linearMip = stage0.mipFilter == D3DTFP_LINEAR;
+        if (pointSample) {
+            desc.Filter = linearMip ? D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR : D3D11_FILTER_MIN_MAG_MIP_POINT;
+        } else {
+            desc.Filter = linearMip ? D3D11_FILTER_MIN_MAG_MIP_LINEAR : D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+        }
+
+        for (SamplerStateEntry& entry : m_samplerStates) {
+            if (std::memcmp(&entry.desc, &desc, sizeof(desc)) == 0) {
+                return entry.state;
+            }
+        }
+
+        ID3D11SamplerState* state = nullptr;
+        if (FAILED(m_device->CreateSamplerState(&desc, &state)) || !state) {
+            return nullptr;
+        }
+        m_samplerStates.push_back({ desc, state });
         return state;
     }
 
@@ -2310,7 +2346,11 @@ private:
         m_context->PSSetShader(m_pixelShader, nullptr, 0);
         m_context->VSSetConstantBuffers(0, 1, &m_constantBuffer);
         m_context->PSSetConstantBuffers(0, 1, &m_constantBuffer);
-        m_context->PSSetSamplers(0, 1, &m_samplerState);
+        ID3D11SamplerState* samplerState = GetSamplerState();
+        if (!samplerState) {
+            return;
+        }
+        m_context->PSSetSamplers(0, 1, &samplerState);
         m_context->PSSetShaderResources(0, 2, textureViews);
 
         const float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -2753,6 +2793,7 @@ private:
     std::vector<BlendStateEntry> m_blendStates;
     std::vector<DepthStateEntry> m_depthStates;
     std::vector<RasterizerStateEntry> m_rasterizerStates;
+    std::vector<SamplerStateEntry> m_samplerStates;
     HDC m_captureDc;
     HBITMAP m_captureBitmap;
     void* m_captureBits;
@@ -5817,6 +5858,14 @@ private:
             vkDestroyPipelineLayout(m_device, m_postPipelineLayout, nullptr);
             m_postPipelineLayout = VK_NULL_HANDLE;
         }
+        if (m_device != VK_NULL_HANDLE) {
+            for (const SamplerCacheEntry& entry : m_samplerCache) {
+                if (entry.sampler != VK_NULL_HANDLE) {
+                    vkDestroySampler(m_device, entry.sampler, nullptr);
+                }
+            }
+            m_samplerCache.clear();
+        }
         if (m_device != VK_NULL_HANDLE && m_sampler != VK_NULL_HANDLE) {
             vkDestroySampler(m_device, m_sampler, nullptr);
             m_sampler = VK_NULL_HANDLE;
@@ -6623,8 +6672,55 @@ private:
     struct TextureDescriptorCacheEntry {
         VkImageView texture0View;
         VkImageView texture1View;
+        VkSampler sampler;
         VkDescriptorSet descriptorSet;
     };
+
+    struct SamplerCacheEntry {
+        VkFilter minFilter;
+        VkFilter magFilter;
+        VkSamplerMipmapMode mipmapMode;
+        VkSampler sampler;
+    };
+
+    VkSampler GetSamplerState()
+    {
+        const ModernTextureStageState& stage0 = m_pipelineState.textureStages[0];
+        const bool pointSample = stage0.minFilter == D3DTFN_POINT || stage0.magFilter == D3DTFG_POINT;
+        const VkFilter filter = pointSample ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+        const VkSamplerMipmapMode mipmapMode = stage0.mipFilter == D3DTFP_LINEAR
+            ? VK_SAMPLER_MIPMAP_MODE_LINEAR
+            : VK_SAMPLER_MIPMAP_MODE_NEAREST;
+
+        for (const SamplerCacheEntry& entry : m_samplerCache) {
+            if (entry.minFilter == filter
+                && entry.magFilter == filter
+                && entry.mipmapMode == mipmapMode) {
+                return entry.sampler;
+            }
+        }
+
+        VkSamplerCreateInfo samplerInfo{};
+        samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        samplerInfo.magFilter = filter;
+        samplerInfo.minFilter = filter;
+        samplerInfo.mipmapMode = mipmapMode;
+        samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        samplerInfo.minLod = 0.0f;
+        samplerInfo.maxLod = 0.0f;
+        samplerInfo.anisotropyEnable = VK_FALSE;
+        samplerInfo.maxAnisotropy = 1.0f;
+
+        VkSampler sampler = VK_NULL_HANDLE;
+        if (vkCreateSampler(m_device, &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+            return VK_NULL_HANDLE;
+        }
+
+        m_samplerCache.push_back({ filter, filter, mipmapMode, sampler });
+        return sampler;
+    }
 
     VkDescriptorSet AllocateTextureDescriptorSet()
     {
@@ -6650,12 +6746,15 @@ private:
 
     VkDescriptorSet GetOrCreateTextureDescriptorSet(VkImageView texture0View, VkImageView texture1View)
     {
-        if (texture0View == VK_NULL_HANDLE || texture1View == VK_NULL_HANDLE) {
+        const VkSampler sampler = GetSamplerState();
+        if (texture0View == VK_NULL_HANDLE || texture1View == VK_NULL_HANDLE || sampler == VK_NULL_HANDLE) {
             return VK_NULL_HANDLE;
         }
 
         for (const TextureDescriptorCacheEntry& entry : m_descriptorSetCache) {
-            if (entry.texture0View == texture0View && entry.texture1View == texture1View) {
+            if (entry.texture0View == texture0View
+                && entry.texture1View == texture1View
+                && entry.sampler == sampler) {
                 return entry.descriptorSet;
             }
         }
@@ -6671,7 +6770,7 @@ private:
         imageInfos[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         imageInfos[1].imageView = texture1View;
         VkDescriptorImageInfo samplerInfo{};
-        samplerInfo.sampler = m_sampler;
+        samplerInfo.sampler = sampler;
 
         VkWriteDescriptorSet descriptorWrites[3]{};
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -6694,7 +6793,7 @@ private:
         descriptorWrites[2].pImageInfo = &samplerInfo;
         vkUpdateDescriptorSets(m_device, static_cast<uint32_t>(std::size(descriptorWrites)), descriptorWrites, 0, nullptr);
 
-        m_descriptorSetCache.push_back({ texture0View, texture1View, descriptorSet });
+        m_descriptorSetCache.push_back({ texture0View, texture1View, sampler, descriptorSet });
         return descriptorSet;
     }
 
@@ -8426,6 +8525,7 @@ private:
     std::vector<VkFramebuffer> m_framebuffers;
     std::vector<VkCommandBuffer> m_commandBuffers;
     std::vector<TextureDescriptorCacheEntry> m_descriptorSetCache;
+    std::vector<SamplerCacheEntry> m_samplerCache;
     std::vector<PipelineEntry> m_pipelines;
     std::vector<UploadPage> m_vertexUploadPages;
     std::vector<UploadPage> m_indexUploadPages;

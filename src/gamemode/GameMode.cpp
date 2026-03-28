@@ -685,8 +685,10 @@ bool QueueCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
         return false;
     }
 
-    const float right = static_cast<float>(left + kCursorTextureSize) - 0.5f;
-    const float bottom = static_cast<float>(top + kCursorTextureSize) - 0.5f;
+    const float quadLeft = static_cast<float>(left);
+    const float quadTop = static_cast<float>(top);
+    const float right = static_cast<float>(left + kCursorTextureSize);
+    const float bottom = static_cast<float>(top + kCursorTextureSize);
     const unsigned int overlayContentWidth = s_cursorTexture->m_surfaceUpdateWidth > 0 ? s_cursorTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(kCursorTextureSize);
     const unsigned int overlayContentHeight = s_cursorTexture->m_surfaceUpdateHeight > 0 ? s_cursorTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(kCursorTextureSize);
     const float maxU = s_cursorTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_cursorTexture->m_w) : 1.0f;
@@ -704,9 +706,9 @@ bool QueueCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
     face->alphaSortKey = 2.0f;
 
-    face->m_verts[0] = { static_cast<float>(left) - 0.5f, static_cast<float>(top) - 0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
-    face->m_verts[1] = { right, static_cast<float>(top) - 0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
-    face->m_verts[2] = { static_cast<float>(left) - 0.5f, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
+    face->m_verts[0] = { quadLeft, quadTop, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+    face->m_verts[1] = { right, quadTop, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
+    face->m_verts[2] = { quadLeft, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
     face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
     g_renderer.AddRP(face, 1 | 8);
     return true;
@@ -1046,17 +1048,11 @@ void ApplyEnemyCursorMagnet(CGameMode& mode, POINT* cursorPos)
         return;
     }
 
-    POINT adjustedClientPos{ cursorPos->x + moveX, cursorPos->y + moveY };
-    POINT adjustedScreenPos = adjustedClientPos;
-    if (!ClientToScreen(g_hMainWnd, &adjustedScreenPos)) {
-        return;
-    }
-
-    if (!SetCursorPos(adjustedScreenPos.x, adjustedScreenPos.y)) {
-        return;
-    }
-
-    *cursorPos = adjustedClientPos;
+    // Keep the magnet as a logical gameplay assist only. Moving the real OS
+    // cursor every frame causes heavy WM_MOUSEMOVE churn and tanks perf once
+    // moving targets start dragging the cursor around.
+    cursorPos->x += moveX;
+    cursorPos->y += moveY;
 }
 
 void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc)
@@ -1616,6 +1612,11 @@ void UpdateGameplayCursor(CGameMode& mode)
     }
 
     if (!mode.m_world || !mode.m_view) {
+        SetModeCursorAction(mode, CursorAction::Arrow);
+        return;
+    }
+
+    if (g_windowMgr.HasWindowAtPoint(mode.m_oldMouseX, mode.m_oldMouseY)) {
         SetModeCursorAction(mode, CursorAction::Arrow);
         return;
     }
@@ -5889,7 +5890,7 @@ int  CGameMode::OnRun() {
     DWORD uiDrawStart = renderPrepEnd;
     DWORD uiDrawEnd = renderPrepEnd;
     bool queuedModernOverlayFrame = false;
-    if (!hasLegacyDevice && isVulkanBackend) {
+    if (!hasLegacyDevice) {
         uiDrawStart = GetTickCount();
         queuedModernOverlayFrame = QueueModernOverlayQuad(*this, m_cursorActNum, m_mouseAnimStartTick);
         QueueRoMapOverlayQuad();
@@ -5948,11 +5949,6 @@ int  CGameMode::OnRun() {
         }
     } else {
         bool composedModernOverlayFrame = queuedModernOverlayFrame;
-        if (!isVulkanBackend) {
-            uiDrawStart = GetTickCount();
-            composedModernOverlayFrame = ComposeModernOverlayFrame(*this, m_cursorActNum, m_mouseAnimStartTick);
-            uiDrawEnd = GetTickCount();
-        }
         const DWORD flipStart = GetTickCount();
         g_renderer.Flip(false);
         const DWORD flipEnd = GetTickCount();

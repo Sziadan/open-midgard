@@ -331,8 +331,26 @@ bool DrawCursorMotionToHdc(HDC hdc, int x, int y, CSprRes* sprRes, const CMotion
     blend.SourceConstantAlpha = 255;
     blend.AlphaFormat = AC_SRC_ALPHA;
 
+    // Cursor ACT motions are authored around a hotspot-relative local origin.
+    // When the motion bounds start entirely in positive space, placing the
+    // bitmap at `x + bounds.left/y + bounds.top` shifts the visible cursor
+    // away from the real OS cursor. Clamp that authored positive offset back
+    // out so the software cursor lands on the same hotspot.
+    const int hotspotOffsetX = (std::max)(0, static_cast<int>(bounds.left));
+    const int hotspotOffsetY = (std::max)(0, static_cast<int>(bounds.top));
+
     HGDIOBJ oldBitmap = SelectObject(memDc, dib);
-    AlphaBlend(hdc, x + bounds.left, y + bounds.top, width, height, memDc, 0, 0, width, height, blend);
+    AlphaBlend(hdc,
+        x + bounds.left - hotspotOffsetX,
+        y + bounds.top - hotspotOffsetY,
+        width,
+        height,
+        memDc,
+        0,
+        0,
+        width,
+        height,
+        blend);
     SelectObject(memDc, oldBitmap);
     DeleteDC(memDc);
     DeleteObject(dib);

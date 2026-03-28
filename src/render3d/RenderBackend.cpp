@@ -20,6 +20,46 @@ constexpr char kRenderBackendRegPath[] = "Software\\Gravity Soft\\Ragnarok Onlin
 constexpr char kRenderBackendValueName[] = "RenderBackend";
 constexpr RenderBackendType kDefaultConfiguredBackend = RenderBackendType::Direct3D11;
 
+bool IsBackendAllowedOnCurrentBuild(RenderBackendType backend)
+{
+#if defined(_WIN64)
+    return backend != RenderBackendType::LegacyDirect3D7;
+#else
+    return true;
+#endif
+}
+
+RenderBackendType GetFallbackBackendForCurrentBuild()
+{
+    constexpr RenderBackendType kOrderedCandidates[] = {
+        RenderBackendType::Direct3D11,
+        RenderBackendType::Direct3D12,
+        RenderBackendType::Vulkan,
+        RenderBackendType::LegacyDirect3D7,
+    };
+
+    for (RenderBackendType candidate : kOrderedCandidates) {
+        if (IsBackendAllowedOnCurrentBuild(candidate)
+            && IsRenderBackendImplemented(candidate)
+            && IsRenderBackendSupported(candidate)) {
+            return candidate;
+        }
+    }
+
+    return kDefaultConfiguredBackend;
+}
+
+RenderBackendType NormalizeBackendForCurrentBuild(RenderBackendType backend)
+{
+    if (IsBackendAllowedOnCurrentBuild(backend)
+        && IsRenderBackendImplemented(backend)
+        && IsRenderBackendSupported(backend)) {
+        return backend;
+    }
+
+    return GetFallbackBackendForCurrentBuild();
+}
+
 template <typename T>
 void SafeRelease(T*& value)
 {
@@ -56,6 +96,9 @@ RenderBackendType ParseRenderBackendName(const char* value)
 
     if (std::strcmp(normalized, "dx11") == 0 || std::strcmp(normalized, "d3d11") == 0 || std::strcmp(normalized, "direct3d11") == 0) {
         return RenderBackendType::Direct3D11;
+    }
+    if (std::strcmp(normalized, "dx7") == 0 || std::strcmp(normalized, "d3d7") == 0 || std::strcmp(normalized, "direct3d7") == 0) {
+        return RenderBackendType::LegacyDirect3D7;
     }
     if (std::strcmp(normalized, "dx12") == 0 || std::strcmp(normalized, "d3d12") == 0 || std::strcmp(normalized, "direct3d12") == 0) {
         return RenderBackendType::Direct3D12;
@@ -189,6 +232,10 @@ bool IsRenderBackendImplemented(RenderBackendType backend)
 
 bool IsRenderBackendSupported(RenderBackendType backend)
 {
+    if (!IsBackendAllowedOnCurrentBuild(backend)) {
+        return false;
+    }
+
     switch (backend) {
     case RenderBackendType::LegacyDirect3D7:
         return true;
@@ -241,7 +288,7 @@ RenderBackendType GetConfiguredRenderBackend()
         return kDefaultConfiguredBackend;
     }
 
-    return static_cast<RenderBackendType>(rawValue);
+    return NormalizeBackendForCurrentBuild(static_cast<RenderBackendType>(rawValue));
 }
 
 bool SetConfiguredRenderBackend(RenderBackendType backend)
@@ -251,6 +298,7 @@ bool SetConfiguredRenderBackend(RenderBackendType backend)
         return false;
     }
 
+    backend = NormalizeBackendForCurrentBuild(backend);
     const DWORD rawValue = static_cast<DWORD>(backend);
     const LONG status = RegSetValueExA(
         key,
@@ -270,7 +318,7 @@ RenderBackendType GetRequestedRenderBackend()
     if (length == 0 || length >= sizeof(buffer)) {
         return GetConfiguredRenderBackend();
     }
-    return ParseRenderBackendName(buffer);
+    return NormalizeBackendForCurrentBuild(ParseRenderBackendName(buffer));
 }
 
 bool InitializeRenderBackend(HWND hwnd, RenderBackendBootstrapResult* outResult)

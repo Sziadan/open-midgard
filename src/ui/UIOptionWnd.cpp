@@ -328,7 +328,7 @@ RenderBackendType NormalizeSelectableBackend(RenderBackendType backend)
         }
     }
 
-    return RenderBackendType::LegacyDirect3D7;
+    return RenderBackendType::Direct3D11;
 }
 
 const char* GetWindowModeName(WindowMode mode)
@@ -610,7 +610,7 @@ std::vector<RenderBackendType> UIOptionWnd::GetSupportedRenderBackends() const
         }
     }
     if (backends.empty()) {
-        backends.push_back(RenderBackendType::LegacyDirect3D7);
+        backends.push_back(RenderBackendType::Direct3D11);
     }
     return backends;
 }

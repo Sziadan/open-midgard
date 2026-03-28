@@ -421,7 +421,7 @@ void CRenderer::AddRP(RPFace* face, int renderFlag) {
         if ((renderFlag & 8) && (renderFlag & 4)) {
             m_rpAlphaOPNoDepthList.push_back({sortKey, face});
         } else if (renderFlag & 4) {
-            m_rpAlphaOPList.push_back({sortKey, face});
+            m_rpAlphaOPList.push_back(face);
         } else if (renderFlag & 2) { // Emissive
             m_rpEmissiveList.push_back({sortKey, face});
         } else if (renderFlag & 8) {
@@ -668,17 +668,13 @@ void CRenderer::FlushRenderList() {
     };
 
     std::vector<BlendedFaceEntry> blendedFaces;
-    blendedFaces.reserve(m_rpAlphaList.size() + m_rpEmissiveList.size() + m_rpAlphaOPList.size());
+    blendedFaces.reserve(m_rpAlphaList.size() + m_rpEmissiveList.size());
     for (auto& pair : m_rpAlphaList) {
         blendedFaces.push_back({ pair.first, pair.second, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA });
     }
     for (auto& pair : m_rpEmissiveList) {
         blendedFaces.push_back({ pair.first, pair.second, D3DBLEND_ONE, D3DBLEND_ONE });
     }
-    for (auto& pair : m_rpAlphaOPList) {
-        blendedFaces.push_back({ pair.first, pair.second, pair.second->srcAlphaMode, pair.second->destAlphaMode });
-    }
-
     std::stable_sort(blendedFaces.begin(), blendedFaces.end(), [](const BlendedFaceEntry& a, const BlendedFaceEntry& b) {
         return a.sortKey < b.sortKey; // Sort back-to-front using oow: smaller is farther.
     });
@@ -704,6 +700,34 @@ void CRenderer::FlushRenderList() {
     if (activeDestBlend != D3DBLEND_INVSRCALPHA) {
         m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
     }
+
+    // Reference parity: AlphaOP faces are submitted in insertion order rather than
+    // being depth-sorted together with the generic alpha/emissive lists.
+    int activeAlphaOpMtPreset = 0;
+    for (RPFace* face : m_rpAlphaOPList) {
+        if (!face) {
+            continue;
+        }
+        if (face->mtPreset != activeAlphaOpMtPreset) {
+            SetMultiTextureMode(face->mtPreset);
+            activeAlphaOpMtPreset = face->mtPreset;
+        }
+        SetTexture(face->tex);
+        if (face->srcAlphaMode != activeSrcBlend) {
+            m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, face->srcAlphaMode);
+            activeSrcBlend = face->srcAlphaMode;
+        }
+        if (face->destAlphaMode != activeDestBlend) {
+            m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, face->destAlphaMode);
+            activeDestBlend = face->destAlphaMode;
+        }
+        RPFace::DrawPri(face, *m_renderDevice);
+    }
+
+    // Reference parity: no-depth alpha draws run with the standard alpha blend
+    // state, not whatever blend the last AlphaOP face happened to use.
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
     std::stable_sort(m_rpAlphaNoDepthList.begin(), m_rpAlphaNoDepthList.end(), [](const std::pair<float, RPFace*>& a, const std::pair<float, RPFace*>& b) {
         return a.first < b.first;

@@ -11,6 +11,9 @@ struct ModernTextureStageState {
     DWORD alphaArg1;
     DWORD alphaOp;
     DWORD alphaArg2;
+    DWORD minFilter;
+    DWORD magFilter;
+    DWORD mipFilter;
 };
 
 struct ModernFixedFunctionState {

@@ -204,7 +204,7 @@ public:
     std::vector<RPRaw*> m_rpRawList;
     std::vector<RPRaw*> m_rpRawAlphaList;
     std::vector<RPRaw*> m_rpRawEmissiveList;
-    std::vector<std::pair<float, RPFace*>> m_rpAlphaOPList;
+    std::vector<RPFace*> m_rpAlphaOPList;
     std::vector<std::pair<float, RPFace*>> m_rpAlphaOPNoDepthList;
     std::vector<RPLmFace*> m_rpLmList;
     std::vector<RPLmFace*> m_rpBumpFaceList;

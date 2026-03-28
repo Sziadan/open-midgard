@@ -53,6 +53,9 @@ void ApplyModernTextureStageState(ModernFixedFunctionState* state, DWORD stage, 
     case D3DTSS_ALPHAARG1: stageState.alphaArg1 = value; break;
     case D3DTSS_ALPHAOP: stageState.alphaOp = value; break;
     case D3DTSS_ALPHAARG2: stageState.alphaArg2 = value; break;
+    case D3DTSS_MINFILTER: stageState.minFilter = value; break;
+    case D3DTSS_MAGFILTER: stageState.magFilter = value; break;
+    case D3DTSS_MIPFILTER: stageState.mipFilter = value; break;
     default: break;
     }
 }
@@ -63,8 +66,8 @@ void ResetModernTextureStageStates(ModernTextureStageState states[2])
         return;
     }
 
-    states[0] = { 0, D3DTA_TEXTURE, D3DTOP_MODULATE, D3DTA_DIFFUSE, D3DTA_TEXTURE, D3DTOP_MODULATE, D3DTA_DIFFUSE };
-    states[1] = { 1, D3DTA_TEXTURE, D3DTOP_DISABLE, D3DTA_CURRENT, D3DTA_TEXTURE, D3DTOP_DISABLE, D3DTA_CURRENT };
+    states[0] = { 0, D3DTA_TEXTURE, D3DTOP_MODULATE, D3DTA_DIFFUSE, D3DTA_TEXTURE, D3DTOP_MODULATE, D3DTA_DIFFUSE, D3DTFN_LINEAR, D3DTFG_LINEAR, D3DTFP_POINT };
+    states[1] = { 1, D3DTA_TEXTURE, D3DTOP_DISABLE, D3DTA_CURRENT, D3DTA_TEXTURE, D3DTOP_DISABLE, D3DTA_CURRENT, D3DTFN_LINEAR, D3DTFG_LINEAR, D3DTFP_POINT };
 }
 
 unsigned int BuildModernDrawFlags(DWORD vertexFormat,

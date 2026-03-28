@@ -446,7 +446,37 @@ bool QueueMenuCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
         s_cursorStateToken = cursorStateToken;
     }
 
-    return QueueRectOverlayQuad(s_cursorTexture, left, top, kCursorTextureSize, kCursorTextureSize, 2.0f, 3);
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return false;
+    }
+
+    const unsigned int overlayContentWidth = s_cursorTexture->m_surfaceUpdateWidth > 0 ? s_cursorTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(kCursorTextureSize);
+    const unsigned int overlayContentHeight = s_cursorTexture->m_surfaceUpdateHeight > 0 ? s_cursorTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(kCursorTextureSize);
+    const float maxU = s_cursorTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_cursorTexture->m_w) : 1.0f;
+    const float maxV = s_cursorTexture->m_h != 0 ? static_cast<float>(overlayContentHeight) / static_cast<float>(s_cursorTexture->m_h) : 1.0f;
+    const float quadLeft = static_cast<float>(left);
+    const float quadTop = static_cast<float>(top);
+    const float quadRight = static_cast<float>(left + kCursorTextureSize);
+    const float quadBottom = static_cast<float>(top + kCursorTextureSize);
+
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = s_cursorTexture;
+    face->mtPreset = 3;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = 2.0f;
+    face->m_verts[0] = { quadLeft, quadTop, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+    face->m_verts[1] = { quadRight, quadTop, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
+    face->m_verts[2] = { quadLeft, quadBottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
+    face->m_verts[3] = { quadRight, quadBottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
+    g_renderer.AddRP(face, 1 | 8);
+    return true;
 }
 
 } // namespace
@@ -537,7 +567,7 @@ void CLoginMode::OnUpdate() {
     g_windowMgr.OnProcess();
     const bool hasLegacyDevice = GetRenderDevice().GetLegacyDevice() != nullptr;
     const bool isVulkanBackend = GetRenderDevice().GetBackendType() == RenderBackendType::Vulkan;
-    if (!hasLegacyDevice && isVulkanBackend) {
+    if (!hasLegacyDevice) {
         g_windowMgr.SetComposeCursorState(m_cursorActNum, m_mouseAnimStartTick, false);
         g_renderer.ClearBackground();
         g_renderer.Clear(0);

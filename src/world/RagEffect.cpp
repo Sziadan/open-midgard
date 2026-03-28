@@ -352,6 +352,8 @@ void SubmitWorldTeiRect(const vector3d& vec1,
     const matrix& viewMatrix,
     CTexture* texture,
     unsigned int color,
+    float tv0,
+    float tv1,
     D3DBLEND destBlend,
     float alphaSortKey,
     int renderFlags)
@@ -364,8 +366,8 @@ void SubmitWorldTeiRect(const vector3d& vec1,
         const vector3d* positions[3];
         float uvs[3][2];
     } triangles[2] = {
-        { { &vec1, &vec2, &vec3 }, { { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } } },
-        { { &vec4, &vec3, &vec1 }, { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 1.0f } } },
+        { { &vec1, &vec2, &vec3 }, { { 1.0f, tv0 }, { 1.0f, tv1 }, { 0.0f, tv1 } } },
+        { { &vec4, &vec3, &vec1 }, { { 0.0f, tv0 }, { 0.0f, tv1 }, { 1.0f, tv0 } } },
     };
 
     for (const TriangleDef& triangle : triangles) {
@@ -541,7 +543,9 @@ void RenderCastingBandLowPolygon(const CEffectPrim& prim,
             base1.z + cosRise * height1 * std::sin(radians1)
         };
 
-        SubmitWorldTeiRect(base0, base1, top1, top0, viewMatrix, texture, color, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+        const float tv0 = static_cast<float>(segmentIndex) / static_cast<float>(kTexParts);
+        const float tv1 = static_cast<float>(segmentIndex + 1) / static_cast<float>(kTexParts);
+        SubmitWorldTeiRect(base0, base1, top1, top0, viewMatrix, texture, color, tv0, tv1, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
     }
 }
 
@@ -2802,7 +2806,7 @@ void CRagEffect::SpawnWarpZone2()
             prim->m_renderFlag = 5u;
             prim->m_duration = m_duration;
             prim->m_texture.push_back(ringBlue);
-            prim->m_tintColor = RGB(180, 225, 255);
+            prim->m_tintColor = RGB(255, 255, 255);
             prim->m_size = m_stateCnt == 1 ? 11.0f : 4.0f;
             ConfigureBand(prim, 0, 0, m_stateCnt == 1 ? 2.5f : 2.7f, m_stateCnt == 1 ? 270.0f : 271.0f, m_stateCnt == 1 ? 2.5f : 2.7f, m_stateCnt == 1 ? 53.0f : 52.0f, -1.0f, 0);
             ConfigureBand(prim, 1, 0, m_stateCnt == 1 ? 5.0f : 5.2f, m_stateCnt == 1 ? 0.0f : 1.0f, m_stateCnt == 1 ? 5.0f : 5.2f, m_stateCnt == 1 ? 60.0f : 59.0f, -1.0f, 0);
