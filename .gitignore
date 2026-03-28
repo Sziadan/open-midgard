@@ -5,3 +5,4 @@ HighPriest.exe.utf8.h
 .venv/
 .vscode/
 build/
+build64/

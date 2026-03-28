@@ -16,6 +16,7 @@ option(RO_ENABLE_MILES_AUDIO "Enable Miles Sound System runtime loading" ON)
 option(RO_ENABLE_BINK_VIDEO "Enable Bink video runtime loading" ON)
 option(RO_ENABLE_GRANNY "Enable Granny runtime loading" ON)
 option(RO_ENABLE_IJL "Enable Intel JPEG Library runtime loading" OFF)
+option(RO_ENABLE_DEV_DEPLOY "Copy build output to the local OldRO folder" ON)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(RO_X64_FIRST_MILESTONE_BUILD ON)
@@ -125,12 +126,18 @@ endif()
 
 add_custom_command(TARGET HighPriest POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:HighPriest>/dlls"
-    COMMAND ${CMAKE_COMMAND} -E make_directory "D:/Spel/OldRO"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_SOURCE_DIR}/dlls"
             "$<TARGET_FILE_DIR:HighPriest>/dlls"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:HighPriest>"
-            "D:/Spel/OldRO/HighPriest.exe"
     COMMENT "Copying runtime DLLs to output folder"
 )
+
+if(RO_ENABLE_DEV_DEPLOY)
+    add_custom_command(TARGET HighPriest POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "D:/Spel/OldRO"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:HighPriest>"
+                "D:/Spel/OldRO/HighPriest.exe"
+        COMMENT "Copying executable to local OldRO folder"
+    )
+endif()
