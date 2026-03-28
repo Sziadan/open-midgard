@@ -524,9 +524,11 @@ void UILoginWnd::OnCreate(int cx, int cy)
     const bool focusPassword = (m_login && m_login->GetText() && m_login->GetText()[0] != '\0');
     if (m_login) {
         m_login->m_hasFocus = !focusPassword;
+        m_login->Invalidate();
     }
     if (m_password) {
         m_password->m_hasFocus = focusPassword;
+        m_password->Invalidate();
     }
     g_windowMgr.m_editWindow = focusPassword ? static_cast<UIWindow*>(m_password) : static_cast<UIWindow*>(m_login);
 }
@@ -852,11 +854,15 @@ void UILoginWnd::OnKeyDown(int virtualKey)
             if (m_login->m_hasFocus) {
                 m_login->m_hasFocus = false;
                 m_password->m_hasFocus = true;
+                m_login->Invalidate();
+                m_password->Invalidate();
                 // Update UIWindowMgr focused edit
                 g_windowMgr.m_editWindow = m_password;
             } else {
                 m_password->m_hasFocus = false;
                 m_login->m_hasFocus = true;
+                m_password->Invalidate();
+                m_login->Invalidate();
                 g_windowMgr.m_editWindow = m_login;
             }
         }

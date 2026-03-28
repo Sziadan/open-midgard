@@ -70,4 +70,5 @@ private:
     // Char1 hair buttons: [0]=161(prev) [1]=160(next) [2]=213(color)
     UIBitmapButton* m_hairBtns[3];
     PreviewState m_preview;
+    DWORD m_lastPreviewAdvanceTick;
 };

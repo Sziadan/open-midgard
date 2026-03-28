@@ -3,12 +3,15 @@
 #include "DebugLog.h"
 #include "render/Prim.h"
 #include "render/Renderer.h"
+#include "render/DC.h"
 #include "render3d/Device.h"
 #include "render3d/RenderDevice.h"
 #include "core/File.h"
+#include "res/ActRes.h"
 #include "res/GndRes.h"
 #include "res/ModelRes.h"
 #include "res/Res.h"
+#include "res/Sprite.h"
 #include "res/Texture.h"
 #include "res/WorldRes.h"
 #include "session/Session.h"
@@ -71,6 +74,8 @@ constexpr int kGroundCullMarginTiles = 14;
 constexpr int kJobWarpNpc = 0x2D;
 constexpr int kJobWarpPortal = 0x80;
 constexpr int kJobPreWarpPortal = 0x81;
+constexpr float kActorShadowPixelRatioScale = 0.14285715f;
+constexpr float kActorShadowSortBias = 0.00001f;
 
 enum class PortalVisualStyle {
     Ready,
@@ -115,6 +120,16 @@ vector3d NormalizeVec3(const vector3d& value);
 vector3d ScaleVec3(const vector3d& value, float scale);
 vector3d AddVec3(const vector3d& a, const vector3d& b);
 bool ProjectPoint(const CRenderer& renderer, const matrix& viewMatrix, const vector3d& point, tlvertex3d* outVertex);
+void SubmitScreenSpaceBillboard(const tlvertex3d& anchor,
+    CTexture* texture,
+    float centerOffsetX,
+    float centerOffsetY,
+    float width,
+    float height,
+    unsigned int color,
+    D3DBLEND destBlend,
+    float alphaSortKey,
+    int renderFlags);
 bool GetGroundItemScreenRect(const matrix& viewMatrix,
     const CItem& item,
     RECT* outRect,
@@ -400,6 +415,464 @@ CTexture* GetAngelWingTexture()
 CTexture* GetJobLevelTexture()
 {
     return GetEffectTexture("data\\texture\\effect\\explosive_1_128.bmp");
+}
+
+struct ActorShadowResource {
+    CTexture* texture = nullptr;
+    float left = 0.0f;
+    float top = 0.0f;
+    float right = 0.0f;
+    float bottom = 0.0f;
+    unsigned int color = 0xFFFFFFFFu;
+    float angle = 0.0f;
+};
+
+void UnpremultiplyShadowPixels(std::vector<unsigned int>& pixels)
+{
+    for (unsigned int& pixel : pixels) {
+        const unsigned int alpha = (pixel >> 24) & 0xFFu;
+        if (alpha == 0u || alpha == 255u) {
+            continue;
+        }
+
+        unsigned int red = (pixel >> 16) & 0xFFu;
+        unsigned int green = (pixel >> 8) & 0xFFu;
+        unsigned int blue = pixel & 0xFFu;
+        red = (std::min)(255u, (red * 255u + alpha / 2u) / alpha);
+        green = (std::min)(255u, (green * 255u + alpha / 2u) / alpha);
+        blue = (std::min)(255u, (blue * 255u + alpha / 2u) / alpha);
+        pixel = (alpha << 24) | (red << 16) | (green << 8) | blue;
+    }
+}
+
+bool FindOpaqueShadowBounds(const unsigned int* pixels, int width, int height, tagRECT* outBounds)
+{
+    if (!pixels || width <= 0 || height <= 0 || !outBounds) {
+        return false;
+    }
+
+    int minX = width;
+    int minY = height;
+    int maxX = -1;
+    int maxY = -1;
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            const unsigned int alpha = (pixels[static_cast<size_t>(y) * static_cast<size_t>(width) + static_cast<size_t>(x)] >> 24) & 0xFFu;
+            if (alpha == 0u) {
+                continue;
+            }
+            minX = (std::min)(minX, x);
+            minY = (std::min)(minY, y);
+            maxX = (std::max)(maxX, x);
+            maxY = (std::max)(maxY, y);
+        }
+    }
+
+    if (maxX < minX || maxY < minY) {
+        return false;
+    }
+
+    outBounds->left = minX;
+    outBounds->top = minY;
+    outBounds->right = maxX + 1;
+    outBounds->bottom = maxY + 1;
+    return true;
+}
+
+const ActorShadowResource* GetActorShadowResource()
+{
+    static ActorShadowResource s_shadowResource;
+    static bool s_attemptedLoad = false;
+    if (s_attemptedLoad) {
+        return s_shadowResource.texture ? &s_shadowResource : nullptr;
+    }
+    s_attemptedLoad = true;
+
+    CActRes* shadowAct = g_resMgr.GetAs<CActRes>("data\\sprite\\shadow.act");
+    CSprRes* shadowSpr = g_resMgr.GetAs<CSprRes>("data\\sprite\\shadow.spr");
+    const CMotion* shadowMotion = shadowAct ? shadowAct->GetMotion(0, 0) : nullptr;
+    if (!shadowAct || !shadowSpr || !shadowMotion || shadowMotion->sprClips.empty()) {
+        return nullptr;
+    }
+
+    const CSprClip& shadowClip = shadowMotion->sprClips[0];
+    const SprImg* shadowImage = shadowSpr->GetSprite(shadowClip.clipType, shadowClip.sprIndex);
+    if (!shadowImage) {
+        return nullptr;
+    }
+
+    const int imageWidth = (std::max)(1, shadowImage->width);
+    const int imageHeight = (std::max)(1, shadowImage->height);
+    std::vector<unsigned int> pixels(static_cast<size_t>(imageWidth) * static_cast<size_t>(imageHeight), 0x00000000u);
+
+    for (int y = 0; y < imageHeight; ++y) {
+        for (int x = 0; x < imageWidth; ++x) {
+            unsigned int srcColor = 0x00000000u;
+            if (shadowClip.clipType == 0) {
+                if (shadowImage->indices.empty()) {
+                    continue;
+                }
+                const unsigned char index = shadowImage->indices[static_cast<size_t>(y) * static_cast<size_t>(imageWidth) + static_cast<size_t>(x)];
+                if (index == 0u) {
+                    continue;
+                }
+                srcColor = shadowSpr->m_pal[index];
+            } else {
+                if (shadowImage->rgba.empty()) {
+                    continue;
+                }
+                srcColor = shadowImage->rgba[static_cast<size_t>(y) * static_cast<size_t>(imageWidth) + static_cast<size_t>(x)];
+                if (((srcColor >> 24) & 0xFFu) == 0u) {
+                    continue;
+                }
+            }
+
+            const unsigned int srcA = (srcColor >> 24) & 0xFFu;
+            const unsigned int srcR = (srcColor >> 16) & 0xFFu;
+            const unsigned int srcG = (srcColor >> 8) & 0xFFu;
+            const unsigned int srcB = srcColor & 0xFFu;
+            const unsigned int outA = srcA * static_cast<unsigned int>(shadowClip.a) / 255u;
+            const unsigned int outR = srcR * static_cast<unsigned int>(shadowClip.r) / 255u;
+            const unsigned int outG = srcG * static_cast<unsigned int>(shadowClip.g) / 255u;
+            const unsigned int outB = srcB * static_cast<unsigned int>(shadowClip.b) / 255u;
+            pixels[static_cast<size_t>(y) * static_cast<size_t>(imageWidth) + static_cast<size_t>(x)] =
+                (outA << 24) | (outR << 16) | (outG << 8) | outB;
+        }
+    }
+
+    tagRECT opaqueBounds{};
+    if (!FindOpaqueShadowBounds(pixels.data(), imageWidth, imageHeight, &opaqueBounds)) {
+        return nullptr;
+    }
+
+    const int croppedWidth = (std::max)(1, static_cast<int>(opaqueBounds.right - opaqueBounds.left));
+    const int croppedHeight = (std::max)(1, static_cast<int>(opaqueBounds.bottom - opaqueBounds.top));
+    std::vector<unsigned int> croppedPixels(static_cast<size_t>(croppedWidth) * static_cast<size_t>(croppedHeight));
+    for (int y = 0; y < croppedHeight; ++y) {
+        const unsigned int* srcRow = pixels.data()
+            + static_cast<size_t>(opaqueBounds.top + y) * static_cast<size_t>(imageWidth)
+            + static_cast<size_t>(opaqueBounds.left);
+        unsigned int* dstRow = croppedPixels.data() + static_cast<size_t>(y) * static_cast<size_t>(croppedWidth);
+        std::memcpy(dstRow, srcRow, static_cast<size_t>(croppedWidth) * sizeof(unsigned int));
+    }
+
+    s_shadowResource.texture = new CTexture();
+    if (!s_shadowResource.texture) {
+        return nullptr;
+    }
+    if (!s_shadowResource.texture->Create(croppedWidth, croppedHeight, PF_A8R8G8B8, false)) {
+        delete s_shadowResource.texture;
+        s_shadowResource.texture = nullptr;
+        return nullptr;
+    }
+
+    s_shadowResource.texture->Update(0,
+        0,
+        croppedWidth,
+        croppedHeight,
+        croppedPixels.data(),
+        true,
+        croppedWidth * static_cast<int>(sizeof(unsigned int)));
+    const int drawLeft = shadowClip.x - imageWidth / 2;
+    const int drawTop = shadowClip.y - imageHeight / 2;
+    s_shadowResource.left = static_cast<float>(drawLeft + opaqueBounds.left);
+    s_shadowResource.top = static_cast<float>(drawTop + opaqueBounds.top);
+    s_shadowResource.right = static_cast<float>(drawLeft + opaqueBounds.right);
+    s_shadowResource.bottom = static_cast<float>(drawTop + opaqueBounds.bottom);
+    s_shadowResource.color = (static_cast<unsigned int>(shadowClip.a) << 24)
+        | (static_cast<unsigned int>(shadowClip.r) << 16)
+        | (static_cast<unsigned int>(shadowClip.g) << 8)
+        | static_cast<unsigned int>(shadowClip.b);
+    s_shadowResource.angle = static_cast<float>(shadowClip.angle);
+    return &s_shadowResource;
+}
+
+float DepthFromOow(float oow)
+{
+    if (oow <= 0.0f || !std::isfinite(oow)) {
+        return 1.0f;
+    }
+    const float clipZ = 1.0f / oow;
+    const float depth = (1500.0f / (1500.0f - kNearPlane)) * (clipZ - kNearPlane) * oow;
+    return (std::min)(1.0f, (std::max)(0.0f, depth));
+}
+
+float ComputeShadowScreenSlope(const matrix& viewMatrix, const vector3d& groundPos, float zoom, const tlvertex3d& projectedGround)
+{
+    vector3d screenVerticalDir{
+        -viewMatrix.m[2][0],
+        0.0f,
+        viewMatrix.m[0][0]
+    };
+    const float dirLength = std::sqrt(screenVerticalDir.x * screenVerticalDir.x + screenVerticalDir.z * screenVerticalDir.z);
+    if (dirLength <= 0.0001f || zoom <= 0.0f) {
+        return 0.0f;
+    }
+    screenVerticalDir.x /= dirLength;
+    screenVerticalDir.z /= dirLength;
+
+    const vector3d samplePos{
+        groundPos.x + screenVerticalDir.x * zoom,
+        groundPos.y,
+        groundPos.z + screenVerticalDir.z * zoom
+    };
+    tlvertex3d projectedSample{};
+    if (!ProjectPoint(g_renderer, viewMatrix, samplePos, &projectedSample)) {
+        return 0.0f;
+    }
+
+    const float deltaY = projectedSample.y - projectedGround.y;
+    if (std::fabs(deltaY) <= 0.001f) {
+        return 0.0f;
+    }
+
+    const float baseClipZ = 1.0f / projectedGround.oow;
+    const float sampleClipZ = 1.0f / projectedSample.oow;
+    return -(sampleClipZ - baseClipZ) / deltaY;
+}
+
+void SubmitScreenSpacePerspectiveSprite(float left,
+    float top,
+    float right,
+    float bottom,
+    float oowBottom,
+    float oowTop,
+    float angleDegrees,
+    CTexture* texture,
+    unsigned int color,
+    D3DBLEND destBlend,
+    int renderFlags)
+{
+    if (!texture || right <= left || bottom <= top || oowBottom <= 0.0f || oowTop <= 0.0f) {
+        return;
+    }
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return;
+    }
+
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = texture;
+    face->mtPreset = 0;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = destBlend;
+    face->alphaSortKey = (std::min)(oowBottom, oowTop);
+
+    if (std::fabs(angleDegrees) <= 0.001f) {
+        face->m_verts[0].x = left + 0.5f;
+        face->m_verts[0].y = top + 0.5f;
+        face->m_verts[1].x = right + 0.5f;
+        face->m_verts[1].y = top + 0.5f;
+        face->m_verts[2].x = left + 0.5f;
+        face->m_verts[2].y = bottom + 0.5f;
+        face->m_verts[3].x = right + 0.5f;
+        face->m_verts[3].y = bottom + 0.5f;
+    } else {
+        const float radians = angleDegrees * (3.14159265f / 180.0f);
+        const float cs = std::cos(radians);
+        const float sn = std::sin(radians);
+        const float halfWidth = (right - left) * 0.5f;
+        const float halfHeight = (bottom - top) * 0.5f;
+        const float centerX = left + halfWidth;
+        const float centerY = top + halfHeight;
+
+        const float x1cs = -halfWidth * cs;
+        const float x1sn = -halfWidth * sn;
+        const float x2cs = halfWidth * cs;
+        const float x2sn = halfWidth * sn;
+        const float ysn = -sn * halfHeight;
+        const float ycs = cs * halfHeight;
+        const float negYcs = -ycs;
+
+        face->m_verts[0].x = x1cs - ysn + centerX + 0.5f;
+        face->m_verts[0].y = negYcs + x1sn + centerY + 0.5f;
+        face->m_verts[1].x = x2cs - ysn + centerX + 0.5f;
+        face->m_verts[1].y = negYcs + x2sn + centerY + 0.5f;
+        face->m_verts[2].x = x1cs + sn * halfHeight + centerX + 0.5f;
+        face->m_verts[2].y = ycs + x1sn + centerY + 0.5f;
+        face->m_verts[3].x = x2cs + sn * halfHeight + centerX + 0.5f;
+        face->m_verts[3].y = ycs + x2sn + centerY + 0.5f;
+    }
+
+    face->m_verts[0].z = DepthFromOow(oowTop);
+    face->m_verts[0].oow = oowTop;
+    face->m_verts[0].tu = 0.0f;
+    face->m_verts[0].tv = 0.0f;
+    face->m_verts[0].color = color;
+    face->m_verts[0].specular = 0xFF000000u;
+
+    face->m_verts[1].z = DepthFromOow(oowTop);
+    face->m_verts[1].oow = oowTop;
+    face->m_verts[1].tu = 1.0f;
+    face->m_verts[1].tv = 0.0f;
+    face->m_verts[1].color = color;
+    face->m_verts[1].specular = 0xFF000000u;
+
+    face->m_verts[2].z = DepthFromOow(oowBottom);
+    face->m_verts[2].oow = oowBottom;
+    face->m_verts[2].tu = 0.0f;
+    face->m_verts[2].tv = 1.0f;
+    face->m_verts[2].color = color;
+    face->m_verts[2].specular = 0xFF000000u;
+
+    face->m_verts[3].z = DepthFromOow(oowBottom);
+    face->m_verts[3].oow = oowBottom;
+    face->m_verts[3].tu = 1.0f;
+    face->m_verts[3].tv = 1.0f;
+    face->m_verts[3].color = color;
+    face->m_verts[3].specular = 0xFF000000u;
+
+    g_renderer.AddRP(face, renderFlags);
+}
+
+bool ComputeActorShadowRect(const CWorld::BillboardScreenEntry& entry,
+    const matrix& viewMatrix,
+    float zoom,
+    const ActorShadowResource& shadow,
+    float* outLeft,
+    float* outTop,
+    float* outRight,
+    float* outBottom,
+    float* outBottomOow,
+    float* outTopOow,
+    float* outAngle)
+{
+    const CPc* actor = entry.actor;
+    if (!actor || actor->m_shadowOn == 0 || !outLeft || !outTop || !outRight || !outBottom || !outBottomOow || !outTopOow || !outAngle) {
+        return false;
+    }
+
+    const float shadowZoom = actor->m_shadowZoom > 0.0f ? actor->m_shadowZoom : 1.0f;
+    if (zoom == 0.0f || shadowZoom == 0.0f) {
+        return false;
+    }
+
+    vector3d groundPos = actor->m_pos;
+    if (g_world.m_attr) {
+        groundPos.y = g_world.m_attr->GetHeight(groundPos.x, groundPos.z);
+    }
+
+    tlvertex3d projectedGround{};
+    if (!ProjectPoint(g_renderer, viewMatrix, groundPos, &projectedGround)) {
+        return false;
+    }
+
+    const float pixelRatio = projectedGround.oow * g_renderer.m_hpc * kActorShadowPixelRatioScale;
+    const float scale = zoom * shadowZoom * pixelRatio;
+    const float left = static_cast<float>(actor->m_sprShift) + projectedGround.x + shadow.left * scale;
+    const float top = projectedGround.y + shadow.top * scale;
+    const float right = static_cast<float>(actor->m_sprShift) + projectedGround.x + shadow.right * scale + 1.0f;
+    const float bottom = projectedGround.y + shadow.bottom * scale + 1.0f;
+    if (!std::isfinite(left) || !std::isfinite(top) || !std::isfinite(right) || !std::isfinite(bottom) || right <= left || bottom <= top) {
+        return false;
+    }
+
+    const float shadowSlope = ComputeShadowScreenSlope(viewMatrix, groundPos, zoom, projectedGround);
+    const float baseClipZ = 1.0f / projectedGround.oow;
+    const float bottomClipZ = baseClipZ - (bottom - projectedGround.y) * shadowSlope;
+    const float topClipZ = baseClipZ - (top - projectedGround.y) * shadowSlope;
+    if (bottomClipZ <= kGroundSubmitNearPlane || topClipZ <= kGroundSubmitNearPlane) {
+        return false;
+    }
+
+    *outLeft = left;
+    *outTop = top;
+    *outRight = right;
+    *outBottom = bottom;
+    *outBottomOow = 1.0f / bottomClipZ + kActorShadowSortBias;
+    *outTopOow = 1.0f / topClipZ + kActorShadowSortBias;
+    *outAngle = shadow.angle;
+    return true;
+}
+
+void RenderCachedActorShadow(const CWorld::BillboardScreenEntry& entry, const matrix& viewMatrix, float zoom)
+{
+    const ActorShadowResource* shadow = GetActorShadowResource();
+    const CPc* actor = entry.actor;
+    if (!shadow || !shadow->texture || !actor || actor->m_shadowOn == 0) {
+        return;
+    }
+
+    const float actorZoom = actor->m_zoom > 0.0f ? actor->m_zoom : 1.0f;
+    const float shadowZoom = actor->m_shadowZoom > 0.0f ? actor->m_shadowZoom : 1.0f;
+    if (actorZoom <= 0.0f || shadowZoom <= 0.0f) {
+        return;
+    }
+
+    vector3d groundPos = actor->m_pos;
+    if (g_world.m_attr) {
+        groundPos.y = g_world.m_attr->GetHeight(groundPos.x, groundPos.z);
+    }
+
+    tlvertex3d projectedGround{};
+    if (!ProjectPoint(g_renderer, viewMatrix, groundPos, &projectedGround)) {
+        return;
+    }
+
+    const float spriteWidth = (std::max)(1.0f, shadow->right - shadow->left);
+    const float spriteHeight = (std::max)(1.0f, shadow->bottom - shadow->top);
+    const float worldScale = actorZoom * shadowZoom * kActorShadowPixelRatioScale;
+    const float halfWidth = spriteWidth * 0.5f * worldScale;
+    const float halfDepth = spriteHeight * 0.5f * worldScale;
+    if (halfWidth <= 0.0f || halfDepth <= 0.0f) {
+        return;
+    }
+
+    const vector3d quad[4] = {
+        vector3d{ groundPos.x - halfWidth, groundPos.y, groundPos.z - halfDepth },
+        vector3d{ groundPos.x + halfWidth, groundPos.y, groundPos.z - halfDepth },
+        vector3d{ groundPos.x - halfWidth, groundPos.y, groundPos.z + halfDepth },
+        vector3d{ groundPos.x + halfWidth, groundPos.y, groundPos.z + halfDepth },
+    };
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return;
+    }
+
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = shadow->texture;
+    face->mtPreset = 3;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = projectedGround.oow;
+
+    for (int index = 0; index < 4; ++index) {
+        if (!ProjectPoint(g_renderer, viewMatrix, quad[index], &face->m_verts[index])) {
+            return;
+        }
+        face->m_verts[index].z = (std::max)(0.0f, face->m_verts[index].z - 0.0002f);
+        face->m_verts[index].color = shadow->color;
+        face->m_verts[index].specular = 0xFF000000u;
+    }
+
+    const float tu1 = (shadow->texture->m_w > 0)
+        ? static_cast<float>(shadow->texture->m_updateWidth) / static_cast<float>(shadow->texture->m_w)
+        : 1.0f;
+    const float tv1 = (shadow->texture->m_h > 0)
+        ? static_cast<float>(shadow->texture->m_updateHeight) / static_cast<float>(shadow->texture->m_h)
+        : 1.0f;
+    face->m_verts[0].tu = 0.0f;
+    face->m_verts[0].tv = 0.0f;
+    face->m_verts[1].tu = tu1;
+    face->m_verts[1].tv = 0.0f;
+    face->m_verts[2].tu = 0.0f;
+    face->m_verts[2].tv = tv1;
+    face->m_verts[3].tu = tu1;
+    face->m_verts[3].tv = tv1;
+
+    g_renderer.AddRP(face, 1);
 }
 
 void SubmitTexturedBillboard(const vector3d& center,
@@ -4212,7 +4685,9 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
     }
 
     EnsureBillboardFrameCache(viewMatrix, cameraLongitude);
+    const float zoom = m_ground ? m_ground->m_zoom : static_cast<float>(m_attr ? m_attr->m_zoom : 5);
     for (const BillboardScreenEntry& entry : m_billboardFrameEntries) {
+        RenderCachedActorShadow(entry, viewMatrix, zoom);
         RenderCachedBillboard(entry);
     }
 }

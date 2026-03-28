@@ -684,6 +684,11 @@ void UIBitmapButton::OnLBtnDown(int x, int y)
     }
 }
 
+void UIBitmapButton::OnLBtnDblClk(int x, int y)
+{
+    OnLBtnDown(x, y);
+}
+
 void UIBitmapButton::OnMouseMove(int x, int y)
 {
     const bool inside = IsPointInsideWindow(this, x, y);

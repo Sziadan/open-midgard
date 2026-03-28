@@ -156,7 +156,15 @@ std::vector<std::string> BuildWallpaperCandidates(const std::string& requestedWa
 
 bool HasDirtyWindowRecursive(UIWindow* window)
 {
-    if (!window || window->m_show == 0) {
+    if (!window) {
+        return false;
+    }
+    // Hidden windows still need one refresh after SetShow(0),
+    // otherwise the composed overlay can keep showing stale pixels.
+    if (window->m_isDirty != 0) {
+        return true;
+    }
+    if (window->m_show == 0) {
         return false;
     }
     if (window->IsUpdateNeed()) {
@@ -694,6 +702,24 @@ bool UIWindowMgr::HasDirtyVisualState() const
     return false;
 }
 
+bool UIWindowMgr::HasDirtyVisualStateExcludingRoMap() const
+{
+    for (UIWindow* child : const_cast<UIWindowMgr*>(this)->m_children) {
+        if (child == m_roMapWnd) {
+            continue;
+        }
+        if (HasDirtyWindowRecursive(child)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool UIWindowMgr::HasRoMapDirtyVisualState() const
+{
+    return HasDirtyWindowRecursive(m_roMapWnd);
+}
+
 void UIWindowMgr::OnDraw() {
     if (!g_hMainWnd) {
         return;
@@ -813,6 +839,59 @@ void UIWindowMgr::OnDraw() {
     }
 
     ReleaseDC(g_hMainWnd, targetDC);
+}
+
+void UIWindowMgr::OnDrawExcludingRoMap()
+{
+    if (!g_hMainWnd) {
+        return;
+    }
+
+    HDC sharedDC = UIWindow::GetSharedDrawDC();
+    if (!sharedDC) {
+        OnDraw();
+        return;
+    }
+
+    RECT clientRect{};
+    GetClientRect(g_hMainWnd, &clientRect);
+    for (auto child : m_children) {
+        if (child && child != m_roMapWnd && child->m_show != 0) {
+            child->OnDraw();
+        }
+    }
+    if (m_itemWnd && m_itemWnd->m_show != 0) {
+        m_itemWnd->DrawHoverOverlay(sharedDC, clientRect);
+    }
+    for (UIWindow* child : m_children) {
+        if (child && child != m_roMapWnd) {
+            ClearDirtyWindowRecursive(child);
+        }
+    }
+}
+
+bool UIWindowMgr::DrawRoMapToHdc(HDC targetDC, int x, int y)
+{
+    if (!targetDC || !m_roMapWnd || m_roMapWnd->m_show == 0) {
+        return false;
+    }
+
+    m_roMapWnd->DrawToHdc(targetDC, x, y);
+    ClearDirtyWindowRecursive(m_roMapWnd);
+    return true;
+}
+
+bool UIWindowMgr::GetRoMapRect(RECT* outRect) const
+{
+    if (!outRect || !m_roMapWnd || m_roMapWnd->m_show == 0) {
+        return false;
+    }
+
+    outRect->left = m_roMapWnd->m_x;
+    outRect->top = m_roMapWnd->m_y;
+    outRect->right = m_roMapWnd->m_x + m_roMapWnd->m_w;
+    outRect->bottom = m_roMapWnd->m_y + m_roMapWnd->m_h;
+    return true;
 }
 
 void UIWindowMgr::RenderWallPaper() {
@@ -1023,6 +1102,8 @@ void UIWindowMgr::OnLBtnDblClk(int x, int y)
     if (!hit) {
         return;
     }
+
+    m_captureWindow = hit;
 
     UIWindow* topLevel = hit;
     while (topLevel && topLevel->m_parent) {

@@ -69,6 +69,26 @@ std::string ToLowerAscii(std::string value)
     return value;
 }
 
+void HashTokenValue(unsigned long long* hash, unsigned long long value)
+{
+    if (!hash) {
+        return;
+    }
+    *hash ^= value;
+    *hash *= 1099511628211ull;
+}
+
+void HashTokenString(unsigned long long* hash, const std::string& value)
+{
+    if (!hash) {
+        return;
+    }
+    for (unsigned char ch : value) {
+        HashTokenValue(hash, static_cast<unsigned long long>(ch));
+    }
+    HashTokenValue(hash, 0xFFull);
+}
+
 void AddUniqueCandidate(std::vector<std::string>& out, const std::string& raw)
 {
     if (raw.empty()) {
@@ -352,7 +372,9 @@ UISkillListWnd::UISkillListWnd()
       m_upgradePressedBitmap(nullptr),
       m_mesBtnLeftBitmap(nullptr),
       m_mesBtnMidBitmap(nullptr),
-      m_mesBtnRightBitmap(nullptr)
+      m_mesBtnRightBitmap(nullptr),
+      m_lastVisualStateToken(0ull),
+      m_hasVisualStateToken(false)
 {
     m_show = 0;
     m_w = kWindowWidth;
@@ -389,7 +411,13 @@ void UISkillListWnd::Move(int x, int y)
 
 bool UISkillListWnd::IsUpdateNeed()
 {
-    return true;
+    if (m_show == 0) {
+        return false;
+    }
+    if (m_isDirty != 0 || !m_hasVisualStateToken) {
+        return true;
+    }
+    return BuildVisualStateToken() != m_lastVisualStateToken;
 }
 
 int UISkillListWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, int extra)
@@ -560,6 +588,10 @@ void UISkillListWnd::OnDraw()
     if (UIWindow::GetSharedDrawDC() == nullptr) {
         ReleaseDC(g_hMainWnd, hdc);
     }
+
+    m_lastVisualStateToken = BuildVisualStateToken();
+    m_hasVisualStateToken = true;
+    m_isDirty = 0;
 }
 
 void UISkillListWnd::OnLBtnDown(int x, int y)
@@ -953,4 +985,38 @@ const PLAYER_SKILL_INFO* UISkillListWnd::GetSelectedSkill() const
         }
     }
     return nullptr;
+}
+
+unsigned long long UISkillListWnd::BuildVisualStateToken() const
+{
+    unsigned long long hash = 1469598103934665603ull;
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_show));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_x));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_y));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_w));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_h));
+    HashTokenValue(&hash, static_cast<unsigned long long>(static_cast<unsigned int>(m_hoveredRow)));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_viewOffset));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_selectedSkillId));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_pressedUpgradeSkillId));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_isDraggingScrollThumb));
+    HashTokenValue(&hash, static_cast<unsigned long long>(g_session.GetPlayerSkillPointCount()));
+
+    const std::list<PLAYER_SKILL_INFO>& skillItems = g_session.GetSkillItems();
+    HashTokenValue(&hash, static_cast<unsigned long long>(skillItems.size()));
+    for (const PLAYER_SKILL_INFO& skill : skillItems) {
+        HashTokenValue(&hash, static_cast<unsigned long long>(skill.m_isValid));
+        HashTokenValue(&hash, static_cast<unsigned long long>(skill.SKID));
+        HashTokenValue(&hash, static_cast<unsigned long long>(skill.type));
+        HashTokenValue(&hash, static_cast<unsigned long long>(skill.level));
+        HashTokenValue(&hash, static_cast<unsigned long long>(skill.spcost));
+        HashTokenValue(&hash, static_cast<unsigned long long>(skill.upgradable));
+        HashTokenValue(&hash, static_cast<unsigned long long>(skill.attackRange));
+        HashTokenValue(&hash, static_cast<unsigned long long>(skill.skillPos));
+        HashTokenValue(&hash, static_cast<unsigned long long>(skill.skillMaxLv));
+        HashTokenString(&hash, skill.skillIdName);
+        HashTokenString(&hash, skill.skillName);
+    }
+
+    return hash;
 }

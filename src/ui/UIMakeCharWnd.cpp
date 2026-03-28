@@ -334,7 +334,7 @@ UIMakeCharWnd::UIMakeCharWnd()
       m_nameEditCtrl(nullptr), m_okButton(nullptr), m_cancelButton(nullptr),
       m_stats{5, 5, 5, 5, 5, 5}, m_hairIdx(1), m_hairColor(0),
       m_statBtns{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
-      m_hairBtns{nullptr, nullptr, nullptr}
+      m_hairBtns{nullptr, nullptr, nullptr}, m_lastPreviewAdvanceTick(0)
 {
     m_defPushId = 118;
     m_defCancelPushId = 119;
@@ -641,15 +641,25 @@ void UIMakeCharWnd::DrawPreview(HDC hdc, const PreviewState& preview)
 
 void UIMakeCharWnd::OnProcess()
 {
-    Invalidate();
-    if ((m_stateCnt % 34) == 0) {
+    constexpr DWORD kPreviewFrameIntervalMs = 160;
+    bool previewFrameChanged = false;
+    const DWORD now = GetTickCount();
+    if (m_lastPreviewAdvanceTick == 0) {
+        m_lastPreviewAdvanceTick = now;
+    }
+    if (now - m_lastPreviewAdvanceTick >= kPreviewFrameIntervalMs) {
         ++m_preview.curAction;
         if (m_preview.curAction >= m_preview.baseAction + 8) {
             m_preview.curAction = m_preview.baseAction;
         }
+        m_lastPreviewAdvanceTick = now;
+        previewFrameChanged = true;
     }
     ++m_stateCnt;
     m_preview.curMotion = 0;
+    if (previewFrameChanged) {
+        Invalidate();
+    }
 }
 
 void UIMakeCharWnd::OnDraw()
@@ -675,12 +685,12 @@ void UIMakeCharWnd::OnDraw()
     }
 
     HDC hdc = targetDC;
-    const bool useCompose = EnsureComposeSurface(targetDC, clientW, clientH);
+    const bool useCompose = !useShared && EnsureComposeSurface(targetDC, clientW, clientH);
     if (useCompose) {
         PatBlt(m_composeDC, 0, 0, clientW, clientH, BLACKNESS);
         g_windowMgr.DrawWallpaperToDC(m_composeDC, clientW, clientH);
         hdc = m_composeDC;
-    } else {
+    } else if (!useShared) {
         g_windowMgr.DrawWallpaperToDC(hdc, clientW, clientH);
     }
 
@@ -763,6 +773,7 @@ int UIMakeCharWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, in
             m_stats[srcIdx] = 5;
             m_stats[dstIdx] = 5;
         }
+        Invalidate();
         return 1;
     };
 
@@ -791,14 +802,17 @@ int UIMakeCharWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, in
     case 160:
         m_hairIdx = (m_hairIdx >= 25) ? 1 : m_hairIdx + 1;
         RebuildPreview();
+        Invalidate();
         return 1;
     case 161:
         m_hairIdx = (m_hairIdx <= 1) ? 25 : m_hairIdx - 1;
         RebuildPreview();
+        Invalidate();
         return 1;
     case 213:
         m_hairColor = (m_hairColor >= 8) ? 0 : m_hairColor + 1;
         RebuildPreview();
+        Invalidate();
         return 1;
 
     default:

@@ -33,6 +33,7 @@ private:
     void SetMiniMode(bool miniMode);
     std::vector<const ITEM_INFO*> BuildSlotAssignments() const;
     HBITMAP GetItemIcon(const ITEM_INFO& item);
+    unsigned long long BuildVisualStateToken() const;
 
     bool m_controlsCreated;
     int m_fullHeight;
@@ -45,4 +46,6 @@ private:
     HBITMAP m_titleBarMid;
     HBITMAP m_titleBarRight;
     std::unordered_map<unsigned int, HBITMAP> m_iconCache;
+    unsigned long long m_lastVisualStateToken;
+    bool m_hasVisualStateToken;
 };

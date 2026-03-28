@@ -58,6 +58,7 @@ private:
     int GetMaxViewOffset(int skillCount) const;
     HBITMAP GetSkillIcon(int skillId);
     const PLAYER_SKILL_INFO* GetSelectedSkill() const;
+    unsigned long long BuildVisualStateToken() const;
 
     bool m_controlsCreated;
     int m_hoveredRow;
@@ -88,4 +89,6 @@ private:
     HBITMAP m_mesBtnRightBitmap;
     std::unordered_map<int, HBITMAP> m_iconCache;
     std::vector<VisibleSkill> m_visibleSkills;
+    unsigned long long m_lastVisualStateToken;
+    bool m_hasVisualStateToken;
 };

@@ -310,14 +310,8 @@ std::uint64_t ComputeGameplayOverlayStateToken(CGameMode& mode, int cursorActNum
     std::uint64_t hash = 1469598103934665603ull;
     HashTokenValue(&hash, static_cast<std::uint64_t>(clientWidth));
     HashTokenValue(&hash, static_cast<std::uint64_t>(clientHeight));
-    HashTokenValue(&hash, static_cast<std::uint64_t>(cursorActNum));
-    HashTokenValue(&hash, static_cast<std::uint64_t>(GetModeCursorVisualFrame(cursorActNum, mouseAnimStartTick)));
-
-    POINT cursorPos{};
-    if (g_hMainWnd && GetCursorPos(&cursorPos) && ScreenToClient(g_hMainWnd, &cursorPos)) {
-        HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(cursorPos.x)));
-        HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(cursorPos.y)));
-    }
+    (void)cursorActNum;
+    (void)mouseAnimStartTick;
 
     if (mode.m_world && mode.m_view && mode.m_world->m_player) {
         int labelX = 0;
@@ -427,7 +421,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
     }
 
     const bool overlayIsAnimated = HasAnimatedLockedTargetOverlay(mode) || HasQueuedMsgEffects();
-    const bool uiDirty = g_windowMgr.HasDirtyVisualState();
+    const bool uiDirty = g_windowMgr.HasDirtyVisualStateExcludingRoMap();
     const std::uint64_t overlayStateToken = ComputeGameplayOverlayStateToken(mode, cursorActNum, mouseAnimStartTick, clientWidth, clientHeight);
     const bool needOverlayRefresh = !s_overlayTextureValid || overlayIsAnimated || uiDirty || overlayStateToken != s_overlayStateToken;
 
@@ -437,9 +431,8 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
 
         HDC previousSharedDc = UIWindow::GetSharedDrawDC();
         UIWindow::SetSharedDrawDC(s_overlayComposeDc);
-        g_windowMgr.OnDraw();
+        g_windowMgr.OnDrawExcludingRoMap();
         UIWindow::SetSharedDrawDC(previousSharedDc);
-        DrawModeCursorToHdc(s_overlayComposeDc, cursorActNum, mouseAnimStartTick);
 
         ConvertOverlayComposeBitsToAlpha(s_overlayComposeBits, clientWidth, clientHeight);
         s_overlayTexture->Update(0,
@@ -480,6 +473,210 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
     face->m_verts[0] = { -0.5f, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
     face->m_verts[1] = { right, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
     face->m_verts[2] = { -0.5f, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
+    face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
+    g_renderer.AddRP(face, 1 | 8);
+    return true;
+}
+
+bool QueueRoMapOverlayQuad()
+{
+    if (!g_hMainWnd) {
+        return false;
+    }
+
+    RECT mapRect{};
+    if (!g_windowMgr.GetRoMapRect(&mapRect)) {
+        return false;
+    }
+
+    const int width = mapRect.right - mapRect.left;
+    const int height = mapRect.bottom - mapRect.top;
+    if (width <= 0 || height <= 0) {
+        return false;
+    }
+
+    HDC windowDc = GetDC(g_hMainWnd);
+    if (!windowDc) {
+        return false;
+    }
+
+    static HDC s_roMapComposeDc = nullptr;
+    static HBITMAP s_roMapComposeBitmap = nullptr;
+    static void* s_roMapComposeBits = nullptr;
+    static int s_roMapComposeWidth = 0;
+    static int s_roMapComposeHeight = 0;
+    static bool s_roMapTextureValid = false;
+    const bool composeReady = EnsureOverlayComposeSurface(windowDc, width, height,
+        &s_roMapComposeDc, &s_roMapComposeBitmap, &s_roMapComposeBits, &s_roMapComposeWidth, &s_roMapComposeHeight);
+    ReleaseDC(g_hMainWnd, windowDc);
+    if (!composeReady) {
+        return false;
+    }
+
+    static CTexture* s_roMapTexture = nullptr;
+    static int s_roMapTextureWidth = 0;
+    static int s_roMapTextureHeight = 0;
+    if (!s_roMapTexture || s_roMapTextureWidth != width || s_roMapTextureHeight != height) {
+        delete s_roMapTexture;
+        s_roMapTexture = new CTexture();
+        if (!s_roMapTexture || !s_roMapTexture->Create(width, height, PF_A8R8G8B8, false)) {
+            delete s_roMapTexture;
+            s_roMapTexture = nullptr;
+            s_roMapTextureWidth = 0;
+            s_roMapTextureHeight = 0;
+            return false;
+        }
+        s_roMapTextureWidth = width;
+        s_roMapTextureHeight = height;
+        s_roMapTextureValid = false;
+    }
+
+    const bool needRoMapRefresh = !s_roMapTextureValid || g_windowMgr.HasRoMapDirtyVisualState();
+    if (needRoMapRefresh) {
+        ClearOverlayComposeBits(s_roMapComposeBits, width, height);
+        if (!g_windowMgr.DrawRoMapToHdc(s_roMapComposeDc, 0, 0)) {
+            return false;
+        }
+        ConvertOverlayComposeBitsToAlpha(s_roMapComposeBits, width, height);
+        s_roMapTexture->Update(0,
+            0,
+            width,
+            height,
+            static_cast<unsigned int*>(s_roMapComposeBits),
+            true,
+            width * static_cast<int>(sizeof(unsigned int)));
+        s_roMapTextureValid = true;
+    }
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return false;
+    }
+
+    const float left = static_cast<float>(mapRect.left) - 0.5f;
+    const float top = static_cast<float>(mapRect.top) - 0.5f;
+    const float right = static_cast<float>(mapRect.right) - 0.5f;
+    const float bottom = static_cast<float>(mapRect.bottom) - 0.5f;
+    const unsigned int overlayContentWidth = s_roMapTexture->m_surfaceUpdateWidth > 0 ? s_roMapTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(width);
+    const unsigned int overlayContentHeight = s_roMapTexture->m_surfaceUpdateHeight > 0 ? s_roMapTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(height);
+    const float maxU = s_roMapTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_roMapTexture->m_w) : 1.0f;
+    const float maxV = s_roMapTexture->m_h != 0 ? static_cast<float>(overlayContentHeight) / static_cast<float>(s_roMapTexture->m_h) : 1.0f;
+
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = s_roMapTexture;
+    face->mtPreset = 0;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = 0.5f;
+
+    face->m_verts[0] = { left, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+    face->m_verts[1] = { right, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
+    face->m_verts[2] = { left, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
+    face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
+    g_renderer.AddRP(face, 1 | 8);
+    return true;
+}
+
+bool QueueCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
+{
+    if (!g_hMainWnd) {
+        return false;
+    }
+
+    POINT cursorPos{};
+    if (!GetModeCursorClientPos(&cursorPos)) {
+        return false;
+    }
+
+    constexpr int kCursorTextureSize = 96;
+    constexpr int kCursorTextureOrigin = 32;
+    const int left = cursorPos.x - kCursorTextureOrigin;
+    const int top = cursorPos.y - kCursorTextureOrigin;
+
+    HDC windowDc = GetDC(g_hMainWnd);
+    if (!windowDc) {
+        return false;
+    }
+
+    static HDC s_cursorComposeDc = nullptr;
+    static HBITMAP s_cursorComposeBitmap = nullptr;
+    static void* s_cursorComposeBits = nullptr;
+    static int s_cursorComposeWidth = 0;
+    static int s_cursorComposeHeight = 0;
+    static bool s_cursorTextureValid = false;
+    const bool composeReady = EnsureOverlayComposeSurface(windowDc, kCursorTextureSize, kCursorTextureSize,
+        &s_cursorComposeDc, &s_cursorComposeBitmap, &s_cursorComposeBits, &s_cursorComposeWidth, &s_cursorComposeHeight);
+    ReleaseDC(g_hMainWnd, windowDc);
+    if (!composeReady) {
+        return false;
+    }
+
+    static CTexture* s_cursorTexture = nullptr;
+    static std::uint64_t s_cursorStateToken = 0ull;
+    if (!s_cursorTexture) {
+        s_cursorTexture = new CTexture();
+        if (!s_cursorTexture || !s_cursorTexture->Create(kCursorTextureSize, kCursorTextureSize, PF_A8R8G8B8, false)) {
+            delete s_cursorTexture;
+            s_cursorTexture = nullptr;
+            return false;
+        }
+        s_cursorTextureValid = false;
+        s_cursorStateToken = 0ull;
+    }
+
+    std::uint64_t cursorStateToken = 1469598103934665603ull;
+    HashTokenValue(&cursorStateToken, static_cast<std::uint64_t>(cursorActNum));
+    HashTokenValue(&cursorStateToken, static_cast<std::uint64_t>(GetModeCursorVisualFrame(cursorActNum, mouseAnimStartTick)));
+
+    if (!s_cursorTextureValid || cursorStateToken != s_cursorStateToken) {
+        ClearOverlayComposeBits(s_cursorComposeBits, kCursorTextureSize, kCursorTextureSize);
+        if (!DrawModeCursorAtToHdc(s_cursorComposeDc, kCursorTextureOrigin, kCursorTextureOrigin, cursorActNum, mouseAnimStartTick)) {
+            return false;
+        }
+        ConvertOverlayComposeBitsToAlpha(s_cursorComposeBits, kCursorTextureSize, kCursorTextureSize);
+        s_cursorTexture->Update(0,
+            0,
+            kCursorTextureSize,
+            kCursorTextureSize,
+            static_cast<unsigned int*>(s_cursorComposeBits),
+            true,
+            kCursorTextureSize * static_cast<int>(sizeof(unsigned int)));
+        s_cursorTextureValid = true;
+        s_cursorStateToken = cursorStateToken;
+    }
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return false;
+    }
+
+    const float right = static_cast<float>(left + kCursorTextureSize) - 0.5f;
+    const float bottom = static_cast<float>(top + kCursorTextureSize) - 0.5f;
+    const unsigned int overlayContentWidth = s_cursorTexture->m_surfaceUpdateWidth > 0 ? s_cursorTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(kCursorTextureSize);
+    const unsigned int overlayContentHeight = s_cursorTexture->m_surfaceUpdateHeight > 0 ? s_cursorTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(kCursorTextureSize);
+    const float maxU = s_cursorTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_cursorTexture->m_w) : 1.0f;
+    const float maxV = s_cursorTexture->m_h != 0 ? static_cast<float>(overlayContentHeight) / static_cast<float>(s_cursorTexture->m_h) : 1.0f;
+
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = s_cursorTexture;
+    face->mtPreset = 0;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = 2.0f;
+
+    face->m_verts[0] = { static_cast<float>(left) - 0.5f, static_cast<float>(top) - 0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+    face->m_verts[1] = { right, static_cast<float>(top) - 0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
+    face->m_verts[2] = { static_cast<float>(left) - 0.5f, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
     face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
     g_renderer.AddRP(face, 1 | 8);
     return true;
@@ -5291,6 +5488,8 @@ int  CGameMode::OnRun() {
     if (!hasLegacyDevice && isVulkanBackend) {
         uiDrawStart = GetTickCount();
         queuedModernOverlayFrame = QueueModernOverlayQuad(*this, m_cursorActNum, m_mouseAnimStartTick);
+        QueueRoMapOverlayQuad();
+        QueueCursorOverlayQuad(m_cursorActNum, m_mouseAnimStartTick);
         uiDrawEnd = GetTickCount();
     }
     const DWORD drawSceneStart = GetTickCount();

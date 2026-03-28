@@ -1373,6 +1373,9 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
 
     player->m_targetGid = 0;
     player->m_proceedTargetGid = 0;
+    player->m_zoom = 1.0f;
+    player->m_shadowOn = 1;
+    player->m_shadowZoom = 1.0f;
     player->m_isMoving = 0;
     player->m_isWaitingMoveAck = 0;
     player->m_path.Reset();
@@ -2298,6 +2301,7 @@ void InitializeRuntimeActorDefaults(CGameActor* actor, u32 gid)
     actor->m_isVisible = 1;
     actor->m_isPc = 0;
     actor->m_roty = 0.0f;
+    actor->m_zoom = 1.0f;
     actor->m_speed = 150;
     actor->m_job = 0;
     actor->m_sex = 0;
@@ -2309,6 +2313,8 @@ void InitializeRuntimeActorDefaults(CGameActor* actor, u32 gid)
     actor->m_clevel = 0;
     actor->m_xSize = 0;
     actor->m_ySize = 0;
+    actor->m_shadowOn = 1;
+    actor->m_shadowZoom = 1.0f;
     actor->m_headType = 0;
     actor->m_gdid = 0;
     actor->m_emblemVersion = 0;

@@ -48,6 +48,7 @@ CAudio::CAudio()
       m_bgmStream(nullptr),
       m_bgmVolume(127),
       m_bgmPaused(false),
+      m_bgmPendingStart(false),
       m_startedUp(false)
 {
 }
@@ -217,6 +218,10 @@ void CAudio::PlayBGM(const char* fName) {
 
     const std::string normalizedPath = NormalizeAudioPath(fName);
     if (!normalizedPath.empty() && normalizedPath == m_bgmPath && m_bgmStream) {
+        if (!m_bgmPaused && m_bgmPendingStart && g_dllExports.AIL_start_stream) {
+            g_dllExports.AIL_start_stream(m_bgmStream);
+            m_bgmPendingStart = false;
+        }
         if (g_dllExports.AIL_pause_stream) {
             g_dllExports.AIL_pause_stream(m_bgmStream, m_bgmPaused ? 1 : 0);
         }
@@ -229,13 +234,16 @@ void CAudio::PlayBGM(const char* fName) {
     if (stream) {
         m_bgmStream = stream;
         m_bgmPath = normalizedPath;
+        m_bgmPendingStart = m_bgmPaused;
         if (g_dllExports.AIL_set_stream_loop_count) {
             g_dllExports.AIL_set_stream_loop_count(stream, 0);
         }
         if (g_dllExports.AIL_set_stream_volume) {
             g_dllExports.AIL_set_stream_volume(stream, m_bgmVolume);
         }
-        g_dllExports.AIL_start_stream(stream);
+        if (!m_bgmPendingStart && g_dllExports.AIL_start_stream) {
+            g_dllExports.AIL_start_stream(stream);
+        }
         if (g_dllExports.AIL_pause_stream) {
             g_dllExports.AIL_pause_stream(stream, m_bgmPaused ? 1 : 0);
         }
@@ -247,6 +255,7 @@ void CAudio::StopBGM() {
         g_dllExports.AIL_close_stream(m_bgmStream);
     }
     m_bgmStream = nullptr;
+    m_bgmPendingStart = false;
     m_bgmPath.clear();
 }
 
@@ -286,7 +295,12 @@ int CAudio::GetBgmVolume() const
 
 void CAudio::SetBgmPaused(bool paused)
 {
+    const bool wasPaused = m_bgmPaused;
     m_bgmPaused = paused;
+    if (!paused && wasPaused && m_bgmPendingStart && m_bgmStream && g_dllExports.AIL_start_stream) {
+        g_dllExports.AIL_start_stream(m_bgmStream);
+        m_bgmPendingStart = false;
+    }
     if (m_bgmStream && g_dllExports.AIL_pause_stream) {
         g_dllExports.AIL_pause_stream(m_bgmStream, paused ? 1 : 0);
     }

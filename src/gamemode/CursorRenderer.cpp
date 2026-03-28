@@ -49,26 +49,45 @@ CursorResCache ResolveCursorResources()
     return cache;
 }
 
-void DrawFallbackCursor(HDC hdc)
+void DrawFallbackCursorAt(HDC hdc, int x, int y)
 {
-    if (!hdc || !g_hMainWnd) {
-        return;
-    }
-
-    POINT pt{};
-    if (!GetCursorPos(&pt) || !ScreenToClient(g_hMainWnd, &pt)) {
+    if (!hdc) {
         return;
     }
 
     HCURSOR cursor = LoadCursor(nullptr, IDC_ARROW);
     if (cursor) {
-        DrawIconEx(hdc, pt.x, pt.y, cursor, 0, 0, 0, nullptr, DI_NORMAL);
+        DrawIconEx(hdc, x, y, cursor, 0, 0, 0, nullptr, DI_NORMAL);
     }
+}
+
+bool GetClientCursorPosInternal(POINT* outPoint)
+{
+    if (!outPoint || !g_hMainWnd) {
+        return false;
+    }
+
+    POINT pt{};
+    if (!GetCursorPos(&pt) || !ScreenToClient(g_hMainWnd, &pt)) {
+        return false;
+    }
+
+    *outPoint = pt;
+    return true;
 }
 
 } // namespace
 
 bool DrawModeCursorToHdc(HDC hdc, int cursorActNum, u32 mouseAnimStartTick)
+{
+    POINT pt{};
+    if (!GetClientCursorPosInternal(&pt)) {
+        return false;
+    }
+    return DrawModeCursorAtToHdc(hdc, pt.x, pt.y, cursorActNum, mouseAnimStartTick);
+}
+
+bool DrawModeCursorAtToHdc(HDC hdc, int x, int y, int cursorActNum, u32 mouseAnimStartTick)
 {
     if (!g_hMainWnd || !hdc) {
         return false;
@@ -101,19 +120,21 @@ bool DrawModeCursorToHdc(HDC hdc, int cursorActNum, u32 mouseAnimStartTick)
             const int motionIndex = static_cast<int>(stateTicks / motionDelay) % motionCount;
             const CMotion* motion = actRes->GetMotion(action, motionIndex);
             if (motion) {
-                POINT pt{};
-                if (GetCursorPos(&pt) && ScreenToClient(g_hMainWnd, &pt)) {
-                    drewCustomCursor = DrawActMotionToHdc(hdc, pt.x, pt.y, sprRes, motion, sprRes->m_pal);
-                }
+                drewCustomCursor = DrawActMotionToHdc(hdc, x, y, sprRes, motion, sprRes->m_pal);
             }
         }
     }
 
     if (!drewCustomCursor) {
-        DrawFallbackCursor(hdc);
+        DrawFallbackCursorAt(hdc, x, y);
     }
 
     return drewCustomCursor;
+}
+
+bool GetModeCursorClientPos(POINT* outPoint)
+{
+    return GetClientCursorPosInternal(outPoint);
 }
 
 u32 GetModeCursorVisualFrame(int cursorActNum, u32 mouseAnimStartTick)

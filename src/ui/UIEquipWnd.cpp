@@ -101,6 +101,26 @@ std::string NormalizeSlash(std::string value)
     return value;
 }
 
+void HashTokenValue(unsigned long long* hash, unsigned long long value)
+{
+    if (!hash) {
+        return;
+    }
+    *hash ^= value;
+    *hash *= 1099511628211ull;
+}
+
+void HashTokenString(unsigned long long* hash, const std::string& value)
+{
+    if (!hash) {
+        return;
+    }
+    for (unsigned char ch : value) {
+        HashTokenValue(hash, static_cast<unsigned long long>(ch));
+    }
+    HashTokenValue(hash, 0xFFull);
+}
+
 void AddUniqueCandidate(std::vector<std::string>& out, const std::string& raw)
 {
     if (raw.empty()) {
@@ -579,7 +599,7 @@ bool DrawEquipPreviewPlayerSprite(HDC hdc, int drawX, int drawY)
 
     const int sex = g_session.GetSex();
     int head = g_session.m_playerHead;
-    const int curAction = g_session.m_playerDir & 7;
+    const int curAction = 0;
     const int curMotion = 0;
 
     const std::string bodyActName = g_session.GetJobActName(g_session.m_playerJob, sex, bodyAct);
@@ -788,7 +808,9 @@ UIEquipWnd::UIEquipWnd()
       m_backgroundFull(nullptr),
       m_titleBarLeft(nullptr),
       m_titleBarMid(nullptr),
-      m_titleBarRight(nullptr)
+      m_titleBarRight(nullptr),
+      m_lastVisualStateToken(0ull),
+      m_hasVisualStateToken(false)
 {
     Create(kWindowWidth, kWindowHeight);
     Move(281, 121);
@@ -824,7 +846,13 @@ void UIEquipWnd::Move(int x, int y)
 
 bool UIEquipWnd::IsUpdateNeed()
 {
-    return true;
+    if (m_show == 0) {
+        return false;
+    }
+    if (m_isDirty != 0 || !m_hasVisualStateToken) {
+        return true;
+    }
+    return BuildVisualStateToken() != m_lastVisualStateToken;
 }
 
 int UIEquipWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, int extra)
@@ -1033,6 +1061,10 @@ void UIEquipWnd::OnDraw()
     if (!useShared) {
         ReleaseDC(g_hMainWnd, hdc);
     }
+
+    m_lastVisualStateToken = BuildVisualStateToken();
+    m_hasVisualStateToken = true;
+    m_isDirty = 0;
 }
 
 void UIEquipWnd::OnLBtnDblClk(int x, int y)
@@ -1251,5 +1283,34 @@ HBITMAP UIEquipWnd::GetItemIcon(const ITEM_INFO& item)
 
     m_iconCache[itemId] = bitmap;
     return bitmap;
+}
+
+unsigned long long UIEquipWnd::BuildVisualStateToken() const
+{
+    unsigned long long hash = 1469598103934665603ull;
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_show));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_x));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_y));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_w));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_h));
+
+    const std::list<ITEM_INFO>& items = g_session.GetInventoryItems();
+    HashTokenValue(&hash, static_cast<unsigned long long>(items.size()));
+    for (const ITEM_INFO& item : items) {
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_itemType));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_location));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_itemIndex));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_wearLocation));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_num));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_isIdentified));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_isDamaged));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_refiningLevel));
+        for (int slotValue : item.m_slot) {
+            HashTokenValue(&hash, static_cast<unsigned long long>(slotValue));
+        }
+        HashTokenString(&hash, item.m_itemName);
+    }
+
+    return hash;
 }
 

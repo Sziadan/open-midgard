@@ -698,19 +698,19 @@ void UISelectCharWnd::UpdateActionButtons()
 
     const bool selectedEmpty = (FindCharacterIndexForSlot(m_selectedSlot) < 0);
     if (m_okButton) {
-        m_okButton->m_show = selectedEmpty ? 0 : 1;
+        m_okButton->SetShow(selectedEmpty ? 0 : 1);
     }
     if (m_makeButton) {
-        m_makeButton->m_show = selectedEmpty ? 1 : 0;
+        m_makeButton->SetShow(selectedEmpty ? 1 : 0);
     }
     if (m_deleteButton) {
-        m_deleteButton->m_show = selectedEmpty ? 0 : 1;
+        m_deleteButton->SetShow(selectedEmpty ? 0 : 1);
     }
     if (m_cancelButton) {
-        m_cancelButton->m_show = 1;
+        m_cancelButton->SetShow(1);
     }
     if (m_chargeButton) {
-        m_chargeButton->m_show = 1;
+        m_chargeButton->SetShow(1);
     }
 
     m_defPushId = selectedEmpty ? 137 : 118;
@@ -835,6 +835,7 @@ void UISelectCharWnd::SetSelectedSlot(int slotNumber)
     ClampSelection();
     SaveSelectionToRegistry();
     UpdateActionButtons();
+    Invalidate();
 }
 
 void UISelectCharWnd::MoveSelection(int delta)

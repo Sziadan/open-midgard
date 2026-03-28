@@ -72,6 +72,11 @@ public:
     void OnProcess();
     void OnDraw();
     bool HasDirtyVisualState() const;
+    bool HasDirtyVisualStateExcludingRoMap() const;
+    bool HasRoMapDirtyVisualState() const;
+    void OnDrawExcludingRoMap();
+    bool DrawRoMapToHdc(HDC targetDC, int x, int y);
+    bool GetRoMapRect(RECT* outRect) const;
     void RenderWallPaper();
     void DrawWallpaperToDC(HDC targetDC, int width, int height);
     void SetWallpaper(CBitmapRes* bitmap);

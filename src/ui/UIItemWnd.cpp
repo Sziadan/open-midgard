@@ -76,6 +76,26 @@ std::string NormalizeSlash(std::string value)
     return value;
 }
 
+void HashTokenValue(unsigned long long* hash, unsigned long long value)
+{
+    if (!hash) {
+        return;
+    }
+    *hash ^= value;
+    *hash *= 1099511628211ull;
+}
+
+void HashTokenString(unsigned long long* hash, const std::string& value)
+{
+    if (!hash) {
+        return;
+    }
+    for (unsigned char ch : value) {
+        HashTokenValue(hash, static_cast<unsigned long long>(ch));
+    }
+    HashTokenValue(hash, 0xFFull);
+}
+
 void AddUniqueCandidate(std::vector<std::string>& out, const std::string& raw)
 {
     if (raw.empty()) {
@@ -516,7 +536,9 @@ UIItemWnd::UIItemWnd()
       m_backgroundRight(nullptr),
     m_titleBarBitmap(nullptr),
       m_tabBitmaps{ nullptr, nullptr, nullptr },
-      m_hoverBitmap(nullptr)
+      m_hoverBitmap(nullptr),
+      m_lastVisualStateToken(0ull),
+      m_hasVisualStateToken(false)
 {
     Create(kWindowWidth, kWindowHeight);
     Move(0, 121);
@@ -552,7 +574,13 @@ void UIItemWnd::Move(int x, int y)
 
 bool UIItemWnd::IsUpdateNeed()
 {
-    return true;
+    if (m_show == 0) {
+        return false;
+    }
+    if (m_isDirty != 0 || !m_hasVisualStateToken) {
+        return true;
+    }
+    return BuildVisualStateToken() != m_lastVisualStateToken;
 }
 
 int UIItemWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, int extra)
@@ -746,6 +774,10 @@ void UIItemWnd::OnDraw()
     if (!useShared) {
         ReleaseDC(g_hMainWnd, hdc);
     }
+
+    m_lastVisualStateToken = BuildVisualStateToken();
+    m_hasVisualStateToken = true;
+    m_isDirty = 0;
 }
 
 void UIItemWnd::DrawHoverOverlay(HDC hdc, const RECT& clientRect) const
@@ -1036,4 +1068,40 @@ HBITMAP UIItemWnd::GetItemIcon(const ITEM_INFO& item)
 std::string UIItemWnd::GetTitleText() const
 {
     return "Inventory";
+}
+
+unsigned long long UIItemWnd::BuildVisualStateToken() const
+{
+    unsigned long long hash = 1469598103934665603ull;
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_show));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_x));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_y));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_w));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_h));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_currentTab));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_viewOffset));
+    HashTokenValue(&hash, static_cast<unsigned long long>(static_cast<unsigned int>(m_hoveredItemIndex)));
+
+    const std::list<ITEM_INFO>& items = g_session.GetInventoryItems();
+    HashTokenValue(&hash, static_cast<unsigned long long>(items.size()));
+    for (const ITEM_INFO& item : items) {
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_itemType));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_location));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_itemIndex));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_wearLocation));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_num));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_price));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_realPrice));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_isIdentified));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_isDamaged));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_refiningLevel));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_isYours));
+        HashTokenValue(&hash, static_cast<unsigned long long>(item.m_deleteTime));
+        for (int slotValue : item.m_slot) {
+            HashTokenValue(&hash, static_cast<unsigned long long>(slotValue));
+        }
+        HashTokenString(&hash, item.m_itemName);
+    }
+
+    return hash;
 }

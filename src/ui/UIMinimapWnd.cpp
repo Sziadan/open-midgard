@@ -778,6 +778,24 @@ void UIRoMapWnd::OnDraw()
         return;
     }
 
+    const bool useShared = (UIWindow::GetSharedDrawDC() != nullptr);
+    HDC hdc = useShared ? UIWindow::GetSharedDrawDC() : GetDC(g_hMainWnd);
+    if (!hdc) {
+        return;
+    }
+
+    DrawToHdc(hdc, m_x, m_y);
+    if (!useShared) {
+        ReleaseDC(g_hMainWnd, hdc);
+    }
+}
+
+void UIRoMapWnd::DrawToHdc(HDC hdc, int drawX, int drawY)
+{
+    if (!hdc || m_show == 0) {
+        return;
+    }
+
     EnsureCreated();
     UpdateMinimapBitmap();
 
@@ -786,27 +804,18 @@ void UIRoMapWnd::OnDraw()
         InvalidateRenderCache();
     }
 
-    const bool useShared = (UIWindow::GetSharedDrawDC() != nullptr);
-    HDC hdc = useShared ? UIWindow::GetSharedDrawDC() : GetDC(g_hMainWnd);
-    if (!hdc) {
-        return;
-    }
-
     EnsureRenderCache(hdc);
     if (m_renderCacheDC && m_renderCacheBitmap) {
         if (m_renderCacheDirty) {
             DrawWindowContents(m_renderCacheDC, 0, 0);
             m_renderCacheDirty = false;
         }
-        BitBlt(hdc, m_x, m_y, m_w, m_h, m_renderCacheDC, 0, 0, SRCCOPY);
+        BitBlt(hdc, drawX, drawY, m_w, m_h, m_renderCacheDC, 0, 0, SRCCOPY);
     } else {
-        DrawWindowContents(hdc, m_x, m_y);
+        DrawWindowContents(hdc, drawX, drawY);
     }
 
-    DrawChildren();
-    if (!useShared) {
-        ReleaseDC(g_hMainWnd, hdc);
-    }
+    DrawCloseButton(hdc, drawX, drawY);
 
     m_lastVisualStateToken = visualStateToken;
     m_hasVisualStateToken = true;
@@ -851,6 +860,48 @@ void UIRoMapWnd::LoadAssets()
         m_bodyBitmap = LoadBitmapFromGameData(ResolveUiAssetPath("itemwin_mid.bmp"));
     }
     InvalidateRenderCache();
+}
+
+void UIRoMapWnd::DrawCloseButton(HDC hdc, int drawX, int drawY)
+{
+    if (!hdc || !m_closeButton || m_closeButton->m_show == 0) {
+        return;
+    }
+
+    HBITMAP drawBmp = nullptr;
+    if (m_closeButton->m_state == 1 && m_closeButton->m_pressedBitmap) {
+        drawBmp = m_closeButton->m_pressedBitmap;
+    } else if (m_closeButton->m_state == 2 && m_closeButton->m_mouseonBitmap) {
+        drawBmp = m_closeButton->m_mouseonBitmap;
+    } else if (m_closeButton->m_normalBitmap) {
+        drawBmp = m_closeButton->m_normalBitmap;
+    } else if (m_closeButton->m_mouseonBitmap) {
+        drawBmp = m_closeButton->m_mouseonBitmap;
+    } else {
+        drawBmp = m_closeButton->m_pressedBitmap;
+    }
+
+    if (!drawBmp) {
+        return;
+    }
+
+    BITMAP bm{};
+    if (!GetObjectA(drawBmp, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
+        return;
+    }
+
+    const int buttonOffsetX = m_closeButton->m_x - m_x;
+    const int buttonOffsetY = m_closeButton->m_y - m_y;
+    RECT dst{
+        drawX + buttonOffsetX,
+        drawY + buttonOffsetY,
+        drawX + buttonOffsetX + bm.bmWidth,
+        drawY + buttonOffsetY + bm.bmHeight
+    };
+    DrawBitmapTransparent(hdc, drawBmp, dst);
+    m_closeButton->m_bitmapWidth = bm.bmWidth;
+    m_closeButton->m_bitmapHeight = bm.bmHeight;
+    m_closeButton->m_isDirty = 0;
 }
 
 void UIRoMapWnd::ReleaseAssets()

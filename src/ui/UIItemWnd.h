@@ -49,6 +49,7 @@ private:
     std::vector<const ITEM_INFO*> GetFilteredItems() const;
     HBITMAP GetItemIcon(const ITEM_INFO& item);
     std::string GetTitleText() const;
+    unsigned long long BuildVisualStateToken() const;
 
     bool m_controlsCreated;
     int m_currentTab;
@@ -66,4 +67,6 @@ private:
     HBITMAP m_hoverBitmap;
     std::unordered_map<unsigned int, HBITMAP> m_iconCache;
     std::vector<VisibleItem> m_visibleItems;
+    unsigned long long m_lastVisualStateToken;
+    bool m_hasVisualStateToken;
 };

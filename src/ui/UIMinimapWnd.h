@@ -21,12 +21,14 @@ public:
     void OnDraw() override;
     void OnWheel(int delta) override;
     void StoreInfo() override;
+    void DrawToHdc(HDC hdc, int drawX, int drawY);
 
 private:
     void EnsureCreated();
     void LayoutChildren();
     void LoadAssets();
     void ReleaseAssets();
+    void DrawCloseButton(HDC hdc, int drawX, int drawY);
     void EnsureRenderCache(HDC referenceDc);
     void ReleaseRenderCache();
     void InvalidateRenderCache();

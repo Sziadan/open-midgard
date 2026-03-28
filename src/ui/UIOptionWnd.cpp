@@ -47,6 +47,26 @@ constexpr int kSliderMin = 0;
 constexpr int kSliderMax = 127;
 constexpr int kTabHeight = 18;
 constexpr int kGraphicsRowHeight = 24;
+constexpr int kWindowCornerRadius = 10;
+
+constexpr COLORREF kFallbackTitleBarColor = RGB(98, 114, 158);
+constexpr COLORREF kFallbackBodyColor = RGB(244, 247, 252);
+constexpr COLORREF kWindowBorderColor = RGB(57, 66, 86);
+constexpr COLORREF kContentFillColor = RGB(255, 255, 255);
+constexpr COLORREF kContentBorderColor = RGB(160, 171, 194);
+constexpr COLORREF kInactiveTabFillColor = RGB(220, 228, 241);
+constexpr COLORREF kInactiveTabBorderColor = RGB(122, 136, 167);
+constexpr COLORREF kActiveTabFillColor = RGB(255, 255, 255);
+constexpr COLORREF kActiveTabBorderColor = RGB(95, 112, 150);
+constexpr COLORREF kHeaderButtonFillColor = RGB(248, 250, 255);
+constexpr COLORREF kHeaderButtonBorderColor = RGB(96, 112, 150);
+constexpr COLORREF kHeaderButtonTextColor = RGB(40, 55, 92);
+constexpr COLORREF kSettingRowFillColor = RGB(247, 250, 255);
+constexpr COLORREF kSettingRowBorderColor = RGB(176, 186, 208);
+constexpr COLORREF kSliderTrackFillColor = RGB(182, 194, 219);
+constexpr COLORREF kSliderTrackBorderColor = RGB(111, 125, 160);
+constexpr COLORREF kSliderKnobFillColor = RGB(255, 255, 255);
+constexpr COLORREF kSliderKnobBorderColor = RGB(87, 101, 136);
 
 constexpr int kCheckIdBgm = 401;
 constexpr int kCheckIdSound = 402;
@@ -255,11 +275,40 @@ void FillRectColor(HDC hdc, const RECT& rc, COLORREF color)
     DeleteObject(brush);
 }
 
+void FillRoundedRectColor(HDC hdc, const RECT& rc, COLORREF color, int radius)
+{
+    if (!hdc) {
+        return;
+    }
+
+    HBRUSH brush = CreateSolidBrush(color);
+    HGDIOBJ oldBrush = SelectObject(hdc, brush);
+    HGDIOBJ oldPen = SelectObject(hdc, GetStockObject(NULL_PEN));
+    RoundRect(hdc, rc.left, rc.top, rc.right, rc.bottom, radius, radius);
+    SelectObject(hdc, oldPen);
+    SelectObject(hdc, oldBrush);
+    DeleteObject(brush);
+}
+
 void DrawRectFrame(HDC hdc, const RECT& rc, COLORREF color)
 {
     HBRUSH brush = CreateSolidBrush(color);
     FrameRect(hdc, &rc, brush);
     DeleteObject(brush);
+}
+
+void DrawWindowTitleText(HDC hdc, int x, int y, int windowRight, const char* text, COLORREF color)
+{
+    if (!hdc) {
+        return;
+    }
+
+    RECT rect = { x, y, windowRight - 4, y + 16 };
+    SetBkMode(hdc, TRANSPARENT);
+    SetTextColor(hdc, color);
+    HGDIOBJ oldFont = SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
+    DrawTextA(hdc, text ? text : "", -1, &rect, DT_LEFT | DT_TOP | DT_SINGLELINE);
+    SelectObject(hdc, oldFont);
 }
 
 int ClampSliderValue(int value)
@@ -462,6 +511,7 @@ void UIOptionWnd::EnsureResources()
 
     m_assetsProbed = true;
     m_frameBitmapPath = ResolveUiAssetPath({
+        "titlebar_fix.bmp",
         "win_option.bmp",
         "optionwin.bmp",
         "win_option2.bmp",
@@ -472,6 +522,7 @@ void UIOptionWnd::EnsureResources()
     }
 
     m_bodyBitmapPath = ResolveUiAssetPath({
+        "itemwin_mid.bmp",
         "win_option_sub.bmp",
         "win_option_body.bmp",
         "option_sub.bmp",
@@ -756,6 +807,7 @@ void UIOptionWnd::SetCollapsed(bool collapsed)
     m_collapsed = collapsed ? 1 : 0;
     m_h = m_collapsed ? kCollapsedHeight : m_orgHeight;
     LayoutControls();
+    Invalidate();
     SaveSettings();
 }
 
@@ -774,6 +826,7 @@ void UIOptionWnd::ResetToDefaultPlacement()
     Resize(kDefaultWidth, m_collapsed ? kCollapsedHeight : kDefaultHeight);
     m_orgHeight = kDefaultHeight;
     LayoutControls();
+    Invalidate();
     SaveSettings();
 }
 
@@ -826,7 +879,7 @@ RECT UIOptionWnd::GetTabRect(int tabIndex) const
         bodyRect.left + margin + tabIndex * tabWidth,
         bodyRect.top + 6,
         bodyRect.left + margin + (tabIndex + 1) * tabWidth - 2,
-        bodyRect.top + 6 + kTabHeight,
+        bodyRect.top + 6 + kTabHeight + 5,
     };
     return rc;
 }
@@ -836,7 +889,7 @@ RECT UIOptionWnd::GetContentRect() const
     RECT bodyRect = GetBodyRect();
     RECT rc = {
         bodyRect.left + 10,
-        bodyRect.top + 6 + kTabHeight + 6,
+        bodyRect.top + 6 + kTabHeight + 4,
         bodyRect.right - 10,
         bodyRect.bottom - 12,
     };
@@ -910,12 +963,12 @@ void UIOptionWnd::DrawSlider(HDC hdc, const RECT& sliderRect, int value, const c
     RECT track = sliderRect;
     track.top += 4;
     track.bottom -= 4;
-    FillRectColor(hdc, track, RGB(116, 98, 82));
-    DrawRectFrame(hdc, track, RGB(72, 58, 45));
+    FillRectColor(hdc, track, kSliderTrackFillColor);
+    DrawRectFrame(hdc, track, kSliderTrackBorderColor);
 
     RECT knob = GetSliderKnobRect(sliderRect, value);
-    FillRectColor(hdc, knob, RGB(240, 229, 206));
-    DrawRectFrame(hdc, knob, RGB(79, 60, 38));
+    FillRoundedRectColor(hdc, knob, kSliderKnobFillColor, 6);
+    DrawRectFrame(hdc, knob, kSliderKnobBorderColor);
 
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(0, 0, 0));
@@ -924,17 +977,17 @@ void UIOptionWnd::DrawSlider(HDC hdc, const RECT& sliderRect, int value, const c
 
 void UIOptionWnd::DrawHeaderButton(HDC hdc, const RECT& rect, const char* text) const
 {
-    FillRectColor(hdc, rect, RGB(222, 208, 190));
-    DrawRectFrame(hdc, rect, RGB(82, 63, 45));
+    FillRoundedRectColor(hdc, rect, kHeaderButtonFillColor, 6);
+    DrawRectFrame(hdc, rect, kHeaderButtonBorderColor);
     SetBkMode(hdc, TRANSPARENT);
-    SetTextColor(hdc, RGB(0, 0, 0));
+    SetTextColor(hdc, kHeaderButtonTextColor);
     TextOutA(hdc, rect.left + 3, rect.top - 1, text, static_cast<int>(std::strlen(text)));
 }
 
 void UIOptionWnd::DrawTabButton(HDC hdc, const RECT& rect, const char* text, bool active) const
 {
-    FillRectColor(hdc, rect, active ? RGB(240, 229, 206) : RGB(214, 199, 181));
-    DrawRectFrame(hdc, rect, active ? RGB(82, 63, 45) : RGB(118, 98, 80));
+    FillRoundedRectColor(hdc, rect, active ? kActiveTabFillColor : kInactiveTabFillColor, 8);
+    DrawRectFrame(hdc, rect, active ? kActiveTabBorderColor : kInactiveTabBorderColor);
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(0, 0, 0));
     TextOutA(hdc, rect.left + 10, rect.top + 3, text, static_cast<int>(std::strlen(text)));
@@ -943,8 +996,8 @@ void UIOptionWnd::DrawTabButton(HDC hdc, const RECT& rect, const char* text, boo
 void UIOptionWnd::DrawSettingRow(HDC hdc, int rowIndex, const char* label, const std::string& value) const
 {
     const RECT rowRect = GetRowRect(rowIndex);
-    FillRectColor(hdc, rowRect, RGB(244, 239, 228));
-    DrawRectFrame(hdc, rowRect, RGB(118, 98, 80));
+    FillRoundedRectColor(hdc, rowRect, kSettingRowFillColor, 8);
+    DrawRectFrame(hdc, rowRect, kSettingRowBorderColor);
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(0, 0, 0));
     TextOutA(hdc, rowRect.left + 8, rowRect.top + 4, label, static_cast<int>(std::strlen(label)));
@@ -1077,6 +1130,7 @@ void UIOptionWnd::CycleGraphicsSetting(GraphicsRowId rowId, int direction)
         }
     }
 
+    Invalidate();
     SaveSettings();
 }
 
@@ -1158,40 +1212,47 @@ void UIOptionWnd::OnDraw()
 
     const RECT titleRect = GetTitleBarRect();
     const RECT bodyRect = GetBodyRect();
+    RECT windowRect = { m_x, m_y, m_x + m_w, m_y + m_h };
+    HRGN clipRegion = CreateRoundRectRgn(windowRect.left, windowRect.top, windowRect.right + 1, windowRect.bottom + 1,
+        kWindowCornerRadius, kWindowCornerRadius);
+    int savedDc = SaveDC(hdc);
+    if (clipRegion) {
+        SelectClipRgn(hdc, clipRegion);
+    }
+
     if (m_frameBitmap) {
         DrawBitmapStretched(hdc, m_frameBitmap, titleRect);
     } else {
-        FillRectColor(hdc, titleRect, RGB(199, 178, 152));
-        DrawRectFrame(hdc, titleRect, RGB(83, 65, 44));
+        FillRectColor(hdc, titleRect, kFallbackTitleBarColor);
     }
 
     if (!m_collapsed) {
         if (m_bodyBitmap) {
             DrawBitmapStretched(hdc, m_bodyBitmap, bodyRect);
         } else {
-            FillRectColor(hdc, bodyRect, RGB(231, 217, 197));
-            DrawRectFrame(hdc, bodyRect, RGB(96, 76, 54));
+            FillRectColor(hdc, bodyRect, kFallbackBodyColor);
         }
     }
 
-    SetBkMode(hdc, TRANSPARENT);
-    SetTextColor(hdc, RGB(255, 255, 255));
-    TextOutA(hdc, m_x + 17, m_y + 4, "Options", 7);
-    SetTextColor(hdc, RGB(0, 0, 0));
-    TextOutA(hdc, m_x + 16, m_y + 3, "Options", 7);
+    RestoreDC(hdc, savedDc);
+    if (clipRegion) {
+        DeleteObject(clipRegion);
+    }
 
-    DrawHeaderButton(hdc, GetBaseButtonRect(), "B");
+    DrawWindowTitleText(hdc, m_x + 18, m_y + 3, m_x + m_w, "Options", RGB(255, 255, 255));
+    DrawWindowTitleText(hdc, m_x + 17, m_y + 2, m_x + m_w, "Options", RGB(0, 0, 0));
+
     DrawHeaderButton(hdc, GetMiniButtonRect(), "_");
     DrawHeaderButton(hdc, GetCloseButtonRect(), "X");
 
     if (!m_collapsed) {
+        const RECT contentRect = GetContentRect();
+        FillRectColor(hdc, contentRect, kContentFillColor);
+        DrawRectFrame(hdc, contentRect, kContentBorderColor);
+
         DrawTabButton(hdc, GetTabRect(TabId_Game), "Game", m_activeTab == TabId_Game);
         DrawTabButton(hdc, GetTabRect(TabId_Graphics), "Graphics", m_activeTab == TabId_Graphics);
         DrawTabButton(hdc, GetTabRect(TabId_Audio), "Audio", m_activeTab == TabId_Audio);
-
-        const RECT contentRect = GetContentRect();
-        FillRectColor(hdc, contentRect, RGB(239, 232, 219));
-        DrawRectFrame(hdc, contentRect, RGB(118, 98, 80));
 
         if (m_activeTab == TabId_Audio) {
             DrawSlider(hdc, GetBgmSliderRect(), m_bgmVolume, "BGM");
@@ -1249,6 +1310,15 @@ void UIOptionWnd::OnDraw()
         }
     }
 
+    HPEN borderPen = CreatePen(PS_SOLID, 1, kWindowBorderColor);
+    HGDIOBJ oldPen = SelectObject(hdc, borderPen);
+    HGDIOBJ oldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
+    RoundRect(hdc, windowRect.left, windowRect.top, windowRect.right, windowRect.bottom,
+        kWindowCornerRadius, kWindowCornerRadius);
+    SelectObject(hdc, oldBrush);
+    SelectObject(hdc, oldPen);
+    DeleteObject(borderPen);
+
     DrawChildren();
 
     if (!useShared) {
@@ -1273,16 +1343,12 @@ void UIOptionWnd::OnLBtnDown(int x, int y)
         return;
     }
 
-    if (PointInRectXY(GetBaseButtonRect(), x, y)) {
-        ResetToDefaultPlacement();
-        return;
-    }
-
     if (!m_collapsed) {
         for (int tabIndex = 0; tabIndex < TabId_Count; ++tabIndex) {
             if (PointInRectXY(GetTabRect(tabIndex), x, y)) {
                 m_activeTab = tabIndex;
                 LayoutControls();
+                Invalidate();
                 SaveSettings();
                 return;
             }
@@ -1310,15 +1376,23 @@ void UIOptionWnd::OnLBtnDown(int x, int y)
 
         if (m_activeTab == TabId_Audio && PointInRectXY(GetBgmSliderRect(), x, y)) {
             m_dragMode = DragMode_BgmSlider;
-            m_bgmVolume = SliderValueFromMouseX(x);
-            ApplyAudioSettings();
+            const int nextVolume = SliderValueFromMouseX(x);
+            if (m_bgmVolume != nextVolume) {
+                m_bgmVolume = nextVolume;
+                Invalidate();
+                ApplyAudioSettings();
+            }
             return;
         }
 
         if (m_activeTab == TabId_Audio && PointInRectXY(GetSoundSliderRect(), x, y)) {
             m_dragMode = DragMode_SoundSlider;
-            m_soundVolume = SliderValueFromMouseX(x);
-            ApplyAudioSettings();
+            const int nextVolume = SliderValueFromMouseX(x);
+            if (m_soundVolume != nextVolume) {
+                m_soundVolume = nextVolume;
+                Invalidate();
+                ApplyAudioSettings();
+            }
             return;
         }
     }
@@ -1346,14 +1420,26 @@ void UIOptionWnd::OnMouseMove(int x, int y)
     }
 
     case DragMode_BgmSlider:
-        m_bgmVolume = SliderValueFromMouseX(x);
-        ApplyAudioSettings();
+    {
+        const int nextVolume = SliderValueFromMouseX(x);
+        if (m_bgmVolume != nextVolume) {
+            m_bgmVolume = nextVolume;
+            Invalidate();
+            ApplyAudioSettings();
+        }
         break;
+    }
 
     case DragMode_SoundSlider:
-        m_soundVolume = SliderValueFromMouseX(x);
-        ApplyAudioSettings();
+    {
+        const int nextVolume = SliderValueFromMouseX(x);
+        if (m_soundVolume != nextVolume) {
+            m_soundVolume = nextVolume;
+            Invalidate();
+            ApplyAudioSettings();
+        }
         break;
+    }
 
     default:
         break;
@@ -1408,7 +1494,10 @@ int UIOptionWnd::SendMsg(UIWindow* sender, int msg, int wparam, int lparam, int 
     }
 
     if (applyAudio) {
+        Invalidate();
         ApplyAudioSettings();
+    } else {
+        Invalidate();
     }
     SaveSettings();
     return 1;

@@ -71,6 +71,7 @@ public:
     void* m_bgmStream;
     int m_bgmVolume;
     bool m_bgmPaused;
+    bool m_bgmPendingStart;
     std::string m_bgmPath;
     bool m_startedUp;
     std::vector<MapBgmEntry> m_mapBgmTable;

@@ -133,6 +133,7 @@ public:
     void SetBitmapName(const char* name, int stateIndex);
     void OnDraw() override;
     void OnLBtnDown(int x, int y) override;
+    void OnLBtnDblClk(int x, int y) override;
     void OnMouseMove(int x, int y) override;
     void OnMouseHover(int x, int y) override;
     void OnLBtnUp(int x, int y) override;

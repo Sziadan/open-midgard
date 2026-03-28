@@ -475,6 +475,8 @@ void CRenderer::SetMultiTextureMode(int nMode) {
         m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
         m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
         m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTFN_LINEAR);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTFG_LINEAR);
         m_renderDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
         m_renderDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
         m_renderDevice->BindTexture(1, nullptr);
@@ -491,6 +493,20 @@ void CRenderer::SetMultiTextureMode(int nMode) {
         m_renderDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
         m_renderDevice->BindTexture(1, nullptr);
         break;
+    case 3:
+        m_renderDevice->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTFN_POINT);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTFG_POINT);
+        m_renderDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+        m_renderDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+        m_renderDevice->BindTexture(1, nullptr);
+        break;
     default:
         m_renderDevice->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
         m_renderDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
@@ -499,6 +515,8 @@ void CRenderer::SetMultiTextureMode(int nMode) {
         m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
         m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
         m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTFN_LINEAR);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTFG_LINEAR);
         m_renderDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
         m_renderDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
         m_renderDevice->BindTexture(1, nullptr);
