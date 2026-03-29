@@ -457,7 +457,7 @@ static bool InitClientSystems()
     g_resMgr.RegisterType("rsm", "", new C3dModelRes());
     g_resMgr.RegisterType("spr", "", new CSprRes());
     g_resMgr.RegisterType("act", "", new CActRes());
-    g_resMgr.RegisterType("str", "effect\\", new CEZeffectRes());
+    g_resMgr.RegisterType("str", "data\\texture\\effect\\", new CEZeffectRes());
     g_resMgr.RegisterType("pal", "", new CPaletteRes());
     g_resMgr.RegisterType("imf", "", new CImfRes());
     g_resMgr.RegisterType("rsw", "", new C3dWorldRes());

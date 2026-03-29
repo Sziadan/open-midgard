@@ -291,6 +291,34 @@ void HandleNotifyEffect(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleNotifyEffect2(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 10) {
+        return;
+    }
+
+    const u32 actorId = ReadLE32(packet.data + 2);
+    const u32 effectId = ReadLE32(packet.data + 6);
+    CGameActor* actor = ResolveNotifyEffectActor(mode, actorId);
+    if (!actor) {
+        DbgLog("[GameMode] notify effect2 unresolved actor=%u effect=%u\n",
+            static_cast<unsigned int>(actorId),
+            static_cast<unsigned int>(effectId));
+        return;
+    }
+
+    DbgLog("[GameMode] notify effect2 actor=%u effect=%u self=%d\n",
+        static_cast<unsigned int>(actorId),
+        static_cast<unsigned int>(effectId),
+        actor == (mode.m_world ? static_cast<CGameActor*>(mode.m_world->m_player) : nullptr));
+
+    if (!actor->LaunchEffect(static_cast<int>(effectId), vector3d{ 0.0f, 0.0f, 0.0f }, 0.0f)) {
+        DbgLog("[GameMode] notify effect2 launch failed actor=%u effect=%u\n",
+            static_cast<unsigned int>(actorId),
+            static_cast<unsigned int>(effectId));
+    }
+}
+
 void HandleSkillCastCancel(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 6) {
@@ -4501,7 +4529,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01D7, HandleActorSpriteChange);
     router.Register(0x01DE, HandleIgnorePacket);
     router.Register(0x01E1, HandleIgnorePacket);
-    router.Register(0x01F3, HandleIgnorePacket);
+    router.Register(0x01F3, HandleNotifyEffect2);
     router.Register(0x0201, HandleIgnorePacket);
     router.Register(0x0209, HandleIgnorePacket);
     router.Register(0x02DD, HandleIgnorePacket);

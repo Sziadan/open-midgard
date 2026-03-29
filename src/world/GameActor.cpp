@@ -2112,6 +2112,10 @@ CAbleToMakeEffect::~CAbleToMakeEffect()
 
 CRagEffect* CAbleToMakeEffect::LaunchEffect(int effectId, vector3d deltaPos, float fRot)
 {
+    if (!g_session.m_isEffectOn) {
+        return nullptr;
+    }
+
     CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
     if (!gameMode || !gameMode->m_world) {
         return nullptr;

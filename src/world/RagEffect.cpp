@@ -12,10 +12,13 @@
 #include "res/ActRes.h"
 #include "res/Sprite.h"
 #include "res/Texture.h"
+#include "session/Session.h"
 
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <initializer_list>
 #include <map>
@@ -27,6 +30,17 @@ constexpr float kSubmitNearPlane = 80.0f;
 constexpr float kPi = 3.14159265f;
 constexpr float kEffectTickMs = 24.0f;
 constexpr float kEffectPixelRatioScale = 0.14285715f;
+
+struct RagEffectCatalogEntry {
+    int effectId;
+    const char* strName;
+    const char* minStrName;
+    const char* variantPrefix;
+    int variantFirst;
+    int variantCount;
+};
+
+#include "RagEffectCatalog.generated.inc"
 
 vector3d AddVec3(const vector3d& a, const vector3d& b)
 {
@@ -71,6 +85,48 @@ bool ContainsIgnoreCaseAscii(const std::string& text, const char* needle)
         return static_cast<char>(std::tolower(ch));
     });
     return loweredText.find(loweredNeedle) != std::string::npos;
+}
+
+std::string ToLowerAscii(std::string value)
+{
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return value;
+}
+
+const RagEffectCatalogEntry* FindRagEffectCatalogEntry(int effectId)
+{
+    const auto begin = std::begin(kRagEffectCatalog);
+    const auto end = std::end(kRagEffectCatalog);
+    const auto it = std::lower_bound(begin, end, effectId, [](const RagEffectCatalogEntry& entry, int value) {
+        return entry.effectId < value;
+    });
+    if (it == end || it->effectId != effectId) {
+        return nullptr;
+    }
+    return it;
+}
+
+std::string ResolveCatalogStrName(const RagEffectCatalogEntry& entry)
+{
+    const char* directName = g_session.m_isMinEffect && entry.minStrName ? entry.minStrName : entry.strName;
+    if (directName && *directName) {
+        return directName;
+    }
+
+    if (!entry.variantPrefix || entry.variantCount <= 0) {
+        return std::string();
+    }
+
+    const int offset = rand() % entry.variantCount;
+    char buffer[64]{};
+    std::snprintf(buffer,
+        sizeof(buffer),
+        "%s%d.str",
+        ToLowerAscii(entry.variantPrefix).c_str(),
+        entry.variantFirst + offset);
+    return buffer;
 }
 
 unsigned int PackColor(unsigned int alpha, COLORREF color)
@@ -913,20 +969,34 @@ std::string ResolveWorldStrName(const std::string& rawName)
         normalized += ".str";
     }
 
-    const std::array<std::string, 3> candidates = {
-        normalized,
-        std::string("effect\\") + normalized,
-        std::string("data\\texture\\effect\\") + normalized,
-    };
-    for (const std::string& candidate : candidates) {
-        if (g_fileMgr.IsDataExist(candidate.c_str())) {
-            if (candidate.rfind("effect\\", 0) == 0) {
-                return candidate.substr(7);
+    std::vector<std::string> variants;
+    variants.push_back(normalized);
+    variants.push_back(ToLowerAscii(normalized));
+
+    std::string underscoreVariant = ToLowerAscii(normalized);
+    std::replace(underscoreVariant.begin(), underscoreVariant.end(), ' ', '_');
+    variants.push_back(underscoreVariant);
+
+    std::string spaceVariant = ToLowerAscii(normalized);
+    std::replace(spaceVariant.begin(), spaceVariant.end(), '_', ' ');
+    variants.push_back(spaceVariant);
+
+    for (const std::string& variant : variants) {
+        const std::array<std::string, 3> candidates = {
+            variant,
+            std::string("effect\\") + variant,
+            std::string("data\\texture\\effect\\") + variant,
+        };
+        for (const std::string& candidate : candidates) {
+            if (g_fileMgr.IsDataExist(candidate.c_str())) {
+                if (candidate.rfind("effect\\", 0) == 0) {
+                    return candidate.substr(7);
+                }
+                if (candidate.rfind("data\\texture\\effect\\", 0) == 0) {
+                    return candidate.substr(20);
+                }
+                return candidate;
             }
-            if (candidate.rfind("data\\texture\\effect\\", 0) == 0) {
-                return candidate.substr(20);
-            }
-            return candidate;
         }
     }
 
@@ -1158,14 +1228,8 @@ void AddXformDelta(KAC_XFORMDATA* target, const KAC_XFORMDATA& delta)
 
 std::string ResolveStrName(int effectId)
 {
-    switch (effectId) {
-    case 337:
-        return "joblvup.str";
-    case 371:
-        return "angel.str";
-    default:
-        return std::string();
-    }
+    const RagEffectCatalogEntry* entry = FindRagEffectCatalogEntry(effectId);
+    return entry ? ResolveCatalogStrName(*entry) : std::string();
 }
 
 COLORREF ResolvePortalTint(const std::string& name)
@@ -1466,6 +1530,52 @@ bool UpdateParticleOrbitPrimitive(CEffectPrim* prim)
     return prim->m_stateCnt <= prim->m_duration || prim->m_alpha > 0.0f;
 }
 
+bool UpdateFreeParticlePrimitive(CEffectPrim* prim, bool applyGravity, bool splineMotion)
+{
+    if (!prim || !prim->m_master) {
+        return false;
+    }
+
+    ++prim->m_stateCnt;
+    prim->m_orgPos = prim->m_master->ResolveBasePosition();
+    prim->m_orgPos = AddVec3(prim->m_orgPos, prim->m_deltaPos2);
+
+    prim->m_speed += prim->m_accel;
+    prim->m_size += prim->m_sizeSpeed;
+    prim->m_sizeSpeed += prim->m_sizeAccel;
+    prim->m_radius += prim->m_radiusSpeed;
+    prim->m_radiusSpeed += prim->m_radiusAccel;
+    prim->m_longitude += prim->m_longSpeed;
+    prim->m_longSpeed += prim->m_longAccel;
+
+    if (applyGravity) {
+        prim->m_gravSpeed += prim->m_gravAccel;
+        prim->m_deltaPos.y += prim->m_gravSpeed;
+    }
+
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix, prim->m_latitude * (kPi / 180.0f));
+    MatrixAppendYRotation(prim->m_matrix, prim->m_longitude * (kPi / 180.0f));
+    prim->m_speed3d = {
+        prim->m_speed * prim->m_matrix.m[2][0],
+        prim->m_speed * prim->m_matrix.m[2][1],
+        prim->m_speed * prim->m_matrix.m[2][2]
+    };
+    prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
+
+    if (splineMotion) {
+        const float timeSeconds = static_cast<float>(prim->m_stateCnt) * (kEffectTickMs / 1000.0f);
+        const float lateral = std::sin(timeSeconds * 4.0f + prim->m_param[0]) * (std::max)(0.0f, prim->m_param[1]);
+        prim->m_deltaPos.x += prim->m_matrix.m[0][0] * lateral;
+        prim->m_deltaPos.z += prim->m_matrix.m[0][2] * lateral;
+    }
+
+    prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
+    UpdateAlphaFade(prim);
+    AdvanceTextureMotion(prim);
+    return prim->m_stateCnt <= prim->m_duration || prim->m_alpha > 0.0f;
+}
+
 } // namespace
 
 CEffectPrim::CEffectPrim()
@@ -1547,6 +1657,15 @@ bool CEffectPrim::OnProcess()
     }
     if (m_type == PP_3DPARTICLEORBIT) {
         return UpdateParticleOrbitPrimitive(this);
+    }
+    if (m_type == PP_3DPARTICLE) {
+        return UpdateFreeParticlePrimitive(this, false, false);
+    }
+    if (m_type == PP_3DPARTICLEGRAVITY) {
+        return UpdateFreeParticlePrimitive(this, true, false);
+    }
+    if (m_type == PP_3DPARTICLESPLINE) {
+        return UpdateFreeParticlePrimitive(this, true, true);
     }
     if (m_type == PP_HEAL) {
         UpdateHealBands(this);
@@ -1753,6 +1872,73 @@ void CEffectPrim::Render(matrix* viewMatrix)
             1 | 2);
         break;
     }
+    case PP_3DPARTICLE:
+    case PP_3DPARTICLEGRAVITY:
+    case PP_3DPARTICLESPLINE: {
+        CTexture* texture = !m_texture.empty()
+            ? m_texture[(std::min)(m_curMotion, static_cast<int>(m_texture.size()) - 1)]
+            : GetSoftDiscTexture();
+        const vector3d pos = m_pos;
+        const float size = (std::max)(0.8f, m_size);
+        SubmitBillboard(pos,
+            *viewMatrix,
+            texture,
+            size * 20.0f,
+            size * 20.0f,
+            PackColor(static_cast<unsigned int>(normalizedAlpha), m_tintColor),
+            D3DBLEND_ONE,
+            0.0f,
+            1 | 2);
+        break;
+    }
+    case PP_3DTEXTURE:
+    case PP_3DSPHERE:
+    case PP_SLASH1: {
+        CTexture* texture = !m_texture.empty()
+            ? m_texture[(std::min)(m_curMotion, static_cast<int>(m_texture.size()) - 1)]
+            : GetSoftGlowTexture(false);
+        const vector3d pos = AddVec3(base, m_deltaPos2);
+        const float width = (std::max)(8.0f, m_outerSize > 0.0f ? m_outerSize * 12.0f : m_size * 32.0f);
+        const float height = (std::max)(8.0f, m_heightSize > 0.0f ? m_heightSize * 12.0f : width);
+        SubmitBillboard(pos,
+            *viewMatrix,
+            texture,
+            width,
+            height,
+            PackColor(static_cast<unsigned int>(normalizedAlpha), m_tintColor),
+            D3DBLEND_ONE,
+            0.0f,
+            1 | 2);
+        break;
+    }
+    case PP_3DCROSSTEXTURE:
+    case PP_3DQUADHORN: {
+        CTexture* texture = !m_texture.empty()
+            ? m_texture[(std::min)(m_curMotion, static_cast<int>(m_texture.size()) - 1)]
+            : GetSoftGlowTexture(false);
+        const vector3d pos = AddVec3(base, m_deltaPos2);
+        const float width = (std::max)(10.0f, m_size * 34.0f + m_outerSize * 8.0f);
+        const float height = (std::max)(10.0f, m_heightSize > 0.0f ? m_heightSize * 12.0f : width * 1.6f);
+        SubmitBillboard(pos,
+            *viewMatrix,
+            texture,
+            width,
+            height,
+            PackColor(static_cast<unsigned int>(normalizedAlpha), m_tintColor),
+            D3DBLEND_ONE,
+            0.0f,
+            1 | 2);
+        SubmitBillboard(pos,
+            *viewMatrix,
+            texture,
+            height,
+            width,
+            PackColor(static_cast<unsigned int>(normalizedAlpha * 0.75f), m_tintColor),
+            D3DBLEND_ONE,
+            0.0f,
+            1 | 2);
+        break;
+    }
     case PP_MAPPARTICLE: {
         const int particles = (std::max)(4, m_spawnCount);
         CTexture* texture = !m_texture.empty() ? m_texture[0] : GetSoftGlowTexture(true);
@@ -1778,6 +1964,36 @@ void CEffectPrim::Render(matrix* viewMatrix)
                 0.0f,
                 1 | 2);
         }
+        break;
+    }
+    case PP_2DTEXTURE:
+    case PP_2DFLASH:
+    case PP_2DCIRCLE: {
+        vector3d anchorPos = AddVec3(base, m_deltaPos2);
+        anchorPos.y += m_param[2];
+        tlvertex3d anchor{};
+        if (!ProjectPoint(anchorPos, *viewMatrix, &anchor)) {
+            break;
+        }
+        const float pixelRatio = ResolveEffectPixelRatio(anchor);
+        if (!std::isfinite(pixelRatio) || pixelRatio <= 0.0f) {
+            break;
+        }
+        CTexture* texture = !m_texture.empty()
+            ? m_texture[(std::min)(m_curMotion, static_cast<int>(m_texture.size()) - 1)]
+            : GetSoftGlowTexture(m_type == PP_2DFLASH);
+        const float width = (std::max)(16.0f, (m_outerSize > 0.0f ? m_outerSize * 12.0f : m_size * 38.0f)) * pixelRatio;
+        const float height = (std::max)(16.0f, (m_heightSize > 0.0f ? m_heightSize * 12.0f : m_size * 38.0f)) * pixelRatio;
+        SubmitScreenQuad(anchor,
+            texture,
+            m_deltaPos2.x * pixelRatio,
+            m_deltaPos2.y * pixelRatio,
+            width,
+            height,
+            PackColor(static_cast<unsigned int>(normalizedAlpha), m_tintColor),
+            D3DBLEND_ONE,
+            0.0f,
+            1 | 2);
         break;
     }
     case PP_SUPERANGEL: {
@@ -2400,8 +2616,18 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         m_loop = true;
         m_duration = 1000000;
         break;
-    default:
+    default: {
+        const std::string strName = ResolveStrName(effectId);
+        if (!strName.empty()) {
+            m_handler = Handler::EzStr;
+            LoadEzEffect(strName.c_str());
+            InitEZ2STRFrame();
+            if (m_aniClips && m_aniClips->cFrame > 0) {
+                m_duration = (std::max)(m_duration, m_aniClips->cFrame + 8);
+            }
+        }
         break;
+    }
     }
 }
 

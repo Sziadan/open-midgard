@@ -48,6 +48,8 @@ public:
     u32  m_userLevel;
     u32  m_gid;
     u8   m_sex;
+    bool m_isEffectOn;
+    bool m_isMinEffect;
     char m_charServerAddr[64];
     int  m_charServerPort;
     int  m_pendingReturnToCharSelect;

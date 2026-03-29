@@ -236,7 +236,8 @@ std::string ExtractLowByteString(const std::wstring& value)
 
 } // namespace
 
-CSession::CSession() : m_aid(0), m_authCode(0), m_sex(0), m_charServerPort(0), m_pendingReturnToCharSelect(0),
+CSession::CSession() : m_aid(0), m_authCode(0), m_sex(0), m_isEffectOn(true), m_isMinEffect(false),
+    m_charServerPort(0), m_pendingReturnToCharSelect(0),
     m_playerPosX(0), m_playerPosY(0), m_playerDir(0), m_playerJob(0), m_playerHead(0), m_playerBodyPalette(0),
     m_playerHeadPalette(0), m_playerWeapon(0), m_playerShield(0), m_playerAccessory(0), m_playerAccessory2(0),
     m_playerAccessory3(0), m_serverTime(0), m_hasSelectedCharacterInfo(false), m_baseExpValue(0),
