@@ -234,5 +234,7 @@ public:
     u32 m_mapLoadingStartTick;
     u32 m_mapLoadingAckTick;
     u32 m_lastActorBootstrapPacketTick;
+    u32 m_worldProcessTick;
+    float m_worldProcessCarryMs;
     std::string m_loadingWallpaperName;
 };

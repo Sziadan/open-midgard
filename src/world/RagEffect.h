@@ -176,9 +176,6 @@ private:
         explicit CWorldAnchor(const vector3d& position);
     };
 
-    static bool IsStrTimedHandler(Handler handler);
-    static float ResolveEffectStepMs(Handler handler);
-
     void ClearPrims();
     void LoadEzEffect(const char* fName);
     void InitEZ2STRFrame();

@@ -29,7 +29,6 @@ constexpr float kNearPlane = 10.0f;
 constexpr float kSubmitNearPlane = 80.0f;
 constexpr float kPi = 3.14159265f;
 constexpr float kEffectTickMs = 24.0f;
-constexpr float kStrEffectTickMs = 24.0f;
 constexpr float kEffectPixelRatioScale = 0.14285715f;
 
 struct RagEffectCatalogEntry {
@@ -2372,17 +2371,6 @@ CRagEffect::~CRagEffect()
     }
 }
 
-bool CRagEffect::IsStrTimedHandler(Handler handler)
-{
-    return handler == Handler::EzStr
-        || handler == Handler::JobLevelUp50;
-}
-
-float CRagEffect::ResolveEffectStepMs(Handler handler)
-{
-    return IsStrTimedHandler(handler) ? kStrEffectTickMs : kEffectTickMs;
-}
-
 void CRagEffect::ClearPrims()
 {
     for (CEffectPrim* prim : m_primList) {
@@ -2715,8 +2703,6 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         break;
     }
     }
-
-    m_tickCarryMs = ResolveEffectStepMs(m_handler);
 }
 
 void CRagEffect::InitWorld(const C3dWorldRes::effectSrcInfo& source)
@@ -2759,8 +2745,6 @@ void CRagEffect::InitWorld(const C3dWorldRes::effectSrcInfo& source)
     } else {
         m_handler = Handler::MapParticle;
     }
-
-    m_tickCarryMs = ResolveEffectStepMs(m_handler);
 }
 
 CEffectPrim* CRagEffect::LaunchEffectPrim(EFFECTPRIMID effectPrimId, const vector3d& deltaPos)
@@ -3387,10 +3371,18 @@ u8 CRagEffect::OnProcess()
     m_lastProcessTick = now;
     m_tickCarryMs += static_cast<float>(elapsedMs);
 
-    const float stepMs = ResolveEffectStepMs(m_handler);
-    const bool strTimedHandler = IsStrTimedHandler(m_handler);
+    const bool frameDrivenStrHandler =
+        m_handler == Handler::EzStr
+        || m_handler == Handler::JobLevelUp50;
 
-    int steps = static_cast<int>(m_tickCarryMs / stepMs);
+    int steps = 0;
+    if (frameDrivenStrHandler) {
+        // Ref-style STR playback advances once per world process pass.
+        steps = 1;
+        m_tickCarryMs = 0.0f;
+    } else {
+        steps = static_cast<int>(m_tickCarryMs / kEffectTickMs);
+    }
     const bool burstSensitiveHandler =
         m_handler == Handler::Portal
         || m_handler == Handler::ReadyPortal
@@ -3404,8 +3396,8 @@ u8 CRagEffect::OnProcess()
     if (steps > 1 && burstSensitiveHandler) {
         steps = 1;
     }
-    if (steps > 0) {
-        m_tickCarryMs -= static_cast<float>(steps) * stepMs;
+    if (!frameDrivenStrHandler && steps > 0) {
+        m_tickCarryMs -= static_cast<float>(steps) * kEffectTickMs;
     }
 
     bool alive = true;
@@ -3413,7 +3405,7 @@ u8 CRagEffect::OnProcess()
         if (m_loop) {
             return 1;
         }
-        const bool ezActive = strTimedHandler
+        const bool ezActive = frameDrivenStrHandler
             && m_aniClips
             && m_stateCnt <= (m_aniClips->cFrame + 8);
         return (ezActive || !m_primList.empty() || m_stateCnt <= m_duration) ? 1 : 0;
@@ -3484,7 +3476,7 @@ u8 CRagEffect::OnProcess()
             continue;
         }
 
-        const bool ezActive = strTimedHandler
+        const bool ezActive = frameDrivenStrHandler
             && m_aniClips
             && m_stateCnt <= (m_aniClips->cFrame + 8);
         const bool primActive = !m_primList.empty();

@@ -62,6 +62,8 @@ constexpr u32 kBootstrapLoadBudgetMs = 6;
 constexpr size_t kBootstrapTextureBatch = 2;
 constexpr size_t kBootstrapBackgroundActorBatch = 6;
 constexpr size_t kBootstrapFixedEffectBatch = 12;
+constexpr float kWorldProcessTickMs = 24.0f;
+constexpr int kMaxWorldProcessStepsPerUpdate = 8;
 constexpr int kHoverNameFontHeight = 20;
 constexpr unsigned char kHoverNameFontBold = 1;
 constexpr int kHoverNameTextPadding = 4;
@@ -5706,7 +5708,8 @@ CGameMode::CGameMode()
         m_heldMoveTargetCellX(-1), m_heldMoveTargetCellY(-1), m_hasHeldMoveTarget(0), m_lastMoveRequestTick(0), m_lastAttackRequestTick(0), m_lastPickupRequestTick(0),
         m_lastAttackChaseHintTick(0), m_attackChaseTargetGid(0), m_attackChaseTargetCellX(-1), m_attackChaseTargetCellY(-1),
         m_attackChaseSourceCellX(-1), m_attackChaseSourceCellY(-1), m_attackChaseRange(1), m_hasAttackChaseHint(0),
-        m_mapLoadingStage(MapLoading_None), m_mapLoadingStartTick(0), m_mapLoadingAckTick(0), m_lastActorBootstrapPacketTick(0)
+        m_mapLoadingStage(MapLoading_None), m_mapLoadingStartTick(0), m_mapLoadingAckTick(0), m_lastActorBootstrapPacketTick(0),
+        m_worldProcessTick(GetTickCount()), m_worldProcessCarryMs(kWorldProcessTickMs)
 {
     std::memset(m_rswName, 0, sizeof(m_rswName));
     std::memset(m_minimapBmpName, 0, sizeof(m_minimapBmpName));
@@ -5725,6 +5728,8 @@ void CGameMode::OnInit(const char* worldName) {
     ClearRuntimeActors(*this);
     m_groundItemList.clear();
     m_playWaveList.clear();
+    m_worldProcessTick = GetTickCount();
+    m_worldProcessCarryMs = kWorldProcessTickMs;
 
     DbgLog("[Build] marker=%s pkt0078=%d pkt0209=%d\n",
         kGameModeBuildMarker,
@@ -6023,13 +6028,27 @@ void CGameMode::OnUpdate() {
     const DWORD actorSummaryEnd = GetTickCount();
 
     UpdateMapAudio(*this);
+    const DWORD worldNow = GetTickCount();
+    const DWORD worldElapsedMs = worldNow - m_worldProcessTick;
+    m_worldProcessTick = worldNow;
+    m_worldProcessCarryMs += static_cast<float>(worldElapsedMs);
+    int worldStepCount = static_cast<int>(m_worldProcessCarryMs / kWorldProcessTickMs);
+    if (worldStepCount > 0) {
+        m_worldProcessCarryMs -= static_cast<float>(worldStepCount) * kWorldProcessTickMs;
+    }
+    if (worldStepCount > kMaxWorldProcessStepsPerUpdate) {
+        worldStepCount = kMaxWorldProcessStepsPerUpdate;
+        m_worldProcessCarryMs = 0.0f;
+    }
 
     if (IsMapLoadingActive(*this)) {
         AdvanceMapLoading(*this);
         if (m_world) {
             SetRuntimeActorCameraLongitude(m_view ? m_view->GetCameraLongitude() : 0.0f);
-            m_world->UpdateActors();
-            CleanupPendingActorDespawns(*this);
+            for (int step = 0; step < worldStepCount; ++step) {
+                m_world->UpdateActors();
+                CleanupPendingActorDespawns(*this);
+            }
             const matrix* viewMatrix = m_view ? &m_view->GetViewMatrix() : nullptr;
             m_world->UpdateBackgroundObjects(viewMatrix);
         }
@@ -6048,8 +6067,10 @@ void CGameMode::OnUpdate() {
     if (m_world) {
         const DWORD actorUpdateStart = GetTickCount();
         SetRuntimeActorCameraLongitude(m_view ? m_view->GetCameraLongitude() : 0.0f);
-        m_world->UpdateActors();
-        CleanupPendingActorDespawns(*this);
+        for (int step = 0; step < worldStepCount; ++step) {
+            m_world->UpdateActors();
+            CleanupPendingActorDespawns(*this);
+        }
         actorUpdateEnd = GetTickCount();
 
         const matrix* viewMatrix = m_view ? &m_view->GetViewMatrix() : nullptr;
