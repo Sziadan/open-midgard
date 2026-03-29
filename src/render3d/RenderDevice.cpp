@@ -5395,7 +5395,7 @@ public:
     void ReleaseTextureResource(CTexture* texture) override
     {
         UntrackTexture(texture);
-        ReleaseTextureMembers(texture);
+        DeferTextureMembersRelease(texture);
     }
 
     bool CreateTextureResource(CTexture* texture, unsigned int requestedWidth, unsigned int requestedHeight,
@@ -5406,7 +5406,7 @@ public:
             return false;
         }
 
-        ReleaseTextureMembers(texture);
+        DeferTextureMembersRelease(texture);
         unsigned int surfaceWidth = requestedWidth;
         unsigned int surfaceHeight = requestedHeight;
         AdjustTextureSize(&surfaceWidth, &surfaceHeight);
@@ -6484,6 +6484,7 @@ private:
                 m_bootstrap.initHr = static_cast<int>(result);
                 return false;
             }
+            ReleasePendingTransferResources();
         }
 
         VkResult result = vkWaitForFences(m_device, 1, &m_immediateFence, VK_TRUE, UINT64_MAX);
@@ -6883,6 +6884,33 @@ private:
             ReleaseTextureMembers(texture);
         }
         m_liveTextures.clear();
+    }
+
+    void DeferTextureMembersRelease(CTexture* texture)
+    {
+        if (!texture) {
+            return;
+        }
+
+        if (texture->m_pddsSurface) {
+            texture->m_pddsSurface->Release();
+            texture->m_pddsSurface = nullptr;
+        }
+
+        if (texture->m_backendTextureView) {
+            texture->m_backendTextureView->Release();
+            texture->m_backendTextureView = nullptr;
+        }
+
+        if (texture->m_backendTextureObject) {
+            m_pendingReleaseTextures.push_back(static_cast<VulkanTextureHandle*>(texture->m_backendTextureObject));
+            texture->m_backendTextureObject = nullptr;
+        }
+
+        if (texture->m_backendTextureUpload) {
+            texture->m_backendTextureUpload->Release();
+            texture->m_backendTextureUpload = nullptr;
+        }
     }
 
     struct UploadPage {
@@ -8289,14 +8317,13 @@ private:
 
     VkResult BeginFrame()
     {
-        ReleasePendingTransferResources();
-
         VkResult result = vkWaitForFences(m_device, 1, &m_inFlightFence, VK_TRUE, UINT64_MAX);
         if (result != VK_SUCCESS) {
             DbgLog("[Render][Vulkan] vkWaitForFences(frame) failed: %d\n", static_cast<int>(result));
             m_bootstrap.initHr = static_cast<int>(result);
             return result;
         }
+        ReleasePendingTransferResources();
         result = vkResetFences(m_device, 1, &m_inFlightFence);
         if (result != VK_SUCCESS) {
             DbgLog("[Render][Vulkan] vkResetFences(frame) failed: %d\n", static_cast<int>(result));
@@ -8428,6 +8455,13 @@ private:
             vkFreeMemory(m_device, memory, nullptr);
         }
         m_pendingReleaseMemory.clear();
+
+        for (VulkanTextureHandle* textureHandle : m_pendingReleaseTextures) {
+            if (textureHandle) {
+                textureHandle->Release();
+            }
+        }
+        m_pendingReleaseTextures.clear();
     }
 
     void ResizeSwapChain()
@@ -8531,6 +8565,7 @@ private:
     std::vector<UploadPage> m_indexUploadPages;
     std::vector<VkBuffer> m_pendingReleaseBuffers;
     std::vector<VkDeviceMemory> m_pendingReleaseMemory;
+    std::vector<VulkanTextureHandle*> m_pendingReleaseTextures;
 
 #else
     VulkanRenderDevice()

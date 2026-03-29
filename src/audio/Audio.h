@@ -1,6 +1,7 @@
 #pragma once
 #include "Types.h"
 #include "res/Res.h"
+#include <memory>
 #include <string>
 #include <map>
 #include <vector>
@@ -54,7 +55,9 @@ public:
     virtual void Reset() override;
 };
 
-// CAudio is the high-level manager for Miles
+class IAudioBackend;
+
+// CAudio is the high-level audio manager used by the client.
 class CAudio {
 public:
     CAudio();
@@ -64,17 +67,6 @@ public:
         std::string rswName;
         std::string bgmPath;
     };
-
-    HDIGDRIVER m_digDriver;
-    std::vector<HSAMPLE> m_samples;
-    float m_soundVolume;
-    void* m_bgmStream;
-    int m_bgmVolume;
-    bool m_bgmPaused;
-    bool m_bgmPendingStart;
-    std::string m_bgmPath;
-    bool m_startedUp;
-    std::vector<MapBgmEntry> m_mapBgmTable;
 
     static CAudio* GetInstance();
     bool Init();
@@ -95,8 +87,14 @@ public:
     std::string ResolveMapBgmPath(const char* rswName);
 
 private:
-    HSAMPLE FindReusableSample();
     bool EnsureMapBgmTableLoaded();
     static std::string CanonicalizeMapName(const char* rswName);
     static std::string NormalizeAudioPath(const char* path);
+
+    float m_soundVolume;
+    int m_bgmVolume;
+    bool m_bgmPaused;
+    std::string m_bgmPath;
+    std::vector<MapBgmEntry> m_mapBgmTable;
+    std::unique_ptr<IAudioBackend> m_backend;
 };

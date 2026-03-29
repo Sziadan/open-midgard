@@ -134,7 +134,7 @@ void UINotifyLevelUpWnd::SetShow(int show)
 
 bool UINotifyLevelUpWnd::IsUpdateNeed()
 {
-    return m_show != 0 && (m_isDirty != 0 || !m_children.empty());
+    return m_show != 0 && m_isDirty != 0;
 }
 
 void UINotifyLevelUpWnd::OnCreate(int x, int y)
