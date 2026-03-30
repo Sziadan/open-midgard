@@ -51,7 +51,7 @@
 // ---------------------------------------------------------------------------
 // Window constants
 // ---------------------------------------------------------------------------
-const char* const WINDOW_NAME = "Ragnarok";
+const char* const WINDOW_NAME = "open-midgard";
 
 int  WINDOW_WIDTH  = 1920;
 int  WINDOW_HEIGHT = 1080;
@@ -73,7 +73,7 @@ char      g_baseDir3[MAX_PATH] = {};
 CFileMgr  g_fileMgr;
 int       g_readFolderFirst = 0;   // 0=PAK-first, 1=disk-first
 static RenderBackendType g_activeRenderBackend = RenderBackendType::LegacyDirect3D7;
-static std::string g_windowTitleStatus = WINDOW_NAME;
+static std::string g_windowTitleStatusSuffix;
 static int g_windowTitleFps = -1;
 static DWORD g_windowTitleFpsTick = 0;
 static unsigned int g_windowTitleFrameCount = 0;
@@ -133,7 +133,11 @@ static void ApplyMainWindowTitle()
         return;
     }
 
-    std::string title = g_windowTitleStatus.empty() ? std::string(WINDOW_NAME) : g_windowTitleStatus;
+    std::string title = WINDOW_NAME;
+    if (!g_windowTitleStatusSuffix.empty()) {
+        title += " - ";
+        title += g_windowTitleStatusSuffix;
+    }
     title += " [";
     title += GetRenderBackendName(g_activeRenderBackend);
     title += "]";
@@ -147,7 +151,11 @@ static void ApplyMainWindowTitle()
 
 void RefreshMainWindowTitle(const char* status)
 {
-    g_windowTitleStatus = (status && *status) ? std::string(status) : std::string(WINDOW_NAME);
+    if (status && *status) {
+        g_windowTitleStatusSuffix = status;
+    } else {
+        g_windowTitleStatusSuffix.clear();
+    }
     ApplyMainWindowTitle();
 }
 

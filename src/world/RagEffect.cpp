@@ -451,6 +451,8 @@ void SubmitWorldQuad(const vector3d (&quad)[4],
     g_renderer.AddRP(face, renderFlags);
 }
 
+// vec1=base0 (angle0, ground), vec2=base1 (angle1, ground), vec3=top1, vec4=top0.
+// U spans circumference (u0..u1); V spans ribbon inner..outer (vBottom..vTop, e.g. 1..0).
 void SubmitWorldTeiRect(const vector3d& vec1,
     const vector3d& vec2,
     const vector3d& vec3,
@@ -458,8 +460,10 @@ void SubmitWorldTeiRect(const vector3d& vec1,
     const matrix& viewMatrix,
     CTexture* texture,
     unsigned int color,
-    float tv0,
-    float tv1,
+    float u0,
+    float u1,
+    float vBottom,
+    float vTop,
     D3DBLEND destBlend,
     float alphaSortKey,
     int renderFlags)
@@ -472,8 +476,8 @@ void SubmitWorldTeiRect(const vector3d& vec1,
         const vector3d* positions[3];
         float uvs[3][2];
     } triangles[2] = {
-        { { &vec1, &vec2, &vec3 }, { { 1.0f, tv0 }, { 1.0f, tv1 }, { 0.0f, tv1 } } },
-        { { &vec4, &vec3, &vec1 }, { { 0.0f, tv0 }, { 0.0f, tv1 }, { 1.0f, tv0 } } },
+        { { &vec1, &vec2, &vec3 }, { { u0, vBottom }, { u1, vBottom }, { u1, vTop } } },
+        { { &vec4, &vec3, &vec1 }, { { u0, vTop }, { u1, vTop }, { u0, vBottom } } },
     };
 
     for (const TriangleDef& triangle : triangles) {
@@ -559,7 +563,7 @@ void RenderBandRibbon(const CEffectPrim& prim,
     const int renderFlags = ResolveEffectRenderFlags(prim.m_renderFlag, 1 | 2);
     const D3DBLEND destBlend = ResolveEffectDestBlend(prim.m_renderFlag);
     const int sampleCount = static_cast<int>(band.heights.size());
-    const vector3d center = prim.m_master ? prim.m_pos : base;
+    const vector3d center = base;
     const float groundY = ResolveGroundHeight(center) + prim.m_deltaPos2.y;
     const float ringRadius = (std::max)(0.4f, prim.m_size + band.distance * radiusScale);
     const float clampedAlpha = (std::min)(255.0f, band.alpha);
@@ -589,16 +593,29 @@ void RenderBandRibbon(const CEffectPrim& prim,
             vector3d{ center.x + std::cos(radians1) * outerRadius1, groundY - verticalLift1, center.z + std::sin(radians1) * outerRadius1 },
         };
         const unsigned int colors[4] = { bottomColor, bottomColor, topColor, topColor };
-        const float uvs[4][2] = { { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f } };
+        // One texture wrap around the full ring: U advances with angle. (Using 0–1 U per wedge
+        // repeats the whole texture 21× and reads as thin stripes.)
+        const float invSamples = 1.0f / static_cast<float>(sampleCount);
+        const float u0 = static_cast<float>(sampleIndex) * invSamples;
+        const float u1 = static_cast<float>(sampleIndex + 1) * invSamples;
+        const float uvs[4][2] = {
+            { u0, 1.0f },
+            { u1, 1.0f },
+            { u0, 0.0f },
+            { u1, 0.0f },
+        };
         SubmitWorldQuad(quad, viewMatrix, texture, colors, uvs, destBlend, 0.0f, renderFlags);
     }
 }
 
-void RenderCastingBandLowPolygon(const CEffectPrim& prim,
+// Ref geometry: Render3DCasting_LowPolygon (10 segments). UV: one texture wrap around the ring
+// (U per segment); full V along ribbon height — not 1/21 Ref strips (those read as thin stripes here).
+void RenderBandLowPolygonTeiRect(const CEffectPrim& prim,
     const vector3d& base,
     const EffectBandState& band,
     const matrix& viewMatrix,
-    CTexture* texture)
+    CTexture* texture,
+    float groundRadius)
 {
     if (!band.active || !texture || texture == &CTexMgr::s_dummy_texture || band.alpha <= 0.0f) {
         return;
@@ -606,16 +623,15 @@ void RenderCastingBandLowPolygon(const CEffectPrim& prim,
 
     const int renderFlags = ResolveEffectRenderFlags(prim.m_renderFlag, 1 | 2);
     const D3DBLEND destBlend = ResolveEffectDestBlend(prim.m_renderFlag);
-    constexpr int kTexParts = 21;
     constexpr int kSegments = 10;
     constexpr int kFullDisplayAngle = 360;
 
-    const vector3d center = prim.m_master ? prim.m_pos : base;
+    const vector3d center = base;
     const float groundY = ResolveGroundHeight(center) + prim.m_deltaPos2.y;
     const float riseRadians = band.riseAngle * (kPi / 180.0f);
     const float cosRise = std::cos(riseRadians);
     const float sinRise = std::sin(riseRadians);
-    const float radius = (std::max)(0.0f, band.distance);
+    const float radius = (std::max)(0.0f, groundRadius);
     const unsigned int color = PackColor(static_cast<unsigned int>((std::min)(255.0f, band.alpha)), prim.m_tintColor);
 
     const int basicAngle = kFullDisplayAngle / kSegments;
@@ -653,16 +669,30 @@ void RenderCastingBandLowPolygon(const CEffectPrim& prim,
             base1.z + cosRise * height1 * std::sin(radians1)
         };
 
-        const float tv0 = static_cast<float>(segmentIndex) / static_cast<float>(kTexParts);
-        const float tv1 = static_cast<float>(segmentIndex + 1) / static_cast<float>(kTexParts);
-        SubmitWorldTeiRect(base0, base1, top1, top0, viewMatrix, texture, color, tv0, tv1, destBlend, 0.0f, renderFlags);
+        const float invSeg = 1.0f / static_cast<float>(kSegments);
+        const float segU0 = static_cast<float>(segmentIndex) * invSeg;
+        const float segU1 = static_cast<float>(segmentIndex + 1) * invSeg;
+        SubmitWorldTeiRect(base0, base1, top1, top0, viewMatrix, texture, color, segU0, segU1, 1.0f, 0.0f, destBlend, 0.0f, renderFlags);
     }
+}
+
+void RenderCastingBandLowPolygon(const CEffectPrim& prim,
+    const vector3d& base,
+    const EffectBandState& band,
+    const matrix& viewMatrix,
+    CTexture* texture)
+{
+    RenderBandLowPolygonTeiRect(prim, base, band, viewMatrix, texture, (std::max)(0.0f, band.distance));
 }
 
 void UpdateHealBands(CEffectPrim* prim)
 {
     if (!prim) {
         return;
+    }
+
+    if (prim->m_master) {
+        prim->m_pos = prim->m_master->ResolveBasePosition();
     }
 
     for (int bandIndex = 0; bandIndex < static_cast<int>(prim->m_bands.size()); ++bandIndex) {
@@ -725,6 +755,10 @@ void UpdatePortalBands(CEffectPrim* prim)
 {
     if (!prim) {
         return;
+    }
+
+    if (prim->m_master) {
+        prim->m_pos = prim->m_master->ResolveBasePosition();
     }
 
     const int subtype = static_cast<int>(prim->m_param[0]);
@@ -2030,7 +2064,8 @@ void CEffectPrim::Render(matrix* viewMatrix)
     case PP_PORTAL: {
         CTexture* texture = !m_texture.empty() ? m_texture[0] : GetSoftGlowTexture(false);
         for (const EffectBandState& band : m_bands) {
-            RenderBandRibbon(*this, base, band, *viewMatrix, texture, 0.35f);
+            const float groundRadius = (std::max)(0.01f, m_size + band.radius);
+            RenderBandLowPolygonTeiRect(*this, base, band, *viewMatrix, texture, groundRadius);
         }
         break;
     }
@@ -2066,11 +2101,13 @@ void CEffectPrim::Render(matrix* viewMatrix)
         const float size = (std::max)(0.6f, m_size);
         const int renderFlags = ResolveEffectRenderFlags(m_renderFlag, 1 | 2);
         const D3DBLEND destBlend = ResolveEffectDestBlend(m_renderFlag);
+        // Ref uses sprite clip * m_size * pixelRatio; soft-disc fallback reads small at 18x — nudge up.
+        constexpr float kOrbitBillboardScale = 23.0f;
         SubmitBillboard(pos,
             *viewMatrix,
             texture,
-            size * 18.0f,
-            size * 18.0f,
+            size * kOrbitBillboardScale,
+            size * kOrbitBillboardScale,
             PackColor(static_cast<unsigned int>(normalizedAlpha), m_tintColor),
             destBlend,
             0.0f,
@@ -3056,12 +3093,6 @@ void CRagEffect::SpawnPortal()
 
 void CRagEffect::SpawnPortal2()
 {
-    CTexture* magicViolet = ResolveEffectTextureCandidates({
-        "effect\\magic_violet.tga",
-        "effect\\magic_violet.bmp",
-        "effect\\magic_vio.tga",
-        "effect\\magic_vio.bmp",
-    }, false);
     CTexture* ringBlue = ResolveEffectTextureCandidates({
         "effect\\ring_blue.tga",
         "effect\\ring_blue.bmp",
@@ -3085,7 +3116,7 @@ void CRagEffect::SpawnPortal2()
         if (CEffectPrim* prim = LaunchEffectPrim(PP_HEAL, vector3d{})) {
             prim->m_renderFlag = 5u;
             prim->m_duration = m_duration;
-            prim->m_texture.push_back(magicViolet ? magicViolet : ringBlue);
+            prim->m_texture.push_back(ringBlue);
             prim->m_tintColor = RGB(255, 255, 255);
             prim->m_size = 4.0f;
             ConfigureBand(prim, 0, 0, 50.0f, static_cast<float>(rand() % 360), 4.0f, 90.0f, 1400.0f, 2);
@@ -3200,10 +3231,13 @@ void CRagEffect::SpawnWarpZone()
         "effect\\alpha_down.bmp",
         "effect\\alpha_dow.bmp",
     });
-    CTexture* magicBlue = ResolveEffectTextureCandidates({
+    CTexture* magicBlue = TryResolveEffectTextureCandidates({
         "effect\\magic_blue.tga",
+        "effect\\magic_blue.bmp",
         "effect\\magic_sky.tga",
-    }, true);
+        "effect\\magic_sky.bmp",
+    });
+    CTexture* warpBandTex = magicBlue ? magicBlue : ringBlue;
 
     if (m_stateCnt == 0 && alphaDown) {
         if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
@@ -3233,13 +3267,14 @@ void CRagEffect::SpawnWarpZone()
             prim->m_maxAlpha = 200.0f;
             prim->m_alphaSpeed = 10.0f;
             prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 5;
-            prim->m_texture.push_back(ringBlue);
-            prim->m_tintColor = RGB(86, 196, 255);
+            prim->m_texture.push_back(warpBandTex);
+            prim->m_tintColor = RGB(255, 255, 255);
         }
     }
 
     if ((m_stateCnt % 10) == 0) {
         if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{})) {
+            prim->m_renderFlag = 5u;
             prim->m_duration = 130;
             prim->m_radius = 5.0f + static_cast<float>((rand() % 200) / 100) * 0.75f;
             prim->m_radiusSpeed = 0.0005f;
@@ -3252,7 +3287,6 @@ void CRagEffect::SpawnWarpZone()
             prim->m_maxAlpha = 96.0f;
             prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
             prim->m_size = static_cast<float>(rand() % 10) * 0.1f + 0.7f;
-            prim->m_texture.push_back(magicBlue);
             prim->m_tintColor = RGB(255, 255, 255);
             MatrixIdentity(prim->m_matrix);
             MatrixAppendYRotation(prim->m_matrix, prim->m_longitude * (kPi / 180.0f));
@@ -3281,11 +3315,6 @@ void CRagEffect::SpawnWarpZone2()
         "effect\\alpha_down.bmp",
         "effect\\alpha_dow.bmp",
     });
-    CTexture* magicBlue = ResolveEffectTextureCandidates({
-        "effect\\magic_blue.tga",
-        "effect\\magic_sky.tga",
-    }, true);
-
     if (m_stateCnt == 0 && alphaDown) {
         if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
             prim->m_duration = 99999999;
@@ -3318,6 +3347,7 @@ void CRagEffect::SpawnWarpZone2()
 
     if ((m_stateCnt % 10) == 0) {
         if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{})) {
+            prim->m_renderFlag = 5u;
             prim->m_duration = 70;
             prim->m_radius = 4.5f + static_cast<float>((rand() % 200) / 100) * 0.75f;
             prim->m_radiusSpeed = 0.0005f;
@@ -3331,7 +3361,6 @@ void CRagEffect::SpawnWarpZone2()
             prim->m_maxAlpha = 96.0f;
             prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
             prim->m_size = static_cast<float>(rand() % 10) * 0.1f + 0.7f;
-            prim->m_texture.push_back(magicBlue);
             prim->m_tintColor = RGB(255, 255, 255);
             MatrixIdentity(prim->m_matrix);
             MatrixAppendYRotation(prim->m_matrix, prim->m_longitude * (kPi / 180.0f));
@@ -3362,9 +3391,10 @@ void CRagEffect::SpawnEntry2()
         });
 
         if (CEffectPrim* prim = LaunchEffectPrim(PP_HEAL, vector3d{})) {
+            prim->m_renderFlag = 5u;
             prim->m_duration = m_duration;
             prim->m_texture.push_back(ringBlue);
-            prim->m_tintColor = RGB(96, 196, 255);
+            prim->m_tintColor = RGB(255, 255, 255);
             prim->m_size = 4.0f;
             ConfigureBand(prim, 0, 0, 30.0f, static_cast<float>(rand() % 360), 3.7f, 90.0f, 1400.0f, 2);
             ConfigureBand(prim, 1, 0, 30.0f, static_cast<float>(rand() % 360), 3.4f, 90.0f, 1400.0f, 2);

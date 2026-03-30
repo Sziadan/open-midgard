@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(RagnarokHighPriest VERSION 2008.0 LANGUAGES CXX)
+project(OpenMidgard VERSION 2008.0 LANGUAGES CXX)
 
 # ─── Toolchain requirements ────────────────────────────────────────────────
 set(CMAKE_CXX_STANDARD 17)
@@ -85,9 +85,10 @@ add_subdirectory(src/security)
 add_subdirectory(src/main)
 
 # ─── Final executable ─────────────────────────────────────────────────────
-add_executable(HighPriest WIN32 src/main/WinMain.cpp)
+add_executable(open_midgard WIN32 src/main/WinMain.cpp)
+set_target_properties(open_midgard PROPERTIES OUTPUT_NAME "open-midgard")
 
-target_link_libraries(HighPriest PRIVATE
+target_link_libraries(open_midgard PRIVATE
     ro_main
     ro_gamemode
     ro_session
@@ -116,28 +117,28 @@ target_link_libraries(HighPriest PRIVATE
 
 if(MSVC)
     # ddraw.h can auto-link ddraw.lib via pragma; we resolve DirectDraw dynamically.
-    target_link_options(HighPriest PRIVATE /NODEFAULTLIB:ddraw.lib)
+    target_link_options(open_midgard PRIVATE /NODEFAULTLIB:ddraw.lib)
 endif()
 
 if(DEFINED DX7_INCLUDE)
-    target_include_directories(HighPriest PRIVATE ${DX7_INCLUDE})
-    target_link_directories(HighPriest PRIVATE ${DX7_LIBDIR})
+    target_include_directories(open_midgard PRIVATE ${DX7_INCLUDE})
+    target_link_directories(open_midgard PRIVATE ${DX7_LIBDIR})
 endif()
 
-add_custom_command(TARGET HighPriest POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:HighPriest>/dlls"
+add_custom_command(TARGET open_midgard POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:open_midgard>/dlls"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_SOURCE_DIR}/dlls"
-            "$<TARGET_FILE_DIR:HighPriest>/dlls"
+            "$<TARGET_FILE_DIR:open_midgard>/dlls"
     COMMENT "Copying runtime DLLs to output folder"
 )
 
 if(RO_ENABLE_DEV_DEPLOY)
-    add_custom_command(TARGET HighPriest POST_BUILD
+    add_custom_command(TARGET open_midgard POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "D:/Spel/OldRO"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:HighPriest>"
-                "D:/Spel/OldRO/HighPriest.exe"
+                "$<TARGET_FILE:open_midgard>"
+                "D:/Spel/OldRO/open-midgard.exe"
         COMMENT "Copying executable to local OldRO folder"
     )
 endif()

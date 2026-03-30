@@ -25,7 +25,7 @@ bool            RelaunchCurrentApplication();
 bool            UpdatePatch(const char* patchExe, const char* patchUp);
 void*           ExcuteProgram(const char* exePath);
 
-// Process validation (checks if a valid Ragnarok executable is running)
+// Process validation (checks if another client instance is running)
 bool            SearchProcessIn9X();
 bool            SearchProcessInNT();
 

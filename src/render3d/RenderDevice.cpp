@@ -7204,7 +7204,7 @@ private:
 
         VkApplicationInfo appInfo{};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pApplicationName = "HighPriest";
+        appInfo.pApplicationName = "open-midgard";
         appInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
         appInfo.pEngineName = "OpenMidgard";
         appInfo.engineVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);

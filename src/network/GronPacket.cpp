@@ -150,6 +150,7 @@ void FillPacketSizeTable()
     SetPacketSize(0x0104, 79);
     SetPacketSize(0x0105, 31);
     SetPacketSize(0x0106, 10);
+    SetPacketSize(0x0107, 10);              // ZC_NOTIFY_POSITION_TO_GROUPM (party minimap dot)
     SetPacketSize(0x0109, kVariablePacketSize);
     SetPacketSize(0x010E, 11);
     SetPacketSize(0x010F, kVariablePacketSize);
@@ -234,6 +235,7 @@ void FillPacketSizeTable()
     SetPacketSize(0x01EF, kVariablePacketSize);
     SetPacketSize(0x01F3, 10);
     SetPacketSize(0x01F8, 2);
+    SetPacketSize(0x01FF, 10);              // ZC_HIGHJUMP (clif_slide)
     SetPacketSize(0x0201, kVariablePacketSize);
     SetPacketSize(0x0209, 36);
     SetPacketSize(0x0214, 42);

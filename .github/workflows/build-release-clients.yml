@@ -18,12 +18,12 @@ jobs:
       matrix:
         include:
           - label: Win32
-            asset_name: HighPriest-win32
+            asset_name: open-midgard-win32
             configure_preset: vs2022-win32
             build_preset: build-release
             output_dir: build/Release
           - label: x64
-            asset_name: HighPriest-x64
+            asset_name: open-midgard-x64
             configure_preset: vs2022-x64
             build_preset: build-release-x64
             output_dir: build64/Release
@@ -57,7 +57,7 @@ jobs:
           }
 
           New-Item -ItemType Directory -Path $stagingDir | Out-Null
-          Copy-Item "${{ matrix.output_dir }}/HighPriest.exe" $stagingDir
+          Copy-Item "${{ matrix.output_dir }}/open-midgard.exe" $stagingDir
 
           if (Test-Path "${{ matrix.output_dir }}/dlls") {
             Copy-Item "${{ matrix.output_dir }}/dlls" $stagingDir -Recurse
@@ -88,5 +88,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release-assets/HighPriest-win32/HighPriest-win32.zip
-            release-assets/HighPriest-x64/HighPriest-x64.zip
+            release-assets/open-midgard-win32/open-midgard-win32.zip
+            release-assets/open-midgard-x64/open-midgard-x64.zip

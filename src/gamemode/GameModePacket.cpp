@@ -6299,6 +6299,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0087, HandleSelfMoveAck);
     router.Register(0x008A, HandleActorActionNotify);
     router.Register(0x0088, HandleActorSetPosition);
+    router.Register(0x01FF, HandleActorSetPosition); // ZC_HIGHJUMP: same id/x/y layout as 0x0088
     router.Register(0x009C, HandleActorDirection);
     router.Register(0x010E, HandlePlayerSkillUpdate);
     router.Register(0x010F, HandlePlayerSkillList);
@@ -6375,6 +6376,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x013E, HandleSkillCastAck);
     router.Register(0x01B0, HandleIgnorePacket);
     router.Register(0x0106, HandleIgnorePacket);
+    router.Register(0x0107, HandleIgnorePacket); // party minimap position (account id); framing only
     router.Register(0x0104, HandleIgnorePacket);
     router.Register(0x011F, HandleSkillUnitSet);
     router.Register(0x0120, HandleIgnorePacket);
