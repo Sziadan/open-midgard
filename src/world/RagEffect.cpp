@@ -547,66 +547,20 @@ void ConfigureBand(CEffectPrim* prim,
     SetBandMode(&band, mode);
 }
 
-float ResolveGroundHeight(const vector3d& position);
-
-void RenderBandRibbon(const CEffectPrim& prim,
-    const vector3d& base,
-    const EffectBandState& band,
-    const matrix& viewMatrix,
-    CTexture* texture,
-    float radiusScale)
+// variant 0/1 match SpawnWarpZone2 m_stateCnt 1/2 band parameters; rotOff rotates all bands together.
+void ConfigureWarpZoneCastingBands(CEffectPrim* prim, int variant, float rotOff)
 {
-    if (!band.active || !texture || texture == &CTexMgr::s_dummy_texture || band.alpha <= 0.0f) {
+    if (!prim) {
         return;
     }
-
-    const int renderFlags = ResolveEffectRenderFlags(prim.m_renderFlag, 1 | 2);
-    const D3DBLEND destBlend = ResolveEffectDestBlend(prim.m_renderFlag);
-    const int sampleCount = static_cast<int>(band.heights.size());
-    const vector3d center = base;
-    const float groundY = ResolveGroundHeight(center) + prim.m_deltaPos2.y;
-    const float ringRadius = (std::max)(0.4f, prim.m_size + band.distance * radiusScale);
-    const float clampedAlpha = (std::min)(255.0f, band.alpha);
-    const unsigned int topColor = PackColor(static_cast<unsigned int>(clampedAlpha), prim.m_tintColor);
-    const unsigned int bottomColor = PackColor(static_cast<unsigned int>((std::min)(255.0f, clampedAlpha * 0.72f)), prim.m_tintColor);
-
-    for (int sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex) {
-        const int nextIndex = (sampleIndex + 1) % sampleCount;
-        const float angle0 = WrapAngle360(band.rotStart + (360.0f * static_cast<float>(sampleIndex) / static_cast<float>(sampleCount)));
-        const float angle1 = WrapAngle360(band.rotStart + (360.0f * static_cast<float>(nextIndex) / static_cast<float>(sampleCount)));
-        const float radians0 = angle0 * (kPi / 180.0f);
-        const float radians1 = angle1 * (kPi / 180.0f);
-        const float riseRadians = band.riseAngle * (kPi / 180.0f);
-        const float height0 = band.heights[static_cast<size_t>(sampleIndex)];
-        const float height1 = band.heights[static_cast<size_t>(nextIndex)];
-        const float radialLift0 = std::cos(riseRadians) * height0;
-        const float radialLift1 = std::cos(riseRadians) * height1;
-        const float verticalLift0 = std::sin(riseRadians) * height0;
-        const float verticalLift1 = std::sin(riseRadians) * height1;
-        const float outerRadius0 = ringRadius + radialLift0;
-        const float outerRadius1 = ringRadius + radialLift1;
-
-        const vector3d quad[4] = {
-            vector3d{ center.x + std::cos(radians0) * ringRadius, groundY, center.z + std::sin(radians0) * ringRadius },
-            vector3d{ center.x + std::cos(radians1) * ringRadius, groundY, center.z + std::sin(radians1) * ringRadius },
-            vector3d{ center.x + std::cos(radians0) * outerRadius0, groundY - verticalLift0, center.z + std::sin(radians0) * outerRadius0 },
-            vector3d{ center.x + std::cos(radians1) * outerRadius1, groundY - verticalLift1, center.z + std::sin(radians1) * outerRadius1 },
-        };
-        const unsigned int colors[4] = { bottomColor, bottomColor, topColor, topColor };
-        // One texture wrap around the full ring: U advances with angle. (Using 0–1 U per wedge
-        // repeats the whole texture 21× and reads as thin stripes.)
-        const float invSamples = 1.0f / static_cast<float>(sampleCount);
-        const float u0 = static_cast<float>(sampleIndex) * invSamples;
-        const float u1 = static_cast<float>(sampleIndex + 1) * invSamples;
-        const float uvs[4][2] = {
-            { u0, 1.0f },
-            { u1, 1.0f },
-            { u0, 0.0f },
-            { u1, 0.0f },
-        };
-        SubmitWorldQuad(quad, viewMatrix, texture, colors, uvs, destBlend, 0.0f, renderFlags);
-    }
+    const bool a = variant == 0;
+    ConfigureBand(prim, 0, 0, a ? 2.5f : 2.7f, WrapAngle360((a ? 270.0f : 271.0f) + rotOff), a ? 2.5f : 2.7f, a ? 53.0f : 52.0f, -1.0f, 0);
+    ConfigureBand(prim, 1, 0, a ? 5.0f : 5.2f, WrapAngle360((a ? 0.0f : 1.0f) + rotOff), a ? 5.0f : 5.2f, a ? 60.0f : 59.0f, -1.0f, 0);
+    ConfigureBand(prim, 2, 0, a ? 7.5f : 7.7f, WrapAngle360((a ? 90.0f : 91.0f) + rotOff), a ? 7.5f : 7.7f, a ? 55.0f : 54.0f, -1.0f, 0);
+    ConfigureBand(prim, 3, 0, 10.0f, WrapAngle360((a ? 180.0f : 181.0f) + rotOff), 10.0f, a ? 50.0f : 49.0f, -1.0f, 0);
 }
+
+float ResolveGroundHeight(const vector3d& position);
 
 // Ref geometry: Render3DCasting_LowPolygon (10 segments). UV: one texture wrap around the ring
 // (U per segment); full V along ribbon height — not 1/21 Ref strips (those read as thin stripes here).
@@ -683,72 +637,6 @@ void RenderCastingBandLowPolygon(const CEffectPrim& prim,
     CTexture* texture)
 {
     RenderBandLowPolygonTeiRect(prim, base, band, viewMatrix, texture, (std::max)(0.0f, band.distance));
-}
-
-void UpdateHealBands(CEffectPrim* prim)
-{
-    if (!prim) {
-        return;
-    }
-
-    if (prim->m_master) {
-        prim->m_pos = prim->m_master->ResolveBasePosition();
-    }
-
-    for (int bandIndex = 0; bandIndex < static_cast<int>(prim->m_bands.size()); ++bandIndex) {
-        EffectBandState& band = prim->m_bands[static_cast<size_t>(bandIndex)];
-        if (!band.active) {
-            continue;
-        }
-
-        ++band.process;
-        const u8 mode = band.modes[0];
-        if (mode == 1) {
-            band.rotStart = WrapAngle360(band.rotStart + static_cast<float>(bandIndex + 8));
-        } else if (mode == 2) {
-            band.rotStart = WrapAngle360(band.rotStart + static_cast<float>(bandIndex >= 2 ? bandIndex + 2 : bandIndex + 4));
-        } else if (mode == 3) {
-            band.rotStart = WrapAngle360(band.rotStart + static_cast<float>(bandIndex + 6));
-        }
-
-        if (band.fadeThreshold >= 0.0f && static_cast<float>(band.process) >= band.fadeThreshold) {
-            band.alpha = (std::max)(0.0f, band.alpha - 2.0f);
-        } else if (band.process < 16) {
-            const float alphaStep = mode == 2 ? 3.0f : (mode == 3 ? 2.0f : 5.0f);
-            band.alpha = (std::min)(180.0f, band.alpha + alphaStep);
-        }
-
-        for (int sampleIndex = 0; sampleIndex < static_cast<int>(band.heights.size()); ++sampleIndex) {
-            float height = 0.0f;
-            switch (mode) {
-            case 0:
-            case 33: {
-                const int phaseMul = bandIndex == 0 ? 4 : (bandIndex == 1 ? 3 : 2);
-                const float wave = SinDeg(static_cast<float>(sampleIndex * 34 + band.process * phaseMul));
-                height = band.maxHeight * (0.75f + wave * 0.25f);
-                if (band.process <= 90) {
-                    height *= (std::max)(0.0f, SinDeg(static_cast<float>(band.process)));
-                }
-                break;
-            }
-            case 1:
-            case 3:
-                height = band.maxHeight;
-                if (band.process <= 90) {
-                    height *= (std::max)(0.0f, SinDeg(static_cast<float>(band.process)));
-                }
-                break;
-            case 2:
-                height = band.process > 45
-                    ? 0.0f
-                    : band.maxHeight * (std::max)(0.0f, SinDeg(static_cast<float>(band.process * 4)));
-                break;
-            default:
-                break;
-            }
-            band.heights[static_cast<size_t>(sampleIndex)] = (std::max)(0.0f, height);
-        }
-    }
 }
 
 void UpdatePortalBands(CEffectPrim* prim)
@@ -1905,11 +1793,6 @@ bool CEffectPrim::OnProcess()
     if (m_type == PP_3DPARTICLESPLINE) {
         return UpdateFreeParticlePrimitive(this, true, true);
     }
-    if (m_type == PP_HEAL) {
-        UpdateHealBands(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration || std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active && band.alpha > 0.0f; });
-    }
     if (m_type == PP_PORTAL) {
         UpdatePortalBands(this);
         ++m_stateCnt;
@@ -1954,7 +1837,6 @@ void CEffectPrim::Render(matrix* viewMatrix)
         && m_type != PP_MAPPARTICLE
         && m_type != PP_PORTALSTACK
         && m_type != PP_CASTINGRING4
-        && m_type != PP_HEAL
         && m_type != PP_PORTAL
         && m_type != PP_WIND) {
         return;
@@ -2051,13 +1933,6 @@ void CEffectPrim::Render(matrix* viewMatrix)
             const float uvs[4][2] = { { uInc, 1.0f }, { nextU, 1.0f }, { uInc, 0.0f }, { nextU, 0.0f } };
             SubmitWorldQuad(quad, *viewMatrix, texture, colors, uvs, destBlend, 0.0f, renderFlags);
             uInc = nextU >= 1.0f ? 0.0f : nextU;
-        }
-        break;
-    }
-    case PP_HEAL: {
-        CTexture* texture = !m_texture.empty() ? m_texture[0] : GetSoftGlowTexture(false);
-        for (const EffectBandState& band : m_bands) {
-            RenderBandRibbon(*this, base, band, *viewMatrix, texture, 1.0f);
         }
         break;
     }
@@ -3113,15 +2988,13 @@ void CRagEffect::SpawnPortal2()
     }
 
     if (m_stateCnt == 0) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_HEAL, vector3d{})) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_CASTINGRING4, vector3d{})) {
             prim->m_renderFlag = 5u;
             prim->m_duration = m_duration;
             prim->m_texture.push_back(ringBlue);
             prim->m_tintColor = RGB(255, 255, 255);
             prim->m_size = 4.0f;
-            ConfigureBand(prim, 0, 0, 50.0f, static_cast<float>(rand() % 360), 4.0f, 90.0f, 1400.0f, 2);
-            ConfigureBand(prim, 1, 0, 50.0f, static_cast<float>(rand() % 360), 3.0f, 90.0f, 1400.0f, 2);
-            ConfigureBand(prim, 2, 0, 50.0f, static_cast<float>(rand() % 360), 2.0f, 90.0f, 1400.0f, 2);
+            ConfigureWarpZoneCastingBands(prim, 0, static_cast<float>(rand() % 360));
         }
     }
 
@@ -3338,10 +3211,7 @@ void CRagEffect::SpawnWarpZone2()
             prim->m_texture.push_back(ringBlue);
             prim->m_tintColor = RGB(255, 255, 255);
             prim->m_size = m_stateCnt == 1 ? 11.0f : 4.0f;
-            ConfigureBand(prim, 0, 0, m_stateCnt == 1 ? 2.5f : 2.7f, m_stateCnt == 1 ? 270.0f : 271.0f, m_stateCnt == 1 ? 2.5f : 2.7f, m_stateCnt == 1 ? 53.0f : 52.0f, -1.0f, 0);
-            ConfigureBand(prim, 1, 0, m_stateCnt == 1 ? 5.0f : 5.2f, m_stateCnt == 1 ? 0.0f : 1.0f, m_stateCnt == 1 ? 5.0f : 5.2f, m_stateCnt == 1 ? 60.0f : 59.0f, -1.0f, 0);
-            ConfigureBand(prim, 2, 0, m_stateCnt == 1 ? 7.5f : 7.7f, m_stateCnt == 1 ? 90.0f : 91.0f, m_stateCnt == 1 ? 7.5f : 7.7f, m_stateCnt == 1 ? 55.0f : 54.0f, -1.0f, 0);
-            ConfigureBand(prim, 3, 0, 10.0f, m_stateCnt == 1 ? 180.0f : 181.0f, 10.0f, m_stateCnt == 1 ? 50.0f : 49.0f, -1.0f, 0);
+            ConfigureWarpZoneCastingBands(prim, m_stateCnt == 1 ? 0 : 1, 0.0f);
         }
     }
 
@@ -3390,16 +3260,13 @@ void CRagEffect::SpawnEntry2()
             "effect\\ef_portal.wav",
         });
 
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_HEAL, vector3d{})) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_CASTINGRING4, vector3d{})) {
             prim->m_renderFlag = 5u;
             prim->m_duration = m_duration;
             prim->m_texture.push_back(ringBlue);
             prim->m_tintColor = RGB(255, 255, 255);
             prim->m_size = 4.0f;
-            ConfigureBand(prim, 0, 0, 30.0f, static_cast<float>(rand() % 360), 3.7f, 90.0f, 1400.0f, 2);
-            ConfigureBand(prim, 1, 0, 30.0f, static_cast<float>(rand() % 360), 3.4f, 90.0f, 1400.0f, 2);
-            ConfigureBand(prim, 2, 0, 4.0f, static_cast<float>(rand() % 360), 3.6f, 10.0f, 1400.0f, 2);
-            ConfigureBand(prim, 3, 0, 4.0f, static_cast<float>(rand() % 360), 3.7f, 5.0f, 1400.0f, 2);
+            ConfigureWarpZoneCastingBands(prim, 0, static_cast<float>(rand() % 360));
         }
     }
 }
