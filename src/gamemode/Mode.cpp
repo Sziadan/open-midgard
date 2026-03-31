@@ -3,6 +3,9 @@
 #include "GameMode.h"
 #include "core/ClientInfoLocale.h"
 #include "qtui/QtUiRuntime.h"
+#include "render/Renderer.h"
+#include "render3d/RenderDevice.h"
+#include "res/Texture.h"
 #include "ui/UIWindowMgr.h"
 #include "main/WinMain.h"
 #include <cstring>
@@ -23,12 +26,103 @@ std::string ChooseRandomLoadingWallpaper()
     return loadingScreens[index];
 }
 
+bool QueueFullScreenOverlayQuad(CTexture* texture, int width, int height, float sortKey)
+{
+    if (!texture || width <= 0 || height <= 0) {
+        return false;
+    }
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return false;
+    }
+
+    const float right = static_cast<float>(width) - 0.5f;
+    const float bottom = static_cast<float>(height) - 0.5f;
+    const unsigned int overlayContentWidth = texture->m_surfaceUpdateWidth > 0 ? texture->m_surfaceUpdateWidth : static_cast<unsigned int>(width);
+    const unsigned int overlayContentHeight = texture->m_surfaceUpdateHeight > 0 ? texture->m_surfaceUpdateHeight : static_cast<unsigned int>(height);
+    const float maxU = texture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(texture->m_w) : 1.0f;
+    const float maxV = texture->m_h != 0 ? static_cast<float>(overlayContentHeight) / static_cast<float>(texture->m_h) : 1.0f;
+
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = texture;
+    face->mtPreset = 3;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = sortKey;
+
+    face->m_verts[0] = { -0.5f, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+    face->m_verts[1] = { right, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
+    face->m_verts[2] = { -0.5f, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
+    face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
+    g_renderer.AddRP(face, 1 | 8);
+    return true;
+}
+
+bool QueueLoadingMenuOverlayQuad(int width, int height)
+{
+    if (width <= 0 || height <= 0) {
+        return false;
+    }
+
+    static CTexture* s_qtLoadingOverlayTexture = nullptr;
+    static int s_qtLoadingOverlayTextureWidth = 0;
+    static int s_qtLoadingOverlayTextureHeight = 0;
+    if (!s_qtLoadingOverlayTexture
+        || s_qtLoadingOverlayTextureWidth != width
+        || s_qtLoadingOverlayTextureHeight != height) {
+        delete s_qtLoadingOverlayTexture;
+        s_qtLoadingOverlayTexture = new CTexture();
+        if (!s_qtLoadingOverlayTexture
+            || !s_qtLoadingOverlayTexture->Create(width, height, PF_A8R8G8B8, false)) {
+            delete s_qtLoadingOverlayTexture;
+            s_qtLoadingOverlayTexture = nullptr;
+            s_qtLoadingOverlayTextureWidth = 0;
+            s_qtLoadingOverlayTextureHeight = 0;
+            return false;
+        }
+        s_qtLoadingOverlayTextureWidth = width;
+        s_qtLoadingOverlayTextureHeight = height;
+    }
+
+    if (!RenderQtUiMenuOverlayTexture(s_qtLoadingOverlayTexture, width, height)) {
+        return false;
+    }
+    return QueueFullScreenOverlayQuad(s_qtLoadingOverlayTexture, width, height, 2.0f);
+}
+
 void DrawLoadingScreenFrame(const char* message, float progress)
 {
     const std::string wallpaperName = ChooseRandomLoadingWallpaper();
     g_windowMgr.ShowLoadingScreen(wallpaperName, message ? message : "Loading...", progress);
     g_windowMgr.OnProcess();
-    g_windowMgr.OnDraw();
+    const bool hasLegacyDevice = GetRenderDevice().GetLegacyDevice() != nullptr;
+    if (!hasLegacyDevice && IsQtUiRuntimeEnabled() && g_hMainWnd) {
+        RECT clientRect{};
+        GetClientRect(g_hMainWnd, &clientRect);
+        const int clientWidth = clientRect.right - clientRect.left;
+        const int clientHeight = clientRect.bottom - clientRect.top;
+        if (clientWidth > 0 && clientHeight > 0) {
+            g_renderer.ClearBackground();
+            g_renderer.Clear(0);
+            g_windowMgr.RenderWallPaper();
+            if (QueueLoadingMenuOverlayQuad(clientWidth, clientHeight)) {
+                g_renderer.DrawScene();
+                g_renderer.Flip(false);
+            } else {
+                g_windowMgr.OnDraw();
+            }
+        } else {
+            g_windowMgr.OnDraw();
+        }
+    } else {
+        g_windowMgr.OnDraw();
+    }
     if (g_hMainWnd) {
         UpdateWindow(g_hMainWnd);
     }
