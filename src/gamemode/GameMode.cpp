@@ -448,11 +448,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
     static std::uint64_t s_overlayStateToken = 0ull;
     static bool s_overlayTextureValid = false;
     static u32 s_lastMovingOverlayRefreshTick = 0;
-    const bool composeReady = EnsureOverlayComposeSurface(clientWidth, clientHeight,
-        &s_overlayComposeDc, &s_overlayComposeBitmap, &s_overlayComposeBits, &s_overlayComposeWidth, &s_overlayComposeHeight);
-    if (!composeReady) {
-        return false;
-    }
+    const bool qtGameplayRuntimeEnabled = IsQtUiRuntimeEnabled();
 
     static CTexture* s_overlayTexture = nullptr;
     static int s_overlayTextureWidth = 0;
@@ -492,7 +488,6 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         }
     }
 
-    const bool qtGameplayRuntimeEnabled = IsQtUiRuntimeEnabled();
     const bool overlayIsAnimated = false;
     const bool uiDirty = qtGameplayRuntimeEnabled
         ? g_windowMgr.HasDirtyVisualState()
@@ -510,86 +505,105 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
 
     if (needOverlayRefresh) {
         const double refreshStartMs = trackMovePerf ? qpcNowMs() : 0.0;
-        ClearOverlayComposeBits(s_overlayComposeBits, clientWidth, clientHeight);
-        const double overlayDrawStartMs = trackMovePerf ? qpcNowMs() : 0.0;
-        DrawGameplayOverlayToHdc(mode, s_overlayComposeDc);
-        if (trackMovePerf) {
-            g_overlayMovePerfStats.modernOverlayDrawMs += qpcNowMs() - overlayDrawStartMs;
-        }
-
-        const double uiDrawStartMs = trackMovePerf ? qpcNowMs() : 0.0;
-        if (!qtGameplayRuntimeEnabled) {
-            g_windowMgr.OnDrawExcludingRoMapToHdc(s_overlayComposeDc);
-        } else {
-            g_windowMgr.ClearDirtyVisualState();
-        }
-        if (trackMovePerf) {
-            g_overlayMovePerfStats.modernUiDrawMs += qpcNowMs() - uiDrawStartMs;
-        }
-
-        const double convertStartMs = trackMovePerf ? qpcNowMs() : 0.0;
-        ConvertOverlayComposeBitsToAlpha(s_overlayComposeBits, clientWidth, clientHeight);
-        if (trackMovePerf) {
-            g_overlayMovePerfStats.modernConvertMs += qpcNowMs() - convertStartMs;
-        }
-        s_qtOverlayTextureValid = s_qtOverlayTexture
+        s_qtOverlayTextureValid = qtGameplayRuntimeEnabled
+            && s_qtOverlayTexture
             && RenderQtUiGameplayOverlayTexture(mode, s_qtOverlayTexture, clientWidth, clientHeight);
-        if (!s_qtOverlayTextureValid) {
+        if (s_qtOverlayTextureValid) {
+            g_windowMgr.ClearDirtyVisualState();
+            s_overlayTextureValid = false;
+        } else {
+            const bool composeReady = EnsureOverlayComposeSurface(clientWidth, clientHeight,
+                &s_overlayComposeDc, &s_overlayComposeBitmap, &s_overlayComposeBits, &s_overlayComposeWidth, &s_overlayComposeHeight);
+            if (!composeReady) {
+                return false;
+            }
+
+            ClearOverlayComposeBits(s_overlayComposeBits, clientWidth, clientHeight);
+            const double overlayDrawStartMs = trackMovePerf ? qpcNowMs() : 0.0;
+            DrawGameplayOverlayToHdc(mode, s_overlayComposeDc);
+            if (trackMovePerf) {
+                g_overlayMovePerfStats.modernOverlayDrawMs += qpcNowMs() - overlayDrawStartMs;
+            }
+
+            const double uiDrawStartMs = trackMovePerf ? qpcNowMs() : 0.0;
+            if (!qtGameplayRuntimeEnabled) {
+                g_windowMgr.OnDrawExcludingRoMapToHdc(s_overlayComposeDc);
+            } else {
+                g_windowMgr.ClearDirtyVisualState();
+            }
+            if (trackMovePerf) {
+                g_overlayMovePerfStats.modernUiDrawMs += qpcNowMs() - uiDrawStartMs;
+            }
+
+            const double convertStartMs = trackMovePerf ? qpcNowMs() : 0.0;
+            ConvertOverlayComposeBitsToAlpha(s_overlayComposeBits, clientWidth, clientHeight);
+            if (trackMovePerf) {
+                g_overlayMovePerfStats.modernConvertMs += qpcNowMs() - convertStartMs;
+            }
             CompositeQtUiGameplayOverlay(mode,
                 s_overlayComposeBits,
                 clientWidth,
                 clientHeight,
                 clientWidth * static_cast<int>(sizeof(unsigned int)));
+
+            const double textureUpdateStartMs = trackMovePerf ? qpcNowMs() : 0.0;
+            s_overlayTexture->Update(0,
+                0,
+                clientWidth,
+                clientHeight,
+                static_cast<unsigned int*>(s_overlayComposeBits),
+                true,
+                clientWidth * static_cast<int>(sizeof(unsigned int)));
+            if (trackMovePerf) {
+                g_overlayMovePerfStats.modernTextureUpdateMs += qpcNowMs() - textureUpdateStartMs;
+            }
+            s_overlayTextureValid = true;
         }
-        const double textureUpdateStartMs = trackMovePerf ? qpcNowMs() : 0.0;
-        s_overlayTexture->Update(0,
-            0,
-            clientWidth,
-            clientHeight,
-            static_cast<unsigned int*>(s_overlayComposeBits),
-            true,
-            clientWidth * static_cast<int>(sizeof(unsigned int)));
         if (trackMovePerf) {
-            g_overlayMovePerfStats.modernTextureUpdateMs += qpcNowMs() - textureUpdateStartMs;
             g_overlayMovePerfStats.modernRefreshes += 1;
             (void)refreshStartMs;
         }
-        s_overlayTextureValid = true;
         s_overlayStateToken = overlayStateToken;
         if (overlayStateChanged) {
             s_lastMovingOverlayRefreshTick = now;
         }
     }
 
-    RPFace* face = g_renderer.BorrowNullRP();
-    if (!face) {
+    if (!s_overlayTextureValid && !s_qtOverlayTextureValid) {
         return false;
     }
 
     const float right = static_cast<float>(clientWidth) - 0.5f;
     const float bottom = static_cast<float>(clientHeight) - 0.5f;
-    const unsigned int overlayContentWidth = s_overlayTexture->m_surfaceUpdateWidth > 0 ? s_overlayTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(clientWidth);
-    const unsigned int overlayContentHeight = s_overlayTexture->m_surfaceUpdateHeight > 0 ? s_overlayTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(clientHeight);
-    const float maxU = s_overlayTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_overlayTexture->m_w) : 1.0f;
-    const float maxV = s_overlayTexture->m_h != 0 ? static_cast<float>(overlayContentHeight) / static_cast<float>(s_overlayTexture->m_h) : 1.0f;
+    if (s_overlayTextureValid) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) {
+            return false;
+        }
 
-    face->primType = D3DPT_TRIANGLESTRIP;
-    face->verts = face->m_verts;
-    face->numVerts = 4;
-    face->indices = nullptr;
-    face->numIndices = 0;
-    face->tex = s_overlayTexture;
-    face->mtPreset = 3;
-    face->cullMode = D3DCULL_NONE;
-    face->srcAlphaMode = D3DBLEND_SRCALPHA;
-    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
-    face->alphaSortKey = 1.0f;
+        const unsigned int overlayContentWidth = s_overlayTexture->m_surfaceUpdateWidth > 0 ? s_overlayTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(clientWidth);
+        const unsigned int overlayContentHeight = s_overlayTexture->m_surfaceUpdateHeight > 0 ? s_overlayTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(clientHeight);
+        const float maxU = s_overlayTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_overlayTexture->m_w) : 1.0f;
+        const float maxV = s_overlayTexture->m_h != 0 ? static_cast<float>(overlayContentHeight) / static_cast<float>(s_overlayTexture->m_h) : 1.0f;
 
-    face->m_verts[0] = { -0.5f, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
-    face->m_verts[1] = { right, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
-    face->m_verts[2] = { -0.5f, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
-    face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
-    g_renderer.AddRP(face, 1 | 8);
+        face->primType = D3DPT_TRIANGLESTRIP;
+        face->verts = face->m_verts;
+        face->numVerts = 4;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = s_overlayTexture;
+        face->mtPreset = 3;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+        face->alphaSortKey = 1.0f;
+
+        face->m_verts[0] = { -0.5f, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+        face->m_verts[1] = { right, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
+        face->m_verts[2] = { -0.5f, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
+        face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
+        g_renderer.AddRP(face, 1 | 8);
+    }
 
     if (s_qtOverlayTextureValid) {
         RPFace* qtFace = g_renderer.BorrowNullRP();
