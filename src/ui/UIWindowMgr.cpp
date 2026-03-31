@@ -924,6 +924,24 @@ bool UIWindowMgr::HasRoMapDirtyVisualState() const
     return HasDirtyWindowRecursive(m_roMapWnd);
 }
 
+void UIWindowMgr::ClearDirtyVisualState()
+{
+    for (UIWindow* child : m_children) {
+        if (child) {
+            ClearDirtyWindowRecursive(child);
+        }
+    }
+}
+
+void UIWindowMgr::ClearDirtyVisualStateExcludingRoMap()
+{
+    for (UIWindow* child : m_children) {
+        if (child && child != m_roMapWnd) {
+            ClearDirtyWindowRecursive(child);
+        }
+    }
+}
+
 void UIWindowMgr::DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap)
 {
     if (!g_hMainWnd || !targetDC) {
@@ -943,10 +961,10 @@ void UIWindowMgr::DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap)
         m_itemWnd->DrawHoverOverlay(targetDC, clientRect);
     }
     UIWindow::SetSharedDrawDC(previousSharedDC);
-    for (UIWindow* child : m_children) {
-        if (child && (includeRoMap || child != m_roMapWnd)) {
-            ClearDirtyWindowRecursive(child);
-        }
+    if (includeRoMap) {
+        ClearDirtyVisualState();
+    } else {
+        ClearDirtyVisualStateExcludingRoMap();
     }
 }
 

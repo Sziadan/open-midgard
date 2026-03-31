@@ -91,6 +91,8 @@ public:
     bool HasDirtyVisualState() const;
     bool HasDirtyVisualStateExcludingRoMap() const;
     bool HasRoMapDirtyVisualState() const;
+    void ClearDirtyVisualState();
+    void ClearDirtyVisualStateExcludingRoMap();
     void OnDrawExcludingRoMap();
     void OnDrawExcludingRoMapToHdc(HDC targetDC);
     bool DrawRoMapToHdc(HDC targetDC, int x, int y);

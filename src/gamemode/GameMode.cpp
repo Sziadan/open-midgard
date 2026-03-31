@@ -507,6 +507,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
 
     if (needOverlayRefresh) {
         const double refreshStartMs = trackMovePerf ? qpcNowMs() : 0.0;
+        const bool qtGameplayRuntimeEnabled = IsQtUiRuntimeEnabled();
         ClearOverlayComposeBits(s_overlayComposeBits, clientWidth, clientHeight);
         const double overlayDrawStartMs = trackMovePerf ? qpcNowMs() : 0.0;
         DrawGameplayOverlayToHdc(mode, s_overlayComposeDc);
@@ -515,7 +516,11 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         }
 
         const double uiDrawStartMs = trackMovePerf ? qpcNowMs() : 0.0;
-        g_windowMgr.OnDrawExcludingRoMapToHdc(s_overlayComposeDc);
+        if (!qtGameplayRuntimeEnabled) {
+            g_windowMgr.OnDrawExcludingRoMapToHdc(s_overlayComposeDc);
+        } else {
+            g_windowMgr.ClearDirtyVisualStateExcludingRoMap();
+        }
         if (trackMovePerf) {
             g_overlayMovePerfStats.modernUiDrawMs += qpcNowMs() - uiDrawStartMs;
         }

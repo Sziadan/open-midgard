@@ -412,6 +412,8 @@ bool QueueLoginUiQuad()
 
         if (!qtMenuRuntimeEnabled) {
             g_windowMgr.OnDrawToHdc(s_uiComposeDc);
+        } else {
+            g_windowMgr.ClearDirtyVisualState();
         }
 
         ConvertOverlayComposeBitsToAlpha(s_uiComposeBits, clientWidth, clientHeight);
