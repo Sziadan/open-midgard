@@ -27,6 +27,7 @@
 #include "gamemode/CursorRenderer.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
+#include "qtui/QtUiRuntime.h"
 
 #include "core/File.h"
 #include "res/Bitmap.h"
@@ -1016,7 +1017,20 @@ void UIWindowMgr::OnDraw() {
         }
     }
 
-    OnDrawToHdc(drawDC);
+    const bool qtMenuRuntimeEnabled = useCompose
+        && hasMenuUi
+        && IsQtUiRuntimeEnabled()
+        && GetRenderDevice().GetLegacyDevice() == nullptr;
+    if (!qtMenuRuntimeEnabled) {
+        OnDrawToHdc(drawDC);
+    } else {
+        ClearDirtyVisualState();
+        CompositeQtUiMenuOverlay(
+            m_uiComposeBits,
+            clientWidth,
+            clientHeight,
+            clientWidth * static_cast<int>(sizeof(unsigned int)));
+    }
     if (useCompose && m_composeCursorEnabled) {
         DrawModeCursorToHdc(drawDC, m_composeCursorActNum, m_composeCursorStartTick);
     }
