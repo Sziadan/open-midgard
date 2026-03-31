@@ -492,8 +492,11 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         }
     }
 
+    const bool qtGameplayRuntimeEnabled = IsQtUiRuntimeEnabled();
     const bool overlayIsAnimated = false;
-    const bool uiDirty = g_windowMgr.HasDirtyVisualStateExcludingRoMap();
+    const bool uiDirty = qtGameplayRuntimeEnabled
+        ? g_windowMgr.HasDirtyVisualState()
+        : g_windowMgr.HasDirtyVisualStateExcludingRoMap();
     const std::uint64_t overlayStateToken = ComputeGameplayOverlayStateToken(mode, cursorActNum, mouseAnimStartTick, clientWidth, clientHeight);
     const bool overlayStateChanged = overlayStateToken != s_overlayStateToken;
     const u32 now = GetTickCount();
@@ -507,7 +510,6 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
 
     if (needOverlayRefresh) {
         const double refreshStartMs = trackMovePerf ? qpcNowMs() : 0.0;
-        const bool qtGameplayRuntimeEnabled = IsQtUiRuntimeEnabled();
         ClearOverlayComposeBits(s_overlayComposeBits, clientWidth, clientHeight);
         const double overlayDrawStartMs = trackMovePerf ? qpcNowMs() : 0.0;
         DrawGameplayOverlayToHdc(mode, s_overlayComposeDc);
@@ -519,7 +521,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         if (!qtGameplayRuntimeEnabled) {
             g_windowMgr.OnDrawExcludingRoMapToHdc(s_overlayComposeDc);
         } else {
-            g_windowMgr.ClearDirtyVisualStateExcludingRoMap();
+            g_windowMgr.ClearDirtyVisualState();
         }
         if (trackMovePerf) {
             g_overlayMovePerfStats.modernUiDrawMs += qpcNowMs() - uiDrawStartMs;
@@ -6899,10 +6901,12 @@ int  CGameMode::OnRun() {
         if (trackMovePerfFrame) {
             g_overlayMovePerfStats.queueModernMs += qpcNowMs() - modernQueueStartMs;
         }
-        const double roMapStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
-        QueueRoMapOverlayQuad();
-        if (trackMovePerfFrame) {
-            g_overlayMovePerfStats.queueRoMapMs += qpcNowMs() - roMapStartMs;
+        if (!IsQtUiRuntimeEnabled()) {
+            const double roMapStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+            QueueRoMapOverlayQuad();
+            if (trackMovePerfFrame) {
+                g_overlayMovePerfStats.queueRoMapMs += qpcNowMs() - roMapStartMs;
+            }
         }
         const double lockedTargetStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
         QueueLockedTargetOverlayQuad(*this);
