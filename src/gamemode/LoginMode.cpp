@@ -352,11 +352,6 @@ bool QueueLoginUiQuad()
     static int s_uiComposeHeight = 0;
     static std::uint64_t s_uiStateToken = 0ull;
     static bool s_uiTextureValid = false;
-    const bool composeReady = EnsureOverlayComposeSurface(clientWidth, clientHeight,
-        &s_uiComposeDc, &s_uiComposeBitmap, &s_uiComposeBits, &s_uiComposeWidth, &s_uiComposeHeight);
-    if (!composeReady) {
-        return false;
-    }
 
     static CTexture* s_uiTexture = nullptr;
     static int s_uiTextureWidth = 0;
@@ -402,21 +397,6 @@ bool QueueLoginUiQuad()
     const bool needUiRefresh = !s_uiTextureValid || uiDirty || uiStateToken != s_uiStateToken;
     if (needUiRefresh) {
         const bool qtMenuRuntimeEnabled = IsQtUiRuntimeEnabled();
-        if (g_windowMgr.m_wallpaperSurface && g_windowMgr.m_wallpaperSurface->HasSoftwarePixels()) {
-            g_windowMgr.DrawWallpaperToDC(s_uiComposeDc, clientWidth, clientHeight);
-        } else {
-            HBRUSH clearBrush = CreateSolidBrush(RGB(0, 0, 0));
-            FillRect(s_uiComposeDc, &clientRect, clearBrush);
-            DeleteObject(clearBrush);
-        }
-
-        if (!qtMenuRuntimeEnabled) {
-            g_windowMgr.OnDrawToHdc(s_uiComposeDc);
-        } else {
-            g_windowMgr.ClearDirtyVisualState();
-        }
-
-        ConvertOverlayComposeBitsToAlpha(s_uiComposeBits, clientWidth, clientHeight);
         bool renderedQtMenuOverlay = false;
         if (qtMenuRuntimeEnabled && s_qtUiOverlayTexture) {
             renderedQtMenuOverlay = RenderQtUiMenuOverlayTexture(
@@ -424,30 +404,59 @@ bool QueueLoginUiQuad()
                 clientWidth,
                 clientHeight);
         }
-        if (!renderedQtMenuOverlay) {
+
+        if (renderedQtMenuOverlay) {
+            g_windowMgr.ClearDirtyVisualState();
+            s_uiTextureValid = false;
+        } else {
+            const bool composeReady = EnsureOverlayComposeSurface(clientWidth, clientHeight,
+                &s_uiComposeDc, &s_uiComposeBitmap, &s_uiComposeBits, &s_uiComposeWidth, &s_uiComposeHeight);
+            if (!composeReady) {
+                return false;
+            }
+
+            if (g_windowMgr.m_wallpaperSurface && g_windowMgr.m_wallpaperSurface->HasSoftwarePixels()) {
+                g_windowMgr.DrawWallpaperToDC(s_uiComposeDc, clientWidth, clientHeight);
+            } else {
+                HBRUSH clearBrush = CreateSolidBrush(RGB(0, 0, 0));
+                FillRect(s_uiComposeDc, &clientRect, clearBrush);
+                DeleteObject(clearBrush);
+            }
+
+            if (!qtMenuRuntimeEnabled) {
+                g_windowMgr.OnDrawToHdc(s_uiComposeDc);
+            } else {
+                g_windowMgr.ClearDirtyVisualState();
+            }
+
+            ConvertOverlayComposeBitsToAlpha(s_uiComposeBits, clientWidth, clientHeight);
             CompositeQtUiMenuOverlay(
                 s_uiComposeBits,
                 clientWidth,
                 clientHeight,
                 clientWidth * static_cast<int>(sizeof(unsigned int)));
+            s_uiTexture->Update(0,
+                0,
+                clientWidth,
+                clientHeight,
+                static_cast<unsigned int*>(s_uiComposeBits),
+                true,
+                clientWidth * static_cast<int>(sizeof(unsigned int)));
+            s_uiTextureValid = true;
         }
         s_qtUiOverlayTextureValid = renderedQtMenuOverlay;
-        s_uiTexture->Update(0,
-            0,
-            clientWidth,
-            clientHeight,
-            static_cast<unsigned int*>(s_uiComposeBits),
-            true,
-            clientWidth * static_cast<int>(sizeof(unsigned int)));
-        s_uiTextureValid = true;
         s_uiStateToken = uiStateToken;
     }
 
-    const bool queuedBaseUi = QueueFullScreenOverlayQuad(s_uiTexture, clientWidth, clientHeight, 1.0f, 3);
-    if (queuedBaseUi && s_qtUiOverlayTextureValid) {
-        QueueFullScreenOverlayQuad(s_qtUiOverlayTexture, clientWidth, clientHeight, 2.0f, 3);
+    bool queuedAnyUi = false;
+    if (s_uiTextureValid) {
+        queuedAnyUi = QueueFullScreenOverlayQuad(s_uiTexture, clientWidth, clientHeight, 1.0f, 3);
     }
-    return queuedBaseUi;
+    if (s_qtUiOverlayTextureValid) {
+        g_windowMgr.RenderWallPaper();
+        queuedAnyUi = QueueFullScreenOverlayQuad(s_qtUiOverlayTexture, clientWidth, clientHeight, 2.0f, 3) || queuedAnyUi;
+    }
+    return queuedAnyUi;
 }
 
 bool QueueMenuCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
