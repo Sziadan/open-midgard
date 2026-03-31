@@ -6,6 +6,7 @@
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
 #include "main/WinMain.h"
+#include "qtui/QtUiRuntime.h"
 #include "session/Session.h"
 
 #include <windows.h>
@@ -191,6 +192,12 @@ void UIItemSellWnd::ActivateButton(ButtonId buttonId)
 
 void UIItemSellWnd::OnDraw()
 {
+    if (IsQtUiRuntimeEnabled()) {
+        m_lastDrawStateToken = BuildDisplayStateToken();
+        m_hasDrawStateToken = true;
+        return;
+    }
+
     bool useShared = false;
     HDC hdc = AcquireDrawTarget(&useShared);
     if (!hdc || m_show == 0) {
@@ -349,6 +356,31 @@ void UIItemSellWnd::HandleKeyDown(int virtualKey)
         m_viewOffset = selectedRow - GetVisibleRowCount() + 2;
     }
     m_viewOffset = (std::max)(0, (std::min)(GetMaxViewOffset(), m_viewOffset));
+}
+
+int UIItemSellWnd::GetViewOffset() const
+{
+    return m_viewOffset;
+}
+
+int UIItemSellWnd::GetHoverRow() const
+{
+    return m_hoverRow;
+}
+
+int UIItemSellWnd::GetVisibleRowCountForQt() const
+{
+    return GetVisibleRowCount();
+}
+
+int UIItemSellWnd::GetHoverButton() const
+{
+    return static_cast<int>(m_hoverButton);
+}
+
+int UIItemSellWnd::GetPressedButton() const
+{
+    return static_cast<int>(m_pressedButton);
 }
 
 unsigned long long UIItemSellWnd::BuildDisplayStateToken() const

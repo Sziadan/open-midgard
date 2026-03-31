@@ -3,6 +3,7 @@
 #include "UIWindowMgr.h"
 #include "core/File.h"
 #include "res/Bitmap.h"
+#include "qtui/QtUiRuntime.h"
 #include "session/Session.h"
 #include "world/GameActor.h"
 #include "world/World.h"
@@ -431,6 +432,13 @@ void UIBasicInfoWnd::OnCreate(int x, int y)
 
 void UIBasicInfoWnd::OnDraw()
 {
+    if (IsQtUiRuntimeEnabled()) {
+        m_lastDrawStateToken = BuildDisplayStateToken();
+        m_hasDrawStateToken = true;
+        m_isDirty = 0;
+        return;
+    }
+
     if (!g_hMainWnd || m_show == 0) {
         return;
     }
@@ -530,6 +538,21 @@ void UIBasicInfoWnd::NewHeight(int height)
 {
     Resize(kFullWidth, height == kMiniHeight ? kMiniHeight : kFullHeight);
     LayoutChildren();
+}
+
+bool UIBasicInfoWnd::IsMiniMode() const
+{
+    return m_h == kMiniHeight;
+}
+
+bool UIBasicInfoWnd::GetDisplayDataForQt(DisplayData* outData) const
+{
+    if (!outData) {
+        return false;
+    }
+
+    *outData = BuildDisplayData();
+    return true;
 }
 
 void UIBasicInfoWnd::EnsureCreated()

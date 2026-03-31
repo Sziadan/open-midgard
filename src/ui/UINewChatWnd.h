@@ -23,6 +23,7 @@ public:
     void AddChatLine(const char* text, u32 color, u8 channel, u32 tick);
     const std::vector<ChatLine>& GetLines() const;
     const std::vector<ChatLine>& GetVisibleLines() const;
+    const std::string& GetInputText() const;
     void ClearLines();
     bool HandleKeyDown(int virtualKey);
     bool HandleChar(char c);

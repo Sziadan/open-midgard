@@ -9,35 +9,6 @@ class UIBitmapButton;
 
 class UIBasicInfoWnd : public UIFrameWnd {
 public:
-    UIBasicInfoWnd();
-    ~UIBasicInfoWnd() override;
-
-    void SetShow(int show) override;
-    void Move(int x, int y) override;
-    bool IsUpdateNeed() override;
-    msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
-    void OnCreate(int x, int y) override;
-    void OnDraw() override;
-    void OnLBtnDblClk(int x, int y) override;
-    void OnMouseHover(int x, int y) override;
-    void StoreInfo() override;
-
-    void NewHeight(int height);
-
-private:
-    enum : int {
-        kButtonIdStatus = 126,
-        kButtonIdOption = 127,
-        kButtonIdItems = 128,
-        kButtonIdEquip = 129,
-        kButtonIdSkill = 130,
-        kButtonIdFriend = 133,
-        kButtonIdBase = 134,
-        kButtonIdMini = 136,
-        kButtonIdComm = 148,
-        kButtonIdMap = 153,
-    };
-
     struct DisplayData {
         std::string name;
         std::string jobName;
@@ -52,6 +23,37 @@ private:
         int maxWeight = 0;
         int expPercent = 0;
         int jobExpPercent = 0;
+    };
+
+    UIBasicInfoWnd();
+    ~UIBasicInfoWnd() override;
+
+    void SetShow(int show) override;
+    void Move(int x, int y) override;
+    bool IsUpdateNeed() override;
+    msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
+    void OnCreate(int x, int y) override;
+    void OnDraw() override;
+    void OnLBtnDblClk(int x, int y) override;
+    void OnMouseHover(int x, int y) override;
+    void StoreInfo() override;
+
+    void NewHeight(int height);
+    bool IsMiniMode() const;
+    bool GetDisplayDataForQt(DisplayData* outData) const;
+
+private:
+    enum : int {
+        kButtonIdStatus = 126,
+        kButtonIdOption = 127,
+        kButtonIdItems = 128,
+        kButtonIdEquip = 129,
+        kButtonIdSkill = 130,
+        kButtonIdFriend = 133,
+        kButtonIdBase = 134,
+        kButtonIdMini = 136,
+        kButtonIdComm = 148,
+        kButtonIdMap = 153,
     };
 
     void EnsureCreated();

@@ -15,13 +15,20 @@
 #include "ui/UIMakeCharWnd.h"
 #include "ui/UIChooseWnd.h"
 #include "ui/UIChooseSellBuyWnd.h"
+#include "ui/UIBasicInfoWnd.h"
+#include "ui/UIItemPurchaseWnd.h"
+#include "ui/UIItemSellWnd.h"
 #include "ui/UIItemShopWnd.h"
+#include "ui/UINewChatWnd.h"
 #include "ui/UINpcMenuWnd.h"
 #include "ui/UINpcInputWnd.h"
 #include "ui/UINotifyLevelUpWnd.h"
+#include "ui/UIRechargeGage.h"
 #include "ui/UISelectCharWnd.h"
 #include "ui/UISelectServerWnd.h"
 #include "ui/UISayDialogWnd.h"
+#include "ui/UIShortCutWnd.h"
+#include "ui/UIStatusWnd.h"
 #include "ui/UIShopCommon.h"
 #include "ui/UIWindowMgr.h"
 #include "world/GameActor.h"
@@ -47,6 +54,30 @@ QString ToQString(const std::string& value)
 QString ToQString(const char* value)
 {
     return value ? QString::fromLocal8Bit(value) : QString();
+}
+
+QString FormatCompositeStatusText(int primary, int secondary)
+{
+    if (secondary > 0) {
+        return QStringLiteral("%1 + %2").arg(primary).arg(secondary);
+    }
+    return QString::number(primary);
+}
+
+QString FormatMatkStatusText(int minValue, int maxValue)
+{
+    if (minValue == maxValue) {
+        return QString::number(maxValue);
+    }
+    return QStringLiteral("%1~%2").arg(minValue).arg(maxValue);
+}
+
+QString FormatBaseStatusText(int baseValue, int plusValue)
+{
+    if (plusValue > 0) {
+        return QStringLiteral("%1+%2").arg(baseValue).arg(plusValue);
+    }
+    return QString::number(baseValue);
 }
 
 bool IsNpcColorCodeAt(const std::string& value, size_t index)
@@ -78,6 +109,34 @@ QString StripNpcColorCodes(const std::string& value)
         stripped.push_back(value[index]);
     }
     return ToQString(stripped);
+}
+
+QString ResolveShortcutSlotLabel(const SHORTCUT_SLOT* slot)
+{
+    if (!slot || slot->id == 0) {
+        return QString();
+    }
+
+    if (slot->isSkill != 0) {
+        if (const PLAYER_SKILL_INFO* skill = g_session.GetSkillItemBySkillId(static_cast<int>(slot->id))) {
+            if (!skill->skillName.empty()) {
+                return ToQString(skill->skillName);
+            }
+            if (!skill->skillIdName.empty()) {
+                return ToQString(skill->skillIdName);
+            }
+        }
+        return QStringLiteral("Skill %1").arg(slot->id);
+    }
+
+    if (const ITEM_INFO* item = g_session.GetInventoryItemByItemId(slot->id)) {
+        const std::string displayName = shopui::GetItemDisplayName(*item);
+        if (!displayName.empty()) {
+            return ToQString(displayName);
+        }
+    }
+
+    return QStringLiteral("Item %1").arg(slot->id);
 }
 
 QString ToCssColor(u8 red, u8 green, u8 blue)
@@ -570,6 +629,329 @@ void PopulateItemShopState(QtUiState* state)
     state->setItemShopRows(rows);
 }
 
+void PopulateItemPurchaseState(QtUiState* state)
+{
+    if (!state) {
+        return;
+    }
+
+    const UIItemPurchaseWnd* const purchaseWnd = g_windowMgr.m_itemPurchaseWnd;
+    const bool visible = purchaseWnd && purchaseWnd->m_show != 0;
+    state->setItemPurchaseVisible(visible);
+    if (!visible) {
+        state->setItemPurchaseGeometry(0, 0, 0, 0);
+        state->setItemPurchaseTotal(0);
+        state->setItemPurchaseRows(QVariantList{});
+        state->setItemPurchaseButtons(QVariantList{});
+        return;
+    }
+
+    state->setItemPurchaseGeometry(purchaseWnd->m_x, purchaseWnd->m_y, purchaseWnd->m_w, purchaseWnd->m_h);
+    state->setItemPurchaseTotal(g_session.m_shopDealTotal);
+
+    QVariantList rows;
+    const int startRow = purchaseWnd->GetViewOffset();
+    const int endRow = (std::min)(
+        static_cast<int>(g_session.m_shopDealRows.size()),
+        startRow + purchaseWnd->GetVisibleRowCountForQt() - 1);
+    rows.reserve((std::max)(0, endRow - startRow));
+    for (int rowIndex = startRow; rowIndex < endRow; ++rowIndex) {
+        const NPC_SHOP_DEAL_ROW& row = g_session.m_shopDealRows[static_cast<size_t>(rowIndex)];
+        QVariantMap entry;
+        entry.insert(QStringLiteral("name"), ToQString(shopui::GetItemDisplayName(row.itemInfo)));
+        entry.insert(QStringLiteral("quantity"), row.quantity);
+        entry.insert(QStringLiteral("cost"), row.unitPrice * row.quantity);
+        entry.insert(QStringLiteral("selected"), g_session.m_shopSelectedDealRow == rowIndex);
+        entry.insert(QStringLiteral("hover"), purchaseWnd->GetHoverRow() == rowIndex);
+        rows.push_back(entry);
+    }
+    state->setItemPurchaseRows(rows);
+
+    QVariantList buttons;
+    struct ButtonSpec {
+        int id;
+        const char* label;
+    };
+    const ButtonSpec specs[] = {
+        { 0, "Add" },
+        { 1, "Remove" },
+        { 2, "Buy" },
+        { 3, "Cancel" },
+    };
+    for (const ButtonSpec& spec : specs) {
+        QVariantMap button;
+        button.insert(QStringLiteral("label"), ToQString(spec.label));
+        button.insert(QStringLiteral("hot"), purchaseWnd->GetHoverButton() == spec.id);
+        button.insert(QStringLiteral("pressed"), purchaseWnd->GetPressedButton() == spec.id);
+        buttons.push_back(button);
+    }
+    state->setItemPurchaseButtons(buttons);
+}
+
+void PopulateItemSellState(QtUiState* state)
+{
+    if (!state) {
+        return;
+    }
+
+    const UIItemSellWnd* const sellWnd = g_windowMgr.m_itemSellWnd;
+    const bool visible = sellWnd && sellWnd->m_show != 0;
+    state->setItemSellVisible(visible);
+    if (!visible) {
+        state->setItemSellGeometry(0, 0, 0, 0);
+        state->setItemSellTotal(0);
+        state->setItemSellRows(QVariantList{});
+        state->setItemSellButtons(QVariantList{});
+        return;
+    }
+
+    state->setItemSellGeometry(sellWnd->m_x, sellWnd->m_y, sellWnd->m_w, sellWnd->m_h);
+    state->setItemSellTotal(g_session.m_shopDealTotal);
+
+    QVariantList rows;
+    const int startRow = sellWnd->GetViewOffset();
+    const int endRow = (std::min)(
+        static_cast<int>(g_session.m_shopDealRows.size()),
+        startRow + sellWnd->GetVisibleRowCountForQt() - 1);
+    rows.reserve((std::max)(0, endRow - startRow));
+    for (int rowIndex = startRow; rowIndex < endRow; ++rowIndex) {
+        const NPC_SHOP_DEAL_ROW& row = g_session.m_shopDealRows[static_cast<size_t>(rowIndex)];
+        QVariantMap entry;
+        entry.insert(QStringLiteral("name"), ToQString(shopui::GetItemDisplayName(row.itemInfo)));
+        entry.insert(QStringLiteral("quantity"), row.quantity);
+        entry.insert(QStringLiteral("gain"), row.unitPrice * row.quantity);
+        entry.insert(QStringLiteral("selected"), g_session.m_shopSelectedDealRow == rowIndex);
+        entry.insert(QStringLiteral("hover"), sellWnd->GetHoverRow() == rowIndex);
+        rows.push_back(entry);
+    }
+    state->setItemSellRows(rows);
+
+    QVariantList buttons;
+    struct ButtonSpec {
+        int id;
+        const char* label;
+    };
+    const ButtonSpec specs[] = {
+        { 0, "Add" },
+        { 1, "Remove" },
+        { 2, "Sell" },
+        { 3, "Cancel" },
+    };
+    for (const ButtonSpec& spec : specs) {
+        QVariantMap button;
+        button.insert(QStringLiteral("label"), ToQString(spec.label));
+        button.insert(QStringLiteral("hot"), sellWnd->GetHoverButton() == spec.id);
+        button.insert(QStringLiteral("pressed"), sellWnd->GetPressedButton() == spec.id);
+        buttons.push_back(button);
+    }
+    state->setItemSellButtons(buttons);
+}
+
+void PopulateShortCutState(QtUiState* state)
+{
+    if (!state) {
+        return;
+    }
+
+    const UIShortCutWnd* const shortCutWnd = g_windowMgr.m_shortCutWnd;
+    const bool visible = shortCutWnd && shortCutWnd->m_show != 0;
+    state->setShortCutVisible(visible);
+    if (!visible) {
+        state->setShortCutGeometry(0, 0, 0, 0);
+        state->setShortCutPage(0);
+        state->setShortCutHoverSlot(-1);
+        state->setShortCutSlots(QVariantList{});
+        return;
+    }
+
+    state->setShortCutGeometry(shortCutWnd->m_x, shortCutWnd->m_y, shortCutWnd->m_w, shortCutWnd->m_h);
+    state->setShortCutPage(g_session.GetShortcutPage() + 1);
+    state->setShortCutHoverSlot(shortCutWnd->GetHoverSlot());
+
+    QVariantList slots;
+    slots.reserve(kShortcutSlotsPerPage);
+    for (int slotIndex = 0; slotIndex < kShortcutSlotsPerPage; ++slotIndex) {
+        QVariantMap slotEntry;
+        slotEntry.insert(QStringLiteral("index"), slotIndex);
+        slotEntry.insert(QStringLiteral("hover"), shortCutWnd->GetHoverSlot() == slotIndex);
+
+        const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByVisibleIndex(slotIndex);
+        if (slot && slot->id != 0) {
+            slotEntry.insert(QStringLiteral("occupied"), true);
+            slotEntry.insert(QStringLiteral("isSkill"), slot->isSkill != 0);
+            slotEntry.insert(QStringLiteral("label"), ResolveShortcutSlotLabel(slot));
+            slotEntry.insert(QStringLiteral("count"), static_cast<int>(slot->count));
+        } else {
+            slotEntry.insert(QStringLiteral("occupied"), false);
+            slotEntry.insert(QStringLiteral("isSkill"), false);
+            slotEntry.insert(QStringLiteral("label"), QString());
+            slotEntry.insert(QStringLiteral("count"), 0);
+        }
+        slots.push_back(slotEntry);
+    }
+    state->setShortCutSlots(slots);
+}
+
+void PopulateBasicInfoState(QtUiState* state)
+{
+    if (!state) {
+        return;
+    }
+
+    const UIBasicInfoWnd* const basicInfoWnd = g_windowMgr.m_basicInfoWnd;
+    const bool visible = basicInfoWnd && basicInfoWnd->m_show != 0;
+    state->setBasicInfoVisible(visible);
+    if (!visible) {
+        state->setBasicInfoGeometry(0, 0, 0, 0);
+        state->setBasicInfoMini(false);
+        state->setBasicInfoData(QVariantMap{});
+        return;
+    }
+
+    state->setBasicInfoGeometry(basicInfoWnd->m_x, basicInfoWnd->m_y, basicInfoWnd->m_w, basicInfoWnd->m_h);
+    state->setBasicInfoMini(basicInfoWnd->IsMiniMode());
+
+    UIBasicInfoWnd::DisplayData display{};
+    QVariantMap data;
+    if (basicInfoWnd->GetDisplayDataForQt(&display)) {
+        data.insert(QStringLiteral("name"), ToQString(display.name));
+        data.insert(QStringLiteral("jobName"), ToQString(display.jobName));
+        data.insert(QStringLiteral("level"), display.level);
+        data.insert(QStringLiteral("jobLevel"), display.jobLevel);
+        data.insert(QStringLiteral("hp"), display.hp);
+        data.insert(QStringLiteral("maxHp"), display.maxHp);
+        data.insert(QStringLiteral("sp"), display.sp);
+        data.insert(QStringLiteral("maxSp"), display.maxSp);
+        data.insert(QStringLiteral("money"), display.money);
+        data.insert(QStringLiteral("weight"), display.weight);
+        data.insert(QStringLiteral("maxWeight"), display.maxWeight);
+        data.insert(QStringLiteral("expPercent"), display.expPercent);
+        data.insert(QStringLiteral("jobExpPercent"), display.jobExpPercent);
+    }
+    state->setBasicInfoData(data);
+}
+
+void PopulateStatusState(QtUiState* state)
+{
+    if (!state) {
+        return;
+    }
+
+    const UIStatusWnd* const statusWnd = g_windowMgr.m_statusWnd;
+    const bool visible = statusWnd && statusWnd->m_show != 0;
+    state->setStatusVisible(visible);
+    if (!visible) {
+        state->setStatusGeometry(0, 0, 0, 0);
+        state->setStatusMini(false);
+        state->setStatusPage(0);
+        state->setStatusData(QVariantMap{});
+        return;
+    }
+
+    state->setStatusGeometry(statusWnd->m_x, statusWnd->m_y, statusWnd->m_w, statusWnd->m_h);
+    state->setStatusMini(statusWnd->IsMiniMode());
+    state->setStatusPage(statusWnd->GetPageForQt());
+
+    UIStatusWnd::DisplayData display{};
+    QVariantMap data;
+    if (statusWnd->GetDisplayDataForQt(&display)) {
+        static const char* const kLabels[] = { "STR", "AGI", "VIT", "INT", "DEX", "LUK" };
+
+        QVariantList stats;
+        stats.reserve(6);
+        for (int index = 0; index < 6; ++index) {
+            QVariantMap row;
+            row.insert(QStringLiteral("label"), QString::fromLatin1(kLabels[index]));
+            row.insert(QStringLiteral("value"), FormatBaseStatusText(display.baseStats[index], display.plusStats[index]));
+            row.insert(QStringLiteral("cost"), display.statCosts[index]);
+            row.insert(QStringLiteral("canIncrease"),
+                !statusWnd->IsMiniMode()
+                && statusWnd->GetPageForQt() == 0
+                && display.statCosts[index] > 0
+                && display.baseStats[index] < 99
+                && display.statCosts[index] <= display.statusPoint);
+            stats.push_back(row);
+        }
+
+        data.insert(QStringLiteral("stats"), stats);
+        data.insert(QStringLiteral("attackText"), FormatCompositeStatusText(display.attack, display.refineAttack));
+        data.insert(QStringLiteral("matkText"), FormatMatkStatusText(display.matkMin, display.matkMax));
+        data.insert(QStringLiteral("hit"), display.hit);
+        data.insert(QStringLiteral("critical"), display.critical);
+        data.insert(QStringLiteral("statusPoint"), display.statusPoint);
+        data.insert(QStringLiteral("itemDefText"), FormatCompositeStatusText(display.itemDef, display.plusDef));
+        data.insert(QStringLiteral("itemMdefText"), FormatCompositeStatusText(display.itemMdef, display.plusMdef));
+        data.insert(QStringLiteral("fleeText"), FormatCompositeStatusText(display.flee, display.plusFlee));
+        data.insert(QStringLiteral("aspdText"), FormatCompositeStatusText(display.aspd, display.plusAspd));
+    }
+    state->setStatusData(data);
+}
+
+void PopulateChatWindowState(QtUiState* state)
+{
+    if (!state) {
+        return;
+    }
+
+    const UINewChatWnd* const chatWnd = g_windowMgr.m_chatWnd;
+    const bool visible = chatWnd && chatWnd->m_show != 0;
+    state->setChatWindowVisible(visible);
+    if (!visible) {
+        state->setChatWindowGeometry(0, 0, 0, 0);
+        state->setChatWindowInputActive(false);
+        state->setChatWindowInputText(QString());
+        state->setChatWindowLines(QVariantList{});
+        return;
+    }
+
+    state->setChatWindowGeometry(chatWnd->m_x, chatWnd->m_y, chatWnd->m_w, chatWnd->m_h);
+    state->setChatWindowInputActive(chatWnd->IsInputActive());
+    state->setChatWindowInputText(ToQString(chatWnd->GetInputText()));
+
+    QVariantList lines;
+    const std::vector<ChatLine>& visibleLines = chatWnd->GetVisibleLines();
+    lines.reserve(static_cast<qsizetype>(visibleLines.size()));
+    for (const ChatLine& line : visibleLines) {
+        QVariantMap entry;
+        entry.insert(QStringLiteral("text"), ToQString(line.text));
+        entry.insert(QStringLiteral("color"),
+            ToCssColor(
+                static_cast<u8>((line.color >> 16) & 0xFFu),
+                static_cast<u8>((line.color >> 8) & 0xFFu),
+                static_cast<u8>(line.color & 0xFFu)));
+        lines.push_back(entry);
+    }
+    state->setChatWindowLines(lines);
+}
+
+void PopulateRechargeGaugeState(QtUiState* state)
+{
+    if (!state) {
+        return;
+    }
+
+    const UIRechargeGage* rechargeGauge = nullptr;
+    for (UIWindow* const window : g_windowMgr.m_children) {
+        UIRechargeGage* const gauge = dynamic_cast<UIRechargeGage*>(window);
+        if (!gauge || gauge->m_show == 0) {
+            continue;
+        }
+        rechargeGauge = gauge;
+        break;
+    }
+
+    const bool visible = rechargeGauge != nullptr;
+    state->setRechargeGaugeVisible(visible);
+    if (!visible) {
+        state->setRechargeGaugeGeometry(0, 0, 0, 0);
+        state->setRechargeGaugeProgress(0, 0);
+        return;
+    }
+
+    state->setRechargeGaugeGeometry(rechargeGauge->m_x, rechargeGauge->m_y, rechargeGauge->m_w, rechargeGauge->m_h);
+    state->setRechargeGaugeProgress(rechargeGauge->GetAmount(), rechargeGauge->GetTotalAmount());
+}
+
 bool IsMonsterLikeHoverActor(const CGameActor* actor)
 {
     if (!actor) {
@@ -771,6 +1153,25 @@ bool QtUiStateAdapter::syncMenu(RenderBackendType activeBackend,
     m_state->setItemShopGeometry(0, 0, 0, 0);
     m_state->setItemShopTitle(QString());
     m_state->setItemShopRows(QVariantList{});
+    m_state->setItemPurchaseVisible(false);
+    m_state->setItemPurchaseGeometry(0, 0, 0, 0);
+    m_state->setItemPurchaseTotal(0);
+    m_state->setItemPurchaseRows(QVariantList{});
+    m_state->setItemPurchaseButtons(QVariantList{});
+    m_state->setItemSellVisible(false);
+    m_state->setItemSellGeometry(0, 0, 0, 0);
+    m_state->setItemSellTotal(0);
+    m_state->setItemSellRows(QVariantList{});
+    m_state->setItemSellButtons(QVariantList{});
+    m_state->setShortCutVisible(false);
+    m_state->setShortCutGeometry(0, 0, 0, 0);
+    m_state->setShortCutPage(0);
+    m_state->setShortCutHoverSlot(-1);
+    m_state->setShortCutSlots(QVariantList{});
+    m_state->setBasicInfoVisible(false);
+    m_state->setBasicInfoGeometry(0, 0, 0, 0);
+    m_state->setBasicInfoMini(false);
+    m_state->setBasicInfoData(QVariantMap{});
     m_state->setShopChoiceVisible(false);
     m_state->setShopChoiceGeometry(0, 0, 0, 0);
     m_state->setShopChoiceButtons(QVariantList{});
@@ -805,6 +1206,13 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
     PopulateNpcInputState(m_state);
     PopulateChooseMenuState(m_state);
     PopulateItemShopState(m_state);
+    PopulateItemPurchaseState(m_state);
+    PopulateItemSellState(m_state);
+    PopulateShortCutState(m_state);
+    PopulateBasicInfoState(m_state);
+    PopulateStatusState(m_state);
+    PopulateChatWindowState(m_state);
+    PopulateRechargeGaugeState(m_state);
     PopulateShopChoiceState(m_state);
     PopulateNotificationState(m_state);
 

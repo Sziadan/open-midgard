@@ -9,21 +9,6 @@ class UIBitmapButton;
 
 class UIStatusWnd : public UIFrameWnd {
 public:
-    UIStatusWnd();
-    ~UIStatusWnd() override;
-
-    void SetShow(int show) override;
-    void Move(int x, int y) override;
-    bool IsUpdateNeed() override;
-    msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
-    void OnCreate(int x, int y) override;
-    void OnDraw() override;
-    void OnLBtnDblClk(int x, int y) override;
-    void OnLBtnDown(int x, int y) override;
-    void OnMouseHover(int x, int y) override;
-    void StoreInfo() override;
-
-private:
     struct DisplayData {
         std::array<int, 6> baseStats{};
         std::array<int, 6> plusStats{};
@@ -46,6 +31,24 @@ private:
         int guildId = 0;
     };
 
+    UIStatusWnd();
+    ~UIStatusWnd() override;
+
+    void SetShow(int show) override;
+    void Move(int x, int y) override;
+    bool IsUpdateNeed() override;
+    msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
+    void OnCreate(int x, int y) override;
+    void OnDraw() override;
+    void OnLBtnDblClk(int x, int y) override;
+    void OnLBtnDown(int x, int y) override;
+    void OnMouseHover(int x, int y) override;
+    void StoreInfo() override;
+    bool IsMiniMode() const;
+    int GetPageForQt() const;
+    bool GetDisplayDataForQt(DisplayData* outData) const;
+
+private:
     void EnsureCreated();
     void LayoutChildren();
     void RefreshIncrementButtons();

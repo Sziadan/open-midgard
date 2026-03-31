@@ -23,6 +23,7 @@ public:
     void OnMouseHover(int x, int y) override;
     void OnRBtnDown(int x, int y) override;
     void OnWheel(int delta) override;
+    int GetHoverSlot() const;
 
 private:
     void LoadAssets();

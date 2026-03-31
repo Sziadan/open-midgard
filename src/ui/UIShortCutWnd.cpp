@@ -6,6 +6,7 @@
 #include "gamemode/Mode.h"
 #include "item/Item.h"
 #include "main/WinMain.h"
+#include "qtui/QtUiRuntime.h"
 #include "session/Session.h"
 #include "skill/Skill.h"
 
@@ -192,6 +193,13 @@ void UIShortCutWnd::StoreInfo()
 
 void UIShortCutWnd::OnDraw()
 {
+    if (IsQtUiRuntimeEnabled()) {
+        m_lastDrawStateToken = BuildDisplayStateToken();
+        m_hasDrawStateToken = true;
+        m_isDirty = 0;
+        return;
+    }
+
     bool useShared = false;
     HDC hdc = AcquireDrawTarget(&useShared);
     if (!hdc) {
@@ -389,6 +397,11 @@ void UIShortCutWnd::OnWheel(int delta)
     if (g_session.GetShortcutPage() != oldPage) {
         Invalidate();
     }
+}
+
+int UIShortCutWnd::GetHoverSlot() const
+{
+    return m_hoverSlot;
 }
 
 void UIShortCutWnd::LoadAssets()

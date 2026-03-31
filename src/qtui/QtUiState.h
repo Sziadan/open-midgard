@@ -94,6 +94,60 @@ class QtUiState : public QObject {
     Q_PROPERTY(int itemShopHeight READ itemShopHeight NOTIFY itemShopGeometryChanged)
     Q_PROPERTY(QString itemShopTitle READ itemShopTitle NOTIFY itemShopTitleChanged)
     Q_PROPERTY(QVariantList itemShopRows READ itemShopRows NOTIFY itemShopRowsChanged)
+    Q_PROPERTY(bool itemPurchaseVisible READ itemPurchaseVisible NOTIFY itemPurchaseVisibleChanged)
+    Q_PROPERTY(int itemPurchaseX READ itemPurchaseX NOTIFY itemPurchaseGeometryChanged)
+    Q_PROPERTY(int itemPurchaseY READ itemPurchaseY NOTIFY itemPurchaseGeometryChanged)
+    Q_PROPERTY(int itemPurchaseWidth READ itemPurchaseWidth NOTIFY itemPurchaseGeometryChanged)
+    Q_PROPERTY(int itemPurchaseHeight READ itemPurchaseHeight NOTIFY itemPurchaseGeometryChanged)
+    Q_PROPERTY(int itemPurchaseTotal READ itemPurchaseTotal NOTIFY itemPurchaseTotalChanged)
+    Q_PROPERTY(QVariantList itemPurchaseRows READ itemPurchaseRows NOTIFY itemPurchaseRowsChanged)
+    Q_PROPERTY(QVariantList itemPurchaseButtons READ itemPurchaseButtons NOTIFY itemPurchaseButtonsChanged)
+    Q_PROPERTY(bool itemSellVisible READ itemSellVisible NOTIFY itemSellVisibleChanged)
+    Q_PROPERTY(int itemSellX READ itemSellX NOTIFY itemSellGeometryChanged)
+    Q_PROPERTY(int itemSellY READ itemSellY NOTIFY itemSellGeometryChanged)
+    Q_PROPERTY(int itemSellWidth READ itemSellWidth NOTIFY itemSellGeometryChanged)
+    Q_PROPERTY(int itemSellHeight READ itemSellHeight NOTIFY itemSellGeometryChanged)
+    Q_PROPERTY(int itemSellTotal READ itemSellTotal NOTIFY itemSellTotalChanged)
+    Q_PROPERTY(QVariantList itemSellRows READ itemSellRows NOTIFY itemSellRowsChanged)
+    Q_PROPERTY(QVariantList itemSellButtons READ itemSellButtons NOTIFY itemSellButtonsChanged)
+    Q_PROPERTY(bool shortCutVisible READ shortCutVisible NOTIFY shortCutVisibleChanged)
+    Q_PROPERTY(int shortCutX READ shortCutX NOTIFY shortCutGeometryChanged)
+    Q_PROPERTY(int shortCutY READ shortCutY NOTIFY shortCutGeometryChanged)
+    Q_PROPERTY(int shortCutWidth READ shortCutWidth NOTIFY shortCutGeometryChanged)
+    Q_PROPERTY(int shortCutHeight READ shortCutHeight NOTIFY shortCutGeometryChanged)
+    Q_PROPERTY(int shortCutPage READ shortCutPage NOTIFY shortCutPageChanged)
+    Q_PROPERTY(int shortCutHoverSlot READ shortCutHoverSlot NOTIFY shortCutHoverSlotChanged)
+    Q_PROPERTY(QVariantList shortCutSlots READ shortCutSlots NOTIFY shortCutSlotsChanged)
+    Q_PROPERTY(bool basicInfoVisible READ basicInfoVisible NOTIFY basicInfoVisibleChanged)
+    Q_PROPERTY(int basicInfoX READ basicInfoX NOTIFY basicInfoGeometryChanged)
+    Q_PROPERTY(int basicInfoY READ basicInfoY NOTIFY basicInfoGeometryChanged)
+    Q_PROPERTY(int basicInfoWidth READ basicInfoWidth NOTIFY basicInfoGeometryChanged)
+    Q_PROPERTY(int basicInfoHeight READ basicInfoHeight NOTIFY basicInfoGeometryChanged)
+    Q_PROPERTY(bool basicInfoMini READ basicInfoMini NOTIFY basicInfoMiniChanged)
+    Q_PROPERTY(QVariantMap basicInfoData READ basicInfoData NOTIFY basicInfoDataChanged)
+    Q_PROPERTY(bool statusVisible READ statusVisible NOTIFY statusVisibleChanged)
+    Q_PROPERTY(int statusX READ statusX NOTIFY statusGeometryChanged)
+    Q_PROPERTY(int statusY READ statusY NOTIFY statusGeometryChanged)
+    Q_PROPERTY(int statusWidth READ statusWidth NOTIFY statusGeometryChanged)
+    Q_PROPERTY(int statusHeight READ statusHeight NOTIFY statusGeometryChanged)
+    Q_PROPERTY(bool statusMini READ statusMini NOTIFY statusMiniChanged)
+    Q_PROPERTY(int statusPage READ statusPage NOTIFY statusPageChanged)
+    Q_PROPERTY(QVariantMap statusData READ statusData NOTIFY statusDataChanged)
+    Q_PROPERTY(bool chatWindowVisible READ chatWindowVisible NOTIFY chatWindowVisibleChanged)
+    Q_PROPERTY(int chatWindowX READ chatWindowX NOTIFY chatWindowGeometryChanged)
+    Q_PROPERTY(int chatWindowY READ chatWindowY NOTIFY chatWindowGeometryChanged)
+    Q_PROPERTY(int chatWindowWidth READ chatWindowWidth NOTIFY chatWindowGeometryChanged)
+    Q_PROPERTY(int chatWindowHeight READ chatWindowHeight NOTIFY chatWindowGeometryChanged)
+    Q_PROPERTY(bool chatWindowInputActive READ chatWindowInputActive NOTIFY chatWindowInputActiveChanged)
+    Q_PROPERTY(QString chatWindowInputText READ chatWindowInputText NOTIFY chatWindowInputTextChanged)
+    Q_PROPERTY(QVariantList chatWindowLines READ chatWindowLines NOTIFY chatWindowLinesChanged)
+    Q_PROPERTY(bool rechargeGaugeVisible READ rechargeGaugeVisible NOTIFY rechargeGaugeVisibleChanged)
+    Q_PROPERTY(int rechargeGaugeX READ rechargeGaugeX NOTIFY rechargeGaugeGeometryChanged)
+    Q_PROPERTY(int rechargeGaugeY READ rechargeGaugeY NOTIFY rechargeGaugeGeometryChanged)
+    Q_PROPERTY(int rechargeGaugeWidth READ rechargeGaugeWidth NOTIFY rechargeGaugeGeometryChanged)
+    Q_PROPERTY(int rechargeGaugeHeight READ rechargeGaugeHeight NOTIFY rechargeGaugeGeometryChanged)
+    Q_PROPERTY(int rechargeGaugeAmount READ rechargeGaugeAmount NOTIFY rechargeGaugeProgressChanged)
+    Q_PROPERTY(int rechargeGaugeTotal READ rechargeGaugeTotal NOTIFY rechargeGaugeProgressChanged)
     Q_PROPERTY(bool shopChoiceVisible READ shopChoiceVisible NOTIFY shopChoiceVisibleChanged)
     Q_PROPERTY(int shopChoiceX READ shopChoiceX NOTIFY shopChoiceGeometryChanged)
     Q_PROPERTY(int shopChoiceY READ shopChoiceY NOTIFY shopChoiceGeometryChanged)
@@ -197,6 +251,60 @@ public:
     int itemShopHeight() const { return m_itemShopHeight; }
     const QString& itemShopTitle() const { return m_itemShopTitle; }
     const QVariantList& itemShopRows() const { return m_itemShopRows; }
+    bool itemPurchaseVisible() const { return m_itemPurchaseVisible; }
+    int itemPurchaseX() const { return m_itemPurchaseX; }
+    int itemPurchaseY() const { return m_itemPurchaseY; }
+    int itemPurchaseWidth() const { return m_itemPurchaseWidth; }
+    int itemPurchaseHeight() const { return m_itemPurchaseHeight; }
+    int itemPurchaseTotal() const { return m_itemPurchaseTotal; }
+    const QVariantList& itemPurchaseRows() const { return m_itemPurchaseRows; }
+    const QVariantList& itemPurchaseButtons() const { return m_itemPurchaseButtons; }
+    bool itemSellVisible() const { return m_itemSellVisible; }
+    int itemSellX() const { return m_itemSellX; }
+    int itemSellY() const { return m_itemSellY; }
+    int itemSellWidth() const { return m_itemSellWidth; }
+    int itemSellHeight() const { return m_itemSellHeight; }
+    int itemSellTotal() const { return m_itemSellTotal; }
+    const QVariantList& itemSellRows() const { return m_itemSellRows; }
+    const QVariantList& itemSellButtons() const { return m_itemSellButtons; }
+    bool shortCutVisible() const { return m_shortCutVisible; }
+    int shortCutX() const { return m_shortCutX; }
+    int shortCutY() const { return m_shortCutY; }
+    int shortCutWidth() const { return m_shortCutWidth; }
+    int shortCutHeight() const { return m_shortCutHeight; }
+    int shortCutPage() const { return m_shortCutPage; }
+    int shortCutHoverSlot() const { return m_shortCutHoverSlot; }
+    const QVariantList& shortCutSlots() const { return m_shortCutSlots; }
+    bool basicInfoVisible() const { return m_basicInfoVisible; }
+    int basicInfoX() const { return m_basicInfoX; }
+    int basicInfoY() const { return m_basicInfoY; }
+    int basicInfoWidth() const { return m_basicInfoWidth; }
+    int basicInfoHeight() const { return m_basicInfoHeight; }
+    bool basicInfoMini() const { return m_basicInfoMini; }
+    const QVariantMap& basicInfoData() const { return m_basicInfoData; }
+    bool statusVisible() const { return m_statusVisible; }
+    int statusX() const { return m_statusX; }
+    int statusY() const { return m_statusY; }
+    int statusWidth() const { return m_statusWidth; }
+    int statusHeight() const { return m_statusHeight; }
+    bool statusMini() const { return m_statusMini; }
+    int statusPage() const { return m_statusPage; }
+    const QVariantMap& statusData() const { return m_statusData; }
+    bool chatWindowVisible() const { return m_chatWindowVisible; }
+    int chatWindowX() const { return m_chatWindowX; }
+    int chatWindowY() const { return m_chatWindowY; }
+    int chatWindowWidth() const { return m_chatWindowWidth; }
+    int chatWindowHeight() const { return m_chatWindowHeight; }
+    bool chatWindowInputActive() const { return m_chatWindowInputActive; }
+    const QString& chatWindowInputText() const { return m_chatWindowInputText; }
+    const QVariantList& chatWindowLines() const { return m_chatWindowLines; }
+    bool rechargeGaugeVisible() const { return m_rechargeGaugeVisible; }
+    int rechargeGaugeX() const { return m_rechargeGaugeX; }
+    int rechargeGaugeY() const { return m_rechargeGaugeY; }
+    int rechargeGaugeWidth() const { return m_rechargeGaugeWidth; }
+    int rechargeGaugeHeight() const { return m_rechargeGaugeHeight; }
+    int rechargeGaugeAmount() const { return m_rechargeGaugeAmount; }
+    int rechargeGaugeTotal() const { return m_rechargeGaugeTotal; }
     bool shopChoiceVisible() const { return m_shopChoiceVisible; }
     int shopChoiceX() const { return m_shopChoiceX; }
     int shopChoiceY() const { return m_shopChoiceY; }
@@ -640,6 +748,267 @@ public:
         emit itemShopRowsChanged();
     }
 
+    void setItemPurchaseVisible(bool value) {
+        if (m_itemPurchaseVisible == value) {
+            return;
+        }
+        m_itemPurchaseVisible = value;
+        emit itemPurchaseVisibleChanged();
+    }
+
+    void setItemPurchaseGeometry(int x, int y, int width, int height) {
+        if (m_itemPurchaseX == x && m_itemPurchaseY == y
+            && m_itemPurchaseWidth == width && m_itemPurchaseHeight == height) {
+            return;
+        }
+        m_itemPurchaseX = x;
+        m_itemPurchaseY = y;
+        m_itemPurchaseWidth = width;
+        m_itemPurchaseHeight = height;
+        emit itemPurchaseGeometryChanged();
+    }
+
+    void setItemPurchaseTotal(int value) {
+        if (m_itemPurchaseTotal == value) {
+            return;
+        }
+        m_itemPurchaseTotal = value;
+        emit itemPurchaseTotalChanged();
+    }
+
+    void setItemPurchaseRows(const QVariantList& value) {
+        m_itemPurchaseRows = value;
+        emit itemPurchaseRowsChanged();
+    }
+
+    void setItemPurchaseButtons(const QVariantList& value) {
+        m_itemPurchaseButtons = value;
+        emit itemPurchaseButtonsChanged();
+    }
+
+    void setItemSellVisible(bool value) {
+        if (m_itemSellVisible == value) {
+            return;
+        }
+        m_itemSellVisible = value;
+        emit itemSellVisibleChanged();
+    }
+
+    void setItemSellGeometry(int x, int y, int width, int height) {
+        if (m_itemSellX == x && m_itemSellY == y
+            && m_itemSellWidth == width && m_itemSellHeight == height) {
+            return;
+        }
+        m_itemSellX = x;
+        m_itemSellY = y;
+        m_itemSellWidth = width;
+        m_itemSellHeight = height;
+        emit itemSellGeometryChanged();
+    }
+
+    void setItemSellTotal(int value) {
+        if (m_itemSellTotal == value) {
+            return;
+        }
+        m_itemSellTotal = value;
+        emit itemSellTotalChanged();
+    }
+
+    void setItemSellRows(const QVariantList& value) {
+        m_itemSellRows = value;
+        emit itemSellRowsChanged();
+    }
+
+    void setItemSellButtons(const QVariantList& value) {
+        m_itemSellButtons = value;
+        emit itemSellButtonsChanged();
+    }
+
+    void setShortCutVisible(bool value) {
+        if (m_shortCutVisible == value) {
+            return;
+        }
+        m_shortCutVisible = value;
+        emit shortCutVisibleChanged();
+    }
+
+    void setShortCutGeometry(int x, int y, int width, int height) {
+        if (m_shortCutX == x && m_shortCutY == y
+            && m_shortCutWidth == width && m_shortCutHeight == height) {
+            return;
+        }
+        m_shortCutX = x;
+        m_shortCutY = y;
+        m_shortCutWidth = width;
+        m_shortCutHeight = height;
+        emit shortCutGeometryChanged();
+    }
+
+    void setShortCutPage(int value) {
+        if (m_shortCutPage == value) {
+            return;
+        }
+        m_shortCutPage = value;
+        emit shortCutPageChanged();
+    }
+
+    void setShortCutHoverSlot(int value) {
+        if (m_shortCutHoverSlot == value) {
+            return;
+        }
+        m_shortCutHoverSlot = value;
+        emit shortCutHoverSlotChanged();
+    }
+
+    void setShortCutSlots(const QVariantList& value) {
+        m_shortCutSlots = value;
+        emit shortCutSlotsChanged();
+    }
+
+    void setBasicInfoVisible(bool value) {
+        if (m_basicInfoVisible == value) {
+            return;
+        }
+        m_basicInfoVisible = value;
+        emit basicInfoVisibleChanged();
+    }
+
+    void setBasicInfoGeometry(int x, int y, int width, int height) {
+        if (m_basicInfoX == x && m_basicInfoY == y
+            && m_basicInfoWidth == width && m_basicInfoHeight == height) {
+            return;
+        }
+        m_basicInfoX = x;
+        m_basicInfoY = y;
+        m_basicInfoWidth = width;
+        m_basicInfoHeight = height;
+        emit basicInfoGeometryChanged();
+    }
+
+    void setBasicInfoMini(bool value) {
+        if (m_basicInfoMini == value) {
+            return;
+        }
+        m_basicInfoMini = value;
+        emit basicInfoMiniChanged();
+    }
+
+    void setBasicInfoData(const QVariantMap& value) {
+        m_basicInfoData = value;
+        emit basicInfoDataChanged();
+    }
+
+    void setStatusVisible(bool value) {
+        if (m_statusVisible == value) {
+            return;
+        }
+        m_statusVisible = value;
+        emit statusVisibleChanged();
+    }
+
+    void setStatusGeometry(int x, int y, int width, int height) {
+        if (m_statusX == x && m_statusY == y
+            && m_statusWidth == width && m_statusHeight == height) {
+            return;
+        }
+        m_statusX = x;
+        m_statusY = y;
+        m_statusWidth = width;
+        m_statusHeight = height;
+        emit statusGeometryChanged();
+    }
+
+    void setStatusMini(bool value) {
+        if (m_statusMini == value) {
+            return;
+        }
+        m_statusMini = value;
+        emit statusMiniChanged();
+    }
+
+    void setStatusPage(int value) {
+        if (m_statusPage == value) {
+            return;
+        }
+        m_statusPage = value;
+        emit statusPageChanged();
+    }
+
+    void setStatusData(const QVariantMap& value) {
+        m_statusData = value;
+        emit statusDataChanged();
+    }
+
+    void setChatWindowVisible(bool value) {
+        if (m_chatWindowVisible == value) {
+            return;
+        }
+        m_chatWindowVisible = value;
+        emit chatWindowVisibleChanged();
+    }
+
+    void setChatWindowGeometry(int x, int y, int width, int height) {
+        if (m_chatWindowX == x && m_chatWindowY == y
+            && m_chatWindowWidth == width && m_chatWindowHeight == height) {
+            return;
+        }
+        m_chatWindowX = x;
+        m_chatWindowY = y;
+        m_chatWindowWidth = width;
+        m_chatWindowHeight = height;
+        emit chatWindowGeometryChanged();
+    }
+
+    void setChatWindowInputActive(bool value) {
+        if (m_chatWindowInputActive == value) {
+            return;
+        }
+        m_chatWindowInputActive = value;
+        emit chatWindowInputActiveChanged();
+    }
+
+    void setChatWindowInputText(const QString& value) {
+        if (m_chatWindowInputText == value) {
+            return;
+        }
+        m_chatWindowInputText = value;
+        emit chatWindowInputTextChanged();
+    }
+
+    void setChatWindowLines(const QVariantList& value) {
+        m_chatWindowLines = value;
+        emit chatWindowLinesChanged();
+    }
+
+    void setRechargeGaugeVisible(bool value) {
+        if (m_rechargeGaugeVisible == value) {
+            return;
+        }
+        m_rechargeGaugeVisible = value;
+        emit rechargeGaugeVisibleChanged();
+    }
+
+    void setRechargeGaugeGeometry(int x, int y, int width, int height) {
+        if (m_rechargeGaugeX == x && m_rechargeGaugeY == y
+            && m_rechargeGaugeWidth == width && m_rechargeGaugeHeight == height) {
+            return;
+        }
+        m_rechargeGaugeX = x;
+        m_rechargeGaugeY = y;
+        m_rechargeGaugeWidth = width;
+        m_rechargeGaugeHeight = height;
+        emit rechargeGaugeGeometryChanged();
+    }
+
+    void setRechargeGaugeProgress(int amount, int total) {
+        if (m_rechargeGaugeAmount == amount && m_rechargeGaugeTotal == total) {
+            return;
+        }
+        m_rechargeGaugeAmount = amount;
+        m_rechargeGaugeTotal = total;
+        emit rechargeGaugeProgressChanged();
+    }
+
     void setShopChoiceVisible(bool value) {
         if (m_shopChoiceVisible == value) {
             return;
@@ -723,6 +1092,38 @@ signals:
     void itemShopGeometryChanged();
     void itemShopTitleChanged();
     void itemShopRowsChanged();
+    void itemPurchaseVisibleChanged();
+    void itemPurchaseGeometryChanged();
+    void itemPurchaseTotalChanged();
+    void itemPurchaseRowsChanged();
+    void itemPurchaseButtonsChanged();
+    void itemSellVisibleChanged();
+    void itemSellGeometryChanged();
+    void itemSellTotalChanged();
+    void itemSellRowsChanged();
+    void itemSellButtonsChanged();
+    void shortCutVisibleChanged();
+    void shortCutGeometryChanged();
+    void shortCutPageChanged();
+    void shortCutHoverSlotChanged();
+    void shortCutSlotsChanged();
+    void basicInfoVisibleChanged();
+    void basicInfoGeometryChanged();
+    void basicInfoMiniChanged();
+    void basicInfoDataChanged();
+    void statusVisibleChanged();
+    void statusGeometryChanged();
+    void statusMiniChanged();
+    void statusPageChanged();
+    void statusDataChanged();
+    void chatWindowVisibleChanged();
+    void chatWindowGeometryChanged();
+    void chatWindowInputActiveChanged();
+    void chatWindowInputTextChanged();
+    void chatWindowLinesChanged();
+    void rechargeGaugeVisibleChanged();
+    void rechargeGaugeGeometryChanged();
+    void rechargeGaugeProgressChanged();
     void shopChoiceVisibleChanged();
     void shopChoiceGeometryChanged();
     void shopChoiceButtonsChanged();
@@ -818,6 +1219,60 @@ private:
     int m_itemShopHeight = 0;
     QString m_itemShopTitle;
     QVariantList m_itemShopRows;
+    bool m_itemPurchaseVisible = false;
+    int m_itemPurchaseX = 0;
+    int m_itemPurchaseY = 0;
+    int m_itemPurchaseWidth = 0;
+    int m_itemPurchaseHeight = 0;
+    int m_itemPurchaseTotal = 0;
+    QVariantList m_itemPurchaseRows;
+    QVariantList m_itemPurchaseButtons;
+    bool m_itemSellVisible = false;
+    int m_itemSellX = 0;
+    int m_itemSellY = 0;
+    int m_itemSellWidth = 0;
+    int m_itemSellHeight = 0;
+    int m_itemSellTotal = 0;
+    QVariantList m_itemSellRows;
+    QVariantList m_itemSellButtons;
+    bool m_shortCutVisible = false;
+    int m_shortCutX = 0;
+    int m_shortCutY = 0;
+    int m_shortCutWidth = 0;
+    int m_shortCutHeight = 0;
+    int m_shortCutPage = 0;
+    int m_shortCutHoverSlot = -1;
+    QVariantList m_shortCutSlots;
+    bool m_basicInfoVisible = false;
+    int m_basicInfoX = 0;
+    int m_basicInfoY = 0;
+    int m_basicInfoWidth = 0;
+    int m_basicInfoHeight = 0;
+    bool m_basicInfoMini = false;
+    QVariantMap m_basicInfoData;
+    bool m_statusVisible = false;
+    int m_statusX = 0;
+    int m_statusY = 0;
+    int m_statusWidth = 0;
+    int m_statusHeight = 0;
+    bool m_statusMini = false;
+    int m_statusPage = 0;
+    QVariantMap m_statusData;
+    bool m_chatWindowVisible = false;
+    int m_chatWindowX = 0;
+    int m_chatWindowY = 0;
+    int m_chatWindowWidth = 0;
+    int m_chatWindowHeight = 0;
+    bool m_chatWindowInputActive = false;
+    QString m_chatWindowInputText;
+    QVariantList m_chatWindowLines;
+    bool m_rechargeGaugeVisible = false;
+    int m_rechargeGaugeX = 0;
+    int m_rechargeGaugeY = 0;
+    int m_rechargeGaugeWidth = 0;
+    int m_rechargeGaugeHeight = 0;
+    int m_rechargeGaugeAmount = 0;
+    int m_rechargeGaugeTotal = 0;
     bool m_shopChoiceVisible = false;
     int m_shopChoiceX = 0;
     int m_shopChoiceY = 0;

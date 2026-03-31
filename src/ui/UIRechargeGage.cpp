@@ -1,6 +1,7 @@
 #include "UIRechargeGage.h"
 
 #include "main/WinMain.h"
+#include "qtui/QtUiRuntime.h"
 
 #include <algorithm>
 #include <windows.h>
@@ -14,8 +15,23 @@ void UIRechargeGage::SetAmount(int amount, int totalAmount)
     Invalidate();
 }
 
+int UIRechargeGage::GetAmount() const
+{
+    return m_amount;
+}
+
+int UIRechargeGage::GetTotalAmount() const
+{
+    return m_totalAmount;
+}
+
 void UIRechargeGage::OnDraw()
 {
+    if (IsQtUiRuntimeEnabled()) {
+        m_isDirty = 0;
+        return;
+    }
+
     if (!g_hMainWnd || m_show == 0) {
         return;
     }

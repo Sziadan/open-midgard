@@ -4,6 +4,7 @@
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
 #include "main/WinMain.h"
+#include "qtui/QtUiRuntime.h"
 
 #include <algorithm>
 #include <string>
@@ -183,6 +184,11 @@ const std::vector<ChatLine>& UINewChatWnd::GetVisibleLines() const
     return m_visibleLines;
 }
 
+const std::string& UINewChatWnd::GetInputText() const
+{
+    return m_inputText;
+}
+
 void UINewChatWnd::OnProcess()
 {
     Layout();
@@ -220,6 +226,12 @@ void UINewChatWnd::OnProcess()
 
 void UINewChatWnd::OnDraw()
 {
+    if (IsQtUiRuntimeEnabled()) {
+        m_lastDrawTick = GetTickCount();
+        m_isDirty = 0;
+        return;
+    }
+
     if (!g_hMainWnd || m_show == 0) {
         return;
     }

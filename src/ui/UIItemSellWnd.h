@@ -17,6 +17,11 @@ public:
     void OnMouseMove(int x, int y) override;
     void OnWheel(int delta) override;
     void HandleKeyDown(int virtualKey);
+    int GetViewOffset() const;
+    int GetHoverRow() const;
+    int GetVisibleRowCountForQt() const;
+    int GetHoverButton() const;
+    int GetPressedButton() const;
 
 private:
     enum ButtonId {

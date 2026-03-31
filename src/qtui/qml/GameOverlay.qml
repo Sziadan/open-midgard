@@ -562,6 +562,980 @@ Item {
     }
 
     Rectangle {
+        x: uiState.itemPurchaseX
+        y: uiState.itemPurchaseY
+        width: uiState.itemPurchaseWidth
+        height: uiState.itemPurchaseHeight
+        color: "#ececec"
+        border.width: 1
+        border.color: "#484848"
+        visible: uiState.itemPurchaseVisible
+
+        Rectangle {
+            x: 0
+            y: 0
+            width: parent.width
+            height: 17
+            color: "#52657b"
+        }
+
+        Text {
+            x: 6
+            y: 1
+            text: "Purchase"
+            color: "#ffffff"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Rectangle {
+            x: 8
+            y: 22
+            width: parent.width - 16
+            height: parent.height - 80
+            color: "#f8f8f8"
+            border.width: 1
+            border.color: "#787878"
+
+            Column {
+                x: 1
+                y: 1
+                width: parent.width - 2
+                spacing: 0
+
+                Rectangle {
+                    width: parent.width
+                    height: 17
+                    color: "#dee5ed"
+
+                    Text {
+                        x: 4
+                        y: 2
+                        text: "Item"
+                        color: "#1e1e1e"
+                        font.pixelSize: 11
+                    }
+
+                    Text {
+                        x: 126
+                        y: 2
+                        width: 34
+                        text: "Qty"
+                        color: "#1e1e1e"
+                        font.pixelSize: 11
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    Text {
+                        x: width - 64
+                        y: 2
+                        width: 56
+                        text: "Cost"
+                        color: "#1e1e1e"
+                        font.pixelSize: 11
+                        horizontalAlignment: Text.AlignRight
+                    }
+                }
+
+                Repeater {
+                    model: uiState.itemPurchaseRows
+
+                    delegate: Rectangle {
+                        required property var modelData
+                        width: parent.width
+                        height: 18
+                        color: modelData.selected ? "#bccce2" : (modelData.hover ? "#e2eaf4" : "transparent")
+
+                        Text {
+                            x: 4
+                            y: 2
+                            width: 126
+                            text: modelData.name
+                            color: "#1a1a1a"
+                            font.pixelSize: 11
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            x: 126
+                            y: 2
+                            width: 34
+                            text: modelData.quantity
+                            color: "#303030"
+                            font.pixelSize: 11
+                            horizontalAlignment: Text.AlignHCenter
+                        }
+
+                        Text {
+                            x: parent.width - 64
+                            y: 2
+                            width: 56
+                            text: modelData.cost
+                            color: "#1c3c62"
+                            font.pixelSize: 11
+                            horizontalAlignment: Text.AlignRight
+                        }
+                    }
+                }
+            }
+        }
+
+        Text {
+            x: 10
+            y: height - 75
+            text: "Total"
+            color: "#242424"
+            font.pixelSize: 11
+        }
+
+        Text {
+            x: 90
+            y: height - 75
+            width: 138
+            text: uiState.itemPurchaseTotal
+            color: "#1c3c62"
+            font.pixelSize: 11
+            horizontalAlignment: Text.AlignRight
+        }
+
+        Repeater {
+            model: [
+                { x: 10, y: 222, w: 68, h: 20 },
+                { x: 84, y: 222, w: 68, h: 20 },
+                { x: 10, y: 246, w: 104, h: 20 },
+                { x: 124, y: 246, w: 104, h: 20 }
+            ]
+
+            delegate: Rectangle {
+                required property var modelData
+                readonly property var buttonState: uiState.itemPurchaseButtons[index] || ({})
+                x: modelData.x
+                y: modelData.y
+                width: modelData.w
+                height: modelData.h
+                color: buttonState.pressed ? "#aab9cd" : (buttonState.hot ? "#c4d2e4" : "#dcdcdc")
+                border.width: 1
+                border.color: "#585858"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: buttonState.label || ""
+                    color: "#181818"
+                    font.pixelSize: 12
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        x: uiState.itemSellX
+        y: uiState.itemSellY
+        width: uiState.itemSellWidth
+        height: uiState.itemSellHeight
+        color: "#ececec"
+        border.width: 1
+        border.color: "#484848"
+        visible: uiState.itemSellVisible
+
+        Rectangle {
+            x: 0
+            y: 0
+            width: parent.width
+            height: 17
+            color: "#52657b"
+        }
+
+        Text {
+            x: 6
+            y: 1
+            text: "Sell"
+            color: "#ffffff"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Rectangle {
+            x: 8
+            y: 22
+            width: parent.width - 16
+            height: parent.height - 80
+            color: "#f8f8f8"
+            border.width: 1
+            border.color: "#787878"
+
+            Column {
+                x: 1
+                y: 1
+                width: parent.width - 2
+                spacing: 0
+
+                Rectangle {
+                    width: parent.width
+                    height: 17
+                    color: "#dee5ed"
+
+                    Text {
+                        x: 4
+                        y: 2
+                        text: "Item"
+                        color: "#1e1e1e"
+                        font.pixelSize: 11
+                    }
+
+                    Text {
+                        x: 126
+                        y: 2
+                        width: 34
+                        text: "Qty"
+                        color: "#1e1e1e"
+                        font.pixelSize: 11
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    Text {
+                        x: width - 64
+                        y: 2
+                        width: 56
+                        text: "Gain"
+                        color: "#1e1e1e"
+                        font.pixelSize: 11
+                        horizontalAlignment: Text.AlignRight
+                    }
+                }
+
+                Repeater {
+                    model: uiState.itemSellRows
+
+                    delegate: Rectangle {
+                        required property var modelData
+                        width: parent.width
+                        height: 18
+                        color: modelData.selected ? "#bccce2" : (modelData.hover ? "#e2eaf4" : "transparent")
+
+                        Text {
+                            x: 4
+                            y: 2
+                            width: 126
+                            text: modelData.name
+                            color: "#1a1a1a"
+                            font.pixelSize: 11
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            x: 126
+                            y: 2
+                            width: 34
+                            text: modelData.quantity
+                            color: "#303030"
+                            font.pixelSize: 11
+                            horizontalAlignment: Text.AlignHCenter
+                        }
+
+                        Text {
+                            x: parent.width - 64
+                            y: 2
+                            width: 56
+                            text: modelData.gain
+                            color: "#1c3c62"
+                            font.pixelSize: 11
+                            horizontalAlignment: Text.AlignRight
+                        }
+                    }
+                }
+            }
+        }
+
+        Text {
+            x: 10
+            y: height - 75
+            text: "Total"
+            color: "#242424"
+            font.pixelSize: 11
+        }
+
+        Text {
+            x: 90
+            y: height - 75
+            width: 138
+            text: uiState.itemSellTotal
+            color: "#1c3c62"
+            font.pixelSize: 11
+            horizontalAlignment: Text.AlignRight
+        }
+
+        Repeater {
+            model: [
+                { x: 10, y: 222, w: 68, h: 20 },
+                { x: 84, y: 222, w: 68, h: 20 },
+                { x: 10, y: 246, w: 104, h: 20 },
+                { x: 124, y: 246, w: 104, h: 20 }
+            ]
+
+            delegate: Rectangle {
+                required property var modelData
+                readonly property var buttonState: uiState.itemSellButtons[index] || ({})
+                x: modelData.x
+                y: modelData.y
+                width: modelData.w
+                height: modelData.h
+                color: buttonState.pressed ? "#aab9cd" : (buttonState.hot ? "#c4d2e4" : "#dcdcdc")
+                border.width: 1
+                border.color: "#585858"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: buttonState.label || ""
+                    color: "#181818"
+                    font.pixelSize: 12
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        x: uiState.shortCutX
+        y: uiState.shortCutY
+        width: uiState.shortCutWidth
+        height: uiState.shortCutHeight
+        radius: 4
+        color: "#d0d0d0"
+        border.width: 1
+        border.color: "#606060"
+        visible: uiState.shortCutVisible
+
+        Repeater {
+            model: uiState.shortCutSlots
+
+            delegate: Rectangle {
+                required property var modelData
+                x: 5 + index * 29
+                y: 4
+                width: 24
+                height: 24
+                color: modelData.hover ? "#d0d8e8" : "#f0f0f0"
+                border.width: 1
+                border.color: modelData.isSkill ? "#6a4fb0" : "#6a6a6a"
+
+                Text {
+                    anchors.centerIn: parent
+                    width: parent.width - 4
+                    text: modelData.occupied ? (modelData.isSkill ? "S" : "I") : ""
+                    color: "#202020"
+                    font.pixelSize: 10
+                    font.bold: true
+                }
+
+                Text {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 2
+                    anchors.bottom: parent.bottom
+                    text: modelData.count > 0 ? modelData.count : ""
+                    color: "#ffffff"
+                    font.pixelSize: 9
+                    font.bold: true
+                    style: Text.Outline
+                    styleColor: "#000000"
+                }
+            }
+        }
+
+        Text {
+            x: width - 25
+            y: 16
+            width: 12
+            text: uiState.shortCutPage
+            color: "#ffffff"
+            font.pixelSize: 11
+            font.bold: true
+            style: Text.Outline
+            styleColor: "#000000"
+            horizontalAlignment: Text.AlignRight
+        }
+    }
+
+    Rectangle {
+        x: uiState.basicInfoX
+        y: uiState.basicInfoY
+        width: uiState.basicInfoWidth
+        height: uiState.basicInfoHeight
+        radius: 4
+        color: uiState.basicInfoMini ? "#ece7d8" : "#ede9df"
+        border.width: 1
+        border.color: "#6b675f"
+        visible: uiState.basicInfoVisible
+
+        Text {
+            x: 9
+            y: uiState.basicInfoMini ? 3 : 5
+            text: uiState.basicInfoMini ? (uiState.basicInfoData.name || "") : "Basic Info"
+            color: uiState.basicInfoMini ? "#000000" : "#ffffff"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Text {
+            x: 17
+            y: 18
+            visible: uiState.basicInfoMini
+            text: "Lv. " + (uiState.basicInfoData.level || 0)
+                + " / " + (uiState.basicInfoData.jobName || "")
+                + " / Exp. " + (uiState.basicInfoData.expPercent || 0) + " %"
+            color: "#000000"
+            font.pixelSize: 11
+        }
+
+        Text {
+            x: 17
+            y: 33
+            visible: uiState.basicInfoMini
+            text: "HP " + (uiState.basicInfoData.hp || 0) + " / " + (uiState.basicInfoData.maxHp || 0)
+                + "  |  SP " + (uiState.basicInfoData.sp || 0) + " / " + (uiState.basicInfoData.maxSp || 0)
+                + "  |  " + (uiState.basicInfoData.money || 0) + " Z"
+            color: "#000000"
+            font.pixelSize: 11
+        }
+
+        Text {
+            x: 9
+            y: 24
+            visible: !uiState.basicInfoMini
+            text: uiState.basicInfoData.name || ""
+            color: "#000000"
+            font.pixelSize: 12
+        }
+
+        Text {
+            x: 9
+            y: 38
+            visible: !uiState.basicInfoMini
+            text: uiState.basicInfoData.jobName || ""
+            color: "#000000"
+            font.pixelSize: 12
+        }
+
+        Rectangle {
+            x: 110
+            y: 22
+            width: 85
+            height: 9
+            visible: !uiState.basicInfoMini
+            color: "#403c3c"
+            border.width: 1
+            border.color: "#202020"
+
+            Rectangle {
+                x: 1
+                y: 1
+                width: Math.max(0, (parent.width - 2) * ((uiState.basicInfoData.maxHp || 0) > 0 ? (uiState.basicInfoData.hp || 0) / uiState.basicInfoData.maxHp : 0))
+                height: parent.height - 2
+                color: ((uiState.basicInfoData.maxHp || 0) > 0 && (uiState.basicInfoData.hp || 0) * 100 < uiState.basicInfoData.maxHp * 25) ? "#d04848" : "#d06060"
+            }
+        }
+
+        Rectangle {
+            x: 110
+            y: 43
+            width: 85
+            height: 9
+            visible: !uiState.basicInfoMini
+            color: "#403c3c"
+            border.width: 1
+            border.color: "#202020"
+
+            Rectangle {
+                x: 1
+                y: 1
+                width: Math.max(0, (parent.width - 2) * ((uiState.basicInfoData.maxSp || 0) > 0 ? (uiState.basicInfoData.sp || 0) / uiState.basicInfoData.maxSp : 0))
+                height: parent.height - 2
+                color: "#4a78d8"
+            }
+        }
+
+        Text {
+            x: 95
+            y: 31
+            visible: !uiState.basicInfoMini
+            text: "HP      " + (uiState.basicInfoData.hp || 0) + "  /  " + (uiState.basicInfoData.maxHp || 0)
+            color: "#000000"
+            font.pixelSize: 10
+        }
+
+        Text {
+            x: 95
+            y: 52
+            visible: !uiState.basicInfoMini
+            text: "SP      " + (uiState.basicInfoData.sp || 0) + "  /  " + (uiState.basicInfoData.maxSp || 0)
+            color: "#000000"
+            font.pixelSize: 10
+        }
+
+        Text {
+            x: 17
+            y: 72
+            visible: !uiState.basicInfoMini
+            text: "Base Lv. " + (uiState.basicInfoData.level || 0)
+            color: "#000000"
+            font.pixelSize: 11
+        }
+
+        Rectangle {
+            x: 84
+            y: 77
+            width: 102
+            height: 6
+            visible: !uiState.basicInfoMini
+            color: "#ffffff"
+            border.width: 1
+            border.color: "#808080"
+
+            Rectangle {
+                x: 1
+                y: 1
+                width: Math.max(0, (parent.width - 2) * ((uiState.basicInfoData.expPercent || 0) / 100.0))
+                height: parent.height - 2
+                color: "#4fd17f"
+            }
+        }
+
+        Text {
+            x: 17
+            y: 84
+            visible: !uiState.basicInfoMini
+            text: "Job Lv. " + (uiState.basicInfoData.jobLevel || 0)
+            color: "#000000"
+            font.pixelSize: 11
+        }
+
+        Rectangle {
+            x: 84
+            y: 87
+            width: 102
+            height: 6
+            visible: !uiState.basicInfoMini
+            color: "#ffffff"
+            border.width: 1
+            border.color: "#808080"
+
+            Rectangle {
+                x: 1
+                y: 1
+                width: Math.max(0, (parent.width - 2) * ((uiState.basicInfoData.jobExpPercent || 0) / 100.0))
+                height: parent.height - 2
+                color: "#6aa8ff"
+            }
+        }
+
+        Text {
+            x: 5
+            y: 103
+            visible: !uiState.basicInfoMini
+            text: "Weight : " + (uiState.basicInfoData.weight || 0) + " / " + (uiState.basicInfoData.maxWeight || 0)
+            color: ((uiState.basicInfoData.maxWeight || 0) > 0 && (uiState.basicInfoData.weight || 0) * 100 >= uiState.basicInfoData.maxWeight * 50) ? "#ff0000" : "#000000"
+            font.pixelSize: 11
+        }
+
+        Text {
+            x: 107
+            y: 103
+            visible: !uiState.basicInfoMini
+            text: "Zeny : " + (uiState.basicInfoData.money || 0)
+            color: "#000000"
+            font.pixelSize: 11
+        }
+    }
+
+    Rectangle {
+        x: uiState.statusX
+        y: uiState.statusY
+        width: uiState.statusWidth
+        height: uiState.statusHeight
+        radius: 4
+        color: uiState.statusMini ? "#ece7d8" : "#ede9df"
+        border.width: 1
+        border.color: "#6b675f"
+        visible: uiState.statusVisible
+
+        Rectangle {
+            x: 1
+            y: 1
+            width: parent.width - 2
+            height: 16
+            radius: 3
+            color: uiState.statusMini ? "#d5d0c2" : "#6e8194"
+            border.width: 1
+            border.color: uiState.statusMini ? "#8b877b" : "#4e5d6c"
+        }
+
+        Text {
+            x: 17
+            y: 3
+            text: "Status"
+            color: uiState.statusMini ? "#000000" : "#ffffff"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Rectangle {
+            x: 3
+            y: 3
+            width: 12
+            height: 11
+            radius: 2
+            color: "#d7d2c5"
+            border.width: 1
+            border.color: "#7f7a70"
+            visible: uiState.statusMini
+
+            Text {
+                anchors.centerIn: parent
+                text: "B"
+                color: "#000000"
+                font.pixelSize: 8
+                font.bold: true
+            }
+        }
+
+        Rectangle {
+            x: 252
+            y: 3
+            width: 12
+            height: 11
+            radius: 2
+            color: "#d7d2c5"
+            border.width: 1
+            border.color: "#7f7a70"
+            visible: !uiState.statusMini
+
+            Text {
+                anchors.centerIn: parent
+                text: "_"
+                color: "#000000"
+                font.pixelSize: 8
+                font.bold: true
+            }
+        }
+
+        Rectangle {
+            x: 266
+            y: 3
+            width: 12
+            height: 11
+            radius: 2
+            color: "#d7d2c5"
+            border.width: 1
+            border.color: "#7f7a70"
+
+            Text {
+                anchors.centerIn: parent
+                text: "X"
+                color: "#000000"
+                font.pixelSize: 8
+                font.bold: true
+            }
+        }
+
+        Text {
+            x: 96
+            y: 3
+            visible: uiState.statusMini
+            text: "Points " + (uiState.statusData.statusPoint || 0)
+            color: "#000000"
+            font.pixelSize: 11
+        }
+
+        Rectangle {
+            x: 0
+            y: 17
+            width: parent.width
+            height: parent.height - 17
+            color: "#e7e2d6"
+            border.width: 0
+            visible: !uiState.statusMini
+
+            Rectangle {
+                x: 0
+                y: 0
+                width: 20
+                height: parent.height
+                color: "#d3cdbf"
+            }
+
+            Rectangle {
+                x: 0
+                y: 0
+                width: 20
+                height: 26
+                color: uiState.statusPage === 0 ? "#ebe7db" : "#c9c2b2"
+                border.width: 1
+                border.color: "#8c8578"
+            }
+
+            Rectangle {
+                x: 0
+                y: 26
+                width: 20
+                height: 24
+                color: uiState.statusPage === 1 ? "#ebe7db" : "#c9c2b2"
+                border.width: 1
+                border.color: "#8c8578"
+            }
+
+            Text {
+                x: 6
+                y: 8
+                text: "1"
+                color: "#000000"
+                font.pixelSize: 10
+                font.bold: uiState.statusPage === 0
+            }
+
+            Text {
+                x: 6
+                y: 33
+                text: "2"
+                color: "#000000"
+                font.pixelSize: 10
+                font.bold: uiState.statusPage === 1
+            }
+
+            Repeater {
+                model: uiState.statusData.stats || []
+
+                delegate: Item {
+                    required property var modelData
+                    x: 28
+                    y: 6 + (index * 16)
+                    width: 78
+                    height: 14
+                    visible: uiState.statusPage === 0
+
+                    Text {
+                        x: 0
+                        y: 0
+                        text: modelData.label
+                        color: "#000000"
+                        font.pixelSize: 11
+                        font.bold: true
+                    }
+
+                    Text {
+                        x: 26
+                        y: 0
+                        width: 36
+                        text: modelData.value
+                        color: "#000000"
+                        font.pixelSize: 11
+                    }
+
+                    Text {
+                        x: 52
+                        y: 0
+                        width: 20
+                        text: modelData.cost > 0 ? modelData.cost : ""
+                        color: "#4a4a4a"
+                        font.pixelSize: 10
+                        horizontalAlignment: Text.AlignRight
+                    }
+
+                    Rectangle {
+                        x: 64
+                        y: 1
+                        width: 12
+                        height: 11
+                        radius: 2
+                        visible: modelData.canIncrease
+                        color: "#d8d8d8"
+                        border.width: 1
+                        border.color: "#7f7a70"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: ">"
+                            color: "#000000"
+                            font.pixelSize: 8
+                            font.bold: true
+                        }
+                    }
+                }
+            }
+
+            Text {
+                x: 118
+                y: 10
+                visible: uiState.statusPage === 0
+                text: "Atk  " + (uiState.statusData.attackText || "")
+                color: "#000000"
+                font.pixelSize: 11
+            }
+
+            Text {
+                x: 118
+                y: 26
+                visible: uiState.statusPage === 0
+                text: "Matk " + (uiState.statusData.matkText || "")
+                color: "#000000"
+                font.pixelSize: 11
+            }
+
+            Text {
+                x: 118
+                y: 42
+                visible: uiState.statusPage === 0
+                text: "Hit   " + (uiState.statusData.hit || 0)
+                color: "#000000"
+                font.pixelSize: 11
+            }
+
+            Text {
+                x: 118
+                y: 58
+                visible: uiState.statusPage === 0
+                text: "Crit  " + (uiState.statusData.critical || 0)
+                color: "#000000"
+                font.pixelSize: 11
+            }
+
+            Text {
+                x: 204
+                y: 74
+                visible: uiState.statusPage === 0
+                text: "Pts " + (uiState.statusData.statusPoint || 0)
+                color: "#000000"
+                font.pixelSize: 11
+                font.bold: true
+            }
+
+            Text {
+                x: 204
+                y: 10
+                visible: uiState.statusPage === 0
+                text: "Def   " + (uiState.statusData.itemDefText || "")
+                color: "#000000"
+                font.pixelSize: 11
+            }
+
+            Text {
+                x: 204
+                y: 26
+                visible: uiState.statusPage === 0
+                text: "Mdef " + (uiState.statusData.itemMdefText || "")
+                color: "#000000"
+                font.pixelSize: 11
+            }
+
+            Text {
+                x: 204
+                y: 42
+                visible: uiState.statusPage === 0
+                text: "Flee  " + (uiState.statusData.fleeText || "")
+                color: "#000000"
+                font.pixelSize: 11
+            }
+
+            Text {
+                x: 204
+                y: 58
+                visible: uiState.statusPage === 0
+                text: "Aspd " + (uiState.statusData.aspdText || "")
+                color: "#000000"
+                font.pixelSize: 11
+            }
+        }
+    }
+
+    Rectangle {
+        x: uiState.chatWindowX
+        y: uiState.chatWindowY
+        width: uiState.chatWindowWidth
+        height: uiState.chatWindowHeight
+        color: "#50181818"
+        border.width: 1
+        border.color: "#ffffff"
+        visible: uiState.chatWindowVisible
+
+        Rectangle {
+            x: 8
+            y: 8
+            width: parent.width - 16
+            height: parent.height - 38
+            color: "#90181818"
+            border.width: 1
+            border.color: "#60ffffff"
+            clip: true
+
+            Column {
+                id: chatLinesColumn
+                x: 4
+                y: Math.max(4, parent.height - height - 4)
+                width: parent.width - 8
+                spacing: 2
+
+                Repeater {
+                    model: uiState.chatWindowLines
+
+                    delegate: Text {
+                        required property var modelData
+                        width: chatLinesColumn.width
+                        text: modelData.text
+                        color: modelData.color
+                        font.pixelSize: 12
+                        wrapMode: Text.WordWrap
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            x: 8
+            y: parent.height - 30
+            width: parent.width - 16
+            height: 22
+            color: uiState.chatWindowInputActive ? "#f5f5dc" : "#d2d2d2"
+            border.width: 1
+            border.color: "#000000"
+
+            Text {
+                x: 4
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - 8
+                text: uiState.chatWindowInputText + (uiState.chatWindowInputActive ? "_" : "")
+                color: "#101010"
+                font.pixelSize: 12
+                elide: Text.ElideLeft
+            }
+        }
+    }
+
+    Rectangle {
+        x: uiState.rechargeGaugeX
+        y: uiState.rechargeGaugeY
+        width: uiState.rechargeGaugeWidth
+        height: uiState.rechargeGaugeHeight
+        color: "#523f2d"
+        border.width: 1
+        border.color: "#523f2d"
+        visible: uiState.rechargeGaugeVisible
+
+        Rectangle {
+            x: 1
+            y: 1
+            width: parent.width - 2
+            height: parent.height - 2
+            color: "#f4efe4"
+        }
+
+        Rectangle {
+            x: 1
+            y: 1
+            width: Math.max(0, (parent.width - 2) * ((uiState.rechargeGaugeTotal || 0) > 0
+                ? (uiState.rechargeGaugeAmount || 0) / uiState.rechargeGaugeTotal : 0))
+            height: parent.height - 2
+            color: "#307830"
+        }
+    }
+
+    Rectangle {
         x: uiState.shopChoiceX
         y: uiState.shopChoiceY
         width: uiState.shopChoiceWidth

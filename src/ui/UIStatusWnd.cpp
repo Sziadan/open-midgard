@@ -5,6 +5,7 @@
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
 #include "main/WinMain.h"
+#include "qtui/QtUiRuntime.h"
 #include "res/Bitmap.h"
 #include "session/Session.h"
 #include "world/GameActor.h"
@@ -410,6 +411,13 @@ void UIStatusWnd::OnCreate(int x, int y)
 
 void UIStatusWnd::OnDraw()
 {
+    if (IsQtUiRuntimeEnabled()) {
+        m_lastDrawStateToken = BuildDisplayStateToken();
+        m_hasDrawStateToken = true;
+        m_isDirty = 0;
+        return;
+    }
+
     if (m_show == 0) {
         return;
     }
@@ -495,6 +503,26 @@ void UIStatusWnd::OnMouseHover(int x, int y)
 void UIStatusWnd::StoreInfo()
 {
     SaveUiWindowPlacement("StatusWnd", m_x, m_y);
+}
+
+bool UIStatusWnd::IsMiniMode() const
+{
+    return m_h == kMiniHeight;
+}
+
+int UIStatusWnd::GetPageForQt() const
+{
+    return m_page;
+}
+
+bool UIStatusWnd::GetDisplayDataForQt(DisplayData* outData) const
+{
+    if (!outData) {
+        return false;
+    }
+
+    *outData = BuildDisplayData();
+    return true;
 }
 
 void UIStatusWnd::EnsureCreated()
