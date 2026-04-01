@@ -360,21 +360,3 @@ bool DrawActMotionToHdc(HDC hdc, int x, int y, class CSprRes* sprRes, const stru
     return true;
 }
 
-bool DrawActMotionToBitmap(CDCBitmap* bitmap, int x, int y, class CSprRes* sprRes, const struct CMotion* motion, unsigned int* palette)
-{
-    if (!bitmap || !bitmap->GetImageData() || bitmap->GetWidth() == 0 || bitmap->GetHeight() == 0
-            || !sprRes || !motion || !palette) {
-        return false;
-    }
-
-    BlitMotionToArgb(
-        bitmap->GetImageData(),
-        static_cast<int>(bitmap->GetWidth()),
-        static_cast<int>(bitmap->GetHeight()),
-        x,
-        y,
-        sprRes,
-        motion,
-        palette);
-    return true;
-}

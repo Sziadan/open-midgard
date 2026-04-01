@@ -27,7 +27,6 @@ public:
 
 void BlitMotionToArgb(unsigned int* dest, int destW, int destH, int baseX, int baseY, class CSprRes* sprRes, const struct CMotion* motion, unsigned int* palette);
 bool DrawActMotionToHdc(HDC hdc, int x, int y, class CSprRes* sprRes, const struct CMotion* motion, unsigned int* palette);
-bool DrawActMotionToBitmap(CDCBitmap* bitmap, int x, int y, class CSprRes* sprRes, const struct CMotion* motion, unsigned int* palette);
 
 // Drawing context for software bitmaps backed by DIB sections
 class CDCBitmap : public CDC {

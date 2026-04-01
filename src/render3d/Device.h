@@ -6,12 +6,10 @@
 #include <stdio.h>
 #include "render/Renderer.h"
 #include "res/Texture.h"
-#include "render/DC.h"
 
 // Forward declarations
 class CRenderer;
 class CTexture;
-class CDCBitmap;
 class CSurface;
 
 class C3dDevice {
@@ -34,7 +32,6 @@ public:
     CRenderer* CreateRenderer();
     void DestroyRenderer(CRenderer* rc);
     
-    CDCBitmap* CreateDCBuffer(unsigned int w, unsigned int h);
     CSurface* CreateWallPaper(unsigned int w, unsigned int h);
     
     void AdjustTextureSize(unsigned int* w, unsigned int* h);

@@ -471,7 +471,6 @@ void CDynamicVB::Release() { if (m_pVB) { m_pVB->Release(); m_pVB = 0; } }
 bool C3dDevice::TestScreen() { return true; }
 CRenderer* C3dDevice::CreateRenderer() { return new CRenderer(); }
 void C3dDevice::DestroyRenderer(CRenderer* rc) { delete rc; }
-CDCBitmap* C3dDevice::CreateDCBuffer(unsigned int w, unsigned int h) { return NULL; }
 CSurface* C3dDevice::CreateWallPaper(unsigned int w, unsigned int h) {
     (void)w;
     (void)h;
