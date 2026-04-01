@@ -34,6 +34,7 @@ public:
     virtual HDC AcquireDrawTarget() const;
     virtual void ReleaseDrawTarget(HDC dc) const;
     bool BlitToDrawTarget(HDC sourceDc, int width, int height) const;
+    bool BlitArgbBitsToDrawTarget(const void* bits, int width, int height) const;
 
     static void SetSharedDrawDC(HDC dc);
     static HDC GetSharedDrawDC();

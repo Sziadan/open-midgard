@@ -71,6 +71,7 @@ private:
     std::string m_backgroundPath;
     HDC m_composeDC;
     HBITMAP m_composeBitmap;
+    void* m_composeBits;
     int m_composeWidth;
     int m_composeHeight;
     UIEditCtrl* m_nameEditCtrl;

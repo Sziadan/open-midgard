@@ -504,7 +504,8 @@ const char* ResolveJobName(int job)
 UISelectCharWnd::UISelectCharWnd()
     : m_controlsCreated(false), m_assetsProbed(false), m_backgroundBmp(nullptr),
       m_slotBmp(nullptr), m_slotSelectedBmp(nullptr),
-      m_composeDC(nullptr), m_composeBitmap(nullptr), m_composeWidth(0), m_composeHeight(0),
+      m_composeDC(nullptr), m_composeBitmap(nullptr), m_composeBits(nullptr),
+      m_composeWidth(0), m_composeHeight(0),
       m_okButton(nullptr), m_cancelButton(nullptr), m_makeButton(nullptr),
       m_deleteButton(nullptr), m_chargeButton(nullptr), m_selectedSlot(0), m_page(0),
       m_lastAnimTick(0), m_animAction(0)
@@ -669,6 +670,7 @@ void UISelectCharWnd::ReleaseComposeSurface()
         DeleteDC(m_composeDC);
         m_composeDC = nullptr;
     }
+    m_composeBits = nullptr;
     m_composeWidth = 0;
     m_composeHeight = 0;
 }
@@ -697,8 +699,7 @@ bool UISelectCharWnd::EnsureComposeSurface(int width, int height)
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biBitCount = 32;
     bmi.bmiHeader.biCompression = BI_RGB;
-    void* composeBits = nullptr;
-    m_composeBitmap = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &composeBits, nullptr, 0);
+    m_composeBitmap = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &m_composeBits, nullptr, 0);
     if (!m_composeBitmap) {
         ReleaseComposeSurface();
         return false;
@@ -1304,7 +1305,7 @@ void UISelectCharWnd::OnDraw()
     DrawChildrenToHdc(hdc);
 
     if (useCompose) {
-        if (!BlitToDrawTarget(hdc, clientW, clientH)) {
+        if (!BlitArgbBitsToDrawTarget(m_composeBits, clientW, clientH)) {
             return;
         }
     } else {

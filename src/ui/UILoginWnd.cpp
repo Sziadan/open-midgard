@@ -406,6 +406,7 @@ UILoginWnd::UILoginWnd()
       m_wallpaperBmp(nullptr),
       m_composeDC(nullptr),
       m_composeBitmap(nullptr),
+      m_composeBits(nullptr),
       m_composeWidth(0),
       m_composeHeight(0),
       m_saveAccountChecked(false),
@@ -651,6 +652,7 @@ void UILoginWnd::ReleaseComposeSurface()
         DeleteDC(m_composeDC);
         m_composeDC = nullptr;
     }
+    m_composeBits = nullptr;
     m_composeWidth = 0;
     m_composeHeight = 0;
 }
@@ -679,8 +681,7 @@ bool UILoginWnd::EnsureComposeSurface(int width, int height)
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biBitCount = 32;
     bmi.bmiHeader.biCompression = BI_RGB;
-    void* composeBits = nullptr;
-    m_composeBitmap = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &composeBits, nullptr, 0);
+    m_composeBitmap = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &m_composeBits, nullptr, 0);
     if (!m_composeBitmap) {
         ReleaseComposeSurface();
         return false;
@@ -838,7 +839,7 @@ void UILoginWnd::OnDraw()
     DrawChildrenToHdc(drawDC);
 
     if (useCompose) {
-        if (!BlitToDrawTarget(drawDC, clientW, clientH)) {
+        if (!BlitArgbBitsToDrawTarget(m_composeBits, clientW, clientH)) {
             return;
         }
     } else {

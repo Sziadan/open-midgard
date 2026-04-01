@@ -42,6 +42,7 @@ private:
     std::array<std::string, UiAssetCount> m_uiAssetPaths;
     HDC m_composeDC;
     HBITMAP m_composeBitmap;
+    void* m_composeBits;
     int m_composeWidth;
     int m_composeHeight;
     bool m_saveAccountChecked;

@@ -112,6 +112,7 @@ private:
     HBITMAP m_slotSelectedBmp;
     HDC m_composeDC;
     HBITMAP m_composeBitmap;
+    void* m_composeBits;
     int m_composeWidth;
     int m_composeHeight;
     UIBitmapButton* m_okButton;
