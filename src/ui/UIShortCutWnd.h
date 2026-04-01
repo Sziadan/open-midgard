@@ -1,5 +1,6 @@
 #pragma once
 
+#include "UIShopCommon.h"
 #include "UIWindow.h"
 
 #include <unordered_map>
@@ -33,14 +34,14 @@ private:
     RECT GetSlotRect(int visibleSlot) const;
     void ActivateSlot(int visibleSlot);
     void DrawSlotOverlayText(HDC hdc, const RECT& slotRect, int value) const;
-    HBITMAP GetItemIcon(const ITEM_INFO& item);
-    HBITMAP GetSkillIcon(int skillId);
+    const shopui::BitmapPixels* GetItemIcon(const ITEM_INFO& item);
+    const shopui::BitmapPixels* GetSkillIcon(int skillId);
     unsigned long long BuildDisplayStateToken() const;
 
-    HBITMAP m_backgroundBitmap;
-    HBITMAP m_slotButtonBitmap;
-    std::unordered_map<unsigned int, HBITMAP> m_itemIconCache;
-    std::unordered_map<int, HBITMAP> m_skillIconCache;
+    shopui::BitmapPixels m_backgroundBitmap;
+    shopui::BitmapPixels m_slotButtonBitmap;
+    std::unordered_map<unsigned int, shopui::BitmapPixels> m_itemIconCache;
+    std::unordered_map<int, shopui::BitmapPixels> m_skillIconCache;
     int m_hoverSlot;
     int m_pressedSlot;
     int m_pressedSlotAbsoluteIndex;

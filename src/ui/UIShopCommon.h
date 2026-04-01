@@ -2,6 +2,7 @@
 
 #include "core/File.h"
 #include "item/Item.h"
+#include "render/DC.h"
 #include "res/Bitmap.h"
 
 #include <windows.h>
@@ -14,6 +15,26 @@
 #pragma comment(lib, "msimg32.lib")
 
 namespace shopui {
+
+struct BitmapPixels {
+    std::vector<unsigned int> pixels;
+    int width = 0;
+    int height = 0;
+
+    bool IsValid() const
+    {
+        return width > 0
+            && height > 0
+            && pixels.size() >= static_cast<size_t>(width) * static_cast<size_t>(height);
+    }
+
+    void Clear()
+    {
+        pixels.clear();
+        width = 0;
+        height = 0;
+    }
+};
 
 inline std::string ToLowerAscii(std::string value)
 {
@@ -102,6 +123,34 @@ inline HBITMAP LoadBitmapFromGameData(const std::string& path)
     return outBitmap;
 }
 
+inline BitmapPixels LoadBitmapPixelsFromGameData(const std::string& path, bool applyTransparentKey = false)
+{
+    BitmapPixels bitmap;
+    u32* rawPixels = nullptr;
+    if (!LoadBgraPixelsFromGameData(path.c_str(), &rawPixels, &bitmap.width, &bitmap.height)
+        || !rawPixels
+        || bitmap.width <= 0
+        || bitmap.height <= 0) {
+        delete[] rawPixels;
+        bitmap.Clear();
+        return bitmap;
+    }
+
+    const size_t pixelCount = static_cast<size_t>(bitmap.width) * static_cast<size_t>(bitmap.height);
+    bitmap.pixels.assign(rawPixels, rawPixels + pixelCount);
+    delete[] rawPixels;
+
+    if (applyTransparentKey) {
+        for (unsigned int& pixel : bitmap.pixels) {
+            if ((pixel & 0x00FFFFFFu) == 0x00FF00FFu) {
+                pixel = 0;
+            }
+        }
+    }
+
+    return bitmap;
+}
+
 inline void DrawBitmapTransparent(HDC target, HBITMAP bitmap, const RECT& dst)
 {
     if (!target || !bitmap) {
@@ -132,6 +181,22 @@ inline void DrawBitmapTransparent(HDC target, HBITMAP bitmap, const RECT& dst)
         RGB(255, 0, 255));
     SelectObject(srcDC, oldBitmap);
     DeleteDC(srcDC);
+}
+
+inline void DrawBitmapPixelsTransparent(HDC target, const BitmapPixels& bitmap, const RECT& dst)
+{
+    if (!target || !bitmap.IsValid() || dst.right <= dst.left || dst.bottom <= dst.top) {
+        return;
+    }
+
+    AlphaBlendArgbToHdc(target,
+                        dst.left,
+                        dst.top,
+                        dst.right - dst.left,
+                        dst.bottom - dst.top,
+                        bitmap.pixels.data(),
+                        bitmap.width,
+                        bitmap.height);
 }
 
 inline void FillRectColor(HDC hdc, const RECT& rect, COLORREF color)
