@@ -1030,9 +1030,10 @@ void UIWindowMgr::OnDraw() {
         return;
     }
 
+    const bool hasModernBackend = GetRenderDevice().GetLegacyDevice() == nullptr;
     const bool qtMenuRuntimeEnabled = hasMenuUi
         && IsQtUiRuntimeEnabled()
-        && GetRenderDevice().GetLegacyDevice() == nullptr;
+        && hasModernBackend;
     if (qtMenuRuntimeEnabled) {
         static CTexture* s_qtMenuOverlayTexture = nullptr;
         static int s_qtMenuOverlayTextureWidth = 0;
@@ -1085,10 +1086,7 @@ void UIWindowMgr::OnDraw() {
         }
     }
 
-    const bool qtMenuComposeFallback = useCompose
-        && hasMenuUi
-        && IsQtUiRuntimeEnabled()
-        && GetRenderDevice().GetLegacyDevice() == nullptr;
+    const bool qtMenuComposeFallback = useCompose && qtMenuRuntimeEnabled;
     if (!qtMenuComposeFallback) {
         DrawVisibleWindowsToHdc(drawDC, true);
     } else {
@@ -1099,10 +1097,8 @@ void UIWindowMgr::OnDraw() {
             clientHeight,
             clientWidth * static_cast<int>(sizeof(unsigned int)));
     }
-    const bool hasModernBackend = GetRenderDevice().GetLegacyDevice() == nullptr;
-    const bool allowModernUiPresent = hasModernBackend;
     bool presentedModernUiFrame = false;
-    if (useCompose && allowModernUiPresent && m_uiComposeBits) {
+    if (useCompose && hasModernBackend && m_uiComposeBits) {
         presentedModernUiFrame = GetRenderDevice().UpdateBackBufferFromMemory(
             m_uiComposeBits,
             clientWidth,
