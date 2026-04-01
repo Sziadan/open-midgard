@@ -261,9 +261,9 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - 8
                         text: modelData
-                        color: "#000000"
+                        textFormat: Text.RichText
                         font.pixelSize: 12
-                        elide: Text.ElideRight
+                        clip: true
                     }
                 }
             }
@@ -321,7 +321,7 @@ Item {
             width: parent.width - 20
             height: uiState.sayDialogHasAction ? (parent.height - 10 - 10 - 22 - 8) : (parent.height - 20)
             text: uiState.sayDialogText
-            color: "#000000"
+            textFormat: Text.RichText
             font.pixelSize: 12
             wrapMode: Text.WordWrap
             verticalAlignment: Text.AlignTop

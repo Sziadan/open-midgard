@@ -102,18 +102,49 @@ bool IsNpcColorCodeAt(const std::string& value, size_t index)
     return true;
 }
 
-QString StripNpcColorCodes(const std::string& value)
+QString NpcColorCodesToHtml(const std::string& value)
 {
-    std::string stripped;
-    stripped.reserve(value.size());
-    for (size_t index = 0; index < value.size(); ++index) {
+    QString html = QStringLiteral("<span style=\"color:#000000;\">");
+    size_t segmentStart = 0;
+    for (size_t index = 0; index < value.size();) {
         if (IsNpcColorCodeAt(value, index)) {
-            index += 6;
+            if (index > segmentStart) {
+                html += ToQString(value.substr(segmentStart, index - segmentStart)).toHtmlEscaped();
+            }
+            html += QStringLiteral("</span><span style=\"color:#%1;\">")
+                .arg(QString::fromLatin1(value.data() + index + 1, 6).toLower());
+            index += 7;
+            segmentStart = index;
             continue;
         }
-        stripped.push_back(value[index]);
+        if (value[index] == '\r') {
+            if (index > segmentStart) {
+                html += ToQString(value.substr(segmentStart, index - segmentStart)).toHtmlEscaped();
+            }
+            if (index + 1 < value.size() && value[index + 1] == '\n') {
+                ++index;
+            }
+            html += QStringLiteral("<br/>");
+            ++index;
+            segmentStart = index;
+            continue;
+        }
+        if (value[index] == '\n') {
+            if (index > segmentStart) {
+                html += ToQString(value.substr(segmentStart, index - segmentStart)).toHtmlEscaped();
+            }
+            html += QStringLiteral("<br/>");
+            ++index;
+            segmentStart = index;
+            continue;
+        }
+        ++index;
     }
-    return ToQString(stripped);
+    if (segmentStart < value.size()) {
+        html += ToQString(value.substr(segmentStart)).toHtmlEscaped();
+    }
+    html += QStringLiteral("</span>");
+    return html;
 }
 
 QString ResolveShortcutSlotLabel(const SHORTCUT_SLOT* slot)
@@ -520,7 +551,7 @@ void PopulateNpcMenuState(QtUiState* state)
     const std::vector<std::string>& rawOptions = menuWnd->GetOptions();
     options.reserve(static_cast<qsizetype>(rawOptions.size()));
     for (const std::string& option : rawOptions) {
-        options.push_back(StripNpcColorCodes(option));
+        options.push_back(NpcColorCodesToHtml(option));
     }
     state->setNpcMenuOptions(options);
 }
@@ -542,7 +573,7 @@ void PopulateSayDialogState(QtUiState* state)
     }
 
     state->setSayDialogGeometry(dialogWnd->m_x, dialogWnd->m_y, dialogWnd->m_w, dialogWnd->m_h);
-    state->setSayDialogText(StripNpcColorCodes(dialogWnd->GetDisplayText()));
+    state->setSayDialogText(NpcColorCodesToHtml(dialogWnd->GetDisplayText()));
     state->setSayDialogAction(
         dialogWnd->HasActionButton(),
         dialogWnd->IsNextAction() ? QStringLiteral("Next") : QStringLiteral("Close"),
