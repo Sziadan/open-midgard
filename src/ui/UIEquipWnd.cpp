@@ -571,35 +571,16 @@ bool DrawEquipPreviewPlayerSpriteFitted(HDC hdc, const RECT& previewArea)
     constexpr int kComposeWidth = 160;
     constexpr int kComposeHeight = 180;
 
-    BITMAPINFO bmi{};
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = kComposeWidth;
-    bmi.bmiHeader.biHeight = -kComposeHeight;
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 32;
-    bmi.bmiHeader.biCompression = BI_RGB;
-
-    void* dibBits = nullptr;
-    HBITMAP dib = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
-    if (!dib || !dibBits) {
-        if (dib) {
-            DeleteObject(dib);
-        }
+    ArgbDibSurface composeSurface;
+    if (!composeSurface.EnsureSize(kComposeWidth, kComposeHeight)) {
         return false;
     }
 
-    std::memset(dibBits, 0, static_cast<size_t>(kComposeWidth) * static_cast<size_t>(kComposeHeight) * sizeof(unsigned int));
+    std::memset(composeSurface.GetBits(), 0, static_cast<size_t>(kComposeWidth) * static_cast<size_t>(kComposeHeight) * sizeof(unsigned int));
 
-    HDC memDc = CreateCompatibleDC(hdc);
-    if (!memDc) {
-        DeleteObject(dib);
-        return false;
-    }
-
-    HGDIOBJ oldBitmap = SelectObject(memDc, dib);
-    const bool drew = DrawEquipPreviewPlayerSprite(memDc, kComposeWidth / 2, kComposeHeight - 14);
+    const bool drew = DrawEquipPreviewPlayerSprite(composeSurface.GetDC(), kComposeWidth / 2, kComposeHeight - 14);
     RECT srcBounds{};
-    const bool hasBounds = FindOpaqueBounds(static_cast<const unsigned int*>(dibBits), kComposeWidth, kComposeHeight, &srcBounds);
+    const bool hasBounds = FindOpaqueBounds(static_cast<const unsigned int*>(composeSurface.GetBits()), kComposeWidth, kComposeHeight, &srcBounds);
 
     if (drew && hasBounds) {
         const int srcW = srcBounds.right - srcBounds.left;
@@ -629,7 +610,7 @@ bool DrawEquipPreviewPlayerSpriteFitted(HDC hdc, const RECT& previewArea)
             dstY,
             drawW,
             drawH,
-            memDc,
+            composeSurface.GetDC(),
             srcBounds.left,
             srcBounds.top,
             srcW,
@@ -637,9 +618,6 @@ bool DrawEquipPreviewPlayerSpriteFitted(HDC hdc, const RECT& previewArea)
             blend);
     }
 
-    SelectObject(memDc, oldBitmap);
-    DeleteDC(memDc);
-    DeleteObject(dib);
     return drew && hasBounds;
 }
 
