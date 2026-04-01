@@ -17,6 +17,13 @@
 
 #include <windows.h>
 
+#if RO_ENABLE_QT6_UI
+#include <QFont>
+#include <QImage>
+#include <QPainter>
+#include <QString>
+#endif
+
 #include <algorithm>
 #include <array>
 #include <cctype>
@@ -97,6 +104,77 @@ void DrawBitmapPixelsOverlay(HDC target, const shopui::BitmapPixels& bmp, const 
     }
     shopui::DrawBitmapPixelsTransparent(target, bmp, dst);
 }
+
+#if RO_ENABLE_QT6_UI
+QFont BuildSelectCharFontFromHdc(HDC hdc)
+{
+    LOGFONTA logFont{};
+    if (hdc) {
+        if (HGDIOBJ fontObject = GetCurrentObject(hdc, OBJ_FONT)) {
+            GetObjectA(fontObject, sizeof(logFont), &logFont);
+        }
+    }
+
+    const QString family = logFont.lfFaceName[0] != '\0'
+        ? QString::fromLocal8Bit(logFont.lfFaceName)
+        : QStringLiteral("MS Sans Serif");
+    QFont font(family);
+    font.setPixelSize(logFont.lfHeight != 0 ? (std::max)(1, std::abs(logFont.lfHeight)) : 13);
+    font.setBold(logFont.lfWeight >= FW_BOLD);
+    font.setStyleStrategy(QFont::NoAntialias);
+    return font;
+}
+
+Qt::Alignment ToQtSelectCharAlignment(UINT format)
+{
+    Qt::Alignment alignment = Qt::AlignLeft | Qt::AlignTop;
+    if (format & DT_CENTER) {
+        alignment &= ~Qt::AlignLeft;
+        alignment |= Qt::AlignHCenter;
+    } else if (format & DT_RIGHT) {
+        alignment &= ~Qt::AlignLeft;
+        alignment |= Qt::AlignRight;
+    }
+
+    if (format & DT_VCENTER) {
+        alignment &= ~Qt::AlignTop;
+        alignment |= Qt::AlignVCenter;
+    } else if (format & DT_BOTTOM) {
+        alignment &= ~Qt::AlignTop;
+        alignment |= Qt::AlignBottom;
+    }
+
+    return alignment;
+}
+
+void DrawSelectCharText(HDC hdc, const RECT& rect, const char* text, COLORREF color, UINT format)
+{
+    if (!hdc || !text || rect.right <= rect.left || rect.bottom <= rect.top) {
+        return;
+    }
+
+    const QString label = QString::fromLocal8Bit(text);
+    if (label.isEmpty()) {
+        return;
+    }
+
+    const int width = rect.right - rect.left;
+    const int height = rect.bottom - rect.top;
+    std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+    QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32);
+    if (image.isNull()) {
+        return;
+    }
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setRenderHint(QPainter::TextAntialiasing, false);
+    painter.setFont(BuildSelectCharFontFromHdc(hdc));
+    painter.setPen(QColor(GetRValue(color), GetGValue(color), GetBValue(color)));
+    painter.drawText(QRect(0, 0, width, height), ToQtSelectCharAlignment(format) | Qt::TextSingleLine, label);
+    AlphaBlendArgbToHdc(hdc, rect.left, rect.top, width, height, pixels.data(), width, height);
+}
+#endif
 
 RECT MakeBitmapRectAtSlotOrigin(const shopui::BitmapPixels& bmp, const RECT& outerRect)
 {
@@ -1336,8 +1414,13 @@ void UISelectCharWnd::OnDraw()
         RECT nextRc = MakeRect(m_x + kPageButtonXNext, m_y + kPageButtonY, kPageButtonWidth, kPageButtonHeight);
         DrawRectFrame(hdc, prevRc, RGB(120, 96, 68));
         DrawRectFrame(hdc, nextRc, RGB(120, 96, 68));
+#if RO_ENABLE_QT6_UI
+        DrawSelectCharText(hdc, prevRc, "<", RGB(94, 56, 38), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        DrawSelectCharText(hdc, nextRc, ">", RGB(94, 56, 38), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+#else
         DrawTextA(hdc, "<", -1, &prevRc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         DrawTextA(hdc, ">", -1, &nextRc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+#endif
     }
 
     CHARACTER_INFO* chars = GetCharacters();
@@ -1367,7 +1450,11 @@ void UISelectCharWnd::OnDraw()
         char line[64];
         auto drawLabel = [&](int rx, int ry, const char* text) {
             RECT rc = MakeRect(m_x + rx, m_y + ry, 140, 14);
+#if RO_ENABLE_QT6_UI
+            DrawSelectCharText(hdc, rc, text, RGB(80, 50, 30), DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+#else
             DrawTextA(hdc, text, -1, &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+#endif
         };
 
         SetTextColor(hdc, RGB(80, 50, 30));

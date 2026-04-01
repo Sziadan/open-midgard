@@ -14,6 +14,13 @@
 
 #include <windows.h>
 
+#if RO_ENABLE_QT6_UI
+#include <QFont>
+#include <QImage>
+#include <QPainter>
+#include <QString>
+#endif
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -68,6 +75,55 @@ void DrawBitmapPixelsStretched(HDC target, const shopui::BitmapPixels& bmp, cons
         0, 0, bmp.width, bmp.height, bmp.pixels.data(), &bmi, DIB_RGB_COLORS, SRCCOPY);
     SetStretchBltMode(target, oldStretchMode);
 }
+
+#if RO_ENABLE_QT6_UI
+QFont BuildMakeCharFontFromHdc(HDC hdc)
+{
+    LOGFONTA logFont{};
+    if (hdc) {
+        if (HGDIOBJ fontObject = GetCurrentObject(hdc, OBJ_FONT)) {
+            GetObjectA(fontObject, sizeof(logFont), &logFont);
+        }
+    }
+
+    const QString family = logFont.lfFaceName[0] != '\0'
+        ? QString::fromLocal8Bit(logFont.lfFaceName)
+        : QStringLiteral("Tahoma");
+    QFont font(family);
+    font.setPixelSize(logFont.lfHeight != 0 ? (std::max)(1, std::abs(logFont.lfHeight)) : 11);
+    font.setBold(logFont.lfWeight >= FW_BOLD);
+    font.setStyleStrategy(QFont::NoAntialias);
+    return font;
+}
+
+void DrawMakeCharText(HDC hdc, const RECT& rect, const char* text, COLORREF color, Qt::Alignment alignment)
+{
+    if (!hdc || !text || rect.right <= rect.left || rect.bottom <= rect.top) {
+        return;
+    }
+
+    const QString label = QString::fromLocal8Bit(text);
+    if (label.isEmpty()) {
+        return;
+    }
+
+    const int width = rect.right - rect.left;
+    const int height = rect.bottom - rect.top;
+    std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+    QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32);
+    if (image.isNull()) {
+        return;
+    }
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setRenderHint(QPainter::TextAntialiasing, false);
+    painter.setFont(BuildMakeCharFontFromHdc(hdc));
+    painter.setPen(QColor(GetRValue(color), GetGValue(color), GetBValue(color)));
+    painter.drawText(QRect(0, 0, width, height), alignment | Qt::TextSingleLine, label);
+    AlphaBlendArgbToHdc(hdc, rect.left, rect.top, width, height, pixels.data(), width, height);
+}
+#endif
 
 std::string ToLowerAscii(std::string value)
 {
@@ -827,7 +883,11 @@ void UIMakeCharWnd::OnDraw()
         for (int i = 0; i < 6; ++i) {
             std::snprintf(buf, sizeof(buf), "%d", m_stats[kStatIdx[i]]);
             RECT valueRc = MakeRect(valueX, m_y + kValueY[i], 30, 13);
+#if RO_ENABLE_QT6_UI
+            DrawMakeCharText(hdc, valueRc, buf, RGB(60, 36, 20), Qt::AlignCenter | Qt::AlignVCenter);
+#else
             DrawTextA(hdc, buf, -1, &valueRc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+#endif
         }
         if (oldFont) {
             SelectObject(hdc, oldFont);
