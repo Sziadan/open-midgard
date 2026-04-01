@@ -118,6 +118,11 @@ QString FormatBasicInfoMiniStatusText(int hp, int maxHp, int sp, int maxSp, int 
         .arg(money);
 }
 
+QString FormatCharacterSlotLevelText(int level)
+{
+    return QStringLiteral("Lv. %1").arg(level);
+}
+
 bool IsNpcColorCodeAt(const std::string& value, size_t index)
 {
     if (index + 7 > value.size() || value[index] != '^') {
@@ -329,6 +334,7 @@ void PopulateServerSelectState(QtUiState* state)
         state->setServerPanelGeometry(0, 0, 0, 0);
         state->setServerSelectedIndex(-1);
         state->setServerHoverIndex(-1);
+        state->setServerPanelData(QVariantMap{});
         state->setServerEntries(QVariantList{});
         return;
     }
@@ -336,6 +342,9 @@ void PopulateServerSelectState(QtUiState* state)
     state->setServerPanelGeometry(serverWnd->m_x, serverWnd->m_y, serverWnd->m_w, serverWnd->m_h);
     state->setServerSelectedIndex(GetSelectedClientInfoIndex());
     state->setServerHoverIndex(serverWnd->GetHoverIndex());
+    QVariantMap serverPanelData;
+    serverPanelData.insert(QStringLiteral("title"), QStringLiteral("Select Server"));
+    state->setServerPanelData(serverPanelData);
 
     QVariantList entries;
     const std::vector<ClientInfoConnection>& connections = GetClientInfoConnections();
@@ -361,6 +370,7 @@ void PopulateLoginPanelState(QtUiState* state)
     if (!visible) {
         state->setLoginPanelGeometry(0, 0, 0, 0);
         state->setLoginPanelData(QString(), QString(), false, false);
+        state->setLoginPanelLabels(QVariantMap{});
         state->setLoginButtons(QVariantList{});
         return;
     }
@@ -373,6 +383,10 @@ void PopulateLoginPanelState(QtUiState* state)
         passwordMask,
         loginWnd->IsSaveAccountChecked(),
         loginWnd->IsPasswordFocused());
+    QVariantMap loginPanelLabels;
+    loginPanelLabels.insert(QStringLiteral("title"), QStringLiteral("Login"));
+    loginPanelLabels.insert(QStringLiteral("saveLabel"), QStringLiteral("Save"));
+    state->setLoginPanelLabels(loginPanelLabels);
 
     QVariantList buttons;
     const int buttonCount = loginWnd->GetQtButtonCount();
@@ -441,6 +455,10 @@ void PopulateCharSelectState(QtUiState* state)
         slot.insert(QStringLiteral("name"), ToQString(slotInfo.name));
         slot.insert(QStringLiteral("job"), ToQString(slotInfo.job));
         slot.insert(QStringLiteral("level"), slotInfo.level);
+        slot.insert(QStringLiteral("displayName"),
+            slotInfo.occupied ? ToQString(slotInfo.name) : QStringLiteral("Empty Slot"));
+        slot.insert(QStringLiteral("levelText"),
+            slotInfo.occupied ? FormatCharacterSlotLevelText(slotInfo.level) : QString());
         slots.push_back(slot);
     }
     state->setCharSelectSlots(slots);
@@ -534,6 +552,7 @@ void PopulateMakeCharState(QtUiState* state)
     if (!visible) {
         state->setMakeCharPanelGeometry(0, 0, 0, 0);
         state->setMakeCharData(QString(), false, QVariantList{}, 0, 0);
+        state->setMakeCharPanelData(QVariantMap{});
         state->setMakeCharButtons(QVariantList{});
         state->setMakeCharStatFields(QVariantList{});
         return;
@@ -557,6 +576,11 @@ void PopulateMakeCharState(QtUiState* state)
             stats,
             display.hairIndex,
             display.hairColor);
+        QVariantMap makeCharPanelData;
+        makeCharPanelData.insert(QStringLiteral("previewTitle"), QStringLiteral("Preview"));
+        makeCharPanelData.insert(QStringLiteral("hairText"), QStringLiteral("Hair %1").arg(display.hairIndex));
+        makeCharPanelData.insert(QStringLiteral("colorText"), QStringLiteral("Color %1").arg(display.hairColor));
+        state->setMakeCharPanelData(makeCharPanelData);
 
         QVariantList statFields;
         statFields.reserve(makeCharWnd->GetQtStatFieldCount());
@@ -599,6 +623,7 @@ void PopulateMakeCharState(QtUiState* state)
     }
 
     state->setMakeCharData(QString(), false, QVariantList{}, 0, 0);
+    state->setMakeCharPanelData(QVariantMap{});
     state->setMakeCharButtons(QVariantList{});
     state->setMakeCharStatFields(QVariantList{});
 }

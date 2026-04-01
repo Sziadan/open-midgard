@@ -20,6 +20,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(int serverPanelHeight READ serverPanelHeight NOTIFY serverPanelGeometryChanged)
     Q_PROPERTY(int serverSelectedIndex READ serverSelectedIndex NOTIFY serverSelectionChanged)
     Q_PROPERTY(int serverHoverIndex READ serverHoverIndex NOTIFY serverHoverIndexChanged)
+    Q_PROPERTY(QVariantMap serverPanelData READ serverPanelData NOTIFY serverPanelDataChanged)
     Q_PROPERTY(QVariantList serverEntries READ serverEntries NOTIFY serverEntriesChanged)
     Q_PROPERTY(bool loginPanelVisible READ loginPanelVisible NOTIFY loginPanelVisibleChanged)
     Q_PROPERTY(int loginPanelX READ loginPanelX NOTIFY loginPanelGeometryChanged)
@@ -30,6 +31,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(QString loginPasswordMask READ loginPasswordMask NOTIFY loginPanelDataChanged)
     Q_PROPERTY(bool loginSaveAccountChecked READ loginSaveAccountChecked NOTIFY loginPanelDataChanged)
     Q_PROPERTY(bool loginPasswordFocused READ loginPasswordFocused NOTIFY loginPanelDataChanged)
+    Q_PROPERTY(QVariantMap loginPanelLabels READ loginPanelLabels NOTIFY loginPanelLabelsChanged)
     Q_PROPERTY(QVariantList loginButtons READ loginButtons NOTIFY loginButtonsChanged)
     Q_PROPERTY(bool charSelectVisible READ charSelectVisible NOTIFY charSelectVisibleChanged)
     Q_PROPERTY(int charSelectPanelX READ charSelectPanelX NOTIFY charSelectPanelGeometryChanged)
@@ -52,6 +54,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(QVariantList makeCharStats READ makeCharStats NOTIFY makeCharDataChanged)
     Q_PROPERTY(int makeCharHairIndex READ makeCharHairIndex NOTIFY makeCharDataChanged)
     Q_PROPERTY(int makeCharHairColor READ makeCharHairColor NOTIFY makeCharDataChanged)
+    Q_PROPERTY(QVariantMap makeCharPanelData READ makeCharPanelData NOTIFY makeCharPanelDataChanged)
     Q_PROPERTY(QVariantList makeCharButtons READ makeCharButtons NOTIFY makeCharButtonsChanged)
     Q_PROPERTY(QVariantList makeCharStatFields READ makeCharStatFields NOTIFY makeCharStatFieldsChanged)
     Q_PROPERTY(bool loadingVisible READ loadingVisible NOTIFY loadingVisibleChanged)
@@ -225,6 +228,7 @@ public:
     int serverPanelHeight() const { return m_serverPanelHeight; }
     int serverSelectedIndex() const { return m_serverSelectedIndex; }
     int serverHoverIndex() const { return m_serverHoverIndex; }
+    const QVariantMap& serverPanelData() const { return m_serverPanelData; }
     const QVariantList& serverEntries() const { return m_serverEntries; }
     bool loginPanelVisible() const { return m_loginPanelVisible; }
     int loginPanelX() const { return m_loginPanelX; }
@@ -235,6 +239,7 @@ public:
     const QString& loginPasswordMask() const { return m_loginPasswordMask; }
     bool loginSaveAccountChecked() const { return m_loginSaveAccountChecked; }
     bool loginPasswordFocused() const { return m_loginPasswordFocused; }
+    const QVariantMap& loginPanelLabels() const { return m_loginPanelLabels; }
     const QVariantList& loginButtons() const { return m_loginButtons; }
     bool charSelectVisible() const { return m_charSelectVisible; }
     int charSelectPanelX() const { return m_charSelectPanelX; }
@@ -257,6 +262,7 @@ public:
     const QVariantList& makeCharStats() const { return m_makeCharStats; }
     int makeCharHairIndex() const { return m_makeCharHairIndex; }
     int makeCharHairColor() const { return m_makeCharHairColor; }
+    const QVariantMap& makeCharPanelData() const { return m_makeCharPanelData; }
     const QVariantList& makeCharButtons() const { return m_makeCharButtons; }
     const QVariantList& makeCharStatFields() const { return m_makeCharStatFields; }
     bool loadingVisible() const { return m_loadingVisible; }
@@ -502,6 +508,14 @@ public:
         emit serverHoverIndexChanged();
     }
 
+    void setServerPanelData(const QVariantMap& value) {
+        if (m_serverPanelData == value) {
+            return;
+        }
+        m_serverPanelData = value;
+        emit serverPanelDataChanged();
+    }
+
     void setServerEntries(const QVariantList& value) {
         m_serverEntries = value;
         emit serverEntriesChanged();
@@ -543,6 +557,14 @@ public:
         m_loginSaveAccountChecked = saveAccountChecked;
         m_loginPasswordFocused = passwordFocused;
         emit loginPanelDataChanged();
+    }
+
+    void setLoginPanelLabels(const QVariantMap& value) {
+        if (m_loginPanelLabels == value) {
+            return;
+        }
+        m_loginPanelLabels = value;
+        emit loginPanelLabelsChanged();
     }
 
     void setLoginButtons(const QVariantList& value) {
@@ -647,6 +669,14 @@ public:
         m_makeCharHairIndex = hairIndex;
         m_makeCharHairColor = hairColor;
         emit makeCharDataChanged();
+    }
+
+    void setMakeCharPanelData(const QVariantMap& value) {
+        if (m_makeCharPanelData == value) {
+            return;
+        }
+        m_makeCharPanelData = value;
+        emit makeCharPanelDataChanged();
     }
 
     void setMakeCharButtons(const QVariantList& value) {
@@ -1414,10 +1444,12 @@ signals:
     void serverPanelGeometryChanged();
     void serverSelectionChanged();
     void serverHoverIndexChanged();
+    void serverPanelDataChanged();
     void serverEntriesChanged();
     void loginPanelVisibleChanged();
     void loginPanelGeometryChanged();
     void loginPanelDataChanged();
+    void loginPanelLabelsChanged();
     void loginButtonsChanged();
     void charSelectVisibleChanged();
     void charSelectPanelGeometryChanged();
@@ -1429,6 +1461,7 @@ signals:
     void makeCharVisibleChanged();
     void makeCharPanelGeometryChanged();
     void makeCharDataChanged();
+    void makeCharPanelDataChanged();
     void makeCharButtonsChanged();
     void makeCharStatFieldsChanged();
     void loadingVisibleChanged();
@@ -1532,6 +1565,7 @@ private:
     int m_serverPanelHeight = 0;
     int m_serverSelectedIndex = -1;
     int m_serverHoverIndex = -1;
+    QVariantMap m_serverPanelData;
     QVariantList m_serverEntries;
     bool m_loginPanelVisible = false;
     int m_loginPanelX = 0;
@@ -1542,6 +1576,7 @@ private:
     QString m_loginPasswordMask;
     bool m_loginSaveAccountChecked = false;
     bool m_loginPasswordFocused = false;
+    QVariantMap m_loginPanelLabels;
     QVariantList m_loginButtons;
     bool m_charSelectVisible = false;
     int m_charSelectPanelX = 0;
@@ -1564,6 +1599,7 @@ private:
     QVariantList m_makeCharStats;
     int m_makeCharHairIndex = 0;
     int m_makeCharHairColor = 0;
+    QVariantMap m_makeCharPanelData;
     QVariantList m_makeCharButtons;
     QVariantList m_makeCharStatFields;
     bool m_loadingVisible = false;

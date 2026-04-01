@@ -2453,7 +2453,7 @@ Item {
             spacing: 4
 
             Text {
-                text: "Select Server"
+                text: uiState.serverPanelData.title || ""
                 color: "#303030"
                 font.pixelSize: 14
                 font.bold: true
@@ -2509,7 +2509,7 @@ Item {
         Text {
             x: 14
             y: 10
-            text: "Login"
+            text: uiState.loginPanelLabels.title || ""
             color: "#303030"
             font.pixelSize: 16
             font.bold: true
@@ -2568,7 +2568,7 @@ Item {
         Text {
             x: 250
             y: 31
-            text: "Save"
+            text: uiState.loginPanelLabels.saveLabel || ""
             color: "#303030"
             font.pixelSize: 11
         }
@@ -2627,7 +2627,7 @@ Item {
                     spacing: 8
 
                     Text {
-                        text: modelData.occupied ? modelData.name : "Empty Slot"
+                        text: modelData.displayName || ""
                         color: "#50321e"
                         font.pixelSize: 16
                         font.bold: true
@@ -2640,7 +2640,7 @@ Item {
                     }
 
                     Text {
-                        text: modelData.occupied ? ("Lv. " + modelData.level) : ""
+                        text: modelData.levelText || ""
                         color: "#704c30"
                         font.pixelSize: 13
                     }
@@ -2758,20 +2758,20 @@ Item {
                 spacing: 8
 
                 Text {
-                    text: "Preview"
+                    text: uiState.makeCharPanelData.previewTitle || ""
                     color: "#50321e"
                     font.pixelSize: 18
                     font.bold: true
                 }
 
                 Text {
-                    text: "Hair " + uiState.makeCharHairIndex
+                    text: uiState.makeCharPanelData.hairText || ""
                     color: "#704c30"
                     font.pixelSize: 13
                 }
 
                 Text {
-                    text: "Color " + uiState.makeCharHairColor
+                    text: uiState.makeCharPanelData.colorText || ""
                     color: "#704c30"
                     font.pixelSize: 13
                 }
