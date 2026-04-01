@@ -520,10 +520,12 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
             }
 
             ClearOverlayComposeBits(s_overlayComposeBits, clientWidth, clientHeight);
-            const double overlayDrawStartMs = trackMovePerf ? qpcNowMs() : 0.0;
-            DrawGameplayOverlayToHdc(mode, s_overlayComposeDc);
-            if (trackMovePerf) {
-                g_overlayMovePerfStats.modernOverlayDrawMs += qpcNowMs() - overlayDrawStartMs;
+            if (!qtGameplayRuntimeEnabled) {
+                const double overlayDrawStartMs = trackMovePerf ? qpcNowMs() : 0.0;
+                DrawGameplayOverlayToHdc(mode, s_overlayComposeDc);
+                if (trackMovePerf) {
+                    g_overlayMovePerfStats.modernOverlayDrawMs += qpcNowMs() - overlayDrawStartMs;
+                }
             }
 
             const double uiDrawStartMs = trackMovePerf ? qpcNowMs() : 0.0;
@@ -877,7 +879,7 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
     SetRectEmpty(&overlayRect);
 
     const std::string label = ResolveHoveredActorName(mode, actorIt->second);
-    const bool drawLockedTargetText = !IsQtUiRuntimeEnabled() && !label.empty();
+    const bool drawLockedTargetText = !label.empty();
     if (drawLockedTargetText) {
         HDC measureDc = CreateCompatibleDC(nullptr);
         if (!measureDc) {
@@ -2120,9 +2122,6 @@ void DrawOutlinedScreenText(HDC hdc, int x, int y, const char* text, COLORREF co
 
 void DrawHoveredGroundItemName(CGameMode& mode, HDC hdc)
 {
-    if (IsQtUiRuntimeEnabled()) {
-        return;
-    }
     if (!hdc || !mode.m_world || !mode.m_view) {
         return;
     }
@@ -2155,9 +2154,6 @@ void DrawHoveredGroundItemName(CGameMode& mode, HDC hdc)
 
 void DrawHoveredActorName(CGameMode& mode, HDC hdc)
 {
-    if (IsQtUiRuntimeEnabled()) {
-        return;
-    }
     if (!hdc || !mode.m_world || !mode.m_view) {
         return;
     }
@@ -2210,9 +2206,6 @@ void DrawHoveredActorName(CGameMode& mode, HDC hdc)
 
 void DrawLockedTargetName(CGameMode& mode, HDC hdc)
 {
-    if (IsQtUiRuntimeEnabled()) {
-        return;
-    }
     if (!hdc || !mode.m_world || !mode.m_view || mode.m_lastLockOnMonGid == 0) {
         return;
     }
@@ -2295,9 +2288,6 @@ void DrawFallbackLockedTargetArrow(HDC hdc, int centerX, int tipY)
 
 void DrawLockedTargetArrow(CGameMode& mode, HDC hdc)
 {
-    if (IsQtUiRuntimeEnabled()) {
-        return;
-    }
     if (!hdc || !mode.m_world || !mode.m_view || mode.m_lastLockOnMonGid == 0) {
         return;
     }
