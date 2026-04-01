@@ -627,6 +627,34 @@ bool UIStatusWnd::GetQtPageTabDisplayForQt(int index, QtButtonDisplay* out) cons
     return true;
 }
 
+int UIStatusWnd::GetQtIncrementButtonCount() const
+{
+    return static_cast<int>(kIncrementButtonIds.size());
+}
+
+bool UIStatusWnd::GetQtIncrementButtonDisplayForQt(int index, QtButtonDisplay* out) const
+{
+    if (!out || index < 0 || index >= GetQtIncrementButtonCount()) {
+        return false;
+    }
+
+    const DisplayData data = BuildDisplayData();
+    out->id = kIncrementButtonIds[static_cast<size_t>(index)];
+    out->x = m_x + 88;
+    out->y = m_y + 17 + kStatRows[static_cast<size_t>(index)];
+    out->width = kQtButtonWidth;
+    out->height = kQtButtonHeight;
+    out->label = ">";
+    out->visible =
+        !IsMiniMode()
+        && m_page == 0
+        && data.statCosts[static_cast<size_t>(index)] > 0
+        && data.baseStats[static_cast<size_t>(index)] < 99
+        && data.statCosts[static_cast<size_t>(index)] <= data.statusPoint;
+    out->active = false;
+    return true;
+}
+
 void UIStatusWnd::EnsureCreated()
 {
     if (!m_controlsCreated) {

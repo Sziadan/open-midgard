@@ -1090,12 +1090,16 @@ void PopulateStatusState(QtUiState* state)
             row.insert(QStringLiteral("label"), QString::fromLatin1(kLabels[index]));
             row.insert(QStringLiteral("value"), FormatBaseStatusText(display.baseStats[index], display.plusStats[index]));
             row.insert(QStringLiteral("cost"), display.statCosts[index]);
-            row.insert(QStringLiteral("canIncrease"),
-                !statusWnd->IsMiniMode()
-                && statusWnd->GetPageForQt() == 0
-                && display.statCosts[index] > 0
-                && display.baseStats[index] < 99
-                && display.statCosts[index] <= display.statusPoint);
+            UIStatusWnd::QtButtonDisplay incrementButton{};
+            const bool hasIncrementButton = statusWnd->GetQtIncrementButtonDisplayForQt(index, &incrementButton);
+            row.insert(QStringLiteral("canIncrease"), hasIncrementButton && incrementButton.visible);
+            if (hasIncrementButton) {
+                row.insert(QStringLiteral("increaseX"), incrementButton.x);
+                row.insert(QStringLiteral("increaseY"), incrementButton.y);
+                row.insert(QStringLiteral("increaseWidth"), incrementButton.width);
+                row.insert(QStringLiteral("increaseHeight"), incrementButton.height);
+                row.insert(QStringLiteral("increaseLabel"), ToQString(incrementButton.label));
+            }
             stats.push_back(row);
         }
 

@@ -1349,10 +1349,10 @@ Item {
                     }
 
                     Rectangle {
-                        x: 64
-                        y: 1
-                        width: 12
-                        height: 11
+                        x: (modelData.increaseX || 0) - modelData.x
+                        y: (modelData.increaseY || 0) - modelData.y
+                        width: modelData.increaseWidth || 0
+                        height: modelData.increaseHeight || 0
                         radius: 2
                         visible: modelData.canIncrease
                         color: "#d8d8d8"
@@ -1361,7 +1361,7 @@ Item {
 
                         Text {
                             anchors.centerIn: parent
-                            text: ">"
+                            text: modelData.increaseLabel || ""
                             color: "#000000"
                             font.pixelSize: 8
                             font.bold: true

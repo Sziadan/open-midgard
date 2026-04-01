@@ -64,6 +64,8 @@ public:
     bool GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* out) const;
     int GetQtPageTabCount() const;
     bool GetQtPageTabDisplayForQt(int index, QtButtonDisplay* out) const;
+    int GetQtIncrementButtonCount() const;
+    bool GetQtIncrementButtonDisplayForQt(int index, QtButtonDisplay* out) const;
 
 private:
     void EnsureCreated();
