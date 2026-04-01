@@ -1675,11 +1675,15 @@ void DrawGameplayFallbackToWindow(
     u32 mouseAnimStartTick,
     bool trackMovePerfFrame,
     double uiDrawStartMs,
-    bool allowCursorWithoutWindowDc)
+    bool allowCursorWithoutWindowDc,
+    bool cursorAlreadyQueued)
 {
     const bool qtGameplayRuntimeEnabled = IsQtUiRuntimeEnabled()
         && GetRenderDevice().GetLegacyDevice() == nullptr;
     if (qtGameplayRuntimeEnabled) {
+        if (cursorAlreadyQueued) {
+            return;
+        }
         HDC windowDc = GetDC(g_hMainWnd);
         if (windowDc) {
             const double cursorHdcStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
@@ -7449,6 +7453,7 @@ int  CGameMode::OnRun() {
     DWORD uiDrawStart = renderPrepEnd;
     DWORD uiDrawEnd = renderPrepEnd;
     bool queuedModernOverlayFrame = false;
+    bool queuedCursorOverlayFrame = false;
     if (!hasLegacyDevice) {
         uiDrawStart = GetTickCount();
         const double modernQueueStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
@@ -7476,7 +7481,7 @@ int  CGameMode::OnRun() {
         QueuePlayerVitalsOverlayQuad(*this);
         QueueHoverLabelsOverlayQuad(*this);
         const double cursorQueueStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
-        QueueCursorOverlayQuad(m_cursorActNum, m_mouseAnimStartTick);
+        queuedCursorOverlayFrame = QueueCursorOverlayQuad(m_cursorActNum, m_mouseAnimStartTick);
         if (trackMovePerfFrame) {
             g_overlayMovePerfStats.queueCursorMs += QpcNowMs() - cursorQueueStartMs;
         }
@@ -7501,7 +7506,8 @@ int  CGameMode::OnRun() {
             m_mouseAnimStartTick,
             trackMovePerfFrame,
             uiDrawStartMs,
-            true);
+            true,
+            false);
         const DWORD uiDrawEnd = GetTickCount();
 
         g_framePerfStats.frames += 1;
@@ -7539,7 +7545,8 @@ int  CGameMode::OnRun() {
                 m_mouseAnimStartTick,
                 trackMovePerfFrame,
                 uiDrawStartMs,
-                !isVulkanBackend);
+                !isVulkanBackend,
+                queuedCursorOverlayFrame);
         }
         g_framePerfStats.frames += 1;
         g_framePerfStats.updateMs += static_cast<u64>(updateEnd - updateStart);
