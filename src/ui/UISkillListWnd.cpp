@@ -7,11 +7,20 @@
 #include "core/File.h"
 #include "main/WinMain.h"
 #include "qtui/QtUiRuntime.h"
+#include "render/DC.h"
 #include "res/Bitmap.h"
 #include "session/Session.h"
 #include "skill/Skill.h"
 
 #include <windows.h>
+
+#if RO_ENABLE_QT6_UI
+#include <QFont>
+#include <QFontMetrics>
+#include <QImage>
+#include <QPainter>
+#include <QString>
+#endif
 
 #include <algorithm>
 #include <array>
@@ -206,6 +215,81 @@ void DrawThreePieceBarPixels(HDC hdc, const RECT& rect, const shopui::BitmapPixe
     TileBitmapPixels(hdc, mid, midRect);
 }
 
+#if RO_ENABLE_QT6_UI
+QFont BuildSkillListFontFromHdc(HDC hdc)
+{
+    LOGFONTA logFont{};
+    if (hdc) {
+        if (HGDIOBJ fontObject = GetCurrentObject(hdc, OBJ_FONT)) {
+            GetObjectA(fontObject, sizeof(logFont), &logFont);
+        }
+    }
+
+    const QString family = logFont.lfFaceName[0] != '\0'
+        ? QString::fromLocal8Bit(logFont.lfFaceName)
+        : QStringLiteral("MS Sans Serif");
+    QFont font(family);
+    font.setPixelSize(logFont.lfHeight != 0 ? (std::max)(1, std::abs(logFont.lfHeight)) : 13);
+    font.setBold(logFont.lfWeight >= FW_BOLD);
+    font.setStyleStrategy(QFont::NoAntialias);
+    return font;
+}
+
+void DrawSkillTextLineQt(HDC hdc, int x, int y, COLORREF color, const std::string& text)
+{
+    if (!hdc || text.empty()) {
+        return;
+    }
+
+    const QString label = QString::fromLocal8Bit(text.c_str());
+    if (label.isEmpty()) {
+        return;
+    }
+
+    const QFont font = BuildSkillListFontFromHdc(hdc);
+    const QFontMetrics metrics(font);
+    const int width = (std::max)(1, metrics.horizontalAdvance(label) + 4);
+    const int height = (std::max)(1, metrics.height() + 2);
+    std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+    QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32);
+    if (image.isNull()) {
+        return;
+    }
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setRenderHint(QPainter::TextAntialiasing, false);
+    painter.setFont(font);
+    painter.setPen(QColor(GetRValue(color), GetGValue(color), GetBValue(color)));
+    painter.drawText(0, metrics.ascent(), label);
+    AlphaBlendArgbToHdc(hdc, x, y, width, height, pixels.data(), width, height);
+}
+
+void DrawSkillButtonTextQt(HDC hdc, const RECT& rect, const std::string& text, COLORREF color)
+{
+    if (!hdc || text.empty() || rect.right <= rect.left || rect.bottom <= rect.top) {
+        return;
+    }
+
+    const QString label = QString::fromLocal8Bit(text.c_str());
+    const int width = rect.right - rect.left;
+    const int height = rect.bottom - rect.top;
+    std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+    QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32);
+    if (image.isNull()) {
+        return;
+    }
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setRenderHint(QPainter::TextAntialiasing, false);
+    painter.setFont(BuildSkillListFontFromHdc(hdc));
+    painter.setPen(QColor(GetRValue(color), GetGValue(color), GetBValue(color)));
+    painter.drawText(QRect(0, 0, width, height), Qt::AlignCenter | Qt::AlignVCenter | Qt::TextSingleLine, label);
+    AlphaBlendArgbToHdc(hdc, rect.left, rect.top, width, height, pixels.data(), width, height);
+}
+#endif
+
 void DrawTextLine(HDC hdc, int x, int y, COLORREF color, const std::string& text)
 {
     if (!hdc || text.empty()) {
@@ -213,7 +297,11 @@ void DrawTextLine(HDC hdc, int x, int y, COLORREF color, const std::string& text
     }
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, color);
+#if RO_ENABLE_QT6_UI
+    DrawSkillTextLineQt(hdc, x, y, color, text);
+#else
     TextOutA(hdc, x, y, text.c_str(), static_cast<int>(text.size()));
+#endif
 }
 
 void FillRectColor(HDC hdc, const RECT& rect, COLORREF color)
@@ -1033,7 +1121,11 @@ void UISkillListWnd::DrawBottomButton(HDC hdc, const TextButton& button) const
     RECT textRect{ button.rect.left, button.rect.top + 3, button.rect.right, button.rect.bottom };
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(0, 0, 0));
+#if RO_ENABLE_QT6_UI
+    DrawSkillButtonTextQt(hdc, textRect, button.label, RGB(0, 0, 0));
+#else
     DrawTextA(hdc, button.label.c_str(), static_cast<int>(button.label.size()), &textRect, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+#endif
 }
 
 int UISkillListWnd::HitTestBottomButton(int globalX, int globalY) const
