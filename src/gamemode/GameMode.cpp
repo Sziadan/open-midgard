@@ -2419,7 +2419,7 @@ void DrawLockedTargetArrow(CGameMode& mode, HDC hdc)
     bmi.bmiHeader.biCompression = BI_RGB;
 
     void* dibBits = nullptr;
-    HBITMAP dib = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
+    HBITMAP dib = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
     if (!dib || !dibBits) {
         if (dib) {
             DeleteObject(dib);

@@ -168,7 +168,7 @@ bool DrawActMotionToHdc(HDC hdc, int x, int y, class CSprRes* sprRes, const stru
     blend.AlphaFormat = AC_SRC_ALPHA;
 
     void* dibBits = nullptr;
-    HBITMAP dib = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
+    HBITMAP dib = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
     if (!dib || !dibBits) {
         if (dib) {
             DeleteObject(dib);

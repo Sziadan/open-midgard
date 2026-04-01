@@ -212,7 +212,15 @@ void FillRectAlpha(HDC target, const RECT& rect, COLORREF color, BYTE alpha)
         return;
     }
 
-    HBITMAP memBitmap = CreateCompatibleBitmap(target, rect.right - rect.left, rect.bottom - rect.top);
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = rect.right - rect.left;
+    bmi.bmiHeader.biHeight = -(rect.bottom - rect.top);
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    void* memBits = nullptr;
+    HBITMAP memBitmap = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &memBits, nullptr, 0);
     if (!memBitmap) {
         DeleteDC(memDc);
         return;

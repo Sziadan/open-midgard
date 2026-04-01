@@ -133,7 +133,7 @@ void DrawFallbackCursorAt(HDC hdc, int x, int y)
     bmi.bmiHeader.biCompression = BI_RGB;
 
     void* dibBits = nullptr;
-    HBITMAP dib = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
+    HBITMAP dib = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
     if (!dib || !dibBits) {
         if (dib) {
             DeleteObject(dib);
@@ -386,7 +386,7 @@ void DrawDragPreviewAt(HDC hdc, int x, int y)
     bmi.bmiHeader.biCompression = BI_RGB;
 
     void* dibBits = nullptr;
-    HBITMAP dib = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
+    HBITMAP dib = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
     if (!dib || !dibBits) {
         if (dib) {
             DeleteObject(dib);
@@ -719,7 +719,7 @@ bool DrawCursorMotionToHdc(HDC hdc, int x, int y, CSprRes* sprRes, const CMotion
     bmi.bmiHeader.biCompression = BI_RGB;
 
     void* dibBits = nullptr;
-    HBITMAP dib = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
+    HBITMAP dib = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
     if (!dib || !dibBits) {
         if (dib) {
             DeleteObject(dib);
