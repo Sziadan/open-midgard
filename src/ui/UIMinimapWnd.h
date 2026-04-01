@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UIFrameWnd.h"
+#include "UIShopCommon.h"
 
 #include <array>
 #include <string>
@@ -69,9 +70,8 @@ private:
 
     bool m_controlsCreated;
     UIBitmapButton* m_closeButton;
-    HBITMAP m_titleBarBitmap;
-    HBITMAP m_bodyBitmap;
-    HBITMAP m_mapBitmap;
+    shopui::BitmapPixels m_titleBarBitmap;
+    shopui::BitmapPixels m_bodyBitmap;
     HDC m_renderCacheDC;
     HBITMAP m_renderCacheBitmap;
     HBITMAP m_renderCacheOldBitmap;

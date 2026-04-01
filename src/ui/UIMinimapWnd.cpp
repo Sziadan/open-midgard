@@ -6,6 +6,7 @@
 #include "gamemode/Mode.h"
 #include "main/WinMain.h"
 #include "qtui/QtUiRuntime.h"
+#include "render/DC.h"
 #include "res/Bitmap.h"
 #include "session/Session.h"
 #include "world/World.h"
@@ -188,92 +189,67 @@ std::string ResolveMinimapPath(const std::string& bitmapName)
     return std::string();
 }
 
-HBITMAP LoadBitmapFromGameData(const std::string& path, int* outWidth = nullptr, int* outHeight = nullptr)
+shopui::BitmapPixels LoadBitmapPixelsFromGameData(const std::string& path)
 {
-    if (outWidth) {
-        *outWidth = 0;
-    }
-    if (outHeight) {
-        *outHeight = 0;
-    }
-
-    HBITMAP outBitmap = nullptr;
-    if (!path.empty()) {
-        LoadHBitmapFromGameData(path.c_str(), &outBitmap, outWidth, outHeight);
-    }
-
-    return outBitmap;
+    return shopui::LoadBitmapPixelsFromGameData(path, true);
 }
 
-void DrawBitmapTransparent(HDC target, HBITMAP bitmap, const RECT& dst)
+void DrawBitmapPixelsAlphaBlended(HDC target, const shopui::BitmapPixels& bitmap, const RECT& dst)
 {
-    if (!target || !bitmap) {
+    if (!target || !bitmap.IsValid() || dst.right <= dst.left || dst.bottom <= dst.top) {
         return;
     }
-
-    BITMAP bm{};
-    if (!GetObjectA(bitmap, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
-
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
-        return;
-    }
-
-    HGDIOBJ oldBitmap = SelectObject(srcDC, bitmap);
-    TransparentBlt(target,
-        dst.left,
-        dst.top,
-        dst.right - dst.left,
-        dst.bottom - dst.top,
-        srcDC,
-        0,
-        0,
-        bm.bmWidth,
-        bm.bmHeight,
-        RGB(255, 0, 255));
-    SelectObject(srcDC, oldBitmap);
-    DeleteDC(srcDC);
+    AlphaBlendArgbToHdc(target,
+                        dst.left,
+                        dst.top,
+                        dst.right - dst.left,
+                        dst.bottom - dst.top,
+                        bitmap.pixels.data(),
+                        bitmap.width,
+                        bitmap.height);
 }
 
-void DrawBitmapStretched(HDC target, HBITMAP bitmap, const RECT& dst, const RECT* srcRect = nullptr)
+void DrawBgraPixelsStretched(HDC target,
+    const u32* pixels,
+    int bitmapWidth,
+    int bitmapHeight,
+    const RECT& dst,
+    const RECT* srcRect = nullptr)
 {
-    if (!target || !bitmap) {
+    if (!target || !pixels || bitmapWidth <= 0 || bitmapHeight <= 0 || dst.right <= dst.left || dst.bottom <= dst.top) {
         return;
     }
-
-    BITMAP bm{};
-    if (!GetObjectA(bitmap, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
-
-    RECT src{ 0, 0, bm.bmWidth, bm.bmHeight };
+    RECT src{ 0, 0, bitmapWidth, bitmapHeight };
     if (srcRect) {
         src = *srcRect;
     }
-
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
+    if (src.left < 0 || src.top < 0 || src.right > bitmapWidth || src.bottom > bitmapHeight || src.right <= src.left || src.bottom <= src.top) {
         return;
     }
 
-    HGDIOBJ oldBitmap = SelectObject(srcDC, bitmap);
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = bitmapWidth;
+    bmi.bmiHeader.biHeight = -bitmapHeight;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
     const int oldStretchMode = SetStretchBltMode(target, COLORONCOLOR);
-    StretchBlt(target,
+    StretchDIBits(target,
         dst.left,
         dst.top,
         dst.right - dst.left,
         dst.bottom - dst.top,
-        srcDC,
         src.left,
         src.top,
         src.right - src.left,
         src.bottom - src.top,
+        pixels,
+        &bmi,
+        DIB_RGB_COLORS,
         SRCCOPY);
     SetStretchBltMode(target, oldStretchMode);
-    SelectObject(srcDC, oldBitmap);
-    DeleteDC(srcDC);
 }
 
 RECT FitRectPreservingAspect(const RECT& dst, int srcWidth, int srcHeight)
@@ -432,9 +408,8 @@ bool BlitArgbCacheToHdc(HDC target, int x, int y, int width, int height, const v
 UIRoMapWnd::UIRoMapWnd()
     : m_controlsCreated(false),
       m_closeButton(nullptr),
-      m_titleBarBitmap(nullptr),
-      m_bodyBitmap(nullptr),
-      m_mapBitmap(nullptr),
+      m_titleBarBitmap(),
+      m_bodyBitmap(),
       m_renderCacheDC(nullptr),
       m_renderCacheBitmap(nullptr),
       m_renderCacheOldBitmap(nullptr),
@@ -598,14 +573,14 @@ void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY)
         SelectClipRgn(hdc, clipRgn);
     }
 
-    if (m_bodyBitmap) {
-        DrawBitmapTransparent(hdc, m_bodyBitmap, bodyRect);
+    if (m_bodyBitmap.IsValid()) {
+        DrawBitmapPixelsAlphaBlended(hdc, m_bodyBitmap, bodyRect);
     } else {
         FillSolidRect(hdc, bodyRect, RGB(209, 216, 228));
     }
 
-    if (m_titleBarBitmap) {
-        DrawBitmapTransparent(hdc, m_titleBarBitmap, titleRect);
+    if (m_titleBarBitmap.IsValid()) {
+        DrawBitmapPixelsAlphaBlended(hdc, m_titleBarBitmap, titleRect);
     } else {
         FillSolidRect(hdc, titleRect, RGB(98, 114, 158));
     }
@@ -661,10 +636,10 @@ void UIRoMapWnd::DrawWindowContents(HDC hdc, int baseX, int baseY)
             srcRect.top = (std::max)(0, (std::min)(static_cast<int>(srcRect.top), m_mapBitmapHeight - srcHeight));
             srcRect.right = srcRect.left + srcWidth;
             srcRect.bottom = srcRect.top + srcHeight;
-            DrawBitmapStretched(hdc, m_mapBitmap, mapRect, &srcRect);
+            DrawBgraPixelsStretched(hdc, m_mapPixels.data(), m_mapBitmapWidth, m_mapBitmapHeight, mapRect, &srcRect);
         } else {
             drawRect = FitRectPreservingAspect(mapRect, m_mapBitmapWidth, m_mapBitmapHeight);
-            DrawBitmapStretched(hdc, m_mapBitmap, drawRect);
+            DrawBgraPixelsStretched(hdc, m_mapPixels.data(), m_mapBitmapWidth, m_mapBitmapHeight, drawRect);
         }
     } else {
         FillSolidRect(hdc, mapRect, RGB(62, 88, 52));
@@ -1049,11 +1024,11 @@ void UIRoMapWnd::LayoutChildren()
 
 void UIRoMapWnd::LoadAssets()
 {
-    if (!m_titleBarBitmap) {
-        m_titleBarBitmap = LoadBitmapFromGameData(ResolveUiAssetPath("titlebar_fix.bmp"));
+    if (!m_titleBarBitmap.IsValid()) {
+        m_titleBarBitmap = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("titlebar_fix.bmp"));
     }
-    if (!m_bodyBitmap) {
-        m_bodyBitmap = LoadBitmapFromGameData(ResolveUiAssetPath("itemwin_mid.bmp"));
+    if (!m_bodyBitmap.IsValid()) {
+        m_bodyBitmap = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("itemwin_mid.bmp"));
     }
     InvalidateRenderCache();
 }
@@ -1098,17 +1073,8 @@ void UIRoMapWnd::DrawCloseButton(HDC hdc, int drawX, int drawY)
 void UIRoMapWnd::ReleaseAssets()
 {
     ReleaseRenderCache();
-    HBITMAP* bitmaps[] = {
-        &m_titleBarBitmap,
-        &m_bodyBitmap,
-        &m_mapBitmap,
-    };
-    for (HBITMAP* bitmap : bitmaps) {
-        if (*bitmap) {
-            DeleteObject(*bitmap);
-            *bitmap = nullptr;
-        }
-    }
+    m_titleBarBitmap.Clear();
+    m_bodyBitmap.Clear();
     m_mapBitmapWidth = 0;
     m_mapBitmapHeight = 0;
     m_mapPixels.clear();
@@ -1179,12 +1145,7 @@ void UIRoMapWnd::InvalidateRenderCache()
 void UIRoMapWnd::UpdateMinimapBitmap()
 {
     const std::string bitmapName = GetCurrentMinimapBitmapName();
-    const bool qtUiEnabled = IsQtUiRuntimeEnabled();
     if (bitmapName.empty()) {
-        if (m_mapBitmap) {
-            DeleteObject(m_mapBitmap);
-            m_mapBitmap = nullptr;
-        }
         m_mapPixels.clear();
         m_mapBitmapWidth = 0;
         m_mapBitmapHeight = 0;
@@ -1194,32 +1155,24 @@ void UIRoMapWnd::UpdateMinimapBitmap()
         return;
     }
 
-    const bool hasCachedMinimap = qtUiEnabled ? !m_mapPixels.empty() : (m_mapBitmap != nullptr);
+    const bool hasCachedMinimap = !m_mapPixels.empty() && m_mapBitmapWidth > 0 && m_mapBitmapHeight > 0;
     if (!m_loadedBitmapName.empty() && ToLowerAscii(m_loadedBitmapName) == ToLowerAscii(bitmapName) && hasCachedMinimap) {
         return;
     }
 
     const std::string resolvedPath = ResolveMinimapPath(bitmapName);
-    if (m_mapBitmap) {
-        DeleteObject(m_mapBitmap);
-        m_mapBitmap = nullptr;
-    }
     m_mapPixels.clear();
     m_mapBitmapWidth = 0;
     m_mapBitmapHeight = 0;
     m_loadedBitmapName = bitmapName;
     m_loadedBitmapPath = resolvedPath;
     if (!resolvedPath.empty()) {
-        if (qtUiEnabled) {
-            u32* pixels = nullptr;
-            if (LoadBgraPixelsFromGameData(resolvedPath.c_str(), &pixels, &m_mapBitmapWidth, &m_mapBitmapHeight) && pixels) {
-                const size_t pixelCount = static_cast<size_t>(m_mapBitmapWidth) * static_cast<size_t>(m_mapBitmapHeight);
-                m_mapPixels.assign(pixels, pixels + pixelCount);
-            }
-            delete[] pixels;
-        } else {
-            m_mapBitmap = LoadBitmapFromGameData(resolvedPath, &m_mapBitmapWidth, &m_mapBitmapHeight);
+        u32* pixels = nullptr;
+        if (LoadBgraPixelsFromGameData(resolvedPath.c_str(), &pixels, &m_mapBitmapWidth, &m_mapBitmapHeight) && pixels) {
+            const size_t pixelCount = static_cast<size_t>(m_mapBitmapWidth) * static_cast<size_t>(m_mapBitmapHeight);
+            m_mapPixels.assign(pixels, pixels + pixelCount);
         }
+        delete[] pixels;
     }
     InvalidateRenderCache();
     Invalidate();
