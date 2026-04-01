@@ -82,6 +82,64 @@ void DrawFallbackCursorAt(HDC hdc, int x, int y)
     }
 }
 
+bool DrawFallbackCursorToArgb(unsigned int* dest, int destW, int destH, int x, int y)
+{
+    if (!dest || destW <= 0 || destH <= 0) {
+        return false;
+    }
+
+    static const char* const kFallbackCursorMask[] = {
+        "X.............",
+        "XX............",
+        "XOX...........",
+        "XOOX..........",
+        "XOOOX.........",
+        "XOOOOX........",
+        "XOOOOOX.......",
+        "XOOOOOOX......",
+        "XOOOOOOOX.....",
+        "XOOOOOOOOX....",
+        "XOOOOOOOOOX...",
+        "XOOOOOOOOOOX..",
+        "XOOOOXXXXXXXX.",
+        "XOOXOX........",
+        "XOX..OX.......",
+        "XX....OX......",
+        "X......OX.....",
+        "........X....."
+    };
+
+    constexpr int kMaskHeight = static_cast<int>(sizeof(kFallbackCursorMask) / sizeof(kFallbackCursorMask[0]));
+    constexpr unsigned int kOutlineColor = 0xFF000000u;
+    constexpr unsigned int kFillColor = 0xFFF6F6F6u;
+
+    for (int row = 0; row < kMaskHeight; ++row) {
+        const char* maskRow = kFallbackCursorMask[row];
+        for (int col = 0; maskRow[col] != '\0'; ++col) {
+            const int destX = x + col;
+            const int destY = y + row;
+            if (destX < 0 || destX >= destW || destY < 0 || destY >= destH) {
+                continue;
+            }
+
+            unsigned int srcColor = 0u;
+            if (maskRow[col] == 'X') {
+                srcColor = kOutlineColor;
+            } else if (maskRow[col] == 'O') {
+                srcColor = kFillColor;
+            } else {
+                continue;
+            }
+
+            AlphaBlendCursorPixel(
+                dest[static_cast<size_t>(destY) * static_cast<size_t>(destW) + static_cast<size_t>(destX)],
+                PremultiplyCursorColor(srcColor));
+        }
+    }
+
+    return true;
+}
+
 bool GetClientCursorPosInternal(POINT* outPoint)
 {
     if (!outPoint || !g_hMainWnd) {
@@ -778,9 +836,11 @@ bool DrawModeCursorAtToArgb(unsigned int* dest, int destW, int destH, int x, int
         drewCustomCursor = DrawResolvedCursorActionToArgb(dest, destW, destH, x, y, cursorActNum, mouseAnimStartTick, s_cache);
     }
 
-    if (drewCustomCursor) {
-        DrawDragPreviewToArgb(dest, destW, destH, x, y);
+    if (!drewCustomCursor) {
+        drewCustomCursor = DrawFallbackCursorToArgb(dest, destW, destH, x, y);
     }
+
+    DrawDragPreviewToArgb(dest, destW, destH, x, y);
 
     return drewCustomCursor;
 }

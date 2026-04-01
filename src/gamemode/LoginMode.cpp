@@ -476,11 +476,6 @@ bool QueueMenuCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
     const int top = cursorPos.y - kCursorTextureOrigin;
     static unsigned int s_cursorComposePixels[kCursorTextureSize * kCursorTextureSize] = {};
 
-    static HDC s_cursorComposeDc = nullptr;
-    static HBITMAP s_cursorComposeBitmap = nullptr;
-    static void* s_cursorComposeBits = nullptr;
-    static int s_cursorComposeWidth = 0;
-    static int s_cursorComposeHeight = 0;
     static bool s_cursorTextureValid = false;
     static CTexture* s_cursorTexture = nullptr;
     static std::uint64_t s_cursorStateToken = 0ull;
@@ -501,27 +496,15 @@ bool QueueMenuCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
 
     if (!s_cursorTextureValid || cursorStateToken != s_cursorStateToken) {
         std::fill_n(s_cursorComposePixels, kCursorTextureSize * kCursorTextureSize, 0u);
-        bool composedCursor = DrawModeCursorAtToArgb(
+        if (!DrawModeCursorAtToArgb(
             s_cursorComposePixels,
             kCursorTextureSize,
             kCursorTextureSize,
             kCursorTextureOrigin,
             kCursorTextureOrigin,
             cursorActNum,
-            mouseAnimStartTick);
-        if (!composedCursor) {
-            const bool composeReady = EnsureOverlayComposeSurface(kCursorTextureSize, kCursorTextureSize,
-                &s_cursorComposeDc, &s_cursorComposeBitmap, &s_cursorComposeBits, &s_cursorComposeWidth, &s_cursorComposeHeight);
-            if (!composeReady) {
-                return false;
-            }
-
-            ClearOverlayComposeBits(s_cursorComposeBits, kCursorTextureSize, kCursorTextureSize);
-            if (!DrawModeCursorAtToHdc(s_cursorComposeDc, kCursorTextureOrigin, kCursorTextureOrigin, cursorActNum, mouseAnimStartTick)) {
-                return false;
-            }
-            ConvertOverlayComposeBitsToAlpha(s_cursorComposeBits, kCursorTextureSize, kCursorTextureSize);
-            std::memcpy(s_cursorComposePixels, s_cursorComposeBits, sizeof(s_cursorComposePixels));
+            mouseAnimStartTick)) {
+            return false;
         }
         s_cursorTexture->Update(0,
             0,
