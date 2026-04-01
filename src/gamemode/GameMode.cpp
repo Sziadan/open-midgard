@@ -224,6 +224,7 @@ void ApplyEnemyCursorMagnet(CGameMode& mode, POINT* cursorPos);
 bool IsMonsterLikeHoverActor(const CGameActor* actor);
 bool IsWalkableAttrCell(const CGameMode& mode, int tileX, int tileY);
 void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc);
+void FillSolidRectArgb(unsigned int* pixels, int width, int height, const RECT& rect, COLORREF color);
 void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc);
 std::string ResolveHoveredActorName(CGameMode& mode, CGameActor* actor);
 const char* UiKorPrefix();
@@ -1072,20 +1073,10 @@ bool QueuePlayerVitalsOverlayQuad(CGameMode& mode)
         return false;
     }
 
-    static HDC s_vitalsComposeDc = nullptr;
-    static HBITMAP s_vitalsComposeBitmap = nullptr;
-    static void* s_vitalsComposeBits = nullptr;
-    static int s_vitalsComposeWidth = 0;
-    static int s_vitalsComposeHeight = 0;
-    const bool composeReady = EnsureOverlayComposeSurface(width, height,
-        &s_vitalsComposeDc, &s_vitalsComposeBitmap, &s_vitalsComposeBits, &s_vitalsComposeWidth, &s_vitalsComposeHeight);
-    if (!composeReady) {
-        return false;
-    }
-
     static CTexture* s_vitalsTexture = nullptr;
     static int s_vitalsTextureWidth = 0;
     static int s_vitalsTextureHeight = 0;
+    static std::vector<unsigned int> s_vitalsComposePixels;
     if (!s_vitalsTexture || s_vitalsTextureWidth != width || s_vitalsTextureHeight != height) {
         delete s_vitalsTexture;
         s_vitalsTexture = new CTexture();
@@ -1098,20 +1089,63 @@ bool QueuePlayerVitalsOverlayQuad(CGameMode& mode)
         }
         s_vitalsTextureWidth = width;
         s_vitalsTextureHeight = height;
+        s_vitalsComposePixels.assign(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+    } else if (s_vitalsComposePixels.size() != static_cast<size_t>(width) * static_cast<size_t>(height)) {
+        s_vitalsComposePixels.assign(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
     }
 
-    ClearOverlayComposeBits(s_vitalsComposeBits, width, height);
-    const int savedDc = SaveDC(s_vitalsComposeDc);
-    SetViewportOrgEx(s_vitalsComposeDc, -clippedRect.left, -clippedRect.top, nullptr);
-    DrawPlayerVitalsOverlay(mode, s_vitalsComposeDc);
-    RestoreDC(s_vitalsComposeDc, savedDc);
+    std::fill(s_vitalsComposePixels.begin(), s_vitalsComposePixels.end(), 0u);
+    const int localOuterLeft = outerLeft - clippedRect.left;
+    const int localOuterTop = labelY - clippedRect.top;
+    RECT outerRect{
+        localOuterLeft,
+        localOuterTop,
+        localOuterLeft + kPlayerVitalsBarWidth + kPlayerVitalsBorderThickness * 2,
+        localOuterTop + totalHeight,
+    };
+    FillSolidRectArgb(s_vitalsComposePixels.data(), width, height, outerRect, RGB(0, 0, 0));
 
-    ConvertOverlayComposeBitsToAlpha(s_vitalsComposeBits, width, height);
+    const int innerLeft = outerRect.left + kPlayerVitalsBorderThickness;
+    const int innerTop = outerRect.top + kPlayerVitalsBorderThickness;
+    RECT hpRect{ innerLeft, innerTop, innerLeft + kPlayerVitalsBarWidth, innerTop + kPlayerVitalsBarHeight };
+    RECT spRect{
+        innerLeft,
+        hpRect.bottom + kPlayerVitalsBorderThickness,
+        innerLeft + kPlayerVitalsBarWidth,
+        hpRect.bottom + kPlayerVitalsBorderThickness + kPlayerVitalsBarHeight,
+    };
+    FillSolidRectArgb(s_vitalsComposePixels.data(), width, height, hpRect, RGB(255, 255, 255));
+    FillSolidRectArgb(s_vitalsComposePixels.data(), width, height, spRect, RGB(255, 255, 255));
+
+    if (maxHp > 0) {
+        const int hp = (std::max)(0, (std::min)(static_cast<int>(player->m_Hp), maxHp));
+        const int hpFillWidth = kPlayerVitalsBarWidth * hp / maxHp;
+        if (hpFillWidth > 0) {
+            RECT hpFillRect{ hpRect.left, hpRect.top, hpRect.left + hpFillWidth, hpRect.bottom };
+            const bool lowHp = hp * 4 < maxHp;
+            FillSolidRectArgb(
+                s_vitalsComposePixels.data(),
+                width,
+                height,
+                hpFillRect,
+                lowHp ? RGB(220, 32, 32) : RGB(48, 192, 48));
+        }
+    }
+
+    if (maxSp > 0) {
+        const int sp = (std::max)(0, (std::min)(static_cast<int>(player->m_Sp), maxSp));
+        const int spFillWidth = kPlayerVitalsBarWidth * sp / maxSp;
+        if (spFillWidth > 0) {
+            RECT spFillRect{ spRect.left, spRect.top, spRect.left + spFillWidth, spRect.bottom };
+            FillSolidRectArgb(s_vitalsComposePixels.data(), width, height, spFillRect, RGB(48, 96, 220));
+        }
+    }
+
     s_vitalsTexture->Update(0,
         0,
         width,
         height,
-        static_cast<unsigned int*>(s_vitalsComposeBits),
+        s_vitalsComposePixels.data(),
         true,
         width * static_cast<int>(sizeof(unsigned int)));
 
@@ -2436,6 +2470,36 @@ void FillSolidRect(HDC hdc, const RECT& rect, COLORREF color)
     }
     FillRect(hdc, &rect, brush);
     DeleteObject(brush);
+}
+
+unsigned int PackColorRefArgb(COLORREF color)
+{
+    return 0xFF000000u | (static_cast<unsigned int>(color) & 0x00FFFFFFu);
+}
+
+void FillSolidRectArgb(unsigned int* pixels, int width, int height, const RECT& rect, COLORREF color)
+{
+    if (!pixels || width <= 0 || height <= 0) {
+        return;
+    }
+
+    RECT clipped{
+        (std::max)(0L, rect.left),
+        (std::max)(0L, rect.top),
+        (std::min)(static_cast<LONG>(width), rect.right),
+        (std::min)(static_cast<LONG>(height), rect.bottom)
+    };
+    if (clipped.right <= clipped.left || clipped.bottom <= clipped.top) {
+        return;
+    }
+
+    const unsigned int argb = PackColorRefArgb(color);
+    for (LONG y = clipped.top; y < clipped.bottom; ++y) {
+        unsigned int* row = pixels + static_cast<size_t>(y) * static_cast<size_t>(width);
+        for (LONG x = clipped.left; x < clipped.right; ++x) {
+            row[x] = argb;
+        }
+    }
 }
 
 void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc)
