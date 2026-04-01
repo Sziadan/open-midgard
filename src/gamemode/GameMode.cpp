@@ -1306,6 +1306,51 @@ void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc)
     DrawHoveredActorName(mode, targetDc);
 }
 
+void DrawGameplayFallbackToWindow(
+    CGameMode& mode,
+    int cursorActNum,
+    u32 mouseAnimStartTick,
+    bool trackMovePerfFrame,
+    double uiDrawStartMs,
+    bool allowCursorWithoutWindowDc)
+{
+    const auto qpcNowMs = []() -> double {
+        static LARGE_INTEGER freq = [] {
+            LARGE_INTEGER value{};
+            QueryPerformanceFrequency(&value);
+            return value;
+        }();
+        LARGE_INTEGER now{};
+        QueryPerformanceCounter(&now);
+        return static_cast<double>(now.QuadPart) * 1000.0 / static_cast<double>(freq.QuadPart);
+    };
+    HDC windowDc = GetDC(g_hMainWnd);
+    if (windowDc) {
+        const double overlayDrawStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        DrawGameplayOverlayToHdc(mode, windowDc);
+        DrawPlayerVitalsOverlay(mode, windowDc);
+        if (trackMovePerfFrame) {
+            g_overlayMovePerfStats.fallbackOverlayDrawMs += qpcNowMs() - overlayDrawStartMs;
+        }
+        g_windowMgr.DrawVisibleWindowsToHdc(windowDc, true);
+        if (trackMovePerfFrame) {
+            g_overlayMovePerfStats.fallbackUiDrawMs += qpcNowMs() - uiDrawStartMs;
+        }
+        const double cursorHdcStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        DrawModeCursorToHdc(windowDc, cursorActNum, mouseAnimStartTick);
+        if (trackMovePerfFrame) {
+            g_overlayMovePerfStats.fallbackCursorHdcMs += qpcNowMs() - cursorHdcStartMs;
+        }
+        ReleaseDC(g_hMainWnd, windowDc);
+    } else if (allowCursorWithoutWindowDc) {
+        const double cursorStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        DrawModeCursor(cursorActNum, mouseAnimStartTick);
+        if (trackMovePerfFrame) {
+            g_overlayMovePerfStats.fallbackCursorMs += qpcNowMs() - cursorStartMs;
+        }
+    }
+}
+
 bool RequestReturnToCharSelect()
 {
     PACKET_CZ_RESTART packet{};
@@ -7082,31 +7127,13 @@ int  CGameMode::OnRun() {
         }
         const DWORD uiDrawStart = GetTickCount();
         const double uiDrawStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
-        HDC windowDc = GetDC(g_hMainWnd);
-        if (windowDc) {
-            const double overlayDrawStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
-            DrawGameplayOverlayToHdc(*this, windowDc);
-            DrawPlayerVitalsOverlay(*this, windowDc);
-            if (trackMovePerfFrame) {
-                g_overlayMovePerfStats.fallbackOverlayDrawMs += qpcNowMs() - overlayDrawStartMs;
-            }
-            g_windowMgr.DrawVisibleWindowsToHdc(windowDc, true);
-            if (trackMovePerfFrame) {
-                g_overlayMovePerfStats.fallbackUiDrawMs += qpcNowMs() - uiDrawStartMs;
-            }
-            const double cursorHdcStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
-            DrawModeCursorToHdc(windowDc, m_cursorActNum, m_mouseAnimStartTick);
-            if (trackMovePerfFrame) {
-                g_overlayMovePerfStats.fallbackCursorHdcMs += qpcNowMs() - cursorHdcStartMs;
-            }
-            ReleaseDC(g_hMainWnd, windowDc);
-        } else {
-            const double cursorStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
-            DrawModeCursor(m_cursorActNum, m_mouseAnimStartTick);
-            if (trackMovePerfFrame) {
-                g_overlayMovePerfStats.fallbackCursorMs += qpcNowMs() - cursorStartMs;
-            }
-        }
+        DrawGameplayFallbackToWindow(
+            *this,
+            m_cursorActNum,
+            m_mouseAnimStartTick,
+            trackMovePerfFrame,
+            uiDrawStartMs,
+            true);
         const DWORD uiDrawEnd = GetTickCount();
 
         g_framePerfStats.frames += 1;
@@ -7137,32 +7164,14 @@ int  CGameMode::OnRun() {
             g_overlayMovePerfStats.flipMs += qpcNowMs() - flipStartMs;
         }
         if (!composedModernOverlayFrame) {
-            HDC windowDc = GetDC(g_hMainWnd);
-            if (windowDc) {
-                const double overlayDrawStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
-                DrawGameplayOverlayToHdc(*this, windowDc);
-                DrawPlayerVitalsOverlay(*this, windowDc);
-                if (trackMovePerfFrame) {
-                    g_overlayMovePerfStats.fallbackOverlayDrawMs += qpcNowMs() - overlayDrawStartMs;
-                }
-                const double uiDrawStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
-                g_windowMgr.DrawVisibleWindowsToHdc(windowDc, true);
-                if (trackMovePerfFrame) {
-                    g_overlayMovePerfStats.fallbackUiDrawMs += qpcNowMs() - uiDrawStartMs;
-                }
-                const double cursorHdcStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
-                DrawModeCursorToHdc(windowDc, m_cursorActNum, m_mouseAnimStartTick);
-                if (trackMovePerfFrame) {
-                    g_overlayMovePerfStats.fallbackCursorHdcMs += qpcNowMs() - cursorHdcStartMs;
-                }
-                ReleaseDC(g_hMainWnd, windowDc);
-            } else if (!isVulkanBackend) {
-                const double cursorStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
-                DrawModeCursor(m_cursorActNum, m_mouseAnimStartTick);
-                if (trackMovePerfFrame) {
-                    g_overlayMovePerfStats.fallbackCursorMs += qpcNowMs() - cursorStartMs;
-                }
-            }
+            const double uiDrawStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+            DrawGameplayFallbackToWindow(
+                *this,
+                m_cursorActNum,
+                m_mouseAnimStartTick,
+                trackMovePerfFrame,
+                uiDrawStartMs,
+                !isVulkanBackend);
         }
         g_framePerfStats.frames += 1;
         g_framePerfStats.updateMs += static_cast<u64>(updateEnd - updateStart);
