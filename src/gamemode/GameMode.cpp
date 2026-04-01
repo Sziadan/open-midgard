@@ -854,17 +854,11 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
         return false;
     }
 
-    HDC measureDc = CreateCompatibleDC(nullptr);
-    if (!measureDc) {
-        return false;
-    }
-
     RECT clientRect{};
     GetClientRect(g_hMainWnd, &clientRect);
 
     auto actorIt = mode.m_runtimeActors.find(mode.m_lastLockOnMonGid);
     if (actorIt == mode.m_runtimeActors.end() || !actorIt->second || !actorIt->second->m_isVisible) {
-        DeleteDC(measureDc);
         return false;
     }
 
@@ -876,7 +870,6 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
         &centerX,
         nullptr,
         &labelY)) {
-        DeleteDC(measureDc);
         return false;
     }
 
@@ -886,6 +879,10 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
     const std::string label = ResolveHoveredActorName(mode, actorIt->second);
     const bool drawLockedTargetText = !IsQtUiRuntimeEnabled() && !label.empty();
     if (drawLockedTargetText) {
+        HDC measureDc = CreateCompatibleDC(nullptr);
+        if (!measureDc) {
+            return false;
+        }
         DrawDC drawDc(measureDc);
         drawDc.SetFont(FONT_DEFAULT, kHoverNameFontHeight, kHoverNameFontBold);
         SIZE textSize{};
@@ -894,6 +891,7 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
         const int textY = labelY + kHoverNameTextPadding + kHoverNameVerticalOffset;
         RECT textRect{ textX - 2, textY - 2, textX + textSize.cx + 2, textY + textSize.cy + 2 };
         UnionRect(&overlayRect, &overlayRect, &textRect);
+        DeleteDC(measureDc);
     }
 
     static bool s_arrowPixelsLoaded = false;
@@ -952,7 +950,6 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
     InflateRect(&overlayRect, 4, 4);
     RECT clippedRect{};
     IntersectRect(&clippedRect, &overlayRect, &clientRect);
-    DeleteDC(measureDc);
 
     const int width = clippedRect.right - clippedRect.left;
     const int height = clippedRect.bottom - clippedRect.top;
