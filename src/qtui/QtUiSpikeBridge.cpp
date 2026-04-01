@@ -453,6 +453,10 @@ public:
             return false;
         }
 
+        if (!m_loggedMenuCpuBridge) {
+            DbgLog("[QtUi] Menu overlay using CPU bridge fallback (%dx%d).\n", width, height);
+            m_loggedMenuCpuBridge = true;
+        }
         BlendQtImageOntoBgraBuffer(m_renderImage, bgraPixels, width, height, pitch);
         return true;
     }
@@ -468,6 +472,11 @@ public:
 
         QtUiRenderTargetInfo targetInfo{};
         if (!GetRenderDevice().GetQtUiTextureTargetInfo(texture, &targetInfo) || !targetInfo.available) {
+            if (!m_loggedMenuTextureUnavailable) {
+                DbgLog("[QtUi] Menu overlay native texture target unavailable on backend '%s'.\n",
+                    GetRenderBackendName(GetRenderDevice().GetBackendType()));
+                m_loggedMenuTextureUnavailable = true;
+            }
             m_nativeOverlayBackend = RenderBackendType::LegacyDirect3D7;
             return false;
         }
@@ -529,6 +538,10 @@ public:
             return false;
         }
 
+        if (!m_loggedGameplayCpuBridge) {
+            DbgLog("[QtUi] Gameplay overlay using CPU bridge fallback (%dx%d).\n", width, height);
+            m_loggedGameplayCpuBridge = true;
+        }
         BlendQtImageOntoBgraBuffer(m_renderImage, bgraPixels, width, height, pitch);
         return true;
     }
@@ -544,6 +557,11 @@ public:
 
         QtUiRenderTargetInfo targetInfo{};
         if (!GetRenderDevice().GetQtUiTextureTargetInfo(texture, &targetInfo) || !targetInfo.available) {
+            if (!m_loggedGameplayTextureUnavailable) {
+                DbgLog("[QtUi] Gameplay overlay native texture target unavailable on backend '%s'.\n",
+                    GetRenderBackendName(GetRenderDevice().GetBackendType()));
+                m_loggedGameplayTextureUnavailable = true;
+            }
             m_nativeOverlayBackend = RenderBackendType::LegacyDirect3D7;
             return false;
         }
@@ -888,6 +906,10 @@ private:
     bool m_nativeTargetMirrorVertically = false;
     bool m_loggedNativeOverlaySuccess = false;
     bool m_loggedNativeOverlayFailure = false;
+    bool m_loggedMenuCpuBridge = false;
+    bool m_loggedGameplayCpuBridge = false;
+    bool m_loggedMenuTextureUnavailable = false;
+    bool m_loggedGameplayTextureUnavailable = false;
     HWND m_mainWindow = nullptr;
     int m_mouseX = 0;
     int m_mouseY = 0;

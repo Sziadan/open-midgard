@@ -349,6 +349,20 @@ bool QueueLoginUiQuad()
                 clientHeight);
         }
 
+        {
+            static int s_lastLoggedMenuPath = -1;
+            const int menuPath = renderedQtMenuOverlay ? 2 : (qtMenuRuntimeEnabled ? 1 : 0);
+            if (menuPath != s_lastLoggedMenuPath) {
+                DbgLog("[LoginMode] menu overlay path=%s qtEnabled=%d texture=%p size=%dx%d\n",
+                    renderedQtMenuOverlay ? "native_texture" : (qtMenuRuntimeEnabled ? "cpu_bridge" : "legacy_gdi"),
+                    qtMenuRuntimeEnabled ? 1 : 0,
+                    s_qtUiOverlayTexture,
+                    clientWidth,
+                    clientHeight);
+                s_lastLoggedMenuPath = menuPath;
+            }
+        }
+
         if (renderedQtMenuOverlay) {
             g_windowMgr.ClearDirtyVisualState();
             s_uiTextureValid = false;

@@ -637,6 +637,21 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         s_qtOverlayTextureValid = qtGameplayRuntimeEnabled
             && s_qtOverlayTexture
             && RenderQtUiGameplayOverlayTexture(mode, s_qtOverlayTexture, clientWidth, clientHeight);
+
+        {
+            static int s_lastLoggedGameplayPath = -1;
+            const int gameplayPath = s_qtOverlayTextureValid ? 2 : (qtGameplayRuntimeEnabled ? 1 : 0);
+            if (gameplayPath != s_lastLoggedGameplayPath) {
+                DbgLog("[GameMode] gameplay overlay path=%s qtEnabled=%d texture=%p size=%dx%d\n",
+                    s_qtOverlayTextureValid ? "native_texture" : (qtGameplayRuntimeEnabled ? "cpu_bridge" : "legacy_gdi"),
+                    qtGameplayRuntimeEnabled ? 1 : 0,
+                    s_qtOverlayTexture,
+                    clientWidth,
+                    clientHeight);
+                s_lastLoggedGameplayPath = gameplayPath;
+            }
+        }
+
         if (s_qtOverlayTextureValid) {
             g_windowMgr.ClearDirtyVisualState();
             s_overlayTextureValid = false;

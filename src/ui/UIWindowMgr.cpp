@@ -1142,6 +1142,21 @@ void UIWindowMgr::OnDraw() {
     const bool qtMenuRuntimeEnabled = hasMenuUi
         && IsQtUiRuntimeEnabled()
         && hasModernBackend;
+
+    {
+        static int s_lastLoggedUiMgrMenuMode = -1;
+        const int menuMode = qtMenuRuntimeEnabled ? 1 : 0;
+        if (menuMode != s_lastLoggedUiMgrMenuMode) {
+            DbgLog("[UIWindowMgr] front-menu qtRuntime=%d hasMenuUi=%d modernBackend=%d size=%dx%d\n",
+                qtMenuRuntimeEnabled ? 1 : 0,
+                hasMenuUi ? 1 : 0,
+                hasModernBackend ? 1 : 0,
+                clientWidth,
+                clientHeight);
+            s_lastLoggedUiMgrMenuMode = menuMode;
+        }
+    }
+
     if (qtMenuRuntimeEnabled) {
         static CTexture* s_qtMenuOverlayTexture = nullptr;
         static int s_qtMenuOverlayTextureWidth = 0;
