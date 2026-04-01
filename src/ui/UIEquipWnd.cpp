@@ -173,112 +173,50 @@ std::string ResolveUiAssetPath(const char* fileName)
     return NormalizeSlash(fileName ? fileName : "");
 }
 
-HBITMAP LoadBitmapFromGameData(const std::string& path)
+shopui::BitmapPixels LoadBitmapPixelsFromGameData(const std::string& path)
 {
-    HBITMAP outBitmap = nullptr;
-    LoadHBitmapFromGameData(path.c_str(), &outBitmap, nullptr, nullptr);
-    return outBitmap;
+    return shopui::LoadBitmapPixelsFromGameData(path, true);
 }
 
-void DrawBitmapTransparent(HDC target, HBITMAP bitmap, const RECT& dst)
+void DrawBitmapPixelsStretched(HDC target, const shopui::BitmapPixels& bitmap, const RECT& dst)
 {
-    if (!target || !bitmap) {
+    if (!target || !bitmap.IsValid() || dst.right <= dst.left || dst.bottom <= dst.top) {
         return;
     }
-
-    BITMAP bm{};
-    if (!GetObjectA(bitmap, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
-
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
-        return;
-    }
-
-    HGDIOBJ oldBitmap = SelectObject(srcDC, bitmap);
-    TransparentBlt(target,
-        dst.left,
-        dst.top,
-        dst.right - dst.left,
-        dst.bottom - dst.top,
-        srcDC,
-        0,
-        0,
-        bm.bmWidth,
-        bm.bmHeight,
-        RGB(255, 0, 255));
-    SelectObject(srcDC, oldBitmap);
-    DeleteDC(srcDC);
+    AlphaBlendArgbToHdc(target,
+                        dst.left,
+                        dst.top,
+                        dst.right - dst.left,
+                        dst.bottom - dst.top,
+                        bitmap.pixels.data(),
+                        bitmap.width,
+                        bitmap.height);
 }
 
-void DrawBitmapAlpha(HDC target, HBITMAP bitmap, const RECT& dst)
+void DrawBitmapPixelsSegmentTransparent(HDC target, const shopui::BitmapPixels& bitmap, const RECT& dst, int srcX, int srcY, int srcW, int srcH)
 {
-    if (!target || !bitmap || dst.right <= dst.left || dst.bottom <= dst.top) {
+    if (!target || !bitmap.IsValid() || srcW <= 0 || srcH <= 0 || dst.right <= dst.left || dst.bottom <= dst.top) {
+        return;
+    }
+    if (srcX < 0 || srcY < 0 || srcX + srcW > bitmap.width || srcY + srcH > bitmap.height) {
         return;
     }
 
-    BITMAP bm{};
-    if (!GetObjectA(bitmap, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
+    std::vector<unsigned int> cropped(static_cast<size_t>(srcW) * static_cast<size_t>(srcH));
+    for (int row = 0; row < srcH; ++row) {
+        const unsigned int* srcRow = bitmap.pixels.data() + static_cast<size_t>(srcY + row) * static_cast<size_t>(bitmap.width) + static_cast<size_t>(srcX);
+        unsigned int* dstRow = cropped.data() + static_cast<size_t>(row) * static_cast<size_t>(srcW);
+        std::copy(srcRow, srcRow + srcW, dstRow);
     }
 
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
-        return;
-    }
-
-    HGDIOBJ oldBitmap = SelectObject(srcDC, bitmap);
-
-    BLENDFUNCTION blend{};
-    blend.BlendOp = AC_SRC_OVER;
-    blend.SourceConstantAlpha = 255;
-    blend.AlphaFormat = AC_SRC_ALPHA;
-
-    const BOOL ok = AlphaBlend(target,
-        dst.left,
-        dst.top,
-        dst.right - dst.left,
-        dst.bottom - dst.top,
-        srcDC,
-        0,
-        0,
-        bm.bmWidth,
-        bm.bmHeight,
-        blend);
-
-    if (!ok) {
-        DrawBitmapTransparent(target, bitmap, dst);
-    }
-
-    SelectObject(srcDC, oldBitmap);
-    DeleteDC(srcDC);
-}
-
-void DrawBitmapSegmentTransparent(HDC target, HBITMAP bitmap, const RECT& dst, int srcX, int srcY, int srcW, int srcH)
-{
-    if (!target || !bitmap || srcW <= 0 || srcH <= 0 || dst.right <= dst.left || dst.bottom <= dst.top) {
-        return;
-    }
-
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
-        return;
-    }
-    HGDIOBJ oldBitmap = SelectObject(srcDC, bitmap);
-    TransparentBlt(target,
-        dst.left,
-        dst.top,
-        dst.right - dst.left,
-        dst.bottom - dst.top,
-        srcDC,
-        srcX,
-        srcY,
-        srcW,
-        srcH,
-        RGB(255, 0, 255));
-    SelectObject(srcDC, oldBitmap);
-    DeleteDC(srcDC);
+    AlphaBlendArgbToHdc(target,
+                        dst.left,
+                        dst.top,
+                        dst.right - dst.left,
+                        dst.bottom - dst.top,
+                        cropped.data(),
+                        srcW,
+                        srcH);
 }
 
 void FillRectColor(HDC hdc, const RECT& rect, COLORREF color)
@@ -757,13 +695,13 @@ UIEquipWnd::UIEquipWnd()
     : m_controlsCreated(false),
       m_fullHeight(kWindowHeight),
       m_systemButtons{ nullptr, nullptr, nullptr },
-      m_backgroundLeft(nullptr),
-      m_backgroundMid(nullptr),
-      m_backgroundRight(nullptr),
-      m_backgroundFull(nullptr),
-      m_titleBarLeft(nullptr),
-      m_titleBarMid(nullptr),
-      m_titleBarRight(nullptr),
+      m_backgroundLeft(),
+      m_backgroundMid(),
+      m_backgroundRight(),
+      m_backgroundFull(),
+      m_titleBarLeft(),
+      m_titleBarMid(),
+      m_titleBarRight(),
       m_dragArmed(false),
       m_dragStartPoint{},
       m_dragItemId(0),
@@ -851,12 +789,9 @@ void UIEquipWnd::OnCreate(int x, int y)
     m_controlsCreated = true;
     LoadAssets();
 
-    if (m_backgroundFull) {
-        BITMAP bgInfo{};
-        if (GetObjectA(m_backgroundFull, sizeof(bgInfo), &bgInfo) && bgInfo.bmWidth > 0 && bgInfo.bmHeight > 0) {
-            m_fullHeight = kTitleBarHeight + static_cast<int>(bgInfo.bmHeight);
-            Resize(static_cast<int>(bgInfo.bmWidth), m_fullHeight);
-        }
+    if (m_backgroundFull.IsValid()) {
+        m_fullHeight = kTitleBarHeight + m_backgroundFull.height;
+        Resize(m_backgroundFull.width, m_fullHeight);
     }
 
     struct ButtonSpec {
@@ -924,17 +859,14 @@ void UIEquipWnd::OnDraw()
     FillRectColor(hdc, windowRect, RGB(255, 255, 255));
 
     const int bodyTop = m_y + kTitleBarHeight;
-    if (m_backgroundFull) {
-        BITMAP bgInfo{};
-        if (GetObjectA(m_backgroundFull, sizeof(bgInfo), &bgInfo) && bgInfo.bmWidth > 0 && bgInfo.bmHeight > 0) {
-            RECT bgRect{
-                m_x,
-                bodyTop,
-                m_x + bgInfo.bmWidth,
-                bodyTop + bgInfo.bmHeight
-            };
-            DrawBitmapTransparent(hdc, m_backgroundFull, bgRect);
-        }
+    if (m_backgroundFull.IsValid()) {
+        RECT bgRect{
+            m_x,
+            bodyTop,
+            m_x + m_backgroundFull.width,
+            bodyTop + m_backgroundFull.height
+        };
+        DrawBitmapPixelsStretched(hdc, m_backgroundFull, bgRect);
     } else {
         RECT bodyRect{ m_x, bodyTop, m_x + m_w, m_y + m_h };
         FillRectColor(hdc, bodyRect, RGB(255, 255, 255));
@@ -942,37 +874,30 @@ void UIEquipWnd::OnDraw()
         for (int yPos = bodyTop; yPos < m_y + m_h; yPos += 8) {
             RECT leftRect{ m_x, yPos, m_x + 20, std::min(yPos + 8, m_y + m_h) };
             RECT rightRect{ m_x + m_w - 20, yPos, m_x + m_w, std::min(yPos + 8, m_y + m_h) };
-            DrawBitmapTransparent(hdc, m_backgroundLeft, leftRect);
-            DrawBitmapTransparent(hdc, m_backgroundRight, rightRect);
+            DrawBitmapPixelsStretched(hdc, m_backgroundLeft, leftRect);
+            DrawBitmapPixelsStretched(hdc, m_backgroundRight, rightRect);
         }
     }
 
     const RECT titleStrip{ m_x, m_y, m_x + m_w, m_y + kTitleBarHeight };
-    if (m_titleBarLeft && m_titleBarMid && m_titleBarRight) {
-        BITMAP leftInfo{};
-        BITMAP midInfo{};
-        BITMAP rightInfo{};
-        GetObjectA(m_titleBarLeft, sizeof(leftInfo), &leftInfo);
-        GetObjectA(m_titleBarMid, sizeof(midInfo), &midInfo);
-        GetObjectA(m_titleBarRight, sizeof(rightInfo), &rightInfo);
-
-        const int leftW = (std::max)(0, static_cast<int>(leftInfo.bmWidth));
-        const int rightW = (std::max)(0, static_cast<int>(rightInfo.bmWidth));
+    if (m_titleBarLeft.IsValid() && m_titleBarMid.IsValid() && m_titleBarRight.IsValid()) {
+        const int leftW = (std::max)(0, m_titleBarLeft.width);
+        const int rightW = (std::max)(0, m_titleBarRight.width);
         const int midW = (std::max)(0, static_cast<int>(titleStrip.right - titleStrip.left - leftW - rightW));
         if (leftW > 0) {
             RECT dst{ titleStrip.left, titleStrip.top, titleStrip.left + leftW, titleStrip.bottom };
-            DrawBitmapSegmentTransparent(hdc, m_titleBarLeft, dst, 0, 0, static_cast<int>(leftInfo.bmWidth), (std::max)(1, static_cast<int>(leftInfo.bmHeight)));
+            DrawBitmapPixelsSegmentTransparent(hdc, m_titleBarLeft, dst, 0, 0, leftW, (std::max)(1, m_titleBarLeft.height));
         }
         if (midW > 0) {
             RECT dst{ titleStrip.left + leftW, titleStrip.top, titleStrip.left + leftW + midW, titleStrip.bottom };
-            DrawBitmapSegmentTransparent(hdc, m_titleBarMid, dst, 0, 0, (std::max)(1, static_cast<int>(midInfo.bmWidth)), (std::max)(1, static_cast<int>(midInfo.bmHeight)));
+            DrawBitmapPixelsSegmentTransparent(hdc, m_titleBarMid, dst, 0, 0, (std::max)(1, m_titleBarMid.width), (std::max)(1, m_titleBarMid.height));
         }
         if (rightW > 0) {
             RECT dst{ titleStrip.right - rightW, titleStrip.top, titleStrip.right, titleStrip.bottom };
-            DrawBitmapSegmentTransparent(hdc, m_titleBarRight, dst, 0, 0, static_cast<int>(rightInfo.bmWidth), (std::max)(1, static_cast<int>(rightInfo.bmHeight)));
+            DrawBitmapPixelsSegmentTransparent(hdc, m_titleBarRight, dst, 0, 0, rightW, (std::max)(1, m_titleBarRight.height));
         }
-    } else if (m_backgroundMid) {
-        DrawBitmapTransparent(hdc, m_backgroundMid, titleStrip);
+    } else if (m_backgroundMid.IsValid()) {
+        DrawBitmapPixelsStretched(hdc, m_backgroundMid, titleStrip);
     }
     DrawWindowText(hdc, m_x + 18, m_y + 3, "Equipment", RGB(255, 255, 255));
     DrawWindowText(hdc, m_x + 17, m_y + 2, "Equipment", RGB(0, 0, 0));
@@ -1264,45 +1189,24 @@ void UIEquipWnd::LayoutChildren()
 
 void UIEquipWnd::LoadAssets()
 {
-    m_backgroundLeft = LoadBitmapFromGameData(ResolveUiAssetPath("itemwin_left.bmp"));
-    m_backgroundMid = LoadBitmapFromGameData(ResolveUiAssetPath("itemwin_mid.bmp"));
-    m_backgroundRight = LoadBitmapFromGameData(ResolveUiAssetPath("itemwin_right.bmp"));
-    m_backgroundFull = LoadBitmapFromGameData(ResolveUiAssetPath("equipwin_bg.bmp"));
-    m_titleBarLeft = LoadBitmapFromGameData(ResolveUiAssetPath("titlebar_left.bmp"));
-    m_titleBarMid = LoadBitmapFromGameData(ResolveUiAssetPath("titlebar_mid.bmp"));
-    m_titleBarRight = LoadBitmapFromGameData(ResolveUiAssetPath("titlebar_right.bmp"));
+    m_backgroundLeft = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("itemwin_left.bmp"));
+    m_backgroundMid = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("itemwin_mid.bmp"));
+    m_backgroundRight = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("itemwin_right.bmp"));
+    m_backgroundFull = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("equipwin_bg.bmp"));
+    m_titleBarLeft = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("titlebar_left.bmp"));
+    m_titleBarMid = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("titlebar_mid.bmp"));
+    m_titleBarRight = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("titlebar_right.bmp"));
 }
 
 void UIEquipWnd::ReleaseAssets()
 {
-    if (m_backgroundLeft) {
-        DeleteObject(m_backgroundLeft);
-        m_backgroundLeft = nullptr;
-    }
-    if (m_backgroundMid) {
-        DeleteObject(m_backgroundMid);
-        m_backgroundMid = nullptr;
-    }
-    if (m_backgroundRight) {
-        DeleteObject(m_backgroundRight);
-        m_backgroundRight = nullptr;
-    }
-    if (m_backgroundFull) {
-        DeleteObject(m_backgroundFull);
-        m_backgroundFull = nullptr;
-    }
-    if (m_titleBarLeft) {
-        DeleteObject(m_titleBarLeft);
-        m_titleBarLeft = nullptr;
-    }
-    if (m_titleBarMid) {
-        DeleteObject(m_titleBarMid);
-        m_titleBarMid = nullptr;
-    }
-    if (m_titleBarRight) {
-        DeleteObject(m_titleBarRight);
-        m_titleBarRight = nullptr;
-    }
+    m_backgroundLeft.Clear();
+    m_backgroundMid.Clear();
+    m_backgroundRight.Clear();
+    m_backgroundFull.Clear();
+    m_titleBarLeft.Clear();
+    m_titleBarMid.Clear();
+    m_titleBarRight.Clear();
     m_iconCache.clear();
 }
 
