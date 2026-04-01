@@ -4,7 +4,6 @@
 #include "GameMode.h"
 #include "Mode.h"
 #include "main/WinMain.h"
-#include "render/DC.h"
 #include "res/ActRes.h"
 #include "res/Sprite.h"
 #include "session/Session.h"
@@ -14,6 +13,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+bool DrawModeCursorAtToHdc(HDC hdc, int x, int y, int cursorActNum, u32 mouseAnimStartTick);
 
 namespace {
 
