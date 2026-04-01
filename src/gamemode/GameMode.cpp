@@ -2474,7 +2474,10 @@ void FillSolidRect(HDC hdc, const RECT& rect, COLORREF color)
 
 unsigned int PackColorRefArgb(COLORREF color)
 {
-    return 0xFF000000u | (static_cast<unsigned int>(color) & 0x00FFFFFFu);
+    const unsigned int red = static_cast<unsigned int>(GetRValue(color));
+    const unsigned int green = static_cast<unsigned int>(GetGValue(color));
+    const unsigned int blue = static_cast<unsigned int>(GetBValue(color));
+    return 0xFF000000u | (red << 16) | (green << 8) | blue;
 }
 
 void FillSolidRectArgb(unsigned int* pixels, int width, int height, const RECT& rect, COLORREF color)
