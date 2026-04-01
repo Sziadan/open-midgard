@@ -22,8 +22,10 @@
 #include <vector>
 
 #if RO_ENABLE_QT6_UI
+#include <QFont>
 #include <QImage>
 #include <QPainter>
+#include <QPainterPath>
 #endif
 
 #pragma comment(lib, "msimg32.lib")
@@ -373,6 +375,23 @@ std::string StripExtension(const std::string& value)
     }
     return out;
 }
+
+#if RO_ENABLE_QT6_UI
+QImage BitmapPixelsToQImage(const shopui::BitmapPixels& bitmap)
+{
+    if (!bitmap.IsValid()) {
+        return QImage();
+    }
+
+    QImage image(
+        reinterpret_cast<const uchar*>(bitmap.pixels.data()),
+        bitmap.width,
+        bitmap.height,
+        bitmap.width * static_cast<int>(sizeof(unsigned int)),
+        QImage::Format_ARGB32);
+    return image.copy();
+}
+#endif
 
 bool BlitArgbCacheToHdc(HDC target, int x, int y, int width, int height, const void* bits)
 {
@@ -1041,6 +1060,115 @@ bool UIRoMapWnd::BuildQtMinimapImage(QImage* outImage) const
         painter.drawImage(targetRect, sourceImage, sourceRect);
     }
 
+    *outImage = composed;
+    return true;
+#endif
+}
+
+bool UIRoMapWnd::BuildOverlayImageForRenderer(QImage* outImage) const
+{
+#if !RO_ENABLE_QT6_UI
+    (void)outImage;
+    return false;
+#else
+    if (!outImage) {
+        return false;
+    }
+
+    UIRoMapWnd* mutableThis = const_cast<UIRoMapWnd*>(this);
+    mutableThis->EnsureCreated();
+    mutableThis->UpdateMinimapBitmap();
+    mutableThis->LayoutChildren();
+
+    QImage minimapImage;
+    if (!BuildQtMinimapImage(&minimapImage)) {
+        return false;
+    }
+
+    QImage composed(m_w, m_h, QImage::Format_ARGB32);
+    composed.fill(Qt::transparent);
+
+    QPainter painter(&composed);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
+    painter.setRenderHint(QPainter::TextAntialiasing, false);
+
+    const QRect windowRect(0, 0, m_w, m_h);
+    const QRect titleRect(0, 0, m_w, kTitleBarHeight);
+    const QRect bodyRect(0, kTitleBarHeight, m_w, m_h - kTitleBarHeight);
+    const QRect mapRect(kBodyInset, kMapTop, kMapSize, kMapSize);
+    const QRect coordsRect(8, kCoordsTop, m_w - 16, kCoordsHeight);
+
+    QPainterPath clipPath;
+    clipPath.addRoundedRect(QRectF(windowRect), static_cast<qreal>(kWindowCornerRadius), static_cast<qreal>(kWindowCornerRadius));
+    painter.setClipPath(clipPath);
+
+    const QImage bodyImage = BitmapPixelsToQImage(m_bodyBitmap);
+    if (!bodyImage.isNull()) {
+        painter.drawImage(bodyRect, bodyImage);
+    } else {
+        painter.fillRect(bodyRect, QColor(209, 216, 228));
+    }
+
+    const QImage titleImage = BitmapPixelsToQImage(m_titleBarBitmap);
+    if (!titleImage.isNull()) {
+        painter.drawImage(titleRect, titleImage);
+    } else {
+        painter.fillRect(titleRect, QColor(98, 114, 158));
+    }
+
+    painter.drawImage(mapRect, minimapImage);
+    painter.setClipping(false);
+
+    QPen borderPen(QColor(57, 66, 86));
+    painter.setPen(borderPen);
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRoundedRect(QRectF(0.5, 0.5, static_cast<qreal>(m_w - 1), static_cast<qreal>(m_h - 1)),
+        static_cast<qreal>(kWindowCornerRadius),
+        static_cast<qreal>(kWindowCornerRadius));
+    painter.drawRect(QRectF(mapRect.x() + 0.5, mapRect.y() + 0.5, static_cast<qreal>(mapRect.width() - 1), static_cast<qreal>(mapRect.height() - 1)));
+
+    QFont font(QStringLiteral("MS Sans Serif"));
+    font.setPixelSize(11);
+    font.setStyleStrategy(QFont::NoAntialias);
+    painter.setFont(font);
+
+    painter.setPen(Qt::black);
+    painter.drawText(QPoint(17, 11), QStringLiteral("Mini Map"));
+    painter.setPen(Qt::white);
+    painter.drawText(QPoint(18, 12), QStringLiteral("Mini Map"));
+
+    painter.setPen(Qt::black);
+    painter.drawText(coordsRect.adjusted(0, 0, -78, 0), Qt::AlignLeft | Qt::AlignVCenter | Qt::TextSingleLine,
+        QString::fromStdString(StripExtension(GetCurrentMinimapBitmapName())));
+    const QString coordsText = QStringLiteral("X : %1    Y : %2").arg(g_session.m_playerPosX).arg(g_session.m_playerPosY);
+    painter.drawText(coordsRect, Qt::AlignRight | Qt::AlignVCenter | Qt::TextSingleLine, coordsText);
+
+    if (m_closeButton && m_closeButton->m_show != 0) {
+        const shopui::BitmapPixels* drawBmp = nullptr;
+        if (m_closeButton->m_state == 1 && m_closeButton->m_pressedBitmap.IsValid()) {
+            drawBmp = &m_closeButton->m_pressedBitmap;
+        } else if (m_closeButton->m_state == 2 && m_closeButton->m_mouseonBitmap.IsValid()) {
+            drawBmp = &m_closeButton->m_mouseonBitmap;
+        } else if (m_closeButton->m_normalBitmap.IsValid()) {
+            drawBmp = &m_closeButton->m_normalBitmap;
+        } else if (m_closeButton->m_mouseonBitmap.IsValid()) {
+            drawBmp = &m_closeButton->m_mouseonBitmap;
+        } else if (m_closeButton->m_pressedBitmap.IsValid()) {
+            drawBmp = &m_closeButton->m_pressedBitmap;
+        }
+
+        if (drawBmp) {
+            const QImage closeImage = BitmapPixelsToQImage(*drawBmp);
+            if (!closeImage.isNull()) {
+                const int buttonOffsetX = m_closeButton->m_x - m_x;
+                const int buttonOffsetY = m_closeButton->m_y - m_y;
+                painter.drawImage(QRect(buttonOffsetX, buttonOffsetY, drawBmp->width, drawBmp->height), closeImage);
+            }
+        }
+    }
+
+    painter.end();
     *outImage = composed;
     return true;
 #endif

@@ -829,12 +829,8 @@ bool QueueRoMapOverlayQuad()
     static void* s_roMapComposeBits = nullptr;
     static int s_roMapComposeWidth = 0;
     static int s_roMapComposeHeight = 0;
+    static std::vector<unsigned int> s_roMapComposePixels;
     static bool s_roMapTextureValid = false;
-    const bool composeReady = EnsureOverlayComposeSurface(width, height,
-        &s_roMapComposeDc, &s_roMapComposeBitmap, &s_roMapComposeBits, &s_roMapComposeWidth, &s_roMapComposeHeight);
-    if (!composeReady) {
-        return false;
-    }
 
     static CTexture* s_roMapTexture = nullptr;
     static int s_roMapTextureWidth = 0;
@@ -856,17 +852,51 @@ bool QueueRoMapOverlayQuad()
 
     const bool needRoMapRefresh = !s_roMapTextureValid || g_windowMgr.HasRoMapDirtyVisualState();
     if (needRoMapRefresh) {
-        ClearOverlayComposeBits(s_roMapComposeBits, width, height);
-        if (!g_windowMgr.DrawRoMapToHdc(s_roMapComposeDc, 0, 0)) {
-            return false;
+        unsigned int* uploadPixels = nullptr;
+#if RO_ENABLE_QT6_UI
+        bool builtWithQtImage = false;
+        if (g_windowMgr.m_roMapWnd) {
+            QImage overlayImage;
+            if (g_windowMgr.m_roMapWnd->BuildOverlayImageForRenderer(&overlayImage) && !overlayImage.isNull()) {
+                const QImage straightImage = overlayImage.convertToFormat(QImage::Format_ARGB32);
+                const size_t pixelCount = static_cast<size_t>(width) * static_cast<size_t>(height);
+                if (s_roMapComposePixels.size() != pixelCount) {
+                    s_roMapComposePixels.resize(pixelCount);
+                }
+
+                for (int y = 0; y < height; ++y) {
+                    const unsigned int* srcRow = reinterpret_cast<const unsigned int*>(straightImage.constScanLine(y));
+                    unsigned int* dstRow = s_roMapComposePixels.data() + static_cast<size_t>(y) * static_cast<size_t>(width);
+                    std::memcpy(dstRow, srcRow, static_cast<size_t>(width) * sizeof(unsigned int));
+                }
+
+                uploadPixels = s_roMapComposePixels.data();
+                builtWithQtImage = true;
+            }
         }
-        ApplyRoundedOverlayMask(s_roMapComposeBits, width, height, kRoMapCornerEllipseSize, kRoMapCornerEllipseSize);
-        ConvertOverlayComposeBitsToAlpha(s_roMapComposeBits, width, height);
+        if (!builtWithQtImage)
+#endif
+        {
+            const bool composeReady = EnsureOverlayComposeSurface(width, height,
+                &s_roMapComposeDc, &s_roMapComposeBitmap, &s_roMapComposeBits, &s_roMapComposeWidth, &s_roMapComposeHeight);
+            if (!composeReady) {
+                return false;
+            }
+
+            ClearOverlayComposeBits(s_roMapComposeBits, width, height);
+            if (!g_windowMgr.DrawRoMapToHdc(s_roMapComposeDc, 0, 0)) {
+                return false;
+            }
+            ApplyRoundedOverlayMask(s_roMapComposeBits, width, height, kRoMapCornerEllipseSize, kRoMapCornerEllipseSize);
+            ConvertOverlayComposeBitsToAlpha(s_roMapComposeBits, width, height);
+            uploadPixels = static_cast<unsigned int*>(s_roMapComposeBits);
+        }
+
         s_roMapTexture->Update(0,
             0,
             width,
             height,
-            static_cast<unsigned int*>(s_roMapComposeBits),
+            uploadPixels,
             true,
             width * static_cast<int>(sizeof(unsigned int)));
         s_roMapTextureValid = true;

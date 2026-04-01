@@ -58,6 +58,7 @@ public:
     void DrawToHdc(HDC hdc, int drawX, int drawY);
     bool GetDisplayDataForQt(DisplayData* outData) const;
     bool BuildQtMinimapImage(QImage* outImage) const;
+    bool BuildOverlayImageForRenderer(QImage* outImage) const;
 
 private:
     void EnsureCreated();
