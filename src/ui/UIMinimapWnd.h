@@ -75,6 +75,7 @@ private:
     HDC m_renderCacheDC;
     HBITMAP m_renderCacheBitmap;
     HBITMAP m_renderCacheOldBitmap;
+    void* m_renderCacheBits;
     int m_renderCacheWidth;
     int m_renderCacheHeight;
     bool m_renderCacheDirty;

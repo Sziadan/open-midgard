@@ -397,6 +397,36 @@ std::string StripExtension(const std::string& value)
     return out;
 }
 
+bool BlitArgbCacheToHdc(HDC target, int x, int y, int width, int height, const void* bits)
+{
+    if (!target || !bits || width <= 0 || height <= 0) {
+        return false;
+    }
+
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = width;
+    bmi.bmiHeader.biHeight = -height;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    return StretchDIBits(
+               target,
+               x,
+               y,
+               width,
+               height,
+               0,
+               0,
+               width,
+               height,
+               bits,
+               &bmi,
+               DIB_RGB_COLORS,
+               SRCCOPY) != GDI_ERROR;
+}
+
 } // namespace
 
 UIRoMapWnd::UIRoMapWnd()
@@ -408,6 +438,7 @@ UIRoMapWnd::UIRoMapWnd()
       m_renderCacheDC(nullptr),
       m_renderCacheBitmap(nullptr),
       m_renderCacheOldBitmap(nullptr),
+      m_renderCacheBits(nullptr),
       m_renderCacheWidth(0),
       m_renderCacheHeight(0),
       m_renderCacheDirty(true),
@@ -759,7 +790,9 @@ void UIRoMapWnd::DrawToHdc(HDC hdc, int drawX, int drawY)
             DrawWindowContents(m_renderCacheDC, 0, 0);
             m_renderCacheDirty = false;
         }
-        BitBlt(hdc, drawX, drawY, m_w, m_h, m_renderCacheDC, 0, 0, SRCCOPY);
+        if (!BlitArgbCacheToHdc(hdc, drawX, drawY, m_w, m_h, m_renderCacheBits)) {
+            BitBlt(hdc, drawX, drawY, m_w, m_h, m_renderCacheDC, 0, 0, SRCCOPY);
+        }
     } else {
         DrawWindowContents(hdc, drawX, drawY);
     }
@@ -1111,9 +1144,8 @@ void UIRoMapWnd::EnsureRenderCache()
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biBitCount = 32;
     bmi.bmiHeader.biCompression = BI_RGB;
-    void* cacheBits = nullptr;
-    m_renderCacheBitmap = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &cacheBits, nullptr, 0);
-    if (!m_renderCacheBitmap) {
+    m_renderCacheBitmap = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &m_renderCacheBits, nullptr, 0);
+    if (!m_renderCacheBitmap || !m_renderCacheBits) {
         ReleaseRenderCache();
         return;
     }
@@ -1134,6 +1166,7 @@ void UIRoMapWnd::ReleaseRenderCache()
         DeleteObject(m_renderCacheBitmap);
         m_renderCacheBitmap = nullptr;
     }
+    m_renderCacheBits = nullptr;
     if (m_renderCacheDC) {
         DeleteDC(m_renderCacheDC);
         m_renderCacheDC = nullptr;
