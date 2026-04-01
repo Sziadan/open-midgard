@@ -3034,11 +3034,17 @@ Item {
 
         Repeater {
             model: [
-                { x: 483, y: 318, w: 40, text: "OK" },
-                { x: 530, y: 318, w: 40, text: "Cancel" },
-                { x: 48, y: 135, w: 16, text: "<" },
-                { x: 130, y: 135, w: 16, text: ">" },
-                { x: 89, y: 101, w: 16, text: "^" }
+                { x: 270, y: 50, w: 16, h: 14, text: "+" },
+                { x: 270, y: 244, w: 16, h: 14, text: "+" },
+                { x: 190, y: 104, w: 16, h: 14, text: "+" },
+                { x: 349, y: 190, w: 16, h: 14, text: "+" },
+                { x: 349, y: 104, w: 16, h: 14, text: "+" },
+                { x: 190, y: 190, w: 16, h: 14, text: "+" },
+                { x: 48, y: 135, w: 16, h: 14, text: "<" },
+                { x: 130, y: 135, w: 16, h: 14, text: ">" },
+                { x: 89, y: 101, w: 16, h: 14, text: "^" },
+                { x: 483, y: 318, w: 44, h: 22, text: "OK" },
+                { x: 530, y: 318, w: 44, h: 22, text: "Cancel" }
             ]
 
             delegate: Rectangle {
@@ -3046,7 +3052,7 @@ Item {
                 x: modelData.x
                 y: modelData.y
                 width: modelData.w
-                height: 18
+                height: modelData.h
                 radius: 3
                 color: "#d8d0c4"
                 border.width: 1
