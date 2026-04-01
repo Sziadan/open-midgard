@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UIFrameWnd.h"
+#include "UIShopCommon.h"
 
 #include <array>
 #include <string>
@@ -65,8 +66,8 @@ private:
     int m_page;
     std::array<UIBitmapButton*, 3> m_systemButtons;
     std::array<UIBitmapButton*, 6> m_incrementButtons;
-    HBITMAP m_titleBarBitmap;
-    std::array<HBITMAP, 2> m_pageBackgrounds;
+    shopui::BitmapPixels m_titleBarBitmap;
+    std::array<shopui::BitmapPixels, 2> m_pageBackgrounds;
     unsigned long long m_lastDrawStateToken;
     bool m_hasDrawStateToken;
 };

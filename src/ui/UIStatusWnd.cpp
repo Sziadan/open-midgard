@@ -143,58 +143,9 @@ std::string ResolveUiAssetPath(const char* fileName)
     return NormalizeSlash(fileName ? fileName : "");
 }
 
-HBITMAP LoadBitmapFromGameData(const std::string& path)
+shopui::BitmapPixels LoadBitmapPixelsFromGameData(const std::string& path)
 {
-    HBITMAP outBitmap = nullptr;
-    LoadHBitmapFromGameData(path.c_str(), &outBitmap, nullptr, nullptr);
-    return outBitmap;
-}
-
-void DrawBitmapTransparent(HDC target, HBITMAP bitmap, const RECT& dst)
-{
-    if (!target || !bitmap || dst.right <= dst.left || dst.bottom <= dst.top) {
-        return;
-    }
-
-    BITMAP bm{};
-    if (!GetObjectA(bitmap, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
-
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
-        return;
-    }
-
-    HGDIOBJ oldBitmap = SelectObject(srcDC, bitmap);
-    TransparentBlt(target,
-        dst.left,
-        dst.top,
-        dst.right - dst.left,
-        dst.bottom - dst.top,
-        srcDC,
-        0,
-        0,
-        bm.bmWidth,
-        bm.bmHeight,
-        RGB(255, 0, 255));
-    SelectObject(srcDC, oldBitmap);
-    DeleteDC(srcDC);
-}
-
-void DrawBitmapTransparent(HDC target, HBITMAP bitmap, int x, int y)
-{
-    if (!bitmap) {
-        return;
-    }
-
-    BITMAP bm{};
-    if (!GetObjectA(bitmap, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
-
-    RECT dst{ x, y, x + bm.bmWidth, y + bm.bmHeight };
-    DrawBitmapTransparent(target, bitmap, dst);
+    return shopui::LoadBitmapPixelsFromGameData(path, true);
 }
 
 void HashValue(unsigned long long* hash, unsigned long long value)
@@ -270,8 +221,8 @@ UIStatusWnd::UIStatusWnd()
       m_page(0),
       m_systemButtons{ nullptr, nullptr, nullptr },
       m_incrementButtons{ nullptr, nullptr, nullptr, nullptr, nullptr, nullptr },
-      m_titleBarBitmap(nullptr),
-      m_pageBackgrounds{ nullptr, nullptr },
+      m_titleBarBitmap(),
+      m_pageBackgrounds{},
       m_lastDrawStateToken(0ull),
       m_hasDrawStateToken(false)
 {
@@ -431,13 +382,13 @@ void UIStatusWnd::OnDraw()
     }
 
     RECT titleRect{ m_x, m_y, m_x + m_w, m_y + kTitleBarHeight };
-    DrawBitmapTransparent(hdc, m_titleBarBitmap, titleRect);
+    shopui::DrawBitmapPixelsTransparent(hdc, m_titleBarBitmap, titleRect);
     DrawWindowText(hdc, m_x + 18, m_y + 3, "Status", RGB(255, 255, 255));
     DrawWindowText(hdc, m_x + 17, m_y + 2, "Status", RGB(0, 0, 0));
 
     if (m_h > kMiniHeight) {
         RECT bodyRect{ m_x, m_y + kTitleBarHeight, m_x + m_w, m_y + kTitleBarHeight + kBodyHeight };
-        DrawBitmapTransparent(hdc, m_pageBackgrounds[m_page == 0 ? 0 : 1], bodyRect);
+        shopui::DrawBitmapPixelsTransparent(hdc, m_pageBackgrounds[m_page == 0 ? 0 : 1], bodyRect);
 
         if (m_page == 0) {
             const DisplayData data = BuildDisplayData();
@@ -730,28 +681,20 @@ void UIStatusWnd::DrawRightAlignedValue(HDC hdc, int right, int y, const std::st
 
 void UIStatusWnd::LoadAssets()
 {
-    if (!m_titleBarBitmap) {
-        m_titleBarBitmap = LoadBitmapFromGameData(ResolveUiAssetPath("titlebar_fix.bmp"));
+    if (!m_titleBarBitmap.IsValid()) {
+        m_titleBarBitmap = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("titlebar_fix.bmp"));
     }
-    if (!m_pageBackgrounds[0]) {
-        m_pageBackgrounds[0] = LoadBitmapFromGameData(ResolveUiAssetPath("statwin0_bg.bmp"));
+    if (!m_pageBackgrounds[0].IsValid()) {
+        m_pageBackgrounds[0] = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("statwin0_bg.bmp"));
     }
-    if (!m_pageBackgrounds[1]) {
-        m_pageBackgrounds[1] = LoadBitmapFromGameData(ResolveUiAssetPath("statwin1_bg.bmp"));
+    if (!m_pageBackgrounds[1].IsValid()) {
+        m_pageBackgrounds[1] = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("statwin1_bg.bmp"));
     }
 }
 
 void UIStatusWnd::ReleaseAssets()
 {
-    HBITMAP* bitmaps[] = {
-        &m_titleBarBitmap,
-        &m_pageBackgrounds[0],
-        &m_pageBackgrounds[1],
-    };
-    for (HBITMAP* bitmap : bitmaps) {
-        if (*bitmap) {
-            DeleteObject(*bitmap);
-            *bitmap = nullptr;
-        }
-    }
+    m_titleBarBitmap.Clear();
+    m_pageBackgrounds[0].Clear();
+    m_pageBackgrounds[1].Clear();
 }
