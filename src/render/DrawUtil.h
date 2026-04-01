@@ -74,6 +74,7 @@ private:
     int m_fontHeight;
     unsigned char m_bold;
     int m_charset;
+    COLORREF m_textColor;
 };
 
 // Global drawing functions

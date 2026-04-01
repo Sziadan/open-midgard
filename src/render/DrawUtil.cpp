@@ -1,9 +1,18 @@
 #include "DrawUtil.h"
 #include "Renderer.h"
 #include "core/Globals.h"
+#include "DC.h"
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
+
+#if RO_ENABLE_QT6_UI
+#include <QFont>
+#include <QFontMetrics>
+#include <QImage>
+#include <QPainter>
+#include <QString>
+#endif
 
 // --- Font Mapping Tables ---
 
@@ -94,6 +103,7 @@ DrawDC::DrawDC(HDC hdc) : m_hdc(hdc), m_oldFont(NULL) {
     m_fontHeight = 12;
     m_bold = 0;
     m_charset = ANSI_CHARSET;
+    m_textColor = RGB(0, 0, 0);
 }
 
 DrawDC::~DrawDC() {
@@ -112,16 +122,76 @@ void DrawDC::SetFont(int fontType, int fontHeight, unsigned char bold) {
 }
 
 void DrawDC::SetTextColor(COLORREF color) {
+    m_textColor = color;
     ::SetTextColor(m_hdc, color);
 }
 
 void DrawDC::TextOutA(int x, int y, const char* text, int len) {
     // Simple text out for now, ignoring multi-lang piping
+#if RO_ENABLE_QT6_UI
+    if (!m_hdc || !text || len <= 0) {
+        return;
+    }
+
+    const QString label = QString::fromLocal8Bit(text, len);
+    if (label.isEmpty()) {
+        return;
+    }
+
+    QFont font(QString::fromLocal8Bit(fontFaceNT[m_fontType]));
+    font.setPixelSize((std::max)(1, std::abs(m_fontHeight)));
+    font.setBold(m_bold != 0);
+    font.setStyleStrategy(QFont::NoAntialias);
+
+    const QFontMetrics metrics(font);
+    const int width = (std::max)(1, metrics.horizontalAdvance(label) + 2);
+    const int height = (std::max)(1, metrics.height() + 2);
+    std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+    QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32);
+    if (image.isNull()) {
+        return;
+    }
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setRenderHint(QPainter::TextAntialiasing, false);
+    painter.setFont(font);
+    painter.setPen(QColor(GetRValue(m_textColor), GetGValue(m_textColor), GetBValue(m_textColor)));
+    painter.drawText(0, metrics.ascent(), label);
+    AlphaBlendArgbToHdc(m_hdc, x, y, width, height, pixels.data(), width, height);
+#else
     ::TextOutA(m_hdc, x, y, text, len);
+#endif
 }
 
 void DrawDC::GetTextExtentPoint32A(const char* text, int len, SIZE* size) {
+#if RO_ENABLE_QT6_UI
+    if (!size) {
+        return;
+    }
+
+    size->cx = 0;
+    size->cy = 0;
+    if (!text || len <= 0) {
+        return;
+    }
+
+    const QString label = QString::fromLocal8Bit(text, len);
+    if (label.isEmpty()) {
+        return;
+    }
+
+    QFont font(QString::fromLocal8Bit(fontFaceNT[m_fontType]));
+    font.setPixelSize((std::max)(1, std::abs(m_fontHeight)));
+    font.setBold(m_bold != 0);
+    font.setStyleStrategy(QFont::NoAntialias);
+
+    const QFontMetrics metrics(font);
+    size->cx = metrics.horizontalAdvance(label);
+    size->cy = metrics.height();
+#else
     ::GetTextExtentPoint32A(m_hdc, text, len, size);
+#endif
 }
 
 // --- Global Drawing Functions ---
