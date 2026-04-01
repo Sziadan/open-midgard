@@ -331,22 +331,6 @@ void UIWindow::ReleaseDrawTarget(HDC dc) const
     }
 }
 
-bool BlitToMainWindow(HDC sourceDc, int width, int height)
-{
-    if (!g_hMainWnd || !sourceDc || width <= 0 || height <= 0) {
-        return false;
-    }
-
-    HDC targetDc = GetDC(g_hMainWnd);
-    if (!targetDc) {
-        return false;
-    }
-
-    BitBlt(targetDc, 0, 0, width, height, sourceDc, 0, 0, SRCCOPY);
-    ReleaseDC(g_hMainWnd, targetDc);
-    return true;
-}
-
 bool BlitArgbBitsToMainWindow(const void* bits, int width, int height)
 {
     if (!g_hMainWnd || !bits || width <= 0 || height <= 0) {
@@ -381,22 +365,6 @@ bool BlitArgbBitsToMainWindow(const void* bits, int width, int height)
                                        SRCCOPY) != GDI_ERROR;
     ReleaseDC(g_hMainWnd, targetDc);
     return success;
-}
-
-bool UIWindow::BlitToDrawTarget(HDC sourceDc, int width, int height) const
-{
-    if (!sourceDc || width <= 0 || height <= 0) {
-        return false;
-    }
-
-    HDC targetDc = AcquireDrawTarget();
-    if (!targetDc) {
-        return false;
-    }
-
-    BitBlt(targetDc, 0, 0, width, height, sourceDc, 0, 0, SRCCOPY);
-    ReleaseDrawTarget(targetDc);
-    return true;
 }
 
 bool UIWindow::BlitArgbBitsToDrawTarget(const void* bits, int width, int height) const

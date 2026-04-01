@@ -7,7 +7,6 @@
 void PlayUiButtonSound();
 bool LoadUiWindowPlacement(const char* windowName, int* x, int* y);
 void SaveUiWindowPlacement(const char* windowName, int x, int y);
-bool BlitToMainWindow(HDC sourceDc, int width, int height);
 bool BlitArgbBitsToMainWindow(const void* bits, int width, int height);
 
 struct BOXINFO {
@@ -34,7 +33,6 @@ public:
     virtual void DrawChildrenToHdc(HDC dc);
     virtual HDC AcquireDrawTarget() const;
     virtual void ReleaseDrawTarget(HDC dc) const;
-    bool BlitToDrawTarget(HDC sourceDc, int width, int height) const;
     bool BlitArgbBitsToDrawTarget(const void* bits, int width, int height) const;
 
     static void SetSharedDrawDC(HDC dc);
