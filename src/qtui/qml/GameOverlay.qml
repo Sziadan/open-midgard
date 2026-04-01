@@ -719,27 +719,21 @@ Item {
         }
 
         Repeater {
-            model: [
-                { x: 10, y: 222, w: 68, h: 20 },
-                { x: 84, y: 222, w: 68, h: 20 },
-                { x: 10, y: 246, w: 104, h: 20 },
-                { x: 124, y: 246, w: 104, h: 20 }
-            ]
+            model: uiState.itemPurchaseButtons
 
             delegate: Rectangle {
                 required property var modelData
-                readonly property var buttonState: uiState.itemPurchaseButtons[index] || ({})
-                x: modelData.x
-                y: modelData.y
-                width: modelData.w
-                height: modelData.h
-                color: buttonState.pressed ? "#aab9cd" : (buttonState.hot ? "#c4d2e4" : "#dcdcdc")
+                x: (modelData.x || 0) - uiState.itemPurchaseX
+                y: (modelData.y || 0) - uiState.itemPurchaseY
+                width: modelData.width || 0
+                height: modelData.height || 0
+                color: modelData.pressed ? "#aab9cd" : (modelData.hot ? "#c4d2e4" : "#dcdcdc")
                 border.width: 1
                 border.color: "#585858"
 
                 Text {
                     anchors.centerIn: parent
-                    text: buttonState.label || ""
+                    text: modelData.label || ""
                     color: "#181818"
                     font.pixelSize: 12
                 }
@@ -885,27 +879,21 @@ Item {
         }
 
         Repeater {
-            model: [
-                { x: 10, y: 222, w: 68, h: 20 },
-                { x: 84, y: 222, w: 68, h: 20 },
-                { x: 10, y: 246, w: 104, h: 20 },
-                { x: 124, y: 246, w: 104, h: 20 }
-            ]
+            model: uiState.itemSellButtons
 
             delegate: Rectangle {
                 required property var modelData
-                readonly property var buttonState: uiState.itemSellButtons[index] || ({})
-                x: modelData.x
-                y: modelData.y
-                width: modelData.w
-                height: modelData.h
-                color: buttonState.pressed ? "#aab9cd" : (buttonState.hot ? "#c4d2e4" : "#dcdcdc")
+                x: (modelData.x || 0) - uiState.itemSellX
+                y: (modelData.y || 0) - uiState.itemSellY
+                width: modelData.width || 0
+                height: modelData.height || 0
+                color: modelData.pressed ? "#aab9cd" : (modelData.hot ? "#c4d2e4" : "#dcdcdc")
                 border.width: 1
                 border.color: "#585858"
 
                 Text {
                     anchors.centerIn: parent
-                    text: buttonState.label || ""
+                    text: modelData.label || ""
                     color: "#181818"
                     font.pixelSize: 12
                 }

@@ -729,6 +729,13 @@ void PopulateItemPurchaseState(QtUiState* state)
     };
     for (const ButtonSpec& spec : specs) {
         QVariantMap button;
+        RECT rect{};
+        if (purchaseWnd->GetButtonRectForQt(spec.id, &rect)) {
+            button.insert(QStringLiteral("x"), rect.left);
+            button.insert(QStringLiteral("y"), rect.top);
+            button.insert(QStringLiteral("width"), rect.right - rect.left);
+            button.insert(QStringLiteral("height"), rect.bottom - rect.top);
+        }
         button.insert(QStringLiteral("label"), ToQString(spec.label));
         button.insert(QStringLiteral("hot"), purchaseWnd->GetHoverButton() == spec.id);
         button.insert(QStringLiteral("pressed"), purchaseWnd->GetPressedButton() == spec.id);
@@ -788,6 +795,13 @@ void PopulateItemSellState(QtUiState* state)
     };
     for (const ButtonSpec& spec : specs) {
         QVariantMap button;
+        RECT rect{};
+        if (sellWnd->GetButtonRectForQt(spec.id, &rect)) {
+            button.insert(QStringLiteral("x"), rect.left);
+            button.insert(QStringLiteral("y"), rect.top);
+            button.insert(QStringLiteral("width"), rect.right - rect.left);
+            button.insert(QStringLiteral("height"), rect.bottom - rect.top);
+        }
         button.insert(QStringLiteral("label"), ToQString(spec.label));
         button.insert(QStringLiteral("hot"), sellWnd->GetHoverButton() == spec.id);
         button.insert(QStringLiteral("pressed"), sellWnd->GetPressedButton() == spec.id);

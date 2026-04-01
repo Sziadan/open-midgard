@@ -22,6 +22,7 @@ public:
     int GetVisibleRowCountForQt() const;
     int GetHoverButton() const;
     int GetPressedButton() const;
+    bool GetButtonRectForQt(int buttonId, RECT* outRect) const;
 
 private:
     enum ButtonId {

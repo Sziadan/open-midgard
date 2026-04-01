@@ -382,6 +382,16 @@ int UIItemPurchaseWnd::GetPressedButton() const
     return static_cast<int>(m_pressedButton);
 }
 
+bool UIItemPurchaseWnd::GetButtonRectForQt(int buttonId, RECT* outRect) const
+{
+    if (!outRect || buttonId < ButtonAdd || buttonId > ButtonCancel) {
+        return false;
+    }
+
+    *outRect = GetButtonRect(static_cast<ButtonId>(buttonId));
+    return true;
+}
+
 unsigned long long UIItemPurchaseWnd::BuildDisplayStateToken() const
 {
     unsigned long long hash = 1469598103934665603ull;
