@@ -28,6 +28,10 @@ constexpr int kBarWidth = 85;
 constexpr int kBarHeight = 9;
 constexpr int kExpBarWidth = 102;
 constexpr int kExpBarHeight = 6;
+constexpr int kQtMenuButtonWidth = 32;
+constexpr int kQtMenuButtonHeight = 20;
+constexpr int kQtTopButtonWidth = 11;
+constexpr int kQtTopButtonHeight = 11;
 constexpr int kTopButtonY = 3;
 constexpr int kBaseButtonX = 3;
 constexpr int kMiniButtonX = 266;
@@ -74,6 +78,17 @@ constexpr std::array<const char*, 8> kMenuButtonTooltips = {
     "Alt+C",
     "Alt+Z",
 };
+
+RECT MakeBasicInfoRect(int x, int y, int left, int top, int width, int height)
+{
+    RECT rect{ x + left, y + top, x + left + width, y + top + height };
+    return rect;
+}
+
+bool IsPointInRect(const RECT& rect, int x, int y)
+{
+    return x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom;
+}
 
 std::string ToLowerAscii(std::string value)
 {
@@ -508,6 +523,62 @@ void UIBasicInfoWnd::OnDraw()
     m_lastDrawStateToken = BuildDisplayStateToken();
     m_hasDrawStateToken = true;
     m_isDirty = 0;
+}
+
+void UIBasicInfoWnd::OnLBtnDown(int x, int y)
+{
+    if (IsQtUiRuntimeEnabled()) {
+        const RECT baseRect = MakeBasicInfoRect(m_x, m_y, kBaseButtonX, kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
+        const RECT miniRect = MakeBasicInfoRect(m_x, m_y, kMiniButtonX, kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
+        if (IsPointInRect(baseRect, x, y) || IsPointInRect(miniRect, x, y)) {
+            UIWindow::OnLBtnDown(x, y);
+            return;
+        }
+    }
+
+    UIFrameWnd::OnLBtnDown(x, y);
+}
+
+void UIBasicInfoWnd::OnLBtnUp(int x, int y)
+{
+    if (IsQtUiRuntimeEnabled()) {
+        const bool wasDragging = m_isDragging != 0;
+        UIFrameWnd::OnLBtnUp(x, y);
+        if (wasDragging) {
+            return;
+        }
+
+        if (m_h == kMiniHeight) {
+            const RECT baseRect = MakeBasicInfoRect(m_x, m_y, kBaseButtonX, kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
+            if (IsPointInRect(baseRect, x, y)) {
+                SendMsg(this, 6, kButtonIdBase, 0, 0);
+            }
+            return;
+        }
+
+        const RECT miniRect = MakeBasicInfoRect(m_x, m_y, kMiniButtonX, kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
+        if (IsPointInRect(miniRect, x, y)) {
+            SendMsg(this, 6, kButtonIdMini, 0, 0);
+            return;
+        }
+
+        for (size_t index = 0; index < kMenuButtonIds.size(); ++index) {
+            const RECT buttonRect = MakeBasicInfoRect(
+                m_x,
+                m_y,
+                207 + static_cast<int>(36 * (index % 2)),
+                22 + static_cast<int>(24 * (index / 2)),
+                kQtMenuButtonWidth,
+                kQtMenuButtonHeight);
+            if (IsPointInRect(buttonRect, x, y)) {
+                SendMsg(this, 6, kMenuButtonIds[index], 0, 0);
+                return;
+            }
+        }
+        return;
+    }
+
+    UIFrameWnd::OnLBtnUp(x, y);
 }
 
 void UIBasicInfoWnd::OnLBtnDblClk(int x, int y)
