@@ -230,7 +230,7 @@ std::string ResolveHoveredActorName(CGameMode& mode, CGameActor* actor);
 const char* UiKorPrefix();
 std::string ResolveDataPath(const std::string& fileName, const char* ext, const std::vector<std::string>& directPrefixes);
 double QpcNowMs();
-bool BlitToWindow(HWND hwnd, HDC sourceDc, int width, int height);
+bool BlitArgbBitsToWindow(HWND hwnd, const void* bits, int width, int height);
 
 void ReleaseOverlayComposeSurface(HDC* composeDc, HBITMAP* composeBitmap, void** composeBits, int* composeWidth, int* composeHeight)
 {
@@ -1794,9 +1794,9 @@ double QpcNowMs()
     return static_cast<double>(now.QuadPart) * 1000.0 / static_cast<double>(freq.QuadPart);
 }
 
-bool BlitToWindow(HWND hwnd, HDC sourceDc, int width, int height)
+bool BlitArgbBitsToWindow(HWND hwnd, const void* bits, int width, int height)
 {
-    if (!hwnd || !sourceDc || width <= 0 || height <= 0) {
+    if (!hwnd || !bits || width <= 0 || height <= 0) {
         return false;
     }
 
@@ -1805,9 +1805,29 @@ bool BlitToWindow(HWND hwnd, HDC sourceDc, int width, int height)
         return false;
     }
 
-    BitBlt(targetDc, 0, 0, width, height, sourceDc, 0, 0, SRCCOPY);
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = width;
+    bmi.bmiHeader.biHeight = -height;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    const bool success = StretchDIBits(targetDc,
+                                       0,
+                                       0,
+                                       width,
+                                       height,
+                                       0,
+                                       0,
+                                       width,
+                                       height,
+                                       bits,
+                                       &bmi,
+                                       DIB_RGB_COLORS,
+                                       SRCCOPY) != GDI_ERROR;
     ReleaseDC(hwnd, targetDc);
-    return true;
+    return success;
 }
 
 bool IsMovePerfActive(const CGameMode& mode)
@@ -6763,7 +6783,7 @@ void DrawBootstrapScene(HWND hwnd, const CGameMode& mode)
         &hintRect,
         DT_LEFT | DT_SINGLELINE | DT_VCENTER);
 
-    BlitToWindow(hwnd, memDC, width, height);
+    BlitArgbBitsToWindow(hwnd, dibBits, width, height);
 
     SelectObject(memDC, oldBitmap);
     DeleteObject(bitmap);
