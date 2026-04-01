@@ -229,6 +229,7 @@ void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc);
 std::string ResolveHoveredActorName(CGameMode& mode, CGameActor* actor);
 const char* UiKorPrefix();
 std::string ResolveDataPath(const std::string& fileName, const char* ext, const std::vector<std::string>& directPrefixes);
+double QpcNowMs();
 
 void ReleaseOverlayComposeSurface(HDC* composeDc, HBITMAP* composeBitmap, void** composeBits, int* composeWidth, int* composeHeight)
 {
@@ -417,16 +418,6 @@ std::uint64_t ComputeGameplayOverlayStateToken(CGameMode& mode, int cursorActNum
 bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStartTick)
 {
     const bool trackMovePerf = mode.m_world && mode.m_world->m_player && mode.m_world->m_player->m_isMoving;
-    const auto qpcNowMs = []() -> double {
-        static LARGE_INTEGER freq = [] {
-            LARGE_INTEGER value{};
-            QueryPerformanceFrequency(&value);
-            return value;
-        }();
-        LARGE_INTEGER now{};
-        QueryPerformanceCounter(&now);
-        return static_cast<double>(now.QuadPart) * 1000.0 / static_cast<double>(freq.QuadPart);
-    };
 
     if (!g_hMainWnd) {
         return false;
@@ -504,7 +495,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         || (overlayStateChanged && allowMovingOverlayRefresh);
 
     if (needOverlayRefresh) {
-        const double refreshStartMs = trackMovePerf ? qpcNowMs() : 0.0;
+        const double refreshStartMs = trackMovePerf ? QpcNowMs() : 0.0;
         s_qtOverlayTextureValid = qtGameplayRuntimeEnabled
             && s_qtOverlayTexture
             && RenderQtUiGameplayOverlayTexture(mode, s_qtOverlayTexture, clientWidth, clientHeight);
@@ -520,27 +511,27 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
 
             ClearOverlayComposeBits(s_overlayComposeBits, clientWidth, clientHeight);
             if (!qtGameplayRuntimeEnabled) {
-                const double overlayDrawStartMs = trackMovePerf ? qpcNowMs() : 0.0;
+                const double overlayDrawStartMs = trackMovePerf ? QpcNowMs() : 0.0;
                 DrawGameplayOverlayToHdc(mode, s_overlayComposeDc);
                 if (trackMovePerf) {
-                    g_overlayMovePerfStats.modernOverlayDrawMs += qpcNowMs() - overlayDrawStartMs;
+                    g_overlayMovePerfStats.modernOverlayDrawMs += QpcNowMs() - overlayDrawStartMs;
                 }
             }
 
-            const double uiDrawStartMs = trackMovePerf ? qpcNowMs() : 0.0;
+            const double uiDrawStartMs = trackMovePerf ? QpcNowMs() : 0.0;
             if (!qtGameplayRuntimeEnabled) {
                 g_windowMgr.OnDrawExcludingRoMapToHdc(s_overlayComposeDc);
             } else {
                 g_windowMgr.ClearDirtyVisualState();
             }
             if (trackMovePerf) {
-                g_overlayMovePerfStats.modernUiDrawMs += qpcNowMs() - uiDrawStartMs;
+                g_overlayMovePerfStats.modernUiDrawMs += QpcNowMs() - uiDrawStartMs;
             }
 
-            const double convertStartMs = trackMovePerf ? qpcNowMs() : 0.0;
+            const double convertStartMs = trackMovePerf ? QpcNowMs() : 0.0;
             ConvertOverlayComposeBitsToAlpha(s_overlayComposeBits, clientWidth, clientHeight);
             if (trackMovePerf) {
-                g_overlayMovePerfStats.modernConvertMs += qpcNowMs() - convertStartMs;
+                g_overlayMovePerfStats.modernConvertMs += QpcNowMs() - convertStartMs;
             }
             CompositeQtUiGameplayOverlay(mode,
                 s_overlayComposeBits,
@@ -548,7 +539,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
                 clientHeight,
                 clientWidth * static_cast<int>(sizeof(unsigned int)));
 
-            const double textureUpdateStartMs = trackMovePerf ? qpcNowMs() : 0.0;
+            const double textureUpdateStartMs = trackMovePerf ? QpcNowMs() : 0.0;
             s_overlayTexture->Update(0,
                 0,
                 clientWidth,
@@ -557,7 +548,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
                 true,
                 clientWidth * static_cast<int>(sizeof(unsigned int)));
             if (trackMovePerf) {
-                g_overlayMovePerfStats.modernTextureUpdateMs += qpcNowMs() - textureUpdateStartMs;
+                g_overlayMovePerfStats.modernTextureUpdateMs += QpcNowMs() - textureUpdateStartMs;
             }
             s_overlayTextureValid = true;
         }
@@ -1314,39 +1305,29 @@ void DrawGameplayFallbackToWindow(
     double uiDrawStartMs,
     bool allowCursorWithoutWindowDc)
 {
-    const auto qpcNowMs = []() -> double {
-        static LARGE_INTEGER freq = [] {
-            LARGE_INTEGER value{};
-            QueryPerformanceFrequency(&value);
-            return value;
-        }();
-        LARGE_INTEGER now{};
-        QueryPerformanceCounter(&now);
-        return static_cast<double>(now.QuadPart) * 1000.0 / static_cast<double>(freq.QuadPart);
-    };
     HDC windowDc = GetDC(g_hMainWnd);
     if (windowDc) {
-        const double overlayDrawStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        const double overlayDrawStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
         DrawGameplayOverlayToHdc(mode, windowDc);
         DrawPlayerVitalsOverlay(mode, windowDc);
         if (trackMovePerfFrame) {
-            g_overlayMovePerfStats.fallbackOverlayDrawMs += qpcNowMs() - overlayDrawStartMs;
+            g_overlayMovePerfStats.fallbackOverlayDrawMs += QpcNowMs() - overlayDrawStartMs;
         }
         g_windowMgr.DrawVisibleWindowsToHdc(windowDc, true);
         if (trackMovePerfFrame) {
-            g_overlayMovePerfStats.fallbackUiDrawMs += qpcNowMs() - uiDrawStartMs;
+            g_overlayMovePerfStats.fallbackUiDrawMs += QpcNowMs() - uiDrawStartMs;
         }
-        const double cursorHdcStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        const double cursorHdcStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
         DrawModeCursorToHdc(windowDc, cursorActNum, mouseAnimStartTick);
         if (trackMovePerfFrame) {
-            g_overlayMovePerfStats.fallbackCursorHdcMs += qpcNowMs() - cursorHdcStartMs;
+            g_overlayMovePerfStats.fallbackCursorHdcMs += QpcNowMs() - cursorHdcStartMs;
         }
         ReleaseDC(g_hMainWnd, windowDc);
     } else if (allowCursorWithoutWindowDc) {
-        const double cursorStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        const double cursorStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
         DrawModeCursor(cursorActNum, mouseAnimStartTick);
         if (trackMovePerfFrame) {
-            g_overlayMovePerfStats.fallbackCursorMs += qpcNowMs() - cursorStartMs;
+            g_overlayMovePerfStats.fallbackCursorMs += QpcNowMs() - cursorStartMs;
         }
     }
 }
@@ -7007,16 +6988,6 @@ void CGameMode::OnExit() {
     m_loadingWallpaperName.clear();
 }
 int  CGameMode::OnRun() {
-    const auto qpcNowMs = []() -> double {
-        static LARGE_INTEGER freq = [] {
-            LARGE_INTEGER value{};
-            QueryPerformanceFrequency(&value);
-            return value;
-        }();
-        LARGE_INTEGER now{};
-        QueryPerformanceCounter(&now);
-        return static_cast<double>(now.QuadPart) * 1000.0 / static_cast<double>(freq.QuadPart);
-    };
     const bool mapLoadingWasActive = IsMapLoadingActive(*this);
     const DWORD updateStart = GetTickCount();
     OnUpdate();
@@ -7084,33 +7055,33 @@ int  CGameMode::OnRun() {
     bool queuedModernOverlayFrame = false;
     if (!hasLegacyDevice) {
         uiDrawStart = GetTickCount();
-        const double modernQueueStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        const double modernQueueStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
         queuedModernOverlayFrame = QueueModernOverlayQuad(*this, m_cursorActNum, m_mouseAnimStartTick);
         if (trackMovePerfFrame) {
-            g_overlayMovePerfStats.queueModernMs += qpcNowMs() - modernQueueStartMs;
+            g_overlayMovePerfStats.queueModernMs += QpcNowMs() - modernQueueStartMs;
         }
         if (!IsQtUiRuntimeEnabled()) {
-            const double roMapStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+            const double roMapStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
             QueueRoMapOverlayQuad();
             if (trackMovePerfFrame) {
-                g_overlayMovePerfStats.queueRoMapMs += qpcNowMs() - roMapStartMs;
+                g_overlayMovePerfStats.queueRoMapMs += QpcNowMs() - roMapStartMs;
             }
         }
-        const double lockedTargetStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        const double lockedTargetStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
         QueueLockedTargetOverlayQuad(*this);
         if (trackMovePerfFrame) {
-            g_overlayMovePerfStats.queueLockedTargetMs += qpcNowMs() - lockedTargetStartMs;
+            g_overlayMovePerfStats.queueLockedTargetMs += QpcNowMs() - lockedTargetStartMs;
         }
-        const double msgStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        const double msgStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
         QueueMsgEffectsOverlayQuad();
         if (trackMovePerfFrame) {
-            g_overlayMovePerfStats.queueMsgMs += qpcNowMs() - msgStartMs;
+            g_overlayMovePerfStats.queueMsgMs += QpcNowMs() - msgStartMs;
         }
         QueuePlayerVitalsOverlayQuad(*this);
-        const double cursorQueueStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        const double cursorQueueStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
         QueueCursorOverlayQuad(m_cursorActNum, m_mouseAnimStartTick);
         if (trackMovePerfFrame) {
-            g_overlayMovePerfStats.queueCursorMs += qpcNowMs() - cursorQueueStartMs;
+            g_overlayMovePerfStats.queueCursorMs += QpcNowMs() - cursorQueueStartMs;
         }
         uiDrawEnd = GetTickCount();
     }
@@ -7119,14 +7090,14 @@ int  CGameMode::OnRun() {
     const DWORD drawSceneEnd = GetTickCount();
     if (hasLegacyDevice) {
         const DWORD flipStart = GetTickCount();
-        const double flipStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        const double flipStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
         g_renderer.Flip(false);
         const DWORD flipEnd = GetTickCount();
         if (trackMovePerfFrame) {
-            g_overlayMovePerfStats.flipMs += qpcNowMs() - flipStartMs;
+            g_overlayMovePerfStats.flipMs += QpcNowMs() - flipStartMs;
         }
         const DWORD uiDrawStart = GetTickCount();
-        const double uiDrawStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        const double uiDrawStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
         DrawGameplayFallbackToWindow(
             *this,
             m_cursorActNum,
@@ -7157,14 +7128,14 @@ int  CGameMode::OnRun() {
     } else {
         bool composedModernOverlayFrame = queuedModernOverlayFrame;
         const DWORD flipStart = GetTickCount();
-        const double flipStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+        const double flipStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
         g_renderer.Flip(false);
         const DWORD flipEnd = GetTickCount();
         if (trackMovePerfFrame) {
-            g_overlayMovePerfStats.flipMs += qpcNowMs() - flipStartMs;
+            g_overlayMovePerfStats.flipMs += QpcNowMs() - flipStartMs;
         }
         if (!composedModernOverlayFrame) {
-            const double uiDrawStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
+            const double uiDrawStartMs = trackMovePerfFrame ? QpcNowMs() : 0.0;
             DrawGameplayFallbackToWindow(
                 *this,
                 m_cursorActNum,
