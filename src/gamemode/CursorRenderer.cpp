@@ -18,6 +18,22 @@ bool DrawModeCursorAtToHdc(HDC hdc, int x, int y, int cursorActNum, u32 mouseAni
 
 namespace {
 
+bool DrawModeCursorToMainWindow(int cursorActNum, u32 mouseAnimStartTick)
+{
+    if (!g_hMainWnd) {
+        return false;
+    }
+
+    HDC hdc = GetDC(g_hMainWnd);
+    if (!hdc) {
+        return false;
+    }
+
+    const bool drew = DrawModeCursorToHdc(hdc, cursorActNum, mouseAnimStartTick);
+    ReleaseDC(g_hMainWnd, hdc);
+    return drew;
+}
+
 struct CursorResCache
 {
     bool resolved;
@@ -961,16 +977,5 @@ u32 GetModeCursorVisualFrame(int cursorActNum, u32 mouseAnimStartTick)
 
 void DrawModeCursor(int cursorActNum, u32 mouseAnimStartTick)
 {
-    if (!g_hMainWnd) {
-        return;
-    }
-
-    HDC hdc = GetDC(g_hMainWnd);
-    if (!hdc) {
-        return;
-    }
-
-    DrawModeCursorToHdc(hdc, cursorActNum, mouseAnimStartTick);
-
-    ReleaseDC(g_hMainWnd, hdc);
+    DrawModeCursorToMainWindow(cursorActNum, mouseAnimStartTick);
 }
