@@ -1257,62 +1257,28 @@ Item {
             font.bold: true
         }
 
-        Rectangle {
-            x: 3
-            y: 3
-            width: 12
-            height: 11
-            radius: 2
-            color: "#d7d2c5"
-            border.width: 1
-            border.color: "#7f7a70"
-            visible: uiState.statusMini
+        Repeater {
+            model: uiState.statusData.systemButtons || []
 
-            Text {
-                anchors.centerIn: parent
-                text: "B"
-                color: "#000000"
-                font.pixelSize: 8
-                font.bold: true
-            }
-        }
+            delegate: Rectangle {
+                required property var modelData
+                x: (modelData.x || 0) - uiState.statusX
+                y: (modelData.y || 0) - uiState.statusY
+                width: modelData.width || 0
+                height: modelData.height || 0
+                radius: 2
+                color: "#d7d2c5"
+                border.width: 1
+                border.color: "#7f7a70"
+                visible: modelData.visible || false
 
-        Rectangle {
-            x: 252
-            y: 3
-            width: 12
-            height: 11
-            radius: 2
-            color: "#d7d2c5"
-            border.width: 1
-            border.color: "#7f7a70"
-            visible: !uiState.statusMini
-
-            Text {
-                anchors.centerIn: parent
-                text: "_"
-                color: "#000000"
-                font.pixelSize: 8
-                font.bold: true
-            }
-        }
-
-        Rectangle {
-            x: 266
-            y: 3
-            width: 12
-            height: 11
-            radius: 2
-            color: "#d7d2c5"
-            border.width: 1
-            border.color: "#7f7a70"
-
-            Text {
-                anchors.centerIn: parent
-                text: "X"
-                color: "#000000"
-                font.pixelSize: 8
-                font.bold: true
+                Text {
+                    anchors.centerIn: parent
+                    text: modelData.label || ""
+                    color: "#000000"
+                    font.pixelSize: 8
+                    font.bold: true
+                }
             }
         }
 
@@ -1342,42 +1308,28 @@ Item {
                 color: "#d3cdbf"
             }
 
-            Rectangle {
-                x: 0
-                y: 0
-                width: 20
-                height: 26
-                color: uiState.statusPage === 0 ? "#ebe7db" : "#c9c2b2"
-                border.width: 1
-                border.color: "#8c8578"
-            }
+            Repeater {
+                model: uiState.statusData.pageTabs || []
 
-            Rectangle {
-                x: 0
-                y: 26
-                width: 20
-                height: 24
-                color: uiState.statusPage === 1 ? "#ebe7db" : "#c9c2b2"
-                border.width: 1
-                border.color: "#8c8578"
-            }
+                delegate: Rectangle {
+                    required property var modelData
+                    x: (modelData.x || 0) - uiState.statusX
+                    y: (modelData.y || 0) - uiState.statusY - 17
+                    width: modelData.width || 0
+                    height: modelData.height || 0
+                    color: modelData.active ? "#ebe7db" : "#c9c2b2"
+                    border.width: 1
+                    border.color: "#8c8578"
+                    visible: modelData.visible || false
 
-            Text {
-                x: 6
-                y: 8
-                text: "1"
-                color: "#000000"
-                font.pixelSize: 10
-                font.bold: uiState.statusPage === 0
-            }
-
-            Text {
-                x: 6
-                y: 33
-                text: "2"
-                color: "#000000"
-                font.pixelSize: 10
-                font.bold: uiState.statusPage === 1
+                    Text {
+                        anchors.centerIn: parent
+                        text: modelData.label || ""
+                        color: "#000000"
+                        font.pixelSize: 10
+                        font.bold: modelData.active || false
+                    }
+                }
             }
 
             Repeater {

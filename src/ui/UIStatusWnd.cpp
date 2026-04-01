@@ -558,6 +558,75 @@ bool UIStatusWnd::GetDisplayDataForQt(DisplayData* outData) const
     return true;
 }
 
+int UIStatusWnd::GetQtSystemButtonCount() const
+{
+    return 3;
+}
+
+bool UIStatusWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* out) const
+{
+    if (!out || index < 0 || index >= GetQtSystemButtonCount()) {
+        return false;
+    }
+
+    switch (index) {
+    case 0:
+        out->id = kButtonIdBase;
+        out->x = m_x + 3;
+        out->y = m_y + 3;
+        out->width = kQtButtonWidth;
+        out->height = kQtButtonHeight;
+        out->label = "B";
+        out->visible = IsMiniMode();
+        out->active = false;
+        return true;
+    case 1:
+        out->id = kButtonIdMini;
+        out->x = m_x + 252;
+        out->y = m_y + 3;
+        out->width = kQtButtonWidth;
+        out->height = kQtButtonHeight;
+        out->label = "_";
+        out->visible = !IsMiniMode();
+        out->active = false;
+        return true;
+    case 2:
+        out->id = kButtonIdClose;
+        out->x = m_x + 266;
+        out->y = m_y + 3;
+        out->width = kQtButtonWidth;
+        out->height = kQtButtonHeight;
+        out->label = "X";
+        out->visible = true;
+        out->active = false;
+        return true;
+    default:
+        return false;
+    }
+}
+
+int UIStatusWnd::GetQtPageTabCount() const
+{
+    return 2;
+}
+
+bool UIStatusWnd::GetQtPageTabDisplayForQt(int index, QtButtonDisplay* out) const
+{
+    if (!out || index < 0 || index >= GetQtPageTabCount()) {
+        return false;
+    }
+
+    out->id = index;
+    out->x = m_x;
+    out->y = m_y + kTitleBarHeight + (index == 0 ? 0 : 26);
+    out->width = 20;
+    out->height = index == 0 ? 26 : 24;
+    out->label = index == 0 ? "1" : "2";
+    out->visible = !IsMiniMode();
+    out->active = m_page == index;
+    return true;
+}
+
 void UIStatusWnd::EnsureCreated()
 {
     if (!m_controlsCreated) {

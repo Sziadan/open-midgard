@@ -10,6 +10,17 @@ class UIBitmapButton;
 
 class UIStatusWnd : public UIFrameWnd {
 public:
+    struct QtButtonDisplay {
+        int id = 0;
+        int x = 0;
+        int y = 0;
+        int width = 0;
+        int height = 0;
+        std::string label;
+        bool visible = true;
+        bool active = false;
+    };
+
     struct DisplayData {
         std::array<int, 6> baseStats{};
         std::array<int, 6> plusStats{};
@@ -49,6 +60,10 @@ public:
     bool IsMiniMode() const;
     int GetPageForQt() const;
     bool GetDisplayDataForQt(DisplayData* outData) const;
+    int GetQtSystemButtonCount() const;
+    bool GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* out) const;
+    int GetQtPageTabCount() const;
+    bool GetQtPageTabDisplayForQt(int index, QtButtonDisplay* out) const;
 
 private:
     void EnsureCreated();

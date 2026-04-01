@@ -1020,6 +1020,49 @@ void PopulateStatusState(QtUiState* state)
         }
 
         data.insert(QStringLiteral("stats"), stats);
+
+        QVariantList systemButtons;
+        systemButtons.reserve(statusWnd->GetQtSystemButtonCount());
+        for (int index = 0; index < statusWnd->GetQtSystemButtonCount(); ++index) {
+            UIStatusWnd::QtButtonDisplay buttonDisplay{};
+            if (!statusWnd->GetQtSystemButtonDisplayForQt(index, &buttonDisplay)) {
+                continue;
+            }
+
+            QVariantMap button;
+            button.insert(QStringLiteral("id"), buttonDisplay.id);
+            button.insert(QStringLiteral("x"), buttonDisplay.x);
+            button.insert(QStringLiteral("y"), buttonDisplay.y);
+            button.insert(QStringLiteral("width"), buttonDisplay.width);
+            button.insert(QStringLiteral("height"), buttonDisplay.height);
+            button.insert(QStringLiteral("label"), ToQString(buttonDisplay.label));
+            button.insert(QStringLiteral("visible"), buttonDisplay.visible);
+            button.insert(QStringLiteral("active"), buttonDisplay.active);
+            systemButtons.push_back(button);
+        }
+        data.insert(QStringLiteral("systemButtons"), systemButtons);
+
+        QVariantList pageTabs;
+        pageTabs.reserve(statusWnd->GetQtPageTabCount());
+        for (int index = 0; index < statusWnd->GetQtPageTabCount(); ++index) {
+            UIStatusWnd::QtButtonDisplay buttonDisplay{};
+            if (!statusWnd->GetQtPageTabDisplayForQt(index, &buttonDisplay)) {
+                continue;
+            }
+
+            QVariantMap button;
+            button.insert(QStringLiteral("id"), buttonDisplay.id);
+            button.insert(QStringLiteral("x"), buttonDisplay.x);
+            button.insert(QStringLiteral("y"), buttonDisplay.y);
+            button.insert(QStringLiteral("width"), buttonDisplay.width);
+            button.insert(QStringLiteral("height"), buttonDisplay.height);
+            button.insert(QStringLiteral("label"), ToQString(buttonDisplay.label));
+            button.insert(QStringLiteral("visible"), buttonDisplay.visible);
+            button.insert(QStringLiteral("active"), buttonDisplay.active);
+            pageTabs.push_back(button);
+        }
+        data.insert(QStringLiteral("pageTabs"), pageTabs);
+
         data.insert(QStringLiteral("attackText"), FormatCompositeStatusText(display.attack, display.refineAttack));
         data.insert(QStringLiteral("matkText"), FormatMatkStatusText(display.matkMin, display.matkMax));
         data.insert(QStringLiteral("hit"), display.hit);
