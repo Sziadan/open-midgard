@@ -7,6 +7,14 @@
 
 #include <windows.h>
 
+#if RO_ENABLE_QT6_UI
+#include <QFont>
+#include <QFontMetrics>
+#include <QImage>
+#include <QPainter>
+#include <QString>
+#endif
+
 #include <algorithm>
 #include <cstring>
 #include <string>
@@ -194,6 +202,83 @@ inline HFONT GetUiFont()
     return s_font;
 }
 
+#if RO_ENABLE_QT6_UI
+inline QFont BuildUiFontFromHdc(HDC hdc)
+{
+    LOGFONTA logFont{};
+    if (hdc) {
+        if (HGDIOBJ fontObject = GetCurrentObject(hdc, OBJ_FONT)) {
+            GetObjectA(fontObject, sizeof(logFont), &logFont);
+        }
+    }
+
+    const QString family = logFont.lfFaceName[0] != '\0'
+        ? QString::fromLocal8Bit(logFont.lfFaceName)
+        : QStringLiteral("MS Sans Serif");
+    QFont font(family);
+    font.setPixelSize(logFont.lfHeight != 0 ? (std::max)(1, std::abs(logFont.lfHeight)) : 11);
+    font.setBold(logFont.lfWeight >= FW_BOLD);
+    font.setStyleStrategy(QFont::NoAntialias);
+    return font;
+}
+
+inline Qt::Alignment ToQtTextAlignment(UINT format)
+{
+    Qt::Alignment alignment = Qt::AlignLeft | Qt::AlignTop;
+    if (format & DT_CENTER) {
+        alignment &= ~Qt::AlignLeft;
+        alignment |= Qt::AlignHCenter;
+    } else if (format & DT_RIGHT) {
+        alignment &= ~Qt::AlignLeft;
+        alignment |= Qt::AlignRight;
+    }
+
+    if (format & DT_VCENTER) {
+        alignment &= ~Qt::AlignTop;
+        alignment |= Qt::AlignVCenter;
+    } else if (format & DT_BOTTOM) {
+        alignment &= ~Qt::AlignTop;
+        alignment |= Qt::AlignBottom;
+    }
+
+    return alignment;
+}
+
+inline void DrawWindowTextRectQt(HDC hdc, const RECT& rect, const std::string& text, COLORREF color, UINT format)
+{
+    if (!hdc || text.empty() || rect.right <= rect.left || rect.bottom <= rect.top) {
+        return;
+    }
+
+    QString label = QString::fromLocal8Bit(text.c_str());
+    if (label.isEmpty()) {
+        return;
+    }
+
+    const int width = rect.right - rect.left;
+    const int height = rect.bottom - rect.top;
+    const QFont font = BuildUiFontFromHdc(hdc);
+    if (format & DT_END_ELLIPSIS) {
+        const QFontMetrics metrics(font);
+        label = metrics.elidedText(label, Qt::ElideRight, width);
+    }
+
+    std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+    QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32);
+    if (image.isNull()) {
+        return;
+    }
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setRenderHint(QPainter::TextAntialiasing, false);
+    painter.setFont(font);
+    painter.setPen(QColor(GetRValue(color), GetGValue(color), GetBValue(color)));
+    painter.drawText(QRect(0, 0, width, height), ToQtTextAlignment(format) | Qt::TextSingleLine, label);
+    AlphaBlendArgbToHdc(hdc, rect.left, rect.top, width, height, pixels.data(), width, height);
+}
+#endif
+
 inline void DrawWindowTextRect(HDC hdc, const RECT& rect, const std::string& text, COLORREF color, UINT format)
 {
     if (!hdc || text.empty() || rect.right <= rect.left || rect.bottom <= rect.top) {
@@ -204,7 +289,11 @@ inline void DrawWindowTextRect(HDC hdc, const RECT& rect, const std::string& tex
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, color);
     HGDIOBJ oldFont = SelectObject(hdc, GetUiFont());
+#if RO_ENABLE_QT6_UI
+    DrawWindowTextRectQt(hdc, drawRect, text, color, format);
+#else
     DrawTextA(hdc, text.c_str(), -1, &drawRect, format);
+#endif
     SelectObject(hdc, oldFont);
 }
 

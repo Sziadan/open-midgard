@@ -5,8 +5,17 @@
 #include "DebugLog.h"
 #include "main/WinMain.h"
 #include "qtui/QtUiRuntime.h"
+#include "render/DC.h"
 
 #include <windows.h>
+
+#if RO_ENABLE_QT6_UI
+#include <QFont>
+#include <QFontMetrics>
+#include <QImage>
+#include <QPainter>
+#include <QString>
+#endif
 
 #include <algorithm>
 #include <array>
@@ -54,6 +63,55 @@ std::string NormalizeSlashUi(std::string value)
     std::replace(value.begin(), value.end(), '/', '\\');
     return value;
 }
+
+#if RO_ENABLE_QT6_UI
+QFont BuildUiEditFontFromHdc(HDC hdc)
+{
+    LOGFONTA logFont{};
+    if (hdc) {
+        if (HGDIOBJ fontObject = GetCurrentObject(hdc, OBJ_FONT)) {
+            GetObjectA(fontObject, sizeof(logFont), &logFont);
+        }
+    }
+
+    const QString family = logFont.lfFaceName[0] != '\0'
+        ? QString::fromLocal8Bit(logFont.lfFaceName)
+        : QStringLiteral("MS Sans Serif");
+    QFont font(family);
+    font.setPixelSize(logFont.lfHeight != 0 ? (std::max)(1, std::abs(logFont.lfHeight)) : 13);
+    font.setBold(logFont.lfWeight >= FW_BOLD);
+    font.setStyleStrategy(QFont::NoAntialias);
+    return font;
+}
+
+void DrawUiEditTextQt(HDC hdc, const RECT& rect, const std::string& text, COLORREF color)
+{
+    if (!hdc || rect.right <= rect.left || rect.bottom <= rect.top) {
+        return;
+    }
+
+    QString label = QString::fromLocal8Bit(text.c_str());
+    const int width = rect.right - rect.left;
+    const int height = rect.bottom - rect.top;
+    const QFont font = BuildUiEditFontFromHdc(hdc);
+    const QFontMetrics metrics(font);
+    label = metrics.elidedText(label, Qt::ElideRight, width);
+
+    std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+    QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32);
+    if (image.isNull()) {
+        return;
+    }
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setRenderHint(QPainter::TextAntialiasing, false);
+    painter.setFont(font);
+    painter.setPen(QColor(GetRValue(color), GetGValue(color), GetBValue(color)));
+    painter.drawText(QRect(0, 0, width, height), Qt::AlignLeft | Qt::AlignVCenter | Qt::TextSingleLine, label);
+    AlphaBlendArgbToHdc(hdc, rect.left, rect.top, width, height, pixels.data(), width, height);
+}
+#endif
 
 void ClampWindowPositionToClient(int* x, int* y, int w, int h)
 {
@@ -783,7 +841,11 @@ void UIEditCtrl::OnDraw()
     }
 
     RECT textRc = { m_x + m_xOffset, m_y + m_yOffset, m_x + m_w - 2, m_y + m_h - 2 };
+#if RO_ENABLE_QT6_UI
+    DrawUiEditTextQt(hdc, textRc, drawText, RGB(m_textR, m_textG, m_textB));
+#else
     DrawTextA(hdc, drawText.c_str(), -1, &textRc, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
+#endif
 
     DrawChildrenToHdc(hdc);
     ReleaseDrawTarget(hdc);
