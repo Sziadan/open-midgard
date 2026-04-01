@@ -1006,18 +1006,13 @@ void UIWindowMgr::DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap)
     }
 }
 
-void UIWindowMgr::OnDrawToHdc(HDC targetDC)
-{
-    DrawVisibleWindowsToHdc(targetDC, true);
-}
-
 void UIWindowMgr::OnDraw() {
     if (!g_hMainWnd) {
         return;
     }
 
     if (HDC sharedDC = UIWindow::GetSharedDrawDC()) {
-        OnDrawToHdc(sharedDC);
+        DrawVisibleWindowsToHdc(sharedDC, true);
         return;
     }
 
@@ -1095,7 +1090,7 @@ void UIWindowMgr::OnDraw() {
         && IsQtUiRuntimeEnabled()
         && GetRenderDevice().GetLegacyDevice() == nullptr;
     if (!qtMenuComposeFallback) {
-        OnDrawToHdc(drawDC);
+        DrawVisibleWindowsToHdc(drawDC, true);
     } else {
         ClearDirtyVisualState();
         CompositeQtUiMenuOverlay(

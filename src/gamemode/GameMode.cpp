@@ -7090,7 +7090,7 @@ int  CGameMode::OnRun() {
             if (trackMovePerfFrame) {
                 g_overlayMovePerfStats.fallbackOverlayDrawMs += qpcNowMs() - overlayDrawStartMs;
             }
-            g_windowMgr.OnDrawToHdc(windowDc);
+            g_windowMgr.DrawVisibleWindowsToHdc(windowDc, true);
             if (trackMovePerfFrame) {
                 g_overlayMovePerfStats.fallbackUiDrawMs += qpcNowMs() - uiDrawStartMs;
             }
@@ -7146,7 +7146,7 @@ int  CGameMode::OnRun() {
                     g_overlayMovePerfStats.fallbackOverlayDrawMs += qpcNowMs() - overlayDrawStartMs;
                 }
                 const double uiDrawStartMs = trackMovePerfFrame ? qpcNowMs() : 0.0;
-                g_windowMgr.OnDrawToHdc(windowDc);
+                g_windowMgr.DrawVisibleWindowsToHdc(windowDc, true);
                 if (trackMovePerfFrame) {
                     g_overlayMovePerfStats.fallbackUiDrawMs += qpcNowMs() - uiDrawStartMs;
                 }

@@ -424,7 +424,7 @@ bool QueueLoginUiQuad()
             }
 
             if (!qtMenuRuntimeEnabled) {
-                g_windowMgr.OnDrawToHdc(s_uiComposeDc);
+                g_windowMgr.DrawVisibleWindowsToHdc(s_uiComposeDc, true);
             } else {
                 g_windowMgr.ClearDirtyVisualState();
             }

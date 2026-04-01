@@ -86,7 +86,6 @@ public:
     void Reset();
     void OnProcess();
     void OnDraw();
-    void OnDrawToHdc(HDC targetDC);
     void DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap);
     bool HasDirtyVisualState() const;
     bool HasDirtyVisualStateExcludingRoMap() const;
