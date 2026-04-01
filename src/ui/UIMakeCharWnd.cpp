@@ -44,35 +44,29 @@ constexpr int kMakeCharHairY[3] = { 135, 135, 101 };
 constexpr int kMakeCharSmallButtonW = 16;
 constexpr int kMakeCharSmallButtonH = 14;
 
-HBITMAP LoadBitmapFromGameData(const char* path)
+shopui::BitmapPixels LoadBitmapPixelsFromGameData(const char* path)
 {
-    HBITMAP outBmp = nullptr;
-    LoadHBitmapFromGameData(path, &outBmp, nullptr, nullptr);
-    return outBmp;
+    return shopui::LoadBitmapPixelsFromGameData(path ? path : "", true);
 }
 
-void DrawBitmapStretched(HDC target, HBITMAP bmp, const RECT& dst)
+void DrawBitmapPixelsStretched(HDC target, const shopui::BitmapPixels& bmp, const RECT& dst)
 {
-    if (!target || !bmp) {
+    if (!target || !bmp.IsValid() || dst.right <= dst.left || dst.bottom <= dst.top) {
         return;
     }
 
-    BITMAP bm{};
-    if (!GetObjectA(bmp, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = bmp.width;
+    bmi.bmiHeader.biHeight = -bmp.height;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
 
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
-        return;
-    }
-
-    HGDIOBJ old = SelectObject(srcDC, bmp);
-    SetStretchBltMode(target, HALFTONE);
-    StretchBlt(target, dst.left, dst.top, dst.right - dst.left, dst.bottom - dst.top,
-        srcDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
-    SelectObject(srcDC, old);
-    DeleteDC(srcDC);
+    const int oldStretchMode = SetStretchBltMode(target, HALFTONE);
+    StretchDIBits(target, dst.left, dst.top, dst.right - dst.left, dst.bottom - dst.top,
+        0, 0, bmp.width, bmp.height, bmp.pixels.data(), &bmi, DIB_RGB_COLORS, SRCCOPY);
+    SetStretchBltMode(target, oldStretchMode);
 }
 
 std::string ToLowerAscii(std::string value)
@@ -183,18 +177,18 @@ std::vector<std::string> BuildUiAssetCandidates(const char* fileName)
     return out;
 }
 
-HBITMAP LoadFirstBitmapFromCandidates(const std::vector<std::string>& candidates, std::string* outPath)
+shopui::BitmapPixels LoadFirstBitmapPixelsFromCandidates(const std::vector<std::string>& candidates, std::string* outPath)
 {
     for (const std::string& candidate : candidates) {
-        HBITMAP bmp = LoadBitmapFromGameData(candidate.c_str());
-        if (bmp) {
+        shopui::BitmapPixels bmp = LoadBitmapPixelsFromGameData(candidate.c_str());
+        if (bmp.IsValid()) {
             if (outPath) {
                 *outPath = candidate;
             }
             return bmp;
         }
     }
-    return nullptr;
+    return {};
 }
 
 std::string ResolveUiAssetPath(const char* fileName)
@@ -302,7 +296,7 @@ bool DrawPreviewLayer(HDC hdc, const UIMakeCharWnd::PreviewState& preview, int l
 }
 
 UIMakeCharWnd::UIMakeCharWnd()
-    : m_controlsCreated(false), m_assetsProbed(false), m_backgroundBmp(nullptr),
+    : m_controlsCreated(false), m_assetsProbed(false), m_backgroundBmp(),
             m_composeDC(nullptr), m_composeBitmap(nullptr), m_composeBits(nullptr),
       m_composeWidth(0), m_composeHeight(0),
       m_nameEditCtrl(nullptr), m_okButton(nullptr), m_cancelButton(nullptr),
@@ -408,10 +402,7 @@ bool UIMakeCharWnd::GetMakeCharDisplay(MakeCharDisplay* out) const
 
 void UIMakeCharWnd::ClearAssets()
 {
-    if (m_backgroundBmp) {
-        DeleteObject(m_backgroundBmp);
-        m_backgroundBmp = nullptr;
-    }
+    m_backgroundBmp.Clear();
     m_backgroundPath.clear();
 }
 
@@ -481,8 +472,8 @@ void UIMakeCharWnd::EnsureResourceCache()
         nullptr
     };
 
-    for (int i = 0; panelNames[i] && !m_backgroundBmp; ++i) {
-        m_backgroundBmp = LoadFirstBitmapFromCandidates(BuildUiAssetCandidates(panelNames[i]), &m_backgroundPath);
+    for (int i = 0; panelNames[i] && !m_backgroundBmp.IsValid(); ++i) {
+        m_backgroundBmp = LoadFirstBitmapPixelsFromCandidates(BuildUiAssetCandidates(panelNames[i]), &m_backgroundPath);
     }
 }
 
@@ -772,8 +763,8 @@ void UIMakeCharWnd::OnDraw()
     }
 
     RECT panel = MakeRect(m_x, m_y, m_w, m_h);
-    if (m_backgroundBmp) {
-        DrawBitmapStretched(hdc, m_backgroundBmp, panel);
+    if (m_backgroundBmp.IsValid()) {
+        DrawBitmapPixelsStretched(hdc, m_backgroundBmp, panel);
     } else {
         HBRUSH bg = CreateSolidBrush(RGB(255, 255, 255));
         FillRect(hdc, &panel, bg);
