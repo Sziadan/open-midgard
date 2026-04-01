@@ -1,6 +1,7 @@
 #include "UINotifyLevelUpWnd.h"
 
 #include "UIBasicInfoWnd.h"
+#include "UIShopCommon.h"
 #include "UIWindowMgr.h"
 #include "core/File.h"
 #include "main/WinMain.h"
@@ -102,6 +103,21 @@ std::string ResolveUiAssetPath(const char* fileName)
     return NormalizeSlash(fileName ? fileName : "");
 }
 
+SIZE ResolveNotifyButtonSize()
+{
+    static bool s_resolved = false;
+    static SIZE s_size{ 1, 1 };
+    if (!s_resolved) {
+        s_resolved = true;
+        const shopui::BitmapPixels bitmap = shopui::LoadBitmapPixelsFromGameData(ResolveUiAssetPath("lv_up_off.bmp"), true);
+        if (bitmap.IsValid()) {
+            s_size.cx = (std::max)(1, bitmap.width);
+            s_size.cy = (std::max)(1, bitmap.height);
+        }
+    }
+    return s_size;
+}
+
 }
 
 UINotifyLevelUpWnd::UINotifyLevelUpWnd()
@@ -153,6 +169,13 @@ void UINotifyLevelUpWnd::OnCreate(int x, int y)
     }
 
     m_controlsCreated = true;
+
+    if (IsQtUiRuntimeEnabled()) {
+        const SIZE buttonSize = ResolveNotifyButtonSize();
+        Resize(buttonSize.cx, buttonSize.cy);
+        UpdateAnchor();
+        return;
+    }
 
     m_button = new UIBitmapButton();
     const std::string offPath = ResolveUiAssetPath("lv_up_off.bmp");
