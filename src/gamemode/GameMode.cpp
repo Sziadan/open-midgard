@@ -1053,14 +1053,13 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
             return false;
         }
 #else
-        HDC measureDc = CreateCompatibleDC(nullptr);
-        if (!measureDc) {
+        static ArgbDibSurface s_measureSurface;
+        if (!s_measureSurface.EnsureSize(1, 1)) {
             return false;
         }
-        DrawDC drawDc(measureDc);
+        DrawDC drawDc(s_measureSurface.GetDC());
         drawDc.SetFont(FONT_DEFAULT, kHoverNameFontHeight, kHoverNameFontBold);
         drawDc.GetTextExtentPoint32A(label.c_str(), static_cast<int>(label.size()), &textSize);
-        DeleteDC(measureDc);
 #endif
         textX = centerX - (textSize.cx / 2);
         textY = labelY + kHoverNameTextPadding + kHoverNameVerticalOffset;
