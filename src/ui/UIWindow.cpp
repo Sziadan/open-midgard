@@ -5,7 +5,6 @@
 #include "DebugLog.h"
 #include "main/WinMain.h"
 #include "qtui/QtUiRuntime.h"
-#include "res/Bitmap.h"
 
 #include <windows.h>
 
@@ -194,99 +193,6 @@ std::string ResolveUiButtonSoundPath()
         DbgLog("[UI] button sound unresolved\n");
     }
     return s_cachedPath;
-}
-
-HBITMAP LoadBitmapFromGameData(const char* path)
-{
-    HBITMAP outBmp = nullptr;
-    LoadHBitmapFromGameData(path, &outBmp, nullptr, nullptr);
-    return outBmp;
-}
-
-void DrawBitmapStretched(HDC target, HBITMAP bmp, const RECT& dst)
-{
-    if (!target || !bmp) {
-        return;
-    }
-
-    BITMAP bm{};
-    if (!GetObjectA(bmp, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
-
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
-        return;
-    }
-
-    HGDIOBJ old = SelectObject(srcDC, bmp);
-    SetStretchBltMode(target, HALFTONE);
-    StretchBlt(target,
-        dst.left,
-        dst.top,
-        dst.right - dst.left,
-        dst.bottom - dst.top,
-        srcDC,
-        0,
-        0,
-        bm.bmWidth,
-        bm.bmHeight,
-        SRCCOPY);
-    SelectObject(srcDC, old);
-    DeleteDC(srcDC);
-}
-
-void DrawBitmapTransparent(HDC target, HBITMAP bmp, const RECT& dst)
-{
-    if (!target || !bmp) {
-        return;
-    }
-
-    BITMAP bm{};
-    if (!GetObjectA(bmp, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
-
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
-        return;
-    }
-
-    HGDIOBJ old = SelectObject(srcDC, bmp);
-    TransparentBlt(target,
-        dst.left, dst.top,
-        dst.right - dst.left, dst.bottom - dst.top,
-        srcDC, 0, 0, bm.bmWidth, bm.bmHeight,
-        RGB(255, 0, 255));
-    SelectObject(srcDC, old);
-    DeleteDC(srcDC);
-}
-
-void DrawBitmapAt(HDC target, const std::string& path, int x, int y, int* outW = nullptr, int* outH = nullptr)
-{
-    if (!target || path.empty()) {
-        return;
-    }
-
-    HBITMAP bmp = LoadBitmapFromGameData(path.c_str());
-    if (!bmp) {
-        return;
-    }
-
-    BITMAP bm{};
-    if (GetObjectA(bmp, sizeof(bm), &bm) && bm.bmWidth > 0 && bm.bmHeight > 0) {
-        if (outW) {
-            *outW = bm.bmWidth;
-        }
-        if (outH) {
-            *outH = bm.bmHeight;
-        }
-
-        RECT dst = { x, y, x + bm.bmWidth, y + bm.bmHeight };
-        DrawBitmapStretched(target, bmp, dst);
-    }
-
-    DeleteObject(bmp);
 }
 
 bool IsPointInsideWindow(const UIWindow* window, int x, int y)

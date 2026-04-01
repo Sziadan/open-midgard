@@ -116,13 +116,6 @@ inline std::string ResolveUiAssetPath(const char* fileName)
     return NormalizeSlash(fileName ? fileName : "");
 }
 
-inline HBITMAP LoadBitmapFromGameData(const std::string& path)
-{
-    HBITMAP outBitmap = nullptr;
-    LoadHBitmapFromGameData(path.c_str(), &outBitmap, nullptr, nullptr);
-    return outBitmap;
-}
-
 inline BitmapPixels LoadBitmapPixelsFromGameData(const std::string& path, bool applyTransparentKey = false)
 {
     BitmapPixels bitmap;
@@ -149,38 +142,6 @@ inline BitmapPixels LoadBitmapPixelsFromGameData(const std::string& path, bool a
     }
 
     return bitmap;
-}
-
-inline void DrawBitmapTransparent(HDC target, HBITMAP bitmap, const RECT& dst)
-{
-    if (!target || !bitmap) {
-        return;
-    }
-
-    BITMAP bm{};
-    if (!GetObjectA(bitmap, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
-
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
-        return;
-    }
-
-    HGDIOBJ oldBitmap = SelectObject(srcDC, bitmap);
-    TransparentBlt(target,
-        dst.left,
-        dst.top,
-        dst.right - dst.left,
-        dst.bottom - dst.top,
-        srcDC,
-        0,
-        0,
-        bm.bmWidth,
-        bm.bmHeight,
-        RGB(255, 0, 255));
-    SelectObject(srcDC, oldBitmap);
-    DeleteDC(srcDC);
 }
 
 inline void DrawBitmapPixelsTransparent(HDC target, const BitmapPixels& bitmap, const RECT& dst)
