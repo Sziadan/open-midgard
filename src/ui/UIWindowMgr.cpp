@@ -1113,7 +1113,7 @@ void UIWindowMgr::OnDraw() {
 
     if (useCompose) {
         if (!presentedModernUiFrame) {
-            if (!BlitToMainWindow(drawDC, clientWidth, clientHeight)) {
+            if (!BlitArgbBitsToMainWindow(m_uiComposeBits, clientWidth, clientHeight)) {
                 return;
             }
         }

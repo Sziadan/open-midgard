@@ -347,6 +347,42 @@ bool BlitToMainWindow(HDC sourceDc, int width, int height)
     return true;
 }
 
+bool BlitArgbBitsToMainWindow(const void* bits, int width, int height)
+{
+    if (!g_hMainWnd || !bits || width <= 0 || height <= 0) {
+        return false;
+    }
+
+    HDC targetDc = GetDC(g_hMainWnd);
+    if (!targetDc) {
+        return false;
+    }
+
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = width;
+    bmi.bmiHeader.biHeight = -height;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    const bool success = StretchDIBits(targetDc,
+                                       0,
+                                       0,
+                                       width,
+                                       height,
+                                       0,
+                                       0,
+                                       width,
+                                       height,
+                                       bits,
+                                       &bmi,
+                                       DIB_RGB_COLORS,
+                                       SRCCOPY) != GDI_ERROR;
+    ReleaseDC(g_hMainWnd, targetDc);
+    return success;
+}
+
 bool UIWindow::BlitToDrawTarget(HDC sourceDc, int width, int height) const
 {
     if (!sourceDc || width <= 0 || height <= 0) {
