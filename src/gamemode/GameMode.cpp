@@ -884,7 +884,8 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
     SetRectEmpty(&overlayRect);
 
     const std::string label = ResolveHoveredActorName(mode, actorIt->second);
-    if (!label.empty()) {
+    const bool drawLockedTargetText = !IsQtUiRuntimeEnabled() && !label.empty();
+    if (drawLockedTargetText) {
         DrawDC drawDc(measureDc);
         drawDc.SetFont(FONT_DEFAULT, kHoverNameFontHeight, kHoverNameFontBold);
         SIZE textSize{};
@@ -959,20 +960,15 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
         return false;
     }
 
+    static CTexture* s_targetTexture = nullptr;
+    static int s_targetTextureWidth = 0;
+    static int s_targetTextureHeight = 0;
+    static std::vector<unsigned int> s_targetComposePixels;
     static HDC s_targetComposeDc = nullptr;
     static HBITMAP s_targetComposeBitmap = nullptr;
     static void* s_targetComposeBits = nullptr;
     static int s_targetComposeWidth = 0;
     static int s_targetComposeHeight = 0;
-    const bool composeReady = EnsureOverlayComposeSurface(width, height,
-        &s_targetComposeDc, &s_targetComposeBitmap, &s_targetComposeBits, &s_targetComposeWidth, &s_targetComposeHeight);
-    if (!composeReady) {
-        return false;
-    }
-
-    static CTexture* s_targetTexture = nullptr;
-    static int s_targetTextureWidth = 0;
-    static int s_targetTextureHeight = 0;
     if (!s_targetTexture || s_targetTextureWidth != width || s_targetTextureHeight != height) {
         delete s_targetTexture;
         s_targetTexture = new CTexture();
@@ -985,16 +981,40 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
         }
         s_targetTextureWidth = width;
         s_targetTextureHeight = height;
+        s_targetComposePixels.assign(static_cast<size_t>(width) * static_cast<size_t>(height), kOverlayTransparentKey);
+    } else if (s_targetComposePixels.size() != static_cast<size_t>(width) * static_cast<size_t>(height)) {
+        s_targetComposePixels.assign(static_cast<size_t>(width) * static_cast<size_t>(height), kOverlayTransparentKey);
     }
 
-    ClearOverlayComposeBits(s_targetComposeBits, width, height);
-    const int savedDc = SaveDC(s_targetComposeDc);
-    SetViewportOrgEx(s_targetComposeDc, -clippedRect.left, -clippedRect.top, nullptr);
-    DrawLockedTargetName(mode, s_targetComposeDc);
-    RestoreDC(s_targetComposeDc, savedDc);
+    const bool needComposeSurface = drawLockedTargetText || !hasArrowBitmap;
+    unsigned int* targetPixels = nullptr;
+    if (needComposeSurface) {
+        const bool composeReady = EnsureOverlayComposeSurface(width, height,
+            &s_targetComposeDc, &s_targetComposeBitmap, &s_targetComposeBits, &s_targetComposeWidth, &s_targetComposeHeight);
+        if (!composeReady) {
+            return false;
+        }
+
+        ClearOverlayComposeBits(s_targetComposeBits, width, height);
+        if (drawLockedTargetText) {
+            const int savedDc = SaveDC(s_targetComposeDc);
+            SetViewportOrgEx(s_targetComposeDc, -clippedRect.left, -clippedRect.top, nullptr);
+            DrawLockedTargetName(mode, s_targetComposeDc);
+            RestoreDC(s_targetComposeDc, savedDc);
+        }
+        if (!hasArrowBitmap) {
+            const int savedArrowDc = SaveDC(s_targetComposeDc);
+            SetViewportOrgEx(s_targetComposeDc, -clippedRect.left, -clippedRect.top, nullptr);
+            DrawLockedTargetArrow(mode, s_targetComposeDc);
+            RestoreDC(s_targetComposeDc, savedArrowDc);
+        }
+        targetPixels = static_cast<unsigned int*>(s_targetComposeBits);
+    } else {
+        std::fill(s_targetComposePixels.begin(), s_targetComposePixels.end(), kOverlayTransparentKey);
+        targetPixels = s_targetComposePixels.data();
+    }
 
     if (hasArrowBitmap) {
-        unsigned int* targetPixels = static_cast<unsigned int*>(s_targetComposeBits);
         for (int destY = 0; destY < arrowScaledHeight; ++destY) {
             const int localY = (arrowDrawY - clippedRect.top) + destY;
             if (localY < 0 || localY >= height) {
@@ -1033,19 +1053,14 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
                 }
             }
         }
-    } else {
-        const int savedArrowDc = SaveDC(s_targetComposeDc);
-        SetViewportOrgEx(s_targetComposeDc, -clippedRect.left, -clippedRect.top, nullptr);
-        DrawLockedTargetArrow(mode, s_targetComposeDc);
-        RestoreDC(s_targetComposeDc, savedArrowDc);
     }
 
-    ConvertOverlayComposeBitsToAlpha(s_targetComposeBits, width, height);
+    ConvertOverlayComposeBitsToAlpha(targetPixels, width, height);
     s_targetTexture->Update(0,
         0,
         width,
         height,
-        static_cast<unsigned int*>(s_targetComposeBits),
+        targetPixels,
         true,
         width * static_cast<int>(sizeof(unsigned int)));
 
