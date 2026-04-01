@@ -837,14 +837,25 @@ void PopulateItemShopState(QtUiState* state)
     if (!visible) {
         state->setItemShopGeometry(0, 0, 0, 0);
         state->setItemShopTitle(QString());
+        state->setItemShopData(QVariantMap{});
         state->setItemShopRows(QVariantList{});
         return;
     }
 
     state->setItemShopGeometry(shopWnd->m_x, shopWnd->m_y, shopWnd->m_w, shopWnd->m_h);
-    state->setItemShopTitle(g_session.m_shopMode == NpcShopMode::Sell
-            ? QStringLiteral("Sellable Items")
-            : QStringLiteral("Shop Items"));
+    const bool sellMode = g_session.m_shopMode == NpcShopMode::Sell;
+    const QString shopTitle = sellMode
+        ? QStringLiteral("Sellable Items")
+        : QStringLiteral("Shop Items");
+    state->setItemShopTitle(shopTitle);
+
+    QVariantMap shopData;
+    shopData.insert(QStringLiteral("title"), shopTitle);
+    shopData.insert(QStringLiteral("nameLabel"), QStringLiteral("Item"));
+    shopData.insert(QStringLiteral("quantityLabel"), QStringLiteral("Qty"));
+    shopData.insert(QStringLiteral("priceLabel"), QStringLiteral("Price"));
+    shopData.insert(QStringLiteral("showQuantity"), sellMode);
+    state->setItemShopData(shopData);
 
     QVariantList rows;
     const int startRow = shopWnd->GetViewOffset();
@@ -877,6 +888,7 @@ void PopulateItemPurchaseState(QtUiState* state)
     if (!visible) {
         state->setItemPurchaseGeometry(0, 0, 0, 0);
         state->setItemPurchaseTotal(0);
+        state->setItemPurchaseData(QVariantMap{});
         state->setItemPurchaseRows(QVariantList{});
         state->setItemPurchaseButtons(QVariantList{});
         return;
@@ -884,6 +896,13 @@ void PopulateItemPurchaseState(QtUiState* state)
 
     state->setItemPurchaseGeometry(purchaseWnd->m_x, purchaseWnd->m_y, purchaseWnd->m_w, purchaseWnd->m_h);
     state->setItemPurchaseTotal(g_session.m_shopDealTotal);
+    QVariantMap purchaseData;
+    purchaseData.insert(QStringLiteral("title"), QStringLiteral("Purchase"));
+    purchaseData.insert(QStringLiteral("nameLabel"), QStringLiteral("Item"));
+    purchaseData.insert(QStringLiteral("quantityLabel"), QStringLiteral("Qty"));
+    purchaseData.insert(QStringLiteral("amountLabel"), QStringLiteral("Cost"));
+    purchaseData.insert(QStringLiteral("totalLabel"), QStringLiteral("Total"));
+    state->setItemPurchaseData(purchaseData);
 
     QVariantList rows;
     const int startRow = purchaseWnd->GetViewOffset();
@@ -943,6 +962,7 @@ void PopulateItemSellState(QtUiState* state)
     if (!visible) {
         state->setItemSellGeometry(0, 0, 0, 0);
         state->setItemSellTotal(0);
+        state->setItemSellData(QVariantMap{});
         state->setItemSellRows(QVariantList{});
         state->setItemSellButtons(QVariantList{});
         return;
@@ -950,6 +970,13 @@ void PopulateItemSellState(QtUiState* state)
 
     state->setItemSellGeometry(sellWnd->m_x, sellWnd->m_y, sellWnd->m_w, sellWnd->m_h);
     state->setItemSellTotal(g_session.m_shopDealTotal);
+    QVariantMap sellData;
+    sellData.insert(QStringLiteral("title"), QStringLiteral("Sell"));
+    sellData.insert(QStringLiteral("nameLabel"), QStringLiteral("Item"));
+    sellData.insert(QStringLiteral("quantityLabel"), QStringLiteral("Qty"));
+    sellData.insert(QStringLiteral("amountLabel"), QStringLiteral("Gain"));
+    sellData.insert(QStringLiteral("totalLabel"), QStringLiteral("Total"));
+    state->setItemSellData(sellData);
 
     QVariantList rows;
     const int startRow = sellWnd->GetViewOffset();

@@ -103,6 +103,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(int itemShopWidth READ itemShopWidth NOTIFY itemShopGeometryChanged)
     Q_PROPERTY(int itemShopHeight READ itemShopHeight NOTIFY itemShopGeometryChanged)
     Q_PROPERTY(QString itemShopTitle READ itemShopTitle NOTIFY itemShopTitleChanged)
+    Q_PROPERTY(QVariantMap itemShopData READ itemShopData NOTIFY itemShopDataChanged)
     Q_PROPERTY(QVariantList itemShopRows READ itemShopRows NOTIFY itemShopRowsChanged)
     Q_PROPERTY(bool itemPurchaseVisible READ itemPurchaseVisible NOTIFY itemPurchaseVisibleChanged)
     Q_PROPERTY(int itemPurchaseX READ itemPurchaseX NOTIFY itemPurchaseGeometryChanged)
@@ -110,6 +111,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(int itemPurchaseWidth READ itemPurchaseWidth NOTIFY itemPurchaseGeometryChanged)
     Q_PROPERTY(int itemPurchaseHeight READ itemPurchaseHeight NOTIFY itemPurchaseGeometryChanged)
     Q_PROPERTY(int itemPurchaseTotal READ itemPurchaseTotal NOTIFY itemPurchaseTotalChanged)
+    Q_PROPERTY(QVariantMap itemPurchaseData READ itemPurchaseData NOTIFY itemPurchaseDataChanged)
     Q_PROPERTY(QVariantList itemPurchaseRows READ itemPurchaseRows NOTIFY itemPurchaseRowsChanged)
     Q_PROPERTY(QVariantList itemPurchaseButtons READ itemPurchaseButtons NOTIFY itemPurchaseButtonsChanged)
     Q_PROPERTY(bool itemSellVisible READ itemSellVisible NOTIFY itemSellVisibleChanged)
@@ -118,6 +120,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(int itemSellWidth READ itemSellWidth NOTIFY itemSellGeometryChanged)
     Q_PROPERTY(int itemSellHeight READ itemSellHeight NOTIFY itemSellGeometryChanged)
     Q_PROPERTY(int itemSellTotal READ itemSellTotal NOTIFY itemSellTotalChanged)
+    Q_PROPERTY(QVariantMap itemSellData READ itemSellData NOTIFY itemSellDataChanged)
     Q_PROPERTY(QVariantList itemSellRows READ itemSellRows NOTIFY itemSellRowsChanged)
     Q_PROPERTY(QVariantList itemSellButtons READ itemSellButtons NOTIFY itemSellButtonsChanged)
     Q_PROPERTY(bool shortCutVisible READ shortCutVisible NOTIFY shortCutVisibleChanged)
@@ -305,6 +308,7 @@ public:
     int itemShopWidth() const { return m_itemShopWidth; }
     int itemShopHeight() const { return m_itemShopHeight; }
     const QString& itemShopTitle() const { return m_itemShopTitle; }
+    const QVariantMap& itemShopData() const { return m_itemShopData; }
     const QVariantList& itemShopRows() const { return m_itemShopRows; }
     bool itemPurchaseVisible() const { return m_itemPurchaseVisible; }
     int itemPurchaseX() const { return m_itemPurchaseX; }
@@ -312,6 +316,7 @@ public:
     int itemPurchaseWidth() const { return m_itemPurchaseWidth; }
     int itemPurchaseHeight() const { return m_itemPurchaseHeight; }
     int itemPurchaseTotal() const { return m_itemPurchaseTotal; }
+    const QVariantMap& itemPurchaseData() const { return m_itemPurchaseData; }
     const QVariantList& itemPurchaseRows() const { return m_itemPurchaseRows; }
     const QVariantList& itemPurchaseButtons() const { return m_itemPurchaseButtons; }
     bool itemSellVisible() const { return m_itemSellVisible; }
@@ -320,6 +325,7 @@ public:
     int itemSellWidth() const { return m_itemSellWidth; }
     int itemSellHeight() const { return m_itemSellHeight; }
     int itemSellTotal() const { return m_itemSellTotal; }
+    const QVariantMap& itemSellData() const { return m_itemSellData; }
     const QVariantList& itemSellRows() const { return m_itemSellRows; }
     const QVariantList& itemSellButtons() const { return m_itemSellButtons; }
     bool shortCutVisible() const { return m_shortCutVisible; }
@@ -913,6 +919,14 @@ public:
         emit itemShopTitleChanged();
     }
 
+    void setItemShopData(const QVariantMap& value) {
+        if (m_itemShopData == value) {
+            return;
+        }
+        m_itemShopData = value;
+        emit itemShopDataChanged();
+    }
+
     void setItemShopRows(const QVariantList& value) {
         m_itemShopRows = value;
         emit itemShopRowsChanged();
@@ -944,6 +958,14 @@ public:
         }
         m_itemPurchaseTotal = value;
         emit itemPurchaseTotalChanged();
+    }
+
+    void setItemPurchaseData(const QVariantMap& value) {
+        if (m_itemPurchaseData == value) {
+            return;
+        }
+        m_itemPurchaseData = value;
+        emit itemPurchaseDataChanged();
     }
 
     void setItemPurchaseRows(const QVariantList& value) {
@@ -982,6 +1004,14 @@ public:
         }
         m_itemSellTotal = value;
         emit itemSellTotalChanged();
+    }
+
+    void setItemSellData(const QVariantMap& value) {
+        if (m_itemSellData == value) {
+            return;
+        }
+        m_itemSellData = value;
+        emit itemSellDataChanged();
     }
 
     void setItemSellRows(const QVariantList& value) {
@@ -1426,15 +1456,18 @@ signals:
     void itemShopVisibleChanged();
     void itemShopGeometryChanged();
     void itemShopTitleChanged();
+    void itemShopDataChanged();
     void itemShopRowsChanged();
     void itemPurchaseVisibleChanged();
     void itemPurchaseGeometryChanged();
     void itemPurchaseTotalChanged();
+    void itemPurchaseDataChanged();
     void itemPurchaseRowsChanged();
     void itemPurchaseButtonsChanged();
     void itemSellVisibleChanged();
     void itemSellGeometryChanged();
     void itemSellTotalChanged();
+    void itemSellDataChanged();
     void itemSellRowsChanged();
     void itemSellButtonsChanged();
     void shortCutVisibleChanged();
@@ -1582,6 +1615,7 @@ private:
     int m_itemShopWidth = 0;
     int m_itemShopHeight = 0;
     QString m_itemShopTitle;
+    QVariantMap m_itemShopData;
     QVariantList m_itemShopRows;
     bool m_itemPurchaseVisible = false;
     int m_itemPurchaseX = 0;
@@ -1589,6 +1623,7 @@ private:
     int m_itemPurchaseWidth = 0;
     int m_itemPurchaseHeight = 0;
     int m_itemPurchaseTotal = 0;
+    QVariantMap m_itemPurchaseData;
     QVariantList m_itemPurchaseRows;
     QVariantList m_itemPurchaseButtons;
     bool m_itemSellVisible = false;
@@ -1597,6 +1632,7 @@ private:
     int m_itemSellWidth = 0;
     int m_itemSellHeight = 0;
     int m_itemSellTotal = 0;
+    QVariantMap m_itemSellData;
     QVariantList m_itemSellRows;
     QVariantList m_itemSellButtons;
     bool m_shortCutVisible = false;

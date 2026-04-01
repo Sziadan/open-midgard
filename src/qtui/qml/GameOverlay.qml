@@ -455,7 +455,7 @@ Item {
         Text {
             x: 6
             y: 1
-            text: uiState.itemShopTitle
+            text: uiState.itemShopData.title || uiState.itemShopTitle
             color: "#ffffff"
             font.pixelSize: 12
             font.bold: true
@@ -484,8 +484,8 @@ Item {
                     Text {
                         x: 26
                         y: 2
-                        width: uiState.itemShopTitle === "Sellable Items" ? 160 : (parent.width - 110)
-                        text: "Item"
+                        width: (uiState.itemShopData.showQuantity || false) ? 160 : (parent.width - 110)
+                        text: uiState.itemShopData.nameLabel || ""
                         color: "#1e1e1e"
                         font.pixelSize: 11
                     }
@@ -494,8 +494,8 @@ Item {
                         x: 190
                         y: 2
                         width: 38
-                        visible: uiState.itemShopTitle === "Sellable Items"
-                        text: "Qty"
+                        visible: uiState.itemShopData.showQuantity || false
+                        text: uiState.itemShopData.quantityLabel || ""
                         color: "#1e1e1e"
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignHCenter
@@ -505,7 +505,7 @@ Item {
                         x: width - 60
                         y: 2
                         width: 54
-                        text: "Price"
+                        text: uiState.itemShopData.priceLabel || ""
                         color: "#1e1e1e"
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignRight
@@ -524,7 +524,7 @@ Item {
                         Text {
                             x: 24
                             y: 2
-                            width: uiState.itemShopTitle === "Sellable Items" ? 160 : (parent.width - 110)
+                            width: (uiState.itemShopData.showQuantity || false) ? 160 : (parent.width - 110)
                             text: modelData.name
                             color: "#1a1a1a"
                             font.pixelSize: 11
@@ -535,7 +535,7 @@ Item {
                             x: 188
                             y: 2
                             width: 38
-                            visible: uiState.itemShopTitle === "Sellable Items"
+                            visible: uiState.itemShopData.showQuantity || false
                             text: modelData.quantity
                             color: "#303030"
                             font.pixelSize: 11
@@ -578,7 +578,7 @@ Item {
         Text {
             x: 6
             y: 1
-            text: "Purchase"
+            text: uiState.itemPurchaseData.title || ""
             color: "#ffffff"
             font.pixelSize: 12
             font.bold: true
@@ -607,7 +607,7 @@ Item {
                     Text {
                         x: 4
                         y: 2
-                        text: "Item"
+                        text: uiState.itemPurchaseData.nameLabel || ""
                         color: "#1e1e1e"
                         font.pixelSize: 11
                     }
@@ -616,7 +616,7 @@ Item {
                         x: 126
                         y: 2
                         width: 34
-                        text: "Qty"
+                        text: uiState.itemPurchaseData.quantityLabel || ""
                         color: "#1e1e1e"
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignHCenter
@@ -626,7 +626,7 @@ Item {
                         x: width - 64
                         y: 2
                         width: 56
-                        text: "Cost"
+                        text: uiState.itemPurchaseData.amountLabel || ""
                         color: "#1e1e1e"
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignRight
@@ -679,7 +679,7 @@ Item {
         Text {
             x: 10
             y: height - 75
-            text: "Total"
+            text: uiState.itemPurchaseData.totalLabel || ""
             color: "#242424"
             font.pixelSize: 11
         }
@@ -738,7 +738,7 @@ Item {
         Text {
             x: 6
             y: 1
-            text: "Sell"
+            text: uiState.itemSellData.title || ""
             color: "#ffffff"
             font.pixelSize: 12
             font.bold: true
@@ -767,7 +767,7 @@ Item {
                     Text {
                         x: 4
                         y: 2
-                        text: "Item"
+                        text: uiState.itemSellData.nameLabel || ""
                         color: "#1e1e1e"
                         font.pixelSize: 11
                     }
@@ -776,7 +776,7 @@ Item {
                         x: 126
                         y: 2
                         width: 34
-                        text: "Qty"
+                        text: uiState.itemSellData.quantityLabel || ""
                         color: "#1e1e1e"
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignHCenter
@@ -786,7 +786,7 @@ Item {
                         x: width - 64
                         y: 2
                         width: 56
-                        text: "Gain"
+                        text: uiState.itemSellData.amountLabel || ""
                         color: "#1e1e1e"
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignRight
@@ -839,7 +839,7 @@ Item {
         Text {
             x: 10
             y: height - 75
-            text: "Total"
+            text: uiState.itemSellData.totalLabel || ""
             color: "#242424"
             font.pixelSize: 11
         }
