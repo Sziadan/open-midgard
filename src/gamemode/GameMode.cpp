@@ -6599,15 +6599,18 @@ void DrawBootstrapScene(HWND hwnd, const CGameMode& mode)
     }
     const BootstrapWorldCache& cache = GetBootstrapWorldCache();
 
-    HDC windowDC = GetDC(hwnd);
-    if (!windowDC) {
-        return;
-    }
-
-    HDC memDC = CreateCompatibleDC(windowDC);
-    HBITMAP bitmap = CreateCompatibleBitmap(windowDC, width, height);
-    HGDIOBJ oldBitmap = bitmap ? SelectObject(memDC, bitmap) : nullptr;
-    if (!memDC || !bitmap || !oldBitmap) {
+    HDC memDC = CreateCompatibleDC(nullptr);
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = width;
+    bmi.bmiHeader.biHeight = -height;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    void* dibBits = nullptr;
+    HBITMAP bitmap = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
+    HGDIOBJ oldBitmap = (memDC && bitmap) ? SelectObject(memDC, bitmap) : nullptr;
+    if (!memDC || !bitmap || !dibBits || !oldBitmap) {
         if (oldBitmap) {
             SelectObject(memDC, oldBitmap);
         }
@@ -6617,7 +6620,6 @@ void DrawBootstrapScene(HWND hwnd, const CGameMode& mode)
         if (memDC) {
             DeleteDC(memDC);
         }
-        ReleaseDC(hwnd, windowDC);
         return;
     }
 
@@ -6744,12 +6746,15 @@ void DrawBootstrapScene(HWND hwnd, const CGameMode& mode)
         &hintRect,
         DT_LEFT | DT_SINGLELINE | DT_VCENTER);
 
-    BitBlt(windowDC, 0, 0, width, height, memDC, 0, 0, SRCCOPY);
+    HDC windowDC = GetDC(hwnd);
+    if (windowDC) {
+        BitBlt(windowDC, 0, 0, width, height, memDC, 0, 0, SRCCOPY);
+        ReleaseDC(hwnd, windowDC);
+    }
 
     SelectObject(memDC, oldBitmap);
     DeleteObject(bitmap);
     DeleteDC(memDC);
-    ReleaseDC(hwnd, windowDC);
 }
 }
 
