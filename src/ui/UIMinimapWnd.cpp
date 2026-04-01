@@ -1064,25 +1064,20 @@ void UIRoMapWnd::DrawCloseButton(HDC hdc, int drawX, int drawY)
         return;
     }
 
-    HBITMAP drawBmp = nullptr;
-    if (m_closeButton->m_state == 1 && m_closeButton->m_pressedBitmap) {
-        drawBmp = m_closeButton->m_pressedBitmap;
-    } else if (m_closeButton->m_state == 2 && m_closeButton->m_mouseonBitmap) {
-        drawBmp = m_closeButton->m_mouseonBitmap;
-    } else if (m_closeButton->m_normalBitmap) {
-        drawBmp = m_closeButton->m_normalBitmap;
-    } else if (m_closeButton->m_mouseonBitmap) {
-        drawBmp = m_closeButton->m_mouseonBitmap;
+    const shopui::BitmapPixels* drawBmp = nullptr;
+    if (m_closeButton->m_state == 1 && m_closeButton->m_pressedBitmap.IsValid()) {
+        drawBmp = &m_closeButton->m_pressedBitmap;
+    } else if (m_closeButton->m_state == 2 && m_closeButton->m_mouseonBitmap.IsValid()) {
+        drawBmp = &m_closeButton->m_mouseonBitmap;
+    } else if (m_closeButton->m_normalBitmap.IsValid()) {
+        drawBmp = &m_closeButton->m_normalBitmap;
+    } else if (m_closeButton->m_mouseonBitmap.IsValid()) {
+        drawBmp = &m_closeButton->m_mouseonBitmap;
     } else {
-        drawBmp = m_closeButton->m_pressedBitmap;
+        drawBmp = m_closeButton->m_pressedBitmap.IsValid() ? &m_closeButton->m_pressedBitmap : nullptr;
     }
 
     if (!drawBmp) {
-        return;
-    }
-
-    BITMAP bm{};
-    if (!GetObjectA(drawBmp, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
         return;
     }
 
@@ -1091,12 +1086,12 @@ void UIRoMapWnd::DrawCloseButton(HDC hdc, int drawX, int drawY)
     RECT dst{
         drawX + buttonOffsetX,
         drawY + buttonOffsetY,
-        drawX + buttonOffsetX + bm.bmWidth,
-        drawY + buttonOffsetY + bm.bmHeight
+        drawX + buttonOffsetX + drawBmp->width,
+        drawY + buttonOffsetY + drawBmp->height
     };
-    DrawBitmapTransparent(hdc, drawBmp, dst);
-    m_closeButton->m_bitmapWidth = bm.bmWidth;
-    m_closeButton->m_bitmapHeight = bm.bmHeight;
+    shopui::DrawBitmapPixelsTransparent(hdc, *drawBmp, dst);
+    m_closeButton->m_bitmapWidth = drawBmp->width;
+    m_closeButton->m_bitmapHeight = drawBmp->height;
     m_closeButton->m_isDirty = 0;
 }
 

@@ -609,24 +609,15 @@ void UIButton::OnDraw()
 
 UIBitmapButton::UIBitmapButton()
     : m_bitmapWidth(0), m_bitmapHeight(0),
-      m_normalBitmap(nullptr), m_mouseonBitmap(nullptr), m_pressedBitmap(nullptr)
+      m_normalBitmap(), m_mouseonBitmap(), m_pressedBitmap()
 {
 }
 
 UIBitmapButton::~UIBitmapButton()
 {
-    if (m_normalBitmap) {
-        DeleteObject(m_normalBitmap);
-        m_normalBitmap = nullptr;
-    }
-    if (m_mouseonBitmap) {
-        DeleteObject(m_mouseonBitmap);
-        m_mouseonBitmap = nullptr;
-    }
-    if (m_pressedBitmap) {
-        DeleteObject(m_pressedBitmap);
-        m_pressedBitmap = nullptr;
-    }
+    m_normalBitmap.Clear();
+    m_mouseonBitmap.Clear();
+    m_pressedBitmap.Clear();
 }
 
 void UIBitmapButton::SetBitmapName(const char* name, int stateIndex)
@@ -634,47 +625,35 @@ void UIBitmapButton::SetBitmapName(const char* name, int stateIndex)
     const std::string value = name ? name : "";
     if (stateIndex == 0) {
         m_normalBitmapName = value;
-        if (m_normalBitmap) {
-            DeleteObject(m_normalBitmap);
-            m_normalBitmap = nullptr;
-        }
+        m_normalBitmap.Clear();
     } else if (stateIndex == 1) {
         m_mouseonBitmapName = value;
-        if (m_mouseonBitmap) {
-            DeleteObject(m_mouseonBitmap);
-            m_mouseonBitmap = nullptr;
-        }
+        m_mouseonBitmap.Clear();
     } else if (stateIndex == 2) {
         m_pressedBitmapName = value;
-        if (m_pressedBitmap) {
-            DeleteObject(m_pressedBitmap);
-            m_pressedBitmap = nullptr;
-        }
+        m_pressedBitmap.Clear();
     }
 
     if (value.empty()) {
         return;
     }
 
-    HBITMAP loaded = LoadBitmapFromGameData(value.c_str());
-    if (!loaded) {
+    const shopui::BitmapPixels loaded = shopui::LoadBitmapPixelsFromGameData(value, true);
+    if (!loaded.IsValid()) {
         return;
     }
 
-    BITMAP bm{};
-    if (GetObjectA(loaded, sizeof(bm), &bm)) {
-        if (m_bitmapWidth <= 0) {
-            m_bitmapWidth = bm.bmWidth;
-        }
-        if (m_bitmapHeight <= 0) {
-            m_bitmapHeight = bm.bmHeight;
-        }
-        if (m_w <= 0) {
-            m_w = bm.bmWidth;
-        }
-        if (m_h <= 0) {
-            m_h = bm.bmHeight;
-        }
+    if (m_bitmapWidth <= 0) {
+        m_bitmapWidth = loaded.width;
+    }
+    if (m_bitmapHeight <= 0) {
+        m_bitmapHeight = loaded.height;
+    }
+    if (m_w <= 0) {
+        m_w = loaded.width;
+    }
+    if (m_h <= 0) {
+        m_h = loaded.height;
     }
 
     if (stateIndex == 0) {
@@ -683,8 +662,6 @@ void UIBitmapButton::SetBitmapName(const char* name, int stateIndex)
         m_mouseonBitmap = loaded;
     } else if (stateIndex == 2) {
         m_pressedBitmap = loaded;
-    } else {
-        DeleteObject(loaded);
     }
 }
 
@@ -702,27 +679,24 @@ void UIBitmapButton::OnDraw()
         return;
     }
 
-    HBITMAP drawBmp = nullptr;
-    if (m_state == 1 && m_pressedBitmap) {
-        drawBmp = m_pressedBitmap;
-    } else if (m_state == 2 && m_mouseonBitmap) {
-        drawBmp = m_mouseonBitmap;
-    } else if (m_normalBitmap) {
-        drawBmp = m_normalBitmap;
-    } else if (m_mouseonBitmap) {
-        drawBmp = m_mouseonBitmap;
+    const shopui::BitmapPixels* drawBmp = nullptr;
+    if (m_state == 1 && m_pressedBitmap.IsValid()) {
+        drawBmp = &m_pressedBitmap;
+    } else if (m_state == 2 && m_mouseonBitmap.IsValid()) {
+        drawBmp = &m_mouseonBitmap;
+    } else if (m_normalBitmap.IsValid()) {
+        drawBmp = &m_normalBitmap;
+    } else if (m_mouseonBitmap.IsValid()) {
+        drawBmp = &m_mouseonBitmap;
     } else {
-        drawBmp = m_pressedBitmap;
+        drawBmp = m_pressedBitmap.IsValid() ? &m_pressedBitmap : nullptr;
     }
 
     if (drawBmp) {
-        BITMAP bm{};
-        if (GetObjectA(drawBmp, sizeof(bm), &bm) && bm.bmWidth > 0 && bm.bmHeight > 0) {
-            m_bitmapWidth = bm.bmWidth;
-            m_bitmapHeight = bm.bmHeight;
-            RECT dst = { m_x, m_y, m_x + bm.bmWidth, m_y + bm.bmHeight };
-            DrawBitmapTransparent(hdc, drawBmp, dst);
-        }
+        m_bitmapWidth = drawBmp->width;
+        m_bitmapHeight = drawBmp->height;
+        RECT dst = { m_x, m_y, m_x + drawBmp->width, m_y + drawBmp->height };
+        shopui::DrawBitmapPixelsTransparent(hdc, *drawBmp, dst);
     }
     DrawChildrenToHdc(hdc);
     ReleaseDrawTarget(hdc);
@@ -901,20 +875,14 @@ void UIEditCtrl::OnDraw()
 }
 
 UICheckBox::UICheckBox()
-    : m_isChecked(0), m_onBitmap(nullptr), m_offBitmap(nullptr)
+    : m_isChecked(0), m_onBitmap(), m_offBitmap()
 {
 }
 
 UICheckBox::~UICheckBox()
 {
-    if (m_onBitmap) {
-        DeleteObject(m_onBitmap);
-        m_onBitmap = nullptr;
-    }
-    if (m_offBitmap) {
-        DeleteObject(m_offBitmap);
-        m_offBitmap = nullptr;
-    }
+    m_onBitmap.Clear();
+    m_offBitmap.Clear();
 }
 
 void UICheckBox::SetBitmap(const char* onBitmap, const char* offBitmap)
@@ -922,29 +890,20 @@ void UICheckBox::SetBitmap(const char* onBitmap, const char* offBitmap)
     m_onBitmapName = onBitmap ? onBitmap : "";
     m_offBitmapName = offBitmap ? offBitmap : "";
 
-    if (m_onBitmap) {
-        DeleteObject(m_onBitmap);
-        m_onBitmap = nullptr;
-    }
-    if (m_offBitmap) {
-        DeleteObject(m_offBitmap);
-        m_offBitmap = nullptr;
-    }
+    m_onBitmap.Clear();
+    m_offBitmap.Clear();
 
     if (!m_onBitmapName.empty()) {
-        m_onBitmap = LoadBitmapFromGameData(m_onBitmapName.c_str());
+        m_onBitmap = shopui::LoadBitmapPixelsFromGameData(m_onBitmapName, true);
     }
     if (!m_offBitmapName.empty()) {
-        m_offBitmap = LoadBitmapFromGameData(m_offBitmapName.c_str());
+        m_offBitmap = shopui::LoadBitmapPixelsFromGameData(m_offBitmapName, true);
     }
 
-    HBITMAP probe = m_offBitmap ? m_offBitmap : m_onBitmap;
+    const shopui::BitmapPixels* probe = m_offBitmap.IsValid() ? &m_offBitmap : (m_onBitmap.IsValid() ? &m_onBitmap : nullptr);
     if (probe) {
-        BITMAP bm{};
-        if (GetObjectA(probe, sizeof(bm), &bm)) {
-            m_w = bm.bmWidth;
-            m_h = bm.bmHeight;
-        }
+        m_w = probe->width;
+        m_h = probe->height;
     }
 }
 
@@ -971,17 +930,14 @@ void UICheckBox::OnDraw()
         return;
     }
 
-    HBITMAP drawBmp = m_isChecked ? m_onBitmap : m_offBitmap;
-    if (!drawBmp) {
-        drawBmp = m_isChecked ? m_offBitmap : m_onBitmap;
+    const shopui::BitmapPixels* drawBmp = m_isChecked ? &m_onBitmap : &m_offBitmap;
+    if (!drawBmp->IsValid()) {
+        drawBmp = m_isChecked ? &m_offBitmap : &m_onBitmap;
     }
 
-    if (drawBmp) {
-        BITMAP bm{};
-        if (GetObjectA(drawBmp, sizeof(bm), &bm) && bm.bmWidth > 0 && bm.bmHeight > 0) {
-            RECT dst = { m_x, m_y, m_x + bm.bmWidth, m_y + bm.bmHeight };
-            DrawBitmapTransparent(hdc, drawBmp, dst);
-        }
+    if (drawBmp->IsValid()) {
+        RECT dst = { m_x, m_y, m_x + drawBmp->width, m_y + drawBmp->height };
+        shopui::DrawBitmapPixelsTransparent(hdc, *drawBmp, dst);
     } else {
         const int fallbackSize = (std::max)(12, (std::min)(m_w > 0 ? m_w : 16, m_h > 0 ? m_h : 16));
         RECT boxRect = { m_x, m_y, m_x + fallbackSize, m_y + fallbackSize };

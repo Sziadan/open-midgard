@@ -1,5 +1,6 @@
 #pragma once
 #include "Types.h"
+#include "UIShopCommon.h"
 #include <list>
 #include <vector>
 #include <string>
@@ -145,9 +146,9 @@ public:
     std::string m_normalBitmapName;
     std::string m_mouseonBitmapName;
     std::string m_pressedBitmapName;
-    HBITMAP m_normalBitmap;
-    HBITMAP m_mouseonBitmap;
-    HBITMAP m_pressedBitmap;
+    shopui::BitmapPixels m_normalBitmap;
+    shopui::BitmapPixels m_mouseonBitmap;
+    shopui::BitmapPixels m_pressedBitmap;
 };
 
 class UIEditCtrl : public UIWindow {
@@ -188,6 +189,6 @@ public:
     int m_isChecked;
     std::string m_onBitmapName;
     std::string m_offBitmapName;
-    HBITMAP m_onBitmap;
-    HBITMAP m_offBitmap;
+    shopui::BitmapPixels m_onBitmap;
+    shopui::BitmapPixels m_offBitmap;
 };
