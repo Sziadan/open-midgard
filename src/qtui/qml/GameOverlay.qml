@@ -2783,8 +2783,8 @@ Item {
         Rectangle {
             x: 232
             y: 33
-            width: 14
-            height: 14
+            width: 16
+            height: 16
             color: uiState.loginSaveAccountChecked ? "#6e8b3d" : "#ffffff"
             border.width: 1
             border.color: "#404040"
@@ -2803,7 +2803,7 @@ Item {
                 { x: 4, y: 96, w: 52, text: "Request" },
                 { x: 137, y: 96, w: 44, text: "Intro" },
                 { x: 189, y: 96, w: 40, text: "Connect" },
-                { x: 234, y: 96, w: 32, text: "Exit" }
+                { x: 234, y: 96, w: 40, text: "Exit" }
             ]
 
             delegate: Rectangle {
