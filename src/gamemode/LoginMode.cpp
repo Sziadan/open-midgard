@@ -474,6 +474,7 @@ bool QueueMenuCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
     constexpr int kCursorTextureOrigin = 32;
     const int left = cursorPos.x - kCursorTextureOrigin;
     const int top = cursorPos.y - kCursorTextureOrigin;
+    static unsigned int s_cursorComposePixels[kCursorTextureSize * kCursorTextureSize] = {};
 
     static HDC s_cursorComposeDc = nullptr;
     static HBITMAP s_cursorComposeBitmap = nullptr;
@@ -505,16 +506,34 @@ bool QueueMenuCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
     HashTokenValue(&cursorStateToken, static_cast<std::uint64_t>(GetModeCursorVisualFrame(cursorActNum, mouseAnimStartTick)));
 
     if (!s_cursorTextureValid || cursorStateToken != s_cursorStateToken) {
-        ClearOverlayComposeBits(s_cursorComposeBits, kCursorTextureSize, kCursorTextureSize);
-        if (!DrawModeCursorAtToHdc(s_cursorComposeDc, kCursorTextureOrigin, kCursorTextureOrigin, cursorActNum, mouseAnimStartTick)) {
-            return false;
+        std::fill_n(s_cursorComposePixels, kCursorTextureSize * kCursorTextureSize, 0u);
+        bool composedCursor = DrawModeCursorAtToArgb(
+            s_cursorComposePixels,
+            kCursorTextureSize,
+            kCursorTextureSize,
+            kCursorTextureOrigin,
+            kCursorTextureOrigin,
+            cursorActNum,
+            mouseAnimStartTick);
+        if (!composedCursor) {
+            const bool composeReady = EnsureOverlayComposeSurface(kCursorTextureSize, kCursorTextureSize,
+                &s_cursorComposeDc, &s_cursorComposeBitmap, &s_cursorComposeBits, &s_cursorComposeWidth, &s_cursorComposeHeight);
+            if (!composeReady) {
+                return false;
+            }
+
+            ClearOverlayComposeBits(s_cursorComposeBits, kCursorTextureSize, kCursorTextureSize);
+            if (!DrawModeCursorAtToHdc(s_cursorComposeDc, kCursorTextureOrigin, kCursorTextureOrigin, cursorActNum, mouseAnimStartTick)) {
+                return false;
+            }
+            ConvertOverlayComposeBitsToAlpha(s_cursorComposeBits, kCursorTextureSize, kCursorTextureSize);
+            std::memcpy(s_cursorComposePixels, s_cursorComposeBits, sizeof(s_cursorComposePixels));
         }
-        ConvertOverlayComposeBitsToAlpha(s_cursorComposeBits, kCursorTextureSize, kCursorTextureSize);
         s_cursorTexture->Update(0,
             0,
             kCursorTextureSize,
             kCursorTextureSize,
-            static_cast<unsigned int*>(s_cursorComposeBits),
+            s_cursorComposePixels,
             true,
             kCursorTextureSize * static_cast<int>(sizeof(unsigned int)));
         s_cursorTextureValid = true;

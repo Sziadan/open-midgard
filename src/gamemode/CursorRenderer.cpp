@@ -469,6 +469,35 @@ bool DrawCursorMotionToHdc(HDC hdc, int x, int y, CSprRes* sprRes, const CMotion
     return true;
 }
 
+bool DrawCursorMotionToArgb(unsigned int* dest,
+    int destW,
+    int destH,
+    int x,
+    int y,
+    CSprRes* sprRes,
+    const CMotion* motion,
+    unsigned int* palette,
+    unsigned int globalColor)
+{
+    RECT bounds{};
+    if (!dest || destW <= 0 || destH <= 0 || !ComputeCursorMotionBounds(sprRes, motion, &bounds)) {
+        return false;
+    }
+
+    const int hotspotOffsetX = (std::max)(0, static_cast<int>(bounds.left));
+    const int hotspotOffsetY = (std::max)(0, static_cast<int>(bounds.top));
+    BlitCursorMotionToArgb(dest,
+        destW,
+        destH,
+        x + bounds.left - hotspotOffsetX,
+        y + bounds.top - hotspotOffsetY,
+        sprRes,
+        motion,
+        palette,
+        globalColor);
+    return true;
+}
+
 bool DrawResolvedCursorActionAt(HDC hdc, int x, int y, int cursorActNum, u32 mouseAnimStartTick, const CursorResCache& cache)
 {
     CActRes* actRes = cache.resolved ? g_resMgr.GetAs<CActRes>(cache.actName.c_str()) : nullptr;
@@ -493,6 +522,39 @@ bool DrawResolvedCursorActionAt(HDC hdc, int x, int y, int cursorActNum, u32 mou
     const int motionIndex = static_cast<int>(stateTicks / motionDelay) % motionCount;
     const CMotion* motion = actRes->GetMotion(action, motionIndex);
     return motion ? DrawCursorMotionToHdc(hdc, x, y, sprRes, motion, sprRes->m_pal, 0xFAFFFFFFu) : false;
+}
+
+bool DrawResolvedCursorActionToArgb(unsigned int* dest,
+    int destW,
+    int destH,
+    int x,
+    int y,
+    int cursorActNum,
+    u32 mouseAnimStartTick,
+    const CursorResCache& cache)
+{
+    CSprRes* sprRes = cache.resolved ? g_resMgr.GetAs<CSprRes>(cache.sprName.c_str()) : nullptr;
+    CActRes* actRes = cache.resolved ? g_resMgr.GetAs<CActRes>(cache.actName.c_str()) : nullptr;
+    if (!actRes || !sprRes) {
+        return false;
+    }
+
+    int action = cursorActNum;
+    if (action < 0 || action >= static_cast<int>(actRes->actions.size())) {
+        action = 0;
+    }
+
+    const int motionCount = actRes->GetMotionCount(action);
+    if (motionCount <= 0) {
+        return false;
+    }
+
+    const unsigned int elapsed = GetTickCount() - mouseAnimStartTick;
+    const float stateTicks = static_cast<float>(elapsed) * 0.041666668f;
+    const float motionDelay = (std::max)(0.0001f, actRes->GetDelay(action));
+    const int motionIndex = static_cast<int>(stateTicks / motionDelay) % motionCount;
+    const CMotion* motion = actRes->GetMotion(action, motionIndex);
+    return motion ? DrawCursorMotionToArgb(dest, destW, destH, x, y, sprRes, motion, sprRes->m_pal, 0xFAFFFFFFu) : false;
 }
 
 u32 GetCursorActionVisualFrame(int cursorActNum, u32 mouseAnimStartTick, const CursorResCache& cache)
@@ -559,6 +621,35 @@ bool DrawModeCursorAtToHdc(HDC hdc, int x, int y, int cursorActNum, u32 mouseAni
     }
 
     DrawDragPreviewAt(hdc, x, y);
+
+    return drewCustomCursor;
+}
+
+bool DrawModeCursorAtToArgb(unsigned int* dest, int destW, int destH, int x, int y, int cursorActNum, u32 mouseAnimStartTick)
+{
+    if (!dest || destW <= 0 || destH <= 0 || !g_hMainWnd) {
+        return false;
+    }
+
+    const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+    if (gameMode && gameMode->m_dragType != static_cast<int>(DragType::None)) {
+        return false;
+    }
+
+    static bool s_cacheInit = false;
+    static CursorResCache s_cache{};
+    if (!s_cacheInit) {
+        s_cache = ResolveCursorResources();
+        s_cacheInit = true;
+    }
+
+    bool drewCustomCursor = false;
+    if (cursorActNum == static_cast<int>(CursorAction::Forbidden)) {
+        drewCustomCursor = DrawResolvedCursorActionToArgb(dest, destW, destH, x, y, static_cast<int>(CursorAction::Arrow), mouseAnimStartTick, s_cache);
+        drewCustomCursor = DrawResolvedCursorActionToArgb(dest, destW, destH, x, y, cursorActNum, mouseAnimStartTick, s_cache) || drewCustomCursor;
+    } else {
+        drewCustomCursor = DrawResolvedCursorActionToArgb(dest, destW, destH, x, y, cursorActNum, mouseAnimStartTick, s_cache);
+    }
 
     return drewCustomCursor;
 }
