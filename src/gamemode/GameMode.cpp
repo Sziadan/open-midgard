@@ -1409,7 +1409,6 @@ ULONG_PTR EnsureGdiplusStarted();
 const char* UiKorPrefix();
 std::string ResolveDataPath(const std::string& fileName, const char* ext, const std::vector<std::string>& directPrefixes);
 bool LoadBitmapFromGameData(const std::string& dataPath, HBITMAP* outBmp, int* outWidth, int* outHeight);
-void DrawBitmapTransparent(HDC targetDC, HBITMAP bitmap, const RECT& dst);
 
 std::string NormalizeRswNameForCameraTables(const char* rswName)
 {
@@ -5900,38 +5899,6 @@ void DrawBitmapStretched(HDC targetDC, HBITMAP bitmap, const RECT& dst)
         bm.bmWidth,
         bm.bmHeight,
         SRCCOPY);
-    SelectObject(srcDC, old);
-    DeleteDC(srcDC);
-}
-
-void DrawBitmapTransparent(HDC targetDC, HBITMAP bitmap, const RECT& dst)
-{
-    if (!targetDC || !bitmap) {
-        return;
-    }
-
-    BITMAP bm{};
-    if (!GetObjectA(bitmap, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
-
-    HDC srcDC = CreateCompatibleDC(targetDC);
-    if (!srcDC) {
-        return;
-    }
-
-    HGDIOBJ old = SelectObject(srcDC, bitmap);
-    TransparentBlt(targetDC,
-        dst.left,
-        dst.top,
-        dst.right - dst.left,
-        dst.bottom - dst.top,
-        srcDC,
-        0,
-        0,
-        bm.bmWidth,
-        bm.bmHeight,
-        RGB(255, 0, 255));
     SelectObject(srcDC, old);
     DeleteDC(srcDC);
 }
