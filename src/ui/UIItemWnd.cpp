@@ -148,43 +148,24 @@ std::string ResolveUiAssetPath(const char* fileName)
     return NormalizeSlash(fileName ? fileName : "");
 }
 
-HBITMAP LoadBitmapFromGameData(const std::string& path)
+shopui::BitmapPixels LoadBitmapPixelsFromGameData(const std::string& path)
 {
-    HBITMAP outBitmap = nullptr;
-    LoadHBitmapFromGameData(path.c_str(), &outBitmap, nullptr, nullptr);
-    return outBitmap;
+    return shopui::LoadBitmapPixelsFromGameData(path, true);
 }
 
-void DrawBitmapTransparent(HDC target, HBITMAP bitmap, const RECT& dst)
+void DrawBitmapPixelsStretched(HDC target, const shopui::BitmapPixels& bitmap, const RECT& dst)
 {
-    if (!target || !bitmap) {
+    if (!target || !bitmap.IsValid() || dst.right <= dst.left || dst.bottom <= dst.top) {
         return;
     }
-
-    BITMAP bm{};
-    if (!GetObjectA(bitmap, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
-
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
-        return;
-    }
-
-    HGDIOBJ oldBitmap = SelectObject(srcDC, bitmap);
-    TransparentBlt(target,
-        dst.left,
-        dst.top,
-        dst.right - dst.left,
-        dst.bottom - dst.top,
-        srcDC,
-        0,
-        0,
-        bm.bmWidth,
-        bm.bmHeight,
-        RGB(255, 0, 255));
-    SelectObject(srcDC, oldBitmap);
-    DeleteDC(srcDC);
+    AlphaBlendArgbToHdc(target,
+                        dst.left,
+                        dst.top,
+                        dst.right - dst.left,
+                        dst.bottom - dst.top,
+                        bitmap.pixels.data(),
+                        bitmap.width,
+                        bitmap.height);
 }
 
 void FillRectColor(HDC hdc, const RECT& rect, COLORREF color)
@@ -374,22 +355,22 @@ std::string BuildShortItemLabel(const ITEM_INFO& item)
 }
 
 void DrawItemSlot(HDC hdc,
-    HBITMAP slotBitmap,
-    HBITMAP hoverBitmap,
+    const shopui::BitmapPixels& slotBitmap,
+    const shopui::BitmapPixels& hoverBitmap,
     const shopui::BitmapPixels* iconBitmap,
     const RECT& cellRect,
     const ITEM_INFO* item,
     bool hovered)
 {
-    DrawBitmapTransparent(hdc, slotBitmap, cellRect);
+    DrawBitmapPixelsStretched(hdc, slotBitmap, cellRect);
 
     if (!item) {
         return;
     }
 
-    if (hovered && hoverBitmap) {
+    if (hovered && hoverBitmap.IsValid()) {
         RECT hoverRect{ cellRect.left + 2, cellRect.bottom - 17, cellRect.right - 2, cellRect.bottom - 2 };
-        DrawBitmapTransparent(hdc, hoverBitmap, hoverRect);
+        DrawBitmapPixelsStretched(hdc, hoverBitmap, hoverRect);
     }
 
     if (iconBitmap && iconBitmap->IsValid()) {
@@ -500,15 +481,15 @@ UIItemWnd::UIItemWnd()
       m_viewOffset(0),
       m_hoveredItemIndex(-1),
       m_fullHeight(kWindowHeight),
-    m_hoverOverlayItem(nullptr),
-    m_hoverOverlayRect{},
+      m_hoverOverlayItem(nullptr),
+      m_hoverOverlayRect{},
       m_systemButtons{ nullptr, nullptr, nullptr },
-      m_backgroundLeft(nullptr),
-      m_backgroundMid(nullptr),
-      m_backgroundRight(nullptr),
-    m_titleBarBitmap(nullptr),
-      m_tabBitmaps{ nullptr, nullptr, nullptr },
-      m_hoverBitmap(nullptr),
+      m_backgroundLeft(),
+      m_backgroundMid(),
+      m_backgroundRight(),
+      m_titleBarBitmap(),
+      m_tabBitmaps{},
+      m_hoverBitmap(),
       m_dragArmed(false),
       m_dragStartPoint{},
       m_dragItemId(0),
@@ -667,18 +648,18 @@ void UIItemWnd::OnDraw()
     for (int yPos = bodyTop; yPos < m_y + m_h; yPos += 8) {
         RECT leftRect{ m_x, yPos, m_x + 20, std::min(yPos + 8, m_y + m_h) };
         RECT rightRect{ m_x + m_w - 20, yPos, m_x + m_w, std::min(yPos + 8, m_y + m_h) };
-        DrawBitmapTransparent(hdc, m_backgroundLeft, leftRect);
-        DrawBitmapTransparent(hdc, m_backgroundRight, rightRect);
+        DrawBitmapPixelsStretched(hdc, m_backgroundLeft, leftRect);
+        DrawBitmapPixelsStretched(hdc, m_backgroundRight, rightRect);
     }
 
     const std::string titleText = GetTitleText();
     RECT titleStrip{ m_x, m_y, m_x + m_w, m_y + kTitleBarHeight };
-    DrawBitmapTransparent(hdc, m_titleBarBitmap, titleStrip);
+    DrawBitmapPixelsStretched(hdc, m_titleBarBitmap, titleStrip);
     DrawWindowText(hdc, m_x + 18, m_y + 3, titleText, RGB(255, 255, 255));
     DrawWindowText(hdc, m_x + 17, m_y + 2, titleText, RGB(0, 0, 0));
 
     RECT activeTabStrip{ m_x, m_y + kGridTop, m_x + kTabWidth, m_y + kGridTop + kTabHeight };
-    DrawBitmapTransparent(hdc, m_tabBitmaps[m_currentTab], activeTabStrip);
+    DrawBitmapPixelsStretched(hdc, m_tabBitmaps[m_currentTab], activeTabStrip);
 
     if (m_h > kMiniHeight) {
         const int columns = GetItemColumns();
@@ -986,44 +967,26 @@ void UIItemWnd::LayoutChildren()
 
 void UIItemWnd::LoadAssets()
 {
-    m_backgroundLeft = LoadBitmapFromGameData(ResolveUiAssetPath("itemwin_left.bmp"));
-    m_backgroundMid = LoadBitmapFromGameData(ResolveUiAssetPath("itemwin_mid.bmp"));
-    m_backgroundRight = LoadBitmapFromGameData(ResolveUiAssetPath("itemwin_right.bmp"));
-    m_titleBarBitmap = LoadBitmapFromGameData(ResolveUiAssetPath("titlebar_fix.bmp"));
-    m_tabBitmaps[0] = LoadBitmapFromGameData(ResolveUiAssetPath("tab_itm_01.bmp"));
-    m_tabBitmaps[1] = LoadBitmapFromGameData(ResolveUiAssetPath("tab_itm_02.bmp"));
-    m_tabBitmaps[2] = LoadBitmapFromGameData(ResolveUiAssetPath("tab_itm_03.bmp"));
-    m_hoverBitmap = LoadBitmapFromGameData(ResolveUiAssetPath("item_invert.bmp"));
+    m_backgroundLeft = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("itemwin_left.bmp"));
+    m_backgroundMid = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("itemwin_mid.bmp"));
+    m_backgroundRight = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("itemwin_right.bmp"));
+    m_titleBarBitmap = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("titlebar_fix.bmp"));
+    m_tabBitmaps[0] = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("tab_itm_01.bmp"));
+    m_tabBitmaps[1] = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("tab_itm_02.bmp"));
+    m_tabBitmaps[2] = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("tab_itm_03.bmp"));
+    m_hoverBitmap = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("item_invert.bmp"));
 }
 
 void UIItemWnd::ReleaseAssets()
 {
-    if (m_backgroundLeft) {
-        DeleteObject(m_backgroundLeft);
-        m_backgroundLeft = nullptr;
+    m_backgroundLeft.Clear();
+    m_backgroundMid.Clear();
+    m_backgroundRight.Clear();
+    m_titleBarBitmap.Clear();
+    for (shopui::BitmapPixels& bitmap : m_tabBitmaps) {
+        bitmap.Clear();
     }
-    if (m_backgroundMid) {
-        DeleteObject(m_backgroundMid);
-        m_backgroundMid = nullptr;
-    }
-    if (m_backgroundRight) {
-        DeleteObject(m_backgroundRight);
-        m_backgroundRight = nullptr;
-    }
-    if (m_titleBarBitmap) {
-        DeleteObject(m_titleBarBitmap);
-        m_titleBarBitmap = nullptr;
-    }
-    for (HBITMAP& bitmap : m_tabBitmaps) {
-        if (bitmap) {
-            DeleteObject(bitmap);
-            bitmap = nullptr;
-        }
-    }
-    if (m_hoverBitmap) {
-        DeleteObject(m_hoverBitmap);
-        m_hoverBitmap = nullptr;
-    }
+    m_hoverBitmap.Clear();
     m_iconCache.clear();
 }
 

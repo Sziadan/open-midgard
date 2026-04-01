@@ -85,12 +85,12 @@ private:
     const ITEM_INFO* m_hoverOverlayItem;
     RECT m_hoverOverlayRect;
     std::array<UIBitmapButton*, 3> m_systemButtons;
-    HBITMAP m_backgroundLeft;
-    HBITMAP m_backgroundMid;
-    HBITMAP m_backgroundRight;
-    HBITMAP m_titleBarBitmap;
-    std::array<HBITMAP, 3> m_tabBitmaps;
-    HBITMAP m_hoverBitmap;
+    shopui::BitmapPixels m_backgroundLeft;
+    shopui::BitmapPixels m_backgroundMid;
+    shopui::BitmapPixels m_backgroundRight;
+    shopui::BitmapPixels m_titleBarBitmap;
+    std::array<shopui::BitmapPixels, 3> m_tabBitmaps;
+    shopui::BitmapPixels m_hoverBitmap;
     std::unordered_map<unsigned int, shopui::BitmapPixels> m_iconCache;
     std::vector<VisibleItem> m_visibleItems;
     bool m_dragArmed;
