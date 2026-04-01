@@ -759,14 +759,13 @@ void UIMakeCharWnd::OnDraw()
         return;
     }
 
-    const bool useShared = targetDC == UIWindow::GetSharedDrawDC();
     HDC hdc = targetDC;
-    const bool useCompose = !useShared && EnsureComposeSurface(clientW, clientH);
+    const bool useCompose = EnsureComposeSurface(clientW, clientH);
     if (useCompose) {
         PatBlt(m_composeDC, 0, 0, clientW, clientH, BLACKNESS);
         g_windowMgr.DrawWallpaperToDC(m_composeDC, clientW, clientH);
         hdc = m_composeDC;
-    } else if (!useShared) {
+    } else {
         g_windowMgr.DrawWallpaperToDC(hdc, clientW, clientH);
     }
 
