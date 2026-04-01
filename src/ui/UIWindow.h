@@ -37,9 +37,6 @@ public:
     virtual void ReleaseDrawTarget(HDC dc) const;
     bool BlitArgbBitsToDrawTarget(const void* bits, int width, int height) const;
 
-    static void SetSharedDrawDC(HDC dc);
-    static HDC GetSharedDrawDC();
-
     virtual void Invalidate();
     virtual void InvalidateWallPaper();
     virtual void Resize(int w, int h);

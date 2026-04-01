@@ -20,6 +20,28 @@ namespace {
 HDC g_sharedUiDrawDC = nullptr;
 constexpr char kUiWindowRegPath[] = "Software\\Gravity Soft\\Ragnarok Online";
 
+class ScopedUiDrawTarget {
+public:
+    explicit ScopedUiDrawTarget(HDC dc)
+        : m_previous(g_sharedUiDrawDC)
+    {
+        g_sharedUiDrawDC = dc;
+    }
+
+    ~ScopedUiDrawTarget()
+    {
+        g_sharedUiDrawDC = m_previous;
+    }
+
+private:
+    HDC m_previous;
+};
+
+HDC GetActiveUiDrawTarget()
+{
+    return g_sharedUiDrawDC;
+}
+
 std::string ToLowerAsciiUi(std::string value)
 {
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
@@ -322,15 +344,13 @@ void UIWindow::DrawToHdc(HDC dc)
         return;
     }
 
-    HDC previousSharedDC = UIWindow::GetSharedDrawDC();
-    UIWindow::SetSharedDrawDC(dc);
+    ScopedUiDrawTarget scopedTarget(dc);
     OnDraw();
-    UIWindow::SetSharedDrawDC(previousSharedDC);
 }
 
 HDC UIWindow::AcquireDrawTarget() const
 {
-    const HDC shared = UIWindow::GetSharedDrawDC();
+    const HDC shared = GetActiveUiDrawTarget();
     if (shared) {
         return shared;
     }
@@ -339,7 +359,7 @@ HDC UIWindow::AcquireDrawTarget() const
 
 void UIWindow::ReleaseDrawTarget(HDC dc) const
 {
-    if (dc && dc != UIWindow::GetSharedDrawDC() && g_hMainWnd) {
+    if (dc && dc != GetActiveUiDrawTarget() && g_hMainWnd) {
         ReleaseDC(g_hMainWnd, dc);
     }
 }
@@ -427,16 +447,6 @@ bool UIWindow::BlitArgbBitsToDrawTarget(const void* bits, int width, int height)
             audio->PlaySound(path.c_str());
         }
     }
-
-void UIWindow::SetSharedDrawDC(HDC dc)
-{
-    g_sharedUiDrawDC = dc;
-}
-
-HDC UIWindow::GetSharedDrawDC()
-{
-    return g_sharedUiDrawDC;
-}
 
 bool LoadUiWindowPlacement(const char* windowName, int* x, int* y)
 {

@@ -967,11 +967,6 @@ void UIWindowMgr::OnDraw() {
         return;
     }
 
-    if (HDC sharedDC = UIWindow::GetSharedDrawDC()) {
-        DrawVisibleWindowsToHdc(sharedDC, true);
-        return;
-    }
-
     const bool hasMenuUi =
         (m_loginWnd && m_loginWnd->m_show != 0) ||
         (m_selectCharWnd && m_selectCharWnd->m_show != 0) ||
