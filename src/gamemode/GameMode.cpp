@@ -2293,7 +2293,7 @@ void DrawLockedTargetArrow(CGameMode& mode, HDC hdc)
 
     static bool s_bitmapLoaded = false;
     static std::string s_bitmapPath;
-    static HBITMAP s_bitmap = nullptr;
+    static std::vector<unsigned int> s_bitmapPixels;
     static int s_width = 0;
     static int s_height = 0;
     if (!s_bitmapLoaded) {
@@ -2309,12 +2309,21 @@ void DrawLockedTargetArrow(CGameMode& mode, HDC hdc)
             std::string("data\\") + UiKorPrefix() + "basic_interface\\"
         });
         if (!s_bitmapPath.empty()) {
-            if (LoadBitmapFromGameData(s_bitmapPath, &s_bitmap, &s_width, &s_height) && s_bitmap) {
+            u32* pixels = nullptr;
+            if (LoadBgraPixelsFromGameData(s_bitmapPath.c_str(), &pixels, &s_width, &s_height)
+                && pixels
+                && s_width > 0
+                && s_height > 0) {
+                s_bitmapPixels.assign(
+                    pixels,
+                    pixels + static_cast<size_t>(s_width) * static_cast<size_t>(s_height));
+                delete[] pixels;
                 DbgLog("[GameMode] locked target arrow loaded path='%s' size=%dx%d\n",
                     s_bitmapPath.c_str(),
                     s_width,
                     s_height);
             } else {
+                delete[] pixels;
                 DbgLog("[GameMode] locked target arrow bitmap decode failed path='%s'\n",
                     s_bitmapPath.c_str());
             }
@@ -2324,7 +2333,7 @@ void DrawLockedTargetArrow(CGameMode& mode, HDC hdc)
         }
     }
 
-    if (!s_bitmap || s_width <= 0 || s_height <= 0) {
+    if (s_bitmapPixels.empty() || s_width <= 0 || s_height <= 0) {
         const u32 now = GetTickCount();
         const int bounce = static_cast<int>(std::lround((0.5f + 0.5f * std::sin(static_cast<float>(now) * kLockedTargetArrowBouncePerMs))
             * kLockedTargetArrowBouncePixels));
@@ -2340,8 +2349,42 @@ void DrawLockedTargetArrow(CGameMode& mode, HDC hdc)
     const int scaledHeight = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(s_height) * kLockedTargetArrowScale)));
     const int drawX = centerX - (scaledWidth / 2);
     const int drawY = labelY - kLockedTargetArrowBaseLift - scaledHeight - kLockedTargetArrowYOffset - bounce;
-    RECT dst{ drawX, drawY, drawX + scaledWidth, drawY + scaledHeight };
-    DrawBitmapTransparent(hdc, s_bitmap, dst);
+
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = s_width;
+    bmi.bmiHeader.biHeight = -s_height;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    void* dibBits = nullptr;
+    HBITMAP dib = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
+    if (!dib || !dibBits) {
+        if (dib) {
+            DeleteObject(dib);
+        }
+        return;
+    }
+
+    std::memcpy(dibBits, s_bitmapPixels.data(), s_bitmapPixels.size() * sizeof(unsigned int));
+
+    HDC memDc = CreateCompatibleDC(hdc);
+    if (!memDc) {
+        DeleteObject(dib);
+        return;
+    }
+
+    BLENDFUNCTION blend{};
+    blend.BlendOp = AC_SRC_OVER;
+    blend.SourceConstantAlpha = 255;
+    blend.AlphaFormat = AC_SRC_ALPHA;
+
+    HGDIOBJ oldBitmap = SelectObject(memDc, dib);
+    AlphaBlend(hdc, drawX, drawY, scaledWidth, scaledHeight, memDc, 0, 0, s_width, s_height, blend);
+    SelectObject(memDc, oldBitmap);
+    DeleteDC(memDc);
+    DeleteObject(dib);
 }
 
 u32 PackLockedTargetColor(u8 alpha, u8 red, u8 green, u8 blue)
