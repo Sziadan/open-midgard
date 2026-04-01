@@ -13,6 +13,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(QString loginStatus READ loginStatus NOTIFY loginStatusChanged)
     Q_PROPERTY(QString chatPreview READ chatPreview NOTIFY chatPreviewChanged)
     Q_PROPERTY(QString lastInput READ lastInput NOTIFY lastInputChanged)
+    Q_PROPERTY(QVariantMap debugOverlayData READ debugOverlayData NOTIFY debugOverlayDataChanged)
     Q_PROPERTY(bool serverSelectVisible READ serverSelectVisible NOTIFY serverSelectVisibleChanged)
     Q_PROPERTY(int serverPanelX READ serverPanelX NOTIFY serverPanelGeometryChanged)
     Q_PROPERTY(int serverPanelY READ serverPanelY NOTIFY serverPanelGeometryChanged)
@@ -221,6 +222,7 @@ public:
     const QString& loginStatus() const { return m_loginStatus; }
     const QString& chatPreview() const { return m_chatPreview; }
     const QString& lastInput() const { return m_lastInput; }
+    const QVariantMap& debugOverlayData() const { return m_debugOverlayData; }
     bool serverSelectVisible() const { return m_serverSelectVisible; }
     int serverPanelX() const { return m_serverPanelX; }
     int serverPanelY() const { return m_serverPanelY; }
@@ -470,6 +472,14 @@ public:
         }
         m_lastInput = value;
         emit lastInputChanged();
+    }
+
+    void setDebugOverlayData(const QVariantMap& value) {
+        if (m_debugOverlayData == value) {
+            return;
+        }
+        m_debugOverlayData = value;
+        emit debugOverlayDataChanged();
     }
 
     void setServerSelectVisible(bool value) {
@@ -1440,6 +1450,7 @@ signals:
     void loginStatusChanged();
     void chatPreviewChanged();
     void lastInputChanged();
+    void debugOverlayDataChanged();
     void serverSelectVisibleChanged();
     void serverPanelGeometryChanged();
     void serverSelectionChanged();
@@ -1558,6 +1569,7 @@ private:
     QString m_loginStatus;
     QString m_chatPreview;
     QString m_lastInput;
+    QVariantMap m_debugOverlayData;
     bool m_serverSelectVisible = false;
     int m_serverPanelX = 0;
     int m_serverPanelY = 0;

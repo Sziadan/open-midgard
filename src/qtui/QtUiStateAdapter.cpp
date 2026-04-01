@@ -123,6 +123,24 @@ QString FormatCharacterSlotLevelText(int level)
     return QStringLiteral("Lv. %1").arg(level);
 }
 
+QVariantMap BuildDebugOverlayData(const QString& backendName,
+    const QString& modeName,
+    const QString& renderPath,
+    const QString& loginStatus,
+    const QString& chatPreview,
+    const QString& lastInput)
+{
+    QVariantMap data;
+    data.insert(QStringLiteral("title"), QStringLiteral("Qt 6 GPU UI"));
+    data.insert(QStringLiteral("backendLine"), QStringLiteral("Backend: %1").arg(backendName));
+    data.insert(QStringLiteral("modeLine"), QStringLiteral("Mode: %1").arg(modeName));
+    data.insert(QStringLiteral("renderPathLine"), QStringLiteral("Render path: %1").arg(renderPath));
+    data.insert(QStringLiteral("loginStatusLine"), QStringLiteral("Login status: %1").arg(loginStatus));
+    data.insert(QStringLiteral("chatPreviewText"), QStringLiteral("Recent chat:\n%1").arg(chatPreview));
+    data.insert(QStringLiteral("inputLine"), QStringLiteral("Input: %1").arg(lastInput));
+    return data;
+}
+
 bool IsNpcColorCodeAt(const std::string& value, size_t index)
 {
     if (index + 7 > value.size() || value[index] != '^') {
@@ -1996,12 +2014,26 @@ bool QtUiStateAdapter::syncMenu(RenderBackendType activeBackend,
         return false;
     }
 
-    m_state->setBackendName(BackendToQString(activeBackend));
-    m_state->setModeName(BuildMenuModeText());
-    m_state->setRenderPath(BuildRenderPathText(nativeOverlayBackend));
+    const QString backendName = BackendToQString(activeBackend);
+    const QString modeName = BuildMenuModeText();
+    const QString renderPath = BuildRenderPathText(nativeOverlayBackend);
+    const QString loginStatus = ToQString(g_windowMgr.GetLoginStatus());
+    const QString chatPreview = BuildChatPreviewText();
+    const QString lastInput = m_state->lastInput();
+
+    m_state->setBackendName(backendName);
+    m_state->setModeName(modeName);
+    m_state->setRenderPath(renderPath);
     m_state->setArchitectureNote(BuildArchitectureNote(nativeOverlayBackend));
-    m_state->setLoginStatus(ToQString(g_windowMgr.GetLoginStatus()));
-    m_state->setChatPreview(BuildChatPreviewText());
+    m_state->setLoginStatus(loginStatus);
+    m_state->setChatPreview(chatPreview);
+    m_state->setDebugOverlayData(BuildDebugOverlayData(
+        backendName,
+        modeName,
+        renderPath,
+        loginStatus,
+        chatPreview,
+        lastInput));
     PopulateLoginPanelState(m_state);
     PopulateCharSelectState(m_state);
     PopulateMakeCharState(m_state);
@@ -2068,12 +2100,26 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
         return false;
     }
 
-    m_state->setBackendName(BackendToQString(activeBackend));
-    m_state->setModeName(QStringLiteral("Gameplay"));
-    m_state->setRenderPath(BuildRenderPathText(nativeOverlayBackend));
+    const QString backendName = BackendToQString(activeBackend);
+    const QString modeName = QStringLiteral("Gameplay");
+    const QString renderPath = BuildRenderPathText(nativeOverlayBackend);
+    const QString loginStatus = ToQString(g_windowMgr.GetLoginStatus());
+    const QString chatPreview = BuildChatPreviewText();
+    const QString lastInput = m_state->lastInput();
+
+    m_state->setBackendName(backendName);
+    m_state->setModeName(modeName);
+    m_state->setRenderPath(renderPath);
     m_state->setArchitectureNote(BuildArchitectureNote(nativeOverlayBackend));
-    m_state->setLoginStatus(ToQString(g_windowMgr.GetLoginStatus()));
-    m_state->setChatPreview(BuildChatPreviewText());
+    m_state->setLoginStatus(loginStatus);
+    m_state->setChatPreview(chatPreview);
+    m_state->setDebugOverlayData(BuildDebugOverlayData(
+        backendName,
+        modeName,
+        renderPath,
+        loginStatus,
+        chatPreview,
+        lastInput));
     PopulateLoginPanelState(m_state);
     PopulateCharSelectState(m_state);
     PopulateMakeCharState(m_state);

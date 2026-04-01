@@ -21,26 +21,26 @@ Item {
             spacing: 6
 
             Text {
-                text: "Qt 6 GPU UI"
+                text: uiState.debugOverlayData.title || ""
                 color: "#ffffff"
                 font.pixelSize: 22
                 font.bold: true
             }
 
             Text {
-                text: "Backend: " + uiState.backendName
+                text: uiState.debugOverlayData.backendLine || ""
                 color: "#d7dde8"
                 font.pixelSize: 14
             }
 
             Text {
-                text: "Mode: " + uiState.modeName
+                text: uiState.debugOverlayData.modeLine || ""
                 color: "#d7dde8"
                 font.pixelSize: 14
             }
 
             Text {
-                text: "Render path: " + uiState.renderPath
+                text: uiState.debugOverlayData.renderPathLine || ""
                 color: "#9ee7a0"
                 font.pixelSize: 13
                 wrapMode: Text.WordWrap
@@ -62,7 +62,7 @@ Item {
             }
 
             Text {
-                text: "Login status: " + uiState.loginStatus
+                text: uiState.debugOverlayData.loginStatusLine || ""
                 color: "#d7dde8"
                 font.pixelSize: 13
                 wrapMode: Text.WordWrap
@@ -70,7 +70,7 @@ Item {
             }
 
             Text {
-                text: "Recent chat:\n" + uiState.chatPreview
+                text: uiState.debugOverlayData.chatPreviewText || ""
                 color: "#b5d9ff"
                 font.pixelSize: 13
                 wrapMode: Text.WordWrap
@@ -78,7 +78,7 @@ Item {
             }
 
             Text {
-                text: "Input: " + uiState.lastInput
+                text: uiState.debugOverlayData.inputLine || ""
                 color: "#9ee7a0"
                 font.pixelSize: 13
                 wrapMode: Text.WordWrap
