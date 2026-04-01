@@ -85,6 +85,39 @@ QString FormatBaseStatusText(int baseValue, int plusValue)
     return QString::number(baseValue);
 }
 
+QString FormatBasicGaugeText(const char* label, int current, int maximum)
+{
+    return QStringLiteral("%1      %2  /  %3")
+        .arg(ToQString(label))
+        .arg(current)
+        .arg(maximum);
+}
+
+QString FormatBasicLevelText(const char* label, int value)
+{
+    return QStringLiteral("%1 %2")
+        .arg(ToQString(label))
+        .arg(value);
+}
+
+QString FormatBasicInfoMiniHeaderText(int level, const QString& jobName, int expPercent)
+{
+    return QStringLiteral("Lv. %1 / %2 / Exp. %3 %")
+        .arg(level)
+        .arg(jobName)
+        .arg(expPercent);
+}
+
+QString FormatBasicInfoMiniStatusText(int hp, int maxHp, int sp, int maxSp, int money)
+{
+    return QStringLiteral("HP %1 / %2  |  SP %3 / %4  |  %5 Z")
+        .arg(hp)
+        .arg(maxHp)
+        .arg(sp)
+        .arg(maxSp)
+        .arg(money);
+}
+
 bool IsNpcColorCodeAt(const std::string& value, size_t index)
 {
     if (index + 7 > value.size() || value[index] != '^') {
@@ -1091,8 +1124,9 @@ void PopulateBasicInfoState(QtUiState* state)
     UIBasicInfoWnd::DisplayData display{};
     QVariantMap data;
     if (basicInfoWnd->GetDisplayDataForQt(&display)) {
+        const QString jobName = ToQString(display.jobName);
         data.insert(QStringLiteral("name"), ToQString(display.name));
-        data.insert(QStringLiteral("jobName"), ToQString(display.jobName));
+        data.insert(QStringLiteral("jobName"), jobName);
         data.insert(QStringLiteral("level"), display.level);
         data.insert(QStringLiteral("jobLevel"), display.jobLevel);
         data.insert(QStringLiteral("hp"), display.hp);
@@ -1104,6 +1138,17 @@ void PopulateBasicInfoState(QtUiState* state)
         data.insert(QStringLiteral("maxWeight"), display.maxWeight);
         data.insert(QStringLiteral("expPercent"), display.expPercent);
         data.insert(QStringLiteral("jobExpPercent"), display.jobExpPercent);
+        data.insert(QStringLiteral("miniHeaderText"), FormatBasicInfoMiniHeaderText(display.level, jobName, display.expPercent));
+        data.insert(QStringLiteral("miniStatusText"),
+            FormatBasicInfoMiniStatusText(display.hp, display.maxHp, display.sp, display.maxSp, display.money));
+        data.insert(QStringLiteral("hpText"), FormatBasicGaugeText("HP", display.hp, display.maxHp));
+        data.insert(QStringLiteral("spText"), FormatBasicGaugeText("SP", display.sp, display.maxSp));
+        data.insert(QStringLiteral("baseLevelText"), FormatBasicLevelText("Base Lv.", display.level));
+        data.insert(QStringLiteral("jobLevelText"), FormatBasicLevelText("Job Lv.", display.jobLevel));
+        data.insert(QStringLiteral("weightText"),
+            QStringLiteral("Weight : %1 / %2").arg(display.weight).arg(display.maxWeight));
+        data.insert(QStringLiteral("moneyText"),
+            QStringLiteral("Zeny : %1").arg(display.money));
 
         QVariantList systemButtons;
         systemButtons.reserve(basicInfoWnd->GetQtSystemButtonCount());
@@ -1238,6 +1283,7 @@ void PopulateStatusState(QtUiState* state)
         }
         data.insert(QStringLiteral("pageTabs"), pageTabs);
 
+        data.insert(QStringLiteral("title"), QStringLiteral("Status"));
         data.insert(QStringLiteral("attackText"), FormatCompositeStatusText(display.attack, display.refineAttack));
         data.insert(QStringLiteral("matkText"), FormatMatkStatusText(display.matkMin, display.matkMax));
         data.insert(QStringLiteral("hit"), display.hit);
@@ -1247,6 +1293,16 @@ void PopulateStatusState(QtUiState* state)
         data.insert(QStringLiteral("itemMdefText"), FormatCompositeStatusText(display.itemMdef, display.plusMdef));
         data.insert(QStringLiteral("fleeText"), FormatCompositeStatusText(display.flee, display.plusFlee));
         data.insert(QStringLiteral("aspdText"), FormatCompositeStatusText(display.aspd, display.plusAspd));
+        data.insert(QStringLiteral("miniPointsText"), QStringLiteral("Points %1").arg(display.statusPoint));
+        data.insert(QStringLiteral("attackLine"), QStringLiteral("Atk  %1").arg(data.value(QStringLiteral("attackText")).toString()));
+        data.insert(QStringLiteral("matkLine"), QStringLiteral("Matk %1").arg(data.value(QStringLiteral("matkText")).toString()));
+        data.insert(QStringLiteral("hitLine"), QStringLiteral("Hit   %1").arg(display.hit));
+        data.insert(QStringLiteral("critLine"), QStringLiteral("Crit  %1").arg(display.critical));
+        data.insert(QStringLiteral("pointsLine"), QStringLiteral("Pts %1").arg(display.statusPoint));
+        data.insert(QStringLiteral("defLine"), QStringLiteral("Def   %1").arg(data.value(QStringLiteral("itemDefText")).toString()));
+        data.insert(QStringLiteral("mdefLine"), QStringLiteral("Mdef %1").arg(data.value(QStringLiteral("itemMdefText")).toString()));
+        data.insert(QStringLiteral("fleeLine"), QStringLiteral("Flee  %1").arg(data.value(QStringLiteral("fleeText")).toString()));
+        data.insert(QStringLiteral("aspdLine"), QStringLiteral("Aspd %1").arg(data.value(QStringLiteral("aspdText")).toString()));
     }
     state->setStatusData(data);
 }
@@ -1436,6 +1492,7 @@ void PopulateEquipState(QtUiState* state)
     UIEquipWnd::DisplayData display{};
     QVariantMap data;
     if (equipWnd->GetDisplayDataForQt(&display)) {
+        data.insert(QStringLiteral("title"), QStringLiteral("Equipment"));
         QVariantList systemButtons;
         systemButtons.reserve(equipWnd->GetQtSystemButtonCount());
         for (int index = 0; index < equipWnd->GetQtSystemButtonCount(); ++index) {
@@ -1494,6 +1551,7 @@ void PopulateSkillListState(QtUiState* state)
     UISkillListWnd::DisplayData display{};
     QVariantMap data;
     if (skillWnd->GetDisplayDataForQt(&display)) {
+        data.insert(QStringLiteral("title"), QStringLiteral("Skill Tree"));
         QVariantList systemButtons;
         systemButtons.reserve(skillWnd->GetQtSystemButtonCount());
         for (int index = 0; index < skillWnd->GetQtSystemButtonCount(); ++index) {
@@ -1515,6 +1573,8 @@ void PopulateSkillListState(QtUiState* state)
         data.insert(QStringLiteral("systemButtons"), systemButtons);
 
         data.insert(QStringLiteral("skillPointCount"), display.skillPointCount);
+        data.insert(QStringLiteral("skillPointText"), QStringLiteral("Skill Point : %1").arg(display.skillPointCount));
+        data.insert(QStringLiteral("upgradeLabel"), QStringLiteral("+"));
         data.insert(QStringLiteral("viewOffset"), display.viewOffset);
         data.insert(QStringLiteral("maxViewOffset"), display.maxViewOffset);
         data.insert(QStringLiteral("scrollBarVisible"), display.scrollBarVisible);
@@ -1588,6 +1648,7 @@ void PopulateOptionState(QtUiState* state)
     UIOptionWnd::DisplayData display{};
     QVariantMap data;
     if (optionWnd->GetDisplayDataForQt(&display)) {
+        data.insert(QStringLiteral("title"), QStringLiteral("Options"));
         data.insert(QStringLiteral("collapsed"), display.collapsed);
         data.insert(QStringLiteral("activeTab"), display.activeTab);
         data.insert(QStringLiteral("contentX"), display.contentX);
@@ -1707,6 +1768,8 @@ void PopulateMinimapState(QtUiState* state)
     UIRoMapWnd::DisplayData display{};
     QVariantMap data;
     if (minimapWnd->GetDisplayDataForQt(&display)) {
+        data.insert(QStringLiteral("title"), QStringLiteral("Mini Map"));
+        data.insert(QStringLiteral("closeLabel"), QStringLiteral("x"));
         data.insert(QStringLiteral("mapX"), display.mapX);
         data.insert(QStringLiteral("mapY"), display.mapY);
         data.insert(QStringLiteral("mapWidth"), display.mapWidth);

@@ -987,9 +987,7 @@ Item {
             x: 17
             y: 18
             visible: uiState.basicInfoMini
-            text: "Lv. " + (uiState.basicInfoData.level || 0)
-                + " / " + (uiState.basicInfoData.jobName || "")
-                + " / Exp. " + (uiState.basicInfoData.expPercent || 0) + " %"
+            text: uiState.basicInfoData.miniHeaderText || ""
             color: "#000000"
             font.pixelSize: 11
         }
@@ -998,9 +996,7 @@ Item {
             x: 17
             y: 33
             visible: uiState.basicInfoMini
-            text: "HP " + (uiState.basicInfoData.hp || 0) + " / " + (uiState.basicInfoData.maxHp || 0)
-                + "  |  SP " + (uiState.basicInfoData.sp || 0) + " / " + (uiState.basicInfoData.maxSp || 0)
-                + "  |  " + (uiState.basicInfoData.money || 0) + " Z"
+            text: uiState.basicInfoData.miniStatusText || ""
             color: "#000000"
             font.pixelSize: 11
         }
@@ -1065,7 +1061,7 @@ Item {
             x: 95
             y: 31
             visible: !uiState.basicInfoMini
-            text: "HP      " + (uiState.basicInfoData.hp || 0) + "  /  " + (uiState.basicInfoData.maxHp || 0)
+            text: uiState.basicInfoData.hpText || ""
             color: "#000000"
             font.pixelSize: 10
         }
@@ -1074,7 +1070,7 @@ Item {
             x: 95
             y: 52
             visible: !uiState.basicInfoMini
-            text: "SP      " + (uiState.basicInfoData.sp || 0) + "  /  " + (uiState.basicInfoData.maxSp || 0)
+            text: uiState.basicInfoData.spText || ""
             color: "#000000"
             font.pixelSize: 10
         }
@@ -1083,7 +1079,7 @@ Item {
             x: 17
             y: 72
             visible: !uiState.basicInfoMini
-            text: "Base Lv. " + (uiState.basicInfoData.level || 0)
+            text: uiState.basicInfoData.baseLevelText || ""
             color: "#000000"
             font.pixelSize: 11
         }
@@ -1111,7 +1107,7 @@ Item {
             x: 17
             y: 84
             visible: !uiState.basicInfoMini
-            text: "Job Lv. " + (uiState.basicInfoData.jobLevel || 0)
+            text: uiState.basicInfoData.jobLevelText || ""
             color: "#000000"
             font.pixelSize: 11
         }
@@ -1139,7 +1135,7 @@ Item {
             x: 5
             y: 103
             visible: !uiState.basicInfoMini
-            text: "Weight : " + (uiState.basicInfoData.weight || 0) + " / " + (uiState.basicInfoData.maxWeight || 0)
+            text: uiState.basicInfoData.weightText || ""
             color: ((uiState.basicInfoData.maxWeight || 0) > 0 && (uiState.basicInfoData.weight || 0) * 100 >= uiState.basicInfoData.maxWeight * 50) ? "#ff0000" : "#000000"
             font.pixelSize: 11
         }
@@ -1148,7 +1144,7 @@ Item {
             x: 107
             y: 103
             visible: !uiState.basicInfoMini
-            text: "Zeny : " + (uiState.basicInfoData.money || 0)
+            text: uiState.basicInfoData.moneyText || ""
             color: "#000000"
             font.pixelSize: 11
         }
@@ -1204,7 +1200,7 @@ Item {
         Text {
             x: 17
             y: 3
-            text: "Status"
+            text: uiState.statusData.title || ""
             color: uiState.statusMini ? "#000000" : "#ffffff"
             font.pixelSize: 12
             font.bold: true
@@ -1239,7 +1235,7 @@ Item {
             x: 96
             y: 3
             visible: uiState.statusMini
-            text: "Points " + (uiState.statusData.statusPoint || 0)
+            text: uiState.statusData.miniPointsText || ""
             color: "#000000"
             font.pixelSize: 11
         }
@@ -1350,7 +1346,7 @@ Item {
                 x: 118
                 y: 10
                 visible: uiState.statusPage === 0
-                text: "Atk  " + (uiState.statusData.attackText || "")
+                text: uiState.statusData.attackLine || ""
                 color: "#000000"
                 font.pixelSize: 11
             }
@@ -1359,7 +1355,7 @@ Item {
                 x: 118
                 y: 26
                 visible: uiState.statusPage === 0
-                text: "Matk " + (uiState.statusData.matkText || "")
+                text: uiState.statusData.matkLine || ""
                 color: "#000000"
                 font.pixelSize: 11
             }
@@ -1368,7 +1364,7 @@ Item {
                 x: 118
                 y: 42
                 visible: uiState.statusPage === 0
-                text: "Hit   " + (uiState.statusData.hit || 0)
+                text: uiState.statusData.hitLine || ""
                 color: "#000000"
                 font.pixelSize: 11
             }
@@ -1377,7 +1373,7 @@ Item {
                 x: 118
                 y: 58
                 visible: uiState.statusPage === 0
-                text: "Crit  " + (uiState.statusData.critical || 0)
+                text: uiState.statusData.critLine || ""
                 color: "#000000"
                 font.pixelSize: 11
             }
@@ -1386,7 +1382,7 @@ Item {
                 x: 204
                 y: 74
                 visible: uiState.statusPage === 0
-                text: "Pts " + (uiState.statusData.statusPoint || 0)
+                text: uiState.statusData.pointsLine || ""
                 color: "#000000"
                 font.pixelSize: 11
                 font.bold: true
@@ -1396,7 +1392,7 @@ Item {
                 x: 204
                 y: 10
                 visible: uiState.statusPage === 0
-                text: "Def   " + (uiState.statusData.itemDefText || "")
+                text: uiState.statusData.defLine || ""
                 color: "#000000"
                 font.pixelSize: 11
             }
@@ -1405,7 +1401,7 @@ Item {
                 x: 204
                 y: 26
                 visible: uiState.statusPage === 0
-                text: "Mdef " + (uiState.statusData.itemMdefText || "")
+                text: uiState.statusData.mdefLine || ""
                 color: "#000000"
                 font.pixelSize: 11
             }
@@ -1414,7 +1410,7 @@ Item {
                 x: 204
                 y: 42
                 visible: uiState.statusPage === 0
-                text: "Flee  " + (uiState.statusData.fleeText || "")
+                text: uiState.statusData.fleeLine || ""
                 color: "#000000"
                 font.pixelSize: 11
             }
@@ -1423,7 +1419,7 @@ Item {
                 x: 204
                 y: 58
                 visible: uiState.statusPage === 0
-                text: "Aspd " + (uiState.statusData.aspdText || "")
+                text: uiState.statusData.aspdLine || ""
                 color: "#000000"
                 font.pixelSize: 11
             }
@@ -1565,7 +1561,7 @@ Item {
         Text {
             x: 18
             y: 2
-            text: "Mini Map"
+            text: minimapData.title || ""
             color: "#ffffff"
             font.pixelSize: 12
             font.bold: true
@@ -1620,7 +1616,7 @@ Item {
 
             Text {
                 anchors.centerIn: parent
-                text: "x"
+                text: minimapData.closeLabel || ""
                 color: "#18202a"
                 font.pixelSize: 10
                 font.bold: true
@@ -1811,7 +1807,7 @@ Item {
         Text {
             x: 17
             y: 3
-            text: "Equipment"
+            text: uiState.equipData.title || ""
             color: "#ffffff"
             font.pixelSize: 12
             font.bold: true
@@ -1920,7 +1916,7 @@ Item {
         Text {
             x: 10
             y: 3
-            text: "Skill Tree"
+            text: uiState.skillListData.title || ""
             color: "#000000"
             font.pixelSize: 12
             font.bold: true
@@ -2037,7 +2033,7 @@ Item {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "+"
+                        text: uiState.skillListData.upgradeLabel || ""
                         color: "#000000"
                         font.pixelSize: 12
                         font.bold: true
@@ -2080,7 +2076,7 @@ Item {
         Text {
             x: 13
             y: parent.height - 18
-            text: "Skill Point : " + (uiState.skillListData.skillPointCount || 0)
+            text: uiState.skillListData.skillPointText || ""
             color: "#b09130"
             font.pixelSize: 11
             font.bold: true
@@ -2142,7 +2138,7 @@ Item {
         Text {
             x: 17
             y: 2
-            text: "Options"
+            text: uiState.optionData.title || ""
             color: "#ffffff"
             font.pixelSize: 12
             font.bold: true
