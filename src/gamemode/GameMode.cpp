@@ -230,6 +230,7 @@ std::string ResolveHoveredActorName(CGameMode& mode, CGameActor* actor);
 const char* UiKorPrefix();
 std::string ResolveDataPath(const std::string& fileName, const char* ext, const std::vector<std::string>& directPrefixes);
 double QpcNowMs();
+bool BlitToWindow(HWND hwnd, HDC sourceDc, int width, int height);
 
 void ReleaseOverlayComposeSurface(HDC* composeDc, HBITMAP* composeBitmap, void** composeBits, int* composeWidth, int* composeHeight)
 {
@@ -1791,6 +1792,22 @@ double QpcNowMs()
     LARGE_INTEGER now{};
     QueryPerformanceCounter(&now);
     return static_cast<double>(now.QuadPart) * 1000.0 / static_cast<double>(freq.QuadPart);
+}
+
+bool BlitToWindow(HWND hwnd, HDC sourceDc, int width, int height)
+{
+    if (!hwnd || !sourceDc || width <= 0 || height <= 0) {
+        return false;
+    }
+
+    HDC targetDc = GetDC(hwnd);
+    if (!targetDc) {
+        return false;
+    }
+
+    BitBlt(targetDc, 0, 0, width, height, sourceDc, 0, 0, SRCCOPY);
+    ReleaseDC(hwnd, targetDc);
+    return true;
 }
 
 bool IsMovePerfActive(const CGameMode& mode)
@@ -6746,11 +6763,7 @@ void DrawBootstrapScene(HWND hwnd, const CGameMode& mode)
         &hintRect,
         DT_LEFT | DT_SINGLELINE | DT_VCENTER);
 
-    HDC windowDC = GetDC(hwnd);
-    if (windowDC) {
-        BitBlt(windowDC, 0, 0, width, height, memDC, 0, 0, SRCCOPY);
-        ReleaseDC(hwnd, windowDC);
-    }
+    BlitToWindow(hwnd, memDC, width, height);
 
     SelectObject(memDC, oldBitmap);
     DeleteObject(bitmap);
