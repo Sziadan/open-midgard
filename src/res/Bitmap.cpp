@@ -578,59 +578,6 @@ bool LoadBgraPixelsFromGameData(const char* path, u32** outPixels, int* outWidth
     return true;
 }
 
-bool LoadHBitmapFromGameData(const char* path, HBITMAP* outBitmap, int* outWidth, int* outHeight)
-{
-    if (!outBitmap || !path || !*path) {
-        return false;
-    }
-
-    *outBitmap = nullptr;
-    if (outWidth) {
-        *outWidth = 0;
-    }
-    if (outHeight) {
-        *outHeight = 0;
-    }
-
-    int width = 0;
-    int height = 0;
-    u32* pixels = nullptr;
-    if (!LoadBgraPixelsFromGameData(path, &pixels, &width, &height) || !pixels || width <= 0 || height <= 0) {
-        delete[] pixels;
-        return false;
-    }
-
-    BITMAPINFO bmi{};
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = width;
-    bmi.bmiHeader.biHeight = -height;
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 32;
-    bmi.bmiHeader.biCompression = BI_RGB;
-
-    void* dibBits = nullptr;
-    HBITMAP bitmap = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
-    if (!bitmap || !dibBits) {
-        delete[] pixels;
-        if (bitmap) {
-            DeleteObject(bitmap);
-        }
-        return false;
-    }
-
-    std::memcpy(dibBits, pixels, static_cast<size_t>(width) * static_cast<size_t>(height) * sizeof(u32));
-    delete[] pixels;
-
-    *outBitmap = bitmap;
-    if (outWidth) {
-        *outWidth = width;
-    }
-    if (outHeight) {
-        *outHeight = height;
-    }
-    return true;
-}
-
 CBitmapRes::CBitmapRes()
     : m_isAlpha(0), m_width(0), m_height(0), m_data(nullptr)
 {
