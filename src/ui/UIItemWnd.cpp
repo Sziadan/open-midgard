@@ -376,7 +376,7 @@ std::string BuildShortItemLabel(const ITEM_INFO& item)
 void DrawItemSlot(HDC hdc,
     HBITMAP slotBitmap,
     HBITMAP hoverBitmap,
-    HBITMAP iconBitmap,
+    const shopui::BitmapPixels* iconBitmap,
     const RECT& cellRect,
     const ITEM_INFO* item,
     bool hovered)
@@ -392,9 +392,9 @@ void DrawItemSlot(HDC hdc,
         DrawBitmapTransparent(hdc, hoverBitmap, hoverRect);
     }
 
-    if (iconBitmap) {
+    if (iconBitmap && iconBitmap->IsValid()) {
         RECT iconRect{ cellRect.left + 4, cellRect.top + 4, cellRect.right - 4, cellRect.bottom - 4 };
-        DrawBitmapTransparent(hdc, iconBitmap, iconRect);
+        shopui::DrawBitmapPixelsTransparent(hdc, *iconBitmap, iconRect);
     } else {
         std::string shortName = item->GetDisplayName();
         if (shortName.size() > 6) {
@@ -1024,11 +1024,6 @@ void UIItemWnd::ReleaseAssets()
         DeleteObject(m_hoverBitmap);
         m_hoverBitmap = nullptr;
     }
-    for (auto& entry : m_iconCache) {
-        if (entry.second) {
-            DeleteObject(entry.second);
-        }
-    }
     m_iconCache.clear();
 }
 
@@ -1177,27 +1172,27 @@ std::vector<const ITEM_INFO*> UIItemWnd::GetFilteredItems() const
     return out;
 }
 
-HBITMAP UIItemWnd::GetItemIcon(const ITEM_INFO& item)
+const shopui::BitmapPixels* UIItemWnd::GetItemIcon(const ITEM_INFO& item)
 {
     const unsigned int itemId = item.GetItemId();
     const auto found = m_iconCache.find(itemId);
     if (found != m_iconCache.end()) {
-        return found->second;
+        return found->second.IsValid() ? &found->second : nullptr;
     }
 
-    HBITMAP bitmap = nullptr;
+    shopui::BitmapPixels bitmap;
     for (const std::string& candidate : BuildItemIconCandidates(item)) {
         if (!g_fileMgr.IsDataExist(candidate.c_str())) {
             continue;
         }
-        bitmap = LoadBitmapFromGameData(candidate);
-        if (bitmap) {
+        bitmap = shopui::LoadBitmapPixelsFromGameData(candidate, true);
+        if (bitmap.IsValid()) {
             break;
         }
     }
 
-    m_iconCache[itemId] = bitmap;
-    return bitmap;
+    auto inserted = m_iconCache.emplace(itemId, std::move(bitmap));
+    return inserted.first->second.IsValid() ? &inserted.first->second : nullptr;
 }
 
 std::string UIItemWnd::GetTitleText() const

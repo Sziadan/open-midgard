@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UIFrameWnd.h"
+#include "UIShopCommon.h"
 
 #include <array>
 #include <string>
@@ -72,7 +73,7 @@ private:
     int GetItemRows() const;
     int GetMaxViewOffset(int itemCount) const;
     std::vector<const ITEM_INFO*> GetFilteredItems() const;
-    HBITMAP GetItemIcon(const ITEM_INFO& item);
+    const shopui::BitmapPixels* GetItemIcon(const ITEM_INFO& item);
     std::string GetTitleText() const;
     unsigned long long BuildVisualStateToken() const;
 
@@ -90,7 +91,7 @@ private:
     HBITMAP m_titleBarBitmap;
     std::array<HBITMAP, 3> m_tabBitmaps;
     HBITMAP m_hoverBitmap;
-    std::unordered_map<unsigned int, HBITMAP> m_iconCache;
+    std::unordered_map<unsigned int, shopui::BitmapPixels> m_iconCache;
     std::vector<VisibleItem> m_visibleItems;
     bool m_dragArmed;
     POINT m_dragStartPoint;
