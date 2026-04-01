@@ -450,6 +450,29 @@ bool UIMakeCharWnd::GetQtButtonDisplayForQt(int index, QtButtonDisplay* out) con
     return true;
 }
 
+int UIMakeCharWnd::GetQtStatFieldCount() const
+{
+    return 6;
+}
+
+bool UIMakeCharWnd::GetQtStatFieldDisplayForQt(int index, QtStatFieldDisplay* out) const
+{
+    if (!out || index < 0 || index >= GetQtStatFieldCount()) {
+        return false;
+    }
+
+    static const int kValueY[6] = { 40, 56, 72, 88, 104, 120 };
+    static const char* kLabels[6] = { "STR", "AGI", "VIT", "INT", "DEX", "LUK" };
+
+    out->x = m_x + 456;
+    out->y = m_y + kValueY[index];
+    out->width = 58;
+    out->height = 13;
+    out->label = kLabels[index];
+    out->value = m_stats[index];
+    return true;
+}
+
 void UIMakeCharWnd::ClearAssets()
 {
     m_backgroundBmp.Clear();

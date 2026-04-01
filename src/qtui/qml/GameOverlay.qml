@@ -2831,31 +2831,24 @@ Item {
         }
 
         Repeater {
-            model: [
-                { label: "STR", x: 484, y: 40, idx: 0 },
-                { label: "AGI", x: 484, y: 56, idx: 1 },
-                { label: "VIT", x: 484, y: 72, idx: 2 },
-                { label: "INT", x: 484, y: 88, idx: 3 },
-                { label: "DEX", x: 484, y: 104, idx: 4 },
-                { label: "LUK", x: 484, y: 120, idx: 5 }
-            ]
+            model: uiState.makeCharStatFields
 
             delegate: Row {
                 required property var modelData
-                x: modelData.x - 28
-                y: modelData.y
+                x: (modelData.x || 0) - uiState.makeCharPanelX
+                y: (modelData.y || 0) - uiState.makeCharPanelY
                 spacing: 8
 
                 Text {
                     width: 24
-                    text: modelData.label
+                    text: modelData.label || ""
                     color: "#50321e"
                     font.pixelSize: 12
                     font.bold: true
                 }
 
                 Text {
-                    text: uiState.makeCharStats.length > modelData.idx ? uiState.makeCharStats[modelData.idx] : ""
+                    text: modelData.value !== undefined ? modelData.value : ""
                     color: "#3c2414"
                     font.pixelSize: 12
                 }

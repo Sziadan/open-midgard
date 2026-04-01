@@ -49,6 +49,15 @@ public:
         std::string label;
     };
 
+    struct QtStatFieldDisplay {
+        int x = 0;
+        int y = 0;
+        int width = 0;
+        int height = 0;
+        std::string label;
+        int value = 0;
+    };
+
     UIMakeCharWnd();
     ~UIMakeCharWnd() override;
 
@@ -62,6 +71,8 @@ public:
     bool GetMakeCharDisplay(MakeCharDisplay* out) const;
     int GetQtButtonCount() const;
     bool GetQtButtonDisplayForQt(int index, QtButtonDisplay* out) const;
+    int GetQtStatFieldCount() const;
+    bool GetQtStatFieldDisplayForQt(int index, QtStatFieldDisplay* out) const;
 
 private:
     void EnsureResourceCache();

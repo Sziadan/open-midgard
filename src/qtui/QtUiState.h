@@ -53,6 +53,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(int makeCharHairIndex READ makeCharHairIndex NOTIFY makeCharDataChanged)
     Q_PROPERTY(int makeCharHairColor READ makeCharHairColor NOTIFY makeCharDataChanged)
     Q_PROPERTY(QVariantList makeCharButtons READ makeCharButtons NOTIFY makeCharButtonsChanged)
+    Q_PROPERTY(QVariantList makeCharStatFields READ makeCharStatFields NOTIFY makeCharStatFieldsChanged)
     Q_PROPERTY(bool loadingVisible READ loadingVisible NOTIFY loadingVisibleChanged)
     Q_PROPERTY(QString loadingMessage READ loadingMessage NOTIFY loadingMessageChanged)
     Q_PROPERTY(double loadingProgress READ loadingProgress NOTIFY loadingProgressChanged)
@@ -251,6 +252,7 @@ public:
     int makeCharHairIndex() const { return m_makeCharHairIndex; }
     int makeCharHairColor() const { return m_makeCharHairColor; }
     const QVariantList& makeCharButtons() const { return m_makeCharButtons; }
+    const QVariantList& makeCharStatFields() const { return m_makeCharStatFields; }
     bool loadingVisible() const { return m_loadingVisible; }
     const QString& loadingMessage() const { return m_loadingMessage; }
     double loadingProgress() const { return m_loadingProgress; }
@@ -641,6 +643,14 @@ public:
         }
         m_makeCharButtons = value;
         emit makeCharButtonsChanged();
+    }
+
+    void setMakeCharStatFields(const QVariantList& value) {
+        if (m_makeCharStatFields == value) {
+            return;
+        }
+        m_makeCharStatFields = value;
+        emit makeCharStatFieldsChanged();
     }
 
     void setLoadingVisible(bool value) {
@@ -1360,6 +1370,7 @@ signals:
     void makeCharPanelGeometryChanged();
     void makeCharDataChanged();
     void makeCharButtonsChanged();
+    void makeCharStatFieldsChanged();
     void loadingVisibleChanged();
     void loadingMessageChanged();
     void loadingProgressChanged();
@@ -1491,6 +1502,7 @@ private:
     int m_makeCharHairIndex = 0;
     int m_makeCharHairColor = 0;
     QVariantList m_makeCharButtons;
+    QVariantList m_makeCharStatFields;
     bool m_loadingVisible = false;
     QString m_loadingMessage;
     double m_loadingProgress = 0.0;
