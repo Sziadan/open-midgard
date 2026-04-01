@@ -293,43 +293,31 @@ bool AlphaBlendArgbToHdc(HDC hdc,
         return false;
     }
 
-    BITMAPINFO bmi{};
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = pixelWidth;
-    bmi.bmiHeader.biHeight = -pixelHeight;
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 32;
-    bmi.bmiHeader.biCompression = BI_RGB;
-
-    void* dibBits = nullptr;
-    HBITMAP dib = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
-    if (!dib || !dibBits) {
-        if (dib) {
-            DeleteObject(dib);
-        }
+    static thread_local ArgbDibSurface s_blendSurface;
+    if (!s_blendSurface.EnsureSize(pixelWidth, pixelHeight)) {
         return false;
     }
 
-    std::memcpy(dibBits,
+    std::memcpy(s_blendSurface.GetBits(),
                 pixels,
                 static_cast<size_t>(pixelWidth) * static_cast<size_t>(pixelHeight) * sizeof(unsigned int));
-
-    HDC memDc = CreateCompatibleDC(hdc);
-    if (!memDc) {
-        DeleteObject(dib);
-        return false;
-    }
 
     BLENDFUNCTION blend{};
     blend.BlendOp = AC_SRC_OVER;
     blend.SourceConstantAlpha = 255;
     blend.AlphaFormat = AC_SRC_ALPHA;
 
-    HGDIOBJ oldBitmap = SelectObject(memDc, dib);
-    const BOOL ok = AlphaBlend(hdc, dstX, dstY, dstWidth, dstHeight, memDc, srcX, srcY, srcWidth, srcHeight, blend);
-    SelectObject(memDc, oldBitmap);
-    DeleteDC(memDc);
-    DeleteObject(dib);
+    const BOOL ok = AlphaBlend(hdc,
+                               dstX,
+                               dstY,
+                               dstWidth,
+                               dstHeight,
+                               s_blendSurface.GetDC(),
+                               srcX,
+                               srcY,
+                               srcWidth,
+                               srcHeight,
+                               blend);
     return ok == TRUE;
 }
 
