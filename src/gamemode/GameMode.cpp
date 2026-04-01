@@ -241,62 +241,9 @@ std::string ResolveDataPath(const std::string& fileName, const char* ext, const 
 double QpcNowMs();
 bool BlitArgbBitsToWindow(HWND hwnd, const void* bits, int width, int height);
 
-void ReleaseOverlayComposeSurface(HDC* composeDc, HBITMAP* composeBitmap, void** composeBits, int* composeWidth, int* composeHeight)
+bool EnsureOverlayComposeSurface(int width, int height, ArgbDibSurface* composeSurface)
 {
-    if (composeBitmap && *composeBitmap) {
-        DeleteObject(*composeBitmap);
-        *composeBitmap = nullptr;
-    }
-    if (composeDc && *composeDc) {
-        DeleteDC(*composeDc);
-        *composeDc = nullptr;
-    }
-    if (composeBits) {
-        *composeBits = nullptr;
-    }
-    if (composeWidth) {
-        *composeWidth = 0;
-    }
-    if (composeHeight) {
-        *composeHeight = 0;
-    }
-}
-
-bool EnsureOverlayComposeSurface(int width, int height,
-    HDC* composeDc, HBITMAP* composeBitmap, void** composeBits, int* composeWidth, int* composeHeight)
-{
-    if (!composeDc || !composeBitmap || !composeBits || !composeWidth || !composeHeight || width <= 0 || height <= 0) {
-        return false;
-    }
-
-    if (*composeDc && *composeBitmap && *composeBits && *composeWidth == width && *composeHeight == height) {
-        return true;
-    }
-
-    ReleaseOverlayComposeSurface(composeDc, composeBitmap, composeBits, composeWidth, composeHeight);
-
-    *composeDc = CreateCompatibleDC(nullptr);
-    if (!*composeDc) {
-        return false;
-    }
-
-    BITMAPINFO bmi{};
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = width;
-    bmi.bmiHeader.biHeight = -height;
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 32;
-    bmi.bmiHeader.biCompression = BI_RGB;
-    *composeBitmap = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, composeBits, nullptr, 0);
-    if (!*composeBitmap || !*composeBits) {
-        ReleaseOverlayComposeSurface(composeDc, composeBitmap, composeBits, composeWidth, composeHeight);
-        return false;
-    }
-
-    SelectObject(*composeDc, *composeBitmap);
-    *composeWidth = width;
-    *composeHeight = height;
-    return true;
+    return composeSurface && composeSurface->EnsureSize(width, height);
 }
 
 void ClearOverlayComposeBits(void* composeBits, int width, int height)
@@ -625,11 +572,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         return false;
     }
 
-    static HDC s_overlayComposeDc = nullptr;
-    static HBITMAP s_overlayComposeBitmap = nullptr;
-    static void* s_overlayComposeBits = nullptr;
-    static int s_overlayComposeWidth = 0;
-    static int s_overlayComposeHeight = 0;
+    static ArgbDibSurface s_overlayComposeSurface;
     static std::vector<unsigned int> s_qtOverlayComposePixels;
     static std::uint64_t s_overlayStateToken = 0ull;
     static bool s_overlayTextureValid = false;
@@ -699,16 +642,15 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
             s_overlayTextureValid = false;
         } else {
             if (!qtGameplayRuntimeEnabled) {
-                const bool composeReady = EnsureOverlayComposeSurface(clientWidth, clientHeight,
-                    &s_overlayComposeDc, &s_overlayComposeBitmap, &s_overlayComposeBits, &s_overlayComposeWidth, &s_overlayComposeHeight);
+                const bool composeReady = EnsureOverlayComposeSurface(clientWidth, clientHeight, &s_overlayComposeSurface);
                 if (!composeReady) {
                     return false;
                 }
 
-                ClearOverlayComposeBits(s_overlayComposeBits, clientWidth, clientHeight);
+                ClearOverlayComposeBits(s_overlayComposeSurface.GetBits(), clientWidth, clientHeight);
                 const double overlayDrawStartMs = trackMovePerf ? QpcNowMs() : 0.0;
 #if !RO_ENABLE_QT6_UI
-                DrawGameplayOverlayToHdc(mode, s_overlayComposeDc);
+                DrawGameplayOverlayToHdc(mode, s_overlayComposeSurface.GetDC());
 #endif
                 if (trackMovePerf) {
                     g_overlayMovePerfStats.modernOverlayDrawMs += QpcNowMs() - overlayDrawStartMs;
@@ -717,7 +659,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
 
             const double uiDrawStartMs = trackMovePerf ? QpcNowMs() : 0.0;
             if (!qtGameplayRuntimeEnabled) {
-                g_windowMgr.OnDrawExcludingRoMapToHdc(s_overlayComposeDc);
+                g_windowMgr.OnDrawExcludingRoMapToHdc(s_overlayComposeSurface.GetDC());
             } else {
                 g_windowMgr.ClearDirtyVisualState();
             }
@@ -736,11 +678,11 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
                 overlayPixels = s_qtOverlayComposePixels.data();
             } else {
                 const double convertStartMs = trackMovePerf ? QpcNowMs() : 0.0;
-                ConvertOverlayComposeBitsToAlpha(s_overlayComposeBits, clientWidth, clientHeight);
+                ConvertOverlayComposeBitsToAlpha(s_overlayComposeSurface.GetBits(), clientWidth, clientHeight);
                 if (trackMovePerf) {
                     g_overlayMovePerfStats.modernConvertMs += QpcNowMs() - convertStartMs;
                 }
-                overlayPixels = static_cast<unsigned int*>(s_overlayComposeBits);
+                overlayPixels = s_overlayComposeSurface.GetPixels();
             }
             CompositeQtUiGameplayOverlay(mode,
                 overlayPixels,
@@ -855,11 +797,7 @@ bool QueueRoMapOverlayQuad()
         return false;
     }
 
-    static HDC s_roMapComposeDc = nullptr;
-    static HBITMAP s_roMapComposeBitmap = nullptr;
-    static void* s_roMapComposeBits = nullptr;
-    static int s_roMapComposeWidth = 0;
-    static int s_roMapComposeHeight = 0;
+    static ArgbDibSurface s_roMapComposeSurface;
     static std::vector<unsigned int> s_roMapComposePixels;
     static bool s_roMapTextureValid = false;
 
@@ -908,19 +846,18 @@ bool QueueRoMapOverlayQuad()
         if (!builtWithQtImage)
 #endif
         {
-            const bool composeReady = EnsureOverlayComposeSurface(width, height,
-                &s_roMapComposeDc, &s_roMapComposeBitmap, &s_roMapComposeBits, &s_roMapComposeWidth, &s_roMapComposeHeight);
+            const bool composeReady = EnsureOverlayComposeSurface(width, height, &s_roMapComposeSurface);
             if (!composeReady) {
                 return false;
             }
 
-            ClearOverlayComposeBits(s_roMapComposeBits, width, height);
-            if (!g_windowMgr.DrawRoMapToHdc(s_roMapComposeDc, 0, 0)) {
+            ClearOverlayComposeBits(s_roMapComposeSurface.GetBits(), width, height);
+            if (!g_windowMgr.DrawRoMapToHdc(s_roMapComposeSurface.GetDC(), 0, 0)) {
                 return false;
             }
-            ApplyRoundedOverlayMask(s_roMapComposeBits, width, height, kRoMapCornerEllipseSize, kRoMapCornerEllipseSize);
-            ConvertOverlayComposeBitsToAlpha(s_roMapComposeBits, width, height);
-            uploadPixels = static_cast<unsigned int*>(s_roMapComposeBits);
+            ApplyRoundedOverlayMask(s_roMapComposeSurface.GetBits(), width, height, kRoMapCornerEllipseSize, kRoMapCornerEllipseSize);
+            ConvertOverlayComposeBitsToAlpha(s_roMapComposeSurface.GetBits(), width, height);
+            uploadPixels = s_roMapComposeSurface.GetPixels();
         }
 
         s_roMapTexture->Update(0,
@@ -1199,11 +1136,7 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
     static int s_targetTextureHeight = 0;
     static std::vector<unsigned int> s_targetComposePixels;
 #if !RO_ENABLE_QT6_UI
-    static HDC s_targetComposeDc = nullptr;
-    static HBITMAP s_targetComposeBitmap = nullptr;
-    static void* s_targetComposeBits = nullptr;
-    static int s_targetComposeWidth = 0;
-    static int s_targetComposeHeight = 0;
+    static ArgbDibSurface s_targetComposeSurface;
 #endif
     if (!s_targetTexture || s_targetTextureWidth != width || s_targetTextureHeight != height) {
         delete s_targetTexture;
@@ -1248,26 +1181,25 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
 #else
     const bool needComposeSurface = drawLockedTargetText || !hasArrowBitmap;
     if (needComposeSurface) {
-        const bool composeReady = EnsureOverlayComposeSurface(width, height,
-            &s_targetComposeDc, &s_targetComposeBitmap, &s_targetComposeBits, &s_targetComposeWidth, &s_targetComposeHeight);
+        const bool composeReady = EnsureOverlayComposeSurface(width, height, &s_targetComposeSurface);
         if (!composeReady) {
             return false;
         }
 
-        ClearOverlayComposeBits(s_targetComposeBits, width, height);
+        ClearOverlayComposeBits(s_targetComposeSurface.GetBits(), width, height);
         if (drawLockedTargetText) {
-            const int savedDc = SaveDC(s_targetComposeDc);
-            SetViewportOrgEx(s_targetComposeDc, -clippedRect.left, -clippedRect.top, nullptr);
-            DrawLockedTargetName(mode, s_targetComposeDc);
-            RestoreDC(s_targetComposeDc, savedDc);
+            const int savedDc = SaveDC(s_targetComposeSurface.GetDC());
+            SetViewportOrgEx(s_targetComposeSurface.GetDC(), -clippedRect.left, -clippedRect.top, nullptr);
+            DrawLockedTargetName(mode, s_targetComposeSurface.GetDC());
+            RestoreDC(s_targetComposeSurface.GetDC(), savedDc);
         }
         if (!hasArrowBitmap) {
-            const int savedArrowDc = SaveDC(s_targetComposeDc);
-            SetViewportOrgEx(s_targetComposeDc, -clippedRect.left, -clippedRect.top, nullptr);
-            DrawLockedTargetArrow(mode, s_targetComposeDc);
-            RestoreDC(s_targetComposeDc, savedArrowDc);
+            const int savedArrowDc = SaveDC(s_targetComposeSurface.GetDC());
+            SetViewportOrgEx(s_targetComposeSurface.GetDC(), -clippedRect.left, -clippedRect.top, nullptr);
+            DrawLockedTargetArrow(mode, s_targetComposeSurface.GetDC());
+            RestoreDC(s_targetComposeSurface.GetDC(), savedArrowDc);
         }
-        targetPixels = static_cast<unsigned int*>(s_targetComposeBits);
+        targetPixels = s_targetComposeSurface.GetPixels();
     } else {
         std::fill(s_targetComposePixels.begin(), s_targetComposePixels.end(), kOverlayTransparentKey);
         targetPixels = s_targetComposePixels.data();

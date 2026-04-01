@@ -96,62 +96,9 @@ void CopyCString(char* dst, size_t dstSize, const char* src)
 
 constexpr unsigned int kMenuOverlayTransparentKey = 0x00FF00FFu;
 
-void ReleaseOverlayComposeSurface(HDC* composeDc, HBITMAP* composeBitmap, void** composeBits, int* composeWidth, int* composeHeight)
+bool EnsureOverlayComposeSurface(int width, int height, ArgbDibSurface* composeSurface)
 {
-    if (composeBitmap && *composeBitmap) {
-        DeleteObject(*composeBitmap);
-        *composeBitmap = nullptr;
-    }
-    if (composeDc && *composeDc) {
-        DeleteDC(*composeDc);
-        *composeDc = nullptr;
-    }
-    if (composeBits) {
-        *composeBits = nullptr;
-    }
-    if (composeWidth) {
-        *composeWidth = 0;
-    }
-    if (composeHeight) {
-        *composeHeight = 0;
-    }
-}
-
-bool EnsureOverlayComposeSurface(int width, int height,
-    HDC* composeDc, HBITMAP* composeBitmap, void** composeBits, int* composeWidth, int* composeHeight)
-{
-    if (!composeDc || !composeBitmap || !composeBits || !composeWidth || !composeHeight || width <= 0 || height <= 0) {
-        return false;
-    }
-
-    if (*composeDc && *composeBitmap && *composeBits && *composeWidth == width && *composeHeight == height) {
-        return true;
-    }
-
-    ReleaseOverlayComposeSurface(composeDc, composeBitmap, composeBits, composeWidth, composeHeight);
-
-    *composeDc = CreateCompatibleDC(nullptr);
-    if (!*composeDc) {
-        return false;
-    }
-
-    BITMAPINFO bmi{};
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = width;
-    bmi.bmiHeader.biHeight = -height;
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 32;
-    bmi.bmiHeader.biCompression = BI_RGB;
-    *composeBitmap = CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, composeBits, nullptr, 0);
-    if (!*composeBitmap || !*composeBits) {
-        ReleaseOverlayComposeSurface(composeDc, composeBitmap, composeBits, composeWidth, composeHeight);
-        return false;
-    }
-
-    SelectObject(*composeDc, *composeBitmap);
-    *composeWidth = width;
-    *composeHeight = height;
-    return true;
+    return composeSurface && composeSurface->EnsureSize(width, height);
 }
 
 void ClearOverlayComposeBits(void* composeBits, int width, int height)
@@ -345,11 +292,7 @@ bool QueueLoginUiQuad()
         return false;
     }
 
-    static HDC s_uiComposeDc = nullptr;
-    static HBITMAP s_uiComposeBitmap = nullptr;
-    static void* s_uiComposeBits = nullptr;
-    static int s_uiComposeWidth = 0;
-    static int s_uiComposeHeight = 0;
+    static ArgbDibSurface s_uiComposeSurface;
     static std::vector<unsigned int> s_qtUiComposePixels;
     static std::uint64_t s_uiStateToken = 0ull;
     static bool s_uiTextureValid = false;
@@ -411,21 +354,20 @@ bool QueueLoginUiQuad()
             s_uiTextureValid = false;
         } else {
             if (!qtMenuRuntimeEnabled) {
-                const bool composeReady = EnsureOverlayComposeSurface(clientWidth, clientHeight,
-                    &s_uiComposeDc, &s_uiComposeBitmap, &s_uiComposeBits, &s_uiComposeWidth, &s_uiComposeHeight);
+                const bool composeReady = EnsureOverlayComposeSurface(clientWidth, clientHeight, &s_uiComposeSurface);
                 if (!composeReady) {
                     return false;
                 }
 
                 if (g_windowMgr.m_wallpaperSurface && g_windowMgr.m_wallpaperSurface->HasSoftwarePixels()) {
-                    g_windowMgr.DrawWallpaperToDC(s_uiComposeDc, clientWidth, clientHeight);
+                    g_windowMgr.DrawWallpaperToDC(s_uiComposeSurface.GetDC(), clientWidth, clientHeight);
                 } else {
                     HBRUSH clearBrush = CreateSolidBrush(RGB(0, 0, 0));
-                    FillRect(s_uiComposeDc, &clientRect, clearBrush);
+                    FillRect(s_uiComposeSurface.GetDC(), &clientRect, clearBrush);
                     DeleteObject(clearBrush);
                 }
 
-                g_windowMgr.DrawVisibleWindowsToHdc(s_uiComposeDc, true);
+                g_windowMgr.DrawVisibleWindowsToHdc(s_uiComposeSurface.GetDC(), true);
             } else {
                 g_windowMgr.ClearDirtyVisualState();
             }
@@ -440,8 +382,8 @@ bool QueueLoginUiQuad()
                 }
                 overlayPixels = s_qtUiComposePixels.data();
             } else {
-                ConvertOverlayComposeBitsToAlpha(s_uiComposeBits, clientWidth, clientHeight);
-                overlayPixels = static_cast<unsigned int*>(s_uiComposeBits);
+                ConvertOverlayComposeBitsToAlpha(s_uiComposeSurface.GetBits(), clientWidth, clientHeight);
+                overlayPixels = s_uiComposeSurface.GetPixels();
             }
             CompositeQtUiMenuOverlay(
                 overlayPixels,
