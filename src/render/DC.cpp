@@ -374,3 +374,39 @@ bool DrawActMotionToHdc(HDC hdc, int x, int y, class CSprRes* sprRes, const stru
     return AlphaBlendArgbToHdc(hdc, x + clipBox.left, y + clipBox.top, width, height, pixels.data(), width, height);
 }
 
+bool DrawActMotionToArgb(unsigned int* dest, int destW, int destH, int x, int y, class CSprRes* sprRes, const struct CMotion* motion, unsigned int* palette)
+{
+    if (!dest || destW <= 0 || destH <= 0 || !sprRes || !motion || !palette) {
+        return false;
+    }
+
+    RECT clipBox{};
+    bool hasClip = false;
+    for (const CSprClip& clip : motion->sprClips) {
+        const SprImg* image = sprRes->GetSprite(clip.clipType, clip.sprIndex);
+        if (!image) {
+            continue;
+        }
+
+        const int drawX = clip.x - image->width / 2;
+        const int drawY = clip.y - image->height / 2;
+        RECT current = { drawX, drawY, drawX + image->width, drawY + image->height };
+        if (!hasClip) {
+            clipBox = current;
+            hasClip = true;
+        } else {
+            clipBox.left = (std::min)(clipBox.left, current.left);
+            clipBox.top = (std::min)(clipBox.top, current.top);
+            clipBox.right = (std::max)(clipBox.right, current.right);
+            clipBox.bottom = (std::max)(clipBox.bottom, current.bottom);
+        }
+    }
+
+    if (!hasClip) {
+        return false;
+    }
+
+    BlitMotionToArgb(dest, destW, destH, x, y, sprRes, motion, palette);
+    return true;
+}
+

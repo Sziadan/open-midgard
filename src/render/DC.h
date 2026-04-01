@@ -55,3 +55,4 @@ bool AlphaBlendArgbToHdc(HDC hdc,
                          int srcWidth = -1,
                          int srcHeight = -1);
 bool DrawActMotionToHdc(HDC hdc, int x, int y, class CSprRes* sprRes, const struct CMotion* motion, unsigned int* palette);
+bool DrawActMotionToArgb(unsigned int* dest, int destW, int destH, int x, int y, class CSprRes* sprRes, const struct CMotion* motion, unsigned int* palette);

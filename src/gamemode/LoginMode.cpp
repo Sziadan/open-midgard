@@ -478,54 +478,77 @@ bool QueueMenuCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
         return false;
     }
 
+    RECT clientRect{};
+    GetClientRect(g_hMainWnd, &clientRect);
+    const int clientWidth = clientRect.right - clientRect.left;
+    const int clientHeight = clientRect.bottom - clientRect.top;
+    if (clientWidth <= 0 || clientHeight <= 0) {
+        return false;
+    }
+
     POINT cursorPos{};
     if (!GetModeCursorClientPos(&cursorPos)) {
         return false;
     }
 
-    constexpr int kCursorTextureSize = 96;
-    constexpr int kCursorTextureOrigin = 32;
-    const int left = cursorPos.x - kCursorTextureOrigin;
-    const int top = cursorPos.y - kCursorTextureOrigin;
-    static unsigned int s_cursorComposePixels[kCursorTextureSize * kCursorTextureSize] = {};
-
+    RECT cursorBounds{};
+    const bool hasCustomBounds = GetModeCursorDrawBounds(cursorActNum, mouseAnimStartTick, &cursorBounds);
+    const int textureWidth = hasCustomBounds ? (std::max)(1, static_cast<int>(cursorBounds.right - cursorBounds.left)) : 32;
+    const int textureHeight = hasCustomBounds ? (std::max)(1, static_cast<int>(cursorBounds.bottom - cursorBounds.top)) : 32;
+    const int drawOriginX = hasCustomBounds ? -(std::min)(0, static_cast<int>(cursorBounds.left)) : 0;
+    const int drawOriginY = hasCustomBounds ? -(std::min)(0, static_cast<int>(cursorBounds.top)) : 0;
+    const int left = hasCustomBounds ? cursorPos.x + (std::min)(0, static_cast<int>(cursorBounds.left)) : cursorPos.x;
+    const int top = hasCustomBounds ? cursorPos.y + (std::min)(0, static_cast<int>(cursorBounds.top)) : cursorPos.y;
+    static std::vector<unsigned int> s_cursorComposePixels;
     static bool s_cursorTextureValid = false;
     static CTexture* s_cursorTexture = nullptr;
+    static int s_cursorTextureWidth = 0;
+    static int s_cursorTextureHeight = 0;
     static std::uint64_t s_cursorStateToken = 0ull;
-    if (!s_cursorTexture) {
+    if (!s_cursorTexture || s_cursorTextureWidth != textureWidth || s_cursorTextureHeight != textureHeight) {
+        delete s_cursorTexture;
         s_cursorTexture = new CTexture();
-        if (!s_cursorTexture || !s_cursorTexture->Create(kCursorTextureSize, kCursorTextureSize, PF_A8R8G8B8, false)) {
+        if (!s_cursorTexture || !s_cursorTexture->Create(textureWidth, textureHeight, PF_A8R8G8B8, false)) {
             delete s_cursorTexture;
             s_cursorTexture = nullptr;
+            s_cursorTextureWidth = 0;
+            s_cursorTextureHeight = 0;
             return false;
         }
+        s_cursorTextureWidth = textureWidth;
+        s_cursorTextureHeight = textureHeight;
         s_cursorTextureValid = false;
         s_cursorStateToken = 0ull;
+        s_cursorComposePixels.assign(static_cast<size_t>(textureWidth) * static_cast<size_t>(textureHeight), 0u);
+    } else if (s_cursorComposePixels.size() != static_cast<size_t>(textureWidth) * static_cast<size_t>(textureHeight)) {
+        s_cursorComposePixels.assign(static_cast<size_t>(textureWidth) * static_cast<size_t>(textureHeight), 0u);
     }
 
     std::uint64_t cursorStateToken = 1469598103934665603ull;
     HashTokenValue(&cursorStateToken, static_cast<std::uint64_t>(cursorActNum));
     HashTokenValue(&cursorStateToken, static_cast<std::uint64_t>(GetModeCursorVisualFrame(cursorActNum, mouseAnimStartTick)));
+    HashTokenValue(&cursorStateToken, static_cast<std::uint64_t>(static_cast<unsigned int>(textureWidth)));
+    HashTokenValue(&cursorStateToken, static_cast<std::uint64_t>(static_cast<unsigned int>(textureHeight)));
 
     if (!s_cursorTextureValid || cursorStateToken != s_cursorStateToken) {
-        std::fill_n(s_cursorComposePixels, kCursorTextureSize * kCursorTextureSize, 0u);
+        std::fill(s_cursorComposePixels.begin(), s_cursorComposePixels.end(), 0u);
         if (!DrawModeCursorAtToArgb(
-            s_cursorComposePixels,
-            kCursorTextureSize,
-            kCursorTextureSize,
-            kCursorTextureOrigin,
-            kCursorTextureOrigin,
+            s_cursorComposePixels.data(),
+            textureWidth,
+            textureHeight,
+            drawOriginX,
+            drawOriginY,
             cursorActNum,
             mouseAnimStartTick)) {
             return false;
         }
         s_cursorTexture->Update(0,
             0,
-            kCursorTextureSize,
-            kCursorTextureSize,
-            s_cursorComposePixels,
+            textureWidth,
+            textureHeight,
+            s_cursorComposePixels.data(),
             true,
-            kCursorTextureSize * static_cast<int>(sizeof(unsigned int)));
+            textureWidth * static_cast<int>(sizeof(unsigned int)));
         s_cursorTextureValid = true;
         s_cursorStateToken = cursorStateToken;
     }
@@ -535,14 +558,14 @@ bool QueueMenuCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
         return false;
     }
 
-    const unsigned int overlayContentWidth = s_cursorTexture->m_surfaceUpdateWidth > 0 ? s_cursorTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(kCursorTextureSize);
-    const unsigned int overlayContentHeight = s_cursorTexture->m_surfaceUpdateHeight > 0 ? s_cursorTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(kCursorTextureSize);
+    const unsigned int overlayContentWidth = s_cursorTexture->m_surfaceUpdateWidth > 0 ? s_cursorTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(textureWidth);
+    const unsigned int overlayContentHeight = s_cursorTexture->m_surfaceUpdateHeight > 0 ? s_cursorTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(textureHeight);
     const float maxU = s_cursorTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_cursorTexture->m_w) : 1.0f;
     const float maxV = s_cursorTexture->m_h != 0 ? static_cast<float>(overlayContentHeight) / static_cast<float>(s_cursorTexture->m_h) : 1.0f;
     const float quadLeft = static_cast<float>(left);
     const float quadTop = static_cast<float>(top);
-    const float quadRight = static_cast<float>(left + kCursorTextureSize);
-    const float quadBottom = static_cast<float>(top + kCursorTextureSize);
+    const float quadRight = static_cast<float>(left + textureWidth);
+    const float quadBottom = static_cast<float>(top + textureHeight);
 
     face->primType = D3DPT_TRIANGLESTRIP;
     face->verts = face->m_verts;

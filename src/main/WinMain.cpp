@@ -13,6 +13,7 @@
 #include "Types.h"
 #include "core/Timer.h"
 #include "core/File.h"
+#include "gamemode/CursorRenderer.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
 #include "network/Connection.h"
@@ -258,6 +259,30 @@ int ReadRegistry()
 // ---------------------------------------------------------------------------
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    switch (msg) {
+    case WM_MOUSEMOVE:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+        UpdateModeCursorClientPos(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        SetCursor(nullptr);
+        break;
+    case WM_MOUSEWHEEL:
+    {
+        POINT screenPoint{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+        POINT clientPoint = screenPoint;
+        if (ScreenToClient(hwnd, &clientPoint)) {
+            UpdateModeCursorClientPos(clientPoint.x, clientPoint.y);
+        }
+        SetCursor(nullptr);
+        break;
+    }
+    default:
+        break;
+    }
+
     if (HandleQtUiRuntimeWindowMessage(msg, wParam, lParam)) {
         return 0;
     }
@@ -391,7 +416,7 @@ bool InitApp(HINSTANCE hInstance, int nCmdShow)
     wc.lpfnWndProc  = WindowProc;
     wc.hInstance    = hInstance;
     wc.hIcon        = LoadIconA(hInstance, MAKEINTRESOURCEA(0x77));
-    wc.hCursor      = LoadCursorA(nullptr, (LPCSTR)IDC_ARROW);
+    wc.hCursor      = nullptr;
     wc.hbrBackground= nullptr;
     wc.lpszClassName= WINDOW_NAME;
     RegisterClassA(&wc);

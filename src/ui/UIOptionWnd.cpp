@@ -4,6 +4,7 @@
 #include "core/File.h"
 #include "main/WinMain.h"
 #include "qtui/QtUiRuntime.h"
+#include "render/DC.h"
 #include "res/Bitmap.h"
 #include "ui/UIWindowMgr.h"
 
@@ -15,6 +16,14 @@
 #include <cstring>
 #include <string>
 #include <vector>
+
+#if RO_ENABLE_QT6_UI
+#include <QFont>
+#include <QFontMetrics>
+#include <QImage>
+#include <QPainter>
+#include <QString>
+#endif
 
 namespace {
 
@@ -251,13 +260,109 @@ void DrawWindowTitleText(HDC hdc, int x, int y, int windowRight, const char* tex
         return;
     }
 
+#if RO_ENABLE_QT6_UI
+    LOGFONTA logFont{};
+    if (HGDIOBJ fontObject = GetCurrentObject(hdc, OBJ_FONT)) {
+        GetObjectA(fontObject, sizeof(logFont), &logFont);
+    }
+    const QString label = QString::fromLocal8Bit(text ? text : "");
+    if (label.isEmpty()) {
+        return;
+    }
+    const QString family = logFont.lfFaceName[0] != '\0'
+        ? QString::fromLocal8Bit(logFont.lfFaceName)
+        : QStringLiteral("MS Sans Serif");
+    QFont font(family);
+    font.setPixelSize(logFont.lfHeight != 0 ? (std::max)(1, std::abs(logFont.lfHeight)) : 12);
+    font.setBold(logFont.lfWeight >= FW_BOLD);
+    font.setStyleStrategy(QFont::NoAntialias);
+    const QFontMetrics metrics(font);
+    const int width = (std::max)(1, (std::min)(windowRight - x - 4, metrics.horizontalAdvance(label)));
+    const int height = (std::max)(1, metrics.height());
+    std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+    QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32);
+    if (!image.isNull()) {
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing, false);
+        painter.setRenderHint(QPainter::TextAntialiasing, false);
+        painter.setFont(font);
+        painter.setPen(QColor(GetRValue(color), GetGValue(color), GetBValue(color)));
+        painter.drawText(0, metrics.ascent(), label);
+        AlphaBlendArgbToHdc(hdc, x, y, width, height, pixels.data(), width, height);
+    }
+#else
     RECT rect = { x, y, windowRight - 4, y + 16 };
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, color);
     HGDIOBJ oldFont = SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
     DrawTextA(hdc, text ? text : "", -1, &rect, DT_LEFT | DT_TOP | DT_SINGLELINE);
     SelectObject(hdc, oldFont);
+#endif
 }
+
+#if RO_ENABLE_QT6_UI
+QFont BuildUiOptionFontFromHdc(HDC hdc)
+{
+    LOGFONTA logFont{};
+    if (hdc) {
+        if (HGDIOBJ fontObject = GetCurrentObject(hdc, OBJ_FONT)) {
+            GetObjectA(fontObject, sizeof(logFont), &logFont);
+        }
+    }
+
+    const QString family = logFont.lfFaceName[0] != '\0'
+        ? QString::fromLocal8Bit(logFont.lfFaceName)
+        : QStringLiteral("MS Sans Serif");
+    QFont font(family);
+    font.setPixelSize(logFont.lfHeight != 0 ? (std::max)(1, std::abs(logFont.lfHeight)) : 12);
+    font.setBold(logFont.lfWeight >= FW_BOLD);
+    font.setItalic(logFont.lfItalic != 0);
+    font.setUnderline(logFont.lfUnderline != 0);
+    font.setStrikeOut(logFont.lfStrikeOut != 0);
+    font.setStyleStrategy(QFont::NoAntialias);
+    return font;
+}
+
+int MeasureUiOptionTextWidth(HDC hdc, const char* text)
+{
+    const QString label = QString::fromLocal8Bit(text ? text : "");
+    if (label.isEmpty()) {
+        return 0;
+    }
+    const QFontMetrics metrics(BuildUiOptionFontFromHdc(hdc));
+    return (std::max)(1, metrics.horizontalAdvance(label));
+}
+
+void DrawUiOptionText(HDC hdc, int x, int y, const char* text, COLORREF color)
+{
+    if (!hdc) {
+        return;
+    }
+
+    const QString label = QString::fromLocal8Bit(text ? text : "");
+    if (label.isEmpty()) {
+        return;
+    }
+
+    const QFont font = BuildUiOptionFontFromHdc(hdc);
+    const QFontMetrics metrics(font);
+    const int width = (std::max)(1, metrics.horizontalAdvance(label));
+    const int height = (std::max)(1, metrics.height());
+    std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+    QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32);
+    if (image.isNull()) {
+        return;
+    }
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setRenderHint(QPainter::TextAntialiasing, false);
+    painter.setFont(font);
+    painter.setPen(QColor(GetRValue(color), GetGValue(color), GetBValue(color)));
+    painter.drawText(0, metrics.ascent(), label);
+    AlphaBlendArgbToHdc(hdc, x, y, width, height, pixels.data(), width, height);
+}
+#endif
 
 int ClampSliderValue(int value)
 {
@@ -934,7 +1039,11 @@ void UIOptionWnd::DrawSlider(HDC hdc, const RECT& sliderRect, int value, const c
 
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(0, 0, 0));
+#if RO_ENABLE_QT6_UI
+    DrawUiOptionText(hdc, sliderRect.left - 44, sliderRect.top - 1, label, RGB(0, 0, 0));
+#else
     TextOutA(hdc, sliderRect.left - 44, sliderRect.top - 1, label, static_cast<int>(std::strlen(label)));
+#endif
 }
 
 void UIOptionWnd::DrawHeaderButton(HDC hdc, const RECT& rect, const char* text) const
@@ -943,7 +1052,11 @@ void UIOptionWnd::DrawHeaderButton(HDC hdc, const RECT& rect, const char* text) 
     DrawRectFrame(hdc, rect, kHeaderButtonBorderColor);
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, kHeaderButtonTextColor);
+#if RO_ENABLE_QT6_UI
+    DrawUiOptionText(hdc, rect.left + 3, rect.top - 1, text, kHeaderButtonTextColor);
+#else
     TextOutA(hdc, rect.left + 3, rect.top - 1, text, static_cast<int>(std::strlen(text)));
+#endif
 }
 
 void UIOptionWnd::DrawTabButton(HDC hdc, const RECT& rect, const char* text, bool active) const
@@ -952,7 +1065,11 @@ void UIOptionWnd::DrawTabButton(HDC hdc, const RECT& rect, const char* text, boo
     DrawRectFrame(hdc, rect, active ? kActiveTabBorderColor : kInactiveTabBorderColor);
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(0, 0, 0));
+#if RO_ENABLE_QT6_UI
+    DrawUiOptionText(hdc, rect.left + 10, rect.top + 3, text, RGB(0, 0, 0));
+#else
     TextOutA(hdc, rect.left + 10, rect.top + 3, text, static_cast<int>(std::strlen(text)));
+#endif
 }
 
 void UIOptionWnd::DrawSettingRow(HDC hdc, int rowIndex, const char* label, const std::string& value) const
@@ -962,12 +1079,18 @@ void UIOptionWnd::DrawSettingRow(HDC hdc, int rowIndex, const char* label, const
     DrawRectFrame(hdc, rowRect, kSettingRowBorderColor);
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(0, 0, 0));
+#if RO_ENABLE_QT6_UI
+    DrawUiOptionText(hdc, rowRect.left + 8, rowRect.top + 4, label, RGB(0, 0, 0));
+    const int valueX = rowRect.right - 60 - MeasureUiOptionTextWidth(hdc, value.c_str());
+    DrawUiOptionText(hdc, valueX, rowRect.top + 4, value.c_str(), RGB(0, 0, 0));
+#else
     TextOutA(hdc, rowRect.left + 8, rowRect.top + 4, label, static_cast<int>(std::strlen(label)));
 
     SIZE valueSize{};
     GetTextExtentPoint32A(hdc, value.c_str(), static_cast<int>(value.size()), &valueSize);
     const int valueX = rowRect.right - 60 - valueSize.cx;
     TextOutA(hdc, valueX, rowRect.top + 4, value.c_str(), static_cast<int>(value.size()));
+#endif
 
     DrawHeaderButton(hdc, GetRowPrevButtonRect(rowIndex), "<");
     DrawHeaderButton(hdc, GetRowNextButtonRect(rowIndex), ">");
@@ -1227,23 +1350,47 @@ void UIOptionWnd::OnDraw()
             DrawSlider(hdc, GetBgmSliderRect(), m_bgmVolume, "BGM");
             DrawSlider(hdc, GetSoundSliderRect(), m_soundVolume, "Sound");
             if (m_bgmOnCheckBox) {
+#if RO_ENABLE_QT6_UI
+                DrawUiOptionText(hdc, m_bgmOnCheckBox->m_x + 18, m_bgmOnCheckBox->m_y - 1, "Mute", RGB(0, 0, 0));
+#else
                 TextOutA(hdc, m_bgmOnCheckBox->m_x + 18, m_bgmOnCheckBox->m_y - 1, "Mute", 4);
+#endif
             }
             if (m_soundOnCheckBox) {
+#if RO_ENABLE_QT6_UI
+                DrawUiOptionText(hdc, m_soundOnCheckBox->m_x + 18, m_soundOnCheckBox->m_y - 1, "Mute", RGB(0, 0, 0));
+#else
                 TextOutA(hdc, m_soundOnCheckBox->m_x + 18, m_soundOnCheckBox->m_y - 1, "Mute", 4);
+#endif
             }
         } else if (m_activeTab == TabId_Game) {
             if (m_noCtrlCheckBox) {
+#if RO_ENABLE_QT6_UI
+                DrawUiOptionText(hdc, m_noCtrlCheckBox->m_x + 18, m_noCtrlCheckBox->m_y - 1, "Disable Ctrl+Click movement", RGB(0, 0, 0));
+#else
                 TextOutA(hdc, m_noCtrlCheckBox->m_x + 18, m_noCtrlCheckBox->m_y - 1, "Disable Ctrl+Click movement", 26);
+#endif
             }
             if (m_attackSnapCheckBox) {
+#if RO_ENABLE_QT6_UI
+                DrawUiOptionText(hdc, m_attackSnapCheckBox->m_x + 18, m_attackSnapCheckBox->m_y - 1, "Attack target snap", RGB(0, 0, 0));
+#else
                 TextOutA(hdc, m_attackSnapCheckBox->m_x + 18, m_attackSnapCheckBox->m_y - 1, "Attack target snap", 18);
+#endif
             }
             if (m_skillSnapCheckBox) {
+#if RO_ENABLE_QT6_UI
+                DrawUiOptionText(hdc, m_skillSnapCheckBox->m_x + 18, m_skillSnapCheckBox->m_y - 1, "Skill target snap", RGB(0, 0, 0));
+#else
                 TextOutA(hdc, m_skillSnapCheckBox->m_x + 18, m_skillSnapCheckBox->m_y - 1, "Skill target snap", 17);
+#endif
             }
             if (m_itemSnapCheckBox) {
+#if RO_ENABLE_QT6_UI
+                DrawUiOptionText(hdc, m_itemSnapCheckBox->m_x + 18, m_itemSnapCheckBox->m_y - 1, "Item target snap", RGB(0, 0, 0));
+#else
                 TextOutA(hdc, m_itemSnapCheckBox->m_x + 18, m_itemSnapCheckBox->m_y - 1, "Item target snap", 16);
+#endif
             }
         } else if (m_activeTab == TabId_Graphics) {
             const std::vector<GraphicsRowId> rows = GetVisibleGraphicsRows();

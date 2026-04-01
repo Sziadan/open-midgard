@@ -77,6 +77,8 @@ constexpr int kFallbackCursorHeight = static_cast<int>(sizeof(kFallbackCursorMas
 constexpr int kFallbackCursorWidth = 14;
 constexpr unsigned int kFallbackCursorOutlineColor = 0xFF000000u;
 constexpr unsigned int kFallbackCursorFillColor = 0xFFF6F6F6u;
+bool s_hasCachedClientCursorPos = false;
+POINT s_cachedClientCursorPos{};
 
 unsigned int PremultiplyCursorColor(unsigned int color);
 void AlphaBlendCursorPixel(unsigned int& dst, unsigned int src);
@@ -193,6 +195,11 @@ bool GetClientCursorPosInternal(POINT* outPoint)
 {
     if (!outPoint || !g_hMainWnd) {
         return false;
+    }
+
+    if (s_hasCachedClientCursorPos) {
+        *outPoint = s_cachedClientCursorPos;
+        return true;
     }
 
     POINT pt{};
@@ -640,17 +647,9 @@ bool DrawCursorMotionToHdc(HDC hdc, int x, int y, CSprRes* sprRes, const CMotion
     std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
     BlitCursorMotionToArgb(pixels.data(), width, height, -bounds.left, -bounds.top, sprRes, motion, palette, globalColor);
 
-    // Cursor ACT motions are authored around a hotspot-relative local origin.
-    // When the motion bounds start entirely in positive space, placing the
-    // bitmap at `x + bounds.left/y + bounds.top` shifts the visible cursor
-    // away from the real OS cursor. Clamp that authored positive offset back
-    // out so the software cursor lands on the same hotspot.
-    const int hotspotOffsetX = (std::max)(0, static_cast<int>(bounds.left));
-    const int hotspotOffsetY = (std::max)(0, static_cast<int>(bounds.top));
-
     return AlphaBlendArgbToHdc(hdc,
-        x + bounds.left - hotspotOffsetX,
-        y + bounds.top - hotspotOffsetY,
+        x + (std::min)(0, static_cast<int>(bounds.left)),
+        y + (std::min)(0, static_cast<int>(bounds.top)),
         width,
         height,
         pixels.data(),
@@ -673,13 +672,11 @@ bool DrawCursorMotionToArgb(unsigned int* dest,
         return false;
     }
 
-    const int hotspotOffsetX = (std::max)(0, static_cast<int>(bounds.left));
-    const int hotspotOffsetY = (std::max)(0, static_cast<int>(bounds.top));
     BlitCursorMotionToArgb(dest,
         destW,
         destH,
-        x + bounds.left - hotspotOffsetX,
-        y + bounds.top - hotspotOffsetY,
+        x - (std::max)(0, static_cast<int>(bounds.left)),
+        y - (std::max)(0, static_cast<int>(bounds.top)),
         sprRes,
         motion,
         palette,
@@ -744,6 +741,36 @@ bool DrawResolvedCursorActionToArgb(unsigned int* dest,
     const int motionIndex = static_cast<int>(stateTicks / motionDelay) % motionCount;
     const CMotion* motion = actRes->GetMotion(action, motionIndex);
     return motion ? DrawCursorMotionToArgb(dest, destW, destH, x, y, sprRes, motion, sprRes->m_pal, 0xFAFFFFFFu) : false;
+}
+
+bool GetResolvedCursorActionBounds(int cursorActNum, u32 mouseAnimStartTick, const CursorResCache& cache, RECT* outBounds)
+{
+    if (!outBounds) {
+        return false;
+    }
+
+    CSprRes* sprRes = cache.resolved ? g_resMgr.GetAs<CSprRes>(cache.sprName.c_str()) : nullptr;
+    CActRes* actRes = cache.resolved ? g_resMgr.GetAs<CActRes>(cache.actName.c_str()) : nullptr;
+    if (!actRes || !sprRes) {
+        return false;
+    }
+
+    int action = cursorActNum;
+    if (action < 0 || action >= static_cast<int>(actRes->actions.size())) {
+        action = 0;
+    }
+
+    const int motionCount = actRes->GetMotionCount(action);
+    if (motionCount <= 0) {
+        return false;
+    }
+
+    const unsigned int elapsed = GetTickCount() - mouseAnimStartTick;
+    const float stateTicks = static_cast<float>(elapsed) * 0.041666668f;
+    const float motionDelay = (std::max)(0.0001f, actRes->GetDelay(action));
+    const int motionIndex = static_cast<int>(stateTicks / motionDelay) % motionCount;
+    const CMotion* motion = actRes->GetMotion(action, motionIndex);
+    return motion ? ComputeCursorMotionBounds(sprRes, motion, outBounds) : false;
 }
 
 u32 GetCursorActionVisualFrame(int cursorActNum, u32 mouseAnimStartTick, const CursorResCache& cache)
@@ -844,9 +871,58 @@ bool DrawModeCursorAtToArgb(unsigned int* dest, int destW, int destH, int x, int
     return drewCustomCursor;
 }
 
+void UpdateModeCursorClientPos(int x, int y)
+{
+    s_cachedClientCursorPos.x = x;
+    s_cachedClientCursorPos.y = y;
+    s_hasCachedClientCursorPos = true;
+}
+
 bool GetModeCursorClientPos(POINT* outPoint)
 {
     return GetClientCursorPosInternal(outPoint);
+}
+
+bool GetModeCursorDrawBounds(int cursorActNum, u32 mouseAnimStartTick, RECT* outBounds)
+{
+    if (!outBounds) {
+        return false;
+    }
+
+    static bool s_cacheInit = false;
+    static CursorResCache s_cache{};
+    if (!s_cacheInit) {
+        s_cache = ResolveCursorResources();
+        s_cacheInit = true;
+    }
+
+    if (cursorActNum == static_cast<int>(CursorAction::Forbidden)) {
+        RECT arrowBounds{};
+        RECT forbiddenBounds{};
+        const bool hasArrowBounds =
+            GetResolvedCursorActionBounds(static_cast<int>(CursorAction::Arrow), mouseAnimStartTick, s_cache, &arrowBounds);
+        const bool hasForbiddenBounds =
+            GetResolvedCursorActionBounds(cursorActNum, mouseAnimStartTick, s_cache, &forbiddenBounds);
+        if (!hasArrowBounds && !hasForbiddenBounds) {
+            return false;
+        }
+        if (!hasArrowBounds) {
+            *outBounds = forbiddenBounds;
+            return true;
+        }
+        if (!hasForbiddenBounds) {
+            *outBounds = arrowBounds;
+            return true;
+        }
+
+        outBounds->left = (std::min)(arrowBounds.left, forbiddenBounds.left);
+        outBounds->top = (std::min)(arrowBounds.top, forbiddenBounds.top);
+        outBounds->right = (std::max)(arrowBounds.right, forbiddenBounds.right);
+        outBounds->bottom = (std::max)(arrowBounds.bottom, forbiddenBounds.bottom);
+        return true;
+    }
+
+    return GetResolvedCursorActionBounds(cursorActNum, mouseAnimStartTick, s_cache, outBounds);
 }
 
 u32 GetModeCursorVisualFrame(int cursorActNum, u32 mouseAnimStartTick)
