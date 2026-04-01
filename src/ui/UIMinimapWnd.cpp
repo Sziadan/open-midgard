@@ -899,7 +899,7 @@ void UIRoMapWnd::DrawToHdc(HDC hdc, int drawX, int drawY)
             m_renderCacheDirty = false;
         }
         if (!BlitArgbCacheToHdc(hdc, drawX, drawY, m_w, m_h, m_renderCacheSurface.GetBits())) {
-            BitBlt(hdc, drawX, drawY, m_w, m_h, m_renderCacheSurface.GetDC(), 0, 0, SRCCOPY);
+            DrawWindowContents(hdc, drawX, drawY);
         }
     } else {
         DrawWindowContents(hdc, drawX, drawY);

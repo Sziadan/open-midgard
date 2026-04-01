@@ -707,21 +707,18 @@ bool DrawEquipPreviewPlayerSpriteFitted(HDC hdc, const RECT& previewArea)
         const int dstX = previewArea.left + (areaW - drawW) / 2;
         const int dstY = previewArea.top + (areaH - drawH) / 2;
 
-        BLENDFUNCTION blend{};
-        blend.BlendOp = AC_SRC_OVER;
-        blend.SourceConstantAlpha = 255;
-        blend.AlphaFormat = AC_SRC_ALPHA;
-        AlphaBlend(hdc,
+        AlphaBlendArgbToHdc(hdc,
             dstX,
             dstY,
             drawW,
             drawH,
-            composeSurface.GetDC(),
+            static_cast<const unsigned int*>(composeSurface.GetBits()),
+            kComposeWidth,
+            kComposeHeight,
             srcBounds.left,
             srcBounds.top,
             srcW,
-            srcH,
-            blend);
+            srcH);
     }
 
     return drew && hasBounds;
