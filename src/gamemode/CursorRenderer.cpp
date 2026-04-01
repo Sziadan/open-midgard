@@ -194,45 +194,6 @@ bool ResolveDragPreviewCacheKey(const DRAG_INFO& dragInfo, unsigned long long* o
     return false;
 }
 
-HBITMAP LoadDragPreviewBitmap(const DRAG_INFO& dragInfo)
-{
-    static std::unordered_map<unsigned long long, HBITMAP> s_dragPreviewCache;
-
-    unsigned long long cacheKey = 0;
-    if (!ResolveDragPreviewCacheKey(dragInfo, &cacheKey)) {
-        return nullptr;
-    }
-
-    const auto found = s_dragPreviewCache.find(cacheKey);
-    if (found != s_dragPreviewCache.end()) {
-        return found->second;
-    }
-
-    HBITMAP bitmap = nullptr;
-    if (dragInfo.type == static_cast<int>(DragType::ShortcutItem) && dragInfo.itemId != 0) {
-        ITEM_INFO item{};
-        item.SetItemId(dragInfo.itemId);
-        item.m_isIdentified = 1;
-        for (const std::string& candidate : shopui::BuildItemIconCandidates(item)) {
-            if (!g_fileMgr.IsDataExist(candidate.c_str())) {
-                continue;
-            }
-            bitmap = shopui::LoadBitmapFromGameData(candidate);
-            if (bitmap) {
-                break;
-            }
-        }
-    } else if (dragInfo.type == static_cast<int>(DragType::ShortcutSkill) && dragInfo.skillId != 0) {
-        const std::string path = ResolveShortcutDragSkillIconPath(dragInfo.skillId);
-        if (!path.empty() && g_fileMgr.IsDataExist(path.c_str())) {
-            bitmap = shopui::LoadBitmapFromGameData(path);
-        }
-    }
-
-    s_dragPreviewCache[cacheKey] = bitmap;
-    return bitmap;
-}
-
 bool LoadDragPreviewPixels(const DRAG_INFO& dragInfo, DragPreviewPixels* outPreview)
 {
     if (!outPreview) {
@@ -289,6 +250,31 @@ bool LoadDragPreviewPixels(const DRAG_INFO& dragInfo, DragPreviewPixels* outPrev
     return !outPreview->pixels.empty();
 }
 
+bool BuildScaledDragPreviewPixels(const DragPreviewPixels& preview, std::vector<unsigned int>* outPixels)
+{
+    if (!outPixels || preview.width <= 0 || preview.height <= 0 || preview.pixels.empty()) {
+        return false;
+    }
+
+    outPixels->assign(static_cast<size_t>(kDragPreviewSize) * static_cast<size_t>(kDragPreviewSize), 0u);
+    for (int dy = 0; dy < kDragPreviewSize; ++dy) {
+        const int srcY = dy * preview.height / kDragPreviewSize;
+        for (int dx = 0; dx < kDragPreviewSize; ++dx) {
+            const int srcX = dx * preview.width / kDragPreviewSize;
+            unsigned int srcColor = preview.pixels[static_cast<size_t>(srcY) * static_cast<size_t>(preview.width) + static_cast<size_t>(srcX)];
+            if ((srcColor & 0x00FFFFFFu) == 0x00FF00FFu) {
+                continue;
+            }
+            if (((srcColor >> 24) & 0xFFu) == 0u) {
+                srcColor |= 0xFF000000u;
+            }
+            (*outPixels)[static_cast<size_t>(dy) * static_cast<size_t>(kDragPreviewSize) + static_cast<size_t>(dx)] =
+                PremultiplyCursorColor(srcColor);
+        }
+    }
+    return true;
+}
+
 void DrawDragPreviewAt(HDC hdc, int x, int y)
 {
     if (!hdc) {
@@ -300,18 +286,61 @@ void DrawDragPreviewAt(HDC hdc, int x, int y)
         return;
     }
 
-    HBITMAP bitmap = LoadDragPreviewBitmap(gameMode->m_dragInfo);
-    if (!bitmap) {
+    DragPreviewPixels preview{};
+    if (!LoadDragPreviewPixels(gameMode->m_dragInfo, &preview)) {
         return;
     }
 
-    RECT dst{
+    std::vector<unsigned int> scaledPixels;
+    if (!BuildScaledDragPreviewPixels(preview, &scaledPixels) || scaledPixels.empty()) {
+        return;
+    }
+
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = kDragPreviewSize;
+    bmi.bmiHeader.biHeight = -kDragPreviewSize;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    void* dibBits = nullptr;
+    HBITMAP dib = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &dibBits, nullptr, 0);
+    if (!dib || !dibBits) {
+        if (dib) {
+            DeleteObject(dib);
+        }
+        return;
+    }
+
+    std::memcpy(dibBits, scaledPixels.data(), scaledPixels.size() * sizeof(unsigned int));
+
+    HDC memDc = CreateCompatibleDC(hdc);
+    if (!memDc) {
+        DeleteObject(dib);
+        return;
+    }
+
+    BLENDFUNCTION blend{};
+    blend.BlendOp = AC_SRC_OVER;
+    blend.SourceConstantAlpha = 255;
+    blend.AlphaFormat = AC_SRC_ALPHA;
+
+    HGDIOBJ oldBitmap = SelectObject(memDc, dib);
+    AlphaBlend(hdc,
         x + kDragPreviewOffsetX - (kDragPreviewSize / 2),
         y + kDragPreviewOffsetY - (kDragPreviewSize / 2),
-        x + kDragPreviewOffsetX + (kDragPreviewSize / 2),
-        y + kDragPreviewOffsetY + (kDragPreviewSize / 2)
-    };
-    shopui::DrawBitmapTransparent(hdc, bitmap, dst);
+        kDragPreviewSize,
+        kDragPreviewSize,
+        memDc,
+        0,
+        0,
+        kDragPreviewSize,
+        kDragPreviewSize,
+        blend);
+    SelectObject(memDc, oldBitmap);
+    DeleteDC(memDc);
+    DeleteObject(dib);
 }
 
 bool DrawDragPreviewToArgb(unsigned int* dest, int destW, int destH, int x, int y)
@@ -333,6 +362,11 @@ bool DrawDragPreviewToArgb(unsigned int* dest, int destW, int destH, int x, int 
         return false;
     }
 
+    std::vector<unsigned int> scaledPixels;
+    if (!BuildScaledDragPreviewPixels(preview, &scaledPixels) || scaledPixels.empty()) {
+        return false;
+    }
+
     const int destLeft = x + kDragPreviewOffsetX - (kDragPreviewSize / 2);
     const int destTop = y + kDragPreviewOffsetY - (kDragPreviewSize / 2);
     for (int dy = 0; dy < kDragPreviewSize; ++dy) {
@@ -341,24 +375,15 @@ bool DrawDragPreviewToArgb(unsigned int* dest, int destW, int destH, int x, int 
             continue;
         }
 
-        const int srcY = dy * preview.height / kDragPreviewSize;
         for (int dx = 0; dx < kDragPreviewSize; ++dx) {
             const int destX = destLeft + dx;
             if (destX < 0 || destX >= destW) {
                 continue;
             }
 
-            const int srcX = dx * preview.width / kDragPreviewSize;
-            unsigned int srcColor = preview.pixels[static_cast<size_t>(srcY) * static_cast<size_t>(preview.width) + static_cast<size_t>(srcX)];
-            if ((srcColor & 0x00FFFFFFu) == 0x00FF00FFu) {
-                continue;
-            }
-            if (((srcColor >> 24) & 0xFFu) == 0u) {
-                srcColor |= 0xFF000000u;
-            }
             AlphaBlendCursorPixel(
                 dest[static_cast<size_t>(destY) * static_cast<size_t>(destW) + static_cast<size_t>(destX)],
-                PremultiplyCursorColor(srcColor));
+                scaledPixels[static_cast<size_t>(dy) * static_cast<size_t>(kDragPreviewSize) + static_cast<size_t>(dx)]);
         }
     }
 
