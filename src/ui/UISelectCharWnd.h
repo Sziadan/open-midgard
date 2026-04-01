@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UIFrameWnd.h"
+#include "UIShopCommon.h"
 
 #include <array>
 #include <string>
@@ -106,10 +107,10 @@ private:
 
     bool m_controlsCreated;
     bool m_assetsProbed;
-    HBITMAP m_backgroundBmp;
+    shopui::BitmapPixels m_backgroundBmp;
     std::string m_backgroundPath;
-    HBITMAP m_slotBmp;
-    HBITMAP m_slotSelectedBmp;
+    shopui::BitmapPixels m_slotBmp;
+    shopui::BitmapPixels m_slotSelectedBmp;
     HDC m_composeDC;
     HBITMAP m_composeBitmap;
     void* m_composeBits;

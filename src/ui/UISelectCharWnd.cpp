@@ -54,94 +54,61 @@ constexpr int kSelectCharChargeW = 85;
 constexpr char kRegPath[] = "Software\\Gravity Soft\\Ragnarok Online";
 constexpr char kCurSlotValue[] = "CURSLOT";
 
-HBITMAP LoadBitmapFromGameData(const char* path)
+shopui::BitmapPixels LoadBitmapPixelsFromGameData(const char* path)
 {
-    HBITMAP outBmp = nullptr;
-    LoadHBitmapFromGameData(path, &outBmp, nullptr, nullptr);
-    return outBmp;
+    return shopui::LoadBitmapPixelsFromGameData(path ? path : "", true);
 }
 
-void DrawBitmapStretched(HDC target, HBITMAP bmp, const RECT& dst)
+void DrawBitmapPixelsStretched(HDC target, const shopui::BitmapPixels& bmp, const RECT& dst)
 {
-    if (!target || !bmp) {
+    if (!target || !bmp.IsValid() || dst.right <= dst.left || dst.bottom <= dst.top) {
         return;
     }
 
-    BITMAP bm{};
-    if (!GetObjectA(bmp, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = bmp.width;
+    bmi.bmiHeader.biHeight = -bmp.height;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
 
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
-        return;
-    }
-
-    HGDIOBJ old = SelectObject(srcDC, bmp);
-    SetStretchBltMode(target, HALFTONE);
-    StretchBlt(target,
+    const int oldStretchMode = SetStretchBltMode(target, HALFTONE);
+    StretchDIBits(target,
         dst.left,
         dst.top,
         dst.right - dst.left,
         dst.bottom - dst.top,
-        srcDC,
         0,
         0,
-        bm.bmWidth,
-        bm.bmHeight,
+        bmp.width,
+        bmp.height,
+        bmp.pixels.data(),
+        &bmi,
+        DIB_RGB_COLORS,
         SRCCOPY);
-    SelectObject(srcDC, old);
-    DeleteDC(srcDC);
+    SetStretchBltMode(target, oldStretchMode);
 }
 
-void DrawBitmapTransparent(HDC target, HBITMAP bmp, const RECT& dst)
+void DrawBitmapPixelsOverlay(HDC target, const shopui::BitmapPixels& bmp, const RECT& dst)
 {
-    if (!target || !bmp) {
+    if (!target || !bmp.IsValid() || dst.right <= dst.left || dst.bottom <= dst.top) {
         return;
     }
-
-    BITMAP bm{};
-    if (!GetObjectA(bmp, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
-        return;
-    }
-
-    HDC srcDC = CreateCompatibleDC(target);
-    if (!srcDC) {
-        return;
-    }
-
-    HGDIOBJ old = SelectObject(srcDC, bmp);
-    TransparentBlt(target,
-        dst.left,
-        dst.top,
-        dst.right - dst.left,
-        dst.bottom - dst.top,
-        srcDC,
-        0,
-        0,
-        bm.bmWidth,
-        bm.bmHeight,
-        RGB(255, 0, 255));
-    SelectObject(srcDC, old);
-    DeleteDC(srcDC);
+    shopui::DrawBitmapPixelsTransparent(target, bmp, dst);
 }
 
-RECT MakeBitmapRectAtSlotOrigin(HBITMAP bmp, const RECT& outerRect)
+RECT MakeBitmapRectAtSlotOrigin(const shopui::BitmapPixels& bmp, const RECT& outerRect)
 {
     RECT result = outerRect;
-    if (!bmp) {
-        return result;
-    }
-
-    BITMAP bm{};
-    if (!GetObjectA(bmp, sizeof(bm), &bm) || bm.bmWidth <= 0 || bm.bmHeight <= 0) {
+    if (!bmp.IsValid()) {
         return result;
     }
 
     result.left = outerRect.left;
     result.top = outerRect.top;
-    result.right = result.left + bm.bmWidth;
-    result.bottom = result.top + bm.bmHeight;
+    result.right = result.left + bmp.width;
+    result.bottom = result.top + bmp.height;
     return result;
 }
 
@@ -253,18 +220,18 @@ std::vector<std::string> BuildUiAssetCandidates(const char* fileName)
     return out;
 }
 
-HBITMAP LoadFirstBitmapFromCandidates(const std::vector<std::string>& candidates, std::string* outPath)
+shopui::BitmapPixels LoadFirstBitmapPixelsFromCandidates(const std::vector<std::string>& candidates, std::string* outPath)
 {
     for (const std::string& candidate : candidates) {
-        HBITMAP bmp = LoadBitmapFromGameData(candidate.c_str());
-        if (bmp) {
+        shopui::BitmapPixels bmp = LoadBitmapPixelsFromGameData(candidate.c_str());
+        if (bmp.IsValid()) {
             if (outPath) {
                 *outPath = candidate;
             }
             return bmp;
         }
     }
-    return nullptr;
+    return {};
 }
 
 std::string ResolveUiAssetPath(const char* fileName)
@@ -502,8 +469,8 @@ const char* ResolveJobName(int job)
 } // namespace
 
 UISelectCharWnd::UISelectCharWnd()
-    : m_controlsCreated(false), m_assetsProbed(false), m_backgroundBmp(nullptr),
-      m_slotBmp(nullptr), m_slotSelectedBmp(nullptr),
+    : m_controlsCreated(false), m_assetsProbed(false), m_backgroundBmp(),
+      m_slotBmp(), m_slotSelectedBmp(),
       m_composeDC(nullptr), m_composeBitmap(nullptr), m_composeBits(nullptr),
       m_composeWidth(0), m_composeHeight(0),
       m_okButton(nullptr), m_cancelButton(nullptr), m_makeButton(nullptr),
@@ -645,19 +612,10 @@ bool UISelectCharWnd::HandleQtMouseUp(int x, int y)
 
 void UISelectCharWnd::ClearAssets()
 {
-    if (m_backgroundBmp) {
-        DeleteObject(m_backgroundBmp);
-        m_backgroundBmp = nullptr;
-    }
+    m_backgroundBmp.Clear();
     m_backgroundPath.clear();
-    if (m_slotBmp) {
-        DeleteObject(m_slotBmp);
-        m_slotBmp = nullptr;
-    }
-    if (m_slotSelectedBmp) {
-        DeleteObject(m_slotSelectedBmp);
-        m_slotSelectedBmp = nullptr;
-    }
+    m_slotBmp.Clear();
+    m_slotSelectedBmp.Clear();
 }
 
 void UISelectCharWnd::ReleaseComposeSurface()
@@ -726,8 +684,8 @@ void UISelectCharWnd::EnsureResourceCache()
         nullptr
     };
 
-    for (int i = 0; panelNames[i] && !m_backgroundBmp; ++i) {
-        m_backgroundBmp = LoadFirstBitmapFromCandidates(BuildUiAssetCandidates(panelNames[i]), &m_backgroundPath);
+    for (int i = 0; panelNames[i] && !m_backgroundBmp.IsValid(); ++i) {
+        m_backgroundBmp = LoadFirstBitmapPixelsFromCandidates(BuildUiAssetCandidates(panelNames[i]), &m_backgroundPath);
     }
 
     const char* selSlotBmpNames[] = {
@@ -737,8 +695,8 @@ void UISelectCharWnd::EnsureResourceCache()
         "selslot_on.bmp",
         nullptr
     };
-    for (int i = 0; selSlotBmpNames[i] && !m_slotSelectedBmp; ++i) {
-        m_slotSelectedBmp = LoadFirstBitmapFromCandidates(BuildUiAssetCandidates(selSlotBmpNames[i]), nullptr);
+    for (int i = 0; selSlotBmpNames[i] && !m_slotSelectedBmp.IsValid(); ++i) {
+        m_slotSelectedBmp = LoadFirstBitmapPixelsFromCandidates(BuildUiAssetCandidates(selSlotBmpNames[i]), nullptr);
     }
 }
 
@@ -1233,8 +1191,8 @@ void UISelectCharWnd::OnDraw()
     }
 
     const RECT panel = MakeRect(m_x, m_y, m_w, m_h);
-    if (m_backgroundBmp) {
-        DrawBitmapStretched(hdc, m_backgroundBmp, panel);
+    if (m_backgroundBmp.IsValid()) {
+        DrawBitmapPixelsStretched(hdc, m_backgroundBmp, panel);
     } else {
         FillRectColor(hdc, panel, RGB(255, 255, 255));
         DrawRectFrame(hdc, panel, RGB(78, 58, 41));
@@ -1262,8 +1220,8 @@ void UISelectCharWnd::OnDraw()
             m_y + kSlotTop,
             kSlotWidth,
             kSlotHeight);
-        if (slotNumber == m_selectedSlot && m_slotSelectedBmp) {
-            DrawBitmapTransparent(hdc, m_slotSelectedBmp, MakeBitmapRectAtSlotOrigin(m_slotSelectedBmp, slotRect));
+        if (slotNumber == m_selectedSlot && m_slotSelectedBmp.IsValid()) {
+            DrawBitmapPixelsOverlay(hdc, m_slotSelectedBmp, MakeBitmapRectAtSlotOrigin(m_slotSelectedBmp, slotRect));
         }
     }
 
