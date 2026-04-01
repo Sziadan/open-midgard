@@ -818,12 +818,9 @@ void UIMakeCharWnd::OnDraw()
     DrawChildrenToHdc(hdc);
 
     if (useCompose) {
-        targetDC = AcquireDrawTarget();
-        if (!targetDC) {
+        if (!BlitToDrawTarget(hdc, clientW, clientH)) {
             return;
         }
-        BitBlt(targetDC, 0, 0, clientW, clientH, hdc, 0, 0, SRCCOPY);
-        ReleaseDrawTarget(targetDC);
     } else {
         ReleaseDrawTarget(targetDC);
     }

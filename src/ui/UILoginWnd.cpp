@@ -838,12 +838,9 @@ void UILoginWnd::OnDraw()
     DrawChildrenToHdc(drawDC);
 
     if (useCompose) {
-        targetDC = AcquireDrawTarget();
-        if (!targetDC) {
+        if (!BlitToDrawTarget(drawDC, clientW, clientH)) {
             return;
         }
-        BitBlt(targetDC, 0, 0, clientW, clientH, drawDC, 0, 0, SRCCOPY);
-        ReleaseDrawTarget(targetDC);
     } else {
         ReleaseDrawTarget(targetDC);
     }

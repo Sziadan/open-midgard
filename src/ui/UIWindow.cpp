@@ -331,6 +331,22 @@ void UIWindow::ReleaseDrawTarget(HDC dc) const
     }
 }
 
+bool UIWindow::BlitToDrawTarget(HDC sourceDc, int width, int height) const
+{
+    if (!sourceDc || width <= 0 || height <= 0) {
+        return false;
+    }
+
+    HDC targetDc = AcquireDrawTarget();
+    if (!targetDc) {
+        return false;
+    }
+
+    BitBlt(targetDc, 0, 0, width, height, sourceDc, 0, 0, SRCCOPY);
+    ReleaseDrawTarget(targetDc);
+    return true;
+}
+
     void PlayUiButtonSound()
     {
         const std::string path = ResolveUiButtonSoundPath();
