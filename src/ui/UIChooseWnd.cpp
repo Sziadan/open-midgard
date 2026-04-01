@@ -172,7 +172,8 @@ const char* GetEntryBitmapName(int index, int stateIndex)
 UIChooseWnd::UIChooseWnd()
     : m_controlsCreated(false),
       m_entryButtons{ nullptr, nullptr, nullptr, nullptr },
-    m_selectedIndex(MenuEntry_ReturnToGame)
+      m_selectedIndex(MenuEntry_ReturnToGame),
+      m_pressedIndex(-1)
 {
     m_defPushId = 0;
     m_defCancelPushId = 0;
@@ -186,6 +187,7 @@ void UIChooseWnd::SetShow(int show)
     UIWindow::SetShow(show);
 
     if (show == 0) {
+        m_pressedIndex = -1;
         for (UIBitmapButton* button : m_entryButtons) {
             if (button) {
                 button->m_state = 0;
@@ -249,13 +251,32 @@ void UIChooseWnd::OnCreate(int cx, int cy)
 
 void UIChooseWnd::LayoutButtons()
 {
-    const int startX = m_x + (m_w - kButtonWidth) / 2;
-    const int startY = m_y + 12;
     for (int index = 0; index < MenuEntry_Count; ++index) {
         if (m_entryButtons[index]) {
-            m_entryButtons[index]->Move(startX, startY + index * (kButtonHeight + kButtonSpacing));
+            const RECT entryRect = GetEntryRect(index);
+            m_entryButtons[index]->Move(entryRect.left, entryRect.top);
         }
     }
+}
+
+RECT UIChooseWnd::GetEntryRect(int index) const
+{
+    return MakeRect(
+        m_x + (m_w - kButtonWidth) / 2,
+        m_y + 12 + index * (kButtonHeight + kButtonSpacing),
+        kButtonWidth,
+        kButtonHeight);
+}
+
+int UIChooseWnd::HitTestEntry(int x, int y) const
+{
+    for (int index = 0; index < MenuEntry_Count; ++index) {
+        const RECT entryRect = GetEntryRect(index);
+        if (x >= entryRect.left && x < entryRect.right && y >= entryRect.top && y < entryRect.bottom) {
+            return index;
+        }
+    }
+    return -1;
 }
 
 void UIChooseWnd::SyncSelectionVisuals()
@@ -345,20 +366,45 @@ void UIChooseWnd::OnDraw()
 
 void UIChooseWnd::OnLBtnDown(int x, int y)
 {
-    (void)x;
-    (void)y;
+    const int hitIndex = HitTestEntry(x, y);
+    m_pressedIndex = hitIndex;
+    if (hitIndex >= 0) {
+        m_selectedIndex = hitIndex;
+        SyncSelectionVisuals();
+    }
+}
+
+void UIChooseWnd::OnLBtnUp(int x, int y)
+{
+    const int pressedIndex = m_pressedIndex;
+    const int hitIndex = HitTestEntry(x, y);
+    m_pressedIndex = -1;
+    if (hitIndex >= 0) {
+        m_selectedIndex = hitIndex;
+        SyncSelectionVisuals();
+    }
+    if (pressedIndex >= 0 && pressedIndex == hitIndex) {
+        ActivateSelection();
+    }
 }
 
 void UIChooseWnd::OnLBtnDblClk(int x, int y)
 {
-    (void)x;
-    (void)y;
+    const int hitIndex = HitTestEntry(x, y);
+    if (hitIndex >= 0) {
+        m_selectedIndex = hitIndex;
+        SyncSelectionVisuals();
+        ActivateSelection();
+    }
 }
 
 void UIChooseWnd::OnMouseMove(int x, int y)
 {
-    (void)x;
-    (void)y;
+    const int hitIndex = HitTestEntry(x, y);
+    if (hitIndex >= 0 && hitIndex != m_selectedIndex) {
+        m_selectedIndex = hitIndex;
+        SyncSelectionVisuals();
+    }
 }
 
 msgresult_t UIChooseWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
