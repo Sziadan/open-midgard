@@ -989,6 +989,7 @@ void UIWindowMgr::OnDraw() {
         static CTexture* s_qtMenuOverlayTexture = nullptr;
         static int s_qtMenuOverlayTextureWidth = 0;
         static int s_qtMenuOverlayTextureHeight = 0;
+        static std::vector<unsigned int> s_qtMenuComposePixels;
         if (!s_qtMenuOverlayTexture
             || s_qtMenuOverlayTextureWidth != clientWidth
             || s_qtMenuOverlayTextureHeight != clientHeight) {
@@ -1016,6 +1017,39 @@ void UIWindowMgr::OnDraw() {
             g_renderer.DrawScene();
             g_renderer.Flip(false);
             return;
+        }
+
+        if (s_qtMenuOverlayTexture) {
+            const size_t pixelCount = static_cast<size_t>(clientWidth) * static_cast<size_t>(clientHeight);
+            if (s_qtMenuComposePixels.size() != pixelCount) {
+                s_qtMenuComposePixels.assign(pixelCount, 0u);
+            } else {
+                std::fill(s_qtMenuComposePixels.begin(), s_qtMenuComposePixels.end(), 0u);
+            }
+
+            if (CompositeQtUiMenuOverlay(
+                    s_qtMenuComposePixels.data(),
+                    clientWidth,
+                    clientHeight,
+                    clientWidth * static_cast<int>(sizeof(unsigned int)))) {
+                s_qtMenuOverlayTexture->Update(
+                    0,
+                    0,
+                    clientWidth,
+                    clientHeight,
+                    s_qtMenuComposePixels.data(),
+                    true,
+                    clientWidth * static_cast<int>(sizeof(unsigned int)));
+                if (QueueFullScreenOverlayQuad(s_qtMenuOverlayTexture, clientWidth, clientHeight, 2.0f)) {
+                    ClearDirtyVisualState();
+                    g_renderer.ClearBackground();
+                    g_renderer.Clear(0);
+                    RenderWallPaper();
+                    g_renderer.DrawScene();
+                    g_renderer.Flip(false);
+                    return;
+                }
+            }
         }
     }
 
