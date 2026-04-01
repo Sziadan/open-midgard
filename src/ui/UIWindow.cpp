@@ -315,14 +315,10 @@ void UIWindow::DrawChildrenToHdc(HDC dc)
     UIWindow::SetSharedDrawDC(previousSharedDC);
 }
 
-HDC UIWindow::AcquireDrawTarget(bool* outUseShared) const
+HDC UIWindow::AcquireDrawTarget() const
 {
     const HDC shared = UIWindow::GetSharedDrawDC();
-    const bool useShared = shared != nullptr;
-    if (outUseShared) {
-        *outUseShared = useShared;
-    }
-    if (useShared) {
+    if (shared) {
         return shared;
     }
     return g_hMainWnd ? GetDC(g_hMainWnd) : nullptr;

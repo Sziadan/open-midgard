@@ -30,7 +30,7 @@ public:
     virtual void AddChild(UIWindow* child);
     virtual void DrawChildren();
     virtual void DrawChildrenToHdc(HDC dc);
-    virtual HDC AcquireDrawTarget(bool* outUseShared = nullptr) const;
+    virtual HDC AcquireDrawTarget() const;
     virtual void ReleaseDrawTarget(HDC dc) const;
 
     static void SetSharedDrawDC(HDC dc);
