@@ -511,9 +511,21 @@ Item {
                     Text {
                         x: 26
                         y: 2
+                        width: uiState.itemShopTitle === "Sellable Items" ? 160 : (parent.width - 110)
                         text: "Item"
                         color: "#1e1e1e"
                         font.pixelSize: 11
+                    }
+
+                    Text {
+                        x: 190
+                        y: 2
+                        width: 38
+                        visible: uiState.itemShopTitle === "Sellable Items"
+                        text: "Qty"
+                        color: "#1e1e1e"
+                        font.pixelSize: 11
+                        horizontalAlignment: Text.AlignHCenter
                     }
 
                     Text {
@@ -539,11 +551,22 @@ Item {
                         Text {
                             x: 24
                             y: 2
-                            width: parent.width - 110
+                            width: uiState.itemShopTitle === "Sellable Items" ? 160 : (parent.width - 110)
                             text: modelData.name
                             color: "#1a1a1a"
                             font.pixelSize: 11
                             elide: Text.ElideRight
+                        }
+
+                        Text {
+                            x: 188
+                            y: 2
+                            width: 38
+                            visible: uiState.itemShopTitle === "Sellable Items"
+                            text: modelData.quantity
+                            color: "#303030"
+                            font.pixelSize: 11
+                            horizontalAlignment: Text.AlignHCenter
                         }
 
                         Text {
