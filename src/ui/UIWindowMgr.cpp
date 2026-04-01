@@ -26,6 +26,7 @@
 #include "UIWaitWnd.h"
 #include "gamemode/CursorRenderer.h"
 #include "gamemode/GameMode.h"
+#include "gamemode/LoginMode.h"
 #include "gamemode/Mode.h"
 #include "qtui/QtUiRuntime.h"
 
@@ -103,6 +104,136 @@ bool QueueFullScreenOverlayQuad(CTexture* texture, int width, int height, float 
     face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
     g_renderer.AddRP(face, 1 | 8);
     return true;
+}
+
+bool ResolveCurrentModeCursorState(int* outCursorActNum, u32* outMouseAnimStartTick)
+{
+    if (!outCursorActNum || !outMouseAnimStartTick) {
+        return false;
+    }
+
+    if (CLoginMode* loginMode = g_modeMgr.GetCurrentLoginMode()) {
+        *outCursorActNum = loginMode->GetCursorAction();
+        *outMouseAnimStartTick = loginMode->GetCursorAnimStartTick();
+        return true;
+    }
+
+    if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+        *outCursorActNum = gameMode->GetCursorAction();
+        *outMouseAnimStartTick = gameMode->GetCursorAnimStartTick();
+        return true;
+    }
+
+    return false;
+}
+
+bool QueueMenuCursorOverlayQuadForCurrentMode()
+{
+    int cursorActNum = 0;
+    u32 mouseAnimStartTick = 0;
+    if (!ResolveCurrentModeCursorState(&cursorActNum, &mouseAnimStartTick) || !g_hMainWnd) {
+        return false;
+    }
+
+    POINT cursorPos{};
+    if (!GetModeCursorClientPos(&cursorPos)) {
+        return false;
+    }
+
+    constexpr int kCursorTextureSize = 96;
+    constexpr int kCursorTextureOrigin = 32;
+    const int left = cursorPos.x - kCursorTextureOrigin;
+    const int top = cursorPos.y - kCursorTextureOrigin;
+    static unsigned int s_cursorComposePixels[kCursorTextureSize * kCursorTextureSize] = {};
+    static bool s_cursorTextureValid = false;
+    static CTexture* s_cursorTexture = nullptr;
+    static std::uint64_t s_cursorStateToken = 0ull;
+    if (!s_cursorTexture) {
+        s_cursorTexture = new CTexture();
+        if (!s_cursorTexture || !s_cursorTexture->Create(kCursorTextureSize, kCursorTextureSize, PF_A8R8G8B8, false)) {
+            delete s_cursorTexture;
+            s_cursorTexture = nullptr;
+            return false;
+        }
+        s_cursorTextureValid = false;
+        s_cursorStateToken = 0ull;
+    }
+
+    std::uint64_t cursorStateToken = 1469598103934665603ull;
+    cursorStateToken ^= static_cast<std::uint64_t>(cursorActNum);
+    cursorStateToken *= 1099511628211ull;
+    cursorStateToken ^= static_cast<std::uint64_t>(GetModeCursorVisualFrame(cursorActNum, mouseAnimStartTick));
+    cursorStateToken *= 1099511628211ull;
+    if (!s_cursorTextureValid || cursorStateToken != s_cursorStateToken) {
+        std::fill_n(s_cursorComposePixels, kCursorTextureSize * kCursorTextureSize, 0u);
+        if (!DrawModeCursorAtToArgb(
+                s_cursorComposePixels,
+                kCursorTextureSize,
+                kCursorTextureSize,
+                kCursorTextureOrigin,
+                kCursorTextureOrigin,
+                cursorActNum,
+                mouseAnimStartTick)) {
+            return false;
+        }
+        s_cursorTexture->Update(0,
+            0,
+            kCursorTextureSize,
+            kCursorTextureSize,
+            s_cursorComposePixels,
+            true,
+            kCursorTextureSize * static_cast<int>(sizeof(unsigned int)));
+        s_cursorTextureValid = true;
+        s_cursorStateToken = cursorStateToken;
+    }
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return false;
+    }
+
+    const unsigned int overlayContentWidth = s_cursorTexture->m_surfaceUpdateWidth > 0 ? s_cursorTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(kCursorTextureSize);
+    const unsigned int overlayContentHeight = s_cursorTexture->m_surfaceUpdateHeight > 0 ? s_cursorTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(kCursorTextureSize);
+    const float maxU = s_cursorTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_cursorTexture->m_w) : 1.0f;
+    const float maxV = s_cursorTexture->m_h != 0 ? static_cast<float>(overlayContentHeight) / static_cast<float>(s_cursorTexture->m_h) : 1.0f;
+    const float quadLeft = static_cast<float>(left);
+    const float quadTop = static_cast<float>(top);
+    const float quadRight = static_cast<float>(left + kCursorTextureSize);
+    const float quadBottom = static_cast<float>(top + kCursorTextureSize);
+
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = s_cursorTexture;
+    face->mtPreset = 3;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = 2.0f;
+    face->m_verts[0] = { quadLeft, quadTop, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+    face->m_verts[1] = { quadRight, quadTop, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
+    face->m_verts[2] = { quadLeft, quadBottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
+    face->m_verts[3] = { quadRight, quadBottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
+    g_renderer.AddRP(face, 1 | 8);
+    return true;
+}
+
+bool CompositeMenuCursorIntoArgbBuffer(unsigned int* pixels, int width, int height)
+{
+    int cursorActNum = 0;
+    u32 mouseAnimStartTick = 0;
+    if (!pixels || width <= 0 || height <= 0 || !ResolveCurrentModeCursorState(&cursorActNum, &mouseAnimStartTick)) {
+        return false;
+    }
+
+    POINT cursorPos{};
+    if (!GetModeCursorClientPos(&cursorPos)) {
+        return false;
+    }
+
+    return DrawModeCursorAtToArgb(pixels, width, height, cursorPos.x, cursorPos.y, cursorActNum, mouseAnimStartTick);
 }
 
 void AddUniqueCandidate(std::vector<std::string>& out, const std::string& raw)
@@ -1010,6 +1141,7 @@ void UIWindowMgr::OnDraw() {
         if (s_qtMenuOverlayTexture
             && RenderQtUiMenuOverlayTexture(s_qtMenuOverlayTexture, clientWidth, clientHeight)
             && QueueFullScreenOverlayQuad(s_qtMenuOverlayTexture, clientWidth, clientHeight, 2.0f)) {
+            QueueMenuCursorOverlayQuadForCurrentMode();
             ClearDirtyVisualState();
             g_renderer.ClearBackground();
             g_renderer.Clear(0);
@@ -1041,6 +1173,7 @@ void UIWindowMgr::OnDraw() {
                     true,
                     clientWidth * static_cast<int>(sizeof(unsigned int)));
                 if (QueueFullScreenOverlayQuad(s_qtMenuOverlayTexture, clientWidth, clientHeight, 2.0f)) {
+                    QueueMenuCursorOverlayQuadForCurrentMode();
                     ClearDirtyVisualState();
                     g_renderer.ClearBackground();
                     g_renderer.Clear(0);
@@ -1083,6 +1216,10 @@ void UIWindowMgr::OnDraw() {
             clientWidth,
             clientHeight,
             clientWidth * static_cast<int>(sizeof(unsigned int)));
+        CompositeMenuCursorIntoArgbBuffer(
+            static_cast<unsigned int*>(m_uiComposeSurface.GetBits()),
+            clientWidth,
+            clientHeight);
     }
     bool presentedModernUiFrame = false;
     if (useCompose && hasModernBackend && m_uiComposeSurface.GetBits()) {

@@ -660,7 +660,9 @@ void CLoginMode::OnUpdate() {
             g_renderer.Flip(false);
         } else {
             g_windowMgr.OnDraw();
-            DrawModeCursor(m_cursorActNum, m_mouseAnimStartTick);
+            if (!IsQtUiRuntimeEnabled()) {
+                DrawModeCursor(m_cursorActNum, m_mouseAnimStartTick);
+            }
         }
     } else {
         g_windowMgr.OnDraw();

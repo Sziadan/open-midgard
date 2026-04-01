@@ -47,6 +47,8 @@ public:
     virtual void OnUpdate() {}
     void SetCursorAction(CursorAction cursorActNum);
     void SetCursorAction(int cursorActNum);
+    u32 GetCursorAnimStartTick() const { return m_mouseAnimStartTick; }
+    int GetCursorAction() const { return m_cursorActNum; }
 
 protected:
     virtual void OnChangeState(int newState) {}
