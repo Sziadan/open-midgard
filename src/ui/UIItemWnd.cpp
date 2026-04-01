@@ -976,6 +976,77 @@ bool UIItemWnd::GetDisplayDataForQt(DisplayData* outData) const
     return true;
 }
 
+int UIItemWnd::GetQtSystemButtonCount() const
+{
+    return 3;
+}
+
+bool UIItemWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outData) const
+{
+    if (!outData || index < 0 || index >= GetQtSystemButtonCount()) {
+        return false;
+    }
+
+    switch (index) {
+    case 0:
+        outData->id = kButtonIdBase;
+        outData->x = m_x + 247;
+        outData->y = m_y + 3;
+        outData->width = kQtButtonWidth;
+        outData->height = kQtButtonHeight;
+        outData->label = "B";
+        outData->visible = IsMiniMode();
+        outData->active = false;
+        return true;
+    case 1:
+        outData->id = kButtonIdMini;
+        outData->x = m_x + 247;
+        outData->y = m_y + 3;
+        outData->width = kQtButtonWidth;
+        outData->height = kQtButtonHeight;
+        outData->label = "_";
+        outData->visible = !IsMiniMode();
+        outData->active = false;
+        return true;
+    case 2:
+        outData->id = kButtonIdClose;
+        outData->x = m_x + 265;
+        outData->y = m_y + 3;
+        outData->width = kQtButtonWidth;
+        outData->height = kQtButtonHeight;
+        outData->label = "X";
+        outData->visible = true;
+        outData->active = false;
+        return true;
+    default:
+        return false;
+    }
+}
+
+int UIItemWnd::GetQtTabCount() const
+{
+    return kTabCount;
+}
+
+bool UIItemWnd::GetQtTabDisplayForQt(int index, QtButtonDisplay* outData) const
+{
+    if (!outData || index < 0 || index >= GetQtTabCount()) {
+        return false;
+    }
+
+    static const std::array<const char*, kTabCount> kTabLabels = { "Use", "Eqp", "Etc" };
+
+    outData->id = index;
+    outData->x = m_x;
+    outData->y = m_y + 17 + index * 27;
+    outData->width = kTabWidth;
+    outData->height = 27;
+    outData->label = kTabLabels[static_cast<size_t>(index)];
+    outData->visible = !IsMiniMode();
+    outData->active = index == m_currentTab;
+    return true;
+}
+
 void UIItemWnd::EnsureCreated()
 {
     if (!m_controlsCreated) {

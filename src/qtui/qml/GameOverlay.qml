@@ -1683,62 +1683,28 @@ Item {
             font.bold: true
         }
 
-        Rectangle {
-            x: 3
-            y: 3
-            width: 12
-            height: 11
-            radius: 2
-            color: "#d7d2c5"
-            border.width: 1
-            border.color: "#7f7a70"
-            visible: uiState.inventoryMini
+        Repeater {
+            model: uiState.inventoryData.systemButtons || []
 
-            Text {
-                anchors.centerIn: parent
-                text: "B"
-                color: "#000000"
-                font.pixelSize: 8
-                font.bold: true
-            }
-        }
+            delegate: Rectangle {
+                required property var modelData
+                x: (modelData.x || 0) - uiState.inventoryX
+                y: (modelData.y || 0) - uiState.inventoryY
+                width: modelData.width || 0
+                height: modelData.height || 0
+                radius: 2
+                color: "#d7d2c5"
+                border.width: 1
+                border.color: "#7f7a70"
+                visible: modelData.visible || false
 
-        Rectangle {
-            x: 247
-            y: 3
-            width: 12
-            height: 11
-            radius: 2
-            color: "#d7d2c5"
-            border.width: 1
-            border.color: "#7f7a70"
-            visible: !uiState.inventoryMini
-
-            Text {
-                anchors.centerIn: parent
-                text: "_"
-                color: "#000000"
-                font.pixelSize: 8
-                font.bold: true
-            }
-        }
-
-        Rectangle {
-            x: 265
-            y: 3
-            width: 12
-            height: 11
-            radius: 2
-            color: "#d7d2c5"
-            border.width: 1
-            border.color: "#7f7a70"
-
-            Text {
-                anchors.centerIn: parent
-                text: "X"
-                color: "#000000"
-                font.pixelSize: 8
-                font.bold: true
+                Text {
+                    anchors.centerIn: parent
+                    text: modelData.label || ""
+                    color: "#000000"
+                    font.pixelSize: 8
+                    font.bold: true
+                }
             }
         }
 
@@ -1751,23 +1717,25 @@ Item {
             visible: !uiState.inventoryMini
 
             Repeater {
-                model: 3
+                model: uiState.inventoryData.tabs || []
 
                 delegate: Rectangle {
-                    x: 0
-                    y: index * 27
-                    width: 20
-                    height: 27
-                    color: uiState.inventoryTab === index ? "#ebe7db" : "#c9c2b2"
+                    required property var modelData
+                    x: (modelData.x || 0) - uiState.inventoryX
+                    y: (modelData.y || 0) - uiState.inventoryY - 17
+                    width: modelData.width || 0
+                    height: modelData.height || 0
+                    color: modelData.active ? "#ebe7db" : "#c9c2b2"
                     border.width: 1
                     border.color: "#8c8578"
+                    visible: modelData.visible || false
 
                     Text {
                         anchors.centerIn: parent
-                        text: index === 0 ? "Use" : (index === 1 ? "Eqp" : "Etc")
+                        text: modelData.label || ""
                         color: "#000000"
                         font.pixelSize: 9
-                        font.bold: uiState.inventoryTab === index
+                        font.bold: modelData.active || false
                     }
                 }
             }

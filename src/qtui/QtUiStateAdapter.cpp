@@ -1209,6 +1209,48 @@ void PopulateInventoryState(QtUiState* state)
         data.insert(QStringLiteral("viewOffset"), display.viewOffset);
         data.insert(QStringLiteral("maxViewOffset"), display.maxViewOffset);
 
+        QVariantList systemButtons;
+        systemButtons.reserve(itemWnd->GetQtSystemButtonCount());
+        for (int index = 0; index < itemWnd->GetQtSystemButtonCount(); ++index) {
+            UIItemWnd::QtButtonDisplay buttonDisplay{};
+            if (!itemWnd->GetQtSystemButtonDisplayForQt(index, &buttonDisplay)) {
+                continue;
+            }
+
+            QVariantMap button;
+            button.insert(QStringLiteral("id"), buttonDisplay.id);
+            button.insert(QStringLiteral("x"), buttonDisplay.x);
+            button.insert(QStringLiteral("y"), buttonDisplay.y);
+            button.insert(QStringLiteral("width"), buttonDisplay.width);
+            button.insert(QStringLiteral("height"), buttonDisplay.height);
+            button.insert(QStringLiteral("label"), ToQString(buttonDisplay.label));
+            button.insert(QStringLiteral("visible"), buttonDisplay.visible);
+            button.insert(QStringLiteral("active"), buttonDisplay.active);
+            systemButtons.push_back(button);
+        }
+        data.insert(QStringLiteral("systemButtons"), systemButtons);
+
+        QVariantList tabs;
+        tabs.reserve(itemWnd->GetQtTabCount());
+        for (int index = 0; index < itemWnd->GetQtTabCount(); ++index) {
+            UIItemWnd::QtButtonDisplay tabDisplay{};
+            if (!itemWnd->GetQtTabDisplayForQt(index, &tabDisplay)) {
+                continue;
+            }
+
+            QVariantMap tab;
+            tab.insert(QStringLiteral("id"), tabDisplay.id);
+            tab.insert(QStringLiteral("x"), tabDisplay.x);
+            tab.insert(QStringLiteral("y"), tabDisplay.y);
+            tab.insert(QStringLiteral("width"), tabDisplay.width);
+            tab.insert(QStringLiteral("height"), tabDisplay.height);
+            tab.insert(QStringLiteral("label"), ToQString(tabDisplay.label));
+            tab.insert(QStringLiteral("visible"), tabDisplay.visible);
+            tab.insert(QStringLiteral("active"), tabDisplay.active);
+            tabs.push_back(tab);
+        }
+        data.insert(QStringLiteral("tabs"), tabs);
+
         QVariantList slots;
         slots.reserve(static_cast<qsizetype>(display.slots.size()));
         QString hoveredTooltip;

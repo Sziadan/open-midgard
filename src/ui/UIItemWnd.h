@@ -13,6 +13,17 @@ struct ITEM_INFO;
 
 class UIItemWnd : public UIFrameWnd {
 public:
+    struct QtButtonDisplay {
+        int id = 0;
+        int x = 0;
+        int y = 0;
+        int width = 0;
+        int height = 0;
+        std::string label;
+        bool visible = true;
+        bool active = false;
+    };
+
     struct DisplaySlot {
         int x = 0;
         int y = 0;
@@ -53,6 +64,10 @@ public:
     void DrawHoverOverlay(HDC hdc, const RECT& clientRect) const;
     bool IsMiniMode() const;
     bool GetDisplayDataForQt(DisplayData* outData) const;
+    int GetQtSystemButtonCount() const;
+    bool GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outData) const;
+    int GetQtTabCount() const;
+    bool GetQtTabDisplayForQt(int index, QtButtonDisplay* outData) const;
 
 private:
     struct VisibleItem {
