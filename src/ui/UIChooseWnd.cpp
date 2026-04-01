@@ -228,6 +228,10 @@ void UIChooseWnd::OnCreate(int cx, int cy)
     Create(kDefaultWidth, kDefaultHeight);
     Move((cx - m_w) / 2, (cy - m_h) / 2);
 
+    if (IsQtUiRuntimeEnabled()) {
+        return;
+    }
+
     for (int index = 0; index < MenuEntry_Count; ++index) {
         auto* button = new UIBitmapButton();
         button->SetBitmapName(ResolveUiAssetPath(GetEntryBitmapName(index, 0)).c_str(), 0);
