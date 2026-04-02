@@ -49,6 +49,20 @@ struct ViewMovePerfStats {
 
 ViewMovePerfStats g_viewMovePerfStats;
 
+struct ViewHiResStats {
+    u64 frames = 0;
+    double groundMs = 0.0;
+    double hoverMs = 0.0;
+    double actorMs = 0.0;
+    double backgroundMs = 0.0;
+    u64 renderedGameObjects = 0;
+    u64 renderedFixedEffects = 0;
+    u64 renderedBillboards = 0;
+    u64 renderedBackgroundObjects = 0;
+};
+
+ViewHiResStats g_viewHiResStats;
+
 double QpcNowMs()
 {
     static LARGE_INTEGER freq = [] {
@@ -84,6 +98,26 @@ void LogViewMovePerfIfNeeded()
         g_viewMovePerfStats.actorMs / frameCount,
         g_viewMovePerfStats.backgroundMs / frameCount);
     g_viewMovePerfStats = ViewMovePerfStats{};
+}
+
+void LogViewHiResPerfIfNeeded(const CWorld* world)
+{
+    if (!world || g_viewHiResStats.frames == 0 || (g_viewHiResStats.frames % kPerfLogIntervalFrames) != 0) {
+        return;
+    }
+
+    const double frameCount = static_cast<double>(g_viewHiResStats.frames);
+    DbgLog("[ViewPerfHiRes] frames=%llu ground=%.3fms hover=%.3fms actors=%.3fms background=%.3fms gameObjects=%.2f fixedEffects=%.2f billboards=%.2f bgObjs=%.2f\n",
+        static_cast<unsigned long long>(g_viewHiResStats.frames),
+        g_viewHiResStats.groundMs / frameCount,
+        g_viewHiResStats.hoverMs / frameCount,
+        g_viewHiResStats.actorMs / frameCount,
+        g_viewHiResStats.backgroundMs / frameCount,
+        static_cast<double>(g_viewHiResStats.renderedGameObjects) / frameCount,
+        static_cast<double>(g_viewHiResStats.renderedFixedEffects) / frameCount,
+        static_cast<double>(g_viewHiResStats.renderedBillboards) / frameCount,
+        static_cast<double>(g_viewHiResStats.renderedBackgroundObjects) / frameCount);
+    g_viewHiResStats = ViewHiResStats{};
 }
 
 bool IsWalkableAttrCell(const C3dAttr* attr, int attrX, int attrY)
@@ -837,33 +871,46 @@ void CView::OnRender()
     if (trackMovePerf) {
         g_viewMovePerfStats.frames += 1;
     }
+    g_viewHiResStats.frames += 1;
 
     const DWORD groundStart = GetTickCount();
     const double groundStartMs = trackMovePerf ? QpcNowMs() : 0.0;
+    const double groundHiResStartMs = QpcNowMs();
     m_world->m_ground->FlushGround(m_viewMatrix);
     const DWORD groundEnd = GetTickCount();
+    g_viewHiResStats.groundMs += QpcNowMs() - groundHiResStartMs;
     if (trackMovePerf) {
         g_viewMovePerfStats.groundMs += QpcNowMs() - groundStartMs;
     }
 
     const DWORD hoverStart = groundEnd;
+    const double hoverHiResStartMs = QpcNowMs();
     if (m_hoverAttrX >= 0 && m_hoverAttrY >= 0 && IsWalkableAttrCell(m_world->m_attr, m_hoverAttrX, m_hoverAttrY)) {
         m_world->m_ground->RenderAttrTile(m_viewMatrix, m_hoverAttrX, m_hoverAttrY, 0x70FFFFFFu);
     }
     const DWORD hoverEnd = GetTickCount();
+    g_viewHiResStats.hoverMs += QpcNowMs() - hoverHiResStartMs;
 
     const DWORD actorStart = hoverEnd;
     const double actorStartMs = trackMovePerf ? QpcNowMs() : 0.0;
+    const double actorHiResStartMs = QpcNowMs();
     m_world->RenderActors(m_viewMatrix, m_cur.longitude);
     const DWORD actorEnd = GetTickCount();
+    g_viewHiResStats.actorMs += QpcNowMs() - actorHiResStartMs;
+    g_viewHiResStats.renderedGameObjects += m_world->m_lastRenderStats.renderedGameObjects;
+    g_viewHiResStats.renderedFixedEffects += m_world->m_lastRenderStats.renderedFixedEffects;
+    g_viewHiResStats.renderedBillboards += m_world->m_lastRenderStats.renderedBillboards;
     if (trackMovePerf) {
         g_viewMovePerfStats.actorMs += QpcNowMs() - actorStartMs;
     }
 
     const DWORD backgroundStart = actorEnd;
     const double backgroundStartMs = trackMovePerf ? QpcNowMs() : 0.0;
+    const double backgroundHiResStartMs = QpcNowMs();
     m_world->RenderBackgroundObjects(m_viewMatrix);
     const DWORD backgroundEnd = GetTickCount();
+    g_viewHiResStats.backgroundMs += QpcNowMs() - backgroundHiResStartMs;
+    g_viewHiResStats.renderedBackgroundObjects += m_world->m_lastRenderStats.renderedBackgroundObjects;
     if (trackMovePerf) {
         g_viewMovePerfStats.backgroundMs += QpcNowMs() - backgroundStartMs;
     }
@@ -886,4 +933,5 @@ void CView::OnRender()
     if (trackMovePerf) {
         LogViewMovePerfIfNeeded();
     }
+    LogViewHiResPerfIfNeeded(m_world);
 }

@@ -4309,6 +4309,7 @@ CWorld::CWorld()
     , m_billboardFrameCombinedKey(0)
     , m_billboardCachedCombinedKey(0)
     , m_billboardFrameCacheValid(false), m_billboardFrameCacheDirty(true)
+    , m_lastRenderStats{}
     , m_Calculated(nullptr)
 {
 }
@@ -4835,8 +4836,10 @@ void CWorld::UpdateGameObjects()
     }
 }
 
-void CWorld::RenderGameObjects(const matrix& viewMatrix) const
+void CWorld::RenderGameObjects(const matrix& viewMatrix, u32* outRenderedObjects, u32* outRenderedFixedEffects) const
 {
+    u32 renderedObjects = 0;
+    u32 renderedFixedEffects = 0;
     for (CGameObject* object : m_gameObjectList) {
         if (!object) {
             continue;
@@ -4844,7 +4847,17 @@ void CWorld::RenderGameObjects(const matrix& viewMatrix) const
         if (!ShouldRenderGameObject(*object, viewMatrix)) {
             continue;
         }
+        renderedObjects += 1;
+        if (dynamic_cast<CFixedWorldEffect*>(object)) {
+            renderedFixedEffects += 1;
+        }
         object->Render(const_cast<matrix*>(&viewMatrix));
+    }
+    if (outRenderedObjects) {
+        *outRenderedObjects = renderedObjects;
+    }
+    if (outRenderedFixedEffects) {
+        *outRenderedFixedEffects = renderedFixedEffects;
     }
 }
 
@@ -4952,7 +4965,11 @@ void CWorld::ProcessActorSkillRechargeGages(const matrix& viewMatrix, float came
 
 void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
 {
-    RenderGameObjects(viewMatrix);
+    u32 renderedObjects = 0;
+    u32 renderedFixedEffects = 0;
+    RenderGameObjects(viewMatrix, &renderedObjects, &renderedFixedEffects);
+    m_lastRenderStats.renderedGameObjects = renderedObjects;
+    m_lastRenderStats.renderedFixedEffects = renderedFixedEffects;
 
     auto ensurePortalActorEffect = [](CPc* pc) {
         if (!pc || !IsPortalActorJob(pc->m_job)) {
@@ -5046,6 +5063,7 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
     }
 
     std::stable_sort(renderEntries.begin(), renderEntries.end(), CompareBillboardRenderEntry);
+    m_lastRenderStats.renderedBillboards = static_cast<u32>(renderEntries.size());
     for (const BillboardScreenEntry& entry : renderEntries) {
         RenderCachedActorShadow(entry, viewMatrix, zoom);
         RenderCachedBillboard(entry);
@@ -5386,6 +5404,7 @@ bool CWorld::HasWarpAtAttrCell(int attrX, int attrY) const
 
 void CWorld::RenderBackgroundObjects(const matrix& viewMatrix) const
 {
+    u32 renderedBackgroundObjects = 0;
     for (const C3dActor* actor : m_bgObjList) {
         if (!actor) {
             continue;
@@ -5393,8 +5412,10 @@ void CWorld::RenderBackgroundObjects(const matrix& viewMatrix) const
         if (!ShouldRenderBackgroundActor(*actor, viewMatrix)) {
             continue;
         }
+        renderedBackgroundObjects += 1;
         actor->Render(viewMatrix);
     }
+    m_lastRenderStats.renderedBackgroundObjects = renderedBackgroundObjects;
 }
 
 void LaunchLevelUpEffect(CGameActor* actor, u32 effectId)

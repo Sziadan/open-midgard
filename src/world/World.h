@@ -165,6 +165,13 @@ public:
 
 class CWorld {
 public:
+    struct RenderDebugStats {
+        u32 renderedGameObjects = 0;
+        u32 renderedFixedEffects = 0;
+        u32 renderedBillboards = 0;
+        u32 renderedBackgroundObjects = 0;
+    };
+
     CWorld();
     virtual ~CWorld();
 
@@ -218,6 +225,7 @@ public:
     mutable u64 m_billboardCachedCombinedKey;
     mutable bool m_billboardFrameCacheValid;
     mutable bool m_billboardFrameCacheDirty;
+    mutable RenderDebugStats m_lastRenderStats;
 
     void ClearGround();
     void ClearBackgroundObjects();
@@ -263,7 +271,7 @@ public:
         size_t* outNextIndex,
         bool clearExisting);
     void UpdateGameObjects();
-    void RenderGameObjects(const matrix& viewMatrix) const;
+    void RenderGameObjects(const matrix& viewMatrix, u32* outRenderedObjects = nullptr, u32* outRenderedFixedEffects = nullptr) const;
     void UpdateBackgroundObjects(const matrix* viewMatrix);
     void UpdateActors();
     void ProcessActorSkillRechargeGages(const matrix& viewMatrix, float cameraLongitude);
