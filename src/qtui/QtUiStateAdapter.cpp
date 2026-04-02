@@ -1994,7 +1994,7 @@ QString ResolveHoverBackground(const CGameActor* actor)
     }
 
     if (IsMonsterLikeHoverActor(actor)) {
-        return QStringLiteral("#c05a1620");
+        return QStringLiteral("#c0be185d");
     }
 
     if (actor->m_isPc) {
@@ -2002,7 +2002,7 @@ QString ResolveHoverBackground(const CGameActor* actor)
     }
 
     if (actor->m_objectType == 6) {
-        return QStringLiteral("#c0204f9a");
+        return QStringLiteral("#c02d63b6");
     }
 
     return QStringLiteral("#c05a1620");
