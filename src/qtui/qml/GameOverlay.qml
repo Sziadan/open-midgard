@@ -1734,32 +1734,23 @@ Item {
             }
 
             Item {
-                property real headingAngle: ((uiState.minimapData.playerDirection || 0) % 8) * (Math.PI / 4)
+                property real headingDegrees: ((uiState.minimapData.playerDirection || 0) % 8) * 45
 
                 width: 17
                 height: 17
                 visible: uiState.minimapData.playerVisible || false
                 x: (uiState.minimapData.playerX || 0) - (uiState.minimapData.mapX || 0) - width / 2
                 y: (uiState.minimapData.playerY || 0) - (uiState.minimapData.mapY || 0) - height / 2
+                transformOrigin: Item.Center
+                rotation: headingDegrees
 
                 Canvas {
                     anchors.fill: parent
                     antialiasing: false
 
-                    Connections {
-                        target: parent
-
-                        function onHeadingAngleChanged() {
-                            parent.requestPaint()
-                        }
-                    }
-
                     onPaint: {
                         var ctx = getContext("2d")
                         ctx.reset()
-                        ctx.translate(width / 2, height / 2)
-                        ctx.rotate(parent.headingAngle)
-                        ctx.translate(-width / 2, -height / 2)
                         ctx.fillStyle = "#ffffff"
                         ctx.strokeStyle = "#000000"
                         ctx.lineWidth = 1
