@@ -709,7 +709,7 @@ bool DrawEquipPreviewPlayerSpriteFitted(HDC hdc, const RECT& previewArea)
 
     constexpr int kComposeWidth = 160;
     constexpr int kComposeHeight = 180;
-    constexpr float kPreviewScaleBoost = 1.08f;
+    constexpr float kPreviewScaleBoost = 1.18f;
 
     ArgbDibSurface composeSurface;
     if (!composeSurface.EnsureSize(kComposeWidth, kComposeHeight)) {
@@ -744,18 +744,56 @@ bool DrawEquipPreviewPlayerSpriteFitted(HDC hdc, const RECT& previewArea)
         const int dstX = previewArea.left + (areaW - drawW) / 2;
         const int dstY = previewArea.top + (areaH - drawH) / 2;
 
-        AlphaBlendArgbToHdc(hdc,
-            dstX,
-            dstY,
-            drawW,
-            drawH,
-            static_cast<const unsigned int*>(composeSurface.GetBits()),
-            kComposeWidth,
-            kComposeHeight,
-            srcBounds.left,
-            srcBounds.top,
-            srcW,
-            srcH);
+        if (drawW == srcW && drawH == srcH) {
+            AlphaBlendArgbToHdc(hdc,
+                dstX,
+                dstY,
+                drawW,
+                drawH,
+                static_cast<const unsigned int*>(composeSurface.GetBits()),
+                kComposeWidth,
+                kComposeHeight,
+                srcBounds.left,
+                srcBounds.top,
+                srcW,
+                srcH);
+        } else {
+            ArgbDibSurface scaledSurface;
+            if (!scaledSurface.EnsureSize(drawW, drawH)) {
+                return false;
+            }
+
+            std::memset(
+                scaledSurface.GetBits(),
+                0,
+                static_cast<size_t>(drawW) * static_cast<size_t>(drawH) * sizeof(unsigned int));
+
+            StretchArgbToHdc(scaledSurface.GetDC(),
+                0,
+                0,
+                drawW,
+                drawH,
+                static_cast<const unsigned int*>(composeSurface.GetBits()),
+                kComposeWidth,
+                kComposeHeight,
+                srcBounds.left,
+                srcBounds.top,
+                srcW,
+                srcH);
+
+            AlphaBlendArgbToHdc(hdc,
+                dstX,
+                dstY,
+                drawW,
+                drawH,
+                static_cast<const unsigned int*>(scaledSurface.GetBits()),
+                drawW,
+                drawH,
+                0,
+                0,
+                drawW,
+                drawH);
+        }
     }
 
     return drew && hasBounds;
