@@ -536,7 +536,13 @@ bool IsWorldHoverBlockedByUi(int screenX, int screenY)
     return g_windowMgr.HasActiveNpcDialog() || g_windowMgr.HasWindowAtPoint(screenX, screenY);
 }
 
-std::uint64_t ComputeGameplayOverlayStateToken(CGameMode& mode, int cursorActNum, u32 mouseAnimStartTick, int clientWidth, int clientHeight)
+std::uint64_t ComputeGameplayOverlayStateToken(
+    CGameMode& mode,
+    int cursorActNum,
+    u32 mouseAnimStartTick,
+    int clientWidth,
+    int clientHeight,
+    bool includeWorldHover)
 {
     std::uint64_t hash = 1469598103934665603ull;
     HashTokenValue(&hash, static_cast<std::uint64_t>(clientWidth));
@@ -552,7 +558,7 @@ std::uint64_t ComputeGameplayOverlayStateToken(CGameMode& mode, int cursorActNum
         HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_Sp)));
         HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_MaxSp)));
 
-        if (!IsWorldHoverBlockedByUi(mode.m_oldMouseX, mode.m_oldMouseY)) {
+        if (includeWorldHover && !IsWorldHoverBlockedByUi(mode.m_oldMouseX, mode.m_oldMouseY)) {
             CItem* hoveredGroundItem = nullptr;
             int hoveredItemLabelX = 0;
             int hoveredItemLabelY = 0;
@@ -659,7 +665,14 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
     const bool uiDirty = qtGameplayRuntimeEnabled
         ? g_windowMgr.HasDirtyVisualState()
         : g_windowMgr.HasDirtyVisualStateExcludingRoMap();
-    const std::uint64_t overlayStateToken = ComputeGameplayOverlayStateToken(mode, cursorActNum, mouseAnimStartTick, clientWidth, clientHeight);
+    const bool includeWorldHoverInOverlayToken = !qtGameplayRuntimeEnabled;
+    const std::uint64_t overlayStateToken = ComputeGameplayOverlayStateToken(
+        mode,
+        cursorActNum,
+        mouseAnimStartTick,
+        clientWidth,
+        clientHeight,
+        includeWorldHoverInOverlayToken);
     const bool overlayStateChanged = overlayStateToken != s_overlayStateToken;
     const u32 now = GetTickCount();
     const bool allowMovingOverlayRefresh = !trackMovePerf
