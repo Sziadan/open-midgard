@@ -25,6 +25,7 @@ public:
     void OnRBtnDown(int x, int y) override;
     void OnWheel(int delta) override;
     int GetHoverSlot() const;
+    bool GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const;
 
 private:
     void LoadAssets();

@@ -15,6 +15,7 @@
 #include "ui/UINotifyLevelUpWnd.h"
 #include "ui/UISelectCharWnd.h"
 #include "ui/UISelectServerWnd.h"
+#include "ui/UIShopCommon.h"
 #include "ui/UIWindowMgr.h"
 #include "world/GameActor.h"
 #include "world/World.h"
@@ -59,6 +60,35 @@ void EnsureQtUiResourcesInitialized()
 }
 
 namespace {
+
+bool TryBuildItemIconImage(unsigned int itemId, QImage* outImage)
+{
+    if (!outImage || itemId == 0) {
+        return false;
+    }
+
+    const ITEM_INFO* item = g_session.GetInventoryItemByItemId(itemId);
+    ITEM_INFO fallbackItem;
+    if (!item) {
+        fallbackItem.SetItemId(itemId);
+        fallbackItem.m_isIdentified = 1;
+        item = &fallbackItem;
+    }
+
+    shopui::BitmapPixels bitmap;
+    if (!shopui::TryLoadItemIconPixels(*item, &bitmap) || !bitmap.IsValid()) {
+        return false;
+    }
+
+    const QImage source(
+        reinterpret_cast<const uchar*>(bitmap.pixels.data()),
+        bitmap.width,
+        bitmap.height,
+        bitmap.width * static_cast<int>(sizeof(unsigned int)),
+        QImage::Format_ARGB32);
+    *outImage = source.copy();
+    return !outImage->isNull();
+}
 
 enum class MenuPointerCaptureTarget {
     None,
@@ -231,6 +261,12 @@ public:
                         QImage::Format_ARGB32);
                     image = source.copy();
                 }
+            }
+        } else if (baseId.startsWith(QStringLiteral("item/"))) {
+            bool ok = false;
+            const unsigned int itemId = baseId.mid(QStringLiteral("item/").size()).toUInt(&ok);
+            if (ok) {
+                TryBuildItemIconImage(itemId, &image);
             }
         } else if (baseId == QStringLiteral("wallpaper")) {
             if (g_windowMgr.m_wallpaperSurface && g_windowMgr.m_wallpaperSurface->HasSoftwarePixels()) {

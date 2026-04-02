@@ -472,6 +472,29 @@ int UIShortCutWnd::GetHoverSlot() const
     return m_hoverSlot;
 }
 
+bool UIShortCutWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
+{
+    if (!outData || m_show == 0 || m_hoverSlot < 0) {
+        return false;
+    }
+
+    const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByVisibleIndex(m_hoverSlot);
+    if (!slot || slot->id == 0 || slot->isSkill != 0) {
+        return false;
+    }
+
+    ITEM_INFO fallbackItem{};
+    fallbackItem.SetItemId(slot->id);
+    fallbackItem.m_isIdentified = 1;
+    const ITEM_INFO* item = g_session.GetInventoryItemByItemId(slot->id);
+    const ITEM_INFO& hoverItem = item ? *item : fallbackItem;
+
+    outData->anchorRect = GetSlotRect(m_hoverSlot);
+    outData->text = shopui::BuildItemHoverText(hoverItem);
+    outData->itemId = hoverItem.GetItemId();
+    return outData->IsValid();
+}
+
 void UIShortCutWnd::LoadAssets()
 {
     ReleaseAssets();

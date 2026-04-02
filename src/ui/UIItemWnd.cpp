@@ -428,20 +428,6 @@ bool ItemBelongsToTab(const ITEM_INFO& item, int tabIndex)
     }
 }
 
-std::string BuildHoverTooltipText(const ITEM_INFO& item)
-{
-    std::string text;
-    if (item.m_refiningLevel > 0 && IsEquipTabType(item.m_itemType)) {
-        text = "+" + std::to_string(item.m_refiningLevel) + " ";
-    }
-
-    text += item.GetDisplayName();
-    text += ": ";
-    text += std::to_string((std::max)(1, item.m_num));
-    text += " ea";
-    return text;
-}
-
 std::string BuildShortItemLabel(const ITEM_INFO& item)
 {
     std::string shortName = item.GetDisplayName();
@@ -495,7 +481,7 @@ void DrawItemSlot(HDC hdc,
 
 void DrawItemHoverTooltip(HDC hdc, const RECT& clientRect, const RECT& itemRect, const ITEM_INFO& item)
 {
-    const std::string tooltipText = BuildHoverTooltipText(item);
+    const std::string tooltipText = shopui::BuildItemHoverText(item);
 #if RO_ENABLE_QT6_UI
     const QFont font = BuildItemTooltipFont();
     const QString label = QString::fromLocal8Bit(tooltipText.c_str());
@@ -1006,12 +992,22 @@ void UIItemWnd::OnMouseMove(int x, int y)
             m_dragArmed = false;
         }
     }
+    const int oldHoveredItemIndex = m_hoveredItemIndex;
+    RefreshVisibleItemsForInteractionState();
     UpdateHoveredItem(x, y);
+    if (m_hoveredItemIndex != oldHoveredItemIndex) {
+        Invalidate();
+    }
 }
 
 void UIItemWnd::OnMouseHover(int x, int y)
 {
+    const int oldHoveredItemIndex = m_hoveredItemIndex;
+    RefreshVisibleItemsForInteractionState();
     UpdateHoveredItem(x, y);
+    if (m_hoveredItemIndex != oldHoveredItemIndex) {
+        Invalidate();
+    }
 }
 
 void UIItemWnd::DragAndDrop(int x, int y, const DRAG_INFO* const dragInfo)
@@ -1098,8 +1094,9 @@ bool UIItemWnd::GetDisplayDataForQt(DisplayData* outData) const
                 slot.occupied = true;
                 slot.hovered = itemIndex == m_hoveredItemIndex;
                 slot.count = drawItem->m_num;
+                slot.itemId = drawItem->GetItemId();
                 slot.label = BuildShortItemLabel(*drawItem);
-                slot.tooltip = BuildHoverTooltipText(*drawItem);
+                slot.tooltip = shopui::BuildItemHoverText(*drawItem);
             }
             data.displaySlots.push_back(slot);
         }
@@ -1107,6 +1104,53 @@ bool UIItemWnd::GetDisplayDataForQt(DisplayData* outData) const
 
     *outData = std::move(data);
     return true;
+}
+
+bool UIItemWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
+{
+    if (!outData || m_show == 0 || IsMiniMode() || m_hoveredItemIndex < 0) {
+        return false;
+    }
+
+    const std::vector<const ITEM_INFO*> filteredItems = GetFilteredItems();
+    if (m_hoveredItemIndex >= static_cast<int>(filteredItems.size())) {
+        return false;
+    }
+
+    const ITEM_INFO* item = filteredItems[static_cast<size_t>(m_hoveredItemIndex)];
+    if (!item) {
+        return false;
+    }
+
+    const int columns = GetItemColumns();
+    if (columns <= 0) {
+        return false;
+    }
+
+    const int firstIndex = m_viewOffset * columns;
+    const int visibleIndex = m_hoveredItemIndex - firstIndex;
+    if (visibleIndex < 0) {
+        return false;
+    }
+
+    const int rows = GetItemRows();
+    const int slotCount = columns * rows;
+    if (visibleIndex >= slotCount) {
+        return false;
+    }
+
+    const int column = visibleIndex % columns;
+    const int row = visibleIndex / columns;
+
+    outData->anchorRect = RECT{
+        m_x + kGridLeft + column * kGridCell,
+        m_y + kGridTop + row * kGridCell,
+        m_x + kGridLeft + (column + 1) * kGridCell,
+        m_y + kGridTop + (row + 1) * kGridCell,
+    };
+    outData->text = shopui::BuildItemHoverText(*item);
+    outData->itemId = item->GetItemId();
+    return outData->IsValid();
 }
 
 int UIItemWnd::GetQtSystemButtonCount() const
@@ -1386,15 +1430,7 @@ const shopui::BitmapPixels* UIItemWnd::GetItemIcon(const ITEM_INFO& item)
     }
 
     shopui::BitmapPixels bitmap;
-    for (const std::string& candidate : BuildItemIconCandidates(item)) {
-        if (!g_fileMgr.IsDataExist(candidate.c_str())) {
-            continue;
-        }
-        bitmap = shopui::LoadBitmapPixelsFromGameData(candidate, true);
-        if (bitmap.IsValid()) {
-            break;
-        }
-    }
+    shopui::TryLoadItemIconPixels(item, &bitmap);
 
     auto inserted = m_iconCache.emplace(itemId, std::move(bitmap));
     return inserted.first->second.IsValid() ? &inserted.first->second : nullptr;

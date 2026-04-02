@@ -32,6 +32,7 @@ public:
         bool occupied = false;
         bool hovered = false;
         int count = 0;
+        unsigned int itemId = 0;
         std::string label;
         std::string tooltip;
     };
@@ -64,6 +65,7 @@ public:
     void DrawHoverOverlay(HDC hdc, const RECT& clientRect) const;
     bool IsMiniMode() const;
     bool GetDisplayDataForQt(DisplayData* outData) const;
+    bool GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const;
     int GetQtSystemButtonCount() const;
     bool GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outData) const;
     int GetQtTabCount() const;

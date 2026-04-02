@@ -783,6 +783,7 @@ UIEquipWnd::UIEquipWnd()
       m_titleBarLeft(),
       m_titleBarMid(),
       m_titleBarRight(),
+    m_hoveredSlot(-1),
       m_dragArmed(false),
       m_dragStartPoint{},
       m_dragItemId(0),
@@ -809,6 +810,9 @@ UIEquipWnd::~UIEquipWnd()
 void UIEquipWnd::SetShow(int show)
 {
     UIWindow::SetShow(show);
+    if (show == 0) {
+        m_hoveredSlot = -1;
+    }
     if (show != 0) {
         EnsureCreated();
         LayoutChildren();
@@ -1140,6 +1144,7 @@ void UIEquipWnd::OnLBtnUp(int x, int y)
 void UIEquipWnd::OnMouseMove(int x, int y)
 {
     UIFrameWnd::OnMouseMove(x, y);
+    UpdateHoveredSlot(x, y);
     if (!m_dragArmed) {
         return;
     }
@@ -1168,6 +1173,11 @@ void UIEquipWnd::OnMouseMove(int x, int y)
     }
 
     m_dragArmed = false;
+}
+
+void UIEquipWnd::OnMouseHover(int x, int y)
+{
+    UpdateHoveredSlot(x, y);
 }
 
 void UIEquipWnd::OnLBtnDblClk(int x, int y)
@@ -1274,6 +1284,8 @@ bool UIEquipWnd::GetDisplayDataForQt(DisplayData* outData) const
             }
             if (drawItem) {
                 slot.occupied = true;
+                slot.hovered = static_cast<int>(i) == m_hoveredSlot;
+                slot.itemId = drawItem->GetItemId();
                 slot.label = drawItem->GetEquipDisplayName();
             }
             data.displaySlots.push_back(slot);
@@ -1282,6 +1294,29 @@ bool UIEquipWnd::GetDisplayDataForQt(DisplayData* outData) const
 
     *outData = std::move(data);
     return true;
+}
+
+bool UIEquipWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
+{
+    if (!outData || m_show == 0 || IsMiniMode() || m_hoveredSlot < 0 || m_hoveredSlot >= static_cast<int>(kEquipSlots.size())) {
+        return false;
+    }
+
+    const std::vector<const ITEM_INFO*> slotItems = BuildSlotAssignments();
+    const ITEM_INFO* item = slotItems[static_cast<size_t>(m_hoveredSlot)];
+    if (!item) {
+        return false;
+    }
+
+    outData->anchorRect = RECT{
+        m_x + kEquipSlots[static_cast<size_t>(m_hoveredSlot)].iconX,
+        m_y + kEquipSlots[static_cast<size_t>(m_hoveredSlot)].iconY,
+        m_x + kEquipSlots[static_cast<size_t>(m_hoveredSlot)].iconX + kSlotIconSize,
+        m_y + kEquipSlots[static_cast<size_t>(m_hoveredSlot)].iconY + kSlotIconSize,
+    };
+    outData->text = shopui::BuildItemHoverText(*item);
+    outData->itemId = item->GetItemId();
+    return outData->IsValid();
 }
 
 int UIEquipWnd::GetQtSystemButtonCount() const
@@ -1384,6 +1419,38 @@ void UIEquipWnd::SetMiniMode(bool miniMode)
     LayoutChildren();
 }
 
+void UIEquipWnd::UpdateHoveredSlot(int globalX, int globalY)
+{
+    const int oldHoveredSlot = m_hoveredSlot;
+    m_hoveredSlot = -1;
+    if (IsMiniMode()) {
+        if (oldHoveredSlot != m_hoveredSlot) {
+            Invalidate();
+        }
+        return;
+    }
+
+    for (size_t i = 0; i < kEquipSlots.size(); ++i) {
+        const RECT slotRect{
+            m_x + kEquipSlots[i].iconX,
+            m_y + kEquipSlots[i].iconY,
+            m_x + kEquipSlots[i].iconX + kSlotIconSize,
+            m_y + kEquipSlots[i].iconY + kSlotIconSize
+        };
+        if (globalX >= slotRect.left && globalX < slotRect.right && globalY >= slotRect.top && globalY < slotRect.bottom) {
+            m_hoveredSlot = static_cast<int>(i);
+            if (oldHoveredSlot != m_hoveredSlot) {
+                Invalidate();
+            }
+            return;
+        }
+    }
+
+    if (oldHoveredSlot != m_hoveredSlot) {
+        Invalidate();
+    }
+}
+
 std::vector<const ITEM_INFO*> UIEquipWnd::BuildSlotAssignments() const
 {
     std::vector<const ITEM_INFO*> out(kEquipSlots.size(), nullptr);
@@ -1466,15 +1533,7 @@ const shopui::BitmapPixels* UIEquipWnd::GetItemIcon(const ITEM_INFO& item)
     }
 
     shopui::BitmapPixels bitmap;
-    for (const std::string& candidate : BuildItemIconCandidates(item)) {
-        if (!g_fileMgr.IsDataExist(candidate.c_str())) {
-            continue;
-        }
-        bitmap = shopui::LoadBitmapPixelsFromGameData(candidate, true);
-        if (bitmap.IsValid()) {
-            break;
-        }
-    }
+    shopui::TryLoadItemIconPixels(item, &bitmap);
 
     auto inserted = m_iconCache.emplace(itemId, std::move(bitmap));
     return inserted.first->second.IsValid() ? &inserted.first->second : nullptr;
@@ -1488,6 +1547,7 @@ unsigned long long UIEquipWnd::BuildVisualStateToken() const
     HashTokenValue(&hash, static_cast<unsigned long long>(m_y));
     HashTokenValue(&hash, static_cast<unsigned long long>(m_w));
     HashTokenValue(&hash, static_cast<unsigned long long>(m_h));
+    HashTokenValue(&hash, static_cast<unsigned long long>(static_cast<unsigned int>(m_hoveredSlot + 1)));
     if (const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
         HashTokenValue(&hash, static_cast<unsigned long long>(gameMode->m_dragType));
         HashTokenValue(&hash, static_cast<unsigned long long>(gameMode->m_dragInfo.source));

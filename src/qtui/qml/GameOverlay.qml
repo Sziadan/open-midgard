@@ -6,6 +6,10 @@ Item {
     height: parent ? parent.height : 720
     property bool loginCaretVisible: true
 
+    function itemIconSource(itemId) {
+        return itemId > 0 ? "image://openmidgard/item/" + itemId : ""
+    }
+
     function makeCharPanelButtonsKey() {
         var buttons = uiState && uiState.makeCharButtons ? uiState.makeCharButtons : []
         var key = ""
@@ -1772,15 +1776,27 @@ Item {
                     border.width: 1
                     border.color: modelData.hovered ? "#7e95bf" : "#a69f91"
 
+                    Image {
+                        id: inventoryIcon
+                        anchors.centerIn: parent
+                        width: Math.max(1, parent.width - 4)
+                        height: Math.max(1, parent.height - 4)
+                        fillMode: Image.PreserveAspectFit
+                        smooth: false
+                        cache: false
+                        source: modelData.occupied && (modelData.itemId || 0) > 0 ? root.itemIconSource(modelData.itemId || 0) : ""
+                        visible: source !== "" && status === Image.Ready
+                    }
+
                     Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        y: 8
+                        anchors.centerIn: parent
                         width: parent.width - 4
                         text: modelData.occupied ? modelData.label : ""
                         color: "#000000"
                         font.pixelSize: 9
                         horizontalAlignment: Text.AlignHCenter
                         elide: Text.ElideRight
+                        visible: modelData.occupied && !inventoryIcon.visible
                     }
 
                     Text {
@@ -1802,29 +1818,6 @@ Item {
                 text: (uiState.inventoryData.viewOffset || 0) + " / " + (uiState.inventoryData.maxViewOffset || 0)
                 color: "#4a4a4a"
                 font.pixelSize: 10
-            }
-
-            Rectangle {
-                x: 24
-                y: height - 22
-                width: parent.width - 48
-                height: 18
-                radius: 3
-                color: "#d9d3c6"
-                border.width: 1
-                border.color: "#8c8578"
-                visible: (uiState.inventoryData.hoveredTooltip || "").length > 0
-
-                Text {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 6
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - 12
-                    text: uiState.inventoryData.hoveredTooltip || ""
-                    color: "#000000"
-                    font.pixelSize: 10
-                    elide: Text.ElideRight
-                }
             }
         }
     }
@@ -1918,9 +1911,21 @@ Item {
                         y: 0
                         width: modelData.width
                         height: modelData.height
-                        color: modelData.occupied ? "#d7dff0" : "#f5f2ea"
+                        color: modelData.hovered ? "#d7dff0" : (modelData.occupied ? "#d7dff0" : "#f5f2ea")
                         border.width: 1
-                        border.color: modelData.occupied ? "#7e95bf" : "#a69f91"
+                        border.color: modelData.hovered ? "#7e95bf" : (modelData.occupied ? "#7e95bf" : "#a69f91")
+
+                        Image {
+                            id: equipIcon
+                            anchors.centerIn: parent
+                            width: Math.max(1, parent.width - 4)
+                            height: Math.max(1, parent.height - 4)
+                            fillMode: Image.PreserveAspectFit
+                            smooth: false
+                            cache: false
+                            source: modelData.occupied && (modelData.itemId || 0) > 0 ? root.itemIconSource(modelData.itemId || 0) : ""
+                            visible: source !== "" && status === Image.Ready
+                        }
                     }
 
                     Text {

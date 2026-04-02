@@ -1517,7 +1517,6 @@ void PopulateInventoryState(QtUiState* state)
 
         QVariantList itemSlots;
         itemSlots.reserve(static_cast<qsizetype>(display.displaySlots.size()));
-        QString hoveredTooltip;
         for (const UIItemWnd::DisplaySlot& slot : display.displaySlots) {
             QVariantMap entry;
             entry.insert(QStringLiteral("x"), slot.x);
@@ -1527,16 +1526,13 @@ void PopulateInventoryState(QtUiState* state)
             entry.insert(QStringLiteral("occupied"), slot.occupied);
             entry.insert(QStringLiteral("hovered"), slot.hovered);
             entry.insert(QStringLiteral("count"), slot.count);
+            entry.insert(QStringLiteral("itemId"), static_cast<uint>(slot.itemId));
             entry.insert(QStringLiteral("label"), ToQString(slot.label));
             entry.insert(QStringLiteral("tooltip"), ToQString(slot.tooltip));
-            if (slot.hovered && hoveredTooltip.isEmpty()) {
-                hoveredTooltip = ToQString(slot.tooltip);
-            }
             itemSlots.push_back(entry);
         }
 
         data.insert(QStringLiteral("slots"), itemSlots);
-        data.insert(QStringLiteral("hoveredTooltip"), hoveredTooltip);
     } else {
         state->setInventoryTab(0);
     }
@@ -1595,7 +1591,9 @@ void PopulateEquipState(QtUiState* state)
             entry.insert(QStringLiteral("width"), slot.width);
             entry.insert(QStringLiteral("height"), slot.height);
             entry.insert(QStringLiteral("occupied"), slot.occupied);
+            entry.insert(QStringLiteral("hovered"), slot.hovered);
             entry.insert(QStringLiteral("leftColumn"), slot.leftColumn);
+            entry.insert(QStringLiteral("itemId"), static_cast<uint>(slot.itemId));
             entry.insert(QStringLiteral("label"), ToQString(slot.label));
             equipSlots.push_back(entry);
         }
@@ -1961,20 +1959,11 @@ std::string ResolveActorLabel(const CGameMode& mode, CGameActor* actor)
 
 std::string ResolveGroundItemLabel(const CItem* item)
 {
-    if (!item) {
-        return std::string();
-    }
-    std::string itemName = item->m_itemName;
-    if (itemName.empty() && item->m_itemId != 0) {
-        itemName = g_ttemmgr.GetDisplayName(item->m_itemId, item->m_identified != 0);
-    }
-    if (itemName.empty()) {
-        itemName = "Item";
-    }
-
-    char amountText[64]{};
-    std::snprintf(amountText, sizeof(amountText), "%s: %u ea", itemName.c_str(), static_cast<unsigned int>(item->m_amount));
-    return amountText;
+    return item ? shopui::BuildGroundItemHoverText(item->m_itemName,
+                      item->m_itemId,
+                      item->m_identified != 0,
+                      static_cast<unsigned int>(item->m_amount))
+                : std::string();
 }
 
 QString ResolveHoverForeground(const CGameActor* actor)
@@ -2039,6 +2028,42 @@ QVariantMap MakeCenteredAnchor(const QString& text,
     anchor.insert(QStringLiteral("fontPixelSize"), fontPixelSize);
     anchor.insert(QStringLiteral("bold"), bold);
     return anchor;
+}
+
+QVariantMap MakeUiItemAnchor(const shopui::ItemHoverInfo& hoverInfo)
+{
+    const int centerX = hoverInfo.anchorRect.left + ((hoverInfo.anchorRect.right - hoverInfo.anchorRect.left) / 2);
+    return MakeCenteredAnchor(ToQString(hoverInfo.text),
+        centerX,
+        hoverInfo.anchorRect.top - 26,
+        QStringLiteral("#c0087f5b"));
+}
+
+bool TryAppendHoveredUiItemAnchor(QVariantList* anchors)
+{
+    if (!anchors) {
+        return false;
+    }
+
+    shopui::ItemHoverInfo hoverInfo{};
+    if (g_windowMgr.m_itemWnd && g_windowMgr.m_itemWnd->GetHoveredItemForQt(&hoverInfo) && hoverInfo.IsValid()) {
+        anchors->push_back(MakeUiItemAnchor(hoverInfo));
+        return true;
+    }
+
+    hoverInfo = shopui::ItemHoverInfo{};
+    if (g_windowMgr.m_equipWnd && g_windowMgr.m_equipWnd->GetHoveredItemForQt(&hoverInfo) && hoverInfo.IsValid()) {
+        anchors->push_back(MakeUiItemAnchor(hoverInfo));
+        return true;
+    }
+
+    hoverInfo = shopui::ItemHoverInfo{};
+    if (g_windowMgr.m_shortCutWnd && g_windowMgr.m_shortCutWnd->GetHoveredItemForQt(&hoverInfo) && hoverInfo.IsValid()) {
+        anchors->push_back(MakeUiItemAnchor(hoverInfo));
+        return true;
+    }
+
+    return false;
 }
 
 } // namespace
@@ -2210,10 +2235,12 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
         const matrix& viewMatrix = mode.m_view->GetViewMatrix();
         const float cameraLongitude = mode.m_view->GetCameraLongitude();
 
+        const bool hasUiItemHover = TryAppendHoveredUiItemAnchor(&anchors);
+
         int labelX = 0;
         int labelY = 0;
         CGameActor* hoveredActor = nullptr;
-        if (mode.m_world->FindHoveredActorScreen(viewMatrix,
+        if (!hasUiItemHover && mode.m_world->FindHoveredActorScreen(viewMatrix,
                 cameraLongitude,
                 mouseX,
                 mouseY,
@@ -2236,7 +2263,7 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
                     QStringLiteral("#c0be185d"),
                     ResolveHoverForeground(hoveredActor)));
             }
-        } else {
+        } else if (!hasUiItemHover) {
             CItem* hoveredItem = nullptr;
             if (mode.m_world->FindHoveredGroundItemScreen(viewMatrix,
                     mouseX,

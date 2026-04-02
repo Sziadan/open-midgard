@@ -29,7 +29,9 @@ public:
         int width = 0;
         int height = 0;
         bool occupied = false;
+        bool hovered = false;
         bool leftColumn = false;
+        unsigned int itemId = 0;
         std::string label;
     };
 
@@ -50,11 +52,13 @@ public:
     void OnLBtnDown(int x, int y) override;
     void OnLBtnUp(int x, int y) override;
     void OnMouseMove(int x, int y) override;
+    void OnMouseHover(int x, int y) override;
     void OnLBtnDblClk(int x, int y) override;
     void DragAndDrop(int x, int y, const DRAG_INFO* const info) override;
     void StoreInfo() override;
     bool IsMiniMode() const;
     bool GetDisplayDataForQt(DisplayData* outData) const;
+    bool GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const;
     int GetQtSystemButtonCount() const;
     bool GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outData) const;
 
@@ -64,6 +68,7 @@ private:
     void LoadAssets();
     void ReleaseAssets();
     void SetMiniMode(bool miniMode);
+    void UpdateHoveredSlot(int globalX, int globalY);
     std::vector<const ITEM_INFO*> BuildSlotAssignments() const;
     const shopui::BitmapPixels* GetItemIcon(const ITEM_INFO& item);
     unsigned long long BuildVisualStateToken() const;
@@ -79,6 +84,7 @@ private:
     shopui::BitmapPixels m_titleBarMid;
     shopui::BitmapPixels m_titleBarRight;
     std::unordered_map<unsigned int, shopui::BitmapPixels> m_iconCache;
+    int m_hoveredSlot;
     bool m_dragArmed;
     POINT m_dragStartPoint;
     unsigned int m_dragItemId;

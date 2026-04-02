@@ -16,6 +16,7 @@
 #endif
 
 #include <algorithm>
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -41,6 +42,19 @@ struct BitmapPixels {
         pixels.clear();
         width = 0;
         height = 0;
+    }
+};
+
+struct ItemHoverInfo {
+    RECT anchorRect{ 0, 0, 0, 0 };
+    std::string text;
+    unsigned int itemId = 0;
+
+    bool IsValid() const
+    {
+        return anchorRect.right > anchorRect.left
+            && anchorRect.bottom > anchorRect.top
+            && !text.empty();
     }
 };
 
@@ -384,6 +398,27 @@ inline std::vector<std::string> BuildItemIconCandidates(const ITEM_INFO& item)
     return out;
 }
 
+inline bool TryLoadItemIconPixels(const ITEM_INFO& item, BitmapPixels* outBitmap)
+{
+    if (!outBitmap) {
+        return false;
+    }
+
+    outBitmap->Clear();
+    for (const std::string& candidate : BuildItemIconCandidates(item)) {
+        if (!g_fileMgr.IsDataExist(candidate.c_str())) {
+            continue;
+        }
+
+        *outBitmap = LoadBitmapPixelsFromGameData(candidate, true);
+        if (outBitmap->IsValid()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 inline std::string GetItemDisplayName(const ITEM_INFO& item)
 {
     const std::string displayName = item.GetDisplayName();
@@ -394,6 +429,38 @@ inline std::string GetItemDisplayName(const ITEM_INFO& item)
         return item.m_itemName;
     }
     return "Unknown Item";
+}
+
+inline std::string BuildItemHoverText(const ITEM_INFO& item)
+{
+    std::string text;
+    if (item.m_refiningLevel > 0) {
+        text = "+" + std::to_string(item.m_refiningLevel) + " ";
+    }
+
+    text += GetItemDisplayName(item);
+    text += ": ";
+    text += std::to_string((std::max)(1, item.m_num));
+    text += " ea";
+    return text;
+}
+
+inline std::string BuildGroundItemHoverText(const std::string& itemNameValue,
+    unsigned int itemId,
+    bool identified,
+    unsigned int amount)
+{
+    std::string itemName = itemNameValue;
+    if (itemName.empty() && itemId != 0) {
+        itemName = g_ttemmgr.GetDisplayName(itemId, identified);
+    }
+    if (itemName.empty()) {
+        itemName = "Item";
+    }
+
+    char amountText[64]{};
+    std::snprintf(amountText, sizeof(amountText), "%s: %u ea", itemName.c_str(), amount);
+    return amountText;
 }
 
 } // namespace shopui
