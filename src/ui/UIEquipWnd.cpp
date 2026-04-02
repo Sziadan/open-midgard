@@ -1464,6 +1464,7 @@ bool UIEquipWnd::BuildQtPreviewImage(QImage* outImage) const
 
     constexpr int kPreviewWidth = kCenterPanelRight - kCenterPanelLeft;
     constexpr int kPreviewHeight = kCenterPanelBottom - kCenterPanelTop;
+    constexpr int kQtPreviewCropPadding = 2;
     ArgbDibSurface previewSurface;
     if (!previewSurface.EnsureSize(kPreviewWidth, kPreviewHeight)) {
         outImage->fill(Qt::transparent);
@@ -1478,13 +1479,32 @@ bool UIEquipWnd::BuildQtPreviewImage(QImage* outImage) const
     const RECT previewRect{ 0, 0, kPreviewWidth, kPreviewHeight };
     DrawEquipPreviewPlayerSpriteFitted(previewSurface.GetDC(), previewRect);
 
+    RECT opaqueBounds{};
+    const bool hasOpaqueBounds = FindOpaqueBounds(
+        static_cast<const unsigned int*>(previewSurface.GetBits()),
+        kPreviewWidth,
+        kPreviewHeight,
+        &opaqueBounds);
+
     const QImage source(
         reinterpret_cast<const uchar*>(previewSurface.GetBits()),
         kPreviewWidth,
         kPreviewHeight,
         kPreviewWidth * static_cast<int>(sizeof(unsigned int)),
         QImage::Format_ARGB32);
-    *outImage = source.copy();
+    if (hasOpaqueBounds) {
+        const int opaqueLeft = static_cast<int>(opaqueBounds.left);
+        const int opaqueTop = static_cast<int>(opaqueBounds.top);
+        const int opaqueRight = static_cast<int>(opaqueBounds.right);
+        const int opaqueBottom = static_cast<int>(opaqueBounds.bottom);
+        const int cropLeft = (std::max)(0, opaqueLeft - kQtPreviewCropPadding);
+        const int cropTop = (std::max)(0, opaqueTop - kQtPreviewCropPadding);
+        const int cropRight = (std::min)(kPreviewWidth, opaqueRight + kQtPreviewCropPadding);
+        const int cropBottom = (std::min)(kPreviewHeight, opaqueBottom + kQtPreviewCropPadding);
+        *outImage = source.copy(cropLeft, cropTop, cropRight - cropLeft, cropBottom - cropTop);
+    } else {
+        *outImage = source.copy();
+    }
     return !outImage->isNull();
 #else
     (void)outImage;
