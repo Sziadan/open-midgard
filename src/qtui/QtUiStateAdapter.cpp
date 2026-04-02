@@ -1470,8 +1470,19 @@ void PopulateInventoryState(QtUiState* state)
     if (itemWnd->GetDisplayDataForQt(&display)) {
         state->setInventoryTab(display.currentTab);
         data.insert(QStringLiteral("title"), ToQString(display.title));
+        data.insert(QStringLiteral("currentItemCount"), display.currentItemCount);
+        data.insert(QStringLiteral("maxItemCount"), display.maxItemCount);
         data.insert(QStringLiteral("viewOffset"), display.viewOffset);
         data.insert(QStringLiteral("maxViewOffset"), display.maxViewOffset);
+        data.insert(QStringLiteral("scrollBarVisible"), display.scrollBarVisible);
+        data.insert(QStringLiteral("scrollTrackX"), display.scrollTrackX);
+        data.insert(QStringLiteral("scrollTrackY"), display.scrollTrackY);
+        data.insert(QStringLiteral("scrollTrackWidth"), display.scrollTrackWidth);
+        data.insert(QStringLiteral("scrollTrackHeight"), display.scrollTrackHeight);
+        data.insert(QStringLiteral("scrollThumbX"), display.scrollThumbX);
+        data.insert(QStringLiteral("scrollThumbY"), display.scrollThumbY);
+        data.insert(QStringLiteral("scrollThumbWidth"), display.scrollThumbWidth);
+        data.insert(QStringLiteral("scrollThumbHeight"), display.scrollThumbHeight);
 
         QVariantList systemButtons;
         systemButtons.reserve(itemWnd->GetQtSystemButtonCount());
@@ -1842,12 +1853,19 @@ void PopulateMinimapState(QtUiState* state)
     UIRoMapWnd::DisplayData display{};
     QVariantMap data;
     if (minimapWnd->GetDisplayDataForQt(&display)) {
-        data.insert(QStringLiteral("title"), QStringLiteral("Mini Map"));
+        const QString mapName = ToQString(display.mapName);
+        data.insert(QStringLiteral("title"), mapName.isEmpty()
+            ? QStringLiteral("Mini Map")
+            : QStringLiteral("Mini Map - %1").arg(mapName));
         data.insert(QStringLiteral("closeLabel"), QStringLiteral("x"));
         data.insert(QStringLiteral("mapX"), display.mapX);
         data.insert(QStringLiteral("mapY"), display.mapY);
         data.insert(QStringLiteral("mapWidth"), display.mapWidth);
         data.insert(QStringLiteral("mapHeight"), display.mapHeight);
+        data.insert(QStringLiteral("playerVisible"), display.playerVisible);
+        data.insert(QStringLiteral("playerX"), display.playerX);
+        data.insert(QStringLiteral("playerY"), display.playerY);
+        data.insert(QStringLiteral("playerDirection"), display.playerDirection);
         data.insert(QStringLiteral("closeX"), display.closeX);
         data.insert(QStringLiteral("closeY"), display.closeY);
         data.insert(QStringLiteral("closeWidth"), display.closeWidth);
@@ -1858,7 +1876,7 @@ void PopulateMinimapState(QtUiState* state)
         data.insert(QStringLiteral("coordsWidth"), display.coordsWidth);
         data.insert(QStringLiteral("coordsHeight"), display.coordsHeight);
         data.insert(QStringLiteral("imageRevision"), display.imageRevision);
-        data.insert(QStringLiteral("mapName"), ToQString(display.mapName));
+        data.insert(QStringLiteral("mapName"), mapName);
         data.insert(QStringLiteral("coordsText"), ToQString(display.coordsText));
 
         QVariantList markers;

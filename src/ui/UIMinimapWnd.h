@@ -25,6 +25,10 @@ public:
         int mapY = 0;
         int mapWidth = 0;
         int mapHeight = 0;
+        bool playerVisible = false;
+        int playerX = 0;
+        int playerY = 0;
+        int playerDirection = 0;
         int closeX = 0;
         int closeY = 0;
         int closeWidth = 0;

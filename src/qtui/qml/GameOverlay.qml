@@ -1338,147 +1338,251 @@ Item {
                 }
             }
 
-            Repeater {
-                model: uiState.statusData.stats || []
+            Column {
+                x: 28
+                y: 5
+                spacing: 2
+                visible: uiState.statusPage === 0
 
-                delegate: Item {
-                    required property var modelData
-                    x: 28
-                    y: 6 + (index * 16)
-                    width: 78
-                    height: 14
-                    visible: uiState.statusPage === 0
+                Repeater {
+                    model: uiState.statusData.stats || []
 
-                    Text {
-                        x: 0
-                        y: 0
-                        text: modelData.label
-                        color: "#000000"
-                        font.pixelSize: 11
-                        font.bold: true
-                    }
-
-                    Text {
-                        x: 26
-                        y: 0
-                        width: 36
-                        text: modelData.value
-                        color: "#000000"
-                        font.pixelSize: 11
-                    }
-
-                    Text {
-                        x: 52
-                        y: 0
-                        width: 20
-                        text: modelData.cost > 0 ? modelData.cost : ""
-                        color: "#4a4a4a"
-                        font.pixelSize: 10
-                        horizontalAlignment: Text.AlignRight
-                    }
-
-                    Rectangle {
-                        x: (modelData.increaseX || 0) - modelData.x
-                        y: (modelData.increaseY || 0) - modelData.y
-                        width: modelData.increaseWidth || 0
-                        height: modelData.increaseHeight || 0
-                        radius: 2
-                        visible: modelData.canIncrease
-                        color: "#d8d8d8"
-                        border.width: 1
-                        border.color: "#7f7a70"
+                    delegate: Item {
+                        required property var modelData
+                        width: 90
+                        height: 14
 
                         Text {
-                            anchors.centerIn: parent
-                            text: modelData.increaseLabel || ""
+                            x: 0
+                            y: 0
+                            text: modelData.label
                             color: "#000000"
-                            font.pixelSize: 8
+                            font.pixelSize: 11
                             font.bold: true
+                        }
+
+                        Text {
+                            x: 26
+                            y: 0
+                            width: 34
+                            text: modelData.value
+                            color: "#000000"
+                            font.pixelSize: 11
+                        }
+
+                        Rectangle {
+                            x: 64
+                            y: 1
+                            width: modelData.increaseWidth || 0
+                            height: modelData.increaseHeight || 0
+                            radius: 2
+                            visible: modelData.canIncrease
+                            color: "#d8d8d8"
+                            border.width: 1
+                            border.color: "#7f7a70"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: modelData.increaseLabel || ""
+                                color: "#000000"
+                                font.pixelSize: 8
+                                font.bold: true
+                            }
+                        }
+
+                        Text {
+                            x: 78
+                            y: 0
+                            width: 10
+                            text: modelData.cost > 0 ? modelData.cost : ""
+                            color: "#4a4a4a"
+                            font.pixelSize: 10
+                            horizontalAlignment: Text.AlignRight
                         }
                     }
                 }
             }
 
             Text {
-                x: 118
+                x: 132
                 y: 10
                 visible: uiState.statusPage === 0
-                text: uiState.statusData.attackLine || ""
+                text: "Atk"
                 color: "#000000"
                 font.pixelSize: 11
             }
 
             Text {
-                x: 118
+                x: 152
+                y: 10
+                width: 40
+                visible: uiState.statusPage === 0
+                text: uiState.statusData.attackText || ""
+                color: "#000000"
+                font.pixelSize: 11
+                horizontalAlignment: Text.AlignRight
+            }
+
+            Text {
+                x: 132
                 y: 26
                 visible: uiState.statusPage === 0
-                text: uiState.statusData.matkLine || ""
+                text: "Matk"
                 color: "#000000"
                 font.pixelSize: 11
             }
 
             Text {
-                x: 118
+                x: 152
+                y: 26
+                width: 40
+                visible: uiState.statusPage === 0
+                text: uiState.statusData.matkText || ""
+                color: "#000000"
+                font.pixelSize: 11
+                horizontalAlignment: Text.AlignRight
+            }
+
+            Text {
+                x: 132
                 y: 42
                 visible: uiState.statusPage === 0
-                text: uiState.statusData.hitLine || ""
+                text: "Hit"
                 color: "#000000"
                 font.pixelSize: 11
             }
 
             Text {
-                x: 118
-                y: 58
+                x: 152
+                y: 42
+                width: 40
                 visible: uiState.statusPage === 0
-                text: uiState.statusData.critLine || ""
+                text: (uiState.statusData.hit || 0).toString()
                 color: "#000000"
                 font.pixelSize: 11
+                horizontalAlignment: Text.AlignRight
+            }
+
+            Text {
+                x: 132
+                y: 58
+                visible: uiState.statusPage === 0
+                text: "Crit"
+                color: "#000000"
+                font.pixelSize: 11
+            }
+
+            Text {
+                x: 152
+                y: 58
+                width: 40
+                visible: uiState.statusPage === 0
+                text: (uiState.statusData.critical || 0).toString()
+                color: "#000000"
+                font.pixelSize: 11
+                horizontalAlignment: Text.AlignRight
             }
 
             Text {
                 x: 204
                 y: 74
                 visible: uiState.statusPage === 0
-                text: uiState.statusData.pointsLine || ""
+                text: "Pts"
                 color: "#000000"
                 font.pixelSize: 11
                 font.bold: true
             }
 
             Text {
+                x: 243
+                y: 74
+                width: 30
+                visible: uiState.statusPage === 0
+                text: (uiState.statusData.statusPoint || 0).toString()
+                color: "#000000"
+                font.pixelSize: 11
+                font.bold: true
+                horizontalAlignment: Text.AlignRight
+            }
+
+            Text {
                 x: 204
                 y: 10
                 visible: uiState.statusPage === 0
-                text: uiState.statusData.defLine || ""
+                text: "Def"
                 color: "#000000"
                 font.pixelSize: 11
+            }
+
+            Text {
+                x: 233
+                y: 10
+                width: 40
+                visible: uiState.statusPage === 0
+                text: uiState.statusData.itemDefText || ""
+                color: "#000000"
+                font.pixelSize: 11
+                horizontalAlignment: Text.AlignRight
             }
 
             Text {
                 x: 204
                 y: 26
                 visible: uiState.statusPage === 0
-                text: uiState.statusData.mdefLine || ""
+                text: "Mdef"
                 color: "#000000"
                 font.pixelSize: 11
+            }
+
+            Text {
+                x: 233
+                y: 26
+                width: 40
+                visible: uiState.statusPage === 0
+                text: uiState.statusData.itemMdefText || ""
+                color: "#000000"
+                font.pixelSize: 11
+                horizontalAlignment: Text.AlignRight
             }
 
             Text {
                 x: 204
                 y: 42
                 visible: uiState.statusPage === 0
-                text: uiState.statusData.fleeLine || ""
+                text: "Flee"
                 color: "#000000"
                 font.pixelSize: 11
+            }
+
+            Text {
+                x: 233
+                y: 42
+                width: 40
+                visible: uiState.statusPage === 0
+                text: uiState.statusData.fleeText || ""
+                color: "#000000"
+                font.pixelSize: 11
+                horizontalAlignment: Text.AlignRight
             }
 
             Text {
                 x: 204
                 y: 58
                 visible: uiState.statusPage === 0
-                text: uiState.statusData.aspdLine || ""
+                text: "Aspd"
                 color: "#000000"
                 font.pixelSize: 11
+            }
+
+            Text {
+                x: 233
+                y: 58
+                width: 40
+                visible: uiState.statusPage === 0
+                text: uiState.statusData.aspdText || ""
+                color: "#000000"
+                font.pixelSize: 11
+                horizontalAlignment: Text.AlignRight
             }
         }
     }
@@ -1597,6 +1701,7 @@ Item {
         }
 
         Rectangle {
+            id: minimapMapFrame
             x: minimapData.mapX - parent.x
             y: minimapData.mapY - parent.y
             width: minimapData.mapWidth || 0
@@ -1613,52 +1718,78 @@ Item {
                 cache: false
                 source: parent.visible ? ("image://openmidgard/minimap?rev=" + (minimapData.imageRevision || 0)) : ""
             }
+
+            Repeater {
+                model: minimapData.markers || []
+
+                delegate: Rectangle {
+                    required property var modelData
+                    x: modelData.x - (minimapData.mapX || 0) - modelData.radius
+                    y: modelData.y - (minimapData.mapY || 0) - modelData.radius
+                    width: modelData.radius * 2 + 1
+                    height: modelData.radius * 2 + 1
+                    radius: width / 2
+                    color: modelData.color
+                    border.width: 1
+                    border.color: "#181818"
+                }
+            }
+
+            Item {
+                width: 13
+                height: 13
+                visible: minimapData.playerVisible || false
+                x: (minimapData.playerX || 0) - (minimapData.mapX || 0) - width / 2
+                y: (minimapData.playerY || 0) - (minimapData.mapY || 0) - height / 2
+                transform: Rotation {
+                    origin.x: 6.5
+                    origin.y: 6.5
+                    angle: ((minimapData.playerDirection || 0) % 8) * 45
+                }
+
+                Canvas {
+                    anchors.fill: parent
+                    antialiasing: false
+
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        ctx.reset()
+                        ctx.fillStyle = "#ffffff"
+                        ctx.strokeStyle = "#000000"
+                        ctx.lineWidth = 1
+                        ctx.beginPath()
+                        ctx.moveTo(width / 2, 0.5)
+                        ctx.lineTo(width - 1.5, height - 1.5)
+                        ctx.lineTo(width / 2, height - 4.5)
+                        ctx.lineTo(1.5, height - 1.5)
+                        ctx.closePath()
+                        ctx.fill()
+                        ctx.stroke()
+                    }
+                }
+            }
         }
 
         Text {
             x: 18
             y: 2
+            width: Math.max(0, parent.width - 40)
             text: minimapData.title || ""
             color: "#ffffff"
             font.pixelSize: 12
             font.bold: true
+            elide: Text.ElideRight
         }
 
         Text {
             x: (minimapData.coordsX || 0) - parent.x
             y: (minimapData.coordsY || 0) - parent.y
-            width: 76
-            text: minimapData.mapName || ""
-            color: "#101010"
-            font.pixelSize: 11
-            elide: Text.ElideRight
-        }
-
-        Text {
-            x: (minimapData.coordsX || 0) - parent.x + 78
-            y: (minimapData.coordsY || 0) - parent.y
-            width: Math.max(0, (minimapData.coordsWidth || 0) - 78)
+            width: Math.max(0, minimapData.coordsWidth || 0)
             horizontalAlignment: Text.AlignRight
             text: minimapData.coordsText || ""
             color: "#101010"
             font.pixelSize: 11
             elide: Text.ElideRight
-        }
-
-        Repeater {
-            model: minimapData.markers || []
-
-            delegate: Rectangle {
-                required property var modelData
-                x: modelData.x - parent.x - modelData.radius
-                y: modelData.y - parent.y - modelData.radius
-                width: modelData.radius * 2 + 1
-                height: modelData.radius * 2 + 1
-                radius: width / 2
-                color: modelData.color
-                border.width: 1
-                border.color: "#181818"
-            }
         }
 
         Rectangle {
@@ -1818,12 +1949,44 @@ Item {
                 }
             }
 
-            Text {
-                x: width - 56
-                y: height - 18
-                text: (uiState.inventoryData.viewOffset || 0) + " / " + (uiState.inventoryData.maxViewOffset || 0)
-                color: "#4a4a4a"
-                font.pixelSize: 10
+            Rectangle {
+                x: (uiState.inventoryData.scrollTrackX || 0) - uiState.inventoryX
+                y: (uiState.inventoryData.scrollTrackY || 0) - uiState.inventoryY - 17
+                width: uiState.inventoryData.scrollTrackWidth || 0
+                height: uiState.inventoryData.scrollTrackHeight || 0
+                visible: uiState.inventoryData.scrollBarVisible || false
+                color: "#e3e7ee"
+                border.width: 1
+                border.color: "#a4adbd"
+
+                Rectangle {
+                    x: (uiState.inventoryData.scrollThumbX || 0) - (uiState.inventoryData.scrollTrackX || 0)
+                    y: (uiState.inventoryData.scrollThumbY || 0) - (uiState.inventoryData.scrollTrackY || 0)
+                    width: uiState.inventoryData.scrollThumbWidth || 0
+                    height: uiState.inventoryData.scrollThumbHeight || 0
+                    color: "#8192c7"
+                    border.width: 1
+                    border.color: "#3f5684"
+                }
+            }
+
+            Rectangle {
+                x: 0
+                y: parent.height - height
+                width: parent.width
+                height: 21
+                color: "#ddd7ca"
+                border.width: 1
+                border.color: "#bcb4a7"
+
+                Text {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: (uiState.inventoryData.currentItemCount || 0) + " / " + (uiState.inventoryData.maxItemCount || 0)
+                    color: "#4a4a4a"
+                    font.pixelSize: 10
+                }
             }
         }
     }

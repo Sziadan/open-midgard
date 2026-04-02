@@ -40,8 +40,19 @@ public:
     struct DisplayData {
         std::string title;
         int currentTab = 0;
+        int currentItemCount = 0;
+        int maxItemCount = 0;
         int viewOffset = 0;
         int maxViewOffset = 0;
+        bool scrollBarVisible = false;
+        int scrollTrackX = 0;
+        int scrollTrackY = 0;
+        int scrollTrackWidth = 0;
+        int scrollTrackHeight = 0;
+        int scrollThumbX = 0;
+        int scrollThumbY = 0;
+        int scrollThumbWidth = 0;
+        int scrollThumbHeight = 0;
         std::vector<DisplaySlot> displaySlots;
     };
 
@@ -88,6 +99,8 @@ private:
     int GetTabAtPoint(int globalX, int globalY) const;
     int GetItemColumns() const;
     int GetItemRows() const;
+    int GetInventoryItemCount() const;
+    int GetInventorySlotCapacity() const;
     int GetMaxViewOffset(int itemCount) const;
     std::vector<const ITEM_INFO*> GetFilteredItems() const;
     const shopui::BitmapPixels* GetItemIcon(const ITEM_INFO& item);

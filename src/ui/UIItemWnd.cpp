@@ -41,14 +41,15 @@ constexpr int kWindowWidth = 280;
 constexpr int kWindowHeight = 134;
 constexpr int kMiniHeight = 34;
 constexpr int kTitleBarHeight = 17;
-constexpr int kGridLeft = 40;
+constexpr int kGridLeft = 36;
 constexpr int kGridTop = 17;
 constexpr int kGridCell = 32;
 constexpr int kGridRightMargin = 20;
 constexpr int kGridBottomMargin = 21;
-constexpr int kTabWidth = 20;
+constexpr int kTabWidth = 32;
 constexpr int kTabHeight = 82;
 constexpr int kTabCount = 3;
+constexpr int kInventorySlotCapacity = 100;
 constexpr int kQtButtonWidth = 12;
 constexpr int kQtButtonHeight = 11;
 constexpr int kButtonIdBase = 134;
@@ -802,18 +803,27 @@ void UIItemWnd::OnDraw()
             }
         }
 
-        const std::vector<const ITEM_INFO*> filteredItems = GetFilteredItems();
+        const int totalSlotCount = GetInventorySlotCapacity();
         RECT scrollbarRect{ m_x + m_w - 14, m_y + kGridTop, m_x + m_w - 4, m_y + m_h - kGridBottomMargin };
         FillRectColor(hdc, scrollbarRect, RGB(227, 231, 238));
         FrameRectColor(hdc, scrollbarRect, RGB(164, 173, 189));
 
-        const int maxOffset = std::max(1, GetMaxViewOffset(static_cast<int>(filteredItems.size())) + 1);
+        const int maxOffset = std::max(1, GetMaxViewOffset(totalSlotCount) + 1);
         const int trackHeight = scrollbarRect.bottom - scrollbarRect.top - 8;
         const int thumbHeight = std::max(14, trackHeight / maxOffset);
         const int thumbTop = scrollbarRect.top + 4 + ((trackHeight - thumbHeight) * m_viewOffset) / maxOffset;
         RECT thumbRect{ scrollbarRect.left + 2, thumbTop, scrollbarRect.right - 2, thumbTop + thumbHeight };
         FillRectColor(hdc, thumbRect, RGB(129, 146, 199));
         FrameRectColor(hdc, thumbRect, RGB(63, 86, 132));
+
+        RECT footerRect{ m_x, m_y + m_h - kGridBottomMargin, m_x + m_w, m_y + m_h };
+        FillRectColor(hdc, footerRect, RGB(221, 215, 202));
+        FrameRectColor(hdc, footerRect, RGB(188, 180, 167));
+
+        const int itemCount = GetInventoryItemCount();
+        char footerText[32]{};
+        std::snprintf(footerText, sizeof(footerText), "%d / %d", itemCount, totalSlotCount);
+        DrawWindowText(hdc, m_x + m_w - 50, footerRect.top + 5, footerText, RGB(74, 74, 74));
     }
 
     DrawChildrenToHdc(hdc);
@@ -906,7 +916,7 @@ void UIItemWnd::OnLBtnDown(int x, int y)
         && x < m_x + m_w - 4
         && y >= m_y + kGridTop
         && y < m_y + m_h - kGridBottomMargin) {
-        const int maxOffset = GetMaxViewOffset(static_cast<int>(GetFilteredItems().size()));
+        const int maxOffset = GetMaxViewOffset(GetInventorySlotCapacity());
         if (maxOffset > 0) {
             const int trackTop = m_y + kGridTop + 4;
             const int trackHeight = (m_y + m_h - kGridBottomMargin) - (m_y + kGridTop) - 8;
@@ -1056,10 +1066,12 @@ bool UIItemWnd::GetDisplayDataForQt(DisplayData* outData) const
     DisplayData data{};
     data.title = GetTitleText();
     data.currentTab = m_currentTab;
+    data.currentItemCount = GetInventoryItemCount();
+    data.maxItemCount = GetInventorySlotCapacity();
     data.viewOffset = m_viewOffset;
 
     const std::vector<const ITEM_INFO*> filteredItems = GetFilteredItems();
-    data.maxViewOffset = GetMaxViewOffset(static_cast<int>(filteredItems.size()));
+    data.maxViewOffset = GetMaxViewOffset(data.maxItemCount);
 
     if (m_h > kMiniHeight) {
         const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
@@ -1099,6 +1111,24 @@ bool UIItemWnd::GetDisplayDataForQt(DisplayData* outData) const
                 slot.tooltip = shopui::BuildItemHoverText(*drawItem);
             }
             data.displaySlots.push_back(slot);
+        }
+
+        data.scrollBarVisible = data.maxViewOffset > 0;
+        data.scrollTrackX = m_x + m_w - 14;
+        data.scrollTrackY = m_y + kGridTop;
+        data.scrollTrackWidth = 10;
+        data.scrollTrackHeight = m_h - kGridTop - kGridBottomMargin;
+
+        if (data.scrollBarVisible && data.scrollTrackHeight > 8) {
+            const int offsetRange = std::max(1, data.maxViewOffset + 1);
+            const int trackHeight = data.scrollTrackHeight - 8;
+            const int thumbHeight = std::max(14, trackHeight / offsetRange);
+            const int thumbTop = data.scrollTrackY + 4
+                + ((trackHeight - thumbHeight) * data.viewOffset) / offsetRange;
+            data.scrollThumbX = data.scrollTrackX + 2;
+            data.scrollThumbY = thumbTop;
+            data.scrollThumbWidth = std::max(0, data.scrollTrackWidth - 4);
+            data.scrollThumbHeight = thumbHeight;
         }
     }
 
@@ -1300,7 +1330,7 @@ void UIItemWnd::RefreshVisibleItemsForInteractionState()
     } else {
         m_hoveredItemIndex = std::min(m_hoveredItemIndex, static_cast<int>(filteredItems.size()) - 1);
     }
-    m_viewOffset = std::min(m_viewOffset, GetMaxViewOffset(static_cast<int>(filteredItems.size())));
+    m_viewOffset = std::min(m_viewOffset, GetMaxViewOffset(GetInventorySlotCapacity()));
     m_viewOffset = std::max(m_viewOffset, 0);
     m_visibleItems.clear();
     m_hoverOverlayItem = nullptr;
@@ -1381,6 +1411,23 @@ int UIItemWnd::GetItemRows() const
         return 0;
     }
     return std::max(1, (m_h - kGridTop - kGridBottomMargin) / kGridCell);
+}
+
+int UIItemWnd::GetInventoryItemCount() const
+{
+    int count = 0;
+    const std::list<ITEM_INFO>& items = g_session.GetInventoryItems();
+    for (const ITEM_INFO& item : items) {
+        if (item.m_wearLocation == 0) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+int UIItemWnd::GetInventorySlotCapacity() const
+{
+    return kInventorySlotCapacity;
 }
 
 int UIItemWnd::GetMaxViewOffset(int itemCount) const

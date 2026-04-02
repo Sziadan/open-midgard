@@ -1044,7 +1044,14 @@ bool UIRoMapWnd::GetDisplayDataForQt(DisplayData* outData) const
         }
     }
 
-    appendMarker(g_session.m_playerPosX, g_session.m_playerPosY, RGB(245, 224, 126), 4);
+    POINT playerPoint{};
+    if (BuildMarkerPoint(attrArea, drawRect, zoomedView, srcRect, m_mapBitmapWidth, m_mapBitmapHeight,
+            g_session.m_playerPosX, g_session.m_playerPosY, &playerPoint)) {
+        data.playerVisible = true;
+        data.playerX = playerPoint.x;
+        data.playerY = playerPoint.y;
+        data.playerDirection = g_session.m_playerDir & 7;
+    }
 
     *outData = std::move(data);
     return true;
