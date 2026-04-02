@@ -520,6 +520,11 @@ void HashTokenString(std::uint64_t* hash, const std::string& value)
 std::string ResolveGroundItemHoverLabel(const CItem* item);
 void DrawHoveredGroundItemName(CGameMode& mode, HDC hdc);
 
+bool IsWorldHoverBlockedByUi(int screenX, int screenY)
+{
+    return g_windowMgr.HasActiveNpcDialog() || g_windowMgr.HasWindowAtPoint(screenX, screenY);
+}
+
 std::uint64_t ComputeGameplayOverlayStateToken(CGameMode& mode, int cursorActNum, u32 mouseAnimStartTick, int clientWidth, int clientHeight)
 {
     std::uint64_t hash = 1469598103934665603ull;
@@ -536,39 +541,41 @@ std::uint64_t ComputeGameplayOverlayStateToken(CGameMode& mode, int cursorActNum
         HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_Sp)));
         HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_MaxSp)));
 
-        CItem* hoveredGroundItem = nullptr;
-        int hoveredItemLabelX = 0;
-        int hoveredItemLabelY = 0;
-        if (mode.m_world->FindHoveredGroundItemScreen(mode.m_view->GetViewMatrix(),
-            mode.m_oldMouseX,
-            mode.m_oldMouseY,
-            &hoveredGroundItem,
-            &hoveredItemLabelX,
-            &hoveredItemLabelY)
-            && hoveredGroundItem) {
-            HashTokenValue(&hash, static_cast<std::uint64_t>(hoveredGroundItem->m_aid));
-            HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hoveredItemLabelX)));
-            HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hoveredItemLabelY)));
-            HashTokenString(&hash, ResolveGroundItemHoverLabel(hoveredGroundItem));
-        }
+        if (!IsWorldHoverBlockedByUi(mode.m_oldMouseX, mode.m_oldMouseY)) {
+            CItem* hoveredGroundItem = nullptr;
+            int hoveredItemLabelX = 0;
+            int hoveredItemLabelY = 0;
+            if (mode.m_world->FindHoveredGroundItemScreen(mode.m_view->GetViewMatrix(),
+                mode.m_oldMouseX,
+                mode.m_oldMouseY,
+                &hoveredGroundItem,
+                &hoveredItemLabelX,
+                &hoveredItemLabelY)
+                && hoveredGroundItem) {
+                HashTokenValue(&hash, static_cast<std::uint64_t>(hoveredGroundItem->m_aid));
+                HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hoveredItemLabelX)));
+                HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hoveredItemLabelY)));
+                HashTokenString(&hash, ResolveGroundItemHoverLabel(hoveredGroundItem));
+            }
 
-        CGameActor* hoveredActor = nullptr;
-        int hoveredLabelX = 0;
-        int hoveredLabelY = 0;
-        if (!hoveredGroundItem
-            && mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
-            mode.m_view->GetCameraLongitude(),
-            mode.m_oldMouseX,
-            mode.m_oldMouseY,
-            &hoveredActor,
-            &hoveredLabelX,
-            &hoveredLabelY)
-            && hoveredActor
-            && hoveredActor->m_gid != mode.m_lastLockOnMonGid) {
-            HashTokenValue(&hash, static_cast<std::uint64_t>(hoveredActor->m_gid));
-            HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hoveredLabelX)));
-            HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hoveredLabelY)));
-            HashTokenString(&hash, ResolveHoveredActorName(mode, hoveredActor));
+            CGameActor* hoveredActor = nullptr;
+            int hoveredLabelX = 0;
+            int hoveredLabelY = 0;
+            if (!hoveredGroundItem
+                && mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
+                mode.m_view->GetCameraLongitude(),
+                mode.m_oldMouseX,
+                mode.m_oldMouseY,
+                &hoveredActor,
+                &hoveredLabelX,
+                &hoveredLabelY)
+                && hoveredActor
+                && hoveredActor->m_gid != mode.m_lastLockOnMonGid) {
+                HashTokenValue(&hash, static_cast<std::uint64_t>(hoveredActor->m_gid));
+                HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hoveredLabelX)));
+                HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(hoveredLabelY)));
+                HashTokenString(&hash, ResolveHoveredActorName(mode, hoveredActor));
+            }
         }
     }
 
@@ -1336,6 +1343,10 @@ bool QueueHoverLabelsOverlayQuad(CGameMode& mode)
         return false;
     }
 
+    if (IsWorldHoverBlockedByUi(mode.m_oldMouseX, mode.m_oldMouseY)) {
+        return false;
+    }
+
     std::string label;
     COLORREF textColor = RGB(255, 255, 255);
     int drawX = 0;
@@ -1646,6 +1657,9 @@ void ApplyEnemyCursorMagnet(CGameMode& mode, POINT* cursorPos)
         return;
     }
     if (mode.m_isLeftButtonHeld || mode.m_canRotateView) {
+        return;
+    }
+    if (IsWorldHoverBlockedByUi(cursorPos->x, cursorPos->y)) {
         return;
     }
 
@@ -2398,12 +2412,7 @@ void UpdateGameplayCursor(CGameMode& mode)
         return;
     }
 
-    if (g_windowMgr.HasActiveNpcDialog()) {
-        SetModeCursorAction(mode, CursorAction::Arrow);
-        return;
-    }
-
-    if (g_windowMgr.HasWindowAtPoint(mode.m_oldMouseX, mode.m_oldMouseY)) {
+    if (IsWorldHoverBlockedByUi(mode.m_oldMouseX, mode.m_oldMouseY)) {
         SetModeCursorAction(mode, CursorAction::Arrow);
         return;
     }
@@ -2607,6 +2616,10 @@ void DrawHoveredGroundItemName(CGameMode& mode, HDC hdc)
         return;
     }
 
+    if (IsWorldHoverBlockedByUi(mode.m_oldMouseX, mode.m_oldMouseY)) {
+        return;
+    }
+
     CItem* hoveredItem = nullptr;
     int labelX = 0;
     int labelY = 0;
@@ -2636,6 +2649,10 @@ void DrawHoveredGroundItemName(CGameMode& mode, HDC hdc)
 void DrawHoveredActorName(CGameMode& mode, HDC hdc)
 {
     if (!hdc || !mode.m_world || !mode.m_view) {
+        return;
+    }
+
+    if (IsWorldHoverBlockedByUi(mode.m_oldMouseX, mode.m_oldMouseY)) {
         return;
     }
 

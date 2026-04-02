@@ -2236,11 +2236,12 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
         const float cameraLongitude = mode.m_view->GetCameraLongitude();
 
         const bool hasUiItemHover = TryAppendHoveredUiItemAnchor(&anchors);
+        const bool blocksWorldHover = g_windowMgr.HasWindowAtPoint(mouseX, mouseY);
 
         int labelX = 0;
         int labelY = 0;
         CGameActor* hoveredActor = nullptr;
-        if (!hasUiItemHover && mode.m_world->FindHoveredActorScreen(viewMatrix,
+        if (!hasUiItemHover && !blocksWorldHover && mode.m_world->FindHoveredActorScreen(viewMatrix,
                 cameraLongitude,
                 mouseX,
                 mouseY,
@@ -2263,7 +2264,7 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
                     QStringLiteral("#c0be185d"),
                     ResolveHoverForeground(hoveredActor)));
             }
-        } else if (!hasUiItemHover) {
+        } else if (!hasUiItemHover && !blocksWorldHover) {
             CItem* hoveredItem = nullptr;
             if (mode.m_world->FindHoveredGroundItemScreen(viewMatrix,
                     mouseX,
