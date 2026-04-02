@@ -436,6 +436,7 @@ void UISkillListWnd::SetShow(int show)
     if (show != 0) {
         EnsureCreated();
         LayoutChildren();
+        RefreshVisibleSkillsForInteractionState();
     }
 }
 
@@ -443,6 +444,9 @@ void UISkillListWnd::Move(int x, int y)
 {
     UIWindow::Move(x, y);
     LayoutChildren();
+    if (m_show != 0) {
+        RefreshVisibleSkillsForInteractionState();
+    }
 }
 
 bool UISkillListWnd::IsUpdateNeed()
@@ -564,6 +568,7 @@ void UISkillListWnd::OnDraw()
     const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
     const bool hideDraggedSkill = gameMode
         && gameMode->m_dragType == static_cast<int>(DragType::ShortcutSkill)
+        && gameMode->m_dragInfo.source == static_cast<int>(DragSource::SkillListWindow)
         && gameMode->m_dragInfo.skillId != 0;
     for (size_t rowIndex = 0; rowIndex < m_visibleSkills.size(); ++rowIndex) {
         const VisibleSkill& visible = m_visibleSkills[rowIndex];
@@ -637,6 +642,11 @@ void UISkillListWnd::OnDraw()
 
 void UISkillListWnd::OnLBtnDown(int x, int y)
 {
+    EnsureCreated();
+    if (IsQtUiRuntimeEnabled()) {
+        RefreshVisibleSkillsForInteractionState();
+    }
+
     m_dragArmed = false;
     m_dragSkillId = 0;
     m_dragSkillLevel = 0;
@@ -710,6 +720,10 @@ void UISkillListWnd::OnLBtnDown(int x, int y)
 void UISkillListWnd::OnLBtnUp(int x, int y)
 {
     if (IsQtUiRuntimeEnabled()) {
+        RefreshVisibleSkillsForInteractionState();
+    }
+
+    if (IsQtUiRuntimeEnabled()) {
         const bool wasDragging = m_isDragging != 0;
         UIFrameWnd::OnLBtnUp(x, y);
         if (wasDragging) {
@@ -774,6 +788,10 @@ void UISkillListWnd::OnLBtnUp(int x, int y)
 
 void UISkillListWnd::OnMouseMove(int x, int y)
 {
+    if (IsQtUiRuntimeEnabled()) {
+        RefreshVisibleSkillsForInteractionState();
+    }
+
     UIFrameWnd::OnMouseMove(x, y);
     UpdateHover(x, y);
     if (m_dragArmed) {
@@ -812,6 +830,7 @@ void UISkillListWnd::OnWheel(int delta)
     } else if (delta < 0) {
         m_viewOffset = std::min(maxOffset, m_viewOffset + 1);
     }
+    RefreshVisibleSkillsForInteractionState();
 }
 
 void UISkillListWnd::StoreInfo()
@@ -848,6 +867,11 @@ bool UISkillListWnd::GetDisplayDataForQt(DisplayData* outData) const
     const int visibleRows = std::max(1, (m_h - kTitleBarHeight - kBottomBarHeight - kListTop - kListBottomMargin) / kRowHeight);
     const int rowLeft = m_x + kLeftGutterWidth + 4;
     const int rowRight = m_x + m_w - kListRightMargin - 4;
+    const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+    const bool hideDraggedSkill = gameMode
+        && gameMode->m_dragType == static_cast<int>(DragType::ShortcutSkill)
+        && gameMode->m_dragInfo.source == static_cast<int>(DragSource::SkillListWindow)
+        && gameMode->m_dragInfo.skillId != 0;
     const int firstIndex = data.viewOffset;
     const int lastIndex = std::min(static_cast<int>(skills.size()), firstIndex + visibleRows);
     data.rows.reserve(static_cast<size_t>(std::max(0, lastIndex - firstIndex)));
@@ -863,10 +887,12 @@ bool UISkillListWnd::GetDisplayDataForQt(DisplayData* outData) const
         RECT upgradeRect{ rowRect.right - 28, rowRect.top + 4, rowRect.right - 4, rowRect.top + 28 };
 
         DisplayRow row{};
+        row.skillId = skill->SKID;
         row.x = rowRect.left;
         row.y = rowRect.top;
         row.width = rowRect.right - rowRect.left;
         row.height = rowRect.bottom - rowRect.top;
+        row.iconVisible = !(hideDraggedSkill && skill->SKID == gameMode->m_dragInfo.skillId);
         row.selected = skill->SKID == m_selectedSkillId;
         row.hovered = drawIndex == (m_viewOffset + m_hoveredRow);
         row.upgradeVisible = skill->upgradable != 0 && g_session.GetPlayerSkillPointCount() > 0;
@@ -1258,6 +1284,7 @@ unsigned long long UISkillListWnd::BuildVisualStateToken() const
     HashTokenValue(&hash, static_cast<unsigned long long>(g_session.GetPlayerSkillPointCount()));
     if (const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
         HashTokenValue(&hash, static_cast<unsigned long long>(gameMode->m_dragType));
+        HashTokenValue(&hash, static_cast<unsigned long long>(gameMode->m_dragInfo.source));
         HashTokenValue(&hash, static_cast<unsigned long long>(gameMode->m_dragInfo.skillId));
         HashTokenValue(&hash, static_cast<unsigned long long>(gameMode->m_dragInfo.skillLevel));
     }

@@ -10,6 +10,10 @@ Item {
         return itemId > 0 ? "image://openmidgard/item/" + itemId : ""
     }
 
+    function skillIconSource(skillId) {
+        return skillId > 0 ? "image://openmidgard/skill/" + skillId : ""
+    }
+
     function equipPreviewSource() {
         const revision = uiState.equipData.previewRevision || "0"
         return "image://openmidgard/equippreview?rev=" + revision
@@ -868,10 +872,23 @@ Item {
                 border.width: 1
                 border.color: modelData.isSkill ? "#6a4fb0" : "#6a6a6a"
 
+                Image {
+                    id: shortCutIcon
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    fillMode: Image.PreserveAspectFit
+                    smooth: false
+                    source: modelData.isSkill
+                        ? root.skillIconSource(modelData.skillId || 0)
+                        : root.itemIconSource(modelData.itemId || 0)
+                    visible: modelData.occupied && source !== ""
+                }
+
                 Text {
                     anchors.centerIn: parent
                     width: parent.width - 4
                     text: modelData.occupied ? (modelData.isSkill ? "S" : "I") : ""
+                    visible: !shortCutIcon.visible
                     color: "#202020"
                     font.pixelSize: 10
                     font.bold: true
@@ -2149,6 +2166,15 @@ Item {
                     color: "#f5f2ea"
                     border.width: 1
                     border.color: "#a69f91"
+
+                    Image {
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        fillMode: Image.PreserveAspectFit
+                        smooth: false
+                        source: root.skillIconSource(modelData.skillId || 0)
+                        visible: (modelData.iconVisible !== false) && source !== ""
+                    }
                 }
 
                 Text {

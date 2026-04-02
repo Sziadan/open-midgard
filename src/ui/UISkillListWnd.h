@@ -24,10 +24,12 @@ public:
     };
 
     struct DisplayRow {
+        int skillId = 0;
         int x = 0;
         int y = 0;
         int width = 0;
         int height = 0;
+        bool iconVisible = true;
         bool selected = false;
         bool hovered = false;
         bool upgradeVisible = false;

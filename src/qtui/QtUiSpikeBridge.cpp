@@ -8,6 +8,7 @@
 #include "render3d/RenderBackend.h"
 #include "render3d/RenderDevice.h"
 #include "session/Session.h"
+#include "skill/Skill.h"
 #include "ui/UIEquipWnd.h"
 #include "ui/UILoginWnd.h"
 #include "ui/UIMakeCharWnd.h"
@@ -112,6 +113,51 @@ bool TryBuildItemIconImage(unsigned int itemId, QImage* outImage)
 
     shopui::BitmapPixels bitmap;
     if (!shopui::TryLoadItemIconPixels(*item, &bitmap) || !bitmap.IsValid()) {
+        return false;
+    }
+
+    const QImage source(
+        reinterpret_cast<const uchar*>(bitmap.pixels.data()),
+        bitmap.width,
+        bitmap.height,
+        bitmap.width * static_cast<int>(sizeof(unsigned int)),
+        QImage::Format_ARGB32);
+    *outImage = source.copy();
+    return !outImage->isNull();
+}
+
+std::string ResolveQtSkillIconPath(int skillId)
+{
+    g_skillMgr.EnsureLoaded();
+    const SkillMetadata* metadata = g_skillMgr.GetSkillMetadata(skillId);
+    if (metadata && !metadata->skillIdName.empty()) {
+        const std::string lowered = shopui::ToLowerAscii(metadata->skillIdName);
+        const std::string direct = "texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\" + lowered + ".bmp";
+        const std::string dataPath = "data\\" + direct;
+        if (g_fileMgr.IsDataExist(direct.c_str())) {
+            return direct;
+        }
+        if (g_fileMgr.IsDataExist(dataPath.c_str())) {
+            return dataPath;
+        }
+        return direct;
+    }
+    return g_skillMgr.GetSkillIconPath(skillId);
+}
+
+bool TryBuildSkillIconImage(int skillId, QImage* outImage)
+{
+    if (!outImage || skillId == 0) {
+        return false;
+    }
+
+    const std::string path = ResolveQtSkillIconPath(skillId);
+    if (path.empty()) {
+        return false;
+    }
+
+    shopui::BitmapPixels bitmap = shopui::LoadBitmapPixelsFromGameData(path, true);
+    if (!bitmap.IsValid()) {
         return false;
     }
 
@@ -312,6 +358,12 @@ public:
             const unsigned int itemId = baseId.mid(QStringLiteral("item/").size()).toUInt(&ok);
             if (ok) {
                 TryBuildItemIconImage(itemId, &image);
+            }
+        } else if (baseId.startsWith(QStringLiteral("skill/"))) {
+            bool ok = false;
+            const int skillId = baseId.mid(QStringLiteral("skill/").size()).toInt(&ok);
+            if (ok) {
+                TryBuildSkillIconImage(skillId, &image);
             }
         } else if (baseId == QStringLiteral("equippreview")) {
             const UIEquipWnd* const equipWnd = g_windowMgr.m_equipWnd;

@@ -1162,11 +1162,15 @@ void PopulateShortCutState(QtUiState* state)
         if (slot && slot->id != 0) {
             slotEntry.insert(QStringLiteral("occupied"), true);
             slotEntry.insert(QStringLiteral("isSkill"), slot->isSkill != 0);
+            slotEntry.insert(QStringLiteral("skillId"), slot->isSkill != 0 ? static_cast<int>(slot->id) : 0);
+            slotEntry.insert(QStringLiteral("itemId"), slot->isSkill != 0 ? 0u : slot->id);
             slotEntry.insert(QStringLiteral("label"), ResolveShortcutSlotLabel(slot));
             slotEntry.insert(QStringLiteral("count"), static_cast<int>(slot->count));
         } else {
             slotEntry.insert(QStringLiteral("occupied"), false);
             slotEntry.insert(QStringLiteral("isSkill"), false);
+            slotEntry.insert(QStringLiteral("skillId"), 0);
+            slotEntry.insert(QStringLiteral("itemId"), 0u);
             slotEntry.insert(QStringLiteral("label"), QString());
             slotEntry.insert(QStringLiteral("count"), 0);
         }
@@ -1676,10 +1680,12 @@ void PopulateSkillListState(QtUiState* state)
         rows.reserve(static_cast<qsizetype>(display.rows.size()));
         for (const UISkillListWnd::DisplayRow& row : display.rows) {
             QVariantMap entry;
+            entry.insert(QStringLiteral("skillId"), row.skillId);
             entry.insert(QStringLiteral("x"), row.x);
             entry.insert(QStringLiteral("y"), row.y);
             entry.insert(QStringLiteral("width"), row.width);
             entry.insert(QStringLiteral("height"), row.height);
+            entry.insert(QStringLiteral("iconVisible"), row.iconVisible);
             entry.insert(QStringLiteral("selected"), row.selected);
             entry.insert(QStringLiteral("hovered"), row.hovered);
             entry.insert(QStringLiteral("upgradeVisible"), row.upgradeVisible);

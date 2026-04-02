@@ -169,6 +169,7 @@ private:
     void CycleGraphicsSetting(GraphicsRowId rowId, int direction);
     std::string GetGraphicsRowValue(GraphicsRowId rowId) const;
     void SaveGraphicsPreferences() const;
+    bool HandleQtToggleClick(int x, int y);
 
     bool m_controlsCreated;
     bool m_assetsProbed;

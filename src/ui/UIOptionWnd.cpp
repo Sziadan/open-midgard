@@ -1508,6 +1508,10 @@ void UIOptionWnd::OnLBtnDown(int x, int y)
             }
             return;
         }
+
+        if (HandleQtToggleClick(x, y)) {
+            return;
+        }
     }
 
     if (y < m_y + kTitleBarHeight) {
@@ -1568,6 +1572,55 @@ void UIOptionWnd::OnLBtnUp(int x, int y)
         SaveSettings();
     }
     m_dragMode = DragMode_None;
+}
+
+bool UIOptionWnd::HandleQtToggleClick(int x, int y)
+{
+    if (m_activeTab == TabId_Audio) {
+        if (PointInRectXY(GetAudioToggleRect(0), x, y)) {
+            m_bgmEnabled = (m_bgmEnabled != 0) ? 0 : 1;
+            LayoutControls();
+            Invalidate();
+            ApplyAudioSettings();
+            SaveSettings();
+            return true;
+        }
+        if (PointInRectXY(GetAudioToggleRect(1), x, y)) {
+            m_soundEnabled = (m_soundEnabled != 0) ? 0 : 1;
+            LayoutControls();
+            Invalidate();
+            ApplyAudioSettings();
+            SaveSettings();
+            return true;
+        }
+        return false;
+    }
+
+    if (m_activeTab != TabId_Game) {
+        return false;
+    }
+
+    int* gameToggleValues[] = {
+        &m_noCtrl,
+        &m_attackSnap,
+        &m_skillSnap,
+        &m_itemSnap,
+    };
+
+    for (int index = 0; index < static_cast<int>(std::size(gameToggleValues)); ++index) {
+        if (!PointInRectXY(GetGameToggleRect(index), x, y)) {
+            continue;
+        }
+
+        int* const value = gameToggleValues[index];
+        *value = (*value != 0) ? 0 : 1;
+        LayoutControls();
+        Invalidate();
+        SaveSettings();
+        return true;
+    }
+
+    return false;
 }
 
 void UIOptionWnd::OnLBtnDblClk(int x, int y)
