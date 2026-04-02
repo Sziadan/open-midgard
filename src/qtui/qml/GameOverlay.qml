@@ -134,6 +134,7 @@ Item {
             required property var modelData
             x: modelData.x
             y: modelData.y
+            z: modelData.z || 2000
             width: label.implicitWidth + (modelData.showBubble === false ? 0 : 12)
             height: label.implicitHeight + (modelData.showBubble === false ? 0 : 8)
 
