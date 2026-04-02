@@ -105,7 +105,7 @@ public:
     CTexMgr();
     ~CTexMgr();
     
-    CTexture* CreateTexture(int w, int h, unsigned long* data, PixelFormat format, bool b);
+    CTexture* CreateTexture(int w, int h, unsigned int* data, PixelFormat format, bool b);
     CTexture* CreateTexture(unsigned long w, unsigned long h, PixelFormat format, IDirectDrawSurface7* pSurface);
     CTexture* GetTexture(const char* name, bool b);
     

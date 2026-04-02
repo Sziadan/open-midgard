@@ -21,6 +21,7 @@
 #include "world/World.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -47,8 +48,10 @@
 #include <QSGRendererInterface>
 #include <QVulkanInstance>
 
+#if RO_PLATFORM_WINDOWS && RO_HAS_NATIVE_D3D12
 #include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
+#endif
 
 void EnsureQtUiResourcesInitialized()
 {
@@ -60,6 +63,33 @@ void EnsureQtUiResourcesInitialized()
 }
 
 namespace {
+
+#if !RO_PLATFORM_WINDOWS
+constexpr RoWindowMessage WM_MOUSEMOVE = 0x0200u;
+constexpr RoWindowMessage WM_LBUTTONDOWN = 0x0201u;
+constexpr RoWindowMessage WM_LBUTTONUP = 0x0202u;
+constexpr RoWindowMessage WM_LBUTTONDBLCLK = 0x0203u;
+constexpr RoWindowMessage WM_RBUTTONDOWN = 0x0204u;
+constexpr RoWindowMessage WM_MOUSEWHEEL = 0x020Au;
+constexpr RoWindowMessage WM_CHAR = 0x0102u;
+constexpr RoWindowMessage WM_KEYDOWN = 0x0100u;
+constexpr RoWindowMessage WM_SYSKEYDOWN = 0x0104u;
+#endif
+
+int GetLParamX(RoWindowLParam lParam)
+{
+    return static_cast<int>(static_cast<short>(static_cast<unsigned long>(lParam) & 0xFFFFu));
+}
+
+int GetLParamY(RoWindowLParam lParam)
+{
+    return static_cast<int>(static_cast<short>((static_cast<unsigned long>(lParam) >> 16) & 0xFFFFu));
+}
+
+int GetWheelDelta(RoWindowWParam wParam)
+{
+    return static_cast<int>(static_cast<short>((static_cast<unsigned long>(wParam) >> 16) & 0xFFFFu));
+}
 
 RenderBackendType GetCurrentUiRenderBackend()
 {
@@ -265,6 +295,16 @@ public:
                         width * static_cast<int>(sizeof(unsigned int)),
                         QImage::Format_ARGB32);
                     image = source.copy();
+                } else {
+                    width = (std::max)(g_windowMgr.m_loginWnd->m_w, 1);
+                    height = (std::max)(g_windowMgr.m_loginWnd->m_h, 1);
+                    image = QImage(width, height, QImage::Format_ARGB32_Premultiplied);
+                    image.fill(QColor(243, 240, 231, 224));
+
+                    QPainter painter(&image);
+                    painter.setRenderHint(QPainter::Antialiasing, false);
+                    painter.setPen(QColor(120, 112, 96));
+                    painter.drawRect(0, 0, width - 1, height - 1);
                 }
             }
         } else if (baseId.startsWith(QStringLiteral("item/"))) {
@@ -292,6 +332,13 @@ public:
                         QImage::Format_ARGB32);
                     image = source.copy();
                 }
+            }
+
+            if (image.isNull()) {
+                const int fallbackWidth = requestedSize.isValid() && requestedSize.width() > 0 ? requestedSize.width() : 2;
+                const int fallbackHeight = requestedSize.isValid() && requestedSize.height() > 0 ? requestedSize.height() : 2;
+                image = QImage(fallbackWidth, fallbackHeight, QImage::Format_ARGB32_Premultiplied);
+                image.fill(QColor(22, 26, 34));
             }
         }
 
@@ -417,8 +464,10 @@ public:
         delete m_renderControl;
         m_renderControl = nullptr;
 
+    #if RO_PLATFORM_WINDOWS && RO_HAS_NATIVE_D3D12
         delete m_qtRhi;
         m_qtRhi = nullptr;
+    #endif
 
         delete m_vulkanInstance;
         m_vulkanInstance = nullptr;
@@ -448,25 +497,24 @@ public:
 
     void notifyWindowMessage(RoWindowMessage msg, RoWindowWParam wParam, RoWindowLParam lParam)
     {
-#if RO_PLATFORM_WINDOWS
         switch (msg) {
         case WM_MOUSEMOVE:
-            m_mouseX = static_cast<int>(static_cast<short>(LOWORD(lParam)));
-            m_mouseY = static_cast<int>(static_cast<short>(HIWORD(lParam)));
+            m_mouseX = GetLParamX(lParam);
+            m_mouseY = GetLParamY(lParam);
             m_lastInput = QStringLiteral("Mouse move %1,%2").arg(m_mouseX).arg(m_mouseY);
             break;
         case WM_LBUTTONDOWN:
             m_lastInput = QStringLiteral("Left click %1,%2")
-                .arg(static_cast<int>(static_cast<short>(LOWORD(lParam))))
-                .arg(static_cast<int>(static_cast<short>(HIWORD(lParam))));
+                .arg(GetLParamX(lParam))
+                .arg(GetLParamY(lParam));
             break;
         case WM_RBUTTONDOWN:
             m_lastInput = QStringLiteral("Right click %1,%2")
-                .arg(static_cast<int>(static_cast<short>(LOWORD(lParam))))
-                .arg(static_cast<int>(static_cast<short>(HIWORD(lParam))));
+                .arg(GetLParamX(lParam))
+                .arg(GetLParamY(lParam));
             break;
         case WM_MOUSEWHEEL:
-            m_lastInput = QStringLiteral("Mouse wheel %1").arg(GET_WHEEL_DELTA_WPARAM(wParam));
+            m_lastInput = QStringLiteral("Mouse wheel %1").arg(GetWheelDelta(wParam));
             break;
         case WM_KEYDOWN:
             m_lastInput = QStringLiteral("Key down VK %1").arg(static_cast<unsigned int>(wParam));
@@ -480,11 +528,6 @@ public:
         if (m_stateAdapter && !m_lastInput.isEmpty()) {
             m_stateAdapter->setLastInput(m_lastInput);
         }
-#else
-        (void)msg;
-        (void)wParam;
-        (void)lParam;
-#endif
     }
 
     bool handleWindowMessage(RoWindowMessage msg, RoWindowWParam wParam, RoWindowLParam lParam)
@@ -494,18 +537,12 @@ public:
             return false;
         }
 
-#if !RO_PLATFORM_WINDOWS
-        (void)msg;
-        (void)wParam;
-        (void)lParam;
-        return false;
-#else
         switch (msg) {
         case WM_MOUSEMOVE:
             if (g_windowMgr.m_selectServerWnd && g_windowMgr.m_selectServerWnd->m_show != 0) {
                 g_windowMgr.m_selectServerWnd->OnMouseMove(
-                    static_cast<int>(static_cast<short>(LOWORD(lParam))),
-                    static_cast<int>(static_cast<short>(HIWORD(lParam))));
+                    GetLParamX(lParam),
+                    GetLParamY(lParam));
                 return true;
             }
             return false;
@@ -514,8 +551,8 @@ public:
             if (g_windowMgr.m_selectCharWnd
                 && g_windowMgr.m_selectCharWnd->m_show != 0
                 && g_windowMgr.m_selectCharWnd->HandleQtDoubleClick(
-                    static_cast<int>(static_cast<short>(LOWORD(lParam))),
-                    static_cast<int>(static_cast<short>(HIWORD(lParam))))) {
+                    GetLParamX(lParam),
+                    GetLParamY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
                 return true;
             }
@@ -525,48 +562,48 @@ public:
             if (g_windowMgr.m_makeCharWnd
                 && g_windowMgr.m_makeCharWnd->m_show != 0
                 && g_windowMgr.m_makeCharWnd->HandleQtMouseDown(
-                    static_cast<int>(static_cast<short>(LOWORD(lParam))),
-                    static_cast<int>(static_cast<short>(HIWORD(lParam))))) {
+                    GetLParamX(lParam),
+                    GetLParamY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::MakeChar;
                 return true;
             }
             if (g_windowMgr.m_selectServerWnd
                 && g_windowMgr.m_selectServerWnd->m_show != 0
                 && g_windowMgr.m_selectServerWnd->HandleQtMouseDown(
-                    static_cast<int>(static_cast<short>(LOWORD(lParam))),
-                    static_cast<int>(static_cast<short>(HIWORD(lParam))))) {
+                    GetLParamX(lParam),
+                    GetLParamY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::ServerSelect;
                 return true;
             }
             if (g_windowMgr.m_selectCharWnd
                 && g_windowMgr.m_selectCharWnd->m_show != 0
                 && g_windowMgr.m_selectCharWnd->HandleQtMouseDown(
-                    static_cast<int>(static_cast<short>(LOWORD(lParam))),
-                    static_cast<int>(static_cast<short>(HIWORD(lParam))))) {
+                    GetLParamX(lParam),
+                    GetLParamY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::CharSelect;
                 return true;
             }
             if (g_windowMgr.m_loginWnd
                 && g_windowMgr.m_loginWnd->m_show != 0
                 && g_windowMgr.m_loginWnd->HandleQtMouseDown(
-                    static_cast<int>(static_cast<short>(LOWORD(lParam))),
-                    static_cast<int>(static_cast<short>(HIWORD(lParam))))) {
+                    GetLParamX(lParam),
+                    GetLParamY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::Login;
                 return true;
             }
             if (g_windowMgr.m_notifyLevelUpWnd
                 && g_windowMgr.m_notifyLevelUpWnd->m_show != 0
                 && g_windowMgr.m_notifyLevelUpWnd->HandleQtMouseDown(
-                    static_cast<int>(static_cast<short>(LOWORD(lParam))),
-                    static_cast<int>(static_cast<short>(HIWORD(lParam))))) {
+                    GetLParamX(lParam),
+                    GetLParamY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::NotifyLevelUp;
                 return true;
             }
             if (g_windowMgr.m_notifyJobLevelUpWnd
                 && g_windowMgr.m_notifyJobLevelUpWnd->m_show != 0
                 && g_windowMgr.m_notifyJobLevelUpWnd->HandleQtMouseDown(
-                    static_cast<int>(static_cast<short>(LOWORD(lParam))),
-                    static_cast<int>(static_cast<short>(HIWORD(lParam))))) {
+                    GetLParamX(lParam),
+                    GetLParamY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::NotifyJobLevelUp;
                 return true;
             }
@@ -577,8 +614,8 @@ public:
                 if (g_windowMgr.m_makeCharWnd
                     && g_windowMgr.m_makeCharWnd->m_show != 0) {
                     g_windowMgr.m_makeCharWnd->HandleQtMouseUp(
-                        static_cast<int>(static_cast<short>(LOWORD(lParam))),
-                        static_cast<int>(static_cast<short>(HIWORD(lParam))));
+                        GetLParamX(lParam),
+                        GetLParamY(lParam));
                 }
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
                 return true;
@@ -587,8 +624,8 @@ public:
                 if (g_windowMgr.m_selectCharWnd
                     && g_windowMgr.m_selectCharWnd->m_show != 0
                     && g_windowMgr.m_selectCharWnd->HandleQtMouseUp(
-                        static_cast<int>(static_cast<short>(LOWORD(lParam))),
-                        static_cast<int>(static_cast<short>(HIWORD(lParam))))) {
+                        GetLParamX(lParam),
+                        GetLParamY(lParam))) {
                 }
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
                 return true;
@@ -597,8 +634,8 @@ public:
                 if (g_windowMgr.m_notifyLevelUpWnd
                     && g_windowMgr.m_notifyLevelUpWnd->m_show != 0) {
                     g_windowMgr.m_notifyLevelUpWnd->HandleQtMouseUp(
-                        static_cast<int>(static_cast<short>(LOWORD(lParam))),
-                        static_cast<int>(static_cast<short>(HIWORD(lParam))));
+                        GetLParamX(lParam),
+                        GetLParamY(lParam));
                 }
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
                 return true;
@@ -607,8 +644,8 @@ public:
                 if (g_windowMgr.m_notifyJobLevelUpWnd
                     && g_windowMgr.m_notifyJobLevelUpWnd->m_show != 0) {
                     g_windowMgr.m_notifyJobLevelUpWnd->HandleQtMouseUp(
-                        static_cast<int>(static_cast<short>(LOWORD(lParam))),
-                        static_cast<int>(static_cast<short>(HIWORD(lParam))));
+                        GetLParamX(lParam),
+                        GetLParamY(lParam));
                 }
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
                 return true;
@@ -637,7 +674,6 @@ public:
         default:
             return false;
         }
-#endif
     }
 
     bool compositeMenuOverlay(void* bgraPixels, int width, int height, int pitch)
@@ -821,9 +857,17 @@ public:
 private:
     bool ensureApplication()
     {
-        if (QCoreApplication::instance()) {
-            m_application = qobject_cast<QGuiApplication*>(QCoreApplication::instance());
-            return m_application != nullptr;
+        if (!QCoreApplication::instance()) {
+#if !RO_PLATFORM_WINDOWS
+            const char* qtQpaPlatform = std::getenv("QT_QPA_PLATFORM");
+            const bool hasExplicitPlatform = qtQpaPlatform && *qtQpaPlatform;
+            const bool isWsl = (std::getenv("WSL_DISTRO_NAME") && *std::getenv("WSL_DISTRO_NAME"))
+                || (std::getenv("WSL_INTEROP") && *std::getenv("WSL_INTEROP"));
+            if (isWsl && !hasExplicitPlatform) {
+                qputenv("QT_QPA_PLATFORM", QByteArrayLiteral("xcb"));
+                DbgLog("[QtUi] WSL detected; defaulting QT_QPA_PLATFORM=xcb.\n");
+            }
+#endif
         }
 
         const RenderBackendType backend = GetCurrentUiRenderBackend();
@@ -843,6 +887,12 @@ private:
         else {
             QQuickWindow::setGraphicsApi(QSGRendererInterface::Software);
         }
+
+        if (QCoreApplication::instance()) {
+            m_application = qobject_cast<QGuiApplication*>(QCoreApplication::instance());
+            return m_application != nullptr;
+        }
+
         m_application = new QGuiApplication(m_argc, m_argv);
         m_ownedApplication = true;
         return true;
@@ -1001,7 +1051,7 @@ private:
     }
 #endif
 
-#if RO_HAS_NATIVE_D3D12
+#if RO_PLATFORM_WINDOWS && RO_HAS_NATIVE_D3D12
     bool ensureD3D12Renderer(const QtUiRenderTargetInfo& targetInfo)
     {
         if (m_nativeGraphicsInitialized) {
@@ -1107,7 +1157,7 @@ private:
     }
 #endif
 
-#if RO_HAS_NATIVE_D3D12
+#if RO_PLATFORM_WINDOWS && RO_HAS_NATIVE_D3D12
     bool renderToD3D12Texture(const QtUiRenderTargetInfo& targetInfo, int width, int height)
     {
         if (!m_renderControl || !m_quickWindow || !m_rootItem || width <= 0 || height <= 0
@@ -1169,7 +1219,9 @@ private:
     QQuickWindow* m_quickWindow = nullptr;
     QQmlEngine* m_engine = nullptr;
     QQuickItem* m_rootItem = nullptr;
+#if RO_PLATFORM_WINDOWS && RO_HAS_NATIVE_D3D12
     QRhi* m_qtRhi = nullptr;
+#endif
     QVulkanInstance* m_vulkanInstance = nullptr;
     QImage m_renderImage;
     RenderBackendType m_nativeGraphicsBackend = RenderBackendType::LegacyDirect3D7;

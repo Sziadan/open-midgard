@@ -43,6 +43,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -66,6 +67,102 @@ std::string NormalizeSlash(std::string value)
 {
     std::replace(value.begin(), value.end(), '/', '\\');
     return value;
+}
+
+const std::vector<std::string>& GetArchiveNamesByExtension(const char* ext)
+{
+    static std::map<std::string, std::vector<std::string>> s_byExt;
+    const std::string key = ToLowerAscii(ext ? ext : "");
+    auto it = s_byExt.find(key);
+    if (it != s_byExt.end()) {
+        return it->second;
+    }
+
+    std::vector<std::string> names;
+    g_fileMgr.CollectDataNamesByExtension(key.c_str(), names);
+    auto inserted = s_byExt.emplace(key, std::move(names));
+    return inserted.first->second;
+}
+
+std::string GetLowerFileName(const std::string& value)
+{
+    std::string normalized = NormalizeSlash(value);
+    const size_t slashPos = normalized.find_last_of('\\');
+    if (slashPos != std::string::npos && slashPos + 1 < normalized.size()) {
+        normalized = normalized.substr(slashPos + 1);
+    }
+    return ToLowerAscii(std::move(normalized));
+}
+
+std::string GetLowerFileExtension(const std::string& value)
+{
+    const std::string normalized = NormalizeSlash(value);
+    const size_t dotPos = normalized.find_last_of('.');
+    if (dotPos == std::string::npos || dotPos + 1 >= normalized.size()) {
+        return {};
+    }
+    return ToLowerAscii(normalized.substr(dotPos + 1));
+}
+
+int ScoreArchiveWallpaperPath(const std::string& requestedPath, const std::string& resolvedPath)
+{
+    const std::string loweredRequested = ToLowerAscii(NormalizeSlash(requestedPath));
+    const std::string loweredResolved = ToLowerAscii(NormalizeSlash(resolvedPath));
+    int score = 0;
+
+    if (loweredResolved == loweredRequested) {
+        score += 10000;
+    }
+    if (loweredResolved.rfind("data\\", 0) == 0) {
+        score += 800;
+    }
+    if (loweredResolved.find("\\texture\\") != std::string::npos) {
+        score += 300;
+    }
+    if (loweredResolved.find("\\login_interface\\") != std::string::npos) {
+        score += 250;
+    }
+    if (loweredResolved.find("\\basic_interface\\") != std::string::npos) {
+        score += 200;
+    }
+    if (loweredResolved.find("\\interface\\") != std::string::npos) {
+        score += 100;
+    }
+    if (loweredResolved.find("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA") != std::string::npos) {
+        score += 450;
+    }
+
+    return score;
+}
+
+std::string ResolveArchiveWallpaperByFileName(const std::string& requestedPath)
+{
+    const std::string extension = GetLowerFileExtension(requestedPath);
+    if (extension.empty()) {
+        return {};
+    }
+
+    const std::string requestedFileName = GetLowerFileName(requestedPath);
+    if (requestedFileName.empty()) {
+        return {};
+    }
+
+    const std::vector<std::string>& names = GetArchiveNamesByExtension(extension.c_str());
+    int bestScore = -1;
+    std::string bestPath;
+    for (const std::string& name : names) {
+        if (GetLowerFileName(name) != requestedFileName) {
+            continue;
+        }
+
+        const int score = ScoreArchiveWallpaperPath(requestedPath, name);
+        if (score > bestScore) {
+            bestScore = score;
+            bestPath = name;
+        }
+    }
+
+    return bestPath;
 }
 
 bool QueueFullScreenOverlayQuad(CTexture* texture, int width, int height, float sortKey)
@@ -290,12 +387,10 @@ std::vector<std::string> BuildWallpaperCandidates(const std::string& requestedWa
     const char* directDefaults[] = {
         "ad_title.jpg",
         "rag_title.jpg",
-        "win_login.bmp",
         "title.bmp",
         "title.jpg",
         "login_background.jpg",
         "login_background.bmp",
-        "loginwin.bmp",
         nullptr
     };
 
@@ -1395,6 +1490,7 @@ void UIWindowMgr::SetWallpaper(CBitmapRes* bitmap) {
 
 bool UIWindowMgr::SetWallpaperFromGameData(const std::string& wallpaperName) {
     const std::vector<std::string> candidates = BuildWallpaperCandidates(wallpaperName);
+    std::vector<std::string> fallbackCandidates;
     LOG_WALLPAPER_LOAD("[WallpaperLoad] Searching for wallpaper '%s', %zu candidates\n",
            wallpaperName.c_str(), candidates.size());
 
@@ -1403,6 +1499,10 @@ bool UIWindowMgr::SetWallpaperFromGameData(const std::string& wallpaperName) {
         unsigned char* bytes = g_fileMgr.GetData(candidate.c_str(), &size);
         if (!bytes || size <= 0) {
             LOG_WALLPAPER_LOAD("[WallpaperLoad]   MISS: %s\n", candidate.c_str());
+            const std::string fallback = ResolveArchiveWallpaperByFileName(candidate);
+            if (!fallback.empty()) {
+                AddUniqueCandidate(fallbackCandidates, fallback);
+            }
             delete[] bytes;
             continue;
         }
@@ -1422,6 +1522,28 @@ bool UIWindowMgr::SetWallpaperFromGameData(const std::string& wallpaperName) {
         SetWallpaper(&bitmap);
         m_loadedWallpaperPath = candidate;
         LOG_WALLPAPER_LOAD("[WallpaperLoad] SUCCESS: loaded '%s'\n", candidate.c_str());
+        return true;
+    }
+
+    for (const std::string& candidate : fallbackCandidates) {
+        int size = 0;
+        unsigned char* bytes = g_fileMgr.GetData(candidate.c_str(), &size);
+        if (!bytes || size <= 0) {
+            delete[] bytes;
+            continue;
+        }
+
+        CBitmapRes bitmap;
+        const bool loaded = bitmap.LoadFromBuffer(candidate.c_str(), bytes, size);
+        delete[] bytes;
+
+        if (!loaded || !bitmap.m_data || bitmap.m_width <= 0 || bitmap.m_height <= 0) {
+            continue;
+        }
+
+        SetWallpaper(&bitmap);
+        m_loadedWallpaperPath = candidate;
+        DbgLog("[WallpaperLoad] BASENAME HIT: %s\n", candidate.c_str());
         return true;
     }
 

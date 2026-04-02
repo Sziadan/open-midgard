@@ -22,8 +22,14 @@
 #include <mutex>
 #include <thread>
 
+#include "qtui/QtPlatformWindow.h"
+
 #if defined(__unix__) || defined(__APPLE__)
 #include <dlfcn.h>
+#if defined(__APPLE__)
+#include <limits.h>
+#include <mach-o/dyld.h>
+#endif
 #include <strings.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -40,6 +46,10 @@
 
 #ifndef APIENTRY
 #define APIENTRY
+#endif
+
+#ifndef STDMETHODCALLTYPE
+#define STDMETHODCALLTYPE
 #endif
 
 #ifndef __stdcall
@@ -68,8 +78,8 @@ using WORD = std::uint16_t;
 using DWORD = std::uint32_t;
 using COLORREF = DWORD;
 using UINT = unsigned int;
-using ULONG = unsigned long;
-using LONG = long;
+using ULONG = std::uint32_t;
+using LONG = std::int32_t;
 using ULONG_PTR = std::uintptr_t;
 using UINT_PTR = std::uintptr_t;
 using LONG_PTR = std::intptr_t;
@@ -299,6 +309,16 @@ inline DWORD GetLastError()
     return static_cast<DWORD>(errno);
 }
 
+inline LONG InterlockedIncrement(LONG* value)
+{
+    return ++(*value);
+}
+
+inline LONG InterlockedDecrement(LONG* value)
+{
+    return --(*value);
+}
+
 inline DWORD GetEnvironmentVariableA(const char* name, char* buffer, DWORD size)
 {
     if (!name) {
@@ -344,17 +364,9 @@ inline int ReleaseDC(HWND, HDC)
     return 0;
 }
 
-inline BOOL GetClientRect(HWND, RECT* rect)
+inline BOOL GetClientRect(HWND hwnd, RECT* rect)
 {
-    if (!rect) {
-        return FALSE;
-    }
-
-    rect->left = 0;
-    rect->top = 0;
-    rect->right = 0;
-    rect->bottom = 0;
-    return FALSE;
+    return RoQtGetClientRect(hwnd, rect) ? TRUE : FALSE;
 }
 
 inline BOOL UpdateWindow(HWND)
@@ -383,18 +395,12 @@ inline LRESULT DispatchMessageA(const MSG*)
 
 inline BOOL GetCursorPos(POINT* point)
 {
-    if (!point) {
-        return FALSE;
-    }
-
-    point->x = 0;
-    point->y = 0;
-    return FALSE;
+    return RoQtGetCursorPos(point) ? TRUE : FALSE;
 }
 
-inline BOOL ScreenToClient(HWND, POINT*)
+inline BOOL ScreenToClient(HWND hwnd, POINT* point)
 {
-    return FALSE;
+    return RoQtScreenToClient(hwnd, point) ? TRUE : FALSE;
 }
 
 inline HRGN CreateRoundRectRgn(int, int, int, int, int, int)
@@ -1046,7 +1052,7 @@ inline DWORD GetModuleFileNameA(HMODULE, char* buffer, DWORD size)
         return 0;
     }
 
-#if defined(__unix__) || defined(__APPLE__)
+#if defined(__unix__)
     const ssize_t length = ::readlink("/proc/self/exe", buffer, static_cast<size_t>(size) - 1);
     if (length <= 0 || static_cast<DWORD>(length) >= size) {
         buffer[0] = '\0';
@@ -1055,6 +1061,27 @@ inline DWORD GetModuleFileNameA(HMODULE, char* buffer, DWORD size)
 
     buffer[length] = '\0';
     return static_cast<DWORD>(length);
+#elif defined(__APPLE__)
+    uint32_t pathSize = size;
+    if (_NSGetExecutablePath(buffer, &pathSize) != 0 || pathSize >= size) {
+        buffer[0] = '\0';
+        return 0;
+    }
+
+    char resolvedPath[PATH_MAX] = {};
+    const char* finalPath = ::realpath(buffer, resolvedPath);
+    if (!finalPath) {
+        finalPath = buffer;
+    }
+
+    const size_t finalLength = std::strlen(finalPath);
+    if (finalLength == 0 || finalLength >= size) {
+        buffer[0] = '\0';
+        return 0;
+    }
+
+    std::memmove(buffer, finalPath, finalLength + 1);
+    return static_cast<DWORD>(finalLength);
 #else
     buffer[0] = '\0';
     return 0;

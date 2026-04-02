@@ -1,5 +1,6 @@
 #include "UIEquipWnd.h"
 
+#include "DebugLog.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
 #include "UIItemWnd.h"
@@ -612,6 +613,167 @@ bool DrawEquipPreviewLayer(HDC hdc,
     singleLayerMotion.sprClips.push_back(motion->sprClips[resolvedLayer]);
     return DrawActMotionToHdc(hdc, drawX + point.x, drawY + point.y, sprRes, &singleLayerMotion, palette);
 }
+
+#if RO_ENABLE_QT6_UI
+bool DrawEquipPreviewAccessoryMotionToArgb(unsigned int* pixels,
+    int width,
+    int height,
+    int drawX,
+    int drawY,
+    int curAction,
+    int bodyMotionIndex,
+    int headMotionIndex,
+    const std::string& bodyActName,
+    const std::string& headActName,
+    const std::string& accessoryActName,
+    const std::string& accessorySprName)
+{
+    if (!pixels || width <= 0 || height <= 0 || accessoryActName.empty() || accessorySprName.empty()) {
+        return false;
+    }
+
+    CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
+    CActRes* headActRes = g_resMgr.GetAs<CActRes>(headActName.c_str());
+    CActRes* accessoryActRes = g_resMgr.GetAs<CActRes>(accessoryActName.c_str());
+    CSprRes* accessorySprRes = g_resMgr.GetAs<CSprRes>(accessorySprName.c_str());
+    if (!bodyActRes || !headActRes || !accessoryActRes || !accessorySprRes) {
+        return false;
+    }
+
+    const CMotion* bodyMotion = bodyActRes->GetMotion(curAction, bodyMotionIndex);
+    const CMotion* headMotion = headActRes->GetMotion(curAction, headMotionIndex);
+    const CMotion* accessoryMotion = accessoryActRes->GetMotion(curAction, headMotionIndex);
+    if (!accessoryMotion) {
+        accessoryMotion = accessoryActRes->GetMotion(curAction, 0);
+    }
+    if (!bodyMotion || !headMotion || !accessoryMotion) {
+        return false;
+    }
+
+    POINT point{};
+    ApplyAttachPointDelta(bodyMotion, headMotion, &point);
+    ApplyAttachPointDelta(headMotion, accessoryMotion, &point);
+    return DrawActMotionToArgb(pixels, width, height, drawX + point.x, drawY + point.y, accessorySprRes, accessoryMotion, accessorySprRes->m_pal);
+}
+
+bool DrawEquipPreviewLayerToArgb(unsigned int* pixels,
+    int width,
+    int height,
+    int drawX,
+    int drawY,
+    int layerIndex,
+    int curAction,
+    int curMotion,
+    const std::string& actName,
+    const std::string& sprName,
+    const std::string& imfName,
+    const std::string& bodyActName,
+    const std::string& headActName,
+    int bodyMotionIndex,
+    int headMotionIndex,
+    const std::string& paletteName)
+{
+    if (!pixels || width <= 0 || height <= 0) {
+        return false;
+    }
+
+    CActRes* actRes = g_resMgr.GetAs<CActRes>(actName.c_str());
+    CSprRes* sprRes = g_resMgr.GetAs<CSprRes>(sprName.c_str());
+    CImfRes* imfRes = g_resMgr.GetAs<CImfRes>(imfName.c_str());
+    if (!actRes || !sprRes || !imfRes) {
+        return false;
+    }
+
+    int resolvedLayer = imfRes->GetLayer(layerIndex, curAction, curMotion);
+    if (resolvedLayer < 0) {
+        resolvedLayer = layerIndex;
+    }
+
+    const CMotion* motion = actRes->GetMotion(curAction, curMotion);
+    if (!motion || resolvedLayer >= static_cast<int>(motion->sprClips.size())) {
+        return false;
+    }
+
+    const POINT point = GetEquipPreviewLayerPoint(layerIndex,
+        resolvedLayer,
+        imfRes,
+        motion,
+        bodyActName,
+        headActName,
+        curAction,
+        bodyMotionIndex,
+        curMotion,
+        headMotionIndex);
+
+    std::array<unsigned int, 256> paletteOverride{};
+    unsigned int* palette = sprRes->m_pal;
+    if (!paletteName.empty() && BuildEquipPreviewPaletteOverride(paletteName, paletteOverride)) {
+        palette = paletteOverride.data();
+    }
+
+    CMotion singleLayerMotion{};
+    singleLayerMotion.sprClips.push_back(motion->sprClips[resolvedLayer]);
+    return DrawActMotionToArgb(pixels, width, height, drawX + point.x, drawY + point.y, sprRes, &singleLayerMotion, palette);
+}
+
+bool DrawEquipPreviewPlayerSpriteToArgb(unsigned int* pixels, int width, int height, int drawX, int drawY)
+{
+    if (!pixels || width <= 0 || height <= 0) {
+        return false;
+    }
+
+    char bodyAct[260] = {};
+    char bodySpr[260] = {};
+    char headAct[260] = {};
+    char headSpr[260] = {};
+    char accessoryBottomAct[260] = {};
+    char accessoryBottomSpr[260] = {};
+    char accessoryMidAct[260] = {};
+    char accessoryMidSpr[260] = {};
+    char accessoryTopAct[260] = {};
+    char accessoryTopSpr[260] = {};
+    char imfName[260] = {};
+    char bodyPalette[260] = {};
+    char headPalette[260] = {};
+
+    const int sex = g_session.GetSex();
+    int head = g_session.m_playerHead;
+    const int curAction = 0;
+    const int curMotion = 0;
+
+    const std::string bodyActName = g_session.GetJobActName(g_session.m_playerJob, sex, bodyAct);
+    const std::string bodySprName = g_session.GetJobSprName(g_session.m_playerJob, sex, bodySpr);
+    const std::string headActName = g_session.GetHeadActName(g_session.m_playerJob, &head, sex, headAct);
+    const std::string headSprName = g_session.GetHeadSprName(g_session.m_playerJob, &head, sex, headSpr);
+    const std::string accessoryBottomActName = g_session.GetAccessoryActName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory, accessoryBottomAct);
+    const std::string accessoryBottomSprName = g_session.GetAccessorySprName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory, accessoryBottomSpr);
+    const std::string accessoryMidActName = g_session.GetAccessoryActName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory3, accessoryMidAct);
+    const std::string accessoryMidSprName = g_session.GetAccessorySprName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory3, accessoryMidSpr);
+    const std::string accessoryTopActName = g_session.GetAccessoryActName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory2, accessoryTopAct);
+    const std::string accessoryTopSprName = g_session.GetAccessorySprName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory2, accessoryTopSpr);
+    const std::string imfPath = g_session.GetImfName(g_session.m_playerJob, head, sex, imfName);
+    const std::string bodyPaletteName = g_session.m_playerBodyPalette > 0
+        ? g_session.GetBodyPaletteName(g_session.m_playerJob, sex, g_session.m_playerBodyPalette, bodyPalette)
+        : std::string();
+    const std::string headPaletteName = g_session.m_playerHeadPalette > 0
+        ? g_session.GetHeadPaletteName(head, g_session.m_playerJob, sex, g_session.m_playerHeadPalette, headPalette)
+        : std::string();
+
+    bool drew = false;
+    drew |= DrawEquipPreviewLayerToArgb(pixels, width, height, drawX, drawY, 0, curAction, curMotion, bodyActName, bodySprName, imfPath, bodyActName, headActName, curMotion, curMotion, bodyPaletteName);
+    drew |= DrawEquipPreviewLayerToArgb(pixels, width, height, drawX, drawY, 1, curAction, curMotion, headActName, headSprName, imfPath, bodyActName, headActName, curMotion, curMotion, headPaletteName);
+    if (!accessoryBottomActName.empty() && !accessoryBottomSprName.empty()) {
+        drew |= DrawEquipPreviewAccessoryMotionToArgb(pixels, width, height, drawX, drawY, curAction, curMotion, curMotion, bodyActName, headActName, accessoryBottomActName, accessoryBottomSprName);
+    }
+    if (!accessoryMidActName.empty() && !accessoryMidSprName.empty()) {
+        drew |= DrawEquipPreviewAccessoryMotionToArgb(pixels, width, height, drawX, drawY, curAction, curMotion, curMotion, bodyActName, headActName, accessoryMidActName, accessoryMidSprName);
+    }
+    if (!accessoryTopActName.empty() && !accessoryTopSprName.empty()) {
+        drew |= DrawEquipPreviewAccessoryMotionToArgb(pixels, width, height, drawX, drawY, curAction, curMotion, curMotion, bodyActName, headActName, accessoryTopActName, accessoryTopSprName);
+    }
+    return drew;
+}
+#endif
 
 bool DrawEquipPreviewPlayerSprite(HDC hdc, int drawX, int drawY)
 {
@@ -1473,39 +1635,51 @@ bool UIEquipWnd::BuildQtPreviewImage(QImage* outImage) const
     constexpr int kQtPreviewTopPadding = 10;
     constexpr int kQtPreviewBottomPadding = 14;
 
-    ArgbDibSurface previewSurface;
-    if (!previewSurface.EnsureSize(kQtComposeWidth, kQtComposeHeight)) {
-        outImage->fill(Qt::transparent);
-        return false;
-    }
-
-    std::memset(
-        previewSurface.GetBits(),
-        0,
-        static_cast<size_t>(kQtComposeWidth) * static_cast<size_t>(kQtComposeHeight) * sizeof(unsigned int));
-
-    const bool drew = DrawEquipPreviewPlayerSprite(
-        previewSurface.GetDC(),
+    std::vector<unsigned int> previewPixels(
+        static_cast<size_t>(kQtComposeWidth) * static_cast<size_t>(kQtComposeHeight),
+        0u);
+    const bool drew = DrawEquipPreviewPlayerSpriteToArgb(
+        previewPixels.data(),
+        kQtComposeWidth,
+        kQtComposeHeight,
         kQtComposeWidth / 2,
         kQtComposeHeight - kQtComposeAnchorBottomPadding);
 
     RECT opaqueBounds{};
     const bool hasOpaqueBounds = drew
         && FindOpaqueBounds(
-            static_cast<const unsigned int*>(previewSurface.GetBits()),
+            previewPixels.data(),
             kQtComposeWidth,
             kQtComposeHeight,
             &opaqueBounds);
 
+    if (!drew || !hasOpaqueBounds) {
+        static int s_logCount = 0;
+        if (s_logCount < 8) {
+            ++s_logCount;
+            DbgLog("[QtPreview] equip drew=%d bounds=%d job=%d head=%d sex=%d bodyPal=%d headPal=%d acc=%d/%d/%d\n",
+                drew ? 1 : 0,
+                hasOpaqueBounds ? 1 : 0,
+                g_session.m_playerJob,
+                g_session.m_playerHead,
+                g_session.GetSex(),
+                g_session.m_playerBodyPalette,
+                g_session.m_playerHeadPalette,
+                g_session.m_playerAccessory,
+                g_session.m_playerAccessory2,
+                g_session.m_playerAccessory3);
+        }
+    }
+
     const QImage source(
-        reinterpret_cast<const uchar*>(previewSurface.GetBits()),
+        reinterpret_cast<const uchar*>(previewPixels.data()),
         kQtComposeWidth,
         kQtComposeHeight,
         kQtComposeWidth * static_cast<int>(sizeof(unsigned int)),
         QImage::Format_ARGB32);
 
     if (!hasOpaqueBounds) {
-        *outImage = source.copy().mirrored(false, true);
+        *outImage = source.copy();
         return !outImage->isNull();
     }
 
@@ -1513,7 +1687,7 @@ bool UIEquipWnd::BuildQtPreviewImage(QImage* outImage) const
     const int cropTop = (std::max)(0, static_cast<int>(opaqueBounds.top) - kQtPreviewTopPadding);
     const int cropRight = (std::min)(kQtComposeWidth, static_cast<int>(opaqueBounds.right) + kQtPreviewSidePadding);
     const int cropBottom = (std::min)(kQtComposeHeight, static_cast<int>(opaqueBounds.bottom) + kQtPreviewBottomPadding);
-    *outImage = source.copy(cropLeft, cropTop, cropRight - cropLeft, cropBottom - cropTop).mirrored(false, true);
+    *outImage = source.copy(cropLeft, cropTop, cropRight - cropLeft, cropBottom - cropTop);
     return !outImage->isNull();
 #else
     (void)outImage;

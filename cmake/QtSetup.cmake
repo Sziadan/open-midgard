@@ -46,6 +46,11 @@ function(ro_configure_qt6)
         return()
     endif()
 
+    if(NOT WIN32)
+        message(STATUS "Qt 6 will be resolved from the active non-Windows toolchain")
+        return()
+    endif()
+
     ro_collect_qt6_candidate_roots(_qt_candidate_roots)
     set(_selected_qt_root "")
     foreach(_candidate IN LISTS _qt_candidate_roots)

@@ -562,18 +562,18 @@ CMakeFiles/open_midgard.dir/all: src/cipher/CMakeFiles/ro_cipher.dir/all
 CMakeFiles/open_midgard.dir/all: src/network/CMakeFiles/ro_network.dir/all
 CMakeFiles/open_midgard.dir/all: src/res/CMakeFiles/ro_res.dir/all
 CMakeFiles/open_midgard.dir/all: src/audio/CMakeFiles/ro_audio.dir/all
-CMakeFiles/open_midgard.dir/all: src/input/CMakeFiles/ro_input.dir/all
 CMakeFiles/open_midgard.dir/all: src/session/CMakeFiles/ro_session.dir/all
-CMakeFiles/open_midgard.dir/all: src/world/CMakeFiles/ro_world.dir/all
+CMakeFiles/open_midgard.dir/all: src/input/CMakeFiles/ro_input.dir/all
 CMakeFiles/open_midgard.dir/all: src/gamemode/CMakeFiles/ro_gamemode.dir/all
+CMakeFiles/open_midgard.dir/all: src/world/CMakeFiles/ro_world.dir/all
 CMakeFiles/open_midgard.dir/all: src/render/CMakeFiles/ro_render.dir/all
 CMakeFiles/open_midgard.dir/all: src/ui/CMakeFiles/ro_ui.dir/all
 CMakeFiles/open_midgard.dir/all: src/qtui/CMakeFiles/ro_qtui.dir/all
 CMakeFiles/open_midgard.dir/all: src/skill/CMakeFiles/ro_skill.dir/all
 CMakeFiles/open_midgard.dir/all: src/item/CMakeFiles/ro_item.dir/all
 CMakeFiles/open_midgard.dir/all: src/pathfinder/CMakeFiles/ro_pathfinder.dir/all
-CMakeFiles/open_midgard.dir/all: src/security/CMakeFiles/ro_security.dir/all
 CMakeFiles/open_midgard.dir/all: src/lua/CMakeFiles/ro_lua.dir/all
+CMakeFiles/open_midgard.dir/all: src/security/CMakeFiles/ro_security.dir/all
 CMakeFiles/open_midgard.dir/all: src/main/CMakeFiles/ro_main.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\open_midgard.dir\build.make CMakeFiles/open_midgard.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\open_midgard.dir\build.make CMakeFiles/open_midgard.dir/build
@@ -1219,8 +1219,8 @@ src/qtui/CMakeFiles/ro_qtui.dir/all: src/network/CMakeFiles/ro_network.dir/all
 src/qtui/CMakeFiles/ro_qtui.dir/all: src/res/CMakeFiles/ro_res.dir/all
 src/qtui/CMakeFiles/ro_qtui.dir/all: src/audio/CMakeFiles/ro_audio.dir/all
 src/qtui/CMakeFiles/ro_qtui.dir/all: src/session/CMakeFiles/ro_session.dir/all
-src/qtui/CMakeFiles/ro_qtui.dir/all: src/world/CMakeFiles/ro_world.dir/all
 src/qtui/CMakeFiles/ro_qtui.dir/all: src/gamemode/CMakeFiles/ro_gamemode.dir/all
+src/qtui/CMakeFiles/ro_qtui.dir/all: src/world/CMakeFiles/ro_world.dir/all
 src/qtui/CMakeFiles/ro_qtui.dir/all: src/ui/CMakeFiles/ro_ui.dir/all
 src/qtui/CMakeFiles/ro_qtui.dir/all: src/skill/CMakeFiles/ro_skill.dir/all
 src/qtui/CMakeFiles/ro_qtui.dir/all: src/item/CMakeFiles/ro_item.dir/all
@@ -1259,8 +1259,8 @@ src/qtui/CMakeFiles/ro_qtui.dir/clean:
 # All Build rule for target.
 src/qtui/CMakeFiles/ro_qtui_autogen_timestamp_deps.dir/all: src/core/CMakeFiles/ro_core.dir/all
 src/qtui/CMakeFiles/ro_qtui_autogen_timestamp_deps.dir/all: src/session/CMakeFiles/ro_session.dir/all
-src/qtui/CMakeFiles/ro_qtui_autogen_timestamp_deps.dir/all: src/world/CMakeFiles/ro_world.dir/all
 src/qtui/CMakeFiles/ro_qtui_autogen_timestamp_deps.dir/all: src/gamemode/CMakeFiles/ro_gamemode.dir/all
+src/qtui/CMakeFiles/ro_qtui_autogen_timestamp_deps.dir/all: src/world/CMakeFiles/ro_world.dir/all
 src/qtui/CMakeFiles/ro_qtui_autogen_timestamp_deps.dir/all: src/ui/CMakeFiles/ro_ui.dir/all
 	$(MAKE) $(MAKESILENT) -f src\qtui\CMakeFiles\ro_qtui_autogen_timestamp_deps.dir\build.make src/qtui/CMakeFiles/ro_qtui_autogen_timestamp_deps.dir/depend
 	$(MAKE) $(MAKESILENT) -f src\qtui\CMakeFiles\ro_qtui_autogen_timestamp_deps.dir\build.make src/qtui/CMakeFiles/ro_qtui_autogen_timestamp_deps.dir/build
@@ -1498,8 +1498,8 @@ src/main/CMakeFiles/ro_main.dir/all: src/network/CMakeFiles/ro_network.dir/all
 src/main/CMakeFiles/ro_main.dir/all: src/res/CMakeFiles/ro_res.dir/all
 src/main/CMakeFiles/ro_main.dir/all: src/audio/CMakeFiles/ro_audio.dir/all
 src/main/CMakeFiles/ro_main.dir/all: src/session/CMakeFiles/ro_session.dir/all
-src/main/CMakeFiles/ro_main.dir/all: src/world/CMakeFiles/ro_world.dir/all
 src/main/CMakeFiles/ro_main.dir/all: src/gamemode/CMakeFiles/ro_gamemode.dir/all
+src/main/CMakeFiles/ro_main.dir/all: src/world/CMakeFiles/ro_world.dir/all
 src/main/CMakeFiles/ro_main.dir/all: src/ui/CMakeFiles/ro_ui.dir/all
 src/main/CMakeFiles/ro_main.dir/all: src/skill/CMakeFiles/ro_skill.dir/all
 src/main/CMakeFiles/ro_main.dir/all: src/item/CMakeFiles/ro_item.dir/all

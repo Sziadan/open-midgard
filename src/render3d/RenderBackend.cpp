@@ -44,7 +44,9 @@ constexpr RenderBackendType kDefaultConfiguredBackend = RenderBackendType::Legac
 
 bool IsBackendAllowedOnCurrentBuild(RenderBackendType backend)
 {
-#if defined(_WIN64)
+#if !RO_PLATFORM_WINDOWS
+    return backend == RenderBackendType::Vulkan;
+#elif defined(_WIN64)
     return backend != RenderBackendType::LegacyDirect3D7;
 #else
     return true;
@@ -53,12 +55,18 @@ bool IsBackendAllowedOnCurrentBuild(RenderBackendType backend)
 
 RenderBackendType GetFallbackBackendForCurrentBuild()
 {
+#if !RO_PLATFORM_WINDOWS
+    constexpr RenderBackendType kOrderedCandidates[] = {
+        RenderBackendType::Vulkan,
+    };
+#else
     constexpr RenderBackendType kOrderedCandidates[] = {
         RenderBackendType::Direct3D11,
         RenderBackendType::Direct3D12,
         RenderBackendType::Vulkan,
         RenderBackendType::LegacyDirect3D7,
     };
+#endif
 
     for (RenderBackendType candidate : kOrderedCandidates) {
         if (IsBackendAllowedOnCurrentBuild(candidate)
@@ -306,7 +314,7 @@ bool IsRenderBackendImplemented(RenderBackendType backend)
 {
     switch (backend) {
     case RenderBackendType::LegacyDirect3D7:
-        return true;
+        return RO_PLATFORM_WINDOWS != 0;
 
     case RenderBackendType::Direct3D11:
         return RO_HAS_NATIVE_D3D11 != 0;
@@ -330,7 +338,7 @@ bool IsRenderBackendSupported(RenderBackendType backend)
 
     switch (backend) {
     case RenderBackendType::LegacyDirect3D7:
-        return true;
+        return RO_PLATFORM_WINDOWS != 0;
 
     case RenderBackendType::Direct3D11:
         if (g_supportCache.d3d11 < 0) {

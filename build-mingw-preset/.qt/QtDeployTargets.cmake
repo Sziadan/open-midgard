@@ -55,4 +55,4 @@ set(__QT_DEPLOY_TARGET_ro_main_FILE D:/Spel/RoRebuild/Ragnarok___Win32_HighPries
 set(__QT_DEPLOY_TARGET_ro_main_TYPE STATIC_LIBRARY)
 set(__QT_DEPLOY_TARGET_open_midgard_FILE D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/build-mingw-preset/open-midgard.exe)
 set(__QT_DEPLOY_TARGET_open_midgard_TYPE EXECUTABLE)
-set(__QT_DEPLOY_TARGET_open_midgard_RUNTIME_DLLS C:/Qt/6.11.0/mingw_64/bin/Qt6Quick.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6OpenGL.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6Gui.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6QmlMeta.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6QmlModels.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6QmlWorkerScript.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6Qml.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6Network.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6Core.dll)
+set(__QT_DEPLOY_TARGET_open_midgard_RUNTIME_DLLS C:/Qt/6.11.0/mingw_64/bin/Qt6Quick.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6OpenGL.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6QmlMeta.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6QmlModels.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6QmlWorkerScript.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6Qml.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6Network.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6Gui.dll;C:/Qt/6.11.0/mingw_64/bin/Qt6Core.dll)

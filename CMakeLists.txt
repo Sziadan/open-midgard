@@ -30,6 +30,12 @@ option(RO_ENABLE_NATIVE_D3D12 "Enable the native Direct3D 12 backend when suppor
 set(RO_QT_ROOT "" CACHE PATH "Compiler-compatible Qt 6 kit root (for example C:/Qt/6.11.0/msvc2022_64)")
 set(RO_QT_WINDEPLOYQT_EXECUTABLE "" CACHE FILEPATH "Path to the matching windeployqt.exe")
 
+if(NOT WIN32)
+    set(RO_ENABLE_NATIVE_D3D11 OFF CACHE BOOL "Enable the native Direct3D 11 backend when supported" FORCE)
+    set(RO_ENABLE_NATIVE_D3D12 OFF CACHE BOOL "Enable the native Direct3D 12 backend when supported" FORCE)
+    set(RO_ENABLE_QT6_UI ON CACHE BOOL "Enable the Qt 6 / QML GPU UI runtime" FORCE)
+endif()
+
 if(RO_ENABLE_QT6_UI_SPIKE AND NOT RO_ENABLE_QT6_UI)
     set(RO_ENABLE_QT6_UI ON CACHE BOOL "Enable the Qt 6 / QML GPU UI runtime" FORCE)
 endif()
@@ -87,7 +93,11 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(QtSetup)
 ro_configure_qt6()
 if(RO_ENABLE_QT6_UI)
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui GuiPrivate Qml Quick)
+    if(WIN32)
+        find_package(Qt6 REQUIRED COMPONENTS Core Gui GuiPrivate Qml Quick)
+    else()
+        find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
+    endif()
 endif()
 
 # ─── Compiler options ─────────────────────────────────────────────────────
@@ -161,6 +171,10 @@ else()
     add_executable(open_midgard ${RO_APP_MAIN_SOURCE})
 endif()
 set_target_properties(open_midgard PROPERTIES OUTPUT_NAME "open-midgard")
+
+if(RO_ENABLE_DEV_DEPLOY)
+    target_compile_definitions(open_midgard PRIVATE RO_DEV_DEPLOY_DIR="D:/Spel/OldRO")
+endif()
 
 target_link_libraries(open_midgard PRIVATE
     ro_main

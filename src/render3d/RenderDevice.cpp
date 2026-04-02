@@ -5,6 +5,7 @@
 #include "DebugLog.h"
 #include "GraphicsSettings.h"
 #include "ModernRenderState.h"
+#include "qtui/QtPlatformWindow.h"
 #include "render/Renderer.h"
 #include "res/Texture.h"
 #include "VulkanSmaaShaders.generated.h"
@@ -28,9 +29,15 @@
 #include <vector>
 
 #if RO_HAS_VULKAN
+#if RO_PLATFORM_WINDOWS
 #define VK_USE_PLATFORM_WIN32_KHR
+#endif
 #define VK_NO_PROTOTYPES
 #include <vulkan/vulkan.h>
+#if !RO_PLATFORM_WINDOWS && RO_ENABLE_QT6_UI
+#include <QVulkanInstance>
+#include <QWindow>
+#endif
 #endif
 
 #if RO_HAS_NATIVE_D3D12
@@ -124,8 +131,8 @@ public:
 
         RECT clientRect{};
         GetClientRect(m_hwnd, &clientRect);
-        m_renderWidth = (std::max)(1L, clientRect.right - clientRect.left);
-        m_renderHeight = (std::max)(1L, clientRect.bottom - clientRect.top);
+        m_renderWidth = (std::max)(1, static_cast<int>(clientRect.right - clientRect.left));
+        m_renderHeight = (std::max)(1, static_cast<int>(clientRect.bottom - clientRect.top));
     }
 
     int GetRenderWidth() const override { return m_renderWidth; }
@@ -165,6 +172,7 @@ HMODULE g_vulkanModule = nullptr;
 PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = nullptr;
 PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr = nullptr;
 PFN_vkCreateInstance vkCreateInstance = nullptr;
+PFN_vkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionProperties = nullptr;
 PFN_vkDestroyInstance vkDestroyInstance = nullptr;
 PFN_vkEnumeratePhysicalDevices vkEnumeratePhysicalDevices = nullptr;
 PFN_vkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = nullptr;
@@ -237,7 +245,6 @@ PFN_vkCmdDrawIndexed vkCmdDrawIndexed = nullptr;
 PFN_vkCmdPipelineBarrier vkCmdPipelineBarrier = nullptr;
 PFN_vkCmdCopyImage vkCmdCopyImage = nullptr;
 PFN_vkCmdCopyBufferToImage vkCmdCopyBufferToImage = nullptr;
-PFN_vkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR = nullptr;
 PFN_vkDestroySurfaceKHR vkDestroySurfaceKHR = nullptr;
 PFN_vkGetPhysicalDeviceSurfaceSupportKHR vkGetPhysicalDeviceSurfaceSupportKHR = nullptr;
 PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR vkGetPhysicalDeviceSurfaceCapabilitiesKHR = nullptr;
@@ -256,10 +263,14 @@ bool LoadVulkanLoader()
     }
 
     if (!g_vulkanModule) {
+#if RO_PLATFORM_WINDOWS
         g_vulkanModule = LoadLibraryA("vulkan-1.dll");
+#else
+        g_vulkanModule = LoadLibraryA("libvulkan.so.1");
+#endif
     }
     if (!g_vulkanModule) {
-        DbgLog("[Render] Vulkan loader 'vulkan-1.dll' not found.\n");
+        DbgLog("[Render] Vulkan loader not found.\n");
         return false;
     }
 
@@ -270,7 +281,9 @@ bool LoadVulkanLoader()
     }
 
     vkCreateInstance = reinterpret_cast<PFN_vkCreateInstance>(vkGetInstanceProcAddr(nullptr, "vkCreateInstance"));
-    return vkCreateInstance != nullptr;
+    vkEnumerateInstanceExtensionProperties = reinterpret_cast<PFN_vkEnumerateInstanceExtensionProperties>(
+        vkGetInstanceProcAddr(nullptr, "vkEnumerateInstanceExtensionProperties"));
+    return vkCreateInstance != nullptr && vkEnumerateInstanceExtensionProperties != nullptr;
 }
 
 bool LoadVulkanInstanceFunctions(VkInstance instance)
@@ -287,7 +300,6 @@ bool LoadVulkanInstanceFunctions(VkInstance instance)
     vkGetPhysicalDeviceProperties = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceProperties"));
     vkEnumerateDeviceExtensionProperties = reinterpret_cast<PFN_vkEnumerateDeviceExtensionProperties>(vkGetInstanceProcAddr(instance, "vkEnumerateDeviceExtensionProperties"));
     vkCreateDevice = reinterpret_cast<PFN_vkCreateDevice>(vkGetInstanceProcAddr(instance, "vkCreateDevice"));
-    vkCreateWin32SurfaceKHR = reinterpret_cast<PFN_vkCreateWin32SurfaceKHR>(vkGetInstanceProcAddr(instance, "vkCreateWin32SurfaceKHR"));
     vkDestroySurfaceKHR = reinterpret_cast<PFN_vkDestroySurfaceKHR>(vkGetInstanceProcAddr(instance, "vkDestroySurfaceKHR"));
     vkGetPhysicalDeviceSurfaceSupportKHR = reinterpret_cast<PFN_vkGetPhysicalDeviceSurfaceSupportKHR>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceSurfaceSupportKHR"));
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR = reinterpret_cast<PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR"));
@@ -303,13 +315,36 @@ bool LoadVulkanInstanceFunctions(VkInstance instance)
         && vkGetPhysicalDeviceProperties
         && vkEnumerateDeviceExtensionProperties
         && vkCreateDevice
-        && vkCreateWin32SurfaceKHR
         && vkDestroySurfaceKHR
         && vkGetPhysicalDeviceSurfaceSupportKHR
         && vkGetPhysicalDeviceSurfaceCapabilitiesKHR
         && vkGetPhysicalDeviceSurfaceFormatsKHR
         && vkGetPhysicalDeviceSurfacePresentModesKHR
         && vkGetDeviceProcAddr;
+}
+
+bool HasInstanceExtension(const char* extensionName)
+{
+    if (!vkEnumerateInstanceExtensionProperties || !extensionName) {
+        return false;
+    }
+
+    uint32_t extensionCount = 0;
+    if (vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr) != VK_SUCCESS || extensionCount == 0) {
+        return false;
+    }
+
+    std::vector<VkExtensionProperties> extensions(extensionCount);
+    if (vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data()) != VK_SUCCESS) {
+        return false;
+    }
+
+    for (const VkExtensionProperties& extension : extensions) {
+        if (std::strcmp(extension.extensionName, extensionName) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool LoadVulkanDeviceFunctions(VkDevice device)
@@ -1163,6 +1198,7 @@ bool CompileShaderBlob(const char* source, const char* entryPoint, const char* t
 }
 #endif
 
+#if RO_PLATFORM_WINDOWS
 class LegacyRenderDevice final : public IRenderDevice {
 public:
     LegacyRenderDevice()
@@ -1244,8 +1280,8 @@ public:
 
         RECT clientRect{};
         GetClientRect(m_hwnd, &clientRect);
-        m_renderWidth = (std::max)(1L, clientRect.right - clientRect.left);
-        m_renderHeight = (std::max)(1L, clientRect.bottom - clientRect.top);
+        m_renderWidth = (std::max)(1, static_cast<int>(clientRect.right - clientRect.left));
+        m_renderHeight = (std::max)(1, static_cast<int>(clientRect.bottom - clientRect.top));
     }
 
     int GetRenderWidth() const override
@@ -1521,6 +1557,15 @@ private:
     int m_renderHeight;
     RenderBackendBootstrapResult m_bootstrap;
 };
+#else
+class LegacyRenderDevice final : public UnsupportedModernRenderDevice {
+public:
+    LegacyRenderDevice()
+        : UnsupportedModernRenderDevice(RenderBackendType::LegacyDirect3D7)
+    {
+    }
+};
+#endif
 
 #if RO_HAS_NATIVE_D3D11
 class D3D11RenderDevice final : public IRenderDevice {
@@ -1727,8 +1772,8 @@ public:
 
         RECT clientRect{};
         GetClientRect(m_hwnd, &clientRect);
-        const int newWidth = (std::max)(1L, clientRect.right - clientRect.left);
-        const int newHeight = (std::max)(1L, clientRect.bottom - clientRect.top);
+        const int newWidth = (std::max)(1, static_cast<int>(clientRect.right - clientRect.left));
+        const int newHeight = (std::max)(1, static_cast<int>(clientRect.bottom - clientRect.top));
         if (newWidth != m_renderWidth || newHeight != m_renderHeight) {
             m_renderWidth = newWidth;
             m_renderHeight = newHeight;
@@ -1981,8 +2026,8 @@ private:
         if ((targetWidth <= 0 || targetHeight <= 0) && m_hwnd) {
             RECT clientRect{};
             GetClientRect(m_hwnd, &clientRect);
-            targetWidth = (std::max)(1L, clientRect.right - clientRect.left);
-            targetHeight = (std::max)(1L, clientRect.bottom - clientRect.top);
+            targetWidth = (std::max)(1, static_cast<int>(clientRect.right - clientRect.left));
+            targetHeight = (std::max)(1, static_cast<int>(clientRect.bottom - clientRect.top));
         }
         if (targetWidth <= 0 || targetHeight <= 0) {
             return false;
@@ -2539,8 +2584,8 @@ private:
         if ((m_renderWidth <= 0 || m_renderHeight <= 0) && m_hwnd) {
             RECT clientRect{};
             GetClientRect(m_hwnd, &clientRect);
-            m_renderWidth = (std::max)(1L, clientRect.right - clientRect.left);
-            m_renderHeight = (std::max)(1L, clientRect.bottom - clientRect.top);
+            m_renderWidth = (std::max)(1, static_cast<int>(clientRect.right - clientRect.left));
+            m_renderHeight = (std::max)(1, static_cast<int>(clientRect.bottom - clientRect.top));
         }
         SafeRelease(m_renderTargetView);
         ReleaseSceneRenderTargetResources();
@@ -2673,8 +2718,8 @@ private:
         if ((targetWidth <= 0 || targetHeight <= 0) && m_hwnd) {
             RECT clientRect{};
             GetClientRect(m_hwnd, &clientRect);
-            targetWidth = (std::max)(1L, clientRect.right - clientRect.left);
-            targetHeight = (std::max)(1L, clientRect.bottom - clientRect.top);
+            targetWidth = (std::max)(1, static_cast<int>(clientRect.right - clientRect.left));
+            targetHeight = (std::max)(1, static_cast<int>(clientRect.bottom - clientRect.top));
         }
         if (targetWidth <= 0 || targetHeight <= 0) {
             return false;
@@ -3232,8 +3277,8 @@ public:
 
         RECT clientRect{};
         GetClientRect(m_hwnd, &clientRect);
-        const int newWidth = (std::max)(1L, clientRect.right - clientRect.left);
-        const int newHeight = (std::max)(1L, clientRect.bottom - clientRect.top);
+        const int newWidth = (std::max)(1, static_cast<int>(clientRect.right - clientRect.left));
+        const int newHeight = (std::max)(1, static_cast<int>(clientRect.bottom - clientRect.top));
         if (newWidth != m_renderWidth || newHeight != m_renderHeight) {
             m_renderWidth = newWidth;
             m_renderHeight = newHeight;
@@ -4759,6 +4804,9 @@ public:
           m_presentQueueFamilyIndex(kInvalidQueueFamilyIndex), m_currentImageIndex(0),
                     m_frameBegun(false), m_renderPassActive(false), m_pendingDepthClear(false), m_verticalSyncEnabled(false), m_overlayPassPrepared(false),
                     m_defaultTexture(nullptr), m_samplerAnisotropySupported(false), m_maxSamplerAnisotropy(1.0f)
+#if !RO_PLATFORM_WINDOWS && RO_ENABLE_QT6_UI
+                  , m_qtVulkanInstance(nullptr)
+#endif
     {
         m_bootstrap.backend = RenderBackendType::Vulkan;
         m_bootstrap.initHr = static_cast<int>(E_NOTIMPL);
@@ -4980,6 +5028,10 @@ public:
             vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
             m_surface = VK_NULL_HANDLE;
         }
+#if !RO_PLATFORM_WINDOWS && RO_ENABLE_QT6_UI
+        delete m_qtVulkanInstance;
+        m_qtVulkanInstance = nullptr;
+#endif
         if (m_instance != VK_NULL_HANDLE) {
             vkDestroyInstance(m_instance, nullptr);
             m_instance = VK_NULL_HANDLE;
@@ -5022,8 +5074,8 @@ public:
 
         RECT clientRect{};
         GetClientRect(m_hwnd, &clientRect);
-        const int newWidth = (std::max)(1L, clientRect.right - clientRect.left);
-        const int newHeight = (std::max)(1L, clientRect.bottom - clientRect.top);
+        const int newWidth = (std::max)(1, static_cast<int>(clientRect.right - clientRect.left));
+        const int newHeight = (std::max)(1, static_cast<int>(clientRect.bottom - clientRect.top));
         if (newWidth != m_renderWidth || newHeight != m_renderHeight) {
             m_renderWidth = newWidth;
             m_renderHeight = newHeight;
@@ -7242,10 +7294,21 @@ private:
             return false;
         }
 
-        const char* extensions[] = {
-            VK_KHR_SURFACE_EXTENSION_NAME,
-            VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-        };
+        std::vector<const char*> extensions;
+        extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+#if RO_PLATFORM_WINDOWS
+        extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#else
+        if (HasInstanceExtension("VK_KHR_xcb_surface")) {
+            extensions.push_back("VK_KHR_xcb_surface");
+        }
+        if (HasInstanceExtension("VK_KHR_xlib_surface")) {
+            extensions.push_back("VK_KHR_xlib_surface");
+        }
+        if (HasInstanceExtension("VK_KHR_wayland_surface")) {
+            extensions.push_back("VK_KHR_wayland_surface");
+        }
+#endif
 
         VkApplicationInfo appInfo{};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -7258,8 +7321,8 @@ private:
         VkInstanceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
-        createInfo.enabledExtensionCount = static_cast<uint32_t>(std::size(extensions));
-        createInfo.ppEnabledExtensionNames = extensions;
+        createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+        createInfo.ppEnabledExtensionNames = extensions.data();
 
         const VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
         if (result != VK_SUCCESS) {
@@ -7278,10 +7341,18 @@ private:
 
     bool CreateSurface()
     {
+#if RO_PLATFORM_WINDOWS
         VkWin32SurfaceCreateInfoKHR createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
         createInfo.hinstance = GetModuleHandleA(nullptr);
         createInfo.hwnd = m_hwnd;
+
+        const PFN_vkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR = reinterpret_cast<PFN_vkCreateWin32SurfaceKHR>(
+            vkGetInstanceProcAddr(m_instance, "vkCreateWin32SurfaceKHR"));
+        if (!vkCreateWin32SurfaceKHR) {
+            m_bootstrap.initHr = static_cast<int>(E_NOINTERFACE);
+            return false;
+        }
 
         const VkResult result = vkCreateWin32SurfaceKHR(m_instance, &createInfo, nullptr, &m_surface);
         if (result != VK_SUCCESS) {
@@ -7290,6 +7361,30 @@ private:
             return false;
         }
         return true;
+#else
+        QWindow* window = RoQtGetQWindow(m_hwnd);
+        if (!window) {
+            m_bootstrap.initHr = static_cast<int>(VK_ERROR_INITIALIZATION_FAILED);
+            return false;
+        }
+
+        m_qtVulkanInstance = new QVulkanInstance();
+        m_qtVulkanInstance->setVkInstance(m_instance);
+        if (!m_qtVulkanInstance->create()) {
+            m_bootstrap.initHr = static_cast<int>(VK_ERROR_INITIALIZATION_FAILED);
+            DbgLog("[Render] Qt failed to wrap the Vulkan instance for the host window.\n");
+            return false;
+        }
+
+        window->setVulkanInstance(m_qtVulkanInstance);
+        m_surface = m_qtVulkanInstance->surfaceForWindow(window);
+        if (m_surface == VK_NULL_HANDLE) {
+            m_bootstrap.initHr = static_cast<int>(VK_ERROR_INITIALIZATION_FAILED);
+            DbgLog("[Render] Qt failed to create a Vulkan surface for the host window.\n");
+            return false;
+        }
+        return true;
+#endif
     }
 
     bool PickPhysicalDevice()
@@ -8597,6 +8692,9 @@ private:
     VulkanTextureHandle* m_defaultTexture;
     bool m_samplerAnisotropySupported;
     float m_maxSamplerAnisotropy;
+#if !RO_PLATFORM_WINDOWS && RO_ENABLE_QT6_UI
+    QVulkanInstance* m_qtVulkanInstance;
+#endif
     std::vector<CTexture*> m_liveTextures;
     std::vector<VkImage> m_swapChainImages;
     std::vector<VkImageLayout> m_swapChainImageLayouts;
@@ -8660,8 +8758,8 @@ private:
 
         RECT clientRect{};
         GetClientRect(m_hwnd, &clientRect);
-        m_renderWidth = (std::max)(1L, clientRect.right - clientRect.left);
-        m_renderHeight = (std::max)(1L, clientRect.bottom - clientRect.top);
+        m_renderWidth = (std::max)(1, static_cast<int>(clientRect.right - clientRect.left));
+        m_renderHeight = (std::max)(1, static_cast<int>(clientRect.bottom - clientRect.top));
     }
 
     int GetRenderWidth() const override { return m_renderWidth; }

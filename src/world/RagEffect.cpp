@@ -809,7 +809,7 @@ CTexture* GetSoftGlowTexture(bool cloud)
     }
 
     constexpr int kSize = 64;
-    std::vector<unsigned long> pixels(static_cast<size_t>(kSize) * kSize, 0u);
+    std::vector<unsigned int> pixels(static_cast<size_t>(kSize) * kSize, 0u);
     for (int y = 0; y < kSize; ++y) {
         for (int x = 0; x < kSize; ++x) {
             const float fx = (static_cast<float>(x) + 0.5f) / static_cast<float>(kSize) * 2.0f - 1.0f;
@@ -843,7 +843,7 @@ CTexture* GetSoftDiscTexture()
     }
 
     constexpr int kSize = 64;
-    std::vector<unsigned long> pixels(static_cast<size_t>(kSize) * kSize, 0u);
+    std::vector<unsigned int> pixels(static_cast<size_t>(kSize) * kSize, 0u);
     for (int y = 0; y < kSize; ++y) {
         for (int x = 0; x < kSize; ++x) {
             const float fx = (static_cast<float>(x) + 0.5f) / static_cast<float>(kSize) * 2.0f - 1.0f;
@@ -1238,7 +1238,7 @@ const BakedEffectSpriteFrame* GetBakedEffectSpriteFrame(const std::string& actPa
                         std::memcpy(dst, src, static_cast<size_t>(baked.width) * sizeof(unsigned int));
                     }
                     UnpremultiplyPixels(pixels);
-                    baked.texture = g_texMgr.CreateTexture(baked.width, baked.height, reinterpret_cast<unsigned long*>(pixels.data()), PF_A8R8G8B8, false);
+                    baked.texture = g_texMgr.CreateTexture(baked.width, baked.height, pixels.data(), PF_A8R8G8B8, false);
                     baked.isValid = baked.texture && baked.texture != &CTexMgr::s_dummy_texture;
                 }
             }

@@ -18,3 +18,9 @@ target_include_directories(ro_res PUBLIC ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(ro_res PUBLIC
     ro_core
 )
+
+if(RO_ENABLE_QT6_UI)
+    target_link_libraries(ro_res PUBLIC
+        Qt6::Gui
+    )
+endif()

@@ -608,6 +608,8 @@ src/ui/CMakeFiles/ro_ui.dir/UIEquipWnd.cpp.obj: \
  C:/Qt/6.11.0/mingw_64/include/QtGui/qfontinfo.h \
  C:/Qt/6.11.0/mingw_64/include/QtGui/qfontvariableaxis.h \
  C:/Qt/6.11.0/mingw_64/include/QtCore/QString \
+ D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/DebugLog.h \
+ C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cstdarg \
  D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/GameMode.h \
  D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/gamemode/Mode.h \
  D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/audio/Audio.h \

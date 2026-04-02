@@ -2255,7 +2255,7 @@ bool BlitArgbBitsToWindow(HWND hwnd, const void* bits, int width, int height)
 
     HDC targetDc = GetDC(hwnd);
     if (!targetDc) {
-        return false;
+        return GetRenderDevice().UpdateBackBufferFromMemory(bits, width, height, width * static_cast<int>(sizeof(unsigned int)));
     }
 
     BITMAPINFO bmi{};
@@ -3053,8 +3053,8 @@ void FillSolidRectArgb(unsigned int* pixels, int width, int height, const RECT& 
     }
 
     RECT clipped{
-        (std::max)(0L, rect.left),
-        (std::max)(0L, rect.top),
+        (std::max)(0, static_cast<int>(rect.left)),
+        (std::max)(0, static_cast<int>(rect.top)),
         (std::min)(static_cast<LONG>(width), rect.right),
         (std::min)(static_cast<LONG>(height), rect.bottom)
     };

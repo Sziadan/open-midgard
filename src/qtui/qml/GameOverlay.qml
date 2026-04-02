@@ -210,6 +210,7 @@ Item {
                 model: uiState.npcMenuOptions
 
                 delegate: Rectangle {
+                    required property int index
                     required property var modelData
                     width: parent.width
                     height: 18
@@ -377,6 +378,7 @@ Item {
             model: uiState.chooseMenuOptions
 
             delegate: Rectangle {
+                required property int index
                 required property var modelData
                 x: (parent.width - 221) / 2
                 y: 12 + index * 23
@@ -856,6 +858,7 @@ Item {
             model: uiState.shortCutSlots
 
             delegate: Rectangle {
+                required property int index
                 required property var modelData
                 x: 5 + index * 29
                 y: 4
@@ -2199,11 +2202,11 @@ Item {
         }
 
         Rectangle {
-            x: uiState.skillListData.scrollTrackX - uiState.skillListX
-            y: uiState.skillListData.scrollTrackY - uiState.skillListY
+            x: (uiState.skillListData.scrollTrackX || 0) - uiState.skillListX
+            y: (uiState.skillListData.scrollTrackY || 0) - uiState.skillListY
             width: uiState.skillListData.scrollTrackWidth || 0
             height: uiState.skillListData.scrollTrackHeight || 0
-            visible: uiState.skillListData.scrollBarVisible
+            visible: uiState.skillListData.scrollBarVisible || false
             color: "#e3e7ee"
             border.width: 1
             border.color: "#a4adbd"
@@ -2519,19 +2522,21 @@ Item {
         }
 
         Rectangle {
-            x: (uiState.optionData.restartButton.x || 0) - uiState.optionX
-            y: (uiState.optionData.restartButton.y || 0) - uiState.optionY
-            width: uiState.optionData.restartButton.width || 0
-            height: uiState.optionData.restartButton.height || 0
+            id: optionRestartButton
+            readonly property var restartButtonData: uiState.optionData.restartButton || ({})
+            x: (restartButtonData.x || 0) - uiState.optionX
+            y: (restartButtonData.y || 0) - uiState.optionY
+            width: restartButtonData.width || 0
+            height: restartButtonData.height || 0
             radius: 4
-            visible: uiState.optionData.restartButton.visible || false
+            visible: restartButtonData.visible || false
             color: "#f8faff"
             border.width: 1
             border.color: "#607096"
 
             Text {
                 anchors.centerIn: parent
-                text: uiState.optionData.restartButton.label || ""
+                text: optionRestartButton.restartButtonData.label || ""
                 color: "#28375c"
                 font.pixelSize: 10
             }

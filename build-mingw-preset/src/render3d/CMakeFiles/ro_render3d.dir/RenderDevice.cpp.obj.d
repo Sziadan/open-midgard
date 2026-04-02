@@ -385,6 +385,7 @@ src/render3d/CMakeFiles/ro_render3d.dir/RenderDevice.cpp.obj: \
  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cstdarg \
  D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\src\render3d\GraphicsSettings.h \
  D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\src\render3d\ModernRenderState.h \
+ D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/qtui/QtPlatformWindow.h \
  D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\src\render3d\VulkanSmaaShaders.generated.h \
  D:\Spel\RoRebuild\Ragnarok___Win32_HighPriest2008_Release\src\render3d\VulkanShaders.generated.h \
  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/algorithm \

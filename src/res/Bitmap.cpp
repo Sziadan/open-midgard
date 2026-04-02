@@ -5,6 +5,9 @@
 #if RO_PLATFORM_WINDOWS
 #include <objidl.h>
 #include <wincodec.h>
+#elif RO_ENABLE_QT6_UI
+#include <QByteArray>
+#include <QImage>
 #endif
 
 #include <algorithm>
@@ -438,7 +441,37 @@ bool DecodeImageWithWic(const unsigned char*, int, int& outW, int& outH, u32*& o
 
 bool LoadImageFromMemory(const unsigned char* buffer, int size, int& outW, int& outH, u32*& outData)
 {
+#if !RO_PLATFORM_WINDOWS && RO_ENABLE_QT6_UI
+    outW = 0;
+    outH = 0;
+    outData = nullptr;
+
+    if (!buffer || size <= 0) {
+        return false;
+    }
+
+    const QByteArray encoded(reinterpret_cast<const char*>(buffer), size);
+    QImage image = QImage::fromData(encoded);
+    if (image.isNull()) {
+        return false;
+    }
+
+    image = image.convertToFormat(QImage::Format_ARGB32);
+    if (image.isNull() || image.width() <= 0 || image.height() <= 0) {
+        return false;
+    }
+
+    const size_t pixelCount = static_cast<size_t>(image.width()) * static_cast<size_t>(image.height());
+    std::unique_ptr<u32[]> pixels(new u32[pixelCount]);
+    std::memcpy(pixels.get(), image.constBits(), pixelCount * sizeof(u32));
+
+    outW = image.width();
+    outH = image.height();
+    outData = pixels.release();
+    return true;
+#else
     return DecodeImageWithWic(buffer, size, outW, outH, outData);
+#endif
 }
 
 std::string ResolveAlphaBitmapPath(const char* fName)
@@ -579,7 +612,7 @@ bool LoadBgraPixelsFromGameData(const char* path, u32** outPixels, int* outWidth
     int width = 0;
     int height = 0;
     u32* pixels = nullptr;
-    const bool decoded = DecodeImageWithWic(bytes, size, width, height, pixels);
+    const bool decoded = LoadImageFromMemory(bytes, size, width, height, pixels);
     delete[] bytes;
     if (!decoded || !pixels || width <= 0 || height <= 0) {
         delete[] pixels;

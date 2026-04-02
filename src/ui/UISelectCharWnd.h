@@ -65,6 +65,8 @@ public:
 
     struct PreviewState {
         bool valid = false;
+        int ownerX = 0;
+        int ownerY = 0;
         int x = 0;
         int y = 0;
         int baseAction = 0;

@@ -1,10 +1,30 @@
 #pragma once
 //===========================================================================
-// Connection.h  –  Winsock TCP connection classes
+// Connection.h  –  TCP connection classes
 // Clean C++17 rewrite.
 //===========================================================================
+#if RO_PLATFORM_WINDOWS
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#else
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+using SOCKET = int;
+
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET (-1)
+#endif
+
+#ifndef SOCKET_ERROR
+#define SOCKET_ERROR (-1)
+#endif
+#endif
+
 #include "Types.h"
 #include "PacketQueue.h"
 #include <vector>
@@ -33,7 +53,7 @@ protected:
 
     int FlushSendQueue();
 
-    u32          m_socket;   // SOCKET
+    SOCKET       m_socket;
     sockaddr_in  m_addr;
     u8           m_bBlock;
     u32          m_dwTime;

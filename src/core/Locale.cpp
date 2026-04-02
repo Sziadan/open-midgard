@@ -120,13 +120,31 @@ void ParseLoadingImages(XMLElement* element)
     EnsureDefaultLoadingScreens();
 }
 
+#if !RO_PLATFORM_WINDOWS
+std::string NormalizePortablePath(const char* path)
+{
+    if (!path) {
+        return {};
+    }
+
+    std::string normalized(path);
+    std::replace(normalized.begin(), normalized.end(), '\\', '/');
+    return normalized;
+}
+#endif
+
 bool LoadDiskFile(const char* fileName, std::vector<char>* outBuffer)
 {
     if (!fileName || !*fileName || !outBuffer) {
         return false;
     }
 
+#if RO_PLATFORM_WINDOWS
     std::ifstream file(fileName, std::ios::binary | std::ios::ate);
+#else
+    const std::string normalizedPath = NormalizePortablePath(fileName);
+    std::ifstream file(normalizedPath, std::ios::binary | std::ios::ate);
+#endif
     if (!file.is_open()) {
         return false;
     }
@@ -176,6 +194,12 @@ bool BuildExecutableRelativePath(const char* relativePath, char* outPath, size_t
 
 bool TryLoadExecutableRelativeFile(const char* relativePath, std::vector<char>* outBuffer)
 {
+#if !RO_PLATFORM_WINDOWS
+    if (LoadDiskFile(relativePath, outBuffer)) {
+        return true;
+    }
+#endif
+
     char absolutePath[MAX_PATH] = {};
     if (!BuildExecutableRelativePath(relativePath, absolutePath, sizeof(absolutePath))) {
         return false;
@@ -185,6 +209,13 @@ bool TryLoadExecutableRelativeFile(const char* relativePath, std::vector<char>* 
 
 bool HasLocalDataDirectory()
 {
+#if !RO_PLATFORM_WINDOWS
+    const DWORD runtimeAttrs = GetFileAttributesA("data");
+    if (runtimeAttrs != INVALID_FILE_ATTRIBUTES && (runtimeAttrs & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+        return true;
+    }
+#endif
+
     char dataPath[MAX_PATH] = {};
     if (!BuildExecutableRelativePath("data", dataPath, sizeof(dataPath))) {
         return false;

@@ -3,11 +3,18 @@
 #include "DebugLog.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <cstring>
 #include <map>
 #include <string>
 
+#if !RO_PLATFORM_WINDOWS
+#include <fcntl.h>
+#endif
+
+#if RO_PLATFORM_WINDOWS
 #pragma comment(lib, "ws2_32.lib")
+#endif
 
 namespace {
 
@@ -155,6 +162,57 @@ void LogConnectionRecvTrace(u16 packetId, int packetSize)
         g_recvTracePacketsRemaining);
 }
 
+int GetLastSocketErrorCode()
+{
+#if RO_PLATFORM_WINDOWS
+    return WSAGetLastError();
+#else
+    return errno;
+#endif
+}
+
+bool IsSocketWouldBlockError(int errorCode)
+{
+#if RO_PLATFORM_WINDOWS
+    return errorCode == WSAEWOULDBLOCK || errorCode == WSAEINPROGRESS || errorCode == WSAEALREADY;
+#else
+    return errorCode == EWOULDBLOCK || errorCode == EAGAIN || errorCode == EINPROGRESS || errorCode == EALREADY;
+#endif
+}
+
+bool SetSocketNonBlockingMode(SOCKET socketHandle)
+{
+#if RO_PLATFORM_WINDOWS
+    u_long nonBlock = 1;
+    return ioctlsocket(socketHandle, FIONBIO, &nonBlock) == 0;
+#else
+    const int flags = fcntl(socketHandle, F_GETFL, 0);
+    if (flags < 0) {
+        return false;
+    }
+    return fcntl(socketHandle, F_SETFL, flags | O_NONBLOCK) == 0;
+#endif
+}
+
+int CloseSocketHandle(SOCKET socketHandle)
+{
+#if RO_PLATFORM_WINDOWS
+    return closesocket(socketHandle);
+#else
+    return close(socketHandle);
+#endif
+}
+
+int SelectForSocket(SOCKET socketHandle, fd_set* readSet, fd_set* writeSet, fd_set* errorSet, timeval* timeout)
+{
+#if RO_PLATFORM_WINDOWS
+    (void)socketHandle;
+    return select(0, readSet, writeSet, errorSet, timeout);
+#else
+    return select(socketHandle + 1, readSet, writeSet, errorSet, timeout);
+#endif
+}
+
 } // namespace
 
 //===========================================================================
@@ -166,16 +224,22 @@ bool CConnection::Startup()
 
     DbgLog("[Build] marker=%s pkt0078=%d\n", kBuildMarker, ro::net::GetPacketSize(0x0078));
 
+#if RO_PLATFORM_WINDOWS
     WSADATA wsa;
     return WSAStartup(MAKEWORD(2, 2), &wsa) == 0;
+#else
+    return true;
+#endif
 }
 
 void CConnection::Cleanup()
 {
+#if RO_PLATFORM_WINDOWS
     WSACleanup();
+#endif
 }
 
-CConnection::CConnection() : m_socket((u32)INVALID_SOCKET), m_bBlock(0), m_dwTime(0)
+CConnection::CConnection() : m_socket(INVALID_SOCKET), m_bBlock(0), m_dwTime(0)
 {
     std::memset(&m_addr, 0, sizeof(m_addr));
 }
@@ -190,8 +254,8 @@ bool CConnection::Connect(const char* ip, int port)
     Disconnect();
     ResetConnectionRecvTrace(ip, port);
 
-    m_socket = (u32)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (m_socket == (u32)INVALID_SOCKET) return false;
+    m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (m_socket == INVALID_SOCKET) return false;
 
     m_addr.sin_family = AF_INET;
     m_addr.sin_port = htons((u16)port);
@@ -213,17 +277,19 @@ bool CConnection::Connect(const char* ip, int port)
     m_addr.sin_addr = resolved->sin_addr;
     freeaddrinfo(result);
 
-    u_long nonBlock = 1;
-    ioctlsocket((SOCKET)m_socket, FIONBIO, &nonBlock);
+    if (!SetSocketNonBlockingMode(m_socket)) {
+        Disconnect();
+        return false;
+    }
 
-    const int connectRet = connect((SOCKET)m_socket, (sockaddr*)&m_addr, sizeof(m_addr));
+    const int connectRet = connect(m_socket, reinterpret_cast<sockaddr*>(&m_addr), sizeof(m_addr));
     if (connectRet == 0) {
         m_dwTime = GetTickCount();
         return true;
     }
 
-    const int lastError = WSAGetLastError();
-    if (lastError != WSAEWOULDBLOCK && lastError != WSAEINPROGRESS && lastError != WSAEALREADY) {
+    const int lastError = GetLastSocketErrorCode();
+    if (!IsSocketWouldBlockError(lastError)) {
         Disconnect();
         return false;
     }
@@ -232,22 +298,26 @@ bool CConnection::Connect(const char* ip, int port)
     fd_set errorSet;
     FD_ZERO(&writeSet);
     FD_ZERO(&errorSet);
-    FD_SET((SOCKET)m_socket, &writeSet);
-    FD_SET((SOCKET)m_socket, &errorSet);
+    FD_SET(m_socket, &writeSet);
+    FD_SET(m_socket, &errorSet);
 
     timeval tv{};
     tv.tv_sec = 3;
     tv.tv_usec = 0;
 
-    const int selectRet = select(0, nullptr, &writeSet, &errorSet, &tv);
-    if (selectRet <= 0 || FD_ISSET((SOCKET)m_socket, &errorSet)) {
+    const int selectRet = SelectForSocket(m_socket, nullptr, &writeSet, &errorSet, &tv);
+    if (selectRet <= 0 || FD_ISSET(m_socket, &errorSet)) {
         Disconnect();
         return false;
     }
 
     int soError = 0;
+#if RO_PLATFORM_WINDOWS
     int soLen = sizeof(soError);
-    if (getsockopt((SOCKET)m_socket, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&soError), &soLen) != 0 || soError != 0) {
+#else
+    socklen_t soLen = static_cast<socklen_t>(sizeof(soError));
+#endif
+    if (getsockopt(m_socket, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&soError), &soLen) != 0 || soError != 0) {
         Disconnect();
         return false;
     }
@@ -258,9 +328,9 @@ bool CConnection::Connect(const char* ip, int port)
 
 void CConnection::Disconnect()
 {
-    if (m_socket != (u32)INVALID_SOCKET) {
-        closesocket((SOCKET)m_socket);
-        m_socket = (u32)INVALID_SOCKET;
+    if (m_socket != INVALID_SOCKET) {
+        CloseSocketHandle(m_socket);
+        m_socket = INVALID_SOCKET;
     }
     m_sendQueue.Clear();
     m_recvQueue.Clear();
@@ -269,7 +339,7 @@ void CConnection::Disconnect()
 
 int CConnection::FlushSendQueue()
 {
-    if (m_socket == (u32)INVALID_SOCKET) {
+    if (m_socket == INVALID_SOCKET) {
         return -1;
     }
 
@@ -281,7 +351,7 @@ int CConnection::FlushSendQueue()
             break;
         }
 
-        const int sent = send((SOCKET)m_socket, tmp, toSend, 0);
+        const int sent = send(m_socket, tmp, toSend, 0);
         if (sent > 0) {
             m_sendQueue.Pop(tmp, sent);
             totalSent += sent;
@@ -292,8 +362,8 @@ int CConnection::FlushSendQueue()
             break;
         }
 
-        const int lastError = WSAGetLastError();
-        if (lastError == WSAEWOULDBLOCK || lastError == WSAEINPROGRESS || lastError == WSAEALREADY) {
+        const int lastError = GetLastSocketErrorCode();
+        if (IsSocketWouldBlockError(lastError)) {
             break;
         }
 
@@ -306,7 +376,7 @@ int CConnection::FlushSendQueue()
 
 int CConnection::Send(const char* buf, int len)
 {
-    if (m_socket == (u32)INVALID_SOCKET) return -1;
+    if (m_socket == INVALID_SOCKET) return -1;
     if (!m_sendQueue.Push(buf, len)) return -1;
 
     const int flushed = FlushSendQueue();
@@ -322,7 +392,7 @@ int CConnection::Recv(char* buf, int len, bool peek)
 
     // Try to fill the queue first
     char tmp[4096];
-    int n = recv((SOCKET)m_socket, tmp, sizeof(tmp), 0);
+    int n = recv(m_socket, tmp, sizeof(tmp), 0);
     if (n > 0) {
         m_recvQueue.Push(tmp, n);
     }

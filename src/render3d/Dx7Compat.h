@@ -2,6 +2,8 @@
 
 #include "Types.h"
 
+#include <cstring>
+
 #if RO_PLATFORM_WINDOWS
 
 #include <ddraw.h>
@@ -16,9 +18,24 @@ struct GUID {
     unsigned char Data4[8];
 };
 
+inline bool operator==(const GUID& lhs, const GUID& rhs)
+{
+    return lhs.Data1 == rhs.Data1
+        && lhs.Data2 == rhs.Data2
+        && lhs.Data3 == rhs.Data3
+        && std::memcmp(lhs.Data4, rhs.Data4, sizeof(lhs.Data4)) == 0;
+}
+
 using REFIID = const GUID&;
 using HRESULT = long;
 using D3DCOLOR = DWORD;
+
+constexpr HRESULT S_OK = 0;
+constexpr HRESULT E_NOTIMPL = static_cast<HRESULT>(0x80004001L);
+constexpr HRESULT E_NOINTERFACE = static_cast<HRESULT>(0x80004002L);
+constexpr HRESULT E_POINTER = static_cast<HRESULT>(0x80004003L);
+
+constexpr GUID IID_IUnknown = { 0x00000000u, 0x0000u, 0x0000u, { 0xC0u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u, 0x46u } };
 
 #ifndef RO_WINDOWS_COMPAT_HAS_PALETTEENTRY
 struct PALETTEENTRY {
@@ -30,6 +47,11 @@ struct PALETTEENTRY {
 #endif
 
 struct IUnknown {
+    virtual HRESULT QueryInterface(REFIID riid, void** outObject) = 0;
+    virtual ULONG AddRef() = 0;
+    virtual ULONG Release() = 0;
+
+protected:
     virtual ~IUnknown() = default;
 };
 
@@ -250,6 +272,7 @@ constexpr DWORD D3DFVF_TEX2 = 0x00000200u;
 constexpr DWORD D3DFVF_TLVERTEX = D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1;
 constexpr DWORD DDLOCK_WAIT = 0x00000001u;
 constexpr DWORD DDLOCK_READONLY = 0x00000010u;
+constexpr DWORD D3DTFP_LINEAR = 2u;
 
 constexpr D3DTRANSFORMSTATETYPE D3DTRANSFORMSTATE_VIEW = 2u;
 constexpr D3DTRANSFORMSTATETYPE D3DTRANSFORMSTATE_PROJECTION = 3u;

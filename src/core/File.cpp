@@ -14,6 +14,17 @@
 namespace {
 
 #if !RO_PLATFORM_WINDOWS
+std::string NormalizePortablePath(const char* fileName)
+{
+    if (!fileName) {
+        return {};
+    }
+
+    std::string normalized(fileName);
+    std::replace(normalized.begin(), normalized.end(), '\\', '/');
+    return normalized;
+}
+
 bool FileExistsPortable(const char* fileName)
 {
     if (!fileName || !*fileName) {
@@ -21,7 +32,7 @@ bool FileExistsPortable(const char* fileName)
     }
 
     std::error_code error;
-    return std::filesystem::exists(std::filesystem::path(fileName), error);
+    return std::filesystem::exists(std::filesystem::path(NormalizePortablePath(fileName)), error);
 }
 
 unsigned char* ReadWholeFilePortable(const char* fileName, int* outSize)
@@ -33,7 +44,8 @@ unsigned char* ReadWholeFilePortable(const char* fileName, int* outSize)
         return nullptr;
     }
 
-    FILE* file = std::fopen(fileName, "rb");
+    const std::string normalizedPath = NormalizePortablePath(fileName);
+    FILE* file = std::fopen(normalizedPath.c_str(), "rb");
     if (!file) {
         return nullptr;
     }

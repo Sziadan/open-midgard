@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <map>
 #include <vector>
 
 namespace {
@@ -51,6 +52,26 @@ shopui::BitmapPixels LoadBitmapPixelsFromGameData(const char* path)
 bool ContainsPoint(int left, int top, int width, int height, int x, int y)
 {
     return x >= left && x < left + width && y >= top && y < top + height;
+}
+
+std::string GetNormalizedFileNameLower(std::string value)
+{
+    value = shopui::NormalizeSlash(std::move(value));
+    const size_t slashPos = value.find_last_of('\\');
+    if (slashPos != std::string::npos && slashPos + 1 < value.size()) {
+        value = value.substr(slashPos + 1);
+    }
+    return shopui::ToLowerAscii(std::move(value));
+}
+
+bool IsClassicLoginPanelAssetName(const std::string& value)
+{
+    const std::string fileName = GetNormalizedFileNameLower(value);
+    return fileName == "win_login.bmp"
+        || fileName == "loginwin.bmp"
+        || fileName == "win_login_interface.bmp"
+        || fileName == "login_interface.bmp"
+        || fileName == "win_msgbox.bmp";
 }
 
 void DrawBitmapPixelsStretched(HDC target, const shopui::BitmapPixels& bmp, const RECT& dst)
@@ -96,6 +117,92 @@ std::string NormalizeSlash(std::string value)
 {
     std::replace(value.begin(), value.end(), '/', '\\');
     return value;
+}
+
+const std::vector<std::string>& GetArchiveNamesByExtension(const char* ext)
+{
+    static std::map<std::string, std::vector<std::string>> s_byExt;
+    const std::string key = ToLowerAscii(ext ? ext : "");
+    auto it = s_byExt.find(key);
+    if (it != s_byExt.end()) {
+        return it->second;
+    }
+
+    std::vector<std::string> names;
+    g_fileMgr.CollectDataNamesByExtension(key.c_str(), names);
+    auto inserted = s_byExt.emplace(key, std::move(names));
+    return inserted.first->second;
+}
+
+std::string GetLowerFileExtension(const std::string& value)
+{
+    const std::string normalized = NormalizeSlash(value);
+    const size_t dotPos = normalized.find_last_of('.');
+    if (dotPos == std::string::npos || dotPos + 1 >= normalized.size()) {
+        return {};
+    }
+    return ToLowerAscii(normalized.substr(dotPos + 1));
+}
+
+int ScoreArchiveUiPath(const std::string& requestedPath, const std::string& resolvedPath)
+{
+    const std::string loweredRequested = ToLowerAscii(NormalizeSlash(requestedPath));
+    const std::string loweredResolved = ToLowerAscii(NormalizeSlash(resolvedPath));
+    int score = 0;
+
+    if (loweredResolved == loweredRequested) {
+        score += 10000;
+    }
+    if (loweredResolved.rfind("data\\", 0) == 0) {
+        score += 800;
+    }
+    if (loweredResolved.find("\\texture\\") != std::string::npos) {
+        score += 300;
+    }
+    if (loweredResolved.find("\\login_interface\\") != std::string::npos) {
+        score += 400;
+    }
+    if (loweredResolved.find("\\basic_interface\\") != std::string::npos) {
+        score += 350;
+    }
+    if (loweredResolved.find("\\interface\\") != std::string::npos) {
+        score += 200;
+    }
+    if (loweredResolved.find("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA") != std::string::npos) {
+        score += 450;
+    }
+
+    return score;
+}
+
+std::string ResolveArchiveAssetByFileName(const std::string& requestedPath)
+{
+    const std::string extension = GetLowerFileExtension(requestedPath);
+    if (extension.empty()) {
+        return {};
+    }
+
+    const std::string requestedFileName = GetNormalizedFileNameLower(requestedPath);
+    if (requestedFileName.empty()) {
+        return {};
+    }
+
+    const std::vector<std::string>& names = GetArchiveNamesByExtension(extension.c_str());
+    int bestScore = -1;
+    std::string bestPath;
+    for (const std::string& name : names) {
+        if (GetNormalizedFileNameLower(name) != requestedFileName) {
+            continue;
+        }
+
+        const int score = ScoreArchiveUiPath(requestedPath, name);
+        if (score > bestScore) {
+            bestScore = score;
+            bestPath = name;
+        }
+    }
+
+    return bestPath;
 }
 
 constexpr char kLoginRegPath[] = "Software\\Gravity Soft\\Ragnarok Online";
@@ -217,12 +324,10 @@ std::vector<std::string> BuildWallpaperCandidates(const std::string& requestedWa
     const char* directDefaults[] = {
         "ad_title.jpg",
         "rag_title.jpg",
-        "win_login.bmp",
         "title.bmp",
         "title.jpg",
         "login_background.jpg",
         "login_background.bmp",
-        "loginwin.bmp",
         nullptr
     };
 
@@ -385,6 +490,25 @@ shopui::BitmapPixels LoadFirstBitmapPixelsFromCandidates(const std::vector<std::
             return bmp;
         }
     }
+
+    std::vector<std::string> fallbackCandidates;
+    for (const std::string& candidate : candidates) {
+        const std::string resolved = ResolveArchiveAssetByFileName(candidate);
+        if (!resolved.empty()) {
+            AddUniqueCandidate(fallbackCandidates, resolved);
+        }
+    }
+
+    for (const std::string& candidate : fallbackCandidates) {
+        shopui::BitmapPixels bmp = LoadBitmapPixelsFromGameData(candidate.c_str());
+        if (bmp.IsValid()) {
+            if (outPath) {
+                *outPath = candidate;
+            }
+            return bmp;
+        }
+    }
+
     return {};
 }
 
@@ -753,6 +877,13 @@ void UILoginWnd::EnsureResourceCache()
     for (int i = 0; panelNames[i] && !m_uiAssets[UiPanel].IsValid(); ++i) {
         m_uiAssets[UiPanel] = LoadFirstBitmapPixelsFromCandidates(
             BuildUiAssetCandidates(panelNames[i]), &m_uiAssetPaths[UiPanel]);
+    }
+    if (!m_uiAssets[UiPanel].IsValid()
+        && m_wallpaperBmp.IsValid()
+        && IsClassicLoginPanelAssetName(m_wallpaperPath)) {
+        m_uiAssets[UiPanel] = m_wallpaperBmp;
+        m_uiAssetPaths[UiPanel] = m_wallpaperPath;
+        DbgLog("[LoginUIAsset] PANEL REUSE WALLPAPER: %s\n", m_uiAssetPaths[UiPanel].c_str());
     }
     if (m_uiAssets[UiPanel].IsValid()) {
         DbgLog("[LoginUIAsset] PANEL HIT: %s\n", m_uiAssetPaths[UiPanel].c_str());

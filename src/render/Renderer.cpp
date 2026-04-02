@@ -291,7 +291,7 @@ CTexture* CTexMgr::GetTexture(const char* name, bool b) {
     }
 
     CTexture* tex = CreateTexture(bitmap->m_width, bitmap->m_height,
-        const_cast<unsigned long*>(reinterpret_cast<const unsigned long*>(textureData)), PF_A8R8G8B8, skipColorKey);
+        const_cast<unsigned int*>(reinterpret_cast<const unsigned int*>(textureData)), PF_A8R8G8B8, skipColorKey);
     if (!tex) {
         static int failedTextureCreateLogCount = 0;
         if (failedTextureCreateLogCount < 16) {
@@ -333,7 +333,7 @@ CTexture* CTexMgr::GetTexture(const char* name, bool b) {
     return tex;
 }
 
-CTexture* CTexMgr::CreateTexture(int w, int h, unsigned long* data, PixelFormat format, bool b) {
+CTexture* CTexMgr::CreateTexture(int w, int h, unsigned int* data, PixelFormat format, bool b) {
     CTexture* tex = new CTexture();
     if (!tex) {
         return nullptr;
@@ -343,7 +343,7 @@ CTexture* CTexMgr::CreateTexture(int w, int h, unsigned long* data, PixelFormat 
         return nullptr;
     }
     tex->Update(0, 0, w, h, reinterpret_cast<unsigned int*>(data), b,
-        w * static_cast<int>(sizeof(unsigned long)));
+        w * static_cast<int>(sizeof(unsigned int)));
     return tex;
 }
 

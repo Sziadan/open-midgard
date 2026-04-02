@@ -2166,6 +2166,7 @@ src/render3d/CMakeFiles/ro_render3d.dir/RenderDevice.cpp.obj: D:/Spel/RoRebuild/
   D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/DebugLog.h \
   D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/Types.h \
   D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/platform/WindowsCompat.h \
+  D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/qtui/QtPlatformWindow.h \
   D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/render/Renderer.h \
   D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/render3d/D3dutil.h \
   D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/res/Texture.h \
@@ -2332,6 +2333,8 @@ C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/psdk_inc/_xmitfile.h:
 C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/ptr_traits.h:
 
 C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/avx512vbmivlintrin.h:
+
+D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/qtui/QtPlatformWindow.h:
 
 C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/avx512vlbwintrin.h:
 

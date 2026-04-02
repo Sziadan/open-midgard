@@ -2730,6 +2730,7 @@ src/ui/CMakeFiles/ro_ui.dir/UIEquipWnd.cpp.obj: D:/Spel/RoRebuild/Ragnarok___Win
   C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/clocale \
   C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cmath \
   C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/compare \
+  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cstdarg \
   C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cstddef \
   C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cstdint \
   C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cstdio \
@@ -3049,6 +3050,7 @@ src/ui/CMakeFiles/ro_ui.dir/UIEquipWnd.cpp.obj: D:/Spel/RoRebuild/Ragnarok___Win
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wow64apiset.h \
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wtypes.h \
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wtypesbase.h \
+  D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/DebugLog.h \
   D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/Types.h \
   D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/audio/Audio.h \
   D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/core/File.h \
@@ -19255,6 +19257,8 @@ D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/ui/UIChooseWnd.h:
 
 D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/ui/UIEquipWnd.cpp:
 
+D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/DebugLog.h:
+
 D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/render/Renderer.h:
 
 D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/res/ImfRes.h:
@@ -19280,8 +19284,6 @@ D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/ui/UILoadingWnd.cp
 D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/ui/UILoadingWnd.h:
 
 D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/ui/UILoginWnd.cpp:
-
-D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/DebugLog.h:
 
 D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/ui/UIMakeCharWnd.cpp:
 

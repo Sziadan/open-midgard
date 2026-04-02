@@ -797,16 +797,4 @@ src/qtui/CMakeFiles/ro_qtui.dir/QtUiSpikeBridge.cpp.obj: \
  C:/Qt/6.11.0/mingw_64/include/QtCore/QResource \
  C:/Qt/6.11.0/mingw_64/include/QtCore/qresource.h \
  C:/Qt/6.11.0/mingw_64/include/QtQuick/QSGRendererInterface \
- C:/Qt/6.11.0/mingw_64/include/QtGui/QVulkanInstance \
- C:/Qt/6.11.0/mingw_64/include/QtGui/6.11.0/QtGui/rhi/qrhi.h \
- C:/Qt/6.11.0/mingw_64/include/QtCore/qthread.h \
- C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/future \
- C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/mutex \
- C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/std_mutex.h \
- C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/unique_lock.h \
- C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/condition_variable \
- C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/atomic_futex.h \
- C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/std_thread.h \
- C:/Qt/6.11.0/mingw_64/include/QtGui/6.11.0/QtGui/rhi/qshader.h \
- C:/Qt/6.11.0/mingw_64/include/QtGui/6.11.0/QtGui/rhi/qshaderdescription.h \
- C:/Qt/6.11.0/mingw_64/include/QtGui/6.11.0/QtGui/rhi/qrhi_platform.h
+ C:/Qt/6.11.0/mingw_64/include/QtGui/QVulkanInstance

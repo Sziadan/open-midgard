@@ -130,9 +130,9 @@ open-midgard.exe: src/core/libro_core.a
 open-midgard.exe: _deps/zlib-build/libzlibstatic.a
 open-midgard.exe: C:/Qt/6.11.0/mingw_64/lib/libQt6Quick.a
 open-midgard.exe: C:/Qt/6.11.0/mingw_64/lib/libQt6OpenGL.a
-open-midgard.exe: C:/Qt/6.11.0/mingw_64/lib/libQt6Gui.a
 open-midgard.exe: C:/Qt/6.11.0/mingw_64/lib/libQt6Qml.a
 open-midgard.exe: C:/Qt/6.11.0/mingw_64/lib/libQt6Network.a
+open-midgard.exe: C:/Qt/6.11.0/mingw_64/lib/libQt6Gui.a
 open-midgard.exe: C:/Qt/6.11.0/mingw_64/lib/libQt6Core.a
 open-midgard.exe: C:/Qt/6.11.0/mingw_64/lib/libQt6EntryPoint.a
 open-midgard.exe: CMakeFiles/open_midgard.dir/linkLibs.rsp

@@ -327,7 +327,7 @@ CTexture* GetPortalParticleTexture(bool cloudTexture)
     }
 
     constexpr int kTextureSize = 64;
-    std::vector<unsigned long> pixels(static_cast<size_t>(kTextureSize) * static_cast<size_t>(kTextureSize), 0u);
+    std::vector<unsigned int> pixels(static_cast<size_t>(kTextureSize) * static_cast<size_t>(kTextureSize), 0u);
     for (int y = 0; y < kTextureSize; ++y) {
         for (int x = 0; x < kTextureSize; ++x) {
             const float fx = (static_cast<float>(x) + 0.5f) / static_cast<float>(kTextureSize) * 2.0f - 1.0f;
@@ -367,7 +367,7 @@ CTexture* GetPortalAuraTexture()
     }
 
     constexpr int kTextureSize = 64;
-    std::vector<unsigned long> pixels(static_cast<size_t>(kTextureSize) * static_cast<size_t>(kTextureSize), 0u);
+    std::vector<unsigned int> pixels(static_cast<size_t>(kTextureSize) * static_cast<size_t>(kTextureSize), 0u);
     for (int y = 0; y < kTextureSize; ++y) {
         for (int x = 0; x < kTextureSize; ++x) {
             const float fx = (static_cast<float>(x) + 0.5f) / static_cast<float>(kTextureSize) * 2.0f - 1.0f;
@@ -398,7 +398,7 @@ CTexture* GetPortalRingTexture()
     }
 
     constexpr int kTextureSize = 128;
-    std::vector<unsigned long> pixels(static_cast<size_t>(kTextureSize) * static_cast<size_t>(kTextureSize), 0u);
+    std::vector<unsigned int> pixels(static_cast<size_t>(kTextureSize) * static_cast<size_t>(kTextureSize), 0u);
     for (int y = 0; y < kTextureSize; ++y) {
         for (int x = 0; x < kTextureSize; ++x) {
             const float fx = (static_cast<float>(x) + 0.5f) / static_cast<float>(kTextureSize) * 2.0f - 1.0f;
@@ -3126,7 +3126,7 @@ CTexture* GetDebugGroundTestTexture()
     }
 
     constexpr int kSize = 64;
-    std::vector<unsigned long> pixels(static_cast<size_t>(kSize) * static_cast<size_t>(kSize));
+    std::vector<unsigned int> pixels(static_cast<size_t>(kSize) * static_cast<size_t>(kSize));
     for (int y = 0; y < kSize; ++y) {
         for (int x = 0; x < kSize; ++x) {
             const bool major = ((x / 16) + (y / 16)) % 2 == 0;
@@ -3182,7 +3182,7 @@ bool CLightmapMgr::Create(const CGndRes& gnd)
     m_lmSurfaces.reserve(static_cast<size_t>(atlasCount));
 
     for (int atlasIndex = 0; atlasIndex < atlasCount; ++atlasIndex) {
-        std::vector<unsigned long> atlasPixels(static_cast<size_t>(kLightmapAtlasEdge) * static_cast<size_t>(kLightmapAtlasEdge), 0xFFFFFFFFu);
+        std::vector<unsigned int> atlasPixels(static_cast<size_t>(kLightmapAtlasEdge) * static_cast<size_t>(kLightmapAtlasEdge), 0xFFFFFFFFu);
         const int atlasStart = atlasIndex * kLightmapsPerAtlas;
         const int atlasEnd = (std::min)(atlasStart + kLightmapsPerAtlas, gnd.m_numLightmap);
 

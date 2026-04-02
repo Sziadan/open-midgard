@@ -1,4 +1,4 @@
-add_library(ro_qtui STATIC
+set(RO_QTUI_SOURCES
     QtUiRuntime.h
     QtUiSpikeBridge.h
     QtUiSpikeBridge.cpp
@@ -8,6 +8,15 @@ add_library(ro_qtui STATIC
     QtUiStateAdapter.cpp
     QtUiSpikeAssets.qrc
 )
+
+if(NOT WIN32)
+    list(APPEND RO_QTUI_SOURCES
+        QtPlatformWindow.h
+        QtPlatformWindow.cpp
+    )
+endif()
+
+add_library(ro_qtui STATIC ${RO_QTUI_SOURCES})
 
 set_target_properties(ro_qtui PROPERTIES
     AUTOMOC ON
@@ -23,7 +32,6 @@ target_include_directories(ro_qtui PUBLIC
 target_link_libraries(ro_qtui PUBLIC
     Qt6::Core
     Qt6::Gui
-    Qt6::GuiPrivate
     Qt6::Qml
     Qt6::Quick
     ro_core
@@ -32,3 +40,9 @@ target_link_libraries(ro_qtui PUBLIC
     ro_ui
     ro_world
 )
+
+if(WIN32)
+    target_link_libraries(ro_qtui PUBLIC
+        Qt6::GuiPrivate
+    )
+endif()

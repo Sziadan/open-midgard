@@ -2172,6 +2172,7 @@ src/render3d/CMakeFiles/ro_render3d.dir/RenderDevice.cpp.obj
  D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/DebugLog.h
  D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/Types.h
  D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/platform/WindowsCompat.h
+ D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/qtui/QtPlatformWindow.h
  D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/render/Renderer.h
  D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/render3d/D3dutil.h
  D:/Spel/RoRebuild/Ragnarok___Win32_HighPriest2008_Release/src/res/Texture.h
