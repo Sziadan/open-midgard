@@ -1505,7 +1505,7 @@ bool UIEquipWnd::BuildQtPreviewImage(QImage* outImage) const
         QImage::Format_ARGB32);
 
     if (!hasOpaqueBounds) {
-        *outImage = source.copy();
+        *outImage = source.copy().mirrored(false, true);
         return !outImage->isNull();
     }
 
@@ -1513,7 +1513,7 @@ bool UIEquipWnd::BuildQtPreviewImage(QImage* outImage) const
     const int cropTop = (std::max)(0, static_cast<int>(opaqueBounds.top) - kQtPreviewTopPadding);
     const int cropRight = (std::min)(kQtComposeWidth, static_cast<int>(opaqueBounds.right) + kQtPreviewSidePadding);
     const int cropBottom = (std::min)(kQtComposeHeight, static_cast<int>(opaqueBounds.bottom) + kQtPreviewBottomPadding);
-    *outImage = source.copy(cropLeft, cropTop, cropRight - cropLeft, cropBottom - cropTop);
+    *outImage = source.copy(cropLeft, cropTop, cropRight - cropLeft, cropBottom - cropTop).mirrored(false, true);
     return !outImage->isNull();
 #else
     (void)outImage;
