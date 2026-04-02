@@ -709,6 +709,7 @@ bool DrawEquipPreviewPlayerSpriteFitted(HDC hdc, const RECT& previewArea)
 
     constexpr int kComposeWidth = 160;
     constexpr int kComposeHeight = 180;
+    constexpr float kPreviewScaleBoost = 1.08f;
 
     ArgbDibSurface composeSurface;
     if (!composeSurface.EnsureSize(kComposeWidth, kComposeHeight)) {
@@ -736,6 +737,9 @@ bool DrawEquipPreviewPlayerSpriteFitted(HDC hdc, const RECT& previewArea)
             drawW = (std::max)(1, static_cast<int>(static_cast<float>(srcW) * scale));
             drawH = (std::max)(1, static_cast<int>(static_cast<float>(srcH) * scale));
         }
+
+        drawW = (std::min)(areaW, (std::max)(1, static_cast<int>(static_cast<float>(drawW) * kPreviewScaleBoost)));
+        drawH = (std::min)(areaH, (std::max)(1, static_cast<int>(static_cast<float>(drawH) * kPreviewScaleBoost)));
 
         const int dstX = previewArea.left + (areaW - drawW) / 2;
         const int dstY = previewArea.top + (areaH - drawH) / 2;
