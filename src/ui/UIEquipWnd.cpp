@@ -59,6 +59,10 @@ constexpr const char* kUiKorPrefix =
     "\\";
 
 constexpr int kSlotIconSize = 32;
+constexpr int kSlotVerticalSpacing = 5;
+constexpr int kEquipSlotRowCount = 5;
+constexpr int kEquipSlotBaseY = 19;
+constexpr int kEquipSlotLegacyStep = 32;
 constexpr int kCenterPanelLeft = 98;
 constexpr int kCenterPanelRight = 182;
 constexpr int kCenterPanelTop = 32;
@@ -96,6 +100,20 @@ int GetEquipSlotX(const EquipSlotDefLocal& slot, int windowWidth)
 
     const int rightGutterWidth = (std::max)(0, windowWidth - kCenterPanelRight);
     return kCenterPanelRight + (std::max)(0, (rightGutterWidth - kSlotIconSize) / 2);
+}
+
+int GetEquipSlotRow(const EquipSlotDefLocal& slot)
+{
+    return (std::max)(0, (slot.iconY - kEquipSlotBaseY) / kEquipSlotLegacyStep);
+}
+
+int GetEquipSlotY(const EquipSlotDefLocal& slot, int windowHeight)
+{
+    const int contentHeight = (std::max)(0, windowHeight - kTitleBarHeight);
+    const int totalSlotHeight = (kEquipSlotRowCount * kSlotIconSize)
+        + ((kEquipSlotRowCount - 1) * kSlotVerticalSpacing);
+    const int topOffset = kTitleBarHeight + (std::max)(0, (contentHeight - totalSlotHeight) / 2);
+    return topOffset + (GetEquipSlotRow(slot) * (kSlotIconSize + kSlotVerticalSpacing));
 }
 
 std::string ToLowerAscii(std::string value)
@@ -1028,11 +1046,12 @@ void UIEquipWnd::OnDraw()
 
         for (size_t i = 0; i < kEquipSlots.size(); ++i) {
             const int slotX = GetEquipSlotX(kEquipSlots[i], m_w);
+            const int slotY = GetEquipSlotY(kEquipSlots[i], m_h);
             RECT slotRect{
                 m_x + slotX,
-                m_y + kEquipSlots[i].iconY,
+                m_y + slotY,
                 m_x + slotX + kSlotIconSize,
-                m_y + kEquipSlots[i].iconY + kSlotIconSize
+                m_y + slotY + kSlotIconSize
             };
             const ITEM_INFO* drawItem = slotItems[i];
             if (drawItem
@@ -1107,9 +1126,9 @@ void UIEquipWnd::OnLBtnDown(int x, int y)
 
         RECT slotRect{
             m_x + GetEquipSlotX(kEquipSlots[i], m_w),
-            m_y + kEquipSlots[i].iconY,
+            m_y + GetEquipSlotY(kEquipSlots[i], m_h),
             m_x + GetEquipSlotX(kEquipSlots[i], m_w) + kSlotIconSize,
-            m_y + kEquipSlots[i].iconY + kSlotIconSize
+            m_y + GetEquipSlotY(kEquipSlots[i], m_h) + kSlotIconSize
         };
         if (x >= slotRect.left && x < slotRect.right && y >= slotRect.top && y < slotRect.bottom) {
             m_dragArmed = true;
@@ -1213,11 +1232,12 @@ void UIEquipWnd::OnLBtnDblClk(int x, int y)
             }
 
             const int slotX = GetEquipSlotX(kEquipSlots[i], m_w);
+            const int slotY = GetEquipSlotY(kEquipSlots[i], m_h);
             RECT slotRect{
                 m_x + slotX,
-                m_y + kEquipSlots[i].iconY,
+                m_y + slotY,
                 m_x + slotX + kSlotIconSize,
-                m_y + kEquipSlots[i].iconY + kSlotIconSize
+                m_y + slotY + kSlotIconSize
             };
             if (x >= slotRect.left && x < slotRect.right && y >= slotRect.top && y < slotRect.bottom) {
                 if (g_modeMgr.SendMsg(
@@ -1289,9 +1309,10 @@ bool UIEquipWnd::GetDisplayDataForQt(DisplayData* outData) const
         data.displaySlots.reserve(kEquipSlots.size());
         for (size_t i = 0; i < kEquipSlots.size(); ++i) {
             const int slotX = GetEquipSlotX(kEquipSlots[i], m_w);
+            const int slotY = GetEquipSlotY(kEquipSlots[i], m_h);
             DisplaySlot slot{};
             slot.x = m_x + slotX;
-            slot.y = m_y + kEquipSlots[i].iconY;
+            slot.y = m_y + slotY;
             slot.width = kSlotIconSize;
             slot.height = kSlotIconSize;
             slot.leftColumn = IsLeftEquipSlot(kEquipSlots[i]);
@@ -1330,9 +1351,9 @@ bool UIEquipWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
 
     outData->anchorRect = RECT{
         m_x + GetEquipSlotX(kEquipSlots[static_cast<size_t>(m_hoveredSlot)], m_w),
-        m_y + kEquipSlots[static_cast<size_t>(m_hoveredSlot)].iconY,
+        m_y + GetEquipSlotY(kEquipSlots[static_cast<size_t>(m_hoveredSlot)], m_h),
         m_x + GetEquipSlotX(kEquipSlots[static_cast<size_t>(m_hoveredSlot)], m_w) + kSlotIconSize,
-        m_y + kEquipSlots[static_cast<size_t>(m_hoveredSlot)].iconY + kSlotIconSize,
+        m_y + GetEquipSlotY(kEquipSlots[static_cast<size_t>(m_hoveredSlot)], m_h) + kSlotIconSize,
     };
     outData->text = shopui::BuildItemHoverText(*item);
     outData->itemId = item->GetItemId();
@@ -1494,11 +1515,12 @@ void UIEquipWnd::UpdateHoveredSlot(int globalX, int globalY)
 
     for (size_t i = 0; i < kEquipSlots.size(); ++i) {
         const int slotX = GetEquipSlotX(kEquipSlots[i], m_w);
+        const int slotY = GetEquipSlotY(kEquipSlots[i], m_h);
         const RECT slotRect{
             m_x + slotX,
-            m_y + kEquipSlots[i].iconY,
+            m_y + slotY,
             m_x + slotX + kSlotIconSize,
-            m_y + kEquipSlots[i].iconY + kSlotIconSize
+            m_y + slotY + kSlotIconSize
         };
         if (globalX >= slotRect.left && globalX < slotRect.right && globalY >= slotRect.top && globalY < slotRect.bottom) {
             m_hoveredSlot = static_cast<int>(i);
