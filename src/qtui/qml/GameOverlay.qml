@@ -1961,10 +1961,10 @@ Item {
         }
 
         Text {
-            x: 10
+            x: 17
             y: 3
             text: uiState.skillListData.title || ""
-            color: "#000000"
+            color: "#ffffff"
             font.pixelSize: 12
             font.bold: true
         }

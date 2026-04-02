@@ -552,7 +552,8 @@ void UISkillListWnd::OnDraw()
 
     DrawWindowChrome(hdc);
     SelectObject(hdc, GetUiFont());
-    DrawTextLine(hdc, m_x + 10, m_y + 3, RGB(0, 0, 0), "Skill Tree");
+    DrawTextLine(hdc, m_x + 18, m_y + 3, RGB(255, 255, 255), "Skill Tree");
+    DrawTextLine(hdc, m_x + 17, m_y + 2, RGB(0, 0, 0), "Skill Tree");
     SelectObject(hdc, GetUiBoldFont());
     DrawTextLine(hdc, m_x + 13, m_y + m_h - 18, RGB(176, 145, 48),
         "Skill Point : " + std::to_string(g_session.GetPlayerSkillPointCount()));
