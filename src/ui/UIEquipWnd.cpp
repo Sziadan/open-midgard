@@ -709,7 +709,7 @@ bool DrawEquipPreviewPlayerSpriteFitted(HDC hdc, const RECT& previewArea)
 
     constexpr int kComposeWidth = 160;
     constexpr int kComposeHeight = 180;
-    constexpr float kPreviewScaleBoost = 1.12f;
+    constexpr float kPreviewScaleBoost = 1.06f;
     constexpr int kPreviewSidePadding = 2;
     constexpr int kPreviewTopPadding = 4;
     constexpr int kPreviewBottomPadding = 14;
@@ -751,7 +751,7 @@ bool DrawEquipPreviewPlayerSpriteFitted(HDC hdc, const RECT& previewArea)
         drawH = (std::min)(fitAreaH, (std::max)(1, static_cast<int>(static_cast<float>(drawH) * kPreviewScaleBoost)));
 
         const int dstX = fitAreaLeft + (fitAreaW - drawW) / 2;
-        const int dstY = fitAreaTop + (fitAreaH - drawH) / 2;
+        const int dstY = fitAreaTop;
 
         if (drawW == srcW && drawH == srcH) {
             AlphaBlendArgbToHdc(hdc,
