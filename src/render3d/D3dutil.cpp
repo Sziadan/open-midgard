@@ -39,7 +39,7 @@ int D3DUtil_SetProjectionMatrix(_D3DMATRIX* mat, float fFOV, float fAspect, floa
 
 int _DbgOut(char* strFile, unsigned int dwLine, int hr, char* strMsg) {
     char buffer[256];
-    sprintf(buffer, "%s(%u): %s (hr=%08lx)\n", strFile, dwLine, strMsg, hr);
+    sprintf(buffer, "%s(%u): %s (hr=%08x)\n", strFile, dwLine, strMsg, static_cast<unsigned int>(hr));
     OutputDebugStringA(buffer);
     return hr;
 }
