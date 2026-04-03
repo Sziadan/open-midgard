@@ -609,6 +609,7 @@ UIItemWnd::UIItemWnd()
       m_dragStartPoint{},
       m_dragItemId(0),
       m_dragItemIndex(0),
+    m_dragItemCount(0),
       m_dragItemEquipLocation(0),
       m_lastVisualStateToken(0ull),
       m_hasVisualStateToken(false)
@@ -859,7 +860,15 @@ void UIItemWnd::OnLBtnDblClk(int x, int y)
         const std::vector<const ITEM_INFO*> filteredItems = GetFilteredItems();
         if (m_hoveredItemIndex < static_cast<int>(filteredItems.size())) {
             const ITEM_INFO* item = filteredItems[m_hoveredItemIndex];
-            if (item && IsEquipTabType(item->m_itemType)) {
+            if (item && IsUsableTabType(item->m_itemType)) {
+                if (g_modeMgr.SendMsg(
+                        CGameMode::GameMsg_RequestUseInventoryItem,
+                        static_cast<int>(item->m_itemIndex),
+                        0,
+                        0) != 0) {
+                    return;
+                }
+            } else if (item && IsEquipTabType(item->m_itemType)) {
                 if (item->m_wearLocation != 0) {
                     if (g_modeMgr.SendMsg(
                             CGameMode::GameMsg_RequestUnequipInventoryItem,
@@ -889,6 +898,7 @@ void UIItemWnd::OnLBtnDown(int x, int y)
     m_dragArmed = false;
     m_dragItemId = 0;
     m_dragItemIndex = 0;
+    m_dragItemCount = 0;
     m_dragItemEquipLocation = 0;
 
     if (IsQtUiRuntimeEnabled()) {
@@ -936,6 +946,7 @@ void UIItemWnd::OnLBtnDown(int x, int y)
                 m_dragStartPoint = POINT{ x, y };
                 m_dragItemId = item->GetItemId();
                 m_dragItemIndex = item->m_itemIndex;
+                m_dragItemCount = item->m_num;
                 m_dragItemEquipLocation = item->m_location;
             }
         }
@@ -947,6 +958,7 @@ void UIItemWnd::OnLBtnUp(int x, int y)
     m_dragArmed = false;
     m_dragItemId = 0;
     m_dragItemIndex = 0;
+    m_dragItemCount = 0;
     m_dragItemEquipLocation = 0;
 
     if (IsQtUiRuntimeEnabled()) {
@@ -993,6 +1005,7 @@ void UIItemWnd::OnMouseMove(int x, int y)
                 gameMode->m_dragInfo.source = static_cast<int>(DragSource::InventoryWindow);
                 gameMode->m_dragInfo.itemId = m_dragItemId;
                 gameMode->m_dragInfo.itemIndex = m_dragItemIndex;
+                gameMode->m_dragInfo.itemCount = m_dragItemCount;
                 gameMode->m_dragInfo.itemEquipLocation = m_dragItemEquipLocation;
                 Invalidate();
                 if (g_windowMgr.m_shortCutWnd) {

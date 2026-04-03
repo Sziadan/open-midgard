@@ -4915,6 +4915,87 @@ bool RequestShortcutSlotUpdate(int absoluteSlotIndex)
     return sent;
 }
 
+bool RequestUseInventoryItem(u16 itemIndex)
+{
+    if (itemIndex == 0) {
+        return false;
+    }
+
+    const ITEM_INFO* item = g_session.GetInventoryItemByIndex(itemIndex);
+    if (!item || item->m_itemIndex == 0) {
+        return false;
+    }
+
+    PACKET_CZ_USEITEM2 packet{};
+    packet.PacketType = PacketProfile::ActiveMapServerSend::kUseItem;
+    packet.ItemIndex = static_cast<u16>(item->m_itemIndex);
+    packet.TargetAID = g_session.m_aid;
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    if (sent) {
+        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+            gameMode->m_waitingUseItemAck = static_cast<int>(item->m_itemIndex);
+        }
+    }
+
+    DbgLog("[GameMode] inventory item use itemId=%u index=%u sent=%d\n",
+        static_cast<unsigned int>(item->GetItemId()),
+        static_cast<unsigned int>(item->m_itemIndex),
+        sent ? 1 : 0);
+    return sent;
+}
+
+bool RequestDropInventoryItem(u16 itemIndex, u16 amount)
+{
+    if (itemIndex == 0 || amount == 0) {
+        return false;
+    }
+
+    const ITEM_INFO* item = g_session.GetInventoryItemByIndex(itemIndex);
+    if (!item || item->m_itemIndex == 0 || item->m_num <= 0 || item->m_wearLocation != 0) {
+        return false;
+    }
+
+    if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+        if (gameMode->m_waitingItemThrowAck != 0) {
+            return false;
+        }
+    }
+
+    const int availableCount = (std::min)(item->m_num, 0xFFFF);
+    const int requestedCount = static_cast<int>(amount);
+    const int clampedCount = (std::max)(1, (std::min)(requestedCount, availableCount));
+    const u16 dropAmount = static_cast<u16>(clampedCount);
+
+    PACKET_CZ_ITEM_THROW packet{};
+    packet.PacketType = PacketProfile::ActiveMapServerSend::kDropItem;
+    packet.padding0[0] = 0;
+    packet.padding0[1] = 0;
+    packet.padding0[2] = 0;
+    packet.ItemIndex = itemIndex;
+    packet.padding1 = 0;
+    packet.Count = dropAmount;
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    if (sent) {
+        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+            gameMode->m_waitingItemThrowAck = static_cast<int>(itemIndex);
+        }
+    }
+
+    DbgLog("[GameMode] inventory item drop itemId=%u index=%u amount=%u opcode=0x%04X sent=%d\n",
+        static_cast<unsigned int>(item->GetItemId()),
+        static_cast<unsigned int>(itemIndex),
+        static_cast<unsigned int>(dropAmount),
+        static_cast<unsigned int>(PacketProfile::ActiveMapServerSend::kDropItem),
+        sent ? 1 : 0);
+    return sent;
+}
+
 bool RequestShortcutSlotUse(int visibleSlot)
 {
     const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByVisibleIndex(visibleSlot);
@@ -4928,19 +5009,7 @@ bool RequestShortcutSlotUse(int visibleSlot)
             return false;
         }
 
-        PACKET_CZ_USEITEM2 packet{};
-        packet.PacketType = PacketProfile::ActiveMapServerSend::kUseItem;
-        packet.ItemIndex = static_cast<u16>(item->m_itemIndex);
-        packet.TargetAID = g_session.m_aid;
-
-        const bool sent = CRagConnection::instance()->SendPacket(
-            reinterpret_cast<const char*>(&packet),
-            static_cast<int>(sizeof(packet)));
-        if (sent) {
-            if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
-                gameMode->m_waitingUseItemAck = static_cast<int>(item->m_itemIndex);
-            }
-        }
+        const bool sent = RequestUseInventoryItem(static_cast<u16>(item->m_itemIndex));
         DbgLog("[GameMode] shortcut item use slot=%d itemId=%u index=%u sent=%d\n",
             visibleSlot,
             static_cast<unsigned int>(slot->id),
@@ -8708,6 +8777,12 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
 
     case GameMsg_RequestUnequipInventoryItem:
         return RequestUnequipInventoryItem(static_cast<u16>(wparam)) ? 1 : 0;
+
+    case GameMsg_RequestUseInventoryItem:
+        return RequestUseInventoryItem(static_cast<u16>(wparam)) ? 1 : 0;
+
+    case GameMsg_RequestDropInventoryItem:
+        return RequestDropInventoryItem(static_cast<u16>(wparam), static_cast<u16>(lparam)) ? 1 : 0;
 
     case GameMsg_RequestUpgradeSkillLevel:
         return RequestUpgradeSkillLevel(static_cast<u16>(wparam)) ? 1 : 0;

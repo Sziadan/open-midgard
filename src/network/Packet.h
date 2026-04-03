@@ -9,6 +9,7 @@ enum PacketId {
     PACKETID_CA_ENTER         = 0x0065,  // also sent to char server
     PACKETID_CZ_RESTART       = 0x00B2,
     PACKETID_CH_MAKE_CHAR     = 0x0067,
+    PACKETID_CH_DELETE_CHAR   = 0x0068,
     PACKETID_CZ_QUITGAME      = 0x018A,
     PACKETID_CA_LOGIN_PCBANG  = 0x0277,
     // Received from account server
@@ -19,6 +20,8 @@ enum PacketId {
     PACKETID_HC_REFUSE_ENTER  = 0x006C,
     PACKETID_HC_ACCEPT_MAKECHAR = 0x006D,
     PACKETID_HC_REFUSE_MAKECHAR = 0x006E,
+    PACKETID_HC_ACCEPT_DELETECHAR = 0x006F,
+    PACKETID_HC_REFUSE_DELETECHAR = 0x0070,
     PACKETID_HC_NOTIFY_ZONESVR= 0x0071,
     // Sent to zone server
     PACKETID_CZ_ENTER         = 0x0072,
@@ -48,6 +51,7 @@ constexpr u16 kUseSkillToId = 0x0438;
 // Ground skill (CZ_USE_SKILL_TOGROUND): from packet_ver 22 onward this lives at 0x0113 with
 // padding; 0x0116 is repurposed (e.g. dropitem). See Ref/RunningServer/packet_db.txt.
 constexpr u16 kUseSkillToPos = 0x0113;
+constexpr u16 kDropItem = 0x0116;
 constexpr u16 kUseSkillToPosInfo = 0x0190;
 constexpr u16 kUseSkillMap = 0x011B;
 constexpr u16 kUseItem = 0x0439;
@@ -68,6 +72,7 @@ constexpr u16 kWantToConnection = PacketVer23MapServerSend::kWantToConnection;
 constexpr u16 kActionRequest = PacketVer23MapServerSend::kActionRequest;
 constexpr u16 kUseSkillToId = PacketVer23MapServerSend::kUseSkillToId;
 constexpr u16 kUseSkillToPos = PacketVer23MapServerSend::kUseSkillToPos;
+constexpr u16 kDropItem = PacketVer23MapServerSend::kDropItem;
 constexpr u16 kUseSkillToPosInfo = PacketVer23MapServerSend::kUseSkillToPosInfo;
 constexpr u16 kUseSkillMap = PacketVer23MapServerSend::kUseSkillMap;
 constexpr u16 kUseItem = PacketVer23MapServerSend::kUseItem;
@@ -153,6 +158,12 @@ struct PACKET_CZ_MAKE_CHAR {
     u16  hairStyle;
 };
 
+struct PACKET_CH_DELETE_CHAR {
+    u16 PacketType;    // 0x0068
+    u32 GID;
+    char key[40];
+};
+
 // CZ_ENTER: sent to zone/map server  [19 bytes]
 struct PACKET_CZ_ENTER {
     u16 PacketType;    // 0x0072
@@ -231,6 +242,14 @@ struct PACKET_CZ_USESKILLTOPOSINFO {
     u16 X;
     u16 Y;
     char Contents[80];
+};
+
+struct PACKET_CZ_ITEM_THROW {
+    u16 PacketType;    // 0x0116 for packet_ver 22/23
+    u8  padding0[3];
+    u16 ItemIndex;
+    u8  padding1;
+    u16 Count;
 };
 
 struct PACKET_CZ_USESKILLMAP {
@@ -384,6 +403,7 @@ static_assert(sizeof(PACKET_CZ_STATUS_CHANGE) == 5, "PACKET_CZ_STATUS_CHANGE siz
 static_assert(sizeof(PACKET_CZ_RESTART) == 3, "PACKET_CZ_RESTART size mismatch");
 static_assert(sizeof(PACKET_CZ_QUITGAME) == 4, "PACKET_CZ_QUITGAME size mismatch");
 static_assert(sizeof(PACKET_CZ_MAKE_CHAR) == 37, "PACKET_CZ_MAKE_CHAR size mismatch");
+static_assert(sizeof(PACKET_CH_DELETE_CHAR) == 46, "PACKET_CH_DELETE_CHAR size mismatch");
 static_assert(sizeof(PACKET_CZ_ENTER) == 19, "PACKET_CZ_ENTER size mismatch");
 static_assert(sizeof(PACKET_CZ_ENTER2) == 19, "PACKET_CZ_ENTER2 size mismatch");
 static_assert(sizeof(PACKET_CZ_TICKSEND2) == 8, "PACKET_CZ_TICKSEND2 size mismatch");
@@ -394,6 +414,7 @@ static_assert(sizeof(PACKET_CZ_ACTION_REQUEST2) == 7, "PACKET_CZ_ACTION_REQUEST2
 static_assert(sizeof(PACKET_CZ_USESKILLTOID2) == 10, "PACKET_CZ_USESKILLTOID2 size mismatch");
 static_assert(sizeof(PACKET_CZ_USESKILLTOPOS) == 22, "PACKET_CZ_USESKILLTOPOS size mismatch");
 static_assert(sizeof(PACKET_CZ_USESKILLTOPOSINFO) == 90, "PACKET_CZ_USESKILLTOPOSINFO size mismatch");
+static_assert(sizeof(PACKET_CZ_ITEM_THROW) == 10, "PACKET_CZ_ITEM_THROW size mismatch");
 static_assert(sizeof(PACKET_CZ_USESKILLMAP) == 20, "PACKET_CZ_USESKILLMAP size mismatch");
 static_assert(sizeof(PACKET_CZ_USEITEM2) == 8, "PACKET_CZ_USEITEM2 size mismatch");
 static_assert(sizeof(PACKET_CZ_SKILLUP) == 4, "PACKET_CZ_SKILLUP size mismatch");

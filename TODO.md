@@ -176,11 +176,17 @@ Goal: align the client to one intentional packet profile instead of the current 
 ### Phase E — Migrate Core Gameplay Send Packets
 - [x] Action request
 - [x] Walk / move request
-- [ ] Use skill on target
-- [ ] Use item
+- [x] Use skill on target
+- [x] Use item
 - [x] Name request
 - [x] Chat / broadcast packets that are version-sensitive
-- [ ] Any actor-interaction packets used during normal play (attack, sit/stand, pickup, drop, equip, unequip, NPC interaction)
+- [x] Sit / stand action request
+- [x] Pickup
+- [x] Drop item
+- [x] Equip / unequip
+- [x] NPC interaction
+- [x] Delete-character packet flow
+- [ ] Use skill on ground with extra info (`0x0190`)
 - [ ] Any remaining packets used during the current repro scenarios even if they are not yet fully implemented elsewhere
 
 ### Phase F — Reconcile The Receive Side
@@ -230,6 +236,57 @@ Goal: align the client to one intentional packet profile instead of the current 
 - [ ] 6. Reconcile receive packet sizes/handlers.
 - [ ] 7. Validate remote-player hydration thoroughly.
 - [ ] 8. Remove tracing and document the final state.
+
+### Packet Coverage Audit — 2026-04-03
+
+Scope of this audit:
+- `src/network/Packet.h` packet ids, profiles, and structs
+- `src/network/GronPacket.cpp` size table
+- `src/gamemode/LoginMode.cpp` login/char packet send+recv paths
+- `src/gamemode/GameMode.cpp` gameplay packet send paths
+- `src/gamemode/GameModePacket.cpp` map-server receive routing
+
+Confirmed already implemented and should not stay on the missing list:
+- [x] `0x0436` WantToConnection
+- [x] `0x0437` Action request, including attack and sit/stand
+- [x] `0x0438` Use skill on target
+- [x] `0x0439` Use item
+- [x] `0x00F5` Take item
+- [x] `0x00A9` Equip item
+- [x] `0x00AB` Unequip item
+- [x] `0x0112` Skill up
+- [x] `0x0113` Use skill on ground
+- [x] `0x011B` Use skill on map
+- [x] `0x0089` Tick sync
+- [x] `0x00A7` Walk request
+- [x] `0x0085` Change direction
+- [x] `0x008C` Name request
+- [x] `0x00F3` Global chat
+- [x] `0x0090` / `0x00B8` / `0x00B9` / `0x0143` / `0x01D5` / `0x0146` NPC dialog flow
+- [x] `0x00C5` / `0x00C8` / `0x00C9` NPC shop flow
+- [x] `0x02BA` Shortcut update
+
+Still missing on the client-send / feature side:
+- [x] `0x0068` Delete-character request
+- [x] `0x006F` / `0x0070` Delete-character result handling
+- [x] `0x0116` Drop-item send path
+- [ ] `0x0190` `PACKET_CZ_USESKILLTOPOSINFO` is defined, but there is no gameplay send path using it yet.
+- [ ] `0x0277` `CA_LOGIN_PCBANG` is defined, but there is no send path or feature wiring for it.
+
+Intentionally kept as reference / legacy, not an immediate TODO by itself:
+- [ ] `0x0072` legacy `PACKET_CZ_ENTER` struct remains in `Packet.h`, but active map entry uses `0x0436`.
+- [ ] Legacy map-send constants in `PacketProfile::LegacyMapServerSend` remain for comparison and fallback context, not because the active client still targets them.
+
+Receive packets currently framed but only safe-ignored:
+- [ ] `0x00C0`, `0x0100`, `0x0104`, `0x0106`, `0x0107`, `0x0120`, `0x0131`, `0x0132`, `0x0192`, `0x01B0`, `0x01CF`, `0x01D0`, `0x01E1`, `0x01F8`, `0x0201`, `0x0209`, `0x0283`, `0x02C9`, `0x02D1`, `0x02D2`, `0x02D3`, `0x02D5`, `0x02D7`, `0x02DA`, `0x02DD`, `0x0814`, `0x0816`
+
+Receive packets with a size entry but still no `LoginMode` / `GameModePacket` registration:
+- [ ] `0x0099`, `0x009B`, `0x00A8`, `0x00BA`, `0x00BF`, `0x00C1`, `0x00C2`, `0x00C3`, `0x00D1`, `0x00D2`, `0x00D3`, `0x00D4`, `0x00D6`, `0x00D7`, `0x00D8`, `0x00D9`, `0x00DA`, `0x00DC`, `0x00DD`, `0x00DE`, `0x00DF`, `0x00E0`, `0x00E1`, `0x00E2`, `0x00E3`, `0x00E4`, `0x00E5`, `0x00E6`, `0x00E7`, `0x00E8`, `0x00E9`, `0x00EA`, `0x00EB`, `0x00EC`, `0x00EE`, `0x00EF`, `0x00F2`, `0x00F4`, `0x00F6`, `0x00F7`, `0x00F8`, `0x00F9`, `0x00FA`, `0x00FB`, `0x00FC`, `0x00FD`, `0x00FE`, `0x00FF`, `0x0101`, `0x0102`, `0x0103`, `0x0105`, `0x0116`, `0x012F`, `0x0130`, `0x013B`, `0x013C`, `0x013F`, `0x0140`, `0x0163`, `0x0164`, `0x0165`, `0x0166`, `0x0167`, `0x0168`, `0x0170`, `0x0171`, `0x0172`, `0x0173`, `0x0174`, `0x0175`, `0x0193`, `0x0194`, `0x01A2`, `0x01A3`, `0x01A4`, `0x01A5`, `0x01A6`, `0x01A7`, `0x01A8`, `0x01A9`, `0x01AA`, `0x01AB`, `0x01AC`, `0x01AD`, `0x01AE`, `0x01AF`, `0x01B1`, `0x01B2`, `0x01B3`, `0x01B4`, `0x01B5`, `0x01B6`, `0x01B7`, `0x01B8`, `0x01BA`, `0x0220`, `0x0459`, `0x045A`, `0x045B`, `0x045C`, `0x0461`, `0x0463`, `0x0465`, `0x0466`, `0x0467`, `0x0468`, `0x0469`, `0x046F`, `0x0470`, `0x0471`, `0x0477`, `0x0517`, `0x0518`, `0x0519`, `0x0569`, `0x05EA`, `0x06B3`, `0x06B4`, `0x06C8`, `0x06C9`, `0x06CA`, `0x06CE`
+
+Prioritization order for the missing packet backlog:
+- [ ] 1. Finish the remaining gameplay send gap: `useskilltoposinfo`.
+- [ ] 2. Convert safe-ignore receive packets into real handlers only when a user-visible system depends on them.
+- [ ] 3. Audit the remaining unregistered receive ids against `Ref/eAthena_src_2011` / `Ref/RunningServer` and promote only the packets that appear in current live logs or block active features.
 
 ---
 

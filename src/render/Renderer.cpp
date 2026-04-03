@@ -772,14 +772,37 @@ void CRenderer::FlushRenderList() {
         m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
     }
 
+    auto resolveAlphaSortKey = [](RPFace* face) {
+        if (!face) {
+            return 0.0f;
+        }
+
+        float sortKey = face->alphaSortKey;
+        if (sortKey <= 0.0f && face->verts && face->numVerts > 0) {
+            sortKey = face->verts[0].oow;
+            for (int index = 1; index < face->numVerts; ++index) {
+                sortKey = (std::min)(sortKey, face->verts[index].oow);
+            }
+        }
+        return sortKey;
+    };
+
     // STR AlphaOP layers still need colorkeying here, but alpha test can
     // reject the whole layer for textures that do not carry usable alpha.
     m_renderDevice->SetRenderState(D3DRENDERSTATE_COLORKEYENABLE, TRUE);
 
-    // Reference parity: AlphaOP faces are submitted in insertion order rather than
-    // being depth-sorted together with the generic alpha/emissive lists.
-    int activeAlphaOpMtPreset = 0;
+    std::vector<std::pair<float, RPFace*>> alphaOpFaces;
+    alphaOpFaces.reserve(m_rpAlphaOPList.size());
     for (RPFace* face : m_rpAlphaOPList) {
+        alphaOpFaces.push_back({ resolveAlphaSortKey(face), face });
+    }
+    std::stable_sort(alphaOpFaces.begin(), alphaOpFaces.end(), [](const std::pair<float, RPFace*>& a, const std::pair<float, RPFace*>& b) {
+        return a.first < b.first;
+    });
+
+    int activeAlphaOpMtPreset = 0;
+    for (const auto& pair : alphaOpFaces) {
+        RPFace* face = pair.second;
         if (!face) {
             continue;
         }

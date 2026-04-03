@@ -95,6 +95,8 @@ public:
     int m_numChar;
     int m_selectedCharIndex;
     int m_selectedCharSlot;
+    u32 m_pendingDeleteCharGid;
+    int m_pendingDeleteCharSlot;
     u32 m_subModeStartTime;
     SERVER_ADDR m_serverInfo[100];
     CHARACTER_INFO m_charInfo[12];
@@ -123,6 +125,8 @@ private:
     void OnRefuseChar(const std::vector<u8>& pkt);    // 0x006C
     void OnAcceptMakeChar(const std::vector<u8>& pkt); // 0x006D
     void OnRefuseMakeChar(const std::vector<u8>& pkt); // 0x006E
+    void OnAcceptDeleteChar(const std::vector<u8>& pkt); // 0x006F
+    void OnRefuseDeleteChar(const std::vector<u8>& pkt); // 0x0070
     void OnNotifyZonesvr(const std::vector<u8>& pkt); // 0x0071
     void OnZcAcceptEnter(const std::vector<u8>& pkt); // 0x0073
     void OnDisconnectMsg(const std::vector<u8>& pkt); // 0x0081

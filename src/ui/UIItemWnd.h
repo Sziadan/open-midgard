@@ -127,6 +127,7 @@ private:
     POINT m_dragStartPoint;
     unsigned int m_dragItemId;
     unsigned int m_dragItemIndex;
+    int m_dragItemCount;
     int m_dragItemEquipLocation;
     unsigned long long m_lastVisualStateToken;
     bool m_hasVisualStateToken;

@@ -141,6 +141,7 @@ struct DRAG_INFO {
     void* data = nullptr;
     unsigned int itemId = 0;
     unsigned int itemIndex = 0;
+    int itemCount = 0;
     int itemEquipLocation = 0;
     int shortcutSlotAbsoluteIndex = -1;
     int skillId = 0;

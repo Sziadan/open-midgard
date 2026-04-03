@@ -36,6 +36,18 @@ bool CanReturnToCharacterSelect()
     return g_session.m_charServerAddr[0] != '\0' && g_session.m_charServerPort > 0;
 }
 
+void ClearSelectedCharacterIfMatches(u32 deletedGid)
+{
+    if (deletedGid == 0) {
+        return;
+    }
+
+    CHARACTER_INFO* selected = g_session.GetMutableSelectedCharacterInfo();
+    if (selected && selected->GID == deletedGid) {
+        std::memset(selected, 0, sizeof(*selected));
+    }
+}
+
 std::string ChooseLoginWallpaperName()
 {
     static const char* kUiKorPrefix =
@@ -546,7 +558,8 @@ bool QueueMenuCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
 } // namespace
 
 CLoginMode::CLoginMode() 
-    : m_numServer(0), m_serverSelected(0), m_numChar(0), m_subModeStartTime(0),
+        : m_numServer(0), m_serverSelected(0), m_numChar(0),
+            m_selectedCharIndex(0), m_selectedCharSlot(0), m_pendingDeleteCharGid(0), m_pendingDeleteCharSlot(-1), m_subModeStartTime(0),
       m_syncRequestTime(0), m_wndWait(nullptr), m_multiLang(0), 
       m_nSelectedAccountNo(0), m_nSelectedAccountNo2(0),
     m_zonePort(0)
@@ -755,9 +768,33 @@ msgresult_t CLoginMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, m
     }
 
     case LoginMsg_RequestDeleteCharacter: {
-        char msg[96];
-        std::snprintf(msg, sizeof(msg), "Login: delete-character for slot %d is not implemented yet.", static_cast<int>(wparam));
-        SetLoginStatus(msg);
+        if (!m_isConnected) {
+            SetLoginStatus("Login: not connected to the char server.");
+            return 0;
+        }
+
+        const int requestedSlot = static_cast<int>(wparam);
+        int deleteIndex = static_cast<int>(lparam);
+        if (deleteIndex < 0 || deleteIndex >= m_numChar || static_cast<int>(m_charInfo[deleteIndex].CharNum) != requestedSlot) {
+            deleteIndex = -1;
+            for (int index = 0; index < m_numChar; ++index) {
+                if (static_cast<int>(m_charInfo[index].CharNum) == requestedSlot) {
+                    deleteIndex = index;
+                    break;
+                }
+            }
+        }
+
+        if (deleteIndex < 0 || deleteIndex >= m_numChar) {
+            SetLoginStatus("Login: no character in the selected slot to delete.");
+            return 0;
+        }
+
+        m_selectedCharIndex = deleteIndex;
+        m_selectedCharSlot = static_cast<int>(m_charInfo[deleteIndex].CharNum);
+        m_pendingDeleteCharGid = m_charInfo[deleteIndex].GID;
+        m_pendingDeleteCharSlot = m_selectedCharSlot;
+        m_nextSubMode = LoginSubMode_DeleteChar;
         return 1;
     }
 
@@ -960,6 +997,53 @@ void CLoginMode::OnChangeState(int newState) {
         break;
     }
 
+    case LoginSubMode_DeleteChar: {
+        if (!m_isConnected) {
+            m_pendingDeleteCharGid = 0;
+            m_pendingDeleteCharSlot = -1;
+            SetLoginStatus("Login: char server connection lost before delete request.");
+            m_nextSubMode = LoginSubMode_Login;
+            break;
+        }
+        if (m_pendingDeleteCharGid == 0 || m_pendingDeleteCharSlot < 0) {
+            SetLoginStatus("Login: no character selected for deletion.");
+            m_nextSubMode = LoginSubMode_CharSelect;
+            break;
+        }
+
+        m_wndWait = static_cast<UIWaitWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_WAITWND));
+        if (m_wndWait) {
+            m_wndWait->SetMsg("Deleting character...", 16, 1);
+        }
+
+        PACKET_CH_DELETE_CHAR pkt{};
+        pkt.PacketType = PACKETID_CH_DELETE_CHAR;
+        pkt.GID = m_pendingDeleteCharGid;
+        CopyCString(pkt.key, sizeof(pkt.key), m_emaiAddress);
+
+        const bool sent = CRagConnection::instance()->SendPacket(reinterpret_cast<const char*>(&pkt), static_cast<int>(sizeof(pkt)));
+        DbgLog("[Login] CH_DELETE_CHAR sent: gid=%u slot=%d keyProvided=%d sent=%d\n",
+               pkt.GID,
+               m_pendingDeleteCharSlot,
+               pkt.key[0] != '\0' ? 1 : 0,
+               sent ? 1 : 0);
+
+        if (!sent) {
+            m_pendingDeleteCharGid = 0;
+            m_pendingDeleteCharSlot = -1;
+            SetLoginStatus("Login: failed to send delete-character request.");
+            m_nextSubMode = LoginSubMode_CharSelect;
+            break;
+        }
+
+        if (pkt.key[0] != '\0') {
+            SetLoginStatus("Login: waiting for delete-character response...");
+        } else {
+            SetLoginStatus("Login: delete request sent without an email/delete key; server may refuse it.");
+        }
+        break;
+    }
+
     case LoginSubMode_ZoneConnect: {
         // Disconnect from char server.
         CRagConnection::instance()->Disconnect();
@@ -999,7 +1083,6 @@ void CLoginMode::OnChangeState(int newState) {
     case LoginSubMode_Notice:
     case LoginSubMode_Licence:
     case LoginSubMode_AccountList:
-    case LoginSubMode_DeleteChar:
     case LoginSubMode_SubAccount:
     case LoginSubMode_CharSelectReturn:
     default:
@@ -1071,6 +1154,8 @@ void CLoginMode::PollNetwork()
         case 0x006C: OnRefuseChar(pkt);     break;
         case 0x006D: OnAcceptMakeChar(pkt); break;
         case 0x006E: OnRefuseMakeChar(pkt); break;
+        case 0x006F: OnAcceptDeleteChar(pkt); break;
+        case 0x0070: OnRefuseDeleteChar(pkt); break;
         case 0x0071: OnNotifyZonesvr(pkt);  break;
         case 0x0073:
             OnZcAcceptEnter(pkt);
@@ -1283,6 +1368,88 @@ void CLoginMode::OnRefuseMakeChar(const std::vector<u8>& raw)
     char msg[96];
     std::snprintf(msg, sizeof(msg), "Login: character creation failed (%s, code %d).", reason, (int)code);
     DbgLog("[Login] HC_REFUSE_MAKECHAR: code=%d (%s)\n", (int)code, reason);
+    SetLoginStatus(msg);
+    m_nextSubMode = LoginSubMode_CharSelect;
+}
+
+// ---------------------------------------------------------------------------
+// 0x006F  HC_ACCEPT_DELETECHAR  – char server deleted the selected character
+// ---------------------------------------------------------------------------
+void CLoginMode::OnAcceptDeleteChar(const std::vector<u8>& raw)
+{
+    if (raw.size() < 2) {
+        SetLoginStatus("Login error: HC_ACCEPT_DELETECHAR too short.");
+        m_nextSubMode = LoginSubMode_CharSelect;
+        return;
+    }
+
+    const u32 deletedGid = m_pendingDeleteCharGid;
+    const int deletedSlot = m_pendingDeleteCharSlot;
+    int writeIndex = 0;
+    bool removed = false;
+    for (int readIndex = 0; readIndex < m_numChar; ++readIndex) {
+        const CHARACTER_INFO& info = m_charInfo[readIndex];
+        const bool matchesPendingDelete = deletedGid != 0
+            ? info.GID == deletedGid
+            : static_cast<int>(info.CharNum) == deletedSlot;
+        if (matchesPendingDelete && !removed) {
+            removed = true;
+            continue;
+        }
+        if (writeIndex != readIndex) {
+            m_charInfo[writeIndex] = info;
+        }
+        ++writeIndex;
+    }
+
+    for (int index = writeIndex; index < m_numChar; ++index) {
+        std::memset(&m_charInfo[index], 0, sizeof(m_charInfo[index]));
+    }
+    m_numChar = writeIndex;
+    m_selectedCharSlot = deletedSlot >= 0 ? deletedSlot : 0;
+    m_selectedCharIndex = -1;
+    m_pendingDeleteCharGid = 0;
+    m_pendingDeleteCharSlot = -1;
+    ClearSelectedCharacterIfMatches(deletedGid);
+
+    DbgLog("[Login] HC_ACCEPT_DELETECHAR: gid=%u slot=%d removed=%d totalChars=%d\n",
+           deletedGid,
+           deletedSlot,
+           removed ? 1 : 0,
+           m_numChar);
+    SetLoginStatus(removed ? "Login: character deleted successfully." : "Login: delete acknowledged, but the character was not found locally.");
+    m_nextSubMode = LoginSubMode_CharSelect;
+}
+
+// ---------------------------------------------------------------------------
+// 0x0070  HC_REFUSE_DELETECHAR  – char server refused to delete the character
+// ---------------------------------------------------------------------------
+void CLoginMode::OnRefuseDeleteChar(const std::vector<u8>& raw)
+{
+    const u8 code = (raw.size() > 2) ? raw[2] : 0;
+    char msg[128];
+    switch (code) {
+    case 0:
+        std::snprintf(msg,
+                      sizeof(msg),
+                      m_emaiAddress[0] != '\0'
+                          ? "Login: character deletion failed because the delete key/email was rejected."
+                          : "Login: character deletion failed because no delete key/email is set in this rebuild.");
+        break;
+    case 1:
+        std::snprintf(msg, sizeof(msg), "Login: character deletion failed because the slot is no longer valid.");
+        break;
+    default:
+        std::snprintf(msg, sizeof(msg), "Login: character deletion failed (code %u).", static_cast<unsigned int>(code));
+        break;
+    }
+
+    DbgLog("[Login] HC_REFUSE_DELETECHAR: gid=%u slot=%d code=%u\n",
+           m_pendingDeleteCharGid,
+           m_pendingDeleteCharSlot,
+           static_cast<unsigned int>(code));
+    m_pendingDeleteCharGid = 0;
+    m_pendingDeleteCharSlot = -1;
     SetLoginStatus(msg);
     m_nextSubMode = LoginSubMode_CharSelect;
 }

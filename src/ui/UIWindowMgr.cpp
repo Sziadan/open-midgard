@@ -1689,6 +1689,15 @@ void UIWindowMgr::OnLBtnUp(int x, int y)
             UIWindow* dropTarget = HitTestWindow(x, y);
             if (dropTarget) {
                 dropTarget->DragAndDrop(x, y, &gameMode->m_dragInfo);
+            } else if (gameMode->m_dragInfo.type == static_cast<int>(DragType::ShortcutItem)
+                && gameMode->m_dragInfo.source == static_cast<int>(DragSource::InventoryWindow)
+                && gameMode->m_dragInfo.itemIndex != 0) {
+                const int dropAmount = gameMode->m_dragInfo.itemCount > 1 ? 1 : (std::max)(1, gameMode->m_dragInfo.itemCount);
+                g_modeMgr.SendMsg(
+                    CGameMode::GameMsg_RequestDropInventoryItem,
+                    gameMode->m_dragInfo.itemIndex,
+                    dropAmount,
+                    0);
             }
             if (gameMode->m_dragInfo.source == static_cast<int>(DragSource::ShortcutWindow)
                 && gameMode->m_dragInfo.shortcutSlotAbsoluteIndex >= 0
