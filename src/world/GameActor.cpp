@@ -2064,6 +2064,14 @@ std::array<int, 8> BuildPlayerRenderLayerOrder(CImfRes* imfRes, int curAction, i
         return order;
     }
 
+    auto resolveLayerPriority = [&](int priority) {
+        int layer = imfRes->GetLayer(priority, curAction, curMotion);
+        if (layer < 0) {
+            layer = priority;
+        }
+        return layer;
+    };
+
     const int dir = curAction & 7;
     bool headLayerPassed = false;
     int bodyAndAccessoryIsExchanged = 0;
@@ -2075,12 +2083,12 @@ std::array<int, 8> BuildPlayerRenderLayerOrder(CImfRes* imfRes, int curAction, i
             if (pass == 7) {
                 layer = 7;
             } else if (pass >= 5 && pass <= 6) {
-                layer = imfRes->GetLayer(pass - 5, curAction, curMotion);
+                layer = resolveLayerPriority(pass - 5);
             } else {
                 layer = 6 - pass;
             }
         } else if (pass >= 6 && pass <= 7) {
-            layer = imfRes->GetLayer(pass - 6, curAction, curMotion);
+            layer = resolveLayerPriority(pass - 6);
         } else {
             layer = 7 - pass;
         }
