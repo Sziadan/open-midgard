@@ -2128,6 +2128,38 @@ std::array<int, 8> BuildPlayerRenderLayerOrder(CImfRes* imfRes, int curAction, i
         std::swap(order[bodyIndex], order[headIndex]);
     }
 
+    auto isHeadAccessoryLayer = [](int layer) {
+        return layer == 2 || layer == 3 || layer == 4;
+    };
+
+    std::array<int, 8> reordered{};
+    int delayedAccessories[8] = {};
+    int delayedAccessoryCount = 0;
+    int reorderedCount = 0;
+    bool headDrawn = false;
+
+    for (int layer : order) {
+        if (!headDrawn && isHeadAccessoryLayer(layer)) {
+            delayedAccessories[delayedAccessoryCount++] = layer;
+            continue;
+        }
+
+        reordered[reorderedCount++] = layer;
+        if (layer == 1) {
+            headDrawn = true;
+            for (int index = 0; index < delayedAccessoryCount; ++index) {
+                reordered[reorderedCount++] = delayedAccessories[index];
+            }
+            delayedAccessoryCount = 0;
+        }
+    }
+
+    for (int index = 0; index < delayedAccessoryCount; ++index) {
+        reordered[reorderedCount++] = delayedAccessories[index];
+    }
+
+    order = reordered;
+
     return order;
 }
 
