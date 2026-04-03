@@ -343,6 +343,25 @@ bool ShouldRenderFace(const tlvertex3d projected[3], bool flipNormal, bool twoSi
     return !flipNormal;
 }
 
+bool TriangleIntersectsViewport(const tlvertex3d projected[3])
+{
+    float minX = projected[0].x;
+    float maxX = projected[0].x;
+    float minY = projected[0].y;
+    float maxY = projected[0].y;
+    for (int index = 1; index < 3; ++index) {
+        minX = (std::min)(minX, projected[index].x);
+        maxX = (std::max)(maxX, projected[index].x);
+        minY = (std::min)(minY, projected[index].y);
+        maxY = (std::max)(maxY, projected[index].y);
+    }
+
+    return maxX >= 0.0f
+        && minX <= static_cast<float>(g_renderer.m_width)
+        && maxY >= 0.0f
+        && minY <= static_cast<float>(g_renderer.m_height);
+}
+
 vector2d ComputeUvScale(const CTexture* texture)
 {
     if (!texture) {
@@ -592,6 +611,20 @@ void C3dNode::Render(const matrix& parentWorld, const matrix& viewMatrix, bool f
     const bool flipNormal = Matrix3x3Determinant(nodeWorld) < 0.0f;
 
     if (m_mesh) {
+        std::vector<tlvertex3d> projectedVerts(m_mesh->m_vert.size());
+        std::vector<unsigned char> validProjectedVerts(m_mesh->m_vert.size(), 0);
+        for (size_t vertexIndex = 0; vertexIndex < m_mesh->m_vert.size(); ++vertexIndex) {
+            const vector3d worldVertex = TransformPoint(nodeWorld, m_mesh->m_vert[vertexIndex]);
+            validProjectedVerts[vertexIndex] = ProjectPoint(g_renderer, viewMatrix, worldVertex, &projectedVerts[vertexIndex]) ? 1u : 0u;
+        }
+
+        std::vector<vector2d> uvScaleByTextureSlot(m_textures.size(), vector2d{ 1.0f, 1.0f });
+        for (size_t textureIndex = 0; textureIndex < m_textures.size(); ++textureIndex) {
+            if (m_textures[textureIndex]) {
+                uvScaleByTextureSlot[textureIndex] = ComputeUvScale(m_textures[textureIndex]);
+            }
+        }
+
         for (size_t faceIndex = 0; faceIndex < m_mesh->m_face.size(); ++faceIndex) {
             const face3d& face = m_mesh->m_face[faceIndex];
             if (face.vertindex[0] >= m_mesh->m_vert.size()
@@ -600,26 +633,26 @@ void C3dNode::Render(const matrix& parentWorld, const matrix& viewMatrix, bool f
                 continue;
             }
 
+            if (!validProjectedVerts[face.vertindex[0]]
+                || !validProjectedVerts[face.vertindex[1]]
+                || !validProjectedVerts[face.vertindex[2]]) {
+                continue;
+            }
+
             const CTexture* texture = nullptr;
+            vector2d uvScale{ 1.0f, 1.0f };
             if (face.meshMtlId >= 0 && !m_textures.empty()) {
                 const size_t textureIndex = static_cast<size_t>(face.meshMtlId) % m_textures.size();
                 texture = m_textures[textureIndex];
+                uvScale = uvScaleByTextureSlot[textureIndex];
             }
 
-            vector2d uvScale{ 1.0f, 1.0f };
-            if (texture) {
-                uvScale = ComputeUvScale(texture);
-            }
-
-            tlvertex3d projected[3]{};
-            bool validFace = true;
+            tlvertex3d projected[3] = {
+                projectedVerts[face.vertindex[0]],
+                projectedVerts[face.vertindex[1]],
+                projectedVerts[face.vertindex[2]],
+            };
             for (int corner = 0; corner < 3; ++corner) {
-                const vector3d worldVertex = TransformPoint(nodeWorld, m_mesh->m_vert[face.vertindex[corner]]);
-                if (!ProjectPoint(g_renderer, viewMatrix, worldVertex, &projected[corner])) {
-                    validFace = false;
-                    break;
-                }
-
                 const size_t tvertIndex = face.tvertindex[corner];
                 if (tvertIndex < m_mesh->m_tvert.size()) {
                     projected[corner].tu = m_mesh->m_tvert[tvertIndex].u * uvScale.x;
@@ -632,11 +665,11 @@ void C3dNode::Render(const matrix& parentWorld, const matrix& viewMatrix, bool f
                 projected[corner].color = faceIndex < m_colorInfo.size() ? m_colorInfo[faceIndex].color[corner] : 0xFFFFFFFFu;
             }
 
-            if (!validFace) {
+            if (!ShouldRenderFace(projected, flipNormal, forceDoubleSided || face.twoSide)) {
                 continue;
             }
 
-            if (!ShouldRenderFace(projected, flipNormal, forceDoubleSided || face.twoSide)) {
+            if (!TriangleIntersectsViewport(projected)) {
                 continue;
             }
 

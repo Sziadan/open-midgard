@@ -79,10 +79,18 @@ constexpr float kFixedEffectBaseHeightOffset = 0.0f;
 constexpr float kBackgroundObjectCullNearZ = kNearPlane;
 constexpr float kBackgroundObjectCullFarZ = 6000.0f;
 constexpr float kBackgroundObjectCullPadding = 32.0f;
-constexpr float kBackgroundTinyPropCullNearZ = 350.0f;
-constexpr float kBackgroundTinyPropCullFarZ = 700.0f;
-constexpr float kBackgroundTinyPropMinProjectedRadiusNear = 14.0f;
-constexpr float kBackgroundTinyPropMinProjectedRadiusFar = 24.0f;
+constexpr float kBackgroundTinyPropCullNearZ = 250.0f;
+constexpr float kBackgroundTinyPropCullFarZ = 900.0f;
+constexpr float kBackgroundTinyPropMinProjectedRadiusNear = 18.0f;
+constexpr float kBackgroundTinyPropMinProjectedRadiusFar = 36.0f;
+constexpr float kBackgroundSmallPropCullNearZ = 600.0f;
+constexpr float kBackgroundSmallPropCullFarZ = 1400.0f;
+constexpr float kBackgroundSmallPropMinProjectedRadiusNear = 10.0f;
+constexpr float kBackgroundSmallPropMinProjectedRadiusFar = 18.0f;
+constexpr float kBackgroundMediumPropCullNearZ = 900.0f;
+constexpr float kBackgroundMediumPropCullFarZ = 1800.0f;
+constexpr float kBackgroundMediumPropMinProjectedRadiusNear = 6.0f;
+constexpr float kBackgroundMediumPropMinProjectedRadiusFar = 12.0f;
 constexpr u32 kBackgroundAnimNearInterval = 1;
 constexpr u32 kBackgroundAnimMidInterval = 2;
 constexpr u32 kBackgroundAnimFarInterval = 4;
@@ -2067,14 +2075,47 @@ bool ShouldRenderBackgroundActor(const C3dActor& actor, const matrix& viewMatrix
         return false;
     }
 
-    if (actor.m_animType == 0 && actor.m_boundRadius <= 24.0f && clipZ >= kBackgroundTinyPropCullNearZ) {
-        const float t = (std::min)(1.0f,
-            (std::max)(0.0f, (clipZ - kBackgroundTinyPropCullNearZ) / (kBackgroundTinyPropCullFarZ - kBackgroundTinyPropCullNearZ)));
-        const float minProjectedRadius = kBackgroundTinyPropMinProjectedRadiusNear
-            + (kBackgroundTinyPropMinProjectedRadiusFar - kBackgroundTinyPropMinProjectedRadiusNear) * t;
-        if (projectedRadius < minProjectedRadius) {
+    auto shouldCullByScreenSize = [](const C3dActor& candidate, float candidateProjectedRadius, float candidateClipZ) {
+        if (candidate.m_animType != 0 || candidateClipZ <= 0.0f) {
             return false;
         }
+
+        float nearZ = 0.0f;
+        float farZ = 0.0f;
+        float minProjectedRadiusNear = 0.0f;
+        float minProjectedRadiusFar = 0.0f;
+        if (candidate.m_boundRadius <= 24.0f) {
+            nearZ = kBackgroundTinyPropCullNearZ;
+            farZ = kBackgroundTinyPropCullFarZ;
+            minProjectedRadiusNear = kBackgroundTinyPropMinProjectedRadiusNear;
+            minProjectedRadiusFar = kBackgroundTinyPropMinProjectedRadiusFar;
+        } else if (candidate.m_boundRadius <= 48.0f) {
+            nearZ = kBackgroundSmallPropCullNearZ;
+            farZ = kBackgroundSmallPropCullFarZ;
+            minProjectedRadiusNear = kBackgroundSmallPropMinProjectedRadiusNear;
+            minProjectedRadiusFar = kBackgroundSmallPropMinProjectedRadiusFar;
+        } else if (candidate.m_boundRadius <= 72.0f) {
+            nearZ = kBackgroundMediumPropCullNearZ;
+            farZ = kBackgroundMediumPropCullFarZ;
+            minProjectedRadiusNear = kBackgroundMediumPropMinProjectedRadiusNear;
+            minProjectedRadiusFar = kBackgroundMediumPropMinProjectedRadiusFar;
+        } else {
+            return false;
+        }
+
+        if (candidateClipZ < nearZ) {
+            return false;
+        }
+
+        const float t = (std::min)(1.0f,
+            (std::max)(0.0f, (candidateClipZ - nearZ) / (farZ - nearZ)));
+        const float minProjectedRadius = minProjectedRadiusNear
+            + (minProjectedRadiusFar - minProjectedRadiusNear) * t;
+        return candidateProjectedRadius < minProjectedRadius;
+    };
+
+    if (shouldCullByScreenSize(actor, projectedRadius, clipZ)) {
+        return false;
     }
 
     return true;
@@ -4211,6 +4252,37 @@ void C3dGround::FlushGround(const matrix& viewMatrix)
             const float z0 = GroundCoordZ(y, m_height, m_zoom);
             const float z1 = GroundCoordZ(y + 1, m_height, m_zoom);
 
+            float minHeight = (std::min)((std::min)(cell->h[0], cell->h[1]), (std::min)(cell->h[2], cell->h[3]));
+            float maxHeight = (std::max)((std::max)(cell->h[0], cell->h[1]), (std::max)(cell->h[2], cell->h[3]));
+            if (cell->frontSurfaceId >= 0 && y < m_height - 1) {
+                if (const CGroundCell* frontNeighbor = GetCell(x, y + 1)) {
+                    minHeight = (std::min)(minHeight, (std::min)(frontNeighbor->h[0], frontNeighbor->h[1]));
+                    maxHeight = (std::max)(maxHeight, (std::max)(frontNeighbor->h[0], frontNeighbor->h[1]));
+                }
+            }
+            if (cell->rightSurfaceId >= 0 && x < m_width - 1) {
+                if (const CGroundCell* rightNeighbor = GetCell(x + 1, y)) {
+                    minHeight = (std::min)(minHeight, (std::min)(rightNeighbor->h[0], rightNeighbor->h[2]));
+                    maxHeight = (std::max)(maxHeight, (std::max)(rightNeighbor->h[0], rightNeighbor->h[2]));
+                }
+            }
+
+            const vector3d tileCullCenter{
+                (x0 + x1) * 0.5f,
+                (minHeight + maxHeight) * 0.5f,
+                (z0 + z1) * 0.5f,
+            };
+            const float tileHalfWidth = std::fabs(x1 - x0) * 0.5f;
+            const float tileHalfDepth = std::fabs(z1 - z0) * 0.5f;
+            const float tileHalfHeight = (maxHeight - minHeight) * 0.5f;
+            const float tileCullRadius = std::sqrt(
+                tileHalfWidth * tileHalfWidth
+                + tileHalfDepth * tileHalfDepth
+                + tileHalfHeight * tileHalfHeight);
+            if (!IsWorldSphereVisible(tileCullCenter, tileCullRadius, viewMatrix)) {
+                continue;
+            }
+
             const vector3d topVerts[4] = {
                 vector3d{ x0, cell->h[0], z0 },
                 vector3d{ x1, cell->h[1], z0 },
@@ -5514,14 +5586,37 @@ void CWorld::RenderBackgroundObjects(const matrix& viewMatrix) const
             continue;
         }
 
-        if (actor->m_animType == 0 && actor->m_boundRadius <= 24.0f && clipZ >= kBackgroundTinyPropCullNearZ) {
-            const float t = (std::min)(1.0f,
-                (std::max)(0.0f, (clipZ - kBackgroundTinyPropCullNearZ) / (kBackgroundTinyPropCullFarZ - kBackgroundTinyPropCullNearZ)));
-            const float minProjectedRadius = kBackgroundTinyPropMinProjectedRadiusNear
-                + (kBackgroundTinyPropMinProjectedRadiusFar - kBackgroundTinyPropMinProjectedRadiusNear) * t;
-            if (projectedRadius < minProjectedRadius) {
-                skippedTinyBackgroundObjects += 1;
-                continue;
+        if (actor->m_animType == 0 && clipZ > 0.0f) {
+            float nearZ = 0.0f;
+            float farZ = 0.0f;
+            float minProjectedRadiusNear = 0.0f;
+            float minProjectedRadiusFar = 0.0f;
+            if (actor->m_boundRadius <= 24.0f) {
+                nearZ = kBackgroundTinyPropCullNearZ;
+                farZ = kBackgroundTinyPropCullFarZ;
+                minProjectedRadiusNear = kBackgroundTinyPropMinProjectedRadiusNear;
+                minProjectedRadiusFar = kBackgroundTinyPropMinProjectedRadiusFar;
+            } else if (actor->m_boundRadius <= 48.0f) {
+                nearZ = kBackgroundSmallPropCullNearZ;
+                farZ = kBackgroundSmallPropCullFarZ;
+                minProjectedRadiusNear = kBackgroundSmallPropMinProjectedRadiusNear;
+                minProjectedRadiusFar = kBackgroundSmallPropMinProjectedRadiusFar;
+            } else if (actor->m_boundRadius <= 72.0f) {
+                nearZ = kBackgroundMediumPropCullNearZ;
+                farZ = kBackgroundMediumPropCullFarZ;
+                minProjectedRadiusNear = kBackgroundMediumPropMinProjectedRadiusNear;
+                minProjectedRadiusFar = kBackgroundMediumPropMinProjectedRadiusFar;
+            }
+
+            if (nearZ > 0.0f && clipZ >= nearZ) {
+                const float t = (std::min)(1.0f,
+                    (std::max)(0.0f, (clipZ - nearZ) / (farZ - nearZ)));
+                const float minProjectedRadius = minProjectedRadiusNear
+                    + (minProjectedRadiusFar - minProjectedRadiusNear) * t;
+                if (projectedRadius < minProjectedRadius) {
+                    skippedTinyBackgroundObjects += 1;
+                    continue;
+                }
             }
         }
 
