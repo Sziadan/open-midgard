@@ -176,6 +176,20 @@ bool TryResolveNonPcSpritePaths(const char* spriteRoot, const char* jobName, cha
     return g_resMgr.IsExist(actPath) && g_resMgr.IsExist(sprPath);
 }
 
+const char* ResolveNonPcSpriteAlias(int job, const char* jobName)
+{
+    switch (job) {
+    case 0x3F8: // JT_ARCHER_SKELETON
+    case 0x58C: // JT_G_ARCHER_SKELETON
+        return "skel_archer";
+    case 0x404: // JT_SOLDIER_SKELETON
+    case 0x61A: // JT_G_SOLDIER_SKELETON
+        return "skel_soldier";
+    default:
+        return jobName;
+    }
+}
+
 float ActorRotationDegreesFromDir(int dir)
 {
     return NormalizeAngle360(45.0f * static_cast<float>(dir & 7));
@@ -1610,10 +1624,27 @@ POINT GetPlayerLayerPoint(int layerPriority,
     int headMotionIndex)
 {
     POINT point = imfRes->GetPoint(resolvedLayer, curAction, curMotion);
-    if (layerPriority != 1 || !motion || motion->attachInfo.empty()) {
-        if (layerPriority < 2 || !motion || motion->attachInfo.empty()) {
+    if (!motion || motion->attachInfo.empty()) {
+        return point;
+    }
+
+    if (layerPriority == 1) {
+        CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
+        if (!bodyActRes) {
             return point;
         }
+
+        const CMotion* bodyMotion = bodyActRes->GetMotion(curAction, bodyMotionIndex);
+        if (!bodyMotion || bodyMotion->attachInfo.empty()) {
+            return point;
+        }
+
+        ApplyAttachPointDelta(bodyMotion, motion, &point);
+        return point;
+    }
+
+    if (layerPriority != 2 && layerPriority != 3 && layerPriority != 4 && layerPriority != 8) {
+        return point;
     }
 
     CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
@@ -1623,11 +1654,6 @@ POINT GetPlayerLayerPoint(int layerPriority,
 
     const CMotion* bodyMotion = bodyActRes->GetMotion(curAction, bodyMotionIndex);
     if (!bodyMotion || bodyMotion->attachInfo.empty()) {
-        return point;
-    }
-
-    if (layerPriority == 1) {
-        ApplyAttachPointDelta(bodyMotion, motion, &point);
         return point;
     }
 
@@ -1687,6 +1713,400 @@ bool DrawAttachedAccessoryMotion(BillboardComposeSurface& bitmap,
     ApplyAttachPointDelta(headMotion, accessoryMotion, &point);
     bitmap.BltSprite(drawX + point.x, drawY + point.y, accessorySprRes, const_cast<CMotion*>(accessoryMotion), accessorySprRes->m_pal);
     return true;
+}
+
+constexpr const char* kHumanSpriteBodyDirMarker = "\\\xB8\xF6\xC5\xEB\\";
+constexpr const char* kShieldSpriteRoot = "data\\sprite\\\xB9\xE6\xC6\xD0\\";
+constexpr const char* kWeaponGlowSuffix = "\xB0\xCB\xB1\xA4";
+
+constexpr const char* kWeaponTokenDagger = "\xB4\xDC\xB0\xCB";
+constexpr const char* kWeaponTokenSword = "\xB0\xCB";
+constexpr const char* kWeaponTokenAxe = "\xB5\xB5\xB3\xA2";
+constexpr const char* kWeaponTokenSpear = "\xC3\xA2";
+constexpr const char* kWeaponTokenClub = "\xC5\xAC\xB7\xB4";
+constexpr const char* kWeaponTokenRod = "\xB7\xCE\xB5\xE5";
+constexpr const char* kWeaponTokenBow = "\xC8\xB0";
+constexpr const char* kWeaponTokenBook = "\xC3\xA5";
+constexpr const char* kWeaponTokenKnuckle = "\xB3\xCA\xC5\xAC";
+constexpr const char* kWeaponTokenInstrument = "\xBE\xC7\xB1\xE2";
+constexpr const char* kWeaponTokenWhip = "\xC3\xA4\xC2\xEF";
+constexpr const char* kWeaponTokenKatar = "\xC4\xAB\xC5\xB8\xB8\xA3";
+constexpr const char* kWeaponTokenPistol = "\xB1\xC7\xC3\xD1";
+constexpr const char* kWeaponTokenRifle = "\xB6\xF3\xC0\xCC\xC7\xC3";
+constexpr const char* kWeaponTokenGatling = "\xB1\xE2\xB0\xFC\xC3\xD1";
+constexpr const char* kWeaponTokenShotgun = "\xBC\xA6\xB0\xC7";
+constexpr const char* kWeaponTokenShuriken = "\xBC\xF6\xB8\xAE\xB0\xCB";
+
+constexpr const char* kShieldTokenGuard = "guard";
+constexpr const char* kShieldTokenBuckler = "buckler";
+constexpr const char* kShieldTokenShield = "shield";
+constexpr const char* kShieldTokenMirrorShield = "mirrorshield";
+
+const char* GetGenericWeaponToken(int weaponType)
+{
+    switch (weaponType) {
+    case 1:
+        return kWeaponTokenDagger;
+    case 2:
+    case 3:
+        return kWeaponTokenSword;
+    case 4:
+    case 5:
+        return kWeaponTokenSpear;
+    case 6:
+    case 7:
+        return kWeaponTokenAxe;
+    case 8:
+    case 9:
+        return kWeaponTokenClub;
+    case 10:
+    case 23:
+        return kWeaponTokenRod;
+    case 11:
+        return kWeaponTokenBow;
+    case 12:
+        return kWeaponTokenKnuckle;
+    case 13:
+        return kWeaponTokenInstrument;
+    case 14:
+        return kWeaponTokenWhip;
+    case 15:
+        return kWeaponTokenBook;
+    case 16:
+        return kWeaponTokenKatar;
+    case 17:
+        return kWeaponTokenPistol;
+    case 18:
+        return kWeaponTokenRifle;
+    case 19:
+        return kWeaponTokenGatling;
+    case 20:
+        return kWeaponTokenShotgun;
+    case 22:
+        return kWeaponTokenShuriken;
+    default:
+        return nullptr;
+    }
+}
+
+int NormalizeShieldViewId(int shield)
+{
+    if (shield <= 0) {
+        return 0;
+    }
+
+    if (shield <= 4) {
+        return shield;
+    }
+
+    switch (shield) {
+    case 2101:
+    case 2102:
+        return 1;
+    case 2103:
+    case 2104:
+        return 2;
+    case 2105:
+    case 2106:
+        return 3;
+    case 2107:
+    case 2108:
+    case 2110:
+    case 2111:
+        return 4;
+    default:
+        return 0;
+    }
+}
+
+const char* GetShieldToken(int shieldViewId)
+{
+    switch (shieldViewId) {
+    case 1:
+        return kShieldTokenGuard;
+    case 2:
+        return kShieldTokenBuckler;
+    case 3:
+        return kShieldTokenShield;
+    case 4:
+        return kShieldTokenMirrorShield;
+    default:
+        return nullptr;
+    }
+}
+
+bool ExtractPcOverlayPathParts(const std::string& bodyActName,
+    std::string* outHumanOverlayRoot,
+    std::string* outJobStem,
+    std::string* outSexToken)
+{
+    if (!outHumanOverlayRoot || !outJobStem || !outSexToken) {
+        return false;
+    }
+
+    const size_t bodyMarker = bodyActName.find(kHumanSpriteBodyDirMarker);
+    if (bodyMarker == std::string::npos) {
+        return false;
+    }
+
+    const size_t fileNameStart = bodyActName.find_last_of("\\/");
+    if (fileNameStart == std::string::npos || fileNameStart + 1 >= bodyActName.size()) {
+        return false;
+    }
+
+    const std::string fileName = bodyActName.substr(fileNameStart + 1);
+    const size_t extension = fileName.rfind('.');
+    if (extension == std::string::npos) {
+        return false;
+    }
+
+    const std::string stem = fileName.substr(0, extension);
+    const size_t split = stem.rfind('_');
+    if (split == std::string::npos || split + 1 >= stem.size()) {
+        return false;
+    }
+
+    *outJobStem = stem.substr(0, split);
+    *outSexToken = stem.substr(split + 1);
+    *outHumanOverlayRoot = bodyActName.substr(0, bodyMarker) + "\\" + *outJobStem + "\\";
+    return true;
+}
+
+bool BuildWeaponOverlayPath(const std::string& bodyActName,
+    int weapon,
+    bool glowVariant,
+    const char* extension,
+    std::string* outPath)
+{
+    if (!outPath || !extension || weapon <= 0) {
+        return false;
+    }
+
+    std::string humanOverlayRoot;
+    std::string jobStem;
+    std::string sexToken;
+    if (!ExtractPcOverlayPathParts(bodyActName, &humanOverlayRoot, &jobStem, &sexToken)) {
+        return false;
+    }
+
+    auto buildNumericPath = [&](int numericWeapon) {
+        char buffer[512] = {};
+        if (glowVariant) {
+            std::sprintf(buffer,
+                "%s%s_%s_%d_%s.%s",
+                humanOverlayRoot.c_str(),
+                jobStem.c_str(),
+                sexToken.c_str(),
+                numericWeapon,
+                kWeaponGlowSuffix,
+                extension);
+        } else {
+            std::sprintf(buffer,
+                "%s%s_%s_%d.%s",
+                humanOverlayRoot.c_str(),
+                jobStem.c_str(),
+                sexToken.c_str(),
+                numericWeapon,
+                extension);
+        }
+        return std::string(buffer);
+    };
+
+    std::string candidate = buildNumericPath(weapon);
+    if (g_resMgr.IsExist(candidate.c_str())) {
+        *outPath = candidate;
+        return true;
+    }
+
+    int weaponType = weapon;
+    if (weaponType > 31) {
+        weaponType = g_session.GetWeaponTypeByItemId(weaponType);
+    }
+
+    const char* token = GetGenericWeaponToken(weaponType);
+    if (!token) {
+        return false;
+    }
+
+    char buffer[512] = {};
+    if (glowVariant) {
+        std::sprintf(buffer,
+            "%s%s_%s_%s_%s.%s",
+            humanOverlayRoot.c_str(),
+            jobStem.c_str(),
+            sexToken.c_str(),
+            token,
+            kWeaponGlowSuffix,
+            extension);
+    } else {
+        std::sprintf(buffer,
+            "%s%s_%s_%s.%s",
+            humanOverlayRoot.c_str(),
+            jobStem.c_str(),
+            sexToken.c_str(),
+            token,
+            extension);
+    }
+
+    candidate.assign(buffer);
+    if (!g_resMgr.IsExist(candidate.c_str())) {
+        return false;
+    }
+
+    *outPath = candidate;
+    return true;
+}
+
+bool BuildShieldOverlayPath(const std::string& bodyActName,
+    int shield,
+    const char* extension,
+    std::string* outPath)
+{
+    if (!outPath || !extension) {
+        return false;
+    }
+
+    const int shieldViewId = NormalizeShieldViewId(shield);
+    const char* shieldToken = GetShieldToken(shieldViewId);
+    if (!shieldToken) {
+        return false;
+    }
+
+    std::string humanOverlayRoot;
+    std::string jobStem;
+    std::string sexToken;
+    if (!ExtractPcOverlayPathParts(bodyActName, &humanOverlayRoot, &jobStem, &sexToken)) {
+        return false;
+    }
+
+    char buffer[512] = {};
+    std::sprintf(buffer,
+        "%s%s\\%s_%s_%s.%s",
+        kShieldSpriteRoot,
+        jobStem.c_str(),
+        jobStem.c_str(),
+        sexToken.c_str(),
+        shieldToken,
+        extension);
+    std::string candidate(buffer);
+    if (!g_resMgr.IsExist(candidate.c_str())) {
+        return false;
+    }
+
+    *outPath = candidate;
+    return true;
+}
+
+int ResolveOverlayMotionIndex(CActRes* actRes, int curAction, int curMotion, const std::string& bodyActName)
+{
+    if (!actRes) {
+        return curMotion;
+    }
+
+    int motionIndex = curMotion;
+    const int overlayMotionCount = actRes->GetMotionCount(curAction);
+    if (overlayMotionCount <= 0) {
+        return 0;
+    }
+
+    CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
+    const int bodyMotionCount = bodyActRes ? bodyActRes->GetMotionCount(curAction) : 0;
+    if (bodyMotionCount > 0
+        && overlayMotionCount > bodyMotionCount
+        && (overlayMotionCount % bodyMotionCount) == 0) {
+        motionIndex = curMotion * (overlayMotionCount / bodyMotionCount);
+    }
+
+    return (std::max)(0, (std::min)(motionIndex, overlayMotionCount - 1));
+}
+
+bool DrawPlayerOverlayMotion(BillboardComposeSurface& bitmap,
+    int drawX,
+    int drawY,
+    int layerIndex,
+    int curAction,
+    int curMotion,
+    const std::string& bodyActName,
+    const std::string& actName,
+    const std::string& sprName,
+    const std::string& imfName)
+{
+    if (actName.empty() || sprName.empty()) {
+        return false;
+    }
+
+    CActRes* actRes = g_resMgr.GetAs<CActRes>(actName.c_str());
+    CSprRes* sprRes = g_resMgr.GetAs<CSprRes>(sprName.c_str());
+    CImfRes* imfRes = g_resMgr.GetAs<CImfRes>(imfName.c_str());
+    if (!actRes || !sprRes || !imfRes) {
+        return false;
+    }
+
+    const int motionIndex = ResolveOverlayMotionIndex(actRes, curAction, curMotion, bodyActName);
+    const CMotion* motion = actRes->GetMotion(curAction, motionIndex);
+    if (!motion) {
+        motion = actRes->GetMotion(curAction, 0);
+    }
+    if (!motion) {
+        return false;
+    }
+
+    const POINT point = imfRes->GetPoint(layerIndex, curAction, curMotion);
+    bitmap.BltSprite(drawX + point.x, drawY + point.y, sprRes, const_cast<CMotion*>(motion), sprRes->m_pal);
+    return true;
+}
+
+std::array<int, 8> BuildPlayerRenderLayerOrder(CImfRes* imfRes, int curAction, int curMotion)
+{
+    std::array<int, 8> order{};
+    if (!imfRes) {
+        order = { 7, 0, 1, 4, 3, 2, 5, 6 };
+        return order;
+    }
+
+    const int dir = curAction & 7;
+    bool headLayerPassed = false;
+    int bodyAndAccessoryIsExchanged = 0;
+    int outIndex = 0;
+
+    for (int pass = 7; pass >= 0; --pass) {
+        int layer = 0;
+        if (dir >= 2 && dir <= 5) {
+            if (pass == 7) {
+                layer = 7;
+            } else if (pass >= 5 && pass <= 6) {
+                layer = imfRes->GetLayer(pass - 5, curAction, curMotion);
+            } else {
+                layer = 6 - pass;
+            }
+        } else if (pass >= 6 && pass <= 7) {
+            layer = imfRes->GetLayer(pass - 6, curAction, curMotion);
+        } else {
+            layer = 7 - pass;
+        }
+
+        const int originalLayer = layer;
+        if ((headLayerPassed || (headLayerPassed = layer == 1)) && layer == 0) {
+            layer = 2;
+            ++bodyAndAccessoryIsExchanged;
+        }
+        if (bodyAndAccessoryIsExchanged == 1 && originalLayer == 2) {
+            bodyAndAccessoryIsExchanged = 2;
+            layer = 0;
+        }
+        if (layer >= 8) {
+            layer = 0;
+        }
+        if (layer == 2) {
+            layer = 4;
+        } else if (layer == 4) {
+            layer = 2;
+        }
+
+        order[outIndex++] = layer;
+    }
+
+    return order;
 }
 
 bool DrawPlayerLayer(BillboardComposeSurface& bitmap,
@@ -1820,34 +2240,89 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
         ? g_session.GetHeadPaletteName(head, displayJob, sex, actor.m_headPalette, headPalette)
         : std::string();
 
-    const bool bodyOk = DrawPlayerLayer(bitmap, drawX, drawY, 0, curAction, curMotion, bodyActName, bodySprName, imfPath, bodyActName, headActName, curMotion, headMotion, bodyPaletteName);
-    const bool headOk = DrawPlayerLayer(bitmap, drawX, drawY, 1, curAction, headMotion, headActName, headSprName, imfPath, bodyActName, headActName, curMotion, headMotion, headPaletteName);
-    const bool accessoryBottomOk = !accessoryBottomActName.empty() && !accessoryBottomSprName.empty()
-        ? DrawAttachedAccessoryMotion(bitmap, drawX, drawY, curAction, curMotion, headMotion, bodyActName, headActName, accessoryBottomActName, accessoryBottomSprName)
-        : false;
-    const bool accessoryMidOk = !accessoryMidActName.empty() && !accessoryMidSprName.empty()
-        ? DrawAttachedAccessoryMotion(bitmap, drawX, drawY, curAction, curMotion, headMotion, bodyActName, headActName, accessoryMidActName, accessoryMidSprName)
-        : false;
-    const bool accessoryTopOk = !accessoryTopActName.empty() && !accessoryTopSprName.empty()
-        ? DrawAttachedAccessoryMotion(bitmap, drawX, drawY, curAction, curMotion, headMotion, bodyActName, headActName, accessoryTopActName, accessoryTopSprName)
-        : false;
+    std::string weaponActNameResolved;
+    std::string weaponSprNameResolved;
+    std::string weaponEffectActNameResolved;
+    std::string weaponEffectSprNameResolved;
+    std::string shieldActNameResolved;
+    std::string shieldSprNameResolved;
+    BuildWeaponOverlayPath(bodyActName, actor.m_weapon, false, "act", &weaponActNameResolved);
+    BuildWeaponOverlayPath(bodyActName, actor.m_weapon, false, "spr", &weaponSprNameResolved);
+    BuildWeaponOverlayPath(bodyActName, actor.m_weapon, true, "act", &weaponEffectActNameResolved);
+    BuildWeaponOverlayPath(bodyActName, actor.m_weapon, true, "spr", &weaponEffectSprNameResolved);
+    BuildShieldOverlayPath(bodyActName, actor.m_shield, "act", &shieldActNameResolved);
+    BuildShieldOverlayPath(bodyActName, actor.m_shield, "spr", &shieldSprNameResolved);
 
-    if (!bodyOk && !headOk && !accessoryBottomOk && !accessoryMidOk && !accessoryTopOk) {
+    CImfRes* imfRes = g_resMgr.GetAs<CImfRes>(imfPath.c_str());
+    const std::array<int, 8> layerOrder = BuildPlayerRenderLayerOrder(imfRes, curAction, curMotion);
+
+    bool bodyOk = false;
+    bool headOk = false;
+    bool accessoryBottomOk = false;
+    bool accessoryMidOk = false;
+    bool accessoryTopOk = false;
+    bool weaponOk = false;
+    bool weaponEffectOk = false;
+    bool shieldOk = false;
+
+    for (int layer : layerOrder) {
+        switch (layer) {
+        case 0:
+            bodyOk |= DrawPlayerLayer(bitmap, drawX, drawY, 0, curAction, curMotion, bodyActName, bodySprName, imfPath, bodyActName, headActName, curMotion, headMotion, bodyPaletteName);
+            break;
+        case 1:
+            headOk |= DrawPlayerLayer(bitmap, drawX, drawY, 1, curAction, headMotion, headActName, headSprName, imfPath, bodyActName, headActName, curMotion, headMotion, headPaletteName);
+            break;
+        case 2:
+            accessoryBottomOk |= !accessoryBottomActName.empty() && !accessoryBottomSprName.empty()
+                ? DrawAttachedAccessoryMotion(bitmap, drawX, drawY, curAction, curMotion, headMotion, bodyActName, headActName, accessoryBottomActName, accessoryBottomSprName)
+                : false;
+            break;
+        case 3:
+            accessoryMidOk |= !accessoryMidActName.empty() && !accessoryMidSprName.empty()
+                ? DrawAttachedAccessoryMotion(bitmap, drawX, drawY, curAction, curMotion, headMotion, bodyActName, headActName, accessoryMidActName, accessoryMidSprName)
+                : false;
+            break;
+        case 4:
+            accessoryTopOk |= !accessoryTopActName.empty() && !accessoryTopSprName.empty()
+                ? DrawAttachedAccessoryMotion(bitmap, drawX, drawY, curAction, curMotion, headMotion, bodyActName, headActName, accessoryTopActName, accessoryTopSprName)
+                : false;
+            break;
+        case 5:
+            weaponOk |= DrawPlayerOverlayMotion(bitmap, drawX, drawY, 5, curAction, curMotion, bodyActName, weaponActNameResolved, weaponSprNameResolved, imfPath);
+            break;
+        case 6:
+            weaponEffectOk |= DrawPlayerOverlayMotion(bitmap, drawX, drawY, 6, curAction, curMotion, bodyActName, weaponEffectActNameResolved, weaponEffectSprNameResolved, imfPath);
+            break;
+        case 7:
+            shieldOk |= DrawPlayerOverlayMotion(bitmap, drawX, drawY, 7, curAction, curMotion, bodyActName, shieldActNameResolved, shieldSprNameResolved, imfPath);
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (!bodyOk && !headOk && !accessoryBottomOk && !accessoryMidOk && !accessoryTopOk && !weaponOk && !weaponEffectOk && !shieldOk) {
         static std::map<int, bool> loggedBillboardFailures;
         if (loggedBillboardFailures.insert(std::make_pair(displayJob, true)).second) {
-            DbgLog("[Actor] player billboard draw failed job=%d bodyAct='%s' bodySpr='%s' headAct='%s' headSpr='%s' imf='%s' bodyPal='%s' headPal='%s' action=%d motion=%d head=%d sex=%d\n",
+            DbgLog("[Actor] player billboard draw failed job=%d bodyAct='%s' bodySpr='%s' headAct='%s' headSpr='%s' weaponAct='%s' weaponGlowAct='%s' shieldAct='%s' imf='%s' bodyPal='%s' headPal='%s' action=%d motion=%d head=%d sex=%d weapon=%d shield=%d\n",
                 displayJob,
                 bodyActName.c_str(),
                 bodySprName.c_str(),
                 headActName.c_str(),
                 headSprName.c_str(),
+                weaponActNameResolved.c_str(),
+                weaponEffectActNameResolved.c_str(),
+                shieldActNameResolved.c_str(),
                 imfPath.c_str(),
                 bodyPaletteName.c_str(),
                 headPaletteName.c_str(),
                 curAction,
                 curMotion,
                 head,
-                sex);
+                sex,
+                actor.m_weapon,
+                actor.m_shield);
         }
     }
 
@@ -1867,7 +2342,7 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
         *outHeadPalette = actor.m_headPalette;
     }
 
-    return bodyOk || headOk || accessoryBottomOk || accessoryMidOk || accessoryTopOk;
+    return bodyOk || headOk || accessoryBottomOk || accessoryMidOk || accessoryTopOk || weaponOk || weaponEffectOk || shieldOk;
 }
 
 bool ResolveNonPcSpritePaths(int job, char* actPath, char* sprPath)
@@ -1877,33 +2352,35 @@ bool ResolveNonPcSpritePaths(int job, char* actPath, char* sprPath)
         return false;
     }
 
+    const char* const spriteName = ResolveNonPcSpriteAlias(job, jobName);
+
     if (job >= 1000) {
         if (job >= 6001 && job <= 6047) {
             const char* const spriteRoot = (job >= 6017 && job <= 6046)
                 ? "data\\sprite\\mercenary\\"
                 : "data\\sprite\\homun\\";
-            std::sprintf(actPath, "%s%s.act", spriteRoot, jobName);
-            std::sprintf(sprPath, "%s%s.spr", spriteRoot, jobName);
+            std::sprintf(actPath, "%s%s.act", spriteRoot, spriteName);
+            std::sprintf(sprPath, "%s%s.spr", spriteRoot, spriteName);
             return true;
         }
 
-        if (TryResolveNonPcSpritePaths("data\\sprite\\monster\\", jobName, actPath, sprPath)) {
+        if (TryResolveNonPcSpritePaths("data\\sprite\\monster\\", spriteName, actPath, sprPath)) {
             return true;
         }
-        if (TryResolveNonPcSpritePaths(kLegacyMonsterSpriteRoot, jobName, actPath, sprPath)) {
+        if (TryResolveNonPcSpritePaths(kLegacyMonsterSpriteRoot, spriteName, actPath, sprPath)) {
             return true;
         }
-        if (TryResolveNonPcSpritePaths("data\\sprite\\", jobName, actPath, sprPath)) {
+        if (TryResolveNonPcSpritePaths("data\\sprite\\", spriteName, actPath, sprPath)) {
             return true;
         }
 
-        std::sprintf(actPath, "%s%s.act", "data\\sprite\\monster\\", jobName);
-        std::sprintf(sprPath, "%s%s.spr", "data\\sprite\\monster\\", jobName);
+        std::sprintf(actPath, "%s%s.act", "data\\sprite\\monster\\", spriteName);
+        std::sprintf(sprPath, "%s%s.spr", "data\\sprite\\monster\\", spriteName);
         return true;
     }
 
-    std::sprintf(actPath, "%s%s.act", "data\\sprite\\NPC\\", jobName);
-    std::sprintf(sprPath, "%s%s.spr", "data\\sprite\\NPC\\", jobName);
+    std::sprintf(actPath, "%s%s.act", "data\\sprite\\NPC\\", spriteName);
+    std::sprintf(sprPath, "%s%s.spr", "data\\sprite\\NPC\\", spriteName);
     return true;
 }
 
