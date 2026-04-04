@@ -1,4 +1,5 @@
 #include "QtPlatformWindow.h"
+#include <qnamespace.h>
 
 #if RO_ENABLE_QT6_UI
 
@@ -263,6 +264,7 @@ bool RoQtCreateMainWindow(const char* title,
     RoQtMainWindow* window = new RoQtMainWindow(windowProc);
     window->setTitle(QString::fromUtf8(title ? title : "open-midgard"));
     window->resize((std::max)(width, 1), (std::max)(height, 1));
+    window->setCursor(Qt::BlankCursor);
     if (fullscreen) {
         window->showFullScreen();
     } else {
