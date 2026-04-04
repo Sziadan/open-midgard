@@ -5293,7 +5293,9 @@ public:
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
             g_vulkanPerfStats.presentedFrames += 1;
+#if RO_LOG_VULKAN_STATS
             MaybeLogVulkanPerfStats();
+#endif
             ResizeSwapChain();
             return 0;
         }
@@ -5308,8 +5310,9 @@ public:
         }
 
         g_vulkanPerfStats.presentedFrames += 1;
+#if RO_LOG_VULKAN_STATS
         MaybeLogVulkanPerfStats();
-
+#endif
         return vertSync ? 1 : 0;
     }
 
@@ -5608,6 +5611,7 @@ public:
         const bool immediate = !m_frameBegun || m_renderPassActive;
         if (immediate && g_vulkanPerfStats.immediateDetailedLogs < 16) {
             const char* textureName = (texture && texture->m_texName[0] != '\0') ? texture->m_texName : "(unnamed)";
+#if RO_LOG_VULKAN_STATS
             DbgLog("[Render][VulkanPerf][ImmediateUpload] name='%s' tex=%p update=%d,%d %dx%d frameBegun=%d renderPass=%d\n",
                 textureName,
                 static_cast<void*>(texture),
@@ -5617,11 +5621,13 @@ public:
                 h,
                 m_frameBegun ? 1 : 0,
                 m_renderPassActive ? 1 : 0);
+#endif
             g_vulkanPerfStats.immediateDetailedLogs += 1;
         }
 
         const char* textureName = (texture && texture->m_texName[0] != '\0') ? texture->m_texName : nullptr;
         if (!UploadTextureRegion(textureHandle, x, y, w, h, data, skipColorKey, pitch, immediate, textureName)) {
+#if RO_LOG_VULKAN_STATS
             DbgLog("[Render][Vulkan] UploadTextureRegion failed tex=%p update=%d,%d %dx%d immediate=%d frameBegun=%d renderPass=%d hr=%d\n",
                 static_cast<void*>(texture),
                 x,
@@ -5632,6 +5638,7 @@ public:
                 m_frameBegun ? 1 : 0,
                 m_renderPassActive ? 1 : 0,
                 m_bootstrap.initHr);
+#endif
             return false;
         }
 
