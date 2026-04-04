@@ -21,7 +21,9 @@
 
 #include <windows.h>
 
+#if RO_PLATFORM_WINDOWS
 #pragma comment(lib, "msimg32.lib")
+#endif
 
 namespace {
 constexpr size_t kMaxChatLines = 50;
