@@ -2,6 +2,7 @@ Ref/
 HighPriest.exe.h
 HighPriest.exe.utf8.h
 
+.cache/
 .venv/
 .vscode/
 build/
@@ -12,3 +13,5 @@ build-mingw-qt/
 build-mingw-qt-ninja/
 build-wsl-perm-test/
 build-wsl-smoke/
+
+compile_commands.json
