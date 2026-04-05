@@ -950,6 +950,8 @@ struct SharedPlayerBillboardKey {
     int accessoryBottom = 0;
     int accessoryMid = 0;
     int accessoryTop = 0;
+    int weapon = 0;
+    int shield = 0;
     int action = 0;
     int motion = 0;
 
@@ -978,6 +980,12 @@ struct SharedPlayerBillboardKey {
         }
         if (accessoryTop != other.accessoryTop) {
             return accessoryTop < other.accessoryTop;
+        }
+        if (weapon != other.weapon) {
+            return weapon < other.weapon;
+        }
+        if (shield != other.shield) {
+            return shield < other.shield;
         }
         if (action != other.action) {
             return action < other.action;
@@ -1011,6 +1019,8 @@ struct SharedPlayerBillboardStripKey {
     int accessoryBottom = 0;
     int accessoryMid = 0;
     int accessoryTop = 0;
+    int weapon = 0;
+    int shield = 0;
     int action = 0;
 
     bool operator<(const SharedPlayerBillboardStripKey& other) const
@@ -1039,6 +1049,12 @@ struct SharedPlayerBillboardStripKey {
         if (accessoryTop != other.accessoryTop) {
             return accessoryTop < other.accessoryTop;
         }
+        if (weapon != other.weapon) {
+            return weapon < other.weapon;
+        }
+        if (shield != other.shield) {
+            return shield < other.shield;
+        }
         return action < other.action;
     }
 };
@@ -1066,6 +1082,8 @@ SharedPlayerBillboardKey BuildSharedPlayerBillboardKey(const CPc& actor, int dis
         actor.m_accessory,
         actor.m_accessory3,
         actor.m_accessory2,
+        actor.m_weapon,
+        actor.m_shield,
         0,
         0,
     };
@@ -1162,7 +1180,7 @@ void PrimePlayerBillboardStrip(CPc& actor,
     int bodyAction)
 {
     char bodyAct[260] = {};
-    const std::string bodyActName = g_session.GetJobActName(displayJob, sex, bodyAct);
+    const std::string bodyActName = g_session.GetPlayerBodyActName(displayJob, sex, ResolvePcAttackWeaponValue(actor), bodyAct);
     CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
     const int motionCount = bodyActRes ? bodyActRes->GetMotionCount(bodyAction) : 0;
     if (motionCount <= 1 || motionCount > 8) {
@@ -1178,6 +1196,8 @@ void PrimePlayerBillboardStrip(CPc& actor,
         sharedPlayerKey.accessoryBottom,
         sharedPlayerKey.accessoryMid,
         sharedPlayerKey.accessoryTop,
+        sharedPlayerKey.weapon,
+        sharedPlayerKey.shield,
         bodyAction,
     };
 
@@ -2340,9 +2360,10 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
     int head = actor.m_head;
     const int curAction = bodyAction;
     const int curMotion = headMotion;
+    const int weaponValue = ResolvePcAttackWeaponValue(actor);
 
-    const std::string bodyActName = g_session.GetJobActName(displayJob, sex, bodyAct);
-    const std::string bodySprName = g_session.GetJobSprName(displayJob, sex, bodySpr);
+    const std::string bodyActName = g_session.GetPlayerBodyActName(displayJob, sex, weaponValue, bodyAct);
+    const std::string bodySprName = g_session.GetPlayerBodySprName(displayJob, sex, weaponValue, bodySpr);
     const std::string headActName = g_session.GetHeadActName(displayJob, &head, sex, headAct);
     const std::string headSprName = g_session.GetHeadSprName(displayJob, &head, sex, headSpr);
     const std::string accessoryBottomActName = g_session.GetAccessoryActName(displayJob, &head, sex, actor.m_accessory, accessoryBottomAct);
@@ -4393,7 +4414,7 @@ CActRes* ResolveRuntimeActorActRes(CRenderObject* object)
         const int displayJob = ResolveDisplayJob(*actor);
         const int sex = actor->m_sex != 0 ? 1 : 0;
         char bodyActPath[260] = {};
-        const std::string bodyActName = g_session.GetJobActName(displayJob, sex, bodyActPath);
+        const std::string bodyActName = g_session.GetPlayerBodyActName(displayJob, sex, ResolvePcAttackWeaponValue(*static_cast<CPc*>(actor)), bodyActPath);
         actor->m_actRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
         return actor->m_actRes;
     }
@@ -4433,7 +4454,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
     int headMotion = 0;
     if (usePlayerStyleBillboard) {
         char bodyAct[260] = {};
-        const std::string bodyActName = g_session.GetJobActName(displayJob, sex, bodyAct);
+        const std::string bodyActName = g_session.GetPlayerBodyActName(displayJob, sex, ResolvePcAttackWeaponValue(*this), bodyAct);
         CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
         if (IsTransientActionActive(*this, bodyActRes, m_curAction)) {
             bodyAction = m_curAction;

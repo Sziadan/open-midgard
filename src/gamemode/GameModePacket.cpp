@@ -2804,7 +2804,7 @@ CGameActor* ResolveCombatActor(CGameMode& mode, u32 actorId, bool preferPc)
         return it->second;
     }
 
-    return EnsureRuntimeActor(mode, actorId, preferPc);
+    return EnsureRuntimeActor(mode, actorId, false);
 }
 
 void StartAttackAnimation(CGameActor* actor, CGameActor* target, int attackMT)
@@ -4430,7 +4430,7 @@ void LogActorPacketSeenOnce(const PacketView& packet)
 void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
 {
     const bool isPc = ShouldTreatActorAsPc(state.objectType, state.job);
-    CGameActor* actor = EnsureRuntimeActor(mode, state.gid, ShouldUseSpriteBillboardActor(state.objectType, state.job));
+    CGameActor* actor = EnsureRuntimeActor(mode, state.gid, isPc);
     if (!actor) {
         return;
     }

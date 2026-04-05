@@ -887,6 +887,16 @@ void CView::OnRender()
         return;
     }
 
+    static bool loggedFirstRealRenderStart = false;
+    if (!loggedFirstRealRenderStart) {
+        loggedFirstRealRenderStart = true;
+        DbgLog("[View] first real render start world=%p ground=%p attr=%p player=%p\n",
+            m_world,
+            m_world->m_ground,
+            m_world->m_attr,
+            m_world->m_player);
+    }
+
     const bool trackMovePerf = IsMovePerfActive(m_world);
     if (trackMovePerf) {
         g_viewMovePerfStats.frames += 1;
@@ -896,7 +906,21 @@ void CView::OnRender()
     const DWORD groundStart = GetTickCount();
     const double groundStartMs = trackMovePerf ? QpcNowMs() : 0.0;
     const double groundHiResStartMs = QpcNowMs();
+    static bool loggedGroundStageStart = false;
+    if (!loggedGroundStageStart) {
+        loggedGroundStageStart = true;
+        DbgLog("[View] ground stage start cells=%zu width=%d height=%d zoom=%.2f\n",
+            m_world->m_ground->m_cells.size(),
+            m_world->m_ground->m_width,
+            m_world->m_ground->m_height,
+            m_world->m_ground->m_zoom);
+    }
     m_world->m_ground->FlushGround(m_viewMatrix);
+    static bool loggedGroundStageDone = false;
+    if (!loggedGroundStageDone) {
+        loggedGroundStageDone = true;
+        DbgLog("[View] ground stage complete\n");
+    }
     const DWORD groundEnd = GetTickCount();
     g_viewHiResStats.groundMs += QpcNowMs() - groundHiResStartMs;
     if (trackMovePerf) {
@@ -914,7 +938,23 @@ void CView::OnRender()
     const DWORD actorStart = hoverEnd;
     const double actorStartMs = trackMovePerf ? QpcNowMs() : 0.0;
     const double actorHiResStartMs = QpcNowMs();
+    static bool loggedActorStageStart = false;
+    if (!loggedActorStageStart) {
+        loggedActorStageStart = true;
+        DbgLog("[View] actor stage start actors=%zu items=%zu gameObjects=%zu\n",
+            m_world->m_actorList.size(),
+            m_world->m_itemList.size(),
+            m_world->m_gameObjectList.size());
+    }
     m_world->RenderActors(m_viewMatrix, m_cur.longitude);
+    static bool loggedActorStageDone = false;
+    if (!loggedActorStageDone) {
+        loggedActorStageDone = true;
+        DbgLog("[View] actor stage complete renderedActors=%u renderedItems=%u fixedEffects=%u\n",
+            static_cast<unsigned int>(m_world->m_lastRenderStats.renderedBillboards),
+            static_cast<unsigned int>(m_world->m_lastRenderStats.renderedItems),
+            static_cast<unsigned int>(m_world->m_lastRenderStats.renderedFixedEffects));
+    }
     const DWORD actorEnd = GetTickCount();
     g_viewHiResStats.actorMs += QpcNowMs() - actorHiResStartMs;
     g_viewHiResStats.renderedGameObjects += m_world->m_lastRenderStats.renderedGameObjects;
@@ -935,7 +975,19 @@ void CView::OnRender()
     const DWORD backgroundStart = actorEnd;
     const double backgroundStartMs = trackMovePerf ? QpcNowMs() : 0.0;
     const double backgroundHiResStartMs = QpcNowMs();
+    static bool loggedBackgroundStageStart = false;
+    if (!loggedBackgroundStageStart) {
+        loggedBackgroundStageStart = true;
+        DbgLog("[View] background stage start bgObjects=%zu\n", m_world->m_bgObjList.size());
+    }
     m_world->RenderBackgroundObjects(m_viewMatrix);
+    static bool loggedBackgroundStageDone = false;
+    if (!loggedBackgroundStageDone) {
+        loggedBackgroundStageDone = true;
+        DbgLog("[View] background stage complete rendered=%u skippedTiny=%u\n",
+            static_cast<unsigned int>(m_world->m_lastRenderStats.renderedBackgroundObjects),
+            static_cast<unsigned int>(m_world->m_lastRenderStats.skippedTinyBackgroundObjects));
+    }
     const DWORD backgroundEnd = GetTickCount();
     g_viewHiResStats.backgroundMs += QpcNowMs() - backgroundHiResStartMs;
     g_viewHiResStats.renderedBackgroundObjects += m_world->m_lastRenderStats.renderedBackgroundObjects;

@@ -1,6 +1,8 @@
 #include "Session.h"
+#include "../core/File.h"
 #include "../core/ClientInfoLocale.h"
 #include "../core/Xml.h"
+#include "../lua/LuaBridge.h"
 #include "DebugLog.h"
 
 #include <algorithm>
@@ -30,6 +32,24 @@ constexpr const char* kHitSwordWave = "_hit_sword.wav";
 constexpr const char* kHitSpearWave = "_hit_spear.wav";
 constexpr const char* kHitAxeWave = "_hit_axe.wav";
 constexpr const char* kHitArrowWave = "_hit_arrow.wav";
+
+constexpr const char* kWeaponTokenDagger = "\xB4\xDC\xB0\xCB";
+constexpr const char* kWeaponTokenSword = "\xB0\xCB";
+constexpr const char* kWeaponTokenAxe = "\xB5\xB5\xB3\xA2";
+constexpr const char* kWeaponTokenSpear = "\xC3\xA2";
+constexpr const char* kWeaponTokenClub = "\xC5\xAC\xB7\xB4";
+constexpr const char* kWeaponTokenRod = "\xB7\xCE\xB5\xE5";
+constexpr const char* kWeaponTokenBow = "\xC8\xB0";
+constexpr const char* kWeaponTokenBook = "\xC3\xA5";
+constexpr const char* kWeaponTokenKnuckle = "\xB3\xCA\xC5\xAC";
+constexpr const char* kWeaponTokenInstrument = "\xBE\xC7\xB1\xE2";
+constexpr const char* kWeaponTokenWhip = "\xC3\xA4\xC2\xEF";
+constexpr const char* kWeaponTokenKatar = "\xC4\xAB\xC5\xB8\xB8\xA3";
+constexpr const char* kWeaponTokenPistol = "\xB1\xC7\xC3\xD1";
+constexpr const char* kWeaponTokenRifle = "\xB6\xF3\xC0\xCC\xC7\xC3";
+constexpr const char* kWeaponTokenGatling = "\xB1\xE2\xB0\xFC\xC3\xD1";
+constexpr const char* kWeaponTokenShotgun = "\xBC\xA6\xB0\xC7";
+constexpr const char* kWeaponTokenShuriken = "\xBC\xF6\xB8\xAE\xB0\xCB";
 
 int ClampShortcutPageIndex(int page)
 {
@@ -238,6 +258,147 @@ std::string ExtractLowByteString(const std::wstring& value)
         out.push_back(static_cast<char>(ch & 0xFF));
     }
     return out;
+}
+
+bool IsDualWeaponJob(int job)
+{
+    return job == 12 || job == 4013 || job == 4035;
+}
+
+int NormalizePlayerBodyJob(int job)
+{
+    if (job == JT_G_MASTER) {
+        return job;
+    }
+    return (job > 3950) ? (job - 3950) : job;
+}
+
+bool ResourceExistsLocalFirst(const char* resourcePath)
+{
+    if (!resourcePath || !*resourcePath) {
+        return false;
+    }
+
+    std::error_code error;
+    if (std::filesystem::exists(std::filesystem::path(resourcePath), error) && !error) {
+        return true;
+    }
+
+    return g_fileMgr.IsExist(resourcePath);
+}
+
+const char* GetPlayerBodyWeaponToken(int weaponType)
+{
+    switch (weaponType) {
+    case 1:
+        return kWeaponTokenDagger;
+    case 2:
+    case 3:
+        return kWeaponTokenSword;
+    case 4:
+    case 5:
+        return kWeaponTokenSpear;
+    case 6:
+    case 7:
+        return kWeaponTokenAxe;
+    case 8:
+    case 9:
+        return kWeaponTokenClub;
+    case 10:
+    case 23:
+        return kWeaponTokenRod;
+    case 11:
+        return kWeaponTokenBow;
+    case 12:
+        return kWeaponTokenKnuckle;
+    case 13:
+        return kWeaponTokenInstrument;
+    case 14:
+        return kWeaponTokenWhip;
+    case 15:
+        return kWeaponTokenBook;
+    case 16:
+        return kWeaponTokenKatar;
+    case 17:
+        return kWeaponTokenPistol;
+    case 18:
+        return kWeaponTokenRifle;
+    case 19:
+        return kWeaponTokenGatling;
+    case 20:
+        return kWeaponTokenShotgun;
+    case 22:
+        return kWeaponTokenShuriken;
+    default:
+        return nullptr;
+    }
+}
+
+int ResolvePlayerBodyWeaponType(const CSession& session, int job, int weaponItemId)
+{
+    if (weaponItemId <= 0) {
+        return 0;
+    }
+
+    if (weaponItemId <= 31) {
+        return weaponItemId;
+    }
+
+    if (IsDualWeaponJob(job)) {
+        const int primaryWeapon = weaponItemId & 0xFFFF;
+        const int secondaryWeapon = static_cast<int>((static_cast<unsigned int>(weaponItemId) >> 16) & 0xFFFFu);
+        if (secondaryWeapon != 0 && session.GetWeaponTypeByItemId(secondaryWeapon) > 0) {
+            return session.MakeWeaponTypeByItemId(primaryWeapon, secondaryWeapon);
+        }
+        return session.GetWeaponTypeByItemId(primaryWeapon);
+    }
+
+    return session.GetWeaponTypeByItemId(weaponItemId & 0xFFFF);
+}
+
+char* BuildPlayerBodyResourceName(const CSession& session,
+    int job,
+    int sex,
+    int weaponItemId,
+    const char* extension,
+    char* buf)
+{
+    const int normalizedJob = NormalizePlayerBodyJob(job);
+    const char* sexToken = GetSexToken(sex);
+    const char* jobToken = GetJobToken(normalizedJob);
+
+    char basePath[260] = {};
+    std::sprintf(basePath, "%s%s\\%s\\%s_%s.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken, extension);
+
+    const int weaponType = ResolvePlayerBodyWeaponType(session, normalizedJob, weaponItemId);
+    if (weaponType > 0) {
+        char candidate[260] = {};
+        std::sprintf(candidate, "%s%s\\%s\\%s_%s_%d.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken, weaponType, extension);
+        if (ResourceExistsLocalFirst(candidate)) {
+            std::strcpy(buf, candidate);
+            return buf;
+        }
+
+        const std::string weaponTokenFromLua = session.GetPlayerWeaponToken(weaponType);
+        if (!weaponTokenFromLua.empty()) {
+            std::sprintf(candidate, "%s%s\\%s\\%s_%s_%s.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken, weaponTokenFromLua.c_str(), extension);
+            if (ResourceExistsLocalFirst(candidate)) {
+                std::strcpy(buf, candidate);
+                return buf;
+            }
+        }
+
+        if (const char* weaponToken = GetPlayerBodyWeaponToken(weaponType)) {
+            std::sprintf(candidate, "%s%s\\%s\\%s_%s_%s.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken, weaponToken, extension);
+            if (ResourceExistsLocalFirst(candidate)) {
+                std::strcpy(buf, candidate);
+                return buf;
+            }
+        }
+    }
+
+    std::strcpy(buf, basePath);
+    return buf;
 }
 
 } // namespace
@@ -1055,6 +1216,16 @@ char* CSession::GetJobSprName(int job, int sex, char* buf)
     return buf;
 }
 
+char* CSession::GetPlayerBodyActName(int job, int sex, int weaponItemId, char* buf)
+{
+    return BuildPlayerBodyResourceName(*this, job, sex, weaponItemId, "act", buf);
+}
+
+char* CSession::GetPlayerBodySprName(int job, int sex, int weaponItemId, char* buf)
+{
+    return BuildPlayerBodyResourceName(*this, job, sex, weaponItemId, "spr", buf);
+}
+
 char* CSession::GetHeadActName(int job, int* head, int sex, char* buf)
 {
     const int normalizedJob = NormalizeJob(job);
@@ -1380,6 +1551,45 @@ int CSession::MakeWeaponTypeByItemId(int primaryWeaponItemId, int secondaryWeapo
     }
 
     return result;
+}
+
+int CSession::GetCurrentPlayerWeaponValue() const
+{
+    const unsigned int primaryWeaponItemId = GetEquippedRightHandWeaponItemId();
+    const unsigned int secondaryWeaponItemId = GetEquippedLeftHandWeaponItemId();
+    if (primaryWeaponItemId != 0 || secondaryWeaponItemId != 0) {
+        if (IsDualWeaponJob(m_playerJob) && secondaryWeaponItemId != 0) {
+            return static_cast<int>(primaryWeaponItemId & 0xFFFFu)
+                | (static_cast<int>(secondaryWeaponItemId & 0xFFFFu) << 16);
+        }
+        return primaryWeaponItemId != 0
+            ? static_cast<int>(primaryWeaponItemId)
+            : static_cast<int>(secondaryWeaponItemId);
+    }
+
+    if (IsDualWeaponJob(m_playerJob) && GetWeaponTypeByItemId(m_playerShield) > 0) {
+        return (m_playerWeapon & 0xFFFF) | ((m_playerShield & 0xFFFF) << 16);
+    }
+
+    return m_playerWeapon;
+}
+
+std::string CSession::GetPlayerWeaponToken(int weaponType) const
+{
+    if (weaponType <= 0) {
+        return std::string();
+    }
+
+    if (!g_buabridge.LoadRagnarokScriptOnce("lua files\\datainfo\\weapontable.lub")) {
+        return std::string();
+    }
+
+    std::string token;
+    if (!g_buabridge.GetGlobalTableStringByIntegerKey("WeaponNameTable", weaponType, &token)) {
+        return std::string();
+    }
+
+    return token;
 }
 
 unsigned int CSession::GetEquippedLeftHandWeaponItemId() const

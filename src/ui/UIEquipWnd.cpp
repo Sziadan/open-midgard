@@ -742,9 +742,10 @@ bool DrawEquipPreviewPlayerSpriteToArgb(unsigned int* pixels, int width, int hei
     int head = g_session.m_playerHead;
     const int curAction = 0;
     const int curMotion = 0;
+    const int weaponValue = g_session.GetCurrentPlayerWeaponValue();
 
-    const std::string bodyActName = g_session.GetJobActName(g_session.m_playerJob, sex, bodyAct);
-    const std::string bodySprName = g_session.GetJobSprName(g_session.m_playerJob, sex, bodySpr);
+    const std::string bodyActName = g_session.GetPlayerBodyActName(g_session.m_playerJob, sex, weaponValue, bodyAct);
+    const std::string bodySprName = g_session.GetPlayerBodySprName(g_session.m_playerJob, sex, weaponValue, bodySpr);
     const std::string headActName = g_session.GetHeadActName(g_session.m_playerJob, &head, sex, headAct);
     const std::string headSprName = g_session.GetHeadSprName(g_session.m_playerJob, &head, sex, headSpr);
     const std::string accessoryBottomActName = g_session.GetAccessoryActName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory, accessoryBottomAct);
@@ -797,9 +798,10 @@ bool DrawEquipPreviewPlayerSprite(HDC hdc, int drawX, int drawY)
     int head = g_session.m_playerHead;
     const int curAction = 0;
     const int curMotion = 0;
+    const int weaponValue = g_session.GetCurrentPlayerWeaponValue();
 
-    const std::string bodyActName = g_session.GetJobActName(g_session.m_playerJob, sex, bodyAct);
-    const std::string bodySprName = g_session.GetJobSprName(g_session.m_playerJob, sex, bodySpr);
+    const std::string bodyActName = g_session.GetPlayerBodyActName(g_session.m_playerJob, sex, weaponValue, bodyAct);
+    const std::string bodySprName = g_session.GetPlayerBodySprName(g_session.m_playerJob, sex, weaponValue, bodySpr);
     const std::string headActName = g_session.GetHeadActName(g_session.m_playerJob, &head, sex, headAct);
     const std::string headSprName = g_session.GetHeadSprName(g_session.m_playerJob, &head, sex, headSpr);
     const std::string accessoryBottomActName = g_session.GetAccessoryActName(g_session.m_playerJob, &head, sex, g_session.m_playerAccessory, accessoryBottomAct);

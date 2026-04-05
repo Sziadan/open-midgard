@@ -193,6 +193,8 @@ public:
     int GetPlayerSkillPointCount() const;
     int GetWeaponTypeByItemId(int itemId) const;
     int MakeWeaponTypeByItemId(int primaryWeaponItemId, int secondaryWeaponItemId) const;
+    int GetCurrentPlayerWeaponValue() const;
+    std::string GetPlayerWeaponToken(int weaponType) const;
     bool IsSecondAttack(int job, int sex, int weaponItemId) const;
     float GetPCAttackMotion(int job, int sex, int weaponItemId, int isSecondAttack) const;
     unsigned int GetEquippedLeftHandWeaponItemId() const;
@@ -205,6 +207,8 @@ public:
     int GetSex() const;
     char* GetJobActName(int job, int sex, char* buf);
     char* GetJobSprName(int job, int sex, char* buf);
+    char* GetPlayerBodyActName(int job, int sex, int weaponItemId, char* buf);
+    char* GetPlayerBodySprName(int job, int sex, int weaponItemId, char* buf);
     char* GetHeadActName(int job, int* head, int sex, char* buf);
     char* GetHeadSprName(int job, int* head, int sex, char* buf);
     char* GetAccessoryActName(int job, int* head, int sex, int accessory, char* buf);

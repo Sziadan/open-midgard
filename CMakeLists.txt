@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(OpenMidgard VERSION 2008.0 LANGUAGES CXX)
+project(OpenMidgard VERSION 2008.0 LANGUAGES C CXX)
 
 if(NOT WIN32)
     include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/win32)

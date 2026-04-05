@@ -19,6 +19,7 @@
 #include "network/Connection.h"
 #include "core/DllMgr.h"
 #include "core/ClientInfoLocale.h"
+#include "lua/LuaBridge.h"
 #include "qtui/QtUiRuntime.h"
 #include "ui/UIOptionWnd.h"
 #include "ui/UIWindowMgr.h"
@@ -510,6 +511,26 @@ static bool InitClientSystems()
         return false;
     }
 
+    if (!g_buabridge.Initialize()) {
+        ErrorMsg("Lua runtime initialization failed.");
+        return false;
+    }
+
+    const char* const kBootstrapLuaScripts[] = {
+        "lua files\\datainfo\\enumvar.lub",
+        "lua files\\datainfo\\weapontable.lub",
+        "lua files\\admin\\pcidentity.lub",
+        "lua files\\admin\\pcjobname.lub",
+        "lua files\\datainfo\\pcjobnamegender.lub",
+    };
+    for (const char* scriptPath : kBootstrapLuaScripts) {
+        if (!g_buabridge.LoadRagnarokScriptOnce(scriptPath)) {
+            DbgLog("[Lua] Bootstrap preload failed for '%s': %s\n",
+                scriptPath,
+                g_buabridge.GetLastError().c_str());
+        }
+    }
+
     DbgLog("[Render] Requested backend is '%s'.\n",
         GetRenderBackendName(GetRequestedRenderBackend()));
 
@@ -660,6 +681,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     // CDllMgr cleanup will happen automatically if we add it to a destructor or call it explicitly
     CConnection::Cleanup();
     g_windowMgr.Reset();
+    g_buabridge.Shutdown();
     ShutdownQtUiRuntime();
     GetRenderDevice().Shutdown();
     UnInitMSS();

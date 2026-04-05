@@ -243,6 +243,7 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode);
 bool QueueHoverLabelsOverlayQuad(CGameMode& mode);
 bool QueueMsgEffectsOverlayQuad();
 bool QueuePlayerVitalsOverlayQuad(CGameMode& mode);
+bool IsMapLoadingActive(const CGameMode& mode);
 void ApplyEnemyCursorMagnet(CGameMode& mode, POINT* cursorPos);
 bool IsMonsterLikeHoverActor(const CGameActor* actor);
 bool IsWalkableAttrCell(const CGameMode& mode, int tileX, int tileY);
@@ -605,6 +606,7 @@ std::uint64_t ComputeGameplayOverlayStateToken(
 bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStartTick)
 {
     const bool trackMovePerf = mode.m_world && mode.m_world->m_player && mode.m_world->m_player->m_isMoving;
+    const bool mapLoadingActive = IsMapLoadingActive(mode);
 
     if (!g_hMainWnd) {
         return false;
@@ -623,7 +625,7 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
     static std::uint64_t s_overlayStateToken = 0ull;
     static bool s_overlayTextureValid = false;
     static u32 s_lastMovingOverlayRefreshTick = 0;
-    const bool qtGameplayRuntimeEnabled = IsQtUiRuntimeEnabled();
+    const bool qtRuntimeEnabled = IsQtUiRuntimeEnabled();
 
     static CTexture* s_overlayTexture = nullptr;
     static int s_overlayTextureWidth = 0;
@@ -664,17 +666,20 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
     }
 
     const bool overlayIsAnimated = false;
-    const bool uiDirty = qtGameplayRuntimeEnabled
+    const bool uiDirty = qtRuntimeEnabled
         ? g_windowMgr.HasDirtyVisualState()
         : g_windowMgr.HasDirtyVisualStateExcludingRoMap();
-    const bool includeWorldHoverInOverlayToken = !qtGameplayRuntimeEnabled;
-    const std::uint64_t overlayStateToken = ComputeGameplayOverlayStateToken(
-        mode,
-        cursorActNum,
-        mouseAnimStartTick,
-        clientWidth,
-        clientHeight,
-        includeWorldHoverInOverlayToken);
+    std::uint64_t overlayStateToken = 0ull;
+    if (!mapLoadingActive) {
+        const bool includeWorldHoverInOverlayToken = !qtRuntimeEnabled;
+        overlayStateToken = ComputeGameplayOverlayStateToken(
+            mode,
+            cursorActNum,
+            mouseAnimStartTick,
+            clientWidth,
+            clientHeight,
+            includeWorldHoverInOverlayToken);
+    }
     const bool overlayStateChanged = overlayStateToken != s_overlayStateToken;
     const u32 now = GetTickCount();
     const bool allowMovingOverlayRefresh = !trackMovePerf
@@ -687,19 +692,24 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
 
     if (needOverlayRefresh) {
         const double refreshStartMs = trackMovePerf ? QpcNowMs() : 0.0;
-        const bool allowQtCpuBridge = qtGameplayRuntimeEnabled
+        const bool allowQtCpuBridge = qtRuntimeEnabled
             && GetRenderDevice().GetBackendType() != RenderBackendType::Vulkan;
-        s_qtOverlayTextureValid = qtGameplayRuntimeEnabled
+        s_qtOverlayTextureValid = qtRuntimeEnabled
             && s_qtOverlayTexture
-            && RenderQtUiGameplayOverlayTexture(mode, s_qtOverlayTexture, clientWidth, clientHeight);
+            && (mapLoadingActive
+                ? RenderQtUiMenuOverlayTexture(s_qtOverlayTexture, clientWidth, clientHeight)
+                : RenderQtUiGameplayOverlayTexture(mode, s_qtOverlayTexture, clientWidth, clientHeight));
 
         {
             static int s_lastLoggedGameplayPath = -1;
-            const int gameplayPath = s_qtOverlayTextureValid ? 2 : (allowQtCpuBridge ? 1 : 0);
+            const int gameplayPath = mapLoadingActive
+                ? (s_qtOverlayTextureValid ? 12 : (allowQtCpuBridge ? 11 : 10))
+                : (s_qtOverlayTextureValid ? 2 : (allowQtCpuBridge ? 1 : 0));
             if (gameplayPath != s_lastLoggedGameplayPath) {
-                DbgLog("[GameMode] gameplay overlay path=%s qtEnabled=%d texture=%p size=%dx%d\n",
+                DbgLog("[GameMode] %s overlay path=%s qtEnabled=%d texture=%p size=%dx%d\n",
+                    mapLoadingActive ? "loading" : "gameplay",
                     s_qtOverlayTextureValid ? "native_texture" : (allowQtCpuBridge ? "cpu_bridge" : "legacy_gdi"),
-                    qtGameplayRuntimeEnabled ? 1 : 0,
+                    qtRuntimeEnabled ? 1 : 0,
                     s_qtOverlayTexture,
                     clientWidth,
                     clientHeight);
@@ -755,11 +765,19 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
                 overlayPixels = s_overlayComposeSurface.GetPixels();
             }
             if (allowQtCpuBridge) {
-                CompositeQtUiGameplayOverlay(mode,
-                    overlayPixels,
-                    clientWidth,
-                    clientHeight,
-                    clientWidth * static_cast<int>(sizeof(unsigned int)));
+                if (mapLoadingActive) {
+                    CompositeQtUiMenuOverlay(
+                        overlayPixels,
+                        clientWidth,
+                        clientHeight,
+                        clientWidth * static_cast<int>(sizeof(unsigned int)));
+                } else {
+                    CompositeQtUiGameplayOverlay(mode,
+                        overlayPixels,
+                        clientWidth,
+                        clientHeight,
+                        clientWidth * static_cast<int>(sizeof(unsigned int)));
+                }
             }
 
             const double textureUpdateStartMs = trackMovePerf ? QpcNowMs() : 0.0;
@@ -5880,7 +5898,6 @@ void EnsureBootstrapSelfActor(CGameMode& mode)
         pc->m_accessory = g_session.m_playerAccessory;
         pc->m_accessory2 = g_session.m_playerAccessory2;
         pc->m_accessory3 = g_session.m_playerAccessory3;
-        pc->WarmupCommonBillboardCache();
     }
 
     if (const CHARACTER_INFO* info = g_session.GetSelectedCharacterInfo()) {
@@ -6054,6 +6071,7 @@ void EnsureRealView(CGameMode& mode)
     view->OnEnterFrame();
     mode.m_view = view;
     ConfigureCameraForMap(mode);
+    view->OnCalcViewInfo();
     DbgLog("[GameMode] created real m_view for world '%s'\n", mode.m_rswName);
 }
 
@@ -6322,9 +6340,10 @@ void DrawBootstrapPlayerSprite(HDC hdc, int drawX, int drawY)
     int head = g_session.m_playerHead;
     const int curAction = g_session.m_playerDir & 7;
     const int curMotion = 0;
+    const int weaponValue = g_session.GetCurrentPlayerWeaponValue();
 
-    const std::string bodyActName = g_session.GetJobActName(g_session.m_playerJob, sex, bodyAct);
-    const std::string bodySprName = g_session.GetJobSprName(g_session.m_playerJob, sex, bodySpr);
+    const std::string bodyActName = g_session.GetPlayerBodyActName(g_session.m_playerJob, sex, weaponValue, bodyAct);
+    const std::string bodySprName = g_session.GetPlayerBodySprName(g_session.m_playerJob, sex, weaponValue, bodySpr);
     const std::string headActName = g_session.GetHeadActName(g_session.m_playerJob, &head, sex, headAct);
     const std::string headSprName = g_session.GetHeadSprName(g_session.m_playerJob, &head, sex, headSpr);
     const std::string imfPath = g_session.GetImfName(g_session.m_playerJob, head, sex, imfName);
@@ -6398,9 +6417,10 @@ void DrawBootstrapPlayerSpriteToArgb(unsigned int* pixels, int width, int height
     int head = g_session.m_playerHead;
     const int curAction = g_session.m_playerDir & 7;
     const int curMotion = 0;
+    const int weaponValue = g_session.GetCurrentPlayerWeaponValue();
 
-    const std::string bodyActName = g_session.GetJobActName(g_session.m_playerJob, sex, bodyAct);
-    const std::string bodySprName = g_session.GetJobSprName(g_session.m_playerJob, sex, bodySpr);
+    const std::string bodyActName = g_session.GetPlayerBodyActName(g_session.m_playerJob, sex, weaponValue, bodyAct);
+    const std::string bodySprName = g_session.GetPlayerBodySprName(g_session.m_playerJob, sex, weaponValue, bodySpr);
     const std::string headActName = g_session.GetHeadActName(g_session.m_playerJob, &head, sex, headAct);
     const std::string headSprName = g_session.GetHeadSprName(g_session.m_playerJob, &head, sex, headSpr);
     const std::string imfPath = g_session.GetImfName(g_session.m_playerJob, head, sex, imfName);

@@ -9,6 +9,7 @@
 #include "gamemode/CursorRenderer.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
+#include "lua/LuaBridge.h"
 #include "network/Connection.h"
 #include "qtui/QtPlatformWindow.h"
 #include "qtui/QtUiRuntime.h"
@@ -265,6 +266,26 @@ bool InitClientSystems()
     if (!g_windowMgr.Init()) {
         std::fputs("UI system initialization failed.\n", stderr);
         return false;
+    }
+
+    if (!g_buabridge.Initialize()) {
+        std::fputs("Lua runtime initialization failed.\n", stderr);
+        return false;
+    }
+
+    const char* const kBootstrapLuaScripts[] = {
+        "lua files\\datainfo\\enumvar.lub",
+        "lua files\\datainfo\\weapontable.lub",
+        "lua files\\admin\\pcidentity.lub",
+        "lua files\\admin\\pcjobname.lub",
+        "lua files\\datainfo\\pcjobnamegender.lub",
+    };
+    for (const char* scriptPath : kBootstrapLuaScripts) {
+        if (!g_buabridge.LoadRagnarokScriptOnce(scriptPath)) {
+            DbgLog("[Lua] Bootstrap preload failed for '%s': %s\n",
+                scriptPath,
+                g_buabridge.GetLastError().c_str());
+        }
     }
 
     DbgLog("[Render] Requested backend is '%s'.\n", GetRenderBackendName(GetRequestedRenderBackend()));
@@ -568,6 +589,7 @@ int main(int, char**)
 
     CConnection::Cleanup();
     g_windowMgr.Reset();
+    g_buabridge.Shutdown();
     GetRenderDevice().Shutdown();
     ShutdownQtUiRuntime();
     CAudio::GetInstance()->Shutdown();
