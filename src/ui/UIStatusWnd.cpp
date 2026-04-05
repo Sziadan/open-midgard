@@ -28,7 +28,9 @@
 #include <string>
 #include <vector>
 
+#if RO_PLATFORM_WINDOWS
 #pragma comment(lib, "msimg32.lib")
+#endif
 
 namespace {
 

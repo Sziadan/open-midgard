@@ -68,7 +68,7 @@ public:
     void OnDraw() override;
     void OnProcess() override;
     msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
-    void OnKeyDown(int virtualKey);
+    void OnKeyDown(int virtualKey) override;
     void EnsureQtLayout();
     bool GetQtBackgroundBitmap(const unsigned int** pixels, int* width, int* height);
     bool GetQtButtonBitmap(int index, const unsigned int** pixels, int* width, int* height);

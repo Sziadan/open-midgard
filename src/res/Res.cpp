@@ -5,7 +5,9 @@
 #include <cstring>
 #include <windows.h>
 
+#if RO_PLATFORM_WINDOWS
 #pragma comment(lib, "winmm.lib")
+#endif
 
 namespace {
 constexpr bool kLogCRes = false;

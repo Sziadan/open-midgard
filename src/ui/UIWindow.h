@@ -79,6 +79,7 @@ public:
     virtual void RefreshSnap();
     virtual msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra);
     virtual void OnChar(char c);
+    virtual void OnKeyDown(int virtualKey);
     virtual bool CanReceiveKeyInput() const;
 
     // Recursive hit test: returns deepest visible window at (x,y), nullptr if none
@@ -161,6 +162,7 @@ public:
     void OnDraw() override;
     void OnLBtnDown(int x, int y) override;
     void OnChar(char c) override;
+    void OnKeyDown(int virtualKey) override;
     bool CanReceiveKeyInput() const override;
 
     int m_selectionOrigin;

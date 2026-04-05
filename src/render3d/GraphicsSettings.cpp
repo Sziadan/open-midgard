@@ -61,8 +61,8 @@ int ClampToAllowedAnisotropy(int level)
 GraphicsSettings GetDefaultGraphicsSettings()
 {
     GraphicsSettings settings{};
-    settings.width = 1920;
-    settings.height = 1080;
+    settings.width = kMinWidth;
+    settings.height = kMinHeight;
     settings.windowMode = WindowMode::Windowed;
     settings.textureUpscaleFactor = 1;
     settings.anisotropicLevel = 1;

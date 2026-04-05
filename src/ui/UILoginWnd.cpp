@@ -1119,5 +1119,15 @@ void UILoginWnd::OnKeyDown(int virtualKey)
                 g_windowMgr.m_editWindow = m_login;
             }
         }
+    } else if (virtualKey == VK_BACK)
+    {
+        // Pass-through events to the UIEditCtrl element
+        if (m_login && m_login->m_hasFocus)
+        {
+            m_login->OnKeyDown(virtualKey);
+        } else if (m_password && m_password->m_hasFocus)
+        {
+            m_password->OnKeyDown(virtualKey);
+        }
     }
 }

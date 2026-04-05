@@ -12,7 +12,7 @@ public:
     virtual ~CBitmapRes();
 
     virtual bool Load(const char* fName) override;
-    virtual bool LoadFromBuffer(const char* fName, const unsigned char* buffer, int size);
+    virtual bool LoadFromBuffer(const char* fName, const unsigned char* buffer, int size) override;
     virtual CRes* Clone() override;
     virtual void Reset() override;
 

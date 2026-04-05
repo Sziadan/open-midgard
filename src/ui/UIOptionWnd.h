@@ -95,7 +95,7 @@ public:
     void OnLBtnUp(int x, int y) override;
     void OnLBtnDblClk(int x, int y) override;
     msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
-    void OnKeyDown(int virtualKey);
+    void OnKeyDown(int virtualKey) override;
     bool GetDisplayDataForQt(DisplayData* outData) const;
 
 private:

@@ -24,7 +24,7 @@ public:
     void OnCreate(int cx, int cy) override;
     void OnDraw() override;
     msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
-    void OnKeyDown(int virtualKey);
+    void OnKeyDown(int virtualKey) override;
     void SetWallpaperName(const std::string& wallpaperName);
     bool HandleQtMouseDown(int x, int y);
     void EnsureQtLayout();

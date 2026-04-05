@@ -11,9 +11,45 @@
 #include <filesystem>
 #include "../DebugLog.h"
 
+#if !RO_PLATFORM_WINDOWS
+#include <optional>
+#endif
+
 namespace {
 
 #if !RO_PLATFORM_WINDOWS
+// Windows is case-insensitive, so on non-windows platforms we can operate under the same assumption but must deal with possible filename mismatches due to case
+namespace fs = std::filesystem;
+bool iequals(const std::string& a, const std::string& b) {
+    return a.size() == b.size() &&
+    std::equal(a.begin(), a.end(), b.begin(),
+                [](char a, char b) {
+                    return std::tolower(a) == std::tolower(b);
+                });
+}
+
+std::optional<fs::path> ResolveCaseInsensitive(const fs::path& relative, const fs::path& base = ".")
+{
+    fs::path current = base;
+    for (const auto& part : relative) {
+        if (!fs::exists(current) || !fs::is_directory(current)) {
+            return std::nullopt;
+        }
+        bool found = false;
+        for (const auto& entry : fs::directory_iterator(current)) {
+            if (iequals(entry.path().filename().string(), part.string())) {
+                current /= entry.path().filename();
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return std::nullopt;
+        }
+    }
+    return current;
+}
+
 std::string NormalizePortablePath(const char* fileName)
 {
     if (!fileName) {
@@ -22,7 +58,10 @@ std::string NormalizePortablePath(const char* fileName)
 
     std::string normalized(fileName);
     std::replace(normalized.begin(), normalized.end(), '\\', '/');
-    return normalized;
+
+    auto resolved = ResolveCaseInsensitive(std::filesystem::path(normalized.c_str()));
+
+    return resolved.value_or("");
 }
 
 bool FileExistsPortable(const char* fileName)
@@ -31,8 +70,7 @@ bool FileExistsPortable(const char* fileName)
         return false;
     }
 
-    std::error_code error;
-    return std::filesystem::exists(std::filesystem::path(NormalizePortablePath(fileName)), error);
+    return !NormalizePortablePath(fileName).empty();
 }
 
 unsigned char* ReadWholeFilePortable(const char* fileName, int* outSize)

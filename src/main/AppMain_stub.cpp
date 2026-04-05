@@ -568,9 +568,10 @@ int main(int, char**)
 
     CConnection::Cleanup();
     g_windowMgr.Reset();
-    ShutdownQtUiRuntime();
     GetRenderDevice().Shutdown();
+    ShutdownQtUiRuntime();
     CAudio::GetInstance()->Shutdown();
+    // Qt owns the surface, so avoid calling GetRenderDevice().Shutdown();
     RoQtDestroyMainWindow(g_hMainWnd);
     g_hMainWnd = nullptr;
     return 0;

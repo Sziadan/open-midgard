@@ -54,7 +54,9 @@
 #include <QString>
 #endif
 
+#if RO_PLATFORM_WINDOWS
 #pragma comment(lib, "msimg32.lib")
+#endif
 
 namespace {
 CGameModePacketRouter g_gameModePacketRouter;

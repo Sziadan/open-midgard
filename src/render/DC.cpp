@@ -5,7 +5,9 @@
 #include <algorithm>
 #include <vector>
 
+#if RO_PLATFORM_WINDOWS
 #pragma comment(lib, "msimg32.lib")
+#endif
 
 ArgbDibSurface::ArgbDibSurface()
     : m_dc(nullptr), m_bitmap(nullptr), m_oldBitmap(nullptr), m_bits(nullptr), m_width(0), m_height(0)

@@ -89,7 +89,7 @@ public:
     void OnProcess() override;
     void OnLBtnUp(int x, int y) override;
     msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
-    void OnKeyDown(int virtualKey);
+    void OnKeyDown(int virtualKey) override;
     void EnsureQtLayout();
     bool GetQtBackgroundBitmap(const unsigned int** pixels, int* width, int* height);
     bool GetQtSelectedSlotBitmap(const unsigned int** pixels, int* width, int* height);

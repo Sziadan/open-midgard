@@ -16,7 +16,7 @@ public:
     void OnLBtnDown(int x, int y) override;
     void OnLBtnDblClk(int x, int y) override;
     void OnMouseMove(int x, int y) override;
-    void OnKeyDown(int virtualKey);
+    void OnKeyDown(int virtualKey) override;
     bool HandleQtMouseDown(int x, int y);
     int GetHoverIndex() const { return m_hoverIndex; }
 

@@ -27,6 +27,7 @@ option(RO_QT_UI_DEFAULT_ENABLED "Enable the Qt UI runtime by default unless OPEN
 option(RO_QT_UI_SPIKE_DEFAULT_ENABLED "Deprecated alias for RO_QT_UI_DEFAULT_ENABLED" OFF)
 option(RO_ENABLE_NATIVE_D3D11 "Enable the native Direct3D 11 backend when supported" ON)
 option(RO_ENABLE_NATIVE_D3D12 "Enable the native Direct3D 12 backend when supported" ON)
+option(RO_LOG_VULKAN_STATS "Log vulkan performance stats" OFF)
 set(RO_QT_ROOT "" CACHE PATH "Compiler-compatible Qt 6 kit root (for example C:/Qt/6.11.0/msvc2022_64)")
 set(RO_QT_WINDEPLOYQT_EXECUTABLE "" CACHE FILEPATH "Path to the matching windeployqt.exe")
 
@@ -34,6 +35,7 @@ if(NOT WIN32)
     set(RO_ENABLE_NATIVE_D3D11 OFF CACHE BOOL "Enable the native Direct3D 11 backend when supported" FORCE)
     set(RO_ENABLE_NATIVE_D3D12 OFF CACHE BOOL "Enable the native Direct3D 12 backend when supported" FORCE)
     set(RO_ENABLE_QT6_UI ON CACHE BOOL "Enable the Qt 6 / QML GPU UI runtime" FORCE)
+    set(RO_ENABLE_DEV_DEPLOY OFF CACHE BOOL "Copy build output to the local OldRO folder" FORCE)
 endif()
 
 if(RO_ENABLE_QT6_UI_SPIKE AND NOT RO_ENABLE_QT6_UI)
@@ -86,6 +88,7 @@ add_compile_definitions(
     RO_ENABLE_QT6_UI_SPIKE=$<BOOL:${RO_ENABLE_QT6_UI_SPIKE}>
     RO_QT_UI_DEFAULT_ENABLED=$<BOOL:${RO_QT_UI_DEFAULT_ENABLED}>
     RO_QT_UI_SPIKE_DEFAULT_ENABLED=$<BOOL:${RO_QT_UI_SPIKE_DEFAULT_ENABLED}>
+    RO_LOG_VULKAN_STATS=$<BOOL:${RO_LOG_VULKAN_STATS}>
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -227,13 +230,16 @@ if(DEFINED DX7_INCLUDE)
     target_link_directories(open_midgard PRIVATE ${DX7_LIBDIR})
 endif()
 
-add_custom_command(TARGET open_midgard POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:open_midgard>/dlls"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/dlls"
-            "$<TARGET_FILE_DIR:open_midgard>/dlls"
-    COMMENT "Copying runtime DLLs to output folder"
-)
+
+if(WIN32)
+    add_custom_command(TARGET open_midgard POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:open_midgard>/dlls"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/dlls"
+                "$<TARGET_FILE_DIR:open_midgard>/dlls"
+        COMMENT "Copying runtime DLLs to output folder"
+    )
+endif()
 
 ro_add_qt_runtime_deploy(open_midgard "$<TARGET_FILE_DIR:open_midgard>")
 

@@ -17,7 +17,7 @@ public:
     void OnLBtnDblClk(int x, int y) override;
     void OnMouseMove(int x, int y) override;
     msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
-    void OnKeyDown(int virtualKey);
+    void OnKeyDown(int virtualKey) override;
     int GetSelectedIndex() const;
     int GetPressedIndex() const;
     int GetEntryCount() const;
