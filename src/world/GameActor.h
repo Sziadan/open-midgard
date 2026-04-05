@@ -344,6 +344,8 @@ class CPc : public CGameActor {
 public:
     CPc();
     virtual ~CPc();
+    virtual void SetState(int state) override;
+    virtual void SetModifyFactorOfmotionSpeed(int attackMT) override;
 
     void InvalidateBillboard();
     bool EnsureBillboardTexture(float cameraLongitude);

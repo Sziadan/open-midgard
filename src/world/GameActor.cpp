@@ -95,8 +95,10 @@ constexpr const char* kLegacyMonsterSpriteRoot = "data\\sprite\\\xB8\xF3\xBD\xBA
 constexpr float kDefaultMotionDelay = 4.0f;
 constexpr float kDefaultMotionSpeedFactor = 1.0f;
 constexpr float kAttackMotionFactor = 0.0023148148f;
+constexpr int kMoveStateId = 1;
 constexpr int kAttackStateId = kGameActorAttackStateId;
 constexpr int kDeathStateId = kGameActorDeathStateId;
+constexpr int kSecondAttackStateId = 9;
 constexpr int kHitReactionStateId = 4;
 constexpr int kDeathAction = 64;
 constexpr int kDeathMotion = 4;
@@ -245,6 +247,15 @@ int ResolvePcAttackAction(const CGameActor& actor)
 {
     const int weaponValue = ResolvePcAttackWeaponValue(actor);
     return g_session.IsSecondAttack(actor.m_job, actor.m_sex, weaponValue) ? 88 : 80;
+}
+
+float ResolvePcAttackMotionTiming(const CPc& actor, bool secondAttack)
+{
+    return g_session.GetPCAttackMotion(
+        actor.m_job,
+        actor.m_sex,
+        ResolvePcAttackWeaponValue(actor),
+        secondAttack ? 1 : 0);
 }
 
 bool IsMonsterLikeWaveActor(const CGameActor& actor)
@@ -1307,7 +1318,7 @@ int ResolveTimedMotionIndex(const CGameActor& actor, CActRes* actRes, int action
     const u32 elapsedMs = timeGetTime() - startTick;
     const float stateTicks = static_cast<float>(elapsedMs) * 0.041666668f;
     const float actionDelay = actRes->GetDelay(resolvedAction);
-    const bool useScaledAttackTiming = actor.m_stateId == kAttackStateId
+    const bool useScaledAttackTiming = (actor.m_stateId == kAttackStateId || actor.m_stateId == kSecondAttackStateId)
         && actor.m_attackMotion >= 0.0f
         && actor.m_motionSpeed > 0.0f;
     const bool useDeathTiming = actor.m_stateId == kDeathStateId;
@@ -1334,7 +1345,9 @@ bool IsTransientActionActive(const CGameActor& actor, CActRes* actRes, int actio
         return false;
     }
 
-    const bool allowWhileMoving = actor.m_stateId == kAttackStateId || actor.m_stateId == kDeathStateId;
+    const bool allowWhileMoving = actor.m_stateId == kAttackStateId
+        || actor.m_stateId == kSecondAttackStateId
+        || actor.m_stateId == kDeathStateId;
     if (actor.m_isMoving && !allowWhileMoving) {
         return false;
     }
@@ -1346,7 +1359,7 @@ bool IsTransientActionActive(const CGameActor& actor, CActRes* actRes, int actio
 
     const int motionCount = (std::max)(1, actRes->GetMotionCount(resolvedAction));
     const float actionDelay = actRes->GetDelay(resolvedAction);
-    const bool useScaledAttackTiming = actor.m_stateId == kAttackStateId
+    const bool useScaledAttackTiming = (actor.m_stateId == kAttackStateId || actor.m_stateId == kSecondAttackStateId)
         && actor.m_attackMotion >= 0.0f
         && actor.m_motionSpeed > 0.0f;
     const bool useDeathTiming = actor.m_stateId == kDeathStateId;
@@ -3312,7 +3325,13 @@ u8 CGameActor::ProcessState() {
     }
 
     switch (m_stateId) {
-    case kAttackStateId: {
+    case kMoveStateId:
+        if (!m_isMoving) {
+            SetState(0);
+        }
+        break;
+    case kAttackStateId:
+    case kSecondAttackStateId: {
         if (m_freezeEndTick != 0) {
             if (timeGetTime() >= m_freezeEndTick) {
                 m_freezeEndTick = 0;
@@ -3505,14 +3524,25 @@ void CGameActor::SetState(int state) {
         m_pos.z = m_damageDestZ;
     }
 
-    m_stateId = state;
-    m_stateStartTick = timeGetTime();
+    if (state == kHitReactionStateId && (m_isForceState || m_isForceState2 || m_isForceState3)) {
+        return;
+    }
 
     switch (state) {
     case 0:
         m_attackMotion = -1.0f;
         m_isMotionFreezed = 0;
-        return;
+        SetAction(0, 4, 0);
+        m_isMotionFinished = 1;
+        break;
+    case kMoveStateId:
+        m_attackMotion = -1.0f;
+        m_isMotionFinished = 0;
+        m_isMotionFreezed = 0;
+        if (!m_isAsuraAttack) {
+            SetAction(8, 6, 0);
+        }
+        break;
     case kGameActorSkillStateId:
         m_isMoving = 0;
         m_path.Reset();
@@ -3520,21 +3550,25 @@ void CGameActor::SetState(int state) {
         m_isMotionFreezed = 0;
         SetAction(80, 3, 1);
         m_attackMotion = static_cast<float>(GetAttackMotion());
-        return;
+        break;
     case kGameActorAttackStateId:
+    case kSecondAttackStateId:
         m_isMoving = 0;
         m_path.Reset();
         m_isMotionFinished = 0;
-        SetAction(m_isPc != 0 ? ResolvePcAttackAction(*this) : 16, 4, 1);
-        SetModifyFactorOfmotionSpeed(1440);
+        SetAction(state == kSecondAttackStateId
+                ? 88
+                : (m_isPc != 0 ? ResolvePcAttackAction(*this) : 16),
+            4,
+            1);
         m_attackMotion = static_cast<float>(GetAttackMotion());
-        return;
+        break;
     case kGameActorCastingStateId:
         m_isMoving = 0;
         m_path.Reset();
         m_isMotionFinished = 0;
         m_isMotionFreezed = 0;
-        return;
+        break;
     case kGameActorCastingLoopStateId:
         m_isMoving = 0;
         m_path.Reset();
@@ -3546,11 +3580,8 @@ void CGameActor::SetState(int state) {
             SetAction(16, 4, 1);
         }
         m_isMotionFreezed = 1;
-        return;
+        break;
     case kHitReactionStateId:
-        if (m_isForceState || m_isForceState2 || m_isForceState3) {
-            return;
-        }
         m_isMoving = 0;
         m_path.Reset();
         m_moveStartPos = m_pos;
@@ -3561,7 +3592,7 @@ void CGameActor::SetState(int state) {
         m_isMotionFinished = 0;
         m_isMotionFreezed = 0;
         SetAction(kHitReactionAction, kHitReactionMotion, 1);
-        return;
+        break;
     case kDeathStateId:
         m_isMoving = 0;
         m_path.Reset();
@@ -3575,10 +3606,13 @@ void CGameActor::SetState(int state) {
         m_isMotionFinished = 0;
         m_isMotionFreezed = 0;
         SetAction(kDeathAction, kDeathMotion, 1);
-        return;
+        break;
     default:
         return;
     }
+
+    m_stateId = state;
+    m_stateStartTick = timeGetTime();
 }
 
 void CGameActor::DestroySkillRechargeGage()
@@ -4213,6 +4247,72 @@ CPc::CPc()
 CPc::~CPc()
 {
     ReleaseActorBillboardTexture(*this);
+}
+
+void CPc::SetState(int state)
+{
+    const int previousState = m_stateId;
+    if (previousState == kDeathStateId || m_isTrickDead || state == -1) {
+        return;
+    }
+
+    if (previousState == kHitReactionStateId) {
+        m_pos.x = m_damageDestX;
+        m_pos.z = m_damageDestZ;
+    }
+
+    switch (state) {
+    case 0:
+        CGameActor::SetState(0);
+        m_curMotion = m_headDir;
+        if (previousState == kHitReactionStateId
+            || previousState == kAttackStateId
+            || previousState == kSecondAttackStateId
+            || m_pkState
+            || previousState == kGameActorCastingStateId) {
+            SetAction(32, 4, 0);
+        }
+        break;
+    case kMoveStateId:
+        m_isCounter = 0;
+        if (m_bodyState != 1 && m_bodyState != 2) {
+            m_isMotionFreezed = 0;
+        }
+        m_headDir = 0;
+        CGameActor::SetState(kMoveStateId);
+        break;
+    case kAttackStateId:
+    case kSecondAttackStateId: {
+        m_isCounter = 0;
+        if (m_bodyState != 1 && m_bodyState != 2) {
+            m_isMotionFreezed = 0;
+        }
+        SendMsg(this, 83, 0, 0, 0);
+
+        const bool secondAttack = g_session.IsSecondAttack(
+            m_job,
+            m_sex,
+            ResolvePcAttackWeaponValue(*this));
+        CGameActor::SetState(secondAttack ? kSecondAttackStateId : kAttackStateId);
+        m_attackMotion = ResolvePcAttackMotionTiming(*this, secondAttack);
+        break;
+    }
+    default:
+        CGameActor::SetState(state);
+        break;
+    }
+
+    InvalidateBillboard();
+}
+
+void CPc::SetModifyFactorOfmotionSpeed(int attackMT)
+{
+    if (attackMT <= 0) {
+        attackMT = 1440;
+    }
+
+    m_modifyFactorOfmotionSpeed = static_cast<float>(attackMT) * kAttackMotionFactor;
+    m_modifyFactorOfmotionSpeed2 = m_modifyFactorOfmotionSpeed;
 }
 
 void CPc::InvalidateBillboard()

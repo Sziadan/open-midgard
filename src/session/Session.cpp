@@ -1413,20 +1413,100 @@ unsigned int CSession::GetEquippedRightHandWeaponItemId() const
 
 bool CSession::IsSecondAttack(int job, int sex, int weaponItemId) const
 {
-    int v4 = weaponItemId;
-    const int v5 = job;
+    int weaponType = weaponItemId;
     if (weaponItemId >= 31) {
-        v4 = GetWeaponTypeByItemId(weaponItemId);
+        if (job == 12 || job == 4013 || job == 4035) {
+            const int secondaryWeapon = static_cast<int>((static_cast<unsigned int>(weaponItemId) >> 16) & 0xFFFFu);
+            if (GetWeaponTypeByItemId(secondaryWeapon) <= 0) {
+                weaponType = GetWeaponTypeByItemId(weaponItemId & 0xFFFF);
+            } else {
+                weaponType = MakeWeaponTypeByItemId(weaponItemId & 0xFFFF, secondaryWeapon);
+            }
+        } else {
+            weaponType = GetWeaponTypeByItemId(weaponItemId & 0xFFFF);
+        }
     }
 
-    if (v5 > 4001) {
-        return false;
-    }
-
-    if (v5 == 4001) {
-        if (sex) {
+    if (job > 4001) {
+        switch (job) {
+        case 4002:
+        case 4008:
+        case 4014:
+        case 4015:
+        case 4022:
+        case 4024:
+        case 4030:
+        case 4036:
+        case 4037:
+        case 4044:
+            return weaponType >= 4 && weaponType <= 5;
+        case 4003:
+        case 4006:
+        case 4025:
+        case 4028:
+            return weaponType == 1;
+        case 4004:
+        case 4026:
+            return weaponType != 11;
+        case 4007:
+        case 4012:
+        case 4018:
+        case 4029:
+        case 4034:
+        case 4040:
+            return weaponType == 11;
+        case 4009:
+        case 4031:
+            return weaponType == 15;
+        case 4010:
+        case 4032: {
+            const int value = weaponType - 1;
+            if (value == 0) {
+                return sex == 1;
+            }
+            const int nextValue = value - 9;
+            if (nextValue == 0 || nextValue == 13) {
+                return sex == 0;
+            }
+            return false;
+        }
+        case 4011:
+        case 4019:
+        case 4033:
+        case 4041:
+            if (weaponType == 2) {
+                return true;
+            }
+            return weaponType > 5 && weaponType <= 8;
+        case 4013:
+        case 4035:
+            if (weaponType == 16) {
+                return true;
+            }
+            return weaponType > 24 && weaponType <= 30;
+        case 4016:
+        case 4038:
+            return weaponType == 0 || weaponType == 12;
+        case 4017:
+        case 4039:
+            switch (weaponType) {
+            case 5:
+            case 10:
+            case 15:
+            case 23:
+                return true;
+            default:
+                return false;
+            }
+        case 4020:
+        case 4021:
+        case 4042:
+        case 4043:
+            return weaponType == 11;
+        case 4023:
+        case 4045:
             if (sex == 1) {
-                switch (v4) {
+                switch (weaponType) {
                 case 2:
                 case 3:
                 case 6:
@@ -1440,82 +1520,104 @@ bool CSession::IsSecondAttack(int job, int sex, int weaponItemId) const
                     return false;
                 }
             }
+            return sex == 0 && weaponType == 1;
+        case 4049: {
+            const int value = weaponType - 1;
+            if (value == 0) {
+                return sex == 1;
+            }
+            const int nextValue = value - 9;
+            if (nextValue == 0 || nextValue == 13) {
+                return sex == 0;
+            }
             return false;
         }
-        return v4 == 1;
+        default:
+            return false;
+        }
     }
 
-    switch (v5) {
+    if (job == 4001) {
+        if (sex == 1) {
+            switch (weaponType) {
+            case 2:
+            case 3:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+            case 23:
+                return true;
+            default:
+                return false;
+            }
+        }
+        return sex == 0 && weaponType == 1;
+    }
+
+    switch (job) {
     case 0:
     case 23:
-        if (sex) {
-            if (sex == 1) {
-                switch (v4) {
-                case 2:
-                case 3:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                case 10:
-                case 23:
-                    return true;
-                default:
-                    return false;
-                }
+        if (sex == 1) {
+            switch (weaponType) {
+            case 2:
+            case 3:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+            case 23:
+                return true;
+            default:
+                return false;
             }
-            return false;
         }
-        return v4 == 1;
+        return sex == 0 && weaponType == 1;
     case 1:
     case 7:
     case 13:
     case 14:
     case 21:
-        return v4 >= 4 && v4 <= 5;
+        return weaponType >= 4 && weaponType <= 5;
     case 2:
     case 5:
-        return v4 == 1;
+        return weaponType == 1;
     case 3:
-        return v4 != 11;
+        return weaponType != 11;
     case 6:
     case 11:
     case 17:
-        return v4 == 11;
+        return weaponType == 11;
     case 8:
-        return v4 == 15;
+        return weaponType == 15;
     case 9: {
-        const int v12 = v4 - 1;
-        if (v12 == 0) {
+        const int value = weaponType - 1;
+        if (value == 0) {
             return sex == 1;
         }
-        const int v11 = v12 - 9;
-        if (v11 == 0) {
-            return sex == 0;
-        }
-        if (v11 == 13) {
+        const int nextValue = value - 9;
+        if (nextValue == 0 || nextValue == 13) {
             return sex == 0;
         }
         return false;
     }
     case 10:
     case 18:
-        if (v4 == 2) {
+        if (weaponType == 2) {
             return true;
         }
-        return v4 > 5 && v4 <= 8;
+        return weaponType > 5 && weaponType <= 8;
     case 12:
-        if (v4 == 16) {
+        if (weaponType == 16) {
             return true;
         }
-        return v4 > 24 && v4 <= 30;
+        return weaponType > 24 && weaponType <= 30;
     case 15:
-        if (v4 == 0) {
-            return true;
-        }
-        return v4 == 12;
+        return weaponType == 0 || weaponType == 12;
     case 16:
-        switch (v4) {
+        switch (weaponType) {
         case 5:
         case 10:
         case 15:
@@ -1526,12 +1628,70 @@ bool CSession::IsSecondAttack(int job, int sex, int weaponItemId) const
         }
     case 19:
     case 20:
-        return v4 == 11;
+        return weaponType == 11;
     case 24:
-        return v4 >= 18 && v4 <= 21;
+        return weaponType >= 18 && weaponType <= 21;
     case 25:
-        return v4 == 22;
+        return weaponType == 22;
     default:
         return false;
     }
+}
+
+float CSession::GetPCAttackMotion(int job, int sex, int weaponItemId, int isSecondAttack) const
+{
+    int weaponType = weaponItemId;
+    if (weaponItemId >= 31) {
+        if (job == 12 || job == 4013 || job == 4035) {
+            const int secondaryWeapon = static_cast<int>((static_cast<unsigned int>(weaponItemId) >> 16) & 0xFFFFu);
+            if (GetWeaponTypeByItemId(secondaryWeapon) <= 0) {
+                weaponType = GetWeaponTypeByItemId(weaponItemId & 0xFFFF);
+            } else {
+                weaponType = MakeWeaponTypeByItemId(weaponItemId & 0xFFFF, secondaryWeapon);
+            }
+        } else {
+            weaponType = GetWeaponTypeByItemId(weaponItemId & 0xFFFF);
+        }
+    }
+
+    if (isSecondAttack) {
+        if (isSecondAttack == 1) {
+            if (job <= 4013) {
+                if (job != 4013) {
+                    if (job == 0 || job == 23) {
+                        return sex == 1 ? 5.8499999f : 6.0f;
+                    }
+                    if (job != 12) {
+                        return 6.0f;
+                    }
+                }
+
+                if (weaponType == 16 || (weaponType > 24 && weaponType <= 30)) {
+                    return 3.0f;
+                }
+                return 6.0f;
+            }
+
+            if (job == 4035) {
+                if (weaponType == 16 || (weaponType > 24 && weaponType <= 30)) {
+                    return 3.0f;
+                }
+                return 6.0f;
+            }
+
+            if (job == 4045) {
+                return sex == 1 ? 5.8499999f : 6.0f;
+            }
+        }
+
+        return 6.0f;
+    }
+
+    if (job == 5) {
+        return 5.8499999f;
+    }
+    if (job == 6) {
+        return 5.75f;
+    }
+    return 6.0f;
 }

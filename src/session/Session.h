@@ -194,6 +194,7 @@ public:
     int GetWeaponTypeByItemId(int itemId) const;
     int MakeWeaponTypeByItemId(int primaryWeaponItemId, int secondaryWeaponItemId) const;
     bool IsSecondAttack(int job, int sex, int weaponItemId) const;
+    float GetPCAttackMotion(int job, int sex, int weaponItemId, int isSecondAttack) const;
     unsigned int GetEquippedLeftHandWeaponItemId() const;
     unsigned int GetEquippedRightHandWeaponItemId() const;
     const char* GetPlayerName() const;

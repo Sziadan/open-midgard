@@ -2817,11 +2817,9 @@ void StartAttackAnimation(CGameActor* actor, CGameActor* target, int attackMT)
     actor->m_targetGid = target ? target->m_gid : 0;
     StopActorMovementForAction(actor);
     FaceActorTowardTarget(actor, target);
-    actor->SetState(kGameActorAttackStateId);
-    actor->m_stateStartTick = timeGetTime();
     actor->SetModifyFactorOfmotionSpeed(attackMT);
+    actor->SetState(kGameActorAttackStateId);
     actor->ProcessMotion();
-    actor->m_attackMotion = static_cast<float>(actor->GetAttackMotion());
 
     if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
         pcActor->InvalidateBillboard();
@@ -3354,11 +3352,9 @@ void StartSkillSourceAnimation(CGameActor* actor, const vector3d* targetPos, int
     if (targetPos) {
         FaceActorTowardPosition(actor, *targetPos);
     }
-    actor->SetState(kGameActorAttackStateId);
-    actor->m_stateStartTick = timeGetTime();
     actor->SetModifyFactorOfmotionSpeed(attackMotionMs > 0 ? attackMotionMs : kDefaultAttackMotionTime);
+    actor->SetState(kGameActorAttackStateId);
     actor->ProcessMotion();
-    actor->m_attackMotion = static_cast<float>(actor->GetAttackMotion());
     InvalidateActorBillboard(actor);
 }
 
@@ -3696,8 +3692,8 @@ void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
 
     if (frozenCast) {
         ClearAttachedSkillEffects(sourceActor);
-        sourceActor->SetState(kGameActorAttackStateId);
         sourceActor->SetModifyFactorOfmotionSpeed(castTimeMs > 0 ? castTimeMs : kDefaultAttackMotionTime);
+        sourceActor->SetState(kGameActorAttackStateId);
         sourceActor->m_isMotionFreezed = 1;
         sourceActor->m_freezeEndTick = timeGetTime() + static_cast<u32>((std::max)(0, castTimeMs));
     } else {
@@ -5198,6 +5194,7 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
     actor->m_isMoving = actor->m_moveEndTime > actor->m_moveStartTime;
     if (actor->m_isMoving) {
         actor->m_isSitting = 0;
+        actor->SetState(1);
         if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
             pcActor->m_headDir = 0;
             pcActor->m_curMotion = 0;
@@ -5207,6 +5204,7 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
     }
     if (!actor->m_isMoving) {
         actor->m_pos = actor->m_moveEndPos;
+        actor->SetState(0);
     } else if (isLocalPlayer && actor->m_path.m_cells.size() >= 2) {
         if (!InterpolateRuntimeActorPathPosition(mode.m_world, *actor, g_session.GetServerTime(), &actor->m_pos)) {
             actor->m_pos = actor->m_moveStartPos;
@@ -5277,6 +5275,7 @@ void ApplyRuntimeActorFixPosition(CGameMode& mode, u32 gid, int tileX, int tileY
     actor->m_moveEndTime = actor->m_moveStartTime;
     actor->m_isMoving = 0;
     actor->m_pos = actor->m_moveEndPos;
+    actor->SetState(0);
     actor->RegisterPos();
 }
 
