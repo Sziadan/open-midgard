@@ -3703,6 +3703,12 @@ void CRagEffect::SpawnSight()
         return;
     }
 
+    CTexture* sightGlow = ResolveEffectTextureCandidates({
+        "effect\\pikapika.bmp",
+        "texture\\effect\\pikapika.bmp",
+        "data\\texture\\effect\\pikapika.bmp",
+    }, false);
+
     const float angle = static_cast<float>(-5 * m_stateCnt) * (kPi / 180.0f);
     const float offsetX = std::sin(angle) * 15.0f;
     const float offsetZ = -std::cos(angle) * 15.0f;
@@ -3714,7 +3720,8 @@ void CRagEffect::SpawnSight()
         prim->m_sizeSpeed = -0.1f;
         prim->m_alpha = 150.0f;
         prim->m_alphaSpeed = -3.0f;
-        ConfigureEffectSpritePrim(prim, { "fireball", "sight" }, 0, 1.0f, true, 3.0f, 0);
+        prim->m_texture.push_back(sightGlow);
+        prim->m_tintColor = RGB(255, 255, 255);
     }
 
     if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
@@ -3743,6 +3750,12 @@ void CRagEffect::SpawnSightState()
         return;
     }
 
+    CTexture* sightGlow = ResolveEffectTextureCandidates({
+        "effect\\pikapika.bmp",
+        "texture\\effect\\pikapika.bmp",
+        "data\\texture\\effect\\pikapika.bmp",
+    }, false);
+
     const float angle = static_cast<float>(-5 * m_stateCnt) * (kPi / 180.0f);
     const float offsetX = std::sin(angle) * 15.0f;
     const float offsetZ = -std::cos(angle) * 15.0f;
@@ -3754,7 +3767,8 @@ void CRagEffect::SpawnSightState()
         prim->m_sizeSpeed = -0.1f;
         prim->m_alpha = 50.0f;
         prim->m_alphaSpeed = -3.0f;
-        ConfigureEffectSpritePrim(prim, { "fireball", "sight" }, 0, 1.0f, true, 3.0f, 0);
+        prim->m_texture.push_back(sightGlow);
+        prim->m_tintColor = RGB(255, 255, 255);
     }
 }
 
@@ -3806,6 +3820,12 @@ void CRagEffect::SpawnRuwach()
         return;
     }
 
+    CTexture* ruwachGlow = ResolveEffectTextureCandidates({
+        "effect\\pikapika2.bmp",
+        "texture\\effect\\pikapika2.bmp",
+        "data\\texture\\effect\\pikapika2.bmp",
+    }, false);
+
     constexpr float kRuwachStepDegrees = -50.0f / 13.0f;
     const float angle = static_cast<float>(m_stateCnt) * kRuwachStepDegrees * (kPi / 180.0f);
     const float offsetX = std::sin(angle) * 15.0f;
@@ -3819,7 +3839,8 @@ void CRagEffect::SpawnRuwach()
         prim->m_alpha = 250.0f;
         prim->m_alphaSpeed = -3.0f;
         prim->m_fadeOutCnt = prim->m_duration - 6;
-        ConfigureEffectSpritePrim(prim, { RefRuwachSpriteStem() }, 0, 1.0f, false, 0.0f, 0);
+        prim->m_texture.push_back(ruwachGlow);
+        prim->m_tintColor = RGB(255, 255, 255);
     }
 
     if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
