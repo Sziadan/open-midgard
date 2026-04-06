@@ -229,16 +229,6 @@ int ResolvePcAttackWeaponValue(const CGameActor& actor)
     return weaponValue;
 }
 
-std::string ResolvePcBodyActName(const CGameActor& actor, int displayJob, int sex, char* buf)
-{
-    return g_session.GetPlayerBodyActName(displayJob, sex, ResolvePcAttackWeaponValue(actor), buf);
-}
-
-std::string ResolvePcBodySprName(const CGameActor& actor, int displayJob, int sex, char* buf)
-{
-    return g_session.GetPlayerBodySprName(displayJob, sex, ResolvePcAttackWeaponValue(actor), buf);
-}
-
 int ResolvePcAttackAction(const CGameActor& actor)
 {
     const int weaponValue = ResolvePcAttackWeaponValue(actor);
@@ -879,12 +869,8 @@ int ResolvePcFacingDir(const CPc* actor)
         return g_session.m_playerDir & 7;
     }
 
-    if (actor->m_isMoving) {
-        return ResolveDirFromRotationDegrees(actor->m_roty);
-    }
-
     if (std::isfinite(actor->m_roty)) {
-        return ResolveDirFromRotationDegrees(actor->m_roty);
+        return const_cast<CPc*>(actor)->Get8Dir(actor->m_roty);
     }
 
     return g_session.m_playerDir & 7;
@@ -1176,7 +1162,7 @@ void PrimePlayerBillboardStrip(CPc& actor,
     int bodyAction)
 {
     char bodyAct[260] = {};
-    const std::string bodyActName = ResolvePcBodyActName(actor, displayJob, sex, bodyAct);
+    const std::string bodyActName = g_session.GetJobActName(displayJob, sex, bodyAct);
     CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
     const int motionCount = bodyActRes ? bodyActRes->GetMotionCount(bodyAction) : 0;
     if (motionCount <= 1 || motionCount > kSharedPlayerWarmupMotionLimit) {
@@ -1806,7 +1792,6 @@ bool DrawAttachedAccessoryMotion(BillboardComposeSurface& bitmap,
 
 constexpr const char* kHumanSpriteBodyDirMarker = "\\\xB8\xF6\xC5\xEB\\";
 constexpr const char* kShieldSpriteRoot = "data\\sprite\\\xB9\xE6\xC6\xD0\\";
-constexpr const char* kWeaponGlowSuffix = "\xB0\xCB\xB1\xA4";
 
 constexpr const char* kWeaponTokenDagger = "\xB4\xDC\xB0\xCB";
 constexpr const char* kWeaponTokenSword = "\xB0\xCB";
@@ -1950,30 +1935,36 @@ bool ExtractPcOverlayPathParts(const std::string& bodyActName,
     }
 
     const std::string stem = fileName.substr(0, extension);
-    const size_t maleSplit = stem.find("_m");
-    const size_t femaleSplit = stem.find("_f");
-    size_t split = std::string::npos;
-    if (maleSplit != std::string::npos && (maleSplit + 2 == stem.size() || stem[maleSplit + 2] == '_')) {
-        split = maleSplit;
-    }
-    if (femaleSplit != std::string::npos && (femaleSplit + 2 == stem.size() || stem[femaleSplit + 2] == '_')) {
-        if (split == std::string::npos || femaleSplit < split) {
-            split = femaleSplit;
-        }
-    }
-    if (split == std::string::npos || split + 2 > stem.size()) {
+    const size_t lastSplit = stem.rfind('_');
+    if (lastSplit == std::string::npos || lastSplit + 1 >= stem.size()) {
         return false;
     }
 
-    *outJobStem = stem.substr(0, split);
-    *outSexToken = stem.substr(split + 1, 1);
+    size_t sexSplit = lastSplit;
+    size_t sexLength = stem.size() - lastSplit - 1;
+    const size_t secondSplit = lastSplit > 0 ? stem.rfind('_', lastSplit - 1) : std::string::npos;
+    if (secondSplit != std::string::npos && secondSplit + 1 < lastSplit) {
+        sexSplit = secondSplit;
+        sexLength = lastSplit - secondSplit - 1;
+    }
+
+    if (sexSplit == std::string::npos || sexSplit + 1 >= stem.size()) {
+        return false;
+    }
+
+    if (sexLength == 0) {
+        return false;
+    }
+
+    *outJobStem = stem.substr(0, sexSplit);
+    *outSexToken = stem.substr(sexSplit + 1, sexLength);
     *outHumanOverlayRoot = bodyActName.substr(0, bodyMarker) + "\\" + *outJobStem + "\\";
     return true;
 }
 
 bool BuildWeaponOverlayPath(const std::string& bodyActName,
     int weapon,
-    bool glowVariant,
+    bool secondLayer,
     const char* extension,
     std::string* outPath)
 {
@@ -1988,16 +1979,19 @@ bool BuildWeaponOverlayPath(const std::string& bodyActName,
         return false;
     }
 
+    const int primaryWeaponItemId = weapon & 0xFFFF;
+    const int secondaryWeaponItemId = static_cast<int>((static_cast<unsigned int>(weapon) >> 16) & 0xFFFFu);
+
     auto buildNumericPath = [&](int numericWeapon) {
         char buffer[512] = {};
-        if (glowVariant) {
+        if (secondLayer) {
             std::sprintf(buffer,
-                "%s%s_%s_%d_%s.%s",
+                "%s%s_%s_%d_%d.%s",
                 humanOverlayRoot.c_str(),
                 jobStem.c_str(),
                 sexToken.c_str(),
                 numericWeapon,
-                kWeaponGlowSuffix,
+                numericWeapon,
                 extension);
         } else {
             std::sprintf(buffer,
@@ -2011,7 +2005,7 @@ bool BuildWeaponOverlayPath(const std::string& bodyActName,
         return std::string(buffer);
     };
 
-    std::string candidate = buildNumericPath(weapon);
+    std::string candidate = buildNumericPath(primaryWeaponItemId);
     if (g_resMgr.IsExist(candidate.c_str())) {
         *outPath = candidate;
         return true;
@@ -2019,41 +2013,62 @@ bool BuildWeaponOverlayPath(const std::string& bodyActName,
 
     int weaponType = weapon;
     if (weaponType > 31) {
-        weaponType = g_session.GetWeaponTypeByItemId(weaponType);
+        if (secondaryWeaponItemId != 0 && g_session.GetWeaponTypeByItemId(secondaryWeaponItemId) > 0) {
+            weaponType = g_session.MakeWeaponTypeByItemId(primaryWeaponItemId, secondaryWeaponItemId);
+        } else {
+            weaponType = g_session.GetWeaponTypeByItemId(primaryWeaponItemId);
+        }
     }
 
-    const char* token = GetGenericWeaponToken(weaponType);
-    if (!token) {
+    std::vector<std::string> tokenCandidates;
+    if (const std::string weaponTokenFromLua = g_session.GetPlayerWeaponToken(weaponType); !weaponTokenFromLua.empty()) {
+        tokenCandidates.push_back(weaponTokenFromLua);
+    }
+    if (const char* token = GetGenericWeaponToken(weaponType)) {
+        if (tokenCandidates.empty() || tokenCandidates.front() != token) {
+            tokenCandidates.emplace_back(token);
+        }
+    }
+    if (tokenCandidates.empty()) {
         return false;
     }
 
-    char buffer[512] = {};
-    if (glowVariant) {
-        std::sprintf(buffer,
-            "%s%s_%s_%s_%s.%s",
-            humanOverlayRoot.c_str(),
-            jobStem.c_str(),
-            sexToken.c_str(),
-            token,
-            kWeaponGlowSuffix,
-            extension);
-    } else {
+    for (const std::string& token : tokenCandidates) {
+        char buffer[512] = {};
         std::sprintf(buffer,
             "%s%s_%s_%s.%s",
             humanOverlayRoot.c_str(),
             jobStem.c_str(),
             sexToken.c_str(),
-            token,
+            token.c_str(),
             extension);
+
+        candidate.assign(buffer);
+        if (g_resMgr.IsExist(candidate.c_str())) {
+            *outPath = candidate;
+            return true;
+        }
+
+        if (!secondLayer) {
+            continue;
+        }
+
+        std::sprintf(buffer,
+            "%s%s_%s_%s_%s.%s",
+            humanOverlayRoot.c_str(),
+            jobStem.c_str(),
+            sexToken.c_str(),
+            token.c_str(),
+            token.c_str(),
+            extension);
+        candidate.assign(buffer);
+        if (g_resMgr.IsExist(candidate.c_str())) {
+            *outPath = candidate;
+            return true;
+        }
     }
 
-    candidate.assign(buffer);
-    if (!g_resMgr.IsExist(candidate.c_str())) {
-        return false;
-    }
-
-    *outPath = candidate;
-    return true;
+    return false;
 }
 
 bool BuildShieldOverlayPath(const std::string& bodyActName,
@@ -2098,7 +2113,6 @@ bool BuildShieldOverlayPath(const std::string& bodyActName,
 
 CActRes* ResolvePcTransientActRes(const CGameActor& actor, int action)
 {
-    (void)action;
     if (actor.m_isPc == 0) {
         return nullptr;
     }
@@ -2111,8 +2125,61 @@ CActRes* ResolvePcTransientActRes(const CGameActor& actor, int action)
     const int displayJob = ResolveDisplayJob(actor);
     const int sex = actor.m_sex != 0 ? 1 : 0;
     char bodyActPath[260] = {};
-    const std::string bodyActName = ResolvePcBodyActName(actor, displayJob, sex, bodyActPath);
-    return g_resMgr.GetAs<CActRes>(bodyActName.c_str());
+    const std::string bodyActName = g_session.GetJobActName(displayJob, sex, bodyActPath);
+    CActRes* bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
+
+    const bool isAttackLikeState = actor.m_stateId == kAttackStateId
+        || actor.m_stateId == kSecondAttackStateId
+        || actor.m_stateId == kGameActorCastingLoopStateId;
+    const bool isAttackLikeAction = action >= 80 && action < 96;
+    const int weaponValue = ResolvePcAttackWeaponValue(actor);
+    if ((!isAttackLikeState && !isAttackLikeAction) || weaponValue == 0) {
+        return bodyActRes;
+    }
+
+    auto tryOverlayAct = [&](bool secondLayer, std::string* outPath) -> CActRes* {
+        std::string overlayActNameResolved;
+        if (!BuildWeaponOverlayPath(bodyActName, weaponValue, secondLayer, "act", &overlayActNameResolved)) {
+            return nullptr;
+        }
+
+        CActRes* overlayActRes = g_resMgr.GetAs<CActRes>(overlayActNameResolved.c_str());
+        if (!overlayActRes || ResolveAvailableActionIndex(overlayActRes, action) < 0) {
+            return nullptr;
+        }
+
+        if (outPath) {
+            *outPath = overlayActNameResolved;
+        }
+        return overlayActRes;
+    };
+
+    std::string primaryOverlayActName;
+    if (CActRes* primaryOverlayActRes = tryOverlayAct(false, &primaryOverlayActName)) {
+        return primaryOverlayActRes;
+    }
+
+    std::string secondaryOverlayActName;
+    if (CActRes* secondaryOverlayActRes = tryOverlayAct(true, &secondaryOverlayActName)) {
+        const bool isLocalPlayer = actor.m_gid != 0 && (actor.m_gid == g_session.m_gid || actor.m_gid == g_session.m_aid);
+        if (isLocalPlayer) {
+            static std::map<u32, std::string> loggedSecondaryAttackActs;
+            const std::string logKey = std::to_string(action) + ":" + secondaryOverlayActName;
+            if (loggedSecondaryAttackActs[actor.m_gid] != logKey) {
+                loggedSecondaryAttackActs[actor.m_gid] = logKey;
+                DbgLog("[ActorTrace] TransientAct gid=%u state=%d action=%d weaponValue=%d primaryAct='%s' secondaryAct='%s' selected='secondary'\n",
+                    actor.m_gid,
+                    actor.m_stateId,
+                    action,
+                    weaponValue,
+                    primaryOverlayActName.c_str(),
+                    secondaryOverlayActName.c_str());
+            }
+        }
+        return secondaryOverlayActRes;
+    }
+
+    return bodyActRes;
 }
 
 int ResolveOverlayMotionIndex(CActRes* actRes, int curAction, int curMotion, const std::string& bodyActName)
@@ -2395,8 +2462,8 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
     const int curMotion = headMotion;
     const int weaponValue = ResolvePcAttackWeaponValue(actor);
 
-    const std::string bodyActName = ResolvePcBodyActName(actor, displayJob, sex, bodyAct);
-    const std::string bodySprName = ResolvePcBodySprName(actor, displayJob, sex, bodySpr);
+    const std::string bodyActName = g_session.GetJobActName(displayJob, sex, bodyAct);
+    const std::string bodySprName = g_session.GetJobSprName(displayJob, sex, bodySpr);
     const std::string headActName = g_session.GetHeadActName(displayJob, &head, sex, headAct);
     const std::string headSprName = g_session.GetHeadSprName(displayJob, &head, sex, headSpr);
     const std::string accessoryBottomActName = g_session.GetAccessoryActName(displayJob, &head, sex, actor.m_accessory, accessoryBottomAct);
@@ -2415,14 +2482,14 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
 
     std::string weaponActNameResolved;
     std::string weaponSprNameResolved;
-    std::string weaponEffectActNameResolved;
-    std::string weaponEffectSprNameResolved;
+    std::string weaponLayer6ActNameResolved;
+    std::string weaponLayer6SprNameResolved;
     std::string shieldActNameResolved;
     std::string shieldSprNameResolved;
-    BuildWeaponOverlayPath(bodyActName, actor.m_weapon, false, "act", &weaponActNameResolved);
-    BuildWeaponOverlayPath(bodyActName, actor.m_weapon, false, "spr", &weaponSprNameResolved);
-    BuildWeaponOverlayPath(bodyActName, actor.m_weapon, true, "act", &weaponEffectActNameResolved);
-    BuildWeaponOverlayPath(bodyActName, actor.m_weapon, true, "spr", &weaponEffectSprNameResolved);
+    BuildWeaponOverlayPath(bodyActName, weaponValue, false, "act", &weaponActNameResolved);
+    BuildWeaponOverlayPath(bodyActName, weaponValue, false, "spr", &weaponSprNameResolved);
+    BuildWeaponOverlayPath(bodyActName, weaponValue, true, "act", &weaponLayer6ActNameResolved);
+    BuildWeaponOverlayPath(bodyActName, weaponValue, true, "spr", &weaponLayer6SprNameResolved);
     BuildShieldOverlayPath(bodyActName, actor.m_shield, "act", &shieldActNameResolved);
     BuildShieldOverlayPath(bodyActName, actor.m_shield, "spr", &shieldSprNameResolved);
 
@@ -2435,7 +2502,7 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
     bool accessoryMidOk = false;
     bool accessoryTopOk = false;
     bool weaponOk = false;
-    bool weaponEffectOk = false;
+    bool weaponLayer6Ok = false;
     bool shieldOk = false;
 
     for (int layer : layerOrder) {
@@ -2465,7 +2532,7 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
             weaponOk |= DrawPlayerOverlayMotion(bitmap, drawX, drawY, 5, curAction, curMotion, bodyActName, weaponActNameResolved, weaponSprNameResolved, imfPath);
             break;
         case 6:
-            weaponEffectOk |= DrawPlayerOverlayMotion(bitmap, drawX, drawY, 6, curAction, curMotion, bodyActName, weaponEffectActNameResolved, weaponEffectSprNameResolved, imfPath);
+            weaponLayer6Ok |= DrawPlayerOverlayMotion(bitmap, drawX, drawY, 6, curAction, curMotion, bodyActName, weaponLayer6ActNameResolved, weaponLayer6SprNameResolved, imfPath);
             break;
         case 7:
             shieldOk |= DrawPlayerOverlayMotion(bitmap, drawX, drawY, 7, curAction, curMotion, bodyActName, shieldActNameResolved, shieldSprNameResolved, imfPath);
@@ -2475,17 +2542,17 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
         }
     }
 
-    if (!bodyOk && !headOk && !accessoryBottomOk && !accessoryMidOk && !accessoryTopOk && !weaponOk && !weaponEffectOk && !shieldOk) {
+    if (!bodyOk && !headOk && !accessoryBottomOk && !accessoryMidOk && !accessoryTopOk && !weaponOk && !weaponLayer6Ok && !shieldOk) {
         static std::map<int, bool> loggedBillboardFailures;
         if (loggedBillboardFailures.insert(std::make_pair(displayJob, true)).second) {
-            DbgLog("[Actor] player billboard draw failed job=%d bodyAct='%s' bodySpr='%s' headAct='%s' headSpr='%s' weaponAct='%s' weaponGlowAct='%s' shieldAct='%s' imf='%s' bodyPal='%s' headPal='%s' action=%d motion=%d head=%d sex=%d weapon=%d shield=%d\n",
+            DbgLog("[Actor] player billboard draw failed job=%d bodyAct='%s' bodySpr='%s' headAct='%s' headSpr='%s' weaponAct='%s' weaponLayer6Act='%s' shieldAct='%s' imf='%s' bodyPal='%s' headPal='%s' action=%d motion=%d head=%d sex=%d weaponValue=%d weapon=%d shield=%d\n",
                 displayJob,
                 bodyActName.c_str(),
                 bodySprName.c_str(),
                 headActName.c_str(),
                 headSprName.c_str(),
                 weaponActNameResolved.c_str(),
-                weaponEffectActNameResolved.c_str(),
+                weaponLayer6ActNameResolved.c_str(),
                 shieldActNameResolved.c_str(),
                 imfPath.c_str(),
                 bodyPaletteName.c_str(),
@@ -2494,6 +2561,7 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
                 curMotion,
                 head,
                 sex,
+                weaponValue,
                 actor.m_weapon,
                 actor.m_shield);
         }
@@ -2504,17 +2572,20 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
         const u32 renderKey = (static_cast<u32>(curAction & 0xFFFF) << 16) | static_cast<u32>(curMotion & 0xFFFF);
         if (loggedAttackRenderState[actor.m_gid] != renderKey) {
             loggedAttackRenderState[actor.m_gid] = renderKey;
-            DbgLog("[Actor] pc attack render gid=%u state=%d action=%d motion=%d weaponValue=%d weapon=%d shield=%d bodyAct='%s' weaponAct='%s' weaponGlowAct='%s'\n",
+            DbgLog("[Actor] pc attack render gid=%u state=%d action=%d motion=%d roty=%.1f dir=%d weaponValue=%d weapon=%d shield=%d bodyAct='%s' weaponAct='%s' weaponLayer6Act='%s' weaponLayer6Spr='%s'\n",
                 actor.m_gid,
                 actor.m_stateId,
                 curAction,
                 curMotion,
+                actor.m_roty,
+                const_cast<CPc&>(actor).Get8Dir(actor.m_roty),
                 weaponValue,
                 actor.m_weapon,
                 actor.m_shield,
                 bodyActName.c_str(),
                 weaponActNameResolved.c_str(),
-                weaponEffectActNameResolved.c_str());
+                weaponLayer6ActNameResolved.c_str(),
+                weaponLayer6SprNameResolved.c_str());
         }
     }
 
@@ -2534,7 +2605,7 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
         *outHeadPalette = actor.m_headPalette;
     }
 
-    return bodyOk || headOk || accessoryBottomOk || accessoryMidOk || accessoryTopOk || weaponOk || weaponEffectOk || shieldOk;
+    return bodyOk || headOk || accessoryBottomOk || accessoryMidOk || accessoryTopOk || weaponOk || weaponLayer6Ok || shieldOk;
 }
 
 bool ResolveNonPcSpritePaths(int job, char* actPath, char* sprPath)
@@ -4728,7 +4799,7 @@ CActRes* ResolveRuntimeActorActRes(CRenderObject* object)
         const int displayJob = ResolveDisplayJob(*actor);
         const int sex = actor->m_sex != 0 ? 1 : 0;
         char bodyActPath[260] = {};
-        const std::string bodyActName = ResolvePcBodyActName(*actor, displayJob, sex, bodyActPath);
+        const std::string bodyActName = g_session.GetJobActName(displayJob, sex, bodyActPath);
         actor->m_actRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());
         return actor->m_actRes;
     }
@@ -4768,7 +4839,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
     int headMotion = 0;
     if (usePlayerStyleBillboard) {
         char bodyAct[260] = {};
-        const std::string bodyActName = ResolvePcBodyActName(*this, displayJob, sex, bodyAct);
+        const std::string bodyActName = g_session.GetJobActName(displayJob, sex, bodyAct);
         CActRes* bodyActRes = ResolvePcTransientActRes(*this, m_curAction);
         if (!bodyActRes) {
             bodyActRes = g_resMgr.GetAs<CActRes>(bodyActName.c_str());

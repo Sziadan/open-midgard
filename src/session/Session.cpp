@@ -370,11 +370,28 @@ char* BuildPlayerBodyResourceName(const CSession& session,
     char basePath[260] = {};
     std::sprintf(basePath, "%s%s\\%s\\%s_%s.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken, extension);
 
+    auto hasMatchingBodyResourcePair = [&](const char* candidatePath) {
+        if (!candidatePath || !*candidatePath || !ResourceExistsLocalFirst(candidatePath)) {
+            return false;
+        }
+
+        char companionPath[260] = {};
+        std::strcpy(companionPath, candidatePath);
+        char* dot = std::strrchr(companionPath, '.');
+        if (!dot) {
+            return false;
+        }
+
+        const bool wantAct = std::strcmp(extension, "act") == 0;
+        std::strcpy(dot + 1, wantAct ? "spr" : "act");
+        return ResourceExistsLocalFirst(companionPath);
+    };
+
     const int weaponType = ResolvePlayerBodyWeaponType(session, normalizedJob, weaponItemId);
     if (weaponType > 0) {
         char candidate[260] = {};
         std::sprintf(candidate, "%s%s\\%s\\%s_%s_%d.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken, weaponType, extension);
-        if (ResourceExistsLocalFirst(candidate)) {
+        if (hasMatchingBodyResourcePair(candidate)) {
             std::strcpy(buf, candidate);
             return buf;
         }
@@ -382,7 +399,7 @@ char* BuildPlayerBodyResourceName(const CSession& session,
         const std::string weaponTokenFromLua = session.GetPlayerWeaponToken(weaponType);
         if (!weaponTokenFromLua.empty()) {
             std::sprintf(candidate, "%s%s\\%s\\%s_%s_%s.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken, weaponTokenFromLua.c_str(), extension);
-            if (ResourceExistsLocalFirst(candidate)) {
+            if (hasMatchingBodyResourcePair(candidate)) {
                 std::strcpy(buf, candidate);
                 return buf;
             }
@@ -390,7 +407,7 @@ char* BuildPlayerBodyResourceName(const CSession& session,
 
         if (const char* weaponToken = GetPlayerBodyWeaponToken(weaponType)) {
             std::sprintf(candidate, "%s%s\\%s\\%s_%s_%s.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken, weaponToken, extension);
-            if (ResourceExistsLocalFirst(candidate)) {
+            if (hasMatchingBodyResourcePair(candidate)) {
                 std::strcpy(buf, candidate);
                 return buf;
             }
