@@ -4855,8 +4855,9 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
 {
     const bool isVulkanBackend = GetRenderDevice().GetBackendType() == RenderBackendType::Vulkan;
 
-    const int actorDir = ResolvePcFacingDir(this);
-    const float actorRotationDegrees = ActorRotationDegreesFromDir(actorDir);
+    const float actorRotationDegrees = std::isfinite(m_roty)
+        ? NormalizeAngle360(m_roty)
+        : ActorRotationDegreesFromDir(ResolvePcFacingDir(this));
     const bool isPlayerStyleActor = m_isPc != 0;
     const bool usePlayerStyleBillboard = isPlayerStyleActor;
     const int displayJob = ResolveDisplayJob(*this);
