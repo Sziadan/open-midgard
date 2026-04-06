@@ -1838,6 +1838,7 @@ constexpr const char* kWeaponTokenRifle = "\xB6\xF3\xC0\xCC\xC7\xC3";
 constexpr const char* kWeaponTokenGatling = "\xB1\xE2\xB0\xFC\xC3\xD1";
 constexpr const char* kWeaponTokenShotgun = "\xBC\xA6\xB0\xC7";
 constexpr const char* kWeaponTokenShuriken = "\xBC\xF6\xB8\xAE\xB0\xCB";
+constexpr const char* kWeaponTokenLightSuffix = "\xB0\xCB\xB1\xA4";
 
 constexpr const char* kShieldTokenGuard = "guard";
 constexpr const char* kShieldTokenBuckler = "buckler";
@@ -1875,7 +1876,7 @@ const char* GetGenericWeaponToken(int weaponType)
     case 15:
         return kWeaponTokenBook;
     case 16:
-        return kWeaponTokenKatar;
+        return nullptr;
     case 17:
         return kWeaponTokenPistol;
     case 18:
@@ -1888,6 +1889,31 @@ const char* GetGenericWeaponToken(int weaponType)
         return kWeaponTokenShuriken;
     default:
         return nullptr;
+    }
+}
+
+std::string GetPcOverlayWeaponToken(int weaponType)
+{
+    switch (weaponType) {
+    case 16:
+        return std::string(kWeaponTokenKatar) + "_" + kWeaponTokenKatar;
+    case 25:
+        return std::string(kWeaponTokenDagger) + "_" + kWeaponTokenDagger;
+    case 26:
+        return std::string(kWeaponTokenSword) + "_" + kWeaponTokenSword;
+    case 27:
+        return std::string(kWeaponTokenAxe) + "_" + kWeaponTokenAxe;
+    case 28:
+        return std::string(kWeaponTokenDagger) + "_" + kWeaponTokenSword;
+    case 29:
+        return std::string(kWeaponTokenDagger) + "_" + kWeaponTokenAxe;
+    case 30:
+        return std::string(kWeaponTokenSword) + "_" + kWeaponTokenAxe;
+    default:
+        if (const char* token = GetGenericWeaponToken(weaponType)) {
+            return token;
+        }
+        return std::string();
     }
 }
 
@@ -2060,22 +2086,14 @@ int ResolvePcWeaponOverlayType(const CGameActor& actor, int weapon, bool* outDua
 {
     const int primaryWeaponItemId = weapon & 0xFFFF;
     const int secondaryWeaponItemId = static_cast<int>((static_cast<unsigned int>(weapon) >> 16) & 0xFFFFu);
-    const bool dualWeapon = IsDualWeaponPcJob(actor.m_job)
-        && secondaryWeaponItemId != 0
-        && g_session.GetWeaponTypeByItemId(secondaryWeaponItemId) > 0;
+    const int secondaryWeaponType = g_session.ResolvePackedWeaponType(actor.m_job, secondaryWeaponItemId);
+    const bool dualWeapon = IsDualWeaponPcJob(actor.m_job) && secondaryWeaponType > 0;
 
     if (outDualWeapon) {
         *outDualWeapon = dualWeapon;
     }
 
-    int weaponType = 0;
-    if (dualWeapon) {
-        weaponType = g_session.MakeWeaponTypeByItemId(primaryWeaponItemId, secondaryWeaponItemId);
-    } else if (weapon > 31) {
-        weaponType = g_session.GetWeaponTypeByItemId(primaryWeaponItemId);
-    } else {
-        weaponType = weapon;
-    }
+    const int weaponType = g_session.ResolvePackedWeaponType(actor.m_job, weapon);
 
     return NormalizePcWeaponOverlayTypeForJob(actor.m_job, weaponType, dualWeapon);
 }
@@ -2113,13 +2131,24 @@ bool BuildWeaponOverlayPath(const CGameActor& actor,
 
     auto buildNumericPath = [&](int numericWeapon) {
         char buffer[512] = {};
-        std::sprintf(buffer,
-            "%s%s_%s_%d.%s",
-            humanOverlayRoot.c_str(),
-            jobStem.c_str(),
-            sexToken.c_str(),
-            numericWeapon,
-            extension);
+        if (secondLayer) {
+            std::sprintf(buffer,
+                "%s%s_%s_%d_%s.%s",
+                humanOverlayRoot.c_str(),
+                jobStem.c_str(),
+                sexToken.c_str(),
+                numericWeapon,
+                kWeaponTokenLightSuffix,
+                extension);
+        } else {
+            std::sprintf(buffer,
+                "%s%s_%s_%d.%s",
+                humanOverlayRoot.c_str(),
+                jobStem.c_str(),
+                sexToken.c_str(),
+                numericWeapon,
+                extension);
+        }
         return std::string(buffer);
     };
 
@@ -2133,12 +2162,12 @@ bool BuildWeaponOverlayPath(const CGameActor& actor,
     }
 
     std::vector<std::string> tokenCandidates;
-    if (const std::string weaponTokenFromLua = g_session.GetPlayerWeaponToken(weaponType); !weaponTokenFromLua.empty()) {
-        tokenCandidates.push_back(weaponTokenFromLua);
+    if (const std::string overlayToken = GetPcOverlayWeaponToken(weaponType); !overlayToken.empty()) {
+        tokenCandidates.push_back(overlayToken);
     }
-    if (const char* token = GetGenericWeaponToken(weaponType)) {
-        if (tokenCandidates.empty() || tokenCandidates.front() != token) {
-            tokenCandidates.emplace_back(token);
+    if (const std::string weaponTokenFromLua = g_session.GetPlayerWeaponToken(weaponType); !weaponTokenFromLua.empty()) {
+        if (std::find(tokenCandidates.begin(), tokenCandidates.end(), weaponTokenFromLua) == tokenCandidates.end()) {
+            tokenCandidates.push_back(weaponTokenFromLua);
         }
     }
     if (tokenCandidates.empty()) {
@@ -2147,13 +2176,24 @@ bool BuildWeaponOverlayPath(const CGameActor& actor,
 
     for (const std::string& token : tokenCandidates) {
         char buffer[512] = {};
-        std::sprintf(buffer,
-            "%s%s_%s_%s.%s",
-            humanOverlayRoot.c_str(),
-            jobStem.c_str(),
-            sexToken.c_str(),
-            token.c_str(),
-            extension);
+        if (secondLayer) {
+            std::sprintf(buffer,
+                "%s%s_%s_%s_%s.%s",
+                humanOverlayRoot.c_str(),
+                jobStem.c_str(),
+                sexToken.c_str(),
+                token.c_str(),
+                kWeaponTokenLightSuffix,
+                extension);
+        } else {
+            std::sprintf(buffer,
+                "%s%s_%s_%s.%s",
+                humanOverlayRoot.c_str(),
+                jobStem.c_str(),
+                sexToken.c_str(),
+                token.c_str(),
+                extension);
+        }
 
         candidate.assign(buffer);
         if (g_resMgr.IsExist(candidate.c_str())) {

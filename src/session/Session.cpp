@@ -265,6 +265,72 @@ bool IsDualWeaponJob(int job)
     return job == 12 || job == 4013 || job == 4035;
 }
 
+int NormalizeDualWeaponFamilyType(int weaponType)
+{
+    switch (weaponType) {
+    case 1:
+        return 1;
+    case 2:
+    case 3:
+        return 2;
+    case 6:
+    case 7:
+        return 6;
+    default:
+        return 0;
+    }
+}
+
+int MakeWeaponTypeFromResolvedTypes(int primaryType, int secondaryType)
+{
+    if (primaryType <= 0) {
+        return secondaryType > 0 ? secondaryType : 0;
+    }
+    if (secondaryType <= 0) {
+        return primaryType;
+    }
+
+    const int primaryFamily = NormalizeDualWeaponFamilyType(primaryType);
+    const int secondaryFamily = NormalizeDualWeaponFamilyType(secondaryType);
+    if (primaryFamily == 0 || secondaryFamily == 0) {
+        return 0;
+    }
+
+    if (primaryFamily == 1 && secondaryFamily == 1) {
+        return 25;
+    }
+    if (primaryFamily == 2 && secondaryFamily == 2) {
+        return 26;
+    }
+    if (primaryFamily == 6 && secondaryFamily == 6) {
+        return 27;
+    }
+    if ((primaryFamily == 1 && secondaryFamily == 2) || (primaryFamily == 2 && secondaryFamily == 1)) {
+        return 28;
+    }
+    if ((primaryFamily == 1 && secondaryFamily == 6) || (primaryFamily == 6 && secondaryFamily == 1)) {
+        return 29;
+    }
+    if ((primaryFamily == 2 && secondaryFamily == 6) || (primaryFamily == 6 && secondaryFamily == 2)) {
+        return 30;
+    }
+
+    return 0;
+}
+
+int ResolveWeaponTypeOrViewType(const CSession& session, int value)
+{
+    if (value <= 0) {
+        return 0;
+    }
+
+    if (value <= 31) {
+        return value;
+    }
+
+    return session.GetWeaponTypeByItemId(value & 0xFFFF);
+}
+
 int NormalizePlayerBodyJob(int job)
 {
     if (job == JT_G_MASTER) {
@@ -1572,6 +1638,36 @@ int CSession::MakeWeaponTypeByItemId(int primaryWeaponItemId, int secondaryWeapo
     return result;
 }
 
+int CSession::ResolvePackedWeaponType(int job, int weaponValue) const
+{
+    if (weaponValue <= 0) {
+        return 0;
+    }
+
+    const int primaryValue = weaponValue & 0xFFFF;
+    const int secondaryValue = static_cast<int>((static_cast<unsigned int>(weaponValue) >> 16) & 0xFFFFu);
+
+    if (!IsDualWeaponJob(job)) {
+        return ResolveWeaponTypeOrViewType(*this, primaryValue);
+    }
+
+    const int primaryType = ResolveWeaponTypeOrViewType(*this, primaryValue);
+    const int secondaryType = ResolveWeaponTypeOrViewType(*this, secondaryValue);
+
+    if (secondaryType <= 0) {
+        return primaryType;
+    }
+
+    if (primaryValue > 31 || secondaryValue > 31) {
+        const int combinedType = MakeWeaponTypeByItemId(primaryValue, secondaryValue);
+        if (combinedType > 0) {
+            return combinedType;
+        }
+    }
+
+    return MakeWeaponTypeFromResolvedTypes(primaryType, secondaryType);
+}
+
 int CSession::GetCurrentPlayerWeaponValue() const
 {
     if (IsDualWeaponJob(m_playerJob) && (m_playerWeapon != 0 || m_playerShield != 0)) {
@@ -1646,19 +1742,7 @@ unsigned int CSession::GetEquippedRightHandWeaponItemId() const
 
 bool CSession::IsSecondAttack(int job, int sex, int weaponItemId) const
 {
-    int weaponType = weaponItemId;
-    if (weaponItemId >= 31) {
-        if (job == 12 || job == 4013 || job == 4035) {
-            const int secondaryWeapon = static_cast<int>((static_cast<unsigned int>(weaponItemId) >> 16) & 0xFFFFu);
-            if (GetWeaponTypeByItemId(secondaryWeapon) <= 0) {
-                weaponType = GetWeaponTypeByItemId(weaponItemId & 0xFFFF);
-            } else {
-                weaponType = MakeWeaponTypeByItemId(weaponItemId & 0xFFFF, secondaryWeapon);
-            }
-        } else {
-            weaponType = GetWeaponTypeByItemId(weaponItemId & 0xFFFF);
-        }
-    }
+    const int weaponType = ResolvePackedWeaponType(job, weaponItemId);
 
     if (job > 4001) {
         switch (job) {
@@ -1873,19 +1957,7 @@ bool CSession::IsSecondAttack(int job, int sex, int weaponItemId) const
 
 float CSession::GetPCAttackMotion(int job, int sex, int weaponItemId, int isSecondAttack) const
 {
-    int weaponType = weaponItemId;
-    if (weaponItemId >= 31) {
-        if (job == 12 || job == 4013 || job == 4035) {
-            const int secondaryWeapon = static_cast<int>((static_cast<unsigned int>(weaponItemId) >> 16) & 0xFFFFu);
-            if (GetWeaponTypeByItemId(secondaryWeapon) <= 0) {
-                weaponType = GetWeaponTypeByItemId(weaponItemId & 0xFFFF);
-            } else {
-                weaponType = MakeWeaponTypeByItemId(weaponItemId & 0xFFFF, secondaryWeapon);
-            }
-        } else {
-            weaponType = GetWeaponTypeByItemId(weaponItemId & 0xFFFF);
-        }
-    }
+    const int weaponType = ResolvePackedWeaponType(job, weaponItemId);
 
     if (isSecondAttack) {
         if (isSecondAttack == 1) {

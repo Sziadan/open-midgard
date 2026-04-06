@@ -193,6 +193,7 @@ public:
     int GetPlayerSkillPointCount() const;
     int GetWeaponTypeByItemId(int itemId) const;
     int MakeWeaponTypeByItemId(int primaryWeaponItemId, int secondaryWeaponItemId) const;
+    int ResolvePackedWeaponType(int job, int weaponValue) const;
     int GetCurrentPlayerWeaponValue() const;
     std::string GetPlayerWeaponToken(int weaponType) const;
     bool IsSecondAttack(int job, int sex, int weaponItemId) const;
