@@ -81,7 +81,7 @@ constexpr int kJobWarpNpc = 0x2D;
 constexpr int kJobWarpPortal = 0x80;
 constexpr int kJobPreWarpPortal = 0x81;
 constexpr u32 kRemoteMoveStallLogThresholdMs = 250;
-constexpr u32 kRuwachRelaunchMs = 200;
+constexpr u32 kRuwachRelaunchTicks = 200;
 constexpr int kEffectStateRuwachMask = 0x2000;
 
 struct MoveStallTraceState {
@@ -3766,16 +3766,17 @@ CGameActor::~CGameActor()
 u8 CGameActor::ProcessState() {
     ProcessWillBeAttacked();
 
-    const u32 nowMs = timeGetTime();
-    const u32 elapsedSinceState = nowMs - m_lastProcessStateTime;
-    m_lastProcessStateTime = nowMs;
-    m_effectLaunchCnt += elapsedSinceState;
-
-    if ((m_effectState & kEffectStateRuwachMask) != 0 && m_effectLaunchCnt >= kRuwachRelaunchMs) {
-        m_effectLaunchCnt = 0;
-        if (CRagEffect* effect = LaunchEffect(33, vector3d{}, 0.0f)) {
-            effect->SendMsg(effect, 44, (timeGetTime() >> 4) % 10 + 1, 0, 0);
+    if (m_effectState == 0) {
+        m_effectLaunchCnt = 36000;
+    } else {
+        if ((m_effectState & kEffectStateRuwachMask) != 0 && m_effectLaunchCnt >= kRuwachRelaunchTicks) {
+            m_effectLaunchCnt = 0;
+            if (CRagEffect* effect = LaunchEffect(33, vector3d{}, 0.0f)) {
+                effect->SendMsg(effect, 44, (timeGetTime() >> 4) % 10 + 1, 0, 0);
+            }
         }
+
+        ++m_effectLaunchCnt;
     }
 
     if (m_isMoving) {
