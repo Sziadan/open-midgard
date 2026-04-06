@@ -4896,13 +4896,13 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
                 usedRuntimeDirectionalAction = tryUseRuntimeDirectionalAction(baseBodyAction, baseBodyAction);
             }
 
-            if (usedRuntimeDirectionalAction && (m_isMoving || m_stateId == kMoveStateId)) {
-                headMotion = m_curMotion;
-            } else {
-            headMotion = ResolveHeadMotionFromBodyAction(bodyAction, m_headDir);
-            if (headMotion < 0) {
+            if (usedRuntimeDirectionalAction && m_isMoving) {
                 headMotion = ResolvePcMotionIndex(this, bodyAction, bodyActName);
-            }
+            } else {
+                headMotion = ResolveHeadMotionFromBodyAction(bodyAction, m_headDir);
+                if (headMotion < 0) {
+                    headMotion = ResolvePcMotionIndex(this, bodyAction, bodyActName);
+                }
             }
         }
     } else {
