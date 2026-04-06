@@ -109,6 +109,7 @@ constexpr u32 kStatusPlusAspd = 54;
 constexpr u32 kStatusJobLevel = 55;
 constexpr u32 kNotifyEffectBaseLevelUp = 0;
 constexpr int kEffectStateSightMask = 0x0001;
+constexpr int kEffectStateRuwachMask = 0x0002;
 constexpr int kEffectStateHidingMask = 0x0004;
 constexpr int kEffectStateSpecialHidingMask = 0x0040;
 constexpr int kEffectStateBurrowMask = 0x4000;
@@ -139,8 +140,6 @@ void RefreshActorEffectStatePresentation(CGameActor* actor, int oldEffectState)
         return;
     }
 
-    (void)oldEffectState;
-
     const int effectState = actor->m_effectState;
     const bool hiding = HasEffectStateFlag(effectState, kEffectStateHidingMask);
     const bool specialHiding = HasEffectStateFlag(effectState, kEffectStateSpecialHidingMask);
@@ -154,6 +153,15 @@ void RefreshActorEffectStatePresentation(CGameActor* actor, int oldEffectState)
 
     if (HasEffectStateFlag(effectState, kEffectStateSightMask) && !ActorHasAttachedEffect(actor, kSightStateEffectId)) {
         actor->LaunchEffect(kSightStateEffectId, vector3d{}, 0.0f);
+    }
+
+    const bool hadRuwach = HasEffectStateFlag(oldEffectState, kEffectStateRuwachMask);
+    const bool hasRuwach = HasEffectStateFlag(effectState, kEffectStateRuwachMask);
+    if (!hadRuwach && hasRuwach) {
+        actor->m_effectLaunchCnt = 0;
+        if (CRagEffect* effect = actor->LaunchEffect(22, vector3d{}, 0.0f)) {
+            effect->SendMsg(effect, 44, (timeGetTime() >> 4) % 10 + 1, 0, 0);
+        }
     }
 
     if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
