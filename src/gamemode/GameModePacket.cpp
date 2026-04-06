@@ -2649,6 +2649,48 @@ u32 ResolveAttackImpactDelayMs(const CGameActor& actor)
     return delayMs;
 }
 
+bool IsDualWeaponPcJob(int job)
+{
+    return job == 12 || job == 4013 || job == 4035;
+}
+
+int ResolveCombatHitWaveWeaponType(const CGameActor& sourceActor)
+{
+    int weaponValue = 0;
+
+    if (const CPc* pcActor = dynamic_cast<const CPc*>(&sourceActor)) {
+        weaponValue = pcActor->m_weapon & 0xFFFF;
+        if (IsDualWeaponPcJob(sourceActor.m_job) && pcActor->m_shield != 0) {
+            weaponValue = (pcActor->m_weapon & 0xFFFF) | ((pcActor->m_shield & 0xFFFF) << 16);
+        }
+    } else if (const CGrannyPc* grannyPcActor = dynamic_cast<const CGrannyPc*>(&sourceActor)) {
+        weaponValue = grannyPcActor->m_weapon & 0xFFFF;
+        if (IsDualWeaponPcJob(sourceActor.m_job) && grannyPcActor->m_shield != 0) {
+            weaponValue = (grannyPcActor->m_weapon & 0xFFFF) | ((grannyPcActor->m_shield & 0xFFFF) << 16);
+        }
+    }
+
+    const bool isLocalPlayer = sourceActor.m_gid != 0
+        && (sourceActor.m_gid == g_session.m_gid || sourceActor.m_gid == g_session.m_aid);
+    if (isLocalPlayer) {
+        const int localWeaponValue = g_session.GetCurrentPlayerWeaponValue();
+        if (localWeaponValue != 0) {
+            weaponValue = localWeaponValue;
+        }
+    }
+
+    if (weaponValue == 0) {
+        return -1;
+    }
+
+    int weaponType = g_session.ResolvePackedWeaponType(sourceActor.m_job, weaponValue);
+    if (weaponType <= 0 || weaponType >= 31) {
+        weaponType = g_session.ResolvePackedWeaponType(sourceActor.m_job, weaponValue & 0xFFFF);
+    }
+
+    return (weaponType > 0 && weaponType < 31) ? weaponType : -1;
+}
+
 void EmitCombatNumber(CGameActor* sourceActor, CGameActor* targetActor, int damage, u8 actionType)
 {
     if (!targetActor || damage == 0 || actionType == kNotifyActLuckyDodge) {
@@ -2761,13 +2803,8 @@ void PopulateCombatHitWaveName(CGameActor* sourceActor, CGameActor* targetActor,
     if (targetActor && targetActor->m_isPc != 0) {
         resolvedWaveName = g_session.GetJobHitWaveName(targetActor->m_job);
     } else if (sourceActor) {
-        int weaponType = -1;
-        if (const CPc* pcActor = dynamic_cast<const CPc*>(sourceActor)) {
-            weaponType = pcActor->m_weapon;
-        } else if (const CGrannyPc* grannyPcActor = dynamic_cast<const CGrannyPc*>(sourceActor)) {
-            weaponType = grannyPcActor->m_weapon;
-        }
-        resolvedWaveName = g_session.GetWeaponHitWaveName((weaponType >= 0 && weaponType < 31) ? weaponType : -1);
+        const int weaponType = ResolveCombatHitWaveWeaponType(*sourceActor);
+        resolvedWaveName = g_session.GetWeaponHitWaveName(weaponType);
     } else {
         resolvedWaveName = g_session.GetWeaponHitWaveName(-1);
     }
