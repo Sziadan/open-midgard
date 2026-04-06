@@ -3585,6 +3585,10 @@ UseSkillPacketInfo ResolveUseSkillPacketInfo(u16 skillId)
     UseSkillPacketInfo info;
     GetSkillActionInfo(static_cast<int>(skillId), info.beginEffectId, info.motionType);
 
+    if (skillId == 24) { // AL_RUWACH
+        info.launchUseSkill = false;
+    }
+
     LuaSkillEffectInfo luaInfo;
     if (g_buabridge.GetSkillEffectInfoBySkillId(static_cast<int>(skillId), &luaInfo)) {
         if (luaInfo.hasTargetEffectId) {
@@ -3611,8 +3615,6 @@ int ResolveSkillVisibleEffectId(u16 skillId, const UseSkillPacketInfo& packetInf
     }
 
     switch (skillId) {
-    case 24: // AL_RUWACH
-        return 24;
     case 33: // AL_ANGELUS
         return 41;
     case 35: // AL_CURE
