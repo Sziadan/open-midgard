@@ -379,6 +379,8 @@ public:
     int m_cachedBillboardSex;
     int m_cachedBillboardBodyPalette;
     int m_cachedBillboardHeadPalette;
+    int m_cachedBillboardWeapon;
+    int m_cachedBillboardShield;
     int m_cachedNonPcResourceJob;
     CActRes* m_cachedNonPcActRes;
     CSprRes* m_cachedNonPcSprRes;
