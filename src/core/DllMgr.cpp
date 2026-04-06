@@ -59,40 +59,9 @@ bool CDllMgr::Load(const std::string& dllName) {
         hMod = LoadLibraryA(sideBySide.c_str());
     }
 
-    if (!exeDir.empty() && !hMod) {
-        // 2) Output-local folder: <exe>/dlls
-        std::string localDlls = exeDir + "\\dlls\\" + dllName;
-        hMod = LoadLibraryA(localDlls.c_str());
-    }
-
-    if (!exeDir.empty() && !hMod) {
-        // 3) Dev-tree fallback: <exe>/../dlls
-        std::string parentDir = GetParentDirectory(exeDir);
-        if (!parentDir.empty()) {
-            std::string parentDlls = parentDir + "\\dlls\\" + dllName;
-            hMod = LoadLibraryA(parentDlls.c_str());
-        }
-    }
-
-    if (!exeDir.empty() && !hMod) {
-        // 4) Dev-tree fallback: <exe>/../../dlls (e.g. build/Debug -> repo/dlls)
-        std::string parentDir = GetParentDirectory(exeDir);
-        std::string grandParentDir = GetParentDirectory(parentDir);
-        if (!grandParentDir.empty()) {
-            std::string grandParentDlls = grandParentDir + "\\dlls\\" + dllName;
-            hMod = LoadLibraryA(grandParentDlls.c_str());
-        }
-    }
-
     if (!hMod) {
-        // Keep plain-name load for PATH/system DLLs.
+        // Fall back to the default Windows loader search path.
         hMod = LoadLibraryA(dllName.c_str());
-    }
-
-    if (!hMod) {
-        // Legacy working-directory fallback.
-        std::string fallback = "dlls\\" + dllName;
-        hMod = LoadLibraryA(fallback.c_str());
     }
 
     if (hMod) {

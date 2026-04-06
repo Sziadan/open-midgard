@@ -238,17 +238,6 @@ if(DEFINED DX7_INCLUDE)
     target_link_directories(open_midgard PRIVATE ${DX7_LIBDIR})
 endif()
 
-
-if(WIN32)
-    add_custom_command(TARGET open_midgard POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:open_midgard>/dlls"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/dlls"
-                "$<TARGET_FILE_DIR:open_midgard>/dlls"
-        COMMENT "Copying runtime DLLs to output folder"
-    )
-endif()
-
 ro_add_qt_runtime_deploy(open_midgard "$<TARGET_FILE_DIR:open_midgard>")
 
 if(RO_ENABLE_DEV_DEPLOY)

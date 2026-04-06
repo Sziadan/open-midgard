@@ -59,10 +59,6 @@ jobs:
           New-Item -ItemType Directory -Path $stagingDir | Out-Null
           Copy-Item "${{ matrix.output_dir }}/open-midgard.exe" $stagingDir
 
-          if (Test-Path "${{ matrix.output_dir }}/dlls") {
-            Copy-Item "${{ matrix.output_dir }}/dlls" $stagingDir -Recurse
-          }
-
           Compress-Archive -Path "$stagingDir/*" -DestinationPath $zipPath
 
       - name: Upload packaged artifact
