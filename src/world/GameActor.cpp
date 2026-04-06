@@ -3664,6 +3664,10 @@ u8 CGameActor::ProcessState() {
             m_roty = NormalizeAngle360(rotation);
         }
 
+        if (!m_isNeverAnimation) {
+            m_curAction = m_baseAction + Get8Dir(m_roty);
+        }
+
         if (m_gid != 0 && m_isPc == 0 && m_stateId != kDeathStateId) {
             MoveStallTraceState& trace = g_moveStallTraceByGid[m_gid];
             const bool movedThisFrame = prevPos.x != m_pos.x || prevPos.z != m_pos.z;
@@ -4915,6 +4919,13 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
                 headMotion = m_curMotion;
                 LogDeathBillboardSelectionOnce(*this, actRes, bodyAction, headMotion);
             } else {
+                const int directionalAction = m_baseAction + Get8Dir(m_roty);
+                const int resolvedDirectionalAction = ResolveAvailableActionIndex(actRes, directionalAction);
+                if (resolvedDirectionalAction >= 0) {
+                    bodyAction = resolvedDirectionalAction;
+                } else {
+                    bodyAction = directionalAction;
+                }
                 headMotion = ResolveSpriteMotionIndex(*this, actRes, bodyAction);
                 ProcessRenderMotionWaveEvents(this, actRes, bodyAction, headMotion);
             }
