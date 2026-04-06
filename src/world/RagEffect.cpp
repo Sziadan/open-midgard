@@ -532,6 +532,9 @@ void SetBandMode(EffectBandState* band, u8 mode)
     band->modes.fill(mode);
 }
 
+constexpr u8 kBandModeBeginCasting = 4;
+constexpr u8 kBandModeSaintCasting = 5;
+
 void ConfigureBand(CEffectPrim* prim,
     int bandIndex,
     int process,
@@ -557,6 +560,50 @@ void ConfigureBand(CEffectPrim* prim,
     band.fadeThreshold = fadeThreshold;
     band.radius = 0.0f;
     SetBandMode(&band, mode);
+}
+
+void ConfigureBeginCastingBand(CEffectPrim* prim,
+    int bandIndex,
+    int process,
+    float maxHeight,
+    float rotStart,
+    float distance,
+    float riseAngle,
+    float alphaCeiling,
+    u8 mode)
+{
+    ConfigureBand(prim, bandIndex, process, maxHeight, rotStart, distance, riseAngle, alphaCeiling, mode);
+    if (!prim || bandIndex < 0 || bandIndex >= static_cast<int>(prim->m_bands.size())) {
+        return;
+    }
+
+    EffectBandState& band = prim->m_bands[static_cast<size_t>(bandIndex)];
+    band.alpha = 0.0f;
+    band.radius = distance;
+}
+
+void ConfigureStandardBeginCastingBands(CEffectPrim* prim, float scale, float rotOff)
+{
+    if (!prim) {
+        return;
+    }
+
+    ConfigureBeginCastingBand(prim, 0, 0, 25.0f * scale, WrapAngle360(0.0f + rotOff), 4.5f * scale, 70.0f, 180.0f, kBandModeBeginCasting);
+    ConfigureBeginCastingBand(prim, 1, 0, 22.0f * scale, WrapAngle360(90.0f + rotOff), 5.0f * scale, 57.0f, 180.0f, kBandModeBeginCasting);
+    ConfigureBeginCastingBand(prim, 2, 0, 19.0f * scale, WrapAngle360(180.0f + rotOff), 5.5f * scale, 45.0f, 180.0f, kBandModeBeginCasting);
+    ConfigureBeginCastingBand(prim, 3, 0, 96.0f * scale, WrapAngle360(0.0f + rotOff), 4.0f * scale, 89.0f, 70.0f, kBandModeBeginCasting);
+}
+
+void ConfigureSaintCastingBands(CEffectPrim* prim, float scale, float rotOff, int startDelay)
+{
+    if (!prim) {
+        return;
+    }
+
+    ConfigureBeginCastingBand(prim, 0, startDelay + 0, 20.0f * scale, WrapAngle360(180.0f + rotOff), 4.1f * scale, 80.0f, 180.0f, kBandModeSaintCasting);
+    ConfigureBeginCastingBand(prim, 1, startDelay - 5, 19.0f * scale, WrapAngle360(270.0f + rotOff), 4.1f * scale, 80.0f, 180.0f, kBandModeSaintCasting);
+    ConfigureBeginCastingBand(prim, 2, startDelay - 10, 18.0f * scale, WrapAngle360(0.0f + rotOff), 4.1f * scale, 80.0f, 180.0f, kBandModeSaintCasting);
+    ConfigureBeginCastingBand(prim, 3, startDelay - 15, 17.0f * scale, WrapAngle360(90.0f + rotOff), 4.1f * scale, 80.0f, 180.0f, kBandModeSaintCasting);
 }
 
 // variant 0/1 match SpawnWarpZone2 m_stateCnt 1/2 band parameters; rotOff rotates all bands together.
@@ -787,6 +834,46 @@ void UpdateCastingBands(CEffectPrim* prim)
         }
 
         ++band.process;
+        const u8 mode = band.modes[0];
+        if ((mode == kBandModeBeginCasting || mode == kBandModeSaintCasting) && band.process < 0) {
+            continue;
+        }
+
+        if (mode == kBandModeBeginCasting) {
+            const float alphaCeiling = band.fadeThreshold >= 0.0f ? band.fadeThreshold : 180.0f;
+            const float initialDistance = band.radius > 0.0f ? band.radius : (std::max)(band.distance, 1.0f);
+            band.distance = (std::max)(0.0f, band.distance - 0.05f);
+            band.riseAngle = 90.0f - band.distance * 9.0f;
+            const float heightRatio = initialDistance > 0.0f ? band.distance / initialDistance : 0.0f;
+            band.heights.fill((std::max)(0.0f, band.maxHeight * heightRatio));
+            if (prim->m_stateCnt < prim->m_duration - 40) {
+                band.alpha = (std::min)(alphaCeiling, band.alpha + (band.maxHeight > 30.0f ? 4.0f : 8.0f));
+            } else {
+                band.alpha = (std::max)(0.0f, band.alpha - (band.maxHeight > 30.0f ? 4.0f : 6.0f));
+                if (band.alpha <= 0.0f) {
+                    band.active = false;
+                }
+            }
+            continue;
+        }
+
+        if (mode == kBandModeSaintCasting) {
+            const float alphaCeiling = band.fadeThreshold >= 0.0f ? band.fadeThreshold : 180.0f;
+            band.distance = band.radius > 0.0f ? band.radius : band.distance;
+            band.riseAngle = 80.0f;
+            const float growth = (std::min)(1.0f, static_cast<float>(band.process) / 16.0f);
+            band.heights.fill((std::max)(0.0f, band.maxHeight * growth));
+            if (prim->m_stateCnt < prim->m_duration - 20) {
+                band.alpha = (std::min)(alphaCeiling, band.alpha + 10.0f);
+            } else {
+                band.alpha = (std::max)(0.0f, band.alpha - 8.0f);
+                if (band.alpha <= 0.0f) {
+                    band.active = false;
+                }
+            }
+            continue;
+        }
+
         band.distance -= 0.05f;
         if (band.distance <= 0.0f) {
             band.distance = 10.0f;
@@ -2834,8 +2921,20 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         m_duration = effectId == 582 ? 124 : 112;
         break;
     case 12:
-        m_handler = Handler::Sight;
-        m_duration = 20;
+        m_handler = Handler::BeginCasting;
+        m_duration = 56;
+        break;
+    case 54:
+    case 55:
+    case 56:
+    case 57:
+    case 59:
+        m_handler = Handler::BeginCasting;
+        m_duration = 70;
+        break;
+    case 58:
+        m_handler = Handler::BeginCasting;
+        m_duration = 56;
         break;
     case 22:
         m_handler = Handler::Sight;
@@ -3631,6 +3730,103 @@ void CRagEffect::UpdateSuperAngel()
     }
 }
 
+void CRagEffect::SpawnBeginCasting()
+{
+    if (m_stateCnt != 0) {
+        return;
+    }
+
+    const vector3d base = ResolveBasePosition();
+    TryPlayEffectWaveAt(base, {
+        "effect\\EF_BeginSpell.wav",
+        "effect\\ef_beginspell.wav",
+    });
+
+    const auto launchCastingPrim = [&](CTexture* texture, COLORREF tintColor, float scale, bool saintCasting, int startDelay, float rotOffset) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_CASTINGRING4, vector3d{})) {
+            prim->m_renderFlag = 5u;
+            prim->m_duration = saintCasting ? (std::max)(m_duration, 56) : (std::max)(m_duration, 70);
+            prim->m_texture.push_back(texture);
+            prim->m_tintColor = tintColor;
+            if (saintCasting) {
+                ConfigureSaintCastingBands(prim, scale, rotOffset, startDelay);
+            } else {
+                ConfigureStandardBeginCastingBands(prim, scale, rotOffset);
+            }
+        }
+    };
+
+    switch (m_type) {
+    case 12: {
+        CTexture* ringYellow = ResolveEffectTextureCandidates({
+            "effect\\ring_yellow.tga",
+            "effect\\ring_yellow.bmp",
+            "effect\\ring_white.tga",
+        }, false);
+        launchCastingPrim(ringYellow, RGB(255, 236, 160), 1.15f, true, 0, 0.0f);
+        launchCastingPrim(ringYellow, RGB(255, 224, 140), 1.0f, true, 0, 22.5f);
+        break;
+    }
+    case 54: {
+        CTexture* ringBlue = ResolveEffectTextureCandidates({
+            "effect\\ring_blue.tga",
+            "effect\\ring_blue.bmp",
+        }, false);
+        launchCastingPrim(ringBlue, RGB(224, 240, 255), 1.08f, false, 0, 0.0f);
+        break;
+    }
+    case 55: {
+        CTexture* ringYellow = ResolveEffectTextureCandidates({
+            "effect\\ring_yellow.tga",
+            "effect\\ring_yellow.bmp",
+            "effect\\ring_white.tga",
+        }, false);
+        launchCastingPrim(ringYellow, RGB(255, 236, 172), 1.0f, false, 0, 0.0f);
+        break;
+    }
+    case 56: {
+        CTexture* magicGreen = ResolveEffectTextureCandidates({
+            "effect\\magic_green.tga",
+            "effect\\magic_green.bmp",
+            "effect\\Magic_Green.tga",
+        }, false);
+        launchCastingPrim(magicGreen, RGB(180, 255, 196), 1.0f, false, 0, 0.0f);
+        break;
+    }
+    case 57: {
+        CTexture* ringYellow = ResolveEffectTextureCandidates({
+            "effect\\ring_yellow.tga",
+            "effect\\ring_yellow.bmp",
+            "effect\\ring_white.tga",
+        }, false);
+        launchCastingPrim(ringYellow, RGB(255, 220, 132), 0.92f, false, 0, 0.0f);
+        break;
+    }
+    case 58: {
+        CTexture* ringWhite = ResolveEffectTextureCandidates({
+            "effect\\ring_white.tga",
+            "effect\\ring_white.bmp",
+            "effect\\ring_blue.tga",
+        }, false);
+        launchCastingPrim(ringWhite, RGB(255, 255, 255), 1.0f, true, 0, 0.0f);
+        launchCastingPrim(ringWhite, RGB(236, 244, 255), 0.92f, true, 0, 22.5f);
+        break;
+    }
+    case 59: {
+        CTexture* magicBlue = ResolveEffectTextureCandidates({
+            "effect\\magic_blue.tga",
+            "effect\\magic_blue.bmp",
+            "effect\\ring_white.tga",
+            "effect\\ring_blue.tga",
+        }, false);
+        launchCastingPrim(magicBlue, RGB(224, 240, 255), 1.0f, false, 0, 0.0f);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
 void CRagEffect::SpawnSightAura()
 {
     const vector3d base = ResolveBasePosition();
@@ -3981,6 +4177,9 @@ u8 CRagEffect::OnProcess()
             break;
         case Handler::SuperAngel:
             UpdateSuperAngel();
+            break;
+        case Handler::BeginCasting:
+            SpawnBeginCasting();
             break;
         case Handler::Sight:
             SpawnSight();
