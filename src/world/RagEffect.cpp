@@ -3116,11 +3116,20 @@ void CRagEffect::SpawnPortal()
 
 void CRagEffect::SpawnPortal2()
 {
+    const int variant = static_cast<int>(m_param[0]);
     CTexture* ringBlue = ResolveEffectTextureCandidates({
         "effect\\ring_blue.tga",
         "effect\\ring_blue.bmp",
         "effect\\ring_b.bmp",
     }, false);
+    CTexture* ringRed = ResolveEffectTextureCandidates({
+        "effect\\ring_red.tga",
+        "effect\\ring_red.bmp",
+    }, false);
+    CTexture* magicViolet = ResolveEffectTextureCandidates({
+        "effect\\magic_violet.tga",
+        "effect\\magic_violet.bmp",
+    }, true);
     CTexture* cloud11 = ResolveEffectTextureCandidates({
         "effect\\cloud11.tga",
         "effect\\cloud11.bmp",
@@ -3139,9 +3148,9 @@ void CRagEffect::SpawnPortal2()
         if (CEffectPrim* prim = LaunchEffectPrim(PP_CASTINGRING4, vector3d{})) {
             prim->m_renderFlag = 5u;
             prim->m_duration = m_duration;
-            prim->m_texture.push_back(ringBlue);
+            prim->m_texture.push_back(variant == 3 ? ringRed : magicViolet);
             prim->m_tintColor = RGB(255, 255, 255);
-            prim->m_size = 4.0f;
+            prim->m_size = variant == 3 ? 10.0f : 4.0f;
             ConfigureWarpZoneCastingBands(prim, 0, static_cast<float>(rand() % 360));
         }
     }
@@ -3150,13 +3159,13 @@ void CRagEffect::SpawnPortal2()
         if (CEffectPrim* prim = LaunchEffectPrim(PP_PORTAL, vector3d{})) {
             prim->m_renderFlag = 5u;
             prim->m_duration = m_duration;
-            prim->m_texture.push_back(ringBlue);
+            prim->m_texture.push_back(variant == 3 ? ringRed : ringBlue);
             prim->m_tintColor = RGB(255, 255, 255);
-            prim->m_size = 4.0f;
+            prim->m_size = variant == 3 ? 10.0f : 4.0f;
             prim->m_param[0] = 0.0f;
             ConfigureBand(prim, 0, 0, 6.0009999f, 0.0f, 0.0f, 2.0f, 3111.0f, 0);
-            ConfigureBand(prim, 1, -10, 6.0009999f, 25.0f, 0.0f, 3.0f, 3111.0f, 0);
-            ConfigureBand(prim, 2, -20, 6.0009999f, 50.0f, 0.0f, 4.0f, 3111.0f, 0);
+            ConfigureBand(prim, 1, variant == 3 ? -20 : -10, 6.0009999f, 25.0f, 0.0f, 3.0f, 3111.0f, 0);
+            ConfigureBand(prim, 2, variant == 3 ? -40 : -20, 6.0009999f, 50.0f, 0.0f, 4.0f, 3111.0f, 0);
         }
     }
 
@@ -3432,29 +3441,33 @@ void CRagEffect::SpawnJobLevelUp50()
         "effect\\magic_green.bmp",
         "effect\\magic_ring_a.bmp",
     }, false);
+    CTexture* magicBlue = ResolveEffectTextureCandidates({
+        "effect\\magic_blue.tga",
+        "effect\\magic_blue.bmp",
+    }, false);
 
-    auto spawnBurst = [&](float startAngle) {
+    auto spawnBurst = [&](CTexture* texture, COLORREF tintColor, float startAngle, float radiusSpeed, float size) {
         if (CEffectPrim* prim = LaunchEffectPrim(PP_RADIALSLASH, vector3d{})) {
             prim->m_duration = 42;
             prim->m_spawnCount = 4;
             prim->m_radius = 0.8f;
-            prim->m_radiusSpeed = 0.22f;
+            prim->m_radiusSpeed = radiusSpeed;
             prim->m_heightSize = 2.0f;
             prim->m_alpha = 0.0f;
             prim->m_alphaSpeed = 22.0f;
             prim->m_maxAlpha = 220.0f;
             prim->m_fadeOutCnt = 26;
-            prim->m_size = 1.0f;
-            prim->m_texture.push_back(magicGreen);
-            prim->m_tintColor = RGB(172, 255, 188);
+            prim->m_size = size;
+            prim->m_texture.push_back(texture);
+            prim->m_tintColor = tintColor;
             prim->m_param[0] = startAngle;
             prim->m_param[1] = 7.0f;
             prim->m_param[2] = 12.0f;
         }
     };
 
-    spawnBurst(0.0f);
-    spawnBurst(45.0f);
+    spawnBurst(magicGreen, RGB(172, 255, 188), 0.0f, 0.22f, 1.0f);
+    spawnBurst(magicBlue, RGB(156, 216, 255), 45.0f, 0.16f, 0.8f);
 }
 
 void CRagEffect::SpawnMapMagicZone()
@@ -3619,11 +3632,11 @@ void CRagEffect::SpawnSightAura()
         "effect\\ring_blue.bmp",
         "effect\\ring_b.bmp",
     }, false);
-    CTexture* glow = ResolveEffectTextureCandidates({
-        "effect\\magic_blue.tga",
-        "effect\\magic_sky.tga",
-        "effect\\cloud11.tga",
-        "effect\\cloud11.bmp",
+    CTexture* fireGlow = ResolveEffectTextureCandidates({
+        "effect\\magic_red.tga",
+        "effect\\magic_red.bmp",
+        "effect\\magic_violet.tga",
+        "effect\\magic_violet.bmp",
     }, true);
 
     if (m_stateCnt == 0) {
@@ -3668,7 +3681,9 @@ void CRagEffect::SpawnSightAura()
                 prim->m_alpha = 220.0f;
                 prim->m_alphaSpeed = -8.0f;
                 prim->m_fadeOutCnt = 10;
-                prim->m_texture.push_back(glow);
+                if (!ConfigureEffectSpritePrim(prim, { "fireball", "sight" }, 0, 1.0f, true, 2.0f, 0)) {
+                    prim->m_texture.push_back(fireGlow);
+                }
                 prim->m_tintColor = RGB(255, 220, 120);
             }
         }
@@ -3692,7 +3707,7 @@ void CRagEffect::SpawnSight()
         prim->m_sizeSpeed = -0.1f;
         prim->m_alpha = 150.0f;
         prim->m_alphaSpeed = -3.0f;
-        ConfigureEffectSpritePrim(prim, { "sight" }, 0, 1.0f, true, 3.0f, 0);
+        ConfigureEffectSpritePrim(prim, { "fireball", "sight" }, 0, 1.0f, true, 3.0f, 0);
     }
 
     if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
@@ -3732,7 +3747,7 @@ void CRagEffect::SpawnSightState()
         prim->m_sizeSpeed = -0.1f;
         prim->m_alpha = 50.0f;
         prim->m_alphaSpeed = -3.0f;
-        ConfigureEffectSpritePrim(prim, { "sight" }, 0, 1.0f, true, 3.0f, 0);
+        ConfigureEffectSpritePrim(prim, { "fireball", "sight" }, 0, 1.0f, true, 3.0f, 0);
     }
 }
 
@@ -3740,12 +3755,10 @@ void CRagEffect::SpawnFireBoltRain()
 {
     const vector3d target = m_hasTargetPos ? m_targetPos : ResolveBasePosition();
     CTexture* glow = ResolveEffectTextureCandidates({
-        "effect\\magic_violet.tga",
-        "effect\\magic_violet.bmp",
         "effect\\magic_red.tga",
         "effect\\magic_red.bmp",
-        "effect\\cloud11.tga",
-        "effect\\cloud11.bmp",
+        "effect\\magic_violet.tga",
+        "effect\\magic_violet.bmp",
     }, true);
 
     if (m_stateCnt == 0) {
@@ -3779,7 +3792,9 @@ void CRagEffect::SpawnFireBoltRain()
         prim->m_alpha = 245.0f;
         prim->m_alphaSpeed = -18.0f;
         prim->m_fadeOutCnt = 6;
-        prim->m_texture.push_back(glow);
+        if (!ConfigureEffectSpritePrim(prim, { "fireball" }, 0, 1.0f, true, 1.0f, 0)) {
+            prim->m_texture.push_back(glow);
+        }
         prim->m_tintColor = RGB(255, 168, 80);
     }
 }
