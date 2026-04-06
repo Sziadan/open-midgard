@@ -82,7 +82,7 @@ constexpr int kJobWarpPortal = 0x80;
 constexpr int kJobPreWarpPortal = 0x81;
 constexpr u32 kRemoteMoveStallLogThresholdMs = 250;
 constexpr u32 kRuwachRelaunchMs = 200;
-constexpr int kEffectStateRuwachMask = 0x0002;
+constexpr int kEffectStateRuwachMask = 0x2000;
 
 struct MoveStallTraceState {
     float lastPosX = 0.0f;

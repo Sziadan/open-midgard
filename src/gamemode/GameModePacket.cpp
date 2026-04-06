@@ -109,10 +109,10 @@ constexpr u32 kStatusPlusAspd = 54;
 constexpr u32 kStatusJobLevel = 55;
 constexpr u32 kNotifyEffectBaseLevelUp = 0;
 constexpr int kEffectStateSightMask = 0x0001;
-constexpr int kEffectStateRuwachMask = 0x0002;
+constexpr int kEffectStateRuwachMask = 0x2000;
 constexpr int kEffectStateHidingMask = 0x0004;
 constexpr int kEffectStateSpecialHidingMask = 0x0040;
-constexpr int kEffectStateBurrowMask = 0x4000;
+constexpr int kEffectStateBurrowMask = 0x0002;
 constexpr int kSightStateEffectId = 601;
 
 bool HasEffectStateFlag(int effectState, int mask)
