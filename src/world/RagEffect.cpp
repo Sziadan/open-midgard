@@ -262,6 +262,21 @@ const char* RefRuwachSpriteStem()
     return "\xC0\xCC\xC6\xD1\xC6\xAE";
 }
 
+const char* RefBlessingSpriteStem()
+{
+    return "\xC3\xE0\xBA\xB9";
+}
+
+const char* RefParticle2SpriteStem()
+{
+    return "particle2";
+}
+
+const char* RefParticle6SpriteStem()
+{
+    return "particle6";
+}
+
 void SubmitScreenQuad(const tlvertex3d& anchor,
     CTexture* texture,
     float offsetX,
@@ -1618,29 +1633,53 @@ void RenderCircleLayer(const CEffectPrim& prim,
     }
 }
 
-void AdvanceTextureMotion(CEffectPrim* prim)
+bool AdvanceTextureMotion(CEffectPrim* prim)
 {
     if (!prim) {
-        return;
+        return false;
+    }
+
+    if (!prim->m_spriteActName.empty() && !prim->m_spriteSprName.empty() && !prim->m_spriteRepeat) {
+        CActRes* actRes = g_resMgr.GetAs<CActRes>(prim->m_spriteActName.c_str());
+        if (actRes) {
+            int actionIndex = prim->m_spriteAction;
+            if (actRes->GetMotionCount(actionIndex) <= 0) {
+                actionIndex = 0;
+            }
+
+            const int motionCount = actRes->GetMotionCount(actionIndex);
+            if (motionCount > 0) {
+                const float frameDelay = prim->m_spriteFrameDelay > 0.0f
+                    ? prim->m_spriteFrameDelay
+                    : (std::max)(1.0f, actRes->GetDelay(actionIndex));
+                const int motionAdvance = static_cast<int>(static_cast<float>(prim->m_stateCnt) / frameDelay);
+                const int clampedBase = (std::max)(0, (std::min)(prim->m_spriteMotionBase, motionCount - 1));
+                if (clampedBase + motionAdvance >= motionCount) {
+                    return false;
+                }
+            }
+        }
     }
 
     const int textureCount = (std::max)(1, static_cast<int>(prim->m_texture.size()));
     if (textureCount <= 1) {
         prim->m_curMotion = 0;
-        return;
+        return true;
     }
 
     const int animSpeed = (std::max)(1, prim->m_animSpeed);
     if ((prim->m_stateCnt % animSpeed) != 0) {
-        return;
+        return true;
     }
 
     ++prim->m_curMotion;
     if (prim->m_repeatAnim) {
         prim->m_curMotion %= textureCount;
     } else if (prim->m_curMotion >= textureCount) {
-        prim->m_curMotion = textureCount - 1;
+        return false;
     }
+
+    return true;
 }
 
 void UpdateAlphaFade(CEffectPrim* prim)
@@ -1727,7 +1766,9 @@ bool UpdateCirclePrimitive(CEffectPrim* prim)
     if (prim->m_numSegments > 0) {
         ShiftCircleSegments(prim);
     }
-    AdvanceTextureMotion(prim);
+    if (!AdvanceTextureMotion(prim)) {
+        return false;
+    }
     return prim->m_stateCnt <= prim->m_duration || prim->m_alpha > 0.0f;
 }
 
@@ -1783,7 +1824,9 @@ bool UpdateCylinderPrimitive(CEffectPrim* prim)
     }
 
     UpdateAlphaFade(prim);
-    AdvanceTextureMotion(prim);
+    if (!AdvanceTextureMotion(prim)) {
+        return false;
+    }
     return prim->m_stateCnt <= prim->m_duration || prim->m_alpha > 0.0f;
 }
 
@@ -1815,7 +1858,9 @@ bool UpdateParticleOrbitPrimitive(CEffectPrim* prim)
     prim->m_size += prim->m_sizeSpeed;
 
     UpdateAlphaFade(prim);
-    AdvanceTextureMotion(prim);
+    if (!AdvanceTextureMotion(prim)) {
+        return false;
+    }
     return prim->m_stateCnt <= prim->m_duration || prim->m_alpha > 0.0f;
 }
 
@@ -1861,7 +1906,9 @@ bool UpdateFreeParticlePrimitive(CEffectPrim* prim, bool applyGravity, bool spli
 
     prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
     UpdateAlphaFade(prim);
-    AdvanceTextureMotion(prim);
+    if (!AdvanceTextureMotion(prim)) {
+        return false;
+    }
     return prim->m_stateCnt <= prim->m_duration || prim->m_alpha > 0.0f;
 }
 
@@ -2920,9 +2967,29 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         m_handler = Handler::SuperAngel;
         m_duration = effectId == 582 ? 124 : 112;
         break;
+    case 331:
+        m_handler = Handler::RecoveryHp;
+        m_duration = 30;
+        break;
+    case 332:
+        m_handler = Handler::RecoverySp;
+        m_duration = 30;
+        break;
     case 12:
         m_handler = Handler::BeginCasting;
         m_duration = 56;
+        break;
+    case 312:
+        m_handler = Handler::HealLight;
+        m_duration = 26;
+        break;
+    case 313:
+        m_handler = Handler::HealMedium;
+        m_duration = 34;
+        break;
+    case 325:
+        m_handler = Handler::HealLarge;
+        m_duration = 40;
         break;
     case 54:
     case 55:
@@ -2951,11 +3018,11 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     case 37:
     case 43:
         m_handler = Handler::IncAgility;
-        m_duration = 20;
+        m_duration = 60;
         break;
     case 42:
         m_handler = Handler::Blessing;
-        m_duration = 24;
+        m_duration = 60;
         break;
     case 601:
         m_handler = Handler::SightState;
@@ -3131,6 +3198,11 @@ bool CRagEffect::ResolveCullSphere(vector3d* outCenter, float* outRadius) const
     case Handler::Entry2:
     case Handler::JobLevelUp50:
     case Handler::SuperAngel:
+    case Handler::RecoveryHp:
+    case Handler::RecoverySp:
+    case Handler::HealLight:
+    case Handler::HealMedium:
+    case Handler::HealLarge:
     case Handler::Sight:
     case Handler::SightState:
     case Handler::FireBall:
@@ -3739,6 +3811,440 @@ void CRagEffect::UpdateSuperAngel()
     }
 }
 
+void CRagEffect::SpawnRecoveryHp()
+{
+    const vector3d base = ResolveBasePosition();
+    CTexture* alphaDown = ResolveEffectTextureCandidates({
+        "effect\\alpha_down.tga",
+        "effect\\alpha_down.bmp",
+        "effect\\alpha_dow.bmp",
+    }, false);
+    CTexture* ringWhite = ResolveEffectTextureCandidates({
+        "effect\\ring_white.tga",
+        "effect\\ring_white.bmp",
+        "effect\\ring_blue.tga",
+    }, false);
+    CTexture* sparkTexture = ResolveEffectTextureCandidates({
+        "effect\\alpha_center.tga",
+        "effect\\torch_green11.bmp",
+        "effect\\torch_green10.bmp",
+        "effect\\ring_white.tga",
+    }, false);
+
+    if (m_stateCnt == 0) {
+        TryPlayEffectWaveAt(base, {
+            "effect\\priest_recovery.wav",
+        });
+
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
+            prim->m_duration = m_duration;
+            prim->m_deltaPos2.y = -1.0f;
+            prim->m_innerSize = 9.0f;
+            prim->m_latitude = 90.0f;
+            prim->m_numSegments = 3;
+            prim->m_pattern |= 1;
+            prim->m_radius = 0.0f;
+            prim->m_radiusSpeed = 1.1f;
+            prim->m_radiusAccel = prim->m_radiusSpeed / static_cast<float>(prim->m_duration) * -0.45f;
+            prim->m_alpha = 170.0f;
+            prim->m_maxAlpha = 170.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 12;
+            prim->m_texture.push_back(alphaDown);
+            prim->m_tintColor = RGB(120, 255, 150);
+        }
+
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{})) {
+            prim->m_renderFlag = 5u;
+            prim->m_duration = m_duration;
+            prim->m_deltaPos2.y = -4.0f;
+            prim->m_arcAngle = 36.0f;
+            prim->m_innerSize = 1.8f;
+            prim->m_outerSize = 4.4f;
+            prim->m_innerSpeed = 0.03f;
+            prim->m_outerSpeed = 0.09f;
+            prim->m_heightSize = 28.0f;
+            prim->m_alpha = 0.0f;
+            prim->m_maxAlpha = 120.0f;
+            prim->m_alphaSpeed = 18.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 10;
+            prim->m_texture.push_back(ringWhite);
+            prim->m_tintColor = RGB(228, 255, 228);
+        }
+    }
+
+    if ((m_stateCnt % 2) != 0 || m_stateCnt > 14) {
+        return;
+    }
+
+    for (int index = 0; index < 3; ++index) {
+        const float angleDegrees = static_cast<float>(rand() % 360);
+        const float angleRadians = angleDegrees * (kPi / 180.0f);
+        const float radius = static_cast<float>(rand() % 6 + 2);
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
+            prim->m_renderFlag = 5u;
+            prim->m_duration = 18 + rand() % 6;
+            prim->m_deltaPos2 = {
+                std::sin(angleRadians) * radius,
+                -16.0f + static_cast<float>(rand() % 6),
+                -std::cos(angleRadians) * radius
+            };
+            prim->m_latitude = -90.0f;
+            prim->m_longitude = angleDegrees;
+            prim->m_speed = 0.26f + static_cast<float>(rand() % 8) * 0.02f;
+            prim->m_accel = -prim->m_speed / static_cast<float>(prim->m_duration) * 0.3f;
+            prim->m_size = 1.2f + static_cast<float>(rand() % 5) * 0.15f;
+            prim->m_sizeSpeed = -0.02f;
+            prim->m_alpha = 220.0f;
+            prim->m_maxAlpha = 220.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 8;
+            prim->m_texture.push_back(sparkTexture);
+            prim->m_tintColor = RGB(220, 255, 220);
+        }
+    }
+}
+
+void CRagEffect::SpawnRecoverySp()
+{
+    const vector3d base = ResolveBasePosition();
+    CTexture* alphaDown = ResolveEffectTextureCandidates({
+        "effect\\alpha_down.tga",
+        "effect\\alpha_down.bmp",
+        "effect\\alpha_dow.bmp",
+    }, false);
+    CTexture* ringBlue = ResolveEffectTextureCandidates({
+        "effect\\ring_blue.tga",
+        "effect\\ring_blue.bmp",
+        "effect\\ring_b.bmp",
+    }, false);
+    CTexture* sparkTexture = ResolveEffectTextureCandidates({
+        "effect\\alpha_center.tga",
+        "effect\\magic_blue.tga",
+        "effect\\ring_blue.tga",
+    }, false);
+
+    if (m_stateCnt == 0) {
+        TryPlayEffectWaveAt(base, {
+            "effect\\priest_recovery.wav",
+        });
+
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
+            prim->m_duration = m_duration;
+            prim->m_deltaPos2.y = -1.0f;
+            prim->m_innerSize = 9.0f;
+            prim->m_latitude = 90.0f;
+            prim->m_numSegments = 3;
+            prim->m_pattern |= 1;
+            prim->m_radius = 0.0f;
+            prim->m_radiusSpeed = 1.0f;
+            prim->m_radiusAccel = prim->m_radiusSpeed / static_cast<float>(prim->m_duration) * -0.4f;
+            prim->m_alpha = 150.0f;
+            prim->m_maxAlpha = 150.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 12;
+            prim->m_texture.push_back(alphaDown);
+            prim->m_tintColor = RGB(96, 180, 255);
+        }
+
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{})) {
+            prim->m_renderFlag = 5u;
+            prim->m_duration = m_duration;
+            prim->m_deltaPos2.y = -4.0f;
+            prim->m_arcAngle = 36.0f;
+            prim->m_innerSize = 2.0f;
+            prim->m_outerSize = 4.8f;
+            prim->m_innerSpeed = 0.04f;
+            prim->m_outerSpeed = 0.1f;
+            prim->m_heightSize = 30.0f;
+            prim->m_alpha = 0.0f;
+            prim->m_maxAlpha = 112.0f;
+            prim->m_alphaSpeed = 16.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 10;
+            prim->m_texture.push_back(ringBlue);
+            prim->m_tintColor = RGB(156, 220, 255);
+        }
+    }
+
+    if ((m_stateCnt % 2) != 0 || m_stateCnt > 14) {
+        return;
+    }
+
+    for (int index = 0; index < 4; ++index) {
+        const float angleDegrees = static_cast<float>(rand() % 360);
+        const float angleRadians = angleDegrees * (kPi / 180.0f);
+        const float radius = static_cast<float>(rand() % 7 + 2);
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
+            prim->m_renderFlag = 5u;
+            prim->m_duration = 20 + rand() % 6;
+            prim->m_deltaPos2 = {
+                std::sin(angleRadians) * radius,
+                -18.0f + static_cast<float>(rand() % 8),
+                -std::cos(angleRadians) * radius
+            };
+            prim->m_latitude = -90.0f;
+            prim->m_longitude = angleDegrees;
+            prim->m_speed = 0.24f + static_cast<float>(rand() % 8) * 0.02f;
+            prim->m_accel = -prim->m_speed / static_cast<float>(prim->m_duration) * 0.25f;
+            prim->m_size = 1.1f + static_cast<float>(rand() % 5) * 0.12f;
+            prim->m_sizeSpeed = -0.015f;
+            prim->m_alpha = 210.0f;
+            prim->m_maxAlpha = 210.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 8;
+            prim->m_texture.push_back(sparkTexture);
+            prim->m_tintColor = RGB(180, 228, 255);
+        }
+    }
+}
+
+void CRagEffect::SpawnHealLight()
+{
+    CTexture* alphaDown = ResolveEffectTextureCandidates({
+        "effect\\alpha_down.tga",
+        "effect\\alpha_down.bmp",
+        "effect\\alpha_dow.bmp",
+    }, false);
+    CTexture* sparkTexture = ResolveEffectTextureCandidates({
+        "effect\\alpha_center.tga",
+        "effect\\ring_white.tga",
+    }, false);
+
+    if (m_stateCnt == 0) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
+            prim->m_duration = m_duration;
+            prim->m_deltaPos2.y = -1.0f;
+            prim->m_innerSize = 8.0f;
+            prim->m_latitude = 90.0f;
+            prim->m_numSegments = 3;
+            prim->m_pattern |= 1;
+            prim->m_radius = 0.0f;
+            prim->m_radiusSpeed = 0.95f;
+            prim->m_radiusAccel = prim->m_radiusSpeed / static_cast<float>(prim->m_duration) * -0.4f;
+            prim->m_alpha = 150.0f;
+            prim->m_maxAlpha = 150.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 10;
+            prim->m_texture.push_back(alphaDown);
+            prim->m_tintColor = RGB(176, 255, 176);
+        }
+    }
+
+    if ((m_stateCnt % 2) != 0 || m_stateCnt > 8) {
+        return;
+    }
+
+    for (int index = 0; index < 2; ++index) {
+        const float angleDegrees = static_cast<float>(rand() % 360);
+        const float angleRadians = angleDegrees * (kPi / 180.0f);
+        const float radius = static_cast<float>(rand() % 4 + 1);
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
+            prim->m_renderFlag = 5u;
+            prim->m_duration = 16;
+            prim->m_deltaPos2 = {
+                std::sin(angleRadians) * radius,
+                -16.0f + static_cast<float>(rand() % 6),
+                -std::cos(angleRadians) * radius
+            };
+            prim->m_latitude = -90.0f;
+            prim->m_longitude = angleDegrees;
+            prim->m_speed = 0.22f;
+            prim->m_accel = -prim->m_speed / static_cast<float>(prim->m_duration) * 0.25f;
+            prim->m_size = 1.0f;
+            prim->m_sizeSpeed = -0.02f;
+            prim->m_alpha = 180.0f;
+            prim->m_maxAlpha = 180.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 7;
+            prim->m_texture.push_back(sparkTexture);
+            prim->m_tintColor = RGB(228, 255, 228);
+        }
+    }
+}
+
+void CRagEffect::SpawnHealMedium()
+{
+    CTexture* alphaDown = ResolveEffectTextureCandidates({
+        "effect\\alpha_down.tga",
+        "effect\\alpha_down.bmp",
+        "effect\\alpha_dow.bmp",
+    }, false);
+    CTexture* ringWhite = ResolveEffectTextureCandidates({
+        "effect\\ring_white.tga",
+        "effect\\ring_white.bmp",
+        "effect\\ring_blue.tga",
+    }, false);
+    CTexture* sparkTexture = ResolveEffectTextureCandidates({
+        "effect\\alpha_center.tga",
+        "effect\\ring_white.tga",
+        "effect\\torch_green11.bmp",
+    }, false);
+
+    if (m_stateCnt == 0) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
+            prim->m_duration = m_duration;
+            prim->m_deltaPos2.y = -1.0f;
+            prim->m_innerSize = 9.5f;
+            prim->m_latitude = 90.0f;
+            prim->m_numSegments = 3;
+            prim->m_pattern |= 1;
+            prim->m_radius = 0.0f;
+            prim->m_radiusSpeed = 1.1f;
+            prim->m_radiusAccel = prim->m_radiusSpeed / static_cast<float>(prim->m_duration) * -0.42f;
+            prim->m_alpha = 165.0f;
+            prim->m_maxAlpha = 165.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 12;
+            prim->m_texture.push_back(alphaDown);
+            prim->m_tintColor = RGB(156, 255, 176);
+        }
+
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{})) {
+            prim->m_renderFlag = 5u;
+            prim->m_duration = m_duration;
+            prim->m_deltaPos2.y = -4.0f;
+            prim->m_arcAngle = 36.0f;
+            prim->m_innerSize = 1.8f;
+            prim->m_outerSize = 4.5f;
+            prim->m_innerSpeed = 0.03f;
+            prim->m_outerSpeed = 0.08f;
+            prim->m_heightSize = 28.0f;
+            prim->m_alpha = 0.0f;
+            prim->m_maxAlpha = 112.0f;
+            prim->m_alphaSpeed = 16.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 10;
+            prim->m_texture.push_back(ringWhite);
+            prim->m_tintColor = RGB(236, 255, 236);
+        }
+    }
+
+    if ((m_stateCnt % 2) != 0 || m_stateCnt > 12) {
+        return;
+    }
+
+    for (int index = 0; index < 3; ++index) {
+        const float angleDegrees = static_cast<float>(rand() % 360);
+        const float angleRadians = angleDegrees * (kPi / 180.0f);
+        const float radius = static_cast<float>(rand() % 6 + 2);
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
+            prim->m_renderFlag = 5u;
+            prim->m_duration = 18 + rand() % 4;
+            prim->m_deltaPos2 = {
+                std::sin(angleRadians) * radius,
+                -17.0f + static_cast<float>(rand() % 8),
+                -std::cos(angleRadians) * radius
+            };
+            prim->m_latitude = -90.0f;
+            prim->m_longitude = angleDegrees;
+            prim->m_speed = 0.25f + static_cast<float>(rand() % 5) * 0.02f;
+            prim->m_accel = -prim->m_speed / static_cast<float>(prim->m_duration) * 0.25f;
+            prim->m_size = 1.15f + static_cast<float>(rand() % 4) * 0.12f;
+            prim->m_sizeSpeed = -0.015f;
+            prim->m_alpha = 210.0f;
+            prim->m_maxAlpha = 210.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 7;
+            prim->m_texture.push_back(sparkTexture);
+            prim->m_tintColor = RGB(232, 255, 232);
+        }
+    }
+}
+
+void CRagEffect::SpawnHealLarge()
+{
+    CTexture* alphaDown = ResolveEffectTextureCandidates({
+        "effect\\alpha_down.tga",
+        "effect\\alpha_down.bmp",
+        "effect\\alpha_dow.bmp",
+    }, false);
+    CTexture* ringWhite = ResolveEffectTextureCandidates({
+        "effect\\ring_white.tga",
+        "effect\\ring_white.bmp",
+        "effect\\ring_blue.tga",
+    }, false);
+    CTexture* sparkTexture = ResolveEffectTextureCandidates({
+        "effect\\alpha_center.tga",
+        "effect\\ring_white.tga",
+        "effect\\torch_green12.bmp",
+    }, false);
+
+    if (m_stateCnt == 0) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
+            prim->m_duration = m_duration;
+            prim->m_deltaPos2.y = -1.0f;
+            prim->m_innerSize = 11.0f;
+            prim->m_latitude = 90.0f;
+            prim->m_numSegments = 3;
+            prim->m_pattern |= 1;
+            prim->m_radius = 0.0f;
+            prim->m_radiusSpeed = 1.2f;
+            prim->m_radiusAccel = prim->m_radiusSpeed / static_cast<float>(prim->m_duration) * -0.35f;
+            prim->m_alpha = 175.0f;
+            prim->m_maxAlpha = 175.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 14;
+            prim->m_texture.push_back(alphaDown);
+            prim->m_tintColor = RGB(180, 255, 196);
+        }
+
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
+            prim->m_duration = m_duration;
+            prim->m_deltaPos2.y = -1.0f;
+            prim->m_innerSize = 14.0f;
+            prim->m_latitude = 90.0f;
+            prim->m_numSegments = 3;
+            prim->m_pattern |= 1;
+            prim->m_radius = 0.0f;
+            prim->m_radiusSpeed = 1.45f;
+            prim->m_radiusAccel = prim->m_radiusSpeed / static_cast<float>(prim->m_duration) * -0.35f;
+            prim->m_alpha = 120.0f;
+            prim->m_maxAlpha = 120.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 12;
+            prim->m_texture.push_back(ringWhite);
+            prim->m_tintColor = RGB(255, 255, 255);
+        }
+
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{})) {
+            prim->m_renderFlag = 5u;
+            prim->m_duration = m_duration;
+            prim->m_deltaPos2.y = -5.0f;
+            prim->m_arcAngle = 36.0f;
+            prim->m_innerSize = 2.2f;
+            prim->m_outerSize = 5.2f;
+            prim->m_innerSpeed = 0.04f;
+            prim->m_outerSpeed = 0.11f;
+            prim->m_heightSize = 34.0f;
+            prim->m_alpha = 0.0f;
+            prim->m_maxAlpha = 124.0f;
+            prim->m_alphaSpeed = 18.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 12;
+            prim->m_texture.push_back(ringWhite);
+            prim->m_tintColor = RGB(240, 255, 240);
+        }
+    }
+
+    if ((m_stateCnt % 2) != 0 || m_stateCnt > 16) {
+        return;
+    }
+
+    for (int index = 0; index < 4; ++index) {
+        const float angleDegrees = static_cast<float>(rand() % 360);
+        const float angleRadians = angleDegrees * (kPi / 180.0f);
+        const float radius = static_cast<float>(rand() % 8 + 2);
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
+            prim->m_renderFlag = 5u;
+            prim->m_duration = 20 + rand() % 6;
+            prim->m_deltaPos2 = {
+                std::sin(angleRadians) * radius,
+                -18.0f + static_cast<float>(rand() % 10),
+                -std::cos(angleRadians) * radius
+            };
+            prim->m_latitude = -90.0f;
+            prim->m_longitude = angleDegrees;
+            prim->m_speed = 0.28f + static_cast<float>(rand() % 6) * 0.025f;
+            prim->m_accel = -prim->m_speed / static_cast<float>(prim->m_duration) * 0.22f;
+            prim->m_size = 1.2f + static_cast<float>(rand() % 5) * 0.15f;
+            prim->m_sizeSpeed = -0.012f;
+            prim->m_alpha = 220.0f;
+            prim->m_maxAlpha = 220.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 8;
+            prim->m_texture.push_back(sparkTexture);
+            prim->m_tintColor = RGB(244, 255, 244);
+        }
+    }
+}
+
 void CRagEffect::SpawnBeginCasting()
 {
     if (m_stateCnt != 0) {
@@ -3838,8 +4344,8 @@ void CRagEffect::SpawnBeginCasting()
 
 void CRagEffect::SpawnIncAgility()
 {
-    const vector3d base = ResolveBasePosition();
     const bool dexVariant = m_type == 43;
+    const vector3d base = ResolveBasePosition();
     CTexture* overlayTexture = ResolveEffectTextureCandidates({
         dexVariant ? "effect\\dex_agi_up.bmp" : "effect\\agi_up.bmp",
         dexVariant ? "effect\\agi_up.bmp" : "effect\\dex_agi_up.bmp",
@@ -3860,35 +4366,45 @@ void CRagEffect::SpawnIncAgility()
 
         if (CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE, vector3d{})) {
             prim->m_duration = m_duration;
-            prim->m_outerSize = 3.35f;
-            prim->m_heightSize = 1.7f;
-            prim->m_param[2] = -10.0f;
+            prim->m_longitude = 0.0f;
+            prim->m_speed = 1.5f;
+            prim->m_accel = prim->m_speed / static_cast<float>(prim->m_duration) * -1.2f;
+            prim->m_outerSize = 40.0f / 12.0f;
+            prim->m_heightSize = 20.0f / 12.0f;
             prim->m_alpha = 0.0f;
-            prim->m_alphaSpeed = 20.0f;
             prim->m_maxAlpha = 200.0f;
-            prim->m_fadeOutCnt = 6;
+            prim->m_alphaSpeed = prim->m_maxAlpha * 0.06666667f;
+            prim->m_fadeOutCnt = prim->m_duration - 15;
             prim->m_texture.push_back(overlayTexture);
             prim->m_tintColor = RGB(255, 255, 255);
         }
-        for (int index = 0; index < 5; ++index) {
-            if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCROSSTEXTURE, vector3d{})) {
-                const float angle = (72.0f * static_cast<float>(index) + static_cast<float>(rand() % 24)) * (kPi / 180.0f);
-                const float radius = 2.0f + static_cast<float>(rand() % 7);
-                prim->m_duration = 18;
-                prim->m_deltaPos2 = {
-                    std::sin(angle) * radius,
-                    -10.0f + static_cast<float>(rand() % 5),
-                    -std::cos(angle) * radius
-                };
-                prim->m_size = 0.85f + static_cast<float>(rand() % 4) * 0.08f;
-                prim->m_heightSize = 0.18f;
-                prim->m_alpha = 0.0f;
-                prim->m_alphaSpeed = 28.0f;
-                prim->m_maxAlpha = 200.0f;
-                prim->m_fadeOutCnt = 7;
-                prim->m_texture.push_back(trailTexture);
-                prim->m_tintColor = dexVariant ? RGB(220, 244, 255) : RGB(210, 255, 220);
-            }
+    }
+
+    if ((m_stateCnt % 2) == 0) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCROSSTEXTURE, vector3d{})) {
+            prim->m_duration = 50;
+            const float angle = static_cast<float>(rand() % 360);
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendYRotation(prim->m_matrix, angle * (kPi / 180.0f));
+
+            const float radius = static_cast<float>(rand() % 7 + 2);
+            prim->m_deltaPos2 = {
+                radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
+                radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
+                radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
+            };
+
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendXRotation(prim->m_matrix, 90.0f * (kPi / 180.0f));
+            prim->m_speed = static_cast<float>(rand() % 50 + 20) * 0.01f;
+            prim->m_size = static_cast<float>(rand() % 60 + 30) * (0.1f / 34.0f);
+            prim->m_heightSize = 0.18000001f;
+            prim->m_alpha = 0.0f;
+            prim->m_maxAlpha = 200.0f;
+            prim->m_alphaSpeed = prim->m_maxAlpha * 0.050000001f;
+            prim->m_fadeOutCnt = prim->m_duration - 20;
+            prim->m_texture.push_back(trailTexture);
+            prim->m_tintColor = RGB(255, 255, 255);
         }
     }
 }
@@ -3923,49 +4439,51 @@ void CRagEffect::SpawnBlessing()
         if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
             prim->m_duration = m_duration;
             prim->m_pattern |= 1;
+            prim->m_renderFlag |= 0x200;
             prim->m_radius = 10.0f;
             prim->m_latitude = 90.0f;
-            prim->m_deltaPos2.y = -1.0f;
             prim->m_alpha = 0.0f;
-            prim->m_alphaSpeed = 8.0f;
             prim->m_maxAlpha = 100.0f;
-            prim->m_fadeOutCnt = 8;
+            prim->m_alphaSpeed = prim->m_maxAlpha * 0.033333335f;
+            prim->m_fadeOutCnt = prim->m_duration - 30;
             prim->m_texture.push_back(alphaDown);
             prim->m_tintColor = RGB(32, 176, 232);
         }
-        for (int index = 0; index < 3; ++index) {
-            if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
-                prim->m_duration = 16;
-                prim->m_deltaPos2 = { 0.0f, -18.0f - static_cast<float>(index * 2), 0.0f };
-                prim->m_size = 1.0f - static_cast<float>(index) * 0.12f;
-                prim->m_sizeSpeed = -0.03f;
-                prim->m_alpha = 180.0f - static_cast<float>(index) * 28.0f;
-                prim->m_alphaSpeed = -8.0f;
-                prim->m_texture.push_back(blessingBurstTexture);
-                prim->m_tintColor = RGB(220, 244, 255);
-            }
-        }
+    }
 
-        for (int index = 0; index < 4; ++index) {
-            if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEGRAVITY, vector3d{})) {
-                const float angle = (90.0f * static_cast<float>(index) + static_cast<float>(rand() % 20)) * (kPi / 180.0f);
-                const float radius = 2.0f + static_cast<float>(rand() % 6);
-                prim->m_duration = 22;
-                prim->m_deltaPos2 = {
-                    std::sin(angle) * radius,
-                    -18.0f,
-                    -std::cos(angle) * radius
-                };
-                prim->m_gravSpeed = -0.14f;
-                prim->m_gravAccel = 0.014f;
-                prim->m_size = 0.7f + static_cast<float>(rand() % 4) * 0.05f;
-                prim->m_sizeSpeed = -0.02f;
-                prim->m_alpha = 0.0f;
-                prim->m_alphaSpeed = 16.0f;
-                prim->m_maxAlpha = 180.0f;
-                prim->m_fadeOutCnt = 8;
-                prim->m_texture.push_back(sparkleTexture);
-                prim->m_tintColor = RGB(140, 220, 255);
+    if ((m_stateCnt % 3) == 0 && m_stateCnt < 10) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
+            prim->m_duration = m_duration;
+            prim->m_animSpeed = 2;
+            prim->m_alpha = static_cast<float>(200 - 6 * m_stateCnt);
+            prim->m_param[2] = -25.0f;
+            prim->m_tintColor = RGB(255, 255, 255);
+            ConfigureEffectSpritePrim(prim, { RefBlessingSpriteStem() }, 0, 1.0f, false, 2.0f, 0);
+        }
+    }
+
+    if ((m_stateCnt % 4) == 0) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
+            prim->m_duration = 80;
+            prim->m_pattern |= 0x80;
+            const float angle = static_cast<float>(rand() % 360);
+            const float radius = static_cast<float>(rand() % 7 + 2);
+            prim->m_deltaPos2 = {
+                std::sin(angle * (kPi / 180.0f)) * radius,
+                -25.0f,
+                -std::cos(angle * (kPi / 180.0f)) * radius
+            };
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendXRotation(prim->m_matrix, -90.0f * (kPi / 180.0f));
+            prim->m_speed = static_cast<float>(rand() % 20 + 20) * 0.01f;
+            prim->m_accel = prim->m_speed / static_cast<float>(prim->m_duration) * -0.5f;
+            prim->m_alpha = 0.0f;
+            prim->m_size = 0.5f;
+            prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 5;
+            prim->m_alphaSpeed = prim->m_maxAlpha * 0.1f;
+            prim->m_tintColor = RGB(255, 255, 255);
+            if (!ConfigureEffectSpritePrim(prim, { RefParticle6SpriteStem() }, 0, 1.0f, false, 0.0f, 0)) {
+                prim->m_texture.push_back(sparkleTexture ? sparkleTexture : blessingBurstTexture);
             }
         }
     }
@@ -4173,7 +4691,7 @@ void CRagEffect::SpawnRuwach()
         prim->m_alpha = 250.0f;
         prim->m_alphaSpeed = -3.0f;
         prim->m_fadeOutCnt = prim->m_duration - 6;
-        ConfigureEffectSpritePrim(prim, { "particle2" }, 0, 1.0f, false, 0.0f, 0);
+        ConfigureEffectSpritePrim(prim, { RefParticle2SpriteStem() }, 0, 1.0f, false, 0.0f, 0);
     }
 
     if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
@@ -4322,8 +4840,23 @@ u8 CRagEffect::OnProcess()
         case Handler::SuperAngel:
             UpdateSuperAngel();
             break;
+        case Handler::RecoveryHp:
+            SpawnRecoveryHp();
+            break;
+        case Handler::RecoverySp:
+            SpawnRecoverySp();
+            break;
         case Handler::BeginCasting:
             SpawnBeginCasting();
+            break;
+        case Handler::HealLight:
+            SpawnHealLight();
+            break;
+        case Handler::HealMedium:
+            SpawnHealMedium();
+            break;
+        case Handler::HealLarge:
+            SpawnHealLarge();
             break;
         case Handler::IncAgility:
             SpawnIncAgility();

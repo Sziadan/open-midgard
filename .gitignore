@@ -2,6 +2,7 @@ Ref/
 HighPriest.exe.h
 HighPriest.exe.utf8.h
 HighPriest.exe.c
+HighPriest.exe
 
 .cache/
 .venv/

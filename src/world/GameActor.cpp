@@ -3650,6 +3650,7 @@ void CAbleToMakeEffect::DetachEffects()
             effect->DetachFromMaster();
         }
     }
+    m_effectList.clear();
     m_beginSpellEffect = nullptr;
     m_magicTargetEffect = nullptr;
 }
@@ -4016,7 +4017,9 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         // Same begin-spell / buff ring STR as already showing: only refresh duration (msg 80). Re-launching
         // would run CRagEffect::Init again and replay EzStr startup SFX (e.g. Angelus after level-up refresh).
         if (m_beginSpellEffect && m_beginSpellEffect->GetEffectType() == effectId) {
-            m_beginSpellEffect->SendMsg(m_beginSpellEffect, 80, par2, 0, 0);
+            if (static_cast<int>(par2) > 0) {
+                m_beginSpellEffect->SendMsg(m_beginSpellEffect, 80, par2, 0, 0);
+            }
             return;
         }
         if (m_beginSpellEffect) {
@@ -4025,7 +4028,9 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         }
         m_beginSpellEffect = LaunchEffect(effectId, vector3d{}, 0.0f);
         if (m_beginSpellEffect) {
-            m_beginSpellEffect->SendMsg(m_beginSpellEffect, 80, par2, 0, 0);
+            if (static_cast<int>(par2) > 0) {
+                m_beginSpellEffect->SendMsg(m_beginSpellEffect, 80, par2, 0, 0);
+            }
         }
         return;
     }
@@ -4034,7 +4039,9 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
             m_magicTargetEffect = LaunchEffect(static_cast<int>(par1), vector3d{}, 0.0f);
         }
         if (m_magicTargetEffect) {
-            m_magicTargetEffect->SendMsg(m_magicTargetEffect, 80, par2, 0, 0);
+            if (static_cast<int>(par2) > 0) {
+                m_magicTargetEffect->SendMsg(m_magicTargetEffect, 80, par2, 0, 0);
+            }
         }
         return;
     case 87:

@@ -247,6 +247,11 @@ bool IsMapLoadingActive(const CGameMode& mode);
 void ApplyEnemyCursorMagnet(CGameMode& mode, POINT* cursorPos);
 bool IsMonsterLikeHoverActor(const CGameActor* actor);
 bool IsWalkableAttrCell(const CGameMode& mode, int tileX, int tileY);
+bool IsAttackTargetWithinRange(CGameMode& mode, const CGameActor& target, int attackRange);
+bool SendUseSkillToIdPacket(u16 skillId, u16 skillLevel, u32 targetGid);
+void ClearAttackChaseHint(CGameMode& mode);
+void ClearSkillChase(CGameMode& mode);
+void BeginSkillChase(CGameMode& mode, u32 targetGid, u16 skillId, u16 skillLevel, int skillRange);
 void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc);
 void FillSolidRectArgb(unsigned int* pixels, int width, int height, const RECT& rect, COLORREF color);
 void DrawGameplayOverlayToHdc(CGameMode& mode, HDC targetDc);
@@ -2567,6 +2572,11 @@ bool IsNpcLikeHoverActor(const CGameActor* actor)
     return actor->m_objectType == 6;
 }
 
+bool IsPcLikeHoverActor(const CGameActor* actor)
+{
+    return actor && actor->m_isPc;
+}
+
 void SetModeCursorAction(CGameMode& mode, CursorAction cursorActNum)
 {
     mode.SetCursorAction(cursorActNum);
@@ -2610,10 +2620,124 @@ int ResolveSkillUseRange(u16 skillId)
 
 u32 ResolveSelfSkillTargetId()
 {
+    if (g_session.m_aid != 0) {
+        return g_session.m_aid;
+    }
     if (g_session.m_gid != 0) {
         return g_session.m_gid;
     }
-    return g_session.m_aid;
+    return 0;
+}
+
+u32 ResolveSelectedPcSkillTargetId(const CGameMode* gameMode)
+{
+    if (!gameMode) {
+        return 0;
+    }
+
+    const u32 targetGid = gameMode->m_selectedPcTargetGid;
+    if (targetGid == 0) {
+        return 0;
+    }
+
+    if (targetGid == ResolveSelfSkillTargetId()) {
+        return targetGid;
+    }
+
+    const auto actorIt = gameMode->m_runtimeActors.find(targetGid);
+    if (actorIt == gameMode->m_runtimeActors.end() || !actorIt->second) {
+        return 0;
+    }
+
+    const CGameActor* actor = actorIt->second;
+    return (actor->m_isPc && actor->m_isVisible) ? targetGid : 0;
+}
+
+CGameActor* ResolvePcSkillTargetActor(CGameMode& mode, u32 targetGid)
+{
+    if (targetGid == 0) {
+        return nullptr;
+    }
+
+    if (mode.m_world && mode.m_world->m_player && targetGid == ResolveSelfSkillTargetId()) {
+        return mode.m_world->m_player;
+    }
+
+    const auto actorIt = mode.m_runtimeActors.find(targetGid);
+    if (actorIt == mode.m_runtimeActors.end()) {
+        return nullptr;
+    }
+
+    CGameActor* actor = actorIt->second;
+    return (actor && actor->m_isPc) ? actor : nullptr;
+}
+
+bool TryUseSelectedPcTargetSkill(CGameMode& mode, u16 skillId, u16 skillLevel)
+{
+    const u32 targetGid = ResolveSelectedPcSkillTargetId(&mode);
+    if (targetGid == 0) {
+        return false;
+    }
+
+    CGameActor* targetActor = ResolvePcSkillTargetActor(mode, targetGid);
+    if (!targetActor) {
+        return false;
+    }
+
+    const int skillRange = ResolveSkillUseRange(skillId);
+    mode.m_lastMonGid = 0;
+    mode.m_lastLockOnMonGid = 0;
+
+    if (IsAttackTargetWithinRange(mode, *targetActor, skillRange)) {
+        if (SendUseSkillToIdPacket(skillId, skillLevel, targetGid)) {
+            ClearSkillChase(mode);
+            return true;
+        }
+        return false;
+    }
+
+    BeginSkillChase(mode, targetGid, skillId, skillLevel, skillRange);
+    ClearAttackChaseHint(mode);
+    DbgLog("[GameMode] selected pc skill chase armed skillId=%u level=%u target=%u range=%d\n",
+        static_cast<unsigned int>(skillId),
+        static_cast<unsigned int>(skillLevel),
+        static_cast<unsigned int>(targetGid),
+        skillRange);
+    return true;
+}
+
+bool TrySelectPcTargetFromScreenPoint(CGameMode& mode, int screenX, int screenY)
+{
+    if (!mode.m_world || !mode.m_view || mode.m_canRotateView) {
+        return false;
+    }
+
+    CGameActor* hoveredActor = nullptr;
+    if (!mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
+        mode.m_view->GetCameraLongitude(),
+        screenX,
+        screenY,
+        &hoveredActor,
+        nullptr,
+        nullptr)) {
+        return false;
+    }
+
+    if (!IsPcLikeHoverActor(hoveredActor) || IsMonsterLikeHoverActor(hoveredActor) || IsNpcLikeHoverActor(hoveredActor)) {
+        return false;
+    }
+
+    const bool isSelfTarget = hoveredActor == mode.m_world->m_player
+        || hoveredActor->m_gid == g_session.m_gid
+        || hoveredActor->m_gid == g_session.m_aid;
+    mode.m_selectedPcTargetGid = isSelfTarget
+        ? ResolveSelfSkillTargetId()
+        : hoveredActor->m_gid;
+    mode.m_lastMonGid = 0;
+    mode.m_lastLockOnMonGid = 0;
+    ClearAttackChaseHint(mode);
+    DbgLog("[GameMode] selected pc target gid=%u\n", static_cast<unsigned int>(mode.m_selectedPcTargetGid));
+    return true;
 }
 
 void UpdateGameplayCursor(CGameMode& mode)
@@ -4870,7 +4994,12 @@ bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode, int screenX, int scr
             nullptr)
             && hoveredActor
             && !IsNpcLikeHoverActor(hoveredActor)) {
-            const u32 targetGid = hoveredActor->m_gid != 0 ? hoveredActor->m_gid : ResolveSelfSkillTargetId();
+            const bool isSelfTarget = hoveredActor == mode.m_world->m_player
+                || hoveredActor->m_gid == g_session.m_gid
+                || hoveredActor->m_gid == g_session.m_aid;
+            const u32 targetGid = isSelfTarget
+                ? ResolveSelfSkillTargetId()
+                : hoveredActor->m_gid;
             const int skillRange = ResolveSkillUseRange(skillId);
             mode.m_lastMonGid = 0;
             mode.m_lastLockOnMonGid = 0;
@@ -7998,7 +8127,7 @@ CGameMode::CGameMode()
       m_world(nullptr), m_view(nullptr), m_mousePointer(nullptr),
     m_leftBtnClickTick(0), m_oldMouseX(0), m_oldMouseY(0), m_rBtnClickX(0), m_rBtnClickY(0),
     m_lastRButtonClickTick(0), m_lastRButtonClickX(0), m_lastRButtonClickY(0), m_rButtonDragged(0),
-      m_lastPcGid(0), m_lastMonGid(0), m_lastLockOnMonGid(0),
+            m_lastPcGid(0), m_lastMonGid(0), m_lastLockOnMonGid(0), m_selectedPcTargetGid(0),
       m_isAutoMoveClickOn(0), m_isWaitingWhisperSetting(0), m_isWaitingEnterRoom(0),
       m_isWaitingAddExchangeItem(0), m_waitingWearEquipAck(0), m_waitingTakeoffEquipAck(0),
       m_isReqUpgradeSkillLevel(0), m_exchangeItemCnt(0), m_isWaitingCancelExchangeItem(0),
@@ -8046,6 +8175,7 @@ void CGameMode::OnInit(const char* worldName) {
     m_worldProcessTick = GetTickCount();
     m_worldProcessCarryMs = kWorldProcessTickMs;
     m_lastHoverRefreshTick = 0;
+    m_selectedPcTargetGid = 0;
     ClearPendingSkillUse(*this);
 
     DbgLog("[Build] marker=%s pkt0078=%d pkt0209=%d\n",
@@ -8289,15 +8419,6 @@ int  CGameMode::OnRun() {
             true,
             false);
         const DWORD uiDrawEnd = GetTickCount();
-
-        g_framePerfStats.frames += 1;
-        g_framePerfStats.updateMs += static_cast<u64>(updateEnd - updateStart);
-        g_framePerfStats.processUiMs += static_cast<u64>(processUiEnd - processUiStart);
-        g_framePerfStats.renderPrepMs += static_cast<u64>(renderPrepEnd - renderPrepStart);
-        g_framePerfStats.drawSceneMs += static_cast<u64>(drawSceneEnd - drawSceneStart);
-        g_framePerfStats.uiDrawMs += static_cast<u64>(uiDrawEnd - uiDrawStart);
-        g_framePerfStats.flipMs += static_cast<u64>(flipEnd - flipStart);
-
         if (s_gameplayRenderFrame <= 20 || (s_gameplayRenderFrame % 120u) == 0) {
             DbgLog("[GameMode] frame=%u legacy=1 update=%lu ui=%lu prep=%lu draw=%lu overlay=%lu flip=%lu\n",
                 static_cast<unsigned int>(s_gameplayRenderFrame),
@@ -8644,6 +8765,17 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         }
         if (TryRequestNpcTalkFromScreenPoint(*this, mouseX, mouseY)) {
             ClearPendingSkillUse(*this);
+            return 1;
+        }
+
+        if (TrySelectPcTargetFromScreenPoint(*this, mouseX, mouseY)) {
+            ClearPendingSkillUse(*this);
+            m_isLeftButtonHeld = 0;
+            m_hasHeldMoveTarget = 0;
+            m_lastMoveRequestCellX = -1;
+            m_lastMoveRequestCellY = -1;
+            m_lastMoveRequestTick = 0;
+            m_lastAttackRequestTick = 0;
             return 1;
         }
 

@@ -158,10 +158,7 @@ void RefreshActorEffectStatePresentation(CGameActor* actor, int oldEffectState)
     const bool hadRuwach = HasEffectStateFlag(oldEffectState, kEffectStateRuwachMask);
     const bool hasRuwach = HasEffectStateFlag(effectState, kEffectStateRuwachMask);
     if (!hadRuwach && hasRuwach) {
-        actor->m_effectLaunchCnt = 0;
-        if (CRagEffect* effect = actor->LaunchEffect(22, vector3d{}, 0.0f)) {
-            effect->SendMsg(effect, 44, (timeGetTime() >> 4) % 10 + 1, 0, 0);
-        }
+        // Ref only plays the gain sound here. The orbit itself is the periodic effect-state relaunch of effect 33.
     }
 
     if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
@@ -172,7 +169,16 @@ constexpr u32 kNotifyEffectJobLevelUp = 1;
 constexpr u32 kNotifyEffectBaseLevelUpSuperNovice = 7;
 constexpr u32 kNotifyEffectJobLevelUpSuperNovice = 8;
 constexpr u32 kNotifyEffectBaseLevelUpTaekwon = 9;
-constexpr u32 kEffectIdRecovery = 78;
+constexpr u16 kSkillIdHeal = 28;
+constexpr u32 kEffectIdRecoveryHp = 331;
+constexpr u32 kEffectIdRecoverySp = 332;
+constexpr u32 kEffectIdHealSmall = 7;
+constexpr u32 kEffectIdHealMedium = 312;
+constexpr u32 kEffectIdHealLarge = 313;
+constexpr u32 kEffectIdHealHuge = 325;
+constexpr int kRecoveryNumberKind = 114;
+constexpr u32 kRecoveryHpNumberColor = 0xFF00FF00u;
+constexpr u32 kRecoverySpNumberColor = 0xFF0000FFu;
 constexpr u32 kEffectIdBaseLevelUp = 371;
 constexpr u32 kEffectIdJobLevelUp = 158;
 constexpr u32 kEffectIdBaseLevelUpSuperNovice = 338;
@@ -197,6 +203,50 @@ float ResolveActorHeight(const CWorld* world, float worldX, float worldZ);
 float PacketDirToRotationDegrees(int dir);
 bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value);
 void ClearAttachedSkillEffects(CGameActor* actor);
+
+int ResolveHealVisualEffectId(u32 amount)
+{
+    if (amount < 200) {
+        return static_cast<int>(kEffectIdHealSmall);
+    }
+    if (amount < 2000) {
+        return static_cast<int>(kEffectIdHealMedium);
+    }
+    if (amount < 4000) {
+        return static_cast<int>(kEffectIdHealLarge);
+    }
+    return static_cast<int>(kEffectIdHealHuge);
+}
+
+int ResolveRecoveryEffectId(u32 statusType)
+{
+    switch (statusType) {
+    case kStatusHp:
+        return static_cast<int>(kEffectIdRecoveryHp);
+    case kStatusSp:
+        return static_cast<int>(kEffectIdRecoverySp);
+    default:
+        return -1;
+    }
+}
+
+u32 ResolveRecoveryNumberColor(u32 statusType)
+{
+    return statusType == kStatusSp ? kRecoverySpNumberColor : kRecoveryHpNumberColor;
+}
+
+void EmitRecoveryNumber(CGameActor* sourceActor, CGameActor* targetActor, u32 amount, u32 color)
+{
+    if (!targetActor || amount == 0) {
+        return;
+    }
+
+    targetActor->SendMsg(sourceActor ? sourceActor : targetActor,
+        88,
+        static_cast<int>(amount),
+        static_cast<int>(color),
+        kRecoveryNumberKind);
+}
 
 std::string ToLowerAsciiStatus(std::string value)
 {
@@ -692,7 +742,10 @@ void HandleRecovery(CGameMode& mode, const PacketView& packet)
 
     if (mode.m_world && mode.m_world->m_player) {
         CGameActor* actor = mode.m_world->m_player;
-        if (!actor->LaunchEffect(static_cast<int>(kEffectIdRecovery), vector3d{ 0.0f, 0.0f, 0.0f }, 0.0f)) {
+        EmitRecoveryNumber(actor, actor, amount, ResolveRecoveryNumberColor(statusType));
+
+        const int effectId = ResolveRecoveryEffectId(statusType);
+        if (effectId >= 0 && !actor->LaunchEffect(effectId, vector3d{ 0.0f, 0.0f, 0.0f }, 0.0f)) {
             DbgLog("[GameMode] recovery effect launch failed status=%u amount=%u\n",
                 static_cast<unsigned int>(statusType),
                 static_cast<unsigned int>(amount));
@@ -2668,7 +2721,7 @@ u32 ResolveCombatNumberColor(int damage, u8 actionType)
 int ResolveCombatNumberKind(int damage, u8 actionType)
 {
     if (damage < 0) {
-        return 22;
+        return kRecoveryNumberKind;
     }
 
     switch (actionType) {
@@ -4114,6 +4167,12 @@ void HandleSkillDamageNotify(CGameMode& mode, const PacketView& packet)
     StartSkillSourceAnimation(sourceActor, &targetActor->m_pos, attackMT);
     QueueCombatHitReaction(sourceActor, targetActor, attackedMT, damage, actionType);
     EmitSkillImpactEffects(targetActor, skillId, displayHitCount);
+    if (skillId == kSkillIdHeal && damage > 0) {
+        const int healEffectId = ResolveHealVisualEffectId(static_cast<u32>(damage));
+        if (healEffectId > 0) {
+            targetActor->LaunchEffect(healEffectId, vector3d{}, 0.0f);
+        }
+    }
     EmitCombatNumbers(sourceActor, targetActor, damage, actionType, displayHitCount);
 
     DbgLog("[GameMode] skill damage opcode=0x%04X src=%u dst=%u skill=%u level=%u damage=%d div=%u type=%u\n",
@@ -4226,7 +4285,14 @@ void HandleSkillNoDamageNotify(CGameMode& mode, const PacketView& packet)
         ClearAttachedSkillEffects(sourceActor);
         StartSkillStateAnimation(sourceActor, packetInfo.motionType, dstGid, &targetActor->m_pos);
     }
-    if (targetActor && result != 0 && packetInfo.launchUseSkill) {
+
+    if (targetActor && result != 0 && skillId == kSkillIdHeal) {
+        EmitRecoveryNumber(sourceActor, targetActor, levelOrAmount, kRecoveryHpNumberColor);
+        const int effectId = ResolveHealVisualEffectId(levelOrAmount);
+        if (effectId >= 0) {
+            targetActor->LaunchEffect(effectId, vector3d{}, 0.0f);
+        }
+    } else if (targetActor && result != 0 && packetInfo.launchUseSkill) {
         const int effectId = ResolveSkillVisibleEffectId(skillId, packetInfo, levelOrAmount);
         const bool selfCast = sourceActor && sourceActor == targetActor;
         const bool useTargetSlot = !selfCast
@@ -5435,6 +5501,9 @@ CGameActor* EnsureRuntimeActor(CGameMode& mode, u32 gid, bool preferPc)
 
             static_cast<CGameActor&>(*upgraded) = *existing;
             upgraded->m_birdEffect = nullptr;
+            upgraded->m_effectList.clear();
+            upgraded->m_beginSpellEffect = nullptr;
+            upgraded->m_magicTargetEffect = nullptr;
             upgraded->m_msgEffectList.clear();
             existing->UnRegisterPos();
             delete existing;
@@ -5678,6 +5747,9 @@ void RemoveRuntimeActor(CGameMode& mode, u32 gid)
 
     if (mode.m_lastPcGid == gid) {
         mode.m_lastPcGid = 0;
+    }
+    if (mode.m_selectedPcTargetGid == gid) {
+        mode.m_selectedPcTargetGid = 0;
     }
     if (mode.m_lastMonGid == gid) {
         mode.m_lastMonGid = 0;
@@ -6287,6 +6359,9 @@ void HandleActorVanish(CGameMode& mode, const PacketView& packet)
 
     if (mode.m_lastPcGid == gid) {
         mode.m_lastPcGid = 0;
+    }
+    if (mode.m_selectedPcTargetGid == gid) {
+        mode.m_selectedPcTargetGid = 0;
     }
     if (mode.m_lastMonGid == gid) {
         mode.m_lastMonGid = 0;

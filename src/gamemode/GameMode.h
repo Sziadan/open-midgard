@@ -127,6 +127,7 @@ public:
     int m_lastRButtonClickX, m_lastRButtonClickY;
     int m_rButtonDragged;
     u32 m_lastPcGid, m_lastMonGid, m_lastLockOnMonGid;
+    u32 m_selectedPcTargetGid;
     int m_isAutoMoveClickOn;
     int m_isWaitingWhisperSetting;
     int m_isWaitingEnterRoom;

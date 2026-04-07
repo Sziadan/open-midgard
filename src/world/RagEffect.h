@@ -176,7 +176,12 @@ private:
         MapMagicZone,
         MapParticle,
         SuperAngel,
+        RecoveryHp,
+        RecoverySp,
         BeginCasting,
+        HealLight,
+        HealMedium,
+        HealLarge,
         IncAgility,
         Blessing,
         Sight,
@@ -211,7 +216,12 @@ private:
     void SpawnSuperAngelVariant(int variant, int birthFrame);
     void SpawnSuperAngelBurst(int startAngle);
     void UpdateSuperAngel();
+    void SpawnRecoveryHp();
+    void SpawnRecoverySp();
     void SpawnBeginCasting();
+    void SpawnHealLight();
+    void SpawnHealMedium();
+    void SpawnHealLarge();
     void SpawnIncAgility();
     void SpawnBlessing();
     void SpawnSight();
