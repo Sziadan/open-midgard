@@ -479,11 +479,23 @@ void PopulateCharSelectState(QtUiState* state)
         selectCharWnd->GetCurrentPageCount());
 
     QVariantList slotList;
+    QStringList imageRevisionParts;
+    imageRevisionParts.reserve(4);
+    imageRevisionParts.push_back(QStringLiteral("page=%1").arg(selectCharWnd->GetCurrentPage()));
+    imageRevisionParts.push_back(QStringLiteral("pages=%1").arg(selectCharWnd->GetCurrentPageCount()));
+    imageRevisionParts.push_back(QStringLiteral("selected=%1").arg(selectCharWnd->GetSelectedSlotNumber()));
     for (int visibleIndex = 0; visibleIndex < 3; ++visibleIndex) {
         UISelectCharWnd::VisibleSlotDisplay slotInfo{};
         if (!selectCharWnd->GetVisibleSlotDisplay(visibleIndex, &slotInfo)) {
             continue;
         }
+
+        imageRevisionParts.push_back(QStringLiteral("slot=%1:%2:%3:%4:%5")
+            .arg(slotInfo.slotNumber)
+            .arg(slotInfo.occupied ? 1 : 0)
+            .arg(slotInfo.selected ? 1 : 0)
+            .arg(ToQString(slotInfo.name))
+            .arg(slotInfo.level));
 
         QVariantMap slot;
         slot.insert(QStringLiteral("occupied"), slotInfo.occupied);
@@ -538,10 +550,7 @@ void PopulateCharSelectState(QtUiState* state)
         }
         details.insert(QStringLiteral("fields"), fields);
     }
-    details.insert(QStringLiteral("imageRevision"), QStringLiteral("%1:%2:%3")
-        .arg(selectCharWnd->GetCurrentPage())
-        .arg(selectCharWnd->GetCurrentPageCount())
-        .arg(selectCharWnd->GetSelectedSlotNumber()));
+    details.insert(QStringLiteral("imageRevision"), imageRevisionParts.join(QLatin1Char('|')));
     state->setCharSelectSelectedDetails(details);
 
     QVariantList pageButtons;

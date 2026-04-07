@@ -470,6 +470,65 @@ bool DrawPreviewLayer(HDC hdc, const UIMakeCharWnd::PreviewState& preview, int l
     return DrawActMotionToHdc(hdc, preview.x + point.x, preview.y + point.y, sprRes, &singleLayerMotion, palette);
 }
 
+#if RO_ENABLE_QT6_UI
+bool DrawPreviewLayerToArgb(unsigned int* pixels,
+    int width,
+    int height,
+    const UIMakeCharWnd::PreviewState& preview,
+    int ownerX,
+    int ownerY,
+    int layerIndex)
+{
+    if (!pixels || width <= 0 || height <= 0 || layerIndex < 0 || layerIndex > 1) {
+        return false;
+    }
+
+    CActRes* actRes = g_resMgr.GetAs<CActRes>(preview.actName[layerIndex].c_str());
+    CSprRes* sprRes = g_resMgr.GetAs<CSprRes>(preview.sprName[layerIndex].c_str());
+    CImfRes* imfRes = g_resMgr.GetAs<CImfRes>(preview.imfName.c_str());
+    if (!actRes || !sprRes || !imfRes) {
+        return false;
+    }
+
+    int resolvedLayer = imfRes->GetLayer(layerIndex, preview.curAction, preview.curMotion);
+    if (resolvedLayer < 0) {
+        resolvedLayer = layerIndex;
+    }
+
+    const CMotion* motion = actRes->GetMotion(preview.curAction, preview.curMotion);
+    if (!motion || resolvedLayer >= static_cast<int>(motion->sprClips.size())) {
+        return false;
+    }
+
+    const POINT point = GetPreviewLayerPoint(preview, layerIndex, resolvedLayer, imfRes, motion);
+
+    std::array<unsigned int, 256> paletteOverride{};
+    unsigned int* palette = sprRes->m_pal;
+    if (layerIndex == 0 && preview.bodyPalette > 0 && !preview.bodyPaletteName.empty()) {
+        if (BuildPaletteOverride(preview.bodyPaletteName, paletteOverride)) {
+            palette = paletteOverride.data();
+        }
+    }
+    if (layerIndex == 1 && preview.headPalette > 0 && !preview.headPaletteName.empty()) {
+        if (BuildPaletteOverride(preview.headPaletteName, paletteOverride)) {
+            palette = paletteOverride.data();
+        }
+    }
+
+    CMotion singleLayerMotion{};
+    singleLayerMotion.sprClips.push_back(motion->sprClips[resolvedLayer]);
+    return DrawActMotionToArgb(
+        pixels,
+        width,
+        height,
+        preview.x - ownerX + point.x,
+        preview.y - ownerY + point.y,
+        sprRes,
+        &singleLayerMotion,
+        palette);
+}
+#endif
+
 }
 
 UIMakeCharWnd::UIMakeCharWnd()
@@ -865,26 +924,21 @@ void UIMakeCharWnd::DrawQtPreview(QImage* image)
         return;
     }
 
-    ArgbDibSurface previewSurface;
-    if (!previewSurface.EnsureSize(image->width(), image->height()) || !previewSurface.GetPixels()) {
+    std::vector<unsigned int> overlayPixels(
+        static_cast<size_t>(image->width()) * static_cast<size_t>(image->height()),
+        0u);
+    if (overlayPixels.empty()) {
         return;
     }
 
-    std::fill_n(
-        previewSurface.GetPixels(),
-        static_cast<size_t>(previewSurface.GetWidth()) * static_cast<size_t>(previewSurface.GetHeight()),
-        0u);
-
-    POINT oldOrigin{};
-    SetViewportOrgEx(previewSurface.GetDC(), -m_x, -m_y, &oldOrigin);
-    DrawPreview(previewSurface.GetDC(), m_preview);
-    SetViewportOrgEx(previewSurface.GetDC(), oldOrigin.x, oldOrigin.y, nullptr);
+    DrawPreviewLayerToArgb(overlayPixels.data(), image->width(), image->height(), m_preview, m_x, m_y, 0);
+    DrawPreviewLayerToArgb(overlayPixels.data(), image->width(), image->height(), m_preview, m_x, m_y, 1);
 
     const QImage overlay(
-        reinterpret_cast<const uchar*>(previewSurface.GetPixels()),
-        previewSurface.GetWidth(),
-        previewSurface.GetHeight(),
-        previewSurface.GetWidth() * static_cast<int>(sizeof(unsigned int)),
+        reinterpret_cast<const uchar*>(overlayPixels.data()),
+        image->width(),
+        image->height(),
+        image->width() * static_cast<int>(sizeof(unsigned int)),
         QImage::Format_ARGB32);
     QPainter painter(image);
     painter.drawImage(0, 0, overlay);
