@@ -27,8 +27,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <cstdlib>
 #include <limits>
 #include <vector>
+
+#if RO_PLATFORM_LINUX
+#include <unistd.h>
+#endif
 
 #if RO_HAS_VULKAN
 #if RO_PLATFORM_WINDOWS
@@ -342,6 +347,26 @@ bool LoadVulkanLoader()
     if (vkGetInstanceProcAddr) {
         return true;
     }
+
+#if RO_PLATFORM_LINUX
+    // Prefer the discrete NVIDIA ICD on hybrid laptops unless the user already
+    // supplied explicit Vulkan/PRIME environment configuration.
+    const bool hasNvidiaDriver = access("/proc/driver/nvidia/version", R_OK) == 0;
+    if (hasNvidiaDriver) {
+        if (!std::getenv("VK_LOADER_DRIVERS_SELECT")) {
+            setenv("VK_LOADER_DRIVERS_SELECT", "*nvidia*", 0);
+        }
+        if (!std::getenv("__VK_LAYER_NV_optimus")) {
+            setenv("__VK_LAYER_NV_optimus", "NVIDIA_only", 0);
+        }
+        if (!std::getenv("__NV_PRIME_RENDER_OFFLOAD")) {
+            setenv("__NV_PRIME_RENDER_OFFLOAD", "1", 0);
+        }
+        if (!std::getenv("__GLX_VENDOR_LIBRARY_NAME")) {
+            setenv("__GLX_VENDOR_LIBRARY_NAME", "nvidia", 0);
+        }
+    }
+#endif
 
     if (!g_vulkanModule) {
 #if RO_PLATFORM_WINDOWS
@@ -7652,15 +7677,58 @@ private:
             return false;
         }
 
+        int bestScore = -1;
+        VkPhysicalDevice bestDevice = VK_NULL_HANDLE;
+        uint32_t bestGraphicsIndex = kInvalidQueueFamilyIndex;
+        uint32_t bestPresentIndex = kInvalidQueueFamilyIndex;
+        VkPhysicalDeviceProperties bestProperties{};
+
         for (VkPhysicalDevice device : devices) {
             uint32_t graphicsIndex = kInvalidQueueFamilyIndex;
             uint32_t presentIndex = kInvalidQueueFamilyIndex;
             if (IsPhysicalDeviceSuitable(device, &graphicsIndex, &presentIndex)) {
-                m_physicalDevice = device;
-                m_graphicsQueueFamilyIndex = graphicsIndex;
-                m_presentQueueFamilyIndex = presentIndex;
-                return true;
+                VkPhysicalDeviceProperties properties{};
+                vkGetPhysicalDeviceProperties(device, &properties);
+
+                int score = 0;
+                switch (properties.deviceType) {
+                case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+                    score = 300;
+                    break;
+                case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                    score = 200;
+                    break;
+                case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+                    score = 100;
+                    break;
+                case VK_PHYSICAL_DEVICE_TYPE_CPU:
+                    score = 10;
+                    break;
+                default:
+                    score = 50;
+                    break;
+                }
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestDevice = device;
+                    bestGraphicsIndex = graphicsIndex;
+                    bestPresentIndex = presentIndex;
+                    bestProperties = properties;
+                }
             }
+        }
+
+        if (bestDevice != VK_NULL_HANDLE) {
+            m_physicalDevice = bestDevice;
+            m_graphicsQueueFamilyIndex = bestGraphicsIndex;
+            m_presentQueueFamilyIndex = bestPresentIndex;
+            DbgLog("[Render] Vulkan selected GPU: '%s' (vendor=0x%04x, device=0x%04x, type=%u).\n",
+                bestProperties.deviceName,
+                static_cast<unsigned int>(bestProperties.vendorID),
+                static_cast<unsigned int>(bestProperties.deviceID),
+                static_cast<unsigned int>(bestProperties.deviceType));
+            return true;
         }
 
         m_bootstrap.initHr = static_cast<int>(VK_ERROR_FEATURE_NOT_PRESENT);
