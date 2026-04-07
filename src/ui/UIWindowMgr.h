@@ -125,6 +125,7 @@ public:
     bool OnWheel(int x, int y, int delta);
     void OnChar(char c);
     void OnKeyDown(int virtualKey);
+    bool OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, bool isShiftDown);
     bool HasWindowAtPoint(int x, int y) const;
     void ClampWindowToClient(int* x, int* y, int w, int h) const;
     void SnapWindowToNearby(UIWindow* window, int* x, int* y) const;
@@ -194,6 +195,10 @@ public:
 
 private:
     UIWindow* HitTestWindow(int x, int y) const;
+    bool HasFrontMenuUiVisible() const;
+    bool HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bool isCtrlDown, bool hasFrontMenuUi);
+    bool HandleHotkeyAfterFocusedUi(int virtualKey, bool hasFrontMenuUi);
+    bool HasBlockingUiForGameplayHotkeys() const;
     void ReleaseComposeSurface();
     bool EnsureComposeSurface(int width, int height);
 };

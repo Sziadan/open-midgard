@@ -4,6 +4,7 @@
 #if RO_ENABLE_QT6_UI
 
 #include "DebugLog.h"
+#include "ui/UIWindowMgr.h"
 
 #include <QCloseEvent>
 #include <QCoreApplication>
@@ -56,6 +57,9 @@ constexpr int VK_INSERT = 0x2D;
 constexpr int VK_DELETE = 0x2E;
 constexpr int VK_F1 = 0x70;
 constexpr int VK_F9 = 0x78;
+constexpr int VK_F10 = 0x79;
+constexpr int VK_F11 = 0x7A;
+constexpr int VK_F12 = 0x7B;
 constexpr int VK_OEM_PLUS = 0xBB;
 constexpr int VK_OEM_MINUS = 0xBD;
 
@@ -91,6 +95,10 @@ int MapQtKeyToVirtualKey(int key)
         return key;
     }
 
+    if (key >= Qt::Key_F1 && key <= Qt::Key_F12) {
+        return VK_F1 + (key - Qt::Key_F1);
+    }
+
     switch (key) {
     case Qt::Key_Backspace: return VK_BACK;
     case Qt::Key_Tab: return VK_TAB;
@@ -108,8 +116,6 @@ int MapQtKeyToVirtualKey(int key)
     case Qt::Key_Down: return VK_DOWN;
     case Qt::Key_Insert: return VK_INSERT;
     case Qt::Key_Delete: return VK_DELETE;
-    case Qt::Key_F1: return VK_F1;
-    case Qt::Key_F9: return VK_F9;
     case Qt::Key_Plus:
     case Qt::Key_Equal: return VK_OEM_PLUS;
     case Qt::Key_Minus:
@@ -188,8 +194,18 @@ protected:
 
     void keyPressEvent(QKeyEvent* event) override
     {
+        const int virtualKey = MapQtKeyToVirtualKey(event->key());
+        if (g_windowMgr.OnQtKeyDown(
+                virtualKey,
+                event->modifiers().testFlag(Qt::AltModifier),
+                event->modifiers().testFlag(Qt::ControlModifier),
+                event->modifiers().testFlag(Qt::ShiftModifier))) {
+            event->accept();
+            return;
+        }
+
         const unsigned int msg = event->modifiers().testFlag(Qt::AltModifier) ? WM_SYSKEYDOWN : WM_KEYDOWN;
-        sendMessage(msg, static_cast<std::uintptr_t>(MapQtKeyToVirtualKey(event->key())), 0);
+        sendMessage(msg, static_cast<std::uintptr_t>(virtualKey), 0);
 
         const QString text = event->text();
         if (!text.isEmpty()) {

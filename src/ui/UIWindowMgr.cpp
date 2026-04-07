@@ -1816,37 +1816,106 @@ void UIWindowMgr::OnChar(char c)
     }
 }
 
-void UIWindowMgr::OnKeyDown(int virtualKey)
+bool UIWindowMgr::HasFrontMenuUiVisible() const
 {
-    const bool hasFrontMenuUi =
-        (m_loginWnd && m_loginWnd->m_show != 0) ||
-        (m_selectCharWnd && m_selectCharWnd->m_show != 0) ||
-        (m_makeCharWnd && m_makeCharWnd->m_show != 0);
-    const bool isAltDown = (GetKeyState(VK_MENU) & 0x8000) != 0;
-    const bool isCtrlDown = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+    return (m_loginWnd && m_loginWnd->m_show != 0)
+        || (m_selectCharWnd && m_selectCharWnd->m_show != 0)
+        || (m_makeCharWnd && m_makeCharWnd->m_show != 0);
+}
 
+bool UIWindowMgr::HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bool isCtrlDown, bool hasFrontMenuUi)
+{
     if (isCtrlDown && virtualKey == VK_TAB && !hasFrontMenuUi) {
         ToggleWindow(WID_ROMAPWND);
-        return;
+        return true;
     }
 
     if (isAltDown && !hasFrontMenuUi) {
         switch (virtualKey) {
         case 'A':
             ToggleWindow(WID_STATUSWND);
-            return;
+            return true;
         case 'E':
             ToggleWindow(WID_ITEMWND);
-            return;
+            return true;
         case 'Q':
             ToggleWindow(WID_EQUIPWND);
-            return;
+            return true;
         case 'S':
             ToggleWindow(WID_SKILLLISTWND);
-            return;
+            return true;
         default:
             break;
         }
+    }
+
+    return false;
+}
+
+bool UIWindowMgr::HandleHotkeyAfterFocusedUi(int virtualKey, bool hasFrontMenuUi)
+{
+    if (!hasFrontMenuUi && virtualKey >= VK_F1 && virtualKey <= VK_F9) {
+        g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUse, virtualKey - VK_F1, 0, 0);
+        return true;
+    }
+
+    if (virtualKey == VK_ESCAPE && !hasFrontMenuUi) {
+        UIWindow* chooseWnd = MakeWindow(WID_CHOOSEWND);
+        if (chooseWnd) {
+            chooseWnd->SetShow(1);
+        }
+        return true;
+    }
+
+    if (virtualKey == VK_INSERT && !hasFrontMenuUi) {
+        g_modeMgr.SendMsg(CGameMode::GameMsg_ToggleSitStand, 0, 0, 0);
+        return true;
+    }
+
+    return false;
+}
+
+bool UIWindowMgr::HasBlockingUiForGameplayHotkeys() const
+{
+    return (m_npcInputWnd && m_npcInputWnd->m_show != 0)
+        || (m_npcMenuWnd && m_npcMenuWnd->m_show != 0)
+        || (m_sayDialogWnd && m_sayDialogWnd->m_show != 0)
+        || (m_itemPurchaseWnd && m_itemPurchaseWnd->m_show != 0)
+        || (m_itemSellWnd && m_itemSellWnd->m_show != 0)
+        || (m_itemShopWnd && m_itemShopWnd->m_show != 0)
+        || (m_chooseSellBuyWnd && m_chooseSellBuyWnd->m_show != 0)
+        || (m_chooseWnd && m_chooseWnd->m_show != 0)
+        || (m_optionWnd && m_optionWnd->m_show != 0);
+}
+
+bool UIWindowMgr::OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, bool isShiftDown)
+{
+    (void)isShiftDown;
+
+    const bool hasFrontMenuUi = HasFrontMenuUiVisible();
+    if (HandleHotkeyBeforeFocusedUi(virtualKey, isAltDown, isCtrlDown, hasFrontMenuUi)) {
+        return true;
+    }
+
+    if (HasBlockingUiForGameplayHotkeys()) {
+        return false;
+    }
+
+    if (!hasFrontMenuUi && m_chatWnd && m_chatWnd->IsInputActive()) {
+        return false;
+    }
+
+    return HandleHotkeyAfterFocusedUi(virtualKey, hasFrontMenuUi);
+}
+
+void UIWindowMgr::OnKeyDown(int virtualKey)
+{
+    const bool hasFrontMenuUi = HasFrontMenuUiVisible();
+    const bool isAltDown = (GetKeyState(VK_MENU) & 0x8000) != 0;
+    const bool isCtrlDown = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+
+    if (HandleHotkeyBeforeFocusedUi(virtualKey, isAltDown, isCtrlDown, hasFrontMenuUi)) {
+        return;
     }
 
     if (virtualKey == VK_RETURN || virtualKey == VK_ESCAPE) {
@@ -1922,21 +1991,7 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
         return;
     }
 
-    if (!hasFrontMenuUi && virtualKey >= VK_F1 && virtualKey <= VK_F9) {
-        g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShortcutUse, virtualKey - VK_F1, 0, 0);
-        return;
-    }
-
-    if (virtualKey == VK_ESCAPE && !hasFrontMenuUi) {
-        UIWindow* chooseWnd = MakeWindow(WID_CHOOSEWND);
-        if (chooseWnd) {
-            chooseWnd->SetShow(1);
-        }
-        return;
-    }
-
-    if (virtualKey == VK_INSERT && !hasFrontMenuUi) {
-        g_modeMgr.SendMsg(CGameMode::GameMsg_ToggleSitStand, 0, 0, 0);
+    if (HandleHotkeyAfterFocusedUi(virtualKey, hasFrontMenuUi)) {
         return;
     }
 
