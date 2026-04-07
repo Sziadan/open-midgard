@@ -44,6 +44,26 @@ jobs:
           (Join-Path $qtRoot "bin") | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           $mingwBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
+      - name: Install Vulkan SDK
+        shell: pwsh
+        run: |
+          choco install vulkan-sdk --version=1.4.341 --yes --no-progress
+
+          $vulkanRoot = Get-ChildItem -Path "C:\VulkanSDK" -Directory |
+            Sort-Object Name -Descending |
+            Select-Object -First 1 -ExpandProperty FullName
+
+          if (-not $vulkanRoot) {
+            throw "Failed to locate Vulkan SDK under C:\VulkanSDK after installation"
+          }
+
+          if (-not (Test-Path (Join-Path $vulkanRoot "Include\vulkan\vulkan.h"))) {
+            throw "Installed Vulkan SDK is missing Include\vulkan\vulkan.h"
+          }
+
+          "VULKAN_SDK=$vulkanRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          (Join-Path $vulkanRoot "Bin") | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Configure Windows Qt release
         shell: bash
         run: cmake --preset mingw-qt-x64-ci -DRO_QT_ROOT="$QT_ROOT_DIR"
@@ -86,7 +106,7 @@ jobs:
           Compress-Archive -Path "$stagingDir/*" -DestinationPath $zipPath
 
       - name: Upload packaged artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: open-midgard-windows-qt-x64
           path: ${{ runner.temp }}/open-midgard-windows-qt-x64.zip
@@ -220,7 +240,7 @@ jobs:
           tar -C "$RUNNER_TEMP" -czf "$tar_path" "$asset_name"
 
       - name: Upload packaged artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: open-midgard-linux-qt-vulkan
           path: ${{ runner.temp }}/open-midgard-linux-qt-vulkan.tar.gz
@@ -236,7 +256,7 @@ jobs:
 
     steps:
       - name: Download packaged artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: release-assets
 

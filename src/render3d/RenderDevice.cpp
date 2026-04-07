@@ -9049,6 +9049,8 @@ private:
     void ReleaseTextureResource(CTexture* texture) override { (void)texture; }
     bool CreateTextureResource(CTexture* texture, unsigned int requestedWidth, unsigned int requestedHeight, int pixelFormat, unsigned int* outSurfaceWidth, unsigned int* outSurfaceHeight) override { (void)texture; (void)requestedWidth; (void)requestedHeight; (void)pixelFormat; if (outSurfaceWidth) { *outSurfaceWidth = 0; } if (outSurfaceHeight) { *outSurfaceHeight = 0; } return false; }
     bool UpdateTextureResource(CTexture* texture, int x, int y, int w, int h, const unsigned int* data, bool skipColorKey, int pitch) override { (void)texture; (void)x; (void)y; (void)w; (void)h; (void)data; (void)skipColorKey; (void)pitch; return false; }
+    bool GetQtUiRenderTargetInfo(QtUiRenderTargetInfo* outInfo) const override { if (outInfo) { *outInfo = MakeUnavailableQtUiRenderTargetInfo(RenderBackendType::Vulkan, m_renderWidth, m_renderHeight); } return false; }
+    bool GetQtUiTextureTargetInfo(const CTexture* texture, QtUiRenderTargetInfo* outInfo) const override { (void)texture; if (outInfo) { *outInfo = MakeUnavailableQtUiRenderTargetInfo(RenderBackendType::Vulkan, m_renderWidth, m_renderHeight); } return false; }
 
 private:
     HWND m_hwnd;
