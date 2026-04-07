@@ -7519,7 +7519,7 @@ private:
         extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #else
 // TODO: If vulkan & qt become more tightly coupled, we can just use QVulkanInstance::supportedExtensions()
-#if defined(RO_PLATFORM_MACOS)
+#if RO_PLATFORM_MACOS
         if (HasInstanceExtension("VK_KHR_portability_enumeration")) {
             extensions.push_back("VK_KHR_portability_enumeration");
         }
