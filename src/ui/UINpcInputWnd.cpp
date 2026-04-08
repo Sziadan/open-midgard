@@ -411,6 +411,12 @@ bool UINpcInputWnd::HandleKeyDown(int virtualKey)
         CancelInput();
         return true;
     }
+
+    // Fall back onto the UIEditCtrl OnKeyDown event
+    if (m_editCtrl->m_hasFocus) {
+        m_editCtrl->OnKeyDown(virtualKey);
+    }
+
     return true;
 }
 
