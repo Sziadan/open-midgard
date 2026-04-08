@@ -566,6 +566,20 @@ std::uint64_t ComputeGameplayOverlayStateToken(
         HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_Sp)));
         HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_MaxSp)));
 
+        const u32 statusNow = g_session.GetServerTime();
+        const std::vector<ACTIVE_STATUS_ICON>& activeStatusIcons = g_session.GetActiveStatusIcons();
+        HashTokenValue(&hash, static_cast<std::uint64_t>(activeStatusIcons.size()));
+        for (const ACTIVE_STATUS_ICON& statusIcon : activeStatusIcons) {
+            HashTokenValue(&hash, static_cast<std::uint64_t>(static_cast<std::uint32_t>(statusIcon.statusType)));
+            HashTokenValue(&hash, statusIcon.hasTimer ? 1ull : 0ull);
+            if (statusIcon.hasTimer) {
+                const u32 remainingMs = statusIcon.expireServerTime > statusNow
+                    ? (statusIcon.expireServerTime - statusNow)
+                    : 0u;
+                HashTokenValue(&hash, static_cast<std::uint64_t>(remainingMs / 1000u));
+            }
+        }
+
         if (includeWorldHover && !IsWorldHoverBlockedByUi(mode.m_oldMouseX, mode.m_oldMouseY)) {
             CItem* hoveredGroundItem = nullptr;
             int hoveredItemLabelX = 0;
@@ -2550,7 +2564,7 @@ void SendActorNameRequest(CGameMode& mode, u32 gid)
 
 bool IsMonsterLikeHoverActor(const CGameActor* actor)
 {
-    if (!actor) {
+    if (!actor || actor->m_isPc != 0) {
         return false;
     }
 

@@ -36,7 +36,11 @@ public:
     bool LoadRagnarokScript(const char* relativePath);
     bool LoadRagnarokScriptOnce(const char* relativePath);
     bool HasLoadedScript(const char* relativePath) const;
+    bool GetGlobalTableIntegerByIntegerKey(const char* tableName, int numericKey, int* outValue);
+    bool GetGlobalTableIntegerByStringKey(const char* tableName, const char* stringKey, int* outValue);
+    bool GetGlobalTableNestedStringByIntegerKey(const char* tableName, int numericKey, const char* nestedStringKey, std::string* outValue);
     bool GetGlobalTableStringByIntegerKey(const char* tableName, int numericKey, std::string* outValue);
+    bool GetGlobalTableStringByStringKey(const char* tableName, const char* stringKey, std::string* outValue);
     bool GetSkillEffectInfoBySkillId(int skillId, LuaSkillEffectInfo* outInfo);
 
     const std::string& GetLastError() const;

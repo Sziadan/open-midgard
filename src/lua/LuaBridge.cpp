@@ -91,6 +91,27 @@ bool TryGetLuaGlobalInteger(lua_State* state, const char* name, int* outValue)
 	return true;
 }
 
+bool TryGetGeneratedJobIdFromGlobalName(const char* globalName, int* outValue)
+{
+	if (!globalName || std::strncmp(globalName, "JT_", 3) != 0 || !outValue) {
+		return false;
+	}
+
+	const char* jobName = globalName + 3;
+	if (!*jobName) {
+		return false;
+	}
+
+	for (const JobNameEntry& entry : kGeneratedJobNames) {
+		if (entry.name && std::strcmp(entry.name, jobName) == 0) {
+			*outValue = entry.job;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool TryGetLuaTableIntegerField(lua_State* state, int tableIndex, const char* fieldName, int* outValue)
 {
 	if (!state || !fieldName || !*fieldName || !outValue) {
@@ -170,6 +191,7 @@ int AllocateSyntheticLuaTableValue(const char* tableName, const char* keyName)
 	static int nextSkillId = 50000;
 	static int nextEffectId = 70000;
 	static int nextActorState = 90000;
+	static int nextJobEnum = 110000;
 
 	std::string compositeKey = tableName;
 	compositeKey += '.';
@@ -187,6 +209,8 @@ int AllocateSyntheticLuaTableValue(const char* tableName, const char* keyName)
 		value = nextEffectId++;
 	} else if (_stricmp(tableName, "ACTOR_STATE") == 0) {
 		value = nextActorState++;
+	} else if (_stricmp(tableName, "JT_ENUM") == 0) {
+		value = nextJobEnum++;
 	}
 
 	if (value != 0) {
@@ -332,6 +356,69 @@ void PopulateSkillEffectCompatibilityTables(lua_State* state, const std::vector<
 	flushToken();
 }
 
+void MergeGeneratedJobCompatibility(lua_State* state);
+void AddPcJobVariantAliases(lua_State* state);
+void SetJobTblEntry(lua_State* state, const char* nameKey, int value);
+
+void PopulateJobEnumCompatibilityGlobals(lua_State* state, const std::vector<unsigned char>& bytes)
+{
+	if (!state || bytes.empty()) {
+		return;
+	}
+
+	std::unordered_set<std::string> seenTokens;
+	std::string token;
+	auto flushToken = [&]() {
+		if (token.empty()) {
+			return;
+		}
+
+		if (seenTokens.insert(token).second && std::strncmp(token.c_str(), "JT_", 3) == 0) {
+			int existingValue = 0;
+			if (!TryGetLuaGlobalInteger(state, token.c_str(), &existingValue)) {
+				int value = 0;
+				if (!TryGetGeneratedJobIdFromGlobalName(token.c_str(), &value)) {
+					value = AllocateSyntheticLuaTableValue("JT_ENUM", token.c_str());
+				}
+				if (value != 0) {
+					SetLuaGlobalInteger(state, token.c_str(), value);
+					SetJobTblEntry(state, token.c_str(), value);
+					DbgLog("[Lua] Synthesizing missing global %s=%d before loading job-name data.\n",
+						token.c_str(),
+						value);
+				}
+			} else {
+				SetJobTblEntry(state, token.c_str(), existingValue);
+			}
+		}
+
+		token.clear();
+	};
+
+	for (unsigned char byte : bytes) {
+		const char ch = static_cast<char>(byte);
+		const bool isTokenChar = (ch >= 'A' && ch <= 'Z')
+			|| (ch >= '0' && ch <= '9')
+			|| ch == '_';
+		if (isTokenChar) {
+			token.push_back(ch);
+		} else {
+			flushToken();
+		}
+	}
+	flushToken();
+}
+
+void PrepareGeneratedJobEnumCompatibility(lua_State* state)
+{
+	if (!state) {
+		return;
+	}
+
+	MergeGeneratedJobCompatibility(state);
+	AddPcJobVariantAliases(state);
+}
+
 void EnsurePcJobTbl2Table(lua_State* state)
 {
 	lua_getglobal(state, "pcJobTbl2");
@@ -356,7 +443,31 @@ void SetPcJobTbl2Entry(lua_State* state, const char* nameKey, int value)
 	lua_pushstring(state, nameKey);
 	lua_pushinteger(state, value);
 	lua_settable(state, -3);
-	lua_pushinteger(state, value);
+	lua_pop(state, 1);
+}
+
+void EnsureJobTblTable(lua_State* state)
+{
+	lua_getglobal(state, "jobtbl");
+	if (lua_istable(state, -1)) {
+		lua_pop(state, 1);
+		return;
+	}
+
+	lua_pop(state, 1);
+	lua_newtable(state);
+	lua_setglobal(state, "jobtbl");
+}
+
+void SetJobTblEntry(lua_State* state, const char* nameKey, int value)
+{
+	if (!state || !nameKey || !*nameKey) {
+		return;
+	}
+
+	EnsureJobTblTable(state);
+	lua_getglobal(state, "jobtbl");
+	lua_pushstring(state, nameKey);
 	lua_pushinteger(state, value);
 	lua_settable(state, -3);
 	lua_pop(state, 1);
@@ -401,11 +512,9 @@ void MergeGeneratedJobCompatibility(lua_State* state)
 		std::string globalName = "JT_";
 		globalName += entry.name;
 
-		int existingValue = 0;
-		if (!TryGetLuaGlobalInteger(state, globalName.c_str(), &existingValue)) {
-			SetLuaGlobalInteger(state, globalName.c_str(), entry.job);
-		}
+		SetLuaGlobalInteger(state, globalName.c_str(), entry.job);
 
+		SetJobTblEntry(state, globalName.c_str(), entry.job);
 		SetPcJobTbl2Entry(state, globalName.c_str(), entry.job);
 	}
 }
@@ -451,8 +560,38 @@ void AddPcJobVariantAliases(lua_State* state)
 		}
 
 		SetLuaGlobalInteger(state, alias.aliasName, baseValue);
+		SetJobTblEntry(state, alias.aliasName, baseValue);
 		SetPcJobTbl2Entry(state, alias.aliasName, baseValue);
 	}
+}
+
+void PrepareJobNameCompatibility(lua_State* state)
+{
+	if (!state) {
+		return;
+	}
+
+	MergeGeneratedJobCompatibility(state);
+	AddPcJobVariantAliases(state);
+
+	lua_getglobal(state, "pcJobTbl");
+	if (!lua_istable(state, -1)) {
+		lua_pop(state, 1);
+		return;
+	}
+
+	lua_pushnil(state);
+	while (lua_next(state, -2) != 0) {
+		if (lua_isstring(state, -2) && lua_isnumber(state, -1)) {
+			const char* key = lua_tostring(state, -2);
+			const int value = static_cast<int>(lua_tointeger(state, -1));
+			SetJobTblEntry(state, key, value);
+		}
+
+		lua_pop(state, 1);
+	}
+
+	lua_pop(state, 1);
 }
 
 void PreparePcJobNameGenderCompatibility(lua_State* state)
@@ -718,6 +857,19 @@ bool CLuaBridge::LoadRagnarokScript(const char* relativePath)
 		LoadRagnarokScriptOnce("lua files\\datainfo\\accessoryid.lub");
 	}
 
+	if (PathEndsWithInsensitive(normalized, "lua files\\datainfo\\jobname.lub")
+		|| PathEndsWithInsensitive(normalized, "lua files\\datainfo\\jobname_f.lub")
+		|| PathEndsWithInsensitive(normalized, "lua files\\admin\\pcjobname.lub")
+		|| PathEndsWithInsensitive(normalized, "lua files\\datainfo\\pcjobnamegender.lub")
+		|| PathEndsWithInsensitive(normalized, "lua files\\datainfo\\pcjobnamegender_f.lub")) {
+		PrepareGeneratedJobEnumCompatibility(m_state);
+	}
+
+	if (PathEndsWithInsensitive(normalized, "lua files\\datainfo\\jobname.lub")
+		|| PathEndsWithInsensitive(normalized, "lua files\\datainfo\\jobname_f.lub")) {
+		PrepareJobNameCompatibility(m_state);
+	}
+
 	if (PathEndsWithInsensitive(normalized, "lua files\\datainfo\\pcjobnamegender.lub")
 		|| PathEndsWithInsensitive(normalized, "lua files\\datainfo\\pcjobnamegender_f.lub")) {
 		LoadRagnarokScriptOnce("lua files\\admin\\pcidentity.lub");
@@ -731,6 +883,14 @@ bool CLuaBridge::LoadRagnarokScript(const char* relativePath)
 		m_lastError = "unable to resolve Lua/LUB script";
 		DbgLog("[Lua] Failed to resolve script '%s'.\n", relativePath ? relativePath : "(null)");
 		return false;
+	}
+
+	if (PathEndsWithInsensitive(normalized, "lua files\\datainfo\\jobname.lub")
+		|| PathEndsWithInsensitive(normalized, "lua files\\datainfo\\jobname_f.lub")
+		|| PathEndsWithInsensitive(normalized, "lua files\\admin\\pcjobname.lub")
+		|| PathEndsWithInsensitive(normalized, "lua files\\datainfo\\pcjobnamegender.lub")
+		|| PathEndsWithInsensitive(normalized, "lua files\\datainfo\\pcjobnamegender_f.lub")) {
+		PopulateJobEnumCompatibilityGlobals(m_state, bytes);
 	}
 
 	const bool executed = ExecuteBuffer(bytes.data(), bytes.size(), sourcePath.c_str());
@@ -766,6 +926,140 @@ bool CLuaBridge::HasLoadedScript(const char* relativePath) const
 	return std::find(m_loadedScripts.begin(), m_loadedScripts.end(), normalized) != m_loadedScripts.end();
 }
 
+bool CLuaBridge::GetGlobalTableIntegerByIntegerKey(const char* tableName, int numericKey, int* outValue)
+{
+	if (!outValue) {
+		return false;
+	}
+	*outValue = 0;
+
+	if (!Initialize()) {
+		return false;
+	}
+	if (!tableName || !*tableName) {
+		m_lastError = "empty Lua table name";
+		return false;
+	}
+
+	lua_getglobal(m_state, tableName);
+	if (!lua_istable(m_state, -1)) {
+		lua_settop(m_state, 0);
+		m_lastError = "Lua table not found";
+		return false;
+	}
+
+	lua_pushinteger(m_state, numericKey);
+	lua_gettable(m_state, -2);
+	if (!lua_isnumber(m_state, -1)) {
+		lua_settop(m_state, 0);
+		m_lastError = "Lua table value is not a number";
+		return false;
+	}
+
+	*outValue = static_cast<int>(lua_tointeger(m_state, -1));
+	lua_settop(m_state, 0);
+	m_lastError.clear();
+	return true;
+}
+
+bool CLuaBridge::GetGlobalTableIntegerByStringKey(const char* tableName, const char* stringKey, int* outValue)
+{
+	if (!outValue) {
+		return false;
+	}
+	*outValue = 0;
+
+	if (!Initialize()) {
+		return false;
+	}
+	if (!tableName || !*tableName) {
+		m_lastError = "empty Lua table name";
+		return false;
+	}
+	if (!stringKey || !*stringKey) {
+		m_lastError = "empty Lua string key";
+		return false;
+	}
+
+	lua_getglobal(m_state, tableName);
+	if (!lua_istable(m_state, -1)) {
+		lua_settop(m_state, 0);
+		m_lastError = "Lua table not found";
+		return false;
+	}
+
+	lua_pushstring(m_state, stringKey);
+	lua_gettable(m_state, -2);
+	if (!lua_isnumber(m_state, -1)) {
+		lua_settop(m_state, 0);
+		m_lastError = "Lua table value is not a number";
+		return false;
+	}
+
+	*outValue = static_cast<int>(lua_tointeger(m_state, -1));
+	lua_settop(m_state, 0);
+	m_lastError.clear();
+	return true;
+}
+
+bool CLuaBridge::GetGlobalTableNestedStringByIntegerKey(const char* tableName,
+	int numericKey,
+	const char* nestedStringKey,
+	std::string* outValue)
+{
+	if (!outValue) {
+		return false;
+	}
+	outValue->clear();
+
+	if (!Initialize()) {
+		return false;
+	}
+	if (!tableName || !*tableName) {
+		m_lastError = "empty Lua table name";
+		return false;
+	}
+	if (!nestedStringKey || !*nestedStringKey) {
+		m_lastError = "empty nested Lua string key";
+		return false;
+	}
+
+	lua_getglobal(m_state, tableName);
+	if (!lua_istable(m_state, -1)) {
+		lua_settop(m_state, 0);
+		m_lastError = "Lua table not found";
+		return false;
+	}
+
+	lua_pushinteger(m_state, numericKey);
+	lua_gettable(m_state, -2);
+	if (!lua_istable(m_state, -1)) {
+		lua_settop(m_state, 0);
+		m_lastError = "Lua nested table not found";
+		return false;
+	}
+
+	lua_pushstring(m_state, nestedStringKey);
+	lua_gettable(m_state, -2);
+	if (!lua_isstring(m_state, -1)) {
+		lua_settop(m_state, 0);
+		m_lastError = "Lua nested table value is not a string";
+		return false;
+	}
+
+	const char* value = lua_tostring(m_state, -1);
+	if (!value) {
+		lua_settop(m_state, 0);
+		m_lastError = "Lua string conversion failed";
+		return false;
+	}
+
+	outValue->assign(value);
+	lua_settop(m_state, 0);
+	m_lastError.clear();
+	return true;
+}
+
 bool CLuaBridge::GetGlobalTableStringByIntegerKey(const char* tableName, int numericKey, std::string* outValue)
 {
 	if (!outValue) {
@@ -789,6 +1083,53 @@ bool CLuaBridge::GetGlobalTableStringByIntegerKey(const char* tableName, int num
 	}
 
 	lua_pushinteger(m_state, numericKey);
+	lua_gettable(m_state, -2);
+	if (!lua_isstring(m_state, -1)) {
+		lua_settop(m_state, 0);
+		m_lastError = "Lua table value is not a string";
+		return false;
+	}
+
+	const char* value = lua_tostring(m_state, -1);
+	if (!value) {
+		lua_settop(m_state, 0);
+		m_lastError = "Lua string conversion failed";
+		return false;
+	}
+
+	outValue->assign(value);
+	lua_settop(m_state, 0);
+	m_lastError.clear();
+	return true;
+}
+
+bool CLuaBridge::GetGlobalTableStringByStringKey(const char* tableName, const char* stringKey, std::string* outValue)
+{
+	if (!outValue) {
+		return false;
+	}
+	outValue->clear();
+
+	if (!Initialize()) {
+		return false;
+	}
+	if (!tableName || !*tableName) {
+		m_lastError = "empty Lua table name";
+		return false;
+	}
+	if (!stringKey || !*stringKey) {
+		m_lastError = "empty Lua string key";
+		return false;
+	}
+
+	lua_getglobal(m_state, tableName);
+	if (!lua_istable(m_state, -1)) {
+		lua_settop(m_state, 0);
+		m_lastError = "Lua table not found";
+		return false;
+	}
+
+	lua_pushstring(m_state, stringKey);
 	lua_gettable(m_state, -2);
 	if (!lua_isstring(m_state, -1)) {
 		lua_settop(m_state, 0);

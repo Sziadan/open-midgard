@@ -202,6 +202,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(int minimapWidth READ minimapWidth NOTIFY minimapGeometryChanged)
     Q_PROPERTY(int minimapHeight READ minimapHeight NOTIFY minimapGeometryChanged)
     Q_PROPERTY(QVariantMap minimapData READ minimapData NOTIFY minimapDataChanged)
+    Q_PROPERTY(QVariantList statusIcons READ statusIcons NOTIFY statusIconsChanged)
     Q_PROPERTY(bool shopChoiceVisible READ shopChoiceVisible NOTIFY shopChoiceVisibleChanged)
     Q_PROPERTY(int shopChoiceX READ shopChoiceX NOTIFY shopChoiceGeometryChanged)
     Q_PROPERTY(int shopChoiceY READ shopChoiceY NOTIFY shopChoiceGeometryChanged)
@@ -414,6 +415,7 @@ public:
     int minimapWidth() const { return m_minimapWidth; }
     int minimapHeight() const { return m_minimapHeight; }
     const QVariantMap& minimapData() const { return m_minimapData; }
+    const QVariantList& statusIcons() const { return m_statusIcons; }
     bool shopChoiceVisible() const { return m_shopChoiceVisible; }
     int shopChoiceX() const { return m_shopChoiceX; }
     int shopChoiceY() const { return m_shopChoiceY; }
@@ -1431,6 +1433,11 @@ public:
         emit minimapDataChanged();
     }
 
+    void setStatusIcons(const QVariantList& value) {
+        m_statusIcons = value;
+        emit statusIconsChanged();
+    }
+
     void setShopChoiceVisible(bool value) {
         if (m_shopChoiceVisible == value) {
             return;
@@ -1588,6 +1595,7 @@ signals:
     void minimapVisibleChanged();
     void minimapGeometryChanged();
     void minimapDataChanged();
+    void statusIconsChanged();
     void shopChoiceVisibleChanged();
     void shopChoiceGeometryChanged();
     void shopChoiceTextChanged();
@@ -1791,6 +1799,7 @@ private:
     int m_minimapWidth = 0;
     int m_minimapHeight = 0;
     QVariantMap m_minimapData;
+    QVariantList m_statusIcons;
     bool m_shopChoiceVisible = false;
     int m_shopChoiceX = 0;
     int m_shopChoiceY = 0;

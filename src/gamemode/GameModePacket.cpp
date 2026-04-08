@@ -520,30 +520,40 @@ void HandleIgnorePacket(CGameMode&, const PacketView&)
 {
 }
 
-void HandlePacket043F(CGameMode&, const PacketView& packet)
+void ApplySelfStatusIconPacket(int statusType, u32 actorId, bool active, u32 remainingMs)
 {
-    if (!packet.data || packet.packetLength <= 0) {
+    const bool matchesLocalPlayer = actorId != 0
+        && (actorId == g_session.m_gid || actorId == g_session.m_aid);
+    if (!matchesLocalPlayer) {
         return;
     }
 
-    char hexBytes[3 * 32 + 1]{};
-    const int bytesToDump = (std::min)(static_cast<int>(packet.packetLength), 32);
-    int writeOffset = 0;
-    for (int index = 0; index < bytesToDump && writeOffset + 4 < static_cast<int>(sizeof(hexBytes)); ++index) {
-        const int written = std::snprintf(
-            hexBytes + writeOffset,
-            sizeof(hexBytes) - static_cast<size_t>(writeOffset),
-            index == 0 ? "%02X" : " %02X",
-            static_cast<unsigned int>(packet.data[index]));
-        if (written <= 0) {
-            break;
-        }
-        writeOffset += written;
+    g_session.SetActiveStatusIcon(statusType, active, remainingMs);
+}
+
+void HandlePacket0196(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 9) {
+        return;
     }
 
-    DbgLog("[GameMode] pkt043F len=%u bytes=%s\n",
-        static_cast<unsigned int>(packet.packetLength),
-        hexBytes);
+    const int statusType = static_cast<int>(ReadLE16(packet.data + 2));
+    const u32 actorId = ReadLE32(packet.data + 4);
+    const bool active = packet.data[8] != 0;
+    ApplySelfStatusIconPacket(statusType, actorId, active, 0);
+}
+
+void HandlePacket043F(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 25) {
+        return;
+    }
+
+    const int statusType = static_cast<int>(ReadLE16(packet.data + 2));
+    const u32 actorId = ReadLE32(packet.data + 4);
+    const bool active = packet.data[8] != 0;
+    const u32 remainingMs = ReadLE32(packet.data + 9);
+    ApplySelfStatusIconPacket(statusType, actorId, active, remainingMs);
 }
 
 int ResolvePotionEffectId(unsigned int itemId)
@@ -4418,7 +4428,7 @@ bool ShouldTreatActorAsPc(u8 objectType, int job)
         return false;
     }
 
-    if (IsMonsterLikeJob(job)) {
+    if (IsHomunOrMercenaryJob(job)) {
         return false;
     }
 
@@ -6933,6 +6943,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x02D7, HandleIgnorePacket);
     router.Register(0x02DA, HandleIgnorePacket);
     router.Register(0x02E1, HandleActorActionNotify);
+    router.Register(0x0196, HandlePacket0196);
     router.Register(0x043F, HandlePacket043F);
     router.Register(0x0814, HandleIgnorePacket);
     router.Register(0x0816, HandleIgnorePacket);

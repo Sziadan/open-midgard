@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <unordered_map>
 #include <string>
 #include <list>
 #include <vector>
@@ -58,6 +59,12 @@ struct SHORTCUT_SLOT {
     unsigned char isSkill = 0;
     unsigned int id = 0;
     unsigned short count = 0;
+};
+
+struct ACTIVE_STATUS_ICON {
+    int statusType = 0;
+    bool hasTimer = false;
+    u32 expireServerTime = 0;
 };
 
 constexpr int kShortcutSlotsPerPage = 9;
@@ -179,6 +186,9 @@ public:
     bool AdjustNpcShopDealByDealRow(size_t dealRowIndex, int deltaQuantity);
     int GetNpcShopUnitPrice(const NPC_SHOP_ROW& row) const;
     void ClearShortcutSlots();
+    void ClearActiveStatusIcons();
+    void SetActiveStatusIcon(int statusType, bool active, u32 remainingMs);
+    void PruneExpiredStatusIcons(u32 serverTime);
     int GetShortcutPage() const;
     void SetShortcutPage(int page);
     int GetShortcutSlotAbsoluteIndex(int visibleSlot) const;
@@ -190,6 +200,7 @@ public:
     bool ClearShortcutSlotByVisibleIndex(int visibleSlot);
     int FindShortcutSlotByItemId(unsigned int itemId) const;
     int FindShortcutSlotBySkillId(int skillId) const;
+    const std::vector<ACTIVE_STATUS_ICON>& GetActiveStatusIcons() const;
     int GetPlayerSkillPointCount() const;
     int GetWeaponTypeByItemId(int itemId) const;
     int MakeWeaponTypeByItemId(int primaryWeaponItemId, int secondaryWeaponItemId) const;
@@ -201,6 +212,7 @@ public:
     unsigned int GetEquippedLeftHandWeaponItemId() const;
     unsigned int GetEquippedRightHandWeaponItemId() const;
     const char* GetPlayerName() const;
+    const char* GetJobDisplayName(int job) const;
     const char* GetJobName(int job) const;
     const char* GetAttrWaveName(int attr) const;
     const char* GetJobHitWaveName(int job) const;
@@ -238,6 +250,8 @@ private:
     std::list<PLAYER_SKILL_INFO> m_skillItems;
     std::list<PLAYER_SKILL_INFO> m_homunSkillItems;
     std::list<PLAYER_SKILL_INFO> m_mercSkillItems;
+    mutable std::unordered_map<int, std::string> m_jobDisplayNameCache;
+    std::vector<ACTIVE_STATUS_ICON> m_activeStatusIcons;
     bool m_accessoryNameTableLoaded;
     std::vector<std::string> m_accessoryNameTable;
     std::vector<std::string> m_jobHitWaveNameTable;

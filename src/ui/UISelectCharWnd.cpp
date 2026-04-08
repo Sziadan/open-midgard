@@ -618,28 +618,8 @@ void CopyCharacterName(const CHARACTER_INFO& info, char (&out)[25])
 
 const char* ResolveJobName(int job)
 {
-    switch (job) {
-    case 0: return "Novice";
-    case 1: return "Swordsman";
-    case 2: return "Mage";
-    case 3: return "Archer";
-    case 4: return "Acolyte";
-    case 5: return "Merchant";
-    case 6: return "Thief";
-    case 7: return "Knight";
-    case 8: return "Priest";
-    case 9: return "Wizard";
-    case 10: return "Blacksmith";
-    case 11: return "Hunter";
-    case 12: return "Assassin";
-    case 14: return "Crusader";
-    case 15: return "Monk";
-    case 16: return "Sage";
-    case 17: return "Rogue";
-    case 18: return "Alchemist";
-    case 19: return "Bard";
-    default: return "Unknown";
-    }
+    const char* jobName = g_session.GetJobDisplayName(job);
+    return (jobName && *jobName) ? jobName : "Unknown";
 }
 
 } // namespace

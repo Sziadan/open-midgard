@@ -818,13 +818,13 @@ UIBasicInfoWnd::DisplayData UIBasicInfoWnd::BuildDisplayData() const
 {
     DisplayData data{};
     data.name = g_session.GetPlayerName() ? g_session.GetPlayerName() : "";
-    data.jobName = g_session.GetJobName(g_session.m_playerJob) ? g_session.GetJobName(g_session.m_playerJob) : "";
+    data.jobName = g_session.GetJobDisplayName(g_session.m_playerJob) ? g_session.GetJobDisplayName(g_session.m_playerJob) : "";
 
     if (const CHARACTER_INFO* info = g_session.GetSelectedCharacterInfo()) {
         if (data.name.empty()) {
             data.name = CopyCharacterName(*info);
         }
-        data.jobName = g_session.GetJobName(info->job) ? g_session.GetJobName(info->job) : data.jobName;
+        data.jobName = g_session.GetJobDisplayName(info->job) ? g_session.GetJobDisplayName(info->job) : data.jobName;
         data.level = info->level;
         data.jobLevel = info->joblevel;
         data.hp = info->hp;
@@ -845,7 +845,7 @@ UIBasicInfoWnd::DisplayData UIBasicInfoWnd::BuildDisplayData() const
             data.level = static_cast<int>(g_world.m_player->m_clevel);
         }
         if (data.jobName.empty()) {
-            data.jobName = g_session.GetJobName(g_world.m_player->m_job) ? g_session.GetJobName(g_world.m_player->m_job) : "";
+            data.jobName = g_session.GetJobDisplayName(g_world.m_player->m_job) ? g_session.GetJobDisplayName(g_world.m_player->m_job) : "";
         }
     }
 

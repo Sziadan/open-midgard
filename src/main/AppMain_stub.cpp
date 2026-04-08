@@ -280,6 +280,7 @@ bool InitClientSystems()
         "lua files\\admin\\pcidentity.lub",
         "lua files\\admin\\pcjobname.lub",
         "lua files\\datainfo\\pcjobnamegender.lub",
+        "lua files\\datainfo\\jobname.lub",
     };
     for (const char* scriptPath : kBootstrapLuaScripts) {
         if (!g_buabridge.LoadRagnarokScriptOnce(scriptPath)) {

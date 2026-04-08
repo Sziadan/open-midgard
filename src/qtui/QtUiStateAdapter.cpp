@@ -2,6 +2,8 @@
 
 #include "QtUiState.h"
 
+#include "QtUiStatusIconCatalog.h"
+
 #include "network/Connection.h"
 #include "network/Packet.h"
 #include "core/ClientInfoLocale.h"
@@ -11,6 +13,7 @@
 #include "render3d/RenderBackend.h"
 #include "render3d/RenderDevice.h"
 #include "session/Session.h"
+#include "skill/Skill.h"
 #include "ui/UILoginWnd.h"
 #include "ui/UILoadingWnd.h"
 #include "ui/UIMakeCharWnd.h"
@@ -56,6 +59,9 @@ namespace {
 constexpr DWORD kHoverNameRequestCooldownMs = 1000;
 constexpr int kQtActorLabelVerticalOffset = 10;
 constexpr int kQtSpeechBubbleMaxTextWidth = 200;
+constexpr int kQtStatusIconSize = 56;
+constexpr int kQtStatusIconSpacing = 6;
+constexpr int kQtStatusIconTopMargin = 6;
 
 bool IsGameplayUiSuppressed(const QtUiState* state)
 {
@@ -170,6 +176,7 @@ void ClearGameplayUiState(QtUiState* state)
     state->setMinimapVisible(false);
     state->setMinimapGeometry(0, 0, 0, 0);
     state->setMinimapData(QVariantMap{});
+    state->setStatusIcons(QVariantList{});
 
     state->setShopChoiceVisible(false);
     state->setShopChoiceGeometry(0, 0, 0, 0);
@@ -358,6 +365,156 @@ QString ResolveShortcutSlotLabel(const SHORTCUT_SLOT* slot)
     }
 
     return QStringLiteral("Item %1").arg(slot->id);
+}
+
+QString ResolveStatusIconLabel(int statusType, int skillId)
+{
+    if (skillId > 0) {
+        if (const SkillMetadata* metadata = g_skillMgr.GetSkillMetadata(skillId)) {
+            if (!metadata->displayName.empty()) {
+                return ToQString(metadata->displayName);
+            }
+            if (!metadata->skillIdName.empty()) {
+                return ToQString(metadata->skillIdName);
+            }
+        }
+    }
+
+    if (const qtui::StatusIconCatalogEntry* entry = qtui::FindStatusIconCatalogEntry(statusType)) {
+        return ToQString(entry->fallbackLabel);
+    }
+
+    return QStringLiteral("Status %1").arg(statusType);
+}
+
+QString FormatStatusDuration(u32 remainingMs)
+{
+    const u32 totalSeconds = (remainingMs + 999u) / 1000u;
+    const u32 seconds = totalSeconds % 60u;
+    const u32 totalMinutes = totalSeconds / 60u;
+    const u32 hours = totalMinutes / 60u;
+    const u32 minutes = totalMinutes % 60u;
+
+    if (hours > 0u) {
+        return QStringLiteral("%1:%2:%3")
+            .arg(static_cast<int>(hours))
+            .arg(static_cast<int>(minutes), 2, 10, QChar('0'))
+            .arg(static_cast<int>(seconds), 2, 10, QChar('0'));
+    }
+
+    return QStringLiteral("%1:%2")
+        .arg(static_cast<int>(totalMinutes))
+        .arg(static_cast<int>(seconds), 2, 10, QChar('0'));
+}
+
+QString BuildStatusIconTooltipText(const QVariantMap& icon)
+{
+    const QString name = icon.value(QStringLiteral("name")).toString();
+    if (icon.value(QStringLiteral("timed")).toBool()) {
+        const int remainingMs = (std::max)(0, icon.value(QStringLiteral("remainingMs")).toInt());
+        return QStringLiteral("%1\n%2 remaining").arg(name, FormatStatusDuration(static_cast<u32>(remainingMs)));
+    }
+    return QStringLiteral("%1\nActive").arg(name);
+}
+
+int FindHoveredStatusIconIndex(const QtUiState* state, int mouseX, int mouseY)
+{
+    if (!state || !state->minimapVisible()) {
+        return -1;
+    }
+
+    const QVariantList& icons = state->statusIcons();
+    if (icons.isEmpty()) {
+        return -1;
+    }
+
+    const int stackX = state->minimapX() + (std::max)(0, state->minimapWidth() - kQtStatusIconSize);
+    const int stackY = state->minimapY() + state->minimapHeight() + kQtStatusIconTopMargin;
+    const int stride = kQtStatusIconSize + kQtStatusIconSpacing;
+    const int stackHeight = (icons.size() * kQtStatusIconSize) + ((icons.size() - 1) * kQtStatusIconSpacing);
+    if (mouseX < stackX || mouseX >= stackX + kQtStatusIconSize || mouseY < stackY || mouseY >= stackY + stackHeight) {
+        return -1;
+    }
+
+    const int localY = mouseY - stackY;
+    const int index = localY / stride;
+    if (index < 0 || index >= icons.size()) {
+        return -1;
+    }
+    if ((localY % stride) >= kQtStatusIconSize) {
+        return -1;
+    }
+    return index;
+}
+
+bool TryAppendHoveredStatusIconAnchor(const QtUiState* state, int mouseX, int mouseY, QVariantList* anchors)
+{
+    if (!state || !anchors) {
+        return false;
+    }
+
+    const int hoveredIndex = FindHoveredStatusIconIndex(state, mouseX, mouseY);
+    if (hoveredIndex < 0) {
+        return false;
+    }
+
+    const QVariantList& icons = state->statusIcons();
+    if (hoveredIndex >= icons.size()) {
+        return false;
+    }
+
+    const QVariantMap icon = icons[hoveredIndex].toMap();
+    const int centerX = state->minimapX() + (std::max)(0, state->minimapWidth() - kQtStatusIconSize) + (kQtStatusIconSize / 2);
+    const int bottomY = state->minimapY()
+        + state->minimapHeight()
+        + kQtStatusIconTopMargin
+        + (hoveredIndex * (kQtStatusIconSize + kQtStatusIconSpacing))
+        - 8;
+
+    QVariantMap anchor;
+    anchor.insert(QStringLiteral("text"), BuildStatusIconTooltipText(icon));
+    anchor.insert(QStringLiteral("centerX"), centerX);
+    anchor.insert(QStringLiteral("bottomY"), bottomY);
+    anchor.insert(QStringLiteral("background"), QStringLiteral("#ea1d232c"));
+    anchor.insert(QStringLiteral("foreground"), QStringLiteral("#f3f4f6"));
+    anchor.insert(QStringLiteral("showBubble"), true);
+    anchor.insert(QStringLiteral("fontPixelSize"), 11);
+    anchor.insert(QStringLiteral("bold"), false);
+    anchor.insert(QStringLiteral("wrap"), true);
+    anchor.insert(QStringLiteral("maxTextWidth"), 180);
+    anchor.insert(QStringLiteral("paddingX"), 16);
+    anchor.insert(QStringLiteral("paddingY"), 10);
+    anchor.insert(QStringLiteral("radius"), 5);
+    anchor.insert(QStringLiteral("borderColor"), QStringLiteral("#9ea9b8"));
+    anchor.insert(QStringLiteral("z"), 2100);
+    anchors->push_back(anchor);
+    return true;
+}
+
+QString BuildStatusIconShortLabel(const QString& label)
+{
+    const QString simplified = label.simplified();
+    if (simplified.isEmpty()) {
+        return QStringLiteral("?");
+    }
+
+    const QStringList parts = simplified.split(QChar(' '), Qt::SkipEmptyParts);
+    QString shortLabel;
+    for (const QString& part : parts) {
+        if (part.isEmpty()) {
+            continue;
+        }
+        shortLabel += part.left(1).toUpper();
+        if (shortLabel.size() >= 2) {
+            break;
+        }
+    }
+
+    if (shortLabel.isEmpty()) {
+        shortLabel = simplified.left(2).toUpper();
+    }
+
+    return shortLabel.left(3);
 }
 
 QString ToCssColor(u8 red, u8 green, u8 blue)
@@ -2047,9 +2204,44 @@ void PopulateMinimapState(QtUiState* state)
     state->setMinimapData(data);
 }
 
+void PopulateStatusIconsState(QtUiState* state, int mouseX, int mouseY)
+{
+    if (!state) {
+        return;
+    }
+
+    const u32 now = g_session.GetServerTime();
+    g_session.PruneExpiredStatusIcons(now);
+
+    QVariantList icons;
+    const std::vector<ACTIVE_STATUS_ICON>& activeIcons = g_session.GetActiveStatusIcons();
+    icons.reserve(static_cast<qsizetype>(activeIcons.size()));
+    const int hoveredIndex = FindHoveredStatusIconIndex(state, mouseX, mouseY);
+    for (const ACTIVE_STATUS_ICON& entry : activeIcons) {
+        const qtui::StatusIconCatalogEntry* const catalogEntry = qtui::FindStatusIconCatalogEntry(entry.statusType);
+        const int skillId = catalogEntry ? catalogEntry->skillId : 0;
+        const u32 remainingMs = (entry.hasTimer && entry.expireServerTime > now)
+            ? (entry.expireServerTime - now)
+            : 0;
+        const QString label = ResolveStatusIconLabel(entry.statusType, skillId);
+
+        QVariantMap icon;
+        icon.insert(QStringLiteral("statusType"), entry.statusType);
+        icon.insert(QStringLiteral("skillId"), skillId);
+        icon.insert(QStringLiteral("name"), label);
+        icon.insert(QStringLiteral("shortName"), BuildStatusIconShortLabel(label));
+        icon.insert(QStringLiteral("timed"), entry.hasTimer);
+        icon.insert(QStringLiteral("remainingMs"), static_cast<int>(remainingMs));
+        icon.insert(QStringLiteral("hovered"), hoveredIndex == icons.size());
+        icons.push_back(icon);
+    }
+
+    state->setStatusIcons(icons);
+}
+
 bool IsMonsterLikeHoverActor(const CGameActor* actor)
 {
-    if (!actor) {
+    if (!actor || actor->m_isPc != 0) {
         return false;
     }
 
@@ -2398,6 +2590,7 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
     PopulateSkillListState(m_state);
     PopulateOptionState(m_state);
     PopulateMinimapState(m_state);
+    PopulateStatusIconsState(m_state, mouseX, mouseY);
     PopulateShopChoiceState(m_state);
     PopulateNotificationState(m_state);
 
@@ -2433,12 +2626,14 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
         }
 
         const bool hasUiItemHover = TryAppendHoveredUiItemAnchor(&anchors);
+        const bool hasStatusIconHover = !hasUiItemHover && TryAppendHoveredStatusIconAnchor(m_state, mouseX, mouseY, &anchors);
         const bool blocksWorldHover = g_windowMgr.HasWindowAtPoint(mouseX, mouseY);
+        const bool blocksGameplayHover = hasUiItemHover || hasStatusIconHover || blocksWorldHover;
 
         int labelX = 0;
         int labelY = 0;
         CGameActor* hoveredActor = nullptr;
-        if (!hasUiItemHover && !blocksWorldHover && mode.m_world->FindHoveredActorScreen(viewMatrix,
+        if (!blocksGameplayHover && mode.m_world->FindHoveredActorScreen(viewMatrix,
                 cameraLongitude,
                 mouseX,
                 mouseY,
@@ -2461,7 +2656,7 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
                     ResolveHoverBackground(hoveredActor),
                     ResolveHoverForeground(hoveredActor)));
             }
-        } else if (!hasUiItemHover && !blocksWorldHover) {
+        } else if (!blocksGameplayHover) {
             CItem* hoveredItem = nullptr;
             if (mode.m_world->FindHoveredGroundItemScreen(viewMatrix,
                     mouseX,

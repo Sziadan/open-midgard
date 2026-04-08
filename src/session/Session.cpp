@@ -50,6 +50,21 @@ constexpr const char* kWeaponTokenRifle = "\xB6\xF3\xC0\xCC\xC7\xC3";
 constexpr const char* kWeaponTokenGatling = "\xB1\xE2\xB0\xFC\xC3\xD1";
 constexpr const char* kWeaponTokenShotgun = "\xBC\xA6\xB0\xC7";
 constexpr const char* kWeaponTokenShuriken = "\xBC\xF6\xB8\xAE\xB0\xCB";
+constexpr const char* kPaletteTokenLordKnight = "\xB7\xCE\xB5\xE5\xB3\xAA\xC0\xCC\xC6\xAE";
+constexpr const char* kPaletteTokenHighPriest = "\xC7\xCF\xC0\xCC\xC7\xC1\xB8\xAE\xBD\xBA\xC6\xAE";
+constexpr const char* kPaletteTokenHighWizard = "\xC7\xCF\xC0\xCC\xC0\xA7\xC0\xFA\xB5\xE5";
+constexpr const char* kPaletteTokenWhitesmith = "\xC8\xAD\xC0\xCC\xC6\xAE\xBD\xBA\xB9\xCC\xBD\xBA";
+constexpr const char* kPaletteTokenSniper = "\xBD\xBA\xB3\xAA\xC0\xCC\xC6\xDB";
+constexpr const char* kPaletteTokenAssassinCross = "\xBE\xEE\xBC\xBC\xBD\xC5\xC5\xA9\xB7\xCE\xBD\xBA";
+constexpr const char* kPaletteTokenPecoLordKnight = "\xC6\xE4\xC4\xDA\xB7\xCE\xB3\xAA";
+constexpr const char* kPaletteTokenPaladin = "\xC6\xC8\xB6\xF3\xB5\xF2";
+constexpr const char* kPaletteTokenChampion = "\xC3\xA8\xC7\xC7\xBF\xC2";
+constexpr const char* kPaletteTokenProfessor = "\xC7\xC1\xB7\xCE\xC6\xE4\xBC\xAD";
+constexpr const char* kPaletteTokenStalker = "\xBD\xBA\xC5\xE4\xC4\xBF";
+constexpr const char* kPaletteTokenCreator = "\xC5\xA9\xB8\xAE\xBF\xA1\xC0\xCC\xC5\xCD";
+constexpr const char* kPaletteTokenClown = "\xC5\xA9\xB6\xF3\xBF\xEE";
+constexpr const char* kPaletteTokenGypsy = "\xC1\xFD\xBD\xC3";
+constexpr const char* kPaletteTokenPecoPaladin = "\xC6\xE4\xC4\xDA\xC6\xC8\xB6\xF3";
 
 int ClampShortcutPageIndex(int page)
 {
@@ -183,12 +198,20 @@ const char* GetSexToken(int sex)
     return sex ? kMaleSex : kFemaleSex;
 }
 
-const char* GetJobToken(int job)
+const char* FindExactJobToken(int job)
 {
     for (const JobTokenEntry& entry : kJobTokens) {
         if (entry.job == job) {
             return entry.token;
         }
+    }
+    return nullptr;
+}
+
+const char* GetJobToken(int job)
+{
+    if (const char* token = FindExactJobToken(job)) {
+        return token;
     }
     return kJobTokens[0].token;
 }
@@ -213,6 +236,461 @@ const char* LookupGeneratedJobName(int job)
         return nullptr;
     }
     return it->name;
+}
+
+int FindGeneratedJobIdByName(const char* name)
+{
+    if (!name || !*name) {
+        return -1;
+    }
+
+    for (const JobNameEntry& entry : kGeneratedJobNames) {
+        if (entry.name && std::strcmp(entry.name, name) == 0) {
+            return entry.job;
+        }
+    }
+
+    return -1;
+}
+
+bool LooksLikeDisplayJobName(const std::string& value)
+{
+    if (value.empty()) {
+        return false;
+    }
+
+    bool hasLowercase = false;
+    bool hasSpace = false;
+    for (char ch : value) {
+        const unsigned char uch = static_cast<unsigned char>(ch);
+        if (uch >= 'a' && uch <= 'z') {
+            hasLowercase = true;
+        }
+        if (ch == ' ') {
+            hasSpace = true;
+        }
+    }
+
+    return hasLowercase || hasSpace;
+}
+
+bool NormalizeLuaDisplayJobName(std::string* value)
+{
+    if (!value || value->empty()) {
+        return false;
+    }
+
+    if (value->size() > 2 && value->compare(value->size() - 2, 2, "_W") == 0) {
+        value->resize(value->size() - 2);
+    }
+
+    return !value->empty();
+}
+
+bool TryAcceptLuaDisplayJobName(const std::string& candidate, std::string* outValue)
+{
+    if (!outValue) {
+        return false;
+    }
+
+    std::string normalized = candidate;
+    if (!NormalizeLuaDisplayJobName(&normalized) || !LooksLikeDisplayJobName(normalized)) {
+        return false;
+    }
+
+    *outValue = normalized;
+    return true;
+}
+
+bool TryGetLuaJobDisplayName(int job, int sex, std::string* outValue)
+{
+    if (!outValue) {
+        return false;
+    }
+
+    outValue->clear();
+
+    static const char* kJobNameScripts[] = {
+        "lua files\\admin\\pcjobname.lub",
+        "lua files\\datainfo\\pcjobnamegender.lub",
+        "lua files\\datainfo\\jobname.lub",
+    };
+    for (const char* scriptPath : kJobNameScripts) {
+        g_buabridge.LoadRagnarokScriptOnce(scriptPath);
+    }
+
+    static const char* kMappingTables[] = {
+        "pcJobTbl2",
+        "jobtbl",
+    };
+    static const char* kLegacyGenderTables[] = {
+        "PCJobNameGenderTable",
+        "PcJobNameGenderTable",
+    };
+
+    const char* preferredGenderKey = sex == 1 ? "M" : "F";
+    const char* preferredGenderTable = sex == 1 ? "PCJobNameTableMan" : "PCJobNameTableWoman";
+    const char* secondaryGenderTable = sex == 1 ? "PCJobNameTable" : "PCJobNameTable";
+    const char* alternateGenderTable = sex == 1 ? "PCJobNameTableWoman" : "PCJobNameTableMan";
+    const char* kDisplayTables[] = {
+        preferredGenderTable,
+        secondaryGenderTable,
+        alternateGenderTable,
+        "JobNameTable",
+    };
+
+    auto tryDisplayTableIntegerLookup = [&](const char* tableName, int numericKey) {
+        std::string candidate;
+        return g_buabridge.GetGlobalTableStringByIntegerKey(tableName, numericKey, &candidate)
+            && TryAcceptLuaDisplayJobName(candidate, outValue);
+    };
+
+    auto tryDisplayTableStringLookup = [&](const char* tableName, const char* stringKey) {
+        std::string candidate;
+        return g_buabridge.GetGlobalTableStringByStringKey(tableName, stringKey, &candidate)
+            && TryAcceptLuaDisplayJobName(candidate, outValue);
+    };
+
+    auto tryLegacyNestedGenderLookup = [&](int numericKey) {
+        for (const char* tableName : kLegacyGenderTables) {
+            std::string candidate;
+            if (g_buabridge.GetGlobalTableNestedStringByIntegerKey(tableName, numericKey, preferredGenderKey, &candidate)
+                && TryAcceptLuaDisplayJobName(candidate, outValue)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    auto tryDisplayLookupsByInteger = [&](int numericKey) {
+        for (const char* tableName : kDisplayTables) {
+            if (tryDisplayTableIntegerLookup(tableName, numericKey)) {
+                return true;
+            }
+        }
+        return tryLegacyNestedGenderLookup(numericKey);
+    };
+
+    auto tryDisplayLookupsByString = [&](const char* stringKey) {
+        for (const char* tableName : kDisplayTables) {
+            if (tryDisplayTableStringLookup(tableName, stringKey)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    if (job == 4009) {
+        static bool s_loggedHighPriestProbe = false;
+        if (!s_loggedHighPriestProbe) {
+            s_loggedHighPriestProbe = true;
+
+            auto logStringByInteger = [&](const char* tableName) {
+                std::string value;
+                if (g_buabridge.GetGlobalTableStringByIntegerKey(tableName, job, &value)) {
+                    DbgLog("[Session] Probe %s[%d] string='%s'\n", tableName, job, value.c_str());
+                } else {
+                    DbgLog("[Session] Probe %s[%d] string failed: %s\n",
+                        tableName,
+                        job,
+                        g_buabridge.GetLastError().c_str());
+                }
+            };
+
+            auto logIntegerByInteger = [&](const char* tableName) {
+                int value = 0;
+                if (g_buabridge.GetGlobalTableIntegerByIntegerKey(tableName, job, &value)) {
+                    DbgLog("[Session] Probe %s[%d] integer=%d\n", tableName, job, value);
+                } else {
+                    DbgLog("[Session] Probe %s[%d] integer failed: %s\n",
+                        tableName,
+                        job,
+                        g_buabridge.GetLastError().c_str());
+                }
+            };
+
+            logStringByInteger("pcJobTbl2");
+            logIntegerByInteger("pcJobTbl2");
+            logStringByInteger("jobtbl");
+            logIntegerByInteger("jobtbl");
+            logStringByInteger(preferredGenderTable);
+            logStringByInteger("PCJobNameTable");
+            logStringByInteger("JobNameTable");
+            logIntegerByInteger("JobNameTable");
+
+            for (const char* tableName : kLegacyGenderTables) {
+                std::string value;
+                if (g_buabridge.GetGlobalTableNestedStringByIntegerKey(tableName, job, preferredGenderKey, &value)) {
+                    DbgLog("[Session] Probe %s[%d]['%s'] string='%s'\n",
+                        tableName,
+                        job,
+                        preferredGenderKey,
+                        value.c_str());
+                } else {
+                    DbgLog("[Session] Probe %s[%d]['%s'] string failed: %s\n",
+                        tableName,
+                        job,
+                        preferredGenderKey,
+                        g_buabridge.GetLastError().c_str());
+                }
+            }
+
+            if (const char* generatedName = LookupGeneratedJobName(job)) {
+                std::string jtKey = "JT_";
+                jtKey += generatedName;
+
+                auto logStringByKey = [&](const char* tableName, const char* keyName) {
+                    std::string value;
+                    if (g_buabridge.GetGlobalTableStringByStringKey(tableName, keyName, &value)) {
+                        DbgLog("[Session] Probe %s['%s'] string='%s'\n", tableName, keyName, value.c_str());
+                    } else {
+                        DbgLog("[Session] Probe %s['%s'] string failed: %s\n",
+                            tableName,
+                            keyName,
+                            g_buabridge.GetLastError().c_str());
+                    }
+                };
+
+                auto logIntegerByKey = [&](const char* tableName, const char* keyName) {
+                    int value = 0;
+                    if (g_buabridge.GetGlobalTableIntegerByStringKey(tableName, keyName, &value)) {
+                        DbgLog("[Session] Probe %s['%s'] integer=%d\n", tableName, keyName, value);
+                    } else {
+                        DbgLog("[Session] Probe %s['%s'] integer failed: %s\n",
+                            tableName,
+                            keyName,
+                            g_buabridge.GetLastError().c_str());
+                    }
+                };
+
+                logStringByKey("pcJobTbl2", jtKey.c_str());
+                logIntegerByKey("pcJobTbl2", jtKey.c_str());
+                logStringByKey("pcJobTbl2", generatedName);
+                logIntegerByKey("pcJobTbl2", generatedName);
+                logStringByKey(preferredGenderTable, jtKey.c_str());
+                logStringByKey("PCJobNameTable", jtKey.c_str());
+                logStringByKey("JobNameTable", jtKey.c_str());
+                logStringByKey(preferredGenderTable, generatedName);
+                logStringByKey("PCJobNameTable", generatedName);
+                logStringByKey("JobNameTable", generatedName);
+            }
+        }
+    }
+
+    if (tryDisplayLookupsByInteger(job)) {
+        return true;
+    }
+
+    if (const char* generatedName = LookupGeneratedJobName(job)) {
+        std::string keyName = "JT_";
+        keyName += generatedName;
+
+        if (tryDisplayLookupsByString(keyName.c_str())) {
+            return true;
+        }
+
+        if (tryDisplayLookupsByString(generatedName)) {
+            return true;
+        }
+
+        for (const char* tableName : kMappingTables) {
+            int mappedJob = 0;
+            if (g_buabridge.GetGlobalTableIntegerByStringKey(tableName, keyName.c_str(), &mappedJob)
+                || g_buabridge.GetGlobalTableIntegerByStringKey(tableName, generatedName, &mappedJob)) {
+                if (tryDisplayLookupsByInteger(mappedJob)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+std::string ResolvePlayerResourceJobToken(int job)
+{
+    if (job == JT_G_MASTER) {
+        return std::string(GetJobToken(0));
+    }
+
+    auto tryResolveClassicTransBodyToken = [&](bool secondStage) -> std::string {
+        const int baseJob = (job > 3950) ? (job - 3950) : job;
+        if (const char* baseToken = FindExactJobToken(baseJob)) {
+            return secondStage ? (std::string(baseToken) + "_h") : std::string(baseToken);
+        }
+        return std::string();
+    };
+
+    switch (job) {
+    case 4001: // NOVICE_H
+    case 4002: // SWORDMAN_H
+    case 4003: // MAGICIAN_H
+    case 4004: // ARCHER_H
+    case 4005: // ACOLYTE_H
+    case 4006: // MERCHANT_H
+    case 4007: // THIEF_H
+        if (std::string token = tryResolveClassicTransBodyToken(false); !token.empty()) {
+            return token;
+        }
+        break;
+    case 4008: // KNIGHT_H
+    case 4009: // PRIEST_H
+    case 4010: // WIZARD_H
+    case 4011: // BLACKSMITH_H
+    case 4012: // HUNTER_H
+    case 4013: // ASSASSIN_H
+    case 4014: // CHICKEN_H
+    case 4015: // CRUSADER_H
+    case 4016: // MONK_H
+    case 4017: // SAGE_H
+    case 4018: // ROGUE_H
+    case 4019: // ALCHEMIST_H
+    case 4020: // BARD_H
+    case 4021: // DANCER_H
+    case 4022: // CHICKEN2_H
+        if (std::string token = tryResolveClassicTransBodyToken(true); !token.empty()) {
+            return token;
+        }
+        break;
+    default:
+        break;
+    }
+
+    if (const char* token = FindExactJobToken(job)) {
+        return std::string(token);
+    }
+
+    const char* generatedName = LookupGeneratedJobName(job);
+    if (generatedName && *generatedName) {
+        struct JobSuffixAlias {
+            const char* generatedSuffix;
+            const char* resourceSuffix;
+        };
+
+        static const JobSuffixAlias kSuffixAliases[] = {
+            { "_H", "_h" },
+            { "_B", "_b" },
+        };
+
+        const std::string generatedNameString(generatedName);
+        for (const JobSuffixAlias& alias : kSuffixAliases) {
+            const size_t suffixLength = std::strlen(alias.generatedSuffix);
+            if (generatedNameString.size() <= suffixLength
+                || generatedNameString.compare(generatedNameString.size() - suffixLength, suffixLength, alias.generatedSuffix) != 0) {
+                continue;
+            }
+
+            const std::string baseName = generatedNameString.substr(0, generatedNameString.size() - suffixLength);
+            const int baseJob = FindGeneratedJobIdByName(baseName.c_str());
+            if (baseJob < 0) {
+                continue;
+            }
+
+            if (const char* baseToken = FindExactJobToken(baseJob)) {
+                return std::string(baseToken) + alias.resourceSuffix;
+            }
+        }
+    }
+
+    const int normalizedJob = (job > 3950) ? (job - 3950) : job;
+    if (const char* token = FindExactJobToken(normalizedJob)) {
+        return std::string(token);
+    }
+
+    return std::string(GetJobToken(normalizedJob));
+}
+
+bool TryGetGeneratedBaseJobToken(int job, std::string* outToken)
+{
+    if (!outToken) {
+        return false;
+    }
+
+    outToken->clear();
+
+    const char* generatedName = LookupGeneratedJobName(job);
+    if (!generatedName || !*generatedName) {
+        return false;
+    }
+
+    static const char* kGeneratedSuffixes[] = {
+        "_H",
+        "_B",
+    };
+
+    const std::string generatedNameString(generatedName);
+    for (const char* suffix : kGeneratedSuffixes) {
+        const size_t suffixLength = std::strlen(suffix);
+        if (generatedNameString.size() <= suffixLength
+            || generatedNameString.compare(generatedNameString.size() - suffixLength, suffixLength, suffix) != 0) {
+            continue;
+        }
+
+        const std::string baseName = generatedNameString.substr(0, generatedNameString.size() - suffixLength);
+        const int baseJob = FindGeneratedJobIdByName(baseName.c_str());
+        if (baseJob < 0) {
+            continue;
+        }
+
+        if (const char* baseToken = FindExactJobToken(baseJob)) {
+            *outToken = baseToken;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+std::string ResolvePlayerImfJobToken(int job)
+{
+    if (job == JT_G_MASTER) {
+        return std::string(GetJobToken(0));
+    }
+
+    if (std::string baseToken; TryGetGeneratedBaseJobToken(job, &baseToken)) {
+        return baseToken;
+    }
+
+    if (const char* token = FindExactJobToken(job)) {
+        return std::string(token);
+    }
+
+    const int normalizedJob = (job > 3950) ? (job - 3950) : job;
+    if (const char* token = FindExactJobToken(normalizedJob)) {
+        return std::string(token);
+    }
+
+    return std::string(GetJobToken(normalizedJob));
+}
+
+std::string ResolvePlayerPaletteJobToken(int job)
+{
+    if (job == JT_G_MASTER) {
+        return std::string(GetJobToken(0));
+    }
+
+    const int normalizedJob = (job > 3950) ? (job - 3950) : job;
+    switch (normalizedJob) {
+    case 58: return std::string(kPaletteTokenLordKnight);
+    case 59: return std::string(kPaletteTokenHighPriest);
+    case 60: return std::string(kPaletteTokenHighWizard);
+    case 61: return std::string(kPaletteTokenWhitesmith);
+    case 62: return std::string(kPaletteTokenSniper);
+    case 63: return std::string(kPaletteTokenAssassinCross);
+    case 64: return std::string(kPaletteTokenPecoLordKnight);
+    case 65: return std::string(kPaletteTokenPaladin);
+    case 66: return std::string(kPaletteTokenChampion);
+    case 67: return std::string(kPaletteTokenProfessor);
+    case 68: return std::string(kPaletteTokenStalker);
+    case 69: return std::string(kPaletteTokenCreator);
+    case 70: return std::string(kPaletteTokenClown);
+    case 71: return std::string(kPaletteTokenGypsy);
+    case 72: return std::string(kPaletteTokenPecoPaladin);
+    default:
+        break;
+    }
+
+    return ResolvePlayerResourceJobToken(job);
 }
 
 int NormalizeHeadValue(int head, int job)
@@ -431,10 +909,10 @@ char* BuildPlayerBodyResourceName(const CSession& session,
 {
     const int normalizedJob = NormalizePlayerBodyJob(job);
     const char* sexToken = GetSexToken(sex);
-    const char* jobToken = GetJobToken(normalizedJob);
+    const std::string jobToken = ResolvePlayerResourceJobToken(job);
 
     char basePath[260] = {};
-    std::sprintf(basePath, "%s%s\\%s\\%s_%s.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken, extension);
+    std::sprintf(basePath, "%s%s\\%s\\%s_%s.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken.c_str(), sexToken, extension);
 
     auto hasMatchingBodyResourcePair = [&](const char* candidatePath) {
         if (!candidatePath || !*candidatePath || !ResourceExistsLocalFirst(candidatePath)) {
@@ -456,7 +934,7 @@ char* BuildPlayerBodyResourceName(const CSession& session,
     const int weaponType = ResolvePlayerBodyWeaponType(session, normalizedJob, weaponItemId);
     if (weaponType > 0) {
         char candidate[260] = {};
-        std::sprintf(candidate, "%s%s\\%s\\%s_%s_%d.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken, weaponType, extension);
+        std::sprintf(candidate, "%s%s\\%s\\%s_%s_%d.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken.c_str(), sexToken, weaponType, extension);
         if (hasMatchingBodyResourcePair(candidate)) {
             std::strcpy(buf, candidate);
             return buf;
@@ -464,7 +942,7 @@ char* BuildPlayerBodyResourceName(const CSession& session,
 
         const std::string weaponTokenFromLua = session.GetPlayerWeaponToken(weaponType);
         if (!weaponTokenFromLua.empty()) {
-            std::sprintf(candidate, "%s%s\\%s\\%s_%s_%s.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken, weaponTokenFromLua.c_str(), extension);
+            std::sprintf(candidate, "%s%s\\%s\\%s_%s_%s.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken.c_str(), sexToken, weaponTokenFromLua.c_str(), extension);
             if (hasMatchingBodyResourcePair(candidate)) {
                 std::strcpy(buf, candidate);
                 return buf;
@@ -472,7 +950,7 @@ char* BuildPlayerBodyResourceName(const CSession& session,
         }
 
         if (const char* weaponToken = GetPlayerBodyWeaponToken(weaponType)) {
-            std::sprintf(candidate, "%s%s\\%s\\%s_%s_%s.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken, weaponToken, extension);
+            std::sprintf(candidate, "%s%s\\%s\\%s_%s_%s.%s", kHumanSpriteRoot, kBodyDir, sexToken, jobToken.c_str(), sexToken, weaponToken, extension);
             if (hasMatchingBodyResourcePair(candidate)) {
                 std::strcpy(buf, candidate);
                 return buf;
@@ -567,6 +1045,7 @@ void CSession::SetSelectedCharacterAppearance(const CHARACTER_INFO& info)
     m_selectedCharacterInfo = info;
     m_hasSelectedCharacterInfo = true;
     m_skillItems.clear();
+    ClearActiveStatusIcons();
     m_hasBaseExpValue = false;
     m_hasNextBaseExpValue = false;
     m_hasJobExpValue = false;
@@ -703,6 +1182,50 @@ void CSession::ClearEquipmentInventoryItems()
 void CSession::ClearSkillItems()
 {
     m_skillItems.clear();
+}
+
+void CSession::ClearActiveStatusIcons()
+{
+    m_activeStatusIcons.clear();
+}
+
+void CSession::SetActiveStatusIcon(int statusType, bool active, u32 remainingMs)
+{
+    if (statusType <= 0) {
+        return;
+    }
+
+    const auto it = std::find_if(m_activeStatusIcons.begin(), m_activeStatusIcons.end(), [&](const ACTIVE_STATUS_ICON& entry) {
+        return entry.statusType == statusType;
+    });
+
+    if (!active) {
+        if (it != m_activeStatusIcons.end()) {
+            m_activeStatusIcons.erase(it);
+        }
+        return;
+    }
+
+    ACTIVE_STATUS_ICON icon;
+    icon.statusType = statusType;
+    icon.hasTimer = remainingMs > 0;
+    icon.expireServerTime = icon.hasTimer ? (GetServerTime() + remainingMs) : 0;
+
+    if (it != m_activeStatusIcons.end()) {
+        *it = icon;
+        return;
+    }
+
+    m_activeStatusIcons.push_back(icon);
+}
+
+void CSession::PruneExpiredStatusIcons(u32 serverTime)
+{
+    m_activeStatusIcons.erase(
+        std::remove_if(m_activeStatusIcons.begin(), m_activeStatusIcons.end(), [&](const ACTIVE_STATUS_ICON& entry) {
+            return entry.hasTimer && entry.expireServerTime <= serverTime;
+        }),
+        m_activeStatusIcons.end());
 }
 
 void CSession::ClearHomunSkillItems()
@@ -1053,6 +1576,11 @@ int CSession::GetShortcutPage() const
     return ClampShortcutPageIndex(m_shortcutPage);
 }
 
+const std::vector<ACTIVE_STATUS_ICON>& CSession::GetActiveStatusIcons() const
+{
+    return m_activeStatusIcons;
+}
+
 void CSession::SetShortcutPage(int page)
 {
     m_shortcutPage = ClampShortcutPageIndex(page);
@@ -1233,6 +1761,32 @@ const char* CSession::GetPlayerName() const
     return m_playerName;
 }
 
+const char* CSession::GetJobDisplayName(int job) const
+{
+    if (job == JT_G_MASTER) {
+        return "JT_G_MASTER";
+    }
+
+    const auto cached = m_jobDisplayNameCache.find(job);
+    if (cached != m_jobDisplayNameCache.end()) {
+        return cached->second.c_str();
+    }
+
+    std::string displayName;
+    if (TryGetLuaJobDisplayName(job, GetSex(), &displayName) && !displayName.empty()) {
+        auto inserted = m_jobDisplayNameCache.emplace(job, std::move(displayName));
+        DbgLog("[Session] Cached display job name job=%d name='%s'\n",
+            job,
+            inserted.first->second.c_str());
+        return inserted.first->second.c_str();
+    }
+
+    DbgLog("[Session] Falling back to generated display job name job=%d name='%s'\n",
+        job,
+        LookupGeneratedJobName(job) ? LookupGeneratedJobName(job) : "");
+    return LookupGeneratedJobName(job);
+}
+
 const char* CSession::GetJobName(int job) const
 {
     if (job == JT_G_MASTER) {
@@ -1315,19 +1869,17 @@ int CSession::GetSex() const
 
 char* CSession::GetJobActName(int job, int sex, char* buf)
 {
-    const int normalizedJob = NormalizeJob(job);
     const char* sexToken = GetSexToken(sex);
-    const char* jobToken = GetJobToken(normalizedJob);
-    std::sprintf(buf, "%s%s\\%s\\%s_%s.act", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken);
+    const std::string jobToken = ResolvePlayerResourceJobToken(job);
+    std::sprintf(buf, "%s%s\\%s\\%s_%s.act", kHumanSpriteRoot, kBodyDir, sexToken, jobToken.c_str(), sexToken);
     return buf;
 }
 
 char* CSession::GetJobSprName(int job, int sex, char* buf)
 {
-    const int normalizedJob = NormalizeJob(job);
     const char* sexToken = GetSexToken(sex);
-    const char* jobToken = GetJobToken(normalizedJob);
-    std::sprintf(buf, "%s%s\\%s\\%s_%s.spr", kHumanSpriteRoot, kBodyDir, sexToken, jobToken, sexToken);
+    const std::string jobToken = ResolvePlayerResourceJobToken(job);
+    std::sprintf(buf, "%s%s\\%s\\%s_%s.spr", kHumanSpriteRoot, kBodyDir, sexToken, jobToken.c_str(), sexToken);
     return buf;
 }
 
@@ -1474,19 +2026,18 @@ char* CSession::GetAccessorySprName(int job, int* head, int sex, int accessory, 
 char* CSession::GetImfName(int job, int head, int sex, char* buf)
 {
     (void)head;
-    const int normalizedJob = NormalizeJob(job);
     const char* sexToken = GetSexToken(sex);
-    const char* jobToken = GetJobCompositionToken(normalizedJob);
-    std::sprintf(buf, "%s%s_%s.imf", kImfRoot, jobToken, sexToken);
+
+    const std::string imfToken = ResolvePlayerImfJobToken(job);
+    std::sprintf(buf, "%s%s_%s.imf", kImfRoot, imfToken.c_str(), sexToken);
     return buf;
 }
 
 char* CSession::GetBodyPaletteName(int job, int sex, int palNum, char* buf)
 {
-    const int normalizedJob = NormalizeJob(job);
     const char* sexToken = GetSexToken(sex);
-    const char* jobToken = GetJobCompositionToken(normalizedJob);
-    std::sprintf(buf, "%s%s_%s_%d.pal", kBodyPaletteRoot, jobToken, sexToken, palNum);
+    const std::string jobToken = ResolvePlayerPaletteJobToken(job);
+    std::sprintf(buf, "%s%s_%s_%d.pal", kBodyPaletteRoot, jobToken.c_str(), sexToken, palNum);
     return buf;
 }
 

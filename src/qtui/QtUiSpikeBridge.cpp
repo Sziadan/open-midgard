@@ -2,11 +2,14 @@
 
 #include "QtUiStateAdapter.h"
 
+#include "QtUiStatusIconCatalog.h"
+
 #include "DebugLog.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/View.h"
 #include "render3d/RenderBackend.h"
 #include "render3d/RenderDevice.h"
+#include "res/Bitmap.h"
 #include "session/Session.h"
 #include "skill/Skill.h"
 #include "ui/UIEquipWnd.h"
@@ -114,6 +117,7 @@ enum class QtUiImageRequestKind {
     Wallpaper,
     Item,
     Skill,
+    Status,
     Panel,
     EquipPreview,
     Other,
@@ -158,6 +162,9 @@ QtUiImageRequestKind CategorizeQtUiImageRequest(const QString& baseId)
     if (baseId.startsWith(QStringLiteral("skill/"))) {
         return QtUiImageRequestKind::Skill;
     }
+    if (baseId.startsWith(QStringLiteral("status/"))) {
+        return QtUiImageRequestKind::Status;
+    }
     if (baseId == QStringLiteral("equippreview")) {
         return QtUiImageRequestKind::EquipPreview;
     }
@@ -182,6 +189,8 @@ const char* GetQtUiImageRequestKindName(QtUiImageRequestKind kind)
         return "item";
     case QtUiImageRequestKind::Skill:
         return "skill";
+    case QtUiImageRequestKind::Status:
+        return "status";
     case QtUiImageRequestKind::Panel:
         return "panel";
     case QtUiImageRequestKind::EquipPreview:
@@ -191,6 +200,12 @@ const char* GetQtUiImageRequestKindName(QtUiImageRequestKind kind)
     default:
         return "other";
     }
+}
+
+const char* GetStatusIconDebugLabel(int statusType)
+{
+    const qtui::StatusIconCatalogEntry* const entry = qtui::FindStatusIconCatalogEntry(statusType);
+    return (entry && entry->fallbackLabel) ? entry->fallbackLabel : "unknown";
 }
 
 void RecordQtUiImageRequest(QtUiImageRequestKind kind, double elapsedMs)
@@ -219,7 +234,7 @@ void MaybeLogQtUiPerfStats()
     const double imageRequestTotal = static_cast<double>((std::max)(std::uint64_t{1}, g_qtUiPerfStats.imageRequestTotal));
 
     DbgLog(
-        "[QtUiPerf] frames=%llu menuCpu=%llu update=%.3fms render=%.3fms blend=%.3fms menuNative=%llu update=%.3fms render=%.3fms gameplayCpu=%llu update=%.3fms render=%.3fms blend=%.3fms gameplayNative=%llu update=%.3fms render=%.3fms imgReq=%llu avg=%.3fms %s=%llu/%.3fms %s=%llu/%.3fms %s=%llu/%.3fms %s=%llu/%.3fms %s=%llu/%.3fms %s=%llu/%.3fms %s=%llu/%.3fms\n",
+        "[QtUiPerf] frames=%llu menuCpu=%llu update=%.3fms render=%.3fms blend=%.3fms menuNative=%llu update=%.3fms render=%.3fms gameplayCpu=%llu update=%.3fms render=%.3fms blend=%.3fms gameplayNative=%llu update=%.3fms render=%.3fms imgReq=%llu avg=%.3fms %s=%llu/%.3fms %s=%llu/%.3fms %s=%llu/%.3fms %s=%llu/%.3fms %s=%llu/%.3fms %s=%llu/%.3fms %s=%llu/%.3fms %s=%llu/%.3fms\n",
         static_cast<unsigned long long>(g_qtUiPerfStats.totalFrames),
         static_cast<unsigned long long>(g_qtUiPerfStats.menuCpuFrames),
         g_qtUiPerfStats.menuCpuUpdateMs / menuCpuFrames,
@@ -249,6 +264,9 @@ void MaybeLogQtUiPerfStats()
         GetQtUiImageRequestKindName(QtUiImageRequestKind::Skill),
         static_cast<unsigned long long>(g_qtUiPerfStats.imageRequestCounts[static_cast<size_t>(QtUiImageRequestKind::Skill)]),
         g_qtUiPerfStats.imageRequestMs[static_cast<size_t>(QtUiImageRequestKind::Skill)],
+        GetQtUiImageRequestKindName(QtUiImageRequestKind::Status),
+        static_cast<unsigned long long>(g_qtUiPerfStats.imageRequestCounts[static_cast<size_t>(QtUiImageRequestKind::Status)]),
+        g_qtUiPerfStats.imageRequestMs[static_cast<size_t>(QtUiImageRequestKind::Status)],
         GetQtUiImageRequestKindName(QtUiImageRequestKind::Panel),
         static_cast<unsigned long long>(g_qtUiPerfStats.imageRequestCounts[static_cast<size_t>(QtUiImageRequestKind::Panel)]),
         g_qtUiPerfStats.imageRequestMs[static_cast<size_t>(QtUiImageRequestKind::Panel)],
@@ -382,6 +400,154 @@ bool TryBuildSkillIconImage(int skillId, QImage* outImage)
     *outImage = source.copy();
     if (!outImage->isNull()) {
         s_skillIconCache[skillId] = *outImage;
+    }
+    return !outImage->isNull();
+}
+
+bool TryBuildGameImageWithBitmapRes(const std::string& path, bool applyTransparentKey, QImage* outImage)
+{
+    if (!outImage || path.empty()) {
+        return false;
+    }
+
+    int size = 0;
+    unsigned char* bytes = g_fileMgr.GetData(path.c_str(), &size);
+    if (!bytes || size <= 0) {
+        delete[] bytes;
+        return false;
+    }
+
+    CBitmapRes bitmapRes;
+    const bool loaded = bitmapRes.LoadFromBuffer(path.c_str(), bytes, size);
+    delete[] bytes;
+    if (!loaded || !bitmapRes.m_data || bitmapRes.m_width <= 0 || bitmapRes.m_height <= 0) {
+        return false;
+    }
+
+    const QImage source(
+        reinterpret_cast<const uchar*>(bitmapRes.m_data),
+        bitmapRes.m_width,
+        bitmapRes.m_height,
+        bitmapRes.m_width * static_cast<int>(sizeof(unsigned int)),
+        QImage::Format_ARGB32);
+    *outImage = source.copy();
+    if (outImage->isNull()) {
+        return false;
+    }
+
+    if (applyTransparentKey) {
+        for (int y = 0; y < outImage->height(); ++y) {
+            QRgb* row = reinterpret_cast<QRgb*>(outImage->scanLine(y));
+            for (int x = 0; x < outImage->width(); ++x) {
+                if ((row[x] & 0x00FFFFFFu) == 0x00FF00FFu) {
+                    row[x] = 0u;
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+void AddUniqueStatusPathCandidate(std::vector<std::string>* out, const std::string& raw)
+{
+    if (!out || raw.empty()) {
+        return;
+    }
+
+    const std::string normalized = shopui::NormalizeSlash(raw);
+    const std::string lowered = shopui::ToLowerAscii(normalized);
+    for (const std::string& existing : *out) {
+        if (shopui::ToLowerAscii(existing) == lowered) {
+            return;
+        }
+    }
+    out->push_back(normalized);
+}
+
+std::string ResolveQtStatusIconPath(int statusType)
+{
+    const qtui::StatusIconCatalogEntry* const entry = qtui::FindStatusIconCatalogEntry(statusType);
+    if (!entry || !entry->legacyIconFileName || !entry->legacyIconFileName[0]) {
+        DbgLog("[QtUiStatusIcon] no legacy filename mapped for statusType=%d label='%s'\n",
+            statusType,
+            GetStatusIconDebugLabel(statusType));
+        return std::string();
+    }
+
+    const std::string fileName(entry->legacyIconFileName);
+    std::vector<std::string> candidates;
+    AddUniqueStatusPathCandidate(&candidates, fileName);
+    AddUniqueStatusPathCandidate(&candidates, std::string("effect\\") + fileName);
+    AddUniqueStatusPathCandidate(&candidates, std::string("texture\\effect\\") + fileName);
+    AddUniqueStatusPathCandidate(&candidates, std::string("data\\texture\\effect\\") + fileName);
+    AddUniqueStatusPathCandidate(&candidates, std::string("data\\effect\\") + fileName);
+
+    for (const std::string& candidate : candidates) {
+        if (g_fileMgr.IsDataExist(candidate.c_str())) {
+            DbgLog("[QtUiStatusIcon] resolved statusType=%d label='%s' path='%s'\n",
+                statusType,
+                GetStatusIconDebugLabel(statusType),
+                candidate.c_str());
+            return candidate;
+        }
+    }
+
+    DbgLog("[QtUiStatusIcon] missing statusType=%d label='%s' filename='%s'\n",
+        statusType,
+        GetStatusIconDebugLabel(statusType),
+        entry->legacyIconFileName);
+    for (const std::string& candidate : candidates) {
+        DbgLog("[QtUiStatusIcon]   tried '%s'\n", candidate.c_str());
+    }
+
+    return std::string();
+}
+
+bool TryBuildStatusIconImage(int statusType, QImage* outImage)
+{
+    if (!outImage || statusType == 0) {
+        return false;
+    }
+
+    static std::unordered_map<int, QImage> s_statusIconCache;
+    const auto cached = s_statusIconCache.find(statusType);
+    if (cached != s_statusIconCache.end()) {
+        *outImage = cached->second;
+        return !outImage->isNull();
+    }
+
+    const std::string path = ResolveQtStatusIconPath(statusType);
+    if (path.empty()) {
+        DbgLog("[QtUiStatusIcon] request failed: no path for statusType=%d label='%s'\n",
+            statusType,
+            GetStatusIconDebugLabel(statusType));
+        return false;
+    }
+
+    QImage decodedImage;
+    if (!TryBuildGameImageWithBitmapRes(path, true, &decodedImage)) {
+        DbgLog("[QtUiStatusIcon] decode failed: statusType=%d label='%s' path='%s'\n",
+            statusType,
+            GetStatusIconDebugLabel(statusType),
+            path.c_str());
+        return false;
+    }
+
+    *outImage = decodedImage;
+    if (!outImage->isNull()) {
+        s_statusIconCache[statusType] = *outImage;
+        DbgLog("[QtUiStatusIcon] loaded statusType=%d label='%s' path='%s' size=%dx%d\n",
+            statusType,
+            GetStatusIconDebugLabel(statusType),
+            path.c_str(),
+            outImage->width(),
+            outImage->height());
+    } else {
+        DbgLog("[QtUiStatusIcon] Qt copy failed: statusType=%d label='%s' path='%s'\n",
+            statusType,
+            GetStatusIconDebugLabel(statusType),
+            path.c_str());
     }
     return !outImage->isNull();
 }
@@ -581,6 +747,12 @@ public:
             const int skillId = baseId.mid(QStringLiteral("skill/").size()).toInt(&ok);
             if (ok) {
                 TryBuildSkillIconImage(skillId, &image);
+            }
+        } else if (baseId.startsWith(QStringLiteral("status/"))) {
+            bool ok = false;
+            const int statusType = baseId.mid(QStringLiteral("status/").size()).toInt(&ok);
+            if (ok) {
+                TryBuildStatusIconImage(statusType, &image);
             }
         } else if (baseId == QStringLiteral("equippreview")) {
             const UIEquipWnd* const equipWnd = g_windowMgr.m_equipWnd;

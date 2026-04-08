@@ -157,7 +157,7 @@ bool ContainsIgnoreCaseAscii(const char* text, const char* needle)
 
 bool IsMonsterLikeHoverActor(const CGameActor* actor)
 {
-    if (!actor) {
+    if (!actor || actor->m_isPc != 0) {
         return false;
     }
 

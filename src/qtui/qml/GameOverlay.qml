@@ -14,6 +14,44 @@ Item {
         return skillId > 0 ? "image://openmidgard/skill/" + skillId : ""
     }
 
+    function statusIconSource(statusType) {
+        return statusType > 0 ? "image://openmidgard/status/" + statusType : ""
+    }
+
+    function formatStatusDuration(remainingMs) {
+        var totalSeconds = Math.max(0, Math.ceil((remainingMs || 0) / 1000))
+        var seconds = totalSeconds % 60
+        var totalMinutes = Math.floor(totalSeconds / 60)
+        var hours = Math.floor(totalMinutes / 60)
+        var minutes = totalMinutes % 60
+
+        if (hours > 0) {
+            return hours + ":" + ("0" + minutes).slice(-2) + ":" + ("0" + seconds).slice(-2)
+        }
+        return totalMinutes + ":" + ("0" + seconds).slice(-2)
+    }
+
+    function statusTooltipText(statusData) {
+        if (!statusData) {
+            return ""
+        }
+        if (statusData.timed) {
+            return (statusData.name || "") + "\n" + formatStatusDuration(statusData.remainingMs || 0) + " remaining"
+        }
+        return (statusData.name || "") + "\nActive"
+    }
+
+    function statusExpiryTintFraction(statusData) {
+        if (!statusData || !statusData.timed) {
+            return 0
+        }
+        var remainingMs = Math.max(0, statusData.remainingMs || 0)
+        if (remainingMs >= 60000) {
+            return 0
+        }
+        return 1 - (remainingMs / 60000)
+    }
+
     function equipPreviewSource() {
         const revision = uiState.equipData.previewRevision || "0"
         return "image://openmidgard/equippreview?rev=" + revision
@@ -1790,6 +1828,75 @@ Item {
                 color: "#18202a"
                 font.pixelSize: 10
                 font.bold: true
+            }
+        }
+    }
+
+    Item {
+        x: uiState.minimapX + Math.max(0, uiState.minimapWidth - width)
+        y: uiState.minimapY + uiState.minimapHeight + 6
+        width: 56
+        height: {
+            const iconCount = (uiState.statusIcons || []).length
+            return iconCount > 0 ? (iconCount * 56) + ((iconCount - 1) * 6) : 0
+        }
+        visible: uiState.minimapVisible && (uiState.statusIcons || []).length > 0
+        z: 72
+
+        Column {
+            anchors.fill: parent
+            spacing: 6
+
+            Repeater {
+                model: uiState.statusIcons || []
+
+                delegate: Item {
+                    required property var modelData
+                    property real tintFraction: statusExpiryTintFraction(modelData)
+
+                    width: 56
+                    height: 56
+
+                    Item {
+                        anchors.fill: parent
+                        clip: true
+
+                        Image {
+                            id: statusIconImage
+                            anchors.fill: parent
+                            source: statusIconSource(modelData.statusType || 0)
+                            visible: source !== "" && status === Image.Ready
+                            smooth: false
+                            cache: false
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            visible: !statusIconImage.visible
+                            color: "#556574"
+                            radius: 8
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            visible: !statusIconImage.visible
+                            text: modelData.shortName || "?"
+                            color: "#f6f1e0"
+                            font.pixelSize: 18
+                            font.bold: true
+                        }
+
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            height: Math.round(parent.height * tintFraction)
+                            visible: tintFraction > 0
+                            color: "#c92f2f"
+                            opacity: 0.2 + (0.45 * tintFraction)
+                        }
+                    }
+                }
             }
         }
     }
