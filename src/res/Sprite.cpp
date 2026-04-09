@@ -243,10 +243,10 @@ bool CSprRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int
                     return false;
                 }
                 image->rgba[static_cast<size_t>(y) * image->width + x] =
-                    (static_cast<unsigned int>(rgba[3]) << 24) |
-                    (static_cast<unsigned int>(rgba[2]) << 16) |
-                    (static_cast<unsigned int>(rgba[1]) << 8) |
-                    static_cast<unsigned int>(rgba[0]);
+                    (static_cast<unsigned int>(rgba[0]) << 24) |
+                    (static_cast<unsigned int>(rgba[3]) << 16) |
+                    (static_cast<unsigned int>(rgba[2]) << 8) |
+                    static_cast<unsigned int>(rgba[1]);
             }
         }
 

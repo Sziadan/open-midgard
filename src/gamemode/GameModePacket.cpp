@@ -3957,6 +3957,8 @@ int ResolveSkillVisibleEffectId(u16 skillId, const UseSkillPacketInfo& packetInf
         return 42;
     case 35: // AL_CURE
         return 66;
+    case 138: // AS_ENCHANTPOISON
+        return 20;
     default: {
         return packetInfo.beginEffectId >= 0 ? packetInfo.beginEffectId : ResolveGroundSkillEffectId(skillId, levelOrAmount);
     }
@@ -4678,6 +4680,9 @@ void HandleSkillNoDamageNotify(CGameMode& mode, const PacketView& packet)
             && (packetInfo.useTargetSlot || packetInfo.targetEffectId >= 0);
         if (selfCast && effectId >= 0) {
             targetActor->SendMsg(targetActor, 85, effectId, 0, 0);
+            if (skillId == 138) {
+                targetActor->LaunchEffect(493, vector3d{}, 0.0f);
+            }
         } else {
             ClearAttachedSkillEffects(targetActor);
             targetActor->SendMsg(targetActor, 86,

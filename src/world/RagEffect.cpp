@@ -272,9 +272,54 @@ const char* RefParticle2SpriteStem()
     return "particle2";
 }
 
+const char* RefParticle3SpriteStem()
+{
+    return "particle3";
+}
+
 const char* RefParticle6SpriteStem()
 {
     return "particle6";
+}
+
+bool ConfigureEffectSpritePrim(CEffectPrim* prim,
+    std::initializer_list<const char*> stems,
+    int actionIndex,
+    float scale,
+    bool repeat,
+    float frameDelay,
+    int motionBase);
+
+void ConfigureEnchantPoisonParticle(CEffectPrim* prim, int speedBase, int speedSpan, int sizeBase, int sizeSpan)
+{
+    if (!prim) {
+        return;
+    }
+
+    prim->m_duration = 40;
+
+    const float angle = static_cast<float>(rand() % 360);
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, angle * (kPi / 180.0f));
+
+    const float radius = static_cast<float>(rand() % 6 + 2);
+    prim->m_deltaPos2 = {
+        radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
+        radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
+        radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
+    };
+
+    prim->m_latitude = 90.0f;
+    prim->m_longitude = 0.0f;
+    prim->m_speed = static_cast<float>(rand() % speedSpan + speedBase) * 0.01f;
+    prim->m_accel = prim->m_speed / static_cast<float>(prim->m_duration) * -0.5f;
+    prim->m_size = static_cast<float>(rand() % sizeSpan + sizeBase) * 0.01f;
+    prim->m_rollSpeed = 3.0f;
+    prim->m_alpha = 0.0f;
+    prim->m_alphaSpeed = prim->m_maxAlpha * 0.1f;
+    prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 5;
+    prim->m_tintColor = RGB(255, 255, 255);
+    ConfigureEffectSpritePrim(prim, { RefParticle3SpriteStem(), RefParticle2SpriteStem() }, 0, 1.0f, true, 0.0f, 0);
 }
 
 void SubmitScreenQuad(const tlvertex3d& anchor,
@@ -298,21 +343,66 @@ void SubmitScreenQuadPivot(const tlvertex3d& anchor,
     float pivotY,
     float width,
     float height,
+    float angleDegrees,
     unsigned int color,
     D3DBLEND destBlend,
     float alphaSortKey,
     int renderFlags)
 {
-    SubmitScreenQuad(anchor,
-        texture,
-        width * 0.5f - pivotX,
-        height * 0.5f - pivotY,
-        width,
-        height,
-        color,
-        destBlend,
-        alphaSortKey,
-        renderFlags);
+    if (!texture || texture == &CTexMgr::s_dummy_texture) {
+        return;
+    }
+
+    if (!std::isfinite(angleDegrees) || std::fabs(angleDegrees) <= 0.001f) {
+        SubmitScreenQuad(anchor,
+            texture,
+            width * 0.5f - pivotX,
+            height * 0.5f - pivotY,
+            width,
+            height,
+            color,
+            destBlend,
+            alphaSortKey,
+            renderFlags);
+        return;
+    }
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return;
+    }
+
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = texture;
+    face->mtPreset = 0;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = destBlend;
+    face->alphaSortKey = alphaSortKey;
+
+    const float radians = angleDegrees * (kPi / 180.0f);
+    const float c = std::cos(radians);
+    const float s = std::sin(radians);
+    const float xs[4] = { -pivotX, width - pivotX, -pivotX, width - pivotX };
+    const float ys[4] = { -pivotY, -pivotY, height - pivotY, height - pivotY };
+    const float uvs[4][2] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f } };
+
+    for (int index = 0; index < 4; ++index) {
+        tlvertex3d& vert = face->m_verts[index];
+        vert = anchor;
+        vert.x = anchor.x + xs[index] * c - ys[index] * s;
+        vert.y = anchor.y + xs[index] * s + ys[index] * c;
+        vert.color = color;
+        vert.specular = 0xFF000000u;
+        vert.tu = uvs[index][0];
+        vert.tv = uvs[index][1];
+    }
+
+    g_renderer.AddRP(face, renderFlags);
 }
 
 void SubmitScreenQuad(const tlvertex3d& anchor,
@@ -1469,7 +1559,7 @@ const BakedEffectSpriteFrame* GetBakedEffectSpriteFrame(const std::string& actPa
                         std::memcpy(dst, src, static_cast<size_t>(baked.width) * sizeof(unsigned int));
                     }
                     UnpremultiplyPixels(pixels);
-                    baked.texture = g_texMgr.CreateTexture(baked.width, baked.height, pixels.data(), PF_A8R8G8B8, false);
+                    baked.texture = g_texMgr.CreateTexture(baked.width, baked.height, pixels.data(), PF_A8R8G8B8, true);
                     baked.isValid = baked.texture && baked.texture != &CTexMgr::s_dummy_texture;
                 }
             }
@@ -1523,12 +1613,22 @@ bool SubmitAnimatedSpriteParticle(const CEffectPrim& prim,
     D3DBLEND destBlend,
     int renderFlags)
 {
+    const bool logEnchantPoison = prim.m_spriteSprName.find("particle3.spr") != std::string::npos
+        || prim.m_spriteSprName.find("particle2.spr") != std::string::npos;
     if (!viewMatrix || prim.m_spriteActName.empty() || prim.m_spriteSprName.empty()) {
+        if (logEnchantPoison) {
+            DbgLog("[EnchantPoisonDbg] sprite submit skipped missing view/paths act='%s' spr='%s'\n",
+                prim.m_spriteActName.c_str(),
+                prim.m_spriteSprName.c_str());
+        }
         return false;
     }
 
     CActRes* actRes = g_resMgr.GetAs<CActRes>(prim.m_spriteActName.c_str());
     if (!actRes) {
+        if (logEnchantPoison) {
+            DbgLog("[EnchantPoisonDbg] sprite submit missing act '%s'\n", prim.m_spriteActName.c_str());
+        }
         return false;
     }
 
@@ -1539,6 +1639,11 @@ bool SubmitAnimatedSpriteParticle(const CEffectPrim& prim,
 
     const int motionCount = actRes->GetMotionCount(actionIndex);
     if (motionCount <= 0) {
+        if (logEnchantPoison) {
+            DbgLog("[EnchantPoisonDbg] sprite submit no motions action=%d act='%s'\n",
+                actionIndex,
+                prim.m_spriteActName.c_str());
+        }
         return false;
     }
 
@@ -1557,19 +1662,44 @@ bool SubmitAnimatedSpriteParticle(const CEffectPrim& prim,
         actionIndex,
         motionIndex);
     if (!frame || !frame->texture) {
+        if (logEnchantPoison) {
+            DbgLog("[EnchantPoisonDbg] sprite submit no baked frame action=%d motion=%d act='%s' spr='%s'\n",
+                actionIndex,
+                motionIndex,
+                prim.m_spriteActName.c_str(),
+                prim.m_spriteSprName.c_str());
+        }
         return false;
     }
 
-    vector3d anchorPos = AddVec3(base, prim.m_deltaPos2);
+    (void)base;
+
+    vector3d anchorPos = prim.m_pos;
     anchorPos.y += prim.m_param[2];
     tlvertex3d anchor{};
     if (!ProjectPoint(anchorPos, *viewMatrix, &anchor)) {
+        if (logEnchantPoison) {
+            DbgLog("[EnchantPoisonDbg] sprite submit project fail pos=(%.2f,%.2f,%.2f) base=(%.2f,%.2f,%.2f) state=%d size=%.3f\n",
+                anchorPos.x,
+                anchorPos.y,
+                anchorPos.z,
+                base.x,
+                base.y,
+                base.z,
+                prim.m_stateCnt,
+                prim.m_size);
+        }
         return false;
     }
 
     const float pixelRatio = ResolveEffectPixelRatio(anchor);
     const float scale = (std::max)(0.1f, prim.m_spriteScale) * (std::max)(0.1f, prim.m_size);
     if (!std::isfinite(pixelRatio) || pixelRatio <= 0.0f) {
+        if (logEnchantPoison) {
+            DbgLog("[EnchantPoisonDbg] sprite submit bad pixelRatio=%.6f state=%d\n",
+                pixelRatio,
+                prim.m_stateCnt);
+        }
         return false;
     }
 
@@ -1583,10 +1713,26 @@ bool SubmitAnimatedSpriteParticle(const CEffectPrim& prim,
         pivotY,
         width,
         height,
+        prim.m_roll,
         color,
         destBlend,
         0.0f,
         renderFlags);
+    if (logEnchantPoison && prim.m_stateCnt <= 3) {
+        DbgLog("[EnchantPoisonDbg] sprite submit ok state=%d pos=(%.2f,%.2f,%.2f) screen=(%.2f,%.2f) size=(%.2f,%.2f) pivot=(%.2f,%.2f) roll=%.2f alpha=%u\n",
+            prim.m_stateCnt,
+            anchorPos.x,
+            anchorPos.y,
+            anchorPos.z,
+            anchor.x,
+            anchor.y,
+            width,
+            height,
+            pivotX,
+            pivotY,
+            prim.m_roll,
+            (color >> 24) & 0xFFu);
+    }
     return true;
 }
 
@@ -1837,6 +1983,8 @@ bool UpdateScreenTexturePrimitive(CEffectPrim* prim)
 
     ++prim->m_stateCnt;
     prim->m_speed += prim->m_accel;
+    prim->m_rollSpeed += prim->m_rollAccel;
+    prim->m_roll = WrapAngle360(prim->m_roll + prim->m_rollSpeed);
     prim->m_size += prim->m_sizeSpeed;
     prim->m_sizeSpeed += prim->m_sizeAccel;
     prim->m_radius += prim->m_radiusSpeed;
@@ -2052,6 +2200,8 @@ bool UpdateFreeParticlePrimitive(CEffectPrim* prim, bool applyGravity, bool spli
     prim->m_orgPos = AddVec3(prim->m_orgPos, prim->m_deltaPos2);
 
     prim->m_speed += prim->m_accel;
+    prim->m_rollSpeed += prim->m_rollAccel;
+    prim->m_roll = WrapAngle360(prim->m_roll + prim->m_rollSpeed);
     prim->m_size += prim->m_sizeSpeed;
     prim->m_sizeSpeed += prim->m_sizeAccel;
     prim->m_radius += prim->m_radiusSpeed;
@@ -2131,6 +2281,9 @@ CEffectPrim::CEffectPrim()
     , m_outerAccel(0.0f)
     , m_innerSpeed(0.0f)
     , m_innerAccel(0.0f)
+    , m_roll(0.0f)
+    , m_rollSpeed(0.0f)
+    , m_rollAccel(0.0f)
     , m_tintColor(RGB(255, 255, 255))
     , m_curMotion(0)
     , m_animSpeed(4)
@@ -2161,6 +2314,9 @@ void CEffectPrim::Init(CRagEffect* master, EFFECTPRIMID effectPrimId, const vect
     m_master = master;
     m_type = effectPrimId;
     m_deltaPos = deltaPos;
+    m_roll = 0.0f;
+    m_rollSpeed = 0.0f;
+    m_rollAccel = 0.0f;
     m_isDisappear = false;
     m_alphaDelta = 1.0f;
     m_minAlpha = 0.0f;
@@ -2785,6 +2941,7 @@ void CEffectPrim::Render(matrix* viewMatrix)
             pivotY,
             width,
             height,
+            m_roll,
             color,
             destBlend,
             0.0f,
@@ -3221,6 +3378,15 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     case 43:
         m_handler = Handler::IncAgility;
             m_duration = 100;
+        break;
+    case 20:
+    case 125:
+        m_handler = Handler::EnchantPoison;
+        m_duration = 40;
+        break;
+    case 493:
+        m_handler = Handler::EnchantPoison2;
+        m_duration = 80;
         break;
     case 42:
         m_handler = Handler::Blessing;
@@ -4878,6 +5044,80 @@ void CRagEffect::SpawnBlessing()
     }
 }
 
+void CRagEffect::SpawnEnchantPoison()
+{
+    const vector3d base = ResolveBasePosition();
+    if (m_stateCnt <= 2) {
+        DbgLog("[EnchantPoisonDbg] effect20 state=%d base=(%.2f,%.2f,%.2f) master=%p\n",
+            m_stateCnt,
+            base.x,
+            base.y,
+            base.z,
+            static_cast<void*>(m_master));
+    }
+
+    if (m_stateCnt == 0) {
+        TryPlayEffectWaveAt(base, {
+            "effect\\assasin_enchantpoison.wav",
+        });
+        TryPlayEffectWaveAt(base, {
+            "effect\\EF_PoisonAttack.wav",
+            "effect\\ef_poisonattack.wav",
+        });
+    }
+
+    if ((m_stateCnt % 5) == 0) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
+            ConfigureEnchantPoisonParticle(prim, 30, 30, 40, 50);
+            DbgLog("[EnchantPoisonDbg] spawned effect20 prim=%p delta2=(%.2f,%.2f,%.2f) speed=%.3f size=%.3f rollSpeed=%.2f\n",
+                static_cast<void*>(prim),
+                prim->m_deltaPos2.x,
+                prim->m_deltaPos2.y,
+                prim->m_deltaPos2.z,
+                prim->m_speed,
+                prim->m_size,
+                prim->m_rollSpeed);
+        }
+    }
+}
+
+void CRagEffect::SpawnEnchantPoison2()
+{
+    const vector3d base = ResolveBasePosition();
+    if (m_stateCnt <= 2) {
+        DbgLog("[EnchantPoisonDbg] effect493 state=%d base=(%.2f,%.2f,%.2f) master=%p\n",
+            m_stateCnt,
+            base.x,
+            base.y,
+            base.z,
+            static_cast<void*>(m_master));
+    }
+
+    if (m_stateCnt == 0 || m_stateCnt == 5 || m_stateCnt == 11 || m_stateCnt == 18 || m_stateCnt == 26 || m_stateCnt == 40) {
+        TryPlayEffectWaveAt(base, {
+            "effect\\assasin_enchantpoison.wav",
+        });
+    }
+
+    if ((m_stateCnt % 3) == 0) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
+            ConfigureEnchantPoisonParticle(prim, 30, 50, 20, 20);
+            DbgLog("[EnchantPoisonDbg] spawned effect493 prim=%p delta2=(%.2f,%.2f,%.2f) speed=%.3f size=%.3f rollSpeed=%.2f\n",
+                static_cast<void*>(prim),
+                prim->m_deltaPos2.x,
+                prim->m_deltaPos2.y,
+                prim->m_deltaPos2.z,
+                prim->m_speed,
+                prim->m_size,
+                prim->m_rollSpeed);
+        }
+    }
+
+    if (m_master && (m_stateCnt % 2) == 0 && (m_master->m_BodyLight & 1) == 0) {
+        ++m_master->m_BodyLight;
+    }
+}
+
 void CRagEffect::SpawnSightAura()
 {
     const vector3d base = ResolveBasePosition();
@@ -5260,6 +5500,12 @@ u8 CRagEffect::OnProcess()
                 break;
             case Handler::IncAgility:
                 SpawnIncAgility();
+                break;
+            case Handler::EnchantPoison:
+                SpawnEnchantPoison();
+                break;
+            case Handler::EnchantPoison2:
+                SpawnEnchantPoison2();
                 break;
             case Handler::Blessing:
                 SpawnBlessing();

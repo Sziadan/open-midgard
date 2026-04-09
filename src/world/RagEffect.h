@@ -115,6 +115,9 @@ public:
     float m_outerAccel;
     float m_innerSpeed;
     float m_innerAccel;
+    float m_roll;
+    float m_rollSpeed;
+    float m_rollAccel;
     COLORREF m_tintColor;
     vector3d m_orgPos;
     vector3d m_pos;
@@ -186,6 +189,8 @@ private:
         GrimTooth,
         GrimToothAtk,
         IncAgility,
+        EnchantPoison,
+        EnchantPoison2,
         Blessing,
         Sight,
         SightState,
@@ -229,6 +234,8 @@ private:
     void SpawnGrimTooth();
     void SpawnGrimToothAtk();
     void SpawnIncAgility();
+    void SpawnEnchantPoison();
+    void SpawnEnchantPoison2();
     void SpawnBlessing();
     void SpawnSight();
     void SpawnSightState();
