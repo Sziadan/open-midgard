@@ -98,6 +98,9 @@ constexpr u32 kBackgroundAnimNearInterval = 1;
 constexpr u32 kBackgroundAnimMidInterval = 2;
 constexpr u32 kBackgroundAnimFarInterval = 4;
 constexpr u32 kBackgroundAnimVeryFarInterval = 8;
+constexpr float kSkyboxActorScale = 30.0f;
+constexpr float kSkyboxCameraHeightOffset = 1200.0f;
+constexpr float kSkyboxAnimSpeed = 0.033333335f;
 constexpr float kBackgroundAnimNearDistance = 30.0f;
 constexpr float kBackgroundAnimMidDistance = 60.0f;
 constexpr float kBackgroundAnimFarDistance = 120.0f;
@@ -4912,6 +4915,7 @@ CWorld::CWorld()
     , m_bgObjCount(0), m_bgObjThread(0), m_isPKZone(0), m_isSiegeMode(0)
     , m_isBattleFieldMode(0), m_isEventPVPMode(0)
     , m_bgLightDir{ 0.0f, 1.0f, 0.0f }, m_bgDiffuseCol{ 1.0f, 1.0f, 1.0f }, m_bgAmbientCol{ 0.3f, 0.3f, 0.3f }
+    , m_skyActor(nullptr), m_skyLoadAttempted(false)
     , m_billboardFrameZoom(0.0f)
     , m_billboardActorFingerprint(0)
     , m_billboardFrameCombinedKey(0)
@@ -4924,6 +4928,7 @@ CWorld::CWorld()
 
 CWorld::~CWorld()
 {
+    ClearSky();
     ClearFixedObjects();
     ClearBackgroundObjects();
     ClearGround();
@@ -4944,6 +4949,62 @@ void CWorld::ClearBackgroundObjects()
     }
     m_bgObjList.clear();
     m_bgObjCount = 0;
+}
+
+void CWorld::ClearSky()
+{
+    delete m_skyActor;
+    m_skyActor = nullptr;
+    m_skyLoadAttempted = false;
+}
+
+bool CWorld::EnsureSkyActor()
+{
+    if (m_skyActor) {
+        return true;
+    }
+    if (m_skyLoadAttempted) {
+        return false;
+    }
+
+    m_skyLoadAttempted = true;
+    const std::string skyModelPath = ResolveDataPathWorld("skybox.rsm", ".rsm", {
+        "",
+        "data\\",
+        "model\\",
+        "data\\model\\"
+    });
+    if (skyModelPath.empty()) {
+        DbgLog("[World] skybox model unresolved name='skybox.rsm'\n");
+        return false;
+    }
+
+    C3dModelRes* modelRes = g_resMgr.GetAs<C3dModelRes>(skyModelPath.c_str());
+    if (!modelRes) {
+        DbgLog("[World] skybox model load failed path='%s'\n", skyModelPath.c_str());
+        return false;
+    }
+
+    C3dActor* skyActor = new C3dActor();
+    if (!skyActor) {
+        return false;
+    }
+    if (!skyActor->AssignModel(*modelRes)) {
+        DbgLog("[World] skybox assign failed path='%s'\n", skyModelPath.c_str());
+        delete skyActor;
+        return false;
+    }
+
+    skyActor->m_scale = vector3d{ kSkyboxActorScale, kSkyboxActorScale, kSkyboxActorScale };
+    skyActor->m_animSpeed = kSkyboxAnimSpeed;
+    skyActor->m_forceDoubleSided = true;
+    skyActor->SetFrame(0);
+    skyActor->UpdateVertexColor(
+        vector3d{ 0.0f, 1.0f, 0.0f },
+        vector3d{ 1.0f, 1.0f, 1.0f },
+        vector3d{ 1.0f, 1.0f, 1.0f });
+    m_skyActor = skyActor;
+    return true;
 }
 
 void CWorld::ClearFixedObjects()
@@ -5585,6 +5646,25 @@ void CWorld::ProcessActorSkillRechargeGages(const matrix& viewMatrix, float came
     for (CGameActor* actor : m_actorList) {
         updateForActor(actor);
     }
+}
+
+void CWorld::RenderSky(const matrix& viewMatrix, const vector3d& cameraPos, float cameraLongitude)
+{
+    (void)cameraLongitude;
+    if (!EnsureSkyActor() || !m_skyActor) {
+        return;
+    }
+
+    m_skyActor->AdvanceFrame();
+    m_skyActor->m_pos = vector3d{
+        cameraPos.x,
+        cameraPos.y + kSkyboxCameraHeightOffset,
+        cameraPos.z
+    };
+    m_skyActor->m_rot = vector3d{ 0.0f, 0.0f, 0.0f };
+    m_skyActor->m_isMatrixNeedUpdate = 1;
+    m_skyActor->UpdateMatrix();
+    m_skyActor->Render(viewMatrix);
 }
 
 void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)

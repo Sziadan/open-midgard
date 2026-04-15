@@ -108,6 +108,7 @@ public:
     CTexture* CreateTexture(int w, int h, unsigned int* data, PixelFormat format, bool b);
     CTexture* CreateTexture(unsigned long w, unsigned long h, PixelFormat format, IDirectDrawSurface7* pSurface);
     CTexture* GetTexture(const char* name, bool b);
+    CTexture* GetMaskedTexture(const char* name);
     
     void DestroyAllTexture();
     void DestroyTexture(CTexture* tex);

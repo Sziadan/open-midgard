@@ -897,6 +897,8 @@ void CView::OnRender()
             m_world->m_player);
     }
 
+    m_world->RenderSky(m_viewMatrix, m_from, m_cur.longitude);
+
     const bool trackMovePerf = IsMovePerfActive(m_world);
     if (trackMovePerf) {
         g_viewMovePerfStats.frames += 1;

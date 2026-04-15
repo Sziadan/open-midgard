@@ -230,6 +230,8 @@ public:
     vector3d m_bgLightDir;
     vector3d m_bgDiffuseCol;
     vector3d m_bgAmbientCol;
+    C3dActor* m_skyActor;
+    bool m_skyLoadAttempted;
     SceneGraphNode m_rootNode;
     SceneGraphNode* m_Calculated;
     mutable std::vector<BillboardScreenEntry> m_billboardFrameEntries;
@@ -245,6 +247,8 @@ public:
     void ClearGround();
     void ClearBackgroundObjects();
     void ClearFixedObjects();
+    void ClearSky();
+    bool EnsureSkyActor();
     void NotifyActorDeleted(const CGameActor* actor);
     void ResetSceneGraph();
     void RebuildSceneGraph();
@@ -291,6 +295,7 @@ public:
     void UpdateBackgroundObjects(const matrix* viewMatrix);
     void UpdateActors();
     void ProcessActorSkillRechargeGages(const matrix& viewMatrix, float cameraLongitude);
+    void RenderSky(const matrix& viewMatrix, const vector3d& cameraPos, float cameraLongitude);
     void RenderActors(const matrix& viewMatrix, float cameraLongitude);
     bool GetPlayerScreenLabel(const matrix& viewMatrix,
         float cameraLongitude,

@@ -476,7 +476,7 @@ bool C3dNode::AssignModel(const C3dNodeRes& nodeRes, const C3dModelRes& modelRes
     for (int materialSlot : nodeRes.textureIndices) {
         CTexture* texture = nullptr;
         if (materialSlot >= 0 && materialSlot < static_cast<int>(modelRes.m_materialNames.size())) {
-            texture = g_texMgr.GetTexture(modelRes.m_materialNames[static_cast<size_t>(materialSlot)].c_str(), false);
+            texture = g_texMgr.GetMaskedTexture(modelRes.m_materialNames[static_cast<size_t>(materialSlot)].c_str());
         }
         m_textures.push_back(texture);
     }

@@ -20,6 +20,12 @@ constexpr DWORD kLmFvf = D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DF
 constexpr bool kLogTexture = false;
 constexpr unsigned int kEffectBlackKeyThreshold = 9u;
 
+enum class TextureLoadMode {
+    ColorKey,
+    BlackKey,
+    MagentaMask,
+};
+
 bool ShouldLogGroundTextureName(const char* name)
 {
     if (!name || !*name) {
@@ -225,11 +231,17 @@ void CTexMgr::DestroyAllTexture() {
     m_texTable.clear();
 }
 
-CTexture* CTexMgr::GetTexture(const char* name, bool b) {
+CTexture* LoadManagedTexture(CTexMgr& texMgr, const char* name, TextureLoadMode mode) {
     const std::string baseName = name ? name : "";
-    const std::string cacheKey = (b ? "@bk:" : "@ck:") + baseName;
-    auto it = m_texTable.find(cacheKey.c_str());
-    if (it != m_texTable.end()) {
+    const char* cachePrefix = mode == TextureLoadMode::BlackKey
+        ? "@bk:"
+        : (mode == TextureLoadMode::MagentaMask ? "@mk:" : "@ck:");
+    const char* modeName = mode == TextureLoadMode::BlackKey
+        ? "blackkey"
+        : (mode == TextureLoadMode::MagentaMask ? "masked" : "colorkey");
+    const std::string cacheKey = std::string(cachePrefix) + baseName;
+    auto it = texMgr.m_texTable.find(cacheKey.c_str());
+    if (it != texMgr.m_texTable.end()) {
         it->second->m_timeStamp = GetTickCount();
         return it->second;
     }
@@ -240,10 +252,10 @@ CTexture* CTexMgr::GetTexture(const char* name, bool b) {
         if (missingTextureLogCount < 16) {
             ++missingTextureLogCount;
             if constexpr (kLogTexture) {
-                DbgLog("[Texture] missing '%s' mode=%s\n", name ? name : "(null)", b ? "blackkey" : "colorkey");
+                DbgLog("[Texture] missing '%s' mode=%s\n", name ? name : "(null)", modeName);
             }
         }
-        return &s_dummy_texture;
+        return &CTexMgr::s_dummy_texture;
     }
 
     CBitmapRes* bitmap = g_resMgr.GetAs<CBitmapRes>(texturePath.c_str());
@@ -255,19 +267,19 @@ CTexture* CTexMgr::GetTexture(const char* name, bool b) {
                 DbgLog("[Texture] load failed name='%s' resolved='%s' mode=%s\n",
                     name ? name : "(null)",
                     texturePath.c_str(),
-                    b ? "blackkey" : "colorkey");
+                    modeName);
             }
         }
-        return &s_dummy_texture;
+        return &CTexMgr::s_dummy_texture;
     }
 
     const unsigned int* textureData = reinterpret_cast<const unsigned int*>(bitmap->m_data);
-    std::vector<unsigned int> blackKeyPixels;
+    std::vector<unsigned int> transformedPixels;
     bool skipColorKey = false;
-    if (b) {
+    if (mode == TextureLoadMode::BlackKey) {
         const size_t pixelCount = static_cast<size_t>(bitmap->m_width) * static_cast<size_t>(bitmap->m_height);
-        blackKeyPixels.assign(textureData, textureData + pixelCount);
-        for (unsigned int& pixel : blackKeyPixels) {
+        transformedPixels.assign(textureData, textureData + pixelCount);
+        for (unsigned int& pixel : transformedPixels) {
             if ((pixel & 0x00FFFFFFu) == 0x00FF00FFu) {
                 pixel = 0x00000000u;
                 continue;
@@ -286,7 +298,17 @@ CTexture* CTexMgr::GetTexture(const char* name, bool b) {
                 pixel = 0x00000000u;
             }
         }
-        textureData = blackKeyPixels.data();
+        textureData = transformedPixels.data();
+        skipColorKey = true;
+    } else if (mode == TextureLoadMode::MagentaMask) {
+        const size_t pixelCount = static_cast<size_t>(bitmap->m_width) * static_cast<size_t>(bitmap->m_height);
+        transformedPixels.assign(textureData, textureData + pixelCount);
+        for (unsigned int& pixel : transformedPixels) {
+            if ((pixel & 0x00FFFFFFu) == 0x00FF00FFu) {
+                pixel = 0x00000000u;
+            }
+        }
+        textureData = transformedPixels.data();
         skipColorKey = true;
     }
 
@@ -318,10 +340,10 @@ CTexture* CTexMgr::GetTexture(const char* name, bool b) {
                     texturePath.c_str(),
                     bitmap->m_width,
                     bitmap->m_height,
-                    b ? "blackkey" : "colorkey");
+                    modeName);
             }
         }
-        return &s_dummy_texture;
+        return &CTexMgr::s_dummy_texture;
     }
 
     static int loadedTextureLogCount = 0;
@@ -333,7 +355,7 @@ CTexture* CTexMgr::GetTexture(const char* name, bool b) {
                 texturePath.c_str(),
                 bitmap->m_width,
                 bitmap->m_height,
-                b ? "blackkey" : "colorkey",
+                modeName,
                 static_cast<void*>(tex->m_pddsSurface));
         }
     }
@@ -343,8 +365,16 @@ CTexture* CTexMgr::GetTexture(const char* name, bool b) {
     }
 
     tex->m_timeStamp = GetTickCount();
-    m_texTable[tex->m_texName] = tex;
+    texMgr.m_texTable[tex->m_texName] = tex;
     return tex;
+}
+
+CTexture* CTexMgr::GetTexture(const char* name, bool b) {
+    return LoadManagedTexture(*this, name, b ? TextureLoadMode::BlackKey : TextureLoadMode::ColorKey);
+}
+
+CTexture* CTexMgr::GetMaskedTexture(const char* name) {
+    return LoadManagedTexture(*this, name, TextureLoadMode::MagentaMask);
 }
 
 CTexture* CTexMgr::CreateTexture(int w, int h, unsigned int* data, PixelFormat format, bool b) {
