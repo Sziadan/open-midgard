@@ -31,6 +31,7 @@ constexpr float kSubmitNearPlane = 80.0f;
 constexpr float kPi = 3.14159265f;
 constexpr float kEffectTickMs = 24.0f;
 constexpr float kEffectPixelRatioScale = 0.14285715f;
+constexpr float kWeatherCloudDurationFrames = 960.0f;
 // Ref/Wave.cpp PlayWave defaults used for skill / EzStr SFX.
 constexpr int kRefEffectWaveMaxDist = 250;
 constexpr int kRefEffectWaveMinDist = 40;
@@ -1224,6 +1225,180 @@ CTexture* ResolveEffectTextureCandidates(std::initializer_list<const char*> path
     return GetSoftGlowTexture(cloudFallback);
 }
 
+CTexture* ResolveWeatherCloudTexture(int mapVariant)
+{
+    if (mapVariant == 3) {
+        return ResolveEffectTextureCandidates({
+            "effect\\fog1.tga",
+            "effect\\fog2.tga",
+            "effect\\fog3.tga",
+        }, true);
+    }
+
+    return ResolveEffectTextureCandidates({
+        "effect\\cloud4.tga",
+        "effect\\cloud1.tga",
+        "effect\\cloud2.tga",
+    }, true);
+}
+
+float ResolveWeatherCloudAlphaCeiling(int mapVariant)
+{
+    switch (mapVariant) {
+    case 3:
+        return 148.0f;
+    case 5:
+        return 176.0f;
+    case 7:
+        return 188.0f;
+    case 8:
+        return 208.0f;
+    default:
+        return 168.0f;
+    }
+}
+
+float ResolveWeatherCloudWidthScale(int mapVariant)
+{
+    return mapVariant == 3 ? 5.8f : 7.8f;
+}
+
+float ResolveWeatherCloudHeightScale(int mapVariant)
+{
+    return mapVariant == 3 ? 3.2f : 4.4f;
+}
+
+COLORREF ResolveWeatherCloudTint(int mapVariant)
+{
+    switch (mapVariant) {
+    case 3:
+        return RGB(214, 214, 214);
+    case 5:
+        return RGB(255, 239, 226);
+    default:
+        return RGB(255, 255, 255);
+    }
+}
+
+void InitWeatherCloudSegment(CEffectPrim* prim, int index, int mapVariant, const vector3d& center)
+{
+    if (!prim || index < 0 || index >= static_cast<int>(prim->m_segments.size())) {
+        return;
+    }
+
+    EffectSegmentState& segment = prim->m_segments[static_cast<size_t>(index)];
+    MatrixIdentity(segment.transform);
+
+    float offsetX = 0.0f;
+    float offsetY = 0.0f;
+    float offsetZ = 0.0f;
+    switch (mapVariant) {
+    case 0:
+        offsetY = -125.0f + static_cast<float>(rand() % 10);
+        offsetX = static_cast<float>(rand() % 300 - 150);
+        offsetZ = static_cast<float>(rand() % 300 - 150);
+        break;
+    case 2:
+        offsetY = static_cast<float>(rand() % 10);
+        offsetX = static_cast<float>(rand() % 300 - 150);
+        offsetZ = static_cast<float>(rand() % 300 - 150);
+        break;
+    case 3: {
+        offsetX = static_cast<float>(rand() % 300 - 150);
+        offsetZ = static_cast<float>(rand() % 300 - 150);
+        const float sampleX = center.x + offsetX;
+        const float sampleZ = center.z + offsetZ;
+        const float groundY = g_world.m_attr ? g_world.m_attr->GetHeight(sampleX, sampleZ) : center.y;
+        offsetY = groundY - center.y - 20.0f - static_cast<float>(rand() % 5);
+        break;
+    }
+    case 5:
+        offsetY = 20.0f + static_cast<float>(rand() % 10);
+        offsetX = static_cast<float>(rand() % 300 - 150);
+        offsetZ = static_cast<float>(rand() % 300 - 150);
+        break;
+    default:
+        offsetY = 40.0f + static_cast<float>(rand() % 10);
+        offsetX = static_cast<float>(rand() % 200 + 25);
+        if ((rand() & 1) == 0) {
+            offsetX = -offsetX;
+        }
+        offsetZ = static_cast<float>(rand() % 200 + 25);
+        if ((rand() & 1) == 0) {
+            offsetZ = -offsetZ;
+        }
+        break;
+    }
+
+    const vector3d origin = {
+        center.x + offsetX,
+        center.y + offsetY,
+        center.z + offsetZ,
+    };
+    segment.pos = origin;
+    segment.alpha = 0.0f;
+    segment.radius = (mapVariant == 3 ? 35.0f : 30.0f) + static_cast<float>(rand() % (mapVariant == 3 ? 10 : 20));
+    segment.size = 0.85f + static_cast<float>(rand() % 40) * 0.01f;
+
+    const float basePhase = static_cast<float>(rand() % 360) * (kPi / 180.0f);
+    const float speedScale = 0.08f + static_cast<float>(rand() % 30) * 0.004f;
+    segment.transform.m[0][0] = ((rand() & 1) == 0 ? -1.0f : 1.0f) * speedScale;
+    segment.transform.m[0][1] = mapVariant == 3 ? 0.0f : (0.01f + static_cast<float>(rand() % 10) * 0.0015f);
+    segment.transform.m[0][2] = ((rand() & 1) == 0 ? -1.0f : 1.0f) * (speedScale * 0.6f);
+    segment.transform.m[1][0] = static_cast<float>(rand() % 60);
+    segment.transform.m[1][1] = basePhase;
+    segment.transform.m[1][2] = ResolveWeatherCloudAlphaCeiling(mapVariant);
+    segment.transform.m[2][0] = mapVariant == 3 ? 0.8f : 2.4f + static_cast<float>(rand() % 20) * 0.1f;
+    segment.transform.m[2][1] = 0.01f + static_cast<float>(rand() % 8) * 0.0025f;
+    segment.transform.m[2][2] = mapVariant == 3 ? 0.35f : 1.2f;
+    segment.transform.m[3][0] = origin.x;
+    segment.transform.m[3][1] = origin.y;
+    segment.transform.m[3][2] = origin.z;
+}
+
+bool UpdateWeatherCloudPrimitive(CEffectPrim* prim)
+{
+    if (!prim) {
+        return false;
+    }
+
+    ++prim->m_stateCnt;
+    const int mapVariant = static_cast<int>(prim->m_param[0]);
+    const float fadeInFrames = mapVariant == 3 ? 24.0f : 50.0f;
+    const float fadeOutFrames = 96.0f;
+    bool anyVisible = false;
+    const int count = (std::min)(prim->m_numSegments, static_cast<int>(prim->m_segments.size()));
+    for (int index = 0; index < count; ++index) {
+        EffectSegmentState& segment = prim->m_segments[static_cast<size_t>(index)];
+        const float delay = segment.transform.m[1][0];
+        const float localTick = static_cast<float>(prim->m_stateCnt) - delay;
+        if (localTick < 0.0f) {
+            segment.alpha = 0.0f;
+            continue;
+        }
+
+        const float remaining = static_cast<float>(prim->m_duration - prim->m_stateCnt);
+        const float alphaCeiling = segment.transform.m[1][2];
+        float alpha = (std::min)(alphaCeiling, localTick * (alphaCeiling / fadeInFrames));
+        if (remaining < fadeOutFrames) {
+            alpha = (std::min)(alpha, (std::max)(0.0f, remaining) * (alphaCeiling / fadeOutFrames));
+        }
+        segment.alpha = alpha;
+        if (segment.alpha <= 0.0f) {
+            continue;
+        }
+
+        const float phase = segment.transform.m[1][1] + localTick * segment.transform.m[2][1];
+        const float sway = segment.transform.m[2][0];
+        segment.pos.x = segment.transform.m[3][0] + segment.transform.m[0][0] * localTick + std::sin(phase) * sway;
+        segment.pos.y = segment.transform.m[3][1] + segment.transform.m[0][1] * localTick + std::sin(phase * 0.47f) * segment.transform.m[2][2];
+        segment.pos.z = segment.transform.m[3][2] + segment.transform.m[0][2] * localTick + std::cos(phase * 0.83f) * sway;
+        anyVisible = true;
+    }
+
+    return prim->m_stateCnt <= prim->m_duration || anyVisible;
+}
+
 static std::string StrBasenameLowerNoExt(const char* strPath)
 {
     if (!strPath || !*strPath) {
@@ -2358,6 +2533,9 @@ bool CEffectPrim::OnProcess()
         ++m_stateCnt;
         return m_stateCnt <= m_duration || std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active && band.alpha > 0.0f; });
     }
+    if (m_type == PP_CLOUD) {
+        return UpdateWeatherCloudPrimitive(this);
+    }
     if (m_type == PP_CASTINGRING4 && std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active; })) {
         UpdateCastingBands(this);
         ++m_stateCnt;
@@ -2393,7 +2571,8 @@ void CEffectPrim::Render(matrix* viewMatrix)
         && m_type != PP_PORTALSTACK
         && m_type != PP_CASTINGRING4
         && m_type != PP_PORTAL
-        && m_type != PP_WIND) {
+        && m_type != PP_WIND
+        && m_type != PP_CLOUD) {
         return;
     }
 
@@ -2519,6 +2698,33 @@ void CEffectPrim::Render(matrix* viewMatrix)
                 (m_size + band.distance) * 18.0f,
                 (m_size + band.distance * 0.7f) * 18.0f,
                 PackColor(static_cast<unsigned int>((std::min)(255.0f, band.alpha)), m_tintColor),
+                destBlend,
+                0.0f,
+                renderFlags);
+        }
+        break;
+    }
+    case PP_CLOUD: {
+        CTexture* texture = !m_texture.empty() ? m_texture[0] : GetSoftGlowTexture(true);
+        const int mapVariant = static_cast<int>(m_param[0]);
+        const int renderFlags = ResolveEffectRenderFlags(m_renderFlag, 1 | 2);
+        const D3DBLEND destBlend = ResolveEffectDestBlend(m_renderFlag);
+        const COLORREF tintColor = ResolveWeatherCloudTint(mapVariant);
+        const int count = (std::min)(m_numSegments, static_cast<int>(m_segments.size()));
+        for (int index = 0; index < count; ++index) {
+            const EffectSegmentState& segment = m_segments[static_cast<size_t>(index)];
+            if (segment.alpha <= 0.0f) {
+                continue;
+            }
+
+            const float width = (std::max)(56.0f, segment.radius * ResolveWeatherCloudWidthScale(mapVariant) * segment.size);
+            const float height = (std::max)(28.0f, segment.radius * ResolveWeatherCloudHeightScale(mapVariant) * segment.size);
+            SubmitBillboard(segment.pos,
+                *viewMatrix,
+                texture,
+                width,
+                height,
+                PackColor(static_cast<unsigned int>((std::max)(0.0f, (std::min)(255.0f, segment.alpha))), tintColor),
                 destBlend,
                 0.0f,
                 renderFlags);
@@ -3370,6 +3576,54 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         m_handler = Handler::FireBall;
         m_duration = 40;
         break;
+    case 229:
+        m_handler = Handler::WeatherCloud;
+        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
+        m_param[0] = 0.0f;
+        m_param[1] = 40.0f;
+        break;
+    case 230:
+        m_handler = Handler::WeatherCloud;
+        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
+        m_param[0] = 1.0f;
+        m_param[1] = 60.0f;
+        break;
+    case 233:
+        m_handler = Handler::WeatherCloud;
+        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
+        m_param[0] = 2.0f;
+        m_param[1] = 40.0f;
+        break;
+    case 515:
+        m_handler = Handler::WeatherCloud;
+        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
+        m_param[0] = 3.0f;
+        m_param[1] = 40.0f;
+        break;
+    case 516:
+        m_handler = Handler::WeatherCloud;
+        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
+        m_param[0] = 4.0f;
+        m_param[1] = 40.0f;
+        break;
+    case 592:
+        m_handler = Handler::WeatherCloud;
+        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
+        m_param[0] = 5.0f;
+        m_param[1] = 40.0f;
+        break;
+    case 697:
+        m_handler = Handler::WeatherCloud;
+        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
+        m_param[0] = 7.0f;
+        m_param[1] = 80.0f;
+        break;
+    case 698:
+        m_handler = Handler::WeatherCloud;
+        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
+        m_param[0] = 8.0f;
+        m_param[1] = 80.0f;
+        break;
     case 33:
         m_handler = Handler::Ruwach;
         m_duration = 25;
@@ -4082,6 +4336,37 @@ void CRagEffect::SpawnMapParticle()
     }
 }
 
+
+void CRagEffect::SpawnWeatherCloud()
+{
+    if (m_stateCnt != 0 || !m_master) {
+        return;
+    }
+
+    const int mapVariant = static_cast<int>(m_param[0]);
+    const int cloudCount = (std::max)(1, static_cast<int>(m_param[1]));
+    const vector3d center = ResolveBasePosition();
+    CTexture* texture = ResolveWeatherCloudTexture(mapVariant);
+
+    for (int cloudIndex = 0; cloudIndex < cloudCount; ++cloudIndex) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_CLOUD, vector3d{});
+        if (!prim) {
+            continue;
+        }
+
+        prim->m_renderFlag = 5u;
+        prim->m_duration = m_duration;
+        prim->m_alpha = 255.0f;
+        prim->m_maxAlpha = 255.0f;
+        prim->m_numSegments = 4;
+        prim->m_param[0] = static_cast<float>(mapVariant);
+        prim->m_tintColor = ResolveWeatherCloudTint(mapVariant);
+        prim->m_texture.push_back(texture);
+        for (int segmentIndex = 0; segmentIndex < prim->m_numSegments; ++segmentIndex) {
+            InitWeatherCloudSegment(prim, segmentIndex, mapVariant, center);
+        }
+    }
+}
 void CRagEffect::SpawnSuperAngelVariant(int variant, int birthFrame)
 {
     if (CEffectPrim* prim = LaunchEffectPrim(PP_EFFECTSPRITE, vector3d{})) {
@@ -5412,7 +5697,8 @@ u8 CRagEffect::OnProcess()
         || m_handler == Handler::WarpZone2
         || m_handler == Handler::MapMagicZone
         || m_handler == Handler::MapParticle
-        || m_handler == Handler::SuperAngel;
+        || m_handler == Handler::SuperAngel
+        || m_handler == Handler::WeatherCloud;
     if (steps > 1 && burstSensitiveHandler) {
         steps = 1;
     }
@@ -5527,6 +5813,9 @@ u8 CRagEffect::OnProcess()
                 break;
             case Handler::FireBoltRain:
                 SpawnFireBoltRain();
+                break;
+            case Handler::WeatherCloud:
+                SpawnWeatherCloud();
                 break;
             case Handler::None:
             default:

@@ -36,6 +36,7 @@ enum EFFECTPRIMID {
     PP_HEAL,
     PP_PORTAL,
     PP_WIND,
+    PP_CLOUD,
 };
 
 struct EffectBandState {
@@ -198,6 +199,7 @@ private:
         Ruwach,
         SightAura,
         FireBoltRain,
+        WeatherCloud,
     };
 
     class CWorldAnchor : public CRenderObject {
@@ -243,6 +245,7 @@ private:
     void SpawnRuwach();
     void SpawnSightAura();
     void SpawnFireBoltRain();
+    void SpawnWeatherCloud();
 
     std::list<CEffectPrim*> m_primList;
     CRenderObject* m_master;

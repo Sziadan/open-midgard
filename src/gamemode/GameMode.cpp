@@ -30,6 +30,7 @@
 #include "render3d/RenderDevice.h"
 #include "world/GameActor.h"
 #include "world/MsgEffect.h"
+#include "world/RagEffect.h"
 #include "world/3dActor.h"
 #include "world/World.h"
 #include "main/WinMain.h"
@@ -130,6 +131,8 @@ constexpr float kRefOutdoorLatitudeMax = -25.0f;
 constexpr u32 kAmbientSoundRetryMs = 200;
 constexpr int kAmbientSoundMaxDist = 250;
 constexpr int kAmbientSoundMinDist = 40;
+constexpr int kWeatherCloudRefreshThresholdFrames = 300;
+constexpr int kWeatherCloudEffectIds[] = { 229, 230, 233, 515, 516, 592, 697, 698 };
 
 float g_savedOutdoorCameraLatitude = -45.0f;
 float g_savedOutdoorCameraDistance = kRefAverageCameraDistance;
@@ -160,6 +163,112 @@ struct OverlayMovePerfStats {
 };
 
 OverlayMovePerfStats g_overlayMovePerfStats;
+
+std::string ToLowerAsciiMapName(const char* rswName)
+{
+    if (!rswName) {
+        return std::string();
+    }
+
+    std::string value = rswName;
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return value;
+}
+
+bool IsWeatherCloudEffectId(int effectId)
+{
+    for (int candidate : kWeatherCloudEffectIds) {
+        if (candidate == effectId) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int ResolveRefWeatherCloudEffectId(const char* rswName)
+{
+    const std::string mapName = ToLowerAsciiMapName(rswName);
+    if (mapName == "yuno.rsw"
+        || mapName == "schgld.rsw"
+        || mapName == "bat_fild02.rsw"
+        || mapName == "bat_b01.rsw"
+        || mapName == "bat_b02.rsw") {
+        return 230;
+    }
+    if (mapName == "valkyrie.rsw"
+        || mapName == "rwc01.rsw"
+        || mapName == "himinn.rsw"
+        || mapName == "que_qsch01.rsw"
+        || mapName == "que_qsch02.rsw"
+        || mapName == "que_qsch03.rsw"
+        || mapName == "que_qsch04.rsw"
+        || mapName == "que_qsch05.rsw"
+        || mapName == "que_qaru01.rsw"
+        || mapName == "que_qaru02.rsw"
+        || mapName == "que_qaru03.rsw"
+        || mapName == "que_qaru04.rsw"
+        || mapName == "que_qaru05.rsw") {
+        return 233;
+    }
+    if (mapName == "einbroch.rsw") {
+        return 515;
+    }
+    if (mapName == "thana_boss.rsw" || mapName == "moc_fild22.rsw") {
+        return 592;
+    }
+    if (mapName == "airplane.rsw" || mapName == "airplane01.rsw") {
+        return 516;
+    }
+    if (mapName == "6@tower.rsw" || mapName == "6tower.rsw") {
+        return 697;
+    }
+    if (mapName == "5@tower.rsw" || mapName == "5tower.rsw") {
+        return 698;
+    }
+    return 0;
+}
+
+void EnsureMapWeatherEffects(CGameMode& mode)
+{
+    if (!mode.m_world || !mode.m_world->m_player) {
+        return;
+    }
+
+    CAbleToMakeEffect* player = mode.m_world->m_player;
+    const int desiredEffectId = g_session.m_isEffectOn ? ResolveRefWeatherCloudEffectId(mode.m_rswName) : 0;
+    CRagEffect* desiredEffect = nullptr;
+    std::vector<int> removeEffectIds;
+    for (CRagEffect* effect : player->m_effectList) {
+        if (!effect || !IsWeatherCloudEffectId(effect->GetEffectType())) {
+            continue;
+        }
+
+        if (effect->GetEffectType() == desiredEffectId) {
+            desiredEffect = effect;
+        } else {
+            removeEffectIds.push_back(effect->GetEffectType());
+        }
+    }
+
+    for (int effectId : removeEffectIds) {
+        player->RemoveEffectById(effectId);
+    }
+
+    if (desiredEffectId == 0) {
+        return;
+    }
+
+    if (desiredEffect) {
+        const int remainingFrames = desiredEffect->GetDuration() - desiredEffect->GetStateCount();
+        if (remainingFrames > kWeatherCloudRefreshThresholdFrames) {
+            return;
+        }
+    }
+
+    player->LaunchEffect(desiredEffectId, vector3d{}, 0.0f);
+}
 
 void UpdateMapAudio(CGameMode& mode)
 {
@@ -8642,6 +8751,7 @@ void CGameMode::OnUpdate() {
             // self actor now bypasses the shared billboard helper cache, so this
             // no longer drags cached UI/billboard data around with it.
             m_world->m_player->ProcessState();
+            EnsureMapWeatherEffects(*this);
         }
         actorUpdateEnd = GetTickCount();
 
