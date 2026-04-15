@@ -176,7 +176,7 @@ add_subdirectory(src/main)
 # ─── Final executable ─────────────────────────────────────────────────────
 set(RO_APP_MAIN_SOURCE src/main/WinMain.cpp)
 if(WIN32)
-    add_executable(open_midgard WIN32 ${RO_APP_MAIN_SOURCE})
+    add_executable(open_midgard WIN32 ${RO_APP_MAIN_SOURCE} src/main/OpenMidgard.rc)
 else()
     set(RO_APP_MAIN_SOURCE src/main/AppMain_stub.cpp)
     add_executable(open_midgard ${RO_APP_MAIN_SOURCE})

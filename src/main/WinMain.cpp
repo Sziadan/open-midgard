@@ -57,6 +57,7 @@
 // Window constants
 // ---------------------------------------------------------------------------
 const char* const WINDOW_NAME = "open-midgard";
+constexpr WORD kAppIconResourceId = 101;
 
 int  WINDOW_WIDTH  = 1920;
 int  WINDOW_HEIGHT = 1080;
@@ -662,7 +663,7 @@ bool InitApp(HINSTANCE hInstance, int nCmdShow)
     wc.style        = CS_DBLCLKS;
     wc.lpfnWndProc  = WindowProc;
     wc.hInstance    = hInstance;
-    wc.hIcon        = LoadIconA(hInstance, MAKEINTRESOURCEA(0x77));
+    wc.hIcon        = LoadIconA(hInstance, MAKEINTRESOURCEA(kAppIconResourceId));
     wc.hCursor      = nullptr;
     wc.hbrBackground= nullptr;
     wc.lpszClassName= WINDOW_NAME;

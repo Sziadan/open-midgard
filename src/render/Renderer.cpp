@@ -19,6 +19,8 @@ namespace {
 constexpr DWORD kLmFvf = D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX2;
 constexpr bool kLogTexture = false;
 constexpr unsigned int kEffectBlackKeyThreshold = 9u;
+constexpr unsigned int kMagentaMaskMinChannel = 0xF8u;
+constexpr unsigned int kMagentaMaskMaxGreen = 0x18u;
 
 enum class TextureLoadMode {
     ColorKey,
@@ -101,40 +103,254 @@ void LogUploadedTerrainSurfaceSamples(CTexture* tex, const char* name)
 #endif
 }
 
-std::string ResolveTexturePath(const char* name)
+std::string ToLowerAsciiTexture(std::string value)
 {
-    if (!name || !*name) {
-        return std::string();
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+        if (ch >= 0x80u) {
+            return static_cast<char>(ch);
+        }
+        return static_cast<char>(std::tolower(ch));
+    });
+    return value;
+}
+
+std::string NormalizeTexturePath(std::string value)
+{
+    std::replace(value.begin(), value.end(), '/', '\\');
+    return value;
+}
+
+std::string BaseNameOfTexturePath(const std::string& path)
+{
+    const std::string normalized = NormalizeTexturePath(path);
+    const size_t slash = normalized.find_last_of('\\');
+    if (slash == std::string::npos) {
+        return normalized;
+    }
+    return normalized.substr(slash + 1);
+}
+
+const std::map<std::string, std::string>& GetTextureAliases()
+{
+    static bool s_loaded = false;
+    static std::map<std::string, std::string> s_aliases;
+    if (s_loaded) {
+        return s_aliases;
     }
 
-    const char* candidates[] = {
-        name,
-        "texture\\",
-        "data\\texture\\"
-    };
+    s_loaded = true;
 
-    for (const char* prefix : candidates) {
-        std::string path = prefix == name ? std::string(name) : std::string(prefix) + name;
-        if (g_fileMgr.IsDataExist(path.c_str())) {
-            return path;
+    int size = 0;
+    unsigned char* bytes = g_fileMgr.GetData("data\\resnametable.txt", &size);
+    if (!bytes || size <= 0) {
+        delete[] bytes;
+        return s_aliases;
+    }
+
+    std::string text(reinterpret_cast<const char*>(bytes), static_cast<size_t>(size));
+    delete[] bytes;
+
+    size_t lineStart = 0;
+    while (lineStart < text.size()) {
+        size_t lineEnd = text.find_first_of("\r\n", lineStart);
+        if (lineEnd == std::string::npos) {
+            lineEnd = text.size();
+        }
+
+        std::string line = text.substr(lineStart, lineEnd - lineStart);
+        lineStart = text.find_first_not_of("\r\n", lineEnd);
+        if (lineStart == std::string::npos) {
+            lineStart = text.size();
+        }
+
+        if (line.empty() || (line.size() >= 2 && line[0] == '/' && line[1] == '/')) {
+            continue;
+        }
+
+        const size_t firstHash = line.find('#');
+        const size_t secondHash = firstHash == std::string::npos ? std::string::npos : line.find('#', firstHash + 1);
+        if (firstHash == std::string::npos || secondHash == std::string::npos || firstHash == 0 || secondHash <= firstHash + 1) {
+            continue;
+        }
+
+        std::string key = NormalizeTexturePath(line.substr(0, firstHash));
+        std::string value = NormalizeTexturePath(line.substr(firstHash + 1, secondHash - firstHash - 1));
+        if (!key.empty() && !value.empty()) {
+            s_aliases[ToLowerAsciiTexture(key)] = value;
         }
     }
 
-    const char* dot = std::strrchr(name, '.');
-    if (!dot) {
-        const char* exts[] = { ".bmp", ".jpg", ".jpeg", ".tga" };
-        for (const char* prefix : candidates) {
-            const std::string base = prefix == name ? std::string(name) : std::string(prefix) + name;
-            for (const char* ext : exts) {
-                const std::string path = base + ext;
-                if (g_fileMgr.IsDataExist(path.c_str())) {
-                    return path;
+    return s_aliases;
+}
+
+std::string ResolveTextureAlias(const std::string& candidate)
+{
+    if (candidate.empty()) {
+        return std::string();
+    }
+
+    const auto& aliases = GetTextureAliases();
+    const std::string normalized = ToLowerAsciiTexture(NormalizeTexturePath(candidate));
+    const auto it = aliases.find(normalized);
+    if (it != aliases.end()) {
+        return it->second;
+    }
+
+    const std::string candidateBase = ToLowerAsciiTexture(BaseNameOfTexturePath(normalized));
+    for (const auto& entry : aliases) {
+        if (ToLowerAsciiTexture(BaseNameOfTexturePath(entry.first)) == candidateBase) {
+            return entry.second;
+        }
+    }
+
+    return std::string();
+}
+
+std::string ResolveExistingTexturePath(const std::string& candidate, const std::vector<std::string>& directPrefixes)
+{
+    if (candidate.empty()) {
+        return std::string();
+    }
+
+    const std::string normalized = NormalizeTexturePath(candidate);
+    if (g_fileMgr.IsDataExist(normalized.c_str())) {
+        return normalized;
+    }
+
+    for (const std::string& prefix : directPrefixes) {
+        const std::string prefixed = NormalizeTexturePath(prefix + normalized);
+        if (g_fileMgr.IsDataExist(prefixed.c_str())) {
+            return prefixed;
+        }
+    }
+
+    return std::string();
+}
+
+const std::vector<std::string>& GetTextureDataNamesByExtension(const char* ext)
+{
+    static std::map<std::string, std::vector<std::string>> s_byExt;
+    const std::string key = ToLowerAsciiTexture(ext ? ext : "");
+    auto it = s_byExt.find(key);
+    if (it != s_byExt.end()) {
+        return it->second;
+    }
+
+    std::vector<std::string> names;
+    g_fileMgr.CollectDataNamesByExtension(key.c_str(), names);
+    auto inserted = s_byExt.emplace(key, std::move(names));
+    return inserted.first->second;
+}
+
+std::string ResolveTextureDataPath(const std::string& fileName, const char* ext, const std::vector<std::string>& directPrefixes)
+{
+    if (fileName.empty()) {
+        return std::string();
+    }
+
+    const std::string normalizedName = NormalizeTexturePath(fileName);
+    for (const std::string& prefix : directPrefixes) {
+        const std::string candidate = NormalizeTexturePath(prefix + normalizedName);
+        if (g_fileMgr.IsDataExist(candidate.c_str())) {
+            return candidate;
+        }
+
+        const std::string alias = ResolveTextureAlias(candidate);
+        if (!alias.empty()) {
+            const std::string resolvedAlias = ResolveExistingTexturePath(alias, directPrefixes);
+            if (!resolvedAlias.empty()) {
+                return resolvedAlias;
+            }
+        }
+    }
+
+    const std::string directAlias = ResolveTextureAlias(normalizedName);
+    if (!directAlias.empty()) {
+        const std::string resolvedDirectAlias = ResolveExistingTexturePath(directAlias, directPrefixes);
+        if (!resolvedDirectAlias.empty()) {
+            return resolvedDirectAlias;
+        }
+    }
+
+    const std::string wantedBase = ToLowerAsciiTexture(BaseNameOfTexturePath(normalizedName));
+    const std::string wantedStem = wantedBase.rfind('.') != std::string::npos
+        ? wantedBase.substr(0, wantedBase.rfind('.'))
+        : wantedBase;
+    const auto& knownNames = GetTextureDataNamesByExtension(ext);
+    for (const std::string& known : knownNames) {
+        if (ToLowerAsciiTexture(BaseNameOfTexturePath(known)) == wantedBase) {
+            return known;
+        }
+    }
+
+    for (const std::string& known : knownNames) {
+        const std::string knownLower = ToLowerAsciiTexture(known);
+        if (knownLower.find(wantedStem) != std::string::npos) {
+            return known;
+        }
+    }
+
+    for (const std::string& prefix : directPrefixes) {
+        const std::string alias = ResolveTextureAlias(prefix + normalizedName);
+        if (!alias.empty()) {
+            const std::string aliasBase = ToLowerAsciiTexture(BaseNameOfTexturePath(alias));
+            if (aliasBase == wantedBase || aliasBase.find(wantedStem) != std::string::npos) {
+                const std::string resolvedAlias = ResolveExistingTexturePath(alias, directPrefixes);
+                if (!resolvedAlias.empty()) {
+                    return resolvedAlias;
                 }
             }
         }
     }
 
     return std::string();
+}
+
+std::string ResolveTexturePath(const char* name)
+{
+    if (!name || !*name) {
+        return std::string();
+    }
+
+    const std::string normalizedName = NormalizeTexturePath(name);
+    const std::vector<std::string> prefixes = {
+        "",
+        "texture\\",
+        "data\\texture\\"
+    };
+
+    const char* dot = std::strrchr(normalizedName.c_str(), '.');
+    if (dot) {
+        const std::string resolvedWithExistingExt = ResolveTextureDataPath(normalizedName, dot, prefixes);
+        if (!resolvedWithExistingExt.empty()) {
+            return resolvedWithExistingExt;
+        }
+    }
+
+    static const char* const kTextureExts[] = { ".bmp", ".jpg", ".jpeg", ".tga", ".png" };
+    for (const char* ext : kTextureExts) {
+        const std::string candidate = dot ? normalizedName : normalizedName + ext;
+        const std::string resolved = ResolveTextureDataPath(candidate, ext, prefixes);
+        if (!resolved.empty()) {
+            return resolved;
+        }
+    }
+
+    return std::string();
+}
+
+bool IsMaskedMagentaPixel(unsigned int pixel)
+{
+    if ((pixel & 0x00FFFFFFu) == 0x00FF00FFu) {
+        return true;
+    }
+
+    const unsigned int red = (pixel >> 16) & 0xFFu;
+    const unsigned int green = (pixel >> 8) & 0xFFu;
+    const unsigned int blue = pixel & 0xFFu;
+    return red >= kMagentaMaskMinChannel
+        && blue >= kMagentaMaskMinChannel
+        && green <= kMagentaMaskMaxGreen;
 }
 
 vector3d SubtractVec3(const vector3d& a, const vector3d& b)
@@ -248,12 +464,10 @@ CTexture* LoadManagedTexture(CTexMgr& texMgr, const char* name, TextureLoadMode 
 
     const std::string texturePath = ResolveTexturePath(name);
     if (texturePath.empty()) {
-        static int missingTextureLogCount = 0;
-        if (missingTextureLogCount < 16) {
-            ++missingTextureLogCount;
-            if constexpr (kLogTexture) {
-                DbgLog("[Texture] missing '%s' mode=%s\n", name ? name : "(null)", modeName);
-            }
+        static std::map<std::string, bool> loggedMissingTextures;
+        const std::string logKey = std::string(modeName) + ":" + baseName;
+        if (loggedMissingTextures.size() < 24 && loggedMissingTextures.emplace(logKey, true).second) {
+            DbgLog("[Texture] unresolved name='%s' mode=%s\n", name ? name : "(null)", modeName);
         }
         return &CTexMgr::s_dummy_texture;
     }
@@ -304,7 +518,7 @@ CTexture* LoadManagedTexture(CTexMgr& texMgr, const char* name, TextureLoadMode 
         const size_t pixelCount = static_cast<size_t>(bitmap->m_width) * static_cast<size_t>(bitmap->m_height);
         transformedPixels.assign(textureData, textureData + pixelCount);
         for (unsigned int& pixel : transformedPixels) {
-            if ((pixel & 0x00FFFFFFu) == 0x00FF00FFu) {
+            if (IsMaskedMagentaPixel(pixel)) {
                 pixel = 0x00000000u;
             }
         }

@@ -3555,6 +3555,136 @@ bool ProjectPoint(const CRenderer& renderer, const matrix& viewMatrix, const vec
     return true;
 }
 
+bool IsUsableSkyTexture(CTexture* texture)
+{
+    return texture && texture != &CTexMgr::s_dummy_texture && texture->m_pddsSurface;
+}
+
+bool SubmitSkyQuadFace(const matrix& viewMatrix,
+    const vector3d& origin,
+    const vector3d (&localCorners)[4],
+    CTexture* texture)
+{
+    if (!IsUsableSkyTexture(texture)) {
+        return false;
+    }
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return false;
+    }
+
+    static const float kSkyUv[4][2] = {
+        { 0.0f, 1.0f },
+        { 1.0f, 1.0f },
+        { 1.0f, 0.0f },
+        { 0.0f, 0.0f },
+    };
+
+    for (int index = 0; index < 4; ++index) {
+        const vector3d worldPoint = AddVec3(origin, localCorners[index]);
+        tlvertex3d projected{};
+        if (!ProjectPoint(g_renderer, viewMatrix, worldPoint, &projected)) {
+            return false;
+        }
+
+        projected.color = 0xFFFFFFFFu;
+        projected.tu = kSkyUv[index][0];
+        projected.tv = kSkyUv[index][1];
+        face->m_verts[index] = projected;
+    }
+
+    face->primType = D3DPT_TRIANGLELIST;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = const_cast<unsigned short*>(kGroundQuadIndices);
+    face->numIndices = 6;
+    face->tex = texture;
+    face->mtPreset = 0;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = 0.0f;
+    g_renderer.AddRP(face, 0);
+    return true;
+}
+
+bool RenderSkyFallbackFaces(const matrix& viewMatrix, const vector3d& cameraPos)
+{
+    static const char* const kSkyTextureNames[] = {
+        "effect\\skybox_front.bmp",
+        "effect\\skybox_back.bmp",
+        "effect\\skybox_left.bmp",
+        "effect\\skybox_right.bmp",
+        "effect\\skybox_top.bmp",
+    };
+
+    CTexture* textures[std::size(kSkyTextureNames)] = {};
+    for (size_t index = 0; index < std::size(kSkyTextureNames); ++index) {
+        textures[index] = g_texMgr.GetTexture(kSkyTextureNames[index], false);
+    }
+
+    const vector3d origin{
+        cameraPos.x,
+        cameraPos.y + kSkyboxCameraHeightOffset,
+        cameraPos.z
+    };
+
+    static const vector3d kFrontFace[4] = {
+        { -1250.0f, -450.0f, 1250.0f },
+        { 1250.0f, -450.0f, 1250.0f },
+        { 1250.0f, 650.0f, 1250.0f },
+        { -1250.0f, 650.0f, 1250.0f },
+    };
+    static const vector3d kBackFace[4] = {
+        { 1250.0f, -450.0f, -1250.0f },
+        { -1250.0f, -450.0f, -1250.0f },
+        { -1250.0f, 650.0f, -1250.0f },
+        { 1250.0f, 650.0f, -1250.0f },
+    };
+    static const vector3d kLeftFace[4] = {
+        { -1250.0f, -450.0f, -1250.0f },
+        { -1250.0f, -450.0f, 1250.0f },
+        { -1250.0f, 650.0f, 1250.0f },
+        { -1250.0f, 650.0f, -1250.0f },
+    };
+    static const vector3d kRightFace[4] = {
+        { 1250.0f, -450.0f, 1250.0f },
+        { 1250.0f, -450.0f, -1250.0f },
+        { 1250.0f, 650.0f, -1250.0f },
+        { 1250.0f, 650.0f, 1250.0f },
+    };
+    static const vector3d kTopFace[4] = {
+        { -1250.0f, 650.0f, -1250.0f },
+        { 1250.0f, 650.0f, -1250.0f },
+        { 1250.0f, 650.0f, 1250.0f },
+        { -1250.0f, 650.0f, 1250.0f },
+    };
+
+    int submittedFaces = 0;
+    submittedFaces += SubmitSkyQuadFace(viewMatrix, origin, kFrontFace, textures[0]) ? 1 : 0;
+    submittedFaces += SubmitSkyQuadFace(viewMatrix, origin, kBackFace, textures[1]) ? 1 : 0;
+    submittedFaces += SubmitSkyQuadFace(viewMatrix, origin, kLeftFace, textures[2]) ? 1 : 0;
+    submittedFaces += SubmitSkyQuadFace(viewMatrix, origin, kRightFace, textures[3]) ? 1 : 0;
+    submittedFaces += SubmitSkyQuadFace(viewMatrix, origin, kTopFace, textures[4]) ? 1 : 0;
+
+    static bool loggedFallbackActive = false;
+    static bool loggedFallbackMissing = false;
+    if (submittedFaces > 0) {
+        if (!loggedFallbackActive) {
+            loggedFallbackActive = true;
+            DbgLog("[World] skybox fallback active faces=%d\n", submittedFaces);
+        }
+        return true;
+    }
+
+    if (!loggedFallbackMissing) {
+        loggedFallbackMissing = true;
+        DbgLog("[World] skybox fallback textures unresolved\n");
+    }
+    return false;
+}
+
 u32 ModulateColor(u32 color, const vector3d& light)
 {
     const unsigned int r = (color >> 16) & 0xFFu;
@@ -5652,6 +5782,7 @@ void CWorld::RenderSky(const matrix& viewMatrix, const vector3d& cameraPos, floa
 {
     (void)cameraLongitude;
     if (!EnsureSkyActor() || !m_skyActor) {
+        RenderSkyFallbackFaces(viewMatrix, cameraPos);
         return;
     }
 
