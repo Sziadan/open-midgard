@@ -1,6 +1,7 @@
 #include "Mode.h"
 #include "LoginMode.h"
 #include "GameMode.h"
+#include "DebugLog.h"
 #include "core/ClientInfoLocale.h"
 #include "qtui/QtUiRuntime.h"
 #include "render/Renderer.h"
@@ -277,8 +278,19 @@ void CModeMgr::Run(int startMode, const char* worldName)
     }
 
     if (m_curMode) {
+        DbgLog("[Mode] Final mode exit starting type=%d name='%s' ptr=%p\n",
+            m_curModeType,
+            m_curModeName,
+            static_cast<void*>(m_curMode));
         m_curMode->OnExit();
+        DbgLog("[Mode] Final mode exit completed type=%d name='%s' ptr=%p\n",
+            m_curModeType,
+            m_curModeName,
+            static_cast<void*>(m_curMode));
         delete m_curMode;
+        DbgLog("[Mode] Final mode delete completed type=%d name='%s'\n",
+            m_curModeType,
+            m_curModeName);
         m_curMode = nullptr;
     }
 }

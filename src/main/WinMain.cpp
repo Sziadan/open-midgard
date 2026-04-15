@@ -45,6 +45,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <commctrl.h>
+#include <cstdlib>
 #include <cstring>
 #include <cstdio>
 #include <io.h>
@@ -78,13 +79,19 @@ CFileMgr  g_fileMgr;
 int       g_readFolderFirst = 0;   // 0=PAK-first, 1=disk-first
 static RenderBackendType g_activeRenderBackend = RenderBackendType::LegacyDirect3D7;
 static std::string g_windowTitleStatusSuffix;
+
+static void LogWinMainAtExit()
+{
+    DbgLog("[Shutdown] atexit callback entered\n");
+}
 static int g_windowTitleFps = -1;
 static DWORD g_windowTitleFpsTick = 0;
 static unsigned int g_windowTitleFrameCount = 0;
 
 namespace {
 
-constexpr int kCrashMiniDumpType = 0x1065;
+constexpr int kCrashMiniDumpTypePrimary = 0x21065;
+constexpr int kCrashMiniDumpTypeFallback = 0x20000;
 
 using MiniDumpWriteDumpFn = BOOL (WINAPI*)(HANDLE, DWORD, HANDLE, int, void*, void*, void*);
 
@@ -163,11 +170,34 @@ std::string BuildCrashArtifactStem()
     return std::string(stem);
 }
 
+std::string BuildSystemDllPath(const char* dllName)
+{
+    if (!dllName || !*dllName) {
+        return std::string();
+    }
+
+    char systemDir[MAX_PATH] = {};
+    const UINT len = GetSystemDirectoryA(systemDir, MAX_PATH);
+    if (len == 0 || len >= MAX_PATH) {
+        return std::string(dllName);
+    }
+
+    std::string fullPath(systemDir, systemDir + len);
+    if (!fullPath.empty() && fullPath.back() != '\\' && fullPath.back() != '/') {
+        fullPath.push_back('\\');
+    }
+    fullPath += dllName;
+    return fullPath;
+}
+
 void WriteCrashReportText(const std::string& reportPath,
     DWORD exceptionCode,
     const void* exceptionAddress,
     const std::string& dumpPath,
-    bool dumpWritten)
+    bool dumpWritten,
+    DWORD dumpError,
+    const std::string& dbghelpPath,
+    int dumpTypeUsed)
 {
     HANDLE reportFile = CreateFileA(
         reportPath.c_str(),
@@ -187,17 +217,65 @@ void WriteCrashReportText(const std::string& reportPath,
         sizeof(report),
         "Unhandled exception code=0x%08lX address=%p\r\n"
         "Minidump=%s\r\n"
-        "MinidumpWritten=%d\r\n",
+        "MinidumpWritten=%d\r\n"
+        "MinidumpError=%lu\r\n"
+        "MinidumpType=0x%X\r\n"
+        "DbgHelp=%s\r\n",
         static_cast<unsigned long>(exceptionCode),
         exceptionAddress,
         dumpPath.c_str(),
-        dumpWritten ? 1 : 0);
+        dumpWritten ? 1 : 0,
+        static_cast<unsigned long>(dumpError),
+        static_cast<unsigned int>(dumpTypeUsed),
+        dbghelpPath.c_str());
     if (written > 0) {
         DWORD bytesWritten = 0;
         WriteFile(reportFile, report, static_cast<DWORD>(written), &bytesWritten, nullptr);
     }
 
     CloseHandle(reportFile);
+}
+
+bool TryWriteCrashDumpFile(MiniDumpWriteDumpFn miniDumpWriteDump,
+    HANDLE dumpFile,
+    EXCEPTION_POINTERS* exceptionInfo,
+    int dumpType,
+    DWORD* outError)
+{
+    if (!miniDumpWriteDump || dumpFile == INVALID_HANDLE_VALUE) {
+        if (outError) {
+            *outError = ERROR_INVALID_HANDLE;
+        }
+        return false;
+    }
+
+    SetFilePointer(dumpFile, 0, nullptr, FILE_BEGIN);
+    SetEndOfFile(dumpFile);
+
+    CrashMiniDumpExceptionInfo dumpInfo{};
+    dumpInfo.threadId = GetCurrentThreadId();
+    dumpInfo.exceptionPointers = exceptionInfo;
+    dumpInfo.clientPointers = FALSE;
+
+    const BOOL wroteDump = miniDumpWriteDump(
+        GetCurrentProcess(),
+        GetCurrentProcessId(),
+        dumpFile,
+        dumpType,
+        exceptionInfo ? &dumpInfo : nullptr,
+        nullptr,
+        nullptr);
+    if (wroteDump == TRUE) {
+        if (outError) {
+            *outError = ERROR_SUCCESS;
+        }
+        return true;
+    }
+
+    if (outError) {
+        *outError = GetLastError();
+    }
+    return false;
 }
 
 LONG WINAPI WriteUnhandledCrashDump(EXCEPTION_POINTERS* exceptionInfo)
@@ -214,7 +292,10 @@ LONG WINAPI WriteUnhandledCrashDump(EXCEPTION_POINTERS* exceptionInfo)
     const std::string reportPath = artifactStem + ".txt";
 
     bool dumpWritten = false;
-    HMODULE dbghelp = LoadLibraryA("dbghelp.dll");
+    DWORD dumpError = 0;
+    int dumpTypeUsed = 0;
+    const std::string dbghelpPath = BuildSystemDllPath("dbghelp.dll");
+    HMODULE dbghelp = LoadLibraryA(dbghelpPath.c_str());
     if (dbghelp) {
         MiniDumpWriteDumpFn miniDumpWriteDump = reinterpret_cast<MiniDumpWriteDumpFn>(
             GetProcAddress(dbghelp, "MiniDumpWriteDump"));
@@ -228,36 +309,62 @@ LONG WINAPI WriteUnhandledCrashDump(EXCEPTION_POINTERS* exceptionInfo)
                 FILE_ATTRIBUTE_NORMAL,
                 nullptr);
             if (dumpFile != INVALID_HANDLE_VALUE) {
-                CrashMiniDumpExceptionInfo dumpInfo{};
-                dumpInfo.threadId = GetCurrentThreadId();
-                dumpInfo.exceptionPointers = exceptionInfo;
-                dumpInfo.clientPointers = FALSE;
-
-                dumpWritten = miniDumpWriteDump(
-                    GetCurrentProcess(),
-                    GetCurrentProcessId(),
+                dumpWritten = TryWriteCrashDumpFile(
+                    miniDumpWriteDump,
                     dumpFile,
-                    kCrashMiniDumpType,
-                    exceptionInfo ? &dumpInfo : nullptr,
-                    nullptr,
-                    nullptr) == TRUE;
+                    exceptionInfo,
+                    kCrashMiniDumpTypePrimary,
+                    &dumpError);
+                if (dumpWritten) {
+                    dumpTypeUsed = kCrashMiniDumpTypePrimary;
+                } else {
+                    dumpWritten = TryWriteCrashDumpFile(
+                        miniDumpWriteDump,
+                        dumpFile,
+                        exceptionInfo,
+                        kCrashMiniDumpTypeFallback,
+                        &dumpError);
+                    if (dumpWritten) {
+                        dumpTypeUsed = kCrashMiniDumpTypeFallback;
+                    }
+                }
+                if (!dumpWritten) {
+                    dumpWritten = TryWriteCrashDumpFile(
+                        miniDumpWriteDump,
+                        dumpFile,
+                        nullptr,
+                        0,
+                        &dumpError);
+                    if (dumpWritten) {
+                        dumpTypeUsed = 0;
+                    }
+                }
 
                 CloseHandle(dumpFile);
                 if (!dumpWritten) {
                     DeleteFileA(dumpPath.c_str());
                 }
+            } else {
+                dumpError = GetLastError();
             }
+        } else {
+            dumpError = GetLastError();
         }
         FreeLibrary(dbghelp);
+    } else {
+        dumpError = GetLastError();
     }
 
-    WriteCrashReportText(reportPath, exceptionCode, exceptionAddress, dumpPath, dumpWritten);
-    DbgLog("[Crash] Unhandled exception code=0x%08lX address=%p dump='%s' report='%s' wroteDump=%d\n",
+    WriteCrashReportText(reportPath, exceptionCode, exceptionAddress, dumpPath, dumpWritten, dumpError, dbghelpPath, dumpTypeUsed);
+    DbgLog("[Crash] Unhandled exception code=0x%08lX address=%p dump='%s' report='%s' wroteDump=%d dumpError=%lu dumpType=0x%X dbghelp='%s'\n",
         static_cast<unsigned long>(exceptionCode),
         exceptionAddress,
         dumpPath.c_str(),
         reportPath.c_str(),
-        dumpWritten ? 1 : 0);
+        dumpWritten ? 1 : 0,
+        static_cast<unsigned long>(dumpError),
+        static_cast<unsigned int>(dumpTypeUsed),
+        dbghelpPath.c_str());
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -715,6 +822,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 
     // Install an unhandled exception filter that writes a minidump next to the executable.
     SetUnhandledExceptionFilter(WriteUnhandledCrashDump);
+    std::atexit(LogWinMainAtExit);
 
     // Initialise high-resolution timer
     TIMECAPS tc{};
@@ -797,18 +905,44 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 
     // --- Cleanup ---
     // CDllMgr cleanup will happen automatically if we add it to a destructor or call it explicitly
+    DbgLog("[Shutdown] Begin cleanup after mode loop.\n");
+    DbgLog("[Shutdown] CConnection::Cleanup start\n");
     CConnection::Cleanup();
+    DbgLog("[Shutdown] CConnection::Cleanup done\n");
+    DbgLog("[Shutdown] UIWindowMgr::Reset start\n");
     g_windowMgr.Reset();
+    DbgLog("[Shutdown] UIWindowMgr::Reset done\n");
+    DbgLog("[Shutdown] Lua shutdown start\n");
     g_buabridge.Shutdown();
+    DbgLog("[Shutdown] Lua shutdown done\n");
+    DbgLog("[Shutdown] Qt UI runtime shutdown start\n");
     ShutdownQtUiRuntime();
+    DbgLog("[Shutdown] Qt UI runtime shutdown done\n");
+    DbgLog("[Shutdown] Resource manager unload start\n");
+    g_resMgr.Reset();
+    DbgLog("[Shutdown] Resource manager unload done\n");
+    DbgLog("[Shutdown] Render device shutdown start\n");
     GetRenderDevice().Shutdown();
+    DbgLog("[Shutdown] Render device shutdown done\n");
+    DbgLog("[Shutdown] Audio shutdown start\n");
     UnInitMSS();
+    DbgLog("[Shutdown] Audio shutdown done\n");
 
+    DbgLog("[Shutdown] CoUninitialize start\n");
     CoUninitialize();
+    DbgLog("[Shutdown] CoUninitialize done\n");
+    DbgLog("[Shutdown] DestroyWindow start hwnd=%p\n", g_hMainWnd);
     DestroyWindow(g_hMainWnd);
+    g_hMainWnd = nullptr;
+    DbgLog("[Shutdown] DestroyWindow done\n");
 
-    if (timerRes)
+    if (timerRes) {
+        DbgLog("[Shutdown] timeEndPeriod start res=%u\n", timerRes);
         timeEndPeriod(timerRes);
+        DbgLog("[Shutdown] timeEndPeriod done\n");
+    }
+
+    DbgLog("[Shutdown] WinMain returning 0\n");
 
     return 0;
 }

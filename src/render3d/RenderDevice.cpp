@@ -9277,8 +9277,10 @@ private:
 
 IRenderDevice& GetRenderDevice()
 {
-    static RoutedRenderDevice s_renderDevice;
-    return s_renderDevice;
+    // This singleton is shut down explicitly from WinMain. Keep the storage alive
+    // until process termination to avoid static-destruction ordering hazards.
+    static RoutedRenderDevice* s_renderDevice = new RoutedRenderDevice();
+    return *s_renderDevice;
 }
 
 #if RO_HAS_VULKAN

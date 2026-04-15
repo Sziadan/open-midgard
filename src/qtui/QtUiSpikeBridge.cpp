@@ -1699,8 +1699,10 @@ private:
 
 QtUiRuntimeHost& Runtime()
 {
-    static QtUiRuntimeHost runtime;
-    return runtime;
+    // The runtime is shut down explicitly during app teardown. Intentionally keep
+    // the host storage alive to avoid late singleton destruction after WinMain returns.
+    static QtUiRuntimeHost* runtime = new QtUiRuntimeHost();
+    return *runtime;
 }
 
 } // namespace
