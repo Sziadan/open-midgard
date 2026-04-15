@@ -689,7 +689,9 @@ void C3dNode::Render(const matrix& parentWorld, const matrix& viewMatrix, bool f
             renderFace->numIndices = 0;
             renderFace->tex = const_cast<CTexture*>(texture);
             renderFace->mtPreset = 0;
-            renderFace->cullMode = D3DCULL_NONE;
+            renderFace->cullMode = (forceDoubleSided || face.twoSide)
+                ? static_cast<D3DCULL>(D3DCULL_NONE)
+                : static_cast<D3DCULL>(D3DCULL_CW);
             renderFace->srcAlphaMode = D3DBLEND_SRCALPHA;
             renderFace->destAlphaMode = D3DBLEND_INVSRCALPHA;
             renderFace->alphaSortKey = 0.0f;

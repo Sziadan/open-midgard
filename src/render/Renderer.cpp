@@ -114,6 +114,30 @@ std::string ToLowerAsciiTexture(std::string value)
     return value;
 }
 
+std::string CollapseUtf8Latin1ToBytes(const std::string& value)
+{
+    std::string out;
+    out.reserve(value.size());
+    bool changed = false;
+    for (size_t i = 0; i < value.size(); ++i) {
+        const unsigned char ch = static_cast<unsigned char>(value[i]);
+        if (ch == 0xC2 && i + 1 < value.size()) {
+            out.push_back(value[i + 1]);
+            ++i;
+            changed = true;
+            continue;
+        }
+        if (ch == 0xC3 && i + 1 < value.size()) {
+            out.push_back(static_cast<char>(static_cast<unsigned char>(value[i + 1]) + 0x40u));
+            ++i;
+            changed = true;
+            continue;
+        }
+        out.push_back(static_cast<char>(ch));
+    }
+    return changed ? out : value;
+}
+
 std::string NormalizeTexturePath(std::string value)
 {
     std::replace(value.begin(), value.end(), '/', '\\');
@@ -312,7 +336,7 @@ std::string ResolveTexturePath(const char* name)
         return std::string();
     }
 
-    const std::string normalizedName = NormalizeTexturePath(name);
+    const std::string normalizedName = NormalizeTexturePath(CollapseUtf8Latin1ToBytes(name));
     const std::vector<std::string> prefixes = {
         "",
         "data\\",
