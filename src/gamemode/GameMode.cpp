@@ -8662,7 +8662,6 @@ int  CGameMode::OnRun() {
         if (!hasLegacyLoadingDevice && IsQtUiRuntimeEnabled()) {
             g_renderer.ClearBackground();
             g_renderer.Clear(0);
-            g_windowMgr.RenderWallPaper();
             const bool queuedLoadingOverlay = QueueModernOverlayQuad(*this, m_cursorActNum, m_mouseAnimStartTick);
             if (queuedLoadingOverlay) {
                 QueueCursorOverlayQuad(m_cursorActNum, m_mouseAnimStartTick);

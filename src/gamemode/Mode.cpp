@@ -111,7 +111,6 @@ void DrawLoadingScreenFrame(const char* message, float progress)
         if (clientWidth > 0 && clientHeight > 0) {
             g_renderer.ClearBackground();
             g_renderer.Clear(0);
-            g_windowMgr.RenderWallPaper();
             if (QueueLoadingMenuOverlayQuad(clientWidth, clientHeight)) {
                 g_renderer.DrawScene();
                 g_renderer.Flip(false);
