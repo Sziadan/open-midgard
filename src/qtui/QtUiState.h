@@ -9,6 +9,7 @@ class QtUiState : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString backendName READ backendName NOTIFY backendNameChanged)
     Q_PROPERTY(QString modeName READ modeName NOTIFY modeNameChanged)
+    Q_PROPERTY(QString wallpaperRevision READ wallpaperRevision NOTIFY wallpaperRevisionChanged)
     Q_PROPERTY(QString renderPath READ renderPath NOTIFY renderPathChanged)
     Q_PROPERTY(QString architectureNote READ architectureNote NOTIFY architectureNoteChanged)
     Q_PROPERTY(QString loginStatus READ loginStatus NOTIFY loginStatusChanged)
@@ -222,6 +223,7 @@ public:
 
     const QString& backendName() const { return m_backendName; }
     const QString& modeName() const { return m_modeName; }
+    const QString& wallpaperRevision() const { return m_wallpaperRevision; }
     const QString& renderPath() const { return m_renderPath; }
     const QString& architectureNote() const { return m_architectureNote; }
     const QString& loginStatus() const { return m_loginStatus; }
@@ -441,6 +443,14 @@ public:
         }
         m_modeName = value;
         emit modeNameChanged();
+    }
+
+    void setWallpaperRevision(const QString& value) {
+        if (m_wallpaperRevision == value) {
+            return;
+        }
+        m_wallpaperRevision = value;
+        emit wallpaperRevisionChanged();
     }
 
     void setRenderPath(const QString& value) {
@@ -1485,6 +1495,7 @@ public:
 signals:
     void backendNameChanged();
     void modeNameChanged();
+    void wallpaperRevisionChanged();
     void renderPathChanged();
     void architectureNoteChanged();
     void loginStatusChanged();
@@ -1606,6 +1617,7 @@ signals:
 private:
     QString m_backendName;
     QString m_modeName;
+    QString m_wallpaperRevision;
     QString m_renderPath;
     QString m_architectureNote;
     QString m_loginStatus;

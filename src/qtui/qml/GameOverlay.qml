@@ -88,7 +88,7 @@ Item {
             || uiState.charSelectVisible
             || uiState.makeCharVisible
             || uiState.loadingVisible)
-            ? "image://openmidgard/wallpaper"
+            ? "image://openmidgard/wallpaper?rev=" + encodeURIComponent(uiState.wallpaperRevision || "none")
             : ""
     }
 

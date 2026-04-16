@@ -68,6 +68,14 @@ bool IsGameplayUiSuppressed(const QtUiState* state)
     return state && state->loadingVisible();
 }
 
+QString BuildWallpaperRevisionText()
+{
+    if (!g_windowMgr.m_loadedWallpaperPath.empty()) {
+        return QString::fromLocal8Bit(g_windowMgr.m_loadedWallpaperPath.c_str());
+    }
+    return QStringLiteral("none");
+}
+
 template <typename TWindow>
 bool IsGameplayWindowVisible(const QtUiState* state, const TWindow* window)
 {
@@ -2511,6 +2519,7 @@ bool QtUiStateAdapter::syncMenu(RenderBackendType activeBackend,
 
     const QString backendName = BackendToQString(activeBackend);
     const QString modeName = BuildMenuModeText();
+    const QString wallpaperRevision = BuildWallpaperRevisionText();
     const QString renderPath = BuildRenderPathText(nativeOverlayBackend);
     const QString loginStatus = ToQString(g_windowMgr.GetLoginStatus());
     const QString chatPreview = BuildChatPreviewText();
@@ -2518,6 +2527,7 @@ bool QtUiStateAdapter::syncMenu(RenderBackendType activeBackend,
 
     m_state->setBackendName(backendName);
     m_state->setModeName(modeName);
+    m_state->setWallpaperRevision(wallpaperRevision);
     m_state->setRenderPath(renderPath);
     m_state->setArchitectureNote(BuildArchitectureNote(nativeOverlayBackend));
     m_state->setLoginStatus(loginStatus);
@@ -2550,6 +2560,7 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
 
     const QString backendName = BackendToQString(activeBackend);
     const QString modeName = QStringLiteral("Gameplay");
+    const QString wallpaperRevision = BuildWallpaperRevisionText();
     const QString renderPath = BuildRenderPathText(nativeOverlayBackend);
     const QString loginStatus = ToQString(g_windowMgr.GetLoginStatus());
     const QString chatPreview = BuildChatPreviewText();
@@ -2557,6 +2568,7 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
 
     m_state->setBackendName(backendName);
     m_state->setModeName(modeName);
+    m_state->setWallpaperRevision(wallpaperRevision);
     m_state->setRenderPath(renderPath);
     m_state->setArchitectureNote(BuildArchitectureNote(nativeOverlayBackend));
     m_state->setLoginStatus(loginStatus);
