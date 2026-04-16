@@ -135,6 +135,15 @@ int ScoreArchiveWallpaperPath(const std::string& requestedPath, const std::strin
     return score;
 }
 
+bool ContainsManagedWindow(const UIWindowMgr& manager, const UIWindow* window)
+{
+    if (!window) {
+        return false;
+    }
+
+    return std::find(manager.m_children.begin(), manager.m_children.end(), window) != manager.m_children.end();
+}
+
 std::string ResolveArchiveWallpaperByFileName(const std::string& requestedPath)
 {
     const std::string extension = GetLowerFileExtension(requestedPath);
@@ -1159,7 +1168,11 @@ void UIWindowMgr::Reset() {
 }
 
 void UIWindowMgr::OnProcess() {
-    for (auto child : m_children) {
+    const std::vector<UIWindow*> children(m_children.begin(), m_children.end());
+    for (UIWindow* child : children) {
+        if (!ContainsManagedWindow(*this, child)) {
+            continue;
+        }
         child->OnProcess();
     }
 }
@@ -1218,8 +1231,12 @@ void UIWindowMgr::DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap)
 
     RECT clientRect{};
     GetClientRect(g_hMainWnd, &clientRect);
-    for (auto child : m_children) {
-        if (child && child->m_show != 0 && (includeRoMap || child != m_roMapWnd)) {
+    const std::vector<UIWindow*> children(m_children.begin(), m_children.end());
+    for (UIWindow* child : children) {
+        if (child
+            && ContainsManagedWindow(*this, child)
+            && child->m_show != 0
+            && (includeRoMap || child != m_roMapWnd)) {
             child->DrawToHdc(targetDC);
         }
     }

@@ -54,6 +54,12 @@ vector3d AddVec3(const vector3d& a, const vector3d& b)
     return vector3d{ a.x + b.x, a.y + b.y, a.z + b.z };
 }
 
+bool IsLikelyLiveRenderObject(const CRenderObject* object)
+{
+    const uintptr_t value = reinterpret_cast<uintptr_t>(object);
+    return value >= 0x10000ull && value <= 0x00007FFFFFFFFFFFull;
+}
+
 vector3d ScaleVec3(const vector3d& v, float scale)
 {
     return vector3d{ v.x * scale, v.y * scale, v.z * scale };
@@ -3400,6 +3406,8 @@ CRagEffect::CWorldAnchor::CWorldAnchor(const vector3d& position)
 CRagEffect::CRagEffect()
     : m_master(nullptr)
     , m_ownsMaster(false)
+    , m_masterIsActor(false)
+    , m_masterActorGid(0)
     , m_handler(Handler::None)
     , m_type(0)
     , m_level(1)
@@ -3437,7 +3445,7 @@ CRagEffect::~CRagEffect()
     m_ezEffectRes = nullptr;
     ClearPrims();
 
-    if (CAbleToMakeEffect* owner = dynamic_cast<CAbleToMakeEffect*>(m_master)) {
+    if (CAbleToMakeEffect* owner = ResolveCurrentEffectOwner()) {
         owner->m_effectList.remove(this);
         if (owner->m_beginSpellEffect == this) {
             owner->m_beginSpellEffect = nullptr;
@@ -3697,6 +3705,13 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
 {
     m_master = master;
     m_ownsMaster = false;
+    if (const CGameActor* actorMaster = dynamic_cast<const CGameActor*>(master)) {
+        m_masterIsActor = true;
+        m_masterActorGid = actorMaster->m_gid;
+    } else {
+        m_masterIsActor = false;
+        m_masterActorGid = 0;
+    }
     m_type = effectId;
     m_deltaPos = deltaPos;
     m_cachedPos = master ? master->m_pos : vector3d{};
@@ -3945,6 +3960,8 @@ void CRagEffect::InitWorld(const C3dWorldRes::effectSrcInfo& source)
 {
     m_master = new CWorldAnchor(source.pos);
     m_ownsMaster = true;
+    m_masterIsActor = false;
+    m_masterActorGid = 0;
     m_cachedPos = source.pos;
     m_effectName = source.name;
     m_worldType = source.type;
@@ -4001,10 +4018,18 @@ CEffectPrim* CRagEffect::LaunchEffectPrim(EFFECTPRIMID effectPrimId, const vecto
     return prim;
 }
 
-void CRagEffect::DetachFromMaster()
+void CRagEffect::DetachFromMaster(CRenderObject* knownMaster)
 {
-    const vector3d base = ResolveBasePosition();
-    if (CAbleToMakeEffect* owner = dynamic_cast<CAbleToMakeEffect*>(m_master)) {
+    CRenderObject* ownerMaster = knownMaster;
+    if (!ownerMaster && !m_masterIsActor) {
+        ownerMaster = ResolveCurrentMaster();
+    }
+
+    const vector3d masterPos = ownerMaster ? ownerMaster->m_pos : m_cachedPos;
+    const float masterRot = ownerMaster ? ownerMaster->m_roty : m_longitude;
+    const vector3d base = AddVec3(masterPos, m_deltaPos);
+
+    if (CAbleToMakeEffect* owner = dynamic_cast<CAbleToMakeEffect*>(ownerMaster)) {
         if (owner->m_beginSpellEffect == this) {
             owner->m_beginSpellEffect = nullptr;
         }
@@ -4014,31 +4039,79 @@ void CRagEffect::DetachFromMaster()
     }
 
     m_cachedPos = base;
+    m_longitude = masterRot;
 
     if (m_ownsMaster) {
-        if (m_master) {
-            m_master->m_pos = base;
-        }
+        m_master = nullptr;
         return;
     }
 
     m_master = new CWorldAnchor(base);
     m_ownsMaster = true;
+    m_masterIsActor = false;
+    m_masterActorGid = 0;
     m_deltaPos = vector3d{};
+}
+
+void CRagEffect::OnActorDeleted(const CGameActor* actor)
+{
+    if (!actor) {
+        return;
+    }
+
+    if (m_masterIsActor && actor->m_gid == m_masterActorGid) {
+        DetachFromMaster(const_cast<CGameActor*>(actor));
+        return;
+    }
+
+    if (static_cast<const CRenderObject*>(actor) == m_master) {
+        DetachFromMaster(const_cast<CGameActor*>(actor));
+    }
+}
+
+CRenderObject* CRagEffect::ResolveCurrentMaster() const
+{
+    if (!m_masterIsActor || m_ownsMaster) {
+        return IsLikelyLiveRenderObject(m_master) ? m_master : nullptr;
+    }
+
+    if (g_world.m_player && g_world.m_player->m_gid == m_masterActorGid) {
+        return IsLikelyLiveRenderObject(g_world.m_player) ? g_world.m_player : nullptr;
+    }
+
+    if (const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+        const auto it = gameMode->m_runtimeActors.find(m_masterActorGid);
+        if (it != gameMode->m_runtimeActors.end() && it->second) {
+            return IsLikelyLiveRenderObject(it->second) ? it->second : nullptr;
+        }
+    }
+
+    for (CGameActor* actor : g_world.m_actorList) {
+        if (actor && actor->m_gid == m_masterActorGid) {
+            return IsLikelyLiveRenderObject(actor) ? actor : nullptr;
+        }
+    }
+
+    return nullptr;
+}
+
+CAbleToMakeEffect* CRagEffect::ResolveCurrentEffectOwner() const
+{
+    return dynamic_cast<CAbleToMakeEffect*>(ResolveCurrentMaster());
 }
 
 vector3d CRagEffect::ResolveBasePosition() const
 {
-    if (m_master) {
-        return AddVec3(m_master->m_pos, m_deltaPos);
+    if (CRenderObject* master = ResolveCurrentMaster()) {
+        return AddVec3(master->m_pos, m_deltaPos);
     }
     return AddVec3(m_cachedPos, m_deltaPos);
 }
 
 float CRagEffect::ResolveBaseRotation() const
 {
-    if (m_master) {
-        return m_master->m_roty;
+    if (CRenderObject* master = ResolveCurrentMaster()) {
+        return master->m_roty;
     }
     return m_longitude;
 }
@@ -5691,8 +5764,8 @@ void CRagEffect::SpawnEnchantPoison2()
         }
     }
 
-    if (m_master && (m_stateCnt % 2) == 0 && (m_master->m_BodyLight & 1) == 0) {
-        ++m_master->m_BodyLight;
+    if (CRenderObject* master = ResolveCurrentMaster(); master && (m_stateCnt % 2) == 0 && (master->m_BodyLight & 1) == 0) {
+        ++master->m_BodyLight;
     }
 }
 
@@ -5802,7 +5875,8 @@ void CRagEffect::SpawnSight()
 
 void CRagEffect::SpawnSightState()
 {
-    if (!m_master || !MasterHasEffectState(m_master, kSightEffectStateMask)) {
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master || !MasterHasEffectState(master, kSightEffectStateMask)) {
         m_loop = false;
         m_duration = m_stateCnt;
         return;
@@ -5964,6 +6038,11 @@ void CRagEffect::SpawnFireBoltRain()
 
 u8 CRagEffect::OnProcess()
 {
+    if (CRenderObject* master = ResolveCurrentMaster()) {
+        m_cachedPos = master->m_pos;
+        m_longitude = master->m_roty;
+    }
+
     const u32 now = timeGetTime();
     const u32 elapsedMs = now - m_lastProcessTick;
     m_lastProcessTick = now;
@@ -6175,7 +6254,9 @@ void CRagEffect::SendMsg(CGameObject*, int msg, msgparam_t par1, msgparam_t, msg
                 const float distance = std::sqrt(dx * dx + dz * dz);
                 ClearPrims();
                 m_handler = Handler::GrimTooth;
-                if (CAbleToMakeEffect* owner = dynamic_cast<CAbleToMakeEffect*>(m_master)) {
+                CRenderObject* ownerMaster = nullptr;
+                if (CAbleToMakeEffect* owner = ResolveCurrentEffectOwner()) {
+                    ownerMaster = dynamic_cast<CRenderObject*>(owner);
                     owner->m_effectList.remove(this);
                     if (owner->m_beginSpellEffect == this) {
                         owner->m_beginSpellEffect = nullptr;
@@ -6184,7 +6265,7 @@ void CRagEffect::SendMsg(CGameObject*, int msg, msgparam_t par1, msgparam_t, msg
                         owner->m_magicTargetEffect = nullptr;
                     }
                 }
-                DetachFromMaster();
+                DetachFromMaster(ownerMaster);
                 m_cachedPos = base;
                 m_deltaPos = vector3d{};
                 if (distance > 0.0001f) {

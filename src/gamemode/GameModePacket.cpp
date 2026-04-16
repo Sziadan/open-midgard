@@ -1685,6 +1685,8 @@ void UpsertGroundItem(CGameMode& mode,
     u8 subY,
     bool playDropAnimation)
 {
+    const auto existingIt = mode.m_groundItemList.find(objectId);
+    const bool existed = existingIt != mode.m_groundItemList.end();
     GroundItemState& item = mode.m_groundItemList[objectId];
     item.objectId = objectId;
     item.itemId = itemId;
@@ -1695,6 +1697,16 @@ void UpsertGroundItem(CGameMode& mode,
     item.subX = subX;
     item.subY = subY;
     item.pendingDropAnimation = playDropAnimation ? 1 : 0;
+    DbgLog("[GroundItem] entry obj=%u item=%u amount=%u pos=%u,%u sub=%u,%u existed=%d dropAnim=%d\n",
+        objectId,
+        static_cast<unsigned int>(itemId),
+        static_cast<unsigned int>(amount),
+        static_cast<unsigned int>(tileX),
+        static_cast<unsigned int>(tileY),
+        static_cast<unsigned int>(subX),
+        static_cast<unsigned int>(subY),
+        existed ? 1 : 0,
+        playDropAnimation ? 1 : 0);
 }
 
 void HandleGroundItemEntry(CGameMode& mode, const PacketView& packet)
@@ -1730,6 +1742,27 @@ void HandleGroundItemDisappear(CGameMode& mode, const PacketView& packet)
     }
 
     const u32 objectId = ReadLE32(packet.data + 2);
+    const auto stateIt = mode.m_groundItemList.find(objectId);
+    const bool hadState = stateIt != mode.m_groundItemList.end();
+    const u32 itemId = hadState ? stateIt->second.itemId : 0;
+    const u16 amount = hadState ? stateIt->second.amount : 0;
+    bool hadWorldItem = false;
+    if (mode.m_world) {
+        for (CItem* item : mode.m_world->m_itemList) {
+            if (item && item->m_aid == objectId) {
+                hadWorldItem = true;
+                break;
+            }
+        }
+    }
+    const bool matchedActor = mode.m_runtimeActors.find(objectId) != mode.m_runtimeActors.end();
+    DbgLog("[GroundItem] disappear obj=%u hadState=%d item=%u amount=%u worldItem=%d actorMatch=%d\n",
+        objectId,
+        hadState ? 1 : 0,
+        itemId,
+        static_cast<unsigned int>(amount),
+        hadWorldItem ? 1 : 0,
+        matchedActor ? 1 : 0);
     mode.m_groundItemList.erase(objectId);
     mode.m_pickupReqItemNaidList.remove(objectId);
     if (mode.m_pickupReqItemNaidList.empty()) {
@@ -3979,11 +4012,11 @@ void ClearAttachedSkillEffects(CGameActor* actor, int preserveBeginEffectId)
     }
 
     if (actor->m_beginSpellEffect && actor->m_beginSpellEffect->GetEffectType() != preserveBeginEffectId) {
-        actor->m_beginSpellEffect->DetachFromMaster();
+        actor->m_beginSpellEffect->DetachFromMaster(actor);
         actor->m_beginSpellEffect = nullptr;
     }
     if (actor->m_magicTargetEffect) {
-        actor->m_magicTargetEffect->DetachFromMaster();
+        actor->m_magicTargetEffect->DetachFromMaster(actor);
         actor->m_magicTargetEffect = nullptr;
     }
 }
@@ -6817,6 +6850,13 @@ void HandleActorVanish(CGameMode& mode, const PacketView& packet)
     const u32 gid = ReadLE32(packet.data + 2);
     const u8 reason = packet.data[6];
     DbgLog("[GameMode] vanish gid=%u reason=%u\n", gid, static_cast<unsigned int>(reason));
+    if (const auto groundItemIt = mode.m_groundItemList.find(gid); groundItemIt != mode.m_groundItemList.end()) {
+        DbgLog("[GroundItem] vanish overlaps item obj=%u item=%u amount=%u reason=%u\n",
+            gid,
+            groundItemIt->second.itemId,
+            static_cast<unsigned int>(groundItemIt->second.amount),
+            static_cast<unsigned int>(reason));
+    }
     mode.m_actorPosList.erase(gid);
     mode.m_aidList.erase(gid);
 

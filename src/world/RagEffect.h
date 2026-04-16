@@ -155,12 +155,13 @@ public:
     void InitAtWorldPosition(int effectId, const vector3d& position);
     void InitWorld(const C3dWorldRes::effectSrcInfo& source);
     CEffectPrim* LaunchEffectPrim(EFFECTPRIMID effectPrimId, const vector3d& deltaPos);
-    void DetachFromMaster();
+    void DetachFromMaster(CRenderObject* knownMaster = nullptr);
     int GetEffectType() const { return m_type; }
     int GetStateCount() const { return m_stateCnt; }
     int GetDuration() const { return m_duration; }
 
     u8 OnProcess() override;
+    void OnActorDeleted(const CGameActor* actor) override;
     void Render(matrix* viewMatrix) override;
     void SendMsg(CGameObject*, int, msgparam_t, msgparam_t, msgparam_t) override;
 
@@ -217,6 +218,8 @@ private:
     void InitEZ2STRFrame();
     bool ProcessEZ2STR();
     void RenderAniClip(int layerIndex, const KAC_LAYER& layer, const KAC_XFORMDATA& xform, matrix* viewMatrix);
+    CRenderObject* ResolveCurrentMaster() const;
+    CAbleToMakeEffect* ResolveCurrentEffectOwner() const;
 
     void SpawnEntry2();
     void SpawnJobLevelUp50();
@@ -257,6 +260,8 @@ private:
     std::list<CEffectPrim*> m_primList;
     CRenderObject* m_master;
     bool m_ownsMaster;
+    bool m_masterIsActor;
+    u32 m_masterActorGid;
     Handler m_handler;
     int m_type;
     int m_level;

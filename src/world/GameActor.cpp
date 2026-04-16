@@ -3934,7 +3934,7 @@ void CAbleToMakeEffect::RemoveEffectById(int effectId)
         }
 
         effect->SendMsg(effect, 109, 0, 0, 0);
-        effect->DetachFromMaster();
+        effect->DetachFromMaster(this);
         it = m_effectList.erase(it);
     }
 }
@@ -3943,7 +3943,7 @@ void CAbleToMakeEffect::DetachEffects()
 {
     for (CRagEffect* effect : m_effectList) {
         if (effect) {
-            effect->DetachFromMaster();
+            effect->DetachFromMaster(this);
         }
     }
     m_effectList.clear();
@@ -4389,7 +4389,7 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         const bool forceRestartBeginEffect = effectId == 123;
         if (effectId <= 0) {
             if (m_beginSpellEffect) {
-                m_beginSpellEffect->DetachFromMaster();
+                m_beginSpellEffect->DetachFromMaster(this);
                 m_beginSpellEffect = nullptr;
             }
             return;
@@ -4411,7 +4411,7 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
             RemoveEffectById(effectId);
         }
         if (m_beginSpellEffect) {
-            m_beginSpellEffect->DetachFromMaster();
+            m_beginSpellEffect->DetachFromMaster(this);
             m_beginSpellEffect = nullptr;
         }
         m_beginSpellEffect = LaunchEffect(effectId, vector3d{}, 0.0f);
@@ -4434,7 +4434,7 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         return;
     case 87:
         if (m_magicTargetEffect) {
-            m_magicTargetEffect->DetachFromMaster();
+            m_magicTargetEffect->DetachFromMaster(this);
             m_magicTargetEffect = nullptr;
         }
         return;
