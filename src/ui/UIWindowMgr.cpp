@@ -144,6 +144,16 @@ bool ContainsManagedWindow(const UIWindowMgr& manager, const UIWindow* window)
     return std::find(manager.m_children.begin(), manager.m_children.end(), window) != manager.m_children.end();
 }
 
+bool IsWindowShown(const UIWindow* window)
+{
+    return window && window->m_show != 0;
+}
+
+bool IsLoadingScreenVisible(const UIWindowMgr& manager)
+{
+    return IsWindowShown(manager.m_loadingWnd);
+}
+
 std::string ResolveArchiveWallpaperByFileName(const std::string& requestedPath)
 {
     const std::string extension = GetLowerFileExtension(requestedPath);
@@ -1591,7 +1601,7 @@ bool UIWindowMgr::SetWallpaperFromGameData(const std::string& wallpaperName) {
 
 void UIWindowMgr::ShowLoadingScreen(const std::string& wallpaperName, const std::string& message, float progress)
 {
-    const bool loadingAlreadyVisible = m_loadingWnd && m_loadingWnd->m_show != 0;
+    const bool loadingAlreadyVisible = IsLoadingScreenVisible(*this);
     if (!wallpaperName.empty() && !loadingAlreadyVisible) {
         SetWallpaperFromGameData(wallpaperName);
     }
@@ -2051,7 +2061,9 @@ void UIWindowMgr::SetLoginStatus(const std::string& status) {
 
 void UIWindowMgr::SetLoginWallpaper(const std::string& wallpaperName) {
     m_loginWallpaper = wallpaperName;
-    SetWallpaperFromGameData(wallpaperName);
+    if (!IsLoadingScreenVisible(*this)) {
+        SetWallpaperFromGameData(wallpaperName);
+    }
 
     if (m_loginWnd) {
         m_loginWnd->SetWallpaperName(wallpaperName);

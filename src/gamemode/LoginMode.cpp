@@ -594,8 +594,8 @@ void CLoginMode::OnInit(const char* worldName) {
     }
 
     m_wallPaperBmpName = ChooseLoginWallpaperName();
-    g_windowMgr.SetLoginWallpaper(m_wallPaperBmpName);
     g_windowMgr.RemoveAllWindows();
+    g_windowMgr.SetLoginWallpaper(m_wallPaperBmpName);
 
     m_subMode = LoginSubMode_Login;
     if (g_session.m_pendingReturnToCharSelect != 0 && CanReturnToCharacterSelect()) {
