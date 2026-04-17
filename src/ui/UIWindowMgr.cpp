@@ -404,6 +404,7 @@ std::vector<std::string> BuildWallpaperCandidates(const std::string& requestedWa
         "\\";
 
     const char* directDefaults[] = {
+        "ad_title.png",
         "ad_title.jpg",
         "rag_title.jpg",
         "title.bmp",
@@ -422,29 +423,31 @@ std::vector<std::string> BuildWallpaperCandidates(const std::string& requestedWa
     }
 
     const char* pathPrefixes[] = {
+        "data\\",
+        "data\\texture\\",
+        "data\\texture\\interface\\",
+        "data\\texture\\interface\\basic_interface\\",
+        "data\\texture\\login_interface\\",
+        "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\",
+        "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\",
+        "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\login_interface\\",
         "",
         "texture\\",
         "texture\\interface\\",
         "texture\\interface\\basic_interface\\",
         "texture\\login_interface\\",
         "ui\\",
-        "data\\",
-        "data\\texture\\",
-        "data\\texture\\interface\\",
-        "data\\texture\\interface\\basic_interface\\",
-        "data\\texture\\login_interface\\",
         kUiKor,
         "texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\",
         "texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\login_interface\\",
-        "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\",
-        "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\",
-        "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\login_interface\\",
         nullptr
     };
 
     for (const std::string& baseRaw : baseNames) {
         std::string base = NormalizeSlash(baseRaw);
-        AddUniqueCandidate(out, base);
+        if (base.empty()) {
+            continue;
+        }
 
         std::string filenameOnly = base;
         const size_t slashPos = filenameOnly.find_last_of('\\');
@@ -461,6 +464,7 @@ std::vector<std::string> BuildWallpaperCandidates(const std::string& requestedWa
         if (!hasExtension) {
             nameForms.push_back(filenameOnly + ".bmp");
             nameForms.push_back(filenameOnly + ".jpg");
+            nameForms.push_back(filenameOnly + ".png");
             nameForms.push_back(filenameOnly + ".tga");
         }
 
@@ -1541,53 +1545,56 @@ bool UIWindowMgr::SetWallpaperFromGameData(const std::string& wallpaperName) {
            wallpaperName.c_str(), candidates.size());
 
     for (const std::string& candidate : candidates) {
-        int size = 0;
-        unsigned char* bytes = g_fileMgr.GetData(candidate.c_str(), &size);
-        if (!bytes || size <= 0) {
+        u32* pixels = nullptr;
+        int width = 0;
+        int height = 0;
+        if (!LoadBgraPixelsFromGameData(candidate.c_str(), &pixels, &width, &height)
+            || !pixels
+            || width <= 0
+            || height <= 0) {
             LOG_WALLPAPER_LOAD("[WallpaperLoad]   MISS: %s\n", candidate.c_str());
             const std::string fallback = ResolveArchiveWallpaperByFileName(candidate);
             if (!fallback.empty()) {
                 AddUniqueCandidate(fallbackCandidates, fallback);
             }
-            delete[] bytes;
+            delete[] pixels;
             continue;
         }
-        LOG_WALLPAPER_LOAD("[WallpaperLoad]   HIT:  %s (%d bytes)\n", candidate.c_str(), size);
+        LOG_WALLPAPER_LOAD("[WallpaperLoad]   HIT:  %s (%dx%d)\n", candidate.c_str(), width, height);
 
         CBitmapRes bitmap;
-        const bool loaded = bitmap.LoadFromBuffer(candidate.c_str(), bytes, size);
-        delete[] bytes;
-
-        if (!loaded || !bitmap.m_data || bitmap.m_width <= 0 || bitmap.m_height <= 0) {
-                 LOG_WALLPAPER_LOAD("[WallpaperLoad]   DECODE FAIL: loaded=%d w=%d h=%d\n",
-                   loaded, bitmap.m_width, bitmap.m_height);
-            continue;
-        }
-        LOG_WALLPAPER_LOAD("[WallpaperLoad]   Decoded OK: %dx%d\n", bitmap.m_width, bitmap.m_height);
+        bitmap.m_width = width;
+        bitmap.m_height = height;
+        bitmap.m_data = pixels;
 
         SetWallpaper(&bitmap);
+        bitmap.m_data = nullptr;
+        delete[] pixels;
         m_loadedWallpaperPath = candidate;
         LOG_WALLPAPER_LOAD("[WallpaperLoad] SUCCESS: loaded '%s'\n", candidate.c_str());
         return true;
     }
 
     for (const std::string& candidate : fallbackCandidates) {
-        int size = 0;
-        unsigned char* bytes = g_fileMgr.GetData(candidate.c_str(), &size);
-        if (!bytes || size <= 0) {
-            delete[] bytes;
+        u32* pixels = nullptr;
+        int width = 0;
+        int height = 0;
+        if (!LoadBgraPixelsFromGameData(candidate.c_str(), &pixels, &width, &height)
+            || !pixels
+            || width <= 0
+            || height <= 0) {
+            delete[] pixels;
             continue;
         }
 
         CBitmapRes bitmap;
-        const bool loaded = bitmap.LoadFromBuffer(candidate.c_str(), bytes, size);
-        delete[] bytes;
-
-        if (!loaded || !bitmap.m_data || bitmap.m_width <= 0 || bitmap.m_height <= 0) {
-            continue;
-        }
+        bitmap.m_width = width;
+        bitmap.m_height = height;
+        bitmap.m_data = pixels;
 
         SetWallpaper(&bitmap);
+        bitmap.m_data = nullptr;
+        delete[] pixels;
         m_loadedWallpaperPath = candidate;
         DbgLog("[WallpaperLoad] BASENAME HIT: %s\n", candidate.c_str());
         return true;

@@ -267,6 +267,7 @@ std::vector<std::string> BuildWallpaperCandidates(const std::string& requestedWa
         "\\";
 
     const char* directDefaults[] = {
+        "ad_title.png",
         "ad_title.jpg",
         "rag_title.jpg",
         "title.bmp",
@@ -285,23 +286,23 @@ std::vector<std::string> BuildWallpaperCandidates(const std::string& requestedWa
     }
 
     const char* pathPrefixes[] = {
+        "data\\",
+        "data\\texture\\",
+        "data\\texture\\interface\\",
+        "data\\texture\\interface\\basic_interface\\",
+        "data\\texture\\login_interface\\",
+        "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\",
+        "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\",
+        "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\login_interface\\",
         "",
         "texture\\",
         "texture\\interface\\",
         "texture\\interface\\basic_interface\\",
         "texture\\login_interface\\",
         "ui\\",
-        "data\\",
-        "data\\texture\\",
-        "data\\texture\\interface\\",
-        "data\\texture\\interface\\basic_interface\\",
-        "data\\texture\\login_interface\\",
         kUiKor,
         "texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\",
         "texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\login_interface\\",
-        "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\",
-        "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\basic_interface\\",
-        "data\\texture\\\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\login_interface\\",
         nullptr
     };
 
@@ -310,11 +311,6 @@ std::vector<std::string> BuildWallpaperCandidates(const std::string& requestedWa
         if (base.empty()) {
             continue;
         }
-
-        AddUniqueCandidate(out, base);
-        std::replace(base.begin(), base.end(), '\\', '/');
-        AddUniqueCandidate(out, base);
-        base = NormalizeSlash(base);
 
         std::string filenameOnly = base;
         const size_t slashPos = filenameOnly.find_last_of('\\');
@@ -332,6 +328,7 @@ std::vector<std::string> BuildWallpaperCandidates(const std::string& requestedWa
         if (!hasExtension) {
             nameForms.push_back(filenameOnly + ".bmp");
             nameForms.push_back(filenameOnly + ".jpg");
+            nameForms.push_back(filenameOnly + ".png");
             nameForms.push_back(filenameOnly + ".tga");
         }
 
