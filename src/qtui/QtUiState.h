@@ -168,6 +168,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(QString chatWindowInputText READ chatWindowInputText NOTIFY chatWindowInputTextChanged)
     Q_PROPERTY(QVariantList chatWindowLines READ chatWindowLines NOTIFY chatWindowLinesChanged)
     Q_PROPERTY(QVariantMap chatWindowScrollBar READ chatWindowScrollBar NOTIFY chatWindowScrollBarChanged)
+    Q_PROPERTY(QVariantMap chatWindowUi READ chatWindowUi NOTIFY chatWindowUiChanged)
     Q_PROPERTY(bool rechargeGaugeVisible READ rechargeGaugeVisible NOTIFY rechargeGaugeVisibleChanged)
     Q_PROPERTY(int rechargeGaugeX READ rechargeGaugeX NOTIFY rechargeGaugeGeometryChanged)
     Q_PROPERTY(int rechargeGaugeY READ rechargeGaugeY NOTIFY rechargeGaugeGeometryChanged)
@@ -386,6 +387,7 @@ public:
     const QString& chatWindowInputText() const { return m_chatWindowInputText; }
     const QVariantList& chatWindowLines() const { return m_chatWindowLines; }
     const QVariantMap& chatWindowScrollBar() const { return m_chatWindowScrollBar; }
+    const QVariantMap& chatWindowUi() const { return m_chatWindowUi; }
     bool rechargeGaugeVisible() const { return m_rechargeGaugeVisible; }
     int rechargeGaugeX() const { return m_rechargeGaugeX; }
     int rechargeGaugeY() const { return m_rechargeGaugeY; }
@@ -1297,6 +1299,11 @@ public:
         emit chatWindowScrollBarChanged();
     }
 
+    void setChatWindowUi(const QVariantMap& value) {
+        m_chatWindowUi = value;
+        emit chatWindowUiChanged();
+    }
+
     void setRechargeGaugeVisible(bool value) {
         if (m_rechargeGaugeVisible == value) {
             return;
@@ -1630,6 +1637,7 @@ signals:
     void chatWindowInputTextChanged();
     void chatWindowLinesChanged();
     void chatWindowScrollBarChanged();
+    void chatWindowUiChanged();
     void rechargeGaugeVisibleChanged();
     void rechargeGaugeGeometryChanged();
     void rechargeGaugeProgressChanged();
@@ -1820,6 +1828,7 @@ private:
     QString m_chatWindowInputText;
     QVariantList m_chatWindowLines;
     QVariantMap m_chatWindowScrollBar;
+    QVariantMap m_chatWindowUi;
     bool m_rechargeGaugeVisible = false;
     int m_rechargeGaugeX = 0;
     int m_rechargeGaugeY = 0;

@@ -6430,7 +6430,7 @@ void HandleWhisper(CGameMode& mode, const PacketView& packet)
     mode.m_lastWhisper = msg;
 
     if (!name.empty() && !msg.empty()) {
-        RecordChat(mode, name + " : " + msg, 0x00FFFF00, kChatChannelWhisper);
+        RecordChat(mode, std::string("(From ") + name + ") " + msg, 0x00FFFF00, kChatChannelWhisper);
     } else if (!msg.empty()) {
         RecordChat(mode, msg, 0x00FFFF00, kChatChannelWhisper);
     }
@@ -6478,7 +6478,7 @@ void HandleAckWhisper(CGameMode& mode, const PacketView& packet)
     const u8 status = packet.data[2];
     if (status == 0) {
         if (!mode.m_lastWhisper.empty()) {
-            RecordChat(mode, std::string("(to ") + mode.m_lastWhisperName + ") " + mode.m_lastWhisper,
+            RecordChat(mode, std::string("(To ") + mode.m_lastWhisperName + ") " + mode.m_lastWhisper,
                 0x00FFFF00, kChatChannelWhisper);
         }
     } else {

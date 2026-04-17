@@ -161,6 +161,7 @@ void ClearGameplayUiState(QtUiState* state)
     state->setChatWindowInputText(QString());
     state->setChatWindowLines(QVariantList{});
     state->setChatWindowScrollBar(QVariantMap{});
+    state->setChatWindowUi(QVariantMap{});
 
     state->setRechargeGaugeVisible(false);
     state->setRechargeGaugeGeometry(0, 0, 0, 0);
@@ -1709,6 +1710,7 @@ void PopulateChatWindowState(QtUiState* state)
         state->setChatWindowInputText(QString());
         state->setChatWindowLines(QVariantList{});
         state->setChatWindowScrollBar(QVariantMap{});
+        state->setChatWindowUi(QVariantMap{});
         return;
     }
 
@@ -1741,6 +1743,54 @@ void PopulateChatWindowState(QtUiState* state)
     scrollBar.insert(QStringLiteral("firstVisibleLine"), scrollState.firstVisibleLine);
     scrollBar.insert(QStringLiteral("visibleLineCount"), scrollState.visibleLineCount);
     state->setChatWindowScrollBar(scrollBar);
+
+    QVariantMap chatUi;
+    QVariantList tabs;
+    tabs.reserve(chatWnd->GetTabCount());
+    for (int index = 0; index < chatWnd->GetTabCount(); ++index) {
+        ChatTabDisplay tab{};
+        if (!chatWnd->GetTabDisplay(index, &tab)) {
+            continue;
+        }
+
+        QVariantMap entry;
+        entry.insert(QStringLiteral("id"), tab.id);
+        entry.insert(QStringLiteral("label"), ToQString(tab.label));
+        entry.insert(QStringLiteral("active"), tab.active != 0);
+        tabs.push_back(entry);
+    }
+    chatUi.insert(QStringLiteral("tabs"), tabs);
+    chatUi.insert(QStringLiteral("fontPixelSize"), chatWnd->GetFontPixelSize());
+    chatUi.insert(QStringLiteral("windowOpacityPercent"), chatWnd->GetWindowOpacityPercent());
+    chatUi.insert(QStringLiteral("configVisible"), chatWnd->IsConfigVisible());
+
+    int configX = 0;
+    int configY = 0;
+    int configWidth = 0;
+    int configHeight = 0;
+    if (chatWnd->GetConfigRectForQt(&configX, &configY, &configWidth, &configHeight)) {
+        chatUi.insert(QStringLiteral("configX"), configX);
+        chatUi.insert(QStringLiteral("configY"), configY);
+        chatUi.insert(QStringLiteral("configWidth"), configWidth);
+        chatUi.insert(QStringLiteral("configHeight"), configHeight);
+    }
+
+    QVariantList filters;
+    filters.reserve(chatWnd->GetFilterOptionCount());
+    for (int index = 0; index < chatWnd->GetFilterOptionCount(); ++index) {
+        ChatFilterOptionDisplay filter{};
+        if (!chatWnd->GetFilterOptionDisplay(index, &filter)) {
+            continue;
+        }
+
+        QVariantMap entry;
+        entry.insert(QStringLiteral("id"), filter.id);
+        entry.insert(QStringLiteral("label"), ToQString(filter.label));
+        entry.insert(QStringLiteral("enabled"), filter.enabled != 0);
+        filters.push_back(entry);
+    }
+    chatUi.insert(QStringLiteral("filters"), filters);
+    state->setChatWindowUi(chatUi);
 }
 
 void PopulateRechargeGaugeState(QtUiState* state)

@@ -17,6 +17,7 @@
 #include "ui/UILoginWnd.h"
 #include "ui/UIMakeCharWnd.h"
 #include "ui/UIMinimapWnd.h"
+#include "ui/UINewChatWnd.h"
 #include "ui/UINotifyLevelUpWnd.h"
 #include "ui/UISelectCharWnd.h"
 #include "ui/UISelectServerWnd.h"
@@ -995,6 +996,15 @@ public:
                     GetUiLogicalY(lParam));
                 return true;
             }
+            if (!HasFrontMenuUiVisible()
+                && g_windowMgr.m_chatWnd
+                && g_windowMgr.m_chatWnd->m_show != 0
+                && (g_windowMgr.m_chatWnd->IsQtPointerCaptured()
+                    || g_windowMgr.m_chatWnd->IsQtInteractionPoint(GetUiLogicalX(lParam), GetUiLogicalY(lParam)))) {
+                return g_windowMgr.m_chatWnd->HandleQtMouseMove(
+                    GetUiLogicalX(lParam),
+                    GetUiLogicalY(lParam));
+            }
             return false;
 
         case WM_LBUTTONDBLCLK:
@@ -1057,6 +1067,19 @@ public:
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::NotifyJobLevelUp;
                 return true;
             }
+            if (!HasFrontMenuUiVisible()
+                && g_windowMgr.m_chatWnd
+                && g_windowMgr.m_chatWnd->m_show != 0) {
+                const int logicalX = GetUiLogicalX(lParam);
+                const int logicalY = GetUiLogicalY(lParam);
+                if (g_windowMgr.m_chatWnd->IsInputActive()
+                    && !g_windowMgr.m_chatWnd->IsQtMainPanelPoint(logicalX, logicalY)) {
+                    g_windowMgr.m_chatWnd->ClearInputFocus();
+                }
+                if (g_windowMgr.m_chatWnd->HandleQtMouseDown(logicalX, logicalY)) {
+                    return true;
+                }
+            }
             return false;
 
         case WM_LBUTTONUP:
@@ -1102,6 +1125,28 @@ public:
             }
             if (m_menuPointerCaptureTarget != MenuPointerCaptureTarget::None) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
+                return true;
+            }
+            if (!HasFrontMenuUiVisible()
+                && g_windowMgr.m_chatWnd
+                && g_windowMgr.m_chatWnd->m_show != 0
+                && (g_windowMgr.m_chatWnd->IsQtPointerCaptured()
+                    || g_windowMgr.m_chatWnd->IsQtInteractionPoint(GetUiLogicalX(lParam), GetUiLogicalY(lParam)))
+                && g_windowMgr.m_chatWnd->HandleQtMouseUp(
+                    GetUiLogicalX(lParam),
+                    GetUiLogicalY(lParam))) {
+                return true;
+            }
+            return false;
+
+        case WM_MOUSEWHEEL:
+            if (!HasFrontMenuUiVisible()
+                && g_windowMgr.m_chatWnd
+                && g_windowMgr.m_chatWnd->m_show != 0
+                && g_windowMgr.m_chatWnd->HandleQtWheel(
+                    GetWheelDelta(wParam),
+                    GetUiLogicalX(lParam),
+                    GetUiLogicalY(lParam))) {
                 return true;
             }
             return false;

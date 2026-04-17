@@ -7,6 +7,14 @@ Item {
     property bool loginCaretVisible: true
     property real uiScale: Math.max(0.5, uiState.uiScale || 1.0)
 
+    function rgbaColor(red, green, blue, alpha) {
+        return Qt.rgba(red / 255.0, green / 255.0, blue / 255.0, Math.max(0.0, Math.min(1.0, alpha)))
+    }
+
+    function chatChromeOpacity(chatUi) {
+        return Math.max(0.2, Math.min(1.0, ((chatUi && chatUi.windowOpacityPercent) || 84) / 100.0))
+    }
+
     function itemIconSource(itemId) {
         return itemId > 0 ? "image://openmidgard/item/" + itemId : ""
     }
@@ -1590,35 +1598,122 @@ Item {
     }
 
     Rectangle {
+        id: chatWindowChrome
         x: uiState.chatWindowX
         y: uiState.chatWindowY
         width: uiState.chatWindowWidth
         height: uiState.chatWindowHeight
-        color: "#50181818"
+        radius: 14
         border.width: 1
-        border.color: "#ffffff"
+        border.color: "#7088a0b8"
         visible: uiState.chatWindowVisible
 
+        readonly property var chatUi: uiState.chatWindowUi || ({})
+        readonly property var scrollBar: uiState.chatWindowScrollBar || ({})
+        readonly property bool scrollBarVisible: scrollBar.visible || false
+        readonly property int scrollBarWidth: scrollBarVisible ? 8 : 0
+        readonly property int scrollBarGap: scrollBarVisible ? 4 : 0
+        readonly property int chatFontSize: chatUi.fontPixelSize || 13
+        readonly property real chromeOpacity: root.chatChromeOpacity(chatUi)
+        color: root.rgbaColor(26, 31, 39, 0.78 * chromeOpacity)
+
         Rectangle {
-            x: 8
-            y: 8
-            width: parent.width - 16
-            height: parent.height - 38
-            color: "#90181818"
+            anchors.fill: parent
+            radius: parent.radius
+            color: "transparent"
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: root.rgbaColor(40, 49, 61, 0.88 * chatWindowChrome.chromeOpacity) }
+                GradientStop { position: 1.0; color: root.rgbaColor(18, 23, 29, 0.82 * chatWindowChrome.chromeOpacity) }
+            }
+        }
+
+        Rectangle {
+            x: 1
+            y: 1
+            width: parent.width - 2
+            height: 52
+            radius: 13
+            color: root.rgbaColor(54, 67, 82, 0.64 * chatWindowChrome.chromeOpacity)
+            border.width: 0
+        }
+
+        Row {
+            x: 10
+            y: 10
+            height: 34
+            width: parent.width - 54
+            spacing: 6
+
+            Repeater {
+                model: parent.parent.chatUi.tabs || []
+
+                delegate: Rectangle {
+                    required property var modelData
+                    width: Math.max(68, Math.floor((parent.width - ((parent.spacing || 0) * Math.max(0, ((parent.parent.chatUi.tabs || []).length || 1) - 1))) / Math.max(1, ((parent.parent.chatUi.tabs || []).length || 1))))
+                    height: 34
+                    radius: 10
+                    color: modelData.active ? root.rgbaColor(244, 247, 251, 0.96) : root.rgbaColor(68, 86, 105, 0.46 * chatWindowChrome.chromeOpacity)
+                    border.width: 1
+                    border.color: modelData.active ? root.rgbaColor(200, 211, 223, 0.96) : root.rgbaColor(117, 141, 164, 0.68 * chatWindowChrome.chromeOpacity)
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: modelData.label
+                        color: modelData.active ? "#16212b" : "#ebf1f7"
+                        font.family: "Segoe UI"
+                        font.pixelSize: 13
+                        font.bold: true
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            x: parent.width - 34
+            y: 15
+            width: 24
+            height: 24
+            radius: 8
+            color: parent.chatUi.configVisible ? root.rgbaColor(240, 244, 248, 0.98) : root.rgbaColor(66, 85, 103, 0.52 * parent.chromeOpacity)
             border.width: 1
-            border.color: "#60ffffff"
+            border.color: parent.chatUi.configVisible ? root.rgbaColor(200, 210, 220, 0.98) : root.rgbaColor(100, 120, 143, 0.8 * parent.chromeOpacity)
+
+            Text {
+                anchors.centerIn: parent
+                text: "\u2699"
+                color: parent.parent.chatUi.configVisible ? "#1b2832" : "#edf3f8"
+                font.family: "Segoe UI Symbol"
+                font.pixelSize: 15
+            }
+        }
+
+        Rectangle {
+            x: 10
+            y: 54
+            width: parent.width - 20
+            height: parent.height - 92
+            radius: 12
+            color: root.rgbaColor(12, 16, 21, 0.68 * parent.chromeOpacity)
+            border.width: 1
+            border.color: root.rgbaColor(124, 141, 157, 0.32 * parent.chromeOpacity + 0.14)
             clip: true
 
-            readonly property var scrollBar: uiState.chatWindowScrollBar || ({})
-            readonly property bool scrollBarVisible: scrollBar.visible || false
-            readonly property int scrollBarWidth: scrollBarVisible ? 8 : 0
-            readonly property int scrollBarGap: scrollBarVisible ? 4 : 0
-            readonly property int chatTextWidth: width - 8 - scrollBarWidth - scrollBarGap
+            readonly property int chatTextWidth: width - 10 - parent.scrollBarWidth - parent.scrollBarGap
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 12
+                color: "transparent"
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: root.rgbaColor(47, 60, 74, 0.18 + 0.14 * chatWindowChrome.chromeOpacity) }
+                    GradientStop { position: 1.0; color: root.rgbaColor(17, 22, 25, 0.12 + 0.08 * chatWindowChrome.chromeOpacity) }
+                }
+            }
 
             Column {
                 id: chatLinesColumn
-                x: 4
-                y: Math.max(4, parent.height - height - 4)
+                x: 5
+                y: Math.max(6, parent.height - height - 6)
                 width: parent.chatTextWidth
                 spacing: 2
 
@@ -1631,21 +1726,23 @@ Item {
                         text: modelData.text
                         textFormat: Text.PlainText
                         color: modelData.color
-                        font.pixelSize: 12
+                        font.family: "Segoe UI"
+                        font.pixelSize: parent.parent.parent.chatFontSize
                         wrapMode: Text.WordWrap
                     }
                 }
             }
 
             Rectangle {
-                x: parent.width - 4 - width
-                y: 4
+                x: parent.width - 5 - width
+                y: 5
                 width: parent.scrollBarWidth
-                height: parent.height - 8
+                height: parent.height - 10
                 visible: parent.scrollBarVisible
-                color: "#40282828"
+                radius: 4
+                color: root.rgbaColor(72, 87, 102, 0.22 + 0.18 * chatWindowChrome.chromeOpacity)
                 border.width: 1
-                border.color: "#80ffffff"
+                border.color: root.rgbaColor(144, 160, 173, 0.30 + 0.18 * chatWindowChrome.chromeOpacity)
 
                 Rectangle {
                     readonly property int totalLines: Math.max(1, parent.parent.scrollBar.totalLines || 0)
@@ -1658,53 +1755,329 @@ Item {
                     y: Math.round(maxTravel * firstVisibleLine / scrollDenominator)
                     width: parent.width - 2
                     height: thumbHeight
-                    color: "#c0d8d8d8"
+                    radius: 3
+                    color: root.rgbaColor(238, 245, 249, 0.86)
                 }
             }
         }
 
         Rectangle {
-            x: 8
-            y: parent.height - 30
-            width: 118
-            height: 22
-            color: uiState.chatWindowWhisperInputActive ? "#f5f5dc" : "#d2d2d2"
+            x: 10
+            y: parent.height - 38
+            width: 126
+            height: 28
+            radius: 9
+            color: uiState.chatWindowWhisperInputActive
+                ? root.rgbaColor(247, 251, 255, 0.30 + 0.56 * parent.chromeOpacity)
+                : root.rgbaColor(214, 220, 228, 0.24 + 0.48 * parent.chromeOpacity)
             border.width: 1
-            border.color: "#000000"
+            border.color: uiState.chatWindowWhisperInputActive
+                ? root.rgbaColor(196, 210, 222, 0.86)
+                : root.rgbaColor(151, 164, 179, 0.80)
 
             Text {
-                x: 4
+                x: 8
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 8
+                width: parent.width - 16
                 text: {
                     const baseText = uiState.chatWindowWhisperTargetText.length > 0 || uiState.chatWindowWhisperInputActive
                         ? uiState.chatWindowWhisperTargetText
                         : "To"
                     return baseText + (uiState.chatWindowWhisperInputActive ? "_" : "")
                 }
-                color: uiState.chatWindowWhisperTargetText.length > 0 || uiState.chatWindowWhisperInputActive ? "#101010" : "#606060"
-                font.pixelSize: 12
+                color: uiState.chatWindowWhisperTargetText.length > 0 || uiState.chatWindowWhisperInputActive ? "#18222c" : "#657282"
+                font.family: "Segoe UI"
+                font.pixelSize: 13
                 elide: Text.ElideLeft
             }
         }
 
         Rectangle {
-            x: 130
-            y: parent.height - 30
-            width: parent.width - 138
-            height: 22
-            color: uiState.chatWindowMessageInputActive ? "#f5f5dc" : "#d2d2d2"
+            x: 144
+            y: parent.height - 38
+            width: parent.width - 154
+            height: 28
+            radius: 9
+            color: uiState.chatWindowMessageInputActive
+                ? root.rgbaColor(247, 251, 255, 0.30 + 0.56 * parent.chromeOpacity)
+                : root.rgbaColor(214, 220, 228, 0.24 + 0.48 * parent.chromeOpacity)
             border.width: 1
-            border.color: "#000000"
+            border.color: uiState.chatWindowMessageInputActive
+                ? root.rgbaColor(196, 210, 222, 0.86)
+                : root.rgbaColor(151, 164, 179, 0.80)
 
             Text {
-                x: 4
+                x: 8
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 8
+                width: parent.width - 16
                 text: uiState.chatWindowInputText + (uiState.chatWindowMessageInputActive ? "_" : "")
-                color: "#101010"
-                font.pixelSize: 12
+                color: "#18222c"
+                font.family: "Segoe UI"
+                font.pixelSize: 13
                 elide: Text.ElideLeft
+            }
+        }
+    }
+
+    Rectangle {
+        visible: uiState.chatWindowVisible && (uiState.chatWindowUi.configVisible || false)
+        x: uiState.chatWindowUi.configX || 0
+        y: uiState.chatWindowUi.configY || 0
+        width: uiState.chatWindowUi.configWidth || 0
+        height: uiState.chatWindowUi.configHeight || 0
+        radius: 14
+        color: "#eeedf2f7"
+        border.width: 1
+        border.color: "#8797a8"
+
+        Rectangle {
+            x: 1
+            y: 1
+            width: parent.width - 2
+            height: 42
+            radius: 13
+            color: "#364453"
+        }
+
+        Text {
+            x: 14
+            y: 12
+            text: "Chat Settings"
+            color: "#f4f7fb"
+            font.family: "Segoe UI"
+            font.pixelSize: 17
+            font.bold: true
+        }
+
+        Text {
+            x: 14
+            y: 50
+            text: "Tabs"
+            color: "#24313b"
+            font.family: "Segoe UI"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Column {
+            x: 12
+            y: 72
+            width: 92
+            spacing: 6
+
+            Repeater {
+                model: uiState.chatWindowUi.tabs || []
+
+                delegate: Rectangle {
+                    required property var modelData
+                    width: parent.width
+                    height: 28
+                    radius: 8
+                    color: modelData.active ? "#cfd8e3" : "#f6f8fb"
+                    border.width: 1
+                    border.color: modelData.active ? "#8d9fb3" : "#c8d0d9"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: modelData.label
+                        color: "#1a2630"
+                        font.family: "Segoe UI"
+                        font.pixelSize: 12
+                        font.bold: modelData.active
+                    }
+                }
+            }
+        }
+
+        Text {
+            x: 120
+            y: 50
+            text: "Font"
+            color: "#24313b"
+            font.family: "Segoe UI"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Rectangle {
+            x: 120
+            y: 72
+            width: parent.width - 132
+            height: 28
+            radius: 8
+            color: "#ffffff"
+            border.width: 1
+            border.color: "#c8d0d9"
+        }
+
+        Text {
+            x: 132
+            y: 79
+            text: "Size " + (uiState.chatWindowUi.fontPixelSize || 13)
+            color: "#1a2630"
+            font.family: "Segoe UI"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Rectangle {
+            x: parent.width - 76
+            y: 72
+            width: 28
+            height: 28
+            radius: 8
+            color: "#e6edf4"
+            border.width: 1
+            border.color: "#b8c5d2"
+
+            Text {
+                anchors.centerIn: parent
+                text: "-"
+                color: "#24313b"
+                font.family: "Segoe UI"
+                font.pixelSize: 16
+                font.bold: true
+            }
+        }
+
+        Rectangle {
+            x: parent.width - 40
+            y: 72
+            width: 28
+            height: 28
+            radius: 8
+            color: "#e6edf4"
+            border.width: 1
+            border.color: "#b8c5d2"
+
+            Text {
+                anchors.centerIn: parent
+                text: "+"
+                color: "#24313b"
+                font.family: "Segoe UI"
+                font.pixelSize: 16
+                font.bold: true
+            }
+        }
+
+        Text {
+            x: 120
+            y: 112
+            text: "Transparency"
+            color: "#24313b"
+            font.family: "Segoe UI"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Rectangle {
+            x: 120
+            y: 128
+            width: parent.width - 132
+            height: 28
+            radius: 8
+            color: "#ffffff"
+            border.width: 1
+            border.color: "#c8d0d9"
+        }
+
+        Text {
+            x: 132
+            y: 135
+            text: (uiState.chatWindowUi.windowOpacityPercent || 84) + "%"
+            color: "#1a2630"
+            font.family: "Segoe UI"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Rectangle {
+            x: 130
+            y: 168
+            width: parent.width - 152
+            height: 8
+            radius: 4
+            color: "#cfd7df"
+            border.width: 0
+
+            Rectangle {
+                width: Math.max(8, parent.width * (((uiState.chatWindowUi.windowOpacityPercent || 84) - 20) / 80))
+                height: parent.height
+                radius: 4
+                color: "#6485a6"
+            }
+
+            Rectangle {
+                x: Math.max(0, Math.min(parent.width - 14, parent.width * (((uiState.chatWindowUi.windowOpacityPercent || 84) - 20) / 80) - 7))
+                y: -5
+                width: 14
+                height: 18
+                radius: 7
+                color: "#f7fbff"
+                border.width: 1
+                border.color: "#8ba0b6"
+            }
+        }
+
+        Text {
+            x: 120
+            y: 192
+            text: "Message Types"
+            color: "#24313b"
+            font.family: "Segoe UI"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Grid {
+            x: 120
+            y: 216
+            width: parent.width - 132
+            columns: 2
+            rowSpacing: 6
+            columnSpacing: 8
+
+            Repeater {
+                model: uiState.chatWindowUi.filters || []
+
+                delegate: Rectangle {
+                    required property var modelData
+                    width: Math.floor((parent.width - 8) / 2)
+                    height: 28
+                    radius: 8
+                    color: modelData.enabled ? "#d6e8db" : "#f7f9fb"
+                    border.width: 1
+                    border.color: modelData.enabled ? "#7ca28a" : "#c8d0d9"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: modelData.label
+                        color: modelData.enabled ? "#1f4930" : "#2a3640"
+                        font.family: "Segoe UI"
+                        font.pixelSize: 12
+                        font.bold: modelData.enabled
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            x: parent.width - 116
+            y: parent.height - 40
+            width: 104
+            height: 28
+            radius: 8
+            color: "#e9eef4"
+            border.width: 1
+            border.color: "#b8c5d2"
+
+            Text {
+                anchors.centerIn: parent
+                text: "Reset Tab"
+                color: "#24313b"
+                font.family: "Segoe UI"
+                font.pixelSize: 12
+                font.bold: true
             }
         }
     }
