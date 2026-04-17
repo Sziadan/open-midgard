@@ -496,26 +496,28 @@ void ProcessRenderMotionWaveEvents(CRenderObject* object, CActRes* actRes, int a
         return;
     }
 
+    const int motionWaveBaseAction = object->m_baseAction;
+
     const int motionCount = actRes->GetMotionCount(action);
     if (motionCount <= 0) {
-        object->m_oldBaseAction = action;
+        object->m_oldBaseAction = motionWaveBaseAction;
         object->m_oldMotion = 0;
         return;
     }
 
     const int clampedMotion = (std::max)(0, (std::min)(motion, motionCount - 1));
-    if (object->m_oldBaseAction == action && object->m_oldMotion == clampedMotion) {
+    if (object->m_oldBaseAction == motionWaveBaseAction && object->m_oldMotion == clampedMotion) {
         return;
     }
 
     int previousMotion = object->m_oldMotion;
-    if (object->m_oldBaseAction != action) {
+    if (object->m_oldBaseAction != motionWaveBaseAction) {
         previousMotion = 0;
     }
     previousMotion = (std::max)(0, (std::min)(previousMotion, motionCount - 1));
 
     PlayMotionWaveEvents(object, actRes, action, previousMotion, clampedMotion);
-    object->m_oldBaseAction = action;
+    object->m_oldBaseAction = motionWaveBaseAction;
     object->m_oldMotion = clampedMotion;
 }
 
@@ -3797,7 +3799,11 @@ void CRenderObject::ProcessMotion() {
         return;
     }
 
-    if (m_oldBaseAction != m_baseAction) {
+    const CGameActor* actorForMotionWaveTracking = dynamic_cast<CGameActor*>(this);
+    const bool trackMotionWaveEventsInProcessMotion = actorForMotionWaveTracking
+        && actorForMotionWaveTracking->m_isPc != 0;
+
+    if (trackMotionWaveEventsInProcessMotion && m_oldBaseAction != m_baseAction) {
         m_oldMotion = 0;
     }
 
@@ -3826,19 +3832,25 @@ void CRenderObject::ProcessMotion() {
     const int motionCount = actRes->GetMotionCount(m_curAction);
     if (motionCount <= 0) {
         m_curMotion = 0;
-        m_oldBaseAction = m_baseAction;
-        m_oldMotion = 0;
+        if (trackMotionWaveEventsInProcessMotion) {
+            m_oldBaseAction = m_baseAction;
+            m_oldMotion = 0;
+        }
         return;
     }
 
     if (m_isMotionFinished || m_isMotionFreezed) {
         m_curMotion = (std::min)(m_curMotion, motionCount - 1);
-        m_oldBaseAction = m_baseAction;
-        m_oldMotion = m_curMotion;
+        if (trackMotionWaveEventsInProcessMotion) {
+            m_oldBaseAction = m_baseAction;
+            m_oldMotion = m_curMotion;
+        }
         return;
     }
 
-    const int previousMotion = (std::max)(0, (std::min)(m_oldMotion, motionCount - 1));
+    const int previousMotion = trackMotionWaveEventsInProcessMotion
+        ? (std::max)(0, (std::min)(m_oldMotion, motionCount - 1))
+        : 0;
 
     const float stateTicks = static_cast<float>(timeGetTime() - m_stateStartTick) * 0.041666668f;
     const float motionSpeed = (std::max)(kDefaultMotionSpeedFactor, m_motionSpeed);
@@ -3854,16 +3866,20 @@ void CRenderObject::ProcessMotion() {
                 m_isMotionFinished = 1;
             }
         }
-        PlayMotionWaveEvents(this, actRes, m_curAction, previousMotion, m_curMotion);
-        m_oldBaseAction = m_baseAction;
-        m_oldMotion = m_curMotion;
+        if (trackMotionWaveEventsInProcessMotion) {
+            PlayMotionWaveEvents(this, actRes, m_curAction, previousMotion, m_curMotion);
+            m_oldBaseAction = m_baseAction;
+            m_oldMotion = m_curMotion;
+        }
         return;
     }
 
     m_curMotion = static_cast<int>(stateTicks / motionSpeed) % motionCount;
-    PlayMotionWaveEvents(this, actRes, m_curAction, previousMotion, m_curMotion);
-    m_oldBaseAction = m_baseAction;
-    m_oldMotion = m_curMotion;
+    if (trackMotionWaveEventsInProcessMotion) {
+        PlayMotionWaveEvents(this, actRes, m_curAction, previousMotion, m_curMotion);
+        m_oldBaseAction = m_baseAction;
+        m_oldMotion = m_curMotion;
+    }
 }
 
 void CRenderObject::SetRenderInfo(RENDER_INFO_RECT* rect, float f1, float f2) {
