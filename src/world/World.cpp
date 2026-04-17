@@ -1713,7 +1713,7 @@ public:
         : m_source(source)
         , m_spawnTick(timeGetTime())
         , m_effect(nullptr)
-        , m_useEmitter(source.type == 44)
+        , m_useEmitter(source.type == 44 || source.type == 231 || source.type == 247)
         , m_emitFrames((std::max)(1, static_cast<int>(source.emitSpeed)))
         , m_processCnt(0)
     {

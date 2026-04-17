@@ -25,6 +25,7 @@ enum EFFECTPRIMID {
     PP_2DCIRCLE,
     PP_2DFLASH,
     PP_2DTEXTURE,
+    PP_MAPPILLAR,
     PP_MAPMAGICZONE,
     PP_MAPPARTICLE,
     PP_SUPERANGEL,
@@ -36,6 +37,7 @@ enum EFFECTPRIMID {
     PP_HEAL,
     PP_PORTAL,
     PP_WIND,
+    PP_WATERFALL,
     PP_CLOUD,
 };
 
@@ -181,6 +183,7 @@ private:
         Portal2,
         ReadyPortal2,
         WarpZone2,
+        MapPillar,
         MapMagicZone,
         MapParticle,
         SuperAngel,
@@ -205,6 +208,7 @@ private:
         Ruwach,
         SightAura,
         FireBoltRain,
+        BlueFall,
         WeatherCloud,
     };
 
@@ -229,6 +233,7 @@ private:
     void SpawnPortal2();
     void SpawnReadyPortal2();
     void SpawnWarpZone2();
+    void SpawnMapPillar();
     void SpawnMapMagicZone();
     void SpawnMapParticle();
     void SpawnSuperAngelVariant(int variant, int birthFrame);
@@ -255,6 +260,7 @@ private:
     void SpawnRuwach();
     void SpawnSightAura();
     void SpawnFireBoltRain();
+    void SpawnBlueFall();
     void SpawnWeatherCloud();
 
     std::list<CEffectPrim*> m_primList;

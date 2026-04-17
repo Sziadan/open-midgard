@@ -205,7 +205,6 @@ int ResolveRefWeatherCloudEffectId(const char* rswName)
 {
     const std::string mapName = ToLowerAsciiMapName(rswName);
     if (MatchMapName(mapName, {
-            "yuno.rsw",
             "gonryun.rsw",
             "gon_dun02.rsw",
             "ra_temsky.rsw",

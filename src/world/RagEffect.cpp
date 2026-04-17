@@ -33,6 +33,10 @@ constexpr float kEffectTickMs = 24.0f;
 constexpr float kEffectPixelRatioScale = 0.14285715f;
 constexpr float kEffectSpriteDepthBias = 0.0002f;
 constexpr float kWeatherCloudDurationFrames = 960.0f;
+constexpr float kMapPillarDurationFrames = 960.0f;
+constexpr float kWaterfallSegmentHeight = 40.0f;
+constexpr int kWaterfallVisibleSegments = 5;
+constexpr int kWaterfallTextureCycle = 3;
 // Ref/Wave.cpp PlayWave defaults used for skill / EzStr SFX.
 constexpr int kRefEffectWaveMaxDist = 250;
 constexpr int kRefEffectWaveMinDist = 40;
@@ -1320,6 +1324,46 @@ CTexture* ResolveWeatherCloudTexture(int mapVariant)
     return GetSoftGlowTexture(true);
 }
 
+std::array<CTexture*, 3> ResolveBlueFallTextures(int textureSet)
+{
+    if (textureSet == 1) {
+        return {
+            ResolveEffectTextureCandidates({ "effect\\waterfall31.tga" }, false),
+            ResolveEffectTextureCandidates({ "effect\\waterfall32.tga" }, false),
+            ResolveEffectTextureCandidates({ "effect\\waterfall33.tga" }, false),
+        };
+    }
+
+    return {
+        ResolveEffectTextureCandidates({ "effect\\waterfall11.tga" }, false),
+        ResolveEffectTextureCandidates({ "effect\\waterfall12.tga" }, false),
+        ResolveEffectTextureCandidates({ "effect\\waterfall13.tga" }, false),
+    };
+}
+
+void ConfigureBlueFallBand(CEffectPrim* prim, int bandIndex, int axisMode, int heightMode)
+{
+    if (!prim || bandIndex < 0 || bandIndex >= static_cast<int>(prim->m_bands.size())) {
+        return;
+    }
+
+    EffectBandState& band = prim->m_bands[static_cast<size_t>(bandIndex)];
+    band = {};
+    band.active = true;
+    band.alpha = 120.0f;
+    band.distance = 36.0f + static_cast<float>(bandIndex);
+    band.radius = static_cast<float>(bandIndex) * 0.25f - 1.0f;
+    band.maxHeight = heightMode == 1
+        ? 30.0f - static_cast<float>(bandIndex) * 6.0f
+        : 80.0f - static_cast<float>(bandIndex) * 13.0f;
+    band.modes.fill(0);
+    band.modes[0] = static_cast<u8>(axisMode != 0 ? 1 : 0);
+    band.modes[1] = 1;
+    for (int segmentIndex = 0; segmentIndex <= 20; ++segmentIndex) {
+        band.heights[static_cast<size_t>(segmentIndex)] = static_cast<float>(segmentIndex) * kWaterfallSegmentHeight;
+    }
+}
+
 float ResolveWeatherCloudAlphaCeiling(int mapVariant)
 {
     switch (mapVariant) {
@@ -1485,6 +1529,71 @@ bool UpdateWeatherCloudPrimitive(CEffectPrim* prim)
     }
 
     return prim->m_stateCnt <= prim->m_duration || anyVisible;
+}
+
+bool UpdateWaterfallPrimitive(CEffectPrim* prim)
+{
+    if (!prim) {
+        return false;
+    }
+
+    ++prim->m_stateCnt;
+    for (EffectBandState& band : prim->m_bands) {
+        if (band.active) {
+            ++band.process;
+        }
+    }
+
+    return prim->m_stateCnt <= prim->m_duration;
+}
+
+bool UpdateMapPillarPrimitive(CEffectPrim* prim)
+{
+    if (!prim) {
+        return false;
+    }
+
+    if (prim->m_master) {
+        prim->m_pos = prim->m_master->ResolveBasePosition();
+    }
+
+    ++prim->m_stateCnt;
+    bool anyActive = false;
+    for (EffectBandState& band : prim->m_bands) {
+        if (!band.active) {
+            continue;
+        }
+
+        ++band.process;
+        band.rotStart = WrapAngle360(band.rotStart + 1.0f);
+
+        float heightScale = 0.0f;
+        if (band.process >= 200) {
+            if (band.process > 290) {
+                heightScale = 1.0f;
+            } else {
+                const float growT = (std::clamp)(static_cast<float>(band.process - 200) / 90.0f, 0.0f, 1.0f);
+                heightScale = SinDeg(growT * 90.0f);
+            }
+        }
+
+        float fadeScale = 1.0f;
+        if (band.process >= 800) {
+            fadeScale = (std::max)(0.0f, 1.0f - static_cast<float>(band.process - 800) / 80.0f);
+        }
+
+        const float baseAlpha = band.fadeThreshold >= 0.0f ? band.fadeThreshold : 50.0f;
+        band.alpha = baseAlpha * fadeScale;
+        band.heights.fill(band.maxHeight * heightScale * fadeScale);
+        if (band.alpha <= 0.0f && band.process > 880) {
+            band.active = false;
+            continue;
+        }
+
+        anyActive = anyActive || band.alpha > 0.0f;
+    }
+
+    return prim->m_stateCnt <= prim->m_duration || anyActive;
 }
 
 static std::string StrBasenameLowerNoExt(const char* strPath)
@@ -2764,8 +2873,14 @@ bool CEffectPrim::OnProcess()
         ++m_stateCnt;
         return m_stateCnt <= m_duration || std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active && band.alpha > 0.0f; });
     }
+    if (m_type == PP_WATERFALL) {
+        return UpdateWaterfallPrimitive(this);
+    }
     if (m_type == PP_CLOUD) {
         return UpdateWeatherCloudPrimitive(this);
+    }
+    if (m_type == PP_MAPPILLAR) {
+        return UpdateMapPillarPrimitive(this);
     }
     if (m_type == PP_CASTINGRING4 && std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active; })) {
         UpdateCastingBands(this);
@@ -2803,6 +2918,8 @@ void CEffectPrim::Render(matrix* viewMatrix)
         && m_type != PP_CASTINGRING4
         && m_type != PP_PORTAL
         && m_type != PP_WIND
+        && m_type != PP_WATERFALL
+        && m_type != PP_MAPPILLAR
         && m_type != PP_CLOUD) {
         return;
     }
@@ -2909,6 +3026,16 @@ void CEffectPrim::Render(matrix* viewMatrix)
         }
         break;
     }
+    case PP_MAPPILLAR: {
+        CTexture* texture = !m_texture.empty() ? m_texture[0] : GetSoftGlowTexture(false);
+        for (const EffectBandState& band : m_bands) {
+            if (!band.active || band.alpha <= 0.0f) {
+                continue;
+            }
+            RenderBandLowPolygonTeiRect(*this, base, band, *viewMatrix, texture, (std::max)(0.01f, band.distance));
+        }
+        break;
+    }
     case PP_WIND: {
         CTexture* texture = !m_texture.empty() ? m_texture[0] : GetSoftGlowTexture(true);
         const int renderFlags = ResolveEffectRenderFlags(m_renderFlag, 1 | 2);
@@ -2932,6 +3059,109 @@ void CEffectPrim::Render(matrix* viewMatrix)
                 destBlend,
                 0.0f,
                 renderFlags);
+        }
+        break;
+    }
+    case PP_WATERFALL: {
+        const int renderFlags = ResolveEffectRenderFlags(m_renderFlag, 1 | 2);
+        const D3DBLEND destBlend = ResolveEffectDestBlend(m_renderFlag);
+        const float groundY = ResolveGroundHeight(base) + m_deltaPos2.y;
+        for (const EffectBandState& band : m_bands) {
+            if (!band.active || band.alpha <= 0.0f || band.maxHeight <= 0.0f) {
+                continue;
+            }
+
+            const int cycleLength = (std::max)(1, static_cast<int>(std::round(band.maxHeight)));
+            float scroll = static_cast<float>(band.process % cycleLength) * (kWaterfallSegmentHeight / static_cast<float>(cycleLength));
+            const bool reverseScroll = band.modes[1] != 0;
+            if (reverseScroll) {
+                scroll = kWaterfallSegmentHeight - scroll;
+            }
+
+            const float crop = (std::clamp)(scroll / kWaterfallSegmentHeight, 0.0f, 1.0f);
+            const int phase = (band.process % (kWaterfallTextureCycle * cycleLength)) / cycleLength;
+            const bool swapAxes = band.modes[0] != 0;
+            const float halfWidth = band.distance * 0.5f;
+            const unsigned int waterfallColor = PackColor(static_cast<unsigned int>((std::clamp)(band.alpha, 0.0f, 255.0f)), m_tintColor);
+
+            for (int stripIndex = 0; stripIndex < kWaterfallVisibleSegments; ++stripIndex) {
+                const float yTop = scroll - band.heights[static_cast<size_t>(stripIndex)];
+                const float yBottom = scroll - band.heights[static_cast<size_t>(stripIndex + 1)];
+                float visibleTop = yTop;
+                float visibleBottom = yBottom;
+                float vTop = 0.0f;
+                float vBottom = 1.0f;
+
+                if (!reverseScroll) {
+                    if (stripIndex == 0) {
+                        visibleTop = yTop + (yBottom - yTop) * crop;
+                        vTop = crop;
+                    } else if (stripIndex == kWaterfallVisibleSegments - 1) {
+                        visibleBottom = yTop + (yBottom - yTop) * crop;
+                        vBottom = crop;
+                    }
+                } else {
+                    if (stripIndex == 0) {
+                        visibleBottom = yTop + (yBottom - yTop) * crop;
+                        vBottom = crop;
+                    } else if (stripIndex == kWaterfallVisibleSegments - 1) {
+                        visibleTop = yTop + (yBottom - yTop) * crop;
+                        vTop = crop;
+                    }
+                }
+
+                if (std::fabs(visibleTop - visibleBottom) <= 0.001f) {
+                    continue;
+                }
+
+                int textureIndex = stripIndex % kWaterfallTextureCycle;
+                if (reverseScroll) {
+                    textureIndex = (textureIndex - phase) % kWaterfallTextureCycle;
+                    if (textureIndex < 0) {
+                        textureIndex += kWaterfallTextureCycle;
+                    }
+                } else {
+                    textureIndex = (textureIndex + phase) % kWaterfallTextureCycle;
+                }
+
+                CTexture* texture = textureIndex < static_cast<int>(m_texture.size())
+                    ? m_texture[static_cast<size_t>(textureIndex)]
+                    : nullptr;
+                if (!texture || texture == &CTexMgr::s_dummy_texture) {
+                    continue;
+                }
+
+                vector3d base0{};
+                vector3d base1{};
+                vector3d top1{};
+                vector3d top0{};
+                if (!swapAxes) {
+                    base0 = { base.x - halfWidth, groundY + visibleBottom, base.z + band.radius };
+                    base1 = { base.x + halfWidth, groundY + visibleBottom, base.z + band.radius };
+                    top1 = { base.x + halfWidth, groundY + visibleTop, base.z + band.radius };
+                    top0 = { base.x - halfWidth, groundY + visibleTop, base.z + band.radius };
+                } else {
+                    base0 = { base.x + band.radius, groundY + visibleBottom, base.z - halfWidth };
+                    base1 = { base.x + band.radius, groundY + visibleBottom, base.z + halfWidth };
+                    top1 = { base.x + band.radius, groundY + visibleTop, base.z + halfWidth };
+                    top0 = { base.x + band.radius, groundY + visibleTop, base.z - halfWidth };
+                }
+
+                SubmitWorldTeiRect(base0,
+                    base1,
+                    top1,
+                    top0,
+                    *viewMatrix,
+                    texture,
+                    waterfallColor,
+                    0.0f,
+                    1.0f,
+                    vBottom,
+                    vTop,
+                    destBlend,
+                    0.0f,
+                    renderFlags);
+            }
         }
         break;
     }
@@ -3828,7 +4058,11 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         m_handler = Handler::WeatherCloud;
         m_duration = static_cast<int>(kWeatherCloudDurationFrames);
         m_param[0] = 1.0f;
-        m_param[1] = 60.0f;
+        m_param[1] = 40.0f;
+        break;
+    case 231:
+        m_handler = Handler::MapPillar;
+        m_duration = static_cast<int>(kMapPillarDurationFrames);
         break;
     case 233:
         m_handler = Handler::WeatherCloud;
@@ -3869,6 +4103,10 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     case 33:
         m_handler = Handler::Ruwach;
         m_duration = 25;
+        break;
+    case 247:
+        m_handler = Handler::MapPillar;
+        m_duration = static_cast<int>(kMapPillarDurationFrames);
         break;
     case 37:
     case 43:
@@ -4134,11 +4372,19 @@ bool CRagEffect::ResolveCullSphere(vector3d* outCenter, float* outRadius) const
     case Handler::WarpZone2:
         radius = 180.0f;
         break;
+    case Handler::MapPillar:
+        radius = 180.0f;
+        center.y += 56.0f;
+        break;
     case Handler::MapMagicZone:
         radius = (std::max)(120.0f, std::fabs(m_param[0]) * 2.0f + 48.0f);
         break;
     case Handler::MapParticle:
         radius = 128.0f;
+        break;
+    case Handler::BlueFall:
+        radius = 220.0f;
+        center.y += 40.0f;
         break;
     case Handler::Smoke:
     case Handler::Torch:
@@ -4625,6 +4871,38 @@ void CRagEffect::SpawnMapMagicZone()
     }
 }
 
+void CRagEffect::SpawnMapPillar()
+{
+    if (m_stateCnt != 0 || !m_master) {
+        return;
+    }
+
+    const int variant = m_type == 247 ? 1 : 0;
+    if (CEffectPrim* prim = LaunchEffectPrim(PP_MAPPILLAR, vector3d{})) {
+        prim->m_renderFlag = 5u;
+        prim->m_duration = m_duration;
+        prim->m_size = 4.0f;
+        prim->m_alpha = 255.0f;
+        prim->m_maxAlpha = 255.0f;
+        prim->m_tintColor = RGB(110, 175, 255);
+        prim->m_texture.push_back(ResolveEffectTextureCandidates({ "effect\\ring_blue.tga" }, false));
+
+        for (int bandIndex = 0; bandIndex < 4; ++bandIndex) {
+            EffectBandState& band = prim->m_bands[static_cast<size_t>(bandIndex)];
+            band = {};
+            band.active = true;
+            band.process = bandIndex * 30;
+            band.maxHeight = 120.0f;
+            band.rotStart = static_cast<float>(bandIndex * 90);
+            band.distance = (variant == 1 ? 11.0f : 2.0f) + static_cast<float>(bandIndex) * 0.5f;
+            band.riseAngle = 89.0f;
+            band.fadeThreshold = variant == 1 ? 70.0f : 50.0f;
+            band.alpha = band.fadeThreshold;
+            band.heights.fill(0.0f);
+        }
+    }
+}
+
 void CRagEffect::SpawnMapParticle()
 {
     if (!m_primList.empty()) {
@@ -4676,6 +4954,45 @@ void CRagEffect::SpawnWeatherCloud()
         }
     }
 }
+
+void CRagEffect::SpawnBlueFall()
+{
+    if (m_stateCnt != 0 || !m_master) {
+        return;
+    }
+
+    const vector3d base = ResolveBasePosition();
+
+    if (CEffectPrim* prim = LaunchEffectPrim(PP_WATERFALL, vector3d{})) {
+        prim->m_renderFlag = 5u;
+        prim->m_duration = m_duration;
+        prim->m_alpha = 255.0f;
+        prim->m_maxAlpha = 255.0f;
+        prim->m_tintColor = RGB(55, 55, 255);
+
+        const std::array<CTexture*, 3> textures = ResolveBlueFallTextures(static_cast<int>(m_param[2]));
+        for (CTexture* texture : textures) {
+            prim->m_texture.push_back(texture);
+        }
+
+        DbgLog("[RagEffect] BlueFall spawn effect=%d base=(%.2f,%.2f,%.2f) tex=%p/%p/%p axis=%d height=%d set=%d\n",
+            m_type,
+            base.x,
+            base.y,
+            base.z,
+            textures[0],
+            textures[1],
+            textures[2],
+            static_cast<int>(m_param[0]),
+            static_cast<int>(m_param[1]),
+            static_cast<int>(m_param[2]));
+
+        for (int bandIndex = 0; bandIndex < 4; ++bandIndex) {
+            ConfigureBlueFallBand(prim, bandIndex, static_cast<int>(m_param[0]), static_cast<int>(m_param[1]));
+        }
+    }
+}
+
 void CRagEffect::SpawnSuperAngelVariant(int variant, int birthFrame)
 {
     if (CEffectPrim* prim = LaunchEffectPrim(PP_EFFECTSPRITE, vector3d{})) {
@@ -6067,9 +6384,11 @@ u8 CRagEffect::OnProcess()
         || m_handler == Handler::Portal2
         || m_handler == Handler::ReadyPortal2
         || m_handler == Handler::WarpZone2
+        || m_handler == Handler::MapPillar
         || m_handler == Handler::MapMagicZone
         || m_handler == Handler::MapParticle
         || m_handler == Handler::SuperAngel
+        || m_handler == Handler::BlueFall
         || m_handler == Handler::WeatherCloud;
     if (steps > 1 && burstSensitiveHandler) {
         steps = 1;
@@ -6119,6 +6438,9 @@ u8 CRagEffect::OnProcess()
                 break;
             case Handler::WarpZone2:
                 SpawnWarpZone2();
+                break;
+            case Handler::MapPillar:
+                SpawnMapPillar();
                 break;
             case Handler::MapMagicZone:
                 SpawnMapMagicZone();
@@ -6191,6 +6513,9 @@ u8 CRagEffect::OnProcess()
                 break;
             case Handler::FireBoltRain:
                 SpawnFireBoltRain();
+                break;
+            case Handler::BlueFall:
+                SpawnBlueFall();
                 break;
             case Handler::WeatherCloud:
                 SpawnWeatherCloud();
