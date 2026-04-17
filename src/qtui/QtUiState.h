@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -15,6 +16,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(QString loginStatus READ loginStatus NOTIFY loginStatusChanged)
     Q_PROPERTY(QString chatPreview READ chatPreview NOTIFY chatPreviewChanged)
     Q_PROPERTY(QString lastInput READ lastInput NOTIFY lastInputChanged)
+    Q_PROPERTY(double uiScale READ uiScale NOTIFY uiScaleChanged)
     Q_PROPERTY(QVariantMap debugOverlayData READ debugOverlayData NOTIFY debugOverlayDataChanged)
     Q_PROPERTY(bool serverSelectVisible READ serverSelectVisible NOTIFY serverSelectVisibleChanged)
     Q_PROPERTY(int serverPanelX READ serverPanelX NOTIFY serverPanelGeometryChanged)
@@ -229,6 +231,7 @@ public:
     const QString& loginStatus() const { return m_loginStatus; }
     const QString& chatPreview() const { return m_chatPreview; }
     const QString& lastInput() const { return m_lastInput; }
+    double uiScale() const { return m_uiScale; }
     const QVariantMap& debugOverlayData() const { return m_debugOverlayData; }
     bool serverSelectVisible() const { return m_serverSelectVisible; }
     int serverPanelX() const { return m_serverPanelX; }
@@ -491,6 +494,14 @@ public:
         }
         m_lastInput = value;
         emit lastInputChanged();
+    }
+
+    void setUiScale(double value) {
+        if (std::abs(m_uiScale - value) < 0.0001) {
+            return;
+        }
+        m_uiScale = value;
+        emit uiScaleChanged();
     }
 
     void setDebugOverlayData(const QVariantMap& value) {
@@ -1501,6 +1512,7 @@ signals:
     void loginStatusChanged();
     void chatPreviewChanged();
     void lastInputChanged();
+    void uiScaleChanged();
     void debugOverlayDataChanged();
     void serverSelectVisibleChanged();
     void serverPanelGeometryChanged();
@@ -1623,6 +1635,7 @@ private:
     QString m_loginStatus;
     QString m_chatPreview;
     QString m_lastInput;
+    double m_uiScale = 1.0;
     QVariantMap m_debugOverlayData;
     bool m_serverSelectVisible = false;
     int m_serverPanelX = 0;

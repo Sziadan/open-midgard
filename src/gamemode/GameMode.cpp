@@ -905,6 +905,20 @@ std::uint64_t ComputeGameplayOverlayStateToken(
     return hash;
 }
 
+void SyncRendererToWindowSize()
+{
+    GetRenderDevice().RefreshRenderSize();
+    const int renderWidth = GetRenderDevice().GetRenderWidth();
+    const int renderHeight = GetRenderDevice().GetRenderHeight();
+    if (renderWidth <= 0 || renderHeight <= 0) {
+        return;
+    }
+
+    if (g_renderer.m_width != renderWidth || g_renderer.m_height != renderHeight) {
+        g_renderer.SetSize(renderWidth, renderHeight);
+    }
+}
+
 bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStartTick)
 {
     const bool trackMovePerf = mode.m_world && mode.m_world->m_player && mode.m_world->m_player->m_isMoving;
@@ -8643,6 +8657,8 @@ void CGameMode::OnExit() {
     m_loadingWallpaperName.clear();
 }
 int  CGameMode::OnRun() {
+    SyncRendererToWindowSize();
+
     const bool mapLoadingWasActive = IsMapLoadingActive(*this);
     const DWORD updateStart = GetTickCount();
     OnUpdate();

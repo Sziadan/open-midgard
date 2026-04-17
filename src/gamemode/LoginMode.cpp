@@ -210,6 +210,20 @@ std::uint64_t ComputeLoginUiStateToken(int clientWidth, int clientHeight)
     return hash;
 }
 
+void SyncRendererToWindowSize()
+{
+    GetRenderDevice().RefreshRenderSize();
+    const int renderWidth = GetRenderDevice().GetRenderWidth();
+    const int renderHeight = GetRenderDevice().GetRenderHeight();
+    if (renderWidth <= 0 || renderHeight <= 0) {
+        return;
+    }
+
+    if (g_renderer.m_width != renderWidth || g_renderer.m_height != renderHeight) {
+        g_renderer.SetSize(renderWidth, renderHeight);
+    }
+}
+
 bool QueueFullScreenOverlayQuad(CTexture* texture, int width, int height, float sortKey, int mtPreset)
 {
     if (!texture || width <= 0 || height <= 0) {
@@ -637,6 +651,8 @@ int CLoginMode::OnRun() {
 }
 
 void CLoginMode::OnUpdate() {
+    SyncRendererToWindowSize();
+
     if (m_isConnected) {
         PollNetwork();
     }

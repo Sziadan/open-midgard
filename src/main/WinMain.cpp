@@ -23,6 +23,7 @@
 #include "lua/LuaBridge.h"
 #include "qtui/QtUiRuntime.h"
 #include "ui/UIOptionWnd.h"
+#include "ui/UiScale.h"
 #include "ui/UIWindowMgr.h"
 #include "render3d/Device.h"
 #include "render3d/RenderBackend.h"
@@ -564,8 +565,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         const int x = GET_X_LPARAM(lParam);
         const int y = GET_Y_LPARAM(lParam);
-        const bool uiHit = g_windowMgr.HasWindowAtPoint(x, y);
-        g_windowMgr.OnLBtnDown(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        const int uiX = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(x) : x;
+        const int uiY = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(y) : y;
+        const bool uiHit = g_windowMgr.HasWindowAtPoint(uiX, uiY);
+        g_windowMgr.OnLBtnDown(uiX, uiY);
         if (!uiHit) {
             g_modeMgr.SendMsg(CGameMode::GameMsg_LButtonDown, x, y);
         }
@@ -576,9 +579,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         const int x = GET_X_LPARAM(lParam);
         const int y = GET_Y_LPARAM(lParam);
+        const int uiX = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(x) : x;
+        const int uiY = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(y) : y;
         const bool uiCaptured = (g_windowMgr.m_captureWindow != nullptr);
-        const bool uiHit = g_windowMgr.HasWindowAtPoint(x, y);
-        g_windowMgr.OnLBtnUp(x, y);
+        const bool uiHit = g_windowMgr.HasWindowAtPoint(uiX, uiY);
+        g_windowMgr.OnLBtnUp(uiX, uiY);
         if (!uiCaptured && !uiHit) {
             g_modeMgr.SendMsg(CGameMode::GameMsg_LButtonUp, x, y);
         }
@@ -589,7 +594,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         const int x = GET_X_LPARAM(lParam);
         const int y = GET_Y_LPARAM(lParam);
-        g_windowMgr.OnLBtnDblClk(x, y);
+        g_windowMgr.OnLBtnDblClk(
+            IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(x) : x,
+            IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(y) : y);
         return 0;
     }
 
@@ -597,7 +604,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         const int x = GET_X_LPARAM(lParam);
         const int y = GET_Y_LPARAM(lParam);
-        if (!g_windowMgr.HasWindowAtPoint(x, y)) {
+        const int uiX = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(x) : x;
+        const int uiY = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(y) : y;
+        if (!g_windowMgr.HasWindowAtPoint(uiX, uiY)) {
             g_modeMgr.SendMsg(CGameMode::GameMsg_RButtonDown, x, y);
         }
         return 0;
@@ -607,7 +616,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         const int x = GET_X_LPARAM(lParam);
         const int y = GET_Y_LPARAM(lParam);
-        if (!g_windowMgr.HasWindowAtPoint(x, y)) {
+        const int uiX = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(x) : x;
+        const int uiY = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(y) : y;
+        if (!g_windowMgr.HasWindowAtPoint(uiX, uiY)) {
             g_modeMgr.SendMsg(CGameMode::GameMsg_RButtonUp, x, y);
         }
         return 0;
@@ -617,9 +628,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         const int x = GET_X_LPARAM(lParam);
         const int y = GET_Y_LPARAM(lParam);
+        const int uiX = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(x) : x;
+        const int uiY = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(y) : y;
         const bool uiCaptured = (g_windowMgr.m_captureWindow != nullptr);
-        g_windowMgr.OnMouseMove(x, y);
-        if (!uiCaptured && !g_windowMgr.HasWindowAtPoint(x, y)) {
+        g_windowMgr.OnMouseMove(uiX, uiY);
+        if (!uiCaptured && !g_windowMgr.HasWindowAtPoint(uiX, uiY)) {
             g_modeMgr.SendMsg(CGameMode::GameMsg_MouseMove, x, y);
         }
         return 0;
@@ -630,7 +643,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         POINT screenPoint{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
         POINT clientPoint = screenPoint;
         ScreenToClient(hwnd, &clientPoint);
-        if (!g_windowMgr.OnWheel(clientPoint.x, clientPoint.y, GET_WHEEL_DELTA_WPARAM(wParam))) {
+        const int uiX = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(clientPoint.x) : clientPoint.x;
+        const int uiY = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(clientPoint.y) : clientPoint.y;
+        if (!g_windowMgr.OnWheel(uiX, uiY, GET_WHEEL_DELTA_WPARAM(wParam))) {
             g_modeMgr.SendMsg(CGameMode::GameMsg_MouseWheel, GET_WHEEL_DELTA_WPARAM(wParam), 0);
         }
         return 0;

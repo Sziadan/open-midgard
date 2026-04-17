@@ -39,7 +39,10 @@ public:
         int width = 0;
         int height = 0;
         int value = 0;
+        int minValue = 0;
+        int maxValue = 127;
         std::string label;
+        std::string valueText;
     };
 
     struct DisplayGraphicsRow {
@@ -79,6 +82,7 @@ public:
         int contentHeight = 0;
         std::vector<DisplayButton> systemButtons;
         DisplayButton restartButton;
+        DisplayButton applyButton;
         std::vector<DisplayTab> tabs;
         std::vector<DisplayToggle> toggles;
         std::vector<DisplaySlider> sliders;
@@ -94,6 +98,7 @@ public:
     void OnMouseMove(int x, int y) override;
     void OnLBtnUp(int x, int y) override;
     void OnLBtnDblClk(int x, int y) override;
+    void Move(int x, int y) override;
     msgresult_t SendMsg(UIWindow* sender, int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
     void OnKeyDown(int virtualKey) override;
     bool GetDisplayDataForQt(DisplayData* outData) const;
@@ -111,6 +116,7 @@ private:
         DragMode_Window,
         DragMode_BgmSlider,
         DragMode_SoundSlider,
+        DragMode_GuiScaleSlider,
     };
 
     enum GraphicsRowId {
@@ -147,12 +153,20 @@ private:
     RECT GetRowPrevButtonRect(int rowIndex) const;
     RECT GetRowNextButtonRect(int rowIndex) const;
     RECT GetRestartButtonRect() const;
+    RECT GetApplyButtonRect() const;
     RECT GetBgmSliderRect() const;
     RECT GetSoundSliderRect() const;
+    RECT GetGuiScaleSliderRect() const;
     RECT GetAudioToggleRect(int toggleIndex) const;
     RECT GetGameToggleRect(int toggleIndex) const;
-    RECT GetSliderKnobRect(const RECT& sliderRect, int value) const;
-    void DrawSlider(HDC hdc, const RECT& sliderRect, int value, const char* label) const;
+    RECT GetSliderKnobRect(const RECT& sliderRect, int value, int minValue, int maxValue) const;
+    void DrawSlider(HDC hdc,
+        const RECT& sliderRect,
+        int value,
+        int minValue,
+        int maxValue,
+        const char* label,
+        const char* valueText = nullptr) const;
     void DrawHeaderButton(HDC hdc, const RECT& rect, const char* text) const;
     void DrawTabButton(HDC hdc, const RECT& rect, const char* text, bool active) const;
     void DrawSettingRow(HDC hdc, int rowIndex, const char* label, const std::string& value) const;
@@ -169,6 +183,9 @@ private:
     void CycleGraphicsSetting(GraphicsRowId rowId, int direction);
     std::string GetGraphicsRowValue(GraphicsRowId rowId) const;
     void SaveGraphicsPreferences() const;
+    bool HasPendingUiScaleApply() const;
+    void ApplyPendingUiScale();
+    void DiscardPendingUiScale();
     bool HandleQtToggleClick(int x, int y);
 
     bool m_controlsCreated;
@@ -192,6 +209,8 @@ private:
     int m_attackSnap;
     int m_skillSnap;
     int m_itemSnap;
+    int m_guiScalePercent;
+    int m_appliedGuiScalePercent;
     int m_collapsed;
     int m_activeTab;
     int m_dragMode;

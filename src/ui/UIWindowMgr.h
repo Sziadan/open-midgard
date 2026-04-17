@@ -128,6 +128,7 @@ public:
     bool OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, bool isShiftDown);
     bool HasWindowAtPoint(int x, int y) const;
     void ClampWindowToClient(int* x, int* y, int w, int h) const;
+    void RepositionManagedWindowsForUiScale(int previousPercent, int nextPercent);
     void SnapWindowToNearby(UIWindow* window, int* x, int* y) const;
     void EnsureChatWindowVisible();
     bool HasActiveNpcDialog() const;

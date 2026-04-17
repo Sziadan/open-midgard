@@ -12,6 +12,7 @@
 #include "res/Bitmap.h"
 #include "session/Session.h"
 #include "skill/Skill.h"
+#include "ui/UiScale.h"
 #include "ui/UIEquipWnd.h"
 #include "ui/UILoginWnd.h"
 #include "ui/UIMakeCharWnd.h"
@@ -96,6 +97,16 @@ int GetLParamX(RoWindowLParam lParam)
 int GetLParamY(RoWindowLParam lParam)
 {
     return static_cast<int>(static_cast<short>((static_cast<unsigned long>(lParam) >> 16) & 0xFFFFu));
+}
+
+int GetUiLogicalX(RoWindowLParam lParam)
+{
+    return UiScaleRawToLogicalCoordinate(GetLParamX(lParam));
+}
+
+int GetUiLogicalY(RoWindowLParam lParam)
+{
+    return UiScaleRawToLogicalCoordinate(GetLParamY(lParam));
 }
 
 int GetWheelDelta(RoWindowWParam wParam)
@@ -980,8 +991,8 @@ public:
         case WM_MOUSEMOVE:
             if (g_windowMgr.m_selectServerWnd && g_windowMgr.m_selectServerWnd->m_show != 0) {
                 g_windowMgr.m_selectServerWnd->OnMouseMove(
-                    GetLParamX(lParam),
-                    GetLParamY(lParam));
+                    GetUiLogicalX(lParam),
+                    GetUiLogicalY(lParam));
                 return true;
             }
             return false;
@@ -990,8 +1001,8 @@ public:
             if (g_windowMgr.m_selectCharWnd
                 && g_windowMgr.m_selectCharWnd->m_show != 0
                 && g_windowMgr.m_selectCharWnd->HandleQtDoubleClick(
-                    GetLParamX(lParam),
-                    GetLParamY(lParam))) {
+                    GetUiLogicalX(lParam),
+                    GetUiLogicalY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
                 return true;
             }
@@ -1001,48 +1012,48 @@ public:
             if (g_windowMgr.m_makeCharWnd
                 && g_windowMgr.m_makeCharWnd->m_show != 0
                 && g_windowMgr.m_makeCharWnd->HandleQtMouseDown(
-                    GetLParamX(lParam),
-                    GetLParamY(lParam))) {
+                    GetUiLogicalX(lParam),
+                    GetUiLogicalY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::MakeChar;
                 return true;
             }
             if (g_windowMgr.m_selectServerWnd
                 && g_windowMgr.m_selectServerWnd->m_show != 0
                 && g_windowMgr.m_selectServerWnd->HandleQtMouseDown(
-                    GetLParamX(lParam),
-                    GetLParamY(lParam))) {
+                    GetUiLogicalX(lParam),
+                    GetUiLogicalY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::ServerSelect;
                 return true;
             }
             if (g_windowMgr.m_selectCharWnd
                 && g_windowMgr.m_selectCharWnd->m_show != 0
                 && g_windowMgr.m_selectCharWnd->HandleQtMouseDown(
-                    GetLParamX(lParam),
-                    GetLParamY(lParam))) {
+                    GetUiLogicalX(lParam),
+                    GetUiLogicalY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::CharSelect;
                 return true;
             }
             if (g_windowMgr.m_loginWnd
                 && g_windowMgr.m_loginWnd->m_show != 0
                 && g_windowMgr.m_loginWnd->HandleQtMouseDown(
-                    GetLParamX(lParam),
-                    GetLParamY(lParam))) {
+                    GetUiLogicalX(lParam),
+                    GetUiLogicalY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::Login;
                 return true;
             }
             if (g_windowMgr.m_notifyLevelUpWnd
                 && g_windowMgr.m_notifyLevelUpWnd->m_show != 0
                 && g_windowMgr.m_notifyLevelUpWnd->HandleQtMouseDown(
-                    GetLParamX(lParam),
-                    GetLParamY(lParam))) {
+                    GetUiLogicalX(lParam),
+                    GetUiLogicalY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::NotifyLevelUp;
                 return true;
             }
             if (g_windowMgr.m_notifyJobLevelUpWnd
                 && g_windowMgr.m_notifyJobLevelUpWnd->m_show != 0
                 && g_windowMgr.m_notifyJobLevelUpWnd->HandleQtMouseDown(
-                    GetLParamX(lParam),
-                    GetLParamY(lParam))) {
+                    GetUiLogicalX(lParam),
+                    GetUiLogicalY(lParam))) {
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::NotifyJobLevelUp;
                 return true;
             }
@@ -1053,8 +1064,8 @@ public:
                 if (g_windowMgr.m_makeCharWnd
                     && g_windowMgr.m_makeCharWnd->m_show != 0) {
                     g_windowMgr.m_makeCharWnd->HandleQtMouseUp(
-                        GetLParamX(lParam),
-                        GetLParamY(lParam));
+                        GetUiLogicalX(lParam),
+                        GetUiLogicalY(lParam));
                 }
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
                 return true;
@@ -1063,8 +1074,8 @@ public:
                 if (g_windowMgr.m_selectCharWnd
                     && g_windowMgr.m_selectCharWnd->m_show != 0
                     && g_windowMgr.m_selectCharWnd->HandleQtMouseUp(
-                        GetLParamX(lParam),
-                        GetLParamY(lParam))) {
+                        GetUiLogicalX(lParam),
+                        GetUiLogicalY(lParam))) {
                 }
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
                 return true;
@@ -1073,8 +1084,8 @@ public:
                 if (g_windowMgr.m_notifyLevelUpWnd
                     && g_windowMgr.m_notifyLevelUpWnd->m_show != 0) {
                     g_windowMgr.m_notifyLevelUpWnd->HandleQtMouseUp(
-                        GetLParamX(lParam),
-                        GetLParamY(lParam));
+                        GetUiLogicalX(lParam),
+                        GetUiLogicalY(lParam));
                 }
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
                 return true;
@@ -1083,8 +1094,8 @@ public:
                 if (g_windowMgr.m_notifyJobLevelUpWnd
                     && g_windowMgr.m_notifyJobLevelUpWnd->m_show != 0) {
                     g_windowMgr.m_notifyJobLevelUpWnd->HandleQtMouseUp(
-                        GetLParamX(lParam),
-                        GetLParamY(lParam));
+                        GetUiLogicalX(lParam),
+                        GetUiLogicalY(lParam));
                 }
                 m_menuPointerCaptureTarget = MenuPointerCaptureTarget::None;
                 return true;

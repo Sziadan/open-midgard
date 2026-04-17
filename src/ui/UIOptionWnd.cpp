@@ -7,6 +7,7 @@
 #include "qtui/QtUiRuntime.h"
 #include "render/DC.h"
 #include "res/Bitmap.h"
+#include "ui/UiScale.h"
 #include "ui/UIWindowMgr.h"
 
 #include <windows.h>
@@ -436,6 +437,13 @@ std::string FormatAnisotropicText(int level)
     return FormatMultiplierText(level);
 }
 
+std::string FormatPercentText(int value)
+{
+    char buffer[16] = {};
+    std::snprintf(buffer, sizeof(buffer), "%d%%", value);
+    return std::string(buffer);
+}
+
 void LoadSavedAudioSettingsFromIni(int* bgmVolume, int* soundVolume, int* bgmEnabled, int* soundEnabled)
 {
     if (!bgmVolume || !soundVolume || !bgmEnabled || !soundEnabled) {
@@ -495,6 +503,8 @@ UIOptionWnd::UIOptionWnd()
       m_attackSnap(0),
       m_skillSnap(0),
       m_itemSnap(0),
+            m_guiScalePercent(GetConfiguredUiScalePercent()),
+            m_appliedGuiScalePercent(GetConfiguredUiScalePercent()),
       m_collapsed(0),
       m_activeTab(TabId_Game),
       m_dragMode(DragMode_None),
@@ -685,6 +695,8 @@ void UIOptionWnd::LoadSettings()
     m_itemSnap = LoadSettingsIniInt(kOptionWndSection, kOptionWndItemSnapValue, m_itemSnap);
     m_collapsed = LoadSettingsIniInt(kOptionWndSection, kOptionWndCollapsedValue, m_collapsed);
     m_activeTab = LoadSettingsIniInt(kOptionWndSection, kOptionWndTabValue, m_activeTab);
+    m_guiScalePercent = GetConfiguredUiScalePercent();
+    m_appliedGuiScalePercent = m_guiScalePercent;
 
     LoadSavedAudioSettingsFromIni(&m_bgmVolume, &m_soundVolume, &m_bgmEnabled, &m_soundEnabled);
     m_graphicsSettings = GetCachedGraphicsSettings();
@@ -722,6 +734,10 @@ void UIOptionWnd::LoadSettings()
     m_attackSnap = (m_attackSnap != 0) ? 1 : 0;
     m_skillSnap = (m_skillSnap != 0) ? 1 : 0;
     m_itemSnap = (m_itemSnap != 0) ? 1 : 0;
+    m_guiScalePercent = ClampUiScalePercent(m_guiScalePercent);
+    m_appliedGuiScalePercent = ClampUiScalePercent(m_appliedGuiScalePercent);
+    m_guiScalePercent = m_appliedGuiScalePercent;
+    SetRuntimeUiScalePercent(m_appliedGuiScalePercent);
     m_collapsed = (m_collapsed != 0) ? 1 : 0;
     if (m_activeTab < 0 || m_activeTab >= TabId_Count) {
         m_activeTab = TabId_Game;
@@ -757,8 +773,39 @@ void UIOptionWnd::SaveSettings() const
     SaveSettingsIniInt(kOptionWndSection, kOptionWndItemSnapValue, m_itemSnap != 0 ? 1 : 0);
     SaveSettingsIniInt(kOptionWndSection, kOptionWndCollapsedValue, m_collapsed != 0 ? 1 : 0);
     SaveSettingsIniInt(kOptionWndSection, kOptionWndTabValue, m_activeTab);
+    SaveConfiguredUiScalePercent(m_appliedGuiScalePercent);
 
     SaveGraphicsPreferences();
+}
+
+bool UIOptionWnd::HasPendingUiScaleApply() const
+{
+    return ClampUiScalePercent(m_guiScalePercent) != ClampUiScalePercent(m_appliedGuiScalePercent);
+}
+
+void UIOptionWnd::ApplyPendingUiScale()
+{
+    const int nextPercent = ClampUiScalePercent(m_guiScalePercent);
+    const int previousPercent = ClampUiScalePercent(m_appliedGuiScalePercent);
+    if (nextPercent == previousPercent) {
+        return;
+    }
+
+    m_appliedGuiScalePercent = nextPercent;
+    g_windowMgr.RepositionManagedWindowsForUiScale(previousPercent, nextPercent);
+    SetRuntimeUiScalePercent(nextPercent);
+    LayoutControls();
+    Invalidate();
+    SaveSettings();
+}
+
+void UIOptionWnd::DiscardPendingUiScale()
+{
+    const int appliedPercent = ClampUiScalePercent(m_appliedGuiScalePercent);
+    if (m_guiScalePercent != appliedPercent) {
+        m_guiScalePercent = appliedPercent;
+        Invalidate();
+    }
 }
 
 void UIOptionWnd::ApplyAudioSettings() const
@@ -827,6 +874,16 @@ void UIOptionWnd::SetCollapsed(bool collapsed)
     SaveSettings();
 }
 
+void UIOptionWnd::Move(int x, int y)
+{
+    const int previousX = m_x;
+    const int previousY = m_y;
+    UIWindow::Move(x, y);
+    if (m_x != previousX || m_y != previousY) {
+        LayoutControls();
+    }
+}
+
 void UIOptionWnd::ResetToDefaultPlacement()
 {
     if (g_hMainWnd) {
@@ -848,12 +905,31 @@ void UIOptionWnd::ResetToDefaultPlacement()
 
 int UIOptionWnd::SliderValueFromMouseX(int mouseX) const
 {
-    const RECT sliderRect = (m_dragMode == DragMode_SoundSlider) ? GetSoundSliderRect() : GetBgmSliderRect();
+    RECT sliderRect{};
+    int minValue = kSliderMin;
+    int maxValue = kSliderMax;
+    switch (m_dragMode) {
+    case DragMode_SoundSlider:
+        sliderRect = GetSoundSliderRect();
+        break;
+    case DragMode_GuiScaleSlider:
+        sliderRect = GetGuiScaleSliderRect();
+        minValue = kUiScaleMinPercent;
+        maxValue = kUiScaleMaxPercent;
+        break;
+    case DragMode_BgmSlider:
+    default:
+        sliderRect = GetBgmSliderRect();
+        break;
+    }
+
     const int trackStart = sliderRect.left + 4;
     const int sliderWidth = static_cast<int>(sliderRect.right - sliderRect.left);
     const int trackWidth = (std::max)(1, sliderWidth - 8);
     const int relative = (std::max)(0, (std::min)(trackWidth, mouseX - trackStart));
-    return ClampSliderValue((relative * kSliderMax + trackWidth / 2) / trackWidth);
+    const int valueRange = (std::max)(1, maxValue - minValue);
+    const int nextValue = minValue + ((relative * valueRange + trackWidth / 2) / trackWidth);
+    return (std::max)(minValue, (std::min)(maxValue, nextValue));
 }
 
 RECT UIOptionWnd::GetTitleBarRect() const
@@ -950,6 +1026,18 @@ RECT UIOptionWnd::GetRestartButtonRect() const
     return rc;
 }
 
+RECT UIOptionWnd::GetApplyButtonRect() const
+{
+    RECT contentRect = GetContentRect();
+    RECT rc = {
+        contentRect.right - 92,
+        contentRect.bottom - 22,
+        contentRect.right - 8,
+        contentRect.bottom - 4,
+    };
+    return rc;
+}
+
 RECT UIOptionWnd::GetBgmSliderRect() const
 {
     RECT contentRect = GetContentRect();
@@ -961,6 +1049,13 @@ RECT UIOptionWnd::GetSoundSliderRect() const
 {
     RECT contentRect = GetContentRect();
     RECT rc = { contentRect.left + 54, contentRect.top + 58, contentRect.right - 72, contentRect.top + 72 };
+    return rc;
+}
+
+RECT UIOptionWnd::GetGuiScaleSliderRect() const
+{
+    RECT contentRect = GetContentRect();
+    RECT rc = { contentRect.left + 66, contentRect.top + 120, contentRect.right - 52, contentRect.top + 134 };
     return rc;
 }
 
@@ -979,17 +1074,25 @@ RECT UIOptionWnd::GetGameToggleRect(int toggleIndex) const
     return rc;
 }
 
-RECT UIOptionWnd::GetSliderKnobRect(const RECT& sliderRect, int value) const
+RECT UIOptionWnd::GetSliderKnobRect(const RECT& sliderRect, int value, int minValue, int maxValue) const
 {
     const int trackStart = sliderRect.left + 4;
     const int sliderWidth = static_cast<int>(sliderRect.right - sliderRect.left);
     const int trackWidth = (std::max)(1, sliderWidth - 8);
-    const int knobCenter = trackStart + (trackWidth * ClampSliderValue(value)) / kSliderMax;
+    const int clampedValue = (std::max)(minValue, (std::min)(maxValue, value));
+    const int valueRange = (std::max)(1, maxValue - minValue);
+    const int knobCenter = trackStart + (trackWidth * (clampedValue - minValue)) / valueRange;
     RECT rc = { knobCenter - 4, sliderRect.top - 2, knobCenter + 4, sliderRect.bottom + 2 };
     return rc;
 }
 
-void UIOptionWnd::DrawSlider(HDC hdc, const RECT& sliderRect, int value, const char* label) const
+void UIOptionWnd::DrawSlider(HDC hdc,
+    const RECT& sliderRect,
+    int value,
+    int minValue,
+    int maxValue,
+    const char* label,
+    const char* valueText) const
 {
     RECT track = sliderRect;
     track.top += 4;
@@ -997,7 +1100,7 @@ void UIOptionWnd::DrawSlider(HDC hdc, const RECT& sliderRect, int value, const c
     FillRectColor(hdc, track, kSliderTrackFillColor);
     DrawRectFrame(hdc, track, kSliderTrackBorderColor);
 
-    RECT knob = GetSliderKnobRect(sliderRect, value);
+    RECT knob = GetSliderKnobRect(sliderRect, value, minValue, maxValue);
     FillRoundedRectColor(hdc, knob, kSliderKnobFillColor, 6);
     DrawRectFrame(hdc, knob, kSliderKnobBorderColor);
 
@@ -1008,6 +1111,14 @@ void UIOptionWnd::DrawSlider(HDC hdc, const RECT& sliderRect, int value, const c
 #else
     TextOutA(hdc, sliderRect.left - 44, sliderRect.top - 1, label, static_cast<int>(std::strlen(label)));
 #endif
+
+    if (valueText && *valueText) {
+#if RO_ENABLE_QT6_UI
+        DrawUiOptionText(hdc, sliderRect.right + 8, sliderRect.top - 1, valueText, RGB(0, 0, 0));
+#else
+        TextOutA(hdc, sliderRect.right + 8, sliderRect.top - 1, valueText, static_cast<int>(std::strlen(valueText)));
+#endif
+    }
 }
 
 void UIOptionWnd::DrawHeaderButton(HDC hdc, const RECT& rect, const char* text) const
@@ -1311,8 +1422,8 @@ void UIOptionWnd::OnDraw()
         DrawTabButton(hdc, GetTabRect(TabId_Audio), "Audio", m_activeTab == TabId_Audio);
 
         if (m_activeTab == TabId_Audio) {
-            DrawSlider(hdc, GetBgmSliderRect(), m_bgmVolume, "BGM");
-            DrawSlider(hdc, GetSoundSliderRect(), m_soundVolume, "Sound");
+            DrawSlider(hdc, GetBgmSliderRect(), m_bgmVolume, kSliderMin, kSliderMax, "BGM");
+            DrawSlider(hdc, GetSoundSliderRect(), m_soundVolume, kSliderMin, kSliderMax, "Sound");
             if (m_bgmOnCheckBox) {
 #if RO_ENABLE_QT6_UI
                 DrawUiOptionText(hdc, m_bgmOnCheckBox->m_x + 18, m_bgmOnCheckBox->m_y - 1, "Mute", RGB(0, 0, 0));
@@ -1355,6 +1466,19 @@ void UIOptionWnd::OnDraw()
 #else
                 TextOutA(hdc, m_itemSnapCheckBox->m_x + 18, m_itemSnapCheckBox->m_y - 1, "Item target snap", 16);
 #endif
+            }
+
+            const std::string guiScaleText = FormatPercentText(m_guiScalePercent);
+            DrawSlider(hdc,
+                GetGuiScaleSliderRect(),
+                m_guiScalePercent,
+                kUiScaleMinPercent,
+                kUiScaleMaxPercent,
+                "UI scale",
+                guiScaleText.c_str());
+
+            if (HasPendingUiScaleApply()) {
+                DrawHeaderButton(hdc, GetApplyButtonRect(), "Apply");
             }
         } else if (m_activeTab == TabId_Graphics) {
             const std::vector<GraphicsRowId> rows = GetVisibleGraphicsRows();
@@ -1410,6 +1534,7 @@ void UIOptionWnd::OnLBtnDown(int x, int y)
     }
 
     if (PointInRectXY(GetCloseButtonRect(), x, y)) {
+        DiscardPendingUiScale();
         SetShow(0);
         SaveSettings();
         return;
@@ -1433,6 +1558,13 @@ void UIOptionWnd::OnLBtnDown(int x, int y)
 
         if (HasPendingGraphicsRestart() && PointInRectXY(GetRestartButtonRect(), x, y)) {
             PromptForGraphicsRestart();
+            return;
+        }
+
+        if (m_activeTab == TabId_Game
+            && HasPendingUiScaleApply()
+            && PointInRectXY(GetApplyButtonRect(), x, y)) {
+            ApplyPendingUiScale();
             return;
         }
 
@@ -1473,6 +1605,16 @@ void UIOptionWnd::OnLBtnDown(int x, int y)
             return;
         }
 
+        if (m_activeTab == TabId_Game && PointInRectXY(GetGuiScaleSliderRect(), x, y)) {
+            m_dragMode = DragMode_GuiScaleSlider;
+            const int nextPercent = SliderValueFromMouseX(x);
+            if (m_guiScalePercent != nextPercent) {
+                m_guiScalePercent = nextPercent;
+                Invalidate();
+            }
+            return;
+        }
+
         if (HandleQtToggleClick(x, y)) {
             return;
         }
@@ -1496,7 +1638,6 @@ void UIOptionWnd::OnMouseMove(int x, int y)
         int snappedY = m_dragWindowStartY + (y - m_dragAnchorY);
         g_windowMgr.SnapWindowToNearby(this, &snappedX, &snappedY);
         Move(snappedX, snappedY);
-        LayoutControls();
         break;
     }
 
@@ -1518,6 +1659,16 @@ void UIOptionWnd::OnMouseMove(int x, int y)
             m_soundVolume = nextVolume;
             Invalidate();
             ApplyAudioSettings();
+        }
+        break;
+    }
+
+    case DragMode_GuiScaleSlider:
+    {
+        const int nextPercent = SliderValueFromMouseX(x);
+        if (m_guiScalePercent != nextPercent) {
+            m_guiScalePercent = nextPercent;
+            Invalidate();
         }
         break;
     }
@@ -1635,7 +1786,13 @@ msgresult_t UIOptionWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, m
 
 void UIOptionWnd::OnKeyDown(int virtualKey)
 {
+    if (virtualKey == VK_RETURN && HasPendingUiScaleApply()) {
+        ApplyPendingUiScale();
+        return;
+    }
+
     if (virtualKey == VK_ESCAPE) {
+        DiscardPendingUiScale();
         SetShow(0);
         SaveSettings();
     }
@@ -1650,6 +1807,8 @@ bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
     DisplayData data{};
     data.collapsed = m_collapsed != 0;
     data.activeTab = m_activeTab;
+    data.restartButton.visible = false;
+    data.applyButton.visible = false;
 
     const RECT contentRect = GetContentRect();
     data.contentX = contentRect.left;
@@ -1710,6 +1869,8 @@ bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
             bgm.width = bgmRect.right - bgmRect.left;
             bgm.height = bgmRect.bottom - bgmRect.top;
             bgm.value = m_bgmVolume;
+            bgm.minValue = kSliderMin;
+            bgm.maxValue = kSliderMax;
             bgm.label = "BGM";
             data.sliders.push_back(std::move(bgm));
 
@@ -1720,6 +1881,8 @@ bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
             sound.width = soundRect.right - soundRect.left;
             sound.height = soundRect.bottom - soundRect.top;
             sound.value = m_soundVolume;
+            sound.minValue = kSliderMin;
+            sound.maxValue = kSliderMax;
             sound.label = "Sound";
             data.sliders.push_back(std::move(sound));
 
@@ -1764,6 +1927,29 @@ bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
                 toggle.checked = def.checked;
                 toggle.label = def.label;
                 data.toggles.push_back(std::move(toggle));
+            }
+
+            const RECT guiScaleRect = GetGuiScaleSliderRect();
+            DisplaySlider guiScale{};
+            guiScale.x = guiScaleRect.left;
+            guiScale.y = guiScaleRect.top;
+            guiScale.width = guiScaleRect.right - guiScaleRect.left;
+            guiScale.height = guiScaleRect.bottom - guiScaleRect.top;
+            guiScale.value = m_guiScalePercent;
+            guiScale.minValue = kUiScaleMinPercent;
+            guiScale.maxValue = kUiScaleMaxPercent;
+            guiScale.label = "UI scale";
+            guiScale.valueText = FormatPercentText(m_guiScalePercent);
+            data.sliders.push_back(std::move(guiScale));
+
+            if (HasPendingUiScaleApply()) {
+                const RECT applyRect = GetApplyButtonRect();
+                data.applyButton.visible = true;
+                data.applyButton.x = applyRect.left;
+                data.applyButton.y = applyRect.top;
+                data.applyButton.width = applyRect.right - applyRect.left;
+                data.applyButton.height = applyRect.bottom - applyRect.top;
+                data.applyButton.label = "Apply";
             }
         } else if (m_activeTab == TabId_Graphics) {
             const std::vector<GraphicsRowId> rows = GetVisibleGraphicsRows();

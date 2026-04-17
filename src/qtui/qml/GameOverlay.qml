@@ -5,6 +5,7 @@ Item {
     width: parent ? parent.width : 1280
     height: parent ? parent.height : 720
     property bool loginCaretVisible: true
+    property real uiScale: Math.max(0.5, uiState.uiScale || 1.0)
 
     function itemIconSource(itemId) {
         return itemId > 0 ? "image://openmidgard/item/" + itemId : ""
@@ -211,6 +212,15 @@ Item {
             }
         }
     }
+
+    Item {
+        id: uiLayer
+        x: 0
+        y: 0
+        width: root.uiScale > 0 ? root.width / root.uiScale : root.width
+        height: root.uiScale > 0 ? root.height / root.uiScale : root.height
+        scale: root.uiScale
+        transformOrigin: Item.TopLeft
 
     Repeater {
         model: uiState.notifications
@@ -2594,11 +2604,14 @@ Item {
                 width: modelData.width
                 height: modelData.height
                 visible: !(uiState.optionData.collapsed || false)
+                readonly property int sliderMin: modelData.minValue !== undefined ? modelData.minValue : 0
+                readonly property int sliderMax: modelData.maxValue !== undefined ? Math.max(sliderMin + 1, modelData.maxValue) : 127
+                readonly property real sliderRange: Math.max(1, sliderMax - sliderMin)
 
                 Text {
-                    x: -44
+                    x: -60
                     y: -1
-                    width: 40
+                    width: 56
                     text: modelData.label
                     color: "#000000"
                     font.pixelSize: 11
@@ -2616,7 +2629,7 @@ Item {
                 }
 
                 Rectangle {
-                    x: 4 + ((Math.max(0, parent.width - 8) * (modelData.value || 0)) / 127) - 4
+                    x: 4 + ((Math.max(0, parent.width - 8) * ((modelData.value || 0) - parent.sliderMin)) / parent.sliderRange) - 4
                     y: -2
                     width: 8
                     height: parent.height + 4
@@ -2624,6 +2637,15 @@ Item {
                     color: "#ffffff"
                     border.width: 1
                     border.color: "#576588"
+                }
+
+                Text {
+                    x: parent.width + 8
+                    y: -1
+                    width: 42
+                    text: modelData.valueText || ""
+                    color: "#000000"
+                    font.pixelSize: 11
                 }
             }
         }
@@ -2717,6 +2739,27 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: optionRestartButton.restartButtonData.label || ""
+                color: "#28375c"
+                font.pixelSize: 10
+            }
+        }
+
+        Rectangle {
+            id: optionApplyButton
+            readonly property var applyButtonData: uiState.optionData.applyButton || ({})
+            x: (applyButtonData.x || 0) - uiState.optionX
+            y: (applyButtonData.y || 0) - uiState.optionY
+            width: applyButtonData.width || 0
+            height: applyButtonData.height || 0
+            radius: 4
+            visible: applyButtonData.visible || false
+            color: "#f8faff"
+            border.width: 1
+            border.color: "#607096"
+
+            Text {
+                anchors.centerIn: parent
+                text: optionApplyButton.applyButtonData.label || ""
                 color: "#28375c"
                 font.pixelSize: 10
             }
@@ -3158,5 +3201,6 @@ Item {
                 height: modelData.height || 0
             }
         }
+    }
     }
 }

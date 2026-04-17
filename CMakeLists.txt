@@ -242,10 +242,10 @@ ro_add_qt_runtime_deploy(open_midgard "$<TARGET_FILE_DIR:open_midgard>")
 
 if(RO_ENABLE_DEV_DEPLOY)
     add_custom_command(TARGET open_midgard POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory "D:/Spel/OldRO"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:open_midgard>"
-                "D:/Spel/OldRO/open-midgard.exe"
+        COMMAND ${CMAKE_COMMAND}
+                -DRO_SRC="$<TARGET_FILE:open_midgard>"
+                -DRO_DST="D:/Spel/OldRO/open-midgard.exe"
+                -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/BestEffortCopy.cmake"
         COMMENT "Copying executable to local OldRO folder"
     )
     ro_add_qt_runtime_deploy(open_midgard "D:/Spel/OldRO")

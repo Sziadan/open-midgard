@@ -14,6 +14,7 @@
 #include "render3d/RenderDevice.h"
 #include "session/Session.h"
 #include "skill/Skill.h"
+#include "ui/UiScale.h"
 #include "ui/UILoginWnd.h"
 #include "ui/UILoadingWnd.h"
 #include "ui/UIMakeCharWnd.h"
@@ -2082,6 +2083,15 @@ void PopulateOptionState(QtUiState* state)
         restartButton.insert(QStringLiteral("label"), ToQString(display.restartButton.label));
         data.insert(QStringLiteral("restartButton"), restartButton);
 
+        QVariantMap applyButton;
+        applyButton.insert(QStringLiteral("x"), display.applyButton.x);
+        applyButton.insert(QStringLiteral("y"), display.applyButton.y);
+        applyButton.insert(QStringLiteral("width"), display.applyButton.width);
+        applyButton.insert(QStringLiteral("height"), display.applyButton.height);
+        applyButton.insert(QStringLiteral("visible"), display.applyButton.visible);
+        applyButton.insert(QStringLiteral("label"), ToQString(display.applyButton.label));
+        data.insert(QStringLiteral("applyButton"), applyButton);
+
         QVariantList tabs;
         tabs.reserve(static_cast<qsizetype>(display.tabs.size()));
         for (const UIOptionWnd::DisplayTab& tab : display.tabs) {
@@ -2119,7 +2129,10 @@ void PopulateOptionState(QtUiState* state)
             entry.insert(QStringLiteral("width"), slider.width);
             entry.insert(QStringLiteral("height"), slider.height);
             entry.insert(QStringLiteral("value"), slider.value);
+            entry.insert(QStringLiteral("minValue"), slider.minValue);
+            entry.insert(QStringLiteral("maxValue"), slider.maxValue);
             entry.insert(QStringLiteral("label"), ToQString(slider.label));
+            entry.insert(QStringLiteral("valueText"), ToQString(slider.valueText));
             sliders.push_back(entry);
         }
         data.insert(QStringLiteral("sliders"), sliders);
@@ -2532,6 +2545,7 @@ bool QtUiStateAdapter::syncMenu(RenderBackendType activeBackend,
     m_state->setArchitectureNote(BuildArchitectureNote(nativeOverlayBackend));
     m_state->setLoginStatus(loginStatus);
     m_state->setChatPreview(chatPreview);
+    m_state->setUiScale(static_cast<double>(GetConfiguredUiScaleFactor()));
     m_state->setDebugOverlayData(BuildDebugOverlayData(
         backendName,
         modeName,
@@ -2573,6 +2587,7 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
     m_state->setArchitectureNote(BuildArchitectureNote(nativeOverlayBackend));
     m_state->setLoginStatus(loginStatus);
     m_state->setChatPreview(chatPreview);
+    m_state->setUiScale(static_cast<double>(GetConfiguredUiScaleFactor()));
     m_state->setDebugOverlayData(BuildDebugOverlayData(
         backendName,
         modeName,
@@ -2602,7 +2617,9 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
     PopulateSkillListState(m_state);
     PopulateOptionState(m_state);
     PopulateMinimapState(m_state);
-    PopulateStatusIconsState(m_state, mouseX, mouseY);
+    const int uiMouseX = UiScaleRawToLogicalCoordinate(mouseX);
+    const int uiMouseY = UiScaleRawToLogicalCoordinate(mouseY);
+    PopulateStatusIconsState(m_state, uiMouseX, uiMouseY);
     PopulateShopChoiceState(m_state);
     PopulateNotificationState(m_state);
 
@@ -2638,8 +2655,8 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
         }
 
         const bool hasUiItemHover = TryAppendHoveredUiItemAnchor(&anchors);
-        const bool hasStatusIconHover = !hasUiItemHover && TryAppendHoveredStatusIconAnchor(m_state, mouseX, mouseY, &anchors);
-        const bool blocksWorldHover = g_windowMgr.HasWindowAtPoint(mouseX, mouseY);
+        const bool hasStatusIconHover = !hasUiItemHover && TryAppendHoveredStatusIconAnchor(m_state, uiMouseX, uiMouseY, &anchors);
+        const bool blocksWorldHover = g_windowMgr.HasWindowAtPoint(uiMouseX, uiMouseY);
         const bool blocksGameplayHover = hasUiItemHover || hasStatusIconHover || blocksWorldHover;
 
         int labelX = 0;

@@ -41,6 +41,12 @@ constexpr int kChatScrollbarGap = 4;
 constexpr size_t kMaxInputChars = 180;
 constexpr size_t kMaxInputHistory = 5;
 constexpr int kChatWheelScrollLines = 3;
+
+bool PointInRectXY(const RECT& rc, int x, int y)
+{
+    return x >= rc.left && x < rc.right && y >= rc.top && y < rc.bottom;
+}
+
 COLORREF ToColorRef(u32 color)
 {
     return RGB((color >> 16) & 0xFFu, (color >> 8) & 0xFFu, color & 0xFFu);
@@ -213,10 +219,35 @@ void FillRectStippled(HDC target, const RECT& rect)
 UINewChatWnd::UINewChatWnd()
     : m_lastDrawTick(0),
       m_inputActive(0),
-    m_historyBrowseIndex(-1),
-    m_scrollLineOffset(0),
-    m_firstVisibleLineIndex(0)
+      m_historyBrowseIndex(-1),
+      m_scrollLineOffset(0),
+      m_firstVisibleLineIndex(0),
+      m_dragStartGlobalX(0),
+      m_dragStartGlobalY(0),
+      m_dragStartWindowX(0),
+      m_dragStartWindowY(0),
+      m_dragArmed(0),
+      m_isDragging(0)
 {
+    const int panelHeight = kChatHistoryHeight + kChatInputHeight + (kChatPanelPadding * 3);
+    Create(kChatWindowWidth, panelHeight);
+
+    int defaultX = kChatWindowMargin;
+    int defaultY = 480 - panelHeight - kChatWindowMargin;
+    if (g_hMainWnd) {
+        RECT clientRect{};
+        GetClientRect(g_hMainWnd, &clientRect);
+        defaultY = clientRect.bottom - panelHeight - kChatWindowMargin;
+    }
+
+    Move(defaultX, defaultY);
+
+    int savedX = m_x;
+    int savedY = m_y;
+    if (LoadUiWindowPlacement("ChatWnd", &savedX, &savedY)) {
+        g_windowMgr.ClampWindowToClient(&savedX, &savedY, m_w, m_h);
+        Move(savedX, savedY);
+    }
 }
 
 UINewChatWnd::~UINewChatWnd() = default;
@@ -522,9 +553,69 @@ void UINewChatWnd::ClearLines()
 
 void UINewChatWnd::OnLBtnDown(int x, int y)
 {
-    (void)x;
-    (void)y;
-    SetInputActive(true);
+    const RECT inputRc = {
+        m_x + kChatPanelPadding,
+        m_y + m_h - kChatInputHeight - kChatPanelPadding,
+        m_x + m_w - kChatPanelPadding,
+        m_y + m_h - kChatPanelPadding
+    };
+
+    if (PointInRectXY(inputRc, x, y)) {
+        SetInputActive(true);
+        m_dragArmed = 0;
+        m_isDragging = 0;
+        return;
+    }
+
+    m_dragArmed = 1;
+    m_isDragging = 0;
+    m_dragStartGlobalX = x;
+    m_dragStartGlobalY = y;
+    m_dragStartWindowX = m_x;
+    m_dragStartWindowY = m_y;
+}
+
+void UINewChatWnd::OnMouseMove(int x, int y)
+{
+    if (m_dragArmed == 0 && m_isDragging == 0) {
+        return;
+    }
+
+    const int dx = x - m_dragStartGlobalX;
+    const int dy = y - m_dragStartGlobalY;
+    if (m_isDragging == 0 && ((dx * dx) + (dy * dy)) >= 16) {
+        m_isDragging = 1;
+    }
+
+    if (m_isDragging == 0) {
+        return;
+    }
+
+    int snappedX = m_dragStartWindowX + dx;
+    int snappedY = m_dragStartWindowY + dy;
+    g_windowMgr.SnapWindowToNearby(this, &snappedX, &snappedY);
+    g_windowMgr.ClampWindowToClient(&snappedX, &snappedY, m_w, m_h);
+    Move(snappedX, snappedY);
+}
+
+void UINewChatWnd::OnLBtnUp(int x, int y)
+{
+    if (m_isDragging != 0) {
+        StoreInfo();
+    } else if (m_dragArmed != 0) {
+        const RECT inputRc = {
+            m_x + kChatPanelPadding,
+            m_y + m_h - kChatInputHeight - kChatPanelPadding,
+            m_x + m_w - kChatPanelPadding,
+            m_y + m_h - kChatPanelPadding
+        };
+        if (!PointInRectXY(inputRc, x, y)) {
+            SetInputActive(true);
+        }
+    }
+
+    m_dragArmed = 0;
+    m_isDragging = 0;
 }
 
 void UINewChatWnd::OnWheel(int delta)
@@ -642,9 +733,12 @@ void UINewChatWnd::Layout()
     GetClientRect(g_hMainWnd, &clientRect);
 
     const int panelHeight = kChatHistoryHeight + kChatInputHeight + (kChatPanelPadding * 3);
-
-    Move(kChatWindowMargin, clientRect.bottom - panelHeight - kChatWindowMargin);
     Resize(kChatWindowWidth, panelHeight);
+
+    int clampedX = m_x;
+    int clampedY = m_y;
+    g_windowMgr.ClampWindowToClient(&clampedX, &clampedY, m_w, m_h);
+    Move(clampedX, clampedY);
 }
 
 void UINewChatWnd::AdjustScroll(int lineDelta)
@@ -739,4 +833,9 @@ void UINewChatWnd::RestorePersistentState(const std::vector<std::string>& inputH
     ClampScrollOffset();
     RefreshVisibleLines(GetTickCount());
     Invalidate();
+}
+
+void UINewChatWnd::StoreInfo()
+{
+    SaveUiWindowPlacement("ChatWnd", m_x, m_y);
 }

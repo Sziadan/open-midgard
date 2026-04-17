@@ -24,6 +24,7 @@
 #include "UIOptionWnd.h"
 #include "UISelectCharWnd.h"
 #include "UIWaitWnd.h"
+#include "UiScale.h"
 #include "gamemode/CursorRenderer.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/LoginMode.h"
@@ -43,6 +44,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <map>
 #include <memory>
 #include <vector>
@@ -517,6 +519,59 @@ bool RangesOverlapWithMargin(int a0, int a1, int b0, int b1, int margin)
 {
     return std::max(a0, b0) <= std::min(a1, b1) + margin;
 }
+
+float NormalizeUiScaleFactor(float scaleFactor)
+{
+    return scaleFactor > 0.01f ? scaleFactor : 1.0f;
+}
+
+void GetUiLogicalClientRectForScale(float scaleFactor, RECT* outRect)
+{
+    if (!outRect) {
+        return;
+    }
+
+    RECT clientRect{ 0, 0, 640, 480 };
+    if (g_hMainWnd) {
+        GetClientRect(g_hMainWnd, &clientRect);
+    }
+
+    const float normalizedScale = NormalizeUiScaleFactor(scaleFactor);
+    outRect->left = clientRect.left;
+    outRect->top = clientRect.top;
+    outRect->right = clientRect.left + (std::max)(1, static_cast<int>(std::floor(static_cast<float>(clientRect.right - clientRect.left) / normalizedScale)));
+    outRect->bottom = clientRect.top + (std::max)(1, static_cast<int>(std::floor(static_cast<float>(clientRect.bottom - clientRect.top) / normalizedScale)));
+}
+
+void ClampWindowToLogicalClientRect(int* x, int* y, int w, int h, float scaleFactor, bool fullyVisible)
+{
+    if (!x || !y) {
+        return;
+    }
+
+    RECT logicalClientRect{};
+    GetUiLogicalClientRectForScale(scaleFactor, &logicalClientRect);
+
+    const int minX = logicalClientRect.left;
+    const int minY = logicalClientRect.top;
+    const int clientRight = logicalClientRect.right;
+    const int clientBottom = logicalClientRect.bottom;
+    const int maxX = std::max(minX, clientRight - std::max(1, w));
+    const int visibleHeight = fullyVisible ? std::max(1, h) : std::max(17, std::min(h, 64));
+    const int maxY = std::max(minY, clientBottom - visibleHeight);
+    *x = std::clamp(*x, minX, maxX);
+    *y = std::clamp(*y, minY, maxY);
+}
+
+int UiLogicalToRawCoordinate(int logicalValue, float scaleFactor)
+{
+    return static_cast<int>(std::lround(static_cast<double>(logicalValue) * static_cast<double>(NormalizeUiScaleFactor(scaleFactor))));
+}
+
+int UiRawToLogicalCoordinateWithScale(int rawValue, float scaleFactor)
+{
+    return static_cast<int>(std::lround(static_cast<double>(rawValue) / static_cast<double>(NormalizeUiScaleFactor(scaleFactor))));
+}
 }
 
 UIWindowMgr g_windowMgr;
@@ -540,23 +595,36 @@ UIWindowMgr::~UIWindowMgr() {
 
 void UIWindowMgr::ClampWindowToClient(int* x, int* y, int w, int h) const
 {
-    if (!x || !y) {
+    ClampWindowToLogicalClientRect(
+        x,
+        y,
+        w,
+        h,
+        IsQtUiRuntimeEnabled() ? GetConfiguredUiScaleFactor() : 1.0f,
+        IsQtUiRuntimeEnabled());
+}
+
+void UIWindowMgr::RepositionManagedWindowsForUiScale(int previousPercent, int nextPercent)
+{
+    const int clampedPreviousPercent = ClampUiScalePercent(previousPercent);
+    const int clampedNextPercent = ClampUiScalePercent(nextPercent);
+    if (clampedPreviousPercent == clampedNextPercent) {
         return;
     }
 
-    RECT clientRect{ 0, 0, 640, 480 };
-    if (g_hMainWnd) {
-        GetClientRect(g_hMainWnd, &clientRect);
-    }
+    const float previousScale = static_cast<float>(clampedPreviousPercent) / 100.0f;
+    const float nextScale = static_cast<float>(clampedNextPercent) / 100.0f;
+    for (UIWindow* window : m_children) {
+        if (!window || window->m_show == 0 || window->m_parent != nullptr || !window->IsFrameWnd()) {
+            continue;
+        }
 
-    const int minX = static_cast<int>(clientRect.left);
-    const int minY = static_cast<int>(clientRect.top);
-    const int clientRight = static_cast<int>(clientRect.right);
-    const int clientBottom = static_cast<int>(clientRect.bottom);
-    const int maxX = std::max(minX, clientRight - std::max(1, w));
-    const int maxY = std::max(minY, clientBottom - std::max(17, std::min(h, 64)));
-    *x = std::clamp(*x, minX, maxX);
-    *y = std::clamp(*y, minY, maxY);
+        int nextX = UiRawToLogicalCoordinateWithScale(UiLogicalToRawCoordinate(window->m_x, previousScale), nextScale);
+        int nextY = UiRawToLogicalCoordinateWithScale(UiLogicalToRawCoordinate(window->m_y, previousScale), nextScale);
+        ClampWindowToLogicalClientRect(&nextX, &nextY, window->m_w, window->m_h, nextScale, true);
+        window->Move(nextX, nextY);
+        window->StoreInfo();
+    }
 }
 
 void UIWindowMgr::SnapWindowToNearby(UIWindow* window, int* x, int* y) const
@@ -570,10 +638,10 @@ void UIWindowMgr::SnapWindowToNearby(UIWindow* window, int* x, int* y) const
     int bestXDistance = kWindowSnapDistance + 1;
     int bestYDistance = kWindowSnapDistance + 1;
 
-    RECT clientRect{ 0, 0, 640, 480 };
-    if (g_hMainWnd) {
-        GetClientRect(g_hMainWnd, &clientRect);
-    }
+    RECT clientRect{};
+    GetUiLogicalClientRectForScale(
+        IsQtUiRuntimeEnabled() ? GetConfiguredUiScaleFactor() : 1.0f,
+        &clientRect);
 
     const auto considerX = [&](int candidateX) {
         const int distance = std::abs(*x - candidateX);

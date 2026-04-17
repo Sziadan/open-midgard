@@ -23,10 +23,14 @@ public:
     UINewChatWnd();
     ~UINewChatWnd() override;
 
+    bool IsFrameWnd() override { return true; }
     void OnProcess() override;
     void OnDraw() override;
     void OnLBtnDown(int x, int y) override;
+    void OnMouseMove(int x, int y) override;
+    void OnLBtnUp(int x, int y) override;
     void OnWheel(int delta) override;
+    void StoreInfo() override;
 
     void AddChatLine(const char* text, u32 color, u8 channel, u32 tick);
     const std::vector<ChatLine>& GetLines() const;
@@ -62,4 +66,10 @@ private:
     int m_historyBrowseIndex;
     int m_scrollLineOffset;
     int m_firstVisibleLineIndex;
+    int m_dragStartGlobalX;
+    int m_dragStartGlobalY;
+    int m_dragStartWindowX;
+    int m_dragStartWindowY;
+    int m_dragArmed;
+    int m_isDragging;
 };
