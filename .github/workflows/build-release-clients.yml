@@ -253,6 +253,8 @@ jobs:
       - build-windows-qt
       - build-linux-qt-vulkan
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Download packaged artifacts
@@ -264,6 +266,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           gh release upload "${{ github.event.release.tag_name }}" \
