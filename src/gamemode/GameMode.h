@@ -14,6 +14,9 @@ class UIPlayerGage;
 struct NamePair {
     std::string name;
     std::string nick;
+    std::string partyName;
+    std::string guildName;
+    std::string guildTitle;
 };
 
 struct CellPos {
@@ -106,6 +109,23 @@ public:
             GameMsg_RequestStorageClose = 20030,
             GameMsg_RequestIdentifyInventoryItem = 20031,
                 GameMsg_RequestComposeCardIntoEquipment = 20032,
+                GameMsg_RequestPlayerContextAction = 20033,
+            GameMsg_RequestPartyCreate = 20034,
+            GameMsg_RequestPartyChangeOptions = 20035,
+            GameMsg_RequestPartyDisband = 20036,
+                GameMsg_RequestPartyInvite = 20037,
+                GameMsg_RequestPartyInviteReply = 20038,
+    };
+
+    enum PlayerContextAction {
+        PlayerContext_CheckEquipmentInfo = 0,
+        PlayerContext_RequestDeal,
+        PlayerContext_AskJoinParty,
+        PlayerContext_InviteJoinGuild,
+        PlayerContext_SendWhisper,
+        PlayerContext_RegisterFriend,
+        PlayerContext_SendMail,
+        PlayerContext_RejectWhispering,
     };
 
     CGameMode();
@@ -265,6 +285,11 @@ public:
     float m_worldProcessCarryMs;
     u32 m_lastHoverRefreshTick;
     std::string m_loadingWallpaperName;
+    int m_hasPendingPartyCreateOptions;
+    int m_pendingPartyCreateExpShare;
+    int m_pendingPartyCreateItemShare;
+    int m_pendingPartyCreateItemSharingType;
+    std::string m_pendingPartyCreateName;
 };
 
 bool ArmPendingSkillUseFromSkillList(int skillId);

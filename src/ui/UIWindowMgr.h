@@ -32,6 +32,10 @@ class UIShortCutWnd;
 class UIItemDropCntWnd;
 class UISayDialogWnd;
 class UINpcMenuWnd;
+class UIPlayerContextMenuWnd;
+class UIJoinPartyAcceptWnd;
+class UIMessengerGroupWnd;
+class UIPartyOptionWnd;
 class UINpcInputWnd;
 class UIChooseWnd;
 class UIChooseSellBuyWnd;
@@ -78,6 +82,10 @@ public:
         WID_LOADINGWND        = 10,
         WID_STATUSWND         = 11,
         WID_NPCMENUWND        = 12,
+        WID_JOINPARTYACCEPTWND = 0x23,
+        WID_PLAYERCONTEXTMENUWND = 0x94,
+        WID_MESSENGERGROUPWND = 0x22,
+        WID_PARTYOPTIONWND    = 0x95,
         WID_OPTIONWND         = 13,
         WID_EQUIPWND          = 14,
         WID_SKILLLISTWND      = 15,
@@ -149,6 +157,7 @@ public:
     void EnsureChatWindowVisible();
     bool HasActiveNpcDialog() const;
     void CloseNpcDialogWindows();
+    void ClosePlayerContextMenu();
     void CloseNpcShopWindows();
     void CloseStorageWindows();
     void ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int preferredY);
@@ -185,6 +194,10 @@ public:
     UIStatusWnd* m_statusWnd;
     UISayDialogWnd* m_sayDialogWnd;
     UINpcMenuWnd* m_npcMenuWnd;
+    UIPlayerContextMenuWnd* m_playerContextMenuWnd;
+    UIJoinPartyAcceptWnd* m_joinPartyAcceptWnd;
+    UIMessengerGroupWnd* m_messengerGroupWnd;
+    UIPartyOptionWnd* m_partyOptionWnd;
     UINpcInputWnd* m_npcInputWnd;
     UIChooseSellBuyWnd* m_chooseSellBuyWnd;
     UIItemShopWnd* m_itemShopWnd;

@@ -19,6 +19,7 @@
 #include "ui/UILoadingWnd.h"
 #include "ui/UIMakeCharWnd.h"
 #include "ui/UIChooseWnd.h"
+#include "ui/UIJoinPartyAcceptWnd.h"
 #include "ui/UIChooseSellBuyWnd.h"
 #include "ui/UIBasicInfoWnd.h"
 #include "ui/UIEquipWnd.h"
@@ -27,6 +28,8 @@
 #include "ui/UIItemIdentifyWnd.h"
 #include "ui/UIItemInfoWnd.h"
 #include "ui/UIItemWnd.h"
+#include "ui/UIMessengerGroupWnd.h"
+#include "ui/UIPartyOptionWnd.h"
 #include "ui/UIStorageWnd.h"
 #include "ui/UIItemPurchaseWnd.h"
 #include "ui/UIItemSellWnd.h"
@@ -34,6 +37,7 @@
 #include "ui/UIMinimapWnd.h"
 #include "ui/UINewChatWnd.h"
 #include "ui/UINpcMenuWnd.h"
+#include "ui/UIPlayerContextMenuWnd.h"
 #include "ui/UINpcInputWnd.h"
 #include "ui/UINotifyLevelUpWnd.h"
 #include "ui/UIOptionWnd.h"
@@ -184,6 +188,18 @@ void ClearGameplayUiState(QtUiState* state)
     state->setStorageMini(false);
     state->setStorageTab(0);
     state->setStorageData(QVariantMap{});
+
+    state->setFriendPartyVisible(false);
+    state->setFriendPartyGeometry(0, 0, 0, 0);
+    state->setFriendPartyData(QVariantMap{});
+
+    state->setPartySetupVisible(false);
+    state->setPartySetupGeometry(0, 0, 0, 0);
+    state->setPartySetupData(QVariantMap{});
+
+    state->setPartyInviteVisible(false);
+    state->setPartyInviteGeometry(0, 0, 0, 0);
+    state->setPartyInviteData(QVariantMap{});
 
     state->setEquipVisible(false);
     state->setEquipGeometry(0, 0, 0, 0);
@@ -1098,6 +1114,26 @@ void PopulateShopChoiceState(QtUiState* state)
 void PopulateNpcMenuState(QtUiState* state)
 {
     if (!state) {
+        return;
+    }
+
+    const UIPlayerContextMenuWnd* const playerMenuWnd = g_windowMgr.m_playerContextMenuWnd;
+    const bool playerMenuVisible = IsGameplayWindowVisible(state, playerMenuWnd);
+    if (playerMenuVisible) {
+        state->setNpcMenuVisible(true);
+        state->setNpcMenuGeometry(playerMenuWnd->m_x, playerMenuWnd->m_y, playerMenuWnd->m_w, playerMenuWnd->m_h);
+        state->setNpcMenuSelection(playerMenuWnd->GetSelectedIndex());
+        state->setNpcMenuHoverIndex(playerMenuWnd->GetHoverIndex());
+        state->setNpcMenuButtons(false, false);
+
+        QVariantList options;
+        const std::vector<std::string>& rawOptions = playerMenuWnd->GetOptions();
+        options.reserve(static_cast<qsizetype>(rawOptions.size()));
+        for (const std::string& option : rawOptions) {
+            options.push_back(NpcColorCodesToHtml(option));
+        }
+        state->setNpcMenuOptions(options);
+        state->setNpcMenuButtonsData(QVariantList{});
         return;
     }
 
@@ -2061,6 +2097,252 @@ void PopulateStorageState(QtUiState* state)
     state->setStorageData(data);
 }
 
+void PopulateFriendPartyState(QtUiState* state)
+{
+    if (!state) {
+        return;
+    }
+
+    const UIMessengerGroupWnd* const friendPartyWnd = g_windowMgr.m_messengerGroupWnd;
+    const bool visible = IsGameplayWindowVisible(state, friendPartyWnd);
+    state->setFriendPartyVisible(visible);
+    if (!visible) {
+        state->setFriendPartyGeometry(0, 0, 0, 0);
+        state->setFriendPartyData(QVariantMap{});
+        return;
+    }
+
+    state->setFriendPartyGeometry(friendPartyWnd->m_x, friendPartyWnd->m_y, friendPartyWnd->m_w, friendPartyWnd->m_h);
+
+    UIMessengerGroupWnd::DisplayData display{};
+    QVariantMap data;
+    if (friendPartyWnd->GetDisplayDataForQt(&display)) {
+        data.insert(QStringLiteral("title"), ToQString(display.title));
+        data.insert(QStringLiteral("summaryTitle"), ToQString(display.summaryTitle));
+        data.insert(QStringLiteral("summaryValue"), ToQString(display.summaryValue));
+        data.insert(QStringLiteral("summarySecondaryValue"), ToQString(display.summarySecondaryValue));
+        data.insert(QStringLiteral("currentTab"), display.currentTab);
+        data.insert(QStringLiteral("selectedIndex"), display.selectedIndex);
+        data.insert(QStringLiteral("viewOffset"), display.viewOffset);
+        data.insert(QStringLiteral("maxViewOffset"), display.maxViewOffset);
+        data.insert(QStringLiteral("scrollBarVisible"), display.scrollBarVisible);
+        data.insert(QStringLiteral("scrollTrackX"), display.scrollTrackX);
+        data.insert(QStringLiteral("scrollTrackY"), display.scrollTrackY);
+        data.insert(QStringLiteral("scrollTrackWidth"), display.scrollTrackWidth);
+        data.insert(QStringLiteral("scrollTrackHeight"), display.scrollTrackHeight);
+        data.insert(QStringLiteral("scrollThumbX"), display.scrollThumbX);
+        data.insert(QStringLiteral("scrollThumbY"), display.scrollThumbY);
+        data.insert(QStringLiteral("scrollThumbWidth"), display.scrollThumbWidth);
+        data.insert(QStringLiteral("scrollThumbHeight"), display.scrollThumbHeight);
+
+        QVariantList systemButtons;
+        systemButtons.reserve(friendPartyWnd->GetQtSystemButtonCount());
+        for (int index = 0; index < friendPartyWnd->GetQtSystemButtonCount(); ++index) {
+            UIMessengerGroupWnd::QtButtonDisplay buttonDisplay{};
+            if (!friendPartyWnd->GetQtSystemButtonDisplayForQt(index, &buttonDisplay)) {
+                continue;
+            }
+
+            QVariantMap button;
+            button.insert(QStringLiteral("id"), buttonDisplay.id);
+            button.insert(QStringLiteral("x"), buttonDisplay.x);
+            button.insert(QStringLiteral("y"), buttonDisplay.y);
+            button.insert(QStringLiteral("width"), buttonDisplay.width);
+            button.insert(QStringLiteral("height"), buttonDisplay.height);
+            button.insert(QStringLiteral("label"), ToQString(buttonDisplay.label));
+            button.insert(QStringLiteral("visible"), buttonDisplay.visible);
+            button.insert(QStringLiteral("active"), buttonDisplay.active);
+            systemButtons.push_back(button);
+        }
+        data.insert(QStringLiteral("systemButtons"), systemButtons);
+
+        QVariantList tabs;
+        tabs.reserve(friendPartyWnd->GetQtTabCount());
+        for (int index = 0; index < friendPartyWnd->GetQtTabCount(); ++index) {
+            UIMessengerGroupWnd::QtButtonDisplay tabDisplay{};
+            if (!friendPartyWnd->GetQtTabDisplayForQt(index, &tabDisplay)) {
+                continue;
+            }
+
+            QVariantMap tab;
+            tab.insert(QStringLiteral("id"), tabDisplay.id);
+            tab.insert(QStringLiteral("x"), tabDisplay.x);
+            tab.insert(QStringLiteral("y"), tabDisplay.y);
+            tab.insert(QStringLiteral("width"), tabDisplay.width);
+            tab.insert(QStringLiteral("height"), tabDisplay.height);
+            tab.insert(QStringLiteral("label"), ToQString(tabDisplay.label));
+            tab.insert(QStringLiteral("visible"), tabDisplay.visible);
+            tab.insert(QStringLiteral("active"), tabDisplay.active);
+            tabs.push_back(tab);
+        }
+        data.insert(QStringLiteral("tabs"), tabs);
+
+        QVariantList rows;
+        rows.reserve(static_cast<qsizetype>(display.rows.size()));
+        for (const UIMessengerGroupWnd::DisplayRow& row : display.rows) {
+            QVariantMap entry;
+            entry.insert(QStringLiteral("x"), row.x);
+            entry.insert(QStringLiteral("y"), row.y);
+            entry.insert(QStringLiteral("width"), row.width);
+            entry.insert(QStringLiteral("height"), row.height);
+            entry.insert(QStringLiteral("selected"), row.selected);
+            entry.insert(QStringLiteral("color"), row.color);
+            entry.insert(QStringLiteral("name"), ToQString(row.name));
+            entry.insert(QStringLiteral("status"), ToQString(row.status));
+            entry.insert(QStringLiteral("detail"), ToQString(row.detail));
+            rows.push_back(entry);
+        }
+        data.insert(QStringLiteral("rows"), rows);
+
+        QVariantList actionButtons;
+        actionButtons.reserve(static_cast<qsizetype>(display.actionButtons.size()));
+        for (const UIMessengerGroupWnd::QtButtonDisplay& buttonDisplay : display.actionButtons) {
+            QVariantMap button;
+            button.insert(QStringLiteral("id"), buttonDisplay.id);
+            button.insert(QStringLiteral("x"), buttonDisplay.x);
+            button.insert(QStringLiteral("y"), buttonDisplay.y);
+            button.insert(QStringLiteral("width"), buttonDisplay.width);
+            button.insert(QStringLiteral("height"), buttonDisplay.height);
+            button.insert(QStringLiteral("label"), ToQString(buttonDisplay.label));
+            button.insert(QStringLiteral("visible"), buttonDisplay.visible);
+            button.insert(QStringLiteral("active"), buttonDisplay.active);
+            actionButtons.push_back(button);
+        }
+        data.insert(QStringLiteral("actionButtons"), actionButtons);
+    }
+
+    state->setFriendPartyData(data);
+}
+
+void PopulatePartySetupState(QtUiState* state)
+{
+    if (!state) {
+        return;
+    }
+
+    const UIPartyOptionWnd* const partySetupWnd = g_windowMgr.m_partyOptionWnd;
+    const bool visible = IsGameplayWindowVisible(state, partySetupWnd);
+    state->setPartySetupVisible(visible);
+    if (!visible) {
+        state->setPartySetupGeometry(0, 0, 0, 0);
+        state->setPartySetupData(QVariantMap{});
+        return;
+    }
+
+    state->setPartySetupGeometry(partySetupWnd->m_x, partySetupWnd->m_y, partySetupWnd->m_w, partySetupWnd->m_h);
+
+    UIPartyOptionWnd::DisplayData display{};
+    QVariantMap data;
+    if (partySetupWnd->GetDisplayDataForQt(&display)) {
+        data.insert(QStringLiteral("title"), ToQString(display.title));
+        data.insert(QStringLiteral("showNameEdit"), display.showNameEdit);
+        data.insert(QStringLiteral("nameFocused"), display.nameFocused);
+        data.insert(QStringLiteral("nameLabel"), ToQString(display.nameLabel));
+        data.insert(QStringLiteral("nameValue"), ToQString(display.nameValue));
+        data.insert(QStringLiteral("nameFieldX"), display.nameFieldX);
+        data.insert(QStringLiteral("nameFieldY"), display.nameFieldY);
+        data.insert(QStringLiteral("nameFieldWidth"), display.nameFieldWidth);
+        data.insert(QStringLiteral("nameFieldHeight"), display.nameFieldHeight);
+
+        QVariantList labels;
+        labels.reserve(static_cast<qsizetype>(display.labels.size()));
+        for (const UIPartyOptionWnd::DisplayLabel& label : display.labels) {
+            QVariantMap entry;
+            entry.insert(QStringLiteral("x"), label.x);
+            entry.insert(QStringLiteral("y"), label.y);
+            entry.insert(QStringLiteral("width"), label.width);
+            entry.insert(QStringLiteral("height"), label.height);
+            entry.insert(QStringLiteral("text"), ToQString(label.text));
+            entry.insert(QStringLiteral("header"), label.header);
+            labels.push_back(entry);
+        }
+        data.insert(QStringLiteral("labels"), labels);
+
+        QVariantList choices;
+        choices.reserve(static_cast<qsizetype>(display.choices.size()));
+        for (const UIPartyOptionWnd::DisplayChoice& choice : display.choices) {
+            QVariantMap entry;
+            entry.insert(QStringLiteral("groupId"), choice.groupId);
+            entry.insert(QStringLiteral("optionId"), choice.optionId);
+            entry.insert(QStringLiteral("x"), choice.x);
+            entry.insert(QStringLiteral("y"), choice.y);
+            entry.insert(QStringLiteral("width"), choice.width);
+            entry.insert(QStringLiteral("height"), choice.height);
+            entry.insert(QStringLiteral("label"), ToQString(choice.label));
+            entry.insert(QStringLiteral("selected"), choice.selected);
+            choices.push_back(entry);
+        }
+        data.insert(QStringLiteral("choices"), choices);
+
+        QVariantList buttons;
+        buttons.reserve(static_cast<qsizetype>(display.buttons.size()));
+        for (const UIPartyOptionWnd::QtButtonDisplay& buttonDisplay : display.buttons) {
+            QVariantMap button;
+            button.insert(QStringLiteral("id"), buttonDisplay.id);
+            button.insert(QStringLiteral("x"), buttonDisplay.x);
+            button.insert(QStringLiteral("y"), buttonDisplay.y);
+            button.insert(QStringLiteral("width"), buttonDisplay.width);
+            button.insert(QStringLiteral("height"), buttonDisplay.height);
+            button.insert(QStringLiteral("label"), ToQString(buttonDisplay.label));
+            button.insert(QStringLiteral("visible"), buttonDisplay.visible);
+            button.insert(QStringLiteral("active"), buttonDisplay.active);
+            buttons.push_back(button);
+        }
+        data.insert(QStringLiteral("buttons"), buttons);
+    }
+
+    state->setPartySetupData(data);
+}
+
+void PopulatePartyInviteState(QtUiState* state)
+{
+    if (!state) {
+        return;
+    }
+
+    const UIJoinPartyAcceptWnd* const partyInviteWnd = g_windowMgr.m_joinPartyAcceptWnd;
+    const bool visible = IsGameplayWindowVisible(state, partyInviteWnd);
+    state->setPartyInviteVisible(visible);
+    if (!visible) {
+        state->setPartyInviteGeometry(0, 0, 0, 0);
+        state->setPartyInviteData(QVariantMap{});
+        return;
+    }
+
+    state->setPartyInviteGeometry(partyInviteWnd->m_x, partyInviteWnd->m_y, partyInviteWnd->m_w, partyInviteWnd->m_h);
+
+    UIJoinPartyAcceptWnd::DisplayData display{};
+    QVariantMap data;
+    if (partyInviteWnd->GetDisplayDataForQt(&display)) {
+        data.insert(QStringLiteral("title"), ToQString(display.title));
+        data.insert(QStringLiteral("bodyText"), ToQString(display.bodyText));
+
+        QVariantList messageLines;
+        messageLines.reserve(static_cast<qsizetype>(display.messageLines.size()));
+        for (const std::string& line : display.messageLines) {
+            messageLines.push_back(ToQString(line));
+        }
+        data.insert(QStringLiteral("messageLines"), messageLines);
+
+        QVariantList buttons;
+        buttons.reserve(static_cast<qsizetype>(display.buttons.size()));
+        for (const UIJoinPartyAcceptWnd::QtButtonDisplay& buttonDisplay : display.buttons) {
+            QVariantMap button;
+            button.insert(QStringLiteral("id"), buttonDisplay.id);
+            button.insert(QStringLiteral("x"), buttonDisplay.x);
+            button.insert(QStringLiteral("y"), buttonDisplay.y);
+            button.insert(QStringLiteral("width"), buttonDisplay.width);
+            button.insert(QStringLiteral("height"), buttonDisplay.height);
+            button.insert(QStringLiteral("label"), ToQString(buttonDisplay.label));
+            button.insert(QStringLiteral("active"), buttonDisplay.active);
+            buttons.push_back(button);
+        }
+        data.insert(QStringLiteral("buttons"), buttons);
+    }
+
+    state->setPartyInviteData(data);
+}
+
 void PopulateEquipState(QtUiState* state)
 {
     if (!state) {
@@ -2836,6 +3118,77 @@ bool ShouldUseServerNameForHoverActor(const CGameActor* actor)
     return actor->m_objectType == 6;
 }
 
+const NamePair* FindCachedHoverActorNameEntry(const CGameMode& mode, const CGameActor* actor)
+{
+    if (!actor) {
+        return nullptr;
+    }
+
+    const auto cachedNameIt = mode.m_actorNameListByGID.find(actor->m_gid);
+    if (cachedNameIt == mode.m_actorNameListByGID.end()) {
+        return nullptr;
+    }
+
+    return &cachedNameIt->second;
+}
+
+std::string ResolveFallbackPartyNameForHoverActor(const std::string& actorName, const CGameActor* actor)
+{
+    if (!actor || g_session.m_partyName.empty()) {
+        return std::string();
+    }
+
+    if (actor->m_gid == g_session.m_gid || actor->m_gid == g_session.m_aid) {
+        return g_session.m_partyName;
+    }
+
+    if (actorName.empty()) {
+        return std::string();
+    }
+
+    const std::list<FRIEND_INFO>& partyMembers = g_session.GetPartyList();
+    for (const FRIEND_INFO& member : partyMembers) {
+        if (member.characterName == actorName) {
+            return g_session.m_partyName;
+        }
+    }
+
+    return std::string();
+}
+
+std::string BuildHoverActorLabel(const std::string& actorName, const NamePair* cachedEntry, const CGameActor* actor)
+{
+    if (actorName.empty()) {
+        return std::string();
+    }
+
+    std::string label = actorName;
+    std::string partyName = cachedEntry ? cachedEntry->partyName : std::string();
+    if (partyName.empty()) {
+        partyName = ResolveFallbackPartyNameForHoverActor(actorName, actor);
+    }
+    if (!partyName.empty()) {
+        label += " (";
+        label += partyName;
+        label += ")";
+    }
+
+    const std::string guildName = cachedEntry ? cachedEntry->guildName : std::string();
+    if (!guildName.empty()) {
+        label += "\n";
+        label += guildName;
+
+        const std::string guildTitle = cachedEntry ? cachedEntry->guildTitle : std::string();
+        if (!guildTitle.empty()) {
+            label += " [";
+            label += guildTitle;
+            label += "]";
+        }
+    }
+
+    return label;
+}
+
 void SendActorNameRequest(CGameMode& mode, u32 gid)
 {
     if (gid == 0 || gid == g_session.m_gid) {
@@ -2862,16 +3215,17 @@ std::string ResolveActorLabel(const CGameMode& mode, CGameActor* actor)
         return std::string();
     }
 
+    const NamePair* const cachedEntry = FindCachedHoverActorNameEntry(mode, actor);
+
     if (actor->m_gid == g_session.m_gid) {
         const char* playerName = g_session.GetPlayerName();
         if (playerName && *playerName) {
-            return playerName;
+            return BuildHoverActorLabel(playerName, cachedEntry, actor);
         }
     }
 
-    const auto cachedNameIt = mode.m_actorNameListByGID.find(actor->m_gid);
-    if (cachedNameIt != mode.m_actorNameListByGID.end() && !cachedNameIt->second.name.empty()) {
-        return cachedNameIt->second.name;
+    if (cachedEntry && !cachedEntry->name.empty()) {
+        return BuildHoverActorLabel(cachedEntry->name, cachedEntry, actor);
     }
 
     if (ShouldUseServerNameForHoverActor(actor)) {
@@ -3007,6 +3361,20 @@ QVariantMap MakeSpeechBubbleAnchor(const QString& text,
     anchor.insert(QStringLiteral("radius"), 8);
     anchor.insert(QStringLiteral("borderColor"), QStringLiteral("#80686868"));
     anchor.insert(QStringLiteral("z"), 2100);
+    return anchor;
+}
+
+QVariantMap MakePartyHpBarAnchor(int centerX, int topY, int currentHp, int maxHp)
+{
+    QVariantMap anchor;
+    anchor.insert(QStringLiteral("kind"), QStringLiteral("partyHpBar"));
+    anchor.insert(QStringLiteral("x"), centerX - 30);
+    anchor.insert(QStringLiteral("y"), topY);
+    anchor.insert(QStringLiteral("width"), 60);
+    anchor.insert(QStringLiteral("height"), 5);
+    anchor.insert(QStringLiteral("currentHp"), currentHp);
+    anchor.insert(QStringLiteral("maxHp"), maxHp);
+    anchor.insert(QStringLiteral("z"), 2050);
     return anchor;
 }
 
@@ -3171,6 +3539,9 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
     PopulateRechargeGaugeState(m_state);
     PopulateInventoryState(m_state);
     PopulateStorageState(m_state);
+    PopulateFriendPartyState(m_state);
+    PopulatePartySetupState(m_state);
+    PopulatePartyInviteState(m_state);
     PopulateEquipState(m_state);
     PopulateSkillListState(m_state);
     PopulateItemInfoState(m_state);
@@ -3191,6 +3562,44 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
         const matrix& viewMatrix = mode.m_view->GetViewMatrix();
         const float cameraLongitude = mode.m_view->GetCameraLongitude();
         const u32 now = GetTickCount();
+
+        auto appendPartyHpAnchor = [&](CGameActor* actor) {
+            if (!actor || actor->m_isPc == 0 || !actor->m_isVisible) {
+                return;
+            }
+            if (actor->m_gid == g_session.m_gid || actor->m_gid == g_session.m_aid) {
+                return;
+            }
+            if (actor->m_stateId == kGameActorDeathStateId) {
+                return;
+            }
+
+            const NamePair* const cachedEntry = FindCachedHoverActorNameEntry(mode, actor);
+            if (!cachedEntry || cachedEntry->name.empty()) {
+                SendActorNameRequest(mode, actor->m_gid);
+                return;
+            }
+
+            const FRIEND_INFO* matchedMember = nullptr;
+            for (const FRIEND_INFO& member : g_session.GetPartyList()) {
+                if (member.characterName == cachedEntry->name) {
+                    matchedMember = &member;
+                    break;
+                }
+            }
+            if (!matchedMember || matchedMember->partyMaxHp <= 0) {
+                return;
+            }
+
+            int centerX = 0;
+            int topY = 0;
+            int labelY = 0;
+            if (!mode.m_world->GetActorScreenMarker(viewMatrix, cameraLongitude, actor->m_gid, &centerX, &topY, &labelY)) {
+                return;
+            }
+
+            anchors.push_back(MakePartyHpBarAnchor(centerX, labelY + 8, matchedMember->partyHp, matchedMember->partyMaxHp));
+        };
 
         auto appendChatBubbleAnchor = [&](CGameActor* actor) {
             if (!actor || !actor->m_isVisible || !actor->HasActiveChatBubble(now)) {
@@ -3214,6 +3623,7 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
             if (!actor || actor == mode.m_world->m_player) {
                 continue;
             }
+            appendPartyHpAnchor(actor);
             appendChatBubbleAnchor(actor);
         }
 

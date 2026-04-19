@@ -136,6 +136,51 @@ bool LoadTextFileFromGameData(const char* fileName, std::string& outText)
     return false;
 }
 
+constexpr u32 kRosterAccentColors[] = {
+    0xFF0A31B8u,
+    0xFF0071B8u,
+    0xFF000000u,
+    0xFF7800A0u,
+    0xFF007040u,
+    0xFF787000u,
+    0xFF780078u,
+    0xFF782800u,
+    0xFF787828u,
+    0xFF000078u,
+    0xFF0031B2u,
+    0xFF319000u,
+    0xFF003180u,
+    0xFF319000u,
+    0xFF319032u,
+    0xFF7800A0u,
+};
+
+u32 ResolveRosterAccentColor(int index)
+{
+    if (index < 0) {
+        index = 0;
+    }
+    constexpr size_t kRosterAccentColorCount = sizeof(kRosterAccentColors) / sizeof(kRosterAccentColors[0]);
+    return kRosterAccentColors[static_cast<size_t>(index) % kRosterAccentColorCount];
+}
+
+std::string NormalizePartyMapName(std::string value)
+{
+    if (value.size() > 4) {
+        value.resize(value.size() - 3);
+        value += "rsw";
+    }
+    return value;
+}
+
+bool NamesEqual(const std::string& left, const char* right)
+{
+    if (!right) {
+        return left.empty();
+    }
+    return left == right;
+}
+
 std::string NormalizeFogMapName(const char* rswName)
 {
     std::string normalized = ToLowerAscii(TrimAscii(rswName ? rswName : ""));
@@ -2002,6 +2047,175 @@ int CSession::GetNpcShopUnitPrice(const NPC_SHOP_ROW& row) const
         return row.secondaryPrice;
     }
     return row.price;
+}
+
+void CSession::ClearParty()
+{
+    m_partyList.clear();
+    m_partyName.clear();
+    m_amIPartyMaster = false;
+    m_partyExpShare = false;
+    m_itemDivType = false;
+    m_itemCollectType = false;
+}
+
+unsigned int CSession::GetNumParty() const
+{
+    return static_cast<unsigned int>(m_partyList.size());
+}
+
+void CSession::AddMemberToParty(const FRIEND_INFO& info)
+{
+    FRIEND_INFO member = info;
+    member.mapName = NormalizePartyMapName(member.mapName);
+
+    int index = 0;
+    for (FRIEND_INFO& existing : m_partyList) {
+        if (existing.characterName == member.characterName) {
+            if (member.partyHp <= 0 && member.partyMaxHp <= 0) {
+                member.partyHp = existing.partyHp;
+                member.partyMaxHp = existing.partyMaxHp;
+            }
+            member.color = ResolveRosterAccentColor(index);
+            existing = member;
+            return;
+        }
+        ++index;
+    }
+
+    member.color = ResolveRosterAccentColor(index);
+    m_partyList.push_back(std::move(member));
+}
+
+unsigned int CSession::GetMemberAidFromParty(const char* characterName) const
+{
+    for (const FRIEND_INFO& member : m_partyList) {
+        if (NamesEqual(member.characterName, characterName)) {
+            return member.AID;
+        }
+    }
+    return 0;
+}
+
+void CSession::DeleteMemberFromParty(const char* characterName)
+{
+    auto it = std::find_if(m_partyList.begin(), m_partyList.end(), [&](const FRIEND_INFO& member) {
+        return NamesEqual(member.characterName, characterName);
+    });
+    if (it != m_partyList.end()) {
+        m_partyList.erase(it);
+    }
+}
+
+void CSession::ChangeRoleFromParty(unsigned int aid, int role)
+{
+    for (FRIEND_INFO& member : m_partyList) {
+        if (member.AID == aid) {
+            member.role = role;
+            return;
+        }
+    }
+}
+
+bool CSession::SetPartyMemberHp(unsigned int aid, int hp, int maxHp)
+{
+    for (FRIEND_INFO& member : m_partyList) {
+        if (member.AID == aid) {
+            member.partyHp = (std::max)(0, hp);
+            member.partyMaxHp = (std::max)(0, maxHp);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+const FRIEND_INFO* CSession::FindPartyMemberByAid(unsigned int aid) const
+{
+    for (const FRIEND_INFO& member : m_partyList) {
+        if (member.AID == aid) {
+            return &member;
+        }
+    }
+
+    return nullptr;
+}
+
+void CSession::RefreshPartyUI()
+{
+}
+
+const std::list<FRIEND_INFO>& CSession::GetPartyList() const
+{
+    return m_partyList;
+}
+
+void CSession::ClearFriend()
+{
+    m_friendList.clear();
+}
+
+unsigned int CSession::GetNumFriend() const
+{
+    return static_cast<unsigned int>(m_friendList.size());
+}
+
+bool CSession::IsFriendName(const char* characterName) const
+{
+    return std::any_of(m_friendList.begin(), m_friendList.end(), [&](const FRIEND_INFO& info) {
+        return NamesEqual(info.characterName, characterName);
+    });
+}
+
+bool CSession::DeleteFriendFromList(unsigned int gid)
+{
+    auto it = std::find_if(m_friendList.begin(), m_friendList.end(), [&](const FRIEND_INFO& info) {
+        return info.GID == gid;
+    });
+    if (it == m_friendList.end()) {
+        return false;
+    }
+
+    m_friendList.erase(it);
+    return true;
+}
+
+void CSession::AddFriendToList(const FRIEND_INFO& info)
+{
+    FRIEND_INFO entry = info;
+
+    int index = 0;
+    for (FRIEND_INFO& existing : m_friendList) {
+        if (existing.characterName == entry.characterName) {
+            entry.color = ResolveRosterAccentColor(index);
+            existing = entry;
+            return;
+        }
+        ++index;
+    }
+
+    entry.color = ResolveRosterAccentColor(index);
+    m_friendList.push_back(std::move(entry));
+}
+
+bool CSession::SetFriendState(unsigned int aid, unsigned int gid, unsigned char state)
+{
+    for (FRIEND_INFO& info : m_friendList) {
+        if (info.AID == aid && info.GID == gid) {
+            info.state = state;
+            return true;
+        }
+    }
+    return false;
+}
+
+void CSession::RefreshFriendUI()
+{
+}
+
+const std::list<FRIEND_INFO>& CSession::GetFriendList() const
+{
+    return m_friendList;
 }
 
 void CSession::ClearShortcutSlots()

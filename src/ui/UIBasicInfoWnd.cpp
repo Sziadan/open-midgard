@@ -470,6 +470,9 @@ msgresult_t UIBasicInfoWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam
     case kButtonIdMap:
         g_windowMgr.ToggleWindow(UIWindowMgr::WID_ROMAPWND);
         return 1;
+    case kButtonIdFriend:
+        g_windowMgr.ToggleWindow(UIWindowMgr::WID_MESSENGERGROUPWND);
+        return 1;
     default:
         return 1;
     }

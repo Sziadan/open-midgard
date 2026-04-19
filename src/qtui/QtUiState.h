@@ -192,6 +192,24 @@ class QtUiState : public QObject {
     Q_PROPERTY(bool storageMini READ storageMini NOTIFY storageMiniChanged)
     Q_PROPERTY(int storageTab READ storageTab NOTIFY storageTabChanged)
     Q_PROPERTY(QVariantMap storageData READ storageData NOTIFY storageDataChanged)
+    Q_PROPERTY(bool friendPartyVisible READ friendPartyVisible NOTIFY friendPartyVisibleChanged)
+    Q_PROPERTY(int friendPartyX READ friendPartyX NOTIFY friendPartyGeometryChanged)
+    Q_PROPERTY(int friendPartyY READ friendPartyY NOTIFY friendPartyGeometryChanged)
+    Q_PROPERTY(int friendPartyWidth READ friendPartyWidth NOTIFY friendPartyGeometryChanged)
+    Q_PROPERTY(int friendPartyHeight READ friendPartyHeight NOTIFY friendPartyGeometryChanged)
+    Q_PROPERTY(QVariantMap friendPartyData READ friendPartyData NOTIFY friendPartyDataChanged)
+    Q_PROPERTY(bool partySetupVisible READ partySetupVisible NOTIFY partySetupVisibleChanged)
+    Q_PROPERTY(int partySetupX READ partySetupX NOTIFY partySetupGeometryChanged)
+    Q_PROPERTY(int partySetupY READ partySetupY NOTIFY partySetupGeometryChanged)
+    Q_PROPERTY(int partySetupWidth READ partySetupWidth NOTIFY partySetupGeometryChanged)
+    Q_PROPERTY(int partySetupHeight READ partySetupHeight NOTIFY partySetupGeometryChanged)
+    Q_PROPERTY(QVariantMap partySetupData READ partySetupData NOTIFY partySetupDataChanged)
+    Q_PROPERTY(bool partyInviteVisible READ partyInviteVisible NOTIFY partyInviteVisibleChanged)
+    Q_PROPERTY(int partyInviteX READ partyInviteX NOTIFY partyInviteGeometryChanged)
+    Q_PROPERTY(int partyInviteY READ partyInviteY NOTIFY partyInviteGeometryChanged)
+    Q_PROPERTY(int partyInviteWidth READ partyInviteWidth NOTIFY partyInviteGeometryChanged)
+    Q_PROPERTY(int partyInviteHeight READ partyInviteHeight NOTIFY partyInviteGeometryChanged)
+    Q_PROPERTY(QVariantMap partyInviteData READ partyInviteData NOTIFY partyInviteDataChanged)
     Q_PROPERTY(bool equipVisible READ equipVisible NOTIFY equipVisibleChanged)
     Q_PROPERTY(int equipX READ equipX NOTIFY equipGeometryChanged)
     Q_PROPERTY(int equipY READ equipY NOTIFY equipGeometryChanged)
@@ -449,6 +467,24 @@ public:
     bool storageMini() const { return m_storageMini; }
     int storageTab() const { return m_storageTab; }
     const QVariantMap& storageData() const { return m_storageData; }
+    bool friendPartyVisible() const { return m_friendPartyVisible; }
+    int friendPartyX() const { return m_friendPartyX; }
+    int friendPartyY() const { return m_friendPartyY; }
+    int friendPartyWidth() const { return m_friendPartyWidth; }
+    int friendPartyHeight() const { return m_friendPartyHeight; }
+    const QVariantMap& friendPartyData() const { return m_friendPartyData; }
+    bool partySetupVisible() const { return m_partySetupVisible; }
+    int partySetupX() const { return m_partySetupX; }
+    int partySetupY() const { return m_partySetupY; }
+    int partySetupWidth() const { return m_partySetupWidth; }
+    int partySetupHeight() const { return m_partySetupHeight; }
+    const QVariantMap& partySetupData() const { return m_partySetupData; }
+    bool partyInviteVisible() const { return m_partyInviteVisible; }
+    int partyInviteX() const { return m_partyInviteX; }
+    int partyInviteY() const { return m_partyInviteY; }
+    int partyInviteWidth() const { return m_partyInviteWidth; }
+    int partyInviteHeight() const { return m_partyInviteHeight; }
+    const QVariantMap& partyInviteData() const { return m_partyInviteData; }
     bool equipVisible() const { return m_equipVisible; }
     int equipX() const { return m_equipX; }
     int equipY() const { return m_equipY; }
@@ -1497,6 +1533,90 @@ public:
         emit storageDataChanged();
     }
 
+    void setFriendPartyVisible(bool value) {
+        if (m_friendPartyVisible == value) {
+            return;
+        }
+        m_friendPartyVisible = value;
+        emit friendPartyVisibleChanged();
+    }
+
+    void setFriendPartyGeometry(int x, int y, int width, int height) {
+        if (m_friendPartyX == x && m_friendPartyY == y
+            && m_friendPartyWidth == width && m_friendPartyHeight == height) {
+            return;
+        }
+        m_friendPartyX = x;
+        m_friendPartyY = y;
+        m_friendPartyWidth = width;
+        m_friendPartyHeight = height;
+        emit friendPartyGeometryChanged();
+    }
+
+    void setFriendPartyData(const QVariantMap& value) {
+        if (m_friendPartyData == value) {
+            return;
+        }
+        m_friendPartyData = value;
+        emit friendPartyDataChanged();
+    }
+
+    void setPartySetupVisible(bool value) {
+        if (m_partySetupVisible == value) {
+            return;
+        }
+        m_partySetupVisible = value;
+        emit partySetupVisibleChanged();
+    }
+
+    void setPartySetupGeometry(int x, int y, int width, int height) {
+        if (m_partySetupX == x && m_partySetupY == y
+            && m_partySetupWidth == width && m_partySetupHeight == height) {
+            return;
+        }
+        m_partySetupX = x;
+        m_partySetupY = y;
+        m_partySetupWidth = width;
+        m_partySetupHeight = height;
+        emit partySetupGeometryChanged();
+    }
+
+    void setPartySetupData(const QVariantMap& value) {
+        if (m_partySetupData == value) {
+            return;
+        }
+        m_partySetupData = value;
+        emit partySetupDataChanged();
+    }
+
+    void setPartyInviteVisible(bool value) {
+        if (m_partyInviteVisible == value) {
+            return;
+        }
+        m_partyInviteVisible = value;
+        emit partyInviteVisibleChanged();
+    }
+
+    void setPartyInviteGeometry(int x, int y, int width, int height) {
+        if (m_partyInviteX == x && m_partyInviteY == y
+            && m_partyInviteWidth == width && m_partyInviteHeight == height) {
+            return;
+        }
+        m_partyInviteX = x;
+        m_partyInviteY = y;
+        m_partyInviteWidth = width;
+        m_partyInviteHeight = height;
+        emit partyInviteGeometryChanged();
+    }
+
+    void setPartyInviteData(const QVariantMap& value) {
+        if (m_partyInviteData == value) {
+            return;
+        }
+        m_partyInviteData = value;
+        emit partyInviteDataChanged();
+    }
+
     void setEquipVisible(bool value) {
         if (m_equipVisible == value) {
             return;
@@ -1911,6 +2031,15 @@ signals:
     void storageMiniChanged();
     void storageTabChanged();
     void storageDataChanged();
+    void friendPartyVisibleChanged();
+    void friendPartyGeometryChanged();
+    void friendPartyDataChanged();
+    void partySetupVisibleChanged();
+    void partySetupGeometryChanged();
+    void partySetupDataChanged();
+    void partyInviteVisibleChanged();
+    void partyInviteGeometryChanged();
+    void partyInviteDataChanged();
     void equipVisibleChanged();
     void equipGeometryChanged();
     void equipMiniChanged();
@@ -2132,6 +2261,24 @@ private:
     bool m_storageMini = false;
     int m_storageTab = 0;
     QVariantMap m_storageData;
+    bool m_friendPartyVisible = false;
+    int m_friendPartyX = 0;
+    int m_friendPartyY = 0;
+    int m_friendPartyWidth = 0;
+    int m_friendPartyHeight = 0;
+    QVariantMap m_friendPartyData;
+    bool m_partySetupVisible = false;
+    int m_partySetupX = 0;
+    int m_partySetupY = 0;
+    int m_partySetupWidth = 0;
+    int m_partySetupHeight = 0;
+    QVariantMap m_partySetupData;
+    bool m_partyInviteVisible = false;
+    int m_partyInviteX = 0;
+    int m_partyInviteY = 0;
+    int m_partyInviteWidth = 0;
+    int m_partyInviteHeight = 0;
+    QVariantMap m_partyInviteData;
     bool m_equipVisible = false;
     int m_equipX = 0;
     int m_equipY = 0;

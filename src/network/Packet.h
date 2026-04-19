@@ -125,6 +125,24 @@ constexpr u16 kMoveFromStorage = PacketVer23StorageSend::kMoveFromStorage;
 constexpr u16 kCloseStorage = PacketVer23StorageSend::kCloseStorage;
 }
 
+namespace LegacyPartySend {
+constexpr u16 kInviteParty = 0x00FC;
+constexpr u16 kReplyPartyInvite = 0x00FF;
+constexpr u16 kCreateParty = 0x00F9;
+constexpr u16 kLeaveParty = 0x0100;
+constexpr u16 kChangePartyOption = 0x0102;
+constexpr u16 kRemovePartyMember = 0x0103;
+}
+
+namespace ActivePartySend {
+constexpr u16 kInviteParty = LegacyPartySend::kInviteParty;
+constexpr u16 kReplyPartyInvite = LegacyPartySend::kReplyPartyInvite;
+constexpr u16 kCreateParty = LegacyPartySend::kCreateParty;
+constexpr u16 kLeaveParty = LegacyPartySend::kLeaveParty;
+constexpr u16 kChangePartyOption = LegacyPartySend::kChangePartyOption;
+constexpr u16 kRemovePartyMember = LegacyPartySend::kRemovePartyMember;
+}
+
 namespace LegacyShortcutSend {
 constexpr u16 kKeyChange = 0x02BA;
 }
@@ -383,6 +401,38 @@ struct PACKET_CZ_PC_SELL_ITEMLIST {
     // Followed by repeated { index.W, amount.W } rows.
 };
 
+struct PACKET_CZ_CREATE_GROUP {
+    u16 PacketType;    // 0x00F9
+    char PartyName[24];
+};
+
+struct PACKET_CZ_REQ_JOIN_GROUP {
+    u16 PacketType;    // 0x00FC
+    u32 AccountId;
+};
+
+struct PACKET_CZ_JOIN_GROUP {
+    u16 PacketType;    // 0x00FF
+    u32 PartyId;
+    u32 Flag;
+};
+
+struct PACKET_CZ_REQ_LEAVE_GROUP {
+    u16 PacketType;    // 0x0100
+};
+
+struct PACKET_CZ_CHANGE_GROUP_MASTER {
+    u16 PacketType;    // 0x0102
+    u16 ExpOption;
+    u16 ItemOption;
+};
+
+struct PACKET_CZ_REQ_EXPEL_GROUP_MEMBER {
+    u16 PacketType;    // 0x0103
+    u32 AccountId;
+    char CharacterName[24];
+};
+
 struct PACKET_CZ_MOVE_ITEM_TO_STORE {
     u16 PacketType;    // 0x0094 for packet_ver 22/23 pre-renewal storage family
     u8  padding0[5];
@@ -491,6 +541,12 @@ static_assert(sizeof(PACKET_CZ_NPC_CLOSE_DIALOG) == 6, "PACKET_CZ_NPC_CLOSE_DIAL
 static_assert(sizeof(PACKET_CZ_ACK_SELECT_DEALTYPE) == 7, "PACKET_CZ_ACK_SELECT_DEALTYPE size mismatch");
 static_assert(sizeof(PACKET_CZ_PC_PURCHASE_ITEMLIST) == 4, "PACKET_CZ_PC_PURCHASE_ITEMLIST size mismatch");
 static_assert(sizeof(PACKET_CZ_PC_SELL_ITEMLIST) == 4, "PACKET_CZ_PC_SELL_ITEMLIST size mismatch");
+static_assert(sizeof(PACKET_CZ_CREATE_GROUP) == 26, "PACKET_CZ_CREATE_GROUP size mismatch");
+static_assert(sizeof(PACKET_CZ_REQ_JOIN_GROUP) == 6, "PACKET_CZ_REQ_JOIN_GROUP size mismatch");
+static_assert(sizeof(PACKET_CZ_JOIN_GROUP) == 10, "PACKET_CZ_JOIN_GROUP size mismatch");
+static_assert(sizeof(PACKET_CZ_REQ_LEAVE_GROUP) == 2, "PACKET_CZ_REQ_LEAVE_GROUP size mismatch");
+static_assert(sizeof(PACKET_CZ_CHANGE_GROUP_MASTER) == 6, "PACKET_CZ_CHANGE_GROUP_MASTER size mismatch");
+static_assert(sizeof(PACKET_CZ_REQ_EXPEL_GROUP_MEMBER) == 30, "PACKET_CZ_REQ_EXPEL_GROUP_MEMBER size mismatch");
 static_assert(sizeof(PACKET_CZ_MOVE_ITEM_TO_STORE) == 14, "PACKET_CZ_MOVE_ITEM_TO_STORE size mismatch");
 static_assert(sizeof(PACKET_CZ_MOVE_ITEM_FROM_STORE) == 22, "PACKET_CZ_MOVE_ITEM_FROM_STORE size mismatch");
 static_assert(sizeof(PACKET_CZ_CLOSE_STORE) == 2, "PACKET_CZ_CLOSE_STORE size mismatch");

@@ -198,6 +198,7 @@ Item {
 
         delegate: Item {
             required property var modelData
+            property bool isPartyHpBar: modelData.kind === "partyHpBar"
             property int bubblePaddingX: modelData.showBubble === false ? 0 : (modelData.paddingX || 12)
             property int bubblePaddingY: modelData.showBubble === false ? 0 : (modelData.paddingY || 8)
             property int maxTextWidth: modelData.maxTextWidth || 0
@@ -215,14 +216,43 @@ Item {
             x: root.clampOverlayX(anchorX, width)
             y: root.clampOverlayY(anchorY, height)
             z: modelData.z || 2000
-            width: textWidth + bubblePaddingX
-            height: Math.max(1, Math.ceil(label.implicitHeight)) + bubblePaddingY
+            width: isPartyHpBar ? (modelData.width || 60) : (textWidth + bubblePaddingX)
+            height: isPartyHpBar ? (modelData.height || 5) : (Math.max(1, Math.ceil(label.implicitHeight)) + bubblePaddingY)
+
+            Rectangle {
+                visible: parent.isPartyHpBar
+                x: 0
+                y: 0
+                width: parent.width
+                height: parent.height
+                color: "#14199b"
+
+                Rectangle {
+                    x: 1
+                    y: 1
+                    width: parent.width - 2
+                    height: parent.height - 2
+                    color: "#1e243a"
+                }
+
+                Rectangle {
+                    x: 1
+                    y: 1
+                    width: {
+                        const maxHp = Math.max(1, modelData.maxHp || 0)
+                        const currentHp = Math.max(0, Math.min(modelData.currentHp || 0, maxHp))
+                        return Math.max(0, Math.floor((parent.width - 2) * currentHp / maxHp))
+                    }
+                    height: parent.height - 2
+                    color: (modelData.maxHp > 0 && (modelData.currentHp || 0) * 4 < (modelData.maxHp || 0)) ? "#ea1616" : "#16ea25"
+                }
+            }
 
             Rectangle {
                 anchors.fill: parent
                 radius: modelData.radius || 6
                 color: modelData.background
-                visible: modelData.showBubble !== false
+                visible: !parent.isPartyHpBar && modelData.showBubble !== false
                 border.width: 1
                 border.color: modelData.borderColor || "#80ffffff"
             }
@@ -233,6 +263,7 @@ Item {
                 y: Math.floor(parent.bubblePaddingY / 2)
                 width: parent.textWidth
                 text: modelData.text
+                visible: !parent.isPartyHpBar
                 color: modelData.foreground
                 font.pixelSize: modelData.fontPixelSize || 14
                 font.bold: modelData.bold !== false
@@ -2953,6 +2984,499 @@ Item {
                         elide: Text.ElideRight
                         visible: modelData.occupied
                     }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        x: uiState.friendPartyX
+        y: uiState.friendPartyY
+        width: uiState.friendPartyWidth
+        height: uiState.friendPartyHeight
+        radius: 4
+        color: "#e9e1d2"
+        border.width: 1
+        border.color: "#5c5243"
+        visible: uiState.friendPartyVisible
+
+        Rectangle {
+            x: 1
+            y: 1
+            width: parent.width - 2
+            height: 16
+            radius: 3
+            color: "#5c6f60"
+            border.width: 1
+            border.color: "#3c4a3e"
+        }
+
+        Text {
+            x: 10
+            y: 2
+            text: uiState.friendPartyData.title || "Friend / Party"
+            color: "#f8f8f0"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Repeater {
+            model: uiState.friendPartyData.systemButtons || []
+
+            delegate: Rectangle {
+                required property var modelData
+                x: (modelData.x || 0) - uiState.friendPartyX
+                y: (modelData.y || 0) - uiState.friendPartyY
+                width: modelData.width || 0
+                height: modelData.height || 0
+                radius: 2
+                color: "#d2c6b4"
+                border.width: 1
+                border.color: "#6e604a"
+                visible: modelData.visible || false
+
+                Text {
+                    anchors.centerIn: parent
+                    text: modelData.label || ""
+                    color: "#222222"
+                    font.pixelSize: 9
+                    font.bold: true
+                }
+            }
+        }
+
+        Rectangle {
+            x: 0
+            y: 17
+            width: parent.width
+            height: parent.height - 17
+            color: "#f5f0e5"
+
+            Repeater {
+                model: uiState.friendPartyData.tabs || []
+
+                delegate: Rectangle {
+                    required property var modelData
+                    x: (modelData.x || 0) - uiState.friendPartyX
+                    y: (modelData.y || 0) - uiState.friendPartyY - 17
+                    width: modelData.width || 0
+                    height: modelData.height || 0
+                    radius: 3
+                    color: modelData.active ? "#fff7e9" : "#d6ccb8"
+                    border.width: 1
+                    border.color: modelData.active ? "#7a623e" : "#978972"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: modelData.label || ""
+                        color: "#2a2a2a"
+                        font.pixelSize: 10
+                        font.bold: true
+                    }
+                }
+            }
+
+            Rectangle {
+                x: 10
+                y: 23
+                width: parent.width - 26
+                height: 18
+                color: "#e0d8c6"
+                border.width: 1
+                border.color: "#ab9e88"
+
+                Text {
+                    x: 6
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Name"
+                    color: "#4c3d25"
+                    font.pixelSize: 10
+                    font.bold: true
+                }
+
+                Text {
+                    x: 110
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: (uiState.friendPartyData.currentTab || 0) === 0 ? "State" : "Role"
+                    color: "#4c3d25"
+                    font.pixelSize: 10
+                    font.bold: true
+                }
+
+                Text {
+                    x: 171
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: (uiState.friendPartyData.currentTab || 0) === 0 ? "Memo" : "Map"
+                    color: "#4c3d25"
+                    font.pixelSize: 10
+                    font.bold: true
+                }
+            }
+
+            Rectangle {
+                x: 10
+                y: 41
+                width: parent.width - 26
+                height: parent.height - 125
+                color: "#fcf9f2"
+                border.width: 1
+                border.color: "#9e937c"
+
+                Repeater {
+                    model: uiState.friendPartyData.rows || []
+
+                    delegate: Rectangle {
+                        required property var modelData
+                        x: (modelData.x || 0) - uiState.friendPartyX - 10
+                        y: (modelData.y || 0) - uiState.friendPartyY - 58
+                        width: modelData.width || 0
+                        height: modelData.height || 0
+                        color: modelData.selected ? "#ebe2cd" : "#faf7ef"
+
+                        Rectangle {
+                            x: 3
+                            y: 3
+                            width: 6
+                            height: parent.height - 6
+                            color: Qt.rgba(((modelData.color || 0) >> 16 & 255) / 255,
+                                           ((modelData.color || 0) >> 8 & 255) / 255,
+                                           ((modelData.color || 0) & 255) / 255,
+                                           1.0)
+                        }
+
+                        Text {
+                            x: 14
+                            width: 88
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: modelData.name || ""
+                            color: "#1a1a1a"
+                            font.pixelSize: 10
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            x: 109
+                            width: 50
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: modelData.status || ""
+                            color: "#424242"
+                            font.pixelSize: 10
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            x: 171
+                            width: parent.width - 175
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: modelData.detail || ""
+                            color: "#5c5040"
+                            font.pixelSize: 10
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+
+                Rectangle {
+                    x: width - 12
+                    y: 1
+                    width: 11
+                    height: parent.height - 2
+                    color: "#e6dfd0"
+                    border.width: 1
+                    border.color: "#a8997e"
+                    visible: uiState.friendPartyData.scrollBarVisible || false
+
+                    Rectangle {
+                        x: 1
+                        y: (uiState.friendPartyData.scrollThumbY || 0) - (uiState.friendPartyData.scrollTrackY || 0)
+                        width: parent.width - 2
+                        height: uiState.friendPartyData.scrollThumbHeight || 0
+                        color: "#97835e"
+                        border.width: 1
+                        border.color: "#68563a"
+                    }
+                }
+            }
+
+            Repeater {
+                model: uiState.friendPartyData.actionButtons || []
+
+                delegate: Rectangle {
+                    required property var modelData
+                    x: (modelData.x || 0) - uiState.friendPartyX
+                    y: (modelData.y || 0) - uiState.friendPartyY - 17
+                    width: modelData.width || 0
+                    height: modelData.height || 0
+                    radius: 3
+                    color: (modelData.active || false) ? "#d4e2ef" : "#ebe5d6"
+                    border.width: 1
+                    border.color: "#796a4f"
+                    visible: modelData.visible || false
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: modelData.label || ""
+                        color: "#1c1c1c"
+                        font.pixelSize: 10
+                        font.bold: true
+                    }
+                }
+            }
+
+            Rectangle {
+                x: 10
+                y: parent.height - 43
+                width: parent.width - 20
+                height: 34
+                color: "#e8e2d5"
+                border.width: 1
+                border.color: "#b1a590"
+
+                Text {
+                    x: 6
+                    y: 4
+                    text: uiState.friendPartyData.summaryTitle || ""
+                    color: "#443a2c"
+                    font.pixelSize: 10
+                    font.bold: true
+                }
+
+                Text {
+                    x: 86
+                    width: parent.width - 92
+                    y: 4
+                    text: uiState.friendPartyData.summaryValue || ""
+                    color: "#303030"
+                    font.pixelSize: 10
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    x: 6
+                    y: 18
+                    width: parent.width - 12
+                    text: uiState.friendPartyData.summarySecondaryValue || ""
+                    color: "#303030"
+                    font.pixelSize: 10
+                    elide: Text.ElideRight
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        x: uiState.partySetupX
+        y: uiState.partySetupY
+        width: uiState.partySetupWidth
+        height: uiState.partySetupHeight
+        radius: 4
+        color: "#e9e1d2"
+        border.width: 1
+        border.color: "#5c5243"
+        visible: uiState.partySetupVisible
+
+        Rectangle {
+            x: 1
+            y: 1
+            width: parent.width - 2
+            height: 16
+            radius: 3
+            color: "#5c6f60"
+            border.width: 1
+            border.color: "#3c4a3e"
+        }
+
+        Text {
+            x: 10
+            y: 2
+            text: uiState.partySetupData.title || "Party Setup"
+            color: "#f8f8f0"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Repeater {
+            model: uiState.partySetupData.labels || []
+
+            delegate: Text {
+                required property var modelData
+                x: (modelData.x || 0) - uiState.partySetupX
+                y: (modelData.y || 0) - uiState.partySetupY
+                width: modelData.width || 0
+                height: modelData.height || 0
+                text: modelData.text || ""
+                color: (modelData.header || false) ? "#4a3c26" : "#2e2e2e"
+                font.pixelSize: 10
+                font.bold: modelData.header || false
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+            }
+        }
+
+        Rectangle {
+            x: (uiState.partySetupData.nameFieldX || 0) - uiState.partySetupX
+            y: (uiState.partySetupData.nameFieldY || 0) - uiState.partySetupY
+            width: uiState.partySetupData.nameFieldWidth || 0
+            height: uiState.partySetupData.nameFieldHeight || 0
+            color: (uiState.partySetupData.showNameEdit || false)
+                ? ((uiState.partySetupData.nameFocused || false) ? "#ffffc8" : "#f2f2f2")
+                : "#fcf9f2"
+            border.width: 1
+            border.color: (uiState.partySetupData.showNameEdit || false) ? "#000000" : "#9e937c"
+
+            Text {
+                x: 6
+                width: parent.width - 12
+                anchors.verticalCenter: parent.verticalCenter
+                text: uiState.partySetupData.nameValue || ""
+                color: "#202020"
+                font.pixelSize: 11
+                elide: Text.ElideRight
+            }
+        }
+
+        Repeater {
+            model: uiState.partySetupData.choices || []
+
+            delegate: Item {
+                required property var modelData
+                x: (modelData.x || 0) - uiState.partySetupX
+                y: (modelData.y || 0) - uiState.partySetupY
+                width: modelData.width || 0
+                height: modelData.height || 0
+
+                Rectangle {
+                    x: 0
+                    y: 2
+                    width: 14
+                    height: 14
+                    color: "#f7f3e9"
+                    border.width: 1
+                    border.color: "#7e6f55"
+
+                    Rectangle {
+                        x: 3
+                        y: 3
+                        width: 8
+                        height: 8
+                        color: "#576f8a"
+                        visible: modelData.selected || false
+                    }
+                }
+
+                Text {
+                    x: 20
+                    width: parent.width - 20
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: modelData.label || ""
+                    color: "#2c2c2c"
+                    font.pixelSize: 10
+                    elide: Text.ElideRight
+                }
+            }
+        }
+
+        Repeater {
+            model: uiState.partySetupData.buttons || []
+
+            delegate: Rectangle {
+                required property var modelData
+                x: (modelData.x || 0) - uiState.partySetupX
+                y: (modelData.y || 0) - uiState.partySetupY
+                width: modelData.width || 0
+                height: modelData.height || 0
+                radius: 3
+                color: (modelData.active || false) ? "#d4e2ef" : "#ebe5d6"
+                border.width: 1
+                border.color: "#796a4f"
+                visible: modelData.visible || false
+
+                Text {
+                    anchors.centerIn: parent
+                    text: modelData.label || ""
+                    color: "#1c1c1c"
+                    font.pixelSize: 10
+                    font.bold: true
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        x: uiState.partyInviteX
+        y: uiState.partyInviteY
+        width: uiState.partyInviteWidth
+        height: uiState.partyInviteHeight
+        radius: 4
+        color: "#e9e1d2"
+        border.width: 1
+        border.color: "#5c5243"
+        visible: uiState.partyInviteVisible
+
+        Rectangle {
+            x: 1
+            y: 1
+            width: parent.width - 2
+            height: 16
+            radius: 3
+            color: "#5c6f60"
+            border.width: 1
+            border.color: "#3c4a3e"
+        }
+
+        Rectangle {
+            x: 14
+            y: 28
+            width: parent.width - 28
+            height: 52
+            radius: 2
+            color: "#efe8db"
+            border.width: 1
+            border.color: "#a5967d"
+        }
+
+        Text {
+            x: 10
+            y: 2
+            text: uiState.partyInviteData.title || "Party Invitation"
+            color: "#f8f8f0"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Text {
+            x: 20
+            y: 34
+            width: parent.width - 40
+            height: 42
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            wrapMode: Text.WordWrap
+            text: uiState.partyInviteData.bodyText || ((uiState.partyInviteData.messageLines || []).join("\n"))
+            color: "#383838"
+            font.pixelSize: 11
+        }
+
+        Repeater {
+            model: uiState.partyInviteData.buttons || []
+
+            delegate: Rectangle {
+                required property var modelData
+                x: (modelData.x || 0) - uiState.partyInviteX
+                y: (modelData.y || 0) - uiState.partyInviteY
+                width: modelData.width || 0
+                height: modelData.height || 0
+                radius: 3
+                color: (modelData.active || false) ? "#d4e2ef" : "#ebe5d6"
+                border.width: 1
+                border.color: "#796a4f"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: modelData.label || ""
+                    color: "#1c1c1c"
+                    font.pixelSize: 10
+                    font.bold: true
                 }
             }
         }

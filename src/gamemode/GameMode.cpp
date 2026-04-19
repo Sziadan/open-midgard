@@ -21,6 +21,8 @@
 #include "res/WorldRes.h"
 #include "session/Session.h"
 #include "ui/UIMinimapWnd.h"
+#include "ui/UiScale.h"
+#include "ui/UIPlayerContextMenuWnd.h"
 #include "ui/UIWindow.h"
 #include "ui/UIWindowMgr.h"
 #include "render/DrawUtil.h"
@@ -3208,6 +3210,102 @@ std::string ResolveHoveredActorName(CGameMode& mode, CGameActor* actor)
     return "Entity";
 }
 
+std::string FormatPlayerContextLabel(const char* format, const std::string& playerName)
+{
+    if (!format) {
+        return std::string();
+    }
+
+    char buffer[256] = {};
+    std::snprintf(buffer, sizeof(buffer), format, playerName.c_str());
+    return buffer;
+}
+
+std::vector<PlayerContextMenuEntry> BuildPlayerContextMenuEntries(const std::string& playerName)
+{
+    return {
+        { CGameMode::PlayerContext_CheckEquipmentInfo, FormatPlayerContextLabel("Check %s's Equipment Info", playerName) },
+        { CGameMode::PlayerContext_RequestDeal, FormatPlayerContextLabel("Request a deal with (%s)", playerName) },
+        { CGameMode::PlayerContext_AskJoinParty, FormatPlayerContextLabel("Ask (%s) to join your party", playerName) },
+        { CGameMode::PlayerContext_InviteJoinGuild, FormatPlayerContextLabel("Invite (%s) to join your guild", playerName) },
+        { CGameMode::PlayerContext_SendWhisper, "Send whisper to player" },
+        { CGameMode::PlayerContext_RegisterFriend, "Register as a Friend" },
+        { CGameMode::PlayerContext_SendMail, "Send a mail" },
+        { CGameMode::PlayerContext_RejectWhispering, "Reject Whispering" },
+    };
+}
+
+bool TryOpenPlayerContextMenu(CGameMode& mode, int screenX, int screenY)
+{
+    if (!mode.m_world || !mode.m_view) {
+        return false;
+    }
+
+    CGameActor* hoveredActor = nullptr;
+    if (!mode.m_world->FindHoveredActorScreen(mode.m_view->GetViewMatrix(),
+        mode.m_view->GetCameraLongitude(),
+        screenX,
+        screenY,
+        &hoveredActor,
+        nullptr,
+        nullptr)) {
+        return false;
+    }
+
+    if (!IsPcLikeHoverActor(hoveredActor) || IsMonsterLikeHoverActor(hoveredActor) || IsNpcLikeHoverActor(hoveredActor)) {
+        return false;
+    }
+
+    const bool isSelfTarget = hoveredActor == mode.m_world->m_player
+        || hoveredActor->m_gid == g_session.m_gid
+        || hoveredActor->m_gid == g_session.m_aid;
+    if (isSelfTarget) {
+        return false;
+    }
+
+    const std::string targetName = ResolveHoveredActorName(mode, hoveredActor);
+    const u32 targetAid = hoveredActor->m_gid;
+    auto* menuWnd = static_cast<UIPlayerContextMenuWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_PLAYERCONTEXTMENUWND));
+    if (!menuWnd) {
+        return false;
+    }
+
+    const int menuX = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(screenX) : screenX;
+    const int menuY = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(screenY) : screenY;
+
+    mode.m_menuTargetAID = targetAid;
+    mode.m_lastWhisperMenuCharacterName = targetName;
+    menuWnd->SetMenu(targetAid, targetName, BuildPlayerContextMenuEntries(targetName), menuX, menuY);
+    DbgLog("[GameMode] opened player context menu targetAid=%u targetName='%s'\n",
+        static_cast<unsigned int>(targetAid),
+        targetName.c_str());
+    return true;
+}
+
+const char* GetPlayerContextActionName(CGameMode::PlayerContextAction action)
+{
+    switch (action) {
+    case CGameMode::PlayerContext_CheckEquipmentInfo:
+        return "check-equipment-info";
+    case CGameMode::PlayerContext_RequestDeal:
+        return "request-deal";
+    case CGameMode::PlayerContext_AskJoinParty:
+        return "ask-join-party";
+    case CGameMode::PlayerContext_InviteJoinGuild:
+        return "invite-join-guild";
+    case CGameMode::PlayerContext_SendWhisper:
+        return "send-whisper";
+    case CGameMode::PlayerContext_RegisterFriend:
+        return "register-friend";
+    case CGameMode::PlayerContext_SendMail:
+        return "send-mail";
+    case CGameMode::PlayerContext_RejectWhispering:
+        return "reject-whispering";
+    default:
+        return "unknown";
+    }
+}
+
 COLORREF ResolveHoverNameColor(const CGameActor* actor)
 {
     if (!actor) {
@@ -5968,6 +6066,168 @@ bool RequestCloseStorage()
     return sent;
 }
 
+std::string NormalizePartyNameForPacket(const char* rawName)
+{
+    std::string partyName = rawName ? rawName : "";
+    const size_t first = partyName.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) {
+        return {};
+    }
+
+    const size_t last = partyName.find_last_not_of(" \t\r\n");
+    partyName = partyName.substr(first, last - first + 1);
+    if (partyName.size() > 23) {
+        partyName.resize(23);
+    }
+    return partyName;
+}
+
+u16 BuildPartyItemOption(bool itemShareParty, bool itemSharingTypeShared)
+{
+    return static_cast<u16>((itemShareParty ? 0x01u : 0x00u)
+        | (itemSharingTypeShared ? 0x02u : 0x00u));
+}
+
+bool RequestCreateParty(const char* rawPartyName)
+{
+    if (g_session.GetNumParty() > 0) {
+        return false;
+    }
+
+    const std::string partyName = NormalizePartyNameForPacket(rawPartyName);
+    if (partyName.empty()) {
+        return false;
+    }
+
+    PACKET_CZ_CREATE_GROUP packet{};
+    packet.PacketType = PacketProfile::ActivePartySend::kCreateParty;
+    std::memcpy(packet.PartyName, partyName.c_str(), partyName.size());
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] create party name='%s' sent=%d\n", partyName.c_str(), sent ? 1 : 0);
+    return sent;
+}
+
+bool RequestPartyInvite(u32 targetAid)
+{
+    if (targetAid == 0 || g_session.GetNumParty() == 0) {
+        return false;
+    }
+
+    PACKET_CZ_REQ_JOIN_GROUP packet{};
+    packet.PacketType = PacketProfile::ActivePartySend::kInviteParty;
+    packet.AccountId = targetAid;
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] party invite targetAid=%u sent=%d\n",
+        static_cast<unsigned int>(targetAid),
+        sent ? 1 : 0);
+    return sent;
+}
+
+bool ReplyPartyInvite(u32 partyId, bool accept)
+{
+    if (partyId == 0) {
+        return false;
+    }
+
+    PACKET_CZ_JOIN_GROUP packet{};
+    packet.PacketType = PacketProfile::ActivePartySend::kReplyPartyInvite;
+    packet.PartyId = partyId;
+    packet.Flag = accept ? 1u : 0u;
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] party invite reply partyId=%u accept=%d sent=%d\n",
+        static_cast<unsigned int>(partyId),
+        accept ? 1 : 0,
+        sent ? 1 : 0);
+    return sent;
+}
+
+bool RequestChangePartyOptions(bool expShare, bool itemShareParty, bool itemSharingTypeShared)
+{
+    PACKET_CZ_CHANGE_GROUP_MASTER packet{};
+    packet.PacketType = PacketProfile::ActivePartySend::kChangePartyOption;
+    packet.ExpOption = expShare ? 1 : 0;
+    packet.ItemOption = BuildPartyItemOption(itemShareParty, itemSharingTypeShared);
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] change party options exp=%u items=%u sent=%d\n",
+        static_cast<unsigned int>(packet.ExpOption),
+        static_cast<unsigned int>(packet.ItemOption),
+        sent ? 1 : 0);
+
+    if (sent) {
+        g_session.m_partyExpShare = expShare;
+        g_session.m_itemCollectType = itemShareParty;
+        g_session.m_itemDivType = itemSharingTypeShared;
+    }
+    return sent;
+}
+
+bool RequestLeaveParty()
+{
+    if (g_session.GetNumParty() == 0) {
+        return false;
+    }
+
+    PACKET_CZ_REQ_LEAVE_GROUP packet{};
+    packet.PacketType = PacketProfile::ActivePartySend::kLeaveParty;
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] leave party sent=%d\n", sent ? 1 : 0);
+    return sent;
+}
+
+bool RequestRemovePartyMember(u32 accountId, const char* characterName)
+{
+    if (accountId == 0 || !characterName || *characterName == '\0' || !g_session.m_amIPartyMaster) {
+        return false;
+    }
+
+    PACKET_CZ_REQ_EXPEL_GROUP_MEMBER packet{};
+    packet.PacketType = PacketProfile::ActivePartySend::kRemovePartyMember;
+    packet.AccountId = accountId;
+    const std::string normalizedName = NormalizePartyNameForPacket(characterName);
+    std::memcpy(packet.CharacterName, normalizedName.c_str(), normalizedName.size());
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] remove party member aid=%u name='%s' sent=%d\n",
+        static_cast<unsigned int>(accountId),
+        normalizedName.c_str(),
+        sent ? 1 : 0);
+    return sent;
+}
+
+bool RequestDisbandParty()
+{
+    if (g_session.GetNumParty() == 0 || !g_session.m_amIPartyMaster) {
+        return false;
+    }
+
+    bool sentAny = false;
+    for (const FRIEND_INFO& member : g_session.GetPartyList()) {
+        if (member.AID == 0 || member.AID == g_session.m_aid) {
+            continue;
+        }
+        sentAny = RequestRemovePartyMember(member.AID, member.characterName.c_str()) || sentAny;
+    }
+
+    return RequestLeaveParty() || sentAny;
+}
+
 bool TryRequestNpcTalkFromScreenPoint(CGameMode& mode, int screenX, int screenY)
 {
     if (!mode.m_world || !mode.m_view || mode.m_canRotateView) {
@@ -8670,7 +8930,9 @@ CGameMode::CGameMode()
         m_attackChaseSourceCellX(-1), m_attackChaseSourceCellY(-1), m_attackChaseRange(1), m_hasAttackChaseHint(0),
         m_skillChaseTargetGid(0), m_lastSkillChaseRequestTick(0), m_skillChaseSkillId(0), m_skillChaseSkillLevel(0), m_skillChaseRange(1), m_hasSkillChase(0),
         m_mapLoadingStage(MapLoading_None), m_mapLoadingStartTick(0), m_mapLoadingAckTick(0), m_lastActorBootstrapPacketTick(0),
-        m_worldProcessTick(GetTickCount()), m_worldProcessCarryMs(kWorldProcessTickMs), m_lastHoverRefreshTick(0)
+        m_worldProcessTick(GetTickCount()), m_worldProcessCarryMs(kWorldProcessTickMs), m_lastHoverRefreshTick(0),
+        m_hasPendingPartyCreateOptions(0), m_pendingPartyCreateExpShare(0), m_pendingPartyCreateItemShare(0), m_pendingPartyCreateItemSharingType(0),
+        m_pendingPartyCreateName()
 {
     std::memset(m_rswName, 0, sizeof(m_rswName));
     std::memset(m_minimapBmpName, 0, sizeof(m_minimapBmpName));
@@ -8694,6 +8956,11 @@ void CGameMode::OnInit(const char* worldName) {
     m_worldProcessCarryMs = kWorldProcessTickMs;
     m_lastHoverRefreshTick = 0;
     m_selectedPcTargetGid = 0;
+    m_hasPendingPartyCreateOptions = 0;
+    m_pendingPartyCreateExpShare = 0;
+    m_pendingPartyCreateItemShare = 0;
+    m_pendingPartyCreateItemSharingType = 0;
+    m_pendingPartyCreateName.clear();
     ClearPendingSkillUse(*this);
 
     DbgLog("[Build] marker=%s pkt0078=%d pkt0209=%d\n",
@@ -8783,8 +9050,8 @@ void CGameMode::MakeFog(int fogOn)
 void CGameMode::OnExit() {
     g_renderer.FogSwitch(0);
     g_gameModePacketRouter.Clear();
-    g_windowMgr.RemoveAllWindows();
     ClearRuntimeActors(*this);
+    g_windowMgr.RemoveAllWindows();
     m_groundItemList.clear();
     m_playWaveList.clear();
     m_streamFileName.clear();
@@ -9541,6 +9808,64 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
     case GameMsg_RequestComposeCardIntoEquipment:
         return RequestComposeCardIntoEquipment(static_cast<s16>(wparam), static_cast<s16>(lparam)) ? 1 : 0;
 
+    case GameMsg_RequestPartyCreate: {
+        const char* partyName = reinterpret_cast<const char*>(wparam);
+        const unsigned int optionBits = static_cast<unsigned int>(lparam);
+        const bool expShare = (optionBits & 0x01u) != 0;
+        const bool itemShareParty = (optionBits & 0x02u) != 0;
+        const bool itemSharingTypeShared = (optionBits & 0x04u) != 0;
+        m_pendingPartyCreateName = NormalizePartyNameForPacket(partyName);
+        const bool sent = RequestCreateParty(partyName);
+        if (!sent) {
+            m_pendingPartyCreateName.clear();
+            return 0;
+        }
+        m_hasPendingPartyCreateOptions = 1;
+        m_pendingPartyCreateExpShare = expShare ? 1 : 0;
+        m_pendingPartyCreateItemShare = itemShareParty ? 1 : 0;
+        m_pendingPartyCreateItemSharingType = itemSharingTypeShared ? 1 : 0;
+        return 1;
+    }
+
+    case GameMsg_RequestPartyChangeOptions: {
+        const unsigned int optionBits = static_cast<unsigned int>(wparam);
+        return RequestChangePartyOptions(
+            (optionBits & 0x01u) != 0,
+            (optionBits & 0x02u) != 0,
+            (optionBits & 0x04u) != 0) ? 1 : 0;
+    }
+
+    case GameMsg_RequestPartyDisband:
+        return RequestDisbandParty() ? 1 : 0;
+
+    case GameMsg_RequestPartyInvite:
+        if (g_session.GetNumParty() == 0) {
+            g_windowMgr.PushChatEvent("Create a party before inviting other players.", 0x00FF4040u, 6);
+            return 0;
+        }
+        return RequestPartyInvite(static_cast<u32>(wparam)) ? 1 : 0;
+
+    case GameMsg_RequestPartyInviteReply:
+        return ReplyPartyInvite(static_cast<u32>(wparam), static_cast<unsigned int>(lparam) != 0u) ? 1 : 0;
+
+    case GameMsg_RequestPlayerContextAction: {
+        const PlayerContextAction action = static_cast<PlayerContextAction>(lparam);
+        const u32 targetAid = static_cast<u32>(wparam);
+        if (action == PlayerContext_AskJoinParty) {
+            DbgLog("[GameMode] player context action targetAid=%u action=%d (%s)\n",
+                static_cast<unsigned int>(targetAid),
+                static_cast<int>(action),
+                GetPlayerContextActionName(action));
+            return SendMsg(GameMsg_RequestPartyInvite, targetAid, 0, 0);
+        }
+
+        DbgLog("[GameMode] player context action stub targetAid=%u action=%d (%s)\n",
+            static_cast<unsigned int>(targetAid),
+            static_cast<int>(action),
+            GetPlayerContextActionName(action));
+        return 1;
+    }
+
     case GameMsg_RButtonUp:
         m_canRotateView = 0;
         if (GetCapture() == g_hMainWnd) {
@@ -9550,8 +9875,14 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             m_lastRButtonClickTick = GetTickCount();
             m_lastRButtonClickX = static_cast<int>(wparam);
             m_lastRButtonClickY = static_cast<int>(lparam);
+            if (!TryOpenPlayerContextMenu(*this, static_cast<int>(wparam), static_cast<int>(lparam))) {
+                g_windowMgr.ClosePlayerContextMenu();
+                m_menuTargetAID = 0;
+            }
         } else {
             m_lastRButtonClickTick = 0;
+            g_windowMgr.ClosePlayerContextMenu();
+            m_menuTargetAID = 0;
         }
         return 1;
 

@@ -5,6 +5,10 @@
 #include "UIStatusWnd.h"
 #include "UISayDialogWnd.h"
 #include "UINpcMenuWnd.h"
+#include "UIPlayerContextMenuWnd.h"
+#include "UIJoinPartyAcceptWnd.h"
+#include "UIMessengerGroupWnd.h"
+#include "UIPartyOptionWnd.h"
 #include "UINpcInputWnd.h"
 #include "UIChooseWnd.h"
 #include "UIChooseSellBuyWnd.h"
@@ -587,8 +591,8 @@ UIWindowMgr::UIWindowMgr()
       m_gronMsnWndShow(0), m_gronMsgWndShow(0), m_chatWndStatus(0),
       m_miniMapZoomFactor(1.0f), m_miniMapArgb(0), m_isDrawCompass(0),
       m_isDragAll(0), m_conversionMode(0),
-      m_captureWindow(nullptr), m_editWindow(nullptr), m_modalWindow(nullptr), m_lastHitWindow(nullptr),
-            m_loadingWnd(nullptr), m_roMapWnd(nullptr), m_minimapZoomWnd(nullptr), m_statusWnd(nullptr), m_sayDialogWnd(nullptr), m_npcMenuWnd(nullptr), m_npcInputWnd(nullptr), m_chooseSellBuyWnd(nullptr), m_itemShopWnd(nullptr), m_itemPurchaseWnd(nullptr), m_itemSellWnd(nullptr), m_storageWnd(nullptr), m_shortCutWnd(nullptr), m_chatWnd(nullptr),
+    m_captureWindow(nullptr), m_editWindow(nullptr), m_modalWindow(nullptr), m_lastHitWindow(nullptr),
+        m_loadingWnd(nullptr), m_roMapWnd(nullptr), m_minimapZoomWnd(nullptr), m_statusWnd(nullptr), m_sayDialogWnd(nullptr), m_npcMenuWnd(nullptr), m_playerContextMenuWnd(nullptr), m_joinPartyAcceptWnd(nullptr), m_messengerGroupWnd(nullptr), m_partyOptionWnd(nullptr), m_npcInputWnd(nullptr), m_chooseSellBuyWnd(nullptr), m_itemShopWnd(nullptr), m_itemPurchaseWnd(nullptr), m_itemSellWnd(nullptr), m_storageWnd(nullptr), m_shortCutWnd(nullptr), m_chatWnd(nullptr),
                 m_loginWnd(nullptr), m_selectServerWnd(nullptr), m_selectCharWnd(nullptr), m_makeCharWnd(nullptr), m_waitWnd(nullptr), m_chooseWnd(nullptr), m_optionWnd(nullptr), m_itemWnd(nullptr), m_itemInfoWnd(nullptr), m_itemCollectionWnd(nullptr), m_itemCompositionWnd(nullptr), m_itemIdentifyWnd(nullptr), m_questWnd(nullptr), m_basicInfoWnd(nullptr), m_notifyLevelUpWnd(nullptr), m_notifyJobLevelUpWnd(nullptr), m_equipWnd(nullptr), m_skillDescribeWnd(nullptr), m_skillListWnd(nullptr),
                         m_wallpaperSurface(nullptr), m_uiComposeSurface(), m_chatActiveInputField(0), m_chatScrollLineOffset(0)
 {
@@ -741,6 +745,13 @@ void UIWindowMgr::CloseNpcDialogWindows()
     }
 }
 
+void UIWindowMgr::ClosePlayerContextMenu()
+{
+    if (m_playerContextMenuWnd) {
+        m_playerContextMenuWnd->HideMenu();
+    }
+}
+
 void UIWindowMgr::CloseNpcShopWindows()
 {
     if (m_chooseSellBuyWnd) {
@@ -827,6 +838,46 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_children.push_back(m_npcMenuWnd);
         m_npcMenuWnd->SetShow(1);
         return m_npcMenuWnd;
+
+    case WID_PLAYERCONTEXTMENUWND:
+        if (!m_playerContextMenuWnd) {
+            m_playerContextMenuWnd = new UIPlayerContextMenuWnd();
+            m_children.push_back(m_playerContextMenuWnd);
+        }
+        m_children.remove(m_playerContextMenuWnd);
+        m_children.push_back(m_playerContextMenuWnd);
+        m_playerContextMenuWnd->SetShow(1);
+        return m_playerContextMenuWnd;
+
+    case WID_MESSENGERGROUPWND:
+        if (!m_messengerGroupWnd) {
+            m_messengerGroupWnd = new UIMessengerGroupWnd();
+            m_children.push_back(m_messengerGroupWnd);
+        }
+        m_children.remove(m_messengerGroupWnd);
+        m_children.push_back(m_messengerGroupWnd);
+        m_messengerGroupWnd->SetShow(1);
+        return m_messengerGroupWnd;
+
+    case WID_JOINPARTYACCEPTWND:
+        if (!m_joinPartyAcceptWnd) {
+            m_joinPartyAcceptWnd = new UIJoinPartyAcceptWnd();
+            m_children.push_back(m_joinPartyAcceptWnd);
+        }
+        m_children.remove(m_joinPartyAcceptWnd);
+        m_children.push_back(m_joinPartyAcceptWnd);
+        m_joinPartyAcceptWnd->SetShow(1);
+        return m_joinPartyAcceptWnd;
+
+    case WID_PARTYOPTIONWND:
+        if (!m_partyOptionWnd) {
+            m_partyOptionWnd = new UIPartyOptionWnd();
+            m_children.push_back(m_partyOptionWnd);
+        }
+        m_children.remove(m_partyOptionWnd);
+        m_children.push_back(m_partyOptionWnd);
+        m_partyOptionWnd->SetShow(1);
+        return m_partyOptionWnd;
 
     case WID_CHOOSESELLBUYWND:
         if (!m_chooseSellBuyWnd) {
@@ -1116,6 +1167,9 @@ bool UIWindowMgr::ToggleWindow(int windowId)
     case WID_STORAGEWND:
         window = m_storageWnd;
         break;
+    case WID_MESSENGERGROUPWND:
+        window = m_messengerGroupWnd;
+        break;
     case WID_EQUIPWND:
         window = m_equipWnd;
         break;
@@ -1219,6 +1273,18 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
     if (window == m_npcMenuWnd) {
         m_npcMenuWnd = nullptr;
     }
+    if (window == m_playerContextMenuWnd) {
+        m_playerContextMenuWnd = nullptr;
+    }
+    if (window == m_joinPartyAcceptWnd) {
+        m_joinPartyAcceptWnd = nullptr;
+    }
+    if (window == m_messengerGroupWnd) {
+        m_messengerGroupWnd = nullptr;
+    }
+    if (window == m_partyOptionWnd) {
+        m_partyOptionWnd = nullptr;
+    }
     if (window == m_npcInputWnd) {
         m_npcInputWnd = nullptr;
     }
@@ -1305,6 +1371,10 @@ void UIWindowMgr::RemoveAllWindows()
     m_statusWnd = nullptr;
     m_sayDialogWnd = nullptr;
     m_npcMenuWnd = nullptr;
+    m_playerContextMenuWnd = nullptr;
+    m_joinPartyAcceptWnd = nullptr;
+    m_messengerGroupWnd = nullptr;
+    m_partyOptionWnd = nullptr;
     m_npcInputWnd = nullptr;
     m_chooseSellBuyWnd = nullptr;
     m_itemShopWnd = nullptr;
@@ -1861,6 +1931,17 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
 {
     UIWindow* hit = HitTestWindow(x, y);
 
+    if (m_playerContextMenuWnd && m_playerContextMenuWnd->m_show != 0) {
+        UIWindow* topLevel = hit;
+        while (topLevel && topLevel->m_parent) {
+            topLevel = topLevel->m_parent;
+        }
+        if (topLevel != m_playerContextMenuWnd) {
+            m_playerContextMenuWnd->HideMenu();
+            hit = HitTestWindow(x, y);
+        }
+    }
+
     m_captureWindow = hit;
 
     if (hit) {
@@ -1887,6 +1968,16 @@ void UIWindowMgr::OnLBtnDown(int x, int y)
 void UIWindowMgr::OnLBtnDblClk(int x, int y)
 {
     UIWindow* hit = HitTestWindow(x, y);
+    if (m_playerContextMenuWnd && m_playerContextMenuWnd->m_show != 0) {
+        UIWindow* topLevel = hit;
+        while (topLevel && topLevel->m_parent) {
+            topLevel = topLevel->m_parent;
+        }
+        if (topLevel != m_playerContextMenuWnd) {
+            m_playerContextMenuWnd->HideMenu();
+            hit = HitTestWindow(x, y);
+        }
+    }
     if (!hit) {
         return;
     }
@@ -1976,6 +2067,16 @@ void UIWindowMgr::OnLBtnUp(int x, int y)
 void UIWindowMgr::OnRBtnDown(int x, int y)
 {
     UIWindow* hit = HitTestWindow(x, y);
+    if (m_playerContextMenuWnd && m_playerContextMenuWnd->m_show != 0) {
+        UIWindow* topLevel = hit;
+        while (topLevel && topLevel->m_parent) {
+            topLevel = topLevel->m_parent;
+        }
+        if (topLevel != m_playerContextMenuWnd) {
+            m_playerContextMenuWnd->HideMenu();
+            hit = HitTestWindow(x, y);
+        }
+    }
     m_captureWindow = hit;
 
     if (!hit) {
@@ -2112,6 +2213,14 @@ void UIWindowMgr::OnChar(char c)
         return;
     }
 
+    if (m_joinPartyAcceptWnd && m_joinPartyAcceptWnd->m_show != 0) {
+        return;
+    }
+
+    if (m_playerContextMenuWnd && m_playerContextMenuWnd->m_show != 0) {
+        return;
+    }
+
     if (HasActiveNpcDialog()) {
         return;
     }
@@ -2153,6 +2262,9 @@ bool UIWindowMgr::HandleHotkeyBeforeFocusedUi(int virtualKey, bool isAltDown, bo
         case 'S':
             ToggleWindow(WID_SKILLLISTWND);
             return true;
+        case 'Z':
+            ToggleWindow(WID_MESSENGERGROUPWND);
+            return true;
         default:
             break;
         }
@@ -2187,7 +2299,9 @@ bool UIWindowMgr::HandleHotkeyAfterFocusedUi(int virtualKey, bool hasFrontMenuUi
 bool UIWindowMgr::HasBlockingUiForGameplayHotkeys() const
 {
     return (m_npcInputWnd && m_npcInputWnd->m_show != 0)
+        || (m_joinPartyAcceptWnd && m_joinPartyAcceptWnd->m_show != 0)
         || (m_npcMenuWnd && m_npcMenuWnd->m_show != 0)
+        || (m_playerContextMenuWnd && m_playerContextMenuWnd->m_show != 0)
         || (m_sayDialogWnd && m_sayDialogWnd->m_show != 0)
         || (m_itemPurchaseWnd && m_itemPurchaseWnd->m_show != 0)
         || (m_itemSellWnd && m_itemSellWnd->m_show != 0)
@@ -2248,8 +2362,18 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
         return;
     }
 
+    if (m_joinPartyAcceptWnd && m_joinPartyAcceptWnd->m_show != 0) {
+        m_joinPartyAcceptWnd->HandleKeyDown(virtualKey);
+        return;
+    }
+
     if (m_npcMenuWnd && m_npcMenuWnd->m_show != 0) {
         m_npcMenuWnd->HandleKeyDown(virtualKey);
+        return;
+    }
+
+    if (m_playerContextMenuWnd && m_playerContextMenuWnd->m_show != 0) {
+        m_playerContextMenuWnd->HandleKeyDown(virtualKey);
         return;
     }
 

@@ -16,6 +16,7 @@
 #include "item/Item.h"
 #include "main/WinMain.h"
 #include "session/Session.h"
+#include "ui/UIPcGage.h"
 #include "ui/UIRechargeGage.h"
 #include "ui/UIWindowMgr.h"
 
@@ -4408,6 +4409,39 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
     case 83:
         DestroySkillRechargeGage();
         return;
+    case 34: {
+        CPc* pcActor = dynamic_cast<CPc*>(this);
+        if (!pcActor) {
+            return;
+        }
+
+        if (!pcActor->m_gage) {
+            auto* gage = new UIPcGage();
+            if (gage) {
+                gage->Create(60, 5);
+                g_windowMgr.AddWindowFront(gage);
+                pcActor->m_gage = gage;
+            }
+        }
+
+        if (pcActor->m_gage) {
+            pcActor->m_gage->SetMode(0);
+            pcActor->m_gage->SetHp(static_cast<int>(par1), static_cast<int>(par2));
+            pcActor->m_gage->SetSp(0, 0);
+        }
+
+        m_Hp = static_cast<u16>((std::max)(0, static_cast<int>(par1)));
+        m_MaxHp = static_cast<u16>((std::max)(0, static_cast<int>(par2)));
+        return;
+    }
+    case 35: {
+        CPc* pcActor = dynamic_cast<CPc*>(this);
+        if (pcActor && pcActor->m_gage) {
+            g_windowMgr.DeleteWindow(pcActor->m_gage);
+            pcActor->m_gage = nullptr;
+        }
+        return;
+    }
     case 85: {
         const int effectId = static_cast<int>(par1);
         const bool forceRestartBeginEffect = effectId == 123;
@@ -5257,6 +5291,11 @@ CPc::CPc()
 
 CPc::~CPc()
 {
+    if (m_gage) {
+        g_windowMgr.DeleteWindow(m_gage);
+        m_gage = nullptr;
+    }
+
     ReleaseActorBillboardTexture(*this);
 }
 

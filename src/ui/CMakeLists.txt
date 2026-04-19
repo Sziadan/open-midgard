@@ -23,6 +23,14 @@ add_library(ro_ui STATIC
     UISayDialogWnd.cpp
     UINpcMenuWnd.h
     UINpcMenuWnd.cpp
+    UIPlayerContextMenuWnd.h
+    UIPlayerContextMenuWnd.cpp
+    UIJoinPartyAcceptWnd.h
+    UIJoinPartyAcceptWnd.cpp
+    UIMessengerGroupWnd.h
+    UIMessengerGroupWnd.cpp
+    UIPartyOptionWnd.h
+    UIPartyOptionWnd.cpp
     UINpcInputWnd.h
     UINpcInputWnd.cpp
     UIChooseSellBuyWnd.h
@@ -66,6 +74,8 @@ add_library(ro_ui STATIC
     UIFrameWnd.cpp
     UIWindowMgr.h
     UIWindowMgr.cpp
+    UIPcGage.h
+    UIPcGage.cpp
     UIRechargeGage.h
     UIRechargeGage.cpp
     UIWaitWnd.h

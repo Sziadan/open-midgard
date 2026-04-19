@@ -35,6 +35,19 @@ struct PLAYER_SKILL_INFO {
     std::vector<int> needSkillList;
 };
 
+struct FRIEND_INFO {
+    int isValid = 0;
+    u32 AID = 0;
+    u32 GID = 0;
+    std::string characterName;
+    std::string mapName;
+    int role = 0;
+    int state = 0;
+    u32 color = 0;
+    int partyHp = 0;
+    int partyMaxHp = 0;
+};
+
 enum class NpcShopMode : int {
     None = 0,
     Buy = 1,
@@ -149,6 +162,13 @@ public:
     int m_shopDealTotal = 0;
     std::vector<NPC_SHOP_ROW> m_shopRows;
     std::vector<NPC_SHOP_DEAL_ROW> m_shopDealRows;
+    std::list<FRIEND_INFO> m_partyList;
+    std::list<FRIEND_INFO> m_friendList;
+    std::string m_partyName;
+    bool m_amIPartyMaster = false;
+    bool m_partyExpShare = false;
+    bool m_itemDivType = false;
+    bool m_itemCollectType = false;
     bool m_storageOpen = false;
     int m_storageCurrentCount = 0;
     int m_storageMaxCount = 0;
@@ -210,6 +230,24 @@ public:
     bool AdjustNpcShopDealBySourceRow(size_t sourceRowIndex, int deltaQuantity);
     bool AdjustNpcShopDealByDealRow(size_t dealRowIndex, int deltaQuantity);
     int GetNpcShopUnitPrice(const NPC_SHOP_ROW& row) const;
+    void ClearParty();
+    unsigned int GetNumParty() const;
+    void AddMemberToParty(const FRIEND_INFO& info);
+    unsigned int GetMemberAidFromParty(const char* characterName) const;
+    void DeleteMemberFromParty(const char* characterName);
+    void ChangeRoleFromParty(unsigned int aid, int role);
+    bool SetPartyMemberHp(unsigned int aid, int hp, int maxHp);
+    const FRIEND_INFO* FindPartyMemberByAid(unsigned int aid) const;
+    void RefreshPartyUI();
+    const std::list<FRIEND_INFO>& GetPartyList() const;
+    void ClearFriend();
+    unsigned int GetNumFriend() const;
+    bool IsFriendName(const char* characterName) const;
+    bool DeleteFriendFromList(unsigned int gid);
+    void AddFriendToList(const FRIEND_INFO& info);
+    bool SetFriendState(unsigned int aid, unsigned int gid, unsigned char state);
+    void RefreshFriendUI();
+    const std::list<FRIEND_INFO>& GetFriendList() const;
     void ClearShortcutSlots();
     void ClearActiveStatusIcons();
     void SetActiveStatusIcon(int statusType, bool active, u32 remainingMs);

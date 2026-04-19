@@ -17,6 +17,7 @@
 #include "audio/Audio.h"
 #include "lua/LuaBridge.h"
 #include "ui/UIBasicInfoWnd.h"
+#include "ui/UIJoinPartyAcceptWnd.h"
 #include "ui/UISayDialogWnd.h"
 #include "ui/UINpcMenuWnd.h"
 #include "ui/UINpcInputWnd.h"
@@ -6865,6 +6866,418 @@ void HandleNotifyChatParty(CGameMode& mode, const PacketView& packet)
     }
 }
 
+std::string ExtractFixedPacketString(const u8* data, size_t length)
+{
+    if (!data || length == 0) {
+        return {};
+    }
+
+    std::string value(reinterpret_cast<const char*>(data), length);
+    const size_t nulPos = value.find('\0');
+    if (nulPos != std::string::npos) {
+        value.resize(nulPos);
+    }
+    return value;
+}
+
+void ApplyCachedPartyHpToVisibleActor(CGameMode& mode, u32 aid, const std::string& characterName)
+{
+    if (aid == 0 || characterName.empty()) {
+        return;
+    }
+
+    const FRIEND_INFO* const member = g_session.FindPartyMemberByAid(aid);
+    if (!member || member->partyMaxHp <= 0) {
+        return;
+    }
+
+    auto tryMatchActor = [&](CGameActor* actor) {
+        if (!actor || actor->m_isPc == 0 || actor->m_gid == g_session.m_gid || actor->m_gid == g_session.m_aid) {
+            return false;
+        }
+
+        const auto nameIt = mode.m_actorNameListByGID.find(actor->m_gid);
+        if (nameIt == mode.m_actorNameListByGID.end() || nameIt->second.name != characterName) {
+            return false;
+        }
+
+        actor->SendMsg(actor, 34, member->partyHp, member->partyMaxHp, 0);
+        return true;
+    };
+
+    if (mode.m_world && mode.m_world->m_player) {
+        tryMatchActor(mode.m_world->m_player);
+    }
+    for (const auto& runtimeEntry : mode.m_runtimeActors) {
+        if (tryMatchActor(runtimeEntry.second)) {
+            break;
+        }
+    }
+}
+
+void HandlePartyCreateAck(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 3) {
+        return;
+    }
+
+    const u8 result = packet.data[2];
+    switch (result) {
+    case 0:
+        RecordChat(mode, "Party successfully organized.", 0x0000C000, kChatChannelSystem);
+        if (g_session.GetNumParty() == 0 && !mode.m_pendingPartyCreateName.empty()) {
+            FRIEND_INFO info{};
+            info.isValid = 1;
+            info.AID = g_session.m_aid;
+            info.characterName = g_session.GetPlayerName();
+            info.role = 0;
+            info.state = 0;
+
+            g_session.ClearParty();
+            g_session.m_partyName = mode.m_pendingPartyCreateName;
+            g_session.m_amIPartyMaster = true;
+            g_session.m_partyExpShare = mode.m_pendingPartyCreateExpShare != 0;
+            g_session.m_itemCollectType = mode.m_pendingPartyCreateItemShare != 0;
+            g_session.m_itemDivType = mode.m_pendingPartyCreateItemSharingType != 0;
+            g_session.AddMemberToParty(info);
+            g_session.RefreshPartyUI();
+
+            DbgLog("[Party] seeded local create state name='%s' aid=%u\n",
+                mode.m_pendingPartyCreateName.c_str(),
+                static_cast<unsigned int>(g_session.m_aid));
+        }
+        g_windowMgr.MakeWindow(UIWindowMgr::WID_MESSENGERGROUPWND);
+        if (mode.m_hasPendingPartyCreateOptions != 0) {
+            const unsigned int optionBits =
+                (mode.m_pendingPartyCreateExpShare != 0 ? 0x01u : 0x00u)
+                | (mode.m_pendingPartyCreateItemShare != 0 ? 0x02u : 0x00u)
+                | (mode.m_pendingPartyCreateItemSharingType != 0 ? 0x04u : 0x00u);
+            if (optionBits != 0) {
+                mode.SendMsg(CGameMode::GameMsg_RequestPartyChangeOptions, optionBits, 0, 0);
+            }
+        }
+        break;
+    case 1:
+        RecordChat(mode, "Party name already exists.", 0x00FF4040, kChatChannelSystem);
+        break;
+    case 2:
+        RecordChat(mode, "You are already in a party.", 0x00FF4040, kChatChannelSystem);
+        break;
+    case 3:
+        RecordChat(mode, "Cannot organize a party on this map.", 0x00FF4040, kChatChannelSystem);
+        break;
+    default:
+        break;
+    }
+
+    mode.m_hasPendingPartyCreateOptions = 0;
+    mode.m_pendingPartyCreateExpShare = 0;
+    mode.m_pendingPartyCreateItemShare = 0;
+    mode.m_pendingPartyCreateItemSharingType = 0;
+    mode.m_pendingPartyCreateName.clear();
+}
+
+void HandlePartyInviteAck(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 27) {
+        return;
+    }
+
+    const std::string nick = ExtractFixedPacketString(packet.data + 2, 24);
+    const int result = packet.packetLength >= 30
+        ? static_cast<int>(ReadLE32(packet.data + 26))
+        : static_cast<int>(packet.data[26]);
+
+    switch (result) {
+    case 0:
+        RecordChat(mode, "Character is already in a party.", 0x00FF4040, kChatChannelSystem);
+        break;
+    case 1:
+        RecordChat(mode,
+            nick.empty() ? "Character rejected the party invitation." : nick + " rejected the party invitation.",
+            0x00FF4040,
+            kChatChannelSystem);
+        break;
+    case 2:
+        RecordChat(mode,
+            nick.empty() ? "Character accepted the party invitation." : nick + " accepted the party invitation.",
+            0x0000C000,
+            kChatChannelSystem);
+        break;
+    case 3:
+        RecordChat(mode, "Party is full.", 0x00FF4040, kChatChannelSystem);
+        break;
+    case 4:
+        RecordChat(mode, "A character from the same account already joined the party.", 0x00FF4040, kChatChannelSystem);
+        break;
+    case 5:
+        RecordChat(mode, "The character blocked party invitations.", 0x00FF4040, kChatChannelSystem);
+        break;
+    case 7:
+        RecordChat(mode, "Character is not online or does not exist.", 0x00FF4040, kChatChannelSystem);
+        break;
+    case 8:
+        RecordChat(mode, "Cannot invite this character to the party right now.", 0x00FF4040, kChatChannelSystem);
+        break;
+    case 9:
+        RecordChat(mode, "This map prohibits party joining.", 0x00FF4040, kChatChannelSystem);
+        break;
+    default:
+        break;
+    }
+}
+
+void HandlePartyInviteRequest(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 30) {
+        return;
+    }
+
+    const u32 partyId = ReadLE32(packet.data + 2);
+    if (partyId == 0) {
+        return;
+    }
+
+    auto* inviteWnd = static_cast<UIJoinPartyAcceptWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_JOINPARTYACCEPTWND));
+    if (!inviteWnd) {
+        return;
+    }
+
+    inviteWnd->OpenInvite(partyId, ExtractFixedPacketString(packet.data + 6, 24).c_str());
+}
+
+void HandlePartyList(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 28) {
+        return;
+    }
+
+    std::map<u32, std::pair<int, int>> cachedPartyHpByAid;
+    for (const FRIEND_INFO& existing : g_session.GetPartyList()) {
+        if (existing.AID != 0 && existing.partyMaxHp > 0) {
+            cachedPartyHpByAid[existing.AID] = std::make_pair(existing.partyHp, existing.partyMaxHp);
+        }
+    }
+
+    g_session.ClearParty();
+    g_session.m_partyName = ExtractFixedPacketString(packet.data + 4, 24);
+
+    const int entryCount = (packet.packetLength - 28) / 46;
+    for (int index = 0; index < entryCount; ++index) {
+        const u8* entry = packet.data + 28 + index * 46;
+        FRIEND_INFO info{};
+        info.isValid = 1;
+        info.AID = ReadLE32(entry + 0);
+        info.characterName = ExtractFixedPacketString(entry + 4, 24);
+        info.mapName = ExtractFixedPacketString(entry + 28, 16);
+        info.role = static_cast<int>(entry[44]);
+        info.state = static_cast<int>(entry[45]);
+        const auto cachedHpIt = cachedPartyHpByAid.find(info.AID);
+        if (cachedHpIt != cachedPartyHpByAid.end()) {
+            info.partyHp = cachedHpIt->second.first;
+            info.partyMaxHp = cachedHpIt->second.second;
+        }
+        g_session.AddMemberToParty(info);
+        if (info.AID == g_session.m_aid && info.role == 0) {
+            g_session.m_amIPartyMaster = true;
+        }
+        ApplyCachedPartyHpToVisibleActor(mode, info.AID, info.characterName);
+    }
+
+    g_session.RefreshPartyUI();
+}
+
+void HandlePartyMemberAdded(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 79) {
+        return;
+    }
+
+    FRIEND_INFO info{};
+    info.isValid = 1;
+    info.AID = ReadLE32(packet.data + 2);
+    info.role = static_cast<int>(ReadLE32(packet.data + 6));
+    info.state = static_cast<int>(packet.data[14]);
+    g_session.m_partyName = ExtractFixedPacketString(packet.data + 15, 24);
+    info.characterName = ExtractFixedPacketString(packet.data + 39, 24);
+    info.mapName = ExtractFixedPacketString(packet.data + 63, 16);
+    if (const FRIEND_INFO* const existing = g_session.FindPartyMemberByAid(info.AID)) {
+        info.partyHp = existing->partyHp;
+        info.partyMaxHp = existing->partyMaxHp;
+    }
+    if (packet.packetLength >= 81) {
+        g_session.m_itemCollectType = packet.data[79] != 0;
+        g_session.m_itemDivType = packet.data[80] != 0;
+    }
+    g_session.AddMemberToParty(info);
+    if (info.AID == g_session.m_aid && info.role == 0) {
+        g_session.m_amIPartyMaster = true;
+    }
+    ApplyCachedPartyHpToVisibleActor(mode, info.AID, info.characterName);
+    g_session.RefreshPartyUI();
+}
+
+void HandlePartyOptionChanged(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 6) {
+        return;
+    }
+
+    const u32 expOption = ReadLE32(packet.data + 2);
+    if (expOption == 2) {
+        RecordChat(mode, "Cannot change EXP sharing right now.", 0x00FF4040, kChatChannelSystem);
+    } else {
+        g_session.m_partyExpShare = expOption != 0;
+    }
+
+    if (packet.packetLength >= 8) {
+        g_session.m_itemCollectType = packet.data[6] != 0;
+        g_session.m_itemDivType = packet.data[7] != 0;
+    }
+
+    g_session.RefreshPartyUI();
+}
+
+void HandlePartyMemberRemoved(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 31) {
+        return;
+    }
+
+    const std::string characterName = ExtractFixedPacketString(packet.data + 6, 24);
+    if (characterName.empty()) {
+        return;
+    }
+
+    const u8 result = packet.data[30];
+    if (result == 2) {
+        RecordChat(mode, "Cannot leave the party on this map.", 0x00FF4040, kChatChannelSystem);
+        return;
+    }
+    if (result == 3) {
+        RecordChat(mode, "Cannot expel a party member on this map.", 0x00FF4040, kChatChannelSystem);
+        return;
+    }
+
+    g_session.DeleteMemberFromParty(characterName.c_str());
+    if (characterName == g_session.GetPlayerName() || (result & 0x10u) != 0) {
+        g_session.ClearParty();
+        if ((result & 0x10u) != 0) {
+            RecordChat(mode, "Party has been disbanded.", 0x0000C000, kChatChannelSystem);
+        }
+    }
+    g_session.RefreshPartyUI();
+}
+
+void HandlePartyHpUpdate(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data) {
+        return;
+    }
+
+    const u32 aid = ReadLE32(packet.data + 2);
+    int hp = 0;
+    int maxHp = 0;
+    if (packet.packetId == 0x080E) {
+        if (packet.packetLength < 14) {
+            return;
+        }
+        hp = static_cast<int>(ReadLE32(packet.data + 6));
+        maxHp = static_cast<int>(ReadLE32(packet.data + 10));
+    } else {
+        if (packet.packetLength < 10) {
+            return;
+        }
+        hp = static_cast<int>(ReadLE16(packet.data + 6));
+        maxHp = static_cast<int>(ReadLE16(packet.data + 8));
+    }
+
+    if (aid == 0 || !g_session.SetPartyMemberHp(aid, hp, maxHp)) {
+        return;
+    }
+
+    const FRIEND_INFO* const member = g_session.FindPartyMemberByAid(aid);
+    if (!member || member->characterName.empty()) {
+        return;
+    }
+    ApplyCachedPartyHpToVisibleActor(mode, aid, member->characterName);
+}
+
+void HandleFriendsList(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 4) {
+        return;
+    }
+
+    g_session.ClearFriend();
+    const int entryCount = (packet.packetLength - 4) / 32;
+    for (int index = 0; index < entryCount; ++index) {
+        const u8* entry = packet.data + 4 + index * 32;
+        FRIEND_INFO info{};
+        info.isValid = 1;
+        info.AID = ReadLE32(entry + 0);
+        info.GID = ReadLE32(entry + 4);
+        info.characterName = ExtractFixedPacketString(entry + 8, 24);
+        info.state = 1;
+        g_session.AddFriendToList(info);
+    }
+    g_session.RefreshFriendUI();
+}
+
+void HandleFriendState(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 11) {
+        return;
+    }
+
+    if (g_session.SetFriendState(ReadLE32(packet.data + 2), ReadLE32(packet.data + 6), packet.data[10])) {
+        g_session.RefreshFriendUI();
+    }
+}
+
+void HandleFriendAdd(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 36) {
+        return;
+    }
+
+    if (ReadLE16(packet.data + 2) != 0) {
+        return;
+    }
+
+    FRIEND_INFO info{};
+    info.isValid = 1;
+    info.AID = ReadLE32(packet.data + 4);
+    info.GID = ReadLE32(packet.data + 8);
+    info.characterName = ExtractFixedPacketString(packet.data + 12, 24);
+    info.state = 0;
+    g_session.AddFriendToList(info);
+    g_session.RefreshFriendUI();
+}
+
+void HandleFriendDelete(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 10) {
+        return;
+    }
+
+    if (g_session.DeleteFriendFromList(ReadLE32(packet.data + 6))) {
+        g_session.RefreshFriendUI();
+    }
+}
+
+void HandleFriendRequest(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 34) {
+        return;
+    }
+
+    const std::string friendName = ExtractFixedPacketString(packet.data + 10, 24);
+    if (!friendName.empty()) {
+        RecordChat(mode, std::string("Friend request from ") + friendName + ".", 0x00FFFF00, kChatChannelSystem);
+    }
+}
+
 void HandleBattlefieldChat(CGameMode& mode, const PacketView& packet)
 {
     // Ref: Zc_Battlefield_Chat (0x02DC)
@@ -7576,17 +7989,39 @@ void HandleActorNameAck(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    NamePair& entry = mode.m_actorNameListByGID[gid];
-    entry.name = name;
-    if (packet.packetId == 0x0195 && packet.packetLength >= 54) {
-        entry.nick = ExtractFixedPacketString(packet, 30, 24);
-    }
+    auto updateEntry = [&](NamePair& entry) {
+        entry.name = name;
+        entry.nick.clear();
+        entry.partyName.clear();
+        entry.guildName.clear();
+        entry.guildTitle.clear();
+
+        if (packet.packetId == 0x0195 && packet.packetLength >= 102) {
+            entry.partyName = ExtractFixedPacketString(packet, 30, 24);
+            entry.guildName = ExtractFixedPacketString(packet, 54, 24);
+            entry.guildTitle = ExtractFixedPacketString(packet, 78, 24);
+        }
+    };
+
+    updateEntry(mode.m_actorNameListByGID[gid]);
+    updateEntry(mode.m_actorNameList[gid]);
+
+    const NamePair& entry = mode.m_actorNameListByGID[gid];
     mode.m_actorNameByGIDReqTimer.erase(gid);
 
-    DbgLog("[GameMode] name ack gid=%u name='%s' nick='%s'\n",
+    DbgLog("[GameMode] name ack gid=%u name='%s' party='%s' guild='%s' title='%s'\n",
         gid,
         entry.name.c_str(),
-        entry.nick.c_str());
+        entry.partyName.c_str(),
+        entry.guildName.c_str(),
+        entry.guildTitle.c_str());
+
+    for (const FRIEND_INFO& member : g_session.GetPartyList()) {
+        if (member.characterName == entry.name && member.partyMaxHp > 0) {
+            ApplyCachedPartyHpToVisibleActor(mode, member.AID, member.characterName);
+            break;
+        }
+    }
 }
 
 } // namespace
@@ -7765,6 +8200,10 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00F4, HandleStorageItemAdded);
     router.Register(0x00F6, HandleStorageItemRemoved);
     router.Register(0x00F8, HandleStorageClose);
+    router.Register(0x00FD, HandlePartyInviteAck);
+    router.Register(0x00FE, HandlePartyInviteRequest);
+    router.Register(0x00FA, HandlePartyCreateAck);
+    router.Register(0x00FB, HandlePartyList);
     router.Register(0x01C8, HandleUseItemAck2);
     router.Register(0x01C4, HandleStorageItemAdded);
     router.Register(0x01EE, HandleNormalInventoryList);
@@ -7792,12 +8231,15 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00BD, HandleInitialStatusSummary);
     router.Register(0x00BE, HandleStatusPointCostUpdate);
     router.Register(0x00C0, HandleIgnorePacket);
+    router.Register(0x0101, HandlePartyOptionChanged);
     router.Register(0x013D, HandleRecovery);
     router.Register(0x013E, HandleSkillCastAck);
     router.Register(0x01B0, HandleIgnorePacket);
-    router.Register(0x0106, HandleIgnorePacket);
+    router.Register(0x0106, HandlePartyHpUpdate);
     router.Register(0x0107, HandleIgnorePacket); // party minimap position (account id); framing only
-    router.Register(0x0104, HandleIgnorePacket);
+    router.Register(0x0104, HandlePartyMemberAdded);
+    router.Register(0x0105, HandlePartyMemberRemoved);
+    router.Register(0x01E9, HandlePartyMemberAdded);
     router.Register(0x011F, HandleSkillUnitSet);
     router.Register(0x0120, HandleIgnorePacket);
     router.Register(0x0131, HandleIgnorePacket);
@@ -7814,11 +8256,17 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01DE, HandleSkillDamageNotify);
     router.Register(0x01E1, HandleIgnorePacket);
     router.Register(0x01F3, HandleNotifyEffect2);
-    router.Register(0x0201, HandleIgnorePacket);
-    router.Register(0x0209, HandleIgnorePacket);
+    router.Register(0x0201, HandleFriendsList);
+    router.Register(0x0206, HandleFriendState);
+    router.Register(0x0207, HandleFriendRequest);
+    router.Register(0x0209, HandleFriendAdd);
+    router.Register(0x020A, HandleFriendDelete);
     router.Register(0x0214, HandleStatusSummary);
+    router.Register(0x02C5, HandlePartyInviteAck);
     router.Register(0x02DD, HandleIgnorePacket);
+    router.Register(0x080E, HandlePartyHpUpdate);
     router.Register(0x0283, HandleIgnorePacket);
+    router.Register(0x02C6, HandlePartyInviteRequest);
     router.Register(0x02C9, HandleIgnorePacket);
     router.Register(0x02B9, HandleShortcutKeyList);
     router.Register(0x02D2, HandleIgnorePacket);

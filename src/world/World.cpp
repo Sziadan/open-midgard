@@ -17,6 +17,7 @@
 #include "res/WorldRes.h"
 #include "session/Session.h"
 #include "main/WinMain.h"
+#include "ui/UIPcGage.h"
 
 #include <mmsystem.h>
 #include <windows.h>
@@ -5837,17 +5838,33 @@ void CWorld::ProcessActorSkillRechargeGages(const matrix& viewMatrix, float came
     }
 
     auto updateForActor = [&](CGameActor* actor) {
-        if (!actor || !actor->m_skillRechargeGage) {
+        if (!actor) {
             return;
         }
+
         int centerX = 0;
         int topY = 0;
         int labelY = 0;
         if (!GetActorScreenMarker(viewMatrix, cameraLongitude, actor->m_gid, &centerX, &topY, &labelY)) {
+            if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
+                if (pcActor->m_gage) {
+                    pcActor->m_gage->Move(-100, -100);
+                }
+            }
             return;
         }
-        (void)labelY;
-        actor->ProcessSkillRechargeGageOverlay(centerX, topY, clientHeight);
+
+        if (actor->m_skillRechargeGage) {
+            actor->ProcessSkillRechargeGageOverlay(centerX, topY, clientHeight);
+        }
+
+        if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
+            if (pcActor->m_gage) {
+                const float scale = (actor->m_lastPixelRatio > 0.0f) ? actor->m_lastPixelRatio : 1.0f;
+                const int yOffset = static_cast<int>((12.0f * static_cast<float>(clientHeight) / 480.0f) * scale);
+                pcActor->m_gage->Move(centerX - 30, labelY + yOffset);
+            }
+        }
     };
 
     if (m_player) {
