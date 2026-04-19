@@ -23,6 +23,10 @@ constexpr int kTitleBarHeight = 17;
 constexpr int kCloseButtonSize = 12;
 constexpr int kPadding = 8;
 constexpr int kIconBoxSize = 52;
+constexpr int kDescriptionTop = 88;
+constexpr int kDescriptionScrollBarWidth = 10;
+constexpr int kDescriptionScrollBarGap = 4;
+constexpr int kDescriptionWheelStep = 24;
 
 bool IsInsideRect(const RECT& rect, int x, int y)
 {
@@ -114,6 +118,76 @@ void DrawWrappedTextRect(HDC hdc, const RECT& rect, const std::string& text, COL
     DrawTextA(hdc, text.c_str(), -1, &drawRect, DT_LEFT | DT_TOP | DT_WORDBREAK);
 #endif
 }
+
+int MeasureWrappedTextHeight(HDC hdc, int width, const std::string& text)
+{
+    if (width <= 0 || text.empty()) {
+        return 0;
+    }
+
+#if RO_ENABLE_QT6_UI
+    QFont font(QStringLiteral("MS Sans Serif"));
+    font.setPixelSize(11);
+    font.setStyleStrategy(QFont::NoAntialias);
+    const QRect bounds = QFontMetrics(font).boundingRect(
+        QRect(0, 0, width, 16384),
+        Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap,
+        QString::fromLocal8Bit(text.c_str()));
+    if (bounds.height() > 0) {
+        return bounds.height();
+    }
+#endif
+
+#if RO_PLATFORM_WINDOWS
+    RECT calcRect{ 0, 0, width, 0 };
+    DrawTextA(hdc, text.c_str(), -1, &calcRect, DT_LEFT | DT_TOP | DT_WORDBREAK | DT_EDITCONTROL | DT_CALCRECT | DT_NOPREFIX);
+    return (std::max)(0, static_cast<int>(calcRect.bottom - calcRect.top));
+#else
+    (void)hdc;
+    return 0;
+#endif
+}
+
+void DrawWrappedTextRectScrolled(HDC hdc, const RECT& rect, const std::string& text, COLORREF color, int scrollOffset, int contentHeight)
+{
+    if (!hdc || text.empty() || rect.right <= rect.left || rect.bottom <= rect.top) {
+        return;
+    }
+
+#if RO_ENABLE_QT6_UI
+    const int width = rect.right - rect.left;
+    const int height = rect.bottom - rect.top;
+    std::vector<unsigned int> pixels(static_cast<size_t>(width) * static_cast<size_t>(height), 0u);
+    QImage image(reinterpret_cast<uchar*>(pixels.data()), width, height, width * static_cast<int>(sizeof(unsigned int)), QImage::Format_ARGB32);
+    if (!image.isNull()) {
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing, false);
+        painter.setRenderHint(QPainter::TextAntialiasing, false);
+        QFont font(QStringLiteral("MS Sans Serif"));
+        font.setPixelSize(11);
+        font.setStyleStrategy(QFont::NoAntialias);
+        painter.setFont(font);
+        painter.setPen(QColor(GetRValue(color), GetGValue(color), GetBValue(color)));
+        painter.drawText(
+            QRect(0, -scrollOffset, width, (std::max)(height + scrollOffset, contentHeight)),
+            Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap,
+            QString::fromLocal8Bit(text.c_str()));
+        AlphaBlendArgbToHdc(hdc, rect.left, rect.top, width, height, pixels.data(), width, height);
+        return;
+    }
+#endif
+
+#if RO_PLATFORM_WINDOWS
+    const int savedDc = SaveDC(hdc);
+    IntersectClipRect(hdc, rect.left, rect.top, rect.right, rect.bottom);
+    const int viewportHeight = static_cast<int>(rect.bottom - rect.top);
+    RECT drawRect{ rect.left, rect.top - scrollOffset, rect.right, rect.top - scrollOffset + (std::max)(viewportHeight, contentHeight) };
+    SetBkMode(hdc, TRANSPARENT);
+    SetTextColor(hdc, color);
+    DrawTextA(hdc, text.c_str(), -1, &drawRect, DT_LEFT | DT_TOP | DT_WORDBREAK | DT_EDITCONTROL | DT_NOPREFIX);
+    RestoreDC(hdc, savedDc);
+#endif
+}
 }
 
 UISkillDescribeWnd::UISkillDescribeWnd()
@@ -122,6 +196,9 @@ UISkillDescribeWnd::UISkillDescribeWnd()
       m_closeHovered(false),
       m_closePressed(false),
       m_hasStoredPlacement(false),
+      m_descriptionScrollOffset(0),
+      m_isDraggingDescriptionScroll(false),
+      m_descriptionScrollDragOffsetY(0),
       m_iconBitmap()
 {
     Create(kWindowWidth, kWindowHeight);
@@ -181,8 +258,21 @@ void UISkillDescribeWnd::OnDraw()
         detailY += 13;
     }
 
-    const RECT descriptionRect{ m_x + kPadding, iconBox.bottom + 10, m_x + m_w - kPadding, m_y + m_h - kPadding };
-    DrawWrappedTextRect(hdc, descriptionRect, BuildDescriptionText(), RGB(16, 16, 16));
+    const DescriptionLayout descriptionLayout = GetDescriptionLayout();
+    DrawWrappedTextRectScrolled(
+        hdc,
+        descriptionLayout.viewportRect,
+        BuildDescriptionText(),
+        RGB(16, 16, 16),
+        m_descriptionScrollOffset,
+        descriptionLayout.contentHeight);
+
+    if (descriptionLayout.scrollBarVisible) {
+        shopui::FillRectColor(hdc, descriptionLayout.scrollTrackRect, RGB(227, 231, 238));
+        shopui::FrameRectColor(hdc, descriptionLayout.scrollTrackRect, RGB(164, 173, 189));
+        shopui::FillRectColor(hdc, descriptionLayout.scrollThumbRect, RGB(180, 188, 205));
+        shopui::FrameRectColor(hdc, descriptionLayout.scrollThumbRect, RGB(120, 130, 150));
+    }
 
     ReleaseDrawTarget(hdc);
     m_isDirty = 0;
@@ -196,11 +286,33 @@ void UISkillDescribeWnd::OnLBtnDown(int x, int y)
         Invalidate();
         return;
     }
+
+    const DescriptionLayout descriptionLayout = GetDescriptionLayout();
+    if (descriptionLayout.scrollBarVisible) {
+        if (IsInsideRect(descriptionLayout.scrollThumbRect, x, y)) {
+            m_isDraggingDescriptionScroll = true;
+            m_descriptionScrollDragOffsetY = y - descriptionLayout.scrollThumbRect.top;
+            return;
+        }
+        if (IsInsideRect(descriptionLayout.scrollTrackRect, x, y)) {
+            const int thumbHeight = descriptionLayout.scrollThumbRect.bottom - descriptionLayout.scrollThumbRect.top;
+            UpdateDescriptionScrollFromThumbPosition(y - (thumbHeight / 2));
+            Invalidate();
+            return;
+        }
+    }
+
     UIFrameWnd::OnLBtnDown(x, y);
 }
 
 void UISkillDescribeWnd::OnLBtnUp(int x, int y)
 {
+    if (m_isDraggingDescriptionScroll) {
+        m_isDraggingDescriptionScroll = false;
+        UpdateInteraction(x, y);
+        return;
+    }
+
     const bool wasDragging = m_isDragging != 0;
     UIFrameWnd::OnLBtnUp(x, y);
     if (wasDragging) {
@@ -217,6 +329,13 @@ void UISkillDescribeWnd::OnLBtnUp(int x, int y)
 
 void UISkillDescribeWnd::OnMouseMove(int x, int y)
 {
+    if (m_isDraggingDescriptionScroll) {
+        UpdateDescriptionScrollFromThumbPosition(y - m_descriptionScrollDragOffsetY);
+        UpdateInteraction(x, y);
+        Invalidate();
+        return;
+    }
+
     UIFrameWnd::OnMouseMove(x, y);
     UpdateInteraction(x, y);
 }
@@ -224,6 +343,20 @@ void UISkillDescribeWnd::OnMouseMove(int x, int y)
 void UISkillDescribeWnd::OnMouseHover(int x, int y)
 {
     UpdateInteraction(x, y);
+}
+
+void UISkillDescribeWnd::OnWheel(int delta)
+{
+    const DescriptionLayout descriptionLayout = GetDescriptionLayout();
+    if (!descriptionLayout.scrollBarVisible) {
+        return;
+    }
+
+    if (delta > 0) {
+        AdjustDescriptionScroll(-kDescriptionWheelStep);
+    } else if (delta < 0) {
+        AdjustDescriptionScroll(kDescriptionWheelStep);
+    }
 }
 
 void UISkillDescribeWnd::StoreInfo()
@@ -236,6 +369,9 @@ void UISkillDescribeWnd::SetSkillInfo(const PLAYER_SKILL_INFO& skillInfo, int pr
 {
     m_skillInfo = skillInfo;
     m_hasSkill = skillInfo.SKID != 0;
+    m_descriptionScrollOffset = 0;
+    m_isDraggingDescriptionScroll = false;
+    m_descriptionScrollDragOffsetY = 0;
     m_iconBitmap.Clear();
     if (m_hasSkill) {
         const std::string iconPath = ResolveSkillIconPath(skillInfo);
@@ -269,6 +405,22 @@ bool UISkillDescribeWnd::GetDisplayDataForQt(DisplayData* outData) const
         (m_skillInfo.attackRange > 0 ? ("Range: " + std::to_string(m_skillInfo.attackRange)) : std::string())
     };
     outData->description = BuildDescriptionText();
+    const DescriptionLayout descriptionLayout = GetDescriptionLayout();
+    outData->descriptionX = descriptionLayout.viewportRect.left;
+    outData->descriptionY = descriptionLayout.viewportRect.top;
+    outData->descriptionWidth = descriptionLayout.viewportRect.right - descriptionLayout.viewportRect.left;
+    outData->descriptionHeight = descriptionLayout.viewportRect.bottom - descriptionLayout.viewportRect.top;
+    outData->descriptionContentHeight = descriptionLayout.contentHeight;
+    outData->descriptionScrollOffset = m_descriptionScrollOffset;
+    outData->descriptionScrollBar.visible = descriptionLayout.scrollBarVisible;
+    outData->descriptionScrollBar.trackX = descriptionLayout.scrollTrackRect.left;
+    outData->descriptionScrollBar.trackY = descriptionLayout.scrollTrackRect.top;
+    outData->descriptionScrollBar.trackWidth = descriptionLayout.scrollTrackRect.right - descriptionLayout.scrollTrackRect.left;
+    outData->descriptionScrollBar.trackHeight = descriptionLayout.scrollTrackRect.bottom - descriptionLayout.scrollTrackRect.top;
+    outData->descriptionScrollBar.thumbX = descriptionLayout.scrollThumbRect.left;
+    outData->descriptionScrollBar.thumbY = descriptionLayout.scrollThumbRect.top;
+    outData->descriptionScrollBar.thumbWidth = descriptionLayout.scrollThumbRect.right - descriptionLayout.scrollThumbRect.left;
+    outData->descriptionScrollBar.thumbHeight = descriptionLayout.scrollThumbRect.bottom - descriptionLayout.scrollThumbRect.top;
     const RECT closeRect = GetCloseButtonRect();
     outData->closeButton = { closeRect.left, closeRect.top, kCloseButtonSize, kCloseButtonSize, m_closeHovered, m_closePressed, "X" };
     return true;
@@ -282,6 +434,88 @@ bool UISkillDescribeWnd::HasSkill() const
 RECT UISkillDescribeWnd::GetCloseButtonRect() const
 {
     return shopui::MakeRect(m_x + m_w - 16, m_y + 2, kCloseButtonSize, kCloseButtonSize);
+}
+
+UISkillDescribeWnd::DescriptionLayout UISkillDescribeWnd::GetDescriptionLayout() const
+{
+    DescriptionLayout layout{};
+    layout.viewportRect = RECT{ m_x + kPadding, m_y + kDescriptionTop, m_x + m_w - kPadding, m_y + m_h - kPadding };
+
+    HDC hdc = AcquireDrawTarget();
+    const std::string descriptionText = BuildDescriptionText();
+    layout.contentHeight = MeasureWrappedTextHeight(hdc, layout.viewportRect.right - layout.viewportRect.left, descriptionText);
+    if (layout.contentHeight > (layout.viewportRect.bottom - layout.viewportRect.top)) {
+        layout.scrollBarVisible = true;
+        layout.viewportRect.right -= (kDescriptionScrollBarGap + kDescriptionScrollBarWidth);
+        layout.contentHeight = MeasureWrappedTextHeight(hdc, layout.viewportRect.right - layout.viewportRect.left, descriptionText);
+        layout.scrollTrackRect = RECT{
+            layout.viewportRect.right + kDescriptionScrollBarGap,
+            layout.viewportRect.top,
+            layout.viewportRect.right + kDescriptionScrollBarGap + kDescriptionScrollBarWidth,
+            layout.viewportRect.bottom
+        };
+    }
+    if (hdc) {
+        ReleaseDrawTarget(hdc);
+    }
+
+    const int viewportHeight = (std::max)(0, static_cast<int>(layout.viewportRect.bottom - layout.viewportRect.top));
+    layout.contentHeight = (std::max)(layout.contentHeight, viewportHeight);
+    layout.maxScrollOffset = (std::max)(0, layout.contentHeight - viewportHeight);
+
+    if (layout.scrollBarVisible) {
+        const int trackHeight = (std::max)(0, static_cast<int>(layout.scrollTrackRect.bottom - layout.scrollTrackRect.top - 8));
+        int thumbHeight = viewportHeight > 0 && layout.contentHeight > 0
+            ? (trackHeight * viewportHeight) / layout.contentHeight
+            : trackHeight;
+        thumbHeight = (std::max)(18, thumbHeight);
+        thumbHeight = (std::min)(trackHeight, thumbHeight);
+
+        int thumbTop = layout.scrollTrackRect.top + 4;
+        if (layout.maxScrollOffset > 0 && trackHeight > thumbHeight) {
+            thumbTop += ((trackHeight - thumbHeight) * m_descriptionScrollOffset) / layout.maxScrollOffset;
+        }
+        layout.scrollThumbRect = RECT{
+            layout.scrollTrackRect.left + 2,
+            thumbTop,
+            layout.scrollTrackRect.right - 2,
+            thumbTop + thumbHeight
+        };
+    }
+
+    return layout;
+}
+
+void UISkillDescribeWnd::ClampDescriptionScroll()
+{
+    const DescriptionLayout layout = GetDescriptionLayout();
+    m_descriptionScrollOffset = std::clamp(m_descriptionScrollOffset, 0, layout.maxScrollOffset);
+}
+
+void UISkillDescribeWnd::AdjustDescriptionScroll(int delta)
+{
+    const int oldOffset = m_descriptionScrollOffset;
+    m_descriptionScrollOffset += delta;
+    ClampDescriptionScroll();
+    if (m_descriptionScrollOffset != oldOffset) {
+        Invalidate();
+    }
+}
+
+void UISkillDescribeWnd::UpdateDescriptionScrollFromThumbPosition(int globalY)
+{
+    const DescriptionLayout layout = GetDescriptionLayout();
+    if (!layout.scrollBarVisible || layout.maxScrollOffset <= 0) {
+        m_descriptionScrollOffset = 0;
+        return;
+    }
+
+    const int thumbHeight = layout.scrollThumbRect.bottom - layout.scrollThumbRect.top;
+    const int minTop = layout.scrollTrackRect.top + 4;
+    const int maxTop = layout.scrollTrackRect.bottom - 4 - thumbHeight;
+    const int clampedTop = (std::max)(minTop, (std::min)(globalY, maxTop));
+    const int denominator = (std::max)(1, maxTop - minTop);
+    m_descriptionScrollOffset = ((clampedTop - minTop) * layout.maxScrollOffset) / denominator;
 }
 
 void UISkillDescribeWnd::UpdateInteraction(int x, int y)

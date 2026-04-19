@@ -3466,16 +3466,46 @@ Item {
             }
         }
 
-        Text {
-            x: 8
-            y: 88
-            width: parent.width - 16
-            height: parent.height - 96
-            text: uiState.skillDescribeData.description || ""
-            color: "#111111"
-            font.pixelSize: 10
-            wrapMode: Text.WordWrap
-            verticalAlignment: Text.AlignTop
+        Rectangle {
+            x: (uiState.skillDescribeData.descriptionX || 0) - uiState.skillDescribeX
+            y: (uiState.skillDescribeData.descriptionY || 0) - uiState.skillDescribeY
+            width: uiState.skillDescribeData.descriptionWidth || 0
+            height: uiState.skillDescribeData.descriptionHeight || 0
+            color: "transparent"
+            clip: true
+
+            Text {
+                x: 0
+                y: -(uiState.skillDescribeData.descriptionScrollOffset || 0)
+                width: parent.width
+                height: Math.max(implicitHeight, uiState.skillDescribeData.descriptionContentHeight || 0)
+                text: uiState.skillDescribeData.description || ""
+                color: "#111111"
+                font.pixelSize: 10
+                wrapMode: Text.WordWrap
+                verticalAlignment: Text.AlignTop
+            }
+        }
+
+        Rectangle {
+            x: (uiState.skillDescribeData.descriptionScrollBar.trackX || 0) - uiState.skillDescribeX
+            y: (uiState.skillDescribeData.descriptionScrollBar.trackY || 0) - uiState.skillDescribeY
+            width: uiState.skillDescribeData.descriptionScrollBar.trackWidth || 0
+            height: uiState.skillDescribeData.descriptionScrollBar.trackHeight || 0
+            visible: uiState.skillDescribeData.descriptionScrollBar.visible || false
+            color: "#e3e7ee"
+            border.width: 1
+            border.color: "#a4adbd"
+
+            Rectangle {
+                x: (uiState.skillDescribeData.descriptionScrollBar.thumbX || 0) - (uiState.skillDescribeData.descriptionScrollBar.trackX || 0)
+                y: (uiState.skillDescribeData.descriptionScrollBar.thumbY || 0) - (uiState.skillDescribeData.descriptionScrollBar.trackY || 0)
+                width: uiState.skillDescribeData.descriptionScrollBar.thumbWidth || 0
+                height: uiState.skillDescribeData.descriptionScrollBar.thumbHeight || 0
+                color: "#b4bccd"
+                border.width: 1
+                border.color: "#788296"
+            }
         }
     }
 

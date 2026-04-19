@@ -145,6 +145,108 @@ std::string ResolveShortcutSkillIconPath(int skillId)
     return g_skillMgr.GetSkillIconPath(skillId);
 }
 
+std::string BuildShortcutSlotKeyLabel(int visibleSlot)
+{
+    if (visibleSlot < 0 || visibleSlot >= kShortcutSlotsPerPage) {
+        return std::string();
+    }
+    return "F" + std::to_string(visibleSlot + 1);
+}
+
+int ResolveShortcutSkillUseLevel(const SHORTCUT_SLOT& slot, const PLAYER_SKILL_INFO* skill)
+{
+    if (slot.count > 0) {
+        return static_cast<int>(slot.count);
+    }
+    if (skill && skill->level > 0) {
+        return skill->level;
+    }
+    return 1;
+}
+
+int ResolveShortcutSkillSpCost(int skillId, int useLevel, const PLAYER_SKILL_INFO* skill)
+{
+    if (useLevel <= 0) {
+        return 0;
+    }
+
+    g_skillMgr.EnsureLoaded();
+    if (const SkillMetadata* metadata = g_skillMgr.GetSkillMetadata(skillId)) {
+        const size_t levelIndex = static_cast<size_t>(useLevel - 1);
+        if (levelIndex < metadata->levelSpCosts.size()) {
+            return metadata->levelSpCosts[levelIndex];
+        }
+    }
+
+    if (skill && skill->spcost > 0) {
+        return skill->spcost;
+    }
+
+    return 0;
+}
+
+std::string ResolveShortcutSkillName(int skillId, const PLAYER_SKILL_INFO* skill)
+{
+    if (skill) {
+        if (!skill->skillName.empty()) {
+            return skill->skillName;
+        }
+        if (!skill->skillIdName.empty()) {
+            return skill->skillIdName;
+        }
+    }
+
+    g_skillMgr.EnsureLoaded();
+    if (const SkillMetadata* metadata = g_skillMgr.GetSkillMetadata(skillId)) {
+        if (!metadata->displayName.empty()) {
+            return metadata->displayName;
+        }
+        if (!metadata->skillIdName.empty()) {
+            return metadata->skillIdName;
+        }
+    }
+
+    return "Skill " + std::to_string(skillId);
+}
+
+std::string BuildShortcutSkillHoverText(int visibleSlot, const SHORTCUT_SLOT& slot)
+{
+    if (slot.id == 0 || slot.isSkill == 0) {
+        return std::string();
+    }
+
+    const PLAYER_SKILL_INFO* skill = g_session.GetSkillItemBySkillId(static_cast<int>(slot.id));
+    const std::string keyLabel = BuildShortcutSlotKeyLabel(visibleSlot);
+    const std::string skillName = ResolveShortcutSkillName(static_cast<int>(slot.id), skill);
+    const int useLevel = ResolveShortcutSkillUseLevel(slot, skill);
+    const int spCost = ResolveShortcutSkillSpCost(static_cast<int>(slot.id), useLevel, skill);
+
+    std::string text = keyLabel;
+    if (!text.empty()) {
+        text += " ";
+    }
+    text += skillName;
+    text += " Use Lv ";
+    text += std::to_string(useLevel);
+    text += " (Sp: ";
+    text += std::to_string(spCost);
+    text += ")";
+    return text;
+}
+
+std::string BuildShortcutItemHoverText(int visibleSlot, const ITEM_INFO& item)
+{
+    const std::string keyLabel = BuildShortcutSlotKeyLabel(visibleSlot);
+    const std::string itemText = shopui::BuildItemHoverText(item);
+    if (keyLabel.empty()) {
+        return itemText;
+    }
+    if (itemText.empty()) {
+        return keyLabel;
+    }
+    return keyLabel + " " + itemText;
+}
+
 } // namespace
 
 UIShortCutWnd::UIShortCutWnd()
@@ -492,8 +594,22 @@ bool UIShortCutWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
     }
 
     const SHORTCUT_SLOT* slot = g_session.GetShortcutSlotByVisibleIndex(m_hoverSlot);
-    if (!slot || slot->id == 0 || slot->isSkill != 0) {
+    if (!slot) {
         return false;
+    }
+
+    outData->anchorRect = GetSlotRect(m_hoverSlot);
+    outData->itemId = 0;
+    outData->identified = true;
+
+    if (slot->id == 0) {
+        outData->text = BuildShortcutSlotKeyLabel(m_hoverSlot);
+        return outData->IsValid();
+    }
+
+    if (slot->isSkill != 0) {
+        outData->text = BuildShortcutSkillHoverText(m_hoverSlot, *slot);
+        return outData->IsValid();
     }
 
     ITEM_INFO fallbackItem{};
@@ -502,8 +618,7 @@ bool UIShortCutWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
     const ITEM_INFO* item = g_session.GetInventoryItemByItemId(slot->id);
     const ITEM_INFO& hoverItem = item ? *item : fallbackItem;
 
-    outData->anchorRect = GetSlotRect(m_hoverSlot);
-    outData->text = shopui::BuildItemHoverText(hoverItem);
+    outData->text = BuildShortcutItemHoverText(m_hoverSlot, hoverItem);
     outData->itemId = hoverItem.GetItemId();
     outData->identified = hoverItem.m_isIdentified != 0;
     return outData->IsValid();

@@ -2316,6 +2316,12 @@ void PopulateSkillDescribeState(QtUiState* state)
         data.insert(QStringLiteral("skillId"), display.skillId);
         data.insert(QStringLiteral("name"), ToQString(display.name));
         data.insert(QStringLiteral("description"), ToQString(display.description));
+        data.insert(QStringLiteral("descriptionX"), display.descriptionX);
+        data.insert(QStringLiteral("descriptionY"), display.descriptionY);
+        data.insert(QStringLiteral("descriptionWidth"), display.descriptionWidth);
+        data.insert(QStringLiteral("descriptionHeight"), display.descriptionHeight);
+        data.insert(QStringLiteral("descriptionContentHeight"), display.descriptionContentHeight);
+        data.insert(QStringLiteral("descriptionScrollOffset"), display.descriptionScrollOffset);
 
         QVariantList detailLines;
         detailLines.reserve(static_cast<qsizetype>(display.detailLines.size()));
@@ -2335,6 +2341,18 @@ void PopulateSkillDescribeState(QtUiState* state)
         closeButton.insert(QStringLiteral("pressed"), display.closeButton.pressed);
         closeButton.insert(QStringLiteral("label"), ToQString(display.closeButton.label));
         data.insert(QStringLiteral("closeButton"), closeButton);
+
+        QVariantMap descriptionScrollBar;
+        descriptionScrollBar.insert(QStringLiteral("visible"), display.descriptionScrollBar.visible);
+        descriptionScrollBar.insert(QStringLiteral("trackX"), display.descriptionScrollBar.trackX);
+        descriptionScrollBar.insert(QStringLiteral("trackY"), display.descriptionScrollBar.trackY);
+        descriptionScrollBar.insert(QStringLiteral("trackWidth"), display.descriptionScrollBar.trackWidth);
+        descriptionScrollBar.insert(QStringLiteral("trackHeight"), display.descriptionScrollBar.trackHeight);
+        descriptionScrollBar.insert(QStringLiteral("thumbX"), display.descriptionScrollBar.thumbX);
+        descriptionScrollBar.insert(QStringLiteral("thumbY"), display.descriptionScrollBar.thumbY);
+        descriptionScrollBar.insert(QStringLiteral("thumbWidth"), display.descriptionScrollBar.thumbWidth);
+        descriptionScrollBar.insert(QStringLiteral("thumbHeight"), display.descriptionScrollBar.thumbHeight);
+        data.insert(QStringLiteral("descriptionScrollBar"), descriptionScrollBar);
     }
     state->setSkillDescribeData(data);
 }
