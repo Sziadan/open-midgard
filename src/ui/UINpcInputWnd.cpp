@@ -130,7 +130,12 @@ UINpcInputWnd::UINpcInputWnd()
     : m_npcId(0),
       m_mode(InputMode::String),
       m_editCtrl(new UIEditCtrl()),
-      m_pressedTarget(ClickTarget::None)
+    m_pressedTarget(ClickTarget::None),
+    m_submitAction(SubmitAction::None),
+    m_submitGameMessage(0),
+    m_submitWparam(0),
+    m_maxNumberValue(0),
+    m_dialogLabel("Enter text")
 {
     Create(kInputWidth, kInputHeight);
     m_editCtrl->Create(m_w - kPadding * 2, kEditHeight);
@@ -196,6 +201,11 @@ UINpcInputWnd::InputMode UINpcInputWnd::GetInputMode() const
 const char* UINpcInputWnd::GetInputText() const
 {
     return m_editCtrl ? m_editCtrl->GetText() : "";
+}
+
+const char* UINpcInputWnd::GetDialogLabel() const
+{
+    return m_dialogLabel.empty() ? "" : m_dialogLabel.c_str();
 }
 
 bool UINpcInputWnd::IsOkPressed() const
@@ -310,7 +320,7 @@ void UINpcInputWnd::OnDraw()
 
     HFONT oldFont = static_cast<HFONT>(SelectObject(hdc, GetNpcInputFont()));
     RECT labelRect = MakeRect(m_x + kPadding, m_y + kPadding - 1, m_w - kPadding * 2, 16);
-    const char* label = (m_mode == InputMode::Number) ? "Enter a number" : "Enter text";
+    const char* label = GetDialogLabel();
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(0, 0, 0));
 #if RO_ENABLE_QT6_UI
@@ -328,12 +338,18 @@ void UINpcInputWnd::OnDraw()
     ReleaseDrawTarget(hdc);
 }
 
-void UINpcInputWnd::OpenForMode(u32 npcId, InputMode mode)
+void UINpcInputWnd::OpenForMode(u32 npcId, InputMode mode, SubmitAction action, const char* label)
 {
     m_npcId = npcId;
     m_mode = mode;
+    m_submitAction = action;
+    m_submitGameMessage = 0;
+    m_submitWparam = 0;
+    m_maxNumberValue = 0;
+    m_dialogLabel = label ? label : ((mode == InputMode::Number) ? "Enter a number" : "Enter text");
     m_editCtrl->SetText("");
     m_editCtrl->m_type = (mode == InputMode::Number) ? 1 : 0;
+    m_editCtrl->m_maxchar = (mode == InputMode::Number) ? 10 : 0;
     m_editCtrl->m_hasFocus = true;
     m_pressedTarget = ClickTarget::None;
     SetShow(1);
@@ -343,17 +359,35 @@ void UINpcInputWnd::OpenForMode(u32 npcId, InputMode mode)
 
 void UINpcInputWnd::OpenNumber(u32 npcId)
 {
-    OpenForMode(npcId, InputMode::Number);
+    OpenForMode(npcId, InputMode::Number, SubmitAction::NpcNumber, "Enter a number");
 }
 
 void UINpcInputWnd::OpenString(u32 npcId)
 {
-    OpenForMode(npcId, InputMode::String);
+    OpenForMode(npcId, InputMode::String, SubmitAction::NpcString, "Enter text");
+}
+
+void UINpcInputWnd::OpenGameNumberPrompt(const char* label, int gameMessage, msgparam_t wparam, u32 initialValue, u32 maxValue)
+{
+    OpenForMode(0, InputMode::Number, SubmitAction::GameMessage, label && *label ? label : "Enter amount");
+    m_submitGameMessage = gameMessage;
+    m_submitWparam = wparam;
+    m_maxNumberValue = maxValue;
+
+    char valueText[32]{};
+    const u32 clampedInitialValue = maxValue > 0 ? (std::max)(1u, (std::min)(initialValue, maxValue)) : initialValue;
+    std::snprintf(valueText, sizeof(valueText), "%u", static_cast<unsigned int>(clampedInitialValue));
+    m_editCtrl->SetText(valueText);
 }
 
 void UINpcInputWnd::HideInput()
 {
     m_npcId = 0;
+    m_submitAction = SubmitAction::None;
+    m_submitGameMessage = 0;
+    m_submitWparam = 0;
+    m_maxNumberValue = 0;
+    m_dialogLabel = "Enter text";
     m_editCtrl->SetText("");
     m_editCtrl->m_hasFocus = false;
     if (g_windowMgr.m_editWindow == m_editCtrl) {
@@ -364,29 +398,52 @@ void UINpcInputWnd::HideInput()
 
 bool UINpcInputWnd::SubmitCurrentText()
 {
-    if (m_npcId == 0) {
-        return false;
-    }
-
     const char* text = m_editCtrl->GetText();
     if (!text || *text == '\0') {
         return false;
     }
 
+    if (m_submitAction == SubmitAction::None) {
+        return false;
+    }
+
+    u32 numericValue = 0;
+    if (m_submitAction == SubmitAction::GameMessage) {
+        numericValue = std::strtoul(text, nullptr, 10);
+        if (numericValue == 0) {
+            return false;
+        }
+        if (m_maxNumberValue > 0) {
+            numericValue = (std::min)(numericValue, m_maxNumberValue);
+        }
+    }
+
     const u32 npcId = m_npcId;
+    const SubmitAction submitAction = m_submitAction;
+    const int submitGameMessage = m_submitGameMessage;
+    const msgparam_t submitWparam = m_submitWparam;
     const std::string textCopy = text;
     HideInput();
     PlayUiButtonSound();
-    if (m_mode == InputMode::Number) {
+
+    if (submitAction == SubmitAction::NpcNumber) {
         return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcInputNumber, npcId, std::strtoul(textCopy.c_str(), nullptr, 10), 0) != 0;
     }
-    return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcInputString, npcId, reinterpret_cast<msgparam_t>(textCopy.c_str()), 0) != 0;
+    if (submitAction == SubmitAction::NpcString) {
+        return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestNpcInputString, npcId, reinterpret_cast<msgparam_t>(textCopy.c_str()), 0) != 0;
+    }
+    if (submitAction == SubmitAction::GameMessage) {
+        return g_modeMgr.SendMsg(submitGameMessage, submitWparam, static_cast<msgparam_t>(numericValue), 0) != 0;
+    }
+
+    return false;
 }
 
 void UINpcInputWnd::CancelInput()
 {
-    if (m_npcId == 0) {
+    if (m_submitAction == SubmitAction::GameMessage || m_npcId == 0) {
         HideInput();
+        PlayUiButtonSound();
         return;
     }
 

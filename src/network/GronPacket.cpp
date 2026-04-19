@@ -130,6 +130,8 @@ void FillPacketSizeTable()
     SetPacketSize(0x00EE, 2);
     SetPacketSize(0x00EF, 2);
     SetPacketSize(0x00F2, 6);
+        SetPacketSize(0x00A5, kVariablePacketSize);
+        SetPacketSize(0x00A6, kVariablePacketSize);
     SetPacketSize(0x00F3, kVariablePacketSize);
     SetPacketSize(0x00F4, 21);
     SetPacketSize(0x00F5, 8);
@@ -224,6 +226,7 @@ void FillPacketSizeTable()
     SetPacketSize(0x01B9, 6);
     SetPacketSize(0x01BA, 26);
     SetPacketSize(0x01C3, kVariablePacketSize);
+    SetPacketSize(0x01C4, 22);
     SetPacketSize(0x01C8, 13);
     SetPacketSize(0x01C9, 97);
     SetPacketSize(0x01CF, 28);
@@ -234,6 +237,7 @@ void FillPacketSizeTable()
     SetPacketSize(0x01E1, 8);
     SetPacketSize(0x01EE, kVariablePacketSize);
     SetPacketSize(0x01EF, kVariablePacketSize);
+    SetPacketSize(0x01F0, kVariablePacketSize);
     SetPacketSize(0x01F3, 10);
     SetPacketSize(0x01F8, 2);
     SetPacketSize(0x01FF, 10);              // ZC_HIGHJUMP (clif_slide)
@@ -248,6 +252,7 @@ void FillPacketSizeTable()
     SetPacketSize(0x0235, kVariablePacketSize);
     SetPacketSize(0x0239, 11);
     SetPacketSize(0x0283, 6);
+    SetPacketSize(0x02EA, kVariablePacketSize);
     SetPacketSize(0x02EB, 13);
     SetPacketSize(0x02EC, 67);
     SetPacketSize(0x8482, 4);

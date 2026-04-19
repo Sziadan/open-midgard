@@ -1409,6 +1409,7 @@ void CSession::SetSelectedCharacterAppearance(const CHARACTER_INFO& info)
     m_aspd = 0;
     m_plusAspd = 0;
     ClearNpcShopState();
+    CloseStorage();
     ClearShortcutSlots();
 
     std::memset(m_playerName, 0, sizeof(m_playerName));
@@ -1502,6 +1503,11 @@ void CSession::ClearEquipmentInventoryItems()
     }
 }
 
+void CSession::ClearStorageItems()
+{
+    m_storageItems.clear();
+}
+
 void CSession::ClearSkillItems()
 {
     m_skillItems.clear();
@@ -1575,6 +1581,69 @@ void CSession::SetInventoryItem(const ITEM_INFO& itemInfo)
     m_inventoryItems.push_back(itemInfo);
 }
 
+void CSession::OpenStorage(int currentCount, int maxCount)
+{
+    m_storageOpen = true;
+    m_storageCurrentCount = (std::max)(0, currentCount);
+    m_storageMaxCount = (std::max)(0, maxCount);
+}
+
+void CSession::CloseStorage()
+{
+    m_storageOpen = false;
+    m_storageCurrentCount = 0;
+    m_storageMaxCount = 0;
+    ClearStorageItems();
+}
+
+void CSession::SetStorageItem(const ITEM_INFO& itemInfo)
+{
+    auto it = std::find_if(m_storageItems.begin(), m_storageItems.end(), [&](const ITEM_INFO& existing) {
+        return existing.m_itemIndex == itemInfo.m_itemIndex;
+    });
+
+    if (it != m_storageItems.end()) {
+        *it = itemInfo;
+        return;
+    }
+
+    m_storageItems.push_back(itemInfo);
+}
+
+void CSession::AddStorageItem(const ITEM_INFO& itemInfo)
+{
+    auto it = std::find_if(m_storageItems.begin(), m_storageItems.end(), [&](const ITEM_INFO& existing) {
+        return existing.m_itemIndex == itemInfo.m_itemIndex;
+    });
+
+    if (it != m_storageItems.end()) {
+        it->m_num += itemInfo.m_num;
+        if (itemInfo.GetItemId() != 0) {
+            it->SetItemId(itemInfo.GetItemId());
+        }
+        if (itemInfo.m_itemType != 0) {
+            it->m_itemType = itemInfo.m_itemType;
+        }
+        if (itemInfo.m_location != 0) {
+            it->m_location = itemInfo.m_location;
+        }
+        if (itemInfo.m_wearLocation != 0) {
+            it->m_wearLocation = itemInfo.m_wearLocation;
+        }
+        it->m_isIdentified = itemInfo.m_isIdentified;
+        it->m_isDamaged = itemInfo.m_isDamaged;
+        it->m_refiningLevel = itemInfo.m_refiningLevel;
+        it->m_deleteTime = itemInfo.m_deleteTime;
+        std::memcpy(it->m_slot, itemInfo.m_slot, sizeof(it->m_slot));
+        return;
+    }
+
+    m_storageItems.push_back(itemInfo);
+    if (m_storageOpen) {
+        ++m_storageCurrentCount;
+    }
+}
+
 void CSession::AddInventoryItem(const ITEM_INFO& itemInfo)
 {
     auto it = std::find_if(m_inventoryItems.begin(), m_inventoryItems.end(), [&](const ITEM_INFO& existing) {
@@ -1646,6 +1715,25 @@ void CSession::RemoveInventoryItem(unsigned int itemIndex, int amount)
 
         if (amount <= 0 || it->m_num <= amount) {
             m_inventoryItems.erase(it);
+        } else {
+            it->m_num -= amount;
+        }
+        return;
+    }
+}
+
+void CSession::RemoveStorageItem(unsigned int itemIndex, int amount)
+{
+    for (auto it = m_storageItems.begin(); it != m_storageItems.end(); ++it) {
+        if (it->m_itemIndex != itemIndex) {
+            continue;
+        }
+
+        if (amount <= 0 || it->m_num <= amount) {
+            m_storageItems.erase(it);
+            if (m_storageOpen) {
+                m_storageCurrentCount = (std::max)(0, m_storageCurrentCount - 1);
+            }
         } else {
             it->m_num -= amount;
         }
@@ -1803,6 +1891,36 @@ const ITEM_INFO* CSession::GetInventoryItemByItemId(unsigned int itemId) const
         }
     }
     return bestMatch;
+}
+
+const std::list<ITEM_INFO>& CSession::GetStorageItems() const
+{
+    return m_storageItems;
+}
+
+const ITEM_INFO* CSession::GetStorageItemByIndex(unsigned int itemIndex) const
+{
+    for (const ITEM_INFO& item : m_storageItems) {
+        if (item.m_itemIndex == itemIndex) {
+            return &item;
+        }
+    }
+    return nullptr;
+}
+
+bool CSession::IsStorageOpen() const
+{
+    return m_storageOpen;
+}
+
+int CSession::GetStorageCurrentCount() const
+{
+    return m_storageCurrentCount;
+}
+
+int CSession::GetStorageMaxCount() const
+{
+    return m_storageMaxCount;
 }
 
 const std::list<PLAYER_SKILL_INFO>& CSession::GetSkillItems() const

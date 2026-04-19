@@ -827,11 +827,20 @@ void HandleUseItemAck2(CGameMode&, const PacketView& packet)
     const int remainingAmount = static_cast<int>(ReadLE16(packet.data + 10));
     const bool ok = packet.data[12] != 0;
 
-    if (const ITEM_INFO* existing = g_session.GetInventoryItemByIndex(itemIndex)) {
-        ITEM_INFO updated = *existing;
-        updated.SetItemId(itemId);
-        updated.m_num = (std::max)(0, remainingAmount);
-        g_session.SetInventoryItem(updated);
+    if (IsLocalActorId(actorId)) {
+        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+            gameMode->m_waitingUseItemAck = 0;
+        }
+
+        if (ok) {
+            if (const ITEM_INFO* existing = g_session.GetInventoryItemByIndex(itemIndex)) {
+                const int currentAmount = (std::max)(0, existing->m_num);
+                const int consumedAmount = currentAmount - (std::max)(0, remainingAmount);
+                if (consumedAmount > 0) {
+                    g_session.RemoveInventoryItem(itemIndex, consumedAmount);
+                }
+            }
+        }
     }
 
     if (ok) {
@@ -840,10 +849,39 @@ void HandleUseItemAck2(CGameMode&, const PacketView& packet)
         }
     }
 
-    DbgLog("[GameMode] use item ack2 index=%u itemId=%u actor=%u amount=%d ok=%d\n",
+    DbgLog("[GameMode] use item ack2 index=%u itemId=%u actor=%u amount=%d ok=%d self=%d\n",
         itemIndex,
         itemId,
         actorId,
+        remainingAmount,
+        ok ? 1 : 0,
+        IsLocalActorId(actorId) ? 1 : 0);
+}
+
+void HandleUseItemAck(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 7) {
+        return;
+    }
+
+    const unsigned int itemIndex = static_cast<unsigned int>(ReadLE16(packet.data + 2));
+    const int remainingAmount = static_cast<int>(ReadLE16(packet.data + 4));
+    const bool ok = packet.data[6] != 0;
+
+    mode.m_waitingUseItemAck = 0;
+
+    if (ok) {
+        if (const ITEM_INFO* existing = g_session.GetInventoryItemByIndex(itemIndex)) {
+            const int currentAmount = (std::max)(0, existing->m_num);
+            const int consumedAmount = currentAmount - (std::max)(0, remainingAmount);
+            if (consumedAmount > 0) {
+                g_session.RemoveInventoryItem(itemIndex, consumedAmount);
+            }
+        }
+    }
+
+    DbgLog("[GameMode] use item ack index=%u amount=%d ok=%d\n",
+        itemIndex,
         remainingAmount,
         ok ? 1 : 0);
 }
@@ -1165,12 +1203,15 @@ bool BuildNormalInventoryItem(const PacketView& packet, const u8* entry, ITEM_IN
     size_t entrySize = 0;
     switch (packet.packetId) {
     case 0x00A3:
+    case 0x00A5:
         entrySize = 10;
         break;
     case 0x01EE:
+    case 0x01F0:
         entrySize = 18;
         break;
     case 0x02E8:
+    case 0x02EA:
         entrySize = 22;
         break;
     default:
@@ -1214,12 +1255,14 @@ bool BuildEquipInventoryItem(const PacketView& packet, const u8* entry, ITEM_INF
     size_t entrySize = 0;
     switch (packet.packetId) {
     case 0x00A4:
+    case 0x00A6:
         entrySize = 20;
         break;
     case 0x01EF:
         entrySize = 24;
         break;
     case 0x02D0:
+    case 0x02D1:
         entrySize = 26;
         break;
     default:
@@ -1613,6 +1656,183 @@ void HandleEquipInventoryList(CGameMode& mode, const PacketView& packet)
     }
     g_session.RebuildPlayerEquipmentAppearanceFromInventory();
     SyncSessionAppearanceToLocalPlayer(mode);
+}
+
+bool BuildStorageItemFromAddPacket(const PacketView& packet, ITEM_INFO& outItem)
+{
+    if (!packet.data) {
+        return false;
+    }
+
+    outItem = ITEM_INFO{};
+    outItem.m_itemIndex = ReadLE16(packet.data + 2);
+    outItem.m_num = static_cast<int>(ReadLE32(packet.data + 4));
+    outItem.SetItemId(ReadLE16(packet.data + 8));
+
+    if (packet.packetId == 0x00F4) {
+        if (packet.packetLength < 21) {
+            return false;
+        }
+        outItem.m_isIdentified = packet.data[10];
+        outItem.m_isDamaged = packet.data[11];
+        outItem.m_refiningLevel = packet.data[12];
+        outItem.m_slot[0] = ReadLE16(packet.data + 13);
+        outItem.m_slot[1] = ReadLE16(packet.data + 15);
+        outItem.m_slot[2] = ReadLE16(packet.data + 17);
+        outItem.m_slot[3] = ReadLE16(packet.data + 19);
+    } else if (packet.packetId == 0x01C4) {
+        if (packet.packetLength < 22) {
+            return false;
+        }
+        outItem.m_itemType = packet.data[10];
+        outItem.m_isIdentified = packet.data[11];
+        outItem.m_isDamaged = packet.data[12];
+        outItem.m_refiningLevel = packet.data[13];
+        outItem.m_slot[0] = ReadLE16(packet.data + 14);
+        outItem.m_slot[1] = ReadLE16(packet.data + 16);
+        outItem.m_slot[2] = ReadLE16(packet.data + 18);
+        outItem.m_slot[3] = ReadLE16(packet.data + 20);
+    } else {
+        return false;
+    }
+
+    if (outItem.m_num <= 0) {
+        outItem.m_num = 1;
+    }
+    return outItem.m_itemIndex != 0;
+}
+
+void HandleStorageStatus(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 6) {
+        return;
+    }
+
+    const int currentCount = static_cast<int>(ReadLE16(packet.data + 2));
+    const int maxCount = static_cast<int>(ReadLE16(packet.data + 4));
+    g_session.OpenStorage(currentCount, maxCount);
+    g_windowMgr.CloseNpcDialogWindows();
+    g_windowMgr.CloseNpcShopWindows();
+    g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMWND);
+    g_windowMgr.MakeWindow(UIWindowMgr::WID_STORAGEWND);
+    DbgLog("[GameMode] storage status current=%d max=%d\n", currentCount, maxCount);
+}
+
+void HandleNormalStorageList(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 4) {
+        return;
+    }
+
+    size_t entrySize = 0;
+    switch (packet.packetId) {
+    case 0x00A5:
+        entrySize = 10;
+        break;
+    case 0x01F0:
+        entrySize = 18;
+        break;
+    case 0x02EA:
+        entrySize = 22;
+        break;
+    default:
+        return;
+    }
+
+    for (size_t offset = 4; offset + entrySize <= static_cast<size_t>(packet.packetLength); offset += entrySize) {
+        ITEM_INFO itemInfo;
+        if (BuildNormalInventoryItem(packet, packet.data + offset, itemInfo)) {
+            g_session.SetStorageItem(itemInfo);
+        }
+    }
+}
+
+void HandleEquipStorageList(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 4) {
+        return;
+    }
+
+    size_t entrySize = 0;
+    switch (packet.packetId) {
+    case 0x00A6:
+        entrySize = 20;
+        break;
+    case 0x02D1:
+        entrySize = 26;
+        break;
+    default:
+        return;
+    }
+
+    for (size_t offset = 4; offset + entrySize <= static_cast<size_t>(packet.packetLength); offset += entrySize) {
+        ITEM_INFO itemInfo;
+        if (BuildEquipInventoryItem(packet, packet.data + offset, itemInfo)) {
+            itemInfo.m_wearLocation = 0;
+            g_session.SetStorageItem(itemInfo);
+        }
+    }
+}
+
+void HandleStorageItemAdded(CGameMode&, const PacketView& packet)
+{
+    ITEM_INFO itemInfo;
+    if (!BuildStorageItemFromAddPacket(packet, itemInfo)) {
+        return;
+    }
+
+    g_session.AddStorageItem(itemInfo);
+    DbgLog("[GameMode] storage add pkt=0x%04X index=%u amount=%d item=%u type=%u\n",
+        static_cast<unsigned int>(packet.packetId),
+        static_cast<unsigned int>(itemInfo.m_itemIndex),
+        itemInfo.m_num,
+        static_cast<unsigned int>(itemInfo.GetItemId()),
+        static_cast<unsigned int>(itemInfo.m_itemType));
+}
+
+void HandleStorageItemRemoved(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 8) {
+        return;
+    }
+
+    const unsigned int itemIndex = ReadLE16(packet.data + 2);
+    const int amount = static_cast<int>(ReadLE32(packet.data + 4));
+    g_session.RemoveStorageItem(itemIndex, amount);
+    DbgLog("[GameMode] storage remove index=%u amount=%d\n",
+        static_cast<unsigned int>(itemIndex),
+        amount);
+}
+
+void HandleStorageClose(CGameMode&, const PacketView&)
+{
+    g_session.CloseStorage();
+    g_windowMgr.CloseStorageWindows();
+    DbgLog("[GameMode] storage close\n");
+}
+
+void HandleStoragePasswordRequest(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 4) {
+        return;
+    }
+
+    const u16 info = ReadLE16(packet.data + 2);
+    DbgLog("[GameMode] storage password request info=%u\n", static_cast<unsigned int>(info));
+    g_windowMgr.PushChatEvent("Storage password flow is not implemented yet.", 0x000000FFu, 6);
+}
+
+void HandleStoragePasswordResult(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 6) {
+        return;
+    }
+
+    const u16 result = ReadLE16(packet.data + 2);
+    const u16 errorCount = ReadLE16(packet.data + 4);
+    DbgLog("[GameMode] storage password result=%u errors=%u\n",
+        static_cast<unsigned int>(result),
+        static_cast<unsigned int>(errorCount));
 }
 
 void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
@@ -7337,15 +7557,28 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x00A1, HandleGroundItemDisappear);
     router.Register(0x00A3, HandleNormalInventoryList);
     router.Register(0x00A4, HandleEquipInventoryList);
+    router.Register(0x00A5, HandleNormalStorageList);
+    router.Register(0x00A6, HandleEquipStorageList);
     router.Register(0x00AA, HandleEquipItemAck);
     router.Register(0x00AF, HandleItemRemove);
     router.Register(0x00AC, HandleUnequipItemAck);
+    router.Register(0x00A8, HandleUseItemAck);
+    router.Register(0x00F2, HandleStorageStatus);
+    router.Register(0x00F4, HandleStorageItemAdded);
+    router.Register(0x00F6, HandleStorageItemRemoved);
+    router.Register(0x00F8, HandleStorageClose);
     router.Register(0x01C8, HandleUseItemAck2);
+    router.Register(0x01C4, HandleStorageItemAdded);
     router.Register(0x01EE, HandleNormalInventoryList);
     router.Register(0x01EF, HandleEquipInventoryList);
+    router.Register(0x01F0, HandleNormalStorageList);
     router.Register(0x01F8, HandleIgnorePacket);
     router.Register(0x02D0, HandleEquipInventoryList);
+    router.Register(0x02D1, HandleEquipStorageList);
     router.Register(0x02E8, HandleNormalInventoryList);
+    router.Register(0x02EA, HandleNormalStorageList);
+    router.Register(0x023A, HandleStoragePasswordRequest);
+    router.Register(0x023C, HandleStoragePasswordResult);
     router.Register(0x07FA, HandleItemRemove);
     router.Register(0x0100, HandleIgnorePacket);
 
@@ -7390,7 +7623,6 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0283, HandleIgnorePacket);
     router.Register(0x02C9, HandleIgnorePacket);
     router.Register(0x02B9, HandleShortcutKeyList);
-    router.Register(0x02D1, HandleIgnorePacket);
     router.Register(0x02D2, HandleIgnorePacket);
     router.Register(0x02D3, HandleIgnorePacket);
     router.Register(0x02D5, HandleIgnorePacket);

@@ -133,6 +133,7 @@ enum class DragSource : int {
     EquipmentWindow = 2,
     SkillListWindow = 3,
     ShortcutWindow = 4,
+    StorageWindow = 5,
 };
 
 struct DRAG_INFO {

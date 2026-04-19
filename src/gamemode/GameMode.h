@@ -101,6 +101,9 @@ public:
         GameMsg_RequestShopSellList = 20024,
         GameMsg_RequestShortcutUpdate = 20025,
         GameMsg_RequestShortcutUse = 20026,
+            GameMsg_RequestStorageStoreItem = 20028,
+            GameMsg_RequestStorageWithdrawItem = 20029,
+            GameMsg_RequestStorageClose = 20030,
     };
 
     CGameMode();

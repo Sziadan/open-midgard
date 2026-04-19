@@ -106,6 +106,19 @@ constexpr u16 kPurchaseItemList = 0x00C8;
 constexpr u16 kSellItemList = 0x00C9;
 }
 
+namespace PacketVer23StorageSend {
+// packet_ver 23 inherits the pre-renewal storage packet family from packet_ver 22.
+constexpr u16 kMoveToStorage = 0x0094;
+constexpr u16 kMoveFromStorage = 0x00F7;
+constexpr u16 kCloseStorage = 0x0193;
+}
+
+namespace ActiveStorageSend {
+constexpr u16 kMoveToStorage = PacketVer23StorageSend::kMoveToStorage;
+constexpr u16 kMoveFromStorage = PacketVer23StorageSend::kMoveFromStorage;
+constexpr u16 kCloseStorage = PacketVer23StorageSend::kCloseStorage;
+}
+
 namespace LegacyShortcutSend {
 constexpr u16 kKeyChange = 0x02BA;
 }
@@ -348,6 +361,26 @@ struct PACKET_CZ_PC_SELL_ITEMLIST {
     // Followed by repeated { index.W, amount.W } rows.
 };
 
+struct PACKET_CZ_MOVE_ITEM_TO_STORE {
+    u16 PacketType;    // 0x0094 for packet_ver 22/23 pre-renewal storage family
+    u8  padding0[5];
+    u16 ItemIndex;
+    u8  padding1;
+    u32 Count;
+};
+
+struct PACKET_CZ_MOVE_ITEM_FROM_STORE {
+    u16 PacketType;    // 0x00F7 for packet_ver 22/23 pre-renewal storage family
+    u8  padding0[12];
+    u16 ItemIndex;
+    u8  padding1[2];
+    u32 Count;
+};
+
+struct PACKET_CZ_CLOSE_STORE {
+    u16 PacketType;    // 0x0193 for packet_ver 22/23 pre-renewal storage family
+};
+
 struct PACKET_CZ_SHORTCUT_KEY_CHANGE {
     u16 PacketType;    // 0x02BA
     u16 Index;
@@ -433,6 +466,9 @@ static_assert(sizeof(PACKET_CZ_NPC_CLOSE_DIALOG) == 6, "PACKET_CZ_NPC_CLOSE_DIAL
 static_assert(sizeof(PACKET_CZ_ACK_SELECT_DEALTYPE) == 7, "PACKET_CZ_ACK_SELECT_DEALTYPE size mismatch");
 static_assert(sizeof(PACKET_CZ_PC_PURCHASE_ITEMLIST) == 4, "PACKET_CZ_PC_PURCHASE_ITEMLIST size mismatch");
 static_assert(sizeof(PACKET_CZ_PC_SELL_ITEMLIST) == 4, "PACKET_CZ_PC_SELL_ITEMLIST size mismatch");
+static_assert(sizeof(PACKET_CZ_MOVE_ITEM_TO_STORE) == 14, "PACKET_CZ_MOVE_ITEM_TO_STORE size mismatch");
+static_assert(sizeof(PACKET_CZ_MOVE_ITEM_FROM_STORE) == 22, "PACKET_CZ_MOVE_ITEM_FROM_STORE size mismatch");
+static_assert(sizeof(PACKET_CZ_CLOSE_STORE) == 2, "PACKET_CZ_CLOSE_STORE size mismatch");
 static_assert(sizeof(PACKET_CZ_SHORTCUT_KEY_CHANGE) == 11, "PACKET_CZ_SHORTCUT_KEY_CHANGE size mismatch");
 
 #pragma pack(pop)

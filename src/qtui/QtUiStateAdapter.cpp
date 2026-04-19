@@ -25,6 +25,7 @@
 #include "ui/UIItemCollectionWnd.h"
 #include "ui/UIItemInfoWnd.h"
 #include "ui/UIItemWnd.h"
+#include "ui/UIStorageWnd.h"
 #include "ui/UIItemPurchaseWnd.h"
 #include "ui/UIItemSellWnd.h"
 #include "ui/UIItemShopWnd.h"
@@ -175,6 +176,12 @@ void ClearGameplayUiState(QtUiState* state)
     state->setInventoryMini(false);
     state->setInventoryTab(0);
     state->setInventoryData(QVariantMap{});
+
+    state->setStorageVisible(false);
+    state->setStorageGeometry(0, 0, 0, 0);
+    state->setStorageMini(false);
+    state->setStorageTab(0);
+    state->setStorageData(QVariantMap{});
 
     state->setEquipVisible(false);
     state->setEquipGeometry(0, 0, 0, 0);
@@ -1193,9 +1200,7 @@ void PopulateNpcInputState(QtUiState* state)
 
     state->setNpcInputGeometry(inputWnd->m_x, inputWnd->m_y, inputWnd->m_w, inputWnd->m_h);
     state->setNpcInputText(
-        inputWnd->GetInputMode() == UINpcInputWnd::InputMode::Number
-            ? QStringLiteral("Enter a number")
-            : QStringLiteral("Enter text"),
+        ToQString(inputWnd->GetDialogLabel()),
         ToQString(inputWnd->GetInputText()));
     state->setNpcInputButtons(inputWnd->IsOkPressed(), inputWnd->IsCancelPressed());
 
@@ -1939,6 +1944,111 @@ void PopulateInventoryState(QtUiState* state)
         state->setInventoryTab(0);
     }
     state->setInventoryData(data);
+}
+
+void PopulateStorageState(QtUiState* state)
+{
+    if (!state) {
+        return;
+    }
+
+    const UIStorageWnd* const storageWnd = g_windowMgr.m_storageWnd;
+    const bool visible = IsGameplayWindowVisible(state, storageWnd);
+    state->setStorageVisible(visible);
+    if (!visible) {
+        state->setStorageGeometry(0, 0, 0, 0);
+        state->setStorageMini(false);
+        state->setStorageTab(0);
+        state->setStorageData(QVariantMap{});
+        return;
+    }
+
+    state->setStorageGeometry(storageWnd->m_x, storageWnd->m_y, storageWnd->m_w, storageWnd->m_h);
+    state->setStorageMini(storageWnd->IsMiniMode());
+
+    UIStorageWnd::DisplayData display{};
+    QVariantMap data;
+    if (storageWnd->GetDisplayDataForQt(&display)) {
+        state->setStorageTab(display.currentTab);
+        data.insert(QStringLiteral("title"), ToQString(display.title));
+        data.insert(QStringLiteral("currentItemCount"), display.currentItemCount);
+        data.insert(QStringLiteral("maxItemCount"), display.maxItemCount);
+        data.insert(QStringLiteral("viewOffset"), display.viewOffset);
+        data.insert(QStringLiteral("maxViewOffset"), display.maxViewOffset);
+        data.insert(QStringLiteral("scrollBarVisible"), display.scrollBarVisible);
+        data.insert(QStringLiteral("scrollTrackX"), display.scrollTrackX);
+        data.insert(QStringLiteral("scrollTrackY"), display.scrollTrackY);
+        data.insert(QStringLiteral("scrollTrackWidth"), display.scrollTrackWidth);
+        data.insert(QStringLiteral("scrollTrackHeight"), display.scrollTrackHeight);
+        data.insert(QStringLiteral("scrollThumbX"), display.scrollThumbX);
+        data.insert(QStringLiteral("scrollThumbY"), display.scrollThumbY);
+        data.insert(QStringLiteral("scrollThumbWidth"), display.scrollThumbWidth);
+        data.insert(QStringLiteral("scrollThumbHeight"), display.scrollThumbHeight);
+
+        QVariantList systemButtons;
+        systemButtons.reserve(storageWnd->GetQtSystemButtonCount());
+        for (int index = 0; index < storageWnd->GetQtSystemButtonCount(); ++index) {
+            UIStorageWnd::QtButtonDisplay buttonDisplay{};
+            if (!storageWnd->GetQtSystemButtonDisplayForQt(index, &buttonDisplay)) {
+                continue;
+            }
+
+            QVariantMap button;
+            button.insert(QStringLiteral("id"), buttonDisplay.id);
+            button.insert(QStringLiteral("x"), buttonDisplay.x);
+            button.insert(QStringLiteral("y"), buttonDisplay.y);
+            button.insert(QStringLiteral("width"), buttonDisplay.width);
+            button.insert(QStringLiteral("height"), buttonDisplay.height);
+            button.insert(QStringLiteral("label"), ToQString(buttonDisplay.label));
+            button.insert(QStringLiteral("visible"), buttonDisplay.visible);
+            button.insert(QStringLiteral("active"), buttonDisplay.active);
+            systemButtons.push_back(button);
+        }
+        data.insert(QStringLiteral("systemButtons"), systemButtons);
+
+        QVariantList tabs;
+        tabs.reserve(storageWnd->GetQtTabCount());
+        for (int index = 0; index < storageWnd->GetQtTabCount(); ++index) {
+            UIStorageWnd::QtButtonDisplay tabDisplay{};
+            if (!storageWnd->GetQtTabDisplayForQt(index, &tabDisplay)) {
+                continue;
+            }
+
+            QVariantMap tab;
+            tab.insert(QStringLiteral("id"), tabDisplay.id);
+            tab.insert(QStringLiteral("x"), tabDisplay.x);
+            tab.insert(QStringLiteral("y"), tabDisplay.y);
+            tab.insert(QStringLiteral("width"), tabDisplay.width);
+            tab.insert(QStringLiteral("height"), tabDisplay.height);
+            tab.insert(QStringLiteral("label"), ToQString(tabDisplay.label));
+            tab.insert(QStringLiteral("visible"), tabDisplay.visible);
+            tab.insert(QStringLiteral("active"), tabDisplay.active);
+            tabs.push_back(tab);
+        }
+        data.insert(QStringLiteral("tabs"), tabs);
+
+        QVariantList itemSlots;
+        itemSlots.reserve(static_cast<qsizetype>(display.displaySlots.size()));
+        for (const UIStorageWnd::DisplaySlot& slot : display.displaySlots) {
+            QVariantMap entry;
+            entry.insert(QStringLiteral("x"), slot.x);
+            entry.insert(QStringLiteral("y"), slot.y);
+            entry.insert(QStringLiteral("width"), slot.width);
+            entry.insert(QStringLiteral("height"), slot.height);
+            entry.insert(QStringLiteral("occupied"), slot.occupied);
+            entry.insert(QStringLiteral("hovered"), slot.hovered);
+            entry.insert(QStringLiteral("count"), slot.count);
+            entry.insert(QStringLiteral("itemId"), static_cast<uint>(slot.itemId));
+            entry.insert(QStringLiteral("label"), ToQString(slot.label));
+            entry.insert(QStringLiteral("tooltip"), ToQString(slot.tooltip));
+            itemSlots.push_back(entry);
+        }
+
+        data.insert(QStringLiteral("slots"), itemSlots);
+    } else {
+        state->setStorageTab(0);
+    }
+    state->setStorageData(data);
 }
 
 void PopulateEquipState(QtUiState* state)
@@ -2711,6 +2821,12 @@ bool TryAppendHoveredUiItemAnchor(QVariantList* anchors)
     }
 
     shopui::ItemHoverInfo hoverInfo{};
+    if (g_windowMgr.m_storageWnd && g_windowMgr.m_storageWnd->GetHoveredItemForQt(&hoverInfo) && hoverInfo.IsValid()) {
+        anchors->push_back(MakeUiItemAnchor(hoverInfo));
+        return true;
+    }
+
+    hoverInfo = shopui::ItemHoverInfo{};
     if (g_windowMgr.m_itemWnd && g_windowMgr.m_itemWnd->GetHoveredItemForQt(&hoverInfo) && hoverInfo.IsValid()) {
         anchors->push_back(MakeUiItemAnchor(hoverInfo));
         return true;
@@ -2847,6 +2963,7 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
     PopulateChatWindowState(m_state);
     PopulateRechargeGaugeState(m_state);
     PopulateInventoryState(m_state);
+    PopulateStorageState(m_state);
     PopulateEquipState(m_state);
     PopulateSkillListState(m_state);
     PopulateItemInfoState(m_state);

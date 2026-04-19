@@ -31,6 +31,8 @@ add_library(ro_ui STATIC
     UINotifyLevelUpWnd.cpp
     UIItemWnd.h
     UIItemWnd.cpp
+    UIStorageWnd.h
+    UIStorageWnd.cpp
     UIItemInfoWnd.h
     UIItemInfoWnd.cpp
     UIItemCollectionWnd.h

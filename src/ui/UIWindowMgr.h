@@ -15,6 +15,7 @@ class UISelectCharWnd;
 class UIMakeCharWnd;
 class UIWaitWnd;
 class UIItemWnd;
+class UIStorageWnd;
 class UIItemInfoWnd;
 class UIItemCollectionWnd;
 class UIQuestWnd;
@@ -83,6 +84,7 @@ public:
         WID_NOTIFYLEVELUPWND  = 21,
         WID_ITEMSELLWND       = 22,
         WID_SHORTCUTWND       = 23,
+        WID_STORAGEWND        = 50,
         WID_CHOOSEWND         = 17,
         WID_ROMAPWND          = 0x93,
         WID_NOTIFYJOBLEVELUPWND = 49,
@@ -144,6 +146,7 @@ public:
     bool HasActiveNpcDialog() const;
     void CloseNpcDialogWindows();
     void CloseNpcShopWindows();
+    void CloseStorageWindows();
     void ShowItemInfoWindow(const ITEM_INFO& item, int preferredX, int preferredY);
     void ShowItemCollectionWindow(const ITEM_INFO& item, int preferredX, int preferredY);
     void ShowSkillDescribeWindow(const PLAYER_SKILL_INFO& skillInfo, int preferredX, int preferredY);
@@ -183,6 +186,7 @@ public:
     UIItemShopWnd* m_itemShopWnd;
     UIItemPurchaseWnd* m_itemPurchaseWnd;
     UIItemSellWnd* m_itemSellWnd;
+    UIStorageWnd* m_storageWnd;
     UIShortCutWnd* m_shortCutWnd;
     UINewChatWnd* m_chatWnd;
     UILoginWnd* m_loginWnd;

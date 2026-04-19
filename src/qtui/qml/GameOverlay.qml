@@ -2553,6 +2553,240 @@ Item {
     }
 
     Rectangle {
+        x: uiState.storageX
+        y: uiState.storageY
+        width: uiState.storageWidth
+        height: uiState.storageHeight
+        radius: 4
+        color: "#ede7dc"
+        border.width: 1
+        border.color: "#7a6d57"
+        visible: uiState.storageVisible
+
+        Rectangle {
+            x: 1
+            y: 1
+            width: parent.width - 2
+            height: 16
+            radius: 3
+            color: "#8c7551"
+            border.width: 1
+            border.color: "#655238"
+        }
+
+        Text {
+            x: 17
+            y: 3
+            text: uiState.storageData.title || "Kafra Storage"
+            color: "#fff8ee"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Repeater {
+            model: uiState.storageData.systemButtons || []
+
+            delegate: Rectangle {
+                required property var modelData
+                x: (modelData.x || 0) - uiState.storageX
+                y: (modelData.y || 0) - uiState.storageY
+                width: modelData.width || 0
+                height: modelData.height || 0
+                radius: 2
+                color: "#ddd0b8"
+                border.width: 1
+                border.color: "#8a775a"
+                visible: modelData.visible || false
+
+                Text {
+                    anchors.centerIn: parent
+                    text: modelData.label || ""
+                    color: "#000000"
+                    font.pixelSize: 8
+                    font.bold: true
+                }
+            }
+        }
+
+        Rectangle {
+            x: 0
+            y: 17
+            width: parent.width
+            height: parent.height - 17
+            color: "#e8decc"
+            visible: !uiState.storageMini
+
+            Repeater {
+                model: uiState.storageData.tabs || []
+
+                delegate: Rectangle {
+                    required property var modelData
+                    x: (modelData.x || 0) - uiState.storageX
+                    y: (modelData.y || 0) - uiState.storageY - 17
+                    width: modelData.width || 0
+                    height: modelData.height || 0
+                    color: modelData.active ? "#efe6d5" : "#cfbea1"
+                    border.width: 1
+                    border.color: "#8d7b62"
+                    visible: modelData.visible || false
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: modelData.label || ""
+                        color: "#000000"
+                        font.pixelSize: 9
+                        font.bold: modelData.active || false
+                    }
+                }
+            }
+
+            Rectangle {
+                x: 36
+                y: 0
+                width: parent.width - 56
+                height: 18
+                color: "#dfd6c6"
+                border.width: 1
+                border.color: "#b6a891"
+
+                Text {
+                    x: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Item"
+                    color: "#4a3a24"
+                    font.pixelSize: 10
+                    font.bold: true
+                }
+
+                Text {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Qty"
+                    color: "#4a3a24"
+                    font.pixelSize: 10
+                    font.bold: true
+                }
+            }
+
+            Repeater {
+                model: uiState.storageData.slots || []
+
+                delegate: Rectangle {
+                    required property var modelData
+                    x: modelData.x - uiState.storageX
+                    y: modelData.y - uiState.storageY - 17
+                    width: modelData.width
+                    height: modelData.height
+                    color: modelData.hovered ? "#e5ddce" : "#f5eee3"
+                    border.width: 1
+                    border.color: modelData.hovered ? "#9b7f56" : "#ab9c86"
+
+                    Image {
+                        id: storageIcon
+                        x: 5
+                        y: Math.floor((parent.height - height) / 2)
+                        width: 20
+                        height: 20
+                        fillMode: Image.PreserveAspectFit
+                        smooth: false
+                        cache: false
+                        source: modelData.occupied && (modelData.itemId || 0) > 0 ? root.itemIconSource(modelData.itemId || 0) : ""
+                        visible: source !== "" && status === Image.Ready
+                    }
+
+                    Rectangle {
+                        x: 4
+                        y: 3
+                        width: 22
+                        height: 20
+                        color: "#ebe4d6"
+                        border.width: 1
+                        border.color: "#a59882"
+                        visible: modelData.occupied && !storageIcon.visible
+                    }
+
+                    Text {
+                        x: 30
+                        width: parent.width - 88
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.occupied ? modelData.label : ""
+                        color: "#000000"
+                        font.pixelSize: 9
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                        visible: modelData.occupied && !storageIcon.visible
+                    }
+
+                    Text {
+                        x: 30
+                        width: parent.width - 88
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.occupied ? modelData.label : ""
+                        color: "#201c16"
+                        font.pixelSize: 10
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                        visible: modelData.occupied && storageIcon.visible
+                    }
+
+                    Text {
+                        anchors.right: parent.right
+                        anchors.rightMargin: 6
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.occupied ? Math.max(1, modelData.count || 0) : ""
+                        color: "#5a4020"
+                        font.pixelSize: 10
+                        font.bold: true
+                    }
+                }
+            }
+
+            Rectangle {
+                x: (uiState.storageData.scrollTrackX || 0) - uiState.storageX
+                y: (uiState.storageData.scrollTrackY || 0) - uiState.storageY - 17
+                width: uiState.storageData.scrollTrackWidth || 0
+                height: uiState.storageData.scrollTrackHeight || 0
+                visible: uiState.storageData.scrollBarVisible || false
+                color: "#e8dfd3"
+                border.width: 1
+                border.color: "#aea08b"
+
+                Rectangle {
+                    x: (uiState.storageData.scrollThumbX || 0) - (uiState.storageData.scrollTrackX || 0)
+                    y: (uiState.storageData.scrollThumbY || 0) - (uiState.storageData.scrollTrackY || 0)
+                    width: uiState.storageData.scrollThumbWidth || 0
+                    height: uiState.storageData.scrollThumbHeight || 0
+                    color: "#b99f74"
+                    border.width: 1
+                    border.color: "#755a33"
+                }
+            }
+
+            Rectangle {
+                x: 0
+                y: parent.height - height
+                width: parent.width
+                height: 21
+                color: "#ddd3c4"
+                border.width: 1
+                border.color: "#bcaf9b"
+
+                Text {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: (uiState.storageData.currentItemCount || 0) + " / " + (uiState.storageData.maxItemCount || 0)
+                    color: "#5a5144"
+                    font.pixelSize: 10
+                }
+            }
+        }
+    }
+
+    Rectangle {
         x: uiState.equipX
         y: uiState.equipY
         width: uiState.equipWidth

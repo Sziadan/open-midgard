@@ -12,6 +12,7 @@
 #include "UIItemCollectionWnd.h"
 #include "UIItemInfoWnd.h"
 #include "UIItemWnd.h"
+#include "UIStorageWnd.h"
 #include "UIItemPurchaseWnd.h"
 #include "UIItemSellWnd.h"
 #include "UIItemShopWnd.h"
@@ -585,7 +586,7 @@ UIWindowMgr::UIWindowMgr()
       m_miniMapZoomFactor(1.0f), m_miniMapArgb(0), m_isDrawCompass(0),
       m_isDragAll(0), m_conversionMode(0),
       m_captureWindow(nullptr), m_editWindow(nullptr), m_modalWindow(nullptr), m_lastHitWindow(nullptr),
-      m_loadingWnd(nullptr), m_roMapWnd(nullptr), m_minimapZoomWnd(nullptr), m_statusWnd(nullptr), m_sayDialogWnd(nullptr), m_npcMenuWnd(nullptr), m_npcInputWnd(nullptr), m_chooseSellBuyWnd(nullptr), m_itemShopWnd(nullptr), m_itemPurchaseWnd(nullptr), m_itemSellWnd(nullptr), m_shortCutWnd(nullptr), m_chatWnd(nullptr),
+            m_loadingWnd(nullptr), m_roMapWnd(nullptr), m_minimapZoomWnd(nullptr), m_statusWnd(nullptr), m_sayDialogWnd(nullptr), m_npcMenuWnd(nullptr), m_npcInputWnd(nullptr), m_chooseSellBuyWnd(nullptr), m_itemShopWnd(nullptr), m_itemPurchaseWnd(nullptr), m_itemSellWnd(nullptr), m_storageWnd(nullptr), m_shortCutWnd(nullptr), m_chatWnd(nullptr),
         m_loginWnd(nullptr), m_selectServerWnd(nullptr), m_selectCharWnd(nullptr), m_makeCharWnd(nullptr), m_waitWnd(nullptr), m_chooseWnd(nullptr), m_optionWnd(nullptr), m_itemWnd(nullptr), m_itemInfoWnd(nullptr), m_itemCollectionWnd(nullptr), m_questWnd(nullptr), m_basicInfoWnd(nullptr), m_notifyLevelUpWnd(nullptr), m_notifyJobLevelUpWnd(nullptr), m_equipWnd(nullptr), m_skillDescribeWnd(nullptr), m_skillListWnd(nullptr),
                         m_wallpaperSurface(nullptr), m_uiComposeSurface(), m_chatActiveInputField(0), m_chatScrollLineOffset(0)
 {
@@ -758,6 +759,14 @@ void UIWindowMgr::CloseNpcShopWindows()
     }
 }
 
+void UIWindowMgr::CloseStorageWindows()
+{
+    if (m_storageWnd) {
+        m_storageWnd->SetShow(0);
+        m_storageWnd->StoreInfo();
+    }
+}
+
 void UIWindowMgr::ReleaseComposeSurface()
 {
     m_uiComposeSurface.Release();
@@ -856,6 +865,16 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_children.push_back(m_itemSellWnd);
         m_itemSellWnd->SetShow(1);
         return m_itemSellWnd;
+
+    case WID_STORAGEWND:
+        if (!m_storageWnd) {
+            m_storageWnd = new UIStorageWnd();
+            m_children.push_back(m_storageWnd);
+        }
+        m_children.remove(m_storageWnd);
+        m_children.push_back(m_storageWnd);
+        m_storageWnd->SetShow(1);
+        return m_storageWnd;
 
     case WID_SHORTCUTWND:
         if (!m_shortCutWnd) {
@@ -1072,6 +1091,9 @@ bool UIWindowMgr::ToggleWindow(int windowId)
     case WID_ITEMWND:
         window = m_itemWnd;
         break;
+    case WID_STORAGEWND:
+        window = m_storageWnd;
+        break;
     case WID_EQUIPWND:
         window = m_equipWnd;
         break;
@@ -1190,6 +1212,9 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
     if (window == m_itemSellWnd) {
         m_itemSellWnd = nullptr;
     }
+    if (window == m_storageWnd) {
+        m_storageWnd = nullptr;
+    }
     if (window == m_shortCutWnd) {
         m_shortCutWnd = nullptr;
     }
@@ -1257,6 +1282,7 @@ void UIWindowMgr::RemoveAllWindows()
     m_itemShopWnd = nullptr;
     m_itemPurchaseWnd = nullptr;
     m_itemSellWnd = nullptr;
+    m_storageWnd = nullptr;
     m_shortCutWnd = nullptr;
     m_chatWnd = nullptr;
     m_basicInfoWnd = nullptr;
@@ -1378,6 +1404,9 @@ void UIWindowMgr::DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap)
     }
     if (m_itemWnd && m_itemWnd->m_show != 0) {
         m_itemWnd->DrawHoverOverlay(targetDC, clientRect);
+    }
+    if (m_storageWnd && m_storageWnd->m_show != 0) {
+        m_storageWnd->DrawHoverOverlay(targetDC, clientRect);
     }
     if (includeRoMap) {
         ClearDirtyVisualState();
@@ -1867,12 +1896,23 @@ void UIWindowMgr::OnLBtnUp(int x, int y)
             } else if (gameMode->m_dragInfo.type == static_cast<int>(DragType::ShortcutItem)
                 && gameMode->m_dragInfo.source == static_cast<int>(DragSource::InventoryWindow)
                 && gameMode->m_dragInfo.itemIndex != 0) {
-                const int dropAmount = gameMode->m_dragInfo.itemCount > 1 ? 1 : (std::max)(1, gameMode->m_dragInfo.itemCount);
-                g_modeMgr.SendMsg(
-                    CGameMode::GameMsg_RequestDropInventoryItem,
-                    gameMode->m_dragInfo.itemIndex,
-                    dropAmount,
-                    0);
+                const int dropAmount = (std::max)(1, gameMode->m_dragInfo.itemCount);
+                if (dropAmount > 1) {
+                    if (auto* inputWnd = static_cast<UINpcInputWnd*>(MakeWindow(WID_NPCINPUTWND))) {
+                        inputWnd->OpenGameNumberPrompt(
+                            "Enter amount to drop",
+                            CGameMode::GameMsg_RequestDropInventoryItem,
+                            static_cast<msgparam_t>(gameMode->m_dragInfo.itemIndex),
+                            static_cast<u32>(dropAmount),
+                            static_cast<u32>(dropAmount));
+                    }
+                } else {
+                    g_modeMgr.SendMsg(
+                        CGameMode::GameMsg_RequestDropInventoryItem,
+                        gameMode->m_dragInfo.itemIndex,
+                        dropAmount,
+                        0);
+                }
             }
             if (gameMode->m_dragInfo.source == static_cast<int>(DragSource::ShortcutWindow)
                 && gameMode->m_dragInfo.shortcutSlotAbsoluteIndex >= 0
@@ -2122,6 +2162,7 @@ bool UIWindowMgr::HasBlockingUiForGameplayHotkeys() const
         || (m_itemPurchaseWnd && m_itemPurchaseWnd->m_show != 0)
         || (m_itemSellWnd && m_itemSellWnd->m_show != 0)
         || (m_itemShopWnd && m_itemShopWnd->m_show != 0)
+        || (m_storageWnd && m_storageWnd->m_show != 0)
         || (m_chooseSellBuyWnd && m_chooseSellBuyWnd->m_show != 0)
         || (m_chooseWnd && m_chooseWnd->m_show != 0)
         || (m_optionWnd && m_optionWnd->m_show != 0);
@@ -2134,6 +2175,10 @@ bool UIWindowMgr::OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, b
     const bool hasFrontMenuUi = HasFrontMenuUiVisible();
     if (HandleHotkeyBeforeFocusedUi(virtualKey, isAltDown, isCtrlDown, hasFrontMenuUi)) {
         return true;
+    }
+
+    if (m_storageWnd && m_storageWnd->m_show != 0 && virtualKey == VK_ESCAPE) {
+        return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestStorageClose, 0, 0, 0) != 0;
     }
 
     if (HasBlockingUiForGameplayHotkeys()) {
@@ -2195,6 +2240,15 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
 
     if (m_itemShopWnd && m_itemShopWnd->m_show != 0) {
         m_itemShopWnd->HandleKeyDown(virtualKey);
+        return;
+    }
+
+    if (m_storageWnd && m_storageWnd->m_show != 0) {
+        if (virtualKey == VK_ESCAPE) {
+            g_modeMgr.SendMsg(CGameMode::GameMsg_RequestStorageClose, 0, 0, 0);
+            return;
+        }
+        m_storageWnd->OnKeyDown(virtualKey);
         return;
     }
 

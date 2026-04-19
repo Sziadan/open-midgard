@@ -5832,6 +5832,64 @@ bool RequestNpcShopSellList()
     return sent;
 }
 
+bool RequestMoveInventoryItemToStorage(u16 itemIndex, u32 amount)
+{
+    if (!g_session.IsStorageOpen() || itemIndex == 0 || amount == 0) {
+        return false;
+    }
+
+    PACKET_CZ_MOVE_ITEM_TO_STORE packet{};
+    packet.PacketType = PacketProfile::ActiveStorageSend::kMoveToStorage;
+    packet.ItemIndex = itemIndex;
+    packet.Count = amount;
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] storage store index=%u amount=%u sent=%d\n",
+        static_cast<unsigned int>(packet.ItemIndex),
+        static_cast<unsigned int>(packet.Count),
+        sent ? 1 : 0);
+    return sent;
+}
+
+bool RequestMoveStorageItemToInventory(u16 itemIndex, u32 amount)
+{
+    if (!g_session.IsStorageOpen() || itemIndex == 0 || amount == 0) {
+        return false;
+    }
+
+    PACKET_CZ_MOVE_ITEM_FROM_STORE packet{};
+    packet.PacketType = PacketProfile::ActiveStorageSend::kMoveFromStorage;
+    packet.ItemIndex = itemIndex;
+    packet.Count = amount;
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] storage withdraw index=%u amount=%u sent=%d\n",
+        static_cast<unsigned int>(packet.ItemIndex),
+        static_cast<unsigned int>(packet.Count),
+        sent ? 1 : 0);
+    return sent;
+}
+
+bool RequestCloseStorage()
+{
+    if (!g_session.IsStorageOpen()) {
+        return false;
+    }
+
+    PACKET_CZ_CLOSE_STORE packet{};
+    packet.PacketType = PacketProfile::ActiveStorageSend::kCloseStorage;
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] storage close sent=%d\n", sent ? 1 : 0);
+    return sent;
+}
+
 bool TryRequestNpcTalkFromScreenPoint(CGameMode& mode, int screenX, int screenY)
 {
     if (!mode.m_world || !mode.m_view || mode.m_canRotateView) {
@@ -9383,6 +9441,15 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
 
     case GameMsg_RequestShopSellList:
         return RequestNpcShopSellList() ? 1 : 0;
+
+    case GameMsg_RequestStorageStoreItem:
+        return RequestMoveInventoryItemToStorage(static_cast<u16>(wparam), static_cast<u32>(lparam)) ? 1 : 0;
+
+    case GameMsg_RequestStorageWithdrawItem:
+        return RequestMoveStorageItemToInventory(static_cast<u16>(wparam), static_cast<u32>(lparam)) ? 1 : 0;
+
+    case GameMsg_RequestStorageClose:
+        return RequestCloseStorage() ? 1 : 0;
 
     case GameMsg_RequestShortcutUpdate:
         return RequestShortcutSlotUpdate(static_cast<int>(wparam)) ? 1 : 0;

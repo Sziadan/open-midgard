@@ -184,6 +184,14 @@ class QtUiState : public QObject {
     Q_PROPERTY(bool inventoryMini READ inventoryMini NOTIFY inventoryMiniChanged)
     Q_PROPERTY(int inventoryTab READ inventoryTab NOTIFY inventoryTabChanged)
     Q_PROPERTY(QVariantMap inventoryData READ inventoryData NOTIFY inventoryDataChanged)
+    Q_PROPERTY(bool storageVisible READ storageVisible NOTIFY storageVisibleChanged)
+    Q_PROPERTY(int storageX READ storageX NOTIFY storageGeometryChanged)
+    Q_PROPERTY(int storageY READ storageY NOTIFY storageGeometryChanged)
+    Q_PROPERTY(int storageWidth READ storageWidth NOTIFY storageGeometryChanged)
+    Q_PROPERTY(int storageHeight READ storageHeight NOTIFY storageGeometryChanged)
+    Q_PROPERTY(bool storageMini READ storageMini NOTIFY storageMiniChanged)
+    Q_PROPERTY(int storageTab READ storageTab NOTIFY storageTabChanged)
+    Q_PROPERTY(QVariantMap storageData READ storageData NOTIFY storageDataChanged)
     Q_PROPERTY(bool equipVisible READ equipVisible NOTIFY equipVisibleChanged)
     Q_PROPERTY(int equipX READ equipX NOTIFY equipGeometryChanged)
     Q_PROPERTY(int equipY READ equipY NOTIFY equipGeometryChanged)
@@ -421,6 +429,14 @@ public:
     bool inventoryMini() const { return m_inventoryMini; }
     int inventoryTab() const { return m_inventoryTab; }
     const QVariantMap& inventoryData() const { return m_inventoryData; }
+    bool storageVisible() const { return m_storageVisible; }
+    int storageX() const { return m_storageX; }
+    int storageY() const { return m_storageY; }
+    int storageWidth() const { return m_storageWidth; }
+    int storageHeight() const { return m_storageHeight; }
+    bool storageMini() const { return m_storageMini; }
+    int storageTab() const { return m_storageTab; }
+    const QVariantMap& storageData() const { return m_storageData; }
     bool equipVisible() const { return m_equipVisible; }
     int equipX() const { return m_equipX; }
     int equipY() const { return m_equipY; }
@@ -1413,6 +1429,50 @@ public:
         emit inventoryDataChanged();
     }
 
+    void setStorageVisible(bool value) {
+        if (m_storageVisible == value) {
+            return;
+        }
+        m_storageVisible = value;
+        emit storageVisibleChanged();
+    }
+
+    void setStorageGeometry(int x, int y, int width, int height) {
+        if (m_storageX == x && m_storageY == y
+            && m_storageWidth == width && m_storageHeight == height) {
+            return;
+        }
+        m_storageX = x;
+        m_storageY = y;
+        m_storageWidth = width;
+        m_storageHeight = height;
+        emit storageGeometryChanged();
+    }
+
+    void setStorageMini(bool value) {
+        if (m_storageMini == value) {
+            return;
+        }
+        m_storageMini = value;
+        emit storageMiniChanged();
+    }
+
+    void setStorageTab(int value) {
+        if (m_storageTab == value) {
+            return;
+        }
+        m_storageTab = value;
+        emit storageTabChanged();
+    }
+
+    void setStorageData(const QVariantMap& value) {
+        if (m_storageData == value) {
+            return;
+        }
+        m_storageData = value;
+        emit storageDataChanged();
+    }
+
     void setEquipVisible(bool value) {
         if (m_equipVisible == value) {
             return;
@@ -1766,6 +1826,11 @@ signals:
     void inventoryMiniChanged();
     void inventoryTabChanged();
     void inventoryDataChanged();
+    void storageVisibleChanged();
+    void storageGeometryChanged();
+    void storageMiniChanged();
+    void storageTabChanged();
+    void storageDataChanged();
     void equipVisibleChanged();
     void equipGeometryChanged();
     void equipMiniChanged();
@@ -1973,6 +2038,14 @@ private:
     bool m_inventoryMini = false;
     int m_inventoryTab = 0;
     QVariantMap m_inventoryData;
+    bool m_storageVisible = false;
+    int m_storageX = 0;
+    int m_storageY = 0;
+    int m_storageWidth = 0;
+    int m_storageHeight = 0;
+    bool m_storageMini = false;
+    int m_storageTab = 0;
+    QVariantMap m_storageData;
     bool m_equipVisible = false;
     int m_equipX = 0;
     int m_equipY = 0;
