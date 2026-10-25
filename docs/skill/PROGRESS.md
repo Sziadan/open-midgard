@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A IceArrow emitter, reference projectile contact and impact circle, after Berserk checkpoint `a024aa8`. Id26 now preserves original RNG order, parent angles, geometry dimensions, ground contact and ring initialization.
+Current work: WP5A FireBall emitter and reference target-arrival/camera-roll particle controls, after IceArrow checkpoint `fb58581`. Original id24 now uses exact assets, absolute-target motion and shared reference state/per-clip rendering.
 
-Next action: continue remaining active emitter/primitive ports, including FireBall and unported texture/particle callers. Generic enabled control branches, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue remaining active emitter/primitive ports and generic control branches. Map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## FireBall emitter / target arrival / camera roll — 2026-10-26
+
+- Ref/RagEffect.cpp:4057-4125 (0x5F8310) -> SpawnFireBall, original dispatcher id24. Preserves four emission frames 20/24/28/32, stored effect origin, horizontal listener delta/y0 and no RNG. Exact EF_FireBall wave and original Korean-directory fireball sprite/action replace basename candidate resolution.
+- Ref/GameActor.cpp:1024-1035,1041-1051 and HighPriest.exe.c:315246 -> source heading/distance arithmetic. Target is absolute parent m_deltaPos, measured from newly launched primitive world position, not a displacement vector. Preserved float squared-distance temporary, double sqrt/division and divisor3.141592 heading; longitude is negated source heading; separate roty becomes180-heading with original wrap. Integer-truncated longitude initializes Y matrix before first update.
+- Original PP_3DPARTICLE profile: duration 20, pattern 0x120, offset(0,-15,0), speed-negative distance/duration, size 1.3, divisor 1/repeat/one segment, constructor alpha/max 254 and fade -1. First projectile is white; frames 24/28/32 have RGB246/199/76 and alpha180/130/80. Initial segment follows exact resource loads/locks.
+- Ref/RagEffectPrim.cpp:456-594 -> UpdateLinearReferenceParticle now includes reachable 0x100 target-arrival test and 0x20 camera-relative roll. After integration, horizontal distance<=3 returns false before alpha/segment/animation and before outer counter increment. Otherwise roll=roty-cameraLongitude, then source alpha/segment and animation. Added primitive roty storage and read-only parent target accessor; id24 binds reference particle updater/per-clip rendering. General random/change-point particle controls remain open.
+
+Validation: release build, six silent C++ suites / 665 checks (507 lifecycle/primitive, 100 rendering, 58 other), six Python tests, three-literal executable byte audit and whitespace check pass. Added 20 checks for schedule, stored origin/audio, absolute target, heading/matrix/roty, source profiles/colors/resources, first-frame motion, camera roll, early arrival, zero distance, missing assets and balanced locks. Wave 0x71B5B4 and sprite/action 0x71B5A0/0x71B58C match executable bytes. No media/live acceptance. Approved OldRO SHA-256: `D54DC7F964BE03428F2497807E1290A05B98D681AC567A0858F210749133356F`. Other active emitters, generic controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## IceArrow emitter / projectile contact / impact ring — 2026-10-26
 

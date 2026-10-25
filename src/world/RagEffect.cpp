@@ -2622,6 +2622,7 @@ CEffectPrim::CEffectPrim()
     , m_outerAccel(0.0f)
     , m_innerSpeed(0.0f)
     , m_innerAccel(0.0f)
+    , m_roty(0.0f)
     , m_roll(0.0f)
     , m_rollSpeed(0.0f)
     , m_rollAccel(0.0f)
@@ -6285,6 +6286,7 @@ bool UpdateWarpZoneOrbit(CEffectPrim* prim)
 // Ref/RagEffectPrim.cpp:456-594,2184-2328. Poison, Ruwach, Smoke and Torch use
 // linear PP_3DPARTICLE state with no change points or movement-pattern bits.
 // Blessing adds the 0x80 alpha-twinkle pattern handled by the shared alpha port.
+// FireBall adds 0x100 target termination and 0x20 camera-relative roll.
 // Torch's 0x200 bit selects clip color only. Other callers still need their
 // additional pattern/control branches.
 bool UpdateLinearReferenceParticle(CEffectPrim* prim)
@@ -6293,14 +6295,25 @@ bool UpdateLinearReferenceParticle(CEffectPrim* prim)
     prim->m_speed += prim->m_accel;
     prim->m_sizeSpeed += prim->m_sizeAccel;
     prim->m_speed3d = {
-        prim->m_speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
-        prim->m_speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
-        prim->m_speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
+        static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
     };
     prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
     prim->m_roll += prim->m_rollSpeed;
     prim->m_size += prim->m_sizeSpeed;
     prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
+    if ((prim->m_pattern & 0x100) != 0) {
+        const vector3d& target = prim->m_master->TargetPosition();
+        const double dx = static_cast<double>(target.x) - prim->m_pos.x;
+        const double dz = static_cast<double>(target.z) - prim->m_pos.z;
+        const float squared = static_cast<float>(dz * dz + dx * dx);
+        if (std::sqrt(static_cast<double>(squared)) <= 3.0) return false;
+    }
+    if ((prim->m_pattern & 0x20) != 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_view) prim->m_roll = prim->m_roty - mode->m_view->GetCameraLongitude();
+    }
     ProcessReferenceParticleAlpha(prim);
     ShiftCircleSegments(prim);
     return AnimateReferenceParticle(prim);
@@ -6495,7 +6508,7 @@ bool CEffectPrim::UsesReferenceParticle() const
         || (m_type == PP_3DPARTICLEORBIT && m_master
             && (m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
-            && (m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
+            && (m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
 }
 
@@ -9065,43 +9078,46 @@ void CRagEffect::SpawnSight2()
     ApplySight(50.0f, false);
 }
 
+// Ref/RagEffect.cpp:4057-4125 (0x5F8310), original effect 24.
+// CalcDir/CalcDist use the primitive's stored world origin and absolute target.
 void CRagEffect::SpawnFireBall()
 {
-    if (m_stateCnt != 20 && m_stateCnt != 24 && m_stateCnt != 28 && m_stateCnt != 32) {
-        return;
+    if (m_stateCnt != 20 && m_stateCnt != 24 && m_stateCnt != 28 && m_stateCnt != 32) return;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_FireBall.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
     }
-
-    const vector3d base = ResolveBasePosition();
-    TryPlayEffectWaveAt(base, "effect\\EF_FireBall.wav");
-
-    if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
-        prim->m_duration = 20;
-        prim->m_pattern |= 0x120;
-        prim->m_deltaPos2 = { 0.0f, -15.0f, 0.0f };
-
-        const float dx = m_deltaPos.x;
-        const float dz = m_deltaPos.z;
-        const float distance = std::sqrt(dx * dx + dz * dz);
-        const float facingDegrees = std::atan2(dx, -dz) * (180.0f / kPi);
-        prim->m_longitude = -facingDegrees;
-        prim->m_speed = distance > 0.0f ? -(distance / static_cast<float>(prim->m_duration)) : 0.0f;
-        prim->m_size = 1.3f;
-        prim->m_animSpeed = 1;
-        prim->m_alpha = 255.0f;
-
-        if (m_stateCnt != 20) {
-            prim->m_tintColor = RGB(246, 199, 76);
-            if (m_stateCnt == 24) {
-                prim->m_alpha = 180.0f;
-            } else if (m_stateCnt == 28) {
-                prim->m_alpha = 130.0f;
-            } else {
-                prim->m_alpha = 80.0f;
-            }
-        }
-
-        ConfigureEffectSpritePrim(prim, { "fireball" }, 0, 1.0f, true, 0.0f, 0);
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+    prim->m_duration = 20;
+    prim->m_pattern |= 0x120;
+    prim->m_deltaPos2 = {0.0f,-15.0f,0.0f};
+    const double dx = static_cast<double>(m_deltaPos.x) - prim->m_pos.x;
+    const double dz = static_cast<double>(m_deltaPos.z) - prim->m_pos.z;
+    const double angle = std::atan2(dx, -dz) / 3.141592 * 180.0;
+    prim->m_roty = static_cast<float>(angle);
+    if (angle >= 360.0) prim->m_roty = static_cast<float>(angle - 360.0);
+    if (prim->m_roty < 0.0f) prim->m_roty = static_cast<float>(prim->m_roty + 360.0);
+    prim->m_longitude = -prim->m_roty;
+    prim->m_roty = static_cast<float>(180.0 - prim->m_roty);
+    if (prim->m_roty < 0.0f) prim->m_roty = static_cast<float>(prim->m_roty + 360.0);
+    const float squared = static_cast<float>(dz * dz + dx * dx);
+    prim->m_speed = static_cast<float>(-(std::sqrt(static_cast<double>(squared)) / prim->m_duration));
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+    prim->m_size = 1.3f;
+    prim->m_animSpeed = 1;
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_fadeOutCnt = -1; prim->m_repeatAnim = true; prim->m_numSegments = 1;
+    if (m_stateCnt != 20) {
+        prim->m_tintColor = RGB(246,199,76);
+        if (m_stateCnt == 24) prim->m_alpha = 180.0f;
+        else if (m_stateCnt == 28) prim->m_alpha = 130.0f;
+        else prim->m_alpha = 80.0f;
     }
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\fireball.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\fireball.act"); // 0x71B5A0 / 0x71B58C
+    ShiftCircleSegments(prim);
 }
 
 // Ref/RagEffect.cpp:7202-7261 (0x5F9170). The angle truncates before

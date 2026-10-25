@@ -315,6 +315,7 @@ public:
     float m_outerAccel;
     float m_innerSpeed;
     float m_innerAccel;
+    float m_roty;
     float m_roll;
     float m_rollSpeed;
     float m_rollAccel;
@@ -364,6 +365,7 @@ public:
     int GetStateCount() const { return m_stateCnt; }
     int GetDuration() const { return m_duration; }
     void AddDuration(int frames) { m_duration += frames; }
+    const vector3d& TargetPosition() const { return m_deltaPos; }
     void SetGroundHitFlag() { m_flag = 1; }
     void AbsorbPrimDelta(const vector3d& delta) { m_deltaPos = delta; }
 

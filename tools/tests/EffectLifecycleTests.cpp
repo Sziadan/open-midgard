@@ -100,6 +100,8 @@ struct CView {
     matrix view;
     CView() { MatrixIdentity(view); }
     const matrix& GetViewMatrix() const { return view; }
+    float longitude=15.5f;
+    float GetCameraLongitude() const {return longitude;}
     float GetCameraLatitude() const { return -45; }
 } testView;
 struct CGameObject {
@@ -173,6 +175,7 @@ struct CEffectPrim : CGameObject {
     int m_totalTexture=1;
     float m_size = 1, m_heightSize = 0, m_longitude = 0, m_latitude = 0, m_speed = 0, m_accel = 0;
     vector3d m_deltaPos, m_deltaPos2, m_deltaPosAccel, m_pos, m_orgPos;
+    float m_roty=0;
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 0, m_minAlpha = 0;
     bool m_isDisappear = false;
     matrix m_matrix = [] { matrix value; MatrixIdentity(value); return value; }();
@@ -265,6 +268,7 @@ struct CRagEffect : CGameObject {
     void ApplyWarpZone2(const char*);
     void ApplyWarpZone();
     void ApplyIceArrow();
+    void SpawnFireBall();
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -301,6 +305,7 @@ struct CRagEffect : CGameObject {
     void ClearPrims();
     void AbsorbPrimDelta(const vector3d& delta){m_deltaPos=delta;}
     void SetGroundHitFlag(){m_flag=1;}
+    const vector3d& TargetPosition() const{return m_deltaPos;}
     void SendMsg(CGameObject*, int, msgparam_t, msgparam_t, msgparam_t) override;
 };
 
@@ -1885,6 +1890,53 @@ int main()
         effect.m_stateCnt=32;effect.ApplyIceArrow();check(effect.m_primList.size()==3,"IceArrow count bound excludes flight equal to scaled count");
         check(std::fabs(EffectHeading(0,0,1,0)-90.00001872397214)<0.000001,"four-coordinate heading preserves original double divisor constant");
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;g_world.m_attr=oldAttr;g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=24;effect.m_master=&actor;effect.m_duration=200;effect.m_effectPos={10,50,30};effect.m_deltaPos={50,0,30};
+        waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;effect.m_stateCnt=19;effect.SpawnFireBall();
+        check(effect.m_primList.empty() && waveCalls.empty(),"FireBall emits nothing before frame twenty");
+        effect.m_stateCnt=20;effect.SpawnFireBall();auto* prim=effect.m_primList.front();
+        check(effect.m_primList.size()==1 && prim->UsesReferenceParticle() && prim->m_type==PP_3DPARTICLE && prim->m_duration==20
+            && prim->m_pattern==0x120 && prim->m_deltaPos2.y==-15,"FireBall emits original particle type and movement controls");
+        check(waveCalls.size()==1 && waveCalls[0].name=="effect\\EF_FireBall.wav" && waveCalls[0].x==8 && waveCalls[0].y==0 && waveCalls[0].z==26,
+            "FireBall wave uses stored effect position and horizontal listener delta");
+        check(effect.m_effectPos.x==10 && prim->m_pos.x==10 && prim->m_pos.y==50 && rngDraws==draws,"FireBall preserves stored origin without actor copy or RNG");
+        const float sourceHeading=static_cast<float>(std::atan2(40.0,-0.0)/3.141592*180.0);
+        check(prim->m_longitude==-sourceHeading && prim->m_roty==static_cast<float>(180.0-sourceHeading) && prim->m_speed==-2,
+            "FireBall computes heading and distance from stored world origin to absolute target");
+        check(std::fabs(prim->m_matrix.m[2][0]+1)<0.000001f && prim->m_size==1.3f && prim->m_animSpeed==1 && prim->m_repeatAnim,
+            "FireBall truncates source longitude before Y matrix and preserves sprite size/divisor");
+        check(prim->m_alpha==254 && prim->m_maxAlpha==254 && prim->m_fadeOutCnt==-1 && prim->m_numSegments==1 && prim->m_segments[0].argb==0xFEFFFFFF,
+            "FireBall main projectile uses original constructor alpha fade and segment defaults");
+        check(g_resMgr.requests.size()==2 && g_resMgr.requests[0]=="\xC0\xCC\xC6\xD1\xC6\xAE\\fireball.spr"
+            && g_resMgr.requests[1]=="\xC0\xCC\xC6\xD1\xC6\xAE\\fireball.act","FireBall loads exact sprite then action without basename candidates");
+        prim->m_alphaDelta=1;prim->OnProcess();
+        check(std::fabs(prim->m_pos.x-12)<0.000001f && prim->m_pos.y==35 && prim->m_curMotion==1 && prim->m_stateCnt==1,
+            "FireBall first particle update integrates toward world target and advances source animation");
+        check(prim->m_roll==prim->m_roty-testView.longitude && prim->m_segments[0].pos.x==prim->m_pos.x,
+            "FireBall updates camera-relative roll and reference segment position");
+        const float oldCamera=testView.longitude;testView.longitude=70;prim->OnProcess();
+        check(prim->m_roll==prim->m_roty-70,"FireBall roll follows changing camera longitude");testView.longitude=oldCamera;
+        while(prim->m_stateCnt<18)prim->OnProcess();
+        const auto previousSegment=prim->m_segments[0];const int motion=prim->m_curMotion;
+        check(!prim->OnProcess() && prim->m_stateCnt==18 && prim->m_curMotion==motion && prim->m_segments[0].pos.x==previousSegment.pos.x
+            && prim->m_pos.x>47,"FireBall target hit terminates before alpha segment animation and outer increment");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        for(int frame:{24,28,32}){
+            effect.m_stateCnt=frame;effect.SpawnFireBall();auto* trail=effect.m_primList.back();const int alpha=frame==24?180:frame==28?130:80;
+            check(trail->m_alpha==alpha && trail->m_tintColor==RGB(246,199,76) && trail->m_segments[0].argb==((u32(alpha)<<24)|0xF6C74C),
+                "FireBall trailing projectile keeps source amber tint and frame-specific alpha");
+        }
+        check(effect.m_primList.size()==3 && waveCalls.size()==4 && rngDraws==draws,"FireBall emits exactly four scheduled waves/projectiles without RNG");
+        effect.m_stateCnt=36;effect.SpawnFireBall();check(effect.m_primList.size()==3 && waveCalls.size()==4,"FireBall stops emission after source schedule");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=20;effect.m_deltaPos={10,0,30};effect.SpawnFireBall();prim=effect.m_primList.front();
+        check(prim->m_speed==0 && !prim->OnProcess() && prim->m_stateCnt==0,"FireBall zero-distance target terminates on first update without animation");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_resMgr.fail=true;effect.SpawnFireBall();g_resMgr.fail=false;prim=effect.m_primList.front();
+        check(prim->UsesReferenceParticle() && prim->m_particleSprRes==nullptr && prim->m_texture.empty(),"missing FireBall resources retain reference routing with no texture substitute");
+        effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"FireBall cleanup releases sprite/action locks");
+        g_world.m_player=oldPlayer;
     }
     {
         CRagEffect effect;
