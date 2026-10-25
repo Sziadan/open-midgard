@@ -167,7 +167,7 @@ struct CEffectPrim : CGameObject {
     vector3d m_speed3d;
     float m_longSpeed=0,m_longAccel=0,m_radiusSpeed=0,m_radiusAccel=0,m_innerSpeed=0,m_innerAccel=0,m_innerSize=0;
     u32 m_tintColor=0xFFFFFF;
-    std::array<EffectSegmentState,12> m_segments;
+    std::array<EffectSegmentState,50> m_segments;
 
     std::vector<CTexture*> m_texture;
     bool active = true;

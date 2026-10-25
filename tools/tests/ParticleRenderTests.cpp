@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <vector>
 #include <string>
+#include <list>
 
 using u32 = std::uint32_t;
 struct RECT { long left, top, right, bottom; };
@@ -41,10 +42,15 @@ struct CActRes {
 struct CEffectPrim {
     int m_numSegments=1,m_spriteAction=0,m_curMotion=0,m_pattern=0;
     u32 m_renderFlag=5;
-    float m_roll=0;
-    std::array<EffectSegmentState,12> m_segments;
+    float m_roll=0,m_size=1,m_arcAngle=36;
+    matrix m_matrix;
+    std::vector<CTexture*> m_texture;
+    std::array<EffectSegmentState,50> m_segments;
 };
-constexpr int PF_A8R8G8B8=4, D3DPT_TRIANGLESTRIP=5, D3DCULL_NONE=1;
+constexpr int PF_A8R8G8B8=4, D3DPT_TRIANGLESTRIP=5, D3DPT_TRIANGLELIST=4, D3DCULL_NONE=1;
+constexpr int D3DRENDERSTATE_ZENABLE=0,D3DRENDERSTATE_ZWRITEENABLE=1,D3DRENDERSTATE_SRCBLEND=2,D3DRENDERSTATE_DESTBLEND=3;
+constexpr int TRUE=1,FALSE=0,D3DZB_FALSE=0,D3DZB_TRUE=1;
+struct SilentRenderDevice;
 constexpr int D3DBLEND_SRCALPHA=5,D3DBLEND_ONE=2,D3DBLEND_INVSRCALPHA=6;
 struct CTexMgr {
     static CTexture s_dummy_texture;
@@ -67,21 +73,48 @@ struct RPFace {
     CTexture* tex=nullptr;
     int srcAlphaMode=0,destAlphaMode=0;
     float alphaSortKey=0;
+    static void DrawPri(RPFace*,SilentRenderDevice&);
 };
+struct SilentDraw { RPFace face; int depthTest,depthWrite,srcBlend,destBlend; CTexture* bound; };
+struct SilentRenderDevice {
+    int states[4]{1,1,5,6};
+    CTexture* bound=nullptr;
+    std::vector<SilentDraw> draws;
+    void SetRenderState(int name,int value){states[name]=value;}
+} silentDevice;
+void RPFace::DrawPri(RPFace* face,SilentRenderDevice& device){
+    device.draws.push_back({*face,device.states[0],device.states[1],device.states[2],device.states[3],device.bound});
+}
+int fogCalls=0;
+void ApplyFogToVertices(tlvertex3d*,int,bool,int){++fogCalls;}
 struct SilentRenderer {
-    int m_width=640,m_height=480,m_xoffset=320,m_yoffset=240;
+    int m_width=640,m_height=480,m_xoffset=320,m_yoffset=240,m_halfWidth=320,m_halfHeight=240;
     float m_hpc=700,m_vpc=700;
-    RPFace face;
+    std::list<RPFace> pool;
+    bool m_isFoggy=false;int m_fogPara=0;
+    SilentRenderDevice* m_renderDevice=&silentDevice;
+    std::vector<RPFace*> m_rpAlphaOPList,m_rpLMGroundList,m_rpLMLightList,m_rpFaceList;
+    std::vector<std::pair<float,RPFace*>> m_rpAlphaDepthList,m_rpAlphaList,m_rpAlphaNoDepthList;
+    std::vector<std::pair<float,RPFace*>> m_rpEmissiveDepthList,m_rpEmissiveList,m_rpEmissiveNoDepthList;
+    void AddReferenceEffectTriangle(RPFace*,int);
+    void FlushEffectDepthLists();
+    void FlushEffectNoDepthLists();
+    void SetTexture(CTexture* tex){m_renderDevice->bound=tex;}
     std::vector<RPFace> submissions;
     std::vector<int> flags;
-    RPFace* BorrowNullRP() { face={};return &face; }
+    RPFace* BorrowNullRP() { pool.emplace_back();return &pool.back(); }
     void AddRP(RPFace* value,int flag) { submissions.push_back(*value);flags.push_back(flag); }
 } g_renderer;
 float GetCos(int angle) { return std::cos(angle*3.14159265f/180.0f); }
 float GetSin(int angle) { return std::sin(angle*3.14159265f/180.0f); }
 #include "ParticleRenderBodies.inc"
+float g_cosTable[361],g_sinTable[361];
+vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
+#include "CircleRenderBodies.inc"
+#include "ReferenceTriangleQueueBodies.inc"
 
 int main() {
+    for(int i=0;i<=360;++i){g_cosTable[i]=GetCos(i);g_sinTable[i]=GetSin(i);}
     int checks=0,failures=0;
     auto check=[&](bool ok,const char* message){++checks;if(!ok){++failures;std::printf("FAIL: %s\n",message);}};
     auto near=[](float a,float b){return std::fabs(a-b)<0.0001f;};
@@ -162,6 +195,117 @@ int main() {
     SprImg failed;failed.rgba=rgba.rgba;g_texMgr.fail=true;
     check(ResolveParticleTexture(failed,sprites.m_pal)==nullptr && failed.tex==nullptr,"failed upload leaves no dummy texture cached");
     g_texMgr.fail=false;
+    {
+        CEffectPrim circle;circle.m_numSegments=2;circle.m_size=2;circle.m_arcAngle=90;circle.m_renderFlag=0x201;
+        circle.m_texture.push_back(&g_texMgr.texture);
+        for(int i=0;i<4;++i)circle.m_matrix.m[i][i]=1;
+        circle.m_matrix.m[3][0]=3;circle.m_matrix.m[3][1]=4;circle.m_matrix.m[3][2]=5;
+        circle.m_segments[0].pos={10,20,50};circle.m_segments[0].radius=6;circle.m_segments[0].size=50;
+        circle.m_segments[0].alpha=0;circle.m_segments[0].argb=0x12345678;
+        circle.m_segments[1].pos={20,30,60};circle.m_segments[1].radius=10;circle.m_segments[1].size=100;
+        circle.m_segments[1].argb=0x00FEABCD;
+        circle.m_segments[0].transform.m[3][0]=100000;
+        g_renderer.m_hpc=100;g_renderer.m_vpc=100;g_renderer.m_xoffset=1;g_renderer.m_yoffset=2;
+        auto clearQueues=[&]{
+            g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpLMGroundList.clear();g_renderer.m_rpLMLightList.clear();g_renderer.m_rpFaceList.clear();
+            g_renderer.m_rpAlphaDepthList.clear();g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaNoDepthList.clear();
+            g_renderer.m_rpEmissiveDepthList.clear();g_renderer.m_rpEmissiveList.clear();g_renderer.m_rpEmissiveNoDepthList.clear();
+            silentDevice.draws.clear();
+        };
+        clearQueues();RenderReferenceCircle(circle,view);
+        check(g_renderer.m_rpAlphaNoDepthList.size()==16,"circle emits two independent triangles for each arc and every segment");
+        auto* first=g_renderer.m_rpAlphaNoDepthList[0].second;
+        auto* second=g_renderer.m_rpAlphaNoDepthList[1].second;
+        check(first->primType==D3DPT_TRIANGLELIST && first->numVerts==3 && first!=second,"reference circle keeps distinct pooled triangle submissions");
+        check(near(first->m_verts[0].x,320+17.0f/55*100) && near(first->m_verts[0].y,240+24.0f/55*100),
+            "circle uses primitive width and current matrix translation with segment position and half-screen projection");
+        check(near(first->m_verts[1].x,320+13.0f/55*100) && near(first->m_verts[1].y,240+28.0f/55*100)
+            && near(first->m_verts[2].x,320+19.0f/55*100),"first triangle preserves inner-start, inner-end, outer-start order");
+        check(near(second->m_verts[0].y,240+30.0f/55*100) && near(second->m_verts[1].x,first->m_verts[2].x)
+            && near(second->m_verts[2].y,first->m_verts[1].y),"second triangle preserves outer-end, outer-start, inner-end order");
+        check(first->m_verts[0].color==0x12345678 && first->m_verts[0].specular==0xFF000000,
+            "circle uses stored segment ARGB without current-alpha clamp or tint reconstruction");
+        check(g_renderer.m_rpAlphaNoDepthList[8].second->m_verts[0].color==0x00FEABCD,
+            "circle submits even transparent history segments with their own color");
+        check(first->m_verts[0].tu==0 && first->m_verts[0].tv==1 && first->m_verts[1].tu==0.25f && first->m_verts[2].tv==0
+            && second->m_verts[0].tu==0.25f && second->m_verts[1].tu==0 && second->m_verts[2].tv==1,
+            "circle preserves both reference triangle UV orders");
+        check(g_renderer.m_rpAlphaNoDepthList[6].second->m_verts[0].tu==0.75f && g_renderer.m_rpAlphaNoDepthList[8].second->m_verts[0].tu==0,
+            "circle UV phase wraps after four wedges");
+        check(near(first->m_verts[0].oow,1.0f/55) && first->destAlphaMode==6 && first->srcAlphaMode==5,
+            "circle has no invented eighty-unit cutoff and Blessing flags retain ordinary alpha blending");
+        circle.m_arcAngle=120;clearQueues();RenderReferenceCircle(circle,view);
+        check(g_renderer.m_rpAlphaNoDepthList.size()==12 && g_renderer.m_rpAlphaNoDepthList[6].second->m_verts[0].tu==0.75f,
+            "circle carries UV phase across segment boundaries instead of restarting it");
+        circle.m_numSegments=1;circle.m_arcAngle=90.5f;clearQueues();RenderReferenceCircle(circle,view);
+        check(g_renderer.m_rpAlphaNoDepthList.size()==6 && near(g_renderer.m_rpAlphaNoDepthList[0].second->m_verts[1].x,320+13.0f/55*100),
+            "2008 circle truncates each fractional next angle and compares against unrounded stop");
+        circle.m_arcAngle=360;g_sinTable[360]=0.125f;clearQueues();RenderReferenceCircle(circle,view);
+        check(g_renderer.m_rpAlphaNoDepthList.size()==2 && near(g_renderer.m_rpAlphaNoDepthList[1].second->m_verts[0].y,240+24.75f/55*100),
+            "circle reads endpoint table index three-sixty directly without wrapping to zero");
+        circle.m_arcAngle=0;clearQueues();RenderReferenceCircle(circle,view);
+        check(g_renderer.m_rpAlphaNoDepthList.empty(),"invalid circle arc does not invent replacement geometry");
+        circle.m_arcAngle=36;circle.m_numSegments=0;RenderReferenceCircle(circle,view);
+        check(g_renderer.m_rpAlphaNoDepthList.empty(),"zero reference segments produce no circle submissions");
+        circle.m_numSegments=1;circle.m_texture[0]=nullptr;RenderReferenceCircle(circle,view);
+        check(g_renderer.m_rpAlphaNoDepthList.empty(),"missing circle texture does not substitute another asset");
+        circle.m_texture[0]=&CTexMgr::s_dummy_texture;RenderReferenceCircle(circle,view);
+        check(g_renderer.m_rpAlphaNoDepthList.empty(),"dummy circle texture produces no replacement geometry");
+        circle.m_texture[0]=&g_texMgr.texture;circle.m_numSegments=50;circle.m_arcAngle=360;
+        for(auto& segment:circle.m_segments)segment=circle.m_segments[0];
+        clearQueues();RenderReferenceCircle(circle,view);
+        check(circle.m_segments.size()==50 && g_renderer.m_rpAlphaNoDepthList.size()==100,"circle retains all fifty original history segments without reconstructed twelve-slot truncation");
+        tlvertex3d projected;ProjectReferenceEffectVertex({0,0,10},view,projected);
+        check(projected.x==320 && projected.y==240 && near(projected.z,0),"reference triangle projection has no half-pixel displacement or configurable-screen-offset substitution");
+        ProjectReferenceEffectVertex({1,2,5},view,projected);
+        check(projected.z<0 && near(projected.oow,0.2f),"reference triangle projection preserves near device depths without clamping");
+        ProjectReferenceEffectVertex({0,0,2000},view,projected);
+        check(projected.z>1,"reference triangle projection preserves far device depths without clamping");
+        ProjectReferenceEffectVertex({0,0,-50},view,projected);
+        check(projected.oow<0,"reference triangle projection does not invent behind-camera culling");
+        auto makeFace=[&](float a,float b,float c,CTexture* tex){
+            auto* face=g_renderer.BorrowNullRP();face->verts=face->m_verts;face->numVerts=3;face->tex=tex;
+            face->m_verts[0].oow=a;face->m_verts[1].oow=b;face->m_verts[2].oow=c;return face;
+        };
+        CTexture farTex,nearTex;
+        auto* face=makeFace(0.8f,0.2f,0.01f,&nearTex);
+        clearQueues();g_renderer.AddReferenceEffectTriangle(face,1);
+        check(g_renderer.m_rpAlphaList.size()==1 && g_renderer.m_rpAlphaList[0].first==0.8f,"reference ordinary alpha triangle sorts by its first vertex, not minimum depth");
+        g_renderer.AddReferenceEffectTriangle(face,3);
+        check(g_renderer.m_rpEmissiveList.size()==1 && near(g_renderer.m_rpEmissiveList[0].first,0.5f),"reference emissive triangle sorts by first-two-vertex midpoint");
+        g_renderer.AddReferenceEffectTriangle(face,0x101);g_renderer.AddReferenceEffectTriangle(face,0x103);
+        check(g_renderer.m_rpAlphaDepthList.size()==1 && g_renderer.m_rpEmissiveDepthList.size()==1,"reference flag one-hundred selects separate depth-writing passes");
+        g_renderer.AddReferenceEffectTriangle(face,0x201);g_renderer.AddReferenceEffectTriangle(face,0x203);
+        check(g_renderer.m_rpAlphaNoDepthList.size()==1 && g_renderer.m_rpEmissiveNoDepthList.size()==1
+            && near(g_renderer.m_rpAlphaNoDepthList[0].first,0.5f),"reference flag two-hundred selects separate depth-disabled passes and midpoint sorting");
+        g_renderer.AddReferenceEffectTriangle(face,0x301);
+        check(g_renderer.m_rpAlphaDepthList.size()==2 && g_renderer.m_rpAlphaNoDepthList.size()==1,"reference depth-writing bit takes priority over no-depth bit");
+        g_renderer.AddReferenceEffectTriangle(face,0x207);
+        check(g_renderer.m_rpAlphaOPList.size()==1 && g_renderer.m_rpEmissiveNoDepthList.size()==1,"reference AlphaOP bit takes priority over emissive and no-depth bits");
+        g_renderer.AddReferenceEffectTriangle(face,0x800);g_renderer.AddReferenceEffectTriangle(face,0x1000);g_renderer.AddReferenceEffectTriangle(face,0);
+        check(g_renderer.m_rpLMGroundList.size()==1 && g_renderer.m_rpLMLightList.size()==1 && g_renderer.m_rpFaceList.size()==1,
+            "reference non-alpha triangle routes ground, light and opaque queues");
+        auto* far=makeFace(0.1f,0.3f,0.9f,&farTex);
+        clearQueues();g_renderer.AddReferenceEffectTriangle(face,0x101);g_renderer.AddReferenceEffectTriangle(far,0x101);
+        g_renderer.AddReferenceEffectTriangle(face,0x103);g_renderer.AddReferenceEffectTriangle(far,0x103);
+        g_renderer.FlushEffectDepthLists();
+        check(silentDevice.draws.size()==4 && silentDevice.draws[0].bound==&farTex && silentDevice.draws[1].bound==&nearTex
+            && silentDevice.draws[2].bound==&farTex,"depth-writing alpha and emissive passes sort independently back-to-front");
+        check(silentDevice.draws[0].depthWrite==1 && silentDevice.draws[0].depthTest==1 && silentDevice.draws[0].srcBlend==5 && silentDevice.draws[0].destBlend==6
+            && silentDevice.draws[2].srcBlend==2 && silentDevice.draws[2].destBlend==2,"depth-writing passes retain reference depth and blend states");
+        check(g_renderer.m_rpAlphaDepthList.empty() && g_renderer.m_rpEmissiveDepthList.empty(),"depth-writing queues are reclaimed after drawing");
+        clearQueues();g_renderer.AddReferenceEffectTriangle(face,0x201);g_renderer.AddReferenceEffectTriangle(far,0x201);
+        g_renderer.AddReferenceEffectTriangle(face,0x203);g_renderer.AddReferenceEffectTriangle(far,0x203);
+        g_renderer.FlushEffectNoDepthLists();
+        check(silentDevice.draws.size()==4 && silentDevice.draws[0].bound==&farTex && silentDevice.draws[1].bound==&nearTex
+            && silentDevice.draws[2].bound==&farTex,"no-depth alpha and emissive passes sort independently back-to-front");
+        check(silentDevice.draws[0].depthTest==0 && silentDevice.draws[0].depthWrite==0 && silentDevice.draws[0].srcBlend==5 && silentDevice.draws[0].destBlend==6
+            && silentDevice.draws[2].srcBlend==2 && silentDevice.draws[2].destBlend==2,"no-depth passes disable testing/writes and retain source alpha/emissive blends");
+        check(g_renderer.m_rpAlphaNoDepthList.empty() && g_renderer.m_rpEmissiveNoDepthList.empty() && silentDevice.states[0]==1 && silentDevice.states[2]==5 && silentDevice.states[3]==6,
+            "no-depth queues clear and restore subsequent depth/blend state");
+        clearQueues();g_renderer.AddReferenceEffectTriangle(face,0x201);g_renderer.FlushEffectNoDepthLists();const auto drawCount=silentDevice.draws.size();
+        g_renderer.FlushEffectNoDepthLists();check(silentDevice.draws.size()==drawCount,"no-depth flush never redraws stale previous-frame faces");
+    }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;
 }

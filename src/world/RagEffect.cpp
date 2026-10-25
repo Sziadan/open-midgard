@@ -1994,6 +1994,84 @@ void ShiftCircleSegments(CEffectPrim* prim)
     prim->m_segments[0].transform = prim->m_matrix;
 }
 
+// HighPriest.exe.c:55640-55652 (0x4131B0). Ref/Renderer.cpp repeats
+// the other overload's signature; this overload uses half-screen offsets and
+// device z, with no invented near-plane cutoff, clamp or pixel displacement.
+void ProjectReferenceEffectVertex(const vector3d& point, const matrix& view, tlvertex3d& vertex)
+{
+    const double reciprocal = 1.0 / (static_cast<double>(view.m[2][2]) * point.z
+        + static_cast<double>(view.m[1][2]) * point.y + static_cast<double>(view.m[0][2]) * point.x + view.m[3][2]);
+    vertex.oow = static_cast<float>(reciprocal);
+    vertex.x = static_cast<float>((static_cast<double>(view.m[2][0]) * point.z
+        + static_cast<double>(view.m[1][0]) * point.y + static_cast<double>(point.x) * view.m[0][0] + view.m[3][0])
+        * reciprocal * g_renderer.m_hpc + g_renderer.m_halfWidth);
+    vertex.y = static_cast<float>((static_cast<double>(view.m[2][1]) * point.z
+        + static_cast<double>(view.m[1][1]) * point.y + static_cast<double>(view.m[0][1]) * point.x + view.m[3][1])
+        * g_renderer.m_vpc * vertex.oow + g_renderer.m_halfHeight);
+    vertex.z = static_cast<float>(1500.0 / (1500.0 - 10.0) * (1.0 / vertex.oow - 10.0) * vertex.oow);
+}
+
+void SubmitReferenceEffectTriangle(const vector3d (&points)[3], const matrix& view,
+    CTexture* texture, u32 color, const float (&uvs)[3][2], int renderFlag)
+{
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) return;
+    face->primType = D3DPT_TRIANGLELIST;
+    face->verts = face->m_verts;
+    face->numVerts = 3;
+    face->indices = nullptr; face->numIndices = 0;
+    face->tex = texture; face->mtPreset = 0; face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = (renderFlag & 2) != 0 ? D3DBLEND_ONE : D3DBLEND_SRCALPHA;
+    face->destAlphaMode = (renderFlag & 6) != 0 ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = 0;
+    for (int i = 0; i < 3; ++i) {
+        ProjectReferenceEffectVertex(points[i], view, face->m_verts[i]);
+        face->m_verts[i].color = color;
+        face->m_verts[i].specular = 0xFF000000u;
+        face->m_verts[i].tu = uvs[i][0]; face->m_verts[i].tv = uvs[i][1];
+    }
+    g_renderer.AddReferenceEffectTriangle(face, renderFlag);
+}
+
+// Ref/RagEffectPrim.cpp:2855-3187 (0x6476E0). The 2008 loop truncates
+// each next angle to an int. Use primitive matrix/width with segment radius,
+// position and stored ARGB; do not reconstruct state from current alpha.
+void RenderReferenceCircle(const CEffectPrim& prim, const matrix& view)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    if (!texture || texture == &CTexMgr::s_dummy_texture) return;
+    const float stop = 360.0f - prim.m_arcAngle;
+    float u = 0.0f;
+    for (int j = 0; j < prim.m_numSegments && j < static_cast<int>(prim.m_segments.size()); ++j) {
+        const EffectSegmentState& segment = prim.m_segments[static_cast<size_t>(j)];
+        const float inner = segment.radius - prim.m_size;
+        for (int angle = 0; angle <= stop;) {
+            const int next = static_cast<int>(static_cast<double>(angle) + prim.m_arcAngle);
+            if (next <= angle || next > 360) return; // Invalid arc, no replacement geometry.
+            const auto place = [&](float radius, int degrees) {
+                const double x = static_cast<double>(g_cosTable[degrees]) * radius;
+                const double y = static_cast<double>(g_sinTable[degrees]) * radius;
+                const vector3d transformed{
+                    static_cast<float>(y * prim.m_matrix.m[1][0] + x * prim.m_matrix.m[0][0] + prim.m_matrix.m[3][0]),
+                    static_cast<float>(y * prim.m_matrix.m[1][1] + x * prim.m_matrix.m[0][1] + prim.m_matrix.m[3][1]),
+                    static_cast<float>(y * prim.m_matrix.m[1][2] + x * prim.m_matrix.m[0][2] + prim.m_matrix.m[3][2])
+                };
+                return AddVec3(transformed, segment.pos);
+            };
+            const vector3d a = place(inner, angle), b = place(inner, next);
+            const vector3d c = place(segment.radius, angle), d = place(segment.radius, next);
+            const vector3d first[3] = {a,b,c}, second[3] = {d,c,b};
+            const float firstUV[3][2] = {{u,1.0f},{u+0.25f,1.0f},{u,0.0f}};
+            const float secondUV[3][2] = {{u+0.25f,0.0f},{u,0.0f},{u+0.25f,1.0f}};
+            SubmitReferenceEffectTriangle(first, view, texture, segment.argb, firstUV, static_cast<int>(prim.m_renderFlag));
+            SubmitReferenceEffectTriangle(second, view, texture, segment.argb, secondUV, static_cast<int>(prim.m_renderFlag));
+            u += 0.25f;
+            if (u >= 1.0f) u = 0.0f;
+            angle = next;
+        }
+    }
+}
+
 void RenderCircleLayer(const CEffectPrim& prim,
     const EffectSegmentState& state,
     matrix& viewMatrix,
@@ -6499,6 +6577,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
 void CEffectPrim::Render(matrix* viewMatrix)
 {
     if (!m_master || !viewMatrix) {
+        return;
+    }
+    if (m_type == PP_3DCIRCLE && m_master->GetEffectType() == 42) {
+        RenderReferenceCircle(*this, *viewMatrix);
         return;
     }
     if (UsesReferenceParticle()) {

@@ -4,9 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A Blessing (42) emitter and reachable particle/circle state migration. Poison is checkpointed in `856e5d1`; Blessing sprites now use reference resources, twinkle and per-clip rendering. Its common circle renderer still requires a separate parity port. Handler and renderer migration remain partial.
+Current work: WP5A reference circle rendering and triangle queue/pass support. Blessing emitter/state is checkpointed in `f63f13c`; its circle now binds the reference geometry/projection/queue path. Other circle emitters still need state/initialization migration before using this renderer. Handler and backend parity remain partial.
 
-Next action: port the common circle renderer/submission behavior used by Blessing, then migrate Sight sprite-particle paths. Preserve reference assets, segment/primitive state, alpha patterns, renderer flags and call order; remove legacy routes as each migration completes. Generic particle control branches, map-emitter initialization/scheduling, resource-loader/cache parity, common renderer/backend behavior and unfinished packages/acceptance remain open.
+Next action: migrate Sight sprite-particle paths, then other circle emitters and their segment/state initialization. Preserve reference assets, triangle/segment state, alpha patterns, render flags and call order; remove legacy routes as each migration completes. Generic primitive control branches, map initialization/scheduling, resource-loader/cache parity, full renderer/fog/backend behavior and unfinished packages/acceptance remain open.
+
+## Circle renderer / triangle queues — 2026-10-25
+
+- Added the reference Render3DCircle geometry path: primitive current matrix/width with segment position/radius/packed ARGB, two independent triangles per wedge, source vertex/UV order, quarter-step UV phase retained across segments, direct trig-table endpoint 360 and original integer next-angle stepping. All 50 original segment slots are now represented; invalid arcs and missing textures get no replacement geometry.
+- Reference triangle projection uses half-screen offsets and device depth from original 0x4131B0, retaining negative/far depths with no synthetic 80-unit cutoff, clamp or half-pixel displacement. Blessing's circle dispatch reaches this path before legacy alpha rejection. Other emitters retain their old binding until their reference segment initialization/state is ported.
+- Added the original RPTriFace queue selection: first-vertex ordinary alpha key, first-two midpoint for emissive/depth modes, original bit precedence, 0x100 depth-write and 0x200 depth-disabled passes. Depth-write lists were previously declared but never consumed; they now draw and clear. No-depth alpha/emissive lists sort independently, use original blend/depth states and clear, preventing stale emissive faces. Existing fog and other frame passes remain a separate parity audit.
+- Validation: release build, six silent C++ suites / 442 checks (313 lifecycle/primitive + 71 particle/circle/queue/render-pass + 58 other), six Python tests and whitespace check pass. Added 36 numeric checks with production geometry/projection/queue/pass bodies and a silent render-device recorder. No media or live acceptance was used.
+- Approved OldRO deployment SHA-256 matches `B90DAECA39DC589140FA8EC0418114431CE721C659EF8AD3913CDDD2BC055D41`. This closes Blessing's previous circle submission subset, not all circle bindings or full visual/backend acceptance. WP5A and the overall plan remain incomplete.
+
 
 ## Blessing emitter / state migration — 2026-10-25
 

@@ -154,6 +154,7 @@ public:
     void SetMultiTextureMode(int nMode);
     
     void AddRP(RPFace* face, int renderFlag);
+    void AddReferenceEffectTriangle(RPFace* face, int renderFlag);
     void AddLmRP(RPLmFace* face, int renderFlag);
     void AddRawRP(RPRaw* face, int renderFlag);
     
@@ -238,6 +239,8 @@ public:
 private:
     void ApplyFogState();
     void FlushAlphaDepthList();
+    void FlushEffectDepthLists();
+    void FlushEffectNoDepthLists();
     void FlushAlphaList();
     void FlushAlphaRawList();
     void FlushFaceList();

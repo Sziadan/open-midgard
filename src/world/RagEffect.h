@@ -334,7 +334,7 @@ public:
     std::array<EffectBandState, 4> m_bands;
     std::array<EffectGi, 4> m_gi;
     int m_numSegments;
-    std::array<EffectSegmentState, 12> m_segments;
+    std::array<EffectSegmentState, 50> m_segments;
 };
 
 class CRagEffect : public CGameObject {

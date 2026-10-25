@@ -877,6 +877,88 @@ void CRenderer::AddRP(RPFace* face, int renderFlag) {
     }
 }
 
+// Ref/Renderer.cpp:5813-5925 (0x412520), original RPTriFace overload.
+// Keep its sort keys and 0x100/0x200 depth modes separate from legacy AddRP.
+void CRenderer::AddReferenceEffectTriangle(RPFace* face, int renderFlag)
+{
+    if (!face || !face->verts || face->numVerts < 2) return;
+    ApplyFogToVertices(face->verts, face->numVerts, m_isFoggy, m_fogPara);
+    const float average = static_cast<float>((static_cast<double>(face->verts[0].oow)
+        - face->verts[1].oow) * 0.5 + face->verts[1].oow);
+    if ((renderFlag & 1) != 0) {
+        if ((renderFlag & 4) != 0) {
+            m_rpAlphaOPList.push_back(face);
+        } else if ((renderFlag & 2) != 0) {
+            if ((renderFlag & 0x100) != 0) m_rpEmissiveDepthList.push_back({average, face});
+            else if ((renderFlag & 0x200) != 0) m_rpEmissiveNoDepthList.push_back({average, face});
+            else m_rpEmissiveList.push_back({average, face});
+        } else if ((renderFlag & 0x100) != 0) {
+            m_rpAlphaDepthList.push_back({average, face});
+        } else if ((renderFlag & 0x200) != 0) {
+            m_rpAlphaNoDepthList.push_back({average, face});
+        } else {
+            m_rpAlphaList.push_back({face->verts[0].oow, face});
+        }
+    } else if ((renderFlag & 0x800) != 0) {
+        m_rpLMGroundList.push_back(face);
+    } else if ((renderFlag & 0x1000) != 0) {
+        m_rpLMLightList.push_back(face);
+    } else {
+        m_rpFaceList.push_back(face);
+    }
+}
+
+// Ref/Renderer.cpp:6978-6993: depth-writing alpha then emissive passes.
+void CRenderer::FlushEffectDepthLists()
+{
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, TRUE);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    std::sort(m_rpAlphaDepthList.begin(), m_rpAlphaDepthList.end());
+    for (const auto& entry : m_rpAlphaDepthList) {
+        SetTexture(entry.second->tex);
+        RPFace::DrawPri(entry.second, *m_renderDevice);
+    }
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_ONE);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);
+    std::sort(m_rpEmissiveDepthList.begin(), m_rpEmissiveDepthList.end());
+    for (const auto& entry : m_rpEmissiveDepthList) {
+        SetTexture(entry.second->tex);
+        RPFace::DrawPri(entry.second, *m_renderDevice);
+    }
+    m_rpAlphaDepthList.clear();
+    m_rpEmissiveDepthList.clear();
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
+}
+
+// Ref's no-depth alpha/emissive passes sort independently, with depth test
+// disabled. Original 0x200 means this pass, including Blessing's flag 0x201.
+void CRenderer::FlushEffectNoDepthLists()
+{
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, FALSE);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    std::sort(m_rpAlphaNoDepthList.begin(), m_rpAlphaNoDepthList.end());
+    for (const auto& entry : m_rpAlphaNoDepthList) {
+        SetTexture(entry.second->tex);
+        RPFace::DrawPri(entry.second, *m_renderDevice);
+    }
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_ONE);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);
+    std::sort(m_rpEmissiveNoDepthList.begin(), m_rpEmissiveNoDepthList.end());
+    for (const auto& entry : m_rpEmissiveNoDepthList) {
+        SetTexture(entry.second->tex);
+        RPFace::DrawPri(entry.second, *m_renderDevice);
+    }
+    m_rpAlphaNoDepthList.clear();
+    m_rpEmissiveNoDepthList.clear();
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ZENABLE, D3DZB_TRUE);
+}
+
 void CRenderer::AddLmRP(RPLmFace* face, int renderFlag) {
     if (face) {
         ApplyFogToLightmapVertices(face->lmverts, face->numVerts, m_isFoggy, m_fogPara);
@@ -1143,6 +1225,7 @@ void CRenderer::FlushRenderList() {
     m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_ALPHATESTENABLE, FALSE);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_COLORKEYENABLE, FALSE);
+    FlushEffectDepthLists();
     m_renderDevice->SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, FALSE);
     
     struct BlendedFaceEntry {
@@ -1310,27 +1393,7 @@ void CRenderer::FlushRenderList() {
 
     m_renderDevice->SetRenderState(D3DRENDERSTATE_COLORKEYENABLE, FALSE);
 
-    for (auto& pair : m_rpAlphaNoDepthList) {
-        SetTexture(pair.second->tex);
-        RPFace::DrawPri(pair.second, *m_renderDevice);
-    }
-
-    if (!m_rpEmissiveNoDepthList.empty()) {
-        m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_ONE);
-        m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);
-        std::stable_sort(m_rpEmissiveNoDepthList.begin(), m_rpEmissiveNoDepthList.end(), [](const std::pair<float, RPFace*>& a, const std::pair<float, RPFace*>& b) {
-            return a.first < b.first;
-        });
-
-        for (auto& pair : m_rpEmissiveNoDepthList) {
-            SetTexture(pair.second->tex);
-            RPFace::DrawPri(pair.second, *m_renderDevice);
-        }
-
-        m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
-        m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
-    }
-    m_renderDevice->SetRenderState(D3DRENDERSTATE_ZENABLE, D3DZB_TRUE);
+    FlushEffectNoDepthLists();
     
     m_renderDevice->SetRenderState(D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_ALPHATESTENABLE, TRUE);
