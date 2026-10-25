@@ -7,6 +7,7 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <memory>
 
 using u8 = std::uint8_t;
 using u32 = std::uint32_t;
@@ -33,13 +34,38 @@ bool PlayWave(const char* name, float, float y, float, int volume, int range, fl
     ++waves; waveY = y; waveName = name;
     return volume == 250 && range == 40 && frequency == 1;
 }
-struct CTexture {};
+struct CTexture { int m_w = 64, m_h = 64, m_updateWidth = 32, m_updateHeight = 16; };
 #include "StrTypes.inc"
 struct TexMgr {
     CTexture texture;
     const char* lastPath = nullptr;
     CTexture* GetTexture(const char* path, bool) { lastPath = path; return &texture; }
 } g_texMgr;
+int lastTextureFrame = -1;
+CTexture* KAC_LAYER::GetTexture(int frame) { lastTextureFrame = frame; return &g_texMgr.texture; }
+using D3DBLEND = int;
+constexpr int D3DPT_TRIANGLESTRIP = 5, D3DCULL_NONE = 1;
+struct tlvertex3d { float x=0,y=0,z=0,oow=0; u32 color=0,specular=0; float tu=0,tv=0; };
+struct RPFace {
+    int primType=0, numVerts=0, numIndices=0, mtPreset=0, cullMode=0;
+    tlvertex3d m_verts[6], *verts=nullptr;
+    unsigned short* indices=nullptr;
+    CTexture* tex=nullptr;
+    D3DBLEND srcAlphaMode=0,destAlphaMode=0;
+    float alphaSortKey=0;
+};
+struct SilentRenderer {
+    float m_hpc=7, m_vpc=7;
+    int m_xoffset=0,m_yoffset=0,m_halfWidth=0,m_halfHeight=0,submissions=0,lastFlags=0;
+    RPFace face;
+    RPFace* BorrowNullRP() { face = {}; return &face; }
+    void AddRP(RPFace*, int flags) { ++submissions; lastFlags=flags; }
+} g_renderer;
+struct CView {
+    matrix view;
+    CView() { MatrixIdentity(view); }
+    const matrix& GetViewMatrix() const { return view; }
+} testView;
 struct CGameObject {
     virtual ~CGameObject() = default;
     virtual u8 OnProcess() { return 1; }
@@ -70,7 +96,7 @@ struct CWorld {
     CRenderObject* m_player = nullptr;
     void UpdateGameObjects();
 } g_world;
-struct CGameMode { CWorld* m_world = &g_world; } gameMode;
+struct CGameMode { CWorld* m_world = &g_world; CView* m_view = &testView; } gameMode;
 struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
 enum EFFECTPRIMID { PP_2DTEXTURE = 0, PP_3DCROSSTEXTURE = 0x10, PP_3DQUADHORN = 0x9, Other = 0x7F };
 struct CEffectPrim : CGameObject {
@@ -105,20 +131,22 @@ struct CRagEffect : CGameObject {
     bool m_ownsMaster = false, m_masterIsActor = false, m_isWorldEffect = false;
     u32 m_masterActorGid = 0;
     int m_type = 0, m_stateCnt = 0, m_duration = 3, m_count = 0, m_level = 0;
-    float m_longitude = 0, m_param[4]{};
+    float m_longitude = 0, m_param[4]{}, m_tlvertX=0, m_tlvertY=0, m_tlvertZ=0;
     vector3d m_strScreenOffset, m_strAnchorPosition, m_effectPos, m_cachedPos, m_deltaPos, m_deltaPos2, m_targetPos;
     bool m_hasTargetPos = false;
     void* m_ezEffectRes = nullptr;
     KANICLIP* m_aniClips = nullptr;
     int m_iCurLayer = 0, m_cEndLayer = 0;
     std::array<KAC_XFORMDATA, 128> m_actXformData{};
-    std::array<int, 128> m_aiCurAniKey{}, m_activeAniKeyFrame{}, m_activeAniKeyAppliedState{};
-    std::array<u8, 128> m_isLayerDrawn{}, m_activeAniKeyZeroBlend{};
+    std::array<int, 128> m_aiCurAniKey{};
+    std::array<u8, 128> m_isLayerDrawn{};
     bool m_strFrameActive = true;
     bool FinishEffectFrame();
     void InitEZ2STRFrame();
     bool ProcessEZ2STR(float x = 0.0f, float y = -80.0f, float z = 0.0f);
     bool ProcessTargetPositionStr();
+    void RenderAniClip(int,const KAC_LAYER&,const KAC_XFORMDATA&,matrix*);
+    void Render(matrix*);
     std::list<CEffectPrim*> m_primList;
     bool active = true, spawn = false;
     int frames = 0, worldFrames = 0, m_flag = 0;
@@ -399,7 +427,8 @@ int main()
     }
     {
         CRagEffect effect;
-        KANICLIP clip;
+        auto clipStorage = std::make_unique<KANICLIP>();
+        KANICLIP& clip = *clipStorage;
         effect.m_master = &actor;
         effect.m_aniClips = &clip;
         effect.m_cEndLayer = 1;
@@ -444,7 +473,8 @@ int main()
             check(effect.OnProcess() == 1 && effect.m_stateCnt == 1,
                 "reference ignored STR result still permits outer duration processing");
         }
-        KANICLIP clip;
+        auto clipStorage = std::make_unique<KANICLIP>();
+        KANICLIP& clip = *clipStorage;
         clip.cLayer = 2;
         clip.aLayer[1].cAniKey = 2;
         effect.m_aniClips = &clip;
@@ -477,7 +507,8 @@ int main()
         effect.m_master = &actor;
         actor.m_pos = { 10, 20, 30 };
         effect.m_deltaPos = { 40, 50, 60 };
-        KANICLIP clip;
+        auto clipStorage = std::make_unique<KANICLIP>();
+        KANICLIP& clip = *clipStorage;
         clip.cLayer = 2;
         KAC_KEYFRAME keys[2];
         keys[1].iFrame = 2;
@@ -573,7 +604,8 @@ int main()
         auto runMode = [&](u32 mode, float start, float delta, int age, int textures) {
             CRagEffect effect;
             effect.m_master = &actor;
-            KANICLIP clip; clip.cLayer = 2;
+            auto clipStorage = std::make_unique<KANICLIP>();
+        KANICLIP& clip = *clipStorage; clip.cLayer = 2;
             KAC_KEYFRAME keys[2]; keys[1].iFrame = 1000;
             keys[0].dwType = 1;
             keys[0].XformData.anitype = mode;
@@ -601,7 +633,8 @@ int main()
     {
         CRagEffect effect;
         effect.m_master = &actor;
-        KANICLIP clip; clip.cLayer = 2;
+        auto clipStorage = std::make_unique<KANICLIP>();
+        KANICLIP& clip = *clipStorage; clip.cLayer = 2;
         KAC_KEYFRAME keys[2]; keys[0].XformData.aniframe = 1;
         keys[1].iFrame = 10; keys[1].dwType = 1;
         keys[1].XformData.anitype = 5; keys[1].XformData.anidelta = 2;
@@ -615,7 +648,8 @@ int main()
     {
         CRagEffect effect;
         effect.m_master = &actor;
-        KANICLIP clip; clip.cLayer = 4;
+        auto clipStorage = std::make_unique<KANICLIP>();
+        KANICLIP& clip = *clipStorage; clip.cLayer = 4;
         KAC_KEYFRAME keys[3][2];
         for (int i = 0; i < 3; ++i) {
             keys[i][0].dwType = 1; keys[i][0].XformData.anitype = i == 0 ? 3 : 4;
@@ -635,6 +669,102 @@ int main()
         check(effect.ProcessEZ2STR(7,-9,3) && effect.m_actXformData[1].aniframe == -11
             && effect.m_strScreenOffset.x == 7 && effect.m_strScreenOffset.y == -9 && effect.m_strScreenOffset.z == 3,
             "STR reverse-loop scratch starts at passed z while screen offsets preserve all original arguments");
+    }
+    {
+        auto close = [](float a,float b) { return std::abs(a-b) < 0.0001f; };
+        CRagEffect effect;
+        effect.m_effectPos = {0,0,1};
+        effect.m_tlvertX = 100; effect.m_tlvertY = 200;
+        matrix view; MatrixIdentity(view);
+        KAC_LAYER layer; layer.cTex = 1;
+        KAC_XFORMDATA xf;
+        xf.x = 320; xf.y = 240; xf.u = 0.5f; xf.us = 0.25f; xf.v = 0.2f; xf.vs = 0.4f;
+        xf.crA = 257.9f; xf.crR = -1.9f; xf.crG = 258.9f; xf.crB = 511.1f;
+        xf.srcalpha = 7; xf.destalpha = 8; xf.mtpreset = 9;
+        const int xs[2][4] = {{40,10,30,20},{20,30,10,40}};
+        const int ys[2][4] = {{400,100,300,200},{400,100,300,200}};
+        for (int flipX = 0; flipX < 2; ++flipX) {
+            for (int flipY = 0; flipY < 2; ++flipY) {
+                for (int k=0;k<4;++k) {
+                    xf.ax[k] = static_cast<float>(flipX ? 40-10*k : 10+10*k);
+                    xf.ay[k] = static_cast<float>(flipY ? 400-100*k : 100+100*k);
+                }
+                effect.RenderAniClip(1,layer,xf,&view);
+                bool vertices = true;
+                for (int k=0;k<4;++k) {
+                    const auto& v = g_renderer.face.m_verts[k];
+                    const bool right = flipX ? k < 2 : k >= 2;
+                    const bool lower = flipY ? (k==1 || k==3) : (k==0 || k==2);
+                    vertices = vertices && close(v.x,100.0f+xs[flipX][k]) && close(v.y,200.0f+ys[flipY][k])
+                        && close(v.tu,right ? 0.375f : 0.25f) && close(v.tv,lower ? 0.15f : 0.05f)
+                        && v.z == 0.00003102122f && v.oow == 1 && v.specular == 0xFFFFFFFFu && v.color == 0x01FF02FFu;
+                }
+                check(vertices, "STR mirrored/unmirrored quad preserves corner order, texture cropping, wrapped colors and depth");
+            }
+        }
+        check(g_renderer.face.srcAlphaMode == 7 && g_renderer.face.destAlphaMode == 8
+            && g_renderer.face.mtPreset == 9 && g_renderer.lastFlags == 5 && g_renderer.face.numVerts == 4,
+            "STR submits original blend values and preset without destination-alpha rewriting");
+        xf.aniframe = 99;
+        effect.RenderAniClip(1,layer,xf,&view);
+        check(lastTextureFrame == 99, "STR texture lookup retains upper frame index instead of clamping to layer texture count");
+        xf.aniframe = -2;
+        effect.RenderAniClip(1,layer,xf,&view);
+        check(lastTextureFrame == 0, "STR texture lookup clamps only nonpositive frame to zero");
+        const int before = g_renderer.submissions;
+        xf.srcalpha = xf.destalpha = 0;
+        effect.RenderAniClip(1,layer,xf,&view);
+        check(g_renderer.submissions == before+1 && g_renderer.face.srcAlphaMode == 0 && g_renderer.face.destAlphaMode == 0,
+            "STR zero-blend key is submitted immediately without invented key-age suppression");
+        for (int k=0;k<4;++k) { xf.ax[k] = static_cast<float>(10+10*k); xf.ay[k] = static_cast<float>(100+100*k); }
+        xf.rz = 256;
+        effect.RenderAniClip(1,layer,xf,&view);
+        check(std::abs(g_renderer.face.m_verts[1].x) < 0.001f && std::abs(g_renderer.face.m_verts[1].y-210) < 0.001f,
+            "STR quad rotation uses reference 1024-unit angular conversion");
+    }
+    {
+        CRagEffect effect;
+        effect.m_master = &actor;
+        actor.m_pos = {2,4,2}; effect.m_effectPos = {0,0,1};
+        g_renderer.m_halfWidth = 500; g_renderer.m_halfHeight = 400;
+        g_renderer.m_xoffset = 11; g_renderer.m_yoffset = 22;
+        MatrixIdentity(testView.view);
+        auto clipStorage = std::make_unique<KANICLIP>();
+        KANICLIP& clip = *clipStorage; clip.cLayer = 2;
+        KAC_KEYFRAME keys[2]; keys[1].iFrame = 1000;
+        keys[0].XformData.x = 320; keys[0].XformData.y = 240;
+        for(int k=0;k<4;++k) {keys[0].XformData.ax[k]=static_cast<float>(10+10*k);keys[0].XformData.ay[k]=static_cast<float>(100+100*k);}
+        clip.aLayer[1].cAniKey = 2; clip.aLayer[1].aAniKey = keys; clip.aLayer[1].cTex = 1;
+        effect.m_aniClips = &clip; effect.m_ezEffectRes = &clip;
+        effect.InitEZ2STRFrame();
+        check(effect.ProcessEZ2STR() && effect.m_tlvertX == 507 && effect.m_tlvertY == 334 && effect.m_tlvertZ < 0,
+            "STR processing projection uses half-screen offsets and unclamped device depth");
+        matrix renderView; MatrixIdentity(renderView); renderView.m[3][0] = 100; renderView.m[3][2] = 1;
+        effect.RenderAniClip(1,clip.aLayer[1],effect.m_actXformData[1],&renderView);
+        check(g_renderer.face.m_verts[0].x == 527 && g_renderer.face.m_verts[0].y == 534
+            && g_renderer.face.m_verts[0].oow == 0.5f && effect.m_tlvertX == 507,
+            "STR render uses saved screen anchor while pixel ratio and reciprocal depth use persistent effect position and render view");
+        const auto negative = ProjectStrPoint({2,3,-1},testView.view,3,4);
+        check(negative.x == -11 && negative.y == -17 && negative.z == -1,
+            "STR projection preserves negative reciprocal depth without billboard clipping");
+        g_renderer.m_halfWidth = g_renderer.m_halfHeight = g_renderer.m_xoffset = g_renderer.m_yoffset = 0;
+    }
+    {
+        CRagEffect effect;
+        effect.m_effectPos = {0,0,1};
+        auto clipStorage = std::make_unique<KANICLIP>();
+        KANICLIP& clip = *clipStorage; clip.cLayer = 3;
+        effect.m_aniClips = &clip;
+        effect.m_isLayerDrawn[0] = effect.m_isLayerDrawn[1] = 1;
+        matrix view; MatrixIdentity(view);
+        int before = g_renderer.submissions;
+        effect.Render(&view);
+        check(g_renderer.submissions == before+1,
+            "effect Render draws marked STR layers independently of handler tag and excludes layer zero");
+        effect.m_isLayerDrawn[2] = 1;
+        before = g_renderer.submissions;
+        effect.Render(&view);
+        check(g_renderer.submissions == before+2, "effect Render submits every marked nonzero STR layer");
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

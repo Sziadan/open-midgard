@@ -169,18 +169,6 @@ std::string ResolveCatalogStrName(const RagEffectCatalogEntry& entry)
     return buffer;
 }
 
-D3DBLEND ResolveAniClipBlendMode(u32 blendMode)
-{
-    switch (static_cast<D3DBLEND>(blendMode)) {
-    case D3DBLEND_DESTALPHA:
-        return D3DBLEND_ONE;
-    case D3DBLEND_INVDESTALPHA:
-        return D3DBLEND_ZERO;
-    default:
-        return static_cast<D3DBLEND>(blendMode);
-    }
-}
-
 int ResolveEffectRenderFlags(u32 renderFlag, int fallbackFlags)
 {
     return renderFlag != 0 ? static_cast<int>(renderFlag) : fallbackFlags;
@@ -7300,6 +7288,26 @@ void CRagEffect::LoadEzEffect(const char* fName)
 
 // Ref/RagEffect.cpp:9666-9695. Restart the key cursors without resetting
 // transform accumulators: Ref carries those values across a restart.
+// Ref/Renderer.cpp:7067-7084 (0x413130). The STR path projects without
+// the reconstructed billboard near-plane/depth clamping. z carries reciprocal depth.
+vector3d ProjectStrPoint(const vector3d& point, const matrix& view, int screenX, int screenY)
+{
+    const double reciprocal = 1.0 / (static_cast<double>(view.m[2][2]) * point.z
+        + static_cast<double>(view.m[1][2]) * point.y
+        + static_cast<double>(view.m[0][2]) * point.x + view.m[3][2]);
+    vector3d projected;
+    projected.z = static_cast<float>(reciprocal);
+    projected.x = static_cast<float>((static_cast<double>(view.m[2][0]) * point.z
+        + static_cast<double>(view.m[1][0]) * point.y
+        + static_cast<double>(point.x) * view.m[0][0] + view.m[3][0])
+        * reciprocal * g_renderer.m_hpc + screenX);
+    projected.y = static_cast<float>((static_cast<double>(view.m[2][1]) * point.z
+        + static_cast<double>(view.m[1][1]) * point.y
+        + static_cast<double>(view.m[0][1]) * point.x + view.m[3][1])
+        * g_renderer.m_vpc * projected.z + screenY);
+    return projected;
+}
+
 void CRagEffect::InitEZ2STRFrame()
 {
     m_iCurLayer = 0;
@@ -7332,15 +7340,21 @@ bool CRagEffect::ProcessEZ2STR(float x, float y, float z)
     // anchor from this call for the split renderer, including temporary targets.
     CRenderObject* master = ResolveCurrentMaster();
     if (!master) return false;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!mode || !mode->m_view) return false;
     m_strAnchorPosition = master->m_pos;
+    const vector3d projected = ProjectStrPoint(m_strAnchorPosition, mode->m_view->GetViewMatrix(), g_renderer.m_halfWidth, g_renderer.m_halfHeight);
+    m_tlvertX = projected.x + x;
+    m_tlvertY = projected.y + y;
+    // Processing calls the tlvertex overload (0x4131B0), whose z is device
+    // depth. Rendering below calls the reciprocal-depth overload (0x413130).
+    m_tlvertZ = static_cast<float>(1500.0 / (1500.0 - 10.0)
+        * (1.0 / projected.z - 10.0) * projected.z) + z;
     m_strScreenOffset = { x, y, z };
     // Binary 0x5F1358/0x5F138A reuses the z argument slot as the loop
     // quotient. Reverse-loop mode reads its preceding value before replacing it.
     float loopQuotient = z;
     m_isLayerDrawn.fill(0);
-    m_activeAniKeyFrame.fill(-1);
-    m_activeAniKeyAppliedState.fill(-1);
-    m_activeAniKeyZeroBlend.fill(0);
     for (int layerIndex = 0; layerIndex < m_aniClips->cLayer && layerIndex < static_cast<int>(m_actXformData.size()); ++layerIndex) {
         const KAC_LAYER& layer = m_aniClips->aLayer[static_cast<size_t>(layerIndex)];
         if (layer.cAniKey <= 0 || !layer.aAniKey) {
@@ -7435,10 +7449,7 @@ bool CRagEffect::ProcessEZ2STR(float x, float y, float z)
         }
 
         m_isLayerDrawn[static_cast<size_t>(layerIndex)] = 1;
-        m_activeAniKeyFrame[static_cast<size_t>(layerIndex)] = key->iFrame;
-        m_activeAniKeyAppliedState[static_cast<size_t>(layerIndex)] = m_stateCnt;
-        m_activeAniKeyZeroBlend[static_cast<size_t>(layerIndex)] =
-            (key->XformData.srcalpha == 0u && key->XformData.destalpha == 0u) ? 1u : 0u;
+
     }
 
     m_strFrameActive = true;
@@ -7458,98 +7469,74 @@ bool CRagEffect::ProcessTargetPositionStr()
     return active;
 }
 
-void CRagEffect::RenderAniClip(int layerIndex, const KAC_LAYER& layer, const KAC_XFORMDATA& xform, matrix* viewMatrix)
+// Ref/RagEffect.cpp:9725-9862 (0x5F1420). Preserve Ref's independent
+// pixel-ratio projection, conditional corner/UV order and byte color conversion.
+void CRagEffect::RenderAniClip(int, const KAC_LAYER& layer, const KAC_XFORMDATA& xform, matrix* viewMatrix)
 {
-    if (!viewMatrix) {
-        return;
-    }
-
-    if (layer.cTex <= 0) {
-        return;
-    }
-
-    if (layerIndex >= 0 && layerIndex < static_cast<int>(m_activeAniKeyZeroBlend.size())
-        && m_activeAniKeyZeroBlend[static_cast<size_t>(layerIndex)] != 0) {
-        const int keyFrame = m_activeAniKeyFrame[static_cast<size_t>(layerIndex)];
-        const int appliedState = m_activeAniKeyAppliedState[static_cast<size_t>(layerIndex)];
-        if (keyFrame >= 0 && appliedState >= 0) {
-            const int keyAgeTicks = appliedState - keyFrame;
-            if (keyAgeTicks <= 1) {
-                return;
-            }
-        }
-    }
-
-    const int aniFrame = (std::max)(0, (std::min)(layer.cTex - 1, static_cast<int>(xform.aniframe)));
-    CTexture* texture = const_cast<KAC_LAYER&>(layer).GetTexture(aniFrame);
-    if (!texture || texture == &CTexMgr::s_dummy_texture) {
-        return;
-    }
-
-    tlvertex3d anchor{};
-    if (!ProjectPoint(m_strAnchorPosition, *viewMatrix, &anchor)) {
-        return;
-    }
-    const float pixelRatio = ResolveEffectPixelRatio(anchor);
-    if (!std::isfinite(pixelRatio) || pixelRatio <= 0.0f) {
-        return;
-    }
-
-    m_tlvertX = anchor.x + m_strScreenOffset.x;
-    m_tlvertY = anchor.y + m_strScreenOffset.y;
-    m_tlvertZ = anchor.z + m_strScreenOffset.z;
-
+    if (!viewMatrix) return;
+    const vector3d projected = ProjectStrPoint(m_effectPos, *viewMatrix, g_renderer.m_xoffset, g_renderer.m_yoffset);
+    const float pixelRatio = static_cast<float>(static_cast<double>(projected.z) * g_renderer.m_hpc * static_cast<double>(0.14285715f));
     RPFace* face = g_renderer.BorrowNullRP();
-    if (!face) {
-        return;
-    }
-
+    if (!face) return;
     face->primType = D3DPT_TRIANGLESTRIP;
     face->verts = face->m_verts;
     face->numVerts = 4;
     face->indices = nullptr;
     face->numIndices = 0;
-    face->tex = texture;
-    face->mtPreset = static_cast<int>(xform.mtpreset);
     face->cullMode = D3DCULL_NONE;
-    face->srcAlphaMode = ResolveAniClipBlendMode(xform.srcalpha);
-    face->destAlphaMode = ResolveAniClipBlendMode(xform.destalpha);
     face->alphaSortKey = 0.0f;
-
-    const float uScale = texture->m_w > 0 ? static_cast<float>(texture->m_updateWidth) / static_cast<float>(texture->m_w) : 1.0f;
-    const float vScale = texture->m_h > 0 ? static_cast<float>(texture->m_updateHeight) / static_cast<float>(texture->m_h) : 1.0f;
-    const float angle = xform.rz * (kPi / 512.0f);
-    const float s = std::sin(angle);
-    const float c = std::cos(angle);
-
-    float xs[4] = { xform.ax[3], xform.ax[0], xform.ax[2], xform.ax[1] };
-    float ys[4] = { xform.ay[3], xform.ay[0], xform.ay[2], xform.ay[1] };
-    float us[4] = { xform.u, xform.u, xform.u + xform.us, xform.u + xform.us };
-    float vs[4] = { xform.v + xform.vs, xform.v, xform.v + xform.vs, xform.v };
-
-    const auto clampColor = [](float value) -> unsigned int {
-        return static_cast<unsigned int>((std::max)(0.0f, (std::min)(255.0f, value)));
-    };
-    const unsigned int color = (clampColor(xform.crA) << 24)
-        | (clampColor(xform.crR) << 16)
-        | (clampColor(xform.crG) << 8)
-        | clampColor(xform.crB);
-
+    tlvertex3d* verts = face->m_verts;
+    if (xform.ax[0] >= static_cast<double>(xform.ax[1])) {
+        verts[1].x = xform.ax[1]; verts[1].tu = xform.us + xform.u;
+        verts[3].x = xform.ax[0]; verts[3].tu = xform.u;
+        verts[0].x = xform.ax[2]; verts[0].tu = xform.us + xform.u;
+        verts[2].x = xform.ax[3]; verts[2].tu = xform.u;
+    } else {
+        verts[1].x = xform.ax[0]; verts[1].tu = xform.u;
+        verts[3].x = xform.ax[1]; verts[3].tu = xform.us + xform.u;
+        verts[0].x = xform.ax[3]; verts[0].tu = xform.u;
+        verts[2].x = xform.ax[2]; verts[2].tu = xform.us + xform.u;
+    }
+    if (xform.ay[1] >= static_cast<double>(xform.ay[2])) {
+        verts[3].y = xform.ay[2]; verts[3].tv = xform.v + xform.vs;
+        verts[2].y = xform.ay[1]; verts[2].tv = xform.v;
+        verts[1].y = xform.ay[3]; verts[1].tv = xform.v + xform.vs;
+        verts[0].y = xform.ay[0]; verts[0].tv = xform.v;
+    } else {
+        verts[3].y = xform.ay[1]; verts[3].tv = xform.v;
+        verts[2].y = xform.ay[2]; verts[2].tv = xform.v + xform.vs;
+        verts[1].y = xform.ay[0]; verts[1].tv = xform.v;
+        verts[0].y = xform.ay[3]; verts[0].tv = xform.v + xform.vs;
+    }
+    const int frame = static_cast<int>(xform.aniframe);
+    CTexture* texture = const_cast<KAC_LAYER&>(layer).GetTexture(frame <= 0 ? 0 : frame);
+    if (!texture) return;
+    const double uScale = static_cast<double>(texture->m_updateWidth) / texture->m_w;
+    const float vScale = static_cast<float>(static_cast<double>(texture->m_updateHeight) / texture->m_h);
+    const float angle = static_cast<float>(static_cast<double>(xform.rz) * 0.3515625000000055 * 3.141592 * 0.0055555557);
+    const float sine = static_cast<float>(std::sin(static_cast<double>(angle)));
+    const double cosine = std::cos(static_cast<double>(angle));
+    const auto colorByte = [](float value) { return static_cast<u8>(static_cast<long long>(value)); };
+    const u32 color = (static_cast<u32>(colorByte(xform.crA)) << 24)
+        | (static_cast<u32>(colorByte(xform.crR)) << 16)
+        | (static_cast<u32>(colorByte(xform.crG)) << 8) | colorByte(xform.crB);
     for (int index = 0; index < 4; ++index) {
-        const float rotatedX = (xs[index] * c - ys[index] * s + xform.x - 320.0f) * pixelRatio;
-        const float rotatedY = (ys[index] * c + xs[index] * s + xform.y - 240.0f) * pixelRatio;
-        tlvertex3d& vert = face->m_verts[index];
-        vert = anchor;
-        vert.x = rotatedX + m_tlvertX;
-        vert.y = rotatedY + m_tlvertY;
-        vert.z = 0.000031f;
+        tlvertex3d& vert = verts[index];
+        vert.tu = static_cast<float>(uScale * vert.tu);
+        vert.tv = vScale * vert.tv;
+        const double vx = vert.x, vy = vert.y;
+        vert.x = static_cast<float>((vx * cosine - vy * sine + xform.x - 320.0) * pixelRatio + m_tlvertX);
+        vert.y = static_cast<float>((vy * cosine + vx * sine + xform.y - 240.0) * pixelRatio + m_tlvertY);
         vert.color = color;
         vert.specular = 0xFFFFFFFFu;
-        vert.tu = us[index] * uScale;
-        vert.tv = vs[index] * vScale;
+        vert.z = 0.00003102122f;
+        vert.oow = projected.z;
     }
-
-    g_renderer.AddRP(face, 1 | 4);
+    face->tex = texture;
+    face->srcAlphaMode = static_cast<D3DBLEND>(xform.srcalpha);
+    face->destAlphaMode = static_cast<D3DBLEND>(xform.destalpha);
+    face->mtPreset = static_cast<int>(xform.mtpreset);
+    g_renderer.AddRP(face, 5);
 }
 
 void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& deltaPos)
@@ -13596,36 +13583,17 @@ void CRagEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam
     }
 }
 
+// HighPriest.exe.c:422017-422048: STR layers are independent of the
+// reconstructed handler tag; layer zero is deliberately excluded.
 void CRagEffect::Render(matrix* viewMatrix)
 {
-    if (!viewMatrix) {
-        return;
-    }
-
-    if ((m_type == kRagEffectPortal || m_type == kRagEffectReadyPortal || m_type == kRagEffectWarpZone)
-        && m_stateCnt <= 3) {
-        const vector3d base = ResolveBasePosition();
-        DbgLog("[RagEffect] render effect=%d step=%d prims=%zu base=(%.2f,%.2f,%.2f)\n",
-            m_type,
-            m_stateCnt,
-            m_primList.size(),
-            base.x,
-            base.y,
-            base.z);
-    }
-
-    if ((m_handler == Handler::EzStr || m_handler == Handler::JobLevelUp50) && m_aniClips) {
-        for (int layerIndex = 1; layerIndex < m_aniClips->cLayer && layerIndex < static_cast<int>(m_isLayerDrawn.size()); ++layerIndex) {
-            if (!m_isLayerDrawn[static_cast<size_t>(layerIndex)]) {
-                continue;
-            }
-            RenderAniClip(layerIndex,
-                m_aniClips->aLayer[static_cast<size_t>(layerIndex)],
-                m_actXformData[static_cast<size_t>(layerIndex)],
-                viewMatrix);
+    if (!viewMatrix || !m_aniClips) return;
+    for (int layer = 1; layer < m_aniClips->cLayer && layer < static_cast<int>(m_isLayerDrawn.size()); ++layer) {
+        if (m_isLayerDrawn[static_cast<size_t>(layer)]) {
+            RenderAniClip(layer, m_aniClips->aLayer[static_cast<size_t>(layer)],
+                m_actXformData[static_cast<size_t>(layer)], viewMatrix);
         }
     }
-
 }
 
 CRagEffect* CreateWorldRagEffect(const C3dWorldRes::effectSrcInfo& source)

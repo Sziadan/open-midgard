@@ -70,8 +70,10 @@ extract_body(entry2 "${effect_source}" "void CRagEffect::ApplyEntry2()" "void CR
 file(READ "../../src/res/EzEffectRes.h" str_types_source)
 extract_body(str_types "${str_types_source}" "struct KAC_XFORMDATA" "class CEZeffectRes")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/StrTypes.inc" "${str_types}")
+extract_body(effect_render "${effect_source}" "void CRagEffect::Render(matrix*" "CRagEffect* CreateWorldRagEffect(")
+extract_body(str_render "${effect_source}" "void CRagEffect::RenderAniClip(" "void CRagEffect::Init(")
 extract_body(str_delta "${effect_source}" "void AddXformDelta(" "std::string ResolveStrName(")
-extract_body(str_process "${effect_source}" "void CRagEffect::InitEZ2STRFrame()" "void CRagEffect::RenderAniClip(")
+extract_body(str_process "${effect_source}" "vector3d ProjectStrPoint(" "void CRagEffect::RenderAniClip(")
 file(READ "../../src/world/World.cpp" world_source)
 extract_body(primitive_init "${effect_source}" "void CEffectPrim::Init(" "static_assert(offsetof(EffectGi, height)")
 extract_body(primitive_lifetime "${effect_source}" "CEffectPrim::~CEffectPrim()" "bool CEffectPrim::ProcessPrimitiveFrame()")
@@ -85,7 +87,7 @@ extract_body(effect_messages "${effect_source}" "void CRagEffect::SendMsg(" "voi
 extract_body(actor_detach "${actor_source}" "void CAbleToMakeEffect::RemoveEffectById(" "CGameActor::CGameActor()")
 extract_body(world_update "${world_source}" "void CWorld::UpdateGameObjects()" "CGameActor* CWorld::GetGameActorByAID(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc"
-    "${effect_gate}\n${primitive_lifetime}\n${primitive_init}\n${effect_tick}\n${effect_dtor}\n${effect_launch}\n${effect_messages}\n${actor_detach}\n${world_update}\n${grim_tooth}\n${str_delta}\n${str_process}\n${str_termination}\n${entry2}")
+    "${effect_gate}\n${primitive_lifetime}\n${primitive_init}\n${effect_tick}\n${effect_dtor}\n${effect_launch}\n${effect_messages}\n${actor_detach}\n${world_update}\n${grim_tooth}\n${str_delta}\n${str_process}\n${str_termination}\n${entry2}\n${str_render}\n${effect_render}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/world/RagEffect.cpp ../../src/world/RagEffect.h ../../src/world/World.cpp ../../src/res/EzEffectRes.h)
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)

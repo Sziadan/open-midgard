@@ -4,9 +4,15 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A STR keyframe arithmetic, partial. Checkpoint `d3610bb` saves the previous lifecycle, position and ownership work. Completed parts are now committed separately as requested.
+Current work: WP5A STR projection/quad submission, partial. Checkpoints: `d3610bb` saves prior lifecycle/ownership work; `2562385` saves STR keyframe arithmetic. Completed, tested parts are committed individually as requested.
 
-Next action: port STR quad construction/blend/color/depth behavior and remove the reconstructed renderer's key-age suppression. Then reconcile the primitive enum/dispatch and remaining legacy emitter/primitive bodies. Full WP5A and overall acceptance remain incomplete.
+Next action: reconcile the full primitive enum/dispatch and remove the remaining reconstructed emitters/primitive bodies. Also audit STR resource/texture loading and every effect handler's position/return semantics. STR keyframe and quad paths now have production-body numeric tests; full WP5A and overall acceptance remain incomplete.
+
+## STR projection/quad continuation — 2026-10-25
+
+- Ported processing-time screen projection and independent render-time pixel-ratio projection, including their different screen offsets and depth outputs. Confirmed the overload difference in the executable because Ref/Renderer.cpp duplicates the wrong signature/body for the tlvertex overload.
+- Ported both corner/UV branch pairs, texture cropping, reference angular conversion, byte-wrapping colors, unchanged blend values/material preset, depth and reciprocal-depth writes. Removed invented key-age suppression, frame upper clamp, blend remapping and handler-tag restriction. STR Render still excludes layer zero, as Ref does.
+- Validation: five C++ suites pass with 192 checks (134 lifecycle/STR), five Python tests pass, release build and approved deployment pass. Deployed SHA-256: `A499855C162C73E408532EADA456B504E41023A24E0272A16F05692A6DFE43C4`. Tests use silent numeric fixtures; no media was opened or displayed. Source resource-loading/primitive gaps and live acceptance remain open.
 
 ## STR keyframe continuation — 2026-10-25
 

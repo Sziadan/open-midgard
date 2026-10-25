@@ -450,9 +450,6 @@ private:
     std::array<KAC_XFORMDATA, 128> m_actXformData;
     std::array<u8, 128> m_isLayerDrawn;
     std::array<int, 128> m_aiCurAniKey;
-    std::array<int, 128> m_activeAniKeyFrame;
-    std::array<int, 128> m_activeAniKeyAppliedState;
-    std::array<u8, 128> m_activeAniKeyZeroBlend;
     bool m_hasTargetPos;
 };
 
