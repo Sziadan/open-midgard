@@ -329,6 +329,10 @@ public:
     std::vector<float> m_chPoint;
     std::vector<float> m_chVal1;
     bool m_chSpeed = false;
+    bool m_AlphaShow = false;
+    int m_chCnt = 0;
+    int m_count = 0;
+    std::vector<float> m_chVal2;
     std::string m_spriteActName;
     std::string m_spriteSprName;
     int m_spriteAction;
@@ -514,6 +518,7 @@ private:
     void SpawnSight();
     void SpawnSight2();
     void SpawnFireBall();
+    void SpawnFireFly();
     void SpawnRuwach();
     void SpawnBlueFall();
     void SpawnWeatherCloud();

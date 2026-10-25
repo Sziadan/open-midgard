@@ -6121,9 +6121,26 @@ bool AnimateReferenceParticle(CEffectPrim* prim)
     return true;
 }
 
-// Ref/RagEffectPrim.cpp:2184-2328, ordinary (non-keyed) alpha branch.
+// Ref/RagEffectPrim.cpp:2184-2328, ordinary/keyed alpha and speed keys.
 void ProcessReferenceParticleAlpha(CEffectPrim* prim)
 {
+    if (prim->m_AlphaShow) {
+        if (prim->m_chCnt < 0 || prim->m_chCnt >= static_cast<int>(prim->m_chPoint.size())) prim->m_chCnt = 0;
+        const size_t key = static_cast<size_t>(prim->m_chCnt);
+        if (key < prim->m_chPoint.size() && key < prim->m_chVal1.size() && key < prim->m_chVal2.size()
+            && static_cast<double>(prim->m_stateCnt) == prim->m_chPoint[key]) {
+            prim->m_alpha = prim->m_chVal1[key];
+            prim->m_maxAlpha = prim->m_chVal2[key];
+            ++prim->m_chCnt;
+        }
+    } else if (prim->m_chSpeed) {
+        const size_t key = static_cast<size_t>(prim->m_chCnt);
+        if (key < prim->m_chPoint.size() && key < prim->m_chVal1.size()
+            && static_cast<double>(prim->m_stateCnt) == prim->m_chPoint[key]) {
+            prim->m_alphaSpeed = prim->m_chVal1[key];
+            ++prim->m_chCnt;
+        }
+    }
     if ((prim->m_pattern & 0x80) != 0) {
         if (prim->m_alphaSpeed < 0.0f) {
             if (prim->m_alpha <= prim->m_minAlpha) prim->m_alphaSpeed *= -1.0f;
@@ -6287,6 +6304,7 @@ bool UpdateWarpZoneOrbit(CEffectPrim* prim)
 // linear PP_3DPARTICLE state with no change points or movement-pattern bits.
 // Blessing adds the 0x80 alpha-twinkle pattern handled by the shared alpha port.
 // FireBall adds 0x100 target termination and 0x20 camera-relative roll.
+// FireFly adds periodic 0x4 steering and keyed alpha/max-alpha changes.
 // Torch's 0x200 bit selects clip color only. Other callers still need their
 // additional pattern/control branches.
 bool UpdateLinearReferenceParticle(CEffectPrim* prim)
@@ -6302,6 +6320,15 @@ bool UpdateLinearReferenceParticle(CEffectPrim* prim)
     prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
     prim->m_roll += prim->m_rollSpeed;
     prim->m_size += prim->m_sizeSpeed;
+    if ((prim->m_pattern & 4) != 0 && prim->m_stateCnt % prim->m_count == 0) {
+        prim->m_speed = static_cast<float>(static_cast<double>(rand() % 35 + 15) * 0.0099999998);
+        prim->m_longitude = static_cast<float>(prim->m_longitude - 40.0 + rand() % 80);
+        prim->m_latitude = static_cast<float>(prim->m_latitude - 40.0 + rand() % 80);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+        prim->m_count = rand() % 10 + 5;
+    }
     prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
     if ((prim->m_pattern & 0x100) != 0) {
         const vector3d& target = prim->m_master->TargetPosition();
@@ -6508,7 +6535,7 @@ bool CEffectPrim::UsesReferenceParticle() const
         || (m_type == PP_3DPARTICLEORBIT && m_master
             && (m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
-            && (m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
+            && (m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
 }
 
@@ -7770,8 +7797,8 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 35: case 36: case 61:
-        // ProcessEffectFrame dispatches original ReadyPortal/Portal/WarpZone directly.
+    case 35: case 36: case 45: case 61:
+        // ProcessEffectFrame dispatches ReadyPortal/Portal/FireFly/WarpZone directly.
         m_handler = Handler::None;
         break;
     case 312: case 313: case 325: case 331: case 332:
@@ -9117,6 +9144,39 @@ void CRagEffect::SpawnFireBall()
         else prim->m_alpha = 80.0f;
     }
     prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\fireball.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\fireball.act"); // 0x71B5A0 / 0x71B58C
+    ShiftCircleSegments(prim);
+}
+
+// Ref/RagEffect.cpp:4127-4192 (0x5F63F0), original effect 45.
+void CRagEffect::SpawnFireFly()
+{
+    if (m_stateCnt != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+    prim->m_pattern |= 0x84;
+    prim->m_duration = 140; m_duration = 140;
+    prim->m_speed = static_cast<float>(static_cast<double>(rand() % 35 + 15) * 0.0099999998);
+    prim->m_longitude = static_cast<float>(rand() % 360);
+    prim->m_latitude = static_cast<float>(rand() % 360);
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+    MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+    const double radius = rand() % 13 + 2;
+    prim->m_deltaPos2 = {
+        static_cast<float>(radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+    };
+    prim->m_deltaPos2.y = static_cast<float>(prim->m_deltaPos2.y - 10.0);
+    prim->m_count = rand() % 25 + 5;
+    prim->m_size = static_cast<float>(static_cast<double>(rand() % 70 + 30) * 0.0099999998);
+    prim->m_alpha = 0.0f; prim->m_maxAlpha = 80.0f;
+    prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.66666669);
+    prim->m_AlphaShow = true; prim->m_chCnt = 0;
+    prim->m_chPoint = {40.0f,100.0f};
+    prim->m_chVal1 = {120.0f,0.0f};
+    prim->m_chVal2 = {200.0f,80.0f};
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act"); // 0x71B200 / 0x71B1E8
+    prim->m_fadeOutCnt = -1; prim->m_animSpeed = 4; prim->m_repeatAnim = true; prim->m_numSegments = 1;
     ShiftCircleSegments(prim);
 }
 
@@ -12412,6 +12472,10 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 45) {
+        SpawnFireFly();
+        return true;
+    }
     if (m_type == 26) {
         ApplyIceArrow();
         return true;

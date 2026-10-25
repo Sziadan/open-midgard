@@ -194,7 +194,9 @@ struct CEffectPrim : CGameObject {
 
     std::vector<CTexture*> m_texture;
     std::vector<float> m_chPoint,m_chVal1;
-    bool m_chSpeed=false;
+    bool m_chSpeed=false,m_AlphaShow=false;
+    int m_chCnt=0,m_count=0;
+    std::vector<float> m_chVal2;
     bool active = true;
     ~CEffectPrim() override;
     void Init(CRagEffect*, EFFECTPRIMID, const vector3d&);
@@ -269,6 +271,7 @@ struct CRagEffect : CGameObject {
     void ApplyWarpZone();
     void ApplyIceArrow();
     void SpawnFireBall();
+    void SpawnFireFly();
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -1937,6 +1940,57 @@ int main()
         check(prim->UsesReferenceParticle() && prim->m_particleSprRes==nullptr && prim->m_texture.empty(),"missing FireBall resources retain reference routing with no texture substitute");
         effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"FireBall cleanup releases sprite/action locks");
         g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor;actor.m_pos={900,800,700};CRagEffect effect;effect.m_type=45;effect.m_master=&actor;effect.m_effectPos={10,50,30};
+        waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;rngValues={34,90,0,12,24,69};rngCursor=0;
+        effect.SpawnFireFly();auto* prim=effect.m_primList.front();
+        check(effect.m_primList.size()==1 && effect.m_duration==140 && prim->m_duration==140 && prim->m_pattern==0x84 && prim->UsesReferenceParticle(),
+            "FireFly zero frame sets parent lifetime and original random-steering twinkle profile");
+        check(rngDraws==draws+6 && rngCursor==6 && prim->m_speed==static_cast<float>(49*0.0099999998) && prim->m_longitude==90
+            && prim->m_latitude==0 && prim->m_count==29 && prim->m_size==static_cast<float>(99*0.0099999998),
+            "FireFly preserves six-draw speed longitude latitude radius interval size order");
+        check(std::fabs(prim->m_deltaPos2.x-14)<0.000001f && prim->m_deltaPos2.y==-10 && effect.m_effectPos.x==10,
+            "FireFly stores rotated launch offset while preserving effect origin");
+        check(prim->m_alpha==0 && prim->m_maxAlpha==80 && prim->m_alphaSpeed==static_cast<float>(80*0.66666669)
+            && prim->m_AlphaShow && prim->m_chCnt==0 && prim->m_fadeOutCnt==-1,"FireFly enables keyed alpha with source twinkle rise and constructor fade");
+        check(prim->m_chPoint==std::vector<float>({40,100}) && prim->m_chVal1==std::vector<float>({120,0})
+            && prim->m_chVal2==std::vector<float>({200,80}),"FireFly preserves ordered frame alpha and maximum-alpha key arrays");
+        check(g_resMgr.requests.size()==2 && g_resMgr.requests[0]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr"
+            && g_resMgr.requests[1]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act" && prim->m_numSegments==1 && prim->m_segments[0].argb==0x00FFFFFF,
+            "FireFly initializes segment after exact particle-one resource requests");
+        rngValues={0,79,0,9};rngCursor=0;const float initialSpeed=prim->m_speed;prim->m_alphaDelta=1;prim->OnProcess();
+        check(rngDraws==draws+10 && rngCursor==4 && prim->m_speed==static_cast<float>(15*0.0099999998)
+            && prim->m_longitude==129 && prim->m_latitude==-40 && prim->m_count==14,
+            "FireFly frame-zero steering consumes source speed yaw pitch interval draws");
+        check(std::fabs(prim->m_deltaPos.x-initialSpeed)<0.000001f && std::fabs(prim->m_pos.x-(24+initialSpeed))<0.000001f && prim->m_pos.y==40,
+            "FireFly integrates previous launch matrix and speed before random steering replacement");
+        check(prim->m_alpha==static_cast<float>(80*0.66666669) && prim->m_curMotion==1 && prim->m_stateCnt==1,
+            "FireFly frame-zero keyed alpha and animation run after steering and movement");
+        const int afterSteer=rngDraws;prim->OnProcess();check(rngDraws==afterSteer && prim->m_maxAlpha==80 && prim->m_alpha==80,
+            "FireFly non-steering frame consumes no RNG and clamps alpha to current key maximum");
+        prim->OnProcess();check(prim->m_alphaSpeed<0 && prim->m_alpha<80,"FireFly twinkle reverses at current maximum");
+        prim->m_stateCnt=40;prim->m_count=13;prim->m_alpha=20;prim->m_alphaSpeed=10;prim->OnProcess();
+        check(prim->m_alpha==130 && prim->m_maxAlpha==200 && prim->m_chCnt==1,"FireFly frame-forty key precedes twinkle and alpha integration");
+        prim->m_stateCnt=100;prim->m_count=13;prim->m_alpha=150;prim->m_alphaSpeed=-10;prim->OnProcess();
+        check(prim->m_alpha==10 && prim->m_maxAlpha==80 && prim->m_chCnt==2 && prim->m_alphaSpeed==10,
+            "FireFly frame-one-hundred key resets alpha before minimum twinkle reversal");
+        prim->m_stateCnt=101;prim->OnProcess();check(prim->m_chCnt==0 && prim->m_maxAlpha==80,"FireFly keyed alpha cursor resets after final key without replaying unmatched frames");
+        prim->m_stateCnt=102;prim->m_chCnt=-1;prim->OnProcess();check(prim->m_chCnt==0,"keyed alpha restores negative cursor before reading keys");
+        effect.m_stateCnt=1;effect.SpawnFireFly();check(effect.m_primList.size()==1 && waveCalls.empty(),"FireFly emits only on zero and has no wave");
+        effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"FireFly cleanup balances resource locks");
+        rngValues.clear();rngCursor=0;
+    }
+    {
+        CRagEffect effect;effect.m_duration=200;CEffectPrim prim;prim.m_master=&effect;prim.m_duration=100;prim.m_fadeOutCnt=-1;
+        prim.m_chSpeed=true;prim.m_chPoint={20};prim.m_chVal1={-2};prim.m_stateCnt=19;prim.m_alpha=50;prim.m_alphaSpeed=5;
+        ProcessReferenceParticleAlpha(&prim);check(prim.m_alpha==55 && prim.m_chCnt==0,"enabled alpha-speed key waits for exact source frame");
+        prim.m_stateCnt=20;ProcessReferenceParticleAlpha(&prim);check(prim.m_alpha==53 && prim.m_alphaSpeed==-2 && prim.m_chCnt==1,
+            "enabled alpha-speed key replaces speed before integration and advances cursor");
+        prim.m_chSpeed=false;prim.m_AlphaShow=true;prim.m_chPoint={40};prim.m_chVal1={120};prim.m_chVal2={200};prim.m_chCnt=0;
+        prim.m_stateCnt=40;prim.m_fadeOutCnt=40;prim.m_alphaDelta=1;prim.m_alphaSpeed=10;ProcessReferenceParticleAlpha(&prim);
+        check(prim.m_maxAlpha==200 && prim.m_alphaSpeed==-2 && prim.m_alpha==118,"fixed-frame fade uses newly keyed alpha and overrides previous speed");
+        prim.m_master=nullptr;
     }
     {
         CRagEffect effect;

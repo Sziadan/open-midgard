@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A FireBall emitter and reference target-arrival/camera-roll particle controls, after IceArrow checkpoint `fb58581`. Original id24 now uses exact assets, absolute-target motion and shared reference state/per-clip rendering.
+Current work: WP5A FireFly emitter and shared random-steering/keyed-alpha controls, after FireBall checkpoint `42ce54e`. Original id45 now preserves source RNG, movement ordering and frame40/frame100 alpha/max changes.
 
-Next action: continue remaining active emitter/primitive ports and generic control branches. Map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue remaining active particle/texture emitters and unported movement/change-point controls. Map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## FireFly emitter / random steering / keyed alpha — 2026-10-26
+
+- Ref/RagEffect.cpp:4127-4192 (0x5F63F0) -> SpawnFireFly, normal id45, direct dispatcher route. Emits only at zero, preserves stored origin, sets both parent/primitive duration 140 and pattern 0x84. Six RNG draws in speed/longitude/latitude/radius/steering interval/size order. Original Y then X matrix, rotated offset with y-10, double-product speed/size, alpha 0/max 80/rise max*0.66666669 and no audio.
+- Original m_AlphaShow/chCnt and ordered keys restored: frame 40 alpha 120/max 200; frame100 alpha 0/max 80. Exact particle1 sprite/action and locks, repeat/divisor 4/one segment/fade -1. Added original primitive count and keyed-alpha storage with zero constructor defaults.
+- Ref/RagEffectPrim.cpp:456-594 -> UpdateLinearReferenceParticle adds reachable 0x4 random steering. Integrates old matrix/speed first, then at state%count==0 draws speed, longitude delta, latitude delta and next interval in original order; Y then X replacement matrix affects subsequent motion. Frame-zero steering consumes four draws even immediately after the six emitter draws.
+- Ref/RagEffectPrim.cpp:2184-2328 -> ProcessReferenceParticleAlpha now supports both source key branches. m_AlphaShow resets an exhausted/negative cursor before comparing current frame, applies alpha/max and advances cursor. m_chSpeed updates speed only at its matching frame. Key processing precedes twinkle, parent-shortened/fixed-frame fade overrides, integration, clamps and packed color. Existing WarpZone key data remains inactive with its zero flag.
+
+Validation: release build, six silent C++ suites / 685 checks (527 lifecycle/primitive, 100 rendering, 58 other), six Python tests, two-literal executable byte audit and whitespace check pass. Added 20 checks for six+four draw order, profile/position/resource initialization, movement-before-steering, keyed cursor/alpha/max transitions, twinkle, enabled speed keys/fade precedence, no repeat/audio and resource cleanup. Sprite/action 0x71B200/0x71B1E8 match executable bytes. No media/live acceptance. Approved OldRO SHA-256: `669FCAE3D474447615E80DBD14F579DD2F38C21702CDA4D2C37CCBACAC5CC0E6`. Other emitters and generic movement/change-point controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## FireBall emitter / target arrival / camera roll — 2026-10-26
 
