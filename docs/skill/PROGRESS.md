@@ -4,9 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A primitive identifier reconciliation. SuperAngel emitter/GI state is checkpointed in `2c9fd52`; all 129 primitive ids now match the reference. Handler and shared renderer parity remain partial.
+Current work: WP5A per-clip particle rendering, connected to PP_SUPERANGEL. Primitive ids are checkpointed in `0d50b9f`; the SuperAngel emitter/state checkpoint is `2c9fd52`. Handler and renderer migration remain partial.
 
-Next action: port the shared sprite-particle per-clip renderer and remaining primitive bodies. SuperAngel's emitter/state and exact assets are ported, but its shared sprite compositor is not a complete Render3DParticle port. Resource loading and all unfinished packages/acceptance remain open.
+Next action: migrate the remaining sprite-particle emitters/update paths onto reference resources, explicit motion/segment state and the per-clip renderer; remove their legacy baked-motion routes as each migration completes. Remaining primitive bodies, resource-loader/cache parity, common renderer/backend behavior and unfinished packages/acceptance remain open.
+
+## Per-clip particle renderer — 2026-10-25
+
+- Replaced SuperAngel's baked-motion submission with the shared reference per-segment/per-clip particle path. Preserves explicit action/motion, segment position/size/packed color, logical half-resolution dimensions, zoom (including negative values), flip-specific bounds/culling and clip-plus-roll rotation. No fixed canvas, opaque-bounds crop or synthetic near-plane cutoff in this path.
+- Ported sprite submission with half-pixel offsets, integer-degree rotation about each clip center, distinct slope-adjusted top/bottom reciprocal depth, source device-depth formula, padded texture UVs and the exact flag-5 additive blend rule. Indexed palettes and RGBA pixels upload separately from clip colors. Sprite resources own the resulting textures; physical upload extents adapt the current backend's optional texture upscaling to reference UV coverage.
+- Corrected the previous checkpoint's clip-color interpretation: `m_pattern & 0x200` selects original clip ARGB. `m_renderFlag & 0x200` does not. Confirmed original renderer instructions at 0x645C33/0x645C45 (pattern offset 0x194), with render flags separately loaded at 0x645CA2 (offset 0x180). SuperAngel variant 10 now retains segment alpha with render flag 0x201. Segment initialization/shifting now stores packed wrapping ARGB.
+- Validation: release build, six silent C++ suites / 300 checks (207 lifecycle/primitive + 35 particle-render + 58 other), six Python tests and diff whitespace check pass. New fixtures compile the production renderer/texture bodies, capture synthetic numeric submissions and uploads, and open no real media. Approved deployment hash matches `A48060118223A25FD18EAEC4F322E11C2D2E912861D2A5C277D52DA463EAEC53`.
+- This completes the per-clip path for the current SuperAngel binding, not every original Render3DParticle caller or the original indexed atlas/cache. Existing resource decoding, GPU/backend acceptance and live skill verification remain open. WP5A and the overall plan remain incomplete.
+
 
 ## Primitive identifier reconciliation — 2026-10-25
 

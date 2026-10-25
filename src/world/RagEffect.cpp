@@ -1929,8 +1929,7 @@ bool SubmitAnimatedSpriteParticle(const CEffectPrim& prim,
         : (std::max)(1.0f, actRes->GetDelay(actionIndex));
     const int motionAdvance = static_cast<int>(static_cast<float>(prim.m_stateCnt) / frameDelay);
     const int clampedBase = (std::max)(0, (std::min)(prim.m_spriteMotionBase, motionCount - 1));
-    const int motionIndex = prim.m_type == PP_SUPERANGEL ? prim.m_curMotion
-        : prim.m_spriteRepeat ? (clampedBase + motionAdvance) % motionCount
+    const int motionIndex = prim.m_spriteRepeat ? (clampedBase + motionAdvance) % motionCount
         : (std::min)(motionCount - 1, clampedBase + motionAdvance);
 
     const BakedEffectSpriteFrame* frame = GetBakedEffectSpriteFrame(
@@ -2075,6 +2074,8 @@ void ShiftCircleSegments(CEffectPrim* prim)
         const float step = static_cast<float>(index);
         prim->m_segments[static_cast<size_t>(index)].alpha = prim->m_alpha
             - prim->m_alpha / static_cast<float>((std::max)(historyCount, 1)) * step;
+        prim->m_segments[static_cast<size_t>(index)].argb = PackColor(
+            static_cast<u8>(static_cast<long long>(prim->m_segments[static_cast<size_t>(index)].alpha)), prim->m_tintColor);
         prim->m_segments[static_cast<size_t>(index)].size = prim->m_size
             - prim->m_size / static_cast<float>((std::max)(historyCount, 1)) * step * 0.5f;
     }
@@ -2083,6 +2084,7 @@ void ShiftCircleSegments(CEffectPrim* prim)
     prim->m_segments[0].radius = prim->m_radius;
     prim->m_segments[0].size = prim->m_size;
     prim->m_segments[0].alpha = prim->m_alpha;
+    prim->m_segments[0].argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)), prim->m_tintColor);
     prim->m_segments[0].transform = prim->m_matrix;
 }
 
@@ -6035,18 +6037,147 @@ void UpdateSuperAngelPrimitive(CEffectPrim* prim)
     ShiftCircleSegments(prim);
 }
 
-// Ref routes 0x55 to its shared Render3DParticle sprite path. Use the current
-// sprite compositor with the ported explicit motion and no substitute assets.
-// The shared compositor's per-clip submission still needs its full Ref port.
+// Ref/GameActor.cpp:10748-10928. Each sprite retains its own texture and
+// palette; clip color/zoom/rotation are never baked into a motion canvas.
+struct ParticleSprite {
+    SprImg* image;
+    float left, top, right, bottom;
+    float oow, oowup;
+    u32 color;
+    float angle;
+};
+
+CTexture* ResolveParticleTexture(SprImg& image, const unsigned int* palette)
+{
+    if (image.tex) return image.tex;
+    if (image.width <= 0 || image.height <= 0) return nullptr;
+    const size_t count = static_cast<size_t>(image.width) * image.height;
+    std::vector<unsigned int> pixels;
+    if (!image.indices.empty()) {
+        if (image.indices.size() < count) return nullptr;
+        pixels.resize(count);
+        for (size_t i = 0; i < count; ++i) {
+            const unsigned char index = image.indices[i];
+            pixels[i] = index == 0 ? 0u : 0xFF000000u | (palette[index] & 0xFFFFFFu);
+        }
+    } else {
+        if (image.rgba.size() < count) return nullptr;
+        pixels.assign(image.rgba.begin(), image.rgba.begin() + count);
+    }
+    CTexture* texture = g_texMgr.CreateTexture(image.width, image.height, pixels.data(), PF_A8R8G8B8, true);
+    if (!texture || texture == &CTexMgr::s_dummy_texture) return nullptr;
+    image.tex = texture; // Owned and released by CSprRes::Reset.
+    return texture;
+}
+
+void SubmitParticleSprite(const ParticleSprite& sprite, const unsigned int* palette, int renderFlag)
+{
+    CTexture* texture = ResolveParticleTexture(*sprite.image, palette);
+    if (!texture) return;
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) return;
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = texture;
+    face->mtPreset = 0;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = renderFlag == 5 ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = 0;
+    // The current texture backend stores physical upload extents separately
+    // when upscaling; these represent Ref's m_updateWidth/m_updateHeight.
+    const float u1 = static_cast<float>(texture->m_surfaceUpdateWidth) / texture->m_w;
+    const float v1 = static_cast<float>(texture->m_surfaceUpdateHeight) / texture->m_h;
+    const float width = (sprite.right - sprite.left) * 0.5f;
+    const float height = (sprite.bottom - sprite.top) * 0.5f;
+    const float centerX = width + sprite.left;
+    const float centerY = height + sprite.top;
+    // Ref truncates the summed clip/primitive angle before table lookup.
+    const float cosine = sprite.angle == 0.0f ? 1.0f : GetCos(static_cast<int>(sprite.angle));
+    const float sine = sprite.angle == 0.0f ? 0.0f : GetSin(static_cast<int>(sprite.angle));
+    for (int i = 0; i < 4; ++i) {
+        tlvertex3d& vertex = face->m_verts[i];
+        if (sprite.angle == 0.0f) {
+            vertex.x = ((i & 1) ? sprite.right : sprite.left) + 0.5f;
+            vertex.y = ((i & 2) ? sprite.bottom : sprite.top) + 0.5f;
+        } else {
+            const float x = (i & 1) ? width : -width;
+            const float y = (i & 2) ? height : -height;
+            vertex.x = x * cosine - y * sine + centerX + 0.5f;
+            vertex.y = y * cosine + x * sine + centerY + 0.5f;
+        }
+        vertex.oow = (i & 2) ? sprite.oow : sprite.oowup;
+        vertex.z = static_cast<float>(1500.0 / (1500.0 - 10.0)
+            * (1.0 / vertex.oow - 10.0) * vertex.oow);
+        vertex.color = sprite.color;
+        vertex.specular = 0xFF000000u;
+        vertex.tu = (i & 1) ? u1 : 0.0f;
+        vertex.tv = (i & 2) ? v1 : 0.0f;
+    }
+    g_renderer.AddRP(face, renderFlag);
+}
+
+// Ref/RagEffectPrim.cpp:3939-4072 (0x645A20). The decompiler's
+// v36[1].m_lastTlvertY aliases m_pattern, not m_renderFlag.
+void RenderParticleSprites(const CEffectPrim& prim, CSprRes& sprites, const CActRes& actions,
+    const matrix& view, float slope)
+{
+    for (int j = 0; j < prim.m_numSegments && j < static_cast<int>(prim.m_segments.size()); ++j) {
+        const EffectSegmentState& segment = prim.m_segments[static_cast<size_t>(j)];
+        const vector3d& pos = segment.pos;
+        const float z = pos.z * view.m[2][2] + view.m[1][2] * pos.y + view.m[0][2] * pos.x + view.m[3][2];
+        const float oow = static_cast<float>(1.0 / z);
+        const float x = static_cast<float>((view.m[2][0] * pos.z + view.m[1][0] * pos.y
+            + pos.x * view.m[0][0] + view.m[3][0]) * (1.0 / z) * g_renderer.m_hpc + g_renderer.m_xoffset);
+        const float y = (view.m[2][1] * pos.z + view.m[1][1] * pos.y
+            + view.m[0][1] * pos.x + view.m[3][1]) * g_renderer.m_vpc * oow + g_renderer.m_yoffset;
+        const float ratio = static_cast<float>(static_cast<double>(oow) * g_renderer.m_hpc * 0.14285715);
+        const CMotion* motion = actions.GetMotion(prim.m_spriteAction, prim.m_curMotion);
+        if (!motion) continue;
+        for (const CSprClip& clip : motion->sprClips) {
+            const SprImg* image = sprites.GetSprite(clip.clipType, clip.sprIndex);
+            if (!image) continue;
+            const float top = static_cast<float>(static_cast<double>(segment.size) * clip.y * ratio * clip.zoomY + y);
+            const float bottom = static_cast<float>(static_cast<double>(clip.y + image->height * (image->isHalfH + 1))
+                * ratio * segment.size * clip.zoomY + y);
+            if (!(g_renderer.m_height > top && bottom > 0.0f)) continue;
+            const int endX = clip.x + image->width * (image->isHalfW + 1);
+            const double left = static_cast<double>(segment.size) * ((clip.flags & 1) ? endX : clip.x) * clip.zoomX * ratio + x;
+            const float right = static_cast<float>(static_cast<double>((clip.flags & 1) ? clip.x : endX)
+                * segment.size * clip.zoomX * ratio + x);
+            if (clip.flags & 1) {
+                if (right >= g_renderer.m_width || left <= 0.0) continue;
+            } else if (left >= g_renderer.m_width || right <= 0.0f) continue;
+            ParticleSprite sprite{};
+            sprite.image = const_cast<SprImg*>(image);
+            sprite.left = static_cast<float>(left); sprite.top = top;
+            sprite.right = right; sprite.bottom = bottom;
+            sprite.oow = static_cast<float>(1.0 / ((bottom - y) * slope + z) + 0.0000099999997);
+            sprite.oowup = static_cast<float>(1.0 / ((top - y) * slope + z) + 0.0000099999997);
+            sprite.color = (prim.m_pattern & 0x200) != 0
+                ? (static_cast<u32>(clip.a) << 24) | (static_cast<u32>(clip.r) << 16)
+                    | (static_cast<u32>(clip.g) << 8) | clip.b
+                : segment.argb;
+            sprite.angle = static_cast<float>(static_cast<double>(clip.angle) + prim.m_roll);
+            SubmitParticleSprite(sprite, sprites.m_pal, static_cast<int>(prim.m_renderFlag));
+        }
+    }
+}
+
 void RenderSuperAngelPrimitive(const CEffectPrim& prim, matrix& view)
 {
     if (!prim.m_superAngelSprRes || !prim.m_superAngelActRes) return;
-    const u8 alpha = (prim.m_renderFlag & 0x200u) != 0
-        ? 255 : static_cast<u8>(static_cast<long long>(prim.m_alpha));
-    const u32 color = (static_cast<u32>(alpha) << 24) | 0xFFFFFFu;
-    SubmitAnimatedSpriteParticle(prim, prim.m_pos, &view, color,
-        (prim.m_renderFlag & 6u) != 0 ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA,
-        static_cast<int>(prim.m_renderFlag));
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!mode || !mode->m_view) return;
+    // Ref/View.cpp:286-293 and HighPriest.exe.c g_gradient = 0.16.
+    const int latitude = static_cast<int>(-mode->m_view->GetCameraLatitude());
+    const float tangent = GetSin(latitude) / GetCos(latitude);
+    const float tangenta = 0.16f * tangent;
+    const float slope = tangenta / g_renderer.m_screenYFactor;
+    RenderParticleSprites(prim, *prim.m_superAngelSprRes, *prim.m_superAngelActRes, view, slope);
 }
 
 CEffectPrim::~CEffectPrim()
@@ -8100,6 +8231,8 @@ void CRagEffect::ApplySuperAngel(signed char variant, signed char)
         prim->m_segments[0].pos = prim->m_pos;
         prim->m_segments[0].size = prim->m_size;
         prim->m_segments[0].radius = prim->m_radius;
+        prim->m_segments[0].alpha = prim->m_alpha;
+        prim->m_segments[0].argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)), prim->m_tintColor);
         prim->m_segments[0].transform = prim->m_matrix;
         for (int band = 1; band < 4; ++band) prim->m_gi[static_cast<size_t>(band)].life = 0;
     }

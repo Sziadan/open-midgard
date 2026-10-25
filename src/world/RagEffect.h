@@ -240,6 +240,7 @@ struct EffectSegmentState {
     float size = 0.0f;
     float alpha = 0.0f;
     int process = 0;
+    u32 argb = 0;
     float displayAngle = 0.0f;
     float phaseDegrees = 0.0f;
     matrix transform{};

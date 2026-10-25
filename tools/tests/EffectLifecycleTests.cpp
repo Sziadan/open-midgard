@@ -74,7 +74,7 @@ struct RPFace {
     float alphaSortKey=0;
 };
 struct SilentRenderer {
-    float m_hpc=7, m_vpc=7;
+    float m_hpc=7, m_vpc=7, m_screenYFactor=1;
     int m_xoffset=0,m_yoffset=0,m_halfWidth=0,m_halfHeight=0,submissions=0,lastFlags=0;
     RPFace face;
     RPFace* BorrowNullRP() { face = {}; return &face; }
@@ -96,6 +96,7 @@ struct CView {
     matrix view;
     CView() { MatrixIdentity(view); }
     const matrix& GetViewMatrix() const { return view; }
+    float GetCameraLatitude() const { return -45; }
 } testView;
 struct CGameObject {
     virtual ~CGameObject() = default;
@@ -152,6 +153,7 @@ struct CEffectPrim : CGameObject {
     int m_spriteAction=0,m_animSpeed=0,m_curMotion=0,m_numSegments=0;
     bool m_repeatAnim=false,m_spriteRepeat=false;
     float m_alpha=0,m_radius=0;
+    u32 m_tintColor=0xFFFFFF;
     std::array<EffectSegmentState,12> m_segments;
 
     std::vector<CTexture*> m_texture;
@@ -173,8 +175,13 @@ struct CEffectPrim : CGameObject {
 int angelSpriteSubmissions=0,angelSubmittedMotion=-1;
 u32 angelSubmittedColor=0;
 D3DBLEND angelSubmittedBlend=0;
-bool SubmitAnimatedSpriteParticle(const CEffectPrim& prim,const vector3d&,matrix*,unsigned int color,D3DBLEND blend,int) {
-    ++angelSpriteSubmissions;angelSubmittedMotion=prim.m_curMotion;angelSubmittedColor=color;angelSubmittedBlend=blend;return true;
+u32 PackColor(unsigned int alpha, u32 color) {
+    return (alpha << 24) | ((color & 255) << 16) | (color & 0xFF00) | ((color >> 16) & 255);
+}
+void RenderParticleSprites(const CEffectPrim& prim,CSprRes&,const CActRes&,const matrix&,float) {
+    ++angelSpriteSubmissions;angelSubmittedMotion=prim.m_curMotion;
+    angelSubmittedColor=prim.m_segments[0].argb;
+    angelSubmittedBlend=prim.m_renderFlag==5?2:6;
 }
 struct CRagEffect : CGameObject {
     Probe deaths{ effectDeaths };
@@ -1018,13 +1025,20 @@ int main()
         check(gi.process==process && prim.m_pos.x==4 && prim.m_segments[0].pos.y==5,
             "inactive SuperAngel GI still stores delta position and shifts its segment");
         matrix view;MatrixIdentity(view);prim.m_superAngelSprRes=&g_resMgr.spr;prim.m_superAngelActRes=&g_resMgr.act;
-        g_resMgr.spr.Lock();g_resMgr.act.Lock();prim.m_alpha=30;prim.m_renderFlag=5;prim.m_curMotion=7;
+        g_resMgr.spr.Lock();g_resMgr.act.Lock();prim.m_alpha=30;prim.m_renderFlag=5;prim.m_curMotion=7;ShiftCircleSegments(&prim);
         RenderSuperAngelPrimitive(prim,view);
         check(angelSubmittedMotion==7 && angelSubmittedColor==0x1EFFFFFFu && angelSubmittedBlend==2,
             "SuperAngel sprite submission uses explicit motion, GI alpha and additive flags");
         prim.m_renderFlag=0x201;RenderSuperAngelPrimitive(prim,view);
-        check(angelSubmittedColor==0xFFFFFFFFu && angelSubmittedBlend==6,
-            "SuperAngel clip-color flag does not multiply clip alpha by primitive alpha");
+        check(angelSubmittedColor==0x1EFFFFFFu && angelSubmittedBlend==6,
+            "SuperAngel render flag 0x201 preserves segment alpha and uses ordinary blending");
+    }
+    {
+        CEffectPrim prim;prim.m_numSegments=2;prim.m_alpha=259.75f;prim.m_size=4;
+        prim.m_tintColor=0x563412;
+        ShiftCircleSegments(&prim);
+        check(prim.m_segments[0].argb==0x03123456u,"segment head packs truncated wrapping alpha and primitive RGB");
+        check(prim.m_segments[1].argb==0x81123456u,"history segment packs its own attenuated alpha");
     }
     {
         CRagEffect effect;
