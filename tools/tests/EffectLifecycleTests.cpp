@@ -112,6 +112,10 @@ struct CRenderObject : CGameObject {
     float m_roty = 0;
     int m_BodyLight = 0;
     char m_BeZero = 0;
+    struct Color { u8 a=0,r=0,g=0,b=0; } m_oldColor,m_curColor;
+    struct SpriteColor { struct { Color s; } u; };
+    struct { SpriteColor m_sprColor; } m_u28;
+    int m_isSprArgbFixed=0;
     int tintCalls=0,alpha=123,red=1,green=2,blue=3;
     void SetArgb(int a,int r,int g,int b) {
         ++tintCalls;if(a!=-1)alpha=a;if(r!=-1)red=r;if(g!=-1)green=g;if(b!=-1)blue=b;
@@ -136,7 +140,11 @@ struct CWorld {
     CRenderObject* m_player = nullptr;
     void UpdateGameObjects();
 } g_world;
-struct CGameMode { CWorld* m_world = &g_world; CView* m_view = &testView; } gameMode;
+struct CGameMode {
+    CWorld* m_world = &g_world; CView* m_view = &testView;
+    int messages=0,lastMsg=0,lastArg=0;
+    void SendMsg(int msg,msgparam_t arg,msgparam_t,msgparam_t) {++messages;lastMsg=msg;lastArg=static_cast<int>(arg);}
+} gameMode;
 struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
 #include "PrimitiveEnum.inc"
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
@@ -145,6 +153,7 @@ void UpdateSuperAngelPrimitive(CEffectPrim*);
 bool UpdateLinearReferenceParticle(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
+bool UpdateBerserkCrossTexture(CEffectPrim*);
 bool UpdateWarpZoneOrbit(CEffectPrim*);
 struct CEffectPrim : CGameObject {
     Probe deaths{ primitiveDeaths };
@@ -154,7 +163,7 @@ struct CEffectPrim : CGameObject {
     u32 m_renderFlag = 1;
     int m_stateCnt = 0, m_duration = 10, updates = 0, observedFrame = -1, resetFrame = -1;
     int m_pattern = 0, m_spawnCount = 0, m_fadeOutCnt = 0;
-    float m_outerSize = 0, m_arcAngle = 36, m_maxHeightSize = 100;
+    float m_outerSize = 0, m_arcAngle = 36, m_maxHeightSize = 100, m_widthSize=0;
     float m_outerSpeed=0,m_outerAccel=0,m_heightSpeed=0,m_heightAccel=0;
     int m_totalTexture=1;
     float m_size = 1, m_heightSize = 0, m_longitude = 0, m_latitude = 0, m_speed = 0, m_accel = 0;
@@ -187,6 +196,7 @@ struct CEffectPrim : CGameObject {
     bool UsesReferenceParticle() const;
     bool UsesReferenceCircle() const;
     bool UsesReferenceCylinder() const;
+    bool UsesReferenceCrossTexture() const;
     void SetParticleResources(const char*, const char*,bool = false);
     bool ProcessPrimitiveFrame() {
         ++updates;
@@ -194,6 +204,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
+        if (UsesReferenceCrossTexture() && !UpdateBerserkCrossTexture(this)) return false;
         if (UsesReferenceCylinder() && !UpdateReferenceCylinderState(this)) return false;
         if (m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle() && !UpdateWarpZoneOrbit(this)) return false;
         if (m_type == PP_3DPARTICLE && UsesReferenceParticle() && !UpdateLinearReferenceParticle(this)) return false;
@@ -249,6 +260,7 @@ struct CRagEffect : CGameObject {
     void ApplyWarpZone();
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
+    bool ApplyPotionBerserk();
     void ApplySight(float,bool);
     void SpawnSight();
     void SpawnSight2();
@@ -1748,6 +1760,62 @@ int main()
         effect.InitEZ2STRFrame();effect.m_stateCnt=1;
         check(effect.ProcessPotionConcentration() && effect.m_strScreenOffset.x==0 && effect.m_strScreenOffset.y==-80 && effect.m_strScreenOffset.z==0,
             "potion caller processes original STR offset and propagates its active result");
+    }
+    {
+        CRenderObject actor;actor.m_pos={90,80,70};actor.m_u28.m_sprColor.u.s={123,1,2,3};
+        CRagEffect effect;effect.m_master=&actor;effect.m_type=220;effect.m_duration=200;effect.m_effectPos={10,50,30};
+        waveCalls.clear();const int draws=rngDraws;const int messages=gameMode.messages;
+        check(effect.ApplyPotionBerserk(),"Berserk ignores missing STR completion on zero");
+        check(actor.m_isSprArgbFixed==1 && actor.alpha==255 && actor.red==250 && actor.green==120 && actor.blue==120,
+            "Berserk fixes actor alpha and tint to original message-one-twenty-eight values");
+        check(actor.m_oldColor.a==123 && actor.m_oldColor.r==1 && actor.m_oldColor.g==2 && actor.m_oldColor.b==3
+            && actor.m_curColor.a==255,"Berserk preserves pre-tint color and stores original current alpha");
+        check(effect.m_primList.size()==1 && effect.m_primList.front()->m_type==PP_3DCYLINDER && effect.m_primList.front()->m_pos.y==50
+            && effect.m_effectPos.y==80,"Berserk launches stored-origin pillar before copying parent position");
+        check(waveCalls.empty() && rngDraws==draws && gameMode.messages==messages,"Berserk zero-frame pillar adds no audio mode message or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=12;effect.ApplyPotionBerserk();check(effect.m_primList.empty(),"Berserk particle window excludes frame twelve");
+        rngValues={91,6,49,59};rngCursor=0;effect.m_stateCnt=16;effect.ApplyPotionBerserk();auto* prim=effect.m_primList.front();
+        check(prim->m_type==PP_3DCROSSTEXTURE && prim->m_duration==40 && prim->m_gi[0].life==0,"Berserk emits original cross texture at frame sixteen");
+        check(rngDraws==draws+4 && rngCursor==4 && prim->m_widthSize==8.9f && prim->m_size==1,
+            "Berserk keeps four-draw angle radius speed width order and unnormalized width");
+        check(std::fabs(prim->m_deltaPos2.x-8*GetSin(91))<0.000001f && std::fabs(prim->m_deltaPos2.z-8*GetCos(91))<0.000001f
+            && prim->m_deltaPos2.y==0,"Berserk spawn offset uses original integer-degree Y matrix");
+        check(std::fabs(prim->m_matrix.m[1][2]-1)<0.000001f && prim->m_speed==static_cast<float>(69*0.016666668)
+            && prim->m_heightSize==0.2f,"Berserk replaces spawn matrix with X ninety and preserves double-product speed");
+        check(prim->m_alpha==0 && prim->m_maxAlpha==180 && prim->m_alphaSpeed==static_cast<float>(180*0.050000001)
+            && prim->m_fadeOutCnt==20 && prim->m_tintColor==RGB(240,0,0) && std::string(g_texMgr.lastPath)=="effect\\ac_center2.tga",
+            "Berserk retains exact particle alpha tint fade and texture");
+        prim->m_alphaDelta=1;prim->OnProcess();
+        check(prim->UsesReferenceCrossTexture() && prim->m_stateCnt==1 && prim->m_curMotion==0 && prim->m_argb==0x09F00000,
+            "Berserk cross texture updates source alpha packed color and one-texture animation on zero");
+        check(std::fabs(prim->m_pos.y-(80-prim->m_speed))<0.00001f && prim->m_widthSize==8.9f && prim->m_heightSize==0.2f,
+            "Berserk cross texture follows stored origin and launch-matrix motion without synthetic scaling");
+        actor.m_pos.y=200;effect.m_effectPos=actor.m_pos;prim->OnProcess();
+        check(std::fabs(prim->m_pos.y-(200-2*prim->m_speed))<0.00001f,"Berserk cross texture follows updated parent with accumulated displacement");
+        prim->m_stateCnt=20;prim->m_alpha=180;prim->OnProcess();
+        check(prim->m_alpha==171 && prim->m_alphaSpeed==-9 && prim->m_argb==0xABF00000,"Berserk cross texture retains exact frame-twenty fade");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+        effect.m_stateCnt=18;auto* oldPlayer=g_world.m_player;g_world.m_player=nullptr;
+        effect.ApplyPotionBerserk();g_world.m_player=oldPlayer;
+        check(waveCalls.size()==1 && waveCalls[0].name=="effect\\ac_concentration.wav" && waveCalls[0].x==0 && waveCalls[0].y==0 && waveCalls[0].z==0,
+            "Berserk frame-eighteen wave uses direct zero coordinates without player dependency");
+        check(gameMode.messages==messages+1 && gameMode.lastMsg==135 && gameMode.lastArg==1,"Berserk sends original mode message at frame eighteen");
+        effect.m_stateCnt=108;effect.ApplyPotionBerserk();check(effect.m_primList.size()==1,"Berserk emits last divisible particle frame below one-ten");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_stateCnt=112;effect.ApplyPotionBerserk();
+        check(effect.m_primList.empty(),"Berserk particle window stops after one-ten");
+        effect.m_stateCnt=150;check(effect.ApplyPotionBerserk() && actor.m_isSprArgbFixed==1,"Berserk keeps tint and effect alive through frame one-fifty");
+        effect.m_stateCnt=151;check(!effect.ApplyPotionBerserk() && actor.m_isSprArgbFixed==0 && actor.m_oldColor.a==0 && actor.m_oldColor.r==0,
+            "Berserk terminates after one-fifty and clears fixed-tint bookkeeping");
+        check(actor.red==250 && actor.green==120 && actor.blue==120,"Berserk clear preserves current sprite channels like source message one-twenty-nine");
+        auto clip=std::make_unique<KANICLIP>();clip->cLayer=2;KAC_KEYFRAME keys[2];keys[0].iFrame=0;keys[1].iFrame=100;
+        clip->aLayer[1].cAniKey=2;clip->aLayer[1].aAniKey=keys;effect.m_ezEffectRes=clip.get();effect.m_aniClips=clip.get();
+        effect.InitEZ2STRFrame();effect.m_stateCnt=1;
+        check(effect.ApplyPotionBerserk() && effect.m_strScreenOffset.y==-80 && effect.m_strScreenOffset.x==0 && effect.m_strScreenOffset.z==0,
+            "Berserk processes original STR offset on non-emission frame");
+        actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
+        check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
+        effect.ClearPrims();g_world.UpdateGameObjects();
     }
     {
         CRagEffect effect;

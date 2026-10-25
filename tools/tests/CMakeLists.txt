@@ -80,7 +80,7 @@ extract_body(segment_shift "${effect_source}" "void ShiftCircleSegments(" "// Hi
 extract_body(warp_band "${effect_source}" "void ConfigureHealBand(" "void CRagEffect::LaunchParticleUp(")
 extract_body(warp_helper "${effect_source}" "void LaunchWarpCasting(" "void CRagEffect::ApplyPortalWind(")
 extract_body(ready_portal_emitter "${effect_source}" "void CRagEffect::ApplyReadyPortal()" "void CRagEffect::ApplyReadyPortal2()")
-extract_body(potion_emitters "${effect_source}" "void CRagEffect::ApplyPotionPillar(" "void CRagEffect::ApplyPotionBerserk()")
+extract_body(potion_emitters "${effect_source}" "void CRagEffect::ApplyPotionPillar(" "float EffectHeading(")
 extract_body(warp_emitter "${effect_source}" "void CRagEffect::ApplyWarpZone2(" "void CRagEffect::ApplyReadyPortal()")
 extract_body(blessing_emitter "${effect_source}" "void CRagEffect::SpawnBlessing()" "// Ref/RagEffect.cpp:7721-7761")
 extract_body(smoke_torch_emitters "${effect_source}" "void CRagEffect::SpawnSmoke()" "// Ref/RagEffect.cpp:3442-3555")

@@ -2109,6 +2109,44 @@ void RenderReferenceCylinder(const CEffectPrim& prim, const matrix& view)
     }
 }
 
+// Ref/RagEffectPrim.cpp:3195-3514 (0x646EC0). Two perpendicular strips,
+// four independent triangles, original stored color/texture and flag 1.
+void RenderReferenceCrossTexture(const CEffectPrim& prim, const matrix& view)
+{
+    if (prim.m_curMotion < 0 || prim.m_curMotion >= static_cast<int>(prim.m_texture.size())) return;
+    CTexture* texture = prim.m_texture[static_cast<size_t>(prim.m_curMotion)];
+    if (!texture || texture == &CTexMgr::s_dummy_texture) return;
+    const float h = prim.m_heightSize, w = prim.m_widthSize;
+    const vector3d local[2][4] = {
+        {{-h,0,w},{-h,0,-w},{h,0,w},{h,0,-w}},
+        {{0,-h,w},{0,-h,-w},{0,h,w},{0,h,-w}}
+    };
+    const float firstUV[3][2] = {{0,1},{1,1},{0,0}};
+    const float secondUV[3][2] = {{1,0},{0,0},{1,1}};
+    for (int strip = 0; strip < 2; ++strip) {
+        vector3d points[4];
+        for (int i = 0; i < 4; ++i) {
+            const vector3d& v = local[strip][i];
+            float transformed[3];
+            for (int axis = 0; axis < 3; ++axis) {
+                const double yz = i == 0
+                    ? static_cast<double>(prim.m_matrix.m[1][axis]) * v.y + static_cast<double>(prim.m_matrix.m[2][axis]) * v.z
+                    : static_cast<double>(prim.m_matrix.m[2][axis]) * v.z + static_cast<double>(prim.m_matrix.m[1][axis]) * v.y;
+                const double coordinate = yz + static_cast<double>(prim.m_matrix.m[0][axis]) * v.x + prim.m_matrix.m[3][axis];
+                // Source keeps first-vertex x in x87 through world translation.
+                transformed[axis] = static_cast<float>(coordinate);
+                if (i == 0 && axis == 0) transformed[axis] = static_cast<float>(coordinate + prim.m_pos.x);
+            }
+            points[i] = AddVec3(vector3d{transformed[0],transformed[1],transformed[2]}, prim.m_pos);
+            if (i == 0) points[i].x = transformed[0];
+        }
+        const vector3d first[3] = {points[0],points[1],points[2]};
+        const vector3d second[3] = {points[3],points[2],points[1]};
+        SubmitReferenceEffectTriangle(first, view, texture, prim.m_argb, firstUV, 1);
+        SubmitReferenceEffectTriangle(second, view, texture, prim.m_argb, secondUV, 1);
+    }
+}
+
 void RenderCircleLayer(const CEffectPrim& prim,
     const EffectSegmentState& state,
     matrix& viewMatrix,
@@ -2555,6 +2593,7 @@ CEffectPrim::CEffectPrim()
     , m_maxAlpha(255.0f)
     , m_alphaDelta(1.0f)
     , m_minAlpha(0.0f)
+    , m_widthSize(0.0f)
     , m_size(1.0f)
     , m_sizeSpeed(0.0f)
     , m_sizeAccel(0.0f)
@@ -6108,6 +6147,30 @@ void ProcessReferenceParticleAlpha(CEffectPrim* prim)
     prim->m_argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)), prim->m_tintColor);
 }
 
+// Ref/RagEffectPrim.cpp:966-1310 (0x643340), reachable Berserk profile:
+// pattern zero, no change points, width/height/angular/RGB speeds all zero.
+// Retain its launch matrix for motion/rendering; unused rotMat is identity.
+bool UpdateBerserkCrossTexture(CEffectPrim* prim)
+{
+    prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
+    prim->m_speed += prim->m_accel;
+    prim->m_speed3d = {
+        static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+    };
+    prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
+    prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
+    ProcessReferenceParticleAlpha(prim);
+    if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;
+    ++prim->m_curMotion;
+    if (prim->m_repeatAnim) {
+        prim->m_curMotion %= prim->m_totalTexture;
+        return true;
+    }
+    return prim->m_curMotion != prim->m_totalTexture;
+}
+
 // Ref/RagEffectPrim.cpp:288-365 (0x6443E0), Prim3DCylinder.
 // Ref's body is mislabeled Prim3DCylinderHalf; signature/address and dispatch
 // identify the full cylinder. Bound to original Portal while other callers migrate.
@@ -6407,6 +6470,11 @@ bool CEffectPrim::UsesReferenceCylinder() const
     }
 }
 
+bool CEffectPrim::UsesReferenceCrossTexture() const
+{
+    return m_type == PP_3DCROSSTEXTURE && m_master && m_master->GetEffectType() == 220;
+}
+
 bool CEffectPrim::UsesReferenceParticle() const
 {
     return m_type == PP_SUPERANGEL
@@ -6672,6 +6740,9 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_3DPARTICLESPLINE) {
         return UpdateFreeParticlePrimitive(this, true, true);
     }
+    if (UsesReferenceCrossTexture()) {
+        return UpdateBerserkCrossTexture(this);
+    }
     if (m_type == PP_3DCROSSTEXTURE) {
         return UpdateCrossTexturePrimitive(this);
     }
@@ -6716,6 +6787,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (UsesReferenceCircle()) {
         RenderReferenceCircle(*this, *viewMatrix);
+        return;
+    }
+    if (UsesReferenceCrossTexture()) {
+        RenderReferenceCrossTexture(*this, *viewMatrix);
         return;
     }
     if (UsesReferenceCylinder()) {
@@ -10970,10 +11045,12 @@ bool CRagEffect::ProcessPotionConcentration()
     return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
 }
 
-void CRagEffect::ApplyPotionBerserk()
+// Ref/RagEffect.cpp:1081-1143 (0x607430), original effect 220.
+bool CRagEffect::ApplyPotionBerserk()
 {
     CRenderObject* master = ResolveCurrentMaster();
-    if (m_stateCnt == 0 && master != nullptr) {
+    if (!master) return false;
+    if (m_stateCnt == 0) {
         if (master->m_oldColor.a == 0 && master->m_oldColor.r == 0 && master->m_oldColor.g == 0 && master->m_oldColor.b == 0) {
             master->m_oldColor.a = master->m_u28.m_sprColor.u.s.a;
             master->m_oldColor.r = master->m_u28.m_sprColor.u.s.r;
@@ -10985,43 +11062,46 @@ void CRagEffect::ApplyPotionBerserk()
         master->m_curColor.r = 250;
         master->m_curColor.g = 120;
         master->m_curColor.b = 120;
-        master->SetArgb(-1, 250, 120, 120);
+        master->SetArgb(255, 250, 120, 120);
         ApplyPotionPillar(1.0f, 50);
     }
     if (m_stateCnt == 18) {
-        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-            mode->SendMsg(135, 1, 0, 0);
-            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                TryPlayEffectWaveAt(mode->m_world->m_player->m_pos, "effect\\ac_concentration.wav");
-            }
-        }
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) mode->SendMsg(135, 1, 0, 0);
+        PlayWave("effect\\ac_concentration.wav", 0.0f, 0.0f, 0.0f, 250, 40, 1.0f); // 0x712CC8
     }
-    if (master) m_effectPos = master->m_pos; // Ref Potion_Berserk, after frame-zero pillar.
+    m_effectPos = master->m_pos; // Ref Potion_Berserk, after frame-zero pillar.
     if (m_stateCnt > 12 && m_stateCnt < 110 && (m_stateCnt & 3) == 0) {
         CEffectPrim* prim = LaunchEffectPrim(PP_3DCROSSTEXTURE, vector3d{});
         if (prim != nullptr) {
             prim->m_duration = 40;
+            prim->m_animSpeed = 4; prim->m_repeatAnim = true;
             MatrixIdentity(prim->m_matrix);
-            MatrixAppendYRotation(prim->m_matrix, static_cast<float>(rand() % 360) * (kPi / 180.0f));
-            const float radius = static_cast<float>(rand() % 7 + 2);
+            MatrixAppendYRotation(prim->m_matrix, GetRadian(rand() % 360));
+            const double radius = static_cast<double>(rand() % 7 + 2);
             prim->m_deltaPos2 = {
-                radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
-                radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
-                radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
+                static_cast<float>(radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+                static_cast<float>(radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+                static_cast<float>(radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
             };
             MatrixIdentity(prim->m_matrix);
-            MatrixAppendXRotation(prim->m_matrix, 90.0f * (kPi / 180.0f));
-            prim->m_speed = static_cast<float>(rand() % 50 + 20) * 0.016666668f;
-            prim->m_size = static_cast<float>(rand() % 60 + 30) * (0.1f / 34.0f);
+            MatrixAppendXRotation(prim->m_matrix, GetRadian(90));
+            prim->m_speed = static_cast<float>(static_cast<double>(rand() % 50 + 20) * 0.016666668);
+            prim->m_widthSize = static_cast<float>(static_cast<double>(rand() % 60 + 30) * 0.1);
             prim->m_heightSize = 0.2f;
             prim->m_alpha = 0.0f;
             prim->m_maxAlpha = 180.0f;
-            prim->m_alphaSpeed = prim->m_maxAlpha * 0.050000001f;
+            prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.050000001);
             prim->m_fadeOutCnt = prim->m_duration - 20;
             prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ac_center2.tga", false));
             prim->m_tintColor = RGB(240, 0, 0);
+            prim->m_gi[0].life = 0;
         }
     }
+    ProcessEZ2STR(0.0f, -80.0f, 0.0f); // Original deliberately ignores completion.
+    if (m_stateCnt <= 150) return true;
+    master->m_oldColor = {};
+    master->m_isSprArgbFixed = 0; // Original actor message 129; current sprite color stays.
+    return false;
 }
 
 float EffectHeading(float fromX, float fromZ, float toX, float toZ)
@@ -12303,6 +12383,7 @@ bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
     if (m_type == 218 || m_type == 219) return ProcessPotionConcentration();
+    if (m_type == 220) return ApplyPotionBerserk();
     if (m_type == 221) {
         ApplyPotionPillar(1.0f, 50);
         return true;
@@ -12771,9 +12852,6 @@ bool CRagEffect::ProcessEffectFrame()
     if (dispatchHandler && m_type == 248) {
         ApplyProvidence("effect\\ring_yellow.tga");
     }
-    if (dispatchHandler && m_type == 220) {
-        ApplyPotionBerserk();
-    }
     if (iceArrow) {
         ApplyIceArrow();
     }
@@ -12855,13 +12933,6 @@ bool CRagEffect::ProcessEffectFrame()
         }
     }
 
-    if (m_type == 220 && m_stateCnt > 150) {
-        if (master) {
-            master->m_oldColor = {};
-            master->m_isSprArgbFixed = 0;
-        }
-        return false;
-    }
     return FinishEffectFrame();
 }
 

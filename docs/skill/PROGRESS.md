@@ -4,10 +4,20 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A PotionPillar and concentration/awakening dispatch, after original WarpZone checkpoint `3a9628b`. Potion cylinders now use reference update/rendering; ids 218/219 preserve original parent-copy, audio, timing and STR-result behavior.
+Current work: WP5A Berserk control/emission and reachable reference cross-texture update/rendering, after potion checkpoint `81227be`. Effect220 now preserves original STR-result handling, tint window, emission profiles and four-triangle geometry.
 
-Next action: continue active emitter/primitive ports, including the remaining Potion_Berserk tint/cross-texture/STR behavior and IceArrow circle. Generic enabled control branches, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open.
+Next action: migrate IceArrow's cross-texture/circle emitter and reachable primitive controls. Other active emitters, generic enabled control branches, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Berserk control / emitter and reachable cross-texture path — 2026-10-26
+
+- Ref/RagEffect.cpp:1081-1143 (0x607430) -> ApplyPotionBerserk, original id 220, now called directly by ProcessEffectFrame. Zero preserves old color if unset, applies source fixed alpha 255/tint 250/120/120, then emits the stored-origin pillar before copying parent position. Frame 18 sends mode message 135/1 then direct zero-coordinate concentration wave without requiring a listener/player.
+- Every call processes STR at (0,-80,0), deliberately ignores its result, stays alive through 150 and clears old-color/fixed-tint bookkeeping after 150 while preserving current sprite channels. Removed late generic dispatcher invocation/termination. Existing direct actor-field adapter follows Ref/GameActor.cpp:4846-4869 messages 128/129; general actor message delivery is not newly certified.
+- Cross-texture window remains >12/<110 with frame divisible by four. Preserved angle/radius/speed/width four-draw order, integer-degree Y spawn rotation then replacement X90 matrix, double-product speed/width/alpha arithmetic, height 0.2, RGB 240/0/0, alpha 0/max180/rise max*0.050000001, fade20, duration40, exact ac_center2 texture and GI[0].life zero. Added original widthSize field (constructor zero), replacing renderer-normalized m_size encoding.
+- Ref/RagEffectPrim.cpp:966-1310 (0x643340) -> UpdateBerserkCrossTexture, complete reachable pattern-zero profile with zero width/height/angular/RGB speeds and no change points. Stored parent plus launch offset, launch-matrix movement and cumulative displacement precede ProcessAlpha and original texture-animation gate/wrap/equality. Other Prim3DTexture patterns/change controls remain open.
+- Ref/RagEffectPrim.cpp:3195-3514 (0x646EC0) -> RenderReferenceCrossTexture. Two perpendicular local strips, source width/height, current launch matrix/position, four independent triangles, exact corner/UV order, stored packed color and current texture. Original hard-coded flag 1, projection and triangle queue; no camera-facing billboard, synthetic alpha scale or missing-texture glow. Only id220 PP_3DCROSSTEXTURE binds this path. First-vertex x preserves extended precision through world translation.
+
+Validation: release build, six silent C++ suites / 623 checks (465 lifecycle/primitive, 100 rendering, 58 other), six Python tests, two-literal executable byte audit and whitespace check pass. Added 24 lifecycle/emitter/state and ten geometry/submission checks. Wave 0x712CC8 and texture 0x71B2D4 match executable bytes. No media/live acceptance. Approved OldRO SHA-256: `FD568D81B831552AC829EF6C826495C7CA38D2FB02B3833B6D3AAB7E9BE2EF15`. Other cross-texture callers (including IceArrow), generic control branches, map scheduling, resource/cache and full renderer/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Potion pillar / concentration and awakening — 2026-10-26
 

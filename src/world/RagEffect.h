@@ -264,6 +264,7 @@ public:
     bool UsesReferenceParticle() const;
     bool UsesReferenceCircle() const;
     bool UsesReferenceCylinder() const;
+    bool UsesReferenceCrossTexture() const;
     void SetParticleResources(const char* sprName, const char* actName, bool actionFirst = false);
     void SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t) override;
     void Render(matrix* viewMatrix) override;
@@ -285,6 +286,7 @@ public:
     float m_maxAlpha;
     float m_alphaDelta;
     float m_minAlpha;
+    float m_widthSize;
     float m_size;
     float m_sizeSpeed;
     float m_sizeAccel;
@@ -453,7 +455,7 @@ private:
     void ApplyAttackEnergy2(const char* textureName);
     void ApplyPotionPillar(float speed, int duration);
     bool ProcessPotionConcentration();
-    void ApplyPotionBerserk();
+    bool ApplyPotionBerserk();
     void ApplyIceArrow();
     void ApplyProvidence(const char* textureName);
     void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);

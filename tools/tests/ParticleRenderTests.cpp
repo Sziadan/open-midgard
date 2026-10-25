@@ -45,7 +45,7 @@ struct CEffectPrim {
     float m_roll=0,m_size=1,m_arcAngle=36;
     matrix m_matrix;
     vector3d m_pos;
-    float m_innerSize=0,m_outerSize=0,m_heightSize=0;
+    float m_innerSize=0,m_outerSize=0,m_heightSize=0,m_widthSize=0;
     u32 m_argb=0xFFFFFFFF;
     std::vector<CTexture*> m_texture;
     std::array<EffectSegmentState,50> m_segments;
@@ -247,6 +247,34 @@ int main() {
         check(g_renderer.m_rpAlphaList.size()==2 && matches(g_renderer.m_rpAlphaList[0].second->m_verts[2],{14.5f,24,105+2*g_sinTable[360]}),
             "cylinder endpoint directly reads table index three-sixty");
         g_cosTable[360]=GetCos(360);
+    }
+    {
+        CEffectPrim cross;cross.m_widthSize=3;cross.m_heightSize=0.2f;cross.m_pos={10,20,100};cross.m_argb=0x09F00000;
+        cross.m_texture={&g_texMgr.texture};cross.m_renderFlag=0x205;
+        for(int i=0;i<4;++i)cross.m_matrix.m[i][i]=1;
+        auto renderCross=[&](){g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaNoDepthList.clear();
+            RenderReferenceCrossTexture(cross,view);};
+        auto matches=[&](const tlvertex3d& v,vector3d point){tlvertex3d expected;ProjectReferenceEffectVertex(point,view,expected);
+            return near(v.x,expected.x)&&near(v.y,expected.y)&&near(v.oow,expected.oow);};
+        renderCross();check(g_renderer.m_rpAlphaList.size()==4,"cross texture emits four triangles across two perpendicular strips");
+        auto* first=g_renderer.m_rpAlphaList[0].second;auto* second=g_renderer.m_rpAlphaList[1].second;auto* third=g_renderer.m_rpAlphaList[2].second;
+        check(matches(first->m_verts[0],{9.8f,20,103})&&matches(first->m_verts[1],{9.8f,20,97})&&matches(first->m_verts[2],{10.2f,20,103}),
+            "cross first strip preserves local height versus width dimensions and vertex order");
+        check(matches(second->m_verts[0],{10.2f,20,97})&&matches(second->m_verts[1],{10.2f,20,103})&&matches(second->m_verts[2],{9.8f,20,97}),
+            "cross second triangle preserves source reversed strip order");
+        check(matches(third->m_verts[0],{10,19.8f,103})&&matches(third->m_verts[1],{10,19.8f,97})&&matches(third->m_verts[2],{10,20.2f,103}),
+            "cross second strip lies in perpendicular local plane");
+        check(first->m_verts[0].tu==0&&first->m_verts[0].tv==1&&first->m_verts[1].tu==1&&first->m_verts[1].tv==1
+            &&first->m_verts[2].tu==0&&first->m_verts[2].tv==0&&second->m_verts[0].tu==1&&second->m_verts[0].tv==0,
+            "cross texture preserves original triangle UV order");
+        check(first->m_verts[0].color==0x09F00000&&third->m_verts[2].color==0x09F00000&&first->srcAlphaMode==5&&first->destAlphaMode==6
+            &&g_renderer.m_rpAlphaOPList.empty()&&g_renderer.m_rpAlphaNoDepthList.empty(),"cross texture uses stored color and hard-coded alpha flag one");
+        cross.m_matrix.m[1][1]=0;cross.m_matrix.m[1][2]=1;cross.m_matrix.m[2][1]=-1;cross.m_matrix.m[2][2]=0;renderCross();
+        check(matches(g_renderer.m_rpAlphaList[0].second->m_verts[0],{9.8f,17,100})
+            &&matches(g_renderer.m_rpAlphaList[2].second->m_verts[0],{10,17,99.8f}),"cross texture uses launch matrix instead of camera billboard orientation");
+        cross.m_argb=0;renderCross();check(g_renderer.m_rpAlphaList.size()==4,"cross texture retains zero-alpha source submissions");
+        cross.m_texture[0]=&CTexMgr::s_dummy_texture;renderCross();check(g_renderer.m_rpAlphaList.empty(),"cross missing texture emits no glow substitute");
+        cross.m_texture[0]=&g_texMgr.texture;cross.m_curMotion=1;renderCross();check(g_renderer.m_rpAlphaList.empty(),"cross invalid current texture motion emits no substitute");
     }
     {
         CEffectPrim circle;circle.m_numSegments=2;circle.m_size=2;circle.m_arcAngle=90;circle.m_renderFlag=0x201;
