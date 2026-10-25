@@ -4,9 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A Ruwach (effect 33) particle migration. The shared per-clip renderer is checkpointed in `7554b3b`; Ruwach now joins SuperAngel on that path. Handler and renderer migration remain partial.
+Current work: WP5A Smoke (44) and Torch (47) particle migration. Ruwach is checkpointed in `84f9321`; Smoke/Torch now join it and SuperAngel on the reference particle renderer. Handler and renderer migration remain partial.
 
-Next action: migrate the remaining sprite-particle emitters (including Blessing/Sight/Smoke/Torch and poison particles), preserving each caller's reference assets, constructor defaults, motion/alpha patterns and renderer binding. Remove their legacy baked-motion routes as each migration completes. Generic particle control branches, resource-loader/cache parity, common renderer/backend behavior and unfinished packages/acceptance remain open.
+Next action: migrate the remaining sprite-particle emitters, starting with poison particles and then Blessing/Sight. Preserve each caller's reference assets, constructor defaults, motion/alpha patterns and renderer binding; remove legacy baked-motion routes as each migration completes. Generic particle control branches, map-emitter initialization/scheduling, resource-loader/cache parity, common renderer/backend behavior and unfinished packages/acceptance remain open.
+
+## Smoke / Torch particle migration — 2026-10-25
+
+- Replaced Smoke's invented fade-in (alpha 0, maximum 100) with original constructor alpha/maximum 254 and zero alpha speed. Restored the exact X-angle/Y-angle/speed RNG order, source matrix composition, duration-based fade point, one segment, repeat and divisor 4. Copies parent position on every call, including non-emission frames.
+- Torch now preserves constructor alpha/maximum 254, zero alpha speed and fade frame -1 while selecting sprite clip color through pattern 0x200. Invalid size/divisor values update the parent's parameters to 1; valid fractional size remains unchanged and the animation divisor truncates to an integer. Removed invented alpha rise and all name/color-based bitmap fallbacks.
+- Both use exact executable sprite/action literals and sprite-then-action locks. Generalized the existing reachable linear particle updater as UpdateLinearReferenceParticle, bound to effects 33/44/47. Added normal effect-47 handler routing; retained map Smoke/Torch branches now preserve ids 44/47 so their primitives use reference dispatch. Existing map scheduling and name-based handler selection remain separate open work.
+- Validation: release build, six silent C++ suites / 352 checks (259 lifecycle/primitive + 35 particle-render + 58 other), six Python tests, four-literal executable byte audit and whitespace check pass. Added 25 checks, including controlled RNG sequences and production matrix multiplication/rotation bodies. No media or live acceptance was used.
+- Approved OldRO deployment SHA-256 matches `CF610FC3217FC2403C1CA21B6384274677DD15DF5E389740915F2A4D4DAAE7DE`. This completes the emitter/reachable particle state migration for these profiles; other particle patterns/emitters, resource/cache and backend acceptance remain open. WP5A and the overall plan remain incomplete.
+
 
 ## Ruwach particle migration — 2026-10-25
 

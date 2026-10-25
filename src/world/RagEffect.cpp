@@ -281,16 +281,6 @@ const char* RefParticle6SpriteStem()
     return "particle6";
 }
 
-const char* RefChimneySmokeSpriteStem()
-{
-    return "\xB1\xBC\xB6\xD2\xBF\xAC\xB1\xE2";
-}
-
-const char* RefTorchSpriteStem()
-{
-    return "torch_01";
-}
-
 bool ConfigureEffectSpritePrim(CEffectPrim* prim,
     std::initializer_list<const char*> stems,
     int actionIndex,
@@ -332,50 +322,6 @@ void ConfigureEnchantPoisonParticle(CEffectPrim* prim, int speedBase, int speedS
     prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 5;
     prim->m_tintColor = RGB(255, 255, 255);
     ConfigureEffectSpritePrim(prim, { RefParticle3SpriteStem(), RefParticle2SpriteStem() }, 0, 1.0f, true, 0.0f, 0);
-}
-
-void AppendTorchFallbackTextures(CEffectPrim* prim, const std::string& effectName)
-{
-    if (!prim) {
-        return;
-    }
-
-    auto appendSequence = [&](const char* prefix) {
-        for (int frameIndex = 1; frameIndex <= 13; ++frameIndex) {
-            std::string path = std::string("effect\\") + prefix;
-            if (frameIndex < 10) {
-                path += '0';
-            }
-            path += std::to_string(frameIndex);
-            path += ".bmp";
-            if (CTexture* texture = TryResolveEffectTextureCandidates({ path.c_str() })) {
-                prim->m_texture.push_back(texture);
-            }
-        }
-    };
-
-    if (ContainsIgnoreCaseAscii(effectName, "red")) {
-        appendSequence("torch_red");
-    } else if (ContainsIgnoreCaseAscii(effectName, "violet") || ContainsIgnoreCaseAscii(effectName, "purple")) {
-        appendSequence("torch_violet");
-    } else if (ContainsIgnoreCaseAscii(effectName, "green")) {
-        appendSequence("torch_green");
-    }
-
-    if (prim->m_texture.empty()) {
-        appendSequence("torch_red");
-        appendSequence("torch_green");
-        appendSequence("torch_violet");
-    }
-
-    if (prim->m_texture.empty()) {
-        prim->m_texture.push_back(ResolveEffectTextureCandidates({
-            "effect\\torch_red01.bmp",
-            "effect\\torch_green01.bmp",
-            "effect\\torch_violet01.bmp",
-            "effect\\magic_red.tga",
-        }, false));
-    }
 }
 
 void SubmitScreenQuad(const tlvertex3d& anchor,
@@ -6056,10 +6002,11 @@ bool AnimateReferenceParticle(CEffectPrim* prim)
     return true;
 }
 
-// Ref/RagEffectPrim.cpp:456-594,2184-2328. Ruwach launches only pattern-zero
-// PP_3DPARTICLE with constructor motion/alpha defaults and no change points.
-// Other callers still require their additional pattern/control branches.
-bool UpdateRuwachParticle(CEffectPrim* prim)
+// Ref/RagEffectPrim.cpp:456-594,2184-2328. Ruwach, Smoke and Torch use
+// linear PP_3DPARTICLE state with no change points or movement-pattern bits.
+// Torch's 0x200 bit selects clip color only. Other callers still need their
+// additional pattern/control branches.
+bool UpdateLinearReferenceParticle(CEffectPrim* prim)
 {
     prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
     prim->m_speed += prim->m_accel;
@@ -6250,7 +6197,8 @@ void CEffectPrim::SetParticleResources(const char* sprName, const char* actName)
 bool CEffectPrim::UsesReferenceParticle() const
 {
     return m_type == PP_SUPERANGEL
-        || (m_type == PP_3DPARTICLE && m_master && m_master->GetEffectType() == 33);
+        || (m_type == PP_3DPARTICLE && m_master
+            && (m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
 }
 
 CEffectPrim::~CEffectPrim()
@@ -6487,8 +6435,8 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_3DPARTICLEORBIT) {
         return UpdateParticleOrbitPrimitive(this);
     }
-    if (m_type == PP_3DPARTICLE && m_master && m_master->GetEffectType() == 33) {
-        return UpdateRuwachParticle(this);
+    if (m_type == PP_3DPARTICLE && UsesReferenceParticle()) {
+        return UpdateLinearReferenceParticle(this);
     }
     if (m_type == PP_3DPARTICLE) {
         return UpdateFreeParticlePrimitive(this, false, false);
@@ -7582,6 +7530,9 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     case 44:
         m_handler = Handler::Smoke;
         break;
+    case 47:
+        m_handler = Handler::Torch;
+        break;
     case 601:
         m_handler = Handler::SightState;
         break;
@@ -7664,8 +7615,10 @@ void CRagEffect::InitWorld(const C3dWorldRes::effectSrcInfo& source)
         m_type = kRagEffectReadyPortal;
         m_handler = Handler::ReadyPortal;
     } else if (source.type == 44) {
+        m_type = 44;
         m_handler = Handler::Smoke;
     } else if (source.type == 47) {
+        m_type = 47;
         m_handler = Handler::Torch;
     } else if (ContainsIgnoreCaseAscii(source.name, "warp") || ContainsIgnoreCaseAscii(source.name, "portal")) {
         m_type = kRagEffectWarpZone;
@@ -9054,61 +9007,56 @@ void CRagEffect::SpawnBlessing()
     }
 }
 
+// Ref/RagEffect.cpp:7721-7761 (0x5F6250). Three RNG draws per smoke
+// follow the initial count draw, in X-angle / Y-angle / speed order.
 void CRagEffect::SpawnSmoke()
 {
-    if (m_stateCnt != 0) {
-        return;
-    }
-
-    const int smokeCount = rand() % 4 + 1;
-    for (int smokeIndex = 0; smokeIndex < smokeCount; ++smokeIndex) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
-            prim->m_duration = m_duration;
-            MatrixIdentity(prim->m_matrix);
-            MatrixAppendXRotation(prim->m_matrix, static_cast<float>(rand() % 30 + 75) * (kPi / 180.0f));
-            MatrixAppendYRotation(prim->m_matrix, static_cast<float>(rand() % 360) * (kPi / 180.0f));
-            prim->m_deltaPos2.y = -9.0f;
-            prim->m_rollSpeed = 0.75f;
-            prim->m_speed = static_cast<float>(rand() % 3 + 3) * 0.1f;
-            prim->m_alpha = 0.0f;
-            prim->m_maxAlpha = 100.0f;
-            prim->m_alphaSpeed = prim->m_maxAlpha * 0.033333335f;
-            prim->m_size = 1.5f;
-            prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
-            prim->m_tintColor = RGB(255, 255, 255);
-
-            if (!ConfigureEffectSpritePrim(prim, { RefChimneySmokeSpriteStem() }, 0, 1.0f, true, 0.0f, 0)) {
-                prim->m_texture.push_back(ResolveEffectTextureCandidates({
-                    "effect\\smoke.tga",
-                    "effect\\smoke.bmp",
-                    "effect\\smoke2.bmp",
-                }, true));
-            }
-        }
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return;
+    const int count = rand() % 4 + 1;
+    for (int i = 0; i < count; ++i) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+        prim->m_duration = m_duration;
+        const float xAngle = GetRadian(rand() % 30 + 75);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, xAngle);
+        const float yAngle = GetRadian(rand() % 360);
+        MatrixAppendYRotation(prim->m_matrix, yAngle);
+        prim->m_deltaPos2.y = -9.0f;
+        prim->m_rollSpeed = 0.75f;
+        prim->m_speed = static_cast<float>(static_cast<double>(rand() % 3 + 3) * 0.1);
+        prim->m_size = 1.5f;
+        prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xBC\xB6\xD2\xBF\xAC\xB1\xE2.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xBC\xB6\xD2\xBF\xAC\xB1\xE2.act"); // 0x71B440 / 0x71B42C
+        // Ref constructor defaults, unlike the replaced synthetic fade-in.
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f; prim->m_alphaSpeed = 0.0f;
+        prim->m_animSpeed = 4; prim->m_repeatAnim = true; prim->m_numSegments = 1;
+        ShiftCircleSegments(prim);
     }
 }
 
+// Ref/RagEffect.cpp:8826-8852 (0x5F69B0). Size and divisor defaults modify
+// the parent's parameters; constructor alpha remains 254, without a fade-in.
 void CRagEffect::SpawnTorch()
 {
-    if (m_stateCnt != 0) {
-        return;
-    }
-
-    if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
-        prim->m_pattern |= 0x200;
-        prim->m_duration = m_duration;
-        prim->m_deltaPos2.y = -10.0f;
-        prim->m_alpha = 0.0f;
-        prim->m_maxAlpha = 180.0f;
-        prim->m_alphaSpeed = 12.0f;
-        prim->m_size = m_param[0] > 0.0f ? m_param[0] : 1.0f;
-        prim->m_animSpeed = (std::max)(1, static_cast<int>(m_param[1]));
-        prim->m_tintColor = RGB(255, 255, 255);
-
-        if (!ConfigureEffectSpritePrim(prim, { RefTorchSpriteStem() }, 0, 1.0f, true, 0.0f, 0)) {
-            AppendTorchFallbackTextures(prim, m_effectName);
-        }
-    }
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+    prim->m_pattern |= 0x200;
+    prim->m_duration = m_duration;
+    prim->m_deltaPos2.y = -10.0f;
+    if (m_param[0] <= 0.0f) m_param[0] = 1.0f;
+    if (m_param[1] < 1.0f) m_param[1] = 1.0f;
+    prim->m_size = m_param[0];
+    prim->m_animSpeed = static_cast<int>(m_param[1]);
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\torch_01.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\torch_01.act"); // 0x71B47C / 0x71B468
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f; prim->m_alphaSpeed = 0.0f;
+    prim->m_fadeOutCnt = -1; prim->m_repeatAnim = true; prim->m_numSegments = 1;
+    ShiftCircleSegments(prim);
 }
 
 void CRagEffect::SpawnEnchantPoison()

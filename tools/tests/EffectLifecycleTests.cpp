@@ -24,13 +24,14 @@ constexpr int kPrimTypeHeal = 0x3C;
 struct matrix { float m[4][4]{}; };
 #include "EffectSegmentTypes.inc"
 void MatrixIdentity(matrix& m) { m = {}; for (int i = 0; i < 4; ++i) m.m[i][i] = 1; }
-void MatrixAppendYRotation(matrix& m, float a) { m.m[2][0] = std::sin(a); m.m[2][2] = std::cos(a); }
-void MatrixAppendXRotation(matrix&, float) {}
+#include "ParticleMatrixBodies.inc"
 float GetRadian(int degree) { return degree * 3.14159265f / 180.0f; }
 float GetSin(int degree) { return std::sin(GetRadian(degree)); }
 float GetCos(int degree) { return std::cos(GetRadian(degree)); }
 int rngDraws = 0, waves = 0;
-int SilentRand() { ++rngDraws; return 0; }
+std::vector<int> rngValues;
+size_t rngCursor=0;
+int SilentRand() { ++rngDraws; return rngCursor < rngValues.size() ? rngValues[rngCursor++] : 0; }
 float waveY = 99;
 std::string waveName;
 bool PlayWave(const char* name, float, float y, float, int volume, int range, float frequency) {
@@ -134,7 +135,7 @@ struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_m
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
 void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
-bool UpdateRuwachParticle(CEffectPrim*);
+bool UpdateLinearReferenceParticle(CEffectPrim*);
 struct CEffectPrim : CGameObject {
     Probe deaths{ primitiveDeaths };
     CRagEffect* m_master = nullptr;
@@ -172,7 +173,7 @@ struct CEffectPrim : CGameObject {
         observedFrame = m_stateCnt;
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
-        if (m_type == PP_3DPARTICLE && UsesReferenceParticle() && !UpdateRuwachParticle(this)) return false;
+        if (m_type == PP_3DPARTICLE && UsesReferenceParticle() && !UpdateLinearReferenceParticle(this)) return false;
         if (resetFrame >= 0) m_stateCnt = resetFrame;
         return active;
     }
@@ -218,6 +219,8 @@ struct CRagEffect : CGameObject {
     void ApplySuperAngel(signed char,signed char);
     void ProcessSuperAngelEffect();
     void SpawnRuwach();
+    void SpawnSmoke();
+    void SpawnTorch();
     void ApplyEntry2();
     bool ApplyJobLvUp50(int);
     bool ApplyJobLvUp50_2(short);
@@ -1119,6 +1122,85 @@ int main()
         prim.m_stateCnt=3;prim.m_curMotion=1;
         check(AnimateReferenceParticle(&prim) && prim.m_curMotion==1,"reference motion is unchanged between animation divisors");
         g_resMgr.act.count=8;
+    }
+    {
+        CRenderObject actor;actor.m_pos={100,50,200};
+        CRagEffect effect;effect.m_type=44;effect.m_master=&actor;effect.m_duration=90;
+        const int beforeRng=rngDraws,beforeWaves=waves;
+        rngValues={1,0,90,0,29,180,2};rngCursor=0;g_resMgr.requests.clear();
+        effect.SpawnSmoke();
+        check(effect.m_primList.size()==2 && rngDraws-beforeRng==7 && rngCursor==7,"Smoke consumes one count draw then X-angle, Y-angle and speed for each particle");
+        check(effect.m_effectPos.x==100 && waves==beforeWaves,"Smoke copies parent position without a wave call");
+        auto it=effect.m_primList.begin();auto* first=*it++;auto* second=*it;
+        check(first->m_alpha==254 && first->m_maxAlpha==254 && first->m_alphaSpeed==0 && first->m_segments[0].argb==0xFEFFFFFF,
+            "Smoke retains original constructor alpha instead of synthetic fade-in");
+        check(first->m_duration==90 && first->m_size==1.5f && first->m_deltaPos2.y==-9 && first->m_rollSpeed==0.75f && first->m_fadeOutCnt==60,
+            "Smoke preserves source size, offset, roll and two-thirds fade point");
+        check(first->m_animSpeed==4 && first->m_repeatAnim && first->m_numSegments==1 && first->UsesReferenceParticle(),
+            "Smoke initializes one reference sprite segment with looping divisor four");
+        check(std::fabs(first->m_speed-0.3f)<0.000001f && std::fabs(second->m_speed-0.5f)<0.000001f,
+            "Smoke speed draws preserve original minimum and maximum");
+        check(std::fabs(first->m_matrix.m[2][0]-std::cos(GetRadian(75)))<0.000001f
+            && std::fabs(first->m_matrix.m[2][1]+std::sin(GetRadian(75)))<0.000001f,
+            "Smoke composes X rotation followed by Y rotation with production matrix code");
+        check(std::fabs(second->m_matrix.m[2][1]+std::sin(GetRadian(104)))<0.000001f,
+            "Smoke X-angle draw reaches original upper boundary 104 degrees");
+        check(g_resMgr.requests.size()==4 && first->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xBC\xB6\xD2\xBF\xAC\xB1\xE2.spr"
+            && first->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xBC\xB6\xD2\xBF\xAC\xB1\xE2.act",
+            "Smoke loads only the original recovered sprite and action");
+        first->OnProcess();
+        check(first->m_curMotion==1 && first->m_alpha==254 && first->m_roll==0.75f
+            && std::fabs(first->m_pos.x-(100+0.3f*std::cos(GetRadian(75))))<0.00001f
+            && std::fabs(first->m_pos.y-(41-0.3f*std::sin(GetRadian(75))))<0.00001f,
+            "Smoke first frame moves along its stored matrix, rotates and advances motion with unchanged alpha");
+        first->m_stateCnt=60;first->OnProcess();
+        check(std::fabs(first->m_alphaSpeed+254.0f/30)<0.00001f && first->m_alpha<254,
+            "Smoke begins source fade exactly at duration minus duration divided by three");
+        effect.m_stateCnt=1;actor.m_pos.x=130;const int draws=rngDraws;effect.SpawnSmoke();
+        check(effect.m_primList.size()==2 && rngDraws==draws && effect.m_effectPos.x==130,
+            "Smoke updates parent position after frame zero without re-emission or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        rngValues.clear();rngCursor=0;
+        effect.m_stateCnt=0;effect.SpawnSmoke();
+        check(effect.m_primList.size()==1,"Smoke zero count draw emits exactly one particle");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        rngValues={3};rngCursor=0;effect.SpawnSmoke();
+        check(effect.m_primList.size()==4,"Smoke maximum count draw emits exactly four particles");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+        check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"Smoke world cleanup releases each resource lock");
+    }
+    {
+        CRenderObject actor;actor.m_pos={5,20,25};
+        CRagEffect effect;effect.m_type=47;effect.m_master=&actor;effect.m_duration=80;
+        effect.m_param[0]=-2;effect.m_param[1]=0.25f;
+        const int draws=rngDraws,beforeWaves=waves;g_resMgr.requests.clear();effect.SpawnTorch();
+        check(effect.m_primList.size()==1 && rngDraws==draws && waves==beforeWaves,"Torch emits once without RNG or waves");
+        auto* prim=effect.m_primList.front();
+        check(effect.m_param[0]==1 && effect.m_param[1]==1 && prim->m_size==1 && prim->m_animSpeed==1,
+            "Torch repairs invalid size and speed in persistent parent parameters");
+        check(prim->m_pattern==0x200 && prim->m_alpha==254 && prim->m_alphaSpeed==0 && prim->m_maxAlpha==254
+            && prim->m_fadeOutCnt==-1 && prim->m_repeatAnim && prim->m_numSegments==1,
+            "Torch keeps source clip-color pattern and constructor alpha/fade/segment defaults");
+        check(prim->m_duration==80 && prim->m_deltaPos2.y==-10 && prim->UsesReferenceParticle(),
+            "Torch preserves parent duration and source vertical offset in reference routing");
+        check(g_resMgr.requests.size()==2 && prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\torch_01.spr"
+            && prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\torch_01.act",
+            "Torch requests only the original torch_01 sprite and action");
+        prim->OnProcess();
+        check(prim->m_alpha==254 && prim->m_curMotion==1 && prim->m_pos.y==10 && prim->m_pattern==0x200,
+            "Torch first frame retains alpha and clip-color control while advancing motion");
+        effect.m_stateCnt=1;actor.m_pos.z=50;effect.SpawnTorch();
+        check(effect.m_primList.size()==1 && effect.m_effectPos.z==50,"Torch copies parent on later frames without repeated emission");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=0;effect.m_param[0]=0.5f;effect.m_param[1]=2.9f;effect.SpawnTorch();prim=effect.m_primList.front();
+        check(effect.m_param[0]==0.5f && effect.m_param[1]==2.9f && prim->m_size==0.5f && prim->m_animSpeed==2,
+            "Torch retains positive fractional size and truncates the original animation divisor");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_resMgr.fail=true;effect.SpawnTorch();g_resMgr.fail=false;prim=effect.m_primList.front();
+        check(prim->UsesReferenceParticle() && !prim->m_particleSprRes && prim->m_texture.empty(),
+            "missing Torch assets keep reference dispatch without color-name or bitmap fallbacks");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"Torch world cleanup releases resource locks");
     }
     {
         CRagEffect effect;
