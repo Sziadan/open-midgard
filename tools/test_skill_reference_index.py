@@ -1,5 +1,6 @@
 """Run with .venv/Scripts/python.exe tools/test_skill_reference_index.py."""
 import csv
+import re
 from pathlib import Path
 import tempfile
 import unittest
@@ -11,6 +12,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ReferenceIndexTests(unittest.TestCase):
+    def test_primitive_enum_matches_original_ids(self):
+        def entries(path):
+            source = path.read_text(encoding="latin-1")
+            body = re.search(r"enum EFFECTPRIMID(?: : __int32)?\s*\{([\s\S]*?)\};", source).group(1)
+            rows = re.findall(r"(PP_\w+)\s*=\s*(0x[0-9A-Fa-f]+|\d+)", body)
+            return [(name, int(value, 0)) for name, value in rows]
+        expected = entries(ROOT / "HighPriest.exe.h")
+        actual = entries(ROOT / "src/world/RagEffect.h")
+        self.assertEqual(len(expected), 129)
+        self.assertEqual(actual, expected)
+        self.assertEqual({value for _, value in actual}, set(range(129)))
+
     def test_cp949_literal_hex_termination(self):
         self.assertEqual(cpp_string_literal(b'\xb0A.wav'), '"\\xB0" "A.wav"')
         self.assertEqual(cpp_string_literal(b'\xb01.wav'), '"\\xB0" "1.wav"')

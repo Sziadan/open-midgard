@@ -13,32 +13,137 @@ class CTexture;
 class CSprRes;
 class CActRes;
 
-// Remaining reconstructed selectors retain their existing values during the
-// incremental migration. Full reference enum/dispatch reconciliation is pending.
+// HighPriest.exe.h:2866-2997. All 129 original ids, with explicit values.
 enum EFFECTPRIMID {
-    PP_3DCIRCLE = 0,
-    PP_3DCYLINDER = 1,
-    PP_3DPARTICLEORBIT = 2,
-    PP_3DPARTICLE = 3,
-    PP_3DPARTICLEGRAVITY = 4,
-    PP_3DPARTICLESPLINE = 5,
-    PP_3DTEXTURE = 6,
-    PP_3DCROSSTEXTURE = 7,
-    PP_3DSPHERE = 8,
-    PP_3DQUADHORN = 9,
-    PP_2DCIRCLE = 10,
-    PP_2DFLASH = 11,
-    PP_2DTEXTURE = 12,
-    PP_MAPPILLAR = 13,
-    PP_MAPMAGICZONE = 14,
-    PP_MAPPARTICLE = 15,
-    PP_SUPERANGEL = 0x55,
+    PP_2DTEXTURE = 0x0,
+    PP_2DTEXTUREORBIT = 0x1,
+    PP_2DQUAD = 0x2,
+    PP_2DFLASH = 0x3,
+    PP_2DCIRCLE = 0x4,
+    PP_3DPARTICLE = 0x5,
+    PP_3DPARTICLEGRAVITY = 0x6,
+    PP_3DPARTICLEORBIT = 0x7,
+    PP_3DPARTICLESPLINE = 0x8,
+    PP_3DQUADHORN = 0x9,
+    PP_3DSPLINE = 0xA,
+    PP_3DSPIRAL = 0xB,
+    PP_3DCIRCLE = 0xC,
+    PP_3DCYLINDER = 0xD,
+    PP_3DSPHERE = 0xE,
+    PP_3DTEXTURE = 0xF,
+    PP_3DCROSSTEXTURE = 0x10,
+    PP_3DSHINELIGHT = 0x11,
+    PP_3DCYLINDERHALF = 0x12,
+    PP_3DFLASH = 0x13,
+    PP_3DLINE = 0x14,
+    PP_3DPARTICLE_NOMASTER = 0x15,
+    PP_3DTEXTURE_NOMASTER = 0x16,
+    PP_3DCASTING = 0x17,
+    PP_3DCASTING_2 = 0x18,
+    PP_3DCASTING_3 = 0x19,
+    PP_MAPMAGICZONE = 0x1A,
+    PP_MAPPARTICLE = 0x1B,
+    PP_3DAURA = 0x1C,
+    PP_3DAURA_2 = 0x1D,
+    PP_GI_1 = 0x1E,
+    PP_GI_2 = 0x1F,
+    PP_CHOOKGI = 0x20,
+    PP_CLOUD = 0x21,
+    PP_GI_3 = 0x22,
+    PP_GUMGANG = 0x23,
+    PP_GI_4 = 0x24,
+    PP_GRANDCROSS2 = 0x25,
+    PP_LINELINK = 0x26,
+    PP_LANDPROTECTOR = 0x27,
+    PP_SAKURA = 0x28,
+    PP_MAPPILLAR = 0x29,
+    PP_SHIELDBOOMERANG = 0x2A,
+    PP_INTIMIDATE = 0x2B,
+    PP_TEIHIT1 = 0x2C,
+    PP_TEIHIT2 = 0x2D,
+    PP_CHIMTO = 0x2E,
+    PP_BOTTOM = 0x2F,
+    PP_BOTTOM2 = 0x30,
+    PP_BOTTOMOUT = 0x31,
+    PP_GI_5 = 0x32,
+    PP_BOTTOMSPR = 0x33,
+    PP_POKJUK = 0x34,
+    PP_THROWITEM = 0x35,
+    PP_CHEMICALPROTECTION = 0x36,
+    PP_CHEMICAL2 = 0x37,
+    PP_CHEMICAL3 = 0x38,
+    PP_TELEPORTATION2 = 0x39,
+    PP_FIRSTAID = 0x3A,
+    PP_PARTICLE_UP = 0x3B,
+    PP_HEAL = 0x3C,
+    PP_GUARD = 0x3D,
+    PP_WIND = 0x3E,
+    PP_PORTAL = 0x3F,
+    PP_RECT_UP = 0x40,
+    PP_3DCASTING_4 = 0x41,
+    PP_FOREST = 0x42,
+    PP_FOOT = 0x43,
+    PP_ASURACASTING = 0x44,
+    PP_TRIPLEATTACK = 0x45,
+    PP_HITLINE = 0x46,
+    PP_BLIND = 0x47,
+    PP_POISON = 0x48,
+    PP_MAGNUM2 = 0x49,
+    PP_CALLZONE = 0x4A,
     PP_SLASH1 = 0x4B,
-    PP_HEAL = 22,
-    PP_PORTAL = 23,
-    PP_WIND = 24,
-    PP_WATERFALL = 25,
-    PP_CLOUD = 26,
+    PP_SAINTWING = 0x4C,
+    PP_SPHEREWIND = 0x4D,
+    PP_COLORPAPER = 0x4E,
+    PP_WATERFALL = 0x4F,
+    PP_WATERFALLPARTICLE = 0x50,
+    PP_LIGHTSPHERE = 0x51,
+    PP_EFFECTTEXTURE = 0x52,
+    PP_MINI_TETRIS = 0x53,
+    PP_GHOST = 0x54,
+    PP_SUPERANGEL = 0x55,
+    PP_SOULBREAKER = 0x56,
+    PP_PRESSURE = 0x57,
+    PP_GROUNDSHAKE = 0x58,
+    PP_BASH3D = 0x59,
+    PP_RECT_UP2 = 0x5A,
+    PP_SPHEREWIND2 = 0x5B,
+    PP_SOULBREAKER2 = 0x5C,
+    PP_RAINBOW = 0x5D,
+    PP_PEONG = 0x5E,
+    PP_EFFECTTEXTURE2 = 0x5F,
+    PP_PEONGUP = 0x60,
+    PP_TANJI2 = 0x61,
+    PP_AIRTEXTURE = 0x62,
+    PP_DOUBLEGUMGANG = 0x63,
+    PP_HITLINE3 = 0x64,
+    PP_ELECTRIC = 0x65,
+    PP_ELECTRIC2 = 0x66,
+    PP_STORMKICK = 0x67,
+    PP_HALFSPHERE = 0x68,
+    PP_ATTACKENERGY = 0x69,
+    PP_ATTACKENERGY2 = 0x6A,
+    PP_3DCASTING_5 = 0x6B,
+    PP_FLOWERCAST = 0x6C,
+    PP_SOULLINK = 0x6D,
+    PP_HEAL_LOW = 0x6E,
+    PP_SOULPARTICLE = 0x6F,
+    PP_GROUNDSAMPLE = 0x70,
+    PP_GI_EXPLOSION = 0x71,
+    PP_HERMODE = 0x72,
+    PP_3DAURA_3 = 0x73,
+    PP_SHIELDBOOMERANG3 = 0x74,
+    PP_3DQUADHORN2 = 0x75,
+    PP_ACIDDEMON = 0x76,
+    PP_STIN = 0x77,
+    PP_SMA = 0x78,
+    PP_SMA2 = 0x79,
+    PP_STIN2 = 0x7A,
+    PP_TWILIGHT = 0x7B,
+    PP_KOUENKA = 0x7C,
+    PP_STIN4 = 0x7D,
+    PP_STIN5 = 0x7E,
+    PP_BUBBLE_DROP = 0x7F,
+    PP_EFFECTTEXTURE_ANI = 0x80,
 };
 
 struct EffectBandState {
@@ -55,47 +160,47 @@ struct EffectBandState {
     std::array<u8, 21> modes{};
 };
 
-constexpr int kPrimTypeParticleUp = 0x3B;
-constexpr int kPrimTypeBottom = 0x2F;
-constexpr int kPrimTypeBottomOut = 0x31;
-constexpr int kPrimTypeHeal = 0x3C;
-constexpr int kPrimTypeHealLow = 0x6E;
-constexpr int kPrimTypeGiExplosion = 0x71;
-constexpr int kPrimTypeAcidDemon = 0x76;
-constexpr int kPrimTypeFlowerCast = 0x6C;
-constexpr int kPrimTypeRectUp = 0x40;
-constexpr int kPrimTypeBlind = 0x47;
-constexpr int kPrimTypeCasting4 = 0x41;
-constexpr int kPrimTypeCasting5 = 0x6B;
-constexpr int kPrimTypeThrowItem = 0x35;
-constexpr int kPrimTypeEffectTexture = 0x52;
-constexpr int kPrimTypeChemical = 0x36;
-constexpr int kPrimTypeChemical2 = 0x37;
-constexpr int kPrimTypeChemical3 = 0x38;
-constexpr int kPrimTypeTeleport2 = 0x39;
-constexpr int kPrimTypeFirstAid = 0x3A;
-constexpr int kPrimTypeWind = 0x3E;
-constexpr int kPrimTypePortal = 0x3F;
-constexpr int kPrimTypePoison = 0x48;
-constexpr int kPrimTypeForest = 0x42;
-constexpr int kPrimTypeSaintWing = 0x4C;
-constexpr int kPrimTypeMagnum2 = 0x49;
-constexpr int kPrimTypeSphereWind = 0x4D;
-constexpr int kPrimTypeColorPaper = 0x4E;
-constexpr int kPrimTypeGi1 = 0x1E;
-constexpr int kPrimTypeGi2 = 0x1F;
-constexpr int kPrimTypeGi4 = 0x24;
-constexpr int kPrimTypeStormKick = 0x67;
-constexpr int kPrimTypeHalfSphere = 0x68;
-constexpr int kPrimTypeAttackEnergy = 0x69;
-constexpr int kPrimTypeElectric = 0x65;
-constexpr int kPrimTypeElectric2 = 0x66;
-constexpr int kPrimTypeAttackEnergy2 = 0x6A;
-constexpr int kPrimTypeGi5 = 0x32;
-constexpr int kPrimTypeCasting = 0x17;
-constexpr int kPrimTypeCasting2 = 0x18;
-constexpr int kPrimTypeMapPillar = 0x29;
-constexpr int kPrimTypeCasting3 = 0x19;
+constexpr int kPrimTypeParticleUp = PP_PARTICLE_UP;
+constexpr int kPrimTypeBottom = PP_BOTTOM;
+constexpr int kPrimTypeBottomOut = PP_BOTTOMOUT;
+constexpr int kPrimTypeHeal = PP_HEAL;
+constexpr int kPrimTypeHealLow = PP_HEAL_LOW;
+constexpr int kPrimTypeGiExplosion = PP_GI_EXPLOSION;
+constexpr int kPrimTypeAcidDemon = PP_ACIDDEMON;
+constexpr int kPrimTypeFlowerCast = PP_FLOWERCAST;
+constexpr int kPrimTypeRectUp = PP_RECT_UP;
+constexpr int kPrimTypeBlind = PP_BLIND;
+constexpr int kPrimTypeCasting4 = PP_3DCASTING_4;
+constexpr int kPrimTypeCasting5 = PP_3DCASTING_5;
+constexpr int kPrimTypeThrowItem = PP_THROWITEM;
+constexpr int kPrimTypeEffectTexture = PP_EFFECTTEXTURE;
+constexpr int kPrimTypeChemical = PP_CHEMICALPROTECTION;
+constexpr int kPrimTypeChemical2 = PP_CHEMICAL2;
+constexpr int kPrimTypeChemical3 = PP_CHEMICAL3;
+constexpr int kPrimTypeTeleport2 = PP_TELEPORTATION2;
+constexpr int kPrimTypeFirstAid = PP_FIRSTAID;
+constexpr int kPrimTypeWind = PP_WIND;
+constexpr int kPrimTypePortal = PP_PORTAL;
+constexpr int kPrimTypePoison = PP_POISON;
+constexpr int kPrimTypeForest = PP_FOREST;
+constexpr int kPrimTypeSaintWing = PP_SAINTWING;
+constexpr int kPrimTypeMagnum2 = PP_MAGNUM2;
+constexpr int kPrimTypeSphereWind = PP_SPHEREWIND;
+constexpr int kPrimTypeColorPaper = PP_COLORPAPER;
+constexpr int kPrimTypeGi1 = PP_GI_1;
+constexpr int kPrimTypeGi2 = PP_GI_2;
+constexpr int kPrimTypeGi4 = PP_GI_4;
+constexpr int kPrimTypeStormKick = PP_STORMKICK;
+constexpr int kPrimTypeHalfSphere = PP_HALFSPHERE;
+constexpr int kPrimTypeAttackEnergy = PP_ATTACKENERGY;
+constexpr int kPrimTypeElectric = PP_ELECTRIC;
+constexpr int kPrimTypeElectric2 = PP_ELECTRIC2;
+constexpr int kPrimTypeAttackEnergy2 = PP_ATTACKENERGY2;
+constexpr int kPrimTypeGi5 = PP_GI_5;
+constexpr int kPrimTypeCasting = PP_3DCASTING;
+constexpr int kPrimTypeCasting2 = PP_3DCASTING_2;
+constexpr int kPrimTypeMapPillar = PP_MAPPILLAR;
+constexpr int kPrimTypeCasting3 = PP_3DCASTING_3;
 
 // One 180-byte m_GI slot from the 2008 CEffectPrim. Offsets were taken from the
 // stores in CRagEffect::Heal at 0x6319B0. The spark quad uses distance as its
@@ -154,6 +259,7 @@ public:
     void Init(CRagEffect* master, EFFECTPRIMID effectPrimId, const vector3d& deltaPos);
     u8 OnProcess() override;
     bool ProcessPrimitiveFrame();
+    bool UsesLegacyBandPayload() const;
     void SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t) override;
     void Render(matrix* viewMatrix) override;
 
@@ -238,6 +344,7 @@ public:
     void InitWorld(const C3dWorldRes::effectSrcInfo& source);
     CEffectPrim* LaunchEffectPrim(EFFECTPRIMID effectPrimId, const vector3d& deltaPos);
     void DiscardPrimitive(CEffectPrim* prim);
+    bool IsWorldEffect() const { return m_isWorldEffect; }
     const vector3d& EffectPosition() const { return m_effectPos; }
     int GetEffectType() const { return m_type; }
     int GetStateCount() const { return m_stateCnt; }

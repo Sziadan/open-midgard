@@ -4,9 +4,16 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A SuperAngel emitter/GI update and removal of the final invented selectors. Completed parts are committed separately; the preceding checkpoint is `2bf2522` (job-level-up/slash).
+Current work: WP5A primitive identifier reconciliation. SuperAngel emitter/GI state is checkpointed in `2c9fd52`; all 129 primitive ids now match the reference. Handler and shared renderer parity remain partial.
 
-Next action: replace the remaining reconstructed enum values with all 129 reference ids, then port the shared sprite-particle per-clip renderer and remaining primitive bodies. SuperAngel's emitter/state and exact assets are ported, but its shared sprite compositor is not a complete Render3DParticle port. Resource loading and all unfinished packages/acceptance remain open.
+Next action: port the shared sprite-particle per-clip renderer and remaining primitive bodies. SuperAngel's emitter/state and exact assets are ported, but its shared sprite compositor is not a complete Render3DParticle port. Resource loading and all unfinished packages/acceptance remain open.
+
+## Primitive identifier reconciliation — 2026-10-25
+
+- Replaced the shortened reconstructed EFFECTPRIMID with all 129 explicit entries from HighPriest.exe.h:2866-2997. Existing raw-id aliases now name the canonical enum entries. No invented selectors remain. This establishes the identifier contract; it does not establish all 129 handler bodies.
+- Retained RSW/synthetic map emitters still use band payloads for PP_MAPPILLAR, PP_PORTAL and PP_WIND. Dispatch now distinguishes those world-effect payloads from skill/packet GI payloads so corrected ids preserve the existing map handlers. Their original behavior remains separate parity work.
+- Standalone fixtures now extract the production enum. A Python regression compares every ordered name/value pair with the reference, checks the count and contiguous 0..128 values. Seven C++ checks cover the restricted world-effect payload distinction.
+- Validation: release build, five silent C++ suites (263 checks, including 205 lifecycle/primitive checks), six Python tests and diff whitespace check pass. Approved OldRO deployment SHA-256 matches: `45366E7FC843C449394A93ADECB5FC4574EE8BBF759B8B62B4DA83F336E887D9`. No media or live acceptance was used. WP5A and the overall plan remain incomplete.
 
 ## SuperAngel emitter / update continuation — 2026-10-25
 

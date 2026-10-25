@@ -6065,6 +6065,14 @@ void CEffectPrim::SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgpara
     }
 }
 
+// The retained RSW/synthetic-map emitters use legacy band state. Skill and
+// packet effects use the reference GI payload for these same canonical ids.
+bool CEffectPrim::UsesLegacyBandPayload() const
+{
+    return m_master && m_master->IsWorldEffect()
+        && (m_type == PP_MAPPILLAR || m_type == PP_PORTAL || m_type == PP_WIND);
+}
+
 // Ref/RagEffectPrim.cpp:5733-5770, 6198-6206. Unlike effects, primitives
 // include their final duration frame. Only the two life-99 texture kinds
 // bypass the zero-skip-frame gate.
@@ -6083,7 +6091,7 @@ u8 CEffectPrim::OnProcess()
     default:
         break;
     }
-    if (!g_isSkipFrame && !((static_cast<int>(m_type) == 0 || static_cast<int>(m_type) == 0x10) && m_gi[0].life == 99)) {
+    if (!g_isSkipFrame && !((m_type == PP_2DTEXTURE || m_type == PP_3DCROSSTEXTURE) && m_gi[0].life == 99)) {
         return 1;
     }
     if (!ProcessPrimitiveFrame()) {
@@ -6151,7 +6159,7 @@ bool CEffectPrim::ProcessPrimitiveFrame()
         UpdateGi2Primitive(this);
         return true;
     }
-    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeMapPillar)) {
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeMapPillar) && !UsesLegacyBandPayload()) {
         UpdateMapPillarGi(this);
         return true;
     }
@@ -6250,11 +6258,11 @@ bool CEffectPrim::ProcessPrimitiveFrame()
         UpdatePoisonPrimitive(this);
         return true;
     }
-    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypePortal)) {
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypePortal) && !UsesLegacyBandPayload()) {
         UpdatePortalPrimitive(this);
         return true;
     }
-    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeWind)) {
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeWind) && !UsesLegacyBandPayload()) {
         UpdateWindPrimitive(this);
         return true;
     }
@@ -6334,8 +6342,8 @@ void CEffectPrim::Render(matrix* viewMatrix)
         RenderSlash1Primitive(*this, *viewMatrix);
         return;
     }
-    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting3)
-        || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi5) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi1) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeTeleport2) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeHeal) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGiExplosion) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeAcidDemon) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeFlowerCast) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting2) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeMapPillar) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi2)) {
+    if ((m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting3)
+        || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi5) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi1) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeTeleport2) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeHeal) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGiExplosion) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeAcidDemon) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeFlowerCast) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting2) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeMapPillar) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi2)) && !UsesLegacyBandPayload()) {
         RenderHealCasting(*this, *viewMatrix);
         return;
     }
@@ -6399,7 +6407,7 @@ void CEffectPrim::Render(matrix* viewMatrix)
         RenderPoison(*this, *viewMatrix);
         return;
     }
-    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypePortal)) {
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypePortal) && !UsesLegacyBandPayload()) {
         RenderHealCasting(*this, *viewMatrix);
         return;
     }
@@ -6427,7 +6435,7 @@ void CEffectPrim::Render(matrix* viewMatrix)
         RenderStormKick(*this, *viewMatrix);
         return;
     }
-    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeWind)) {
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeWind) && !UsesLegacyBandPayload()) {
         RenderWind(*this, *viewMatrix);
         return;
     }

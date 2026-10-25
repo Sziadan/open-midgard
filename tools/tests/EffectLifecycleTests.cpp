@@ -129,7 +129,8 @@ struct CWorld {
 } g_world;
 struct CGameMode { CWorld* m_world = &g_world; CView* m_view = &testView; } gameMode;
 struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
-enum EFFECTPRIMID { PP_SUPERANGEL = 0x55, PP_SLASH1 = 0x4B, PP_2DTEXTURE = 0, PP_3DCROSSTEXTURE = 0x10, PP_3DQUADHORN = 0x9, Other = 0x7F };
+#include "PrimitiveEnum.inc"
+constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
 void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
 struct CEffectPrim : CGameObject {
@@ -159,6 +160,7 @@ struct CEffectPrim : CGameObject {
     void Init(CRagEffect*, EFFECTPRIMID, const vector3d&);
     void SendMsg(CGameObject*, int, msgparam_t, msgparam_t, msgparam_t) override;
     u8 OnProcess() override;
+    bool UsesLegacyBandPayload() const;
     bool ProcessPrimitiveFrame() {
         ++updates;
         observedFrame = m_stateCnt;
@@ -210,6 +212,7 @@ struct CRagEffect : CGameObject {
     ~CRagEffect() override;
     CRenderObject* ResolveCurrentMaster() { return m_master; }
     CAbleToMakeEffect* ResolveCurrentEffectOwner() { return dynamic_cast<CAbleToMakeEffect*>(m_master); }
+    bool IsWorldEffect() const { return m_isWorldEffect; }
     const vector3d& EffectPosition() const { return m_effectPos; }
     int GetEffectType() const { return m_type; }
     u8 OnProcess() override;
@@ -1022,6 +1025,19 @@ int main()
         prim.m_renderFlag=0x201;RenderSuperAngelPrimitive(prim,view);
         check(angelSubmittedColor==0xFFFFFFFFu && angelSubmittedBlend==6,
             "SuperAngel clip-color flag does not multiply clip alpha by primitive alpha");
+    }
+    {
+        CRagEffect effect;
+        CEffectPrim prim;prim.m_master=&effect;
+        for (auto type:{PP_MAPPILLAR,PP_PORTAL,PP_WIND}) {
+            prim.m_type=type;
+            check(!prim.UsesLegacyBandPayload(),"canonical skill primitive ids use reference GI payload");
+            effect.m_isWorldEffect=true;
+            check(prim.UsesLegacyBandPayload(),"retained map emitter dispatch preserves legacy band payload after enum correction");
+            effect.m_isWorldEffect=false;
+        }
+        prim.m_type=PP_HEAL;effect.m_isWorldEffect=true;
+        check(!prim.UsesLegacyBandPayload(),"legacy map payload exception is limited to its three original band kinds");
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
