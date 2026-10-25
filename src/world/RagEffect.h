@@ -459,6 +459,7 @@ private:
     void ApplyPoison(int variant);
     void ApplyEntry2();
     void ApplyPortal2(int variant);
+    void ApplyReadyPortal();
     void ApplyReadyPortal2();
     void ApplyWarpZone2(const char* textureName);
     void ApplyBlackDevil(const char* textureName);

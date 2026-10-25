@@ -235,6 +235,7 @@ struct CRagEffect : CGameObject {
     void ApplySuperAngel(signed char,signed char);
     void ProcessSuperAngelEffect();
     void SpawnRuwach();
+    void ApplyReadyPortal();
     void ApplyWarpZone2(const char*);
     void ApplySight(float,bool);
     void SpawnSight();
@@ -1545,6 +1546,41 @@ int main()
             "missing WarpZone2 orbit assets retain reference routing without soft-disc replacement");
         effect.ClearPrims();g_world.UpdateGameObjects();
         check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"WarpZone2 releases all orbit resource locks through world cleanup");
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={900,900,900};listener.m_pos={2,500,4};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=35;effect.m_master=&actor;effect.m_duration=200;effect.m_effectPos={10,50,30};
+        waveCalls.clear();const int draws=rngDraws;
+        effect.ApplyReadyPortal();auto* ring=effect.m_primList.front();
+        check(effect.m_primList.size()==1 && ring->m_type==PP_3DCIRCLE && ring->UsesReferenceCircle(),
+            "ReadyPortal thirty-five emits one canonical reference circle on zero");
+        check(waveCalls.size()==1 && waveCalls[0].name=="effect\\EF_ReadyPortal.wav" && waveCalls[0].x==8 && waveCalls[0].y==0
+            && waveCalls[0].z==26 && rngDraws==draws,"ReadyPortal uses stored horizontal origin for wave with no RNG");
+        check(effect.m_effectPos.x==10 && ring->m_segments[0].pos.y==50,
+            "ReadyPortal keeps original stored effect position rather than copying a moving actor");
+        check(ring->m_duration==30 && ring->m_deltaPos2.y==-1 && ring->m_innerSize==8 && ring->m_latitude==90
+            && ring->m_radiusSpeed==1 && std::fabs(ring->m_radiusAccel+1.0f/60)<0.00000001f && ring->m_fadeOutCnt==15,
+            "ReadyPortal circle matches original duration, expansion, orientation and fade profile");
+        check(ring->m_pattern==0 && ring->m_radius==0 && ring->m_alpha==254 && ring->m_maxAlpha==254
+            && ring->m_numSegments==1 && ring->m_renderFlag==1,"ReadyPortal retains source constructor flags, radius, alpha and segment defaults");
+        check(ring->m_segments[0].argb==0xFEFFFFFF && std::fabs(ring->m_segments[0].transform.m[1][2]-1)<0.000001f
+            && std::string(g_texMgr.lastPath)=="effect\\ring_blue.tga","ReadyPortal initializes rotated segment before exact ring-blue texture request");
+        ring->OnProcess();
+        check(ring->m_pos.y==49 && std::fabs(ring->m_radius-(1.0f-1.0f/60))<0.000001f && ring->m_size==ring->m_radius
+            && ring->m_alpha==254,"ReadyPortal first frame follows stored parent height and fills initial disk from expanding radius");
+        for(int i=0;i<10;++i)ring->OnProcess();
+        check(ring->m_radius>8 && ring->m_size==8,"ReadyPortal uses inner-size width once radius exceeds it without invented fill pattern");
+        ring->m_stateCnt=15;ring->OnProcess();
+        check(std::fabs(ring->m_alphaSpeed+254.0f/15)<0.00001f && ring->m_alpha<254,
+            "ReadyPortal begins source current-alpha fade exactly at frame fifteen");
+        effect.m_stateCnt=13;effect.ApplyReadyPortal();
+        check(effect.m_primList.size()==1 && waveCalls.size()==1,"ReadyPortal does not emit between fourteen-frame boundaries");
+        effect.m_stateCnt=14;effect.ApplyReadyPortal();
+        check(effect.m_primList.size()==2 && waveCalls.size()==2,"ReadyPortal repeats both circle and sound on frame fourteen");
+        effect.m_stateCnt=28;effect.ApplyReadyPortal();
+        check(effect.m_primList.size()==3 && waveCalls.size()==3 && rngDraws==draws,"ReadyPortal preserves recurring timing without consuming RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
     }
     {
         CRagEffect effect;

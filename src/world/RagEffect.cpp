@@ -6061,7 +6061,7 @@ void ProcessReferenceParticleAlpha(CEffectPrim* prim)
     if (prim->m_alpha > prim->m_maxAlpha) prim->m_alpha = prim->m_maxAlpha;
 }
 
-// Ref/RagEffectPrim.cpp:1780-1852. Blessing/WarpZone2 rings have no change
+// Ref/RagEffectPrim.cpp:1780-1852. ReadyPortal/Blessing/WarpZone2 have no change
 // points; preserve their reference state without terrain-height substitution.
 bool UpdateReferenceCircleState(CEffectPrim* prim)
 {
@@ -6308,7 +6308,7 @@ void CEffectPrim::SetParticleResources(const char* sprName, const char* actName,
 bool CEffectPrim::UsesReferenceCircle() const
 {
     return m_type == PP_3DCIRCLE && m_master
-        && (m_master->GetEffectType() == 42 || m_master->GetEffectType() == 321);
+        && (m_master->GetEffectType() == 35 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 321);
 }
 
 bool CEffectPrim::UsesReferenceParticle() const
@@ -7563,6 +7563,10 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
+    case 35:
+        // ProcessEffectFrame dispatches the original ReadyPortal directly.
+        m_handler = Handler::None;
+        break;
     case 312: case 313: case 325: case 331: case 332:
         // Specialized reference helpers are dispatched by OnProcess2.
         // Keep these out of generic STR-handler selection during Init.
@@ -9641,6 +9645,34 @@ void CRagEffect::ApplyWarpZone2(const char* textureName)
         prim->m_animSpeed = 4; prim->m_repeatAnim = true; prim->m_numSegments = 1;
         ShiftCircleSegments(prim);
     }
+}
+
+// Ref/RagEffect.cpp:7066-7098 (0x5FA100), effect 35. This is distinct
+// from retained synthetic RSW ReadyPortal scheduling. Parent origin is stored.
+void CRagEffect::ApplyReadyPortal()
+{
+    if (m_stateCnt % 14 != 0) return;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_ReadyPortal.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f); // 0x71B760
+    }
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
+    prim->m_duration = 30;
+    prim->m_deltaPos2.y = -1.0f;
+    prim->m_innerSize = 8.0f;
+    prim->m_latitude = 90.0f;
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+    prim->m_radiusSpeed = 1.0f;
+    prim->m_radiusAccel = static_cast<float>(prim->m_radiusSpeed / static_cast<double>(prim->m_duration) * -0.5);
+    prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 2;
+    // Original constructor alpha, radius/pattern and segment defaults.
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_numSegments = 1;
+    ShiftCircleSegments(prim);
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false)); // 0x71943C
 }
 
 void CRagEffect::ApplyReadyPortal2()
@@ -12043,6 +12075,10 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 35) {
+        ApplyReadyPortal();
+        return true;
+    }
     if (m_type == 582) {
         ProcessSuperAngelEffect();
         return true;

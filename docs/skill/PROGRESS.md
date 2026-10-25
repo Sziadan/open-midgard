@@ -3,10 +3,18 @@
 Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
-Last updated: 2026-10-25
-Current work: WP5A obsolete heal/recovery emitter cleanup. WarpZone2 is checkpointed in `221a574`; five unreachable legacy heal/recovery circle/cylinder/particle implementations have now been removed. Active reference helper bodies and tier routing remain unchanged.
+Last updated: 2026-10-26
+Current work: WP5A original ReadyPortal (effect 35) circle migration. Previous cleanup checkpoint: `51bc6da`. The normal effect now follows the original stored-origin sound/circle schedule and shares the reference circle update/render path.
 
 Next action: port remaining active circle emitters and their initialization/state. Generic particle control branches and other callers (including FireBall), map initialization/scheduling, resource-loader/cache parity, full renderer/fog/backend behavior and unfinished packages/acceptance remain open.
+
+## Original ReadyPortal circle migration — 2026-10-26
+
+- Ported Ref/RagEffect.cpp:7066-7098 (0x5FA100), normal effect 35, independently of synthetic map effect 50002 and ReadyPortal2. Every fourteenth frame plays the exact wave at horizontal stored-origin/listener delta, then emits PP_3DCIRCLE with duration 30, y -1, inner size 8, X rotation 90 degrees, radius speed 1 and source deceleration/fade. No actor-position refresh or RNG draw is introduced.
+- Restored constructor alpha/max 254, pattern/radius zero, render flag 1 and one initial rotated segment. Exact ring_blue texture and EF_ReadyPortal wave match executable bytes. Bound this caller to reference circle state/rendering and direct dispatcher handling.
+- Validation: release build, six silent C++ suites / 504 checks (375 lifecycle/primitive, 71 rendering, 58 other), six Python tests, two-literal executable byte audit and whitespace check pass. Twelve new numeric checks cover cadence, stored origin, audio, defaults, segment initialization, expansion/width and fade. Corrected the test-body extraction boundary to keep the new helper from being included twice.
+- Approved OldRO deployment SHA-256 matches `E82C68D3F5BC8C9E64C2D327CD1F89942186F2456AC7FAF39DB5ECBC38889C66`. No media/live acceptance. Synthetic map scheduling, other circle callers, resources and full renderer/backend parity remain open; WP5A and the overall plan remain incomplete.
+
 
 ## Obsolete heal / recovery emitter cleanup — 2026-10-25
 
