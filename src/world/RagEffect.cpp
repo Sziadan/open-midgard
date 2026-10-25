@@ -261,10 +261,6 @@ const char* RefRuwachSpriteStem()
     return "\xC0\xCC\xC6\xD1\xC6\xAE";
 }
 
-const char* RefBlessingSpriteStem()
-{
-    return "\xC3\xE0\xBA\xB9";
-}
 
 const char* RefParticle2SpriteStem()
 {
@@ -276,10 +272,6 @@ const char* RefParticle3SpriteStem()
     return "particle3";
 }
 
-const char* RefParticle6SpriteStem()
-{
-    return "particle6";
-}
 
 bool ConfigureEffectSpritePrim(CEffectPrim* prim,
     std::initializer_list<const char*> stems,
@@ -5970,8 +5962,63 @@ bool AnimateReferenceParticle(CEffectPrim* prim)
     return true;
 }
 
+// Ref/RagEffectPrim.cpp:2184-2328, ordinary (non-keyed) alpha branch.
+void ProcessReferenceParticleAlpha(CEffectPrim* prim)
+{
+    if ((prim->m_pattern & 0x80) != 0) {
+        if (prim->m_alphaSpeed < 0.0f) {
+            if (prim->m_alpha <= prim->m_minAlpha) prim->m_alphaSpeed *= -1.0f;
+        } else if (prim->m_alpha >= prim->m_maxAlpha) {
+            prim->m_alphaSpeed *= -1.0f;
+        }
+    }
+    const int remaining = prim->m_master->GetDuration() - prim->m_master->GetStateCount();
+    if (!prim->m_isDisappear && prim->m_duration - prim->m_stateCnt > remaining + 1) {
+        prim->m_isDisappear = true;
+        prim->m_pattern &= ~0x80;
+        prim->m_alphaSpeed = static_cast<float>(-(prim->m_alpha / static_cast<double>(remaining)));
+    }
+    if (prim->m_stateCnt == prim->m_fadeOutCnt) {
+        prim->m_pattern &= ~0x80;
+        prim->m_alphaSpeed = static_cast<float>(-(prim->m_alpha
+            / static_cast<double>(prim->m_duration - prim->m_stateCnt) * prim->m_alphaDelta));
+    }
+    prim->m_alpha += prim->m_alphaSpeed;
+    if (prim->m_alpha < prim->m_minAlpha) prim->m_alpha = prim->m_minAlpha;
+    if (prim->m_alpha > prim->m_maxAlpha) prim->m_alpha = prim->m_maxAlpha;
+}
+
+// Ref/RagEffectPrim.cpp:1780-1852. Blessing's ring has no change point;
+// this follows its reference circle state without terrain-height substitution.
+bool UpdateBlessingCircle(CEffectPrim* prim)
+{
+    prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
+    prim->m_speed += prim->m_accel;
+    prim->m_longSpeed += prim->m_longAccel;
+    prim->m_radiusSpeed += prim->m_radiusAccel;
+    prim->m_innerSpeed += prim->m_innerAccel;
+    prim->m_longitude += prim->m_longSpeed;
+    prim->m_radius += prim->m_radiusSpeed;
+    prim->m_innerSize += prim->m_innerSpeed;
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+    prim->m_speed3d = {
+        prim->m_speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
+        prim->m_speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
+        prim->m_speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
+    };
+    prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
+    prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
+    prim->m_size = ((prim->m_pattern & 1) != 0 || prim->m_radius < prim->m_innerSize) ? prim->m_radius : prim->m_innerSize;
+    ProcessReferenceParticleAlpha(prim);
+    ShiftCircleSegments(prim);
+    return true;
+}
+
 // Ref/RagEffectPrim.cpp:456-594,2184-2328. Poison, Ruwach, Smoke and Torch use
 // linear PP_3DPARTICLE state with no change points or movement-pattern bits.
+// Blessing adds the 0x80 alpha-twinkle pattern handled by the shared alpha port.
 // Torch's 0x200 bit selects clip color only. Other callers still need their
 // additional pattern/control branches.
 bool UpdateLinearReferenceParticle(CEffectPrim* prim)
@@ -5988,20 +6035,7 @@ bool UpdateLinearReferenceParticle(CEffectPrim* prim)
     prim->m_roll += prim->m_rollSpeed;
     prim->m_size += prim->m_sizeSpeed;
     prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
-    const int remaining = prim->m_master->GetDuration() - prim->m_master->GetStateCount();
-    if (!prim->m_isDisappear && prim->m_duration - prim->m_stateCnt > remaining + 1) {
-        prim->m_isDisappear = true;
-        prim->m_pattern &= ~0x80;
-        prim->m_alphaSpeed = static_cast<float>(-(prim->m_alpha / static_cast<double>(remaining)));
-    }
-    if (prim->m_stateCnt == prim->m_fadeOutCnt) {
-        prim->m_pattern &= ~0x80;
-        prim->m_alphaSpeed = static_cast<float>(-(prim->m_alpha
-            / static_cast<double>(prim->m_duration - prim->m_stateCnt) * prim->m_alphaDelta));
-    }
-    prim->m_alpha += prim->m_alphaSpeed;
-    if (prim->m_alpha < prim->m_minAlpha) prim->m_alpha = prim->m_minAlpha;
-    if (prim->m_alpha > prim->m_maxAlpha) prim->m_alpha = prim->m_maxAlpha;
+    ProcessReferenceParticleAlpha(prim);
     ShiftCircleSegments(prim);
     return AnimateReferenceParticle(prim);
 }
@@ -6149,17 +6183,23 @@ void RenderReferenceParticlePrimitive(const CEffectPrim& prim, matrix& view)
     RenderParticleSprites(prim, *prim.m_particleSprRes, *prim.m_particleActRes, view, slope);
 }
 
-// Ref SetSprName/SetActName retain sprite-then-action lock order.
-void CEffectPrim::SetParticleResources(const char* sprName, const char* actName)
+// Ref SetSprName/SetActName retain each caller's resource/lock order.
+void CEffectPrim::SetParticleResources(const char* sprName, const char* actName, bool actionFirst)
 {
     m_spriteSprName = sprName;
     m_spriteActName = actName;
-    if (m_particleSprRes) m_particleSprRes->Unlock();
-    m_particleSprRes = g_resMgr.GetAs<CSprRes>(sprName);
-    if (m_particleSprRes) m_particleSprRes->Lock();
-    if (m_particleActRes) m_particleActRes->Unlock();
-    m_particleActRes = g_resMgr.GetAs<CActRes>(actName);
-    if (m_particleActRes) m_particleActRes->Lock();
+    const auto loadSprite = [&] {
+        if (m_particleSprRes) m_particleSprRes->Unlock();
+        m_particleSprRes = g_resMgr.GetAs<CSprRes>(sprName);
+        if (m_particleSprRes) m_particleSprRes->Lock();
+    };
+    const auto loadAction = [&] {
+        if (m_particleActRes) m_particleActRes->Unlock();
+        m_particleActRes = g_resMgr.GetAs<CActRes>(actName);
+        if (m_particleActRes) m_particleActRes->Lock();
+    };
+    if (actionFirst) { loadAction(); loadSprite(); }
+    else { loadSprite(); loadAction(); }
 }
 
 bool CEffectPrim::UsesReferenceParticle() const
@@ -6167,7 +6207,7 @@ bool CEffectPrim::UsesReferenceParticle() const
     return m_type == PP_SUPERANGEL
         || (m_type == PP_3DPARTICLE && m_master
             && (m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
-                || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
+                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
 }
 
 CEffectPrim::~CEffectPrim()
@@ -6394,6 +6434,9 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting5)) {
         UpdateCasting5Primitive(this);
         return true;
+    }
+    if (m_type == PP_3DCIRCLE && m_master && m_master->GetEffectType() == 42) {
+        return UpdateBlessingCircle(this);
     }
     if (m_type == PP_3DCIRCLE) {
         return UpdateCirclePrimitive(this);
@@ -8899,80 +8942,69 @@ void CRagEffect::SpawnIncAgility()
     }
 }
 
+// Ref/RagEffect.cpp:2125-2219 (0x5F4260). Preserve all three emission
+// branches and the recurring particles' action-before-sprite resource order.
 void CRagEffect::SpawnBlessing()
 {
-    const vector3d base = ResolveBasePosition();
-    CTexture* alphaDown = ResolveEffectTextureCandidates({
-        "effect\\alpha_down.tga",
-        "effect\\alpha_down.bmp",
-        "effect\\alpha_dow.bmp",
-    }, false);
-    CTexture* sparkleTexture = ResolveEffectTextureCandidates({
-        "effect\\torch_green10.bmp",
-        "effect\\torch_green11.bmp",
-        "effect\\torch_green12.bmp",
-        "effect\\alpha_center.tga",
-    }, false);
-    CTexture* blessingBurstTexture = ResolveEffectTextureCandidates({
-        "effect\\torch_green11.bmp",
-        "effect\\torch_green12.bmp",
-        "effect\\torch_green10.bmp",
-        "effect\\alpha_center.tga",
-    }, false);
-
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
     if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(base, "effect\\EF_Blessing.wav");
-
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
-            prim->m_duration = m_duration;
-            prim->m_pattern |= 1;
-            prim->m_renderFlag |= 0x200;
-            prim->m_radius = 10.0f;
-            prim->m_latitude = 90.0f;
-            prim->m_alpha = 0.0f;
-            prim->m_maxAlpha = 100.0f;
-            prim->m_alphaSpeed = prim->m_maxAlpha * 0.033333335f;
-            prim->m_fadeOutCnt = prim->m_duration - 30;
-            prim->m_texture.push_back(alphaDown);
-            prim->m_tintColor = RGB(32, 176, 232);
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\EF_Blessing.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f); // 0x712828
         }
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
+        prim->m_duration = m_duration;
+        prim->m_pattern |= 1;
+        prim->m_renderFlag |= 0x200;
+        prim->m_radius = 10.0f; prim->m_latitude = 90.0f;
+        prim->m_tintColor = RGB(32,176,232);
+        prim->m_alpha = 0.0f; prim->m_maxAlpha = 100.0f;
+        prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.033333335);
+        prim->m_fadeOutCnt = prim->m_duration - 30;
+        prim->m_numSegments = 1;
+        ShiftCircleSegments(prim);
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false)); // 0x719498
     }
-
-    if ((m_stateCnt % 3) == 0 && m_stateCnt < 10) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
-            prim->m_duration = m_duration;
-            prim->m_animSpeed = 2;
-            prim->m_alpha = static_cast<float>(200 - 6 * m_stateCnt);
-            prim->m_param[2] = -25.0f;
-            prim->m_tintColor = RGB(255, 255, 255);
-            ConfigureEffectSpritePrim(prim, { RefBlessingSpriteStem() }, 0, 1.0f, false, 2.0f, 0);
-        }
+    if (m_stateCnt % 3 == 0 && m_stateCnt < 10) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+        prim->m_duration = m_duration;
+        prim->m_animSpeed = 2;
+        prim->m_alpha = static_cast<float>(200 - 6 * m_stateCnt);
+        prim->m_deltaPos2 = {0.0f,-25.0f,0.0f};
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\\xC3\xE0\xBA\xB9.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC3\xE0\xBA\xB9.act"); // 0x71B2C4 / 0x71B2B4
+        prim->m_maxAlpha = 254.0f; prim->m_fadeOutCnt = -1;
+        prim->m_repeatAnim = true; prim->m_numSegments = 1;
+        ShiftCircleSegments(prim);
     }
-
-    if ((m_stateCnt % 4) == 0) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
-            prim->m_duration = 80;
-            prim->m_pattern |= 0x80;
-            const float angle = static_cast<float>(rand() % 360);
-            const float radius = static_cast<float>(rand() % 7 + 2);
-            prim->m_deltaPos2 = {
-                std::sin(angle * (kPi / 180.0f)) * radius,
-                -25.0f,
-                -std::cos(angle * (kPi / 180.0f)) * radius
-            };
-            MatrixIdentity(prim->m_matrix);
-            MatrixAppendXRotation(prim->m_matrix, -90.0f * (kPi / 180.0f));
-            prim->m_speed = static_cast<float>(rand() % 20 + 20) * 0.01f;
-            prim->m_accel = prim->m_speed / static_cast<float>(prim->m_duration) * -0.5f;
-            prim->m_alpha = 0.0f;
-            prim->m_size = 0.5f;
-            prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 5;
-            prim->m_alphaSpeed = prim->m_maxAlpha * 0.1f;
-            prim->m_tintColor = RGB(255, 255, 255);
-            if (!ConfigureEffectSpritePrim(prim, { RefParticle6SpriteStem() }, 0, 1.0f, false, 0.0f, 0)) {
-                prim->m_texture.push_back(sparkleTexture ? sparkleTexture : blessingBurstTexture);
-            }
-        }
+    if (m_stateCnt % 4 == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+        prim->m_duration = 80;
+        prim->m_pattern |= 0x80;
+        const float angle = GetRadian(rand() % 360);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, angle);
+        const double radius = static_cast<double>(rand() % 7 + 2);
+        prim->m_deltaPos2 = {
+            static_cast<float>(radius * prim->m_matrix.m[2][0] - prim->m_matrix.m[1][0] * 25.0 + prim->m_matrix.m[3][0]),
+            static_cast<float>(radius * prim->m_matrix.m[2][1] - prim->m_matrix.m[1][1] * 25.0 + prim->m_matrix.m[3][1]),
+            static_cast<float>(radius * prim->m_matrix.m[2][2] - prim->m_matrix.m[1][2] * 25.0 + prim->m_matrix.m[3][2])
+        };
+        const float riseAngle = GetRadian(-90);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, riseAngle);
+        prim->m_speed = static_cast<float>(static_cast<double>(rand() % 20 + 20) * 0.0099999998);
+        prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -0.5);
+        prim->m_alpha = 0.0f; prim->m_size = 0.5f;
+        prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 5;
+        prim->m_maxAlpha = 254.0f;
+        prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.1);
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle6.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle6.act", true); // 0x71B284 / 0x71B29C
+        prim->m_animSpeed = 4; prim->m_repeatAnim = true; prim->m_numSegments = 1;
+        ShiftCircleSegments(prim);
     }
 }
 

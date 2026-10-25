@@ -262,7 +262,7 @@ public:
     bool ProcessPrimitiveFrame();
     bool UsesLegacyBandPayload() const;
     bool UsesReferenceParticle() const;
-    void SetParticleResources(const char* sprName, const char* actName);
+    void SetParticleResources(const char* sprName, const char* actName, bool actionFirst = false);
     void SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t) override;
     void Render(matrix* viewMatrix) override;
 

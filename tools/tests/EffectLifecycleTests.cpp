@@ -143,15 +143,16 @@ constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
 void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
 bool UpdateLinearReferenceParticle(CEffectPrim*);
+bool UpdateBlessingCircle(CEffectPrim*);
 struct CEffectPrim : CGameObject {
     Probe deaths{ primitiveDeaths };
     CRagEffect* m_master = nullptr;
     EFFECTPRIMID m_type = Other;
     EffectGi m_gi[4];
-    u32 m_renderFlag = 0;
+    u32 m_renderFlag = 1;
     int m_stateCnt = 0, m_duration = 10, updates = 0, observedFrame = -1, resetFrame = -1;
     int m_pattern = 0, m_spawnCount = 0, m_fadeOutCnt = 0;
-    float m_size = 0, m_heightSize = 0, m_longitude = 0, m_latitude = 0, m_speed = 0, m_accel = 0;
+    float m_size = 1, m_heightSize = 0, m_longitude = 0, m_latitude = 0, m_speed = 0, m_accel = 0;
     vector3d m_deltaPos, m_deltaPos2, m_pos, m_orgPos;
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 0, m_minAlpha = 0;
     bool m_isDisappear = false;
@@ -162,7 +163,9 @@ struct CEffectPrim : CGameObject {
     int m_spriteAction=0,m_animSpeed=0,m_curMotion=0,m_numSegments=0;
     bool m_repeatAnim=false,m_spriteRepeat=false;
     float m_alpha=0,m_radius=0,m_alphaSpeed=0,m_maxAlpha=254,m_sizeSpeed=0,m_sizeAccel=0;
+    std::array<float,4> m_param{};
     vector3d m_speed3d;
+    float m_longSpeed=0,m_longAccel=0,m_radiusSpeed=0,m_radiusAccel=0,m_innerSpeed=0,m_innerAccel=0,m_innerSize=0;
     u32 m_tintColor=0xFFFFFF;
     std::array<EffectSegmentState,12> m_segments;
 
@@ -174,12 +177,13 @@ struct CEffectPrim : CGameObject {
     u8 OnProcess() override;
     bool UsesLegacyBandPayload() const;
     bool UsesReferenceParticle() const;
-    void SetParticleResources(const char*, const char*);
+    void SetParticleResources(const char*, const char*,bool = false);
     bool ProcessPrimitiveFrame() {
         ++updates;
         observedFrame = m_stateCnt;
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
+        if (m_type == PP_3DCIRCLE) UpdateBlessingCircle(this);
         if (m_type == PP_3DPARTICLE && UsesReferenceParticle() && !UpdateLinearReferenceParticle(this)) return false;
         if (resetFrame >= 0) m_stateCnt = resetFrame;
         return active;
@@ -188,6 +192,7 @@ struct CEffectPrim : CGameObject {
 int angelSpriteSubmissions=0,angelSubmittedMotion=-1;
 u32 angelSubmittedColor=0;
 D3DBLEND angelSubmittedBlend=0;
+u32 RGB(u8 r,u8 g,u8 b) { return r | (u32(g)<<8) | (u32(b)<<16); }
 u32 PackColor(unsigned int alpha, u32 color) {
     return (alpha << 24) | ((color & 255) << 16) | (color & 0xFF00) | ((color >> 16) & 255);
 }
@@ -226,6 +231,7 @@ struct CRagEffect : CGameObject {
     void ApplySuperAngel(signed char,signed char);
     void ProcessSuperAngelEffect();
     void SpawnRuwach();
+    void SpawnBlessing();
     void SpawnSmoke();
     void SpawnTorch();
     void SpawnEnchantPoison();
@@ -1299,6 +1305,90 @@ int main()
         check(actor.m_BodyLight==7,"poison two does not increment a light bit that is already set");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
         check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"poison two releases all looping particle resource locks");
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,80,30};listener.m_pos={2,900,4};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=42;effect.m_master=&actor;effect.m_duration=150;
+        waveCalls.clear();g_resMgr.requests.clear();rngValues={90,6,19};rngCursor=0;
+        const int draws=rngDraws;effect.SpawnBlessing();
+        check(effect.m_primList.size()==3 && rngDraws-draws==3,"Blessing frame zero emits circle, burst and recurring particle with three RNG draws");
+        auto it=effect.m_primList.begin();auto* circle=*it++;auto* burst=*it++;auto* spark=*it;
+        check(circle->m_type==PP_3DCIRCLE && burst->m_type==PP_3DPARTICLE && spark->m_type==PP_3DPARTICLE,
+            "Blessing preserves circle/burst/spark launch order");
+        check(waveCalls.size()==1 && waveCalls[0].name=="effect\\EF_Blessing.wav" && waveCalls[0].x==8 && waveCalls[0].y==0 && waveCalls[0].z==26
+            && waveCalls[0].frameRng==draws,"Blessing sound uses horizontal listener delta and precedes particle RNG");
+        check(circle->m_pattern==1 && circle->m_renderFlag==0x201 && circle->m_radius==10 && circle->m_latitude==90
+            && circle->m_tintColor==RGB(32,176,232),"Blessing circle retains source flags, orientation, radius and tint");
+        check(circle->m_duration==150 && circle->m_maxAlpha==100 && std::fabs(circle->m_alphaSpeed-3.3333335f)<0.000001f
+            && circle->m_fadeOutCnt==120 && circle->m_numSegments==1 && circle->m_segments[0].argb==0x0020B0E8,
+            "Blessing circle initializes reference alpha and segment profile");
+        check(circle->m_texture.size()==1 && std::string(g_texMgr.lastPath)=="effect\\alpha_down.tga",
+            "Blessing circle requests only original alpha_down texture");
+        check(burst->m_duration==150 && burst->m_alpha==200 && burst->m_deltaPos2.y==-25 && burst->m_param[2]==0
+            && burst->m_animSpeed==2 && burst->m_fadeOutCnt==-1 && burst->m_repeatAnim && burst->m_numSegments==1,
+            "Blessing burst stores source offset and looping constructor profile");
+        check(burst->UsesReferenceParticle() && spark->UsesReferenceParticle() && burst->m_maxAlpha==254 && spark->m_maxAlpha==254,
+            "both Blessing sprite profiles use reference state and per-clip rendering");
+        check(g_resMgr.requests.size()==4 && g_resMgr.requests[0]=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC3\xE0\xBA\xB9.spr"
+            && g_resMgr.requests[1]=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC3\xE0\xBA\xB9.act"
+            && g_resMgr.requests[2]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle6.act"
+            && g_resMgr.requests[3]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle6.spr",
+            "Blessing preserves burst sprite-first and recurring action-first load order with exact assets");
+        check(spark->m_duration==80 && spark->m_pattern==0x80 && spark->m_size==0.5f && spark->m_alpha==0
+            && spark->m_fadeOutCnt==64 && spark->m_animSpeed==4 && spark->m_repeatAnim,
+            "Blessing recurring particle retains twinkle, fade, size and animation profile");
+        check(std::fabs(spark->m_deltaPos2.x-8)<0.000001f && spark->m_deltaPos2.y==-25
+            && std::fabs(spark->m_speed-static_cast<float>(39*0.0099999998))<0.000001f,
+            "Blessing angle/radius/speed RNG draws reach source profile boundaries");
+        check(std::fabs(spark->m_matrix.m[2][1]-1)<0.000001f,"Blessing recurring motion uses fresh X minus-ninety matrix");
+        burst->OnProcess();
+        check(burst->m_curMotion==1 && burst->m_alpha==200 && burst->m_pos.y==55,
+            "Blessing burst frame zero advances looping motion and follows parent offset");
+        const float speed=spark->m_speed,accel=spark->m_accel;spark->OnProcess();
+        check(spark->m_curMotion==1 && std::fabs(spark->m_alpha-25.4f)<0.000001f && std::fabs(spark->m_pos.y-(55+speed+accel))<0.00001f,
+            "Blessing recurring particle rises and increases alpha on frame zero");
+        circle->OnProcess();
+        check(circle->m_pos.y==80 && circle->m_size==10 && std::fabs(circle->m_alpha-3.3333335f)<0.000001f
+            && circle->m_segments[0].argb==0x0320B0E8,"Blessing circle follows persistent parent height and stores source alpha before outer increment");
+        effect.m_effectPos={20,95,40};circle->m_stateCnt=120;circle->m_alpha=90;circle->OnProcess();
+        check(circle->m_pos.y==95 && circle->m_alphaSpeed==-3 && circle->m_alpha==87,
+            "Blessing circle uses original current-alpha fade without ground-height substitution");
+        spark->m_stateCnt=10;spark->m_alpha=254;spark->m_alphaSpeed=25.4f;ProcessReferenceParticleAlpha(spark);
+        check(spark->m_alphaSpeed==-25.4f && std::fabs(spark->m_alpha-228.6f)<0.00001f,
+            "reference twinkle reverses alpha speed at maximum before adding");
+        spark->m_alpha=0;spark->m_alphaSpeed=-25.4f;ProcessReferenceParticleAlpha(spark);
+        check(spark->m_alphaSpeed==25.4f && spark->m_alpha==25.4f,"reference twinkle reverses alpha speed at minimum");
+        spark->m_alpha=253;spark->m_alphaSpeed=25.4f;ProcessReferenceParticleAlpha(spark);
+        check(spark->m_alpha==254 && spark->m_alphaSpeed==25.4f,"reference twinkle clamps overshoot without reversing until next process");
+        spark->m_stateCnt=64;spark->m_alpha=160;spark->m_alphaSpeed=25.4f;ProcessReferenceParticleAlpha(spark);
+        check(spark->m_pattern==0 && spark->m_alphaSpeed==-10 && spark->m_alpha==150,"Blessing recurring fade clears twinkle at frame sixty-four");
+        spark->m_pattern=0x80;spark->m_isDisappear=false;spark->m_stateCnt=0;spark->m_alpha=100;spark->m_alphaSpeed=25.4f;
+        effect.m_stateCnt=145;ProcessReferenceParticleAlpha(spark);
+        check(spark->m_pattern==0 && spark->m_isDisappear && spark->m_alphaSpeed==-20 && spark->m_alpha==80,
+            "parent-shortened fade overrides twinkle before alpha update");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=0;waveCalls.clear();rngValues.clear();rngCursor=0;const int before=rngDraws;
+        for(int frame=0;frame<=12;++frame){effect.m_stateCnt=frame;effect.SpawnBlessing();}
+        int circles=0,bursts=0,sparks=0;std::vector<int> burstAlphas;
+        for(auto* prim:effect.m_primList) {
+            if(prim->m_type==PP_3DCIRCLE)++circles;
+            else if(prim->m_pattern==0x80)++sparks;
+            else{++bursts;burstAlphas.push_back(static_cast<int>(prim->m_alpha));}
+        }
+        check(circles==1 && bursts==4 && sparks==4 && rngDraws-before==12 && waveCalls.size()==1,
+            "Blessing preserves independent zero/three/four-frame emission gates");
+        check(burstAlphas==std::vector<int>({200,182,164,146}),"Blessing four burst alpha profiles follow original frame arithmetic");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=1;actor.m_pos.y=123;const int beforeNoEmission=rngDraws;effect.SpawnBlessing();
+        check(effect.m_effectPos.y==123 && effect.m_primList.empty() && rngDraws==beforeNoEmission,
+            "Blessing copies parent on non-emission frames without extra RNG");
+        g_resMgr.fail=true;effect.m_stateCnt=0;effect.SpawnBlessing();g_resMgr.fail=false;
+        it=effect.m_primList.begin();++it;burst=*it++;spark=*it;
+        check(burst->UsesReferenceParticle() && spark->UsesReferenceParticle() && !burst->m_particleSprRes && spark->m_texture.empty(),
+            "missing Blessing sprite assets do not trigger texture substitutions");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+        check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"both Blessing resource orders release all locks on world deletion");
     }
     {
         CRagEffect effect;

@@ -4,9 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A EnchantPoison / EnchantPoison2 particles (20/125/493). Smoke/Torch are checkpointed in `5ee6ecd`; poison now joins the reference linear particle state and per-clip renderer. Handler and renderer migration remain partial.
+Current work: WP5A Blessing (42) emitter and reachable particle/circle state migration. Poison is checkpointed in `856e5d1`; Blessing sprites now use reference resources, twinkle and per-clip rendering. Its common circle renderer still requires a separate parity port. Handler and renderer migration remain partial.
 
-Next action: migrate Blessing/Sight sprite-particle paths, including their reference assets, constructor defaults, motion/alpha patterns and renderer binding. Remove legacy baked-motion routes as each migration completes. Generic particle control branches, map-emitter initialization/scheduling, resource-loader/cache parity, common renderer/backend behavior and unfinished packages/acceptance remain open.
+Next action: port the common circle renderer/submission behavior used by Blessing, then migrate Sight sprite-particle paths. Preserve reference assets, segment/primitive state, alpha patterns, renderer flags and call order; remove legacy routes as each migration completes. Generic particle control branches, map-emitter initialization/scheduling, resource-loader/cache parity, common renderer/backend behavior and unfinished packages/acceptance remain open.
+
+## Blessing emitter / state migration — 2026-10-25
+
+- Replaced Blessing's guessed texture alternatives and sprite basename searches with all six exact sprite/action/wave/texture literals. Preserved zero-frame circle/sound, four bursts at 0/3/6/9 and recurring particles every fourth frame, including branch order and three angle/radius/speed RNG draws. Copies parent position on every call; sound uses horizontal listener delta and y zero.
+- Bursts now store the original y -25 offset, constructor maximum alpha 254, repeat, one segment, divisor 2 and fade frame -1. Recurring particles use the original matrix-derived spawn offset and replacement X-minus-90 motion matrix, duration 80, size 0.5, divisor 4, fade 64 and twinkle mask 0x80. Their original action-before-sprite Get/Lock order is supported explicitly by SetParticleResources; existing callers retain sprite-first order.
+- Extracted the reference ordinary alpha branch into ProcessReferenceParticleAlpha and added twinkle sign reversal at min/max before parent-shortened/fixed-frame fade overrides and final clamping. Blessing's PP_3DPARTICLE now uses the shared reference state and per-clip renderer.
+- Ported Blessing's reachable PP_3DCIRCLE state separately: persistent parent height, source radius/size/matrix order, ordinary alpha and segment storage. The existing generic circle renderer still has differences, including blend/segment/submission behavior; this checkpoint does not claim full circle or Blessing visual parity.
+- Validation: release build, six silent C++ suites / 406 checks (313 lifecycle/primitive + 35 particle-render + 58 other), six Python tests, six-literal executable byte audit and whitespace check pass. Added 26 checks for branch counts/order, resource order/profiles, motion, circle state, twinkle/fade precedence, audio and balanced cleanup. No media or live acceptance was used.
+- Approved OldRO deployment SHA-256 matches `C723280A955DB9A28307FC49077948CE3AE36F5EAD9AE97A91A5C35F59C21FE3`. WP5A and the overall plan remain incomplete.
+
 
 ## Poison particle migration — 2026-10-25
 
