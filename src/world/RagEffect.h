@@ -270,6 +270,7 @@ public:
     EFFECTPRIMID m_type;
     vector3d m_deltaPos;
     vector3d m_deltaPos2;
+    vector3d m_deltaPosAccel;
     u32 m_renderFlag;
     int m_stateCnt;
     int m_duration;
@@ -391,10 +392,9 @@ private:
         Smoke,
         Torch,
         Sight,
-        SightState,
+        Sight2,
         FireBall,
         Ruwach,
-        SightAura,
         BlueFall,
         WeatherCloud,
     };
@@ -504,11 +504,11 @@ private:
     void SpawnBlessing();
     void SpawnSmoke();
     void SpawnTorch();
+    void ApplySight(float initialAlpha, bool includeShadow);
     void SpawnSight();
-    void SpawnSightState();
+    void SpawnSight2();
     void SpawnFireBall();
     void SpawnRuwach();
-    void SpawnSightAura();
     void SpawnBlueFall();
     void SpawnWeatherCloud();
 

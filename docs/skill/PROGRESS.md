@@ -4,9 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A reference circle rendering and triangle queue/pass support. Blessing emitter/state is checkpointed in `f63f13c`; its circle now binds the reference geometry/projection/queue path. Other circle emitters still need state/initialization migration before using this renderer. Handler and backend parity remain partial.
+Current work: WP5A Sight (22) / Sight2 (601) particle migration. Circle renderer/queue support is checkpointed in `37b4e16`; Sight profiles now bind ordinary reference particle state and per-clip rendering. Handler and backend parity remain partial.
 
-Next action: migrate Sight sprite-particle paths, then other circle emitters and their segment/state initialization. Preserve reference assets, triangle/segment state, alpha patterns, render flags and call order; remove legacy routes as each migration completes. Generic primitive control branches, map initialization/scheduling, resource-loader/cache parity, full renderer/fog/backend behavior and unfinished packages/acceptance remain open.
+Next action: migrate remaining circle emitters and segment/state initialization onto the reference circle path, then the remaining generic particle movement/control branches and callers (including FireBall). Preserve original assets, primitive types, state, alpha patterns, flags and call order; remove legacy routes as each migration completes. Map initialization/scheduling, resource-loader/cache parity, full renderer/fog/backend behavior and unfinished packages/acceptance remain open.
+
+## Sight / Sight2 migration — 2026-10-25
+
+- Replaced Sight/Sight2 gravity primitives, fireball/sight basename candidates and bitmap substitutions with original PP_3DPARTICLE profiles and exact case-sensitive Sight/Shadow resources. Both copy parent position and project x/y before the even-frame emission gate, preserving the stored z field. Sight emits a main sprite plus Shadow; Sight2 emits only its lower-alpha main sprite.
+- Preserved the source's m_deltaPosAccel.y = 0.1 store as a separate vector field. Neither emitter sets pattern 0x400, so the value is inactive in their ordinary linear particle updates. Removed invented falling/gravity motion and orange tint; original alpha/size/divisor/repeat/fade/segment profiles now apply through shared state and per-clip rendering.
+- Renamed the reconstructed SightState handler to Sight2 (original helper name), removing the invented actor-effect-state termination and 9998 frame reset. Effect 601 follows its original even-frame emission without either condition. Removed the unreachable invented SightAura emitter, handler and guessed assets.
+- Validation: release build, six silent C++ suites / 468 checks (339 lifecycle/primitive + 71 particle/circle/queue/pass + 58 other), six Python tests, four-literal executable byte audit and whitespace check pass. Added 26 checks for type/profile, inactive acceleration, projection, integer-angle offsets, call order, motion/fade, no state gate/wrap, missing resources and resource cleanup. No media or live acceptance was used.
+- Approved OldRO deployment SHA-256 matches `18CC1DE7B7769558A74D155FAF48DE822541AAC4B3FDA563BB65E287DD65C504`. Remaining primitive/circle callers, resource/cache and full renderer/backend acceptance remain open. WP5A and the overall plan remain incomplete.
+
 
 ## Circle renderer / triangle queues — 2026-10-25
 

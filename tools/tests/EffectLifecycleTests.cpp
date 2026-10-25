@@ -153,7 +153,7 @@ struct CEffectPrim : CGameObject {
     int m_stateCnt = 0, m_duration = 10, updates = 0, observedFrame = -1, resetFrame = -1;
     int m_pattern = 0, m_spawnCount = 0, m_fadeOutCnt = 0;
     float m_size = 1, m_heightSize = 0, m_longitude = 0, m_latitude = 0, m_speed = 0, m_accel = 0;
-    vector3d m_deltaPos, m_deltaPos2, m_pos, m_orgPos;
+    vector3d m_deltaPos, m_deltaPos2, m_deltaPosAccel, m_pos, m_orgPos;
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 0, m_minAlpha = 0;
     bool m_isDisappear = false;
     matrix m_matrix;
@@ -231,6 +231,9 @@ struct CRagEffect : CGameObject {
     void ApplySuperAngel(signed char,signed char);
     void ProcessSuperAngelEffect();
     void SpawnRuwach();
+    void ApplySight(float,bool);
+    void SpawnSight();
+    void SpawnSight2();
     void SpawnBlessing();
     void SpawnSmoke();
     void SpawnTorch();
@@ -1389,6 +1392,78 @@ int main()
             "missing Blessing sprite assets do not trigger texture substitutions");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
         check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"both Blessing resource orders release all locks on world deletion");
+    }
+    {
+        CRenderObject actor;actor.m_pos={10,40,100};actor.m_BodyLight=7;
+        CRagEffect effect;effect.m_master=&actor;effect.m_type=22;effect.m_duration=200;effect.m_tlvertZ=333;
+        const auto savedRenderer=g_renderer;
+        g_renderer.m_hpc=100;g_renderer.m_vpc=100;g_renderer.m_halfWidth=320;g_renderer.m_halfHeight=240;
+        g_renderer.m_xoffset=1;g_renderer.m_yoffset=2;
+        const int draws=rngDraws,beforeWaves=waves;g_resMgr.requests.clear();
+        effect.m_stateCnt=1;effect.SpawnSight();
+        check(effect.m_primList.empty() && effect.m_effectPos.y==40 && effect.m_tlvertX==330 && effect.m_tlvertY==280,
+            "Sight copies parent and projects screen fields even on odd frames without emission");
+        check(effect.m_tlvertZ==333,"Sight projection updates only original x and y fields");
+        effect.m_stateCnt=2;effect.SpawnSight();
+        check(effect.m_primList.size()==2 && rngDraws==draws && waves==beforeWaves,"Sight emits two particles every even frame without RNG or audio");
+        auto it=effect.m_primList.begin();auto* sight=*it++;auto* shadow=*it;
+        check(sight->m_type==PP_3DPARTICLE && shadow->m_type==PP_3DPARTICLE && sight->m_pattern==0,
+            "Sight uses ordinary particles with no vector-acceleration movement flag");
+        check(sight->m_deltaPosAccel.x==0 && sight->m_deltaPosAccel.y==0.1f && sight->m_deltaPosAccel.z==0,
+            "Sight preserves original inactive Y-acceleration store");
+        check(std::fabs(sight->m_deltaPos2.x-GetSin(-10)*15)<0.000001f
+            && std::fabs(sight->m_deltaPos2.z-GetCos(-10)*-15)<0.000001f,
+            "Sight orbit offset uses original integer negative-five-times-frame table angle");
+        check(sight->m_deltaPos2.y==-20 && shadow->m_deltaPos2.y==0
+            && sight->m_deltaPos2.x==shadow->m_deltaPos2.x && sight->m_deltaPos2.z==shadow->m_deltaPos2.z,
+            "Sight and Shadow preserve shared horizontal orbit with distinct source heights");
+        check(g_resMgr.requests==std::vector<std::string>({"\xC0\xCC\xC6\xD1\xC6\xAE\\Sight.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\Sight.act","Shadow.spr","Shadow.act"}),
+            "Sight loads original case-sensitive resources in sprite/action order without basename search");
+        check(sight->m_alpha==150 && sight->m_alphaSpeed==-3 && sight->m_size==2.5f && sight->m_sizeSpeed==-0.1f
+            && sight->m_animSpeed==3 && sight->m_duration==20,"Sight retains source primary alpha, size, duration and animation profile");
+        check(shadow->m_alpha==120 && shadow->m_alphaSpeed==-1 && shadow->m_size==1.5f && shadow->m_sizeSpeed==-0.059999999f
+            && shadow->m_animSpeed==2 && shadow->m_duration==20,"Sight retains original Shadow profile");
+        check(sight->m_maxAlpha==254 && shadow->m_maxAlpha==254 && sight->m_fadeOutCnt==-1 && shadow->m_fadeOutCnt==-1
+            && sight->m_repeatAnim && shadow->m_repeatAnim && sight->m_numSegments==1 && shadow->m_numSegments==1,
+            "Sight profiles restore original constructor repeat, alpha, fade and segment defaults");
+        check(sight->UsesReferenceParticle() && shadow->UsesReferenceParticle() && sight->m_tintColor==0xFFFFFF
+            && sight->m_segments[0].argb==0x96FFFFFF && shadow->m_segments[0].argb==0x78FFFFFF,
+            "Sight routes per-clip rendering with original white segment colors instead of orange tint");
+        sight->OnProcess();shadow->OnProcess();
+        check(sight->m_curMotion==1 && sight->m_alpha==147 && sight->m_pos.y==20 && std::fabs(sight->m_size-2.4f)<0.000001f,
+            "Sight frame zero shrinks/fades and advances motion without applying the inactive acceleration");
+        check(shadow->m_curMotion==1 && shadow->m_alpha==119 && shadow->m_pos.y==40,"Sight shadow advances independently on frame zero");
+        for(int i=0;i<4;++i)sight->OnProcess();
+        check(sight->m_pos.y==20 && sight->m_deltaPos.y==0 && sight->m_speed3d.y==0,"Sight remains at fixed relative height across updates without invented gravity");
+        actor.m_pos={20,90,200};effect.m_stateCnt=3;effect.SpawnSight();sight->OnProcess();
+        check(effect.m_primList.size()==2 && effect.m_effectPos.y==90 && sight->m_pos.y==70,
+            "Sight odd-frame parent refresh propagates to existing particles");
+        check(actor.m_BodyLight==7 && actor.tintCalls==0,"Sight introduces no actor light or tint changes");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=0;g_resMgr.fail=true;effect.SpawnSight();g_resMgr.fail=false;sight=effect.m_primList.front();
+        check(effect.m_primList.size()==2 && sight->UsesReferenceParticle() && !sight->m_particleSprRes && sight->m_texture.empty(),
+            "missing Sight resources retain reference routing without fireball or bitmap replacement");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"Sight releases all resource locks through world cleanup");
+        g_renderer=savedRenderer;
+    }
+    {
+        CRenderObject actor;actor.m_pos={5,30,100};
+        CRagEffect effect;effect.m_master=&actor;effect.m_type=601;effect.m_duration=20000;
+        effect.m_stateCnt=0;effect.SpawnSight2();auto* sight=effect.m_primList.front();
+        check(effect.m_primList.size()==1 && sight->m_type==PP_3DPARTICLE && sight->m_alpha==50 && sight->m_alphaSpeed==-3,
+            "Sight2 emits one fifty-alpha ordinary particle and no Shadow");
+        check(sight->UsesReferenceParticle() && sight->m_deltaPosAccel.y==0.1f && sight->m_animSpeed==3 && sight->m_repeatAnim,
+            "Sight2 shares original Sight motion storage and per-clip binding");
+        sight->OnProcess();check(sight->m_alpha==47 && sight->m_pos.y==10,"Sight2 first update has no synthesized falling motion");
+        effect.m_stateCnt=1;effect.SpawnSight2();
+        check(effect.m_primList.size()==1 && effect.m_duration==20000,"Sight2 does not terminate or shorten duration for an absent actor effect-state flag");
+        effect.m_stateCnt=9998;effect.SpawnSight2();
+        check(effect.m_stateCnt==9998 && effect.m_primList.size()==2,"Sight2 preserves original frame counter without invented wrap at 9998");
+        effect.m_stateCnt=9999;effect.SpawnSight2();
+        check(effect.m_stateCnt==9999 && effect.m_primList.size()==2,"Sight2 odd-frame gate remains valid after the former wrap boundary");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"Sight2 releases its looping resource locks");
     }
     {
         CRagEffect effect;

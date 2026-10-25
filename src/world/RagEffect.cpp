@@ -39,7 +39,6 @@ constexpr float kEffectSpriteDepthBias = 0.0002f;
 constexpr float kWaterfallSegmentHeight = 40.0f;
 constexpr int kWaterfallVisibleSegments = 5;
 constexpr int kWaterfallTextureCycle = 3;
-constexpr int kSightEffectStateMask = 0x0001;
 
 struct RagEffectCatalogEntry {
     int effectId;
@@ -177,12 +176,6 @@ int ResolveEffectRenderFlags(u32 renderFlag, int fallbackFlags)
 D3DBLEND ResolveEffectDestBlend(u32 renderFlag, D3DBLEND additiveBlend = D3DBLEND_ONE)
 {
     return (renderFlag & (2u | 4u)) != 0 ? additiveBlend : D3DBLEND_INVSRCALPHA;
-}
-
-bool MasterHasEffectState(const CRenderObject* master, int mask)
-{
-    const CGameActor* actor = dynamic_cast<const CGameActor*>(master);
-    return actor && (actor->m_effectState & mask) != 0;
 }
 
 unsigned int PackColor(unsigned int alpha, COLORREF color)
@@ -2564,6 +2557,7 @@ CEffectPrim::CEffectPrim()
     m_param.fill(0.0f);
     m_deltaPos = vector3d{};
     m_deltaPos2 = vector3d{};
+    m_deltaPosAccel = vector3d{};
     m_orgPos = vector3d{};
     m_pos = vector3d{};
     m_speed3d = vector3d{};
@@ -6284,7 +6278,7 @@ bool CEffectPrim::UsesReferenceParticle() const
 {
     return m_type == PP_SUPERANGEL
         || (m_type == PP_3DPARTICLE && m_master
-            && (m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
+            && (m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
 }
 
@@ -7628,7 +7622,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         m_handler = Handler::Torch;
         break;
     case 601:
-        m_handler = Handler::SightState;
+        m_handler = Handler::Sight2;
         break;
     case kRagEffectPortal:
         m_handler = Handler::Portal;
@@ -7864,10 +7858,9 @@ bool CRagEffect::ResolveCullSphere(vector3d* outCenter, float* outRadius) const
     case Handler::GrimTooth:
     case Handler::GrimToothAtk:
     case Handler::Sight:
-    case Handler::SightState:
+    case Handler::Sight2:
     case Handler::FireBall:
     case Handler::Ruwach:
-    case Handler::SightAura:
         radius = 140.0f;
         break;
     case Handler::None:
@@ -9224,139 +9217,56 @@ void CRagEffect::ProcessEnchantPoison2()
     }
 }
 
-void CRagEffect::SpawnSightAura()
+// Ref/RagEffect.cpp:7327-7411 / 7418-7477 (0x5F7E70/0x5F8120).
+// Both use PP_3DPARTICLE; the stored acceleration is inactive without 0x400.
+void CRagEffect::ApplySight(float initialAlpha, bool includeShadow)
 {
-    const vector3d base = ResolveBasePosition();
-    CTexture* ringBlue = ResolveEffectTextureCandidates({
-        "effect\\ring_blue.tga",
-        "effect\\ring_blue.bmp",
-        "effect\\ring_b.bmp",
-    }, false);
-    CTexture* fireGlow = ResolveEffectTextureCandidates({
-        "effect\\magic_red.tga",
-        "effect\\magic_red.bmp",
-        "effect\\magic_violet.tga",
-        "effect\\magic_violet.bmp",
-    }, true);
-
-
-    if ((m_stateCnt % 8) == 0) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
-            prim->m_duration = 20;
-            prim->m_deltaPos2.y = -1.0f;
-            prim->m_innerSize = 7.0f;
-            prim->m_latitude = 90.0f;
-            prim->m_numSegments = 3;
-            prim->m_pattern |= 1;
-            prim->m_radius = 0.0f;
-            prim->m_radiusSpeed = 0.85f;
-            prim->m_radiusAccel = prim->m_radiusSpeed / static_cast<float>(prim->m_duration) * -0.5f;
-            prim->m_alpha = 150.0f;
-            prim->m_maxAlpha = 150.0f;
-            prim->m_fadeOutCnt = prim->m_duration - 10;
-            prim->m_texture.push_back(ringBlue);
-            prim->m_tintColor = RGB(255, 210, 96);
-        }
-    }
-
-    if ((m_stateCnt % 3) == 0) {
-        const float angle = static_cast<float>(m_stateCnt) * 24.0f * (kPi / 180.0f);
-        const float offsets[2] = { 0.0f, kPi };
-        for (float phase : offsets) {
-            if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
-                const float orbit = angle + phase;
-                prim->m_duration = 18;
-                prim->m_deltaPos2.x = std::sin(orbit) * 15.0f;
-                prim->m_deltaPos2.y = -10.0f + std::cos(orbit * 0.5f) * 2.0f;
-                prim->m_deltaPos2.z = -std::cos(orbit) * 15.0f;
-                prim->m_size = 2.6f;
-                prim->m_sizeSpeed = -0.08f;
-                prim->m_alpha = 220.0f;
-                prim->m_alphaSpeed = -8.0f;
-                prim->m_fadeOutCnt = 10;
-                if (!ConfigureEffectSpritePrim(prim, { "fireball", "sight" }, 0, 1.0f, true, 2.0f, 0)) {
-                    prim->m_texture.push_back(fireGlow);
-                }
-                prim->m_tintColor = RGB(255, 220, 120);
-            }
-        }
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!mode || !mode->m_view) return;
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos, mode->m_view->GetViewMatrix(), projected);
+    m_tlvertX = projected.x; m_tlvertY = projected.y;
+    if (m_stateCnt % 2 != 0) return;
+    const int angle = static_cast<int>(static_cast<double>(m_stateCnt) * -5.0);
+    const float sine = GetSin(angle), cosine = GetCos(angle);
+    GetRadian(angle); // Ref discards this result.
+    const float offsetX = sine * 15.0f, offsetZ = cosine * -15.0f;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+    prim->m_duration = 20;
+    prim->m_deltaPos2 = {offsetX,-20.0f,offsetZ};
+    prim->m_deltaPosAccel.y = 0.1f;
+    prim->m_animSpeed = 3;
+    prim->m_size = 2.5f; prim->m_sizeSpeed = -0.1f;
+    prim->m_alpha = initialAlpha; prim->m_alphaSpeed = -3.0f;
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\Sight.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\Sight.act"); // 0x71B578 / 0x71B564
+    prim->m_maxAlpha = 254.0f; prim->m_fadeOutCnt = -1;
+    prim->m_repeatAnim = true; prim->m_numSegments = 1;
+    ShiftCircleSegments(prim);
+    if (includeShadow) {
+        prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+        prim->m_duration = 20;
+        prim->m_deltaPos2 = {offsetX,0.0f,offsetZ};
+        prim->m_animSpeed = 2;
+        prim->m_size = 1.5f; prim->m_sizeSpeed = -0.059999999f;
+        prim->m_alpha = 120.0f; prim->m_alphaSpeed = -1.0f;
+        prim->SetParticleResources("Shadow.spr", "Shadow.act"); // 0x71B558 / 0x71B54C
+        prim->m_maxAlpha = 254.0f; prim->m_fadeOutCnt = -1;
+        prim->m_repeatAnim = true; prim->m_numSegments = 1;
+        ShiftCircleSegments(prim);
     }
 }
 
 void CRagEffect::SpawnSight()
 {
-    if ((m_stateCnt % 2) != 0) {
-        return;
-    }
-
-    const float angle = static_cast<float>(-5 * m_stateCnt) * (kPi / 180.0f);
-    const float offsetX = std::sin(angle) * 15.0f;
-    const float offsetZ = -std::cos(angle) * 15.0f;
-    if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEGRAVITY, vector3d{})) {
-        prim->m_duration = 20;
-        prim->m_deltaPos2 = { offsetX, -20.0f, offsetZ };
-        prim->m_gravAccel = 0.1f;
-        prim->m_size = 2.5f;
-        prim->m_sizeSpeed = -0.1f;
-        prim->m_alpha = 150.0f;
-        prim->m_alphaSpeed = -3.0f;
-        if (!ConfigureEffectSpritePrim(prim, { "fireball", "sight" }, 0, 1.0f, true, 3.0f, 0)) {
-            prim->m_texture.push_back(ResolveEffectTextureCandidates({
-                "effect\\pikapika.bmp",
-                "texture\\effect\\pikapika.bmp",
-                "data\\texture\\effect\\pikapika.bmp",
-            }, false));
-        }
-        prim->m_tintColor = RGB(255, 176, 96);
-    }
-
-    if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
-        prim->m_duration = 20;
-        prim->m_deltaPos2 = { offsetX, 0.0f, offsetZ };
-        prim->m_size = 1.5f;
-        prim->m_sizeSpeed = -0.06f;
-        prim->m_alpha = 120.0f;
-        prim->m_alphaSpeed = -1.0f;
-        ConfigureEffectSpritePrim(prim, { "Shadow", "shadow" }, 0, 1.0f, true, 2.0f, 0);
-    }
+    ApplySight(150.0f, true);
 }
 
-void CRagEffect::SpawnSightState()
+void CRagEffect::SpawnSight2()
 {
-    CRenderObject* master = ResolveCurrentMaster();
-    if (!master || !MasterHasEffectState(master, kSightEffectStateMask)) {
-        m_loop = false;
-        m_duration = m_stateCnt;
-        return;
-    }
-
-    if (m_stateCnt >= 9998) {
-        m_stateCnt = 0;
-    }
-    if ((m_stateCnt % 2) != 0) {
-        return;
-    }
-
-    const float angle = static_cast<float>(-5 * m_stateCnt) * (kPi / 180.0f);
-    const float offsetX = std::sin(angle) * 15.0f;
-    const float offsetZ = -std::cos(angle) * 15.0f;
-    if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEGRAVITY, vector3d{})) {
-        prim->m_duration = 20;
-        prim->m_deltaPos2 = { offsetX, -20.0f, offsetZ };
-        prim->m_gravAccel = 0.1f;
-        prim->m_size = 2.5f;
-        prim->m_sizeSpeed = -0.1f;
-        prim->m_alpha = 50.0f;
-        prim->m_alphaSpeed = -3.0f;
-        if (!ConfigureEffectSpritePrim(prim, { "fireball", "sight" }, 0, 1.0f, true, 3.0f, 0)) {
-            prim->m_texture.push_back(ResolveEffectTextureCandidates({
-                "effect\\pikapika.bmp",
-                "texture\\effect\\pikapika.bmp",
-                "data\\texture\\effect\\pikapika.bmp",
-            }, false));
-        }
-        prim->m_tintColor = RGB(255, 168, 88);
-    }
+    ApplySight(50.0f, false);
 }
 
 void CRagEffect::SpawnFireBall()
@@ -13074,17 +12984,14 @@ bool CRagEffect::ProcessEffectFrame()
         case Handler::Sight:
             SpawnSight();
             break;
-        case Handler::SightState:
-            SpawnSightState();
+        case Handler::Sight2:
+            SpawnSight2();
             break;
         case Handler::FireBall:
             SpawnFireBall();
             break;
         case Handler::Ruwach:
             SpawnRuwach();
-            break;
-        case Handler::SightAura:
-            SpawnSightAura();
             break;
         case Handler::BlueFall:
             SpawnBlueFall();
