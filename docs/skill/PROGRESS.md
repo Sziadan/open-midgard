@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A original Portal (effect 36) emitter/circle migration; ReadyPortal checkpoint `6c1dd1c` precedes this part.
+Current work: WP5A original Portal cylinder state, after emitter/circle checkpoint `e922ca9`. Effect 36 now uses the reference cylinder integration and animation path; cylinder renderer migration remains open.
 
-Next action: port the reachable original Portal cylinder state, then remaining active circle emitters. Generic particle controls, map scheduling, resource/cache and full renderer/backend acceptance remain open.
+Next action: port original Render3DCylinder geometry/submission for the migrated Portal caller, then remaining active circle emitters. Generic particle controls, map scheduling, resource/cache and full renderer/backend acceptance remain open.
 
+
+## Original Portal cylinder state — 2026-10-26
+
+- Ref/RagEffectPrim.cpp:288-365 (0x6443E0) -> UpdateReferenceCylinderState, bound through UsesReferenceCylinder to PP_3DCYLINDER of original effect 36. Preserves parent stored position plus offset instead of terrain height; accelerations precede integer-degree X/Y matrix and negative local-Y motion; longitude advances after matrix construction. Size integration and original upper height cap follow position.
+- Added m_maxHeightSize with original constructor default 100 (Ref:5423). Preserved pattern-1 shrink after size integration with remaining-frame-plus-one denominator, ProcessAlpha ordering, modulo texture-animation gate and exact equality termination for nonrepeat mode. Other callers keep their migration status.
+- Source-label mismatch: Ref:285 signature says Prim3DCylinder, address 0x6443E0 and dispatch Ref:5832 identify the full cylinder, but the function body at 288 is mislabeled Prim3DCylinderHalf. Followed signature/address/dispatch; the separate half-cylinder body begins at 372.
+
+Validation: release build, six silent C++ suites / 529 checks (400 lifecycle/primitive, 71 rendering, 58 other), six Python tests and whitespace check pass. Fourteen new numeric checks cover first-frame state, persistent origin, alpha rise/fade, motion/rotation ordering, size/height cap, shrink denominator, animation gates/wrap/equality. No new asset literals, media or live acceptance. Approved OldRO SHA-256: `6B91B877AF02D0BE217C03591493550E20258D6CDB025AF39C7821BAE7B94678`. Cylinder geometry/submission, other callers, resource/cache and full backend parity remain open. WP5A and the overall plan remain incomplete.
 
 ## Original Portal emitter / circle — 2026-10-26
 

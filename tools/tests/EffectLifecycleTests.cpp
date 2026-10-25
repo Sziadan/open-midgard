@@ -144,6 +144,7 @@ void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
 bool UpdateLinearReferenceParticle(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
+bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateWarpZoneOrbit(CEffectPrim*);
 struct CEffectPrim : CGameObject {
     Probe deaths{ primitiveDeaths };
@@ -153,7 +154,9 @@ struct CEffectPrim : CGameObject {
     u32 m_renderFlag = 1;
     int m_stateCnt = 0, m_duration = 10, updates = 0, observedFrame = -1, resetFrame = -1;
     int m_pattern = 0, m_spawnCount = 0, m_fadeOutCnt = 0;
-    float m_outerSize = 0, m_arcAngle = 36;
+    float m_outerSize = 0, m_arcAngle = 36, m_maxHeightSize = 100;
+    float m_outerSpeed=0,m_outerAccel=0,m_heightSpeed=0,m_heightAccel=0;
+    int m_totalTexture=1;
     float m_size = 1, m_heightSize = 0, m_longitude = 0, m_latitude = 0, m_speed = 0, m_accel = 0;
     vector3d m_deltaPos, m_deltaPos2, m_deltaPosAccel, m_pos, m_orgPos;
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 0, m_minAlpha = 0;
@@ -181,6 +184,7 @@ struct CEffectPrim : CGameObject {
     bool UsesLegacyBandPayload() const;
     bool UsesReferenceParticle() const;
     bool UsesReferenceCircle() const;
+    bool UsesReferenceCylinder() const;
     void SetParticleResources(const char*, const char*,bool = false);
     bool ProcessPrimitiveFrame() {
         ++updates;
@@ -188,6 +192,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
+        if (UsesReferenceCylinder() && !UpdateReferenceCylinderState(this)) return false;
         if (m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle() && !UpdateWarpZoneOrbit(this)) return false;
         if (m_type == PP_3DPARTICLE && UsesReferenceParticle() && !UpdateLinearReferenceParticle(this)) return false;
         if (resetFrame >= 0) m_stateCnt = resetFrame;
@@ -1613,6 +1618,39 @@ int main()
             "Portal repeats only circle at fourteen without cylinders");
         effect.m_stateCnt=28;effect.ApplyPortal();check(effect.m_primList.size()==5 && waveCalls.empty() && rngDraws==draws,
             "Portal preserves recurring cadence with no wave or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRagEffect effect;effect.m_type=36;effect.m_duration=120;effect.m_effectPos={10,50,30};effect.ApplyPortal();
+        auto* prim=effect.m_primList.front();prim->m_animSpeed=4;prim->m_repeatAnim=true;prim->m_alphaDelta=1;
+        check(prim->UsesReferenceCylinder() && prim->m_maxHeightSize==100,"original Portal cylinder binds reference state and source maximum height");
+        prim->OnProcess();
+        check(prim->m_pos.x==10 && prim->m_pos.y==50 && prim->m_pos.z==30 && prim->m_longitude==4,
+            "reference cylinder uses stored parent height and increments longitude after matrix");
+        check(std::fabs(prim->m_matrix.m[0][0]-1)<0.000001f && prim->m_curMotion==0 && prim->m_stateCnt==1,
+            "reference cylinder first frame uses old longitude then wraps one-texture animation");
+        check(prim->m_alpha==static_cast<float>(128*0.16666667),"reference cylinder applies original alpha rise on zero");
+        for(int i=0;i<6;++i)prim->OnProcess();
+        check(prim->m_alpha==128,"reference cylinder clamps alpha rise to original maximum");
+        effect.m_effectPos={20,70,40};prim->OnProcess();
+        check(prim->m_pos.x==20 && prim->m_pos.y==70 && prim->m_pos.z==40,"reference cylinder follows persistent effect origin without terrain substitution");
+        prim->m_stateCnt=114;prim->OnProcess();
+        check(std::fabs(prim->m_alphaSpeed+128.0f/6)<0.00001f && prim->m_alpha<128,"reference cylinder fade uses current alpha at original fade frame");
+        prim->m_stateCnt=8;prim->m_latitude=90.9f;prim->m_longitude=0.9f;prim->m_speed=1;prim->m_accel=1;
+        prim->m_deltaPos={};prim->m_deltaPos2={1,2,3};prim->m_heightSize=99;prim->m_heightSpeed=2;prim->m_heightAccel=1;
+        prim->m_outerSize=4;prim->m_outerSpeed=1;prim->m_outerAccel=2;prim->m_innerSize=4;prim->m_innerSpeed=-2;prim->m_innerAccel=-1;
+        prim->OnProcess();
+        check(prim->m_speed==2 && std::fabs(prim->m_deltaPos.z+2)<0.000001f && std::fabs(prim->m_deltaPos.y)<0.000001f,
+            "reference cylinder integrates acceleration before negative local-Y motion with integer-degree rotation");
+        check(prim->m_orgPos.x==21 && prim->m_orgPos.y==72 && prim->m_orgPos.z==43 && prim->m_heightSize==100
+            && prim->m_heightSpeed==3 && prim->m_outerSize==7 && prim->m_innerSize==1,"reference cylinder advances sizes and upper-clamps height only");
+        prim->m_pattern=1;prim->m_stateCnt=10;prim->m_duration=20;prim->m_fadeOutCnt=10;prim->m_outerSpeed=0;prim->m_outerAccel=0;prim->m_outerSize=22;
+        prim->OnProcess();check(prim->m_outerSpeed==-2,"reference cylinder shrink starts after size update with remaining-plus-one divisor");
+        prim->m_repeatAnim=false;prim->m_totalTexture=3;prim->m_animSpeed=4;prim->m_curMotion=1;prim->m_stateCnt=1;
+        check(UpdateReferenceCylinderState(prim) && prim->m_curMotion==1,"reference cylinder animation preserves non-divisible frame");
+        prim->m_stateCnt=4;check(UpdateReferenceCylinderState(prim) && prim->m_curMotion==2,"reference cylinder advances texture on divisible frame");
+        check(!UpdateReferenceCylinderState(prim) && prim->m_curMotion==3,"reference cylinder nonrepeating animation terminates at equality");
+        check(UpdateReferenceCylinderState(prim) && prim->m_curMotion==4,"reference cylinder retains original equality-only termination");
         effect.ClearPrims();g_world.UpdateGameObjects();
     }
     {

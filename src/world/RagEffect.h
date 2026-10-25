@@ -263,6 +263,7 @@ public:
     bool UsesLegacyBandPayload() const;
     bool UsesReferenceParticle() const;
     bool UsesReferenceCircle() const;
+    bool UsesReferenceCylinder() const;
     void SetParticleResources(const char* sprName, const char* actName, bool actionFirst = false);
     void SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t) override;
     void Render(matrix* viewMatrix) override;
@@ -293,6 +294,7 @@ public:
     float m_innerSize;
     float m_outerSize;
     float m_heightSize;
+    float m_maxHeightSize;
     float m_heightSpeed;
     float m_heightAccel;
     float m_longitude;

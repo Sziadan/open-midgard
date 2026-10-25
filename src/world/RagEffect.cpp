@@ -2520,6 +2520,7 @@ CEffectPrim::CEffectPrim()
     , m_innerSize(0.0f)
     , m_outerSize(0.0f)
     , m_heightSize(0.0f)
+    , m_maxHeightSize(100.0f)
     , m_heightSpeed(0.0f)
     , m_heightAccel(0.0f)
     , m_longitude(0.0f)
@@ -6061,6 +6062,46 @@ void ProcessReferenceParticleAlpha(CEffectPrim* prim)
     if (prim->m_alpha > prim->m_maxAlpha) prim->m_alpha = prim->m_maxAlpha;
 }
 
+// Ref/RagEffectPrim.cpp:288-365 (0x6443E0), Prim3DCylinder.
+// Ref's body is mislabeled Prim3DCylinderHalf; signature/address and dispatch
+// identify the full cylinder. Bound to original Portal while other callers migrate.
+bool UpdateReferenceCylinderState(CEffectPrim* prim)
+{
+    prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
+    prim->m_speed += prim->m_accel;
+    prim->m_outerSpeed += prim->m_outerAccel;
+    prim->m_innerSpeed += prim->m_innerAccel;
+    prim->m_heightSpeed += prim->m_heightAccel;
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+    const double move = -static_cast<double>(prim->m_speed);
+    prim->m_speed3d = {
+        static_cast<float>(move * prim->m_matrix.m[1][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(move * prim->m_matrix.m[1][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(move * prim->m_matrix.m[1][2] + prim->m_matrix.m[3][2])
+    };
+    prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
+    prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
+    prim->m_longitude += prim->m_longSpeed;
+    prim->m_outerSize += prim->m_outerSpeed;
+    prim->m_innerSize += prim->m_innerSpeed;
+    prim->m_heightSize += prim->m_heightSpeed;
+    if (prim->m_heightSize > prim->m_maxHeightSize) prim->m_heightSize = prim->m_maxHeightSize;
+    if ((prim->m_pattern & 1) != 0 && prim->m_stateCnt == prim->m_fadeOutCnt) {
+        prim->m_outerSpeed = static_cast<float>(-(prim->m_outerSize
+            / static_cast<double>(prim->m_duration - prim->m_stateCnt + 1)));
+    }
+    ProcessReferenceParticleAlpha(prim);
+    if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;
+    ++prim->m_curMotion;
+    if (prim->m_repeatAnim) {
+        prim->m_curMotion %= prim->m_totalTexture;
+        return true;
+    }
+    return prim->m_curMotion != prim->m_totalTexture;
+}
+
 // Ref/RagEffectPrim.cpp:1780-1852. ReadyPortal/Blessing/WarpZone2 have no change
 // points; preserve their reference state without terrain-height substitution.
 bool UpdateReferenceCircleState(CEffectPrim* prim)
@@ -6311,6 +6352,11 @@ bool CEffectPrim::UsesReferenceCircle() const
         && (m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 321);
 }
 
+bool CEffectPrim::UsesReferenceCylinder() const
+{
+    return m_type == PP_3DCYLINDER && m_master && m_master->GetEffectType() == 36;
+}
+
 bool CEffectPrim::UsesReferenceParticle() const
 {
     return m_type == PP_SUPERANGEL
@@ -6550,6 +6596,9 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_3DCIRCLE) {
         return UpdateCirclePrimitive(this);
+    }
+    if (UsesReferenceCylinder()) {
+        return UpdateReferenceCylinderState(this);
     }
     if (m_type == PP_3DCYLINDER) {
         return UpdateCylinderPrimitive(this);
