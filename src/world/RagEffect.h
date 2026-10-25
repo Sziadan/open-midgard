@@ -55,6 +55,80 @@ struct EffectBandState {
     std::array<u8, 21> modes{};
 };
 
+constexpr int kPrimTypeParticleUp = 0x3B;
+constexpr int kPrimTypeBottom = 0x2F;
+constexpr int kPrimTypeBottomOut = 0x31;
+constexpr int kPrimTypeHeal = 0x3C;
+constexpr int kPrimTypeHealLow = 0x6E;
+constexpr int kPrimTypeGiExplosion = 0x71;
+constexpr int kPrimTypeAcidDemon = 0x76;
+constexpr int kPrimTypeFlowerCast = 0x6C;
+constexpr int kPrimTypeRectUp = 0x40;
+constexpr int kPrimTypeBlind = 0x47;
+constexpr int kPrimTypeCasting4 = 0x41;
+constexpr int kPrimTypeCasting5 = 0x6B;
+constexpr int kPrimTypeThrowItem = 0x35;
+constexpr int kPrimTypeEffectTexture = 0x52;
+constexpr int kPrimTypeChemical = 0x36;
+constexpr int kPrimTypeChemical2 = 0x37;
+constexpr int kPrimTypeChemical3 = 0x38;
+constexpr int kPrimTypeTeleport2 = 0x39;
+constexpr int kPrimTypeFirstAid = 0x3A;
+constexpr int kPrimTypeWind = 0x3E;
+constexpr int kPrimTypePortal = 0x3F;
+constexpr int kPrimTypePoison = 0x48;
+constexpr int kPrimTypeForest = 0x42;
+constexpr int kPrimTypeSaintWing = 0x4C;
+constexpr int kPrimTypeMagnum2 = 0x49;
+constexpr int kPrimTypeSphereWind = 0x4D;
+constexpr int kPrimTypeColorPaper = 0x4E;
+constexpr int kPrimTypeGi1 = 0x1E;
+constexpr int kPrimTypeGi2 = 0x1F;
+constexpr int kPrimTypeGi4 = 0x24;
+constexpr int kPrimTypeStormKick = 0x67;
+constexpr int kPrimTypeHalfSphere = 0x68;
+constexpr int kPrimTypeAttackEnergy = 0x69;
+constexpr int kPrimTypeElectric = 0x65;
+constexpr int kPrimTypeElectric2 = 0x66;
+constexpr int kPrimTypeAttackEnergy2 = 0x6A;
+constexpr int kPrimTypeGi5 = 0x32;
+constexpr int kPrimTypeCasting = 0x17;
+constexpr int kPrimTypeCasting2 = 0x18;
+constexpr int kPrimTypeMapPillar = 0x29;
+constexpr int kPrimTypeCasting3 = 0x19;
+
+// One 180-byte m_GI slot from the 2008 CEffectPrim. Offsets were taken from the
+// stores in CRagEffect::Heal at 0x6319B0. The spark quad uses distance as its
+// size, height[2] as its vertical speed, and sparkX/Y/Z as its world position.
+struct EffectGi {
+    u8 life = 0;
+    u8 unused0 = 0;
+    short alphaB = 0;
+    short alphaT = 0;
+    short fullDisplayAngle = 0;
+    float maxHeight = 0.0f;
+    int process = 0;
+    short rotStart = 0;
+    short unused1 = 0;
+    std::array<float, 21> height{};
+    std::array<u8, 21> flag{};
+    u8 unused2 = 0;
+    short riseAngle = 0;
+    float distance = 0.0f;
+    float sparkX = 0.0f;
+    float sparkY = 0.0f;
+    float sparkZ = 0.0f;
+    float vecTNowX = 0.0f;
+    float vecTNowY = 0.0f;
+    float vecTNowZ = 0.0f;
+    float vecBPreX = 0.0f;
+    float arcBaselineY = 0.0f;
+    float vecBPreZ = 0.0f;
+    float vecTPreX = 0.0f;
+    float vecTPreY = 0.0f;
+    float vecTPreZ = 0.0f;
+};
+
 struct EffectSegmentState {
     vector3d pos{};
     float radius = 0.0f;
@@ -144,6 +218,7 @@ public:
     bool m_isDisappear;
     int m_bandController;
     std::array<EffectBandState, 4> m_bands;
+    std::array<EffectGi, 4> m_gi;
     int m_numSegments;
     std::array<EffectSegmentState, 12> m_segments;
 };
@@ -161,6 +236,9 @@ public:
     int GetEffectType() const { return m_type; }
     int GetStateCount() const { return m_stateCnt; }
     int GetDuration() const { return m_duration; }
+    void AddDuration(int frames) { m_duration += frames; }
+    void SetGroundHitFlag() { m_flag = 1; }
+    void AbsorbPrimDelta(const vector3d& delta) { m_deltaPos = delta; }
 
     u8 OnProcess() override;
     void OnActorDeleted(const CGameActor* actor) override;
@@ -168,6 +246,7 @@ public:
     void SendMsg(CGameObject*, int, msgparam_t, msgparam_t, msgparam_t) override;
 
     vector3d ResolveBasePosition() const;
+    vector3d ActorPosition() const;
     float ResolveBaseRotation() const;
     bool ResolveCullSphere(vector3d* outCenter, float* outRadius) const;
 
@@ -207,7 +286,6 @@ private:
         FireBall,
         Ruwach,
         SightAura,
-        FireBoltRain,
         BlueFall,
         WeatherCloud,
     };
@@ -221,6 +299,68 @@ private:
     void LoadEzEffect(const char* fName);
     void InitEZ2STRFrame();
     bool ProcessEZ2STR();
+    bool OnProcess2();
+    void ApplyHeal(const char* textureName, int variant);
+    void ApplyHeal2(const char* textureName, int variant);
+    void ApplyExit2(const char* textureName);
+    void ApplyGlassWall2(const char* textureName);
+    void ApplyParticleUpBurst();
+    void ApplyHealTime(int variant);
+    void ApplyFirstAid();
+    void ApplyChemicalProtection(short time);
+    void ApplyChemical2(short time);
+    void ApplyChemical3(short time);
+    void ApplyTeleportation2(const char* textureName, short time);
+    void ApplyThrowItem(const char* textureName, int variant);
+    void ApplyBottomMagnus(const char* textureName, int variant);
+    void ApplyForestLight(const char* textureName, int variant);
+    void ApplySaintWing(const char* textureName);
+    void ApplyMagnum2(const char* textureName);
+    void ApplySphereWind(const char* textureName, short time, int variant);
+    void ApplyColorPaper(const char* textureName);
+    void ApplySaintCasting(short time, const char* textureName, int variant);
+    void ApplyCoupleCasting(const char* textureName);
+    void ApplyHeartCasting(const char* textureName, float offsetX, float offsetZ);
+    void ApplyGiExplosion(const char* textureName);
+    void ApplyAcidDemon(const char* textureName);
+    void ApplyFlowerCasting(const char* textureName, float size, int variant);
+    void ApplyDefender(const char* textureName);
+    void ApplyMapPillar(const char* textureName, float size, bool wide);
+    void ApplyVolcano(const char* textureName, short variant, bool fastSpin);
+    void ApplyBottomVolcano(const char* textureName, float size);
+    void ApplyWind();
+    void ApplyStormKick(int variant);
+    void ApplyHalfSphere(const char* textureName);
+    void ApplyAttackEnergy(const char* textureName);
+    void ApplyElectric(short baseRise);
+    void ApplyElectric2();
+    void ApplyAttackEnergy2(const char* textureName);
+    void ApplyPotionPillar(float speed, int duration);
+    void ApplyPotionBerserk();
+    void ApplyIceArrow();
+    void ApplyProvidence(const char* textureName);
+    void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);
+    void ApplyBeginCasting(const char* textureName, int option, bool playWave);
+    void ApplyBottomMusic(const char* textureName, int variant);
+    void ApplyBottomLight(const char* textureName, int size);
+    void ApplyBottomOut(const char* textureName, int variant);
+    void ApplyAuraBladeCasting();
+    void ApplyBlind(int level);
+    void ApplyPoison(int variant);
+    void ApplyEntry2();
+    void ApplyPortal2(int variant);
+    void ApplyReadyPortal2();
+    void ApplyWarpZone2(const char* textureName);
+    void ApplyBlackDevil(const char* textureName);
+    void ApplyPortalWind(int variant);
+    void ApplyPortalWind402();
+    void ApplyKyrieGuard();
+    void ApplyBodyLight442();
+    void ApplyBodyLight446();
+    void ApplyBodyLight449();
+    void ApplyActorLight();
+    void ApplyTarot(const char* textureName, int variant);
+    void LaunchParticleUp(const vector3d& origin, float sizeBase, float speedBase, bool secondTexture, u8 switchTexture);
     void RenderAniClip(int layerIndex, const KAC_LAYER& layer, const KAC_XFORMDATA& xform, matrix* viewMatrix);
     CRenderObject* ResolveCurrentMaster() const;
     CAbleToMakeEffect* ResolveCurrentEffectOwner() const;
@@ -259,7 +399,6 @@ private:
     void SpawnFireBall();
     void SpawnRuwach();
     void SpawnSightAura();
-    void SpawnFireBoltRain();
     void SpawnBlueFall();
     void SpawnWeatherCloud();
 

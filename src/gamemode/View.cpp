@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <limits>
 
 namespace {
@@ -465,7 +466,14 @@ CView::CView()
       m_hoverCacheAttrX(-1),
       m_hoverCacheAttrY(-1),
       m_hoverCacheResolved(false),
-      m_hoverCacheHasCell(false)
+      m_hoverCacheHasCell(false),
+      m_isQuake(false),
+      m_quakeStepPending(false),
+      m_quakeStartTick(0),
+      m_quakeTime(0),
+      m_sideQuake(0.0f),
+      m_frontQuake(0.0f),
+      m_latitudeQuake(0.0f)
 {
     MatrixIdentity(m_viewMatrix);
     MatrixIdentity(m_invViewMatrix);
@@ -854,10 +862,62 @@ u64 CView::BillboardFrameCacheSnapTag() const
     return h;
 }
 
+void CView::SetQuake(bool isQuake, int type, float sideQuake, float frontQuake, float latitudeQuake)
+{
+    m_isQuake = isQuake;
+    m_quakeStartTick = GetTickCount();
+    m_sideQuake = sideQuake;
+    m_frontQuake = frontQuake;
+    m_latitudeQuake = latitudeQuake;
+    if (type == 0) {
+        m_quakeTime = 650;
+    } else if (type == 1) {
+        m_quakeTime = 200;
+    } else {
+        m_quakeTime = static_cast<u32>(type);
+    }
+}
+
+void CView::ProcessQuake()
+{
+    if (!m_isQuake) {
+        return;
+    }
+    if (GetTickCount() >= m_quakeStartTick + m_quakeTime) {
+        m_isQuake = false;
+        m_cur.at = m_dest.at;
+        m_cur.distance = m_dest.distance;
+        m_cur.latitude = m_dest.latitude;
+        return;
+    }
+    if (!m_quakeStepPending) {
+        return;
+    }
+    m_quakeStepPending = false;
+
+    // Ref snaps the look-at to the destination every view update, then adds
+    // one shake sample. Doing the same here keeps the offset from stacking
+    // on the damped chase pivot.
+    m_cur.at = m_dest.at;
+    const float longitudeRad = m_cur.longitude * 3.14159265f / 180.0f;
+    const float sideJitter = m_sideQuake + static_cast<float>(std::rand() % 5 - 2) * 0.1f;
+    m_cur.at.x += sideJitter * std::cos(longitudeRad);
+    const float sideJitterZ = m_sideQuake + static_cast<float>(std::rand() % 5 - 2) * 0.1f;
+    m_cur.at.z += sideJitterZ * -std::sin(longitudeRad);
+    m_sideQuake = -m_sideQuake;
+
+    m_cur.distance += m_frontQuake + static_cast<float>(std::rand() % 5 - 2) * 0.1f;
+    m_frontQuake = -m_frontQuake;
+
+    m_cur.latitude += m_latitudeQuake + static_cast<float>(std::rand() % 5 - 2) / 15.0f;
+    m_latitudeQuake = -m_latitudeQuake;
+}
+
 void CView::OnCalcViewInfo()
 {
     m_dest.at = ResolveTargetPosition();
     InterpolateViewInfo();
+    ProcessQuake();
     BuildViewMatrix();
     ++m_viewRevision;
     m_viewSnapTag = BillboardFrameCacheSnapTag();
@@ -883,6 +943,7 @@ void CView::OnCalcViewInfo()
 
 void CView::OnRender()
 {
+    m_quakeStepPending = true;
     if (!m_world || !m_world->m_ground) {
         return;
     }

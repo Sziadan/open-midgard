@@ -4,7 +4,9 @@
 #include "DebugLog.h"
 #include "audio/Audio.h"
 #include "core/File.h"
+#include "core/Timer.h"
 #include "gamemode/GameMode.h"
+#include "gamemode/View.h"
 #include "gamemode/Mode.h"
 #include "render/DC.h"
 #include "render/Prim.h"
@@ -13,8 +15,10 @@
 #include "res/Sprite.h"
 #include "res/Texture.h"
 #include "session/Session.h"
+#include "world/RagEffectDurationTable.generated.inc"
 
 #include <algorithm>
+#include <cstddef>
 #include <cctype>
 #include <cmath>
 #include <cstdio>
@@ -32,14 +36,9 @@ constexpr float kPi = 3.14159265f;
 constexpr float kEffectTickMs = 24.0f;
 constexpr float kEffectPixelRatioScale = 0.14285715f;
 constexpr float kEffectSpriteDepthBias = 0.0002f;
-constexpr float kWeatherCloudDurationFrames = 960.0f;
-constexpr float kMapPillarDurationFrames = 960.0f;
 constexpr float kWaterfallSegmentHeight = 40.0f;
 constexpr int kWaterfallVisibleSegments = 5;
 constexpr int kWaterfallTextureCycle = 3;
-// Ref/Wave.cpp PlayWave defaults used for skill / EzStr SFX.
-constexpr int kRefEffectWaveMaxDist = 250;
-constexpr int kRefEffectWaveMinDist = 40;
 constexpr int kSightEffectStateMask = 0x0001;
 
 struct RagEffectCatalogEntry {
@@ -165,7 +164,7 @@ std::string ResolveCatalogStrName(const RagEffectCatalogEntry& entry)
     std::snprintf(buffer,
         sizeof(buffer),
         "%s%d.str",
-        ToLowerAscii(entry.variantPrefix).c_str(),
+        entry.variantPrefix,
         entry.variantFirst + offset);
     return buffer;
 }
@@ -1596,139 +1595,93 @@ bool UpdateMapPillarPrimitive(CEffectPrim* prim)
     return prim->m_stateCnt <= prim->m_duration || anyActive;
 }
 
-static std::string StrBasenameLowerNoExt(const char* strPath)
-{
-    if (!strPath || !*strPath) {
-        return std::string();
-    }
-
-    std::string path = CollapseUtf8Latin1ToBytes(strPath);
-    std::replace(path.begin(), path.end(), '/', '\\');
-    const size_t slash = path.find_last_of("\\/");
-    std::string file = slash == std::string::npos ? path : path.substr(slash + 1);
-    if (file.size() >= 4) {
-        std::string lower = ToLowerAscii(file);
-        if (lower.size() >= 4 && lower.compare(lower.size() - 4, 4, ".str") == 0) {
-            file = file.substr(0, file.size() - 4);
-        }
-    }
-    return ToLowerAscii(file);
-}
-
-// GRF: data\wav\effect\wizard_<compact>.wav where compact is STR display name with only [a-z0-9] (e.g. storm gust -> stormgust).
-static std::string CompactAlnumLowerAscii(std::string value)
-{
-    std::string out;
-    out.reserve(value.size());
-    for (unsigned char ch : value) {
-        if (std::isalnum(ch)) {
-            out.push_back(static_cast<char>(std::tolower(ch)));
-        }
-    }
-    return out;
-}
-
-static std::string UnderscoreFromSpacesLower(std::string value)
-{
-    value = ToLowerAscii(std::move(value));
-    for (char& ch : value) {
-        if (ch == ' ') {
-            ch = '_';
-        }
-    }
-    return value;
-}
-
 static bool TryPlaySingleEffectWave(const vector3d& soundPos, const std::string& relativePath)
 {
-    if (relativePath.empty() || !g_soundMode || !g_isSoundOn) {
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!mode || !mode->m_world || !mode->m_world->m_player) {
         return false;
     }
-
-    CAudio* audio = CAudio::GetInstance();
-    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
-    if (!audio || !gameMode || !gameMode->m_world || !gameMode->m_world->m_player) {
-        return false;
-    }
-
-    const vector3d listenerPos = gameMode->m_world->m_player->m_pos;
-    const std::array<std::string, 3> candidates = {
-        relativePath,
-        std::string("wav\\") + relativePath,
-        std::string("data\\wav\\") + relativePath,
-    };
-
-    for (const std::string& candidate : candidates) {
-        if (audio->PlaySound3D(candidate.c_str(),
-                soundPos,
-                listenerPos,
-                kRefEffectWaveMaxDist,
-                kRefEffectWaveMinDist,
-                1.0f)) {
-            return true;
-        }
-    }
-    return false;
+    const vector3d& listener = mode->m_world->m_player->m_pos;
+    return PlayWave(relativePath.c_str(), soundPos.x - listener.x, soundPos.y - listener.y,
+        soundPos.z - listener.z);
 }
 
-// Ref RagEffect.cpp: most skill visuals use dedicated PlayWave paths; generic EzStr effects do not read
-// audio from STR keyframes. Match common data layout: effect\ef_<strstem>.wav (and a few fallbacks).
-static void PlayEzStrAssociatedStartupSound(const char* strResourcePath, int effectId, const vector3d& soundPos)
+struct ProvenClipWave {
+    int type;
+    int frame;
+    float yOffset;
+    const char* wave;
+    int chance;
+    int quakeFrame;
+};
+
+const ProvenClipWave kProvenClipWaves[] = {
+    { 30, 0, 0.0f, "effect\\magician_thunderstorm.wav", 0, -1 },
+    { 41, 0, 0.0f, "effect\\EF_Angelus.wav", 0, -1 },
+    { 65, 0, 0.0f, "effect\\thief_invenom.wav", 0, -1 },
+    { 66, 0, 0.0f, "effect\\Acolyte_cure.wav", 0, -1 },
+    { 68, 0, 0.0f, "effect\\st_mvp.wav", 0, -1 },
+    { 69, 0, 0.0f, "effect\\hunter_skidtrap.wav", 0, -1 },
+    { 75, 0, 1.0f, "effect\\priest_gloria.wav", 0, -1 },
+    { 76, 0, 0.0f, "effect\\priest_magnificat.wav", 0, -1 },
+    { 77, 0, 0.0f, "effect\\priest_resurrection.wav", 0, -1 },
+    { 78, 0, 0.0f, "effect\\priest_recovery.wav", 0, -1 },
+    { 83, 0, 0.0f, "effect\\priest_sanctuary.wav", 0, -1 },
+    { 84, 60, 0.0f, "effect\\priest_impositio.wav", 0, -1 },
+    { 85, 15, 0.0f, "effect\\priest_lexaeterna.wav", 0, -1 },
+    { 88, 0, 0.0f, "effect\\priest_suffragium.wav", 0, -1 },
+    { 91, 0, 0.0f, "effect\\priest_benedictio.wav", 0, -1 },
+    { 92, 0, 0.0f, "effect\\wizard_meteor.wav", 0, 40 },
+    { 95, 0, -100.0f, "effect\\wizard_quagmire.wav", 12, -1 },
+    { 96, 75, 0.0f, "effect\\wizard_fire_pillar_a.wav", 0, -1 },
+    { 97, 0, 0.0f, "effect\\wizard_fire_pillar_b.wav", 0, -1 },
+    { 102, 30, 0.0f, "effect\\wizard_fire_pillar_b.wav", 0, 35 },
+    { 103, 0, 0.0f, "effect\\black_weapon_perfection.wav", 0, -1 },
+    { 106, 20, 0.0f, "effect\\hunter_blastmine.wav", 0, -1 },
+    { 107, 0, 0.0f, "effect\\hunter_claymoretrap.wav", 0, -1 },
+    { 108, 0, 0.0f, "effect\\hunter_freezingtrap.wav", 0, -1 },
+    { 111, 0, 0.0f, "effect\\hunter_springtrap.wav", 0, -1 },
+    { 113, 0, 1.0f, "effect\\priest_magnus.wav", 0, -1 },
+    { 124, 0, 0.0f, "effect\\assasin_poisonreact.wav", 0, -1 },
+    { 127, 0, 0.0f, "effect\\assasin_poisonreact.wav", 0, -1 },
+    { 129, 10, 0.0f, "effect\\assasin_venomsplasher.wav", 0, -1 },
+    { 131, 0, 0.0f, "effect\\knight_autocounter.wav", 0, -1 },
+    { 153, 0, 0.0f, "effect\\ac_concentration.wav", 0, -1 },
+    { 218, 0, 0.0f, "effect\\ac_concentration.wav", 0, -1 },
+    { 219, 30, 0.0f, "effect\\ac_concentration.wav", 0, -1 },
+    { 154, 15, 0.0f, "effect\\bs_refinesuccess.wav", 0, -1 },
+    { 155, 5, 0.0f, "effect\\bs_refinefailed.wav", 0, -1 },
+    { 204, 0, -80.0f, "_heal_effect.wav", 0, -1 },
+    { 205, 0, -80.0f, "_heal_effect.wav", 0, -1 },
+    { 206, 0, -80.0f, "_heal_effect.wav", 0, -1 },
+    { 207, 0, -80.0f, "_heal_effect.wav", 0, -1 },
+    { 210, 0, -80.0f, "_heal_effect.wav", 0, -1 },
+    { 234, 0, 0.0f, "effect\\sage_spell breake.wav", 0, -1 },
+    { 245, 0, 0.0f, "effect\\cru_holy cross.wav", 0, -1 },
+    { 255, 10, -150.0f, "_enemy_hit_wind1.wav", 0, -1 },
+    { 256, 10, -150.0f, "_enemy_hit_wind1.wav", 0, -1 },
+    { 257, 10, -150.0f, "_enemy_hit_wind1.wav", 0, -1 },
+    { 258, 10, -150.0f, "_enemy_hit_wind1.wav", 0, -1 },
+    { 390, 0, 0.0f, "effect\\black_overthrust.wav", 0, -1 },
+    { 391, 0, 0.0f, "effect\\EF_IncAgility.wav", 0, -1 },
+    { 273, 0, 0.0f, "effect\\mon_\xBF\xAC\xC8\xAF.wav", 0, -1 },
+    { 208, 0, -80.0f, "effect\\\xC8\xED\xB1\xE2.wav", 0, -1 },
+    { 209, 0, -80.0f, "effect\\\xC8\xED\xB1\xE2.wav", 0, -1 },
+    { 211, 0, -80.0f, "effect\\\xC8\xED\xB1\xE2.wav", 0, -1 },
+    { 130, 0, 0.0f, "effect\\knight_twohandquicken.wav", 0, -1 },
+    { 250, 0, 0.0f, "effect\\knight_twohandquicken.wav", 0, -1 },
+    { 269, 6, 0.0f, "effect\\\xBA\xB9\xC8\xA3\xB0\xDD.wav", 0, -1 },
+    { 270, 6, 0.0f, "effect\\\xBA\xB9\xC8\xA3\xB0\xDD.wav", 0, -1 },
+    { 271, 6, 0.0f, "effect\\\xBA\xB9\xC8\xA3\xB0\xDD.wav", 0, -1 },
+    { 272, 6, 0.0f, "effect\\\xBA\xB9\xC8\xA3\xB0\xDD.wav", 0, -1 },
+    { 440, 0, 0.0f, "effect\\\xBE\xC6\xBC\xFB\xC7\xC1\xC6\xBC\xBF\xC0.wav", 0, -1 },
+};
+
+
+
+bool TryPlayEffectWaveAt(const vector3d& soundPos, const char* name)
 {
-    if (!strResourcePath || !*strResourcePath || !g_soundMode || !g_isSoundOn) {
-        return;
-    }
-
-    std::vector<std::string> tryPaths;
-    if (effectId == 337) {
-        tryPaths.push_back("effect\\levelup.wav");
-        tryPaths.push_back("wav\\levelup.wav");
-    }
-
-    const std::string base = StrBasenameLowerNoExt(strResourcePath);
-    if (!base.empty()) {
-        const std::string compact = CompactAlnumLowerAscii(base);
-        if (!compact.empty()) {
-            tryPaths.push_back(std::string("effect\\wizard_") + compact + ".wav");
-            if (compact.size() > 1) {
-                std::string noTrailDigits = compact;
-                while (!noTrailDigits.empty() && std::isdigit(static_cast<unsigned char>(noTrailDigits.back()))) {
-                    noTrailDigits.pop_back();
-                }
-                if (!noTrailDigits.empty() && noTrailDigits != compact) {
-                    tryPaths.push_back(std::string("effect\\wizard_") + noTrailDigits + ".wav");
-                }
-            }
-            tryPaths.push_back(std::string("effect\\ef_") + compact + ".wav");
-        }
-        const std::string under = UnderscoreFromSpacesLower(base);
-        if (!under.empty() && under != base) {
-            tryPaths.push_back(std::string("effect\\ef_") + under + ".wav");
-        }
-        if (base.find(' ') == std::string::npos) {
-            tryPaths.push_back(std::string("effect\\ef_") + base + ".wav");
-        }
-        tryPaths.push_back(std::string("effect\\") + under + ".wav");
-    }
-
-    for (const std::string& rel : tryPaths) {
-        if (TryPlaySingleEffectWave(soundPos, rel)) {
-            return;
-        }
-    }
-}
-
-bool TryPlayEffectWaveAt(const vector3d& soundPos, std::initializer_list<const char*> paths)
-{
-    for (const char* path : paths) {
-        if (!path || !*path) {
-            continue;
-        }
-        if (TryPlaySingleEffectWave(soundPos, std::string(path))) {
-            return true;
-        }
-    }
-    return false;
+    return name && *name && TryPlaySingleEffectWave(soundPos, name);
 }
 
 std::string ResolveWorldStrName(const std::string& rawName)
@@ -2283,12 +2236,6 @@ void AddXformDelta(KAC_XFORMDATA* target, const KAC_XFORMDATA& delta)
 
 std::string ResolveStrName(int effectId)
 {
-    if (effectId == 49) {
-        char buffer[64]{};
-        std::snprintf(buffer, sizeof(buffer), "FireHit%d.str", 1 + (rand() % 3));
-        return ResolveWorldStrName(buffer);
-    }
-
     const RagEffectCatalogEntry* entry = FindRagEffectCatalogEntry(effectId);
     if (!entry) {
         return std::string();
@@ -2543,6 +2490,19 @@ bool UpdateCrossTexturePrimitive(CEffectPrim* prim)
         prim->m_deltaPos.x += prim->m_matrix.m[2][0] * prim->m_speed;
         prim->m_deltaPos.y += prim->m_matrix.m[2][1] * prim->m_speed;
         prim->m_deltaPos.z += prim->m_matrix.m[2][2] * prim->m_speed;
+    }
+    if (prim->m_master != nullptr && (prim->m_pattern & 0x10) != 0) {
+        prim->m_master->AbsorbPrimDelta(AddVec3(prim->m_deltaPos, prim->m_deltaPos2));
+    }
+    if (prim->m_master != nullptr && (prim->m_pattern & 4) != 0) {
+        const vector3d world = AddVec3(prim->m_master->ActorPosition(), AddVec3(prim->m_deltaPos2, prim->m_deltaPos));
+        const float ground = g_world.m_attr != nullptr ? g_world.m_attr->GetHeight(world.x, world.z) : world.y;
+        if (ground < world.y) {
+            prim->m_speed = 0.0f;
+            prim->m_stateCnt = prim->m_duration - 25;
+            prim->m_pattern &= ~4;
+            prim->m_master->SetGroundHitFlag();
+        }
     }
 
     UpdateAlphaFade(prim);
@@ -2837,8 +2797,3534 @@ void CEffectPrim::Init(CRagEffect* master, EFFECTPRIMID effectPrimId, const vect
     m_minAlpha = 0.0f;
 }
 
+static_assert(offsetof(EffectGi, height) == 20, "GI height offset");
+static_assert(offsetof(EffectGi, flag) == 104, "GI flag offset");
+static_assert(offsetof(EffectGi, distance) == 128, "GI distance offset");
+static_assert(offsetof(EffectGi, sparkX) == 132, "GI spark position offset");
+static_assert(offsetof(EffectGi, arcBaselineY) == 160, "GI arc baseline offset");
+static_assert(offsetof(EffectGi, vecTNowX) == 144, "GI vecT_now offset");
+static_assert(offsetof(EffectGi, vecTPreX) == 168, "GI vecT_pre offset");
+static_assert(sizeof(EffectGi) == 180, "GI stride");
+
+float BitsToFloat(u32 bits)
+{
+    float value = 0.0f;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
+}
+
+u32 FloatBits(float value)
+{
+    u32 bits = 0;
+    std::memcpy(&bits, &value, sizeof(bits));
+    return bits;
+}
+
+int TableAngle(int angle);
+
+void UpdateCastingHeights(EffectGi& gi)
+{
+    for (int sample = 0; sample < 21; ++sample) {
+        if (gi.flag[static_cast<size_t>(sample)] != 0) {
+            continue;
+        }
+        const float sineScale = g_sinTable[9 * sample];
+        if (gi.process <= 90) {
+            gi.height[static_cast<size_t>(sample)] = g_sinTable[gi.process] * gi.maxHeight * sineScale;
+        }
+        const float cap = gi.maxHeight * sineScale;
+        if (cap < gi.height[static_cast<size_t>(sample)]) {
+            gi.height[static_cast<size_t>(sample)] = cap;
+            gi.flag[static_cast<size_t>(sample)] = 1;
+        }
+        if (gi.height[static_cast<size_t>(sample)] < 0.0f) {
+            gi.height[static_cast<size_t>(sample)] = 0.0f;
+        }
+    }
+}
+
+void SpinCastingBand(EffectGi& gi, int band)
+{
+    if (band >= 3) {
+        return;
+    }
+    gi.rotStart = static_cast<short>(gi.rotStart + band + 3);
+    if (gi.rotStart >= 360) {
+        gi.rotStart = static_cast<short>(gi.rotStart - 360);
+    }
+}
+
+void Update3DCastingPrimitive(CEffectPrim* prim)
+{
+    const int firstBand = prim->m_size == 3.0f ? 3 : 0;
+    for (int band = firstBand; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        SpinCastingBand(gi, band);
+        if (gi.process < prim->m_duration - 40) {
+            if (gi.process < 20 && gi.alphaT != 1) {
+                if (band == 3) {
+                    gi.alphaB = static_cast<short>(gi.alphaB + 8);
+                    if (gi.alphaB > 60) {
+                        gi.alphaB = 60;
+                    }
+                } else {
+                    gi.alphaB = static_cast<short>(gi.alphaB + 10);
+                    if (gi.alphaB > 180) {
+                        gi.alphaB = 180;
+                    }
+                }
+            }
+        } else if (band >= 3) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 2);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - 5);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+        UpdateCastingHeights(gi);
+    }
+}
+
+void Update3DCasting3Primitive(CEffectPrim* prim)
+{
+    const int firstBand = prim->m_size == 3.0f ? 3 : 0;
+    for (int band = firstBand; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        SpinCastingBand(gi, band);
+        const bool early = gi.process < prim->m_duration - 40;
+        if (early && gi.process < 20 && band == 3) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 8);
+            if (gi.alphaB > 100) {
+                gi.alphaB = 100;
+            }
+        } else if (early && gi.process < 20) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 10);
+            if (gi.alphaB > 180) {
+                gi.alphaB = 180;
+            }
+        } else if (!early && band >= 3) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 3);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        } else if (!early) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 5);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+        if (band < 3) {
+            UpdateCastingHeights(gi);
+            continue;
+        }
+        for (int sample = 0; sample < 21; ++sample) {
+            const float sineScale = g_sinTable[9 * sample];
+            if (gi.flag[static_cast<size_t>(sample)] != 0) {
+                const float base = gi.maxHeight * sineScale * 0.55000001f;
+                gi.height[static_cast<size_t>(sample)] = base
+                    + g_sinTable[TableAngle(gi.process)] * gi.maxHeight * sineScale * 0.44999999f;
+                continue;
+            }
+            if (gi.process > 90) {
+                gi.flag[static_cast<size_t>(sample)] = 1;
+            } else {
+                gi.height[static_cast<size_t>(sample)] = g_sinTable[gi.process] * gi.maxHeight * sineScale;
+            }
+            if (gi.maxHeight * sineScale < gi.height[static_cast<size_t>(sample)]) {
+                gi.flag[static_cast<size_t>(sample)] = 1;
+            }
+            if (gi.height[static_cast<size_t>(sample)] < 0.0f) {
+                gi.height[static_cast<size_t>(sample)] = 0.0f;
+            }
+        }
+    }
+}
+
+void UpdateGi5Primitive(CEffectPrim* prim)
+{
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.alphaT = static_cast<short>(gi.alphaT + 1);
+        if (gi.alphaT >= 360) {
+            gi.alphaT = static_cast<short>(gi.alphaT - 360);
+        }
+        gi.distance = g_sinTable[TableAngle(gi.alphaT)] + 3.0f;
+        gi.rotStart = static_cast<short>(gi.rotStart + 3);
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        const int bandBase = band * 90;
+        const int phase = bandBase >= 180 ? 2 * (gi.process + band * 45) : gi.process + bandBase;
+        const float wave = g_sinTable[TableAngle(phase)];
+        for (int sample = 0; sample < 21; ++sample) {
+            const float scale = g_sinTable[9 * sample];
+            gi.height[static_cast<size_t>(sample)] = gi.maxHeight * scale
+                + wave * gi.maxHeight * scale * 0.30000001f;
+        }
+    }
+}
+
+void UpdateGi1Primitive(CEffectPrim* prim)
+{
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.process <= 0) {
+            continue;
+        }
+        gi.distance += 0.07f;
+        gi.riseAngle = static_cast<short>(gi.riseAngle - 1);
+        if (gi.riseAngle < 10) {
+            gi.riseAngle = 10;
+            gi.alphaB = 0;
+        }
+        if (gi.distance < 4.0f) {
+            gi.alphaB = static_cast<short>(gi.alphaB + (gi.alphaT == 22 ? 5 : 10));
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - 3);
+            if (gi.alphaB <= 0) {
+                gi.alphaB = 0;
+                if (gi.process < prim->m_duration - 30) {
+                    gi.distance = BitsToFloat(1079488020u);
+                    gi.riseAngle = gi.alphaT == 22 ? 64 : 74;
+                }
+            }
+        }
+        const int bandBase = band * 90;
+        const int phase = bandBase >= 180 ? 2 * (gi.process + band * 45) : gi.process + bandBase;
+        const float wave = g_sinTable[TableAngle(phase)];
+        for (int sample = 0; sample < 21; ++sample) {
+            gi.height[static_cast<size_t>(sample)] = gi.maxHeight
+                + wave * g_sinTable[9 * sample] * gi.maxHeight * 0.30000001f;
+        }
+    }
+}
+
+void UpdateHealPrimitive(CEffectPrim* prim)
+{
+    if (prim->m_gi[0].flag[0] == 33) {
+        int longitude = 0;
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_view != nullptr) {
+                longitude = static_cast<int>(mode->m_view->GetCameraLongitude());
+            }
+        }
+        prim->m_gi[2].alphaT = static_cast<short>(360 - longitude);
+    }
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ResolveBasePosition();
+    }
+
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        const u8 mode = gi.flag[0];
+        if (mode == 1) {
+            gi.rotStart = static_cast<short>(gi.rotStart + band + 8);
+        } else if (mode == 2) {
+            gi.rotStart = static_cast<short>(gi.rotStart + (band >= 2 ? band + 2 : band + 4));
+        } else if (mode == 3) {
+            gi.rotStart = static_cast<short>(gi.rotStart + band + 6);
+        }
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+
+        if (gi.process < gi.alphaT || gi.alphaT < 0) {
+            if (gi.process < 16) {
+                if (mode == 2) {
+                    gi.alphaB = static_cast<short>(gi.alphaB + 3);
+                } else {
+                    gi.alphaB = static_cast<short>(gi.alphaB + (mode == 3 ? 2 : 5));
+                }
+                if (gi.alphaB > 180) {
+                    gi.alphaB = 180;
+                }
+            }
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - 2);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+
+        int waveBase = 0;
+        for (int sample = 0; sample < 21; ++sample) {
+            const u8 sampleMode = gi.flag[static_cast<size_t>(sample)];
+            float height = gi.maxHeight;
+            if (sampleMode == 0 || sampleMode == 33) {
+                int wave = waveBase + 2 * gi.process;
+                if (band == 0) {
+                    wave = waveBase + 4 * gi.process;
+                } else if (band == 1) {
+                    wave = waveBase + 3 * prim->m_gi[1].process;
+                }
+                const int wrapped = wave % 360;
+                const int angle = wrapped < 0 ? wrapped + 360 : wrapped;
+                height = g_sinTable[angle] * gi.maxHeight * 0.25f + gi.maxHeight * 0.75f;
+                if (gi.process <= 90) {
+                    height *= g_sinTable[gi.process];
+                }
+                if (height < 0.0f) {
+                    height = 0.0f;
+                }
+            } else if (sampleMode == 1 || sampleMode == 3) {
+                if (gi.process <= 90) {
+                    height *= g_sinTable[gi.process];
+                }
+            } else if (sampleMode == 2) {
+                if (gi.process > 45) {
+                    height = 0.0f;
+                } else {
+                    height *= g_sinTable[4 * gi.process];
+                }
+            } else {
+                waveBase += 34;
+                continue;
+            }
+            gi.height[static_cast<size_t>(sample)] = height;
+            waveBase += 34;
+        }
+    }
+}
+
+unsigned int CastingSizeRgb(float size)
+{
+    switch (static_cast<unsigned int>(static_cast<long long>(size))) {
+    case 1u:
+        return 0x00FFAFAFu;
+    case 4u:
+        return 0x006464FFu;
+    case 6u:
+        return 0x00FF6464u;
+    case 7u:
+        return 0x0064FF64u;
+    case 8u:
+        return 0x00FFFFAAu;
+    case 9u:
+        return 0x008CD28Cu;
+    case 10u:
+        return 0x00FF59B6u;
+    case 11u:
+        return 0x00AAAAFFu;
+    case 12u:
+        return 0x00323232u;
+    case 13u:
+        return 0x00FF32FFu;
+    case 14u:
+        return 0x007878FFu;
+    case 15u:
+        return 0x000AFF0Au;
+    default:
+        return 0x00FFFFFFu;
+    }
+}
+
+D3DBLEND CastingSizeBlend(float size)
+{
+    switch (static_cast<unsigned int>(static_cast<long long>(size))) {
+    case 2u:
+    case 3u:
+    case 12u:
+    case 13u:
+    case 14u:
+    case 100u:
+        return D3DBLEND_INVSRCALPHA;
+    default:
+        return D3DBLEND_ONE;
+    }
+}
+
+void RenderHealLow(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    const unsigned int rgb = CastingSizeRgb(prim.m_size);
+    const D3DBLEND blend = CastingSizeBlend(prim.m_size);
+    const int spin = TableAngle(prim.m_gi[2].alphaT);
+    for (int band = 0; band < 4; ++band) {
+        const EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1 || gi.fullDisplayAngle < 0) {
+            continue;
+        }
+        const int basicAngle = gi.fullDisplayAngle / 10;
+        int count = 0;
+        int sample = 0;
+        bool havePrevious = false;
+        vector3d previousInner{};
+        vector3d previousOuter{};
+        bool keepGoing = true;
+        while (keepGoing) {
+            int angle = (count + gi.rotStart) % 360;
+            if (angle < 0) {
+                angle += 360;
+            }
+            if (gi.fullDisplayAngle == 360 && sample == 10) {
+                angle = TableAngle(gi.rotStart);
+            }
+            const float cosine = g_cosTable[angle];
+            const float sine = g_sinTable[angle];
+            vector3d inner{ gi.distance * cosine, 0.0f, gi.distance * sine };
+            const int rise = TableAngle(gi.riseAngle);
+            const float radial = g_cosTable[rise] * gi.height[static_cast<size_t>(sample)];
+            vector3d outer{
+                radial * cosine + inner.x,
+                -(g_sinTable[rise] * gi.height[static_cast<size_t>(sample)]),
+                radial * sine + inner.z
+            };
+            if (gi.sparkY == 1234.5f) {
+                const float offsetX = gi.sparkX * g_cosTable[spin] - gi.sparkZ * g_sinTable[spin];
+                const float offsetZ = gi.sparkX * g_sinTable[spin] + gi.sparkZ * g_cosTable[spin];
+                inner.x += offsetX;
+                inner.z += offsetZ;
+                outer.x += offsetX;
+                outer.z += offsetZ;
+            }
+            if (havePrevious && gi.alphaB > 0) {
+                const int part = sample - 1;
+                const float u0 = static_cast<float>(part) * 0.047619049f;
+                const float u1 = static_cast<float>(part + 1) * 0.047619049f;
+                const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | rgb;
+                const vector3d previousInnerWorld{ prim.m_pos.x + previousInner.x, prim.m_pos.y + previousInner.y, prim.m_pos.z + previousInner.z };
+                const vector3d innerWorld{ prim.m_pos.x + inner.x, prim.m_pos.y + inner.y, prim.m_pos.z + inner.z };
+                const vector3d outerWorld{ prim.m_pos.x + outer.x, prim.m_pos.y + outer.y, prim.m_pos.z + outer.z };
+                const vector3d previousOuterWorld{ prim.m_pos.x + previousOuter.x, prim.m_pos.y + previousOuter.y, prim.m_pos.z + previousOuter.z };
+                SubmitWorldTeiRect(previousInnerWorld, innerWorld, outerWorld, previousOuterWorld, viewMatrix, texture, color, u0, u1, 1.0f, 0.0f, blend, 0.0f, static_cast<int>(prim.m_renderFlag));
+            }
+            if (++sample > 10) {
+                sample = 10;
+            }
+            previousInner = inner;
+            previousOuter = outer;
+            havePrevious = true;
+            keepGoing = basicAngle + count <= gi.fullDisplayAngle;
+            count += basicAngle;
+        }
+    }
+}
+
+void RenderHealCasting(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+        for (int band = 0; band < 4; ++band) {
+        const EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1 || gi.fullDisplayAngle < 0) {
+            continue;
+        }
+
+        const int basicAngle = gi.fullDisplayAngle / 20;
+        int count = 0;
+        int sample = 0;
+        bool havePrevious = false;
+        vector3d previousBase{};
+        vector3d previousTop{};
+        do {
+            int angle = (count + gi.rotStart) % 360;
+            if (angle < 0) {
+                angle += 360;
+            }
+            if (gi.fullDisplayAngle == 360 && sample == 20) {
+                angle = gi.rotStart;
+                if (angle < 0) {
+                    angle += 360;
+                }
+            }
+            const float cosine = g_cosTable[angle];
+            const float sine = g_sinTable[angle];
+            const u32 heightBits = FloatBits(gi.maxHeight);
+            float baseY = 0.0f;
+            float topLift = 0.0f;
+            if (heightBits == 1086326833u) {
+                baseY = -2.0f;
+                topLift = 2.0f;
+            } else if (heightBits == 1103102476u) {
+                baseY = -1.0f;
+                topLift = 1.0f;
+            }
+            const int rise = gi.riseAngle < 0 ? gi.riseAngle + 360 : gi.riseAngle;
+            const int riseAngle = rise % 360;
+            const float sampleHeight = gi.height[static_cast<size_t>((std::min)(sample, 20))];
+            const float radial = g_cosTable[riseAngle] * sampleHeight;
+            const float vertical = g_sinTable[riseAngle] * sampleHeight;
+            const vector3d base = {
+                prim.m_pos.x + cosine * gi.distance,
+                prim.m_pos.y + baseY,
+                prim.m_pos.z + sine * gi.distance
+            };
+            const vector3d top = {
+                prim.m_pos.x + radial * cosine + cosine * gi.distance,
+                prim.m_pos.y - (vertical + topLift),
+                prim.m_pos.z + radial * sine + sine * gi.distance
+            };
+            if (sample > 0 && havePrevious) {
+                const int texPart = sample - 1;
+                float u0 = static_cast<float>(texPart) * 0.047619049f;
+                float u1 = static_cast<float>(texPart + 1) * 0.047619049f;
+                if (texPart == 0) {
+                    u0 = 0.0f;
+                }
+                const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24)
+                    | CastingSizeRgb(prim.m_size);
+                SubmitWorldTeiRect(previousBase,
+                    base,
+                    top,
+                    previousTop,
+                    viewMatrix,
+                    prim.m_texture.empty() ? nullptr : prim.m_texture[0],
+                    color,
+                    u0,
+                    u1,
+                    1.0f,
+                    0.0f,
+                    CastingSizeBlend(prim.m_size),
+                    0.0f,
+                    static_cast<int>(prim.m_renderFlag));
+            }
+            previousBase = base;
+            previousTop = top;
+            havePrevious = true;
+            ++sample;
+            if (sample >= 21) {
+                sample = 20;
+            }
+            count += basicAngle;
+        } while (basicAngle + count <= gi.fullDisplayAngle);
+    }
+}
+
+int TableAngle(int angle)
+{
+    angle %= 360;
+    if (angle < 0) {
+        angle += 360;
+    }
+    return angle;
+}
+
+void RotateCornerTowardScreen(vector3d* corner, int rot0, int rot1)
+{
+    const float cosLat = g_cosTable[rot1];
+    const float sinLat = g_sinTable[rot1];
+    const float z = corner->z;
+    const float y = corner->y;
+    corner->z = z * cosLat - y * sinLat;
+    corner->y = z * sinLat + y * cosLat;
+    const float cosLon = g_cosTable[rot0];
+    const float sinLon = g_sinTable[rot0];
+    const float x = corner->x;
+    const float z2 = corner->z;
+    corner->x = x * cosLon - z2 * sinLon;
+    corner->z = x * sinLon + z2 * cosLon;
+}
+
+void UpdateGiExplosionPrimitive(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ActorPosition();
+    }
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.rotStart = static_cast<short>(gi.rotStart + 4);
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        if (gi.process <= 30) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 8);
+            if (gi.alphaB > 160) {
+                gi.alphaB = 160;
+            }
+        }
+        gi.distance -= 0.2f;
+        for (int sample = 0; sample < 21; ++sample) {
+            if (gi.flag[static_cast<size_t>(sample)] != 0) {
+                continue;
+            }
+            const float envelope = g_sinTable[9 * sample];
+            if (gi.process <= 90) {
+                gi.height[static_cast<size_t>(sample)] = g_sinTable[gi.process] * gi.maxHeight * envelope;
+            }
+            const float cap = gi.maxHeight * envelope;
+            if (cap < gi.height[static_cast<size_t>(sample)]) {
+                gi.height[static_cast<size_t>(sample)] = cap;
+                gi.flag[static_cast<size_t>(sample)] = 1;
+            }
+            if (gi.height[static_cast<size_t>(sample)] < 0.0f) {
+                gi.height[static_cast<size_t>(sample)] = 0.0f;
+            }
+        }
+    }
+}
+
+void UpdateAcidDemonPrimitive(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ActorPosition();
+    }
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.rotStart = static_cast<short>(gi.rotStart + (band == 3 ? rand() % 2 + 2 : rand() % 3 + 4));
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        if (gi.process < 20) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 5);
+            if (gi.alphaB > 80) {
+                gi.alphaB = 80;
+            }
+        } else if (gi.process >= 40) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 15);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+        gi.maxHeight *= band == 3 ? 1.025f : 1.005f;
+        for (int sample = 0; sample < 21; ++sample) {
+            const float envelope = g_sinTable[9 * sample];
+            if (gi.process > 90) {
+                gi.flag[static_cast<size_t>(sample)] = 1;
+            } else {
+                gi.height[static_cast<size_t>(sample)] = g_sinTable[gi.process] * gi.maxHeight * envelope;
+            }
+            if (gi.maxHeight * envelope < gi.height[static_cast<size_t>(sample)]) {
+                gi.flag[static_cast<size_t>(sample)] = 1;
+            }
+            if (gi.height[static_cast<size_t>(sample)] < 0.0f) {
+                gi.height[static_cast<size_t>(sample)] = 0.0f;
+            }
+        }
+    }
+}
+
+void UpdateFlowerCastPrimitive(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ActorPosition();
+    }
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        const int pulse = 4 * (gi.process % 90);
+        gi.maxHeight = g_sinTable[pulse] * 2.5f + gi.vecTNowY;
+        if (gi.riseAngle >= 360) {
+            gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
+        } else if (gi.riseAngle < 0) {
+            gi.riseAngle = static_cast<short>(gi.riseAngle + 360);
+        }
+        if (gi.process <= 110) {
+            if (gi.process < 20) {
+                gi.alphaB = static_cast<short>(gi.alphaB + 5);
+                if (gi.alphaB > 180) {
+                    gi.alphaB = 180;
+                }
+            }
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - 1);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+        for (int sample = 0; sample < 21; ++sample) {
+            if (gi.flag[static_cast<size_t>(sample)] != 0) {
+                continue;
+            }
+            const float envelope = g_sinTable[9 * sample];
+            float height = envelope * gi.maxHeight;
+            if (gi.process <= 90) {
+                height *= g_sinTable[gi.process];
+            }
+            gi.height[static_cast<size_t>(sample)] = height;
+            if (envelope * gi.maxHeight < height) {
+                gi.height[static_cast<size_t>(sample)] = envelope * gi.maxHeight;
+                gi.flag[static_cast<size_t>(sample)] = 1;
+            }
+            if (gi.height[static_cast<size_t>(sample)] < 0.0f) {
+                gi.height[static_cast<size_t>(sample)] = 0.0f;
+            }
+        }
+    }
+}
+
+void UpdateDefenderPrimitive(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ActorPosition();
+    }
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.rotStart = static_cast<short>(gi.rotStart + (band == 0 || band == 2 ? 1 : 2));
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        if (gi.process < prim->m_duration - 20) {
+            if (gi.process < 100) {
+                gi.alphaB = static_cast<short>(gi.alphaB + 1);
+                if (gi.alphaB > 80) {
+                    gi.alphaB = 80;
+                }
+            }
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - 5);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+        const int phase = band >= 2 ? 2 * (gi.process + (band == 2 ? 90 : 135)) : gi.process + band * 90;
+        const int wave = TableAngle(phase);
+        for (int sample = 0; sample < 21; ++sample) {
+            const float envelope = g_sinTable[9 * sample];
+            gi.height[static_cast<size_t>(sample)] = envelope * gi.maxHeight * (1.0f + 0.30000001f * g_sinTable[wave]);
+        }
+    }
+}
+
+void UpdateMapPillarGi(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ActorPosition();
+    }
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.rotStart = static_cast<short>(gi.rotStart + 1);
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        if (gi.alphaT == 1 && gi.process > 250) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 1);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+        if (gi.process >= 800) {
+            gi.maxHeight -= 1.0f;
+            if (gi.maxHeight < 0.0f) {
+                gi.maxHeight = 0.0f;
+            }
+        }
+        for (int sample = 0; sample < 21; ++sample) {
+            float height = 0.0f;
+            if (gi.process >= 200) {
+                height = gi.process > 290 ? gi.maxHeight : g_sinTable[gi.process - 200] * gi.maxHeight;
+            }
+            if (height < 0.0f) {
+                height = 0.0f;
+            }
+            gi.height[static_cast<size_t>(sample)] = height;
+        }
+    }
+}
+
+void UpdateGi2Primitive(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ActorPosition();
+    }
+    const bool fastSpin = prim->m_accel == 99.0f;
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.rotStart = static_cast<short>(gi.rotStart + (fastSpin ? 3 : 5));
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        gi.distance += fastSpin ? 0.1f : 0.30000001f;
+        gi.riseAngle = static_cast<short>(gi.riseAngle - 1);
+        const short riseFloor = fastSpin ? 30 : 40;
+        if (gi.riseAngle < riseFloor) {
+            gi.riseAngle = riseFloor;
+        }
+        if (gi.process <= 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB + (gi.alphaT == 1 ? 10 : 20));
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - (gi.alphaT == 2 ? 8 : 2));
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+        const int wave = TableAngle(gi.process + band * 90);
+        for (int sample = 0; sample < 21; ++sample) {
+            const float envelope = g_sinTable[9 * sample];
+            gi.height[static_cast<size_t>(sample)] = envelope * gi.maxHeight * (1.0f + 0.15000001f * g_sinTable[wave]);
+        }
+    }
+}
+
+void UpdateGi4Primitive(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ActorPosition();
+    }
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.distance += 0.039999999f;
+        gi.riseAngle = static_cast<short>(gi.riseAngle - 1);
+        if (gi.riseAngle < 10) {
+            gi.riseAngle = 10;
+            gi.alphaB = 0;
+        }
+        if (gi.distance < 2.5f) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 20);
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - 2);
+            if (gi.alphaB <= 0) {
+                gi.alphaB = 0;
+                gi.distance = 2.1399999f;
+                gi.riseAngle = 74;
+            }
+        }
+        const int wave = TableAngle(band >= 2 ? 2 * (gi.process + (band == 2 ? 90 : 135)) : gi.process + band * 90);
+        for (int sample = 0; sample < 21; ++sample) {
+            const float envelope = g_sinTable[9 * sample];
+            gi.height[static_cast<size_t>(sample)] = gi.maxHeight * (1.0f + 0.30000001f * g_sinTable[wave] * envelope);
+        }
+    }
+}
+
+void UpdateStormKickPrimitive(CEffectPrim* prim)
+{
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.process <= 0) {
+            continue;
+        }
+        gi.rotStart = static_cast<short>(gi.rotStart + rand() % 3 + 3);
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        if (gi.process > 60) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 1);
+        }
+        if (gi.process <= 40) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 1);
+        }
+        if (gi.alphaB < 0) {
+            gi.alphaB = 0;
+        }
+    }
+}
+
+void RenderStormKick(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (int band = 0; band < 4; ++band) {
+        const EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        unsigned char red = 0;
+        unsigned char green = 0;
+        unsigned char blue = 0;
+        D3DBLEND blend = D3DBLEND_INVSRCALPHA;
+        switch (gi.flag[4]) {
+        case 0:
+            red = 50;
+            green = 50;
+            blue = 255;
+            blend = D3DBLEND_ONE;
+            break;
+        case 1:
+            red = 164;
+            green = 136;
+            blue = 55;
+            break;
+        case 2:
+            red = 155;
+            green = 255;
+            blue = 155;
+            break;
+        case 3:
+            red = 130;
+            green = 130;
+            blue = 255;
+            break;
+        case 4:
+            red = 255;
+            green = 50;
+            blue = 50;
+            break;
+        case 5:
+            red = 5;
+            green = 5;
+            blue = 5;
+            break;
+        case 6:
+            red = 255;
+            green = 255;
+            blue = 255;
+            break;
+        case 7:
+            red = 255;
+            green = 125;
+            blue = 255;
+            break;
+        default:
+            continue;
+        }
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24)
+            | (static_cast<unsigned int>(red) << 16)
+            | (static_cast<unsigned int>(green) << 8)
+            | blue;
+        float radius = gi.maxHeight;
+        float height = -gi.height[0];
+        const int segments = gi.flag[0];
+        for (int sample = 0; sample < segments; ++sample) {
+            if (sample > 0) {
+                height += gi.height[1];
+                radius -= (2.2f - static_cast<float>(sample) * 0.2f) * gi.distance;
+            }
+            const int angle = TableAngle(gi.rotStart + 45 * sample);
+            const auto place = [&](int cornerAngle, float y) {
+                const int wrapped = TableAngle(cornerAngle);
+                return vector3d{
+                    prim.m_pos.x + g_cosTable[wrapped] * radius,
+                    prim.m_pos.y + y,
+                    prim.m_pos.z + g_sinTable[wrapped] * radius
+                };
+            };
+            SubmitWorldTeiRect(
+                place(angle, height - 1.0f),
+                place(angle + 90, height - 1.0f),
+                place(angle + 180, height),
+                place(angle + 270, height),
+                viewMatrix,
+                texture,
+                color,
+                0.0f,
+                1.0f,
+                1.0f,
+                0.0f,
+                blend,
+                0.0f,
+                static_cast<int>(prim.m_renderFlag));
+        }
+    }
+}
+
+void UpdateHalfSpherePrimitive(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ActorPosition();
+    }
+    const int facing = prim->m_master != nullptr ? static_cast<int>(prim->m_master->ResolveBaseRotation() + 180.0f) : 0;
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.rotStart = static_cast<short>(facing);
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        const int side = gi.rotStart + 90 >= 360 ? gi.rotStart - 270 : gi.rotStart + 90;
+        gi.vecTNowX = g_cosTable[side] * 5.0f;
+        gi.vecTNowZ = g_sinTable[side] * 5.0f;
+        if (gi.process <= 50 && gi.alphaB < 120) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 5);
+        }
+    }
+}
+
+void RenderHalfSphere(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (int band = 0; band < 4; ++band) {
+        const EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        const int basicAngle = gi.fullDisplayAngle / 10;
+        if (basicAngle <= 0) {
+            continue;
+        }
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | 0x00FAFAFFu;
+        const auto place = [&](int latitude, int longitude) {
+            const int lat = TableAngle(latitude);
+            const int lon = TableAngle(longitude);
+            const float ring = gi.distance * g_sinTable[lat];
+            return vector3d{
+                prim.m_pos.x + ring * g_cosTable[lon] + gi.vecTNowX,
+                prim.m_pos.y + gi.distance * g_cosTable[lat] - gi.maxHeight,
+                prim.m_pos.z + ring * g_sinTable[lon] + gi.vecTNowZ
+            };
+        };
+        for (int latitude = 0; latitude < 180; latitude += 18) {
+            bool havePrevious = false;
+            vector3d previousNear{};
+            vector3d previousFar{};
+            for (int longitude = 0; longitude <= gi.fullDisplayAngle; longitude += basicAngle) {
+                int spin = gi.rotStart + longitude;
+                if (gi.fullDisplayAngle == 360 && longitude == gi.fullDisplayAngle) {
+                    spin = gi.rotStart;
+                }
+                const vector3d inner = place(latitude, spin);
+                const vector3d outer = place(latitude + 18, spin);
+                if (havePrevious) {
+                    SubmitWorldTeiRect(previousNear, inner, outer, previousFar, viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_INVSRCALPHA, 0.0f, static_cast<int>(prim.m_renderFlag));
+                }
+                previousNear = inner;
+                previousFar = outer;
+                havePrevious = true;
+            }
+        }
+    }
+}
+
+void UpdateAttackEnergyPrimitive(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ActorPosition();
+    }
+    const int facing = prim->m_master != nullptr ? static_cast<int>(prim->m_master->ResolveBaseRotation() + 180.0f) : 0;
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.process <= 0) {
+            continue;
+        }
+        if (band < 2) {
+            gi.riseAngle = static_cast<short>(gi.riseAngle + 1);
+        }
+        if (gi.riseAngle >= 360) {
+            gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
+        }
+        gi.rotStart = static_cast<short>(facing);
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        const int side = gi.rotStart + 90 >= 360 ? gi.rotStart - 270 : gi.rotStart + 90;
+        gi.vecTNowX = g_cosTable[side] * 5.0f;
+        gi.vecTNowZ = g_sinTable[side] * 5.0f;
+        if (gi.alphaB < 40) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 5);
+        }
+    }
+}
+
+void RenderAttackEnergy(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (int band = 0; band < 4; ++band) {
+        const EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1 || gi.alphaB <= 0 || gi.fullDisplayAngle < 0) {
+            continue;
+        }
+        const int basicAngle = gi.fullDisplayAngle / 10;
+        if (basicAngle <= 0) {
+            continue;
+        }
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | 0x00FAFAFFu;
+        const int latitude = TableAngle(gi.rotStart);
+        const float cosLat = g_cosTable[latitude];
+        const float sinLat = g_sinTable[latitude];
+        const float outerDistance = gi.height[0] * gi.distance * 0.1f + gi.distance;
+        const auto place = [&](int longitude, float radius, float offsetScale) {
+            const int lon = TableAngle(longitude);
+            const float ring = radius * g_sinTable[lon];
+            return vector3d{
+                prim.m_pos.x + ring * cosLat + offsetScale * gi.vecTNowX,
+                prim.m_pos.y + radius * g_cosTable[lon] - gi.maxHeight,
+                prim.m_pos.z + ring * sinLat + offsetScale * gi.vecTNowZ
+            };
+        };
+        bool havePrevious = false;
+        vector3d previousInner{};
+        vector3d previousOuter{};
+        int part = 0;
+        for (int step = 0; step <= gi.fullDisplayAngle; step += basicAngle) {
+            int spin = gi.riseAngle + step;
+            if (gi.fullDisplayAngle == 360 && step == gi.fullDisplayAngle) {
+                spin = gi.riseAngle;
+            }
+            const vector3d inner = place(spin, gi.distance, 1.0f);
+            const vector3d outer = place(spin, outerDistance, -gi.height[0]);
+            if (havePrevious) {
+                const int slice = part - 1;
+                const float u0 = slice == 0 ? 0.0f : static_cast<float>(slice) * 0.047619049f;
+                const float u1 = static_cast<float>(slice + 1) * 0.047619049f;
+                SubmitWorldTeiRect(previousInner, inner, outer, previousOuter, viewMatrix, texture, color, u0, u1, 0.89999998f, 0.0f, D3DBLEND_INVSRCALPHA, 0.0f, static_cast<int>(prim.m_renderFlag));
+            }
+            previousInner = inner;
+            previousOuter = outer;
+            havePrevious = true;
+            ++part;
+            if (part > 20) {
+                part = 20;
+            }
+        }
+    }
+}
+
+void UpdateElectricPrimitive(CEffectPrim* prim)
+{
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.process <= 0) {
+            continue;
+        }
+        gi.distance += 0.40000001f;
+        if (gi.distance > 15.0f) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 2);
+        }
+        if (gi.process <= 25) {
+            gi.alphaB = static_cast<short>(gi.alphaB + rand() % 4 + 5);
+        }
+        if (gi.alphaB < 0) {
+            gi.alphaB = 0;
+        }
+        if (gi.process == 1) {
+            for (int step = 0; step < 21; ++step) {
+                gi.height[0] += 9.0f;
+                if (gi.height[0] <= 180.0f) {
+                    int index = static_cast<int>(gi.vecTNowY);
+                    while (index >= 1) {
+                        --index;
+                        gi.height[static_cast<size_t>(index + 1)] = gi.height[static_cast<size_t>(index)];
+                        gi.flag[static_cast<size_t>(index + 1)] = gi.flag[static_cast<size_t>(index)];
+                    }
+                } else {
+                    gi.height[0] = 180.0f;
+                }
+            }
+        }
+    }
+}
+
+void RenderElectric(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        const int samples = static_cast<int>(gi.vecTNowY);
+        if (gi.life != 1 || gi.alphaB <= 0 || gi.process <= 0 || samples <= 0) {
+            continue;
+        }
+        float jitterY[21]{};
+        float jitterX[21]{};
+        float jitterZ[21]{};
+        const int jitterCount = (std::min)(samples + 1, 21);
+        for (int sample = 0; sample < jitterCount; ++sample) {
+            jitterY[sample] = static_cast<float>(rand() % 7) * 0.1f - 0.30000001f;
+            jitterX[sample] = static_cast<float>(rand() % 7) * 0.1f - 0.30000001f;
+            jitterZ[sample] = static_cast<float>(rand() % 7) * 0.1f - 0.30000001f;
+        }
+        const int facing = TableAngle(gi.riseAngle);
+        const auto pathPoint = [&](int sample) {
+            const float angle = gi.height[static_cast<size_t>(sample)];
+            const int angleIndex = TableAngle(static_cast<int>(angle));
+            const float radial = angle > 0.0f ? angle * 0.011111111f * gi.distance : 0.0f;
+            return vector3d{
+                radial * g_cosTable[facing] + jitterX[sample] + gi.sparkX,
+                -(g_sinTable[angleIndex] * gi.vecTNowX * gi.distance) + jitterY[sample] - 2.0f + gi.sparkY,
+                radial * g_sinTable[facing] + jitterZ[sample] + gi.sparkZ
+            };
+        };
+        int fade = 0;
+        for (int sample = 0; sample < samples; ++sample) {
+            const vector3d pointA = pathPoint(sample);
+            const vector3d pointB = pathPoint((std::min)(sample + 1, 20));
+            if (sample > 0 && sample < 19) {
+                const float dx = pointA.x - pointB.x;
+                const float dz = pointA.z - pointB.z;
+                const float length = std::sqrt(dx * dx + dz * dz);
+                int heading = 0;
+                if (length > 0.0f) {
+                    const float nx = dx / length;
+                    const float nz = dz / length;
+                    int angle = 0;
+                    bool capped = false;
+                    while (nx < g_cosTable[angle]) {
+                        if (++angle > 180) {
+                            heading = 180;
+                            capped = true;
+                            break;
+                        }
+                    }
+                    if (!capped) {
+                        heading = nz < 0.0f ? 360 - angle : angle;
+                    }
+                }
+                const int side = TableAngle(heading + 90);
+                const int alpha = gi.alphaB - fade;
+                vector3d previousA{};
+                vector3d previousB{};
+                bool havePrevious = false;
+                for (int around = 0; around <= 360; around += 120) {
+                    const float up = gi.maxHeight * g_sinTable[around];
+                    const float horizontal = gi.maxHeight * g_cosTable[around];
+                    const float sideX = horizontal * g_cosTable[side];
+                    const float sideZ = horizontal * g_sinTable[side];
+                    const vector3d currentA{ pointA.x + sideX, pointA.y + up, pointA.z + sideZ };
+                    const vector3d currentB{ pointB.x + sideX, pointB.y + up, pointB.z + sideZ };
+                    if (havePrevious && alpha > 0) {
+                        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned char>(alpha)) << 24)
+                            | (static_cast<unsigned int>(6 * sample) << 16)
+                            | (static_cast<unsigned int>(6 * sample) << 8)
+                            | 255u;
+                        SubmitWorldTeiRect(currentA, currentB, previousB, previousA, viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+                    }
+                    previousA = currentA;
+                    previousB = currentB;
+                    havePrevious = true;
+                }
+            }
+            fade += 5;
+        }
+    }
+}
+
+int ElectricHeading(float xDelta, float zDelta)
+{
+    const float length = std::sqrt(xDelta * xDelta + zDelta * zDelta);
+    if (length <= 0.0f) {
+        return 0;
+    }
+    const float nx = xDelta / length;
+    const float nz = zDelta / length;
+    int angle = 0;
+    while (nx < g_cosTable[angle]) {
+        if (++angle > 180) {
+            return 180;
+        }
+    }
+    return nz < 0.0f ? 360 - angle : angle;
+}
+
+void UpdateElectric2Primitive(CEffectPrim* prim)
+{
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.process <= 0) {
+            continue;
+        }
+        gi.distance += 0.60000002f;
+        if (gi.process <= 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB + rand() % 6 + 15);
+        }
+        if (gi.process > 20) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 5);
+        }
+        if (gi.alphaB < 0) {
+            gi.alphaB = 0;
+        }
+        if (gi.process == 1) {
+            for (int step = 0; step < 21; ++step) {
+                gi.height[0] += 18.0f;
+                if (gi.height[0] >= 360.0f) {
+                    gi.height[0] -= 360.0f;
+                } else {
+                    int index = static_cast<int>(gi.vecTNowY);
+                    while (index >= 1) {
+                        --index;
+                        gi.height[static_cast<size_t>(index + 1)] = gi.height[static_cast<size_t>(index)];
+                    }
+                }
+            }
+        } else if (gi.vecTNowY >= 0.0f) {
+            const int last = static_cast<int>(gi.vecTNowY);
+            for (int sample = 0; sample <= last && sample < 21; ++sample) {
+                gi.height[static_cast<size_t>(sample)] += 8.0f;
+                if (gi.height[static_cast<size_t>(sample)] >= 360.0f) {
+                    gi.height[static_cast<size_t>(sample)] -= 360.0f;
+                }
+                if (gi.height[static_cast<size_t>(sample)] < 0.0f) {
+                    gi.height[static_cast<size_t>(sample)] += 360.0f;
+                }
+            }
+        }
+    }
+}
+
+void RenderElectric2(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        const int samples = static_cast<int>(gi.vecTNowY);
+        if (gi.life != 1 || gi.alphaB <= 0 || gi.process <= 0 || gi.vecTNowY <= 0.0f || samples <= 0) {
+            continue;
+        }
+        float jitterY[21]{};
+        float jitterX[21]{};
+        float jitterZ[21]{};
+        const int jitterCount = (std::min)(samples + 1, 21);
+        for (int sample = 0; sample < jitterCount; ++sample) {
+            jitterY[sample] = static_cast<float>(rand() % 11) * 0.1f - 0.5f;
+            jitterX[sample] = static_cast<float>(rand() % 11) * 0.1f - 0.5f;
+            jitterZ[sample] = static_cast<float>(rand() % 11) * 0.1f - 0.5f;
+        }
+        const int facing = TableAngle(gi.riseAngle);
+        const auto pathPoint = [&](int sample) {
+            const float angle = gi.height[static_cast<size_t>(sample)];
+            const int angleIndex = TableAngle(static_cast<int>(angle));
+            const float radial = static_cast<float>(sample) * 0.2f * gi.distance;
+            return vector3d{
+                radial * g_cosTable[facing] + jitterX[sample] + gi.sparkX,
+                g_sinTable[angleIndex] * gi.vecTNowX * -15.0f + jitterY[sample] - 8.0f + gi.sparkY,
+                radial * g_sinTable[facing] + jitterZ[sample] + gi.sparkZ
+            };
+        };
+        int spread = -135;
+        int span = 150;
+        for (int sample = 0; sample < samples; ++sample) {
+            const vector3d pointA = pathPoint(sample);
+            const vector3d pointB = pathPoint((std::min)(sample + 1, 20));
+            if (span < 150 && span > -135) {
+                const int alpha = span <= 0 ? gi.alphaB + span : gi.alphaB + spread;
+                const int side = TableAngle(ElectricHeading(pointA.x - pointB.x, pointA.z - pointB.z) + 90);
+                vector3d previousA{};
+                vector3d previousB{};
+                bool havePrevious = false;
+                for (int around = 0; around <= 360; around += 120) {
+                    const float up = gi.maxHeight * g_sinTable[around];
+                    const float horizontal = gi.maxHeight * g_cosTable[around];
+                    const float sideX = horizontal * g_cosTable[side];
+                    const float sideZ = horizontal * g_sinTable[side];
+                    const vector3d currentA{ pointA.x + sideX, pointA.y + up, pointA.z + sideZ };
+                    const vector3d currentB{ pointB.x + sideX, pointB.y + up, pointB.z + sideZ };
+                    if (havePrevious && alpha > 0) {
+                        const int green = rand() % 121;
+                        const int red = rand() % 121;
+                        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned char>(alpha)) << 24)
+                            | (static_cast<unsigned int>(red) << 16)
+                            | (static_cast<unsigned int>(green) << 8)
+                            | 255u;
+                        SubmitWorldTeiRect(currentA, currentB, previousB, previousA, viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+                    }
+                    previousA = currentA;
+                    previousB = currentB;
+                    havePrevious = true;
+                }
+            }
+            spread += 15;
+            span -= 15;
+        }
+    }
+}
+
+void UpdateAttackEnergy2Primitive(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ActorPosition();
+    }
+    const int facing = prim->m_master != nullptr ? static_cast<int>(prim->m_master->ResolveBaseRotation() + 180.0f) : 0;
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.process <= 0) {
+            continue;
+        }
+        if (gi.height[1] >= 90.0f) {
+            gi.alphaB = 10;
+            gi.height[1] = 0.0f;
+        } else {
+            gi.height[1] += 1.0f;
+            gi.alphaB = static_cast<short>(gi.alphaB + 10);
+            if (gi.alphaB > 60) {
+                gi.alphaB = 60;
+            }
+        }
+        if (gi.process > 30 && gi.alphaB >= 4 * (45 - gi.process)) {
+            gi.alphaB = static_cast<short>(4 * (45 - gi.process));
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+        gi.riseAngle = static_cast<short>(gi.riseAngle + 1);
+        if (gi.riseAngle >= 360) {
+            gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
+        }
+        gi.rotStart = static_cast<short>(facing);
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        const int side = gi.rotStart + 90 >= 360 ? gi.rotStart - 270 : gi.rotStart + 90;
+        gi.vecTNowX = g_cosTable[side];
+        gi.vecTNowZ = g_sinTable[side];
+    }
+}
+
+void RenderAttackEnergy2(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    const unsigned int rgb = CastingSizeRgb(prim.m_size);
+    const D3DBLEND blend = CastingSizeBlend(prim.m_size);
+    for (int band = 0; band < 4; ++band) {
+        const EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1 || gi.alphaB <= 0 || gi.fullDisplayAngle < 0) {
+            continue;
+        }
+        const int basicAngle = gi.fullDisplayAngle / 10;
+        if (basicAngle <= 0) {
+            continue;
+        }
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | rgb;
+        const int latitude = TableAngle(gi.rotStart);
+        const auto place = [&](float tilt, int longitude) {
+            int tiltIndex = static_cast<int>(tilt);
+            if (tiltIndex > 90) {
+                tiltIndex = 90;
+            }
+            if (tiltIndex < 0) {
+                tiltIndex = 0;
+            }
+            const int lon = TableAngle(longitude);
+            const float radial = g_sinTable[tiltIndex] * gi.distance;
+            const float along = radial * g_sinTable[lon];
+            return vector3d{
+                prim.m_pos.x + gi.vecTNowX * 3.0f + along * g_cosTable[latitude] + gi.maxHeight * gi.vecTNowX * g_cosTable[tiltIndex],
+                prim.m_pos.y + radial * g_cosTable[lon] - gi.maxHeight,
+                prim.m_pos.z + gi.vecTNowZ * 3.0f + along * g_sinTable[latitude] + gi.maxHeight * gi.vecTNowZ * g_cosTable[tiltIndex]
+            };
+        };
+        bool havePrevious = false;
+        vector3d previousInner{};
+        vector3d previousOuter{};
+        int part = 0;
+        for (int step = 0; step <= gi.fullDisplayAngle; step += basicAngle) {
+            int spin = gi.riseAngle + step;
+            if (gi.fullDisplayAngle == 360 && step == gi.fullDisplayAngle) {
+                spin = gi.riseAngle;
+            }
+            const vector3d inner = place(gi.height[1], spin);
+            const vector3d outer = place(gi.height[1] + 10.0f, spin);
+            if (havePrevious) {
+                const int slice = part - 1;
+                const float u0 = slice == 0 ? 0.0f : static_cast<float>(slice) * 0.047619049f;
+                const float u1 = static_cast<float>(slice + 1) * 0.047619049f;
+                for (int pass = 0; pass < 2; ++pass) {
+                    SubmitWorldTeiRect(previousInner, inner, outer, previousOuter, viewMatrix, texture, color, u0, u1, 1.0f, 0.0f, blend, 0.0f, static_cast<int>(prim.m_renderFlag));
+                }
+            }
+            previousInner = inner;
+            previousOuter = outer;
+            havePrevious = true;
+            ++part;
+            if (part > 20) {
+                part = 20;
+            }
+        }
+    }
+}
+
+void UpdateBottomOutPrimitive(CEffectPrim* prim)
+{
+    int longitude = 0;
+    int latitude = 0;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_view != nullptr) {
+            longitude = static_cast<int>(mode->m_view->GetCameraLongitude());
+            latitude = static_cast<int>(mode->m_view->GetCameraLatitude());
+        }
+    }
+    prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+    short pitch = static_cast<short>(450 - latitude);
+    if (pitch >= 360) {
+        pitch = static_cast<short>(pitch - 360);
+    }
+    prim->m_gi[1].alphaT = pitch;
+
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.process > 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 5);
+            if (gi.alphaB <= 0) {
+                gi.alphaB = 0;
+                gi.process = 0;
+                gi.sparkY = gi.flag[1] != 0 ? prim->m_pos.y - 5.0f : prim->m_pos.y;
+            }
+            gi.sparkY -= 0.2f;
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB + 25);
+        }
+        gi.height[8] += 5.0f;
+        if (gi.height[8] >= 360.0f) {
+            gi.height[8] -= 360.0f;
+        }
+        if (gi.flag[1] == 1) {
+            gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + 5);
+            if (gi.fullDisplayAngle >= 360) {
+                gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle - 360);
+            }
+        }
+    }
+}
+
+void UpdateBottomPrimitive(CEffectPrim* prim)
+{
+    int longitude = 0;
+    int latitude = 0;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_view != nullptr) {
+            longitude = static_cast<int>(mode->m_view->GetCameraLongitude());
+            latitude = static_cast<int>(mode->m_view->GetCameraLatitude());
+        }
+    }
+    prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+    short pitch = static_cast<short>(450 - latitude);
+    if (pitch >= 360) {
+        pitch = static_cast<short>(pitch - 360);
+    }
+    prim->m_gi[1].alphaT = pitch;
+
+    EffectGi& head = prim->m_gi[0];
+    if (head.life != 1) {
+        return;
+    }
+    ++head.process;
+    if (head.process % 6 == 0) {
+        for (int band = 3; band >= 1; --band) {
+            EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+            if (gi.life == 0) {
+                continue;
+            }
+            const EffectGi& previous = prim->m_gi[static_cast<size_t>(band - 1)];
+            gi.distance = previous.distance + 0.5f;
+            gi.height[8] = previous.height[8];
+            gi.alphaB = static_cast<short>(previous.alphaB - 50);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+            gi.sparkX = previous.sparkX;
+            gi.sparkY = previous.sparkY;
+            gi.sparkZ = previous.sparkZ;
+            gi.fullDisplayAngle = previous.fullDisplayAngle;
+            gi.flag[0] = previous.flag[0];
+            gi.flag[2] = 2;
+            gi.height[7] = 0.0f;
+        }
+    }
+    head.height[8] += 5.0f;
+    if (head.height[8] >= 360.0f) {
+        head.height[8] -= 360.0f;
+    }
+    head.rotStart = static_cast<short>(head.rotStart + 1);
+    if (head.rotStart >= 360) {
+        head.rotStart = static_cast<short>(head.rotStart - 360);
+    }
+    head.sparkX = prim->m_pos.x;
+    head.sparkZ = prim->m_pos.z;
+    head.arcBaselineY = prim->m_pos.y - 6.0f;
+    head.sparkY = g_sinTable[TableAngle(head.rotStart)] * 3.0f + head.arcBaselineY;
+    if (head.flag[2] == 7) {
+        head.fullDisplayAngle = static_cast<short>(head.fullDisplayAngle + 10);
+        if (head.fullDisplayAngle >= 360) {
+            head.fullDisplayAngle = static_cast<short>(head.fullDisplayAngle - 360);
+        }
+    }
+}
+
+void UpdateParticleUpPrimitive(CEffectPrim* prim)
+{
+    int longitude = 0;
+    int latitude = 0;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_view != nullptr) {
+            longitude = static_cast<int>(mode->m_view->GetCameraLongitude());
+            latitude = static_cast<int>(mode->m_view->GetCameraLatitude());
+        }
+    }
+    prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+    short pitch = static_cast<short>(450 - latitude);
+    if (pitch >= 360) {
+        pitch = static_cast<short>(pitch - 360);
+    }
+    prim->m_gi[1].alphaT = pitch;
+
+    int markA = 36;
+    int markB = 35;
+    for (int band = 0; band < 4 && markB > 7; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life == 1) {
+            ++gi.process;
+            if (gi.process > 0) {
+                gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle - 5);
+                if (gi.fullDisplayAngle < 0) {
+                    gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + 360);
+                }
+                if (gi.process == 1) {
+                    gi.rotStart = static_cast<short>(rand() % 360);
+                } else if (gi.process > 10) {
+                    if (gi.flag[1] == 1) {
+                        gi.flag[0] = static_cast<u8>(gi.process == markB || gi.process == markA);
+                    }
+                    gi.alphaB = static_cast<short>(gi.alphaB - 3);
+                    if (gi.alphaB < 0) {
+                        gi.alphaB = 0;
+                        gi.life = 0;
+                    }
+                } else {
+                    gi.alphaB = static_cast<short>(gi.alphaB + 15);
+                }
+                const int spin = TableAngle(gi.rotStart);
+                gi.sparkY -= gi.height[2];
+                gi.sparkX += g_cosTable[spin] * gi.height[1];
+                gi.sparkZ += g_sinTable[spin] * gi.height[1];
+            }
+        }
+        markA -= 7;
+        markB -= 7;
+    }
+}
+
+void RenderParticleUp(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    const int rot0 = TableAngle(prim.m_gi[0].alphaT);
+    const int rot1 = TableAngle(prim.m_gi[1].alphaT);
+    for (int band = 0; band < 4; ++band) {
+        const EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1 || gi.alphaB <= 0
+            || (gi.flag[2] != 0 && gi.flag[2] != 1 && gi.flag[2] != 2 && gi.flag[2] != 3 && gi.flag[2] != 4
+                && gi.flag[2] != 7 && gi.flag[2] != 8 && gi.flag[2] != 9
+                && gi.flag[2] != 11 && gi.flag[2] != 10 && gi.flag[2] != 15)) {
+            continue;
+        }
+        const int spin = TableAngle(gi.fullDisplayAngle);
+        const int tilt = TableAngle(static_cast<int>(gi.height[8]));
+        const float radius = gi.distance + g_sinTable[tilt] * gi.distance * 0.050000001f;
+        const float sideShift = FloatBits(gi.height[9]) == 0x41200000u ? 4.0f : 0.0f;
+        vector3d corners[4]{};
+        int angle = spin;
+        for (vector3d& corner : corners) {
+            corner.x = g_cosTable[angle] * radius + sideShift;
+            corner.y = 0.0f;
+            corner.z = g_sinTable[angle] * radius;
+            RotateCornerTowardScreen(&corner, rot0, rot1);
+            corner.x += gi.sparkX;
+            corner.y += gi.sparkY;
+            corner.z += gi.sparkZ;
+            angle = TableAngle(angle + 90);
+        }
+        const int textureIndex = gi.flag[0];
+        CTexture* texture = textureIndex >= 0 && textureIndex < static_cast<int>(prim.m_texture.size())
+            ? prim.m_texture[static_cast<size_t>(textureIndex)]
+            : nullptr;
+        const bool straightCorners = gi.flag[2] == 0 || gi.flag[2] == 1 || gi.flag[2] == 15;
+        unsigned int rgb = 0x00DCFADCu;
+        D3DBLEND blend = D3DBLEND_ONE;
+        if (gi.flag[2] == 15) {
+            rgb = 0x00FFC8FFu;
+            blend = D3DBLEND_INVSRCALPHA;
+        } else if (gi.flag[2] == 0) {
+            rgb = 0x00FFFFFFu;
+            blend = D3DBLEND_INVSRCALPHA;
+        } else if (gi.flag[2] == 1) {
+            rgb = 0x00FA9696u;
+        } else if (gi.flag[2] == 2) {
+            rgb = 0x008282FAu;
+        } else if (gi.flag[2] == 3) {
+            rgb = 0x00C8C864u;
+        } else if (gi.flag[2] == 4 || gi.flag[2] == 7) {
+            rgb = 0x00FFFFFFu;
+            if (gi.flag[2] == 4) {
+                blend = D3DBLEND_INVSRCALPHA;
+            }
+        } else if (gi.flag[2] == 8) {
+            rgb = 0x0087FF87u;
+            blend = D3DBLEND_INVSRCALPHA;
+        } else if (gi.flag[2] == 9) {
+            blend = D3DBLEND_INVSRCALPHA;
+            switch (gi.flag[3]) {
+            case 1:
+                rgb = 0x008787FFu;
+                break;
+            case 2:
+                rgb = 0x0087CDFFu;
+                break;
+            case 3:
+                rgb = 0x0087FFFFu;
+                break;
+            case 4:
+                rgb = 0x00FFFFFFu;
+                break;
+            case 5:
+                rgb = 0x00FF8787u;
+                break;
+            case 6:
+                rgb = 0x00FFFFFFu;
+                blend = D3DBLEND_ONE;
+                break;
+            default:
+                continue;
+            }
+        } else if (gi.flag[2] == 10) {
+            rgb = 0x00FAFA96u;
+        }
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | rgb;
+        const vector3d& corner0 = straightCorners ? corners[0] : corners[1];
+        const vector3d& corner1 = straightCorners ? corners[1] : corners[0];
+        const vector3d& corner2 = straightCorners ? corners[2] : corners[3];
+        const vector3d& corner3 = straightCorners ? corners[3] : corners[2];
+        SubmitWorldTeiRect(corner0,
+            corner1,
+            corner2,
+            corner3,
+            viewMatrix,
+            texture,
+            color,
+            0.0f,
+            1.0f,
+            1.0f,
+            0.0f,
+            blend,
+            0.0f,
+            static_cast<int>(prim.m_renderFlag));
+    }
+}
+
+void UpdateTeleportation2Primitive(CEffectPrim* prim)
+{
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.rotStart = static_cast<short>(gi.rotStart - band + 5);
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        if (gi.process <= 0) {
+            continue;
+        }
+        const int doubled = gi.process * 2;
+        if (gi.flag[0] != 0) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 10);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        } else {
+            if (doubled < 180) {
+                if (doubled >= 135) {
+                    gi.alphaB = static_cast<short>(gi.alphaB - 1);
+                    if (gi.alphaB < 0) {
+                        gi.alphaB = 0;
+                    }
+                }
+            } else {
+                gi.flag[0] = 1;
+            }
+            gi.maxHeight = static_cast<float>(static_cast<signed char>(gi.flag[1])) * g_sinTable[TableAngle(doubled)];
+        }
+        const int bandBase = band * 90;
+        const int phase = band * 30;
+        for (int sample = 0; sample < 21; ++sample) {
+            const int angle = bandBase >= 180
+                ? (3 * (gi.process + phase)) % 360
+                : (gi.process + bandBase) % 360;
+            const int sampleAngle = angle < 0 ? angle + 360 : angle;
+            gi.height[static_cast<size_t>(sample)] = gi.maxHeight;
+            gi.height[static_cast<size_t>(sample)] += g_sinTable[sampleAngle] * gi.maxHeight * g_sinTable[TableAngle(sample * 9)] * 0.30000001f;
+        }
+    }
+}
+
+void CopyThrowTrail(EffectGi& destination, const EffectGi& source, int alphaDrop)
+{
+    destination.fullDisplayAngle = source.fullDisplayAngle;
+    destination.distance = source.distance;
+    destination.height[8] = source.height[8];
+    destination.alphaB = static_cast<short>(source.alphaB - alphaDrop);
+    if (destination.alphaB < 0) {
+        destination.alphaB = 0;
+    }
+    destination.sparkX = source.sparkX;
+    destination.sparkY = source.sparkY;
+    destination.sparkZ = source.sparkZ;
+    destination.flag[0] = source.flag[0];
+}
+
+short ThrowHeading(float dx, float dz)
+{
+    const float length = std::sqrt(dx * dx + dz * dz);
+    if (length == 0.0f) {
+        return 0;
+    }
+    const float nx = dx / length;
+    const float nz = dz / length;
+    int angle = 0;
+    while (nx < g_cosTable[angle]) {
+        ++angle;
+        if (angle > 180) {
+            return 180;
+        }
+    }
+    return nz < 0.0f ? static_cast<short>(360 - angle) : static_cast<short>(angle);
+}
+
+void UpdateThrowItemPrimitive(CEffectPrim* prim)
+{
+    int longitude = 0;
+    int latitude = 0;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_view != nullptr) {
+            longitude = static_cast<int>(mode->m_view->GetCameraLongitude());
+            latitude = static_cast<int>(mode->m_view->GetCameraLatitude());
+        }
+    }
+    prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+    short pitch = static_cast<short>(450 - latitude);
+    if (pitch >= 360) {
+        pitch = static_cast<short>(pitch - 360);
+    }
+    prim->m_gi[1].alphaT = pitch;
+    EffectGi& head = prim->m_gi[0];
+    if (head.life != 1) {
+        return;
+    }
+    ++head.process;
+    if ((head.process % 2) == 1) {
+        if (head.process > 3) {
+            CopyThrowTrail(prim->m_gi[3], prim->m_gi[2], 25);
+        }
+        if (head.process > 2) {
+            CopyThrowTrail(prim->m_gi[2], prim->m_gi[1], 25);
+        }
+        if (head.process > 1) {
+            CopyThrowTrail(prim->m_gi[1], head, 150);
+        }
+    }
+    head.fullDisplayAngle = static_cast<short>(head.fullDisplayAngle + (head.flag[2] == 15 ? 45 : 10));
+    if (head.fullDisplayAngle >= 360) {
+        head.fullDisplayAngle = static_cast<short>(head.fullDisplayAngle - 360);
+    }
+    if (head.process == 1) {
+        head.rotStart = ThrowHeading(prim->m_deltaPos.x - head.sparkX, prim->m_deltaPos.z - head.sparkZ);
+    }
+    const float progress = head.flag[1] == 0
+        ? 2.0f
+        : static_cast<float>(head.process) / static_cast<float>(head.flag[1]);
+    if (progress <= 1.05f) {
+        const float clamped = progress > 1.0f ? 1.0f : progress;
+        const int arc = static_cast<int>(static_cast<double>(clamped) * 180.0);
+        head.arcBaselineY += head.height[2];
+        float lift = g_sinTable[TableAngle(arc)];
+        if (head.flag[2] == 0) {
+            lift *= 10.0f;
+        } else if (head.flag[2] != 15) {
+            lift *= 30.0f;
+        }
+        head.sparkY = head.arcBaselineY - lift;
+        const int heading = TableAngle(head.rotStart);
+        head.sparkX += g_cosTable[heading] * head.height[1];
+        head.sparkZ += g_sinTable[heading] * head.height[1];
+    } else {
+        head.alphaB = static_cast<short>(head.alphaB - 20);
+        if (head.alphaB < 0) {
+            head.alphaB = 0;
+        }
+    }
+}
+
+void UpdateEffectTexturePrimitive(CEffectPrim* prim)
+{
+    int longitude = 0;
+    int latitude = 0;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_view != nullptr) {
+            longitude = static_cast<int>(mode->m_view->GetCameraLongitude());
+            latitude = static_cast<int>(mode->m_view->GetCameraLatitude());
+        }
+    }
+    prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+    short pitch = static_cast<short>(450 - latitude);
+    if (pitch >= 360) {
+        pitch = static_cast<short>(pitch - 360);
+    }
+    prim->m_gi[1].alphaT = pitch;
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) {
+        return;
+    }
+    ++gi.process;
+    if (gi.process <= 300 && (gi.flag[4] == 1 || gi.flag[4] == 3)) {
+        if (gi.process >= 200) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 5);
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB + 10);
+            if (gi.alphaB > 220) {
+                gi.alphaB = 220;
+            }
+        }
+    }
+    if (gi.flag[4] == 2 && gi.process > 40) {
+        if (gi.process >= 62) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 8);
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB + 8);
+        }
+        if (gi.alphaB > 0) {
+            gi.distance += 0.69999999f;
+        }
+    }
+    if ((gi.flag[4] == 1 || gi.flag[4] == 2 || gi.flag[4] == 3) && gi.process > 300 && gi.alphaB > 0) {
+        gi.alphaB = static_cast<short>(gi.alphaB - 1);
+    }
+    if (gi.alphaB > 255) {
+        gi.alphaB = 255;
+    }
+    if (gi.alphaB < 0) {
+        gi.alphaB = 0;
+    }
+    if (gi.flag[4] != 100) {
+        gi.height[8] += 2.0f;
+        if (gi.height[8] >= 360.0f) {
+            gi.height[8] -= 360.0f;
+        }
+    }
+    gi.sparkY = gi.arcBaselineY;
+    if (gi.flag[4] < 100) {
+        gi.sparkX = prim->m_pos.x;
+        gi.sparkZ = prim->m_pos.z;
+    }
+}
+
+int EffectTextureStep(float heightMode, int which)
+{
+    const u32 bits = FloatBits(heightMode);
+    if (bits == 0x3F800000u) {
+        return which == 1 ? 120 : 60;
+    }
+    if (bits == 0x40000000u) {
+        return which == 1 ? 50 : 130;
+    }
+    return 90;
+}
+
+void RenderEffectTexture(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    const int rot0 = TableAngle(prim.m_gi[0].alphaT);
+    const int rot1 = TableAngle(prim.m_gi[1].alphaT);
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0 || (gi.flag[2] != 0 && gi.flag[2] != 2 && gi.flag[2] != 3)) {
+            continue;
+        }
+        const int tilt = TableAngle(static_cast<int>(gi.height[8]));
+        const float radius = g_sinTable[tilt] * gi.distance * 0.050000001f + gi.distance;
+        int angle = TableAngle(gi.fullDisplayAngle);
+        vector3d corners[4]{};
+        for (int corner = 0; corner < 4; ++corner) {
+            corners[corner].x = g_cosTable[angle] * radius;
+            corners[corner].z = g_sinTable[angle] * radius;
+            if (corner < 3) {
+                angle = TableAngle(angle - EffectTextureStep(gi.height[10], corner));
+            }
+            RotateCornerTowardScreen(&corners[corner], rot0, rot1);
+            corners[corner].x += gi.sparkX;
+            corners[corner].y += gi.sparkY;
+            corners[corner].z += gi.sparkZ;
+        }
+        const int textureIndex = gi.flag[0];
+        CTexture* texture = textureIndex >= 0 && textureIndex < static_cast<int>(prim.m_texture.size())
+            ? prim.m_texture[static_cast<size_t>(textureIndex)]
+            : nullptr;
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | 0x00FFFFFFu;
+        if (gi.flag[2] == 2) {
+            const unsigned int tinted = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | 0x00FA8282u;
+            SubmitWorldTeiRect(corners[1], corners[0], corners[3], corners[2], viewMatrix, texture, tinted, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+            SubmitWorldTeiRect(corners[1], corners[0], corners[3], corners[2], viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+            continue;
+        }
+        SubmitWorldTeiRect(corners[0], corners[1], corners[2], corners[3], viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_INVSRCALPHA, 0.0f, static_cast<int>(prim.m_renderFlag));
+    }
+}
+
+void UpdateChemicalPrimitive(CEffectPrim* prim)
+{
+    int longitude = 0;
+    int latitude = 0;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_view != nullptr) {
+            longitude = static_cast<int>(mode->m_view->GetCameraLongitude());
+            latitude = static_cast<int>(mode->m_view->GetCameraLatitude());
+        }
+    }
+    prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+    short pitch = static_cast<short>(450 - latitude);
+    if (pitch >= 360) {
+        pitch = static_cast<short>(pitch - 360);
+    }
+    prim->m_gi[1].alphaT = pitch;
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        const int previous = gi.process;
+        ++gi.process;
+        if (previous < 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 18);
+        } else if (gi.process > 20) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 15);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+    }
+}
+
+void RenderChemicalWedge(const CEffectPrim& prim,
+    const matrix& viewMatrix,
+    const EffectGi& gi,
+    int spread,
+    short alpha,
+    unsigned int rgb)
+{
+    if (alpha <= 0) {
+        return;
+    }
+    const int rot0 = TableAngle(prim.m_gi[0].alphaT);
+    const int rot1 = TableAngle(prim.m_gi[1].alphaT);
+    const int heading = TableAngle(gi.riseAngle);
+    vector3d origin{};
+    vector3d left{};
+    vector3d right{};
+    left.x = g_cosTable[TableAngle(heading - spread)] * gi.distance;
+    left.z = g_sinTable[TableAngle(heading - spread)] * gi.distance;
+    right.x = g_cosTable[TableAngle(heading + spread)] * gi.distance;
+    right.z = g_sinTable[TableAngle(heading + spread)] * gi.distance;
+    RotateCornerTowardScreen(&origin, rot0, rot1);
+    RotateCornerTowardScreen(&left, rot0, rot1);
+    RotateCornerTowardScreen(&right, rot0, rot1);
+    origin.x += prim.m_pos.x;
+    origin.y += prim.m_pos.y;
+    origin.z += prim.m_pos.z;
+    left.x += prim.m_pos.x;
+    left.y += prim.m_pos.y;
+    left.z += prim.m_pos.z;
+    right.x += prim.m_pos.x;
+    right.y += prim.m_pos.y;
+    right.z += prim.m_pos.z;
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(alpha)) << 24) | rgb;
+    SubmitWorldTeiRect(origin, left, right, origin, viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+}
+
+void RenderChemical(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        RenderChemicalWedge(prim, viewMatrix, gi, 3, static_cast<short>(static_cast<double>(gi.alphaB) * 0.5), 0x00FFFFFFu);
+        RenderChemicalWedge(prim, viewMatrix, gi, 5, gi.alphaB, 0x00FF8282u);
+    }
+}
+
+void UpdateChemical2Primitive(CEffectPrim* prim)
+{
+    int longitude = 0;
+    int latitude = 0;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_view != nullptr) {
+            longitude = static_cast<int>(mode->m_view->GetCameraLongitude());
+            latitude = static_cast<int>(mode->m_view->GetCameraLatitude());
+        }
+    }
+    prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+    short pitch = static_cast<short>(450 - latitude);
+    if (pitch >= 360) {
+        pitch = static_cast<short>(pitch - 360);
+    }
+    prim->m_gi[1].alphaT = pitch;
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.process <= 20) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 4);
+        } else if (gi.process > 50) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 2);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+    }
+}
+
+void RenderChemical2(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        const int heading = TableAngle(gi.riseAngle);
+        const int across = TableAngle(heading - 90);
+        const int opposite = TableAngle(heading - 180);
+        const int along = TableAngle(heading + 90);
+        const float span = gi.height[0] + gi.maxHeight;
+        const float innerX = g_cosTable[across] * span;
+        const float innerZ = g_sinTable[across] * span;
+        const float outerX = g_cosTable[across] * gi.height[0] + g_cosTable[along] * gi.maxHeight;
+        const float outerZ = g_sinTable[across] * gi.height[0] + g_sinTable[along] * gi.maxHeight;
+        vector3d nearOuter{
+            prim.m_pos.x + g_cosTable[heading] * gi.distance + outerX,
+            prim.m_pos.y,
+            prim.m_pos.z + g_sinTable[heading] * gi.distance + outerZ
+        };
+        vector3d farOuter{
+            prim.m_pos.x + g_cosTable[opposite] * gi.distance + outerX,
+            prim.m_pos.y,
+            prim.m_pos.z + g_sinTable[opposite] * gi.distance + outerZ
+        };
+        vector3d farInner{
+            prim.m_pos.x + g_cosTable[opposite] * gi.distance + innerX,
+            prim.m_pos.y,
+            prim.m_pos.z + g_sinTable[opposite] * gi.distance + innerZ
+        };
+        vector3d nearInner{
+            prim.m_pos.x + g_cosTable[heading] * gi.distance + innerX,
+            prim.m_pos.y,
+            prim.m_pos.z + g_sinTable[heading] * gi.distance + innerZ
+        };
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | 0x00FFFFFFu;
+        SubmitWorldTeiRect(nearOuter, farOuter, farInner, nearInner, viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_INVSRCALPHA, 0.0f, static_cast<int>(prim.m_renderFlag));
+    }
+}
+
+void UpdateChemical3Primitive(CEffectPrim* prim)
+{
+    int longitude = 0;
+    int latitude = 0;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_view != nullptr) {
+            longitude = static_cast<int>(mode->m_view->GetCameraLongitude());
+            latitude = static_cast<int>(mode->m_view->GetCameraLatitude());
+        }
+    }
+    prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+    short pitch = static_cast<short>(450 - latitude);
+    if (pitch >= 360) {
+        pitch = static_cast<short>(pitch - 360);
+    }
+    prim->m_gi[1].alphaT = pitch;
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.process <= 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB + (gi.flag[0] >= 10 ? 20 : 12));
+        }
+        if (gi.flag[0] >= 10) {
+            gi.height[3] += 0.05f;
+        }
+        gi.height[1] += gi.height[3];
+        if (gi.height[1] >= 200.0f) {
+            gi.height[1] -= 200.0f;
+        }
+        if (gi.process > 20) {
+            gi.alphaB = static_cast<short>(gi.alphaB - (gi.flag[0] >= 10 ? 2 : 4));
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+    }
+}
+
+bool Chemical3Rgb(u8 flag, unsigned int* rgb)
+{
+    switch (flag) {
+    case 0:
+        *rgb = 0x00E1E1FFu;
+        return true;
+    case 1:
+        *rgb = 0x00CDCFFFu;
+        return true;
+    case 2:
+        *rgb = 0x00B9B9FFu;
+        return true;
+    case 10:
+        *rgb = 0x00FFFFE1u;
+        return true;
+    case 11:
+        *rgb = 0x00FFFFCDu;
+        return true;
+    case 12:
+        *rgb = 0x00FFFFB9u;
+        return true;
+    case 20:
+        *rgb = 0x00E1FFE1u;
+        return true;
+    case 21:
+        *rgb = 0x00CDFFCDu;
+        return true;
+    case 22:
+        *rgb = 0x00B9FFB9u;
+        return true;
+    default:
+        return false;
+    }
+}
+
+void Chemical3Point(int heading, float travel, float distance, float baseX, float baseZ, float* outX, float* outZ)
+{
+    int direction = 0;
+    float along = 0.0f;
+    if (travel >= distance) {
+        direction = TableAngle(heading);
+        along = travel - distance;
+    } else {
+        direction = TableAngle(heading - 180);
+        along = distance - travel;
+    }
+    *outX = g_cosTable[direction] * along + baseX;
+    *outZ = g_sinTable[direction] * along + baseZ;
+}
+
+void RenderChemical3(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        unsigned int rgb = 0;
+        if (!Chemical3Rgb(gi.flag[0], &rgb)) {
+            continue;
+        }
+        const int heading = gi.riseAngle;
+        const int across = TableAngle(heading - 90);
+        const int along = TableAngle(heading + 90);
+        const float innerX = g_cosTable[across] * (gi.height[0] + gi.maxHeight);
+        const float innerZ = g_sinTable[across] * (gi.height[0] + gi.maxHeight);
+        const float outerX = g_cosTable[across] * gi.height[0] + g_cosTable[along] * gi.maxHeight;
+        const float outerZ = g_sinTable[across] * gi.height[0] + g_sinTable[along] * gi.maxHeight;
+        float nearInnerX = 0.0f;
+        float nearInnerZ = 0.0f;
+        float farInnerX = 0.0f;
+        float farInnerZ = 0.0f;
+        float nearOuterX = 0.0f;
+        float nearOuterZ = 0.0f;
+        float farOuterX = 0.0f;
+        float farOuterZ = 0.0f;
+        Chemical3Point(heading, gi.height[1], gi.distance, innerX, innerZ, &nearInnerX, &nearInnerZ);
+        Chemical3Point(heading, gi.height[1] + gi.height[2], gi.distance, innerX, innerZ, &farInnerX, &farInnerZ);
+        Chemical3Point(heading, gi.height[1], gi.distance, outerX, outerZ, &nearOuterX, &nearOuterZ);
+        Chemical3Point(heading, gi.height[1] + gi.height[2], gi.distance, outerX, outerZ, &farOuterX, &farOuterZ);
+        const float y = prim.m_pos.y - 6.0f;
+        const vector3d farOuter{ prim.m_pos.x + farOuterX, y, prim.m_pos.z + farOuterZ };
+        const vector3d nearOuter{ prim.m_pos.x + nearOuterX, y, prim.m_pos.z + nearOuterZ };
+        const vector3d nearInner{ prim.m_pos.x + nearInnerX, y, prim.m_pos.z + nearInnerZ };
+        const vector3d farInner{ prim.m_pos.x + farInnerX, y, prim.m_pos.z + farInnerZ };
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | rgb;
+        SubmitWorldTeiRect(farOuter, nearOuter, nearInner, farInner, viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_INVSRCALPHA, 0.0f, static_cast<int>(prim.m_renderFlag));
+    }
+}
+
+void UpdateFirstAidPrimitive(CEffectPrim* prim)
+{
+    int longitude = 0;
+    int latitude = 0;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_view != nullptr) {
+            longitude = static_cast<int>(mode->m_view->GetCameraLongitude());
+            latitude = static_cast<int>(mode->m_view->GetCameraLatitude());
+        }
+    }
+    prim->m_gi[0].alphaT = static_cast<short>(TableAngle(360 - longitude));
+    int latitudeComplement = 450 - latitude;
+    if (latitudeComplement >= 360) {
+        latitudeComplement -= 360;
+    }
+    prim->m_gi[1].alphaT = static_cast<short>(TableAngle(latitudeComplement));
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) {
+        return;
+    }
+    ++gi.process;
+    gi.height[8] += 3.0f;
+    if (gi.height[8] >= 360.0f) {
+        gi.height[8] -= 360.0f;
+    }
+    if (gi.process <= 20) {
+        gi.alphaB = static_cast<short>(gi.alphaB + 4);
+    }
+    if (gi.process > 100) {
+        gi.alphaB = static_cast<short>(gi.alphaB - 1);
+        if (gi.alphaB < 0) {
+            gi.alphaB = 0;
+        }
+    }
+}
+
+void UpdateForestPrimitive(CEffectPrim* prim)
+{
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        if (gi.flag[0] == 11) {
+            if (gi.process > 40) {
+                if (gi.process > 140) {
+                    gi.alphaB = static_cast<short>(gi.alphaB - 1);
+                }
+            } else {
+                gi.alphaB = static_cast<short>(gi.alphaB + 1);
+            }
+            if (gi.alphaB <= 0) {
+                gi.alphaB = 0;
+            }
+        }
+        if (band == 1 || band == 3) {
+            const int sample = (gi.process % 720) / 2;
+            gi.maxHeight = gi.height[0] + g_sinTable[TableAngle(sample)] * 0.5f;
+        }
+    }
+}
+
+void RenderForest(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        const float radius = gi.maxHeight;
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | 0x00E6FFE6u;
+        vector3d previousNow{};
+        vector3d previousPre{};
+        for (int step = 0; step <= 5; ++step) {
+            const int angle = TableAngle(gi.rotStart + 72 * step);
+            const float alongX = radius * g_cosTable[angle];
+            const float alongZ = radius * g_sinTable[angle];
+            const vector3d now{
+                gi.vecTNowX + alongX,
+                gi.vecTNowY,
+                gi.vecTNowZ + alongZ
+            };
+            const vector3d pre{
+                gi.vecTPreX + alongX,
+                gi.vecTPreY,
+                gi.vecTPreZ + alongZ
+            };
+            if (step > 0) {
+                SubmitWorldTeiRect(previousNow,
+                    now,
+                    pre,
+                    previousPre,
+                    viewMatrix,
+                    texture,
+                    color,
+                    0.0f,
+                    1.0f,
+                    1.0f,
+                    0.0f,
+                    D3DBLEND_ONE,
+                    0.0f,
+                    static_cast<int>(prim.m_renderFlag));
+            }
+            previousNow = now;
+            previousPre = pre;
+        }
+    }
+}
+
+void UpdateColorPaperPrimitive(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.riseAngle = static_cast<short>(gi.riseAngle + 2);
+        if (gi.riseAngle >= 360) {
+            gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
+        }
+        gi.sparkY += gi.distance;
+        if (gi.sparkY > -10.0f) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 10);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+                gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + 1);
+                if (gi.fullDisplayAngle < 3) {
+                    gi.sparkX = static_cast<float>(rand() % 101 - 50);
+                    gi.sparkZ = static_cast<float>(rand() % 101 - 50);
+                    gi.sparkY = static_cast<float>(-110 - rand() % 50);
+                    gi.process = 0;
+                }
+            }
+        }
+        if (gi.process < 60) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 5);
+            if (gi.alphaB > 250) {
+                gi.alphaB = 250;
+            }
+        }
+    }
+}
+
+void RenderColorPaper(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        const int rise = TableAngle(gi.riseAngle);
+        const float radius = gi.maxHeight;
+        auto corner = [&](int spin) {
+            const int angle = TableAngle(spin);
+            const float across = g_sinTable[angle] * radius;
+            return vector3d{
+                g_cosTable[angle] * radius + gi.sparkX + prim.m_pos.x,
+                across * g_cosTable[rise] + gi.sparkY + prim.m_pos.y,
+                across * g_sinTable[rise] + gi.sparkZ + prim.m_pos.z
+            };
+        };
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24)
+            | (static_cast<unsigned int>(static_cast<unsigned char>(static_cast<int>(gi.height[0]))) << 16)
+            | (static_cast<unsigned int>(static_cast<unsigned char>(static_cast<int>(gi.height[1]))) << 8)
+            | static_cast<unsigned int>(static_cast<unsigned char>(static_cast<int>(gi.height[2])));
+        SubmitWorldTeiRect(corner(gi.rotStart),
+            corner(gi.rotStart + 90),
+            corner(gi.rotStart + 180),
+            corner(gi.rotStart + 270),
+            viewMatrix,
+            texture,
+            color,
+            0.0f,
+            1.0f,
+            1.0f,
+            0.0f,
+            D3DBLEND_ONE,
+            0.0f,
+            static_cast<int>(prim.m_renderFlag));
+    }
+}
+
+void UpdateSphereWindPrimitive(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        const int spun = static_cast<int>(static_cast<double>(gi.rotStart) + gi.height[1]);
+        gi.rotStart = static_cast<short>(spun);
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+    }
+}
+
+void RenderSphereWind(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    const unsigned int rgb = prim.m_size == 10.0f ? 0x00FF59B6u : 0x006464FFu;
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        const int basic = gi.fullDisplayAngle / 20;
+        if (basic <= 0) {
+            continue;
+        }
+        int count = 0;
+        int step = 0;
+        vector3d previousNear{};
+        vector3d previousFar{};
+        while (count <= gi.fullDisplayAngle) {
+            int angle = count + gi.rotStart;
+            if (angle < 360) {
+                if (angle < 0) {
+                    angle += 360;
+                }
+            } else {
+                angle -= 360;
+            }
+            if (gi.fullDisplayAngle == 360 && step == 20) {
+                angle = gi.rotStart;
+            }
+            angle = TableAngle(angle);
+            const int rise = TableAngle(gi.riseAngle);
+            const float cosine = g_cosTable[angle];
+            const float sine = g_sinTable[angle];
+            const float riseCos = g_cosTable[rise];
+            const float riseSin = g_sinTable[rise];
+            const vector3d nearPoint{
+                gi.distance * riseCos * cosine - riseSin * gi.maxHeight,
+                riseCos * gi.maxHeight + gi.distance * riseSin * cosine + gi.height[0],
+                sine * gi.distance
+            };
+            const vector3d farPoint{
+                gi.distance * riseCos * cosine + riseSin * gi.maxHeight,
+                gi.distance * riseSin * cosine - riseCos * gi.maxHeight + gi.height[0],
+                sine * gi.distance
+            };
+            if (step > 0 && gi.alphaB > 0) {
+                const int part = step - 1;
+                const float u0 = part == 0 ? 0.0f : static_cast<float>(part) * 0.047619049f;
+                const float u1 = static_cast<float>(part + 1) * 0.047619049f;
+                const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | rgb;
+                auto place = [&](vector3d corner) {
+                    corner.x += prim.m_pos.x;
+                    corner.y += prim.m_pos.y;
+                    corner.z += prim.m_pos.z;
+                    return corner;
+                };
+                SubmitWorldTeiRect(place(previousNear),
+                    place(nearPoint),
+                    place(farPoint),
+                    place(previousFar),
+                    viewMatrix,
+                    texture,
+                    color,
+                    u0,
+                    u1,
+                    1.0f,
+                    0.0f,
+                    D3DBLEND_ONE,
+                    0.0f,
+                    static_cast<int>(prim.m_renderFlag));
+            }
+            if (++step >= 21) {
+                step = 20;
+            }
+            previousNear = nearPoint;
+            previousFar = farPoint;
+            count += basic;
+        }
+    }
+}
+
+void UpdateMagnum2Primitive(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.riseAngle < 0) {
+            gi.riseAngle = 0;
+        }
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        if (gi.process >= 9) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 30);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+                gi.life = 0;
+            }
+        } else if (gi.alphaT != 0) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 5);
+            if (gi.alphaB > 40) {
+                gi.alphaB = 40;
+            }
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB + 10);
+            if (gi.alphaB > 80) {
+                gi.alphaB = 80;
+            }
+        }
+    }
+}
+
+void RenderMagnum2(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.fullDisplayAngle < 0) {
+            continue;
+        }
+        const int basic = gi.fullDisplayAngle / 20;
+        int sample = 0;
+        int order = 0;
+        int count = 0;
+        vector3d previousInner{};
+        vector3d previousOuter{};
+        while (count <= gi.fullDisplayAngle) {
+            int angle = sample + gi.rotStart;
+            if (angle >= 360) {
+                angle -= 360;
+            }
+            if (gi.fullDisplayAngle == 360 && order == 20) {
+                angle = gi.rotStart;
+            }
+            angle = TableAngle(angle);
+            const int rise = TableAngle(gi.riseAngle);
+            const vector3d inner{
+                g_cosTable[angle] * gi.distance,
+                -3.0f,
+                g_sinTable[angle] * gi.distance
+            };
+            const float reach = g_cosTable[rise] * gi.maxHeight;
+            const float lift = g_sinTable[rise] * gi.maxHeight;
+            const vector3d outer{
+                reach * g_cosTable[angle] + inner.x,
+                -(lift + 3.0f),
+                reach * g_sinTable[angle] + inner.z
+            };
+            if (order > 0 && gi.alphaB > 0) {
+                const int part = order - 1;
+                const float u0 = part == 0 ? 0.0f : static_cast<float>(part) * 0.047619049f;
+                const float u1 = static_cast<float>(part + 1) * 0.047619049f;
+                const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | 0x00FFFFFFu;
+                auto place = [&](vector3d corner) {
+                    corner.x += prim.m_pos.x;
+                    corner.y += prim.m_pos.y;
+                    corner.z += prim.m_pos.z;
+                    return corner;
+                };
+                SubmitWorldTeiRect(place(previousOuter),
+                    place(inner),
+                    place(outer),
+                    place(previousInner),
+                    viewMatrix,
+                    texture,
+                    color,
+                    u0,
+                    u1,
+                    1.0f,
+                    0.0f,
+                    D3DBLEND_ONE,
+                    0.0f,
+                    static_cast<int>(prim.m_renderFlag));
+            }
+            if (++order >= 21) {
+                order = 20;
+            }
+            previousInner = inner;
+            previousOuter = outer;
+            sample = basic + count;
+            count += basic;
+            if (basic <= 0) {
+                break;
+            }
+        }
+    }
+}
+
+void UpdateSaintWingPrimitive(CEffectPrim* prim)
+{
+    float playerYaw = 0.0f;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+            playerYaw = mode->m_world->m_player->m_roty;
+        }
+    }
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.riseAngle = static_cast<short>(gi.riseAngle + 1);
+        if (gi.riseAngle >= 360) {
+            gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
+        }
+        const float anchor = -9.0f - (static_cast<float>(prim->m_gi[1].alphaT) - 115.0f) * 0.17f;
+        gi.height[0] = anchor;
+        gi.fullDisplayAngle = static_cast<short>((g_sinTable[TableAngle(gi.riseAngle)] + 1.0f) * 20.0f);
+        const float yaw = playerYaw + ((band == 0 || band == 2) ? 135.0f : 45.0f);
+        gi.rotStart = static_cast<short>(static_cast<int>(yaw));
+    }
+}
+
+void RenderSaintWing(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (int band = 0; band < 2; ++band) {
+        const EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        int along = 0;
+        for (int step = 0; along < 90; ++step) {
+            const int heading = TableAngle(gi.rotStart);
+            const int left = TableAngle(gi.rotStart - 65);
+            const int right = TableAngle(gi.rotStart + 65);
+            const vector3d edgeA{
+                g_cosTable[left] * gi.distance,
+                gi.height[0],
+                g_sinTable[left] * gi.distance
+            };
+            const vector3d edgeB{
+                g_cosTable[right] * gi.distance,
+                gi.height[0],
+                g_sinTable[right] * gi.distance
+            };
+            const int slot = step % 5;
+            const int spread = TableAngle(along >= 45 ? along - 6 * slot : along + gi.fullDisplayAngle - 6 * slot);
+            const float span = along >= 45
+                ? g_sinTable[TableAngle(gi.riseAngle)] * 0.5f + 0.5f + gi.maxHeight
+                : gi.maxHeight;
+            const float across = span * g_cosTable[spread];
+            const float drop = span * g_sinTable[spread];
+            const float side = g_cosTable[heading] * across;
+            const float forward = g_sinTable[heading] * across;
+            const vector3d innerA{ edgeA.x + side, edgeA.y - drop, edgeA.z + forward };
+            const vector3d innerB{ edgeB.x + side, edgeB.y - drop, edgeB.z + forward };
+            auto place = [&](vector3d corner) {
+                corner.x += prim.m_pos.x;
+                corner.y += prim.m_pos.y;
+                corner.z += prim.m_pos.z;
+                return corner;
+            };
+            int alpha = gi.alphaB;
+            D3DBLEND blend = D3DBLEND_INVSRCALPHA;
+            unsigned int rgb = 0x00FFCDCDu;
+            if (slot < 4) {
+                for (int repeat = 0; repeat < 4 - slot; ++repeat) {
+                    alpha = static_cast<int>(static_cast<double>(alpha) * 0.69999999);
+                }
+                blend = D3DBLEND_ONE;
+                rgb = 0x00FF6969u;
+            }
+            const unsigned int color = (static_cast<unsigned int>(alpha) << 24) | rgb;
+            if (band == 0) {
+                SubmitWorldTeiRect(place(edgeB), place(innerB), place(innerA), place(edgeA), viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, blend, 0.0f, static_cast<int>(prim.m_renderFlag));
+            } else {
+                SubmitWorldTeiRect(place(edgeA), place(innerA), place(innerB), place(edgeB), viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, blend, 0.0f, static_cast<int>(prim.m_renderFlag));
+            }
+            along += 9;
+        }
+    }
+}
+
+void UpdateRectUpPrimitive(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.process <= 0) {
+            continue;
+        }
+        gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + 1);
+        if (gi.process > gi.alphaT) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 2);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+        const int spin = TableAngle(gi.fullDisplayAngle);
+        float height = g_sinTable[spin] * gi.maxHeight * 0.34999999f + gi.maxHeight * 0.64999998f;
+        if (gi.process < 90) {
+            height *= g_sinTable[gi.process];
+        }
+        gi.height[2] = height;
+    }
+}
+
+void RenderRectUp(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        const int angle = TableAngle(gi.rotStart);
+        const float cosine = g_cosTable[angle];
+        const float sine = g_sinTable[angle];
+        const float halfX = gi.height[0];
+        const float halfZ = gi.height[1];
+        const float lowY = -1.0f - gi.height[2];
+        const vector3d highA{
+            prim.m_pos.x + halfX * cosine - halfZ * sine,
+            prim.m_pos.y - 1.0f,
+            prim.m_pos.z + halfX * sine + halfZ * cosine
+        };
+        const vector3d highB{
+            prim.m_pos.x + halfX * cosine + halfZ * sine,
+            prim.m_pos.y - 1.0f,
+            prim.m_pos.z + halfX * sine - halfZ * cosine
+        };
+        const vector3d highC{
+            prim.m_pos.x - halfX * cosine + halfZ * sine,
+            prim.m_pos.y - 1.0f,
+            prim.m_pos.z - halfX * sine - halfZ * cosine
+        };
+        const vector3d highD{
+            prim.m_pos.x - halfX * cosine - halfZ * sine,
+            prim.m_pos.y - 1.0f,
+            prim.m_pos.z - halfX * sine + halfZ * cosine
+        };
+        const vector3d lowA{ highA.x, prim.m_pos.y + lowY, highA.z };
+        const vector3d lowB{ highB.x, prim.m_pos.y + lowY, highB.z };
+        const vector3d lowC{ highC.x, prim.m_pos.y + lowY, highC.z };
+        const vector3d lowD{ highD.x, prim.m_pos.y + lowY, highD.z };
+        unsigned int rgb = 0x00FFFFFFu;
+        D3DBLEND destBlend = D3DBLEND_ONE;
+        const u32 heightBits = FloatBits(gi.height[3]);
+        if (heightBits == 0x3F800000u) {
+            rgb = 0x00EBFFEBu;
+            destBlend = D3DBLEND_INVSRCALPHA;
+        } else if (heightBits == 0x40000000u) {
+            rgb = 0x00505050u;
+            destBlend = D3DBLEND_INVSRCALPHA;
+        }
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | rgb;
+        const auto submit = [&](const vector3d& a, const vector3d& b, const vector3d& c, const vector3d& d, unsigned int faceColor) {
+            SubmitWorldTeiRect(a, b, c, d, viewMatrix, texture, faceColor, 0.0f, 1.0f, 1.0f, 0.0f, destBlend, 0.0f, static_cast<int>(prim.m_renderFlag));
+        };
+        submit(highA, highB, lowB, lowA, color);
+        submit(highB, highC, lowC, lowB, color);
+        submit(highC, highD, lowD, lowC, color);
+        submit(highD, highA, lowA, lowD, color);
+        if (heightBits == 0x40000000u) {
+            const int doubled = gi.alphaB * 2 > 255 ? 255 : gi.alphaB * 2;
+            const unsigned int capColor = (static_cast<unsigned int>(doubled) << 24) | rgb;
+            submit(highA, highC, lowC, lowA, capColor);
+            submit(highB, highD, lowD, lowB, capColor);
+        }
+    }
+}
+
+void UpdateBlindPrimitive(CEffectPrim* prim)
+{
+    int longitude = 0;
+    int latitude = 0;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_view != nullptr) {
+            longitude = static_cast<int>(mode->m_view->GetCameraLongitude());
+            latitude = static_cast<int>(mode->m_view->GetCameraLatitude());
+        }
+    }
+    prim->m_gi[0].alphaT = static_cast<short>(TableAngle(360 - longitude));
+    int latitudeComplement = 450 - latitude;
+    if (latitudeComplement >= 360) {
+        latitudeComplement -= 360;
+    }
+    prim->m_gi[1].alphaT = static_cast<short>(TableAngle(latitudeComplement));
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ResolveBasePosition();
+    }
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.alphaB < 255) {
+            ++gi.alphaB;
+        }
+    }
+}
+
+void UpdatePoisonPrimitive(CEffectPrim* prim)
+{
+    int longitude = 0;
+    int latitude = 0;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_view != nullptr) {
+            longitude = static_cast<int>(mode->m_view->GetCameraLongitude());
+            latitude = static_cast<int>(mode->m_view->GetCameraLatitude());
+        }
+    }
+    prim->m_gi[0].alphaT = static_cast<short>(TableAngle(360 - longitude));
+    int latitudeComplement = 450 - latitude;
+    if (latitudeComplement >= 360) {
+        latitudeComplement -= 360;
+    }
+    prim->m_gi[1].alphaT = static_cast<short>(TableAngle(latitudeComplement));
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.maxHeight >= 30.0f) {
+            gi.maxHeight -= 30.0f;
+        }
+        if (gi.flag[10] != 1) {
+            if (gi.alphaB <= 45) {
+                gi.alphaB = static_cast<short>(gi.alphaB + 5);
+            }
+        } else if (gi.process < 10) {
+            if (gi.alphaB <= 45) {
+                gi.alphaB = static_cast<short>(gi.alphaB + 10);
+            }
+        } else if (gi.process > 65 && gi.alphaB >= 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 10);
+        }
+    }
+}
+
+void RenderPoison(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    const int rot0 = TableAngle(prim.m_gi[0].alphaT);
+    const int rot1 = TableAngle(prim.m_gi[1].alphaT);
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        unsigned int rgb = 0x00FFFFFFu;
+        if (gi.flag[10] == 1) {
+            rgb = 0x00FF0000u;
+        } else if (gi.flag[10] != 0) {
+            rgb = 0x000000FFu;
+        }
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | rgb;
+        for (int cellX = -120; cellX < 90; cellX += 30) {
+            for (int cellZ = -90; cellZ < 90; cellZ += 30) {
+                const float x = gi.maxHeight + static_cast<float>(cellX);
+                const float z = gi.maxHeight + static_cast<float>(cellZ);
+                const float edge = gi.maxHeight + gi.distance;
+                vector3d corners[4] = {
+                    { x, -10.0f, z },
+                    { edge + static_cast<float>(cellX), -10.0f, z },
+                    { edge + static_cast<float>(cellX), -10.0f, edge + static_cast<float>(cellZ) },
+                    { x, -10.0f, edge + static_cast<float>(cellZ) },
+                };
+                for (vector3d& corner : corners) {
+                    RotateCornerTowardScreen(&corner, rot0, rot1);
+                    corner.x += prim.m_pos.x;
+                    corner.y += prim.m_pos.y;
+                    corner.z += prim.m_pos.z;
+                }
+                SubmitWorldTeiRect(corners[0],
+                    corners[1],
+                    corners[2],
+                    corners[3],
+                    viewMatrix,
+                    texture,
+                    color,
+                    0.0f,
+                    1.0f,
+                    1.0f,
+                    0.0f,
+                    D3DBLEND_INVSRCALPHA,
+                    0.0f,
+                    static_cast<int>(prim.m_renderFlag));
+            }
+        }
+    }
+}
+
+void RenderBlind(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    const int rot0 = TableAngle(prim.m_gi[0].alphaT);
+    const int rot1 = TableAngle(prim.m_gi[1].alphaT);
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        const unsigned int channel = gi.flag[0] == 1 ? 30u : 10u;
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24)
+            | (channel << 16)
+            | (channel << 8)
+            | channel;
+        const float span = gi.distance;
+        const float outer = span + 50.0f;
+        const vector3d faces[8][4] = {
+            { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, span }, { span, 0.0f, span }, { span, 0.0f, 0.0f } },
+            { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -span }, { span, 0.0f, -span }, { span, 0.0f, 0.0f } },
+            { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, span }, { -span, 0.0f, span }, { -span, 0.0f, 0.0f } },
+            { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -span }, { -span, 0.0f, -span }, { -span, 0.0f, 0.0f } },
+            { { span, 0.0f, -span }, { outer, 0.0f, -span }, { outer, 0.0f, outer }, { span, 0.0f, outer } },
+            { { span, 0.0f, span }, { span, 0.0f, outer }, { -outer, 0.0f, outer }, { -outer, 0.0f, span } },
+            { { -span, 0.0f, span }, { -outer, 0.0f, span }, { -outer, 0.0f, -outer }, { -span, 0.0f, -outer } },
+            { { -span, 0.0f, -span }, { -span, 0.0f, -outer }, { outer, 0.0f, -outer }, { outer, 0.0f, -span } },
+        };
+        for (int face = 0; face < 8; ++face) {
+            vector3d corners[4] = { faces[face][0], faces[face][1], faces[face][2], faces[face][3] };
+            for (vector3d& corner : corners) {
+                RotateCornerTowardScreen(&corner, rot0, rot1);
+                corner.x += prim.m_pos.x;
+                corner.y += prim.m_pos.y;
+                corner.z += prim.m_pos.z;
+            }
+            const int textureIndex = face < 4 ? 0 : 1;
+            CTexture* texture = textureIndex < static_cast<int>(prim.m_texture.size())
+                ? prim.m_texture[static_cast<size_t>(textureIndex)]
+                : nullptr;
+            SubmitWorldTeiRect(corners[0],
+                corners[1],
+                corners[2],
+                corners[3],
+                viewMatrix,
+                texture,
+                color,
+                0.0f,
+                1.0f,
+                1.0f,
+                0.0f,
+                D3DBLEND_INVSRCALPHA,
+                0.0f,
+                static_cast<int>(prim.m_renderFlag));
+        }
+    }
+}
+
+void UpdatePortalPrimitive(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ResolveBasePosition();
+    }
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (band == 0) {
+            ++prim->m_gi[3].process;
+        }
+        if (gi.process <= 0) {
+            continue;
+        }
+        const bool variant3 = prim->m_gi[3].alphaT == 3;
+        if (variant3) {
+            gi.distance -= 0.25f;
+            if (gi.distance < 7.0f) {
+                if (gi.distance < 0.0f) {
+                    gi.distance = 0.0f;
+                }
+                gi.alphaB = static_cast<short>(gi.alphaB - 7);
+                if (gi.alphaB < 0) {
+                    gi.alphaB = 0;
+                    if (prim->m_gi[3].process <= 1400) {
+                        gi.process = 0;
+                        gi.distance = 14.0f;
+                    } else {
+                        gi.life = 0;
+                    }
+                }
+            }
+        } else {
+            gi.distance += 0.5f;
+            if (gi.distance > 7.0f) {
+                gi.alphaB = static_cast<short>(gi.alphaB - 15);
+                if (gi.alphaB < 0) {
+                    gi.alphaB = 0;
+                    const int clock = prim->m_gi[3].process;
+                    if (clock > 120 && prim->m_gi[3].alphaT == 1) {
+                        gi.life = 0;
+                    } else if (clock <= 1400) {
+                        gi.process = 0;
+                        gi.distance = 0.0f;
+                    } else {
+                        gi.life = 0;
+                    }
+                }
+            }
+        }
+        if (variant3) {
+            if (gi.process < 20) {
+                gi.alphaB = static_cast<short>(gi.alphaB + 12);
+                if (gi.alphaB > 240) {
+                    gi.alphaB = 240;
+                }
+            }
+        } else if (gi.process < 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 24);
+            if (gi.alphaB > 240) {
+                gi.alphaB = 240;
+            }
+        }
+        const float baseHeight = gi.maxHeight;
+        for (int sample = 0; sample < 21; ++sample) {
+            float height = baseHeight;
+            if (gi.process <= 10) {
+                height *= g_sinTable[9 * gi.process];
+            }
+            gi.height[static_cast<size_t>(sample)] = height;
+        }
+    }
+}
+
+void UpdateCasting4Primitive(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ResolveBasePosition();
+    }
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.distance -= 0.050000001f;
+        if (gi.distance <= 0.0f) {
+            gi.distance = 10.0f;
+            gi.alphaB = 0;
+        }
+        gi.riseAngle = static_cast<short>(90.0f - gi.distance * 9.0f);
+        gi.maxHeight = gi.distance;
+        if (gi.process < prim->m_duration - 40) {
+            if (gi.alphaB < 70) {
+                gi.alphaB = static_cast<short>(gi.alphaB + 1);
+            }
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - 3);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+        for (int sample = 0; sample < 21; ++sample) {
+            if (gi.flag[static_cast<size_t>(sample)] != 0) {
+                continue;
+            }
+            float height = gi.maxHeight;
+            if (height < 0.0f) {
+                height = 0.0f;
+            }
+            gi.height[static_cast<size_t>(sample)] = height;
+        }
+    }
+}
+
+void UpdateCasting5Primitive(CEffectPrim* prim)
+{
+    if (prim->m_master != nullptr) {
+        prim->m_pos = prim->m_master->ResolveBasePosition();
+    }
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        gi.distance += 0.1f;
+        if (gi.distance >= 13.0f) {
+            gi.distance = 3.0f;
+            gi.alphaB = 0;
+            if (gi.process > 50) {
+                gi.life = 0;
+            }
+        }
+        float height = gi.distance - 3.0f;
+        if (height <= 5.0f) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 2);
+        } else {
+            height = 10.0f - height;
+            if (gi.alphaB > 0) {
+                gi.alphaB = static_cast<short>(gi.alphaB - 2);
+            }
+        }
+        gi.maxHeight = height + height;
+        gi.riseAngle = static_cast<short>(90.0f - (gi.distance - 3.0f) * 5.0f);
+        for (int sample = 0; sample < 21; ++sample) {
+            if (gi.flag[static_cast<size_t>(sample)] != 0) {
+                continue;
+            }
+            float sampleHeight = gi.maxHeight;
+            if (sampleHeight < 0.0f) {
+                sampleHeight = 0.0f;
+            }
+            gi.height[static_cast<size_t>(sample)] = sampleHeight;
+        }
+    }
+}
+
+void UpdateWindPrimitive(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+        ++gi.process;
+        if (gi.process <= 0) {
+            continue;
+        }
+        gi.rotStart = static_cast<short>(gi.rotStart + 5);
+        if (gi.rotStart >= 360) {
+            gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        }
+        gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + 3);
+        const short angleCap = gi.alphaT == 2 ? 180 : 120;
+        if (gi.fullDisplayAngle > angleCap) {
+            gi.fullDisplayAngle = angleCap;
+        }
+        if (gi.alphaT == 1) {
+            if (gi.process > 20) {
+                gi.alphaB = static_cast<short>(gi.alphaB - 2);
+                if (gi.alphaB < 0) {
+                    gi.alphaB = 0;
+                }
+                gi.distance += 0.1f;
+            }
+        } else if (gi.alphaT == 2) {
+            if (gi.process > 50) {
+                gi.alphaB = static_cast<short>(gi.alphaB - 1);
+                if (gi.alphaB < 0) {
+                    gi.alphaB = 0;
+                }
+            }
+            if (gi.process > 12) {
+                gi.distance += 0.1f;
+            }
+        }
+        if (gi.process > 1400) {
+            if (gi.alphaT != 3) {
+                gi.alphaB = static_cast<short>(gi.alphaB - 3);
+            }
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+            }
+        }
+        if (gi.alphaT == 2) {
+            if (gi.process < 12) {
+                gi.alphaB = static_cast<short>(gi.alphaB + 1);
+            }
+        } else if (gi.process < 12) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 10);
+            if (gi.alphaB > 250) {
+                gi.alphaB = 250;
+            }
+        }
+    }
+}
+
+void RenderWind(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    const int sizeKey = static_cast<int>(prim.m_size);
+    unsigned int rgb = 0x00FFFFFFu;
+    if (sizeKey == 4) {
+        rgb = 0x006464FFu;
+    } else if (sizeKey == 8) {
+        rgb = 0x00FFFFAAu;
+    } else if (sizeKey == 10) {
+        rgb = 0x00FF59B6u;
+    }
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.fullDisplayAngle <= 0 || gi.alphaB <= 0) {
+            continue;
+        }
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | rgb;
+        const int basicAngle = gi.fullDisplayAngle / 21;
+        if (basicAngle <= 0) {
+            continue;
+        }
+        const int rise = TableAngle(gi.riseAngle);
+        bool havePrevious = false;
+        vector3d previousBase{};
+        vector3d previousTop{};
+        int order = 0;
+        for (int count = 0; count < gi.fullDisplayAngle; count += basicAngle) {
+            int angle = TableAngle(count + gi.rotStart);
+            if (gi.fullDisplayAngle == 360 && order == 20) {
+                angle = TableAngle(gi.rotStart);
+            }
+            const float cosine = g_cosTable[angle];
+            const float sine = g_sinTable[angle];
+            const float sampleHeight = gi.height[static_cast<size_t>((std::min)(order, 20))];
+            const float radial = g_cosTable[rise] * sampleHeight;
+            const float vertical = g_sinTable[rise] * sampleHeight;
+            const vector3d base{
+                cosine * gi.distance,
+                -gi.maxHeight,
+                sine * gi.distance
+            };
+            const vector3d top{
+                base.x + radial * cosine,
+                -(vertical + gi.maxHeight),
+                base.z + radial * sine
+            };
+            if (havePrevious) {
+                const float u0 = order == 1 ? 0.0f : static_cast<float>(order - 1) * 0.047619049f;
+                const float u1 = static_cast<float>(order) * 0.047619049f;
+                const vector3d worldPreviousBase = AddVec3(previousBase, prim.m_pos);
+                const vector3d worldBase = AddVec3(base, prim.m_pos);
+                const vector3d worldTop = AddVec3(top, prim.m_pos);
+                const vector3d worldPreviousTop = AddVec3(previousTop, prim.m_pos);
+                SubmitWorldTeiRect(worldPreviousBase,
+                    worldBase,
+                    worldTop,
+                    worldPreviousTop,
+                    viewMatrix,
+                    texture,
+                    color,
+                    u0,
+                    u1,
+                    1.0f,
+                    0.0f,
+                    D3DBLEND_ONE,
+                    0.0f,
+                    static_cast<int>(prim.m_renderFlag));
+            }
+            previousBase = base;
+            previousTop = top;
+            havePrevious = true;
+            ++order;
+            if (order >= 21) {
+                order = 20;
+            }
+        }
+    }
+}
+
 bool CEffectPrim::OnProcess()
 {
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting)) {
+        Update3DCastingPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting3)) {
+        Update3DCasting3Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi5)) {
+        UpdateGi5Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi1)) {
+        UpdateGi1Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeAttackEnergy2)) {
+        UpdateAttackEnergy2Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeElectric2)) {
+        UpdateElectric2Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeElectric)) {
+        UpdateElectricPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeAttackEnergy)) {
+        UpdateAttackEnergyPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHalfSphere)) {
+        UpdateHalfSpherePrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeStormKick)) {
+        UpdateStormKickPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {
+        UpdateGi4Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi2)) {
+        UpdateGi2Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeMapPillar)) {
+        UpdateMapPillarGi(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting2)) {
+        UpdateDefenderPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeFlowerCast)) {
+        UpdateFlowerCastPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeAcidDemon)) {
+        UpdateAcidDemonPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeGiExplosion)) {
+        UpdateGiExplosionPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHeal) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow)) {
+        UpdateHealPrimitive(this);
+        if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) && m_master != nullptr) {
+            m_pos = m_master->ActorPosition();
+        }
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeEffectTexture)) {
+        UpdateEffectTexturePrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeThrowItem)) {
+        UpdateThrowItemPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeTeleport2)) {
+        UpdateTeleportation2Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical)) {
+        UpdateChemicalPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical2)) {
+        UpdateChemical2Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical3)) {
+        UpdateChemical3Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeFirstAid)) {
+        UpdateFirstAidPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeBottomOut)) {
+        UpdateBottomOutPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeBottom)) {
+        UpdateBottomPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeParticleUp)) {
+        UpdateParticleUpPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeColorPaper)) {
+        UpdateColorPaperPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeSphereWind)) {
+        UpdateSphereWindPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeMagnum2)) {
+        UpdateMagnum2Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeSaintWing)) {
+        UpdateSaintWingPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeForest)) {
+        UpdateForestPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeRectUp)) {
+        UpdateRectUpPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeBlind)) {
+        UpdateBlindPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypePoison)) {
+        UpdatePoisonPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypePortal)) {
+        UpdatePortalPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeWind)) {
+        UpdateWindPrimitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting4)) {
+        UpdateCasting4Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting5)) {
+        UpdateCasting5Primitive(this);
+        ++m_stateCnt;
+        return m_stateCnt <= m_duration;
+    }
     if (m_type == PP_3DCIRCLE) {
         return UpdateCirclePrimitive(this);
     }
@@ -2906,6 +6392,107 @@ bool CEffectPrim::OnProcess()
 void CEffectPrim::Render(matrix* viewMatrix)
 {
     if (!m_master || !viewMatrix) {
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting3)
+        || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi5) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi1) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeTeleport2) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeHeal) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGiExplosion) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeAcidDemon) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeFlowerCast) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting2) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeMapPillar) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi2)) {
+        RenderHealCasting(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {
+        RenderHealLow(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical)) {
+        RenderChemical(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical2)) {
+        RenderChemical2(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical3)) {
+        RenderChemical3(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeEffectTexture)) {
+        RenderEffectTexture(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeThrowItem)
+        || m_type == static_cast<EFFECTPRIMID>(kPrimTypeFirstAid)
+        || m_type == static_cast<EFFECTPRIMID>(kPrimTypeParticleUp)
+        || m_type == static_cast<EFFECTPRIMID>(kPrimTypeBottom)
+        || m_type == static_cast<EFFECTPRIMID>(kPrimTypeBottomOut)) {
+        RenderParticleUp(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeColorPaper)) {
+        RenderColorPaper(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeSphereWind)) {
+        RenderSphereWind(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeMagnum2)) {
+        RenderMagnum2(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeSaintWing)) {
+        RenderSaintWing(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeForest)) {
+        RenderForest(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeRectUp)) {
+        RenderRectUp(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeBlind)) {
+        RenderBlind(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypePoison)) {
+        RenderPoison(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypePortal)) {
+        RenderHealCasting(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeAttackEnergy2)) {
+        RenderAttackEnergy2(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeElectric2)) {
+        RenderElectric2(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeElectric)) {
+        RenderElectric(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeAttackEnergy)) {
+        RenderAttackEnergy(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHalfSphere)) {
+        RenderHalfSphere(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeStormKick)) {
+        RenderStormKick(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeWind)) {
+        RenderWind(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting4) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting5)) {
+        RenderHealCasting(*this, *viewMatrix);
         return;
     }
 
@@ -3948,7 +7535,9 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     m_longitude = master ? master->m_roty : 0.0f;
     m_handler = Handler::None;
     m_loop = false;
-    m_duration = 100;
+    m_duration = (effectId >= 0 && effectId < kRagEffectDurationCount)
+        ? kRagEffectDurationTable[effectId]
+        : 100;
     m_stateCnt = 0;
     m_lastProcessTick = timeGetTime();
     m_tickCarryMs = kEffectTickMs;
@@ -3960,198 +7549,145 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     switch (effectId) {
     case 158:
         m_handler = Handler::Entry2;
-        m_duration = 72;
         break;
     case 337:
         m_handler = Handler::JobLevelUp50;
-        m_duration = 108;
         LoadEzEffect("joblvup.str");
         InitEZ2STRFrame();
-        if (m_ezEffectRes) {
-            PlayEzStrAssociatedStartupSound("joblvup.str", effectId, ResolveBasePosition());
-        }
-        if (m_aniClips && m_aniClips->cFrame > 0) {
-            m_duration = (std::max)(m_duration, m_aniClips->cFrame + 36);
-        }
         break;
     case 371: {
         m_handler = Handler::EzStr;
-        m_duration = 120;
         const std::string strName = ResolveStrName(effectId);
         LoadEzEffect(strName.c_str());
         InitEZ2STRFrame();
-        // Base level-up: GameModePacket::PlayBaseLevelUpPresentation already plays levelup.wav. angel.str maps to
-        // wizard_angel / ef_angel SFX which reads as Angelus — skip duplicate startup audio here.
-        if (m_aniClips && m_aniClips->cFrame > 0) {
-            m_duration = m_aniClips->cFrame + 8;
-        }
         break;
     }
     case 338:
     case 582:
         m_handler = Handler::SuperAngel;
-        m_duration = effectId == 582 ? 124 : 112;
         break;
     case 331:
         m_handler = Handler::RecoveryHp;
-        m_duration = 30;
         break;
     case 332:
         m_handler = Handler::RecoverySp;
-        m_duration = 30;
         break;
     case 12:
-        m_handler = Handler::BeginCasting;
-        m_duration = 56;
-        break;
-    case 312:
-        m_handler = Handler::HealLight;
-        m_duration = 26;
-        break;
-    case 313:
-        m_handler = Handler::HealMedium;
-        m_duration = 34;
-        break;
-    case 325:
-        m_handler = Handler::HealLarge;
-        m_duration = 40;
-        break;
-    case 159:
-        m_handler = Handler::HideStart;
-        m_duration = 14;
-        break;
-    case 123:
-        m_handler = Handler::GrimTooth;
-        m_duration = 24;
-        break;
-    case 132:
-        m_handler = Handler::GrimToothAtk;
-        m_duration = 10;
-        break;
     case 54:
     case 55:
     case 56:
     case 57:
+    case 58:
     case 59:
         m_handler = Handler::BeginCasting;
-        m_duration = 70;
         break;
-    case 58:
-        m_handler = Handler::BeginCasting;
-        m_duration = 56;
+    case 312:
+        m_handler = Handler::HealLight;
+        break;
+    case 313:
+        m_handler = Handler::HealMedium;
+        break;
+    case 325:
+        m_handler = Handler::HealLarge;
+        break;
+    case 159:
+        m_handler = Handler::HideStart;
+        break;
+    case 123:
+        m_handler = Handler::GrimTooth;
+        break;
+    case 132:
+        m_handler = Handler::GrimToothAtk;
         break;
     case 22:
         m_handler = Handler::Sight;
-        m_duration = 20;
         break;
     case 24:
         m_handler = Handler::FireBall;
-        m_duration = 40;
         break;
     case 229:
         m_handler = Handler::WeatherCloud;
-        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
         m_param[0] = 0.0f;
         m_param[1] = 40.0f;
         break;
     case 230:
         m_handler = Handler::WeatherCloud;
-        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
         m_param[0] = 1.0f;
         m_param[1] = 40.0f;
         break;
     case 231:
         m_handler = Handler::MapPillar;
-        m_duration = static_cast<int>(kMapPillarDurationFrames);
         break;
     case 233:
         m_handler = Handler::WeatherCloud;
-        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
         m_param[0] = 2.0f;
         m_param[1] = 40.0f;
         break;
     case 515:
         m_handler = Handler::WeatherCloud;
-        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
         m_param[0] = 3.0f;
         m_param[1] = 40.0f;
         break;
     case 516:
         m_handler = Handler::WeatherCloud;
-        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
         m_param[0] = 4.0f;
         m_param[1] = 40.0f;
         break;
     case 592:
         m_handler = Handler::WeatherCloud;
-        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
         m_param[0] = 5.0f;
         m_param[1] = 40.0f;
         break;
     case 697:
         m_handler = Handler::WeatherCloud;
-        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
         m_param[0] = 7.0f;
         m_param[1] = 80.0f;
         break;
     case 698:
         m_handler = Handler::WeatherCloud;
-        m_duration = static_cast<int>(kWeatherCloudDurationFrames);
         m_param[0] = 8.0f;
         m_param[1] = 80.0f;
         break;
     case 33:
         m_handler = Handler::Ruwach;
-        m_duration = 25;
         break;
     case 247:
         m_handler = Handler::MapPillar;
-        m_duration = static_cast<int>(kMapPillarDurationFrames);
         break;
     case 37:
     case 43:
         m_handler = Handler::IncAgility;
-            m_duration = 100;
         break;
     case 20:
     case 125:
         m_handler = Handler::EnchantPoison;
-        m_duration = 40;
         break;
     case 493:
         m_handler = Handler::EnchantPoison2;
-        m_duration = 80;
         break;
     case 42:
         m_handler = Handler::Blessing;
-        m_duration = 60;
         break;
     case 44:
         m_handler = Handler::Smoke;
-        m_duration = 100;
         break;
     case 601:
         m_handler = Handler::SightState;
-        m_duration = 20;
         m_loop = true;
         break;
     case 316:
         m_handler = Handler::ReadyPortal2;
-        m_duration = 100;
         break;
     case 317:
         m_handler = Handler::Portal2;
-        m_duration = 100;
         m_param[0] = 0.0f;
         break;
     case 321:
         m_handler = Handler::WarpZone2;
         m_loop = true;
-        m_duration = 1000000;
         break;
     case 341:
         m_handler = Handler::Portal2;
-        m_duration = 100;
         m_param[0] = 3.0f;
         break;
     case kRagEffectPortal:
@@ -4175,15 +7711,17 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
             m_handler = Handler::EzStr;
             LoadEzEffect(strName.c_str());
             InitEZ2STRFrame();
-            if (m_ezEffectRes) {
-                PlayEzStrAssociatedStartupSound(strName.c_str(), effectId, ResolveBasePosition());
-            }
-            if (m_aniClips && m_aniClips->cFrame > 0) {
-                m_duration = (std::max)(m_duration, m_aniClips->cFrame + 8);
-            }
         }
         break;
     }
+    }
+
+    if (m_ezEffectRes == nullptr) {
+        const std::string strName = ResolveStrName(effectId);
+        if (!strName.empty()) {
+            LoadEzEffect(strName.c_str());
+            InitEZ2STRFrame();
+        }
     }
 }
 
@@ -4219,9 +7757,6 @@ void CRagEffect::InitWorld(const C3dWorldRes::effectSrcInfo& source)
         m_handler = Handler::EzStr;
         LoadEzEffect(worldStrName.c_str());
         InitEZ2STRFrame();
-        if (m_ezEffectRes) {
-            PlayEzStrAssociatedStartupSound(worldStrName.c_str(), m_type, ResolveBasePosition());
-        }
         if (m_aniClips && m_aniClips->cFrame > 0) {
             m_duration = (std::max)(m_duration, m_aniClips->cFrame + 12);
         }
@@ -4346,6 +7881,14 @@ vector3d CRagEffect::ResolveBasePosition() const
     return AddVec3(m_cachedPos, m_deltaPos);
 }
 
+vector3d CRagEffect::ActorPosition() const
+{
+    if (CRenderObject* master = ResolveCurrentMaster()) {
+        return master->m_pos;
+    }
+    return m_cachedPos;
+}
+
 float CRagEffect::ResolveBaseRotation() const
 {
     if (CRenderObject* master = ResolveCurrentMaster()) {
@@ -4405,7 +7948,6 @@ bool CRagEffect::ResolveCullSphere(vector3d* outCenter, float* outRadius) const
     case Handler::FireBall:
     case Handler::Ruwach:
     case Handler::SightAura:
-    case Handler::FireBoltRain:
         radius = 140.0f;
         break;
     case Handler::None:
@@ -4577,10 +8119,7 @@ void CRagEffect::SpawnReadyPortal()
     }, false);
 
     if ((m_stateCnt % 14) == 0) {
-        TryPlayEffectWaveAt(ResolveBasePosition(), {
-            "effect\\ef_readyportal.wav",
-            "effect\\ef_readyp.wav",
-        });
+        TryPlayEffectWaveAt(ResolveBasePosition(), "effect\\EF_ReadyPortal.wav");
     }
 
     if ((m_stateCnt % 14) == 0) {
@@ -4612,10 +8151,7 @@ void CRagEffect::SpawnReadyPortal2()
     }, false);
 
     if ((m_stateCnt % 14) == 0) {
-        TryPlayEffectWaveAt(ResolveBasePosition(), {
-            "effect\\ef_readyportal.wav",
-            "effect\\ef_readyp.wav",
-        });
+        TryPlayEffectWaveAt(ResolveBasePosition(), "effect\\EF_ReadyPortal.wav");
     }
 
     if (m_stateCnt == 0) {
@@ -4797,9 +8333,7 @@ void CRagEffect::SpawnEntry2()
     }, false);
 
     if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(ResolveBasePosition(), {
-            "effect\\ef_portal.wav",
-        });
+        TryPlayEffectWaveAt(ResolveBasePosition(), "effect\\ef_portal.wav");
 
         if (CEffectPrim* prim = LaunchEffectPrim(PP_CASTINGRING4, vector3d{})) {
             prim->m_renderFlag = 5u;
@@ -5077,10 +8611,7 @@ void CRagEffect::UpdateSuperAngel()
 {
     if (m_stateCnt == 0) {
         // Ref RagEffect OnProcess case 0x152 (effect 338): PlayWave(levelup) only at frame 0, not ef_angel.
-        TryPlayEffectWaveAt(ResolveBasePosition(), {
-            "effect\\levelup.wav",
-            "wav\\levelup.wav",
-        });
+        TryPlayEffectWaveAt(ResolveBasePosition(), "levelup.wav");
         if (m_type == 338) {
             SpawnSuperAngelVariant(0, m_stateCnt);
             SpawnSuperAngelVariant(1, m_stateCnt);
@@ -5130,9 +8661,7 @@ void CRagEffect::SpawnRecoveryHp()
     }, false);
 
     if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(base, {
-            "effect\\priest_recovery.wav",
-        });
+        TryPlayEffectWaveAt(base, "effect\\priest_recovery.wav");
 
         if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
             prim->m_duration = m_duration;
@@ -5221,9 +8750,7 @@ void CRagEffect::SpawnRecoverySp()
     }, false);
 
     if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(base, {
-            "effect\\priest_recovery.wav",
-        });
+        TryPlayEffectWaveAt(base, "effect\\priest_recovery.wav");
 
         if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
             prim->m_duration = m_duration;
@@ -5601,10 +9128,7 @@ void CRagEffect::SpawnGrimTooth()
     const float totalDistance = std::sqrt(totalDelta.x * totalDelta.x + totalDelta.z * totalDelta.z);
 
     if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(base, {
-            "effect\\ef_frostdiver.wav",
-            "effect\\EF_FrostDiver.wav",
-        });
+        TryPlayEffectWaveAt(base, "effect\\EF_FrostDiver.wav");
     }
 
     if (m_flag != 0) {
@@ -5718,10 +9242,7 @@ void CRagEffect::SpawnBeginCasting()
     }
 
     const vector3d base = ResolveBasePosition();
-    TryPlayEffectWaveAt(base, {
-        "effect\\EF_BeginSpell.wav",
-        "effect\\ef_beginspell.wav",
-    });
+    TryPlayEffectWaveAt(base, "effect\\EF_BeginSpell.wav");
 
     const auto launchCastingPrim = [&](CTexture* texture, COLORREF tintColor, float scale, bool saintCasting, int startDelay, float rotOffset) {
         if (CEffectPrim* prim = LaunchEffectPrim(PP_CASTINGRING4, vector3d{})) {
@@ -5825,10 +9346,7 @@ void CRagEffect::SpawnIncAgility()
     }, false);
 
     if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(base, {
-            dexVariant ? "effect\\EF_IncAgiDex.wav" : "effect\\EF_IncAgility.wav",
-            "effect\\ef_incagi.wav",
-        });
+        TryPlayEffectWaveAt(base, dexVariant ? "effect\\EF_IncAgiDex.wav" : "effect\\EF_IncAgility.wav");
 
         if (CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE, vector3d{})) {
             prim->m_duration = m_duration;
@@ -5897,10 +9415,7 @@ void CRagEffect::SpawnBlessing()
     }, false);
 
     if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(base, {
-            "effect\\EF_Blessing.wav",
-            "effect\\ef_blessing.wav",
-        });
+        TryPlayEffectWaveAt(base, "effect\\EF_Blessing.wav");
 
         if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
             prim->m_duration = m_duration;
@@ -6025,13 +9540,8 @@ void CRagEffect::SpawnEnchantPoison()
     }
 
     if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(base, {
-            "effect\\assasin_enchantpoison.wav",
-        });
-        TryPlayEffectWaveAt(base, {
-            "effect\\EF_PoisonAttack.wav",
-            "effect\\ef_poisonattack.wav",
-        });
+        TryPlayEffectWaveAt(base, "effect\\assasin_enchantpoison.wav");
+        TryPlayEffectWaveAt(base, "effect\\EF_PoisonAttack.wav");
     }
 
     if ((m_stateCnt % 5) == 0) {
@@ -6062,9 +9572,7 @@ void CRagEffect::SpawnEnchantPoison2()
     }
 
     if (m_stateCnt == 0 || m_stateCnt == 5 || m_stateCnt == 11 || m_stateCnt == 18 || m_stateCnt == 26 || m_stateCnt == 40) {
-        TryPlayEffectWaveAt(base, {
-            "effect\\assasin_enchantpoison.wav",
-        });
+        TryPlayEffectWaveAt(base, "effect\\assasin_enchantpoison.wav");
     }
 
     if ((m_stateCnt % 3) == 0) {
@@ -6101,13 +9609,6 @@ void CRagEffect::SpawnSightAura()
         "effect\\magic_violet.bmp",
     }, true);
 
-    if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(base, {
-            "effect\\ef_ruwach.wav",
-            "effect\\ef_sight.wav",
-            "effect\\ef_incagi.wav",
-        });
-    }
 
     if ((m_stateCnt % 8) == 0) {
         if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
@@ -6235,10 +9736,7 @@ void CRagEffect::SpawnFireBall()
     }
 
     const vector3d base = ResolveBasePosition();
-    TryPlayEffectWaveAt(base, {
-        "effect\\EF_FireBall.wav",
-        "effect\\ef_fireball.wav",
-    });
+    TryPlayEffectWaveAt(base, "effect\\EF_FireBall.wav");
 
     if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
         prim->m_duration = 20;
@@ -6305,59 +9803,2990 @@ void CRagEffect::SpawnRuwach()
     }
 }
 
-void CRagEffect::SpawnFireBoltRain()
+
+
+
+
+
+
+
+
+bool EffectTicksWhenNoFrameTime(int type)
 {
-    const vector3d target = m_hasTargetPos ? m_targetPos : ResolveBasePosition();
-    CTexture* glow = ResolveEffectTextureCandidates({
-        "effect\\magic_red.tga",
-        "effect\\magic_red.bmp",
-        "effect\\magic_violet.tga",
-        "effect\\magic_violet.bmp",
-    }, true);
-
-    if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(target, {
-            "effect\\ef_firebolt.wav",
-            "effect\\ef_firehit.wav",
-            "effect\\ef_fireball.wav",
-            "effect\\ef_firehit1.wav",
-        });
+    switch (type) {
+    case 25:
+    case 37:
+    case 49:
+    case 51:
+    case 52:
+    case 53:
+    case 147:
+    case 152:
+    case 200:
+    case 201:
+    case 202:
+    case 203:
+    case 228:
+    case 254:
+    case 312:
+    case 313:
+    case 320:
+    case 325:
+    case 328:
+    case 362:
+    case 397:
+    case 398:
+    case 418:
+    case 436:
+    case 437:
+    case 438:
+    case 441:
+    case 454:
+    case 467:
+    case 468:
+    case 469:
+    case 470:
+    case 471:
+    case 472:
+    case 473:
+    case 488:
+    case 489:
+    case 490:
+    case 503:
+    case 504:
+    case 506:
+    case 523:
+    case 524:
+    case 525:
+    case 526:
+    case 527:
+    case 528:
+    case 529:
+    case 530:
+    case 531:
+    case 532:
+    case 533:
+    case 534:
+    case 535:
+    case 536:
+    case 590:
+    case 603:
+    case 629:
+    case 678:
+    case 679:
+    case 680:
+        return true;
+    default:
+        return false;
     }
+}
 
-    const int hitCount = (std::max)(1, m_level > 0 ? m_level : 1);
-    const int spawnInterval = (std::max)(1, 18 / hitCount);
-    if ((m_stateCnt % spawnInterval) != 0 || (m_stateCnt / spawnInterval) >= hitCount) {
+void ConfigureHealBand(EffectGi& gi, float maxHeight, short rotStart, float distance, short riseAngle, short alphaPeak)
+{
+    gi.life = 1;
+    gi.process = 0;
+    gi.fullDisplayAngle = 360;
+    gi.maxHeight = maxHeight;
+    gi.rotStart = rotStart;
+    gi.alphaB = 0;
+    gi.distance = distance;
+    gi.riseAngle = riseAngle;
+    gi.sparkY = 0.0f;
+    gi.alphaT = alphaPeak;
+    gi.height.fill(0.0f);
+    gi.flag.fill(0);
+}
+
+void CRagEffect::LaunchParticleUp(const vector3d& origin, float sizeBase, float speedBase, bool secondTexture, u8 switchTexture)
+{
+    CEffectPrim* spark = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeParticleUp), vector3d{});
+    if (spark == nullptr) {
         return;
     }
+    spark->m_renderFlag = 5;
+    spark->m_duration = m_duration;
+    spark->m_size = 0.0f;
+    spark->m_pos = origin;
+    spark->m_texture.push_back(g_texMgr.GetTexture("effect\\pok1.tga", false));
+    if (secondTexture) {
+        spark->m_texture.push_back(g_texMgr.GetTexture("effect\\pok3.tga", false));
+    }
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = spark->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.distance = static_cast<float>(rand() % 10) * 0.1f + sizeBase;
+        gi.height[8] = 0.0f;
+        gi.height[1] = 0.0f;
+        gi.height[2] = static_cast<float>(rand() % 40) * 0.0099999998f + speedBase;
+        gi.alphaB = 0;
+        gi.sparkX = static_cast<float>(rand() % 13) + origin.x - 6.0f;
+        gi.sparkZ = static_cast<float>(rand() % 13) + origin.z - 6.0f;
+        gi.sparkY = origin.y;
+        gi.rotStart = 0;
+        gi.fullDisplayAngle = 0;
+        gi.flag[0] = 0;
+        gi.flag[1] = switchTexture;
+        gi.flag[2] = 11;
+    }
+}
 
-    if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEGRAVITY, vector3d{})) {
-        const float lateralX = static_cast<float>((rand() % 9) - 4);
-        const float lateralZ = static_cast<float>((rand() % 9) - 4);
-        prim->m_duration = 10;
-        prim->m_deltaPos2.x = target.x - ResolveBasePosition().x + lateralX;
-        prim->m_deltaPos2.y = 42.0f + static_cast<float>(rand() % 10);
-        prim->m_deltaPos2.z = target.z - ResolveBasePosition().z + lateralZ;
-        prim->m_latitude = 180.0f;
-        prim->m_speed = 4.5f + static_cast<float>(rand() % 3);
-        prim->m_gravSpeed = -1.4f;
-        prim->m_gravAccel = -0.85f;
-        prim->m_size = 5.0f;
-        prim->m_sizeSpeed = -0.18f;
-        prim->m_alpha = 245.0f;
-        prim->m_alphaSpeed = -18.0f;
-        prim->m_fadeOutCnt = 6;
-        if (!ConfigureEffectSpritePrim(prim, { "fireball" }, 0, 1.0f, true, 1.0f, 0)) {
-            prim->m_texture.push_back(glow);
+void CRagEffect::ApplyParticleUpBurst()
+{
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    for (int burst = 0; burst < 20; ++burst) {
+        CEffectPrim* spark = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeParticleUp), vector3d{});
+        if (spark == nullptr) {
+            return;
         }
-        prim->m_tintColor = RGB(255, 168, 80);
+        spark->m_renderFlag = 5;
+        spark->m_duration = m_duration;
+        spark->m_size = 0.0f;
+        spark->m_pos = origin;
+        spark->m_texture.push_back(g_texMgr.GetTexture("effect\\thunder_center.bmp", false));
+        for (int band = 0; band < 4; ++band) {
+            EffectGi& gi = spark->m_gi[static_cast<size_t>(band)];
+            gi.life = 1;
+            gi.process = rand() % 10 - 10;
+            gi.distance = static_cast<float>(rand() % 16) * 0.029999999f + 0.1f;
+            gi.height[8] = 0.0f;
+            gi.height[1] = static_cast<float>(rand() % 10) * 0.0099999998f;
+            gi.height[2] = static_cast<float>(rand() % 40) * 0.0099999998f + 0.2f;
+            gi.alphaB = 0;
+            gi.sparkX = static_cast<float>(rand() % 9) + origin.x - 4.0f;
+            gi.sparkZ = static_cast<float>(rand() % 9) + origin.z - 4.0f;
+            gi.sparkY = origin.y;
+            gi.rotStart = 0;
+            gi.fullDisplayAngle = 0;
+            gi.flag[0] = 0;
+            gi.flag[1] = 0;
+            gi.flag[2] = 10;
+        }
+    }
+}
+
+void LaunchWarpCasting(CRagEffect* effect, EFFECTPRIMID primType, const vector3d& origin, const char* textureName, float size, const float* distance, const short* spin, const short* rise)
+{
+    CEffectPrim* prim = effect->LaunchEffectPrim(primType, vector3d{});
+    if (prim == nullptr || textureName == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = effect->GetDuration();
+    prim->m_pos = origin;
+    prim->m_size = size;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        ConfigureHealBand(gi, distance[band], spin[band], distance[band], rise[band], 0);
+    }
+}
+
+void CRagEffect::ApplyPortalWind(int variant)
+{
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeWind), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_size = variant == 1 ? 8.0f : 5.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\cloud11.tga", false));
+    for (int band = 0; band < 4; ++band) {
+        const float index = static_cast<float>(band);
+        float maxHeight = index + index + 5.0f;
+        float distance = static_cast<float>(rand() % 101) * 0.029999999f + 4.5f;
+        if (variant == 1) {
+            maxHeight = index + index + 3.0f;
+            distance = static_cast<float>(rand() % 101) * 0.0099999998f + 2.5f;
+        } else if (variant == 2) {
+            maxHeight = 48.0f - index * 5.0f;
+            distance = 14.0f - index * 2.0f;
+        } else if (variant == 3) {
+            maxHeight = 28.0f - index * 5.0f;
+            distance = 6.0f - index;
+        }
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        ConfigureHealBand(gi, maxHeight, static_cast<short>(90 * band), distance, static_cast<short>(rand() % 21 + 80), variant < 2 ? 1 : 2);
+        gi.fullDisplayAngle = 30;
+        gi.height.fill(1.0f);
+    }
+}
+
+void CRagEffect::ApplyKyrieGuard()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    if (m_stateCnt == 0) {
+        vector3d wavePos = origin;
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                wavePos.y = mode->m_world->m_player->m_pos.y;
+            }
+        }
+        TryPlayEffectWaveAt(wavePos, "effect\\kyrie_guard.wav");
+    }
+    if (master != nullptr && m_stateCnt <= 29) {
+        if ((master->m_BodyLight & 8) != 8) {
+            master->m_BodyLight += 8;
+        }
+        if ((m_stateCnt % 6) >= 3) {
+            master->SetArgb(-1, 250, 250, 250);
+        } else {
+            master->SetArgb(-1, 100, 100, 100);
+        }
+    }
+    ProcessEZ2STR();
+}
+
+void CRagEffect::ApplyBodyLight442()
+{
+    if (CRenderObject* master = ResolveCurrentMaster()) {
+        if ((master->m_BodyLight & 0x8000) != 0x8000) {
+            master->m_BodyLight += 0x8000;
+            master->m_BodyTime3 = static_cast<u8>(m_stateCnt);
+        }
+    }
+}
+
+void CRagEffect::ApplyBodyLight446()
+{
+    if (CRenderObject* master = ResolveCurrentMaster()) {
+        if ((master->m_BodyLight & 0x20000) != 0x20000) {
+            master->m_BodyLight += 0x20000;
+            master->m_BodyTime2 = static_cast<u8>(m_stateCnt);
+        }
+        if ((master->m_BodyLight & 0x40) != 0x40 && m_stateCnt < 25) {
+            master->m_BodyLight += 64;
+            master->m_BodyTime = static_cast<u16>(static_cast<unsigned short>(m_stateCnt) + 11);
+        }
+    }
+}
+
+void CRagEffect::ApplyTarot(const char* textureName, int variant)
+{
+    if (textureName == nullptr) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeEffectTexture)) {
+            existing->m_pos = origin;
+        }
+    }
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeEffectTexture), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 0.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    if (variant == 2) {
+        gi.distance = 10.0f;
+        gi.arcBaselineY = origin.y - 10.0f;
+        gi.flag[2] = 2;
+        gi.height[10] = 0.0f;
+        gi.fullDisplayAngle = 135;
+    } else if (variant == 3) {
+        gi.distance = 8.0f;
+        gi.arcBaselineY = origin.y - 30.0f;
+        gi.flag[2] = 3;
+        gi.height[10] = 2.0f;
+        gi.fullDisplayAngle = 155;
+    } else if (variant == 4) {
+        gi.distance = 6.0f;
+        gi.arcBaselineY = origin.y - 30.0f;
+        gi.flag[2] = 0;
+        gi.height[10] = 0.0f;
+        gi.fullDisplayAngle = 135;
+    } else {
+        gi.distance = 8.0f;
+        gi.arcBaselineY = origin.y - 30.0f;
+        gi.flag[2] = 0;
+        gi.height[10] = 1.0f;
+        gi.fullDisplayAngle = 120;
+    }
+    gi.height[8] = 0.0f;
+    gi.alphaB = 0;
+    gi.sparkX = origin.x;
+    gi.sparkZ = origin.z;
+    gi.rotStart = static_cast<short>(rand() % 360);
+    gi.flag[0] = 0;
+    gi.flag[4] = static_cast<u8>(variant == 4 ? 1 : variant);
+}
+
+void CRagEffect::ApplyActorLight()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    auto playAtListener = [&](const char* wave) {
+        vector3d wavePos = origin;
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                wavePos.y = mode->m_world->m_player->m_pos.y;
+            }
+        }
+        TryPlayEffectWaveAt(wavePos, wave);
+    };
+    auto flashBody = [&](int red, int green, int blue) {
+        if (master == nullptr) {
+            return;
+        }
+        if ((master->m_BodyLight & 8) != 8) {
+            master->m_BodyLight += 8;
+        }
+        if ((m_stateCnt % 2) != 0) {
+            master->SetArgb(-1, 255, 255, 255);
+            return;
+        }
+        if ((master->m_BodyLight & 1) != 1) {
+            ++master->m_BodyLight;
+        }
+        master->SetArgb(-1, red, green, blue);
+    };
+    const unsigned short frame = static_cast<unsigned short>(m_stateCnt);
+    switch (m_type) {
+    case 414:
+        if (master != nullptr && (master->m_BodyLight & 0x40) != 0x40 && m_stateCnt < 18) {
+            master->m_BodyLight += 64;
+            master->m_BodyTime = static_cast<u16>(2 * frame);
+        }
+        break;
+    case 415:
+        if (m_stateCnt == 17) {
+            playAtListener("effect\\EF_hit2.wav");
+        }
+        if (m_stateCnt == 25) {
+            playAtListener("effect\\EF_hit4.wav");
+        }
+        if (master != nullptr && (master->m_BodyLight & 0x80) != 0x80 && m_stateCnt >= 30) {
+            master->m_BodyLight += 128;
+            master->m_BodyTime = static_cast<u16>(frame - 30);
+        }
+        break;
+    case 417:
+        if (master == nullptr || (master->m_BodyLight & 0x100) == 0x100) {
+            break;
+        }
+        master->m_BodyLight += 256;
+        if (m_stateCnt < 15) {
+            master->m_BodyTime = frame;
+        }
+        break;
+    case 419:
+        if (master != nullptr && (master->m_BodyLight & 0x200) != 0x200) {
+            master->m_BodyLight += 512;
+        }
+        break;
+    case 420:
+        if (master != nullptr && (master->m_BodyLight & 0x10) != 0x10) {
+            master->m_BodyLight += 16;
+            if (m_stateCnt <= 45) {
+                master->m_BodySin3 = static_cast<u8>(m_stateCnt);
+            }
+        }
+        break;
+    case 421:
+        if (master != nullptr && (master->m_BodyLight & 0x10) != 0x10) {
+            master->m_BodyLight += 16;
+            master->m_BodySin3 = 45;
+        }
+        break;
+    case 422:
+        if (master != nullptr && (master->m_BodyLight & 0x400) != 0x400) {
+            master->m_BodyLight += 1024;
+            if (m_stateCnt <= 45) {
+                master->m_BodySin4 = static_cast<u8>(m_stateCnt);
+            }
+        }
+        break;
+    case 423:
+        if (master != nullptr && (master->m_BodyLight & 0x400) != 0x400) {
+            master->m_BodyLight += 1024;
+            master->m_BodySin4 = 45;
+        }
+        break;
+    case 424:
+        if (master != nullptr && (master->m_BodyLight & 0x800) != 0x800) {
+            master->m_BodyLight += 2048;
+            master->m_BodySin5 = m_stateCnt >= 200 ? static_cast<u8>(-56) : static_cast<u8>(m_stateCnt);
+        }
+        break;
+    case 425:
+        if (master != nullptr && m_stateCnt >= 30) {
+            master->m_BodyLight |= 0x1000;
+            master->m_BodyTime = static_cast<u16>(frame - 30);
+        }
+        break;
+    case 426:
+    case 458:
+        if (master == nullptr || (master->m_BodyLight & 0x2000) == 0x2000) {
+            break;
+        }
+        master->m_BodyLight += 0x2000;
+        master->m_BodyTime = frame;
+        break;
+    case 427:
+        if (master != nullptr && (master->m_BodyLight & 0x800) != 0x800) {
+            master->m_BodyLight += 2048;
+            if (m_stateCnt < 150) {
+                master->m_BodyTime = static_cast<u16>(frame + 50);
+            }
+        }
+        break;
+    case 538:
+        if (master == nullptr || m_stateCnt >= 31) {
+            break;
+        }
+        if ((master->m_BodyLight & 8) != 8) {
+            master->m_BodyLight += 8;
+        }
+        if ((m_stateCnt % 2) != 0) {
+            master->SetArgb(-1, 255, 255, 255);
+            break;
+        }
+        if ((master->m_BodyLight & 1) != 1) {
+            ++master->m_BodyLight;
+        }
+        master->SetArgb(-1, 0, 255, 0);
+        break;
+    case 540:
+        if (master == nullptr || m_stateCnt > 15 || (master->m_BodyLight & 0x10) == 0x10) {
+            break;
+        }
+        master->m_BodyLight += 16;
+        master->m_BodySin3 = static_cast<u8>(45 - 3 * (m_stateCnt & 0xFF));
+        break;
+    case 542:
+        if (master == nullptr || (master->m_BodyLight & 0x4000) == 0x4000 || m_stateCnt > 150) {
+            break;
+        }
+        master->m_BodyLight += 0x4000;
+        master->m_BodyTime2 = static_cast<u8>(m_stateCnt / 3);
+        break;
+    case 544:
+        if (master == nullptr || (master->m_BodyLight & 0x40000) == 0x40000) {
+            break;
+        }
+        master->m_BodyLight += 0x40000;
+        master->m_BodyTime2 = m_stateCnt > 200
+            ? static_cast<u8>(25)
+            : static_cast<u8>(static_cast<double>(m_stateCnt) * 0.125);
+        break;
+    case 375:
+        if (master != nullptr && (master->m_BodyLight & 8) != 8) {
+            master->m_BodyLight += 8;
+        }
+        break;
+    case 379:
+        if (master != nullptr && m_stateCnt <= 200) {
+            master->SetArgb(-1, 205 - m_stateCnt, 205 - m_stateCnt, 255);
+        }
+        break;
+    case 382:
+        if (master != nullptr && (master->m_BodyLight & 4) != 4) {
+            master->m_BodyLight += 4;
+        }
+        break;
+    case 385:
+        if (master != nullptr && m_stateCnt >= 40 && m_stateCnt <= 70) {
+            if ((master->m_BodyLight & 1) != 1) {
+                ++master->m_BodyLight;
+            }
+            master->SetArgb(-1, 200, 150, 50);
+        }
+        break;
+    case 387:
+        if (m_stateCnt == 30) {
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                mode->SendMsg(135, 0, 0, 0);
+            }
+        }
+        if (master != nullptr && m_stateCnt >= 30 && m_stateCnt <= 54) {
+            master->m_roty += 30.0f;
+            if (master->m_roty > 360.0f) {
+                master->m_roty -= 360.0f;
+            }
+        }
+        if (master != nullptr && m_stateCnt >= 30 && m_stateCnt <= 50 && (m_stateCnt % 10) < 5
+            && (master->m_BodyLight & 1) != 1) {
+            ++master->m_BodyLight;
+        }
+        break;
+    case 396:
+        if (master != nullptr) {
+            if ((master->m_BodyLight & 1) != 1) {
+                ++master->m_BodyLight;
+            }
+            if ((master->m_BodyLight & 8) != 8) {
+                master->m_BodyLight += 8;
+            }
+            master->SetArgb(-1, 255, 89, 182);
+        }
+        break;
+    case 500:
+        if (m_stateCnt < 31) {
+            flashBody(0, 0, 255);
+        }
+        break;
+    case 521:
+        if (m_stateCnt >= 10 && m_stateCnt < 51) {
+            flashBody(255, 0, 0);
+        }
+        break;
+    case 548:
+        if (master != nullptr && m_stateCnt <= 16) {
+            master->m_BodyLight |= 0x40000;
+            master->m_BodyTime2 = static_cast<u8>(3 * (m_stateCnt & 0xFF));
+        }
+        break;
+    case 549:
+        if (master != nullptr && m_stateCnt <= 16) {
+            master->m_BodyLight |= 0x4000;
+            master->m_BodyTime2 = static_cast<u8>(3 * (m_stateCnt & 0xFF));
+        }
+        break;
+    case 550:
+        if (master != nullptr && m_stateCnt > 30 && m_stateCnt <= 50) {
+            master->m_BodyLight |= 0x2000;
+            master->m_BodyTime = frame;
+        }
+        break;
+    case 625:
+        if (master != nullptr && (m_stateCnt % 4) == 0 && (master->m_BodyLight & 0x4000) != 0x4000) {
+            master->m_BodyLight += 0x4000;
+            master->m_BodyTime2 = 20;
+        }
+        break;
+    case 626:
+        if (master != nullptr && (m_stateCnt % 4) == 0 && (master->m_BodyLight & 0x40000) != 0x40000) {
+            master->m_BodyLight += 0x40000;
+            master->m_BodyTime2 = 20;
+        }
+        break;
+    case 655:
+        if (master != nullptr && (master->m_BodyLight & 0x80000) != 0x80000) {
+            master->m_BodyLight += 0x80000;
+            master->m_BodySin5 = m_stateCnt >= 200 ? static_cast<u8>(-56) : static_cast<u8>(m_stateCnt);
+        }
+        break;
+    case 656:
+        if (master != nullptr && m_stateCnt < 40 && (master->m_BodyLight & 0x80000) != 0x80000) {
+            master->m_BodyLight += 0x80000;
+            master->m_BodySin5 = static_cast<u8>(-56 - 5 * (m_stateCnt & 0xFF));
+        }
+        break;
+    case 667:
+        if (master != nullptr && (master->m_BodyLight & 2) != 2) {
+            master->m_BodyLight += 2;
+            master->m_BodySin5 = m_stateCnt >= 25 ? static_cast<u8>(-56) : static_cast<u8>(8 * m_stateCnt);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+void CRagEffect::ApplyBodyLight449()
+{
+    if (CRenderObject* master = ResolveCurrentMaster()) {
+        if ((master->m_BodyLight & 0x4000) != 0x4000) {
+            master->m_BodyLight += 0x4000;
+            if (m_stateCnt <= 50) {
+                master->m_BodyTime2 = static_cast<u8>(m_stateCnt);
+            }
+        }
+    }
+}
+
+void CRagEffect::ApplyPortalWind402()
+{
+    ApplyPortalWind(1);
+    if (m_stateCnt < 5 || m_stateCnt > 65) {
+        return;
+    }
+    if (CRenderObject* master = ResolveCurrentMaster()) {
+        if ((master->m_BodyLight & 1) != 1) {
+            ++master->m_BodyLight;
+        }
+        master->SetArgb(-1, 250, 250, 200);
+    }
+}
+
+void CRagEffect::ApplyBlackDevil(const char* textureName)
+{
+    if (textureName == nullptr || (m_stateCnt != 1 && m_stateCnt != 2)) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    if (m_stateCnt == 1) {
+        const float distance[4] = { 2.5f, 5.0f, 7.5f, 10.0f };
+        const short spin[4] = { 270, 0, 90, 180 };
+        const short rise[4] = { 53, 60, 55, 50 };
+        LaunchWarpCasting(this, static_cast<EFFECTPRIMID>(kPrimTypeCasting5), origin, textureName, 12.0f, distance, spin, rise);
+        return;
+    }
+    const float distance[4] = { 2.7f, 5.1999998f, 7.6999998f, 10.2f };
+    const short spin[4] = { 271, 1, 91, 181 };
+    const short rise[4] = { 52, 59, 54, 49 };
+    LaunchWarpCasting(this, static_cast<EFFECTPRIMID>(kPrimTypeCasting5), origin, textureName, 12.0f, distance, spin, rise);
+}
+
+void CRagEffect::ApplyWarpZone2(const char* textureName)
+{
+    if (m_stateCnt == 99999998) {
+        m_stateCnt = 0;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    if (m_stateCnt == 1) {
+        const float distance[4] = { 2.5f, 5.0f, 7.5f, 10.0f };
+        const short spin[4] = { 270, 0, 90, 180 };
+        const short rise[4] = { 53, 60, 55, 50 };
+        LaunchWarpCasting(this, static_cast<EFFECTPRIMID>(kPrimTypeCasting4), origin, textureName, 11.0f, distance, spin, rise);
+    } else if (m_stateCnt == 2) {
+        const float distance[4] = { 2.7f, 5.1999998f, 7.6999998f, 10.2f };
+        const short spin[4] = { 271, 1, 91, 181 };
+        const short rise[4] = { 52, 59, 54, 49 };
+        LaunchWarpCasting(this, static_cast<EFFECTPRIMID>(kPrimTypeCasting4), origin, textureName, 4.0f, distance, spin, rise);
+    }
+    if (m_stateCnt == 0) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
+            prim->m_duration = 99999999;
+            prim->m_pattern |= 1;
+            prim->m_radius = 15.0f;
+            prim->m_deltaPos2.y -= 1.5f;
+            prim->m_latitude = 90.0f;
+            prim->m_alpha = 0.0f;
+            prim->m_maxAlpha = 128.0f;
+            prim->m_alphaSpeed = prim->m_maxAlpha * 0.1f;
+            prim->m_fadeOutCnt = prim->m_duration - 10;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false));
+        }
+    }
+    if ((m_stateCnt % 10) == 0) {
+        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{})) {
+            prim->m_radius = static_cast<float>((rand() % 200) / 100) * 0.75f + 4.5f;
+            prim->m_radiusSpeed = 0.00050000002f;
+            prim->m_duration = 70;
+            prim->m_longitude = static_cast<float>(rand() % 360);
+            if ((rand() & 1) == 0) {
+                prim->m_longSpeed = 2.5f - static_cast<float>(rand() % 11) * 0.1f;
+            } else {
+                prim->m_longSpeed = static_cast<float>(rand() % 11) * 0.1f - 2.5f;
+            }
+            prim->m_gravSpeed = -0.30000001f;
+            prim->m_gravAccel = prim->m_gravSpeed / static_cast<float>(prim->m_duration) * -0.66666669f;
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendYRotation(prim->m_matrix, prim->m_longitude * (kPi / 180.0f));
+            prim->m_deltaPos2 = {
+                prim->m_radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
+                prim->m_radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
+                prim->m_radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
+            };
+            prim->m_size = 0.69999999f;
+            prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+        }
+    }
+}
+
+void CRagEffect::ApplyReadyPortal2()
+{
+    if ((m_stateCnt % 14) == 0) {
+        CRenderObject* master = ResolveCurrentMaster();
+        vector3d soundPos = master != nullptr ? master->m_pos : m_cachedPos;
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                soundPos.y = mode->m_world->m_player->m_pos.y;
+            }
+        }
+        TryPlayEffectWaveAt(soundPos, "effect\\EF_ReadyPortal.wav");
+    }
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypePortal), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_size = 5.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+    ConfigureHealBand(prim->m_gi[0], 6.0009999f, 0, 0.0f, 2, 100);
+    ConfigureHealBand(prim->m_gi[1], 6.0009999f, 25, 0.0f, 3, 100);
+    ConfigureHealBand(prim->m_gi[2], 6.0009999f, 50, 0.0f, 4, 100);
+    prim->m_gi[1].process = -10;
+    prim->m_gi[2].process = -20;
+    prim->m_gi[3].life = 0;
+    prim->m_gi[3].process = 0;
+    prim->m_gi[3].alphaT = 1;
+    for (int band = 0; band < 3; ++band) {
+        prim->m_gi[static_cast<size_t>(band)].flag.fill(1);
+    }
+}
+
+void CRagEffect::ApplyPortal2(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    if (m_stateCnt == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHeal), vector3d{});
+        if (prim == nullptr) {
+            return;
+        }
+        prim->m_renderFlag = 5;
+        prim->m_duration = m_duration;
+        prim->m_pos = origin;
+        const bool red = variant == 3;
+        prim->m_size = red ? 10.0f : 4.0f;
+        prim->m_texture.push_back(g_texMgr.GetTexture(red ? "effect\\ring_red.tga" : "effect\\magic_violet.tga", false));
+        ConfigureHealBand(prim->m_gi[0], 50.0f, static_cast<short>(rand() % 360), 4.0f, 90, 1400);
+        ConfigureHealBand(prim->m_gi[1], 50.0f, static_cast<short>(rand() % 360), 3.0f, 90, 1400);
+        ConfigureHealBand(prim->m_gi[2], 50.0f, static_cast<short>(rand() % 360), 2.0f, 90, 1400);
+        prim->m_gi[3].life = 0;
+        for (int band = 0; band < 3; ++band) {
+            prim->m_gi[static_cast<size_t>(band)].flag.fill(1);
+        }
+        return;
+    }
+    if (m_stateCnt == 1) {
+        CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypePortal), vector3d{});
+        if (prim == nullptr) {
+            return;
+        }
+        prim->m_renderFlag = 5;
+        prim->m_duration = m_duration;
+        prim->m_pos = origin;
+        const bool red = variant == 3;
+        prim->m_size = red ? 10.0f : 4.0f;
+        prim->m_texture.push_back(g_texMgr.GetTexture(red ? "effect\\ring_red.tga" : "effect\\ring_blue.tga", false));
+        ConfigureHealBand(prim->m_gi[0], 6.0009999f, 0, 0.0f, 2, 3111);
+        ConfigureHealBand(prim->m_gi[1], 6.0009999f, 25, 0.0f, 3, 3111);
+        ConfigureHealBand(prim->m_gi[2], 6.0009999f, 50, 0.0f, 4, 3111);
+        prim->m_gi[1].process = red ? -20 : -10;
+        prim->m_gi[2].process = red ? -40 : -20;
+        prim->m_gi[3].life = 0;
+        prim->m_gi[3].process = 0;
+        prim->m_gi[3].alphaT = static_cast<short>(variant);
+        for (int band = 0; band < 3; ++band) {
+            prim->m_gi[static_cast<size_t>(band)].flag.fill(1);
+        }
+        return;
+    }
+    if (m_stateCnt != 2) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeWind), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_size = variant == 3 ? 10.0f : 4.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\cloud11.tga", false));
+    const float heights[4] = { 1.5f, 3.5f, 5.5f, 7.5f };
+    const short spins[4] = { 0, 90, 180, 270 };
+    const float radii[4] = { 9.0f, 7.5f, 6.0f, 4.5f };
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        ConfigureHealBand(gi, heights[band], spins[band], radii[band], 90, 0);
+        gi.fullDisplayAngle = 30;
+        gi.height.fill(1.5f);
+    }
+}
+
+void CRagEffect::ApplyEntry2()
+{
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    vector3d soundPos = origin;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+            soundPos.y = mode->m_world->m_player->m_pos.y - 150.0f;
+        }
+    }
+    TryPlayEffectWaveAt(soundPos, "effect\\EF_Portal.wav");
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHeal), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_size = 4.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+    ConfigureHealBand(prim->m_gi[0], 30.0f, static_cast<short>(rand() % 360), 3.7f, 90, 1400);
+    ConfigureHealBand(prim->m_gi[1], 30.0f, static_cast<short>(rand() % 360), 3.4000001f, 90, 1400);
+    ConfigureHealBand(prim->m_gi[2], 4.0f, static_cast<short>(rand() % 360), 3.5999999f, 10, 1400);
+    ConfigureHealBand(prim->m_gi[3], 4.0f, static_cast<short>(rand() % 360), 3.7f, 5, 1400);
+    for (EffectGi& gi : prim->m_gi) {
+        gi.flag.fill(2);
+    }
+}
+
+void CRagEffect::ApplyPoison(int variant)
+{
+    if (m_stateCnt == 99999998) {
+        m_stateCnt = 0;
+        m_duration = 99999999;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    if (m_stateCnt == 0) {
+        origin.y -= 9.0f;
+        m_cachedPos.y -= 9.0f;
+        CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypePoison), origin);
+        if (prim == nullptr) {
+            return;
+        }
+        prim->m_renderFlag |= 0x200u;
+        prim->m_duration = m_duration;
+        const char* textureName = variant != 0 ? "effect\\white02.bmp" : "effect\\poison_f.bmp";
+        prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+        EffectGi& gi = prim->m_gi[0];
+        gi.life = 1;
+        gi.process = 0;
+        gi.distance = 30.0f;
+        gi.maxHeight = 0.0f;
+        gi.alphaB = 0;
+        gi.flag[10] = static_cast<u8>(variant);
+        prim->m_pos = origin;
+        return;
+    }
+    for (CEffectPrim* prim : m_primList) {
+        if (prim != nullptr && prim->m_type == static_cast<EFFECTPRIMID>(kPrimTypePoison)) {
+            prim->m_pos = origin;
+        }
+    }
+}
+
+void CRagEffect::ApplyBlind(int level)
+{
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeBlind), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag |= 0x200u;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\fullb.tga", false));
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\white02.bmp", false));
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.alphaB = 0;
+    if (level != 0) {
+        gi.distance = 140.0f - static_cast<float>(10 * level);
+        gi.flag[0] = 1;
+    } else {
+        gi.distance = 50.0f;
+        gi.flag[0] = 0;
+    }
+}
+
+void CRagEffect::ApplySaintCasting(short time, const char* textureName, int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi1)) {
+            existing->m_pos = origin;
+        }
+    }
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    if (m_duration < 56) {
+        m_duration = 56;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeGi1), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_size = 5.0f;
+    switch (variant) {
+    case 1:
+        prim->m_size = 8.0f;
+        break;
+    case 2:
+        prim->m_size = 5.0f;
+        break;
+    case 3:
+        prim->m_size = 10.0f;
+        break;
+    case 4:
+        prim->m_size = 11.0f;
+        break;
+    case 5:
+        prim->m_size = 4.0f;
+        break;
+    case 6:
+        prim->m_size = 12.0f;
+        break;
+    default:
+        break;
+    }
+    const float bandHeight = variant == 2 ? 25.0f : variant == 22 ? 15.0f : 20.0f;
+    const short spins[4] = { 180, 270, 0, 90 };
+    const short alphaLift[4] = { 135, 90, 45, 0 };
+    const bool stagger = m_duration <= 60;
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = stagger ? -5 * band : 0;
+        gi.fullDisplayAngle = 360;
+        gi.maxHeight = bandHeight - static_cast<float>(band);
+        gi.rotStart = spins[band];
+        gi.alphaB = stagger ? 0 : static_cast<short>(time + alphaLift[band]);
+        gi.distance = 4.0999999f;
+        gi.riseAngle = 80;
+        gi.alphaT = static_cast<short>(variant);
+        gi.sparkY = 0.0f;
+    }
+}
+
+void CRagEffect::ApplyBottomOut(const char* textureName, int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeBottomOut)) {
+            existing->m_pos = origin;
+        }
+    }
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeBottomOut), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    const int bands = variant == 1 ? 1 : 2;
+    for (int band = 0; band < bands; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = rand() % 11;
+        gi.distance = variant == 1
+            ? static_cast<float>(rand() % 20) * 0.1f + 3.0f
+            : static_cast<float>(rand() % 6 + 5);
+        gi.height[8] = 0.0f;
+        gi.height[7] = 0.0f;
+        gi.alphaB = 0;
+        gi.sparkX = origin.x;
+        gi.sparkZ = origin.z;
+        gi.arcBaselineY = variant == 1 ? origin.y - 5.0f : origin.y;
+        gi.fullDisplayAngle = 45;
+        gi.flag[0] = 0;
+        gi.flag[1] = static_cast<u8>(variant);
+        gi.flag[2] = 2;
+    }
+}
+
+void CRagEffect::ApplyBottomLight(const char* textureName, int size)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi5)) {
+            existing->m_pos = origin;
+        }
+    }
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeGi5), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = static_cast<float>(size);
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.fullDisplayAngle = 315;
+    gi.maxHeight = static_cast<float>(rand() % 10 + 25);
+    gi.rotStart = static_cast<short>(rand() % 360);
+    gi.alphaB = static_cast<short>(50 - rand() % 10);
+    gi.riseAngle = 90;
+    gi.alphaT = static_cast<short>(rand() % 360);
+    gi.sparkY = 0.0f;
+}
+
+void CRagEffect::ApplyBottomMusic(const char* textureName, int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeBottom)) {
+            existing->m_pos = origin;
+        }
+    }
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeBottom), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 0.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.distance = 3.0f;
+    if (variant == 1) {
+        gi.distance = 5.0f;
+    } else if (variant == 4) {
+        gi.distance = 15.0f;
+    } else if (variant == 6) {
+        gi.distance = 8.0f;
+    } else if (variant == 9) {
+        gi.distance = 1.5f;
+    }
+    gi.height[8] = 0.0f;
+    gi.height[7] = 0.0f;
+    gi.alphaB = 200;
+    gi.sparkX = origin.x;
+    gi.sparkZ = origin.z;
+    gi.arcBaselineY = origin.y - 6.0f;
+    gi.rotStart = static_cast<short>(rand() % 360);
+    gi.fullDisplayAngle = 45;
+    gi.flag[0] = 0;
+    gi.flag[2] = 2;
+    if (variant == 4) {
+        gi.height[9] = 10.0f;
+    } else if (variant == 2) {
+        for (int band = 1; band < 4; ++band) {
+            prim->m_gi[static_cast<size_t>(band)].life = 1;
+            prim->m_gi[static_cast<size_t>(band)].alphaB = 0;
+        }
+    } else if (variant == 3) {
+        gi.flag[2] = 3;
+    } else if (variant == 5 || variant == 6) {
+        gi.flag[2] = 4;
+    } else if (variant == 7) {
+        gi.flag[2] = 7;
+    } else if (variant == 9) {
+        gi.flag[2] = 9;
+        gi.flag[3] = 6;
+    }
+}
+
+void CRagEffect::ApplyBeginCasting(const char* textureName, int option, bool playWave)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr
+            && (existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting)
+                || existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting3))) {
+            existing->m_pos = origin;
+        }
+    }
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    if (playWave) {
+        vector3d wavePos = origin;
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                wavePos.y = mode->m_world->m_player->m_pos.y;
+            }
+        }
+        TryPlayEffectWaveAt(wavePos, "effect\\EF_BeginSpell.wav");
+    }
+    if (m_duration < 70) {
+        m_duration = 70;
+    }
+    const bool third = option == 33;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(third ? kPrimTypeCasting3 : kPrimTypeCasting), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_size = third ? 0.0f : static_cast<float>(option);
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    const float heights[4] = { 25.0f, 22.0f, 19.0f, 250.0f };
+    const float distances[4] = { 4.5f, 5.0f, 5.5f, 4.0f };
+    const short rises[4] = { 70, 57, 45, 89 };
+    const short spins[4] = { 0, 90, 180, 0 };
+    const short alphas[4] = { 180, 180, 180, 70 };
+    const short spans[4] = { 315, 315, 315, 360 };
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = spans[band];
+        gi.maxHeight = heights[band];
+        gi.rotStart = spins[band];
+        gi.alphaB = alphas[band];
+        gi.distance = distances[band];
+        gi.riseAngle = rises[band];
+        gi.sparkY = 0.0f;
+    }
+}
+
+void CRagEffect::ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset)
+{
+    if (playWave && m_stateCnt == 0) {
+        CRenderObject* master = ResolveCurrentMaster();
+        vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                wavePos.y = mode->m_world->m_player->m_pos.y + waveYOffset;
+            } else {
+                wavePos.y += waveYOffset;
+            }
+        } else {
+            wavePos.y += waveYOffset;
+        }
+        TryPlayEffectWaveAt(wavePos, "effect\\EF_BeginSpell.wav");
+    }
+    ApplySaintCasting(45, textureName, variant);
+    ApplySaintCasting(25, textureName, variant);
+}
+
+void CRagEffect::ApplyCoupleCasting(const char* textureName)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    if (m_stateCnt == 0) {
+        vector3d wavePos = origin;
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                wavePos.y = mode->m_world->m_player->m_pos.y;
+            }
+        }
+        TryPlayEffectWaveAt(wavePos, "effect\\EF_BeginSpell.wav");
+    }
+    ApplySaintCasting(45, textureName, 3);
+    ApplySaintCasting(25, textureName, 3);
+}
+
+void CRagEffect::ApplyHeartCasting(const char* textureName, float offsetX, float offsetZ)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHealLow), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 10.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    const short fadeAt = static_cast<short>(static_cast<unsigned short>(m_duration) - 25);
+    for (int band = 0; band < 2; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = 360;
+        gi.maxHeight = band == 0 ? 12.0f : 25.0f;
+        gi.rotStart = static_cast<short>(rand() % 360);
+        gi.alphaB = 0;
+        gi.distance = band == 0 ? 2.3f : 2.0f;
+        gi.riseAngle = static_cast<short>(band == 0 ? 86 : 90);
+        gi.alphaT = fadeAt;
+        gi.sparkX = offsetX;
+        gi.sparkZ = offsetZ;
+        gi.sparkY = 1234.5f;
+        gi.height.fill(0.0f);
+        gi.flag.fill(33);
+    }
+    prim->m_gi[2].life = 0;
+    prim->m_gi[3].life = 0;
+}
+
+void CRagEffect::ApplyGiExplosion(const char* textureName)
+{
+    if (textureName == nullptr) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeGiExplosion), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 4.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = 315;
+        gi.maxHeight = 15.0f;
+        gi.rotStart = static_cast<short>(rand() % 360);
+        gi.alphaB = 0;
+        gi.distance = 20.0f - static_cast<float>(band) * 0.5f;
+        gi.riseAngle = 50;
+        gi.sparkY = 0.0f;
+        gi.height.fill(0.0f);
+        gi.flag.fill(0);
+    }
+}
+
+void CRagEffect::ApplyAcidDemon(const char* textureName)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    vector3d wavePos = origin;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+            wavePos.y = mode->m_world->m_player->m_pos.y;
+        }
+    }
+    TryPlayEffectWaveAt(wavePos, "effect\\EF_FireWall.wav");
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeAcidDemon), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 13.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    const short fullAngles[4] = { 315, 315, 315, 360 };
+    const float heights[4] = { 25.0f, 22.0f, 19.0f, 30.0f };
+    const short spins[4] = { 0, 90, 180, 0 };
+    const float distances[4] = { 2.4000001f, 2.7f, 3.0f, 2.2f };
+    const short rises[4] = { 70, 57, 45, 90 };
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = fullAngles[band];
+        gi.maxHeight = heights[band];
+        gi.rotStart = spins[band];
+        gi.alphaB = 0;
+        gi.distance = distances[band];
+        gi.riseAngle = rises[band];
+        gi.sparkY = 0.0f;
+        gi.height.fill(0.0f);
+        gi.flag.fill(0);
+    }
+}
+
+void CRagEffect::ApplyFlowerCasting(const char* textureName, float size, int variant)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeFlowerCast), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = size;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    const float distances[2][4] = {
+        { 4.5f, 5.0f, 5.5f, 5.0f },
+        { 5.5f, 6.0f, 6.5f, 6.0f },
+    };
+    const short rises[2][4] = {
+        { 85, 80, 70, 75 },
+        { 50, 55, 65, 60 },
+    };
+    const float heights[2][4] = {
+        { 27.0f, 28.0f, 29.0f, 30.0f },
+        { 30.0f, 29.0f, 28.0f, 27.0f },
+    };
+    const short spins[2][4] = {
+        { 0, 90, 180, 270 },
+        { 90, 180, 270, 0 },
+    };
+    const int kind = variant == 1 ? 1 : 0;
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = 315;
+        gi.alphaB = 0;
+        gi.sparkY = 0.0f;
+        gi.distance = distances[kind][band];
+        gi.riseAngle = rises[kind][band];
+        gi.maxHeight = heights[kind][band];
+        gi.rotStart = spins[kind][band];
+        gi.vecTNowX = static_cast<float>(gi.riseAngle);
+        gi.vecTNowY = gi.maxHeight;
+        gi.height.fill(0.0f);
+        gi.flag.fill(0);
+    }
+}
+
+void CRagEffect::ApplyDefender(const char* textureName)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeCasting2), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 0.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    const float heights[4] = { 40.0f, 39.0f, 38.0f, 37.0f };
+    const short spins[4] = { 180, 270, 0, 90 };
+    const float distances[4] = { 8.0f, 7.9000001f, 7.8000002f, 7.6999998f };
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = 360;
+        gi.maxHeight = heights[band];
+        gi.rotStart = spins[band];
+        gi.alphaB = 0;
+        gi.distance = distances[band];
+        gi.riseAngle = 90;
+        gi.sparkY = 0.0f;
+        gi.height.fill(0.0f);
+        gi.flag.fill(0);
+    }
+}
+
+void CRagEffect::ApplyMapPillar(const char* textureName, float size, bool wide)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeMapPillar), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = size;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = band * 30;
+        gi.fullDisplayAngle = 360;
+        gi.maxHeight = 120.0f;
+        gi.rotStart = static_cast<short>(90 * band);
+        gi.alphaB = static_cast<short>(wide ? 70 : 50);
+        gi.distance = static_cast<float>(band) * 0.5f + (wide ? 11.0f : 2.0f);
+        gi.alphaT = 0;
+        gi.riseAngle = 89;
+        gi.sparkY = 0.0f;
+        gi.height.fill(0.0f);
+        gi.flag.fill(0);
+    }
+}
+
+void CRagEffect::ApplyProvidence(const char* textureName)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeMapPillar), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 5.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 200;
+        gi.fullDisplayAngle = 360;
+        gi.maxHeight = 120.0f;
+        gi.rotStart = static_cast<short>(90 * band);
+        gi.alphaB = 40;
+        gi.distance = static_cast<float>(band) * 0.5f + 6.0f;
+        gi.riseAngle = static_cast<short>(83 - band);
+        gi.alphaT = 1;
+        gi.sparkY = 0.0f;
+        gi.height.fill(0.0f);
+        gi.flag.fill(0);
+    }
+}
+
+void CRagEffect::ApplyVolcano(const char* textureName, short variant, bool fastSpin)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeGi2), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 0.0f;
+    prim->m_accel = fastSpin ? 99.0f : 0.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    const bool compact = variant == 2;
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = 360;
+        gi.maxHeight = compact ? 15.0f : 25.0f;
+        gi.riseAngle = compact ? 70 : 80;
+        gi.rotStart = static_cast<short>(90 * band);
+        gi.alphaB = 0;
+        gi.distance = static_cast<float>(band) + 1.0f;
+        gi.alphaT = variant;
+        gi.sparkY = 0.0f;
+        gi.height.fill(0.0f);
+        gi.flag.fill(0);
+    }
+}
+
+void CRagEffect::ApplyBottomVolcano(const char* textureName, float size)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeGi4), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = size;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.fullDisplayAngle = 360;
+    gi.maxHeight = 15.0f;
+    gi.rotStart = static_cast<short>(rand() % 360);
+    gi.alphaB = static_cast<short>(rand() % 100);
+    gi.distance = 2.5999999f;
+    gi.riseAngle = 80;
+    gi.sparkY = 0.0f;
+    gi.height.fill(0.0f);
+    gi.flag.fill(0);
+}
+
+void CRagEffect::ApplyWind()
+{
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeWind), vector3d{});
+    if (prim != nullptr) {
+        prim->m_renderFlag = 5;
+        prim->m_duration = m_duration;
+        prim->m_size = 4.0f;
+        prim->m_pos = origin;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\cloud11.tga", false));
+        const short angles[4] = { 90, 70, 50, 30 };
+        const short spins[4] = { 0, 10, 20, 30 };
+        const float distances[4] = { 3.0f, 3.2f, 3.4000001f, 3.5999999f };
+        const float heights[4] = { 3.0f, 2.5f, 2.0f, 1.5f };
+        for (int band = 0; band < 4; ++band) {
+            EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+            gi.life = 1;
+            gi.process = 0;
+            gi.fullDisplayAngle = angles[band];
+            gi.maxHeight = 8.0f;
+            gi.rotStart = spins[band];
+            gi.alphaB = 0;
+            gi.alphaT = 0;
+            gi.distance = distances[band];
+            gi.riseAngle = 90;
+            gi.height.fill(heights[band]);
+            gi.flag.fill(0);
+        }
+    }
+    vector3d wavePos = origin;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+            wavePos.y = mode->m_world->m_player->m_pos.y;
+        }
+    }
+    TryPlayEffectWaveAt(wavePos, "_heal_effect.wav");
+}
+
+void CRagEffect::ApplyStormKick(int variant)
+{
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeStormKick), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 0.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\storm2.tga", false));
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.maxHeight = 40.0f;
+    gi.alphaB = 0;
+    gi.rotStart = static_cast<short>(rand() % 360);
+    gi.distance = 2.0f;
+    gi.height[0] = 50.0f;
+    gi.height[1] = 5.0f;
+    gi.flag[0] = 10;
+    gi.flag[4] = static_cast<u8>(variant);
+}
+
+void CRagEffect::ApplyHalfSphere(const char* textureName)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHalfSphere), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 513;
+    prim->m_duration = m_duration;
+    prim->m_size = 0.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.maxHeight = 8.0f;
+    gi.alphaB = 0;
+    gi.distance = 8.0f;
+    gi.fullDisplayAngle = 180;
+}
+
+void CRagEffect::ApplyAttackEnergy(const char* textureName)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeAttackEnergy), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 513;
+    prim->m_duration = m_duration;
+    prim->m_size = 100.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    const short rises[4] = { 0, 45, 90, 135 };
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.alphaB = 0;
+        gi.fullDisplayAngle = 360;
+        gi.maxHeight = 8.0f;
+        gi.distance = 8.0f;
+        gi.height[0] = 20.0f;
+        gi.riseAngle = rises[band];
+    }
+}
+
+void CRagEffect::ApplyElectric(short baseRise)
+{
+    if (m_stateCnt < 20 || m_stateCnt >= 24) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeElectric), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 0.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\elec1.tga", false));
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.maxHeight = 0.1f;
+        gi.alphaB = 0;
+        gi.alphaT = 0;
+        gi.riseAngle = static_cast<short>(baseRise + 45 * band);
+        gi.distance = 0.0f;
+        gi.height.fill(0.0f);
+        gi.flag.fill(0);
+        gi.vecTNowX = static_cast<float>(rand() % 11) * 0.0099999998f;
+        gi.vecTNowY = 20.0f;
+        gi.sparkX = origin.x;
+        gi.sparkY = origin.y;
+        gi.sparkZ = origin.z;
+    }
+}
+
+void CRagEffect::ApplyElectric2()
+{
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    const short rise = static_cast<short>(ElectricHeading(m_deltaPos.x - origin.x, m_deltaPos.z - origin.z));
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeElectric2), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 0.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\elec1.tga", false));
+    const float starts[4] = { 0.0f, 180.0f, 0.0f, 180.0f };
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.maxHeight = 0.1f;
+        gi.alphaB = 0;
+        gi.alphaT = 0;
+        gi.riseAngle = rise;
+        gi.distance = 0.0f;
+        gi.height.fill(0.0f);
+        gi.flag.fill(0);
+        gi.height[0] = starts[band];
+        gi.vecTNowX = static_cast<float>(rand() % 6) * 0.0099999998f + 0.2f;
+        gi.vecTNowY = 20.0f;
+        gi.sparkX = origin.x;
+        gi.sparkY = origin.y;
+        gi.sparkZ = origin.z;
+    }
+}
+
+void CRagEffect::ApplyAttackEnergy2(const char* textureName)
+{
+    if (textureName == nullptr || (m_stateCnt != 0 && m_stateCnt != 4)) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeAttackEnergy2), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 4.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    const float tilts[4] = { 0.0f, 22.0f, 44.0f, 66.0f };
+    const short rises[4] = { 0, 45, 90, 135 };
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.maxHeight = 8.0f;
+        gi.alphaB = 0;
+        gi.distance = 8.0f;
+        gi.fullDisplayAngle = 360;
+        gi.height[0] = 10.0f;
+        gi.height[1] = tilts[band];
+        gi.riseAngle = rises[band];
+    }
+}
+
+void CRagEffect::ApplyPotionPillar(float speed, int duration)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_duration = duration;
+    prim->m_pos = origin;
+    prim->m_outerSize = 4.5f;
+    prim->m_innerSize = 4.5f;
+    prim->m_heightSize = 10.0f;
+    prim->m_heightSpeed = speed;
+    prim->m_heightAccel = 0.0099999998f;
+    prim->m_alpha = 0.0f;
+    prim->m_maxAlpha = 90.0f;
+    prim->m_alphaSpeed = prim->m_maxAlpha * 0.050000001f;
+    prim->m_fadeOutCnt = prim->m_duration - 10;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false));
+}
+
+void CRagEffect::ApplyPotionBerserk()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (m_stateCnt == 0 && master != nullptr) {
+        if (master->m_oldColor.a == 0 && master->m_oldColor.r == 0 && master->m_oldColor.g == 0 && master->m_oldColor.b == 0) {
+            master->m_oldColor.a = master->m_u28.m_sprColor.u.s.a;
+            master->m_oldColor.r = master->m_u28.m_sprColor.u.s.r;
+            master->m_oldColor.g = master->m_u28.m_sprColor.u.s.g;
+            master->m_oldColor.b = master->m_u28.m_sprColor.u.s.b;
+        }
+        master->m_isSprArgbFixed = 1;
+        master->m_curColor.a = 255;
+        master->m_curColor.r = 250;
+        master->m_curColor.g = 120;
+        master->m_curColor.b = 120;
+        master->SetArgb(-1, 250, 120, 120);
+        ApplyPotionPillar(1.0f, 50);
+    }
+    if (m_stateCnt == 18) {
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            mode->SendMsg(135, 1, 0, 0);
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                TryPlayEffectWaveAt(mode->m_world->m_player->m_pos, "effect\\ac_concentration.wav");
+            }
+        }
+    }
+    if (m_stateCnt > 12 && m_stateCnt < 110 && (m_stateCnt & 3) == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCROSSTEXTURE, vector3d{});
+        if (prim != nullptr) {
+            prim->m_duration = 40;
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendYRotation(prim->m_matrix, static_cast<float>(rand() % 360) * (kPi / 180.0f));
+            const float radius = static_cast<float>(rand() % 7 + 2);
+            prim->m_deltaPos2 = {
+                radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
+                radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
+                radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
+            };
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendXRotation(prim->m_matrix, 90.0f * (kPi / 180.0f));
+            prim->m_speed = static_cast<float>(rand() % 50 + 20) * 0.016666668f;
+            prim->m_size = static_cast<float>(rand() % 60 + 30) * (0.1f / 34.0f);
+            prim->m_heightSize = 0.2f;
+            prim->m_alpha = 0.0f;
+            prim->m_maxAlpha = 180.0f;
+            prim->m_alphaSpeed = prim->m_maxAlpha * 0.050000001f;
+            prim->m_fadeOutCnt = prim->m_duration - 20;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ac_center2.tga", false));
+            prim->m_tintColor = RGB(240, 0, 0);
+        }
+    }
+}
+
+float EffectHeading(float fromX, float fromZ, float toX, float toZ)
+{
+    float angle = std::atan2(toX - fromX, -(toZ - fromZ)) * (180.0f / kPi);
+    if (angle >= 360.0f) {
+        angle -= 360.0f;
+    }
+    if (angle < 0.0f) {
+        angle += 360.0f;
+    }
+    return angle;
+}
+
+void CRagEffect::ApplyIceArrow()
+{
+    // Ref runtime-wave: 0x5F862A (EF_IceArrow%d.wav, rand() % 3 + 1).
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master != nullptr) {
+        m_cachedPos = master->m_pos;
+    }
+    if (m_stateCnt == 12) {
+        m_count *= 10;
+        char waveName[64];
+        std::snprintf(waveName, sizeof(waveName), "effect\\EF_IceArrow%d.wav", (rand() % 3) + 1);
+        vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                wavePos.y = mode->m_world->m_player->m_pos.y;
+            }
+        }
+        TryPlayEffectWaveAt(wavePos, waveName);
+    }
+    const int flight = m_stateCnt - 12;
+    if (m_stateCnt >= 12 && flight % 10 == 0 && flight < m_count) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCROSSTEXTURE, vector3d{});
+        if (prim != nullptr) {
+            prim->m_duration = 70;
+            prim->m_pattern = 20;
+            prim->m_alpha = 254.0f;
+            prim->m_maxAlpha = 254.0f;
+            prim->m_deltaPos2.x = static_cast<float>(rand() % 10 + 25);
+            prim->m_deltaPos2.y = -60.0f;
+            prim->m_deltaPos2.z = static_cast<float>(rand() % 10 + 15);
+            const float aimX = static_cast<float>(rand() % 4 - 2);
+            const float aimZ = static_cast<float>(rand() % 4 - 2);
+            prim->m_longitude = -EffectHeading(prim->m_deltaPos2.x, prim->m_deltaPos2.z, aimX, aimZ);
+            const float horizontal = std::sqrt(prim->m_deltaPos2.x * prim->m_deltaPos2.x + prim->m_deltaPos2.z * prim->m_deltaPos2.z);
+            prim->m_latitude = EffectHeading(-std::fabs(prim->m_deltaPos2.y), horizontal, 0.0f, 0.0f);
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendXRotation(prim->m_matrix, prim->m_latitude * (kPi / 180.0f));
+            MatrixAppendYRotation(prim->m_matrix, prim->m_longitude * (kPi / 180.0f));
+            prim->m_speed = -2.75f;
+            prim->m_size = 11.5f / 34.0f;
+            prim->m_heightSize = 3.8f / 12.0f;
+            prim->m_fadeOutCnt = prim->m_duration - 20;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\icearrow.tga", false));
+        }
+    }
+    if (m_flag != 0) {
+        m_flag = 0;
+        CEffectPrim* ring = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
+        if (ring != nullptr) {
+            ring->m_duration = 30;
+            ring->m_latitude = 90.0f;
+            ring->m_radiusSpeed = 1.2f;
+            ring->m_radiusAccel = ring->m_radiusSpeed / static_cast<float>(ring->m_duration + 40) * -2.0f;
+            ring->m_innerSize = 10.0f;
+            ring->m_alpha = 0.0f;
+            ring->m_maxAlpha = 254.0f;
+            ring->m_alphaSpeed = ring->m_maxAlpha * 0.1f;
+            ring->m_fadeOutCnt = ring->m_duration - 10;
+            ring->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+        }
+    }
+}
+
+void CRagEffect::ApplyAuraBladeCasting()
+{
+    ApplySaintCasting(45, "effect\\ring_white.tga", 22);
+    ApplySaintCasting(25, "effect\\ring_yellow.tga", 22);
+}
+
+void CRagEffect::ApplyColorPaper(const char* textureName)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeColorPaper), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.maxHeight = static_cast<float>(rand() % 31) * 0.0099999998f + 0.30000001f;
+        gi.rotStart = static_cast<short>(rand() % 360);
+        gi.riseAngle = static_cast<short>(45 * band);
+        gi.alphaB = 0;
+        gi.height[0] = static_cast<float>(rand() % 360);
+        gi.height[1] = static_cast<float>(rand() % 360);
+        gi.height[2] = static_cast<float>(rand() % 360);
+        gi.sparkX = static_cast<float>(rand() % 101 - 50);
+        gi.sparkY = static_cast<float>(-110 - rand() % 50);
+        gi.sparkZ = static_cast<float>(rand() % 101 - 50);
+        gi.distance = static_cast<float>(rand() % 26) * 0.0099999998f + 0.25f;
+        gi.fullDisplayAngle = 0;
+    }
+}
+
+void CRagEffect::ApplySphereWind(const char* textureName, short time, int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeSphereWind)) {
+            existing->m_pos = origin;
+        }
+    }
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeSphereWind), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = variant == 1 ? 10.0f : 4.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.maxHeight = static_cast<float>(rand() % 11) * 0.2f + 4.0f;
+        gi.distance = 14.0f;
+        gi.height[0] = -14.0f;
+        gi.height[1] = static_cast<float>(rand() % 4 + 3);
+        gi.rotStart = static_cast<short>(rand() % 360);
+        gi.riseAngle = static_cast<short>(time + 45 * band);
+        gi.alphaB = 100;
+        gi.fullDisplayAngle = static_cast<short>(rand() % 91 + 180);
+    }
+}
+
+void CRagEffect::ApplyMagnum2(const char* textureName)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeMagnum2)) {
+            existing->m_pos = origin;
+        }
+    }
+    if (m_stateCnt == 0) {
+        m_flag = 0;
+    }
+    auto playAtListener = [&](const char* wave) {
+        vector3d wavePos = origin;
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                wavePos.y = mode->m_world->m_player->m_pos.y;
+            }
+        }
+        TryPlayEffectWaveAt(wavePos, wave);
+    };
+    if (m_stateCnt == 20) {
+        playAtListener("permeter_attack.wav");
+    } else if (m_stateCnt == 30) {
+        playAtListener("effect\\EF_MagnumBreak.wav");
+    }
+    if (textureName == nullptr || m_stateCnt < 25 || m_stateCnt > 55 || (m_stateCnt % 3) != 0) {
+        return;
+    }
+    ++m_flag;
+    if (m_flag >= 11) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeMagnum2), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 5.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    const int age = m_stateCnt - 25;
+    for (int band = 0; band < 2; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.alphaB = 0;
+        gi.alphaT = static_cast<short>(band);
+        gi.fullDisplayAngle = 360;
+        gi.maxHeight = 20.0f - static_cast<float>(age) * 0.69999999f;
+        gi.rotStart = static_cast<short>(6 * age + 9 * band);
+        gi.distance = static_cast<float>(age) * 0.2f + 5.0f;
+        gi.riseAngle = static_cast<short>(2 * (35 - 4 * band - age));
+    }
+}
+
+void CRagEffect::ApplySaintWing(const char* textureName)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeSaintWing)) {
+            existing->m_pos = origin;
+        }
+    }
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeSaintWing), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 4.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    prim->m_gi[2].life = 0;
+    prim->m_gi[3].life = 0;
+    for (int band = 0; band < 2; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.maxHeight = 10.0f;
+        gi.distance = 2.0f;
+        gi.height[0] = -8.0f;
+        gi.rotStart = 0;
+        gi.fullDisplayAngle = 0;
+        gi.alphaB = 200;
+        gi.riseAngle = 0;
+    }
+}
+
+void CRagEffect::ApplyForestLight(const char* textureName, int variant)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeForest), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    m_deltaPos = origin;
+    if (variant == 10) {
+        m_deltaPos.x -= 15.0f;
+        m_deltaPos.y -= 60.0f;
+        m_deltaPos.z -= 15.0f;
+    } else {
+        m_deltaPos.x -= 70.0f;
+        m_deltaPos.y -= 300.0f;
+        m_deltaPos.z -= 70.0f;
+    }
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = band == 3 ? 180 : 0;
+        if (variant == 2) {
+            gi.alphaB = 30;
+        } else if (variant == 10) {
+            gi.alphaB = 25;
+        } else if (variant == 11) {
+            gi.alphaB = 0;
+        } else {
+            gi.alphaB = 40;
+        }
+        gi.distance = 0.0f;
+        if (band == 3) {
+            gi.maxHeight = (variant == 1 || variant == 11) ? 4.0f : variant == 2 ? 1.0f : 2.0f;
+        } else if (variant == 1 || variant == 11) {
+            gi.maxHeight = static_cast<float>(2 * band) + 4.0f;
+        } else if (variant == 2) {
+            gi.maxHeight = static_cast<float>(band) * 0.5f + 1.0f;
+        } else {
+            gi.maxHeight = static_cast<float>(band) + 2.0f;
+        }
+        gi.height[0] = gi.maxHeight;
+        gi.rotStart = static_cast<short>(25 * band);
+        gi.vecTNowX = origin.x;
+        gi.vecTNowY = origin.y;
+        gi.vecTNowZ = origin.z;
+        gi.vecTPreX = m_deltaPos.x;
+        gi.vecTPreY = m_deltaPos.y;
+        gi.vecTPreZ = m_deltaPos.z;
+        gi.flag[0] = static_cast<u8>(variant);
+    }
+}
+
+void CRagEffect::ApplyBottomMagnus(const char* textureName, int variant)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeRectUp), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_size = 1.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+    gi.rotStart = 0;
+    gi.height[2] = 0.0f;
+    gi.height[3] = static_cast<float>(variant);
+    if (variant == 1) {
+        gi.maxHeight = 16.0f;
+        gi.alphaB = 120;
+        gi.alphaT = 1880;
+        gi.height[0] = 2.5f;
+        gi.height[1] = 2.5f;
+    } else if (variant == 2) {
+        gi.maxHeight = 32.0f;
+        gi.alphaB = 30;
+        gi.alphaT = 29999;
+        gi.height[0] = 2.5f;
+        gi.height[1] = 2.5f;
+    } else {
+        gi.maxHeight = 50.0f;
+        gi.alphaB = 30;
+        gi.alphaT = 864;
+        gi.height[0] = 5.0f;
+        gi.height[1] = 5.0f;
+    }
+    prim->m_gi[1].life = 0;
+    prim->m_gi[2].life = 0;
+    prim->m_gi[3].life = 0;
+}
+
+void CRagEffect::ApplyThrowItem(const char* textureName, int variant)
+{
+    if (textureName == nullptr) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* prim : m_primList) {
+        if (prim != nullptr && prim->m_type == static_cast<EFFECTPRIMID>(kPrimTypeThrowItem)) {
+            prim->m_pos = origin;
+        }
+    }
+    int launchFrame = 0;
+    if (variant == 10) {
+        launchFrame = 5;
+    } else if (variant == 11) {
+        launchFrame = 10;
+    }
+    if (m_stateCnt != launchFrame) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeThrowItem), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 0.0f;
+    prim->m_pos = origin;
+    prim->m_deltaPos = m_deltaPos;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    EffectGi& gi = prim->m_gi[0];
+    const float dx = m_deltaPos.x - origin.x;
+    const float dz = m_deltaPos.z - origin.z;
+    gi.life = 1;
+    gi.process = 0;
+    gi.maxHeight = std::sqrt(dx * dx + dz * dz);
+    gi.distance = variant == 2 ? 2.0f : variant == 3 ? 4.0f : 3.0f;
+    gi.height[8] = 0.0f;
+    gi.alphaB = 255;
+    gi.sparkX = origin.x;
+    gi.sparkZ = origin.z;
+    gi.sparkY = 0.0f;
+    gi.arcBaselineY = origin.y - 8.0f;
+    gi.rotStart = 0;
+    gi.height[1] = variant == 2 ? 2.0f : variant == 3 ? 3.0f : gi.maxHeight * 0.039999999f;
+    gi.height[2] = gi.maxHeight == 0.0f ? 0.0f : gi.height[1] / gi.maxHeight * (m_deltaPos.y - origin.y);
+    gi.fullDisplayAngle = variant == 3 ? 330 : 0;
+    gi.flag[0] = 0;
+    gi.height[7] = 0.0f;
+    if (variant == 0) {
+        gi.flag[2] = 8;
+    } else if (variant == 1) {
+        gi.flag[2] = 9;
+        gi.flag[3] = static_cast<u8>(m_count);
+    } else if (variant < 10) {
+        if (variant == 2) {
+            gi.flag[2] = 0;
+        } else if (variant == 3) {
+            gi.flag[2] = 15;
+        }
+    } else {
+        gi.flag[2] = 9;
+        gi.flag[3] = 4;
+    }
+    int steps = 0;
+    while (static_cast<float>(steps) * gi.height[1] <= gi.maxHeight) {
+        ++steps;
+        if (steps >= 100) {
+            steps = 0;
+            break;
+        }
+    }
+    gi.flag[1] = static_cast<u8>(steps);
+    prim->m_gi[1].life = 1;
+    prim->m_gi[1].alphaB = 0;
+    prim->m_gi[2].life = 1;
+    prim->m_gi[2].alphaB = 0;
+    prim->m_gi[3].life = 1;
+    prim->m_gi[3].alphaB = 0;
+}
+
+void CRagEffect::ApplyTeleportation2(const char* textureName, short time)
+{
+    if (m_stateCnt != 0 || textureName == nullptr) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    vector3d wavePos = origin;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+            wavePos.y = mode->m_world->m_player->m_pos.y;
+        }
+    }
+    TryPlayEffectWaveAt(wavePos, "effect\\EF_Teleportation.wav");
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeTeleport2), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_size = 4.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    const float timeScale = static_cast<float>(2 * time);
+    const float heightBase = static_cast<float>(60 * time);
+    const float heights[4] = { 100.0f, 70.0f, 40.0f, 15.0f };
+    const short spins[4] = { 180, 270, 0, 90 };
+    const short alphas[4] = { 100, 80, 60, 40 };
+    const float distances[4] = { 1.5f, 3.0f, 4.0f, 5.0f };
+    const short rises[4] = { 90, 89, 88, 87 };
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = 360;
+        gi.maxHeight = heightBase + heights[band];
+        gi.rotStart = spins[band];
+        gi.alphaB = alphas[band];
+        gi.distance = distances[band] - timeScale;
+        gi.riseAngle = rises[band];
+        gi.sparkY = 0.0f;
+        gi.height.fill(0.0f);
+        gi.flag[0] = 0;
+        gi.flag[1] = static_cast<u8>(static_cast<int>(gi.maxHeight));
+    }
+}
+
+short Chemical2RiseAngle(float dx, float dz)
+{
+    const float length = std::sqrt(dx * dx + dz * dz);
+    if (length == 0.0f) {
+        return 0;
+    }
+    const float nx = dx / length;
+    const float nz = dz / length;
+    short angle = 0;
+    while (nx < g_cosTable[angle]) {
+        ++angle;
+        if (angle > 180) {
+            return 180;
+        }
+    }
+    short rise = nz < 0.0f ? static_cast<short>(360 - angle) : angle;
+    if (rise >= 360) {
+        rise = static_cast<short>(rise - 360);
+    }
+    return rise;
+}
+
+void CRagEffect::ApplyChemical2(short time)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* prim : m_primList) {
+        if (prim != nullptr && prim->m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical2)) {
+            prim->m_pos = origin;
+        }
+    }
+    if (m_stateCnt != 40) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeChemical2), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag |= 0x200u;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\slash01.tga", false));
+    m_cachedPos.y -= 9.0f;
+    const short rise = Chemical2RiseAngle(m_deltaPos.x - origin.x, m_deltaPos.z - origin.z);
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.distance = 100.0f;
+        gi.maxHeight = 1.0f;
+        gi.height[0] = time != 0 ? static_cast<float>(band) * 2.5f + 15.0f : static_cast<float>(band) * -2.5f - 15.0f;
+        gi.riseAngle = rise;
+        gi.alphaB = 0;
+    }
+}
+
+void CRagEffect::ApplyChemical3(short time)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeChemical3), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 513u;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(time >= 10 ? "effect\\line3y.tga" : "effect\\line3.tga", false));
+    const int digit = time % 10;
+    const short rise = Chemical2RiseAngle(m_deltaPos.x - origin.x, m_deltaPos.z - origin.z);
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.distance = 100.0f;
+        gi.alphaB = 0;
+        gi.riseAngle = rise;
+        if (digit == 0) {
+            gi.height[0] = -15.0f - static_cast<float>(rand() % 11);
+        } else if (digit == 1) {
+            gi.height[0] = static_cast<float>(rand() % 11) + 15.0f;
+        }
+        gi.height[1] = static_cast<float>(rand() % 200);
+        if (time >= 10 && time < 20) {
+            gi.maxHeight = static_cast<float>(rand() % 6) * 0.1f + 0.5f;
+            gi.height[2] = static_cast<float>(rand() % 31) + 40.0f;
+            gi.flag[0] = static_cast<u8>(rand() % 3 + 10);
+            gi.height[3] = static_cast<float>(rand() % 11) * 0.1f + 1.0f;
+        } else if (time >= 20) {
+            gi.maxHeight = static_cast<float>(rand() % 4) * 0.1f + 0.40000001f;
+            gi.height[2] = static_cast<float>(rand() % 31) + 30.0f;
+            gi.flag[0] = static_cast<u8>(rand() % 3 + 20);
+            gi.height[3] = static_cast<float>(rand() % 21) * 0.1f + 1.5f;
+        } else {
+            gi.maxHeight = static_cast<float>(rand() % 4) * 0.1f + 0.30000001f;
+            gi.height[2] = static_cast<float>(rand() % 31) + 20.0f;
+            gi.flag[0] = static_cast<u8>(rand() % 3);
+            gi.height[3] = static_cast<float>(rand() % 21) * 0.1f + 1.5f;
+        }
+    }
+}
+
+void CRagEffect::ApplyChemicalProtection(short time)
+{
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeChemical), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\shockwave_c.bmp", false));
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.alphaB = 0;
+        gi.distance = 100.0f;
+        gi.riseAngle = static_cast<short>(time + 90 * band);
+    }
+}
+
+void CRagEffect::ApplyFirstAid()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* prim : m_primList) {
+        if (prim != nullptr && prim->m_type == static_cast<EFFECTPRIMID>(kPrimTypeFirstAid)) {
+            prim->m_pos = origin;
+        }
+    }
+    if (m_stateCnt != 0) {
+        return;
+    }
+    vector3d soundPos = origin;
+    if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+        if (gameMode->m_world != nullptr && gameMode->m_world->m_player != nullptr) {
+            soundPos.y = gameMode->m_world->m_player->m_pos.y + 150.0f;
+        }
+    }
+    TryPlayEffectWaveAt(soundPos, "_heal_effect.wav");
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeFirstAid), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 0.0f;
+    prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\pikapika2.bmp", false));
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.distance = 10.0f;
+    gi.alphaB = 0;
+    gi.height[6] = 0.02f;
+    gi.height[8] = static_cast<float>(rand() % 360);
+    gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+    gi.flag[0] = 0;
+    gi.flag[2] = 1;
+    gi.sparkX = origin.x;
+    gi.sparkY = origin.y - 12.0f;
+    gi.sparkZ = origin.z;
+}
+
+void CRagEffect::ApplyHealTime(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    if (m_stateCnt == 0) {
+        vector3d soundPos = origin;
+        CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+        if (gameMode != nullptr && gameMode->m_world != nullptr && gameMode->m_world->m_player != nullptr) {
+            soundPos.y = gameMode->m_world->m_player->m_pos.y + (variant != 0 ? -80.0f : -40.0f);
+        }
+        TryPlayEffectWaveAt(soundPos, variant != 0 ? "effect\\\xC8\xED\xB1\xE2.wav" : "effect\\_heal_effect.wav");
+    }
+    if (m_stateCnt > 20 || (m_stateCnt % 4) != 0) {
+        return;
+    }
+    CEffectPrim* spark = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeParticleUp), vector3d{});
+    if (spark == nullptr) {
+        return;
+    }
+    spark->m_renderFlag = 5;
+    spark->m_duration = m_duration;
+    spark->m_size = 0.0f;
+    spark->m_pos = origin;
+    spark->m_texture.push_back(g_texMgr.GetTexture("effect\\pok1.tga", false));
+    spark->m_texture.push_back(g_texMgr.GetTexture("effect\\pok3.tga", false));
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = spark->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.distance = static_cast<float>(rand() % 10) * 0.1f + 1.5f;
+        gi.height[8] = 0.0f;
+        gi.height[1] = 0.0f;
+        gi.height[2] = static_cast<float>(rand() % 20) * 0.0099999998f + 0.2f;
+        gi.alphaB = 0;
+        gi.sparkX = static_cast<float>(rand() % 7) + origin.x - 3.0f;
+        gi.sparkZ = static_cast<float>(rand() % 7) + origin.z - 3.0f;
+        gi.sparkY = origin.y - 6.0f;
+        gi.rotStart = 0;
+        gi.fullDisplayAngle = 0;
+        gi.flag[0] = 0;
+        gi.flag[1] = 1;
+        gi.flag[2] = static_cast<u8>(variant != 0 ? 1 : 11);
+    }
+}
+
+void CRagEffect::ApplyGlassWall2(const char* textureName)
+{
+    if (textureName == nullptr) {
+        return;
+    }
+    if (m_stateCnt == 0) {
+        CRenderObject* master = ResolveCurrentMaster();
+        const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+        TryPlayEffectWaveAt(origin, "effect\\EF_GlassWall.wav");
+        CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHeal), vector3d{});
+        if (prim != nullptr) {
+            prim->m_renderFlag = 5;
+            prim->m_duration = m_duration;
+            prim->m_pos = origin;
+            prim->m_size = 10.0f;
+            prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+            ConfigureHealBand(prim->m_gi[0], 34.0f, static_cast<short>(rand() % 360), 3.5999999f, 90, 3080);
+            ConfigureHealBand(prim->m_gi[1], 37.0f, static_cast<short>(rand() % 360), 3.3f, 90, 3080);
+            ConfigureHealBand(prim->m_gi[2], 40.0f, static_cast<short>(rand() % 360), 3.0f, 90, 3080);
+            prim->m_gi[3].life = 0;
+        }
+    }
+    ProcessEZ2STR();
+}
+
+void CRagEffect::ApplyExit2(const char* textureName)
+{
+    if (textureName == nullptr || m_stateCnt != 0) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    TryPlayEffectWaveAt(origin, "effect\\EF_Teleportation.wav");
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHeal), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_size = 4.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    ConfigureHealBand(prim->m_gi[3], 20.0f, 0, 2.4000001f, 84, 60);
+    ConfigureHealBand(prim->m_gi[2], 45.0f, 90, 2.2f, 86, 60);
+    ConfigureHealBand(prim->m_gi[1], 70.0f, 180, 2.0f, 88, 60);
+    ConfigureHealBand(prim->m_gi[0], 180.0f, 270, 1.8f, 90, 58);
+}
+
+void CRagEffect::ApplyHeal2(const char* textureName, int variant)
+{
+    if (textureName == nullptr) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    if (m_stateCnt == 0) {
+        if (variant < 2) {
+            TryPlayEffectWaveAt(origin, "_heal_effect.wav");
+        }
+        CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHeal), vector3d{});
+        if (prim == nullptr) {
+            return;
+        }
+        prim->m_renderFlag = 5;
+        prim->m_duration = m_duration;
+        prim->m_pos = origin;
+        prim->m_size = variant == 2 ? 4.0f : 9.0f;
+        prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+        const short alphaPeak = variant != 0 ? 40 : 60;
+        const float upperHeight = variant != 0 ? 18.0f : 12.0f;
+        ConfigureHealBand(prim->m_gi[0], 60.0f, 0, BitsToFloat(0x40933333u), 90, alphaPeak);
+        ConfigureHealBand(prim->m_gi[1], 60.0f, 180, 5.0f, 90, alphaPeak);
+        ConfigureHealBand(prim->m_gi[2], upperHeight, static_cast<short>(rand() % 360), 5.0f, 50, alphaPeak);
+        ConfigureHealBand(prim->m_gi[3], upperHeight, static_cast<short>(rand() % 360), 5.1999998f, 48, alphaPeak);
+    } else if (m_stateCnt <= 50 && (m_stateCnt % 6) == 0 && variant < 2) {
+        const float speedBase = variant != 0 ? 0.60000002f : 0.40000001f;
+        LaunchParticleUp(origin, 2.0f, speedBase, true, 1);
+    }
+    if (variant != 1) {
+        return;
+    }
+    if (m_stateCnt == 1) {
+        CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHeal), vector3d{});
+        if (prim != nullptr) {
+            prim->m_renderFlag = 5;
+            prim->m_duration = m_duration;
+            prim->m_pos = origin;
+            prim->m_size = 9.0f;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false));
+            ConfigureHealBand(prim->m_gi[0], 90.0f, 0, 4.1999998f, 90, 40);
+            ConfigureHealBand(prim->m_gi[1], 90.0f, 90, 4.3000002f, 90, 40);
+            ConfigureHealBand(prim->m_gi[2], 10.0f, static_cast<short>(rand() % 360), 5.3000002f, 46, 30);
+            ConfigureHealBand(prim->m_gi[3], 10.0f, static_cast<short>(rand() % 360), 5.4000001f, 44, 30);
+        }
+    }
+    if (m_stateCnt <= 50 && (m_stateCnt % 9) == 2) {
+        LaunchParticleUp(origin, 2.4000001f, 0.40000001f, true, 1);
+    }
+}
+
+void CRagEffect::ApplyHeal(const char* textureName, int variant)
+{
+    if (textureName == nullptr) {
+        return;
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    if (m_stateCnt != 0) {
+        const int limit = variant == 1 ? 25 : 50;
+        if (m_stateCnt > limit || (m_stateCnt % 6) != 0) {
+            return;
+        }
+        LaunchParticleUp(origin,
+            2.0f,
+            variant == 1 ? 0.40000001f : 0.30000001f,
+            variant == 1,
+            variant == 1 ? 1 : 0);
+        return;
+    }
+    TryPlayEffectWaveAt(origin, "_heal_effect.wav");
+
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHeal), vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_pos = origin;
+    prim->m_size = variant == 1 ? 5.0f : 9.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+
+    const float distance = variant == 1
+        ? 4.5f + static_cast<float>(rand() % 100) * 0.0049999999f
+        : BitsToFloat(0x40933333u);
+    const float maxHeight = variant == 1
+        ? static_cast<float>(rand() % 20) + 40.0f
+        : 40.0f;
+    const short alphaPeak = variant == 1 ? 30 : 60;
+
+    for (int band = 0; band < 2; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = 360;
+        gi.rotStart = static_cast<short>(rand() % 360);
+        gi.alphaB = 0;
+        gi.riseAngle = 90;
+        gi.sparkY = 0.0f;
+        gi.alphaT = alphaPeak;
+        gi.maxHeight = maxHeight;
+        gi.distance = band == 0 ? distance : distance + 0.2f;
+        if (variant != 1 && band == 1) {
+            gi.distance = BitsToFloat(0x4099999Au);
+            gi.maxHeight = 40.0f;
+        }
+        gi.height.fill(0.0f);
+        gi.flag.fill(0);
+    }
+    prim->m_gi[2].life = 0;
+    prim->m_gi[3].life = 0;
+}
+
+bool CRagEffect::OnProcess2()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d soundPos = master != nullptr ? master->m_pos : m_cachedPos;
+    switch (m_type) {
+    case 301:
+        if (m_stateCnt == 300) {
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    TryPlayEffectWaveAt(mode->m_world->m_player->m_pos, "effect\\\xC6\xF8\xC1\xD7.wav");
+                }
+            }
+        }
+        if (m_stateCnt > 2300) {
+            m_stateCnt = 299;
+        }
+        return true;
+    case 312:
+        ApplyHeal("effect\\alpha_down.tga", 0);
+        return true;
+    case 313:
+        ApplyHeal2("effect\\ring_white.tga", 0);
+        return true;
+    case 314:
+        ApplyExit2("effect\\ring_purple.tga");
+        return true;
+    case 308:
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xB5\xB9.bmp", 2);
+        return true;
+    case 304:
+        ApplyTeleportation2("effect\\Magic_Violet.tga", 0);
+        return true;
+    case 303: {
+        ApplyChemical2(0);
+        ApplyChemical2(1);
+        if (m_stateCnt == 44) {
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                mode->SendMsg(135, 0, 0, 0);
+                vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+                TryPlayEffectWaveAt(wavePos, "effect\\\xBF\xAC\xC1\xD6\xBA\xD8\xB0\xDD.wav");
+            }
+        }
+        if (master != nullptr && m_stateCnt >= 20 && m_stateCnt <= 120) {
+            if ((master->m_BodyLight & 8) != 8) {
+                master->m_BodyLight += 8;
+            }
+            master->SetArgb(-1, 255, 255, 150);
+        }
+        return true;
+    }
+    case 300: {
+        CRenderObject* chemicalMaster = ResolveCurrentMaster();
+        const vector3d chemicalOrigin = chemicalMaster != nullptr ? chemicalMaster->m_pos : m_cachedPos;
+        m_cachedPos = chemicalOrigin;
+        if (m_stateCnt == 0) {
+            vector3d wavePos = chemicalOrigin;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, "apocalips_attack.wav");
+        }
+        ApplyChemicalProtection(30);
+        ApplyChemicalProtection(60);
+        if (m_stateCnt == 0) {
+            m_cachedPos.y -= 9.0f;
+        }
+        return true;
+    }
+    case 309:
+        ApplyFirstAid();
+        return true;
+    case 307:
+        ApplyForestLight("effect\\cloud11.tga", 0);
+        return true;
+    case 310:
+        ApplyParticleUpBurst();
+        return true;
+    case 322:
+        ApplyForestLight("effect\\cloud11.tga", 1);
+        return true;
+    case 323:
+        ApplyForestLight("effect\\cloud11.tga", 2);
+        return true;
+    case 324:
+        ApplyForestLight("effect\\cloud11.tga", 10);
+        return true;
+    case 315:
+        ApplyGlassWall2("effect\\alpha_down.tga");
+        return true;
+    case 318:
+        ApplyBottomMagnus("effect\\ring_red.tga", 0);
+        return true;
+    case 319:
+        ApplyBottomMagnus("effect\\alpha_down.tga", 1);
+        return true;
+    case 320:
+        ApplyHeal("effect\\alpha_down.tga", 1);
+        return true;
+    case 321:
+        ApplyWarpZone2("effect\\ring_blue.tga");
+        return true;
+    case 325:
+        ApplyHeal2("effect\\ring_white.tga", 1);
+        return true;
+    case 331:
+        ApplyHealTime(0);
+        return true;
+    case 332:
+        ApplyHealTime(1);
+        return true;
+    case 334:
+        ApplyBlind(0);
+        return true;
+    case 335:
+        ApplyPoison(0);
+        return true;
+    case 316:
+        ApplyReadyPortal2();
+        return true;
+    case 317:
+        ApplyPortal2(0);
+        return true;
+    case 341:
+        ApplyPortal2(3);
+        return true;
+    case 344:
+        ApplyEntry2();
+        return true;
+    case 339:
+        ApplyMagnum2("effect\\ring_yellow.tga");
+        return true;
+    case 346:
+        for (short windTime = 0; windTime < 45; windTime = static_cast<short>(windTime + 9)) {
+            ApplySphereWind("effect\\blue_ivy.bmp", windTime, 0);
+        }
+        return true;
+    case 342:
+        ApplyCoupleCasting("effect\\ring_red.tga");
+        return true;
+    case 343:
+        if (m_stateCnt == 0) {
+            vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, "effect\\EF_BeginSpell.wav");
+            const float heartOffsets[][2] = {
+                { 0.0f, 9.9900007f },
+                { -3.5100002f, 11.88f },
+                { -7.8300004f, 12.960001f },
+                { -12.42f, 11.34f },
+                { -15.120001f, 7.0200005f },
+                { -15.39f, 1.6200001f },
+                { -13.77f, -3.2400002f },
+                { -10.8f, -7.0200005f },
+                { -6.7500005f, -10.26f },
+                { -2.7f, -12.690001f },
+                { 0.0f, -16.200001f },
+                { 2.97f, -12.690001f },
+                { 7.0200005f, -10.26f },
+                { 11.070001f, -7.0200005f },
+                { 14.040001f, -3.2400002f },
+                { 15.660001f, 1.6200001f },
+                { 15.39f, 7.0200005f },
+                { 12.690001f, 11.34f },
+                { 8.1000004f, 12.960001f },
+                { 3.7800002f, 11.88f },
+            };
+            for (const auto& offset : heartOffsets) {
+                ApplyHeartCasting("effect\\ring_red.tga", offset[0], offset[1]);
+            }
+        }
+        return true;
+    case 347:
+        for (int paper = 0; paper < 50; ++paper) {
+            ApplyColorPaper("effect\\white02.bmp");
+        }
+        return true;
+    case 367:
+        ApplyAuraBladeCasting();
+        return true;
+    case 370:
+        ApplyBottomMusic("effect\\cross_old.bmp", 9);
+        return true;
+    case 345:
+        ApplySaintWing("effect\\wing003.bmp");
+        return true;
+    case 305:
+        if (m_stateCnt == 0) {
+            TryPlayEffectWaveAt(soundPos, "effect\\p_success.wav");
+        }
+        ProcessEZ2STR();
+        return true;
+    case 306:
+        if (m_stateCnt == 0) {
+            TryPlayEffectWaveAt(soundPos, "effect\\p_failed.wav");
+        }
+        ProcessEZ2STR();
+        return true;
+    case 311:
+        if (m_stateCnt == 0) {
+            vector3d wavePos = soundPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, "effect\\\xB0\xED\xBC\xBA\xB9\xE6\xB0\xA1.wav");
+        }
+        ProcessEZ2STR();
+        return true;
+    case 368:
+        if (master != nullptr) {
+            if ((master->m_BodyLight & 1) != 1) {
+                ++master->m_BodyLight;
+            }
+            master->SetArgb(-1, 255, 100, 100);
+        }
+        return true;
+    case 369:
+        if (m_stateCnt == 0) {
+            TryPlayEffectWaveAt(soundPos, "effect\\knight_twohandquicken.wav");
+        }
+        if (master != nullptr) {
+            master->SetArgb(-1, 255, 255, 160);
+        }
+        ProcessEZ2STR();
+        return true;
+    case 371:
+    case 372:
+        ProcessEZ2STR();
+        return true;
+    default:
+        return false;
     }
 }
 
 u8 CRagEffect::OnProcess()
 {
-    if (CRenderObject* master = ResolveCurrentMaster()) {
-        m_cachedPos = master->m_pos;
-        m_longitude = master->m_roty;
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) {
+        return 0;
+    }
+    m_cachedPos = master->m_pos;
+    m_longitude = master->m_roty;
+
+    if (!EffectTicksWhenNoFrameTime(m_type) && g_isSkipFrame == 0) {
+        return 1;
+    }
+    if (g_isSkipFrame > 0 && master->m_BeZero == 1) {
+        master->m_BodyLight = 0;
+        master->m_BeZero = 0;
     }
 
     const u32 now = timeGetTime();
@@ -6410,7 +12839,464 @@ u8 CRagEffect::OnProcess()
 
     for (int step = 0; step < steps && alive; ++step) {
         const bool dispatchHandler = m_loop || frameDrivenStrHandler || m_stateCnt < m_duration;
+        const bool kyrieGuard = dispatchHandler && m_type == 392;
+        const bool bodyLight442 = dispatchHandler && m_type == 442;
+        const bool bodyLight446 = dispatchHandler && m_type == 446;
+        const bool bodyLight449 = dispatchHandler && m_type == 449;
+        const bool tarot = dispatchHandler && m_type >= 523 && m_type <= 536;
+        const bool actorLight = dispatchHandler && (
+            m_type == 414 || m_type == 415 || m_type == 417 || m_type == 419 || m_type == 420
+            || m_type == 421 || m_type == 422 || m_type == 423 || m_type == 424 || m_type == 425
+            || m_type == 426 || m_type == 427 || m_type == 458
+            || m_type == 538 || m_type == 540 || m_type == 542 || m_type == 544
+            || m_type == 375 || m_type == 379 || m_type == 382 || m_type == 385 || m_type == 387 || m_type == 396
+            || m_type == 500 || m_type == 521 || m_type == 548 || m_type == 549 || m_type == 550
+            || m_type == 625 || m_type == 626 || m_type == 655 || m_type == 656 || m_type == 667);
+        const bool portalWind402 = dispatchHandler && m_type == 402;
+        const bool blackDevil = dispatchHandler && m_type == 487;
+        const bool bodyLightBit = dispatchHandler && m_type == 474;
+        const bool blindLevel = dispatchHandler && m_type >= 475 && m_type <= 484;
+        const bool beginCast = dispatchHandler && ((m_type >= 54 && m_type <= 57) || m_type == 59 || (m_type >= 172 && m_type <= 179));
+        const bool bottomLight = dispatchHandler && (m_type == 280 || m_type == 285);
+        const bool bottomOut = dispatchHandler && m_type == 283;
+        const bool blastMine = dispatchHandler && m_type == 676;
+        const bool chemicalSlash = dispatchHandler && (m_type == 439 || m_type == 512 || m_type == 623);
+        const bool giExplosion = dispatchHandler && m_type == 514;
+        const bool acidDemon = dispatchHandler && m_type == 537;
+        const bool flowerCast = dispatchHandler && m_type == 488;
+        const bool defender = dispatchHandler && (m_type == 222 || m_type == 252);
+        const bool mapPillar = dispatchHandler && (m_type == 231 || m_type == 247 || m_type == 259 || m_type == 260);
+        const bool volcano = dispatchHandler && (m_type == 223 || m_type == 225 || m_type == 236 || m_type == 237 || m_type == 238 || m_type == 261 || m_type == 263);
+        const bool bottomVolcano = dispatchHandler && (m_type == 239 || m_type == 240 || m_type == 241 || m_type == 620);
+        const bool wind = dispatchHandler && m_type == 224;
+        const bool stormKick = dispatchHandler && (m_type == 435 || m_type == 459 || m_type == 460 || m_type == 461 || m_type == 464 || m_type == 465);
+        const bool halfSphere = dispatchHandler && m_type == 436;
+        const bool attackEnergy = dispatchHandler && m_type == 437;
+        const bool electric = dispatchHandler && m_type == 432;
+        const bool electric2 = dispatchHandler && m_type == 433;
+        const bool attackEnergy2 = dispatchHandler && m_type == 438;
+        const bool potionPillar = dispatchHandler && m_type == 221;
+        const bool iceArrow = dispatchHandler && m_type == 26;
+        const bool healBlue = dispatchHandler && m_type == 253;
+        const bool bottomMusic = dispatchHandler && (m_type == 278 || m_type == 279 || m_type == 282 || m_type == 286
+            || m_type == 289 || m_type == 291 || m_type == 293 || m_type == 674);
+        if (tarot) {
+            static const char* kTarotTextures[] = {
+                "effect\\Tarot01.tga", "effect\\Tarot02.tga", "effect\\Tarot03.tga", "effect\\Tarot04.tga",
+                "effect\\Tarot05.tga", "effect\\Tarot06.tga", "effect\\Tarot07.tga", "effect\\Tarot08.tga",
+                "effect\\Tarot09.tga", "effect\\Tarot10.tga", "effect\\Tarot11.tga", "effect\\Tarot12.tga",
+                "effect\\Tarot13.tga", "effect\\Tarot14.tga"
+            };
+            ApplyTarot(kTarotTextures[m_type - 523], 1);
+        } else if (dispatchHandler && m_type == 554) {
+            ApplyTarot("effect\\freeze_a.bmp", 2);
+        } else if (dispatchHandler && (m_type == 610 || m_type == 611)) {
+            if (m_stateCnt == 0) {
+                CRenderObject* textureMaster = ResolveCurrentMaster();
+                vector3d wavePos = textureMaster != nullptr ? textureMaster->m_pos : m_cachedPos;
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                        wavePos.y = mode->m_world->m_player->m_pos.y;
+                    }
+                }
+                TryPlayEffectWaveAt(wavePos, m_type == 610 ? "_heal_effect.wav" : "caramel_die.wav");
+            }
+            ApplyTarot(m_type == 610 ? "effect\\success.bmp" : "effect\\failed.bmp", 3);
+        } else if (dispatchHandler && m_type == 669) {
+            if (m_stateCnt == 1) {
+                CRenderObject* poisonMaster = ResolveCurrentMaster();
+                vector3d wavePos = poisonMaster != nullptr ? poisonMaster->m_pos : m_cachedPos;
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                        wavePos.y = mode->m_world->m_player->m_pos.y;
+                    }
+                }
+                TryPlayEffectWaveAt(wavePos, "effect\\wideb.wav");
+            }
+            ApplyPoison(1);
+            ProcessEZ2STR();
+        } else if (dispatchHandler && m_type == 673) {
+            ApplyPoison(2);
+        } else if (dispatchHandler && (m_type == 600 || m_type == 613 || m_type == 614 || m_type == 615 || m_type == 616)) {
+            const char* throwTexture = "effect\\coin_a.bmp";
+            if (m_type == 600) {
+                throwTexture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xA3\xB3\xD1\xB3\xAA\xC0\xCC\xC7\xC1.bmp";
+            } else if (m_type == 613) {
+                throwTexture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBC\xF6\xB8\xAE\xB0\xCB.bmp";
+            } else if (m_type == 614) {
+                throwTexture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC4\xED\xB3\xAA\xC0\xCC_\xB5\xB6.bmp";
+            } else if (m_type == 615) {
+                throwTexture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC7\xB3\xB8\xB6_\xBF\xAD\xC8\xAD.bmp";
+            }
+            ApplyThrowItem(throwTexture, 3);
+        } else if (dispatchHandler && m_type == 298) {
+            ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xF3\xBA\xB4.bmp", 0);
+        } else if (dispatchHandler && (m_type == 299 || m_type == 541)) {
+            ApplyThrowItem(m_type == 299
+                ? "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xF3\xC6\xF7\xBC\xC7\xBA\xB4.bmp"
+                : "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xB9\xF6\xBC\xAD\xC5\xA9\xC6\xF7\xBC\xC7.bmp",
+                1);
+        } else if (dispatchHandler && m_type == 539) {
+            ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC8\xAD\xBF\xB0\xBA\xB4.bmp", 10);
+            ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBF\xB0\xBB\xEA\xBA\xB4.bmp", 11);
+        } else if (dispatchHandler && m_type == 405) {
+            ApplyBottomMagnus("effect\\ring_white.tga", 2);
+        } else if (dispatchHandler && m_type == 581) {
+            ApplyForestLight("effect\\cloud11.tga", 11);
+        } else if (dispatchHandler && m_type == 564) {
+            ApplyCoupleCasting("effect\\ring_red.tga");
+        } else if (dispatchHandler && m_type == 12) {
+            ApplyPairedSaintCasting("effect\\ring_yellow.tga", 1, true, 0.0f);
+        } else if (dispatchHandler && m_type == 58) {
+            ApplyPairedSaintCasting("effect\\ring_white.tga", 0, true, 0.0f);
+        } else if (dispatchHandler && m_type == 441) {
+            ApplyPairedSaintCasting("effect\\ring_blue.tga", 5, true, -100.0f);
+        } else if (dispatchHandler && m_type == 454) {
+            ApplyPairedSaintCasting("effect\\ring_black.tga", 6, true, 0.0f);
+        } else if (beginCast) {
+            switch (m_type) {
+            case 54:
+                ApplyBeginCasting("effect\\ring_blue.tga", 2, true);
+                break;
+            case 55:
+                ApplyBeginCasting("effect\\ring_yellow.tga", 1, true);
+                break;
+            case 56:
+                ApplyBeginCasting("effect\\Magic_Green.tga", 33, true);
+                break;
+            case 57:
+                ApplyBeginCasting("effect\\ring_yellow.tga", 0, true);
+                break;
+            case 59:
+                ApplyBeginCasting("effect\\Magic_Violet.tga", 33, true);
+                break;
+            case 172:
+                ApplyBeginCasting("effect\\ring_black.tga", 3, false);
+                break;
+            case 173:
+                ApplyBeginCasting("effect\\ring_red.tga", 3, false);
+                break;
+            case 174:
+                ApplyBeginCasting("effect\\ring_blue.tga", 3, false);
+                break;
+            case 175:
+                ApplyBeginCasting("effect\\ring_yellow.tga", 3, false);
+                break;
+            case 176:
+                ApplyBeginCasting("effect\\ring_jadu.tga", 3, false);
+                break;
+            case 177:
+                ApplyBeginCasting("effect\\ring_brown.tga", 3, false);
+                break;
+            case 178:
+                ApplyBeginCasting("effect\\ring_white.tga", 3, false);
+                break;
+            case 179:
+                ApplyBeginCasting("effect\\ring_purple.tga", 3, false);
+                break;
+            default:
+                break;
+            }
+        } else if (healBlue) {
+            if (m_stateCnt == 0) {
+                CRenderObject* healMaster = ResolveCurrentMaster();
+                vector3d wavePos = healMaster != nullptr ? healMaster->m_pos : m_cachedPos;
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                        wavePos.y = mode->m_world->m_player->m_pos.y - 80.0f;
+                    }
+                }
+                TryPlayEffectWaveAt(wavePos, "effect\\\xC8\xED\xB1\xE2.wav");
+            }
+            ApplyHeal2("effect\\ring_blue.tga", 2);
+        } else if (giExplosion) {
+            ApplyGiExplosion("effect\\ring_blue.tga");
+        } else if (acidDemon) {
+            if (m_stateCnt == 5) {
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    mode->SendMsg(135, 0, 0, 0);
+                }
+            }
+            ApplyAcidDemon("effect\\ring_black.tga");
+        } else if (flowerCast) {
+            if (m_stateCnt == 5) {
+                vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                        wavePos.y = mode->m_world->m_player->m_pos.y;
+                    }
+                }
+                TryPlayEffectWaveAt(wavePos, "effect\\T_\xBE\xC8\xB6\xF4\xC7\xD1\xB8\xB6\xB9\xFD.wav");
+            }
+            if (master != nullptr && (master->m_BodyLight & 0x800) != 0x800) {
+                master->m_BodyLight += 2048;
+                if (m_stateCnt >= 200) {
+                    if (m_stateCnt < 400) {
+                        master->m_BodySin5 = static_cast<u8>(-112 - (m_stateCnt & 0xFF));
+                    }
+                } else {
+                    master->m_BodySin5 = static_cast<u8>(m_stateCnt);
+                }
+            }
+            ApplyFlowerCasting("effect\\ring_blue.tga", 4.0f, 0);
+            ApplyFlowerCasting("effect\\ring_blue.tga", 4.0f, 1);
+        } else if (defender) {
+            ApplyDefender(m_type == 222 ? "effect\\ring_black.tga" : "effect\\ring_yellow.tga");
+        } else if (mapPillar) {
+            const char* textureName = "effect\\ring_blue.tga";
+            float size = 4.0f;
+            bool wide = false;
+            if (m_type == 247) {
+                wide = true;
+            } else if (m_type == 259) {
+                textureName = "effect\\magic_green.tga";
+                size = 7.0f;
+            } else if (m_type == 260) {
+                textureName = "effect\\ring_red.tga";
+                size = 6.0f;
+            }
+            ApplyMapPillar(textureName, size, wide);
+        } else if (volcano) {
+            const char* textureName = "effect\\ring_white.tga";
+            short variant = 0;
+            bool fastSpin = false;
+            if (m_type == 223) {
+                variant = 2;
+            } else if (m_type == 225) {
+                textureName = "effect\\ring_red.tga";
+            } else if (m_type == 236) {
+                textureName = "effect\\ring_blue.tga";
+            } else if (m_type == 237) {
+                textureName = "effect\\magic_green.tga";
+            } else if (m_type == 261) {
+                textureName = "effect\\ring_yellow.tga";
+                fastSpin = true;
+            } else if (m_type == 263) {
+                textureName = "effect\\ring_yellow.tga";
+                variant = 1;
+            }
+            ApplyVolcano(textureName, variant, fastSpin);
+        } else if (bottomVolcano) {
+            const char* textureName = "effect\\ring_blue.tga";
+            float size = 0.0f;
+            if (m_type == 239) {
+                textureName = "effect\\ring_red.tga";
+            } else if (m_type == 241) {
+                textureName = "effect\\magic_green.tga";
+            } else if (m_type == 620) {
+                size = 14.0f;
+            }
+            ApplyBottomVolcano(textureName, size);
+        } else if (wind) {
+            ApplyWind();
+        } else if (stormKick) {
+            if (m_type == 435 && m_stateCnt == 5) {
+                vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                        wavePos.y = mode->m_world->m_player->m_pos.y;
+                    }
+                }
+                TryPlayEffectWaveAt(wavePos, "effect\\T_\xC8\xB8\xBF\xC0\xB8\xAE\xC2\xF7\xB1\xE2.wav");
+            }
+            const int variant = m_type == 459 ? 1 : (m_type == 460 ? 2 : (m_type == 461 ? 3 : (m_type == 464 ? 6 : (m_type == 465 ? 7 : 0))));
+            ApplyStormKick(variant);
+            ApplyPortalWind(2);
+            ApplyPortalWind(3);
+            if (master != nullptr && ((m_type == 435 && m_stateCnt <= 47) || (m_type == 459 && m_stateCnt <= 50))) {
+                master->m_roty += m_type == 435 ? 30.0f : 14.0f;
+                if (master->m_roty > 360.0f) {
+                    master->m_roty -= 360.0f;
+                }
+            }
+        } else if (halfSphere) {
+            ApplyHalfSphere("effect\\white02.bmp");
+        } else if (attackEnergy) {
+            ApplyHalfSphere("effect\\white02.bmp");
+            ApplyAttackEnergy("effect\\ring_blue.tga");
+        } else if (electric) {
+            if (m_stateCnt == 25) {
+                vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                        wavePos.y = mode->m_world->m_player->m_pos.y;
+                    }
+                }
+                TryPlayEffectWaveAt(wavePos, "effect\\T_\xC0\xFC\xB1\xE2.wav");
+            }
+            ApplyElectric(0);
+            ApplyElectric(180);
+        } else if (electric2) {
+            ApplyElectric2();
+            ApplyElectric2();
+        } else if (attackEnergy2) {
+            if (m_stateCnt == 0) {
+                vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                        wavePos.y = mode->m_world->m_player->m_pos.y;
+                    }
+                }
+                TryPlayEffectWaveAt(wavePos, "effect\\T_\xB8\xB6\xB9\xFD\xB9\xDD\xBB\xE7.wav");
+            }
+            ApplyAttackEnergy2("effect\\cloud11.tga");
+        } else if (potionPillar) {
+            ApplyPotionPillar(1.0f, 50);
+        } else if (chemicalSlash) {
+            if (m_type == 623 && m_stateCnt == 28) {
+                vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                        wavePos.y = mode->m_world->m_player->m_pos.y;
+                    }
+                }
+                TryPlayEffectWaveAt(wavePos, "effect\\\xC7\xC7\xBE\xEE\xBD\xCC\xBC\xA6.wav");
+            }
+            const short slashTime = static_cast<short>(m_type == 512 ? 10 : (m_type == 623 ? 20 : 0));
+            for (int repeat = 0; repeat < 4; ++repeat) {
+                ApplyChemical3(slashTime);
+                ApplyChemical3(static_cast<short>(slashTime + 1));
+            }
+            if (m_type == 512 && m_stateCnt == 44) {
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    mode->SendMsg(135, 0, 0, 0);
+                    vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                        wavePos.y = mode->m_world->m_player->m_pos.y;
+                    }
+                    TryPlayEffectWaveAt(wavePos, "effect\\\xBF\xAC\xC1\xD6\xBA\xD8\xB0\xDD.wav");
+                }
+            }
+            if (m_type == 512 && master != nullptr && m_stateCnt >= 20 && m_stateCnt <= 100) {
+                if ((master->m_BodyLight & 8) != 8) {
+                    master->m_BodyLight += 8;
+                }
+                master->SetArgb(-1, 255, 255, 150);
+            }
+        } else if (blastMine) {
+            ApplyTarot("effect\\blast_mine##clock.bmp", 4);
+            if (m_stateCnt == 10) {
+                CRenderObject* blastMaster = ResolveCurrentMaster();
+                vector3d wavePos = blastMaster != nullptr ? blastMaster->m_pos : m_cachedPos;
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                        wavePos.y = mode->m_world->m_player->m_pos.y;
+                    }
+                }
+                TryPlayEffectWaveAt(wavePos, "effect\\EF_DecAgility.wav");
+            }
+        } else if (bottomOut) {
+            ApplyBottomOut("effect\\safeline.bmp", 0);
+        } else if (bottomLight) {
+            ApplyBottomLight("effect\\twirl.bmp", m_type == 280 ? 8 : 4);
+        } else if (bottomMusic) {
+            switch (m_type) {
+            case 278:
+                ApplyBottomMusic("effect\\zz.bmp", 1);
+                break;
+            case 279:
+                ApplyBottomMusic("effect\\pocket.bmp", 3);
+                break;
+            case 282:
+                ApplyBottomMusic("effect\\twirl.bmp", 7);
+                break;
+            case 286:
+                ApplyBottomMusic("effect\\melody_b.bmp", 0);
+                break;
+            case 289:
+                ApplyBottomMusic("effect\\idun_apple.bmp", 6);
+                break;
+            case 291:
+                ApplyBottomMusic("effect\\melody_a.bmp", 0);
+                break;
+            case 293:
+                ApplyBottomMusic("effect\\kiss.bmp", 4);
+                break;
+            case 674:
+                ApplyBottomMusic("effect\\curse.bmp", 6);
+                break;
+            default:
+                break;
+            }
+        } else if (dispatchHandler && m_type == 394) {
+            for (short windTime = 0; windTime < 45; windTime = static_cast<short>(windTime + 9)) {
+                ApplySphereWind("effect\\fire_ivy.bmp", windTime, 1);
+            }
+        } else if (kyrieGuard) {
+            ApplyKyrieGuard();
+        } else if (bodyLight442) {
+            ApplyBodyLight442();
+        } else if (bodyLight446) {
+            ApplyBodyLight446();
+        } else if (bodyLight449) {
+            ApplyBodyLight449();
+        } else if (actorLight) {
+            ApplyActorLight();
+        } else if (portalWind402) {
+            ApplyPortalWind402();
+        } else if (blackDevil) {
+            ApplyBlackDevil("effect\\ring_black.tga");
+        } else if (bodyLightBit && master != nullptr && (master->m_BodyLight & 2) != 2) {
+            master->m_BodyLight += 2;
+        } else if (blindLevel) {
+            ApplyBlind(m_type - 474);
+        }
+        const bool tierHandled = dispatchHandler && m_type >= 300 && m_type <= 373 && OnProcess2();
+        const bool textureCard = tarot || m_type == 554 || m_type == 610 || m_type == 611 || m_type == 669 || m_type == 673
+            || m_type == 600 || m_type == 613 || m_type == 614 || m_type == 615 || m_type == 616
+            || m_type == 298 || m_type == 299 || m_type == 539 || m_type == 541 || m_type == 405 || m_type == 581 || m_type == 394 || m_type == 564
+            || m_type == 12 || m_type == 58 || m_type == 441 || m_type == 454;
+        if (dispatchHandler && m_stateCnt == 0 && (m_type == 295 || m_type == 296)) {
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                mode->SendMsg(179, m_type == 295 ? 1 : 0, 0, 0);
+            }
+        }
         if (dispatchHandler) {
+            for (const ProvenClipWave& entry : kProvenClipWaves) {
+                if (entry.type != m_type) {
+                    continue;
+                }
+                if (entry.quakeFrame == m_stateCnt) {
+                    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                        mode->SendMsg(135, 0, 0, 0);
+                    }
+                }
+                if (entry.frame == m_stateCnt && (entry.type == 130 || entry.type == 250)) {
+                    m_duration = 9999;
+                }
+                if (entry.frame != m_stateCnt || (entry.chance != 0 && rand() % entry.chance != 0)) {
+                    break;
+                }
+                CRenderObject* waveMaster = ResolveCurrentMaster();
+                vector3d wavePos = waveMaster != nullptr ? waveMaster->m_pos : m_cachedPos;
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                        if (entry.type == 245 || entry.type == 218 || entry.type == 219) {
+                            wavePos = mode->m_world->m_player->m_pos;
+                        }
+                        wavePos.y = mode->m_world->m_player->m_pos.y + entry.yOffset;
+                    }
+                }
+                TryPlayEffectWaveAt(wavePos, entry.wave);
+                break;
+            }
+        }
+        if (dispatchHandler && m_type == 248) {
+            ApplyProvidence("effect\\ring_yellow.tga");
+        }
+        if (dispatchHandler && m_type == 218 && m_stateCnt == 0) {
+            ApplyPotionPillar(2.0f, 50);
+        }
+        if (dispatchHandler && m_type == 219 && m_stateCnt == 30) {
+            ApplyPotionPillar(1.9f, 30);
+        }
+        if (dispatchHandler && m_type == 220) {
+            ApplyPotionBerserk();
+        }
+        if (iceArrow) {
+            ApplyIceArrow();
+        }
+        if (dispatchHandler && !tierHandled && !textureCard && !kyrieGuard && !bodyLight442 && !bodyLight446 && !bodyLight449 && !actorLight && !portalWind402 && !blackDevil && !bodyLightBit && !blindLevel && !beginCast && !bottomLight && !bottomOut && !blastMine && !healBlue && !bottomMusic && !chemicalSlash && !giExplosion && !acidDemon && !flowerCast && !defender && !mapPillar && !volcano && !bottomVolcano && !wind && !stormKick && !halfSphere && !attackEnergy && !electric && !electric2 && !attackEnergy2 && !potionPillar && !iceArrow) {
             switch (m_handler) {
             case Handler::EzStr:
                 ProcessEZ2STR();
@@ -6511,9 +13397,6 @@ u8 CRagEffect::OnProcess()
             case Handler::SightAura:
                 SpawnSightAura();
                 break;
-            case Handler::FireBoltRain:
-                SpawnFireBoltRain();
-                break;
             case Handler::BlueFall:
                 SpawnBlueFall();
                 break;
@@ -6534,6 +13417,17 @@ u8 CRagEffect::OnProcess()
                 continue;
             }
             ++it;
+        }
+
+        if (m_type == 220 && m_stateCnt > 150) {
+            if (CRenderObject* tintMaster = ResolveCurrentMaster()) {
+                tintMaster->m_oldColor = {};
+                tintMaster->m_isSprArgbFixed = 0;
+            }
+            ClearPrims();
+            m_duration = 0;
+            m_loop = false;
+            m_aniClips = nullptr;
         }
 
         ++m_stateCnt;
@@ -6561,17 +13455,24 @@ u8 CRagEffect::OnProcess()
 void CRagEffect::SendMsg(CGameObject*, int msg, msgparam_t par1, msgparam_t, msgparam_t)
 {
     switch (msg) {
+    case 24:
+        m_master = nullptr;
+        m_ownsMaster = false;
+        m_masterIsActor = false;
+        m_masterActorGid = 0;
+        return;
     case 14:
+        if (par1 != 0) {
+            const vector3d* delta = reinterpret_cast<const vector3d*>(par1);
+            m_deltaPos = *delta;
+            m_targetPos = *delta;
+            m_hasTargetPos = true;
+        }
         if ((m_type == 24 || m_type == 123) && par1 != 0) {
             const vector3d* targetPos = reinterpret_cast<const vector3d*>(par1);
             m_targetPos = *targetPos;
             m_hasTargetPos = true;
-            if (m_type == 24 && m_handler != Handler::FireBoltRain) {
-                ClearPrims();
-                m_handler = Handler::FireBoltRain;
-                m_duration = 18;
-                m_stateCnt = 0;
-            } else if (m_type == 123) {
+            if (m_type == 123) {
                 const vector3d base = ResolveBasePosition();
                 const float dx = m_targetPos.x - base.x;
                 const float dy = m_targetPos.y - base.y;
@@ -6618,9 +13519,14 @@ void CRagEffect::SendMsg(CGameObject*, int msg, msgparam_t par1, msgparam_t, msg
             }
         }
         return;
-    case 44:
-        m_level = static_cast<int>(par1);
+    case 44: {
+        const int value = static_cast<int>(par1);
+        if (value != 0xFFFF && value != 65534) {
+            m_count = value > 50 ? 50 : value;
+        }
+        m_level = value;
         return;
+    }
     case 46:
         if (par1 != 0) {
             const vector3d* params = reinterpret_cast<const vector3d*>(par1);

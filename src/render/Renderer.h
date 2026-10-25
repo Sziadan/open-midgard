@@ -17,6 +17,8 @@ struct SprImg;
 struct CacheInfo;
 class CBitmapRes;
 
+std::string ResolveTexturePath(const char* name);
+
 struct tlvertex3d {
     float x, y, z;
     float oow;

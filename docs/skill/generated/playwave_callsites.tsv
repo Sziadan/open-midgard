@@ -1,0 +1,392 @@
+callVA	function	stringVA	string	status
+0x4587AF	UISelectServerWnd::SendMsg	0x6F30A4	버튼소리.wav	ok
+0x459945	UILoginWnd::SendMsg	0x6F30A4	버튼소리.wav	ok
+0x45ABC1	UINoticeWnd::SendMsg	0x6F30A4	버튼소리.wav	ok
+0x45D500	UISelectCharWnd::SendMsg	0x6F30A4	버튼소리.wav	ok
+0x465AFA	UIChatRoomWnd::SendMsg	0x6F30A4	버튼소리.wav	ok
+0x4EA900	UIWindowMgr::AddWhisperChatToWhisperWnd	0x6F30A4	버튼소리.wav	ok
+0x555B8E	CRenderObject::ProcessSound			UNRESOLVED
+0x555CCF	CRenderObject::ProcessSound			UNRESOLVED
+0x555E5F	CRenderObject::ProcessSound			UNRESOLVED
+0x55EA45	CGameActor::SendMsg			UNRESOLVED
+0x560A6C	CGameActor::SendMsg	0x711D1C	effect\T_벽튕김.wav	ok
+0x560FD4	CGameActor::SendMsg	0x711D08	effect\_blind.wav	ok
+0x561E72	CGameActor::SetAttrState	0x711DD0	effect\EF_Sight.wav	ok
+0x561ED5	CGameActor::SetAttrState	0x711DD0	effect\EF_Sight.wav	ok
+0x562655	CGameActor::SetAttrState	0x711DB8	_frozen_explosion.wav	ok
+0x5626C5	CGameActor::SetAttrState	0x711DA0	_stone_explosion.wav	ok
+0x56279F	CGameActor::SetAttrState	0x711D90	_stonecurse.wav	ok
+0x562849	CGameActor::SetAttrState	0x711D84	_stun.wav	ok
+0x5628F1	CGameActor::SetAttrState	0x711D78	_poison.wav	ok
+0x5629FF	CGameActor::SetAttrState	0x711D78	_poison.wav	ok
+0x562B24	CGameActor::SetAttrState	0x711D6C	_curse.wav	ok
+0x562B8B	CGameActor::SetAttrState	0x711D5C	_silence.wav	ok
+0x562C2D	CGameActor::SetAttrState	0x711D4C	_confusion.wav	ok
+0x562CA1	CGameActor::SetAttrState	0x711D40	_blind.wav	ok
+0x567497	CGameActor::Am_Skill	0x711E1C	effect\mon_맹룡과강.wav	ok
+0x567590	CGameActor::Am_Skill	0x711E04	effect\맹호경파산.wav	ok
+0x5680A4	CGameActor::Am_Groundskill	0x711E90	assulter_attack.wav	ok
+0x5681A2	CGameActor::Am_Groundskill	0x711E78	effect\EF_FireWall.wav	ok
+0x5681F8	CGameActor::Am_Groundskill	0x711E58	effect\wizard_earthspike.wav	ok
+0x56825F	CGameActor::Am_Groundskill	0x711E48	effect\수둔.wav	ok
+0x568287	CGameActor::Am_Groundskill	0x711E34	effect\그라운드.wav	ok
+0x57D0C9	CGameMode::MakePotionEffect	0x712840	_heal_effect.wav	ok
+0x57D0ED	CGameMode::MakePotionEffect	0x712828	effect\EF_Blessing.wav	ok
+0x57D242	CGameMode::MakePotionEffect	0x712818	effect\fast.wav	ok
+0x57D29B	CGameMode::MakePotionEffect	0x712800	effect\ro2effect.wav	ok
+0x57D2C4	CGameMode::MakePotionEffect	0x7127E8	effect\itempokjuk.wav	ok
+0x57D2ED	CGameMode::MakePotionEffect	0x7127D8	wraith_die.wav	ok
+0x57D367	CGameMode::MakePotionEffect	0x7127C0	ork_warrior_breath.wav	ok
+0x57D3C9	CGameMode::MakePotionEffect	0x7127A0	evil_cloud_hermit_attack.wav	ok
+0x57D431	CGameMode::MakePotionEffect	0x712840	_heal_effect.wav	ok
+0x57D4A0	CGameMode::MakePotionEffect	0x71278C	effect\mapae.wav	ok
+0x57D8ED	CGameMode::ProcessPlayWave			UNRESOLVED
+0x57D91C	CGameMode::ProcessPlayWave			UNRESOLVED
+0x57E27C	CGameMode::ProcessDamageSituation			UNRESOLVED
+0x58D6CF	CGameMode::Zc_Use_Skill	0x711D90	_stonecurse.wav	ok
+0x58E155	CGameMode::Zc_Use_Skill	0x712FB8	effect\mon_폭기.wav	ok
+0x58E22E	CGameMode::Zc_Use_Skill	0x711E1C	effect\mon_맹룡과강.wav	ok
+0x58E5D1	CGameMode::Zc_Use_Skill	0x712F9C	effect\석양의 어쌔신.wav	ok
+0x58E5F9	CGameMode::Zc_Use_Skill	0x712F84	effect\브라기의 시.wav	ok
+0x58E621	CGameMode::Zc_Use_Skill	0x712F6C	effect\이둔의 사과.wav	ok
+0x58E649	CGameMode::Zc_Use_Skill	0x712F58	effect\흥얼거림.wav	ok
+0x58E671	CGameMode::Zc_Use_Skill	0x712F3C	effect\나를잊지말아요.wav	ok
+0x58E699	CGameMode::Zc_Use_Skill	0x712F1C	effect\당신을 위한 서비스.wav	ok
+0x58E6C1	CGameMode::Zc_Use_Skill	0x712F08	effect\자장가.wav	ok
+0x58E6E9	CGameMode::Zc_Use_Skill	0x712EF0	effect\영원의 혼돈.wav	ok
+0x58E711	CGameMode::Zc_Use_Skill	0x712EDC	effect\전장의.wav	ok
+0x58E739	CGameMode::Zc_Use_Skill	0x712EC0	effect\니벨룽겐의 반지.wav	ok
+0x58E761	CGameMode::Zc_Use_Skill	0x712EA8	effect\심연속으로.wav	ok
+0x58E789	CGameMode::Zc_Use_Skill	0x712E94	effect\불사신.wav	ok
+0x58E7B1	CGameMode::Zc_Use_Skill	0x712E80	effect\김서방돈.wav	ok
+0x58E7D9	CGameMode::Zc_Use_Skill	0x712E70	effect\로키.wav	ok
+0x58E801	CGameMode::Zc_Use_Skill	0x712E5C	effect\행운의.wav	ok
+0x58EAF7	CGameMode::Zc_Use_Skill	0x712E40	effect\오라 블레이드.wav	ok
+0x58EC48	CGameMode::Zc_Use_Skill	0x712FB8	effect\mon_폭기.wav	ok
+0x58F106	CGameMode::Zc_Use_Skill	0x712E28	effect\마법력 증폭.wav	ok
+0x58F4F0	CGameMode::Zc_Use_Skill	0x712E18	effect\달빛.wav	ok
+0x58F77B	CGameMode::Zc_Use_Skill	0x712E04	effect\T_낙법.wav	ok
+0x58F7AB	CGameMode::Zc_Use_Skill	0x712DEC	effect\T_바람방출.wav	ok
+0x58F8AE	CGameMode::Zc_Use_Skill	0x712DD8	effect\T_변신.wav	ok
+0x58F9E6	CGameMode::Zc_Use_Skill	0x712DC4	effect\T_등록.wav	ok
+0x58FAFD	CGameMode::Zc_Use_Skill	0x712DB0	effect\T_슈웃.wav	ok
+0x58FBB3	CGameMode::Zc_Use_Skill	0x712D9C	effect\T_공격력.wav	ok
+0x58FC30	CGameMode::Zc_Use_Skill	0x712D88	effect\T_방어형.wav	ok
+0x58FD02	CGameMode::Zc_Use_Skill	0x712D68	effect\priest_resurrection.wav	ok
+0x58FDA4	CGameMode::Zc_Use_Skill	0x712D50	effect\T_보조마법.wav	ok
+0x58FE0D	CGameMode::Zc_Use_Skill	0x712D3C	effect\T_치잉.wav	ok
+0x58FE76	CGameMode::Zc_Use_Skill	0x712D24	effect\T_마법반사.wav	ok
+0x59000E	CGameMode::Zc_Use_Skill	0x712D04	effect\헤르모드의 지팡이.wav	ok
+0x59003E	CGameMode::Zc_Use_Skill	0x712CE4	effect\priest_slowpoison.wav	ok
+0x5900DC	CGameMode::Zc_Use_Skill	0x712CC8	effect\ac_concentration.wav	ok
+0x590107	CGameMode::Zc_Use_Skill	0x712CB4	effect\T_피링.wav	ok
+0x59012F	CGameMode::Zc_Use_Skill	0x712C9C	effect\다다미뒤집기.wav	ok
+0x590157	CGameMode::Zc_Use_Skill	0x712C88	effect\크래커.wav	ok
+0x590320	CGameMode::Zc_Use_Skill	0x712C78	effect\플립.wav	ok
+0x590748	CGameMode::Zc_Use_Skill	0x712C64	effect\2008cat.wav	ok
+0x590839	CGameMode::Zc_Use_Skill	0x712C4C	dream_device_edq.wav	ok
+0x59093C	CGameMode::Zc_Use_Skill	0x712C34	effect\vallentine.wav	ok
+0x5909F6	CGameMode::Zc_Use_Skill	0x712C20	amon_ra_die01.wav	ok
+0x590AD8	CGameMode::Zc_Use_Skill	0x712C0C	effect\ef_entry.wav	ok
+0x590DDD	CGameMode::Zc_Use_Skill	0x712BF4	effect\h_defence.wav	ok
+0x590E83	CGameMode::Zc_Use_Skill	0x712BDC	effect\h_castling.wav	ok
+0x591122	CGameMode::Zc_Use_Skill	0x712BC8	effect\버서크.wav	ok
+0x596E03	CGameMode::Zc_Par_Change	0x713168	levelup.wav	ok
+0x59C5AE	CGameMode::Zc_StarSkill	0x712CB4	effect\T_피링.wav	ok
+0x59EC8C	CGameMode::Zc_Notify_Groundskill	0x713560	effect\가스펠.wav	ok
+0x59ECB4	CGameMode::Zc_Notify_Groundskill	0x71354C	effect\바실리카.wav	ok
+0x5A4872	CGameMode::Zc_Msg|CGameMode::Zc_Msg_State_Change	0x7136EC	lava_golem_move.wav	ok
+0x5A556E	CGameMode::Zc_Notify_Ranking	0x713700	effect\number_change.wav	ok
+0x5A8845	CGameMode::Zc_Sound			UNRESOLVED
+0x5A88C7	CGameMode::Zc_Sound			UNRESOLVED
+0x5BC6E0	UIWindowMgr::Aco_Battle	0x712FB8	effect\mon_폭기.wav	ok
+0x5BCE5F	UIWindowMgr::Help_Battle	0x712DB0	effect\T_슈웃.wav	ok
+0x5BDA74	UIWindowMgr::Mob_Battle	0x712D9C	effect\T_공격력.wav	ok
+0x5BDBB3	UIWindowMgr::Mob_Battle	0x711E78	effect\EF_FireWall.wav	ok
+0x5C401B	UIWindowMgr::BS_Selling	0x714280	effect\rog_steal coin.wav	ok
+0x5C413C	UIWindowMgr::BS_Selling	0x714280	effect\rog_steal coin.wav	ok
+0x5C4290	UIWindowMgr::BS_Selling	0x7141F0	effect\rog_intimidate.wav	ok
+0x5C49F2	UIWindowMgr::BS_Buying	0x714280	effect\rog_steal coin.wav	ok
+0x5C4A87	UIWindowMgr::BS_Buying	0x714280	effect\rog_steal coin.wav	ok
+0x5C4D1C	UIWindowMgr::BS_Buying_Weapon	0x714280	effect\rog_steal coin.wav	ok
+0x5C4DDA	UIWindowMgr::BS_Buying_Weapon	0x714280	effect\rog_steal coin.wav	ok
+0x5C4EFA	UIWindowMgr::BS_Buying_Weapon	0x714280	effect\rog_steal coin.wav	ok
+0x5C4F7C	UIWindowMgr::BS_Buying_Weapon	0x714280	effect\rog_steal coin.wav	ok
+0x5C507C	UIWindowMgr::BS_NotBuying	0x714280	effect\rog_steal coin.wav	ok
+0x5C512C	UIWindowMgr::BS_NotAnswering	0x714280	effect\rog_steal coin.wav	ok
+0x5C5D50	UIWindowMgr::HP_Resting	0x714280	effect\rog_steal coin.wav	ok
+0x5C615C	UIWindowMgr::HP_Resting	0x711D08	effect\_blind.wav	ok
+0x5C6314	UIWindowMgr::HP_DayPassing	0x714280	effect\rog_steal coin.wav	ok
+0x5C8F6F	UIWindowMgr::Aco_Travel	0x712D24	effect\T_마법반사.wav	ok
+0x5CCF51	Tetris::AreaCheck	0x712BC8	effect\버서크.wav	ok
+0x5CD16B	Tetris::AreaDelete	0x7172EC	effect\complete.wav	ok
+0x5CDF0F	UIWindowMgr::BS_Tetris	0x717300	effect\bs_refinefailed.wav	ok
+0x5D6A53	CSoundMaker::OnProcess			UNRESOLVED
+0x5D9E95	CPc::OnProcess			UNRESOLVED
+0x5E0FD6	CGrannyPc::OnProcess			UNRESOLVED
+0x5E48A1	CPlayer::OnProcess			UNRESOLVED
+0x5E718F	CRagEffect::OnProcess|CRagEffect::OnProcess2	0x7194B0	effect\고성방가.wav	ok
+0x5E735E	CRagEffect::OnProcess|CRagEffect::OnProcess2	0x713168	levelup.wav	ok
+0x5E743C	CRagEffect::OnProcess|CRagEffect::OnProcess2	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5E76FF	CRagEffect::OnProcess|CRagEffect::OnProcess2	0x719374	effect\기공포.wav	ok
+0x5E77E1	CRagEffect::OnProcess|CRagEffect::OnProcess2	0x719360	effect\프레셔.wav	ok
+0x5E786B	CRagEffect::OnProcess|CRagEffect::OnProcess2	0x719314	effect\세크리파이스.wav	ok
+0x5E7954	CRagEffect::OnProcess|CRagEffect::OnProcess2	0x7192D8	effect\knight_twohandquicken.wav	ok
+0x5E7A0C	CRagEffect::OnProcess|CRagEffect::OnProcess2	0x7192C0	apocalips_attack.wav	ok
+0x5E7AB8	CRagEffect::OnProcess|CRagEffect::OnProcess2	0x7192AC	effect\연주붕격.wav	ok
+0x5E8346	CRagEffect::OnProcess3	0x719CA8	effect\wideb.wav	ok
+0x5E83C4	CRagEffect::OnProcess3	0x719C6C	effect\EF_DecAgility.wav	ok
+0x5E84ED	CRagEffect::OnProcess3	0x719C18	effect\earth_quake.wav	ok
+0x5E866C	CRagEffect::OnProcess3	0x719C08	effect\일섬.wav	ok
+0x5E86E6	CRagEffect::OnProcess3	0x719BF4	effect\안개베기.wav	ok
+0x5E8760	CRagEffect::OnProcess3	0x719BDC	effect\그림자베기.wav	ok
+0x5E87DE	CRagEffect::OnProcess3	0x719BC8	effect\EF_hit2.wav	ok
+0x5E88D3	CRagEffect::OnProcess3	0x719BB0	effect\래피드샤워.wav	ok
+0x5E894D	CRagEffect::OnProcess3	0x719B98	effect\매지컬블릿.wav	ok
+0x5E89AB	CRagEffect::OnProcess3	0x719B80	effect\트리플액션.wav	ok
+0x5E8AA7	CRagEffect::OnProcess3	0x719B6C	effect\폭염룡.wav	ok
+0x5E8B18	CRagEffect::OnProcess3	0x719B58	effect\빙정락.wav	ok
+0x5E8B96	CRagEffect::OnProcess3	0x719B40	effect\데스페라도.wav	ok
+0x5E8C22	CRagEffect::OnProcess3	0x719B2C	effect\더스트샷.wav	ok
+0x5E8CA9	CRagEffect::OnProcess3	0x719B18	effect\디스암.wav	ok
+0x5E8D5C	CRagEffect::OnProcess3	0x719A74	effect\t_바람방출.wav	ok
+0x5E8DD8	CRagEffect::OnProcess3	0x719A4C	effect\피어싱샷.wav	ok
+0x5E8E73	CRagEffect::OnProcess3	0x719A3C	effect\풍인.wav	ok
+0x5E9086	CRagEffect::OnProcess3	0x712840	_heal_effect.wav	ok
+0x5E9105	CRagEffect::OnProcess3	0x71998C	caramel_die.wav	ok
+0x5E9417	CRagEffect::OnProcess3	0x71994C	effect\T_따듯한마법.wav	ok
+0x5E9803	CRagEffect::OnProcess3	0x719798	effect\wizard_fire_pillar_b.wav	ok
+0x5E98D4	CRagEffect::OnProcess3	0x7192AC	effect\연주붕격.wav	ok
+0x5E99BD	CRagEffect::OnProcess3	0x719760	effect\priest_suffragium.wav	ok
+0x5E9A5B	CRagEffect::OnProcess3	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5E9B6F	CRagEffect::OnProcess3	0x7196D4	effect\T_캐스팅.wav	ok
+0x5E9BAC	CRagEffect::OnProcess3	0x7196C0	effect\T_영혼.wav	ok
+0x5E9C47	CRagEffect::OnProcess3	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5E9DBE	CRagEffect::OnProcess3	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5E9EEA	CRagEffect::OnProcess3	0x71969C	effect\복호격.wav	ok
+0x5EA164	CRagEffect::OnProcess3	0x71961C	effect\T_에너지방출.wav	ok
+0x5EA269	CRagEffect::OnProcess3	0x7195E8	effect\ef_hit6.wav	ok
+0x5EA43E	CRagEffect::OnProcess3	0x7195D0	effect\T_바람마법.wav	ok
+0x5EA4D6	CRagEffect::OnProcess3	0x7195B8	effect\T_날라차기.wav	ok
+0x5EA72A	CRagEffect::OnProcess3	0x712840	_heal_effect.wav	ok
+0x5EA856	CRagEffect::OnProcess3	0x719550	effect\풀버스터.wav	ok
+0x5EA93A	CRagEffect::OnProcess3	0x719538	effect\dragonfear.wav	ok
+0x5EA9BE	CRagEffect::OnProcess3	0x719CA8	effect\wideb.wav	ok
+0x5EAF26	CRagEffect::OnProcess3	0x71A7C0	effect\흡기.wav	ok
+0x5EAFC8	CRagEffect::OnProcess3	0x712D24	effect\T_마법반사.wav	ok
+0x5EB082	CRagEffect::OnProcess3	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5EB1FE	CRagEffect::OnProcess3	0x71A790	effect\EF_NapalmBeat.wav	ok
+0x5EB274	CRagEffect::OnProcess3	0x71A77C	effect\윈드워크.wav	ok
+0x5EB386	CRagEffect::OnProcess3	0x712828	effect\EF_Blessing.wav	ok
+0x5EB472	CRagEffect::OnProcess3	0x71A748	effect\kyrie_guard.wav	ok
+0x5EB7D6	CRagEffect::OnProcess3	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5EB850	CRagEffect::OnProcess3	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5EB8CA	CRagEffect::OnProcess3	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5EB944	CRagEffect::OnProcess3	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5EB9BD	CRagEffect::OnProcess3	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5EBA47	CRagEffect::OnProcess3	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5EBAD4	CRagEffect::OnProcess3	0x71A6D0	effect\T_안락한마법.wav	ok
+0x5EBCAB	CRagEffect::OnProcess3	0x71A654	effect\T_회오리차기.wav	ok
+0x5EBDB6	CRagEffect::OnProcess3	0x71A62C	effect\T_회피.wav	ok
+0x5EBE33	CRagEffect::OnProcess3	0x71A62C	effect\T_회피.wav	ok
+0x5EBEF8	CRagEffect::OnProcess3	0x71A618	effect\T_전기.wav	ok
+0x5EBFDF	CRagEffect::OnProcess3	0x71A600	effect\매직 크래쉬.wav	ok
+0x5EC0D4	CRagEffect::OnProcess3	0x71A5E4	effect\swordman_provoke.wav	ok
+0x5EC21F	CRagEffect::OnProcess3	0x71A5C8	effect\assasin_cloaking.wav	ok
+0x5EC881	CRagEffect::OnProcess3	0x71A4B8	effect\mon_금강불괴.wav	ok
+0x5EC995	CRagEffect::OnProcess3	0x71A4A4	effect\EF_Bash.wav	ok
+0x5EC9E1	CRagEffect::OnProcess3	0x7141F0	effect\rog_intimidate.wav	ok
+0x5ECAC5	CRagEffect::OnProcess3	0x71A474	effect\rog_back stap.wav	ok
+0x5ECB3A	CRagEffect::OnProcess3	0x71A45C	effect\헤드 크러쉬.wav	ok
+0x5ECBF0	CRagEffect::OnProcess3	0x71A444	effect\비트 조인트.wav	ok
+0x5ECCB8	CRagEffect::OnProcess3	0x71A428	effect\hunter_detecting.wav	ok
+0x5ECD94	CRagEffect::OnProcess3	0x711E1C	effect\mon_맹룡과강.wav	ok
+0x5ECE6A	CRagEffect::OnProcess3	0x71A3D4	effect\아숨프티오.wav	ok
+0x5ECEDE	CRagEffect::OnProcess3	0x71A3B8	effect\메테오 어썰트.wav	ok
+0x5ECFB1	CRagEffect::OnProcess3	0x71A390	effect\샤프슈팅.wav	ok
+0x5ED01F	CRagEffect::OnProcess3	0x71A378	effect\애로우 발칸.wav	ok
+0x5ED147	CRagEffect::OnProcess3	0x71A364	effect\mon_연환.wav	ok
+0x5ED1DE	CRagEffect::OnProcess3	0x71A34C	effect\소울 체인지.wav	ok
+0x5ED24B	CRagEffect::OnProcess3	0x71A34C	effect\소울 체인지.wav	ok
+0x5ED352	CRagEffect::OnProcess3	0x71A334	effect\T_내려찍기.wav	ok
+0x5ED6B9	CRagEffect::OnProcess3	0x71A320	effect\T_회피2.wav	ok
+0x5ED7E0	CRagEffect::OnProcess3	0x71A308	effect\T_돌려차기.wav	ok
+0x5ED8D6	CRagEffect::OnProcess3	0x719BC8	effect\EF_hit2.wav	ok
+0x5ED938	CRagEffect::OnProcess3	0x71A2F4	effect\EF_hit4.wav	ok
+0x5ED9E5	CRagEffect::OnProcess3	0x7195B8	effect\T_날라차기.wav	ok
+0x5EE392	CRagEffect::OnProcess3	0x71A0D0	effect\wizard_meteor.wav	ok
+0x5EE513	CRagEffect::OnProcess3	0x719798	effect\wizard_fire_pillar_b.wav	ok
+0x5EEA35	CRagEffect::OnProcess3	0x719F40	effect\T_효과음1.wav	ok
+0x5EEC95	CRagEffect::OnProcess3	0x712CC8	effect\ac_concentration.wav	ok
+0x5EECE9	CRagEffect::OnProcess3	0x712CC8	effect\ac_concentration.wav	ok
+0x5EEE85	CRagEffect::OnProcess3	0x714280	effect\rog_steal coin.wav	ok
+0x5EEF3C	CRagEffect::OnProcess3	0x719EA0	_enemy_hit_wind1.wav	ok
+0x5F21BF	CRagEffect::Hit2	0x719BC8	effect\EF_hit2.wav	ok
+0x5F24D5	CRagEffect::Hit3	0x71B218	effect\EF_hit3.wav	ok
+0x5F2B6F	CRagEffect::Hit4	0x71A2F4	effect\EF_hit4.wav	ok
+0x5F305F	CRagEffect::Hit5	0x71B22C	effect\EF_hit5.wav	ok
+0x5F32DF	CRagEffect::Hit6	0x71B240	effect\EF_hit6.wav	ok
+0x5F3616	CRagEffect::Exit	0x712840	_heal_effect.wav	ok
+0x5F3B63	CRagEffect::BeginSpell	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5F3BF3	CRagEffect::BeginSpell2	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5F3C73	CRagEffect::BeginSpell3	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5F3CF3	CRagEffect::BeginSpell4	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5F3D73	CRagEffect::BeginSpell5	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5F3DF3	CRagEffect::BeginSpell6	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5F3E83	CRagEffect::BeginSpell7	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x5F3EF5	CRagEffect::GlassWall	0x71B26C	effect\EF_GlassWall.wav	ok
+0x5F42CE	CRagEffect::Blessing	0x712828	effect\EF_Blessing.wav	ok
+0x5F47CF	CRagEffect::IncAGIDEX	0x71B304	effect\EF_IncAgiDex.wav	ok
+0x5F4F02	CRagEffect::Heal|CRagEffect::HealSP	0x712840	_heal_effect.wav	ok
+0x5F518A	CRagEffect::SoulStrike	0x71B37C	effect\EF_SoulStrike.wav	ok
+0x5F54AC	CRagEffect::Bash	0x71A4A4	effect\EF_Bash.wav	ok
+0x5F581F	CRagEffect::Detoxication	0x71B3B0	effect\EF_Detoxication.wav	ok
+0x5F59B0	CRagEffect::Detoxication	0x71B3B0	effect\EF_Detoxication.wav	ok
+0x5F5BD3	CRagEffect::MagnumBreak	0x71B3CC	effect\EF_MagnumBreak.wav	ok
+0x5F5F95	CRagEffect::Steal	0x71B418	effect\EF_Steal.wav	ok
+0x5F7AF0	CRagEffect::Endure	0x71B534	effect\EF_Endure.wav	ok
+0x5F8373	CRagEffect::FireBall	0x71B5B4	effect\EF_FireBall.wav	ok
+0x5F862A	CRagEffect::IceArrow			UNRESOLVED
+0x5F8EE5	CRagEffect::FrostDiver2	0x71B60C	effect\EF_FrostDiver2.wav	ok
+0x5F9439	CRagEffect::ThunderStorm	0x719F1C	effect\magician_thunderstorm.wav	ok
+0x5F94CD	CRagEffect::ThunderStorm2	0x71B650	effect\EF_ThunderStorm.wav	ok
+0x5F963C	CRagEffect::FireArrow			UNRESOLVED
+0x5F9DA9	CRagEffect::NapalmBeat	0x71A790	effect\EF_NapalmBeat.wav	ok
+0x5F9FF3	CRagEffect::Teleportation	0x71B744	effect\EF_Teleportation.wav	ok
+0x5FA15B	CRagEffect::ReadyPortal	0x71B760	effect\EF_ReadyPortal.wav	ok
+0x5FA71F	CRagEffect::IncAgility	0x71A760	effect\EF_IncAgility.wav	ok
+0x5FAAFF	CRagEffect::DecAgility	0x719C6C	effect\EF_DecAgility.wav	ok
+0x5FAE7D	CRagEffect::Aqua	0x71B7C8	effect\EF_Aqua.wav	ok
+0x5FBFCE	CRagEffect::Sightrasher	0x71B81C	effect\wizard_sightrasher.wav	ok
+0x5FCED5	CRagEffect::IceWall	0x71B83C	effect\wizard_icewall.wav	ok
+0x5FD1BE	CRagEffect::EarthSpike	0x711E58	effect\wizard_earthspike.wav	ok
+0x5FD22D	CRagEffect::EarthSpike			UNRESOLVED
+0x5FD760	CRagEffect::TurnUndead	0x71A4A4	effect\EF_Bash.wav	ok
+0x5FDDA2	CRagEffect::SpearBmr	0x71B5B4	effect\EF_FireBall.wav	ok
+0x5FE711	CRagEffect::RemoveTrap	0x71B8A4	effect\hunter_removetrap.wav	ok
+0x5FE903	CRagEffect::Yufitel	0x71B984	effect\hunter_shockwavetrap.wav	ok
+0x5FF21B	CRagEffect::HasteUp	0x71BA3C	effect\black_adrenalinerush_a.wav	ok
+0x5FF268	CRagEffect::HasteUp	0x71BA18	effect\black_adrenalinerush_b.wav	ok
+0x5FF661	CRagEffect::Flasher	0x71BA60	effect\hunter_flasher.wav	ok
+0x5FFB11	CRagEffect::BlitzBeat	0x71BA98	effect\hunter_blitzbeat_1st.wav	ok
+0x5FFB5D	CRagEffect::BlitzBeat	0x71BA7C	effect\hunter_blitzbeat.wav	ok
+0x6007B3	CRagEffect::WaterBall	0x71BB18	effect\wizard_waterball_chulung.wav	ok
+0x6009A3	CRagEffect::WaterBall2	0x71BB18	effect\wizard_waterball_chulung.wav	ok
+0x600C13	CRagEffect::FireIvy	0x71BB6C	effect\wizard_fire_ivy.wav	ok
+0x600D93	CRagEffect::Detecting	0x71A428	effect\hunter_detecting.wav	ok
+0x600F79	CRagEffect::Cloaking	0x71A5C8	effect\assasin_cloaking.wav	ok
+0x60105F	CRagEffect::SonicBlow	0x71BB9C	effect\EF_StoneCurse.wav	ok
+0x6011C5	CRagEffect::SonicBlowHit	0x71BBD0	effect\assasin_sonicblow.wav	ok
+0x6014A5	CRagEffect::GrimTooth	0x71BBF0	effect\EF_FrostDiver.wav	ok
+0x601B60	CRagEffect::EnchantPoison	0x71BC58	effect\assasin_enchantpoison.wav	ok
+0x601B8E	CRagEffect::EnchantPoison	0x71BC3C	effect\EF_PoisonAttack.wav	ok
+0x601DD8	CRagEffect::EnchantPoison2	0x71BC58	effect\assasin_enchantpoison.wav	ok
+0x602201	CRagEffect::OverThrust	0x71A598	effect\black_overthrust.wav	ok
+0x6022C7	CRagEffect::OverThrust	0x71BB9C	effect\EF_StoneCurse.wav	ok
+0x602432	CRagEffect::SlowPoison	0x71BC3C	effect\EF_PoisonAttack.wav	ok
+0x6027C5	CRagEffect::HeavensDrive	0x711E58	effect\wizard_earthspike.wav	ok
+0x604F49	CRagEffect::Angelus	0x71A220	effect\EF_Angelus.wav	ok
+0x605030	CRagEffect::Signum	0x71BCA8	effect\EF_Signum.wav	ok
+0x60505E	CRagEffect::Signum	0x71A4A4	effect\EF_Bash.wav	ok
+0x60538C	CRagEffect::Gloria	0x71A1A0	effect\priest_gloria.wav	ok
+0x6053F9	CRagEffect::Mvp	0x71A1D8	effect\st_mvp.wav	ok
+0x605469	CRagEffect::Cure	0x71A1EC	effect\Acolyte_cure.wav	ok
+0x6054D9	CRagEffect::Invenom	0x71A204	effect\thief_invenom.wav	ok
+0x605548	CRagEffect::Provoke	0x71A5E4	effect\swordman_provoke.wav	ok
+0x605595	CRagEffect::Provoke	0x71A5E4	effect\swordman_provoke.wav	ok
+0x605609	CRagEffect::SkidTrap	0x71A1BC	effect\hunter_skidtrap.wav	ok
+0x605679	CRagEffect::Magnificat	0x71A180	effect\priest_magnificat.wav	ok
+0x6056E9	CRagEffect::Resurrection	0x712D68	effect\priest_resurrection.wav	ok
+0x605759	CRagEffect::Recovery	0x71A164	effect\priest_recovery.wav	ok
+0x6057C9	CRagEffect::Sanctuary	0x71A148	effect\priest_sanctuary.wav	ok
+0x605850	CRagEffect::Lord	0x71BCC0	effect\wizard_meteo.wav	ok
+0x6058FA	CRagEffect::Lord	0x71BCC0	effect\wizard_meteo.wav	ok
+0x605A91	CRagEffect::StormGust	0x71BCD8	effect\wizard_stormgust.wav	ok
+0x605D68	CRagEffect::Impositio	0x71A12C	effect\priest_impositio.wav	ok
+0x605DD9	CRagEffect::Suffragium	0x719760	effect\priest_suffragium.wav	ok
+0x605E49	CRagEffect::LexDivina	0x71BCF4	effect\priest_lexdivina.wav	ok
+0x605E96	CRagEffect::LexDivina	0x71BCF4	effect\priest_lexdivina.wav	ok
+0x605EE3	CRagEffect::LexDivina	0x71BCF4	effect\priest_lexdivina.wav	ok
+0x605F30	CRagEffect::LexDivina	0x71BCF4	effect\priest_lexdivina.wav	ok
+0x605F7D	CRagEffect::LexDivina	0x71BCF4	effect\priest_lexdivina.wav	ok
+0x605FE8	CRagEffect::LexAeterna	0x71A10C	effect\priest_lexaeterna.wav	ok
+0x60605F	CRagEffect::Aspersio	0x71BD10	effect\priest_aspersio.wav	ok
+0x606269	CRagEffect::Benedictio	0x71A0EC	effect\priest_benedictio.wav	ok
+0x6062ED	CRagEffect::Quagmire	0x71A0B4	effect\wizard_quagmire.wav	ok
+0x606359	CRagEffect::MeteorStorm	0x71A0D0	effect\wizard_meteor.wav	ok
+0x6063E8	CRagEffect::MeteorStorm	0x71A094	effect\wizard_fire_pillar_a.wav	ok
+0x606459	CRagEffect::FirePillarBomb	0x719798	effect\wizard_fire_pillar_b.wav	ok
+0x6064C8	CRagEffect::RepairWeapon	0x71BD2C	effect\black_weapon_repair_a.wav	ok
+0x606515	CRagEffect::RepairWeapon	0x71BD2C	effect\black_weapon_repair_a.wav	ok
+0x606588	CRagEffect::CrashEarth	0x719798	effect\wizard_fire_pillar_b.wav	ok
+0x606619	CRagEffect::Perfection	0x71A070	effect\black_weapon_perfection.wav	ok
+0x606689	CRagEffect::MaxPower	0x71BDA4	effect\black_maximize_power_circle.wav	ok
+0x6066D6	CRagEffect::MaxPower	0x71BD7C	effect\black_maximize_power_sword.wav	ok
+0x606723	CRagEffect::MaxPower	0x71BD7C	effect\black_maximize_power_sword.wav	ok
+0x606770	CRagEffect::MaxPower	0x71BD50	effect\black_maximize_power_sword_bic.wav	ok
+0x6067EC	CRagEffect::Magnus	0x719FD8	effect\priest_magnus.wav	ok
+0x606858	CRagEffect::BlastMineBomb	0x71A054	effect\hunter_blastmine.wav	ok
+0x6068C9	CRagEffect::Claymore	0x71A034	effect\hunter_claymoretrap.wav	ok
+0x606939	CRagEffect::Freezing	0x71A014	effect\hunter_freezingtrap.wav	ok
+0x6069A9	CRagEffect::SpringTrap	0x719FF4	effect\hunter_springtrap.wav	ok
+0x606A19	CRagEffect::Kyrie	0x71BDF0	effect\priest_kyrie_eleison_b.wav	ok
+0x606A66	CRagEffect::Kyrie	0x71BDCC	effect\priest_kyrie_eleison_a.wav	ok
+0x606AD9	CRagEffect::Kyrie	0x719F98	effect\assasin_poisonreact.wav	ok
+0x606B49	CRagEffect::AutoCounter	0x719FB8	effect\knight_autocounter.wav	ok
+0x606BB9	CRagEffect::PoisonReact2	0x719F98	effect\assasin_poisonreact.wav	ok
+0x606C28	CRagEffect::Splasher	0x719F74	effect\assasin_venomsplasher.wav	ok
+0x606D01	CRagEffect::FireHit			UNRESOLVED
+0x606DF3	CRagEffect::TwoHandQuicken	0x7192D8	effect\knight_twohandquicken.wav	ok
+0x606E69	CRagEffect::Concentration	0x712CC8	effect\ac_concentration.wav	ok
+0x606ED8	CRagEffect::RefineOk	0x719F58	effect\bs_refinesuccess.wav	ok
+0x606F48	CRagEffect::RefineFail	0x717300	effect\bs_refinefailed.wav	ok
+0x606FC9	CRagEffect::CartRevolution	0x71B3CC	effect\EF_MagnumBreak.wav	ok
+0x60738E	CRagEffect::Potion_|CRagEffect::Potion_Con	0x712CC8	effect\ac_concentration.wav	ok
+0x6073FF	CRagEffect::Potion_|CRagEffect::Potion_Con	0x712CC8	effect\ac_concentration.wav	ok
+0x6074A3	CRagEffect::Potion_Berserk	0x712CC8	effect\ac_concentration.wav	ok
+0x607846	CRagEffect::BlueCasting	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x6078D3	CRagEffect::DarkCasting	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x607D64	CRagEffect::BeginCasting2	0x711E78	effect\EF_FireWall.wav	ok
+0x608565	CRagEffect::CartBoost	0x71A760	effect\EF_IncAgility.wav	ok
+0x6087F1	CRagEffect::BeginAsura	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x60A8EE	CRagEffect::Kouenka			UNRESOLVED
+0x60D466	CRagEffect::PokJuk_Sound	0x71C254	effect\폭죽.wav	ok
+0x60F30F	CRagEffect::ShieldBoomerang	0x71C33C	effect\cru_shield boomerang.wav	ok
+0x60F5C7	CRagEffect::ShieldBoomerang3	0x71C33C	effect\cru_shield boomerang.wav	ok
+0x60FC83	CRagEffect::FirstAid	0x712840	_heal_effect.wav	ok
+0x629DD7	CRagEffect::CoupleCasting	0x7193CC	effect\EF_BeginSpell.wav	ok
+0x62A468	CRagEffect::WIND	0x712840	_heal_effect.wav	ok
+0x62D9A0	CRagEffect::GRANDCROSS	0x71C99C	effect\cru_grand cross.wav	ok
+0x62F4FE	CRagEffect::TELEPORTATION2	0x71B744	effect\EF_Teleportation.wav	ok
+0x6310FC	CRagEffect::HealTime	0x71A7C0	effect\흡기.wav	ok
+0x631D31	CRagEffect::ParticlePath	0x712840	_heal_effect.wav	ok
+0x632250	CRagEffect::Exit2	0x71B744	effect\EF_Teleportation.wav	ok
+0x63262F	CRagEffect::Guard	0x71A748	effect\kyrie_guard.wav	ok
+0x63280F	CRagEffect::Guard2	0x71BD50	effect\black_maximize_power_sword_bic.wav	ok
+0x633B68	CRagEffect::Heal2	0x712840	_heal_effect.wav	ok
+0x634484	CRagEffect::ReadyPortal2	0x71B760	effect\EF_ReadyPortal.wav	ok
+0x635BF4	CRagEffect::Entry2	0x71CB04	effect\EF_Portal.wav	ok
+0x63710F	CRagEffect::GlassWall2	0x71B26C	effect\EF_GlassWall.wav	ok
+0x63748F	CRagEffect::TANJI	0x71CB1C	effect\mon_탄지신통.wav	ok
+0x637CF3	CRagEffect::TRIPLEATTACK	0x719BC8	effect\EF_hit2.wav	ok
+0x637D40	CRagEffect::TRIPLEATTACK	0x71A2F4	effect\EF_hit4.wav	ok
+0x637D8D	CRagEffect::TRIPLEATTACK	0x719BC8	effect\EF_hit2.wav	ok
+0x6385A5	CRagEffect::CHIMTO	0x71CBA4	effect\mon_침투경.wav	ok
+0x63E2B3	CRagEffect::MagicRod	0x71CC5C	effect\sage_magic rod.wav	ok
+0x63E379	CRagEffect::Magnum2	0x71B3CC	effect\EF_MagnumBreak.wav	ok
+0x63E9D9	CRagEffect::Effect_SPR	0x71D30C	effect\h_blood_lust.wav	ok
+0x63EB54	CRagEffect::Effect_SPR	0x71D1DC	effect\ef_firehit.wav	ok
+0x63F694	CRagEffect::Effect_SPR	0x7127E8	effect\itempokjuk.wav	ok
+0x63F9DE	CRagEffect::Vallentine	0x712C34	effect\vallentine.wav	ok
+0x642CAD	CEffectPrim::Prim3DParticleGravity			UNRESOLVED
+0x67C1B5	CSession::LaunchSkillSpecialEffect	0x7236D8	effect\mon_아수라 패황권.wav	ok
+0x67C560	CSession::LaunchSkillSpecialEffect	0x7236D8	effect\mon_아수라 패황권.wav	ok
+0x67CB67	CSession::LaunchSkillSpecialEffect	0x7236C0	effect\닌자_던지기.wav	ok
+0x67D353	CSession::LaunchSkillSpecialEffect	0x711E78	effect\EF_FireWall.wav	ok
+0x67D37B	CSession::LaunchSkillSpecialEffect	0x711D90	_stonecurse.wav	ok
+0x67D699	CSession::LaunchSkillSpecialEffect	0x712C20	amon_ra_die01.wav	ok
+0x67D8AA	CSession::LaunchSkillSpecialEffect	0x7236A8	effect\widesleep.wav	ok
+0x6858F6	CSkill::SendMsg	0x71CB04	effect\EF_Portal.wav	ok
+0x685AF5	CSkill::SendMsg	0x711E78	effect\EF_FireWall.wav	ok
+0x685B64	CSkill::SendMsg	0x724EF8	effect\화염진.wav	ok
+0x687A56	CMsgEffect::OnProcess	0x71A748	effect\kyrie_guard.wav	ok

@@ -11,6 +11,9 @@ public:
     virtual void Shutdown() = 0;
 
     virtual bool PlayWave(const char* fName, float volume) = 0;
+    virtual bool Has3DProvider() const = 0;
+    virtual bool PlayWave3D(const char* fName, float x, float y, float z,
+        int volumeMaxDist, int volumeMinDist, float volume) = 0;
     virtual bool PlayBGM(const char* normalizedPath, int volume, bool paused) = 0;
     virtual void StopBGM() = 0;
     virtual void StopAllSounds() = 0;

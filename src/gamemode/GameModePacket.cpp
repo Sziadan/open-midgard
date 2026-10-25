@@ -39,6 +39,7 @@
 #include "ui/UIWindowMgr.h"
 #include "world/GameActor.h"
 #include "world/RagEffect.h"
+#include "world/RagEffect.h"
 #include "world/World.h"
 
 #include <algorithm>
@@ -299,49 +300,6 @@ void ClearPendingLocalHideSkillRequest()
     g_pendingLocalHideSkillRequest = {};
 }
 
-void ApplyPendingLocalHideSkillFallback(CGameActor* actor, u16 skillId)
-{
-    if (!actor) {
-        return;
-    }
-
-    const u32 now = timeGetTime();
-    if (!IsPendingLocalHideSkillRequestActive(now)) {
-        ClearPendingLocalHideSkillRequest();
-        return;
-    }
-
-    const int mask = ResolveHideSkillEffectStateMask(skillId);
-    if (mask == 0 || g_pendingLocalHideSkillRequest.mask != mask) {
-        return;
-    }
-
-    const bool isActive = (actor->m_effectState & mask) != 0;
-    if (isActive == g_pendingLocalHideSkillRequest.expectedActive) {
-        ClearPendingLocalHideSkillRequest();
-        return;
-    }
-
-    const int oldEffectState = actor->m_effectState;
-    if (g_pendingLocalHideSkillRequest.expectedActive) {
-        actor->m_effectState |= mask;
-        if (mask == kEffectStateHidingMask) {
-            actor->m_effectState &= ~kEffectStateSpecialHidingMask;
-        } else if (mask == kEffectStateSpecialHidingMask) {
-            actor->m_effectState &= ~kEffectStateHidingMask;
-        }
-    } else {
-        actor->m_effectState &= ~mask;
-    }
-
-    RefreshActorEffectStatePresentation(actor, oldEffectState);
-    DbgLog("[GameMode] synthesized local hide state skill=%u old=%d new=%d mask=0x%X\n",
-        static_cast<unsigned int>(skillId),
-        oldEffectState,
-        actor->m_effectState,
-        static_cast<unsigned int>(mask));
-    ClearPendingLocalHideSkillRequest();
-}
 
 bool HasEffectStateFlag(int effectState, int mask)
 {
@@ -484,16 +442,8 @@ constexpr u32 kNotifyEffectJobLevelUp = 1;
 constexpr u32 kNotifyEffectBaseLevelUpSuperNovice = 7;
 constexpr u32 kNotifyEffectJobLevelUpSuperNovice = 8;
 constexpr u32 kNotifyEffectBaseLevelUpTaekwon = 9;
-constexpr u16 kSkillIdHeal = 28;
-constexpr u16 kSkillIdGrimtooth = 137;
 constexpr u32 kEffectIdRecoveryHp = 331;
 constexpr u32 kEffectIdRecoverySp = 332;
-constexpr u32 kEffectIdHealSmall = 7;
-constexpr u32 kEffectIdHealMedium = 312;
-constexpr u32 kEffectIdHealLarge = 313;
-constexpr u32 kEffectIdHealHuge = 325;
-constexpr u32 kEffectIdGrimtooth = 123;
-constexpr u32 kEffectIdGrimtoothImpact = 132;
 constexpr int kRecoveryNumberKind = 114;
 constexpr u32 kRecoveryHpNumberColor = 0xFF00FF00u;
 constexpr u32 kRecoverySpNumberColor = 0xFF0000FFu;
@@ -512,7 +462,6 @@ struct RemoteMoveApplyTrace {
 };
 
 std::map<u32, RemoteMoveApplyTrace> g_remoteMoveApplyTraceByGid;
-std::map<u32, u32> g_lastGrimtoothSourcePresentationTickByGid;
 
 u16 ReadLE16(const u8* data);
 u32 ReadLE32(const u8* data);
@@ -521,22 +470,7 @@ float TileToWorldCoordZ(const CWorld* world, int tileY);
 float ResolveActorHeight(const CWorld* world, float worldX, float worldZ);
 float PacketDirToRotationDegrees(int dir);
 bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value);
-void ClearAttachedSkillEffects(CGameActor* actor, int preserveBeginEffectId = -1);
-void StartSkillSourceAnimation(CGameActor* actor, const vector3d* targetPos, int attackMotionMs);
 
-int ResolveHealVisualEffectId(u32 amount)
-{
-    if (amount < 200) {
-        return static_cast<int>(kEffectIdHealSmall);
-    }
-    if (amount < 2000) {
-        return static_cast<int>(kEffectIdHealMedium);
-    }
-    if (amount < 4000) {
-        return static_cast<int>(kEffectIdHealLarge);
-    }
-    return static_cast<int>(kEffectIdHealHuge);
-}
 
 int ResolveRecoveryEffectId(u32 statusType)
 {
@@ -576,48 +510,10 @@ std::string ToLowerAsciiStatus(std::string value)
     return value;
 }
 
-const char* ResolveLevelUpWavePath()
-{
-    static bool s_initialized = false;
-    static std::string s_path;
-    if (s_initialized) {
-        return s_path.empty() ? nullptr : s_path.c_str();
-    }
-    s_initialized = true;
-
-    const char* directCandidates[] = {
-        "wav\\levelup.wav",
-        "data\\wav\\levelup.wav",
-        "wav\\LEVELUP.WAV",
-        "data\\wav\\LEVELUP.WAV",
-        nullptr
-    };
-    for (int index = 0; directCandidates[index]; ++index) {
-        if (g_fileMgr.IsDataExist(directCandidates[index])) {
-            s_path = directCandidates[index];
-            return s_path.c_str();
-        }
-    }
-
-    std::vector<std::string> wavNames;
-    g_fileMgr.CollectDataNamesByExtension("wav", wavNames);
-    for (const std::string& candidate : wavNames) {
-        if (ToLowerAsciiStatus(candidate).find("levelup") != std::string::npos) {
-            s_path = candidate;
-            break;
-        }
-    }
-
-    return s_path.empty() ? nullptr : s_path.c_str();
-}
-
 void PlayBaseLevelUpPresentation(CGameMode& mode)
 {
-    if (const char* wavePath = ResolveLevelUpWavePath()) {
-        if (CAudio* audio = CAudio::GetInstance()) {
-            audio->PlaySound(wavePath);
-        }
-    }
+    // Ref/GameModePacket.cpp Zc_Par_Change (0x596E03).
+    PlayWave("levelup.wav", 0.0f, 0.0f, 0.0f);
 
     g_windowMgr.MakeWindow(UIWindowMgr::WID_NOTIFYLEVELUPWND);
 }
@@ -818,26 +714,104 @@ void HandleSkillCastCancel(CGameMode& mode, const PacketView& packet)
 
     const u32 actorId = ReadLE32(packet.data + 2);
     CGameActor* actor = ResolveNotifyEffectActor(mode, actorId);
-    DbgLog("[GameMode] skill cast cancel actor=%u resolved=%d recentLevelStatus=%u recentType=%u\n",
-        static_cast<unsigned int>(actorId),
-        actor ? 1 : 0,
-        static_cast<unsigned int>(GetTickCount() - g_lastSelfLevelUpStatusTick),
-        static_cast<unsigned int>(g_lastSelfLevelUpStatusType));
-
-    if (!actor) {
+    if (actor == nullptr) {
         return;
     }
 
-    ClearAttachedSkillEffects(actor);
-    actor->m_isMotionFreezed = 0;
-    actor->m_freezeEndTick = 0;
-    actor->m_attackMotion = -1.0f;
-    if (actor->m_stateId == kGameActorAttackStateId) {
-        actor->m_stateId = 0;
-    }
     actor->SendMsg(actor, 84, 0, 0, 0);
     actor->SendMsg(actor, 87, 0, 0, 0);
     actor->SendMsg(actor, 83, 0, 0, 0);
+}
+
+// Ref/GameModePacket.cpp:25976-26125 (0x5A85D0), clif.c:7976.
+// Ref runtime-wave: 0x5A8845 0x5A88C7 (name bytes from packet + 2).
+void HandleSound(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 35) {
+        return;
+    }
+    const char* bytes = reinterpret_cast<const char*>(packet.data + 2);
+    size_t length = 0;
+    while (length < 24 && bytes[length] != '\0') {
+        ++length;
+    }
+    const std::string name(bytes, length);
+    const u8 action = packet.data[26];
+    const u32 aid = ReadLE32(packet.data + 31);
+    if (action == 0) {
+        CGameActor* actor = mode.m_world ? mode.m_world->GetGameActorByAID(aid) : nullptr;
+        if (actor && mode.m_world->m_player) {
+            const vector3d& player = mode.m_world->m_player->m_pos;
+            // The reference sound packet uses player - actor, with y = 0.
+            PlayWave(name.c_str(), player.x - actor->m_pos.x, 0.0f, player.z - actor->m_pos.z);
+        } else {
+            PlayWave(name.c_str(), 0.0f, 0.0f, 0.0f);
+        }
+    } else if (action == 1) {
+        PLAY_WAVE_INFO info{};
+        info.wavName = name;
+        info.term = ReadLE32(packet.data + 27);
+        info.nAID = aid;
+        info.endTick = timeGetTime() + info.term;
+        mode.m_playWaveList.push_back(info);
+        PlayWave(name.c_str(), 0.0f, 0.0f, 0.0f);
+    } else if (action == 2) {
+        const auto found = std::find_if(mode.m_playWaveList.begin(), mode.m_playWaveList.end(),
+            [&](const PLAY_WAVE_INFO& info) { return info.wavName == name; });
+        if (found != mode.m_playWaveList.end()) {
+            mode.m_playWaveList.erase(found);
+        }
+    }
+}
+
+// Ref/GameModePacket.cpp:10258-10273 (0x5A8900).
+void HandleComboDelay(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 10) {
+        return;
+    }
+    const u32 aid = ReadLE32(packet.data + 2);
+    const u32 tick = ReadLE32(packet.data + 6);
+    g_session.SetForceAnimEndTick(aid, tick);
+    CGameActor* actor = mode.m_world ? (aid == g_session.m_aid
+        ? mode.m_world->m_player : mode.m_world->GetGameActorByAID(aid)) : nullptr;
+    if (actor) {
+        actor->SetForceAnimEndTick(tick);
+    }
+}
+
+// Ref/GameModePacket.cpp:8808-8876 (0x5A8400).
+void HandleBladeStop(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 14 || !mode.m_world) {
+        return;
+    }
+    auto actorByAid = [&](u32 aid) -> CGameActor* {
+        return aid == g_session.m_aid ? mode.m_world->m_player : mode.m_world->GetGameActorByAID(aid);
+    };
+    CGameActor* source = actorByAid(ReadLE32(packet.data + 2));
+    CGameActor* target = actorByAid(ReadLE32(packet.data + 6));
+    if (ReadLE32(packet.data + 10)) {
+        if (source && target) {
+            source->SetForceAnimation(96, 4, 4, 96, 4, 1, 0x5F5E0FFu, 0);
+            source->m_isSprArgbFixed = 1;
+            source->SetArgb(-1, 64, 64, 64);
+            target->m_isMotionFreezed = 1;
+            target->m_isSprArgbFixed = 1;
+            target->SetArgb(-1, 64, 64, 64);
+        }
+    } else {
+        if (source) {
+            source->SetForceAnimation(96, 4, 4, 96, 4, 1, 1u, 0);
+            source->m_isSprArgbFixed = 0;
+            source->SetArgb(-1, 255, 255, 255);
+        }
+        if (target) {
+            target->m_isMotionFreezed = 0;
+            target->m_isSprArgbFixed = 0;
+            target->SetArgb(-1, 255, 255, 255);
+        }
+    }
 }
 
 void HandleIgnorePacket(CGameMode&, const PacketView&)
@@ -3505,552 +3479,6 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
     mode.m_lastActorBootstrapPacketTick = GetTickCount();
 }
 
-constexpr u8 kNotifyActDamage = 0;
-constexpr u8 kNotifyActEndureDamage = 4;
-constexpr u8 kNotifyActMultiHitDamage = 8;
-constexpr u8 kNotifyActMultiHitEndure = 9;
-constexpr u8 kNotifyActCriticalDamage = 10;
-constexpr u8 kNotifyActLuckyDodge = 11;
-constexpr int kDefaultAttackMotionTime = 1440;
-constexpr u32 kRefDoubleAttackTermMs = 200;
-
-struct ScheduledAttackHit {
-    int damage = 0;
-    u32 delayMs = 0;
-};
-
-bool IsAttackNotifyType(u8 actionType)
-{
-    switch (actionType) {
-    case kNotifyActDamage:
-    case kNotifyActEndureDamage:
-    case kNotifyActMultiHitDamage:
-    case kNotifyActMultiHitEndure:
-    case kNotifyActCriticalDamage:
-    case kNotifyActLuckyDodge:
-        return true;
-    default:
-        return false;
-    }
-}
-
-u32 ResolveCombatNumberColor(int damage, u8 actionType)
-{
-    if (damage < 0) {
-        return 0xFF00FF00u;
-    }
-
-    switch (actionType) {
-    case kNotifyActCriticalDamage:
-        return 0xFFFFFF00u;
-    default:
-        return 0xFFFFFFFFu;
-    }
-}
-
-int ResolveCombatNumberKind(int damage, u8 actionType)
-{
-    if (damage < 0) {
-        return kRecoveryNumberKind;
-    }
-
-    switch (actionType) {
-    case kNotifyActCriticalDamage:
-        return 16;
-    default:
-        return 14;
-    }
-}
-
-u16 ResolveAttackRepeatHitCount(u8 actionType, u16 div)
-{
-    if (actionType == kNotifyActMultiHitDamage || actionType == kNotifyActMultiHitEndure) {
-        return static_cast<u16>((std::max)(1, (std::min)(36, static_cast<int>(div))));
-    }
-
-    return 1;
-}
-
-u32 ResolveAttackImpactDelayMs(const CGameActor& actor)
-{
-    u32 delayMs = static_cast<u32>((std::max)(0.0f, actor.m_attackMotion * actor.m_motionSpeed * 24.0f));
-    switch (actor.m_job) {
-    case 1016:
-    case 1420:
-        delayMs += 192;
-        break;
-    case 1285:
-    case 1830:
-        delayMs += 912;
-        break;
-    case 1286:
-    case 1287:
-    case 1829:
-        delayMs += 408;
-        break;
-    default:
-        break;
-    }
-    return delayMs;
-}
-
-bool IsDualWeaponPcJob(int job)
-{
-    return job == 12 || job == 4013 || job == 4035;
-}
-
-int ResolveCombatHitWaveWeaponType(const CGameActor& sourceActor)
-{
-    int weaponValue = 0;
-
-    if (const CPc* pcActor = dynamic_cast<const CPc*>(&sourceActor)) {
-        weaponValue = pcActor->m_weapon & 0xFFFF;
-        if (IsDualWeaponPcJob(sourceActor.m_job) && pcActor->m_shield != 0) {
-            weaponValue = (pcActor->m_weapon & 0xFFFF) | ((pcActor->m_shield & 0xFFFF) << 16);
-        }
-    } else if (const CGrannyPc* grannyPcActor = dynamic_cast<const CGrannyPc*>(&sourceActor)) {
-        weaponValue = grannyPcActor->m_weapon & 0xFFFF;
-        if (IsDualWeaponPcJob(sourceActor.m_job) && grannyPcActor->m_shield != 0) {
-            weaponValue = (grannyPcActor->m_weapon & 0xFFFF) | ((grannyPcActor->m_shield & 0xFFFF) << 16);
-        }
-    }
-
-    const bool isLocalPlayer = sourceActor.m_gid != 0
-        && (sourceActor.m_gid == g_session.m_gid || sourceActor.m_gid == g_session.m_aid);
-    if (isLocalPlayer) {
-        const int localWeaponValue = g_session.GetCurrentPlayerWeaponValue();
-        if (localWeaponValue != 0) {
-            weaponValue = localWeaponValue;
-        }
-    }
-
-    if (weaponValue == 0) {
-        return -1;
-    }
-
-    if (IsDualWeaponPcJob(sourceActor.m_job)) {
-        const int primaryWeaponValue = weaponValue & 0xFFFF;
-        if (primaryWeaponValue == 0) {
-            return -1;
-        }
-
-        int primaryWeaponType = g_session.ResolvePackedWeaponType(sourceActor.m_job, primaryWeaponValue);
-        if (primaryWeaponType <= 0 || primaryWeaponType >= 31) {
-            primaryWeaponType = g_session.ResolvePackedWeaponType(0, primaryWeaponValue);
-        }
-
-        return (primaryWeaponType > 0 && primaryWeaponType < 31) ? primaryWeaponType : -1;
-    }
-
-    int weaponType = g_session.ResolvePackedWeaponType(sourceActor.m_job, weaponValue);
-    if (weaponType <= 0 || weaponType >= 31) {
-        weaponType = g_session.ResolvePackedWeaponType(sourceActor.m_job, weaponValue & 0xFFFF);
-    }
-
-    return (weaponType > 0 && weaponType < 31) ? weaponType : -1;
-}
-
-bool IsRangedProjectileWeaponType(int weaponType)
-{
-    return weaponType == 11 || weaponType == 13 || weaponType == 14;
-}
-
-bool IsRefArrowMonsterJob(int job)
-{
-    switch (job) {
-    case 1016:
-    case 1189:
-    case 1253:
-    case 1258:
-    case 1271:
-    case 1282:
-    case 1285:
-    case 1410:
-    case 1412:
-    case 1420:
-    case 1453:
-    case 1455:
-    case 1473:
-    case 1495:
-    case 1498:
-    case 1500:
-    case 1531:
-    case 1550:
-    case 1555:
-    case 1664:
-    case 1665:
-    case 1666:
-    case 1667:
-    case 1688:
-    case 1865:
-        return true;
-    default:
-        break;
-    }
-
-    return job >= 6017 && job <= 6026;
-}
-
-bool ShouldSpawnAttackProjectile(const CGameActor& sourceActor)
-{
-    if (sourceActor.m_isPc != 0) {
-        return IsRangedProjectileWeaponType(ResolveCombatHitWaveWeaponType(sourceActor));
-    }
-
-    return IsRefArrowMonsterJob(sourceActor.m_job);
-}
-
-float ResolveAttackProjectileTravelFrames(const CGameActor& sourceActor)
-{
-    (void)sourceActor;
-    return 8.0f;
-}
-
-float ResolveRefProjectileTravelFrames(const vector3d& startPos, const vector3d& targetPos)
-{
-    const float dx = targetPos.x - startPos.x;
-    const float dy = targetPos.y - startPos.y;
-    const float dz = targetPos.z - startPos.z;
-    const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
-    return (std::max)(1.0f, (std::min)(8.0f, distance * 0.2f));
-}
-
-float ResolveAttackProjectileDelayFrames(const CGameActor& sourceActor,
-    const vector3d& startPos,
-    const vector3d& targetPos)
-{
-    const float impactFrames = static_cast<float>(ResolveAttackImpactDelayMs(sourceActor)) / 24.0f;
-    const float travelFrames = ResolveRefProjectileTravelFrames(startPos, targetPos);
-    return (std::max)(0.0f, impactFrames - travelFrames);
-}
-
-void SpawnAttackProjectile(CGameMode& mode, CGameActor* sourceActor, CGameActor* targetActor)
-{
-    if (!mode.m_world || !sourceActor || !targetActor || !ShouldSpawnAttackProjectile(*sourceActor)) {
-        return;
-    }
-
-    const float travelFrames = ResolveRefProjectileTravelFrames(sourceActor->m_pos, targetActor->m_pos);
-    const float delayFrames = ResolveAttackProjectileDelayFrames(*sourceActor, sourceActor->m_pos, targetActor->m_pos);
-    const float impactFrames = static_cast<float>(ResolveAttackImpactDelayMs(*sourceActor)) / 24.0f;
-    DbgLog("[Projectile] queue attack src=%u dst=%u srcJob=%d dstJob=%d srcPc=%d visual=arrow impact=%.2f travel=%.2f delay=%.2f\n",
-        static_cast<unsigned int>(sourceActor->m_gid),
-        static_cast<unsigned int>(targetActor->m_gid),
-        sourceActor->m_job,
-        targetActor->m_job,
-        sourceActor->m_isPc,
-        impactFrames,
-        travelFrames,
-        delayFrames);
-
-    mode.m_world->SpawnProjectileEffect(sourceActor->m_pos,
-        targetActor->m_pos,
-        targetActor->m_gid,
-        WorldProjectileVisual::Arrow,
-        travelFrames,
-        delayFrames);
-}
-
-void EmitCombatNumber(CGameActor* sourceActor, CGameActor* targetActor, int damage, u8 actionType)
-{
-    if (!targetActor || damage == 0 || actionType == kNotifyActLuckyDodge) {
-        return;
-    }
-
-    const int numberValue = damage < 0 ? -damage : damage;
-    if (numberValue <= 0) {
-        return;
-    }
-
-    const bool isLocalPlayerTarget = targetActor->m_gid == g_session.m_gid || targetActor->m_gid == g_session.m_aid;
-    const bool isLocalPlayerSource = sourceActor && (sourceActor->m_gid == g_session.m_gid || sourceActor->m_gid == g_session.m_aid);
-    const u32 numberColor = (isLocalPlayerTarget && !isLocalPlayerSource)
-        ? 0xFFFF4040u
-        : ResolveCombatNumberColor(damage, actionType);
-
-    targetActor->SendMsg(sourceActor,
-        88,
-        numberValue,
-        static_cast<int>(numberColor),
-        ResolveCombatNumberKind(damage, actionType));
-}
-
-void AppendCombatDamageHits(std::vector<int>& hitDamages, int damage, u16 hitCountRaw)
-{
-    if (damage == 0) {
-        return;
-    }
-
-    const int hitCount = (std::max)(1, static_cast<int>(hitCountRaw));
-    if (hitCount <= 1) {
-        hitDamages.push_back(damage);
-        return;
-    }
-
-    const int absDamage = damage < 0 ? -damage : damage;
-    const int sign = damage < 0 ? -1 : 1;
-    const int basePerHit = absDamage / hitCount;
-    int remainder = absDamage % hitCount;
-    for (int hitIndex = 0; hitIndex < hitCount; ++hitIndex) {
-        int perHit = basePerHit;
-        if (remainder > 0) {
-            ++perHit;
-            --remainder;
-        }
-        hitDamages.push_back(perHit * sign);
-    }
-}
-
-std::vector<int> ResolveAttackHitDamages(int damage, int leftDamage, u16 hitCountRaw)
-{
-    std::vector<int> hitDamages;
-    hitDamages.reserve((std::max)(1, static_cast<int>(hitCountRaw)) + (leftDamage != 0 ? 1 : 0));
-    AppendCombatDamageHits(hitDamages, damage, hitCountRaw);
-    if (leftDamage != 0) {
-        hitDamages.push_back(leftDamage);
-    }
-    return hitDamages;
-}
-
-std::vector<ScheduledAttackHit> ResolveAttackHitSchedule(const CGameActor& sourceActor,
-    int damage,
-    int leftDamage,
-    u16 div,
-    u8 actionType)
-{
-    std::vector<ScheduledAttackHit> scheduledHits;
-    const u16 repeatHitCount = ResolveAttackRepeatHitCount(actionType, div);
-    const u32 impactDelayMs = ResolveAttackImpactDelayMs(sourceActor);
-    const bool hasRefOffhandFollowup = leftDamage != 0
-        && (sourceActor.m_job < 1000 || sourceActor.m_job > 4000);
-
-    if (actionType == kNotifyActLuckyDodge) {
-        scheduledHits.push_back({ 0, impactDelayMs });
-        return scheduledHits;
-    }
-
-    if (damage != 0) {
-        if (repeatHitCount <= 1) {
-            scheduledHits.push_back({ damage, impactDelayMs });
-        } else {
-            const int perHitDamage = damage / static_cast<int>(repeatHitCount);
-            scheduledHits.reserve(static_cast<size_t>(repeatHitCount) + (hasRefOffhandFollowup ? 1u : 0u));
-            scheduledHits.push_back({ perHitDamage, impactDelayMs });
-
-            if (hasRefOffhandFollowup) {
-                const u32 followupDelayMs = impactDelayMs + kRefDoubleAttackTermMs / 2;
-                for (u16 hitIndex = 1; hitIndex < repeatHitCount; ++hitIndex) {
-                    scheduledHits.push_back({ perHitDamage, followupDelayMs });
-                }
-            } else {
-                for (u16 hitIndex = 1; hitIndex < repeatHitCount; ++hitIndex) {
-                    scheduledHits.push_back({ perHitDamage, impactDelayMs + kRefDoubleAttackTermMs * hitIndex });
-                }
-            }
-        }
-    }
-
-    if (hasRefOffhandFollowup) {
-        const u32 offhandDelayMs = impactDelayMs + kRefDoubleAttackTermMs / 4 + kRefDoubleAttackTermMs + kRefDoubleAttackTermMs / 2;
-        scheduledHits.push_back({ leftDamage, offhandDelayMs });
-    }
-
-    if (scheduledHits.empty() && actionType != kNotifyActLuckyDodge) {
-        scheduledHits.push_back({ 0, impactDelayMs });
-    }
-
-    return scheduledHits;
-}
-
-int ResolveQueuedCombatMessage(u8 actionType)
-{
-    if (actionType == kNotifyActLuckyDodge) {
-        return 94;
-    }
-    if (actionType == kNotifyActCriticalDamage) {
-        return 93;
-    }
-    return 133;
-}
-
-void PopulateCombatHitWaveName(CGameActor* sourceActor, CGameActor* targetActor, char* waveName, size_t waveNameSize)
-{
-    if (!waveName || waveNameSize == 0) {
-        return;
-    }
-
-    const char* resolvedWaveName = nullptr;
-    if (targetActor && targetActor->m_isPc != 0) {
-        resolvedWaveName = g_session.GetJobHitWaveName(targetActor->m_job);
-    } else if (sourceActor) {
-        const int weaponType = ResolveCombatHitWaveWeaponType(*sourceActor);
-        resolvedWaveName = g_session.GetWeaponHitWaveName(weaponType);
-    } else {
-        resolvedWaveName = g_session.GetWeaponHitWaveName(-1);
-    }
-
-    if (resolvedWaveName && *resolvedWaveName) {
-        std::snprintf(waveName, waveNameSize, "%s", resolvedWaveName);
-    }
-}
-
-void EmitCombatNumbers(CGameActor* sourceActor, CGameActor* targetActor, const std::vector<int>& hitDamages, u8 actionType)
-{
-    for (int hitDamage : hitDamages) {
-        EmitCombatNumber(sourceActor, targetActor, hitDamage, actionType);
-    }
-}
-
-u16 ResolveDisplayedSkillHitCount(u16 skillId, u16 level, u16 div)
-{
-    if (div > 1) {
-        return div;
-    }
-
-    switch (skillId) {
-    case 17: // MG_FIREBOLT
-    case 19: // MG_COLDBOLT
-    case 20: // MG_LIGHTNINGBOLT
-        return level > 1 ? level : 1;
-    default:
-        return div > 0 ? div : 1;
-    }
-}
-
-void EmitCombatNumbers(CGameActor* sourceActor, CGameActor* targetActor, int damage, u8 actionType, u16 hitCountRaw)
-{
-    std::vector<int> hitDamages;
-    hitDamages.reserve((std::max)(1, static_cast<int>(hitCountRaw)));
-    AppendCombatDamageHits(hitDamages, damage, hitCountRaw);
-    EmitCombatNumbers(sourceActor, targetActor, hitDamages, actionType);
-}
-
-void EmitSkillImpactEffect(CGameActor* targetActor, u16 skillId)
-{
-    if (!targetActor) {
-        return;
-    }
-
-    LuaSkillEffectInfo luaInfo;
-    if (g_buabridge.GetSkillEffectInfoBySkillId(static_cast<int>(skillId), &luaInfo) && !luaInfo.effectIds.empty()) {
-        for (int effectId : luaInfo.effectIds) {
-            if (effectId > 0) {
-                targetActor->LaunchEffect(effectId, vector3d{}, 0.0f);
-            }
-        }
-        return;
-    }
-
-    switch (skillId) {
-    case 17: // MG_FIREBOLT
-        targetActor->LaunchEffect(49, vector3d{}, 0.0f);
-        break;
-    case kSkillIdGrimtooth:
-        targetActor->LaunchEffect(static_cast<int>(kEffectIdGrimtoothImpact), vector3d{}, 0.0f);
-        break;
-    default:
-        break;
-    }
-}
-
-void EmitSkillImpactEffects(CGameActor* targetActor, u16 skillId, u16 hitCountRaw)
-{
-    const int hitCount = (std::max)(1, static_cast<int>(hitCountRaw));
-    for (int hitIndex = 0; hitIndex < hitCount; ++hitIndex) {
-        EmitSkillImpactEffect(targetActor, skillId);
-    }
-}
-
-void QueueCombatHitReaction(CGameActor* sourceActor, CGameActor* targetActor, int attackedMT, int damage, u8 actionType)
-{
-    if (!targetActor) {
-        return;
-    }
-
-    WBA hitInfo{};
-    hitInfo.gid = sourceActor ? sourceActor->m_gid : 0;
-    hitInfo.time = timeGetTime();
-    hitInfo.message = ResolveQueuedCombatMessage(actionType);
-    hitInfo.attackedMotionTime = attackedMT;
-    hitInfo.damageDestX = targetActor->m_pos.x;
-    hitInfo.damageDestZ = targetActor->m_pos.z;
-    if (actionType != kNotifyActLuckyDodge) {
-        PopulateCombatHitWaveName(sourceActor, targetActor, hitInfo.waveName, sizeof(hitInfo.waveName));
-    }
-
-    targetActor->QueueWillBeAttacked(hitInfo);
-}
-
-void QueueTimedAttackHit(CGameActor* sourceActor,
-    CGameActor* targetActor,
-    int attackedMT,
-    int damage,
-    u8 actionType,
-    u32 queueTime)
-{
-    if (!targetActor) {
-        return;
-    }
-
-    WBA hitInfo{};
-    hitInfo.gid = sourceActor ? sourceActor->m_gid : 0;
-    hitInfo.time = queueTime;
-    hitInfo.message = ResolveQueuedCombatMessage(actionType);
-    hitInfo.attackedMotionTime = attackedMT;
-    hitInfo.damage = damage < 0 ? -damage : damage;
-    if (damage != 0) {
-        const bool isLocalPlayerTarget = targetActor->m_gid == g_session.m_gid || targetActor->m_gid == g_session.m_aid;
-        const bool isLocalPlayerSource = sourceActor && (sourceActor->m_gid == g_session.m_gid || sourceActor->m_gid == g_session.m_aid);
-        hitInfo.damageColor = (isLocalPlayerTarget && !isLocalPlayerSource)
-            ? 0xFFFF4040u
-            : ResolveCombatNumberColor(damage, actionType);
-        hitInfo.damageKind = ResolveCombatNumberKind(damage, actionType);
-    }
-    hitInfo.damageDestX = targetActor->m_pos.x;
-    hitInfo.damageDestZ = targetActor->m_pos.z;
-    if (actionType != kNotifyActLuckyDodge) {
-        PopulateCombatHitWaveName(sourceActor, targetActor, hitInfo.waveName, sizeof(hitInfo.waveName));
-    }
-    targetActor->QueueWillBeAttacked(hitInfo);
-}
-
-void QueueAttackHitReactions(CGameActor* sourceActor,
-    CGameActor* targetActor,
-    int attackedMT,
-    const std::vector<ScheduledAttackHit>& scheduledHits,
-    u8 actionType)
-{
-    const u32 now = timeGetTime();
-    for (const ScheduledAttackHit& scheduledHit : scheduledHits) {
-        QueueTimedAttackHit(sourceActor,
-            targetActor,
-            attackedMT,
-            scheduledHit.damage,
-            actionType,
-            now + scheduledHit.delayMs);
-    }
-}
-
-void FaceActorTowardTarget(CGameActor* actor, CGameActor* target)
-{
-    if (!actor || !target) {
-        return;
-    }
-
-    const float dx = target->m_pos.x - actor->m_pos.x;
-    const float dz = target->m_pos.z - actor->m_pos.z;
-    if (dx == 0.0f && dz == 0.0f) {
-        return;
-    }
-
-    actor->m_roty = std::atan2(dx, -dz) * (180.0f / 3.14159265f);
-    if (actor->m_roty < 0.0f) {
-        actor->m_roty += 360.0f;
-    }
-    if (actor->m_roty >= 360.0f) {
-        actor->m_roty -= 360.0f;
-    }
-}
 
 void FaceActorTowardPosition(CGameActor* actor, const vector3d& targetPos)
 {
@@ -4099,54 +3527,6 @@ CGameActor* ResolveCombatActor(CGameMode& mode, u32 actorId, bool preferPc)
         }
     }
     return EnsureRuntimeActor(mode, actorId, preferPc);
-}
-
-void StartAttackAnimation(CGameActor* actor, CGameActor* target, int attackMT)
-{
-    if (!actor) {
-        return;
-    }
-
-    actor->m_isSitting = 0;
-    actor->m_targetGid = target ? target->m_gid : 0;
-    StopActorMovementForAction(actor);
-    FaceActorTowardTarget(actor, target);
-    actor->SetModifyFactorOfmotionSpeed(attackMT);
-    DbgLog("[ActorTrace2] attack before actor=%p gid=%u state=%d base=%d cur=%d motion=%d isPc=%d isCPc=%d target=%u attackMT=%d roty=%.1f\n",
-        static_cast<void*>(actor),
-        actor->m_gid,
-        actor->m_stateId,
-        actor->m_baseAction,
-        actor->m_curAction,
-        actor->m_curMotion,
-        actor->m_isPc,
-        dynamic_cast<CPc*>(actor) != nullptr,
-        actor->m_targetGid,
-        attackMT,
-        actor->m_roty);
-    actor->SetState(kGameActorAttackStateId);
-    DbgLog("[ActorTrace2] attack after SetState actor=%p gid=%u state=%d base=%d cur=%d motion=%d atkMotion=%.1f\n",
-        static_cast<void*>(actor),
-        actor->m_gid,
-        actor->m_stateId,
-        actor->m_baseAction,
-        actor->m_curAction,
-        actor->m_curMotion,
-        actor->m_attackMotion);
-    actor->ProcessMotion();
-    DbgLog("[ActorTrace2] attack after ProcessMotion actor=%p gid=%u state=%d base=%d cur=%d motion=%d finished=%d atkMotion=%.1f\n",
-        static_cast<void*>(actor),
-        actor->m_gid,
-        actor->m_stateId,
-        actor->m_baseAction,
-        actor->m_curAction,
-        actor->m_curMotion,
-        actor->m_isMotionFinished,
-        actor->m_attackMotion);
-
-    if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
-        pcActor->InvalidateBillboard();
-    }
 }
 
 void StartPickupAnimation(CGameMode& mode, CGameActor* actor, u32 objectAid)
@@ -4298,15 +3678,24 @@ const char* ResolveSkillFailMessage(u16 skillId, u32 btype, u8 cause)
 
 void HandleSkillFailAck(CGameMode& mode, const PacketView& packet)
 {
-    (void)mode;
     if (!packet.data || packet.packetLength < 10) {
         return;
+    }
+
+    if (mode.m_world != nullptr && mode.m_world->m_player != nullptr) {
+        mode.m_world->m_player->m_isMotionFreezed = 0;
     }
 
     const u16 skillId = ReadLE16(packet.data + 2);
     const u32 btype = ReadLE32(packet.data + 4);
     const u8 result = packet.data[8];
     const u8 cause = packet.data[9];
+    if (result != 0) {
+        return;
+    }
+    if (skillId == 1 && cause == 0 && btype == 1) {
+        mode.m_isReqEmotion = 0;
+    }
     const char* message = ResolveSkillFailMessage(skillId, btype, cause);
 
     DbgLog("[GameMode] skill fail ack opcode=0x%04X skill=%u num=%u result=%u cause=%u msg='%s'\n",
@@ -4322,9 +3711,24 @@ void HandleSkillFailAck(CGameMode& mode, const PacketView& packet)
         static_cast<int>(kSystemNoticeColor));
 }
 
+bool SessionIsAttack(int action)
+{
+    return action == 0 || action == 4;
+}
+
+CGameActor* FindActorByPacketGid(CWorld& world, u32 gid)
+{
+    for (CGameActor* actor : world.m_actorList) {
+        if (actor != nullptr && actor->m_gid == gid) {
+            return actor;
+        }
+    }
+    return nullptr;
+}
+
 void HandleActorActionNotify(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data) {
+    if (!packet.data || mode.m_world == nullptr) {
         return;
     }
 
@@ -4335,114 +3739,49 @@ void HandleActorActionNotify(CGameMode& mode, const PacketView& packet)
     }
 
     const u32 srcGid = ReadLE32(packet.data + 2);
-    const u32 dstGid = ReadLE32(packet.data + 6);
-    const u32 serverTick = ReadLE32(packet.data + 10);
+    const u32 targetGid = ReadLE32(packet.data + 6);
+    const u32 startTime = ReadLE32(packet.data + 10);
     int attackMT = static_cast<int>(ReadLE32(packet.data + 14));
-    const int attackedMT = static_cast<int>(ReadLE32(packet.data + 18));
+    int attackedMT = static_cast<int>(ReadLE32(packet.data + 18));
     const int damage = isNotifyAct2
         ? static_cast<int>(ReadLE32(packet.data + 22))
         : static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 22)));
-    const u16 div = isNotifyAct2
-        ? ReadLE16(packet.data + 26)
-        : ReadLE16(packet.data + 24);
-    const u8 actionType = packet.data[isNotifyAct2 ? 28 : 26];
+    const int count = isNotifyAct2
+        ? static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 26)))
+        : static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 24)));
+    const int action = packet.data[isNotifyAct2 ? 28 : 26];
     const int leftDamage = isNotifyAct2
         ? static_cast<int>(ReadLE32(packet.data + 29))
         : static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 27)));
 
+    if (damage == -30000) {
+        return;
+    }
     if (attackMT == 0) {
-        attackMT = kDefaultAttackMotionTime;
+        attackMT = 1440;
     }
-    (void)attackedMT;
-
-    mode.m_aidList[srcGid] = GetTickCount();
-    if (dstGid != 0) {
-        mode.m_aidList[dstGid] = GetTickCount();
+    if (attackedMT == 0 && !SessionIsAttack(action)) {
+        attackedMT = 1440;
     }
 
-    if (!IsAttackNotifyType(actionType) && actionType != 1 && actionType != 2 && actionType != 3) {
-        static std::map<u32, bool> s_loggedUnsupportedActNotifyTypes;
-        const u32 unsupportedKey = (static_cast<u32>(packet.packetId) << 8) | static_cast<u32>(actionType);
-        if (!s_loggedUnsupportedActNotifyTypes[unsupportedKey]) {
-            s_loggedUnsupportedActNotifyTypes[unsupportedKey] = true;
-            DbgLog("[GameMode] unsupported act notify opcode=0x%04X type=%u src=%u dst=%u rawTick=%u\n",
-                packet.packetId,
-                static_cast<unsigned int>(actionType),
-                srcGid,
-                dstGid,
-                static_cast<unsigned int>(serverTick));
-        }
-        return;
+    int actionBlock[10] = {};
+    actionBlock[0] = damage;
+    actionBlock[1] = leftDamage;
+    actionBlock[2] = action;
+    actionBlock[3] = static_cast<int>(targetGid);
+    actionBlock[4] = static_cast<int>(startTime);
+    actionBlock[5] = count;
+    actionBlock[6] = -1;
+    actionBlock[7] = -1;
+    actionBlock[8] = attackMT;
+    actionBlock[9] = attackedMT;
+
+    CGameActor* actor = srcGid == g_session.m_aid
+        ? static_cast<CGameActor*>(mode.m_world->m_player)
+        : FindActorByPacketGid(*mode.m_world, srcGid);
+    if (actor != nullptr) {
+        actor->SendMsg(actor, 11, reinterpret_cast<msgparam_t>(actionBlock), 0, 0);
     }
-
-    CGameActor* sourceActor = ResolveCombatActor(mode, srcGid, true);
-    CGameActor* targetActor = (dstGid != 0 && IsAttackNotifyType(actionType))
-        ? ResolveCombatActor(mode, dstGid, true)
-        : nullptr;
-    if (!sourceActor) {
-        return;
-    }
-
-    DbgLog("[GameMode] act notify stage=resolved src=%u dst=%u srcPtr=%p dstPtr=%p srcPc=%d dstPc=%d srcLocal=%d srcCPc=%d dstCPc=%d\n",
-        srcGid,
-        dstGid,
-        static_cast<void*>(sourceActor),
-        static_cast<void*>(targetActor),
-        sourceActor->m_isPc,
-        targetActor ? targetActor->m_isPc : 0,
-        mode.m_world && sourceActor == static_cast<CGameActor*>(mode.m_world->m_player),
-        dynamic_cast<CPc*>(sourceActor) != nullptr,
-        dynamic_cast<CPc*>(targetActor) != nullptr);
-
-    if (actionType == 1) {
-        StartPickupAnimation(mode, sourceActor, dstGid);
-        DbgLog("[GameMode] act notify pickup opcode=0x%04X src=%u item=%u action=%d\n",
-            packet.packetId,
-            srcGid,
-            dstGid,
-            sourceActor->m_curAction);
-        return;
-    }
-
-    if (actionType == 2 || actionType == 3) {
-        StartSitStandAnimation(sourceActor, actionType == 2);
-        DbgLog("[GameMode] act notify posture opcode=0x%04X src=%u type=%u sitting=%d\n",
-            packet.packetId,
-            srcGid,
-            static_cast<unsigned int>(actionType),
-            actionType == 2 ? 1 : 0);
-        return;
-    }
-
-    StartAttackAnimation(sourceActor, targetActor, attackMT);
-    SpawnAttackProjectile(mode, sourceActor, targetActor);
-    DbgLog("[GameMode] act notify stage=started src=%u action=%d motionSpeed=%.3f atkMotion=%.1f\n",
-        srcGid,
-        sourceActor->m_curAction,
-        sourceActor->m_motionSpeed,
-        sourceActor->m_attackMotion);
-    const std::vector<ScheduledAttackHit> scheduledHits = ResolveAttackHitSchedule(*sourceActor, damage, leftDamage, div, actionType);
-    QueueAttackHitReactions(sourceActor, targetActor, attackedMT, scheduledHits, actionType);
-    DbgLog("[GameMode] act notify stage=number src=%u dst=%u dmg=%d left=%d hits=%u\n",
-        srcGid,
-        dstGid,
-        damage,
-        leftDamage,
-        static_cast<unsigned int>(scheduledHits.size()));
-
-    DbgLog("[GameMode] act notify opcode=0x%04X src=%u dst=%u type=%u attackMT=%d attackedMT=%d dmg=%d left=%d div=%u action=%d motionSpeed=%.3f atkMotion=%.1f\n",
-        packet.packetId,
-        srcGid,
-        dstGid,
-        static_cast<unsigned int>(actionType),
-        attackMT,
-        attackedMT,
-        damage,
-        leftDamage,
-        static_cast<unsigned int>(div),
-        sourceActor->m_curAction,
-        sourceActor->m_motionSpeed,
-        sourceActor->m_attackMotion);
 }
 
 void ApplyMapChangeSessionState(const MapChangeInfo& info)
@@ -4601,421 +3940,18 @@ float TileToWorldCoordZ(const CWorld* world, int tileY)
     return (static_cast<float>(tileY) - static_cast<float>(height) * 0.5f) * zoom + zoom * 0.5f;
 }
 
-struct UseSkillPacketInfo {
-    int beginEffectId = 16;
-    int motionType = 7;
-    int targetEffectId = -1;
-    std::vector<int> impactEffectIds;
-    bool useTargetSlot = false;
-    bool launchUseSkill = true;
-};
-
-UseSkillPacketInfo ResolveUseSkillPacketInfo(u16 skillId)
-{
-    UseSkillPacketInfo info;
-    GetSkillActionInfo(static_cast<int>(skillId), info.beginEffectId, info.motionType);
-
-    if (skillId == 24) { // AL_RUWACH
-        info.launchUseSkill = false;
-    }
-
-    LuaSkillEffectInfo luaInfo;
-    if (g_buabridge.GetSkillEffectInfoBySkillId(static_cast<int>(skillId), &luaInfo)) {
-        if (luaInfo.hasTargetEffectId) {
-            info.targetEffectId = luaInfo.targetEffectId;
-        }
-        info.impactEffectIds = luaInfo.effectIds;
-        if (luaInfo.hasOnTarget) {
-            info.useTargetSlot = luaInfo.onTarget;
-        }
-        if (luaInfo.hasLaunchUseSkill) {
-            info.launchUseSkill = luaInfo.launchUseSkill;
-        }
-    }
-
-    return info;
-}
-
-int ResolveGroundSkillEffectId(u16 skillId, u16 level);
-
-int ResolveSkillVisibleEffectId(u16 skillId, const UseSkillPacketInfo& packetInfo, u16 levelOrAmount)
-{
-    if (packetInfo.targetEffectId >= 0) {
-        return packetInfo.targetEffectId;
-    }
-
-    switch (skillId) {
-    case 29: // AL_INCAGI
-        return 37;
-    case 33: // AL_ANGELUS
-        return 41;
-    case 34: // AL_BLESSING
-        return 42;
-    case 35: // AL_CURE
-        return 66;
-    case 138: // AS_ENCHANTPOISON
-        return 20;
-    default: {
-        return packetInfo.beginEffectId >= 0 ? packetInfo.beginEffectId : ResolveGroundSkillEffectId(skillId, levelOrAmount);
-    }
-    }
-}
-
-void InvalidateActorBillboard(CGameActor* actor)
-{
-    if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
-        pcActor->InvalidateBillboard();
-    }
-}
-
-void ClearAttachedSkillEffects(CGameActor* actor, int preserveBeginEffectId)
-{
-    if (!actor) {
-        return;
-    }
-
-    if (actor->m_beginSpellEffect && actor->m_beginSpellEffect->GetEffectType() != preserveBeginEffectId) {
-        actor->m_beginSpellEffect->DetachFromMaster(actor);
-        actor->m_beginSpellEffect = nullptr;
-    }
-    if (actor->m_magicTargetEffect) {
-        actor->m_magicTargetEffect->DetachFromMaster(actor);
-        actor->m_magicTargetEffect = nullptr;
-    }
-}
-
-bool ShouldReplayGrimtoothSourcePresentation(u32 srcGid)
-{
-    if (srcGid == 0) {
-        return true;
-    }
-
-    const u32 now = timeGetTime();
-    u32& lastTick = g_lastGrimtoothSourcePresentationTickByGid[srcGid];
-    if (lastTick != 0 && now - lastTick <= 120) {
-        return false;
-    }
-
-    lastTick = now;
-    return true;
-}
-
-void StartDirectedSkillBeginEffect(CGameActor* actor, int effectId, const vector3d& targetPos)
-{
-    if (!actor || effectId <= 0) {
-        return;
-    }
-
-    if (effectId == static_cast<int>(kEffectIdGrimtooth)) {
-        DbgLog("[Projectile] queue grimtooth src=%u effect=%d visual=effect target=(%.2f,%.2f,%.2f)\n",
-            static_cast<unsigned int>(actor->m_gid),
-            effectId,
-            targetPos.x,
-            targetPos.y,
-            targetPos.z);
-    }
-
-    actor->SendMsg(actor, 85, effectId, 0, 0);
-    if (actor->m_beginSpellEffect && actor->m_beginSpellEffect->GetEffectType() == effectId) {
-        actor->m_beginSpellEffect->SendMsg(actor->m_beginSpellEffect,
-            14,
-            reinterpret_cast<msgparam_t>(&targetPos),
-            0,
-            0);
-    }
-}
-
-void MaybeStartGrimtoothSourcePresentation(CGameActor* sourceActor, u32 srcGid, const vector3d& targetPos)
-{
-    if (!sourceActor || !ShouldReplayGrimtoothSourcePresentation(srcGid)) {
-        return;
-    }
-
-    StartSkillSourceAnimation(sourceActor, &targetPos, kDefaultAttackMotionTime);
-    StartDirectedSkillBeginEffect(sourceActor, static_cast<int>(kEffectIdGrimtooth), targetPos);
-}
-
-void StartSkillSourceAnimation(CGameActor* actor, const vector3d* targetPos, int attackMotionMs)
-{
-    if (!actor) {
-        return;
-    }
-
-    actor->m_isSitting = 0;
-    actor->m_targetGid = 0;
-    StopActorMovementForAction(actor);
-    if (targetPos) {
-        FaceActorTowardPosition(actor, *targetPos);
-    }
-    actor->SetModifyFactorOfmotionSpeed(attackMotionMs > 0 ? attackMotionMs : kDefaultAttackMotionTime);
-    actor->SetState(kGameActorAttackStateId);
-    actor->ProcessMotion();
-    InvalidateActorBillboard(actor);
-}
-
-void StartSkillStateAnimation(CGameActor* actor, int stateId, u32 targetGid, const vector3d* targetPos)
-{
-    if (!actor) {
-        return;
-    }
-
-    actor->m_isSitting = 0;
-    actor->m_targetGid = targetGid;
-    StopActorMovementForAction(actor);
-    if (targetPos) {
-        FaceActorTowardPosition(actor, *targetPos);
-    }
-    actor->SetState(stateId);
-    InvalidateActorBillboard(actor);
-}
-
-vector3d ResolveSkillCellWorldPosition(const CWorld* world, int cellX, int cellY)
-{
-    const float worldX = TileToWorldCoordX(world, cellX);
-    const float worldZ = TileToWorldCoordZ(world, cellY);
-    return vector3d{
-        worldX,
-        ResolveActorHeight(world, worldX, worldZ),
-        worldZ
-    };
-}
-
-int ResolveGroundSkillEffectId(u16 skillId, u16 level)
-{
-    LuaSkillEffectInfo luaInfo;
-    if (g_buabridge.GetSkillEffectInfoBySkillId(static_cast<int>(skillId), &luaInfo) && luaInfo.hasGroundEffectId) {
-        return luaInfo.groundEffectId;
-    }
-
-    switch (skillId) {
-    case 21: return 30;
-    case 25: return 141;
-    case 69: return 91;
-    case 70: return 83;
-    case 79: return 113;
-    case 83: return 92;
-    case 85: return 90;
-    case 87: return 74;
-    case 89: return 89;
-    case 91: return 142;
-    case 92: return 95;
-    case 110: return 102;
-    case 111: return 98;
-    case 286: return 236;
-    case 287: return 237;
-    case 288: return 238;
-    case 478:
-        if (level >= 10) {
-            return 499;
-        }
-        if (level >= 6) {
-            return 498;
-        }
-        return 497;
-    case 694: return 91;
-    default:
-        return static_cast<int>(skillId);
-    }
-}
-
-static std::string LowercaseAsciiSkillIdName(std::string value)
-{
-    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
-        if (ch >= 'A' && ch <= 'Z') {
-            return static_cast<char>(ch - 'A' + 'a');
-        }
-        return static_cast<char>(ch);
-    });
-    return value;
-}
-
-// GRF layout: data\wav\effect\wizard_<stem>.wav (Ref RagEffect Lord/MeteorStorm/StormGust use aEffectWizard* / HunterBl).
-static std::string CompactAlnumLower(std::string value)
-{
-    std::string out;
-    out.reserve(value.size());
-    for (unsigned char ch : value) {
-        if (std::isalnum(ch)) {
-            out.push_back(static_cast<char>(std::tolower(ch)));
-        }
-    }
-    return out;
-}
-
-static std::string WizardWaveStemFromSkillIdName(std::string idName)
-{
-    idName = LowercaseAsciiSkillIdName(std::move(idName));
-    static constexpr const char* kStripPrefixes[] = {
-        "mg_", "wz_", "pr_", "am_", "mo_", "npc_", "tk_", "sl_", "gs_", "cr_", "cg_", "nj_", "lk_", "rms_",
-        "st_", "sa_", "pf_", "we_", "bs_", "mc_", "all_", "ba_", "nc_", "sr_", "al_", "ht_", "kn_", "tf_",
-    };
-    for (const char* pre : kStripPrefixes) {
-        const size_t len = std::strlen(pre);
-        if (idName.size() > len && idName.compare(0, len, pre) == 0) {
-            idName = idName.substr(len);
-            break;
-        }
-    }
-    return CompactAlnumLower(idName);
-}
 
 static bool TryPlayEffectWaveAtPosition(const vector3d& soundPos, const std::string& relativePath)
 {
-    if (relativePath.empty()) {
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!mode || !mode->m_world || !mode->m_world->m_player) {
         return false;
     }
-
-    CAudio* audio = CAudio::GetInstance();
-    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
-    if (!audio || !gameMode || !gameMode->m_world || !gameMode->m_world->m_player) {
-        return false;
-    }
-
-    const vector3d listenerPos = gameMode->m_world->m_player->m_pos;
-    const std::array<std::string, 3> candidates = {
-        relativePath,
-        std::string("wav\\") + relativePath,
-        std::string("data\\wav\\") + relativePath,
-    };
-
-    for (const std::string& candidate : candidates) {
-        if (audio->PlaySound3D(candidate.c_str(), soundPos, listenerPos, 250, 40, 1.0f)) {
-            return true;
-        }
-    }
-    return false;
+    const vector3d& listener = mode->m_world->m_player->m_pos;
+    return PlayWave(relativePath.c_str(), soundPos.x - listener.x, soundPos.y - listener.y,
+        soundPos.z - listener.z);
 }
 
-static bool TryPlayFirstMatchingEffectWave(const vector3d& pos, std::initializer_list<const char*> paths)
-{
-    for (const char* path : paths) {
-        if (path && TryPlayEffectWaveAtPosition(pos, path)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// EzStr world effects do not emit audio from keyframes; timed casts no longer attach begin-spell STR (which
-// often carried cast SFX). Play impact SFX when server-driven packets spawn the ground/cell effect.
-static void PlayGroundSkillImpactSound(u16 skillId, const vector3d& worldPos)
-{
-    if (!g_soundMode || !g_isSoundOn) {
-        return;
-    }
-
-    switch (skillId) {
-    case 21: // MG_THUNDERSTORM — client ground effect id 30 (thunderstorm.str)
-        if (TryPlayFirstMatchingEffectWave(worldPos, {
-                "effect\\wizard_thunderstorm.wav",
-                "effect\\ef_thunderstorm.wav",
-                "effect\\ef_thunder.wav",
-            })) {
-            return;
-        }
-        break;
-    case 83: // WZ_METEOR — client ground effect id 92 (Meteor*.str); Ref PlayWave aEffectWizardMe
-        if (TryPlayFirstMatchingEffectWave(worldPos, {
-                "effect\\wizard_meteor.wav",
-                "effect\\wizard_meteorstorm.wav",
-                "effect\\ef_meteor.wav",
-            })) {
-            return;
-        }
-        break;
-    case 85: // WZ_VERMILION — client ground effect id 90 (lord.str); Ref Lord() uses aEffectWizardMe_0 + aEffectHunterBl
-        if (TryPlayFirstMatchingEffectWave(worldPos, {
-                "effect\\wizard_vermilion.wav",
-                "effect\\wizard_lord.wav",
-                "effect\\wizard_meteor.wav",
-                "effect\\hunter_blitz.wav",
-                "effect\\ef_vermillion.wav",
-                "effect\\ef_lord.wav",
-                "effect\\ef_lov.wav",
-            })) {
-            return;
-        }
-        break;
-    case 89: // WZ_STORMGUST — client ground effect id 89 (storm gust.str); Ref PlayWave aEffectWizardSt
-        if (TryPlayFirstMatchingEffectWave(worldPos, {
-                "effect\\wizard_stormgust.wav",
-                "effect\\ef_stormgust.wav",
-            })) {
-            return;
-        }
-        break;
-    }
-
-    const SkillMetadata* md = g_skillMgr.GetSkillMetadata(skillId);
-    if (!md || md->skillIdName.empty()) {
-        return;
-    }
-
-    const std::string n = LowercaseAsciiSkillIdName(md->skillIdName);
-    const std::string wizardStem = WizardWaveStemFromSkillIdName(md->skillIdName);
-    if (!wizardStem.empty() && TryPlayEffectWaveAtPosition(worldPos, std::string("effect\\wizard_") + wizardStem + ".wav")) {
-        return;
-    }
-
-    const std::string compactUnderscore = CompactAlnumLower(n);
-    if (!compactUnderscore.empty()
-        && TryPlayEffectWaveAtPosition(worldPos, std::string("effect\\wizard_") + compactUnderscore + ".wav")) {
-        return;
-    }
-
-    if (TryPlayEffectWaveAtPosition(worldPos, std::string("effect\\ef_") + n + ".wav")) {
-        return;
-    }
-
-    if (!compactUnderscore.empty()
-        && TryPlayEffectWaveAtPosition(worldPos, std::string("effect\\ef_") + compactUnderscore + ".wav")) {
-        return;
-    }
-
-    static constexpr const char* kStripPrefixes[] = {
-        "mg_",
-        "wz_",
-        "pr_",
-        "am_",
-        "mo_",
-        "we_",
-        "bs_",
-        "mc_",
-        "all_",
-        "ba_",
-        "nc_",
-        "sr_",
-    };
-
-    for (const char* pre : kStripPrefixes) {
-        const size_t len = std::strlen(pre);
-        if (n.size() > len && n.compare(0, len, pre) == 0) {
-            const std::string tail = n.substr(len);
-            if (TryPlayEffectWaveAtPosition(worldPos, std::string("effect\\wizard_") + CompactAlnumLower(tail) + ".wav")) {
-                return;
-            }
-            if (TryPlayEffectWaveAtPosition(worldPos, std::string("effect\\ef_") + tail + ".wav")) {
-                return;
-            }
-        }
-    }
-}
-
-CRagEffect* SpawnWorldSkillEffect(CGameMode& mode, int effectId, const vector3d& position)
-{
-    if (effectId < 0 || !mode.m_world) {
-        return nullptr;
-    }
-
-    CRagEffect* effect = new CRagEffect();
-    if (!effect) {
-        return nullptr;
-    }
-
-    effect->InitAtWorldPosition(effectId, position);
-    mode.m_world->m_gameObjectList.push_back(effect);
-    return effect;
-}
 
 float ResolveActorHeight(const CWorld* world, float worldX, float worldZ)
 {
@@ -5025,6 +3961,8 @@ float ResolveActorHeight(const CWorld* world, float worldX, float worldZ)
     return 0.0f;
 }
 
+bool IsMonsterSkillActor(const CGameActor* actor);
+
 void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 24) {
@@ -5033,17 +3971,14 @@ void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
 
     const u32 srcGid = ReadLE32(packet.data + 2);
     const u32 dstGid = ReadLE32(packet.data + 6);
-    const int cellX = static_cast<int>(ReadLE16(packet.data + 10));
-    const int cellY = static_cast<int>(ReadLE16(packet.data + 12));
+    const int cellX = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 10)));
+    const int cellY = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 12)));
     const u16 skillId = ReadLE16(packet.data + 14);
-    const PLAYER_SKILL_INFO* castSkillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId));
-    const u16 castLevel = static_cast<u16>(castSkillInfo && castSkillInfo->level > 0 ? castSkillInfo->level : 1);
     const u32 property = ReadLE32(packet.data + 16);
     const int castTimeMs = static_cast<int>(ReadLE32(packet.data + 20));
 
     CGameActor* sourceActor = ResolveCombatActor(mode, srcGid, true);
-    CGameActor* targetActor = dstGid != 0 ? ResolveCombatActor(mode, dstGid, true) : nullptr;
-    if (!sourceActor) {
+    if (sourceActor == nullptr) {
         DbgLog("[GameMode] skill cast ack unresolved src=%u dst=%u skill=%u\n",
             srcGid,
             dstGid,
@@ -5051,89 +3986,71 @@ void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    const vector3d targetPos = targetActor
-        ? targetActor->m_pos
-        : ResolveSkillCellWorldPosition(mode.m_world, cellX, cellY);
-
     int beginEffectId = 16;
-    int motionType = kGameActorCastingStateId;
+    int motionType = 8;
     GetSkillActionInfo2(static_cast<int>(skillId), beginEffectId, motionType, static_cast<int>(property), sourceActor->m_job);
-    LuaSkillEffectInfo luaInfo;
-    if (g_buabridge.GetSkillEffectInfoBySkillId(static_cast<int>(skillId), &luaInfo)) {
-        if (luaInfo.hasBeginEffectId) {
-            beginEffectId = luaInfo.beginEffectId;
-        }
-        if (luaInfo.hasBeginMotionType) {
-            motionType = luaInfo.beginMotionType;
-        }
-    }
 
-    // Ruwach's real visual is already driven by its state/visible effect path; some servers still emit a cast ack
-    // for this instant skill, which otherwise adds a spurious begin-spell ring.
-    if (skillId == 24) {
-        beginEffectId = -1;
-    }
-
-    int motion = motionType;
-    if (motion == 0 && castTimeMs > 0) {
-        motion = kGameActorCastingStateId;
-    } else if ((motion == 5 || motion == 11 || motion == 12) && castTimeMs > 0) {
-        motion = kGameActorCastingStateId;
-    }
-
-    const bool frozenCast = (skillId == 57 || skillId == 62);
-
-    sourceActor->m_isSitting = 0;
-    StopActorMovementForAction(sourceActor);
-    FaceActorTowardPosition(sourceActor, targetPos);
-
-    if (frozenCast) {
-        ClearAttachedSkillEffects(sourceActor);
-        sourceActor->SetModifyFactorOfmotionSpeed(castTimeMs > 0 ? castTimeMs : kDefaultAttackMotionTime);
-        sourceActor->SetState(kGameActorAttackStateId);
+    if (skillId == 62 || skillId == 57) {
+        sourceActor->SetState(motionType);
         sourceActor->m_isMotionFreezed = 1;
-        sourceActor->m_freezeEndTick = timeGetTime() + static_cast<u32>((std::max)(0, castTimeMs));
+        sourceActor->m_freezeEndTick = static_cast<u32>(castTimeMs) + timeGetTime();
     } else {
-        ClearAttachedSkillEffects(sourceActor);
-        if (motion == kGameActorAttackStateId && castTimeMs > 0) {
-            StartSkillSourceAnimation(sourceActor, &targetPos, castTimeMs);
-        } else {
-            sourceActor->m_targetGid = dstGid;
-            int motionToApply = motion;
-            // State 8 never calls SetAction; timed casts need the loop pose (13) so motion/granny state matches Ref.
-            if (castTimeMs > 0 && motionToApply == kGameActorCastingStateId) {
-                motionToApply = kGameActorCastingLoopStateId;
+        sourceActor->SetState(motionType);
+        sourceActor->SendMsg(sourceActor, 85, beginEffectId, castTimeMs >> 4, 0);
+        sourceActor->SendMsg(sourceActor, 82, castTimeMs, 0, 0);
+        if (IsMonsterSkillActor(sourceActor)) {
+            int act = -1;
+            int loopType = 0;
+            const char* jobName = g_session.GetJobName(sourceActor->m_job);
+            g_session.GetMonsterSkillInfo(jobName != nullptr ? jobName : "", skillId, act, loopType);
+            if (act != -1) {
+                sourceActor->SetAction(8 * act - 8, 1, loopType == 0 ? 1 : 0);
+                if (skillId == 193) {
+                    sourceActor->m_motionSpeed = static_cast<float>(castTimeMs / 300);
+                }
             }
-            sourceActor->SetState(motionToApply);
-        }
-        if (beginEffectId >= 0) {
-            sourceActor->SendMsg(sourceActor, 85, beginEffectId, castTimeMs > 0 ? (castTimeMs >> 4) : 0, 0);
-        }
-        if (castTimeMs > 0) {
-            sourceActor->SendMsg(sourceActor, 82, castTimeMs, 0, 0);
         }
     }
 
-    if (dstGid != 0 && targetActor && targetActor != sourceActor) {
-        sourceActor->SendMsg(sourceActor, 81, dstGid, 0, 0);
-        targetActor->SendMsg(targetActor, 86, 60, castTimeMs >> 4, 0);
+    if (dstGid != 0) {
+        CGameActor* targetActor = ResolveCombatActor(mode, dstGid, true);
+        if (targetActor != nullptr && targetActor != sourceActor) {
+            const bool mercenaryOrHomun = targetActor->m_job > 6000 && targetActor->m_job < 6048;
+            const bool pkOrSiege = mode.m_world != nullptr
+                && (mode.m_world->m_isPKZone != 0 || mode.m_world->m_isSiegeMode != 0);
+            if ((!mercenaryOrHomun && targetActor->m_objectType != 9)
+                || !SKILL_INFO::IsGoodSkillForActor(skillId)
+                || pkOrSiege) {
+                sourceActor->SendMsg(sourceActor, 81, dstGid, 0, 0);
+            }
+            FaceActorTowardPosition(sourceActor, targetActor->m_pos);
+            targetActor->SendMsg(targetActor, 86, 60, castTimeMs >> 4, 0);
+            if (skillId == 490) {
+                if (CRagEffect* effect = sourceActor->LaunchEffect(539, vector3d{}, 0.0f)) {
+                    effect->SendMsg(effect, 14, reinterpret_cast<msgparam_t>(&targetActor->m_pos), 0, 0);
+                }
+            }
+        }
+    } else if (mode.m_world != nullptr) {
+        float destX = 0.0f;
+        float destZ = 0.0f;
+        mode.GetClientCoor(cellX, cellY, destX, destZ);
+        FaceActorTowardPosition(sourceActor, vector3d{ destX, sourceActor->m_pos.y, destZ });
+        CGroundScope* scope = new CGroundScope();
+        scope->SendMsg(nullptr, 22, static_cast<msgparam_t>(srcGid), 0, 0);
+        scope->SendMsg(nullptr, 14, cellX, cellY, 0);
+        scope->SendMsg(nullptr, 115, static_cast<msgparam_t>(static_cast<u32>(castTimeMs) + timeGetTime()), 0, 0);
+        scope->SendMsg(nullptr, 117, skillId, 0, 0);
+        mode.m_world->m_gameObjectList.push_back(scope);
     }
 
-    // Ground timed casts: defer cell effect until server sends damage / ZC_SKILL_ENTRY / etc., not cast-start ack.
-    if (dstGid == 0 && castTimeMs <= 0) {
-        const int groundFx = ResolveGroundSkillEffectId(skillId, castLevel);
-        if (groundFx > 0) {
-            SpawnWorldSkillEffect(mode, groundFx, targetPos);
-        }
-    }
-
-    if (skillId == 17 && targetActor && targetActor != sourceActor) { // MG_FIREBOLT
-        if (CRagEffect* effect = sourceActor->LaunchEffect(24, vector3d{}, 0.0f)) {
-            effect->SendMsg(effect, 44, castLevel > 0 ? castLevel : 1, 0, 0);
-            effect->SendMsg(effect, 14, reinterpret_cast<msgparam_t>(&targetActor->m_pos), 0, 0);
-        }
-    } else if (skillId == kSkillIdGrimtooth) {
-        MaybeStartGrimtoothSourcePresentation(sourceActor, srcGid, targetPos);
+    if (skillId == 401) {
+        sourceActor->SetForceAnimation(96, 0, 0, 96, 0, 0, 0, 0);
+        sourceActor->LaunchEffect(402, vector3d{}, 0.0f);
+    } else if (skillId == 268) {
+        sourceActor->SetForceAnimation(96, 0, 0, 96, 0, 1, static_cast<u32>(castTimeMs) + 1000u, 0);
+    } else if (skillId == 261 || skillId == 1015) {
+        sourceActor->SetForceAnimation(96, 0, 0, 96, 0, 0, 0, 0);
     }
 
     DbgLog("[GameMode] skill cast ack src=%u dst=%u skill=%u property=%u castMs=%d cell=(%d,%d)\n",
@@ -5144,6 +4061,111 @@ void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
         castTimeMs,
         cellX,
         cellY);
+}
+
+struct SkillUseArgs {
+    int skillId = 0;
+    int damage = 0;
+    int action = 0;
+    u32 targetGid = 0;
+    u32 startTime = 0;
+    int level = 0;
+    int count = 0;
+    int cellX = -1;
+    int cellY = -1;
+    int attackMT = 0;
+    int attackedMT = 0;
+};
+
+struct GroundSkillArgs {
+    int skillId = 0;
+    int startTime = 0;
+    int cellX = 0;
+    int cellY = 0;
+    int level = 0;
+};
+
+struct AttrStateArgs {
+    int bodyState = 0;
+    int effectState = 0;
+    int healthState = 0;
+    int pkState = 0;
+};
+
+bool IsMonsterSkillActor(const CGameActor* actor)
+{
+    return actor != nullptr
+        && actor->m_objectType != 9
+        && actor->m_job > 1000
+        && actor->m_job < 4000;
+}
+
+void ApplyMonsterSkillMotion(CGameActor* source, int skillId)
+{
+    if (!IsMonsterSkillActor(source)) {
+        return;
+    }
+
+    int act = -1;
+    int loopType = 0;
+    const char* jobName = g_session.GetJobName(source->m_job);
+    g_session.GetMonsterSkillInfo(jobName != nullptr ? jobName : "", skillId, act, loopType);
+    if (act == -1 || source->m_gid == g_session.m_aid) {
+        return;
+    }
+    source->SetAction(8 * act - 8, 1, loopType == 0 ? 1 : 0);
+}
+
+void DeliverSkillUse(CGameMode& mode, const SkillUseArgs& args, u32 sourceGid, bool skill2Extras)
+{
+    CGameActor* source = ResolveCombatActor(mode, sourceGid, true);
+    CGameActor* target = args.targetGid != 0 ? ResolveCombatActor(mode, args.targetGid, true) : nullptr;
+    if (source != nullptr) {
+        source->SendMsg(source, 37, reinterpret_cast<msgparam_t>(&args), 0, 0);
+    } else if (mode.m_world != nullptr) {
+        if (CSkill* skill = mode.m_world->GetSkillByAID(sourceGid)) {
+            skill->SendMsg(skill, 37, reinterpret_cast<msgparam_t>(&args), 0, 0);
+        }
+    }
+    if (skill2Extras && source != nullptr && target != nullptr) {
+        if (args.skillId == 141 && static_cast<u16>(args.level) == 0xFFFFu) {
+            target->LaunchEffect(129, vector3d{}, 0.0f);
+        } else if (args.skillId == 662 && source != target) {
+            target->LaunchEffect(372, vector3d{}, 0.0f);
+        }
+    }
+    if (IsMonsterSkillActor(source)) {
+        ApplyMonsterSkillMotion(source, args.skillId);
+    } else {
+        mode.SendMsg(99,
+            static_cast<msgparam_t>(args.skillId),
+            reinterpret_cast<msgparam_t>(source),
+            static_cast<msgparam_t>(args.level));
+    }
+}
+
+void LaunchGroundArrowShower(CGameMode& mode, CGameActor* source, int cellX, int cellY)
+{
+    if (source == nullptr || mode.m_world == nullptr || mode.m_world->m_attr == nullptr) {
+        return;
+    }
+
+    mode.MakeArrowEffectPos(source->m_pos, source->m_pos, 18.0f);
+    static const int kNeighborCells[8][2] = {
+        { 1, 0 }, { 1, 1 }, { 1, -1 }, { -1, 0 },
+        { -1, 1 }, { -1, -1 }, { 0, 1 }, { 0, -1 },
+    };
+    for (int index = 0; index < 8; ++index) {
+        float clientX = 0.0f;
+        float clientZ = 0.0f;
+        mode.GetClientCoor(cellX + kNeighborCells[index][0], cellY + kNeighborCells[index][1], clientX, clientZ);
+        const vector3d cellPos{
+            clientX,
+            mode.m_world->m_attr->GetHeight(clientX, clientZ),
+            clientZ,
+        };
+        mode.MakeArrowEffectPos(source->m_pos, cellPos, 18.0f);
+    }
 }
 
 void HandleSkillDamageNotify(CGameMode& mode, const PacketView& packet)
@@ -5165,53 +4187,21 @@ void HandleSkillDamageNotify(CGameMode& mode, const PacketView& packet)
         : static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 24)));
     const u16 level = ReadLE16(packet.data + (isLongDamage ? 28 : 26));
     const u16 div = ReadLE16(packet.data + (isLongDamage ? 30 : 28));
-    const u16 displayHitCount = ResolveDisplayedSkillHitCount(skillId, level, div);
     const u8 actionType = packet.data[isLongDamage ? 32 : 30];
 
-    CGameActor* sourceActor = ResolveCombatActor(mode, srcGid, true);
-    CGameActor* targetActor = ResolveCombatActor(mode, dstGid, true);
-    if (!sourceActor || !targetActor) {
-        DbgLog("[GameMode] skill damage unresolved src=%u dst=%u skill=%u opcode=0x%04X\n",
-            srcGid,
-            dstGid,
-            static_cast<unsigned int>(skillId),
-            packet.packetId);
-        return;
-    }
-
-    ClearAttachedSkillEffects(sourceActor,
-        skillId == kSkillIdGrimtooth ? static_cast<int>(kEffectIdGrimtooth) : -1);
-    if (skillId == kSkillIdGrimtooth) {
-        DbgLog("[Projectile] grimtooth damage packet opcode=0x%04X src=%u dst=%u level=%u div=%u damage=%d type=%u\n",
-            packet.packetId,
-            srcGid,
-            dstGid,
-            static_cast<unsigned int>(level),
-            static_cast<unsigned int>(div),
-            damage,
-            static_cast<unsigned int>(actionType));
-        MaybeStartGrimtoothSourcePresentation(sourceActor, srcGid, targetActor->m_pos);
-        if (damage == -30000) {
-            DbgLog("[GameMode] grimtooth sentinel suppressed opcode=0x%04X src=%u dst=%u level=%u div=%u\n",
-                packet.packetId,
-                srcGid,
-                dstGid,
-                static_cast<unsigned int>(level),
-                static_cast<unsigned int>(div));
-            return;
-        }
-    } else {
-        StartSkillSourceAnimation(sourceActor, &targetActor->m_pos, attackMT);
-    }
-    QueueCombatHitReaction(sourceActor, targetActor, attackedMT, damage, actionType);
-    EmitSkillImpactEffects(targetActor, skillId, displayHitCount);
-    if (skillId == kSkillIdHeal && damage > 0) {
-        const int healEffectId = ResolveHealVisualEffectId(static_cast<u32>(damage));
-        if (healEffectId > 0) {
-            targetActor->LaunchEffect(healEffectId, vector3d{}, 0.0f);
-        }
-    }
-    EmitCombatNumbers(sourceActor, targetActor, damage, actionType, displayHitCount);
+    SkillUseArgs args{};
+    args.skillId = skillId;
+    args.damage = damage;
+    args.action = actionType;
+    args.targetGid = dstGid;
+    args.startTime = ReadLE32(packet.data + 12);
+    args.level = level;
+    args.count = div;
+    args.cellX = -1;
+    args.cellY = -1;
+    args.attackMT = attackMT;
+    args.attackedMT = attackedMT;
+    DeliverSkillUse(mode, args, srcGid, isLongDamage);
 
     DbgLog("[GameMode] skill damage opcode=0x%04X src=%u dst=%u skill=%u level=%u damage=%d div=%u type=%u\n",
         packet.packetId,
@@ -5239,53 +4229,27 @@ void HandleSkillDamagePositionNotify(CGameMode& mode, const PacketView& packet)
     const u32 dstGid = ReadLE32(packet.data + 8);
     const int attackMT = static_cast<int>(ReadLE32(packet.data + 16));
     const int attackedMT = static_cast<int>(ReadLE32(packet.data + 20));
-    const int cellX = static_cast<int>(ReadLE16(packet.data + 24));
-    const int cellY = static_cast<int>(ReadLE16(packet.data + 26));
+    const int cellX = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 24)));
+    const int cellY = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 26)));
     const int damage = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 28)));
     const u16 level = ReadLE16(packet.data + 30);
     const u16 div = ReadLE16(packet.data + 32);
-    const u16 displayHitCount = ResolveDisplayedSkillHitCount(skillId, level, div);
     const u8 actionType = packet.data[34];
 
-    CGameActor* sourceActor = ResolveCombatActor(mode, srcGid, true);
-    CGameActor* targetActor = ResolveCombatActor(mode, dstGid, true);
-    const vector3d impactPos = ResolveSkillCellWorldPosition(mode.m_world, cellX, cellY);
+    SkillUseArgs args{};
+    args.skillId = skillId;
+    args.damage = damage;
+    args.action = actionType;
+    args.targetGid = dstGid;
+    args.startTime = ReadLE32(packet.data + 12);
+    args.level = static_cast<int>(static_cast<int16_t>(level));
+    args.count = static_cast<int>(static_cast<int16_t>(div));
+    args.cellX = cellX;
+    args.cellY = cellY;
+    args.attackMT = attackMT;
+    args.attackedMT = attackedMT;
+    DeliverSkillUse(mode, args, srcGid, false);
 
-    if (sourceActor) {
-        ClearAttachedSkillEffects(sourceActor,
-            skillId == kSkillIdGrimtooth ? static_cast<int>(kEffectIdGrimtooth) : -1);
-        if (skillId == kSkillIdGrimtooth) {
-            DbgLog("[Projectile] grimtooth pos packet src=%u dst=%u level=%u div=%u damage=%d cell=(%d,%d)\n",
-                srcGid,
-                dstGid,
-                static_cast<unsigned int>(level),
-                static_cast<unsigned int>(div),
-                damage,
-                cellX,
-                cellY);
-            MaybeStartGrimtoothSourcePresentation(sourceActor, srcGid, impactPos);
-        } else {
-            StartSkillSourceAnimation(sourceActor, &impactPos, attackMT);
-        }
-    }
-    if (skillId == kSkillIdGrimtooth && damage == -30000) {
-        DbgLog("[GameMode] grimtooth sentinel suppressed pos src=%u dst=%u level=%u div=%u cell=(%d,%d)\n",
-            srcGid,
-            dstGid,
-            static_cast<unsigned int>(level),
-            static_cast<unsigned int>(div),
-            cellX,
-            cellY);
-        return;
-    }
-    if (targetActor) {
-        QueueCombatHitReaction(sourceActor, targetActor, attackedMT, damage, actionType);
-        EmitSkillImpactEffects(targetActor, skillId, displayHitCount);
-        EmitCombatNumbers(sourceActor, targetActor, damage, actionType, displayHitCount);
-    }
-
-    SpawnWorldSkillEffect(mode, ResolveGroundSkillEffectId(skillId, level), impactPos);
-    PlayGroundSkillImpactSound(skillId, impactPos);
     DbgLog("[GameMode] skill damage pos src=%u dst=%u skill=%u level=%u damage=%d div=%u cell=(%d,%d)\n",
         srcGid,
         dstGid,
@@ -5309,23 +4273,35 @@ void HandleGroundSkillNotify(CGameMode& mode, const PacketView& packet)
 
     const u16 skillId = ReadLE16(packet.data + 2);
     const u32 srcGid = ReadLE32(packet.data + 4);
-    const u16 level = ReadLE16(packet.data + 8);
-    const int cellX = static_cast<int>(ReadLE16(packet.data + 10));
-    const int cellY = static_cast<int>(ReadLE16(packet.data + 12));
+    const int level = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 8)));
+    const int cellX = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 10)));
+    const int cellY = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 12)));
+
+    GroundSkillArgs args{};
+    args.skillId = skillId;
+    args.startTime = static_cast<int>(ReadLE32(packet.data + 14));
+    args.level = level;
+    args.cellX = cellX;
+    args.cellY = cellY;
 
     CGameActor* sourceActor = ResolveCombatActor(mode, srcGid, true);
-    const vector3d worldPos = ResolveSkillCellWorldPosition(mode.m_world, cellX, cellY);
-    const UseSkillPacketInfo packetInfo = ResolveUseSkillPacketInfo(skillId);
-    if (sourceActor) {
-        ClearAttachedSkillEffects(sourceActor);
-        if (packetInfo.motionType == kGameActorAttackStateId) {
-            StartSkillSourceAnimation(sourceActor, &worldPos, kDefaultAttackMotionTime);
-        } else if (packetInfo.motionType >= 0) {
-            StartSkillStateAnimation(sourceActor, packetInfo.motionType, 0, &worldPos);
-        }
+    if (sourceActor != nullptr) {
+        sourceActor->SendMsg(sourceActor, 38, reinterpret_cast<msgparam_t>(&args), 0, 0);
     }
-    SpawnWorldSkillEffect(mode, ResolveGroundSkillEffectId(skillId, level), worldPos);
-    PlayGroundSkillImpactSound(skillId, worldPos);
+    if (!IsMonsterSkillActor(sourceActor)) {
+        if (skillId == 47) {
+            LaunchGroundArrowShower(mode, sourceActor, cellX, cellY);
+        } else if (skillId == 362 || skillId == 369) {
+            const vector3d origin = mode.m_world->m_player != nullptr ? mode.m_world->m_player->m_pos : vector3d{};
+            TryPlayEffectWaveAtPosition(origin,
+                skillId == 362 ? "effect\\\xB0\xA1\xBD\xBA\xC6\xE7.wav" : "effect\\\xB9\xD9\xBD\xC7\xB8\xAE\xC4\xAB.wav");
+        }
+    } else {
+        int act = -1;
+        int loopType = 0;
+        const char* jobName = g_session.GetJobName(sourceActor->m_job);
+        g_session.GetMonsterSkillInfo(jobName != nullptr ? jobName : "", skillId, act, loopType);
+    }
 
     DbgLog("[GameMode] ground skill src=%u skill=%u level=%u cell=(%d,%d)\n",
         srcGid,
@@ -5333,6 +4309,138 @@ void HandleGroundSkillNotify(CGameMode& mode, const PacketView& packet)
         static_cast<unsigned int>(level),
         cellX,
         cellY);
+}
+
+bool EffectExists(CAbleToMakeEffect* actor, int effectId)
+{
+    if (actor == nullptr) {
+        return false;
+    }
+    for (const CRagEffect* effect : actor->m_effectList) {
+        if (effect != nullptr && effect->GetEffectType() == effectId) {
+            return true;
+        }
+    }
+    return false;
+}
+
+CRagEffect* LaunchOn(CAbleToMakeEffect* actor, int effectId)
+{
+    if (actor == nullptr) {
+        return nullptr;
+    }
+    return actor->LaunchEffect(effectId, vector3d{}, 0.0f);
+}
+
+void PlayUseSkillWave(const char* name, float offsetX, float offsetY, float offsetZ)
+{
+    vector3d origin{};
+    if (g_modeMgr.GetCurrentGameMode() != nullptr
+        && g_modeMgr.GetCurrentGameMode()->m_world != nullptr
+        && g_modeMgr.GetCurrentGameMode()->m_world->m_player != nullptr) {
+        origin = g_modeMgr.GetCurrentGameMode()->m_world->m_player->m_pos;
+    }
+    origin.x += offsetX;
+    origin.y += offsetY;
+    origin.z += offsetZ;
+    TryPlayEffectWaveAtPosition(origin, name != nullptr ? name : "");
+}
+
+void PlayUseSkillWaveAt(const vector3d& position, const char* name)
+{
+    TryPlayEffectWaveAtPosition(position, name != nullptr ? name : "");
+}
+
+#include "UseSkillEffect.generated.inc"
+
+bool UseSkillFacesCell(int skillId)
+{
+    switch (skillId) {
+    case 12:
+    case 18:
+    case 21:
+    case 70:
+    case 79:
+    case 83:
+    case 85:
+    case 89:
+    case 110:
+    case 478:
+        return true;
+    default:
+        return false;
+    }
+}
+
+void DeliverUseSkill(CGameMode& mode, u32 sourceGid, u32 targetGid, int skillId, int rawLevel, bool success)
+{
+    CGameActor* source = sourceGid != 0 ? ResolveCombatActor(mode, sourceGid, true) : nullptr;
+    bool monsterAction = false;
+    if (source != nullptr) {
+        if (skillId == 249 || skillId == 8220) {
+            source->SetState(2);
+        }
+        if (!IsMonsterSkillActor(source) && skillId != 9) {
+            const msgparam_t levelArg = (skillId == 334 || skillId == 335)
+                ? static_cast<msgparam_t>(targetGid)
+                : static_cast<msgparam_t>(rawLevel);
+            mode.SendMsg(99,
+                static_cast<msgparam_t>(skillId),
+                reinterpret_cast<msgparam_t>(source),
+                levelArg);
+        } else {
+            int act = -1;
+            int loopType = 0;
+            const char* jobName = g_session.GetJobName(source->m_job);
+            g_session.GetMonsterSkillInfo(jobName != nullptr ? jobName : "", skillId, act, loopType);
+            if (act != -1) {
+                source->SetAction(8 * act - 8, 1, loopType == 0 ? 1 : 0);
+                monsterAction = true;
+            }
+        }
+    }
+    if (!monsterAction && skillId != 263 && skillId != 272 && skillId != 273 && skillId != 371 && source != nullptr) {
+        int beginEffectId = 16;
+        int motion = 7;
+        GetSkillActionInfo(skillId, beginEffectId, motion);
+        if (source->m_stateId == 1 || motion != 1) {
+            source->SetState(motion);
+        } else {
+            source->SetState(7);
+        }
+    }
+
+    CGameActor* target = nullptr;
+    if (UseSkillFacesCell(skillId)) {
+        if (source != nullptr) {
+            float cellX = 0.0f;
+            float cellZ = 0.0f;
+            mode.GetClientCoor(static_cast<int>(static_cast<unsigned short>(targetGid >> 16)),
+                static_cast<int>(static_cast<unsigned short>(targetGid)),
+                cellX,
+                cellZ);
+            FaceActorTowardPosition(source, vector3d{ cellX, source->m_pos.y, cellZ });
+        }
+    } else if (skillId == 124 || skillId == 131) {
+        if (source != nullptr && mode.m_world != nullptr) {
+            if (CSkill* skill = mode.m_world->GetSkillByAID(targetGid)) {
+                FaceActorTowardPosition(source, skill->m_pos);
+            }
+        }
+    } else {
+        if (targetGid == g_session.m_aid && mode.m_world != nullptr) {
+            target = mode.m_world->m_player;
+        } else if (targetGid != 0) {
+            target = ResolveCombatActor(mode, targetGid, true);
+        }
+        if (source != nullptr && target != nullptr && source != target) {
+            FaceActorTowardPosition(source, target->m_pos);
+        }
+    }
+
+    if (success) {
+        ApplyUseSkillEffects(mode, source, target, skillId, rawLevel, sourceGid, targetGid);
+    }
 }
 
 void HandleSkillNoDamageNotify(CGameMode& mode, const PacketView& packet)
@@ -5346,86 +4454,132 @@ void HandleSkillNoDamageNotify(CGameMode& mode, const PacketView& packet)
     }
 
     const u16 skillId = ReadLE16(packet.data + 2);
-    const u16 levelOrAmount = ReadLE16(packet.data + 4);
+    const int rawLevel = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 4)));
     const u32 dstGid = ReadLE32(packet.data + 6);
     const u32 srcGid = ReadLE32(packet.data + 10);
     const u8 result = packet.data[14];
 
-    CGameActor* sourceActor = srcGid != 0 ? ResolveCombatActor(mode, srcGid, true) : nullptr;
-    CGameActor* targetActor = ResolveCombatActor(mode, dstGid, true);
-    const UseSkillPacketInfo packetInfo = ResolveUseSkillPacketInfo(skillId);
-    if (sourceActor && targetActor && packetInfo.motionType >= 0) {
-        ClearAttachedSkillEffects(sourceActor);
-        StartSkillStateAnimation(sourceActor, packetInfo.motionType, dstGid, &targetActor->m_pos);
-    }
+    DeliverUseSkill(mode, srcGid, dstGid, skillId, rawLevel, result != 0);
 
-    if (targetActor && result != 0 && skillId == kSkillIdHeal) {
-        EmitRecoveryNumber(sourceActor, targetActor, levelOrAmount, kRecoveryHpNumberColor);
-        const int effectId = ResolveHealVisualEffectId(levelOrAmount);
-        if (effectId >= 0) {
-            targetActor->LaunchEffect(effectId, vector3d{}, 0.0f);
-        }
-    } else if (targetActor && result != 0 && packetInfo.launchUseSkill) {
-        const int effectId = ResolveSkillVisibleEffectId(skillId, packetInfo, levelOrAmount);
-        const bool selfCast = sourceActor && sourceActor == targetActor;
-        const bool useTargetSlot = !selfCast
-            && (packetInfo.useTargetSlot || packetInfo.targetEffectId >= 0);
-        if (selfCast && effectId >= 0) {
-            targetActor->SendMsg(targetActor, 85, effectId, 0, 0);
-            if (skillId == 138) {
-                targetActor->LaunchEffect(493, vector3d{}, 0.0f);
-            }
-        } else {
-            ClearAttachedSkillEffects(targetActor);
-            targetActor->SendMsg(targetActor, 86,
-                effectId >= 0 ? effectId : ResolveGroundSkillEffectId(skillId, levelOrAmount),
-                0,
-                0);
-        }
-    }
-
-    if (result != 0
-        && targetActor
-        && sourceActor == targetActor
-        && IsLocalActorId(srcGid)
-        && IsLocalActorId(dstGid)) {
-        ApplyPendingLocalHideSkillFallback(targetActor, skillId);
-    }
-
-    DbgLog("[GameMode] skill nodamage src=%u dst=%u skill=%u value=%u result=%u\n",
+    DbgLog("[GameMode] skill nodamage src=%u dst=%u skill=%u value=%d result=%u\n",
         srcGid,
         dstGid,
         static_cast<unsigned int>(skillId),
-        static_cast<unsigned int>(levelOrAmount),
+        rawLevel,
         static_cast<unsigned int>(result));
+}
+
+void RememberVisibleTrap(CGameMode& mode, u32 unitAid, u32 creatorAid, u8& visible)
+{
+    visible = 1;
+    std::list<u32>& traps = mode.m_visibleTrapList;
+    if (creatorAid == g_session.m_aid || traps.empty()) {
+        traps.push_back(unitAid);
+        return;
+    }
+    for (auto it = traps.begin(); it != traps.end(); ++it) {
+        if (*it == unitAid) {
+            traps.erase(it);
+            visible = 0;
+            return;
+        }
+    }
+    traps.push_back(unitAid);
+}
+
+void PlaceSkillUnit(CGameMode& mode, u32 unitAid, u32 creatorAid, int job, int cellX, int cellY, u8 visible)
+{
+    if (mode.m_world == nullptr) {
+        return;
+    }
+    CSkill* skill = mode.m_world->GetSkillByAID(unitAid);
+    if (skill == nullptr) {
+        if (job < 0x2D) {
+            return;
+        }
+        skill = new CSkill();
+        mode.m_world->m_gameObjectList.push_back(skill);
+        mode.m_world->m_skillList.push_back(skill);
+    }
+    SkillStandEntry entry;
+    entry.aid = unitAid;
+    entry.creatorAid = creatorAid;
+    entry.job = job;
+    entry.cellX = cellX;
+    entry.cellY = cellY;
+    entry.isVisible = visible;
+    skill->SendMsg(skill, 45, reinterpret_cast<msgparam_t>(&entry), 0, 0);
 }
 
 void HandleSkillUnitSet(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 16 || !mode.m_world) {
+    if (!packet.data || packet.packetLength < 16 || mode.m_world == nullptr) {
         return;
     }
-
-    if (!ro::net::IsActiveSkillUnitSetPacket(packet.packetId)) {
+    if (packet.packetId != ro::net::GetActiveMapReceiveProfile().skillUnitSetBasic) {
         return;
     }
 
     const u32 unitAid = ReadLE32(packet.data + 2);
-    const u32 srcGid = ReadLE32(packet.data + 6);
-    const int cellX = static_cast<int>(ReadLE16(packet.data + 10));
-    const int cellY = static_cast<int>(ReadLE16(packet.data + 12));
-    const u8 unitId = packet.data[14];
+    const u32 creatorAid = ReadLE32(packet.data + 6);
+    const int cellX = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 10)));
+    const int cellY = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 12)));
+    const int job = packet.data[14];
+    u8 visible = 1;
+    RememberVisibleTrap(mode, unitAid, creatorAid, visible);
+    PlaceSkillUnit(mode, unitAid, creatorAid, job, cellX, cellY, visible);
+}
 
-    const vector3d worldPos = ResolveSkillCellWorldPosition(mode.m_world, cellX, cellY);
-    SpawnWorldSkillEffect(mode, static_cast<int>(unitId), worldPos);
+void HandleSkillUnitSet2(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 97 || mode.m_world == nullptr) {
+        return;
+    }
+    if (packet.packetId != ro::net::GetActiveMapReceiveProfile().skillUnitSetExtended) {
+        return;
+    }
+    if (packet.data[16] == 1) {
+        const u32 unitAid = ReadLE32(packet.data + 2);
+        const int cellX = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 10)));
+        const int cellY = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 12)));
+        char text[80];
+        std::memcpy(text, packet.data + 17, 79);
+        text[79] = '\0';
+        CGraffiSkill* graffiti = new CGraffiSkill();
+        mode.m_world->m_gameObjectList.push_back(graffiti);
+        mode.m_world->m_skillList.push_back(graffiti);
+        graffiti->SendMsg(graffiti, 22, static_cast<msgparam_t>(unitAid), 0, 0);
+        graffiti->SendMsg(graffiti, 117, reinterpret_cast<msgparam_t>(text), cellX, cellY);
+        return;
+    }
 
-    DbgLog("[GameMode] skill unit opcode=0x%04X unitAid=%u src=%u unitId=%u cell=(%d,%d)\n",
-        packet.packetId,
-        unitAid,
-        srcGid,
-        static_cast<unsigned int>(unitId),
-        cellX,
-        cellY);
+    const u32 unitAid = ReadLE32(packet.data + 2);
+    const u32 creatorAid = ReadLE32(packet.data + 6);
+    const int cellX = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 10)));
+    const int cellY = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 12)));
+    const int job = packet.data[14];
+    u8 visible = 1;
+    RememberVisibleTrap(mode, unitAid, creatorAid, visible);
+    PlaceSkillUnit(mode, unitAid, creatorAid, job, cellX, cellY, visible);
+}
+
+void HandleSkillDisappear(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 6 || mode.m_world == nullptr) {
+        return;
+    }
+    mode.m_world->RemoveSkill(ReadLE32(packet.data + 2));
+}
+
+void HandleSkillUpdate(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 6 || mode.m_world == nullptr) {
+        return;
+    }
+    CSkill* skill = mode.m_world->GetSkillByAID(ReadLE32(packet.data + 2));
+    if (skill != nullptr && skill->m_job > 138 && skill->m_job <= 153) {
+        skill->SendMsg(skill, 119, 0, 0, 0);
+    }
 }
 
 void DecodePosDir(const u8* src, int& posX, int& posY, int& dir)
@@ -6645,16 +5799,20 @@ void HandleActorStateChange(CGameMode& mode, const PacketView& packet)
     }
 
     const int oldEffectState = actor->m_effectState;
+    AttrStateArgs state{};
+    state.bodyState = bodyState;
+    state.effectState = effectState;
+    state.healthState = healthState;
+    state.pkState = pkState;
+    actor->SendMsg(actor, 43, reinterpret_cast<msgparam_t>(&state), 0, 0);
 
-    actor->m_bodyState = bodyState;
-    actor->m_healthState = healthState;
-    actor->m_effectState = effectState;
-    actor->m_pkState = pkState;
     const bool localPlayer = IsLocalPlayerActor(mode, gid);
     if (localPlayer) {
         UpdateKnownLocalCartState(IsEffectStatePushCart(effectState), effectState);
     }
-    RefreshActorEffectStatePresentation(actor, oldEffectState);
+    if (HasEffectStateFlag(effectState, kEffectStateSightMask) && !ActorHasAttachedEffect(actor, kSightStateEffectId)) {
+        actor->LaunchEffect(kSightStateEffectId, vector3d{}, 0.0f);
+    }
     if (localPlayer && IsEffectStatePushCartChanged(actor->m_effectState, oldEffectState)) {
         InvalidateCartUi();
     }
@@ -8613,7 +7771,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0105, HandlePartyMemberRemoved);
     RegisterHandlerIfValid(router, receiveProfile.partyMemberAddedExtended, HandlePartyMemberAdded);
     RegisterHandlerIfValid(router, receiveProfile.skillUnitSetBasic, HandleSkillUnitSet);
-    router.Register(0x0120, HandleIgnorePacket);
+    router.Register(0x0120, HandleSkillDisappear);
     router.Register(0x0131, HandleIgnorePacket);
     router.Register(0x0132, HandleIgnorePacket);
     router.Register(0x0141, HandleSelfStatInfo);
@@ -8621,9 +7779,13 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     RegisterHandlerIfValid(router, receiveProfile.notifyEffectBasic, HandleNotifyEffect);
     router.Register(0x01B9, HandleSkillCastCancel);
     router.Register(0x0192, HandleIgnorePacket);
-    RegisterHandlerIfValid(router, receiveProfile.skillUnitSetExtended, HandleSkillUnitSet);
+    RegisterHandlerIfValid(router, receiveProfile.skillUnitSetExtended, HandleSkillUnitSet2);
+    router.Register(0x01AC, HandleSkillUpdate);
     router.Register(0x01CF, HandleIgnorePacket);
     router.Register(0x01D0, HandleIgnorePacket);
+    router.Register(0x01D3, HandleSound);
+    router.Register(0x01D2, HandleComboDelay);
+    router.Register(0x01D1, HandleBladeStop);
         router.Register(0x0199, HandleIgnorePacket); // map property state; keep framing aligned until consumed
     router.Register(0x01D6, HandleIgnorePacket); // map type / mapflags hint; framing only for now
     router.Register(0x01D7, HandleActorSpriteChange);

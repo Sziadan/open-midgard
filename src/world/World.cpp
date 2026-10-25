@@ -1,4 +1,5 @@
 #include "World.h"
+#include "world/GameActor.h"
 #include "world/MsgEffect.h"
 #include "world/3dActor.h"
 #include "world/RagEffect.h"
@@ -4701,6 +4702,93 @@ void C3dGround::RenderAttrTile(const matrix& viewMatrix, int attrX, int attrY, u
     g_renderer.AddRP(face, 1);
 }
 
+void C3dGround::RenderGroundTile(const matrix& viewMatrix, int attrX, int attrY, u32 color, CTexture* texture, const vector2d uv[4]) const
+{
+    if (!m_attr || !texture || !uv || texture->m_w == 0 || texture->m_h == 0) {
+        return;
+    }
+    if (attrX < 0 || attrY < 0 || attrX >= m_attr->m_width || attrY >= m_attr->m_height) {
+        return;
+    }
+
+    const CGroundCell* groundCell = GetCell(attrX / 2, attrY / 2);
+    if (!groundCell || groundCell->topSurfaceId < 0) {
+        return;
+    }
+    const CGroundSurface* topSurface = GetSurface(groundCell->topSurfaceId);
+    if (!topSurface) {
+        return;
+    }
+
+    const CAttrCell& attrCell = m_attr->m_cells[static_cast<size_t>(attrY) * static_cast<size_t>(m_attr->m_width) + static_cast<size_t>(attrX)];
+    vector3d worldVerts[4] = {
+        topSurface->vertex[0].wvert,
+        topSurface->vertex[1].wvert,
+        topSurface->vertex[2].wvert,
+        topSurface->vertex[3].wvert,
+    };
+    worldVerts[0].y = attrCell.h1;
+    worldVerts[1].y = attrCell.h2;
+    worldVerts[2].y = attrCell.h3;
+    worldVerts[3].y = attrCell.h4;
+
+    const float leftX = worldVerts[0].x;
+    const float rightX = worldVerts[1].x;
+    const float topZ = worldVerts[0].z;
+    const float bottomZ = worldVerts[2].z;
+    for (int i = 0; i < 4; ++i) {
+        if (attrX & 1) {
+            if (worldVerts[i].x < rightX) {
+                worldVerts[i].x = (rightX - worldVerts[i].x) * 0.5f + worldVerts[i].x;
+            }
+        } else if (worldVerts[i].x > leftX) {
+            worldVerts[i].x = worldVerts[i].x - (worldVerts[i].x - leftX) * 0.5f;
+        }
+
+        if (attrY & 1) {
+            if (worldVerts[i].z < bottomZ) {
+                worldVerts[i].z = (bottomZ - worldVerts[i].z) * 0.5f + worldVerts[i].z;
+            }
+        } else if (worldVerts[i].z > topZ) {
+            worldVerts[i].z = worldVerts[i].z - (worldVerts[i].z - topZ) * 0.5f;
+        }
+    }
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) {
+        return;
+    }
+    face->primType = D3DPT_TRIANGLESTRIP;
+    face->verts = face->m_verts;
+    face->numVerts = 4;
+    face->indices = nullptr;
+    face->numIndices = 0;
+    face->tex = texture;
+    face->mtPreset = 0;
+    face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA;
+    face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->alphaSortKey = 0.0f;
+
+    tlvertex3d* verts = face->m_verts;
+    for (int i = 0; i < 4; ++i) {
+        if (!ProjectPoint(g_renderer, viewMatrix, worldVerts[i], &verts[i])) {
+            return;
+        }
+        verts[i].z -= 0.000030517578f;
+        verts[i].color = color;
+        verts[i].specular = 0xFF000000u;
+    }
+
+    const float uAdjust = static_cast<float>(texture->m_updateWidth) / static_cast<float>(texture->m_w);
+    const float vAdjust = static_cast<float>(texture->m_updateHeight) / static_cast<float>(texture->m_h);
+    for (int i = 0; i < 4; ++i) {
+        verts[i].tu = uAdjust * uv[i].x;
+        verts[i].tv = vAdjust * uv[i].y;
+    }
+    g_renderer.AddRP(face, 1);
+}
+
 void C3dGround::FlushGround(const matrix& viewMatrix)
 {
     if (m_width <= 0 || m_height <= 0 || m_cells.empty()) {
@@ -5745,12 +5833,94 @@ void CWorld::UpdateGameObjects()
     for (auto it = m_gameObjectList.begin(); it != m_gameObjectList.end(); ) {
         CGameObject* object = *it;
         if (!object || object->OnProcess() == 0) {
+            if (CSkill* skill = dynamic_cast<CSkill*>(object)) {
+                m_skillList.remove(skill);
+            }
             delete object;
             it = m_gameObjectList.erase(it);
             continue;
         }
         ++it;
     }
+}
+
+CGameActor* CWorld::GetGameActorByAID(u32 aid) const
+{
+    for (CGameActor* actor : m_actorList) {
+        if (actor && actor->m_gid == aid) {
+            return actor;
+        }
+    }
+    return nullptr;
+}
+
+CSkill* CWorld::GetSkillByAID(u32 aid)
+{
+    for (CSkill* skill : m_skillList) {
+        if (skill != nullptr && skill->m_aid == aid) {
+            return skill;
+        }
+    }
+    return nullptr;
+}
+
+CSkill* CWorld::MakeSkill(int job, int cellX, int cellY)
+{
+    u32 aid = 199;
+    for (const CSkill* skill : m_skillList) {
+        if (skill != nullptr && skill->m_aid > aid) {
+            aid = skill->m_aid;
+        }
+    }
+
+    CSkill* skill = new CSkill();
+    m_gameObjectList.push_back(skill);
+    m_skillList.push_back(skill);
+    SkillStandEntry entry;
+    entry.job = job;
+    entry.aid = aid + 1;
+    entry.cellX = cellX;
+    entry.cellY = cellY;
+    entry.isVisible = 1;
+    entry.creatorAid = 1;
+    skill->SendMsg(skill, 45, reinterpret_cast<msgparam_t>(&entry), 0, 0);
+    return skill;
+}
+
+bool CWorld::RemoveSkill(u32 aid)
+{
+    CSkill* skill = nullptr;
+    for (auto it = m_skillList.begin(); it != m_skillList.end(); ++it) {
+        if (*it != nullptr && (*it)->m_aid == aid) {
+            skill = *it;
+            m_skillList.erase(it);
+            break;
+        }
+    }
+    if (skill == nullptr) {
+        return false;
+    }
+    m_gameObjectList.remove(skill);
+    delete skill;
+    return true;
+}
+
+bool CWorld::RemoveSkillByJob(int job)
+{
+    CSkill* skill = nullptr;
+    for (auto it = m_skillList.begin(); it != m_skillList.end(); ++it) {
+        if (*it != nullptr && (*it)->m_job == job) {
+            skill = *it;
+            m_skillList.erase(it);
+            break;
+        }
+    }
+    if (skill == nullptr) {
+        return false;
+    }
+    m_gameObjectList.remove(skill);
+    delete skill;
+    return true;
 }
 
 void CWorld::RenderGameObjects(const matrix& viewMatrix, u32* outRenderedObjects, u32* outRenderedFixedEffects) const

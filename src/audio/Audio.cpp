@@ -101,21 +101,8 @@ bool CAudio::PlaySound(const char* fName, float vol)
 bool CAudio::PlaySound3D(const char* fName, const vector3d& soundPos, const vector3d& listenerPos,
     int volumeMaxDist, int volumeMinDist, float vol)
 {
-    const float dx = soundPos.x - listenerPos.x;
-    const float dy = soundPos.y - listenerPos.y;
-    const float dz = soundPos.z - listenerPos.z;
-    const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
-    const float maxDist = static_cast<float>((std::max)(volumeMaxDist, 1));
-    const float minDist = static_cast<float>((std::max)(volumeMinDist, 1));
-    if (distance >= maxDist) {
-        return false;
-    }
-
-    float distanceFactor = 1.0f;
-    if (distance > minDist) {
-        distanceFactor = minDist / distance;
-    }
-    return PlaySound(fName, ClampUnit(vol * distanceFactor));
+    return ::PlayWave(fName, soundPos.x - listenerPos.x, soundPos.y - listenerPos.y,
+        soundPos.z - listenerPos.z, volumeMaxDist, volumeMinDist, vol);
 }
 
 void CAudio::PlayBGM(const char* fName)

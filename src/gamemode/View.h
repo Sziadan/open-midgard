@@ -36,11 +36,14 @@ public:
     void RotateByDrag(int deltaX, int deltaY);
     void ZoomByWheel(int wheelDelta);
     void ResetToDefaultOrientation();
+    // Ref/dhxj/View.cpp SetQuake. Type 0 lasts 650 ms, type 1 lasts 200 ms.
+    void SetQuake(bool isQuake, int type, float sideQuake, float frontQuake, float latitudeQuake);
     void UpdateHoverCellFromScreen(int screenX, int screenY);
     void ClearHoverCell();
     bool ScreenToHoveredAttrCell(int screenX, int screenY, int* outAttrX, int* outAttrY) const;
     const matrix& GetViewMatrix() const { return m_viewMatrix; }
     float GetCameraLongitude() const { return m_cur.longitude; }
+    float GetCameraLatitude() const { return m_cur.latitude; }
     float GetTargetCameraLatitude() const { return m_dest.latitude; }
     float GetTargetCameraDistance() const { return m_dest.distance; }
     u64 BillboardFrameCacheSnapTag() const;
@@ -55,6 +58,7 @@ private:
 
     void BuildViewMatrix();
     void InterpolateViewInfo();
+    void ProcessQuake();
     void ClampCameraState(CameraState* state) const;
     float ClampLongitude(float longitude) const;
     vector3d ResolveTargetPosition() const;
@@ -82,4 +86,11 @@ private:
     mutable int m_hoverCacheAttrY;
     mutable bool m_hoverCacheResolved;
     mutable bool m_hoverCacheHasCell;
+    bool m_isQuake;
+    bool m_quakeStepPending;
+    u32 m_quakeStartTick;
+    u32 m_quakeTime;
+    float m_sideQuake;
+    float m_frontQuake;
+    float m_latitudeQuake;
 };

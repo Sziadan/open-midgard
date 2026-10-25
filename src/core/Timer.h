@@ -15,6 +15,10 @@ void ResetTimer();
 // Returns 1 when frame-skipping is disabled (g_frameskip == 0).
 unsigned long GetSkipFrameCount();
 
+// Set by the game-mode update to the number of logic steps this frame.
+// Effect processing uses it the way CGameMode::OnUpdate writes g_isSkipFrame.
+extern int g_isSkipFrame;
+
 // Returns 1 (stub: was originally meant to suppress scene rendering
 // if behind schedule, but the original implementation always returned 1).
 int SkipSceneRendering();

@@ -1,0 +1,41 @@
+Continuation validation — 2026-10-25
+
+cmake --preset vs2022-x64 -DRO_ENABLE_DEV_DEPLOY=ON
+  PASS (exit 0). Existing CMake developer warnings: CMP0135 / CMP0169.
+cmake --build --preset build-release-x64
+  PASS (exit 0), build64/Release/open-midgard.exe linked.
+  Optional OldRO copy skipped: Permission denied. Executable was not deployed there.
+
+.venv/Scripts/python.exe tools/test_skill_reference_index.py
+  PASS: 5 Python tests (schema/anchors, shared labels, nested cases, duplicate signature,
+  original dispatch case sets, cp949 hex literal regression).
+cmake -S tools/tests -B build64/skill-parity-tests -G "Visual Studio 17 2022" -A x64
+cmake --build build64/skill-parity-tests --config Release
+ctest --test-dir build64/skill-parity-tests -C Release --output-on-failure
+  PASS: 4/4 suites, 58 explicit C++ checks.
+  wave_math_checks: 13; server_sound_checks: 24 (sound/combo/Blade Stop);
+  wave_dispatch_checks: 8; forced_motion_checks: 13.
+  Production function bodies compiled against silent test doubles; no media played/rendered.
+
+.venv/Scripts/python.exe tools/generate_skill_tables.py
+.venv/Scripts/python.exe tools/generate_use_skill_effect.py
+  PASS: repeated full generation, zero byte differences after line-ending normalization.
+  Manual BLOCKED.md entries preserved.
+  710 duration entries; 167 STR mappings; 391 wave calls (19 runtime names);
+  693 effect dispatch rows; 2526 skill-behavior/inventory rows;
+  13 runtime producer ports pending; 0 generated-table validation errors;
+  use-skill translator: 0 unported statements.
+
+.venv/Scripts/python.exe tools/audit_skill_parity.py
+  Static routing: 30/41 required opcodes have a non-ignore registration.
+  Eleven routes remain missing/ignored. Presence is not body/receiver parity.
+
+git diff --check
+  PASS. Git reports LF-to-CRLF normalization notices for some working files.
+
+NOT VERIFIED:
+  Full effect/primitive/actor/status/ground-unit parity.
+  All packet handler bodies and receivers.
+  Native Miles 3D provider and sound sample-pool equivalence.
+  SKILL_MATRIX.md (missing), live RunningServer tests, 20 random-skill acceptance.
+  The complete implementation plan remains in progress.

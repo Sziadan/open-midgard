@@ -57,6 +57,10 @@ public:
 
 class IAudioBackend;
 
+// Ref/Wave.cpp:289. Coordinates are relative to the player.
+bool PlayWave(const char* name, float x, float y, float z,
+    int volumeMaxDist = 250, int volumeMinDist = 40, float vFactor = 1.0f);
+
 // CAudio is the high-level audio manager used by the client.
 class CAudio {
 public:
@@ -72,6 +76,8 @@ public:
     bool Init();
     void Shutdown();
     bool PlaySound(const char* fName, float vol = 1.0f);
+    bool PlayWaveRelative(const char* fName, float x, float y, float z,
+        int volumeMaxDist, int volumeMinDist, float vFactor);
     bool PlaySound3D(const char* fName, const vector3d& soundPos, const vector3d& listenerPos,
         int volumeMaxDist = 250, int volumeMinDist = 40, float vol = 1.0f);
     void PlayBGM(const char* fName);

@@ -1,6 +1,7 @@
 #include "AudioBackend.h"
 
 #include "Audio.h"
+#include "WaveMath.h"
 #include "core/DllMgr.h"
 
 #include <algorithm>
@@ -94,6 +95,17 @@ public:
             g_dllExports.AIL_shutdown();
         }
         m_startedUp = false;
+    }
+
+    // This backend opens a digital driver only. Ref/Sound.cpp:166 falls back
+    // to PlayDigital when there is no 3D provider.
+    bool Has3DProvider() const override { return false; }
+
+    bool PlayWave3D(const char* name, float x, float y, float z, int, int, float volume) override
+    {
+        const int attenuated = ro::audio::DigitalWaveVolume(x, y, z, 250, 40,
+            static_cast<int>(volume * 127.0f), 1.0f);
+        return PlayWave(name, static_cast<float>(attenuated) / 127.0f);
     }
 
     bool PlayWave(const char* fName, float volume) override

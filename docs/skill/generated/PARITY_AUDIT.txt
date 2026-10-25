@@ -1,0 +1,20 @@
+Static skill parity audit (not runtime verification)
+Reference dispatch case labels: 693
+OnProcess: 416, OnProcess2: 73, OnProcess3: 204
+Packet handlers registered and not ignored: 30/41
+Registration does not establish a 1:1 handler body or receiver implementation.
+Open packet routes:
+  0x01D0: HandleIgnorePacket
+  0x01E1: HandleIgnorePacket
+  0x01CF: HandleIgnorePacket
+  0x01CD: MISSING
+  0x0215: MISSING
+  0x0284: MISSING
+  0x0191: MISSING
+  0x043D: MISSING
+  0x0162: MISSING
+  0x0145: MISSING
+  0x01B4: MISSING
+SKILL_MATRIX.md: MISSING
+Effect bodies/primitives: incomplete; see PROGRESS.md and PARITY_LOG.md.
+Live/replay per-skill acceptance: not established by this static audit.

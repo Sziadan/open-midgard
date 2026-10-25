@@ -137,9 +137,15 @@ public:
     virtual void OnExit() override;
     virtual int  OnRun() override;
     virtual void OnUpdate() override;
+    void ProcessPlayWave();
     virtual msgresult_t SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override;
     virtual void OnChangeState(int newState) override;
     void MakeFog(int fogOn);
+    // Ref/GameMode.cpp:11527. hideTime is in 24 Hz frames.
+    void MakeArrowEffectPos(const vector3d& sourcePos, const vector3d& targetPos, float hideTime);
+    void MakeArrowEffect(const vector3d& sourcePos, unsigned int targetGid, float hideTime, int job);
+    void GetServerCoor(float clientX, float clientZ, int& serverX, int& serverY) const;
+    void GetClientCoor(int serverX, int serverY, float& clientX, float& clientZ) const;
 
     // Memory layout from HighPriest.exe.h:30992
     int m_areaLeft, m_areaRight, m_areaTop, m_areaBottom;
@@ -190,6 +196,7 @@ public:
     u32 m_lastNameWaitingListTick;
     
     std::vector<PLAY_WAVE_INFO> m_playWaveList;
+    std::vector<PLAY_WAVE_INFO> m_ambientWaveList;
     std::vector<u32> m_KillerList;
     
     std::string m_lastWhisperMenuCharacterName;

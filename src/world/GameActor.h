@@ -52,17 +52,21 @@ struct CPathInfo {
     }
 };
 
+// 2008 WBA is 40 bytes. attackedSpeedFactor sits at offset 32 (HighPriest message 27
+// writes a float there). targetGid holds the attacker's gid. Message 27/131/134
+// overwrite that float's bits with the running damage and change message to
+// 111/130/133 when the running damage is non-zero.
 struct WBA {
-    u32 gid = 0;
-    u32 time = 0;
     int message = 0;
-    int attackedMotionTime = 0;
     int damage = 0;
-    u32 damageColor = 0;
-    int damageKind = 0;
-    float damageDestX = 0.0f;
-    float damageDestZ = 0.0f;
-    char waveName[128] = {};
+    u32 time = 0;
+    u32 targetGid = 0;
+    int tCellX = -1;
+    int tCellY = -1;
+    int effectId1 = -1;
+    int effectId2 = -1;
+    float attackedSpeedFactor = 1.0f;
+    int effectLevel = 1;
 };
 struct _MSG2AI { u8 gap[32]; };
 struct PROCEEDTYPE { int type; };
@@ -92,6 +96,11 @@ public:
 class CRenderObject : public CGameObject {
 public:
     CRenderObject();
+
+    void SetForceAnimation(int act, int mot, int maxMot, int finishAct, int finishMot, int isAnim, u32 endTick, int isLoop);
+    void SetForceAnimEndTick(u32 tick);
+    void ProcessForcedMotion();
+    void SetArgb(int alpha, int red, int green, int blue);
 
     vector3d m_pos;
     std::string m_bodyPaletteName;
@@ -191,6 +200,26 @@ public:
     CRagEffect* m_magicTargetEffect;
 };
 
+class CGroundScope : public CAbleToMakeEffect {
+public:
+    CGroundScope();
+
+    u8 OnProcess() override;
+    void Render(matrix* viewMatrix) override;
+    void SendMsg(CGameObject* sender, int message, msgparam_t arg1, msgparam_t arg2, msgparam_t arg3) override;
+
+private:
+    int GetScopeSize(int skillId) const;
+
+    u32 m_masterGid = 0;
+    int m_groundPosX = 0;
+    int m_groundPosY = 0;
+    u32 m_lastingTime = 0;
+    int m_scopeSize = 1;
+    float m_rot = 0.0f;
+    float m_rotSpeed = 0.0f;
+};
+
 class CGameActor : public CAbleToMakeEffect {
 public:
     CGameActor();
@@ -243,6 +272,12 @@ public:
     u8 m_objectType;
     _MSG2AI m_homunMsg, m_homunResMsg, m_merMsg, m_merResMsg;
     CMsgEffect* m_birdEffect;
+    CMsgEffect* m_iceEffect;
+    CMsgEffect* m_curseEffect;
+    CMsgEffect* m_sleepEffect;
+    CMsgEffect* m_stunEffect;
+    CMsgEffect* m_silenceEffect;
+    CMsgEffect* m_angelusEffect;
     CMsgEffect* m_cartEffect;
     CMsgEffect* m_lastDamageNumberEffect;
     std::list<CMsgEffect*> m_msgEffectList;
@@ -259,6 +294,7 @@ public:
     virtual void ProcessWillBeAttacked();
     virtual void SetModifyFactorOfmotionSpeed(int attackMT);
     virtual int GetAttackMotion();
+    virtual int GetWeapon() const { return -1; } // Ref/GameActor.cpp:2194
     virtual void RegisterPos();
     virtual void UnRegisterPos();
     void StartHideFade(u32 durationMs);
@@ -266,6 +302,14 @@ public:
     bool IsHideFadeActive(u32 now) const;
     u32 GetHideFadeAlpha(u32 now) const;
     void QueueWillBeAttacked(const WBA& hitInfo);
+    void EnqueueWillBeAttacked(WBA* hit, int runningDamage, int forcedMessage);
+    void HandleAttacked(const WBA& hit);
+    void Am_Action(const int* arg);
+    void Am_Skill(const int* arg);
+    void Am_Groundskill(const int* arg);
+    void StartMoveToCell(int cellX, int cellY, int pathFlag);
+    void SetAttrState(int bodyState, int effectState, int healthState, bool changedNow);
+    CMsgEffect* SpawnMsgSprite(int processType, const char* spritePath, const char* actPath, int action, float zoom);
     void DeleteMatchingEffect(CMsgEffect* effect);
     void DeleteTotalNumber(int kind);
     void ProcessSkillRechargeGageOverlay(int screenCenterX, int screenTopY, int clientHeight);
@@ -371,6 +415,7 @@ public:
     HairInfo m_hair;
 
     CGrannyPc();
+    int GetWeapon() const override { return m_weapon; } // Ref/Pc.cpp:2454
     virtual ~CGrannyPc();
     virtual void SetAction(int act, int mot, int type) override;
     virtual void Render();
@@ -379,6 +424,7 @@ public:
 class CPc : public CGameActor {
 public:
     CPc();
+    int GetWeapon() const override { return m_weapon; } // Ref/Npc.cpp:859
     virtual ~CPc();
     virtual void SetState(int state) override;
     virtual void SetModifyFactorOfmotionSpeed(int attackMT) override;
@@ -434,12 +480,96 @@ public:
     CRagEffect* m_statusEffect;
 };
 
+struct SkillStandEntry {
+    u32 aid = 0;
+    u32 creatorAid = 0;
+    int job = 0;
+    int cellX = 0;
+    int cellY = 0;
+    u8 isVisible = 0;
+};
+
 class CSkill : public CGameActor {
 public:
-    u32 m_launchCnt, m_SkillStartTime, m_aid;
-    C3dActor* m_3dactor;
-    CRagEffect* m_LoopEffect;
-    int m_effectId;
+    CSkill();
+    ~CSkill() override;
+
+    u8 OnProcess() override;
+    void Render(matrix* viewMatrix) override;
+    void SendMsg(CGameObject* sender, int message, msgparam_t arg1, msgparam_t arg2, msgparam_t arg3) override;
+
+    u32 m_launchCnt = 0;
+    u32 m_SkillStartTime = 0;
+    u32 m_aid = 0;
+    C3dActor* m_3dactor = nullptr;
+    CRagEffect* m_LoopEffect = nullptr;
+    int m_effectId = -1;
+
+private:
+    void HideModel();
+    void ShowModel(const char* modelName);
+    const char* TrapModelName() const;
+    void ApplyStandEntry(const SkillStandEntry& entry);
+    void LaunchPeriodic(int effectId, int subtract);
+    void LaunchLoop(int effectId);
+    void PlayUnitWave(const char* name) const;
+    bool EffectExists(int effectId) const;
+};
+
+class CGraffiSkill : public CSkill {
+public:
+    CGraffiSkill();
+    ~CGraffiSkill() override;
+
+    u8 OnProcess() override;
+    void Render(matrix* viewMatrix) override;
+    void SendMsg(CGameObject* sender, int message, msgparam_t arg1, msgparam_t arg2, msgparam_t arg3) override;
+
+private:
+    void OnInit();
+
+    int m_offsX = 0;
+    int m_offsY = 0;
+    int m_groundPosX = 0;
+    int m_groundPosY = 0;
+    u32 m_lastingTime = 0;
+    float m_rot = 0.0f;
+    CTexture* m_tex = nullptr;
+    char m_strMsg[80];
+};
+
+// Ref/Skill.cpp CArrowEffect (0x689150). Message 14 aims at an actor id.
+// Message 64 aims at a world position. Skill 47 uses message 64.
+class CArrowEffect : public CRenderObject {
+public:
+    CArrowEffect();
+    ~CArrowEffect() override;
+
+    u8 OnProcess() override;
+    void Render(matrix* viewMatrix) override;
+    void SendMsg(CGameObject* sender, int message, msgparam_t arg1, msgparam_t arg2, msgparam_t arg3) override;
+
+    // The 2008 SendMsg has a fourth argument (monster job). This client's
+    // message signature does not, so MakeArrowEffect stores the job here first.
+    void SetSpriteJob(int job);
+
+private:
+    void ApplySpriteForJob(int job);
+    void LoadSpriteResources();
+    bool EnsureBillboard();
+
+    vector3d m_sPos;
+    vector3d m_tPos;
+    vector3d m_moveSpeed;
+    float m_hideTime;
+    float m_fastFactor;
+    u32 m_targetGid;
+    int m_process;
+    int m_spriteJob;
+    std::string m_sprName;
+    std::string m_actName;
+    CTexture* m_billboardTexture;
+    int m_cachedBillboardMotion;
 };
 
 class CItem : public CRenderObject {

@@ -133,6 +133,7 @@ public:
     const CGroundCell* GetCell(int x, int y) const;
     const CGroundSurface* GetSurface(int index) const;
     void RenderAttrTile(const matrix& viewMatrix, int attrX, int attrY, u32 color) const;
+    void RenderGroundTile(const matrix& viewMatrix, int attrX, int attrY, u32 color, CTexture* texture, const vector2d uv[4]) const;
     void FlushGround(const matrix& viewMatrix);
 
     C3dAttr* m_attr;
@@ -260,6 +261,11 @@ public:
     void UpdateCalculatedNodeForTile(int tileX, int tileY);
     void RegisterActor(CGameActor* actor);
     void UnregisterActor(CGameActor* actor);
+    CSkill* GetSkillByAID(u32 aid);
+    CGameActor* GetGameActorByAID(u32 aid) const;
+    CSkill* MakeSkill(int job, int cellX, int cellY);
+    bool RemoveSkill(u32 aid);
+    bool RemoveSkillByJob(int job);
     std::vector<CGameActor*>* GetActorsAtWorldPos(float x, float z);
     const std::vector<CGameActor*>* GetActorsAtWorldPos(float x, float z) const;
     bool BuildGroundFromGnd(const CGndRes& gnd,

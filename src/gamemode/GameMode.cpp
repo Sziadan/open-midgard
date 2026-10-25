@@ -12,6 +12,8 @@
 #include "pathfinder/PathFinder.h"
 #include "core/ClientInfoLocale.h"
 #include "core/File.h"
+#include "core/Globals.h"
+#include "core/Timer.h"
 #include "DebugLog.h"
 #include "render/DC.h"
 #include "res/ActRes.h"
@@ -465,7 +467,7 @@ void UpdateMapAudio(CGameMode& mode)
         const float volumeFactor = (std::max)(0.0f, sound->vol);
         const u32 cycleMs = sound->cycle > 0.0f ? static_cast<u32>(sound->cycle * 1000.0f) : kAmbientSoundRetryMs;
         PLAY_WAVE_INFO* playingState = nullptr;
-        for (PLAY_WAVE_INFO& playing : mode.m_playWaveList) {
+        for (PLAY_WAVE_INFO& playing : mode.m_ambientWaveList) {
             if (playing.wavName == wavName && playing.nAID == static_cast<u32>(soundIndex)) {
                 playingState = &playing;
                 break;
@@ -482,8 +484,8 @@ void UpdateMapAudio(CGameMode& mode)
             info.volumeFactor = volumeFactor;
             info.volumeMaxDist = sound->width;
             info.volumeMinDist = sound->height;
-            mode.m_playWaveList.push_back(info);
-            playingState = &mode.m_playWaveList.back();
+            mode.m_ambientWaveList.push_back(info);
+            playingState = &mode.m_ambientWaveList.back();
         }
 
         playingState->term = cycleMs;
@@ -699,6 +701,18 @@ void DrawBootstrapSceneTextQt(unsigned int* pixels,
     int groundHeight,
     int activeWidth,
     int activeHeight);
+#else
+void DrawOutlinedTextQtToOverlay(
+    unsigned int*,
+    int,
+    int,
+    int,
+    int,
+    int,
+    const std::string&,
+    COLORREF)
+{
+}
 #endif
 
 inline unsigned int PackOverlayRgb(COLORREF color)
@@ -9258,6 +9272,7 @@ void CGameMode::OnInit(const char* worldName) {
     ClearRuntimeActors(*this);
     m_groundItemList.clear();
     m_playWaveList.clear();
+    m_ambientWaveList.clear();
     m_worldProcessTick = GetTickCount();
     m_worldProcessCarryMs = kWorldProcessTickMs;
     m_lastHoverRefreshTick = 0;
@@ -9360,6 +9375,7 @@ void CGameMode::OnExit() {
     g_windowMgr.RemoveAllWindows();
     m_groundItemList.clear();
     m_playWaveList.clear();
+    m_ambientWaveList.clear();
     m_streamFileName.clear();
     if (GetCapture() == g_hMainWnd) {
         ReleaseCapture();
@@ -9598,6 +9614,28 @@ int  CGameMode::OnRun() {
     }
     return 1;
 }
+// Ref/GameMode.cpp:15448-15506 (0x57D870).
+// Ref runtime-wave: 0x57D8ED 0x57D91C (PLAY_WAVE_INFO::wavName).
+void CGameMode::ProcessPlayWave()
+{
+    for (PLAY_WAVE_INFO& info : m_playWaveList) {
+        if (timeGetTime() < info.endTick) {
+            continue;
+        }
+        if (info.nAID != 0) {
+            CGameActor* actor = m_world ? m_world->GetGameActorByAID(info.nAID) : nullptr;
+            if (actor && m_world->m_player) {
+                const vector3d& player = m_world->m_player->m_pos;
+                PlayWave(info.wavName.c_str(), player.x - actor->m_pos.x, 0.0f,
+                    player.z - actor->m_pos.z);
+            }
+        } else {
+            PlayWave(info.wavName.c_str(), 0.0f, 0.0f, 0.0f);
+        }
+        info.endTick = timeGetTime() + info.term;
+    }
+}
+
 void CGameMode::OnUpdate() {
     DestroyDeferredRuntimeActors(*this);
     EnsureBootstrapSelfActor(*this);
@@ -9632,6 +9670,7 @@ void CGameMode::OnUpdate() {
     LogRuntimeActorSummary(*this);
     const DWORD actorSummaryEnd = GetTickCount();
 
+    ProcessPlayWave();
     UpdateMapAudio(*this);
     const DWORD worldNow = GetTickCount();
     const DWORD worldElapsedMs = worldNow - m_worldProcessTick;
@@ -9645,12 +9684,14 @@ void CGameMode::OnUpdate() {
         worldStepCount = kMaxWorldProcessStepsPerUpdate;
         m_worldProcessCarryMs = 0.0f;
     }
+    g_isSkipFrame = worldStepCount;
+    const int actorSteps = worldStepCount > 0 ? worldStepCount : 1;
 
     if (IsMapLoadingActive(*this)) {
         AdvanceMapLoading(*this);
         if (m_world) {
             SetRuntimeActorCameraLongitude(m_view ? m_view->GetCameraLongitude() : 0.0f);
-            for (int step = 0; step < worldStepCount; ++step) {
+            for (int step = 0; step < actorSteps; ++step) {
                 m_world->UpdateActors();
                 CleanupPendingActorDespawns(*this);
             }
@@ -9675,7 +9716,7 @@ void CGameMode::OnUpdate() {
     if (m_world) {
         const DWORD actorUpdateStart = GetTickCount();
         SetRuntimeActorCameraLongitude(m_view ? m_view->GetCameraLongitude() : 0.0f);
-        for (int step = 0; step < worldStepCount; ++step) {
+        for (int step = 0; step < actorSteps; ++step) {
             m_world->UpdateActors();
             CleanupPendingActorDespawns(*this);
         }
@@ -9801,6 +9842,69 @@ void CGameMode::OnUpdate() {
         LogGameModeMovePerfIfNeeded();
     }
 }
+void DecodeTalkScript(char* str)
+{
+    if (g_serviceType != ServiceKorea || str == nullptr) {
+        return;
+    }
+    const int length = static_cast<int>(std::strlen(str));
+    for (int index = 0; index < length; ++index) {
+        unsigned char value = static_cast<unsigned char>(str[index]);
+        if (value >= 0x61u && value <= 0x7Au) {
+            value = static_cast<unsigned char>(static_cast<int>(-37) - static_cast<int>(value));
+        }
+        if (value < 0x41u || value > 0x5Au) {
+            if (value >= 0xB0u && value <= 0xBFu) {
+                value = static_cast<unsigned char>(111 - static_cast<int>(value));
+            }
+        } else {
+            value = static_cast<unsigned char>(static_cast<int>(-101) - static_cast<int>(value));
+        }
+        str[index] = static_cast<char>(value);
+    }
+}
+
+void SendTalkScriptLine(int variant)
+{
+    const char* fileName = variant == 1 ? "BA_frostjoke.txt" : "DC_scream.txt";
+    if (g_serviceType == ServiceGermany) {
+        fileName = variant == 1 ? "english\\BA_frostjoke.txt" : "english\\DC_scream.txt";
+    }
+    CFile file;
+    if (!file.Open(fileName, 0)) {
+        return;
+    }
+    const int length = file.Size();
+    if (length <= 0) {
+        file.Close();
+        return;
+    }
+    std::vector<char> bytes(static_cast<size_t>(length) + 1, 0);
+    file.Read(bytes.data(), static_cast<u32>(length));
+    file.Close();
+    const int chosen = (rand() % (variant == 1 ? 117 : 114)) + 1;
+    int line = 0;
+    std::string text;
+    for (int index = 0; index < length; ++index) {
+        const unsigned char value = static_cast<unsigned char>(bytes[static_cast<size_t>(index)]);
+        if (value == 13) {
+            ++line;
+        }
+        if (line == chosen) {
+            if (value != 13 && value != 10 && value != 9) {
+                text.push_back(static_cast<char>(value));
+            }
+        } else if (line == chosen + 1) {
+            break;
+        }
+    }
+    if (text.empty()) {
+        return;
+    }
+    DecodeTalkScript(text.data());
+    SendGlobalChatMessage(g_session.GetPlayerName(), text);
+}
+
 msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
     (void)extra;
@@ -10204,6 +10308,22 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             m_view->ZoomByWheel(static_cast<int>(wparam));
         }
         return 1;
+
+    case 135:
+        // Ref/GameMode2.cpp case 0x87. val1 == 1 is the short shake.
+        if (m_view) {
+            const int shakeType = static_cast<int>(wparam);
+            if (shakeType == 1) {
+                m_view->SetQuake(true, 1, 1.0f, 0.24f, 0.2f);
+            } else {
+                m_view->SetQuake(true, 0, 1.0f, 0.24f, 0.2f);
+            }
+        }
+        return 0;
+
+    case 179:
+        SendTalkScriptLine(static_cast<int>(wparam));
+        return 0;
 
     default:
         return 0;

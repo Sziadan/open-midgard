@@ -1,0 +1,2527 @@
+skillId	name	function	case	line	source
+1	NV_BASIC	catalog			src/skill/SkillEnumIdTable.inc
+2	SM_SWORD	catalog			src/skill/SkillEnumIdTable.inc
+3	SM_TWOHAND	catalog			src/skill/SkillEnumIdTable.inc
+4	SM_RECOVERY	catalog			src/skill/SkillEnumIdTable.inc
+5	SM_BASH	catalog			src/skill/SkillEnumIdTable.inc
+6	SM_PROVOKE	catalog			src/skill/SkillEnumIdTable.inc
+7	SM_MAGNUM	catalog			src/skill/SkillEnumIdTable.inc
+8	SM_ENDURE	catalog			src/skill/SkillEnumIdTable.inc
+9	MG_SRECOVERY	catalog			src/skill/SkillEnumIdTable.inc
+10	MG_SIGHT	catalog			src/skill/SkillEnumIdTable.inc
+11	MG_NAPALMBEAT	catalog			src/skill/SkillEnumIdTable.inc
+12	MG_SAFETYWALL	catalog			src/skill/SkillEnumIdTable.inc
+13	MG_SOULSTRIKE	catalog			src/skill/SkillEnumIdTable.inc
+14	MG_COLDBOLT	catalog			src/skill/SkillEnumIdTable.inc
+15	MG_FROSTDIVER	catalog			src/skill/SkillEnumIdTable.inc
+16	MG_STONECURSE	catalog			src/skill/SkillEnumIdTable.inc
+17	MG_FIREBALL	catalog			src/skill/SkillEnumIdTable.inc
+18	MG_FIREWALL	catalog			src/skill/SkillEnumIdTable.inc
+19	MG_FIREBOLT	catalog			src/skill/SkillEnumIdTable.inc
+20	MG_LIGHTNINGBOLT	catalog			src/skill/SkillEnumIdTable.inc
+21	MG_THUNDERSTORM	catalog			src/skill/SkillEnumIdTable.inc
+22	AL_DP	catalog			src/skill/SkillEnumIdTable.inc
+23	AL_DEMONBANE	catalog			src/skill/SkillEnumIdTable.inc
+24	AL_RUWACH	catalog			src/skill/SkillEnumIdTable.inc
+25	AL_PNEUMA	catalog			src/skill/SkillEnumIdTable.inc
+26	AL_TELEPORT	catalog			src/skill/SkillEnumIdTable.inc
+27	AL_WARP	catalog			src/skill/SkillEnumIdTable.inc
+28	AL_HEAL	catalog			src/skill/SkillEnumIdTable.inc
+29	AL_INCAGI	catalog			src/skill/SkillEnumIdTable.inc
+30	AL_DECAGI	catalog			src/skill/SkillEnumIdTable.inc
+31	AL_HOLYWATER	catalog			src/skill/SkillEnumIdTable.inc
+32	AL_CRUCIS	catalog			src/skill/SkillEnumIdTable.inc
+33	AL_ANGELUS	catalog			src/skill/SkillEnumIdTable.inc
+34	AL_BLESSING	catalog			src/skill/SkillEnumIdTable.inc
+35	AL_CURE	catalog			src/skill/SkillEnumIdTable.inc
+36	MC_INCCARRY	catalog			src/skill/SkillEnumIdTable.inc
+37	MC_DISCOUNT	catalog			src/skill/SkillEnumIdTable.inc
+38	MC_OVERCHARGE	catalog			src/skill/SkillEnumIdTable.inc
+39	MC_PUSHCART	catalog			src/skill/SkillEnumIdTable.inc
+40	MC_IDENTIFY	catalog			src/skill/SkillEnumIdTable.inc
+41	MC_VENDING	catalog			src/skill/SkillEnumIdTable.inc
+42	MC_MAMMONITE	catalog			src/skill/SkillEnumIdTable.inc
+43	AC_OWL	catalog			src/skill/SkillEnumIdTable.inc
+44	AC_VULTURE	catalog			src/skill/SkillEnumIdTable.inc
+45	AC_CONCENTRATION	catalog			src/skill/SkillEnumIdTable.inc
+46	AC_DOUBLE	catalog			src/skill/SkillEnumIdTable.inc
+47	AC_SHOWER	catalog			src/skill/SkillEnumIdTable.inc
+48	TF_DOUBLE	catalog			src/skill/SkillEnumIdTable.inc
+49	TF_MISS	catalog			src/skill/SkillEnumIdTable.inc
+50	TF_STEAL	catalog			src/skill/SkillEnumIdTable.inc
+51	TF_HIDING	catalog			src/skill/SkillEnumIdTable.inc
+52	TF_POISON	catalog			src/skill/SkillEnumIdTable.inc
+53	TF_DETOXIFY	catalog			src/skill/SkillEnumIdTable.inc
+54	ALL_RESURRECTION	catalog			src/skill/SkillEnumIdTable.inc
+55	KN_SPEARMASTERY	catalog			src/skill/SkillEnumIdTable.inc
+56	KN_PIERCE	catalog			src/skill/SkillEnumIdTable.inc
+57	KN_BRANDISHSPEAR	catalog			src/skill/SkillEnumIdTable.inc
+58	KN_SPEARSTAB	catalog			src/skill/SkillEnumIdTable.inc
+59	KN_SPEARBOOMERANG	catalog			src/skill/SkillEnumIdTable.inc
+60	KN_TWOHANDQUICKEN	catalog			src/skill/SkillEnumIdTable.inc
+61	KN_AUTOCOUNTER	catalog			src/skill/SkillEnumIdTable.inc
+62	KN_BOWLINGBASH	catalog			src/skill/SkillEnumIdTable.inc
+63	KN_RIDING	catalog			src/skill/SkillEnumIdTable.inc
+64	KN_CAVALIERMASTERY	catalog			src/skill/SkillEnumIdTable.inc
+65	PR_MACEMASTERY	catalog			src/skill/SkillEnumIdTable.inc
+66	PR_IMPOSITIO	catalog			src/skill/SkillEnumIdTable.inc
+67	PR_SUFFRAGIUM	catalog			src/skill/SkillEnumIdTable.inc
+68	PR_ASPERSIO	catalog			src/skill/SkillEnumIdTable.inc
+69	PR_BENEDICTIO	catalog			src/skill/SkillEnumIdTable.inc
+70	PR_SANCTUARY	catalog			src/skill/SkillEnumIdTable.inc
+71	PR_SLOWPOISON	catalog			src/skill/SkillEnumIdTable.inc
+72	PR_STRECOVERY	catalog			src/skill/SkillEnumIdTable.inc
+73	PR_KYRIE	catalog			src/skill/SkillEnumIdTable.inc
+74	PR_MAGNIFICAT	catalog			src/skill/SkillEnumIdTable.inc
+75	PR_GLORIA	catalog			src/skill/SkillEnumIdTable.inc
+76	PR_LEXDIVINA	catalog			src/skill/SkillEnumIdTable.inc
+77	PR_TURNUNDEAD	catalog			src/skill/SkillEnumIdTable.inc
+78	PR_LEXAETERNA	catalog			src/skill/SkillEnumIdTable.inc
+79	PR_MAGNUS	catalog			src/skill/SkillEnumIdTable.inc
+80	WZ_FIREPILLAR	catalog			src/skill/SkillEnumIdTable.inc
+81	WZ_SIGHTRASHER	catalog			src/skill/SkillEnumIdTable.inc
+82	WZ_FIREIVY	catalog			src/skill/SkillEnumIdTable.inc
+83	WZ_METEOR	catalog			src/skill/SkillEnumIdTable.inc
+84	WZ_JUPITEL	catalog			src/skill/SkillEnumIdTable.inc
+85	WZ_VERMILION	catalog			src/skill/SkillEnumIdTable.inc
+86	WZ_WATERBALL	catalog			src/skill/SkillEnumIdTable.inc
+87	WZ_ICEWALL	catalog			src/skill/SkillEnumIdTable.inc
+88	WZ_FROSTNOVA	catalog			src/skill/SkillEnumIdTable.inc
+89	WZ_STORMGUST	catalog			src/skill/SkillEnumIdTable.inc
+90	WZ_EARTHSPIKE	catalog			src/skill/SkillEnumIdTable.inc
+91	WZ_HEAVENDRIVE	catalog			src/skill/SkillEnumIdTable.inc
+92	WZ_QUAGMIRE	catalog			src/skill/SkillEnumIdTable.inc
+93	WZ_ESTIMATION	catalog			src/skill/SkillEnumIdTable.inc
+94	BS_IRON	catalog			src/skill/SkillEnumIdTable.inc
+95	BS_STEEL	catalog			src/skill/SkillEnumIdTable.inc
+96	BS_ENCHANTEDSTONE	catalog			src/skill/SkillEnumIdTable.inc
+97	BS_ORIDEOCON	catalog			src/skill/SkillEnumIdTable.inc
+98	BS_DAGGER	catalog			src/skill/SkillEnumIdTable.inc
+99	BS_SWORD	catalog			src/skill/SkillEnumIdTable.inc
+100	BS_TWOHANDSWORD	catalog			src/skill/SkillEnumIdTable.inc
+101	BS_AXE	catalog			src/skill/SkillEnumIdTable.inc
+102	BS_MACE	catalog			src/skill/SkillEnumIdTable.inc
+103	BS_KNUCKLE	catalog			src/skill/SkillEnumIdTable.inc
+104	BS_SPEAR	catalog			src/skill/SkillEnumIdTable.inc
+105	BS_HILTBINDING	catalog			src/skill/SkillEnumIdTable.inc
+106	BS_FINDINGORE	catalog			src/skill/SkillEnumIdTable.inc
+107	BS_WEAPONRESEARCH	catalog			src/skill/SkillEnumIdTable.inc
+108	BS_REPAIRWEAPON	catalog			src/skill/SkillEnumIdTable.inc
+109	BS_SKINTEMPER	catalog			src/skill/SkillEnumIdTable.inc
+110	BS_HAMMERFALL	catalog			src/skill/SkillEnumIdTable.inc
+111	BS_ADRENALINE	catalog			src/skill/SkillEnumIdTable.inc
+112	BS_WEAPONPERFECT	catalog			src/skill/SkillEnumIdTable.inc
+113	BS_OVERTHRUST	catalog			src/skill/SkillEnumIdTable.inc
+114	BS_MAXIMIZE	catalog			src/skill/SkillEnumIdTable.inc
+115	HT_SKIDTRAP	catalog			src/skill/SkillEnumIdTable.inc
+116	HT_LANDMINE	catalog			src/skill/SkillEnumIdTable.inc
+117	HT_ANKLESNARE	catalog			src/skill/SkillEnumIdTable.inc
+118	HT_SHOCKWAVE	catalog			src/skill/SkillEnumIdTable.inc
+119	HT_SANDMAN	catalog			src/skill/SkillEnumIdTable.inc
+120	HT_FLASHER	catalog			src/skill/SkillEnumIdTable.inc
+121	HT_FREEZINGTRAP	catalog			src/skill/SkillEnumIdTable.inc
+122	HT_BLASTMINE	catalog			src/skill/SkillEnumIdTable.inc
+123	HT_CLAYMORETRAP	catalog			src/skill/SkillEnumIdTable.inc
+124	HT_REMOVETRAP	catalog			src/skill/SkillEnumIdTable.inc
+125	HT_TALKIEBOX	catalog			src/skill/SkillEnumIdTable.inc
+126	HT_BEASTBANE	catalog			src/skill/SkillEnumIdTable.inc
+127	HT_FALCON	catalog			src/skill/SkillEnumIdTable.inc
+128	HT_STEELCROW	catalog			src/skill/SkillEnumIdTable.inc
+129	HT_BLITZBEAT	catalog			src/skill/SkillEnumIdTable.inc
+130	HT_DETECTING	catalog			src/skill/SkillEnumIdTable.inc
+131	HT_SPRINGTRAP	catalog			src/skill/SkillEnumIdTable.inc
+132	AS_RIGHT	catalog			src/skill/SkillEnumIdTable.inc
+133	AS_LEFT	catalog			src/skill/SkillEnumIdTable.inc
+134	AS_KATAR	catalog			src/skill/SkillEnumIdTable.inc
+135	AS_CLOAKING	catalog			src/skill/SkillEnumIdTable.inc
+136	AS_SONICBLOW	catalog			src/skill/SkillEnumIdTable.inc
+137	AS_GRIMTOOTH	catalog			src/skill/SkillEnumIdTable.inc
+138	AS_ENCHANTPOISON	catalog			src/skill/SkillEnumIdTable.inc
+139	AS_POISONREACT	catalog			src/skill/SkillEnumIdTable.inc
+140	AS_VENOMDUST	catalog			src/skill/SkillEnumIdTable.inc
+141	AS_SPLASHER	catalog			src/skill/SkillEnumIdTable.inc
+142	NV_FIRSTAID	catalog			src/skill/SkillEnumIdTable.inc
+143	NV_TRICKDEAD	catalog			src/skill/SkillEnumIdTable.inc
+144	SM_MOVINGRECOVERY	catalog			src/skill/SkillEnumIdTable.inc
+145	SM_FATALBLOW	catalog			src/skill/SkillEnumIdTable.inc
+146	SM_AUTOBERSERK	catalog			src/skill/SkillEnumIdTable.inc
+147	AC_MAKINGARROW	catalog			src/skill/SkillEnumIdTable.inc
+148	AC_CHARGEARROW	catalog			src/skill/SkillEnumIdTable.inc
+149	TF_SPRINKLESAND	catalog			src/skill/SkillEnumIdTable.inc
+150	TF_BACKSLIDING	catalog			src/skill/SkillEnumIdTable.inc
+151	TF_PICKSTONE	catalog			src/skill/SkillEnumIdTable.inc
+152	TF_THROWSTONE	catalog			src/skill/SkillEnumIdTable.inc
+153	MC_CARTREVOLUTION	catalog			src/skill/SkillEnumIdTable.inc
+154	MC_CHANGECART	catalog			src/skill/SkillEnumIdTable.inc
+155	MC_LOUD	catalog			src/skill/SkillEnumIdTable.inc
+156	AL_HOLYLIGHT	catalog			src/skill/SkillEnumIdTable.inc
+157	MG_ENERGYCOAT	catalog			src/skill/SkillEnumIdTable.inc
+158	NPC_PIERCINGATT	catalog			src/skill/SkillEnumIdTable.inc
+159	NPC_MENTALBREAKER	catalog			src/skill/SkillEnumIdTable.inc
+160	NPC_RANGEATTACK	catalog			src/skill/SkillEnumIdTable.inc
+161	NPC_ATTRICHANGE	catalog			src/skill/SkillEnumIdTable.inc
+162	NPC_CHANGEWATER	catalog			src/skill/SkillEnumIdTable.inc
+163	NPC_CHANGEGROUND	catalog			src/skill/SkillEnumIdTable.inc
+164	NPC_CHANGEFIRE	catalog			src/skill/SkillEnumIdTable.inc
+165	NPC_CHANGEWIND	catalog			src/skill/SkillEnumIdTable.inc
+166	NPC_CHANGEPOISON	catalog			src/skill/SkillEnumIdTable.inc
+167	NPC_CHANGEHOLY	catalog			src/skill/SkillEnumIdTable.inc
+168	NPC_CHANGEDARKNESS	catalog			src/skill/SkillEnumIdTable.inc
+169	NPC_CHANGETELEKINESIS	catalog			src/skill/SkillEnumIdTable.inc
+170	NPC_CRITICALSLASH	catalog			src/skill/SkillEnumIdTable.inc
+171	NPC_COMBOATTACK	catalog			src/skill/SkillEnumIdTable.inc
+172	NPC_GUIDEDATTACK	catalog			src/skill/SkillEnumIdTable.inc
+173	NPC_SELFDESTRUCTION	catalog			src/skill/SkillEnumIdTable.inc
+174	NPC_SPLASHATTACK	catalog			src/skill/SkillEnumIdTable.inc
+175	NPC_SUICIDE	catalog			src/skill/SkillEnumIdTable.inc
+176	NPC_POISON	catalog			src/skill/SkillEnumIdTable.inc
+177	NPC_BLINDATTACK	catalog			src/skill/SkillEnumIdTable.inc
+178	NPC_SILENCEATTACK	catalog			src/skill/SkillEnumIdTable.inc
+179	NPC_STUNATTACK	catalog			src/skill/SkillEnumIdTable.inc
+180	NPC_PETRIFYATTACK	catalog			src/skill/SkillEnumIdTable.inc
+181	NPC_CURSEATTACK	catalog			src/skill/SkillEnumIdTable.inc
+182	NPC_SLEEPATTACK	catalog			src/skill/SkillEnumIdTable.inc
+183	NPC_RANDOMATTACK	catalog			src/skill/SkillEnumIdTable.inc
+184	NPC_WATERATTACK	catalog			src/skill/SkillEnumIdTable.inc
+185	NPC_GROUNDATTACK	catalog			src/skill/SkillEnumIdTable.inc
+186	NPC_FIREATTACK	catalog			src/skill/SkillEnumIdTable.inc
+187	NPC_WINDATTACK	catalog			src/skill/SkillEnumIdTable.inc
+188	NPC_POISONATTACK	catalog			src/skill/SkillEnumIdTable.inc
+189	NPC_HOLYATTACK	catalog			src/skill/SkillEnumIdTable.inc
+190	NPC_DARKNESSATTACK	catalog			src/skill/SkillEnumIdTable.inc
+191	NPC_TELEKINESISATTACK	catalog			src/skill/SkillEnumIdTable.inc
+192	NPC_MAGICALATTACK	catalog			src/skill/SkillEnumIdTable.inc
+193	NPC_METAMORPHOSIS	catalog			src/skill/SkillEnumIdTable.inc
+194	NPC_PROVOCATION	catalog			src/skill/SkillEnumIdTable.inc
+195	NPC_SMOKING	catalog			src/skill/SkillEnumIdTable.inc
+196	NPC_SUMMONSLAVE	catalog			src/skill/SkillEnumIdTable.inc
+197	NPC_EMOTION	catalog			src/skill/SkillEnumIdTable.inc
+198	NPC_TRANSFORMATION	catalog			src/skill/SkillEnumIdTable.inc
+199	NPC_BLOODDRAIN	catalog			src/skill/SkillEnumIdTable.inc
+200	NPC_ENERGYDRAIN	catalog			src/skill/SkillEnumIdTable.inc
+201	NPC_KEEPING	catalog			src/skill/SkillEnumIdTable.inc
+202	NPC_DARKBREATH	catalog			src/skill/SkillEnumIdTable.inc
+203	NPC_DARKBLESSING	catalog			src/skill/SkillEnumIdTable.inc
+204	NPC_BARRIER	catalog			src/skill/SkillEnumIdTable.inc
+205	NPC_DEFENDER	catalog			src/skill/SkillEnumIdTable.inc
+206	NPC_LICK	catalog			src/skill/SkillEnumIdTable.inc
+207	NPC_HALLUCINATION	catalog			src/skill/SkillEnumIdTable.inc
+208	NPC_REBIRTH	catalog			src/skill/SkillEnumIdTable.inc
+209	NPC_SUMMONMONSTER	catalog			src/skill/SkillEnumIdTable.inc
+210	RG_SNATCHER	catalog			src/skill/SkillEnumIdTable.inc
+211	RG_STEALCOIN	catalog			src/skill/SkillEnumIdTable.inc
+212	RG_BACKSTAP	catalog			src/skill/SkillEnumIdTable.inc
+213	RG_TUNNELDRIVE	catalog			src/skill/SkillEnumIdTable.inc
+214	RG_RAID	catalog			src/skill/SkillEnumIdTable.inc
+215	RG_STRIPWEAPON	catalog			src/skill/SkillEnumIdTable.inc
+216	RG_STRIPSHIELD	catalog			src/skill/SkillEnumIdTable.inc
+217	RG_STRIPARMOR	catalog			src/skill/SkillEnumIdTable.inc
+218	RG_STRIPHELM	catalog			src/skill/SkillEnumIdTable.inc
+219	RG_INTIMIDATE	catalog			src/skill/SkillEnumIdTable.inc
+220	RG_GRAFFITI	catalog			src/skill/SkillEnumIdTable.inc
+221	RG_FLAGGRAFFITI	catalog			src/skill/SkillEnumIdTable.inc
+222	RG_CLEANER	catalog			src/skill/SkillEnumIdTable.inc
+223	RG_GANGSTER	catalog			src/skill/SkillEnumIdTable.inc
+224	RG_COMPULSION	catalog			src/skill/SkillEnumIdTable.inc
+225	RG_PLAGIARISM	catalog			src/skill/SkillEnumIdTable.inc
+226	AM_AXEMASTERY	catalog			src/skill/SkillEnumIdTable.inc
+227	AM_LEARNINGPOTION	catalog			src/skill/SkillEnumIdTable.inc
+228	AM_PHARMACY	catalog			src/skill/SkillEnumIdTable.inc
+229	AM_DEMONSTRATION	catalog			src/skill/SkillEnumIdTable.inc
+230	AM_ACIDTERROR	catalog			src/skill/SkillEnumIdTable.inc
+231	AM_POTIONPITCHER	catalog			src/skill/SkillEnumIdTable.inc
+232	AM_CANNIBALIZE	catalog			src/skill/SkillEnumIdTable.inc
+233	AM_SPHEREMINE	catalog			src/skill/SkillEnumIdTable.inc
+234	AM_CP_WEAPON	catalog			src/skill/SkillEnumIdTable.inc
+235	AM_CP_SHIELD	catalog			src/skill/SkillEnumIdTable.inc
+236	AM_CP_ARMOR	catalog			src/skill/SkillEnumIdTable.inc
+237	AM_CP_HELM	catalog			src/skill/SkillEnumIdTable.inc
+238	AM_BIOETHICS	catalog			src/skill/SkillEnumIdTable.inc
+239	AM_BIOTECHNOLOGY	catalog			src/skill/SkillEnumIdTable.inc
+240	AM_CREATECREATURE	catalog			src/skill/SkillEnumIdTable.inc
+241	AM_CULTIVATION	catalog			src/skill/SkillEnumIdTable.inc
+242	AM_FLAMECONTROL	catalog			src/skill/SkillEnumIdTable.inc
+243	AM_CALLHOMUN	catalog			src/skill/SkillEnumIdTable.inc
+244	AM_REST	catalog			src/skill/SkillEnumIdTable.inc
+245	AM_DRILLMASTER	catalog			src/skill/SkillEnumIdTable.inc
+246	AM_HEALHOMUN	catalog			src/skill/SkillEnumIdTable.inc
+247	AM_RESURRECTHOMUN	catalog			src/skill/SkillEnumIdTable.inc
+248	CR_TRUST	catalog			src/skill/SkillEnumIdTable.inc
+249	CR_AUTOGUARD	catalog			src/skill/SkillEnumIdTable.inc
+250	CR_SHIELDCHARGE	catalog			src/skill/SkillEnumIdTable.inc
+251	CR_SHIELDBOOMERANG	catalog			src/skill/SkillEnumIdTable.inc
+252	CR_REFLECTSHIELD	catalog			src/skill/SkillEnumIdTable.inc
+253	CR_HOLYCROSS	catalog			src/skill/SkillEnumIdTable.inc
+254	CR_GRANDCROSS	catalog			src/skill/SkillEnumIdTable.inc
+255	CR_DEVOTION	catalog			src/skill/SkillEnumIdTable.inc
+256	CR_PROVIDENCE	catalog			src/skill/SkillEnumIdTable.inc
+257	CR_DEFENDER	catalog			src/skill/SkillEnumIdTable.inc
+258	CR_SPEARQUICKEN	catalog			src/skill/SkillEnumIdTable.inc
+259	MO_IRONHAND	catalog			src/skill/SkillEnumIdTable.inc
+260	MO_SPIRITSRECOVERY	catalog			src/skill/SkillEnumIdTable.inc
+261	MO_CALLSPIRITS	catalog			src/skill/SkillEnumIdTable.inc
+262	MO_ABSORBSPIRITS	catalog			src/skill/SkillEnumIdTable.inc
+263	MO_TRIPLEATTACK	catalog			src/skill/SkillEnumIdTable.inc
+264	MO_BODYRELOCATION	catalog			src/skill/SkillEnumIdTable.inc
+265	MO_DODGE	catalog			src/skill/SkillEnumIdTable.inc
+266	MO_INVESTIGATE	catalog			src/skill/SkillEnumIdTable.inc
+267	MO_FINGEROFFENSIVE	catalog			src/skill/SkillEnumIdTable.inc
+268	MO_STEELBODY	catalog			src/skill/SkillEnumIdTable.inc
+269	MO_BLADESTOP	catalog			src/skill/SkillEnumIdTable.inc
+270	MO_EXPLOSIONSPIRITS	catalog			src/skill/SkillEnumIdTable.inc
+271	MO_EXTREMITYFIST	catalog			src/skill/SkillEnumIdTable.inc
+272	MO_CHAINCOMBO	catalog			src/skill/SkillEnumIdTable.inc
+273	MO_COMBOFINISH	catalog			src/skill/SkillEnumIdTable.inc
+274	SA_ADVANCEDBOOK	catalog			src/skill/SkillEnumIdTable.inc
+275	SA_CASTCANCEL	catalog			src/skill/SkillEnumIdTable.inc
+276	SA_MAGICROD	catalog			src/skill/SkillEnumIdTable.inc
+277	SA_SPELLBREAKER	catalog			src/skill/SkillEnumIdTable.inc
+278	SA_FREECAST	catalog			src/skill/SkillEnumIdTable.inc
+279	SA_AUTOSPELL	catalog			src/skill/SkillEnumIdTable.inc
+280	SA_FLAMELAUNCHER	catalog			src/skill/SkillEnumIdTable.inc
+281	SA_FROSTWEAPON	catalog			src/skill/SkillEnumIdTable.inc
+282	SA_LIGHTNINGLOADER	catalog			src/skill/SkillEnumIdTable.inc
+283	SA_SEISMICWEAPON	catalog			src/skill/SkillEnumIdTable.inc
+284	SA_DRAGONOLOGY	catalog			src/skill/SkillEnumIdTable.inc
+285	SA_VOLCANO	catalog			src/skill/SkillEnumIdTable.inc
+286	SA_DELUGE	catalog			src/skill/SkillEnumIdTable.inc
+287	SA_VIOLENTGALE	catalog			src/skill/SkillEnumIdTable.inc
+288	SA_LANDPROTECTOR	catalog			src/skill/SkillEnumIdTable.inc
+289	SA_DISPELL	catalog			src/skill/SkillEnumIdTable.inc
+290	SA_ABRACADABRA	catalog			src/skill/SkillEnumIdTable.inc
+291	SA_MONOCELL	catalog			src/skill/SkillEnumIdTable.inc
+292	SA_CLASSCHANGE	catalog			src/skill/SkillEnumIdTable.inc
+293	SA_SUMMONMONSTER	catalog			src/skill/SkillEnumIdTable.inc
+294	SA_REVERSEORCISH	catalog			src/skill/SkillEnumIdTable.inc
+295	SA_DEATH	catalog			src/skill/SkillEnumIdTable.inc
+296	SA_FORTUNE	catalog			src/skill/SkillEnumIdTable.inc
+297	SA_TAMINGMONSTER	catalog			src/skill/SkillEnumIdTable.inc
+298	SA_QUESTION	catalog			src/skill/SkillEnumIdTable.inc
+299	SA_GRAVITY	catalog			src/skill/SkillEnumIdTable.inc
+300	SA_LEVELUP	catalog			src/skill/SkillEnumIdTable.inc
+301	SA_INSTANTDEATH	catalog			src/skill/SkillEnumIdTable.inc
+302	SA_FULLRECOVERY	catalog			src/skill/SkillEnumIdTable.inc
+303	SA_COMA	catalog			src/skill/SkillEnumIdTable.inc
+304	BD_ADAPTATION	catalog			src/skill/SkillEnumIdTable.inc
+305	BD_ENCORE	catalog			src/skill/SkillEnumIdTable.inc
+306	BD_LULLABY	catalog			src/skill/SkillEnumIdTable.inc
+307	BD_RICHMANKIM	catalog			src/skill/SkillEnumIdTable.inc
+308	BD_ETERNALCHAOS	catalog			src/skill/SkillEnumIdTable.inc
+309	BD_DRUMBATTLEFIELD	catalog			src/skill/SkillEnumIdTable.inc
+310	BD_RINGNIBELUNGEN	catalog			src/skill/SkillEnumIdTable.inc
+311	BD_ROKISWEIL	catalog			src/skill/SkillEnumIdTable.inc
+312	BD_INTOABYSS	catalog			src/skill/SkillEnumIdTable.inc
+313	BD_SIEGFRIED	catalog			src/skill/SkillEnumIdTable.inc
+314	BD_RAGNAROK	catalog			src/skill/SkillEnumIdTable.inc
+315	BA_MUSICALLESSON	catalog			src/skill/SkillEnumIdTable.inc
+316	BA_MUSICALSTRIKE	catalog			src/skill/SkillEnumIdTable.inc
+317	BA_DISSONANCE	catalog			src/skill/SkillEnumIdTable.inc
+318	BA_FROSTJOKER	catalog			src/skill/SkillEnumIdTable.inc
+319	BA_WHISTLE	catalog			src/skill/SkillEnumIdTable.inc
+320	BA_ASSASSINCROSS	catalog			src/skill/SkillEnumIdTable.inc
+321	BA_POEMBRAGI	catalog			src/skill/SkillEnumIdTable.inc
+322	BA_APPLEIDUN	catalog			src/skill/SkillEnumIdTable.inc
+323	DC_DANCINGLESSON	catalog			src/skill/SkillEnumIdTable.inc
+324	DC_THROWARROW	catalog			src/skill/SkillEnumIdTable.inc
+325	DC_UGLYDANCE	catalog			src/skill/SkillEnumIdTable.inc
+326	DC_SCREAM	catalog			src/skill/SkillEnumIdTable.inc
+327	DC_HUMMING	catalog			src/skill/SkillEnumIdTable.inc
+328	DC_DONTFORGETME	catalog			src/skill/SkillEnumIdTable.inc
+329	DC_FORTUNEKISS	catalog			src/skill/SkillEnumIdTable.inc
+330	DC_SERVICEFORYOU	catalog			src/skill/SkillEnumIdTable.inc
+331	NPC_RANDOMMOVE	catalog			src/skill/SkillEnumIdTable.inc
+332	NPC_SPEEDUP	catalog			src/skill/SkillEnumIdTable.inc
+333	NPC_REVENGE	catalog			src/skill/SkillEnumIdTable.inc
+334	WE_MALE	catalog			src/skill/SkillEnumIdTable.inc
+335	WE_FEMALE	catalog			src/skill/SkillEnumIdTable.inc
+336	WE_CALLPARTNER	catalog			src/skill/SkillEnumIdTable.inc
+337	ITM_TOMAHAWK	catalog			src/skill/SkillEnumIdTable.inc
+338	NPC_DARKCROSS	catalog			src/skill/SkillEnumIdTable.inc
+339	NPC_GRANDDARKNESS	catalog			src/skill/SkillEnumIdTable.inc
+340	NPC_DARKSTRIKE	catalog			src/skill/SkillEnumIdTable.inc
+341	NPC_DARKTHUNDER	catalog			src/skill/SkillEnumIdTable.inc
+342	NPC_STOP	catalog			src/skill/SkillEnumIdTable.inc
+343	NPC_WEAPONBRAKER	catalog			src/skill/SkillEnumIdTable.inc
+344	NPC_ARMORBRAKE	catalog			src/skill/SkillEnumIdTable.inc
+345	NPC_HELMBRAKE	catalog			src/skill/SkillEnumIdTable.inc
+346	NPC_SHIELDBRAKE	catalog			src/skill/SkillEnumIdTable.inc
+347	NPC_UNDEADATTACK	catalog			src/skill/SkillEnumIdTable.inc
+348	NPC_CHANGEUNDEAD	catalog			src/skill/SkillEnumIdTable.inc
+349	NPC_POWERUP	catalog			src/skill/SkillEnumIdTable.inc
+350	NPC_AGIUP	catalog			src/skill/SkillEnumIdTable.inc
+351	NPC_SIEGEMODE	catalog			src/skill/SkillEnumIdTable.inc
+352	NPC_CALLSLAVE	catalog			src/skill/SkillEnumIdTable.inc
+353	NPC_INVISIBLE	catalog			src/skill/SkillEnumIdTable.inc
+354	NPC_RUN	catalog			src/skill/SkillEnumIdTable.inc
+355	LK_AURABLADE	catalog			src/skill/SkillEnumIdTable.inc
+356	LK_PARRYING	catalog			src/skill/SkillEnumIdTable.inc
+357	LK_CONCENTRATION	catalog			src/skill/SkillEnumIdTable.inc
+358	LK_TENSIONRELAX	catalog			src/skill/SkillEnumIdTable.inc
+359	LK_BERSERK	catalog			src/skill/SkillEnumIdTable.inc
+360	LK_FURY	catalog			src/skill/SkillEnumIdTable.inc
+361	HP_ASSUMPTIO	catalog			src/skill/SkillEnumIdTable.inc
+362	HP_BASILICA	catalog			src/skill/SkillEnumIdTable.inc
+363	HP_MEDITATIO	catalog			src/skill/SkillEnumIdTable.inc
+364	HW_SOULDRAIN	catalog			src/skill/SkillEnumIdTable.inc
+365	HW_MAGICCRASHER	catalog			src/skill/SkillEnumIdTable.inc
+366	HW_MAGICPOWER	catalog			src/skill/SkillEnumIdTable.inc
+367	PA_PRESSURE	catalog			src/skill/SkillEnumIdTable.inc
+368	PA_SACRIFICE	catalog			src/skill/SkillEnumIdTable.inc
+369	PA_GOSPEL	catalog			src/skill/SkillEnumIdTable.inc
+370	CH_PALMSTRIKE	catalog			src/skill/SkillEnumIdTable.inc
+371	CH_TIGERFIST	catalog			src/skill/SkillEnumIdTable.inc
+372	CH_CHAINCRUSH	catalog			src/skill/SkillEnumIdTable.inc
+373	PF_HPCONVERSION	catalog			src/skill/SkillEnumIdTable.inc
+374	PF_SOULCHANGE	catalog			src/skill/SkillEnumIdTable.inc
+375	PF_SOULBURN	catalog			src/skill/SkillEnumIdTable.inc
+376	ASC_KATAR	catalog			src/skill/SkillEnumIdTable.inc
+377	ASC_HALLUCINATION	catalog			src/skill/SkillEnumIdTable.inc
+378	ASC_EDP	catalog			src/skill/SkillEnumIdTable.inc
+379	ASC_BREAKER	catalog			src/skill/SkillEnumIdTable.inc
+380	SN_SIGHT	catalog			src/skill/SkillEnumIdTable.inc
+381	SN_FALCONASSAULT	catalog			src/skill/SkillEnumIdTable.inc
+382	SN_SHARPSHOOTING	catalog			src/skill/SkillEnumIdTable.inc
+383	SN_WINDWALK	catalog			src/skill/SkillEnumIdTable.inc
+384	WS_MELTDOWN	catalog			src/skill/SkillEnumIdTable.inc
+385	WS_CREATECOIN	catalog			src/skill/SkillEnumIdTable.inc
+386	WS_CREATENUGGET	catalog			src/skill/SkillEnumIdTable.inc
+387	WS_CARTBOOST	catalog			src/skill/SkillEnumIdTable.inc
+388	WS_SYSTEMCREATE	catalog			src/skill/SkillEnumIdTable.inc
+389	ST_CHASEWALK	catalog			src/skill/SkillEnumIdTable.inc
+390	ST_REJECTSWORD	catalog			src/skill/SkillEnumIdTable.inc
+391	ST_STEALBACKPACK	catalog			src/skill/SkillEnumIdTable.inc
+392	CR_ALCHEMY	catalog			src/skill/SkillEnumIdTable.inc
+393	CR_SYNTHESISPOTION	catalog			src/skill/SkillEnumIdTable.inc
+394	CG_ARROWVULCAN	catalog			src/skill/SkillEnumIdTable.inc
+395	CG_MOONLIT	catalog			src/skill/SkillEnumIdTable.inc
+396	CG_MARIONETTE	catalog			src/skill/SkillEnumIdTable.inc
+397	LK_SPIRALPIERCE	catalog			src/skill/SkillEnumIdTable.inc
+398	LK_HEADCRUSH	catalog			src/skill/SkillEnumIdTable.inc
+399	LK_JOINTBEAT	catalog			src/skill/SkillEnumIdTable.inc
+400	HW_NAPALMVULCAN	catalog			src/skill/SkillEnumIdTable.inc
+401	CH_SOULCOLLECT	catalog			src/skill/SkillEnumIdTable.inc
+402	PF_MINDBREAKER	catalog			src/skill/SkillEnumIdTable.inc
+403	PF_MEMORIZE	catalog			src/skill/SkillEnumIdTable.inc
+404	PF_FOGWALL	catalog			src/skill/SkillEnumIdTable.inc
+405	PF_SPIDERWEB	catalog			src/skill/SkillEnumIdTable.inc
+406	ASC_METEORASSAULT	catalog			src/skill/SkillEnumIdTable.inc
+407	ASC_CDP	catalog			src/skill/SkillEnumIdTable.inc
+408	WE_BABY	catalog			src/skill/SkillEnumIdTable.inc
+409	WE_CALLPARENT	catalog			src/skill/SkillEnumIdTable.inc
+410	WE_CALLBABY	catalog			src/skill/SkillEnumIdTable.inc
+411	TK_RUN	catalog			src/skill/SkillEnumIdTable.inc
+412	TK_READYSTORM	catalog			src/skill/SkillEnumIdTable.inc
+413	TK_STORMKICK	catalog			src/skill/SkillEnumIdTable.inc
+414	TK_READYDOWN	catalog			src/skill/SkillEnumIdTable.inc
+415	TK_DOWNKICK	catalog			src/skill/SkillEnumIdTable.inc
+416	TK_READYTURN	catalog			src/skill/SkillEnumIdTable.inc
+417	TK_TURNKICK	catalog			src/skill/SkillEnumIdTable.inc
+418	TK_READYCOUNTER	catalog			src/skill/SkillEnumIdTable.inc
+419	TK_COUNTER	catalog			src/skill/SkillEnumIdTable.inc
+420	TK_DODGE	catalog			src/skill/SkillEnumIdTable.inc
+421	TK_JUMPKICK	catalog			src/skill/SkillEnumIdTable.inc
+422	TK_HPTIME	catalog			src/skill/SkillEnumIdTable.inc
+423	TK_SPTIME	catalog			src/skill/SkillEnumIdTable.inc
+424	TK_POWER	catalog			src/skill/SkillEnumIdTable.inc
+425	TK_SEVENWIND	catalog			src/skill/SkillEnumIdTable.inc
+426	TK_HIGHJUMP	catalog			src/skill/SkillEnumIdTable.inc
+427	SG_FEEL	catalog			src/skill/SkillEnumIdTable.inc
+428	SG_SUN_WARM	catalog			src/skill/SkillEnumIdTable.inc
+429	SG_MOON_WARM	catalog			src/skill/SkillEnumIdTable.inc
+430	SG_STAR_WARM	catalog			src/skill/SkillEnumIdTable.inc
+431	SG_SUN_COMFORT	catalog			src/skill/SkillEnumIdTable.inc
+432	SG_MOON_COMFORT	catalog			src/skill/SkillEnumIdTable.inc
+433	SG_STAR_COMFORT	catalog			src/skill/SkillEnumIdTable.inc
+434	SG_HATE	catalog			src/skill/SkillEnumIdTable.inc
+435	SG_SUN_ANGER	catalog			src/skill/SkillEnumIdTable.inc
+436	SG_MOON_ANGER	catalog			src/skill/SkillEnumIdTable.inc
+437	SG_STAR_ANGER	catalog			src/skill/SkillEnumIdTable.inc
+438	SG_SUN_BLESS	catalog			src/skill/SkillEnumIdTable.inc
+439	SG_MOON_BLESS	catalog			src/skill/SkillEnumIdTable.inc
+440	SG_STAR_BLESS	catalog			src/skill/SkillEnumIdTable.inc
+441	SG_DEVIL	catalog			src/skill/SkillEnumIdTable.inc
+442	SG_FRIEND	catalog			src/skill/SkillEnumIdTable.inc
+443	SG_KNOWLEDGE	catalog			src/skill/SkillEnumIdTable.inc
+444	SG_FUSION	catalog			src/skill/SkillEnumIdTable.inc
+445	SL_ALCHEMIST	catalog			src/skill/SkillEnumIdTable.inc
+446	AM_BERSERKPITCHER	catalog			src/skill/SkillEnumIdTable.inc
+447	SL_MONK	catalog			src/skill/SkillEnumIdTable.inc
+448	SL_STAR	catalog			src/skill/SkillEnumIdTable.inc
+449	SL_SAGE	catalog			src/skill/SkillEnumIdTable.inc
+450	SL_CRUSADER	catalog			src/skill/SkillEnumIdTable.inc
+451	SL_SUPERNOVICE	catalog			src/skill/SkillEnumIdTable.inc
+452	SL_KNIGHT	catalog			src/skill/SkillEnumIdTable.inc
+453	SL_WIZARD	catalog			src/skill/SkillEnumIdTable.inc
+454	SL_PRIEST	catalog			src/skill/SkillEnumIdTable.inc
+455	SL_BARDDANCER	catalog			src/skill/SkillEnumIdTable.inc
+456	SL_ROGUE	catalog			src/skill/SkillEnumIdTable.inc
+457	SL_ASSASIN	catalog			src/skill/SkillEnumIdTable.inc
+458	SL_BLACKSMITH	catalog			src/skill/SkillEnumIdTable.inc
+459	BS_ADRENALINE2	catalog			src/skill/SkillEnumIdTable.inc
+460	SL_HUNTER	catalog			src/skill/SkillEnumIdTable.inc
+461	SL_SOULLINKER	catalog			src/skill/SkillEnumIdTable.inc
+462	SL_KAIZEL	catalog			src/skill/SkillEnumIdTable.inc
+463	SL_KAAHI	catalog			src/skill/SkillEnumIdTable.inc
+464	SL_KAUPE	catalog			src/skill/SkillEnumIdTable.inc
+465	SL_KAITE	catalog			src/skill/SkillEnumIdTable.inc
+466	SL_KAINA	catalog			src/skill/SkillEnumIdTable.inc
+467	SL_STIN	catalog			src/skill/SkillEnumIdTable.inc
+468	SL_STUN	catalog			src/skill/SkillEnumIdTable.inc
+469	SL_SMA	catalog			src/skill/SkillEnumIdTable.inc
+470	SL_SWOO	catalog			src/skill/SkillEnumIdTable.inc
+471	SL_SKE	catalog			src/skill/SkillEnumIdTable.inc
+472	SL_SKA	catalog			src/skill/SkillEnumIdTable.inc
+473	SM_SELFPROVOKE	catalog			src/skill/SkillEnumIdTable.inc
+474	NPC_EMOTION_ON	catalog			src/skill/SkillEnumIdTable.inc
+475	ST_PRESERVE	catalog			src/skill/SkillEnumIdTable.inc
+476	ST_FULLSTRIP	catalog			src/skill/SkillEnumIdTable.inc
+477	WS_WEAPONREFINE	catalog			src/skill/SkillEnumIdTable.inc
+478	CR_SLIMPITCHER	catalog			src/skill/SkillEnumIdTable.inc
+479	CR_FULLPROTECTION	catalog			src/skill/SkillEnumIdTable.inc
+480	PA_SHIELDCHAIN	catalog			src/skill/SkillEnumIdTable.inc
+481	HP_MANARECHARGE	catalog			src/skill/SkillEnumIdTable.inc
+482	PF_DOUBLECASTING	catalog			src/skill/SkillEnumIdTable.inc
+483	HW_GANBANTEIN	catalog			src/skill/SkillEnumIdTable.inc
+484	HW_GRAVITATION	catalog			src/skill/SkillEnumIdTable.inc
+485	WS_CARTTERMINATION	catalog			src/skill/SkillEnumIdTable.inc
+486	WS_OVERTHRUSTMAX	catalog			src/skill/SkillEnumIdTable.inc
+487	CG_LONGINGFREEDOM	catalog			src/skill/SkillEnumIdTable.inc
+488	CG_HERMODE	catalog			src/skill/SkillEnumIdTable.inc
+489	CG_TAROTCARD	catalog			src/skill/SkillEnumIdTable.inc
+490	CR_ACIDDEMONSTRATION	catalog			src/skill/SkillEnumIdTable.inc
+491	CR_CULTIVATION	catalog			src/skill/SkillEnumIdTable.inc
+492	ITEM_ENCHANTARMS	catalog			src/skill/SkillEnumIdTable.inc
+493	TK_MISSION	catalog			src/skill/SkillEnumIdTable.inc
+494	SL_HIGH	catalog			src/skill/SkillEnumIdTable.inc
+495	KN_ONEHAND	catalog			src/skill/SkillEnumIdTable.inc
+496	AM_TWILIGHT1	catalog			src/skill/SkillEnumIdTable.inc
+497	AM_TWILIGHT2	catalog			src/skill/SkillEnumIdTable.inc
+498	AM_TWILIGHT3	catalog			src/skill/SkillEnumIdTable.inc
+499	HT_POWER	catalog			src/skill/SkillEnumIdTable.inc
+500	GS_GLITTERING	catalog			src/skill/SkillEnumIdTable.inc
+501	GS_FLING	catalog			src/skill/SkillEnumIdTable.inc
+502	GS_TRIPLEACTION	catalog			src/skill/SkillEnumIdTable.inc
+503	GS_BULLSEYE	catalog			src/skill/SkillEnumIdTable.inc
+504	GS_MADNESSCANCEL	catalog			src/skill/SkillEnumIdTable.inc
+505	GS_ADJUSTMENT	catalog			src/skill/SkillEnumIdTable.inc
+506	GS_INCREASING	catalog			src/skill/SkillEnumIdTable.inc
+507	GS_MAGICALBULLET	catalog			src/skill/SkillEnumIdTable.inc
+508	GS_CRACKER	catalog			src/skill/SkillEnumIdTable.inc
+509	GS_SINGLEACTION	catalog			src/skill/SkillEnumIdTable.inc
+510	GS_SNAKEEYE	catalog			src/skill/SkillEnumIdTable.inc
+511	GS_CHAINACTION	catalog			src/skill/SkillEnumIdTable.inc
+512	GS_TRACKING	catalog			src/skill/SkillEnumIdTable.inc
+513	GS_DISARM	catalog			src/skill/SkillEnumIdTable.inc
+514	GS_PIERCINGSHOT	catalog			src/skill/SkillEnumIdTable.inc
+515	GS_RAPIDSHOWER	catalog			src/skill/SkillEnumIdTable.inc
+516	GS_DESPERADO	catalog			src/skill/SkillEnumIdTable.inc
+517	GS_GATLINGFEVER	catalog			src/skill/SkillEnumIdTable.inc
+518	GS_DUST	catalog			src/skill/SkillEnumIdTable.inc
+519	GS_FULLBUSTER	catalog			src/skill/SkillEnumIdTable.inc
+520	GS_SPREADATTACK	catalog			src/skill/SkillEnumIdTable.inc
+521	GS_GROUNDDRIFT	catalog			src/skill/SkillEnumIdTable.inc
+522	NJ_TOBIDOUGU	catalog			src/skill/SkillEnumIdTable.inc
+523	NJ_SYURIKEN	catalog			src/skill/SkillEnumIdTable.inc
+524	NJ_KUNAI	catalog			src/skill/SkillEnumIdTable.inc
+525	NJ_HUUMA	catalog			src/skill/SkillEnumIdTable.inc
+526	NJ_ZENYNAGE	catalog			src/skill/SkillEnumIdTable.inc
+527	NJ_TATAMIGAESHI	catalog			src/skill/SkillEnumIdTable.inc
+528	NJ_KASUMIKIRI	catalog			src/skill/SkillEnumIdTable.inc
+529	NJ_SHADOWJUMP	catalog			src/skill/SkillEnumIdTable.inc
+530	NJ_KIRIKAGE	catalog			src/skill/SkillEnumIdTable.inc
+531	NJ_UTSUSEMI	catalog			src/skill/SkillEnumIdTable.inc
+532	NJ_BUNSINJYUTSU	catalog			src/skill/SkillEnumIdTable.inc
+533	NJ_NINPOU	catalog			src/skill/SkillEnumIdTable.inc
+534	NJ_KOUENKA	catalog			src/skill/SkillEnumIdTable.inc
+535	NJ_KAENSIN	catalog			src/skill/SkillEnumIdTable.inc
+536	NJ_BAKUENRYU	catalog			src/skill/SkillEnumIdTable.inc
+537	NJ_HYOUSENSOU	catalog			src/skill/SkillEnumIdTable.inc
+538	NJ_SUITON	catalog			src/skill/SkillEnumIdTable.inc
+539	NJ_HYOUSYOURAKU	catalog			src/skill/SkillEnumIdTable.inc
+540	NJ_HUUJIN	catalog			src/skill/SkillEnumIdTable.inc
+541	NJ_RAIGEKISAI	catalog			src/skill/SkillEnumIdTable.inc
+542	NJ_KAMAITACHI	catalog			src/skill/SkillEnumIdTable.inc
+543	NJ_NEN	catalog			src/skill/SkillEnumIdTable.inc
+544	NJ_ISSEN	catalog			src/skill/SkillEnumIdTable.inc
+653	NPC_EARTHQUAKE	catalog			src/skill/SkillEnumIdTable.inc
+654	NPC_FIREBREATH	catalog			src/skill/SkillEnumIdTable.inc
+655	NPC_ICEBREATH	catalog			src/skill/SkillEnumIdTable.inc
+656	NPC_THUNDERBREATH	catalog			src/skill/SkillEnumIdTable.inc
+657	NPC_ACIDBREATH	catalog			src/skill/SkillEnumIdTable.inc
+658	NPC_DARKNESSBREATH	catalog			src/skill/SkillEnumIdTable.inc
+659	NPC_DRAGONFEAR	catalog			src/skill/SkillEnumIdTable.inc
+660	NPC_BLEEDING	catalog			src/skill/SkillEnumIdTable.inc
+661	NPC_PULSESTRIKE	catalog			src/skill/SkillEnumIdTable.inc
+662	NPC_HELLJUDGEMENT	catalog			src/skill/SkillEnumIdTable.inc
+663	NPC_WIDESILENCE	catalog			src/skill/SkillEnumIdTable.inc
+664	NPC_WIDEFREEZE	catalog			src/skill/SkillEnumIdTable.inc
+665	NPC_WIDEBLEEDING	catalog			src/skill/SkillEnumIdTable.inc
+666	NPC_WIDESTONE	catalog			src/skill/SkillEnumIdTable.inc
+667	NPC_WIDECONFUSE	catalog			src/skill/SkillEnumIdTable.inc
+668	NPC_WIDESLEEP	catalog			src/skill/SkillEnumIdTable.inc
+669	NPC_WIDESIGHT	catalog			src/skill/SkillEnumIdTable.inc
+670	NPC_EVILLAND	catalog			src/skill/SkillEnumIdTable.inc
+671	NPC_MAGICMIRROR	catalog			src/skill/SkillEnumIdTable.inc
+672	NPC_SLOWCAST	catalog			src/skill/SkillEnumIdTable.inc
+673	NPC_CRITICALWOUND	catalog			src/skill/SkillEnumIdTable.inc
+674	NPC_EXPULSION	catalog			src/skill/SkillEnumIdTable.inc
+675	NPC_STONESKIN	catalog			src/skill/SkillEnumIdTable.inc
+676	NPC_ANTIMAGIC	catalog			src/skill/SkillEnumIdTable.inc
+677	NPC_WIDECURSE	catalog			src/skill/SkillEnumIdTable.inc
+678	NPC_WIDESTUN	catalog			src/skill/SkillEnumIdTable.inc
+679	NPC_VAMPIRE_GIFT	catalog			src/skill/SkillEnumIdTable.inc
+680	NPC_WIDESOULDRAIN	catalog			src/skill/SkillEnumIdTable.inc
+681	ALL_INCCARRY	catalog			src/skill/SkillEnumIdTable.inc
+682	NPC_TALK	catalog			src/skill/SkillEnumIdTable.inc
+683	NPC_HELLPOWER	catalog			src/skill/SkillEnumIdTable.inc
+684	NPC_WIDEHELLDIGNITY	catalog			src/skill/SkillEnumIdTable.inc
+685	NPC_INVINCIBLE	catalog			src/skill/SkillEnumIdTable.inc
+686	NPC_INVINCIBLEOFF	catalog			src/skill/SkillEnumIdTable.inc
+687	NPC_ALLHEAL	catalog			src/skill/SkillEnumIdTable.inc
+688	GM_SANDMAN	catalog			src/skill/SkillEnumIdTable.inc
+689	CASH_BLESSING	catalog			src/skill/SkillEnumIdTable.inc
+690	CASH_INCAGI	catalog			src/skill/SkillEnumIdTable.inc
+691	CASH_ASSUMPTIO	catalog			src/skill/SkillEnumIdTable.inc
+692	ALL_CATCRY	catalog			src/skill/SkillEnumIdTable.inc
+693	ALL_PARTYFLEE	catalog			src/skill/SkillEnumIdTable.inc
+694	ALL_ANGEL_PROTECT	catalog			src/skill/SkillEnumIdTable.inc
+695	ALL_DREAM_SUMMERNIGHT	catalog			src/skill/SkillEnumIdTable.inc
+696	NPC_CHANGEUNDEAD2	catalog			src/skill/SkillEnumIdTable.inc
+697	ALL_REVERSEORCISH	catalog			src/skill/SkillEnumIdTable.inc
+698	ALL_WEWISH	catalog			src/skill/SkillEnumIdTable.inc
+699	ALL_SONKRAN	catalog			src/skill/SkillEnumIdTable.inc
+1001	KN_CHARGEATK	catalog			src/skill/SkillEnumIdTable.inc
+1002	CR_SHRINK	catalog			src/skill/SkillEnumIdTable.inc
+1003	AS_SONICACCEL	catalog			src/skill/SkillEnumIdTable.inc
+1004	AS_VENOMKNIFE	catalog			src/skill/SkillEnumIdTable.inc
+1005	RG_CLOSECONFINE	catalog			src/skill/SkillEnumIdTable.inc
+1006	WZ_SIGHTBLASTER	catalog			src/skill/SkillEnumIdTable.inc
+1007	SA_CREATECON	catalog			src/skill/SkillEnumIdTable.inc
+1008	SA_ELEMENTWATER	catalog			src/skill/SkillEnumIdTable.inc
+1009	HT_PHANTASMIC	catalog			src/skill/SkillEnumIdTable.inc
+1010	BA_PANGVOICE	catalog			src/skill/SkillEnumIdTable.inc
+1011	DC_WINKCHARM	catalog			src/skill/SkillEnumIdTable.inc
+1012	BS_UNFAIRLYTRICK	catalog			src/skill/SkillEnumIdTable.inc
+1013	BS_GREED	catalog			src/skill/SkillEnumIdTable.inc
+1014	PR_REDEMPTIO	catalog			src/skill/SkillEnumIdTable.inc
+1015	MO_KITRANSLATION	catalog			src/skill/SkillEnumIdTable.inc
+1016	MO_BALKYOUNG	catalog			src/skill/SkillEnumIdTable.inc
+1017	SA_ELEMENTGROUND	catalog			src/skill/SkillEnumIdTable.inc
+1018	SA_ELEMENTFIRE	catalog			src/skill/SkillEnumIdTable.inc
+1019	SA_ELEMENTWIND	catalog			src/skill/SkillEnumIdTable.inc
+2001	RK_ENCHANTBLADE	catalog			src/skill/SkillEnumIdTable.inc
+2002	RK_SONICWAVE	catalog			src/skill/SkillEnumIdTable.inc
+2003	RK_DEATHBOUND	catalog			src/skill/SkillEnumIdTable.inc
+2004	RK_HUNDREDSPEAR	catalog			src/skill/SkillEnumIdTable.inc
+2005	RK_WINDCUTTER	catalog			src/skill/SkillEnumIdTable.inc
+2006	RK_IGNITIONBREAK	catalog			src/skill/SkillEnumIdTable.inc
+2007	RK_DRAGONTRAINING	catalog			src/skill/SkillEnumIdTable.inc
+2008	RK_DRAGONBREATH	catalog			src/skill/SkillEnumIdTable.inc
+2009	RK_DRAGONHOWLING	catalog			src/skill/SkillEnumIdTable.inc
+2010	RK_RUNEMASTERY	catalog			src/skill/SkillEnumIdTable.inc
+2011	RK_MILLENNIUMSHIELD	catalog			src/skill/SkillEnumIdTable.inc
+2012	RK_CRUSHSTRIKE	catalog			src/skill/SkillEnumIdTable.inc
+2013	RK_REFRESH	catalog			src/skill/SkillEnumIdTable.inc
+2014	RK_GIANTGROWTH	catalog			src/skill/SkillEnumIdTable.inc
+2015	RK_STONEHARDSKIN	catalog			src/skill/SkillEnumIdTable.inc
+2016	RK_VITALITYACTIVATION	catalog			src/skill/SkillEnumIdTable.inc
+2017	RK_STORMBLAST	catalog			src/skill/SkillEnumIdTable.inc
+2018	RK_FIGHTINGSPIRIT	catalog			src/skill/SkillEnumIdTable.inc
+2019	RK_ABUNDANCE	catalog			src/skill/SkillEnumIdTable.inc
+2020	RK_PHANTOMTHRUST	catalog			src/skill/SkillEnumIdTable.inc
+2021	GC_VENOMIMPRESS	catalog			src/skill/SkillEnumIdTable.inc
+2022	GC_CROSSIMPACT	catalog			src/skill/SkillEnumIdTable.inc
+2023	GC_DARKILLUSION	catalog			src/skill/SkillEnumIdTable.inc
+2024	GC_RESEARCHNEWPOISON	catalog			src/skill/SkillEnumIdTable.inc
+2025	GC_CREATENEWPOISON	catalog			src/skill/SkillEnumIdTable.inc
+2026	GC_ANTIDOTE	catalog			src/skill/SkillEnumIdTable.inc
+2027	GC_POISONINGWEAPON	catalog			src/skill/SkillEnumIdTable.inc
+2028	GC_WEAPONBLOCKING	catalog			src/skill/SkillEnumIdTable.inc
+2029	GC_COUNTERSLASH	catalog			src/skill/SkillEnumIdTable.inc
+2030	GC_WEAPONCRUSH	catalog			src/skill/SkillEnumIdTable.inc
+2031	GC_VENOMPRESSURE	catalog			src/skill/SkillEnumIdTable.inc
+2032	GC_POISONSMOKE	catalog			src/skill/SkillEnumIdTable.inc
+2033	GC_CLOAKINGEXCEED	catalog			src/skill/SkillEnumIdTable.inc
+2034	GC_PHANTOMMENACE	catalog			src/skill/SkillEnumIdTable.inc
+2035	GC_HALLUCINATIONWALK	catalog			src/skill/SkillEnumIdTable.inc
+2036	GC_ROLLINGCUTTER	catalog			src/skill/SkillEnumIdTable.inc
+2037	GC_CROSSRIPPERSLASHER	catalog			src/skill/SkillEnumIdTable.inc
+2038	AB_JUDEX	catalog			src/skill/SkillEnumIdTable.inc
+2039	AB_ANCILLA	catalog			src/skill/SkillEnumIdTable.inc
+2040	AB_ADORAMUS	catalog			src/skill/SkillEnumIdTable.inc
+2041	AB_CLEMENTIA	catalog			src/skill/SkillEnumIdTable.inc
+2042	AB_CANTO	catalog			src/skill/SkillEnumIdTable.inc
+2043	AB_CHEAL	catalog			src/skill/SkillEnumIdTable.inc
+2044	AB_EPICLESIS	catalog			src/skill/SkillEnumIdTable.inc
+2045	AB_PRAEFATIO	catalog			src/skill/SkillEnumIdTable.inc
+2046	AB_ORATIO	catalog			src/skill/SkillEnumIdTable.inc
+2047	AB_LAUDAAGNUS	catalog			src/skill/SkillEnumIdTable.inc
+2048	AB_LAUDARAMUS	catalog			src/skill/SkillEnumIdTable.inc
+2049	AB_EUCHARISTICA	catalog			src/skill/SkillEnumIdTable.inc
+2050	AB_RENOVATIO	catalog			src/skill/SkillEnumIdTable.inc
+2051	AB_HIGHNESSHEAL	catalog			src/skill/SkillEnumIdTable.inc
+2052	AB_CLEARANCE	catalog			src/skill/SkillEnumIdTable.inc
+2053	AB_EXPIATIO	catalog			src/skill/SkillEnumIdTable.inc
+2054	AB_DUPLELIGHT	catalog			src/skill/SkillEnumIdTable.inc
+2055	AB_DUPLELIGHT_MELEE	catalog			src/skill/SkillEnumIdTable.inc
+2056	AB_DUPLELIGHT_MAGIC	catalog			src/skill/SkillEnumIdTable.inc
+2057	AB_SILENTIUM	catalog			src/skill/SkillEnumIdTable.inc
+2201	WL_WHITEIMPRISON	catalog			src/skill/SkillEnumIdTable.inc
+2202	WL_SOULEXPANSION	catalog			src/skill/SkillEnumIdTable.inc
+2203	WL_FROSTMISTY	catalog			src/skill/SkillEnumIdTable.inc
+2204	WL_JACKFROST	catalog			src/skill/SkillEnumIdTable.inc
+2205	WL_MARSHOFABYSS	catalog			src/skill/SkillEnumIdTable.inc
+2206	WL_RECOGNIZEDSPELL	catalog			src/skill/SkillEnumIdTable.inc
+2207	WL_SIENNAEXECRATE	catalog			src/skill/SkillEnumIdTable.inc
+2208	WL_RADIUS	catalog			src/skill/SkillEnumIdTable.inc
+2209	WL_STASIS	catalog			src/skill/SkillEnumIdTable.inc
+2210	WL_DRAINLIFE	catalog			src/skill/SkillEnumIdTable.inc
+2211	WL_CRIMSONROCK	catalog			src/skill/SkillEnumIdTable.inc
+2212	WL_HELLINFERNO	catalog			src/skill/SkillEnumIdTable.inc
+2213	WL_COMET	catalog			src/skill/SkillEnumIdTable.inc
+2214	WL_CHAINLIGHTNING	catalog			src/skill/SkillEnumIdTable.inc
+2215	WL_CHAINLIGHTNING_ATK	catalog			src/skill/SkillEnumIdTable.inc
+2216	WL_EARTHSTRAIN	catalog			src/skill/SkillEnumIdTable.inc
+2217	WL_TETRAVORTEX	catalog			src/skill/SkillEnumIdTable.inc
+2218	WL_TETRAVORTEX_FIRE	catalog			src/skill/SkillEnumIdTable.inc
+2219	WL_TETRAVORTEX_WATER	catalog			src/skill/SkillEnumIdTable.inc
+2220	WL_TETRAVORTEX_WIND	catalog			src/skill/SkillEnumIdTable.inc
+2221	WL_TETRAVORTEX_GROUND	catalog			src/skill/SkillEnumIdTable.inc
+2222	WL_SUMMONFB	catalog			src/skill/SkillEnumIdTable.inc
+2223	WL_SUMMONBL	catalog			src/skill/SkillEnumIdTable.inc
+2224	WL_SUMMONWB	catalog			src/skill/SkillEnumIdTable.inc
+2225	WL_SUMMON_ATK_FIRE	catalog			src/skill/SkillEnumIdTable.inc
+2226	WL_SUMMON_ATK_WIND	catalog			src/skill/SkillEnumIdTable.inc
+2227	WL_SUMMON_ATK_WATER	catalog			src/skill/SkillEnumIdTable.inc
+2228	WL_SUMMON_ATK_GROUND	catalog			src/skill/SkillEnumIdTable.inc
+2229	WL_SUMMONSTONE	catalog			src/skill/SkillEnumIdTable.inc
+2230	WL_RELEASE	catalog			src/skill/SkillEnumIdTable.inc
+2231	WL_READING_SB	catalog			src/skill/SkillEnumIdTable.inc
+2232	WL_FREEZE_SP	catalog			src/skill/SkillEnumIdTable.inc
+2233	RA_ARROWSTORM	catalog			src/skill/SkillEnumIdTable.inc
+2234	RA_FEARBREEZE	catalog			src/skill/SkillEnumIdTable.inc
+2235	RA_RANGERMAIN	catalog			src/skill/SkillEnumIdTable.inc
+2236	RA_AIMEDBOLT	catalog			src/skill/SkillEnumIdTable.inc
+2237	RA_DETONATOR	catalog			src/skill/SkillEnumIdTable.inc
+2238	RA_ELECTRICSHOCKER	catalog			src/skill/SkillEnumIdTable.inc
+2239	RA_CLUSTERBOMB	catalog			src/skill/SkillEnumIdTable.inc
+2240	RA_WUGMASTERY	catalog			src/skill/SkillEnumIdTable.inc
+2241	RA_WUGRIDER	catalog			src/skill/SkillEnumIdTable.inc
+2242	RA_WUGDASH	catalog			src/skill/SkillEnumIdTable.inc
+2243	RA_WUGSTRIKE	catalog			src/skill/SkillEnumIdTable.inc
+2244	RA_WUGBITE	catalog			src/skill/SkillEnumIdTable.inc
+2245	RA_TOOTHOFWUG	catalog			src/skill/SkillEnumIdTable.inc
+2246	RA_SENSITIVEKEEN	catalog			src/skill/SkillEnumIdTable.inc
+2247	RA_CAMOUFLAGE	catalog			src/skill/SkillEnumIdTable.inc
+2248	RA_RESEARCHTRAP	catalog			src/skill/SkillEnumIdTable.inc
+2249	RA_MAGENTATRAP	catalog			src/skill/SkillEnumIdTable.inc
+2250	RA_COBALTTRAP	catalog			src/skill/SkillEnumIdTable.inc
+2251	RA_MAIZETRAP	catalog			src/skill/SkillEnumIdTable.inc
+2252	RA_VERDURETRAP	catalog			src/skill/SkillEnumIdTable.inc
+2253	RA_FIRINGTRAP	catalog			src/skill/SkillEnumIdTable.inc
+2254	RA_ICEBOUNDTRAP	catalog			src/skill/SkillEnumIdTable.inc
+2255	NC_MADOLICENCE	catalog			src/skill/SkillEnumIdTable.inc
+2256	NC_BOOSTKNUCKLE	catalog			src/skill/SkillEnumIdTable.inc
+2257	NC_PILEBUNKER	catalog			src/skill/SkillEnumIdTable.inc
+2258	NC_VULCANARM	catalog			src/skill/SkillEnumIdTable.inc
+2259	NC_FLAMELAUNCHER	catalog			src/skill/SkillEnumIdTable.inc
+2260	NC_COLDSLOWER	catalog			src/skill/SkillEnumIdTable.inc
+2261	NC_ARMSCANNON	catalog			src/skill/SkillEnumIdTable.inc
+2262	NC_ACCELERATION	catalog			src/skill/SkillEnumIdTable.inc
+2263	NC_HOVERING	catalog			src/skill/SkillEnumIdTable.inc
+2264	NC_F_SIDESLIDE	catalog			src/skill/SkillEnumIdTable.inc
+2265	NC_B_SIDESLIDE	catalog			src/skill/SkillEnumIdTable.inc
+2266	NC_MAINFRAME	catalog			src/skill/SkillEnumIdTable.inc
+2267	NC_SELFDESTRUCTION	catalog			src/skill/SkillEnumIdTable.inc
+2268	NC_SHAPESHIFT	catalog			src/skill/SkillEnumIdTable.inc
+2269	NC_EMERGENCYCOOL	catalog			src/skill/SkillEnumIdTable.inc
+2270	NC_INFRAREDSCAN	catalog			src/skill/SkillEnumIdTable.inc
+2271	NC_ANALYZE	catalog			src/skill/SkillEnumIdTable.inc
+2272	NC_MAGNETICFIELD	catalog			src/skill/SkillEnumIdTable.inc
+2273	NC_NEUTRALBARRIER	catalog			src/skill/SkillEnumIdTable.inc
+2274	NC_STEALTHFIELD	catalog			src/skill/SkillEnumIdTable.inc
+2275	NC_REPAIR	catalog			src/skill/SkillEnumIdTable.inc
+2276	NC_TRAININGAXE	catalog			src/skill/SkillEnumIdTable.inc
+2277	NC_RESEARCHFE	catalog			src/skill/SkillEnumIdTable.inc
+2278	NC_AXEBOOMERANG	catalog			src/skill/SkillEnumIdTable.inc
+2279	NC_POWERSWING	catalog			src/skill/SkillEnumIdTable.inc
+2280	NC_AXETORNADO	catalog			src/skill/SkillEnumIdTable.inc
+2281	NC_SILVERSNIPER	catalog			src/skill/SkillEnumIdTable.inc
+2282	NC_MAGICDECOY	catalog			src/skill/SkillEnumIdTable.inc
+2283	NC_DISJOINT	catalog			src/skill/SkillEnumIdTable.inc
+2284	SC_FATALMENACE	catalog			src/skill/SkillEnumIdTable.inc
+2285	SC_REPRODUCE	catalog			src/skill/SkillEnumIdTable.inc
+2286	SC_AUTOSHADOWSPELL	catalog			src/skill/SkillEnumIdTable.inc
+2287	SC_SHADOWFORM	catalog			src/skill/SkillEnumIdTable.inc
+2288	SC_TRIANGLESHOT	catalog			src/skill/SkillEnumIdTable.inc
+2289	SC_BODYPAINT	catalog			src/skill/SkillEnumIdTable.inc
+2290	SC_INVISIBILITY	catalog			src/skill/SkillEnumIdTable.inc
+2291	SC_DEADLYINFECT	catalog			src/skill/SkillEnumIdTable.inc
+2292	SC_ENERVATION	catalog			src/skill/SkillEnumIdTable.inc
+2293	SC_GROOMY	catalog			src/skill/SkillEnumIdTable.inc
+2294	SC_IGNORANCE	catalog			src/skill/SkillEnumIdTable.inc
+2295	SC_LAZINESS	catalog			src/skill/SkillEnumIdTable.inc
+2296	SC_UNLUCKY	catalog			src/skill/SkillEnumIdTable.inc
+2297	SC_WEAKNESS	catalog			src/skill/SkillEnumIdTable.inc
+2298	SC_STRIPACCESSARY	catalog			src/skill/SkillEnumIdTable.inc
+2299	SC_MANHOLE	catalog			src/skill/SkillEnumIdTable.inc
+2300	SC_DIMENSIONDOOR	catalog			src/skill/SkillEnumIdTable.inc
+2301	SC_CHAOSPANIC	catalog			src/skill/SkillEnumIdTable.inc
+2302	SC_MAELSTROM	catalog			src/skill/SkillEnumIdTable.inc
+2303	SC_BLOODYLUST	catalog			src/skill/SkillEnumIdTable.inc
+2304	SC_FEINTBOMB	catalog			src/skill/SkillEnumIdTable.inc
+2307	LG_CANNONSPEAR	catalog			src/skill/SkillEnumIdTable.inc
+2308	LG_BANISHINGPOINT	catalog			src/skill/SkillEnumIdTable.inc
+2309	LG_TRAMPLE	catalog			src/skill/SkillEnumIdTable.inc
+2310	LG_SHIELDPRESS	catalog			src/skill/SkillEnumIdTable.inc
+2311	LG_REFLECTDAMAGE	catalog			src/skill/SkillEnumIdTable.inc
+2312	LG_PINPOINTATTACK	catalog			src/skill/SkillEnumIdTable.inc
+2313	LG_FORCEOFVANGUARD	catalog			src/skill/SkillEnumIdTable.inc
+2314	LG_RAGEBURST	catalog			src/skill/SkillEnumIdTable.inc
+2315	LG_SHIELDSPELL	catalog			src/skill/SkillEnumIdTable.inc
+2316	LG_EXEEDBREAK	catalog			src/skill/SkillEnumIdTable.inc
+2317	LG_OVERBRAND	catalog			src/skill/SkillEnumIdTable.inc
+2318	LG_PRESTIGE	catalog			src/skill/SkillEnumIdTable.inc
+2319	LG_BANDING	catalog			src/skill/SkillEnumIdTable.inc
+2320	LG_MOONSLASHER	catalog			src/skill/SkillEnumIdTable.inc
+2321	LG_RAYOFGENESIS	catalog			src/skill/SkillEnumIdTable.inc
+2322	LG_PIETY	catalog			src/skill/SkillEnumIdTable.inc
+2323	LG_EARTHDRIVE	catalog			src/skill/SkillEnumIdTable.inc
+2324	LG_HESPERUSLIT	catalog			src/skill/SkillEnumIdTable.inc
+2325	LG_INSPIRATION	catalog			src/skill/SkillEnumIdTable.inc
+2326	SR_DRAGONCOMBO	catalog			src/skill/SkillEnumIdTable.inc
+2327	SR_SKYNETBLOW	catalog			src/skill/SkillEnumIdTable.inc
+2328	SR_EARTHSHAKER	catalog			src/skill/SkillEnumIdTable.inc
+2329	SR_FALLENEMPIRE	catalog			src/skill/SkillEnumIdTable.inc
+2330	SR_TIGERCANNON	catalog			src/skill/SkillEnumIdTable.inc
+2331	SR_HELLGATE	catalog			src/skill/SkillEnumIdTable.inc
+2332	SR_RAMPAGEBLASTER	catalog			src/skill/SkillEnumIdTable.inc
+2333	SR_CRESCENTELBOW	catalog			src/skill/SkillEnumIdTable.inc
+2334	SR_CURSEDCIRCLE	catalog			src/skill/SkillEnumIdTable.inc
+2335	SR_LIGHTNINGWALK	catalog			src/skill/SkillEnumIdTable.inc
+2336	SR_KNUCKLEARROW	catalog			src/skill/SkillEnumIdTable.inc
+2337	SR_WINDMILL	catalog			src/skill/SkillEnumIdTable.inc
+2338	SR_RAISINGDRAGON	catalog			src/skill/SkillEnumIdTable.inc
+2339	SR_GENTLETOUCH	catalog			src/skill/SkillEnumIdTable.inc
+2340	SR_ASSIMILATEPOWER	catalog			src/skill/SkillEnumIdTable.inc
+2341	SR_POWERVELOCITY	catalog			src/skill/SkillEnumIdTable.inc
+2342	SR_CRESCENTELBOW_AUTOSPELL	catalog			src/skill/SkillEnumIdTable.inc
+2343	SR_GATEOFHELL	catalog			src/skill/SkillEnumIdTable.inc
+2344	SR_GENTLETOUCH_QUIET	catalog			src/skill/SkillEnumIdTable.inc
+2345	SR_GENTLETOUCH_CURE	catalog			src/skill/SkillEnumIdTable.inc
+2346	SR_GENTLETOUCH_ENERGYGAIN	catalog			src/skill/SkillEnumIdTable.inc
+2347	SR_GENTLETOUCH_CHANGE	catalog			src/skill/SkillEnumIdTable.inc
+2348	SR_GENTLETOUCH_REVITALIZE	catalog			src/skill/SkillEnumIdTable.inc
+2350	WA_SWING_DANCE	catalog			src/skill/SkillEnumIdTable.inc
+2351	WA_SYMPHONY_OF_LOVER	catalog			src/skill/SkillEnumIdTable.inc
+2352	WA_MOONLIT_SERENADE	catalog			src/skill/SkillEnumIdTable.inc
+2381	MI_RUSH_WINDMILL	catalog			src/skill/SkillEnumIdTable.inc
+2382	MI_ECHOSONG	catalog			src/skill/SkillEnumIdTable.inc
+2383	MI_HARMONIZE	catalog			src/skill/SkillEnumIdTable.inc
+2412	WM_LESSON	catalog			src/skill/SkillEnumIdTable.inc
+2413	WM_METALICSOUND	catalog			src/skill/SkillEnumIdTable.inc
+2414	WM_REVERBERATION	catalog			src/skill/SkillEnumIdTable.inc
+2415	WM_REVERBERATION_MELEE	catalog			src/skill/SkillEnumIdTable.inc
+2416	WM_REVERBERATION_MAGIC	catalog			src/skill/SkillEnumIdTable.inc
+2417	WM_DOMINION_IMPULSE	catalog			src/skill/SkillEnumIdTable.inc
+2418	WM_SEVERE_RAINSTORM	catalog			src/skill/SkillEnumIdTable.inc
+2419	WM_POEMOFNETHERWORLD	catalog			src/skill/SkillEnumIdTable.inc
+2420	WM_VOICEOFSIREN	catalog			src/skill/SkillEnumIdTable.inc
+2421	WM_DEADHILLHERE	catalog			src/skill/SkillEnumIdTable.inc
+2422	WM_LULLABY_DEEPSLEEP	catalog			src/skill/SkillEnumIdTable.inc
+2423	WM_SIRCLEOFNATURE	catalog			src/skill/SkillEnumIdTable.inc
+2424	WM_RANDOMIZESPELL	catalog			src/skill/SkillEnumIdTable.inc
+2425	WM_GLOOMYDAY	catalog			src/skill/SkillEnumIdTable.inc
+2426	WM_GREAT_ECHO	catalog			src/skill/SkillEnumIdTable.inc
+2427	WM_SONG_OF_MANA	catalog			src/skill/SkillEnumIdTable.inc
+2428	WM_DANCE_WITH_WUG	catalog			src/skill/SkillEnumIdTable.inc
+2429	WM_SOUND_OF_DESTRUCTION	catalog			src/skill/SkillEnumIdTable.inc
+2430	WM_SATURDAY_NIGHT_FEVER	catalog			src/skill/SkillEnumIdTable.inc
+2431	WM_LERADS_DEW	catalog			src/skill/SkillEnumIdTable.inc
+2432	WM_MELODYOFSINK	catalog			src/skill/SkillEnumIdTable.inc
+2433	WM_BEYOND_OF_WARCRY	catalog			src/skill/SkillEnumIdTable.inc
+2434	WM_UNLIMITED_HUMMING_VOICE	catalog			src/skill/SkillEnumIdTable.inc
+2443	SO_FIREWALK	catalog			src/skill/SkillEnumIdTable.inc
+2444	SO_ELECTRICWALK	catalog			src/skill/SkillEnumIdTable.inc
+2445	SO_SPELLFIST	catalog			src/skill/SkillEnumIdTable.inc
+2446	SO_EARTHGRAVE	catalog			src/skill/SkillEnumIdTable.inc
+2447	SO_DIAMONDDUST	catalog			src/skill/SkillEnumIdTable.inc
+2448	SO_POISON_BUSTER	catalog			src/skill/SkillEnumIdTable.inc
+2449	SO_PSYCHIC_WAVE	catalog			src/skill/SkillEnumIdTable.inc
+2450	SO_CLOUD_KILL	catalog			src/skill/SkillEnumIdTable.inc
+2451	SO_STRIKING	catalog			src/skill/SkillEnumIdTable.inc
+2452	SO_WARMER	catalog			src/skill/SkillEnumIdTable.inc
+2453	SO_VACUUM_EXTREME	catalog			src/skill/SkillEnumIdTable.inc
+2454	SO_VARETYR_SPEAR	catalog			src/skill/SkillEnumIdTable.inc
+2455	SO_ARRULLO	catalog			src/skill/SkillEnumIdTable.inc
+2456	SO_EL_CONTROL	catalog			src/skill/SkillEnumIdTable.inc
+2457	SO_SUMMON_AGNI	catalog			src/skill/SkillEnumIdTable.inc
+2458	SO_SUMMON_AQUA	catalog			src/skill/SkillEnumIdTable.inc
+2459	SO_SUMMON_VENTUS	catalog			src/skill/SkillEnumIdTable.inc
+2460	SO_SUMMON_TERA	catalog			src/skill/SkillEnumIdTable.inc
+2461	SO_EL_ACTION	catalog			src/skill/SkillEnumIdTable.inc
+2462	SO_EL_ANALYSIS	catalog			src/skill/SkillEnumIdTable.inc
+2463	SO_EL_SYMPATHY	catalog			src/skill/SkillEnumIdTable.inc
+2464	SO_EL_CURE	catalog			src/skill/SkillEnumIdTable.inc
+2465	SO_FIRE_INSIGNIA	catalog			src/skill/SkillEnumIdTable.inc
+2466	SO_WATER_INSIGNIA	catalog			src/skill/SkillEnumIdTable.inc
+2467	SO_WIND_INSIGNIA	catalog			src/skill/SkillEnumIdTable.inc
+2468	SO_EARTH_INSIGNIA	catalog			src/skill/SkillEnumIdTable.inc
+2474	GN_TRAINING_SWORD	catalog			src/skill/SkillEnumIdTable.inc
+2475	GN_REMODELING_CART	catalog			src/skill/SkillEnumIdTable.inc
+2476	GN_CART_TORNADO	catalog			src/skill/SkillEnumIdTable.inc
+2477	GN_CARTCANNON	catalog			src/skill/SkillEnumIdTable.inc
+2478	GN_CARTBOOST	catalog			src/skill/SkillEnumIdTable.inc
+2479	GN_THORNS_TRAP	catalog			src/skill/SkillEnumIdTable.inc
+2480	GN_BLOOD_SUCKER	catalog			src/skill/SkillEnumIdTable.inc
+2481	GN_SPORE_EXPLOSION	catalog			src/skill/SkillEnumIdTable.inc
+2482	GN_WALLOFTHORN	catalog			src/skill/SkillEnumIdTable.inc
+2483	GN_CRAZYWEED	catalog			src/skill/SkillEnumIdTable.inc
+2484	GN_CRAZYWEED_ATK	catalog			src/skill/SkillEnumIdTable.inc
+2485	GN_DEMONIC_FIRE	catalog			src/skill/SkillEnumIdTable.inc
+2486	GN_FIRE_EXPANSION	catalog			src/skill/SkillEnumIdTable.inc
+2487	GN_FIRE_EXPANSION_SMOKE_POWDER	catalog			src/skill/SkillEnumIdTable.inc
+2488	GN_FIRE_EXPANSION_TEAR_GAS	catalog			src/skill/SkillEnumIdTable.inc
+2489	GN_FIRE_EXPANSION_ACID	catalog			src/skill/SkillEnumIdTable.inc
+2490	GN_HELLS_PLANT	catalog			src/skill/SkillEnumIdTable.inc
+2491	GN_HELLS_PLANT_ATK	catalog			src/skill/SkillEnumIdTable.inc
+2492	GN_MANDRAGORA	catalog			src/skill/SkillEnumIdTable.inc
+2493	GN_SLINGITEM	catalog			src/skill/SkillEnumIdTable.inc
+2494	GN_CHANGEMATERIAL	catalog			src/skill/SkillEnumIdTable.inc
+2495	GN_MIX_COOKING	catalog			src/skill/SkillEnumIdTable.inc
+2496	GN_MAKEBOMB	catalog			src/skill/SkillEnumIdTable.inc
+2497	GN_S_PHARMACY	catalog			src/skill/SkillEnumIdTable.inc
+2498	GN_SLINGITEM_RANGEMELEEATK	catalog			src/skill/SkillEnumIdTable.inc
+2499	AB_SECRAMENT	catalog			src/skill/SkillEnumIdTable.inc
+2500	WM_SEVERE_RAINSTORM_MELEE	catalog			src/skill/SkillEnumIdTable.inc
+2501	SR_HOWLINGOFLION	catalog			src/skill/SkillEnumIdTable.inc
+2502	SR_RIDEINLIGHTNING	catalog			src/skill/SkillEnumIdTable.inc
+2503	LG_OVERBRAND_BRANDISH	catalog			src/skill/SkillEnumIdTable.inc
+2504	LG_OVERBRAND_PLUSATK	catalog			src/skill/SkillEnumIdTable.inc
+2533	ALL_ODINS_RECALL	catalog			src/skill/SkillEnumIdTable.inc
+2534	RETURN_TO_ELDICASTES	catalog			src/skill/SkillEnumIdTable.inc
+2535	ALL_BUYING_STORE	catalog			src/skill/SkillEnumIdTable.inc
+8001	HLIF_HEAL	catalog			src/skill/SkillEnumIdTable.inc
+8002	HLIF_AVOID	catalog			src/skill/SkillEnumIdTable.inc
+8003	HLIF_BRAIN	catalog			src/skill/SkillEnumIdTable.inc
+8004	HLIF_CHANGE	catalog			src/skill/SkillEnumIdTable.inc
+8005	HAMI_CASTLE	catalog			src/skill/SkillEnumIdTable.inc
+8006	HAMI_DEFENCE	catalog			src/skill/SkillEnumIdTable.inc
+8007	HAMI_SKIN	catalog			src/skill/SkillEnumIdTable.inc
+8008	HAMI_BLOODLUST	catalog			src/skill/SkillEnumIdTable.inc
+8009	HFLI_MOON	catalog			src/skill/SkillEnumIdTable.inc
+8010	HFLI_FLEET	catalog			src/skill/SkillEnumIdTable.inc
+8011	HFLI_SPEED	catalog			src/skill/SkillEnumIdTable.inc
+8012	HFLI_SBR44	catalog			src/skill/SkillEnumIdTable.inc
+8013	HVAN_CAPRICE	catalog			src/skill/SkillEnumIdTable.inc
+8014	HVAN_CHAOTIC	catalog			src/skill/SkillEnumIdTable.inc
+8015	HVAN_INSTRUCT	catalog			src/skill/SkillEnumIdTable.inc
+8016	HVAN_EXPLOSION	catalog			src/skill/SkillEnumIdTable.inc
+8017		catalog			src/skill/SkillEnumIdTable.inc
+8018		catalog			src/skill/SkillEnumIdTable.inc
+8019		catalog			src/skill/SkillEnumIdTable.inc
+8020		catalog			src/skill/SkillEnumIdTable.inc
+8021		catalog			src/skill/SkillEnumIdTable.inc
+8022		catalog			src/skill/SkillEnumIdTable.inc
+8023		catalog			src/skill/SkillEnumIdTable.inc
+8024		catalog			src/skill/SkillEnumIdTable.inc
+8025		catalog			src/skill/SkillEnumIdTable.inc
+8026		catalog			src/skill/SkillEnumIdTable.inc
+8027		catalog			src/skill/SkillEnumIdTable.inc
+8028		catalog			src/skill/SkillEnumIdTable.inc
+8029		catalog			src/skill/SkillEnumIdTable.inc
+8030		catalog			src/skill/SkillEnumIdTable.inc
+8031		catalog			src/skill/SkillEnumIdTable.inc
+8032		catalog			src/skill/SkillEnumIdTable.inc
+8033		catalog			src/skill/SkillEnumIdTable.inc
+8034		catalog			src/skill/SkillEnumIdTable.inc
+8035		catalog			src/skill/SkillEnumIdTable.inc
+8036		catalog			src/skill/SkillEnumIdTable.inc
+8037		catalog			src/skill/SkillEnumIdTable.inc
+8038		catalog			src/skill/SkillEnumIdTable.inc
+8039		catalog			src/skill/SkillEnumIdTable.inc
+8040		catalog			src/skill/SkillEnumIdTable.inc
+8041		catalog			src/skill/SkillEnumIdTable.inc
+8042		catalog			src/skill/SkillEnumIdTable.inc
+8043		catalog			src/skill/SkillEnumIdTable.inc
+8044		catalog			src/skill/SkillEnumIdTable.inc
+8045		catalog			src/skill/SkillEnumIdTable.inc
+8046		catalog			src/skill/SkillEnumIdTable.inc
+8201	MS_BASH	catalog			src/skill/SkillEnumIdTable.inc
+8202	MS_MAGNUM	catalog			src/skill/SkillEnumIdTable.inc
+8203	MS_BOWLINGBASH	catalog			src/skill/SkillEnumIdTable.inc
+8204	MS_PARRYING	catalog			src/skill/SkillEnumIdTable.inc
+8205	MS_REFLECTSHIELD	catalog			src/skill/SkillEnumIdTable.inc
+8206	MS_BERSERK	catalog			src/skill/SkillEnumIdTable.inc
+8207	MA_DOUBLE	catalog			src/skill/SkillEnumIdTable.inc
+8208	MA_SHOWER	catalog			src/skill/SkillEnumIdTable.inc
+8209	MA_SKIDTRAP	catalog			src/skill/SkillEnumIdTable.inc
+8210	MA_LANDMINE	catalog			src/skill/SkillEnumIdTable.inc
+8211	MA_SANDMAN	catalog			src/skill/SkillEnumIdTable.inc
+8212	MA_FREEZINGTRAP	catalog			src/skill/SkillEnumIdTable.inc
+8213	MA_REMOVETRAP	catalog			src/skill/SkillEnumIdTable.inc
+8214	MA_CHARGEARROW	catalog			src/skill/SkillEnumIdTable.inc
+8215	MA_SHARPSHOOTING	catalog			src/skill/SkillEnumIdTable.inc
+8216	ML_PIERCE	catalog			src/skill/SkillEnumIdTable.inc
+8217	ML_BRANDISH	catalog			src/skill/SkillEnumIdTable.inc
+8218	ML_SPIRALPIERCE	catalog			src/skill/SkillEnumIdTable.inc
+8219	ML_DEFENDER	catalog			src/skill/SkillEnumIdTable.inc
+8220	ML_AUTOGUARD	catalog			src/skill/SkillEnumIdTable.inc
+8221	ML_DEVOTION	catalog			src/skill/SkillEnumIdTable.inc
+8222	MER_MAGNIFICAT	catalog			src/skill/SkillEnumIdTable.inc
+8223	MER_QUICKEN	catalog			src/skill/SkillEnumIdTable.inc
+8224	MER_SIGHT	catalog			src/skill/SkillEnumIdTable.inc
+8225	MER_CRASH	catalog			src/skill/SkillEnumIdTable.inc
+8226	MER_REGAIN	catalog			src/skill/SkillEnumIdTable.inc
+8227	MER_TENDER	catalog			src/skill/SkillEnumIdTable.inc
+8228	MER_BENEDICTION	catalog			src/skill/SkillEnumIdTable.inc
+8229	MER_RECUPERATE	catalog			src/skill/SkillEnumIdTable.inc
+8230	MER_MENTALCURE	catalog			src/skill/SkillEnumIdTable.inc
+8231	MER_COMPRESS	catalog			src/skill/SkillEnumIdTable.inc
+8232	MER_PROVOKE	catalog			src/skill/SkillEnumIdTable.inc
+8233	MER_AUTOBERSERK	catalog			src/skill/SkillEnumIdTable.inc
+8234	MER_DECAGI	catalog			src/skill/SkillEnumIdTable.inc
+8235	MER_SCAPEGOAT	catalog			src/skill/SkillEnumIdTable.inc
+8236	MER_LEXDIVINA	catalog			src/skill/SkillEnumIdTable.inc
+8237	MER_ESTIMATION	catalog			src/skill/SkillEnumIdTable.inc
+8238	MER_KYRIE	catalog			src/skill/SkillEnumIdTable.inc
+8239	MER_BLESSING	catalog			src/skill/SkillEnumIdTable.inc
+8240	MER_INCAGI	catalog			src/skill/SkillEnumIdTable.inc
+8401	EL_CIRCLE_OF_FIRE	catalog			src/skill/SkillEnumIdTable.inc
+8402	EL_FIRE_CLOAK	catalog			src/skill/SkillEnumIdTable.inc
+8403	EL_FIRE_MANTLE	catalog			src/skill/SkillEnumIdTable.inc
+8404	EL_WATER_SCREEN	catalog			src/skill/SkillEnumIdTable.inc
+8405	EL_WATER_DROP	catalog			src/skill/SkillEnumIdTable.inc
+8406	EL_WATER_BARRIER	catalog			src/skill/SkillEnumIdTable.inc
+8407	EL_WIND_STEP	catalog			src/skill/SkillEnumIdTable.inc
+8408	EL_WIND_CURTAIN	catalog			src/skill/SkillEnumIdTable.inc
+8409	EL_ZEPHYR	catalog			src/skill/SkillEnumIdTable.inc
+8410	EL_SOLID_SKIN	catalog			src/skill/SkillEnumIdTable.inc
+8411	EL_STONE_SHIELD	catalog			src/skill/SkillEnumIdTable.inc
+8412	EL_POWER_OF_GAIA	catalog			src/skill/SkillEnumIdTable.inc
+8413	EL_PYROTECHNIC	catalog			src/skill/SkillEnumIdTable.inc
+8414	EL_HEATER	catalog			src/skill/SkillEnumIdTable.inc
+8415	EL_TROPIC	catalog			src/skill/SkillEnumIdTable.inc
+8416	EL_AQUAPLAY	catalog			src/skill/SkillEnumIdTable.inc
+8417	EL_COOLER	catalog			src/skill/SkillEnumIdTable.inc
+8418	EL_CHILLY_AIR	catalog			src/skill/SkillEnumIdTable.inc
+8419	EL_GUST	catalog			src/skill/SkillEnumIdTable.inc
+8420	EL_BLAST	catalog			src/skill/SkillEnumIdTable.inc
+8421	EL_WILD_STORM	catalog			src/skill/SkillEnumIdTable.inc
+8422	EL_PETROLOGY	catalog			src/skill/SkillEnumIdTable.inc
+8423	EL_CURSED_SOIL	catalog			src/skill/SkillEnumIdTable.inc
+8424	EL_UPHEAVAL	catalog			src/skill/SkillEnumIdTable.inc
+8425	EL_FIRE_ARROW	catalog			src/skill/SkillEnumIdTable.inc
+8426	EL_FIRE_BOMB	catalog			src/skill/SkillEnumIdTable.inc
+8427	EL_FIRE_BOMB_ATK	catalog			src/skill/SkillEnumIdTable.inc
+8428	EL_FIRE_WAVE	catalog			src/skill/SkillEnumIdTable.inc
+8429	EL_FIRE_WAVE_ATK	catalog			src/skill/SkillEnumIdTable.inc
+8430	EL_ICE_NEEDLE	catalog			src/skill/SkillEnumIdTable.inc
+8431	EL_WATER_SCREW	catalog			src/skill/SkillEnumIdTable.inc
+8432	EL_WATER_SCREW_ATK	catalog			src/skill/SkillEnumIdTable.inc
+8433	EL_TIDAL_WEAPON	catalog			src/skill/SkillEnumIdTable.inc
+8434	EL_WIND_SLASH	catalog			src/skill/SkillEnumIdTable.inc
+8435	EL_HURRICANE	catalog			src/skill/SkillEnumIdTable.inc
+8436	EL_HURRICANE_ATK	catalog			src/skill/SkillEnumIdTable.inc
+8437	EL_TYPOON_MIS	catalog			src/skill/SkillEnumIdTable.inc
+8438	EL_TYPOON_MIS_ATK	catalog			src/skill/SkillEnumIdTable.inc
+8439	EL_STONE_HAMMER	catalog			src/skill/SkillEnumIdTable.inc
+8440	EL_ROCK_CRUSHER	catalog			src/skill/SkillEnumIdTable.inc
+8441	EL_ROCK_CRUSHER_ATK	catalog			src/skill/SkillEnumIdTable.inc
+8442	EL_STONE_RAIN	catalog			src/skill/SkillEnumIdTable.inc
+10000		catalog			src/skill/SkillEnumIdTable.inc
+10001		catalog			src/skill/SkillEnumIdTable.inc
+10002		catalog			src/skill/SkillEnumIdTable.inc
+10003		catalog			src/skill/SkillEnumIdTable.inc
+10004		catalog			src/skill/SkillEnumIdTable.inc
+10005		catalog			src/skill/SkillEnumIdTable.inc
+10006		catalog			src/skill/SkillEnumIdTable.inc
+10007		catalog			src/skill/SkillEnumIdTable.inc
+10008		catalog			src/skill/SkillEnumIdTable.inc
+10009		catalog			src/skill/SkillEnumIdTable.inc
+10010		catalog			src/skill/SkillEnumIdTable.inc
+10011		catalog			src/skill/SkillEnumIdTable.inc
+10012		catalog			src/skill/SkillEnumIdTable.inc
+10013		catalog			src/skill/SkillEnumIdTable.inc
+10014		catalog			src/skill/SkillEnumIdTable.inc
+5	SM_BASH	CSession::GetSkillActionInfo	5	4086	Ref/Session2.cpp
+7	SM_MAGNUM	CSession::GetSkillActionInfo	7	4087	Ref/Session2.cpp
+42	MC_MAMMONITE	CSession::GetSkillActionInfo	42	4088	Ref/Session2.cpp
+46	AC_DOUBLE	CSession::GetSkillActionInfo	46	4089	Ref/Session2.cpp
+366	HW_MAGICPOWER	CSession::GetSkillActionInfo	366	4090	Ref/Session2.cpp
+9	MG_SRECOVERY	CSession::GetSkillActionInfo	9	4092	Ref/Session2.cpp
+10	MG_SIGHT	CSession::GetSkillActionInfo	10	4093	Ref/Session2.cpp
+11	MG_NAPALMBEAT	CSession::GetSkillActionInfo	11	4094	Ref/Session2.cpp
+12	MG_SAFETYWALL	CSession::GetSkillActionInfo	12	4095	Ref/Session2.cpp
+13	MG_SOULSTRIKE	CSession::GetSkillActionInfo	13	4096	Ref/Session2.cpp
+14	MG_COLDBOLT	CSession::GetSkillActionInfo	14	4097	Ref/Session2.cpp
+15	MG_FROSTDIVER	CSession::GetSkillActionInfo	15	4098	Ref/Session2.cpp
+16	MG_STONECURSE	CSession::GetSkillActionInfo	16	4099	Ref/Session2.cpp
+17	MG_FIREBALL	CSession::GetSkillActionInfo	17	4100	Ref/Session2.cpp
+18	MG_FIREWALL	CSession::GetSkillActionInfo	18	4101	Ref/Session2.cpp
+19	MG_FIREBOLT	CSession::GetSkillActionInfo	19	4102	Ref/Session2.cpp
+20	MG_LIGHTNINGBOLT	CSession::GetSkillActionInfo	20	4103	Ref/Session2.cpp
+21	MG_THUNDERSTORM	CSession::GetSkillActionInfo	21	4104	Ref/Session2.cpp
+22	AL_DP	CSession::GetSkillActionInfo	22	4105	Ref/Session2.cpp
+23	AL_DEMONBANE	CSession::GetSkillActionInfo	23	4106	Ref/Session2.cpp
+24	AL_RUWACH	CSession::GetSkillActionInfo	24	4107	Ref/Session2.cpp
+25	AL_PNEUMA	CSession::GetSkillActionInfo	25	4108	Ref/Session2.cpp
+26	AL_TELEPORT	CSession::GetSkillActionInfo	26	4109	Ref/Session2.cpp
+27	AL_WARP	CSession::GetSkillActionInfo	27	4110	Ref/Session2.cpp
+30	AL_DECAGI	CSession::GetSkillActionInfo	30	4111	Ref/Session2.cpp
+31	AL_HOLYWATER	CSession::GetSkillActionInfo	31	4112	Ref/Session2.cpp
+32	AL_CRUCIS	CSession::GetSkillActionInfo	32	4113	Ref/Session2.cpp
+33	AL_ANGELUS	CSession::GetSkillActionInfo	33	4114	Ref/Session2.cpp
+35	AL_CURE	CSession::GetSkillActionInfo	35	4115	Ref/Session2.cpp
+54	ALL_RESURRECTION	CSession::GetSkillActionInfo	54	4116	Ref/Session2.cpp
+65	PR_MACEMASTERY	CSession::GetSkillActionInfo	65	4117	Ref/Session2.cpp
+66	PR_IMPOSITIO	CSession::GetSkillActionInfo	66	4118	Ref/Session2.cpp
+67	PR_SUFFRAGIUM	CSession::GetSkillActionInfo	67	4119	Ref/Session2.cpp
+68	PR_ASPERSIO	CSession::GetSkillActionInfo	68	4120	Ref/Session2.cpp
+69	PR_BENEDICTIO	CSession::GetSkillActionInfo	69	4121	Ref/Session2.cpp
+70	PR_SANCTUARY	CSession::GetSkillActionInfo	70	4122	Ref/Session2.cpp
+71	PR_SLOWPOISON	CSession::GetSkillActionInfo	71	4123	Ref/Session2.cpp
+72	PR_STRECOVERY	CSession::GetSkillActionInfo	72	4124	Ref/Session2.cpp
+73	PR_KYRIE	CSession::GetSkillActionInfo	73	4125	Ref/Session2.cpp
+74	PR_MAGNIFICAT	CSession::GetSkillActionInfo	74	4126	Ref/Session2.cpp
+75	PR_GLORIA	CSession::GetSkillActionInfo	75	4127	Ref/Session2.cpp
+76	PR_LEXDIVINA	CSession::GetSkillActionInfo	76	4128	Ref/Session2.cpp
+77	PR_TURNUNDEAD	CSession::GetSkillActionInfo	77	4129	Ref/Session2.cpp
+78	PR_LEXAETERNA	CSession::GetSkillActionInfo	78	4130	Ref/Session2.cpp
+79	PR_MAGNUS	CSession::GetSkillActionInfo	79	4131	Ref/Session2.cpp
+80	WZ_FIREPILLAR	CSession::GetSkillActionInfo	80	4132	Ref/Session2.cpp
+81	WZ_SIGHTRASHER	CSession::GetSkillActionInfo	81	4133	Ref/Session2.cpp
+82	WZ_FIREIVY	CSession::GetSkillActionInfo	82	4134	Ref/Session2.cpp
+83	WZ_METEOR	CSession::GetSkillActionInfo	83	4135	Ref/Session2.cpp
+84	WZ_JUPITEL	CSession::GetSkillActionInfo	84	4136	Ref/Session2.cpp
+85	WZ_VERMILION	CSession::GetSkillActionInfo	85	4137	Ref/Session2.cpp
+86	WZ_WATERBALL	CSession::GetSkillActionInfo	86	4138	Ref/Session2.cpp
+87	WZ_ICEWALL	CSession::GetSkillActionInfo	87	4139	Ref/Session2.cpp
+88	WZ_FROSTNOVA	CSession::GetSkillActionInfo	88	4140	Ref/Session2.cpp
+89	WZ_STORMGUST	CSession::GetSkillActionInfo	89	4141	Ref/Session2.cpp
+90	WZ_EARTHSPIKE	CSession::GetSkillActionInfo	90	4142	Ref/Session2.cpp
+91	WZ_HEAVENDRIVE	CSession::GetSkillActionInfo	91	4143	Ref/Session2.cpp
+92	WZ_QUAGMIRE	CSession::GetSkillActionInfo	92	4144	Ref/Session2.cpp
+340	NPC_DARKSTRIKE	CSession::GetSkillActionInfo	340	4145	Ref/Session2.cpp
+341	NPC_DARKTHUNDER	CSession::GetSkillActionInfo	341	4146	Ref/Session2.cpp
+342	NPC_STOP	CSession::GetSkillActionInfo	342	4147	Ref/Session2.cpp
+28	AL_HEAL	CSession::GetSkillActionInfo	28	4149	Ref/Session2.cpp
+34	AL_BLESSING	CSession::GetSkillActionInfo	34	4150	Ref/Session2.cpp
+136	AS_SONICBLOW	CSession::GetSkillActionInfo	136	4151	Ref/Session2.cpp
+156	AL_HOLYLIGHT	CSession::GetSkillActionInfo	156	4152	Ref/Session2.cpp
+157	MG_ENERGYCOAT	CSession::GetSkillActionInfo	157	4153	Ref/Session2.cpp
+334	WE_MALE	CSession::GetSkillActionInfo	334	4154	Ref/Session2.cpp
+335	WE_FEMALE	CSession::GetSkillActionInfo	335	4155	Ref/Session2.cpp
+29	AL_INCAGI	CSession::GetSkillActionInfo	29	4157	Ref/Session2.cpp
+151	TF_PICKSTONE	CSession::GetSkillActionInfo	151	4158	Ref/Session2.cpp
+304	BD_ADAPTATION	CSession::GetSkillActionInfo	304	4159	Ref/Session2.cpp
+45	AC_CONCENTRATION	CSession::GetSkillActionInfo	45	4161	Ref/Session2.cpp
+47	AC_SHOWER	CSession::GetSkillActionInfo	47	4164	Ref/Session2.cpp
+212	RG_BACKSTAP	CSession::GetSkillActionInfo	212	4165	Ref/Session2.cpp
+214	RG_RAID	CSession::GetSkillActionInfo	214	4166	Ref/Session2.cpp
+219	RG_INTIMIDATE	CSession::GetSkillActionInfo	219	4167	Ref/Session2.cpp
+253	CR_HOLYCROSS	CSession::GetSkillActionInfo	253	4168	Ref/Session2.cpp
+266	MO_INVESTIGATE	CSession::GetSkillActionInfo	266	4169	Ref/Session2.cpp
+267	MO_FINGEROFFENSIVE	CSession::GetSkillActionInfo	267	4170	Ref/Session2.cpp
+338	NPC_DARKCROSS	CSession::GetSkillActionInfo	338	4171	Ref/Session2.cpp
+367	PA_PRESSURE	CSession::GetSkillActionInfo	367	4172	Ref/Session2.cpp
+368	PA_SACRIFICE	CSession::GetSkillActionInfo	368	4173	Ref/Session2.cpp
+382	SN_SHARPSHOOTING	CSession::GetSkillActionInfo	382	4174	Ref/Session2.cpp
+51	TF_HIDING	CSession::GetSkillActionInfo	51	4176	Ref/Session2.cpp
+55	KN_SPEARMASTERY	CSession::GetSkillActionInfo	55	4177	Ref/Session2.cpp
+60	KN_TWOHANDQUICKEN	CSession::GetSkillActionInfo	60	4178	Ref/Session2.cpp
+63	KN_RIDING	CSession::GetSkillActionInfo	63	4179	Ref/Session2.cpp
+64	KN_CAVALIERMASTERY	CSession::GetSkillActionInfo	64	4180	Ref/Session2.cpp
+93	WZ_ESTIMATION	CSession::GetSkillActionInfo	93	4181	Ref/Session2.cpp
+94	BS_IRON	CSession::GetSkillActionInfo	94	4182	Ref/Session2.cpp
+95	BS_STEEL	CSession::GetSkillActionInfo	95	4183	Ref/Session2.cpp
+96	BS_ENCHANTEDSTONE	CSession::GetSkillActionInfo	96	4184	Ref/Session2.cpp
+97	BS_ORIDEOCON	CSession::GetSkillActionInfo	97	4185	Ref/Session2.cpp
+98	BS_DAGGER	CSession::GetSkillActionInfo	98	4186	Ref/Session2.cpp
+99	BS_SWORD	CSession::GetSkillActionInfo	99	4187	Ref/Session2.cpp
+100	BS_TWOHANDSWORD	CSession::GetSkillActionInfo	100	4188	Ref/Session2.cpp
+101	BS_AXE	CSession::GetSkillActionInfo	101	4189	Ref/Session2.cpp
+102	BS_MACE	CSession::GetSkillActionInfo	102	4190	Ref/Session2.cpp
+103	BS_KNUCKLE	CSession::GetSkillActionInfo	103	4191	Ref/Session2.cpp
+104	BS_SPEAR	CSession::GetSkillActionInfo	104	4192	Ref/Session2.cpp
+105	BS_HILTBINDING	CSession::GetSkillActionInfo	105	4193	Ref/Session2.cpp
+106	BS_FINDINGORE	CSession::GetSkillActionInfo	106	4194	Ref/Session2.cpp
+107	BS_WEAPONRESEARCH	CSession::GetSkillActionInfo	107	4195	Ref/Session2.cpp
+108	BS_REPAIRWEAPON	CSession::GetSkillActionInfo	108	4196	Ref/Session2.cpp
+110	BS_HAMMERFALL	CSession::GetSkillActionInfo	110	4197	Ref/Session2.cpp
+111	BS_ADRENALINE	CSession::GetSkillActionInfo	111	4198	Ref/Session2.cpp
+112	BS_WEAPONPERFECT	CSession::GetSkillActionInfo	112	4199	Ref/Session2.cpp
+113	BS_OVERTHRUST	CSession::GetSkillActionInfo	113	4200	Ref/Session2.cpp
+114	BS_MAXIMIZE	CSession::GetSkillActionInfo	114	4201	Ref/Session2.cpp
+126	HT_BEASTBANE	CSession::GetSkillActionInfo	126	4202	Ref/Session2.cpp
+127	HT_FALCON	CSession::GetSkillActionInfo	127	4203	Ref/Session2.cpp
+128	HT_STEELCROW	CSession::GetSkillActionInfo	128	4204	Ref/Session2.cpp
+129	HT_BLITZBEAT	CSession::GetSkillActionInfo	129	4205	Ref/Session2.cpp
+130	HT_DETECTING	CSession::GetSkillActionInfo	130	4206	Ref/Session2.cpp
+131	HT_SPRINGTRAP	CSession::GetSkillActionInfo	131	4207	Ref/Session2.cpp
+132	AS_RIGHT	CSession::GetSkillActionInfo	132	4208	Ref/Session2.cpp
+133	AS_LEFT	CSession::GetSkillActionInfo	133	4209	Ref/Session2.cpp
+134	AS_KATAR	CSession::GetSkillActionInfo	134	4210	Ref/Session2.cpp
+135	AS_CLOAKING	CSession::GetSkillActionInfo	135	4211	Ref/Session2.cpp
+137	AS_GRIMTOOTH	CSession::GetSkillActionInfo	137	4212	Ref/Session2.cpp
+138	AS_ENCHANTPOISON	CSession::GetSkillActionInfo	138	4213	Ref/Session2.cpp
+139	AS_POISONREACT	CSession::GetSkillActionInfo	139	4214	Ref/Session2.cpp
+140	AS_VENOMDUST	CSession::GetSkillActionInfo	140	4215	Ref/Session2.cpp
+141	AS_SPLASHER	CSession::GetSkillActionInfo	141	4216	Ref/Session2.cpp
+153	MC_CARTREVOLUTION	CSession::GetSkillActionInfo	153	4217	Ref/Session2.cpp
+158	NPC_PIERCINGATT	CSession::GetSkillActionInfo	158	4218	Ref/Session2.cpp
+159	NPC_MENTALBREAKER	CSession::GetSkillActionInfo	159	4219	Ref/Session2.cpp
+160	NPC_RANGEATTACK	CSession::GetSkillActionInfo	160	4220	Ref/Session2.cpp
+161	NPC_ATTRICHANGE	CSession::GetSkillActionInfo	161	4221	Ref/Session2.cpp
+162	NPC_CHANGEWATER	CSession::GetSkillActionInfo	162	4222	Ref/Session2.cpp
+163	NPC_CHANGEGROUND	CSession::GetSkillActionInfo	163	4223	Ref/Session2.cpp
+164	NPC_CHANGEFIRE	CSession::GetSkillActionInfo	164	4224	Ref/Session2.cpp
+165	NPC_CHANGEWIND	CSession::GetSkillActionInfo	165	4225	Ref/Session2.cpp
+166	NPC_CHANGEPOISON	CSession::GetSkillActionInfo	166	4226	Ref/Session2.cpp
+167	NPC_CHANGEHOLY	CSession::GetSkillActionInfo	167	4227	Ref/Session2.cpp
+168	NPC_CHANGEDARKNESS	CSession::GetSkillActionInfo	168	4228	Ref/Session2.cpp
+169	NPC_CHANGETELEKINESIS	CSession::GetSkillActionInfo	169	4229	Ref/Session2.cpp
+170	NPC_CRITICALSLASH	CSession::GetSkillActionInfo	170	4230	Ref/Session2.cpp
+171	NPC_COMBOATTACK	CSession::GetSkillActionInfo	171	4231	Ref/Session2.cpp
+172	NPC_GUIDEDATTACK	CSession::GetSkillActionInfo	172	4232	Ref/Session2.cpp
+173	NPC_SELFDESTRUCTION	CSession::GetSkillActionInfo	173	4233	Ref/Session2.cpp
+174	NPC_SPLASHATTACK	CSession::GetSkillActionInfo	174	4234	Ref/Session2.cpp
+175	NPC_SUICIDE	CSession::GetSkillActionInfo	175	4235	Ref/Session2.cpp
+176	NPC_POISON	CSession::GetSkillActionInfo	176	4236	Ref/Session2.cpp
+177	NPC_BLINDATTACK	CSession::GetSkillActionInfo	177	4237	Ref/Session2.cpp
+178	NPC_SILENCEATTACK	CSession::GetSkillActionInfo	178	4238	Ref/Session2.cpp
+179	NPC_STUNATTACK	CSession::GetSkillActionInfo	179	4239	Ref/Session2.cpp
+180	NPC_PETRIFYATTACK	CSession::GetSkillActionInfo	180	4240	Ref/Session2.cpp
+181	NPC_CURSEATTACK	CSession::GetSkillActionInfo	181	4241	Ref/Session2.cpp
+182	NPC_SLEEPATTACK	CSession::GetSkillActionInfo	182	4242	Ref/Session2.cpp
+183	NPC_RANDOMATTACK	CSession::GetSkillActionInfo	183	4243	Ref/Session2.cpp
+184	NPC_WATERATTACK	CSession::GetSkillActionInfo	184	4244	Ref/Session2.cpp
+185	NPC_GROUNDATTACK	CSession::GetSkillActionInfo	185	4245	Ref/Session2.cpp
+186	NPC_FIREATTACK	CSession::GetSkillActionInfo	186	4246	Ref/Session2.cpp
+187	NPC_WINDATTACK	CSession::GetSkillActionInfo	187	4247	Ref/Session2.cpp
+188	NPC_POISONATTACK	CSession::GetSkillActionInfo	188	4248	Ref/Session2.cpp
+189	NPC_HOLYATTACK	CSession::GetSkillActionInfo	189	4249	Ref/Session2.cpp
+190	NPC_DARKNESSATTACK	CSession::GetSkillActionInfo	190	4250	Ref/Session2.cpp
+191	NPC_TELEKINESISATTACK	CSession::GetSkillActionInfo	191	4251	Ref/Session2.cpp
+192	NPC_MAGICALATTACK	CSession::GetSkillActionInfo	192	4252	Ref/Session2.cpp
+234	AM_CP_WEAPON	CSession::GetSkillActionInfo	234	4253	Ref/Session2.cpp
+235	AM_CP_SHIELD	CSession::GetSkillActionInfo	235	4254	Ref/Session2.cpp
+236	AM_CP_ARMOR	CSession::GetSkillActionInfo	236	4255	Ref/Session2.cpp
+237	AM_CP_HELM	CSession::GetSkillActionInfo	237	4256	Ref/Session2.cpp
+258	CR_SPEARQUICKEN	CSession::GetSkillActionInfo	258	4257	Ref/Session2.cpp
+264	MO_BODYRELOCATION	CSession::GetSkillActionInfo	264	4258	Ref/Session2.cpp
+271	MO_EXTREMITYFIST	CSession::GetSkillActionInfo	271	4259	Ref/Session2.cpp
+272	MO_CHAINCOMBO	CSession::GetSkillActionInfo	272	4260	Ref/Session2.cpp
+273	MO_COMBOFINISH	CSession::GetSkillActionInfo	273	4261	Ref/Session2.cpp
+371	CH_TIGERFIST	CSession::GetSkillActionInfo	371	4262	Ref/Session2.cpp
+379	ASC_BREAKER	CSession::GetSkillActionInfo	379	4263	Ref/Session2.cpp
+383	SN_WINDWALK	CSession::GetSkillActionInfo	383	4264	Ref/Session2.cpp
+56	KN_PIERCE	CSession::GetSkillActionInfo	56	4266	Ref/Session2.cpp
+58	KN_SPEARSTAB	CSession::GetSkillActionInfo	58	4267	Ref/Session2.cpp
+61	KN_AUTOCOUNTER	CSession::GetSkillActionInfo	61	4268	Ref/Session2.cpp
+62	KN_BOWLINGBASH	CSession::GetSkillActionInfo	62	4269	Ref/Session2.cpp
+109	BS_SKINTEMPER	CSession::GetSkillActionInfo	109	4270	Ref/Session2.cpp
+263	MO_TRIPLEATTACK	CSession::GetSkillActionInfo	263	4271	Ref/Session2.cpp
+370	CH_PALMSTRIKE	CSession::GetSkillActionInfo	370	4272	Ref/Session2.cpp
+372	CH_CHAINCRUSH	CSession::GetSkillActionInfo	372	4273	Ref/Session2.cpp
+57	KN_BRANDISHSPEAR	CSession::GetSkillActionInfo	57	4275	Ref/Session2.cpp
+59	KN_SPEARBOOMERANG	CSession::GetSkillActionInfo	59	4279	Ref/Session2.cpp
+149	TF_SPRINKLESAND	CSession::GetSkillActionInfo	149	4280	Ref/Session2.cpp
+152	TF_THROWSTONE	CSession::GetSkillActionInfo	152	4281	Ref/Session2.cpp
+115	HT_SKIDTRAP	CSession::GetSkillActionInfo	115	4283	Ref/Session2.cpp
+116	HT_LANDMINE	CSession::GetSkillActionInfo	116	4284	Ref/Session2.cpp
+117	HT_ANKLESNARE	CSession::GetSkillActionInfo	117	4285	Ref/Session2.cpp
+118	HT_SHOCKWAVE	CSession::GetSkillActionInfo	118	4286	Ref/Session2.cpp
+119	HT_SANDMAN	CSession::GetSkillActionInfo	119	4287	Ref/Session2.cpp
+120	HT_FLASHER	CSession::GetSkillActionInfo	120	4288	Ref/Session2.cpp
+121	HT_FREEZINGTRAP	CSession::GetSkillActionInfo	121	4289	Ref/Session2.cpp
+122	HT_BLASTMINE	CSession::GetSkillActionInfo	122	4290	Ref/Session2.cpp
+123	HT_CLAYMORETRAP	CSession::GetSkillActionInfo	123	4291	Ref/Session2.cpp
+124	HT_REMOVETRAP	CSession::GetSkillActionInfo	124	4292	Ref/Session2.cpp
+125	HT_TALKIEBOX	CSession::GetSkillActionInfo	125	4293	Ref/Session2.cpp
+196	NPC_SUMMONSLAVE	CSession::GetSkillActionInfo	196	4295	Ref/Session2.cpp
+209	NPC_SUMMONMONSTER	CSession::GetSkillActionInfo	209	4296	Ref/Session2.cpp
+249	CR_AUTOGUARD	CSession::GetSkillActionInfo	249	4297	Ref/Session2.cpp
+252	CR_REFLECTSHIELD	CSession::GetSkillActionInfo	252	4298	Ref/Session2.cpp
+257	CR_DEFENDER	CSession::GetSkillActionInfo	257	4299	Ref/Session2.cpp
+268	MO_STEELBODY	CSession::GetSkillActionInfo	268	4300	Ref/Session2.cpp
+349	NPC_POWERUP	CSession::GetSkillActionInfo	349	4301	Ref/Session2.cpp
+350	NPC_AGIUP	CSession::GetSkillActionInfo	350	4302	Ref/Session2.cpp
+356	LK_PARRYING	CSession::GetSkillActionInfo	356	4303	Ref/Session2.cpp
+380	SN_SIGHT	CSession::GetSkillActionInfo	380	4304	Ref/Session2.cpp
+229	AM_DEMONSTRATION	CSession::GetSkillActionInfo	229	4306	Ref/Session2.cpp
+230	AM_ACIDTERROR	CSession::GetSkillActionInfo	230	4307	Ref/Session2.cpp
+231	AM_POTIONPITCHER	CSession::GetSkillActionInfo	231	4308	Ref/Session2.cpp
+232	AM_CANNIBALIZE	CSession::GetSkillActionInfo	232	4309	Ref/Session2.cpp
+250	CR_SHIELDCHARGE	CSession::GetSkillActionInfo	250	4310	Ref/Session2.cpp
+251	CR_SHIELDBOOMERANG	CSession::GetSkillActionInfo	251	4311	Ref/Session2.cpp
+243	AM_CALLHOMUN	CSession::GetSkillActionInfo	243	4313	Ref/Session2.cpp
+244	AM_REST	CSession::GetSkillActionInfo	244	4314	Ref/Session2.cpp
+247	AM_RESURRECTHOMUN	CSession::GetSkillActionInfo	247	4315	Ref/Session2.cpp
+337	ITM_TOMAHAWK	CSession::GetSkillActionInfo	337	4316	Ref/Session2.cpp
+344	NPC_ARMORBRAKE	CSession::GetSkillActionInfo	344	4317	Ref/Session2.cpp
+345	NPC_HELMBRAKE	CSession::GetSkillActionInfo	345	4318	Ref/Session2.cpp
+346	NPC_SHIELDBRAKE	CSession::GetSkillActionInfo	346	4319	Ref/Session2.cpp
+365	HW_MAGICCRASHER	CSession::GetSkillActionInfo	365	4320	Ref/Session2.cpp
+373	PF_HPCONVERSION	CSession::GetSkillActionInfo	373	4321	Ref/Session2.cpp
+374	PF_SOULCHANGE	CSession::GetSkillActionInfo	374	4322	Ref/Session2.cpp
+375	PF_SOULBURN	CSession::GetSkillActionInfo	375	4323	Ref/Session2.cpp
+381	SN_FALCONASSAULT	CSession::GetSkillActionInfo	381	4324	Ref/Session2.cpp
+256	CR_PROVIDENCE	CSession::GetSkillActionInfo	256	4326	Ref/Session2.cpp
+261	MO_CALLSPIRITS	CSession::GetSkillActionInfo	261	4327	Ref/Session2.cpp
+269	MO_BLADESTOP	CSession::GetSkillActionInfo	269	4328	Ref/Session2.cpp
+369	PA_GOSPEL	CSession::GetSkillActionInfo	369	4329	Ref/Session2.cpp
+306	BD_LULLABY	CSession::GetSkillActionInfo	306	4331	Ref/Session2.cpp
+307	BD_RICHMANKIM	CSession::GetSkillActionInfo	307	4332	Ref/Session2.cpp
+308	BD_ETERNALCHAOS	CSession::GetSkillActionInfo	308	4333	Ref/Session2.cpp
+309	BD_DRUMBATTLEFIELD	CSession::GetSkillActionInfo	309	4334	Ref/Session2.cpp
+310	BD_RINGNIBELUNGEN	CSession::GetSkillActionInfo	310	4335	Ref/Session2.cpp
+311	BD_ROKISWEIL	CSession::GetSkillActionInfo	311	4336	Ref/Session2.cpp
+312	BD_INTOABYSS	CSession::GetSkillActionInfo	312	4337	Ref/Session2.cpp
+313	BD_SIEGFRIED	CSession::GetSkillActionInfo	313	4338	Ref/Session2.cpp
+325	DC_UGLYDANCE	CSession::GetSkillActionInfo	325	4339	Ref/Session2.cpp
+327	DC_HUMMING	CSession::GetSkillActionInfo	327	4340	Ref/Session2.cpp
+328	DC_DONTFORGETME	CSession::GetSkillActionInfo	328	4341	Ref/Session2.cpp
+329	DC_FORTUNEKISS	CSession::GetSkillActionInfo	329	4342	Ref/Session2.cpp
+330	DC_SERVICEFORYOU	CSession::GetSkillActionInfo	330	4343	Ref/Session2.cpp
+316	BA_MUSICALSTRIKE	CSession::GetSkillActionInfo	316	4345	Ref/Session2.cpp
+324	DC_THROWARROW	CSession::GetSkillActionInfo	324	4346	Ref/Session2.cpp
+317	BA_DISSONANCE	CSession::GetSkillActionInfo	317	4348	Ref/Session2.cpp
+319	BA_WHISTLE	CSession::GetSkillActionInfo	319	4349	Ref/Session2.cpp
+320	BA_ASSASSINCROSS	CSession::GetSkillActionInfo	320	4350	Ref/Session2.cpp
+321	BA_POEMBRAGI	CSession::GetSkillActionInfo	321	4351	Ref/Session2.cpp
+322	BA_APPLEIDUN	CSession::GetSkillActionInfo	322	4352	Ref/Session2.cpp
+347	NPC_UNDEADATTACK	CSession::GetSkillActionInfo	347	4356	Ref/Session2.cpp
+357	LK_CONCENTRATION	CSession::GetSkillActionInfo	357	4359	Ref/Session2.cpp
+359	LK_BERSERK	CSession::GetSkillActionInfo	359	4360	Ref/Session2.cpp
+360	LK_FURY	CSession::GetSkillActionInfo	360	4361	Ref/Session2.cpp
+361	HP_ASSUMPTIO	CSession::GetSkillActionInfo	361	4362	Ref/Session2.cpp
+362	HP_BASILICA	CSession::GetSkillActionInfo	362	4363	Ref/Session2.cpp
+364	HW_SOULDRAIN	CSession::GetSkillActionInfo	364	4365	Ref/Session2.cpp
+387	WS_CARTBOOST	CSession::GetSkillActionInfo	387	4387	Ref/Session2.cpp
+411	TK_RUN	CSession::GetSkillActionInfo	411	4388	Ref/Session2.cpp
+444	SG_FUSION	CSession::GetSkillActionInfo	444	4389	Ref/Session2.cpp
+389	ST_CHASEWALK	CSession::GetSkillActionInfo	389	4391	Ref/Session2.cpp
+402	PF_MINDBREAKER	CSession::GetSkillActionInfo	402	4392	Ref/Session2.cpp
+403	PF_MEMORIZE	CSession::GetSkillActionInfo	403	4393	Ref/Session2.cpp
+425	TK_SEVENWIND	CSession::GetSkillActionInfo	425	4394	Ref/Session2.cpp
+427	SG_FEEL	CSession::GetSkillActionInfo	427	4395	Ref/Session2.cpp
+434	SG_HATE	CSession::GetSkillActionInfo	434	4396	Ref/Session2.cpp
+462	SL_KAIZEL	CSession::GetSkillActionInfo	462	4397	Ref/Session2.cpp
+463	SL_KAAHI	CSession::GetSkillActionInfo	463	4398	Ref/Session2.cpp
+464	SL_KAUPE	CSession::GetSkillActionInfo	464	4399	Ref/Session2.cpp
+465	SL_KAITE	CSession::GetSkillActionInfo	465	4400	Ref/Session2.cpp
+467	SL_STIN	CSession::GetSkillActionInfo	467	4401	Ref/Session2.cpp
+468	SL_STUN	CSession::GetSkillActionInfo	468	4402	Ref/Session2.cpp
+469	SL_SMA	CSession::GetSkillActionInfo	469	4403	Ref/Session2.cpp
+470	SL_SWOO	CSession::GetSkillActionInfo	470	4404	Ref/Session2.cpp
+471	SL_SKE	CSession::GetSkillActionInfo	471	4405	Ref/Session2.cpp
+472	SL_SKA	CSession::GetSkillActionInfo	472	4406	Ref/Session2.cpp
+485	WS_CARTTERMINATION	CSession::GetSkillActionInfo	485	4407	Ref/Session2.cpp
+493	TK_MISSION	CSession::GetSkillActionInfo	493	4408	Ref/Session2.cpp
+394	CG_ARROWVULCAN	CSession::GetSkillActionInfo	394	4410	Ref/Session2.cpp
+395	CG_MOONLIT	CSession::GetSkillActionInfo	395	4412	Ref/Session2.cpp
+396	CG_MARIONETTE	CSession::GetSkillActionInfo	396	4413	Ref/Session2.cpp
+488	CG_HERMODE	CSession::GetSkillActionInfo	488	4414	Ref/Session2.cpp
+397	LK_SPIRALPIERCE	CSession::GetSkillActionInfo	397	4419	Ref/Session2.cpp
+398	LK_HEADCRUSH	CSession::GetSkillActionInfo	398	4420	Ref/Session2.cpp
+399	LK_JOINTBEAT	CSession::GetSkillActionInfo	399	4421	Ref/Session2.cpp
+484	HW_GRAVITATION	CSession::GetSkillActionInfo	484	4422	Ref/Session2.cpp
+400	HW_NAPALMVULCAN	CSession::GetSkillActionInfo	400	4424	Ref/Session2.cpp
+483	HW_GANBANTEIN	CSession::GetSkillActionInfo	483	4425	Ref/Session2.cpp
+401	CH_SOULCOLLECT	CSession::GetSkillActionInfo	401	4427	Ref/Session2.cpp
+405	PF_SPIDERWEB	CSession::GetSkillActionInfo	405	4429	Ref/Session2.cpp
+482	PF_DOUBLECASTING	CSession::GetSkillActionInfo	482	4430	Ref/Session2.cpp
+406	ASC_METEORASSAULT	CSession::GetSkillActionInfo	406	4432	Ref/Session2.cpp
+459	BS_ADRENALINE2	CSession::GetSkillActionInfo	459	4433	Ref/Session2.cpp
+479	CR_FULLPROTECTION	CSession::GetSkillActionInfo	479	4434	Ref/Session2.cpp
+486	WS_OVERTHRUSTMAX	CSession::GetSkillActionInfo	486	4435	Ref/Session2.cpp
+408	WE_BABY	CSession::GetSkillActionInfo	408	4437	Ref/Session2.cpp
+487	CG_LONGINGFREEDOM	CSession::GetSkillActionInfo	487	4438	Ref/Session2.cpp
+489	CG_TAROTCARD	CSession::GetSkillActionInfo	489	4439	Ref/Session2.cpp
+412	TK_READYSTORM	CSession::GetSkillActionInfo	412	4441	Ref/Session2.cpp
+413	TK_STORMKICK	CSession::GetSkillActionInfo	413	4445	Ref/Session2.cpp
+414	TK_READYDOWN	CSession::GetSkillActionInfo	414	4449	Ref/Session2.cpp
+415	TK_DOWNKICK	CSession::GetSkillActionInfo	415	4453	Ref/Session2.cpp
+416	TK_READYTURN	CSession::GetSkillActionInfo	416	4457	Ref/Session2.cpp
+445	SL_ALCHEMIST	CSession::GetSkillActionInfo	445	4458	Ref/Session2.cpp
+447	SL_MONK	CSession::GetSkillActionInfo	447	4459	Ref/Session2.cpp
+448	SL_STAR	CSession::GetSkillActionInfo	448	4460	Ref/Session2.cpp
+449	SL_SAGE	CSession::GetSkillActionInfo	449	4461	Ref/Session2.cpp
+450	SL_CRUSADER	CSession::GetSkillActionInfo	450	4462	Ref/Session2.cpp
+451	SL_SUPERNOVICE	CSession::GetSkillActionInfo	451	4463	Ref/Session2.cpp
+452	SL_KNIGHT	CSession::GetSkillActionInfo	452	4464	Ref/Session2.cpp
+453	SL_WIZARD	CSession::GetSkillActionInfo	453	4465	Ref/Session2.cpp
+454	SL_PRIEST	CSession::GetSkillActionInfo	454	4466	Ref/Session2.cpp
+455	SL_BARDDANCER	CSession::GetSkillActionInfo	455	4467	Ref/Session2.cpp
+456	SL_ROGUE	CSession::GetSkillActionInfo	456	4468	Ref/Session2.cpp
+457	SL_ASSASIN	CSession::GetSkillActionInfo	457	4469	Ref/Session2.cpp
+458	SL_BLACKSMITH	CSession::GetSkillActionInfo	458	4470	Ref/Session2.cpp
+460	SL_HUNTER	CSession::GetSkillActionInfo	460	4471	Ref/Session2.cpp
+461	SL_SOULLINKER	CSession::GetSkillActionInfo	461	4472	Ref/Session2.cpp
+417	TK_TURNKICK	CSession::GetSkillActionInfo	417	4474	Ref/Session2.cpp
+418	TK_READYCOUNTER	CSession::GetSkillActionInfo	418	4478	Ref/Session2.cpp
+419	TK_COUNTER	CSession::GetSkillActionInfo	419	4482	Ref/Session2.cpp
+420	TK_DODGE	CSession::GetSkillActionInfo	420	4486	Ref/Session2.cpp
+421	TK_JUMPKICK	CSession::GetSkillActionInfo	421	4490	Ref/Session2.cpp
+426	TK_HIGHJUMP	CSession::GetSkillActionInfo	426	4494	Ref/Session2.cpp
+428	SG_SUN_WARM	CSession::GetSkillActionInfo	428	4498	Ref/Session2.cpp
+429	SG_MOON_WARM	CSession::GetSkillActionInfo	429	4499	Ref/Session2.cpp
+430	SG_STAR_WARM	CSession::GetSkillActionInfo	430	4500	Ref/Session2.cpp
+431	SG_SUN_COMFORT	CSession::GetSkillActionInfo	431	4504	Ref/Session2.cpp
+432	SG_MOON_COMFORT	CSession::GetSkillActionInfo	432	4505	Ref/Session2.cpp
+433	SG_STAR_COMFORT	CSession::GetSkillActionInfo	433	4506	Ref/Session2.cpp
+446	AM_BERSERKPITCHER	CSession::GetSkillActionInfo	446	4510	Ref/Session2.cpp
+478	CR_SLIMPITCHER	CSession::GetSkillActionInfo	478	4511	Ref/Session2.cpp
+490	CR_ACIDDEMONSTRATION	CSession::GetSkillActionInfo	490	4512	Ref/Session2.cpp
+480	PA_SHIELDCHAIN	CSession::GetSkillActionInfo	480	4516	Ref/Session2.cpp
+495	KN_ONEHAND	CSession::GetSkillActionInfo	495	4533	Ref/Session2.cpp
+544	NJ_ISSEN	CSession::GetSkillActionInfo	544	4534	Ref/Session2.cpp
+654	NPC_FIREBREATH	CSession::GetSkillActionInfo	654	4535	Ref/Session2.cpp
+661	NPC_PULSESTRIKE	CSession::GetSkillActionInfo	661	4536	Ref/Session2.cpp
+663	NPC_WIDESILENCE	CSession::GetSkillActionInfo	663	4537	Ref/Session2.cpp
+499	HT_POWER	CSession::GetSkillActionInfo	499	4539	Ref/Session2.cpp
+500	GS_GLITTERING	CSession::GetSkillActionInfo	500	4541	Ref/Session2.cpp
+501	GS_FLING	CSession::GetSkillActionInfo	501	4545	Ref/Session2.cpp
+504	GS_MADNESSCANCEL	CSession::GetSkillActionInfo	504	4546	Ref/Session2.cpp
+505	GS_ADJUSTMENT	CSession::GetSkillActionInfo	505	4547	Ref/Session2.cpp
+506	GS_INCREASING	CSession::GetSkillActionInfo	506	4548	Ref/Session2.cpp
+516	GS_DESPERADO	CSession::GetSkillActionInfo	516	4549	Ref/Session2.cpp
+517	GS_GATLINGFEVER	CSession::GetSkillActionInfo	517	4550	Ref/Session2.cpp
+502	GS_TRIPLEACTION	CSession::GetSkillActionInfo	502	4554	Ref/Session2.cpp
+503	GS_BULLSEYE	CSession::GetSkillActionInfo	503	4555	Ref/Session2.cpp
+507	GS_MAGICALBULLET	CSession::GetSkillActionInfo	507	4556	Ref/Session2.cpp
+512	GS_TRACKING	CSession::GetSkillActionInfo	512	4557	Ref/Session2.cpp
+513	GS_DISARM	CSession::GetSkillActionInfo	513	4558	Ref/Session2.cpp
+514	GS_PIERCINGSHOT	CSession::GetSkillActionInfo	514	4559	Ref/Session2.cpp
+515	GS_RAPIDSHOWER	CSession::GetSkillActionInfo	515	4560	Ref/Session2.cpp
+518	GS_DUST	CSession::GetSkillActionInfo	518	4561	Ref/Session2.cpp
+519	GS_FULLBUSTER	CSession::GetSkillActionInfo	519	4562	Ref/Session2.cpp
+520	GS_SPREADATTACK	CSession::GetSkillActionInfo	520	4563	Ref/Session2.cpp
+508	GS_CRACKER	CSession::GetSkillActionInfo	508	4565	Ref/Session2.cpp
+521	GS_GROUNDDRIFT	CSession::GetSkillActionInfo	521	4566	Ref/Session2.cpp
+523	NJ_SYURIKEN	CSession::GetSkillActionInfo	523	4570	Ref/Session2.cpp
+524	NJ_KUNAI	CSession::GetSkillActionInfo	524	4571	Ref/Session2.cpp
+525	NJ_HUUMA	CSession::GetSkillActionInfo	525	4572	Ref/Session2.cpp
+526	NJ_ZENYNAGE	CSession::GetSkillActionInfo	526	4573	Ref/Session2.cpp
+531	NJ_UTSUSEMI	CSession::GetSkillActionInfo	531	4574	Ref/Session2.cpp
+534	NJ_KOUENKA	CSession::GetSkillActionInfo	534	4575	Ref/Session2.cpp
+539	NJ_HYOUSYOURAKU	CSession::GetSkillActionInfo	539	4576	Ref/Session2.cpp
+540	NJ_HUUJIN	CSession::GetSkillActionInfo	540	4577	Ref/Session2.cpp
+541	NJ_RAIGEKISAI	CSession::GetSkillActionInfo	541	4578	Ref/Session2.cpp
+542	NJ_KAMAITACHI	CSession::GetSkillActionInfo	542	4579	Ref/Session2.cpp
+543	NJ_NEN	CSession::GetSkillActionInfo	543	4580	Ref/Session2.cpp
+527	NJ_TATAMIGAESHI	CSession::GetSkillActionInfo	527	4584	Ref/Session2.cpp
+528	NJ_KASUMIKIRI	CSession::GetSkillActionInfo	528	4585	Ref/Session2.cpp
+529	NJ_SHADOWJUMP	CSession::GetSkillActionInfo	529	4586	Ref/Session2.cpp
+532	NJ_BUNSINJYUTSU	CSession::GetSkillActionInfo	532	4587	Ref/Session2.cpp
+535	NJ_KAENSIN	CSession::GetSkillActionInfo	535	4588	Ref/Session2.cpp
+536	NJ_BAKUENRYU	CSession::GetSkillActionInfo	536	4589	Ref/Session2.cpp
+537	NJ_HYOUSENSOU	CSession::GetSkillActionInfo	537	4590	Ref/Session2.cpp
+538	NJ_SUITON	CSession::GetSkillActionInfo	538	4591	Ref/Session2.cpp
+530	NJ_KIRIKAGE	CSession::GetSkillActionInfo	530	4595	Ref/Session2.cpp
+572		CSession::GetSkillActionInfo	572	4600	Ref/Session2.cpp
+573		CSession::GetSkillActionInfo	573	4601	Ref/Session2.cpp
+574		CSession::GetSkillActionInfo	574	4602	Ref/Session2.cpp
+575		CSession::GetSkillActionInfo	575	4603	Ref/Session2.cpp
+669	NPC_WIDESIGHT	CSession::GetSkillActionInfo	669	4629	Ref/Session2.cpp
+674	NPC_EXPULSION	CSession::GetSkillActionInfo	674	4631	Ref/Session2.cpp
+675	NPC_STONESKIN	CSession::GetSkillActionInfo	675	4633	Ref/Session2.cpp
+676	NPC_ANTIMAGIC	CSession::GetSkillActionInfo	676	4634	Ref/Session2.cpp
+678	NPC_WIDESTUN	CSession::GetSkillActionInfo	678	4635	Ref/Session2.cpp
+688	GM_SANDMAN	CSession::GetSkillActionInfo	688	4637	Ref/Session2.cpp
+689	CASH_BLESSING	CSession::GetSkillActionInfo	689	4641	Ref/Session2.cpp
+1009	HT_PHANTASMIC	CSession::GetSkillActionInfo	1009	4688	Ref/Session2.cpp
+1011	DC_WINKCHARM	CSession::GetSkillActionInfo	1011	4690	Ref/Session2.cpp
+1013	BS_GREED	CSession::GetSkillActionInfo	1013	4694	Ref/Session2.cpp
+1015	MO_KITRANSLATION	CSession::GetSkillActionInfo	1015	4698	Ref/Session2.cpp
+1016	MO_BALKYOUNG	CSession::GetSkillActionInfo	1016	4700	Ref/Session2.cpp
+8012	HFLI_SBR44	CSession::GetSkillActionInfo	8012	4719	Ref/Session2.cpp
+8204	MS_PARRYING	CSession::GetSkillActionInfo	8204	4721	Ref/Session2.cpp
+8219	ML_DEFENDER	CSession::GetSkillActionInfo	8219	4722	Ref/Session2.cpp
+8220	ML_AUTOGUARD	CSession::GetSkillActionInfo	8220	4723	Ref/Session2.cpp
+8206	MS_BERSERK	CSession::GetSkillActionInfo	8206	4725	Ref/Session2.cpp
+8222	MER_MAGNIFICAT	CSession::GetSkillActionInfo	8222	4727	Ref/Session2.cpp
+5	SM_BASH	CSession::GetSkillActionInfo2	5	4762	Ref/Session2.cpp
+7	SM_MAGNUM	CSession::GetSkillActionInfo2	7	4763	Ref/Session2.cpp
+42	MC_MAMMONITE	CSession::GetSkillActionInfo2	42	4764	Ref/Session2.cpp
+46	AC_DOUBLE	CSession::GetSkillActionInfo2	46	4765	Ref/Session2.cpp
+110	BS_HAMMERFALL	CSession::GetSkillActionInfo2	110	4766	Ref/Session2.cpp
+9	MG_SRECOVERY	CSession::GetSkillActionInfo2	9	4768	Ref/Session2.cpp
+10	MG_SIGHT	CSession::GetSkillActionInfo2	10	4769	Ref/Session2.cpp
+11	MG_NAPALMBEAT	CSession::GetSkillActionInfo2	11	4770	Ref/Session2.cpp
+12	MG_SAFETYWALL	CSession::GetSkillActionInfo2	12	4771	Ref/Session2.cpp
+13	MG_SOULSTRIKE	CSession::GetSkillActionInfo2	13	4772	Ref/Session2.cpp
+14	MG_COLDBOLT	CSession::GetSkillActionInfo2	14	4773	Ref/Session2.cpp
+15	MG_FROSTDIVER	CSession::GetSkillActionInfo2	15	4774	Ref/Session2.cpp
+16	MG_STONECURSE	CSession::GetSkillActionInfo2	16	4775	Ref/Session2.cpp
+17	MG_FIREBALL	CSession::GetSkillActionInfo2	17	4776	Ref/Session2.cpp
+18	MG_FIREWALL	CSession::GetSkillActionInfo2	18	4777	Ref/Session2.cpp
+19	MG_FIREBOLT	CSession::GetSkillActionInfo2	19	4778	Ref/Session2.cpp
+20	MG_LIGHTNINGBOLT	CSession::GetSkillActionInfo2	20	4779	Ref/Session2.cpp
+21	MG_THUNDERSTORM	CSession::GetSkillActionInfo2	21	4780	Ref/Session2.cpp
+22	AL_DP	CSession::GetSkillActionInfo2	22	4781	Ref/Session2.cpp
+23	AL_DEMONBANE	CSession::GetSkillActionInfo2	23	4782	Ref/Session2.cpp
+24	AL_RUWACH	CSession::GetSkillActionInfo2	24	4783	Ref/Session2.cpp
+25	AL_PNEUMA	CSession::GetSkillActionInfo2	25	4784	Ref/Session2.cpp
+26	AL_TELEPORT	CSession::GetSkillActionInfo2	26	4785	Ref/Session2.cpp
+27	AL_WARP	CSession::GetSkillActionInfo2	27	4786	Ref/Session2.cpp
+28	AL_HEAL	CSession::GetSkillActionInfo2	28	4787	Ref/Session2.cpp
+30	AL_DECAGI	CSession::GetSkillActionInfo2	30	4788	Ref/Session2.cpp
+31	AL_HOLYWATER	CSession::GetSkillActionInfo2	31	4789	Ref/Session2.cpp
+32	AL_CRUCIS	CSession::GetSkillActionInfo2	32	4790	Ref/Session2.cpp
+33	AL_ANGELUS	CSession::GetSkillActionInfo2	33	4791	Ref/Session2.cpp
+35	AL_CURE	CSession::GetSkillActionInfo2	35	4792	Ref/Session2.cpp
+54	ALL_RESURRECTION	CSession::GetSkillActionInfo2	54	4793	Ref/Session2.cpp
+66	PR_IMPOSITIO	CSession::GetSkillActionInfo2	66	4794	Ref/Session2.cpp
+67	PR_SUFFRAGIUM	CSession::GetSkillActionInfo2	67	4795	Ref/Session2.cpp
+68	PR_ASPERSIO	CSession::GetSkillActionInfo2	68	4796	Ref/Session2.cpp
+69	PR_BENEDICTIO	CSession::GetSkillActionInfo2	69	4797	Ref/Session2.cpp
+70	PR_SANCTUARY	CSession::GetSkillActionInfo2	70	4798	Ref/Session2.cpp
+72	PR_STRECOVERY	CSession::GetSkillActionInfo2	72	4799	Ref/Session2.cpp
+73	PR_KYRIE	CSession::GetSkillActionInfo2	73	4800	Ref/Session2.cpp
+74	PR_MAGNIFICAT	CSession::GetSkillActionInfo2	74	4801	Ref/Session2.cpp
+75	PR_GLORIA	CSession::GetSkillActionInfo2	75	4802	Ref/Session2.cpp
+76	PR_LEXDIVINA	CSession::GetSkillActionInfo2	76	4803	Ref/Session2.cpp
+77	PR_TURNUNDEAD	CSession::GetSkillActionInfo2	77	4804	Ref/Session2.cpp
+78	PR_LEXAETERNA	CSession::GetSkillActionInfo2	78	4805	Ref/Session2.cpp
+79	PR_MAGNUS	CSession::GetSkillActionInfo2	79	4806	Ref/Session2.cpp
+80	WZ_FIREPILLAR	CSession::GetSkillActionInfo2	80	4807	Ref/Session2.cpp
+81	WZ_SIGHTRASHER	CSession::GetSkillActionInfo2	81	4808	Ref/Session2.cpp
+82	WZ_FIREIVY	CSession::GetSkillActionInfo2	82	4809	Ref/Session2.cpp
+83	WZ_METEOR	CSession::GetSkillActionInfo2	83	4810	Ref/Session2.cpp
+84	WZ_JUPITEL	CSession::GetSkillActionInfo2	84	4811	Ref/Session2.cpp
+85	WZ_VERMILION	CSession::GetSkillActionInfo2	85	4812	Ref/Session2.cpp
+86	WZ_WATERBALL	CSession::GetSkillActionInfo2	86	4813	Ref/Session2.cpp
+87	WZ_ICEWALL	CSession::GetSkillActionInfo2	87	4814	Ref/Session2.cpp
+88	WZ_FROSTNOVA	CSession::GetSkillActionInfo2	88	4815	Ref/Session2.cpp
+89	WZ_STORMGUST	CSession::GetSkillActionInfo2	89	4816	Ref/Session2.cpp
+90	WZ_EARTHSPIKE	CSession::GetSkillActionInfo2	90	4817	Ref/Session2.cpp
+91	WZ_HEAVENDRIVE	CSession::GetSkillActionInfo2	91	4818	Ref/Session2.cpp
+92	WZ_QUAGMIRE	CSession::GetSkillActionInfo2	92	4819	Ref/Session2.cpp
+108	BS_REPAIRWEAPON	CSession::GetSkillActionInfo2	108	4820	Ref/Session2.cpp
+156	AL_HOLYLIGHT	CSession::GetSkillActionInfo2	156	4821	Ref/Session2.cpp
+157	MG_ENERGYCOAT	CSession::GetSkillActionInfo2	157	4822	Ref/Session2.cpp
+254	CR_GRANDCROSS	CSession::GetSkillActionInfo2	254	4823	Ref/Session2.cpp
+255	CR_DEVOTION	CSession::GetSkillActionInfo2	255	4824	Ref/Session2.cpp
+256	CR_PROVIDENCE	CSession::GetSkillActionInfo2	256	4825	Ref/Session2.cpp
+261	MO_CALLSPIRITS	CSession::GetSkillActionInfo2	261	4826	Ref/Session2.cpp
+262	MO_ABSORBSPIRITS	CSession::GetSkillActionInfo2	262	4827	Ref/Session2.cpp
+266	MO_INVESTIGATE	CSession::GetSkillActionInfo2	266	4828	Ref/Session2.cpp
+267	MO_FINGEROFFENSIVE	CSession::GetSkillActionInfo2	267	4829	Ref/Session2.cpp
+277	SA_SPELLBREAKER	CSession::GetSkillActionInfo2	277	4830	Ref/Session2.cpp
+279	SA_AUTOSPELL	CSession::GetSkillActionInfo2	279	4831	Ref/Session2.cpp
+280	SA_FLAMELAUNCHER	CSession::GetSkillActionInfo2	280	4832	Ref/Session2.cpp
+281	SA_FROSTWEAPON	CSession::GetSkillActionInfo2	281	4833	Ref/Session2.cpp
+282	SA_LIGHTNINGLOADER	CSession::GetSkillActionInfo2	282	4834	Ref/Session2.cpp
+283	SA_SEISMICWEAPON	CSession::GetSkillActionInfo2	283	4835	Ref/Session2.cpp
+285	SA_VOLCANO	CSession::GetSkillActionInfo2	285	4836	Ref/Session2.cpp
+286	SA_DELUGE	CSession::GetSkillActionInfo2	286	4837	Ref/Session2.cpp
+287	SA_VIOLENTGALE	CSession::GetSkillActionInfo2	287	4838	Ref/Session2.cpp
+288	SA_LANDPROTECTOR	CSession::GetSkillActionInfo2	288	4839	Ref/Session2.cpp
+289	SA_DISPELL	CSession::GetSkillActionInfo2	289	4840	Ref/Session2.cpp
+290	SA_ABRACADABRA	CSession::GetSkillActionInfo2	290	4841	Ref/Session2.cpp
+339	NPC_GRANDDARKNESS	CSession::GetSkillActionInfo2	339	4842	Ref/Session2.cpp
+340	NPC_DARKSTRIKE	CSession::GetSkillActionInfo2	340	4843	Ref/Session2.cpp
+341	NPC_DARKTHUNDER	CSession::GetSkillActionInfo2	341	4844	Ref/Session2.cpp
+342	NPC_STOP	CSession::GetSkillActionInfo2	342	4845	Ref/Session2.cpp
+365	HW_MAGICCRASHER	CSession::GetSkillActionInfo2	365	4846	Ref/Session2.cpp
+373	PF_HPCONVERSION	CSession::GetSkillActionInfo2	373	4847	Ref/Session2.cpp
+374	PF_SOULCHANGE	CSession::GetSkillActionInfo2	374	4848	Ref/Session2.cpp
+375	PF_SOULBURN	CSession::GetSkillActionInfo2	375	4849	Ref/Session2.cpp
+29	AL_INCAGI	CSession::GetSkillActionInfo2	29	4851	Ref/Session2.cpp
+34	AL_BLESSING	CSession::GetSkillActionInfo2	34	4853	Ref/Session2.cpp
+45	AC_CONCENTRATION	CSession::GetSkillActionInfo2	45	4855	Ref/Session2.cpp
+47	AC_SHOWER	CSession::GetSkillActionInfo2	47	4858	Ref/Session2.cpp
+56	KN_PIERCE	CSession::GetSkillActionInfo2	56	4859	Ref/Session2.cpp
+58	KN_SPEARSTAB	CSession::GetSkillActionInfo2	58	4860	Ref/Session2.cpp
+62	KN_BOWLINGBASH	CSession::GetSkillActionInfo2	62	4861	Ref/Session2.cpp
+51	TF_HIDING	CSession::GetSkillActionInfo2	51	4864	Ref/Session2.cpp
+55	KN_SPEARMASTERY	CSession::GetSkillActionInfo2	55	4865	Ref/Session2.cpp
+60	KN_TWOHANDQUICKEN	CSession::GetSkillActionInfo2	60	4866	Ref/Session2.cpp
+63	KN_RIDING	CSession::GetSkillActionInfo2	63	4867	Ref/Session2.cpp
+64	KN_CAVALIERMASTERY	CSession::GetSkillActionInfo2	64	4868	Ref/Session2.cpp
+93	WZ_ESTIMATION	CSession::GetSkillActionInfo2	93	4869	Ref/Session2.cpp
+158	NPC_PIERCINGATT	CSession::GetSkillActionInfo2	158	4870	Ref/Session2.cpp
+159	NPC_MENTALBREAKER	CSession::GetSkillActionInfo2	159	4871	Ref/Session2.cpp
+160	NPC_RANGEATTACK	CSession::GetSkillActionInfo2	160	4872	Ref/Session2.cpp
+161	NPC_ATTRICHANGE	CSession::GetSkillActionInfo2	161	4873	Ref/Session2.cpp
+162	NPC_CHANGEWATER	CSession::GetSkillActionInfo2	162	4874	Ref/Session2.cpp
+163	NPC_CHANGEGROUND	CSession::GetSkillActionInfo2	163	4875	Ref/Session2.cpp
+164	NPC_CHANGEFIRE	CSession::GetSkillActionInfo2	164	4876	Ref/Session2.cpp
+165	NPC_CHANGEWIND	CSession::GetSkillActionInfo2	165	4877	Ref/Session2.cpp
+166	NPC_CHANGEPOISON	CSession::GetSkillActionInfo2	166	4878	Ref/Session2.cpp
+167	NPC_CHANGEHOLY	CSession::GetSkillActionInfo2	167	4879	Ref/Session2.cpp
+168	NPC_CHANGEDARKNESS	CSession::GetSkillActionInfo2	168	4880	Ref/Session2.cpp
+169	NPC_CHANGETELEKINESIS	CSession::GetSkillActionInfo2	169	4881	Ref/Session2.cpp
+170	NPC_CRITICALSLASH	CSession::GetSkillActionInfo2	170	4882	Ref/Session2.cpp
+171	NPC_COMBOATTACK	CSession::GetSkillActionInfo2	171	4883	Ref/Session2.cpp
+172	NPC_GUIDEDATTACK	CSession::GetSkillActionInfo2	172	4884	Ref/Session2.cpp
+173	NPC_SELFDESTRUCTION	CSession::GetSkillActionInfo2	173	4885	Ref/Session2.cpp
+174	NPC_SPLASHATTACK	CSession::GetSkillActionInfo2	174	4886	Ref/Session2.cpp
+175	NPC_SUICIDE	CSession::GetSkillActionInfo2	175	4887	Ref/Session2.cpp
+176	NPC_POISON	CSession::GetSkillActionInfo2	176	4888	Ref/Session2.cpp
+177	NPC_BLINDATTACK	CSession::GetSkillActionInfo2	177	4889	Ref/Session2.cpp
+178	NPC_SILENCEATTACK	CSession::GetSkillActionInfo2	178	4890	Ref/Session2.cpp
+179	NPC_STUNATTACK	CSession::GetSkillActionInfo2	179	4891	Ref/Session2.cpp
+180	NPC_PETRIFYATTACK	CSession::GetSkillActionInfo2	180	4892	Ref/Session2.cpp
+181	NPC_CURSEATTACK	CSession::GetSkillActionInfo2	181	4893	Ref/Session2.cpp
+182	NPC_SLEEPATTACK	CSession::GetSkillActionInfo2	182	4894	Ref/Session2.cpp
+183	NPC_RANDOMATTACK	CSession::GetSkillActionInfo2	183	4895	Ref/Session2.cpp
+184	NPC_WATERATTACK	CSession::GetSkillActionInfo2	184	4896	Ref/Session2.cpp
+185	NPC_GROUNDATTACK	CSession::GetSkillActionInfo2	185	4897	Ref/Session2.cpp
+186	NPC_FIREATTACK	CSession::GetSkillActionInfo2	186	4898	Ref/Session2.cpp
+187	NPC_WINDATTACK	CSession::GetSkillActionInfo2	187	4899	Ref/Session2.cpp
+188	NPC_POISONATTACK	CSession::GetSkillActionInfo2	188	4900	Ref/Session2.cpp
+189	NPC_HOLYATTACK	CSession::GetSkillActionInfo2	189	4901	Ref/Session2.cpp
+190	NPC_DARKNESSATTACK	CSession::GetSkillActionInfo2	190	4902	Ref/Session2.cpp
+191	NPC_TELEKINESISATTACK	CSession::GetSkillActionInfo2	191	4903	Ref/Session2.cpp
+192	NPC_MAGICALATTACK	CSession::GetSkillActionInfo2	192	4904	Ref/Session2.cpp
+258	CR_SPEARQUICKEN	CSession::GetSkillActionInfo2	258	4905	Ref/Session2.cpp
+272	MO_CHAINCOMBO	CSession::GetSkillActionInfo2	272	4906	Ref/Session2.cpp
+273	MO_COMBOFINISH	CSession::GetSkillActionInfo2	273	4907	Ref/Session2.cpp
+338	NPC_DARKCROSS	CSession::GetSkillActionInfo2	338	4908	Ref/Session2.cpp
+347	NPC_UNDEADATTACK	CSession::GetSkillActionInfo2	347	4909	Ref/Session2.cpp
+368	PA_SACRIFICE	CSession::GetSkillActionInfo2	368	4910	Ref/Session2.cpp
+370	CH_PALMSTRIKE	CSession::GetSkillActionInfo2	370	4911	Ref/Session2.cpp
+371	CH_TIGERFIST	CSession::GetSkillActionInfo2	371	4912	Ref/Session2.cpp
+372	CH_CHAINCRUSH	CSession::GetSkillActionInfo2	372	4913	Ref/Session2.cpp
+57	KN_BRANDISHSPEAR	CSession::GetSkillActionInfo2	57	4915	Ref/Session2.cpp
+59	KN_SPEARBOOMERANG	CSession::GetSkillActionInfo2	59	4919	Ref/Session2.cpp
+61	KN_AUTOCOUNTER	CSession::GetSkillActionInfo2	61	4923	Ref/Session2.cpp
+152	TF_THROWSTONE	CSession::GetSkillActionInfo2	152	4924	Ref/Session2.cpp
+115	HT_SKIDTRAP	CSession::GetSkillActionInfo2	115	4926	Ref/Session2.cpp
+116	HT_LANDMINE	CSession::GetSkillActionInfo2	116	4927	Ref/Session2.cpp
+117	HT_ANKLESNARE	CSession::GetSkillActionInfo2	117	4928	Ref/Session2.cpp
+118	HT_SHOCKWAVE	CSession::GetSkillActionInfo2	118	4929	Ref/Session2.cpp
+119	HT_SANDMAN	CSession::GetSkillActionInfo2	119	4930	Ref/Session2.cpp
+120	HT_FLASHER	CSession::GetSkillActionInfo2	120	4931	Ref/Session2.cpp
+121	HT_FREEZINGTRAP	CSession::GetSkillActionInfo2	121	4932	Ref/Session2.cpp
+122	HT_BLASTMINE	CSession::GetSkillActionInfo2	122	4933	Ref/Session2.cpp
+123	HT_CLAYMORETRAP	CSession::GetSkillActionInfo2	123	4934	Ref/Session2.cpp
+124	HT_REMOVETRAP	CSession::GetSkillActionInfo2	124	4935	Ref/Session2.cpp
+125	HT_TALKIEBOX	CSession::GetSkillActionInfo2	125	4936	Ref/Session2.cpp
+136	AS_SONICBLOW	CSession::GetSkillActionInfo2	136	4938	Ref/Session2.cpp
+141	AS_SPLASHER	CSession::GetSkillActionInfo2	141	4942	Ref/Session2.cpp
+344	NPC_ARMORBRAKE	CSession::GetSkillActionInfo2	344	4943	Ref/Session2.cpp
+345	NPC_HELMBRAKE	CSession::GetSkillActionInfo2	345	4944	Ref/Session2.cpp
+346	NPC_SHIELDBRAKE	CSession::GetSkillActionInfo2	346	4945	Ref/Session2.cpp
+350	NPC_AGIUP	CSession::GetSkillActionInfo2	350	4946	Ref/Session2.cpp
+149	TF_SPRINKLESAND	CSession::GetSkillActionInfo2	149	4948	Ref/Session2.cpp
+151	TF_PICKSTONE	CSession::GetSkillActionInfo2	151	4950	Ref/Session2.cpp
+196	NPC_SUMMONSLAVE	CSession::GetSkillActionInfo2	196	4953	Ref/Session2.cpp
+209	NPC_SUMMONMONSTER	CSession::GetSkillActionInfo2	209	4954	Ref/Session2.cpp
+249	CR_AUTOGUARD	CSession::GetSkillActionInfo2	249	4955	Ref/Session2.cpp
+270	MO_EXPLOSIONSPIRITS	CSession::GetSkillActionInfo2	270	4956	Ref/Session2.cpp
+349	NPC_POWERUP	CSession::GetSkillActionInfo2	349	4957	Ref/Session2.cpp
+230	AM_ACIDTERROR	CSession::GetSkillActionInfo2	230	4959	Ref/Session2.cpp
+231	AM_POTIONPITCHER	CSession::GetSkillActionInfo2	231	4960	Ref/Session2.cpp
+232	AM_CANNIBALIZE	CSession::GetSkillActionInfo2	232	4961	Ref/Session2.cpp
+234	AM_CP_WEAPON	CSession::GetSkillActionInfo2	234	4962	Ref/Session2.cpp
+235	AM_CP_SHIELD	CSession::GetSkillActionInfo2	235	4963	Ref/Session2.cpp
+236	AM_CP_ARMOR	CSession::GetSkillActionInfo2	236	4964	Ref/Session2.cpp
+237	AM_CP_HELM	CSession::GetSkillActionInfo2	237	4965	Ref/Session2.cpp
+268	MO_STEELBODY	CSession::GetSkillActionInfo2	268	4966	Ref/Session2.cpp
+243	AM_CALLHOMUN	CSession::GetSkillActionInfo2	243	4968	Ref/Session2.cpp
+244	AM_REST	CSession::GetSkillActionInfo2	244	4969	Ref/Session2.cpp
+247	AM_RESURRECTHOMUN	CSession::GetSkillActionInfo2	247	4970	Ref/Session2.cpp
+271	MO_EXTREMITYFIST	CSession::GetSkillActionInfo2	271	4973	Ref/Session2.cpp
+334	WE_MALE	CSession::GetSkillActionInfo2	334	4978	Ref/Session2.cpp
+336	WE_CALLPARTNER	CSession::GetSkillActionInfo2	336	4979	Ref/Session2.cpp
+335	WE_FEMALE	CSession::GetSkillActionInfo2	335	4981	Ref/Session2.cpp
+361	HP_ASSUMPTIO	CSession::GetSkillActionInfo2	361	4984	Ref/Session2.cpp
+362	HP_BASILICA	CSession::GetSkillActionInfo2	362	4985	Ref/Session2.cpp
+367	PA_PRESSURE	CSession::GetSkillActionInfo2	367	4986	Ref/Session2.cpp
+382	SN_SHARPSHOOTING	CSession::GetSkillActionInfo2	382	5005	Ref/Session2.cpp
+394	CG_ARROWVULCAN	CSession::GetSkillActionInfo2	394	5006	Ref/Session2.cpp
+383	SN_WINDWALK	CSession::GetSkillActionInfo2	383	5010	Ref/Session2.cpp
+480	PA_SHIELDCHAIN	CSession::GetSkillActionInfo2	480	5011	Ref/Session2.cpp
+483	HW_GANBANTEIN	CSession::GetSkillActionInfo2	483	5012	Ref/Session2.cpp
+489	CG_TAROTCARD	CSession::GetSkillActionInfo2	489	5013	Ref/Session2.cpp
+389	ST_CHASEWALK	CSession::GetSkillActionInfo2	389	5015	Ref/Session2.cpp
+397	LK_SPIRALPIERCE	CSession::GetSkillActionInfo2	397	5017	Ref/Session2.cpp
+398	LK_HEADCRUSH	CSession::GetSkillActionInfo2	398	5021	Ref/Session2.cpp
+399	LK_JOINTBEAT	CSession::GetSkillActionInfo2	399	5022	Ref/Session2.cpp
+495	KN_ONEHAND	CSession::GetSkillActionInfo2	495	5023	Ref/Session2.cpp
+400	HW_NAPALMVULCAN	CSession::GetSkillActionInfo2	400	5025	Ref/Session2.cpp
+401	CH_SOULCOLLECT	CSession::GetSkillActionInfo2	401	5026	Ref/Session2.cpp
+402	PF_MINDBREAKER	CSession::GetSkillActionInfo2	402	5027	Ref/Session2.cpp
+403	PF_MEMORIZE	CSession::GetSkillActionInfo2	403	5028	Ref/Session2.cpp
+405	PF_SPIDERWEB	CSession::GetSkillActionInfo2	405	5029	Ref/Session2.cpp
+482	PF_DOUBLECASTING	CSession::GetSkillActionInfo2	482	5030	Ref/Session2.cpp
+484	HW_GRAVITATION	CSession::GetSkillActionInfo2	484	5031	Ref/Session2.cpp
+406	ASC_METEORASSAULT	CSession::GetSkillActionInfo2	406	5033	Ref/Session2.cpp
+408	WE_BABY	CSession::GetSkillActionInfo2	408	5035	Ref/Session2.cpp
+409	WE_CALLPARENT	CSession::GetSkillActionInfo2	409	5036	Ref/Session2.cpp
+410	WE_CALLBABY	CSession::GetSkillActionInfo2	410	5037	Ref/Session2.cpp
+411	TK_RUN	CSession::GetSkillActionInfo2	411	5041	Ref/Session2.cpp
+427	SG_FEEL	CSession::GetSkillActionInfo2	427	5042	Ref/Session2.cpp
+434	SG_HATE	CSession::GetSkillActionInfo2	434	5043	Ref/Session2.cpp
+444	SG_FUSION	CSession::GetSkillActionInfo2	444	5044	Ref/Session2.cpp
+445	SL_ALCHEMIST	CSession::GetSkillActionInfo2	445	5045	Ref/Session2.cpp
+447	SL_MONK	CSession::GetSkillActionInfo2	447	5046	Ref/Session2.cpp
+448	SL_STAR	CSession::GetSkillActionInfo2	448	5047	Ref/Session2.cpp
+449	SL_SAGE	CSession::GetSkillActionInfo2	449	5048	Ref/Session2.cpp
+450	SL_CRUSADER	CSession::GetSkillActionInfo2	450	5049	Ref/Session2.cpp
+451	SL_SUPERNOVICE	CSession::GetSkillActionInfo2	451	5050	Ref/Session2.cpp
+452	SL_KNIGHT	CSession::GetSkillActionInfo2	452	5051	Ref/Session2.cpp
+453	SL_WIZARD	CSession::GetSkillActionInfo2	453	5052	Ref/Session2.cpp
+454	SL_PRIEST	CSession::GetSkillActionInfo2	454	5053	Ref/Session2.cpp
+455	SL_BARDDANCER	CSession::GetSkillActionInfo2	455	5054	Ref/Session2.cpp
+456	SL_ROGUE	CSession::GetSkillActionInfo2	456	5055	Ref/Session2.cpp
+457	SL_ASSASIN	CSession::GetSkillActionInfo2	457	5056	Ref/Session2.cpp
+458	SL_BLACKSMITH	CSession::GetSkillActionInfo2	458	5057	Ref/Session2.cpp
+460	SL_HUNTER	CSession::GetSkillActionInfo2	460	5058	Ref/Session2.cpp
+461	SL_SOULLINKER	CSession::GetSkillActionInfo2	461	5059	Ref/Session2.cpp
+462	SL_KAIZEL	CSession::GetSkillActionInfo2	462	5060	Ref/Session2.cpp
+463	SL_KAAHI	CSession::GetSkillActionInfo2	463	5061	Ref/Session2.cpp
+464	SL_KAUPE	CSession::GetSkillActionInfo2	464	5062	Ref/Session2.cpp
+465	SL_KAITE	CSession::GetSkillActionInfo2	465	5063	Ref/Session2.cpp
+467	SL_STIN	CSession::GetSkillActionInfo2	467	5064	Ref/Session2.cpp
+468	SL_STUN	CSession::GetSkillActionInfo2	468	5065	Ref/Session2.cpp
+469	SL_SMA	CSession::GetSkillActionInfo2	469	5066	Ref/Session2.cpp
+470	SL_SWOO	CSession::GetSkillActionInfo2	470	5067	Ref/Session2.cpp
+471	SL_SKE	CSession::GetSkillActionInfo2	471	5068	Ref/Session2.cpp
+472	SL_SKA	CSession::GetSkillActionInfo2	472	5069	Ref/Session2.cpp
+494	SL_HIGH	CSession::GetSkillActionInfo2	494	5070	Ref/Session2.cpp
+425	TK_SEVENWIND	CSession::GetSkillActionInfo2	425	5072	Ref/Session2.cpp
+493	TK_MISSION	CSession::GetSkillActionInfo2	493	5073	Ref/Session2.cpp
+426	TK_HIGHJUMP	CSession::GetSkillActionInfo2	426	5077	Ref/Session2.cpp
+446	AM_BERSERKPITCHER	CSession::GetSkillActionInfo2	446	5081	Ref/Session2.cpp
+475	ST_PRESERVE	CSession::GetSkillActionInfo2	475	5084	Ref/Session2.cpp
+478	CR_SLIMPITCHER	CSession::GetSkillActionInfo2	478	5087	Ref/Session2.cpp
+490	CR_ACIDDEMONSTRATION	CSession::GetSkillActionInfo2	490	5088	Ref/Session2.cpp
+479	CR_FULLPROTECTION	CSession::GetSkillActionInfo2	479	5091	Ref/Session2.cpp
+496	AM_TWILIGHT1	CSession::GetSkillActionInfo2	496	5095	Ref/Session2.cpp
+497	AM_TWILIGHT2	CSession::GetSkillActionInfo2	497	5099	Ref/Session2.cpp
+498	AM_TWILIGHT3	CSession::GetSkillActionInfo2	498	5103	Ref/Session2.cpp
+503	GS_BULLSEYE	CSession::GetSkillActionInfo2	503	5124	Ref/Session2.cpp
+504	GS_MADNESSCANCEL	CSession::GetSkillActionInfo2	504	5125	Ref/Session2.cpp
+505	GS_ADJUSTMENT	CSession::GetSkillActionInfo2	505	5126	Ref/Session2.cpp
+512	GS_TRACKING	CSession::GetSkillActionInfo2	512	5127	Ref/Session2.cpp
+513	GS_DISARM	CSession::GetSkillActionInfo2	513	5128	Ref/Session2.cpp
+514	GS_PIERCINGSHOT	CSession::GetSkillActionInfo2	514	5129	Ref/Session2.cpp
+515	GS_RAPIDSHOWER	CSession::GetSkillActionInfo2	515	5130	Ref/Session2.cpp
+517	GS_GATLINGFEVER	CSession::GetSkillActionInfo2	517	5131	Ref/Session2.cpp
+518	GS_DUST	CSession::GetSkillActionInfo2	518	5135	Ref/Session2.cpp
+519	GS_FULLBUSTER	CSession::GetSkillActionInfo2	519	5136	Ref/Session2.cpp
+520	GS_SPREADATTACK	CSession::GetSkillActionInfo2	520	5137	Ref/Session2.cpp
+521	GS_GROUNDDRIFT	CSession::GetSkillActionInfo2	521	5138	Ref/Session2.cpp
+525	NJ_HUUMA	CSession::GetSkillActionInfo2	525	5141	Ref/Session2.cpp
+532	NJ_BUNSINJYUTSU	CSession::GetSkillActionInfo2	532	5142	Ref/Session2.cpp
+543	NJ_NEN	CSession::GetSkillActionInfo2	543	5143	Ref/Session2.cpp
+534	NJ_KOUENKA	CSession::GetSkillActionInfo2	534	5147	Ref/Session2.cpp
+535	NJ_KAENSIN	CSession::GetSkillActionInfo2	535	5148	Ref/Session2.cpp
+536	NJ_BAKUENRYU	CSession::GetSkillActionInfo2	536	5149	Ref/Session2.cpp
+537	NJ_HYOUSENSOU	CSession::GetSkillActionInfo2	537	5152	Ref/Session2.cpp
+538	NJ_SUITON	CSession::GetSkillActionInfo2	538	5153	Ref/Session2.cpp
+539	NJ_HYOUSYOURAKU	CSession::GetSkillActionInfo2	539	5154	Ref/Session2.cpp
+540	NJ_HUUJIN	CSession::GetSkillActionInfo2	540	5157	Ref/Session2.cpp
+541	NJ_RAIGEKISAI	CSession::GetSkillActionInfo2	541	5158	Ref/Session2.cpp
+542	NJ_KAMAITACHI	CSession::GetSkillActionInfo2	542	5159	Ref/Session2.cpp
+555		CSession::GetSkillActionInfo2	555	5163	Ref/Session2.cpp
+572		CSession::GetSkillActionInfo2	572	5168	Ref/Session2.cpp
+573		CSession::GetSkillActionInfo2	573	5169	Ref/Session2.cpp
+574		CSession::GetSkillActionInfo2	574	5170	Ref/Session2.cpp
+575		CSession::GetSkillActionInfo2	575	5171	Ref/Session2.cpp
+654	NPC_FIREBREATH	CSession::GetSkillActionInfo2	654	5175	Ref/Session2.cpp
+663	NPC_WIDESILENCE	CSession::GetSkillActionInfo2	663	5176	Ref/Session2.cpp
+666	NPC_WIDESTONE	CSession::GetSkillActionInfo2	666	5177	Ref/Session2.cpp
+667	NPC_WIDECONFUSE	CSession::GetSkillActionInfo2	667	5178	Ref/Session2.cpp
+668	NPC_WIDESLEEP	CSession::GetSkillActionInfo2	668	5179	Ref/Session2.cpp
+675	NPC_STONESKIN	CSession::GetSkillActionInfo2	675	5180	Ref/Session2.cpp
+676	NPC_ANTIMAGIC	CSession::GetSkillActionInfo2	676	5181	Ref/Session2.cpp
+678	NPC_WIDESTUN	CSession::GetSkillActionInfo2	678	5182	Ref/Session2.cpp
+661	NPC_PULSESTRIKE	CSession::GetSkillActionInfo2	661	5184	Ref/Session2.cpp
+669	NPC_WIDESIGHT	CSession::GetSkillActionInfo2	669	5186	Ref/Session2.cpp
+8220	ML_AUTOGUARD	CSession::GetSkillActionInfo2	8220	5208	Ref/Session2.cpp
+1018	SA_ELEMENTFIRE	CSession::GetSkillActionInfo2	1018	5213	Ref/Session2.cpp
+1019	SA_ELEMENTWIND	CSession::GetSkillActionInfo2	1019	5217	Ref/Session2.cpp
+1011	DC_WINKCHARM	CSession::GetSkillActionInfo2	1011	5231	Ref/Session2.cpp
+1014	PR_REDEMPTIO	CSession::GetSkillActionInfo2	1014	5234	Ref/Session2.cpp
+1015	MO_KITRANSLATION	CSession::GetSkillActionInfo2	1015	5236	Ref/Session2.cpp
+1016	MO_BALKYOUNG	CSession::GetSkillActionInfo2	1016	5238	Ref/Session2.cpp
+689	CASH_BLESSING	CSession::GetSkillActionInfo2	689	5257	Ref/Session2.cpp
+690	CASH_INCAGI	CSession::GetSkillActionInfo2	690	5262	Ref/Session2.cpp
+691	CASH_ASSUMPTIO	CSession::GetSkillActionInfo2	691	5267	Ref/Session2.cpp
+694	ALL_ANGEL_PROTECT	CSession::GetSkillActionInfo2	694	5269	Ref/Session2.cpp
+1004	AS_VENOMKNIFE	CSession::GetSkillActionInfo2	1004	5284	Ref/Session2.cpp
+1006	WZ_SIGHTBLASTER	CSession::GetSkillActionInfo2	1006	5290	Ref/Session2.cpp
+1008	SA_ELEMENTWATER	CSession::GetSkillActionInfo2	1008	5292	Ref/Session2.cpp
+1009	HT_PHANTASMIC	CSession::GetSkillActionInfo2	1009	5296	Ref/Session2.cpp
+668	NPC_WIDESLEEP	CSession::LaunchSkillSpecialEffect	668	6813	Ref/Session2.cpp
+669	NPC_WIDESIGHT	CSession::LaunchSkillSpecialEffect	669	6816	Ref/Session2.cpp
+672	NPC_SLOWCAST	CSession::LaunchSkillSpecialEffect	672	6821	Ref/Session2.cpp
+673	NPC_CRITICALWOUND	CSession::LaunchSkillSpecialEffect	673	6826	Ref/Session2.cpp
+674	NPC_EXPULSION	CSession::LaunchSkillSpecialEffect	674	6831	Ref/Session2.cpp
+675	NPC_STONESKIN	CSession::LaunchSkillSpecialEffect	675	6840	Ref/Session2.cpp
+676	NPC_ANTIMAGIC	CSession::LaunchSkillSpecialEffect	676	6845	Ref/Session2.cpp
+534	NJ_KOUENKA	CSession::LaunchSkillSpecialEffect	534	6866	Ref/Session2.cpp
+537	NJ_HYOUSENSOU	CSession::LaunchSkillSpecialEffect	537	6871	Ref/Session2.cpp
+540	NJ_HUUJIN	CSession::LaunchSkillSpecialEffect	540	6878	Ref/Session2.cpp
+542	NJ_KAMAITACHI	CSession::LaunchSkillSpecialEffect	542	6892	Ref/Session2.cpp
+544	NJ_ISSEN	CSession::LaunchSkillSpecialEffect	544	6899	Ref/Session2.cpp
+653	NPC_EARTHQUAKE	CSession::LaunchSkillSpecialEffect	653	6904	Ref/Session2.cpp
+654	NPC_FIREBREATH	CSession::LaunchSkillSpecialEffect	654	6909	Ref/Session2.cpp
+659	NPC_DRAGONFEAR	CSession::LaunchSkillSpecialEffect	659	6912	Ref/Session2.cpp
+661	NPC_PULSESTRIKE	CSession::LaunchSkillSpecialEffect	661	6917	Ref/Session2.cpp
+665	NPC_WIDEBLEEDING	CSession::LaunchSkillSpecialEffect	665	6922	Ref/Session2.cpp
+666	NPC_WIDESTONE	CSession::LaunchSkillSpecialEffect	666	6927	Ref/Session2.cpp
+419	TK_COUNTER	CSession::LaunchSkillSpecialEffect	419	6945	Ref/Session2.cpp
+421	TK_JUMPKICK	CSession::LaunchSkillSpecialEffect	421	6962	Ref/Session2.cpp
+467	SL_STIN	CSession::LaunchSkillSpecialEffect	467	6980	Ref/Session2.cpp
+468	SL_STUN	CSession::LaunchSkillSpecialEffect	468	6996	Ref/Session2.cpp
+469	SL_SMA	CSession::LaunchSkillSpecialEffect	469	7012	Ref/Session2.cpp
+480	PA_SHIELDCHAIN	CSession::LaunchSkillSpecialEffect	480	7032	Ref/Session2.cpp
+485	WS_CARTTERMINATION	CSession::LaunchSkillSpecialEffect	485	7037	Ref/Session2.cpp
+490	CR_ACIDDEMONSTRATION	CSession::LaunchSkillSpecialEffect	490	7042	Ref/Session2.cpp
+501	GS_FLING	CSession::LaunchSkillSpecialEffect	501	7047	Ref/Session2.cpp
+502	GS_TRIPLEACTION	CSession::LaunchSkillSpecialEffect	502	7052	Ref/Session2.cpp
+503	GS_BULLSEYE	CSession::LaunchSkillSpecialEffect	503	7057	Ref/Session2.cpp
+507	GS_MAGICALBULLET	CSession::LaunchSkillSpecialEffect	507	7062	Ref/Session2.cpp
+512	GS_TRACKING	CSession::LaunchSkillSpecialEffect	512	7067	Ref/Session2.cpp
+514	GS_PIERCINGSHOT	CSession::LaunchSkillSpecialEffect	514	7072	Ref/Session2.cpp
+515	GS_RAPIDSHOWER	CSession::LaunchSkillSpecialEffect	515	7079	Ref/Session2.cpp
+518	GS_DUST	CSession::LaunchSkillSpecialEffect	518	7084	Ref/Session2.cpp
+519	GS_FULLBUSTER	CSession::LaunchSkillSpecialEffect	519	7089	Ref/Session2.cpp
+520	GS_SPREADATTACK	CSession::LaunchSkillSpecialEffect	520	7096	Ref/Session2.cpp
+523	NJ_SYURIKEN	CSession::LaunchSkillSpecialEffect	523	7107	Ref/Session2.cpp
+524	NJ_KUNAI	CSession::LaunchSkillSpecialEffect	524	7118	Ref/Session2.cpp
+525	NJ_HUUMA	CSession::LaunchSkillSpecialEffect	525	7125	Ref/Session2.cpp
+526	NJ_ZENYNAGE	CSession::LaunchSkillSpecialEffect	526	7141	Ref/Session2.cpp
+528	NJ_KASUMIKIRI	CSession::LaunchSkillSpecialEffect	528	7157	Ref/Session2.cpp
+263	MO_TRIPLEATTACK	CSession::LaunchSkillSpecialEffect	263	7179	Ref/Session2.cpp
+266	MO_INVESTIGATE	CSession::LaunchSkillSpecialEffect	266	7186	Ref/Session2.cpp
+267	MO_FINGEROFFENSIVE	CSession::LaunchSkillSpecialEffect	267	7204	Ref/Session2.cpp
+271	MO_EXTREMITYFIST	CSession::LaunchSkillSpecialEffect	271	7220	Ref/Session2.cpp
+337	ITM_TOMAHAWK	CSession::LaunchSkillSpecialEffect	337	7227	Ref/Session2.cpp
+338	NPC_DARKCROSS	CSession::LaunchSkillSpecialEffect	338	7234	Ref/Session2.cpp
+339	NPC_GRANDDARKNESS	CSession::LaunchSkillSpecialEffect	339	7240	Ref/Session2.cpp
+341	NPC_DARKTHUNDER	CSession::LaunchSkillSpecialEffect	341	7245	Ref/Session2.cpp
+344	NPC_ARMORBRAKE	CSession::LaunchSkillSpecialEffect	344	7252	Ref/Session2.cpp
+345	NPC_HELMBRAKE	CSession::LaunchSkillSpecialEffect	345	7257	Ref/Session2.cpp
+346	NPC_SHIELDBRAKE	CSession::LaunchSkillSpecialEffect	346	7262	Ref/Session2.cpp
+365	HW_MAGICCRASHER	CSession::LaunchSkillSpecialEffect	365	7267	Ref/Session2.cpp
+367	PA_PRESSURE	CSession::LaunchSkillSpecialEffect	367	7272	Ref/Session2.cpp
+368	PA_SACRIFICE	CSession::LaunchSkillSpecialEffect	368	7277	Ref/Session2.cpp
+379	ASC_BREAKER	CSession::LaunchSkillSpecialEffect	379	7282	Ref/Session2.cpp
+381	SN_FALCONASSAULT	CSession::LaunchSkillSpecialEffect	381	7298	Ref/Session2.cpp
+382	SN_SHARPSHOOTING	CSession::LaunchSkillSpecialEffect	382	7303	Ref/Session2.cpp
+394	CG_ARROWVULCAN	CSession::LaunchSkillSpecialEffect	394	7310	Ref/Session2.cpp
+397	LK_SPIRALPIERCE	CSession::LaunchSkillSpecialEffect	397	7317	Ref/Session2.cpp
+398	LK_HEADCRUSH	CSession::LaunchSkillSpecialEffect	398	7322	Ref/Session2.cpp
+399	LK_JOINTBEAT	CSession::LaunchSkillSpecialEffect	399	7327	Ref/Session2.cpp
+400	HW_NAPALMVULCAN	CSession::LaunchSkillSpecialEffect	400	7332	Ref/Session2.cpp
+415	TK_DOWNKICK	CSession::LaunchSkillSpecialEffect	415	7337	Ref/Session2.cpp
+47	AC_SHOWER	CSession::LaunchSkillSpecialEffect	47	7358	Ref/Session2.cpp
+56	KN_PIERCE	CSession::LaunchSkillSpecialEffect	56	7392	Ref/Session2.cpp
+57	KN_BRANDISHSPEAR	CSession::LaunchSkillSpecialEffect	57	7407	Ref/Session2.cpp
+58	KN_SPEARSTAB	CSession::LaunchSkillSpecialEffect	58	7414	Ref/Session2.cpp
+59	KN_SPEARBOOMERANG	CSession::LaunchSkillSpecialEffect	59	7421	Ref/Session2.cpp
+62	KN_BOWLINGBASH	CSession::LaunchSkillSpecialEffect	62	7440	Ref/Session2.cpp
+77	PR_TURNUNDEAD	CSession::LaunchSkillSpecialEffect	77	7447	Ref/Session2.cpp
+84	WZ_JUPITEL	CSession::LaunchSkillSpecialEffect	84	7454	Ref/Session2.cpp
+86	WZ_WATERBALL	CSession::LaunchSkillSpecialEffect	86	7461	Ref/Session2.cpp
+90	WZ_EARTHSPIKE	CSession::LaunchSkillSpecialEffect	90	7468	Ref/Session2.cpp
+136	AS_SONICBLOW	CSession::LaunchSkillSpecialEffect	136	7475	Ref/Session2.cpp
+137	AS_GRIMTOOTH	CSession::LaunchSkillSpecialEffect	137	7494	Ref/Session2.cpp
+149	TF_SPRINKLESAND	CSession::LaunchSkillSpecialEffect	149	7501	Ref/Session2.cpp
+152	TF_THROWSTONE	CSession::LaunchSkillSpecialEffect	152	7506	Ref/Session2.cpp
+153	MC_CARTREVOLUTION	CSession::LaunchSkillSpecialEffect	153	7513	Ref/Session2.cpp
+160	NPC_RANGEATTACK	CSession::LaunchSkillSpecialEffect	160	7518	Ref/Session2.cpp
+212	RG_BACKSTAP	CSession::LaunchSkillSpecialEffect	212	7525	Ref/Session2.cpp
+219	RG_INTIMIDATE	CSession::LaunchSkillSpecialEffect	219	7532	Ref/Session2.cpp
+230	AM_ACIDTERROR	CSession::LaunchSkillSpecialEffect	230	7541	Ref/Session2.cpp
+231	AM_POTIONPITCHER	CSession::LaunchSkillSpecialEffect	231	7548	Ref/Session2.cpp
+250	CR_SHIELDCHARGE	CSession::LaunchSkillSpecialEffect	250	7565	Ref/Session2.cpp
+251	CR_SHIELDBOOMERANG	CSession::LaunchSkillSpecialEffect	251	7570	Ref/Session2.cpp
+253	CR_HOLYCROSS	CSession::LaunchSkillSpecialEffect	253	7577	Ref/Session2.cpp
+14	MG_COLDBOLT	CSession::LaunchSkillSpecialEffect	14	7594	Ref/Session2.cpp
+15	MG_FROSTDIVER	CSession::LaunchSkillSpecialEffect	15	7599	Ref/Session2.cpp
+17	MG_FIREBALL	CSession::LaunchSkillSpecialEffect	17	7606	Ref/Session2.cpp
+19	MG_FIREBOLT	CSession::LaunchSkillSpecialEffect	19	7613	Ref/Session2.cpp
+20	MG_LIGHTNINGBOLT	CSession::LaunchSkillSpecialEffect	20	7618	Ref/Session2.cpp
+21	MG_THUNDERSTORM	CSession::LaunchSkillSpecialEffect	21	7626	Ref/Session2.cpp
+1	NV_BASIC	CSession::InitSkillEffectIdTable	assign	6222	Ref/Session2.cpp
+2	SM_SWORD	CSession::InitSkillEffectIdTable	assign	6223	Ref/Session2.cpp
+3	SM_TWOHAND	CSession::InitSkillEffectIdTable	assign	6224	Ref/Session2.cpp
+4	SM_RECOVERY	CSession::InitSkillEffectIdTable	assign	6225	Ref/Session2.cpp
+5	SM_BASH	CSession::InitSkillEffectIdTable	assign	6226	Ref/Session2.cpp
+6	SM_PROVOKE	CSession::InitSkillEffectIdTable	assign	6227	Ref/Session2.cpp
+7	SM_MAGNUM	CSession::InitSkillEffectIdTable	assign	6228	Ref/Session2.cpp
+8	SM_ENDURE	CSession::InitSkillEffectIdTable	assign	6229	Ref/Session2.cpp
+9	MG_SRECOVERY	CSession::InitSkillEffectIdTable	assign	6230	Ref/Session2.cpp
+10	MG_SIGHT	CSession::InitSkillEffectIdTable	assign	6231	Ref/Session2.cpp
+12	MG_SAFETYWALL	CSession::InitSkillEffectIdTable	assign	6232	Ref/Session2.cpp
+13	MG_SOULSTRIKE	CSession::InitSkillEffectIdTable	assign	6233	Ref/Session2.cpp
+340	NPC_DARKSTRIKE	CSession::InitSkillEffectIdTable	assign	6234	Ref/Session2.cpp
+14	MG_COLDBOLT	CSession::InitSkillEffectIdTable	assign	6235	Ref/Session2.cpp
+15	MG_FROSTDIVER	CSession::InitSkillEffectIdTable	assign	6236	Ref/Session2.cpp
+16	MG_STONECURSE	CSession::InitSkillEffectIdTable	assign	6237	Ref/Session2.cpp
+17	MG_FIREBALL	CSession::InitSkillEffectIdTable	assign	6238	Ref/Session2.cpp
+18	MG_FIREWALL	CSession::InitSkillEffectIdTable	assign	6239	Ref/Session2.cpp
+19	MG_FIREBOLT	CSession::InitSkillEffectIdTable	assign	6240	Ref/Session2.cpp
+20	MG_LIGHTNINGBOLT	CSession::InitSkillEffectIdTable	assign	6241	Ref/Session2.cpp
+21	MG_THUNDERSTORM	CSession::InitSkillEffectIdTable	assign	6242	Ref/Session2.cpp
+22	AL_DP	CSession::InitSkillEffectIdTable	assign	6243	Ref/Session2.cpp
+23	AL_DEMONBANE	CSession::InitSkillEffectIdTable	assign	6244	Ref/Session2.cpp
+24	AL_RUWACH	CSession::InitSkillEffectIdTable	assign	6245	Ref/Session2.cpp
+25	AL_PNEUMA	CSession::InitSkillEffectIdTable	assign	6246	Ref/Session2.cpp
+26	AL_TELEPORT	CSession::InitSkillEffectIdTable	assign	6247	Ref/Session2.cpp
+27	AL_WARP	CSession::InitSkillEffectIdTable	assign	6248	Ref/Session2.cpp
+28	AL_HEAL	CSession::InitSkillEffectIdTable	assign	6249	Ref/Session2.cpp
+29	AL_INCAGI	CSession::InitSkillEffectIdTable	assign	6250	Ref/Session2.cpp
+690	CASH_INCAGI	CSession::InitSkillEffectIdTable	assign	6251	Ref/Session2.cpp
+30	AL_DECAGI	CSession::InitSkillEffectIdTable	assign	6252	Ref/Session2.cpp
+31	AL_HOLYWATER	CSession::InitSkillEffectIdTable	assign	6253	Ref/Session2.cpp
+32	AL_CRUCIS	CSession::InitSkillEffectIdTable	assign	6254	Ref/Session2.cpp
+33	AL_ANGELUS	CSession::InitSkillEffectIdTable	assign	6255	Ref/Session2.cpp
+34	AL_BLESSING	CSession::InitSkillEffectIdTable	assign	6256	Ref/Session2.cpp
+689	CASH_BLESSING	CSession::InitSkillEffectIdTable	assign	6257	Ref/Session2.cpp
+35	AL_CURE	CSession::InitSkillEffectIdTable	assign	6258	Ref/Session2.cpp
+36	MC_INCCARRY	CSession::InitSkillEffectIdTable	assign	6259	Ref/Session2.cpp
+37	MC_DISCOUNT	CSession::InitSkillEffectIdTable	assign	6260	Ref/Session2.cpp
+38	MC_OVERCHARGE	CSession::InitSkillEffectIdTable	assign	6261	Ref/Session2.cpp
+39	MC_PUSHCART	CSession::InitSkillEffectIdTable	assign	6262	Ref/Session2.cpp
+40	MC_IDENTIFY	CSession::InitSkillEffectIdTable	assign	6263	Ref/Session2.cpp
+41	MC_VENDING	CSession::InitSkillEffectIdTable	assign	6264	Ref/Session2.cpp
+42	MC_MAMMONITE	CSession::InitSkillEffectIdTable	assign	6265	Ref/Session2.cpp
+43	AC_OWL	CSession::InitSkillEffectIdTable	assign	6266	Ref/Session2.cpp
+44	AC_VULTURE	CSession::InitSkillEffectIdTable	assign	6267	Ref/Session2.cpp
+45	AC_CONCENTRATION	CSession::InitSkillEffectIdTable	assign	6268	Ref/Session2.cpp
+46	AC_DOUBLE	CSession::InitSkillEffectIdTable	assign	6269	Ref/Session2.cpp
+499	HT_POWER	CSession::InitSkillEffectIdTable	assign	6270	Ref/Session2.cpp
+1009	HT_PHANTASMIC	CSession::InitSkillEffectIdTable	assign	6271	Ref/Session2.cpp
+47	AC_SHOWER	CSession::InitSkillEffectIdTable	assign	6272	Ref/Session2.cpp
+48	TF_DOUBLE	CSession::InitSkillEffectIdTable	assign	6273	Ref/Session2.cpp
+49	TF_MISS	CSession::InitSkillEffectIdTable	assign	6274	Ref/Session2.cpp
+50	TF_STEAL	CSession::InitSkillEffectIdTable	assign	6275	Ref/Session2.cpp
+51	TF_HIDING	CSession::InitSkillEffectIdTable	assign	6276	Ref/Session2.cpp
+52	TF_POISON	CSession::InitSkillEffectIdTable	assign	6277	Ref/Session2.cpp
+53	TF_DETOXIFY	CSession::InitSkillEffectIdTable	assign	6278	Ref/Session2.cpp
+54	ALL_RESURRECTION	CSession::InitSkillEffectIdTable	assign	6279	Ref/Session2.cpp
+55	KN_SPEARMASTERY	CSession::InitSkillEffectIdTable	assign	6280	Ref/Session2.cpp
+56	KN_PIERCE	CSession::InitSkillEffectIdTable	assign	6281	Ref/Session2.cpp
+57	KN_BRANDISHSPEAR	CSession::InitSkillEffectIdTable	assign	6282	Ref/Session2.cpp
+58	KN_SPEARSTAB	CSession::InitSkillEffectIdTable	assign	6283	Ref/Session2.cpp
+59	KN_SPEARBOOMERANG	CSession::InitSkillEffectIdTable	assign	6284	Ref/Session2.cpp
+60	KN_TWOHANDQUICKEN	CSession::InitSkillEffectIdTable	assign	6285	Ref/Session2.cpp
+61	KN_AUTOCOUNTER	CSession::InitSkillEffectIdTable	assign	6286	Ref/Session2.cpp
+62	KN_BOWLINGBASH	CSession::InitSkillEffectIdTable	assign	6287	Ref/Session2.cpp
+63	KN_RIDING	CSession::InitSkillEffectIdTable	assign	6288	Ref/Session2.cpp
+64	KN_CAVALIERMASTERY	CSession::InitSkillEffectIdTable	assign	6289	Ref/Session2.cpp
+65	PR_MACEMASTERY	CSession::InitSkillEffectIdTable	assign	6290	Ref/Session2.cpp
+66	PR_IMPOSITIO	CSession::InitSkillEffectIdTable	assign	6291	Ref/Session2.cpp
+67	PR_SUFFRAGIUM	CSession::InitSkillEffectIdTable	assign	6292	Ref/Session2.cpp
+68	PR_ASPERSIO	CSession::InitSkillEffectIdTable	assign	6293	Ref/Session2.cpp
+69	PR_BENEDICTIO	CSession::InitSkillEffectIdTable	assign	6294	Ref/Session2.cpp
+694	ALL_ANGEL_PROTECT	CSession::InitSkillEffectIdTable	assign	6295	Ref/Session2.cpp
+70	PR_SANCTUARY	CSession::InitSkillEffectIdTable	assign	6296	Ref/Session2.cpp
+72	PR_STRECOVERY	CSession::InitSkillEffectIdTable	assign	6297	Ref/Session2.cpp
+73	PR_KYRIE	CSession::InitSkillEffectIdTable	assign	6298	Ref/Session2.cpp
+74	PR_MAGNIFICAT	CSession::InitSkillEffectIdTable	assign	6299	Ref/Session2.cpp
+75	PR_GLORIA	CSession::InitSkillEffectIdTable	assign	6300	Ref/Session2.cpp
+76	PR_LEXDIVINA	CSession::InitSkillEffectIdTable	assign	6301	Ref/Session2.cpp
+77	PR_TURNUNDEAD	CSession::InitSkillEffectIdTable	assign	6302	Ref/Session2.cpp
+78	PR_LEXAETERNA	CSession::InitSkillEffectIdTable	assign	6303	Ref/Session2.cpp
+79	PR_MAGNUS	CSession::InitSkillEffectIdTable	assign	6304	Ref/Session2.cpp
+80	WZ_FIREPILLAR	CSession::InitSkillEffectIdTable	assign	6305	Ref/Session2.cpp
+81	WZ_SIGHTRASHER	CSession::InitSkillEffectIdTable	assign	6306	Ref/Session2.cpp
+83	WZ_METEOR	CSession::InitSkillEffectIdTable	assign	6307	Ref/Session2.cpp
+84	WZ_JUPITEL	CSession::InitSkillEffectIdTable	assign	6308	Ref/Session2.cpp
+341	NPC_DARKTHUNDER	CSession::InitSkillEffectIdTable	assign	6309	Ref/Session2.cpp
+85	WZ_VERMILION	CSession::InitSkillEffectIdTable	assign	6310	Ref/Session2.cpp
+88	WZ_FROSTNOVA	CSession::InitSkillEffectIdTable	assign	6311	Ref/Session2.cpp
+89	WZ_STORMGUST	CSession::InitSkillEffectIdTable	assign	6312	Ref/Session2.cpp
+664	NPC_WIDEFREEZE	CSession::InitSkillEffectIdTable	assign	6313	Ref/Session2.cpp
+90	WZ_EARTHSPIKE	CSession::InitSkillEffectIdTable	assign	6314	Ref/Session2.cpp
+91	WZ_HEAVENDRIVE	CSession::InitSkillEffectIdTable	assign	6315	Ref/Session2.cpp
+92	WZ_QUAGMIRE	CSession::InitSkillEffectIdTable	assign	6316	Ref/Session2.cpp
+93	WZ_ESTIMATION	CSession::InitSkillEffectIdTable	assign	6317	Ref/Session2.cpp
+115	HT_SKIDTRAP	CSession::InitSkillEffectIdTable	assign	6318	Ref/Session2.cpp
+116	HT_LANDMINE	CSession::InitSkillEffectIdTable	assign	6319	Ref/Session2.cpp
+117	HT_ANKLESNARE	CSession::InitSkillEffectIdTable	assign	6320	Ref/Session2.cpp
+118	HT_SHOCKWAVE	CSession::InitSkillEffectIdTable	assign	6321	Ref/Session2.cpp
+119	HT_SANDMAN	CSession::InitSkillEffectIdTable	assign	6322	Ref/Session2.cpp
+688	GM_SANDMAN	CSession::InitSkillEffectIdTable	assign	6323	Ref/Session2.cpp
+692	ALL_CATCRY	CSession::InitSkillEffectIdTable	assign	6324	Ref/Session2.cpp
+693	ALL_PARTYFLEE	CSession::InitSkillEffectIdTable	assign	6325	Ref/Session2.cpp
+695	ALL_DREAM_SUMMERNIGHT	CSession::InitSkillEffectIdTable	assign	6326	Ref/Session2.cpp
+120	HT_FLASHER	CSession::InitSkillEffectIdTable	assign	6327	Ref/Session2.cpp
+121	HT_FREEZINGTRAP	CSession::InitSkillEffectIdTable	assign	6328	Ref/Session2.cpp
+122	HT_BLASTMINE	CSession::InitSkillEffectIdTable	assign	6329	Ref/Session2.cpp
+123	HT_CLAYMORETRAP	CSession::InitSkillEffectIdTable	assign	6330	Ref/Session2.cpp
+124	HT_REMOVETRAP	CSession::InitSkillEffectIdTable	assign	6331	Ref/Session2.cpp
+125	HT_TALKIEBOX	CSession::InitSkillEffectIdTable	assign	6332	Ref/Session2.cpp
+126	HT_BEASTBANE	CSession::InitSkillEffectIdTable	assign	6333	Ref/Session2.cpp
+127	HT_FALCON	CSession::InitSkillEffectIdTable	assign	6334	Ref/Session2.cpp
+128	HT_STEELCROW	CSession::InitSkillEffectIdTable	assign	6335	Ref/Session2.cpp
+129	HT_BLITZBEAT	CSession::InitSkillEffectIdTable	assign	6336	Ref/Session2.cpp
+130	HT_DETECTING	CSession::InitSkillEffectIdTable	assign	6337	Ref/Session2.cpp
+131	HT_SPRINGTRAP	CSession::InitSkillEffectIdTable	assign	6338	Ref/Session2.cpp
+132	AS_RIGHT	CSession::InitSkillEffectIdTable	assign	6339	Ref/Session2.cpp
+133	AS_LEFT	CSession::InitSkillEffectIdTable	assign	6340	Ref/Session2.cpp
+134	AS_KATAR	CSession::InitSkillEffectIdTable	assign	6341	Ref/Session2.cpp
+135	AS_CLOAKING	CSession::InitSkillEffectIdTable	assign	6342	Ref/Session2.cpp
+136	AS_SONICBLOW	CSession::InitSkillEffectIdTable	assign	6343	Ref/Session2.cpp
+137	AS_GRIMTOOTH	CSession::InitSkillEffectIdTable	assign	6344	Ref/Session2.cpp
+138	AS_ENCHANTPOISON	CSession::InitSkillEffectIdTable	assign	6345	Ref/Session2.cpp
+139	AS_POISONREACT	CSession::InitSkillEffectIdTable	assign	6346	Ref/Session2.cpp
+140	AS_VENOMDUST	CSession::InitSkillEffectIdTable	assign	6347	Ref/Session2.cpp
+141	AS_SPLASHER	CSession::InitSkillEffectIdTable	assign	6348	Ref/Session2.cpp
+94	BS_IRON	CSession::InitSkillEffectIdTable	assign	6349	Ref/Session2.cpp
+95	BS_STEEL	CSession::InitSkillEffectIdTable	assign	6350	Ref/Session2.cpp
+96	BS_ENCHANTEDSTONE	CSession::InitSkillEffectIdTable	assign	6351	Ref/Session2.cpp
+97	BS_ORIDEOCON	CSession::InitSkillEffectIdTable	assign	6352	Ref/Session2.cpp
+98	BS_DAGGER	CSession::InitSkillEffectIdTable	assign	6353	Ref/Session2.cpp
+99	BS_SWORD	CSession::InitSkillEffectIdTable	assign	6354	Ref/Session2.cpp
+100	BS_TWOHANDSWORD	CSession::InitSkillEffectIdTable	assign	6355	Ref/Session2.cpp
+101	BS_AXE	CSession::InitSkillEffectIdTable	assign	6356	Ref/Session2.cpp
+102	BS_MACE	CSession::InitSkillEffectIdTable	assign	6357	Ref/Session2.cpp
+103	BS_KNUCKLE	CSession::InitSkillEffectIdTable	assign	6358	Ref/Session2.cpp
+104	BS_SPEAR	CSession::InitSkillEffectIdTable	assign	6359	Ref/Session2.cpp
+105	BS_HILTBINDING	CSession::InitSkillEffectIdTable	assign	6360	Ref/Session2.cpp
+106	BS_FINDINGORE	CSession::InitSkillEffectIdTable	assign	6361	Ref/Session2.cpp
+107	BS_WEAPONRESEARCH	CSession::InitSkillEffectIdTable	assign	6362	Ref/Session2.cpp
+108	BS_REPAIRWEAPON	CSession::InitSkillEffectIdTable	assign	6363	Ref/Session2.cpp
+109	BS_SKINTEMPER	CSession::InitSkillEffectIdTable	assign	6364	Ref/Session2.cpp
+110	BS_HAMMERFALL	CSession::InitSkillEffectIdTable	assign	6365	Ref/Session2.cpp
+111	BS_ADRENALINE	CSession::InitSkillEffectIdTable	assign	6366	Ref/Session2.cpp
+112	BS_WEAPONPERFECT	CSession::InitSkillEffectIdTable	assign	6367	Ref/Session2.cpp
+113	BS_OVERTHRUST	CSession::InitSkillEffectIdTable	assign	6368	Ref/Session2.cpp
+114	BS_MAXIMIZE	CSession::InitSkillEffectIdTable	assign	6369	Ref/Session2.cpp
+141	AS_SPLASHER	CSession::InitSkillEffectIdTable	assign	6370	Ref/Session2.cpp
+159	NPC_MENTALBREAKER	CSession::InitSkillEffectIdTable	assign	6371	Ref/Session2.cpp
+192	NPC_MAGICALATTACK	CSession::InitSkillEffectIdTable	assign	6372	Ref/Session2.cpp
+158	NPC_PIERCINGATT	CSession::InitSkillEffectIdTable	assign	6373	Ref/Session2.cpp
+160	NPC_RANGEATTACK	CSession::InitSkillEffectIdTable	assign	6374	Ref/Session2.cpp
+161	NPC_ATTRICHANGE	CSession::InitSkillEffectIdTable	assign	6375	Ref/Session2.cpp
+162	NPC_CHANGEWATER	CSession::InitSkillEffectIdTable	assign	6376	Ref/Session2.cpp
+163	NPC_CHANGEGROUND	CSession::InitSkillEffectIdTable	assign	6377	Ref/Session2.cpp
+164	NPC_CHANGEFIRE	CSession::InitSkillEffectIdTable	assign	6378	Ref/Session2.cpp
+165	NPC_CHANGEWIND	CSession::InitSkillEffectIdTable	assign	6379	Ref/Session2.cpp
+166	NPC_CHANGEPOISON	CSession::InitSkillEffectIdTable	assign	6380	Ref/Session2.cpp
+167	NPC_CHANGEHOLY	CSession::InitSkillEffectIdTable	assign	6381	Ref/Session2.cpp
+168	NPC_CHANGEDARKNESS	CSession::InitSkillEffectIdTable	assign	6382	Ref/Session2.cpp
+169	NPC_CHANGETELEKINESIS	CSession::InitSkillEffectIdTable	assign	6383	Ref/Session2.cpp
+171	NPC_COMBOATTACK	CSession::InitSkillEffectIdTable	assign	6384	Ref/Session2.cpp
+172	NPC_GUIDEDATTACK	CSession::InitSkillEffectIdTable	assign	6385	Ref/Session2.cpp
+173	NPC_SELFDESTRUCTION	CSession::InitSkillEffectIdTable	assign	6386	Ref/Session2.cpp
+174	NPC_SPLASHATTACK	CSession::InitSkillEffectIdTable	assign	6387	Ref/Session2.cpp
+175	NPC_SUICIDE	CSession::InitSkillEffectIdTable	assign	6388	Ref/Session2.cpp
+175	NPC_SUICIDE	CSession::InitSkillEffectIdTable	assign	6389	Ref/Session2.cpp
+176	NPC_POISON	CSession::InitSkillEffectIdTable	assign	6390	Ref/Session2.cpp
+177	NPC_BLINDATTACK	CSession::InitSkillEffectIdTable	assign	6391	Ref/Session2.cpp
+178	NPC_SILENCEATTACK	CSession::InitSkillEffectIdTable	assign	6392	Ref/Session2.cpp
+663	NPC_WIDESILENCE	CSession::InitSkillEffectIdTable	assign	6393	Ref/Session2.cpp
+678	NPC_WIDESTUN	CSession::InitSkillEffectIdTable	assign	6394	Ref/Session2.cpp
+666	NPC_WIDESTONE	CSession::InitSkillEffectIdTable	assign	6395	Ref/Session2.cpp
+668	NPC_WIDESLEEP	CSession::InitSkillEffectIdTable	assign	6396	Ref/Session2.cpp
+667	NPC_WIDECONFUSE	CSession::InitSkillEffectIdTable	assign	6397	Ref/Session2.cpp
+179	NPC_STUNATTACK	CSession::InitSkillEffectIdTable	assign	6398	Ref/Session2.cpp
+180	NPC_PETRIFYATTACK	CSession::InitSkillEffectIdTable	assign	6399	Ref/Session2.cpp
+181	NPC_CURSEATTACK	CSession::InitSkillEffectIdTable	assign	6400	Ref/Session2.cpp
+182	NPC_SLEEPATTACK	CSession::InitSkillEffectIdTable	assign	6401	Ref/Session2.cpp
+183	NPC_RANDOMATTACK	CSession::InitSkillEffectIdTable	assign	6402	Ref/Session2.cpp
+184	NPC_WATERATTACK	CSession::InitSkillEffectIdTable	assign	6403	Ref/Session2.cpp
+185	NPC_GROUNDATTACK	CSession::InitSkillEffectIdTable	assign	6404	Ref/Session2.cpp
+186	NPC_FIREATTACK	CSession::InitSkillEffectIdTable	assign	6405	Ref/Session2.cpp
+654	NPC_FIREBREATH	CSession::InitSkillEffectIdTable	assign	6406	Ref/Session2.cpp
+676	NPC_ANTIMAGIC	CSession::InitSkillEffectIdTable	assign	6407	Ref/Session2.cpp
+662	NPC_HELLJUDGEMENT	CSession::InitSkillEffectIdTable	assign	6408	Ref/Session2.cpp
+347	NPC_UNDEADATTACK	CSession::InitSkillEffectIdTable	assign	6409	Ref/Session2.cpp
+187	NPC_WINDATTACK	CSession::InitSkillEffectIdTable	assign	6410	Ref/Session2.cpp
+188	NPC_POISONATTACK	CSession::InitSkillEffectIdTable	assign	6411	Ref/Session2.cpp
+189	NPC_HOLYATTACK	CSession::InitSkillEffectIdTable	assign	6412	Ref/Session2.cpp
+190	NPC_DARKNESSATTACK	CSession::InitSkillEffectIdTable	assign	6413	Ref/Session2.cpp
+191	NPC_TELEKINESISATTACK	CSession::InitSkillEffectIdTable	assign	6414	Ref/Session2.cpp
+199	NPC_BLOODDRAIN	CSession::InitSkillEffectIdTable	assign	6415	Ref/Session2.cpp
+200	NPC_ENERGYDRAIN	CSession::InitSkillEffectIdTable	assign	6416	Ref/Session2.cpp
+202	NPC_DARKBREATH	CSession::InitSkillEffectIdTable	assign	6417	Ref/Session2.cpp
+1	NV_BASIC	CSession::InitSkillEffectIdTable	assign	6459	Ref/Session2.cpp
+2	SM_SWORD	CSession::InitSkillEffectIdTable	assign	6460	Ref/Session2.cpp
+3	SM_TWOHAND	CSession::InitSkillEffectIdTable	assign	6461	Ref/Session2.cpp
+4	SM_RECOVERY	CSession::InitSkillEffectIdTable	assign	6462	Ref/Session2.cpp
+5	SM_BASH	CSession::InitSkillEffectIdTable	assign	6463	Ref/Session2.cpp
+6	SM_PROVOKE	CSession::InitSkillEffectIdTable	assign	6464	Ref/Session2.cpp
+7	SM_MAGNUM	CSession::InitSkillEffectIdTable	assign	6465	Ref/Session2.cpp
+8	SM_ENDURE	CSession::InitSkillEffectIdTable	assign	6466	Ref/Session2.cpp
+9	MG_SRECOVERY	CSession::InitSkillEffectIdTable	assign	6467	Ref/Session2.cpp
+10	MG_SIGHT	CSession::InitSkillEffectIdTable	assign	6468	Ref/Session2.cpp
+11	MG_NAPALMBEAT	CSession::InitSkillEffectIdTable	assign	6469	Ref/Session2.cpp
+12	MG_SAFETYWALL	CSession::InitSkillEffectIdTable	assign	6470	Ref/Session2.cpp
+13	MG_SOULSTRIKE	CSession::InitSkillEffectIdTable	assign	6471	Ref/Session2.cpp
+14	MG_COLDBOLT	CSession::InitSkillEffectIdTable	assign	6472	Ref/Session2.cpp
+15	MG_FROSTDIVER	CSession::InitSkillEffectIdTable	assign	6473	Ref/Session2.cpp
+16	MG_STONECURSE	CSession::InitSkillEffectIdTable	assign	6474	Ref/Session2.cpp
+17	MG_FIREBALL	CSession::InitSkillEffectIdTable	assign	6475	Ref/Session2.cpp
+18	MG_FIREWALL	CSession::InitSkillEffectIdTable	assign	6476	Ref/Session2.cpp
+19	MG_FIREBOLT	CSession::InitSkillEffectIdTable	assign	6477	Ref/Session2.cpp
+20	MG_LIGHTNINGBOLT	CSession::InitSkillEffectIdTable	assign	6478	Ref/Session2.cpp
+21	MG_THUNDERSTORM	CSession::InitSkillEffectIdTable	assign	6479	Ref/Session2.cpp
+22	AL_DP	CSession::InitSkillEffectIdTable	assign	6480	Ref/Session2.cpp
+23	AL_DEMONBANE	CSession::InitSkillEffectIdTable	assign	6481	Ref/Session2.cpp
+24	AL_RUWACH	CSession::InitSkillEffectIdTable	assign	6482	Ref/Session2.cpp
+25	AL_PNEUMA	CSession::InitSkillEffectIdTable	assign	6483	Ref/Session2.cpp
+26	AL_TELEPORT	CSession::InitSkillEffectIdTable	assign	6484	Ref/Session2.cpp
+27	AL_WARP	CSession::InitSkillEffectIdTable	assign	6485	Ref/Session2.cpp
+28	AL_HEAL	CSession::InitSkillEffectIdTable	assign	6486	Ref/Session2.cpp
+29	AL_INCAGI	CSession::InitSkillEffectIdTable	assign	6487	Ref/Session2.cpp
+690	CASH_INCAGI	CSession::InitSkillEffectIdTable	assign	6488	Ref/Session2.cpp
+30	AL_DECAGI	CSession::InitSkillEffectIdTable	assign	6489	Ref/Session2.cpp
+31	AL_HOLYWATER	CSession::InitSkillEffectIdTable	assign	6490	Ref/Session2.cpp
+32	AL_CRUCIS	CSession::InitSkillEffectIdTable	assign	6491	Ref/Session2.cpp
+33	AL_ANGELUS	CSession::InitSkillEffectIdTable	assign	6492	Ref/Session2.cpp
+34	AL_BLESSING	CSession::InitSkillEffectIdTable	assign	6493	Ref/Session2.cpp
+689	CASH_BLESSING	CSession::InitSkillEffectIdTable	assign	6494	Ref/Session2.cpp
+35	AL_CURE	CSession::InitSkillEffectIdTable	assign	6495	Ref/Session2.cpp
+36	MC_INCCARRY	CSession::InitSkillEffectIdTable	assign	6496	Ref/Session2.cpp
+37	MC_DISCOUNT	CSession::InitSkillEffectIdTable	assign	6497	Ref/Session2.cpp
+38	MC_OVERCHARGE	CSession::InitSkillEffectIdTable	assign	6498	Ref/Session2.cpp
+39	MC_PUSHCART	CSession::InitSkillEffectIdTable	assign	6499	Ref/Session2.cpp
+40	MC_IDENTIFY	CSession::InitSkillEffectIdTable	assign	6500	Ref/Session2.cpp
+41	MC_VENDING	CSession::InitSkillEffectIdTable	assign	6501	Ref/Session2.cpp
+42	MC_MAMMONITE	CSession::InitSkillEffectIdTable	assign	6502	Ref/Session2.cpp
+43	AC_OWL	CSession::InitSkillEffectIdTable	assign	6503	Ref/Session2.cpp
+44	AC_VULTURE	CSession::InitSkillEffectIdTable	assign	6504	Ref/Session2.cpp
+45	AC_CONCENTRATION	CSession::InitSkillEffectIdTable	assign	6505	Ref/Session2.cpp
+46	AC_DOUBLE	CSession::InitSkillEffectIdTable	assign	6506	Ref/Session2.cpp
+499	HT_POWER	CSession::InitSkillEffectIdTable	assign	6507	Ref/Session2.cpp
+1009	HT_PHANTASMIC	CSession::InitSkillEffectIdTable	assign	6508	Ref/Session2.cpp
+47	AC_SHOWER	CSession::InitSkillEffectIdTable	assign	6509	Ref/Session2.cpp
+48	TF_DOUBLE	CSession::InitSkillEffectIdTable	assign	6510	Ref/Session2.cpp
+49	TF_MISS	CSession::InitSkillEffectIdTable	assign	6511	Ref/Session2.cpp
+50	TF_STEAL	CSession::InitSkillEffectIdTable	assign	6512	Ref/Session2.cpp
+51	TF_HIDING	CSession::InitSkillEffectIdTable	assign	6513	Ref/Session2.cpp
+52	TF_POISON	CSession::InitSkillEffectIdTable	assign	6514	Ref/Session2.cpp
+53	TF_DETOXIFY	CSession::InitSkillEffectIdTable	assign	6515	Ref/Session2.cpp
+54	ALL_RESURRECTION	CSession::InitSkillEffectIdTable	assign	6516	Ref/Session2.cpp
+55	KN_SPEARMASTERY	CSession::InitSkillEffectIdTable	assign	6517	Ref/Session2.cpp
+56	KN_PIERCE	CSession::InitSkillEffectIdTable	assign	6518	Ref/Session2.cpp
+57	KN_BRANDISHSPEAR	CSession::InitSkillEffectIdTable	assign	6519	Ref/Session2.cpp
+58	KN_SPEARSTAB	CSession::InitSkillEffectIdTable	assign	6520	Ref/Session2.cpp
+59	KN_SPEARBOOMERANG	CSession::InitSkillEffectIdTable	assign	6521	Ref/Session2.cpp
+60	KN_TWOHANDQUICKEN	CSession::InitSkillEffectIdTable	assign	6522	Ref/Session2.cpp
+61	KN_AUTOCOUNTER	CSession::InitSkillEffectIdTable	assign	6523	Ref/Session2.cpp
+62	KN_BOWLINGBASH	CSession::InitSkillEffectIdTable	assign	6524	Ref/Session2.cpp
+63	KN_RIDING	CSession::InitSkillEffectIdTable	assign	6525	Ref/Session2.cpp
+64	KN_CAVALIERMASTERY	CSession::InitSkillEffectIdTable	assign	6526	Ref/Session2.cpp
+65	PR_MACEMASTERY	CSession::InitSkillEffectIdTable	assign	6527	Ref/Session2.cpp
+66	PR_IMPOSITIO	CSession::InitSkillEffectIdTable	assign	6528	Ref/Session2.cpp
+67	PR_SUFFRAGIUM	CSession::InitSkillEffectIdTable	assign	6529	Ref/Session2.cpp
+68	PR_ASPERSIO	CSession::InitSkillEffectIdTable	assign	6530	Ref/Session2.cpp
+69	PR_BENEDICTIO	CSession::InitSkillEffectIdTable	assign	6531	Ref/Session2.cpp
+694	ALL_ANGEL_PROTECT	CSession::InitSkillEffectIdTable	assign	6532	Ref/Session2.cpp
+70	PR_SANCTUARY	CSession::InitSkillEffectIdTable	assign	6533	Ref/Session2.cpp
+72	PR_STRECOVERY	CSession::InitSkillEffectIdTable	assign	6534	Ref/Session2.cpp
+73	PR_KYRIE	CSession::InitSkillEffectIdTable	assign	6535	Ref/Session2.cpp
+74	PR_MAGNIFICAT	CSession::InitSkillEffectIdTable	assign	6536	Ref/Session2.cpp
+75	PR_GLORIA	CSession::InitSkillEffectIdTable	assign	6537	Ref/Session2.cpp
+76	PR_LEXDIVINA	CSession::InitSkillEffectIdTable	assign	6538	Ref/Session2.cpp
+77	PR_TURNUNDEAD	CSession::InitSkillEffectIdTable	assign	6539	Ref/Session2.cpp
+78	PR_LEXAETERNA	CSession::InitSkillEffectIdTable	assign	6540	Ref/Session2.cpp
+79	PR_MAGNUS	CSession::InitSkillEffectIdTable	assign	6541	Ref/Session2.cpp
+80	WZ_FIREPILLAR	CSession::InitSkillEffectIdTable	assign	6542	Ref/Session2.cpp
+81	WZ_SIGHTRASHER	CSession::InitSkillEffectIdTable	assign	6543	Ref/Session2.cpp
+83	WZ_METEOR	CSession::InitSkillEffectIdTable	assign	6544	Ref/Session2.cpp
+84	WZ_JUPITEL	CSession::InitSkillEffectIdTable	assign	6545	Ref/Session2.cpp
+341	NPC_DARKTHUNDER	CSession::InitSkillEffectIdTable	assign	6546	Ref/Session2.cpp
+85	WZ_VERMILION	CSession::InitSkillEffectIdTable	assign	6547	Ref/Session2.cpp
+88	WZ_FROSTNOVA	CSession::InitSkillEffectIdTable	assign	6548	Ref/Session2.cpp
+89	WZ_STORMGUST	CSession::InitSkillEffectIdTable	assign	6549	Ref/Session2.cpp
+90	WZ_EARTHSPIKE	CSession::InitSkillEffectIdTable	assign	6550	Ref/Session2.cpp
+91	WZ_HEAVENDRIVE	CSession::InitSkillEffectIdTable	assign	6551	Ref/Session2.cpp
+92	WZ_QUAGMIRE	CSession::InitSkillEffectIdTable	assign	6552	Ref/Session2.cpp
+93	WZ_ESTIMATION	CSession::InitSkillEffectIdTable	assign	6553	Ref/Session2.cpp
+115	HT_SKIDTRAP	CSession::InitSkillEffectIdTable	assign	6554	Ref/Session2.cpp
+116	HT_LANDMINE	CSession::InitSkillEffectIdTable	assign	6555	Ref/Session2.cpp
+117	HT_ANKLESNARE	CSession::InitSkillEffectIdTable	assign	6556	Ref/Session2.cpp
+118	HT_SHOCKWAVE	CSession::InitSkillEffectIdTable	assign	6557	Ref/Session2.cpp
+119	HT_SANDMAN	CSession::InitSkillEffectIdTable	assign	6558	Ref/Session2.cpp
+688	GM_SANDMAN	CSession::InitSkillEffectIdTable	assign	6559	Ref/Session2.cpp
+692	ALL_CATCRY	CSession::InitSkillEffectIdTable	assign	6560	Ref/Session2.cpp
+693	ALL_PARTYFLEE	CSession::InitSkillEffectIdTable	assign	6561	Ref/Session2.cpp
+695	ALL_DREAM_SUMMERNIGHT	CSession::InitSkillEffectIdTable	assign	6562	Ref/Session2.cpp
+120	HT_FLASHER	CSession::InitSkillEffectIdTable	assign	6563	Ref/Session2.cpp
+121	HT_FREEZINGTRAP	CSession::InitSkillEffectIdTable	assign	6564	Ref/Session2.cpp
+122	HT_BLASTMINE	CSession::InitSkillEffectIdTable	assign	6565	Ref/Session2.cpp
+123	HT_CLAYMORETRAP	CSession::InitSkillEffectIdTable	assign	6566	Ref/Session2.cpp
+124	HT_REMOVETRAP	CSession::InitSkillEffectIdTable	assign	6567	Ref/Session2.cpp
+125	HT_TALKIEBOX	CSession::InitSkillEffectIdTable	assign	6568	Ref/Session2.cpp
+126	HT_BEASTBANE	CSession::InitSkillEffectIdTable	assign	6569	Ref/Session2.cpp
+127	HT_FALCON	CSession::InitSkillEffectIdTable	assign	6570	Ref/Session2.cpp
+128	HT_STEELCROW	CSession::InitSkillEffectIdTable	assign	6571	Ref/Session2.cpp
+129	HT_BLITZBEAT	CSession::InitSkillEffectIdTable	assign	6572	Ref/Session2.cpp
+130	HT_DETECTING	CSession::InitSkillEffectIdTable	assign	6573	Ref/Session2.cpp
+131	HT_SPRINGTRAP	CSession::InitSkillEffectIdTable	assign	6574	Ref/Session2.cpp
+132	AS_RIGHT	CSession::InitSkillEffectIdTable	assign	6575	Ref/Session2.cpp
+133	AS_LEFT	CSession::InitSkillEffectIdTable	assign	6576	Ref/Session2.cpp
+134	AS_KATAR	CSession::InitSkillEffectIdTable	assign	6577	Ref/Session2.cpp
+135	AS_CLOAKING	CSession::InitSkillEffectIdTable	assign	6578	Ref/Session2.cpp
+136	AS_SONICBLOW	CSession::InitSkillEffectIdTable	assign	6579	Ref/Session2.cpp
+137	AS_GRIMTOOTH	CSession::InitSkillEffectIdTable	assign	6580	Ref/Session2.cpp
+138	AS_ENCHANTPOISON	CSession::InitSkillEffectIdTable	assign	6581	Ref/Session2.cpp
+139	AS_POISONREACT	CSession::InitSkillEffectIdTable	assign	6582	Ref/Session2.cpp
+140	AS_VENOMDUST	CSession::InitSkillEffectIdTable	assign	6583	Ref/Session2.cpp
+141	AS_SPLASHER	CSession::InitSkillEffectIdTable	assign	6584	Ref/Session2.cpp
+94	BS_IRON	CSession::InitSkillEffectIdTable	assign	6585	Ref/Session2.cpp
+95	BS_STEEL	CSession::InitSkillEffectIdTable	assign	6586	Ref/Session2.cpp
+96	BS_ENCHANTEDSTONE	CSession::InitSkillEffectIdTable	assign	6587	Ref/Session2.cpp
+97	BS_ORIDEOCON	CSession::InitSkillEffectIdTable	assign	6588	Ref/Session2.cpp
+98	BS_DAGGER	CSession::InitSkillEffectIdTable	assign	6589	Ref/Session2.cpp
+99	BS_SWORD	CSession::InitSkillEffectIdTable	assign	6590	Ref/Session2.cpp
+100	BS_TWOHANDSWORD	CSession::InitSkillEffectIdTable	assign	6591	Ref/Session2.cpp
+101	BS_AXE	CSession::InitSkillEffectIdTable	assign	6592	Ref/Session2.cpp
+102	BS_MACE	CSession::InitSkillEffectIdTable	assign	6593	Ref/Session2.cpp
+103	BS_KNUCKLE	CSession::InitSkillEffectIdTable	assign	6594	Ref/Session2.cpp
+104	BS_SPEAR	CSession::InitSkillEffectIdTable	assign	6595	Ref/Session2.cpp
+105	BS_HILTBINDING	CSession::InitSkillEffectIdTable	assign	6596	Ref/Session2.cpp
+106	BS_FINDINGORE	CSession::InitSkillEffectIdTable	assign	6597	Ref/Session2.cpp
+107	BS_WEAPONRESEARCH	CSession::InitSkillEffectIdTable	assign	6598	Ref/Session2.cpp
+108	BS_REPAIRWEAPON	CSession::InitSkillEffectIdTable	assign	6599	Ref/Session2.cpp
+109	BS_SKINTEMPER	CSession::InitSkillEffectIdTable	assign	6600	Ref/Session2.cpp
+110	BS_HAMMERFALL	CSession::InitSkillEffectIdTable	assign	6601	Ref/Session2.cpp
+111	BS_ADRENALINE	CSession::InitSkillEffectIdTable	assign	6602	Ref/Session2.cpp
+112	BS_WEAPONPERFECT	CSession::InitSkillEffectIdTable	assign	6603	Ref/Session2.cpp
+113	BS_OVERTHRUST	CSession::InitSkillEffectIdTable	assign	6604	Ref/Session2.cpp
+114	BS_MAXIMIZE	CSession::InitSkillEffectIdTable	assign	6605	Ref/Session2.cpp
+141	AS_SPLASHER	CSession::InitSkillEffectIdTable	assign	6606	Ref/Session2.cpp
+143	NV_TRICKDEAD	CSession::InitSkillEffectIdTable	assign	6607	Ref/Session2.cpp
+153	MC_CARTREVOLUTION	CSession::InitSkillEffectIdTable	assign	6608	Ref/Session2.cpp
+159	NPC_MENTALBREAKER	CSession::InitSkillEffectIdTable	assign	6609	Ref/Session2.cpp
+192	NPC_MAGICALATTACK	CSession::InitSkillEffectIdTable	assign	6610	Ref/Session2.cpp
+158	NPC_PIERCINGATT	CSession::InitSkillEffectIdTable	assign	6611	Ref/Session2.cpp
+160	NPC_RANGEATTACK	CSession::InitSkillEffectIdTable	assign	6612	Ref/Session2.cpp
+161	NPC_ATTRICHANGE	CSession::InitSkillEffectIdTable	assign	6613	Ref/Session2.cpp
+162	NPC_CHANGEWATER	CSession::InitSkillEffectIdTable	assign	6614	Ref/Session2.cpp
+163	NPC_CHANGEGROUND	CSession::InitSkillEffectIdTable	assign	6615	Ref/Session2.cpp
+164	NPC_CHANGEFIRE	CSession::InitSkillEffectIdTable	assign	6616	Ref/Session2.cpp
+165	NPC_CHANGEWIND	CSession::InitSkillEffectIdTable	assign	6617	Ref/Session2.cpp
+166	NPC_CHANGEPOISON	CSession::InitSkillEffectIdTable	assign	6618	Ref/Session2.cpp
+167	NPC_CHANGEHOLY	CSession::InitSkillEffectIdTable	assign	6619	Ref/Session2.cpp
+168	NPC_CHANGEDARKNESS	CSession::InitSkillEffectIdTable	assign	6620	Ref/Session2.cpp
+169	NPC_CHANGETELEKINESIS	CSession::InitSkillEffectIdTable	assign	6621	Ref/Session2.cpp
+171	NPC_COMBOATTACK	CSession::InitSkillEffectIdTable	assign	6622	Ref/Session2.cpp
+172	NPC_GUIDEDATTACK	CSession::InitSkillEffectIdTable	assign	6623	Ref/Session2.cpp
+173	NPC_SELFDESTRUCTION	CSession::InitSkillEffectIdTable	assign	6624	Ref/Session2.cpp
+174	NPC_SPLASHATTACK	CSession::InitSkillEffectIdTable	assign	6625	Ref/Session2.cpp
+175	NPC_SUICIDE	CSession::InitSkillEffectIdTable	assign	6626	Ref/Session2.cpp
+176	NPC_POISON	CSession::InitSkillEffectIdTable	assign	6627	Ref/Session2.cpp
+177	NPC_BLINDATTACK	CSession::InitSkillEffectIdTable	assign	6628	Ref/Session2.cpp
+178	NPC_SILENCEATTACK	CSession::InitSkillEffectIdTable	assign	6629	Ref/Session2.cpp
+663	NPC_WIDESILENCE	CSession::InitSkillEffectIdTable	assign	6630	Ref/Session2.cpp
+179	NPC_STUNATTACK	CSession::InitSkillEffectIdTable	assign	6631	Ref/Session2.cpp
+180	NPC_PETRIFYATTACK	CSession::InitSkillEffectIdTable	assign	6632	Ref/Session2.cpp
+181	NPC_CURSEATTACK	CSession::InitSkillEffectIdTable	assign	6633	Ref/Session2.cpp
+182	NPC_SLEEPATTACK	CSession::InitSkillEffectIdTable	assign	6634	Ref/Session2.cpp
+183	NPC_RANDOMATTACK	CSession::InitSkillEffectIdTable	assign	6635	Ref/Session2.cpp
+184	NPC_WATERATTACK	CSession::InitSkillEffectIdTable	assign	6636	Ref/Session2.cpp
+185	NPC_GROUNDATTACK	CSession::InitSkillEffectIdTable	assign	6637	Ref/Session2.cpp
+186	NPC_FIREATTACK	CSession::InitSkillEffectIdTable	assign	6638	Ref/Session2.cpp
+654	NPC_FIREBREATH	CSession::InitSkillEffectIdTable	assign	6639	Ref/Session2.cpp
+662	NPC_HELLJUDGEMENT	CSession::InitSkillEffectIdTable	assign	6640	Ref/Session2.cpp
+187	NPC_WINDATTACK	CSession::InitSkillEffectIdTable	assign	6641	Ref/Session2.cpp
+188	NPC_POISONATTACK	CSession::InitSkillEffectIdTable	assign	6642	Ref/Session2.cpp
+189	NPC_HOLYATTACK	CSession::InitSkillEffectIdTable	assign	6643	Ref/Session2.cpp
+190	NPC_DARKNESSATTACK	CSession::InitSkillEffectIdTable	assign	6644	Ref/Session2.cpp
+347	NPC_UNDEADATTACK	CSession::InitSkillEffectIdTable	assign	6645	Ref/Session2.cpp
+191	NPC_TELEKINESISATTACK	CSession::InitSkillEffectIdTable	assign	6646	Ref/Session2.cpp
+199	NPC_BLOODDRAIN	CSession::InitSkillEffectIdTable	assign	6647	Ref/Session2.cpp
+200	NPC_ENERGYDRAIN	CSession::InitSkillEffectIdTable	assign	6648	Ref/Session2.cpp
+202	NPC_DARKBREATH	CSession::InitSkillEffectIdTable	assign	6649	Ref/Session2.cpp
+267	MO_FINGEROFFENSIVE	CSession::InitSkillEffectIdTable	assign	6650	Ref/Session2.cpp
+273	MO_COMBOFINISH	CSession::InitSkillEffectIdTable	assign	6651	Ref/Session2.cpp
+156	AL_HOLYLIGHT	CSession::InitSkillEffectIdTable	assign	6652	Ref/Session2.cpp
+272	MO_CHAINCOMBO	CSession::InitSkillEffectIdTable	assign	6653	Ref/Session2.cpp
+371	CH_TIGERFIST	CSession::InitSkillEffectIdTable	assign	6654	Ref/Session2.cpp
+372	CH_CHAINCRUSH	CSession::InitSkillEffectIdTable	assign	6655	Ref/Session2.cpp
+381	SN_FALCONASSAULT	CSession::InitSkillEffectIdTable	assign	6656	Ref/Session2.cpp
+382	SN_SHARPSHOOTING	CSession::InitSkillEffectIdTable	assign	6657	Ref/Session2.cpp
+394	CG_ARROWVULCAN	CSession::InitSkillEffectIdTable	assign	6658	Ref/Session2.cpp
+397	LK_SPIRALPIERCE	CSession::InitSkillEffectIdTable	assign	6659	Ref/Session2.cpp
+400	HW_NAPALMVULCAN	CSession::InitSkillEffectIdTable	assign	6660	Ref/Session2.cpp
+485	WS_CARTTERMINATION	CSession::InitSkillEffectIdTable	assign	6661	Ref/Session2.cpp
+1001	KN_CHARGEATK	CSession::InitSkillEffectIdTable	assign	6662	Ref/Session2.cpp
+1016	MO_BALKYOUNG	CSession::InitSkillEffectIdTable	assign	6663	Ref/Session2.cpp
+534	NJ_KOUENKA	CSession::InitSkillEffectIdTable	assign	6664	Ref/Session2.cpp
+537	NJ_HYOUSENSOU	CSession::InitSkillEffectIdTable	assign	6665	Ref/Session2.cpp
+7	SM_MAGNUM	CGameActor::Am_Skill	7	972	Ref/GameActorMsgHandler.cpp
+17	MG_FIREBALL	CGameActor::Am_Skill	17	973	Ref/GameActorMsgHandler.cpp
+19	MG_FIREBOLT	CGameActor::Am_Skill	19	974	Ref/GameActorMsgHandler.cpp
+14	MG_COLDBOLT	CGameActor::Am_Skill	14	977	Ref/GameActorMsgHandler.cpp
+15	MG_FROSTDIVER	CGameActor::Am_Skill	15	978	Ref/GameActorMsgHandler.cpp
+20	MG_LIGHTNINGBOLT	CGameActor::Am_Skill	20	981	Ref/GameActorMsgHandler.cpp
+54	ALL_RESURRECTION	CGameActor::Am_Skill	54	984	Ref/GameActorMsgHandler.cpp
+56	KN_PIERCE	CGameActor::Am_Skill	56	991	Ref/GameActorMsgHandler.cpp
+57	KN_BRANDISHSPEAR	CGameActor::Am_Skill	57	992	Ref/GameActorMsgHandler.cpp
+58	KN_SPEARSTAB	CGameActor::Am_Skill	58	993	Ref/GameActorMsgHandler.cpp
+59	KN_SPEARBOOMERANG	CGameActor::Am_Skill	59	994	Ref/GameActorMsgHandler.cpp
+90	WZ_EARTHSPIKE	CGameActor::Am_Skill	90	996	Ref/GameActorMsgHandler.cpp
+91	WZ_HEAVENDRIVE	CGameActor::Am_Skill	91	997	Ref/GameActorMsgHandler.cpp
+136	AS_SONICBLOW	CGameActor::Am_Skill	136	1034	Ref/GameActorMsgHandler.cpp
+170	NPC_CRITICALSLASH	CGameActor::Am_Skill	170	1037	Ref/GameActorMsgHandler.cpp
+184	NPC_WATERATTACK	CGameActor::Am_Skill	184	1040	Ref/GameActorMsgHandler.cpp
+185	NPC_GROUNDATTACK	CGameActor::Am_Skill	185	1041	Ref/GameActorMsgHandler.cpp
+186	NPC_FIREATTACK	CGameActor::Am_Skill	186	1042	Ref/GameActorMsgHandler.cpp
+187	NPC_WINDATTACK	CGameActor::Am_Skill	187	1043	Ref/GameActorMsgHandler.cpp
+188	NPC_POISONATTACK	CGameActor::Am_Skill	188	1044	Ref/GameActorMsgHandler.cpp
+189	NPC_HOLYATTACK	CGameActor::Am_Skill	189	1045	Ref/GameActorMsgHandler.cpp
+190	NPC_DARKNESSATTACK	CGameActor::Am_Skill	190	1047	Ref/GameActorMsgHandler.cpp
+413	TK_STORMKICK	CGameActor::Am_Skill	413	1096	Ref/GameActorMsgHandler.cpp
+419	TK_COUNTER	CGameActor::Am_Skill	419	1097	Ref/GameActorMsgHandler.cpp
+421	TK_JUMPKICK	CGameActor::Am_Skill	421	1098	Ref/GameActorMsgHandler.cpp
+415	TK_DOWNKICK	CGameActor::Am_Skill	415	1100	Ref/GameActorMsgHandler.cpp
+417	TK_TURNKICK	CGameActor::Am_Skill	417	1101	Ref/GameActorMsgHandler.cpp
+263	MO_TRIPLEATTACK	CGameActor::Am_Skill	263	1153	Ref/GameActorMsgHandler.cpp
+271	MO_EXTREMITYFIST	CGameActor::Am_Skill	271	1154	Ref/GameActorMsgHandler.cpp
+266	MO_INVESTIGATE	CGameActor::Am_Skill	266	1157	Ref/GameActorMsgHandler.cpp
+267	MO_FINGEROFFENSIVE	CGameActor::Am_Skill	267	1158	Ref/GameActorMsgHandler.cpp
+272	MO_CHAINCOMBO	CGameActor::Am_Skill	272	1162	Ref/GameActorMsgHandler.cpp
+273	MO_COMBOFINISH	CGameActor::Am_Skill	273	1181	Ref/GameActorMsgHandler.cpp
+370	CH_PALMSTRIKE	CGameActor::Am_Skill	370	1199	Ref/GameActorMsgHandler.cpp
+371	CH_TIGERFIST	CGameActor::Am_Skill	371	1210	Ref/GameActorMsgHandler.cpp
+372	CH_CHAINCRUSH	CGameActor::Am_Skill	372	1225	Ref/GameActorMsgHandler.cpp
+413	TK_STORMKICK	CGameActor::Am_Skill	413	1244	Ref/GameActorMsgHandler.cpp
+413	TK_STORMKICK	CGameActor::Am_Skill	413	1303	Ref/GameActorMsgHandler.cpp
+415	TK_DOWNKICK	CGameActor::Am_Skill	415	1304	Ref/GameActorMsgHandler.cpp
+417	TK_TURNKICK	CGameActor::Am_Skill	417	1305	Ref/GameActorMsgHandler.cpp
+419	TK_COUNTER	CGameActor::Am_Skill	419	1306	Ref/GameActorMsgHandler.cpp
+421	TK_JUMPKICK	CGameActor::Am_Skill	421	1307	Ref/GameActorMsgHandler.cpp
+21	MG_THUNDERSTORM	CGameActor::Am_Groundskill	21	372	Ref/GameActorMsgHandler.cpp
+25	AL_PNEUMA	CGameActor::Am_Groundskill	25	378	Ref/GameActorMsgHandler.cpp
+69	PR_BENEDICTIO	CGameActor::Am_Groundskill	69	384	Ref/GameActorMsgHandler.cpp
+70	PR_SANCTUARY	CGameActor::Am_Groundskill	70	386	Ref/GameActorMsgHandler.cpp
+79	PR_MAGNUS	CGameActor::Am_Groundskill	79	392	Ref/GameActorMsgHandler.cpp
+83	WZ_METEOR	CGameActor::Am_Groundskill	83	398	Ref/GameActorMsgHandler.cpp
+85	WZ_VERMILION	CGameActor::Am_Groundskill	85	404	Ref/GameActorMsgHandler.cpp
+87	WZ_ICEWALL	CGameActor::Am_Groundskill	87	410	Ref/GameActorMsgHandler.cpp
+89	WZ_STORMGUST	CGameActor::Am_Groundskill	89	416	Ref/GameActorMsgHandler.cpp
+91	WZ_HEAVENDRIVE	CGameActor::Am_Groundskill	91	422	Ref/GameActorMsgHandler.cpp
+92	WZ_QUAGMIRE	CGameActor::Am_Groundskill	92	428	Ref/GameActorMsgHandler.cpp
+110	BS_HAMMERFALL	CGameActor::Am_Groundskill	110	434	Ref/GameActorMsgHandler.cpp
+111	BS_ADRENALINE	CGameActor::Am_Groundskill	111	440	Ref/GameActorMsgHandler.cpp
+115	HT_SKIDTRAP	CGameActor::Am_Groundskill	115	442	Ref/GameActorMsgHandler.cpp
+483	HW_GANBANTEIN	CGameActor::Am_Groundskill	483	461	Ref/GameActorMsgHandler.cpp
+484	HW_GRAVITATION	CGameActor::Am_Groundskill	484	468	Ref/GameActorMsgHandler.cpp
+491	CR_CULTIVATION	CGameActor::Am_Groundskill	491	471	Ref/GameActorMsgHandler.cpp
+521	GS_GROUNDDRIFT	CGameActor::Am_Groundskill	521	476	Ref/GameActorMsgHandler.cpp
+538	NJ_SUITON	CGameActor::Am_Groundskill	538	479	Ref/GameActorMsgHandler.cpp
+694	ALL_ANGEL_PROTECT	CGameActor::Am_Groundskill	694	482	Ref/GameActorMsgHandler.cpp
+12	MG_SAFETYWALL	CGameMode::Zc_Use_Skill	12	28089	Ref/GameModePacket.cpp
+18	MG_FIREWALL	CGameMode::Zc_Use_Skill	18	28090	Ref/GameModePacket.cpp
+21	MG_THUNDERSTORM	CGameMode::Zc_Use_Skill	21	28091	Ref/GameModePacket.cpp
+70	PR_SANCTUARY	CGameMode::Zc_Use_Skill	70	28092	Ref/GameModePacket.cpp
+79	PR_MAGNUS	CGameMode::Zc_Use_Skill	79	28093	Ref/GameModePacket.cpp
+83	WZ_METEOR	CGameMode::Zc_Use_Skill	83	28094	Ref/GameModePacket.cpp
+8010	HFLI_FLEET	CGameMode::Zc_Use_Skill	8010	28183	Ref/GameModePacket.cpp
+8011	HFLI_SPEED	CGameMode::Zc_Use_Skill	8011	28184	Ref/GameModePacket.cpp
+8016	HVAN_EXPLOSION	CGameMode::Zc_Use_Skill	8016	28192	Ref/GameModePacket.cpp
+8204	MS_PARRYING	CGameMode::Zc_Use_Skill	8204	28202	Ref/GameModePacket.cpp
+8206	MS_BERSERK	CGameMode::Zc_Use_Skill	8206	28207	Ref/GameModePacket.cpp
+8219	ML_DEFENDER	CGameMode::Zc_Use_Skill	8219	28221	Ref/GameModePacket.cpp
+8220	ML_AUTOGUARD	CGameMode::Zc_Use_Skill	8220	28231	Ref/GameModePacket.cpp
+8222	MER_MAGNIFICAT	CGameMode::Zc_Use_Skill	8222	28237	Ref/GameModePacket.cpp
+539	NJ_HYOUSYOURAKU	CGameMode::Zc_Use_Skill	539	28546	Ref/GameModePacket.cpp
+541	NJ_RAIGEKISAI	CGameMode::Zc_Use_Skill	541	28555	Ref/GameModePacket.cpp
+555		CGameMode::Zc_Use_Skill	555	28564	Ref/GameModePacket.cpp
+572		CGameMode::Zc_Use_Skill	572	28576	Ref/GameModePacket.cpp
+573		CGameMode::Zc_Use_Skill	573	28577	Ref/GameModePacket.cpp
+574		CGameMode::Zc_Use_Skill	574	28578	Ref/GameModePacket.cpp
+575		CGameMode::Zc_Use_Skill	575	28579	Ref/GameModePacket.cpp
+578		CGameMode::Zc_Use_Skill	578	28598	Ref/GameModePacket.cpp
+689	CASH_BLESSING	CGameMode::Zc_Use_Skill	689	28607	Ref/GameModePacket.cpp
+690	CASH_INCAGI	CGameMode::Zc_Use_Skill	690	28617	Ref/GameModePacket.cpp
+691	CASH_ASSUMPTIO	CGameMode::Zc_Use_Skill	691	28627	Ref/GameModePacket.cpp
+487	CG_LONGINGFREEDOM	CGameMode::Zc_Use_Skill	487	28659	Ref/GameModePacket.cpp
+488	CG_HERMODE	CGameMode::Zc_Use_Skill	488	28669	Ref/GameModePacket.cpp
+489	CG_TAROTCARD	CGameMode::Zc_Use_Skill	489	28672	Ref/GameModePacket.cpp
+493	TK_MISSION	CGameMode::Zc_Use_Skill	493	28682	Ref/GameModePacket.cpp
+494	SL_HIGH	CGameMode::Zc_Use_Skill	494	28685	Ref/GameModePacket.cpp
+495	KN_ONEHAND	CGameMode::Zc_Use_Skill	495	28687	Ref/GameModePacket.cpp
+500	GS_GLITTERING	CGameMode::Zc_Use_Skill	500	28698	Ref/GameModePacket.cpp
+504	GS_MADNESSCANCEL	CGameMode::Zc_Use_Skill	504	28701	Ref/GameModePacket.cpp
+505	GS_ADJUSTMENT	CGameMode::Zc_Use_Skill	505	28710	Ref/GameModePacket.cpp
+506	GS_INCREASING	CGameMode::Zc_Use_Skill	506	28714	Ref/GameModePacket.cpp
+508	GS_CRACKER	CGameMode::Zc_Use_Skill	508	28724	Ref/GameModePacket.cpp
+513	GS_DISARM	CGameMode::Zc_Use_Skill	513	28727	Ref/GameModePacket.cpp
+516	GS_DESPERADO	CGameMode::Zc_Use_Skill	516	28738	Ref/GameModePacket.cpp
+517	GS_GATLINGFEVER	CGameMode::Zc_Use_Skill	517	28747	Ref/GameModePacket.cpp
+527	NJ_TATAMIGAESHI	CGameMode::Zc_Use_Skill	527	28757	Ref/GameModePacket.cpp
+349	NPC_POWERUP	CGameMode::Zc_Use_Skill	349	28781	Ref/GameModePacket.cpp
+350	NPC_AGIUP	CGameMode::Zc_Use_Skill	350	28791	Ref/GameModePacket.cpp
+355	LK_AURABLADE	CGameMode::Zc_Use_Skill	355	28795	Ref/GameModePacket.cpp
+356	LK_PARRYING	CGameMode::Zc_Use_Skill	356	28812	Ref/GameModePacket.cpp
+357	LK_CONCENTRATION	CGameMode::Zc_Use_Skill	357	28814	Ref/GameModePacket.cpp
+359	LK_BERSERK	CGameMode::Zc_Use_Skill	359	28824	Ref/GameModePacket.cpp
+360	LK_FURY	CGameMode::Zc_Use_Skill	360	28825	Ref/GameModePacket.cpp
+361	HP_ASSUMPTIO	CGameMode::Zc_Use_Skill	361	28827	Ref/GameModePacket.cpp
+364	HW_SOULDRAIN	CGameMode::Zc_Use_Skill	364	28829	Ref/GameModePacket.cpp
+366	HW_MAGICPOWER	CGameMode::Zc_Use_Skill	366	28851	Ref/GameModePacket.cpp
+373	PF_HPCONVERSION	CGameMode::Zc_Use_Skill	373	28860	Ref/GameModePacket.cpp
+374	PF_SOULCHANGE	CGameMode::Zc_Use_Skill	374	28869	Ref/GameModePacket.cpp
+375	PF_SOULBURN	CGameMode::Zc_Use_Skill	375	28898	Ref/GameModePacket.cpp
+378	ASC_EDP	CGameMode::Zc_Use_Skill	378	28910	Ref/GameModePacket.cpp
+380	SN_SIGHT	CGameMode::Zc_Use_Skill	380	28919	Ref/GameModePacket.cpp
+383	SN_WINDWALK	CGameMode::Zc_Use_Skill	383	28928	Ref/GameModePacket.cpp
+384	WS_MELTDOWN	CGameMode::Zc_Use_Skill	384	28937	Ref/GameModePacket.cpp
+387	WS_CARTBOOST	CGameMode::Zc_Use_Skill	387	28946	Ref/GameModePacket.cpp
+389	ST_CHASEWALK	CGameMode::Zc_Use_Skill	389	28955	Ref/GameModePacket.cpp
+390	ST_REJECTSWORD	CGameMode::Zc_Use_Skill	390	28959	Ref/GameModePacket.cpp
+395	CG_MOONLIT	CGameMode::Zc_Use_Skill	395	28968	Ref/GameModePacket.cpp
+396	CG_MARIONETTE	CGameMode::Zc_Use_Skill	396	28978	Ref/GameModePacket.cpp
+402	PF_MINDBREAKER	CGameMode::Zc_Use_Skill	402	28999	Ref/GameModePacket.cpp
+403	PF_MEMORIZE	CGameMode::Zc_Use_Skill	403	29008	Ref/GameModePacket.cpp
+406	ASC_METEORASSAULT	CGameMode::Zc_Use_Skill	406	29012	Ref/GameModePacket.cpp
+408	WE_BABY	CGameMode::Zc_Use_Skill	408	29021	Ref/GameModePacket.cpp
+411	TK_RUN	CGameMode::Zc_Use_Skill	411	29030	Ref/GameModePacket.cpp
+413	TK_STORMKICK	CGameMode::Zc_Use_Skill	413	29049	Ref/GameModePacket.cpp
+420	TK_DODGE	CGameMode::Zc_Use_Skill	420	29058	Ref/GameModePacket.cpp
+425	TK_SEVENWIND	CGameMode::Zc_Use_Skill	425	29061	Ref/GameModePacket.cpp
+426	TK_HIGHJUMP	CGameMode::Zc_Use_Skill	426	29083	Ref/GameModePacket.cpp
+428	SG_SUN_WARM	CGameMode::Zc_Use_Skill	428	29094	Ref/GameModePacket.cpp
+429	SG_MOON_WARM	CGameMode::Zc_Use_Skill	429	29095	Ref/GameModePacket.cpp
+430	SG_STAR_WARM	CGameMode::Zc_Use_Skill	430	29096	Ref/GameModePacket.cpp
+431	SG_SUN_COMFORT	CGameMode::Zc_Use_Skill	431	29114	Ref/GameModePacket.cpp
+432	SG_MOON_COMFORT	CGameMode::Zc_Use_Skill	432	29115	Ref/GameModePacket.cpp
+433	SG_STAR_COMFORT	CGameMode::Zc_Use_Skill	433	29116	Ref/GameModePacket.cpp
+434	SG_HATE	CGameMode::Zc_Use_Skill	434	29129	Ref/GameModePacket.cpp
+444	SG_FUSION	CGameMode::Zc_Use_Skill	444	29140	Ref/GameModePacket.cpp
+445	SL_ALCHEMIST	CGameMode::Zc_Use_Skill	445	29148	Ref/GameModePacket.cpp
+447	SL_MONK	CGameMode::Zc_Use_Skill	447	29149	Ref/GameModePacket.cpp
+448	SL_STAR	CGameMode::Zc_Use_Skill	448	29150	Ref/GameModePacket.cpp
+449	SL_SAGE	CGameMode::Zc_Use_Skill	449	29151	Ref/GameModePacket.cpp
+450	SL_CRUSADER	CGameMode::Zc_Use_Skill	450	29152	Ref/GameModePacket.cpp
+451	SL_SUPERNOVICE	CGameMode::Zc_Use_Skill	451	29153	Ref/GameModePacket.cpp
+452	SL_KNIGHT	CGameMode::Zc_Use_Skill	452	29154	Ref/GameModePacket.cpp
+453	SL_WIZARD	CGameMode::Zc_Use_Skill	453	29155	Ref/GameModePacket.cpp
+454	SL_PRIEST	CGameMode::Zc_Use_Skill	454	29156	Ref/GameModePacket.cpp
+455	SL_BARDDANCER	CGameMode::Zc_Use_Skill	455	29157	Ref/GameModePacket.cpp
+456	SL_ROGUE	CGameMode::Zc_Use_Skill	456	29158	Ref/GameModePacket.cpp
+457	SL_ASSASIN	CGameMode::Zc_Use_Skill	457	29159	Ref/GameModePacket.cpp
+458	SL_BLACKSMITH	CGameMode::Zc_Use_Skill	458	29160	Ref/GameModePacket.cpp
+460	SL_HUNTER	CGameMode::Zc_Use_Skill	460	29161	Ref/GameModePacket.cpp
+461	SL_SOULLINKER	CGameMode::Zc_Use_Skill	461	29162	Ref/GameModePacket.cpp
+446	AM_BERSERKPITCHER	CGameMode::Zc_Use_Skill	446	29164	Ref/GameModePacket.cpp
+459	BS_ADRENALINE2	CGameMode::Zc_Use_Skill	459	29187	Ref/GameModePacket.cpp
+462	SL_KAIZEL	CGameMode::Zc_Use_Skill	462	29197	Ref/GameModePacket.cpp
+463	SL_KAAHI	CGameMode::Zc_Use_Skill	463	29210	Ref/GameModePacket.cpp
+464	SL_KAUPE	CGameMode::Zc_Use_Skill	464	29220	Ref/GameModePacket.cpp
+465	SL_KAITE	CGameMode::Zc_Use_Skill	465	29230	Ref/GameModePacket.cpp
+470	SL_SWOO	CGameMode::Zc_Use_Skill	470	29244	Ref/GameModePacket.cpp
+471	SL_SKE	CGameMode::Zc_Use_Skill	471	29258	Ref/GameModePacket.cpp
+472	SL_SKA	CGameMode::Zc_Use_Skill	472	29269	Ref/GameModePacket.cpp
+475	ST_PRESERVE	CGameMode::Zc_Use_Skill	475	29285	Ref/GameModePacket.cpp
+476	ST_FULLSTRIP	CGameMode::Zc_Use_Skill	476	29294	Ref/GameModePacket.cpp
+479	CR_FULLPROTECTION	CGameMode::Zc_Use_Skill	479	29305	Ref/GameModePacket.cpp
+482	PF_DOUBLECASTING	CGameMode::Zc_Use_Skill	482	29317	Ref/GameModePacket.cpp
+6	SM_PROVOKE	CGameMode::Zc_Use_Skill	6	29346	Ref/GameModePacket.cpp
+7	SM_MAGNUM	CGameMode::Zc_Use_Skill	7	29355	Ref/GameModePacket.cpp
+8	SM_ENDURE	CGameMode::Zc_Use_Skill	8	29364	Ref/GameModePacket.cpp
+9	MG_SRECOVERY	CGameMode::Zc_Use_Skill	9	29373	Ref/GameModePacket.cpp
+16	MG_STONECURSE	CGameMode::Zc_Use_Skill	16	29377	Ref/GameModePacket.cpp
+28	AL_HEAL	CGameMode::Zc_Use_Skill	28	29390	Ref/GameModePacket.cpp
+334	WE_MALE	CGameMode::Zc_Use_Skill	334	29391	Ref/GameModePacket.cpp
+29	AL_INCAGI	CGameMode::Zc_Use_Skill	29	29393	Ref/GameModePacket.cpp
+30	AL_DECAGI	CGameMode::Zc_Use_Skill	30	29395	Ref/GameModePacket.cpp
+31	AL_HOLYWATER	CGameMode::Zc_Use_Skill	31	29404	Ref/GameModePacket.cpp
+32	AL_CRUCIS	CGameMode::Zc_Use_Skill	32	29413	Ref/GameModePacket.cpp
+33	AL_ANGELUS	CGameMode::Zc_Use_Skill	33	29422	Ref/GameModePacket.cpp
+34	AL_BLESSING	CGameMode::Zc_Use_Skill	34	29431	Ref/GameModePacket.cpp
+35	AL_CURE	CGameMode::Zc_Use_Skill	35	29433	Ref/GameModePacket.cpp
+45	AC_CONCENTRATION	CGameMode::Zc_Use_Skill	45	29442	Ref/GameModePacket.cpp
+50	TF_STEAL	CGameMode::Zc_Use_Skill	50	29451	Ref/GameModePacket.cpp
+53	TF_DETOXIFY	CGameMode::Zc_Use_Skill	53	29460	Ref/GameModePacket.cpp
+54	ALL_RESURRECTION	CGameMode::Zc_Use_Skill	54	29469	Ref/GameModePacket.cpp
+60	KN_TWOHANDQUICKEN	CGameMode::Zc_Use_Skill	60	29486	Ref/GameModePacket.cpp
+61	KN_AUTOCOUNTER	CGameMode::Zc_Use_Skill	61	29490	Ref/GameModePacket.cpp
+66	PR_IMPOSITIO	CGameMode::Zc_Use_Skill	66	29499	Ref/GameModePacket.cpp
+67	PR_SUFFRAGIUM	CGameMode::Zc_Use_Skill	67	29508	Ref/GameModePacket.cpp
+68	PR_ASPERSIO	CGameMode::Zc_Use_Skill	68	29517	Ref/GameModePacket.cpp
+71	PR_SLOWPOISON	CGameMode::Zc_Use_Skill	71	29526	Ref/GameModePacket.cpp
+72	PR_STRECOVERY	CGameMode::Zc_Use_Skill	72	29535	Ref/GameModePacket.cpp
+73	PR_KYRIE	CGameMode::Zc_Use_Skill	73	29544	Ref/GameModePacket.cpp
+74	PR_MAGNIFICAT	CGameMode::Zc_Use_Skill	74	29553	Ref/GameModePacket.cpp
+75	PR_GLORIA	CGameMode::Zc_Use_Skill	75	29555	Ref/GameModePacket.cpp
+76	PR_LEXDIVINA	CGameMode::Zc_Use_Skill	76	29564	Ref/GameModePacket.cpp
+78	PR_LEXAETERNA	CGameMode::Zc_Use_Skill	78	29573	Ref/GameModePacket.cpp
+81	WZ_SIGHTRASHER	CGameMode::Zc_Use_Skill	81	29582	Ref/GameModePacket.cpp
+88	WZ_FROSTNOVA	CGameMode::Zc_Use_Skill	88	29591	Ref/GameModePacket.cpp
+108	BS_REPAIRWEAPON	CGameMode::Zc_Use_Skill	108	29600	Ref/GameModePacket.cpp
+111	BS_ADRENALINE	CGameMode::Zc_Use_Skill	111	29609	Ref/GameModePacket.cpp
+112	BS_WEAPONPERFECT	CGameMode::Zc_Use_Skill	112	29611	Ref/GameModePacket.cpp
+113	BS_OVERTHRUST	CGameMode::Zc_Use_Skill	113	29620	Ref/GameModePacket.cpp
+114	BS_MAXIMIZE	CGameMode::Zc_Use_Skill	114	29622	Ref/GameModePacket.cpp
+124	HT_REMOVETRAP	CGameMode::Zc_Use_Skill	124	29631	Ref/GameModePacket.cpp
+131	HT_SPRINGTRAP	CGameMode::Zc_Use_Skill	131	29641	Ref/GameModePacket.cpp
+138	AS_ENCHANTPOISON	CGameMode::Zc_Use_Skill	138	29657	Ref/GameModePacket.cpp
+139	AS_POISONREACT	CGameMode::Zc_Use_Skill	139	29661	Ref/GameModePacket.cpp
+141	AS_SPLASHER	CGameMode::Zc_Use_Skill	141	29670	Ref/GameModePacket.cpp
+142	NV_FIRSTAID	CGameMode::Zc_Use_Skill	142	29680	Ref/GameModePacket.cpp
+155	MC_LOUD	CGameMode::Zc_Use_Skill	155	29689	Ref/GameModePacket.cpp
+157	MG_ENERGYCOAT	CGameMode::Zc_Use_Skill	157	29698	Ref/GameModePacket.cpp
+162	NPC_CHANGEWATER	CGameMode::Zc_Use_Skill	162	29707	Ref/GameModePacket.cpp
+163	NPC_CHANGEGROUND	CGameMode::Zc_Use_Skill	163	29716	Ref/GameModePacket.cpp
+164	NPC_CHANGEFIRE	CGameMode::Zc_Use_Skill	164	29725	Ref/GameModePacket.cpp
+165	NPC_CHANGEWIND	CGameMode::Zc_Use_Skill	165	29734	Ref/GameModePacket.cpp
+166	NPC_CHANGEPOISON	CGameMode::Zc_Use_Skill	166	29743	Ref/GameModePacket.cpp
+167	NPC_CHANGEHOLY	CGameMode::Zc_Use_Skill	167	29752	Ref/GameModePacket.cpp
+168	NPC_CHANGEDARKNESS	CGameMode::Zc_Use_Skill	168	29761	Ref/GameModePacket.cpp
+169	NPC_CHANGETELEKINESIS	CGameMode::Zc_Use_Skill	169	29770	Ref/GameModePacket.cpp
+173	NPC_SELFDESTRUCTION	CGameMode::Zc_Use_Skill	173	29779	Ref/GameModePacket.cpp
+175	NPC_SUICIDE	CGameMode::Zc_Use_Skill	175	29783	Ref/GameModePacket.cpp
+196	NPC_SUMMONSLAVE	CGameMode::Zc_Use_Skill	196	29794	Ref/GameModePacket.cpp
+201	NPC_KEEPING	CGameMode::Zc_Use_Skill	201	29803	Ref/GameModePacket.cpp
+205	NPC_DEFENDER	CGameMode::Zc_Use_Skill	205	29812	Ref/GameModePacket.cpp
+211	RG_STEALCOIN	CGameMode::Zc_Use_Skill	211	29821	Ref/GameModePacket.cpp
+214	RG_RAID	CGameMode::Zc_Use_Skill	214	29842	Ref/GameModePacket.cpp
+215	RG_STRIPWEAPON	CGameMode::Zc_Use_Skill	215	29851	Ref/GameModePacket.cpp
+216	RG_STRIPSHIELD	CGameMode::Zc_Use_Skill	216	29853	Ref/GameModePacket.cpp
+217	RG_STRIPARMOR	CGameMode::Zc_Use_Skill	217	29862	Ref/GameModePacket.cpp
+218	RG_STRIPHELM	CGameMode::Zc_Use_Skill	218	29871	Ref/GameModePacket.cpp
+231	AM_POTIONPITCHER	CGameMode::Zc_Use_Skill	231	29880	Ref/GameModePacket.cpp
+234	AM_CP_WEAPON	CGameMode::Zc_Use_Skill	234	29902	Ref/GameModePacket.cpp
+235	AM_CP_SHIELD	CGameMode::Zc_Use_Skill	235	29903	Ref/GameModePacket.cpp
+236	AM_CP_ARMOR	CGameMode::Zc_Use_Skill	236	29904	Ref/GameModePacket.cpp
+237	AM_CP_HELM	CGameMode::Zc_Use_Skill	237	29905	Ref/GameModePacket.cpp
+249	CR_AUTOGUARD	CGameMode::Zc_Use_Skill	249	29914	Ref/GameModePacket.cpp
+252	CR_REFLECTSHIELD	CGameMode::Zc_Use_Skill	252	29916	Ref/GameModePacket.cpp
+255	CR_DEVOTION	CGameMode::Zc_Use_Skill	255	29925	Ref/GameModePacket.cpp
+256	CR_PROVIDENCE	CGameMode::Zc_Use_Skill	256	29934	Ref/GameModePacket.cpp
+257	CR_DEFENDER	CGameMode::Zc_Use_Skill	257	29943	Ref/GameModePacket.cpp
+258	CR_SPEARQUICKEN	CGameMode::Zc_Use_Skill	258	29945	Ref/GameModePacket.cpp
+262	MO_ABSORBSPIRITS	CGameMode::Zc_Use_Skill	262	29955	Ref/GameModePacket.cpp
+268	MO_STEELBODY	CGameMode::Zc_Use_Skill	268	29964	Ref/GameModePacket.cpp
+269	MO_BLADESTOP	CGameMode::Zc_Use_Skill	269	29981	Ref/GameModePacket.cpp
+270	MO_EXPLOSIONSPIRITS	CGameMode::Zc_Use_Skill	270	29985	Ref/GameModePacket.cpp
+276	SA_MAGICROD	CGameMode::Zc_Use_Skill	276	30003	Ref/GameModePacket.cpp
+277	SA_SPELLBREAKER	CGameMode::Zc_Use_Skill	277	30012	Ref/GameModePacket.cpp
+280	SA_FLAMELAUNCHER	CGameMode::Zc_Use_Skill	280	30021	Ref/GameModePacket.cpp
+281	SA_FROSTWEAPON	CGameMode::Zc_Use_Skill	281	30023	Ref/GameModePacket.cpp
+282	SA_LIGHTNINGLOADER	CGameMode::Zc_Use_Skill	282	30025	Ref/GameModePacket.cpp
+283	SA_SEISMICWEAPON	CGameMode::Zc_Use_Skill	283	30027	Ref/GameModePacket.cpp
+289	SA_DISPELL	CGameMode::Zc_Use_Skill	289	30029	Ref/GameModePacket.cpp
+306	BD_LULLABY	CGameMode::Zc_Use_Skill	306	30038	Ref/GameModePacket.cpp
+307	BD_RICHMANKIM	CGameMode::Zc_Use_Skill	307	30041	Ref/GameModePacket.cpp
+308	BD_ETERNALCHAOS	CGameMode::Zc_Use_Skill	308	30044	Ref/GameModePacket.cpp
+309	BD_DRUMBATTLEFIELD	CGameMode::Zc_Use_Skill	309	30047	Ref/GameModePacket.cpp
+310	BD_RINGNIBELUNGEN	CGameMode::Zc_Use_Skill	310	30050	Ref/GameModePacket.cpp
+311	BD_ROKISWEIL	CGameMode::Zc_Use_Skill	311	30053	Ref/GameModePacket.cpp
+312	BD_INTOABYSS	CGameMode::Zc_Use_Skill	312	30056	Ref/GameModePacket.cpp
+313	BD_SIEGFRIED	CGameMode::Zc_Use_Skill	313	30059	Ref/GameModePacket.cpp
+318	BA_FROSTJOKER	CGameMode::Zc_Use_Skill	318	30062	Ref/GameModePacket.cpp
+320	BA_ASSASSINCROSS	CGameMode::Zc_Use_Skill	320	30075	Ref/GameModePacket.cpp
+321	BA_POEMBRAGI	CGameMode::Zc_Use_Skill	321	30078	Ref/GameModePacket.cpp
+322	BA_APPLEIDUN	CGameMode::Zc_Use_Skill	322	30081	Ref/GameModePacket.cpp
+326	DC_SCREAM	CGameMode::Zc_Use_Skill	326	30084	Ref/GameModePacket.cpp
+327	DC_HUMMING	CGameMode::Zc_Use_Skill	327	30097	Ref/GameModePacket.cpp
+328	DC_DONTFORGETME	CGameMode::Zc_Use_Skill	328	30100	Ref/GameModePacket.cpp
+329	DC_FORTUNEKISS	CGameMode::Zc_Use_Skill	329	30103	Ref/GameModePacket.cpp
+330	DC_SERVICEFORYOU	CGameMode::Zc_Use_Skill	330	30106	Ref/GameModePacket.cpp
+335	WE_FEMALE	CGameMode::Zc_Use_Skill	335	30109	Ref/GameModePacket.cpp
+342	NPC_STOP	CGameMode::Zc_Use_Skill	342	30119	Ref/GameModePacket.cpp
+47	AC_SHOWER	CGameMode::Zc_Notify_Groundskill	47	18201	Ref/GameModePacket.cpp
+362	HP_BASILICA	CGameMode::Zc_Notify_Groundskill	362	18235	Ref/GameModePacket.cpp
+369	PA_GOSPEL	CGameMode::Zc_Notify_Groundskill	369	18238	Ref/GameModePacket.cpp
+85	WZ_VERMILION	CSkill::SendMsg	85	3056	Ref/Skill.cpp
+18	MG_FIREWALL	CSkill::SendMsg	18	3059	Ref/Skill.cpp
+79	PR_MAGNUS	CSkill::SendMsg	79	3062	Ref/Skill.cpp

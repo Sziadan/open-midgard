@@ -35,3 +35,9 @@ private:
 };
 
 extern CSkillMgr g_skillMgr;
+
+// Ref SKILL_INFO::IsSkillNotDelayed, HighPriest.exe.c:263510.
+namespace SKILL_INFO {
+bool IsSkillNotDelayed(int skillId);
+bool IsGoodSkillForActor(int skillId);
+}

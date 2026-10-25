@@ -26,3 +26,22 @@ tools/
 build_output*.txt
 *.ps1
 *.py
+
+# Skill parity generators and checks must accompany their generated outputs.
+!tools/
+tools/*
+!tools/ro_exe_resolve.py
+!tools/generate_skill_tables.py
+!tools/generate_rageffect_catalog.py
+!tools/generate_use_skill_effect.py
+!tools/gen_skill_enum_table.py
+!tools/skill_reference_index.py
+!tools/test_skill_reference_index.py
+!tools/audit_skill_parity.py
+!tools/tests/
+tools/tests/*
+!tools/tests/CMakeLists.txt
+!tools/tests/WaveMathTests.cpp
+!tools/tests/ServerSoundTests.cpp
+!tools/tests/WaveDispatchTests.cpp
+!tools/tests/ForcedMotionTests.cpp

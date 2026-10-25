@@ -1,0 +1,20 @@
+callVA	function	srcAnchor	status
+0x555B8E	CRenderObject::ProcessSound		producer port pending
+0x555CCF	CRenderObject::ProcessSound		producer port pending
+0x555E5F	CRenderObject::ProcessSound		producer port pending
+0x55EA45	CGameActor::SendMsg	src/world/GameActor.cpp	port-anchor-present (runtime parity unverified)
+0x57D8ED	CGameMode::ProcessPlayWave	src/gamemode/GameMode.cpp	port-anchor-present (runtime parity unverified)
+0x57D91C	CGameMode::ProcessPlayWave	src/gamemode/GameMode.cpp	port-anchor-present (runtime parity unverified)
+0x57E27C	CGameMode::ProcessDamageSituation		producer port pending
+0x5A8845	CGameMode::Zc_Sound	src/gamemode/GameModePacket.cpp	port-anchor-present (runtime parity unverified)
+0x5A88C7	CGameMode::Zc_Sound	src/gamemode/GameModePacket.cpp	port-anchor-present (runtime parity unverified)
+0x5D6A53	CSoundMaker::OnProcess		producer port pending
+0x5D9E95	CPc::OnProcess		producer port pending
+0x5E0FD6	CGrannyPc::OnProcess		producer port pending
+0x5E48A1	CPlayer::OnProcess		producer port pending
+0x5F862A	CRagEffect::IceArrow	src/world/RagEffect.cpp	port-anchor-present (runtime parity unverified)
+0x5F963C	CRagEffect::FireArrow		producer port pending
+0x5FD22D	CRagEffect::EarthSpike		producer port pending
+0x606D01	CRagEffect::FireHit		producer port pending
+0x60A8EE	CRagEffect::Kouenka		producer port pending
+0x642CAD	CEffectPrim::Prim3DParticleGravity		producer port pending

@@ -12,6 +12,7 @@
 // ---------------------------------------------------------------------------
 static DWORD s_frameTime = 0;   // timeGetTime() snapshot of last frame
 static DWORD s_frameFreq = 16;  // milliseconds per frame tick
+int g_isSkipFrame = 1;
 
 // ---------------------------------------------------------------------------
 

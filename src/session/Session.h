@@ -6,8 +6,11 @@
 #include <list>
 #include <vector>
 #include "Types.h"
+#include "core/Xml.h"
 #include "item/Item.h"
 #include "skill/Skill.h"
+
+class CGameActor;
 
 struct accountInfo {
     std::string display;
@@ -266,6 +269,8 @@ public:
     const std::vector<ACTIVE_STATUS_ICON>& GetActiveStatusIcons() const;
     int GetPlayerSkillPointCount() const;
     int GetWeaponTypeByItemId(int itemId) const;
+    u32 GetForceAnimEndTick(u32 aid) const;
+    void SetForceAnimEndTick(u32 aid, u32 tick);
     int MakeWeaponTypeByItemId(int primaryWeaponItemId, int secondaryWeaponItemId) const;
     int ResolvePackedWeaponType(int job, int weaponValue) const;
     int GetCurrentPlayerWeaponValue() const;
@@ -280,6 +285,13 @@ public:
     const char* GetAttrWaveName(int attr) const;
     const char* GetJobHitWaveName(int job) const;
     const char* GetWeaponHitWaveName(int weapon) const;
+    const char* GetWeaponSwingWaveName(int weapon) const;
+    int GetAttackEffectIdBySkillId(unsigned int skillId) const;
+    int GetAttackedEffectIdBySkillId(unsigned int skillId) const;
+    // Ref/Session2.cpp:6673. `level` is the hit count Am_Skill passes in.
+    void LaunchSkillSpecialEffect(int skillId, int level, CGameActor* source, CGameActor* target);
+    // Ref/Session2.cpp:3259. `act` is set to -1 when the monster XML has no entry.
+    void GetMonsterSkillInfo(const char* monsterName, int skillId, int& act, int& loopType);
     int GetSex() const;
     char* GetJobActName(int job, int sex, char* buf);
     char* GetJobSprName(int job, int sex, char* buf);
@@ -298,6 +310,7 @@ private:
     void EnsureAccessoryNameTableLoaded();
     void InitJobHitWaveName();
     void InitWeaponHitWaveName();
+    void InitWeaponSwingWaveName();
     int NormalizeJob(int job) const;
     u32 m_serverTime;
     int m_numLatePacket;
@@ -325,6 +338,11 @@ private:
     std::vector<std::string> m_accessoryNameTable;
     std::vector<std::string> m_jobHitWaveNameTable;
     std::vector<std::string> m_weaponHitWaveNameTable;
+    std::vector<std::string> m_weaponSwingWaveNameTable;
+    struct ForceAnimTick { u32 aid; u32 tick; };
+    std::vector<ForceAnimTick> m_forceAnimEndTick;
+    bool m_monsterSkillInfoLoaded = false;
+    XMLDocument m_monsterSkillInfo;
 };
 
 extern CSession g_session;

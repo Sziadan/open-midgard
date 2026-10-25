@@ -1,0 +1,7 @@
+duration entries: 710
+str cases parsed: 167
+playwave calls: 391 unresolved: 19
+effect handler rows: 693
+skill behaviour rows: 2526
+blocked: 13
+validation errors: 0

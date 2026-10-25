@@ -4,6 +4,8 @@ add_library(ro_audio STATIC
     Audio.h
     AudioBackend.h
     Audio.cpp
+    Wave.cpp
+    WaveMath.h
     MilesAudioBackend.cpp
     MiniaudioBackend.cpp
     Video.h

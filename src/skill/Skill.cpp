@@ -280,3 +280,149 @@ void CSkillMgr::LoadSkillLevelSpCosts()
 }
 
 CSkillMgr g_skillMgr;
+
+namespace SKILL_INFO {
+
+bool IsSkillNotDelayed(int skillId)
+{
+    if (skillId > 77) {
+        if (skillId != 86 && skillId != 340 && skillId != 690) {
+            return true;
+        }
+    } else if (skillId != 77) {
+        switch (skillId) {
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+        case 16:
+        case 17:
+        case 18:
+        case 19:
+        case 20:
+        case 21:
+        case 27:
+        case 29:
+        case 30:
+        case 32:
+        case 33:
+            return false;
+        default:
+            return true;
+        }
+    }
+    return false;
+}
+
+bool IsGoodSkillForActor(int skillId)
+{
+    if (skillId <= 465) {
+        if (skillId < 460) {
+            if (skillId > 139) {
+                switch (skillId) {
+                case 231:
+                case 234:
+                case 235:
+                case 236:
+                case 237:
+                case 255:
+                case 256:
+                case 262:
+                case 280:
+                case 281:
+                case 282:
+                case 283:
+                case 361:
+                case 445:
+                case 446:
+                case 447:
+                case 448:
+                case 449:
+                case 450:
+                case 451:
+                case 452:
+                case 453:
+                case 454:
+                case 455:
+                case 456:
+                case 457:
+                case 458:
+                    return true;
+                default:
+                    return false;
+                }
+            }
+            if (skillId < 138) {
+                switch (skillId) {
+                case 4:
+                case 28:
+                case 29:
+                case 34:
+                case 35:
+                case 53:
+                case 54:
+                case 66:
+                case 67:
+                case 68:
+                case 71:
+                case 72:
+                case 73:
+                case 108:
+                    return true;
+                default:
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    if (skillId <= 626) {
+        if (skillId != 626) {
+            switch (skillId) {
+            case 479:
+            case 494:
+            case 564:
+            case 572:
+            case 573:
+            case 574:
+            case 575:
+            case 577:
+            case 593:
+            case 621:
+            case 622:
+                return true;
+            default:
+                return false;
+            }
+        }
+        return true;
+    }
+    if (skillId <= 691) {
+        if (skillId < 688) {
+            switch (skillId) {
+            case 636:
+            case 637:
+            case 641:
+            case 642:
+            case 643:
+            case 645:
+            case 646:
+                return true;
+            default:
+                return false;
+            }
+        }
+        return true;
+    }
+    if (skillId > 1015) {
+        if (skillId < 8226 || skillId > 8231) {
+            return false;
+        }
+    } else if (skillId != 1015 && skillId != 694) {
+        return false;
+    }
+    return true;
+}
+
+}

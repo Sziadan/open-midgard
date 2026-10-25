@@ -263,6 +263,9 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x01C8, 13);
     SetPacketSize(0x01C9, 97);
     SetPacketSize(0x01CF, 28);
+    SetPacketSize(0x01D3, 35);             // ZC_SOUND, clif.c:7976 / packet_db.txt:383
+    SetPacketSize(0x01D2, 10);             // ZC_COMBODELAY, clif.c:6813
+    SetPacketSize(0x01D1, 14);             // ZC_BLADESTOP, clif.c:6831
     SetPacketSize(0x01D0, 8);
     SetPacketSize(0x01D6, 4);
     SetPacketSize(0x01D4, 6);

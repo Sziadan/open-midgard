@@ -154,43 +154,21 @@ bool TryPlayMsgSpriteMotionEvent(const CMsgEffect& effect, int motionIndex)
     if (!act) {
         return false;
     }
-
     const CMotion* motion = act->GetMotion(effect.m_spriteActionIndex, motionIndex);
     if (!motion || motion->eventId < 0) {
         return false;
     }
-
     const char* eventName = act->GetEventName(motion->eventId);
     if (!ContainsAsciiCaseInsensitive(eventName, ".wav")) {
         return false;
     }
-
-    CAudio* audio = CAudio::GetInstance();
-    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
-    if (!audio || !gameMode || !gameMode->m_world || !gameMode->m_world->m_player) {
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!mode || !mode->m_world || !mode->m_world->m_player) {
         return false;
     }
-
-    const vector3d origin = effect.m_masterActor ? effect.m_masterActor->m_pos : effect.m_pos;
-    const vector3d listenerPos = gameMode->m_world->m_player->m_pos;
-    const std::string normalized = NormalizeWaveEventPath(eventName);
-    if (normalized.empty()) {
-        return false;
-    }
-
-    std::array<std::string, 3> candidates = {
-        normalized,
-        std::string("wav\\") + normalized,
-        std::string("data\\wav\\") + normalized,
-    };
-
-    for (const std::string& candidate : candidates) {
-        if (audio->PlaySound3D(candidate.c_str(), origin, listenerPos)) {
-            return true;
-        }
-    }
-
-    return false;
+    const vector3d& origin = effect.m_masterActor ? effect.m_masterActor->m_pos : effect.m_pos;
+    const vector3d& listener = mode->m_world->m_player->m_pos;
+    return PlayWave(eventName, origin.x - listener.x, origin.y - listener.y, origin.z - listener.z);
 }
 
 bool ProjectMsgEffectPoint(const matrix& viewMatrix, const vector3d& point, tlvertex3d* outVertex)
@@ -1994,6 +1972,43 @@ u8 CMsgEffect::OnProcess()
         }
         break;
     }
+    case 5:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 18:
+        if (m_masterActor) {
+            m_pos = m_masterActor->m_pos;
+            m_orgPos = m_pos;
+        }
+        {
+            const int motionCount = ResolveMsgSpriteMotionCountForEffect(*this, m_spriteActionIndex);
+            if (motionCount > 0) {
+                m_spriteMotionIndex = static_cast<int>(stateCount) % motionCount;
+            }
+        }
+        m_alpha = 255;
+        m_zoom = m_msgEffectType == 18 ? 6.0f : (m_orgZoom > 0.0f ? m_orgZoom : 1.0f);
+        break;
+    case 6:
+    case 25:
+        if (m_masterActor) {
+            m_pos.x = m_masterActor->m_pos.x;
+            m_pos.z = m_masterActor->m_pos.z;
+        }
+        {
+            const int motionCount = ResolveMsgSpriteMotionCountForEffect(*this, m_spriteActionIndex);
+            if (motionCount <= 0 || stateCount >= static_cast<float>(motionCount)) {
+                m_isDisappear = 1;
+                break;
+            }
+            m_spriteMotionIndex = static_cast<int>(stateCount);
+        }
+        m_alpha = 255;
+        m_zoom = m_orgZoom > 0.0f ? m_orgZoom : 1.0f;
+        break;
     case 22:
         m_pos.y = m_orgPos.y - stateCount * 0.1f;
         if (m_zoom < 3.0f) {

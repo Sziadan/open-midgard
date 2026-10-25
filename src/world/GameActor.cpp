@@ -16,6 +16,7 @@
 #include "item/Item.h"
 #include "main/WinMain.h"
 #include "session/Session.h"
+#include "pathfinder/PathFinder.h"
 #include "ui/UIPcGage.h"
 #include "ui/UIRechargeGage.h"
 #include "ui/UIWindowMgr.h"
@@ -356,35 +357,13 @@ CGameActor* ResolveActorByGidForCastRetarget(u32 gid)
 
 bool TryPlayQueuedWaveAtActor(const CGameActor& actor, const char* waveName)
 {
-    if (!waveName || !*waveName) {
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!mode || !mode->m_world || !mode->m_world->m_player) {
         return false;
     }
-
-    CAudio* audio = CAudio::GetInstance();
-    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
-    if (!audio || !gameMode || !gameMode->m_world || !gameMode->m_world->m_player) {
-        return false;
-    }
-
-    const vector3d listenerPos = gameMode->m_world->m_player->m_pos;
-    const std::string normalized = NormalizeWaveEventPath(waveName);
-    if (normalized.empty()) {
-        return false;
-    }
-
-    std::array<std::string, 3> candidates = {
-        normalized,
-        std::string("wav\\") + normalized,
-        std::string("data\\wav\\") + normalized,
-    };
-
-    for (const std::string& candidate : candidates) {
-        if (audio->PlaySound3D(candidate.c_str(), actor.m_pos, listenerPos)) {
-            return true;
-        }
-    }
-
-    return false;
+    const vector3d& listener = mode->m_world->m_player->m_pos;
+    return PlayWave(waveName, actor.m_pos.x - listener.x, actor.m_pos.y - listener.y,
+        actor.m_pos.z - listener.z);
 }
 
 bool ContainsAsciiCaseInsensitive(const char* text, const char* token)
@@ -416,36 +395,10 @@ bool TryPlayActorMotionWave(CGameActor& actor, const char* eventName)
     if (!ShouldPlayMotionWaveForActor(actor) || !ContainsAsciiCaseInsensitive(eventName, ".wav")) {
         return false;
     }
-
     if (actor.m_isPc != 0) {
         return QueueActorHitWave(actor, eventName);
     }
-
-    CAudio* audio = CAudio::GetInstance();
-    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
-    if (!audio || !gameMode || !gameMode->m_world || !gameMode->m_world->m_player) {
-        return false;
-    }
-
-    const vector3d listenerPos = gameMode->m_world->m_player->m_pos;
-    const std::string normalized = NormalizeWaveEventPath(eventName);
-    if (normalized.empty()) {
-        return false;
-    }
-
-    std::array<std::string, 3> candidates = {
-        normalized,
-        std::string("wav\\") + normalized,
-        std::string("data\\wav\\") + normalized,
-    };
-
-    for (const std::string& candidate : candidates) {
-        if (audio->PlaySound3D(candidate.c_str(), actor.m_pos, listenerPos)) {
-            return true;
-        }
-    }
-
-    return false;
+    return TryPlayQueuedWaveAtActor(actor, eventName);
 }
 
 void PlayMotionWaveEvents(CRenderObject* object, CActRes* actRes, int action, int oldMotion, int newMotion)
@@ -534,67 +487,25 @@ void ProcessQueuedHitWave(CGameActor& actor)
     actor.m_hitWaveName[0] = '\0';
 }
 
-void ApplyQueuedHitReaction(CGameActor& actor, const WBA& hitInfo)
+CGameActor* FindAttacker(u32 gid)
 {
-    CGameActor* sourceActor = nullptr;
-    if (hitInfo.gid != 0) {
-        if (g_world.m_player && g_world.m_player->m_gid == hitInfo.gid) {
-            sourceActor = g_world.m_player;
-        } else {
-            for (CGameActor* entry : g_world.m_actorList) {
-                if (entry && entry->m_gid == hitInfo.gid) {
-                    sourceActor = entry;
-                    break;
-                }
-            }
+    if (gid == 0) {
+        return nullptr;
+    }
+    if (g_world.m_player && (g_world.m_player->m_gid == gid || g_session.m_aid == gid)) {
+        return g_world.m_player;
+    }
+    for (CGameActor* entry : g_world.m_actorList) {
+        if (entry && entry->m_gid == gid) {
+            return entry;
         }
     }
+    return nullptr;
+}
 
-    actor.m_damageDestX = hitInfo.damageDestX;
-    actor.m_damageDestZ = hitInfo.damageDestZ;
-
-    if (hitInfo.message == 94) {
-        actor.SendMsg(nullptr, 95, 0, 0, 0);
-        return;
-    }
-
-    if (hitInfo.damage == 0) {
-        if (sourceActor) {
-            sourceActor->SendMsg(&actor, 89, 0, 0, 0);
-        } else {
-            actor.SendMsg(nullptr, 89, 0, 0, 0);
-        }
-        return;
-    }
-
-    if (hitInfo.waveName[0] != '\0') {
-        TryPlayQueuedWaveAtActor(actor, hitInfo.waveName);
-    } else if (const char* genericWave = g_session.GetWeaponHitWaveName(-1)) {
-        TryPlayQueuedWaveAtActor(actor, genericWave);
-    }
-
-    if (actor.m_stateId == kDeathStateId) {
-        return;
-    }
-
-    if (hitInfo.attackedMotionTime > 0) {
-        actor.m_motionSpeed = (std::max)(kDefaultMotionSpeedFactor,
-            static_cast<float>(hitInfo.attackedMotionTime) * kAttackMotionFactor);
-    }
-
-    if (hitInfo.damage != 0 && hitInfo.damageKind != 0) {
-        actor.SendMsg(sourceActor,
-            88,
-            hitInfo.damage,
-            static_cast<int>(hitInfo.damageColor),
-            hitInfo.damageKind);
-
-        if (hitInfo.message == 93) {
-            actor.SendMsg(nullptr, 92, 0, 0, 0);
-        }
-    }
-
-    actor.SetState(kHitReactionStateId);
+bool IsPlayerJob(int job)
+{
+    return (job >= 0 && job < 28) || (job > 4000 && job < 6000);
 }
 
 bool IsPortalFallbackJob(int job)
@@ -3879,6 +3790,22 @@ const char* CActRes::GetEventName(int eventIndex) const {
 // CGameObject::~CGameObject() {} // defined in header as virtual
 
 // CRenderObject stubs
+void CRenderObject::SetArgb(int alpha, int red, int green, int blue)
+{
+    if (alpha != -1) {
+        m_u28.m_sprColor.u.s.a = static_cast<u8>(alpha);
+    }
+    if (red != -1) {
+        m_u28.m_sprColor.u.s.r = static_cast<u8>(red);
+    }
+    if (green != -1) {
+        m_u28.m_sprColor.u.s.g = static_cast<u8>(green);
+    }
+    if (blue != -1) {
+        m_u28.m_sprColor.u.s.b = static_cast<u8>(blue);
+    }
+}
+
 CRenderObject::CRenderObject()
     : m_pos{ 0.0f, 0.0f, 0.0f }
     , m_baseAction(0)
@@ -3924,7 +3851,7 @@ CRenderObject::CRenderObject()
     , m_forceAct2{ 0, 0, 0, 0, 0 }
     , m_forceMot2{ 0, 0, 0, 0, 0 }
     , m_forceMaxMot(0)
-    , m_forceAnimSpeed(0)
+    , m_forceAnimSpeed(10) // Ref/GameActor.cpp:8969
     , m_forceFinishedAct(0)
     , m_forceFinishedMot(0)
     , m_forceStartMot(0)
@@ -4017,6 +3944,19 @@ void CRenderObject::ProcessMotion() {
         return;
     }
 
+    if (m_isForceState || m_isForceState2 || m_isForceState3) {
+        const int previousMotion = m_curMotion;
+        ProcessForcedMotion();
+        if (const CGameActor* actor = dynamic_cast<const CGameActor*>(this)) {
+            if (actor->m_isPc != 0) {
+                PlayMotionWaveEvents(this, actRes, m_curAction, previousMotion, m_curMotion);
+                m_oldBaseAction = m_baseAction;
+                m_oldMotion = m_curMotion;
+            }
+        }
+        return;
+    }
+
     const CGameActor* actorForMotionWaveTracking = dynamic_cast<CGameActor*>(this);
     const bool trackMotionWaveEventsInProcessMotion = actorForMotionWaveTracking
         && actorForMotionWaveTracking->m_isPc != 0;
@@ -4098,6 +4038,121 @@ void CRenderObject::ProcessMotion() {
         m_oldBaseAction = m_baseAction;
         m_oldMotion = m_curMotion;
     }
+}
+
+// Forced-state branches of Ref/GameActor.cpp:6168-6395 (ProcessMotion,
+// 0x555500). Keep the reference's output-before-advance and byte wrapping.
+void CRenderObject::ProcessForcedMotion()
+{
+    const float stateCnt = static_cast<float>(static_cast<double>(timeGetTime() - m_stateStartTick) * 0.041666668);
+    if (m_isForceState2) {
+        m_forceAct = m_forceAct2[m_forceStartMot];
+        m_forceMot = m_forceMot2[m_forceStartMot];
+        if (m_isForceAnimFinish) {
+            m_baseAction = m_forceAct2[4];
+            m_curAction = m_forceAct2[4] + Get8Dir(m_roty);
+            m_curMotion = m_forceMot2[4];
+            if (!m_forceStateEndTick) {
+                m_isForceState2 = 0;
+                m_motionType = 1;
+            }
+        } else {
+            m_baseAction = m_forceAct;
+            m_curAction = m_forceAct + Get8Dir(m_roty);
+            m_curMotion = m_forceMot;
+        }
+        if (!m_isForceAnimation) {
+            return;
+        }
+        if (timeGetTime() >= m_forceStateEndTick) {
+            m_isForceState2 = 0;
+            m_forceStateEndTick = 0;
+            m_motionType = 1;
+            m_isMotionFinished = 1;
+        }
+        if (!m_isForceAnimFinish && !(m_forceStateCnt % m_forceAnimSpeed)) {
+            ++m_forceStartMot;
+        }
+        if (m_forceStartMot <= m_forceMaxMot) {
+            goto advance;
+        }
+        if (m_isForceAnimLoop) {
+            m_forceStartMot = 0;
+            ++m_forceStateCnt;
+            return;
+        }
+        m_forceStartMot = m_forceMaxMot;
+        goto finish;
+    }
+
+    if (m_isForceAnimFinish) {
+        m_baseAction = m_forceFinishedAct;
+        m_curAction = m_forceFinishedAct + Get8Dir(m_roty);
+        m_curMotion = m_forceFinishedMot;
+        if (!m_forceStateEndTick) {
+            m_isForceState = 0;
+            m_motionType = 1;
+        }
+    } else {
+        m_baseAction = m_forceAct;
+        m_curAction = m_forceAct + Get8Dir(m_roty);
+        m_curMotion = m_forceMot;
+    }
+    if (!m_isForceAnimation) {
+        return;
+    }
+    if (timeGetTime() >= m_forceStateEndTick) {
+        m_isForceState = 0;
+        m_forceStateEndTick = 0;
+        m_motionType = 1;
+        m_isMotionFinished = 1;
+    }
+    if (m_isForceState3) {
+        if (!m_isForceAnimFinish) {
+            if (m_BodyAni == 3) {
+                m_forceMot = static_cast<u8>(-1 - static_cast<long long>(static_cast<double>(stateCnt) * -2.0 / m_motionSpeed) - m_forceMaxMot);
+            } else {
+                m_forceMot = static_cast<u8>(static_cast<long long>((static_cast<double>(stateCnt) + stateCnt) / m_motionSpeed));
+            }
+        }
+        if (m_forceMot <= m_forceMaxMot) {
+            goto advance;
+        }
+        if (m_BodyAni == 2) {
+            m_BodyAni = 3;
+            m_forceMot = 0;
+            ++m_forceStateCnt;
+            return;
+        }
+        m_BodyAni = 0;
+    } else {
+        if (!m_isForceAnimFinish && !(m_forceStateCnt % m_forceAnimSpeed)) {
+            if (m_isForceAnimLoop && !m_forceFinishedAct && m_forceFinishedMot) {
+                m_forceFinishedMot = 0;
+                --m_forceMot;
+            } else {
+                ++m_forceMot;
+            }
+        }
+        if (m_forceMot <= m_forceMaxMot) {
+            goto advance;
+        }
+        if (m_isForceAnimLoop) {
+            if (m_forceFinishedAct) {
+                m_forceMot = m_forceStartMot;
+            } else {
+                m_forceMot = m_forceStartMot + 1;
+                m_forceFinishedMot = 1;
+            }
+            ++m_forceStateCnt;
+            return;
+        }
+    }
+    m_forceMot = m_forceMaxMot;
+finish:
+    m_isForceAnimFinish = 1;
+advance:
+    ++m_forceStateCnt;
 }
 
 void CRenderObject::SetRenderInfo(RENDER_INFO_RECT* rect, float f1, float f2) {
@@ -4273,6 +4328,12 @@ CGameActor::CGameActor()
     , m_merMsg{}
     , m_merResMsg{}
     , m_birdEffect(nullptr)
+    , m_iceEffect(nullptr)
+    , m_curseEffect(nullptr)
+    , m_sleepEffect(nullptr)
+    , m_stunEffect(nullptr)
+    , m_silenceEffect(nullptr)
+    , m_angelusEffect(nullptr)
     , m_cartEffect(nullptr)
     , m_lastDamageNumberEffect(nullptr)
     , m_moveStartPos{ 0.0f, 0.0f, 0.0f }
@@ -4298,6 +4359,12 @@ CGameActor::~CGameActor()
     const std::vector<CMsgEffect*> ownedMsgEffects(m_msgEffectList.begin(), m_msgEffectList.end());
     m_msgEffectList.clear();
     m_birdEffect = nullptr;
+    m_iceEffect = nullptr;
+    m_curseEffect = nullptr;
+    m_sleepEffect = nullptr;
+    m_stunEffect = nullptr;
+    m_silenceEffect = nullptr;
+    m_angelusEffect = nullptr;
     m_cartEffect = nullptr;
     m_lastDamageNumberEffect = nullptr;
     for (CMsgEffect* effect : ownedMsgEffects) {
@@ -4598,9 +4665,85 @@ u8 CGameActor::ProcessState() {
     return 1;
 }
 
+CMsgEffect* CGameActor::SpawnMsgSprite(int processType, const char* spritePath, const char* actPath, int action, float zoom)
+{
+    CMsgEffect* effect = new CMsgEffect();
+    if (!effect) {
+        return nullptr;
+    }
+
+    effect->m_msgEffectType = processType;
+    effect->m_masterGid = m_gid;
+    effect->m_customSpritePath = std::string("data\\sprite\\") + (spritePath ? spritePath : "");
+    effect->m_customActPath = std::string("data\\sprite\\") + (actPath ? actPath : "");
+    effect->m_spriteActionIndex = action;
+    effect->m_spriteMotionIndex = 0;
+    effect->m_isVisible = 1;
+    effect->m_alpha = 255;
+    effect->m_zoom = zoom;
+    effect->m_orgZoom = zoom;
+    effect->m_colorArgb = 0xFFFFFFFFu;
+    effect->m_stateStartTick = timeGetTime();
+    effect->m_pos = m_pos;
+    effect->m_orgPos = m_pos;
+    g_world.m_gameObjectList.push_back(effect);
+    m_msgEffectList.push_back(effect);
+    effect->SendMsg(this, 50, 0, 0, 0);
+    return effect;
+}
+
+void ReleaseMsgSprite(CMsgEffect*& slot)
+{
+    if (!slot) {
+        return;
+    }
+    slot->SendMsg(nullptr, 53, 0, 0, 0);
+    slot = nullptr;
+}
+
 void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3)
 {
     switch (msg) {
+    case 11:
+        Am_Action(reinterpret_cast<const int*>(par1));
+        return;
+    case 12:
+        if (m_stateId != kDeathStateId) {
+            SetState(kDeathStateId);
+        }
+        return;
+    case 19:
+        StartMoveToCell(static_cast<int>(par1), static_cast<int>(par2), static_cast<int>(par3));
+        return;
+    case 26:
+    case 39:
+    case 93:
+    case 94:
+    case 96:
+    case 97:
+    case 111:
+    case 130:
+    case 133:
+        if (par1 != 0) {
+            HandleAttacked(*reinterpret_cast<const WBA*>(par1));
+        }
+        return;
+    case 27:
+        EnqueueWillBeAttacked(reinterpret_cast<WBA*>(par1), static_cast<int>(par2), 111);
+        return;
+    case 37:
+        Am_Skill(reinterpret_cast<const int*>(par1));
+        return;
+    case 38:
+        Am_Groundskill(reinterpret_cast<const int*>(par1));
+        return;
+    case 43:
+        if (par1 != 0) {
+            const int* state = reinterpret_cast<const int*>(par1);
+            SetAttrState(state[0], state[1], state[2], true);
+            m_pkState = state[3];
+        }
+        return;
     case 28:
         if (m_stateId != kDeathStateId
             && m_isPc == 0
@@ -4632,6 +4775,16 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
     }
     case 83:
         DestroySkillRechargeGage();
+        return;
+    case 84:
+        if (m_beginSpellEffect != nullptr) {
+            m_beginSpellEffect->SendMsg(this, 24, 0, 0, 0);
+            const auto found = std::find(m_effectList.begin(), m_effectList.end(), m_beginSpellEffect);
+            if (found != m_effectList.end()) {
+                m_effectList.erase(found);
+            }
+            m_beginSpellEffect = nullptr;
+        }
         return;
     case 34: {
         CPc* pcActor = dynamic_cast<CPc*>(this);
@@ -4748,6 +4901,147 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
     case 95:
         SpawnLuckyDodgeEffect(*this);
         return;
+    case 131:
+        EnqueueWillBeAttacked(reinterpret_cast<WBA*>(par1), static_cast<int>(par2), 130);
+        return;
+    case 134:
+        EnqueueWillBeAttacked(reinterpret_cast<WBA*>(par1), static_cast<int>(par2), 133);
+        return;
+    case 58:
+        if (!m_iceEffect) {
+            m_iceEffect = SpawnMsgSprite(5,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.act",
+                0,
+                1.0f);
+        }
+        return;
+    case 59:
+    case 107:
+        ReleaseMsgSprite(m_iceEffect);
+        return;
+    case 62:
+        SpawnMsgSprite(6,
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.act",
+            1,
+            1.0f);
+        return;
+    case 63:
+        SpawnMsgSprite(6,
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\smoke.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\smoke.act",
+            0,
+            1.0f);
+        return;
+    case 67:
+        if (!m_curseEffect) {
+            m_curseEffect = SpawnMsgSprite(7,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-curse.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-curse.act",
+                0,
+                1.0f);
+        }
+        return;
+    case 68:
+        ReleaseMsgSprite(m_curseEffect);
+        return;
+    case 69:
+        if (!m_sleepEffect) {
+            m_sleepEffect = SpawnMsgSprite(8,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-sleep.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-sleep.act",
+                0,
+                1.0f);
+            SetState(10);
+        }
+        return;
+    case 70:
+        if (m_sleepEffect) {
+            ReleaseMsgSprite(m_sleepEffect);
+            SetState(m_oldstateId);
+        }
+        return;
+    case 71:
+        if (!m_stunEffect) {
+            m_stunEffect = SpawnMsgSprite(9,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-stun.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-stun.act",
+                0,
+                1.0f);
+        }
+        return;
+    case 72:
+        ReleaseMsgSprite(m_stunEffect);
+        return;
+    case 73:
+        if (!m_silenceEffect) {
+            m_silenceEffect = SpawnMsgSprite(10,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.act",
+                10,
+                1.0f);
+        }
+        return;
+    case 74:
+        ReleaseMsgSprite(m_silenceEffect);
+        return;
+    case 75:
+        if (!m_angelusEffect) {
+            m_angelusEffect = SpawnMsgSprite(11,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\msg.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\msg.act",
+                1,
+                1.0f);
+        }
+        return;
+    case 76:
+        ReleaseMsgSprite(m_angelusEffect);
+        return;
+    case 101:
+        if (!m_birdEffect) {
+            const char* sprite = "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB8\xC5.spr";
+            const char* act = "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB8\xC5.act";
+            if (m_job == 4012) {
+                sprite = "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB8\xC5" "2.spr";
+                act = "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB8\xC5" "2.act";
+            } else if (m_job == 4034) {
+                act = "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBA\xA3\xC0\xCC\xBA\xF1\xB8\xC5.act";
+            } else if (m_job == 4050) {
+                sprite = "\xB8\xF3\xBD\xBA\xC5\xCD\\demon_pungus.spr";
+                act = "\xB8\xF3\xBD\xBA\xC5\xCD\\demon_pungus.act";
+            } else if (m_job == 4051) {
+                sprite = "\xB8\xF3\xBD\xBA\xC5\xCD\\explosion.spr";
+                act = "\xB8\xF3\xBD\xBA\xC5\xCD\\explosion.act";
+            } else if (m_job == 4052) {
+                sprite = "\xB8\xF3\xBD\xBA\xC5\xCD\\lude.spr";
+                act = "\xB8\xF3\xBD\xBA\xC5\xCD\\lude.act";
+            }
+            m_birdEffect = SpawnMsgSprite(18, sprite, act, 0, 6.0f);
+        }
+        return;
+    case 102:
+        ReleaseMsgSprite(m_birdEffect);
+        return;
+    case 108:
+        SetState(kGameActorAttackStateId);
+        m_attackMotion = static_cast<float>(GetAttackMotion());
+        RegisterPos();
+        m_stateStartTick = timeGetTime();
+        m_curMotion = 4;
+        m_motionSpeed = 1.0f;
+        m_curAction = Get8Dir(m_roty) + m_curAction;
+        if (m_willBeDead && m_willBeAttackedList.size() <= 1) {
+            SendMsg(this, 12, 0, 0, 0);
+        }
+        return;
+    case 132:
+        SpawnMsgSprite(25,
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\bluemsg.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\msg.act",
+            2,
+            1.0f);
+        return;
     case 51:
         SpawnCartEffect(*this, static_cast<int>(par1));
         return;
@@ -4757,6 +5051,30 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
     default:
         return;
     }
+}
+
+void CRenderObject::SetForceAnimation(int act, int mot, int maxMot, int finishAct, int finishMot, int isAnim, u32 endTick, int isLoop)
+{
+    m_forceAct = static_cast<u8>(act);
+    m_forceMot = static_cast<u8>(mot);
+    m_forceStartMot = static_cast<u8>(mot);
+    m_forceMaxMot = static_cast<u8>(maxMot);
+    m_forceFinishedMot = static_cast<u8>(finishMot);
+    m_isForceAnimLoop = isLoop;
+    m_forceFinishedAct = static_cast<u8>(finishAct);
+    m_isForceAnimation = isAnim;
+    m_isForceAnimFinish = 0;
+    m_isForceState = 1;
+    m_isForceState3 = 0;
+    m_isForceState2 = 0;
+    m_forceStateCnt = 1;
+    m_forceStateEndTick = isAnim ? endTick + timeGetTime() : 0;
+}
+
+// Ref/GameActor.cpp:11191 (0x563300).
+void CRenderObject::SetForceAnimEndTick(u32 tick)
+{
+    m_forceStateEndTick = tick + timeGetTime();
 }
 
 void CGameActor::SetState(int state) {
@@ -4938,9 +5256,215 @@ void CGameActor::ProcessWillBeAttacked()
             continue;
         }
 
-        ApplyQueuedHitReaction(*this, *it);
+        const WBA hit = *it;
+        SendMsg(this, hit.message, reinterpret_cast<msgparam_t>(&hit), 0, 0);
         it = m_willBeAttackedList.erase(it);
     }
+}
+
+void CGameActor::EnqueueWillBeAttacked(WBA* hit, int runningDamage, int forcedMessage)
+{
+    if (!hit) {
+        return;
+    }
+    if (runningDamage != 0) {
+        std::memcpy(&hit->attackedSpeedFactor, &runningDamage, sizeof(runningDamage));
+        hit->message = forcedMessage;
+    }
+    m_willBeAttackedList.push_back(*hit);
+}
+
+void CGameActor::HandleAttacked(const WBA& hit)
+{
+    CGameActor* attacker = FindAttacker(hit.targetGid);
+    if (hit.tCellX == -1 || hit.tCellY == -1) {
+        m_damageDestX = m_pos.x;
+        m_damageDestZ = m_pos.z;
+    } else if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+        gameMode->GetClientCoor(hit.tCellX, hit.tCellY, m_damageDestX, m_damageDestZ);
+    }
+
+    DbgLog("[WBA] msg=%d skillEffect=%d/%d damage=%d level=%d delivery=%u\n",
+        hit.message,
+        hit.effectId1,
+        hit.effectId2,
+        hit.damage,
+        hit.effectLevel,
+        hit.time);
+
+    if (hit.message == 96 || hit.message == 97) {
+        m_colorOfSingleColor = 0xFFFF0000u;
+        if (hit.effectId2 == 198) {
+            m_colorOfSingleColor = static_cast<u32>(-16503900);
+        } else if (hit.effectId2 == 184) {
+            m_colorOfSingleColor = static_cast<u32>(-11513776);
+        }
+    }
+
+    int shownDamage = hit.damage;
+    if (hit.message == 94) {
+        shownDamage = 0;
+    }
+    bool negative = false;
+    if (shownDamage < 0 && shownDamage != -29999) {
+        shownDamage = -shownDamage;
+        negative = true;
+    }
+
+    auto finish = [this]() {
+        if (m_willBeDead && m_willBeAttackedList.size() <= 1) {
+            SendMsg(this, 12, 0, 0, 0);
+        }
+    };
+
+    if (shownDamage == 0) {
+        if (hit.message == 94) {
+            SendMsg(this, 95, 0, 0, 0);
+        } else if (attacker) {
+            const int attackerJob = attacker->m_job;
+            if (attackerJob < 45 || attackerJob >= 4000) {
+                attacker->SendMsg(this, 89, static_cast<int>(0xFFFF0000u), 0, 0);
+            } else {
+                attacker->SendMsg(this, 89, -1, 0, 0);
+            }
+        }
+        finish();
+        return;
+    }
+
+    m_singleColorStartTick = timeGetTime();
+    if (hit.effectId2 != -2) {
+        m_isSingleColor = 1;
+        // Ref runtime-wave: 0x55EA45 (session hit-wave lookup).
+        const char* wave = nullptr;
+        if (hit.message == 96 || hit.message == 97) {
+            wave = g_session.GetWeaponHitWaveName(-1);
+        } else if (IsPlayerJob(m_job)) {
+            wave = g_session.GetJobHitWaveName(m_job);
+        } else {
+            // Ref/GameActor.cpp:4022-4051. Assassins use the low word of
+            // the packed weapon pair. Item ids are converted after that.
+            int weapon = attacker ? attacker->GetWeapon() : -1;
+            if (attacker && (attacker->m_job == 12 || attacker->m_job == 4013 || attacker->m_job == 4035)) {
+                weapon = static_cast<unsigned short>(weapon);
+            }
+            if (weapon > 1000) {
+                weapon = g_session.GetWeaponTypeByItemId(weapon);
+            }
+            wave = g_session.GetWeaponHitWaveName(weapon);
+        }
+        if (wave && g_world.m_player) {
+            const vector3d& player = g_world.m_player->m_pos;
+            PlayWave(wave, m_pos.x - player.x, 0.0f, m_pos.z - player.z);
+        }
+    } else {
+        m_isSingleColor = 0;
+    }
+
+    if (hit.effectId1 >= 0) {
+        if (CRagEffect* first = LaunchEffect(hit.effectId1, vector3d{}, 0.0f)) {
+            first->SendMsg(first, 44, 1, 0, 0);
+        }
+    }
+    if (hit.effectId2 == 122) {
+        m_roty += 90.0f;
+        if (m_roty >= 360.0f) {
+            m_roty -= 360.0f;
+        }
+    } else if (hit.effectId2 >= 0) {
+        if (CRagEffect* second = LaunchEffect(hit.effectId2, vector3d{}, 0.0f)) {
+            second->SendMsg(second, 44, 1, 0, 0);
+            if ((hit.effectId2 == 216 || hit.effectId2 == 217) && attacker) {
+                second->SendMsg(second, 14, reinterpret_cast<msgparam_t>(&attacker->m_pos), 0, 0);
+            }
+        }
+    }
+
+    int cumulative = 0;
+    std::memcpy(&cumulative, &hit.attackedSpeedFactor, sizeof(cumulative));
+    if (negative) {
+        SendMsg(this, 88, shownDamage, 114, 0);
+    } else {
+        switch (hit.message) {
+        case 93:
+            SendMsg(this, 88, shownDamage, -256, 16);
+            SendMsg(this, 92, 0, 0, 0);
+            break;
+        case 130:
+            SendMsg(this, 88, cumulative, -1, 22);
+            SendMsg(this, 132, 0, 0, 0);
+            break;
+        case 133:
+            SendMsg(this, 88, cumulative, -1, 22);
+            break;
+        case 111:
+            SendMsg(this, 88, shownDamage, -1, 21);
+            SendMsg(this, 88, cumulative, -171, 22);
+            break;
+        default:
+            SendMsg(this, 88, shownDamage, -1, 14);
+            break;
+        }
+    }
+
+    const bool cumulativeMessage = hit.message == 111 || hit.message == 130 || hit.message == 133;
+    const float speed = hit.attackedSpeedFactor;
+    const bool player = IsPlayerJob(m_job);
+    if (!cumulativeMessage && m_stateId != kDeathStateId && hit.message != 39
+        && (!player || m_stateId != kGameActorAttackStateId)) {
+        SetState(kHitReactionStateId);
+        if (speed > 1.0f) {
+            m_loopCountOfmotionFinish = speed;
+        } else if (speed > 0.0f) {
+            m_motionSpeed = player ? speed * m_motionSpeed : speed;
+        }
+    }
+    finish();
+}
+
+void CGameActor::StartMoveToCell(int cellX, int cellY, int pathFlag)
+{
+    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+    if (!gameMode || !gameMode->m_world || !gameMode->m_world->m_attr) {
+        return;
+    }
+
+    int srcX = 0;
+    int srcY = 0;
+    gameMode->GetServerCoor(m_pos.x, m_pos.z, srcX, srcY);
+    m_moveStartTime = g_session.GetServerTime();
+    m_moveSrcX = srcX;
+    m_moveSrcY = srcY;
+    m_moveDestX = cellX;
+    m_moveDestY = cellY;
+    m_path.Reset();
+    m_moveStartPos = m_pos;
+
+    const float worldX = TileToWorldCoordX(gameMode->m_world, cellX);
+    const float worldZ = TileToWorldCoordZ(gameMode->m_world, cellY);
+    m_moveEndPos.x = worldX;
+    m_moveEndPos.z = worldZ;
+    m_moveEndPos.y = gameMode->m_world->m_attr->GetHeight(worldX, worldZ);
+    m_moveEndTime = m_moveStartTime;
+
+    g_pathFinder.SetMap(gameMode->m_world->m_attr);
+    const int speed = static_cast<int>(m_speed != 0 ? m_speed : 150u);
+    if (g_pathFinder.FindPath(m_moveStartTime, srcX, srcY, cellX, cellY, 0, 0, speed, &m_path)
+        && m_path.m_cells.size() >= 2) {
+        m_moveEndTime = m_path.m_cells.back().arrivalTime;
+        m_isMoving = m_moveEndTime > m_moveStartTime;
+        m_pathStartCell = 0;
+        SetState(1);
+        if (pathFlag) {
+            m_isNeverAnimation = 0;
+            m_isMotionFreezed = 1;
+        } else {
+            m_isNeverAnimation = 1;
+        }
+        return;
+    }
+
+    SetState(0);
 }
 
 void CGameActor::QueueWillBeAttacked(const WBA& hitInfo)
@@ -4998,6 +5522,24 @@ void CGameActor::DeleteMatchingEffect(CMsgEffect* effect)
 
     if (m_birdEffect == effect) {
         m_birdEffect = nullptr;
+    }
+    if (m_iceEffect == effect) {
+        m_iceEffect = nullptr;
+    }
+    if (m_curseEffect == effect) {
+        m_curseEffect = nullptr;
+    }
+    if (m_sleepEffect == effect) {
+        m_sleepEffect = nullptr;
+    }
+    if (m_stunEffect == effect) {
+        m_stunEffect = nullptr;
+    }
+    if (m_silenceEffect == effect) {
+        m_silenceEffect = nullptr;
+    }
+    if (m_angelusEffect == effect) {
+        m_angelusEffect = nullptr;
     }
     if (m_cartEffect == effect) {
         DbgLog("[CartEffect] detach gid=%u effect=%p removedFromOwner=%d disappear=%d\n",

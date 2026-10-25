@@ -394,7 +394,7 @@ std::string ResolveTextureDataPath(const std::string& fileName, const char* ext,
     return std::string();
 }
 
-std::string ResolveTexturePath(const char* name)
+std::string ResolveTexturePathImpl(const char* name)
 {
     if (!name || !*name) {
         return std::string();
@@ -527,6 +527,11 @@ void BuildLookAtMatrix(const vector3d& eye, const vector3d& at, const vector3d& 
 }
 
 } // namespace
+
+std::string ResolveTexturePath(const char* name)
+{
+    return ResolveTexturePathImpl(name);
+}
 
 CRenderer g_renderer;
 CTexMgr g_texMgr;

@@ -9,6 +9,12 @@ add_library(ro_world STATIC
     GameActor.cpp
     RagEffect.h
     RagEffect.cpp
+    SkillSpecialEffect.cpp
+    ArrowEffect.cpp
+    GroundScope.cpp
+    SkillUnit.cpp
+    GraffiSkill.cpp
+    GameActorMsgHandler.cpp
     MsgEffect.h
     MsgEffect.cpp
     Granny.h
@@ -20,4 +26,5 @@ target_link_libraries(ro_world PUBLIC
     ro_core
     ro_res
     ro_ui
+    ro_pathfinder
 )

@@ -25,14 +25,19 @@ constexpr const char* kBodyPaletteRoot = "data\\palette\\\xB8\xF6\\";
 constexpr const char* kHeadPaletteRoot = "data\\palette\\\xB8\xD3\xB8\xAE\\";
 constexpr const char* kFemaleSex = "\xBF\xA9";
 constexpr const char* kMaleSex = "\xB3\xB2";
-constexpr const char* kPlayerClothesWave = "player_clothes.wav";
-constexpr const char* kPlayerWoodenMaleWave = "player_wooden_male.wav";
-constexpr const char* kPlayerMetalWave = "player_metal.wav";
-constexpr const char* kHitMaceWave = "_hit_mace.wav";
-constexpr const char* kHitSwordWave = "_hit_sword.wav";
-constexpr const char* kHitSpearWave = "_hit_spear.wav";
-constexpr const char* kHitAxeWave = "_hit_axe.wav";
-constexpr const char* kHitArrowWave = "_hit_arrow.wav";
+
+#include "JobHitWaveName.generated.inc"
+#include "WeaponHitWaveName.generated.inc"
+#include "WeaponSwingWaveName.generated.inc"
+#include "SkillAttackEffectIdTable.generated.inc"
+
+void FillWaveNameTable(std::vector<std::string>& dest, const char* const* source, int count)
+{
+    dest.resize(static_cast<size_t>(count));
+    for (int index = 0; index < count; ++index) {
+        dest[static_cast<size_t>(index)] = source[index] ? source[index] : "";
+    }
+}
 
 constexpr const char* kWeaponTokenDagger = "\xB4\xDC\xB0\xCB";
 constexpr const char* kWeaponTokenSword = "\xB0\xCB";
@@ -209,76 +214,6 @@ constexpr const char* kEnemyHitFireWaves[] = {
 constexpr const char* kEnemyHitWindWaves[] = {
     "_enemy_hit_wind1.wav",
     "_enemy_hit_wind2.wav",
-};
-
-struct JobWaveOverride {
-    int job;
-    const char* waveName;
-};
-
-constexpr JobWaveOverride kJobHitWaveOverrides[] = {
-    { 1, kPlayerMetalWave },
-    { 3, kPlayerWoodenMaleWave },
-    { 6, kPlayerWoodenMaleWave },
-    { 7, kPlayerMetalWave },
-    { 11, kPlayerWoodenMaleWave },
-    { 12, kPlayerWoodenMaleWave },
-    { 14, kPlayerMetalWave },
-    { 15, kPlayerMetalWave },
-    { 17, kPlayerWoodenMaleWave },
-    { 19, kPlayerWoodenMaleWave },
-    { 20, kPlayerWoodenMaleWave },
-    { 24, kPlayerWoodenMaleWave },
-    { 25, kPlayerWoodenMaleWave },
-    { 52, kPlayerMetalWave },
-    { 54, kPlayerWoodenMaleWave },
-    { 57, kPlayerWoodenMaleWave },
-    { 58, kPlayerMetalWave },
-    { 62, kPlayerWoodenMaleWave },
-    { 63, kPlayerWoodenMaleWave },
-    { 65, kPlayerMetalWave },
-    { 66, kPlayerMetalWave },
-    { 68, kPlayerWoodenMaleWave },
-    { 70, kPlayerWoodenMaleWave },
-    { 71, kPlayerWoodenMaleWave },
-    { 74, kPlayerMetalWave },
-    { 76, kPlayerWoodenMaleWave },
-    { 79, kPlayerWoodenMaleWave },
-    { 80, kPlayerMetalWave },
-    { 84, kPlayerWoodenMaleWave },
-    { 85, kPlayerWoodenMaleWave },
-    { 87, kPlayerMetalWave },
-    { 88, kPlayerMetalWave },
-    { 90, kPlayerWoodenMaleWave },
-    { 92, kPlayerWoodenMaleWave },
-    { 93, kPlayerWoodenMaleWave },
-    { 96, kPlayerWoodenMaleWave },
-    { 97, kPlayerMetalWave },
-    { 98, kPlayerMetalWave },
-    { 100, kPlayerWoodenMaleWave },
-    { 101, kPlayerMetalWave },
-};
-
-struct WeaponWaveOverride {
-    int weaponType;
-    const char* waveName;
-};
-
-constexpr WeaponWaveOverride kWeaponHitWaveOverrides[] = {
-    { 0, kHitMaceWave },
-    { 1, kHitSwordWave },
-    { 2, kHitSwordWave },
-    { 3, kHitSwordWave },
-    { 4, kHitSpearWave },
-    { 5, kHitSpearWave },
-    { 6, kHitAxeWave },
-    { 7, kHitAxeWave },
-    { 8, kHitMaceWave },
-    { 9, kHitMaceWave },
-    { 10, kHitMaceWave },
-    { 11, kHitArrowWave },
-    { 15, kHitMaceWave },
-    { 23, kHitMaceWave },
 };
 
 struct JobTokenEntry {
@@ -1260,6 +1195,7 @@ CSession::CSession() : m_aid(0), m_authCode(0), m_sex(0), m_isEffectOn(true), m_
     ClearShortcutSlots();
     InitJobHitWaveName();
     InitWeaponHitWaveName();
+    InitWeaponSwingWaveName();
 }
 
 CSession::~CSession()
@@ -2492,24 +2428,51 @@ const char* CSession::GetWeaponHitWaveName(int weapon) const
     return m_weaponHitWaveNameTable[weapon].c_str();
 }
 
+const char* CSession::GetWeaponSwingWaveName(int weapon) const
+{
+    // Ref/Session.cpp GetWeaponSwingWaveName: weapon -1 uses the same four enemy-hit waves as a hit.
+    if (weapon == -1) {
+        return kEnemyHitNormalWaves[std::rand() % (sizeof(kEnemyHitNormalWaves) / sizeof(kEnemyHitNormalWaves[0]))];
+    }
+
+    if (weapon < 0 || weapon >= static_cast<int>(m_weaponSwingWaveNameTable.size())) {
+        return "";
+    }
+
+    return m_weaponSwingWaveNameTable[weapon].c_str();
+}
+
+int CSession::GetAttackEffectIdBySkillId(unsigned int skillId) const
+{
+    // Ref/Session.cpp:6925. 0x40E is the last valid index of the 1039-entry table.
+    if (skillId > 0x40Eu) {
+        return -1;
+    }
+    return kSkillAttackEffectIdTable[skillId];
+}
+
+int CSession::GetAttackedEffectIdBySkillId(unsigned int skillId) const
+{
+    // Ref/Session.cpp:6938.
+    if (skillId > 0x40Eu) {
+        return -1;
+    }
+    return kSkillAttackedEffectIdTable[skillId];
+}
+
 void CSession::InitJobHitWaveName()
 {
-    m_jobHitWaveNameTable.assign(21068, kPlayerClothesWave);
-    for (const JobWaveOverride& entry : kJobHitWaveOverrides) {
-        if (entry.job >= 0 && entry.job < static_cast<int>(m_jobHitWaveNameTable.size())) {
-            m_jobHitWaveNameTable[entry.job] = entry.waveName;
-        }
-    }
+    FillWaveNameTable(m_jobHitWaveNameTable, kJobHitWaveName, kJobHitWaveNameCount);
 }
 
 void CSession::InitWeaponHitWaveName()
 {
-    m_weaponHitWaveNameTable.assign(31, kHitMaceWave);
-    for (const WeaponWaveOverride& entry : kWeaponHitWaveOverrides) {
-        if (entry.weaponType >= 0 && entry.weaponType < static_cast<int>(m_weaponHitWaveNameTable.size())) {
-            m_weaponHitWaveNameTable[entry.weaponType] = entry.waveName;
-        }
-    }
+    FillWaveNameTable(m_weaponHitWaveNameTable, kWeaponHitWaveName, kWeaponHitWaveNameCount);
+}
+
+void CSession::InitWeaponSwingWaveName()
+{
+    FillWaveNameTable(m_weaponSwingWaveNameTable, kWeaponSwingWaveName, kWeaponSwingWaveNameCount);
 }
 
 int CSession::NormalizeJob(int job) const
@@ -2730,6 +2693,30 @@ char* CSession::GetHeadPaletteName(int head, int job, int sex, int palNum, char*
     const char* sexToken = GetSexToken(sex);
     std::sprintf(buf, "%s\xB8\xD3\xB8\xAE%d_%s_%d.pal", kHeadPaletteRoot, resolvedHead, sexToken, palNum);
     return buf;
+}
+
+// Ref/Session2.cpp:2912-2934 (0x681C20).
+u32 CSession::GetForceAnimEndTick(u32 aid) const
+{
+    for (const ForceAnimTick& entry : m_forceAnimEndTick) {
+        if (entry.aid == aid) {
+            return entry.tick;
+        }
+    }
+    return static_cast<u32>(-1);
+}
+
+// Ref/Session2.cpp:7899-7998 (0x681A20). Update the first matching AID,
+// otherwise append, retaining the vector's order.
+void CSession::SetForceAnimEndTick(u32 aid, u32 tick)
+{
+    for (ForceAnimTick& entry : m_forceAnimEndTick) {
+        if (entry.aid == aid) {
+            entry.tick = tick;
+            return;
+        }
+    }
+    m_forceAnimEndTick.push_back({ aid, tick });
 }
 
 // Ref CSession::GetWeaponType — Ref/Session2.cpp

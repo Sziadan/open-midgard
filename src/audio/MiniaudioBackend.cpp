@@ -1,6 +1,7 @@
 #include "AudioBackend.h"
 
 #include "Audio.h"
+#include "WaveMath.h"
 #include "core/File.h"
 
 #if defined(_MSC_VER)
@@ -91,6 +92,18 @@ public:
         }
     }
 
+    // No Miles 3D provider is open in this backend. Use the original
+    // no-provider branch instead of substituting a different rolloff curve.
+    bool Has3DProvider() const override { return false; }
+
+    bool PlayWave3D(const char* fName, float x, float y, float z,
+        int, int, float volume) override
+    {
+        const int attenuated = ro::audio::DigitalWaveVolume(x, y, z, 250, 40,
+            static_cast<int>(volume * 127.0f), 1.0f);
+        return PlayWave(fName, static_cast<float>(attenuated) / 127.0f);
+    }
+
     bool PlayWave(const char* fName, float volume) override
     {
         if (!fName || !*fName || volume <= 0.0f || !Init()) {
@@ -118,7 +131,7 @@ public:
         if (ma_sound_init_from_data_source(
                 &m_engine,
                 &instance->decoder,
-                0,
+                MA_SOUND_FLAG_NO_SPATIALIZATION,
                 nullptr,
                 &instance->sound) != MA_SUCCESS) {
             CleanupOneShot(instance.get());
