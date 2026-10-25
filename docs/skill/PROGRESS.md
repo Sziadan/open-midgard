@@ -4,9 +4,17 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A WarpZone2 (321) circle/orbit migration. Sight/Sight2 is checkpointed in `515a3b4`; WarpZone2 now binds reference circle state/rendering and its orbit particle resource/update/render path. Handler and backend parity remain partial.
+Current work: WP5A obsolete heal/recovery emitter cleanup. WarpZone2 is checkpointed in `221a574`; five unreachable legacy heal/recovery circle/cylinder/particle implementations have now been removed. Active reference helper bodies and tier routing remain unchanged.
 
-Next action: remove obsolete legacy heal/recovery circle emitters bypassed by OnProcess2, then port remaining active circle emitters and their initialization/state. Generic particle control branches and other callers (including FireBall), map initialization/scheduling, resource-loader/cache parity, full renderer/fog/backend behavior and unfinished packages/acceptance remain open.
+Next action: port remaining active circle emitters and their initialization/state. Generic particle control branches and other callers (including FireBall), map initialization/scheduling, resource-loader/cache parity, full renderer/fog/backend behavior and unfinished packages/acceptance remain open.
+
+## Obsolete heal / recovery emitter cleanup — 2026-10-25
+
+- Deleted SpawnRecoveryHp/Sp and SpawnHealLight/Medium/Large, their Handler tags, declarations and fallback switch branches. Effects 312/313/325/331/332 are already handled by OnProcess2 before that switch through ApplyHeal/ApplyHeal2/ApplyHealTime. Removed the dead guessed texture alternatives, synthetic circle/cylinder/particle profiles and extra wave paths with those methods.
+- Init retains specialized tier handling rather than selecting a generic STR handler. Existing cull radius 140 for those five ids is preserved explicitly after removal of the unused tags; no culling-profile change is intended.
+- Validation: source comparison confirms OnProcess2 and all three active helper bodies byte-identical to the preceding commit; the tier-before-fallback guard remains present. Release build, six silent C++ suites / 492 checks, six Python tests and whitespace check pass. No new behavior tests were added for this deletion-only part. Approved OldRO hash matches `C14D6626C0537829877FAD5766A50EE7992AEE2E73E0F9A094CECC66F7CF67A3`.
+- Active helper/primitive/resource/backend parity remains partial; this removes obsolete alternatives, not a full-healing acceptance claim. No media/live acceptance. WP5A and the overall plan remain incomplete.
+
 
 ## WarpZone2 circle / orbit migration — 2026-10-25
 

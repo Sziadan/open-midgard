@@ -86,7 +86,7 @@ extract_body(poison_emitters "${effect_source}" "void ConfigureEnchantPoisonPart
 extract_body(sight_emitters "${effect_source}" "void CRagEffect::ApplySight(" "void CRagEffect::SpawnFireBall()")
 extract_body(sight_projection "${effect_source}" "void ProjectReferenceEffectVertex(" "void SubmitReferenceEffectTriangle(")
 extract_body(ruwach_emitter "${effect_source}" "void CRagEffect::SpawnRuwach()" "bool EffectTicksWhenNoFrameTime(")
-extract_body(angel_emitters "${effect_source}" "void CRagEffect::ApplySuperAngel(" "void CRagEffect::SpawnRecoveryHp()")
+extract_body(angel_emitters "${effect_source}" "void CRagEffect::ApplySuperAngel(" "void CRagEffect::SpawnHideStart()")
 extract_body(slash_primitive "${effect_source}" "void UpdateSlash1Primitive(" "// Ref/GameActor.cpp:10748-10928.")
 extract_body(angel_render "${effect_source}" "void RenderReferenceParticlePrimitive(" "CEffectPrim::~CEffectPrim()")
 extract_body(particle_render "${effect_source}" "struct ParticleSprite {" "void RenderReferenceParticlePrimitive(")

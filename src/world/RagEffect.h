@@ -379,11 +379,6 @@ private:
         MapPillar,
         MapMagicZone,
         MapParticle,
-        RecoveryHp,
-        RecoverySp,
-        HealLight,
-        HealMedium,
-        HealLarge,
         HideStart,
         GrimTooth,
         GrimToothAtk,
@@ -491,11 +486,6 @@ private:
     void SpawnMapParticle();
     void ApplySuperAngel(signed char variant, signed char time);
     void ProcessSuperAngelEffect();
-    void SpawnRecoveryHp();
-    void SpawnRecoverySp();
-    void SpawnHealLight();
-    void SpawnHealMedium();
-    void SpawnHealLarge();
     void SpawnHideStart();
     void SpawnGrimTooth();
     void SpawnGrimToothAtk();
