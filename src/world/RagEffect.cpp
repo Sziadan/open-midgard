@@ -2226,9 +2226,6 @@ void AddXformDelta(KAC_XFORMDATA* target, const KAC_XFORMDATA& delta)
     target->crG += delta.crG;
     target->crB += delta.crB;
     target->crA += delta.crA;
-    target->srcalpha = delta.srcalpha;
-    target->destalpha = delta.destalpha;
-    target->mtpreset = delta.mtpreset;
 }
 
 std::string ResolveStrName(int effectId)
@@ -7232,6 +7229,7 @@ CRagEffect::CRagEffect()
     , m_strFrameActive(true)
     , m_lastProcessTick(timeGetTime())
     , m_tickCarryMs(kEffectTickMs)
+    , m_strScreenOffset{ 0.0f, -80.0f, 0.0f }
     , m_strAnchorPosition{}
     , m_effectPos{}
     , m_cachedPos{}
@@ -7317,7 +7315,7 @@ void CRagEffect::InitEZ2STRFrame()
     }
 }
 
-bool CRagEffect::ProcessEZ2STR()
+bool CRagEffect::ProcessEZ2STR(float x, float y, float z)
 {
     m_strFrameActive = false;
     if (!m_ezEffectRes || !m_aniClips) {
@@ -7335,6 +7333,10 @@ bool CRagEffect::ProcessEZ2STR()
     CRenderObject* master = ResolveCurrentMaster();
     if (!master) return false;
     m_strAnchorPosition = master->m_pos;
+    m_strScreenOffset = { x, y, z };
+    // Binary 0x5F1358/0x5F138A reuses the z argument slot as the loop
+    // quotient. Reverse-loop mode reads its preceding value before replacing it.
+    float loopQuotient = z;
     m_isLayerDrawn.fill(0);
     m_activeAniKeyFrame.fill(-1);
     m_activeAniKeyAppliedState.fill(-1);
@@ -7350,17 +7352,16 @@ bool CRagEffect::ProcessEZ2STR()
             continue;
         }
         if (curKeyIndex >= layer.cAniKey) {
-            curKeyIndex = layer.cAniKey - 1;
+            continue;
         }
 
         const KAC_KEYFRAME* key = &layer.aAniKey[static_cast<size_t>(curKeyIndex)];
-        int frameOffset = m_stateCnt - key->iFrame;
+        const int frameOffset = m_stateCnt - key->iFrame;
         if (frameOffset >= 0 && curKeyIndex < layer.cAniKey - 1) {
             const KAC_KEYFRAME& nextKey = layer.aAniKey[static_cast<size_t>(curKeyIndex + 1)];
             if (frameOffset > 0 && nextKey.iFrame == m_stateCnt) {
                 ++curKeyIndex;
                 key = &layer.aAniKey[static_cast<size_t>(curKeyIndex)];
-                frameOffset = m_stateCnt - key->iFrame;
                 if (curKeyIndex >= layer.cAniKey - 1) {
                     curKeyIndex = -1;
                     ++m_iCurLayer;
@@ -7379,31 +7380,42 @@ bool CRagEffect::ProcessEZ2STR()
             case 1:
                 xform.aniframe += key->XformData.aniframe;
                 break;
-            case 2:
-                xform.aniframe += key->XformData.anidelta;
-                if (xform.aniframe >= static_cast<float>(layer.cTex)) {
-                    xform.aniframe = static_cast<float>((std::max)(layer.cTex - 1, 0));
+            case 2: {
+                const double nextFrame = static_cast<double>(xform.aniframe) + key->XformData.anidelta;
+                xform.aniframe = static_cast<float>(nextFrame);
+                if (nextFrame >= static_cast<float>(layer.cTex)) {
+                    xform.aniframe = static_cast<float>(layer.cTex) - 1.0f;
                 }
                 break;
+            }
             case 3: {
-                xform.aniframe += key->XformData.anidelta;
-                const float texCount = static_cast<float>((std::max)(layer.cTex, 1));
-                if (xform.aniframe >= texCount) {
-                    xform.aniframe = std::fmod(xform.aniframe, texCount);
+                const double nextFrame = static_cast<double>(xform.aniframe) + key->XformData.anidelta;
+                xform.aniframe = static_cast<float>(nextFrame);
+                const float frame = xform.aniframe;
+                const float texCount = static_cast<float>(layer.cTex);
+                if (static_cast<double>(texCount) <= nextFrame) {
+                    loopQuotient = static_cast<float>(static_cast<int>(static_cast<double>(frame) / texCount));
+                    xform.aniframe = static_cast<float>(frame - static_cast<double>(texCount) * loopQuotient);
                 }
                 break;
             }
             case 4: {
-                xform.aniframe -= key->XformData.anidelta;
-                const float texCount = static_cast<float>((std::max)(layer.cTex, 1));
-                while (xform.aniframe < 0.0f) {
-                    xform.aniframe += texCount;
+                const double nextFrame = static_cast<double>(xform.aniframe) - key->XformData.anidelta;
+                xform.aniframe = static_cast<float>(nextFrame);
+                if (nextFrame < 0.0) {
+                    const float texCount = static_cast<float>(layer.cTex);
+                    double remainder = nextFrame - static_cast<double>(texCount) * loopQuotient;
+                    loopQuotient = static_cast<float>(static_cast<int>(remainder / texCount));
+                    if (remainder < 0.0) remainder += texCount;
+                    xform.aniframe = static_cast<float>(remainder);
                 }
                 break;
             }
             case 5: {
-                const int span = (std::max)(layer.cTex - 1, 1);
-                const int motion = static_cast<int>(static_cast<float>(frameOffset) * key->XformData.anidelta + xform.aniframe);
+                // Ref uses the pre-transition key age even when this call just
+                // advanced the cursor to a new key; it does not recompute age.
+                const int motion = static_cast<int>(static_cast<double>(frameOffset) * key->XformData.anidelta + xform.aniframe);
+                const int span = layer.cTex - 1;
                 xform.aniframe = ((motion / span) & 1) != 0
                     ? static_cast<float>(span * ((motion / span) + 1) - motion)
                     : static_cast<float>(motion % span);
@@ -7483,9 +7495,9 @@ void CRagEffect::RenderAniClip(int layerIndex, const KAC_LAYER& layer, const KAC
         return;
     }
 
-    m_tlvertX = anchor.x;
-    m_tlvertY = anchor.y - 80.0f;
-    m_tlvertZ = anchor.z;
+    m_tlvertX = anchor.x + m_strScreenOffset.x;
+    m_tlvertY = anchor.y + m_strScreenOffset.y;
+    m_tlvertZ = anchor.z + m_strScreenOffset.z;
 
     RPFace* face = g_renderer.BorrowNullRP();
     if (!face) {

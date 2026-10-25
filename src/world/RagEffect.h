@@ -301,7 +301,7 @@ private:
     void ClearPrims();
     void LoadEzEffect(const char* fName);
     void InitEZ2STRFrame();
-    bool ProcessEZ2STR();
+    bool ProcessEZ2STR(float x = 0.0f, float y = -80.0f, float z = 0.0f);
     bool ProcessTargetPositionStr();
     bool OnProcess2();
     bool ProcessEffectFrame();
@@ -427,6 +427,7 @@ private:
     bool m_strFrameActive;
     u32 m_lastProcessTick;
     float m_tickCarryMs;
+    vector3d m_strScreenOffset;
     vector3d m_strAnchorPosition;
     vector3d m_effectPos;
     vector3d m_cachedPos;

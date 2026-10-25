@@ -4,9 +4,15 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A position propagation, primitive counter ownership, STR target anchoring and Entry2, partial. Incoming changes are saved in commit `aa6ea58`; subsequent continuation changes remain in the working tree.
+Current work: WP5A STR keyframe arithmetic, partial. Checkpoint `d3610bb` saves the previous lifecycle, position and ownership work. Completed parts are now committed separately as requested.
 
-Next action: reconcile the full reference primitive enum/dispatch, replace the remaining legacy emitters/renderers, and finish per-handler return/position semantics. Primitive counters now advance only in the outer processor. STR keeps the processing-time world anchor; full reference projection/render math and animation modes remain open. Then continue outstanding WP2/WP3/WP7 and acceptance work. The overall plan is not complete.
+Next action: port STR quad construction/blend/color/depth behavior and remove the reconstructed renderer's key-age suppression. Then reconcile the primitive enum/dispatch and remaining legacy emitter/primitive bodies. Full WP5A and overall acceptance remain incomplete.
+
+## STR keyframe continuation — 2026-10-25
+
+- Delta keys preserve blend modes and material preset, as the original processor does. Key transitions preserve the preceding key's age for animation mode 5.
+- Modes 1-5 now retain Ref arithmetic, signed results and truncation. The executable confirms that reverse-loop mode reads the quotient left by a preceding layer and initially uses the z argument slot. Preserved this quirk instead of normalizing it to a repeated wrap. ProcessEZ2STR now accepts and retains the original x/y/z arguments for its renderer.
+- Validation: five silent C++ suites pass with 178 checks (120 lifecycle/STR), five Python tests pass, release build and approved deployment pass. Deployed SHA-256: `644A159BA069B37396D3CB03F85DC9167C9C6A1B6243F222F6D7C8D704D0AE18`. No media/live acceptance was used. The renderer, primitive mapping and remaining work packages are still open.
 
 ## Position/primitive continuation — 2026-10-25
 

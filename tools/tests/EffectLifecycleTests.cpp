@@ -106,7 +106,7 @@ struct CRagEffect : CGameObject {
     u32 m_masterActorGid = 0;
     int m_type = 0, m_stateCnt = 0, m_duration = 3, m_count = 0, m_level = 0;
     float m_longitude = 0, m_param[4]{};
-    vector3d m_strAnchorPosition, m_effectPos, m_cachedPos, m_deltaPos, m_deltaPos2, m_targetPos;
+    vector3d m_strScreenOffset, m_strAnchorPosition, m_effectPos, m_cachedPos, m_deltaPos, m_deltaPos2, m_targetPos;
     bool m_hasTargetPos = false;
     void* m_ezEffectRes = nullptr;
     KANICLIP* m_aniClips = nullptr;
@@ -117,7 +117,7 @@ struct CRagEffect : CGameObject {
     bool m_strFrameActive = true;
     bool FinishEffectFrame();
     void InitEZ2STRFrame();
-    bool ProcessEZ2STR();
+    bool ProcessEZ2STR(float x = 0.0f, float y = -80.0f, float z = 0.0f);
     bool ProcessTargetPositionStr();
     std::list<CEffectPrim*> m_primList;
     bool active = true, spawn = false;
@@ -550,6 +550,91 @@ int main()
         prim.resetFrame = -1; prim.m_duration = 0; prim.m_stateCnt = 0;
         check(prim.OnProcess() == 0 && prim.observedFrame == 0 && prim.m_stateCnt == 1,
             "zero-duration primitive dispatches at frame zero then expires");
+    }
+    {
+        KAC_XFORMDATA target, delta;
+        target.x = 1; delta.x = 2;
+        target.us2 = 3; delta.us2 = 4;
+        target.ax[3] = 5; delta.ax[3] = 6;
+        target.ay[0] = 7; delta.ay[0] = 8;
+        target.rz = 9; delta.rz = 10;
+        target.crR = 11; delta.crR = 12;
+        target.crA = 13; delta.crA = 14;
+        target.srcalpha = 5; target.destalpha = 2; target.mtpreset = 9;
+        delta.srcalpha = 1; delta.destalpha = 7; delta.mtpreset = 3;
+        AddXformDelta(&target,delta);
+        check(target.x == 3 && target.us2 == 7 && target.ax[3] == 11 && target.ay[0] == 15
+            && target.rz == 19 && target.crR == 23 && target.crA == 27,
+            "STR delta keys accumulate positional, UV, corner, rotation and color fields");
+        check(target.srcalpha == 5 && target.destalpha == 2 && target.mtpreset == 9,
+            "STR delta keys retain existing blend modes and material preset");
+    }
+    {
+        auto runMode = [&](u32 mode, float start, float delta, int age, int textures) {
+            CRagEffect effect;
+            effect.m_master = &actor;
+            KANICLIP clip; clip.cLayer = 2;
+            KAC_KEYFRAME keys[2]; keys[1].iFrame = 1000;
+            keys[0].dwType = 1;
+            keys[0].XformData.anitype = mode;
+            keys[0].XformData.aniframe = delta;
+            keys[0].XformData.anidelta = delta;
+            clip.aLayer[1].cAniKey = 2; clip.aLayer[1].aAniKey = keys; clip.aLayer[1].cTex = textures;
+            effect.m_aniClips = &clip; effect.m_ezEffectRes = &clip;
+            effect.InitEZ2STRFrame(); effect.m_stateCnt = age;
+            effect.m_actXformData[1].aniframe = start;
+            effect.ProcessEZ2STR();
+            return effect.m_actXformData[1].aniframe;
+        };
+        check(runMode(0,3,20,7,5) == 3, "STR stop mode retains frame");
+        check(runMode(1,2,1.5f,7,5) == 3.5f, "STR interpolation mode adds key frame delta");
+        check(runMode(2,4.5f,2,7,5) == 4, "STR once mode clamps at last texture");
+        check(runMode(2,-3,1,7,5) == -2, "STR once mode preserves negative frame without an invented lower clamp");
+        check(runMode(3,3,13,7,5) == 1, "STR forward loop truncates quotient across multiple cycles");
+        check(runMode(3,1,-9,7,5) == -8, "STR forward loop leaves negative values untouched");
+        check(runMode(4,1,2,7,5) == 4, "STR reverse loop applies its single texture-count addition");
+        check(runMode(4,1,13,7,5) == -7, "STR reverse loop preserves original out-of-range result for a large backward step");
+        check(runMode(5,0,1,7,5) == 1, "STR bidirectional mode uses integer quotient parity");
+        check(runMode(5,0,-1,1,5) == -1, "STR bidirectional mode preserves signed remainder");
+        check(runMode(99,3,20,7,5) == 3, "STR unknown animation mode leaves frame unchanged");
+    }
+    {
+        CRagEffect effect;
+        effect.m_master = &actor;
+        KANICLIP clip; clip.cLayer = 2;
+        KAC_KEYFRAME keys[2]; keys[0].XformData.aniframe = 1;
+        keys[1].iFrame = 10; keys[1].dwType = 1;
+        keys[1].XformData.anitype = 5; keys[1].XformData.anidelta = 2;
+        clip.aLayer[1].cAniKey = 2; clip.aLayer[1].aAniKey = keys; clip.aLayer[1].cTex = 5;
+        effect.m_aniClips = &clip; effect.m_ezEffectRes = &clip;
+        effect.InitEZ2STRFrame(); effect.ProcessEZ2STR(); effect.m_stateCnt = 10;
+        check(effect.ProcessEZ2STR() && effect.m_actXformData[1].aniframe == 3
+            && effect.m_aiCurAniKey[1] == -1 && effect.m_iCurLayer == 1,
+            "STR key transition uses the previous key age for bidirectional terminal delta");
+    }
+    {
+        CRagEffect effect;
+        effect.m_master = &actor;
+        KANICLIP clip; clip.cLayer = 4;
+        KAC_KEYFRAME keys[3][2];
+        for (int i = 0; i < 3; ++i) {
+            keys[i][0].dwType = 1; keys[i][0].XformData.anitype = i == 0 ? 3 : 4;
+            keys[i][0].XformData.anidelta = i == 0 ? 11.0f : 2.0f;
+            keys[i][1].iFrame = 1000;
+            clip.aLayer[i+1].cAniKey = 2; clip.aLayer[i+1].aAniKey = keys[i]; clip.aLayer[i+1].cTex = 5;
+            effect.m_actXformData[i+1].aniframe = 1;
+        }
+        effect.m_aniClips = &clip; effect.m_ezEffectRes = &clip;
+        effect.InitEZ2STRFrame();
+        check(effect.ProcessEZ2STR() && effect.m_actXformData[1].aniframe == 2
+            && effect.m_actXformData[2].aniframe == -6 && effect.m_actXformData[3].aniframe == 9,
+            "STR loop quotient is shared across layers in binary order, including its reverse-loop quirk");
+        clip.cLayer = 2;
+        keys[0][0].XformData.anitype = 4; keys[0][0].XformData.anidelta = 2;
+        effect.InitEZ2STRFrame(); effect.m_actXformData[1].aniframe = 1;
+        check(effect.ProcessEZ2STR(7,-9,3) && effect.m_actXformData[1].aniframe == -11
+            && effect.m_strScreenOffset.x == 7 && effect.m_strScreenOffset.y == -9 && effect.m_strScreenOffset.z == 3,
+            "STR reverse-loop scratch starts at passed z while screen offsets preserve all original arguments");
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
