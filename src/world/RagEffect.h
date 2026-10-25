@@ -460,6 +460,7 @@ private:
     void ApplyEntry2();
     void ApplyPortal2(int variant);
     void ApplyReadyPortal();
+    void ApplyPortal();
     void ApplyReadyPortal2();
     void ApplyWarpZone2(const char* textureName);
     void ApplyBlackDevil(const char* textureName);

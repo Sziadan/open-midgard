@@ -342,3 +342,11 @@ Validation: release build, six silent C++ suites / 492 checks (363 lifecycle/pri
 - Distinct synthetic map id 50002 and ReadyPortal2 remain separate; neither is newly certified. Test extraction boundary now ends WarpZone2 before the new helper.
 
 Validation: release build, six silent C++ suites / 504 checks (375 lifecycle/primitive, 71 rendering, 58 other), six Python tests, two-literal executable audit and whitespace check pass. Twelve new numeric checks cover timing, stored origin/audio, source constructor/profile, rotated initial segment, expansion/width and fade. Approved OldRO SHA-256: `E82C68D3F5BC8C9E64C2D327CD1F89942186F2456AC7FAF39DB5ECBC38889C66`. No media/live acceptance. Other circle callers, map scheduling, resource/cache and full renderer/backend parity remain open.
+
+## Original Portal emitter / circle — 2026-10-26
+
+- Ref/RagEffect.cpp:6981-7039 (0x5FA2A0), original dispatcher id 36 -> ApplyPortal. Frame zero emits two PP_3DCYLINDER in order, with original duration, arc 36, radii 3.5/4, rotation speeds 4/5, heights 40/50, alpha 0/max 128/rise max*0.16666667 and duration-6 fade. No sound, RNG or live-actor position refresh.
+- Every fourteenth frame emits the original circle, including frame zero after both cylinders: duration 30, y -1, inner width 8, X rotation 90, radius speed 1, original deceleration/fade and constructor alpha/max 254, pattern zero and one segment. Id 36 now uses the reference circle updater/renderer. All three texture requests match ring_blue bytes at 0x71943C.
+- Synthetic map portal scheduling remains distinct. Cylinder updater/renderer parity is still open; this checkpoint certifies emitter fields/order and the circle binding only.
+
+Validation: release build, six silent C++ suites / 515 checks (386 lifecycle/primitive, 71 rendering, 58 other), six Python tests and whitespace check pass. Eleven new checks cover ordering, distinct cylinder profiles, defaults/resource, stored origin, circle state, cadence and no RNG/wave. No media/live acceptance. Approved OldRO SHA-256: `BE2A03783A4B0E4627C8EA15C5C0C66C2471C314431F758E50F3274BAEBDC8DF`. WP5A and the overall plan remain incomplete.

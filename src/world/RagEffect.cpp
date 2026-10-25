@@ -6308,7 +6308,7 @@ void CEffectPrim::SetParticleResources(const char* sprName, const char* actName,
 bool CEffectPrim::UsesReferenceCircle() const
 {
     return m_type == PP_3DCIRCLE && m_master
-        && (m_master->GetEffectType() == 35 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 321);
+        && (m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 321);
 }
 
 bool CEffectPrim::UsesReferenceParticle() const
@@ -7563,8 +7563,8 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 35:
-        // ProcessEffectFrame dispatches the original ReadyPortal directly.
+    case 35: case 36:
+        // ProcessEffectFrame dispatches original ReadyPortal/Portal directly.
         m_handler = Handler::None;
         break;
     case 312: case 313: case 325: case 331: case 332:
@@ -9658,6 +9658,54 @@ void CRagEffect::ApplyReadyPortal()
         PlayWave("effect\\EF_ReadyPortal.wav", m_effectPos.x - listener.x, 0.0f,
             m_effectPos.z - listener.z, 250, 40, 1.0f); // 0x71B760
     }
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
+    prim->m_duration = 30;
+    prim->m_deltaPos2.y = -1.0f;
+    prim->m_innerSize = 8.0f;
+    prim->m_latitude = 90.0f;
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+    prim->m_radiusSpeed = 1.0f;
+    prim->m_radiusAccel = static_cast<float>(prim->m_radiusSpeed / static_cast<double>(prim->m_duration) * -0.5);
+    prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 2;
+    // Original constructor alpha, radius/pattern and segment defaults.
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_numSegments = 1;
+    ShiftCircleSegments(prim);
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false)); // 0x71943C
+}
+
+// Ref/RagEffect.cpp:6981-7039 (0x5FA2A0), original effect 36.
+// Distinct from retained synthetic RSW portal scheduling; no wave call.
+void CRagEffect::ApplyPortal()
+{
+    if (m_stateCnt == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
+        prim->m_duration = m_duration;
+        prim->m_arcAngle = 36.0f;
+        prim->m_outerSize = 3.5f;
+        prim->m_innerSize = 3.5f;
+        prim->m_longSpeed = 4.0f;
+        prim->m_heightSize = 40.0f;
+        prim->m_alpha = 0.0f;
+        prim->m_maxAlpha = 128.0f;
+        prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.16666667);
+        prim->m_fadeOutCnt = prim->m_duration - 6;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false)); // 0x71943C
+        prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
+        prim->m_duration = m_duration;
+        prim->m_arcAngle = 36.0f;
+        prim->m_outerSize = 4.0f;
+        prim->m_innerSize = 4.0f;
+        prim->m_longSpeed = 5.0f;
+        prim->m_heightSize = 50.0f;
+        prim->m_alpha = 0.0f;
+        prim->m_maxAlpha = 128.0f;
+        prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.16666667);
+        prim->m_fadeOutCnt = prim->m_duration - 6;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false)); // 0x71943C
+    }
+    if (m_stateCnt % 14 != 0) return;
     CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
     prim->m_duration = 30;
     prim->m_deltaPos2.y = -1.0f;
@@ -12075,6 +12123,10 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 36) {
+        ApplyPortal();
+        return true;
+    }
     if (m_type == 35) {
         ApplyReadyPortal();
         return true;

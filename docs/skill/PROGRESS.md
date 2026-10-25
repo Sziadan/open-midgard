@@ -4,9 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A original ReadyPortal (effect 35) circle migration. Previous cleanup checkpoint: `51bc6da`. The normal effect now follows the original stored-origin sound/circle schedule and shares the reference circle update/render path.
+Current work: WP5A original Portal (effect 36) emitter/circle migration; ReadyPortal checkpoint `6c1dd1c` precedes this part.
 
-Next action: port remaining active circle emitters and their initialization/state. Generic particle control branches and other callers (including FireBall), map initialization/scheduling, resource-loader/cache parity, full renderer/fog/backend behavior and unfinished packages/acceptance remain open.
+Next action: port the reachable original Portal cylinder state, then remaining active circle emitters. Generic particle controls, map scheduling, resource/cache and full renderer/backend acceptance remain open.
+
+
+## Original Portal emitter / circle — 2026-10-26
+
+- Ref/RagEffect.cpp:6981-7039 (0x5FA2A0), original dispatcher id 36 -> ApplyPortal. Frame zero emits two PP_3DCYLINDER in order, with original duration, arc 36, radii 3.5/4, rotation speeds 4/5, heights 40/50, alpha 0/max 128/rise max*0.16666667 and duration-6 fade. No sound, RNG or live-actor position refresh.
+- Every fourteenth frame emits the original circle, including frame zero after both cylinders: duration 30, y -1, inner width 8, X rotation 90, radius speed 1, original deceleration/fade and constructor alpha/max 254, pattern zero and one segment. Id 36 now uses the reference circle updater/renderer. All three texture requests match ring_blue bytes at 0x71943C.
+- Synthetic map portal scheduling remains distinct. Cylinder updater/renderer parity is still open; this checkpoint certifies emitter fields/order and the circle binding only.
+
+Validation: release build, six silent C++ suites / 515 checks (386 lifecycle/primitive, 71 rendering, 58 other), six Python tests and whitespace check pass. Eleven new checks cover ordering, distinct cylinder profiles, defaults/resource, stored origin, circle state, cadence and no RNG/wave. No media/live acceptance. Approved OldRO SHA-256: `BE2A03783A4B0E4627C8EA15C5C0C66C2471C314431F758E50F3274BAEBDC8DF`. WP5A and the overall plan remain incomplete.
 
 ## Original ReadyPortal circle migration — 2026-10-26
 

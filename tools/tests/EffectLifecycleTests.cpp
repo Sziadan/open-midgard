@@ -153,6 +153,7 @@ struct CEffectPrim : CGameObject {
     u32 m_renderFlag = 1;
     int m_stateCnt = 0, m_duration = 10, updates = 0, observedFrame = -1, resetFrame = -1;
     int m_pattern = 0, m_spawnCount = 0, m_fadeOutCnt = 0;
+    float m_outerSize = 0, m_arcAngle = 36;
     float m_size = 1, m_heightSize = 0, m_longitude = 0, m_latitude = 0, m_speed = 0, m_accel = 0;
     vector3d m_deltaPos, m_deltaPos2, m_deltaPosAccel, m_pos, m_orgPos;
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 0, m_minAlpha = 0;
@@ -236,6 +237,7 @@ struct CRagEffect : CGameObject {
     void ProcessSuperAngelEffect();
     void SpawnRuwach();
     void ApplyReadyPortal();
+    void ApplyPortal();
     void ApplyWarpZone2(const char*);
     void ApplySight(float,bool);
     void SpawnSight();
@@ -1581,6 +1583,37 @@ int main()
         effect.m_stateCnt=28;effect.ApplyReadyPortal();
         check(effect.m_primList.size()==3 && waveCalls.size()==3 && rngDraws==draws,"ReadyPortal preserves recurring timing without consuming RNG");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor;actor.m_pos={900,800,700};
+        CRagEffect effect;effect.m_type=36;effect.m_master=&actor;effect.m_duration=120;effect.m_effectPos={10,50,30};
+        const int draws=rngDraws;waveCalls.clear();
+        effect.ApplyPortal();auto it=effect.m_primList.begin();auto* first=*it++;auto* second=*it++;auto* ring=*it;
+        check(effect.m_primList.size()==3 && first->m_type==PP_3DCYLINDER && second->m_type==PP_3DCYLINDER && ring->m_type==PP_3DCIRCLE,
+            "original Portal emits two cylinders then one circle at zero");
+        check(first->m_duration==120 && first->m_arcAngle==36 && first->m_outerSize==3.5f && first->m_innerSize==3.5f
+            && first->m_longSpeed==4 && first->m_heightSize==40,"Portal first cylinder preserves source dimensions and rotation");
+        check(second->m_duration==120 && second->m_arcAngle==36 && second->m_outerSize==4 && second->m_innerSize==4
+            && second->m_longSpeed==5 && second->m_heightSize==50,"Portal second cylinder preserves distinct dimensions and rotation");
+        check(first->m_alpha==0 && first->m_maxAlpha==128 && first->m_alphaSpeed==static_cast<float>(128*0.16666667)
+            && first->m_fadeOutCnt==114 && second->m_alpha==0 && second->m_maxAlpha==128
+            && second->m_alphaSpeed==first->m_alphaSpeed && second->m_fadeOutCnt==114,"Portal cylinders preserve source rise and fade profile");
+        check(first->m_renderFlag==1 && second->m_renderFlag==1 && first->m_pattern==0 && second->m_pattern==0
+            && first->m_texture.size()==1 && second->m_texture.size()==1 && ring->m_texture.size()==1
+            && std::string(g_texMgr.lastPath)=="effect\\ring_blue.tga","Portal uses original flags and exact ring-blue resource");
+        check(effect.m_effectPos.x==10 && first->m_pos.y==50 && second->m_pos.y==50 && ring->m_segments[0].pos.y==50,
+            "Portal preserves stored origin instead of following live actor");
+        check(ring->UsesReferenceCircle() && ring->m_duration==30 && ring->m_deltaPos2.y==-1 && ring->m_innerSize==8
+            && ring->m_radiusSpeed==1 && ring->m_fadeOutCnt==15 && ring->m_pattern==0 && ring->m_alpha==254
+            && ring->m_numSegments==1,"Portal recurring circle follows original profile and reference dispatch");
+        ring->OnProcess();check(ring->m_pos.y==49 && ring->m_radius>0 && ring->m_size==ring->m_radius
+            && ring->m_segments[0].argb==0xFEFFFFFF,"Portal circle advances reference state and segment");
+        effect.m_stateCnt=1;effect.ApplyPortal();check(effect.m_primList.size()==3,"Portal emits nothing on intervening frame");
+        effect.m_stateCnt=14;effect.ApplyPortal();check(effect.m_primList.size()==4 && effect.m_primList.back()->m_type==PP_3DCIRCLE,
+            "Portal repeats only circle at fourteen without cylinders");
+        effect.m_stateCnt=28;effect.ApplyPortal();check(effect.m_primList.size()==5 && waveCalls.empty() && rngDraws==draws,
+            "Portal preserves recurring cadence with no wave or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
     }
     {
         CRagEffect effect;
