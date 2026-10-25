@@ -80,6 +80,7 @@ extract_body(segment_shift "${effect_source}" "void ShiftCircleSegments(" "// Hi
 extract_body(warp_band "${effect_source}" "void ConfigureHealBand(" "void CRagEffect::LaunchParticleUp(")
 extract_body(warp_helper "${effect_source}" "void LaunchWarpCasting(" "void CRagEffect::ApplyPortalWind(")
 extract_body(ready_portal_emitter "${effect_source}" "void CRagEffect::ApplyReadyPortal()" "void CRagEffect::ApplyReadyPortal2()")
+extract_body(potion_emitters "${effect_source}" "void CRagEffect::ApplyPotionPillar(" "void CRagEffect::ApplyPotionBerserk()")
 extract_body(warp_emitter "${effect_source}" "void CRagEffect::ApplyWarpZone2(" "void CRagEffect::ApplyReadyPortal()")
 extract_body(blessing_emitter "${effect_source}" "void CRagEffect::SpawnBlessing()" "// Ref/RagEffect.cpp:7721-7761")
 extract_body(smoke_torch_emitters "${effect_source}" "void CRagEffect::SpawnSmoke()" "// Ref/RagEffect.cpp:3442-3555")
@@ -123,7 +124,7 @@ extract_body(effect_messages "${effect_source}" "void CRagEffect::SendMsg(" "voi
 extract_body(actor_detach "${actor_source}" "void CAbleToMakeEffect::RemoveEffectById(" "CGameActor::CGameActor()")
 extract_body(world_update "${world_source}" "void CWorld::UpdateGameObjects()" "CGameActor* CWorld::GetGameActorByAID(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc"
-    "${resource_lock}\n${effect_gate}\n${primitive_lifetime}\n${primitive_init}\n${effect_tick}\n${effect_dtor}\n${effect_launch}\n${effect_messages}\n${actor_detach}\n${world_update}\n${grim_tooth}\n${str_delta}\n${str_process}\n${str_termination}\n${entry2}\n${str_render}\n${effect_render}\n${segment_shift}\n${slash_primitive}\n${angel_render}\n${job_emitters}\n${angel_emitters}\n${ruwach_emitter}\n${smoke_torch_emitters}\n${poison_emitters}\n${blessing_emitter}\n${sight_projection}\n${sight_emitters}\n${warp_band}\n${warp_helper}\n${warp_emitter}\n${ready_portal_emitter}")
+    "${resource_lock}\n${effect_gate}\n${primitive_lifetime}\n${primitive_init}\n${effect_tick}\n${effect_dtor}\n${effect_launch}\n${effect_messages}\n${actor_detach}\n${world_update}\n${grim_tooth}\n${str_delta}\n${str_process}\n${str_termination}\n${entry2}\n${str_render}\n${effect_render}\n${segment_shift}\n${slash_primitive}\n${angel_render}\n${job_emitters}\n${angel_emitters}\n${ruwach_emitter}\n${smoke_torch_emitters}\n${poison_emitters}\n${blessing_emitter}\n${sight_projection}\n${sight_emitters}\n${warp_band}\n${warp_helper}\n${warp_emitter}\n${ready_portal_emitter}\n${potion_emitters}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/render/Renderer.cpp ../../src/render/Prim.cpp ../../src/res/ActRes.h ../../src/world/RagEffect.cpp ../../src/world/RagEffect.h ../../src/world/World.cpp ../../src/res/EzEffectRes.h ../../src/res/Res.cpp)
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)

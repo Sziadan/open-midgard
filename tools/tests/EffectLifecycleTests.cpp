@@ -247,6 +247,8 @@ struct CRagEffect : CGameObject {
     void ApplyPortal();
     void ApplyWarpZone2(const char*);
     void ApplyWarpZone();
+    void ApplyPotionPillar(float,int);
+    bool ProcessPotionConcentration();
     void ApplySight(float,bool);
     void SpawnSight();
     void SpawnSight2();
@@ -1706,6 +1708,46 @@ int main()
         effect.m_stateCnt=146;effect.ApplyWarpZone();check(effect.m_stateCnt==146 && effect.m_primList.empty(),"WarpZone does not replace equality reset with greater-than clamp");
         check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"WarpZone releases sprite and action locks through world cleanup");
         rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor;actor.m_pos={90,80,70};
+        CRagEffect effect;effect.m_master=&actor;effect.m_type=221;effect.m_duration=200;effect.m_effectPos={10,50,30};
+        waveCalls.clear();const int draws=rngDraws;effect.ApplyPotionPillar(1,50);auto* prim=effect.m_primList.front();
+        check(prim->UsesReferenceCylinder() && prim->m_type==PP_3DCYLINDER,"PotionPillar uses reference cylinder state and renderer dispatch");
+        check(prim->m_pos.x==10 && prim->m_pos.y==50 && effect.m_effectPos.y==50,"PotionPillar helper preserves stored origin without live actor substitution");
+        check(prim->m_duration==50 && prim->m_outerSize==4.5f && prim->m_innerSize==4.5f && prim->m_heightSize==10
+            && prim->m_heightSpeed==1 && prim->m_heightAccel==0.0099999998f,"PotionPillar preserves original dimensions and height acceleration");
+        check(prim->m_alpha==0 && prim->m_maxAlpha==90 && prim->m_alphaSpeed==static_cast<float>(90*0.050000001)
+            && prim->m_fadeOutCnt==40 && std::string(g_texMgr.lastPath)=="effect\\alpha_down.tga","PotionPillar preserves exact alpha arithmetic fade and texture");
+        prim->m_animSpeed=4;prim->m_repeatAnim=true;prim->m_alphaDelta=1;prim->OnProcess();
+        check(std::fabs(prim->m_heightSize-11.01f)<0.000001f && prim->m_pos.y==50 && prim->m_argb==0x04FFFFFF,
+            "PotionPillar integrates height acceleration before rendering stored packed alpha");
+        prim->m_stateCnt=40;prim->m_alpha=90;prim->OnProcess();
+        check(prim->m_alpha==81 && prim->m_alphaSpeed==-9,"PotionPillar original fade begins at duration minus ten");
+        effect.m_stateCnt=1;effect.ApplyPotionPillar(1,50);check(effect.m_primList.size()==2 && waveCalls.empty() && rngDraws==draws,
+            "PotionPillar helper emits on every call without audio or RNG");effect.ClearPrims();g_world.UpdateGameObjects();
+        for(int type:{218,219,220,221}){effect.m_type=type;CEffectPrim probe;probe.m_master=&effect;probe.m_type=PP_3DCYLINDER;
+            check(probe.UsesReferenceCylinder(),"all original potion cylinder callers use migrated cylinder path");probe.m_master=nullptr;}
+        effect.m_type=218;effect.m_stateCnt=0;
+        check(!effect.ProcessPotionConcentration(),"concentration propagates missing STR termination after emitter side effects");
+        check(effect.m_effectPos.x==90 && effect.m_effectPos.y==80 && effect.m_primList.size()==1 && effect.m_primList.front()->m_heightSpeed==2
+            && effect.m_primList.front()->m_duration==50,"concentration copies actor before zero-frame pillar");
+        check(waveCalls.size()==1 && waveCalls[0].name=="effect\\ac_concentration.wav" && waveCalls[0].x==0 && waveCalls[0].y==0
+            && waveCalls[0].z==0 && waveCalls[0].volume==250 && waveCalls[0].range==40,"concentration uses direct zero-position wave before STR");
+        actor.m_pos={100,200,300};effect.m_stateCnt=1;effect.ProcessPotionConcentration();
+        check(effect.m_effectPos.y==200 && effect.m_primList.size()==1 && waveCalls.size()==1,"concentration refreshes actor on non-emission frames without duplicate wave");
+        effect.ClearPrims();g_world.UpdateGameObjects();waveCalls.clear();effect.m_type=219;effect.m_stateCnt=29;
+        effect.ProcessPotionConcentration();check(effect.m_primList.empty() && waveCalls.empty(),"awakening does not emit before frame thirty");
+        effect.m_stateCnt=30;effect.ProcessPotionConcentration();prim=effect.m_primList.front();
+        check(effect.m_primList.size()==1 && prim->m_duration==30 && prim->m_heightSpeed==1.9f && prim->m_fadeOutCnt==20
+            && waveCalls.size()==1,"awakening emits its distinct pillar and wave on frame thirty");
+        effect.m_stateCnt=31;effect.ProcessPotionConcentration();check(effect.m_primList.size()==1 && waveCalls.size()==1,"awakening does not repeat frame-thirty emission");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        auto clip=std::make_unique<KANICLIP>();clip->cLayer=2;KAC_KEYFRAME keys[2];keys[0].iFrame=0;keys[1].iFrame=100;
+        clip->aLayer[1].cAniKey=2;clip->aLayer[1].aAniKey=keys;effect.m_ezEffectRes=clip.get();effect.m_aniClips=clip.get();
+        effect.InitEZ2STRFrame();effect.m_stateCnt=1;
+        check(effect.ProcessPotionConcentration() && effect.m_strScreenOffset.x==0 && effect.m_strScreenOffset.y==-80 && effect.m_strScreenOffset.z==0,
+            "potion caller processes original STR offset and propagates its active result");
     }
     {
         CRagEffect effect;

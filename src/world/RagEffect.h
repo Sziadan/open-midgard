@@ -452,6 +452,7 @@ private:
     void ApplyElectric2();
     void ApplyAttackEnergy2(const char* textureName);
     void ApplyPotionPillar(float speed, int duration);
+    bool ProcessPotionConcentration();
     void ApplyPotionBerserk();
     void ApplyIceArrow();
     void ApplyProvidence(const char* textureName);

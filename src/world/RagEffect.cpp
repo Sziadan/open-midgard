@@ -1356,8 +1356,6 @@ const ProvenClipWave kProvenClipWaves[] = {
     { 129, 10, 0.0f, "effect\\assasin_venomsplasher.wav", 0, -1 },
     { 131, 0, 0.0f, "effect\\knight_autocounter.wav", 0, -1 },
     { 153, 0, 0.0f, "effect\\ac_concentration.wav", 0, -1 },
-    { 218, 0, 0.0f, "effect\\ac_concentration.wav", 0, -1 },
-    { 219, 30, 0.0f, "effect\\ac_concentration.wav", 0, -1 },
     { 154, 15, 0.0f, "effect\\bs_refinesuccess.wav", 0, -1 },
     { 155, 5, 0.0f, "effect\\bs_refinefailed.wav", 0, -1 },
     { 204, 0, -80.0f, "_heal_effect.wav", 0, -1 },
@@ -6402,7 +6400,11 @@ bool CEffectPrim::UsesReferenceCircle() const
 
 bool CEffectPrim::UsesReferenceCylinder() const
 {
-    return m_type == PP_3DCYLINDER && m_master && m_master->GetEffectType() == 36;
+    if (m_type != PP_3DCYLINDER || !m_master) return false;
+    switch (m_master->GetEffectType()) {
+    case 36: case 218: case 219: case 220: case 221: return true;
+    default: return false;
+    }
 }
 
 bool CEffectPrim::UsesReferenceParticle() const
@@ -10935,16 +10937,12 @@ void CRagEffect::ApplyAttackEnergy2(const char* textureName)
     }
 }
 
+// Ref/RagEffect.cpp:7041-7060 (0x604C30). This helper preserves the
+// stored effect origin; caller-specific parent copies happen before the call.
 void CRagEffect::ApplyPotionPillar(float speed, int duration)
 {
-    CRenderObject* master = ResolveCurrentMaster();
-    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
     CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
-    if (prim == nullptr) {
-        return;
-    }
     prim->m_duration = duration;
-    prim->m_pos = origin;
     prim->m_outerSize = 4.5f;
     prim->m_innerSize = 4.5f;
     prim->m_heightSize = 10.0f;
@@ -10952,9 +10950,24 @@ void CRagEffect::ApplyPotionPillar(float speed, int duration)
     prim->m_heightAccel = 0.0099999998f;
     prim->m_alpha = 0.0f;
     prim->m_maxAlpha = 90.0f;
-    prim->m_alphaSpeed = prim->m_maxAlpha * 0.050000001f;
+    prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.050000001);
     prim->m_fadeOutCnt = prim->m_duration - 10;
-    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false));
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false)); // 0x719498
+}
+
+// HighPriest.exe.c:431781-431802 (0x607350/0x6073C0), ids 218/219.
+// Ref repeats Potion_Con and omits 0x6073C0; follow the original binary.
+bool CRagEffect::ProcessPotionConcentration()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return false;
+    m_effectPos = master->m_pos;
+    const bool awakening = m_type == 219;
+    if (m_stateCnt == (awakening ? 30 : 0)) {
+        PlayWave("effect\\ac_concentration.wav", 0.0f, 0.0f, 0.0f, 250, 40, 1.0f); // 0x712CC8
+        ApplyPotionPillar(awakening ? 1.9f : 2.0f, awakening ? 30 : 50);
+    }
+    return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
 }
 
 void CRagEffect::ApplyPotionBerserk()
@@ -10983,6 +10996,7 @@ void CRagEffect::ApplyPotionBerserk()
             }
         }
     }
+    if (master) m_effectPos = master->m_pos; // Ref Potion_Berserk, after frame-zero pillar.
     if (m_stateCnt > 12 && m_stateCnt < 110 && (m_stateCnt & 3) == 0) {
         CEffectPrim* prim = LaunchEffectPrim(PP_3DCROSSTEXTURE, vector3d{});
         if (prim != nullptr) {
@@ -12288,6 +12302,11 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 218 || m_type == 219) return ProcessPotionConcentration();
+    if (m_type == 221) {
+        ApplyPotionPillar(1.0f, 50);
+        return true;
+    }
     if (m_type == 61) {
         ApplyWarpZone();
         return true;
@@ -12346,7 +12365,6 @@ bool CRagEffect::ProcessEffectFrame()
     const bool electric = dispatchHandler && m_type == 432;
     const bool electric2 = dispatchHandler && m_type == 433;
     const bool attackEnergy2 = dispatchHandler && m_type == 438;
-    const bool potionPillar = dispatchHandler && m_type == 221;
     const bool iceArrow = dispatchHandler && m_type == 26;
     const bool healBlue = dispatchHandler && m_type == 253;
     const bool bottomMusic = dispatchHandler && (m_type == 278 || m_type == 279 || m_type == 282 || m_type == 286
@@ -12611,8 +12629,6 @@ bool CRagEffect::ProcessEffectFrame()
             TryPlayEffectWaveAt(wavePos, "effect\\T_\xB8\xB6\xB9\xFD\xB9\xDD\xBB\xE7.wav");
         }
         ApplyAttackEnergy2("effect\\cloud11.tga");
-    } else if (potionPillar) {
-        ApplyPotionPillar(1.0f, 50);
     } else if (chemicalSlash) {
         if (m_type == 623 && m_stateCnt == 28) {
             vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
@@ -12742,7 +12758,7 @@ bool CRagEffect::ProcessEffectFrame()
             vector3d wavePos = waveMaster != nullptr ? waveMaster->m_pos : m_cachedPos;
             if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
                 if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                    if (entry.type == 245 || entry.type == 218 || entry.type == 219) {
+                    if (entry.type == 245) {
                         wavePos = mode->m_world->m_player->m_pos;
                     }
                     wavePos.y = mode->m_world->m_player->m_pos.y + entry.yOffset;
@@ -12755,19 +12771,13 @@ bool CRagEffect::ProcessEffectFrame()
     if (dispatchHandler && m_type == 248) {
         ApplyProvidence("effect\\ring_yellow.tga");
     }
-    if (dispatchHandler && m_type == 218 && m_stateCnt == 0) {
-        ApplyPotionPillar(2.0f, 50);
-    }
-    if (dispatchHandler && m_type == 219 && m_stateCnt == 30) {
-        ApplyPotionPillar(1.9f, 30);
-    }
     if (dispatchHandler && m_type == 220) {
         ApplyPotionBerserk();
     }
     if (iceArrow) {
         ApplyIceArrow();
     }
-    if (dispatchHandler && !tierHandled && !textureCard && !kyrieGuard && !bodyLight442 && !bodyLight446 && !bodyLight449 && !actorLight && !portalWind402 && !blackDevil && !bodyLightBit && !blindLevel && !beginCast && !bottomLight && !bottomOut && !blastMine && !healBlue && !bottomMusic && !chemicalSlash && !giExplosion && !acidDemon && !flowerCast && !defender && !mapPillar && !volcano && !bottomVolcano && !wind && !stormKick && !halfSphere && !attackEnergy && !electric && !electric2 && !attackEnergy2 && !potionPillar && !iceArrow) {
+    if (dispatchHandler && !tierHandled && !textureCard && !kyrieGuard && !bodyLight442 && !bodyLight446 && !bodyLight449 && !actorLight && !portalWind402 && !blackDevil && !bodyLightBit && !blindLevel && !beginCast && !bottomLight && !bottomOut && !blastMine && !healBlue && !bottomMusic && !chemicalSlash && !giExplosion && !acidDemon && !flowerCast && !defender && !mapPillar && !volcano && !bottomVolcano && !wind && !stormKick && !halfSphere && !attackEnergy && !electric && !electric2 && !attackEnergy2 && !iceArrow) {
         switch (m_handler) {
         case Handler::EzStr:
             if (m_type == 185) {

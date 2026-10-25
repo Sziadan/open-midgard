@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A original WarpZone emitter and shared circle/orbit binding, after Portal-renderer checkpoint `3be69ff`. Original effect 61 preserves exact reset, profiles, inactive alpha-key storage and four-draw orbit emission.
+Current work: WP5A PotionPillar and concentration/awakening dispatch, after original WarpZone checkpoint `3a9628b`. Potion cylinders now use reference update/rendering; ids 218/219 preserve original parent-copy, audio, timing and STR-result behavior.
 
-Next action: continue remaining active emitter/primitive ports, including unmigrated circle/cylinder callers. Generic enabled alpha-key/change-point controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue active emitter/primitive ports, including the remaining Potion_Berserk tint/cross-texture/STR behavior and IceArrow circle. Generic enabled control branches, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Potion pillar / concentration and awakening — 2026-10-26
+
+- Ref/RagEffect.cpp:7041-7060 (0x604C30) -> ApplyPotionPillar. Removed live-actor origin substitution: the helper uses LaunchEffectPrim's stored effect origin. Original cylinder dimensions 4.5/4.5/10, caller height speed, height acceleration 0.0099999998, alpha 0/max 90, double-product rise max*0.050000001 and duration-10 fade preserved. Exact alpha_down texture (0x719498).
+- HighPriest.exe.c:431781-431802 (0x607350/0x6073C0), dispatcher cases 218/219 -> ProcessPotionConcentration. Copies parent position every call, emits direct zero-coordinate ac_concentration wave (0x712CC8) before pillar on frame 0/30, with speed/duration 2/50 or 1.9/30, then ProcessEZ2STR(0,-80,0) and propagates its result. Removed superseded generic wave-table entries, late pillar calls and player-position sound substitution. Case 221 now directly emits PotionPillar(1,50) every frame with no extra STR/audio handling.
+- UsesReferenceCylinder now includes potion callers 218/219/220/221. Their cylinders use the reference integration/alpha/texture animation and geometry/submission paths. Potion_Berserk's persistent parent-position copy is restored at the source point after the zero-frame pillar and frame-18 wave, so its existing cylinder follows the stored parent origin. Other Berserk tint/cross-texture/STR behavior remains partial and is not certified by this checkpoint.
+- Source discrepancy: Ref/RagEffect.cpp repeats Potion_Con/0x607350 at 1061 and 1151 and lacks the distinct 0x6073C0 Potion_ body. Followed HighPriest.exe.c:431793-431802 and original dispatcher case 219 for frame 30, speed 1.9 and duration 30.
+
+Validation: release build, six silent C++ suites / 589 checks (441 lifecycle/primitive, 90 rendering, 58 other), six Python tests, two-literal executable byte audit and whitespace check pass. Nineteen new checks cover stored origin/profile, cylinder binding/motion/fade, emission per call, caller copy/timing, direct audio, original STR offset and result propagation. No media/live acceptance. Approved OldRO SHA-256: `10E10E196F0AE821A164FBAF6B45220CF3566DBB057EEEA600E00F1BD3B4B87B`. Other active emitters, Berserk remainder, generic controls, map scheduling, resource/cache and full renderer/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Original WarpZone emitter / circle and orbit binding — 2026-10-26
 
