@@ -4,9 +4,15 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A incremental primitive selector reconciliation. Completed parts are committed separately; previous checkpoints include `d3610bb`, `2562385` and `36d3064`.
+Current work: WP5A primitive selector migration, JobLvUp50/JobLvUp50_2 and PP_SLASH1. Previous checkpoints include `36d3064` (STR quads) and `140630f` (obsolete casting/portal paths). Completed parts are committed separately.
 
-Next action: replace the remaining JobLvUp50/SuperAngel reconstructed emitters and their two invented primitive types, then reconcile the full reference enum and remaining dispatch bodies. Also complete resource loading, per-handler position/return audits and other unfinished work packages. The plan remains incomplete.
+Next action: replace SuperAngel and its PP_RADIALSLASH/PP_EFFECTSPRITE approximations, then finish full reference primitive enum/dispatch reconciliation. Audit remaining primitive bodies, resource loading and per-handler position/return behavior before acceptance. The overall plan remains incomplete.
+
+## Job-level-up / slash continuation — 2026-10-25
+
+- Effect 337 now calls the two original green JobLvUp50 emitters at angles 0/45, emitting only on frame 5. Only time zero processes STR, using offsets 0/0/0; the tier dispatcher ignores that helper's return as Ref does. Effect 590 calls the blue variant only at frame 15.
+- PP_SLASH1 now has its reference id 0x4B and dedicated update/render geometry. Ported four-band growth/fade rules, variant flag behavior, three ribbons per band, center/side heights and alpha, world offsets, UVs and additive submission. Removed the JobLvUp50 radial-billboard substitute, guessed texture alternatives and obsolete handler tag. Other primitive selectors remain an incomplete migration.
+- Validation: release build, five Python tests and all five silent C++ suites pass (209 checks, including 151 lifecycle/STR/slash checks). Approved OldRO deployment hashes match `4064EB704A40E41504CE6EE70DD4717642770C1E43F23848437AA4B3EBE1B9C1`. Common triangle submission/backend behavior is outside these geometry fixtures; no media or live acceptance was used.
 
 ## Primitive dispatch cleanup — 2026-10-25
 

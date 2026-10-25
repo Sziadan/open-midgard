@@ -32,7 +32,7 @@ enum EFFECTPRIMID {
     PP_MAPPARTICLE = 15,
     PP_SUPERANGEL = 16,
     PP_RADIALSLASH = 17,
-    PP_SLASH1 = 18,
+    PP_SLASH1 = 0x4B,
     PP_EFFECTSPRITE = 21,
     PP_HEAL = 22,
     PP_PORTAL = 23,
@@ -258,7 +258,6 @@ private:
     enum class Handler {
         None,
         EzStr,
-        JobLevelUp50,
         Portal,
         ReadyPortal,
         WarpZone,
@@ -368,7 +367,9 @@ private:
     CRenderObject* ResolveCurrentMaster() const;
     CAbleToMakeEffect* ResolveCurrentEffectOwner() const;
 
-    void SpawnJobLevelUp50();
+    bool ApplyJobLvUp50(int time);
+    bool ApplyJobLvUp50_2(short time);
+    void ProcessJobLvUp50_2();
     void SpawnPortal();
     void SpawnReadyPortal();
     void SpawnWarpZone();

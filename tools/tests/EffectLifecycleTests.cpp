@@ -44,7 +44,7 @@ struct TexMgr {
 int lastTextureFrame = -1;
 CTexture* KAC_LAYER::GetTexture(int frame) { lastTextureFrame = frame; return &g_texMgr.texture; }
 using D3DBLEND = int;
-constexpr int D3DPT_TRIANGLESTRIP = 5, D3DCULL_NONE = 1;
+constexpr int D3DPT_TRIANGLESTRIP = 5, D3DCULL_NONE = 1, D3DBLEND_ONE = 2;
 struct tlvertex3d { float x=0,y=0,z=0,oow=0; u32 color=0,specular=0; float tu=0,tv=0; };
 struct RPFace {
     int primType=0, numVerts=0, numIndices=0, mtPreset=0, cullMode=0;
@@ -61,6 +61,18 @@ struct SilentRenderer {
     RPFace* BorrowNullRP() { face = {}; return &face; }
     void AddRP(RPFace*, int flags) { ++submissions; lastFlags=flags; }
 } g_renderer;
+struct SlashQuad {
+    vector3d points[4];
+    u32 color;
+    float u0,u1,v0,v1;
+    D3DBLEND blend;
+    int flags;
+};
+std::vector<SlashQuad> slashQuads;
+void SubmitWorldTeiRect(const vector3d& a,const vector3d& b,const vector3d& c,const vector3d& d,
+    const matrix&,CTexture*,unsigned int color,float u0,float u1,float v0,float v1,D3DBLEND blend,float,int flags) {
+    slashQuads.push_back({{a,b,c,d},color,u0,u1,v0,v1,blend,flags});
+}
 struct CView {
     matrix view;
     CView() { MatrixIdentity(view); }
@@ -98,7 +110,8 @@ struct CWorld {
 } g_world;
 struct CGameMode { CWorld* m_world = &g_world; CView* m_view = &testView; } gameMode;
 struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
-enum EFFECTPRIMID { PP_2DTEXTURE = 0, PP_3DCROSSTEXTURE = 0x10, PP_3DQUADHORN = 0x9, Other = 0x7F };
+enum EFFECTPRIMID { PP_SLASH1 = 0x4B, PP_2DTEXTURE = 0, PP_3DCROSSTEXTURE = 0x10, PP_3DQUADHORN = 0x9, Other = 0x7F };
+void UpdateSlash1Primitive(CEffectPrim*);
 struct CEffectPrim : CGameObject {
     Probe deaths{ primitiveDeaths };
     CRagEffect* m_master = nullptr;
@@ -121,6 +134,7 @@ struct CEffectPrim : CGameObject {
     bool ProcessPrimitiveFrame() {
         ++updates;
         observedFrame = m_stateCnt;
+        if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (resetFrame >= 0) m_stateCnt = resetFrame;
         return active;
     }
@@ -153,6 +167,9 @@ struct CRagEffect : CGameObject {
     vector3d m_grimToothOrigin, m_grimToothRemaining, m_grimToothStep;
     void SpawnGrimTooth();
     void ApplyEntry2();
+    bool ApplyJobLvUp50(int);
+    bool ApplyJobLvUp50_2(short);
+    void ProcessJobLvUp50_2();
     ~CRagEffect() override;
     CRenderObject* ResolveCurrentMaster() { return m_master; }
     CAbleToMakeEffect* ResolveCurrentEffectOwner() { return dynamic_cast<CAbleToMakeEffect*>(m_master); }
@@ -765,6 +782,85 @@ int main()
         before = g_renderer.submissions;
         effect.Render(&view);
         check(g_renderer.submissions == before+2, "effect Render submits every marked nonzero STR layer");
+    }
+    {
+        CRagEffect effect;
+        effect.m_master = &actor; effect.m_duration = 700;
+        const int randomBefore = rngDraws;
+        check(!effect.ApplyJobLvUp50(0) && effect.ApplyJobLvUp50(45) && effect.m_primList.empty(),
+            "JobLvUp50 only time zero processes STR and missing STR does not make time 45 fail");
+        effect.m_stateCnt = 5;
+        effect.ApplyJobLvUp50(0); effect.ApplyJobLvUp50(45);
+        check(effect.m_primList.size() == 2 && std::strcmp(g_texMgr.lastPath,"effect\\magic_green.tga") == 0
+            && rngDraws == randomBefore, "JobLvUp50 emits two exact green slash primitives without random draws");
+        int time = 0;
+        for (auto* prim : effect.m_primList) {
+            bool bands = prim->m_type == PP_SLASH1 && prim->m_duration == 700 && prim->m_size == 9 && prim->m_renderFlag == 5;
+            for(int k=0;k<4;++k) {
+                const auto& gi=prim->m_gi[k];
+                bands = bands && gi.life==1 && gi.process==0 && gi.maxHeight==2 && gi.distance==2
+                    && gi.height[0]==1 && gi.rotStart==time+90*k && gi.alphaB==0 && gi.flag[0]==0;
+            }
+            check(bands,"JobLvUp50 carries exact four-band profiles and source orientation");
+            time = 45;
+        }
+        g_world.UpdateGameObjects();
+        auto* first = effect.m_primList.front();
+        check(first->m_stateCnt == 1 && first->m_gi[0].process == 1 && first->m_gi[0].height[0] == 2
+            && first->m_gi[0].alphaB == 5 && first->m_gi[0].distance == 4,
+            "world dispatches slash update before the shared primitive frame increment");
+        effect.m_stateCnt = 6; actor.m_pos={12,13,14}; effect.ApplyJobLvUp50(45);
+        check(effect.m_primList.size()==2 && effect.EffectPosition().x==12,
+            "JobLvUp50 follows actor after its emission frame without another primitive");
+        effect.ApplyJobLvUp50_2(0); effect.ApplyJobLvUp50_2(45);
+        auto* blue = effect.m_primList.back();
+        check(effect.m_primList.size()==4 && blue->m_size==4 && blue->m_gi[0].maxHeight==1.5f
+            && blue->m_gi[3].rotStart==315 && std::strcmp(g_texMgr.lastPath,"effect\\magic_blue.tga")==0,
+            "JobLvUp50_2 emits blue size-four slashes on every call with no STR processing");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        CRagEffect effect; effect.m_master=&actor; effect.m_effectPos={10,20,30};
+        CEffectPrim prim; prim.m_master=&effect;
+        auto& normal=prim.m_gi[0]; normal.life=1;normal.process=6;normal.height[0]=9;normal.alphaB=10;normal.maxHeight=3.9f;normal.distance=2;
+        auto& run=prim.m_gi[1]; run=normal;run.process=4;run.maxHeight=1.9f;run.flag[0]=1;
+        auto& dead=prim.m_gi[2];dead=normal;dead.process=20;dead.height[0]=10;dead.alphaB=1;dead.maxHeight=5;
+        prim.m_gi[3].process=17;
+        UpdateSlash1Primitive(&prim);
+        check(prim.m_pos.x==10 && normal.process==7 && normal.height[0]==10 && normal.alphaB==15
+            && normal.distance==4 && normal.maxHeight>4, "slash normal branch grows and permits reference height overshoot");
+        check(run.process==5 && run.alphaB==15 && run.distance==3 && run.maxHeight>2,
+            "slash run-stop variant uses shorter alpha rise and smaller radial/height steps");
+        check(dead.life==0 && dead.alphaB==0 && dead.distance==4 && prim.m_gi[3].process==17,
+            "slash expiry still finishes its current update and skips preexisting inactive bands");
+        UpdateSlash1Primitive(&prim);
+        check(normal.alphaB==13 && run.alphaB==13 && dead.process==21,
+            "slash starts fading only after inner radius ten and leaves dead bands untouched");
+        prim.m_texture.push_back(&g_texMgr.texture); prim.m_renderFlag=5;prim.m_size=9;
+        for(auto& gi:prim.m_gi)gi.life=0;
+        normal.life=1;normal.alphaB=30;normal.height[0]=3;normal.distance=2;normal.maxHeight=4;normal.rotStart=0;
+        matrix view;MatrixIdentity(view);slashQuads.clear();
+        RenderSlash1Primitive(prim,view);
+        check(slashQuads.size()==3 && slashQuads[0].color==0x0AFFFFFFu && slashQuads[1].color==0x1EFFFFFFu
+            && slashQuads[2].points[0].z>30 && slashQuads[0].points[0].z<30,
+            "slash geometry emits three adjacent rays with dimmer side ribbons and wrapped angles");
+        const auto& center=slashQuads[1];
+        check(center.points[0].x==13 && center.points[0].y==20 && center.points[1].x==15
+            && center.points[2].y==16 && std::abs(center.points[3].y-19.2f)<0.0001f
+            && center.u0==0 && center.u1==1 && center.v0==1 && center.v1==0 && center.blend==2 && center.flags==5,
+            "slash world geometry preserves inner/outer heights, UVs and additive submission without multiplying by stored size");
+        normal.alphaB=0;slashQuads.clear();RenderSlash1Primitive(prim,view);
+        check(slashQuads.empty(),"slash renderer omits zero-alpha bands");
+    }
+    {
+        CRagEffect effect;effect.m_master=&actor;
+        effect.m_stateCnt=14;effect.ProcessJobLvUp50_2();
+        check(effect.m_primList.empty(),"effect 590 waits for frame 15 before calling its unconditional slash helpers");
+        effect.m_stateCnt=15;effect.ProcessJobLvUp50_2();
+        check(effect.m_primList.size()==2,"effect 590 calls its zero/45-degree helpers on frame 15");
+        effect.m_stateCnt=16;effect.ProcessJobLvUp50_2();
+        check(effect.m_primList.size()==2,"effect 590 does not repeat emission after frame 15");
+        effect.ClearPrims();g_world.UpdateGameObjects();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

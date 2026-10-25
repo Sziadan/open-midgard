@@ -5925,6 +5925,58 @@ void RenderWind(const CEffectPrim& prim, const matrix& viewMatrix)
 
 // Ref/RagEffectPrim.cpp:5679, 6377. The world owns primitive objects;
 // the parent's list only tracks attachments.
+// HighPriest.exe.c:451706-451754 (0x625C30). Counter belongs to OnProcess.
+void UpdateSlash1Primitive(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        ++gi.process;
+        gi.height[0] += 1.0f;
+        if (gi.height[0] > 10.0f) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 2);
+            if (gi.alphaB < 0) { gi.alphaB = 0; gi.life = 0; }
+        }
+        if (gi.flag[0] == 1) {
+            gi.distance += 1.0f;
+            if (gi.maxHeight < 2.0f) gi.maxHeight = static_cast<float>(gi.maxHeight + 0.2);
+            if (gi.process <= 5) gi.alphaB = static_cast<short>(gi.alphaB + 5);
+        } else {
+            gi.distance += 2.0f;
+            if (gi.maxHeight < 4.0f) gi.maxHeight = static_cast<float>(gi.maxHeight + 0.40000001);
+            if (gi.process <= 7) gi.alphaB = static_cast<short>(gi.alphaB + 5);
+        }
+    }
+}
+
+// HighPriest.exe.c:447104-447220 (0x620210). Three adjacent radial ribbons
+// per live band, with the center ribbon taller and more opaque than the sides.
+void RenderSlash1Primitive(const CEffectPrim& prim, const matrix& view)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) continue;
+        for (int sample = 0; sample <= 2; ++sample) {
+            int angle = gi.rotStart - 1 + sample;
+            if (angle < 0) angle += 360;
+            else if (angle >= 360) angle -= 360;
+            const float cosine = GetCos(angle), sine = GetSin(angle);
+            const float innerZ = gi.height[0] * sine;
+            const double outerRadius = static_cast<double>(gi.distance) + gi.height[0];
+            const float outerZ = static_cast<float>(sine * outerRadius);
+            const float innerY = static_cast<float>(-gi.maxHeight * (sample == 1 ? 0.2 : 0.1));
+            const float outerY = sample == 1 ? -gi.maxHeight : static_cast<float>(-gi.maxHeight * 0.40000001);
+            const vector3d inner{ gi.height[0] * cosine, 0.0f, innerZ };
+            const vector3d outer{ static_cast<float>(outerRadius * cosine), 0.0f, outerZ };
+            const short alpha = sample == 1 ? gi.alphaB : static_cast<short>(gi.alphaB / 3);
+            const u32 color = (static_cast<u32>(static_cast<u8>(alpha)) << 24) | 0xFFFFFFu;
+            SubmitWorldTeiRect(AddVec3(prim.m_pos, inner), AddVec3(prim.m_pos, outer),
+                AddVec3(prim.m_pos, {outer.x, outerY, outer.z}), AddVec3(prim.m_pos, {inner.x, innerY, inner.z}),
+                view, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+        }
+    }
+}
+
 CEffectPrim::~CEffectPrim()
 {
     if (m_master) {
@@ -5969,6 +6021,10 @@ u8 CEffectPrim::OnProcess()
 
 bool CEffectPrim::ProcessPrimitiveFrame()
 {
+    if (m_type == PP_SLASH1) {
+        UpdateSlash1Primitive(this);
+        return true;
+    }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting)) {
         Update3DCastingPrimitive(this);
         return true;
@@ -6190,6 +6246,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
 void CEffectPrim::Render(matrix* viewMatrix)
 {
     if (!m_master || !viewMatrix) {
+        return;
+    }
+    if (m_type == PP_SLASH1) {
+        RenderSlash1Primitive(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting3)
@@ -6620,8 +6680,7 @@ void CEffectPrim::Render(matrix* viewMatrix)
         break;
     }
     case PP_3DTEXTURE:
-    case PP_3DSPHERE:
-    case PP_SLASH1: {
+    case PP_3DSPHERE: {
         CTexture* texture = !m_texture.empty()
             ? m_texture[(std::min)(m_curMotion, static_cast<int>(m_texture.size()) - 1)]
             : GetSoftGlowTexture(false);
@@ -7308,11 +7367,6 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     m_grimToothRemaining = vector3d{};
 
     switch (effectId) {
-    case 337:
-        m_handler = Handler::JobLevelUp50;
-        LoadEzEffect("joblvup.str");
-        InitEZ2STRFrame();
-        break;
     case 371: {
         m_handler = Handler::EzStr;
         const std::string strName = ResolveStrName(effectId);
@@ -7646,7 +7700,6 @@ bool CRagEffect::ResolveCullSphere(vector3d* outCenter, float* outRadius) const
     case Handler::Smoke:
     case Handler::Torch:
     case Handler::EzStr:
-    case Handler::JobLevelUp50:
     case Handler::SuperAngel:
     case Handler::RecoveryHp:
     case Handler::RecoverySp:
@@ -7908,46 +7961,56 @@ void CRagEffect::ApplyEntry2()
     }
 }
 
-void CRagEffect::SpawnJobLevelUp50()
+// HighPriest.exe.c:434741-434782 (0x60D710). Only time zero processes STR;
+// the tier dispatcher deliberately ignores this helper's completion result.
+bool CRagEffect::ApplyJobLvUp50(int time)
 {
-    ProcessEZ2STR();
-
-    if (m_stateCnt != 5) {
-        return;
-    }
-
-    CTexture* magicGreen = ResolveEffectTextureCandidates({
-        "effect\\magic_green.tga",
-        "effect\\magic_green.bmp",
-        "effect\\magic_ring_a.bmp",
-    }, false);
-    CTexture* magicBlue = ResolveEffectTextureCandidates({
-        "effect\\magic_blue.tga",
-        "effect\\magic_blue.bmp",
-    }, false);
-
-    auto spawnBurst = [&](CTexture* texture, COLORREF tintColor, float startAngle, float radiusSpeed, float size) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_RADIALSLASH, vector3d{})) {
-            prim->m_duration = 42;
-            prim->m_spawnCount = 4;
-            prim->m_radius = 0.8f;
-            prim->m_radiusSpeed = radiusSpeed;
-            prim->m_heightSize = 2.0f;
-            prim->m_alpha = 0.0f;
-            prim->m_alphaSpeed = 22.0f;
-            prim->m_maxAlpha = 220.0f;
-            prim->m_fadeOutCnt = 26;
-            prim->m_size = size;
-            prim->m_texture.push_back(texture);
-            prim->m_tintColor = tintColor;
-            prim->m_param[0] = startAngle;
-            prim->m_param[1] = 7.0f;
-            prim->m_param[2] = 12.0f;
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return false;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt == 5) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_SLASH1, vector3d{});
+        prim->m_renderFlag = 5;
+        prim->m_duration = m_duration;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\magic_green.tga", false));
+        prim->m_size = 9.0f;
+        for (int band = 0; band < 4; ++band) {
+            EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+            gi.life = 1; gi.process = 0; gi.maxHeight = 2.0f;
+            gi.rotStart = static_cast<short>(time + band * 90);
+            gi.alphaB = 0; gi.distance = 2.0f; gi.height[0] = 1.0f; gi.flag[0] = 0;
         }
-    };
+    }
+    return time != 0 || ProcessEZ2STR(0.0f, 0.0f, 0.0f);
+}
 
-    spawnBurst(magicGreen, RGB(172, 255, 188), 0.0f, 0.22f, 1.0f);
-    spawnBurst(magicBlue, RGB(156, 216, 255), 45.0f, 0.16f, 0.8f);
+// HighPriest.exe.c:434785-434822 (0x60D8A0): every call emits.
+bool CRagEffect::ApplyJobLvUp50_2(short time)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return false;
+    m_effectPos = master->m_pos;
+    CEffectPrim* prim = LaunchEffectPrim(PP_SLASH1, vector3d{});
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\magic_blue.tga", false));
+    prim->m_size = 4.0f;
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1; gi.process = 0; gi.maxHeight = 1.5f;
+        gi.rotStart = static_cast<short>(time + band * 90);
+        gi.alphaB = 0; gi.distance = 2.0f; gi.height[0] = 1.0f; gi.flag[0] = 0;
+    }
+    return true;
+}
+
+// Ref/RagEffect.cpp:11977-11983, OnProcess3 case 590 (0x24E).
+void CRagEffect::ProcessJobLvUp50_2()
+{
+    if (m_stateCnt == 15) {
+        ApplyJobLvUp50_2(0);
+        ApplyJobLvUp50_2(45);
+    }
 }
 
 void CRagEffect::SpawnMapMagicZone()
@@ -11977,6 +12040,10 @@ bool CRagEffect::OnProcess2()
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d soundPos = master != nullptr ? master->m_pos : m_cachedPos;
     switch (m_type) {
+    case 337:
+        ApplyJobLvUp50(0);
+        ApplyJobLvUp50(45);
+        return true;
     case 301:
         if (m_stateCnt == 300) {
             if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
@@ -12292,8 +12359,7 @@ u8 CRagEffect::ProcessWorldEffect()
     m_tickCarryMs += static_cast<float>(elapsedMs);
 
     const bool frameDrivenStrHandler =
-        m_handler == Handler::EzStr
-        || m_handler == Handler::JobLevelUp50;
+        m_handler == Handler::EzStr;
 
     int steps = 0;
     if (frameDrivenStrHandler) {
@@ -12360,6 +12426,10 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 590) {
+        ProcessJobLvUp50_2();
+        return true;
+    }
     CRenderObject* master = ResolveCurrentMaster();
     const bool dispatchHandler = true;
     const bool kyrieGuard = dispatchHandler && m_type == 392;
@@ -12827,9 +12897,6 @@ bool CRagEffect::ProcessEffectFrame()
             } else {
                 ProcessEZ2STR();
             }
-            break;
-        case Handler::JobLevelUp50:
-            SpawnJobLevelUp50();
             break;
         case Handler::Portal:
             SpawnPortal();
