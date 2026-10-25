@@ -146,13 +146,16 @@ constexpr int kRagEffectWarpZone = 50003;
 
 class CRagEffect;
 
-class CEffectPrim {
+class CEffectPrim : public CGameObject {
 public:
     CEffectPrim();
+    ~CEffectPrim() override;
 
     void Init(CRagEffect* master, EFFECTPRIMID effectPrimId, const vector3d& deltaPos);
-    bool OnProcess();
-    void Render(matrix* viewMatrix);
+    u8 OnProcess() override;
+    bool ProcessPrimitiveFrame();
+    void SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t) override;
+    void Render(matrix* viewMatrix) override;
 
     CRagEffect* m_master;
     EFFECTPRIMID m_type;
@@ -232,7 +235,8 @@ public:
     void InitAtWorldPosition(int effectId, const vector3d& position);
     void InitWorld(const C3dWorldRes::effectSrcInfo& source);
     CEffectPrim* LaunchEffectPrim(EFFECTPRIMID effectPrimId, const vector3d& deltaPos);
-    void DetachFromMaster(CRenderObject* knownMaster = nullptr);
+    void DiscardPrimitive(CEffectPrim* prim);
+    const vector3d& EffectPosition() const { return m_effectPos; }
     int GetEffectType() const { return m_type; }
     int GetStateCount() const { return m_stateCnt; }
     int GetDuration() const { return m_duration; }
@@ -254,7 +258,6 @@ private:
     enum class Handler {
         None,
         EzStr,
-        Entry2,
         JobLevelUp50,
         Portal,
         ReadyPortal,
@@ -299,7 +302,11 @@ private:
     void LoadEzEffect(const char* fName);
     void InitEZ2STRFrame();
     bool ProcessEZ2STR();
+    bool ProcessTargetPositionStr();
     bool OnProcess2();
+    bool ProcessEffectFrame();
+    bool FinishEffectFrame();
+    u8 ProcessWorldEffect();
     void ApplyHeal(const char* textureName, int variant);
     void ApplyHeal2(const char* textureName, int variant);
     void ApplyExit2(const char* textureName);
@@ -365,7 +372,6 @@ private:
     CRenderObject* ResolveCurrentMaster() const;
     CAbleToMakeEffect* ResolveCurrentEffectOwner() const;
 
-    void SpawnEntry2();
     void SpawnJobLevelUp50();
     void SpawnPortal();
     void SpawnReadyPortal();
@@ -409,7 +415,6 @@ private:
     u32 m_masterActorGid;
     Handler m_handler;
     int m_type;
-    int m_level;
     int m_flag;
     int m_count;
     int m_stateCnt;
@@ -418,11 +423,17 @@ private:
     int m_iCurLayer;
     int m_worldType;
     bool m_loop;
+    bool m_isWorldEffect;
+    bool m_strFrameActive;
     u32 m_lastProcessTick;
     float m_tickCarryMs;
+    vector3d m_strAnchorPosition;
+    vector3d m_effectPos;
     vector3d m_cachedPos;
     vector3d m_deltaPos;
+    vector3d m_deltaPos2;
     vector3d m_targetPos;
+    vector3d m_grimToothOrigin;
     vector3d m_grimToothStep;
     vector3d m_grimToothRemaining;
     float m_param[4];

@@ -1490,7 +1490,6 @@ bool UpdateWeatherCloudPrimitive(CEffectPrim* prim)
         return false;
     }
 
-    ++prim->m_stateCnt;
     const int mapVariant = static_cast<int>(prim->m_param[0]);
     const float fadeInFrames = mapVariant == 3 ? 24.0f : 50.0f;
     const float fadeOutFrames = 96.0f;
@@ -1536,7 +1535,6 @@ bool UpdateWaterfallPrimitive(CEffectPrim* prim)
         return false;
     }
 
-    ++prim->m_stateCnt;
     for (EffectBandState& band : prim->m_bands) {
         if (band.active) {
             ++band.process;
@@ -1556,7 +1554,6 @@ bool UpdateMapPillarPrimitive(CEffectPrim* prim)
         prim->m_pos = prim->m_master->ResolveBasePosition();
     }
 
-    ++prim->m_stateCnt;
     bool anyActive = false;
     for (EffectBandState& band : prim->m_bands) {
         if (!band.active) {
@@ -2443,7 +2440,6 @@ bool UpdateScreenTexturePrimitive(CEffectPrim* prim)
         return false;
     }
 
-    ++prim->m_stateCnt;
     prim->m_speed += prim->m_accel;
     prim->m_rollSpeed += prim->m_rollAccel;
     prim->m_roll = WrapAngle360(prim->m_roll + prim->m_rollSpeed);
@@ -2475,7 +2471,6 @@ bool UpdateCrossTexturePrimitive(CEffectPrim* prim)
         return false;
     }
 
-    ++prim->m_stateCnt;
     prim->m_speed += prim->m_accel;
     prim->m_size += prim->m_sizeSpeed;
     prim->m_sizeSpeed += prim->m_sizeAccel;
@@ -2518,7 +2513,6 @@ bool UpdateCirclePrimitive(CEffectPrim* prim)
         return false;
     }
 
-    ++prim->m_stateCnt;
     prim->m_orgPos = prim->m_master->ResolveBasePosition();
     prim->m_orgPos.x += prim->m_deltaPos2.x;
     prim->m_orgPos.z += prim->m_deltaPos2.z;
@@ -2578,7 +2572,6 @@ bool UpdateCylinderPrimitive(CEffectPrim* prim)
         return false;
     }
 
-    ++prim->m_stateCnt;
     prim->m_orgPos = prim->m_master->ResolveBasePosition();
     prim->m_orgPos.x += prim->m_deltaPos2.x;
     prim->m_orgPos.z += prim->m_deltaPos2.z;
@@ -2636,7 +2629,6 @@ bool UpdateParticleOrbitPrimitive(CEffectPrim* prim)
         return false;
     }
 
-    ++prim->m_stateCnt;
     prim->m_orgPos = prim->m_master->ResolveBasePosition();
     prim->m_radiusSpeed += prim->m_radiusAccel;
     prim->m_gravSpeed += prim->m_gravAccel;
@@ -2670,7 +2662,6 @@ bool UpdateFreeParticlePrimitive(CEffectPrim* prim, bool applyGravity, bool spli
         return false;
     }
 
-    ++prim->m_stateCnt;
     prim->m_orgPos = prim->m_master->ResolveBasePosition();
     prim->m_orgPos = AddVec3(prim->m_orgPos, prim->m_deltaPos2);
 
@@ -2788,7 +2779,9 @@ void CEffectPrim::Init(CRagEffect* master, EFFECTPRIMID effectPrimId, const vect
 {
     m_master = master;
     m_type = effectPrimId;
-    m_deltaPos = deltaPos;
+    m_deltaPos = AddVec3(m_deltaPos, deltaPos);
+    m_orgPos = master->EffectPosition();
+    m_pos = m_orgPos;
     m_roll = 0.0f;
     m_rollSpeed = 0.0f;
     m_rollAccel = 0.0f;
@@ -6120,210 +6113,214 @@ void RenderWind(const CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
-bool CEffectPrim::OnProcess()
+// Ref/RagEffectPrim.cpp:5679, 6377. The world owns primitive objects;
+// the parent's list only tracks attachments.
+CEffectPrim::~CEffectPrim()
+{
+    if (m_master) {
+        m_master->SendMsg(this, 25, 0, 0, 0);
+    }
+}
+
+void CEffectPrim::SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t)
+{
+    if (msg == 24) {
+        m_master = nullptr;
+    }
+}
+
+// Ref/RagEffectPrim.cpp:5733-5770, 6198-6206. Unlike effects, primitives
+// include their final duration frame. Only the two life-99 texture kinds
+// bypass the zero-skip-frame gate.
+u8 CEffectPrim::OnProcess()
+{
+    if (!m_master) {
+        return 0;
+    }
+    // Ref/RagEffectPrim.cpp:5748-5765: copy before the skip-frame gate.
+    switch (static_cast<int>(m_type)) {
+    case 0x17: case 0x1C: case 0x1D: case 0x1E: case 0x20:
+    case 0x23: case 0x3C: case 0x44: case 0x63: case 0x68:
+    case 0x69: case 0x6A: case 0x6C: case 0x6D: case 0x6F:
+        m_pos = m_master->EffectPosition();
+        break;
+    default:
+        break;
+    }
+    if (!g_isSkipFrame && !((static_cast<int>(m_type) == 0 || static_cast<int>(m_type) == 0x10) && m_gi[0].life == 99)) {
+        return 1;
+    }
+    if (!ProcessPrimitiveFrame()) {
+        return 0;
+    }
+    ++m_stateCnt;
+    return m_stateCnt <= m_duration;
+}
+
+bool CEffectPrim::ProcessPrimitiveFrame()
 {
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting)) {
         Update3DCastingPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting3)) {
         Update3DCasting3Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi5)) {
         UpdateGi5Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi1)) {
         UpdateGi1Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeAttackEnergy2)) {
         UpdateAttackEnergy2Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeElectric2)) {
         UpdateElectric2Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeElectric)) {
         UpdateElectricPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeAttackEnergy)) {
         UpdateAttackEnergyPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHalfSphere)) {
         UpdateHalfSpherePrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeStormKick)) {
         UpdateStormKickPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {
         UpdateGi4Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi2)) {
         UpdateGi2Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeMapPillar)) {
         UpdateMapPillarGi(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting2)) {
         UpdateDefenderPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeFlowerCast)) {
         UpdateFlowerCastPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeAcidDemon)) {
         UpdateAcidDemonPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeGiExplosion)) {
         UpdateGiExplosionPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHeal) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow)) {
         UpdateHealPrimitive(this);
         if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) && m_master != nullptr) {
             m_pos = m_master->ActorPosition();
         }
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeEffectTexture)) {
         UpdateEffectTexturePrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeThrowItem)) {
         UpdateThrowItemPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeTeleport2)) {
         UpdateTeleportation2Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical)) {
         UpdateChemicalPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical2)) {
         UpdateChemical2Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical3)) {
         UpdateChemical3Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeFirstAid)) {
         UpdateFirstAidPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeBottomOut)) {
         UpdateBottomOutPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeBottom)) {
         UpdateBottomPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeParticleUp)) {
         UpdateParticleUpPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeColorPaper)) {
         UpdateColorPaperPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeSphereWind)) {
         UpdateSphereWindPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeMagnum2)) {
         UpdateMagnum2Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeSaintWing)) {
         UpdateSaintWingPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeForest)) {
         UpdateForestPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeRectUp)) {
         UpdateRectUpPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeBlind)) {
         UpdateBlindPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypePoison)) {
         UpdatePoisonPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypePortal)) {
         UpdatePortalPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeWind)) {
         UpdateWindPrimitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting4)) {
         UpdateCasting4Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting5)) {
         UpdateCasting5Primitive(this);
-        ++m_stateCnt;
-        return m_stateCnt <= m_duration;
+        return true;
     }
     if (m_type == PP_3DCIRCLE) {
         return UpdateCirclePrimitive(this);
@@ -6351,12 +6348,10 @@ bool CEffectPrim::OnProcess()
     }
     if (m_type == PP_PORTAL) {
         UpdatePortalBands(this);
-        ++m_stateCnt;
         return m_stateCnt <= m_duration || std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active; });
     }
     if (m_type == PP_WIND) {
         UpdateWindBands(this);
-        ++m_stateCnt;
         return m_stateCnt <= m_duration || std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active && band.alpha > 0.0f; });
     }
     if (m_type == PP_WATERFALL) {
@@ -6370,11 +6365,9 @@ bool CEffectPrim::OnProcess()
     }
     if (m_type == PP_CASTINGRING4 && std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active; })) {
         UpdateCastingBands(this);
-        ++m_stateCnt;
         return m_stateCnt <= m_duration || std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active && band.alpha > 0.0f; });
     }
 
-    ++m_stateCnt;
     m_size += m_sizeSpeed;
     m_sizeSpeed += m_sizeAccel;
     m_radius += m_radiusSpeed;
@@ -7227,7 +7220,6 @@ CRagEffect::CRagEffect()
     , m_masterActorGid(0)
     , m_handler(Handler::None)
     , m_type(0)
-    , m_level(1)
     , m_flag(0)
     , m_count(0)
     , m_stateCnt(0)
@@ -7236,11 +7228,17 @@ CRagEffect::CRagEffect()
     , m_iCurLayer(0)
     , m_worldType(0)
     , m_loop(false)
+    , m_isWorldEffect(false)
+    , m_strFrameActive(true)
     , m_lastProcessTick(timeGetTime())
     , m_tickCarryMs(kEffectTickMs)
+    , m_strAnchorPosition{}
+    , m_effectPos{}
     , m_cachedPos{}
     , m_deltaPos{}
+    , m_deltaPos2{}
     , m_targetPos{}
+    , m_grimToothOrigin{}
     , m_grimToothStep{}
     , m_grimToothRemaining{}
     , m_param{ 0.0f, 0.0f, 0.0f, 0.0f }
@@ -7263,13 +7261,7 @@ CRagEffect::~CRagEffect()
     ClearPrims();
 
     if (CAbleToMakeEffect* owner = ResolveCurrentEffectOwner()) {
-        owner->m_effectList.remove(this);
-        if (owner->m_beginSpellEffect == this) {
-            owner->m_beginSpellEffect = nullptr;
-        }
-        if (owner->m_magicTargetEffect == this) {
-            owner->m_magicTargetEffect = nullptr;
-        }
+        owner->SendMsg(this, 23, 0, 0, 0);
     }
 
     if (m_ownsMaster) {
@@ -7280,8 +7272,11 @@ CRagEffect::~CRagEffect()
 
 void CRagEffect::ClearPrims()
 {
+    // Ref/RagEffect.cpp:10058-10078 / message 25: detach; the world deletes.
     for (CEffectPrim* prim : m_primList) {
-        delete prim;
+        if (prim) {
+            prim->SendMsg(this, 24, 0, 0, 0);
+        }
     }
     m_primList.clear();
 }
@@ -7305,28 +7300,41 @@ void CRagEffect::LoadEzEffect(const char* fName)
     }
 }
 
+// Ref/RagEffect.cpp:9666-9695. Restart the key cursors without resetting
+// transform accumulators: Ref carries those values across a restart.
 void CRagEffect::InitEZ2STRFrame()
 {
     m_iCurLayer = 0;
     m_stateCnt = 0;
     m_cEndLayer = m_aniClips ? m_aniClips->cLayer : 0;
-    if (m_aniClips && m_aniClips->cLayer > 0 && m_aniClips->aLayer[0].cAniKey == 0) {
+    if (m_aniClips && m_aniClips->aLayer[0].cAniKey == 0) {
         m_cEndLayer = m_aniClips->cLayer - 1;
     }
-    m_actXformData.fill(KAC_XFORMDATA{});
-    m_aiCurAniKey.fill(0);
-    m_isLayerDrawn.fill(0);
-    m_activeAniKeyFrame.fill(-1);
-    m_activeAniKeyAppliedState.fill(-1);
-    m_activeAniKeyZeroBlend.fill(0);
+    if (m_aniClips) {
+        for (int layer = 0; layer < m_aniClips->cLayer && layer < static_cast<int>(m_aiCurAniKey.size()); ++layer) {
+            m_aiCurAniKey[static_cast<size_t>(layer)] = 0;
+        }
+    }
 }
 
 bool CRagEffect::ProcessEZ2STR()
 {
-    if (!m_aniClips) {
+    m_strFrameActive = false;
+    if (!m_ezEffectRes || !m_aniClips) {
         return false;
     }
 
+    // Ref/RagEffect.cpp:9505-9508: retain the final frame's state on
+    // termination; callers decide whether a false result ends the effect.
+    if (m_iCurLayer >= m_cEndLayer) {
+        return false;
+    }
+
+    // Ref projects the master's position during processing. Keep the world
+    // anchor from this call for the split renderer, including temporary targets.
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return false;
+    m_strAnchorPosition = master->m_pos;
     m_isLayerDrawn.fill(0);
     m_activeAniKeyFrame.fill(-1);
     m_activeAniKeyAppliedState.fill(-1);
@@ -7421,7 +7429,21 @@ bool CRagEffect::ProcessEZ2STR()
             (key->XformData.srcalpha == 0u && key->XformData.destalpha == 0u) ? 1u : 0u;
     }
 
+    m_strFrameActive = true;
     return true;
+}
+
+// HighPriest.exe.c:420542-420562, case 185. Restore the actor on both
+// completion and continuation; STR processing captures the temporary anchor.
+bool CRagEffect::ProcessTargetPositionStr()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return false;
+    m_deltaPos2 = master->m_pos;
+    master->m_pos = m_deltaPos;
+    const bool active = ProcessEZ2STR();
+    master->m_pos = m_deltaPos2;
+    return active;
 }
 
 void CRagEffect::RenderAniClip(int layerIndex, const KAC_LAYER& layer, const KAC_XFORMDATA& xform, matrix* viewMatrix)
@@ -7453,7 +7475,7 @@ void CRagEffect::RenderAniClip(int layerIndex, const KAC_LAYER& layer, const KAC
     }
 
     tlvertex3d anchor{};
-    if (!ProjectPoint(ResolveBasePosition(), *viewMatrix, &anchor)) {
+    if (!ProjectPoint(m_strAnchorPosition, *viewMatrix, &anchor)) {
         return;
     }
     const float pixelRatio = ResolveEffectPixelRatio(anchor);
@@ -7532,9 +7554,11 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     m_type = effectId;
     m_deltaPos = deltaPos;
     m_cachedPos = master ? master->m_pos : vector3d{};
+    m_effectPos = m_cachedPos;
     m_longitude = master ? master->m_roty : 0.0f;
     m_handler = Handler::None;
     m_loop = false;
+    m_isWorldEffect = effectId == kRagEffectPortal || effectId == kRagEffectReadyPortal || effectId == kRagEffectWarpZone;
     m_duration = (effectId >= 0 && effectId < kRagEffectDurationCount)
         ? kRagEffectDurationTable[effectId]
         : 100;
@@ -7543,13 +7567,11 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     m_tickCarryMs = kEffectTickMs;
     m_targetPos = vector3d{};
     m_hasTargetPos = false;
+    m_grimToothOrigin = m_cachedPos;
     m_grimToothStep = vector3d{};
     m_grimToothRemaining = vector3d{};
 
     switch (effectId) {
-    case 158:
-        m_handler = Handler::Entry2;
-        break;
     case 337:
         m_handler = Handler::JobLevelUp50;
         LoadEzEffect("joblvup.str");
@@ -7673,7 +7695,6 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         break;
     case 601:
         m_handler = Handler::SightState;
-        m_loop = true;
         break;
     case 316:
         m_handler = Handler::ReadyPortal2;
@@ -7684,7 +7705,6 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         break;
     case 321:
         m_handler = Handler::WarpZone2;
-        m_loop = true;
         break;
     case 341:
         m_handler = Handler::Portal2;
@@ -7734,11 +7754,13 @@ void CRagEffect::InitAtWorldPosition(int effectId, const vector3d& position)
 
 void CRagEffect::InitWorld(const C3dWorldRes::effectSrcInfo& source)
 {
+    m_isWorldEffect = true;
     m_master = new CWorldAnchor(source.pos);
     m_ownsMaster = true;
     m_masterIsActor = false;
     m_masterActorGid = 0;
     m_cachedPos = source.pos;
+    m_effectPos = source.pos;
     m_effectName = source.name;
     m_worldType = source.type;
     m_emitSpeed = source.emitSpeed;
@@ -7788,42 +7810,20 @@ CEffectPrim* CRagEffect::LaunchEffectPrim(EFFECTPRIMID effectPrimId, const vecto
     }
     prim->Init(this, effectPrimId, deltaPos);
     m_primList.push_back(prim);
+    // Ref/RagEffect.cpp:9937-10023: primitives are processed/rendered by World.
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CWorld* world = mode && mode->m_world ? mode->m_world : &g_world;
+    world->m_gameObjectList.push_back(prim);
     return prim;
 }
 
-void CRagEffect::DetachFromMaster(CRenderObject* knownMaster)
+// Registered primitives remain world-owned even if resource setup fails.
+// Use the Ref message-25 / message-24 attachment protocol for cancellation.
+void CRagEffect::DiscardPrimitive(CEffectPrim* prim)
 {
-    CRenderObject* ownerMaster = knownMaster;
-    if (!ownerMaster && !m_masterIsActor) {
-        ownerMaster = ResolveCurrentMaster();
-    }
-
-    const vector3d masterPos = ownerMaster ? ownerMaster->m_pos : m_cachedPos;
-    const float masterRot = ownerMaster ? ownerMaster->m_roty : m_longitude;
-    const vector3d base = AddVec3(masterPos, m_deltaPos);
-
-    if (CAbleToMakeEffect* owner = dynamic_cast<CAbleToMakeEffect*>(ownerMaster)) {
-        if (owner->m_beginSpellEffect == this) {
-            owner->m_beginSpellEffect = nullptr;
-        }
-        if (owner->m_magicTargetEffect == this) {
-            owner->m_magicTargetEffect = nullptr;
-        }
-    }
-
-    m_cachedPos = base;
-    m_longitude = masterRot;
-
-    if (m_ownsMaster) {
-        m_master = nullptr;
-        return;
-    }
-
-    m_master = new CWorldAnchor(base);
-    m_ownsMaster = true;
-    m_masterIsActor = false;
-    m_masterActorGid = 0;
-    m_deltaPos = vector3d{};
+    if (!prim) return;
+    SendMsg(prim, 25, 0, 0, 0);
+    prim->SendMsg(this, 24, 0, 0, 0);
 }
 
 void CRagEffect::OnActorDeleted(const CGameActor* actor)
@@ -7833,12 +7833,12 @@ void CRagEffect::OnActorDeleted(const CGameActor* actor)
     }
 
     if (m_masterIsActor && actor->m_gid == m_masterActorGid) {
-        DetachFromMaster(const_cast<CGameActor*>(actor));
+        SendMsg(nullptr, 24, 0, 0, 0);
         return;
     }
 
     if (static_cast<const CRenderObject*>(actor) == m_master) {
-        DetachFromMaster(const_cast<CGameActor*>(actor));
+        SendMsg(nullptr, 24, 0, 0, 0);
     }
 }
 
@@ -7875,6 +7875,10 @@ CAbleToMakeEffect* CRagEffect::ResolveCurrentEffectOwner() const
 
 vector3d CRagEffect::ResolveBasePosition() const
 {
+    // Ref: effect 123 retains the position copied by Init; message 14 is its target.
+    if (m_type == 123) {
+        return m_grimToothOrigin;
+    }
     if (CRenderObject* master = ResolveCurrentMaster()) {
         return AddVec3(master->m_pos, m_deltaPos);
     }
@@ -7932,7 +7936,6 @@ bool CRagEffect::ResolveCullSphere(vector3d* outCenter, float* outRadius) const
     case Handler::Smoke:
     case Handler::Torch:
     case Handler::EzStr:
-    case Handler::Entry2:
     case Handler::JobLevelUp50:
     case Handler::SuperAngel:
     case Handler::RecoveryHp:
@@ -8324,25 +8327,42 @@ void CRagEffect::SpawnWarpZone2()
     }
 }
 
-void CRagEffect::SpawnEntry2()
+// HighPriest.exe.c:459558-459668 (0x635BB0). Entry2 launches PP_HEAL,
+// not a casting-ring approximation, and uses four distinct ring profiles.
+void CRagEffect::ApplyEntry2()
 {
-    CTexture* ringBlue = ResolveEffectTextureCandidates({
-        "effect\\ring_blue.tga",
-        "effect\\ring_blue.bmp",
-        "effect\\ring_b.bmp",
-    }, false);
-
-    if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(ResolveBasePosition(), "effect\\ef_portal.wav");
-
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_CASTINGRING4, vector3d{})) {
-            prim->m_renderFlag = 5u;
-            prim->m_duration = m_duration;
-            prim->m_texture.push_back(ringBlue);
-            prim->m_tintColor = RGB(255, 255, 255);
-            prim->m_size = 4.0f;
-            ConfigureWarpZoneCastingBands(prim, 0, static_cast<float>(rand() % 360));
-        }
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_Portal.wav", m_effectPos.x - listener.x, -150.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHeal), vector3d{});
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+    prim->m_size = 4.0f;
+    const float heights[] = { 30.0f, 30.0f, 4.0f, 4.0f };
+    const float distances[] = { 3.7f, 3.4000001f, 3.5999999f, 3.7f };
+    const short rises[] = { 90, 90, 10, 5 };
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = 360;
+        gi.maxHeight = heights[band];
+        gi.rotStart = static_cast<short>(rand() % 360);
+        gi.alphaB = 0;
+        gi.distance = distances[band];
+        gi.riseAngle = rises[band];
+        gi.alphaT = 1400;
+        gi.sparkY = 0.0f;
+        gi.height.fill(0.0f);
+        gi.flag.fill(2);
     }
 }
 
@@ -8546,8 +8566,7 @@ void CRagEffect::SpawnSuperAngelVariant(int variant, int birthFrame)
         prim->m_param[2] = taekwon ? -26.0f : -34.0f;
         prim->m_param[3] = taekwon ? 1.6f : 1.0f;
         if (!ConfigureEffectSpritePrim(prim, spriteStems, 0, taekwon ? 1.15f : 1.0f, false, 0.0f, 0)) {
-            m_primList.pop_back();
-            delete prim;
+            DiscardPrimitive(prim);
             prim = LaunchEffectPrim(PP_SUPERANGEL, vector3d{});
             if (!prim) {
                 return;
@@ -9113,85 +9132,72 @@ void CRagEffect::SpawnHideStart()
     }
 }
 
+// Ref/RagEffect.cpp:4613-4702. Keep the two discarded RNG draws: they
+// determine the subsequent size/orientation sequence even though unused here.
 void CRagEffect::SpawnGrimTooth()
 {
-    if (!m_hasTargetPos) {
-        return;
-    }
-
-    const vector3d base = ResolveBasePosition();
-    const vector3d totalDelta = {
-        m_targetPos.x - base.x,
-        m_targetPos.y - base.y,
-        m_targetPos.z - base.z,
-    };
-    const float totalDistance = std::sqrt(totalDelta.x * totalDelta.x + totalDelta.z * totalDelta.z);
-
+    const vector3d base = m_grimToothOrigin;
     if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(base, "effect\\EF_FrostDiver.wav");
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\EF_FrostDiver.wav", base.x - listener.x, 0.0f,
+                base.z - listener.z, 250, 40, 1.0f);
+        }
+        float rotation = static_cast<float>(std::atan2(static_cast<double>(m_deltaPos.x) - base.x,
+            -(static_cast<double>(m_deltaPos.z) - base.z)) / 3.141592 * 180.0);
+        if (rotation >= 360.0f) rotation -= 360.0f;
+        if (rotation < 0.0f) rotation += 360.0f;
+        matrix direction;
+        MatrixIdentity(direction);
+        // GetRadian takes an integer, so truncate after negating the rotation.
+        MatrixAppendYRotation(direction, GetRadian(static_cast<int>(-rotation)));
+        m_grimToothStep = {
+            direction.m[2][0] + direction.m[2][0] + direction.m[3][0],
+            direction.m[2][1] + direction.m[2][1] + direction.m[3][1],
+            direction.m[2][2] + direction.m[2][2] + direction.m[3][2],
+        };
+        m_grimToothRemaining = {
+            m_grimToothRemaining.x - m_grimToothStep.x,
+            m_grimToothRemaining.y - m_grimToothStep.y,
+            m_grimToothRemaining.z - m_grimToothStep.z,
+        };
     }
-
-    if (m_flag != 0) {
-        return;
-    }
-
+    if (m_flag != 0) return;
     if ((m_stateCnt % 3) == 0) {
-        const float traveledDistance = std::sqrt(
-            m_grimToothRemaining.x * m_grimToothRemaining.x
-            + m_grimToothRemaining.z * m_grimToothRemaining.z);
-        if (traveledDistance >= (std::max)(0.0f, totalDistance - 2.5f)) {
-            m_flag = 1;
-        }
-
-        CTexture* stoneTexture = ResolveEffectTextureCandidates({
-            "effect\\stone.bmp",
-            "effect\\stone.tga",
-        }, false);
-        if (stoneTexture) {
-            if (CEffectPrim* prim = LaunchEffectPrim(PP_3DQUADHORN, vector3d{})) {
-                prim->m_renderFlag = 0u;
-                prim->m_pattern |= 1;
-                prim->m_duration = 40;
-                prim->m_deltaPos2 = {
-                    m_grimToothRemaining.x,
-                    20.0f + totalDelta.y * (totalDistance > 0.0f ? (traveledDistance / totalDistance) : 0.0f),
-                    m_grimToothRemaining.z,
-                };
-                prim->m_size = static_cast<float>(rand() % 40 + 60) * 0.01f;
-                prim->m_heightSize = 10.0f;
-                prim->m_longitude = static_cast<float>(rand() % 360);
-                prim->m_latitude = static_cast<float>(rand() % 30 + 75);
-                MatrixIdentity(prim->m_matrix);
-                MatrixAppendXRotation(prim->m_matrix, prim->m_latitude * (kPi / 180.0f));
-                MatrixAppendYRotation(prim->m_matrix, prim->m_longitude * (kPi / 180.0f));
-                prim->m_speed = 3.0f;
-                prim->m_accel = prim->m_speed / static_cast<float>(prim->m_duration) * -2.0f;
-                prim->m_alpha = 255.0f;
-                prim->m_maxAlpha = 255.0f;
-                prim->m_fadeOutCnt = prim->m_duration - 10;
-                prim->m_texture.push_back(stoneTexture);
-                prim->m_tintColor = RGB(255, 255, 255);
-                if (m_stateCnt <= 6) {
-                    DbgLog("[Projectile] grimtooth effect123 step=%d base=(%.2f,%.2f,%.2f) travel=(%.2f,%.2f,%.2f) total=(%.2f,%.2f,%.2f)\n",
-                        m_stateCnt,
-                        base.x,
-                        base.y,
-                        base.z,
-                        prim->m_deltaPos2.x,
-                        prim->m_deltaPos2.y,
-                        prim->m_deltaPos2.z,
-                        totalDelta.x,
-                        totalDelta.y,
-                        totalDelta.z);
-                }
-            }
-        }
+        const double dx = static_cast<double>(m_deltaPos.x) - base.x;
+        const double dz = static_cast<double>(m_deltaPos.z) - base.z;
+        const float squaredDistance = static_cast<float>(dx * dx + dz * dz);
+        if (std::sqrt(squaredDistance) <= 2.5) m_flag = 1;
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DQUADHORN, vector3d{});
+        prim->m_pattern |= 1;
+        prim->m_duration = 40;
+        const int angle = rand() % 360;
+        rand();
+        GetSin(angle);
+        GetCos(angle);
+        prim->m_deltaPos2 = {
+            m_grimToothRemaining.x,
+            20.0f + m_grimToothRemaining.y,
+            m_grimToothRemaining.z,
+        };
+        prim->m_size = static_cast<float>((rand() % 40 + 60) * 0.0099999998);
+        prim->m_heightSize = 10.0f;
+        prim->m_longitude = static_cast<float>(rand() % 360);
+        prim->m_latitude = static_cast<float>(rand() % 30 + 75);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_speed = 3.0f;
+        prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -2.0);
+        prim->m_spawnCount = 6;
+        prim->m_fadeOutCnt = prim->m_duration - 10;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\stone.bmp", false));
     }
-
     m_grimToothRemaining = {
-        m_grimToothRemaining.x + m_grimToothStep.x,
-        m_grimToothRemaining.y + m_grimToothStep.y,
-        m_grimToothRemaining.z + m_grimToothStep.z,
+        m_grimToothRemaining.x - m_grimToothStep.x,
+        m_grimToothRemaining.y - m_grimToothStep.y,
+        m_grimToothRemaining.z - m_grimToothStep.z,
     };
 }
 
@@ -10621,38 +10627,6 @@ void CRagEffect::ApplyPortal2(int variant)
     }
 }
 
-void CRagEffect::ApplyEntry2()
-{
-    if (m_stateCnt != 0) {
-        return;
-    }
-    CRenderObject* master = ResolveCurrentMaster();
-    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
-    vector3d soundPos = origin;
-    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-        if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-            soundPos.y = mode->m_world->m_player->m_pos.y - 150.0f;
-        }
-    }
-    TryPlayEffectWaveAt(soundPos, "effect\\EF_Portal.wav");
-    CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHeal), vector3d{});
-    if (prim == nullptr) {
-        return;
-    }
-    prim->m_renderFlag = 5;
-    prim->m_duration = m_duration;
-    prim->m_pos = origin;
-    prim->m_size = 4.0f;
-    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
-    ConfigureHealBand(prim->m_gi[0], 30.0f, static_cast<short>(rand() % 360), 3.7f, 90, 1400);
-    ConfigureHealBand(prim->m_gi[1], 30.0f, static_cast<short>(rand() % 360), 3.4000001f, 90, 1400);
-    ConfigureHealBand(prim->m_gi[2], 4.0f, static_cast<short>(rand() % 360), 3.5999999f, 10, 1400);
-    ConfigureHealBand(prim->m_gi[3], 4.0f, static_cast<short>(rand() % 360), 3.7f, 5, 1400);
-    for (EffectGi& gi : prim->m_gi) {
-        gi.flag.fill(2);
-    }
-}
-
 void CRagEffect::ApplyPoison(int variant)
 {
     if (m_stateCnt == 99999998) {
@@ -10661,6 +10635,7 @@ void CRagEffect::ApplyPoison(int variant)
     }
     CRenderObject* master = ResolveCurrentMaster();
     vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     if (m_stateCnt == 0) {
         origin.y -= 9.0f;
@@ -10720,6 +10695,7 @@ void CRagEffect::ApplySaintCasting(short time, const char* textureName, int vari
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     for (CEffectPrim* existing : m_primList) {
         if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi1)) {
@@ -10785,6 +10761,7 @@ void CRagEffect::ApplyBottomOut(const char* textureName, int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     for (CEffectPrim* existing : m_primList) {
         if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeBottomOut)) {
@@ -10827,6 +10804,7 @@ void CRagEffect::ApplyBottomLight(const char* textureName, int size)
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     for (CEffectPrim* existing : m_primList) {
         if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi5)) {
@@ -10861,6 +10839,7 @@ void CRagEffect::ApplyBottomMusic(const char* textureName, int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     for (CEffectPrim* existing : m_primList) {
         if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeBottom)) {
@@ -10925,6 +10904,7 @@ void CRagEffect::ApplyBeginCasting(const char* textureName, int option, bool pla
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     for (CEffectPrim* existing : m_primList) {
         if (existing != nullptr
@@ -11002,6 +10982,7 @@ void CRagEffect::ApplyCoupleCasting(const char* textureName)
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     if (m_stateCnt == 0) {
         vector3d wavePos = origin;
@@ -11061,6 +11042,7 @@ void CRagEffect::ApplyGiExplosion(const char* textureName)
     }
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     if (m_stateCnt != 0) {
         return;
@@ -11674,6 +11656,7 @@ void CRagEffect::ApplyIceArrow()
     // Ref runtime-wave: 0x5F862A (EF_IceArrow%d.wav, rand() % 3 + 1).
     CRenderObject* master = ResolveCurrentMaster();
     if (master != nullptr) {
+        m_effectPos = master->m_pos;
         m_cachedPos = master->m_pos;
     }
     if (m_stateCnt == 12) {
@@ -11742,6 +11725,7 @@ void CRagEffect::ApplyColorPaper(const char* textureName)
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     if (textureName == nullptr || m_stateCnt != 0) {
         return;
@@ -11777,6 +11761,7 @@ void CRagEffect::ApplySphereWind(const char* textureName, short time, int varian
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     for (CEffectPrim* existing : m_primList) {
         if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeSphereWind)) {
@@ -11814,6 +11799,7 @@ void CRagEffect::ApplyMagnum2(const char* textureName)
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     for (CEffectPrim* existing : m_primList) {
         if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeMagnum2)) {
@@ -11872,6 +11858,7 @@ void CRagEffect::ApplySaintWing(const char* textureName)
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     for (CEffectPrim* existing : m_primList) {
         if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeSaintWing)) {
@@ -11913,6 +11900,7 @@ void CRagEffect::ApplyForestLight(const char* textureName, int variant)
     }
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeForest), vector3d{});
     if (prim == nullptr) {
@@ -12021,6 +12009,7 @@ void CRagEffect::ApplyThrowItem(const char* textureName, int variant)
     }
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     for (CEffectPrim* prim : m_primList) {
         if (prim != nullptr && prim->m_type == static_cast<EFFECTPRIMID>(kPrimTypeThrowItem)) {
@@ -12104,6 +12093,7 @@ void CRagEffect::ApplyTeleportation2(const char* textureName, short time)
     }
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     vector3d wavePos = origin;
     if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
@@ -12171,6 +12161,7 @@ void CRagEffect::ApplyChemical2(short time)
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     for (CEffectPrim* prim : m_primList) {
         if (prim != nullptr && prim->m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical2)) {
@@ -12188,6 +12179,7 @@ void CRagEffect::ApplyChemical2(short time)
     prim->m_duration = m_duration;
     prim->m_pos = origin;
     prim->m_texture.push_back(g_texMgr.GetTexture("effect\\slash01.tga", false));
+    m_effectPos.y -= 9.0f;
     m_cachedPos.y -= 9.0f;
     const short rise = Chemical2RiseAngle(m_deltaPos.x - origin.x, m_deltaPos.z - origin.z);
     for (int band = 0; band < 4; ++band) {
@@ -12206,6 +12198,7 @@ void CRagEffect::ApplyChemical3(short time)
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     if (m_stateCnt != 0) {
         return;
@@ -12281,6 +12274,7 @@ void CRagEffect::ApplyFirstAid()
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     for (CEffectPrim* prim : m_primList) {
         if (prim != nullptr && prim->m_type == static_cast<EFFECTPRIMID>(kPrimTypeFirstAid)) {
@@ -12421,6 +12415,7 @@ void CRagEffect::ApplyHeal2(const char* textureName, int variant)
     }
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     if (m_stateCnt == 0) {
         if (variant < 2) {
             TryPlayEffectWaveAt(origin, "_heal_effect.wav");
@@ -12473,6 +12468,7 @@ void CRagEffect::ApplyHeal(const char* textureName, int variant)
     }
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     if (m_stateCnt != 0) {
         const int limit = variant == 1 ? 25 : 50;
         if (m_stateCnt > limit || (m_stateCnt % 6) != 0) {
@@ -12772,23 +12768,76 @@ bool CRagEffect::OnProcess2()
     }
 }
 
+// Ref/HighPriest.exe.c:419629-419680, 421945-422012. One accepted
+// processing call is one effect frame, independent of elapsed wall-clock time.
+// HighPriest.exe.c CRagEffect::OnProcess: direct ProcessEZ2STR calls whose
+// result reaches LABEL_425 (plus case 185's explicit false return). Cases
+// 130/136/244/250/390/391/392/406/407/440 deliberately ignore that result.
+bool EffectChecksStrResult(int effectId)
+{
+    switch (effectId) {
+    case 23: case 25: case 29: case 30: case 41: case 49: case 52: case 64:
+    case 65: case 66: case 68: case 69: case 70: case 75: case 76: case 77:
+    case 78: case 83: case 84: case 85: case 88: case 91: case 92: case 95:
+    case 96: case 97: case 102: case 103: case 106: case 107: case 108: case 109:
+    case 110: case 111: case 113: case 124: case 126: case 127: case 129: case 131:
+    case 133: case 134: case 135: case 139: case 141: case 143: case 144: case 146:
+    case 147: case 148: case 149: case 150: case 151: case 152: case 153: case 154:
+    case 155: case 156: case 157: case 158: case 167: case 168: case 169: case 181:
+    case 182: case 183: case 185: case 186: case 187: case 188: case 189: case 190:
+    case 191: case 192: case 193: case 194: case 195: case 197: case 199: case 204:
+    case 205: case 206: case 207: case 208: case 209: case 210: case 211: case 213:
+    case 214: case 218: case 219: case 234: case 235: case 245: case 248: case 251:
+    case 255: case 256: case 257: case 258: case 268: case 269: case 270: case 271:
+    case 272: case 273:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool CRagEffect::FinishEffectFrame()
+{
+    if (!m_strFrameActive) {
+        if (m_type == 145) {
+            // Ref restarts the clip in this case, then the outer frame advances.
+            InitEZ2STRFrame();
+        } else if (EffectChecksStrResult(m_type)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 u8 CRagEffect::OnProcess()
 {
     CRenderObject* master = ResolveCurrentMaster();
-    if (master == nullptr) {
+    if (!master) {
         return 0;
     }
     m_cachedPos = master->m_pos;
     m_longitude = master->m_roty;
-
-    if (!EffectTicksWhenNoFrameTime(m_type) && g_isSkipFrame == 0) {
+    if (!EffectTicksWhenNoFrameTime(m_type) && !g_isSkipFrame) {
         return 1;
     }
     if (g_isSkipFrame > 0 && master->m_BeZero == 1) {
         master->m_BodyLight = 0;
         master->m_BeZero = 0;
     }
+    if (m_isWorldEffect) {
+        return ProcessWorldEffect();
+    }
+    if (!ProcessEffectFrame()) {
+        return 0;
+    }
+    ++m_stateCnt;
+    return m_stateCnt < m_duration;
+}
 
+// Legacy RSW map-emitter scheduling. Skill/packet effects use OnProcess's
+// reference frame count and never extend their life for a clip or primitive.
+u8 CRagEffect::ProcessWorldEffect()
+{
     const u32 now = timeGetTime();
     const u32 elapsedMs = now - m_lastProcessTick;
     m_lastProcessTick = now;
@@ -12838,598 +12887,9 @@ u8 CRagEffect::OnProcess()
     }
 
     for (int step = 0; step < steps && alive; ++step) {
-        const bool dispatchHandler = m_loop || frameDrivenStrHandler || m_stateCnt < m_duration;
-        const bool kyrieGuard = dispatchHandler && m_type == 392;
-        const bool bodyLight442 = dispatchHandler && m_type == 442;
-        const bool bodyLight446 = dispatchHandler && m_type == 446;
-        const bool bodyLight449 = dispatchHandler && m_type == 449;
-        const bool tarot = dispatchHandler && m_type >= 523 && m_type <= 536;
-        const bool actorLight = dispatchHandler && (
-            m_type == 414 || m_type == 415 || m_type == 417 || m_type == 419 || m_type == 420
-            || m_type == 421 || m_type == 422 || m_type == 423 || m_type == 424 || m_type == 425
-            || m_type == 426 || m_type == 427 || m_type == 458
-            || m_type == 538 || m_type == 540 || m_type == 542 || m_type == 544
-            || m_type == 375 || m_type == 379 || m_type == 382 || m_type == 385 || m_type == 387 || m_type == 396
-            || m_type == 500 || m_type == 521 || m_type == 548 || m_type == 549 || m_type == 550
-            || m_type == 625 || m_type == 626 || m_type == 655 || m_type == 656 || m_type == 667);
-        const bool portalWind402 = dispatchHandler && m_type == 402;
-        const bool blackDevil = dispatchHandler && m_type == 487;
-        const bool bodyLightBit = dispatchHandler && m_type == 474;
-        const bool blindLevel = dispatchHandler && m_type >= 475 && m_type <= 484;
-        const bool beginCast = dispatchHandler && ((m_type >= 54 && m_type <= 57) || m_type == 59 || (m_type >= 172 && m_type <= 179));
-        const bool bottomLight = dispatchHandler && (m_type == 280 || m_type == 285);
-        const bool bottomOut = dispatchHandler && m_type == 283;
-        const bool blastMine = dispatchHandler && m_type == 676;
-        const bool chemicalSlash = dispatchHandler && (m_type == 439 || m_type == 512 || m_type == 623);
-        const bool giExplosion = dispatchHandler && m_type == 514;
-        const bool acidDemon = dispatchHandler && m_type == 537;
-        const bool flowerCast = dispatchHandler && m_type == 488;
-        const bool defender = dispatchHandler && (m_type == 222 || m_type == 252);
-        const bool mapPillar = dispatchHandler && (m_type == 231 || m_type == 247 || m_type == 259 || m_type == 260);
-        const bool volcano = dispatchHandler && (m_type == 223 || m_type == 225 || m_type == 236 || m_type == 237 || m_type == 238 || m_type == 261 || m_type == 263);
-        const bool bottomVolcano = dispatchHandler && (m_type == 239 || m_type == 240 || m_type == 241 || m_type == 620);
-        const bool wind = dispatchHandler && m_type == 224;
-        const bool stormKick = dispatchHandler && (m_type == 435 || m_type == 459 || m_type == 460 || m_type == 461 || m_type == 464 || m_type == 465);
-        const bool halfSphere = dispatchHandler && m_type == 436;
-        const bool attackEnergy = dispatchHandler && m_type == 437;
-        const bool electric = dispatchHandler && m_type == 432;
-        const bool electric2 = dispatchHandler && m_type == 433;
-        const bool attackEnergy2 = dispatchHandler && m_type == 438;
-        const bool potionPillar = dispatchHandler && m_type == 221;
-        const bool iceArrow = dispatchHandler && m_type == 26;
-        const bool healBlue = dispatchHandler && m_type == 253;
-        const bool bottomMusic = dispatchHandler && (m_type == 278 || m_type == 279 || m_type == 282 || m_type == 286
-            || m_type == 289 || m_type == 291 || m_type == 293 || m_type == 674);
-        if (tarot) {
-            static const char* kTarotTextures[] = {
-                "effect\\Tarot01.tga", "effect\\Tarot02.tga", "effect\\Tarot03.tga", "effect\\Tarot04.tga",
-                "effect\\Tarot05.tga", "effect\\Tarot06.tga", "effect\\Tarot07.tga", "effect\\Tarot08.tga",
-                "effect\\Tarot09.tga", "effect\\Tarot10.tga", "effect\\Tarot11.tga", "effect\\Tarot12.tga",
-                "effect\\Tarot13.tga", "effect\\Tarot14.tga"
-            };
-            ApplyTarot(kTarotTextures[m_type - 523], 1);
-        } else if (dispatchHandler && m_type == 554) {
-            ApplyTarot("effect\\freeze_a.bmp", 2);
-        } else if (dispatchHandler && (m_type == 610 || m_type == 611)) {
-            if (m_stateCnt == 0) {
-                CRenderObject* textureMaster = ResolveCurrentMaster();
-                vector3d wavePos = textureMaster != nullptr ? textureMaster->m_pos : m_cachedPos;
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                        wavePos.y = mode->m_world->m_player->m_pos.y;
-                    }
-                }
-                TryPlayEffectWaveAt(wavePos, m_type == 610 ? "_heal_effect.wav" : "caramel_die.wav");
-            }
-            ApplyTarot(m_type == 610 ? "effect\\success.bmp" : "effect\\failed.bmp", 3);
-        } else if (dispatchHandler && m_type == 669) {
-            if (m_stateCnt == 1) {
-                CRenderObject* poisonMaster = ResolveCurrentMaster();
-                vector3d wavePos = poisonMaster != nullptr ? poisonMaster->m_pos : m_cachedPos;
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                        wavePos.y = mode->m_world->m_player->m_pos.y;
-                    }
-                }
-                TryPlayEffectWaveAt(wavePos, "effect\\wideb.wav");
-            }
-            ApplyPoison(1);
-            ProcessEZ2STR();
-        } else if (dispatchHandler && m_type == 673) {
-            ApplyPoison(2);
-        } else if (dispatchHandler && (m_type == 600 || m_type == 613 || m_type == 614 || m_type == 615 || m_type == 616)) {
-            const char* throwTexture = "effect\\coin_a.bmp";
-            if (m_type == 600) {
-                throwTexture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xA3\xB3\xD1\xB3\xAA\xC0\xCC\xC7\xC1.bmp";
-            } else if (m_type == 613) {
-                throwTexture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBC\xF6\xB8\xAE\xB0\xCB.bmp";
-            } else if (m_type == 614) {
-                throwTexture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC4\xED\xB3\xAA\xC0\xCC_\xB5\xB6.bmp";
-            } else if (m_type == 615) {
-                throwTexture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC7\xB3\xB8\xB6_\xBF\xAD\xC8\xAD.bmp";
-            }
-            ApplyThrowItem(throwTexture, 3);
-        } else if (dispatchHandler && m_type == 298) {
-            ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xF3\xBA\xB4.bmp", 0);
-        } else if (dispatchHandler && (m_type == 299 || m_type == 541)) {
-            ApplyThrowItem(m_type == 299
-                ? "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xF3\xC6\xF7\xBC\xC7\xBA\xB4.bmp"
-                : "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xB9\xF6\xBC\xAD\xC5\xA9\xC6\xF7\xBC\xC7.bmp",
-                1);
-        } else if (dispatchHandler && m_type == 539) {
-            ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC8\xAD\xBF\xB0\xBA\xB4.bmp", 10);
-            ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBF\xB0\xBB\xEA\xBA\xB4.bmp", 11);
-        } else if (dispatchHandler && m_type == 405) {
-            ApplyBottomMagnus("effect\\ring_white.tga", 2);
-        } else if (dispatchHandler && m_type == 581) {
-            ApplyForestLight("effect\\cloud11.tga", 11);
-        } else if (dispatchHandler && m_type == 564) {
-            ApplyCoupleCasting("effect\\ring_red.tga");
-        } else if (dispatchHandler && m_type == 12) {
-            ApplyPairedSaintCasting("effect\\ring_yellow.tga", 1, true, 0.0f);
-        } else if (dispatchHandler && m_type == 58) {
-            ApplyPairedSaintCasting("effect\\ring_white.tga", 0, true, 0.0f);
-        } else if (dispatchHandler && m_type == 441) {
-            ApplyPairedSaintCasting("effect\\ring_blue.tga", 5, true, -100.0f);
-        } else if (dispatchHandler && m_type == 454) {
-            ApplyPairedSaintCasting("effect\\ring_black.tga", 6, true, 0.0f);
-        } else if (beginCast) {
-            switch (m_type) {
-            case 54:
-                ApplyBeginCasting("effect\\ring_blue.tga", 2, true);
-                break;
-            case 55:
-                ApplyBeginCasting("effect\\ring_yellow.tga", 1, true);
-                break;
-            case 56:
-                ApplyBeginCasting("effect\\Magic_Green.tga", 33, true);
-                break;
-            case 57:
-                ApplyBeginCasting("effect\\ring_yellow.tga", 0, true);
-                break;
-            case 59:
-                ApplyBeginCasting("effect\\Magic_Violet.tga", 33, true);
-                break;
-            case 172:
-                ApplyBeginCasting("effect\\ring_black.tga", 3, false);
-                break;
-            case 173:
-                ApplyBeginCasting("effect\\ring_red.tga", 3, false);
-                break;
-            case 174:
-                ApplyBeginCasting("effect\\ring_blue.tga", 3, false);
-                break;
-            case 175:
-                ApplyBeginCasting("effect\\ring_yellow.tga", 3, false);
-                break;
-            case 176:
-                ApplyBeginCasting("effect\\ring_jadu.tga", 3, false);
-                break;
-            case 177:
-                ApplyBeginCasting("effect\\ring_brown.tga", 3, false);
-                break;
-            case 178:
-                ApplyBeginCasting("effect\\ring_white.tga", 3, false);
-                break;
-            case 179:
-                ApplyBeginCasting("effect\\ring_purple.tga", 3, false);
-                break;
-            default:
-                break;
-            }
-        } else if (healBlue) {
-            if (m_stateCnt == 0) {
-                CRenderObject* healMaster = ResolveCurrentMaster();
-                vector3d wavePos = healMaster != nullptr ? healMaster->m_pos : m_cachedPos;
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                        wavePos.y = mode->m_world->m_player->m_pos.y - 80.0f;
-                    }
-                }
-                TryPlayEffectWaveAt(wavePos, "effect\\\xC8\xED\xB1\xE2.wav");
-            }
-            ApplyHeal2("effect\\ring_blue.tga", 2);
-        } else if (giExplosion) {
-            ApplyGiExplosion("effect\\ring_blue.tga");
-        } else if (acidDemon) {
-            if (m_stateCnt == 5) {
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    mode->SendMsg(135, 0, 0, 0);
-                }
-            }
-            ApplyAcidDemon("effect\\ring_black.tga");
-        } else if (flowerCast) {
-            if (m_stateCnt == 5) {
-                vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                        wavePos.y = mode->m_world->m_player->m_pos.y;
-                    }
-                }
-                TryPlayEffectWaveAt(wavePos, "effect\\T_\xBE\xC8\xB6\xF4\xC7\xD1\xB8\xB6\xB9\xFD.wav");
-            }
-            if (master != nullptr && (master->m_BodyLight & 0x800) != 0x800) {
-                master->m_BodyLight += 2048;
-                if (m_stateCnt >= 200) {
-                    if (m_stateCnt < 400) {
-                        master->m_BodySin5 = static_cast<u8>(-112 - (m_stateCnt & 0xFF));
-                    }
-                } else {
-                    master->m_BodySin5 = static_cast<u8>(m_stateCnt);
-                }
-            }
-            ApplyFlowerCasting("effect\\ring_blue.tga", 4.0f, 0);
-            ApplyFlowerCasting("effect\\ring_blue.tga", 4.0f, 1);
-        } else if (defender) {
-            ApplyDefender(m_type == 222 ? "effect\\ring_black.tga" : "effect\\ring_yellow.tga");
-        } else if (mapPillar) {
-            const char* textureName = "effect\\ring_blue.tga";
-            float size = 4.0f;
-            bool wide = false;
-            if (m_type == 247) {
-                wide = true;
-            } else if (m_type == 259) {
-                textureName = "effect\\magic_green.tga";
-                size = 7.0f;
-            } else if (m_type == 260) {
-                textureName = "effect\\ring_red.tga";
-                size = 6.0f;
-            }
-            ApplyMapPillar(textureName, size, wide);
-        } else if (volcano) {
-            const char* textureName = "effect\\ring_white.tga";
-            short variant = 0;
-            bool fastSpin = false;
-            if (m_type == 223) {
-                variant = 2;
-            } else if (m_type == 225) {
-                textureName = "effect\\ring_red.tga";
-            } else if (m_type == 236) {
-                textureName = "effect\\ring_blue.tga";
-            } else if (m_type == 237) {
-                textureName = "effect\\magic_green.tga";
-            } else if (m_type == 261) {
-                textureName = "effect\\ring_yellow.tga";
-                fastSpin = true;
-            } else if (m_type == 263) {
-                textureName = "effect\\ring_yellow.tga";
-                variant = 1;
-            }
-            ApplyVolcano(textureName, variant, fastSpin);
-        } else if (bottomVolcano) {
-            const char* textureName = "effect\\ring_blue.tga";
-            float size = 0.0f;
-            if (m_type == 239) {
-                textureName = "effect\\ring_red.tga";
-            } else if (m_type == 241) {
-                textureName = "effect\\magic_green.tga";
-            } else if (m_type == 620) {
-                size = 14.0f;
-            }
-            ApplyBottomVolcano(textureName, size);
-        } else if (wind) {
-            ApplyWind();
-        } else if (stormKick) {
-            if (m_type == 435 && m_stateCnt == 5) {
-                vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                        wavePos.y = mode->m_world->m_player->m_pos.y;
-                    }
-                }
-                TryPlayEffectWaveAt(wavePos, "effect\\T_\xC8\xB8\xBF\xC0\xB8\xAE\xC2\xF7\xB1\xE2.wav");
-            }
-            const int variant = m_type == 459 ? 1 : (m_type == 460 ? 2 : (m_type == 461 ? 3 : (m_type == 464 ? 6 : (m_type == 465 ? 7 : 0))));
-            ApplyStormKick(variant);
-            ApplyPortalWind(2);
-            ApplyPortalWind(3);
-            if (master != nullptr && ((m_type == 435 && m_stateCnt <= 47) || (m_type == 459 && m_stateCnt <= 50))) {
-                master->m_roty += m_type == 435 ? 30.0f : 14.0f;
-                if (master->m_roty > 360.0f) {
-                    master->m_roty -= 360.0f;
-                }
-            }
-        } else if (halfSphere) {
-            ApplyHalfSphere("effect\\white02.bmp");
-        } else if (attackEnergy) {
-            ApplyHalfSphere("effect\\white02.bmp");
-            ApplyAttackEnergy("effect\\ring_blue.tga");
-        } else if (electric) {
-            if (m_stateCnt == 25) {
-                vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                        wavePos.y = mode->m_world->m_player->m_pos.y;
-                    }
-                }
-                TryPlayEffectWaveAt(wavePos, "effect\\T_\xC0\xFC\xB1\xE2.wav");
-            }
-            ApplyElectric(0);
-            ApplyElectric(180);
-        } else if (electric2) {
-            ApplyElectric2();
-            ApplyElectric2();
-        } else if (attackEnergy2) {
-            if (m_stateCnt == 0) {
-                vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                        wavePos.y = mode->m_world->m_player->m_pos.y;
-                    }
-                }
-                TryPlayEffectWaveAt(wavePos, "effect\\T_\xB8\xB6\xB9\xFD\xB9\xDD\xBB\xE7.wav");
-            }
-            ApplyAttackEnergy2("effect\\cloud11.tga");
-        } else if (potionPillar) {
-            ApplyPotionPillar(1.0f, 50);
-        } else if (chemicalSlash) {
-            if (m_type == 623 && m_stateCnt == 28) {
-                vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                        wavePos.y = mode->m_world->m_player->m_pos.y;
-                    }
-                }
-                TryPlayEffectWaveAt(wavePos, "effect\\\xC7\xC7\xBE\xEE\xBD\xCC\xBC\xA6.wav");
-            }
-            const short slashTime = static_cast<short>(m_type == 512 ? 10 : (m_type == 623 ? 20 : 0));
-            for (int repeat = 0; repeat < 4; ++repeat) {
-                ApplyChemical3(slashTime);
-                ApplyChemical3(static_cast<short>(slashTime + 1));
-            }
-            if (m_type == 512 && m_stateCnt == 44) {
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    mode->SendMsg(135, 0, 0, 0);
-                    vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
-                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                        wavePos.y = mode->m_world->m_player->m_pos.y;
-                    }
-                    TryPlayEffectWaveAt(wavePos, "effect\\\xBF\xAC\xC1\xD6\xBA\xD8\xB0\xDD.wav");
-                }
-            }
-            if (m_type == 512 && master != nullptr && m_stateCnt >= 20 && m_stateCnt <= 100) {
-                if ((master->m_BodyLight & 8) != 8) {
-                    master->m_BodyLight += 8;
-                }
-                master->SetArgb(-1, 255, 255, 150);
-            }
-        } else if (blastMine) {
-            ApplyTarot("effect\\blast_mine##clock.bmp", 4);
-            if (m_stateCnt == 10) {
-                CRenderObject* blastMaster = ResolveCurrentMaster();
-                vector3d wavePos = blastMaster != nullptr ? blastMaster->m_pos : m_cachedPos;
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                        wavePos.y = mode->m_world->m_player->m_pos.y;
-                    }
-                }
-                TryPlayEffectWaveAt(wavePos, "effect\\EF_DecAgility.wav");
-            }
-        } else if (bottomOut) {
-            ApplyBottomOut("effect\\safeline.bmp", 0);
-        } else if (bottomLight) {
-            ApplyBottomLight("effect\\twirl.bmp", m_type == 280 ? 8 : 4);
-        } else if (bottomMusic) {
-            switch (m_type) {
-            case 278:
-                ApplyBottomMusic("effect\\zz.bmp", 1);
-                break;
-            case 279:
-                ApplyBottomMusic("effect\\pocket.bmp", 3);
-                break;
-            case 282:
-                ApplyBottomMusic("effect\\twirl.bmp", 7);
-                break;
-            case 286:
-                ApplyBottomMusic("effect\\melody_b.bmp", 0);
-                break;
-            case 289:
-                ApplyBottomMusic("effect\\idun_apple.bmp", 6);
-                break;
-            case 291:
-                ApplyBottomMusic("effect\\melody_a.bmp", 0);
-                break;
-            case 293:
-                ApplyBottomMusic("effect\\kiss.bmp", 4);
-                break;
-            case 674:
-                ApplyBottomMusic("effect\\curse.bmp", 6);
-                break;
-            default:
-                break;
-            }
-        } else if (dispatchHandler && m_type == 394) {
-            for (short windTime = 0; windTime < 45; windTime = static_cast<short>(windTime + 9)) {
-                ApplySphereWind("effect\\fire_ivy.bmp", windTime, 1);
-            }
-        } else if (kyrieGuard) {
-            ApplyKyrieGuard();
-        } else if (bodyLight442) {
-            ApplyBodyLight442();
-        } else if (bodyLight446) {
-            ApplyBodyLight446();
-        } else if (bodyLight449) {
-            ApplyBodyLight449();
-        } else if (actorLight) {
-            ApplyActorLight();
-        } else if (portalWind402) {
-            ApplyPortalWind402();
-        } else if (blackDevil) {
-            ApplyBlackDevil("effect\\ring_black.tga");
-        } else if (bodyLightBit && master != nullptr && (master->m_BodyLight & 2) != 2) {
-            master->m_BodyLight += 2;
-        } else if (blindLevel) {
-            ApplyBlind(m_type - 474);
+        if (!ProcessEffectFrame()) {
+            return 0;
         }
-        const bool tierHandled = dispatchHandler && m_type >= 300 && m_type <= 373 && OnProcess2();
-        const bool textureCard = tarot || m_type == 554 || m_type == 610 || m_type == 611 || m_type == 669 || m_type == 673
-            || m_type == 600 || m_type == 613 || m_type == 614 || m_type == 615 || m_type == 616
-            || m_type == 298 || m_type == 299 || m_type == 539 || m_type == 541 || m_type == 405 || m_type == 581 || m_type == 394 || m_type == 564
-            || m_type == 12 || m_type == 58 || m_type == 441 || m_type == 454;
-        if (dispatchHandler && m_stateCnt == 0 && (m_type == 295 || m_type == 296)) {
-            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                mode->SendMsg(179, m_type == 295 ? 1 : 0, 0, 0);
-            }
-        }
-        if (dispatchHandler) {
-            for (const ProvenClipWave& entry : kProvenClipWaves) {
-                if (entry.type != m_type) {
-                    continue;
-                }
-                if (entry.quakeFrame == m_stateCnt) {
-                    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                        mode->SendMsg(135, 0, 0, 0);
-                    }
-                }
-                if (entry.frame == m_stateCnt && (entry.type == 130 || entry.type == 250)) {
-                    m_duration = 9999;
-                }
-                if (entry.frame != m_stateCnt || (entry.chance != 0 && rand() % entry.chance != 0)) {
-                    break;
-                }
-                CRenderObject* waveMaster = ResolveCurrentMaster();
-                vector3d wavePos = waveMaster != nullptr ? waveMaster->m_pos : m_cachedPos;
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                        if (entry.type == 245 || entry.type == 218 || entry.type == 219) {
-                            wavePos = mode->m_world->m_player->m_pos;
-                        }
-                        wavePos.y = mode->m_world->m_player->m_pos.y + entry.yOffset;
-                    }
-                }
-                TryPlayEffectWaveAt(wavePos, entry.wave);
-                break;
-            }
-        }
-        if (dispatchHandler && m_type == 248) {
-            ApplyProvidence("effect\\ring_yellow.tga");
-        }
-        if (dispatchHandler && m_type == 218 && m_stateCnt == 0) {
-            ApplyPotionPillar(2.0f, 50);
-        }
-        if (dispatchHandler && m_type == 219 && m_stateCnt == 30) {
-            ApplyPotionPillar(1.9f, 30);
-        }
-        if (dispatchHandler && m_type == 220) {
-            ApplyPotionBerserk();
-        }
-        if (iceArrow) {
-            ApplyIceArrow();
-        }
-        if (dispatchHandler && !tierHandled && !textureCard && !kyrieGuard && !bodyLight442 && !bodyLight446 && !bodyLight449 && !actorLight && !portalWind402 && !blackDevil && !bodyLightBit && !blindLevel && !beginCast && !bottomLight && !bottomOut && !blastMine && !healBlue && !bottomMusic && !chemicalSlash && !giExplosion && !acidDemon && !flowerCast && !defender && !mapPillar && !volcano && !bottomVolcano && !wind && !stormKick && !halfSphere && !attackEnergy && !electric && !electric2 && !attackEnergy2 && !potionPillar && !iceArrow) {
-            switch (m_handler) {
-            case Handler::EzStr:
-                ProcessEZ2STR();
-                break;
-            case Handler::Entry2:
-                SpawnEntry2();
-                break;
-            case Handler::JobLevelUp50:
-                SpawnJobLevelUp50();
-                break;
-            case Handler::Portal:
-                SpawnPortal();
-                break;
-            case Handler::ReadyPortal:
-                SpawnReadyPortal();
-                break;
-            case Handler::WarpZone:
-                SpawnWarpZone();
-                break;
-            case Handler::Portal2:
-                SpawnPortal2();
-                break;
-            case Handler::ReadyPortal2:
-                SpawnReadyPortal2();
-                break;
-            case Handler::WarpZone2:
-                SpawnWarpZone2();
-                break;
-            case Handler::MapPillar:
-                SpawnMapPillar();
-                break;
-            case Handler::MapMagicZone:
-                SpawnMapMagicZone();
-                break;
-            case Handler::MapParticle:
-                SpawnMapParticle();
-                break;
-            case Handler::SuperAngel:
-                UpdateSuperAngel();
-                break;
-            case Handler::RecoveryHp:
-                SpawnRecoveryHp();
-                break;
-            case Handler::RecoverySp:
-                SpawnRecoverySp();
-                break;
-            case Handler::BeginCasting:
-                SpawnBeginCasting();
-                break;
-            case Handler::HealLight:
-                SpawnHealLight();
-                break;
-            case Handler::HealMedium:
-                SpawnHealMedium();
-                break;
-            case Handler::HealLarge:
-                SpawnHealLarge();
-                break;
-            case Handler::HideStart:
-                SpawnHideStart();
-                break;
-            case Handler::GrimTooth:
-                SpawnGrimTooth();
-                break;
-            case Handler::GrimToothAtk:
-                SpawnGrimToothAtk();
-                break;
-            case Handler::IncAgility:
-                SpawnIncAgility();
-                break;
-            case Handler::EnchantPoison:
-                SpawnEnchantPoison();
-                break;
-            case Handler::EnchantPoison2:
-                SpawnEnchantPoison2();
-                break;
-            case Handler::Blessing:
-                SpawnBlessing();
-                break;
-            case Handler::Smoke:
-                SpawnSmoke();
-                break;
-            case Handler::Torch:
-                SpawnTorch();
-                break;
-            case Handler::Sight:
-                SpawnSight();
-                break;
-            case Handler::SightState:
-                SpawnSightState();
-                break;
-            case Handler::FireBall:
-                SpawnFireBall();
-                break;
-            case Handler::Ruwach:
-                SpawnRuwach();
-                break;
-            case Handler::SightAura:
-                SpawnSightAura();
-                break;
-            case Handler::BlueFall:
-                SpawnBlueFall();
-                break;
-            case Handler::WeatherCloud:
-                SpawnWeatherCloud();
-                break;
-            case Handler::None:
-            default:
-                break;
-            }
-        }
-
-        for (auto it = m_primList.begin(); it != m_primList.end(); ) {
-            CEffectPrim* prim = *it;
-            if (!prim || !prim->OnProcess()) {
-                delete prim;
-                it = m_primList.erase(it);
-                continue;
-            }
-            ++it;
-        }
-
-        if (m_type == 220 && m_stateCnt > 150) {
-            if (CRenderObject* tintMaster = ResolveCurrentMaster()) {
-                tintMaster->m_oldColor = {};
-                tintMaster->m_isSprArgbFixed = 0;
-            }
-            ClearPrims();
-            m_duration = 0;
-            m_loop = false;
-            m_aniClips = nullptr;
-        }
-
         ++m_stateCnt;
 
         if (m_loop && m_handler == Handler::EzStr && m_aniClips && m_stateCnt > (m_aniClips->cFrame + 1)) {
@@ -13452,14 +12912,614 @@ u8 CRagEffect::OnProcess()
     return alive ? 1 : 0;
 }
 
-void CRagEffect::SendMsg(CGameObject*, int msg, msgparam_t par1, msgparam_t, msgparam_t)
+bool CRagEffect::ProcessEffectFrame()
+{
+    m_strFrameActive = true;
+    CRenderObject* master = ResolveCurrentMaster();
+    const bool dispatchHandler = true;
+    const bool kyrieGuard = dispatchHandler && m_type == 392;
+    const bool bodyLight442 = dispatchHandler && m_type == 442;
+    const bool bodyLight446 = dispatchHandler && m_type == 446;
+    const bool bodyLight449 = dispatchHandler && m_type == 449;
+    const bool tarot = dispatchHandler && m_type >= 523 && m_type <= 536;
+    const bool actorLight = dispatchHandler && (
+        m_type == 414 || m_type == 415 || m_type == 417 || m_type == 419 || m_type == 420
+        || m_type == 421 || m_type == 422 || m_type == 423 || m_type == 424 || m_type == 425
+        || m_type == 426 || m_type == 427 || m_type == 458
+        || m_type == 538 || m_type == 540 || m_type == 542 || m_type == 544
+        || m_type == 375 || m_type == 379 || m_type == 382 || m_type == 385 || m_type == 387 || m_type == 396
+        || m_type == 500 || m_type == 521 || m_type == 548 || m_type == 549 || m_type == 550
+        || m_type == 625 || m_type == 626 || m_type == 655 || m_type == 656 || m_type == 667);
+    const bool portalWind402 = dispatchHandler && m_type == 402;
+    const bool blackDevil = dispatchHandler && m_type == 487;
+    const bool bodyLightBit = dispatchHandler && m_type == 474;
+    const bool blindLevel = dispatchHandler && m_type >= 475 && m_type <= 484;
+    const bool beginCast = dispatchHandler && ((m_type >= 54 && m_type <= 57) || m_type == 59 || (m_type >= 172 && m_type <= 179));
+    const bool bottomLight = dispatchHandler && (m_type == 280 || m_type == 285);
+    const bool bottomOut = dispatchHandler && m_type == 283;
+    const bool blastMine = dispatchHandler && m_type == 676;
+    const bool chemicalSlash = dispatchHandler && (m_type == 439 || m_type == 512 || m_type == 623);
+    const bool giExplosion = dispatchHandler && m_type == 514;
+    const bool acidDemon = dispatchHandler && m_type == 537;
+    const bool flowerCast = dispatchHandler && m_type == 488;
+    const bool defender = dispatchHandler && (m_type == 222 || m_type == 252);
+    const bool mapPillar = dispatchHandler && (m_type == 231 || m_type == 247 || m_type == 259 || m_type == 260);
+    const bool volcano = dispatchHandler && (m_type == 223 || m_type == 225 || m_type == 236 || m_type == 237 || m_type == 238 || m_type == 261 || m_type == 263);
+    const bool bottomVolcano = dispatchHandler && (m_type == 239 || m_type == 240 || m_type == 241 || m_type == 620);
+    const bool wind = dispatchHandler && m_type == 224;
+    const bool stormKick = dispatchHandler && (m_type == 435 || m_type == 459 || m_type == 460 || m_type == 461 || m_type == 464 || m_type == 465);
+    const bool halfSphere = dispatchHandler && m_type == 436;
+    const bool attackEnergy = dispatchHandler && m_type == 437;
+    const bool electric = dispatchHandler && m_type == 432;
+    const bool electric2 = dispatchHandler && m_type == 433;
+    const bool attackEnergy2 = dispatchHandler && m_type == 438;
+    const bool potionPillar = dispatchHandler && m_type == 221;
+    const bool iceArrow = dispatchHandler && m_type == 26;
+    const bool healBlue = dispatchHandler && m_type == 253;
+    const bool bottomMusic = dispatchHandler && (m_type == 278 || m_type == 279 || m_type == 282 || m_type == 286
+        || m_type == 289 || m_type == 291 || m_type == 293 || m_type == 674);
+    if (tarot) {
+        static const char* kTarotTextures[] = {
+            "effect\\Tarot01.tga", "effect\\Tarot02.tga", "effect\\Tarot03.tga", "effect\\Tarot04.tga",
+            "effect\\Tarot05.tga", "effect\\Tarot06.tga", "effect\\Tarot07.tga", "effect\\Tarot08.tga",
+            "effect\\Tarot09.tga", "effect\\Tarot10.tga", "effect\\Tarot11.tga", "effect\\Tarot12.tga",
+            "effect\\Tarot13.tga", "effect\\Tarot14.tga"
+        };
+        ApplyTarot(kTarotTextures[m_type - 523], 1);
+    } else if (dispatchHandler && m_type == 554) {
+        ApplyTarot("effect\\freeze_a.bmp", 2);
+    } else if (dispatchHandler && (m_type == 610 || m_type == 611)) {
+        if (m_stateCnt == 0) {
+            CRenderObject* textureMaster = ResolveCurrentMaster();
+            vector3d wavePos = textureMaster != nullptr ? textureMaster->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, m_type == 610 ? "_heal_effect.wav" : "caramel_die.wav");
+        }
+        ApplyTarot(m_type == 610 ? "effect\\success.bmp" : "effect\\failed.bmp", 3);
+    } else if (dispatchHandler && m_type == 669) {
+        if (m_stateCnt == 1) {
+            CRenderObject* poisonMaster = ResolveCurrentMaster();
+            vector3d wavePos = poisonMaster != nullptr ? poisonMaster->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, "effect\\wideb.wav");
+        }
+        ApplyPoison(1);
+        ProcessEZ2STR();
+    } else if (dispatchHandler && m_type == 673) {
+        ApplyPoison(2);
+    } else if (dispatchHandler && (m_type == 600 || m_type == 613 || m_type == 614 || m_type == 615 || m_type == 616)) {
+        const char* throwTexture = "effect\\coin_a.bmp";
+        if (m_type == 600) {
+            throwTexture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xA3\xB3\xD1\xB3\xAA\xC0\xCC\xC7\xC1.bmp";
+        } else if (m_type == 613) {
+            throwTexture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBC\xF6\xB8\xAE\xB0\xCB.bmp";
+        } else if (m_type == 614) {
+            throwTexture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC4\xED\xB3\xAA\xC0\xCC_\xB5\xB6.bmp";
+        } else if (m_type == 615) {
+            throwTexture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC7\xB3\xB8\xB6_\xBF\xAD\xC8\xAD.bmp";
+        }
+        ApplyThrowItem(throwTexture, 3);
+    } else if (dispatchHandler && m_type == 298) {
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xF3\xBA\xB4.bmp", 0);
+    } else if (dispatchHandler && (m_type == 299 || m_type == 541)) {
+        ApplyThrowItem(m_type == 299
+            ? "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xF3\xC6\xF7\xBC\xC7\xBA\xB4.bmp"
+            : "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xB9\xF6\xBC\xAD\xC5\xA9\xC6\xF7\xBC\xC7.bmp",
+            1);
+    } else if (dispatchHandler && m_type == 539) {
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC8\xAD\xBF\xB0\xBA\xB4.bmp", 10);
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBF\xB0\xBB\xEA\xBA\xB4.bmp", 11);
+    } else if (dispatchHandler && m_type == 405) {
+        ApplyBottomMagnus("effect\\ring_white.tga", 2);
+    } else if (dispatchHandler && m_type == 581) {
+        ApplyForestLight("effect\\cloud11.tga", 11);
+    } else if (dispatchHandler && m_type == 564) {
+        ApplyCoupleCasting("effect\\ring_red.tga");
+    } else if (dispatchHandler && m_type == 12) {
+        ApplyPairedSaintCasting("effect\\ring_yellow.tga", 1, true, 0.0f);
+    } else if (dispatchHandler && m_type == 58) {
+        ApplyPairedSaintCasting("effect\\ring_white.tga", 0, true, 0.0f);
+    } else if (dispatchHandler && m_type == 441) {
+        ApplyPairedSaintCasting("effect\\ring_blue.tga", 5, true, -100.0f);
+    } else if (dispatchHandler && m_type == 454) {
+        ApplyPairedSaintCasting("effect\\ring_black.tga", 6, true, 0.0f);
+    } else if (beginCast) {
+        switch (m_type) {
+        case 54:
+            ApplyBeginCasting("effect\\ring_blue.tga", 2, true);
+            break;
+        case 55:
+            ApplyBeginCasting("effect\\ring_yellow.tga", 1, true);
+            break;
+        case 56:
+            ApplyBeginCasting("effect\\Magic_Green.tga", 33, true);
+            break;
+        case 57:
+            ApplyBeginCasting("effect\\ring_yellow.tga", 0, true);
+            break;
+        case 59:
+            ApplyBeginCasting("effect\\Magic_Violet.tga", 33, true);
+            break;
+        case 172:
+            ApplyBeginCasting("effect\\ring_black.tga", 3, false);
+            break;
+        case 173:
+            ApplyBeginCasting("effect\\ring_red.tga", 3, false);
+            break;
+        case 174:
+            ApplyBeginCasting("effect\\ring_blue.tga", 3, false);
+            break;
+        case 175:
+            ApplyBeginCasting("effect\\ring_yellow.tga", 3, false);
+            break;
+        case 176:
+            ApplyBeginCasting("effect\\ring_jadu.tga", 3, false);
+            break;
+        case 177:
+            ApplyBeginCasting("effect\\ring_brown.tga", 3, false);
+            break;
+        case 178:
+            ApplyBeginCasting("effect\\ring_white.tga", 3, false);
+            break;
+        case 179:
+            ApplyBeginCasting("effect\\ring_purple.tga", 3, false);
+            break;
+        default:
+            break;
+        }
+    } else if (healBlue) {
+        if (m_stateCnt == 0) {
+            CRenderObject* healMaster = ResolveCurrentMaster();
+            vector3d wavePos = healMaster != nullptr ? healMaster->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y - 80.0f;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, "effect\\\xC8\xED\xB1\xE2.wav");
+        }
+        ApplyHeal2("effect\\ring_blue.tga", 2);
+    } else if (giExplosion) {
+        ApplyGiExplosion("effect\\ring_blue.tga");
+    } else if (acidDemon) {
+        if (m_stateCnt == 5) {
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                mode->SendMsg(135, 0, 0, 0);
+            }
+        }
+        ApplyAcidDemon("effect\\ring_black.tga");
+    } else if (flowerCast) {
+        if (m_stateCnt == 5) {
+            vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, "effect\\T_\xBE\xC8\xB6\xF4\xC7\xD1\xB8\xB6\xB9\xFD.wav");
+        }
+        if (master != nullptr && (master->m_BodyLight & 0x800) != 0x800) {
+            master->m_BodyLight += 2048;
+            if (m_stateCnt >= 200) {
+                if (m_stateCnt < 400) {
+                    master->m_BodySin5 = static_cast<u8>(-112 - (m_stateCnt & 0xFF));
+                }
+            } else {
+                master->m_BodySin5 = static_cast<u8>(m_stateCnt);
+            }
+        }
+        ApplyFlowerCasting("effect\\ring_blue.tga", 4.0f, 0);
+        ApplyFlowerCasting("effect\\ring_blue.tga", 4.0f, 1);
+    } else if (defender) {
+        ApplyDefender(m_type == 222 ? "effect\\ring_black.tga" : "effect\\ring_yellow.tga");
+    } else if (mapPillar) {
+        const char* textureName = "effect\\ring_blue.tga";
+        float size = 4.0f;
+        bool wide = false;
+        if (m_type == 247) {
+            wide = true;
+        } else if (m_type == 259) {
+            textureName = "effect\\magic_green.tga";
+            size = 7.0f;
+        } else if (m_type == 260) {
+            textureName = "effect\\ring_red.tga";
+            size = 6.0f;
+        }
+        ApplyMapPillar(textureName, size, wide);
+    } else if (volcano) {
+        const char* textureName = "effect\\ring_white.tga";
+        short variant = 0;
+        bool fastSpin = false;
+        if (m_type == 223) {
+            variant = 2;
+        } else if (m_type == 225) {
+            textureName = "effect\\ring_red.tga";
+        } else if (m_type == 236) {
+            textureName = "effect\\ring_blue.tga";
+        } else if (m_type == 237) {
+            textureName = "effect\\magic_green.tga";
+        } else if (m_type == 261) {
+            textureName = "effect\\ring_yellow.tga";
+            fastSpin = true;
+        } else if (m_type == 263) {
+            textureName = "effect\\ring_yellow.tga";
+            variant = 1;
+        }
+        ApplyVolcano(textureName, variant, fastSpin);
+    } else if (bottomVolcano) {
+        const char* textureName = "effect\\ring_blue.tga";
+        float size = 0.0f;
+        if (m_type == 239) {
+            textureName = "effect\\ring_red.tga";
+        } else if (m_type == 241) {
+            textureName = "effect\\magic_green.tga";
+        } else if (m_type == 620) {
+            size = 14.0f;
+        }
+        ApplyBottomVolcano(textureName, size);
+    } else if (wind) {
+        ApplyWind();
+    } else if (stormKick) {
+        if (m_type == 435 && m_stateCnt == 5) {
+            vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, "effect\\T_\xC8\xB8\xBF\xC0\xB8\xAE\xC2\xF7\xB1\xE2.wav");
+        }
+        const int variant = m_type == 459 ? 1 : (m_type == 460 ? 2 : (m_type == 461 ? 3 : (m_type == 464 ? 6 : (m_type == 465 ? 7 : 0))));
+        ApplyStormKick(variant);
+        ApplyPortalWind(2);
+        ApplyPortalWind(3);
+        if (master != nullptr && ((m_type == 435 && m_stateCnt <= 47) || (m_type == 459 && m_stateCnt <= 50))) {
+            master->m_roty += m_type == 435 ? 30.0f : 14.0f;
+            if (master->m_roty > 360.0f) {
+                master->m_roty -= 360.0f;
+            }
+        }
+    } else if (halfSphere) {
+        ApplyHalfSphere("effect\\white02.bmp");
+    } else if (attackEnergy) {
+        ApplyHalfSphere("effect\\white02.bmp");
+        ApplyAttackEnergy("effect\\ring_blue.tga");
+    } else if (electric) {
+        if (m_stateCnt == 25) {
+            vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, "effect\\T_\xC0\xFC\xB1\xE2.wav");
+        }
+        ApplyElectric(0);
+        ApplyElectric(180);
+    } else if (electric2) {
+        ApplyElectric2();
+        ApplyElectric2();
+    } else if (attackEnergy2) {
+        if (m_stateCnt == 0) {
+            vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, "effect\\T_\xB8\xB6\xB9\xFD\xB9\xDD\xBB\xE7.wav");
+        }
+        ApplyAttackEnergy2("effect\\cloud11.tga");
+    } else if (potionPillar) {
+        ApplyPotionPillar(1.0f, 50);
+    } else if (chemicalSlash) {
+        if (m_type == 623 && m_stateCnt == 28) {
+            vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, "effect\\\xC7\xC7\xBE\xEE\xBD\xCC\xBC\xA6.wav");
+        }
+        const short slashTime = static_cast<short>(m_type == 512 ? 10 : (m_type == 623 ? 20 : 0));
+        for (int repeat = 0; repeat < 4; ++repeat) {
+            ApplyChemical3(slashTime);
+            ApplyChemical3(static_cast<short>(slashTime + 1));
+        }
+        if (m_type == 512 && m_stateCnt == 44) {
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                mode->SendMsg(135, 0, 0, 0);
+                vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+                TryPlayEffectWaveAt(wavePos, "effect\\\xBF\xAC\xC1\xD6\xBA\xD8\xB0\xDD.wav");
+            }
+        }
+        if (m_type == 512 && master != nullptr && m_stateCnt >= 20 && m_stateCnt <= 100) {
+            if ((master->m_BodyLight & 8) != 8) {
+                master->m_BodyLight += 8;
+            }
+            master->SetArgb(-1, 255, 255, 150);
+        }
+    } else if (blastMine) {
+        ApplyTarot("effect\\blast_mine##clock.bmp", 4);
+        if (m_stateCnt == 10) {
+            CRenderObject* blastMaster = ResolveCurrentMaster();
+            vector3d wavePos = blastMaster != nullptr ? blastMaster->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, "effect\\EF_DecAgility.wav");
+        }
+    } else if (bottomOut) {
+        ApplyBottomOut("effect\\safeline.bmp", 0);
+    } else if (bottomLight) {
+        ApplyBottomLight("effect\\twirl.bmp", m_type == 280 ? 8 : 4);
+    } else if (bottomMusic) {
+        switch (m_type) {
+        case 278:
+            ApplyBottomMusic("effect\\zz.bmp", 1);
+            break;
+        case 279:
+            ApplyBottomMusic("effect\\pocket.bmp", 3);
+            break;
+        case 282:
+            ApplyBottomMusic("effect\\twirl.bmp", 7);
+            break;
+        case 286:
+            ApplyBottomMusic("effect\\melody_b.bmp", 0);
+            break;
+        case 289:
+            ApplyBottomMusic("effect\\idun_apple.bmp", 6);
+            break;
+        case 291:
+            ApplyBottomMusic("effect\\melody_a.bmp", 0);
+            break;
+        case 293:
+            ApplyBottomMusic("effect\\kiss.bmp", 4);
+            break;
+        case 674:
+            ApplyBottomMusic("effect\\curse.bmp", 6);
+            break;
+        default:
+            break;
+        }
+    } else if (dispatchHandler && m_type == 394) {
+        for (short windTime = 0; windTime < 45; windTime = static_cast<short>(windTime + 9)) {
+            ApplySphereWind("effect\\fire_ivy.bmp", windTime, 1);
+        }
+    } else if (kyrieGuard) {
+        ApplyKyrieGuard();
+    } else if (bodyLight442) {
+        ApplyBodyLight442();
+    } else if (bodyLight446) {
+        ApplyBodyLight446();
+    } else if (bodyLight449) {
+        ApplyBodyLight449();
+    } else if (actorLight) {
+        ApplyActorLight();
+    } else if (portalWind402) {
+        ApplyPortalWind402();
+    } else if (blackDevil) {
+        ApplyBlackDevil("effect\\ring_black.tga");
+    } else if (bodyLightBit && master != nullptr && (master->m_BodyLight & 2) != 2) {
+        master->m_BodyLight += 2;
+    } else if (blindLevel) {
+        ApplyBlind(m_type - 474);
+    }
+    const bool tierHandled = dispatchHandler && m_type >= 300 && m_type <= 373 && OnProcess2();
+    const bool textureCard = tarot || m_type == 554 || m_type == 610 || m_type == 611 || m_type == 669 || m_type == 673
+        || m_type == 600 || m_type == 613 || m_type == 614 || m_type == 615 || m_type == 616
+        || m_type == 298 || m_type == 299 || m_type == 539 || m_type == 541 || m_type == 405 || m_type == 581 || m_type == 394 || m_type == 564
+        || m_type == 12 || m_type == 58 || m_type == 441 || m_type == 454;
+    if (dispatchHandler && m_stateCnt == 0 && (m_type == 295 || m_type == 296)) {
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            mode->SendMsg(179, m_type == 295 ? 1 : 0, 0, 0);
+        }
+    }
+    if (dispatchHandler) {
+        for (const ProvenClipWave& entry : kProvenClipWaves) {
+            if (entry.type != m_type) {
+                continue;
+            }
+            if (entry.quakeFrame == m_stateCnt) {
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    mode->SendMsg(135, 0, 0, 0);
+                }
+            }
+            if (entry.frame == m_stateCnt && (entry.type == 130 || entry.type == 250)) {
+                m_duration = 9999;
+            }
+            if (entry.frame != m_stateCnt || (entry.chance != 0 && rand() % entry.chance != 0)) {
+                break;
+            }
+            CRenderObject* waveMaster = ResolveCurrentMaster();
+            vector3d wavePos = waveMaster != nullptr ? waveMaster->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    if (entry.type == 245 || entry.type == 218 || entry.type == 219) {
+                        wavePos = mode->m_world->m_player->m_pos;
+                    }
+                    wavePos.y = mode->m_world->m_player->m_pos.y + entry.yOffset;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, entry.wave);
+            break;
+        }
+    }
+    if (dispatchHandler && m_type == 248) {
+        ApplyProvidence("effect\\ring_yellow.tga");
+    }
+    if (dispatchHandler && m_type == 218 && m_stateCnt == 0) {
+        ApplyPotionPillar(2.0f, 50);
+    }
+    if (dispatchHandler && m_type == 219 && m_stateCnt == 30) {
+        ApplyPotionPillar(1.9f, 30);
+    }
+    if (dispatchHandler && m_type == 220) {
+        ApplyPotionBerserk();
+    }
+    if (iceArrow) {
+        ApplyIceArrow();
+    }
+    if (dispatchHandler && !tierHandled && !textureCard && !kyrieGuard && !bodyLight442 && !bodyLight446 && !bodyLight449 && !actorLight && !portalWind402 && !blackDevil && !bodyLightBit && !blindLevel && !beginCast && !bottomLight && !bottomOut && !blastMine && !healBlue && !bottomMusic && !chemicalSlash && !giExplosion && !acidDemon && !flowerCast && !defender && !mapPillar && !volcano && !bottomVolcano && !wind && !stormKick && !halfSphere && !attackEnergy && !electric && !electric2 && !attackEnergy2 && !potionPillar && !iceArrow) {
+        switch (m_handler) {
+        case Handler::EzStr:
+            if (m_type == 185) {
+                ProcessTargetPositionStr();
+            } else {
+                ProcessEZ2STR();
+            }
+            break;
+        case Handler::JobLevelUp50:
+            SpawnJobLevelUp50();
+            break;
+        case Handler::Portal:
+            SpawnPortal();
+            break;
+        case Handler::ReadyPortal:
+            SpawnReadyPortal();
+            break;
+        case Handler::WarpZone:
+            SpawnWarpZone();
+            break;
+        case Handler::Portal2:
+            SpawnPortal2();
+            break;
+        case Handler::ReadyPortal2:
+            SpawnReadyPortal2();
+            break;
+        case Handler::WarpZone2:
+            SpawnWarpZone2();
+            break;
+        case Handler::MapPillar:
+            SpawnMapPillar();
+            break;
+        case Handler::MapMagicZone:
+            SpawnMapMagicZone();
+            break;
+        case Handler::MapParticle:
+            SpawnMapParticle();
+            break;
+        case Handler::SuperAngel:
+            UpdateSuperAngel();
+            break;
+        case Handler::RecoveryHp:
+            SpawnRecoveryHp();
+            break;
+        case Handler::RecoverySp:
+            SpawnRecoverySp();
+            break;
+        case Handler::BeginCasting:
+            SpawnBeginCasting();
+            break;
+        case Handler::HealLight:
+            SpawnHealLight();
+            break;
+        case Handler::HealMedium:
+            SpawnHealMedium();
+            break;
+        case Handler::HealLarge:
+            SpawnHealLarge();
+            break;
+        case Handler::HideStart:
+            SpawnHideStart();
+            break;
+        case Handler::GrimTooth:
+            SpawnGrimTooth();
+            break;
+        case Handler::GrimToothAtk:
+            SpawnGrimToothAtk();
+            break;
+        case Handler::IncAgility:
+            SpawnIncAgility();
+            break;
+        case Handler::EnchantPoison:
+            SpawnEnchantPoison();
+            break;
+        case Handler::EnchantPoison2:
+            SpawnEnchantPoison2();
+            break;
+        case Handler::Blessing:
+            SpawnBlessing();
+            break;
+        case Handler::Smoke:
+            SpawnSmoke();
+            break;
+        case Handler::Torch:
+            SpawnTorch();
+            break;
+        case Handler::Sight:
+            SpawnSight();
+            break;
+        case Handler::SightState:
+            SpawnSightState();
+            break;
+        case Handler::FireBall:
+            SpawnFireBall();
+            break;
+        case Handler::Ruwach:
+            SpawnRuwach();
+            break;
+        case Handler::SightAura:
+            SpawnSightAura();
+            break;
+        case Handler::BlueFall:
+            SpawnBlueFall();
+            break;
+        case Handler::WeatherCloud:
+            SpawnWeatherCloud();
+            break;
+        case Handler::None:
+        default:
+            break;
+        }
+    }
+
+    if (m_type == 220 && m_stateCnt > 150) {
+        if (master) {
+            master->m_oldColor = {};
+            master->m_isSprArgbFixed = 0;
+        }
+        return false;
+    }
+    return FinishEffectFrame();
+}
+
+void CRagEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3)
 {
     switch (msg) {
     case 24:
+        if (m_ownsMaster) {
+            delete m_master;
+        }
         m_master = nullptr;
         m_ownsMaster = false;
         m_masterIsActor = false;
         m_masterActorGid = 0;
+        return;
+    case 25:
+        if (par1) {
+            ClearPrims();
+        } else if (sender) {
+            const auto found = std::find_if(m_primList.begin(), m_primList.end(),
+                [sender](CEffectPrim* prim) { return prim == sender; });
+            if (found != m_primList.end()) {
+                m_primList.erase(found);
+            }
+        }
         return;
     case 14:
         if (par1 != 0) {
@@ -13468,63 +13528,43 @@ void CRagEffect::SendMsg(CGameObject*, int msg, msgparam_t par1, msgparam_t, msg
             m_targetPos = *delta;
             m_hasTargetPos = true;
         }
-        if ((m_type == 24 || m_type == 123) && par1 != 0) {
-            const vector3d* targetPos = reinterpret_cast<const vector3d*>(par1);
-            m_targetPos = *targetPos;
-            m_hasTargetPos = true;
-            if (m_type == 123) {
-                const vector3d base = ResolveBasePosition();
-                const float dx = m_targetPos.x - base.x;
-                const float dy = m_targetPos.y - base.y;
-                const float dz = m_targetPos.z - base.z;
-                const float distance = std::sqrt(dx * dx + dz * dz);
-                ClearPrims();
-                m_handler = Handler::GrimTooth;
-                CRenderObject* ownerMaster = nullptr;
-                if (CAbleToMakeEffect* owner = ResolveCurrentEffectOwner()) {
-                    ownerMaster = dynamic_cast<CRenderObject*>(owner);
-                    owner->m_effectList.remove(this);
-                    if (owner->m_beginSpellEffect == this) {
-                        owner->m_beginSpellEffect = nullptr;
-                    }
-                    if (owner->m_magicTargetEffect == this) {
-                        owner->m_magicTargetEffect = nullptr;
-                    }
-                }
-                DetachFromMaster(ownerMaster);
-                m_cachedPos = base;
-                m_deltaPos = vector3d{};
-                if (distance > 0.0001f) {
-                    const float invDistance = 2.0f / distance;
-                    m_grimToothStep = { dx * invDistance, 0.0f, dz * invDistance };
-                    m_grimToothRemaining = vector3d{};
-                    m_flag = 0;
-                } else {
-                    m_grimToothStep = vector3d{};
-                    m_grimToothRemaining = vector3d{};
-                    m_flag = 1;
-                }
-                DbgLog("[Projectile] grimtooth effect123 init base=(%.2f,%.2f,%.2f) target=(%.2f,%.2f,%.2f) step=(%.2f,%.2f,%.2f)\n",
-                    base.x,
-                    base.y,
-                    base.z,
-                    m_targetPos.x,
-                    m_targetPos.y,
-                    m_targetPos.z,
-                    m_grimToothStep.x,
-                    m_grimToothStep.y,
-                    m_grimToothStep.z);
-                m_duration = (std::max)(6, static_cast<int>(std::ceil(distance / 2.0f)) + 2);
-                m_stateCnt = 0;
-            }
+        if (par2 != 0) {
+            m_deltaPos2 = *reinterpret_cast<const vector3d*>(par2);
         }
         return;
     case 44: {
+        // Ref/RagEffect.cpp:12764-12814. These sentinels carry position /
+        // colour control data; they do not update the ordinary count.
         const int value = static_cast<int>(par1);
-        if (value != 0xFFFF && value != 65534) {
+        const int option = static_cast<int>(par2);
+        if (value == 0xFFFF) {
+            switch (option) {
+            case 130:
+            case 250:
+                m_effectPos = { 200.0f, 200.0f, 0.0f };
+                break;
+            case 128:
+                m_effectPos = { 250.0f, 150.0f, 150.0f };
+                break;
+            case 169:
+                m_effectPos = { 180.0f, 180.0f, 250.0f };
+                break;
+            case 243:
+                m_effectPos = { 250.0f, 250.0f, 250.0f };
+                m_duration = static_cast<int>(par3);
+                break;
+            default:
+                break;
+            }
+        } else if (value == 65534) {
+            if (option == 128) {
+                m_effectPos = { -1.0f, -1.0f, -1.0f };
+            } else if (option == 130) {
+                m_effectPos = { -2.0f, -2.0f, -2.0f };
+            }
+        } else {
             m_count = value > 50 ? 50 : value;
         }
-        m_level = value;
         return;
     }
     case 46:
@@ -13538,12 +13578,6 @@ void CRagEffect::SendMsg(CGameObject*, int msg, msgparam_t par1, msgparam_t, msg
         return;
     case 80:
         m_duration = static_cast<int>(par1);
-        return;
-    case 109:
-        ClearPrims();
-        m_loop = false;
-        m_duration = 0;
-        m_stateCnt = 1;
         return;
     default:
         return;
@@ -13580,11 +13614,6 @@ void CRagEffect::Render(matrix* viewMatrix)
         }
     }
 
-    for (CEffectPrim* prim : m_primList) {
-        if (prim) {
-            prim->Render(viewMatrix);
-        }
-    }
 }
 
 CRagEffect* CreateWorldRagEffect(const C3dWorldRes::effectSrcInfo& source)

@@ -45,3 +45,4 @@ tools/tests/*
 !tools/tests/ServerSoundTests.cpp
 !tools/tests/WaveDispatchTests.cpp
 !tools/tests/ForcedMotionTests.cpp
+!tools/tests/EffectLifecycleTests.cpp

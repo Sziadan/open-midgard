@@ -4207,10 +4207,6 @@ CRagEffect* CAbleToMakeEffect::LaunchEffect(int effectId, vector3d deltaPos, flo
 
 void CAbleToMakeEffect::RemoveEffectById(int effectId)
 {
-    if (effectId <= 0) {
-        return;
-    }
-
     for (auto it = m_effectList.begin(); it != m_effectList.end();) {
         CRagEffect* effect = *it;
         if (!effect) {
@@ -4223,16 +4219,10 @@ void CAbleToMakeEffect::RemoveEffectById(int effectId)
             continue;
         }
 
-        if (m_beginSpellEffect == effect) {
-            m_beginSpellEffect = nullptr;
-        }
-        if (m_magicTargetEffect == effect) {
-            m_magicTargetEffect = nullptr;
-        }
-
-        effect->SendMsg(effect, 109, 0, 0, 0);
-        effect->DetachFromMaster(this);
-        it = m_effectList.erase(it);
+        // Ref/GameActor.cpp:2492-2520: remove only the first matching id.
+        effect->SendMsg(this, 24, 0, 0, 0);
+        m_effectList.erase(it);
+        return;
     }
 }
 
@@ -4240,12 +4230,97 @@ void CAbleToMakeEffect::DetachEffects()
 {
     for (CRagEffect* effect : m_effectList) {
         if (effect) {
-            effect->DetachFromMaster(this);
+            effect->SendMsg(this, 24, 0, 0, 0);
         }
     }
     m_effectList.clear();
     m_beginSpellEffect = nullptr;
     m_magicTargetEffect = nullptr;
+}
+
+// Ref/GameActor.cpp:2330-2540 (0x559B60). The attachment list does not own
+// the objects; message 24 disconnects them until the world's next sweep.
+void CAbleToMakeEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t)
+{
+    auto detachListed = [this](CRagEffect* effect) {
+        const auto found = std::find(m_effectList.begin(), m_effectList.end(), effect);
+        if (found != m_effectList.end()) {
+            effect->SendMsg(this, 24, 0, 0, 0);
+            m_effectList.erase(found);
+        }
+    };
+    switch (msg) {
+    case 23:
+        if (sender) {
+            const auto found = std::find_if(m_effectList.begin(), m_effectList.end(),
+                [sender](CRagEffect* effect) { return effect == sender; });
+            if (found != m_effectList.end()) {
+                m_effectList.erase(found);
+                if (m_beginSpellEffect == sender) {
+                    m_beginSpellEffect = nullptr;
+                } else if (m_magicTargetEffect == sender) {
+                    m_magicTargetEffect = nullptr;
+                }
+            }
+        }
+        return;
+    case 84:
+        if (m_beginSpellEffect) {
+            detachListed(m_beginSpellEffect);
+            m_beginSpellEffect = nullptr;
+        }
+        return;
+    case 85:
+        if (!m_beginSpellEffect) {
+            m_beginSpellEffect = LaunchEffect(static_cast<int>(par1), vector3d{}, 0.0f);
+        }
+        if (m_beginSpellEffect) {
+            if (static_cast<int>(par1) > 0) {
+                SendMsg(this, 109, par1, 0, 0);
+                m_beginSpellEffect = LaunchEffect(static_cast<int>(par1), vector3d{}, 0.0f);
+            }
+            if (m_beginSpellEffect) {
+                m_beginSpellEffect->SendMsg(this, 80, par2, 0, 0);
+            }
+        }
+        return;
+    case 86:
+        if (!m_magicTargetEffect) {
+            m_magicTargetEffect = LaunchEffect(static_cast<int>(par1), vector3d{}, 0.0f);
+        }
+        if (m_magicTargetEffect) {
+            m_magicTargetEffect->SendMsg(this, 80, par2, 0, 0);
+        }
+        return;
+    case 87:
+        if (m_magicTargetEffect) {
+            detachListed(m_magicTargetEffect);
+            m_magicTargetEffect = nullptr;
+        }
+        return;
+    case 109:
+        RemoveEffectById(static_cast<int>(par1));
+        return;
+    case 120:
+        if (par1) {
+            int* type = reinterpret_cast<int*>(par1);
+            for (auto it = m_effectList.begin(); it != m_effectList.end();) {
+                CRagEffect* effect = *it;
+                if (!effect) {
+                    it = m_effectList.erase(it);
+                    continue;
+                }
+                if (effect->GetEffectType() == *type) {
+                    *type = -1;
+                    return;
+                }
+                ++it;
+            }
+        }
+        return;
+    default:
+        return;
+    }
 }
 
 CGameActor::CGameActor()
@@ -4753,9 +4828,6 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         }
         SetState(kDeathStateId);
         return;
-    case 109:
-        RemoveEffectById(static_cast<int>(par1));
-        return;
     case 81:
         m_targetGid = static_cast<u32>(par1);
         return;
@@ -4775,16 +4847,6 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
     }
     case 83:
         DestroySkillRechargeGage();
-        return;
-    case 84:
-        if (m_beginSpellEffect != nullptr) {
-            m_beginSpellEffect->SendMsg(this, 24, 0, 0, 0);
-            const auto found = std::find(m_effectList.begin(), m_effectList.end(), m_beginSpellEffect);
-            if (found != m_effectList.end()) {
-                m_effectList.erase(found);
-            }
-            m_beginSpellEffect = nullptr;
-        }
         return;
     case 34: {
         CPc* pcActor = dynamic_cast<CPc*>(this);
@@ -4819,60 +4881,6 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         }
         return;
     }
-    case 85: {
-        const int effectId = static_cast<int>(par1);
-        const bool forceRestartBeginEffect = effectId == 123;
-        if (effectId <= 0) {
-            if (m_beginSpellEffect) {
-                m_beginSpellEffect->DetachFromMaster(this);
-                m_beginSpellEffect = nullptr;
-            }
-            return;
-        }
-        if (m_beginSpellEffect
-            && std::find(m_effectList.begin(), m_effectList.end(), m_beginSpellEffect) == m_effectList.end()) {
-            m_beginSpellEffect = nullptr;
-        }
-        // Same begin-spell / buff ring STR as already showing: only refresh duration (msg 80). Re-launching
-        // would run CRagEffect::Init again and replay EzStr startup SFX (e.g. Angelus after level-up refresh).
-        if (m_beginSpellEffect && m_beginSpellEffect->GetEffectType() == effectId) {
-            if (!forceRestartBeginEffect) {
-                if (static_cast<int>(par2) > 0) {
-                    m_beginSpellEffect->SendMsg(m_beginSpellEffect, 80, par2, 0, 0);
-                }
-                return;
-            }
-
-            RemoveEffectById(effectId);
-        }
-        if (m_beginSpellEffect) {
-            m_beginSpellEffect->DetachFromMaster(this);
-            m_beginSpellEffect = nullptr;
-        }
-        m_beginSpellEffect = LaunchEffect(effectId, vector3d{}, 0.0f);
-        if (m_beginSpellEffect) {
-            if (static_cast<int>(par2) > 0) {
-                m_beginSpellEffect->SendMsg(m_beginSpellEffect, 80, par2, 0, 0);
-            }
-        }
-        return;
-    }
-    case 86:
-        if (!m_magicTargetEffect && static_cast<int>(par1) > 0) {
-            m_magicTargetEffect = LaunchEffect(static_cast<int>(par1), vector3d{}, 0.0f);
-        }
-        if (m_magicTargetEffect) {
-            if (static_cast<int>(par2) > 0) {
-                m_magicTargetEffect->SendMsg(m_magicTargetEffect, 80, par2, 0, 0);
-            }
-        }
-        return;
-    case 87:
-        if (m_magicTargetEffect) {
-            m_magicTargetEffect->DetachFromMaster(this);
-            m_magicTargetEffect = nullptr;
-        }
-        return;
     case 98:
         m_willBeDead = 0;
         m_vanishTime = 0;
@@ -5049,6 +5057,7 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         DestroyAttachedMsgEffect(*this, &m_cartEffect);
         return;
     default:
+        CAbleToMakeEffect::SendMsg(src, msg, par1, par2, par3);
         return;
     }
 }

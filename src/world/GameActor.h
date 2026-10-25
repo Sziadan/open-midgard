@@ -191,6 +191,7 @@ public:
     CRagEffect* LaunchEffect(int effectId, vector3d deltaPos = vector3d{ 0.0f, 0.0f, 0.0f }, float fRot = 0.0f);
     void DetachEffects();
     void RemoveEffectById(int effectId);
+    void SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override;
 
     int m_efId;
     int m_Sk_Level;

@@ -4,9 +4,36 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP0 index/resolver corrections; WP2 forced animation and hit-wave selection; WP3/WP6 server sound; WP7 combo/Blade Stop. All remain parts of an unfinished plan.
+Current work: WP5A position propagation, primitive counter ownership, STR target anchoring and Entry2, partial. Incoming changes are saved in commit `aa6ea58`; subsequent continuation changes remain in the working tree.
 
-Next action: finish WP5A's effect lifecycle and primitive parity, then the remaining WP2 actor states/messages and WP3/WP7 packet handlers. `CRagEffect::OnProcess` still uses elapsed-time accumulation, loop extensions and prim/STR liveness beyond the reference duration. Do not call the effect core complete because its duration table and skip-frame gate are present.
+Next action: reconcile the full reference primitive enum/dispatch, replace the remaining legacy emitters/renderers, and finish per-handler return/position semantics. Primitive counters now advance only in the outer processor. STR keeps the processing-time world anchor; full reference projection/render math and animation modes remain open. Then continue outstanding WP2/WP3/WP7 and acceptance work. The overall plan is not complete.
+
+## Position/primitive continuation — 2026-10-25
+
+- Corrected a missed ownership migration: Super Angel's asset-setup failure still directly deleted a registered primitive, leaving its pointer in the world list. It now detaches through messages 25/24 and the world deletes it. A production-body regression check covers rejection, replacement and exactly-once reclamation. Super Angel's existing guessed asset/fallback behavior is still an unfinished emitter port.
+- Propagated persistent parent-position stores in 21 existing effect handlers (including both heal handlers), retaining frame-zero-only behavior for Teleportation2 and Chemical2's launch-time y subtraction. The complete dispatcher-position audit remains open.
+- Ported effect 185's temporary master-position substitution/restoration around STR processing. STR now retains the master's world anchor from the accepted processing call, so rendering after restoration uses the target anchor. This does not complete reference projection/view/vertex math.
+- Consolidated Entry2 under effect 344 and corrected effect 158 to the STR dispatcher. The Entry2 PP_HEAL emitter uses: four distinct GI ring profiles, four RNG draws, exact ring-blue texture and EF_Portal wave with relative y -150. Parent position follows the master on every call; emission occurs only at frame zero.
+- Primitive handlers no longer increment the shared frame counter. `CEffectPrim::OnProcess` dispatches at the current frame, exits on failure, then increments exactly once and checks inclusive duration. Explicit handler counter changes are preserved.
+- Validation: release build succeeds, five Python tests pass and all five silent C++ suites pass (162 C++ checks, including 104 lifecycle checks). Approved explicit OldRO deployment succeeds; source/destination SHA-256 both `E03683504DD9E6F6DED3B7E0B8ADC0948047151EFA3F89863D56BC328A8D5FA1`. No media or live session was used. WP5A remains partial.
+
+## Position/control and STR continuation — 2026-10-25
+
+- OldRO deployment is now authorized and succeeds through the approved explicit copy command. The latest release executable and `D:/Spel/OldRO/open-midgard.exe` have identical SHA-256: `4219F5D4CAC7574977672EA233A8D80765C8D42DAD967D69B69A2812FC4EB87E`. The sandboxed post-build step still lacks external-directory write access; the explicit approved copy completed after the build.
+- Added persistent effect position/control storage, initialized from the master (or map source), independently of the live actor cache. Message 44 now represents all 65535/65534 control options and ordinary signed-count behavior, including option 243's third-parameter duration. Removed the invented unused level assignment.
+- Primitive Init now adds the supplied delta and copies the parent position into both current and origin fields. The 15 reference position-copy primitive ids update before the skip-frame gate. These stores are ported; mapping every existing handler's movement into the persistent parent field remains open.
+- STR restart now resets counters and active key cursors without clearing accumulated transforms. Processing checks resource availability and completed-layer count before touching draw/transform state. The terminal key draws on its transition call; the following call reports completion.
+- Main-dispatch completion routing now honors the 106 direct STR-result consumers, leaves the 10 ignored-result cases running to their duration check, and restarts case 145 before the outer frame increment. Helper functions that internally call STR and have their own return/side-effect behavior still require individual ports.
+- Validation: x64 release build and deployment succeed; five Python tests and five silent C++ suites pass (145 C++ checks, including 87 lifecycle/control/STR checks). No media or live server session was used. WP5A and the overall plan remain incomplete.
+
+## Lifecycle continuation — 2026-10-25
+
+- Replaced the skill effect's wall-clock catch-up loop and primitive/alpha/STR lifetime extensions with one handler dispatch, one counter increment and `stateCnt < duration`. Handler failure returns before the outer increment. Removed synthetic infinite-loop flags on real ids 321 and 601. RSW map emitters retain their existing scheduler separately.
+- Primitives now join the world's object list, process/render there, and unregister from their parent when deleted. Parent destruction/message 25 detaches rather than deletes primitives; the world reclaims them. Actor exit/message 24 clears the master instead of allocating a permanent world anchor. Primitive outer lifetime is inclusive (`stateCnt <= duration`), with the reference life-99 gate exception for numeric ids 0 and 0x10.
+- Ported `CAbleToMakeEffect::SendMsg` cases 23, 84, 85, 86, 87, 109 and 120. Actor messages now delegate to this base. Begin-cast message 85 preserves Ref's launch/remove/relaunch order, including the first positive-id double initialization; message 86 reuses an existing target effect. Duration zero is passed through. Removal handles id zero and only the first matching attachment.
+- Effect message 14 copies both vectors. Removed invented message-109 effect behavior and message-14 Grim Tooth detachment/flight/duration rewriting. Grim Tooth now retains its Init origin, subtracts its two-unit direction step in Ref order, emits every third frame, consumes the two discarded RNG draws, and requests only `effect\stone.bmp`. Its downstream primitive update/render still needs the complete WP5 port.
+- Validation: x64 release build passes; five Python tests and five silent C++ suites pass (98 C++ checks, including 40 lifecycle/casting/Grim Tooth checks). Production lifecycle/message/emitter bodies compile against controlled, silent doubles; no media was opened, played or rendered. Optional OldRO copy is still skipped with permission denied.
+- WP5A remains **partial**: `EFFECTPRIMID` in src still has reconstructed values/collisions; Ref's pre-gate primitive position-copy list is not fully represented; handler failure/counter semantics and `ProcessEZ2STR` end-layer handling remain open. Effect messages 44's special control vectors also remain open. No RunningServer acceptance or skill-matrix verification was performed.
 
 ## Continuation review — 2026-10-25
 
