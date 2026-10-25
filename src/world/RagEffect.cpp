@@ -1929,8 +1929,8 @@ bool SubmitAnimatedSpriteParticle(const CEffectPrim& prim,
         : (std::max)(1.0f, actRes->GetDelay(actionIndex));
     const int motionAdvance = static_cast<int>(static_cast<float>(prim.m_stateCnt) / frameDelay);
     const int clampedBase = (std::max)(0, (std::min)(prim.m_spriteMotionBase, motionCount - 1));
-    const int motionIndex = prim.m_spriteRepeat
-        ? (clampedBase + motionAdvance) % motionCount
+    const int motionIndex = prim.m_type == PP_SUPERANGEL ? prim.m_curMotion
+        : prim.m_spriteRepeat ? (clampedBase + motionAdvance) % motionCount
         : (std::min)(motionCount - 1, clampedBase + motionAdvance);
 
     const BakedEffectSpriteFrame* frame = GetBakedEffectSpriteFrame(
@@ -2567,6 +2567,8 @@ CEffectPrim::CEffectPrim()
     , m_spriteMotionBase(0)
     , m_spriteFrameDelay(0.0f)
     , m_spriteScale(1.0f)
+    , m_superAngelSprRes(nullptr)
+    , m_superAngelActRes(nullptr)
     , m_spriteRepeat(false)
     , m_repeatAnim(true)
     , m_isDisappear(false)
@@ -5977,11 +5979,83 @@ void RenderSlash1Primitive(const CEffectPrim& prim, const matrix& view)
     }
 }
 
+// HighPriest.exe.c:434160-434328. Preserve the GI clock, signed byte
+// controls, alpha overshoot and fade order; the outer processor owns frame count.
+void UpdateSuperAngelPrimitive(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life == 1) {
+        ++gi.process;
+        gi.sparkY = static_cast<float>(gi.sparkY - 0.1);
+        gi.vecBPreX = gi.sparkX; gi.arcBaselineY = gi.sparkY; gi.vecBPreZ = gi.sparkZ;
+        prim->m_deltaPos = {gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ};
+        const int variant = static_cast<signed char>(gi.flag[0]);
+        const int birth = static_cast<signed char>(gi.flag[1]);
+        if (gi.process < 50) {
+            if (birth != 0) {
+                if (prim->m_alpha < 40 - birth) prim->m_alpha += 1.0f;
+            } else if (variant == 1) {
+                if (prim->m_alpha < 200.0f) prim->m_alpha += 5.0f;
+            } else if (variant == 10) {
+                if (prim->m_alpha < 255.0f) prim->m_alpha += 10.0f;
+                if (prim->m_alpha > 255.0f) prim->m_alpha = 255.0f;
+            } else if (variant == 11) {
+                prim->m_alpha = 0.0f;
+            } else if (variant < 2) {
+                if (prim->m_alpha < 245.0f) prim->m_alpha += 5.0f;
+            } else if (gi.process < 30 && prim->m_alpha < 150.0f) {
+                prim->m_alpha += 5.0f;
+            }
+        }
+        if (gi.process > 30) {
+            if (variant == 10 || variant == 11) {
+                if ((gi.process & 3) == 0) ++prim->m_curMotion;
+                if (prim->m_curMotion > 15) prim->m_curMotion = 15;
+            } else if (static_cast<u8>(variant) <= 1 || variant >= 2) {
+                if (gi.process % 3 == 0) ++prim->m_curMotion;
+                if (prim->m_curMotion > 29) prim->m_curMotion = 29;
+            }
+        }
+        float fade = 0.0f;
+        switch (variant) {
+        case 0: if (gi.process > 100) fade = 4.0f; break;
+        case 2: if (gi.process > 30) fade = 3.0f; break;
+        case 3: if (gi.process > 60) fade = 3.0f; break;
+        case 4: if (gi.process > 70) fade = 3.0f; break;
+        case 10: if (gi.process > 100) fade = 6.0f; break;
+        default: if (gi.process > 75) fade = birth != 0 ? 3.0f : 6.0f; break;
+        }
+        if (fade != 0.0f) {
+            prim->m_alpha -= fade;
+            if (prim->m_alpha < 0.0f) prim->m_alpha = 0.0f;
+        }
+    }
+    prim->m_pos = prim->m_deltaPos;
+    ShiftCircleSegments(prim);
+}
+
+// Ref routes 0x55 to its shared Render3DParticle sprite path. Use the current
+// sprite compositor with the ported explicit motion and no substitute assets.
+// The shared compositor's per-clip submission still needs its full Ref port.
+void RenderSuperAngelPrimitive(const CEffectPrim& prim, matrix& view)
+{
+    if (!prim.m_superAngelSprRes || !prim.m_superAngelActRes) return;
+    const u8 alpha = (prim.m_renderFlag & 0x200u) != 0
+        ? 255 : static_cast<u8>(static_cast<long long>(prim.m_alpha));
+    const u32 color = (static_cast<u32>(alpha) << 24) | 0xFFFFFFu;
+    SubmitAnimatedSpriteParticle(prim, prim.m_pos, &view, color,
+        (prim.m_renderFlag & 6u) != 0 ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA,
+        static_cast<int>(prim.m_renderFlag));
+}
+
 CEffectPrim::~CEffectPrim()
 {
     if (m_master) {
         m_master->SendMsg(this, 25, 0, 0, 0);
     }
+    if (m_superAngelSprRes) m_superAngelSprRes->Unlock();
+    if (m_superAngelActRes) m_superAngelActRes->Unlock();
 }
 
 void CEffectPrim::SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t)
@@ -6021,6 +6095,10 @@ u8 CEffectPrim::OnProcess()
 
 bool CEffectPrim::ProcessPrimitiveFrame()
 {
+    if (m_type == PP_SUPERANGEL) {
+        UpdateSuperAngelPrimitive(this);
+        return true;
+    }
     if (m_type == PP_SLASH1) {
         UpdateSlash1Primitive(this);
         return true;
@@ -6246,6 +6324,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
 void CEffectPrim::Render(matrix* viewMatrix)
 {
     if (!m_master || !viewMatrix) {
+        return;
+    }
+    if (m_type == PP_SUPERANGEL) {
+        RenderSuperAngelPrimitive(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_SLASH1) {
@@ -6793,191 +6875,6 @@ void CEffectPrim::Render(matrix* viewMatrix)
             renderFlags);
         break;
     }
-    case PP_SUPERANGEL: {
-        tlvertex3d anchor{};
-        vector3d anchorPos = base;
-        anchorPos.y += m_param[2];
-        if (!ProjectPoint(anchorPos, *viewMatrix, &anchor)) {
-            return;
-        }
-        const float pixelRatio = ResolveEffectPixelRatio(anchor);
-        if (!std::isfinite(pixelRatio) || pixelRatio <= 0.0f) {
-            return;
-        }
-
-        const int variant = static_cast<int>(m_param[0]);
-        const int birthFrame = static_cast<int>(m_param[1]);
-        const int process = m_stateCnt;
-        float visualAlpha = normalizedAlpha;
-        switch (variant) {
-        case 1: {
-            const float maxAlpha = static_cast<float>((std::max)(0, 40 - birthFrame));
-            visualAlpha = (std::min)(maxAlpha, static_cast<float>(process));
-            break;
-        }
-        case 2:
-        case 3:
-        case 4:
-            visualAlpha = process < 30 ? (std::min)(150.0f, static_cast<float>(process) * 5.0f) : normalizedAlpha;
-            break;
-        case 10:
-            visualAlpha = process < 50 ? (std::min)(255.0f, static_cast<float>(process) * 10.0f) : normalizedAlpha;
-            break;
-        case 11:
-            visualAlpha = process < 50 ? (std::min)(180.0f, static_cast<float>(process) * 3.0f) : normalizedAlpha;
-            break;
-        case 0:
-        default:
-            visualAlpha = process < 50 ? (std::min)(245.0f, static_cast<float>(process) * 5.0f) : normalizedAlpha;
-            break;
-        }
-        const float drift = -22.0f - static_cast<float>(process) * (0.9f + m_param[3] * 0.08f);
-        const float sway = std::sin(timeSeconds * (1.8f + m_param[3] * 0.2f) + m_param[0] * 0.8f) * (18.0f + static_cast<float>((std::min)(process, 30)) * 0.35f);
-        CTexture* wingTexture = m_texture.size() > 0 ? m_texture[0] : GetSoftGlowTexture(false);
-        CTexture* ringTexture = m_texture.size() > 1 ? m_texture[1] : GetSoftGlowTexture(false);
-        CTexture* accentTexture = m_texture.size() > 2 ? m_texture[2] : GetSoftGlowTexture(true);
-        const int renderFlags = ResolveEffectRenderFlags(m_renderFlag, 1 | 2);
-        const D3DBLEND destBlend = ResolveEffectDestBlend(m_renderFlag);
-        SubmitScreenQuad(anchor,
-            wingTexture,
-            sway - 26.0f,
-            drift,
-            (72.0f + m_size * 18.0f) * pixelRatio,
-            (128.0f + m_size * 22.0f) * pixelRatio,
-            PackColor(static_cast<unsigned int>((std::max)(0.0f, (std::min)(255.0f, visualAlpha))), m_tintColor),
-            destBlend,
-            0.0f,
-            renderFlags);
-        SubmitScreenQuad(anchor,
-            wingTexture,
-            -sway + 26.0f,
-            drift,
-            (72.0f + m_size * 18.0f) * pixelRatio,
-            (128.0f + m_size * 22.0f) * pixelRatio,
-            PackColor(static_cast<unsigned int>((std::max)(0.0f, (std::min)(255.0f, visualAlpha))), m_tintColor),
-            destBlend,
-            0.0f,
-            renderFlags);
-        SubmitScreenQuad(anchor,
-            ringTexture,
-            0.0f,
-            20.0f + std::sin(timeSeconds * 4.0f + m_param[0]) * 6.0f,
-            (78.0f + m_size * 18.0f) * pixelRatio,
-            (78.0f + m_size * 18.0f) * pixelRatio,
-            PackColor(static_cast<unsigned int>(visualAlpha * 0.8f), RGB(220, 240, 255)),
-            destBlend,
-            0.0f,
-            renderFlags);
-        SubmitScreenQuad(anchor,
-            accentTexture,
-            std::sin(timeSeconds * 3.0f + m_param[0]) * 18.0f,
-            8.0f - timeSeconds * 20.0f,
-            (40.0f + m_size * 12.0f) * pixelRatio,
-            (40.0f + m_size * 12.0f) * pixelRatio,
-            PackColor(static_cast<unsigned int>(visualAlpha * 0.7f), RGB(255, 244, 196)),
-            destBlend,
-            0.0f,
-            renderFlags);
-        break;
-    }
-    case PP_RADIALSLASH: {
-        CTexture* texture = !m_texture.empty() ? m_texture[0] : GetSoftGlowTexture(false);
-        const int particles = (std::max)(4, m_spawnCount);
-        const float progress = m_duration > 0
-            ? (std::min)(1.0f, static_cast<float>(m_stateCnt) / static_cast<float>(m_duration))
-            : 1.0f;
-        const float radialBase = m_radius + progress * (m_radiusSpeed * static_cast<float>(m_duration) + m_param[1]);
-        const float heightBase = m_heightSize + progress * m_param[2];
-        const int renderFlags = ResolveEffectRenderFlags(m_renderFlag, 1 | 2);
-        const D3DBLEND destBlend = ResolveEffectDestBlend(m_renderFlag);
-        for (int index = 0; index < particles; ++index) {
-            const float step = 360.0f / static_cast<float>(particles);
-            const float angleDeg = m_param[0] + step * static_cast<float>(index);
-            const float angle = angleDeg * (kPi / 180.0f);
-            vector3d pos = {
-                base.x + std::cos(angle) * radialBase,
-                base.y - heightBase - progress * 8.0f,
-                base.z + std::sin(angle) * radialBase
-            };
-            const float scale = 1.0f - progress * 0.35f;
-            SubmitBillboard(pos,
-                *viewMatrix,
-                texture,
-                (32.0f + m_size * 18.0f) * scale,
-                (88.0f + m_size * 28.0f) * scale,
-                PackColor(static_cast<unsigned int>(normalizedAlpha * (1.0f - progress * 0.45f)), m_tintColor),
-                destBlend,
-                0.0f,
-                renderFlags);
-        }
-        break;
-    }
-    case PP_EFFECTSPRITE: {
-        if (m_spriteActName.empty() || m_spriteSprName.empty()) {
-            break;
-        }
-
-        CActRes* actRes = g_resMgr.GetAs<CActRes>(m_spriteActName.c_str());
-        if (!actRes) {
-            break;
-        }
-
-        int actionIndex = m_spriteAction;
-        if (actRes->GetMotionCount(actionIndex) <= 0) {
-            actionIndex = 0;
-        }
-        const int motionCount = actRes->GetMotionCount(actionIndex);
-        if (motionCount <= 0) {
-            break;
-        }
-
-        const float frameDelay = m_spriteFrameDelay > 0.0f
-            ? m_spriteFrameDelay
-            : (std::max)(1.0f, actRes->GetDelay(actionIndex));
-        const int motionAdvance = static_cast<int>(static_cast<float>(m_stateCnt) / frameDelay);
-        const int clampedBase = (std::max)(0, (std::min)(m_spriteMotionBase, motionCount - 1));
-        const int motionIndex = m_spriteRepeat
-            ? (clampedBase + motionAdvance) % motionCount
-            : (std::min)(motionCount - 1, clampedBase + motionAdvance);
-
-        const BakedEffectSpriteFrame* frame = GetBakedEffectSpriteFrame(m_spriteActName, m_spriteSprName, actionIndex, motionIndex);
-        if (!frame || !frame->texture) {
-            break;
-        }
-
-        vector3d anchorPos = base;
-        anchorPos.y += m_param[2];
-        tlvertex3d anchor{};
-        if (!ProjectPoint(anchorPos, *viewMatrix, &anchor)) {
-            break;
-        }
-
-        const float pixelRatio = ResolveEffectPixelRatio(anchor);
-        const float scale = (std::max)(0.1f, m_spriteScale);
-        if (!std::isfinite(pixelRatio) || pixelRatio <= 0.0f) {
-            break;
-        }
-
-        const float width = static_cast<float>(frame->width) * pixelRatio * scale;
-        const float height = static_cast<float>(frame->height) * pixelRatio * scale;
-        const float pivotX = frame->pivotX * pixelRatio * scale;
-        const float pivotY = frame->pivotY * pixelRatio * scale;
-        const int renderFlags = ResolveEffectRenderFlags(m_renderFlag, 1 | 2);
-        const D3DBLEND destBlend = ResolveEffectDestBlend(m_renderFlag);
-        SubmitScreenQuadPivot(anchor,
-            frame->texture,
-            pivotX,
-            pivotY,
-            width,
-            height,
-            m_roll,
-            color,
-            destBlend,
-            0.0f,
-            renderFlags,
-            kEffectSpriteDepthBias);
-        break;
-    }
     default:
         break;
     }
@@ -7374,10 +7271,6 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 338:
-    case 582:
-        m_handler = Handler::SuperAngel;
-        break;
     case 331:
         m_handler = Handler::RecoveryHp;
         break;
@@ -7700,7 +7593,6 @@ bool CRagEffect::ResolveCullSphere(vector3d* outCenter, float* outRadius) const
     case Handler::Smoke:
     case Handler::Torch:
     case Handler::EzStr:
-    case Handler::SuperAngel:
     case Handler::RecoveryHp:
     case Handler::RecoverySp:
     case Handler::HealLight:
@@ -8152,115 +8044,78 @@ void CRagEffect::SpawnBlueFall()
     }
 }
 
-void CRagEffect::SpawnSuperAngelVariant(int variant, int birthFrame)
+// HighPriest.exe.c:433666-433827 (0x60B580). Asset bytes are read from
+// the listed executable VAs; CResMgr supplies its registered sprite directory.
+void CRagEffect::ApplySuperAngel(signed char variant, signed char)
 {
-    if (CEffectPrim* prim = LaunchEffectPrim(PP_EFFECTSPRITE, vector3d{})) {
-        const bool taekwon = variant >= 10;
-        const std::initializer_list<const char*> spriteStems = taekwon
-            ? std::initializer_list<const char*>{ "fake_angel", "al_angelus" }
-            : std::initializer_list<const char*>{ "fake_angel", "al_angelus" };
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt == 0 || (m_stateCnt <= 18 && (variant == 1 || variant == 11) && m_stateCnt % 3 == 0)) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_SUPERANGEL, vector3d{});
         prim->m_duration = m_duration;
+        EffectGi& gi = prim->m_gi[0];
+        gi.process = 0; gi.life = 1; prim->m_size = 1.0f;
+        gi.sparkX = m_effectPos.x; gi.sparkY = m_effectPos.y - 40.0f; gi.sparkZ = m_effectPos.z;
+        gi.flag[0] = static_cast<u8>(variant); gi.flag[1] = static_cast<u8>(m_stateCnt);
         prim->m_alpha = 0.0f;
-        prim->m_alphaSpeed = taekwon ? 10.0f : 8.0f;
-        prim->m_maxAlpha = taekwon ? 255.0f : 220.0f;
-        prim->m_fadeOutCnt = taekwon ? 92 : 84;
-        prim->m_size = taekwon ? 1.15f : 1.0f;
-        prim->m_tintColor = taekwon ? RGB(148, 255, 196) : RGB(255, 244, 188);
-        prim->m_param[0] = static_cast<float>(variant);
-        prim->m_param[1] = static_cast<float>(birthFrame);
-        prim->m_param[2] = taekwon ? -26.0f : -34.0f;
-        prim->m_param[3] = taekwon ? 1.6f : 1.0f;
-        if (!ConfigureEffectSpritePrim(prim, spriteStems, 0, taekwon ? 1.15f : 1.0f, false, 0.0f, 0)) {
-            DiscardPrimitive(prim);
-            prim = LaunchEffectPrim(PP_SUPERANGEL, vector3d{});
-            if (!prim) {
-                return;
-            }
-            prim->m_duration = m_duration;
-            prim->m_alpha = 0.0f;
-            prim->m_alphaSpeed = taekwon ? 10.0f : 8.0f;
-            prim->m_maxAlpha = taekwon ? 255.0f : 220.0f;
-            prim->m_fadeOutCnt = taekwon ? 92 : 84;
-            prim->m_size = taekwon ? 1.15f : 1.0f;
-            prim->m_tintColor = taekwon ? RGB(148, 255, 196) : RGB(255, 244, 188);
-            prim->m_texture.push_back(ResolveEffectTextureCandidates({
-                "effect\\priest_angel_wing.bmp",
-                "effect\\magnificat_angel_wing.bmp",
-                "effect\\sanctuaria_angel_wing_up.bmp",
-            }, false));
-            prim->m_texture.push_back(ResolveEffectTextureCandidates({
-                "effect\\priest_angel_ring.bmp",
-                "effect\\ring_blue.tga",
-                "effect\\ring_white.tga",
-            }, false));
-            prim->m_texture.push_back(ResolveEffectTextureCandidates({
-                "effect\\priest_angel_hand.bmp",
-                "effect\\lexaeterna_angel.bmp",
-                "effect\\priest_angel_hair.bmp",
-            }, true));
-            prim->m_param[0] = static_cast<float>(variant);
-            prim->m_param[1] = static_cast<float>(birthFrame);
-            prim->m_param[2] = taekwon ? -30.0f : -40.0f;
-            prim->m_param[3] = taekwon ? 1.6f : 1.0f;
+        struct Assets { int variant; const char* spr; const char* act; };
+        static const Assets assets[] = {
+        { 0, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC3\xB5\xBB\xE7.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC3\xB5\xBB\xE7.act" }, // 0x71C13C / 0x71C12C
+        { 1, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC3\xB5\xBB\xE7\xB3\xAF\xB0\xB3.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC3\xB5\xBB\xE7\xB3\xAF\xB0\xB3.act" }, // 0x71C118 / 0x71C104
+        { 2, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xEA\xC5\xD0" "1.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xEA\xC5\xD0" "1.act" }, // 0x71C0F0 / 0x71C0DC
+        { 3, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xEA\xC5\xD0" "2.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xEA\xC5\xD0" "2.act" }, // 0x71C0C8 / 0x71C0B4
+        { 4, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xEA\xC5\xD0" "3.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xEA\xC5\xD0" "3.act" }, // 0x71C0A0 / 0x71C08C
+        { 10, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xD1\xBA\xB9\xC3\xB5\xBB\xE7.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xD1\xBA\xB9\xC3\xB5\xBB\xE7.act" }, // 0x71C078 / 0x71C064
+        { 11, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xD1\xBA\xB9\xC3\xB5\xBB\xE7(\xB3\xAF\xB0\xB3).spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xD1\xBA\xB9\xC3\xB5\xBB\xE7(\xB3\xAF\xB0\xB3).act" }, // 0x71C048 / 0x71C02C
+        };
+        for (const Assets& asset : assets) {
+            if (asset.variant != variant) continue;
+            prim->m_spriteSprName = asset.spr;
+            prim->m_spriteActName = asset.act;
+            prim->m_superAngelSprRes = g_resMgr.GetAs<CSprRes>(asset.spr);
+            if (prim->m_superAngelSprRes) prim->m_superAngelSprRes->Lock();
+            prim->m_superAngelActRes = g_resMgr.GetAs<CActRes>(asset.act);
+            if (prim->m_superAngelActRes) prim->m_superAngelActRes->Lock();
+            prim->m_renderFlag = 5;
+            break;
+        }
+        if (variant == 10) {
+            prim->m_renderFlag = 0x201;
+            gi.sparkY = m_effectPos.y - 30.0f;
+        } else if (variant == 11) {
+            gi.sparkY = m_effectPos.y - 30.0f;
+        }
+        prim->m_spriteAction = 0; prim->m_animSpeed = 16; prim->m_curMotion = 0;
+        prim->m_repeatAnim = true; prim->m_spriteRepeat = true;
+        prim->m_numSegments = 1; // Ref primitive constructor, followed by InitSegment.
+        prim->m_segments[0].pos = prim->m_pos;
+        prim->m_segments[0].size = prim->m_size;
+        prim->m_segments[0].radius = prim->m_radius;
+        prim->m_segments[0].transform = prim->m_matrix;
+        for (int band = 1; band < 4; ++band) prim->m_gi[static_cast<size_t>(band)].life = 0;
+    }
+    if ((variant == 0 || variant == 10) && (m_stateCnt == 65 || m_stateCnt == 66)) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_SLASH1, vector3d{});
+        prim->m_renderFlag = 5; prim->m_duration = m_duration; prim->m_size = 4.0f;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+        for (int band = 0; band < 4; ++band) {
+            EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
+            gi.life = 1; gi.process = 0; gi.maxHeight = 2.0f;
+            gi.rotStart = static_cast<short>(90 * band + (m_stateCnt == 66 ? 45 : 0));
+            gi.alphaB = 0; gi.distance = 2.0f; gi.height[0] = 1.0f; gi.flag[0] = 0;
         }
     }
 }
 
-void CRagEffect::SpawnSuperAngelBurst(int startAngle)
+// Ref/RagEffect.cpp:10838-10844,11947-11950: source call order matters.
+void CRagEffect::ProcessSuperAngelEffect()
 {
-    if (CEffectPrim* prim = LaunchEffectPrim(PP_RADIALSLASH, vector3d{})) {
-        prim->m_duration = 40;
-        prim->m_spawnCount = 4;
-        prim->m_radius = 0.9f;
-        prim->m_radiusSpeed = 0.2f;
-        prim->m_heightSize = 1.5f;
-        prim->m_alpha = 0.0f;
-        prim->m_alphaSpeed = 24.0f;
-        prim->m_maxAlpha = 220.0f;
-        prim->m_fadeOutCnt = 24;
-        prim->m_size = 0.85f;
-        prim->m_texture.push_back(ResolveEffectTextureCandidates({
-            "effect\\ring_blue.tga",
-            "effect\\ring_blue.bmp",
-            "effect\\ring_b.bmp",
-        }, false));
-        prim->m_tintColor = RGB(180, 220, 255);
-        prim->m_param[0] = static_cast<float>(startAngle);
-        prim->m_param[1] = 6.0f;
-        prim->m_param[2] = 10.0f;
-    }
-}
-
-void CRagEffect::UpdateSuperAngel()
-{
-    if (m_stateCnt == 0) {
-        // Ref RagEffect OnProcess case 0x152 (effect 338): PlayWave(levelup) only at frame 0, not ef_angel.
-        TryPlayEffectWaveAt(ResolveBasePosition(), "levelup.wav");
-        if (m_type == 338) {
-            SpawnSuperAngelVariant(0, m_stateCnt);
-            SpawnSuperAngelVariant(1, m_stateCnt);
-            SpawnSuperAngelVariant(2, m_stateCnt);
-            SpawnSuperAngelVariant(3, m_stateCnt);
-        } else {
-            SpawnSuperAngelVariant(11, m_stateCnt);
-            SpawnSuperAngelVariant(10, m_stateCnt);
-        }
-    }
-
-    if ((m_type == 338 && m_stateCnt <= 18) || (m_type == 582 && m_stateCnt <= 18)) {
-        if ((m_stateCnt % 3) == 0) {
-            if (m_type == 338) {
-                SpawnSuperAngelVariant(1, m_stateCnt);
-            } else {
-                SpawnSuperAngelVariant(11, m_stateCnt);
-            }
-        }
-    }
-
-    if (m_stateCnt == 65) {
-        SpawnSuperAngelBurst(0);
-    } else if (m_stateCnt == 66) {
-        SpawnSuperAngelBurst(45);
+    if (m_type == 338) {
+        if (m_stateCnt == 0) PlayWave("levelup.wav", 0.0f, 0.0f, 0.0f, 250, 40, 1.0f);
+        ApplySuperAngel(0, 0); ApplySuperAngel(1, 0); ApplySuperAngel(2, 0); ApplySuperAngel(3, 0);
+    } else if (m_type == 582) {
+        ApplySuperAngel(11, 0); ApplySuperAngel(10, 0);
     }
 }
 
@@ -12040,6 +11895,9 @@ bool CRagEffect::OnProcess2()
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d soundPos = master != nullptr ? master->m_pos : m_cachedPos;
     switch (m_type) {
+    case 338:
+        ProcessSuperAngelEffect();
+        return true;
     case 337:
         ApplyJobLvUp50(0);
         ApplyJobLvUp50(45);
@@ -12376,7 +12234,6 @@ u8 CRagEffect::ProcessWorldEffect()
         || m_handler == Handler::MapPillar
         || m_handler == Handler::MapMagicZone
         || m_handler == Handler::MapParticle
-        || m_handler == Handler::SuperAngel
         || m_handler == Handler::BlueFall
         || m_handler == Handler::WeatherCloud;
     if (steps > 1 && burstSensitiveHandler) {
@@ -12426,6 +12283,10 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 582) {
+        ProcessSuperAngelEffect();
+        return true;
+    }
     if (m_type == 590) {
         ProcessJobLvUp50_2();
         return true;
@@ -12915,9 +12776,6 @@ bool CRagEffect::ProcessEffectFrame()
             break;
         case Handler::MapParticle:
             SpawnMapParticle();
-            break;
-        case Handler::SuperAngel:
-            UpdateSuperAngel();
             break;
         case Handler::RecoveryHp:
             SpawnRecoveryHp();

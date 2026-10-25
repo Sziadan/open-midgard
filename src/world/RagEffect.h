@@ -10,6 +10,8 @@
 #include <vector>
 
 class CTexture;
+class CSprRes;
+class CActRes;
 
 // Remaining reconstructed selectors retain their existing values during the
 // incremental migration. Full reference enum/dispatch reconciliation is pending.
@@ -30,10 +32,8 @@ enum EFFECTPRIMID {
     PP_MAPPILLAR = 13,
     PP_MAPMAGICZONE = 14,
     PP_MAPPARTICLE = 15,
-    PP_SUPERANGEL = 16,
-    PP_RADIALSLASH = 17,
+    PP_SUPERANGEL = 0x55,
     PP_SLASH1 = 0x4B,
-    PP_EFFECTSPRITE = 21,
     PP_HEAL = 22,
     PP_PORTAL = 23,
     PP_WIND = 24,
@@ -216,6 +216,8 @@ public:
     int m_animSpeed;
     float m_spriteFrameDelay;
     float m_spriteScale;
+    CSprRes* m_superAngelSprRes;
+    CActRes* m_superAngelActRes;
     bool m_spriteRepeat;
     bool m_repeatAnim;
     bool m_isDisappear;
@@ -264,7 +266,6 @@ private:
         MapPillar,
         MapMagicZone,
         MapParticle,
-        SuperAngel,
         RecoveryHp,
         RecoverySp,
         HealLight,
@@ -376,9 +377,8 @@ private:
     void SpawnMapPillar();
     void SpawnMapMagicZone();
     void SpawnMapParticle();
-    void SpawnSuperAngelVariant(int variant, int birthFrame);
-    void SpawnSuperAngelBurst(int startAngle);
-    void UpdateSuperAngel();
+    void ApplySuperAngel(signed char variant, signed char time);
+    void ProcessSuperAngelEffect();
     void SpawnRecoveryHp();
     void SpawnRecoverySp();
     void SpawnHealLight();

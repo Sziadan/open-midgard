@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstring>
 #include <windows.h>
+#include <mmsystem.h>
 
 #if RO_PLATFORM_WINDOWS
 #pragma comment(lib, "winmm.lib")
@@ -38,6 +39,18 @@ CRes::CRes() : m_lockCnt(0), m_timeStamp(0), m_extIndex(-1)
 }
 
 CRes::~CRes() = default;
+
+// Ref/Res.cpp:2570-2592 (0x521C30 / 0x521C40).
+int CRes::Lock()
+{
+    return ++m_lockCnt;
+}
+
+int CRes::Unlock()
+{
+    m_timeStamp = timeGetTime();
+    return --m_lockCnt;
+}
 
 bool CRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int size)
 {

@@ -8,6 +8,8 @@
 #include <array>
 #include <string>
 #include <memory>
+#include <type_traits>
+#include <set>
 
 using u8 = std::uint8_t;
 using u32 = std::uint32_t;
@@ -20,6 +22,7 @@ vector3d AddVec3(vector3d a, vector3d b) { return {a.x+b.x, a.y+b.y, a.z+b.z}; }
 #include "EffectGiTypes.inc"
 constexpr int kPrimTypeHeal = 0x3C;
 struct matrix { float m[4][4]{}; };
+#include "EffectSegmentTypes.inc"
 void MatrixIdentity(matrix& m) { m = {}; for (int i = 0; i < 4; ++i) m.m[i][i] = 1; }
 void MatrixAppendYRotation(matrix& m, float a) { m.m[2][0] = std::sin(a); m.m[2][2] = std::cos(a); }
 void MatrixAppendXRotation(matrix&, float) {}
@@ -41,10 +44,26 @@ struct TexMgr {
     const char* lastPath = nullptr;
     CTexture* GetTexture(const char* path, bool) { lastPath = path; return &texture; }
 } g_texMgr;
+u32 resourceTick = 123;
+u32 timeGetTime() { return resourceTick; }
+struct CRes { int m_lockCnt=0; u32 m_timeStamp=0; int Lock(); int Unlock(); };
+struct CSprRes : CRes {};
+struct CActRes : CRes {};
+struct ResourceManager {
+    CSprRes spr; CActRes act;
+    bool fail = false;
+    std::vector<std::string> requests;
+    template<class T> T* GetAs(const char* name) {
+        requests.emplace_back(name);
+        if (fail) return nullptr;
+        if constexpr (std::is_same_v<T,CSprRes>) return &spr;
+        else return &act;
+    }
+} g_resMgr;
 int lastTextureFrame = -1;
 CTexture* KAC_LAYER::GetTexture(int frame) { lastTextureFrame = frame; return &g_texMgr.texture; }
 using D3DBLEND = int;
-constexpr int D3DPT_TRIANGLESTRIP = 5, D3DCULL_NONE = 1, D3DBLEND_ONE = 2;
+constexpr int D3DPT_TRIANGLESTRIP = 5, D3DCULL_NONE = 1, D3DBLEND_ONE = 2, D3DBLEND_INVSRCALPHA = 6;
 struct tlvertex3d { float x=0,y=0,z=0,oow=0; u32 color=0,specular=0; float tu=0,tv=0; };
 struct RPFace {
     int primType=0, numVerts=0, numIndices=0, mtPreset=0, cullMode=0;
@@ -110,8 +129,9 @@ struct CWorld {
 } g_world;
 struct CGameMode { CWorld* m_world = &g_world; CView* m_view = &testView; } gameMode;
 struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
-enum EFFECTPRIMID { PP_SLASH1 = 0x4B, PP_2DTEXTURE = 0, PP_3DCROSSTEXTURE = 0x10, PP_3DQUADHORN = 0x9, Other = 0x7F };
+enum EFFECTPRIMID { PP_SUPERANGEL = 0x55, PP_SLASH1 = 0x4B, PP_2DTEXTURE = 0, PP_3DCROSSTEXTURE = 0x10, PP_3DQUADHORN = 0x9, Other = 0x7F };
 void UpdateSlash1Primitive(CEffectPrim*);
+void UpdateSuperAngelPrimitive(CEffectPrim*);
 struct CEffectPrim : CGameObject {
     Probe deaths{ primitiveDeaths };
     CRagEffect* m_master = nullptr;
@@ -125,6 +145,14 @@ struct CEffectPrim : CGameObject {
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 0, m_minAlpha = 0;
     bool m_isDisappear = false;
     matrix m_matrix;
+    CSprRes* m_superAngelSprRes = nullptr;
+    CActRes* m_superAngelActRes = nullptr;
+    std::string m_spriteActName,m_spriteSprName;
+    int m_spriteAction=0,m_animSpeed=0,m_curMotion=0,m_numSegments=0;
+    bool m_repeatAnim=false,m_spriteRepeat=false;
+    float m_alpha=0,m_radius=0;
+    std::array<EffectSegmentState,12> m_segments;
+
     std::vector<CTexture*> m_texture;
     bool active = true;
     ~CEffectPrim() override;
@@ -135,10 +163,17 @@ struct CEffectPrim : CGameObject {
         ++updates;
         observedFrame = m_stateCnt;
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
+        if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (resetFrame >= 0) m_stateCnt = resetFrame;
         return active;
     }
 };
+int angelSpriteSubmissions=0,angelSubmittedMotion=-1;
+u32 angelSubmittedColor=0;
+D3DBLEND angelSubmittedBlend=0;
+bool SubmitAnimatedSpriteParticle(const CEffectPrim& prim,const vector3d&,matrix*,unsigned int color,D3DBLEND blend,int) {
+    ++angelSpriteSubmissions;angelSubmittedMotion=prim.m_curMotion;angelSubmittedColor=color;angelSubmittedBlend=blend;return true;
+}
 struct CRagEffect : CGameObject {
     Probe deaths{ effectDeaths };
     CRenderObject* m_master = nullptr;
@@ -166,6 +201,8 @@ struct CRagEffect : CGameObject {
     int frames = 0, worldFrames = 0, m_flag = 0;
     vector3d m_grimToothOrigin, m_grimToothRemaining, m_grimToothStep;
     void SpawnGrimTooth();
+    void ApplySuperAngel(signed char,signed char);
+    void ProcessSuperAngelEffect();
     void ApplyEntry2();
     bool ApplyJobLvUp50(int);
     bool ApplyJobLvUp50_2(short);
@@ -861,6 +898,130 @@ int main()
         effect.m_stateCnt=16;effect.ProcessJobLvUp50_2();
         check(effect.m_primList.size()==2,"effect 590 does not repeat emission after frame 15");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRes resource;
+        check(resource.Lock()==1 && resource.Lock()==2 && resource.m_timeStamp==0,
+            "resource Lock increments reference count without changing timestamp");
+        resourceTick=456;
+        check(resource.Unlock()==1 && resource.m_timeStamp==456 && resource.Unlock()==0 && resource.Unlock()==-1,
+            "resource Unlock records current tick and preserves signed reference count semantics");
+    }
+    {
+        CRagEffect effect;effect.m_master=&actor;effect.m_duration=300;
+        actor.m_pos={10,50,30};
+        const int variants[]={0,1,2,3,4,10,11};
+        const int randomBefore=rngDraws;
+        g_resMgr.requests.clear();
+        for (int variant:variants) effect.ApplySuperAngel(static_cast<signed char>(variant),0);
+        check(effect.m_primList.size()==7 && rngDraws==randomBefore && g_resMgr.requests.size()==14
+            && g_resMgr.spr.m_lockCnt==7 && g_resMgr.act.m_lockCnt==7,
+            "SuperAngel emits seven exact variants and loads/locks one sprite/action pair each without RNG");
+        std::set<std::string> sprites,actions;
+        int index=0;
+        for(auto* prim:effect.m_primList) {
+            const int variant=variants[index++];
+            sprites.insert(prim->m_spriteSprName);actions.insert(prim->m_spriteActName);
+            check(prim->m_type==PP_SUPERANGEL && prim->m_duration==300 && prim->m_alpha==0 && prim->m_size==1
+                && prim->m_renderFlag==(variant==10?0x201u:5u) && prim->m_gi[0].flag[0]==variant
+                && prim->m_gi[0].sparkY==(variant>=10?20.0f:10.0f) && prim->m_numSegments==1
+                && prim->m_spriteAction==0 && prim->m_animSpeed==16 && prim->m_curMotion==0 && prim->m_repeatAnim,
+                "SuperAngel variant has reference type, position, action, alpha and render flags");
+        }
+        check(sprites.size()==7 && actions.size()==7 && sprites.begin()->find("fake_angel")==std::string::npos,
+            "SuperAngel variants retain distinct recovered Korean sprite/action names");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0 && g_resMgr.spr.m_timeStamp==resourceTick,
+            "world reclamation releases every SuperAngel resource lock with current timestamp");
+    }
+    {
+        CRagEffect effect;effect.m_master=&actor;effect.m_type=338;
+        const int before=waves;
+        for(int frame=0;frame<=18;++frame) {effect.m_stateCnt=frame;effect.ProcessSuperAngelEffect();}
+        check(effect.m_primList.size()==10 && waves==before+1 && waveName=="levelup.wav" && waveY==0,
+            "effect 338 launches four initial variants plus six wing trails without duplicate frame-zero wing, with one listener wave");
+        int wings=0;for(auto* prim:effect.m_primList)if(prim->m_gi[0].flag[0]==1)++wings;
+        check(wings==7,"effect 338 wing births occur at frames 0,3,6,9,12,15,18");
+        effect.m_stateCnt=19;effect.ProcessSuperAngelEffect();
+        check(effect.m_primList.size()==10,"SuperAngel stops trail emission after frame 18");
+        effect.m_stateCnt=65;effect.ProcessSuperAngelEffect();auto* slash=effect.m_primList.back();
+        check(effect.m_primList.size()==11 && slash->m_type==PP_SLASH1 && slash->m_size==4
+            && slash->m_gi[3].rotStart==270 && slash->m_gi[0].maxHeight==2 && slash->m_gi[0].height[0]==1
+            && std::strcmp(g_texMgr.lastPath,"effect\\ring_blue.tga")==0,
+            "SuperAngel emits its original four-band blue slash at frame 65");
+        effect.m_stateCnt=66;effect.ProcessSuperAngelEffect();
+        check(effect.m_primList.size()==12 && effect.m_primList.back()->m_gi[3].rotStart==315,
+            "SuperAngel second slash is rotated 45 degrees on frame 66");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRagEffect effect;effect.m_master=&actor;effect.m_type=582;
+        const int before=waves;
+        effect.ProcessSuperAngelEffect();
+        check(effect.m_primList.size()==2 && effect.m_primList.front()->m_gi[0].flag[0]==11
+            && effect.m_primList.back()->m_gi[0].flag[0]==10 && waves==before,
+            "effect 582 preserves 11-before-10 order and does not invent a level-up wave");
+        effect.m_stateCnt=3;effect.ProcessSuperAngelEffect();
+        check(effect.m_primList.size()==3 && effect.m_primList.back()->m_gi[0].flag[1]==3,
+            "effect 582 repeats only variant 11 and stores birth frame");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_resMgr.fail=true;effect.m_stateCnt=0;effect.ApplySuperAngel(0,0);
+        check(effect.m_primList.size()==1 && !effect.m_primList.front()->m_superAngelSprRes
+            && !effect.m_primList.front()->m_superAngelActRes,
+            "missing SuperAngel assets leave one unrenderable original primitive without alternate names or replacement textures");
+        matrix view;MatrixIdentity(view);const int submitted=angelSpriteSubmissions;
+        RenderSuperAngelPrimitive(*effect.m_primList.front(),view);
+        check(angelSpriteSubmissions==submitted,"SuperAngel renderer does not substitute missing resources");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_resMgr.fail=false;
+    }
+    {
+        CRagEffect effect;effect.m_master=&actor;effect.m_effectPos={999,999,999};
+        const int variants[]={0,1,2,3,4,10,11};
+        const float initial[]={5,5,5,5,5,10,0};
+        const int cutoffs[]={100,75,30,60,70,100,75};
+        const float fades[]={4,6,3,3,3,6,6};
+        for(int index=0;index<7;++index) {
+            CEffectPrim prim;prim.m_master=&effect;prim.m_type=PP_SUPERANGEL;prim.m_numSegments=1;prim.m_size=1;
+            auto& gi=prim.m_gi[0];gi.life=1;gi.flag[0]=static_cast<u8>(variants[index]);gi.sparkX=10;gi.sparkY=20;gi.sparkZ=30;
+            UpdateSuperAngelPrimitive(&prim);
+            check(prim.m_alpha==initial[index] && gi.process==1 && std::abs(prim.m_pos.y-19.9f)<0.00001f
+                && prim.m_pos.x==10 && prim.m_segments[0].alpha==prim.m_alpha && gi.arcBaselineY==gi.sparkY,
+                "SuperAngel GI drives initial alpha, fixed-origin drift and head segment state");
+            gi.process=cutoffs[index];prim.m_alpha=100;
+            UpdateSuperAngelPrimitive(&prim);
+            check(prim.m_alpha==100-fades[index],"SuperAngel variants begin fading at their reference process boundary");
+        }
+        CEffectPrim prim;prim.m_master=&effect;prim.m_numSegments=1;auto& gi=prim.m_gi[0];gi.life=1;
+        gi.flag[0]=0;prim.m_alpha=244;UpdateSuperAngelPrimitive(&prim);
+        check(prim.m_alpha==249,"SuperAngel normal alpha rise preserves reference overshoot");
+        gi.process=0;prim.m_alpha=-100;UpdateSuperAngelPrimitive(&prim);
+        check(prim.m_alpha==-95,"SuperAngel preserves negative input alpha outside its explicit fade-clamp branches");
+        gi.process=0;gi.flag[0]=10;prim.m_alpha=254;UpdateSuperAngelPrimitive(&prim);
+        check(prim.m_alpha==255,"SuperAngel variant ten explicitly clamps its alpha rise");
+        gi.process=0;gi.flag[0]=11;gi.flag[1]=9;prim.m_alpha=0;
+        for(int i=0;i<40;++i)UpdateSuperAngelPrimitive(&prim);
+        check(prim.m_alpha==31,"SuperAngel birth-frame trail alpha uses 40 minus birth before variant-specific rules");
+        gi.process=75;prim.m_alpha=10;UpdateSuperAngelPrimitive(&prim);
+        check(prim.m_alpha==7,"SuperAngel delayed trails fade by three after process 75");
+        gi.flag[0]=0;gi.flag[1]=0;gi.process=32;prim.m_curMotion=0;UpdateSuperAngelPrimitive(&prim);
+        check(prim.m_curMotion==1,"ordinary SuperAngel motion advances on multiples of three after process 30");
+        gi.flag[0]=10;gi.process=31;prim.m_curMotion=0;UpdateSuperAngelPrimitive(&prim);
+        check(prim.m_curMotion==1,"SuperAngel ten/eleven motion advances on multiples of four after process 30");
+        gi.flag[0]=1;gi.process=31;prim.m_curMotion=50;UpdateSuperAngelPrimitive(&prim);
+        check(prim.m_curMotion==29,"ordinary SuperAngel motion clamps at 29");
+        gi.flag[0]=11;gi.process=31;prim.m_curMotion=50;UpdateSuperAngelPrimitive(&prim);
+        check(prim.m_curMotion==15,"SuperAngel ten/eleven motion clamps at 15");
+        gi.life=0;prim.m_deltaPos={4,5,6};const int process=gi.process;UpdateSuperAngelPrimitive(&prim);
+        check(gi.process==process && prim.m_pos.x==4 && prim.m_segments[0].pos.y==5,
+            "inactive SuperAngel GI still stores delta position and shifts its segment");
+        matrix view;MatrixIdentity(view);prim.m_superAngelSprRes=&g_resMgr.spr;prim.m_superAngelActRes=&g_resMgr.act;
+        g_resMgr.spr.Lock();g_resMgr.act.Lock();prim.m_alpha=30;prim.m_renderFlag=5;prim.m_curMotion=7;
+        RenderSuperAngelPrimitive(prim,view);
+        check(angelSubmittedMotion==7 && angelSubmittedColor==0x1EFFFFFFu && angelSubmittedBlend==2,
+            "SuperAngel sprite submission uses explicit motion, GI alpha and additive flags");
+        prim.m_renderFlag=0x201;RenderSuperAngelPrimitive(prim,view);
+        check(angelSubmittedColor==0xFFFFFFFFu && angelSubmittedBlend==6,
+            "SuperAngel clip-color flag does not multiply clip alpha by primitive alpha");
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

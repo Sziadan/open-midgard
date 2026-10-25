@@ -4,9 +4,16 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A primitive selector migration, JobLvUp50/JobLvUp50_2 and PP_SLASH1. Previous checkpoints include `36d3064` (STR quads) and `140630f` (obsolete casting/portal paths). Completed parts are committed separately.
+Current work: WP5A SuperAngel emitter/GI update and removal of the final invented selectors. Completed parts are committed separately; the preceding checkpoint is `2bf2522` (job-level-up/slash).
 
-Next action: replace SuperAngel and its PP_RADIALSLASH/PP_EFFECTSPRITE approximations, then finish full reference primitive enum/dispatch reconciliation. Audit remaining primitive bodies, resource loading and per-handler position/return behavior before acceptance. The overall plan remains incomplete.
+Next action: replace the remaining reconstructed enum values with all 129 reference ids, then port the shared sprite-particle per-clip renderer and remaining primitive bodies. SuperAngel's emitter/state and exact assets are ported, but its shared sprite compositor is not a complete Render3DParticle port. Resource loading and all unfinished packages/acceptance remain open.
+
+## SuperAngel emitter / update continuation — 2026-10-25
+
+- Replaced guessed fake_angel/al_angelus resources and wing-texture fallbacks with seven exact sprite/action pairs, byte-verified at all 14 executable addresses. Resources load/lock in original sprite-then-action order and unlock on world deletion. Added reference CRes Lock/Unlock, including unlock timestamp behavior.
+- Ported initial/trail emission and caller order for effects 338/582, listener-only wave for 338, slash bursts at 65/66, variant flags, head segment and process-driven alpha/drift/motion/fade rules. Removed PP_RADIALSLASH and PP_EFFECTSPRITE and their renderer branches; PP_SUPERANGEL is now the original 0x55.
+- Uses the shared sprite compositor with explicit current motion and source render flags. That compositor's original per-clip geometry/color/blending semantics remain open; no complete SuperAngel visual-parity claim.
+- Validation: 256 C++ checks (198 lifecycle/STR/primitive/resource), five Python tests, release build and approved deployment pass. Deployed SHA-256: `9F9190B7E4158FECA8A8DB8EA004A34C1FB6A384090608EF06824CF65A180C86`. No media was played/displayed and no live acceptance was performed.
 
 ## Job-level-up / slash continuation — 2026-10-25
 

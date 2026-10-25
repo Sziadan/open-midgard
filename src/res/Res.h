@@ -16,6 +16,8 @@ public:
     virtual bool Load(const char* fName);
     virtual void Reset();
     virtual void OnLoadError(const char* fName);
+    int Lock();
+    int Unlock();
 
     // Memory layout from HighPriest.exe.h:9119
     int m_lockCnt;
