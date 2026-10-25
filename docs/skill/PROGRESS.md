@@ -4,9 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A Sight (22) / Sight2 (601) particle migration. Circle renderer/queue support is checkpointed in `37b4e16`; Sight profiles now bind ordinary reference particle state and per-clip rendering. Handler and backend parity remain partial.
+Current work: WP5A WarpZone2 (321) circle/orbit migration. Sight/Sight2 is checkpointed in `515a3b4`; WarpZone2 now binds reference circle state/rendering and its orbit particle resource/update/render path. Handler and backend parity remain partial.
 
-Next action: migrate remaining circle emitters and segment/state initialization onto the reference circle path, then the remaining generic particle movement/control branches and callers (including FireBall). Preserve original assets, primitive types, state, alpha patterns, flags and call order; remove legacy routes as each migration completes. Map initialization/scheduling, resource-loader/cache parity, full renderer/fog/backend behavior and unfinished packages/acceptance remain open.
+Next action: remove obsolete legacy heal/recovery circle emitters bypassed by OnProcess2, then port remaining active circle emitters and their initialization/state. Generic particle control branches and other callers (including FireBall), map initialization/scheduling, resource-loader/cache parity, full renderer/fog/backend behavior and unfinished packages/acceptance remain open.
+
+## WarpZone2 circle / orbit migration — 2026-10-25
+
+- Corrected ApplyWarpZone2's source timing: parent position copies only on frames 1/2, existing four-band casting profiles retain their exact constants, frame zero initializes the long-lived circle with a segment, and every tenth frame initializes an orbit sprite. Circle update/render now uses the shared reference path (UpdateReferenceCircleState, renamed from the Blessing-only name).
+- Restored exact particle1 sprite/action resources, constructor alpha/max 254, looping divisor 4 and one segment. Preserved all five RNG draws, including the discarded integer-divided size draw. Radius uses integer division before scale; size retains rand()%10/10 + 0.69999999. The initial stored orbit offset remains separate from the current radial displacement.
+- Added the reachable reference orbit update: radial/gravity/angular integration, integer-degree Y rotation, position before raw-radian Z rotation, alpha/segment store before animation. Source profile has no keyed radius schedule or change point; those other orbit branches remain open. Missing assets no longer use the legacy soft-disc substitute for effect 321.
+- Validation: release build, six silent C++ suites / 492 checks (363 lifecycle/primitive + 71 particle/circle/queue/pass + 58 other), six Python tests, three-literal executable byte audit and whitespace check pass. Added 24 checks for branch/RNG order, constructor/casting/orbit/circle profiles, parent-copy timing, integrated motion, fade and reset, resource names and cleanup. No media or live acceptance was used.
+- Approved OldRO deployment SHA-256 matches `ECE991B1D6B15FBBE6F34228EEA6BA3639B455AE1AB25C6B8FC7994D8AA9D7A6`. Other casting bodies/rendering, generic orbit controls, circle callers and full renderer/backend acceptance remain open. WP5A and the overall plan remain incomplete.
+
 
 ## Sight / Sight2 migration — 2026-10-25
 

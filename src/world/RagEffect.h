@@ -262,6 +262,7 @@ public:
     bool ProcessPrimitiveFrame();
     bool UsesLegacyBandPayload() const;
     bool UsesReferenceParticle() const;
+    bool UsesReferenceCircle() const;
     void SetParticleResources(const char* sprName, const char* actName, bool actionFirst = false);
     void SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t) override;
     void Render(matrix* viewMatrix) override;
@@ -304,6 +305,7 @@ public:
     float m_emitSpeed;
     float m_arcAngle;
     float m_latitude;
+    float m_latiSpeed;
     float m_outerSpeed;
     float m_outerAccel;
     float m_innerSpeed;

@@ -143,7 +143,8 @@ constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
 void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
 bool UpdateLinearReferenceParticle(CEffectPrim*);
-bool UpdateBlessingCircle(CEffectPrim*);
+bool UpdateReferenceCircleState(CEffectPrim*);
+bool UpdateWarpZoneOrbit(CEffectPrim*);
 struct CEffectPrim : CGameObject {
     Probe deaths{ primitiveDeaths };
     CRagEffect* m_master = nullptr;
@@ -164,6 +165,7 @@ struct CEffectPrim : CGameObject {
     bool m_repeatAnim=false,m_spriteRepeat=false;
     float m_alpha=0,m_radius=0,m_alphaSpeed=0,m_maxAlpha=254,m_sizeSpeed=0,m_sizeAccel=0;
     std::array<float,4> m_param{};
+    float m_gravSpeed=0,m_gravAccel=0,m_latiSpeed=0;
     vector3d m_speed3d;
     float m_longSpeed=0,m_longAccel=0,m_radiusSpeed=0,m_radiusAccel=0,m_innerSpeed=0,m_innerAccel=0,m_innerSize=0;
     u32 m_tintColor=0xFFFFFF;
@@ -177,13 +179,15 @@ struct CEffectPrim : CGameObject {
     u8 OnProcess() override;
     bool UsesLegacyBandPayload() const;
     bool UsesReferenceParticle() const;
+    bool UsesReferenceCircle() const;
     void SetParticleResources(const char*, const char*,bool = false);
     bool ProcessPrimitiveFrame() {
         ++updates;
         observedFrame = m_stateCnt;
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
-        if (m_type == PP_3DCIRCLE) UpdateBlessingCircle(this);
+        if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
+        if (m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle() && !UpdateWarpZoneOrbit(this)) return false;
         if (m_type == PP_3DPARTICLE && UsesReferenceParticle() && !UpdateLinearReferenceParticle(this)) return false;
         if (resetFrame >= 0) m_stateCnt = resetFrame;
         return active;
@@ -231,6 +235,7 @@ struct CRagEffect : CGameObject {
     void ApplySuperAngel(signed char,signed char);
     void ProcessSuperAngelEffect();
     void SpawnRuwach();
+    void ApplyWarpZone2(const char*);
     void ApplySight(float,bool);
     void SpawnSight();
     void SpawnSight2();
@@ -1464,6 +1469,82 @@ int main()
         check(effect.m_stateCnt==9999 && effect.m_primList.size()==2,"Sight2 odd-frame gate remains valid after the former wrap boundary");
         effect.ClearPrims();g_world.UpdateGameObjects();
         check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"Sight2 releases its looping resource locks");
+    }
+    {
+        CRenderObject actor;actor.m_pos={90,80,70};
+        CRagEffect effect;effect.m_master=&actor;effect.m_type=321;effect.m_duration=99999999;effect.m_effectPos={10,50,30};
+        rngValues={199,90,0,10,9};rngCursor=0;g_resMgr.requests.clear();
+        const int draws=rngDraws,beforeWaves=waves;
+        effect.ApplyWarpZone2("effect\\ring_blue.tga");
+        check(effect.m_primList.size()==2 && rngDraws-draws==5 && rngCursor==5 && waves==beforeWaves,
+            "WarpZone2 zero emits circle then orbit with all five original RNG draws and no wave");
+        auto it=effect.m_primList.begin();auto* circle=*it++;auto* orbit=*it;
+        check(circle->m_type==PP_3DCIRCLE && circle->UsesReferenceCircle() && orbit->m_type==PP_3DPARTICLEORBIT && orbit->UsesReferenceParticle(),
+            "WarpZone2 circle and orbit select canonical reference state/render paths");
+        check(effect.m_effectPos.x==10 && circle->m_pos.y==50 && circle->m_segments[0].pos.x==10,
+            "WarpZone2 frame zero retains stored parent origin rather than refreshing actor position");
+        check(circle->m_duration==99999999 && circle->m_pattern==1 && circle->m_radius==15 && circle->m_deltaPos2.y==-1.5f
+            && circle->m_latitude==90 && circle->m_fadeOutCnt==99999989 && circle->m_numSegments==1,
+            "WarpZone2 initializes original long-lived circle and offset profile");
+        check(circle->m_alpha==0 && circle->m_maxAlpha==128 && std::fabs(circle->m_alphaSpeed-12.8f)<0.000001f
+            && std::string(g_texMgr.lastPath)=="effect\\alpha_down.tga","WarpZone2 circle retains exact alpha/texture profile without alternate paths");
+        check(orbit->m_radius==5.25f && orbit->m_size==0.69999999f && orbit->m_longitude==90 && orbit->m_longSpeed==1.5f,
+            "WarpZone2 preserves integer-division radius/size and positive angular speed branch");
+        check(orbit->m_duration==70 && orbit->m_fadeOutCnt==47 && orbit->m_alpha==254 && orbit->m_maxAlpha==254
+            && orbit->m_animSpeed==4 && orbit->m_repeatAnim && orbit->m_numSegments==1,
+            "WarpZone2 restores original orbit constructor alpha, animation and segment defaults");
+        check(std::fabs(orbit->m_radiusSpeed-0.00050000002f)<0.000000001f && orbit->m_gravSpeed==-0.30000001f
+            && std::fabs(orbit->m_gravAccel-static_cast<float>(-0.30000001f/70.0*-0.66666669))<0.00000001f,
+            "WarpZone2 orbit preserves radial drift and original gravity arithmetic");
+        check(g_resMgr.requests==std::vector<std::string>({"\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act"}),
+            "WarpZone2 requests exact particle1 sprite then action");
+        check(std::fabs(orbit->m_deltaPos2.x-5.25f)<0.000001f && std::fabs(orbit->m_deltaPos2.z)<0.000001f
+            && orbit->m_segments[0].argb==0xFEFFFFFF,"WarpZone2 stores initial orbit offset and reference segment color");
+        circle->OnProcess();
+        check(circle->m_pos.y==48.5f && circle->m_size==15 && std::fabs(circle->m_alpha-12.8f)<0.000001f,
+            "WarpZone2 circle uses reference parent-height state before outer counter increment");
+        const float oldRadius=orbit->m_radius,oldGrav=orbit->m_gravSpeed,accel=orbit->m_gravAccel;
+        orbit->OnProcess();
+        const float radius=oldRadius+0.00050000002f;
+        check(orbit->m_stateCnt==1 && orbit->m_curMotion==1 && orbit->m_longitude==91.5f && std::fabs(orbit->m_radius-radius)<0.000001f,
+            "WarpZone2 orbit updates radius/angular speed before its zero-frame animation advance");
+        check(std::fabs(orbit->m_deltaPos.x-radius*std::sin(GetRadian(91)))<0.000001f
+            && std::fabs(orbit->m_deltaPos.z-radius*std::cos(GetRadian(91)))<0.000001f,
+            "WarpZone2 orbit truncates updated longitude before degree-table lookup");
+        check(std::fabs(orbit->m_pos.x-(10+5.25f+orbit->m_deltaPos.x))<0.00001f
+            && std::fabs(orbit->m_pos.y-(50+oldGrav+accel))<0.00001f && orbit->m_alpha==254,
+            "WarpZone2 keeps both initial offset and current radial displacement with integrated vertical gravity");
+        orbit->m_stateCnt=47;orbit->m_alpha=230;orbit->OnProcess();
+        check(orbit->m_alphaSpeed==-10 && orbit->m_alpha==220,"WarpZone2 orbit derives fade at frame forty-seven over remaining twenty-three frames");
+        effect.m_stateCnt=1;effect.ApplyWarpZone2("effect\\ring_blue.tga");auto* firstCast=effect.m_primList.back();
+        check(effect.m_effectPos.x==90 && firstCast->m_type==PP_3DCASTING_4 && firstCast->m_size==11
+            && firstCast->m_renderFlag==5 && firstCast->m_pos.y==80,"WarpZone2 frame one copies actor and launches original first casting profile");
+        check(firstCast->m_gi[0].distance==2.5f && firstCast->m_gi[0].rotStart==270 && firstCast->m_gi[0].riseAngle==53
+            && firstCast->m_gi[3].distance==10 && firstCast->m_gi[3].riseAngle==50,
+            "WarpZone2 first casting retains ordered band constants");
+        actor.m_pos={100,90,80};effect.m_stateCnt=2;effect.ApplyWarpZone2("effect\\ring_blue.tga");auto* secondCast=effect.m_primList.back();
+        check(effect.m_effectPos.y==90 && secondCast->m_size==4 && secondCast->m_gi[0].rotStart==271
+            && secondCast->m_gi[1].distance==5.1999998f && secondCast->m_gi[3].riseAngle==49,
+            "WarpZone2 frame two copies actor and preserves second casting band profile");
+        actor.m_pos={999,999,999};effect.m_stateCnt=3;const auto count=effect.m_primList.size();const int before=rngDraws;
+        effect.ApplyWarpZone2("effect\\ring_blue.tga");
+        check(effect.m_effectPos.x==100 && effect.m_primList.size()==count && rngDraws==before,
+            "WarpZone2 later non-emission frames neither refresh parent origin nor consume RNG");
+        effect.m_stateCnt=10;rngValues={99,0,1,0,0};rngCursor=0;effect.ApplyWarpZone2("effect\\ring_blue.tga");auto* secondOrbit=effect.m_primList.back();
+        check(secondOrbit->m_radius==4.5f && secondOrbit->m_longSpeed==-2.5f && secondOrbit->m_size==0.69999999f && rngCursor==5,
+            "WarpZone2 negative branch retains lower radius boundary and still consumes discarded size draw");
+        secondOrbit->m_latitude=0.25f;secondOrbit->m_latiSpeed=0.5f;secondOrbit->m_longSpeed=0;secondOrbit->OnProcess();
+        check(secondOrbit->m_latitude==0.75f && std::fabs(secondOrbit->m_matrix.m[0][0]-std::cos(0.75f))<0.000001f,
+            "reference orbit applies updated latitude to Z rotation directly as radians");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=99999998;rngValues.clear();rngCursor=0;effect.ApplyWarpZone2("effect\\ring_blue.tga");
+        check(effect.m_stateCnt==0 && effect.m_primList.size()==2,"WarpZone2 preserves original parent reset and zero-frame re-emission");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_resMgr.fail=true;effect.ApplyWarpZone2("effect\\ring_blue.tga");g_resMgr.fail=false;orbit=effect.m_primList.back();
+        check(orbit->UsesReferenceParticle() && !orbit->m_particleSprRes && orbit->m_texture.empty(),
+            "missing WarpZone2 orbit assets retain reference routing without soft-disc replacement");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"WarpZone2 releases all orbit resource locks through world cleanup");
     }
     {
         CRagEffect effect;

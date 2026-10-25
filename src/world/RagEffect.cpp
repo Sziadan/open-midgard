@@ -2532,6 +2532,7 @@ CEffectPrim::CEffectPrim()
     , m_emitSpeed(1.0f)
     , m_arcAngle(36.0f)
     , m_latitude(0.0f)
+    , m_latiSpeed(0.0f)
     , m_outerSpeed(0.0f)
     , m_outerAccel(0.0f)
     , m_innerSpeed(0.0f)
@@ -6060,9 +6061,9 @@ void ProcessReferenceParticleAlpha(CEffectPrim* prim)
     if (prim->m_alpha > prim->m_maxAlpha) prim->m_alpha = prim->m_maxAlpha;
 }
 
-// Ref/RagEffectPrim.cpp:1780-1852. Blessing's ring has no change point;
-// this follows its reference circle state without terrain-height substitution.
-bool UpdateBlessingCircle(CEffectPrim* prim)
+// Ref/RagEffectPrim.cpp:1780-1852. Blessing/WarpZone2 rings have no change
+// points; preserve their reference state without terrain-height substitution.
+bool UpdateReferenceCircleState(CEffectPrim* prim)
 {
     prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
     prim->m_speed += prim->m_accel;
@@ -6086,6 +6087,36 @@ bool UpdateBlessingCircle(CEffectPrim* prim)
     ProcessReferenceParticleAlpha(prim);
     ShiftCircleSegments(prim);
     return true;
+}
+
+// Ref/RagEffectPrim.cpp:816-891 (0x642CE0), reachable WarpZone2 profile.
+// It has no change point or keyed radius schedule. Position is computed before
+// the raw-radian Z rotation, then alpha/segments precede motion advancement.
+bool UpdateWarpZoneOrbit(CEffectPrim* prim)
+{
+    prim->m_orgPos = prim->m_master->EffectPosition();
+    prim->m_radiusSpeed += prim->m_radiusAccel;
+    prim->m_gravSpeed += prim->m_gravAccel;
+    prim->m_longSpeed += prim->m_longAccel;
+    prim->m_radius += prim->m_radiusSpeed;
+    prim->m_longitude += prim->m_longSpeed;
+    prim->m_deltaPos2.y += prim->m_gravSpeed;
+    prim->m_orgPos = AddVec3(prim->m_orgPos, prim->m_deltaPos2);
+    prim->m_roll += prim->m_rollSpeed;
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+    prim->m_deltaPos = {
+        prim->m_radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
+        prim->m_radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
+        prim->m_radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
+    };
+    prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
+    prim->m_size += prim->m_sizeSpeed;
+    prim->m_latitude += prim->m_latiSpeed;
+    MatrixAppendZRotation(prim->m_matrix, prim->m_latitude);
+    ProcessReferenceParticleAlpha(prim);
+    ShiftCircleSegments(prim);
+    return AnimateReferenceParticle(prim);
 }
 
 // Ref/RagEffectPrim.cpp:456-594,2184-2328. Poison, Ruwach, Smoke and Torch use
@@ -6274,9 +6305,16 @@ void CEffectPrim::SetParticleResources(const char* sprName, const char* actName,
     else { loadSprite(); loadAction(); }
 }
 
+bool CEffectPrim::UsesReferenceCircle() const
+{
+    return m_type == PP_3DCIRCLE && m_master
+        && (m_master->GetEffectType() == 42 || m_master->GetEffectType() == 321);
+}
+
 bool CEffectPrim::UsesReferenceParticle() const
 {
     return m_type == PP_SUPERANGEL
+        || (m_type == PP_3DPARTICLEORBIT && m_master && m_master->GetEffectType() == 321)
         || (m_type == PP_3DPARTICLE && m_master
             && (m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
@@ -6507,14 +6545,17 @@ bool CEffectPrim::ProcessPrimitiveFrame()
         UpdateCasting5Primitive(this);
         return true;
     }
-    if (m_type == PP_3DCIRCLE && m_master && m_master->GetEffectType() == 42) {
-        return UpdateBlessingCircle(this);
+    if (UsesReferenceCircle()) {
+        return UpdateReferenceCircleState(this);
     }
     if (m_type == PP_3DCIRCLE) {
         return UpdateCirclePrimitive(this);
     }
     if (m_type == PP_3DCYLINDER) {
         return UpdateCylinderPrimitive(this);
+    }
+    if (m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle()) {
+        return UpdateWarpZoneOrbit(this);
     }
     if (m_type == PP_3DPARTICLEORBIT) {
         return UpdateParticleOrbitPrimitive(this);
@@ -6573,7 +6614,7 @@ void CEffectPrim::Render(matrix* viewMatrix)
     if (!m_master || !viewMatrix) {
         return;
     }
-    if (m_type == PP_3DCIRCLE && m_master->GetEffectType() == 42) {
+    if (UsesReferenceCircle()) {
         RenderReferenceCircle(*this, *viewMatrix);
         return;
     }
@@ -9987,61 +10028,61 @@ void CRagEffect::ApplyBlackDevil(const char* textureName)
     LaunchWarpCasting(this, static_cast<EFFECTPRIMID>(kPrimTypeCasting5), origin, textureName, 12.0f, distance, spin, rise);
 }
 
+// Ref/RagEffect2.cpp:33659-33923 (0x635F90), effect 321. Preserve the
+// source's conditional parent copies, five orbit RNG draws and integer division.
 void CRagEffect::ApplyWarpZone2(const char* textureName)
 {
-    if (m_stateCnt == 99999998) {
-        m_stateCnt = 0;
-    }
-    CRenderObject* master = ResolveCurrentMaster();
-    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
-    if (m_stateCnt == 1) {
-        const float distance[4] = { 2.5f, 5.0f, 7.5f, 10.0f };
-        const short spin[4] = { 270, 0, 90, 180 };
-        const short rise[4] = { 53, 60, 55, 50 };
-        LaunchWarpCasting(this, static_cast<EFFECTPRIMID>(kPrimTypeCasting4), origin, textureName, 11.0f, distance, spin, rise);
-    } else if (m_stateCnt == 2) {
-        const float distance[4] = { 2.7f, 5.1999998f, 7.6999998f, 10.2f };
-        const short spin[4] = { 271, 1, 91, 181 };
-        const short rise[4] = { 52, 59, 54, 49 };
-        LaunchWarpCasting(this, static_cast<EFFECTPRIMID>(kPrimTypeCasting4), origin, textureName, 4.0f, distance, spin, rise);
+    if (m_stateCnt == 99999998) m_stateCnt = 0;
+    if (m_stateCnt == 1 || m_stateCnt == 2) {
+        CRenderObject* master = ResolveCurrentMaster();
+        if (!master) return;
+        m_effectPos = master->m_pos;
+        if (m_stateCnt == 1) {
+            const float distance[4] = {2.5f,5.0f,7.5f,10.0f};
+            const short spin[4] = {270,0,90,180}, rise[4] = {53,60,55,50};
+            LaunchWarpCasting(this, PP_3DCASTING_4, m_effectPos, textureName, 11.0f, distance, spin, rise);
+        } else {
+            const float distance[4] = {2.7f,5.1999998f,7.6999998f,10.2f};
+            const short spin[4] = {271,1,91,181}, rise[4] = {52,59,54,49};
+            LaunchWarpCasting(this, PP_3DCASTING_4, m_effectPos, textureName, 4.0f, distance, spin, rise);
+        }
     }
     if (m_stateCnt == 0) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
-            prim->m_duration = 99999999;
-            prim->m_pattern |= 1;
-            prim->m_radius = 15.0f;
-            prim->m_deltaPos2.y -= 1.5f;
-            prim->m_latitude = 90.0f;
-            prim->m_alpha = 0.0f;
-            prim->m_maxAlpha = 128.0f;
-            prim->m_alphaSpeed = prim->m_maxAlpha * 0.1f;
-            prim->m_fadeOutCnt = prim->m_duration - 10;
-            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false));
-        }
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
+        prim->m_duration = 99999999;
+        prim->m_pattern |= 1;
+        prim->m_radius = 15.0f; prim->m_deltaPos2.y -= 1.5f;
+        prim->m_latitude = 90.0f;
+        prim->m_alpha = 0.0f; prim->m_maxAlpha = 128.0f;
+        prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.1);
+        prim->m_fadeOutCnt = prim->m_duration - 10;
+        prim->m_numSegments = 1;
+        ShiftCircleSegments(prim);
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false)); // 0x719498
     }
-    if ((m_stateCnt % 10) == 0) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{})) {
-            prim->m_radius = static_cast<float>((rand() % 200) / 100) * 0.75f + 4.5f;
-            prim->m_radiusSpeed = 0.00050000002f;
-            prim->m_duration = 70;
-            prim->m_longitude = static_cast<float>(rand() % 360);
-            if ((rand() & 1) == 0) {
-                prim->m_longSpeed = 2.5f - static_cast<float>(rand() % 11) * 0.1f;
-            } else {
-                prim->m_longSpeed = static_cast<float>(rand() % 11) * 0.1f - 2.5f;
-            }
-            prim->m_gravSpeed = -0.30000001f;
-            prim->m_gravAccel = prim->m_gravSpeed / static_cast<float>(prim->m_duration) * -0.66666669f;
-            MatrixIdentity(prim->m_matrix);
-            MatrixAppendYRotation(prim->m_matrix, prim->m_longitude * (kPi / 180.0f));
-            prim->m_deltaPos2 = {
-                prim->m_radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
-                prim->m_radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
-                prim->m_radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
-            };
-            prim->m_size = 0.69999999f;
-            prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
-        }
+    if (m_stateCnt % 10 == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{});
+        prim->m_radius = static_cast<float>(static_cast<double>(rand() % 200 / 100) * 0.75 + 4.5);
+        prim->m_radiusSpeed = 0.00050000002f;
+        prim->m_duration = 70;
+        prim->m_longitude = static_cast<float>(rand() % 360);
+        if ((rand() & 1) == 0) prim->m_longSpeed = static_cast<float>(2.5 - static_cast<double>(rand() % 11) * 0.1);
+        else prim->m_longSpeed = static_cast<float>(static_cast<double>(rand() % 11) * 0.1 - 2.5);
+        prim->m_gravSpeed = -0.30000001f;
+        prim->m_gravAccel = static_cast<float>(prim->m_gravSpeed / static_cast<double>(prim->m_duration) * -0.66666669);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_deltaPos2 = {
+            static_cast<float>(static_cast<double>(prim->m_radius) * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+            static_cast<float>(static_cast<double>(prim->m_radius) * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+            static_cast<float>(static_cast<double>(prim->m_radius) * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+        };
+        prim->m_size = static_cast<float>(static_cast<double>(rand() % 10 / 10) + 0.69999999);
+        prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act"); // 0x71B200 / 0x71B1E8
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_animSpeed = 4; prim->m_repeatAnim = true; prim->m_numSegments = 1;
+        ShiftCircleSegments(prim);
     }
 }
 
