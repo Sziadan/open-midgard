@@ -11,34 +11,34 @@
 
 class CTexture;
 
+// Remaining reconstructed selectors retain their existing values during the
+// incremental migration. Full reference enum/dispatch reconciliation is pending.
 enum EFFECTPRIMID {
     PP_3DCIRCLE = 0,
-    PP_3DCYLINDER,
-    PP_3DPARTICLEORBIT,
-    PP_3DPARTICLE,
-    PP_3DPARTICLEGRAVITY,
-    PP_3DPARTICLESPLINE,
-    PP_3DTEXTURE,
-    PP_3DCROSSTEXTURE,
-    PP_3DSPHERE,
-    PP_3DQUADHORN,
-    PP_2DCIRCLE,
-    PP_2DFLASH,
-    PP_2DTEXTURE,
-    PP_MAPPILLAR,
-    PP_MAPMAGICZONE,
-    PP_MAPPARTICLE,
-    PP_SUPERANGEL,
-    PP_RADIALSLASH,
-    PP_SLASH1,
-    PP_PORTALSTACK,
-    PP_CASTINGRING4,
-    PP_EFFECTSPRITE,
-    PP_HEAL,
-    PP_PORTAL,
-    PP_WIND,
-    PP_WATERFALL,
-    PP_CLOUD,
+    PP_3DCYLINDER = 1,
+    PP_3DPARTICLEORBIT = 2,
+    PP_3DPARTICLE = 3,
+    PP_3DPARTICLEGRAVITY = 4,
+    PP_3DPARTICLESPLINE = 5,
+    PP_3DTEXTURE = 6,
+    PP_3DCROSSTEXTURE = 7,
+    PP_3DSPHERE = 8,
+    PP_3DQUADHORN = 9,
+    PP_2DCIRCLE = 10,
+    PP_2DFLASH = 11,
+    PP_2DTEXTURE = 12,
+    PP_MAPPILLAR = 13,
+    PP_MAPMAGICZONE = 14,
+    PP_MAPPARTICLE = 15,
+    PP_SUPERANGEL = 16,
+    PP_RADIALSLASH = 17,
+    PP_SLASH1 = 18,
+    PP_EFFECTSPRITE = 21,
+    PP_HEAL = 22,
+    PP_PORTAL = 23,
+    PP_WIND = 24,
+    PP_WATERFALL = 25,
+    PP_CLOUD = 26,
 };
 
 struct EffectBandState {
@@ -262,16 +262,12 @@ private:
         Portal,
         ReadyPortal,
         WarpZone,
-        Portal2,
-        ReadyPortal2,
-        WarpZone2,
         MapPillar,
         MapMagicZone,
         MapParticle,
         SuperAngel,
         RecoveryHp,
         RecoverySp,
-        BeginCasting,
         HealLight,
         HealMedium,
         HealLarge,
@@ -376,9 +372,6 @@ private:
     void SpawnPortal();
     void SpawnReadyPortal();
     void SpawnWarpZone();
-    void SpawnPortal2();
-    void SpawnReadyPortal2();
-    void SpawnWarpZone2();
     void SpawnMapPillar();
     void SpawnMapMagicZone();
     void SpawnMapParticle();
@@ -387,7 +380,6 @@ private:
     void UpdateSuperAngel();
     void SpawnRecoveryHp();
     void SpawnRecoverySp();
-    void SpawnBeginCasting();
     void SpawnHealLight();
     void SpawnHealMedium();
     void SpawnHealLarge();

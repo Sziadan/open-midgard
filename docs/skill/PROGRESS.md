@@ -4,9 +4,15 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A STR projection/quad submission, partial. Checkpoints: `d3610bb` saves prior lifecycle/ownership work; `2562385` saves STR keyframe arithmetic. Completed, tested parts are committed individually as requested.
+Current work: WP5A incremental primitive selector reconciliation. Completed parts are committed separately; previous checkpoints include `d3610bb`, `2562385` and `36d3064`.
 
-Next action: reconcile the full primitive enum/dispatch and remove the remaining reconstructed emitters/primitive bodies. Also audit STR resource/texture loading and every effect handler's position/return semantics. STR keyframe and quad paths now have production-body numeric tests; full WP5A and overall acceptance remain incomplete.
+Next action: replace the remaining JobLvUp50/SuperAngel reconstructed emitters and their two invented primitive types, then reconcile the full reference enum and remaining dispatch bodies. Also complete resource loading, per-handler position/return audits and other unfinished work packages. The plan remains incomplete.
+
+## Primitive dispatch cleanup — 2026-10-25
+
+- Removed unreachable duplicate Portal2/ReadyPortal2/WarpZone2 and begin-casting emitters, their Handler tags and obsolete Init overrides. Existing OnProcess2 cases 316/317/321/341 and the main casting/texture dispatch retain their existing ports.
+- Removed invented PP_PORTALSTACK and PP_CASTINGRING4 selectors and their private renderer/update/setup paths. Preserved the remaining 25 selector values explicitly to avoid shifting other ids during this incremental migration. Two invented selectors still remain: PP_RADIALSLASH and PP_EFFECTSPRITE. The actual 129-entry enum/dispatch reconciliation is not complete.
+- Validation: release build and all five silent C++ suites pass (192 checks); explicit OldRO deployment hashes match `E3743B5ED2B11AC9327D92E66F11EDF6987A59679D7B8AA0BD402772F74C7D3A`. This part removes unreachable code and adds no replacement behavior or media tests.
 
 ## STR projection/quad continuation — 2026-10-25
 

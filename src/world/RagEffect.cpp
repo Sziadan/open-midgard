@@ -806,100 +806,6 @@ void SubmitWorldTeiRect(const vector3d& vec1,
     }
 }
 
-void SetBandMode(EffectBandState* band, u8 mode)
-{
-    if (!band) {
-        return;
-    }
-    band->modes.fill(mode);
-}
-
-constexpr u8 kBandModeBeginCasting = 4;
-constexpr u8 kBandModeSaintCasting = 5;
-
-void ConfigureBand(CEffectPrim* prim,
-    int bandIndex,
-    int process,
-    float maxHeight,
-    float rotStart,
-    float distance,
-    float riseAngle,
-    float fadeThreshold,
-    u8 mode)
-{
-    if (!prim || bandIndex < 0 || bandIndex >= static_cast<int>(prim->m_bands.size())) {
-        return;
-    }
-
-    EffectBandState& band = prim->m_bands[static_cast<size_t>(bandIndex)];
-    band = {};
-    band.active = true;
-    band.process = process;
-    band.maxHeight = maxHeight;
-    band.rotStart = rotStart;
-    band.distance = distance;
-    band.riseAngle = riseAngle;
-    band.fadeThreshold = fadeThreshold;
-    band.radius = 0.0f;
-    SetBandMode(&band, mode);
-}
-
-void ConfigureBeginCastingBand(CEffectPrim* prim,
-    int bandIndex,
-    int process,
-    float maxHeight,
-    float rotStart,
-    float distance,
-    float riseAngle,
-    float alphaCeiling,
-    u8 mode)
-{
-    ConfigureBand(prim, bandIndex, process, maxHeight, rotStart, distance, riseAngle, alphaCeiling, mode);
-    if (!prim || bandIndex < 0 || bandIndex >= static_cast<int>(prim->m_bands.size())) {
-        return;
-    }
-
-    EffectBandState& band = prim->m_bands[static_cast<size_t>(bandIndex)];
-    band.alpha = 0.0f;
-    band.radius = distance;
-}
-
-void ConfigureStandardBeginCastingBands(CEffectPrim* prim, float scale, float rotOff)
-{
-    if (!prim) {
-        return;
-    }
-
-    ConfigureBeginCastingBand(prim, 0, 0, 25.0f * scale, WrapAngle360(0.0f + rotOff), 4.5f * scale, 70.0f, 180.0f, kBandModeBeginCasting);
-    ConfigureBeginCastingBand(prim, 1, 0, 22.0f * scale, WrapAngle360(90.0f + rotOff), 5.0f * scale, 57.0f, 180.0f, kBandModeBeginCasting);
-    ConfigureBeginCastingBand(prim, 2, 0, 19.0f * scale, WrapAngle360(180.0f + rotOff), 5.5f * scale, 45.0f, 180.0f, kBandModeBeginCasting);
-    ConfigureBeginCastingBand(prim, 3, 0, 96.0f * scale, WrapAngle360(0.0f + rotOff), 4.0f * scale, 89.0f, 70.0f, kBandModeBeginCasting);
-}
-
-void ConfigureSaintCastingBands(CEffectPrim* prim, float scale, float rotOff, int startDelay)
-{
-    if (!prim) {
-        return;
-    }
-
-    ConfigureBeginCastingBand(prim, 0, startDelay + 0, 20.0f * scale, WrapAngle360(180.0f + rotOff), 4.1f * scale, 80.0f, 180.0f, kBandModeSaintCasting);
-    ConfigureBeginCastingBand(prim, 1, startDelay - 5, 19.0f * scale, WrapAngle360(270.0f + rotOff), 4.1f * scale, 80.0f, 180.0f, kBandModeSaintCasting);
-    ConfigureBeginCastingBand(prim, 2, startDelay - 10, 18.0f * scale, WrapAngle360(0.0f + rotOff), 4.1f * scale, 80.0f, 180.0f, kBandModeSaintCasting);
-    ConfigureBeginCastingBand(prim, 3, startDelay - 15, 17.0f * scale, WrapAngle360(90.0f + rotOff), 4.1f * scale, 80.0f, 180.0f, kBandModeSaintCasting);
-}
-
-// variant 0/1 match SpawnWarpZone2 m_stateCnt 1/2 band parameters; rotOff rotates all bands together.
-void ConfigureWarpZoneCastingBands(CEffectPrim* prim, int variant, float rotOff)
-{
-    if (!prim) {
-        return;
-    }
-    const bool a = variant == 0;
-    ConfigureBand(prim, 0, 0, a ? 2.5f : 2.7f, WrapAngle360((a ? 270.0f : 271.0f) + rotOff), a ? 2.5f : 2.7f, a ? 53.0f : 52.0f, -1.0f, 0);
-    ConfigureBand(prim, 1, 0, a ? 5.0f : 5.2f, WrapAngle360((a ? 0.0f : 1.0f) + rotOff), a ? 5.0f : 5.2f, a ? 60.0f : 59.0f, -1.0f, 0);
-    ConfigureBand(prim, 2, 0, a ? 7.5f : 7.7f, WrapAngle360((a ? 90.0f : 91.0f) + rotOff), a ? 7.5f : 7.7f, a ? 55.0f : 54.0f, -1.0f, 0);
-    ConfigureBand(prim, 3, 0, 10.0f, WrapAngle360((a ? 180.0f : 181.0f) + rotOff), 10.0f, a ? 50.0f : 49.0f, -1.0f, 0);
-}
 
 float ResolveGroundHeight(const vector3d& position);
 
@@ -969,15 +875,6 @@ void RenderBandLowPolygonTeiRect(const CEffectPrim& prim,
         const float segU1 = static_cast<float>(segmentIndex + 1) * invSeg;
         SubmitWorldTeiRect(base0, base1, top1, top0, viewMatrix, texture, color, segU0, segU1, 1.0f, 0.0f, destBlend, 0.0f, renderFlags);
     }
-}
-
-void RenderCastingBandLowPolygon(const CEffectPrim& prim,
-    const vector3d& base,
-    const EffectBandState& band,
-    const matrix& viewMatrix,
-    CTexture* texture)
-{
-    RenderBandLowPolygonTeiRect(prim, base, band, viewMatrix, texture, (std::max)(0.0f, band.distance));
 }
 
 void UpdatePortalBands(CEffectPrim* prim)
@@ -1097,78 +994,6 @@ void UpdateWindBands(CEffectPrim* prim)
                 band.alpha = (std::min)(250.0f, band.alpha + 10.0f);
             }
         }
-    }
-}
-
-void UpdateCastingBands(CEffectPrim* prim)
-{
-    if (!prim) {
-        return;
-    }
-
-    if (prim->m_master) {
-        prim->m_pos = prim->m_master->ResolveBasePosition();
-    }
-
-    for (EffectBandState& band : prim->m_bands) {
-        if (!band.active) {
-            continue;
-        }
-
-        ++band.process;
-        const u8 mode = band.modes[0];
-        if ((mode == kBandModeBeginCasting || mode == kBandModeSaintCasting) && band.process < 0) {
-            continue;
-        }
-
-        if (mode == kBandModeBeginCasting) {
-            const float alphaCeiling = band.fadeThreshold >= 0.0f ? band.fadeThreshold : 180.0f;
-            const float initialDistance = band.radius > 0.0f ? band.radius : (std::max)(band.distance, 1.0f);
-            band.distance = (std::max)(0.0f, band.distance - 0.05f);
-            band.riseAngle = 90.0f - band.distance * 9.0f;
-            const float heightRatio = initialDistance > 0.0f ? band.distance / initialDistance : 0.0f;
-            band.heights.fill((std::max)(0.0f, band.maxHeight * heightRatio));
-            if (prim->m_stateCnt < prim->m_duration - 40) {
-                band.alpha = (std::min)(alphaCeiling, band.alpha + (band.maxHeight > 30.0f ? 4.0f : 8.0f));
-            } else {
-                band.alpha = (std::max)(0.0f, band.alpha - (band.maxHeight > 30.0f ? 4.0f : 6.0f));
-                if (band.alpha <= 0.0f) {
-                    band.active = false;
-                }
-            }
-            continue;
-        }
-
-        if (mode == kBandModeSaintCasting) {
-            const float alphaCeiling = band.fadeThreshold >= 0.0f ? band.fadeThreshold : 180.0f;
-            band.distance = band.radius > 0.0f ? band.radius : band.distance;
-            band.riseAngle = 80.0f;
-            const float growth = (std::min)(1.0f, static_cast<float>(band.process) / 16.0f);
-            band.heights.fill((std::max)(0.0f, band.maxHeight * growth));
-            if (prim->m_stateCnt < prim->m_duration - 20) {
-                band.alpha = (std::min)(alphaCeiling, band.alpha + 10.0f);
-            } else {
-                band.alpha = (std::max)(0.0f, band.alpha - 8.0f);
-                if (band.alpha <= 0.0f) {
-                    band.active = false;
-                }
-            }
-            continue;
-        }
-
-        band.distance -= 0.05f;
-        if (band.distance <= 0.0f) {
-            band.distance = 10.0f;
-            band.alpha = 0.0f;
-        }
-
-        band.riseAngle = 90.0f - band.distance * 9.0f;
-        if (band.process < prim->m_duration - 40) {
-            band.alpha = (std::min)(70.0f, band.alpha + 1.0f);
-        } else {
-            band.alpha = (std::max)(0.0f, band.alpha - 3.0f);
-        }
-        band.heights.fill((std::max)(0.0f, band.distance));
     }
 }
 
@@ -6348,11 +6173,6 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_MAPPILLAR) {
         return UpdateMapPillarPrimitive(this);
     }
-    if (m_type == PP_CASTINGRING4 && std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active; })) {
-        UpdateCastingBands(this);
-        return m_stateCnt <= m_duration || std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active && band.alpha > 0.0f; });
-    }
-
     m_size += m_sizeSpeed;
     m_sizeSpeed += m_sizeAccel;
     m_radius += m_radiusSpeed;
@@ -6479,8 +6299,6 @@ void CEffectPrim::Render(matrix* viewMatrix)
     if (normalizedAlpha <= 0.0f
         && m_type != PP_MAPMAGICZONE
         && m_type != PP_MAPPARTICLE
-        && m_type != PP_PORTALSTACK
-        && m_type != PP_CASTINGRING4
         && m_type != PP_PORTAL
         && m_type != PP_WIND
         && m_type != PP_WATERFALL
@@ -7035,87 +6853,6 @@ void CEffectPrim::Render(matrix* viewMatrix)
         }
         break;
     }
-    case PP_PORTALSTACK: {
-        CTexture* texture = !m_texture.empty() ? m_texture[0] : GetSoftGlowTexture(false);
-        const int rings = (std::max)(3, m_spawnCount);
-        const float baseRadius = (std::max)(1.0f, m_outerSize);
-        const float riseSpeed = m_param[2] != 0.0f ? m_param[2] : 0.5f;
-        const int delayStep = m_param[1] != 0.0f ? static_cast<int>(m_param[1]) : 10;
-        const int cycleTicks = 28;
-        const int renderFlags = ResolveEffectRenderFlags(m_renderFlag, 1 | 2);
-        const D3DBLEND destBlend = ResolveEffectDestBlend(m_renderFlag);
-        for (int ringIndex = 0; ringIndex < rings; ++ringIndex) {
-            int localTick = m_stateCnt - ringIndex * delayStep;
-            if (localTick < 0) {
-                continue;
-            }
-            localTick %= cycleTicks;
-            const float grow = (std::min)(7.0f, static_cast<float>(localTick) * riseSpeed);
-            const float alpha = localTick < 10
-                ? (std::min)(240.0f, static_cast<float>(localTick) * 24.0f)
-                : (std::max)(0.0f, 240.0f - (grow > 7.0f ? (grow - 7.0f) * 60.0f : 0.0f));
-            if (alpha <= 0.0f) {
-                continue;
-            }
-            const float width = (baseRadius + grow) * 34.0f;
-            const float height = (baseRadius + grow * 0.55f) * 26.0f;
-            const float yOffset = -grow * 8.0f;
-            const vector3d pos = { base.x, base.y + yOffset, base.z };
-            SubmitBillboard(pos,
-                *viewMatrix,
-                texture,
-                width,
-                height,
-                PackColor(static_cast<unsigned int>(alpha), m_tintColor),
-                destBlend,
-                0.0f,
-                renderFlags);
-        }
-        break;
-    }
-    case PP_CASTINGRING4: {
-        CTexture* texture = !m_texture.empty() ? m_texture[0] : GetSoftGlowTexture(true);
-        const bool hasBands = std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active; });
-        if (hasBands) {
-            for (const EffectBandState& band : m_bands) {
-                RenderCastingBandLowPolygon(*this, base, band, *viewMatrix, texture);
-            }
-            break;
-        }
-        const int arms = 4;
-        const float distanceStart = m_outerSize > 0.0f ? m_outerSize : 10.0f;
-        const int localTick = m_duration > 0 ? m_stateCnt % m_duration : m_stateCnt;
-        const float distance = (std::max)(0.0f, distanceStart - static_cast<float>(localTick) * 0.05f);
-        const float alpha = localTick < m_duration - 40
-            ? (std::min)(70.0f, static_cast<float>(localTick))
-            : (std::max)(0.0f, 70.0f - static_cast<float>(localTick - (m_duration - 40)) * 3.0f);
-        if (alpha <= 0.0f) {
-            break;
-        }
-        const int renderFlags = ResolveEffectRenderFlags(m_renderFlag, 1 | 2);
-        const D3DBLEND destBlend = ResolveEffectDestBlend(m_renderFlag);
-        for (int arm = 0; arm < arms; ++arm) {
-            const float baseAngle = m_param[0] + static_cast<float>(arm) * (kPi * 0.5f);
-            const float angle = baseAngle + timeSeconds * (0.8f + m_param[1] * 0.05f);
-            const float radius = (std::max)(1.0f, distance - static_cast<float>(arm) * 2.5f);
-            const vector3d pos = {
-                base.x + std::cos(angle) * radius,
-                base.y - 2.0f - static_cast<float>(arm) * 0.6f,
-                base.z + std::sin(angle) * radius
-            };
-            const float size = (std::max)(0.8f, radius) * 8.0f;
-            SubmitBillboard(pos,
-                *viewMatrix,
-                texture,
-                size,
-                size,
-                PackColor(static_cast<unsigned int>(alpha), m_tintColor),
-                destBlend,
-                0.0f,
-                renderFlags);
-        }
-        break;
-    }
     case PP_EFFECTSPRITE: {
         if (m_spriteActName.empty() || m_spriteSprName.empty()) {
             break;
@@ -7593,15 +7330,6 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     case 332:
         m_handler = Handler::RecoverySp;
         break;
-    case 12:
-    case 54:
-    case 55:
-    case 56:
-    case 57:
-    case 58:
-    case 59:
-        m_handler = Handler::BeginCasting;
-        break;
     case 312:
         m_handler = Handler::HealLight;
         break;
@@ -7694,20 +7422,6 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         break;
     case 601:
         m_handler = Handler::SightState;
-        break;
-    case 316:
-        m_handler = Handler::ReadyPortal2;
-        break;
-    case 317:
-        m_handler = Handler::Portal2;
-        m_param[0] = 0.0f;
-        break;
-    case 321:
-        m_handler = Handler::WarpZone2;
-        break;
-    case 341:
-        m_handler = Handler::Portal2;
-        m_param[0] = 3.0f;
         break;
     case kRagEffectPortal:
         m_handler = Handler::Portal;
@@ -7913,9 +7627,6 @@ bool CRagEffect::ResolveCullSphere(vector3d* outCenter, float* outRadius) const
     case Handler::Portal:
     case Handler::ReadyPortal:
     case Handler::WarpZone:
-    case Handler::Portal2:
-    case Handler::ReadyPortal2:
-    case Handler::WarpZone2:
         radius = 180.0f;
         break;
     case Handler::MapPillar:
@@ -8042,76 +7753,6 @@ void CRagEffect::SpawnPortal()
     }
 }
 
-void CRagEffect::SpawnPortal2()
-{
-    const int variant = static_cast<int>(m_param[0]);
-    CTexture* ringBlue = ResolveEffectTextureCandidates({
-        "effect\\ring_blue.tga",
-        "effect\\ring_blue.bmp",
-        "effect\\ring_b.bmp",
-    }, false);
-    CTexture* ringRed = ResolveEffectTextureCandidates({
-        "effect\\ring_red.tga",
-        "effect\\ring_red.bmp",
-    }, false);
-    CTexture* magicViolet = ResolveEffectTextureCandidates({
-        "effect\\magic_violet.tga",
-        "effect\\magic_violet.bmp",
-    }, true);
-    CTexture* cloud11 = ResolveEffectTextureCandidates({
-        "effect\\cloud11.tga",
-        "effect\\cloud11.bmp",
-    }, true);
-
-    if (m_stateCnt == 0) {
-        const vector3d base = ResolveBasePosition();
-        DbgLog("[RagEffect] spawn portal base=(%.2f,%.2f,%.2f) ringBlue=%p\n",
-            base.x,
-            base.y,
-            base.z,
-            ringBlue);
-    }
-
-    if (m_stateCnt == 0) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_CASTINGRING4, vector3d{})) {
-            prim->m_renderFlag = 5u;
-            prim->m_duration = m_duration;
-            prim->m_texture.push_back(variant == 3 ? ringRed : magicViolet);
-            prim->m_tintColor = RGB(255, 255, 255);
-            prim->m_size = variant == 3 ? 10.0f : 4.0f;
-            ConfigureWarpZoneCastingBands(prim, 0, static_cast<float>(rand() % 360));
-        }
-    }
-
-    if (m_stateCnt == 1) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_PORTAL, vector3d{})) {
-            prim->m_renderFlag = 5u;
-            prim->m_duration = m_duration;
-            prim->m_texture.push_back(variant == 3 ? ringRed : ringBlue);
-            prim->m_tintColor = RGB(255, 255, 255);
-            prim->m_size = variant == 3 ? 10.0f : 4.0f;
-            prim->m_param[0] = 0.0f;
-            ConfigureBand(prim, 0, 0, 6.0009999f, 0.0f, 0.0f, 2.0f, 3111.0f, 0);
-            ConfigureBand(prim, 1, variant == 3 ? -20 : -10, 6.0009999f, 25.0f, 0.0f, 3.0f, 3111.0f, 0);
-            ConfigureBand(prim, 2, variant == 3 ? -40 : -20, 6.0009999f, 50.0f, 0.0f, 4.0f, 3111.0f, 0);
-        }
-    }
-
-    if (m_stateCnt == 2) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_WIND, vector3d{})) {
-            prim->m_renderFlag = 5u;
-            prim->m_duration = m_duration;
-            prim->m_texture.push_back(cloud11 ? cloud11 : ringBlue);
-            prim->m_tintColor = RGB(255, 255, 255);
-            prim->m_size = 4.0f;
-            ConfigureBand(prim, 0, 0, 1.5f, 0.0f, 9.0f, 90.0f, 0.0f, 0);
-            ConfigureBand(prim, 1, 0, 3.5f, 90.0f, 7.5f, 90.0f, 0.0f, 0);
-            ConfigureBand(prim, 2, 0, 5.5f, 180.0f, 6.0f, 90.0f, 0.0f, 0);
-            ConfigureBand(prim, 3, 0, 7.5f, 270.0f, 4.5f, 90.0f, 0.0f, 0);
-        }
-    }
-}
-
 void CRagEffect::SpawnReadyPortal()
 {
     CTexture* ringBlue = ResolveEffectTextureCandidates({
@@ -8140,33 +7781,6 @@ void CRagEffect::SpawnReadyPortal()
             prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 2;
             prim->m_texture.push_back(ringBlue);
             prim->m_tintColor = RGB(120, 220, 255);
-        }
-    }
-}
-
-void CRagEffect::SpawnReadyPortal2()
-{
-    CTexture* ringBlue = ResolveEffectTextureCandidates({
-        "effect\\ring_blue.tga",
-        "effect\\ring_blue.bmp",
-        "effect\\ring_b.bmp",
-    }, false);
-
-    if ((m_stateCnt % 14) == 0) {
-        TryPlayEffectWaveAt(ResolveBasePosition(), "effect\\EF_ReadyPortal.wav");
-    }
-
-    if (m_stateCnt == 0) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_PORTAL, vector3d{})) {
-            prim->m_renderFlag = 5u;
-            prim->m_duration = m_duration;
-            prim->m_texture.push_back(ringBlue);
-            prim->m_tintColor = RGB(255, 255, 255);
-            prim->m_size = 5.0f;
-            prim->m_param[0] = 1.0f;
-            ConfigureBand(prim, 0, 0, 6.0009999f, 0.0f, 0.0f, 2.0f, 100.0f, 0);
-            ConfigureBand(prim, 1, -10, 6.0009999f, 25.0f, 0.0f, 3.0f, 100.0f, 0);
-            ConfigureBand(prim, 2, -20, 6.0009999f, 50.0f, 0.0f, 4.0f, 100.0f, 0);
         }
     }
 }
@@ -8251,77 +7865,6 @@ void CRagEffect::SpawnWarpZone()
     }
 
     if (m_stateCnt >= 145) {
-        m_stateCnt = 0;
-    }
-}
-
-void CRagEffect::SpawnWarpZone2()
-{
-    CTexture* ringBlue = ResolveEffectTextureCandidates({
-        "effect\\ring_blue.tga",
-        "effect\\ring_blue.bmp",
-        "effect\\ring_b.bmp",
-    }, false);
-    CTexture* alphaDown = TryResolveEffectTextureCandidates({
-        "effect\\alpha_down.tga",
-        "effect\\alpha_down.bmp",
-        "effect\\alpha_dow.bmp",
-    });
-    if (m_stateCnt == 0 && alphaDown) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{})) {
-            prim->m_duration = 99999999;
-            prim->m_radius = 15.0f;
-            prim->m_innerSize = 11.0f;
-            prim->m_alpha = 0.0f;
-            prim->m_alphaSpeed = 12.8f;
-            prim->m_maxAlpha = 128.0f;
-            prim->m_deltaPos2.y = -1.5f;
-            prim->m_latitude = 90.0f;
-            prim->m_pattern |= 1;
-            prim->m_texture.push_back(alphaDown);
-            prim->m_tintColor = RGB(255, 255, 255);
-        }
-    }
-
-    if (m_stateCnt == 1 || m_stateCnt == 2) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_CASTINGRING4, vector3d{})) {
-            prim->m_renderFlag = 5u;
-            prim->m_duration = m_duration;
-            prim->m_texture.push_back(ringBlue);
-            prim->m_tintColor = RGB(255, 255, 255);
-            prim->m_size = m_stateCnt == 1 ? 11.0f : 4.0f;
-            ConfigureWarpZoneCastingBands(prim, m_stateCnt == 1 ? 0 : 1, 0.0f);
-        }
-    }
-
-    if ((m_stateCnt % 10) == 0) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{})) {
-            prim->m_renderFlag = 5u;
-            prim->m_duration = 70;
-            prim->m_radius = 4.5f + static_cast<float>((rand() % 200) / 100) * 0.75f;
-            prim->m_radiusSpeed = 0.0005f;
-            prim->m_longitude = static_cast<float>(rand() % 360);
-            const float speedMagnitude = 2.5f - static_cast<float>(rand() % 11) * 0.1f;
-            prim->m_longSpeed = ((rand() & 1) == 0) ? speedMagnitude : -speedMagnitude;
-            prim->m_gravSpeed = -0.3f;
-            prim->m_gravAccel = (-prim->m_gravSpeed / static_cast<float>(prim->m_duration)) * 0.66666669f;
-            prim->m_heightSize = 4.0f;
-            prim->m_alpha = 96.0f;
-            prim->m_maxAlpha = 96.0f;
-            prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
-            prim->m_size = static_cast<float>(rand() % 10) * 0.1f + 0.7f;
-            prim->m_tintColor = RGB(255, 255, 255);
-            MatrixIdentity(prim->m_matrix);
-            MatrixAppendYRotation(prim->m_matrix, prim->m_longitude * (kPi / 180.0f));
-            prim->m_deltaPos2 = {
-                prim->m_radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
-                prim->m_radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
-                prim->m_radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
-            };
-        }
-    }
-
-    if (m_stateCnt >= 99999998) {
         m_stateCnt = 0;
     }
 }
@@ -9237,100 +8780,6 @@ void CRagEffect::SpawnGrimToothAtk()
             prim->m_texture.push_back(stoneTexture);
             prim->m_tintColor = RGB(255, 255, 255);
         }
-    }
-}
-
-void CRagEffect::SpawnBeginCasting()
-{
-    if (m_stateCnt != 0) {
-        return;
-    }
-
-    const vector3d base = ResolveBasePosition();
-    TryPlayEffectWaveAt(base, "effect\\EF_BeginSpell.wav");
-
-    const auto launchCastingPrim = [&](CTexture* texture, COLORREF tintColor, float scale, bool saintCasting, int startDelay, float rotOffset) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_CASTINGRING4, vector3d{})) {
-            prim->m_renderFlag = 5u;
-            prim->m_duration = saintCasting ? (std::max)(m_duration, 56) : (std::max)(m_duration, 70);
-            prim->m_texture.push_back(texture);
-            prim->m_tintColor = tintColor;
-            if (saintCasting) {
-                ConfigureSaintCastingBands(prim, scale, rotOffset, startDelay);
-            } else {
-                ConfigureStandardBeginCastingBands(prim, scale, rotOffset);
-            }
-        }
-    };
-
-    switch (m_type) {
-    case 12: {
-        CTexture* ringYellow = ResolveEffectTextureCandidates({
-            "effect\\ring_yellow.tga",
-            "effect\\ring_yellow.bmp",
-            "effect\\ring_white.tga",
-        }, false);
-        launchCastingPrim(ringYellow, RGB(255, 236, 160), 1.15f, true, 0, 0.0f);
-        launchCastingPrim(ringYellow, RGB(255, 224, 140), 1.0f, true, 0, 22.5f);
-        break;
-    }
-    case 54: {
-        CTexture* ringBlue = ResolveEffectTextureCandidates({
-            "effect\\ring_blue.tga",
-            "effect\\ring_blue.bmp",
-        }, false);
-        launchCastingPrim(ringBlue, RGB(224, 240, 255), 1.08f, false, 0, 0.0f);
-        break;
-    }
-    case 55: {
-        CTexture* ringYellow = ResolveEffectTextureCandidates({
-            "effect\\ring_yellow.tga",
-            "effect\\ring_yellow.bmp",
-            "effect\\ring_white.tga",
-        }, false);
-        launchCastingPrim(ringYellow, RGB(255, 236, 172), 1.0f, false, 0, 0.0f);
-        break;
-    }
-    case 56: {
-        CTexture* magicGreen = ResolveEffectTextureCandidates({
-            "effect\\magic_green.tga",
-            "effect\\magic_green.bmp",
-            "effect\\Magic_Green.tga",
-        }, false);
-        launchCastingPrim(magicGreen, RGB(180, 255, 196), 1.0f, false, 0, 0.0f);
-        break;
-    }
-    case 57: {
-        CTexture* ringYellow = ResolveEffectTextureCandidates({
-            "effect\\ring_yellow.tga",
-            "effect\\ring_yellow.bmp",
-            "effect\\ring_white.tga",
-        }, false);
-        launchCastingPrim(ringYellow, RGB(255, 220, 132), 0.92f, false, 0, 0.0f);
-        break;
-    }
-    case 58: {
-        CTexture* ringWhite = ResolveEffectTextureCandidates({
-            "effect\\ring_white.tga",
-            "effect\\ring_white.bmp",
-            "effect\\ring_blue.tga",
-        }, false);
-        launchCastingPrim(ringWhite, RGB(255, 255, 255), 1.0f, true, 0, 0.0f);
-        launchCastingPrim(ringWhite, RGB(236, 244, 255), 0.92f, true, 0, 22.5f);
-        break;
-    }
-    case 59: {
-        CTexture* magicBlue = ResolveEffectTextureCandidates({
-            "effect\\magic_blue.tga",
-            "effect\\magic_blue.bmp",
-            "effect\\ring_white.tga",
-            "effect\\ring_blue.tga",
-        }, false);
-        launchCastingPrim(magicBlue, RGB(224, 240, 255), 1.0f, false, 0, 0.0f);
-        break;
-    }
-    default:
-        break;
     }
 }
 
@@ -12858,9 +12307,6 @@ u8 CRagEffect::ProcessWorldEffect()
         m_handler == Handler::Portal
         || m_handler == Handler::ReadyPortal
         || m_handler == Handler::WarpZone
-        || m_handler == Handler::Portal2
-        || m_handler == Handler::ReadyPortal2
-        || m_handler == Handler::WarpZone2
         || m_handler == Handler::MapPillar
         || m_handler == Handler::MapMagicZone
         || m_handler == Handler::MapParticle
@@ -13394,15 +12840,6 @@ bool CRagEffect::ProcessEffectFrame()
         case Handler::WarpZone:
             SpawnWarpZone();
             break;
-        case Handler::Portal2:
-            SpawnPortal2();
-            break;
-        case Handler::ReadyPortal2:
-            SpawnReadyPortal2();
-            break;
-        case Handler::WarpZone2:
-            SpawnWarpZone2();
-            break;
         case Handler::MapPillar:
             SpawnMapPillar();
             break;
@@ -13420,9 +12857,6 @@ bool CRagEffect::ProcessEffectFrame()
             break;
         case Handler::RecoverySp:
             SpawnRecoverySp();
-            break;
-        case Handler::BeginCasting:
-            SpawnBeginCasting();
             break;
         case Handler::HealLight:
             SpawnHealLight();
