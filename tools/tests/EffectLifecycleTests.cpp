@@ -48,7 +48,7 @@ u32 resourceTick = 123;
 u32 timeGetTime() { return resourceTick; }
 struct CRes { int m_lockCnt=0; u32 m_timeStamp=0; int Lock(); int Unlock(); };
 struct CSprRes : CRes {};
-struct CActRes : CRes {};
+struct CActRes : CRes { int count=8; int GetMotionCount(int) const { return count; } };
 struct ResourceManager {
     CSprRes spr; CActRes act;
     bool fail = false;
@@ -134,6 +134,7 @@ struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_m
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
 void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
+bool UpdateRuwachParticle(CEffectPrim*);
 struct CEffectPrim : CGameObject {
     Probe deaths{ primitiveDeaths };
     CRagEffect* m_master = nullptr;
@@ -147,12 +148,13 @@ struct CEffectPrim : CGameObject {
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 0, m_minAlpha = 0;
     bool m_isDisappear = false;
     matrix m_matrix;
-    CSprRes* m_superAngelSprRes = nullptr;
-    CActRes* m_superAngelActRes = nullptr;
+    CSprRes* m_particleSprRes = nullptr;
+    CActRes* m_particleActRes = nullptr;
     std::string m_spriteActName,m_spriteSprName;
     int m_spriteAction=0,m_animSpeed=0,m_curMotion=0,m_numSegments=0;
     bool m_repeatAnim=false,m_spriteRepeat=false;
-    float m_alpha=0,m_radius=0;
+    float m_alpha=0,m_radius=0,m_alphaSpeed=0,m_maxAlpha=254,m_sizeSpeed=0,m_sizeAccel=0;
+    vector3d m_speed3d;
     u32 m_tintColor=0xFFFFFF;
     std::array<EffectSegmentState,12> m_segments;
 
@@ -163,11 +165,14 @@ struct CEffectPrim : CGameObject {
     void SendMsg(CGameObject*, int, msgparam_t, msgparam_t, msgparam_t) override;
     u8 OnProcess() override;
     bool UsesLegacyBandPayload() const;
+    bool UsesReferenceParticle() const;
+    void SetParticleResources(const char*, const char*);
     bool ProcessPrimitiveFrame() {
         ++updates;
         observedFrame = m_stateCnt;
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
+        if (m_type == PP_3DPARTICLE && UsesReferenceParticle() && !UpdateRuwachParticle(this)) return false;
         if (resetFrame >= 0) m_stateCnt = resetFrame;
         return active;
     }
@@ -212,6 +217,7 @@ struct CRagEffect : CGameObject {
     void SpawnGrimTooth();
     void ApplySuperAngel(signed char,signed char);
     void ProcessSuperAngelEffect();
+    void SpawnRuwach();
     void ApplyEntry2();
     bool ApplyJobLvUp50(int);
     bool ApplyJobLvUp50_2(short);
@@ -220,6 +226,8 @@ struct CRagEffect : CGameObject {
     CRenderObject* ResolveCurrentMaster() { return m_master; }
     CAbleToMakeEffect* ResolveCurrentEffectOwner() { return dynamic_cast<CAbleToMakeEffect*>(m_master); }
     bool IsWorldEffect() const { return m_isWorldEffect; }
+    int GetDuration() const { return m_duration; }
+    int GetStateCount() const { return m_stateCnt; }
     const vector3d& EffectPosition() const { return m_effectPos; }
     int GetEffectType() const { return m_type; }
     u8 OnProcess() override;
@@ -976,11 +984,11 @@ int main()
             "effect 582 repeats only variant 11 and stores birth frame");
         effect.ClearPrims();g_world.UpdateGameObjects();
         g_resMgr.fail=true;effect.m_stateCnt=0;effect.ApplySuperAngel(0,0);
-        check(effect.m_primList.size()==1 && !effect.m_primList.front()->m_superAngelSprRes
-            && !effect.m_primList.front()->m_superAngelActRes,
+        check(effect.m_primList.size()==1 && !effect.m_primList.front()->m_particleSprRes
+            && !effect.m_primList.front()->m_particleActRes,
             "missing SuperAngel assets leave one unrenderable original primitive without alternate names or replacement textures");
         matrix view;MatrixIdentity(view);const int submitted=angelSpriteSubmissions;
-        RenderSuperAngelPrimitive(*effect.m_primList.front(),view);
+        RenderReferenceParticlePrimitive(*effect.m_primList.front(),view);
         check(angelSpriteSubmissions==submitted,"SuperAngel renderer does not substitute missing resources");
         effect.ClearPrims();g_world.UpdateGameObjects();g_resMgr.fail=false;
     }
@@ -1024,12 +1032,12 @@ int main()
         gi.life=0;prim.m_deltaPos={4,5,6};const int process=gi.process;UpdateSuperAngelPrimitive(&prim);
         check(gi.process==process && prim.m_pos.x==4 && prim.m_segments[0].pos.y==5,
             "inactive SuperAngel GI still stores delta position and shifts its segment");
-        matrix view;MatrixIdentity(view);prim.m_superAngelSprRes=&g_resMgr.spr;prim.m_superAngelActRes=&g_resMgr.act;
+        matrix view;MatrixIdentity(view);prim.m_particleSprRes=&g_resMgr.spr;prim.m_particleActRes=&g_resMgr.act;
         g_resMgr.spr.Lock();g_resMgr.act.Lock();prim.m_alpha=30;prim.m_renderFlag=5;prim.m_curMotion=7;ShiftCircleSegments(&prim);
-        RenderSuperAngelPrimitive(prim,view);
+        RenderReferenceParticlePrimitive(prim,view);
         check(angelSubmittedMotion==7 && angelSubmittedColor==0x1EFFFFFFu && angelSubmittedBlend==2,
             "SuperAngel sprite submission uses explicit motion, GI alpha and additive flags");
-        prim.m_renderFlag=0x201;RenderSuperAngelPrimitive(prim,view);
+        prim.m_renderFlag=0x201;RenderReferenceParticlePrimitive(prim,view);
         check(angelSubmittedColor==0x1EFFFFFFu && angelSubmittedBlend==6,
             "SuperAngel render flag 0x201 preserves segment alpha and uses ordinary blending");
     }
@@ -1039,6 +1047,78 @@ int main()
         ShiftCircleSegments(&prim);
         check(prim.m_segments[0].argb==0x03123456u,"segment head packs truncated wrapping alpha and primitive RGB");
         check(prim.m_segments[1].argb==0x81123456u,"history segment packs its own attenuated alpha");
+    }
+    {
+        CRenderObject actor;actor.m_pos={10,20,30};
+        CRagEffect effect;effect.m_master=&actor;effect.m_type=33;effect.m_duration=100;
+        const int initialRng=rngDraws,initialWaves=waves;
+        g_resMgr.requests.clear();effect.m_stateCnt=1;effect.SpawnRuwach();
+        check(effect.m_primList.empty() && effect.m_effectPos.x==10,"Ruwach copies master position even on non-emission frames");
+        effect.m_stateCnt=3;effect.SpawnRuwach();
+        check(effect.m_primList.size()==2 && rngDraws==initialRng && waves==initialWaves,"Ruwach emits two particles every third frame without RNG or wave calls");
+        auto it=effect.m_primList.begin();auto* particle=*it++;auto* shadow=*it;
+        check(g_resMgr.requests.size()==4 && g_resMgr.requests[0]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.spr"
+            && g_resMgr.requests[1]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.act"
+            && g_resMgr.requests[2]=="Shadow.spr" && g_resMgr.requests[3]=="Shadow.act", "Ruwach uses original sprite/action names and sprite-then-action load order");
+        check(std::fabs(particle->m_deltaPos2.x-GetSin(-11)*15)<0.0001f
+            && std::fabs(particle->m_deltaPos2.z-GetCos(-11)*-15)<0.0001f,
+            "Ruwach angle truncates toward zero to integer degrees before trig lookup");
+        check(particle->m_deltaPos2.y==-10 && shadow->m_deltaPos2.y==0
+            && particle->m_deltaPos2.x==shadow->m_deltaPos2.x && particle->m_deltaPos2.z==shadow->m_deltaPos2.z,
+            "Ruwach particle/shadow share horizontal offset with distinct source heights");
+        check(particle->m_duration==25 && shadow->m_duration==25 && particle->m_fadeOutCnt==19 && shadow->m_fadeOutCnt==19,
+            "Ruwach retains twenty-five-frame duration and frame-nineteen fade");
+        check(particle->m_size==3 && particle->m_sizeSpeed==-0.1f && particle->m_alpha==250 && particle->m_alphaSpeed==-3,
+            "Ruwach particle has original size and alpha profile");
+        check(shadow->m_size==1.5f && shadow->m_sizeSpeed==-0.059999999f && shadow->m_alpha==150 && shadow->m_alphaSpeed==-2.5f,
+            "Ruwach shadow has original size and alpha profile");
+        check(particle->m_animSpeed==4 && shadow->m_animSpeed==2 && particle->m_maxAlpha==254 && particle->m_repeatAnim,
+            "Ruwach restores reference constructor motion and alpha defaults");
+        check(particle->m_numSegments==1 && particle->m_segments[0].argb==0xFAFFFFFF && shadow->m_segments[0].argb==0x96FFFFFF,
+            "Ruwach initializes one colored segment before the first update");
+        check(particle->UsesReferenceParticle() && shadow->UsesReferenceParticle(),"Ruwach uses reference particle dispatch");
+        check(particle->OnProcess()==1 && particle->m_stateCnt==1 && particle->m_curMotion==1 && std::fabs(particle->m_size-2.9f)<0.00001f
+            && particle->m_alpha==247,"Ruwach frame zero advances motion after shrinking and fading");
+        check(shadow->OnProcess()==1 && shadow->m_curMotion==1 && shadow->m_alpha==147.5f,"Ruwach shadow also advances motion on zero");
+        check(particle->m_segments[0].argb==0xF7FFFFFF && std::fabs(particle->m_pos.y-10)<0.0001f,
+            "Ruwach update stores segment alpha and parent-relative position");
+        effect.m_effectPos={40,50,60};particle->m_stateCnt=1;particle->OnProcess();
+        check(std::fabs(particle->m_pos.x-(40+particle->m_deltaPos2.x))<0.0001f && particle->m_pos.y==40,
+            "Ruwach follows persistent parent position without velocity or ground fallback");
+        particle->m_stateCnt=19;particle->m_alpha=180;particle->m_alphaSpeed=-3;particle->OnProcess();
+        check(particle->m_alphaSpeed==-30 && particle->m_alpha==150,"Ruwach computes fade speed from current alpha at frame nineteen");
+        particle->m_stateCnt=20;particle->m_alpha=10;particle->m_alphaSpeed=-30;particle->OnProcess();
+        check(particle->m_alpha==0 && particle->m_segments[0].argb==0x00FFFFFF,"Ruwach fading clamps at minimum before storing segment color");
+        particle->m_stateCnt=4;particle->m_curMotion=7;particle->OnProcess();
+        check(particle->m_curMotion==0,"Ruwach looping animation wraps by actual action motion count");
+        particle->m_stateCnt=25;check(particle->OnProcess()==0 && particle->m_stateCnt==26,"Ruwach retains inclusive primitive final frame");
+        effect.m_stateCnt=99;particle->m_stateCnt=0;particle->m_alpha=120;particle->m_isDisappear=false;particle->OnProcess();
+        check(particle->m_isDisappear && particle->m_alphaSpeed==-120 && particle->m_alpha==0,
+            "Ruwach fades immediately when parent has only one frame remaining");
+        // Deletion is performed by the world, retaining balanced resource locks.
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"Ruwach resource locks release on world deletion");
+        g_resMgr.fail=true;effect.m_stateCnt=0;effect.SpawnRuwach();g_resMgr.fail=false;
+        check(effect.m_primList.size()==2 && effect.m_primList.front()->UsesReferenceParticle()
+            && effect.m_primList.front()->m_particleSprRes==nullptr,"missing Ruwach resources keep reference routing without substitute assets");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRagEffect effect;effect.m_type=33;effect.m_duration=100;
+        CEffectPrim prim;prim.m_master=&effect;prim.m_type=PP_3DPARTICLE;
+        prim.m_particleActRes=&g_resMgr.act;g_resMgr.act.Lock();g_resMgr.act.count=3;
+        prim.m_animSpeed=2;prim.m_repeatAnim=false;prim.m_stateCnt=2;prim.m_curMotion=2;
+        check(prim.OnProcess()==0 && prim.m_stateCnt==2 && prim.m_curMotion==3,
+            "reference particle animation completion returns before outer counter increment");
+        prim.m_curMotion=2;prim.m_pattern=0x800;
+        check(AnimateReferenceParticle(&prim) && prim.m_curMotion==2,"reference particle stop-at-last flag keeps terminal motion");
+        prim.m_pattern=0;prim.m_curMotion=3;
+        check(AnimateReferenceParticle(&prim) && prim.m_curMotion==4,"reference nonloop completion compares equality rather than clamping overflow");
+        prim.m_repeatAnim=true;prim.m_curMotion=2;
+        check(AnimateReferenceParticle(&prim) && prim.m_curMotion==0,"reference repeat wraps immediately at motion count");
+        prim.m_stateCnt=3;prim.m_curMotion=1;
+        check(AnimateReferenceParticle(&prim) && prim.m_curMotion==1,"reference motion is unchanged between animation divisors");
+        g_resMgr.act.count=8;
     }
     {
         CRagEffect effect;

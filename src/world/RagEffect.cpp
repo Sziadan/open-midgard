@@ -2569,8 +2569,8 @@ CEffectPrim::CEffectPrim()
     , m_spriteMotionBase(0)
     , m_spriteFrameDelay(0.0f)
     , m_spriteScale(1.0f)
-    , m_superAngelSprRes(nullptr)
-    , m_superAngelActRes(nullptr)
+    , m_particleSprRes(nullptr)
+    , m_particleActRes(nullptr)
     , m_spriteRepeat(false)
     , m_repeatAnim(true)
     , m_isDisappear(false)
@@ -6037,6 +6037,60 @@ void UpdateSuperAngelPrimitive(CEffectPrim* prim)
     ShiftCircleSegments(prim);
 }
 
+// Ref/RagEffectPrim.cpp:7-40. Called after segment storage, before the
+// outer primitive counter increment. Frame zero advances the motion too.
+bool AnimateReferenceParticle(CEffectPrim* prim)
+{
+    if (prim->m_animSpeed == 0 || prim->m_stateCnt % prim->m_animSpeed != 0) return true;
+    ++prim->m_curMotion;
+    if (!prim->m_particleActRes) return true;
+    const int count = prim->m_particleActRes->GetMotionCount(prim->m_spriteAction);
+    if (count <= 0) return true;
+    if (prim->m_repeatAnim) {
+        prim->m_curMotion %= count;
+    } else if ((prim->m_pattern & 0x800) != 0) {
+        if (prim->m_curMotion == count) --prim->m_curMotion;
+    } else if (prim->m_curMotion == count) {
+        return false;
+    }
+    return true;
+}
+
+// Ref/RagEffectPrim.cpp:456-594,2184-2328. Ruwach launches only pattern-zero
+// PP_3DPARTICLE with constructor motion/alpha defaults and no change points.
+// Other callers still require their additional pattern/control branches.
+bool UpdateRuwachParticle(CEffectPrim* prim)
+{
+    prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
+    prim->m_speed += prim->m_accel;
+    prim->m_sizeSpeed += prim->m_sizeAccel;
+    prim->m_speed3d = {
+        prim->m_speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
+        prim->m_speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
+        prim->m_speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
+    };
+    prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
+    prim->m_roll += prim->m_rollSpeed;
+    prim->m_size += prim->m_sizeSpeed;
+    prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
+    const int remaining = prim->m_master->GetDuration() - prim->m_master->GetStateCount();
+    if (!prim->m_isDisappear && prim->m_duration - prim->m_stateCnt > remaining + 1) {
+        prim->m_isDisappear = true;
+        prim->m_pattern &= ~0x80;
+        prim->m_alphaSpeed = static_cast<float>(-(prim->m_alpha / static_cast<double>(remaining)));
+    }
+    if (prim->m_stateCnt == prim->m_fadeOutCnt) {
+        prim->m_pattern &= ~0x80;
+        prim->m_alphaSpeed = static_cast<float>(-(prim->m_alpha
+            / static_cast<double>(prim->m_duration - prim->m_stateCnt) * prim->m_alphaDelta));
+    }
+    prim->m_alpha += prim->m_alphaSpeed;
+    if (prim->m_alpha < prim->m_minAlpha) prim->m_alpha = prim->m_minAlpha;
+    if (prim->m_alpha > prim->m_maxAlpha) prim->m_alpha = prim->m_maxAlpha;
+    ShiftCircleSegments(prim);
+    return AnimateReferenceParticle(prim);
+}
+
 // Ref/GameActor.cpp:10748-10928. Each sprite retains its own texture and
 // palette; clip color/zoom/rotation are never baked into a motion canvas.
 struct ParticleSprite {
@@ -6167,9 +6221,9 @@ void RenderParticleSprites(const CEffectPrim& prim, CSprRes& sprites, const CAct
     }
 }
 
-void RenderSuperAngelPrimitive(const CEffectPrim& prim, matrix& view)
+void RenderReferenceParticlePrimitive(const CEffectPrim& prim, matrix& view)
 {
-    if (!prim.m_superAngelSprRes || !prim.m_superAngelActRes) return;
+    if (!prim.m_particleSprRes || !prim.m_particleActRes) return;
     CGameMode* mode = g_modeMgr.GetCurrentGameMode();
     if (!mode || !mode->m_view) return;
     // Ref/View.cpp:286-293 and HighPriest.exe.c g_gradient = 0.16.
@@ -6177,7 +6231,26 @@ void RenderSuperAngelPrimitive(const CEffectPrim& prim, matrix& view)
     const float tangent = GetSin(latitude) / GetCos(latitude);
     const float tangenta = 0.16f * tangent;
     const float slope = tangenta / g_renderer.m_screenYFactor;
-    RenderParticleSprites(prim, *prim.m_superAngelSprRes, *prim.m_superAngelActRes, view, slope);
+    RenderParticleSprites(prim, *prim.m_particleSprRes, *prim.m_particleActRes, view, slope);
+}
+
+// Ref SetSprName/SetActName retain sprite-then-action lock order.
+void CEffectPrim::SetParticleResources(const char* sprName, const char* actName)
+{
+    m_spriteSprName = sprName;
+    m_spriteActName = actName;
+    if (m_particleSprRes) m_particleSprRes->Unlock();
+    m_particleSprRes = g_resMgr.GetAs<CSprRes>(sprName);
+    if (m_particleSprRes) m_particleSprRes->Lock();
+    if (m_particleActRes) m_particleActRes->Unlock();
+    m_particleActRes = g_resMgr.GetAs<CActRes>(actName);
+    if (m_particleActRes) m_particleActRes->Lock();
+}
+
+bool CEffectPrim::UsesReferenceParticle() const
+{
+    return m_type == PP_SUPERANGEL
+        || (m_type == PP_3DPARTICLE && m_master && m_master->GetEffectType() == 33);
 }
 
 CEffectPrim::~CEffectPrim()
@@ -6185,8 +6258,8 @@ CEffectPrim::~CEffectPrim()
     if (m_master) {
         m_master->SendMsg(this, 25, 0, 0, 0);
     }
-    if (m_superAngelSprRes) m_superAngelSprRes->Unlock();
-    if (m_superAngelActRes) m_superAngelActRes->Unlock();
+    if (m_particleSprRes) m_particleSprRes->Unlock();
+    if (m_particleActRes) m_particleActRes->Unlock();
 }
 
 void CEffectPrim::SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t)
@@ -6414,6 +6487,9 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_3DPARTICLEORBIT) {
         return UpdateParticleOrbitPrimitive(this);
     }
+    if (m_type == PP_3DPARTICLE && m_master && m_master->GetEffectType() == 33) {
+        return UpdateRuwachParticle(this);
+    }
     if (m_type == PP_3DPARTICLE) {
         return UpdateFreeParticlePrimitive(this, false, false);
     }
@@ -6465,8 +6541,8 @@ void CEffectPrim::Render(matrix* viewMatrix)
     if (!m_master || !viewMatrix) {
         return;
     }
-    if (m_type == PP_SUPERANGEL) {
-        RenderSuperAngelPrimitive(*this, *viewMatrix);
+    if (UsesReferenceParticle()) {
+        RenderReferenceParticlePrimitive(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_SLASH1) {
@@ -8210,12 +8286,7 @@ void CRagEffect::ApplySuperAngel(signed char variant, signed char)
         };
         for (const Assets& asset : assets) {
             if (asset.variant != variant) continue;
-            prim->m_spriteSprName = asset.spr;
-            prim->m_spriteActName = asset.act;
-            prim->m_superAngelSprRes = g_resMgr.GetAs<CSprRes>(asset.spr);
-            if (prim->m_superAngelSprRes) prim->m_superAngelSprRes->Lock();
-            prim->m_superAngelActRes = g_resMgr.GetAs<CActRes>(asset.act);
-            if (prim->m_superAngelActRes) prim->m_superAngelActRes->Lock();
+            prim->SetParticleResources(asset.spr, asset.act);
             prim->m_renderFlag = 5;
             break;
         }
@@ -9281,48 +9352,42 @@ void CRagEffect::SpawnFireBall()
     }
 }
 
+// Ref/RagEffect.cpp:7202-7261 (0x5F9170). The angle truncates before
+// the trig-table calls. Particle2 and Shadow retain their original profiles.
 void CRagEffect::SpawnRuwach()
 {
-    if ((m_stateCnt % 3) != 0) {
-        return;
-    }
-
-    constexpr float kRuwachStepDegrees = -50.0f / 13.0f;
-    const float angle = static_cast<float>(m_stateCnt) * kRuwachStepDegrees * (kPi / 180.0f);
-    const float offsetX = std::sin(angle) * 15.0f;
-    const float offsetZ = -std::cos(angle) * 15.0f;
-
-    if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
-        prim->m_duration = 25;
-        prim->m_deltaPos2 = { offsetX, -10.0f, offsetZ };
-        prim->m_size = 3.0f;
-        prim->m_sizeSpeed = -0.1f;
-        prim->m_alpha = 250.0f;
-        prim->m_alphaSpeed = -3.0f;
-        prim->m_fadeOutCnt = prim->m_duration - 6;
-        ConfigureEffectSpritePrim(prim, { RefParticle2SpriteStem() }, 0, 1.0f, false, 0.0f, 0);
-    }
-
-    if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
-        prim->m_duration = 25;
-        prim->m_deltaPos2 = { offsetX, 0.0f, offsetZ };
-        prim->m_animSpeed = 2;
-        prim->m_size = 1.5f;
-        prim->m_sizeSpeed = -0.06f;
-        prim->m_alpha = 150.0f;
-        prim->m_alphaSpeed = -2.5f;
-        prim->m_fadeOutCnt = prim->m_duration - 6;
-        ConfigureEffectSpritePrim(prim, { "Shadow", "shadow" }, 0, 1.0f, false, 0.0f, 0);
-    }
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt % 3 != 0) return;
+    const int angle = static_cast<int>(static_cast<double>(m_stateCnt) * 0.7692307692307692 * -5.0);
+    const float sine = GetSin(angle);
+    const float cosine = GetCos(angle);
+    GetRadian(angle); // Ref consumes the result without using it.
+    const float offsetX = sine * 15.0f;
+    const float offsetZ = cosine * -15.0f;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+    prim->m_duration = 25;
+    prim->m_deltaPos2 = {offsetX, -10.0f, offsetZ};
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.act"); // 0x71B334 / 0x71B31C
+    prim->m_size = 3.0f; prim->m_sizeSpeed = -0.1f;
+    prim->m_alpha = 250.0f; prim->m_alphaSpeed = -3.0f;
+    prim->m_fadeOutCnt = prim->m_duration - 6;
+    // Ref constructor defaults not yet shared by the remaining legacy emitters.
+    prim->m_maxAlpha = 254.0f; prim->m_animSpeed = 4;
+    prim->m_repeatAnim = true; prim->m_numSegments = 1;
+    ShiftCircleSegments(prim);
+    prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+    prim->m_duration = 25;
+    prim->m_deltaPos2 = {offsetX, 0.0f, offsetZ};
+    prim->SetParticleResources("Shadow.spr", "Shadow.act"); // 0x71B558 / 0x71B54C
+    prim->m_animSpeed = 2;
+    prim->m_size = 1.5f; prim->m_sizeSpeed = -0.059999999f;
+    prim->m_alpha = 150.0f; prim->m_alphaSpeed = -2.5f;
+    prim->m_fadeOutCnt = prim->m_duration - 6;
+    prim->m_maxAlpha = 254.0f; prim->m_repeatAnim = true; prim->m_numSegments = 1;
+    ShiftCircleSegments(prim);
 }
-
-
-
-
-
-
-
-
 
 bool EffectTicksWhenNoFrameTime(int type)
 {

@@ -4,9 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A per-clip particle rendering, connected to PP_SUPERANGEL. Primitive ids are checkpointed in `0d50b9f`; the SuperAngel emitter/state checkpoint is `2c9fd52`. Handler and renderer migration remain partial.
+Current work: WP5A Ruwach (effect 33) particle migration. The shared per-clip renderer is checkpointed in `7554b3b`; Ruwach now joins SuperAngel on that path. Handler and renderer migration remain partial.
 
-Next action: migrate the remaining sprite-particle emitters/update paths onto reference resources, explicit motion/segment state and the per-clip renderer; remove their legacy baked-motion routes as each migration completes. Remaining primitive bodies, resource-loader/cache parity, common renderer/backend behavior and unfinished packages/acceptance remain open.
+Next action: migrate the remaining sprite-particle emitters (including Blessing/Sight/Smoke/Torch and poison particles), preserving each caller's reference assets, constructor defaults, motion/alpha patterns and renderer binding. Remove their legacy baked-motion routes as each migration completes. Generic particle control branches, resource-loader/cache parity, common renderer/backend behavior and unfinished packages/acceptance remain open.
+
+## Ruwach particle migration — 2026-10-25
+
+- Replaced effect 33's continuous-angle emitter and basename fallback searches with the original integer-degree trig calls, emission every third frame, two ordered PP_3DPARTICLE profiles, four exact resource literals and resource locking. All four names match bytes at the original executable VAs. Parent position is copied even on non-emission frames; no wave or RNG call is introduced.
+- Ruwach's two primitives now use the reference particle state path: follow the persistent parent, apply original shrink/alpha rates, compute the frame-19 fade from current alpha, shorten fade when the parent ends, store the segment before animation, advance motion on primitive frame zero, and repeat at the action's actual motion count. Reference constructor defaults are restored locally (animation divisors 4/2, maximum alpha 254, repeat, one segment).
+- Generalized the shared particle resource members/setter/render entry point so Ruwach and SuperAngel use the same per-clip path. Resource locking/release order remains sprite then action. Missing Ruwach resources retain reference routing without a soft-disc or alternate-name replacement.
+- Validation: release build, six silent C++ suites / 327 checks (234 lifecycle/primitive + 35 particle-render + 58 other), six Python tests, four-literal executable byte audit and diff whitespace check pass. Approved OldRO deployment hash matches `B67EDD4979E4A17B2366AC3EBC82CA019CB1282425F9363F70D69A1A037643A5`. No media or live acceptance was used.
+- The Ruwach updater ports the complete reachable pattern-zero state for these two profiles; it does not certify the other Prim3DParticle pattern/change-point branches, every emitter, the original indexed atlas/cache or the common rendering backend. WP5A and the overall plan remain incomplete.
+
 
 ## Per-clip particle renderer — 2026-10-25
 

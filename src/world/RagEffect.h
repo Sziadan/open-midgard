@@ -261,6 +261,8 @@ public:
     u8 OnProcess() override;
     bool ProcessPrimitiveFrame();
     bool UsesLegacyBandPayload() const;
+    bool UsesReferenceParticle() const;
+    void SetParticleResources(const char* sprName, const char* actName);
     void SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t) override;
     void Render(matrix* viewMatrix) override;
 
@@ -323,8 +325,8 @@ public:
     int m_animSpeed;
     float m_spriteFrameDelay;
     float m_spriteScale;
-    CSprRes* m_superAngelSprRes;
-    CActRes* m_superAngelActRes;
+    CSprRes* m_particleSprRes;
+    CActRes* m_particleActRes;
     bool m_spriteRepeat;
     bool m_repeatAnim;
     bool m_isDisappear;
