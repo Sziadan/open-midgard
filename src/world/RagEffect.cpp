@@ -6178,7 +6178,7 @@ bool UpdateReferenceCircleState(CEffectPrim* prim)
     return true;
 }
 
-// Ref/RagEffectPrim.cpp:816-891 (0x642CE0), reachable WarpZone2 profile.
+// Ref/RagEffectPrim.cpp:816-891 (0x642CE0), reachable WarpZone/WarpZone2 profiles.
 // It has no change point or keyed radius schedule. Position is computed before
 // the raw-radian Z rotation, then alpha/segments precede motion advancement.
 bool UpdateWarpZoneOrbit(CEffectPrim* prim)
@@ -6397,7 +6397,7 @@ void CEffectPrim::SetParticleResources(const char* sprName, const char* actName,
 bool CEffectPrim::UsesReferenceCircle() const
 {
     return m_type == PP_3DCIRCLE && m_master
-        && (m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 321);
+        && (m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321);
 }
 
 bool CEffectPrim::UsesReferenceCylinder() const
@@ -6408,7 +6408,8 @@ bool CEffectPrim::UsesReferenceCylinder() const
 bool CEffectPrim::UsesReferenceParticle() const
 {
     return m_type == PP_SUPERANGEL
-        || (m_type == PP_3DPARTICLEORBIT && m_master && m_master->GetEffectType() == 321)
+        || (m_type == PP_3DPARTICLEORBIT && m_master
+            && (m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
             && (m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
@@ -7664,8 +7665,8 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 35: case 36:
-        // ProcessEffectFrame dispatches original ReadyPortal/Portal directly.
+    case 35: case 36: case 61:
+        // ProcessEffectFrame dispatches original ReadyPortal/Portal/WarpZone directly.
         m_handler = Handler::None;
         break;
     case 312: case 313: case 325: case 331: case 332:
@@ -9731,6 +9732,69 @@ void CRagEffect::ApplyWarpZone2(const char* textureName)
         if ((rand() & 1) == 0) prim->m_longSpeed = static_cast<float>(2.5 - static_cast<double>(rand() % 11) * 0.1);
         else prim->m_longSpeed = static_cast<float>(static_cast<double>(rand() % 11) * 0.1 - 2.5);
         prim->m_gravSpeed = -0.30000001f;
+        prim->m_gravAccel = static_cast<float>(prim->m_gravSpeed / static_cast<double>(prim->m_duration) * -0.66666669);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_deltaPos2 = {
+            static_cast<float>(static_cast<double>(prim->m_radius) * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+            static_cast<float>(static_cast<double>(prim->m_radius) * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+            static_cast<float>(static_cast<double>(prim->m_radius) * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+        };
+        prim->m_size = static_cast<float>(static_cast<double>(rand() % 10 / 10) + 0.69999999);
+        prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act"); // 0x71B200 / 0x71B1E8
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_animSpeed = 4; prim->m_repeatAnim = true; prim->m_numSegments = 1;
+        ShiftCircleSegments(prim);
+    }
+}
+
+// Ref/RagEffect.cpp:9095-9186 (0x5FBA00), original effect 61.
+// Stored origin, pre-emission reset and inactive alpha-key data are intentional.
+void CRagEffect::ApplyWarpZone()
+{
+    if (m_stateCnt == 145) m_stateCnt = 0;
+    if (m_stateCnt == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
+        prim->m_duration = 158;
+        prim->m_pattern |= 1;
+        prim->m_radius = 15.0f;
+        prim->m_deltaPos2.y -= 1.0f;
+        prim->m_latitude = 90.0f;
+        prim->m_alpha = 0.0f; prim->m_maxAlpha = 128.0f;
+        prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.1);
+        prim->m_fadeOutCnt = prim->m_duration - 10;
+        prim->m_numSegments = 1;
+        ShiftCircleSegments(prim);
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false)); // 0x719498
+    }
+    if (m_stateCnt % 28 == 0 && m_stateCnt < 117) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
+        prim->m_duration = 80;
+        prim->m_innerSize = 4.0f;
+        prim->m_latitude = 90.0f;
+        prim->m_deltaPos2.y -= 1.0f;
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+        prim->m_radius = 14.0f;
+        prim->m_radiusSpeed = -0.15000001f;
+        prim->m_alpha = 5.0f; prim->m_maxAlpha = 200.0f; prim->m_alphaSpeed = 10.0f;
+        prim->m_chPoint.push_back(20.0f);
+        prim->m_chVal1.push_back(0.0f); // m_chSpeed remains constructor zero.
+        prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 5;
+        prim->m_numSegments = 1;
+        ShiftCircleSegments(prim);
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false)); // 0x71943C
+    }
+    if (m_stateCnt % 10 == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{});
+        prim->m_radius = static_cast<float>(static_cast<double>(rand() % 200 / 100) * 0.75 + 5.0);
+        prim->m_radiusSpeed = 0.00050000002f;
+        prim->m_duration = 130;
+        prim->m_longitude = static_cast<float>(rand() % 360);
+        rand(); // Original discarded draw before fixed angular speed.
+        prim->m_longSpeed = 2.0f;
+        prim->m_gravSpeed = -0.2f;
         prim->m_gravAccel = static_cast<float>(prim->m_gravSpeed / static_cast<double>(prim->m_duration) * -0.66666669);
         MatrixIdentity(prim->m_matrix);
         MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
@@ -12224,6 +12288,10 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 61) {
+        ApplyWarpZone();
+        return true;
+    }
     if (m_type == 36) {
         ApplyPortal();
         return true;

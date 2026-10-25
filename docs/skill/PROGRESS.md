@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A original Portal cylinder rendering, after cylinder-state checkpoint `5ed8559`. Effect 36 now reaches reference cylinder geometry/projection/triangle submission with original packed color and hard-coded alpha-pass flag.
+Current work: WP5A original WarpZone emitter and shared circle/orbit binding, after Portal-renderer checkpoint `3be69ff`. Original effect 61 preserves exact reset, profiles, inactive alpha-key storage and four-draw orbit emission.
 
-Next action: port remaining active circle emitters (including original WarpZone) and migrate remaining cylinder callers. Generic particle controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue remaining active emitter/primitive ports, including unmigrated circle/cylinder callers. Generic enabled alpha-key/change-point controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Original WarpZone emitter / circle and orbit binding — 2026-10-26
+
+- Ref/RagEffect.cpp:9095-9186 (0x5FBA00), dispatcher id 61 -> ApplyWarpZone. Equality reset at 145 occurs before all emission. Stored origin is preserved with no actor-position refresh or sound. Zero emits filled disk, shrinking ring and orbit in that order. Shrinking rings emit every 28 frames below 117; orbits every 10 frames.
+- Disk retains duration 158, pattern 1, radius 15, y -1, latitude 90, alpha 0/max 128/rise max*0.1 and fade 148. Its initial segment preserves constructor identity matrix; rotation occurs during update. Ring retains duration 80, inner width 4, X rotation 90, radius 14/speed -0.15000001, alpha 5/max 200/rise 10, fade 64 and initial segment. Original chPoint [20]/chVal1 [0] are stored, but m_chSpeed remains constructor zero; the frame-20 alpha entry is inactive. Generic enabled alpha-key branches remain open.
+- Orbit retains integer-divided radius draw (rand()%200/100)*0.75+5, radius speed 0.00050000002, duration 130, longitude draw, discarded third draw before fixed angular speed 2, gravity -0.2/source acceleration, integer-degree initial matrix and stored offset, discarded integer-divided size draw plus 0.69999999, fade 87, constructor alpha/max 254/flag 1, divisor 4/repeat/one segment. Exact particle1 resources and locks. Four RNG draws per orbit are preserved.
+- UsesReferenceCircle and UsesReferenceParticle now include original effect 61. Shared WarpZone orbit integration, alpha, animation and per-clip rendering apply. Synthetic map WarpZone remains separate and partial.
+
+Validation: release build, six silent C++ suites / 570 checks (422 lifecycle/primitive, 90 rendering, 58 other), six Python tests, four-literal executable byte audit and whitespace check pass. Twenty-one new checks cover profiles/order, stored origin, inactive frame-20 key, RNG/resources, first-frame updates, cadence/threshold/reset and balanced resource cleanup. Corrected the silent primitive double's default matrix to original identity when the initial disk assertion exposed its zero matrix. No media/live acceptance. Approved OldRO SHA-256: `02E3B363DDA8F6C83FC393D93DE12BB432CEB17A215F0DBDA042AA61F80804A7`. Remaining active emitters, generic primitive controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Original Portal cylinder renderer — 2026-10-26
 

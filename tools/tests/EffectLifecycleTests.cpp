@@ -161,7 +161,7 @@ struct CEffectPrim : CGameObject {
     vector3d m_deltaPos, m_deltaPos2, m_deltaPosAccel, m_pos, m_orgPos;
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 0, m_minAlpha = 0;
     bool m_isDisappear = false;
-    matrix m_matrix;
+    matrix m_matrix = [] { matrix value; MatrixIdentity(value); return value; }();
     CSprRes* m_particleSprRes = nullptr;
     CActRes* m_particleActRes = nullptr;
     std::string m_spriteActName,m_spriteSprName;
@@ -176,6 +176,8 @@ struct CEffectPrim : CGameObject {
     std::array<EffectSegmentState,50> m_segments;
 
     std::vector<CTexture*> m_texture;
+    std::vector<float> m_chPoint,m_chVal1;
+    bool m_chSpeed=false;
     bool active = true;
     ~CEffectPrim() override;
     void Init(CRagEffect*, EFFECTPRIMID, const vector3d&);
@@ -244,6 +246,7 @@ struct CRagEffect : CGameObject {
     void ApplyReadyPortal();
     void ApplyPortal();
     void ApplyWarpZone2(const char*);
+    void ApplyWarpZone();
     void ApplySight(float,bool);
     void SpawnSight();
     void SpawnSight2();
@@ -1653,6 +1656,56 @@ int main()
         check(!UpdateReferenceCylinderState(prim) && prim->m_curMotion==3,"reference cylinder nonrepeating animation terminates at equality");
         check(UpdateReferenceCylinderState(prim) && prim->m_curMotion==4,"reference cylinder retains original equality-only termination");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor;actor.m_pos={900,800,700};
+        CRagEffect effect;effect.m_type=61;effect.m_master=&actor;effect.m_duration=1000;effect.m_effectPos={10,50,30};
+        rngValues={199,91,321,9};rngCursor=0;const int draws=rngDraws;waveCalls.clear();g_resMgr.requests.clear();
+        effect.ApplyWarpZone();auto it=effect.m_primList.begin();auto* disk=*it++;auto* ring=*it++;auto* orbit=*it;
+        check(effect.m_primList.size()==3 && disk->m_type==PP_3DCIRCLE && ring->m_type==PP_3DCIRCLE && orbit->m_type==PP_3DPARTICLEORBIT,
+            "original WarpZone emits disk then shrinking ring then orbit at zero");
+        check(disk->UsesReferenceCircle() && ring->UsesReferenceCircle() && orbit->UsesReferenceParticle(),"original WarpZone binds reference circle and orbit paths");
+        check(disk->m_duration==158 && disk->m_pattern==1 && disk->m_radius==15 && disk->m_deltaPos2.y==-1 && disk->m_latitude==90
+            && disk->m_alpha==0 && disk->m_maxAlpha==128 && disk->m_alphaSpeed==static_cast<float>(128*0.1) && disk->m_fadeOutCnt==148,
+            "WarpZone disk preserves source lifetime height radius and alpha profile");
+        check(disk->m_numSegments==1 && disk->m_segments[0].argb==0x00FFFFFF && disk->m_segments[0].transform.m[1][1]==1,
+            "WarpZone disk initializes segment before its first rotation update");
+        check(ring->m_duration==80 && ring->m_innerSize==4 && ring->m_radius==14 && ring->m_radiusSpeed==-0.15000001f
+            && ring->m_deltaPos2.y==-1 && ring->m_alpha==5 && ring->m_maxAlpha==200 && ring->m_alphaSpeed==10 && ring->m_fadeOutCnt==64,
+            "WarpZone ring preserves source shrinking and alpha profile");
+        check(ring->m_chPoint==std::vector<float>{20} && ring->m_chVal1==std::vector<float>{0} && !ring->m_chSpeed,
+            "WarpZone stores original alpha-key arrays without enabling their control flag");
+        check(ring->m_segments[0].argb==0x05FFFFFF && std::fabs(ring->m_segments[0].transform.m[1][2]-1)<0.000001f,
+            "WarpZone ring initial segment retains rotated matrix and alpha five");
+        check(rngDraws==draws+4 && rngCursor==4 && orbit->m_radius==5.75f && orbit->m_longitude==91 && orbit->m_longSpeed==2 && orbit->m_size==0.69999999f,
+            "WarpZone consumes four RNG draws including discarded angular draw and integer-divided size draw");
+        check(orbit->m_duration==130 && orbit->m_radiusSpeed==0.00050000002f && orbit->m_gravSpeed==-0.2f
+            && std::fabs(orbit->m_gravAccel-static_cast<float>(-0.2f/130.0*-0.66666669))<0.000000001f && orbit->m_fadeOutCnt==87,
+            "WarpZone orbit preserves source duration expansion and gravity profile");
+        check(orbit->m_alpha==254 && orbit->m_maxAlpha==254 && orbit->m_renderFlag==1 && orbit->m_animSpeed==4 && orbit->m_repeatAnim && orbit->m_numSegments==1,
+            "WarpZone orbit preserves constructor alpha render flag and looping sprite profile");
+        check(g_resMgr.requests.size()==2 && g_resMgr.requests[0]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr"
+            && g_resMgr.requests[1]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act","WarpZone uses exact sprite then action resources");
+        check(effect.m_effectPos.x==10 && effect.m_effectPos.y==50 && waveCalls.empty(),"WarpZone preserves stored origin and has no sound");
+        disk->OnProcess();ring->OnProcess();orbit->OnProcess();
+        check(disk->m_pos.y==49 && disk->m_size==15 && ring->m_pos.y==49 && std::fabs(ring->m_radius-13.85f)<0.000001f && ring->m_size==4,
+            "WarpZone first circle update preserves filled disk versus ring width");
+        check(orbit->m_stateCnt==1 && orbit->m_longitude==93 && orbit->m_curMotion==1 && orbit->m_segments[0].pos.y<50,
+            "WarpZone orbit follows reference integration segment and animation order");
+        ring->m_stateCnt=20;ring->m_alpha=100;ring->OnProcess();
+        check(ring->m_alphaSpeed==10 && ring->m_alpha==110,"WarpZone inactive frame-twenty alpha key leaves rise unchanged");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=28;effect.ApplyWarpZone();check(effect.m_primList.size()==1 && effect.m_primList.front()->m_type==PP_3DCIRCLE,
+            "WarpZone emits only shrinking ring at twenty-eight");effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=112;effect.ApplyWarpZone();check(effect.m_primList.size()==1,"WarpZone emits last shrinking ring at one-twelve");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=140;effect.ApplyWarpZone();check(effect.m_primList.size()==1 && effect.m_primList.front()->m_type==PP_3DPARTICLEORBIT,
+            "WarpZone stops shrinking rings after source threshold while orbit cadence continues");effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=145;effect.ApplyWarpZone();check(effect.m_stateCnt==0 && effect.m_primList.size()==3,
+            "WarpZone resets exactly at one-forty-five before zero-frame emission");effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=146;effect.ApplyWarpZone();check(effect.m_stateCnt==146 && effect.m_primList.empty(),"WarpZone does not replace equality reset with greater-than clamp");
+        check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"WarpZone releases sprite and action locks through world cleanup");
+        rngValues.clear();rngCursor=0;
     }
     {
         CRagEffect effect;

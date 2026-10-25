@@ -323,6 +323,9 @@ public:
     matrix m_matrix;
     std::array<float, 4> m_param;
     std::vector<CTexture*> m_texture;
+    std::vector<float> m_chPoint;
+    std::vector<float> m_chVal1;
+    bool m_chSpeed = false;
     std::string m_spriteActName;
     std::string m_spriteSprName;
     int m_spriteAction;
@@ -466,6 +469,7 @@ private:
     void ApplyPortal();
     void ApplyReadyPortal2();
     void ApplyWarpZone2(const char* textureName);
+    void ApplyWarpZone();
     void ApplyBlackDevil(const char* textureName);
     void ApplyPortalWind(int variant);
     void ApplyPortalWind402();
