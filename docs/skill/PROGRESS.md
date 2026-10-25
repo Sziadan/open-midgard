@@ -4,10 +4,20 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Berserk control/emission and reachable reference cross-texture update/rendering, after potion checkpoint `81227be`. Effect220 now preserves original STR-result handling, tint window, emission profiles and four-triangle geometry.
+Current work: WP5A IceArrow emitter, reference projectile contact and impact circle, after Berserk checkpoint `a024aa8`. Id26 now preserves original RNG order, parent angles, geometry dimensions, ground contact and ring initialization.
 
-Next action: migrate IceArrow's cross-texture/circle emitter and reachable primitive controls. Other active emitters, generic enabled control branches, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue remaining active emitter/primitive ports, including FireBall and unported texture/particle callers. Generic enabled control branches, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open.
 
+
+## IceArrow emitter / projectile contact / impact ring — 2026-10-26
+
+- Ref/RagEffect.cpp:5892-6006 (0x5F85A0) -> ApplyIceArrow, original dispatcher id26, now direct before generic fallback. Parent position copies every call. Frame12 draws runtime wave variant, plays horizontal listener delta/y0, then multiplies count by10. Projectiles emit at 12+10*n while flight<scaled count; no sound repeats or additional count scaling.
+- Restored source RNG order: first Z spawn draw (+15), then X (+25), first Z aim draw (-2), then X (-2). Longitude and latitude copy to parent effect as well as projectile; added parent latitude storage. Source squared-length float temporary, heading double divisor 3.141592 and integer-degree X/Y matrices are preserved. Removed normalized width/height substitutes: original width11.5/height3.8, speed-2.75, duration70, pattern20, fade50, alpha/max254, divisor4/repeat and GI life0.
+- HighPriest.exe.c:315246-315257 (0x5552D0) -> EffectHeading. Ref/GameActor.cpp:1021 labels a two-coordinate body with the four-coordinate signature and omits the actual overload. Followed raw decompile for four-coordinate math and double return, with wrapping after calculation.
+- Ref/RagEffectPrim.cpp:966-1310 -> shared UpdateReferenceCrossTexture (renamed from UpdateBerserkCrossTexture), bound to id26/220. IceArrow's reachable 0x10 branch propagates offset+displacement to parent before 0x4 ground test. Strict terrainHeight<currentY contact stops speed, replaces counter with duration-25 before outer increment, clears only ground bit and sets parent flag. No repeated queries after contact. Source alpha/animation order retained; broader primitive flags and controls remain open.
+- Parent hit flag consumes once on next effect call, independently of projectile cadence. Impact circle retains duration30, radius speed1.2, source double deceleration, inner10, alpha0/max254/rise max*0.1, fade20 and initial identity segment before first rotation update. Id26 now uses reference circle state/rendering and reference cross-texture geometry/submission.
+
+Validation: release build, six silent C++ suites / 645 checks (487 lifecycle/primitive, 100 rendering, 58 other), six Python tests, three-literal executable byte audit and whitespace check pass. Added 22 checks for ordered RNG/profiles, count/audio timing, parent angles, integer matrices, in-flight/strict-equality/contact/stop behavior, parent delta/flag and impact initialization/state. Wave format 0x71B5E0, icearrow texture 0x71B5CC and ring_blue 0x71943C match executable bytes. No media/live acceptance. Approved OldRO SHA-256: `8CBFAD373FE5015CA6AEB1907684031D675D956369F5C9B18F532557B621B99D`. Other active emitters, generic controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Berserk control / emitter and reachable cross-texture path — 2026-10-26
 

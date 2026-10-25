@@ -547,6 +547,7 @@ private:
     vector3d m_grimToothRemaining;
     float m_param[4];
     float m_emitSpeed;
+    float m_latitude;
     float m_longitude;
     float m_tlvertX;
     float m_tlvertY;

@@ -6147,10 +6147,10 @@ void ProcessReferenceParticleAlpha(CEffectPrim* prim)
     prim->m_argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)), prim->m_tintColor);
 }
 
-// Ref/RagEffectPrim.cpp:966-1310 (0x643340), reachable Berserk profile:
-// pattern zero, no change points, width/height/angular/RGB speeds all zero.
-// Retain its launch matrix for motion/rendering; unused rotMat is identity.
-bool UpdateBerserkCrossTexture(CEffectPrim* prim)
+// Ref/RagEffectPrim.cpp:966-1310 (0x643340), reachable Berserk/IceArrow:
+// fixed width/height/color, no change points. IceArrow enables parent delta
+// propagation and ground contact; both retain the launch matrix for rendering.
+bool UpdateReferenceCrossTexture(CEffectPrim* prim)
 {
     prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
     prim->m_speed += prim->m_accel;
@@ -6161,6 +6161,19 @@ bool UpdateBerserkCrossTexture(CEffectPrim* prim)
     };
     prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
     prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
+    if ((prim->m_pattern & 0x10) != 0) {
+        prim->m_master->AbsorbPrimDelta(AddVec3(prim->m_deltaPos, prim->m_deltaPos2));
+    }
+    if ((prim->m_pattern & 4) != 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_attr
+            && mode->m_world->m_attr->GetHeight(prim->m_pos.x, prim->m_pos.z) < prim->m_pos.y) {
+            prim->m_speed = 0.0f;
+            prim->m_stateCnt = prim->m_duration - 25;
+            prim->m_pattern &= ~4;
+            prim->m_master->SetGroundHitFlag();
+        }
+    }
     ProcessReferenceParticleAlpha(prim);
     if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;
     ++prim->m_curMotion;
@@ -6458,7 +6471,7 @@ void CEffectPrim::SetParticleResources(const char* sprName, const char* actName,
 bool CEffectPrim::UsesReferenceCircle() const
 {
     return m_type == PP_3DCIRCLE && m_master
-        && (m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321);
+        && (m_master->GetEffectType() == 26 || m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321);
 }
 
 bool CEffectPrim::UsesReferenceCylinder() const
@@ -6472,7 +6485,8 @@ bool CEffectPrim::UsesReferenceCylinder() const
 
 bool CEffectPrim::UsesReferenceCrossTexture() const
 {
-    return m_type == PP_3DCROSSTEXTURE && m_master && m_master->GetEffectType() == 220;
+    return m_type == PP_3DCROSSTEXTURE && m_master
+        && (m_master->GetEffectType() == 26 || m_master->GetEffectType() == 220);
 }
 
 bool CEffectPrim::UsesReferenceParticle() const
@@ -6741,7 +6755,7 @@ bool CEffectPrim::ProcessPrimitiveFrame()
         return UpdateFreeParticlePrimitive(this, true, true);
     }
     if (UsesReferenceCrossTexture()) {
-        return UpdateBerserkCrossTexture(this);
+        return UpdateReferenceCrossTexture(this);
     }
     if (m_type == PP_3DCROSSTEXTURE) {
         return UpdateCrossTexturePrimitive(this);
@@ -7393,6 +7407,7 @@ CRagEffect::CRagEffect()
     , m_grimToothRemaining{}
     , m_param{ 0.0f, 0.0f, 0.0f, 0.0f }
     , m_emitSpeed(1.0f)
+    , m_latitude(0.0f)
     , m_longitude(0.0f)
     , m_tlvertX(0.0f)
     , m_tlvertY(0.0f)
@@ -11104,79 +11119,78 @@ bool CRagEffect::ApplyPotionBerserk()
     return false;
 }
 
-float EffectHeading(float fromX, float fromZ, float toX, float toZ)
+// HighPriest.exe.c:315246-315257 (0x5552D0), four-coordinate CalcDir.
+// Ref/GameActor.cpp labels the two-coordinate body with this overload's signature.
+double EffectHeading(float fromX, float fromZ, float toX, float toZ)
 {
-    float angle = std::atan2(toX - fromX, -(toZ - fromZ)) * (180.0f / kPi);
-    if (angle >= 360.0f) {
-        angle -= 360.0f;
-    }
-    if (angle < 0.0f) {
-        angle += 360.0f;
-    }
+    double angle = std::atan2(static_cast<double>(toX) - fromX,
+        -(static_cast<double>(toZ) - fromZ)) / 3.141592 * 180.0;
+    if (angle >= 360.0) angle -= 360.0;
+    if (angle < 0.0) angle += 360.0;
     return angle;
 }
 
+// Ref/RagEffect.cpp:5892-6006 (0x5F85A0), original effect 26.
 void CRagEffect::ApplyIceArrow()
 {
-    // Ref runtime-wave: 0x5F862A (EF_IceArrow%d.wav, rand() % 3 + 1).
     CRenderObject* master = ResolveCurrentMaster();
-    if (master != nullptr) {
-        m_effectPos = master->m_pos;
-        m_cachedPos = master->m_pos;
-    }
+    if (!master) return;
+    m_effectPos = master->m_pos;
     if (m_stateCnt == 12) {
-        m_count *= 10;
         char waveName[64];
-        std::snprintf(waveName, sizeof(waveName), "effect\\EF_IceArrow%d.wav", (rand() % 3) + 1);
-        vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
-        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                wavePos.y = mode->m_world->m_player->m_pos.y;
-            }
+        std::snprintf(waveName, sizeof(waveName), "effect\\EF_IceArrow%d.wav", rand() % 3 + 1);
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave(waveName, m_effectPos.x - listener.x, 0.0f, m_effectPos.z - listener.z, 250, 40, 1.0f);
         }
-        TryPlayEffectWaveAt(wavePos, waveName);
+        m_count *= 10;
     }
     const int flight = m_stateCnt - 12;
     if (m_stateCnt >= 12 && flight % 10 == 0 && flight < m_count) {
         CEffectPrim* prim = LaunchEffectPrim(PP_3DCROSSTEXTURE, vector3d{});
-        if (prim != nullptr) {
-            prim->m_duration = 70;
-            prim->m_pattern = 20;
-            prim->m_alpha = 254.0f;
-            prim->m_maxAlpha = 254.0f;
-            prim->m_deltaPos2.x = static_cast<float>(rand() % 10 + 25);
-            prim->m_deltaPos2.y = -60.0f;
-            prim->m_deltaPos2.z = static_cast<float>(rand() % 10 + 15);
-            const float aimX = static_cast<float>(rand() % 4 - 2);
-            const float aimZ = static_cast<float>(rand() % 4 - 2);
-            prim->m_longitude = -EffectHeading(prim->m_deltaPos2.x, prim->m_deltaPos2.z, aimX, aimZ);
-            const float horizontal = std::sqrt(prim->m_deltaPos2.x * prim->m_deltaPos2.x + prim->m_deltaPos2.z * prim->m_deltaPos2.z);
-            prim->m_latitude = EffectHeading(-std::fabs(prim->m_deltaPos2.y), horizontal, 0.0f, 0.0f);
-            MatrixIdentity(prim->m_matrix);
-            MatrixAppendXRotation(prim->m_matrix, prim->m_latitude * (kPi / 180.0f));
-            MatrixAppendYRotation(prim->m_matrix, prim->m_longitude * (kPi / 180.0f));
-            prim->m_speed = -2.75f;
-            prim->m_size = 11.5f / 34.0f;
-            prim->m_heightSize = 3.8f / 12.0f;
-            prim->m_fadeOutCnt = prim->m_duration - 20;
-            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\icearrow.tga", false));
-        }
+        prim->m_duration = 70;
+        prim->m_pattern = 20;
+        const int spawnZ = rand() % 10;
+        const int spawnX = rand() % 10;
+        prim->m_deltaPos2 = {static_cast<float>(spawnX + 25), -60.0f, static_cast<float>(spawnZ + 15)};
+        const int aimZ = rand() % 4;
+        const int aimX = rand() % 4 - 2;
+        prim->m_longitude = static_cast<float>(-EffectHeading(prim->m_deltaPos2.x, prim->m_deltaPos2.z,
+            static_cast<float>(aimX), static_cast<float>(aimZ - 2)));
+        m_longitude = prim->m_longitude;
+        const double x = std::fabs(static_cast<double>(prim->m_deltaPos2.x));
+        const double z = std::fabs(static_cast<double>(prim->m_deltaPos2.z));
+        const float squared = static_cast<float>(x * x + z * z);
+        const float horizontal = static_cast<float>(std::sqrt(static_cast<double>(squared)));
+        prim->m_latitude = static_cast<float>(EffectHeading(-std::fabs(prim->m_deltaPos2.y), horizontal, 0.0f, 0.0f));
+        m_latitude = prim->m_latitude;
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_speed = -2.75f;
+        prim->m_widthSize = 11.5f;
+        prim->m_heightSize = 3.8f;
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+        prim->m_fadeOutCnt = prim->m_duration - 20;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\icearrow.tga", false));
+        prim->m_gi[0].life = 0;
     }
     if (m_flag != 0) {
         m_flag = 0;
         CEffectPrim* ring = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
-        if (ring != nullptr) {
-            ring->m_duration = 30;
-            ring->m_latitude = 90.0f;
-            ring->m_radiusSpeed = 1.2f;
-            ring->m_radiusAccel = ring->m_radiusSpeed / static_cast<float>(ring->m_duration + 40) * -2.0f;
-            ring->m_innerSize = 10.0f;
-            ring->m_alpha = 0.0f;
-            ring->m_maxAlpha = 254.0f;
-            ring->m_alphaSpeed = ring->m_maxAlpha * 0.1f;
-            ring->m_fadeOutCnt = ring->m_duration - 10;
-            ring->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
-        }
+        ring->m_duration = 30;
+        ring->m_latitude = 90.0f;
+        ring->m_radiusSpeed = 1.2f;
+        ring->m_radiusAccel = static_cast<float>(ring->m_radiusSpeed / static_cast<double>(ring->m_duration + 40) * -2.0);
+        ring->m_innerSize = 10.0f;
+        ring->m_alpha = 0.0f; ring->m_maxAlpha = 254.0f;
+        ring->m_alphaSpeed = static_cast<float>(ring->m_maxAlpha * 0.1);
+        ring->m_fadeOutCnt = ring->m_duration - 10;
+        ring->m_numSegments = 1;
+        ShiftCircleSegments(ring);
+        ring->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
     }
 }
 
@@ -12382,6 +12396,10 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 26) {
+        ApplyIceArrow();
+        return true;
+    }
     if (m_type == 218 || m_type == 219) return ProcessPotionConcentration();
     if (m_type == 220) return ApplyPotionBerserk();
     if (m_type == 221) {
@@ -12446,7 +12464,6 @@ bool CRagEffect::ProcessEffectFrame()
     const bool electric = dispatchHandler && m_type == 432;
     const bool electric2 = dispatchHandler && m_type == 433;
     const bool attackEnergy2 = dispatchHandler && m_type == 438;
-    const bool iceArrow = dispatchHandler && m_type == 26;
     const bool healBlue = dispatchHandler && m_type == 253;
     const bool bottomMusic = dispatchHandler && (m_type == 278 || m_type == 279 || m_type == 282 || m_type == 286
         || m_type == 289 || m_type == 291 || m_type == 293 || m_type == 674);
@@ -12852,10 +12869,7 @@ bool CRagEffect::ProcessEffectFrame()
     if (dispatchHandler && m_type == 248) {
         ApplyProvidence("effect\\ring_yellow.tga");
     }
-    if (iceArrow) {
-        ApplyIceArrow();
-    }
-    if (dispatchHandler && !tierHandled && !textureCard && !kyrieGuard && !bodyLight442 && !bodyLight446 && !bodyLight449 && !actorLight && !portalWind402 && !blackDevil && !bodyLightBit && !blindLevel && !beginCast && !bottomLight && !bottomOut && !blastMine && !healBlue && !bottomMusic && !chemicalSlash && !giExplosion && !acidDemon && !flowerCast && !defender && !mapPillar && !volcano && !bottomVolcano && !wind && !stormKick && !halfSphere && !attackEnergy && !electric && !electric2 && !attackEnergy2 && !iceArrow) {
+    if (dispatchHandler && !tierHandled && !textureCard && !kyrieGuard && !bodyLight442 && !bodyLight446 && !bodyLight449 && !actorLight && !portalWind402 && !blackDevil && !bodyLightBit && !blindLevel && !beginCast && !bottomLight && !bottomOut && !blastMine && !healBlue && !bottomMusic && !chemicalSlash && !giExplosion && !acidDemon && !flowerCast && !defender && !mapPillar && !volcano && !bottomVolcano && !wind && !stormKick && !halfSphere && !attackEnergy && !electric && !electric2 && !attackEnergy2) {
         switch (m_handler) {
         case Handler::EzStr:
             if (m_type == 185) {

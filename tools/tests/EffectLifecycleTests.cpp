@@ -134,7 +134,12 @@ struct CAbleToMakeEffect : CRenderObject {
     int launches = 0;
 };
 struct CSkill : CGameObject {};
+struct SilentAttr {
+    float height=1000,lastX=0,lastZ=0;int calls=0;
+    float GetHeight(float x,float z){++calls;lastX=x;lastZ=z;return height;}
+};
 struct CWorld {
+    SilentAttr* m_attr=nullptr;
     std::list<CGameObject*> m_gameObjectList;
     std::list<CSkill*> m_skillList;
     CRenderObject* m_player = nullptr;
@@ -153,7 +158,7 @@ void UpdateSuperAngelPrimitive(CEffectPrim*);
 bool UpdateLinearReferenceParticle(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
-bool UpdateBerserkCrossTexture(CEffectPrim*);
+bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateWarpZoneOrbit(CEffectPrim*);
 struct CEffectPrim : CGameObject {
     Probe deaths{ primitiveDeaths };
@@ -204,7 +209,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
-        if (UsesReferenceCrossTexture() && !UpdateBerserkCrossTexture(this)) return false;
+        if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
         if (UsesReferenceCylinder() && !UpdateReferenceCylinderState(this)) return false;
         if (m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle() && !UpdateWarpZoneOrbit(this)) return false;
         if (m_type == PP_3DPARTICLE && UsesReferenceParticle() && !UpdateLinearReferenceParticle(this)) return false;
@@ -230,6 +235,7 @@ struct CRagEffect : CGameObject {
     bool m_ownsMaster = false, m_masterIsActor = false, m_isWorldEffect = false;
     u32 m_masterActorGid = 0;
     int m_type = 0, m_stateCnt = 0, m_duration = 3, m_count = 0, m_level = 0;
+    float m_latitude=0;
     float m_longitude = 0, m_param[4]{}, m_tlvertX=0, m_tlvertY=0, m_tlvertZ=0;
     vector3d m_strScreenOffset, m_strAnchorPosition, m_effectPos, m_cachedPos, m_deltaPos, m_deltaPos2, m_targetPos;
     bool m_hasTargetPos = false;
@@ -258,6 +264,7 @@ struct CRagEffect : CGameObject {
     void ApplyPortal();
     void ApplyWarpZone2(const char*);
     void ApplyWarpZone();
+    void ApplyIceArrow();
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -292,6 +299,8 @@ struct CRagEffect : CGameObject {
     CEffectPrim* LaunchEffectPrim(EFFECTPRIMID, const vector3d&);
     void DiscardPrimitive(CEffectPrim*);
     void ClearPrims();
+    void AbsorbPrimDelta(const vector3d& delta){m_deltaPos=delta;}
+    void SetGroundHitFlag(){m_flag=1;}
     void SendMsg(CGameObject*, int, msgparam_t, msgparam_t, msgparam_t) override;
 };
 
@@ -1816,6 +1825,66 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,50,30};listener.m_pos={2,500,4};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;auto* oldAttr=g_world.m_attr;SilentAttr attr;g_world.m_attr=&attr;
+        CRagEffect effect;effect.m_type=26;effect.m_master=&actor;effect.m_duration=200;effect.m_count=2;
+        waveCalls.clear();const int draws=rngDraws;effect.m_stateCnt=11;effect.ApplyIceArrow();
+        check(effect.m_primList.empty() && waveCalls.empty() && effect.m_count==2 && effect.m_effectPos.y==50,
+            "IceArrow copies actor before frame twelve without emission count scaling or audio");
+        rngValues={2,1,8,3,0};rngCursor=0;effect.m_stateCnt=12;effect.ApplyIceArrow();auto* arrow=effect.m_primList.front();
+        check(effect.m_count==20 && effect.m_primList.size()==1 && waveCalls.size()==1 && waveCalls[0].name=="effect\\EF_IceArrow3.wav",
+            "IceArrow selects runtime wave and scales count on frame twelve before projectile gate");
+        check(waveCalls[0].x==8 && waveCalls[0].y==0 && waveCalls[0].z==26 && waveCalls[0].frameRng==draws+1,
+            "IceArrow wave uses horizontal actor-listener delta before projectile RNG");
+        check(rngDraws==draws+5 && rngCursor==5 && arrow->m_deltaPos2.x==33 && arrow->m_deltaPos2.y==-60 && arrow->m_deltaPos2.z==16,
+            "IceArrow draws Z spawn before X and consumes wave plus four projectile draws");
+        const float expectedLongitude=static_cast<float>(-EffectHeading(33,16,-2,1));
+        const float expectedLatitude=static_cast<float>(EffectHeading(-60,static_cast<float>(std::sqrt(1345.0)),0,0));
+        check(arrow->m_longitude==expectedLongitude && arrow->m_latitude==expectedLatitude && effect.m_longitude==expectedLongitude && effect.m_latitude==expectedLatitude,
+            "IceArrow draws Z aim before X and stores source longitude and latitude on both primitive and effect");
+        matrix expected;MatrixIdentity(expected);MatrixAppendXRotation(expected,GetRadian(static_cast<int>(expectedLatitude)));
+        MatrixAppendYRotation(expected,GetRadian(static_cast<int>(expectedLongitude)));
+        check(std::fabs(arrow->m_matrix.m[2][0]-expected.m[2][0])<0.000001f && std::fabs(arrow->m_matrix.m[2][1]-expected.m[2][1])<0.000001f,
+            "IceArrow truncates both source angles before launch matrix construction");
+        check(arrow->m_type==PP_3DCROSSTEXTURE && arrow->UsesReferenceCrossTexture() && arrow->m_duration==70 && arrow->m_pattern==20
+            && arrow->m_speed==-2.75f && arrow->m_widthSize==11.5f && arrow->m_heightSize==3.8f && arrow->m_fadeOutCnt==50,
+            "IceArrow preserves original cross-texture dimensions duration motion pattern and fade");
+        check(arrow->m_alpha==254 && arrow->m_maxAlpha==254 && arrow->m_renderFlag==1 && arrow->m_animSpeed==4 && arrow->m_repeatAnim
+            && arrow->m_gi[0].life==0 && std::string(g_texMgr.lastPath)=="effect\\icearrow.tga","IceArrow retains constructor profile and exact texture");
+        arrow->m_alphaDelta=1;arrow->OnProcess();
+        check(attr.calls==1 && attr.lastX==arrow->m_pos.x && attr.lastZ==arrow->m_pos.z && effect.m_flag==0 && arrow->m_pattern==20,
+            "IceArrow queries ground after world position integration and retains in-flight control above terrain threshold");
+        check(effect.m_deltaPos.x==arrow->m_deltaPos.x+33 && effect.m_deltaPos.y==arrow->m_deltaPos.y-60 && effect.m_deltaPos.z==arrow->m_deltaPos.z+16,
+            "IceArrow propagates offset plus accumulated displacement to parent before collision");
+        check(arrow->m_stateCnt==1 && arrow->m_curMotion==0 && arrow->m_argb==0xFEFFFFFF,"IceArrow frame-zero state keeps original alpha and wrapped texture motion");
+        attr.height=arrow->m_pos.y;arrow->m_speed=0;arrow->OnProcess();
+        check(arrow->m_pattern==20 && effect.m_flag==0,"IceArrow ground equality does not trigger strict less-than contact");
+        attr.height=-1000;arrow->m_speed=-2.75f;arrow->OnProcess();
+        check(arrow->m_speed==0 && arrow->m_pattern==16 && effect.m_flag==1 && arrow->m_stateCnt==46,
+            "IceArrow contact clears only ground bit sets hit flag and replaces state with duration-minus-twenty-five before increment");
+        const int queries=attr.calls;const vector3d stopped=arrow->m_deltaPos;arrow->OnProcess();
+        check(attr.calls==queries && arrow->m_deltaPos.x==stopped.x && arrow->m_deltaPos.y==stopped.y && arrow->m_deltaPos.z==stopped.z,
+            "IceArrow stops motion and further terrain queries after first hit");
+        effect.m_stateCnt=13;effect.ApplyIceArrow();auto* ring=effect.m_primList.back();
+        check(effect.m_primList.size()==2 && ring->m_type==PP_3DCIRCLE && ring->UsesReferenceCircle() && effect.m_flag==0,
+            "IceArrow consumes hit flag and emits reference circle on next effect call independent of flight gate");
+        check(ring->m_duration==30 && ring->m_latitude==90 && ring->m_radiusSpeed==1.2f
+            && ring->m_radiusAccel==static_cast<float>(1.2f/70.0*-2.0) && ring->m_innerSize==10 && ring->m_alpha==0
+            && ring->m_alphaSpeed==static_cast<float>(254*0.1) && ring->m_fadeOutCnt==20,
+            "IceArrow impact circle preserves exact expansion and fade profile");
+        check(ring->m_numSegments==1 && ring->m_segments[0].argb==0x00FFFFFF && ring->m_segments[0].transform.m[1][1]==1
+            && std::string(g_texMgr.lastPath)=="effect\\ring_blue.tga","IceArrow impact initializes source identity segment before rotation update");
+        ring->m_alphaDelta=1;ring->OnProcess();check(ring->m_pos.y==50 && ring->m_size==ring->m_radius && ring->m_alpha>0,
+            "IceArrow impact circle uses reference state without terrain-height substitution");
+        effect.ApplyIceArrow();check(effect.m_primList.size()==2,"IceArrow does not duplicate consumed impact flag");
+        rngValues={4,7,2,1};rngCursor=0;actor.m_pos={20,60,40};effect.m_stateCnt=22;effect.ApplyIceArrow();
+        check(effect.m_primList.size()==3 && waveCalls.size()==1 && effect.m_effectPos.y==60 && rngCursor==4,
+            "IceArrow emits second projectile ten frames later without repeating audio or count scaling");
+        effect.m_stateCnt=32;effect.ApplyIceArrow();check(effect.m_primList.size()==3,"IceArrow count bound excludes flight equal to scaled count");
+        check(std::fabs(EffectHeading(0,0,1,0)-90.00001872397214)<0.000001,"four-coordinate heading preserves original double divisor constant");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;g_world.m_attr=oldAttr;g_world.m_player=oldPlayer;
     }
     {
         CRagEffect effect;
