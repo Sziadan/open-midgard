@@ -44,6 +44,9 @@ struct CEffectPrim {
     u32 m_renderFlag=5;
     float m_roll=0,m_size=1,m_arcAngle=36;
     matrix m_matrix;
+    vector3d m_pos;
+    float m_innerSize=0,m_outerSize=0,m_heightSize=0;
+    u32 m_argb=0xFFFFFFFF;
     std::vector<CTexture*> m_texture;
     std::array<EffectSegmentState,50> m_segments;
 };
@@ -195,6 +198,56 @@ int main() {
     SprImg failed;failed.rgba=rgba.rgba;g_texMgr.fail=true;
     check(ResolveParticleTexture(failed,sprites.m_pal)==nullptr && failed.tex==nullptr,"failed upload leaves no dummy texture cached");
     g_texMgr.fail=false;
+    {
+        CTexture secondTexture;
+        CEffectPrim cylinder;cylinder.m_arcAngle=90;cylinder.m_innerSize=2;cylinder.m_outerSize=4;cylinder.m_heightSize=10;
+        cylinder.m_pos={10,20,100};cylinder.m_texture={&g_texMgr.texture,&secondTexture};cylinder.m_curMotion=1;
+        cylinder.m_argb=0x12345678;cylinder.m_renderFlag=0x205;
+        for(int i=0;i<4;++i)cylinder.m_matrix.m[i][i]=1;
+        cylinder.m_matrix.m[3][0]=3;cylinder.m_matrix.m[3][1]=4;cylinder.m_matrix.m[3][2]=5;
+        auto renderCylinder=[&](){g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpEmissiveList.clear();
+            g_renderer.m_rpAlphaNoDepthList.clear();RenderReferenceCylinder(cylinder,view);};
+        auto matches=[&](const tlvertex3d& vertex,vector3d point){tlvertex3d expected;ProjectReferenceEffectVertex(point,view,expected);
+            return near(vertex.x,expected.x)&&near(vertex.y,expected.y)&&near(vertex.oow,expected.oow)&&near(vertex.z,expected.z);};
+        renderCylinder();check(g_renderer.m_rpAlphaList.size()==8,"cylinder submits two independent triangles for each of four wedges");
+        auto* first=g_renderer.m_rpAlphaList[0].second;auto* second=g_renderer.m_rpAlphaList[1].second;
+        check(matches(first->m_verts[0],{15,24,105}) && matches(first->m_verts[1],{17,14,105}) && matches(first->m_verts[2],{13,24,107}),
+            "cylinder first triangle preserves lower-start upper-start lower-end order and negative local height");
+        check(matches(second->m_verts[0],{13,24,107}) && matches(second->m_verts[1],{17,14,105}) && matches(second->m_verts[2],{13,14,109}),
+            "cylinder second triangle preserves lower-end upper-start upper-end order");
+        check(first->m_verts[0].tu==0 && first->m_verts[0].tv==1 && first->m_verts[1].tu==0 && first->m_verts[1].tv==0
+            && first->m_verts[2].tu==0.25f && first->m_verts[2].tv==1,"cylinder first triangle preserves source quarter-step UVs");
+        check(second->m_verts[0].tu==0.25f && second->m_verts[0].tv==1 && second->m_verts[1].tu==0 && second->m_verts[1].tv==0
+            && second->m_verts[2].tu==0.25f && second->m_verts[2].tv==0,"cylinder second triangle preserves source quarter-step UVs");
+        check(first->tex==&secondTexture && second->tex==&secondTexture,"cylinder selects current texture motion instead of texture zero");
+        check(first->m_verts[0].color==0x12345678 && first->m_verts[1].color==0x12345678 && second->m_verts[2].color==0x12345678,
+            "cylinder uses stored primitive packed color without reconstructing alpha");
+        check(first->numVerts==3 && first->primType==D3DPT_TRIANGLELIST && first->m_verts[0].specular==0xFF000000
+            && first->srcAlphaMode==5 && first->destAlphaMode==6,"cylinder retains independent triangle projection and ordinary alpha blend");
+        check(g_renderer.m_rpAlphaOPList.empty() && g_renderer.m_rpEmissiveList.empty() && g_renderer.m_rpAlphaNoDepthList.empty(),
+            "cylinder hard-coded flag one ignores primitive renderFlag bits");
+        check(near(g_renderer.m_rpAlphaList[0].first,first->m_verts[0].oow),"cylinder queue uses original first-vertex sort depth");
+        cylinder.m_matrix.m[0][0]=0;cylinder.m_matrix.m[0][2]=1;cylinder.m_matrix.m[2][0]=-1;cylinder.m_matrix.m[2][2]=0;
+        renderCylinder();check(matches(g_renderer.m_rpAlphaList[0].second->m_verts[0],{13,24,107})
+            && matches(g_renderer.m_rpAlphaList[0].second->m_verts[1],{13,14,109})
+            && matches(g_renderer.m_rpAlphaList[0].second->m_verts[2],{11,24,105}),"cylinder uses full current primitive matrix before adding position");
+        cylinder.m_matrix.m[0][0]=1;cylinder.m_matrix.m[0][2]=0;cylinder.m_matrix.m[2][0]=0;cylinder.m_matrix.m[2][2]=1;
+        cylinder.m_arcAngle=36;renderCylinder();check(g_renderer.m_rpAlphaList.size()==20 && g_renderer.m_rpAlphaList[8].second->m_verts[0].tu==0,
+            "Portal cylinder thirty-six-degree wedges wrap UV phase every fourth wedge");
+        cylinder.m_arcAngle=72.5f;renderCylinder();check(g_renderer.m_rpAlphaList.size()==8,"cylinder retains floating loop progression for fractional arc");
+        const int end=static_cast<int>(3*72.5f+72.5f);
+        check(matches(g_renderer.m_rpAlphaList.back().second->m_verts[0],{13+2*g_cosTable[end],24,105+2*g_sinTable[end]}),
+            "cylinder fractional loop truncates table index without truncating accumulated angle");
+        cylinder.m_argb=0;cylinder.m_arcAngle=90;renderCylinder();check(g_renderer.m_rpAlphaList.size()==8 && g_renderer.m_rpAlphaList[0].second->m_verts[0].color==0,
+            "cylinder retains source zero-alpha triangle submissions");
+        cylinder.m_curMotion=2;renderCylinder();check(g_renderer.m_rpAlphaList.empty(),"invalid cylinder texture motion emits no substitute");
+        cylinder.m_curMotion=0;cylinder.m_texture[0]=&CTexMgr::s_dummy_texture;renderCylinder();check(g_renderer.m_rpAlphaList.empty(),"missing cylinder texture emits no substitute");
+        cylinder.m_texture[0]=&g_texMgr.texture;cylinder.m_arcAngle=0;renderCylinder();check(g_renderer.m_rpAlphaList.empty(),"invalid cylinder arc emits no replacement geometry");
+        cylinder.m_arcAngle=360;g_cosTable[360]=0.75f;renderCylinder();
+        check(g_renderer.m_rpAlphaList.size()==2 && matches(g_renderer.m_rpAlphaList[0].second->m_verts[2],{14.5f,24,105+2*g_sinTable[360]}),
+            "cylinder endpoint directly reads table index three-sixty");
+        g_cosTable[360]=GetCos(360);
+    }
     {
         CEffectPrim circle;circle.m_numSegments=2;circle.m_size=2;circle.m_arcAngle=90;circle.m_renderFlag=0x201;
         circle.m_texture.push_back(&g_texMgr.texture);

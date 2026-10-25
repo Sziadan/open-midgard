@@ -2065,6 +2065,52 @@ void RenderReferenceCircle(const CEffectPrim& prim, const matrix& view)
     }
 }
 
+// Ref/RagEffectPrim.cpp:3521-3801 (0x647E50), original full cylinder.
+// Current primitive matrix/position and ProcessAlpha's stored color; source
+// submits flag 1 regardless of m_renderFlag. Unlike circles, angles stay float.
+void RenderReferenceCylinder(const CEffectPrim& prim, const matrix& view)
+{
+    if (prim.m_curMotion < 0 || prim.m_curMotion >= static_cast<int>(prim.m_texture.size())) return;
+    CTexture* texture = prim.m_texture[static_cast<size_t>(prim.m_curMotion)];
+    if (!texture || texture == &CTexMgr::s_dummy_texture) return;
+    if (!(prim.m_arcAngle > 0.0f && prim.m_arcAngle <= 360.0f)) return;
+    const float stop = 360.0f - prim.m_arcAngle;
+    float angle = 0.0f, u = 0.0f;
+    for (;;) {
+        const double next = static_cast<double>(angle) + prim.m_arcAngle;
+        const int firstAngle = static_cast<int>(angle), nextAngle = static_cast<int>(next);
+        if (nextAngle > 360) return;
+        const auto place = [&](int degrees, bool top, bool end) {
+            const double radius = top ? prim.m_outerSize : prim.m_innerSize;
+            // Source stores the top cosine products to float before matrix use.
+            const double x = top ? static_cast<float>(g_cosTable[degrees] * radius) : g_cosTable[degrees] * radius;
+            const double z = g_sinTable[degrees] * radius;
+            const double y = top ? -static_cast<double>(prim.m_heightSize) : 0.0;
+            const vector3d transformed{
+                static_cast<float>(z * prim.m_matrix.m[2][0] + y * prim.m_matrix.m[1][0] + x * prim.m_matrix.m[0][0] + prim.m_matrix.m[3][0]),
+                static_cast<float>((top && end
+                    ? x * prim.m_matrix.m[0][1] + z * prim.m_matrix.m[2][1] + y * prim.m_matrix.m[1][1]
+                    : z * prim.m_matrix.m[2][1] + y * prim.m_matrix.m[1][1] + x * prim.m_matrix.m[0][1]) + prim.m_matrix.m[3][1]),
+                static_cast<float>((top && end
+                    ? x * prim.m_matrix.m[0][2] + z * prim.m_matrix.m[2][2] + y * prim.m_matrix.m[1][2]
+                    : z * prim.m_matrix.m[2][2] + y * prim.m_matrix.m[1][2] + x * prim.m_matrix.m[0][2]) + prim.m_matrix.m[3][2])
+            };
+            return AddVec3(transformed, prim.m_pos);
+        };
+        const vector3d a = place(firstAngle, false, false), b = place(nextAngle, false, true);
+        const vector3d c = place(firstAngle, true, false), d = place(nextAngle, true, true);
+        const vector3d first[3] = {a,c,b}, second[3] = {b,c,d};
+        const float nextU = u + 0.25f;
+        const float firstUV[3][2] = {{u,1.0f},{u,0.0f},{nextU,1.0f}};
+        const float secondUV[3][2] = {{nextU,1.0f},{u,0.0f},{nextU,0.0f}};
+        SubmitReferenceEffectTriangle(first, view, texture, prim.m_argb, firstUV, 1);
+        SubmitReferenceEffectTriangle(second, view, texture, prim.m_argb, secondUV, 1);
+        u = nextU >= 1.0f ? 0.0f : nextU;
+        angle = static_cast<float>(next);
+        if (next > stop) break;
+    }
+}
+
 void RenderCircleLayer(const CEffectPrim& prim,
     const EffectSegmentState& state,
     matrix& viewMatrix,
@@ -2521,6 +2567,7 @@ CEffectPrim::CEffectPrim()
     , m_outerSize(0.0f)
     , m_heightSize(0.0f)
     , m_maxHeightSize(100.0f)
+    , m_argb(0xFFFFFFFFu)
     , m_heightSpeed(0.0f)
     , m_heightAccel(0.0f)
     , m_longitude(0.0f)
@@ -6060,6 +6107,7 @@ void ProcessReferenceParticleAlpha(CEffectPrim* prim)
     prim->m_alpha += prim->m_alphaSpeed;
     if (prim->m_alpha < prim->m_minAlpha) prim->m_alpha = prim->m_minAlpha;
     if (prim->m_alpha > prim->m_maxAlpha) prim->m_alpha = prim->m_maxAlpha;
+    prim->m_argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)), prim->m_tintColor);
 }
 
 // Ref/RagEffectPrim.cpp:288-365 (0x6443E0), Prim3DCylinder.
@@ -6665,6 +6713,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (UsesReferenceCircle()) {
         RenderReferenceCircle(*this, *viewMatrix);
+        return;
+    }
+    if (UsesReferenceCylinder()) {
+        RenderReferenceCylinder(*this, *viewMatrix);
         return;
     }
     if (UsesReferenceParticle()) {

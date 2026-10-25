@@ -295,6 +295,7 @@ public:
     float m_outerSize;
     float m_heightSize;
     float m_maxHeightSize;
+    u32 m_argb;
     float m_heightSpeed;
     float m_heightAccel;
     float m_longitude;

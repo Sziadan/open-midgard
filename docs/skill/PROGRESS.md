@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A original Portal cylinder state, after emitter/circle checkpoint `e922ca9`. Effect 36 now uses the reference cylinder integration and animation path; cylinder renderer migration remains open.
+Current work: WP5A original Portal cylinder rendering, after cylinder-state checkpoint `5ed8559`. Effect 36 now reaches reference cylinder geometry/projection/triangle submission with original packed color and hard-coded alpha-pass flag.
 
-Next action: port original Render3DCylinder geometry/submission for the migrated Portal caller, then remaining active circle emitters. Generic particle controls, map scheduling, resource/cache and full renderer/backend acceptance remain open.
+Next action: port remaining active circle emitters (including original WarpZone) and migrate remaining cylinder callers. Generic particle controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Original Portal cylinder renderer — 2026-10-26
+
+- Ref/RagEffectPrim.cpp:3521-3801 (0x647E50) -> RenderReferenceCylinder, bound through UsesReferenceCylinder for original effect 36. Uses primitive position/current matrix, inner bottom radius, outer top radius and negative local height. Two independent triangles per wedge preserve source order (lower start / upper start / lower end, then lower end / upper start / upper end), quarter-step UVs with four-wedge wrap and current texture motion.
+- Preserved floating-angle progression and truncated direct trig-table indices, including endpoint 360. Circle's separate integer-loop semantics remain distinct. Top cosine products round to source float temporaries; end-top y/z retain the original matrix-addition order. Uses shared original projection and triangle queue with hard-coded flag 1, regardless of primitive renderFlag. No invented tint, additive override or zero-alpha rejection.
+- Ref ProcessAlpha:2326-2329 -> shared ProcessReferenceParticleAlpha now stores packed m_argb after clamping. Added original constructor default 0xFFFFFFFF (Ref:5489). Cylinder rendering reads that stored value, including before the first update, rather than reconstructing color from current alpha during render.
+
+Validation: release build, six silent C++ suites / 549 checks (401 lifecycle/primitive, 90 rendering, 58 other), six Python tests and whitespace check pass. Added 19 geometry/submission checks and one packed-color lifecycle check. Initial queue-depth assertion incorrectly expected device z; corrected the test to the original first-vertex oow contract already implemented in AddReferenceEffectTriangle. No media/live acceptance or new asset literals. Approved OldRO SHA-256: `7EA88B1205D10F3AA1A42F7ADD53AD4D116B6462627A18BD79C820E8EFB172ED`. This closes the Portal cylinder geometry/submission subset; other cylinder callers, remaining circle emitters, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Original Portal cylinder state — 2026-10-26
 

@@ -172,7 +172,7 @@ struct CEffectPrim : CGameObject {
     float m_gravSpeed=0,m_gravAccel=0,m_latiSpeed=0;
     vector3d m_speed3d;
     float m_longSpeed=0,m_longAccel=0,m_radiusSpeed=0,m_radiusAccel=0,m_innerSpeed=0,m_innerAccel=0,m_innerSize=0;
-    u32 m_tintColor=0xFFFFFF;
+    u32 m_tintColor=0xFFFFFF,m_argb=0xFFFFFFFF;
     std::array<EffectSegmentState,50> m_segments;
 
     std::vector<CTexture*> m_texture;
@@ -1632,6 +1632,7 @@ int main()
         check(prim->m_alpha==static_cast<float>(128*0.16666667),"reference cylinder applies original alpha rise on zero");
         for(int i=0;i<6;++i)prim->OnProcess();
         check(prim->m_alpha==128,"reference cylinder clamps alpha rise to original maximum");
+        check(prim->m_argb==0x80FFFFFF,"reference alpha update stores packed cylinder color for rendering");
         effect.m_effectPos={20,70,40};prim->OnProcess();
         check(prim->m_pos.x==20 && prim->m_pos.y==70 && prim->m_pos.z==40,"reference cylinder follows persistent effect origin without terrain substitution");
         prim->m_stateCnt=114;prim->OnProcess();
