@@ -500,6 +500,7 @@ private:
     void SpawnIncAgility();
     void SpawnEnchantPoison();
     void SpawnEnchantPoison2();
+    void ProcessEnchantPoison2();
     void SpawnBlessing();
     void SpawnSmoke();
     void SpawnTorch();

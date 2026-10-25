@@ -4,9 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-25
-Current work: WP5A Smoke (44) and Torch (47) particle migration. Ruwach is checkpointed in `84f9321`; Smoke/Torch now join it and SuperAngel on the reference particle renderer. Handler and renderer migration remain partial.
+Current work: WP5A EnchantPoison / EnchantPoison2 particles (20/125/493). Smoke/Torch are checkpointed in `5ee6ecd`; poison now joins the reference linear particle state and per-clip renderer. Handler and renderer migration remain partial.
 
-Next action: migrate the remaining sprite-particle emitters, starting with poison particles and then Blessing/Sight. Preserve each caller's reference assets, constructor defaults, motion/alpha patterns and renderer binding; remove legacy baked-motion routes as each migration completes. Generic particle control branches, map-emitter initialization/scheduling, resource-loader/cache parity, common renderer/backend behavior and unfinished packages/acceptance remain open.
+Next action: migrate Blessing/Sight sprite-particle paths, including their reference assets, constructor defaults, motion/alpha patterns and renderer binding. Remove legacy baked-motion routes as each migration completes. Generic particle control branches, map-emitter initialization/scheduling, resource-loader/cache parity, common renderer/backend behavior and unfinished packages/acceptance remain open.
+
+## Poison particle migration — 2026-10-25
+
+- Effects 20/125 now emit the original particle3 sprite/action every fifth frame; effect 493 emits every third frame with its distinct speed/size profile. Restored angle/radius/speed/size RNG order, spawn Y rotation followed by replacement X-90 motion matrix, exact source arithmetic, maximum alpha 254, fade at 32, animation divisor 4, repeat and one segment. Removed particle2 fallback and poison-specific approximation diagnostics.
+- Both helpers preserve the stored effect origin. Sounds use effect-minus-listener x/z with y zero and original volume/range/factor. Effects 20/125 play two ordered waves only on zero; effect 493 plays the assassin wave on 0/5/11/18/26/40. All four distinct sprite/action/wave literals match executable bytes.
+- Ported effect 493's dispatcher tint: alternating magenta/even and white/odd through frame 80, low light bit set on even frames, no tint writes from 81 onward. Actor alpha and higher light bits are preserved; particle/sound emission still follows the helper's independent timing.
+- Validation: release build, six silent C++ suites / 380 checks (287 lifecycle/primitive + 35 particle-render + 58 other), six Python tests, four-literal executable byte audit and whitespace check pass. Added 28 checks for profiles/RNG, matrix replacement, origin, sound ordering/coordinates/schedule, motion/fade, tint window and resource cleanup. No media or live acceptance was used.
+- Approved OldRO deployment SHA-256 matches `390B43D6683A88A7B444E8BBA3C6D843F4E1760E19702F0360CF1A6E6C56B49A`. These callers use the complete reachable linear state; other generic particle patterns/emitters, original resource/cache and backend acceptance remain open. WP5A and the overall plan remain incomplete.
+
 
 ## Smoke / Torch particle migration — 2026-10-25
 

@@ -34,7 +34,10 @@ size_t rngCursor=0;
 int SilentRand() { ++rngDraws; return rngCursor < rngValues.size() ? rngValues[rngCursor++] : 0; }
 float waveY = 99;
 std::string waveName;
-bool PlayWave(const char* name, float, float y, float, int volume, int range, float frequency) {
+struct SilentWaveCall { std::string name; float x,y,z; int frameRng,volume,range;float frequency; };
+std::vector<SilentWaveCall> waveCalls;
+bool PlayWave(const char* name, float x, float y, float z, int volume, int range, float frequency) {
+    waveCalls.push_back({name,x,y,z,rngDraws,volume,range,frequency});
     ++waves; waveY = y; waveName = name;
     return volume == 250 && range == 40 && frequency == 1;
 }
@@ -109,6 +112,10 @@ struct CRenderObject : CGameObject {
     float m_roty = 0;
     int m_BodyLight = 0;
     char m_BeZero = 0;
+    int tintCalls=0,alpha=123,red=1,green=2,blue=3;
+    void SetArgb(int a,int r,int g,int b) {
+        ++tintCalls;if(a!=-1)alpha=a;if(r!=-1)red=r;if(g!=-1)green=g;if(b!=-1)blue=b;
+    }
 };
 struct CRagEffect;
 struct CEffectPrim;
@@ -221,6 +228,9 @@ struct CRagEffect : CGameObject {
     void SpawnRuwach();
     void SpawnSmoke();
     void SpawnTorch();
+    void SpawnEnchantPoison();
+    void SpawnEnchantPoison2();
+    void ProcessEnchantPoison2();
     void ApplyEntry2();
     bool ApplyJobLvUp50(int);
     bool ApplyJobLvUp50_2(short);
@@ -1201,6 +1211,94 @@ int main()
             "missing Torch assets keep reference dispatch without color-name or bitmap fallbacks");
         effect.ClearPrims();g_world.UpdateGameObjects();
         check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"Torch world cleanup releases resource locks");
+    }
+    {
+        CRenderObject actor;actor.m_pos={100,200,300};
+        CRenderObject listener;listener.m_pos={-5,900,4};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_master=&actor;effect.m_type=20;effect.m_duration=200;effect.m_effectPos={10,70,30};
+        rngValues={90,5,29,49};rngCursor=0;const int beforeRng=rngDraws;
+        waveCalls.clear();g_resMgr.requests.clear();effect.SpawnEnchantPoison();
+        check(effect.m_primList.size()==1 && rngDraws-beforeRng==4 && rngCursor==4,
+            "EnchantPoison emits one particle using exactly angle, radius, speed and size draws");
+        check(waveCalls.size()==2 && waveCalls[0].name=="effect\\assasin_enchantpoison.wav" && waveCalls[1].name=="effect\\EF_PoisonAttack.wav",
+            "EnchantPoison plays both original waves in order on frame zero");
+        check(waveCalls[0].x==15 && waveCalls[0].y==0 && waveCalls[0].z==26
+            && waveCalls[1].y==0 && waveCalls[0].volume==250 && waveCalls[0].range==40 && waveCalls[0].frequency==1,
+            "poison sounds use stored effect minus listener horizontally with source zero y and volume parameters");
+        check(waveCalls[0].frameRng==beforeRng && waveCalls[1].frameRng==beforeRng,
+            "poison wave calls precede particle RNG draws");
+        auto* prim=effect.m_primList.front();
+        check(std::fabs(prim->m_deltaPos2.x-7)<0.000001f && std::fabs(prim->m_deltaPos2.z)<0.000001f,
+            "poison spawn uses the original random Y rotation and radius upper boundary");
+        check(std::fabs(prim->m_speed-static_cast<float>(59*0.0099999998))<0.000001f
+            && std::fabs(prim->m_size-static_cast<float>(89*0.0099999998))<0.000001f,
+            "EnchantPoison speed and size use their exact upper profiles");
+        check(std::fabs(prim->m_matrix.m[2][1]+1)<0.000001f && std::fabs(prim->m_matrix.m[2][0])<0.000001f,
+            "poison replaces spawn rotation with X ninety-degree motion matrix");
+        check(prim->m_maxAlpha==254 && prim->m_alpha==0 && std::fabs(prim->m_alphaSpeed-25.4f)<0.000001f
+            && prim->m_duration==40 && prim->m_fadeOutCnt==32 && prim->m_animSpeed==4 && prim->m_repeatAnim && prim->m_numSegments==1,
+            "poison retains constructor and source alpha, fade, duration and animation defaults");
+        check(g_resMgr.requests.size()==2 && prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.spr"
+            && prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.act" && prim->UsesReferenceParticle(),
+            "poison requests only exact particle3 resources and uses reference rendering");
+        check(effect.m_effectPos.x==10 && prim->m_segments[0].pos.y==70 && prim->m_segments[0].argb==0x00FFFFFF,
+            "poison preserves stored origin and initializes transparent source segment");
+        const float speed=prim->m_speed,accel=prim->m_accel;
+        prim->OnProcess();
+        check(std::fabs(prim->m_speed-(speed+accel))<0.000001f && std::fabs(prim->m_pos.y-(70-speed-accel))<0.00001f
+            && prim->m_roll==3 && prim->m_curMotion==1 && std::fabs(prim->m_alpha-25.4f)<0.000001f,
+            "poison frame zero accelerates, rises, rotates, increases alpha and advances motion");
+        prim->m_stateCnt=32;prim->m_alpha=128;prim->OnProcess();
+        check(prim->m_alphaSpeed==-16 && prim->m_alpha==112,"poison frame thirty-two fade derives from current alpha over eight frames");
+        effect.m_stateCnt=1;actor.m_pos={900,900,900};const int draws=rngDraws;effect.SpawnEnchantPoison();
+        check(effect.m_primList.size()==1 && waveCalls.size()==2 && rngDraws==draws && effect.m_effectPos.x==10,
+            "poison non-emission frame neither follows actor nor repeats audio or RNG");
+        rngValues.clear();rngCursor=0;effect.m_stateCnt=5;effect.SpawnEnchantPoison();
+        check(effect.m_primList.size()==2 && waveCalls.size()==2,"EnchantPoison repeats only particles at five-frame intervals");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_type=125;effect.m_stateCnt=0;effect.SpawnEnchantPoison();prim=effect.m_primList.front();
+        check(prim->UsesReferenceParticle() && std::fabs(prim->m_speed-0.3f)<0.000001f && std::fabs(prim->m_size-0.4f)<0.000001f,
+            "effect one-twenty-five shares original EnchantPoison profile including lower RNG boundaries");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_resMgr.fail=true;effect.SpawnEnchantPoison();g_resMgr.fail=false;prim=effect.m_primList.front();
+        check(prim->UsesReferenceParticle() && !prim->m_particleSprRes && prim->m_texture.empty(),
+            "missing poison sprite retains reference routing without particle2 or texture substitution");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+        check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"poison resource locks release through world ownership");
+    }
+    {
+        CRenderObject actor,listener;listener.m_pos={1,500,2};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_master=&actor;effect.m_type=493;effect.m_duration=200;effect.m_effectPos={11,40,22};
+        waveCalls.clear();rngValues={359,5,49,19};rngCursor=0;
+        effect.ProcessEnchantPoison2();auto* prim=effect.m_primList.front();
+        check(std::fabs(prim->m_speed-static_cast<float>(79*0.0099999998))<0.000001f
+            && std::fabs(prim->m_size-static_cast<float>(39*0.0099999998))<0.000001f,
+            "EnchantPoison2 uses its separate speed and size upper profiles");
+        check(prim->UsesReferenceParticle() && actor.alpha==123 && actor.red==255 && actor.green==0 && actor.blue==255 && actor.m_BodyLight==1,
+            "effect four-ninety-three sets magenta and low light bit without changing actor alpha");
+        rngValues.clear();rngCursor=0;
+        std::vector<int> soundFrames;
+        if(!waveCalls.empty())soundFrames.push_back(0);
+        for(int frame=1;frame<=82;++frame) {
+            const auto before=waveCalls.size();effect.m_stateCnt=frame;effect.ProcessEnchantPoison2();
+            if(waveCalls.size()!=before)soundFrames.push_back(frame);
+            if(frame==1)check(actor.green==255 && actor.m_BodyLight==1,"poison two odd frames use shared white-tint branch without toggling light bit");
+            if(frame==80)check(actor.green==0 && actor.tintCalls==81,"poison two retains alternating tint through inclusive frame eighty");
+        }
+        check(soundFrames==std::vector<int>({0,5,11,18,26,40}),"poison two plays only its six original scheduled sound frames");
+        check(waveCalls.size()==6 && waveCalls.back().name=="effect\\assasin_enchantpoison.wav"
+            && waveCalls.back().x==10 && waveCalls.back().y==0 && waveCalls.back().z==20,
+            "poison two audio keeps stored horizontal origin and has no extra poison-attack wave");
+        check(effect.m_primList.size()==28,"poison two emits every third frame including frames beyond the tint window");
+        check(actor.tintCalls==81 && actor.green==0,"poison two stops tint writes at frame eighty-one without forced restoration");
+        effect.m_stateCnt=6;actor.m_BodyLight=6;effect.ProcessEnchantPoison2();
+        check(actor.m_BodyLight==7,"poison two sets only missing low light bit while preserving higher flags");
+        effect.m_stateCnt=8;effect.ProcessEnchantPoison2();
+        check(actor.m_BodyLight==7,"poison two does not increment a light bit that is already set");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+        check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"poison two releases all looping particle resource locks");
     }
     {
         CRagEffect effect;

@@ -292,38 +292,6 @@ bool ConfigureEffectSpritePrim(CEffectPrim* prim,
 CTexture* TryResolveEffectTextureCandidates(std::initializer_list<const char*> paths);
 CTexture* ResolveEffectTextureCandidates(std::initializer_list<const char*> paths, bool cloudFallback);
 
-void ConfigureEnchantPoisonParticle(CEffectPrim* prim, int speedBase, int speedSpan, int sizeBase, int sizeSpan)
-{
-    if (!prim) {
-        return;
-    }
-
-    prim->m_duration = 40;
-
-    const float angle = static_cast<float>(rand() % 360);
-    MatrixIdentity(prim->m_matrix);
-    MatrixAppendYRotation(prim->m_matrix, angle * (kPi / 180.0f));
-
-    const float radius = static_cast<float>(rand() % 6 + 2);
-    prim->m_deltaPos2 = {
-        radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
-        radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
-        radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
-    };
-
-    prim->m_latitude = 90.0f;
-    prim->m_longitude = 0.0f;
-    prim->m_speed = static_cast<float>(rand() % speedSpan + speedBase) * 0.01f;
-    prim->m_accel = prim->m_speed / static_cast<float>(prim->m_duration) * -0.5f;
-    prim->m_size = static_cast<float>(rand() % sizeSpan + sizeBase) * 0.01f;
-    prim->m_rollSpeed = 3.0f;
-    prim->m_alpha = 0.0f;
-    prim->m_alphaSpeed = prim->m_maxAlpha * 0.1f;
-    prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 5;
-    prim->m_tintColor = RGB(255, 255, 255);
-    ConfigureEffectSpritePrim(prim, { RefParticle3SpriteStem(), RefParticle2SpriteStem() }, 0, 1.0f, true, 0.0f, 0);
-}
-
 void SubmitScreenQuad(const tlvertex3d& anchor,
     CTexture* texture,
     float offsetX,
@@ -6002,7 +5970,7 @@ bool AnimateReferenceParticle(CEffectPrim* prim)
     return true;
 }
 
-// Ref/RagEffectPrim.cpp:456-594,2184-2328. Ruwach, Smoke and Torch use
+// Ref/RagEffectPrim.cpp:456-594,2184-2328. Poison, Ruwach, Smoke and Torch use
 // linear PP_3DPARTICLE state with no change points or movement-pattern bits.
 // Torch's 0x200 bit selects clip color only. Other callers still need their
 // additional pattern/control branches.
@@ -6198,7 +6166,8 @@ bool CEffectPrim::UsesReferenceParticle() const
 {
     return m_type == PP_SUPERANGEL
         || (m_type == PP_3DPARTICLE && m_master
-            && (m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
+            && (m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
+                || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
 }
 
 CEffectPrim::~CEffectPrim()
@@ -9059,70 +9028,85 @@ void CRagEffect::SpawnTorch()
     ShiftCircleSegments(prim);
 }
 
+// Ref/RagEffect.cpp:3442-3555 (0x601B10/0x601D70): the two emitters
+// share this profile setup, with four RNG draws in angle/radius/speed/size order.
+void ConfigureEnchantPoisonParticle(CEffectPrim* prim, int speedSpan, int sizeBase, int sizeSpan)
+{
+    prim->m_duration = 40;
+    const float angle = GetRadian(rand() % 360);
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, angle);
+    const double radius = static_cast<double>(rand() % 6 + 2);
+    prim->m_deltaPos2 = {
+        static_cast<float>(radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+    };
+    const float riseAngle = GetRadian(90);
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix, riseAngle);
+    prim->m_speed = static_cast<float>(static_cast<double>(rand() % speedSpan + 30) * 0.0099999998);
+    prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -0.5);
+    prim->m_size = static_cast<float>(static_cast<double>(rand() % sizeSpan + sizeBase) * 0.0099999998);
+    prim->m_rollSpeed = 3.0f;
+    prim->m_alpha = 0.0f;
+    // Reference constructor defaults for these linear particle callers.
+    prim->m_maxAlpha = 254.0f;
+    prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.1);
+    prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 5;
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.act"); // 0x71BC24 / 0x71BC0C
+    prim->m_animSpeed = 4; prim->m_repeatAnim = true; prim->m_numSegments = 1;
+    ShiftCircleSegments(prim);
+}
+
+// Ref preserves this effect's stored origin, rather than copying its actor.
 void CRagEffect::SpawnEnchantPoison()
 {
-    const vector3d base = ResolveBasePosition();
-    if (m_stateCnt <= 2) {
-        DbgLog("[EnchantPoisonDbg] effect20 state=%d base=(%.2f,%.2f,%.2f) master=%p\n",
-            m_stateCnt,
-            base.x,
-            base.y,
-            base.z,
-            static_cast<void*>(m_master));
-    }
-
     if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(base, "effect\\assasin_enchantpoison.wav");
-        TryPlayEffectWaveAt(base, "effect\\EF_PoisonAttack.wav");
-    }
-
-    if ((m_stateCnt % 5) == 0) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
-            ConfigureEnchantPoisonParticle(prim, 30, 30, 40, 50);
-            DbgLog("[EnchantPoisonDbg] spawned effect20 prim=%p delta2=(%.2f,%.2f,%.2f) speed=%.3f size=%.3f rollSpeed=%.2f\n",
-                static_cast<void*>(prim),
-                prim->m_deltaPos2.x,
-                prim->m_deltaPos2.y,
-                prim->m_deltaPos2.z,
-                prim->m_speed,
-                prim->m_size,
-                prim->m_rollSpeed);
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\assasin_enchantpoison.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f); // 0x71BC58
+            PlayWave("effect\\EF_PoisonAttack.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f); // 0x71BC3C
         }
+    }
+    if (m_stateCnt % 5 == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+        ConfigureEnchantPoisonParticle(prim, 30, 40, 50);
     }
 }
 
 void CRagEffect::SpawnEnchantPoison2()
 {
-    const vector3d base = ResolveBasePosition();
-    if (m_stateCnt <= 2) {
-        DbgLog("[EnchantPoisonDbg] effect493 state=%d base=(%.2f,%.2f,%.2f) master=%p\n",
-            m_stateCnt,
-            base.x,
-            base.y,
-            base.z,
-            static_cast<void*>(m_master));
-    }
-
     if (m_stateCnt == 0 || m_stateCnt == 5 || m_stateCnt == 11 || m_stateCnt == 18 || m_stateCnt == 26 || m_stateCnt == 40) {
-        TryPlayEffectWaveAt(base, "effect\\assasin_enchantpoison.wav");
-    }
-
-    if ((m_stateCnt % 3) == 0) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{})) {
-            ConfigureEnchantPoisonParticle(prim, 30, 50, 20, 20);
-            DbgLog("[EnchantPoisonDbg] spawned effect493 prim=%p delta2=(%.2f,%.2f,%.2f) speed=%.3f size=%.3f rollSpeed=%.2f\n",
-                static_cast<void*>(prim),
-                prim->m_deltaPos2.x,
-                prim->m_deltaPos2.y,
-                prim->m_deltaPos2.z,
-                prim->m_speed,
-                prim->m_size,
-                prim->m_rollSpeed);
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\assasin_enchantpoison.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f); // 0x71BC58
         }
     }
+    if (m_stateCnt % 3 == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+        ConfigureEnchantPoisonParticle(prim, 50, 20, 20);
+    }
+}
 
-    if (CRenderObject* master = ResolveCurrentMaster(); master && (m_stateCnt % 2) == 0 && (master->m_BodyLight & 1) == 0) {
-        ++master->m_BodyLight;
+// Ref/RagEffect.cpp:11325-11342 (OnProcess3 case 0x1ED); LABEL_206 at
+// 12053 sets white on odd frames. The helper above has no tint side effect.
+void CRagEffect::ProcessEnchantPoison2()
+{
+    SpawnEnchantPoison2();
+    if (m_stateCnt >= 81) return;
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    if (m_stateCnt % 2 != 0) {
+        master->SetArgb(-1, 255, 255, 255);
+    } else {
+        if ((master->m_BodyLight & 1) == 0) ++master->m_BodyLight;
+        master->SetArgb(-1, 255, 0, 255);
     }
 }
 
@@ -12962,7 +12946,7 @@ bool CRagEffect::ProcessEffectFrame()
             SpawnEnchantPoison();
             break;
         case Handler::EnchantPoison2:
-            SpawnEnchantPoison2();
+            ProcessEnchantPoison2();
             break;
         case Handler::Blessing:
             SpawnBlessing();

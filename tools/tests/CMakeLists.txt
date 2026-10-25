@@ -77,7 +77,8 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/EffectSegmentTypes.inc" "${segment_types
 extract_body(gi_types "${effect_header}" "struct EffectGi" "struct EffectSegmentState")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/EffectGiTypes.inc" "${gi_types}")
 extract_body(segment_shift "${effect_source}" "void ShiftCircleSegments(" "void RenderCircleLayer(")
-extract_body(smoke_torch_emitters "${effect_source}" "void CRagEffect::SpawnSmoke()" "void CRagEffect::SpawnEnchantPoison()")
+extract_body(smoke_torch_emitters "${effect_source}" "void CRagEffect::SpawnSmoke()" "// Ref/RagEffect.cpp:3442-3555")
+extract_body(poison_emitters "${effect_source}" "void ConfigureEnchantPoisonParticle(" "void CRagEffect::SpawnSightAura()")
 extract_body(ruwach_emitter "${effect_source}" "void CRagEffect::SpawnRuwach()" "bool EffectTicksWhenNoFrameTime(")
 extract_body(angel_emitters "${effect_source}" "void CRagEffect::ApplySuperAngel(" "void CRagEffect::SpawnRecoveryHp()")
 extract_body(slash_primitive "${effect_source}" "void UpdateSlash1Primitive(" "// Ref/GameActor.cpp:10748-10928.")
@@ -109,7 +110,7 @@ extract_body(effect_messages "${effect_source}" "void CRagEffect::SendMsg(" "voi
 extract_body(actor_detach "${actor_source}" "void CAbleToMakeEffect::RemoveEffectById(" "CGameActor::CGameActor()")
 extract_body(world_update "${world_source}" "void CWorld::UpdateGameObjects()" "CGameActor* CWorld::GetGameActorByAID(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc"
-    "${resource_lock}\n${effect_gate}\n${primitive_lifetime}\n${primitive_init}\n${effect_tick}\n${effect_dtor}\n${effect_launch}\n${effect_messages}\n${actor_detach}\n${world_update}\n${grim_tooth}\n${str_delta}\n${str_process}\n${str_termination}\n${entry2}\n${str_render}\n${effect_render}\n${segment_shift}\n${slash_primitive}\n${angel_render}\n${job_emitters}\n${angel_emitters}\n${ruwach_emitter}\n${smoke_torch_emitters}")
+    "${resource_lock}\n${effect_gate}\n${primitive_lifetime}\n${primitive_init}\n${effect_tick}\n${effect_dtor}\n${effect_launch}\n${effect_messages}\n${actor_detach}\n${world_update}\n${grim_tooth}\n${str_delta}\n${str_process}\n${str_termination}\n${entry2}\n${str_render}\n${effect_render}\n${segment_shift}\n${slash_primitive}\n${angel_render}\n${job_emitters}\n${angel_emitters}\n${ruwach_emitter}\n${smoke_torch_emitters}\n${poison_emitters}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/render/Prim.cpp ../../src/res/ActRes.h ../../src/world/RagEffect.cpp ../../src/world/RagEffect.h ../../src/world/World.cpp ../../src/res/EzEffectRes.h ../../src/res/Res.cpp)
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
