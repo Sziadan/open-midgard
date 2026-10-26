@@ -53,6 +53,10 @@ checks = {
     "source radius inset sequence 0.5 then 0.25 maps to the two passes": (
         source, r"four \? v22 \+ 0\.25 : v22 \+ 0\.5",
         impl, r"minus \+= pass == 0 \? 0\.5f : 0\.25f"),
+    "PW one maps to source inverse-source-alpha blend": (
+        body(EXE, "void __thiscall CEffectPrim::RenderTeiRect(\n        CEffectPrim *this,\n        int *rpCnt,\n        __int16 alpha,"),
+        r"PW == 0[\s\S]*?destAlphaMode = 2[\s\S]*?destAlphaMode = 6",
+        body(IMPL, "void SubmitPokJukRect("), r"face->destAlphaMode = D3DBLEND_INVSRCALPHA"),
 }
 
 for name, (src, src_re, dst, dst_re) in checks.items():

@@ -844,7 +844,7 @@ int main() {
             for(int strip=0;strip<4;++strip) {
                 const auto& face=g_renderer.submissions[static_cast<size_t>(strip*2)];
                 check(face.tex==&textures[textureIds[strip]]&&face.m_verts[0].color==((static_cast<u32>(alphaValues[strip])<<24)|0x006464FFu)
-                    &&face.srcAlphaMode==D3DBLEND_SRCALPHA&&face.destAlphaMode==D3DBLEND_INVSRCALPHA
+                    &&face.srcAlphaMode==D3DBLEND_SRCALPHA&&face.destAlphaMode==D3DBLEND_ONE
                     &&face.m_verts[0].tu==0&&face.m_verts[0].tv==1&&face.m_verts[2].tu==1&&face.m_verts[2].tv==0,
                     "GumGang strip preserves its source alpha, texture index, packed RGB, blend and UV rectangle");
                 check(g_renderer.flags[static_cast<size_t>(strip*2)]==0x205,
@@ -893,7 +893,7 @@ int main() {
                     tlvertex3d expected;ProjectReferenceEffectVertex({static_cast<float>(GetCos(45)*radius+4.0+10.0),18.0f,
                         static_cast<float>(GetSin(45)*radius+130.0)},view,expected);
                     check(face.m_verts[0].color==((55u<<24)|colors[mode][layer])&&face.tex==&textures[0]
-                        &&face.destAlphaMode==D3DBLEND_INVSRCALPHA
+                        &&face.destAlphaMode==D3DBLEND_ONE
                         &&near(face.m_verts[0].x,expected.x)&&near(face.m_verts[0].y,expected.y)
                         &&near(face.m_verts[0].oow,expected.oow),
                         "DoubleGumGang preserves source layer style, process-capped alpha, radius, texture and blend");
@@ -922,7 +922,7 @@ int main() {
                 tlvertex3d expected;ProjectReferenceEffectVertex({21,22,143},view,expected);
                 const RPFace& first=g_renderer.submissions[0];const RPFace& secondPass=g_renderer.submissions[2];
                 check(first.m_verts[0].color==((100u<<24)|colors[style])&&first.tex==&textures[0]
-                    &&first.destAlphaMode==D3DBLEND_ONE&&near(first.m_verts[0].x,expected.x)
+                    &&first.destAlphaMode==D3DBLEND_INVSRCALPHA&&near(first.m_verts[0].x,expected.x)
                     &&near(first.m_verts[0].y,expected.y),"PokJuk maps all style colors and the base spark offset");
                 ProjectReferenceEffectVertex({23.5f,25,145.5f},view,expected);
                 check(secondPass.m_verts[0].color==((50u<<24)|colors[style])

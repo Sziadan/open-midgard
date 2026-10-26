@@ -6793,7 +6793,7 @@ void SubmitGumGangRect(const vector3d corners[4], const vector3d& translation,
         face->mtPreset = 0;
         face->cullMode = D3DCULL_NONE;
         face->srcAlphaMode = D3DBLEND_SRCALPHA;
-        face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+        face->destAlphaMode = D3DBLEND_ONE;
         face->alphaSortKey = 0.0f;
         for (int vertex = 0; vertex < 3; ++vertex) {
             ProjectReferenceEffectVertex(positions[triangle][vertex], viewMatrix, face->m_verts[vertex]);
@@ -6948,7 +6948,7 @@ void SubmitPokJukRect(const vector3d corners[4], const vector3d& translation,
         face->mtPreset = 0;
         face->cullMode = D3DCULL_NONE;
         face->srcAlphaMode = D3DBLEND_SRCALPHA;
-        face->destAlphaMode = D3DBLEND_ONE;
+        face->destAlphaMode = D3DBLEND_INVSRCALPHA;
         face->alphaSortKey = 0.0f;
         for (int vertex = 0; vertex < 3; ++vertex) {
             ProjectReferenceEffectVertex(positions[triangle][vertex], viewMatrix, face->m_verts[vertex]);
