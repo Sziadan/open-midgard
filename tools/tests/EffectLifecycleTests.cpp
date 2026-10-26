@@ -170,6 +170,7 @@ bool UpdateReference2DTextureOrbit(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
 void UpdateReferenceQuadHorn(CEffectPrim*);
 void ShiftReferenceSegments(CEffectPrim*);
+void UpdateReferenceSpiral(CEffectPrim*);
 void UpdateReferenceFlash(CEffectPrim*);
 void UpdateReferenceScreenCircle(CEffectPrim*);
 void UpdateReferenceSphere(CEffectPrim*);
@@ -255,6 +256,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DTEXTURE_NOMASTER) return UpdateReferenceNoMasterTexture(this);
         if (m_type == PP_2DTEXTUREORBIT) return UpdateReference2DTextureOrbit(this);
         if (m_type == PP_3DQUADHORN) { UpdateReferenceQuadHorn(this); return active; }
+        if (m_type == PP_3DSPLINE || m_type == PP_3DSPIRAL) { UpdateReferenceSpiral(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1238,6 +1240,32 @@ int main()
             && texturePrim.m_pos.y == 200 && texturePrim.m_pos.z == 305
             && texturePrim.m_alpha == 50 && texturePrim.m_stateCnt == 71,
             "OnProcess case 0x09 pattern 2 applies duration-minus-thirty speed controls after movement and skips alpha");
+        texturePrim.m_type = PP_3DSPLINE; texturePrim.m_stateCnt = 30; texturePrim.m_numSegments = 2;
+        textureMaster.m_effectPos = {100,200,300}; texturePrim.m_deltaPos2 = {1,2,3};
+        texturePrim.m_longitude = 0; texturePrim.m_longSpeed = 90; texturePrim.m_heightSpeed = 5;
+        texturePrim.m_radius = 10; texturePrim.m_size = 4; texturePrim.m_pos = {9,8,7};
+        texturePrim.m_alpha = 70; texturePrim.m_alphaSpeed = 0; texturePrim.m_fadeOutCnt = -1;
+        texturePrim.m_segPos = {}; texturePrim.m_segments[0] = {}; texturePrim.m_segments[1] = {};
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_orgPos.x == 101
+            && texturePrim.m_orgPos.y == 202 && texturePrim.m_orgPos.z == 303
+            && texturePrim.m_segPos[0].x == 101 && texturePrim.m_segPos[0].y == 202
+            && texturePrim.m_segPos[0].z == 293 && texturePrim.m_segPos[1].x == 111
+            && texturePrim.m_segPos[1].y == 207 && texturePrim.m_segPos[1].z == 303
+            && texturePrim.m_segPos[2].y == 198 && texturePrim.m_segPos[3].y == 203
+            && texturePrim.m_segments[0].pos.x == 9 && texturePrim.m_segmentQuadPositions[0][0].x == 101
+            && texturePrim.m_longitude == 90 && texturePrim.m_deltaPos2.y == 7
+            && texturePrim.m_stateCnt == 31,
+            "OnProcess case 0x0A builds all four spiral vertices, shifts them, then advances longitude and height");
+        texturePrim.m_type = PP_3DSPIRAL; texturePrim.m_stateCnt = 40;
+        texturePrim.m_longitude = 180; texturePrim.m_longSpeed = -90; texturePrim.m_heightSpeed = -2;
+        texturePrim.m_deltaPos2 = {4,6,8};
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_orgPos.x == 104
+            && texturePrim.m_orgPos.y == 206 && texturePrim.m_orgPos.z == 308
+            && texturePrim.m_segPos[0].x == 104 && texturePrim.m_segPos[0].z == 318
+            && texturePrim.m_segPos[1].x == 114 && texturePrim.m_segPos[1].z == 308
+            && texturePrim.m_longitude == 90 && texturePrim.m_deltaPos2.y == 4
+            && texturePrim.m_stateCnt == 41,
+            "OnProcess case 0x0B shares the source spiral handler and keeps the same update order");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

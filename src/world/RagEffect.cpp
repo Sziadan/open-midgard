@@ -7881,6 +7881,36 @@ void UpdateReferenceQuadHorn(CEffectPrim* prim)
     }
 }
 
+// Ref/RagEffectPrim.cpp:2125-2170 (0x6448e0), shared by source ids 0x0A/0x0B.
+void UpdateReferenceSpiral(CEffectPrim* prim)
+{
+    prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
+
+    const float longitude = prim->m_longitude;
+    const float nextLongitude = prim->m_longSpeed + longitude;
+    const float x0 = static_cast<float>(prim->m_orgPos.x
+        + static_cast<double>(GetSin(static_cast<int>(longitude))) * prim->m_radius);
+    const float z0 = static_cast<float>(prim->m_orgPos.z
+        - static_cast<double>(GetCos(static_cast<int>(longitude))) * prim->m_radius);
+    const float x1 = static_cast<float>(prim->m_orgPos.x
+        + static_cast<double>(GetSin(static_cast<int>(nextLongitude))) * prim->m_radius);
+    const float z1 = static_cast<float>(prim->m_orgPos.z
+        - static_cast<double>(GetCos(static_cast<int>(nextLongitude))) * prim->m_radius);
+    const float y0 = prim->m_orgPos.y;
+    prim->m_segPos[0] = {x0, y0, z0};
+    const float y1 = y0 + prim->m_heightSpeed;
+    prim->m_segPos[1] = {x1, y1, z1};
+    const float y2 = y0 - prim->m_size;
+    prim->m_segPos[2] = {x0, y2, z0};
+    const float y3 = y0 + prim->m_heightSpeed - prim->m_size;
+    prim->m_segPos[3] = {x1, y3, z1};
+
+    ProcessReferenceParticleAlpha(prim);
+    ShiftReferenceSegments(prim);
+    prim->m_longitude = prim->m_longSpeed + prim->m_longitude;
+    prim->m_deltaPos2.y = prim->m_deltaPos2.y + prim->m_heightSpeed;
+}
+
 // Ref/RagEffectPrim.cpp:966-1310 (0x643340), reachable Berserk/IceArrow:
 // fixed width/height/color, no change points. IceArrow enables parent delta
 // propagation and ground contact. SprayPond adds source rotation rebuilding
@@ -8640,6 +8670,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_3DQUADHORN) {
         UpdateReferenceQuadHorn(this);
+        return true;
+    }
+    if (m_type == PP_3DSPLINE || m_type == PP_3DSPIRAL) {
+        UpdateReferenceSpiral(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

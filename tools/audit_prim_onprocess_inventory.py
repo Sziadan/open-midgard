@@ -72,7 +72,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 64 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0E, 0x11, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 66 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x11, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -352,6 +352,48 @@ check("ShiftSegment source-to-implementation payload, attenuation and zero-count
       and source_shift.index("v2[32] = v3;")
       < source_shift.index("v2[50] = this->m_size")
       < source_shift.index("v1->m_segment[0].pos.x ="))
+source_spiral = body(REF, "void __thiscall CEffectPrim::Prim3DSpiral(CEffectPrim *this)\n{")
+exe_spiral = body(EXE, "void __thiscall CEffectPrim::Prim3DSpiral(CEffectPrim *this)\n{")
+current_spiral = body(CURRENT, "void UpdateReferenceSpiral(CEffectPrim* prim)")
+check("source Prim3DSpiral Ref/EXE bodies match and ids 0x0A/0x0B share the source handler",
+      compact(source_spiral) == compact(exe_spiral)
+      and re.search(r"case\s+0xA:\s*case\s+0xB:\s*CEffectPrim::Prim3DSpiral\(this\);", source_dispatch)
+      and "if (m_type == PP_3DSPLINE || m_type == PP_3DSPIRAL)" in current_dispatch
+      and "UpdateReferenceSpiral(this);" in current_dispatch)
+spiral_source_effects = [
+    "this->m_master->m_pos.x + this->m_deltaPos2.x",
+    "this->m_master->m_pos.y + this->m_deltaPos2.y",
+    "this->m_master->m_pos.z + this->m_deltaPos2.z",
+    "GetSin((__int64)this->m_longitude)", "GetCos((__int64)this->m_longitude)",
+    "GetSin((__int64)(this->m_longSpeed + this->m_longitude))",
+    "GetCos((__int64)(this->m_longSpeed + this->m_longitude))",
+    "this->m_segPos[0].x = vec1", "this->m_segPos[1].x = vec2",
+    "this->m_segPos[2].y = v8", "this->m_segPos[3].y = v9",
+    "CEffectPrim::ProcessAlpha(this);", "CEffectPrim::ShiftSegment(this);",
+    "this->m_longitude = this->m_longSpeed + this->m_longitude;",
+    "this->m_deltaPos2.y = this->m_deltaPos2.y + this->m_heightSpeed;",
+]
+spiral_current_effects = [
+    "AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2)",
+    "GetSin(static_cast<int>(longitude))", "GetCos(static_cast<int>(longitude))",
+    "GetSin(static_cast<int>(nextLongitude))", "GetCos(static_cast<int>(nextLongitude))",
+    "prim->m_segPos[0] = {x0, y0, z0};", "prim->m_segPos[1] = {x1, y1, z1};",
+    "prim->m_segPos[2] = {x0, y2, z0};", "prim->m_segPos[3] = {x1, y3, z1};",
+    "ProcessReferenceParticleAlpha(prim);", "ShiftReferenceSegments(prim);",
+    "prim->m_longitude = prim->m_longSpeed + prim->m_longitude;",
+    "prim->m_deltaPos2.y = prim->m_deltaPos2.y + prim->m_heightSpeed;",
+]
+check("case 0x0A/0x0B source-to-implementation origin, orbit, four vertices and post-shift updates are paired",
+      all(compact(effect) in compact(source_spiral) for effect in spiral_source_effects)
+      and all(compact(effect) in compact(current_spiral) for effect in spiral_current_effects)
+      and current_spiral.index("prim->m_orgPos =") < current_spiral.index("const float x0 =")
+      < current_spiral.index("const float x1 =") < current_spiral.index("prim->m_segPos[0]")
+      < current_spiral.index("prim->m_segPos[1]") < current_spiral.index("prim->m_segPos[2]")
+      < current_spiral.index("prim->m_segPos[3]")
+      < current_spiral.index("ProcessReferenceParticleAlpha(prim);")
+      < current_spiral.index("ShiftReferenceSegments(prim);")
+      < current_spiral.index("prim->m_longitude =")
+      < current_spiral.index("prim->m_deltaPos2.y ="))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)
