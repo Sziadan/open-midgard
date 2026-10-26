@@ -209,6 +209,7 @@ void UpdateReferenceGuard(CEffectPrim*);
 bool UpdateReferenceFoot(CEffectPrim*);
 bool UpdateReferenceAsuraCasting(CEffectPrim*);
 bool UpdateReferenceTripleAttack(CEffectPrim*);
+void UpdateReferenceHitLine(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -320,6 +321,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_FOOT) { UpdateReferenceFoot(this); return active; }
         if (m_type == PP_ASURACASTING) { UpdateReferenceAsuraCasting(this); return active; }
         if (m_type == PP_TRIPLEATTACK) { UpdateReferenceTripleAttack(this); return active; }
+        if (m_type == PP_HITLINE) { UpdateReferenceHitLine(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -757,6 +759,7 @@ __declspec(noinline) void RunGuardLifecycleChecks(CEffectPrim& prim, int& checks
 __declspec(noinline) void RunFootLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunAsuraCastingLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunTripleAttackLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunHitLineLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1129,6 +1132,42 @@ __declspec(noinline) void RunTripleAttackLifecycleChecks(CEffectPrim& prim, int&
     prim.m_stateCnt=0; selector.process=5; selector.height[4]=3; selector.alphaB=3; prim.OnProcess();
     check(selector.process==6 && selector.alphaB==0,
         "case 0x45 selector 3 subtracts four after process 5 and clamps to zero");
+    g_isSkipFrame=oldSkipFrame;
+    RunHitLineLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunHitLineLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_HITLINE; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={901,902,903}; prim.m_master->m_effectPos={101,102,103};
+    for (auto& gi : prim.m_gi) gi={};
+    auto& a=prim.m_gi[0]; a.life=1; a.process=34; a.alphaB=-2; a.height[0]=172; a.flag[0]=5;
+    for (int i=0;i<=20;++i) { a.height[static_cast<size_t>(i)]=static_cast<float>(i*3); a.flag[static_cast<size_t>(i)]=static_cast<u8>(i+10); }
+    a.height[0]=172; a.flag[0]=5;
+    auto& b=prim.m_gi[1]; b.life=1; b.process=35; b.alphaB=10; b.height[0]=180; b.flag[0]=7;
+    auto& c=prim.m_gi[2]; c.life=2; c.process=20; c.alphaB=21; c.height[0]=22; c.flag[0]=23;
+    auto& d=prim.m_gi[3]; d.life=1; d.process=-1; d.alphaB=31; d.height[0]=32; d.flag[0]=33;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==901 && prim.m_pos.y==902 && prim.m_pos.z==903
+        && a.process==35 && a.alphaB==0 && a.height[0]==180 && a.flag[0]==5
+        && a.height[1]==180 && a.height[2]==3 && a.height[20]==57
+        && a.flag[1]==5 && a.flag[2]==11 && a.flag[20]==29
+        && b.process==36 && b.alphaB==5 && b.height[0]==8 && b.flag[0]==8
+        && c.process==20 && c.alphaB==21 && c.height[0]==22 && c.flag[0]==23
+        && d.process==0 && d.alphaB==31 && d.height[0]==32 && d.flag[0]==33
+        && rngDraws==draws,
+        "case 0x46 covers four exact-life gates, process 35/36 alpha edge, strict 180 wrap, descending height/flag history, unchanged origin and no RNG");
+
+    prim.m_stateCnt=0; for (auto& gi : prim.m_gi) gi={};
+    a.life=1; a.process=0; a.alphaB=20; a.height[0]=357; a.flag[0]=254;
+    prim.OnProcess();
+    check(a.process==1 && a.alphaB==20 && a.height[0]==185 && a.flag[0]==255,
+        "case 0x46 height wrap subtracts only 180 once and increments byte flag once, even when angle remains above 180");
     g_isSkipFrame=oldSkipFrame;
 }
 

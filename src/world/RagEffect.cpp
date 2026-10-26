@@ -8835,6 +8835,28 @@ bool UpdateReferenceTripleAttack(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:4849 (case 0x46).
+void UpdateReferenceHitLine(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.process > 35) gi.alphaB = static_cast<short>(gi.alphaB - 5);
+        if (gi.alphaB < 0) gi.alphaB = 0;
+        gi.height[0] += 8.0f;
+        if (gi.height[0] > 180.0f) {
+            gi.height[0] -= 180.0f;
+            ++gi.flag[0];
+        }
+        for (int index = 20; index >= 1; --index) {
+            gi.height[static_cast<size_t>(index)] = gi.height[static_cast<size_t>(index - 1)];
+            gi.flag[static_cast<size_t>(index)] = gi.flag[static_cast<size_t>(index - 1)];
+        }
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9900,6 +9922,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_TRIPLEATTACK) {
         UpdateReferenceTripleAttack(this); // The source handler's true result is ignored before the common tick.
+        return true;
+    }
+    if (m_type == PP_HITLINE) {
+        UpdateReferenceHitLine(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
