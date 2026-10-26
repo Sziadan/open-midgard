@@ -237,6 +237,7 @@ struct EffectGi {
 struct EffectSegmentState {
     vector3d pos{};
     float radius = 0.0f;
+    float longitude = 0.0f;
     float size = 0.0f;
     float alpha = 0.0f;
     int process = 0;
@@ -525,6 +526,7 @@ private:
     void SpawnFireFly();
     void SpawnSandWind();
     void SpawnSteal();
+    bool ProcessCoin();
     void SpawnRuwach();
     void SpawnBlueFall();
     void SpawnWeatherCloud();

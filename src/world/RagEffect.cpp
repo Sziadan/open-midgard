@@ -1979,10 +1979,28 @@ void ShiftCircleSegments(CEffectPrim* prim)
 
     prim->m_segments[0].pos = prim->m_pos;
     prim->m_segments[0].radius = prim->m_radius;
+    prim->m_segments[0].longitude = prim->m_longitude;
     prim->m_segments[0].size = prim->m_size;
     prim->m_segments[0].alpha = prim->m_alpha;
     prim->m_segments[0].argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)), prim->m_tintColor);
     prim->m_segments[0].transform = prim->m_matrix;
+}
+
+// Ref/RagEffectPrim.cpp:1660-1698 (0x640520). Initialization copies
+// full state to every slot; it does not apply ShiftSegment's trail attenuation.
+void InitReferenceSegments(CEffectPrim* prim)
+{
+    const int count = (std::min)(prim->m_numSegments, static_cast<int>(prim->m_segments.size()));
+    for (int i = 0; i < count; ++i) {
+        EffectSegmentState& segment = prim->m_segments[static_cast<size_t>(i)];
+        segment.pos = prim->m_pos;
+        segment.radius = prim->m_radius;
+        segment.longitude = prim->m_longitude;
+        segment.size = prim->m_size;
+        segment.alpha = prim->m_alpha;
+        segment.argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)), prim->m_tintColor);
+        segment.transform = prim->m_matrix;
+    }
 }
 
 // HighPriest.exe.c:55640-55652 (0x4131B0). Ref/Renderer.cpp repeats
@@ -6630,7 +6648,8 @@ bool CEffectPrim::UsesReferenceScreenTexture() const
 bool CEffectPrim::UsesReferenceParticle() const
 {
     return m_type == PP_SUPERANGEL
-        || (m_type == PP_3DPARTICLEGRAVITY && m_master && m_master->GetEffectType() == 18)
+        || (m_type == PP_3DPARTICLEGRAVITY && m_master
+            && (m_master->GetEffectType() == 10 || m_master->GetEffectType() == 18))
         || (m_type == PP_3DPARTICLEORBIT && m_master
             && (m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
@@ -8717,6 +8736,7 @@ void CRagEffect::ApplySuperAngel(signed char variant, signed char)
         prim->m_segments[0].pos = prim->m_pos;
         prim->m_segments[0].size = prim->m_size;
         prim->m_segments[0].radius = prim->m_radius;
+    prim->m_segments[0].longitude = prim->m_longitude;
         prim->m_segments[0].alpha = prim->m_alpha;
         prim->m_segments[0].argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)), prim->m_tintColor);
         prim->m_segments[0].transform = prim->m_matrix;
@@ -9355,6 +9375,42 @@ void CRagEffect::SpawnSteal()
         prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle7.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle7.act"); // 0x71B400 / 0x71B3E8
         ShiftCircleSegments(prim);
     }
+}
+
+// Ref/RagEffect.cpp:225-277 (0x5F7770), original effect 10.
+bool CRagEffect::ProcessCoin()
+{
+    if (!g_session.m_isMinEffect && m_stateCnt == 20) {
+        for (int i = 0; i < 5; ++i) {
+            CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEGRAVITY, vector3d{});
+            prim->m_duration = rand() % 30 + 40;
+            prim->m_longitude = static_cast<float>(30 * (rand() % 12));
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+            const double radius = rand() % 2 + 2;
+            prim->m_deltaPos2 = {
+                static_cast<float>(radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+                static_cast<float>(radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+                static_cast<float>(radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+            };
+            prim->m_deltaPos2.y = static_cast<float>(prim->m_deltaPos2.y - 10.0);
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+            prim->m_speed = static_cast<float>(static_cast<double>(rand() % 50 + 50) * 0.0099999998);
+            prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -0.2857143);
+            prim->m_gravSpeed = static_cast<float>(static_cast<double>(rand() % 100 + 50) * -0.039999999);
+            prim->m_gravAccel = static_cast<float>(-(prim->m_gravSpeed / static_cast<double>(prim->m_duration) * 4.0));
+            prim->m_size = 2.0f;
+            prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+            prim->m_playWaveType = 1; prim->m_animSpeed = 1;
+            prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f; prim->m_repeatAnim = true;
+            prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\\xB5\xBF\xC0\xFC.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB5\xBF\xC0\xFC.act"); // 0x71B510 / 0x71B500
+            prim->m_numSegments = 2;
+            InitReferenceSegments(prim);
+        }
+    }
+    ProcessEZ2STR(0.0f,-80.0f,0.0f); // Original deliberately ignores completion.
+    return m_stateCnt < 100;
 }
 
 // Ref/RagEffect.cpp:7202-7261 (0x5F9170). The angle truncates before
@@ -12649,6 +12705,7 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 10) return ProcessCoin();
     if (m_type == 18) {
         SpawnSteal();
         return true;

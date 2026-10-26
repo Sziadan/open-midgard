@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Steal emitter and reference gravity-particle update/render binding, after SandWind checkpoint `adfbb0e`. Original id18 now preserves source ten-particle burst, RNG, gravity/bounce and optional primitive audio.
+Current work: WP5A Coin emitter and reference two-segment initialization, after Steal checkpoint `75bcac8`. Original id10 now preserves reduced-effects gating, ordered burst, source gravity/audio and STR/termination behavior.
 
-Next action: migrate the distinct Coin emitter and other remaining gravity/particle callers. Other active emitters/generic controls, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue remaining gravity/particle emitters and unported primitive controls. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Coin emitter / two-segment initialization — 2026-10-26
+
+- Ref/RagEffect.cpp:225-277 (0x5F7770) -> ProcessCoin, original id 10, direct dispatcher path. Burst only at frame 20 and when m_isMinEffect is false. Five gravity particles consume 25 RNG draws in duration/yaw/radius/horizontal speed/vertical speed order. Stored effect origin is preserved; no launch wave.
+- Original profile: duration rand()%30+40, longitude 30*(rand()%12), Y matrix and radius rand()%2+2 with y-10, speed (rand()%50+50)*0.0099999998 and drag speed/duration*-0.2857143, vertical speed (rand()%100+50)*-0.039999999 and acceleration -(speed/duration*4), fixed size 2, fade duration-duration/3, playWaveType 1, animation divisor 1/repeat, alpha/max 254 and two segments. Exact recovered Korean coin sprite/action names (0x71B510/0x71B500), locks and shared reference gravity/per-clip renderer binding.
+- ProcessEZ2STR(0,-80,0) runs every call, including reduced-effects mode; its result is deliberately ignored. Helper remains active while state<100 and returns false at 100, matching original Coin control independently of clip completion.
+- Ref/RagEffectPrim.cpp:1660-1698 (0x640520) -> InitReferenceSegments for represented particle segment fields. Both Coin segments start with the same full alpha/size/position/matrix/longitude. Later ShiftCircleSegments applies history attenuation; it now also retains original longitude. Added segment longitude storage. Other primitives' specialized segment payload fields remain separate work.
+
+Validation: release build, six silent C++ suites / 741 checks (575 lifecycle/primitive, 108 rendering, 58 other), six Python tests, two-literal executable byte audit and whitespace check pass. Added 17 checks for reduced-effects gate, burst/draw order/profiles/resources, initial full segments versus subsequent attenuation, actual coin bounce audio, frame gates/termination, STR offset and lock cleanup. No media/live acceptance. Approved OldRO SHA-256: `C18C53DCC78845563586E63C03EBC4644675E00837460A6062C19DC97C484B8F`. Other active emitters/primitive controls, specialized segment fields, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Steal emitter / gravity-particle path — 2026-10-26
 

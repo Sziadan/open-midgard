@@ -152,6 +152,7 @@ struct CGameMode {
     int messages=0,lastMsg=0,lastArg=0;
     void SendMsg(int msg,msgparam_t arg,msgparam_t,msgparam_t) {++messages;lastMsg=msg;lastArg=static_cast<int>(arg);}
 } gameMode;
+struct SilentSession {bool m_isMinEffect=false;} g_session;
 struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
 #include "PrimitiveEnum.inc"
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
@@ -279,6 +280,7 @@ struct CRagEffect : CGameObject {
     void SpawnFireFly();
     void SpawnSandWind();
     void SpawnSteal();
+    bool ProcessCoin();
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -2084,6 +2086,48 @@ int main()
         effect.m_stateCnt=1;effect.SpawnSteal();check(effect.m_primList.size()==10 && waveCalls.size()==2,"Steal emits only on parent frame zero");
         effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"Steal cleanup balances all ten sprite/action locks");
         g_world.m_player=oldPlayer;g_world.m_attr=oldAttr;rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto* oldAttr=g_world.m_attr;SilentAttr attr;attr.height=-1000;g_world.m_attr=&attr;
+        CRagEffect effect;effect.m_type=10;effect.m_master=&actor;effect.m_duration=200;effect.m_effectPos={10,50,30};
+        const int draws=rngDraws;waveCalls.clear();g_resMgr.requests.clear();effect.m_stateCnt=19;g_session.m_isMinEffect=false;
+        check(effect.ProcessCoin() && effect.m_primList.empty() && rngDraws==draws,"Coin remains active before emission despite missing STR");
+        effect.m_stateCnt=20;g_session.m_isMinEffect=true;
+        check(effect.ProcessCoin() && effect.m_primList.empty() && rngDraws==draws && waveCalls.empty(),"Coin reduced-effects gate skips all burst draws and resources");
+        g_session.m_isMinEffect=false;rngValues={29,11,1,49,99};rngCursor=0;effect.ProcessCoin();auto* prim=effect.m_primList.front();
+        check(effect.m_primList.size()==5 && rngDraws==draws+25,"Coin emits five gravity particles with five ordered draws each");
+        check(prim->UsesReferenceParticle() && prim->m_type==PP_3DPARTICLEGRAVITY && prim->m_duration==69 && prim->m_longitude==330
+            && prim->m_deltaPos2.y==-10 && std::fabs(prim->m_deltaPos2.x-3*GetSin(330))<0.000001f,
+            "Coin preserves random duration thirty-degree heading steps and radius offset");
+        check(prim->m_speed==static_cast<float>(99*0.0099999998) && prim->m_accel==static_cast<float>(prim->m_speed/69.0*-0.2857143)
+            && prim->m_gravSpeed==static_cast<float>(149*-0.039999999) && prim->m_gravAccel==static_cast<float>(-(prim->m_gravSpeed/69.0*4.0)),
+            "Coin retains distinct horizontal drag and vertical gravity acceleration arithmetic");
+        check(prim->m_size==2 && prim->m_sizeSpeed==0 && prim->m_fadeOutCnt==46 && prim->m_playWaveType==1 && prim->m_animSpeed==1
+            && prim->m_repeatAnim && prim->m_alpha==254 && prim->m_maxAlpha==254,"Coin preserves fixed size fade audio flag and source animation defaults");
+        check(g_resMgr.requests.size()==10 && g_resMgr.requests[0]=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB5\xBF\xC0\xFC.spr"
+            &&g_resMgr.requests[1]=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB5\xBF\xC0\xFC.act","Coin uses exact recovered Korean sprite/action names in source order");
+        check(prim->m_numSegments==2 && prim->m_segments[0].alpha==254 && prim->m_segments[1].alpha==254 && prim->m_segments[1].size==2
+            &&prim->m_segments[1].pos.x==10 &&prim->m_segments[1].argb==0xFEFFFFFF &&prim->m_segments[1].longitude==330,
+            "Coin initializes both segments to full current state before any trail attenuation");
+        check(effect.m_effectPos.x==10 && waveCalls.empty(),"Coin preserves stored world origin and adds no launch wave");
+        prim->m_alphaDelta=1;prim->OnProcess();
+        check(prim->m_curMotion==1 &&prim->m_stateCnt==1 &&prim->m_size==2 &&attr.calls==0,"Coin first gravity update keeps fixed size advances animation and skips terrain while ascending");
+        check(prim->m_segments[1].alpha==127 &&prim->m_segments[1].size==1.5f &&prim->m_segments[1].pos.x==10
+            &&prim->m_segments[1].argb==0x7FFFFFFF,"Coin subsequent ShiftSegment applies original alpha/size attenuation to initial history");
+        rngValues={0};rngCursor=0;prim->m_gravSpeed=1;prim->m_gravAccel=0;prim->OnProcess();
+        check(waveCalls.size()==1 &&waveCalls[0].name=="effect\\EF_Coin1.wav" &&rngCursor==1 &&prim->m_gravSpeed<0,
+            "Coin actual particle audio flag triggers original bounce wave and one variant draw");
+        effect.m_stateCnt=21;effect.ProcessCoin();check(effect.m_primList.size()==5,"Coin burst is restricted to frame twenty");
+        effect.m_stateCnt=99;check(effect.ProcessCoin(),"Coin remains active at ninety-nine even after STR completion");
+        effect.m_stateCnt=100;check(!effect.ProcessCoin(),"Coin terminates exactly at one hundred independently of STR state");
+        effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0 &&g_resMgr.act.m_lockCnt==0,"Coin releases all sprite/action locks");
+        auto clip=std::make_unique<KANICLIP>();clip->cLayer=2;KAC_KEYFRAME keys[2];keys[0].iFrame=0;keys[1].iFrame=100;
+        clip->aLayer[1].cAniKey=2;clip->aLayer[1].aAniKey=keys;effect.m_ezEffectRes=clip.get();effect.m_aniClips=clip.get();
+        effect.InitEZ2STRFrame();effect.m_stateCnt=1;g_session.m_isMinEffect=true;
+        check(effect.ProcessCoin() &&effect.m_strScreenOffset.x==0 &&effect.m_strScreenOffset.y==-80 &&effect.m_strScreenOffset.z==0,
+            "Coin still processes original STR offset when reduced effects suppress its particle burst");
+        g_session.m_isMinEffect=false;g_world.m_player=oldPlayer;g_world.m_attr=oldAttr;rngValues.clear();rngCursor=0;
     }
     {
         CRagEffect effect;
