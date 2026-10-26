@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A DecAgility id38, after agility checkpoint `72bc315`. Original downward overlay and accelerating trails now bind reference primitive paths, including corrected extended cross-speed integration.
+Current work: WP5A Aqua id39, after DecAgility checkpoint `69eddc2`. Original actor-following nonrepeating sprite animation, exact recovered resources/audio and world cleanup now bind the reference particle path.
 
-Next action: continue unported emitters (including Aqua id39) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters (including Signum id40) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Aqua actor-following sprite animation — 2026-10-26
+
+- Ref/RagEffect.cpp:1774-1798 (0x5FAE10) -> SpawnAqua, original id39, direct ProcessEffectFrame/Init route. Copies actor origin on every call. Zero plays exact actor-relative horizontal EF_Aqua wave and emits one PP_3DPARTICLE; later calls refresh origin without repeated emission/resources/audio. No reduced-effects suppression or RNG, and parent duration remains unchanged.
+- Source particle retains parent duration, y-20 offset, animation divisor2/nonrepeat, exact recovered CP949 sprite/action paths at0x71B7B4/0x71B7A0, source sprite-then-action lock order and one full initial segment at launch origin. Explicit original constructor alpha/max254/size1/fade-1 are preserved; no extra velocity or fade is added. Bound shared reference linear state/per-clip rendering.
+- Original animation advances at primitive frame0, holds on odd frames, and terminates when nonrepeating action exhausts. Reference update applies parent+offset position and segment before animation. Actual world cleanup removes the exhausted primitive from the parent list and releases resource locks.
+
+Validation: release build, six silent C++ suites / 1191 checks (983 lifecycle/primitive, 150 rendering, 58 other), six Python tests, three-literal executable byte audit, three original asset-pointer instruction audits and whitespace check pass. Added13 lifecycle checks for actor-origin audio/order/no RNG/reduced-effects behavior, exact resources/defaults/initial segment, skipped-frame gate, frame-zero advance/odd hold/final motion, moving anchor/nonrepeat behavior and world-driven retirement with balanced locks. Existing shared per-clip rendering/device suites pass. Exact wave0x71B7C8 and sprite/action0x71B7B4/0x71B7A0 match executable bytes; pushes at0x5FAE78/0x5FAECD/0x5FAF09 verified. Animation count in checks comes from a silent action double; no media/live acceptance. Approved OldRO SHA-256: `4E1132938BFAEE09593FC5A682F831C55839B29DD7B2645EA1005075F863777D`. Other emitters/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## DecAgility downward overlay / accelerating trails — 2026-10-26
 

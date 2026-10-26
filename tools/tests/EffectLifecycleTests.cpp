@@ -309,6 +309,7 @@ struct CRagEffect : CGameObject {
     void ApplyBash();
     void SpawnIncAgility();
     void SpawnDecAgility();
+    void SpawnAqua();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1889,6 +1890,43 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,50,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=39;
+        effect.m_effectPos={900,800,700};effect.m_duration=100;g_session.m_isMinEffect=true;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;const int oldMotions=g_resMgr.act.count;g_resMgr.act.count=3;
+        effect.SpawnAqua();auto* prim=effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim->m_type==PP_3DPARTICLE&&prim->UsesReferenceParticle()&&rngDraws==draws,
+            "Aqua emits one reference particle without RNG despite reduced effects");
+        check(effect.m_effectPos.x==10&&effect.m_effectPos.y==50&&effect.m_effectPos.z==100&&effect.m_duration==100
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_Aqua.wav"&&waveCalls[0].x==8&&waveCalls[0].y==0&&waveCalls[0].z==96,
+            "Aqua copies actor origin before exact horizontal audio without overriding parent lifetime");
+        check(prim->m_duration==100&&prim->m_deltaPos2.y==-20&&prim->m_animSpeed==2&&!prim->m_repeatAnim&&prim->m_curMotion==0
+            &&prim->m_alpha==254&&prim->m_maxAlpha==254&&prim->m_fadeOutCnt==-1&&prim->m_size==1,
+            "Aqua preserves source parent duration offset nonrepeating animation and constructor alpha size fade");
+        check(g_resMgr.requests==std::vector<std::string>({"\xC0\xCC\xC6\xD1\xC6\xAE\\\xBC\xBA\xBC\xF6\xB6\xDF\xB1\xE2.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBC\xBA\xBC\xF6\xB6\xDF\xB1\xE2.act"})&&g_texMgr.requests.empty(),
+            "Aqua loads exact recovered CP949 sprite then action without guessed texture resources");
+        check(prim->m_numSegments==1&&prim->m_segments[0].pos.x==10&&prim->m_segments[0].pos.y==50&&prim->m_segments[0].alpha==254
+            &&prim->m_segments[0].argb==0xFEFFFFFF&&prim->m_segments[0].transform.m[1][1]==1,
+            "Aqua initializes one full segment at source launch origin before offset integration");
+        prim->m_alphaDelta=1;g_isSkipFrame=0;prim->OnProcess();check(prim->m_stateCnt==0&&prim->m_curMotion==0,
+            "Aqua ordinary particle honors original no-frame-time gate");g_isSkipFrame=1;
+        check(prim->OnProcess()==1&&prim->m_stateCnt==1&&prim->m_curMotion==1&&prim->m_pos.x==10&&prim->m_pos.y==30&&prim->m_pos.z==100,
+            "Aqua frame-zero update applies offset then advances source animation to frame one");
+        check(prim->m_alpha==254&&prim->m_argb==0xFEFFFFFF&&prim->m_segments[0].pos.y==30&&prim->m_speed==0&&prim->m_deltaPos.y==0,
+            "Aqua reference particle stays at anchor with full alpha and shifted source segment");
+        actor.m_pos={20,60,120};effect.m_stateCnt=1;effect.SpawnAqua();
+        check(effect.m_effectPos.x==20&&effect.m_effectPos.y==60&&effect.m_primList.size()==1&&waveCalls.size()==1&&g_resMgr.requests.size()==2&&rngDraws==draws,
+            "Aqua nonzero calls follow actor without repeating emission sound resources or RNG");
+        prim->OnProcess();check(prim->m_stateCnt==2&&prim->m_curMotion==1&&prim->m_pos.x==20&&prim->m_pos.y==40&&prim->m_pos.z==120,
+            "Aqua odd primitive frame holds animation while following newly copied actor origin");
+        prim->OnProcess();check(prim->m_stateCnt==3&&prim->m_curMotion==2,"Aqua next even primitive frame advances to final available action motion");
+        prim->OnProcess();check(prim->m_stateCnt==4&&prim->m_curMotion==2,"Aqua final motion remains visible on following odd frame");
+        g_world.UpdateGameObjects();check(effect.m_primList.empty()&&g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,
+            "Aqua exhausted nonrepeating action retires through world and parent detach protocol with balanced locks");
+        g_resMgr.act.count=oldMotions;g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;
     }
     {
         CRenderObject actor,listener;actor.m_pos={10,50,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
