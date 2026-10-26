@@ -4200,36 +4200,56 @@ void UpdateElectricPrimitive(CEffectPrim* prim)
     }
 }
 
+void ElectricPathPoint(int riseAngle, float angle, float heightFactor, float distance,
+    float originX, float originY, float originZ, float jitterX, float jitterY, float jitterZ, vector3d* point)
+{
+    int angleIndex = static_cast<int>(angle) % 360;
+    if (angleIndex < 0) {
+        angleIndex += 360;
+    }
+    const int facing = 4 * riseAngle;
+    const double radial = angle > 0.0f ? static_cast<double>(angle) * 0.011111111 * distance : 0.0;
+    point->x = static_cast<float>(radial * g_cosTable[facing]);
+    point->y = static_cast<float>(-static_cast<double>(g_sinTable[angleIndex]) * heightFactor * distance);
+    point->z = static_cast<float>(radial * g_sinTable[facing]);
+    point->x = static_cast<float>(point->x + jitterX);
+    point->y = static_cast<float>(static_cast<double>(jitterY) - 2.0 + point->y);
+    point->z = static_cast<float>(point->z + jitterZ);
+    point->x += originX;
+    point->y += originY;
+    point->z += originZ;
+}
+
 void RenderElectric(const CEffectPrim& prim, const matrix& viewMatrix)
 {
     CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
     for (const EffectGi& gi : prim.m_gi) {
-        const int samples = static_cast<int>(gi.vecTNowY);
-        if (gi.life != 1 || gi.alphaB <= 0 || gi.process <= 0 || samples <= 0) {
-            continue;
-        }
         float jitterY[21]{};
         float jitterX[21]{};
         float jitterZ[21]{};
-        const int jitterCount = (std::min)(samples + 1, 21);
-        for (int sample = 0; sample < jitterCount; ++sample) {
-            jitterY[sample] = static_cast<float>(rand() % 7) * 0.1f - 0.30000001f;
-            jitterX[sample] = static_cast<float>(rand() % 7) * 0.1f - 0.30000001f;
-            jitterZ[sample] = static_cast<float>(rand() % 7) * 0.1f - 0.30000001f;
+        int jitterSample = 0;
+        for (; static_cast<float>(jitterSample) < gi.vecTNowY; ++jitterSample) {
+            const float y = static_cast<float>(static_cast<double>(rand() % 7) * 0.1 - 0.30000001);
+            const float x = static_cast<float>(static_cast<double>(rand() % 7) * 0.1 - 0.30000001);
+            const float z = static_cast<float>(static_cast<double>(rand() % 7) * 0.1 - 0.30000001);
+            if (jitterSample < 21) {
+                jitterY[jitterSample] = y;
+                jitterX[jitterSample] = x;
+                jitterZ[jitterSample] = z;
+            }
         }
-        const int facing = TableAngle(gi.riseAngle);
+        if (gi.life != 1 || gi.alphaB <= 0 || gi.process <= 0 || gi.vecTNowY <= 0.0f) {
+            continue;
+        }
+        const int samples = (std::min)(static_cast<int>(std::ceil(gi.vecTNowY)), 21);
         const auto pathPoint = [&](int sample) {
-            const float angle = gi.height[static_cast<size_t>(sample)];
-            const int angleIndex = TableAngle(static_cast<int>(angle));
-            const float radial = angle > 0.0f ? angle * 0.011111111f * gi.distance : 0.0f;
-            return vector3d{
-                radial * g_cosTable[facing] + jitterX[sample] + gi.sparkX,
-                -(g_sinTable[angleIndex] * gi.vecTNowX * gi.distance) + jitterY[sample] - 2.0f + gi.sparkY,
-                radial * g_sinTable[facing] + jitterZ[sample] + gi.sparkZ
-            };
+            vector3d point{};
+            ElectricPathPoint(gi.riseAngle, gi.height[static_cast<size_t>(sample)], gi.vecTNowX, gi.distance,
+                gi.sparkX, gi.sparkY, gi.sparkZ, jitterX[sample], jitterY[sample], jitterZ[sample], &point);
+            return point;
         };
         int fade = 0;
-        for (int sample = 0; sample < samples; ++sample) {
+        for (int sample = 0; static_cast<float>(sample) < gi.vecTNowY && sample < samples; ++sample) {
             const vector3d pointA = pathPoint(sample);
             const vector3d pointB = pathPoint((std::min)(sample + 1, 20));
             if (sample > 0 && sample < 19) {

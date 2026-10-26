@@ -576,3 +576,5 @@ Validation: release build, six silent C++ suites / 515 checks (386 lifecycle/pri
 Latest completed function gate (2026-10-26): `Render3DCasting_LowPolygon` completed source-to-implementation branch comparison and checkpoint validation. Evidence is in `PARITY_LOG.md`; no next function should begin before this comparison passes. The next casting renderer method remains subject to the same mechanical case/branch comparison gate.
 
 Latest completed function gate (2026-10-26): `Render3DCasting2` / PP_GI_3 completed its branch-level source comparison and checkpoint validation. Evidence is in `PARITY_LOG.md`; the next function remains gated on a passed mechanical source-to-implementation comparison.
+
+Latest completed function gate (2026-10-26): `RenderElectric` / PP_ELECTRIC completed its branch-level source comparison and checkpoint validation. Evidence is in `PARITY_LOG.md`; the next renderer remains gated on a passed mechanical comparison.

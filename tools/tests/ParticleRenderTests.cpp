@@ -122,6 +122,7 @@ vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.
 #include "CircleRenderBodies.inc"
 #include "CastingColorBodies.inc"
 #include "CastingLowRiseBody.inc"
+#include "ElectricPathBody.inc"
 #include "ReferenceTriangleQueueBodies.inc"
 
 int main() {
@@ -161,6 +162,16 @@ int main() {
             && near(outer.y,-static_cast<double>(GetSin(rise))*height)
             && near(outer.z,static_cast<double>(GetSin(side))*radius+inner.z),
             "GI3 casting sample matches source band rotation and radial/vertical branches");
+    }
+    for(int rise:{0,23,45,90}) {
+        vector3d point{};const float angle=135.0f,heightFactor=0.37f,distance=8.0f;
+        ElectricPathPoint(rise,angle,heightFactor,distance,12.0f,30.0f,-4.0f,0.1f,-0.2f,0.3f,&point);
+        const double radial=static_cast<double>(angle)*0.011111111*distance;
+        const int angleIndex=static_cast<int>(angle);
+        check(near(point.x,static_cast<float>(radial*GetCos(rise*4)+0.1f+12.0f))
+            && near(point.y,static_cast<float>(static_cast<double>(-GetSin(angleIndex))*heightFactor*distance-0.2f-2.0f+30.0f))
+            && near(point.z,static_cast<float>(radial*GetSin(rise*4)+0.3f-4.0f)),
+            "electric path sample uses four-times-rise trig, independent jitter and source origin");
     }
     const int inverseSizes[]={0,2,3,12,13,14,100};
     for(int size=0;size<=100;++size) {

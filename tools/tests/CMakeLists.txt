@@ -106,6 +106,8 @@ extract_body(casting_colors "${effect_source}" "unsigned int CastingSizeRgb(" "v
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CastingColorBodies.inc" "${casting_colors}")
 extract_body(casting_low_rise "${effect_source}" "void CastingLowPolygonRise(" "void RenderHealLow(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CastingLowRiseBody.inc" "${casting_low_rise}")
+extract_body(electric_path "${effect_source}" "void ElectricPathPoint(" "void RenderElectric(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ElectricPathBody.inc" "${electric_path}")
 file(READ "../../src/render/Renderer.cpp" renderer_source)
 extract_body(reference_triangle_queue "${renderer_source}" "void CRenderer::AddReferenceEffectTriangle(" "void CRenderer::AddLmRP(")
 string(REPLACE "CRenderer::" "SilentRenderer::" reference_triangle_queue "${reference_triangle_queue}")
