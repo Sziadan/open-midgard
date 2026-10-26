@@ -225,6 +225,7 @@ void UpdateReferenceSoulBreaker2(CEffectPrim*);
 void UpdateReferenceRainbow(CEffectPrim*);
 bool UpdateReferencePeong(CEffectPrim*);
 void UpdateReferenceEffectTexture2(CEffectPrim*);
+bool UpdateReferencePeongUp(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -351,6 +352,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_RAINBOW) { UpdateReferenceRainbow(this); return active; }
         if (m_type == PP_PEONG) { UpdateReferencePeong(this); return active; }
         if (m_type == PP_EFFECTTEXTURE2) { UpdateReferenceEffectTexture2(this); return active; }
+        if (m_type == PP_PEONGUP) { UpdateReferencePeongUp(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -803,6 +805,7 @@ __declspec(noinline) void RunSoulBreaker2LifecycleChecks(CEffectPrim& prim, int&
 __declspec(noinline) void RunRainbowLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunPeongLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunEffectTexture2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunPeongUpLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1871,6 +1874,59 @@ __declspec(noinline) void RunEffectTexture2LifecycleChecks(CEffectPrim& prim, in
         && prim.m_gi[0].alphaT==330 && prim.m_gi[1].alphaT==135,
         "case 0x5F inactive GI receives camera updates but skips process, alpha, height and Y mutations");
     testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
+    RunPeongUpLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunPeongUpLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude; testView.longitude=20.0f;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_PEONGUP; prim.m_stateCnt=0; prim.m_duration=1000; prim.m_pos={9,8,7};
+    prim.m_master->m_effectPos={100,200,300};
+    for (auto& gi : prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=0; a.alphaB=5; a.maxHeight=2;
+    a.height[0]=8; a.height[1]=10; a.height[2]=6; a.height[3]=4;
+    a.arcBaselineY=-1; a.vecBPreX=10; a.vecBPreZ=20;
+    EffectGi& inactive=prim.m_gi[1]; inactive.life=2; inactive.process=9; inactive.alphaB=11;
+    rngValues={3,2}; rngCursor=0; const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==9 && prim.m_pos.y==8 && prim.m_pos.z==7
+        && prim.m_gi[0].alphaT==340 && prim.m_gi[1].alphaT==135
+        && a.process==1 && a.alphaB==10 && a.height[0]==11 && a.height[1]==3
+        && a.height[2]==4 && a.height[3]==357
+        && std::fabs(a.vecBPreX-(10+0.03f*g_sinTable[11]))<0.0001f
+        && std::fabs(a.vecBPreZ-(20+0.03f*g_sinTable[4]))<0.0001f
+        && a.arcBaselineY==-3 && inactive.process==9 && inactive.alphaB==11
+        && rngDraws-draws==2 && rngCursor==2,
+        "case 0x60 positive process updates paired rise/fall height branches in order, conditional RNG, negative-Y drift and unconditional fall");
+
+    a.process=29; a.alphaB=10; a.height[0]=1; a.height[1]=20; a.height[2]=2; a.height[3]=30;
+    a.arcBaselineY=2; a.vecBPreX=5; a.vecBPreZ=6; a.maxHeight=0.5f;
+    rngValues.clear(); rngCursor=0; const int boundaryDraws=rngDraws;
+    prim.OnProcess();
+    check(a.process==30 && a.alphaB==8 && a.height[0]==4 && a.height[2]==5
+        && a.arcBaselineY==1.5f && a.vecBPreX==5 && a.vecBPreZ==6 && rngDraws==boundaryDraws,
+        "case 0x60 process 30 uses fade branch while both increasing height pairs remain above their targets");
+
+    a.process=-2; a.alphaB=44; a.height[0]=5; a.height[1]=5; a.arcBaselineY=-2; a.vecBPreX=3; a.vecBPreZ=4;
+    rngValues.clear(); rngCursor=0; const int skippedDraws=rngDraws;
+    prim.OnProcess();
+    check(a.process==-1 && a.alphaB==44 && a.height[0]==5 && a.height[1]==5
+        && a.arcBaselineY==-2 && a.vecBPreX==3 && a.vecBPreZ==4 && rngDraws==skippedDraws,
+        "case 0x60 nonpositive process skips all GI mutations and RNG after increment");
+
+    for (auto& gi : prim.m_gi) { gi={}; gi.life=1; gi.maxHeight=0; }
+    prim.OnProcess();
+    bool allBands=true;
+    for (const auto& gi : prim.m_gi) {
+        allBands=allBands&&gi.process==1&&gi.alphaB==5&&gi.height[1]==359&&gi.height[3]==359;
+    }
+    check(allBands && rngDraws==skippedDraws,
+        "case 0x60 updates all four exact-life bands and random(0) returns zero without consuming RNG");
+    rngValues.clear(); rngCursor=0; testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()

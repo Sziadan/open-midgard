@@ -9414,6 +9414,65 @@ void UpdateReferenceEffectTexture2(CEffectPrim* prim)
     gi.sparkY = gi.arcBaselineY;
 }
 
+// Ref/dhxj/RagEffect2.cpp:9882; canonical executable PrimPeongUp at 0x61BB70 (case 0x60).
+bool UpdateReferencePeongUp(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode ? mode->m_view : nullptr;
+    if (view) {
+        const short longitude = static_cast<short>(view->GetCameraLongitude());
+        prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+        const short latitude = static_cast<short>(view->GetCameraLatitude());
+        short cameraLatitude = static_cast<short>(360 - latitude + 90);
+        if (cameraLatitude >= 360) cameraLatitude = static_cast<short>(cameraLatitude - 360);
+        prim->m_gi[1].alphaT = cameraLatitude;
+    }
+
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.process < 30) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 5);
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - 2);
+        }
+        if (gi.alphaB < 0) gi.alphaB = 0;
+
+        for (int index = 0; index < 4; index += 2) {
+            float& angle = gi.height[static_cast<size_t>(index)];
+            float& target = gi.height[static_cast<size_t>(index + 1)];
+            if (target > angle) {
+                angle += 3.0f;
+                if (angle > 359.0f) angle = 359.0f;
+                if (angle > target) {
+                    const int range = static_cast<int>(angle);
+                    target = range == 0 ? 0.0f : static_cast<float>(rand() % range);
+                }
+            } else {
+                angle -= 2.0f;
+                if (angle < 0.0f) angle = 0.0f;
+                if (angle <= target) {
+                    const int range = static_cast<int>(angle);
+                    const int draw = range == 0 ? 0 : rand() % range;
+                    target = static_cast<float>(359 - draw);
+                }
+            }
+        }
+
+        if (gi.arcBaselineY < 0.0f) {
+            const int xAngle = static_cast<int>(gi.height[0]);
+            const int zAngle = static_cast<int>(gi.height[2]);
+            gi.vecBPreX = static_cast<float>(gi.vecBPreX + 0.03f * g_sinTable[xAngle]);
+            gi.vecBPreZ = static_cast<float>(gi.vecBPreZ + 0.03f * g_sinTable[zAngle]);
+        }
+        gi.arcBaselineY = static_cast<float>(gi.arcBaselineY - gi.maxHeight);
+    }
+    return true;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -10539,6 +10598,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_EFFECTTEXTURE2) {
         UpdateReferenceEffectTexture2(this); // Source case 0x5F continues to the common tick.
+        return true;
+    }
+    if (m_type == PP_PEONGUP) {
+        UpdateReferencePeongUp(this); // Source case 0x60 ignores the handler's true result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
