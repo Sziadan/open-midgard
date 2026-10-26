@@ -308,6 +308,7 @@ struct CRagEffect : CGameObject {
     void ApplySonicBlowHit();
     void ApplyBash();
     void SpawnIncAgility();
+    void SpawnDecAgility();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1888,6 +1889,67 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,50,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=38;
+        effect.m_effectPos={900,800,700};effect.m_duration=60;effect.m_tlvertZ=123;g_session.m_isMinEffect=true;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;rngValues={90,6,59};rngCursor=0;effect.SpawnDecAgility();
+        auto it=effect.m_primList.begin();auto* overlay=*it++;auto* trail=*it;
+        check(effect.m_primList.size()==2&&overlay->UsesReferenceScreenTexture()&&trail->UsesReferenceCrossTexture()&&rngDraws==draws+3&&rngCursor==3,
+            "DecAgility emits source overlay then three-draw cross trail despite reduced effects");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_DecAgility.wav"&&waveCalls[0].x==8&&waveCalls[0].y==0&&waveCalls[0].z==96
+            &&waveCalls[0].frameRng==draws,"DecAgility plays exact actor-origin horizontal wave before trail RNG");
+        tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_effectPos.x==10&&effect.m_effectPos.y==50&&effect.m_effectPos.z==100&&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y
+            &&effect.m_tlvertZ==123&&effect.m_duration==60,"DecAgility projects actor then copies world anchor retaining projected z and parent lifetime");
+        check(overlay->m_duration==60&&overlay->m_deltaPos2.y==-80&&overlay->m_longitude==180&&overlay->m_speed==1
+            &&overlay->m_accel==static_cast<float>(-1.0/60)&&overlay->m_widthSize==40&&overlay->m_heightSize==10
+            &&overlay->m_alpha==0&&overlay->m_maxAlpha==200&&overlay->m_alphaSpeed==static_cast<float>(200.0*0.06666667)&&overlay->m_fadeOutCnt==45,
+            "DecAgility overlay preserves downward heading offset dimensions deceleration alpha rise and fade");
+        check(g_texMgr.requests==std::vector<std::string>({"effect\\slow.bmp","effect\\ac_center2.tga"})&&g_resMgr.requests.empty(),
+            "DecAgility loads exactly slow overlay then shared cross texture without sprite resources");
+        matrix radial;MatrixIdentity(radial);MatrixAppendYRotation(radial,GetRadian(90));
+        check(trail->m_deltaPos2.x==static_cast<float>(8.0*radial.m[2][0])&&trail->m_deltaPos2.y==-20
+            &&trail->m_deltaPos2.z==static_cast<float>(8.0*radial.m[2][2]),"DecAgility trail draws radial angle then radius and adds source minus-twenty vertical offset");
+        matrix motion;MatrixIdentity(motion);MatrixAppendXRotation(motion,GetRadian(-90));
+        check(trail->m_matrix.m[2][1]==motion.m[2][1]&&trail->m_speed==0&&trail->m_accel==0.015f&&trail->m_widthSize==8.9f
+            &&trail->m_heightSize==0.18000001f,"DecAgility cross replaces radial matrix with negative-X rotation and uses acceleration from zero speed");
+        check(trail->m_duration==50&&trail->m_alpha==0&&trail->m_maxAlpha==200&&trail->m_alphaSpeed==static_cast<float>(200.0*0.050000001)
+            &&trail->m_fadeOutCnt==30&&overlay->m_gi[0].life==0&&trail->m_gi[0].life==0,
+            "DecAgility trail retains source alpha timing and ordinary life-zero processing flags");
+        overlay->m_alphaDelta=1;trail->m_alphaDelta=1;g_isSkipFrame=0;overlay->OnProcess();trail->OnProcess();
+        check(overlay->m_stateCnt==0&&trail->m_stateCnt==0,"DecAgility primitives honor original no-frame-time gate");
+        g_isSkipFrame=1;overlay->OnProcess();trail->OnProcess();const float screenSpeed=1.0f+static_cast<float>(-1.0/60);
+        check(overlay->m_deltaPos.y==static_cast<float>(-static_cast<double>(GetCos(180))*screenSpeed)
+            &&overlay->m_pos.y==projected.y-80+overlay->m_deltaPos.y&&overlay->m_alpha==static_cast<float>(200.0*0.06666667),
+            "DecAgility overlay drifts downward from projected minus-eighty offset with source alpha rise");
+        check(trail->m_speed==0.015f&&trail->m_pos.x==18&&trail->m_pos.y==30+trail->m_deltaPos.y&&trail->m_deltaPos.y>0&&trail->m_alpha==10,
+            "DecAgility cross accelerates downward from actor plus radial and vertical offsets");
+        const float displacement=trail->m_deltaPos.y;trail->OnProcess();
+        check(trail->m_speed==0.03f&&trail->m_deltaPos.y>displacement&&trail->m_widthSize==8.9f,
+            "DecAgility trail continues source acceleration without invented growth or drag");
+        actor.m_pos={20,60,120};effect.m_stateCnt=1;effect.SpawnDecAgility();ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_primList.size()==2&&effect.m_effectPos.y==60&&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y
+            &&waveCalls.size()==1&&rngDraws==draws+3,"DecAgility odd frames refresh actor anchors without repeated emission audio or RNG");
+        trail->OnProcess();check(trail->m_pos.x==28&&trail->m_pos.y==40+trail->m_deltaPos.y,
+            "DecAgility existing trail follows newly copied actor origin");
+        rngValues={0,0,0};rngCursor=0;effect.m_stateCnt=2;effect.SpawnDecAgility();auto* next=effect.m_primList.back();
+        check(effect.m_primList.size()==3&&rngDraws==draws+6&&waveCalls.size()==1&&next->m_widthSize==3&&next->m_deltaPos2.x==0
+            &&next->m_deltaPos2.y==-20&&next->m_deltaPos2.z==2,"DecAgility even frames emit independent three-draw trail with exact lower range offsets");
+        const float alpha=trail->m_alpha;trail->m_stateCnt=30;trail->OnProcess();
+        check(trail->m_alphaSpeed==static_cast<float>(-alpha/20.0)&&trail->m_alpha<alpha,"DecAgility cross preserves source twenty-frame fade at frame thirty");
+        const float overlayAlpha=overlay->m_alpha;overlay->m_stateCnt=45;overlay->OnProcess();
+        check(overlay->m_alphaSpeed==static_cast<float>(-overlayAlpha/15.0)&&overlay->m_alpha<overlayAlpha,
+            "DecAgility overlay preserves source fifteen-frame fade");
+        auto precise=std::make_unique<CEffectPrim>();precise->m_master=&effect;precise->m_type=PP_3DCROSSTEXTURE;
+        precise->m_speed=0.03f;precise->m_accel=0.015f;precise->m_matrix.m[2][2]=0.12345679f;precise->m_animSpeed=4;precise->m_repeatAnim=true;precise->m_fadeOutCnt=-1;
+        const double integrated=static_cast<double>(precise->m_accel)+precise->m_speed;
+        UpdateReferenceCrossTexture(precise.get());
+        check(precise->m_speed3d.z==static_cast<float>(integrated*0.12345679f)
+            &&precise->m_speed3d.z!=static_cast<float>(static_cast<double>(static_cast<float>(integrated))*0.12345679f),
+            "Cross reference motion preserves extended acceleration sum through vector multiplication before stored speed rounding");
+        precise->m_master=nullptr;effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     for(int type:{37,43}) {
         CRenderObject actor,listener;actor.m_pos={10,50,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;

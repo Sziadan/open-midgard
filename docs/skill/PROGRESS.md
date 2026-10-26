@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A IncAgility/IncAGIDEX ids37/43, after Bash checkpoint `5975bb6`. Shared approximation and fallback candidates are replaced by original overlay/cross profiles, exact variant assets and life99-versus0 skipped-frame behavior.
+Current work: WP5A DecAgility id38, after agility checkpoint `72bc315`. Original downward overlay and accelerating trails now bind reference primitive paths, including corrected extended cross-speed integration.
 
-Next action: continue unported emitters (including DecAgility id38) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters (including Aqua id39) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## DecAgility downward overlay / accelerating trails — 2026-10-26
+
+- Ref/RagEffect.cpp:3016-3107 (0x5FAA20) -> SpawnDecAgility, original id38, direct ProcessEffectFrame/Init route. Every call projects current actor x/y then copies actor world origin, preserving projected z/parent lifetime. Zero plays exact horizontal EF_DecAgility wave from refreshed origin before emitting overlay; every even frame emits one trail. No reduced-effects suppression.
+- Overlay retains parent duration, y-80, longitude180/speed1/source deceleration -(speed/duration), width40/height10, alpha0/max200/rise max*0.06666667/fade duration-15, exact slow.bmp and GI life0. Bound reference screen-texture state/centered geometry, preserving downward screen drift.
+- Trails consume three draws (radial angle/radius/width) and preserve duration50, source radial Y matrix/offset plus y-20, replacement pure X(-90) motion matrix, constructor speed0 with acceleration0.015, width(30..89)*0.1/height0.18000001, alpha0/max200/rise max*0.050000001/fade30, exact ac_center2 texture and life0. Bound reference cross state/geometry with ordinary skipped-frame gate and moving parent anchor.
+- Ref/RagEffectPrim.cpp:1086-1105 (0x643340 body) -> UpdateReferenceCrossTexture preserves the extended accel+speed sum through vector multiplication before storing rounded motion components. Previous bound profiles had zero acceleration; DecAgility exposes this arithmetic difference. Earlier cross callers remain passing.
+
+Validation: release build, six silent C++ suites / 1178 checks (970 lifecycle/primitive, 150 rendering, 58 other), six Python tests, three-literal executable byte audit, three original asset-pointer instruction audits and whitespace check pass. Added18 lifecycle checks for ordered three-draw burst/resources/audio, projection/actor origin/z, overlay direction/profile/fade, radial offset and replacement matrix, acceleration/downward motion, life0 skip gate, odd/even cadence, moving anchors, range endpoints and a numeric case distinguishing extended from prematurely rounded vector integration. Existing shared screen/cross geometry/device and earlier caller suites pass. Exact wave0x719C6C, slow0x71B790 and cross0x71B2D4 match executable bytes; original pushes at0x5FAAFA/0x5FAC0B/0x5FADDE verified. No media/live acceptance. Approved OldRO SHA-256: `41628115E34C24BCD2083F12997B95EF2355377482741E849C601A46FB8843EA`. Other emitters/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## IncAgility / IncAGIDEX source overlays and trails — 2026-10-26
 
