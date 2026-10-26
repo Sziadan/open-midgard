@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A PoisonHit id53, after original STR-only dispatch group checkpoint 3ba72a8. Stationary clip-colored particle now uses original emission, lifecycle and rendering paths.
+Current work: WP5A BeginSpell2–7 emitter setup for ids54-59, after PoisonHit checkpoint 06675d8. Direct dispatch, original profiles and missing SaintCasting texture are verified; casting primitive state/geometry still needs audit.
 
-Next action: continue original casting emitters beginning ids54-59 and remaining primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: audit original PP_3DCASTING, PP_3DCASTING_3 and PP_GI_1 updates and geometry before continuing remaining emitters. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## BeginSpell2–7 casting emitter setup — 2026-10-26
+
+- Ref/RagEffect.cpp:1982-2108 (0x5F3B90..0x5F3E20) -> SpawnBeginSpell, direct Init/ProcessEffectFrame route for ids54-59. Removed duplicate generic branches. Copies actor origin on each call, emits exact horizontal EF_BeginSpell audio at zero, then source variant: blue/2, yellow/1, Magic_Green/33, yellow/0, paired white SaintCasting45/25, Magic_Violet/33. No reduced-effects gate or RNG.
+- Ref/RagEffect2.cpp:23440-23549 (0x607950) -> existing ApplyBeginCasting profile retained and tested: duration floor70, PP_3DCASTING versus PP_3DCASTING_3, option33 resetting size0, flag5, exact texture, four original GI bands. Explicitly clear all21 height/flag samples. Removed emitter-time writes to existing primitive positions; subsequent emitter calls update parent origin while primitive updates own position. Audio now calls PlayWave with original horizontal deltas and250/40/1 parameters.
+- Ref/RagEffect2.cpp:31333-31494 (0x6298B0) -> ApplySaintCasting now loads its previously missing texture and clears all21 samples per band. Preserves duration floor56, all source variant size/height branches, full360 bands, time-based alpha offsets and duration<=60 stagger0/-5/-10/-15 with alpha0. Removed eager existing-primitive position writes. Shared callers receive the same missing-texture fix; additional caller dispatch and full GI state/geometry parity are not claimed complete.
+
+Validation: release build, six silent C++ suites / 1686 checks (1462 lifecycle/primitive, 166 rendering, 58 other), seven Python tests and whitespace checks pass. Added184 checks across all six ids and parent durations20/60/61/100, exact emission count/type/texture/profile/audio, all bands/samples, paired ring order, reduced mode/no RNG, nonzero actor follow without repeated work or premature primitive mutation, and eight shared SaintCasting variants. Six executable resource literals and thirteen original push sites verified; all extracted resources exist. Literal addresses: wave0x7193CC, blue0x71943C, yellow0x7193E8, green0x71A6E8, white0x719480, violet0x719520. No media/live acceptance. Approved OldRO SHA-256 matches build: `CDCE2EEC67BCA4BDF523388EBFCB31577FA04AD18872C641433476AD6FB107A4`. Casting primitive update/geometry audit is next; other emitters/controls, caller routing, specialized segments, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## PoisonHit stationary clip-colored particle — 2026-10-26
 

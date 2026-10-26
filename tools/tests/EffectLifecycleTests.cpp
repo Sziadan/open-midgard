@@ -322,6 +322,9 @@ struct CRagEffect : CGameObject {
     void SpawnSprayPond();
     void SpawnIncAgility();
     void SpawnDecAgility();
+    void ApplyBeginCasting(const char*,int,bool);
+    void ApplySaintCasting(short,const char*,int);
+    void SpawnBeginSpell();
     void SpawnPoisonHit();
     void SpawnAqua();
     void SpawnFireBall();
@@ -398,6 +401,8 @@ CRagEffect* CAbleToMakeEffect::LaunchEffect(int type, vector3d, float)
 #include "AttrWaveBodies.inc"
 #include "EffectLifecycleBodies.inc"
 #include "StrOnlyDispatchBody.inc"
+constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
+#include "CastingEmitterBodies.inc"
 #undef rand
 
 int main()
@@ -1340,6 +1345,61 @@ int main()
             "missing Torch assets keep reference dispatch without color-name or bitmap fallbacks");
         effect.ClearPrims();g_world.UpdateGameObjects();
         check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"Torch world cleanup releases resource locks");
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,50,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        const char* textures[]={"effect\\ring_blue.tga","effect\\ring_yellow.tga","effect\\Magic_Green.tga",
+            "effect\\ring_yellow.tga","effect\\ring_white.tga","effect\\Magic_Violet.tga"};
+        const int sizes[]={2,1,0,0,5,0};
+        for(int id=54;id<=59;++id) for(int duration:{20,60,61,100}) {
+            auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=id;
+            actor.m_pos={10,50,100};effect.m_effectPos={900,800,700};effect.m_duration=duration;effect.m_tlvertZ=123;
+            g_session.m_isMinEffect=true;waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+            effect.SpawnBeginSpell();const int expectedDuration=std::max(duration,id==58?56:70);
+            check(effect.m_primList.size()==(id==58?2:1)&&effect.m_duration==expectedDuration&&effect.m_effectPos.y==50&&effect.m_tlvertZ==123,
+                "BeginSpell variants preserve source emission count duration floor actor origin and screen fields");
+            check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_BeginSpell.wav"&&waveCalls[0].x==8&&waveCalls[0].y==0&&waveCalls[0].z==96
+                &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1&&rngDraws==draws&&g_resMgr.requests.empty(),
+                "BeginSpell emits exact horizontal audio once with source parameters and no RNG or sprite requests");
+            check(g_texMgr.requests==std::vector<std::string>(id==58?2:1,textures[id-54]),
+                "BeginSpell loads exact variant texture once per primitive including both SaintCasting rings");
+            int ring=0;for(auto* prim:effect.m_primList) {
+                check(prim->m_type==(id==58?PP_GI_1:(id==56||id==59?PP_3DCASTING_3:PP_3DCASTING))
+                    &&prim->m_size==sizes[id-54]&&prim->m_duration==expectedDuration&&prim->m_renderFlag==5,
+                    "BeginSpell launches original primitive type option size duration and render flag");
+                bool bands=true;const int spins[]={0,90,180,0},saintSpins[]={180,270,0,90},rises[]={70,57,45,89};
+                const float heights[]={25,22,19,250},distances[]={4.5f,5,5.5f,4};
+                for(int band=0;band<4;++band) {
+                    const auto& gi=prim->m_gi[band];bool stagger=id==58&&expectedDuration<=60;
+                    bands&=gi.life==1&&gi.process==(stagger?-5*band:0)&&gi.sparkY==0
+                        &&gi.fullDisplayAngle==(id==58||band==3?360:315)
+                        &&gi.maxHeight==(id==58?20.0f-band:heights[band])&&gi.rotStart==(id==58?saintSpins[band]:spins[band])
+                        &&gi.alphaB==(id==58?(stagger?0:(ring==0?45:25)+135-45*band):(band==3?70:180))
+                        &&gi.distance==(id==58?4.0999999f:distances[band])&&gi.riseAngle==(id==58?80:rises[band]);
+                    for(int sample=0;sample<21;++sample) bands&=gi.height[sample]==0&&gi.flag[sample]==0;
+                }
+                check(bands,"BeginSpell initializes all four bands and 21 sample arrays with original stagger and ring ordering");++ring;
+            }
+            auto* first=effect.m_primList.front();first->m_pos={777,888,999};first->m_gi[0].height[0]=42;
+            actor.m_pos={20,60,120};effect.m_stateCnt=1;effect.SpawnBeginSpell();
+            check(effect.m_effectPos.x==20&&effect.m_effectPos.y==60&&effect.m_duration==expectedDuration&&waveCalls.size()==1
+                &&g_texMgr.requests.size()==(id==58?2:1)&&rngDraws==draws,
+                "BeginSpell nonzero caller follows actor without repeating emission audio texture or RNG");
+            check(first->m_pos.x==777&&first->m_pos.y==888&&first->m_gi[0].height[0]==42,
+                "BeginSpell emitter leaves existing primitive position and sample integration to primitive update");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        // Shared SaintCasting helper serves additional callers; cover each source size/height branch.
+        for(int variant:{0,1,2,3,4,5,6,22}) {
+            auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_duration=100;
+            g_texMgr.requests.clear();effect.ApplySaintCasting(25,"effect\\ring_white.tga",variant);auto* prim=effect.m_primList.front();
+            const float sizes[]={5,8,5,10,11,4,12};const float height=variant==2?25:variant==22?15:20;
+            check(prim->m_size==(variant==22?5:sizes[variant])&&prim->m_gi[0].maxHeight==height&&prim->m_gi[3].maxHeight==height-3
+                &&prim->m_gi[0].alphaT==variant&&prim->m_gi[0].alphaB==160&&prim->m_gi[3].alphaB==25&&g_texMgr.requests.size()==1,
+                "Shared SaintCasting preserves all original variant size height alpha and texture branches");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;
     }
     {
         CRenderObject actor;actor.m_pos={100,200,300};

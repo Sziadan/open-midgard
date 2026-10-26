@@ -8352,7 +8352,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         // Direct helpers own STR completion; load the reference catalog clip below.
         m_handler = Handler::None;
         break;
-    case 48: case 50: case 51: case 53:
+    case 48: case 50: case 51: case 53: case 54: case 55: case 56: case 57: case 58: case 59:
         // Direct reference emitters own their primitive schedules.
         m_handler = Handler::None;
         break;
@@ -11259,17 +11259,13 @@ void CRagEffect::ApplyBlind(int level)
     }
 }
 
+// Ref/RagEffect2.cpp:31333-31494 (0x6298B0).
 void CRagEffect::ApplySaintCasting(short time, const char* textureName, int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
     m_effectPos = origin;
     m_cachedPos = origin;
-    for (CEffectPrim* existing : m_primList) {
-        if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi1)) {
-            existing->m_pos = origin;
-        }
-    }
     if (textureName == nullptr || m_stateCnt != 0) {
         return;
     }
@@ -11283,6 +11279,7 @@ void CRagEffect::ApplySaintCasting(short time, const char* textureName, int vari
     prim->m_renderFlag = 5;
     prim->m_duration = m_duration;
     prim->m_pos = origin;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
     prim->m_size = 5.0f;
     switch (variant) {
     case 1:
@@ -11322,6 +11319,8 @@ void CRagEffect::ApplySaintCasting(short time, const char* textureName, int vari
         gi.riseAngle = 80;
         gi.alphaT = static_cast<short>(variant);
         gi.sparkY = 0.0f;
+        gi.height.fill(0.0f);
+        gi.flag.fill(0);
     }
 }
 
@@ -11468,30 +11467,48 @@ void CRagEffect::ApplyBottomMusic(const char* textureName, int variant)
     }
 }
 
+// Ref/RagEffect.cpp:1982-2108: BeginSpell2 through BeginSpell7.
+void CRagEffect::SpawnBeginSpell()
+{
+    switch (m_type) {
+    case 54: ApplyBeginCasting("effect\\ring_blue.tga",2,true); return;
+    case 55: ApplyBeginCasting("effect\\ring_yellow.tga",1,true); return;
+    case 56: ApplyBeginCasting("effect\\Magic_Green.tga",33,true); return;
+    case 57: ApplyBeginCasting("effect\\ring_yellow.tga",0,true); return;
+    case 59: ApplyBeginCasting("effect\\Magic_Violet.tga",33,true); return;
+    case 58: {
+        CRenderObject* master = ResolveCurrentMaster();
+        if (!master) return;
+        m_effectPos = master->m_pos;
+        if (m_stateCnt != 0) return;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\EF_BeginSpell.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+        }
+        ApplySaintCasting(45,"effect\\ring_white.tga",0);
+        ApplySaintCasting(25,"effect\\ring_white.tga",0);
+        return;
+    }
+    }
+}
+
+// Ref/RagEffect2.cpp:23440-23549 (0x607950), with caller zero-frame/audio gate.
 void CRagEffect::ApplyBeginCasting(const char* textureName, int option, bool playWave)
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
     m_effectPos = origin;
     m_cachedPos = origin;
-    for (CEffectPrim* existing : m_primList) {
-        if (existing != nullptr
-            && (existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting)
-                || existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting3))) {
-            existing->m_pos = origin;
-        }
-    }
     if (textureName == nullptr || m_stateCnt != 0) {
         return;
     }
     if (playWave) {
-        vector3d wavePos = origin;
-        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                wavePos.y = mode->m_world->m_player->m_pos.y;
-            }
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\EF_BeginSpell.wav",origin.x-listener.x,0.0f,origin.z-listener.z,250,40,1.0f);
         }
-        TryPlayEffectWaveAt(wavePos, "effect\\EF_BeginSpell.wav");
     }
     if (m_duration < 70) {
         m_duration = 70;
@@ -11523,6 +11540,8 @@ void CRagEffect::ApplyBeginCasting(const char* textureName, int option, bool pla
         gi.distance = distances[band];
         gi.riseAngle = rises[band];
         gi.sparkY = 0.0f;
+        gi.height.fill(0.0f);
+        gi.flag.fill(0);
     }
 }
 
@@ -14267,6 +14286,10 @@ bool CRagEffect::ProcessEffectFrame()
         SpawnFireFly();
         return true;
     }
+    if (m_type >= 54 && m_type <= 59) {
+        SpawnBeginSpell();
+        return true;
+    }
     if (m_type == 53) {
         SpawnPoisonHit();
         return true;
@@ -14379,7 +14402,7 @@ bool CRagEffect::ProcessEffectFrame()
     const bool blackDevil = dispatchHandler && m_type == 487;
     const bool bodyLightBit = dispatchHandler && m_type == 474;
     const bool blindLevel = dispatchHandler && m_type >= 475 && m_type <= 484;
-    const bool beginCast = dispatchHandler && ((m_type >= 54 && m_type <= 57) || m_type == 59 || (m_type >= 172 && m_type <= 179));
+    const bool beginCast = dispatchHandler && (m_type >= 172 && m_type <= 179);
     const bool bottomLight = dispatchHandler && (m_type == 280 || m_type == 285);
     const bool bottomOut = dispatchHandler && m_type == 283;
     const bool blastMine = dispatchHandler && m_type == 676;
@@ -14468,29 +14491,12 @@ bool CRagEffect::ProcessEffectFrame()
         ApplyCoupleCasting("effect\\ring_red.tga");
     } else if (dispatchHandler && m_type == 12) {
         ApplyPairedSaintCasting("effect\\ring_yellow.tga", 1, true, 0.0f);
-    } else if (dispatchHandler && m_type == 58) {
-        ApplyPairedSaintCasting("effect\\ring_white.tga", 0, true, 0.0f);
     } else if (dispatchHandler && m_type == 441) {
         ApplyPairedSaintCasting("effect\\ring_blue.tga", 5, true, -100.0f);
     } else if (dispatchHandler && m_type == 454) {
         ApplyPairedSaintCasting("effect\\ring_black.tga", 6, true, 0.0f);
     } else if (beginCast) {
         switch (m_type) {
-        case 54:
-            ApplyBeginCasting("effect\\ring_blue.tga", 2, true);
-            break;
-        case 55:
-            ApplyBeginCasting("effect\\ring_yellow.tga", 1, true);
-            break;
-        case 56:
-            ApplyBeginCasting("effect\\Magic_Green.tga", 33, true);
-            break;
-        case 57:
-            ApplyBeginCasting("effect\\ring_yellow.tga", 0, true);
-            break;
-        case 59:
-            ApplyBeginCasting("effect\\Magic_Violet.tga", 33, true);
-            break;
         case 172:
             ApplyBeginCasting("effect\\ring_black.tga", 3, false);
             break;
