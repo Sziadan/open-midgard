@@ -42,7 +42,7 @@ struct CActRes {
 struct CEffectPrim {
     int m_numSegments=1,m_spriteAction=0,m_curMotion=0,m_pattern=0;
     u32 m_renderFlag=5;
-    float m_roll=0,m_size=1,m_arcAngle=36;
+    float m_roll=0,m_size=1,m_arcAngle=36,m_longitude=0;
     matrix m_matrix;
     matrix m_rotMat;
     vector3d m_pos;
@@ -248,6 +248,27 @@ int main() {
         check(g_renderer.m_rpAlphaList.size()==2 && matches(g_renderer.m_rpAlphaList[0].second->m_verts[2],{14.5f,24,105+2*g_sinTable[360]}),
             "cylinder endpoint directly reads table index three-sixty");
         g_cosTable[360]=GetCos(360);
+    }
+    {
+        CEffectPrim flash;flash.m_pos={100,200,900};flash.m_longitude=90.9f;flash.m_arcAngle=10.2f;flash.m_heightSize=30;
+        flash.m_texture={&g_texMgr.texture};flash.m_argb=0xFEFFFFFF;flash.m_renderFlag=0x205;
+        auto renderFlash=[&](){g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaNoDepthList.clear();RenderReferenceFlash(flash);};
+        renderFlash();auto* face=g_renderer.m_rpAlphaList[0].second;
+        check(g_renderer.m_rpAlphaList.size()==1&&face->m_verts[0].x==100&&face->m_verts[0].y==200,
+            "HasteUp flash emits one triangle at exact screen anchor without half-pixel shift");
+        check(face->m_verts[1].x==static_cast<float>(static_cast<double>(GetCos(80))*30+100)
+            &&face->m_verts[1].y==static_cast<float>(200-static_cast<double>(GetSin(80))*30)
+            &&face->m_verts[2].x==static_cast<float>(static_cast<double>(GetCos(101))*30+100)
+            &&face->m_verts[2].y==static_cast<float>(200-static_cast<double>(GetSin(101))*30),
+            "HasteUp flash truncates longitude minus and plus arc separately before trig lookup");
+        check(face->m_verts[0].tu==0.5f&&face->m_verts[0].tv==0&&face->m_verts[1].tu==1&&face->m_verts[1].tv==1
+            &&face->m_verts[2].tu==0&&face->m_verts[2].tv==1,"HasteUp flash preserves source triangular UV order");
+        check(face->m_verts[0].z==0.000001f&&face->m_verts[0].oow==0.99999899f&&face->m_verts[0].color==0xFEFFFFFF
+            &&face->m_verts[0].specular==0xFF000000&&face->tex==&g_texMgr.texture&&g_renderer.m_rpAlphaNoDepthList.empty(),
+            "HasteUp flash keeps fixed source depth color constructor specular texture zero and hard-coded flag one");
+        flash.m_heightSize=0;renderFlash();check(g_renderer.m_rpAlphaList.size()==1&&g_renderer.m_rpAlphaList[0].second->m_verts[2].x==100,
+            "HasteUp initial zero-length flash retains source degenerate submission");
+        flash.m_texture.clear();renderFlash();check(g_renderer.m_rpAlphaList.empty(),"HasteUp missing flash texture emits no replacement geometry");
     }
     {
         CEffectPrim ice;ice.m_pos={10,20,100};ice.m_size=2;ice.m_heightSize=15;ice.m_argb=0xC8FFFFFF;

@@ -2244,6 +2244,37 @@ void RenderReferenceQuadHorn(const CEffectPrim& prim, const matrix& view)
     }
 }
 
+// Ref/RagEffectPrim.cpp:2551-2603 (0x6450D0), original screen ray triangle.
+void RenderReferenceFlash(const CEffectPrim& prim)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    if (!texture || texture == &CTexMgr::s_dummy_texture) return;
+    const int first = static_cast<int>(static_cast<double>(prim.m_longitude)-prim.m_arcAngle);
+    const int second = static_cast<int>(static_cast<double>(prim.m_arcAngle)+prim.m_longitude);
+    const float cosine1 = GetCos(first), sine1 = GetSin(first), cosine2 = GetCos(second);
+    const double sine2 = GetSin(second);
+    const float x[3] = {prim.m_pos.x,
+        static_cast<float>(static_cast<double>(cosine1)*prim.m_heightSize+prim.m_pos.x),
+        static_cast<float>(static_cast<double>(cosine2)*prim.m_heightSize+prim.m_pos.x)};
+    const float y[3] = {prim.m_pos.y,
+        static_cast<float>(prim.m_pos.y-static_cast<double>(sine1)*prim.m_heightSize),
+        static_cast<float>(prim.m_pos.y-sine2*prim.m_heightSize)};
+    const float uv[3][2] = {{0.5f,0},{1,1},{0,1}};
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) return;
+    face->primType = D3DPT_TRIANGLELIST; face->numVerts = 3;
+    face->verts = face->m_verts; face->indices = nullptr; face->numIndices = 0;
+    face->tex = texture; face->mtPreset = 0; face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA; face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    for (int i = 0; i < 3; ++i) {
+        auto& vertex = face->m_verts[i];
+        vertex.x = x[i]; vertex.y = y[i]; vertex.z = 0.000001f; vertex.oow = 0.99999899f;
+        vertex.color = prim.m_argb; vertex.specular = 0xFF000000u;
+        vertex.tu = uv[i][0]; vertex.tv = uv[i][1];
+    }
+    g_renderer.AddReferenceEffectTriangle(face,1);
+}
+
 void RenderCircleLayer(const CEffectPrim& prim,
     const EffectSegmentState& state,
     matrix& viewMatrix,
@@ -6335,6 +6366,32 @@ bool UpdateReferenceScreenTexture(CEffectPrim* prim)
     return prim->m_curMotion != prim->m_totalTexture;
 }
 
+// Ref/RagEffectPrim.cpp:1729-1773 (0x641DF0), original 2D flash state.
+void UpdateReferenceFlash(CEffectPrim* prim)
+{
+    const vector3d anchor = prim->m_master->ScreenPosition();
+    prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
+    prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
+    if ((prim->m_pattern & 1) != 0 && prim->m_heightSize <= 0.0f) {
+        prim->m_heightSpeed = 0.0f; prim->m_heightAccel = 0.0f;
+    }
+    if (prim->m_stateCnt == prim->m_changePoint) {
+        prim->m_heightSpeed = prim->m_changeHeightSpeed;
+        prim->m_longSpeed = prim->m_changeSpeed;
+        prim->m_longAccel = prim->m_changeAccel;
+    }
+    if (prim->m_heightSize < 0.0f) {
+        prim->m_heightSize = 0.0f; prim->m_heightSpeed *= -1.0f;
+    }
+    const double angularSpeed = static_cast<double>(prim->m_longAccel) + prim->m_longSpeed;
+    prim->m_longSpeed = static_cast<float>(angularSpeed);
+    prim->m_heightSpeed += prim->m_heightAccel;
+    prim->m_longitude = static_cast<float>(angularSpeed + prim->m_longitude);
+    prim->m_heightSize += prim->m_heightSpeed;
+    prim->m_arcAngle += prim->m_widthSpeed;
+    ProcessReferenceParticleAlpha(prim);
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), FrostDiver pattern1 profile.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -6719,6 +6776,11 @@ bool CEffectPrim::UsesReferenceCrossTexture() const
         && (m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 220);
 }
 
+bool CEffectPrim::UsesReferenceFlash() const
+{
+    return m_type == PP_2DFLASH && m_master && m_master->GetEffectType() == 98;
+}
+
 bool CEffectPrim::UsesReferenceQuadHorn() const
 {
     return m_type == PP_3DQUADHORN && m_master
@@ -6737,7 +6799,7 @@ bool CEffectPrim::UsesReferenceParticle() const
         || (m_type == PP_3DPARTICLEGRAVITY && m_master
             && (m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 10 || m_master->GetEffectType() == 18))
         || (m_type == PP_3DPARTICLEORBIT && m_master
-            && (m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
+            && (m_master->GetEffectType() == 98 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
             && (m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
@@ -7001,6 +7063,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_3DPARTICLESPLINE) {
         return UpdateFreeParticlePrimitive(this, true, true);
     }
+    if (UsesReferenceFlash()) {
+        UpdateReferenceFlash(this);
+        return true;
+    }
     if (UsesReferenceQuadHorn()) {
         UpdateReferenceQuadHorn(this);
         return true;
@@ -7051,6 +7117,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
 void CEffectPrim::Render(matrix* viewMatrix)
 {
     if (!m_master || !viewMatrix) {
+        return;
+    }
+    if (UsesReferenceFlash()) {
+        RenderReferenceFlash(*this);
         return;
     }
     if (UsesReferenceQuadHorn()) {
@@ -8016,7 +8086,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 27: case 28: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 123: case 132: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 27: case 28: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 123: case 132: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -12037,6 +12107,54 @@ void CRagEffect::ApplyFrostDiver2()
     }
 }
 
+// Ref/RagEffect.cpp:4790-4901 (0x5FF1C0), original effect 98.
+void CRagEffect::ApplyHasteUp()
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (m_stateCnt == 0) m_duration = 300;
+    if ((m_stateCnt == 0 || m_stateCnt == 30) && mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave(m_stateCnt == 0 ? "effect\\black_adrenalinerush_a.wav" : "effect\\black_adrenalinerush_b.wav",
+            m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master || !mode || !mode->m_view) return;
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos,mode->m_view->GetViewMatrix(),projected);
+    m_tlvertX = projected.x; m_tlvertY = projected.y;
+    if (m_stateCnt != 0) return;
+    for (int i = 0; i < 20; ++i) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_2DFLASH,vector3d{});
+        prim->m_duration = 80; prim->m_deltaPos2.y = -40.0f;
+        prim->m_longitude = static_cast<float>(rand() % 360);
+        prim->m_longSpeed = static_cast<float>((rand() % 60 + 10)*0.1);
+        prim->m_longAccel = static_cast<float>(prim->m_longSpeed/static_cast<double>(prim->m_duration)*-0.66666669);
+        prim->m_arcAngle = static_cast<float>((rand() % 25 + 5)*0.1);
+        prim->m_heightSize = 0.0f;
+        prim->m_heightSpeed = static_cast<float>((rand() % 20 + 50)*0.07692308);
+        prim->m_changePoint = 40;
+        prim->m_changeSpeed = static_cast<float>((rand() % 10 + 15)*0.1);
+        prim->m_changeAccel = 0.0f; prim->m_changeHeightSpeed = 0.0f;
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f; prim->m_fadeOutCnt = -1;
+        prim->m_texture.push_back(g_texMgr.GetTexture("EFFECT\\alpha_center.tga",false));
+    }
+    for (int angle = 0; angle < 360; angle += 90) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT,vector3d{});
+        prim->m_duration = 100; prim->m_radius = 7.0f;
+        prim->m_gravSpeed = -0.1f; prim->m_gravAccel = -0.0020000001f;
+        prim->m_longitude = static_cast<float>(angle); prim->m_longAccel = 0.2f;
+        prim->m_longSpeed = static_cast<float>(static_cast<double>(prim->m_longAccel)*m_stateCnt+0.30000001);
+        prim->m_size = 1.2f;
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_fadeOutCnt = prim->m_duration-prim->m_duration/10;
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_numSegments = 1; prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act");
+        InitReferenceSegments(prim);
+    }
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -13291,6 +13409,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 45) {
         SpawnFireFly();
+        return true;
+    }
+    if (m_type == 98) {
+        ApplyHasteUp();
         return true;
     }
     if (m_type == 123 || m_type == 132) {

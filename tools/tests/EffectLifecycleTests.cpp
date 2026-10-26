@@ -162,6 +162,7 @@ void UpdateSuperAngelPrimitive(CEffectPrim*);
 bool UpdateLinearReferenceParticle(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
 void UpdateReferenceQuadHorn(CEffectPrim*);
+void UpdateReferenceFlash(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReferenceScreenTexture(CEffectPrim*);
@@ -202,6 +203,8 @@ struct CEffectPrim : CGameObject {
     std::vector<float> m_chPoint,m_chVal1;
     bool m_chSpeed=false,m_AlphaShow=false;
     int m_chCnt=0,m_count=0,m_playWaveType=0;
+    int m_changePoint=-1;
+    float m_changeSpeed=0.000099999997f,m_changeAccel=0.000099999997f,m_changeHeightSpeed=0.000099999997f;
     std::vector<float> m_chVal2;
     bool active = true;
     ~CEffectPrim() override;
@@ -215,6 +218,7 @@ struct CEffectPrim : CGameObject {
     bool UsesReferenceCrossTexture() const;
     bool UsesReferenceScreenTexture() const;
     bool UsesReferenceQuadHorn() const;
+    bool UsesReferenceFlash() const;
     void SetParticleResources(const char*, const char*,bool = false);
     bool ProcessPrimitiveFrame() {
         ++updates;
@@ -223,6 +227,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
         if (UsesReferenceQuadHorn()) UpdateReferenceQuadHorn(this);
+        if (UsesReferenceFlash()) UpdateReferenceFlash(this);
         if (m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle() && !UpdateReferenceGravityParticle(this)) return false;
         if (UsesReferenceScreenTexture() && !UpdateReferenceScreenTexture(this)) return false;
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
@@ -286,6 +291,7 @@ struct CRagEffect : CGameObject {
     void ApplyFireArrow();
     void ApplyFrostDiver();
     void ApplyFrostDiver2();
+    void ApplyHasteUp();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1866,6 +1872,71 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=98;
+        effect.m_effectPos={30,50,40};effect.m_tlvertZ=123;effect.m_duration=20;g_session.m_isMinEffect=true;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        rngValues={359,59,24,19,9};rngCursor=0;effect.ApplyHasteUp();auto it=effect.m_primList.begin();auto* ray=*it;
+        for(int i=0;i<20;++i)++it;auto* orbit=*it;
+        check(effect.m_primList.size()==24&&rngDraws==draws+100&&effect.m_duration==300&&ray->UsesReferenceFlash()&&orbit->UsesReferenceParticle(),
+            "HasteUp emits twenty rays then four orbit sprites with one hundred draws and duration three hundred despite reduced effects");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\black_adrenalinerush_a.wav"&&waveCalls[0].x==28&&waveCalls[0].y==0
+            &&waveCalls[0].z==36&&waveCalls[0].frameRng==draws,"HasteUp zero-frame sound uses stored origin before all emission draws");
+        tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&effect.m_tlvertZ==123&&effect.m_effectPos.x==30&&effect.m_effectPos.y==50,
+            "HasteUp projects actor x/y preserving stored world origin and projected z");
+        check(ray->m_duration==80&&ray->m_deltaPos2.y==-40&&ray->m_longitude==359&&ray->m_longSpeed==6.9f
+            &&ray->m_longAccel==static_cast<float>(6.9f/80.0*-0.66666669)&&ray->m_arcAngle==2.9f,
+            "HasteUp ordered ray draws preserve angle angular speed drag and arc width");
+        check(ray->m_heightSize==0&&ray->m_heightSpeed==static_cast<float>(69*0.07692308)&&ray->m_changePoint==40
+            &&ray->m_changeSpeed==2.4f&&ray->m_changeAccel==0&&ray->m_changeHeightSpeed==0&&ray->m_fadeOutCnt==-1,
+            "HasteUp ray retains source growth and exact frame-forty change controls without invented fade");
+        check(g_texMgr.requests==std::vector<std::string>(20,"EFFECT\\alpha_center.tga"),"HasteUp rays load exact uppercase EFFECT directory texture");
+        bool profiles=true,segments=true;int angle=0;
+        for(auto current=it;current!=effect.m_primList.end();++current,angle+=90) {
+            const auto* prim=*current;profiles=profiles&&prim->m_type==PP_3DPARTICLEORBIT&&prim->m_duration==100&&prim->m_radius==7
+                &&prim->m_gravSpeed==-0.1f&&prim->m_gravAccel==-0.0020000001f&&prim->m_longitude==angle&&prim->m_longAccel==0.2f
+                &&prim->m_longSpeed==0.30000001f&&prim->m_size==1.2f&&prim->m_fadeOutCnt==90&&prim->m_alpha==254
+                &&prim->m_maxAlpha==254&&prim->m_animSpeed==4&&prim->m_repeatAnim;
+            segments=segments&&prim->m_numSegments==1&&prim->m_segments[0].size==1.2f&&prim->m_segments[0].alpha==254
+                &&prim->m_segments[0].pos.x==30&&prim->m_segments[0].argb==0xFEFFFFFF;
+        }
+        check(profiles&&angle==360,"HasteUp orbit sprites retain source ninety-degree phases and radius gravity angular acceleration size fade animation");
+        check(segments&&g_resMgr.requests.size()==8,"HasteUp orbit sprites initialize full original one-slot segments");
+        bool resources=true;for(size_t i=0;i<g_resMgr.requests.size();i+=2)
+            resources=resources&&g_resMgr.requests[i]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr"&&g_resMgr.requests[i+1]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act";
+        check(resources,"HasteUp orbit sprite and action resource requests preserve exact bytes and lock order");
+        ray->m_alphaDelta=1;const double angular=static_cast<double>(ray->m_longAccel)+ray->m_longSpeed;ray->OnProcess();
+        check(ray->m_longSpeed==static_cast<float>(angular)&&ray->m_longitude==static_cast<float>(angular+359)
+            &&ray->m_heightSize==static_cast<float>(69*0.07692308)&&ray->m_pos.x==effect.m_tlvertX&&ray->m_pos.y==effect.m_tlvertY-40,
+            "HasteUp ray preserves extended angular sum through longitude integration and projected anchor offset");
+        check(ray->m_alpha==254&&ray->m_argb==0xFEFFFFFF&&ray->m_curMotion==0&&rngDraws==draws+100,
+            "HasteUp ray has fixed source alpha no texture animation and no update RNG");
+        for(int frame=1;frame<40;++frame)ray->OnProcess();const float height=ray->m_heightSize,heading=ray->m_longitude;
+        ray->OnProcess();check(ray->m_stateCnt==41&&ray->m_heightSize==height&&ray->m_heightSpeed==0&&ray->m_longAccel==0
+            &&ray->m_longSpeed==2.4f&&ray->m_longitude==static_cast<float>(static_cast<double>(heading)+2.4f),
+            "HasteUp frame forty stops ray growth and replaces angular speed before motion integration");
+        orbit->m_alphaDelta=1;orbit->OnProcess();
+        check(orbit->m_gravSpeed==static_cast<float>(-0.1f+-0.0020000001f)&&orbit->m_deltaPos2.y==orbit->m_gravSpeed
+            &&orbit->m_longSpeed==0.5f&&orbit->m_longitude==0.5f&&orbit->m_pos.y==50+orbit->m_gravSpeed,
+            "HasteUp orbit uses original gravity and angular acceleration at stored parent origin");
+        check(orbit->m_curMotion==1&&orbit->m_segments[0].pos.y==orbit->m_pos.y&&orbit->m_alpha==254,
+            "HasteUp orbit shifts segment before source frame-zero sprite animation");
+        actor.m_pos={20,30,120};effect.m_stateCnt=29;effect.ApplyHasteUp();ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_primList.size()==24&&rngDraws==draws+100&&waveCalls.size()==1&&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y,
+            "HasteUp later frames refresh projection without repeated emission sound or RNG");
+        listener.m_pos={3,900,5};effect.m_stateCnt=30;effect.ApplyHasteUp();
+        check(waveCalls.size()==2&&waveCalls[1].name=="effect\\black_adrenalinerush_b.wav"&&waveCalls[1].x==27&&waveCalls[1].y==0&&waveCalls[1].z==35
+            &&rngDraws==draws+100,"HasteUp frame thirty plays distinct source wave from stored origin and current listener");
+        effect.m_stateCnt=31;effect.ApplyHasteUp();check(waveCalls.size()==2&&effect.m_duration==300&&effect.m_effectPos.y==50,
+            "HasteUp leaves other frames without extra sound duration reset or actor-origin copy");
+        effect.m_stateCnt=0;ray->m_stateCnt=80;check(ray->OnProcess()==0&&ray->m_stateCnt==81,
+            "HasteUp ray includes source final duration frame before terminating");
+        effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,
+            "HasteUp cleanup balances all four sprite and action locks");
+        g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;

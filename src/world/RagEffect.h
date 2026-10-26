@@ -268,6 +268,7 @@ public:
     bool UsesReferenceCrossTexture() const;
     bool UsesReferenceScreenTexture() const;
     bool UsesReferenceQuadHorn() const;
+    bool UsesReferenceFlash() const;
     void SetParticleResources(const char* sprName, const char* actName, bool actionFirst = false);
     void SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t) override;
     void Render(matrix* viewMatrix) override;
@@ -339,6 +340,10 @@ public:
     bool m_AlphaShow = false;
     int m_chCnt = 0;
     int m_count = 0;
+    int m_changePoint = -1;
+    float m_changeSpeed = 0.000099999997f;
+    float m_changeAccel = 0.000099999997f;
+    float m_changeHeightSpeed = 0.000099999997f;
     int m_playWaveType = 0;
     std::vector<float> m_chVal2;
     std::string m_spriteActName;
@@ -473,6 +478,7 @@ private:
     void ApplyFireArrow();
     void ApplyFrostDiver();
     void ApplyFrostDiver2();
+    void ApplyHasteUp();
     void ApplyProvidence(const char* textureName);
     void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);
     void ApplyBeginCasting(const char* textureName, int option, bool playWave);

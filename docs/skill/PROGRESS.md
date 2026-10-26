@@ -4,10 +4,20 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A GrimTooth ids123/132, after FrostDiver checkpoint `88198ac`. Traveling and attack spikes now use source stop controls, retained rotation and reference geometry; attack lifetime/profile and canonical parent cursor storage are corrected.
+Current work: WP5A HasteUp id98, after GrimTooth checkpoint `1fc9e43`. Original twenty-ray/four-orbit burst, two audio gates, frame40 transition and dedicated screen-flash state/geometry are now ported.
 
-Next action: continue unported emitters (including HasteUp id98) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters (including HealSP id14) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## HasteUp rays / orbit sprites and screen-flash primitive — 2026-10-26
+
+- Ref/RagEffect.cpp:4790-4901 (0x5FF1C0) -> ApplyHasteUp, original id98, direct ProcessEffectFrame/Init route. Zero sets parent duration300 and plays exact stored-origin horizontal black_adrenalinerush_a wave; frame30 plays distinct b wave from stored origin/current listener. Each call projects actor x/y after audio and before emission gate, preserving world origin/z. Reduced-effects mode does not suppress emission.
+- Zero emits twenty PP_2DFLASH rays then four orbit sprites. Rays consume five draws each (100 total) in longitude/angular speed/arc/height speed/change speed order. Preserves duration80, y-40, original angular deceleration/height growth, frame40 change point, replacement angular speed, zero angular acceleration/height speed, constructor alpha/max254 and fade-1. Exact uppercase EFFECT directory alpha_center texture.
+- Four PP_3DPARTICLEORBIT sprites preserve phases0/90/180/270, radius7, gravSpeed-0.1/acceleration-0.0020000001, angular acceleration0.2/start speed0.30000001, size1.2, duration100/fade90, source Y matrices and full one-slot initialization. Exact particle1 sprite/action/lock order, divisor4/repeat and shared reference orbit state/per-clip rendering binding. HasteUp's reachable orbit profile has no change point/keyed radius schedule.
+- Ref/RagEffectPrim.cpp:1729-1773 (0x641DF0) -> UpdateReferenceFlash, currently bound only to id98. Projected anchor+offset, original height clamp/reflection ordering, exact change-point assignment before integration, extended angular speed sum through longitude, height/arc integration and source alpha. Added original change-point/speed/accel/height-speed fields/defaults. Broader flash callers remain open.
+- Ref/RagEffectPrim.cpp:2551-2603 (0x6450D0) -> RenderReferenceFlash. One screen triangle from exact anchor and rays at truncated(longitude-arc)/truncated(longitude+arc), source double products, fixed depth/oow, texture0/stored ARGB and source triangular UVs/hard-coded flag1. No half-pixel shift, perspective scaling or missing-texture substitute. Specular0xFF000000 follows original tlvertex3d constructor (Ref/Renderer.cpp:3468-3472).
+
+Validation: release build, six silent C++ suites / 1003 checks (813 lifecycle/primitive, 132 rendering, 58 other), six Python tests, five-literal executable byte audit, five original asset-pointer instruction audits and whitespace check pass. Added19 lifecycle and six rendering checks for 24-primitive order/100 RNG draws, source profiles/keys/resources/segments, projection versus stored origin, two wave gates, extended angular integration/frame40 transition, orbit gravity/phase/animation, duration boundary/lock cleanup and exact screen triangle geometry/UV/depth/flags/zero-length/missing texture. Exact wave a0x71BA3C/b0x71BA18, texture0x71B398 and particle1 sprite/action0x71B200/0x71B1E8 match executable bytes; pushes at0x5FF216/0x5FF263/0x5FF47A/0x5FF5AA/0x5FF5DA verified. No media/live acceptance. Approved OldRO SHA-256: `65D288F3943703641BA4C5A374D0E841A1458840A450DB4368B03C876C3A7598`. Other emitters/flash callers/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## GrimTooth traveling / attack spikes — 2026-10-26
 
