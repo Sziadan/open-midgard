@@ -8307,6 +8307,21 @@ u8 CEffectPrim::OnProcess()
 
 bool CEffectPrim::ProcessPrimitiveFrame()
 {
+    if (m_type == PP_3DSHINELIGHT) {
+        return true;
+    }
+    if (m_type == PP_3DLINE) {
+        m_pos.y += 5.0f;
+        return true;
+    }
+    if (m_type == PP_2DCIRCLE) {
+        UpdateReferenceScreenCircle(this);
+        return true;
+    }
+    if (m_type == PP_3DSPHERE) {
+        UpdateReferenceSphere(this);
+        return true;
+    }
     if (m_type == PP_GROUNDSAMPLE) {
         UpdateGroundSample(this);
         return true;

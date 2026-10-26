@@ -235,6 +235,10 @@ struct CEffectPrim : CGameObject {
     bool ProcessPrimitiveFrame() {
         ++updates;
         observedFrame = m_stateCnt;
+        if (m_type == PP_3DSHINELIGHT) return active;
+        if (m_type == PP_3DLINE) { m_pos.y += 5.0f; return active; }
+        if (m_type == PP_2DCIRCLE) { UpdateReferenceScreenCircle(this); return active; }
+        if (m_type == PP_3DSPHERE) { UpdateReferenceSphere(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -804,7 +808,62 @@ int main()
             && prim.m_pos.x == -2 && prim.m_pos.y == -2 && prim.m_pos.z == -2
             && prim.m_roll == 13.0f && prim.m_rollSpeed == 14.0f && prim.m_rollAccel == 15.0f,
             "primitive Init adds delta then copies master world position without unrelated field resets");
+        g_isSkipFrame = 1;
+        prim.m_type = PP_3DSHINELIGHT;
+        prim.m_pos = { 2, 3, 4 };
+        prim.m_stateCnt = 0;
+        check(prim.OnProcess() == 1 && prim.m_stateCnt == 1
+            && prim.m_pos.x == 2 && prim.m_pos.y == 3 && prim.m_pos.z == 4,
+            "OnProcess case 0x11 is a no-op before shared lifetime increment");
+        prim.m_type = PP_3DLINE;
+        prim.m_pos = { 2, 3, 4 };
+        prim.m_stateCnt = 0;
+        check(prim.OnProcess() == 1 && prim.m_stateCnt == 1
+            && prim.m_pos.x == 2 && prim.m_pos.y == 8 && prim.m_pos.z == 4,
+            "OnProcess case 0x14 adds five to world Y before shared lifetime increment");
+        auto circleMasterStorage = std::make_unique<CRagEffect>();
+        CRagEffect& circleMaster = *circleMasterStorage;
+        circleMaster.m_tlvertX = 100;
+        circleMaster.m_tlvertY = 200;
+        auto circleStorage = std::make_unique<CEffectPrim>();
+        CEffectPrim& circle = *circleStorage;
+        circle.m_master = &circleMaster;
+        circle.m_type = PP_2DCIRCLE;
+        circle.m_deltaPos2 = { 3, 4, 0 };
+        circle.m_radius = 4;
+        circle.m_radiusSpeed = 2;
+        circle.m_radiusAccel = 1;
+        circle.m_innerSize = 6;
+        circle.m_duration = 20;
+        circle.m_fadeOutCnt = 100;
+        check(circle.OnProcess() == 1 && circle.m_pos.x == 103 && circle.m_pos.y == 204
+            && circle.m_radiusSpeed == 3 && circle.m_radius == 7 && circle.m_size == 6
+            && circle.m_stateCnt == 1,
+            "OnProcess case 0x04 always executes source circle anchor, radius, clamp and shared lifetime branches");
+        circle.m_master = nullptr;
+        auto sphereMasterStorage = std::make_unique<CRagEffect>();
+        CRagEffect& sphereMaster = *sphereMasterStorage;
+        sphereMaster.m_effectPos = { 10, 20, 30 };
+        auto sphereStorage = std::make_unique<CEffectPrim>();
+        CEffectPrim& sphere = *sphereStorage;
+        sphere.m_master = &sphereMaster;
+        sphere.m_type = PP_3DSPHERE;
+        sphere.m_deltaPos2 = { 1, 2, 3 };
+        sphere.m_radius = 4;
+        sphere.m_radiusSpeed = 2;
+        sphere.m_radiusAccel = 1;
+        sphere.m_longitude = 10;
+        sphere.m_longSpeed = 2;
+        sphere.m_duration = 20;
+        sphere.m_fadeOutCnt = 100;
+        check(sphere.OnProcess() == 1 && sphere.m_orgPos.x == 11 && sphere.m_orgPos.y == 22
+            && sphere.m_orgPos.z == 33 && sphere.m_pos.x == 11 && sphere.m_pos.y == 22
+            && sphere.m_pos.z == 33 && sphere.m_radiusSpeed == 3 && sphere.m_radius == 7
+            && sphere.m_longitude == 12 && sphere.m_stateCnt == 1,
+            "OnProcess case 0x0E always executes source sphere origin, radius, longitude and shared lifetime branches");
+        sphere.m_master = nullptr;
         g_isSkipFrame = 0;
+        prim.updates = 0;
         const int copiedTypes[] = {0x17,0x1C,0x1D,0x1E,0x20,0x23,0x3C,0x44,0x63,0x68,0x69,0x6A,0x6C,0x6D,0x6F};
         for (int type : copiedTypes) {
             prim.m_pos = {};
@@ -3150,6 +3209,11 @@ int main()
         prim.m_chSpeed=false;prim.m_AlphaShow=true;prim.m_chPoint={40};prim.m_chVal1={120};prim.m_chVal2={200};prim.m_chCnt=0;
         prim.m_stateCnt=40;prim.m_fadeOutCnt=40;prim.m_alphaDelta=1;prim.m_alphaSpeed=10;ProcessReferenceParticleAlpha(&prim);
         check(prim.m_maxAlpha==200 && prim.m_alphaSpeed==-2 && prim.m_alpha==118,"fixed-frame fade uses newly keyed alpha and overrides previous speed");
+        prim.m_AlphaShow=false;prim.m_stateCnt=0;prim.m_fadeOutCnt=0;prim.m_duration=100;
+        prim.m_alpha=100;prim.m_alphaSpeed=0;prim.m_alphaDelta=1;prim.m_pattern=0;
+        ProcessReferenceParticleAlpha(&prim);
+        check(prim.m_alphaSpeed==-1 && prim.m_alpha==99,
+            "source ProcessAlpha applies an ordinary fade when fade frame and state are both zero");
         prim.m_master=nullptr;
     }
     {

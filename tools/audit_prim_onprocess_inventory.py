@@ -72,7 +72,18 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 56 and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
+      len(current_explicit_ids) == 59 and {0x04, 0x0E, 0x11, 0x14}.issubset(current_explicit_ids)
+      and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
+check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
+      re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
+      and re.search(r"case 0xE:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
+      and "if (m_type == PP_2DCIRCLE) {\n        UpdateReferenceScreenCircle(this);" in current_dispatch
+      and "if (m_type == PP_3DSPHERE) {\n        UpdateReferenceSphere(this);" in current_dispatch)
+check("case 0x11 no-op and case 0x14 Y increment match source and current helper branches",
+      re.search(r"case 0x11:\s*goto \$L145961;", source_dispatch) is not None
+      and re.search(r"case 0x14:\s*this->m_pos.y = this->m_pos.y \+ 5\.0;\s*goto \$L145961;", source_dispatch) is not None
+      and re.search(r"if \(m_type == PP_3DSHINELIGHT\)\s*\{\s*return true;\s*\}", current_dispatch) is not None
+      and re.search(r"if \(m_type == PP_3DLINE\)\s*\{\s*m_pos.y \+= 5\.0f;\s*return true;\s*\}", current_dispatch) is not None)
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)
