@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A SonicBlow ids121/122, after MagnumBreak checkpoint `26d0a24`. Original projected ring and seeded hit cylinder now bind reference primitive paths with exact assets, RNG/integer offsets and source facing behavior.
+Current work: WP5A Bash id16, after SonicBlow checkpoint `3898e96`. Original full reduced-effects gate, projected fixed disc and twenty source flash rays now use verified primitive paths with exact audio/resources and distinct alpha profiles.
 
-Next action: continue unported emitters (including Bash id16) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters (including IncAgility id37) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Bash fixed disc / rotating rays — 2026-10-26
+
+- Ref/RagEffect.cpp:1866-1952 (0x5F53E0) -> ApplyBash, original id16, direct ProcessEffectFrame/Init route. Full reduced-effects gate precedes projection/audio/emission/RNG. Otherwise every call projects actor x/y, preserving stored origin/z; zero plays exact stored-origin horizontal EF_Bash wave, then emits one screen circle followed by20 flash rays. Original inner reduced-effects count recheck (10 versus20) remains after the outer suppression gate; normal stable-flag execution emits20 rays. No parent lifetime override.
+- Disc preserves duration40/pattern1/y-40/radius100, constructor zero radial speed and arc36, alpha0/max170/rise max*0.16666667/fade30 and exact lowercase alpha_down texture. Reference screen-circle binding retains full disc width through pattern1 instead of ordinary inner-size clamp.
+- Each ray consumes five draws in longitude/angular speed/arc/initial height/height speed order (100 total in normal mode). Preserves duration40/y-40, source angular drag, angle/rate/width/length/growth ranges, alpha0/max200/rise20/fade27 and exact uppercase EFFECT directory alpha_center texture. Bound reference flash state/geometry with default-disabled change point, source angular integration, continued growth and thirteen-frame fade. No invented HasteUp-style frame40 transition.
+
+Validation: release build, six silent C++ suites / 1128 checks (920 lifecycle/primitive, 150 rendering, 58 other), six Python tests, three-literal executable byte audit, three original asset-pointer instruction audits and whitespace check pass. Added15 lifecycle checks for full reduced-effects suppression (including later projection), ordered21-primitive/100-draw burst, source sound/origin/profile/texture casing, fixed full disc, ray integration/alpha/range endpoints, distinct source fade gates, no-repeat projection and original final duration frame. Existing shared screen-circle/flash geometry/device suites pass. Exact wave0x71A4A4, disc0x719498 and rays0x71B398 match executable bytes; original pushes at0x5F54A7/0x5F5598/0x5F577B verified. No media/live acceptance. Approved OldRO SHA-256: `90092AFC478DF73AD55BCEFF6DE481EA535EC1A1FBF3EC0C13A4853BD99063A3`. Other emitters/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## SonicBlow screen ring / SonicBlowHit cylinder — 2026-10-26
 

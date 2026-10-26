@@ -6921,12 +6921,12 @@ bool CEffectPrim::UsesReferenceSphere() const
 
 bool CEffectPrim::UsesReferenceScreenCircle() const
 {
-    return m_type == PP_2DCIRCLE && m_master && (m_master->GetEffectType() == 121 || m_master->GetEffectType() == 128);
+    return m_type == PP_2DCIRCLE && m_master && (m_master->GetEffectType() == 16 || m_master->GetEffectType() == 121 || m_master->GetEffectType() == 128);
 }
 
 bool CEffectPrim::UsesReferenceFlash() const
 {
-    return m_type == PP_2DFLASH && m_master && m_master->GetEffectType() == 98;
+    return m_type == PP_2DFLASH && m_master && (m_master->GetEffectType() == 16 || m_master->GetEffectType() == 98);
 }
 
 bool CEffectPrim::UsesReferenceQuadHorn() const
@@ -8250,7 +8250,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -12545,6 +12545,45 @@ void CRagEffect::ApplySonicBlowHit()
     prim->m_texture.push_back(g_texMgr.GetTexture("effect\\magic_red.tga",false));
 }
 
+// Ref/RagEffect.cpp:1866-1952 (0x5F53E0), original effect 16.
+void CRagEffect::ApplyBash()
+{
+    if (g_session.m_isMinEffect) return;
+    CRenderObject* master = ResolveCurrentMaster();
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!master || !mode || !mode->m_view) return;
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos,mode->m_view->GetViewMatrix(),projected);
+    m_tlvertX = projected.x; m_tlvertY = projected.y;
+    if (m_stateCnt != 0) return;
+    if (mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_Bash.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    CEffectPrim* prim = LaunchEffectPrim(PP_2DCIRCLE,vector3d{});
+    prim->m_duration = 40; prim->m_pattern |= 1; prim->m_deltaPos2.y = -40.0f;
+    prim->m_radius = 100.0f; prim->m_alpha = 0.0f; prim->m_maxAlpha = 170.0f;
+    prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha*0.16666667);
+    prim->m_fadeOutCnt = prim->m_duration-10;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga",false));
+    // Ref rechecks this flag here, after the outer full-suppression gate.
+    const int count = g_session.m_isMinEffect ? 10 : 20;
+    for (int i = 0; i < count; ++i) {
+        prim = LaunchEffectPrim(PP_2DFLASH,vector3d{});
+        prim->m_duration = 40; prim->m_deltaPos2.y = -40.0f;
+        prim->m_longitude = static_cast<float>(rand() % 360);
+        prim->m_longSpeed = static_cast<float>((rand() % 60 + 10)*0.1);
+        prim->m_longAccel = static_cast<float>(prim->m_longSpeed/static_cast<double>(prim->m_duration)*-0.66666669);
+        prim->m_arcAngle = static_cast<float>((rand() % 25 + 5)*0.1);
+        prim->m_heightSize = static_cast<float>(rand() % 40 + 20);
+        prim->m_heightSpeed = static_cast<float>((rand() % 30 + 20)*0.1);
+        prim->m_alpha = 0.0f; prim->m_maxAlpha = 200.0f;
+        prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha*0.1);
+        prim->m_fadeOutCnt = prim->m_duration-prim->m_duration/3;
+        prim->m_texture.push_back(g_texMgr.GetTexture("EFFECT\\alpha_center.tga",false));
+    }
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -13799,6 +13838,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 45) {
         SpawnFireFly();
+        return true;
+    }
+    if (m_type == 16) {
+        ApplyBash();
         return true;
     }
     if (m_type == 121 || m_type == 122) {

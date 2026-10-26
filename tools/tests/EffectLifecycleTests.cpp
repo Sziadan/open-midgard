@@ -306,6 +306,7 @@ struct CRagEffect : CGameObject {
     void ApplyMagnumBreak();
     void ApplySonicBlow();
     void ApplySonicBlowHit();
+    void ApplyBash();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1886,6 +1887,59 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=16;
+        effect.m_effectPos={30,50,40};effect.m_duration=100;effect.m_tlvertX=-1;effect.m_tlvertY=-2;effect.m_tlvertZ=123;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;g_session.m_isMinEffect=true;effect.ApplyBash();
+        check(effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==draws&&g_texMgr.requests.empty()&&effect.m_tlvertX==-1&&effect.m_tlvertY==-2,
+            "Bash reduced effects suppresses entire helper including audio projection RNG and emission");
+        g_session.m_isMinEffect=false;rngValues.clear();for(int i=0;i<20;++i)rngValues.insert(rngValues.end(),{359,59,24,39,29});rngCursor=0;
+        effect.ApplyBash();auto it=effect.m_primList.begin();auto* disc=*it++;auto* ray=*it;
+        check(effect.m_primList.size()==21&&disc->UsesReferenceScreenCircle()&&ray->UsesReferenceFlash()&&rngDraws==draws+100&&rngCursor==100,
+            "Bash emits source disc then twenty five-draw reference rays in normal effects mode");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_Bash.wav"&&waveCalls[0].x==28&&waveCalls[0].y==0&&waveCalls[0].z==36
+            &&waveCalls[0].frameRng==draws,"Bash exact stored-origin horizontal wave precedes all ray RNG");
+        tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&effect.m_tlvertZ==123&&effect.m_effectPos.x==30&&effect.m_duration==100,
+            "Bash projects actor x/y while retaining stored world origin z and parent lifetime");
+        check(disc->m_duration==40&&disc->m_pattern==1&&disc->m_deltaPos2.y==-40&&disc->m_radius==100&&disc->m_radiusSpeed==0
+            &&disc->m_alpha==0&&disc->m_maxAlpha==170&&disc->m_alphaSpeed==static_cast<float>(170.0*0.16666667)&&disc->m_fadeOutCnt==30&&disc->m_arcAngle==36,
+            "Bash disc preserves fixed radius full-width pattern alpha cap rise fade and constructor arc");
+        bool rays=true;for(auto current=it;current!=effect.m_primList.end();++current){const auto* p=*current;
+            rays=rays&&p->m_type==PP_2DFLASH&&p->m_duration==40&&p->m_deltaPos2.y==-40&&p->m_longitude==359&&p->m_longSpeed==6.9f
+                &&p->m_longAccel==static_cast<float>(6.9f/40.0*-0.66666669)&&p->m_arcAngle==2.9f&&p->m_heightSize==59&&p->m_heightSpeed==4.9f
+                &&p->m_alpha==0&&p->m_maxAlpha==200&&p->m_alphaSpeed==20&&p->m_fadeOutCnt==27&&p->m_changePoint==-1;}
+        check(rays,"Bash rays preserve ordered angle speed arc length growth draws and source alpha fade without change point");
+        bool textures=g_texMgr.requests.size()==21&&g_texMgr.requests[0]=="effect\\alpha_down.tga";
+        for(size_t i=1;i<g_texMgr.requests.size();++i)textures=textures&&g_texMgr.requests[i]=="EFFECT\\alpha_center.tga";
+        check(textures&&g_resMgr.requests.empty(),"Bash preserves disc and ray texture case source order without sprite resources");
+        disc->m_alphaDelta=1;disc->OnProcess();
+        check(disc->m_radius==100&&disc->m_size==100&&disc->m_alpha==static_cast<float>(170.0*0.16666667)
+            &&disc->m_pos.x==effect.m_tlvertX&&disc->m_pos.y==effect.m_tlvertY-40,
+            "Bash circle pattern one retains full disc width independently of inner size");
+        ray->m_alphaDelta=1;const double angular=static_cast<double>(ray->m_longAccel)+ray->m_longSpeed;ray->OnProcess();
+        check(ray->m_longitude==static_cast<float>(angular+359)&&ray->m_heightSize==63.9f&&ray->m_alpha==20&&ray->m_argb==0x14FFFFFF
+            &&ray->m_pos.y==effect.m_tlvertY-40,"Bash ray integrates source angular drag growth and alpha at projected anchor");
+        for(int frame=1;frame<30;++frame)disc->OnProcess();disc->OnProcess();
+        check(disc->m_alphaSpeed==-17&&disc->m_alpha==153&&disc->m_radius==100&&disc->m_size==100,
+            "Bash disc clamps source alpha at one-seventy before ten-frame fade beginning thirty");
+        for(int frame=1;frame<27;++frame)ray->OnProcess();ray->OnProcess();
+        check(ray->m_alphaSpeed==static_cast<float>(-200.0/13)&&ray->m_alpha<200&&ray->m_heightSize>59,
+            "Bash ray uses source thirteen-frame fade beginning twenty-seven while growth continues");
+        actor.m_pos={20,30,120};effect.m_stateCnt=1;g_session.m_isMinEffect=true;const float oldX=effect.m_tlvertX;effect.ApplyBash();
+        check(effect.m_tlvertX==oldX&&effect.m_primList.size()==21&&waveCalls.size()==1&&rngDraws==draws+100,
+            "Bash later reduced-effects gate also suppresses projection refresh without altering existing primitives");
+        g_session.m_isMinEffect=false;effect.ApplyBash();ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&effect.m_primList.size()==21&&waveCalls.size()==1&&rngDraws==draws+100,
+            "Bash nonzero normal calls refresh projection without repeated burst sound or RNG");
+        for(int frame=28;frame<40;++frame)ray->OnProcess();
+        check(ray->OnProcess()==0&&ray->m_stateCnt==41&&ray->m_alpha==0,"Bash ray includes original final duration frame and reaches alpha floor");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_stateCnt=0;rngValues.assign(100,0);rngCursor=0;effect.ApplyBash();it=effect.m_primList.begin();++it;ray=*it;
+        check(ray->m_longitude==0&&ray->m_longSpeed==1&&ray->m_arcAngle==0.5f&&ray->m_heightSize==20&&ray->m_heightSpeed==2,
+            "Bash lower-end ray dimensions and speeds match original RNG ranges");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
