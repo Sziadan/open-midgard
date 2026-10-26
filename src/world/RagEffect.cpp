@@ -8868,6 +8868,69 @@ void UpdateReferenceCallZone(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:10016 (case 0x50); canonical executable 0x61BE50.
+void UpdateReferenceWaterfallParticle(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode ? mode->m_view : nullptr;
+    if (view) {
+        prim->m_gi[0].alphaT = static_cast<short>(360 - static_cast<int>(view->GetCameraLongitude()));
+        prim->m_gi[1].alphaT = static_cast<short>(450 - static_cast<int>(view->GetCameraLatitude()));
+        if (prim->m_gi[1].alphaT >= 360) {
+            prim->m_gi[1].alphaT = static_cast<short>(prim->m_gi[1].alphaT - 360);
+        }
+    }
+
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+
+        for (int index = 0; index < 16; index += 2) {
+            float& angle = gi.height[static_cast<size_t>(index)];
+            float& bound = gi.height[static_cast<size_t>(index + 1)];
+            if (bound > angle) {
+                angle += 1.0f;
+                if (angle > 359.0f) angle = 359.0f;
+                if (angle > bound) {
+                    const int range = static_cast<int>(angle);
+                    bound = static_cast<float>(range ? rand() % range : 0);
+                }
+            } else {
+                angle -= 1.0f;
+                if (angle < 0.0f) angle = 0.0f;
+                if (angle <= bound) {
+                    const int range = static_cast<int>(angle);
+                    bound = static_cast<float>(359 - (range ? rand() % range : 0));
+                }
+            }
+        }
+
+        const auto updatePoint = [&gi](float& x, float& y, float& z,
+                                       size_t xAngle, size_t zAngle,
+                                       float xDirection, float zDirection) {
+            if (y < 0.0f) {
+                x += xDirection * 0.01f * g_sinTable[static_cast<int>(gi.height[xAngle])];
+                z += zDirection * 0.01f * g_sinTable[static_cast<int>(gi.height[zAngle])];
+                if (y < -8.0f) {
+                    x = static_cast<float>(gi.flag[12] == 0 ? rand() % 45 - 22 : rand() % 25 - 12);
+                    y = static_cast<float>(rand() % 30);
+                    z = static_cast<float>(rand() % 11 - 5);
+                    if (gi.flag[11] == 1) {
+                        const float previousX = x;
+                        x = z;
+                        z = previousX;
+                    }
+                }
+            }
+            y -= gi.maxHeight;
+        };
+
+        updatePoint(gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ, 0, 2, 1.0f, 1.0f);
+        updatePoint(gi.sparkX, gi.sparkY, gi.sparkZ, 4, 6, -1.0f, -1.0f);
+        updatePoint(gi.vecTPreX, gi.vecTPreY, gi.vecTPreZ, 8, 10, 1.0f, -1.0f);
+        updatePoint(gi.vecTNowX, gi.vecTNowY, gi.vecTNowZ, 12, 14, -1.0f, 1.0f);
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9941,6 +10004,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_CALLZONE) {
         UpdateReferenceCallZone(this);
+        return true;
+    }
+    if (m_type == PP_WATERFALLPARTICLE) {
+        UpdateReferenceWaterfallParticle(this); // Source case 0x50 continues to the common tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

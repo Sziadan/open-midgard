@@ -211,6 +211,7 @@ bool UpdateReferenceAsuraCasting(CEffectPrim*);
 bool UpdateReferenceTripleAttack(CEffectPrim*);
 void UpdateReferenceHitLine(CEffectPrim*);
 void UpdateReferenceCallZone(CEffectPrim*);
+void UpdateReferenceWaterfallParticle(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -324,6 +325,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_TRIPLEATTACK) { UpdateReferenceTripleAttack(this); return active; }
         if (m_type == PP_HITLINE) { UpdateReferenceHitLine(this); return active; }
         if (m_type == PP_CALLZONE) { UpdateReferenceCallZone(this); return active; }
+        if (m_type == PP_WATERFALLPARTICLE) { UpdateReferenceWaterfallParticle(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -763,6 +765,7 @@ __declspec(noinline) void RunAsuraCastingLifecycleChecks(CEffectPrim& prim, int&
 __declspec(noinline) void RunTripleAttackLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunHitLineLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunCallZoneLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunWaterfallParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1197,6 +1200,48 @@ __declspec(noinline) void RunCallZoneLifecycleChecks(CEffectPrim& prim, int& che
         && d.process==3 && d.alphaB==4 && rngDraws==draws,
         "case 0x4A updates four life gates, includes process 10, caps alpha at 100, copies master and advances tick without RNG");
     g_isSkipFrame=oldSkipFrame;
+    RunWaterfallParticleLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunWaterfallParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_WATERFALLPARTICLE; prim.m_stateCnt=0; prim.m_duration=1000;
+    for (auto& gi : prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.maxHeight=0.5f;
+    for (int index=0; index<16; index+=2) { a.height[static_cast<size_t>(index)]=10; a.height[static_cast<size_t>(index+1)]=20; }
+    a.height[0]=359; a.height[1]=360;
+    a.height[4]=10; a.height[5]=9;
+    a.vecBPreX=1; a.arcBaselineY=-1; a.vecBPreZ=2;
+    a.sparkX=3; a.sparkY=1; a.sparkZ=4;
+    a.vecTPreX=5; a.vecTPreY=-9; a.vecTPreZ=6;
+    a.vecTNowX=7; a.vecTNowY=-8; a.vecTNowZ=8;
+    a.flag[11]=1; a.flag[12]=0;
+    EffectGi& inactive=prim.m_gi[1]; inactive.life=2; inactive.process=7; inactive.height[0]=33; inactive.sparkY=-20;
+    testView.longitude=15.5f;
+    rngValues={4,1,29,10}; rngCursor=0; const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && a.alphaT==345 && prim.m_gi[1].alphaT==135
+        && a.height[0]==359 && a.height[1]==360 && a.height[4]==9 && a.height[5]==355
+        && std::fabs(a.vecBPreX-0.999825f)<0.00001f && a.arcBaselineY==-1.5f
+        && std::fabs(a.vecBPreZ-2.001908f)<0.00001f
+        && a.sparkX==3 && a.sparkY==0.5f && a.sparkZ==4
+        && a.vecTPreX==5 && a.vecTPreY==28.5f && a.vecTPreZ==-21
+        && a.vecTNowX<7 && a.vecTNowY==-8.5f && a.vecTNowZ>8
+        && inactive.process==7 && inactive.height[0]==33 && inactive.sparkY==-20
+        && rngDraws-draws==4,
+        "case 0x50 maps camera angles, exact-life slot gate, angle clamp/random order, point signs, strict respawn/swap and fall speed");
+
+    a.flag[11]=0; a.flag[12]=1; a.vecTNowX=0; a.vecTNowY=-8.01f; a.vecTNowZ=0;
+    rngValues={24,29,10}; rngCursor=0; const int narrowDraws=rngDraws;
+    prim.OnProcess();
+    check(a.vecTNowX==12 && a.vecTNowY==28.5f && a.vecTNowZ==5
+        && rngDraws-narrowDraws==3,
+        "case 0x50 below-minus-eight respawn uses narrow flag-12 X range without swap and consumes three ordered random values");
+    rngValues.clear(); rngCursor=0; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
