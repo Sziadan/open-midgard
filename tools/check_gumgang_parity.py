@@ -28,6 +28,7 @@ tei_rect = body(EXE, "void __thiscall CEffectPrim::RenderTeiRect(\n        CEffe
 project_vertex = body(EXE, "void __thiscall CRenderer::ProjectVertex(CRenderer *this, const vector3d *src, const matrix *vtm, tlvertex3d *vert)\n")
 trig_init = body(EXE, "void __cdecl CreateTrigonometricTable()\n")
 impl = body(IMPL, "void RenderGumGang(CEffectPrim& prim,")
+impl_layer = body(IMPL, "void RenderGumGangLayer(")
 impl_helpers = body(IMPL, "bool GumGangFrontFacing(")
 submit = body(IMPL, "void SubmitGumGangRect(")
 
@@ -49,7 +50,7 @@ checks = {
     "each facing test truncates difference and applies asymmetric bounds": (r"\(__int64\)v13[\s\S]*?v14 < 70 && v14 > -80 \|\| v14 < -270 \|\| v14 > 270", r"static_cast<int>\(static_cast<double>\(angle\) - screenAngle\)[\s\S]*?difference < 70 && difference > -80[\s\S]*?difference < -270 \|\| difference > 270"),
     "mode 0/2 uses normal facing and all other modes invert": (r"\*\(p_z - 34\) == 0\.0 \|\| \*\(\(_DWORD \*\)p_z - 34\) == 0x40000000", r"orientation == 0\.0f \|\| orientation == 2\.0f[\s\S]*?normalOrder \? front : !front"),
     "source reverse order swaps corners 0/1 and 2/3": (r"v15 = vec2\.x[\s\S]*?v17 = vec5\.x[\s\S]*?v20 = vec4\.x[\s\S]*?v23 = vec7\.x", r"std::swap\(stripCorners\[0\], stripCorners\[1\]\);\s*std::swap\(stripCorners\[2\], stripCorners\[3\]\)"),
-    "GumGang supplies four per-strip texture indices, alphas, RGB and source UV rectangle": (r"CEffectPrim::RenderTeiRect\([\s\S]*?CEffectPrim::RenderTeiRect\([\s\S]*?CEffectPrim::RenderTeiRect\([\s\S]*?CEffectPrim::RenderTeiRect\(", r"m_texture\[static_cast<size_t>\(textureIndex\)\][\s\S]*?static_cast<short>\(gi\.height\[static_cast<size_t>\(alphaSlots\[strip\]\)\]\)[\s\S]*?red, green, blue"),
+    "GumGang supplies four per-strip texture indices, alphas, RGB and source UV rectangle": (r"CEffectPrim::RenderTeiRect\([\s\S]*?CEffectPrim::RenderTeiRect\([\s\S]*?CEffectPrim::RenderTeiRect\([\s\S]*?CEffectPrim::RenderTeiRect\(", r"m_texture\[static_cast<size_t>\(textureIndex\)\][\s\S]*?gi\.height\[static_cast<size_t>\(alphaSlots\[strip\]\)\][\s\S]*?static_cast<short>\(alpha\), red, green, blue"),
     "RenderTeiRect adds m_pos, selects TN texture, and uses inverse-alpha blend": (r"vec1\.x = vec1\.x \+ this->m_pos\.x[\s\S]*?m_texture\[v29\][\s\S]*?PW == 0[\s\S]*?destAlphaMode = 2", r"AddVec3\(corners\[0\], translation\)[\s\S]*?face->tex = texture[\s\S]*?D3DBLEND_INVSRCALPHA"),
     "RenderTeiRect preserves packed alpha/RGB and fixed U/V corner mapping": (r"m_argb_B = b[\s\S]*?verts\[0\]\.tu = v21[\s\S]*?verts\[1\]\.tu = v25", r"const float uvs\[2\]\[3\]\[2\] = \{[\s\S]*?\{ 0\.0f, 1\.0f \}, \{ 1\.0f, 1\.0f \}, \{ 1\.0f, 0\.0f \} \}[\s\S]*?const unsigned int color = "),
     "tlvertex projection uses reciprocal depth, half-screen offsets, and no cutoff": (r"vert->oow = v4;[\s\S]*?this->m_halfWidth[\s\S]*?this->m_halfHeight[\s\S]*?vert->z =", r"vertex\.oow = static_cast<float>\(reciprocal\)[\s\S]*?g_renderer\.m_halfWidth[\s\S]*?g_renderer\.m_halfHeight[\s\S]*?vertex\.z ="),
@@ -60,13 +61,13 @@ for name, (source_pattern, impl_pattern) in checks.items():
     assert re.search(source_pattern, source_target, re.S), f"reference missing: {name}"
     target = IMPL if name == "canonical 0x23 route and default RGB/scale" else impl_helpers if name in (
         "each facing test truncates difference and applies asymmetric bounds", "mode 0/2 uses normal facing and all other modes invert"
-    ) else submit if name.startswith("RenderTeiRect") else body(IMPL, "void ProjectReferenceEffectVertex(") if name.startswith("tlvertex") else impl
+    ) else submit if name.startswith("RenderTeiRect") else body(IMPL, "void ProjectReferenceEffectVertex(") if name.startswith("tlvertex") else impl_layer if name not in ("four GI bands and active-life gate", "band red override uses flag1[4] and persists across bands") else impl
     assert re.search(impl_pattern, target, re.S), f"implementation missing: {name}"
     print(f"PASS {name}")
 
 assert source.count("CEffectPrim::RenderTeiRect(") == 4, "expected exactly four reference strip submissions"
 assert "case 0x63:" in dispatch, "canonical 0x63 route missing"
 assert re.search(r"case 0x63:\s*CEffectPrim::RenderDoubleGumGang\(this, wtm\)", dispatch), "canonical 0x63 dispatch target mismatch"
-assert not re.search(r"m_type == PP_DOUBLEGUMGANG", IMPL), "DoubleGumGang must remain a separate unported function"
+assert re.search(r"m_type == PP_DOUBLEGUMGANG\)\s*\{\s*RenderDoubleGumGang\(\*this, \*viewMatrix\)", body(IMPL, "void CEffectPrim::Render(matrix* viewMatrix)")), "DoubleGumGang implementation route mismatch"
 print("PASS 0x63 remains separately routed to RenderDoubleGumGang")
 print(f"{len(checks) + 1} mechanical RenderGumGang source/implementation comparisons passed")

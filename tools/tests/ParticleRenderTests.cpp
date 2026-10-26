@@ -21,6 +21,7 @@ struct EffectGi {
     float vecBPreX=0.0f,arcBaselineY=0.0f,vecBPreZ=0.0f;
     float vecTPreX=0.0f,vecTPreY=0.0f,vecTPreZ=0.0f;
     float vecTNowX=0.0f,vecTNowY=0.0f,vecTNowZ=0.0f;
+    int process=0;
     unsigned char life=0;
 };
 void MatrixIdentity(matrix& m){m={};for(int i=0;i<4;++i)m.m[i][i]=1;}
@@ -869,8 +870,44 @@ int main() {
         RenderGumGang(prim,view,1.0f,100,100,255);
         check(g_renderer.submissions.empty(),"GumGang skips all bands whose life is not one");
     }
+    {
+        CTexture textures[5];CEffectPrim prim;prim.m_pos={10,20,130};prim.m_renderFlag=0x205;
+        for(auto& texture:textures)prim.m_texture.push_back(&texture);
+        EffectGi& gi=prim.m_gi[0];gi.life=1;gi.process=55;gi.distance=10.0f;gi.alphaT=0;
+        gi.height[1]=80;gi.height[2]=0;gi.height[3]=0;
+        gi.height[5]=130;gi.height[6]=1;gi.height[7]=0;
+        gi.height[9]=190;gi.height[10]=2;gi.height[11]=0;
+        gi.height[13]=250;gi.height[14]=4;gi.height[15]=0;gi.arcBaselineY=-2;
+        const unsigned int colors[3][3]={{0x006464FFu,0x00000078u,0x00000078u},
+            {0x005A5A50u,0x003C3C32u,0x001E1E14u},{0x00FF6464u,0x00780000u,0x00780000u}};
+        const float scales[3]={1.0f,1.2f,2.0f};
+        for(int mode=0;mode<3;++mode) {
+            gi.flag[4]=static_cast<unsigned char>(mode);
+            g_renderer.submissions.clear();g_renderer.flags.clear();
+            RenderDoubleGumGang(prim,view);
+            check(g_renderer.submissions.size()==24,"DoubleGumGang renders three layers of four strips for each live band");
+            if(g_renderer.submissions.size()==24) {
+                for(int layer=0;layer<3;++layer) {
+                    const RPFace& face=g_renderer.submissions[static_cast<size_t>(layer*8)];
+                    const float radius=10.0f*scales[layer];
+                    tlvertex3d expected;ProjectReferenceEffectVertex({static_cast<float>(GetCos(45)*radius+4.0+10.0),18.0f,
+                        static_cast<float>(GetSin(45)*radius+130.0)},view,expected);
+                    check(face.m_verts[0].color==((55u<<24)|colors[mode][layer])&&face.tex==&textures[0]
+                        &&face.destAlphaMode==D3DBLEND_INVSRCALPHA
+                        &&near(face.m_verts[0].x,expected.x)&&near(face.m_verts[0].y,expected.y)
+                        &&near(face.m_verts[0].oow,expected.oow),
+                        "DoubleGumGang preserves source layer style, process-capped alpha, radius, texture and blend");
+                }
+                check(g_renderer.submissions[2].tex==&textures[1]&&g_renderer.submissions[4].tex==&textures[2]
+                    &&g_renderer.submissions[6].tex==&textures[4],
+                    "DoubleGumGang selects each strip's own source texture index");
+                check(g_renderer.flags[0]==0x205&&g_renderer.flags[23]==0x205,
+                    "DoubleGumGang forwards render flags for every layer and band");
+            }
+        }
+        gi.life=0;g_renderer.submissions.clear();RenderDoubleGumGang(prim,view);
+        check(g_renderer.submissions.empty(),"DoubleGumGang skips bands whose life is not one");
+    }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;
 }
-
-\r\n

@@ -6806,13 +6806,70 @@ void SubmitGumGangRect(const vector3d corners[4], const vector3d& translation,
     }
 }
 
-void RenderGumGang(CEffectPrim& prim, const matrix& viewMatrix, float radiusScale,
+void RenderGumGangLayer(CEffectPrim& prim, EffectGi& gi, const matrix& viewMatrix,
+    float radiusScale, int alphaCap, bool capAlpha,
     unsigned char red, unsigned char green, unsigned char blue)
 {
     const int angleSlots[4] = { 3, 7, 11, 15 };
     const int alphaSlots[4] = { 1, 5, 9, 13 };
     const int orientationSlots[4] = { 2, 6, 10, 14 };
     const int textureSlots[4] = { 2, 6, 10, 14 };
+    const double radius = static_cast<double>(gi.distance) * radiusScale;
+    vector3d baseCorners[4]{};
+    for (int corner = 0; corner < 4; ++corner) {
+        int angle = 45 + 90 * corner;
+        if (angle >= 360) {
+            angle -= 360;
+        }
+        baseCorners[corner] = {
+            static_cast<float>(static_cast<double>(g_cosTable[angle]) * radius),
+            0.0f,
+            static_cast<float>(static_cast<double>(g_sinTable[angle]) * radius),
+        };
+    }
+    IntimidateTowardScreen(baseCorners, prim.m_gi[0].alphaT, prim.m_gi[1].alphaT);
+
+    GumGangBandOffset offsets[4] = {
+        { &gi.vecBPreX, &gi.arcBaselineY, &gi.vecBPreZ },
+        { &gi.sparkX, &gi.sparkY, &gi.sparkZ },
+        { &gi.vecTPreX, &gi.vecTPreY, &gi.vecTPreZ },
+        { &gi.vecTNowX, &gi.vecTNowY, &gi.vecTNowZ },
+    };
+    for (int strip = 0; strip < 4; ++strip) {
+        const int angle = static_cast<int>(gi.height[static_cast<size_t>(angleSlots[strip])]);
+        const double scale = 4.0;
+        *offsets[strip].x = static_cast<float>(static_cast<double>(g_cosTable[angle]) * scale);
+        *offsets[strip].z = static_cast<float>(static_cast<double>(g_sinTable[angle]) * scale);
+
+        vector3d stripCorners[4]{};
+        for (int corner = 0; corner < 4; ++corner) {
+            stripCorners[corner] = {
+                static_cast<float>(static_cast<double>(baseCorners[corner].x) + *offsets[strip].x),
+                static_cast<float>(static_cast<double>(baseCorners[corner].y) + *offsets[strip].y),
+                static_cast<float>(static_cast<double>(baseCorners[corner].z) + *offsets[strip].z),
+            };
+        }
+        if (!GumGangFrontFacing(angle, prim.m_gi[0].alphaT,
+                gi.height[static_cast<size_t>(orientationSlots[strip])])) {
+            std::swap(stripCorners[0], stripCorners[1]);
+            std::swap(stripCorners[2], stripCorners[3]);
+        }
+
+        const int textureIndex = static_cast<int>(gi.height[static_cast<size_t>(textureSlots[strip])]);
+        CTexture* texture = textureIndex >= 0 && textureIndex < static_cast<int>(prim.m_texture.size())
+            ? prim.m_texture[static_cast<size_t>(textureIndex)] : nullptr;
+        int alpha = static_cast<int>(gi.height[static_cast<size_t>(alphaSlots[strip])]);
+        if (capAlpha && alpha > alphaCap) {
+            alpha = alphaCap;
+        }
+        SubmitGumGangRect(stripCorners, prim.m_pos, viewMatrix, texture,
+            static_cast<short>(alpha), red, green, blue, static_cast<int>(prim.m_renderFlag));
+    }
+}
+
+void RenderGumGang(CEffectPrim& prim, const matrix& viewMatrix, float radiusScale,
+    unsigned char red, unsigned char green, unsigned char blue)
+{
     for (int band = 0; band < 4; ++band) {
         EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
         if (gi.life != 1) {
@@ -6823,54 +6880,35 @@ void RenderGumGang(CEffectPrim& prim, const matrix& viewMatrix, float radiusScal
             green = 20;
             blue = 20;
         }
+        RenderGumGangLayer(prim, gi, viewMatrix, radiusScale, 0, false, red, green, blue);
+    }
+}
 
-        const double radius = static_cast<double>(gi.distance) * radiusScale;
-        vector3d baseCorners[4]{};
-        for (int corner = 0; corner < 4; ++corner) {
-            int angle = 45 + 90 * corner;
-            if (angle >= 360) {
-                angle -= 360;
-            }
-            baseCorners[corner] = {
-                static_cast<float>(static_cast<double>(g_cosTable[angle]) * radius),
-                0.0f,
-                static_cast<float>(static_cast<double>(g_sinTable[angle]) * radius),
-            };
+void RenderDoubleGumGang(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    const float radialScales[3] = { 1.0f, 1.2f, 2.0f };
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
         }
-        IntimidateTowardScreen(baseCorners, prim.m_gi[0].alphaT, prim.m_gi[1].alphaT);
-
-        GumGangBandOffset offsets[4] = {
-            { &gi.vecBPreX, &gi.arcBaselineY, &gi.vecBPreZ },
-            { &gi.sparkX, &gi.sparkY, &gi.sparkZ },
-            { &gi.vecTPreX, &gi.vecTPreY, &gi.vecTPreZ },
-            { &gi.vecTNowX, &gi.vecTNowY, &gi.vecTNowZ },
-        };
-        for (int strip = 0; strip < 4; ++strip) {
-            const int angle = static_cast<int>(gi.height[static_cast<size_t>(angleSlots[strip])]);
-            const double scale = 4.0;
-            *offsets[strip].x = static_cast<float>(static_cast<double>(g_cosTable[angle]) * scale);
-            *offsets[strip].z = static_cast<float>(static_cast<double>(g_sinTable[angle]) * scale);
-
-            vector3d stripCorners[4]{};
-            for (int corner = 0; corner < 4; ++corner) {
-                stripCorners[corner] = {
-                    static_cast<float>(static_cast<double>(baseCorners[corner].x) + *offsets[strip].x),
-                    static_cast<float>(static_cast<double>(baseCorners[corner].y) + *offsets[strip].y),
-                    static_cast<float>(static_cast<double>(baseCorners[corner].z) + *offsets[strip].z),
-                };
+        for (int layer = 0; layer < 3; ++layer) {
+            unsigned char red = 0;
+            unsigned char green = 0;
+            unsigned char blue = 0;
+            if (gi.flag[4] == 0) {
+                if (layer == 0) { red = 100; green = 100; blue = 255; }
+                else { red = 0; green = 0; blue = 120; }
+            } else if (gi.flag[4] == 1) {
+                if (layer == 0) { red = 90; green = 90; blue = 80; }
+                else if (layer == 1) { red = 60; green = 60; blue = 50; }
+                else { red = 30; green = 30; blue = 20; }
+            } else if (layer == 0) {
+                red = 255; green = 100; blue = 100;
+            } else {
+                red = 120; green = 0; blue = 0;
             }
-            if (!GumGangFrontFacing(angle, prim.m_gi[0].alphaT,
-                    gi.height[static_cast<size_t>(orientationSlots[strip])])) {
-                std::swap(stripCorners[0], stripCorners[1]);
-                std::swap(stripCorners[2], stripCorners[3]);
-            }
-
-            const int textureIndex = static_cast<int>(gi.height[static_cast<size_t>(textureSlots[strip])]);
-            CTexture* texture = textureIndex >= 0 && textureIndex < static_cast<int>(prim.m_texture.size())
-                ? prim.m_texture[static_cast<size_t>(textureIndex)] : nullptr;
-            SubmitGumGangRect(stripCorners, prim.m_pos, viewMatrix, texture,
-                static_cast<short>(gi.height[static_cast<size_t>(alphaSlots[strip])]),
-                red, green, blue, static_cast<int>(prim.m_renderFlag));
+            RenderGumGangLayer(prim, gi, viewMatrix, radialScales[layer], gi.process, true, red, green, blue);
         }
     }
 }
@@ -8206,6 +8244,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_GUMGANG) {
         RenderGumGang(*this, *viewMatrix, 1.0f, 100, 100, 255);
+        return;
+    }
+    if (m_type == PP_DOUBLEGUMGANG) {
+        RenderDoubleGumGang(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {
