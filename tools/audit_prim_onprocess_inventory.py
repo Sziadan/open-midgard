@@ -310,6 +310,48 @@ check("case 0x09 source-to-implementation anchor, matrix, stop, restart and alph
       < source_quad.index("if ( (m_pattern & 1) != 0")
       < source_quad.index("if ( (m_pattern & 2) != 0")
       < source_quad.index("CEffectPrim::ProcessAlpha(this);"))
+source_shift = body(REF, "void __thiscall CEffectPrim::ShiftSegment(CEffectPrim *this)\n{")
+exe_shift = body(EXE, "void __thiscall CEffectPrim::ShiftSegment(CEffectPrim *this)\n{")
+current_shift = body(CURRENT, "void ShiftReferenceSegments(CEffectPrim* prim)")
+check("source ShiftSegment Ref/EXE bodies match and the dedicated implementation preserves its history branch",
+      compact(source_shift) == compact(exe_shift)
+      and "const int count = prim->m_numSegments;" in current_shift
+      and "for (int index = count - 1; index > 0; --index)" in current_shift)
+shift_branch_pairs = [
+    ("i = this->m_numSegment - 1;", "const int count = prim->m_numSegments;"),
+    ("*(v2 - 1) = *(v2 - 36);", "destination = prim->m_segments[static_cast<size_t>(index - 1)];"),
+    ("v3 = v1->m_alpha - v1->m_alpha / (double)v1->m_numSegment * v7;",
+     "static_cast<double>(prim->m_alpha) / count * step"),
+    ("this->m_blue", "prim->m_blue"),
+    ("this->m_green", "prim->m_green"),
+    ("this->m_red", "prim->m_red"),
+    ("this->m_size - this->m_size / (double)this->m_numSegment * v7 * 0.5;",
+     "static_cast<double>(prim->m_size) / count * step * 0.5"),
+    ("v1->m_segment[0].pos.x = v1->m_pos.x;", "current.pos = prim->m_pos;"),
+    ("v1->m_segment[0].segPos[0].x = v1->m_segPos[0].x;",
+     "prim->m_segmentQuadPositions[0] = prim->m_segPos;"),
+    ("v1->m_segment[0].segPos[3].z = v1->m_segPos[3].z;",
+     "prim->m_segmentQuadPositions[0] = prim->m_segPos;"),
+    ("v1->m_segment[0].size = v1->m_size;", "current.size = prim->m_size;"),
+    ("v1->m_segment[0].radius = m_radius;", "current.radius = prim->m_radius;"),
+    ("v1->m_segment[0].alpha = m_alpha;", "current.alpha = prim->m_alpha;"),
+    ("qmemcpy(&v1->m_segment[0].mat, &v1->m_matrix, sizeof(v1->m_segment[0].mat));",
+     "current.transform = prim->m_matrix;"),
+    ("v1->m_segment[0].longitude = m_longitude;", "current.longitude = prim->m_longitude;"),
+]
+check("ShiftSegment source-to-implementation payload, attenuation and zero-count slot-zero branches are paired",
+      all(compact(source_branch) in compact(source_shift)
+          and compact(current_branch) in compact(current_shift)
+          for source_branch, current_branch in shift_branch_pairs)
+      and "prim->m_segmentQuadPositions[0] = prim->m_segPos;" in current_shift
+      and current_shift.index("destination = prim->m_segments")
+      < current_shift.index("destination.alpha =")
+      < current_shift.index("destination.argb =")
+      < current_shift.index("destination.size =")
+      < current_shift.index("EffectSegmentState& current")
+      and source_shift.index("v2[32] = v3;")
+      < source_shift.index("v2[50] = this->m_size")
+      < source_shift.index("v1->m_segment[0].pos.x ="))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)

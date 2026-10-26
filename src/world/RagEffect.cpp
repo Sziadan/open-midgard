@@ -2007,6 +2007,37 @@ void ShiftCircleSegments(CEffectPrim* prim)
     prim->m_segments[0].transform = prim->m_matrix;
 }
 
+// HighPriest.exe.c:466090-466174. ShiftSegment copies each segment's full
+// payload, attenuates alpha/size, then always writes the current slot zero.
+void ShiftReferenceSegments(CEffectPrim* prim)
+{
+    const int count = prim->m_numSegments;
+    for (int index = count - 1; index > 0; --index) {
+        EffectSegmentState& destination = prim->m_segments[static_cast<size_t>(index)];
+        destination = prim->m_segments[static_cast<size_t>(index - 1)];
+        prim->m_segmentQuadPositions[static_cast<size_t>(index)]
+            = prim->m_segmentQuadPositions[static_cast<size_t>(index - 1)];
+        const double step = index;
+        destination.alpha = static_cast<float>(static_cast<double>(prim->m_alpha)
+            - static_cast<double>(prim->m_alpha) / count * step);
+        destination.argb = PackColor(static_cast<u8>(static_cast<long long>(destination.alpha)),
+            RGB(static_cast<u8>(prim->m_red), static_cast<u8>(prim->m_green), static_cast<u8>(prim->m_blue)));
+        destination.size = static_cast<float>(static_cast<double>(prim->m_size)
+            - static_cast<double>(prim->m_size) / count * step * 0.5);
+    }
+
+    EffectSegmentState& current = prim->m_segments[0];
+    current.pos = prim->m_pos;
+    prim->m_segmentQuadPositions[0] = prim->m_segPos;
+    current.size = prim->m_size;
+    current.radius = prim->m_radius;
+    current.alpha = prim->m_alpha;
+    current.transform = prim->m_matrix;
+    current.longitude = prim->m_longitude;
+    current.argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)),
+        RGB(static_cast<u8>(prim->m_red), static_cast<u8>(prim->m_green), static_cast<u8>(prim->m_blue)));
+}
+
 // Ref/RagEffectPrim.cpp:1660-1698 (0x640520). Initialization copies
 // full state to every slot; it does not apply ShiftSegment's trail attenuation.
 void InitReferenceSegments(CEffectPrim* prim)

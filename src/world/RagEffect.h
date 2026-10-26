@@ -335,6 +335,7 @@ public:
     vector3d m_orgPos;
     vector3d m_pos;
     vector3d m_speed3d;
+    std::array<vector3d, 4> m_segPos{};
     matrix m_matrix;
     matrix m_rotMat;
     std::array<float, 4> m_param;
@@ -384,6 +385,7 @@ public:
     std::array<EffectGi, 4> m_gi;
     int m_numSegments;
     std::array<EffectSegmentState, 50> m_segments;
+    std::vector<std::array<vector3d, 4>> m_segmentQuadPositions = std::vector<std::array<vector3d, 4>>(50);
 };
 
 class CRagEffect : public CGameObject {

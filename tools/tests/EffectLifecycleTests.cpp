@@ -169,6 +169,7 @@ bool UpdateReferenceNoMasterTexture(CEffectPrim*);
 bool UpdateReference2DTextureOrbit(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
 void UpdateReferenceQuadHorn(CEffectPrim*);
+void ShiftReferenceSegments(CEffectPrim*);
 void UpdateReferenceFlash(CEffectPrim*);
 void UpdateReferenceScreenCircle(CEffectPrim*);
 void UpdateReferenceSphere(CEffectPrim*);
@@ -190,6 +191,7 @@ struct CEffectPrim : CGameObject {
     int m_totalTexture=1;
     float m_size = 1, m_heightSize = 0, m_longitude = 0, m_latitude = 0, m_speed = 0, m_accel = 0;
     vector3d m_deltaPos, m_deltaPos2, m_deltaPos3, m_deltaPosAccel, m_pos, m_orgPos;
+    std::array<vector3d,4> m_segPos{};
     float m_roty=0;
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 1, m_minAlpha = 0;
     bool m_isDisappear = false;
@@ -210,6 +212,7 @@ struct CEffectPrim : CGameObject {
     float m_longSpeed=0,m_longAccel=0,m_radiusSpeed=0,m_radiusAccel=0,m_innerSpeed=0,m_innerAccel=0,m_innerSize=0;
     u32 m_tintColor=0xFFFFFF,m_argb=0xFFFFFFFF;
     std::array<EffectSegmentState,50> m_segments;
+    std::vector<std::array<vector3d,4>> m_segmentQuadPositions = std::vector<std::array<vector3d,4>>(50);
 
     std::vector<CTexture*> m_texture;
     std::vector<float> m_chPoint,m_chVal1;
@@ -438,6 +441,42 @@ int main()
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
     for (int angle=0; angle<=360; ++angle) g_sinTable[angle]=GetSin(angle);
+    {
+        auto segmentedStorage = std::make_unique<CEffectPrim>();
+        CEffectPrim& segmented = *segmentedStorage;
+        segmented.m_numSegments = 3; segmented.m_alpha = 90; segmented.m_size = 12;
+        segmented.m_radius = 7; segmented.m_longitude = 33;
+        segmented.m_red = 10; segmented.m_green = 20; segmented.m_blue = 30;
+        segmented.m_pos = {100,200,300};
+        segmented.m_segPos = {{{1,2,3},{4,5,6},{7,8,9},{10,11,12}}};
+        segmented.m_matrix.m[3][0] = 13;
+        segmented.m_segments[0].pos = {1,2,3};
+        segmented.m_segmentQuadPositions[0] = {{{11,12,13},{14,15,16},{17,18,19},{20,21,22}}};
+        segmented.m_segments[0].size = 6; segmented.m_segments[0].alpha = 7;
+        segmented.m_segments[0].argb = 0x01020304;
+        segmented.m_segments[1].pos = {4,5,6};
+        segmented.m_segmentQuadPositions[1] = {{{31,32,33},{34,35,36},{37,38,39},{40,41,42}}};
+        segmented.m_segments[1].size = 9; segmented.m_segments[1].alpha = 10;
+        ShiftReferenceSegments(&segmented);
+        check(segmented.m_segments[1].pos.x == 1 && segmented.m_segmentQuadPositions[1][3].z == 22
+            && segmented.m_segments[1].alpha == 60 && segmented.m_segments[1].size == 10
+            && segmented.m_segments[1].argb == PackColor(60, RGB(10,20,30))
+            && segmented.m_segments[2].pos.x == 4 && segmented.m_segmentQuadPositions[2][3].z == 42
+            && segmented.m_segments[2].alpha == 30 && segmented.m_segments[2].size == 8,
+            "ShiftSegment copies prior full segment payloads then applies source alpha, color and size attenuation");
+        check(segmented.m_segments[0].pos.x == 100 && segmented.m_segmentQuadPositions[0][0].x == 1
+            && segmented.m_segmentQuadPositions[0][3].z == 12 && segmented.m_segments[0].radius == 7
+            && segmented.m_segments[0].size == 12 && segmented.m_segments[0].alpha == 90
+            && segmented.m_segments[0].longitude == 33 && segmented.m_segments[0].argb == PackColor(90, RGB(10,20,30))
+            && segmented.m_segments[0].transform.m[3][0] == 13,
+            "ShiftSegment always writes current position and all four cross-section vertices to slot zero");
+        segmented.m_numSegments = 0; segmented.m_pos = {200,300,400};
+        segmented.m_segPos[3] = {40,50,60}; segmented.m_alpha = 80;
+        ShiftReferenceSegments(&segmented);
+        check(segmented.m_segments[0].pos.x == 200 && segmented.m_segmentQuadPositions[0][3].z == 60
+            && segmented.m_segments[0].alpha == 80,
+            "ShiftSegment preserves unconditional slot-zero writes when segment count is zero");
+    }
     {
         CRenderObject player;player.m_pos={10,50,20};g_world.m_player=&player;
         auto storage=std::make_unique<CRagEffect>();CRagEffect& effect=*storage;
