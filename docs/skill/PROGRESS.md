@@ -4,9 +4,9 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A casting primitive update and geometry audit, after BeginSpell2–7 emitter checkpoint 3d87f3d. The new ordered-ID and branch-level comparison gate is satisfied for the six emitter functions; casting primitive behavior is next.
+Current work: WP5A PP_3DCASTING primitive update checkpoint, after casting source-comparison checkpoint 749d62c. Corrected unconditional rotation normalization for band3 and verified source branches.
 
-Next action: audit original PP_3DCASTING, PP_3DCASTING_3 and PP_GI_1 updates and geometry before continuing remaining emitters. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: source-compare PP_3DCASTING_3 update, then audit casting/GI rendering geometry one function at a time. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26

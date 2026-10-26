@@ -3010,10 +3010,9 @@ void UpdateCastingHeights(EffectGi& gi)
 
 void SpinCastingBand(EffectGi& gi, int band)
 {
-    if (band >= 3) {
-        return;
+    if (band < 3) {
+        gi.rotStart = static_cast<short>(gi.rotStart + band + 3);
     }
-    gi.rotStart = static_cast<short>(gi.rotStart + band + 3);
     if (gi.rotStart >= 360) {
         gi.rotStart = static_cast<short>(gi.rotStart - 360);
     }
@@ -11476,7 +11475,6 @@ void CRagEffect::SpawnBeginSpell()
     case 56: ApplyBeginCasting("effect\\Magic_Green.tga",33,true); return;
     case 57: ApplyBeginCasting("effect\\ring_yellow.tga",0,true); return;
     case 58: {
-    case 59: ApplyBeginCasting("effect\\Magic_Violet.tga",33,true); return;
         CRenderObject* master = ResolveCurrentMaster();
         if (!master) return;
         m_effectPos = master->m_pos;
@@ -11490,6 +11488,7 @@ void CRagEffect::SpawnBeginSpell()
         ApplySaintCasting(25,"effect\\ring_white.tga",0);
         return;
     }
+    case 59: ApplyBeginCasting("effect\\Magic_Violet.tga",33,true); return;
     }
 }
 

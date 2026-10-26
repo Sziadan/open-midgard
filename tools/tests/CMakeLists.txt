@@ -124,6 +124,8 @@ extract_body(primitive_init "${effect_source}" "void CEffectPrim::Init(" "static
 extract_body(primitive_lifetime "${effect_source}" "CEffectPrim::~CEffectPrim()" "bool CEffectPrim::ProcessPrimitiveFrame()")
 extract_body(effect_gate "${effect_source}" "bool EffectTicksWhenNoFrameTime(" "void ConfigureHealBand(")
 extract_body(str_termination "${effect_source}" "bool EffectChecksStrResult(" "u8 CRagEffect::OnProcess()")
+extract_body(casting_update "${effect_source}" "int TableAngle(int angle);" "void Update3DCasting3Primitive(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CastingUpdateBody.inc" "${casting_update}")
 extract_body(saint_emitter "${effect_source}" "void CRagEffect::ApplySaintCasting(" "void CRagEffect::ApplyBottomOut(")
 extract_body(begin_emitter "${effect_source}" "void CRagEffect::SpawnBeginSpell()" "void CRagEffect::ApplyPairedSaintCasting(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CastingEmitterBodies.inc" "${saint_emitter}\n${begin_emitter}")

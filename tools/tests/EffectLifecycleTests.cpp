@@ -403,6 +403,8 @@ CRagEffect* CAbleToMakeEffect::LaunchEffect(int type, vector3d, float)
 #include "StrOnlyDispatchBody.inc"
 constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
 #include "CastingEmitterBodies.inc"
+float g_sinTable[360]{};
+#include "CastingUpdateBody.inc"
 #undef rand
 
 int main()
@@ -1345,6 +1347,31 @@ int main()
             "missing Torch assets keep reference dispatch without color-name or bitmap fallbacks");
         effect.ClearPrims();g_world.UpdateGameObjects();
         check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"Torch world cleanup releases resource locks");
+    }
+    {
+        // Prim3DCasting comparison against HighPriest.exe.c:611C40.
+        for(int band=0;band<4;++band) for(int initial:{0,356,360,725}) {
+            auto storage=std::make_unique<CEffectPrim>();auto& prim=*storage;prim.m_duration=100;prim.m_size=0;prim.m_gi[band].life=1;
+            prim.m_gi[band].process=0;prim.m_gi[band].rotStart=static_cast<short>(initial);
+            prim.m_gi[band].alphaB=20;prim.m_gi[band].alphaT=0;prim.m_gi[band].maxHeight=10;
+            for(int angle=0;angle<360;++angle)g_sinTable[angle]=static_cast<float>(angle)/360.0f;
+            Update3DCastingPrimitive(&prim);
+            int rotated=band<3?initial+band+3:initial;if(rotated>=360)rotated-=360;
+            const short expected=static_cast<short>(rotated);
+            check(prim.m_gi[band].rotStart==expected,"Prim3DCasting applies source rotation update and one wrap even to band three");
+            check(prim.m_gi[band].process==1&&prim.m_gi[band].alphaB==(band==3?28:30),
+                "Prim3DCasting increments active band and applies source early alpha rise");
+        }
+        auto selected=std::make_unique<CEffectPrim>();auto& prim=*selected;prim.m_duration=100;prim.m_size=3;prim.m_gi[0].life=1;prim.m_gi[3].life=1;
+        prim.m_gi[0].process=0;prim.m_gi[3].process=0;prim.m_gi[3].rotStart=360;
+        Update3DCastingPrimitive(&prim);
+        check(prim.m_gi[0].process==0&&prim.m_gi[3].process==1&&prim.m_gi[3].rotStart==0,
+            "Prim3DCasting size-three mode skips bands zero through two but normalizes band-three rotation");
+        prim.m_duration=60;prim.m_size=0;prim.m_gi[0].life=1;prim.m_gi[0].process=19;prim.m_gi[0].alphaB=4;
+        prim.m_gi[0].rotStart=0;prim.m_gi[3].life=1;prim.m_gi[3].process=19;prim.m_gi[3].alphaB=4;
+        prim.m_gi[3].rotStart=0;Update3DCastingPrimitive(&prim);
+        check(prim.m_gi[0].alphaB==0&&prim.m_gi[3].alphaB==2,
+            "Prim3DCasting duration threshold selects source late fade and clamps at zero");
     }
     {
         CRenderObject actor,listener;actor.m_pos={10,50,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
