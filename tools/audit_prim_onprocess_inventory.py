@@ -75,7 +75,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 78 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A, 0x1B, 0x1C, 0x1D, 0x20, 0x22, 0x23, 0x25, 0x63}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 79 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A, 0x1B, 0x1C, 0x1D, 0x20, 0x22, 0x23, 0x25, 0x63}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -592,7 +592,7 @@ check("case 0x1B Ref and canonical EXE helper bodies match and dispatch ignores 
       and re.search(r"case\s+0x1B:\s*CEffectPrim::PrimMapParticle\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_MAPPARTICLE)" in current_dispatch
       and "UpdateReferenceMapParticle(this); // Source case 0x1B ignores the bool result." in current_dispatch
-      and len(current_explicit_ids) == 78)
+      and len(current_explicit_ids) == 79)
 map_particle_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[0].alphaT=360-m_GI[0].alphaT;",
     "m_GI[1].alphaT=360-m_GI[1].alphaT+90;", "if (m_GI[1].alphaT>=360)",
@@ -642,7 +642,7 @@ check("case 0x1C Ref and canonical EXE aura bodies match and dispatch discards a
       and re.search(r"case\s+0x1C:\s*CEffectPrim::Prim3DAura\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_3DAURA)" in current_dispatch
       and "UpdateReference3DAura(this); // Source case 0x1C ignores the bool result." in current_dispatch
-      and len(current_explicit_ids) == 78)
+      and len(current_explicit_ids) == 79)
 aura_source_effects = [
     "m_pos = m_master->m_pos;", "for (ec=0;ec<2;ec++)", "m_GI[ec].rise_angle+=3;",
     "if (m_GI[ec].rise_angle>=360)", "m_GI[ec].rise_angle-=360;",
@@ -675,7 +675,7 @@ check("case 0x1D Ref/EXE helper bodies match and the dispatcher ignores its retu
       and re.search(r"case\s+0x1D:\s*CEffectPrim::Prim3DAura_2\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_3DAURA_2)" in current_dispatch
       and "UpdateReference3DAura2(this); // Source case 0x1D ignores the bool result." in current_dispatch
-      and len(current_explicit_ids) == 78)
+      and len(current_explicit_ids) == 79)
 aura2_source_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[1].alphaT=360-m_GI[1].alphaT+90;",
     "if (m_GI[1].alphaT>=360)", "m_pos = m_master->m_pos;", "for (ec=0;ec<4;ec++)",
@@ -733,7 +733,7 @@ check("case 0x20 Ref/EXE helper bodies match and dispatcher honors the always-tr
       and re.search(r"case\s+0x20:\s*result = CEffectPrim::PrimCHOOKGI\(this\);\s*if\s*\(\s*!result\s*\)\s*return result;\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_CHOOKGI)" in current_dispatch
       and "return UpdateReferenceChookGi(this); // Source tests this return; all helper paths return true." in current_dispatch
-      and len(current_explicit_ids) == 78)
+      and len(current_explicit_ids) == 79)
 chook_source_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[1].alphaT=360-m_GI[1].alphaT+90;",
     "m_pos = m_master->m_pos;", "if ( m_GI[ec].life == 1 )", "m_GI[ec].process++;",
@@ -786,7 +786,7 @@ check("case 0x22 Ref/EXE helper bodies match, source has 21 samples and dispatch
       and "if (m_type == PP_GI_3)" in current_dispatch
       and "UpdateReferenceGi3(this);" in current_dispatch
       and re.search(r"#define\s+E_DIVISION\s+21", REF_DHXJ_EFFECT_HEADER)
-      and len(current_explicit_ids) == 78)
+      and len(current_explicit_ids) == 79)
 gi3_source_effects = [
     "middle=(E_DIVISION-1)/2;", "m2=90/middle;", "for (;ec<4;ec++)",
     "if (m_GI[ec].life == 1)", "m_GI[ec].process+=1;", "m_GI[ec].distance-=0.01f;",
@@ -824,7 +824,7 @@ check("cases 0x23/0x63 Ref/EXE share PrimGumGang and the dispatcher ignores its 
       and re.search(r"case\s+0x23:\s*case\s+0x63:\s*CEffectPrim::PrimGumGang\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "m_type == PP_GUMGANG || m_type == PP_DOUBLEGUMGANG" in current_dispatch
       and "UpdateReferenceGumGang(this); // Source ids 0x23/0x63 ignore the bool result." in current_dispatch
-      and len(current_explicit_ids) == 78)
+      and len(current_explicit_ids) == 79)
 gumgang_source_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[1].alphaT=360-m_GI[1].alphaT+90;",
     "m_pos = m_master->m_pos;", "range=8;", "half=range/2;", "he=8;", "tn=5;",
@@ -874,7 +874,7 @@ check("case 0x25 Ref/EXE helper bodies match and source dispatch continues to th
       and re.search(r"case\s+0x25:\s*CEffectPrim::PrimGrandCross2\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_GRANDCROSS2)" in current_dispatch
       and "UpdateReferenceGrandCross2(this);" in current_dispatch
-      and len(current_explicit_ids) == 78)
+      and len(current_explicit_ids) == 79)
 grandcross_source_effects = [
     "middle=(E_DIVISION-1)/2;", "m2=90/middle;", "for (;ec<4;ec++)",
     "if (m_GI[ec].life == 1)", "m_GI[ec].process+=1;", "if (m_GI[ec].process>=10)",
@@ -900,6 +900,52 @@ check("case 0x25 source-to-implementation pairs alpha/fade/life and height write
       < current_grandcross.index("gi.height[1] += 0.005f;")
       < current_grandcross.index("gi.height[0] += 0.005f;")
       < current_grandcross.index("gi.height[2] = gi.maxHeight * g_sinTable[gi.process];"))
+source_linelink_decompiled = body(REF_EFFECT2, "unsigned __int8 __thiscall CEffectPrim::PrimLineLink(CEffectPrim *this)\n{")
+exe_linelink = body(EXE, "unsigned __int8 __thiscall CEffectPrim::PrimLineLink(CEffectPrim *this)\n{")
+source_linelink = body(REF_DHXJ_EFFECT2, "CEffectPrim :: PrimLineLink()")
+current_linelink = body(CURRENT, "bool UpdateReferenceLineLink(CEffectPrim* prim)")
+check("case 0x26 Ref/EXE helper bodies match and source dispatch ignores helper return",
+      compact(source_linelink_decompiled) == compact(exe_linelink)
+      and re.search(r"case\s+0x26:\s*CEffectPrim::PrimLineLink\(this\);\s*goto\s+\$L145961;", source_dispatch)
+      and "if (m_type == PP_LINELINK)" in current_dispatch
+      and "UpdateReferenceLineLink(this);" in current_dispatch)
+linelink_source_effects = [
+    "m_pos = m_master->m_pos;", "m_GI[ec].process++;", "m_GI[ec].vecT_now=m_pos;",
+    "m_GI[ec].vecT_now.y-=8.0f;", "if (m_GI[ec].height[4] == 2)",
+    "if (m_GI[ec].process>40)", "m_GI[ec].alphaB-=3;", "if (m_GI[ec].alphaB<0)",
+    "else if (m_GI[ec].process<20)", "m_GI[ec].alphaB+=6;",
+    "else if (m_GI[ec].height[4] == 3)", "pro=m_GI[ec].process%360;",
+    "if (m_GI[ec].process<=80)", "m_GI[ec].alphaB+=1;",
+    "m_GI[ec].max_height+=g_sinTable[pro]*0.005f;", "if (m_GI[ec].process%10<5)",
+    "m_GI[ec].alphaB+=2;", "m_GI[ec].alphaB-=2;", "if (m_GI[ec].height[0]>0)",
+    "m_GI[ec].height[0] == g_session.GetAid()", "gameMode->GetWorld()->m_player;",
+    "gameMode->GetWorld()->GetGameActorByAID(m_GI[ec].height[0]);",
+    "m_GI[ec].life=0;", "m_GI[ec].alphaB=0;", "m_GI[ec].vecT_pre=tActor->m_pos;",
+    "m_GI[ec].vecT_pre.y-=8.0f;", "return true;",
+]
+linelink_current_effects = [
+    "prim->m_pos = prim->m_master->EffectPosition();", "++gi.process;", "gi.vecTNowX = prim->m_pos.x;",
+    "gi.vecTNowY = prim->m_pos.y - 8.0f;", "if (gi.height[4] == 2.0f)",
+    "if (gi.process > 40)", "gi.alphaB = static_cast<short>(gi.alphaB - 3);",
+    "if (gi.alphaB < 0) gi.alphaB = 0;", "else if (gi.process < 20)",
+    "gi.alphaB = static_cast<short>(gi.alphaB + 6);", "else if (gi.height[4] == 3.0f)",
+    "const int phase = gi.process % 360;", "if (gi.process <= 80)",
+    "gi.alphaB = static_cast<short>(gi.alphaB + 1);", "gi.maxHeight += g_sinTable[phase] * 0.005f;",
+    "else if (gi.process % 10 < 5)", "gi.alphaB = static_cast<short>(gi.alphaB + 2);",
+    "gi.alphaB = static_cast<short>(gi.alphaB - 2);", "if (gi.height[0] > 0.0f && world)",
+    "targetAid == g_session.m_aid ? world->m_player", "world->GetGameActorByAID(targetAid);",
+    "gi.life = 0;", "gi.alphaB = 0;", "gi.vecTPreX = target->m_pos.x;",
+    "gi.vecTPreY = target->m_pos.y - 8.0f;", "gi.vecTPreZ = target->m_pos.z;", "return true;",
+]
+check("case 0x26 source-to-implementation branch mapping covers every mode, target path and return",
+      all(compact(effect) in compact(source_linelink) for effect in linelink_source_effects)
+      and all(compact(effect) in compact(current_linelink) for effect in linelink_current_effects)
+      and current_linelink.index("prim->m_pos = prim->m_master->EffectPosition();") < current_linelink.index("++gi.process;")
+      < current_linelink.index("gi.vecTNowX =") < current_linelink.index("if (gi.height[4] == 2.0f)")
+      < current_linelink.index("else if (gi.height[4] == 3.0f)")
+      < current_linelink.index("else if (gi.process % 10 < 5)")
+      < current_linelink.index("if (gi.height[0] > 0.0f && world)")
+      < current_linelink.index("if (!target)") < current_linelink.index("return true;"))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)

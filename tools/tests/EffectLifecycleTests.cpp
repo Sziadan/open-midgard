@@ -157,6 +157,9 @@ struct CWorld {
     std::list<CGameObject*> m_gameObjectList;
     std::list<CSkill*> m_skillList;
     CRenderObject* m_player = nullptr;
+    CRenderObject* lookupActor = nullptr;
+    u32 lookupAid = 0;
+    CRenderObject* GetGameActorByAID(u32 aid) const { return aid == lookupAid ? lookupActor : nullptr; }
     void UpdateGameObjects();
 } g_world;
 struct CGameMode {
@@ -165,7 +168,7 @@ struct CGameMode {
     int messages=0,lastMsg=0,lastArg=0;
     void SendMsg(int msg,msgparam_t arg,msgparam_t,msgparam_t) {++messages;lastMsg=msg;lastArg=static_cast<int>(arg);}
 } gameMode;
-struct CSession {bool m_isMinEffect=false,m_isEffectOn=false;const char* GetAttrWaveName(int) const;} g_session;
+struct CSession {bool m_isMinEffect=false,m_isEffectOn=false;u32 m_aid=0;const char* GetAttrWaveName(int) const;} g_session;
 struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
 #include "PrimitiveEnum.inc"
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
@@ -191,6 +194,7 @@ bool UpdateReferenceChookGi(CEffectPrim*);
 void UpdateReferenceGi3(CEffectPrim*);
 bool UpdateReferenceGumGang(CEffectPrim*);
 void UpdateReferenceGrandCross2(CEffectPrim*);
+bool UpdateReferenceLineLink(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -287,6 +291,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_GI_3) { UpdateReferenceGi3(this); return active; }
         if (m_type == PP_GUMGANG || m_type == PP_DOUBLEGUMGANG) { UpdateReferenceGumGang(this); return active; }
         if (m_type == PP_GRANDCROSS2) { UpdateReferenceGrandCross2(this); return active; }
+        if (m_type == PP_LINELINK) { UpdateReferenceLineLink(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -319,6 +324,7 @@ void RenderParticleSprites(const CEffectPrim& prim,CSprRes&,const CActRes&,const
 }
 struct CRagEffect : CGameObject {
     Probe deaths{ effectDeaths };
+    vector3d m_pos;
     CRenderObject* m_master = nullptr;
     bool m_ownsMaster = false, m_masterIsActor = false, m_isWorldEffect = false;
     u32 m_masterActorGid = 0;
@@ -1707,6 +1713,43 @@ int main()
         check(cross2.life == 2 && cross2.process == 44 && cross2.alphaB == 55
             && cross2.height[0] == 66 && cross2.height[1] == 77 && cross2.height[2] == 88,
             "PrimGrandCross2 skips GI bands unless life equals one");
+        texturePrim.m_type = PP_LINELINK; texturePrim.m_stateCnt = 0; texturePrim.m_duration = 1000;
+        texturePrim.m_master->m_effectPos = {101, 202, 303};
+        g_session.m_aid = 7; g_world.m_player = &actor; actor.m_pos = {11, 22, 33};
+        auto& line = texturePrim.m_gi[0]; line = {}; line.life = 1; line.process = 18; line.alphaB = 10;
+        line.height[0] = 7; line.height[4] = 2;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_pos.x == 101 && texturePrim.m_pos.y == 202
+            && texturePrim.m_pos.z == 303 && line.process == 19 && line.alphaB == 16
+            && line.vecTNowX == 101 && line.vecTNowY == 194 && line.vecTNowZ == 303
+            && line.vecTPreX == 11 && line.vecTPreY == 14 && line.vecTPreZ == 33
+            && line.life == 1 && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x26 soulchange rise tracks master and self actor with exact y offsets");
+        CRenderObject lineTarget; lineTarget.m_pos = {44, 55, 66};
+        g_world.lookupAid = 9; g_world.lookupActor = &lineTarget;
+        line.height[0] = 9; line.height[4] = 3; line.process = 79; line.alphaB = 2; line.maxHeight = 10;
+        const float lineHeight80 = line.maxHeight + g_sinTable[80] * 0.005f;
+        check(texturePrim.OnProcess() == 1 && line.process == 80 && line.alphaB == 3
+            && std::fabs(line.maxHeight - lineHeight80) < 0.000001f
+            && line.vecTPreX == 44 && line.vecTPreY == 47 && line.vecTPreZ == 66 && line.life == 1,
+            "OnProcess case 0x26 mode 3 applies the <=80 alpha boundary, sine height and actor lookup");
+        line.process = 80; line.alphaB = 5;
+        const float lineHeight81 = line.maxHeight + g_sinTable[81] * 0.005f;
+        texturePrim.OnProcess();
+        check(line.process == 81 && line.alphaB == 5 && std::fabs(line.maxHeight - lineHeight81) < 0.000001f,
+            "OnProcess case 0x26 mode 3 stops alpha increase after process 80 but keeps height oscillation");
+        line.height[4] = 2; line.process = 19; line.alphaB = 23;
+        texturePrim.OnProcess();
+        check(line.process == 20 && line.alphaB == 23 && line.life == 1,
+            "OnProcess case 0x26 soulchange holds alpha throughout the inclusive 20-to-40 interval");
+        line.height[4] = 0; line.process = 4; line.alphaB = 8;
+        texturePrim.OnProcess();
+        check(line.process == 5 && line.alphaB == 6 && line.life == 1,
+            "OnProcess case 0x26 blink mode subtracts two on the second five-frame phase");
+        line.height[0] = 0; line.height[4] = 2; line.process = 40; line.alphaB = 2;
+        texturePrim.OnProcess();
+        check(line.process == 41 && line.alphaB == 0 && line.life == 0,
+            "OnProcess case 0x26 soulchange fades and clamps after process 40, then clears missing target");
+        g_world.lookupAid = 0; g_world.lookupActor = nullptr; g_session.m_aid = 0;
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

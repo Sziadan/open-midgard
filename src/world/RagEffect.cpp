@@ -8236,6 +8236,52 @@ void UpdateReferenceGrandCross2(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:14842 (case 0x26). The line-link ribbon tracks
+// the source and target actor positions while its single GI band animates.
+bool UpdateReferenceLineLink(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    EffectGi& gi = prim->m_gi[0];
+    ++gi.process;
+    gi.vecTNowX = prim->m_pos.x;
+    gi.vecTNowY = prim->m_pos.y - 8.0f;
+    gi.vecTNowZ = prim->m_pos.z;
+
+    if (gi.height[4] == 2.0f) {
+        if (gi.process > 40) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 3);
+            if (gi.alphaB < 0) gi.alphaB = 0;
+        } else if (gi.process < 20) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 6);
+        }
+    } else if (gi.height[4] == 3.0f) {
+        const int phase = gi.process % 360;
+        if (gi.process <= 80) gi.alphaB = static_cast<short>(gi.alphaB + 1);
+        gi.maxHeight += g_sinTable[phase] * 0.005f;
+    } else if (gi.process % 10 < 5) {
+        gi.alphaB = static_cast<short>(gi.alphaB + 2);
+    } else {
+        gi.alphaB = static_cast<short>(gi.alphaB - 2);
+    }
+
+    CRenderObject* target = nullptr;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CWorld* world = mode ? mode->m_world : nullptr;
+    if (gi.height[0] > 0.0f && world) {
+        const u32 targetAid = static_cast<u32>(gi.height[0]);
+        target = targetAid == g_session.m_aid ? world->m_player : world->GetGameActorByAID(targetAid);
+    }
+    if (!target) {
+        gi.life = 0;
+        gi.alphaB = 0;
+    } else {
+        gi.vecTPreX = target->m_pos.x;
+        gi.vecTPreY = target->m_pos.y - 8.0f;
+        gi.vecTPreZ = target->m_pos.z;
+    }
+    return true;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9241,6 +9287,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_GRANDCROSS2) {
         UpdateReferenceGrandCross2(this);
+        return true;
+    }
+    if (m_type == PP_LINELINK) {
+        UpdateReferenceLineLink(this); // Source case 0x26 ignores PrimLineLink's return.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
