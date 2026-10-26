@@ -198,6 +198,7 @@ bool UpdateReferenceLineLink(CEffectPrim*);
 bool UpdateReferenceLandProtector(CEffectPrim*);
 bool UpdateReferenceSakura(CEffectPrim*);
 void UpdateReferenceShieldBoomerang(CEffectPrim*);
+void UpdateReferenceIntimidate(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -298,6 +299,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_LANDPROTECTOR) { UpdateReferenceLandProtector(this); return active; }
         if (m_type == PP_SAKURA) { UpdateReferenceSakura(this); return active; }
         if (m_type == PP_SHIELDBOOMERANG) { UpdateReferenceShieldBoomerang(this); return active; }
+        if (m_type == PP_INTIMIDATE) { UpdateReferenceIntimidate(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -606,6 +608,44 @@ __declspec(noinline) void RunShieldBoomerangLifecycleChecks(CEffectPrim& prim, i
         "case 0x2A inactive GI0 skips all band mutations");
     rngValues={}; rngCursor=0;
     g_isSkipFrame = oldSkipFrame;
+}
+
+__declspec(noinline) void RunIntimidateLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame = g_isSkipFrame;
+    g_isSkipFrame = 1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_INTIMIDATE; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={7,8,9}; prim.m_master->m_effectPos={100,200,300};
+    for (auto& gi : prim.m_gi) gi={};
+    auto& a=prim.m_gi[0]; a.life=1; a.process=-1; a.distance=10; a.height[0]=2;
+    a.alphaB=50; a.rotStart=725; a.height[2]=720;
+    auto& b=prim.m_gi[1]; b.life=1; b.process=0; b.distance=20; b.height[0]=3;
+    b.alphaB=40; b.flag[0]=1; b.rotStart=359; b.height[2]=355;
+    auto& c=prim.m_gi[2]; c.life=1; c.process=9; c.distance=30; c.height[0]=4;
+    c.alphaB=230; c.flag[0]=2; c.rotStart=359; c.height[2]=358;
+    auto& d=prim.m_gi[3]; d.life=1; d.process=25; d.distance=40; d.height[0]=5;
+    d.alphaB=5; d.rotStart=360; d.height[2]=359;
+    const int draws=rngDraws;
+    check(prim.OnProcess()==1 && prim.m_stateCnt==1 && prim.m_pos.x==7 && prim.m_pos.y==8 && prim.m_pos.z==9
+        && a.process==0 && a.distance==10 && a.alphaB==50 && a.rotStart==365 && a.height[2]==365
+        && b.process==1 && b.distance==23 && b.alphaB==65 && b.rotStart==359 && b.height[2]==0
+        && c.process==10 && c.distance==34 && c.alphaB==255 && c.rotStart==2 && c.height[2]==1
+        && d.process==26 && d.distance==45 && d.alphaB==0 && d.rotStart==0 && d.height[2]==4
+        && a.alphaT==345 && b.alphaT==135 && rngDraws==draws,
+        "case 0x2B updates four live bands across process, alpha, flag, wrap, camera and no-position/no-RNG branches");
+
+    b.process=10; b.alphaB=77; b.life=1;
+    prim.OnProcess();
+    check(b.process==11 && b.alphaB==77,
+        "case 0x2B process 11 is the inclusive gap between alpha growth and fade");
+    d.life=2; d.process=50; d.distance=61; d.alphaB=62; d.rotStart=63; d.height[2]=64;
+    prim.OnProcess();
+    check(d.life==2 && d.process==50 && d.distance==61 && d.alphaB==62 && d.rotStart==63 && d.height[2]==64,
+        "case 0x2B skips every mutation for bands whose life is not exactly one");
+    g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
@@ -1906,6 +1946,7 @@ int main()
             "PrimLandProtector subtracts 360 only once when the incremented angle remains above one turn");
         RunSakuraLifecycleChecks(texturePrim, checks, failures);
         RunShieldBoomerangLifecycleChecks(texturePrim, checks, failures);
+        RunIntimidateLifecycleChecks(texturePrim, checks, failures);
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

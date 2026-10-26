@@ -8476,6 +8476,39 @@ void UpdateReferenceShieldBoomerang(CEffectPrim* prim)
     gi.sparkZ = static_cast<float>(static_cast<double>(gi.height[1]) * g_sinTable[gi.rotStart] + gi.sparkZ);
 }
 
+// Ref/dhxj/RagEffect2.cpp:14053 (case 0x2B).
+void UpdateReferenceIntimidate(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode ? mode->m_view : nullptr;
+    if (view) {
+        prim->m_gi[0].alphaT = static_cast<short>(360 - static_cast<int>(view->GetCameraLongitude()));
+        prim->m_gi[1].alphaT = static_cast<short>(450 - static_cast<int>(view->GetCameraLatitude()));
+        if (prim->m_gi[1].alphaT >= 360) prim->m_gi[1].alphaT = static_cast<short>(prim->m_gi[1].alphaT - 360);
+    }
+
+    for (size_t index = 0; index < 4; ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        if (gi.process > 0) gi.distance += gi.height[0];
+
+        if (gi.process <= 10 && gi.process > 0) {
+            gi.alphaB = static_cast<short>(gi.alphaB + (gi.flag[0] == 0 ? 15 : 25));
+        } else if (gi.process > 25) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 7);
+            if (gi.alphaB <= 0) gi.alphaB = 0;
+        }
+
+        if (gi.flag[0] == 2) gi.rotStart = static_cast<short>(gi.rotStart + 3);
+        if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+
+        gi.height[2] += gi.flag[0] == 2 ? 3.0f : 5.0f;
+        if (gi.height[2] >= 360.0f) gi.height[2] -= 360.0f;
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9497,6 +9530,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_SHIELDBOOMERANG) {
         UpdateReferenceShieldBoomerang(this);
+        return true;
+    }
+    if (m_type == PP_INTIMIDATE) {
+        UpdateReferenceIntimidate(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
