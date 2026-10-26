@@ -8810,6 +8810,31 @@ bool UpdateReferenceAsuraCasting(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:14919 (case 0x45).
+bool UpdateReferenceTripleAttack(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life <= 0) continue;
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.process <= 5) {
+            if (gi.height[4] == 2.0f) gi.alphaB = static_cast<short>(gi.alphaB + 2);
+            else if (gi.height[4] == 3.0f) gi.alphaB = static_cast<short>(gi.alphaB + 8);
+            else gi.alphaB = static_cast<short>(gi.alphaB + 8);
+        } else {
+            if (gi.height[4] == 2.0f) gi.alphaB = static_cast<short>(gi.alphaB - 1);
+            else if (gi.height[4] == 3.0f) gi.alphaB = static_cast<short>(gi.alphaB - 4);
+            else gi.alphaB = static_cast<short>(gi.alphaB - 4);
+            if (gi.alphaB < 0) gi.alphaB = 0;
+        }
+
+        gi.vecTNowX = gi.sparkX + gi.distance * g_cosTable[gi.rotStart];
+        gi.vecTNowZ = gi.sparkZ + gi.distance * g_sinTable[gi.rotStart];
+    }
+    return true;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9871,6 +9896,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_ASURACASTING) {
         UpdateReferenceAsuraCasting(this); // The source handler's true result is ignored before the common tick.
+        return true;
+    }
+    if (m_type == PP_TRIPLEATTACK) {
+        UpdateReferenceTripleAttack(this); // The source handler's true result is ignored before the common tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

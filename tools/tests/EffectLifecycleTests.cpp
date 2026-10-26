@@ -208,6 +208,7 @@ void UpdateReferencePokJuk(CEffectPrim*);
 void UpdateReferenceGuard(CEffectPrim*);
 bool UpdateReferenceFoot(CEffectPrim*);
 bool UpdateReferenceAsuraCasting(CEffectPrim*);
+bool UpdateReferenceTripleAttack(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -318,6 +319,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_GUARD) { UpdateReferenceGuard(this); return active; }
         if (m_type == PP_FOOT) { UpdateReferenceFoot(this); return active; }
         if (m_type == PP_ASURACASTING) { UpdateReferenceAsuraCasting(this); return active; }
+        if (m_type == PP_TRIPLEATTACK) { UpdateReferenceTripleAttack(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -754,6 +756,7 @@ __declspec(noinline) void RunPokJukLifecycleChecks(CEffectPrim& prim, int& check
 __declspec(noinline) void RunGuardLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunFootLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunAsuraCastingLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunTripleAttackLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1084,6 +1087,49 @@ __declspec(noinline) void RunAsuraCastingLifecycleChecks(CEffectPrim& prim, int&
     check(prim.m_pos.x==801 && prim.m_pos.y==802 && prim.m_pos.z==803,
         "case 0x44 exact GI0 mode flag one copies master position in handler");
     testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
+    RunTripleAttackLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunTripleAttackLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_TRIPLEATTACK; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={91,92,93}; prim.m_master->m_effectPos={101,102,103};
+    for (auto& gi : prim.m_gi) gi={};
+    auto& a=prim.m_gi[0]; a.life=2; a.process=-1; a.alphaB=-7; a.vecTNowX=41; a.vecTNowY=42; a.vecTNowZ=43;
+    auto& b=prim.m_gi[1]; b.life=1; b.process=4; b.height[4]=2; b.alphaB=10;
+    b.sparkX=10; b.sparkZ=20; b.distance=5; b.rotStart=0; b.vecTNowY=77;
+    auto& c=prim.m_gi[2]; c.life=1; c.process=5; c.height[4]=3; c.alphaB=2;
+    c.sparkX=3; c.sparkZ=4; c.distance=2; c.rotStart=90; c.vecTNowY=88;
+    auto& d=prim.m_gi[3]; d.life=0; d.process=8; d.alphaB=33; d.vecTNowX=51; d.vecTNowY=52; d.vecTNowZ=53;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==91 && prim.m_pos.y==92 && prim.m_pos.z==93
+        && a.process==0 && a.alphaB==-7 && a.vecTNowX==41 && a.vecTNowY==42 && a.vecTNowZ==43
+        && b.process==5 && b.alphaB==12 && b.vecTNowX==15 && b.vecTNowY==77 && b.vecTNowZ==20
+        && c.process==6 && c.alphaB==0 && std::fabs(c.vecTNowX-3)<0.0001f && c.vecTNowY==88 && c.vecTNowZ==6
+        && d.process==8 && d.alphaB==33 && d.vecTNowX==51 && d.vecTNowY==52 && d.vecTNowZ==53
+        && rngDraws==draws,
+        "case 0x45 updates every positive-life band, applies process-5 alpha boundary, floors fades, writes target X/Z only and leaves origin/Y/RNG unchanged");
+
+    prim.m_stateCnt=0; for (auto& gi : prim.m_gi) gi={};
+    auto& selector=prim.m_gi[0]; selector.life=1; selector.process=0; selector.height[4]=3; selector.alphaB=10;
+    prim.OnProcess();
+    check(selector.process==1 && selector.alphaB==18,
+        "case 0x45 selector 3 adds eight during positive process 1 to 5");
+    prim.m_stateCnt=0; selector.process=0; selector.height[4]=9; selector.alphaB=10; prim.OnProcess();
+    check(selector.process==1 && selector.alphaB==18,
+        "case 0x45 default selector also adds eight during the early phase");
+    prim.m_stateCnt=0; selector.process=5; selector.height[4]=2; selector.alphaB=5; prim.OnProcess();
+    check(selector.process==6 && selector.alphaB==4,
+        "case 0x45 selector 2 subtracts one after process 5");
+    prim.m_stateCnt=0; selector.process=5; selector.height[4]=3; selector.alphaB=3; prim.OnProcess();
+    check(selector.process==6 && selector.alphaB==0,
+        "case 0x45 selector 3 subtracts four after process 5 and clamps to zero");
+    g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
