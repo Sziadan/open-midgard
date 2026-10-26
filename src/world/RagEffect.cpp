@@ -10102,6 +10102,76 @@ void UpdateReferenceStin5(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:15530; canonical executable PrimBubbleDrop at 0x628690 (case 0x7F).
+void UpdateReferenceBubbleDrop(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode->m_view;
+    prim->m_gi[0].alphaT = static_cast<short>(360 - static_cast<int>(view->GetCameraLongitude()));
+    prim->m_gi[1].alphaT = static_cast<short>(450 - static_cast<int>(view->GetCameraLatitude()));
+    if (prim->m_gi[1].alphaT >= 360) {
+        prim->m_gi[1].alphaT = static_cast<short>(prim->m_gi[1].alphaT - 360);
+    }
+    prim->m_pos = prim->m_master->EffectPosition();
+
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) return;
+    ++gi.process;
+    if (gi.process <= 0) return;
+
+    if (gi.process > 3) {
+        EffectGi& destination = prim->m_gi[3];
+        const EffectGi& source = prim->m_gi[2];
+        destination.fullDisplayAngle = source.fullDisplayAngle;
+        destination.distance = source.distance;
+        destination.height[8] = source.height[8];
+        destination.alphaB = static_cast<short>(source.alphaB - 25);
+        if (destination.alphaB < 0) destination.alphaB = 0;
+        destination.sparkX = source.sparkX;
+        destination.sparkY = source.sparkY;
+        destination.sparkZ = source.sparkZ;
+        destination.flag[0] = source.flag[0];
+    }
+    if (gi.process > 2) {
+        EffectGi& destination = prim->m_gi[2];
+        const EffectGi& source = prim->m_gi[1];
+        destination.fullDisplayAngle = source.fullDisplayAngle;
+        destination.distance = source.distance;
+        destination.height[8] = source.height[8];
+        destination.alphaB = static_cast<short>(source.alphaB - 25);
+        if (destination.alphaB < 0) destination.alphaB = 0;
+        destination.sparkX = source.sparkX;
+        destination.sparkY = source.sparkY;
+        destination.sparkZ = source.sparkZ;
+        destination.flag[0] = source.flag[0];
+    }
+    if (gi.process > 1) {
+        EffectGi& destination = prim->m_gi[1];
+        destination.fullDisplayAngle = gi.fullDisplayAngle;
+        destination.distance = gi.distance;
+        destination.height[8] = gi.height[8];
+        destination.alphaB = static_cast<short>(gi.alphaB - 100);
+        if (destination.alphaB < 0) destination.alphaB = 0;
+        destination.sparkX = gi.sparkX;
+        destination.sparkY = gi.sparkY;
+        destination.sparkZ = gi.sparkZ;
+        destination.flag[0] = gi.flag[0];
+    }
+
+    if (gi.process <= 10) gi.alphaB = static_cast<short>(gi.alphaB + 20);
+    if (gi.process < gi.flag[4]) {
+        gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle - 15);
+        if (gi.fullDisplayAngle < 0) gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + 360);
+        gi.arcBaselineY += gi.height[1];
+        gi.sparkX = prim->m_pos.x + gi.vecBPreX;
+        gi.sparkY = prim->m_pos.y + gi.arcBaselineY;
+        gi.sparkZ = prim->m_pos.z + gi.vecBPreZ;
+    } else {
+        gi.alphaB = static_cast<short>(gi.alphaB - 10);
+        if (gi.alphaB < 0) gi.alphaB = 0;
+    }
+}
+
 // Ref/dhxj/RagEffect2.cpp:1982; canonical executable PrimKouenka (case 0x7C).
 bool UpdateReferenceKouenka(CEffectPrim* prim)
 {
@@ -11470,6 +11540,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_STIN5) {
         UpdateReferenceStin5(this); // Source case 0x7E continues to the shared tick.
+        return true;
+    }
+    if (m_type == PP_BUBBLE_DROP) {
+        UpdateReferenceBubbleDrop(this); // Source case 0x7F continues to the shared tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

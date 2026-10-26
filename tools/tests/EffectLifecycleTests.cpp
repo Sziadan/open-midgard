@@ -243,6 +243,7 @@ void UpdateReferenceTwilight(CEffectPrim*);
 bool UpdateReferenceKouenka(CEffectPrim*);
 void UpdateReferenceStin4(CEffectPrim*);
 void UpdateReferenceStin5(CEffectPrim*);
+void UpdateReferenceBubbleDrop(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -388,6 +389,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_KOUENKA) return UpdateReferenceKouenka(this) && active;
         if (m_type == PP_STIN4) { UpdateReferenceStin4(this); return active; }
         if (m_type == PP_STIN5) { UpdateReferenceStin5(this); return active; }
+        if (m_type == PP_BUBBLE_DROP) { UpdateReferenceBubbleDrop(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -871,6 +873,7 @@ __declspec(noinline) void RunTwilightLifecycleChecks(CEffectPrim& prim, int& che
 __declspec(noinline) void RunKouenkaLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunStin4LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunStin5LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunBubbleDropLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2182,6 +2185,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     RunKouenkaLifecycleChecks(prim, checks, failures);
     RunStin4LifecycleChecks(prim, checks, failures);
     RunStin5LifecycleChecks(prim, checks, failures);
+    RunBubbleDropLifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2845,6 +2849,64 @@ __declspec(noinline) void RunStin5LifecycleChecks(CEffectPrim& prim, int& checks
     check(inactive&&a.process==-1&&a.riseAngle==99&&rngDraws==draws,
         "case 0x7E exact-life and nonpositive post-increment gates leave the inactive lane unchanged without RNG");
     g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunBubbleDropLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude; testView.longitude=20.5f;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_BUBBLE_DROP; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={101,202,303}; prim.m_deltaPos={0,0,0}; prim.m_pos={1,2,3};
+    for(auto& gi:prim.m_gi) gi={};
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_gi[0].alphaT==340&&prim.m_gi[1].alphaT==135
+        &&prim.m_pos.x==101&&prim.m_pos.y==202&&prim.m_pos.z==303&&rngDraws==draws,
+        "case 0x7F always refreshes camera alpha and master position while inactive GI skips animation");
+
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=0; a.flag[4]=10;
+    a.alphaB=5; a.fullDisplayAngle=10; a.height[1]=3; a.vecBPreX=4; a.arcBaselineY=0; a.vecBPreZ=6;
+    prim.OnProcess();
+    check(a.process==1&&a.alphaB==25&&a.fullDisplayAngle==355&&a.arcBaselineY==3
+        &&prim.m_gi[0].sparkX==105&&prim.m_gi[0].sparkY==205&&prim.m_gi[0].sparkZ==309,
+        "case 0x7F first active frame adds uncapped alpha, wraps display angle and sets current vector from master plus risen pre-vector");
+
+    a.process=3; a.flag[4]=5; a.alphaB=120; a.fullDisplayAngle=88; a.distance=9; a.height[8]=11;
+    a.sparkX=12; a.sparkY=13; a.sparkZ=14; a.flag[0]=4;
+    prim.m_gi[1].alphaB=35; prim.m_gi[1].fullDisplayAngle=66; prim.m_gi[1].distance=7;
+    prim.m_gi[1].height[8]=8; prim.m_gi[1].sparkX=21; prim.m_gi[1].sparkY=22; prim.m_gi[1].sparkZ=23;
+    prim.m_gi[1].flag[0]=3; prim.m_gi[1].rotStart=77;
+    prim.m_gi[2].alphaB=15; prim.m_gi[2].fullDisplayAngle=55; prim.m_gi[2].distance=6;
+    prim.m_gi[2].height[8]=7; prim.m_gi[2].sparkX=31; prim.m_gi[2].sparkY=32; prim.m_gi[2].sparkZ=33;
+    prim.m_gi[2].flag[0]=2; prim.m_gi[2].rotStart=66;
+    prim.m_gi[3].rotStart=55;
+    prim.OnProcess();
+    check(a.process==4&&a.alphaB==140&&a.fullDisplayAngle==73&&a.arcBaselineY==6
+        &&a.sparkX==101+a.vecBPreX&&a.sparkY==202+a.arcBaselineY&&a.sparkZ==303+a.vecBPreZ
+        &&prim.m_gi[1].alphaB==20&&prim.m_gi[1].fullDisplayAngle==88&&prim.m_gi[1].distance==9
+        &&prim.m_gi[1].height[8]==11&&prim.m_gi[1].sparkX==12&&prim.m_gi[1].flag[0]==4
+        &&prim.m_gi[1].rotStart==77&&prim.m_gi[2].alphaB==10&&prim.m_gi[2].fullDisplayAngle==66
+        &&prim.m_gi[2].sparkX==21&&prim.m_gi[2].flag[0]==3&&prim.m_gi[3].alphaB==0
+        &&prim.m_gi[3].sparkX==31&&prim.m_gi[3].flag[0]==2&&prim.m_gi[3].rotStart==55,
+        "case 0x7F shifts eligible trails in descending order with source fields and distinct alpha offsets before motion and alpha growth");
+
+    a.process=10; a.flag[4]=11; a.alphaB=2; a.fullDisplayAngle=42; a.arcBaselineY=17;
+    a.sparkX=80; a.sparkY=81; a.sparkZ=82; a.height[1]=9;
+    prim.OnProcess();
+    check(a.process==11&&a.alphaB==0&&a.fullDisplayAngle==42&&a.arcBaselineY==17
+        &&a.sparkX==80&&a.sparkY==81&&a.sparkZ==82&&rngDraws==draws,
+        "case 0x7F threshold-equal terminal branch floors alpha without moving vector, raising pre-y or rotating angle");
+
+    a.life=2; a.process=5; a.alphaB=39; a.fullDisplayAngle=23;
+    const int inactiveDraws=rngDraws; prim.OnProcess();
+    const bool exactLifeSkipped=a.process==5&&a.alphaB==39&&a.fullDisplayAngle==23;
+    a.life=1; a.process=-1; a.alphaB=29; a.fullDisplayAngle=13; prim.OnProcess();
+    check(exactLifeSkipped&&a.process==0&&a.alphaB==29&&a.fullDisplayAngle==13&&rngDraws==inactiveDraws,
+        "case 0x7F exact-life and nonpositive post-increment gates skip all animation and consume no RNG");
+    testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
@@ -4311,6 +4373,7 @@ int main()
         effect.m_master = &actor;
         CEffectPrim prim;
         prim.m_master = &effect;
+        prim.m_type = PP_EFFECTTEXTURE_ANI;
         prim.m_duration = 5;
         check(prim.OnProcess() == 1 && prim.observedFrame == 0 && prim.m_stateCnt == 1,
             "primitive handler observes frame zero before shared outer increment");
