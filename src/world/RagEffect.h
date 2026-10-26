@@ -268,6 +268,7 @@ public:
     bool UsesReferenceCrossTexture() const;
     bool UsesReferenceTexture() const;
     bool UsesReferenceScreenTexture() const;
+    bool UsesReferenceScreenQuad() const;
     bool UsesReferenceQuadHorn() const;
     bool UsesReferenceFlash() const;
     bool UsesReferenceScreenCircle() const;
@@ -348,6 +349,9 @@ public:
     float m_changeSpeed = 0.000099999997f;
     float m_changeAccel = 0.000099999997f;
     float m_changeHeightSpeed = 0.000099999997f;
+    float m_changeWidthSpeed = 0.000099999997f;
+    float m_changeWidthAccel = 0.000099999997f;
+    float m_changeHeightAccel = 0.000099999997f;
     float m_changeSpeedY = 0.0f;
     float m_changeAccelY = 0.0f;
     int m_playWaveType = 0;
@@ -496,6 +500,7 @@ private:
     bool ProcessAngelus();
     bool ProcessFireHit();
     void SpawnFireSplashHit();
+    void SpawnColdHit();
     void SpawnSprayPond();
     void ApplyProvidence(const char* textureName);
     void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);

@@ -209,6 +209,7 @@ struct CEffectPrim : CGameObject {
     float m_changeSpeedY=0,m_changeAccelY=0;
     int m_changePoint=-1;
     float m_changeSpeed=0.000099999997f,m_changeAccel=0.000099999997f,m_changeHeightSpeed=0.000099999997f;
+    float m_changeWidthSpeed=0.000099999997f,m_changeWidthAccel=0.000099999997f,m_changeHeightAccel=0.000099999997f;
     std::vector<float> m_chVal2;
     bool active = true;
     ~CEffectPrim() override;
@@ -222,6 +223,7 @@ struct CEffectPrim : CGameObject {
     bool UsesReferenceCrossTexture() const;
     bool UsesReferenceTexture() const;
     bool UsesReferenceScreenTexture() const;
+    bool UsesReferenceScreenQuad() const;
     bool UsesReferenceQuadHorn() const;
     bool UsesReferenceFlash() const;
     bool UsesReferenceScreenCircle() const;
@@ -238,7 +240,7 @@ struct CEffectPrim : CGameObject {
         if (UsesReferenceScreenCircle()) UpdateReferenceScreenCircle(this);
         if (UsesReferenceSphere()) UpdateReferenceSphere(this);
         if (m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle() && !UpdateReferenceGravityParticle(this)) return false;
-        if (UsesReferenceScreenTexture() && !UpdateReferenceScreenTexture(this)) return false;
+        if ((UsesReferenceScreenTexture() || UsesReferenceScreenQuad()) && !UpdateReferenceScreenTexture(this)) return false;
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
         if (UsesReferenceTexture()) UpdateReferenceCrossTexture(this);
         if (UsesReferenceCylinder() && !UpdateReferenceCylinderState(this)) return false;
@@ -314,6 +316,7 @@ struct CRagEffect : CGameObject {
     bool ProcessAngelus();
     bool ProcessFireHit();
     void SpawnFireSplashHit();
+    void SpawnColdHit();
     void SpawnSprayPond();
     void SpawnIncAgility();
     void SpawnDecAgility();
@@ -3570,6 +3573,86 @@ int main()
         effect.ClearPrims();g_world.UpdateGameObjects();effect.m_stateCnt=0;g_session.m_isMinEffect=false;rngValues={0};rngCursor=0;effect.SpawnFireSplashHit();prim=effect.m_primList.front();
         check(prim->m_roll==0&&prim->m_alpha==254&&effect.m_primList.size()==1&&!EffectTicksWhenNoFrameTime(50),
             "FireSplashHit supports zero angle endpoint in normal mode and retains effect tick gate");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor;actor.m_pos={10,20,100};auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;
+        effect.m_master=&actor;effect.m_type=51;effect.m_effectPos={30,50,40};effect.m_duration=300;
+        effect.m_tlvertX=-1;effect.m_tlvertY=-2;effect.m_tlvertZ=123;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        rngValues.clear();for(int i=0;i<9;++i)rngValues.insert(rngValues.end(),{59,9,44,4});rngValues.push_back(39);rngValues.push_back(0);rngCursor=0;
+        g_session.m_isMinEffect=true;effect.SpawnColdHit();
+        check(effect.m_primList.size()==10&&rngDraws==draws+37&&rngCursor==37,"ColdHit emits nine four-draw shards then one single-draw smoke despite reduced effects");
+        std::vector<CEffectPrim*> prims(effect.m_primList.begin(),effect.m_primList.end());bool shards=true,offsets=true,matrices=true,textures=g_texMgr.requests.size()==10;
+        for(int i=0;i<9;++i){auto* p=prims[i];const bool major=i%3==0;const float speed=major?16.8f:8.8f;
+            shards=shards&&p->UsesReferenceScreenQuad()&&p->m_duration==15&&p->m_roll==i*40+44&&p->m_longitude==p->m_roll
+                &&p->m_heightSize==(major?109.0f:49.0f)&&p->m_widthSize==(major?10.0f:4.0f)&&p->m_speed==speed
+                &&p->m_accel==static_cast<float>(-(speed/15.0)*0.6666666666666666)&&p->m_count==20&&p->m_alpha==200&&p->m_maxAlpha==254
+                &&p->m_fadeOutCnt==5&&p->m_animSpeed==4&&p->m_repeatAnim&&p->m_changePoint==-1;
+            offsets=offsets&&p->m_deltaPos2.x==static_cast<float>(static_cast<double>(GetSin(i*40))*4)
+                &&p->m_deltaPos2.y==static_cast<float>(-(static_cast<double>(GetCos(i*40))*4))-20;
+            matrix expected;MatrixIdentity(expected);MatrixAppendXRotation(expected,GetRadian(0));MatrixAppendYRotation(expected,GetRadian(i*40+44));
+            for(int row=0;row<4;++row)for(int col=0;col<4;++col)matrices=matrices&&p->m_matrix.m[row][col]==expected.m[row][col]&&p->m_rotMat.m[row][col]==expected.m[row][col];
+            textures=textures&&g_texMgr.requests[i]=="effect\\ice.tga";
+        }
+        check(shards,"ColdHit three long and six short shards preserve source integer-division speed ranges alpha fade and raw unwrapped headings");
+        check(offsets,"ColdHit radial offsets use unjittered forty-degree angles with separate minus-twenty vertical offset");
+        check(matrices,"ColdHit copies source X-then-Y launch matrix into retained render matrix for every shard");
+        check(textures&&g_texMgr.requests[9]=="effect\\smoke.tga"&&g_resMgr.requests.empty()&&waveCalls.empty(),"ColdHit requests exact nine ice textures then smoke without sprite or audio resources");
+        auto* smoke=prims[9];auto* shard=prims[0];
+        check(smoke->UsesReferenceScreenTexture()&&smoke->m_duration==25&&smoke->m_speed==0.85000002f&&smoke->m_longitude==19
+            &&smoke->m_widthSize==1&&smoke->m_heightSize==1&&smoke->m_widthSpeed==6&&smoke->m_heightSpeed==6
+            &&smoke->m_changeWidthSpeed==0.5f&&smoke->m_changeHeightSpeed==0.5f&&smoke->m_changePoint==10&&smoke->m_fadeOutCnt==17,
+            "ColdHit smoke preserves source drift dimensions growth change point and eight-frame fade");
+        check(smoke->m_alpha==254&&smoke->m_maxAlpha==254&&smoke->m_animSpeed==4&&smoke->m_repeatAnim&&smoke->m_gi[0].life==0
+            &&smoke->m_changeSpeed==0.000099999997f&&smoke->m_changeWidthAccel==0.000099999997f&&smoke->m_changeHeightAccel==0.000099999997f,
+            "ColdHit smoke retains constructor alpha repeat animation ordinary GI life and untouched change sentinels");
+        tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&effect.m_tlvertZ==123&&effect.m_effectPos.x==30&&effect.m_effectPos.y==50
+            &&effect.m_effectPos.z==40&&effect.m_duration==300,"ColdHit refreshes actor projection without changing stored world origin z or parent lifetime");
+        g_isSkipFrame=0;shard->OnProcess();smoke->OnProcess();
+        check(shard->m_stateCnt==0&&smoke->m_stateCnt==0&&EffectTicksWhenNoFrameTime(51),"ColdHit effect bypasses no-frame-time gate while both ordinary primitive types wait");g_isSkipFrame=1;
+        shard->m_alphaDelta=1;const float firstSpeed=shard->m_speed+shard->m_accel;
+        const double firstY=-static_cast<double>(GetCos(44))*firstSpeed;shard->OnProcess();
+        check(shard->m_speed==firstSpeed&&shard->m_deltaPos.x==static_cast<float>(static_cast<double>(GetSin(44))*firstSpeed)
+            &&shard->m_deltaPos.y==static_cast<float>(firstY)&&shard->m_pos.y==static_cast<float>(firstY+static_cast<float>(projected.y-24))
+            &&shard->m_alpha==200&&shard->m_argb==0xC8FFFFFF&&shard->m_roll==44,
+            "ColdHit shard integrates source deceleration and screen drift at fixed roll without premature alpha decay");
+        for(int frame=1;frame<=5;++frame)shard->OnProcess();
+        check(shard->m_alphaSpeed==-20&&shard->m_alpha==180&&shard->m_widthSize==10&&shard->m_heightSize==109,
+            "ColdHit shard starts ten-frame fade at five while retaining source dimensions");
+        smoke->m_alphaDelta=1;for(int frame=0;frame<10;++frame)smoke->OnProcess();
+        check(smoke->m_widthSize==61&&smoke->m_heightSize==61&&smoke->m_widthSpeed==6&&smoke->m_heightSpeed==6&&smoke->m_alpha==254,
+            "ColdHit smoke grows by six through primitive frame nine without early change or fade");
+        smoke->OnProcess();
+        check(smoke->m_widthSize==61.5f&&smoke->m_heightSize==61.5f&&smoke->m_widthSpeed==0.5f&&smoke->m_heightSpeed==0.5f
+            &&smoke->m_speed==0.85000002f&&smoke->m_accel==0&&smoke->m_widthAccel==0&&smoke->m_heightAccel==0
+            &&smoke->m_changeWidthSpeed==0.5f&&smoke->m_changeHeightSpeed==0.5f,
+            "ColdHit smoke applies growth replacements before frame-ten integration and preserves unspecified controls and change values");
+        while(smoke->m_stateCnt<17)smoke->OnProcess();smoke->OnProcess();
+        check(smoke->m_alphaSpeed==-31.75f&&smoke->m_alpha==222.25f&&smoke->m_widthSize==65&&smoke->m_heightSize==65,
+            "ColdHit smoke begins source eight-frame fade at seventeen while half-unit growth continues");
+        actor.m_pos={20,30,120};effect.m_stateCnt=1;effect.SpawnColdHit();ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_primList.size()==10&&rngDraws==draws+37&&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y,
+            "ColdHit ordinary nonzero frame only refreshes moving actor projection without RNG or emission");
+        effect.m_stateCnt=7;effect.SpawnColdHit();auto* secondSmoke=effect.m_primList.back();
+        check(effect.m_primList.size()==11&&rngDraws==draws+38&&secondSmoke->UsesReferenceScreenTexture()&&secondSmoke->m_longitude==-20&&secondSmoke->m_stateCnt==0,
+            "ColdHit frame seven launches only one fresh smoke using lower heading endpoint and one draw");
+        effect.m_stateCnt=8;effect.SpawnColdHit();check(effect.m_primList.size()==11&&rngDraws==draws+38,"ColdHit frame eight adds no extra smoke shards or RNG");
+        secondSmoke->m_alphaDelta=1;secondSmoke->OnProcess();
+        check(secondSmoke->m_pos.x==projected.x+secondSmoke->m_deltaPos.x&&secondSmoke->m_widthSize==7&&secondSmoke->m_alpha==254,
+            "ColdHit second smoke uses refreshed anchor and its own frame-zero growth lifecycle");
+        while(shard->m_stateCnt<15)shard->OnProcess();check(shard->OnProcess()==0&&shard->m_stateCnt==16&&shard->m_alpha==0,"ColdHit shard includes final duration frame and fades to zero");
+        while(smoke->m_stateCnt<25)smoke->OnProcess();check(smoke->OnProcess()==0&&smoke->m_stateCnt==26&&smoke->m_alpha==0&&smoke->m_widthSize==69,
+            "ColdHit smoke includes final duration frame with continued growth and exhausted fade");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_stateCnt=0;g_session.m_isMinEffect=false;rngValues.assign(37,0);rngCursor=0;effect.SpawnColdHit();
+        shard=effect.m_primList.front();smoke=effect.m_primList.back();
+        check(shard->m_roll==-15&&shard->m_heightSize==100&&shard->m_widthSize==10&&shard->m_speed==12.8f&&shard->m_deltaPos2.x==0&&shard->m_deltaPos2.y==-20,
+            "ColdHit lower shard endpoint preserves negative unwrapped roll zero radial offset and integer speed bin");
+        effect.m_tlvertY=-999;smoke->m_deltaPos.y=1000;smoke->m_longitude=0;smoke->m_alphaDelta=1;smoke->OnProcess();
+        const float preciseY=static_cast<float>(1000.0-static_cast<double>(0.85000002f)-999.0);
+        check(smoke->m_pos.y==preciseY&&smoke->m_pos.y!=smoke->m_deltaPos.y-999,
+            "Reference screen drift retains extended Y displacement through anchor addition before rounding final position");
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);

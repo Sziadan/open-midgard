@@ -579,6 +579,33 @@ int main() {
         panel.m_texture.clear();renderPanel();check(g_renderer.m_rpAlphaList.empty()&&g_renderer.m_rpAlphaNoDepthList.empty(),
             "SprayPond missing texture emits no replacement geometry");
     }
+    {
+        CEffectPrim shard;CTexture secondTexture;shard.m_texture={&g_texMgr.texture,&secondTexture};shard.m_curMotion=1;
+        shard.m_pos={100,200,900};shard.m_widthSize=10;shard.m_heightSize=120;shard.m_roll=0;shard.m_argb=0xC8123456;shard.m_renderFlag=0x205;
+        auto renderShard=[&](){g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaNoDepthList.clear();RenderReferenceScreenQuad(shard);};
+        renderShard();check(g_renderer.m_rpAlphaList.size()==2,"ColdHit screen quad emits exactly two source shard triangles");
+        auto* first=g_renderer.m_rpAlphaList[0].second;auto* second=g_renderer.m_rpAlphaList[1].second;
+        check(first->m_verts[0].x==95&&first->m_verts[0].y==190&&first->m_verts[1].x==100&&first->m_verts[1].y==260
+            &&first->m_verts[2].x==100&&first->m_verts[2].y==140,"ColdHit first shard face uses half dimensions and source five-sixths inset without half-pixel offset");
+        check(second->m_verts[0].x==105&&second->m_verts[0].y==210&&second->m_verts[1].x==100&&second->m_verts[1].y==260
+            &&second->m_verts[2].x==100&&second->m_verts[2].y==140,"ColdHit second shard face preserves opposite side inset and original shared-edge order");
+        check(first->m_verts[0].tu==0&&first->m_verts[0].tv==0.5f&&first->m_verts[1].tu==0.5f&&first->m_verts[1].tv==1
+            &&first->m_verts[2].tu==0.5f&&first->m_verts[2].tv==0&&second->m_verts[0].tu==1&&second->m_verts[0].tv==0.5f,
+            "ColdHit shard faces retain original side and center UVs");
+        check(first->m_verts[0].color==0xC8123456&&first->m_verts[1].color==0xFFFFFFFF&&first->m_verts[2].color==0xC8123456
+            &&second->m_verts[1].color==0xFFFFFFFF&&first->tex==&secondTexture&&second->tex==&secondTexture
+            &&first->m_verts[0].z==0.000001f&&first->m_verts[0].oow==0.99999899f
+            &&g_renderer.m_rpAlphaOPList.empty()&&g_renderer.m_rpAlphaNoDepthList.empty(),
+            "ColdHit uses original white center vertex selected motion fixed screen depth and hard-coded alpha flag one");
+        shard.m_roll=-15.9f;renderShard();first=g_renderer.m_rpAlphaList[0].second;
+        check(first->m_verts[0].x==static_cast<float>(-5.0*GetCos(-15)+10.0*GetSin(-15)+100)
+            &&first->m_verts[0].y==static_cast<float>(-10.0*GetCos(-15)-5.0*GetSin(-15)+200),
+            "ColdHit shard rotation truncates negative fractional roll and retains source float sine cosine products through screen translation");
+        shard.m_argb=0;renderShard();first=g_renderer.m_rpAlphaList[0].second;
+        check(g_renderer.m_rpAlphaList.size()==2&&first->m_verts[0].color==0&&first->m_verts[1].color==0xFFFFFFFF&&first->m_verts[2].color==0,
+            "ColdHit retains source white center even when edge alpha reaches zero");
+        shard.m_texture.clear();renderShard();check(g_renderer.m_rpAlphaList.empty(),"ColdHit missing shard texture produces no fallback geometry");
+    }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;
 }
