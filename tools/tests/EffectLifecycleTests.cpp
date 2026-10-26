@@ -556,33 +556,22 @@ int main()
         auto actorStorage=std::make_unique<CAbleToMakeEffect>();CAbleToMakeEffect& weatherPlayer=*actorStorage;
         g_world.m_player=&weatherPlayer;gameMode.m_world=&g_world;g_session.m_isEffectOn=true;
         std::strncpy(gameMode.m_rswName,"gef_fild07.rsw",sizeof(gameMode.m_rswName)-1);
-        EnsureMapWeatherEffects(gameMode);
+        LaunchMapWeatherEffect(gameMode);
         CRagEffect* effect=weatherPlayer.m_effectList.empty()?nullptr:weatherPlayer.m_effectList.front();
         check(weatherPlayer.launches==1&&effect&&effect->GetEffectType()==229,
-            "weather scheduler launches map-zero weather once for the first supported map alias");
-        if(effect)effect->m_duration=1000;
-        EnsureMapWeatherEffects(gameMode);
-        check(weatherPlayer.launches==1,"weather scheduler keeps a matching live effect when more than 300 frames remain");
-        if(effect)effect->m_duration=300;
-        EnsureMapWeatherEffects(gameMode);
-        check(weatherPlayer.launches==2,"weather scheduler refreshes the matching effect at the 300-frame boundary");
-        if(!weatherPlayer.m_effectList.empty())weatherPlayer.m_effectList.back()->m_duration=1000;
+            "map-load weather launcher emits the supported map-zero variant");
+        g_session.m_isEffectOn=false;
+        check(weatherPlayer.launches==1&&weatherPlayer.m_effectList.size()==1,
+            "effect toggle does not dynamically remove map-load weather");
+        std::strncpy(gameMode.m_rswName,"unknown.rsw",sizeof(gameMode.m_rswName)-1);
+        LaunchMapWeatherEffect(gameMode);
+        check(weatherPlayer.launches==1,
+            "map-load weather launcher leaves unsupported maps without weather primitives");
+        g_session.m_isEffectOn=true;
         std::strncpy(gameMode.m_rswName,"einbroch.rsw",sizeof(gameMode.m_rswName)-1);
-        EnsureMapWeatherEffects(gameMode);
-        bool changed=false,oldWeather=false;
-        for(CRagEffect* current:weatherPlayer.m_effectList){
-            changed=changed||current->GetEffectType()==515;
-            oldWeather=oldWeather||current->GetEffectType()==229;
-        }
-        check(changed&&!oldWeather&&weatherPlayer.launches==3,
-            "weather scheduler removes stale weather ids before launching the new map variant");
-        g_session.m_isEffectOn=false;EnsureMapWeatherEffects(gameMode);
-        check(weatherPlayer.launches==3&&weatherPlayer.m_effectList.empty(),
-            "weather scheduler removes weather effects and does not launch while effects are disabled");
-        g_session.m_isEffectOn=true;std::strncpy(gameMode.m_rswName,"unknown.rsw",sizeof(gameMode.m_rswName)-1);
-        EnsureMapWeatherEffects(gameMode);
-        check(weatherPlayer.launches==3&&weatherPlayer.m_effectList.empty(),
-            "weather scheduler leaves unsupported maps without weather primitives");
+        LaunchMapWeatherEffect(gameMode);
+        check(weatherPlayer.launches==2&&weatherPlayer.m_effectList.back()->GetEffectType()==515,
+            "a later map-load launch selects the new map variant");
         weatherPlayer.DetachEffects();g_world.UpdateGameObjects();
         g_world.m_player=nullptr;gameMode.m_world=&g_world;
     }

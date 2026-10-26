@@ -141,8 +141,6 @@ constexpr float kAmbientSoundCullSlack = 130.0f;
 constexpr float kAmbientSoundMinRangeFactor = 1.0f / 6.0f;
 constexpr int kAmbientSoundMaxDist = 250;
 constexpr int kAmbientSoundMinDist = 40;
-constexpr int kWeatherCloudRefreshThresholdFrames = 300;
-constexpr int kWeatherCloudEffectIds[] = { 229, 230, 233, 515, 516, 592, 697, 698 };
 
 float g_savedOutdoorCameraLatitude = -45.0f;
 float g_savedOutdoorCameraDistance = kRefAverageCameraDistance;
@@ -191,16 +189,6 @@ bool MatchMapName(const std::string& mapName, std::initializer_list<const char*>
 {
     for (const char* candidate : candidates) {
         if (candidate && mapName == candidate) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool IsWeatherCloudEffectId(int effectId)
-{
-    for (int candidate : kWeatherCloudEffectIds) {
-        if (candidate == effectId) {
             return true;
         }
     }
@@ -330,44 +318,27 @@ void ApplyRefFogForMap(const char* rswName, int fogOn)
     g_renderer.FogSwitch(1);
 }
 
-void EnsureMapWeatherEffects(CGameMode& mode)
+void LaunchMapWeatherEffect(CGameMode& mode)
 {
     if (!mode.m_world || !mode.m_world->m_player) {
         return;
     }
 
-    CAbleToMakeEffect* player = mode.m_world->m_player;
-    const int desiredEffectId = g_session.m_isEffectOn ? ResolveRefWeatherCloudEffectId(mode.m_rswName) : 0;
-    CRagEffect* desiredEffect = nullptr;
-    std::vector<int> removeEffectIds;
-    for (CRagEffect* effect : player->m_effectList) {
-        if (!effect || !IsWeatherCloudEffectId(effect->GetEffectType())) {
-            continue;
-        }
-
-        if (effect->GetEffectType() == desiredEffectId) {
-            desiredEffect = effect;
-        } else {
-            removeEffectIds.push_back(effect->GetEffectType());
-        }
-    }
-
-    for (int effectId : removeEffectIds) {
-        player->RemoveEffectById(effectId);
-    }
-
-    if (desiredEffectId == 0) {
+    CAbleToMakeEffect* player = dynamic_cast<CAbleToMakeEffect*>(mode.m_world->m_player);
+    if (!player) {
         return;
     }
 
-    if (desiredEffect) {
-        const int remainingFrames = desiredEffect->GetDuration() - desiredEffect->GetStateCount();
-        if (remainingFrames > kWeatherCloudRefreshThresholdFrames) {
-            return;
-        }
+    if (!g_session.m_isEffectOn) {
+        return;
     }
 
-    player->LaunchEffect(desiredEffectId, vector3d{}, 0.0f);
+    const int effectId = ResolveRefWeatherCloudEffectId(mode.m_rswName);
+    if (effectId == 0) {
+        return;
+    }
+
+    player->LaunchEffect(effectId, vector3d{}, 0.0f);
 }
 
 void UpdateMapAudio(CGameMode& mode)
@@ -4064,6 +4035,7 @@ void UpdateMapLoadingUi(CGameMode& mode, const char* message, float progress)
 void FinishMapLoading(CGameMode& mode)
 {
     SyncBootstrapRuntimeActorWorldPos(mode);
+    LaunchMapWeatherEffect(mode);
     g_windowMgr.HideLoadingScreen();
     g_windowMgr.EnsureChatWindowVisible();
     g_windowMgr.MakeWindow(UIWindowMgr::WID_BASICINFOWND);
@@ -9732,7 +9704,6 @@ void CGameMode::OnUpdate() {
             // self actor now bypasses the shared billboard helper cache, so this
             // no longer drags cached UI/billboard data around with it.
             m_world->m_player->ProcessState();
-            EnsureMapWeatherEffects(*this);
         }
         actorUpdateEnd = GetTickCount();
 

@@ -68,12 +68,9 @@ extract_body(matrix_rotations "${math_source}" "void MatrixAppendXRotation(" "//
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ParticleMatrixBodies.inc" "${matrix_mult}\n${matrix_rotations}")
 file(READ "../../src/world/RagEffect.cpp" effect_source)
 extract_body(weather_map_helpers "${mode_source}" "std::string ToLowerAsciiMapName(" "int ResolveRefMapClearColor(")
-extract_body(weather_map_ensure "${mode_source}" "void EnsureMapWeatherEffects(CGameMode& mode)" "void UpdateMapAudio(")
-string(REPLACE "CAbleToMakeEffect* player = mode.m_world->m_player;"
-    "CAbleToMakeEffect* player = dynamic_cast<CAbleToMakeEffect*>(mode.m_world->m_player);"
-    weather_map_ensure "${weather_map_ensure}")
+extract_body(weather_map_launch "${mode_source}" "void LaunchMapWeatherEffect(CGameMode& mode)" "void UpdateMapAudio(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WeatherMapBodies.inc"
-    "constexpr int kWeatherCloudRefreshThresholdFrames = 300;\nconstexpr int kWeatherCloudEffectIds[] = {229, 230, 233, 515, 516, 592, 697, 698};\n${weather_map_helpers}\n${weather_map_ensure}")
+    "${weather_map_helpers}\n${weather_map_launch}")
 extract_body(project_point "${effect_source}" "bool ProjectPoint(" "float ResolveEffectPixelRatio(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ProjectPointBody.inc" "${project_point}")
 extract_body(attr_wave_tables "${session_source}" "constexpr const char* kEnemyHitNormalWaves[]" "struct JobTokenEntry")
