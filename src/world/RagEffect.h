@@ -530,6 +530,7 @@ private:
     void SpawnHit1();
     void SpawnHitDark();
     void SpawnHit(bool dark);
+    void SpawnPierce();
     void SpawnRuwach();
     void SpawnBlueFall();
     void SpawnWeatherCloud();
@@ -543,6 +544,7 @@ private:
     int m_type;
     int m_flag;
     int m_count;
+    int m_level;
     int m_stateCnt;
     int m_duration;
     int m_cEndLayer;

@@ -245,7 +245,7 @@ struct CRagEffect : CGameObject {
     CRenderObject* m_master = nullptr;
     bool m_ownsMaster = false, m_masterIsActor = false, m_isWorldEffect = false;
     u32 m_masterActorGid = 0;
-    int m_type = 0, m_stateCnt = 0, m_duration = 3, m_count = 0, m_level = 0;
+    int m_type = 0, m_stateCnt = 0, m_duration = 3, m_count = 0, m_level = 1;
     float m_latitude=0;
     float m_longitude = 0, m_param[4]{}, m_tlvertX=0, m_tlvertY=0, m_tlvertZ=0;
     vector3d m_strScreenOffset, m_strAnchorPosition, m_effectPos, m_cachedPos, m_deltaPos, m_deltaPos2, m_targetPos;
@@ -284,6 +284,7 @@ struct CRagEffect : CGameObject {
     void SpawnHit1();
     void SpawnHitDark();
     void SpawnHit(bool);
+    void SpawnPierce();
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -2196,6 +2197,45 @@ int main()
             effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,"HitDark releases every resource lock");
         }
         g_session.m_isMinEffect=false;
+    }
+    {
+        CRenderObject actor;actor.m_roty=45.9f;actor.m_pos={900,800,700};CRagEffect effect;effect.m_type=81;effect.m_master=&actor;
+        effect.m_duration=100;effect.m_effectPos={10,50,30};waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        rngValues.clear();rngCursor=0;g_session.m_isMinEffect=false;effect.SpawnPierce();auto* cylinder=effect.m_primList.front();
+        check(effect.m_level==1&&effect.m_primList.size()==1&&cylinder->UsesReferenceCylinder()&&rngDraws==draws,
+            "Pierce default level one emits only initial reference cylinder with no particle draws");
+        check(cylinder->m_duration==15&&cylinder->m_longitude==134&&cylinder->m_latitude==-90&&cylinder->m_deltaPos2.y==-10
+            &&cylinder->m_outerSize==11&&cylinder->m_innerSize==6&&cylinder->m_heightSize==2.5f&&cylinder->m_fadeOutCnt==8,
+            "Pierce initial cylinder preserves source orientation dimensions lifetime and fade");
+        check(cylinder->m_speed==0.69999999f&&cylinder->m_accel==static_cast<float>(0.69999999f/15.0*-0.5)&&cylinder->m_alpha==254
+            &&std::string(g_texMgr.lastPath)=="effect\\ring_yellow.tga","Pierce cylinder preserves source motion constructor alpha and exact yellow ring");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_stateCnt=20;effect.SpawnPierce();
+        check(effect.m_primList.empty()&&rngDraws==draws,"Pierce level-one gate excludes frame equal to twenty times level");
+        effect.m_level=3;effect.m_stateCnt=19;effect.SpawnPierce();check(effect.m_primList.empty(),"Pierce emits only every twentieth frame");
+        effect.m_stateCnt=20;g_session.m_isMinEffect=true;effect.SpawnPierce();auto it=effect.m_primList.begin();cylinder=*it++;auto* linear=*it++;
+        for(int i=0;i<3;++i)++it;auto* gravity=*it;
+        check(effect.m_primList.size()==9&&rngDraws==draws+52&&linear->m_type==PP_3DPARTICLE&&gravity->m_type==PP_3DPARTICLEGRAVITY,
+            "Pierce later burst emits cylinder four linear then four gravity sprites with fifty-two draws regardless of reduced effects");
+        check(cylinder->m_outerSize==13&&cylinder->m_innerSize==8&&cylinder->m_heightSize==2.5f&&cylinder->m_longitude==134,
+            "Pierce cylinder radius grows from source frame count and refreshes actor facing per burst");
+        check(linear->UsesReferenceParticle()&&gravity->UsesReferenceParticle()&&linear->m_numSegments==3&&gravity->m_numSegments==3,
+            "Pierce sprite groups use reference update render and three-slot initialization");
+        check(linear->m_sizeSpeed==static_cast<float>(-linear->m_size/linear->m_duration)
+            &&gravity->m_sizeSpeed==static_cast<float>(-gravity->m_size/gravity->m_duration)&&linear->m_sizeSpeed<0&&gravity->m_sizeSpeed<0,
+            "Pierce both sprite groups preserve source shrinking-size profile");
+        check(linear->m_tintColor==RGB(255,255,255)&&gravity->m_tintColor==RGB(255,255,255)&&linear->m_fadeOutCnt==0&&gravity->m_fadeOutCnt==0
+            &&linear->m_segments[2].alpha==254&&gravity->m_segments[2].alpha==254,"Pierce sprites retain white tint immediate fade and full initial trail alpha");
+        linear->m_alphaDelta=1;gravity->m_alphaDelta=1;const float oldSize=linear->m_size;linear->OnProcess();gravity->OnProcess();
+        check(linear->m_size<oldSize&&gravity->m_size<oldSize&&linear->m_alpha<254&&gravity->m_alpha<254,
+            "Pierce reference updates apply both source shrink and first-frame fade");
+        check(g_resMgr.requests.size()==16&&effect.m_effectPos.y==50&&waveCalls.empty(),"Pierce preserves exact sprite request count stored origin and no audio");
+        effect.ClearPrims();g_world.UpdateGameObjects();actor.m_roty=270.9f;effect.m_stateCnt=40;effect.SpawnPierce();
+        check(effect.m_primList.size()==9&&effect.m_primList.front()->m_outerSize==15&&effect.m_primList.front()->m_innerSize==10
+            &&effect.m_primList.front()->m_longitude==270,"Pierce later burst uses growing frame radii and newly truncated wrapped facing");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_stateCnt=60;const int beforeEnd=rngDraws;effect.SpawnPierce();
+        check(effect.m_primList.empty()&&rngDraws==beforeEnd,"Pierce level-three window excludes frame sixty");
+        effect.m_stateCnt=0;effect.m_level=0;effect.SpawnPierce();check(effect.m_primList.empty(),"Pierce zero level has no invented minimum burst");
+        check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,"Pierce cleanup balances all sprite/action locks");g_session.m_isMinEffect=false;
     }
     {
         CRagEffect effect;

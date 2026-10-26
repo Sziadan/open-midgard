@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A HitDark ids180/184 and shared hit profiles, after Hit1 checkpoint `98a86e8`. Both dark variants now preserve source tint and unconditional particle emission with original reference primitive paths.
+Current work: WP5A Pierce emitter and repeated shrinking hit bursts, after HitDark checkpoint `797e06e`. Original id81 now preserves source level/frame gate, growing cylinders, ordered sprite bursts and per-particle shrinking profiles.
 
-Next action: continue Pierce and remaining hit/particle emitters and unported primitive controls. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue remaining hit variants (including Hit2) and other unported emitters/primitive controls. Caller level routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Pierce emitter / repeated shrinking hit bursts — 2026-10-26
+
+- Ref/RagEffect.cpp:6808-6947 (0x5FDF90) -> SpawnPierce, original id 81, direct dispatcher/Init route and reference cylinder/linear/gravity bindings. Source emission condition is frame%20==0 and frame<20*level. Restored m_level with original constructor default 1 (Ref:9895); no unverified level-routing mechanism is added.
+- Each accepted burst recomputes truncated/wrapped facing from actor rotation while preserving stored effect world origin. Cylinder duration 15, latitude -90, X/Y matrix, offset(0,-10,0), speed 0.69999999 and original deceleration, outer frame*0.1+11 / inner frame*0.1+6, height 2.5, fade 8, constructor alpha/max 254 and exact ring_yellow texture 0x7193E8.
+- Frame 0 emits only cylinder. Later accepted frames emit four linear then four gravity sprites with 52 RNG draws, regardless of reduced-effects mode. Existing hit-group source profiles/resources/RNG order are shared; Pierce additionally assigns sizeSpeed=-(size/duration) to both groups. Original full three-slot initialization, immediate fade, tilted linear versus Y-only gravity motion and per-clip rendering are retained. Hit1/HitDark wrappers keep nonshrinking particles and their own reduced-effects rules.
+
+Validation: release build, six silent C++ suites / 792 checks (626 lifecycle/primitive, 108 rendering, 58 other), six Python tests, one-literal executable byte audit and whitespace check pass. Added 16 checks for default/higher/zero-level windows, exact boundaries/cadence, frame-dependent radii/facing, ordered later bursts/RNG, resource/origin/audio behavior, shrink/fade, trails and locks. Higher-level branch checks use the original level field directly; server/caller level propagation is not newly certified. No media/live acceptance. Approved OldRO SHA-256: `D491C8B3CF09DDDCAC21C116D8D5DB2BBE736B032E58F13E2A4446D15825CEEF`. Remaining hit variants/primitive controls, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## HitDark emitter / shared hit profiles — 2026-10-26
 
