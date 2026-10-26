@@ -9969,6 +9969,57 @@ void UpdateReferenceStin2(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:23232; canonical executable PrimTwilight at 0x63A070 (case 0x7B).
+void UpdateReferenceTwilight(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode->m_view;
+    EffectGi& first = prim->m_gi[0];
+    first.alphaT = static_cast<short>(360 - static_cast<int>(view->GetCameraLongitude()));
+    const short latitudeAlpha = static_cast<short>(450 - static_cast<int>(view->GetCameraLatitude()));
+    prim->m_gi[1].alphaT = static_cast<short>(latitudeAlpha >= 360 ? latitudeAlpha - 360 : latitudeAlpha);
+    prim->m_pos = prim->m_master->EffectPosition();
+
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        if (gi.process < 50) gi.alphaB = static_cast<short>(gi.alphaB + 5);
+        if (gi.process > gi.rotStart) gi.alphaB = static_cast<short>(gi.alphaB - 5);
+
+        for (int index = 0; index < 4; index += 2) {
+            float& lower = gi.height[static_cast<size_t>(index)];
+            float& upper = gi.height[static_cast<size_t>(index + 1)];
+            if (upper > lower) {
+                lower += 1.0f;
+                if (lower > 359.0f) lower = 359.0f;
+                if (lower > upper) {
+                    const int bound = static_cast<int>(lower);
+                    upper = bound > 0 ? static_cast<float>(rand() % bound) : 0.0f;
+                }
+            } else {
+                lower -= 1.0f;
+                if (lower < 0.0f) lower = 0.0f;
+                if (lower <= upper) {
+                    const int bound = static_cast<int>(lower);
+                    const int randomValue = bound > 0 ? rand() % bound : 0;
+                    upper = static_cast<float>(359 - randomValue);
+                }
+            }
+        }
+
+        const int xAngle = static_cast<int>(gi.height[0]);
+        const int zAngle = static_cast<int>(gi.height[2]);
+        gi.sparkX = static_cast<float>(static_cast<double>(g_sinTable[xAngle]) * 0.1 + static_cast<double>(gi.sparkX));
+        gi.sparkZ = static_cast<float>(static_cast<double>(g_sinTable[zAngle]) * 0.1 + static_cast<double>(gi.sparkZ));
+
+        gi.height[8] += 1.0f;
+        if (gi.height[8] >= 360.0f) gi.height[8] -= 360.0f;
+        gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + 1);
+        if (gi.fullDisplayAngle >= 360) gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle - 360);
+    }
+}
+
 // Ref/dhxj/RagEffect2.cpp:15246; canonical executable PrimTanji2 at 0x627F30 (case 0x61).
 void UpdateReferenceTanji2(CEffectPrim* prim)
 {
@@ -11224,6 +11275,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_STIN2) {
         UpdateReferenceStin2(this); // Source case 0x7A continues to the shared tick.
+        return true;
+    }
+    if (m_type == PP_TWILIGHT) {
+        UpdateReferenceTwilight(this); // Source case 0x7B ignores the true handler result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

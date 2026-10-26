@@ -239,6 +239,7 @@ void UpdateReferenceStin(CEffectPrim*);
 void UpdateReferenceSma(CEffectPrim*);
 void UpdateReferenceSma2(CEffectPrim*);
 void UpdateReferenceStin2(CEffectPrim*);
+void UpdateReferenceTwilight(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -380,6 +381,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SMA) { UpdateReferenceSma(this); return active; }
         if (m_type == PP_SMA2) { UpdateReferenceSma2(this); return active; }
         if (m_type == PP_STIN2) { UpdateReferenceStin2(this); return active; }
+        if (m_type == PP_TWILIGHT) { UpdateReferenceTwilight(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -859,6 +861,7 @@ __declspec(noinline) void RunStinLifecycleChecks(CEffectPrim& prim, int& checks,
 __declspec(noinline) void RunSmaLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSma2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunStin2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunTwilightLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2166,6 +2169,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     RunSmaLifecycleChecks(prim, checks, failures);
     RunSma2LifecycleChecks(prim, checks, failures);
     RunStin2LifecycleChecks(prim, checks, failures);
+    RunTwilightLifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2586,6 +2590,56 @@ __declspec(noinline) void RunStin2LifecycleChecks(CEffectPrim& prim, int& checks
 
     g_session.m_aid=oldAid; g_world.m_player=oldPlayer; g_world.lookupActor=oldLookupActor; g_world.lookupAid=oldLookupAid;
     g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunTwilightLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude; testView.longitude=20.5f;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_TWILIGHT; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={101,202,303}; prim.m_pos={1,2,3};
+    for(auto& gi:prim.m_gi) gi={};
+    prim.OnProcess();
+    check(prim.m_gi[0].alphaT==340&&prim.m_gi[1].alphaT==135
+        &&prim.m_pos.x==101&&prim.m_pos.y==202&&prim.m_pos.z==303,
+        "case 0x7B updates camera angles and copies the master position before checking active lanes");
+
+    for(auto& gi:prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=48; a.rotStart=40; a.alphaB=10;
+    a.height[0]=10.0f; a.height[1]=12.0f; a.height[2]=20.0f; a.height[3]=10.0f;
+    a.height[8]=359.0f; a.fullDisplayAngle=359; a.sparkX=1.0f; a.sparkZ=2.0f;
+    EffectGi& b=prim.m_gi[1]; b.life=1; b.process=48; b.rotStart=90; b.alphaB=5;
+    b.height[0]=0.0f; b.height[1]=20.0f; b.height[2]=5.0f; b.height[3]=1.0f;
+    EffectGi& c=prim.m_gi[2]; c.life=2; c.process=7; c.alphaB=77; c.height[0]=33.0f;
+    const int draws=rngDraws; prim.OnProcess();
+    check(a.process==49&&a.alphaB==10&&a.height[0]==11.0f&&a.height[1]==12.0f
+        &&a.height[2]==19.0f&&a.height[3]==10.0f
+        &&std::fabs(a.sparkX-(1.0f+static_cast<float>(static_cast<double>(g_sinTable[11])*0.1)))<0.000001f
+        &&std::fabs(a.sparkZ-(2.0f+static_cast<float>(static_cast<double>(g_sinTable[19])*0.1)))<0.000001f
+        &&a.height[8]==0.0f&&a.fullDisplayAngle==0
+        &&b.process==49&&b.alphaB==10&&b.height[0]==1.0f&&b.height[2]==4.0f
+        &&c.life==2&&c.process==7&&c.alphaB==77&&c.height[0]==33.0f&&rngDraws==draws,
+        "case 0x7B updates exact-life lanes independently, ramps/fades alpha, advances paired heights and sine motion, and wraps phase/display angle");
+
+    for(auto& gi:prim.m_gi) gi={};
+    a.life=1; a.process=0; a.rotStart=0; a.alphaB=4;
+    a.height[0]=11.5f; a.height[1]=12.0f; a.height[2]=3.0f; a.height[3]=3.0f;
+    rngValues={5,1}; rngCursor=0; const int drawsBeforeRandom=rngDraws;
+    prim.OnProcess();
+    check(a.process==1&&a.alphaB==4&&a.height[0]==12.5f&&a.height[1]==5.0f
+        &&a.height[2]==2.0f&&a.height[3]==358.0f&&rngDraws==drawsBeforeRandom+2,
+        "case 0x7B consumes growth/decrease endpoint random draws in pair order with each pair's source modulo");
+
+    a.process=0; a.alphaB=0; a.height[0]=0.0f; a.height[1]=0.0f;
+    a.height[2]=0.0f; a.height[3]=10.0f; rngValues.clear(); rngCursor=0;
+    const int drawsBeforeZero=rngDraws; prim.OnProcess();
+    check(a.height[0]==0.0f&&a.height[1]==359.0f&&rngDraws==drawsBeforeZero,
+        "case 0x7B random-zero bounds return zero without consuming RNG and preserve the lower height floor");
+    rngValues.clear(); rngCursor=0;
+    testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
