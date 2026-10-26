@@ -584,3 +584,5 @@ Latest completed function gate (2026-10-26): `RenderElectric2` / PP_ELECTRIC2 co
 Latest completed function gate (2026-10-26): `RenderWind` / PP_WIND completed its branch-level source comparison and checkpoint validation. Evidence is in `PARITY_LOG.md`; the next renderer must pass the source comparison before implementation work begins.
 
 Latest completed function gate (2026-10-26): `RenderGrandCross2` / PP_GRANDCROSS2 completed its branch-level source comparison and checkpoint validation. Evidence is in `PARITY_LOG.md`; the next function remains gated on a passed source-to-implementation comparison.
+
+Latest completed function gate (2026-10-26): `RenderLineLink` / PP_LINELINK passed its 16-assertion source/implementation branch comparison, numeric checks, release build and all six C++ suites. `PARITY_LOG.md` records the evidence and deployment hash. The next function remains gated on comparison before implementation.

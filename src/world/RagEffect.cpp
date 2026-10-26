@@ -6473,6 +6473,99 @@ void RenderGrandCross2(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void LineLinkInterpolatedEnd(const vector3d& current, const vector3d& previous, int process, vector3d* endpoint)
+{
+    if (process >= 15) {
+        *endpoint = previous;
+        return;
+    }
+    const float wave = g_sinTable[6 * process];
+    endpoint->x = static_cast<float>(static_cast<double>(previous.x - current.x) * wave + current.x);
+    endpoint->y = static_cast<float>(static_cast<double>(previous.y - current.y) * wave + current.y);
+    endpoint->z = static_cast<float>(static_cast<double>(previous.z - current.z) * wave + current.z);
+}
+
+int LineLinkHeading(float xDelta, float zDelta)
+{
+    const float input = xDelta * xDelta + zDelta * zDelta;
+    const double length = std::sqrt(input);
+    const float normalizedZ = static_cast<float>(zDelta / length);
+    const float normalizedX = static_cast<float>(xDelta / length);
+    int angle = 0;
+    while (normalizedX < g_cosTable[angle]) {
+        if (++angle > 180) {
+            angle = 180;
+            break;
+        }
+    }
+    return normalizedZ < 0.0f ? 360 - angle : angle;
+}
+
+void LineLinkRingPoint(const vector3d& center, float radius, int around, int side, vector3d* point)
+{
+    const int ringAngle = around / 4;
+    const int angle = ((side % 360) + 360) % 360;
+    const double vertical = static_cast<double>(radius) * g_sinTable[ringAngle];
+    const double horizontal = static_cast<double>(radius) * g_cosTable[ringAngle];
+    const float xOffset = static_cast<float>(horizontal * g_cosTable[angle]);
+    const float zOffset = static_cast<float>(horizontal * g_sinTable[angle]);
+    point->x = center.x + xOffset;
+    point->y = static_cast<float>(static_cast<double>(center.y) + vertical);
+    point->z = center.z + zOffset;
+}
+
+void RenderLineLink(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    const EffectGi& gi = prim.m_gi[0];
+    if (gi.life != 1 || gi.alphaB <= 0) {
+        return;
+    }
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    const vector3d current{ gi.vecTNowX, gi.vecTNowY, gi.vecTNowZ };
+    const vector3d previous{ gi.vecTPreX, gi.vecTPreY, gi.vecTPreZ };
+    vector3d endpoint{};
+    LineLinkInterpolatedEnd(current, previous, gi.process, &endpoint);
+    const int side = LineLinkHeading(current.x - previous.x, current.z - previous.z) + 90;
+    const bool modeTwo = gi.height[4] == 2.0f;
+    const bool modeThree = gi.height[4] == 3.0f;
+    for (int layer = 0; layer < 2; ++layer) {
+        const float radius = gi.maxHeight * (layer == 0 ? 1.0f : 2.0f);
+        vector3d previousCurrent{}, previousEnd{};
+        bool havePrevious = false;
+        for (int around = 0; around <= 1440; around += 144) {
+            vector3d currentPoint{}, endPoint{};
+            LineLinkRingPoint(current, radius, around, side, &currentPoint);
+            LineLinkRingPoint(endpoint, radius, around, side, &endPoint);
+            if (havePrevious) {
+                int alpha = gi.alphaB;
+                unsigned int tint = 0x00FF0000u;
+                if (layer == 0) {
+                    if (modeTwo) {
+                        tint = 0x00006496u;
+                    } else if (modeThree) {
+                        tint = 0x00FF59B6u;
+                    }
+                } else {
+                    alpha *= 2;
+                    if (modeTwo) {
+                        tint = 0x00FF3200u;
+                    } else if (modeThree) {
+                        tint = 0x00FF59B6u;
+                    } else {
+                        tint = 0x00FFFF00u;
+                    }
+                }
+                const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned char>(alpha)) << 24) | tint;
+                SubmitWorldTeiRect(previousCurrent, currentPoint, endPoint, previousEnd, viewMatrix, texture, color,
+                    0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+            }
+            previousCurrent = currentPoint;
+            previousEnd = endPoint;
+            havePrevious = true;
+        }
+    }
+}
+
 // Ref/RagEffectPrim.cpp:5679, 6377. The world owns primitive objects;
 // the parent's list only tracks attachments.
 // HighPriest.exe.c:451706-451754 (0x625C30). Counter belongs to OnProcess.
@@ -7619,6 +7712,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_GRANDCROSS2) {
         RenderGrandCross2(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_LINELINK) {
+        RenderLineLink(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {

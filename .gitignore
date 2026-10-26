@@ -38,6 +38,7 @@ tools/*
 !tools/skill_reference_index.py
 !tools/test_skill_reference_index.py
 !tools/audit_skill_parity.py
+!tools/check_line_link_parity.py
 !tools/tests/
 tools/tests/*
 !tools/tests/CMakeLists.txt

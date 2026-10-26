@@ -2,6 +2,8 @@
 
 Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`. New disagreements found while implementing:
 
+- Resolved 2026-10-26, `RenderLineLink`: the default outer ring is RGB `0xFFFF00` (source channel arguments red=-1, green=-1, blue=0), not blue. Its heading also uses source float-normalized deltas after an extended-precision square root; the generic electric heading helper did not preserve that sequence.
+
 - `CRagEffect::OnProcess` and `CRagEffect::OnProcess2` are both annotated in `Ref/RagEffect.cpp` as decompiled from `0x5E6E50`. The function body that actually dispatches effect ids 0–299 and 374–490 is `HighPriest.exe.c` `CRagEffect::OnProcess`. `OnProcess2` in `Ref/RagEffect.cpp:10606` is the 300–373 tier. The handler index follows that split.
 - `m_skillAttackedEffectIdTable` index 0 is assigned with `*table._First = 0` in `Ref/Session2.cpp`, not `_First[0]`. The generator treats a star-assign as index 0. The decompiler's `for` loop that writes `_First[i - 1] = -1` is the -1 fill, not an extra entry.
 - `LaunchSkillSpecialEffect` skills 540 and 469 are decompiled as storing `tActor->m_gid` into `pos.y` before `SendMsg(14)`. Every other `SendMsg(14)` in that function copies a world position, and message 14 writes `m_deltaPos`. The port copies `tActor->m_pos` for those two skills as well.

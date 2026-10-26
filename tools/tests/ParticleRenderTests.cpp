@@ -126,6 +126,7 @@ vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.
 #include "Electric2PathBody.inc"
 #include "WindSampleBody.inc"
 #include "GrandCross2CornersBody.inc"
+#include "LineLinkGeometryBody.inc"
 #include "ReferenceTriangleQueueBodies.inc"
 
 int main() {
@@ -205,6 +206,28 @@ int main() {
             && near(corners[3].x,-hx-dz)&&near(corners[3].z,-hz+dx),
             "Grand Cross2 four rotated corners match source quadrant formula");
     }
+    for(int around=0;around<=1440;around+=144) {
+        vector3d point{};const vector3d center{1.0f,2.0f,3.0f};const float radius=0.4f;const int side=135;
+        LineLinkRingPoint(center,radius,around,side,&point);
+        const int ringAngle=around/4;
+        const float horizontal=radius*GetCos(ringAngle);
+        check(near(point.x,center.x+horizontal*GetCos(side))
+            && near(point.y,center.y+radius*GetSin(ringAngle))
+            && near(point.z,center.z+horizontal*GetSin(side)),
+            "LineLink ring sample follows source 144-byte/36-degree table stepping");
+    }
+    for(int process:{0,7,14,15,24}) {
+        const vector3d current{2.0f,3.0f,4.0f},previous{8.0f,9.0f,10.0f};vector3d endpoint{};
+        LineLinkInterpolatedEnd(current,previous,process,&endpoint);
+        const double wave=process>=15?1.0:GetSin(6*process);
+        check(near(endpoint.x,process>=15?previous.x:static_cast<float>((previous.x-current.x)*wave+current.x))
+            && near(endpoint.y,process>=15?previous.y:static_cast<float>((previous.y-current.y)*wave+current.y))
+            && near(endpoint.z,process>=15?previous.z:static_cast<float>((previous.z-current.z)*wave+current.z)),
+            "LineLink endpoint follows source six-times-process interpolation and process-15 cutoff");
+    }
+    check(LineLinkHeading(1.0f,0.0f)==0 && LineLinkHeading(0.0f,1.0f)==90
+        && LineLinkHeading(-1.0f,0.0f)==180 && LineLinkHeading(0.0f,-1.0f)==270,
+        "LineLink heading search matches all four cardinal directions");
     const int inverseSizes[]={0,2,3,12,13,14,100};
     for(int size=0;size<=100;++size) {
         bool inverse=false;for(int value:inverseSizes)inverse|=size==value;
