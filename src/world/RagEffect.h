@@ -274,6 +274,7 @@ public:
     EFFECTPRIMID m_type;
     vector3d m_deltaPos;
     vector3d m_deltaPos2;
+    vector3d m_deltaPos3;
     vector3d m_deltaPosAccel;
     u32 m_renderFlag;
     int m_stateCnt;
@@ -333,6 +334,7 @@ public:
     bool m_AlphaShow = false;
     int m_chCnt = 0;
     int m_count = 0;
+    int m_playWaveType = 0;
     std::vector<float> m_chVal2;
     std::string m_spriteActName;
     std::string m_spriteSprName;
@@ -522,6 +524,7 @@ private:
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
+    void SpawnSteal();
     void SpawnRuwach();
     void SpawnBlueFall();
     void SpawnWeatherCloud();

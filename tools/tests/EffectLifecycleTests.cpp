@@ -162,6 +162,7 @@ bool UpdateReferenceCircleState(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateSandWindScreenTexture(CEffectPrim*);
+bool UpdateReferenceGravityParticle(CEffectPrim*);
 bool UpdateWarpZoneOrbit(CEffectPrim*);
 struct CEffectPrim : CGameObject {
     Probe deaths{ primitiveDeaths };
@@ -175,7 +176,7 @@ struct CEffectPrim : CGameObject {
     float m_outerSpeed=0,m_outerAccel=0,m_heightSpeed=0,m_heightAccel=0;
     int m_totalTexture=1;
     float m_size = 1, m_heightSize = 0, m_longitude = 0, m_latitude = 0, m_speed = 0, m_accel = 0;
-    vector3d m_deltaPos, m_deltaPos2, m_deltaPosAccel, m_pos, m_orgPos;
+    vector3d m_deltaPos, m_deltaPos2, m_deltaPos3, m_deltaPosAccel, m_pos, m_orgPos;
     float m_roty=0;
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 0, m_minAlpha = 0;
     bool m_isDisappear = false;
@@ -196,7 +197,7 @@ struct CEffectPrim : CGameObject {
     std::vector<CTexture*> m_texture;
     std::vector<float> m_chPoint,m_chVal1;
     bool m_chSpeed=false,m_AlphaShow=false;
-    int m_chCnt=0,m_count=0;
+    int m_chCnt=0,m_count=0,m_playWaveType=0;
     std::vector<float> m_chVal2;
     bool active = true;
     ~CEffectPrim() override;
@@ -216,6 +217,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
+        if (m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle() && !UpdateReferenceGravityParticle(this)) return false;
         if (UsesReferenceScreenTexture() && !UpdateSandWindScreenTexture(this)) return false;
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
         if (UsesReferenceCylinder() && !UpdateReferenceCylinderState(this)) return false;
@@ -276,6 +278,7 @@ struct CRagEffect : CGameObject {
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
+    void SpawnSteal();
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -2036,6 +2039,51 @@ int main()
         check(effect.m_primList.front()->m_duration==-49 && effect.m_primList.front()->m_fadeOutCnt==-33,
             "SandWind preserves negative random lifetime and integer division without invented clamp");
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto* oldAttr=g_world.m_attr;SilentAttr attr;attr.height=-1000;g_world.m_attr=&attr;
+        CRagEffect effect;effect.m_type=18;effect.m_master=&actor;effect.m_duration=60;effect.m_effectPos={10,50,30};
+        waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;rngValues={90,50,3,49,89,99};rngCursor=0;effect.SpawnSteal();
+        auto it=effect.m_primList.begin();auto* prim=*it++;auto* second=*it;
+        check(effect.m_primList.size()==10 && rngDraws==draws+60,"Steal emits ten gravity sprites with six RNG draws each");
+        check(waveCalls.size()==1 && waveCalls[0].name=="effect\\EF_Steal.wav" && waveCalls[0].x==8 && waveCalls[0].y==0
+            && waveCalls[0].z==26 && waveCalls[0].frameRng==draws,"Steal plays stored-origin horizontal wave before all emission draws");
+        check(effect.m_effectPos.x==10 && prim->UsesReferenceParticle() && prim->m_type==PP_3DPARTICLEGRAVITY && prim->m_duration==60,
+            "Steal preserves parent origin and binds original gravity primitive to reference update/rendering");
+        check(prim->m_longitude==90 && prim->m_latitude==0 && std::fabs(prim->m_deltaPos3.x-7)<0.000001f && prim->m_deltaPos2.y==-10,
+            "Steal preserves longitude latitude radius and stored launch-offset profile");
+        check(second->m_deltaPos3.y!=0 && second->m_matrix.m[2][1]==0,"Steal keeps tilted initial offset but replaces motion matrix with Y-only rotation");
+        check(prim->m_speed==static_cast<float>(99*0.0099999998) && prim->m_accel==static_cast<float>(prim->m_speed/60.0*-0.5)
+            && prim->m_gravSpeed==static_cast<float>(149*-0.0099999998) && prim->m_gravAccel==static_cast<float>(prim->m_gravSpeed/60.0*-2.0),
+            "Steal preserves source speed deceleration vertical gravity and acceleration arithmetic");
+        check(prim->m_size==static_cast<float>(199*0.0099999998) && prim->m_sizeSpeed==static_cast<float>(-prim->m_size/60.0)
+            && prim->m_fadeOutCnt==40 && prim->m_alpha==254 && prim->m_maxAlpha==254 && prim->m_animSpeed==4 && prim->m_repeatAnim
+            && prim->m_numSegments==1 && prim->m_playWaveType==0,"Steal retains shrinking size fade and original constructor defaults");
+        check(g_resMgr.requests.size()==20 && g_resMgr.requests[0]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle7.spr"
+            && g_resMgr.requests[1]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle7.act","Steal loads exact particle-seven sprite/action in source order");
+        const float initialSize=prim->m_size;const float initialGrav=prim->m_gravSpeed;prim->m_alphaDelta=1;prim->OnProcess();
+        check(prim->m_stateCnt==1 && prim->m_curMotion==1 && prim->m_pos.x>17 && prim->m_pos.y<40 && attr.calls==0,
+            "gravity first frame integrates stored origin horizontal velocity and independent ascending gravity before animation");
+        check(prim->m_gravSpeed==initialGrav+prim->m_gravAccel && prim->m_size==initialSize+prim->m_sizeSpeed && prim->m_segments[0].argb==0xFEFFFFFF,
+            "gravity advances acceleration size and packed reference segment state");
+        prim->m_speed=-0.1f;prim->m_accel=-0.2f;prim->m_gravSpeed=0;prim->m_gravAccel=0;const vector3d stopped=prim->m_deltaPos;prim->OnProcess();
+        check(prim->m_speed==0 && prim->m_deltaPos.x==stopped.x && prim->m_deltaPos.z==stopped.z && attr.calls==0,
+            "gravity clamps only horizontal speed to zero and skips terrain at zero vertical velocity");
+        prim->m_gravSpeed=1;prim->OnProcess();
+        check(attr.calls==1 && prim->m_gravSpeed==static_cast<float>(-0.66666669) && waveCalls.size()==1 && rngDraws==draws+60,
+            "descending gravity bounces with source factor without RNG or sound when playWaveType is zero");
+        prim->m_gravSpeed=1;attr.height=prim->m_pos.y+1;prim->OnProcess();
+        check(attr.calls==2 && prim->m_gravSpeed==1,"gravity ground equality does not satisfy strict bounce comparison");
+        attr.height=-1000;prim->m_playWaveType=1;rngValues={2};rngCursor=0;prim->m_gravSpeed=1;prim->OnProcess();
+        check(waveCalls.size()==2 && waveCalls.back().name=="effect\\EF_Coin3.wav" && waveCalls.back().x==prim->m_pos.x-2
+            && waveCalls.back().y==0 && waveCalls.back().z==prim->m_pos.z-4 && rngCursor==1,
+            "gravity coin-wave branch consumes one variant draw and uses horizontal particle-listener delta");
+        prim->m_stateCnt=40;prim->m_alpha=254;prim->m_playWaveType=0;prim->m_gravSpeed=0;prim->OnProcess();
+        check(std::fabs(prim->m_alphaSpeed+254.0f/20)<0.000001f && prim->m_alpha<254,"gravity source fade follows current alpha and segment processing order");
+        effect.m_stateCnt=1;effect.SpawnSteal();check(effect.m_primList.size()==10 && waveCalls.size()==2,"Steal emits only on parent frame zero");
+        effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"Steal cleanup balances all ten sprite/action locks");
+        g_world.m_player=oldPlayer;g_world.m_attr=oldAttr;rngValues.clear();rngCursor=0;
     }
     {
         CRagEffect effect;

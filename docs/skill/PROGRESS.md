@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A SandWind emitter and reachable reference screen-texture update/rendering, after FireFly checkpoint `4bf1a70`. Normal id46 now preserves original projection, RNG, screen drift, steering and two-triangle submission.
+Current work: WP5A Steal emitter and reference gravity-particle update/render binding, after SandWind checkpoint `adfbb0e`. Original id18 now preserves source ten-particle burst, RNG, gravity/bounce and optional primitive audio.
 
-Next action: continue remaining active emitters and unported particle/texture controls, including remaining 2D profiles. Map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: migrate the distinct Coin emitter and other remaining gravity/particle callers. Other active emitters/generic controls, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Steal emitter / gravity-particle path — 2026-10-26
+
+- Ref/RagEffect.cpp:8461-8525 (0x5F5F40) -> SpawnSteal, original id 18, direct dispatcher/Init route. Zero frame plays exact stored-origin horizontal Steal wave, then emits ten PP_3DPARTICLEGRAVITY sprites. Six RNG draws each in longitude/latitude/radius/speed/vertical gravity/size order. No live actor-position copy.
+- Preserved Y/X launch matrix, original rotated deltaPos3 and deltaPos2 with y-10, then replacement Y-only motion matrix. Duration from parent; source double arithmetic for horizontal speed/deceleration, vertical speed/acceleration, size/shrink and duration-minus-third fade. Constructor alpha/max 254, divisor 4/repeat/one segment and playWaveType 0. Exact particle7 sprite/action and lock order; per-clip reference rendering bound to id 18 gravity particles.
+- Ref/RagEffectPrim.cpp:602-671 (0x642AB0) -> UpdateReferenceGravityParticle. Original horizontal acceleration and zero lower speed clamp, independent vertical gravity, stored parent+offset, size integration, descending-only terrain test and strict groundHeight<positionY bounce with factor-0.66666669. Horizontal integration keeps source extended-precision speed before field rounding. Alpha/segment/AnimMotion run after contact processing.
+- Optional source playWaveType 1 branch preserved: one RNG draw chooses EF_Coin%d wave and plays horizontal particle/listener delta after bounce. Steal retains type 0 and therefore adds no bounce RNG/audio. This does not port the distinct Coin emitter.
+
+Validation: release build, six silent C++ suites / 724 checks (558 lifecycle/primitive, 108 rendering, 58 other), six Python tests, four-literal executable byte audit and whitespace check pass. Added 17 checks for ten-particle/60-draw emission, initial/motion matrices and offsets, profiles, resource order, integration/clamp, ascending/descending/equality/bounce, optional audio, fade and balanced locks. Wave 0x71B418, sprite/action 0x71B400/0x71B3E8 and coin-format 0x71D44C match executable bytes. No media/live acceptance. Approved OldRO SHA-256: `EB409D4FC5642ECE48ABA2FE154274DA8AD6ACA21695215DBD9AEE4C18897D01`. Other gravity callers, active emitters/generic controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## SandWind emitter / reachable screen-texture path — 2026-10-26
 

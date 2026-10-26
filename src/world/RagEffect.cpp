@@ -2675,6 +2675,7 @@ CEffectPrim::CEffectPrim()
     m_param.fill(0.0f);
     m_deltaPos = vector3d{};
     m_deltaPos2 = vector3d{};
+    m_deltaPos3 = vector3d{};
     m_deltaPosAccel = vector3d{};
     m_orgPos = vector3d{};
     m_pos = vector3d{};
@@ -6196,6 +6197,42 @@ void ProcessReferenceParticleAlpha(CEffectPrim* prim)
     prim->m_argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)), prim->m_tintColor);
 }
 
+// Ref/RagEffectPrim.cpp:602-671 (0x642AB0), original gravity particle.
+bool UpdateReferenceGravityParticle(CEffectPrim* prim)
+{
+    prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
+    const double integratedSpeed = static_cast<double>(prim->m_accel) + prim->m_speed;
+    const double speed = integratedSpeed < 0.0 ? 0.0 : integratedSpeed;
+    prim->m_speed = static_cast<float>(speed);
+    prim->m_gravSpeed += prim->m_gravAccel;
+    prim->m_speed3d = {
+        static_cast<float>(speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+    };
+    prim->m_deltaPos.x += prim->m_speed3d.x;
+    prim->m_deltaPos.y += prim->m_gravSpeed;
+    prim->m_deltaPos.z += prim->m_speed3d.z;
+    prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
+    prim->m_size += prim->m_sizeSpeed;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (prim->m_gravSpeed > 0.0f && mode && mode->m_world && mode->m_world->m_attr
+        && mode->m_world->m_attr->GetHeight(prim->m_pos.x, prim->m_pos.z) < prim->m_pos.y) {
+        prim->m_gravSpeed = static_cast<float>(prim->m_gravSpeed * -0.66666669);
+        if (prim->m_playWaveType == 1) {
+            char waveName[56];
+            std::snprintf(waveName, sizeof(waveName), "effect\\EF_Coin%d.wav", rand() % 3 + 1); // 0x71D44C
+            if (mode->m_world->m_player) {
+                const vector3d& listener = mode->m_world->m_player->m_pos;
+                PlayWave(waveName, prim->m_pos.x - listener.x, 0.0f, prim->m_pos.z - listener.z, 250, 40, 1.0f);
+            }
+        }
+    }
+    ProcessReferenceParticleAlpha(prim);
+    ShiftCircleSegments(prim);
+    return AnimateReferenceParticle(prim);
+}
+
 // Ref/RagEffectPrim.cpp:77-224 (0x641760), reachable SandWind profile:
 // pattern 8, fixed dimensions/roll/color, no change point or acceleration.
 bool UpdateSandWindScreenTexture(CEffectPrim* prim)
@@ -6593,6 +6630,7 @@ bool CEffectPrim::UsesReferenceScreenTexture() const
 bool CEffectPrim::UsesReferenceParticle() const
 {
     return m_type == PP_SUPERANGEL
+        || (m_type == PP_3DPARTICLEGRAVITY && m_master && m_master->GetEffectType() == 18)
         || (m_type == PP_3DPARTICLEORBIT && m_master
             && (m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
@@ -6848,6 +6886,9 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_3DPARTICLE) {
         return UpdateFreeParticlePrimitive(this, false, false);
+    }
+    if (m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle()) {
+        return UpdateReferenceGravityParticle(this);
     }
     if (m_type == PP_3DPARTICLEGRAVITY) {
         return UpdateFreeParticlePrimitive(this, true, false);
@@ -7865,8 +7906,8 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 35: case 36: case 45: case 46: case 61:
-        // ProcessEffectFrame dispatches ReadyPortal/Portal/FireFly/SandWind/WarpZone directly.
+    case 18: case 35: case 36: case 45: case 46: case 61:
+        // ProcessEffectFrame dispatches Steal/ReadyPortal/Portal/FireFly/SandWind/WarpZone directly.
         m_handler = Handler::None;
         break;
     case 312: case 313: case 325: case 331: case 332:
@@ -9272,6 +9313,48 @@ void CRagEffect::SpawnSandWind()
     prim->m_totalTexture = 1; prim->m_animSpeed = 4; prim->m_repeatAnim = true;
     prim->m_texture.push_back(g_texMgr.GetTexture("effect\\sand1.bmp", false));
     prim->m_gi[0].life = 0;
+}
+
+// Ref/RagEffect.cpp:8461-8525 (0x5F5F40), original effect 18.
+void CRagEffect::SpawnSteal()
+{
+    if (m_stateCnt != 0) return;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_Steal.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f); // 0x71B418
+    }
+    for (int i = 0; i < 10; ++i) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEGRAVITY, vector3d{});
+        prim->m_longitude = static_cast<float>(rand() % 360);
+        prim->m_latitude = static_cast<float>(rand() % 100 - 50);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+        const double radius = rand() % 4 + 4;
+        prim->m_deltaPos3 = {
+            static_cast<float>(radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+            static_cast<float>(radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+            static_cast<float>(radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+        };
+        prim->m_deltaPos2 = prim->m_deltaPos3;
+        prim->m_deltaPos2.y = static_cast<float>(prim->m_deltaPos3.y - 10.0);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_duration = m_duration;
+        prim->m_speed = static_cast<float>(static_cast<double>(rand() % 50 + 50) * 0.0099999998);
+        prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -0.5);
+        prim->m_gravSpeed = static_cast<float>(static_cast<double>(rand() % 90 + 60) * -0.0099999998);
+        prim->m_gravAccel = static_cast<float>(prim->m_gravSpeed / static_cast<double>(prim->m_duration) * -2.0);
+        prim->m_size = static_cast<float>(static_cast<double>(rand() % 100 + 100) * 0.0099999998);
+        prim->m_sizeSpeed = static_cast<float>(-(prim->m_size / static_cast<double>(prim->m_duration)));
+        prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_animSpeed = 4; prim->m_repeatAnim = true; prim->m_numSegments = 1;
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle7.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle7.act"); // 0x71B400 / 0x71B3E8
+        ShiftCircleSegments(prim);
+    }
 }
 
 // Ref/RagEffect.cpp:7202-7261 (0x5F9170). The angle truncates before
@@ -12566,6 +12649,10 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 18) {
+        SpawnSteal();
+        return true;
+    }
     if (m_type == 46) {
         SpawnSandWind();
         return true;
