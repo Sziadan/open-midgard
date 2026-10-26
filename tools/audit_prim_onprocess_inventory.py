@@ -72,7 +72,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 61 and {0x04, 0x0E, 0x11, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 62 and {0x01, 0x04, 0x0E, 0x11, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -164,6 +164,39 @@ check("case 0x16 source-to-implementation branch predicates and effects are pair
       all(compact(source_branch) in compact(source_no_master_texture)
           and compact(current_branch) in compact(current_no_master_texture)
           for source_branch, current_branch in case16_branch_pairs))
+source_orbit = body(REF, "bool __thiscall CEffectPrim::Prim2DTextureOrbit(CEffectPrim *this)\n{")
+exe_orbit = body(EXE, "bool __thiscall CEffectPrim::Prim2DTextureOrbit(CEffectPrim *this)\n{")
+current_orbit = body(CURRENT, "bool UpdateReference2DTextureOrbit(CEffectPrim* prim)")
+check("source Prim2DTextureOrbit Ref/EXE bodies match and case 0x01 routes to its dedicated helper",
+      compact(source_orbit) == compact(exe_orbit)
+      and re.search(r"case 1:\s*result = CEffectPrim::Prim2DTextureOrbit\(this\);", source_dispatch) is not None
+      and "if (m_type == PP_2DTEXTUREORBIT) {\n        return UpdateReference2DTextureOrbit(this);" in current_dispatch)
+orbit_branch_pairs = [
+    ("this->m_orgPos.x = m_master->m_tlvertX + this->m_deltaPos2.x;", "prim->m_orgPos.x = anchor.x + prim->m_deltaPos2.x;"),
+    ("this->m_orgPos.y = m_master->m_tlvertY + this->m_deltaPos2.y;", "prim->m_orgPos.y = anchor.y + prim->m_deltaPos2.y;"),
+    ("v3 = this->m_radiusAccel + this->m_radiusSpeed;", "prim->m_radiusSpeed += prim->m_radiusAccel;"),
+    ("v11 = this->m_longAccel + this->m_longSpeed;", "prim->m_longSpeed += prim->m_longAccel;"),
+    ("v9 = this->m_widthAccel + this->m_widthSpeed;", "prim->m_widthSpeed += prim->m_widthAccel;"),
+    ("v8 = this->m_heightAccel + this->m_heightSpeed;", "prim->m_heightSpeed += prim->m_heightAccel;"),
+    ("v10 = this->m_rollAccel + this->m_rollSpeed;", "prim->m_rollSpeed += prim->m_rollAccel;"),
+    ("this->m_roll = v10 + this->m_roll;", "prim->m_roll += prim->m_rollSpeed;"),
+    ("this->m_pos.x = GetSin((__int64)v4) * this->m_radius + this->m_orgPos.x;",
+     "prim->m_pos.x = GetSin(static_cast<int>(prim->m_longitude)) * prim->m_radius + prim->m_orgPos.x;"),
+    ("this->m_pos.y = this->m_orgPos.y - GetCos((__int64)this->m_longitude) * this->m_radius;",
+     "prim->m_pos.y = prim->m_orgPos.y - GetCos(static_cast<int>(prim->m_longitude)) * prim->m_radius;"),
+    ("if ( this->m_stateCnt % this->m_animSpeed )\n    return 1;", "if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;"),
+    ("this->m_curMotion = v6 % this->m_totalTexture;", "prim->m_curMotion = motion % prim->m_totalTexture;"),
+    ("return v6 != this->m_totalTexture;", "return motion != prim->m_totalTexture;"),
+]
+check("case 0x01 source-to-implementation anchor, integration, orbit and animation branches are paired",
+      all(compact(source_branch) in compact(source_orbit)
+          and compact(current_branch) in compact(current_orbit)
+          for source_branch, current_branch in orbit_branch_pairs)
+      and current_orbit.index("prim->m_radiusSpeed += prim->m_radiusAccel;")
+      < current_orbit.index("prim->m_radius += prim->m_radiusSpeed;")
+      < current_orbit.index("prim->m_pos.x =")
+      < current_orbit.index("ProcessReferenceParticleAlpha(prim);")
+      < current_orbit.index("const int motion = ++prim->m_curMotion;"))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)

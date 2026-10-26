@@ -166,6 +166,7 @@ void UpdateSuperAngelPrimitive(CEffectPrim*);
 bool UpdateLinearReferenceParticle(CEffectPrim*);
 bool UpdateReferenceNoMasterParticle(CEffectPrim*);
 bool UpdateReferenceNoMasterTexture(CEffectPrim*);
+bool UpdateReference2DTextureOrbit(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
 void UpdateReferenceQuadHorn(CEffectPrim*);
 void UpdateReferenceFlash(CEffectPrim*);
@@ -249,6 +250,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DSPHERE) { UpdateReferenceSphere(this); return active; }
         if (m_type == PP_3DPARTICLE_NOMASTER) return UpdateReferenceNoMasterParticle(this);
         if (m_type == PP_3DTEXTURE_NOMASTER) return UpdateReferenceNoMasterTexture(this);
+        if (m_type == PP_2DTEXTUREORBIT) return UpdateReference2DTextureOrbit(this);
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1088,6 +1090,36 @@ int main()
         check(texturePrim.OnProcess() == 0 && texturePrim.m_red == 255 && texturePrim.m_green == 0
             && texturePrim.m_blue == 0 && texturePrim.m_stateCnt == 0 && texturePrim.m_curMotion == 1,
             "OnProcess case 0x16 preserves source asymmetric RGB underflow clamps and returns before shared tick on nonrepeat completion");
+        textureMaster.m_tlvertX = 100; textureMaster.m_tlvertY = 200; textureMaster.m_tlvertZ = 300;
+        textureMaster.m_duration = 200; textureMaster.m_stateCnt = 0;
+        texturePrim.m_type = PP_2DTEXTUREORBIT; texturePrim.m_stateCnt = 0; texturePrim.m_duration = 100;
+        texturePrim.m_fadeOutCnt = -1; texturePrim.m_pattern = 0; texturePrim.m_isDisappear = false;
+        texturePrim.m_orgPos = {0,0,99}; texturePrim.m_pos = {0,0,77}; texturePrim.m_deltaPos2 = {3,-4,8};
+        texturePrim.m_radius = 10; texturePrim.m_radiusSpeed = 2; texturePrim.m_radiusAccel = 1;
+        texturePrim.m_longitude = 0; texturePrim.m_longSpeed = 30; texturePrim.m_longAccel = 5;
+        texturePrim.m_widthSize = 3; texturePrim.m_widthSpeed = 2; texturePrim.m_widthAccel = 1;
+        texturePrim.m_heightSize = 4; texturePrim.m_heightSpeed = 4; texturePrim.m_heightAccel = 2;
+        texturePrim.m_roll = 10; texturePrim.m_rollSpeed = 5; texturePrim.m_rollAccel = -1;
+        texturePrim.m_alpha = 20; texturePrim.m_alphaSpeed = 0; texturePrim.m_animSpeed = 1;
+        texturePrim.m_totalTexture = 2; texturePrim.m_curMotion = 1; texturePrim.m_repeatAnim = true;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_orgPos.x == 103 && texturePrim.m_orgPos.y == 196
+            && texturePrim.m_orgPos.z == 99 && texturePrim.m_pos.z == 77
+            && texturePrim.m_radiusSpeed == 3 && texturePrim.m_radius == 13
+            && texturePrim.m_longSpeed == 35 && texturePrim.m_longitude == 35
+            && texturePrim.m_widthSpeed == 3 && texturePrim.m_widthSize == 6
+            && texturePrim.m_heightSpeed == 6 && texturePrim.m_heightSize == 10
+            && texturePrim.m_rollSpeed == 4 && texturePrim.m_roll == 14
+            && std::fabs(texturePrim.m_pos.x - (103 + GetSin(35) * 13)) < 0.0001f
+            && std::fabs(texturePrim.m_pos.y - (196 - GetCos(35) * 13)) < 0.0001f
+            && texturePrim.m_curMotion == 0 && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x01 integrates orbit channels and anchors XY to parent's projected coordinates before repeating animation");
+        texturePrim.m_stateCnt = 1; texturePrim.m_animSpeed = 1; texturePrim.m_curMotion = 1;
+        texturePrim.m_repeatAnim = false; texturePrim.m_radiusSpeed = 0; texturePrim.m_radiusAccel = 0;
+        texturePrim.m_longSpeed = 0; texturePrim.m_longAccel = 0; texturePrim.m_widthSpeed = 0;
+        texturePrim.m_widthAccel = 0; texturePrim.m_heightSpeed = 0; texturePrim.m_heightAccel = 0;
+        texturePrim.m_rollSpeed = 0; texturePrim.m_rollAccel = 0;
+        check(texturePrim.OnProcess() == 0 && texturePrim.m_curMotion == 2 && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x01 nonrepeat texture completion returns before the shared frame tick");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

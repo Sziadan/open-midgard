@@ -8242,6 +8242,37 @@ bool UpdateReferenceNoMasterTexture(CEffectPrim* prim)
     return motion != prim->m_totalTexture;
 }
 
+// Ref/RagEffectPrim.cpp:233-281. This orbit is anchored to the parent's
+// projected screen coordinates and has its own texture-motion completion.
+bool UpdateReference2DTextureOrbit(CEffectPrim* prim)
+{
+    const vector3d anchor = prim->m_master->ScreenPosition();
+    prim->m_orgPos.x = anchor.x + prim->m_deltaPos2.x;
+    prim->m_orgPos.y = anchor.y + prim->m_deltaPos2.y;
+
+    prim->m_radiusSpeed += prim->m_radiusAccel;
+    prim->m_longSpeed += prim->m_longAccel;
+    prim->m_widthSpeed += prim->m_widthAccel;
+    prim->m_heightSpeed += prim->m_heightAccel;
+    prim->m_rollSpeed += prim->m_rollAccel;
+    prim->m_radius += prim->m_radiusSpeed;
+    prim->m_longitude += prim->m_longSpeed;
+    prim->m_roll += prim->m_rollSpeed;
+    prim->m_widthSize += prim->m_widthSpeed;
+    prim->m_heightSize += prim->m_heightSpeed;
+    prim->m_pos.x = GetSin(static_cast<int>(prim->m_longitude)) * prim->m_radius + prim->m_orgPos.x;
+    prim->m_pos.y = prim->m_orgPos.y - GetCos(static_cast<int>(prim->m_longitude)) * prim->m_radius;
+
+    ProcessReferenceParticleAlpha(prim);
+    if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;
+    const int motion = ++prim->m_curMotion;
+    if (prim->m_repeatAnim) {
+        prim->m_curMotion = motion % prim->m_totalTexture;
+        return true;
+    }
+    return motion != prim->m_totalTexture;
+}
+
 // Ref/GameActor.cpp:10748-10928. Each sprite retains its own texture and
 // palette; clip color/zoom/rotation are never baked into a motion canvas.
 struct ParticleSprite {
@@ -8548,6 +8579,9 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_3DTEXTURE_NOMASTER) {
         return UpdateReferenceNoMasterTexture(this);
+    }
+    if (m_type == PP_2DTEXTUREORBIT) {
+        return UpdateReference2DTextureOrbit(this);
     }
     if (m_type == PP_GROUNDSAMPLE) {
         UpdateGroundSample(this);
