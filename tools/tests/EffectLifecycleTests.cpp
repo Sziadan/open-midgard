@@ -222,6 +222,7 @@ void UpdateReferenceBash3D(CEffectPrim*);
 void UpdateReferenceRectUp2(CEffectPrim*);
 void UpdateReferenceSphereWind2(CEffectPrim*);
 void UpdateReferenceSoulBreaker2(CEffectPrim*);
+void UpdateReferenceRainbow(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -345,6 +346,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_RECT_UP2) { UpdateReferenceRectUp2(this); return active; }
         if (m_type == PP_SPHEREWIND2) { UpdateReferenceSphereWind2(this); return active; }
         if (m_type == PP_SOULBREAKER2) { UpdateReferenceSoulBreaker2(this); return active; }
+        if (m_type == PP_RAINBOW) { UpdateReferenceRainbow(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -794,6 +796,7 @@ __declspec(noinline) void RunBash3DLifecycleChecks(CEffectPrim& prim, int& check
 __declspec(noinline) void RunRectUp2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSphereWind2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSoulBreaker2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunRainbowLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1740,6 +1743,41 @@ __declspec(noinline) void RunSoulBreaker2LifecycleChecks(CEffectPrim& prim, int&
     check(a.process==12 && a.alphaB==0 && a.life==0 && std::fabs(a.height[1]-10.4f)<0.0001f
         && std::fabs(a.sparkX-10.4f)<0.0001f,
         "case 0x5C clears life only after alpha becomes negative and moves on that death tick");
+    g_isSkipFrame=oldSkipFrame;
+    RunRainbowLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunRainbowLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_RAINBOW; prim.m_stateCnt=0; prim.m_duration=1000; prim.m_pos={9,8,7};
+    prim.m_master->m_effectPos={100,200,300};
+    for (auto& gi : prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=179; a.alphaB=249; a.rotStart=359; a.riseAngle=360;
+    EffectGi& b=prim.m_gi[1]; b.life=127; b.process=180; b.alphaB=0; b.rotStart=10; b.riseAngle=359;
+    EffectGi& c=prim.m_gi[2]; c.life=1; c.process=359; c.alphaB=2; c.rotStart=-2; c.riseAngle=721;
+    EffectGi& d=prim.m_gi[3]; d.life=128; d.process=179; d.alphaB=10; d.rotStart=20; d.riseAngle=400;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==9 && prim.m_pos.y==8 && prim.m_pos.z==7
+        && a.process==180 && a.alphaB==250 && a.rotStart==360 && a.riseAngle==0
+        && b.process==181 && b.alphaB==0 && b.rotStart==11 && b.riseAngle==359
+        && c.process==360 && c.alphaB==1 && c.rotStart==-1 && c.riseAngle==361
+        && d.process==179 && d.alphaB==10 && d.rotStart==20 && d.riseAngle==400
+        && rngDraws==draws,
+        "case 0x5D uses signed-positive life, exact 180/360 phase edges, alpha clamp and one rise-angle wrap without origin copy or RNG");
+
+    a.process=360; a.alphaB=300; a.rotStart=5; a.riseAngle=720;
+    prim.OnProcess();
+    check(a.process==361 && a.alphaB==250 && a.rotStart==5 && a.riseAngle==360,
+        "case 0x5D above process 360 leaves rotation unchanged but still clamps alpha and subtracts rise angle only once");
+    a.process=-2; a.alphaB=4; a.rotStart=12; a.riseAngle=0;
+    prim.OnProcess();
+    check(a.process==-1 && a.alphaB==5 && a.rotStart==13,
+        "case 0x5D has no positive-process guard and mutates alpha/rotation when signed-positive life remains at negative process");
     g_isSkipFrame=oldSkipFrame;
 }
 

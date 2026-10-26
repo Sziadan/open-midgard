@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, 0x25 through 0x28, 0x2A-0x2E, 0x30, 0x33, 0x34, 0x3D, 0x43, 0x44, 0x45, 0x46, and 0x4A, 0x50, 0x51, 0x54, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, and 0x5C now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
+Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, 0x25 through 0x28, 0x2A-0x2E, 0x30, 0x33, 0x34, 0x3D, 0x43, 0x44, 0x45, 0x46, and 0x4A, 0x50, 0x51, 0x54, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, and 0x5D now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
 
-Next action: source-compare case 0x5D against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
+Next action: source-compare case 0x5E against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
 
-Latest checkpoint (2026-10-26): `PP_SOULBREAKER2` case 0x5C is implemented and branch-compared against readable Ref/dhxj, decompiled Ref, and canonical EXE. Inventory reports 23 source-only IDs; lifecycle suite passes 1,714 checks and all six registered CTest suites pass. x64 Release build passes. Approved OldRO deployment SHA-256 is `B47FA9E179888947CB8AF1B3654DA037157A921398D036B1A235B52A1247019F`; commit is pending. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `PP_RAINBOW` case 0x5D is implemented and branch-compared against readable Ref/dhxj, decompiled Ref, and canonical EXE. Inventory reports 22 source-only IDs; lifecycle suite passes 1,717 checks and all six registered CTest suites pass. x64 Release build passes. Approved OldRO deployment SHA-256 is `AB39AC5FC53BB3ACC815D3DD6C271F540721655014541BC337B08356C4C80731`; commit is pending. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26
