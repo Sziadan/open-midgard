@@ -14,7 +14,7 @@ struct vector3d { float x=0, y=0, z=0; };
 struct matrix { float m[4][4]{}; };
 struct EffectGi {
     short alphaB=0, alphaT=0, fullDisplayAngle=0, rotStart=0, riseAngle=0;
-    float distance=0.0f;
+    float distance=0.0f,maxHeight=0.0f;
     std::array<float,21> height{};
     std::array<unsigned char,21> flag{};
     float sparkX=0.0f,sparkY=0.0f,sparkZ=0.0f;
@@ -907,6 +907,39 @@ int main() {
         }
         gi.life=0;g_renderer.submissions.clear();RenderDoubleGumGang(prim,view);
         check(g_renderer.submissions.empty(),"DoubleGumGang skips bands whose life is not one");
+    }
+    {
+        CTexture textures[5];CEffectPrim prim;prim.m_pos={10,20,130};prim.m_renderFlag=0x205;
+        for(auto& texture:textures)prim.m_texture.push_back(&texture);
+        EffectGi& gi=prim.m_gi[0];gi.life=1;gi.alphaB=100;gi.alphaT=0;gi.maxHeight=10;gi.rotStart=0;
+        gi.sparkX=1;gi.sparkY=2;gi.sparkZ=3;gi.vecBPreX=4;gi.arcBaselineY=5;gi.vecBPreZ=6;
+        const unsigned int colors[5]={0x004646FFu,0x00FF4646u,0x0046FF46u,0x00FFFF5Au,0x00FF46FFu};
+        for(int style=0;style<5;++style) {
+            gi.flag[0]=static_cast<unsigned char>(style);gi.flag[3]=0;
+            g_renderer.submissions.clear();g_renderer.flags.clear();RenderPokJuk(prim,view);
+            check(g_renderer.submissions.size()==4,"PokJuk submits two additive textured triangles for each of two passes");
+            if(g_renderer.submissions.size()==4) {
+                tlvertex3d expected;ProjectReferenceEffectVertex({21,22,143},view,expected);
+                const RPFace& first=g_renderer.submissions[0];const RPFace& secondPass=g_renderer.submissions[2];
+                check(first.m_verts[0].color==((100u<<24)|colors[style])&&first.tex==&textures[0]
+                    &&first.destAlphaMode==D3DBLEND_ONE&&near(first.m_verts[0].x,expected.x)
+                    &&near(first.m_verts[0].y,expected.y),"PokJuk maps all style colors and the base spark offset");
+                ProjectReferenceEffectVertex({23.5f,25,145.5f},view,expected);
+                check(secondPass.m_verts[0].color==((50u<<24)|colors[style])
+                    &&near(secondPass.m_verts[0].x,expected.x)&&near(secondPass.m_verts[0].y,expected.y),
+                    "PokJuk divides second-pass alpha and uses vecBPre offset");
+            }
+        }
+        gi.flag[3]=2;g_renderer.submissions.clear();RenderPokJuk(prim,view);
+        check(g_renderer.submissions.size()==4&&g_renderer.submissions[0].tex==&textures[2]
+            &&g_renderer.submissions[1].tex==&textures[0]&&g_renderer.submissions[2].tex==&textures[2]
+            &&g_renderer.submissions[3].tex==&textures[0]&&g_renderer.submissions[0].m_verts[0].color==0x19FFFFFFu
+            &&g_renderer.submissions[2].m_verts[0].color==0x0CFFFFFFu,
+            "PokJuk textured branch selects its indexed texture, white tint and quarter alpha");
+        gi.alphaB=0;g_renderer.submissions.clear();RenderPokJuk(prim,view);
+        check(g_renderer.submissions.empty(),"PokJuk skips a live band when alphaB is not positive");
+        gi.alphaB=100;gi.life=0;RenderPokJuk(prim,view);
+        check(g_renderer.submissions.empty(),"PokJuk skips bands whose life is not one");
     }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;

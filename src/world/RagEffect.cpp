@@ -6913,6 +6913,111 @@ void RenderDoubleGumGang(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void SubmitPokJukRect(const vector3d corners[4], const vector3d& translation,
+    const matrix& viewMatrix, CTexture* firstTexture, CTexture* secondTexture,
+    short alpha, unsigned char red, unsigned char green, unsigned char blue,
+    int renderFlags)
+{
+    const vector3d positions[2][3] = {
+        { AddVec3(corners[0], translation), AddVec3(corners[1], translation), AddVec3(corners[2], translation) },
+        { AddVec3(corners[3], translation), AddVec3(corners[2], translation), AddVec3(corners[0], translation) },
+    };
+    const float uvs[2][3][2] = {
+        { { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } },
+        { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 1.0f } },
+    };
+    const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(alpha)) << 24)
+        | (static_cast<unsigned int>(red) << 16)
+        | (static_cast<unsigned int>(green) << 8)
+        | blue;
+    CTexture* textures[2] = { firstTexture, secondTexture };
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        if (!textures[triangle]) {
+            continue;
+        }
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) {
+            return;
+        }
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = textures[triangle];
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = D3DBLEND_ONE;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            ProjectReferenceEffectVertex(positions[triangle][vertex], viewMatrix, face->m_verts[vertex]);
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[triangle][vertex][0];
+            face->m_verts[vertex].tv = uvs[triangle][vertex][1];
+        }
+        g_renderer.AddRP(face, renderFlags);
+    }
+}
+
+void RenderPokJuk(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        unsigned char red = 255, green = 70, blue = 255;
+        switch (gi.flag[0]) {
+        case 0: red = 70; green = 70; blue = 255; break;
+        case 1: red = 255; green = 70; blue = 70; break;
+        case 2: red = 70; green = 255; blue = 70; break;
+        case 3: red = 255; green = 255; blue = 90; break;
+        default: break;
+        }
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        float minus = 0.0f;
+        for (int pass = 0; pass < 2; ++pass) {
+            const float radius = gi.maxHeight - minus;
+            vector3d corners[4]{};
+            for (int corner = 0; corner < 4; ++corner) {
+                int angle = static_cast<int>(gi.rotStart) + 90 * corner;
+                if (corner > 0 && angle >= 360) angle -= 360;
+                int zAngle = corner == 3 ? angle : static_cast<int>(gi.rotStart) + 90 * (corner + 1);
+                zAngle %= 360;
+                if (zAngle < 0) zAngle += 360;
+                corners[corner] = {
+                    static_cast<float>(static_cast<double>(g_cosTable[angle]) * radius),
+                    0.0f,
+                    static_cast<float>(static_cast<double>(g_sinTable[zAngle]) * radius),
+                };
+            }
+            IntimidateTowardScreen(corners, prim.m_gi[0].alphaT, prim.m_gi[1].alphaT);
+
+            vector3d offset{};
+            if (pass == 0) offset = { gi.sparkX, gi.sparkY, gi.sparkZ };
+            else if (pass == 1) offset = { gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ };
+            else if (pass == 2) offset = { gi.vecTNowX, gi.vecTNowY, gi.vecTNowZ };
+            else offset = { gi.vecTPreX, gi.vecTPreY, gi.vecTPreZ };
+            for (vector3d& corner : corners) {
+                corner = AddVec3(corner, offset);
+            }
+
+            int alpha = static_cast<int>(gi.alphaB) / (pass + 1);
+            const bool textured = gi.flag[3] != 0;
+            if (textured) alpha /= 4;
+            const int textureIndex = textured ? static_cast<int>(gi.flag[3]) : 0;
+            CTexture* firstTexture = textureIndex >= 0 && textureIndex < static_cast<int>(prim.m_texture.size())
+                ? prim.m_texture[static_cast<size_t>(textureIndex)] : nullptr;
+            CTexture* secondTexture = !prim.m_texture.empty() ? prim.m_texture[0] : nullptr;
+            SubmitPokJukRect(corners, prim.m_pos, viewMatrix, firstTexture, secondTexture,
+                static_cast<short>(alpha), textured ? 255 : red, textured ? 255 : green,
+                textured ? 255 : blue, static_cast<int>(prim.m_renderFlag));
+            minus += pass == 0 ? 0.5f : 0.25f;
+        }
+    }
+}
+
 void TeiHit1Corners(const EffectGi& gi, vector3d corners[4])
 {
     const double height = gi.height[1];
@@ -8248,6 +8353,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_DOUBLEGUMGANG) {
         RenderDoubleGumGang(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_POKJUK) {
+        RenderPokJuk(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {
