@@ -322,6 +322,7 @@ struct CRagEffect : CGameObject {
     void SpawnSprayPond();
     void SpawnIncAgility();
     void SpawnDecAgility();
+    void SpawnPoisonHit();
     void SpawnAqua();
     void SpawnFireBall();
     void SpawnFireFly();
@@ -1905,6 +1906,42 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor;actor.m_pos={100,200,300};auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;
+        effect.m_master=&actor;effect.m_type=53;effect.m_effectPos={10,50,100};effect.m_duration=100;effect.m_tlvertZ=123;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        const int oldMotions=g_resMgr.act.count;g_resMgr.act.count=3;g_session.m_isMinEffect=true;
+        effect.SpawnPoisonHit();auto* prim=effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim->m_type==PP_3DPARTICLE&&prim->UsesReferenceParticle(),
+            "PoisonHit emits one reference particle despite reduced effects");
+        check(effect.m_effectPos.x==10&&effect.m_effectPos.y==50&&effect.m_effectPos.z==100&&effect.m_duration==100&&effect.m_tlvertZ==123,
+            "PoisonHit preserves stored origin duration and screen fields instead of following actor");
+        check(prim->m_duration==100&&prim->m_size==1.5f&&prim->m_animSpeed==2&&!prim->m_repeatAnim&&prim->m_pattern==0x200,
+            "PoisonHit uses parent lifetime exact size divisor nonrepeat and clip-color pattern");
+        check(prim->m_alpha==254&&prim->m_maxAlpha==254&&prim->m_fadeOutCnt==-1&&prim->m_speed==0&&prim->m_deltaPos2.y==0,
+            "PoisonHit retains constructor alpha fade and stationary zero offset");
+        check(g_resMgr.requests==std::vector<std::string>({"\xC0\xCC\xC6\xD1\xC6\xAE\\PoisonHit.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\PoisonHit.act"})&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "PoisonHit requests exact sprite then action with no textures sound or RNG");
+        check(prim->m_numSegments==1&&prim->m_segments[0].pos.x==10&&prim->m_segments[0].pos.y==50
+            &&prim->m_segments[0].size==1.5f&&prim->m_segments[0].argb==0xFEFFFFFF,
+            "PoisonHit initializes full source segment at stored launch position");
+        prim->m_alphaDelta=1;g_isSkipFrame=0;prim->OnProcess();
+        check(prim->m_stateCnt==0&&prim->m_curMotion==0&&EffectTicksWhenNoFrameTime(53),
+            "PoisonHit effect tick exception does not bypass primitive skip gate");g_isSkipFrame=1;
+        check(prim->OnProcess()==1&&prim->m_stateCnt==1&&prim->m_curMotion==1&&prim->m_pos.y==50&&prim->m_size==1.5f,
+            "PoisonHit advances animation on first update while retaining stationary size and anchor");
+        actor.m_pos={400,500,600};effect.m_stateCnt=1;effect.SpawnPoisonHit();
+        check(effect.m_primList.size()==1&&effect.m_effectPos.x==10&&g_resMgr.requests.size()==2&&waveCalls.empty()&&rngDraws==draws,
+            "PoisonHit nonzero emission call preserves stored anchor and avoids repeated work");
+        prim->OnProcess();check(prim->m_stateCnt==2&&prim->m_curMotion==1&&prim->m_pos.x==10&&prim->m_alpha==254,
+            "PoisonHit odd primitive frame holds motion and full alpha at stored origin");
+        prim->OnProcess();check(prim->m_stateCnt==3&&prim->m_curMotion==2,"PoisonHit next even frame advances final action motion");
+        prim->OnProcess();check(prim->m_stateCnt==4&&prim->m_curMotion==2,"PoisonHit final motion holds on odd frame");
+        g_world.UpdateGameObjects();check(effect.m_primList.empty()&&g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,
+            "PoisonHit exhausted nonrepeating action retires through world cleanup and releases locks");
+        g_resMgr.act.count=oldMotions;g_session.m_isMinEffect=false;
     }
     {
         CRenderObject actor,listener;actor.m_pos={10,50,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;

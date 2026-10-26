@@ -550,6 +550,7 @@ private:
     void SpawnGrimToothAtk();
     void SpawnIncAgility();
     void SpawnDecAgility();
+    void SpawnPoisonHit();
     void SpawnAqua();
     void SpawnEnchantPoison();
     void SpawnEnchantPoison2();

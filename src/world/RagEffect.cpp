@@ -7042,7 +7042,7 @@ bool CEffectPrim::UsesReferenceParticle() const
         || (m_type == PP_3DPARTICLEORBIT && m_master
             && (m_master->GetEffectType() == 14 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
-            && (m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
+            && (m_master->GetEffectType() == 53 || m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
 }
 
@@ -8352,7 +8352,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         // Direct helpers own STR completion; load the reference catalog clip below.
         m_handler = Handler::None;
         break;
-    case 48: case 50: case 51:
+    case 48: case 50: case 51: case 53:
         // Direct reference emitters own their primitive schedules.
         m_handler = Handler::None;
         break;
@@ -9412,6 +9412,20 @@ void CRagEffect::SpawnDecAgility()
     prim->m_animSpeed = 4; prim->m_repeatAnim = true;
     prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ac_center2.tga",false));
     prim->m_gi[0].life = 0;
+}
+
+// Ref/RagEffect.cpp:6954-6974 (0x5FB5C0), original effect 53.
+void CRagEffect::SpawnPoisonHit()
+{
+    if (m_stateCnt != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE,vector3d{});
+    prim->m_duration = m_duration; prim->m_size = 1.5f;
+    prim->m_animSpeed = 2; prim->m_pattern |= 0x200; prim->m_repeatAnim = false;
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f; prim->m_fadeOutCnt = -1;
+    prim->m_numSegments = 1;
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\PoisonHit.spr",
+        "\xC0\xCC\xC6\xD1\xC6\xAE\\PoisonHit.act"); // 0x71A718 / 0x71A700
+    InitReferenceSegments(prim);
 }
 
 // Ref/RagEffect.cpp:1774-1798 (0x5FAE10), original effect 39.
@@ -14251,6 +14265,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 45) {
         SpawnFireFly();
+        return true;
+    }
+    if (m_type == 53) {
+        SpawnPoisonHit();
         return true;
     }
     if (m_type == 39) {

@@ -4,10 +4,17 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A original 45-case STR-only dispatch group, after ColdHit checkpoint b184e94. Source minus-eighty offset and missing/exhausted clip termination now use direct reference dispatch.
+Current work: WP5A PoisonHit id53, after original STR-only dispatch group checkpoint 3ba72a8. Stationary clip-colored particle now uses original emission, lifecycle and rendering paths.
 
-Next action: continue remaining original emitters beginning with id53 and remaining primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue original casting emitters beginning ids54-59 and remaining primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## PoisonHit stationary clip-colored particle — 2026-10-26
+
+- Ref/RagEffect.cpp:6954-6974 (0x5FB5C0), inlined in HighPriest.exe.c:419903-419920 with shared InitSegment at LABEL_546 -> SpawnPoisonHit, original id53, direct Init/ProcessEffectFrame routing. Zero emits one PP_3DPARTICLE with parent duration, size1.5, animation divisor2, nonrepeat and pattern0x200 selecting original action clip color. Existing reference particle state and per-clip renderer now bind id53.
+- Preserves stored effect origin rather than following actor, zero offset/motion, original constructor alpha/max254/fade-1 and one full launch segment. No sound, RNG, projection or reduced-effects gate. Existing effect-level no-frame-time exception remains distinct from ordinary primitive skip gating. Exact CP949 PoisonHit.spr then PoisonHit.act resource order is recovered from executable addresses0x71A718/0x71A700.
+
+Validation: release build, six silent C++ suites / 1502 checks (1278 lifecycle/primitive, 166 rendering, 58 other), seven Python tests and whitespace checks pass. Added13 lifecycle checks for emission/reduced mode, stored parent fields, profile/clip-color bit, exact resources/no extra work, initial segment, split tick gates, frame-zero advance, odd-frame hold, stationary anchor, no repeated emission and exhausted nonrepeating action cleanup with balanced resource locks. Existing numeric per-clip render checks verify pattern0x200 selects exact clip ARGB. Both executable resource literals and original push instructions0x5FB621/0x5FB672 were verified; both extracted assets exist. No media/live acceptance. Approved OldRO SHA-256 matches build: `D017970C78D27C82B70BC67474D2EB0FADA4BD85108756167306FB6290F75B89`. Other emitters/controls, caller routing, specialized segments, map scheduling, resource/cache and renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Original STR-only dispatch group — 2026-10-26
 
