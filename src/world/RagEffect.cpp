@@ -9640,6 +9640,53 @@ bool UpdateReferenceHermode(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:5506; canonical executable PrimParticleSpread at 0x6130A0 (case 0x73).
+void UpdateReferenceParticleSpread(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode ? mode->m_view : nullptr;
+    if (view) {
+        const short longitude = static_cast<short>(view->GetCameraLongitude());
+        prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+        const short latitude = static_cast<short>(view->GetCameraLatitude());
+        const short cameraLatitude = static_cast<short>(450 - latitude);
+        prim->m_gi[1].alphaT = static_cast<short>(cameraLatitude >= 360 ? cameraLatitude - 360 : cameraLatitude);
+    }
+
+    if (!prim->m_master) return;
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        ++gi.process;
+
+        float speed = gi.maxHeight * g_sinTable[static_cast<int>(gi.height[2])];
+        gi.arcBaselineY -= speed;
+        speed = gi.maxHeight * g_cosTable[static_cast<int>(gi.height[2])];
+        gi.vecBPreX += speed * g_sinTable[static_cast<int>(gi.height[0])];
+        gi.vecBPreZ += speed * g_cosTable[static_cast<int>(gi.height[0])];
+
+        speed = gi.maxHeight * g_sinTable[static_cast<int>(gi.height[6])];
+        gi.sparkY -= speed;
+        speed = gi.maxHeight * g_cosTable[static_cast<int>(gi.height[6])];
+        gi.sparkX += speed * g_sinTable[static_cast<int>(gi.height[4])];
+        gi.sparkZ += speed * g_cosTable[static_cast<int>(gi.height[4])];
+
+        speed = gi.maxHeight * g_sinTable[static_cast<int>(gi.height[10])];
+        gi.vecTPreY -= speed;
+        speed = gi.maxHeight * g_cosTable[static_cast<int>(gi.height[10])];
+        gi.vecTPreX += speed * g_sinTable[static_cast<int>(gi.height[8])];
+        gi.vecTPreZ += speed * g_cosTable[static_cast<int>(gi.height[8])];
+
+        if (gi.process > 25) {
+            gi.maxHeight *= 0.9f;
+            for (int index = 12; index < 15; ++index) {
+                gi.height[static_cast<size_t>(index)] -= 6.0f;
+                if (gi.height[static_cast<size_t>(index)] < 0.0f) gi.height[static_cast<size_t>(index)] = 0.0f;
+            }
+        }
+    }
+}
+
 // Ref/dhxj/RagEffect2.cpp:15246; canonical executable PrimTanji2 at 0x627F30 (case 0x61).
 void UpdateReferenceTanji2(CEffectPrim* prim)
 {
@@ -10867,6 +10914,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_HERMODE) {
         UpdateReferenceHermode(this); // Source case 0x72 ignores the handler's true result.
+        return true;
+    }
+    if (m_type == PP_3DAURA_3) {
+        UpdateReferenceParticleSpread(this); // Source case 0x73 continues to the shared tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

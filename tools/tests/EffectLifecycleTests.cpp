@@ -232,6 +232,7 @@ void UpdateReferenceHitLine3(CEffectPrim*);
 bool UpdateReferenceSoulLinkLight(CEffectPrim*);
 bool UpdateReferenceSoulParticle(CEffectPrim*);
 bool UpdateReferenceHermode(CEffectPrim*);
+void UpdateReferenceParticleSpread(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -366,6 +367,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SOULLINK) { UpdateReferenceSoulLinkLight(this); return active; }
         if (m_type == PP_SOULPARTICLE) { UpdateReferenceSoulParticle(this); return active; }
         if (m_type == PP_HERMODE) { UpdateReferenceHermode(this); return active; }
+        if (m_type == PP_3DAURA_3) { UpdateReferenceParticleSpread(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -838,6 +840,7 @@ __declspec(noinline) void RunHitLine3LifecycleChecks(CEffectPrim& prim, int& che
 __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunHermodeLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunParticleSpreadLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2138,6 +2141,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
     RunSoulParticleLifecycleChecks(prim, checks, failures);
     RunHermodeLifecycleChecks(prim, checks, failures);
+    RunParticleSpreadLifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2222,6 +2226,52 @@ __declspec(noinline) void RunHermodeLifecycleChecks(CEffectPrim& prim, int& chec
     check(a.alphaB==140&&a.riseAngle==-1&&a.rotStart==1&&rngDraws==draws,
         "case 0x72 preserves negative angles and increments alpha only below 140 without RNG");
     g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunParticleSpreadLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude; testView.longitude=20.0f;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_3DAURA_3; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={7,8,9}; prim.m_master->m_effectPos={100,200,300};
+    for(auto& gi:prim.m_gi) gi={};
+    const int initialDraws=rngDraws; prim.OnProcess();
+    check(prim.m_pos.x==100&&prim.m_pos.y==200&&prim.m_pos.z==300
+        &&prim.m_gi[0].alphaT==340&&prim.m_gi[1].alphaT==135&&rngDraws==initialDraws,
+        "case 0x73 updates camera/master state with inactive lanes and no RNG");
+
+    auto configure=[](EffectGi& gi, int process) {
+        gi.life=1; gi.process=process; gi.maxHeight=10;
+        gi.height[0]=30; gi.height[2]=60; gi.height[4]=90; gi.height[6]=120;
+        gi.height[8]=180; gi.height[10]=270;
+        gi.height[12]=2; gi.height[13]=5; gi.height[14]=8;
+        gi.vecBPreX=1; gi.arcBaselineY=2; gi.vecBPreZ=3;
+        gi.sparkX=4; gi.sparkY=5; gi.sparkZ=6;
+        gi.vecTPreX=7; gi.vecTPreY=8; gi.vecTPreZ=9;
+    };
+    EffectGi& a=prim.m_gi[0]; configure(a,24);
+    EffectGi& b=prim.m_gi[1]; configure(b,25);
+    EffectGi& c=prim.m_gi[2]; configure(c,-1);
+    EffectGi& d=prim.m_gi[3]; d.life=2; d.process=44; d.maxHeight=19; d.height[12]=31;
+    const int draws=rngDraws; prim.OnProcess();
+    auto near=[](float actual,float expected) { return std::fabs(actual-expected)<0.0001f; };
+    const float preY=2-10*GetSin(60), preX=1+10*GetCos(60)*GetSin(30), preZ=3+10*GetCos(60)*GetCos(30);
+    const float nowY=5-10*GetSin(120), nowX=4+10*GetCos(120)*GetSin(90), nowZ=6+10*GetCos(120)*GetCos(90);
+    const float topY=8-10*GetSin(270), topX=7+10*GetCos(270)*GetSin(180), topZ=9+10*GetCos(270)*GetCos(180);
+    check(a.process==25&&a.maxHeight==10&&a.height[12]==2&&a.height[13]==5&&a.height[14]==8
+        &&near(a.arcBaselineY,preY)&&near(a.vecBPreX,preX)&&near(a.vecBPreZ,preZ)
+        &&near(a.sparkY,nowY)&&near(a.sparkX,nowX)&&near(a.sparkZ,nowZ)
+        &&near(a.vecTPreY,topY)&&near(a.vecTPreX,topX)&&near(a.vecTPreZ,topZ),
+        "case 0x73 process twenty-five moves all vectors with pre-decay speed and does not shrink heights");
+    check(b.process==26&&near(b.maxHeight,9.0f)&&b.height[12]==0&&b.height[13]==0&&b.height[14]==2
+        &&near(b.arcBaselineY,preY)&&near(b.sparkY,nowY)&&near(b.vecTPreY,topY)
+        &&c.process==0&&near(c.maxHeight,10)&&c.height[12]==2&&near(c.vecBPreX,preX)&&near(c.sparkY,nowY)
+        &&d.process==44&&d.maxHeight==19&&d.height[12]==31&&rngDraws==draws,
+        "case 0x73 decays speed and three trailing heights only after process twenty-five, without a positive-process gate");
+    testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
