@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A HasteUp id98, after GrimTooth checkpoint `1fc9e43`. Original twenty-ray/four-orbit burst, two audio gates, frame40 transition and dedicated screen-flash state/geometry are now ported.
+Current work: WP5A HealSP id14, after HasteUp checkpoint `b088c66`. Original three blue cylinders, two-draw even-frame orbit sprites, actor-origin refresh and exact root-level heal wave are now ported.
 
-Next action: continue unported emitters (including HealSP id14) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters (including HeavensDrive id142) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## HealSP blue cylinders / orbit sprites — 2026-10-26
+
+- Ref/RagEffect.cpp:4908-5001 (0x5F4AD0) -> ApplyHealSP, original id14, direct ProcessEffectFrame/Init route. Copies current actor origin every call. Zero launches three cylinders, sets parent duration100 and plays exact root-level _heal_effect.wav after cylinder setup/before orbit RNG. Reduced-effects mode does not suppress the helper.
+- Three PP_3DCYLINDER profiles preserve source order: outer/inner radii2.5/3.5/4.5, heights15/25/35, angular speed5, RGB32/176/232, alpha0/maxima16/32/64, rise max*0.033333335, duration100/fade80 and exact alpha_down texture. Bound existing reference cylinder update/geometry, including source rotation order, packed tint/alpha caps and twenty-frame fade.
+- Every even frame emits one PP_3DPARTICLEORBIT with two draws (first deliberately discarded, second longitude). Preserves radius3/duration30, vertical speed-1.2/source deceleration, source Y launch matrix and radius-derived initial offset, size0.55000001, alpha/max254, fade20, divisor4/repeat and exact particle2 sprite/action with one full initial segment. Existing reference orbit updater/rendering now bind id14. Initial radial offset is retained in addition to the radius-derived update displacement, producing source doubled radial displacement. Fixed azimuth and actor-origin following remain intact.
+
+Validation: release build, six silent C++ suites / 1022 checks (832 lifecycle/primitive, 132 rendering, 58 other), six Python tests, four-literal executable byte audit, six original asset-pointer instruction audits and whitespace check pass. Added19 lifecycle checks for four-primitive order/two draws, reduced-effects behavior, exact actor-relative root wave, distinct cylinder profiles/blue tint/alpha rise/clamp/fade, raw rotation, orbit launch offset/doubled radius/gravity/segments/animation, odd/even cadence, moving actor origin and balanced resource locks. Existing shared cylinder/orbit/per-clip geometry suites pass. Exact texture0x719498, wave0x712840, particle2 sprite/action0x71B334/0x71B31C match executable bytes; original pushes at0x5F4C2D/0x5F4D6B/0x5F4EA9/0x5F4EFD/0x5F4FFC/0x5F5073 verified. No media/live acceptance. Approved OldRO SHA-256: `3BDDF7FEB8F9B3BA054C0CDCE30592D53DFC5344FA5AA0728181C8A8D273C9B7`. Other emitters/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## HasteUp rays / orbit sprites and screen-flash primitive — 2026-10-26
 

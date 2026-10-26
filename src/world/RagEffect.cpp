@@ -6765,7 +6765,7 @@ bool CEffectPrim::UsesReferenceCylinder() const
 {
     if (m_type != PP_3DCYLINDER || !m_master) return false;
     switch (m_master->GetEffectType()) {
-    case 0: case 2: case 3: case 36: case 81: case 180: case 184: case 218: case 219: case 220: case 221: return true;
+    case 0: case 2: case 3: case 14: case 36: case 81: case 180: case 184: case 218: case 219: case 220: case 221: return true;
     default: return false;
     }
 }
@@ -6799,7 +6799,7 @@ bool CEffectPrim::UsesReferenceParticle() const
         || (m_type == PP_3DPARTICLEGRAVITY && m_master
             && (m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 10 || m_master->GetEffectType() == 18))
         || (m_type == PP_3DPARTICLEORBIT && m_master
-            && (m_master->GetEffectType() == 98 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
+            && (m_master->GetEffectType() == 14 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
             && (m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
@@ -8086,7 +8086,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 27: case 28: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 123: case 132: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 18: case 27: case 28: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 123: case 132: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -12155,6 +12155,56 @@ void CRagEffect::ApplyHasteUp()
     }
 }
 
+// Ref/RagEffect.cpp:4908-5001 (0x5F4AD0), original effect 14.
+void CRagEffect::ApplyHealSP()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt == 0) {
+        static const float radii[] = {2.5f,3.5f,4.5f};
+        static const float heights[] = {15.0f,25.0f,35.0f};
+        static const float maxima[] = {16.0f,32.0f,64.0f};
+        for (int i = 0; i < 3; ++i) {
+            CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER,vector3d{});
+            if (i == 0) m_duration = 100;
+            prim->m_duration = m_duration;
+            prim->m_longSpeed = 5.0f;
+            prim->m_outerSize = radii[i]; prim->m_innerSize = radii[i]; prim->m_heightSize = heights[i];
+            prim->m_tintColor = RGB(32,176,232);
+            prim->m_alpha = 0.0f; prim->m_maxAlpha = maxima[i];
+            prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha*0.033333335);
+            prim->m_fadeOutCnt = prim->m_duration-20;
+            prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga",false));
+        }
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("_heal_effect.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+        }
+    }
+    if (m_stateCnt % 2 != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT,vector3d{});
+    rand();
+    prim->m_radius = 3.0f; prim->m_duration = 30;
+    prim->m_longitude = static_cast<float>(rand() % 360);
+    prim->m_gravSpeed = -1.2f;
+    prim->m_gravAccel = static_cast<float>(prim->m_gravSpeed/static_cast<double>(prim->m_duration)*-0.66666669);
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_longitude)));
+    prim->m_deltaPos2 = {
+        static_cast<float>(static_cast<double>(prim->m_radius)*prim->m_matrix.m[2][0]+prim->m_matrix.m[3][0]),
+        static_cast<float>(static_cast<double>(prim->m_radius)*prim->m_matrix.m[2][1]+prim->m_matrix.m[3][1]),
+        static_cast<float>(static_cast<double>(prim->m_radius)*prim->m_matrix.m[2][2]+prim->m_matrix.m[3][2])
+    };
+    prim->m_size = 0.55000001f; prim->m_fadeOutCnt = prim->m_duration-prim->m_duration/3;
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_numSegments = 1; prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.act");
+    InitReferenceSegments(prim);
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -13409,6 +13459,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 45) {
         SpawnFireFly();
+        return true;
+    }
+    if (m_type == 14) {
+        ApplyHealSP();
         return true;
     }
     if (m_type == 98) {

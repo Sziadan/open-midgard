@@ -292,6 +292,7 @@ struct CRagEffect : CGameObject {
     void ApplyFrostDiver();
     void ApplyFrostDiver2();
     void ApplyHasteUp();
+    void ApplyHealSP();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1872,6 +1873,70 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,50,30};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=14;
+        effect.m_effectPos={900,800,700};effect.m_duration=20;g_session.m_isMinEffect=true;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;rngValues={999,90};rngCursor=0;effect.ApplyHealSP();
+        auto it=effect.m_primList.begin();auto* cylinder=*it++;++it;++it;auto* orbit=*it;
+        check(effect.m_primList.size()==4&&effect.m_duration==100&&rngDraws==draws+2&&rngCursor==2
+            &&cylinder->m_type==PP_3DCYLINDER&&orbit->m_type==PP_3DPARTICLEORBIT,
+            "HealSP emits three cylinders then orbit sprite with discarded draw and duration one hundred despite reduced effects");
+        check(effect.m_effectPos.x==10&&effect.m_effectPos.y==50&&effect.m_effectPos.z==30
+            &&waveCalls.size()==1&&waveCalls[0].name=="_heal_effect.wav"&&waveCalls[0].x==8&&waveCalls[0].y==0&&waveCalls[0].z==26
+            &&waveCalls[0].frameRng==draws,"HealSP copies actor origin and plays exact root-level wave before orbit RNG");
+        const float radii[3]={2.5f,3.5f,4.5f},heights[3]={15,25,35},maxima[3]={16,32,64};int index=0;bool profiles=true;
+        for(auto* prim:effect.m_primList) {
+            if(index==3)break;
+            profiles=profiles&&prim->UsesReferenceCylinder()&&prim->m_duration==100&&prim->m_longSpeed==5
+                &&prim->m_outerSize==radii[index]&&prim->m_innerSize==radii[index]&&prim->m_heightSize==heights[index]
+                &&prim->m_tintColor==RGB(32,176,232)&&prim->m_alpha==0&&prim->m_maxAlpha==maxima[index]
+                &&prim->m_alphaSpeed==static_cast<float>(maxima[index]*0.033333335)&&prim->m_fadeOutCnt==80
+                &&prim->m_animSpeed==4&&prim->m_repeatAnim;++index;
+        }
+        check(profiles&&index==3,"HealSP cylinder radii heights distinct alpha caps source blue tint and rise fade profiles match reference");
+        check(g_texMgr.requests==std::vector<std::string>(3,"effect\\alpha_down.tga"),"HealSP loads exact alpha-down texture once per ordered cylinder");
+        check(orbit->UsesReferenceParticle()&&orbit->m_duration==30&&orbit->m_radius==3&&orbit->m_longitude==90
+            &&orbit->m_gravSpeed==-1.2f&&orbit->m_gravAccel==static_cast<float>(-1.2f/30.0*-0.66666669)
+            &&orbit->m_size==0.55000001f&&orbit->m_fadeOutCnt==20&&orbit->m_alpha==254&&orbit->m_maxAlpha==254,
+            "HealSP orbit retains post-discard longitude gravity deceleration size duration and fade");
+        check(orbit->m_deltaPos2.x==3*orbit->m_matrix.m[2][0]&&orbit->m_deltaPos2.y==0&&orbit->m_deltaPos2.z==3*orbit->m_matrix.m[2][2]
+            &&orbit->m_numSegments==1&&orbit->m_segments[0].pos.x==10&&orbit->m_segments[0].size==0.55000001f&&orbit->m_segments[0].argb==0xFEFFFFFF,
+            "HealSP orbit starts with source radius offset launch matrix and full one-slot initialization");
+        check(g_resMgr.requests==std::vector<std::string>({"\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.act"})
+            &&orbit->m_animSpeed==4&&orbit->m_repeatAnim,"HealSP uses exact particle2 sprite then action and constructor animation profile");
+        cylinder->m_alphaDelta=1;cylinder->OnProcess();
+        check(cylinder->m_longitude==5&&cylinder->m_alpha==static_cast<float>(16.0*0.033333335)
+            &&(cylinder->m_argb&0xFFFFFF)==0x20B0E8&&cylinder->m_heightSize==15&&cylinder->m_pos.y==50,
+            "HealSP reference cylinder rotates and raises original packed blue alpha without height or origin substitution");
+        for(int frame=1;frame<80;++frame)cylinder->OnProcess();
+        check(cylinder->m_alpha==16&&cylinder->m_argb==0x1020B0E8&&cylinder->m_longitude==400,
+            "HealSP cylinder source alpha clamps at sixteen while raw longitude continues accumulating");
+        cylinder->OnProcess();check(cylinder->m_alphaSpeed==-0.8f&&cylinder->m_alpha==15.2f,
+            "HealSP cylinder begins original twenty-frame fade at primitive frame eighty");
+        orbit->m_alphaDelta=1;orbit->OnProcess();
+        check(orbit->m_pos.x==16&&orbit->m_pos.y==50+orbit->m_gravSpeed&&orbit->m_deltaPos.x==3
+            &&orbit->m_deltaPos2.x==3,"HealSP orbit preserves double radial displacement from launch offset plus current radius");
+        check(orbit->m_curMotion==1&&orbit->m_segments[0].pos.x==16&&orbit->m_alpha==254&&orbit->m_longitude==90&&orbit->m_longSpeed==0,
+            "HealSP orbit shifts source position before animation and keeps fixed azimuth");
+        actor.m_pos={20,60,40};effect.m_stateCnt=1;effect.ApplyHealSP();
+        check(effect.m_primList.size()==4&&rngDraws==draws+2&&waveCalls.size()==1&&effect.m_effectPos.y==60,
+            "HealSP odd frames refresh actor origin without repeated emission sound or RNG");
+        orbit->OnProcess();check(orbit->m_pos.x==26&&orbit->m_pos.y==60+orbit->m_deltaPos2.y,
+            "HealSP existing orbit follows source parent actor-origin refresh");
+        effect.m_stateCnt=2;effect.ApplyHealSP();check(effect.m_primList.size()==5&&rngDraws==draws+4&&waveCalls.size()==1&&g_texMgr.requests.size()==3,
+            "HealSP later even frame emits only a two-draw orbit sprite without cylinders or repeated audio");
+        auto* secondOrbit=effect.m_primList.back();check(secondOrbit->m_segments[0].pos.y==60&&secondOrbit->UsesReferenceParticle(),
+            "HealSP later orbit initializes at newly copied actor origin with reference binding");
+        secondOrbit->m_alphaDelta=1;secondOrbit->m_stateCnt=20;secondOrbit->OnProcess();
+        check(secondOrbit->m_alphaSpeed==static_cast<float>(-254.0/10)&&secondOrbit->m_alpha<254,
+            "HealSP orbit preserves source duration-minus-third fade");
+        effect.m_stateCnt=99;effect.ApplyHealSP();check(effect.m_primList.size()==5&&effect.m_duration==100&&rngDraws==draws+4,
+            "HealSP final odd parent frame does not invent an extra emission or duration reset");
+        effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,
+            "HealSP cleanup balances each particle2 resource lock");
+        g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
