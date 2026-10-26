@@ -205,6 +205,7 @@ bool UpdateReferenceChimTo(CEffectPrim*);
 void UpdateReferenceBottom2(CEffectPrim*);
 bool UpdateReferenceBottomSpr(CEffectPrim*);
 void UpdateReferencePokJuk(CEffectPrim*);
+void UpdateReferenceGuard(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -312,6 +313,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_BOTTOM2) { UpdateReferenceBottom2(this); return active; }
         if (m_type == PP_BOTTOMSPR) { UpdateReferenceBottomSpr(this); return active; }
         if (m_type == PP_POKJUK) { UpdateReferencePokJuk(this); return active; }
+        if (m_type == PP_GUARD) { UpdateReferenceGuard(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -465,6 +467,7 @@ struct CRagEffect : CGameObject {
     void AbsorbPrimDelta(const vector3d& delta){m_deltaPos=delta;}
     void SetGroundHitFlag(){m_flag=1;}
     vector3d ScreenPosition() const{return {m_tlvertX,m_tlvertY,m_tlvertZ};}
+    float ResolveBaseRotation() const { return m_master->m_roty; }
     const vector3d& TargetPosition() const{return m_deltaPos;}
     void SendMsg(CGameObject*, int, msgparam_t, msgparam_t, msgparam_t) override;
 };
@@ -744,6 +747,7 @@ __declspec(noinline) void RunTeiHit2LifecycleChecks(CEffectPrim& prim, int& chec
 __declspec(noinline) void RunBottom2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunBottomSprLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunPokJukLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunGuardLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -938,6 +942,46 @@ __declspec(noinline) void RunPokJukLifecycleChecks(CEffectPrim& prim, int& check
         "case 0x34 orbit phase clamps alpha below zero after its unconditional and random decrements");
     prim.m_particleActRes=nullptr; prim.m_numSegments=0; testView.longitude=oldLongitude;
     rngValues={}; rngCursor=0; g_isSkipFrame=oldSkipFrame;
+    RunGuardLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunGuardLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldActorRotation=prim.m_master->m_master->m_roty;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_GUARD; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={400,500,600}; prim.m_master->m_master->m_roty=100;
+    prim.m_pos={1,2,3};
+    for (auto& gi : prim.m_gi) gi={};
+    auto& a=prim.m_gi[0]; a.life=1; a.process=0; a.alphaB=90; a.rotStart=0;
+    auto& b=prim.m_gi[1]; b.life=1; b.process=1; b.flag[0]=1; b.rotStart=355; b.alphaB=99;
+    auto& c=prim.m_gi[2]; c.life=1; c.process=9; c.flag[0]=0; c.alphaB=99; c.height[0]=1.0f;
+    auto& d=prim.m_gi[3]; d.life=1; d.process=26; d.flag[0]=1; d.rotStart=340; d.alphaB=4; d.height[0]=0.5f;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_pos.x==400 && prim.m_pos.y==500 && prim.m_pos.z==600
+        && a.process==1 && a.rotStart==10 && a.alphaB==110
+        && b.process==2 && b.rotStart==5 && b.alphaB==119
+        && c.process==10 && c.rotStart==10 && c.alphaB==99 && c.height[0]==1.0f
+        && d.process==27 && d.rotStart==350 && d.alphaB==0 && std::fabs(d.height[0]-0.6f)<0.00001f
+        && rngDraws==draws && prim.m_stateCnt==1,
+        "case 0x3D covers all live bands, actor-relative reset/increment angles, one wrap, strict alpha/height process bands and common tick without RNG");
+
+    prim.m_stateCnt=0; prim.m_master->m_master->m_roty=720;
+    a={}; a.life=1; a.process=1; a.flag[0]=1; a.rotStart=720; a.alphaB=100;
+    prim.OnProcess();
+    check(a.process==2 && a.rotStart==370 && a.alphaB==100,
+        "case 0x3D exact flag-one path adds ten and subtracts 360 only once; alpha at 100 is not increased");
+
+    prim.m_stateCnt=0; prim.m_master->m_master->m_roty=0;
+    a={}; a.life=1; a.process=26; a.flag[0]=0; a.rotStart=40; a.alphaB=0; a.height[0]=2;
+    prim.OnProcess();
+    check(a.process==27 && a.rotStart==270 && a.alphaB==0 && std::fabs(a.height[0]-2.1f)<0.00001f,
+        "case 0x3D process 26 to 27 takes strict fade/growth branch and leaves zero alpha clamped");
+    prim.m_master->m_master->m_roty=oldActorRotation; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()

@@ -8710,6 +8710,33 @@ void UpdateReferencePokJuk(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:5305 (case 0x3D).
+void UpdateReferenceGuard(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    const float actorRotation = prim->m_master->ResolveBaseRotation();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        ++gi.process;
+        if (gi.process <= 1) {
+            gi.rotStart = static_cast<short>(actorRotation + 270.0f);
+        } else if (gi.flag[0] == 1) {
+            gi.rotStart = static_cast<short>(gi.rotStart + 10);
+        } else {
+            gi.rotStart = static_cast<short>(actorRotation + 270.0f);
+        }
+        if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+
+        if (gi.process < 10) {
+            if (gi.alphaB < 100) gi.alphaB = static_cast<short>(gi.alphaB + 20);
+        } else if (gi.process > 26) {
+            gi.height[0] += 0.1f;
+            if (gi.alphaB > 0) gi.alphaB = static_cast<short>(gi.alphaB - 6);
+            if (gi.alphaB < 0) gi.alphaB = 0;
+        }
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9759,6 +9786,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_POKJUK) {
         UpdateReferencePokJuk(this);
+        return true;
+    }
+    if (m_type == PP_GUARD) {
+        UpdateReferenceGuard(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
