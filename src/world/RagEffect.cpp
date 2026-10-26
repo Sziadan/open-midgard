@@ -9169,6 +9169,25 @@ void UpdateReferencePressure(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:9374; canonical executable PrimGroundShake at 0x61AD60 (case 0x58).
+void UpdateReferenceGroundShake(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (static_cast<signed char>(gi.life) <= 0) continue;
+
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.process <= 10) gi.alphaB = static_cast<short>(gi.alphaB + 2);
+        gi.distance *= 1.0700001f;
+        if (gi.process > 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 1);
+            if (gi.alphaB < 0) gi.alphaB = 0;
+        }
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -10262,6 +10281,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_PRESSURE) {
         UpdateReferencePressure(this); // Source case 0x57 continues to the common tick.
+        return true;
+    }
+    if (m_type == PP_GROUNDSHAKE) {
+        UpdateReferenceGroundShake(this); // Source case 0x58 continues to the common tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

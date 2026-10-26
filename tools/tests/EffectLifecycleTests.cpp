@@ -217,6 +217,7 @@ void UpdateReferenceLightSphere(CEffectPrim*);
 bool UpdateReferenceGhost(CEffectPrim*);
 void UpdateReferenceSoulBreaker(CEffectPrim*);
 void UpdateReferencePressure(CEffectPrim*);
+void UpdateReferenceGroundShake(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -335,6 +336,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_GHOST) { UpdateReferenceGhost(this); return active; }
         if (m_type == PP_SOULBREAKER) { UpdateReferenceSoulBreaker(this); return active; }
         if (m_type == PP_PRESSURE) { UpdateReferencePressure(this); return active; }
+        if (m_type == PP_GROUNDSHAKE) { UpdateReferenceGroundShake(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -779,6 +781,7 @@ __declspec(noinline) void RunLightSphereLifecycleChecks(CEffectPrim& prim, int& 
 __declspec(noinline) void RunGhostLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSoulBreakerLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunPressureLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunGroundShakeLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1485,6 +1488,52 @@ __declspec(noinline) void RunPressureLifecycleChecks(CEffectPrim& prim, int& che
         && gameMode.messages==0 && rngDraws==pressureDraws,
         "case 0x57 inactive GI still refreshes camera and master position while leaving lifecycle untouched");
     testView.longitude=oldLongitude;
+    g_isSkipFrame=oldSkipFrame;
+    RunGroundShakeLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunGroundShakeLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_GROUNDSHAKE; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={51,52,53};
+    for (auto& gi : prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=-1; a.alphaB=40; a.distance=2;
+    EffectGi& b=prim.m_gi[1]; b.life=127; b.process=0; b.alphaB=9; b.distance=3;
+    EffectGi& c=prim.m_gi[2]; c.life=128; c.process=9; c.alphaB=20; c.distance=4;
+    EffectGi& d=prim.m_gi[3]; d.life=255; d.process=10; d.alphaB=0; d.distance=5;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==51 && prim.m_pos.y==52 && prim.m_pos.z==53
+        && a.process==0 && a.alphaB==40 && a.distance==2
+        && b.process==1 && b.alphaB==11 && std::fabs(b.distance-3.2100003f)<0.0001f
+        && c.process==9 && c.alphaB==20 && c.distance==4
+        && d.process==10 && d.alphaB==0 && d.distance==5 && rngDraws==draws,
+        "case 0x58 copies master, treats GI life as signed, skips nonpositive post-increment processes and updates all active positive gates");
+
+    b.process=9; b.alphaB=10; const float distance10=b.distance;
+    prim.OnProcess();
+    check(b.process==10 && b.alphaB==12 && std::fabs(b.distance-distance10*1.0700001f)<0.0001f,
+        "case 0x58 process 10 remains in alpha-rise branch while scaling distance");
+    b.process=10; b.alphaB=0; const float distance11=b.distance;
+    prim.OnProcess();
+    check(b.process==11 && b.alphaB==0 && std::fabs(b.distance-distance11*1.0700001f)<0.0001f,
+        "case 0x58 process 11 switches to alpha fade, clamps below zero and still scales distance");
+    b.process=10; b.alphaB=30; const float distance12=b.distance;
+    prim.OnProcess();
+    check(b.process==11 && b.alphaB==29 && std::fabs(b.distance-distance12*1.0700001f)<0.0001f,
+        "case 0x58 process 11 subtracts one from positive alpha without clamping or clearing life");
+
+    for (auto& gi : prim.m_gi) { gi.life=1; gi.process=0; gi.alphaB=2; gi.distance=1; }
+    prim.OnProcess();
+    bool allBands=true;
+    for (const auto& gi : prim.m_gi) {
+        allBands=allBands&&gi.process==1&&gi.alphaB==4&&std::fabs(gi.distance-1.0700001f)<0.0001f;
+    }
+    check(allBands,"case 0x58 updates each of the four GI slots independently");
     g_isSkipFrame=oldSkipFrame;
 }
 
