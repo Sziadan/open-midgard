@@ -4,10 +4,20 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Teleportation id34, after OverThrust checkpoint `16f43a8`. Original zero-only audio and cylinder now use reference growth/shrink/fade/height-cap behavior, preserving stored origin and parent fields.
+Current work: WP5A MagnumBreak id17, after Teleportation checkpoint `f661b62`. Original ring/sphere/ring burst and exact sound/textures now use source circle state and dedicated sphere integration/mesh geometry.
 
-Next action: continue unported emitters (including MagnumBreak id17) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters (including SonicBlow ids121/122) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## MagnumBreak rings / original sphere mesh — 2026-10-26
+
+- Ref/RagEffect.cpp:6329-6385 (0x5F5B80) -> ApplyMagnumBreak, original id17, direct ProcessEffectFrame/Init route. Zero plays exact stored-origin horizontal EF_MagnumBreak wave, emits parent-duration circle, parent-duration sphere and fixed-duration30 circle in source order. Preserves parent duration/world origin, no actor refresh/RNG/reduced-effects suppression or repeated nonzero work.
+- Both circles retain renderFlag0x201, latitude90, radiusSpeed1.75/source duration-dependent deceleration, inner12, alpha0/max254/rise max*0.06666667, fade duration-15, one full identity initial segment and exact ring_yellow texture. Bound shared reference circle update/geometry including source no-depth flag handling.
+- Sphere retains radiusSpeed1.15/source duration-dependent deceleration, longitude speed3, alpha0/max254/same rise and fade, constructor arc36 and exact recovered CP949 texture bytes at0x71A5B4. No candidate path, sprite resources or invented texture animation.
+- Ref/RagEffectPrim.cpp:2097-2118 (0x644A80) -> UpdateReferenceSphere, currently bound only to id17. Source stored parent+offset position, extended radius-speed sum through radius integration, longitude integration and source alpha order.
+- Ref/RagEffectPrim.cpp:4650-4958 (0x6489E0) -> RenderReferenceSphere. Original latitude/yaw matrix mesh, two triangles per patch, source loop bounds/float accumulators, truncated angles including quarter-degree seam bias, full UV grid with U reset per latitude band, stored ARGB/texture0 and hard-coded flag1. Retains source rounded local coordinates and final-corner Z intermediate through world translation. Constructor arc36 produces100 triangles. Migrated id17 bypasses generic sphere billboard/glow; other sphere callers remain open.
+
+Validation: release build, six silent C++ suites / 1096 checks (888 lifecycle/primitive, 150 rendering, 58 other), six Python tests, three-literal executable byte audit, four original asset-pointer instruction audits and whitespace check pass. Added14 lifecycle and eight rendering checks for ordered emission/audio/resources/profiles, source duration differences/flags/segments, extended sphere integration/alpha/fade/final frame, no repeat or RNG, original mesh count/geometry/winding/quarter-degree phase/UV/depth flags, fractional loop bounds and missing texture. Exact wave0x71B3CC, yellow ring0x7193E8 and sphere0x71A5B4 match executable bytes; pushes at0x5F5BCE/0x5F5CE8/0x5F5DE5/0x5F5F15 verified. Render tests compile production matrix operations against silent numeric/device doubles; no media/live acceptance. Approved OldRO SHA-256: `4C6D818D8BFCC08E7CD420B13DAD0E09F1B40BEFE25478E12ECE7B75C2DCA38B`. Other emitters/sphere callers/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Teleportation growing / shrinking cylinder — 2026-10-26
 

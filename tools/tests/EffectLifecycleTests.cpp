@@ -164,6 +164,7 @@ bool UpdateReferenceCircleState(CEffectPrim*);
 void UpdateReferenceQuadHorn(CEffectPrim*);
 void UpdateReferenceFlash(CEffectPrim*);
 void UpdateReferenceScreenCircle(CEffectPrim*);
+void UpdateReferenceSphere(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReferenceScreenTexture(CEffectPrim*);
@@ -222,6 +223,7 @@ struct CEffectPrim : CGameObject {
     bool UsesReferenceQuadHorn() const;
     bool UsesReferenceFlash() const;
     bool UsesReferenceScreenCircle() const;
+    bool UsesReferenceSphere() const;
     void SetParticleResources(const char*, const char*,bool = false);
     bool ProcessPrimitiveFrame() {
         ++updates;
@@ -232,6 +234,7 @@ struct CEffectPrim : CGameObject {
         if (UsesReferenceQuadHorn()) UpdateReferenceQuadHorn(this);
         if (UsesReferenceFlash()) UpdateReferenceFlash(this);
         if (UsesReferenceScreenCircle()) UpdateReferenceScreenCircle(this);
+        if (UsesReferenceSphere()) UpdateReferenceSphere(this);
         if (m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle() && !UpdateReferenceGravityParticle(this)) return false;
         if (UsesReferenceScreenTexture() && !UpdateReferenceScreenTexture(this)) return false;
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
@@ -300,6 +303,7 @@ struct CRagEffect : CGameObject {
     void ApplyHeavensDrive();
     void ApplyOverThrust();
     void ApplyTeleportation();
+    void ApplyMagnumBreak();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1880,6 +1884,52 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=17;
+        effect.m_effectPos={30,50,40};effect.m_duration=45;g_session.m_isMinEffect=true;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;effect.ApplyMagnumBreak();
+        auto it=effect.m_primList.begin();auto* first=*it++;auto* sphere=*it++;auto* last=*it;
+        check(effect.m_primList.size()==3&&first->m_type==PP_3DCIRCLE&&sphere->m_type==PP_3DSPHERE&&last->m_type==PP_3DCIRCLE&&rngDraws==draws,
+            "MagnumBreak emits ring sphere ring in original order without RNG despite reduced effects");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_MagnumBreak.wav"&&waveCalls[0].x==28&&waveCalls[0].y==0&&waveCalls[0].z==36
+            &&waveCalls[0].frameRng==draws,"MagnumBreak plays exact stored-origin horizontal wave before emission");
+        check(first->UsesReferenceCircle()&&last->UsesReferenceCircle()&&sphere->UsesReferenceSphere()
+            &&first->m_duration==45&&sphere->m_duration==45&&last->m_duration==30&&effect.m_duration==45,
+            "MagnumBreak binds reference primitive paths and distinct parent-based versus fixed durations");
+        check(first->m_renderFlag==0x201&&last->m_renderFlag==0x201&&first->m_latitude==90&&last->m_latitude==90
+            &&first->m_radiusSpeed==1.75f&&last->m_radiusSpeed==1.75f&&first->m_innerSize==12&&last->m_innerSize==12
+            &&first->m_radiusAccel==static_cast<float>(1.75/45*-0.5)&&last->m_radiusAccel==static_cast<float>(1.75/30*-0.5),
+            "MagnumBreak rings preserve no-depth flags source radii rotation and duration-dependent deceleration");
+        check(first->m_alpha==0&&last->m_alpha==0&&first->m_alphaSpeed==static_cast<float>(254.0*0.06666667)
+            &&last->m_alphaSpeed==first->m_alphaSpeed&&first->m_fadeOutCnt==30&&last->m_fadeOutCnt==15
+            &&first->m_numSegments==1&&first->m_segments[0].argb==0x00FFFFFF&&last->m_segments[0].transform.m[1][1]==1,
+            "MagnumBreak rings retain source alpha rise fade and full identity initial segment");
+        check(sphere->m_radiusSpeed==1.15f&&sphere->m_radiusAccel==static_cast<float>(1.15f/45.0*-0.5)&&sphere->m_longSpeed==3
+            &&sphere->m_alpha==0&&sphere->m_maxAlpha==254&&sphere->m_alphaSpeed==first->m_alphaSpeed&&sphere->m_fadeOutCnt==30&&sphere->m_arcAngle==36,
+            "MagnumBreak sphere preserves source radial deceleration rotation alpha and constructor arc");
+        check(g_texMgr.requests==std::vector<std::string>({"effect\\ring_yellow.tga","effect\\\xB4\xEB\xC6\xF8\xB9\xDF.tga","effect\\ring_yellow.tga"})
+            &&g_resMgr.requests.empty(),"MagnumBreak loads exact recovered sphere texture between two yellow ring textures");
+        sphere->m_alphaDelta=1;const double speed=static_cast<double>(sphere->m_radiusAccel)+sphere->m_radiusSpeed;sphere->OnProcess();
+        check(sphere->m_radiusSpeed==static_cast<float>(speed)&&sphere->m_radius==static_cast<float>(speed)&&sphere->m_longitude==3
+            &&sphere->m_pos.x==30&&sphere->m_pos.y==50&&sphere->m_pos.z==40,"MagnumBreak sphere integrates extended radial speed and source longitude at stored anchor");
+        check(sphere->m_alpha==static_cast<float>(254.0*0.06666667)&&(sphere->m_argb>>24)==16&&sphere->m_curMotion==0,
+            "MagnumBreak sphere updates packed alpha without invented texture animation");
+        const float radius=sphere->m_radius;const double nextSpeed=static_cast<double>(sphere->m_radiusAccel)+sphere->m_radiusSpeed;sphere->OnProcess();
+        check(sphere->m_radius==static_cast<float>(nextSpeed+radius)&&sphere->m_longitude==6&&rngDraws==draws,
+            "MagnumBreak sphere retains source extended radius sum on later updates without RNG");
+        first->m_alphaDelta=1;last->m_alphaDelta=1;first->OnProcess();last->OnProcess();
+        check(first->m_radius>last->m_radius&&first->m_size==first->m_radius&&last->m_size==last->m_radius
+            &&first->m_segments[0].alpha>0&&last->m_segments[0].pos.y==50,"MagnumBreak rings use distinct deceleration and reference growth alpha segment state");
+        const float beforeFade=sphere->m_alpha;sphere->m_stateCnt=30;sphere->OnProcess();
+        check(sphere->m_alphaSpeed==static_cast<float>(-beforeFade/15.0)&&sphere->m_alpha<beforeFade,
+            "MagnumBreak sphere preserves duration-minus-fifteen source fade");
+        effect.m_stateCnt=1;actor.m_pos={1,2,3};effect.ApplyMagnumBreak();
+        check(effect.m_primList.size()==3&&waveCalls.size()==1&&g_texMgr.requests.size()==3&&rngDraws==draws&&effect.m_effectPos.x==30,
+            "MagnumBreak nonzero calls preserve stored origin and do not repeat burst audio or resources");
+        sphere->m_stateCnt=45;check(sphere->OnProcess()==0&&sphere->m_stateCnt==46,"MagnumBreak sphere includes original final duration frame before termination");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;
     }
     {
         CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;

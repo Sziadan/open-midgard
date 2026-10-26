@@ -12,6 +12,8 @@ struct RECT { long left, top, right, bottom; };
 #include "ParticleActTypes.inc"
 struct vector3d { float x=0, y=0, z=0; };
 struct matrix { float m[4][4]{}; };
+void MatrixIdentity(matrix& m){m={};for(int i=0;i<4;++i)m.m[i][i]=1;}
+#include "ParticleMatrixBodies.inc"
 #include "EffectSegmentTypes.inc"
 struct CTexture {
     unsigned int m_w=4, m_h=4, m_updateWidth=2, m_updateHeight=2;
@@ -109,6 +111,7 @@ struct SilentRenderer {
     RPFace* BorrowNullRP() { pool.emplace_back();return &pool.back(); }
     void AddRP(RPFace* value,int flag) { submissions.push_back(*value);flags.push_back(flag); }
 } g_renderer;
+float GetRadian(int angle){return angle*3.14159265f/180.0f;}
 float GetCos(int angle) { return std::cos(angle*3.14159265f/180.0f); }
 float GetSin(int angle) { return std::sin(angle*3.14159265f/180.0f); }
 #include "ParticleRenderBodies.inc"
@@ -248,6 +251,30 @@ int main() {
         check(g_renderer.m_rpAlphaList.size()==2 && matches(g_renderer.m_rpAlphaList[0].second->m_verts[2],{14.5f,24,105+2*g_sinTable[360]}),
             "cylinder endpoint directly reads table index three-sixty");
         g_cosTable[360]=GetCos(360);
+    }
+    {
+        CEffectPrim sphere;sphere.m_pos={10,20,100};sphere.m_radius=5;sphere.m_arcAngle=90;sphere.m_longitude=10.75f;
+        sphere.m_texture={&g_texMgr.texture};sphere.m_argb=0x10FFFFFF;sphere.m_renderFlag=0x205;
+        auto renderSphere=[&](){g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaNoDepthList.clear();RenderReferenceSphere(sphere,view);};
+        auto point=[&](int pitch,int yaw){matrix m;MatrixIdentity(m);MatrixAppendXRotation(m,GetRadian(pitch));MatrixAppendYRotation(m,GetRadian(yaw));
+            return vector3d{m.m[2][0]*5+10,m.m[2][1]*5+20,m.m[2][2]*5+100};};
+        auto matches=[&](const tlvertex3d& vert,vector3d p){tlvertex3d expected;ProjectReferenceEffectVertex(p,view,expected);
+            return near(vert.x,expected.x)&&near(vert.y,expected.y)&&near(vert.oow,expected.oow);};
+        renderSphere();auto* a=g_renderer.m_rpAlphaList[0].second;auto* b=g_renderer.m_rpAlphaList[1].second;
+        check(g_renderer.m_rpAlphaList.size()==16,"MagnumBreak sphere emits two triangles across two latitude bands and four yaw wedges");
+        check(matches(a->m_verts[0],point(-90,10))&&matches(a->m_verts[1],point(0,10))&&matches(a->m_verts[2],point(-90,101)),
+            "MagnumBreak sphere first triangle retains latitude order longitude truncation and quarter-degree seam bias");
+        check(matches(b->m_verts[0],point(0,101))&&matches(b->m_verts[1],point(-90,101))&&matches(b->m_verts[2],point(0,10)),
+            "MagnumBreak sphere second triangle preserves source opposite-corner winding");
+        check(a->m_verts[0].tu==0&&a->m_verts[0].tv==0&&a->m_verts[1].tu==0&&a->m_verts[1].tv==0.5f
+            &&a->m_verts[2].tu==0.25f&&b->m_verts[0].tu==0.25f&&b->m_verts[0].tv==0.5f
+            &&g_renderer.m_rpAlphaList[8].second->m_verts[0].tu==0&&g_renderer.m_rpAlphaList[8].second->m_verts[0].tv==0.5f,
+            "MagnumBreak sphere maps full source UV grid and resets U for each latitude band");
+        check(a->tex==&g_texMgr.texture&&a->m_verts[0].color==0x10FFFFFF&&g_renderer.m_rpAlphaNoDepthList.empty(),
+            "MagnumBreak sphere uses texture zero stored packed color and hard-coded alpha flag one");
+        sphere.m_arcAngle=36;renderSphere();check(g_renderer.m_rpAlphaList.size()==100,"MagnumBreak constructor arc yields original hundred-triangle sphere mesh");
+        sphere.m_arcAngle=72.5f;renderSphere();check(g_renderer.m_rpAlphaList.size()==16,"MagnumBreak sphere preserves fractional arc loop bounds across both axes");
+        sphere.m_texture.clear();renderSphere();check(g_renderer.m_rpAlphaList.empty(),"MagnumBreak missing sphere texture emits no billboard or glow substitute");
     }
     {
         CEffectPrim ring;ring.m_pos={100,200,900};ring.m_radius=20;ring.m_size=5;ring.m_arcAngle=90;ring.m_argb=0xF7FFFFFF;

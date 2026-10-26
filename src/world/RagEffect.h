@@ -270,6 +270,7 @@ public:
     bool UsesReferenceQuadHorn() const;
     bool UsesReferenceFlash() const;
     bool UsesReferenceScreenCircle() const;
+    bool UsesReferenceSphere() const;
     void SetParticleResources(const char* sprName, const char* actName, bool actionFirst = false);
     void SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t) override;
     void Render(matrix* viewMatrix) override;
@@ -486,6 +487,7 @@ private:
     void ApplyHeavensDrive();
     void ApplyOverThrust();
     void ApplyTeleportation();
+    void ApplyMagnumBreak();
     void ApplyProvidence(const char* textureName);
     void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);
     void ApplyBeginCasting(const char* textureName, int option, bool playWave);
