@@ -214,6 +214,7 @@ void UpdateReferenceCallZone(CEffectPrim*);
 void UpdateReferenceWaterfallParticle(CEffectPrim*);
 void UpdateReferenceLightSphere(CEffectPrim*);
 bool UpdateReferenceGhost(CEffectPrim*);
+void UpdateReferenceSoulBreaker(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -330,6 +331,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_WATERFALLPARTICLE) { UpdateReferenceWaterfallParticle(this); return active; }
         if (m_type == PP_LIGHTSPHERE) { UpdateReferenceLightSphere(this); return active; }
         if (m_type == PP_GHOST) { UpdateReferenceGhost(this); return active; }
+        if (m_type == PP_SOULBREAKER) { UpdateReferenceSoulBreaker(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -772,6 +774,7 @@ __declspec(noinline) void RunCallZoneLifecycleChecks(CEffectPrim& prim, int& che
 __declspec(noinline) void RunWaterfallParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunLightSphereLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunGhostLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunSoulBreakerLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1343,6 +1346,64 @@ __declspec(noinline) void RunGhostLifecycleChecks(CEffectPrim& prim, int& checks
         "case 0x54 inactive GI still copies stale delta, shifts segments and advances the common tick while ignored AnimMotion completion is false");
     prim.m_particleActRes=oldActRes; g_resMgr.act.count=oldMotionCount;
     rngValues.clear(); rngCursor=0; g_isSkipFrame=oldSkipFrame;
+    RunSoulBreakerLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunSoulBreakerLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_SOULBREAKER; prim.m_stateCnt=0; prim.m_duration=1000;
+    for (auto& gi : prim.m_gi) gi={};
+    prim.m_pos={0,10,0}; prim.m_deltaPos={10,20,0};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=0; a.height[1]=2; a.alphaB=7;
+    a.sparkX=1; a.sparkY=2; a.sparkZ=3;
+    EffectGi& b=prim.m_gi[1]; b.life=1; b.process=1; b.height[1]=3; b.alphaB=4;
+    b.rotStart=90; b.sparkX=4; b.sparkZ=5;
+    EffectGi& c=prim.m_gi[2]; c.life=1; c.process=10; c.height[1]=4; c.alphaB=5;
+    c.rotStart=0; c.sparkX=6; c.sparkZ=7;
+    EffectGi& inactive=prim.m_gi[3]; inactive.life=2; inactive.process=20; inactive.height[1]=9; inactive.alphaB=11;
+    rngValues={0}; rngCursor=0; const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && a.process==1 && a.rotStart==345 && a.alphaB==7 && a.height[1]==2
+        && std::fabs(a.sparkX-(1+2*g_cosTable[345]))<0.0001f
+        && std::fabs(a.sparkZ-(3+2*g_sinTable[345]))<0.0001f
+        && b.process==2 && b.alphaB==14 && std::fabs(b.height[1]-3.06f)<0.0001f
+        && std::fabs(b.sparkX-(4+3.06f*g_cosTable[90]))<0.0001f
+        && c.process==11 && c.alphaB==0 && c.life==1 && std::fabs(c.height[1]-4.16f)<0.0001f
+        && std::fabs(c.sparkX-(6+4.16f))<0.0001f && inactive.process==20 && inactive.alphaB==11
+        && rngDraws-draws==1,
+        "case 0x56 updates four exact-life gates, initializes direction with one bounded RNG draw, grows/fades by phase and moves even on the death tick");
+
+    c.process=10; c.alphaB=4; c.height[1]=4; c.rotStart=0; c.sparkX=0; c.sparkZ=0;
+    prim.OnProcess();
+    check(c.process==11 && c.alphaB==0 && c.life==0 && std::fabs(c.height[1]-4.16f)<0.0001f
+        && std::fabs(c.sparkX-4.16f)<0.0001f,
+        "case 0x56 clears life only when post-subtraction alpha is negative and still applies that tick's movement");
+
+    for (auto& gi : prim.m_gi) gi={};
+    EffectGi& edge=prim.m_gi[0]; edge.life=1; edge.process=9; edge.height[1]=10; edge.alphaB=15;
+    edge.rotStart=0; edge.sparkX=1; prim.m_pos={0,0,0}; prim.m_deltaPos={1,0,0};
+    rngValues.clear(); rngCursor=0; const int edgeDraws=rngDraws;
+    prim.OnProcess();
+    check(edge.process==10 && edge.alphaB==25 && std::fabs(edge.height[1]-10.2f)<0.0001f
+        && std::fabs(edge.sparkX-11.2f)<0.0001f && rngDraws==edgeDraws,
+        "case 0x56 process 10 remains in the growth branch with strict process-1-only direction RNG");
+
+    edge.process=-2; edge.alphaB=31; edge.height[1]=12; edge.rotStart=75; edge.sparkX=40; edge.sparkZ=50;
+    prim.OnProcess();
+    check(edge.process==-1 && edge.alphaB==31 && edge.height[1]==12 && edge.rotStart==75
+        && edge.sparkX==40 && edge.sparkZ==50 && rngDraws==edgeDraws,
+        "case 0x56 post-increment nonpositive process skips all branch effects and movement");
+
+    edge.process=0; edge.alphaB=0; edge.height[1]=1; edge.rotStart=99; edge.sparkX=0; edge.sparkZ=0;
+    prim.m_pos={0,0,0}; prim.m_deltaPos={0,0,0}; rngValues={15}; rngCursor=0; const int zeroVectorDraws=rngDraws;
+    prim.OnProcess();
+    check(edge.rotStart==0 && edge.sparkX==1 && edge.sparkZ==0 && rngDraws-zeroVectorDraws==1,
+        "case 0x56 zero direction follows canonical EXE Get_Angle NaN loop behavior and then applies neutral angle jitter");
+    g_isSkipFrame=oldSkipFrame;
 }
 
 int main()

@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, 0x25 through 0x28, 0x2A-0x2E, 0x30, 0x33, 0x34, 0x3D, 0x43, 0x44, 0x45, 0x46, and 0x4A, 0x50, 0x51, and 0x54 now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
+Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, 0x25 through 0x28, 0x2A-0x2E, 0x30, 0x33, 0x34, 0x3D, 0x43, 0x44, 0x45, 0x46, and 0x4A, 0x50, 0x51, 0x54, and 0x56 now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
 
-Next action: source-compare case 0x56 against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
+Next action: source-compare case 0x57 against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
 
-Latest checkpoint (2026-10-26): `PP_GHOST` case 0x54 is implemented and branch-compared against readable Ref/dhxj, decompiled Ref, and canonical EXE. Inventory reports 30 source-only IDs; lifecycle suite passes 1,673 checks and all six registered CTest suites pass. x64 Release build passes. OldRO SHA-256 is `A5B8B407AB8280C49D587BD20C27A0F4FDC544957B93AEC5BDA4FB961215A9C3`; commit is pending. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `PP_SOULBREAKER` case 0x56 is implemented and branch-compared against readable Ref/dhxj, decompiled Ref, and canonical EXE. Inventory reports 29 source-only IDs; lifecycle suite passes 1,678 checks and all six registered CTest suites pass. x64 Release build passes. OldRO SHA-256 is `65DEBEC41A14D61CD3CF8B4F1C01A67FD3A24C8CF2E4F8E4DE410120F49023AF`; commit is pending. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26

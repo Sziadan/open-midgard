@@ -9042,6 +9042,55 @@ bool UpdateReferenceGhost(CEffectPrim* prim)
     return AnimateReferenceMotion(prim);
 }
 
+// Canonical executable Get_Angle at 0x63FED0; zero-vector behavior follows the EXE.
+int GetReferenceAngle(float moveX, float moveZ)
+{
+    const float length = std::sqrt(moveX * moveX + moveZ * moveZ);
+    const float normalizedZ = moveZ / length;
+    const float normalizedX = moveX / length;
+    int angle = 0;
+    while (normalizedX < g_cosTable[angle]) {
+        if (++angle > 180) {
+            angle = 180;
+            break;
+        }
+    }
+    return normalizedZ < 0.0f ? 360 - angle : angle;
+}
+
+// Ref/dhxj/RagEffect2.cpp:14111; canonical executable 0x6260F0 (case 0x56).
+void UpdateReferenceSoulBreaker(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.process == 1) {
+            const float deltaX = prim->m_deltaPos.x - prim->m_pos.x;
+            const float deltaZ = prim->m_deltaPos.z - prim->m_pos.z;
+            gi.rotStart = static_cast<short>(GetReferenceAngle(deltaX, deltaZ));
+            gi.rotStart = static_cast<short>(gi.rotStart + rand() % 31 - 15);
+            if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+            if (gi.rotStart < 0) gi.rotStart = static_cast<short>(gi.rotStart + 360);
+        } else if (gi.process <= 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 10);
+            gi.height[1] *= 1.02f;
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - 5);
+            gi.height[1] *= 1.04f;
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+                gi.life = 0;
+            }
+        }
+
+        gi.sparkX = static_cast<float>(gi.height[1] * g_cosTable[gi.rotStart] + gi.sparkX);
+        gi.sparkZ = static_cast<float>(gi.height[1] * g_sinTable[gi.rotStart] + gi.sparkZ);
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -10127,6 +10176,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_GHOST) {
         UpdateReferenceGhost(this); // Source case 0x54 ignores the handler's animation result.
+        return true;
+    }
+    if (m_type == PP_SOULBREAKER) {
+        UpdateReferenceSoulBreaker(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

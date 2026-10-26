@@ -244,3 +244,10 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 - The source assumes game mode/view/world/terrain objects are valid when the corresponding 0x200, 0x40, and pattern-4 branches run. `UpdateReference3DTexture` checks these pointers before reading them, matching this port’s established defensive handling. Under valid runtime state, branch order and effects are compared; null-object behavior remains intentionally safer than source and is not claimed as exact parity.
 
 - PP_MAPPARTICLE alias note (2026-10-26): current `EffectGi` retains the legacy vector Y fields at their original payload offsets as `arcBaselineY` (B-pre), `sparkY` (B-now), `vecTPreY`, and `vecTNowY`. `Ref/dhxj/Base/Util.h` confirms `random(n)` equals `n == 0 ? 0 : rand()%n`; no RNG mismatch is recorded for this helper.
+
+
+## Get_Angle zero-vector comparison for PP_SOULBREAKER (0x56) - 2026-10-26
+
+- `Ref/dhxj/RagEffect2.cpp:26215-26240` (`Get_Angle`) normalizes by `sqrt(move_x*move_x + move_z*move_z)` and scans using `move_x >= g_cosTable[ii]`. With a zero vector, the normalized values are NaN, every `>=` comparison is false, and the readable helper assigns 180.
+- `Ref/RagEffect2.cpp` decompilation and canonical `HighPriest.exe.c:465574-465602` (`Get_Angle`, 0x63FED0) normalize identically but use the inverse loop condition `normalizedX < g_cosTable[ii]`; NaN makes the first loop test false, then the Z sign branch returns angle 0. This is confirmed by the decompiled Ref and executable bodies matching.
+- The 0x56 implementation follows the canonical executable and decompiled Ref, returning angle 0 for a zero vector. For finite nonzero vectors the readable and decompiled conditions are equivalent and the branch maps match. Runtime frequency of a zero direction has not been established.
