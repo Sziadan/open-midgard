@@ -7018,6 +7018,138 @@ void RenderPokJuk(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+int GuardTableAngle(int angle)
+{
+    angle %= 360;
+    return angle < 0 ? angle + 360 : angle;
+}
+
+void GuardRingCorners(const EffectGi& gi, int rowAngle, int sliceAngle,
+    float radialExtent, float verticalOffset, int crossRadius, vector3d corners[4])
+{
+    const int row = GuardTableAngle(rowAngle);
+    int orientation = static_cast<int>(gi.rotStart) + sliceAngle;
+    if (orientation >= 360) orientation -= 360;
+    if (orientation < 0) orientation += 360;
+    int perpendicular = orientation - 90;
+    if (orientation - 90 >= 360) perpendicular = orientation - 450;
+    if (perpendicular < 0) perpendicular += 360;
+
+    const double radius = gi.maxHeight;
+    const double rowSin = g_sinTable[row];
+    const double rowCos = g_cosTable[row];
+    const double centerRadius = radialExtent;
+    const double centerX = g_cosTable[orientation] * rowCos * centerRadius;
+    const double centerZ = g_sinTable[orientation] * rowCos * centerRadius;
+    const double centerY = rowSin * centerRadius + verticalOffset;
+    const int crossAngle = GuardTableAngle(rowAngle + 90);
+    const double sinA = g_sinTable[crossAngle];
+    const double cosA = g_cosTable[crossAngle];
+    const double sinB = g_sinTable[perpendicular];
+    const double cosB = g_cosTable[perpendicular];
+    const double r = crossRadius;
+    const vector3d local[4] = {
+        { static_cast<float>(r * cosB - r * cosA * sinB), static_cast<float>(r * sinA), static_cast<float>(r * cosA * cosB + r * sinB) },
+        { static_cast<float>(-r * cosB - r * cosA * sinB), static_cast<float>(r * sinA), static_cast<float>(r * cosA * cosB - r * sinB) },
+        { static_cast<float>(-r * cosB + r * cosA * sinB), static_cast<float>(-r * sinA), static_cast<float>(-r * cosA * cosB - r * sinB) },
+        { static_cast<float>(r * cosB + r * cosA * sinB), static_cast<float>(-r * sinA), static_cast<float>(-r * cosA * cosB + r * sinB) },
+    };
+    for (int corner = 0; corner < 4; ++corner) {
+        corners[corner] = {
+            static_cast<float>(static_cast<double>(local[corner].x) + centerX),
+            static_cast<float>(static_cast<double>(local[corner].y) + centerY),
+            static_cast<float>(static_cast<double>(local[corner].z) + centerZ),
+        };
+    }
+}
+
+void SubmitGuardRect(const vector3d corners[4], const vector3d& translation,
+    const matrix& viewMatrix, CTexture* firstTexture, CTexture* secondTexture,
+    short alpha, unsigned char red, unsigned char green, unsigned char blue,
+    D3DBLEND destinationBlend, int renderFlags)
+{
+    const vector3d positions[2][3] = {
+        { AddVec3(corners[0], translation), AddVec3(corners[1], translation), AddVec3(corners[2], translation) },
+        { AddVec3(corners[3], translation), AddVec3(corners[2], translation), AddVec3(corners[0], translation) },
+    };
+    const float uvs[2][3][2] = {
+        { { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } },
+        { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 1.0f } },
+    };
+    CTexture* textures[2] = { firstTexture, secondTexture };
+    const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(alpha)) << 24)
+        | (static_cast<unsigned int>(red) << 16)
+        | (static_cast<unsigned int>(green) << 8)
+        | blue;
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        if (!textures[triangle]) continue;
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) return;
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = textures[triangle];
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = destinationBlend;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            ProjectReferenceEffectVertex(positions[triangle][vertex], viewMatrix, face->m_verts[vertex]);
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[triangle][vertex][0];
+            face->m_verts[vertex].tv = uvs[triangle][vertex][1];
+        }
+        g_renderer.AddRP(face, renderFlags);
+    }
+}
+
+void RenderGuard(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) continue;
+        for (int row = 0; row < 3; ++row) {
+            const int rowAngle = -45 + row * 45;
+            gi.distance = static_cast<float>(3 - (std::abs(row - 1)));
+            const int innerRadius = static_cast<int>(gi.distance);
+            for (int slice = 0; slice < 5; ++slice) {
+                const int sliceAngle = -90 + slice * 45;
+                vector3d corners[4]{};
+                const float firstRadius = gi.maxHeight;
+                GuardRingCorners(gi, rowAngle, sliceAngle, firstRadius,
+                    -(firstRadius + 2.0f), innerRadius, corners);
+                SubmitGuardRect(corners, prim.m_pos, viewMatrix,
+                    prim.m_texture.empty() ? nullptr : prim.m_texture[0],
+                    prim.m_texture.empty() ? nullptr : prim.m_texture[0],
+                    gi.alphaB, gi.flag[0] == 2 ? 255 : 205, gi.flag[0] == 2 ? 155 : 255,
+                    gi.flag[0] == 2 ? 0 : 205, D3DBLEND_ONE, static_cast<int>(prim.m_renderFlag));
+
+                const float secondRadius = gi.maxHeight + 0.2f;
+                GuardRingCorners(gi, rowAngle, sliceAngle, secondRadius,
+                    -gi.maxHeight, innerRadius, corners);
+                SubmitGuardRect(corners, prim.m_pos, viewMatrix,
+                    prim.m_texture.empty() ? nullptr : prim.m_texture[0],
+                    prim.m_texture.empty() ? nullptr : prim.m_texture[0],
+                    gi.alphaB, gi.flag[0] == 2 ? 255 : 155, 255,
+                    gi.flag[0] == 2 ? 155 : 155, D3DBLEND_ONE, static_cast<int>(prim.m_renderFlag));
+
+                const float thirdRadius = gi.maxHeight + gi.height[0] + 0.4f;
+                GuardRingCorners(gi, rowAngle, sliceAngle, thirdRadius,
+                    -gi.maxHeight, innerRadius, corners);
+                SubmitGuardRect(corners, prim.m_pos, viewMatrix,
+                    prim.m_texture.size() > 1 ? prim.m_texture[1] : nullptr,
+                    prim.m_texture.empty() ? nullptr : prim.m_texture[0],
+                    gi.alphaB, gi.flag[0] == 2 ? 255 : 225, gi.flag[0] == 2 ? 155 : 255,
+                    gi.flag[0] == 2 ? 0 : 225, D3DBLEND_INVSRCALPHA, static_cast<int>(prim.m_renderFlag));
+            }
+        }
+    }
+}
+
 void TeiHit1Corners(const EffectGi& gi, vector3d corners[4])
 {
     const double height = gi.height[1];
@@ -8357,6 +8489,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_POKJUK) {
         RenderPokJuk(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_GUARD) {
+        RenderGuard(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {

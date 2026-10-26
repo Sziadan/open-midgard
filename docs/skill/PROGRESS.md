@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer parity. `RenderCloud`, `RenderGumGang` (0x23), `RenderDoubleGumGang` (0x63), and `RenderPokJuk` (0x34) are implemented and checkpointed.
+Current work: WP5A renderer parity. `RenderCloud`, `RenderGumGang` (0x23), `RenderDoubleGumGang` (0x63), `RenderPokJuk` (0x34), and `RenderGuard` (0x3D) are implemented and checkpointed.
 
-Next action: compare `RenderGuard` (type 0x3D; Ref/RagEffect2.cpp:14737) branch-by-branch before implementation. The canonical executable dispatcher also confirms `RenderRainbow` (0x5D), `RenderTripleAttack` (0x45; anomalous decompiler matrix argument), and `RenderGroundSample` (0x70); GroundSample depends on map/ground queries. The Cloud producer/updater mismatch remains open: current weather scheduling/update builds segment state while reference `Cloud`/`PrimCloud` creates and advances four GI bands. Compare those producer/update functions before porting them. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: compare `RenderRainbow` (type 0x5D; Ref/RagEffect2.cpp:18647) branch-by-branch before implementation. The canonical executable dispatcher also confirms `RenderTripleAttack` (0x45; anomalous decompiler matrix argument) and `RenderGroundSample` (0x70); GroundSample depends on map/ground queries. The Cloud producer/updater mismatch remains open: current weather scheduling/update builds segment state while reference `Cloud`/`PrimCloud` creates and advances four GI bands. Compare those producer/update functions before porting them. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
-Latest checkpoint (2026-10-26): `RenderPokJuk` passed 11 mechanical branch comparisons. A source constant review also corrected TeiRect destination blend mapping across GumGang, DoubleGumGang and PokJuk. The focused particle suite passes 514 checks; all six C++ suites and seven Python index tests pass. The latest release deployed to OldRO with a matching executable hash. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `RenderGuard` passed nine mechanical branch comparisons. The focused particle suite passes 526 checks; all six C++ suites and seven Python index tests pass. The release deployed to OldRO with a matching executable hash. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26

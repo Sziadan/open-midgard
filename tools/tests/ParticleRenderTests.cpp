@@ -941,6 +941,53 @@ int main() {
         gi.alphaB=100;gi.life=0;RenderPokJuk(prim,view);
         check(g_renderer.submissions.empty(),"PokJuk skips bands whose life is not one");
     }
+    {
+        CTexture textures[2];CEffectPrim prim;prim.m_pos={10,20,130};prim.m_renderFlag=0x105;
+        prim.m_texture={&textures[0],&textures[1]};
+        EffectGi& gi=prim.m_gi[0];gi.life=1;gi.alphaB=100;gi.rotStart=0;gi.maxHeight=10;
+        gi.distance=99;gi.height[0]=2;gi.flag[0]=2;
+        g_renderer.submissions.clear();g_renderer.flags.clear();RenderGuard(prim,view);
+        check(g_renderer.submissions.size()==90,"Guard emits three tiers across three rows and five angular slices per live band");
+        if(g_renderer.submissions.size()==90) {
+            check(g_renderer.submissions[0].m_verts[0].color==0x64FF9B00u
+                &&g_renderer.submissions[2].m_verts[0].color==0x64FFFF9Bu
+                &&g_renderer.submissions[4].m_verts[0].color==0x64FF9B00u,
+                "Guard special color mode preserves all three tier tints and alphaB");
+            check(g_renderer.submissions[0].destAlphaMode==D3DBLEND_ONE
+                &&g_renderer.submissions[2].destAlphaMode==D3DBLEND_ONE
+                &&g_renderer.submissions[4].destAlphaMode==D3DBLEND_INVSRCALPHA
+                &&g_renderer.submissions[4].tex==&textures[1]&&g_renderer.submissions[5].tex==&textures[0],
+                "Guard uses source tier blend and split texture selection");
+            tlvertex3d expected;ProjectReferenceEffectVertex({8.0f,2.34314575f,121.5147186f},view,expected);
+            check(near(g_renderer.submissions[0].m_verts[0].x,expected.x)
+                &&near(g_renderer.submissions[0].m_verts[0].y,expected.y),
+                "Guard first tier preserves source row/slice transform and parent translation");
+            ProjectReferenceEffectVertex({12.0f,2.34314575f,121.5147186f},view,expected);
+            check(near(g_renderer.submissions[0].m_verts[1].x,expected.x)
+                &&near(g_renderer.submissions[0].m_verts[1].y,expected.y),
+                "Guard second corner preserves the source signed cross-section");
+            ProjectReferenceEffectVertex({12.0f,-0.4857864f,124.3431458f},view,expected);
+            check(near(g_renderer.submissions[0].m_verts[2].x,expected.x)
+                &&std::fabs(g_renderer.submissions[0].m_verts[2].y-expected.y)<0.001f,
+                "Guard third corner preserves source reverse-side geometry");
+            ProjectReferenceEffectVertex({8.0f,4.201724f,121.3734f},view,expected);
+            check(std::fabs(g_renderer.submissions[2].m_verts[0].x-expected.x)<0.001f
+                &&std::fabs(g_renderer.submissions[2].m_verts[0].y-expected.y)<0.001f,
+                "Guard second tier uses maxHeight plus 0.2 and its source vertical offset");
+            ProjectReferenceEffectVertex({8.0f,2.646191f,119.8178f},view,expected);
+            check(std::fabs(g_renderer.submissions[4].m_verts[0].x-expected.x)<0.001f
+                &&std::fabs(g_renderer.submissions[4].m_verts[0].y-expected.y)<0.001f,
+                "Guard third tier includes height[0] and its source inverse-alpha surface");
+            check(g_renderer.flags[0]==0x105&&g_renderer.flags[89]==0x105,
+                "Guard forwards primitive render flags for all submissions");
+        }
+        check(gi.distance==2.0f,"Guard preserves the source distance scratch mutation ending at two");
+        gi.flag[0]=0;gi.alphaB=0;g_renderer.submissions.clear();RenderGuard(prim,view);
+        check(g_renderer.submissions.size()==90&&g_renderer.submissions[0].m_verts[0].color==0x00CDFFCDu,
+            "Guard has no alphaB gate and selects ordinary tier colors");
+        gi.life=0;g_renderer.submissions.clear();RenderGuard(prim,view);
+        check(g_renderer.submissions.empty(),"Guard skips bands whose life is not one");
+    }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;
 }
