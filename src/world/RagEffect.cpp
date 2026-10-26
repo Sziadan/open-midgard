@@ -7702,9 +7702,8 @@ bool UpdateReferenceGravityParticle(CEffectPrim* prim)
     return AnimateReferenceParticle(prim);
 }
 
-// Ref/RagEffectPrim.cpp:77-224 (0x641760), reachable SandWind/Hit2:
-// projected anchor, size acceleration and pattern-8 drift. ColdHit adds the
-// source change-point controls and shares this updater for PP_2DQUAD.
+// Ref/RagEffectPrim.cpp:77-224 (0x641760), source cases 0 and 2:
+// screen/absolute anchors, dimension stop, alpha bounce, RGB and drift.
 bool UpdateReferenceScreenTexture(CEffectPrim* prim)
 {
     if (prim->m_stateCnt == prim->m_changePoint) {
@@ -7715,14 +7714,32 @@ bool UpdateReferenceScreenTexture(CEffectPrim* prim)
         if (prim->m_changeHeightAccel != 0.000099999997f) prim->m_heightAccel = prim->m_changeHeightAccel;
         if (prim->m_changeAccel != 0.000099999997f) prim->m_accel = prim->m_changeAccel;
     }
-    const vector3d anchor = prim->m_master->ScreenPosition();
-    prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
-    prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
+    const int pattern = prim->m_pattern;
+    if ((pattern & 4) != 0) {
+        prim->m_pos.x = prim->m_deltaPos2.x;
+        prim->m_pos.y = prim->m_deltaPos2.y;
+    } else {
+        const vector3d anchor = prim->m_master->ScreenPosition();
+        prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
+        prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
+    }
     prim->m_speed += prim->m_accel;
     const double rollSpeed = static_cast<double>(prim->m_rollAccel) + prim->m_rollSpeed;
     prim->m_rollSpeed = static_cast<float>(rollSpeed);
     prim->m_widthSpeed += prim->m_widthAccel;
     prim->m_heightSpeed += prim->m_heightAccel;
+    if ((pattern & 2) != 0 && prim->m_stateCnt >= prim->m_count) {
+        prim->m_widthAccel = 0.0f;
+        prim->m_widthSpeed = 0.0f;
+        prim->m_heightAccel = 0.0f;
+        prim->m_heightSpeed = 0.0f;
+    }
+    if ((pattern & 0x80) != 0) {
+        if ((prim->m_alphaSpeed < 0.0f && prim->m_alpha <= prim->m_minAlpha)
+            || (prim->m_alphaSpeed >= 0.0f && prim->m_alpha >= prim->m_maxAlpha)) {
+            prim->m_alphaSpeed *= -1.0f;
+        }
+    }
     prim->m_roll = static_cast<float>(rollSpeed + prim->m_roll);
     prim->m_widthSize += prim->m_widthSpeed;
     prim->m_heightSize += prim->m_heightSpeed;
@@ -7731,7 +7748,14 @@ bool UpdateReferenceScreenTexture(CEffectPrim* prim)
     prim->m_deltaPos.y = static_cast<float>(deltaY);
     prim->m_pos.x += prim->m_deltaPos.x;
     prim->m_pos.y = static_cast<float>(deltaY+prim->m_pos.y);
-    if ((prim->m_pattern & 8) != 0 && prim->m_stateCnt % prim->m_count == 0) {
+    prim->m_red += prim->m_redSpeed;
+    prim->m_green += prim->m_greenSpeed;
+    prim->m_blue += prim->m_blueSpeed;
+    if (prim->m_red > 255) prim->m_red = 0; else if (prim->m_red < 0) prim->m_red = 255;
+    if (prim->m_green > 255) prim->m_green = 255; else if (prim->m_green < 0) prim->m_green = 0;
+    if (prim->m_blue > 255) prim->m_blue = 255; else if (prim->m_blue < 0) prim->m_blue = 0;
+    prim->m_tintColor = RGB(static_cast<u8>(prim->m_red), static_cast<u8>(prim->m_green), static_cast<u8>(prim->m_blue));
+    if ((pattern & 8) != 0 && prim->m_stateCnt % prim->m_count == 0) {
         prim->m_longitude = static_cast<float>(prim->m_longitude - 8.0 + rand() % 16);
         prim->m_count = rand() % 10 + 10;
     }
@@ -8583,6 +8607,9 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_2DTEXTUREORBIT) {
         return UpdateReference2DTextureOrbit(this);
     }
+    if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
+        return UpdateReferenceScreenTexture(this);
+    }
     if (m_type == PP_GROUNDSAMPLE) {
         UpdateGroundSample(this);
         return true;
@@ -8820,7 +8847,7 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (UsesReferenceScreenTexture() || UsesReferenceScreenQuad()) {
         return UpdateReferenceScreenTexture(this);
     }
-    if (m_type == PP_2DTEXTURE || m_type == PP_2DFLASH || m_type == PP_2DCIRCLE) {
+    if (m_type == PP_2DFLASH || m_type == PP_2DCIRCLE) {
         return UpdateScreenTexturePrimitive(this);
     }
     if (m_type == PP_PORTAL) {

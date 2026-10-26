@@ -259,7 +259,7 @@ struct CEffectPrim : CGameObject {
         if (UsesReferenceScreenCircle()) UpdateReferenceScreenCircle(this);
         if (UsesReferenceSphere()) UpdateReferenceSphere(this);
         if (m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle() && !UpdateReferenceGravityParticle(this)) return false;
-        if ((UsesReferenceScreenTexture() || UsesReferenceScreenQuad()) && !UpdateReferenceScreenTexture(this)) return false;
+        if ((m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) && !UpdateReferenceScreenTexture(this)) return false;
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
         if (UsesReferenceTexture()) UpdateReferenceCrossTexture(this);
         if (UsesReferenceCylinder() && !UpdateReferenceCylinderState(this)) return false;
@@ -654,7 +654,8 @@ int main()
         check(prim.OnProcess() == 0 && prim.m_stateCnt == 2, "primitive cannot extend duration for alpha/bands");
         prim.m_stateCnt = 0; prim.m_duration = 10; prim.updates = 0; g_isSkipFrame = 0;
         check(prim.OnProcess() == 1 && prim.updates == 0, "primitive skip gate pauses updates");
-        prim.m_type = PP_2DTEXTURE; prim.m_gi[0].life = 99;
+        prim.m_type = PP_2DTEXTURE; prim.m_gi[0].life = 99; prim.m_animSpeed = 1;
+        prim.m_repeatAnim = true; prim.m_totalTexture = 1;
         check(prim.OnProcess() == 1 && prim.updates == 1, "life-99 texture bypasses primitive gate");
         prim.m_type = PP_3DCROSSTEXTURE;
         check(prim.OnProcess() == 1 && prim.updates == 2, "reference primitive 0x10 bypasses gate with life 99");
@@ -1120,6 +1121,57 @@ int main()
         texturePrim.m_rollSpeed = 0; texturePrim.m_rollAccel = 0;
         check(texturePrim.OnProcess() == 0 && texturePrim.m_curMotion == 2 && texturePrim.m_stateCnt == 1,
             "OnProcess case 0x01 nonrepeat texture completion returns before the shared frame tick");
+        texturePrim.m_type = PP_2DTEXTURE; texturePrim.m_stateCnt = 10; texturePrim.m_pattern = 0x8E;
+        texturePrim.m_count = 10; texturePrim.m_deltaPos2 = {5,-6,0}; texturePrim.m_deltaPos = {2,3,0};
+        texturePrim.m_pos = {}; texturePrim.m_speed = 1; texturePrim.m_accel = 0.5f; texturePrim.m_longitude = 90;
+        texturePrim.m_roll = 10; texturePrim.m_rollSpeed = 1; texturePrim.m_rollAccel = 2;
+        texturePrim.m_widthSize = 3; texturePrim.m_widthSpeed = 2; texturePrim.m_widthAccel = 1;
+        texturePrim.m_heightSize = 4; texturePrim.m_heightSpeed = 2; texturePrim.m_heightAccel = 1;
+        texturePrim.m_alpha = 0; texturePrim.m_alphaSpeed = -5; texturePrim.m_minAlpha = 0;
+        texturePrim.m_maxAlpha = 100; texturePrim.m_fadeOutCnt = -1;
+        texturePrim.m_red = 255; texturePrim.m_green = 0; texturePrim.m_blue = 255;
+        texturePrim.m_redSpeed = 1; texturePrim.m_greenSpeed = -1; texturePrim.m_blueSpeed = 1;
+        texturePrim.m_animSpeed = 1; texturePrim.m_totalTexture = 3; texturePrim.m_curMotion = 2;
+        texturePrim.m_repeatAnim = true; rngValues = {15,4}; rngCursor = 0; const int textureRngStart = rngDraws;
+        check(texturePrim.OnProcess() == 1 && rngDraws - textureRngStart == 2
+            && texturePrim.m_pos.x == 8.5f && std::fabs(texturePrim.m_pos.y + 3.0f) < 0.00001f
+            && texturePrim.m_widthSize == 3 && texturePrim.m_widthSpeed == 0 && texturePrim.m_widthAccel == 0
+            && texturePrim.m_heightSize == 4 && texturePrim.m_heightSpeed == 0 && texturePrim.m_heightAccel == 0
+            && texturePrim.m_roll == 13 && texturePrim.m_longitude == 97 && texturePrim.m_count == 14
+            && texturePrim.m_alpha == 5 && texturePrim.m_alphaSpeed == 5
+            && texturePrim.m_red == 0 && texturePrim.m_green == 0 && texturePrim.m_blue == 255
+            && texturePrim.m_tintColor == RGB(0,0,255) && texturePrim.m_curMotion == 0
+            && texturePrim.m_stateCnt == 11,
+            "OnProcess case 0x00 pattern 4/2/0x80/8 preserves absolute anchor, dimension stop, alpha bounce, RGB clamps, RNG order and repeat wrap");
+        texturePrim.m_pattern = 0; texturePrim.m_stateCnt = 11; texturePrim.m_animSpeed = 1;
+        texturePrim.m_curMotion = 2; texturePrim.m_repeatAnim = false; texturePrim.m_totalTexture = 3;
+        texturePrim.m_speed = 0; texturePrim.m_accel = 0; texturePrim.m_deltaPos = {};
+        texturePrim.m_redSpeed = 0; texturePrim.m_greenSpeed = 0; texturePrim.m_blueSpeed = 0;
+        check(texturePrim.OnProcess() == 0 && texturePrim.m_curMotion == 3 && texturePrim.m_stateCnt == 11,
+            "OnProcess case 0x00 nonrepeat animation completion returns before shared frame tick");
+        texturePrim.m_type = PP_2DTEXTURE; texturePrim.m_stateCnt = 20; texturePrim.m_pattern = 0;
+        texturePrim.m_changePoint = 20; texturePrim.m_changeWidthSpeed = 2; texturePrim.m_changeHeightSpeed = 3;
+        texturePrim.m_changeSpeed = 4; texturePrim.m_changeWidthAccel = 5;
+        texturePrim.m_changeHeightAccel = 6; texturePrim.m_changeAccel = 7;
+        texturePrim.m_widthSpeed = 1; texturePrim.m_heightSpeed = 2; texturePrim.m_speed = 3;
+        texturePrim.m_widthSize = 10; texturePrim.m_heightSize = 20;
+        texturePrim.m_widthAccel = 0; texturePrim.m_heightAccel = 0; texturePrim.m_accel = 0;
+        texturePrim.m_deltaPos = {}; texturePrim.m_deltaPos2 = {}; texturePrim.m_longitude = 0;
+        texturePrim.m_animSpeed = 100; texturePrim.m_fadeOutCnt = -1;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_speed == 11
+            && texturePrim.m_widthSpeed == 7 && texturePrim.m_widthSize == 17
+            && texturePrim.m_heightSpeed == 9 && texturePrim.m_heightSize == 29
+            && texturePrim.m_deltaPos.x == 0 && texturePrim.m_deltaPos.y == -11
+            && texturePrim.m_pos.x == 100 && texturePrim.m_pos.y == 189 && texturePrim.m_stateCnt == 21,
+            "OnProcess case 0x00 applies all six source change-point scalars before speed, dimensions and screen motion");
+        texturePrim.m_type = PP_2DQUAD; texturePrim.m_stateCnt = 12; texturePrim.m_pattern = 0;
+        texturePrim.m_deltaPos2 = {1,2,0}; texturePrim.m_deltaPos = {}; texturePrim.m_speed = 0;
+        texturePrim.m_accel = 0;
+        texturePrim.m_longitude = 0; texturePrim.m_animSpeed = 2; texturePrim.m_curMotion = 0;
+        texturePrim.m_repeatAnim = true; texturePrim.m_totalTexture = 3;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_pos.x == 101 && texturePrim.m_pos.y == 202
+            && texturePrim.m_stateCnt == 13,
+            "OnProcess case 0x02 routes every 2D quad through the source master-projected texture path");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

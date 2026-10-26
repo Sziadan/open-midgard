@@ -72,7 +72,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 62 and {0x01, 0x04, 0x0E, 0x11, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 63 and {0x00, 0x01, 0x02, 0x04, 0x0E, 0x11, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -197,6 +197,77 @@ check("case 0x01 source-to-implementation anchor, integration, orbit and animati
       < current_orbit.index("prim->m_pos.x =")
       < current_orbit.index("ProcessReferenceParticleAlpha(prim);")
       < current_orbit.index("const int motion = ++prim->m_curMotion;"))
+source_texture = body(REF, "bool __thiscall CEffectPrim::Prim2DTexture(CEffectPrim *this)\n{")
+exe_texture = body(EXE, "bool __thiscall CEffectPrim::Prim2DTexture(CEffectPrim *this)\n{")
+current_texture = body(CURRENT, "bool UpdateReferenceScreenTexture(CEffectPrim* prim)")
+check("source Prim2DTexture Ref/EXE bodies match and cases 0/2 route unconditionally",
+      compact(source_texture) == compact(exe_texture)
+      and re.search(r"case 0:\s*case 2:\s*result = CEffectPrim::Prim2DTexture\(this\);", source_dispatch) is not None
+      and "if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {\n        return UpdateReferenceScreenTexture(this);" in current_dispatch)
+texture_branch_pairs = [
+    ("if ( m_ChangeWidthSpeed != 0.000099999997 )\n      this->m_widthSpeed = m_ChangeWidthSpeed;",
+     "if (prim->m_changeWidthSpeed != 0.000099999997f) prim->m_widthSpeed = prim->m_changeWidthSpeed;"),
+    ("if ( m_ChangeHeightSpeed != 0.000099999997 )\n      this->m_heightSpeed = m_ChangeHeightSpeed;",
+     "if (prim->m_changeHeightSpeed != 0.000099999997f) prim->m_heightSpeed = prim->m_changeHeightSpeed;"),
+    ("if ( m_ChangeSpeed != 0.000099999997 )\n      this->m_speed = m_ChangeSpeed;",
+     "if (prim->m_changeSpeed != 0.000099999997f) prim->m_speed = prim->m_changeSpeed;"),
+    ("if ( m_ChangeWidthAccel != 0.000099999997 )\n      this->m_widthAccel = m_ChangeWidthAccel;",
+     "if (prim->m_changeWidthAccel != 0.000099999997f) prim->m_widthAccel = prim->m_changeWidthAccel;"),
+    ("if ( m_ChangeHeightAccel != 0.000099999997 )\n      this->m_heightAccel = m_ChangeHeightAccel;",
+     "if (prim->m_changeHeightAccel != 0.000099999997f) prim->m_heightAccel = prim->m_changeHeightAccel;"),
+    ("if ( m_ChangeAccel != 0.000099999997 )\n      this->m_accel = m_ChangeAccel;",
+     "if (prim->m_changeAccel != 0.000099999997f) prim->m_accel = prim->m_changeAccel;"),
+    ("if ( (m_pattern & 4) != 0 )", "if ((pattern & 4) != 0)"),
+    ("if ( (m_pattern & 2) != 0 && this->m_stateCnt >= this->m_count )",
+     "if ((pattern & 2) != 0 && prim->m_stateCnt >= prim->m_count)"),
+    ("if ( (m_pattern & 0x80u) != 0 )", "if ((pattern & 0x80) != 0)"),
+    ("if ( m_alpha > this->m_minAlpha )", "prim->m_alpha <= prim->m_minAlpha"),
+    ("else if ( m_alpha < this->m_maxAlpha )", "prim->m_alpha >= prim->m_maxAlpha"),
+    ("this->m_speed = this->m_accel + this->m_speed;", "prim->m_speed += prim->m_accel;"),
+    ("this->m_deltaPos.x = GetSin((__int64)this->m_longitude) * this->m_speed + this->m_deltaPos.x;",
+     "GetSin(static_cast<int>(prim->m_longitude))) * prim->m_speed + prim->m_deltaPos.x"),
+    ("this->m_deltaPos.y = v18;", "prim->m_deltaPos.y = static_cast<float>(deltaY);"),
+    ("this->m_pos.x = v21;", "prim->m_pos.x += prim->m_deltaPos.x;"),
+    ("this->m_pos.y = v18 + this->m_pos.y;", "prim->m_pos.y = static_cast<float>(deltaY+prim->m_pos.y);"),
+    ("if ( v19 <= 255 )", "if (prim->m_red > 255) prim->m_red = 0;"),
+    ("if ( v19 < 0 )\n      this->m_red = 255;", "if (prim->m_red < 0) prim->m_red = 255;"),
+    ("if ( v22 <= 255 )", "if (prim->m_green > 255) prim->m_green = 255;"),
+    ("if ( v22 < 0 )\n      this->m_green = 0;", "if (prim->m_green < 0) prim->m_green = 0;"),
+    ("if ( m_blue <= 255 )", "if (prim->m_blue > 255) prim->m_blue = 255;"),
+    ("if ( m_blue < 0 )\n      this->m_blue = 0;", "if (prim->m_blue < 0) prim->m_blue = 0;"),
+    ("if ( (this->m_pattern & 8) != 0 && !(this->m_stateCnt % this->m_count) )",
+     "if ((pattern & 8) != 0 && prim->m_stateCnt % prim->m_count == 0)"),
+    ("this->m_longitude = this->m_longitude - 8.0 + (double)(rand() % 16);",
+     "prim->m_longitude = static_cast<float>(prim->m_longitude - 8.0 + rand() % 16);"),
+    ("this->m_count = rand() % 10 + 10;", "prim->m_count = rand() % 10 + 10;"),
+    ("if ( this->m_stateCnt % this->m_animSpeed )\n    return 1;", "if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;"),
+    ("this->m_curMotion = v25 % this->m_totalTexture;", "prim->m_curMotion %= prim->m_totalTexture;"),
+    ("return v25 != this->m_totalTexture;", "return prim->m_curMotion != prim->m_totalTexture;"),
+]
+check("case 0x02 source-to-implementation predicates, RGB, RNG and animation effects are paired",
+      all(compact(source_branch) in compact(source_texture)
+          and compact(current_branch) in compact(current_texture)
+          for source_branch, current_branch in texture_branch_pairs)
+      and current_texture.index("if ((pattern & 4) != 0)")
+      < current_texture.index("prim->m_speed += prim->m_accel;")
+      < current_texture.index("if ((pattern & 2) != 0")
+      < current_texture.index("if ((pattern & 0x80) != 0)")
+      < current_texture.index("prim->m_roll =")
+      < current_texture.index("prim->m_deltaPos.x =")
+      < current_texture.index("prim->m_red += prim->m_redSpeed;")
+      < current_texture.index("if ((pattern & 8) != 0")
+      < current_texture.index("ProcessReferenceParticleAlpha(prim);")
+      < current_texture.index("++prim->m_curMotion;")
+      and source_texture.index("if ( (m_pattern & 4) != 0 )")
+      < source_texture.index("this->m_speed = this->m_accel + this->m_speed;")
+      < source_texture.index("if ( (m_pattern & 2) != 0")
+      < source_texture.index("if ( (m_pattern & 0x80u) != 0 )")
+      < source_texture.index("this->m_roll = v11 + this->m_roll;")
+      < source_texture.index("this->m_deltaPos.x = GetSin")
+      < source_texture.index("this->m_red = v16;")
+      < source_texture.index("if ( (this->m_pattern & 8) != 0")
+      < source_texture.index("CEffectPrim::ProcessAlpha(this);")
+      < source_texture.index("if ( this->m_stateCnt % this->m_animSpeed )"))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)
