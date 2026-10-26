@@ -6566,6 +6566,93 @@ void RenderLineLink(const CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void IntimidateTowardScreen(vector3d corners[4], int rotationX, int rotationYZ)
+{
+    for (int i = 0; i < 4; ++i) {
+        const double y = corners[i].y;
+        const double z = corners[i].z;
+        corners[i].z = static_cast<float>(z * g_cosTable[rotationYZ] - y * g_sinTable[rotationYZ]);
+        corners[i].y = static_cast<float>(z * g_sinTable[rotationYZ] + y * g_cosTable[rotationYZ]);
+    }
+    for (int i = 0; i < 4; ++i) {
+        const double x = corners[i].x;
+        const double z = corners[i].z;
+        corners[i].x = static_cast<float>(x * g_cosTable[rotationX] - z * g_sinTable[rotationX]);
+        corners[i].z = static_cast<float>(x * g_sinTable[rotationX] + z * g_cosTable[rotationX]);
+    }
+}
+
+void IntimidateCorners(const EffectGi& gi, vector3d corners[4])
+{
+    const int angleXZ = static_cast<int>(gi.height[2]);
+    int angle = gi.rotStart;
+    for (int i = 0; i < 4; ++i) {
+        const double radius = gi.height[1];
+        const double radialX = static_cast<double>(g_cosTable[angle]) * radius;
+        corners[i].y = static_cast<float>(static_cast<double>(g_sinTable[angle]) * radius);
+        corners[i].x = static_cast<float>(static_cast<double>(g_cosTable[angleXZ]) * radialX);
+        corners[i].z = static_cast<float>(static_cast<double>(g_sinTable[angleXZ]) * radialX);
+        angle += 90;
+        if (angle >= 360) {
+            angle -= 360;
+        }
+    }
+    if (gi.flag[0] == 2) {
+        int angle = gi.rotStart;
+        for (int i = 0; i < 4; ++i) {
+            corners[i].y = 0.0f;
+            corners[i].x = static_cast<float>(static_cast<double>(g_cosTable[angle]) * gi.height[1]);
+            corners[i].z = static_cast<float>(static_cast<double>(g_sinTable[angle]) * gi.height[1]);
+            angle += 90;
+            if (angle >= 360) {
+                angle -= 360;
+            }
+        }
+    }
+}
+
+vector3d IntimidateCenter(const EffectGi& gi)
+{
+    const float fullX = static_cast<float>(static_cast<double>(g_cosTable[gi.fullDisplayAngle]) * gi.distance);
+    const float fullY = static_cast<float>(static_cast<double>(g_sinTable[gi.fullDisplayAngle]) * gi.distance);
+    return {static_cast<float>(static_cast<double>(g_cosTable[gi.riseAngle]) * fullX), fullY,
+        static_cast<float>(static_cast<double>(g_sinTable[gi.riseAngle]) * fullX)};
+}
+
+void RenderIntimidate(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (int band = 0; band < 4; ++band) {
+        const EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        vector3d corners[4]{};
+        IntimidateCorners(gi, corners);
+        if (gi.flag[0] == 2) {
+            IntimidateTowardScreen(corners, prim.m_gi[0].alphaT, prim.m_gi[1].alphaT);
+        }
+        const vector3d center = IntimidateCenter(gi);
+        for (vector3d& corner : corners) {
+            corner.x = static_cast<float>(static_cast<double>(corner.x) + center.x + gi.sparkX);
+            corner.y = static_cast<float>(static_cast<double>(corner.y) + center.y);
+            corner.y = static_cast<float>(static_cast<double>(corner.y) + gi.sparkY);
+            corner.z = static_cast<float>(static_cast<double>(corner.z) + center.z);
+            corner.z = static_cast<float>(static_cast<double>(corner.z) + gi.sparkZ);
+        }
+        unsigned int tint = 0;
+        switch (gi.flag[0]) {
+        case 0: tint = 0x006496FFu; break;
+        case 1: tint = 0x00FAFA9Bu; break;
+        case 2: tint = 0x00FA6464u; break;
+        default: continue;
+        }
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | tint;
+        SubmitWorldTeiRect(corners[0], corners[1], corners[2], corners[3], viewMatrix, texture, color,
+            0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+    }
+}
+
 // Ref/RagEffectPrim.cpp:5679, 6377. The world owns primitive objects;
 // the parent's list only tracks attachments.
 // HighPriest.exe.c:451706-451754 (0x625C30). Counter belongs to OnProcess.
@@ -7716,6 +7803,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_LINELINK) {
         RenderLineLink(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_INTIMIDATE) {
+        RenderIntimidate(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {

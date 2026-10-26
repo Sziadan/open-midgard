@@ -12,6 +12,14 @@ struct RECT { long left, top, right, bottom; };
 #include "ParticleActTypes.inc"
 struct vector3d { float x=0, y=0, z=0; };
 struct matrix { float m[4][4]{}; };
+struct EffectGi {
+    short alphaB=0, alphaT=0, fullDisplayAngle=0, rotStart=0, riseAngle=0;
+    float distance=0.0f;
+    std::array<float,21> height{};
+    std::array<unsigned char,21> flag{};
+    float sparkX=0.0f,sparkY=0.0f,sparkZ=0.0f;
+    unsigned char life=0;
+};
 void MatrixIdentity(matrix& m){m={};for(int i=0;i<4;++i)m.m[i][i]=1;}
 #include "ParticleMatrixBodies.inc"
 #include "EffectSegmentTypes.inc"
@@ -127,6 +135,7 @@ vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.
 #include "WindSampleBody.inc"
 #include "GrandCross2CornersBody.inc"
 #include "LineLinkGeometryBody.inc"
+#include "IntimidateRenderGeometryBody.inc"
 #include "ReferenceTriangleQueueBodies.inc"
 
 int main() {
@@ -228,6 +237,38 @@ int main() {
     check(LineLinkHeading(1.0f,0.0f)==0 && LineLinkHeading(0.0f,1.0f)==90
         && LineLinkHeading(-1.0f,0.0f)==180 && LineLinkHeading(0.0f,-1.0f)==270,
         "LineLink heading search matches all four cardinal directions");
+    for(int angle:{0,30,90,180,270}) {
+        EffectGi gi{};gi.height[1]=12.0f;gi.height[2]=37.0f;gi.rotStart=static_cast<short>(angle);
+        vector3d corners[4]{};IntimidateCorners(gi,corners);
+        for(int i=0;i<4;++i) {
+            const int rotation=(angle+i*90)%360;
+            const double radial=GetCos(rotation)*gi.height[1];
+            check(near(corners[i].x,GetCos(37)*radial)&&near(corners[i].y,GetSin(rotation)*gi.height[1])
+                && near(corners[i].z,GetSin(37)*radial),
+                "Intimidate ring corner matches source rotational and pitch formula");
+        }
+    }
+    {
+        EffectGi gi{};gi.height[1]=5.0f;gi.height[2]=70.0f;gi.rotStart=315;gi.flag[0]=2;
+        vector3d corners[4]{};IntimidateCorners(gi,corners);
+        check(near(corners[0].x,GetCos(315)*5.0)&&near(corners[0].y,0.0f)&&near(corners[0].z,GetSin(315)*5.0)
+            && near(corners[1].x,GetCos(45)*5.0)&&near(corners[1].z,GetSin(45)*5.0),
+            "Intimidate flag-2 rebuilds a flat ring before screen-facing rotation");
+        IntimidateTowardScreen(corners,35,20);
+        const double y=0.0,z=GetSin(315)*5.0;
+        const double rotatedZ=z*GetCos(20)-y*GetSin(20);
+        check(near(corners[0].z,GetCos(315)*5.0*GetSin(35)+rotatedZ*GetCos(35))
+            && near(corners[0].x,GetCos(315)*5.0*GetCos(35)-rotatedZ*GetSin(35)),
+            "Intimidate screen-facing branch applies source YZ then XZ rotations in order");
+    }
+    {
+        EffectGi gi{};gi.distance=9.0f;gi.fullDisplayAngle=120;gi.riseAngle=35;
+        const vector3d center=IntimidateCenter(gi);
+        const double fullX=GetCos(120)*9.0;
+        check(near(center.x,GetCos(35)*fullX)&&near(center.y,GetSin(120)*9.0)
+            && near(center.z,GetSin(35)*fullX),
+            "Intimidate band center uses full-display then rise rotation");
+    }
     const int inverseSizes[]={0,2,3,12,13,14,100};
     for(int size=0;size<=100;++size) {
         bool inverse=false;for(int value:inverseSizes)inverse|=size==value;

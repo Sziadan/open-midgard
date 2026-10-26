@@ -116,6 +116,8 @@ extract_body(grand_cross2_corners "${effect_source}" "void GrandCross2Corners(" 
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/GrandCross2CornersBody.inc" "${grand_cross2_corners}")
 extract_body(line_link_geometry "${effect_source}" "void LineLinkInterpolatedEnd(" "void RenderLineLink(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LineLinkGeometryBody.inc" "${line_link_geometry}")
+extract_body(intimidate_render_geometry "${effect_source}" "void IntimidateTowardScreen(" "void RenderIntimidate(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/IntimidateRenderGeometryBody.inc" "${intimidate_render_geometry}")
 file(READ "../../src/render/Renderer.cpp" renderer_source)
 extract_body(reference_triangle_queue "${renderer_source}" "void CRenderer::AddReferenceEffectTriangle(" "void CRenderer::AddLmRP(")
 string(REPLACE "CRenderer::" "SilentRenderer::" reference_triangle_queue "${reference_triangle_queue}")
