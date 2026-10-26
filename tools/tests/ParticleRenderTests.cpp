@@ -44,6 +44,7 @@ struct CEffectPrim {
     u32 m_renderFlag=5;
     float m_roll=0,m_size=1,m_arcAngle=36;
     matrix m_matrix;
+    matrix m_rotMat;
     vector3d m_pos;
     float m_innerSize=0,m_outerSize=0,m_heightSize=0,m_widthSize=0;
     u32 m_argb=0xFFFFFFFF;
@@ -247,6 +248,33 @@ int main() {
         check(g_renderer.m_rpAlphaList.size()==2 && matches(g_renderer.m_rpAlphaList[0].second->m_verts[2],{14.5f,24,105+2*g_sinTable[360]}),
             "cylinder endpoint directly reads table index three-sixty");
         g_cosTable[360]=GetCos(360);
+    }
+    {
+        CEffectPrim ice;ice.m_pos={10,20,100};ice.m_size=2;ice.m_heightSize=15;ice.m_argb=0xC8FFFFFF;
+        ice.m_texture={&g_texMgr.texture};ice.m_renderFlag=0x205;
+        for(int i=0;i<4;++i)ice.m_rotMat.m[i][i]=1;
+        auto renderIce=[&](){g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaNoDepthList.clear();RenderReferenceQuadHorn(ice,view);};
+        auto matches=[&](const tlvertex3d& v,vector3d point){tlvertex3d expected;ProjectReferenceEffectVertex(point,view,expected);
+            return near(v.x,expected.x)&&near(v.y,expected.y)&&near(v.oow,expected.oow);};
+        renderIce();check(g_renderer.m_rpAlphaList.size()==4,"FrostDiver quad horn submits original four triangular faces");
+        auto* a=g_renderer.m_rpAlphaList[0].second;auto* b=g_renderer.m_rpAlphaList[1].second;
+        auto* c=g_renderer.m_rpAlphaList[2].second;auto* d=g_renderer.m_rpAlphaList[3].second;
+        check(matches(a->m_verts[0],{8,18,100})&&matches(a->m_verts[1],{10,20,115})&&matches(a->m_verts[2],{12,18,100}),
+            "FrostDiver first horn face preserves source square base and positive local Z apex");
+        check(matches(b->m_verts[0],{8,18,100})&&matches(b->m_verts[2],{8,22,100})
+            &&matches(c->m_verts[0],{8,22,100})&&matches(c->m_verts[2],{12,22,100})
+            &&matches(d->m_verts[0],{12,22,100})&&matches(d->m_verts[2],{12,18,100}),"FrostDiver remaining faces preserve source winding and corner order");
+        check(a->m_verts[0].tu==0&&a->m_verts[0].tv==1&&a->m_verts[1].tu==0&&a->m_verts[1].tv==0
+            &&a->m_verts[2].tu==0.2f&&b->m_verts[0].tu==0.2f&&near(d->m_verts[2].tu,0.8f),"FrostDiver horn advances original zero-point-two UV bands per face");
+        check(a->tex==&g_texMgr.texture&&a->m_verts[0].color==0xC8FFFFFF&&a->srcAlphaMode==5&&a->destAlphaMode==6
+            &&g_renderer.m_rpAlphaNoDepthList.empty(),"FrostDiver horn retains stored color exact texture and hard-coded flag one");
+        ice.m_matrix.m[0][0]=100;ice.m_rotMat.m[3][0]=3;ice.m_rotMat.m[3][1]=4;ice.m_rotMat.m[3][2]=5;renderIce();
+        check(matches(g_renderer.m_rpAlphaList[0].second->m_verts[0],{11,22,105}),"FrostDiver geometry uses retained render matrix translation independently of movement matrix");
+        ice.m_rotMat.m[0][0]=0;ice.m_rotMat.m[0][2]=1;ice.m_rotMat.m[2][0]=-1;ice.m_rotMat.m[2][2]=0;renderIce();
+        check(matches(g_renderer.m_rpAlphaList[0].second->m_verts[1],{-2,24,105}),"FrostDiver apex follows retained rotation before adding primitive world origin");
+        ice.m_argb=0;renderIce();check(g_renderer.m_rpAlphaList.size()==4&&g_renderer.m_rpAlphaList[0].second->m_verts[0].color==0,
+            "FrostDiver retains source zero-alpha face submissions");
+        ice.m_texture.clear();renderIce();check(g_renderer.m_rpAlphaList.empty(),"FrostDiver missing texture emits no replacement geometry");
     }
     {
         CEffectPrim cross;cross.m_widthSize=3;cross.m_heightSize=0.2f;cross.m_pos={10,20,100};cross.m_argb=0x09F00000;

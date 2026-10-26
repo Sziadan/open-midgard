@@ -267,6 +267,7 @@ public:
     bool UsesReferenceCylinder() const;
     bool UsesReferenceCrossTexture() const;
     bool UsesReferenceScreenTexture() const;
+    bool UsesReferenceQuadHorn() const;
     void SetParticleResources(const char* sprName, const char* actName, bool actionFirst = false);
     void SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t) override;
     void Render(matrix* viewMatrix) override;
@@ -329,6 +330,7 @@ public:
     vector3d m_pos;
     vector3d m_speed3d;
     matrix m_matrix;
+    matrix m_rotMat;
     std::array<float, 4> m_param;
     std::vector<CTexture*> m_texture;
     std::vector<float> m_chPoint;
@@ -471,6 +473,8 @@ private:
     bool ApplyPotionBerserk();
     void ApplyIceArrow();
     void ApplyFireArrow();
+    void ApplyFrostDiver();
+    void ApplyFrostDiver2();
     void ApplyProvidence(const char* textureName);
     void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);
     void ApplyBeginCasting(const char* textureName, int option, bool playWave);
@@ -573,6 +577,7 @@ private:
     vector3d m_cachedPos;
     vector3d m_deltaPos;
     vector3d m_deltaPos2;
+    vector3d m_deltaPos3;
     vector3d m_targetPos;
     vector3d m_grimToothOrigin;
     vector3d m_grimToothStep;
@@ -581,6 +586,7 @@ private:
     float m_emitSpeed;
     float m_latitude;
     float m_longitude;
+    float m_roty;
     float m_tlvertX;
     float m_tlvertY;
     float m_tlvertZ;

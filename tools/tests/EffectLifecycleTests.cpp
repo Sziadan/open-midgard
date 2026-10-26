@@ -161,6 +161,7 @@ void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
 bool UpdateLinearReferenceParticle(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
+void UpdateReferenceQuadHorn(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReferenceScreenTexture(CEffectPrim*);
@@ -183,6 +184,7 @@ struct CEffectPrim : CGameObject {
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 0, m_minAlpha = 0;
     bool m_isDisappear = false;
     matrix m_matrix = [] { matrix value; MatrixIdentity(value); return value; }();
+    matrix m_rotMat = m_matrix;
     CSprRes* m_particleSprRes = nullptr;
     CActRes* m_particleActRes = nullptr;
     std::string m_spriteActName,m_spriteSprName;
@@ -212,6 +214,7 @@ struct CEffectPrim : CGameObject {
     bool UsesReferenceCylinder() const;
     bool UsesReferenceCrossTexture() const;
     bool UsesReferenceScreenTexture() const;
+    bool UsesReferenceQuadHorn() const;
     void SetParticleResources(const char*, const char*,bool = false);
     bool ProcessPrimitiveFrame() {
         ++updates;
@@ -219,6 +222,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
+        if (UsesReferenceQuadHorn()) UpdateReferenceQuadHorn(this);
         if (m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle() && !UpdateReferenceGravityParticle(this)) return false;
         if (UsesReferenceScreenTexture() && !UpdateReferenceScreenTexture(this)) return false;
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
@@ -267,7 +271,8 @@ struct CRagEffect : CGameObject {
     std::list<CEffectPrim*> m_primList;
     bool active = true, spawn = false;
     int frames = 0, worldFrames = 0, m_flag = 0;
-    vector3d m_grimToothOrigin, m_grimToothRemaining, m_grimToothStep;
+    vector3d m_grimToothOrigin, m_grimToothRemaining, m_grimToothStep, m_deltaPos3;
+    float m_roty=0;
     void SpawnGrimTooth();
     void ApplySuperAngel(signed char,signed char);
     void ProcessSuperAngelEffect();
@@ -278,6 +283,8 @@ struct CRagEffect : CGameObject {
     void ApplyWarpZone();
     void ApplyIceArrow();
     void ApplyFireArrow();
+    void ApplyFrostDiver();
+    void ApplyFrostDiver2();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1858,6 +1865,69 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=27;
+        effect.m_effectPos={10,50,30};effect.m_deltaPos={30,0,30};effect.m_duration=200;
+        waveCalls.clear();g_texMgr.requests.clear();const int draws=rngDraws;g_session.m_isMinEffect=true;effect.ApplyFrostDiver();
+        check(effect.m_primList.empty()&&rngDraws==draws&&effect.m_deltaPos3.x==0&&effect.m_roty==0&&waveCalls.empty(),
+            "FrostDiver reduced effects suppresses all initialization movement RNG and emission");
+        g_session.m_isMinEffect=false;rngValues={90,9,39,29,359,29};rngCursor=0;effect.ApplyFrostDiver();auto* spike=effect.m_primList.front();
+        check(effect.m_primList.size()==1&&rngDraws==draws+6&&spike->UsesReferenceQuadHorn()&&waveCalls.empty(),
+            "FrostDiver emits one six-draw reference spike with no audio");
+        check(effect.m_roty==static_cast<float>(std::atan2(20.0,-0.0)/3.141592*180.0)&&effect.m_deltaPos2.x==-2
+            &&effect.m_deltaPos3.x==7&&effect.m_effectPos.x==10&&effect.m_effectPos.y==50,
+            "FrostDiver initializes five-unit leading cursor then two-unit travel preserving stored origin");
+        matrix travel;MatrixIdentity(travel);MatrixAppendYRotation(travel,GetRadian(-90));
+        check(spike->m_deltaPos2.x==5+GetSin(90)*1.4f&&spike->m_deltaPos2.y==30
+            &&spike->m_deltaPos2.z==-travel.m[2][2]*5.0f+static_cast<float>(-(static_cast<double>(GetCos(90))*1.4f)),
+            "FrostDiver spike uses cursor before step and ordered random radial offset");
+        check(spike->m_size==static_cast<float>(99*0.0099999998)&&spike->m_heightSize==17.9f&&spike->m_longitude==359&&spike->m_latitude==104,
+            "FrostDiver retains six-draw size height longitude latitude profiles");
+        matrix expected;MatrixIdentity(expected);MatrixAppendXRotation(expected,GetRadian(104));MatrixAppendYRotation(expected,GetRadian(359));
+        check(spike->m_matrix.m[2][1]==expected.m[2][1]&&spike->m_rotMat.m[2][0]==expected.m[2][0]
+            &&spike->m_rotMat.m[0][2]==spike->m_matrix.m[0][2],"FrostDiver copies launch X then Y matrix into retained render rotation");
+        check(spike->m_duration==40&&spike->m_pattern==1&&spike->m_speed==3&&spike->m_accel==static_cast<float>(3.0/40*-2)
+            &&spike->m_count==20&&spike->m_fadeOutCnt==30&&spike->m_alpha==254&&spike->m_maxAlpha==254
+            &&g_texMgr.requests==std::vector<std::string>({"effect\\ice.tga"}),"FrostDiver preserves original spike timing stop fade alpha and exact ice texture");
+        spike->m_alphaDelta=1;const double integratedSpeed=static_cast<double>(spike->m_accel)+3.0;spike->OnProcess();
+        check(spike->m_speed3d.x==static_cast<float>(integratedSpeed*expected.m[2][0]+expected.m[3][0])
+            &&spike->m_pos.y==effect.m_effectPos.y+spike->m_deltaPos2.y+spike->m_deltaPos.y&&spike->m_argb==0xFEFFFFFF,
+            "FrostDiver spike keeps source double speed motion before alpha processing");
+        for(int i=1;i<=20;++i)spike->OnProcess();const vector3d stopped=spike->m_deltaPos;
+        check(spike->m_stateCnt==21&&spike->m_speed==0&&spike->m_accel==0&&spike->m_deltaPos.y!=0,
+            "FrostDiver spike integrates frame twenty motion before stopping both speed and acceleration");
+        spike->OnProcess();check(spike->m_deltaPos.x==stopped.x&&spike->m_deltaPos.y==stopped.y&&spike->m_deltaPos.z==stopped.z,
+            "FrostDiver spike holds accumulated displacement after source stop frame");
+        spike->m_stateCnt=30;spike->OnProcess();check(spike->m_alphaSpeed==static_cast<float>(-254.0/10)&&spike->m_alpha<254,
+            "FrostDiver spike begins source ten-frame alpha fade at frame thirty");
+        rngValues.clear();rngCursor=0;for(int frame=1;frame<=7;++frame){effect.m_stateCnt=frame;effect.ApplyFrostDiver();}
+        check(effect.m_primList.size()==8&&effect.m_flag==1&&effect.m_deltaPos3.x==21&&rngDraws==draws+48,
+            "FrostDiver emits final arrival spike inside distance threshold and advances cursor once more");
+        effect.m_stateCnt=8;effect.ApplyFrostDiver();check(effect.m_primList.size()==8&&effect.m_deltaPos3.x==21&&rngDraws==draws+48,
+            "FrostDiver arrival flag prevents further spikes and cursor movement");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_flag=0;effect.m_deltaPos3={17.5f,0,0};effect.m_stateCnt=1;
+        effect.ApplyFrostDiver();check(effect.m_flag==1&&effect.m_primList.size()==1,
+            "FrostDiver arrival includes exact distance two-point-five and still emits final spike");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_type=28;effect.m_stateCnt=0;g_session.m_isMinEffect=true;
+        g_texMgr.requests.clear();waveCalls.clear();const int burstDraws=rngDraws;rngValues={90,3,249,99,359,19};rngCursor=0;effect.ApplyFrostDiver2();
+        spike=effect.m_primList.front();check(effect.m_primList.size()==8&&rngDraws==burstDraws+48&&spike->UsesReferenceQuadHorn(),
+            "FrostDiver2 emits eight spikes with forty-eight draws despite reduced effects");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_FrostDiver2.wav"&&waveCalls[0].x==8&&waveCalls[0].y==0
+            &&waveCalls[0].z==26&&waveCalls[0].frameRng==burstDraws,"FrostDiver2 plays its distinct stored-origin horizontal wave before emission draws");
+        check(spike->m_deltaPos2.x==GetSin(90)*0.4f&&spike->m_deltaPos2.y==30&&spike->m_size==static_cast<float>(349*0.0099999998)
+            &&spike->m_heightSize==29.9f&&spike->m_longitude==359&&spike->m_latitude==99,
+            "FrostDiver2 retains distinct radial size height and angle ranges without traveling cursor");
+        check(spike->m_alpha==200&&spike->m_maxAlpha==254&&spike->m_count==20&&spike->m_pattern==1&&spike->m_duration==40
+            &&spike->m_rotMat.m[2][1]==spike->m_matrix.m[2][1],"FrostDiver2 preserves alpha two-hundred and shared fixed spike motion profile");
+        check(g_texMgr.requests==std::vector<std::string>(8,"effect\\ice.tga")&&effect.m_effectPos.x==10,
+            "FrostDiver2 requests exactly eight ice textures and preserves stored world origin");
+        effect.m_stateCnt=1;effect.ApplyFrostDiver2();check(effect.m_primList.size()==8&&waveCalls.size()==1&&rngDraws==burstDraws+48,
+            "FrostDiver2 does not repeat burst or audio after frame zero");
+        spike->m_alphaDelta=1;spike->OnProcess();check(spike->m_alpha==200&&spike->m_argb==0xC8FFFFFF&&spike->m_curMotion==0,
+            "FrostDiver2 reference update preserves distinct alpha and no texture animation");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor,listener;actor.m_pos={10,50,30};listener.m_pos={2,500,4};

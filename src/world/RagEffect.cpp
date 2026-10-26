@@ -2210,6 +2210,40 @@ void RenderReferenceScreenTexture(const CEffectPrim& prim)
     }
 }
 
+// Ref/RagEffectPrim.cpp:4077-4251 (0x646240), four faces, source UV bands.
+void RenderReferenceQuadHorn(const CEffectPrim& prim, const matrix& view)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    if (!texture || texture == &CTexMgr::s_dummy_texture) return;
+    const float size = prim.m_size, height = prim.m_heightSize;
+    const vector3d faces[4][3] = {
+        {{-size,-size,0},{0,0,height},{size,-size,0}},
+        {{-size,-size,0},{0,0,height},{-size,size,0}},
+        {{-size,size,0},{0,0,height},{size,size,0}},
+        {{size,size,0},{0,0,height},{size,-size,0}}
+    };
+    float u = 0.0f;
+    for (const auto& face : faces) {
+        vector3d world[3];
+        for (int i = 0; i < 3; ++i) {
+            const vector3d& p = face[i];
+            const matrix& m = prim.m_rotMat;
+            const float x = static_cast<float>(static_cast<double>(m.m[2][0])*p.z + static_cast<double>(m.m[1][0])*p.y + static_cast<double>(m.m[0][0])*p.x + m.m[3][0]);
+            const float y = i == 2
+                ? static_cast<float>(static_cast<double>(m.m[2][1])*p.z + static_cast<double>(m.m[0][1])*p.x + static_cast<double>(m.m[1][1])*p.y + m.m[3][1])
+                : static_cast<float>(static_cast<double>(m.m[2][1])*p.z + static_cast<double>(m.m[1][1])*p.y + static_cast<double>(m.m[0][1])*p.x + m.m[3][1]);
+            const float z = i == 2
+                ? static_cast<float>(static_cast<double>(m.m[2][2])*p.z + static_cast<double>(m.m[0][2])*p.x + static_cast<double>(m.m[1][2])*p.y + m.m[3][2])
+                : static_cast<float>(static_cast<double>(m.m[2][2])*p.z + static_cast<double>(m.m[1][2])*p.y + static_cast<double>(m.m[0][2])*p.x + m.m[3][2]);
+            world[i] = {prim.m_pos.x+x,prim.m_pos.y+y,prim.m_pos.z+z};
+        }
+        const float nextU = static_cast<float>(u + 0.2);
+        const float uv[3][2] = {{u,1},{u,0},{nextU,1}};
+        SubmitReferenceEffectTriangle(world,view,texture,prim.m_argb,uv,1);
+        u = nextU;
+    }
+}
+
 void RenderCircleLayer(const CEffectPrim& prim,
     const EffectSegmentState& state,
     matrix& viewMatrix,
@@ -2715,6 +2749,7 @@ CEffectPrim::CEffectPrim()
     m_pos = vector3d{};
     m_speed3d = vector3d{};
     MatrixIdentity(m_matrix);
+    MatrixIdentity(m_rotMat);
     for (EffectSegmentState& segment : m_segments) {
         MatrixIdentity(segment.transform);
     }
@@ -6300,6 +6335,25 @@ bool UpdateReferenceScreenTexture(CEffectPrim* prim)
     return prim->m_curMotion != prim->m_totalTexture;
 }
 
+// Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), FrostDiver pattern1 profile.
+void UpdateReferenceQuadHorn(CEffectPrim* prim)
+{
+    prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(),prim->m_deltaPos2);
+    const double speed = static_cast<double>(prim->m_accel) + prim->m_speed;
+    prim->m_speed = static_cast<float>(speed);
+    prim->m_speed3d = {
+        static_cast<float>(speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+    };
+    prim->m_deltaPos = AddVec3(prim->m_deltaPos,prim->m_speed3d);
+    prim->m_pos = AddVec3(prim->m_orgPos,prim->m_deltaPos);
+    if ((prim->m_pattern & 1) != 0 && prim->m_stateCnt == prim->m_count) {
+        prim->m_accel = 0.0f; prim->m_speed = 0.0f;
+    }
+    ProcessReferenceParticleAlpha(prim);
+}
+
 // Ref/RagEffectPrim.cpp:966-1310 (0x643340), reachable Berserk/IceArrow:
 // fixed width/height/color, no change points. IceArrow enables parent delta
 // propagation and ground contact; both retain the launch matrix for rendering.
@@ -6665,6 +6719,12 @@ bool CEffectPrim::UsesReferenceCrossTexture() const
         && (m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 220);
 }
 
+bool CEffectPrim::UsesReferenceQuadHorn() const
+{
+    return m_type == PP_3DQUADHORN && m_master
+        && (m_master->GetEffectType() == 27 || m_master->GetEffectType() == 28);
+}
+
 bool CEffectPrim::UsesReferenceScreenTexture() const
 {
     return m_type == PP_2DTEXTURE && m_master
@@ -6941,6 +7001,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_3DPARTICLESPLINE) {
         return UpdateFreeParticlePrimitive(this, true, true);
     }
+    if (UsesReferenceQuadHorn()) {
+        UpdateReferenceQuadHorn(this);
+        return true;
+    }
     if (UsesReferenceCrossTexture()) {
         return UpdateReferenceCrossTexture(this);
     }
@@ -6987,6 +7051,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
 void CEffectPrim::Render(matrix* viewMatrix)
 {
     if (!m_master || !viewMatrix) {
+        return;
+    }
+    if (UsesReferenceQuadHorn()) {
+        RenderReferenceQuadHorn(*this,*viewMatrix);
         return;
     }
     if (UsesReferenceScreenTexture()) {
@@ -7596,6 +7664,7 @@ CRagEffect::CRagEffect()
     , m_cachedPos{}
     , m_deltaPos{}
     , m_deltaPos2{}
+    , m_deltaPos3{}
     , m_targetPos{}
     , m_grimToothOrigin{}
     , m_grimToothStep{}
@@ -7604,6 +7673,7 @@ CRagEffect::CRagEffect()
     , m_emitSpeed(1.0f)
     , m_latitude(0.0f)
     , m_longitude(0.0f)
+    , m_roty(0.0f)
     , m_tlvertX(0.0f)
     , m_tlvertY(0.0f)
     , m_tlvertZ(0.0f)
@@ -7952,7 +8022,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 27: case 28: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -11946,6 +12016,79 @@ void CRagEffect::ApplyFireArrow()
     }
 }
 
+// Ref/RagEffect.cpp:4431-4544 (0x5F8A10), original effect 27.
+void CRagEffect::ApplyFrostDiver()
+{
+    if (g_session.m_isMinEffect) return;
+    if (m_stateCnt == 0) {
+        m_roty = static_cast<float>(std::atan2(static_cast<double>(m_deltaPos.x)-m_effectPos.x,
+            -(static_cast<double>(m_deltaPos.z)-m_effectPos.z))/3.141592*180.0);
+        if (m_roty >= 360.0f) m_roty -= 360.0f;
+        if (m_roty < 0.0f) m_roty += 360.0f;
+        matrix direction; MatrixIdentity(direction);
+        MatrixAppendYRotation(direction,GetRadian(static_cast<int>(-m_roty)));
+        m_deltaPos2 = {direction.m[2][0]*5.0f+direction.m[3][0],direction.m[2][1]*5.0f+direction.m[3][1],direction.m[2][2]*5.0f+direction.m[3][2]};
+        m_deltaPos3 = {m_deltaPos3.x-m_deltaPos2.x,m_deltaPos3.y-m_deltaPos2.y,m_deltaPos3.z-m_deltaPos2.z};
+        m_deltaPos2 = {direction.m[2][0]+direction.m[2][0]+direction.m[3][0],direction.m[2][1]+direction.m[2][1]+direction.m[3][1],direction.m[2][2]+direction.m[2][2]+direction.m[3][2]};
+    }
+    if (m_flag != 0) return;
+    const float worldX = m_effectPos.x + m_deltaPos3.x;
+    const float worldZ = m_effectPos.z + m_deltaPos3.z;
+    const double dx = static_cast<double>(m_deltaPos.x)-worldX, dz = static_cast<double>(m_deltaPos.z)-worldZ;
+    const float squared = static_cast<float>(dz*dz+dx*dx);
+    if (std::sqrt(static_cast<double>(squared)) <= 2.5) m_flag = 1;
+    // Ref emits the final spike even when this call sets the arrival flag.
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DQUADHORN,vector3d{});
+    prim->m_duration = 40; prim->m_pattern |= 1;
+    const int angle = rand() % 360;
+    const float length = static_cast<float>((rand() % 10 + 5)*0.1);
+    prim->m_deltaPos2 = {GetSin(angle)*length,30.0f,static_cast<float>(-(static_cast<double>(GetCos(angle))*length))};
+    prim->m_deltaPos2 = AddVec3(m_deltaPos3,prim->m_deltaPos2);
+    prim->m_size = static_cast<float>((rand() % 40 + 60)*0.0099999998);
+    prim->m_heightSize = static_cast<float>((rand() % 30 + 150)*0.1);
+    prim->m_longitude = static_cast<float>(rand() % 360);
+    prim->m_latitude = static_cast<float>(rand() % 30 + 75);
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_latitude)));
+    MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_longitude)));
+    prim->m_rotMat = prim->m_matrix;
+    prim->m_speed = 3.0f; prim->m_accel = static_cast<float>(prim->m_speed/static_cast<double>(prim->m_duration)*-2.0);
+    prim->m_count = 20; prim->m_fadeOutCnt = prim->m_duration-10;
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ice.tga",false));
+    m_deltaPos3 = {m_deltaPos3.x-m_deltaPos2.x,m_deltaPos3.y-m_deltaPos2.y,m_deltaPos3.z-m_deltaPos2.z};
+}
+
+// Ref/RagEffect.cpp:4551-4606 (0x5F8E90), original effect 28.
+void CRagEffect::ApplyFrostDiver2()
+{
+    if (m_stateCnt != 0) return;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_FrostDiver2.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    for (int i = 0; i < 8; ++i) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DQUADHORN,vector3d{});
+        prim->m_duration = 40; prim->m_pattern |= 1;
+        const int angle = rand() % 360;
+        const float length = static_cast<float>((rand() % 4 + 1)*0.1);
+        prim->m_deltaPos2 = {GetSin(angle)*length,30.0f,static_cast<float>(-(static_cast<double>(GetCos(angle))*length))};
+        prim->m_size = static_cast<float>((rand() % 250 + 100)*0.0099999998);
+        prim->m_heightSize = static_cast<float>((rand() % 100 + 200)*0.1);
+        prim->m_longitude = static_cast<float>(rand() % 360);
+        prim->m_latitude = static_cast<float>(rand() % 20 + 80);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_rotMat = prim->m_matrix;
+        prim->m_speed = 3.0f; prim->m_accel = static_cast<float>(prim->m_speed/static_cast<double>(prim->m_duration)*-2.0);
+        prim->m_count = 20; prim->m_alpha = 200.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_fadeOutCnt = prim->m_duration-10;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ice.tga",false));
+    }
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -13200,6 +13343,11 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 45) {
         SpawnFireFly();
+        return true;
+    }
+    if (m_type == 27 || m_type == 28) {
+        if (m_type == 27) ApplyFrostDiver();
+        else ApplyFrostDiver2();
         return true;
     }
     if (m_type == 31) {

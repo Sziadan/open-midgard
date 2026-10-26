@@ -4,10 +4,20 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A FireArrow id31, after NapalmBeat checkpoint `65f0571`. Original animated projectile, independent particle4 trail, source audio/count gates and yellow impact circle now use reference primitive paths.
+Current work: WP5A FrostDiver ids27/28, after FireArrow checkpoint `0ef3167`. Original traveling/burst emitters now bind source ice-spike motion and four-face geometry, preserving reduced-effects differences and exact burst audio.
 
-Next action: continue neighboring emitters (including FrostDiver ids27/28) and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue other quad-horn callers (including GrimTooth) and unported emitters/primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## FrostDiver / FrostDiver2 and four-sided ice spikes — 2026-10-26
+
+- Ref/RagEffect.cpp:4431-4544 (0x5F8A10) -> ApplyFrostDiver, original id27, direct ProcessEffectFrame/Init route. Reduced-effects gate suppresses the entire helper. Zero computes source stored-origin/absolute-target heading, truncates negative rotation for Y matrix, subtracts five-unit initial travel from cursor, then retains two-unit step. Each unflagged call checks source float world cursor distance<=2.5, emits even on final arrival, and advances cursor after emission. Preserves stored origin, no actor-position copy or sound. Added original zero-initialized effect deltaPos3/roty storage.
+- Id27 spikes use six draws in radial angle/length/size/height/longitude/latitude order, source ranges, cursor-relative y30 offset, X/Y launch matrix and separate retained render rotation, duration40/pattern1, speed3/source drag, stop count20, alpha/max254, fade30 and exact ice texture.
+- Ref/RagEffect.cpp:4551-4606 (0x5F8E90) -> ApplyFrostDiver2, original id28, direct ProcessEffectFrame/Init route. Zero-only stored-origin horizontal EF_FrostDiver2 wave precedes eight spikes/48 draws regardless of reduced effects. Preserves distinct radial range, size1..3.49/height20..29.9, latitude80..99, alpha200 and common source spike timing/matrices. No guessed shared sound or moving cursor.
+- Ref/RagEffectPrim.cpp:1919-1980 (0x642F10) -> UpdateReferenceQuadHorn, bound only to reachable ids27/28 pattern1/no-change profile. Original stored parent+offset origin, double speed sum through matrix-vector motion, accumulated displacement, stop after integrating frame20, then source alpha. No added animation, terrain contact or segment update. Other change-point/pattern2 callers remain open.
+- Ref/RagEffectPrim.cpp:4077-4251 (0x646240) -> RenderReferenceQuadHorn. Four original triangles with square base and positive local-Z apex, source face order/winding, independent retained rotMat, original transform temporary order, stored position/ARGB, texture0, advancing0.2 UV bands and hard-coded flag1. Added primitive rotMat with original identity constructor default. Only migrated FrostDiver callers bind this path; other quad-horn callers remain separate work.
+
+Validation: release build, six silent C++ suites / 956 checks (772 lifecycle/primitive, 126 rendering, 58 other), six Python tests, two-literal executable byte audit and whitespace check pass. Added21 lifecycle and nine rendering checks covering reduced-effects differences, cursor initialization/step/final arrival/exact threshold, RNG/profiles/resources/matrices, extended-precision motion, stop/fade order, burst sound/count, stored origin, four faces/UVs/rotation/translation/color/flags and missing texture. Exact ice0x71B5FC and distinct burst wave0x71B60C match executable bytes. All checks use silent numeric/device doubles; no media/live acceptance. Approved OldRO SHA-256: `744D78AB68BB6A7F0853BD48F31E6E5440548836D07E6C1D62E8177EF4DC2638`. Other emitters/quad-horn callers (including GrimTooth), primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## FireArrow projectile / trail / impact — 2026-10-26
 
