@@ -265,6 +265,7 @@ public:
     bool UsesReferenceCircle() const;
     bool UsesReferenceCylinder() const;
     bool UsesReferenceCrossTexture() const;
+    bool UsesReferenceScreenTexture() const;
     void SetParticleResources(const char* sprName, const char* actName, bool actionFirst = false);
     void SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t) override;
     void Render(matrix* viewMatrix) override;
@@ -369,6 +370,7 @@ public:
     int GetStateCount() const { return m_stateCnt; }
     int GetDuration() const { return m_duration; }
     void AddDuration(int frames) { m_duration += frames; }
+    vector3d ScreenPosition() const { return {m_tlvertX,m_tlvertY,m_tlvertZ}; }
     const vector3d& TargetPosition() const { return m_deltaPos; }
     void SetGroundHitFlag() { m_flag = 1; }
     void AbsorbPrimDelta(const vector3d& delta) { m_deltaPos = delta; }
@@ -519,6 +521,7 @@ private:
     void SpawnSight2();
     void SpawnFireBall();
     void SpawnFireFly();
+    void SpawnSandWind();
     void SpawnRuwach();
     void SpawnBlueFall();
     void SpawnWeatherCloud();

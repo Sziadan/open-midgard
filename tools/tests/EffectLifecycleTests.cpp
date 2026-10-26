@@ -161,6 +161,7 @@ bool UpdateLinearReferenceParticle(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
+bool UpdateSandWindScreenTexture(CEffectPrim*);
 bool UpdateWarpZoneOrbit(CEffectPrim*);
 struct CEffectPrim : CGameObject {
     Probe deaths{ primitiveDeaths };
@@ -207,6 +208,7 @@ struct CEffectPrim : CGameObject {
     bool UsesReferenceCircle() const;
     bool UsesReferenceCylinder() const;
     bool UsesReferenceCrossTexture() const;
+    bool UsesReferenceScreenTexture() const;
     void SetParticleResources(const char*, const char*,bool = false);
     bool ProcessPrimitiveFrame() {
         ++updates;
@@ -214,6 +216,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
+        if (UsesReferenceScreenTexture() && !UpdateSandWindScreenTexture(this)) return false;
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
         if (UsesReferenceCylinder() && !UpdateReferenceCylinderState(this)) return false;
         if (m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle() && !UpdateWarpZoneOrbit(this)) return false;
@@ -272,6 +275,7 @@ struct CRagEffect : CGameObject {
     void ApplyIceArrow();
     void SpawnFireBall();
     void SpawnFireFly();
+    void SpawnSandWind();
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -308,6 +312,7 @@ struct CRagEffect : CGameObject {
     void ClearPrims();
     void AbsorbPrimDelta(const vector3d& delta){m_deltaPos=delta;}
     void SetGroundHitFlag(){m_flag=1;}
+    vector3d ScreenPosition() const{return {m_tlvertX,m_tlvertY,m_tlvertZ};}
     const vector3d& TargetPosition() const{return m_deltaPos;}
     void SendMsg(CGameObject*, int, msgparam_t, msgparam_t, msgparam_t) override;
 };
@@ -1991,6 +1996,46 @@ int main()
         prim.m_stateCnt=40;prim.m_fadeOutCnt=40;prim.m_alphaDelta=1;prim.m_alphaSpeed=10;ProcessReferenceParticleAlpha(&prim);
         check(prim.m_maxAlpha==200 && prim.m_alphaSpeed==-2 && prim.m_alpha==118,"fixed-frame fade uses newly keyed alpha and overrides previous speed");
         prim.m_master=nullptr;
+    }
+    {
+        CRenderObject actor;actor.m_pos={10,20,100};CRagEffect effect;effect.m_type=46;effect.m_master=&actor;
+        effect.m_duration=200;effect.m_effectPos={9,8,7};effect.m_tlvertZ=123;waveCalls.clear();const int draws=rngDraws;
+        rngValues={99,299,14,639,49,9};rngCursor=0;effect.SpawnSandWind();auto* prim=effect.m_primList.front();
+        tlvertex3d expected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,expected);
+        check(effect.m_tlvertX==expected.x && effect.m_tlvertY==expected.y && effect.m_tlvertZ==123 && effect.m_effectPos.y==8,
+            "SandWind projects actor x/y without replacing effect origin or stored z");
+        check(prim->UsesReferenceScreenTexture() && prim->m_type==PP_2DTEXTURE && prim->m_pattern==8 && prim->m_duration==101 && prim->m_fadeOutCnt==68,
+            "SandWind emits reference screen texture with original random duration and fade arithmetic");
+        check(rngDraws==draws+6 && rngCursor==6 && prim->m_speed==static_cast<float>(559*0.0099999998) && prim->m_longitude==144
+            && prim->m_deltaPos2.x==139 && prim->m_deltaPos2.y==-191 && prim->m_count==19,"SandWind preserves six-draw duration speed heading x y interval order");
+        check(prim->m_widthSize==30 && prim->m_heightSize==30 && prim->m_alpha==128 && prim->m_maxAlpha==254 && prim->m_argb==0xFFFFFFFF
+            && prim->m_totalTexture==1 && prim->m_animSpeed==4 && prim->m_repeatAnim && prim->m_gi[0].life==0,
+            "SandWind retains source dimensions alpha constructor color and texture animation defaults");
+        check(std::string(g_texMgr.lastPath)=="effect\\sand1.bmp" && waveCalls.empty(),"SandWind requests exact texture and emits no wave");
+        rngValues={15,9};rngCursor=0;prim->m_alphaDelta=1;prim->OnProcess();
+        const float dx=static_cast<float>(static_cast<double>(GetSin(144))*prim->m_speed);
+        const float dy=static_cast<float>(-static_cast<double>(GetCos(144))*prim->m_speed);
+        check(std::fabs(prim->m_deltaPos.x-dx)<0.000001f && std::fabs(prim->m_deltaPos.y-dy)<0.000001f
+            && std::fabs(prim->m_pos.x-(expected.x+139+dx))<0.00002f && std::fabs(prim->m_pos.y-(expected.y-191+dy))<0.00002f,
+            "SandWind first frame uses projected parent anchor plus original offset and old heading displacement");
+        check(rngDraws==draws+8 && rngCursor==2 && prim->m_longitude==151 && prim->m_count==19 && prim->m_stateCnt==1 && prim->m_curMotion==0,
+            "SandWind frame-zero steering draws heading delta then interval after movement and wraps texture animation");
+        check(prim->m_argb==0x80FFFFFF && prim->m_alpha==128,"SandWind first update stores original packed alpha");
+        actor.m_pos={20,30,100};effect.m_stateCnt=1;effect.SpawnSandWind();ProjectReferenceEffectVertex(actor.m_pos,testView.view,expected);
+        check(effect.m_primList.size()==1 && effect.m_tlvertX==expected.x && effect.m_tlvertY==expected.y && rngDraws==draws+8,
+            "SandWind refreshes screen projection before odd-frame no-emission gate");
+        const int afterSteer=rngDraws;prim->OnProcess();check(rngDraws==afterSteer && prim->m_pos.x>expected.x+139,
+            "SandWind screen particle follows updated projection while accumulating drift without per-frame RNG");
+        prim->m_stateCnt=68;prim->OnProcess();check(std::fabs(prim->m_alphaSpeed+128.0f/33)<0.000001f && prim->m_alpha<128,
+            "SandWind fade uses current alpha at original duration-minus-third frame");
+        effect.m_stateCnt=58;rngValues.clear();rngCursor=0;effect.SpawnSandWind();check(effect.m_primList.size()==2,"SandWind includes last even frame fifty-eight");
+        actor.m_pos.x=30;effect.m_stateCnt=60;effect.SpawnSandWind();ProjectReferenceEffectVertex(actor.m_pos,testView.view,expected);
+        check(effect.m_primList.size()==2 && effect.m_tlvertX==expected.x,"SandWind stops emission at sixty while continuing actor projection");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=0;effect.m_duration=50;rngValues={99,0,0,0,0,0};rngCursor=0;effect.SpawnSandWind();
+        check(effect.m_primList.front()->m_duration==-49 && effect.m_primList.front()->m_fadeOutCnt==-33,
+            "SandWind preserves negative random lifetime and integer division without invented clamp");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
     }
     {
         CRagEffect effect;

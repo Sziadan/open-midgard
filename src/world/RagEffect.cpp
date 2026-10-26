@@ -2147,6 +2147,37 @@ void RenderReferenceCrossTexture(const CEffectPrim& prim, const matrix& view)
     }
 }
 
+// Ref/RagEffectPrim.cpp:2722-2850 (0x644DD0), reachable SandWind profile.
+// Fixed roll zero and centered dimensions: source screen triangles, no projection.
+void RenderSandWindScreenTexture(const CEffectPrim& prim)
+{
+    if (prim.m_curMotion < 0 || prim.m_curMotion >= static_cast<int>(prim.m_texture.size())) return;
+    CTexture* texture = prim.m_texture[static_cast<size_t>(prim.m_curMotion)];
+    if (!texture || texture == &CTexMgr::s_dummy_texture) return;
+    const float x = prim.m_pos.x, y = prim.m_pos.y, w = prim.m_widthSize, h = prim.m_heightSize;
+    const vector3d corners[4] = {{-w,h,0},{-w,-h,0},{w,h,0},{w,-h,0}};
+    const int order[2][3] = {{0,1,2},{2,1,3}};
+    const float uv[4][2] = {{0,1},{0,0},{1,1},{1,0}};
+    for (const auto& triangle : order) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) return;
+        face->primType = D3DPT_TRIANGLELIST; face->numVerts = 3;
+        face->verts = face->m_verts; face->indices = nullptr; face->numIndices = 0;
+        face->tex = texture; face->mtPreset = 0; face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA; face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+        for (int i = 0; i < 3; ++i) {
+            const int corner = triangle[i];
+            tlvertex3d& vertex = face->m_verts[i];
+            vertex.x = static_cast<float>(static_cast<double>(corners[corner].x) + x - 0.5);
+            vertex.y = static_cast<float>(static_cast<double>(corners[corner].y) + y - 0.5);
+            vertex.z = 0.000001f; vertex.oow = 0.99999899f;
+            vertex.color = prim.m_argb; vertex.specular = 0xFF000000u;
+            vertex.tu = uv[corner][0]; vertex.tv = uv[corner][1];
+        }
+        g_renderer.AddReferenceEffectTriangle(face, 1);
+    }
+}
+
 void RenderCircleLayer(const CEffectPrim& prim,
     const EffectSegmentState& state,
     matrix& viewMatrix,
@@ -6165,6 +6196,31 @@ void ProcessReferenceParticleAlpha(CEffectPrim* prim)
     prim->m_argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)), prim->m_tintColor);
 }
 
+// Ref/RagEffectPrim.cpp:77-224 (0x641760), reachable SandWind profile:
+// pattern 8, fixed dimensions/roll/color, no change point or acceleration.
+bool UpdateSandWindScreenTexture(CEffectPrim* prim)
+{
+    const vector3d anchor = prim->m_master->ScreenPosition();
+    prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
+    prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
+    prim->m_deltaPos.x = static_cast<float>(static_cast<double>(GetSin(static_cast<int>(prim->m_longitude))) * prim->m_speed + prim->m_deltaPos.x);
+    prim->m_deltaPos.y = static_cast<float>(prim->m_deltaPos.y - static_cast<double>(GetCos(static_cast<int>(prim->m_longitude))) * prim->m_speed);
+    prim->m_pos.x += prim->m_deltaPos.x;
+    prim->m_pos.y += prim->m_deltaPos.y;
+    if (prim->m_stateCnt % prim->m_count == 0) {
+        prim->m_longitude = static_cast<float>(prim->m_longitude - 8.0 + rand() % 16);
+        prim->m_count = rand() % 10 + 10;
+    }
+    ProcessReferenceParticleAlpha(prim);
+    if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;
+    ++prim->m_curMotion;
+    if (prim->m_repeatAnim) {
+        prim->m_curMotion %= prim->m_totalTexture;
+        return true;
+    }
+    return prim->m_curMotion != prim->m_totalTexture;
+}
+
 // Ref/RagEffectPrim.cpp:966-1310 (0x643340), reachable Berserk/IceArrow:
 // fixed width/height/color, no change points. IceArrow enables parent delta
 // propagation and ground contact; both retain the launch matrix for rendering.
@@ -6529,6 +6585,11 @@ bool CEffectPrim::UsesReferenceCrossTexture() const
         && (m_master->GetEffectType() == 26 || m_master->GetEffectType() == 220);
 }
 
+bool CEffectPrim::UsesReferenceScreenTexture() const
+{
+    return m_type == PP_2DTEXTURE && m_master && m_master->GetEffectType() == 46;
+}
+
 bool CEffectPrim::UsesReferenceParticle() const
 {
     return m_type == PP_SUPERANGEL
@@ -6800,6 +6861,9 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_3DCROSSTEXTURE) {
         return UpdateCrossTexturePrimitive(this);
     }
+    if (UsesReferenceScreenTexture()) {
+        return UpdateSandWindScreenTexture(this);
+    }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DFLASH || m_type == PP_2DCIRCLE) {
         return UpdateScreenTexturePrimitive(this);
     }
@@ -6837,6 +6901,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
 void CEffectPrim::Render(matrix* viewMatrix)
 {
     if (!m_master || !viewMatrix) {
+        return;
+    }
+    if (UsesReferenceScreenTexture()) {
+        RenderSandWindScreenTexture(*this);
         return;
     }
     if (UsesReferenceCircle()) {
@@ -7797,8 +7865,8 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 35: case 36: case 45: case 61:
-        // ProcessEffectFrame dispatches ReadyPortal/Portal/FireFly/WarpZone directly.
+    case 35: case 36: case 45: case 46: case 61:
+        // ProcessEffectFrame dispatches ReadyPortal/Portal/FireFly/SandWind/WarpZone directly.
         m_handler = Handler::None;
         break;
     case 312: case 313: case 325: case 331: case 332:
@@ -9178,6 +9246,32 @@ void CRagEffect::SpawnFireFly()
     prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act"); // 0x71B200 / 0x71B1E8
     prim->m_fadeOutCnt = -1; prim->m_animSpeed = 4; prim->m_repeatAnim = true; prim->m_numSegments = 1;
     ShiftCircleSegments(prim);
+}
+
+// Ref/RagEffect.cpp:7260-7321 (0x5F6740), original effect 46.
+void CRagEffect::SpawnSandWind()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!master || !mode || !mode->m_view) return;
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos, mode->m_view->GetViewMatrix(), projected);
+    m_tlvertX = projected.x; m_tlvertY = projected.y;
+    if (m_stateCnt >= 60 || m_stateCnt % 2 != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE, vector3d{});
+    prim->m_pattern = 8;
+    prim->m_duration = m_duration - rand() % 100;
+    prim->m_speed = static_cast<float>(static_cast<double>(rand() % 300 + 260) * 0.0099999998);
+    prim->m_longitude = static_cast<float>(rand() % 15 + 130);
+    prim->m_widthSize = 30.0f; prim->m_heightSize = 30.0f;
+    prim->m_deltaPos2.x = static_cast<float>(rand() % 640 - 500);
+    prim->m_deltaPos2.y = static_cast<float>(rand() % 50 - 240);
+    prim->m_count = rand() % 10 + 10;
+    prim->m_alpha = 128.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+    prim->m_totalTexture = 1; prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\sand1.bmp", false));
+    prim->m_gi[0].life = 0;
 }
 
 // Ref/RagEffect.cpp:7202-7261 (0x5F9170). The angle truncates before
@@ -12472,6 +12566,10 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 46) {
+        SpawnSandWind();
+        return true;
+    }
     if (m_type == 45) {
         SpawnFireFly();
         return true;

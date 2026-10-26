@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A FireFly emitter and shared random-steering/keyed-alpha controls, after FireBall checkpoint `42ce54e`. Original id45 now preserves source RNG, movement ordering and frame40/frame100 alpha/max changes.
+Current work: WP5A SandWind emitter and reachable reference screen-texture update/rendering, after FireFly checkpoint `4bf1a70`. Normal id46 now preserves original projection, RNG, screen drift, steering and two-triangle submission.
 
-Next action: continue remaining active particle/texture emitters and unported movement/change-point controls. Map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue remaining active emitters and unported particle/texture controls, including remaining 2D profiles. Map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## SandWind emitter / reachable screen-texture path — 2026-10-26
+
+- Ref/RagEffect.cpp:7260-7321 (0x5F6740) -> SpawnSandWind, normal id46, direct dispatcher/Init route. Each call projects actor position into stored screen x/y before emission gates, preserving stored z and effect world origin. Even frames below 60 launch PP_2DTEXTURE with six RNG draws: duration subtraction, speed, heading, screen-x offset, screen-y offset and steering interval. No sound.
+- Preserved pattern 8, duration parent-rand()%100 without lifetime clamp, speed (rand()%300+260)*0.0099999998, heading rand()%15+130, width/height 30, offsets rand()%640-500 / rand()%50-240, interval rand()%10+10, alpha 128/max 254, fade duration-duration/3, divisor 4/repeat/one exact sand1 texture and GI life 0. Texture bytes at 0x71B454 match executable.
+- Ref/RagEffectPrim.cpp:77-224 (0x641760) -> UpdateSandWindScreenTexture, bound only to SandWind's fixed dimensions/roll/color, pattern 8, no acceleration/change-point profile. Uses stored projected parent position plus screen offset, integrates drift with old integer heading, then periodically draws heading delta/interval before source alpha and texture animation. Frame 0 consumes two steering draws after six emitter draws. Broader 2D primitive profiles remain open.
+- Ref/RagEffectPrim.cpp:2722-2850 (0x644DD0) -> RenderSandWindScreenTexture. Two independent screen triangles, source vertex/UV order, centered original dimensions, half-pixel displacement, fixed z 0.000001/oow 0.99999899, stored packed color/current texture and hard-coded alpha flag 1. No perspective scaling, world billboard or missing-texture glow. Only effect 46 PP_2DTEXTURE binds the reachable zero-roll renderer; other roll/pattern geometry remains open.
+
+Validation: release build, six silent C++ suites / 707 checks (541 lifecycle/primitive, 108 rendering, 58 other), six Python tests, one-literal executable byte audit and whitespace check pass. Added 14 lifecycle/emitter/update checks and eight screen geometry/submission checks: projection-before-gates, ordered RNG, fixed source profiles, movement-before-steering, fade, cutoff and negative lifetimes; triangle dimensions/order/UV/depth/color/flags/missing asset. No media/live acceptance. Approved OldRO SHA-256: `1F5D84E604A9118DE93942B0F060F9707DE18A253FAA215F406F5A99ED51AD92`. Other active emitters, generic controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## FireFly emitter / random steering / keyed alpha — 2026-10-26
 

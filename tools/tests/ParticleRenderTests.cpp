@@ -277,6 +277,26 @@ int main() {
         cross.m_texture[0]=&g_texMgr.texture;cross.m_curMotion=1;renderCross();check(g_renderer.m_rpAlphaList.empty(),"cross invalid current texture motion emits no substitute");
     }
     {
+        CTexture secondTexture;CEffectPrim sand;sand.m_pos={100,200,900};sand.m_widthSize=30;sand.m_heightSize=30;sand.m_argb=0x80FFFFFF;
+        sand.m_texture={&g_texMgr.texture,&secondTexture};sand.m_curMotion=1;sand.m_renderFlag=0x205;
+        auto renderSand=[&](){g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaNoDepthList.clear();
+            RenderSandWindScreenTexture(sand);};
+        renderSand();check(g_renderer.m_rpAlphaList.size()==2,"SandWind submits exactly two screen triangles");
+        auto* first=g_renderer.m_rpAlphaList[0].second;auto* second=g_renderer.m_rpAlphaList[1].second;
+        check(first->m_verts[0].x==69.5f&&first->m_verts[0].y==229.5f&&first->m_verts[1].x==69.5f&&first->m_verts[1].y==169.5f
+            &&first->m_verts[2].x==129.5f&&first->m_verts[2].y==229.5f,"SandWind screen geometry preserves dimensions order and half-pixel offset without perspective scaling");
+        check(second->m_verts[0].x==129.5f&&second->m_verts[0].y==229.5f&&second->m_verts[1].x==69.5f&&second->m_verts[1].y==169.5f
+            &&second->m_verts[2].x==129.5f&&second->m_verts[2].y==169.5f,"SandWind second triangle preserves original shared-edge order");
+        check(first->m_verts[0].tu==0&&first->m_verts[0].tv==1&&first->m_verts[1].tv==0&&first->m_verts[2].tu==1&&first->m_verts[2].tv==1
+            &&second->m_verts[2].tu==1&&second->m_verts[2].tv==0,"SandWind preserves source screen UV order");
+        check(first->m_verts[0].z==0.000001f&&first->m_verts[0].oow==0.99999899f&&first->m_verts[0].color==0x80FFFFFF&&first->tex==&secondTexture,
+            "SandWind preserves fixed depth reciprocal stored color and current texture");
+        check(g_renderer.m_rpAlphaOPList.empty()&&g_renderer.m_rpAlphaNoDepthList.empty()&&first->srcAlphaMode==5&&first->destAlphaMode==6,
+            "SandWind uses original hard-coded alpha flag one regardless of renderFlag");
+        sand.m_argb=0;renderSand();check(g_renderer.m_rpAlphaList.size()==2&&g_renderer.m_rpAlphaList[0].second->m_verts[0].color==0,"SandWind retains source zero-alpha submissions");
+        sand.m_texture[1]=&CTexMgr::s_dummy_texture;renderSand();check(g_renderer.m_rpAlphaList.empty(),"SandWind missing texture draws no glow substitute");
+    }
+    {
         CEffectPrim circle;circle.m_numSegments=2;circle.m_size=2;circle.m_arcAngle=90;circle.m_renderFlag=0x201;
         circle.m_texture.push_back(&g_texMgr.texture);
         for(int i=0;i<4;++i)circle.m_matrix.m[i][i]=1;
