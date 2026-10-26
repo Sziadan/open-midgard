@@ -7882,6 +7882,77 @@ bool UpdateReferenceMapMagicZone(CEffectPrim* prim)
     return motion != prim->m_totalTexture;
 }
 
+// Ref/dhxj/RagEffect2.cpp:9641 (case 0x1B). The four y fields below are
+// aliases in the original 180-byte GI payload: B-now=sparkY, B-pre=arcBaselineY,
+// T-now=vecTNowY, and T-pre=vecTPreY.
+bool UpdateReferenceMapParticle(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode->m_view;
+    const short longitude = static_cast<short>(view->GetCameraLongitude());
+    prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+    const short latitude = static_cast<short>(view->GetCameraLatitude());
+    short cameraLatitude = static_cast<short>(360 - latitude + 90);
+    if (cameraLatitude >= 360) cameraLatitude = static_cast<short>(cameraLatitude - 360);
+    prim->m_gi[1].alphaT = cameraLatitude;
+
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+
+        for (int angle = 0; angle < 4; angle += 2) {
+            float& current = gi.height[angle];
+            float& target = gi.height[angle + 1];
+            if (target > current) {
+                current += 1.0f;
+                if (current > 359.0f) current = 359.0f;
+                if (current > target) {
+                    const int range = static_cast<int>(current);
+                    target = static_cast<float>(range == 0 ? 0 : rand() % range);
+                }
+            } else {
+                current -= 1.0f;
+                if (current < 0.0f) current = 0.0f;
+                if (current <= target) {
+                    const int range = static_cast<int>(current);
+                    target = static_cast<float>(359 - (range == 0 ? 0 : rand() % range));
+                }
+            }
+        }
+        for (int angle = 4; angle < 8; ++angle) {
+            gi.height[angle] -= 1.0f;
+            if (gi.height[angle] < 0.0f) gi.height[angle] += 360.0f;
+        }
+
+        gi.vecBPreX = GetSin(static_cast<int>(gi.height[4])) * 20.0f;
+        gi.vecBPreZ = GetCos(static_cast<int>(gi.height[4])) * 20.0f;
+        gi.sparkX = GetSin(static_cast<int>(gi.height[5])) * 20.0f;
+        gi.sparkZ = GetCos(static_cast<int>(gi.height[5])) * 20.0f;
+        gi.vecTPreX = GetSin(static_cast<int>(gi.height[6])) * 20.0f;
+        gi.vecTPreZ = GetCos(static_cast<int>(gi.height[6])) * 20.0f;
+        gi.vecTNowX = GetSin(static_cast<int>(gi.height[7])) * 20.0f;
+        gi.vecTNowZ = GetCos(static_cast<int>(gi.height[7])) * 20.0f;
+
+        if (gi.arcBaselineY < 0.0f) {
+            gi.vecBPreX += 2.5f * GetSin(static_cast<int>(gi.height[0]));
+            gi.vecBPreZ += 2.5f * GetSin(static_cast<int>(gi.height[2]));
+        }
+        if (gi.sparkY < 0.0f) {
+            gi.sparkX -= 2.5f * GetSin(static_cast<int>(gi.height[0]));
+            gi.sparkZ -= 2.5f * GetSin(static_cast<int>(gi.height[2]));
+        }
+        if (gi.vecTPreY < 0.0f) {
+            gi.vecTPreX += 2.5f * GetSin(static_cast<int>(gi.height[0]));
+            gi.vecTPreZ -= 2.5f * GetSin(static_cast<int>(gi.height[2]));
+        }
+        if (gi.vecTNowY < 0.0f) {
+            gi.vecTNowX -= 2.5f * GetSin(static_cast<int>(gi.height[0]));
+            gi.vecTNowZ += 2.5f * GetSin(static_cast<int>(gi.height[2]));
+        }
+    }
+    return true;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -8860,6 +8931,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_MAPMAGICZONE) {
         UpdateReferenceMapMagicZone(this); // Source case 0x1A ignores the bool result.
+        return true;
+    }
+    if (m_type == PP_MAPPARTICLE) {
+        UpdateReferenceMapParticle(this); // Source case 0x1B ignores the bool result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

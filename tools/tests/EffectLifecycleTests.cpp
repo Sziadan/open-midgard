@@ -112,6 +112,8 @@ struct CView {
     float longitude=15.5f;
     float GetCameraLongitude() const {return longitude;}
     float GetCameraLatitude() const { return -45; }
+    float GetCurLongitude() const { return longitude; }
+    float GetCurLatitude() const { return GetCameraLatitude(); }
 } testView;
 struct CGameObject {
     virtual ~CGameObject() = default;
@@ -182,6 +184,7 @@ void UpdateReferenceScreenCircle(CEffectPrim*);
 void UpdateReferenceSphere(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceMapMagicZone(CEffectPrim*);
+bool UpdateReferenceMapParticle(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -271,6 +274,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DCYLINDERHALF) { UpdateReferenceCylinderState(this); return active; }
         if (m_type == PP_3DFLASH) { UpdateReferenceFlash(this); return active; }
         if (m_type == PP_MAPMAGICZONE) { UpdateReferenceMapMagicZone(this); return active; }
+        if (m_type == PP_MAPPARTICLE) { UpdateReferenceMapParticle(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1416,6 +1420,45 @@ int main()
         check(texturePrim.OnProcess() == 1 && texturePrim.m_gi[0].rotStart == 0
             && texturePrim.m_stateCnt == 3,
             "OnProcess case 0x1A uses the alternate increment-and-wrap path for other height bits");
+        texturePrim.m_type = PP_MAPPARTICLE; texturePrim.m_stateCnt = 0;
+        texturePrim.m_master->m_effectPos = {31, 41, 59};
+        testView.longitude = 15.5f;
+        auto& mapBand = texturePrim.m_gi[0];
+        mapBand = {};
+        mapBand.life = 1;
+        mapBand.height[0] = 10; mapBand.height[1] = 20;
+        mapBand.height[2] = 30; mapBand.height[3] = 10;
+        mapBand.height[4] = 0; mapBand.height[5] = 1;
+        mapBand.height[6] = 180; mapBand.height[7] = 359;
+        mapBand.arcBaselineY = mapBand.sparkY = mapBand.vecTPreY = mapBand.vecTNowY = -1;
+        auto& inactiveBand = texturePrim.m_gi[1];
+        inactiveBand = {}; inactiveBand.life = 2; inactiveBand.height[0] = 9; inactiveBand.sparkX = 77;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_pos.x == 31 && texturePrim.m_pos.y == 41
+            && texturePrim.m_gi[0].alphaT == 345 && texturePrim.m_gi[1].alphaT == 135
+            && mapBand.height[0] == 11 && mapBand.height[2] == 29
+            && mapBand.height[4] == 359 && mapBand.height[5] == 0
+            && mapBand.height[6] == 179 && mapBand.height[7] == 358
+            && std::fabs(mapBand.vecBPreX - (GetSin(359)*20 + 2.5f*GetSin(11))) < 0.0001f
+            && std::fabs(mapBand.vecBPreZ - (GetCos(359)*20 + 2.5f*GetSin(29))) < 0.0001f
+            && std::fabs(mapBand.sparkX - (-2.5f*GetSin(11))) < 0.0001f
+            && std::fabs(mapBand.sparkZ - (20 - 2.5f*GetSin(29))) < 0.0001f
+            && std::fabs(mapBand.vecTPreX - (GetSin(179)*20 + 2.5f*GetSin(11))) < 0.0001f
+            && std::fabs(mapBand.vecTPreZ - (GetCos(179)*20 - 2.5f*GetSin(29))) < 0.0001f
+            && std::fabs(mapBand.vecTNowX - (GetSin(358)*20 - 2.5f*GetSin(11))) < 0.0001f
+            && std::fabs(mapBand.vecTNowZ - (GetCos(358)*20 + 2.5f*GetSin(29))) < 0.0001f
+            && inactiveBand.height[0] == 9 && inactiveBand.sparkX == 77
+            && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x1B maps view/master state, active band angle and orbit vectors, all four negative-y corrections, inactive-band skip and common tick");
+        mapBand = {}; mapBand.life = 1;
+        mapBand.height[0] = 5.5f; mapBand.height[1] = 5.75f;
+        mapBand.height[2] = 5.5f; mapBand.height[3] = 5.25f;
+        const int drawsBeforeMapParticle = rngDraws;
+        rngValues = {23, 15}; rngCursor = 0;
+        check(UpdateReferenceMapParticle(&texturePrim)
+            && mapBand.height[0] == 6.5f && mapBand.height[1] == 5.0f
+            && mapBand.height[2] == 4.5f && mapBand.height[3] == 356.0f
+            && rngDraws == drawsBeforeMapParticle + 2 && rngCursor == 2,
+            "PrimMapParticle preserves increasing/decreasing threshold branch order and random(int) modulo schedule");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

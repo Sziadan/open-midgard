@@ -6,6 +6,8 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 EXE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
 REF = (ROOT / "Ref/RagEffectPrim.cpp").read_text(encoding="utf-8", errors="replace")
+REF_EFFECT2 = (ROOT / "Ref/RagEffect2.cpp").read_text(encoding="utf-8", errors="replace")
+REF_DHXJ_EFFECT2 = (ROOT / "Ref/dhxj/RagEffect2.cpp").read_text(encoding="cp1252", errors="replace")
 CURRENT = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 HEADER = (ROOT / "src/world/RagEffect.h").read_text(encoding="utf-8")
 
@@ -72,7 +74,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 70 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 71 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A, 0x1B}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -580,6 +582,54 @@ check("case 0x1A bit-pattern direction, signed wrap, master position and animati
       < current_map_magic.index("prim->m_gi[0].rotStart + 1")
       < current_map_magic.index("if (prim->m_stateCnt % prim->m_animSpeed")
       < current_map_magic.index("++prim->m_curMotion;"))
+source_map_particle_decompiled = body(REF_EFFECT2, "unsigned __int8 __thiscall CEffectPrim::PrimMapParticle(CEffectPrim *this)\n{")
+exe_map_particle = body(EXE, "unsigned __int8 __thiscall CEffectPrim::PrimMapParticle(CEffectPrim *this)\n{")
+source_map_particle = body(REF_DHXJ_EFFECT2, "CEffectPrim :: PrimMapParticle()")
+current_map_particle = body(CURRENT, "bool UpdateReferenceMapParticle(CEffectPrim* prim)")
+check("case 0x1B Ref and canonical EXE helper bodies match and dispatch ignores completion",
+      compact(source_map_particle_decompiled) == compact(exe_map_particle)
+      and re.search(r"case\s+0x1B:\s*CEffectPrim::PrimMapParticle\(this\);\s*goto\s+\$L145961;", source_dispatch)
+      and "if (m_type == PP_MAPPARTICLE)" in current_dispatch
+      and "UpdateReferenceMapParticle(this); // Source case 0x1B ignores the bool result." in current_dispatch
+      and len(current_explicit_ids) == 71)
+map_particle_effects = [
+    "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[0].alphaT=360-m_GI[0].alphaT;",
+    "m_GI[1].alphaT=360-m_GI[1].alphaT+90;", "if (m_GI[1].alphaT>=360)",
+    "m_pos = m_master->m_pos;", "if (m_GI[ec].life == 1)",
+    "if (m_GI[ec].height[i+1] > m_GI[ec].height[i])", "m_GI[ec].height[i]+=1;",
+    "if (m_GI[ec].height[i] > m_GI[ec].height[i+1])",
+    "m_GI[ec].height[i+1] = random(int(m_GI[ec].height[i]));",
+    "m_GI[ec].height[i]-=1;", "if (m_GI[ec].height[i] <= m_GI[ec].height[i+1])",
+    "m_GI[ec].height[i+1] = 359 - random(int(m_GI[ec].height[i]));",
+    "for (i=4;i<8;i++)", "g_sinTable[int(m_GI[ec].height[4])] * 20.0f",
+    "g_cosTable[int(m_GI[ec].height[7])] * 20.0f", "m_GI[ec].vecB_pre.y < 0",
+    "m_GI[ec].vecB_now.y < 0", "m_GI[ec].vecT_pre.y < 0", "m_GI[ec].vecT_now.y < 0",
+    "return true;",
+]
+map_particle_current_effects = [
+    "const short longitude = static_cast<short>(view->GetCameraLongitude());",
+    "static_cast<short>(360 - longitude)", "static_cast<short>(360 - latitude + 90)",
+    "if (cameraLatitude >= 360)", "prim->m_pos = prim->m_master->EffectPosition();",
+    "if (gi.life != 1) continue;", "if (target > current)", "current += 1.0f;",
+    "if (current > target)", "rand() % range", "current -= 1.0f;",
+    "if (current <= target)", "359 - (range == 0 ? 0 : rand() % range)",
+    "for (int angle = 4; angle < 8; ++angle)", "GetSin(static_cast<int>(gi.height[4])) * 20.0f",
+    "GetCos(static_cast<int>(gi.height[7])) * 20.0f", "if (gi.arcBaselineY < 0.0f)",
+    "if (gi.sparkY < 0.0f)", "if (gi.vecTPreY < 0.0f)", "if (gi.vecTNowY < 0.0f",
+    "return true;",
+]
+check("case 0x1B branch predicates, mutations and all four orbit correction branches map source-to-implementation",
+      all(compact(effect) in compact(source_map_particle) for effect in map_particle_effects)
+      and all(compact(effect) in compact(current_map_particle) for effect in map_particle_current_effects)
+      and current_map_particle.index("const short longitude") < current_map_particle.index("prim->m_pos =")
+      < current_map_particle.index("if (gi.life != 1)")
+      < current_map_particle.index("if (target > current)")
+      < current_map_particle.index("for (int angle = 4")
+      < current_map_particle.index("gi.vecBPreX =")
+      < current_map_particle.index("if (gi.arcBaselineY <")
+      < current_map_particle.index("if (gi.sparkY <")
+      < current_map_particle.index("if (gi.vecTPreY <")
+      < current_map_particle.index("if (gi.vecTNowY <"))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)
