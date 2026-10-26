@@ -204,6 +204,7 @@ void UpdateReferenceTeiHit2(CEffectPrim*);
 bool UpdateReferenceChimTo(CEffectPrim*);
 void UpdateReferenceBottom2(CEffectPrim*);
 bool UpdateReferenceBottomSpr(CEffectPrim*);
+void UpdateReferencePokJuk(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -310,6 +311,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_CHIMTO) { UpdateReferenceChimTo(this); return active; }
         if (m_type == PP_BOTTOM2) { UpdateReferenceBottom2(this); return active; }
         if (m_type == PP_BOTTOMSPR) { UpdateReferenceBottomSpr(this); return active; }
+        if (m_type == PP_POKJUK) { UpdateReferencePokJuk(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -741,6 +743,7 @@ __declspec(noinline) void RunTeiHit2LifecycleChecks(CEffectPrim& prim, int& chec
 
 __declspec(noinline) void RunBottom2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunBottomSprLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunPokJukLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -853,6 +856,88 @@ __declspec(noinline) void RunBottomSprLifecycleChecks(CEffectPrim& prim, int& ch
         && prim.m_stateCnt==1,
         "case 0x33 inactive GI0 preserves master anchor and process, while dispatcher ignores completed animation and advances tick");
     prim.m_particleActRes=nullptr; prim.m_numSegments=0; g_resMgr.act.count=oldMotionCount; g_isSkipFrame=oldSkipFrame;
+    RunPokJukLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunPokJukLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_POKJUK; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={100,200,300}; prim.m_pos={1,2,3};
+    prim.m_pattern=0; testView.longitude=30;
+    for (auto& gi : prim.m_gi) gi={};
+    auto& a=prim.m_gi[0]; a.life=1; a.process=2; a.flag[1]=0; a.sparkY=8; a.rotStart=358;
+    a.vecTNowX=1; a.vecTNowY=2; a.vecTNowZ=3; a.vecBPreX=4; a.arcBaselineY=5; a.vecBPreZ=6;
+    a.sparkX=7; a.sparkY=8; a.sparkZ=9;
+    auto& b=prim.m_gi[1]; b.life=1; b.process=174; b.flag[2]=0; b.flag[1]=2; b.flag[3]=7;
+    b.sparkX=40; b.sparkY=41; b.sparkZ=42; b.distance=5; b.alphaB=17;
+    auto& c=prim.m_gi[2]; c.life=2; c.process=50; c.flag[1]=1; c.flag[3]=9; c.rotStart=10;
+    auto& d=prim.m_gi[3]; d.life=1; d.process=-1; d.flag[1]=1; d.flag[3]=8; d.rotStart=20;
+    rngValues={}; rngCursor=0; const int drawStart=rngDraws;
+    prim.OnProcess();
+    check(a.process==3 && a.vecTPreX==1 && a.vecTPreY==2 && a.vecTPreZ==3
+        && a.vecTNowX==4 && a.vecTNowY==5 && a.vecTNowZ==6
+        && a.vecBPreX==7 && a.arcBaselineY==8 && a.vecBPreZ==9
+        && a.sparkY==7.75f && a.rotStart==3
+        && b.process==175 && b.flag[3]==1 && b.sparkX==40 && b.sparkY==41 && b.sparkZ==42
+        && b.distance==5 && b.alphaB==17
+        && c.process==50 && c.flag[3]==9 && c.rotStart==10
+        && d.process==0 && d.flag[3]==8 && d.rotStart==20
+        && a.alphaT==330 && b.alphaT==135 && rngDraws==drawStart,
+        "case 0x34 updates camera angles, four life gates, third-frame history, texture phase and one-wrap rotation");
+
+    prim.m_stateCnt=0; testView.longitude=12;
+    for (auto& gi : prim.m_gi) gi={};
+    a= {}; a.life=1; a.process=154; a.flag[1]=0; a.alphaB=4; a.sparkY=10;
+    prim.OnProcess();
+    check(a.process==155 && a.flag[1]==1 && a.alphaB==250 && a.sparkY==9.75f,
+        "case 0x34 descent crosses 154 and switches phase after applying descent, without same-frame orbit movement");
+
+    prim.m_stateCnt=0; for (auto& gi : prim.m_gi) gi={}; a={}; a.life=1; a.process=4; a.flag[1]=1; a.fullDisplayAngle=0;
+    a.riseAngle=0; a.distance=10; a.sparkX=1; a.sparkY=2; a.sparkZ=3; a.alphaB=3;
+    rngValues={0}; rngCursor=0; const int phaseDraws=rngDraws;
+    prim.OnProcess();
+    check(a.sparkX==11.0f && a.sparkY>2.019f && a.sparkY<2.021f && a.sparkZ==3
+        && a.distance==9.8f && a.alphaB==1 && rngDraws==phaseDraws+1,
+        "case 0x34 orbit phase applies ordered movement, distance decay and conditional second alpha decrement");
+
+    prim.m_stateCnt=0; prim.m_master->m_effectPos={301,302,303};
+    for (auto& gi : prim.m_gi) gi={};
+    a={}; a.life=1; a.process=2000; a.flag[1]=1; a.fullDisplayAngle=0; a.riseAngle=0;
+    a.distance=0; a.alphaB=10;
+    rngValues={1,359,99}; rngCursor=0; const int resetDraws=rngDraws;
+    prim.OnProcess();
+    check(a.process==0 && a.flag[1]==0 && a.riseAngle==359
+        && a.sparkX==286 && a.sparkY==302 && a.sparkZ==303
+        && std::fabs(a.distance-0.796f)<0.00001f && a.alphaB==9
+        && rngDraws==resetDraws+3,
+        "case 0x34 over-2000 reset follows phase work and consumes phase, angle, then distance RNG in source order");
+
+    prim.m_stateCnt=0; for (auto& gi : prim.m_gi) gi={}; a={}; a.life=1; a.process=159; a.flag[2]=0; a.flag[1]=2; a.flag[3]=9;
+    prim.OnProcess();
+    check(a.process==160 && a.flag[3]==0,
+        "case 0x34 lower texture-window boundary maps other modulo values to flag zero");
+    prim.m_stateCnt=0; a.process=176; a.flag[3]=0; a.flag[1]=2; prim.OnProcess();
+    check(a.process==177 && a.flag[3]==2,
+        "case 0x34 texture-window modulo 17 selects flag two");
+    prim.m_stateCnt=0; a.process=178; a.flag[3]=0; a.flag[1]=2; prim.OnProcess();
+    check(a.process==179 && a.flag[3]==1,
+        "case 0x34 inclusive upper texture-window edge with modulo 19 selects flag one");
+    prim.m_stateCnt=0; a.process=180; a.flag[3]=1; a.flag[1]=2; prim.OnProcess();
+    check(a.process==181 && a.flag[3]==0,
+        "case 0x34 process beyond the inclusive texture window clears the texture flag");
+    prim.m_stateCnt=0; for (auto& gi : prim.m_gi) gi={}; a={};
+    a.life=1; a.process=4; a.flag[1]=1; a.alphaB=0;
+    rngValues={0}; rngCursor=0; const int clampDraws=rngDraws;
+    prim.OnProcess();
+    check(a.alphaB==0 && rngDraws==clampDraws+1,
+        "case 0x34 orbit phase clamps alpha below zero after its unconditional and random decrements");
+    prim.m_particleActRes=nullptr; prim.m_numSegments=0; testView.longitude=oldLongitude;
+    rngValues={}; rngCursor=0; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()

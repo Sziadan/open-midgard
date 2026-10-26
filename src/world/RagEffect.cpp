@@ -8640,6 +8640,76 @@ bool UpdateReferenceBottomSpr(CEffectPrim* prim)
     return AnimateReferenceParticle(prim);
 }
 
+// Ref/dhxj/RagEffect2.cpp:23308 (case 0x34).
+void UpdateReferencePokJuk(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode->m_view;
+    prim->m_gi[0].alphaT = static_cast<short>(view->GetCameraLongitude());
+    prim->m_gi[0].alphaT = static_cast<short>(360 - prim->m_gi[0].alphaT);
+    prim->m_gi[1].alphaT = static_cast<short>(view->GetCameraLatitude());
+    prim->m_gi[1].alphaT = static_cast<short>(360 - prim->m_gi[1].alphaT + 90);
+    if (prim->m_gi[1].alphaT >= 360) prim->m_gi[1].alphaT = static_cast<short>(prim->m_gi[1].alphaT - 360);
+
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.process % 3 == 0) {
+            gi.vecTPreX = gi.vecTNowX; gi.vecTPreY = gi.vecTNowY; gi.vecTPreZ = gi.vecTNowZ;
+            gi.vecTNowX = gi.vecBPreX; gi.vecTNowY = gi.arcBaselineY; gi.vecTNowZ = gi.vecBPreZ;
+            gi.vecBPreX = gi.sparkX; gi.arcBaselineY = gi.sparkY; gi.vecBPreZ = gi.sparkZ;
+        }
+
+        const int windowStart = 160 + gi.flag[2];
+        if (gi.process <= windowStart + 20 && gi.process >= windowStart) {
+            const int phase = gi.process % 20;
+            if (phase == 15 || phase == 19) gi.flag[3] = 1;
+            else if (phase == 17) gi.flag[3] = 2;
+            else gi.flag[3] = 0;
+        } else {
+            gi.flag[3] = 0;
+        }
+
+        gi.rotStart = static_cast<short>(gi.rotStart + 5);
+        if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+
+        if (gi.flag[1] == 0) {
+            gi.sparkY -= 0.25f;
+            if (gi.process > 154) {
+                gi.flag[1] = 1;
+                gi.alphaB = 250;
+            }
+        } else if (gi.flag[1] == 1) {
+            const float fullSin = g_sinTable[gi.fullDisplayAngle];
+            const float fullCos = g_cosTable[gi.fullDisplayAngle];
+            gi.sparkY += fullSin * gi.distance;
+            const float radial = fullCos * gi.distance;
+            const float riseCos = g_cosTable[gi.riseAngle];
+            const float riseSin = g_sinTable[gi.riseAngle];
+            gi.sparkY += 0.02f;
+            gi.sparkX += riseCos * radial;
+            gi.sparkZ += riseSin * radial;
+            gi.distance *= 0.98f;
+            --gi.alphaB;
+            if (rand() % 2 == 0) --gi.alphaB;
+            if (gi.alphaB < 0) gi.alphaB = 0;
+        }
+
+        if (gi.process > 2000) {
+            gi.process = 0;
+            gi.flag[1] = 0;
+            gi.riseAngle = static_cast<short>(rand() % 360);
+            gi.sparkX = prim->m_pos.x - 15.0f;
+            gi.sparkY = prim->m_pos.y;
+            gi.sparkZ = prim->m_pos.z;
+            gi.distance = 0.4f + static_cast<float>(rand() % 100) * 0.004f;
+        }
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9685,6 +9755,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_BOTTOMSPR) {
         UpdateReferenceBottomSpr(this); // Source case 0x33 ignores the animation result.
+        return true;
+    }
+    if (m_type == PP_POKJUK) {
+        UpdateReferencePokJuk(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
