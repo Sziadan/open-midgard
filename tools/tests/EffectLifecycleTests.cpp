@@ -299,6 +299,7 @@ struct CRagEffect : CGameObject {
     void ApplyHealSP();
     void ApplyHeavensDrive();
     void ApplyOverThrust();
+    void ApplyTeleportation();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1879,6 +1880,45 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=34;
+        effect.m_effectPos={30,50,40};effect.m_tlvertX=123;effect.m_tlvertY=456;effect.m_duration=200;g_session.m_isMinEffect=true;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;effect.ApplyTeleportation();auto* cylinder=effect.m_primList.front();
+        check(effect.m_primList.size()==1&&cylinder->UsesReferenceCylinder()&&cylinder->m_type==PP_3DCYLINDER&&rngDraws==draws,
+            "Teleportation emits one reference cylinder without RNG despite reduced effects");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_Teleportation.wav"&&waveCalls[0].x==28&&waveCalls[0].y==0&&waveCalls[0].z==36
+            &&waveCalls[0].frameRng==draws,"Teleportation plays exact stored-origin horizontal wave before cylinder setup");
+        check(effect.m_effectPos.x==30&&effect.m_effectPos.y==50&&effect.m_effectPos.z==40&&effect.m_duration==200
+            &&effect.m_tlvertX==123&&effect.m_tlvertY==456,"Teleportation preserves stored origin parent duration and projected fields without actor refresh");
+        check(cylinder->m_duration==60&&cylinder->m_pattern==1&&cylinder->m_outerSize==4&&cylinder->m_innerSize==4
+            &&cylinder->m_heightSize==0&&cylinder->m_heightSpeed==5&&cylinder->m_heightAccel==0.25f&&cylinder->m_longSpeed==2
+            &&cylinder->m_maxHeightSize==100&&cylinder->m_arcAngle==36,"Teleportation preserves source cylinder motion profile and constructor height cap arc");
+        check(cylinder->m_alpha==254&&cylinder->m_maxAlpha==254&&cylinder->m_fadeOutCnt==0&&cylinder->m_animSpeed==4&&cylinder->m_repeatAnim
+            &&g_texMgr.requests==std::vector<std::string>({"effect\\ring_blue.tga"})&&g_resMgr.requests.empty(),
+            "Teleportation keeps original immediate fade animation defaults and exact ring-blue texture");
+        cylinder->m_alphaDelta=1;cylinder->OnProcess();
+        check(cylinder->m_heightSpeed==5.25f&&cylinder->m_heightSize==5.25f&&cylinder->m_longitude==2&&cylinder->m_outerSize==4
+            &&cylinder->m_outerSpeed==static_cast<float>(-4.0/61)&&cylinder->m_innerSize==4,
+            "Teleportation first update grows source height before setting duration-plus-one outer shrink speed");
+        check(cylinder->m_alphaSpeed==static_cast<float>(-254.0/60)&&cylinder->m_alpha<254&&(cylinder->m_argb>>24)==249
+            &&cylinder->m_pos.x==30&&cylinder->m_pos.y==50&&cylinder->m_pos.z==40&&cylinder->m_curMotion==0,
+            "Teleportation first update fades at stored world anchor and wraps single texture");
+        cylinder->OnProcess();check(cylinder->m_heightSize==10.75f&&cylinder->m_outerSize==4+static_cast<float>(-4.0/61)
+            &&cylinder->m_innerSize==4&&cylinder->m_longitude==4,"Teleportation later update shrinks only outer radius while accelerating height");
+        for(int frame=2;frame<15;++frame)cylinder->OnProcess();check(cylinder->m_heightSize==100&&cylinder->m_heightSpeed==8.75f,
+            "Teleportation source height reaches constructor cap while growth speed continues accelerating");
+        const float outer=cylinder->m_outerSize;cylinder->OnProcess();check(cylinder->m_heightSize==100&&cylinder->m_outerSize<outer&&cylinder->m_heightSpeed==9,
+            "Teleportation capped cylinder keeps original radius shrink and height-speed integration");
+        actor.m_pos={1,2,3};effect.m_stateCnt=1;effect.ApplyTeleportation();
+        check(effect.m_primList.size()==1&&waveCalls.size()==1&&g_texMgr.requests.size()==1&&rngDraws==draws&&effect.m_effectPos.x==30,
+            "Teleportation nonzero calls do not repeat sound resources or emission and do not follow actor position");
+        for(int frame=16;frame<60;++frame)cylinder->OnProcess();check(cylinder->m_stateCnt==60&&cylinder->m_outerSize>0&&cylinder->m_heightSize==100,
+            "Teleportation cylinder remains active through original final duration frame");
+        check(cylinder->OnProcess()==0&&cylinder->m_stateCnt==61&&cylinder->m_alpha==0,
+            "Teleportation processes duration frame sixty then terminates with faded alpha");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;
     }
     {
         CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;

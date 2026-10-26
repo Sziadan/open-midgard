@@ -4,10 +4,17 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A OverThrust id128, after HeavensDrive checkpoint `d06cae5`. Original dual audio, actor projection, persistent parent and fading ring now use reference screen-circle state/geometry.
+Current work: WP5A Teleportation id34, after OverThrust checkpoint `16f43a8`. Original zero-only audio and cylinder now use reference growth/shrink/fade/height-cap behavior, preserving stored origin and parent fields.
 
-Next action: continue unported emitters (including Teleportation id34) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters (including MagnumBreak id17) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Teleportation growing / shrinking cylinder — 2026-10-26
+
+- Ref/RagEffect.cpp:8608-8634 (0x5F9FA0) -> ApplyTeleportation, original id34, direct ProcessEffectFrame/Init route. Frame0 plays exact stored-origin horizontal EF_Teleportation wave then launches one PP_3DCYLINDER. Preserves stored origin, parent duration and screen fields; no actor-position refresh, projection, reduced-effects suppression or RNG. Later frames perform no helper work.
+- Source profile: duration60, pattern1, outer4/inner4, constructor height0/maxHeight100/arc36, heightSpeed5/acceleration0.25, longitude speed2, constructor alpha/max254, fade0 and exact ring_blue texture. Bound existing reference cylinder state/geometry. First update integrates height before setting source outer shrink speed -4/(duration+1); later frames shrink outer radius only, retain inner4, clamp height100 while continuing height-speed integration, and apply original immediate fade/single-texture animation.
+
+Validation: release build, six silent C++ suites / 1074 checks (874 lifecycle/primitive, 142 rendering, 58 other), six Python tests, two-literal executable byte audit, two original asset-pointer instruction audits and whitespace check pass. Added13 lifecycle checks for zero-only emission/audio/resources, stored origin/unchanged parent fields, reduced-effects/no-RNG behavior, exact profile/defaults, first versus later shrink/growth/alpha order, height cap with continuing acceleration, final duration frame and alpha-floor termination. Existing shared cylinder geometry/device suites pass. Exact wave0x71B744 and texture0x71943C match executable bytes; original pushes at0x5F9FEE/0x5FA0CF verified. No media/live acceptance. Approved OldRO SHA-256: `575996FF99DFF221804865DFE5A47990AAB075E36AF8B812EC0F7C4D52C2E6EC`. Other emitters/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## OverThrust / reference screen-circle primitive — 2026-10-26
 

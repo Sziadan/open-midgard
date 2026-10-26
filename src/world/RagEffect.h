@@ -485,6 +485,7 @@ private:
     void ApplyHealSP();
     void ApplyHeavensDrive();
     void ApplyOverThrust();
+    void ApplyTeleportation();
     void ApplyProvidence(const char* textureName);
     void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);
     void ApplyBeginCasting(const char* textureName, int option, bool playWave);

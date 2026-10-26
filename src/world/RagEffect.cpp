@@ -6844,7 +6844,7 @@ bool CEffectPrim::UsesReferenceCylinder() const
 {
     if (m_type != PP_3DCYLINDER || !m_master) return false;
     switch (m_master->GetEffectType()) {
-    case 0: case 2: case 3: case 14: case 36: case 81: case 180: case 184: case 218: case 219: case 220: case 221: return true;
+    case 0: case 2: case 3: case 14: case 34: case 36: case 81: case 180: case 184: case 218: case 219: case 220: case 221: return true;
     default: return false;
     }
 }
@@ -8178,7 +8178,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 18: case 27: case 28: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -12363,6 +12363,25 @@ void CRagEffect::ApplyOverThrust()
     prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_center.tga",false));
 }
 
+// Ref/RagEffect.cpp:8608-8634 (0x5F9FA0), original effect 34.
+void CRagEffect::ApplyTeleportation()
+{
+    if (m_stateCnt != 0) return;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_Teleportation.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER,vector3d{});
+    prim->m_duration = 60; prim->m_pattern |= 1;
+    prim->m_outerSize = 4.0f; prim->m_innerSize = 4.0f;
+    prim->m_heightSpeed = 5.0f; prim->m_heightAccel = 0.25f;
+    prim->m_longSpeed = 2.0f; prim->m_fadeOutCnt = 0;
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga",false));
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -13617,6 +13636,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 45) {
         SpawnFireFly();
+        return true;
+    }
+    if (m_type == 34) {
+        ApplyTeleportation();
         return true;
     }
     if (m_type == 128) {
