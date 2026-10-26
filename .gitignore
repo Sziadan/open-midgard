@@ -42,6 +42,7 @@ tools/*
 !tools/check_intimidate_parity.py
 !tools/check_tei_hit1_parity.py
 !tools/check_cloud_render_parity.py
+!tools/check_gumgang_parity.py
 !tools/tests/
 tools/tests/*
 !tools/tests/CMakeLists.txt

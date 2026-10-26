@@ -6745,6 +6745,136 @@ void RenderIntimidate(const CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+struct GumGangBandOffset {
+    float* x;
+    float* y;
+    float* z;
+};
+
+bool GumGangFrontFacing(int angle, int screenAngle, float orientation)
+{
+    const int difference = static_cast<int>(static_cast<double>(angle) - screenAngle);
+    const bool front = (difference < 70 && difference > -80)
+        || difference < -270 || difference > 270;
+    const bool normalOrder = orientation == 0.0f || orientation == 2.0f;
+    return normalOrder ? front : !front;
+}
+
+void SubmitGumGangRect(const vector3d corners[4], const vector3d& translation,
+    const matrix& viewMatrix, CTexture* texture, short alpha,
+    unsigned char red, unsigned char green, unsigned char blue, int renderFlags)
+{
+    if (!texture) {
+        return;
+    }
+    const vector3d positions[2][3] = {
+        { AddVec3(corners[0], translation), AddVec3(corners[1], translation), AddVec3(corners[2], translation) },
+        { AddVec3(corners[3], translation), AddVec3(corners[2], translation), AddVec3(corners[0], translation) },
+    };
+    const float uvs[2][3][2] = {
+        { { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } },
+        { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 1.0f } },
+    };
+    const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(alpha)) << 24)
+        | (static_cast<unsigned int>(red) << 16)
+        | (static_cast<unsigned int>(green) << 8)
+        | blue;
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) {
+            return;
+        }
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            ProjectReferenceEffectVertex(positions[triangle][vertex], viewMatrix, face->m_verts[vertex]);
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[triangle][vertex][0];
+            face->m_verts[vertex].tv = uvs[triangle][vertex][1];
+        }
+        g_renderer.AddRP(face, renderFlags);
+    }
+}
+
+void RenderGumGang(CEffectPrim& prim, const matrix& viewMatrix, float radiusScale,
+    unsigned char red, unsigned char green, unsigned char blue)
+{
+    const int angleSlots[4] = { 3, 7, 11, 15 };
+    const int alphaSlots[4] = { 1, 5, 9, 13 };
+    const int orientationSlots[4] = { 2, 6, 10, 14 };
+    const int textureSlots[4] = { 2, 6, 10, 14 };
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1) {
+            continue;
+        }
+        if (gi.flag[4] == 1) {
+            red = 255;
+            green = 20;
+            blue = 20;
+        }
+
+        const double radius = static_cast<double>(gi.distance) * radiusScale;
+        vector3d baseCorners[4]{};
+        for (int corner = 0; corner < 4; ++corner) {
+            int angle = 45 + 90 * corner;
+            if (angle >= 360) {
+                angle -= 360;
+            }
+            baseCorners[corner] = {
+                static_cast<float>(static_cast<double>(g_cosTable[angle]) * radius),
+                0.0f,
+                static_cast<float>(static_cast<double>(g_sinTable[angle]) * radius),
+            };
+        }
+        IntimidateTowardScreen(baseCorners, prim.m_gi[0].alphaT, prim.m_gi[1].alphaT);
+
+        GumGangBandOffset offsets[4] = {
+            { &gi.vecBPreX, &gi.arcBaselineY, &gi.vecBPreZ },
+            { &gi.sparkX, &gi.sparkY, &gi.sparkZ },
+            { &gi.vecTPreX, &gi.vecTPreY, &gi.vecTPreZ },
+            { &gi.vecTNowX, &gi.vecTNowY, &gi.vecTNowZ },
+        };
+        for (int strip = 0; strip < 4; ++strip) {
+            const int angle = static_cast<int>(gi.height[static_cast<size_t>(angleSlots[strip])]);
+            const double scale = 4.0;
+            *offsets[strip].x = static_cast<float>(static_cast<double>(g_cosTable[angle]) * scale);
+            *offsets[strip].z = static_cast<float>(static_cast<double>(g_sinTable[angle]) * scale);
+
+            vector3d stripCorners[4]{};
+            for (int corner = 0; corner < 4; ++corner) {
+                stripCorners[corner] = {
+                    static_cast<float>(static_cast<double>(baseCorners[corner].x) + *offsets[strip].x),
+                    static_cast<float>(static_cast<double>(baseCorners[corner].y) + *offsets[strip].y),
+                    static_cast<float>(static_cast<double>(baseCorners[corner].z) + *offsets[strip].z),
+                };
+            }
+            if (!GumGangFrontFacing(angle, prim.m_gi[0].alphaT,
+                    gi.height[static_cast<size_t>(orientationSlots[strip])])) {
+                std::swap(stripCorners[0], stripCorners[1]);
+                std::swap(stripCorners[2], stripCorners[3]);
+            }
+
+            const int textureIndex = static_cast<int>(gi.height[static_cast<size_t>(textureSlots[strip])]);
+            CTexture* texture = textureIndex >= 0 && textureIndex < static_cast<int>(prim.m_texture.size())
+                ? prim.m_texture[static_cast<size_t>(textureIndex)] : nullptr;
+            SubmitGumGangRect(stripCorners, prim.m_pos, viewMatrix, texture,
+                static_cast<short>(gi.height[static_cast<size_t>(alphaSlots[strip])]),
+                red, green, blue, static_cast<int>(prim.m_renderFlag));
+        }
+    }
+}
+
 void TeiHit1Corners(const EffectGi& gi, vector3d corners[4])
 {
     const double height = gi.height[1];
@@ -8072,6 +8202,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_TEIHIT1) {
         RenderTeiHit1(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_GUMGANG) {
+        RenderGumGang(*this, *viewMatrix, 1.0f, 100, 100, 255);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {

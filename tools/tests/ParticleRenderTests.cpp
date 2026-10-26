@@ -18,6 +18,9 @@ struct EffectGi {
     std::array<float,21> height{};
     std::array<unsigned char,21> flag{};
     float sparkX=0.0f,sparkY=0.0f,sparkZ=0.0f;
+    float vecBPreX=0.0f,arcBaselineY=0.0f,vecBPreZ=0.0f;
+    float vecTPreX=0.0f,vecTPreY=0.0f,vecTPreZ=0.0f;
+    float vecTNowX=0.0f,vecTNowY=0.0f,vecTNowZ=0.0f;
     unsigned char life=0;
 };
 void MatrixIdentity(matrix& m){m={};for(int i=0;i<4;++i)m.m[i][i]=1;}
@@ -61,6 +64,7 @@ struct CEffectPrim {
     u32 m_argb=0xFFFFFFFF;
     std::vector<CTexture*> m_texture;
     std::array<EffectSegmentState,50> m_segments;
+    std::array<EffectGi,4> m_gi;
 };
 using D3DBLEND=int;
 constexpr int PF_A8R8G8B8=4, D3DPT_TRIANGLESTRIP=5, D3DPT_TRIANGLELIST=4, D3DCULL_NONE=1;
@@ -127,6 +131,8 @@ float GetSin(int angle) { return std::sin(angle*3.14159265f/180.0f); }
 #include "ParticleRenderBodies.inc"
 float g_cosTable[361],g_sinTable[361];
 vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
+constexpr float kSubmitNearPlane=80.0f,kNearPlane=10.0f;
+#include "ProjectPointBody.inc"
 #include "CircleRenderBodies.inc"
 #include "CastingColorBodies.inc"
 #include "CastingLowRiseBody.inc"
@@ -136,6 +142,7 @@ vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.
 #include "GrandCross2CornersBody.inc"
 #include "LineLinkGeometryBody.inc"
 #include "IntimidateRenderGeometryBody.inc"
+#include "GumGangRenderGeometryBody.inc"
 #include "TeiHit1GeometryBody.inc"
 #include "CloudRenderGeometryBody.inc"
 #include "ReferenceTriangleQueueBodies.inc"
@@ -810,6 +817,60 @@ int main() {
             "ColdHit retains source white center even when edge alpha reaches zero");
         shard.m_texture.clear();renderShard();check(g_renderer.m_rpAlphaList.empty(),"ColdHit missing shard texture produces no fallback geometry");
     }
+    {
+        const int differences[]={-271,-270,-80,-79,0,69,70,270,271};
+        for(int difference:differences) {
+            const bool front=(difference < 70 && difference > -80)||difference < -270||difference > 270;
+            check(GumGangFrontFacing(difference,0,0.0f)==front
+                && GumGangFrontFacing(difference,0,2.0f)==front
+                && GumGangFrontFacing(difference,0,1.0f)==!front,
+                "GumGang facing branch preserves strict source bounds and mode inversion");
+        }
+        CTexture textures[5];CEffectPrim prim;prim.m_pos={10,20,130};prim.m_renderFlag=0x205;
+        for(auto& texture:textures)prim.m_texture.push_back(&texture);
+        prim.m_gi[0].life=1;prim.m_gi[0].alphaT=0;prim.m_gi[0].distance=10.0f;
+        prim.m_gi[0].height[1]=70;prim.m_gi[0].height[2]=0;prim.m_gi[0].height[3]=0;
+        prim.m_gi[0].height[5]=130;prim.m_gi[0].height[6]=1;prim.m_gi[0].height[7]=0;
+        prim.m_gi[0].height[9]=190;prim.m_gi[0].height[10]=2;prim.m_gi[0].height[11]=0;
+        prim.m_gi[0].height[13]=250;prim.m_gi[0].height[14]=4;prim.m_gi[0].height[15]=0;
+        prim.m_gi[0].arcBaselineY=-2;prim.m_gi[0].sparkY=-3;prim.m_gi[0].vecTPreY=-4;prim.m_gi[0].vecTNowY=-5;
+        prim.m_gi[0].alphaB=0; // The source gates on life only, not alphaB.
+        g_renderer.submissions.clear();g_renderer.flags.clear();
+        RenderGumGang(prim,view,1.0f,100,100,255);
+        check(g_renderer.submissions.size()==8,"GumGang submits two triangles for each of four source strips on a live band");
+        if(g_renderer.submissions.size()==8) {
+            const int textureIds[]={0,1,2,4};const int alphaValues[]={70,130,190,250};
+            for(int strip=0;strip<4;++strip) {
+                const auto& face=g_renderer.submissions[static_cast<size_t>(strip*2)];
+                check(face.tex==&textures[textureIds[strip]]&&face.m_verts[0].color==((static_cast<u32>(alphaValues[strip])<<24)|0x006464FFu)
+                    &&face.srcAlphaMode==D3DBLEND_SRCALPHA&&face.destAlphaMode==D3DBLEND_INVSRCALPHA
+                    &&face.m_verts[0].tu==0&&face.m_verts[0].tv==1&&face.m_verts[2].tu==1&&face.m_verts[2].tv==0,
+                    "GumGang strip preserves its source alpha, texture index, packed RGB, blend and UV rectangle");
+                check(g_renderer.flags[static_cast<size_t>(strip*2)]==0x205,
+                    "GumGang forwards the primitive render flags");
+            }
+            tlvertex3d expectedFirst;ProjectReferenceEffectVertex({static_cast<float>(GetCos(45)*10.0+4.0+10.0),18.0f,static_cast<float>(GetSin(45)*10.0+130.0)},view,expectedFirst);
+            check(near(g_renderer.submissions[0].m_verts[0].x,expectedFirst.x)
+                &&near(g_renderer.submissions[0].m_verts[0].y,expectedFirst.y)
+                &&near(g_renderer.submissions[0].m_verts[0].oow,expectedFirst.oow),
+                "GumGang first strip caches the four-unit angle offset and adds the primitive world position");
+            tlvertex3d reversedFirst;ProjectReferenceEffectVertex({static_cast<float>(GetCos(135)*10.0+4.0+10.0),17.0f,static_cast<float>(GetSin(135)*10.0+130.0)},view,reversedFirst);
+            check(near(g_renderer.submissions[2].m_verts[0].x,reversedFirst.x)
+                &&near(g_renderer.submissions[2].m_verts[0].y,reversedFirst.y),
+                "GumGang nonzero orientation mode reverses the first strip edge order");
+        }
+        prim.m_gi[0].flag[4]=1;prim.m_gi[1].life=1;prim.m_gi[1].distance=10;
+        prim.m_gi[1].height=prim.m_gi[0].height;g_renderer.submissions.clear();g_renderer.flags.clear();
+        RenderGumGang(prim,view,1.0f,100,100,255);
+        check(g_renderer.submissions.size()==16&&g_renderer.submissions[0].m_verts[0].color==0x46FF1414u
+            &&g_renderer.submissions[8].m_verts[0].color==0x46FF1414u,
+            "GumGang red flag overrides and retains color across subsequent active bands");
+        prim.m_gi[0].life=0;prim.m_gi[1].life=0;g_renderer.submissions.clear();
+        RenderGumGang(prim,view,1.0f,100,100,255);
+        check(g_renderer.submissions.empty(),"GumGang skips all bands whose life is not one");
+    }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;
 }
+
+\r\n

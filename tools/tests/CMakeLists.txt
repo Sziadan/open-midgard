@@ -67,6 +67,8 @@ extract_body(matrix_mult "${math_source}" "void MatrixMult(" "void MatrixInverse
 extract_body(matrix_rotations "${math_source}" "void MatrixAppendXRotation(" "// --- Intersection Tests")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ParticleMatrixBodies.inc" "${matrix_mult}\n${matrix_rotations}")
 file(READ "../../src/world/RagEffect.cpp" effect_source)
+extract_body(project_point "${effect_source}" "bool ProjectPoint(" "float ResolveEffectPixelRatio(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ProjectPointBody.inc" "${project_point}")
 extract_body(attr_wave_tables "${session_source}" "constexpr const char* kEnemyHitNormalWaves[]" "struct JobTokenEntry")
 extract_body(attr_wave_selector "${session_source}" "const char* CSession::GetAttrWaveName(" "const char* CSession::GetJobHitWaveName(")
 # Instrument the production selector's RNG with the same silent sequence as emitters.
@@ -118,6 +120,8 @@ extract_body(line_link_geometry "${effect_source}" "void LineLinkInterpolatedEnd
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/LineLinkGeometryBody.inc" "${line_link_geometry}")
 extract_body(intimidate_render_geometry "${effect_source}" "void IntimidateTowardScreen(" "void RenderIntimidate(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/IntimidateRenderGeometryBody.inc" "${intimidate_render_geometry}")
+extract_body(gumgang_render_geometry "${effect_source}" "struct GumGangBandOffset" "void TeiHit1Corners(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/GumGangRenderGeometryBody.inc" "${gumgang_render_geometry}")
 extract_body(tei_hit1_geometry "${effect_source}" "void TeiHit1Corners(" "struct CloudRenderStyle")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/TeiHit1GeometryBody.inc" "${tei_hit1_geometry}")
 extract_body(cloud_render_geometry "${effect_source}" "struct CloudRenderStyle" "bool IsCloudRendererType(")
