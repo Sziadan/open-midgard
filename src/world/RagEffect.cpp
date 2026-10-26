@@ -7975,6 +7975,111 @@ bool UpdateReference3DAura(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:9486 (case 0x1D). Keep the eight angular pairs
+// and four falling-vector groups in their source order for deterministic RNG.
+bool UpdateReference3DAura2(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode->m_view;
+    const short longitude = static_cast<short>(view->GetCameraLongitude());
+    prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+    const short latitude = static_cast<short>(view->GetCameraLatitude());
+    short cameraLatitude = static_cast<short>(360 - latitude + 90);
+    if (cameraLatitude >= 360) cameraLatitude = static_cast<short>(cameraLatitude - 360);
+    prim->m_gi[1].alphaT = cameraLatitude;
+
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+
+        for (int angle = 0; angle < 16; angle += 2) {
+            float& current = gi.height[angle];
+            float& target = gi.height[angle + 1];
+            if (target > current) {
+                current += 3.0f;
+                if (current > 359.0f) current = 359.0f;
+                if (current > target) {
+                    const int range = static_cast<int>(current);
+                    target = static_cast<float>(range == 0 ? 0 : rand() % range);
+                }
+            } else {
+                current -= 2.0f;
+                if (current < 0.0f) current = 0.0f;
+                if (current <= target) {
+                    const int range = static_cast<int>(current);
+                    target = static_cast<float>(359 - (range == 0 ? 0 : rand() % range));
+                }
+            }
+        }
+
+        if (gi.arcBaselineY < 0.0f) {
+            gi.vecBPreX += 0.15f * GetSin(static_cast<int>(gi.height[0]));
+            gi.vecBPreZ += 0.15f * GetSin(static_cast<int>(gi.height[2]));
+            if (gi.flag[0] == 11) {
+                if (gi.arcBaselineY < -50.0f) {
+                    gi.vecBPreX = static_cast<float>(rand() % 15 - 8);
+                    gi.vecBPreZ = static_cast<float>(rand() % 15 - 8);
+                    gi.arcBaselineY = static_cast<float>(rand() % 100);
+                }
+            } else if (gi.arcBaselineY < -30.0f) {
+                gi.vecBPreX = 0.0f;
+                gi.vecBPreZ = 0.0f;
+                gi.arcBaselineY = static_cast<float>(rand() % 100);
+            }
+        }
+        gi.arcBaselineY -= gi.maxHeight;
+
+        if (gi.sparkY < 0.0f) {
+            gi.sparkX -= 0.15f * GetSin(static_cast<int>(gi.height[4]));
+            gi.sparkZ -= 0.15f * GetSin(static_cast<int>(gi.height[6]));
+            if (gi.sparkY < -30.0f) {
+                if (gi.flag[0] == 11) {
+                    gi.sparkX = static_cast<float>(rand() % 15 - 8);
+                    gi.sparkZ = static_cast<float>(rand() % 15 - 8);
+                } else {
+                    gi.sparkX = 0.0f;
+                    gi.sparkZ = 0.0f;
+                }
+                gi.sparkY = static_cast<float>(rand() % 100);
+            }
+        }
+        gi.sparkY -= gi.maxHeight;
+
+        if (gi.vecTPreY < 0.0f) {
+            gi.vecTPreX += 0.15f * GetSin(static_cast<int>(gi.height[8]));
+            gi.vecTPreZ -= 0.15f * GetSin(static_cast<int>(gi.height[10]));
+            if (gi.vecTPreY < -30.0f) {
+                if (gi.flag[0] == 11) {
+                    gi.vecTPreX = static_cast<float>(rand() % 15 - 8);
+                    gi.vecTPreZ = static_cast<float>(rand() % 15 - 8);
+                } else {
+                    gi.vecTPreX = 0.0f;
+                    gi.vecTPreZ = 0.0f;
+                }
+                gi.vecTPreY = static_cast<float>(rand() % 100);
+            }
+        }
+        gi.vecTPreY -= gi.maxHeight;
+
+        if (gi.vecTNowY < 0.0f) {
+            gi.vecTNowX -= 0.15f * GetSin(static_cast<int>(gi.height[12]));
+            gi.vecTNowZ += 0.15f * GetSin(static_cast<int>(gi.height[14]));
+            if (gi.vecTNowY < -30.0f) {
+                if (gi.flag[0] == 11) {
+                    gi.vecTNowX = static_cast<float>(rand() % 15 - 8);
+                    gi.vecTNowZ = static_cast<float>(rand() % 15 - 8);
+                } else {
+                    gi.vecTNowX = 0.0f;
+                    gi.vecTNowZ = 0.0f;
+                }
+                gi.vecTNowY = static_cast<float>(rand() % 100);
+            }
+        }
+        gi.vecTNowY -= gi.maxHeight;
+    }
+    return true;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -8961,6 +9066,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_3DAURA) {
         UpdateReference3DAura(this); // Source case 0x1C ignores the bool result.
+        return true;
+    }
+    if (m_type == PP_3DAURA_2) {
+        UpdateReference3DAura2(this); // Source case 0x1D ignores the bool result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

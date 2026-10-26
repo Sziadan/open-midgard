@@ -186,6 +186,7 @@ bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceMapMagicZone(CEffectPrim*);
 bool UpdateReferenceMapParticle(CEffectPrim*);
 bool UpdateReference3DAura(CEffectPrim*);
+bool UpdateReference3DAura2(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -277,6 +278,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_MAPMAGICZONE) { UpdateReferenceMapMagicZone(this); return active; }
         if (m_type == PP_MAPPARTICLE) { UpdateReferenceMapParticle(this); return active; }
         if (m_type == PP_3DAURA) { UpdateReference3DAura(this); return active; }
+        if (m_type == PP_3DAURA_2) { UpdateReference3DAura2(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1478,6 +1480,69 @@ int main()
         texturePrim.m_stateCnt = 2; texturePrim.m_repeatAnim = true;
         check(UpdateReference3DAura(&texturePrim) && texturePrim.m_curMotion == 0,
             "Prim3DAura repeating AnimTexture wraps motion by total texture count");
+        texturePrim.m_type = PP_3DAURA_2; texturePrim.m_stateCnt = 0;
+        texturePrim.m_master->m_effectPos = {101, 202, 303}; testView.longitude = 15.5f;
+        for (auto& gi : texturePrim.m_gi) { gi = {}; gi.life = 0; }
+        auto& auraBand = texturePrim.m_gi[0]; auraBand.life = 1;
+        for (int pair = 0; pair < 8; ++pair) {
+            if (pair < 4) { auraBand.height[pair*2] = 10; auraBand.height[pair*2+1] = 12; }
+            else { auraBand.height[pair*2] = 10; auraBand.height[pair*2+1] = 10; }
+        }
+        auraBand.maxHeight = 0;
+        rngValues = {1,2,3,4,5,6,7,8}; rngCursor = 0;
+        const int angleDrawStart = rngDraws;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_pos.x == 101 && texturePrim.m_pos.y == 202
+            && texturePrim.m_pos.z == 303 && auraBand.alphaT == 345 && texturePrim.m_gi[1].alphaT == 135
+            && auraBand.height[0] == 13 && auraBand.height[1] == 1
+            && auraBand.height[2] == 13 && auraBand.height[3] == 2
+            && auraBand.height[4] == 13 && auraBand.height[5] == 3
+            && auraBand.height[6] == 13 && auraBand.height[7] == 4
+            && auraBand.height[8] == 8 && auraBand.height[9] == 354
+            && auraBand.height[10] == 8 && auraBand.height[11] == 353
+            && auraBand.height[12] == 8 && auraBand.height[13] == 352
+            && auraBand.height[14] == 8 && auraBand.height[15] == 359
+            && rngDraws == angleDrawStart + 8 && rngCursor == 8 && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x1D maps eight increasing/decreasing angular pairs, thresholds, RNG order, view/master state and tick");
+
+        for (auto& gi : texturePrim.m_gi) gi = {};
+        auto& falling = texturePrim.m_gi[0]; falling.life = 1; falling.flag[0] = 11; falling.maxHeight = 2;
+        for (int pair = 0; pair < 8; ++pair) { falling.height[pair*2] = 10; falling.height[pair*2+1] = 100; }
+        falling.arcBaselineY = -51; falling.sparkY = falling.vecTPreY = falling.vecTNowY = -31;
+        falling.vecBPreX = falling.sparkX = falling.vecTPreX = falling.vecTNowX = 50;
+        falling.vecBPreZ = falling.sparkZ = falling.vecTPreZ = falling.vecTNowZ = 60;
+        rngValues = {1,2,3,4,5,6,7,8,9,10,11,12}; rngCursor = 0;
+        const int fallingDrawStart = rngDraws;
+        check(UpdateReference3DAura2(&texturePrim)
+            && falling.vecBPreX == -7 && falling.vecBPreZ == -6 && falling.arcBaselineY == 1
+            && falling.sparkX == -4 && falling.sparkZ == -3 && falling.sparkY == 4
+            && falling.vecTPreX == -1 && falling.vecTPreZ == 0 && falling.vecTPreY == 7
+            && falling.vecTNowX == 2 && falling.vecTNowZ == 3 && falling.vecTNowY == 10
+            && rngDraws == fallingDrawStart + 12 && rngCursor == 12,
+            "Prim3DAura_2 falling-vector resets honor flag-11 thresholds and ordered x/z/y random draws");
+
+        for (auto& gi : texturePrim.m_gi) gi = {};
+        auto& ordinary = texturePrim.m_gi[0]; ordinary.life = 1; ordinary.maxHeight = 2;
+        for (int pair = 0; pair < 8; ++pair) { ordinary.height[pair*2] = 10; ordinary.height[pair*2+1] = 100; }
+        ordinary.arcBaselineY = -30; ordinary.sparkY = ordinary.vecTPreY = ordinary.vecTNowY = 1;
+        ordinary.vecBPreX = 3; ordinary.vecBPreZ = 4;
+        rngValues = {13,14,15,16}; rngCursor = 0;
+        const int ordinaryDrawStart = rngDraws;
+        check(UpdateReference3DAura2(&texturePrim)
+            && std::fabs(ordinary.vecBPreX - (3 + 0.15f*GetSin(13))) < 0.00001f
+            && std::fabs(ordinary.vecBPreZ - (4 + 0.15f*GetSin(13))) < 0.00001f
+            && ordinary.arcBaselineY == -32
+            && ordinary.sparkY == -1 && ordinary.vecTPreY == -1 && ordinary.vecTNowY == -1
+            && rngDraws == ordinaryDrawStart && rngCursor == 0,
+            "Prim3DAura_2 uses strict fall/reset thresholds, subtracts maxHeight from every y and consumes no random values at the boundary");
+        ordinary.arcBaselineY = ordinary.sparkY = ordinary.vecTPreY = ordinary.vecTNowY = -31;
+        rngValues = {13,14,15,16}; rngCursor = 0;
+        check(UpdateReference3DAura2(&texturePrim)
+            && ordinary.vecBPreX == 0 && ordinary.vecBPreZ == 0 && ordinary.arcBaselineY == 11
+            && ordinary.sparkX == 0 && ordinary.sparkZ == 0 && ordinary.sparkY == 12
+            && ordinary.vecTPreX == 0 && ordinary.vecTPreZ == 0 && ordinary.vecTPreY == 13
+            && ordinary.vecTNowX == 0 && ordinary.vecTNowZ == 0 && ordinary.vecTNowY == 14
+            && rngCursor == 4,
+            "Prim3DAura_2 non-11 reset branch zeros x/z and draws y once for each falling vector");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

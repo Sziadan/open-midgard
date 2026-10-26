@@ -74,7 +74,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 72 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A, 0x1B, 0x1C}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 73 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A, 0x1B, 0x1C, 0x1D}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -591,7 +591,7 @@ check("case 0x1B Ref and canonical EXE helper bodies match and dispatch ignores 
       and re.search(r"case\s+0x1B:\s*CEffectPrim::PrimMapParticle\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_MAPPARTICLE)" in current_dispatch
       and "UpdateReferenceMapParticle(this); // Source case 0x1B ignores the bool result." in current_dispatch
-      and len(current_explicit_ids) == 72)
+      and len(current_explicit_ids) == 73)
 map_particle_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[0].alphaT=360-m_GI[0].alphaT;",
     "m_GI[1].alphaT=360-m_GI[1].alphaT+90;", "if (m_GI[1].alphaT>=360)",
@@ -641,7 +641,7 @@ check("case 0x1C Ref and canonical EXE aura bodies match and dispatch discards a
       and re.search(r"case\s+0x1C:\s*CEffectPrim::Prim3DAura\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_3DAURA)" in current_dispatch
       and "UpdateReference3DAura(this); // Source case 0x1C ignores the bool result." in current_dispatch
-      and len(current_explicit_ids) == 72)
+      and len(current_explicit_ids) == 73)
 aura_source_effects = [
     "m_pos = m_master->m_pos;", "for (ec=0;ec<2;ec++)", "m_GI[ec].rise_angle+=3;",
     "if (m_GI[ec].rise_angle>=360)", "m_GI[ec].rise_angle-=360;",
@@ -665,6 +665,64 @@ check("case 0x1C source-to-implementation maps both unconditional angle updates 
       < current_aura.index("const int motion =")
       < current_aura.index("if (prim->m_repeatAnim)")
       < current_aura.index("else if (motion =="))
+source_aura2_decompiled = body(REF_EFFECT2, "unsigned __int8 __thiscall CEffectPrim::Prim3DAura_2(CEffectPrim *this)\n{")
+exe_aura2 = body(EXE, "unsigned __int8 __thiscall CEffectPrim::Prim3DAura_2(CEffectPrim *this)\n{")
+source_aura2 = body(REF_DHXJ_EFFECT2, "CEffectPrim :: Prim3DAura_2()")
+current_aura2 = body(CURRENT, "bool UpdateReference3DAura2(CEffectPrim* prim)")
+check("case 0x1D Ref/EXE helper bodies match and the dispatcher ignores its return",
+      compact(source_aura2_decompiled) == compact(exe_aura2)
+      and re.search(r"case\s+0x1D:\s*CEffectPrim::Prim3DAura_2\(this\);\s*goto\s+\$L145961;", source_dispatch)
+      and "if (m_type == PP_3DAURA_2)" in current_dispatch
+      and "UpdateReference3DAura2(this); // Source case 0x1D ignores the bool result." in current_dispatch
+      and len(current_explicit_ids) == 73)
+aura2_source_effects = [
+    "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[1].alphaT=360-m_GI[1].alphaT+90;",
+    "if (m_GI[1].alphaT>=360)", "m_pos = m_master->m_pos;", "for (ec=0;ec<4;ec++)",
+    "if (m_GI[ec].life == 1)", "for (i=0;i<16;i+=2)",
+    "if (m_GI[ec].height[i+1] > m_GI[ec].height[i])", "m_GI[ec].height[i]+=3;",
+    "if (m_GI[ec].height[i] > 359)", "m_GI[ec].height[i] = 359;",
+    "if (m_GI[ec].height[i] > m_GI[ec].height[i+1])",
+    "random(int(m_GI[ec].height[i]))", "m_GI[ec].height[i]-=2;",
+    "if (m_GI[ec].height[i] < 0)", "m_GI[ec].height[i] = 0;",
+    "if (m_GI[ec].height[i] <= m_GI[ec].height[i+1])",
+    "359 - random(int(m_GI[ec].height[i]))",
+    "if (m_GI[ec].vecB_pre.y < 0)", "m_GI[ec].flag1[0] == 11",
+    "m_GI[ec].vecB_pre.y<-50", "m_GI[ec].vecB_pre.y<-30",
+    "m_GI[ec].vecB_pre.y -= m_GI[ec].max_height;",
+    "if (m_GI[ec].vecB_now.y < 0)", "m_GI[ec].vecB_now.y<-30",
+    "m_GI[ec].vecB_now.y -= m_GI[ec].max_height;",
+    "if (m_GI[ec].vecT_pre.y < 0)", "m_GI[ec].vecT_pre.y -= m_GI[ec].max_height;",
+    "if (m_GI[ec].vecT_now.y < 0)", "m_GI[ec].vecT_now.y -= m_GI[ec].max_height;",
+    "return true;",
+]
+aura2_current_effects = [
+    "static_cast<short>(360 - longitude)", "static_cast<short>(360 - latitude + 90)",
+    "if (cameraLatitude >= 360)", "prim->m_pos = prim->m_master->EffectPosition();",
+    "if (gi.life != 1) continue;", "for (int angle = 0; angle < 16; angle += 2)",
+    "if (target > current)", "current += 3.0f;", "if (current > 359.0f) current = 359.0f;",
+    "if (current > target)", "rand() % range", "current -= 2.0f;",
+    "if (current < 0.0f) current = 0.0f;", "if (current <= target)",
+    "359 - (range == 0 ? 0 : rand() % range)", "if (gi.arcBaselineY < 0.0f)",
+    "if (gi.flag[0] == 11)", "if (gi.arcBaselineY < -50.0f)",
+    "else if (gi.arcBaselineY < -30.0f)", "gi.arcBaselineY -= gi.maxHeight;",
+    "if (gi.sparkY < 0.0f)", "if (gi.sparkY < -30.0f)", "gi.sparkY -= gi.maxHeight;",
+    "if (gi.vecTPreY < 0.0f)", "gi.vecTPreY -= gi.maxHeight;",
+    "if (gi.vecTNowY < 0.0f)", "gi.vecTNowY -= gi.maxHeight;", "return true;",
+]
+check("case 0x1D source-to-implementation covers every angle/vector branch and preserves branch/RNG order",
+      all(compact(effect) in compact(source_aura2) for effect in aura2_source_effects)
+      and all(compact(effect) in compact(current_aura2) for effect in aura2_current_effects)
+      and current_aura2.index("const short longitude") < current_aura2.index("prim->m_pos =")
+      < current_aura2.index("if (gi.life != 1)")
+      < current_aura2.index("for (int angle = 0")
+      < current_aura2.index("if (gi.arcBaselineY <")
+      < current_aura2.index("gi.arcBaselineY -=")
+      < current_aura2.index("if (gi.sparkY <")
+      < current_aura2.index("gi.sparkY -=")
+      < current_aura2.index("if (gi.vecTPreY <")
+      < current_aura2.index("gi.vecTPreY -=")
+      < current_aura2.index("if (gi.vecTNowY <")
+      < current_aura2.index("gi.vecTNowY -="))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)
