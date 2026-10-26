@@ -121,7 +121,7 @@ extract_body(str_termination "${effect_source}" "bool EffectChecksStrResult(" "u
 extract_body(effect_tick "${effect_source}" "u8 CRagEffect::OnProcess()" "// Legacy RSW map-emitter scheduling.")
 extract_body(effect_dtor "${effect_source}" "CRagEffect::~CRagEffect()" "void CRagEffect::LoadEzEffect(")
 extract_body(effect_launch "${effect_source}" "CEffectPrim* CRagEffect::LaunchEffectPrim(" "void CRagEffect::OnActorDeleted(")
-extract_body(grim_tooth "${effect_source}" "void CRagEffect::SpawnGrimTooth()" "void CRagEffect::SpawnGrimToothAtk()")
+extract_body(grim_tooth "${effect_source}" "void CRagEffect::SpawnGrimTooth()" "void CRagEffect::SpawnIncAgility()")
 extract_body(effect_messages "${effect_source}" "void CRagEffect::SendMsg(" "void CRagEffect::Render(")
 extract_body(actor_detach "${actor_source}" "void CAbleToMakeEffect::RemoveEffectById(" "CGameActor::CGameActor()")
 extract_body(world_update "${world_source}" "void CWorld::UpdateGameObjects()" "CGameActor* CWorld::GetGameActorByAID(")

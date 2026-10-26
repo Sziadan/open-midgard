@@ -6722,7 +6722,7 @@ bool CEffectPrim::UsesReferenceCrossTexture() const
 bool CEffectPrim::UsesReferenceQuadHorn() const
 {
     return m_type == PP_3DQUADHORN && m_master
-        && (m_master->GetEffectType() == 27 || m_master->GetEffectType() == 28);
+        && (m_master->GetEffectType() == 27 || m_master->GetEffectType() == 28 || m_master->GetEffectType() == 123 || m_master->GetEffectType() == 132);
 }
 
 bool CEffectPrim::UsesReferenceScreenTexture() const
@@ -7666,9 +7666,6 @@ CRagEffect::CRagEffect()
     , m_deltaPos2{}
     , m_deltaPos3{}
     , m_targetPos{}
-    , m_grimToothOrigin{}
-    , m_grimToothStep{}
-    , m_grimToothRemaining{}
     , m_param{ 0.0f, 0.0f, 0.0f, 0.0f }
     , m_emitSpeed(1.0f)
     , m_latitude(0.0f)
@@ -8010,9 +8007,6 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     m_tickCarryMs = kEffectTickMs;
     m_targetPos = vector3d{};
     m_hasTargetPos = false;
-    m_grimToothOrigin = m_cachedPos;
-    m_grimToothStep = vector3d{};
-    m_grimToothRemaining = vector3d{};
 
     switch (effectId) {
     case 371: {
@@ -8022,7 +8016,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 27: case 28: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 27: case 28: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 123: case 132: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -8033,12 +8027,6 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         break;
     case 159:
         m_handler = Handler::HideStart;
-        break;
-    case 123:
-        m_handler = Handler::GrimTooth;
-        break;
-    case 132:
-        m_handler = Handler::GrimToothAtk;
         break;
     case 22:
         m_handler = Handler::Sight;
@@ -8285,10 +8273,7 @@ CAbleToMakeEffect* CRagEffect::ResolveCurrentEffectOwner() const
 
 vector3d CRagEffect::ResolveBasePosition() const
 {
-    // Ref: effect 123 retains the position copied by Init; message 14 is its target.
-    if (m_type == 123) {
-        return m_grimToothOrigin;
-    }
+    if (m_type == 123 || m_type == 132) return m_effectPos;
     if (CRenderObject* master = ResolveCurrentMaster()) {
         return AddVec3(master->m_pos, m_deltaPos);
     }
@@ -8344,8 +8329,6 @@ bool CRagEffect::ResolveCullSphere(vector3d* outCenter, float* outRadius) const
     case Handler::Torch:
     case Handler::EzStr:
     case Handler::HideStart:
-    case Handler::GrimTooth:
-    case Handler::GrimToothAtk:
     case Handler::Sight:
     case Handler::Sight2:
     case Handler::FireBall:
@@ -8355,7 +8338,7 @@ bool CRagEffect::ResolveCullSphere(vector3d* outCenter, float* outRadius) const
     case Handler::None:
     default:
         // These ids use OnProcess2 directly; retain their existing cull extent.
-        radius = (m_type == 312 || m_type == 313 || m_type == 325 || m_type == 331 || m_type == 332)
+        radius = (m_type == 123 || m_type == 132 || m_type == 312 || m_type == 313 || m_type == 325 || m_type == 331 || m_type == 332)
             ? 140.0f : 96.0f;
         break;
     }
@@ -8906,112 +8889,77 @@ void CRagEffect::SpawnHideStart()
     }
 }
 
-// Ref/RagEffect.cpp:4613-4702. Keep the two discarded RNG draws: they
-// determine the subsequent size/orientation sequence even though unused here.
+// Ref/RagEffect.cpp:4613-4702 (0x601450). Keep both discarded RNG draws.
 void CRagEffect::SpawnGrimTooth()
 {
-    const vector3d base = m_grimToothOrigin;
+    const vector3d base = m_effectPos;
     if (m_stateCnt == 0) {
         CGameMode* mode = g_modeMgr.GetCurrentGameMode();
         if (mode && mode->m_world && mode->m_world->m_player) {
             const vector3d& listener = mode->m_world->m_player->m_pos;
-            PlayWave("effect\\EF_FrostDiver.wav", base.x - listener.x, 0.0f,
-                base.z - listener.z, 250, 40, 1.0f);
+            PlayWave("effect\\EF_FrostDiver.wav",base.x-listener.x,0.0f,base.z-listener.z,250,40,1.0f);
         }
-        float rotation = static_cast<float>(std::atan2(static_cast<double>(m_deltaPos.x) - base.x,
-            -(static_cast<double>(m_deltaPos.z) - base.z)) / 3.141592 * 180.0);
-        if (rotation >= 360.0f) rotation -= 360.0f;
-        if (rotation < 0.0f) rotation += 360.0f;
-        matrix direction;
-        MatrixIdentity(direction);
-        // GetRadian takes an integer, so truncate after negating the rotation.
-        MatrixAppendYRotation(direction, GetRadian(static_cast<int>(-rotation)));
-        m_grimToothStep = {
-            direction.m[2][0] + direction.m[2][0] + direction.m[3][0],
-            direction.m[2][1] + direction.m[2][1] + direction.m[3][1],
-            direction.m[2][2] + direction.m[2][2] + direction.m[3][2],
+        m_roty = static_cast<float>(std::atan2(static_cast<double>(m_deltaPos.x)-base.x,
+            -(static_cast<double>(m_deltaPos.z)-base.z))/3.141592*180.0);
+        if (m_roty >= 360.0f) m_roty -= 360.0f;
+        if (m_roty < 0.0f) m_roty += 360.0f;
+        matrix direction; MatrixIdentity(direction);
+        MatrixAppendYRotation(direction,GetRadian(static_cast<int>(-m_roty)));
+        m_deltaPos2 = {
+            direction.m[2][0]+direction.m[2][0]+direction.m[3][0],
+            direction.m[2][1]+direction.m[2][1]+direction.m[3][1],
+            direction.m[2][2]+direction.m[2][2]+direction.m[3][2]
         };
-        m_grimToothRemaining = {
-            m_grimToothRemaining.x - m_grimToothStep.x,
-            m_grimToothRemaining.y - m_grimToothStep.y,
-            m_grimToothRemaining.z - m_grimToothStep.z,
-        };
+        m_deltaPos3 = {m_deltaPos3.x-m_deltaPos2.x,m_deltaPos3.y-m_deltaPos2.y,m_deltaPos3.z-m_deltaPos2.z};
     }
     if (m_flag != 0) return;
-    if ((m_stateCnt % 3) == 0) {
-        const double dx = static_cast<double>(m_deltaPos.x) - base.x;
-        const double dz = static_cast<double>(m_deltaPos.z) - base.z;
-        const float squaredDistance = static_cast<float>(dx * dx + dz * dz);
-        if (std::sqrt(squaredDistance) <= 2.5) m_flag = 1;
-        CEffectPrim* prim = LaunchEffectPrim(PP_3DQUADHORN, vector3d{});
-        prim->m_pattern |= 1;
-        prim->m_duration = 40;
+    if (m_stateCnt % 3 == 0) {
+        const double dx = static_cast<double>(m_deltaPos.x)-base.x, dz = static_cast<double>(m_deltaPos.z)-base.z;
+        const float squared = static_cast<float>(dz*dz+dx*dx);
+        if (std::sqrt(static_cast<double>(squared)) <= 2.5) m_flag = 1;
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DQUADHORN,vector3d{});
+        prim->m_pattern |= 1; prim->m_duration = 40;
         const int angle = rand() % 360;
-        rand();
-        GetSin(angle);
-        GetCos(angle);
-        prim->m_deltaPos2 = {
-            m_grimToothRemaining.x,
-            20.0f + m_grimToothRemaining.y,
-            m_grimToothRemaining.z,
-        };
-        prim->m_size = static_cast<float>((rand() % 40 + 60) * 0.0099999998);
+        rand(); GetSin(angle); GetCos(angle);
+        prim->m_deltaPos2 = {m_deltaPos3.x,m_deltaPos3.y+20.0f,m_deltaPos3.z};
+        prim->m_size = static_cast<float>((rand() % 40 + 60)*0.0099999998);
         prim->m_heightSize = 10.0f;
         prim->m_longitude = static_cast<float>(rand() % 360);
         prim->m_latitude = static_cast<float>(rand() % 30 + 75);
         MatrixIdentity(prim->m_matrix);
-        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
-        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
-        prim->m_speed = 3.0f;
-        prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -2.0);
-        prim->m_spawnCount = 6;
-        prim->m_fadeOutCnt = prim->m_duration - 10;
-        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\stone.bmp", false));
+        MatrixAppendXRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_rotMat = prim->m_matrix;
+        prim->m_speed = 3.0f; prim->m_accel = static_cast<float>(prim->m_speed/static_cast<double>(prim->m_duration)*-2.0);
+        prim->m_count = 6; prim->m_fadeOutCnt = prim->m_duration-10;
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\stone.bmp",false));
     }
-    m_grimToothRemaining = {
-        m_grimToothRemaining.x - m_grimToothStep.x,
-        m_grimToothRemaining.y - m_grimToothStep.y,
-        m_grimToothRemaining.z - m_grimToothStep.z,
-    };
+    m_deltaPos3 = {m_deltaPos3.x-m_deltaPos2.x,m_deltaPos3.y-m_deltaPos2.y,m_deltaPos3.z-m_deltaPos2.z};
 }
 
+// Ref/RagEffect.cpp:4709-4783 (0x601850), original effect 132.
 void CRagEffect::SpawnGrimToothAtk()
 {
-    if (m_stateCnt != 0) {
-        return;
-    }
-
-    CTexture* stoneTexture = ResolveEffectTextureCandidates({
-        "effect\\stone.bmp",
-        "effect\\stone.tga",
-    }, false);
-    if (!stoneTexture) {
-        return;
-    }
-
-    const vector3d offsets[3] = {
-        { 0.0f, 40.0f, -12.0f },
-        { 12.0f, 40.0f, 6.0f },
-        { -12.0f, 40.0f, 6.0f },
-    };
-
-    for (int index = 0; index < 3; ++index) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DQUADHORN, vector3d{})) {
-            prim->m_renderFlag = 0u;
-            prim->m_duration = 24;
-            prim->m_deltaPos2 = offsets[index];
-            prim->m_size = 0.9f;
-            prim->m_heightSize = 25.0f;
-            prim->m_longitude = static_cast<float>(120 * (6 - index));
-            prim->m_latitude = 75.0f;
-            MatrixIdentity(prim->m_matrix);
-            MatrixAppendXRotation(prim->m_matrix, prim->m_latitude * (kPi / 180.0f));
-            MatrixAppendYRotation(prim->m_matrix, prim->m_longitude * (kPi / 180.0f));
-            prim->m_alpha = 255.0f;
-            prim->m_fadeOutCnt = prim->m_duration - 8;
-            prim->m_texture.push_back(stoneTexture);
-            prim->m_tintColor = RGB(255, 255, 255);
-        }
+    if (m_stateCnt != 0) return;
+    const vector3d offsets[3] = {{0,40,-12},{12,40,6},{-12,40,6}};
+    for (int i = 0; i < 3; ++i) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DQUADHORN,vector3d{});
+        prim->m_pattern |= 1; prim->m_renderFlag |= 0x200;
+        m_duration = 1000; prim->m_duration = 1000;
+        GetSin(120*i); GetCos(120*i);
+        prim->m_deltaPos2 = offsets[i];
+        prim->m_size = 0.89999998f; prim->m_heightSize = 25.0f;
+        prim->m_longitude = static_cast<float>(120*(6-i)); prim->m_latitude = 75.0f;
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_rotMat = prim->m_matrix;
+        prim->m_speed = 3.5f; prim->m_accel = 0.001f; prim->m_count = 10;
+        prim->m_fadeOutCnt = prim->m_duration-10;
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\stone.bmp",false));
+        m_deltaPos3 = {m_deltaPos3.x-m_deltaPos2.x,m_deltaPos3.y-m_deltaPos2.y,m_deltaPos3.z-m_deltaPos2.z};
     }
 }
 
@@ -13345,6 +13293,11 @@ bool CRagEffect::ProcessEffectFrame()
         SpawnFireFly();
         return true;
     }
+    if (m_type == 123 || m_type == 132) {
+        if (m_type == 123) SpawnGrimTooth();
+        else SpawnGrimToothAtk();
+        return true;
+    }
     if (m_type == 27 || m_type == 28) {
         if (m_type == 27) ApplyFrostDiver();
         else ApplyFrostDiver2();
@@ -13856,12 +13809,6 @@ bool CRagEffect::ProcessEffectFrame()
             break;
         case Handler::HideStart:
             SpawnHideStart();
-            break;
-        case Handler::GrimTooth:
-            SpawnGrimTooth();
-            break;
-        case Handler::GrimToothAtk:
-            SpawnGrimToothAtk();
             break;
         case Handler::IncAgility:
             SpawnIncAgility();

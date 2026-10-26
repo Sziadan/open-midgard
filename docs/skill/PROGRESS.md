@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A FrostDiver ids27/28, after FireArrow checkpoint `0ef3167`. Original traveling/burst emitters now bind source ice-spike motion and four-face geometry, preserving reduced-effects differences and exact burst audio.
+Current work: WP5A GrimTooth ids123/132, after FrostDiver checkpoint `88198ac`. Traveling and attack spikes now use source stop controls, retained rotation and reference geometry; attack lifetime/profile and canonical parent cursor storage are corrected.
 
-Next action: continue other quad-horn callers (including GrimTooth) and unported emitters/primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters (including HasteUp id98) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## GrimTooth traveling / attack spikes — 2026-10-26
+
+- Ref/RagEffect.cpp:4613-4702 (0x601450) -> SpawnGrimTooth, original id123. Replaced duplicated origin/step/cursor storage with original effectPos/deltaPos2/deltaPos3/roty fields. Zero preserves stored-origin horizontal EF_FrostDiver wave, truncated negative heading and two-unit initial cursor subtraction. Every unflagged frame advances cursor; every third frame checks target distance from stored origin (not moving cursor), emits even when arrival flag is set, consumes two discarded RNG draws before source size/orientation draws and then advances cursor. Reduced-effects mode does not suppress this helper.
+- Id123 now sets actual primitive count6 instead of legacy spawnCount, retains source X/Y launch matrix in rotMat, original alpha/max254, duration40, speed3/drag, height10, fade30 and exact stone texture. Bound shared reference quad-horn state/rendering so motion integrates frame6 before stopping, with source four-face geometry and no generic glow substitution.
+- Ref/RagEffect.cpp:4709-4783 (0x601850) -> SpawnGrimToothAtk, original id132. Replaced approximate 24-frame burst and candidate texture list with zero-only three-spike source path: parent/primitive duration1000, pattern1, renderFlag|0x200, offsets(0,40,-12)/(12,40,6)/(-12,40,6), size0.89999998/height25, raw longitudes720/600/480, latitude75, retained X/Y rotation, speed3.5/acceleration0.001, stop count10, alpha/max254 and fade990. Exact stone texture; no RNG or audio; source parent cursor subtracts parent step once per spike. Bound shared reference quad-horn state/rendering, whose source renderer still submits hard-coded flag1.
+- Ids123/132 now dispatch directly before generic behavior and Init selects reference primitive-only routing. Removed obsolete handlers and duplicate GrimTooth position fields. Both cull anchors use stored source origin; existing 140-unit cull extents retained. Other quad-horn profiles/change-point/pattern2 controls remain open.
+
+Validation: release build, six silent C++ suites / 978 checks (794 lifecycle/primitive, 126 rendering, 58 other), six Python tests, two-literal executable byte audit, three original asset-pointer instruction audits and whitespace check pass. Added22 lifecycle checks for discarded draws, stored audio/origin, canonical cursor/angles, three-frame cadence/intervening steps, source origin-distance gate/exact threshold/final emission, stop6 versus stop10 after motion, attack offsets/flags/matrices/long lifetime/cursor adjustment, delayed fade990 and zero-only burst. Existing shared quad-horn geometry/device checks pass. Exact stone0x71B858 and wave0x71BBF0 match executable bytes; original pushes at0x6014A0/0x6017E8/0x601AA3 verified. No media/live acceptance. Approved OldRO SHA-256: `B015FB14F97BA0B7272E1529D15532070AC9B92657FBACE0C23041F9863A7C4B`. Other emitters/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## FrostDiver / FrostDiver2 and four-sided ice spikes — 2026-10-26
 

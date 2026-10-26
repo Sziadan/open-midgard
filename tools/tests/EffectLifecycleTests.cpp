@@ -271,9 +271,10 @@ struct CRagEffect : CGameObject {
     std::list<CEffectPrim*> m_primList;
     bool active = true, spawn = false;
     int frames = 0, worldFrames = 0, m_flag = 0;
-    vector3d m_grimToothOrigin, m_grimToothRemaining, m_grimToothStep, m_deltaPos3;
+    vector3d m_deltaPos3;
     float m_roty=0;
     void SpawnGrimTooth();
+    void SpawnGrimToothAtk();
     void ApplySuperAngel(signed char,signed char);
     void ProcessSuperAngelEffect();
     void SpawnRuwach();
@@ -523,16 +524,16 @@ int main()
     {
         CRagEffect effect;
         effect.m_master = &actor;
-        effect.m_grimToothOrigin = { 10, 5, 20 };
+        effect.m_effectPos = { 10, 5, 20 };
         effect.m_deltaPos = { 10, 99, 10 };
         const int before = rngDraws;
         effect.SpawnGrimTooth();
         auto* prim = effect.m_primList.front();
         check(waves == 1 && waveY == 0 && rngDraws == before + 5, "Grim Tooth retains startup wave and both discarded random draws");
         check(effect.m_flag == 0 && std::abs(prim->m_deltaPos2.z + 2) < 0.0001f
-            && prim->m_deltaPos2.y == 20 && std::abs(effect.m_grimToothRemaining.z + 4) < 0.0001f,
+            && prim->m_deltaPos2.y == 20 && std::abs(effect.m_deltaPos3.z + 4) < 0.0001f,
             "Grim Tooth subtracts two-unit step before spawn and again after spawn without target-height interpolation");
-        check(prim->m_duration == 40 && prim->m_spawnCount == 6 && prim->m_fadeOutCnt == 30
+        check(prim->m_duration == 40 && prim->m_count == 6 && prim->m_fadeOutCnt == 30
             && prim->m_latitude == 75 && std::strcmp(g_texMgr.lastPath, "effect\\stone.bmp") == 0,
             "Grim Tooth uses reference lifetime, count, orientation and single texture name");
         effect.m_stateCnt = 1;
@@ -540,7 +541,7 @@ int main()
         check(effect.m_primList.size() == 1 && rngDraws == before + 5 && waves == 1,
             "Grim Tooth advances between three-frame emissions without extra random or audio calls");
         effect.m_stateCnt = 3;
-        effect.m_deltaPos = effect.m_grimToothOrigin;
+        effect.m_deltaPos = effect.m_effectPos;
         effect.SpawnGrimTooth();
         check(effect.m_flag == 1 && effect.m_primList.size() == 2,
             "Grim Tooth distance gate sets flag and still emits on that frame");
@@ -1865,6 +1866,71 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=123;
+        effect.m_effectPos={10,50,30};effect.m_deltaPos={30,900,30};effect.m_duration=200;g_session.m_isMinEffect=true;
+        waveCalls.clear();g_texMgr.requests.clear();const int draws=rngDraws;rngValues={359,123,39,359,29};rngCursor=0;effect.SpawnGrimTooth();
+        auto* spike=effect.m_primList.front();
+        check(effect.m_primList.size()==1&&rngDraws==draws+5&&rngCursor==5&&spike->UsesReferenceQuadHorn(),
+            "GrimTooth binds reference quad horn and preserves two discarded RNG draws despite reduced effects");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_FrostDiver.wav"&&waveCalls[0].x==8&&waveCalls[0].y==0
+            &&waveCalls[0].z==26&&waveCalls[0].frameRng==draws,"GrimTooth plays exact stored-origin wave before all emission RNG");
+        check(effect.m_roty==static_cast<float>(std::atan2(20.0,-0.0)/3.141592*180.0)&&effect.m_deltaPos2.x==-2&&effect.m_deltaPos3.x==4
+            &&spike->m_deltaPos2.x==2&&spike->m_deltaPos2.y==20&&effect.m_effectPos.x==10,
+            "GrimTooth uses canonical source heading step and cursor without actor or target-height refresh");
+        check(spike->m_size==static_cast<float>(99*0.0099999998)&&spike->m_heightSize==10&&spike->m_longitude==359&&spike->m_latitude==104
+            &&spike->m_count==6&&spike->m_spawnCount==0,"GrimTooth discarded RNG draws precede source size and orientation with count-six stop control");
+        check(spike->m_rotMat.m[2][0]==spike->m_matrix.m[2][0]&&spike->m_rotMat.m[2][1]==spike->m_matrix.m[2][1]
+            &&spike->m_alpha==254&&spike->m_maxAlpha==254&&spike->m_fadeOutCnt==30&&spike->m_duration==40,
+            "GrimTooth retains render rotation original alpha and forty-frame duration with ten-frame fade");
+        spike->m_alphaDelta=1;for(int frame=0;frame<=6;++frame)spike->OnProcess();const vector3d stopped=spike->m_deltaPos;
+        check(spike->m_stateCnt==7&&spike->m_speed==0&&spike->m_accel==0&&stopped.y!=0,
+            "GrimTooth spike integrates frame six then stops original speed and acceleration");
+        spike->OnProcess();check(spike->m_deltaPos.x==stopped.x&&spike->m_deltaPos.y==stopped.y,
+            "GrimTooth spike remains stationary after frame six stop");
+        rngValues.clear();rngCursor=0;effect.m_stateCnt=1;effect.SpawnGrimTooth();effect.m_stateCnt=2;effect.SpawnGrimTooth();
+        check(effect.m_primList.size()==1&&effect.m_deltaPos3.x==8&&rngDraws==draws+5&&waveCalls.size()==1,
+            "GrimTooth advances cursor on intervening frames without emission RNG or audio");
+        effect.m_stateCnt=3;effect.SpawnGrimTooth();check(effect.m_primList.size()==2&&effect.m_primList.back()->m_deltaPos2.x==8&&effect.m_deltaPos3.x==10,
+            "GrimTooth three-frame cadence spawns at pre-step cursor then advances once");
+        effect.m_deltaPos3.x=20;effect.m_stateCnt=6;effect.SpawnGrimTooth();
+        check(effect.m_flag==0&&effect.m_primList.size()==3,"GrimTooth distance gate remains at stored origin even when travel cursor reaches target");
+        effect.m_deltaPos={12.5f,0,30};effect.m_stateCnt=9;effect.SpawnGrimTooth();const float finalCursor=effect.m_deltaPos3.x;
+        check(effect.m_flag==1&&effect.m_primList.size()==4,"GrimTooth exact origin-distance threshold still emits final spike");
+        effect.m_stateCnt=10;effect.SpawnGrimTooth();check(effect.m_primList.size()==4&&effect.m_deltaPos3.x==finalCursor,
+            "GrimTooth flagged caller stops both emissions and cursor advancement");
+        check(g_texMgr.requests==std::vector<std::string>(4,"effect\\stone.bmp"),"GrimTooth requests exactly one original stone texture per spike");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_type=132;effect.m_stateCnt=0;effect.m_duration=24;effect.m_deltaPos2={1,2,3};effect.m_deltaPos3={10,20,30};
+        g_texMgr.requests.clear();waveCalls.clear();const int attackDraws=rngDraws;effect.SpawnGrimToothAtk();
+        check(effect.m_primList.size()==3&&effect.m_duration==1000&&rngDraws==attackDraws&&waveCalls.empty(),
+            "GrimTooth attack emits three source spikes extends parent to one thousand frames without RNG or audio");
+        const vector3d offsets[3]={{0,40,-12},{12,40,6},{-12,40,6}};int index=0;bool profiles=true,matrices=true;
+        for(auto* prim:effect.m_primList) {
+            profiles=profiles&&prim->UsesReferenceQuadHorn()&&prim->m_deltaPos2.x==offsets[index].x&&prim->m_deltaPos2.y==offsets[index].y
+                &&prim->m_deltaPos2.z==offsets[index].z&&prim->m_duration==1000&&prim->m_pattern==1&&prim->m_renderFlag==0x201
+                &&prim->m_size==0.89999998f&&prim->m_heightSize==25&&prim->m_speed==3.5f&&prim->m_accel==0.001f
+                &&prim->m_count==10&&prim->m_fadeOutCnt==990&&prim->m_alpha==254&&prim->m_maxAlpha==254;
+            matrix expected;MatrixIdentity(expected);MatrixAppendXRotation(expected,GetRadian(75));MatrixAppendYRotation(expected,GetRadian(120*(6-index)));
+            matrices=matrices&&prim->m_longitude==120*(6-index)&&prim->m_latitude==75&&prim->m_matrix.m[2][0]==expected.m[2][0]
+                &&prim->m_rotMat.m[2][1]==expected.m[2][1]&&prim->m_rotMat.m[0][2]==expected.m[0][2];++index;
+        }
+        check(profiles,"GrimTooth attack retains original offsets pattern render flag motion alpha count-ten stop and fade-nine-ninety");
+        check(matrices,"GrimTooth attack preserves raw longitudes seven-twenty six-hundred four-eighty and retained source matrices");
+        check(effect.m_deltaPos3.x==7&&effect.m_deltaPos3.y==14&&effect.m_deltaPos3.z==21&&effect.m_effectPos.x==10,
+            "GrimTooth attack subtracts parent step once per spike while preserving stored origin");
+        check(g_texMgr.requests==std::vector<std::string>(3,"effect\\stone.bmp"),"GrimTooth attack loads exact stone texture without candidate paths");
+        spike=effect.m_primList.front();spike->m_alphaDelta=1;for(int frame=0;frame<=10;++frame)spike->OnProcess();const vector3d attackStop=spike->m_deltaPos;
+        check(spike->m_stateCnt==11&&spike->m_speed==0&&spike->m_accel==0&&spike->m_argb==0xFEFFFFFF,
+            "GrimTooth attack integrates positive acceleration through frame ten then stops without early fade");
+        spike->OnProcess();check(spike->m_deltaPos.y==attackStop.y&&spike->m_curMotion==0,
+            "GrimTooth attack holds position and has no invented texture animation");
+        spike->m_stateCnt=990;spike->OnProcess();check(spike->m_alphaSpeed==static_cast<float>(-254.0/10)&&spike->m_alpha<254,
+            "GrimTooth attack delays source ten-frame fade until frame nine-ninety");
+        effect.m_stateCnt=1;effect.SpawnGrimToothAtk();check(effect.m_primList.size()==3&&effect.m_deltaPos3.x==7&&g_texMgr.requests.size()==3,
+            "GrimTooth attack does not repeat emission resources or cursor adjustment after zero");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;
     }
     {
         CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;

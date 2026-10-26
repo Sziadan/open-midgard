@@ -403,8 +403,6 @@ private:
         MapMagicZone,
         MapParticle,
         HideStart,
-        GrimTooth,
-        GrimToothAtk,
         IncAgility,
         EnchantPoison,
         EnchantPoison2,
@@ -579,9 +577,6 @@ private:
     vector3d m_deltaPos2;
     vector3d m_deltaPos3;
     vector3d m_targetPos;
-    vector3d m_grimToothOrigin;
-    vector3d m_grimToothStep;
-    vector3d m_grimToothRemaining;
     float m_param[4];
     float m_emitSpeed;
     float m_latitude;
