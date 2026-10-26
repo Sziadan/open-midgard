@@ -7150,6 +7150,99 @@ void RenderGuard(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void SubmitRainbowRect(int& rpCount, const vector3d& vec1, const vector3d& vec2,
+    const vector3d& vec3, const vector3d& vec4, const matrix& viewMatrix,
+    const vector3d& translation, CTexture* texture, unsigned int color,
+    float frame0, float frame1, int renderFlags)
+{
+    if (rpCount >= 510) return;
+    const vector3d positions[2][3] = {
+        { AddVec3(vec1, translation), AddVec3(vec2, translation), AddVec3(vec3, translation) },
+        { AddVec3(vec4, translation), AddVec3(vec3, translation), AddVec3(vec1, translation) },
+    };
+    const float uvs[2][3][2] = {
+        { { 1.0f, frame0 }, { 1.0f, frame1 }, { 0.0f, frame1 } },
+        { { 0.0f, frame0 }, { 0.0f, frame1 }, { 1.0f, frame0 } },
+    };
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) return;
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = D3DBLEND_ONE;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            ProjectReferenceEffectVertex(positions[triangle][vertex], viewMatrix, face->m_verts[vertex]);
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[triangle][vertex][0];
+            face->m_verts[vertex].tv = uvs[triangle][vertex][1];
+        }
+        g_renderer.AddRP(face, renderFlags);
+    }
+    rpCount += 2;
+}
+
+void RenderRainbow(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    int rpCount = 0;
+    for (int bandIndex = 0; bandIndex < 4; ++bandIndex) {
+        EffectGi& gi = prim.m_gi[static_cast<size_t>(bandIndex)];
+        if (gi.life != 1 || gi.alphaB <= 0) continue;
+
+        const int basicAngle = static_cast<int>(gi.fullDisplayAngle) / 20;
+        for (int pass = 0; pass < 7; ++pass) {
+            int segment = 0;
+            int count = 0;
+            if (gi.fullDisplayAngle < 0) continue;
+            const double outerScale = 1.0 - static_cast<double>(pass) * 0.050000001;
+            const double innerScale = 1.0 - static_cast<double>(pass + 1) * 0.050000001;
+            do {
+                const int angle0 = (count + gi.rotStart) >= 360 ? count + gi.rotStart - 360 : count + gi.rotStart;
+                const int angle1Raw = basicAngle + count + gi.rotStart;
+                const int angle1 = angle1Raw >= 360 ? angle1Raw - 360 : angle1Raw;
+                const double radius = gi.distance;
+                const double cos0 = g_cosTable[angle0], sin0 = g_sinTable[angle0];
+                const double cos1 = g_cosTable[angle1], sin1 = g_sinTable[angle1];
+                const double orientCos = g_cosTable[gi.riseAngle];
+                const double orientSin = g_sinTable[gi.riseAngle];
+                // RenderTeiRect(vec2, vector3d, vec4, vec1): next outer, next inner, current inner, current outer.
+                const vector3d nextOuter = { static_cast<float>(cos1 * radius * outerScale * orientCos), static_cast<float>(2.0 * sin1 * radius * outerScale), static_cast<float>(cos1 * radius * outerScale * orientSin) };
+                const vector3d nextInner = { static_cast<float>(cos1 * radius * innerScale * orientCos), static_cast<float>(2.0 * sin1 * radius * innerScale), static_cast<float>(cos1 * radius * innerScale * orientSin) };
+                const vector3d currentInner = { static_cast<float>(cos0 * radius * innerScale * orientCos), static_cast<float>(2.0 * sin0 * radius * innerScale), static_cast<float>(cos0 * radius * innerScale * orientSin) };
+                const vector3d currentOuter = { static_cast<float>(cos0 * radius * outerScale * orientCos), static_cast<float>(2.0 * sin0 * radius * outerScale), static_cast<float>(cos0 * radius * outerScale * orientSin) };
+
+                unsigned char red = 255, green = 0, blue = 0;
+                switch (pass) {
+                case 0: break;
+                case 1: red = 255; green = 126; break;
+                case 2: red = 255; green = 255; break;
+                case 3: red = 0; green = 255; break;
+                case 4: red = 0; blue = 255; break;
+                case 5: red = 115; green = 50; blue = 200; break;
+                case 6: red = 255; blue = 255; break;
+                }
+                const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24)
+                    | (static_cast<unsigned int>(red) << 16) | (static_cast<unsigned int>(green) << 8) | blue;
+                CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+                const float frame0 = static_cast<float>(static_cast<double>(segment) * 0.047619049);
+                const float frame1 = static_cast<float>(static_cast<double>(segment + 1) * 0.047619049);
+                SubmitRainbowRect(rpCount, nextOuter, nextInner, currentInner, currentOuter, viewMatrix, prim.m_pos,
+                    texture, color, frame0, frame1, static_cast<int>(prim.m_renderFlag));
+                if (++segment >= 21) segment = 20;
+                count += basicAngle;
+            } while (count <= gi.fullDisplayAngle);
+        }
+    }
+}
+
 void TeiHit1Corners(const EffectGi& gi, vector3d corners[4])
 {
     const double height = gi.height[1];
@@ -8493,6 +8586,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_GUARD) {
         RenderGuard(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_RAINBOW) {
+        RenderRainbow(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {

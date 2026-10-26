@@ -129,6 +129,7 @@ struct SilentRenderer {
 float GetRadian(int angle){return angle*3.14159265f/180.0f;}
 float GetCos(int angle) { return std::cos(angle*3.14159265f/180.0f); }
 float GetSin(int angle) { return std::sin(angle*3.14159265f/180.0f); }
+void ProjectReferenceEffectVertex(const vector3d&,const matrix&,tlvertex3d&);
 #include "ParticleRenderBodies.inc"
 float g_cosTable[361],g_sinTable[361];
 vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
@@ -987,6 +988,44 @@ int main() {
             "Guard has no alphaB gate and selects ordinary tier colors");
         gi.life=0;g_renderer.submissions.clear();RenderGuard(prim,view);
         check(g_renderer.submissions.empty(),"Guard skips bands whose life is not one");
+    }
+    {
+        CTexture textures[21];CEffectPrim prim;prim.m_pos={10,20,130};prim.m_renderFlag=0x305;
+        for(auto& texture:textures)prim.m_texture.push_back(&texture);
+        EffectGi& gi=prim.m_gi[0];gi.life=1;gi.alphaB=200;gi.fullDisplayAngle=20;
+        gi.rotStart=0;gi.distance=10;gi.riseAngle=0;
+        g_renderer.submissions.clear();g_renderer.flags.clear();RenderRainbow(prim,view);
+        check(g_renderer.submissions.size()==294,
+            "Rainbow emits two triangle faces for 21 samples in each of seven bands");
+        if(g_renderer.submissions.size()==294) {
+            const unsigned int colors[7]={0xC8FF0000u,0xC8FF7E00u,0xC8FFFF00u,
+                0xC800FF00u,0xC80000FFu,0xC87332C8u,0xC8FF00FFu};
+            bool allColors=true;
+            for(int pass=0;pass<7;++pass) {
+                for(int sample=0;sample<21;++sample) {
+                    const int face=pass*42+sample*2;
+                    if(g_renderer.submissions[face].m_verts[0].color!=colors[pass]
+                        ||g_renderer.submissions[face+1].m_verts[0].color!=colors[pass]) allColors=false;
+                }
+            }
+            check(allColors,"Rainbow preserves all seven source switch colors and alphaB");
+            check(g_renderer.submissions[0].tex==&textures[0]
+                &&g_renderer.submissions[40].tex==&textures[0]
+                &&g_renderer.submissions[42].tex==&textures[0]
+                &&std::fabs(g_renderer.submissions[0].m_verts[0].tv)<0.0001f
+                &&std::fabs(g_renderer.submissions[40].m_verts[0].tv-20.0f*0.047619049f)<0.0001f
+                &&std::fabs(g_renderer.submissions[42].m_verts[0].tv)<0.0001f
+                &&g_renderer.flags[0]==0x305&&g_renderer.flags[293]==0x305,
+                "Rainbow uses the source texture, advances TexPart UV frames, restarts each pass and forwards flags");
+            check(g_renderer.submissions[0].destAlphaMode==D3DBLEND_ONE,
+                "Rainbow passes source PW zero through the additive blend mapping");
+        }
+        gi.alphaB=0;g_renderer.submissions.clear();RenderRainbow(prim,view);
+        check(g_renderer.submissions.empty(),"Rainbow skips a live band when alphaB is not positive");
+        gi.alphaB=200;gi.life=0;g_renderer.submissions.clear();RenderRainbow(prim,view);
+        check(g_renderer.submissions.empty(),"Rainbow skips bands whose life is not one");
+        gi.life=1;gi.fullDisplayAngle=-20;g_renderer.submissions.clear();RenderRainbow(prim,view);
+        check(g_renderer.submissions.empty(),"Rainbow negative angle span retains the source zero-sample behavior");
     }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;
