@@ -264,3 +264,8 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 
 - `Ref/RagEffect2.cpp:2217-2220` carries a `PrimPeong` signature banner but the actual function definition/body is `PrimPeongUp`, with update logic for the separate PP_PEONGUP handler. Canonical EXE has `PrimPeong` at `HighPriest.exe.c:443952` (`0x61BD50`), and `Ref/dhxj/RagEffect2.cpp:9955` provides readable PrimPeong source.
 - Do not use the mislabeled decompiled body as PrimPeong evidence. The 0x5E port is compared against the readable handler and canonical EXE; the EXE branch map matches the readable source.
+
+## PrimTanji2 readable-source differences (0x61)
+
+- Readable `Ref/dhxj/RagEffect2.cpp:15246` returns immediately when `m_isVisible` is false, hides the primitive on a near hit (`abs(dx) < 3 && abs(dz) < 3`), and chooses EF_AIRTEXTURE variants from GI1 flags. The decompiled Ref body at `Ref/RagEffect2.cpp:7988` and canonical EXE at `HighPriest.exe.c:453573` contain none of those conditions and always launch effect 416 every fourth positive GI0 process.
+- Followed the canonical executable: no visibility or hit gate, and literal effect ID 416. Remaining camera, single-GI process/fade, descending trail snapshot, angle scan and movement branches align. Both implementations normalize the x/z direction by its length without a zero-length guard; zero-vector runtime behavior remains an edge case.

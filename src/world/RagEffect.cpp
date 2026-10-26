@@ -9473,6 +9473,82 @@ bool UpdateReferencePeongUp(CEffectPrim* prim)
     return true;
 }
 
+void SpawnTanjiAirTexture(CGameMode* mode, const vector3d& position);
+
+// Ref/dhxj/RagEffect2.cpp:15246; canonical executable PrimTanji2 at 0x627F30 (case 0x61).
+void UpdateReferenceTanji2(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode ? mode->m_view : nullptr;
+    if (view) {
+        const short longitude = static_cast<short>(view->GetCameraLongitude());
+        prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+        const short latitude = static_cast<short>(view->GetCameraLatitude());
+        const short cameraLatitude = static_cast<short>(450 - latitude);
+        prim->m_gi[1].alphaT = static_cast<short>(cameraLatitude >= 360 ? cameraLatitude - 360 : cameraLatitude);
+    }
+
+    CRagEffect* effect = prim->m_master;
+    if (!effect) return;
+    prim->m_pos = effect->EffectPosition();
+
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) return;
+    ++gi.process;
+    if (gi.process <= 0) return;
+
+    const int cadence = gi.flag[2] == 1 ? 1 : 3;
+    if (gi.flag[2] == 1) {
+        if (gi.process <= 10) gi.alphaB = static_cast<short>(gi.alphaB + 25);
+        if (gi.alphaB >= 255) gi.alphaB = 255;
+    }
+
+    if (gi.process % cadence == 0) {
+        for (int destination = 3; destination >= 1; --destination) {
+            if (gi.process <= destination) continue;
+            EffectGi& from = prim->m_gi[static_cast<size_t>(destination - 1)];
+            EffectGi& to = prim->m_gi[static_cast<size_t>(destination)];
+            to.fullDisplayAngle = from.fullDisplayAngle;
+            to.distance = from.distance;
+            to.height[8] = from.height[8];
+            const int fade = destination == 1 ? 150 : 25;
+            const int alpha = static_cast<int>(from.alphaB) - fade;
+            to.alphaB = static_cast<short>(alpha < 0 ? 0 : alpha);
+            to.sparkX = from.sparkX;
+            to.sparkY = from.sparkY;
+            to.sparkZ = from.sparkZ;
+            to.fullDisplayAngle = from.fullDisplayAngle;
+            to.flag[0] = from.flag[0];
+        }
+    }
+
+    gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle - 15);
+    if (gi.fullDisplayAngle < 0) gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + 360);
+
+    if (gi.process == 1) {
+        const float deltaX = prim->m_deltaPos.x - gi.sparkX;
+        const float deltaZ = prim->m_deltaPos.z - gi.sparkZ;
+        const float length = std::sqrt(deltaX * deltaX + deltaZ * deltaZ);
+        const float normalizedX = deltaX / length;
+        const float normalizedZ = deltaZ / length;
+        int tableIndex = 0;
+        while (tableIndex <= 180 && normalizedX < g_cosTable[tableIndex]) {
+            if (++tableIndex > 180) {
+                gi.rotStart = 180;
+                break;
+            }
+        }
+        if (tableIndex <= 180) {
+            gi.rotStart = static_cast<short>(normalizedZ < 0.0f ? 360 - tableIndex : tableIndex);
+        }
+    }
+
+    gi.sparkX += g_cosTable[gi.rotStart] * gi.height[1];
+    gi.sparkZ += g_sinTable[gi.rotStart] * gi.height[1];
+
+    if (gi.process % 4 == 0) SpawnTanjiAirTexture(mode, {gi.sparkX, gi.sparkY, gi.sparkZ});
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -10602,6 +10678,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_PEONGUP) {
         UpdateReferencePeongUp(this); // Source case 0x60 ignores the handler's true result.
+        return true;
+    }
+    if (m_type == PP_TANJI2) {
+        UpdateReferenceTanji2(this); // Source case 0x61 ignores the handler's true result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
@@ -18609,4 +18689,13 @@ CRagEffect* CreateWorldRagEffect(const C3dWorldRes::effectSrcInfo& source)
     }
     effect->InitWorld(source);
     return effect;
+}
+
+// Canonical PrimTanji2 launches effect 416 through the current world player.
+void SpawnTanjiAirTexture(CGameMode* mode, const vector3d& position)
+{
+    if (!mode || !mode->m_world || !mode->m_world->m_player) return;
+    if (CRagEffect* spawned = mode->m_world->m_player->LaunchEffect(416, vector3d{}, 0.0f)) {
+        spawned->SendMsg(nullptr, 14, reinterpret_cast<msgparam_t>(&position), 0, 0);
+    }
 }

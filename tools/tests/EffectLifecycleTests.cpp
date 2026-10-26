@@ -226,6 +226,8 @@ void UpdateReferenceRainbow(CEffectPrim*);
 bool UpdateReferencePeong(CEffectPrim*);
 void UpdateReferenceEffectTexture2(CEffectPrim*);
 bool UpdateReferencePeongUp(CEffectPrim*);
+void UpdateReferenceTanji2(CEffectPrim*);
+void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -353,6 +355,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_PEONG) { UpdateReferencePeong(this); return active; }
         if (m_type == PP_EFFECTTEXTURE2) { UpdateReferenceEffectTexture2(this); return active; }
         if (m_type == PP_PEONGUP) { UpdateReferencePeongUp(this); return active; }
+        if (m_type == PP_TANJI2) { UpdateReferenceTanji2(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -520,6 +523,19 @@ CRagEffect* CAbleToMakeEffect::LaunchEffect(int type, vector3d, float)
     m_effectList.push_back(effect);
     g_world.m_gameObjectList.push_back(effect);
     return effect;
+}
+
+void SpawnTanjiAirTexture(CGameMode* mode, const vector3d& position)
+{
+    if (!mode || !mode->m_world || !mode->m_world->m_player) return;
+    auto* player = dynamic_cast<CAbleToMakeEffect*>(mode->m_world->m_player);
+    if (player) {
+        if (CRagEffect* spawned = player->LaunchEffect(416, vector3d{}, 0.0f)) {
+            spawned->m_deltaPos = position;
+            spawned->m_targetPos = position;
+            spawned->m_hasTargetPos = true;
+        }
+    }
 }
 
 float g_sinTable[361]{}, g_cosTable[361]{};
@@ -806,6 +822,7 @@ __declspec(noinline) void RunRainbowLifecycleChecks(CEffectPrim& prim, int& chec
 __declspec(noinline) void RunPeongLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunEffectTexture2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunPeongUpLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunTanji2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1927,6 +1944,67 @@ __declspec(noinline) void RunPeongUpLifecycleChecks(CEffectPrim& prim, int& chec
     check(allBands && rngDraws==skippedDraws,
         "case 0x60 updates all four exact-life bands and random(0) returns zero without consuming RNG");
     rngValues.clear(); rngCursor=0; testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
+    RunTanji2LifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunTanji2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude; testView.longitude=20.0f;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    CRenderObject* oldPlayer=g_world.m_player;
+    auto playerStorage=std::make_unique<CAbleToMakeEffect>();
+    CAbleToMakeEffect& player=*playerStorage;
+    g_world.m_player=&player;
+    auto effectStorage=std::make_unique<CRagEffect>();
+    CRagEffect& effect=*effectStorage;
+    effect.m_master=&player; effect.m_effectPos={100,200,300}; effect.m_deltaPos={100,0,0};
+    CRagEffect* oldMaster=prim.m_master; prim.m_master=&effect; prim.m_type=PP_TANJI2; prim.m_stateCnt=0;
+    for(auto& gi:prim.m_gi) gi={};
+    prim.m_pos={-1,-2,-3};
+    prim.OnProcess();
+    check(prim.m_pos.x==100&&prim.m_pos.y==200&&prim.m_pos.z==300
+        &&prim.m_gi[0].alphaT==340&&prim.m_gi[1].alphaT==135&&prim.m_gi[0].process==0,
+        "case 0x61 copies effect position and refreshes camera angles even when GI0 is inactive");
+
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.flag[2]=1; a.flag[0]=9; a.process=0; a.alphaB=230;
+    a.fullDisplayAngle=5; a.distance=12; a.height[1]=2; a.height[8]=8; a.sparkX=0; a.sparkY=7; a.sparkZ=0;
+    prim.m_deltaPos={100,0,0}; prim.OnProcess();
+    check(a.process==1&&a.alphaB==255&&a.fullDisplayAngle==350&&a.rotStart==0
+        &&a.sparkX==2&&a.sparkY==7&&a.sparkZ==0,
+        "case 0x61 fast cadence clamps fade-in, wraps spin once, aims at target and advances x/z only");
+
+    a.alphaB=200; a.distance=42; a.height[8]=17; a.flag[0]=11; a.fullDisplayAngle=220;
+    prim.m_gi[1].alphaB=40; prim.m_gi[1].sparkX=71; prim.m_gi[1].sparkY=72; prim.m_gi[1].sparkZ=73;
+    a.sparkX=4; a.sparkZ=6; prim.OnProcess();
+    const EffectGi& firstTrail=prim.m_gi[1];
+    check(a.process==2&&firstTrail.alphaB==75&&firstTrail.distance==42&&firstTrail.height[8]==17
+        &&firstTrail.fullDisplayAngle==220&&firstTrail.sparkX==4&&firstTrail.sparkY==7&&firstTrail.sparkZ==6&&firstTrail.flag[0]==11,
+        "case 0x61 process two snapshots GI0 into GI1 with source alpha loss and full position payload");
+    a.alphaB=20; prim.m_gi[1].alphaB=10; prim.OnProcess();
+    check(a.process==3&&prim.m_gi[1].alphaB==0&&prim.m_gi[2].alphaB==0
+        &&prim.m_gi[2].sparkX==4,
+        "case 0x61 process three copies GI1 to GI2 before GI0 to GI1 and clamps each alpha loss");
+    a.alphaB=100; prim.m_gi[2].alphaB=24; a.height[1]=2; prim.OnProcess();
+    check(a.process==4&&prim.m_gi[3].alphaB==0&&prim.m_gi[3].sparkX==4
+        &&player.launches==1&&player.m_effectList.back()->m_type==416
+        &&player.m_effectList.back()->m_deltaPos.x==a.sparkX&&player.m_effectList.back()->m_deltaPos.y==a.sparkY
+        &&player.m_effectList.back()->m_deltaPos.z==a.sparkZ,
+        "case 0x61 process four snapshots final trail then launches effect 416 at GI0 position");
+
+    a.flag[2]=0; a.process=0; a.alphaB=77; a.rotStart=270; a.sparkX=0; a.sparkY=9; a.sparkZ=0;
+    prim.m_deltaPos={0,0,-20}; a.height[1]=1; prim.OnProcess();
+    check(a.process==1&&a.alphaB==77&&a.rotStart==270&&std::fabs(a.sparkX)<0.0001f
+        &&a.sparkY==9&&std::fabs(a.sparkZ+1.0f)<0.0001f,
+        "case 0x61 slow cadence omits fade-in and direction scan follows negative z without changing y");
+    a.process=-2; const float beforeX=a.sparkX; const float beforeZ=a.sparkZ; prim.OnProcess();
+    check(a.process==-1&&a.sparkX==beforeX&&a.sparkZ==beforeZ,
+        "case 0x61 nonpositive process skips trail spin movement and launch after increment");
+
+    player.DetachEffects(); g_world.UpdateGameObjects(); g_world.m_player=oldPlayer; prim.m_master=oldMaster;
+    testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
