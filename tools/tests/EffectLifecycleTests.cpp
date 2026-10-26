@@ -206,6 +206,7 @@ void UpdateReferenceBottom2(CEffectPrim*);
 bool UpdateReferenceBottomSpr(CEffectPrim*);
 void UpdateReferencePokJuk(CEffectPrim*);
 void UpdateReferenceGuard(CEffectPrim*);
+bool UpdateReferenceFoot(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -314,6 +315,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_BOTTOMSPR) { UpdateReferenceBottomSpr(this); return active; }
         if (m_type == PP_POKJUK) { UpdateReferencePokJuk(this); return active; }
         if (m_type == PP_GUARD) { UpdateReferenceGuard(this); return active; }
+        if (m_type == PP_FOOT) { UpdateReferenceFoot(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -748,6 +750,7 @@ __declspec(noinline) void RunBottom2LifecycleChecks(CEffectPrim& prim, int& chec
 __declspec(noinline) void RunBottomSprLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunPokJukLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunGuardLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunFootLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -982,6 +985,42 @@ __declspec(noinline) void RunGuardLifecycleChecks(CEffectPrim& prim, int& checks
     check(a.process==27 && a.rotStart==270 && a.alphaB==0 && std::fabs(a.height[0]-2.1f)<0.00001f,
         "case 0x3D process 26 to 27 takes strict fade/growth branch and leaves zero alpha clamped");
     prim.m_master->m_master->m_roty=oldActorRotation; g_isSkipFrame=oldSkipFrame;
+    RunFootLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunFootLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_FOOT; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={701,702,703}; prim.m_pos={1,2,3};
+    for (auto& gi : prim.m_gi) gi={};
+    auto& a=prim.m_gi[0]; a.life=0; a.process=-1; a.alphaB=-5;
+    auto& b=prim.m_gi[1]; b.life=1; b.process=13; b.alphaB=33;
+    auto& c=prim.m_gi[2]; c.life=2; c.process=27; c.alphaB=45;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_pos.x==701 && prim.m_pos.y==702 && prim.m_pos.z==703
+        && a.process==0 && a.alphaB==-5
+        && b.process==13 && b.alphaB==33 && c.process==27 && c.alphaB==45
+        && prim.m_stateCnt==1 && rngDraws==draws,
+        "case 0x43 increments only GI0 regardless of life, keeps new-process-zero alpha unchanged, copies master and advances tick");
+
+    prim.m_stateCnt=0; a.process=0; a.alphaB=3; a.life=2;
+    prim.OnProcess();
+    check(a.process==1 && a.alphaB==2,
+        "case 0x43 positive odd process decrements alpha even when GI0 life is inactive");
+
+    prim.m_stateCnt=0; a.process=1; a.alphaB=-4; a.life=1;
+    prim.OnProcess();
+    check(a.process==2 && a.alphaB==0,
+        "case 0x43 positive even process skips decrement but still clamps negative alpha to zero");
+    prim.m_stateCnt=0; a.process=8; a.alphaB=0; prim.OnProcess();
+    check(a.process==9 && a.alphaB==0,
+        "case 0x43 odd alpha decrement is floored at zero");
+    g_isSkipFrame=oldSkipFrame;
 }
 
 int main()

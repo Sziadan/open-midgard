@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, 0x25 through 0x28, 0x2A-0x2E, 0x30, 0x33, 0x34, and 0x3D now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
+Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, 0x25 through 0x28, 0x2A-0x2E, 0x30, 0x33, 0x34, 0x3D, and 0x43 now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
 
-Next action: source-compare case 0x43 against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
+Next action: source-compare case 0x44 against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
 
-Latest checkpoint (2026-10-26): `PP_GUARD` case 0x3D is implemented and branch-compared against readable Ref/dhxj, decompiled Ref, and canonical EXE. Inventory reports 38 source-only IDs; lifecycle suite passes 1,646 checks and all six registered CTest suites pass. x64 Release build passes; OldRO SHA-256 is 4DEE42D6E111913234EE08F1FDA592F54C823DDE73E32E3223AA31A47A6D60C1. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `PP_FOOT` case 0x43 is implemented and branch-compared against readable Ref/dhxj, decompiled Ref, and canonical EXE. Inventory reports 37 source-only IDs; lifecycle suite passes 1,650 checks and all six registered CTest suites pass. x64 Release build passes; OldRO SHA-256 is E14E35CED4F844EA70BAE262365990D49B6EC85B42A8BF1A4004140D67FC3E78. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26

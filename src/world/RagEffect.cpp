@@ -8737,6 +8737,19 @@ void UpdateReferenceGuard(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:9459 (case 0x43).
+bool UpdateReferenceFoot(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    EffectGi& gi = prim->m_gi[0];
+    ++gi.process;
+    if (gi.process > 0) {
+        if (gi.process % 2 >= 1) --gi.alphaB;
+        if (gi.alphaB < 0) gi.alphaB = 0;
+    }
+    return true;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9790,6 +9803,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_GUARD) {
         UpdateReferenceGuard(this);
+        return true;
+    }
+    if (m_type == PP_FOOT) {
+        UpdateReferenceFoot(this); // The source handler's true result is ignored before the common tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
