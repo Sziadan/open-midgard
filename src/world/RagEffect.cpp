@@ -6903,7 +6903,7 @@ bool CEffectPrim::UsesReferenceCylinder() const
 {
     if (m_type != PP_3DCYLINDER || !m_master) return false;
     switch (m_master->GetEffectType()) {
-    case 0: case 2: case 3: case 14: case 34: case 36: case 81: case 180: case 184: case 218: case 219: case 220: case 221: return true;
+    case 0: case 2: case 3: case 14: case 34: case 36: case 81: case 122: case 180: case 184: case 218: case 219: case 220: case 221: return true;
     default: return false;
     }
 }
@@ -6921,7 +6921,7 @@ bool CEffectPrim::UsesReferenceSphere() const
 
 bool CEffectPrim::UsesReferenceScreenCircle() const
 {
-    return m_type == PP_2DCIRCLE && m_master && m_master->GetEffectType() == 128;
+    return m_type == PP_2DCIRCLE && m_master && (m_master->GetEffectType() == 121 || m_master->GetEffectType() == 128);
 }
 
 bool CEffectPrim::UsesReferenceFlash() const
@@ -8250,7 +8250,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -12486,6 +12486,65 @@ void CRagEffect::ApplyMagnumBreak()
     circle(30);
 }
 
+// Ref/RagEffect.cpp:7824-7873 (0x600FA0), original effect 121.
+void CRagEffect::ApplySonicBlow()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!master || !mode || !mode->m_view) return;
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos,mode->m_view->GetViewMatrix(),projected);
+    m_tlvertX = projected.x; m_tlvertY = projected.y;
+    if (m_stateCnt != 0) return;
+    if (mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_StoneCurse.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    CEffectPrim* prim = LaunchEffectPrim(PP_2DCIRCLE,vector3d{});
+    prim->m_duration = m_duration; prim->m_fadeOutCnt = 0;
+    prim->m_deltaPos2.y = -20.0f; prim->m_arcAngle = 10.0f; prim->m_innerSize = 10.0f;
+    prim->m_radiusSpeed = 7.0f;
+    prim->m_radiusAccel = static_cast<float>(prim->m_radiusSpeed/static_cast<double>(prim->m_duration+40)*-2.0);
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_center.tga",false));
+}
+
+// Ref/RagEffect.cpp:7880-7940 (0x601170), original effect 122.
+void CRagEffect::ApplySonicBlowHit()
+{
+    if (m_stateCnt != 0) return;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\assasin_sonicblow.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    int facing = static_cast<int>(180.0-master->m_roty);
+    const int x = rand() % 10, y = rand() % 20;
+    rand();
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER,vector3d{});
+    prim->m_duration = 12;
+    prim->m_longitude = static_cast<float>(facing+(facing < 0 ? 360 : 0)); prim->m_latitude = -90.0f;
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_latitude)));
+    MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_longitude)));
+    prim->m_speed3d = {
+        prim->m_matrix.m[3][0]-(prim->m_matrix.m[1][0]+prim->m_matrix.m[1][0]),
+        prim->m_matrix.m[3][1]-(prim->m_matrix.m[1][1]+prim->m_matrix.m[1][1]),
+        prim->m_matrix.m[3][2]-(prim->m_matrix.m[1][2]+prim->m_matrix.m[1][2])
+    };
+    prim->m_deltaPos = AddVec3(prim->m_speed3d,prim->m_deltaPos);
+    prim->m_deltaPos2 = {static_cast<float>((x+1)/4),static_cast<float>((y+1)/2-11),0.0f};
+    prim->m_speed = 0.40000001f;
+    prim->m_accel = static_cast<float>(prim->m_speed/static_cast<double>(prim->m_duration)*-0.5);
+    prim->m_outerSize = 7.0f; prim->m_innerSize = 4.0f; prim->m_heightSize = 3.5f;
+    prim->m_fadeOutCnt = prim->m_duration-prim->m_duration/2;
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\magic_red.tga",false));
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -13740,6 +13799,11 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 45) {
         SpawnFireFly();
+        return true;
+    }
+    if (m_type == 121 || m_type == 122) {
+        if (m_type == 121) ApplySonicBlow();
+        else ApplySonicBlowHit();
         return true;
     }
     if (m_type == 17) {

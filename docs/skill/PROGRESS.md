@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A MagnumBreak id17, after Teleportation checkpoint `f661b62`. Original ring/sphere/ring burst and exact sound/textures now use source circle state and dedicated sphere integration/mesh geometry.
+Current work: WP5A SonicBlow ids121/122, after MagnumBreak checkpoint `26d0a24`. Original projected ring and seeded hit cylinder now bind reference primitive paths with exact assets, RNG/integer offsets and source facing behavior.
 
-Next action: continue unported emitters (including SonicBlow ids121/122) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters (including Bash id16) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## SonicBlow screen ring / SonicBlowHit cylinder — 2026-10-26
+
+- Ref/RagEffect.cpp:7824-7873 (0x600FA0) -> ApplySonicBlow, original id121, direct ProcessEffectFrame/Init route. Projects current actor x/y every call before zero-only emission gate, retaining stored world origin/z. Zero plays exact stored-origin horizontal EF_StoneCurse wave then emits PP_2DCIRCLE with parent duration, fade0, y-20, arc10, inner10, radiusSpeed7/source acceleration speed/(duration+40)*-2, constructor alpha/max254 and exact lowercase alpha_center texture. No parent-duration override, RNG or reduced-effects suppression. Bound existing reference screen-circle state/geometry.
+- Ref/RagEffect.cpp:7880-7940 (0x601170) -> ApplySonicBlowHit, original id122, direct ProcessEffectFrame/Init route. Zero plays exact assasin_sonicblow wave before three RNG draws (X/Y offset then discarded draw). Facing truncates180-master.roty then adds360 only for negatives; positive raw values above360 remain unwrapped. Integer offsets are (rand10+1)/4 and (rand20+1)/2-11, not floating division. Preserves stored parent origin/screen fields/duration.
+- Hit cylinder retains duration12, latitude-90, source X/Y matrix, initial speed3d translation-minus-twice-local-Y and accumulated seeded displacement before ordinary updates. Source speed0.40000001/drag, outer7/inner4/height3.5, fade6, constructor alpha/max254/divisor4/repeat and exact magic_red texture. Bound shared reference cylinder state/geometry; no invented radius shrink or actor-position refresh. Both helpers emit regardless of reduced-effects mode and do not repeat on nonzero frames.
+
+Validation: release build, six silent C++ suites / 1113 checks (905 lifecycle/primitive, 150 rendering, 58 other), six Python tests, four-literal executable byte audit, four original asset-pointer instruction audits and whitespace check pass. Added17 lifecycle checks for screen projection/emission/audio/duration, source ring integration/fade, hit RNG order/discard/integer boundaries, negative-facing truncation/wrap and positive raw361, matrix/seeded motion, source profiles/resources, fade/frame termination and no-repeat behavior. Existing shared screen-circle/cylinder geometry/device suites pass. Exact StoneCurse0x71BB9C, alpha_center0x7192FC, assasin wave0x71BBD0 and magic_red0x71BBB8 match executable bytes; original pushes at0x60105A/0x601141/0x6011C0/0x60141F verified. No media/live acceptance. Approved OldRO SHA-256: `F9F0E95019B08589F8A80E0B1CFE6EEFE3CD986AFF1E4FF9F67523497165328A`. Other emitters/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## MagnumBreak rings / original sphere mesh — 2026-10-26
 

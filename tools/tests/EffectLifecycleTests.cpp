@@ -304,6 +304,8 @@ struct CRagEffect : CGameObject {
     void ApplyOverThrust();
     void ApplyTeleportation();
     void ApplyMagnumBreak();
+    void ApplySonicBlow();
+    void ApplySonicBlowHit();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1884,6 +1886,63 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=121;
+        effect.m_effectPos={30,50,40};effect.m_tlvertZ=123;effect.m_duration=50;g_session.m_isMinEffect=true;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;effect.ApplySonicBlow();auto* ring=effect.m_primList.front();
+        check(effect.m_primList.size()==1&&ring->UsesReferenceScreenCircle()&&effect.m_duration==50&&ring->m_duration==50&&rngDraws==draws,
+            "SonicBlow emits one parent-duration reference screen circle without RNG or reduced-effects suppression");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_StoneCurse.wav"&&waveCalls[0].x==28&&waveCalls[0].y==0&&waveCalls[0].z==36,
+            "SonicBlow preserves exact stored-origin StoneCurse wave");
+        tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&effect.m_tlvertZ==123&&effect.m_effectPos.x==30,
+            "SonicBlow projects current actor x/y while retaining stored world origin and projected z");
+        check(ring->m_fadeOutCnt==0&&ring->m_deltaPos2.y==-20&&ring->m_arcAngle==10&&ring->m_innerSize==10&&ring->m_radiusSpeed==7
+            &&ring->m_radiusAccel==static_cast<float>(7.0/90*-2)&&ring->m_alpha==254&&g_texMgr.requests==std::vector<std::string>({"effect\\alpha_center.tga"}),
+            "SonicBlow keeps source ring profile with parent-duration-dependent acceleration and exact texture");
+        ring->m_alphaDelta=1;ring->OnProcess();check(ring->m_pos.x==projected.x&&ring->m_pos.y==projected.y-20
+            &&ring->m_alphaSpeed==static_cast<float>(-254.0/50)&&ring->m_size==ring->m_radius&&ring->m_radius>0,
+            "SonicBlow reference ring grows at projected anchor and fades over parent duration");
+        actor.m_pos={20,30,120};effect.m_stateCnt=1;effect.ApplySonicBlow();ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_primList.size()==1&&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&waveCalls.size()==1&&rngDraws==draws,
+            "SonicBlow nonzero calls refresh projection without repeating emission audio or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_type=122;effect.m_stateCnt=0;actor.m_roty=270.9f;
+        effect.m_tlvertX=111;effect.m_tlvertY=222;waveCalls.clear();g_texMgr.requests.clear();rngValues={9,19,123};rngCursor=0;effect.ApplySonicBlowHit();auto* hit=effect.m_primList.front();
+        check(effect.m_primList.size()==1&&hit->UsesReferenceCylinder()&&rngDraws==draws+3&&rngCursor==3,
+            "SonicBlowHit emits one source cylinder with two offset draws then discarded RNG despite reduced effects");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\assasin_sonicblow.wav"&&waveCalls[0].x==28&&waveCalls[0].y==0&&waveCalls[0].z==36
+            &&waveCalls[0].frameRng==draws,"SonicBlowHit plays exact original assasin sound before all RNG");
+        check(hit->m_longitude==270&&hit->m_latitude==-90&&hit->m_deltaPos2.x==2&&hit->m_deltaPos2.y==-1&&hit->m_deltaPos2.z==0,
+            "SonicBlowHit truncates then wraps negative facing and uses integer division for screen-independent offsets");
+        matrix expected;MatrixIdentity(expected);MatrixAppendXRotation(expected,GetRadian(-90));MatrixAppendYRotation(expected,GetRadian(270));
+        const vector3d seeded={expected.m[3][0]-(expected.m[1][0]+expected.m[1][0]),expected.m[3][1]-(expected.m[1][1]+expected.m[1][1]),expected.m[3][2]-(expected.m[1][2]+expected.m[1][2])};
+        check(hit->m_matrix.m[2][0]==expected.m[2][0]&&hit->m_speed3d.x==seeded.x&&hit->m_speed3d.y==seeded.y
+            &&hit->m_deltaPos.x==seeded.x&&hit->m_deltaPos.z==seeded.z,"SonicBlowHit seeds displacement from twice-negative local matrix Y before updates");
+        check(hit->m_duration==12&&hit->m_speed==0.40000001f&&hit->m_accel==static_cast<float>(0.40000001f/12.0*-0.5)
+            &&hit->m_outerSize==7&&hit->m_innerSize==4&&hit->m_heightSize==3.5f&&hit->m_fadeOutCnt==6&&hit->m_alpha==254&&hit->m_maxAlpha==254,
+            "SonicBlowHit retains source twelve-frame cylinder speed drag dimensions fade and constructor alpha");
+        check(g_texMgr.requests==std::vector<std::string>({"effect\\magic_red.tga"})&&g_resMgr.requests.empty()
+            &&effect.m_effectPos.x==30&&effect.m_tlvertX==111&&effect.m_tlvertY==222&&effect.m_duration==50,
+            "SonicBlowHit loads exact magic-red texture while preserving parent origin projection and duration");
+        hit->m_alphaDelta=1;hit->OnProcess();const float speed=0.40000001f+static_cast<float>(0.40000001f/12.0*-0.5);
+        check(hit->m_deltaPos.x==seeded.x+static_cast<float>(-static_cast<double>(speed)*expected.m[1][0])
+            &&hit->m_pos.x==30+2+hit->m_deltaPos.x&&hit->m_pos.y==50-1+hit->m_deltaPos.y&&hit->m_alpha==254,
+            "SonicBlowHit reference update preserves seeded displacement then integrates source negative-local-Y motion");
+        for(int frame=1;frame<6;++frame)hit->OnProcess();hit->OnProcess();
+        check(hit->m_alphaSpeed==static_cast<float>(-254.0/6)&&hit->m_alpha<254&&hit->m_outerSize==7&&hit->m_innerSize==4,
+            "SonicBlowHit begins half-duration fade at frame six without invented radius shrink");
+        effect.m_stateCnt=1;effect.ApplySonicBlowHit();check(effect.m_primList.size()==1&&waveCalls.size()==1&&rngDraws==draws+3,
+            "SonicBlowHit nonzero calls do not repeat sound emission or RNG");
+        hit->m_stateCnt=12;check(hit->OnProcess()==0&&hit->m_stateCnt==13,"SonicBlowHit includes original final duration frame");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_stateCnt=0;actor.m_roty=-181.2f;bool integerOffsets=true;
+        const int xs[6]={0,2,3,6,7,9},expectedX[6]={0,0,1,1,2,2};
+        for(int i=0;i<6;++i){rngValues={xs[i],0,0};rngCursor=0;effect.ApplySonicBlowHit();hit=effect.m_primList.front();
+            integerOffsets=integerOffsets&&hit->m_deltaPos2.x==expectedX[i]&&hit->m_deltaPos2.y==-11&&hit->m_longitude==361;
+            effect.ClearPrims();g_world.UpdateGameObjects();}
+        check(integerOffsets,"SonicBlowHit preserves integer offset boundaries and leaves positive raw facing above three-sixty unwrapped");
+        g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
