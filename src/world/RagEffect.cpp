@@ -9831,6 +9831,53 @@ void UpdateReferenceSma(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:14593; canonical executable PrimSMA2 at 0x626EB0 (case 0x79).
+void UpdateReferenceSma2(CEffectPrim* prim)
+{
+    constexpr int division = 21;
+    const int middle = (division - 1) / 2;
+    const int middleStep = 90 / middle;
+
+    for (size_t band = 0; band < 4; ++band) {
+        EffectGi& gi = prim->m_gi[band];
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        gi.rotStart = static_cast<short>(gi.rotStart + static_cast<short>(band + 3));
+        if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+
+        if (gi.process >= prim->m_duration - 40) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 5);
+            if (gi.alphaB < 0) gi.alphaB = 0;
+        } else if (gi.process < 40) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 5);
+            if (gi.alphaB > 180) gi.alphaB = 180;
+        }
+
+        if (prim->m_deltaPos2.x > 50.0f) {
+            const float alphaLimit = 200.0f - (prim->m_deltaPos2.x - 50.0f) * 5.0f;
+            if (static_cast<float>(gi.alphaB) > alphaLimit)
+                gi.alphaB = static_cast<short>(alphaLimit);
+            if (gi.alphaB < 0) gi.alphaB = 0;
+        }
+
+        for (int point = 0; point < division; ++point) {
+            if (gi.flag[static_cast<size_t>(point)] != 0) continue;
+
+            const int sinLimit = 90 + ((point - middle) * middleStep);
+            const float maximum = gi.maxHeight * g_sinTable[sinLimit];
+            if (gi.process <= 90)
+                gi.height[static_cast<size_t>(point)] = maximum * g_sinTable[gi.process];
+            if (gi.height[static_cast<size_t>(point)] > maximum) {
+                gi.height[static_cast<size_t>(point)] = maximum;
+                gi.flag[static_cast<size_t>(point)] = 1;
+            }
+            if (gi.height[static_cast<size_t>(point)] < 0.0f)
+                gi.height[static_cast<size_t>(point)] = 0.0f;
+        }
+    }
+}
+
 // Ref/dhxj/RagEffect2.cpp:15246; canonical executable PrimTanji2 at 0x627F30 (case 0x61).
 void UpdateReferenceTanji2(CEffectPrim* prim)
 {
@@ -11078,6 +11125,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_SMA) {
         UpdateReferenceSma(this); // Source case 0x78 continues to the shared tick.
+        return true;
+    }
+    if (m_type == PP_SMA2) {
+        UpdateReferenceSma2(this); // Source case 0x79 continues to the shared tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

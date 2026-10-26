@@ -237,6 +237,7 @@ void UpdateReferenceShieldBoomerang3(CEffectPrim*);
 void UpdateReferenceQuadHorn2(CEffectPrim*);
 void UpdateReferenceStin(CEffectPrim*);
 void UpdateReferenceSma(CEffectPrim*);
+void UpdateReferenceSma2(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -376,6 +377,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DQUADHORN2) { UpdateReferenceQuadHorn2(this); return active; }
         if (m_type == PP_STIN) { UpdateReferenceStin(this); return active; }
         if (m_type == PP_SMA) { UpdateReferenceSma(this); return active; }
+        if (m_type == PP_SMA2) { UpdateReferenceSma2(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -853,6 +855,7 @@ __declspec(noinline) void RunShieldBoomerang3LifecycleChecks(CEffectPrim& prim, 
 __declspec(noinline) void RunQuadHorn2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunStinLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSmaLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunSma2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2158,6 +2161,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     RunQuadHorn2LifecycleChecks(prim, checks, failures);
     RunStinLifecycleChecks(prim, checks, failures);
     RunSmaLifecycleChecks(prim, checks, failures);
+    RunSma2LifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2463,6 +2467,49 @@ __declspec(noinline) void RunSmaLifecycleChecks(CEffectPrim& prim, int& checks, 
     check(a.process==2&&a.rotStart==90&&std::fabs(a.sparkX-6)<0.0001f&&a.sparkZ==5
         &&b.process==-1&&b.sparkX==10&&b.sparkZ==11,
         "case 0x78 non-first positive process retains its angle and advances X/Z while nonpositive lanes skip movement");
+    g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunSma2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_SMA2; prim.m_stateCnt=0; prim.m_duration=100;
+    prim.m_deltaPos2={60,0,0}; prim.m_pos={10,20,30}; prim.m_master->m_effectPos={100,200,300};
+    for(auto& gi:prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=0; a.rotStart=357; a.alphaB=170; a.maxHeight=10;
+    a.height.fill(-1.0f); a.flag.fill(0);
+    EffectGi& b=prim.m_gi[1]; b.life=1; b.process=90; b.rotStart=356; b.alphaB=50; b.maxHeight=4;
+    b.height.fill(0.0f); b.flag.fill(1); b.flag[10]=0; b.height[10]=100.0f;
+    EffectGi& c=prim.m_gi[2]; c.life=1; c.process=89; c.rotStart=355; c.alphaB=100; c.maxHeight=2;
+    c.height.fill(7.0f); c.flag.fill(0);
+    EffectGi& d=prim.m_gi[3]; d.life=2; d.process=10; d.rotStart=90; d.alphaB=80; d.height.fill(3.0f);
+    const int positionBefore=prim.m_pos.x; const int draws=rngDraws;
+    prim.OnProcess();
+    check(a.process==1&&a.rotStart==0&&a.alphaB==150
+        &&std::fabs(a.height[0])<0.0001f&&std::fabs(a.height[10]-10.0f*GetSin(1))<0.0001f
+        &&std::fabs(a.height[20])<0.0001f&&a.flag[10]==0
+        &&b.process==91&&b.rotStart==0&&b.alphaB==45&&b.height[10]==4&&b.flag[10]==1
+        &&c.process==90&&c.rotStart==0&&c.alphaB==95&&std::fabs(c.height[10]-2.0f)<0.0001f
+        &&d.life==2&&d.process==10&&d.rotStart==90&&d.alphaB==80
+        &&prim.m_pos.x==positionBefore&&rngDraws==draws,
+        "case 0x79 updates four exact-life lanes, alpha phase/clamps and 21-point flagged height curves in source order");
+
+    a.process=90; a.alphaB=10; a.height.fill(1.0f); a.flag.fill(1); a.flag[0]=0; a.height[0]=100.0f;
+    prim.m_deltaPos2.x=50.0f; prim.m_duration=1000;
+    prim.OnProcess();
+    check(a.process==91&&a.alphaB==10&&a.height[0]==0.0f&&a.flag[0]==1
+        &&std::all_of(a.height.begin()+1,a.height.end(),[](float value){return value==1.0f;}),
+        "case 0x79 process above 90 preserves unclamped unflagged samples except the source maximum clamp and does not apply distance alpha cap at 50");
+
+    a.life=1; a.process=0; a.alphaB=0; a.height.fill(0.0f); a.flag.fill(1); a.rotStart=359;
+    prim.m_deltaPos2.x=90.0f; prim.m_duration=1000;
+    prim.OnProcess();
+    check(a.process==1&&a.rotStart==2&&a.alphaB==0
+        &&prim.m_pos.x==positionBefore&&rngDraws==draws,
+        "case 0x79 applies positive-distance alpha cap after growth and performs only one rotation wrap without position or RNG effects");
     g_isSkipFrame=oldSkipFrame;
 }
 
