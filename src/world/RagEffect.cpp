@@ -9267,6 +9267,33 @@ void UpdateReferenceRectUp2(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:5566; canonical executable PrimSphereWind2 at 0x6132B0 (case 0x5B).
+void UpdateReferenceSphereWind2(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.process <= 25) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 2);
+        } else if (gi.process > 70) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 2);
+        }
+        if (gi.alphaB < 0) gi.alphaB = 0;
+
+        gi.distance *= 1.01f;
+        gi.riseAngle = static_cast<short>(gi.riseAngle + 1);
+        if (rand() % 2 == 0) gi.riseAngle = static_cast<short>(gi.riseAngle + 1);
+        if (gi.riseAngle >= 360) gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
+
+        gi.rotStart = static_cast<short>(gi.rotStart + gi.height[1]);
+        if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -10372,6 +10399,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_RECT_UP2) {
         UpdateReferenceRectUp2(this); // Source case 0x5A continues to the common tick.
+        return true;
+    }
+    if (m_type == PP_SPHEREWIND2) {
+        UpdateReferenceSphereWind2(this); // Source case 0x5B continues to the common tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

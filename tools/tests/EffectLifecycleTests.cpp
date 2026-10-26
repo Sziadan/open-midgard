@@ -220,6 +220,7 @@ void UpdateReferencePressure(CEffectPrim*);
 void UpdateReferenceGroundShake(CEffectPrim*);
 void UpdateReferenceBash3D(CEffectPrim*);
 void UpdateReferenceRectUp2(CEffectPrim*);
+void UpdateReferenceSphereWind2(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -341,6 +342,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_GROUNDSHAKE) { UpdateReferenceGroundShake(this); return active; }
         if (m_type == PP_BASH3D) { UpdateReferenceBash3D(this); return active; }
         if (m_type == PP_RECT_UP2) { UpdateReferenceRectUp2(this); return active; }
+        if (m_type == PP_SPHEREWIND2) { UpdateReferenceSphereWind2(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -788,6 +790,7 @@ __declspec(noinline) void RunPressureLifecycleChecks(CEffectPrim& prim, int& che
 __declspec(noinline) void RunGroundShakeLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunBash3DLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunRectUp2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunSphereWind2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1638,6 +1641,58 @@ __declspec(noinline) void RunRectUp2LifecycleChecks(CEffectPrim& prim, int& chec
     check(a.process==101 && a.height[2]==0,
         "case 0x5A canonical EXE zeroes decay height when the derived angle exceeds 90 instead of readable Ref's clamp");
     g_isSkipFrame=oldSkipFrame;
+    RunSphereWind2LifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunSphereWind2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_SPHEREWIND2; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={41,42,43};
+    for (auto& gi : prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=24; a.alphaB=5; a.distance=1.5f;
+    a.riseAngle=358; a.rotStart=350; a.height[1]=20;
+    EffectGi& b=prim.m_gi[1]; b.life=1; b.process=25; b.alphaB=7; b.distance=2;
+    b.riseAngle=359; b.rotStart=10; b.height[1]=-20;
+    EffectGi& c=prim.m_gi[2]; c.life=1; c.process=70; c.alphaB=1; c.distance=3;
+    EffectGi& d=prim.m_gi[3]; d.life=2; d.process=5; d.alphaB=30; d.distance=4;
+    rngValues={0,1,0}; rngCursor=0; const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==41 && prim.m_pos.y==42 && prim.m_pos.z==43
+        && a.process==25 && a.alphaB==7 && std::fabs(a.distance-1.515f)<0.0001f
+        && a.riseAngle==0 && a.rotStart==10
+        && b.process==26 && b.alphaB==7 && std::fabs(b.distance-2.02f)<0.0001f
+        && b.riseAngle==0 && b.rotStart==-10
+        && c.process==71 && c.alphaB==0 && std::fabs(c.distance-3.03f)<0.0001f
+        && c.riseAngle==2 && d.process==5 && d.alphaB==30 && d.distance==4
+        && rngDraws-draws==3 && rngCursor==3,
+        "case 0x5B updates four exact-life gates through process 25/26/71, consumes one RNG draw each and wraps angles once");
+
+    for (auto& gi : prim.m_gi) gi={};
+    a.life=1; a.process=-2; a.alphaB=20; a.distance=2; a.riseAngle=4; a.rotStart=5; a.height[1]=3;
+    rngValues={0}; rngCursor=0; const int nonpositiveDraws=rngDraws;
+    prim.OnProcess();
+    check(a.process==-1 && a.alphaB==20 && a.distance==2 && a.riseAngle==4 && a.rotStart==5
+        && rngDraws==nonpositiveDraws && rngCursor==0,
+        "case 0x5B active life with nonpositive post-increment process skips alpha, distance, angles and RNG");
+
+    a.process=69; a.alphaB=1; a.distance=1; a.riseAngle=100; a.rotStart=0; rngValues={1}; rngCursor=0;
+    prim.OnProcess();
+    check(a.process==70 && a.alphaB==1 && a.riseAngle==101,
+        "case 0x5B process 70 preserves alpha and performs its one/two-step rise-angle update");
+    a.process=70; a.alphaB=1; a.distance=1; a.riseAngle=100; rngValues={1}; rngCursor=0;
+    prim.OnProcess();
+    check(a.process==71 && a.alphaB==0 && std::fabs(a.distance-1.01f)<0.0001f,
+        "case 0x5B process 71 fades alpha and clamps below zero while retaining distance growth");
+
+    a.process=0; a.alphaB=32767; a.distance=1; a.riseAngle=0; a.rotStart=0; a.height[1]=32770.0f;
+    rngValues={1}; rngCursor=0; prim.OnProcess();
+    check(a.alphaB==0 && a.rotStart==static_cast<short>(32770.0f),
+        "case 0x5B alpha and accumulated rotation retain source signed-short narrowing semantics");
+    rngValues.clear(); rngCursor=0; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
