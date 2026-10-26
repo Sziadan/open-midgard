@@ -223,3 +223,7 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 
 - `Ref/RagEffect2.cpp:18647-18783` computes `BasicAngle = fullDisplayAngle / 20` with signed integer division and uses a do/while loop. For a positive span from 1 through 19, `BasicAngle` is zero and the source loop does not advance. The port retains this exact behavior rather than inventing a fallback. Valid runtime input range has not yet been independently established.
 - `Ref/RagEffectPrim.cpp:6227-6375` guards each rectangle on `rpCnt < 510`, submits two triangle faces, then increments the face counter by two. `RenderRainbow` matches the cap and counter. The production renderer's later resource/backend acceptance is still open.
+
+## RenderTripleAttack decompiler parameter shape - 2026-10-26
+
+- `Ref/RagEffect2.cpp:21951` labels the second parameter as `float wtm`, then casts its bits back to `matrix*`. The canonical executable dispatcher at `HighPriest.exe.c:471726-471727` passes `*(float *)&wtm`, confirming this is a decompiler ABI artifact. The C++ port takes `const matrix&` and preserves the underlying pointer passed by the real call.

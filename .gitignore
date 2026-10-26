@@ -57,3 +57,4 @@ tools/tests/*
 !tools/check_pokjuk_parity.py
 !tools/check_guard_parity.py
 !tools/check_rainbow_parity.py
+!tools/check_triple_attack_parity.py

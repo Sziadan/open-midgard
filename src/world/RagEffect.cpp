@@ -7243,6 +7243,94 @@ void RenderRainbow(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void SubmitTripleAttackRect(int& rpCount, const vector3d& bottomPrevious,
+    const vector3d& bottomCurrent, const vector3d& topCurrent, const vector3d& topPrevious,
+    const matrix& viewMatrix, CTexture* texture, short alpha,
+    bool inverseSourceAlpha, unsigned char red, unsigned char green, unsigned char blue,
+    int renderFlags)
+{
+    if (rpCount >= 510) return;
+    const vector3d positions[2][3] = {
+        { bottomPrevious, bottomCurrent, topCurrent },
+        { topPrevious, topCurrent, bottomPrevious },
+    };
+    const float uvs[2][3][2] = {
+        { { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } },
+        { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 1.0f } },
+    };
+    const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(alpha)) << 24)
+        | (static_cast<unsigned int>(red) << 16) | (static_cast<unsigned int>(green) << 8) | blue;
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) return;
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = inverseSourceAlpha ? D3DBLEND_INVSRCALPHA : D3DBLEND_ONE;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            ProjectReferenceEffectVertex(positions[triangle][vertex], viewMatrix, face->m_verts[vertex]);
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[triangle][vertex][0];
+            face->m_verts[vertex].tv = uvs[triangle][vertex][1];
+        }
+        g_renderer.AddRP(face, renderFlags);
+    }
+    rpCount += 2;
+}
+
+void RenderTripleAttack(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    int rpCount = 0;
+    for (int bandIndex = 0; bandIndex < 4; ++bandIndex) {
+        EffectGi& gi = prim.m_gi[static_cast<size_t>(bandIndex)];
+        if (gi.life != 1 || gi.alphaB <= 0) continue;
+        const float mode = gi.height[4];
+        const int orientation = static_cast<short>(static_cast<int>(gi.rotStart) + 90) % 360;
+        for (int pass = 0; pass < 2; ++pass) {
+            float radius = gi.maxHeight;
+            if (pass == 1) radius = mode == 3.0f ? radius + radius : radius + 0.25f;
+            vector3d previousBottom{};
+            vector3d previousTop{};
+            for (int sample = 0; sample <= 5; ++sample) {
+                const int angle = sample * 72;
+                const double circleCos = g_cosTable[angle];
+                const double circleSin = g_sinTable[angle];
+                const double rx = static_cast<double>(radius) * circleCos * g_cosTable[orientation];
+                const double rz = static_cast<double>(radius) * circleCos * g_sinTable[orientation];
+                const double vertical = static_cast<double>(radius) * circleSin - gi.height[0];
+                const vector3d currentBottom = {
+                    static_cast<float>(gi.sparkX + rx), static_cast<float>(gi.sparkY + vertical), static_cast<float>(gi.sparkZ + rz) };
+                const vector3d currentTop = {
+                    static_cast<float>(gi.vecTNowX + rx), static_cast<float>(gi.vecTNowY + vertical), static_cast<float>(gi.vecTNowZ + rz) };
+                if (sample > 0) {
+                    unsigned char red = 255, green = 255, blue = 55;
+                    if (mode == 2.0f) {
+                        red = green = blue = 255;
+                    } else if (mode == 3.0f) {
+                        red = 255; green = 89; blue = 182;
+                    } else if (pass == 1) {
+                        blue = 200;
+                    }
+                    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+                    SubmitTripleAttackRect(rpCount, previousBottom, currentBottom, currentTop, previousTop,
+                        viewMatrix, texture, gi.alphaB, pass == 0, red, green, blue,
+                        static_cast<int>(prim.m_renderFlag));
+                }
+                previousBottom = currentBottom;
+                previousTop = currentTop;
+            }
+        }
+    }
+}
+
 void TeiHit1Corners(const EffectGi& gi, vector3d corners[4])
 {
     const double height = gi.height[1];
@@ -8590,6 +8678,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_RAINBOW) {
         RenderRainbow(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_TRIPLEATTACK) {
+        RenderTripleAttack(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {

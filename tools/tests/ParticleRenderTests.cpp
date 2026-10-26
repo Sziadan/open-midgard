@@ -1027,6 +1027,64 @@ int main() {
         gi.life=1;gi.fullDisplayAngle=-20;g_renderer.submissions.clear();RenderRainbow(prim,view);
         check(g_renderer.submissions.empty(),"Rainbow negative angle span retains the source zero-sample behavior");
     }
+    {
+        CTexture textures[2];CEffectPrim prim;prim.m_pos={100,200,300};prim.m_renderFlag=0x405;
+        prim.m_texture={&textures[0],&textures[1]};
+        EffectGi& gi=prim.m_gi[0];gi.life=1;gi.alphaB=180;gi.rotStart=0;gi.maxHeight=10;
+        gi.height[0]=2;gi.height[4]=2.0f;
+        gi.sparkX=4;gi.sparkY=5;gi.sparkZ=6;gi.vecTNowX=14;gi.vecTNowY=15;gi.vecTNowZ=16;
+        g_renderer.submissions.clear();g_renderer.flags.clear();RenderTripleAttack(prim,view);
+        check(g_renderer.submissions.size()==20,
+            "TripleAttack emits five quads in each of two passes for one active band");
+        if(g_renderer.submissions.size()==20) {
+            const RPFace& first=g_renderer.submissions[0];
+            const RPFace& secondPass=g_renderer.submissions[10];
+            check(first.m_verts[0].color==0xB4FFFFFFu&&secondPass.m_verts[0].color==0xB4FFFFFFu
+                &&first.destAlphaMode==D3DBLEND_INVSRCALPHA&&secondPass.destAlphaMode==D3DBLEND_ONE,
+                "TripleAttack mode two uses white and source PW blend per pass");
+            check(first.tex==&textures[0]&&g_renderer.submissions[1].tex==&textures[0]
+                &&first.m_verts[0].tu==0.0f&&first.m_verts[0].tv==1.0f
+                &&first.m_verts[1].tu==1.0f&&first.m_verts[1].tv==1.0f
+                &&first.m_verts[2].tu==1.0f&&first.m_verts[2].tv==0.0f,
+                "TripleAttack TN and F1 select texture zero for both triangles with fixed source UVs");
+            tlvertex3d expected;
+            ProjectReferenceEffectVertex({4.0f,3.0f,16.0f},view,expected);
+            check(near(first.m_verts[0].x,expected.x)&&near(first.m_verts[0].y,expected.y),
+                "TripleAttack preserves source seed endpoint and F1 suppresses parent translation");
+            ProjectReferenceEffectVertex({4.0f,12.510565f,9.090170f},view,expected);
+            check(near(first.m_verts[1].x,expected.x)&&near(first.m_verts[1].y,expected.y),
+                "TripleAttack advances angular sample using source radius and orientation table");
+            ProjectReferenceEffectVertex({14.0f,22.510565f,19.090170f},view,expected);
+            check(near(first.m_verts[2].x,expected.x)&&near(first.m_verts[2].y,expected.y),
+                "TripleAttack carries the top endpoint alongside the bottom endpoint");
+            check(g_renderer.flags[0]==0x405&&g_renderer.flags[19]==0x405,
+                "TripleAttack forwards primitive render flags");
+        }
+        gi.height[4]=3.0f;g_renderer.submissions.clear();RenderTripleAttack(prim,view);
+        if(g_renderer.submissions.size()==20) {
+            tlvertex3d expected;ProjectReferenceEffectVertex({4.0f,3.0f,26.0f},view,expected);
+            check(near(g_renderer.submissions[10].m_verts[0].x,expected.x)
+                &&near(g_renderer.submissions[10].m_verts[0].y,expected.y),
+                "TripleAttack mode three doubles the second-pass radius");
+        } else check(false,"TripleAttack mode-three radius check has complete submissions");
+        const unsigned int passZeroColors[3]={0xB4FFFF37u,0xB4FF59B6u,0xB4FFFFFFu};
+        const unsigned int passOneColors[3]={0xB4FFFFC8u,0xB4FF59B6u,0xB4FFFFFFu};
+        for(int modeIndex=0;modeIndex<3;++modeIndex) {
+            gi.height[4]=modeIndex==0?0.0f:(modeIndex==1?3.0f:2.0f);
+            g_renderer.submissions.clear();RenderTripleAttack(prim,view);
+            const unsigned int firstColor=g_renderer.submissions.empty()?0:g_renderer.submissions[0].m_verts[0].color;
+            const unsigned int secondColor=g_renderer.submissions.size()<11?0:g_renderer.submissions[10].m_verts[0].color;
+            check(firstColor==passZeroColors[modeIndex]&&secondColor==passOneColors[modeIndex],
+                "TripleAttack preserves all three source mode color branches across both passes");
+        }
+        gi.height[4]=2.0f;prim.m_gi[1].life=1;prim.m_gi[1].alphaB=180;g_renderer.submissions.clear();
+        RenderTripleAttack(prim,view);
+        check(g_renderer.submissions.size()==40,"TripleAttack independently renders each active GI band");
+        gi.alphaB=0;g_renderer.submissions.clear();RenderTripleAttack(prim,view);
+        check(g_renderer.submissions.size()==20,"TripleAttack skips only the alpha-gated first band");
+        gi.life=0;prim.m_gi[1].life=0;g_renderer.submissions.clear();RenderTripleAttack(prim,view);
+        check(g_renderer.submissions.empty(),"TripleAttack skips inactive bands");
+    }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;
 }

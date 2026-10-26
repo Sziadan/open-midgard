@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer parity. `RenderCloud`, `RenderGumGang` (0x23), `RenderDoubleGumGang` (0x63), `RenderPokJuk` (0x34), `RenderGuard` (0x3D), and `RenderRainbow` (0x5D) are implemented and checkpointed.
+Current work: WP5A renderer parity. `RenderCloud`, `RenderGumGang` (0x23), `RenderDoubleGumGang` (0x63), `RenderPokJuk` (0x34), `RenderGuard` (0x3D), `RenderRainbow` (0x5D), and `RenderTripleAttack` (0x45) are implemented and checkpointed.
 
-Next action: compare `RenderTripleAttack` (type 0x45) branch-by-branch before implementation; the decompiler's matrix parameter is anomalous and must be reconciled against the executable dispatcher. `RenderGroundSample` (0x70) depends on map/ground queries. The Cloud producer/updater mismatch remains open: current weather scheduling/update builds segment state while reference `Cloud`/`PrimCloud` creates and advances four GI bands. Compare those producer/update functions before porting them. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: compare `RenderGroundSample` (type 0x70) branch-by-branch; it depends on map/ground queries. The Cloud producer/updater mismatch remains open: current weather scheduling/update builds segment state while reference `Cloud`/`PrimCloud` creates and advances four GI bands. Compare those producer/update functions before porting them. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
-Latest checkpoint (2026-10-26): `RenderRainbow` passed twelve mechanical branch comparisons. The focused particle suite passes 533 checks; all six C++ suites and seven Python index tests pass. The release deployed to OldRO with matching SHA-256 `3C33C9383C806E3B5F437E13B786F49F0112C947A9005C7F1B335AFB150D149F`. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `RenderTripleAttack` passed eleven mechanical branch comparisons. The focused particle suite passes 547 checks; all six C++ suites and seven Python index tests pass. The release deployed to OldRO with matching executable hashes. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26
