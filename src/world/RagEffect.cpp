@@ -8080,6 +8080,71 @@ bool UpdateReference3DAura2(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:22806 (case 0x20).
+bool UpdateReferenceChookGi(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode->m_view;
+    const short longitude = static_cast<short>(view->GetCameraLongitude());
+    prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+    const short latitude = static_cast<short>(view->GetCameraLatitude());
+    short cameraLatitude = static_cast<short>(360 - latitude + 90);
+    if (cameraLatitude >= 360) cameraLatitude = static_cast<short>(cameraLatitude - 360);
+    prim->m_gi[1].alphaT = cameraLatitude;
+    prim->m_pos = prim->m_master->EffectPosition();
+
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) return true;
+
+    ++gi.process;
+    if (gi.process <= 200) ++gi.alphaB;
+
+    for (int angle = 0; angle < 6; angle += 2) {
+        float& current = gi.height[angle];
+        float& target = gi.height[angle + 1];
+        if (target > current) {
+            current += 1.0f;
+            if (current > 359.0f) current = 359.0f;
+            if (current > target) {
+                const int range = static_cast<int>(current);
+                target = static_cast<float>(range == 0 ? 0 : rand() % range);
+            }
+        } else {
+            current -= 1.0f;
+            if (current < 0.0f) current = 0.0f;
+            if (current <= target) {
+                const int range = static_cast<int>(current);
+                target = static_cast<float>(359 - (range == 0 ? 0 : rand() % range));
+            }
+        }
+    }
+
+    if (gi.flag[0] == 0 || gi.process % 2 == 0) {
+        gi.height[6] += 1.0f;
+        if (gi.height[6] >= 360.0f) gi.height[6] -= 360.0f;
+    }
+
+    if (gi.height[10] == 1.0f) {
+        gi.sparkX = 0.7f * GetSin(static_cast<int>(gi.height[0]));
+        gi.sparkZ = 0.7f * GetSin(static_cast<int>(gi.height[2]));
+        gi.sparkY = 0.7f * GetSin(static_cast<int>(gi.height[4]));
+        gi.sparkX += 5.5f * GetSin(static_cast<int>(gi.height[6]));
+        gi.sparkZ += 5.5f * GetCos(static_cast<int>(gi.height[6]));
+    } else {
+        const float radialScale = gi.flag[0] == 0 ? 1.0f : 0.5f;
+        gi.sparkX = radialScale * GetSin(static_cast<int>(gi.height[0]));
+        gi.sparkZ = radialScale * GetSin(static_cast<int>(gi.height[2]));
+        gi.sparkY = radialScale * GetSin(static_cast<int>(gi.height[4]));
+        gi.sparkX += 7.0f * GetSin(static_cast<int>(gi.height[6]));
+        gi.sparkZ += 7.0f * GetCos(static_cast<int>(gi.height[6]));
+    }
+    gi.sparkY += gi.height[7];
+
+    gi.height[8] += static_cast<float>(5 + rand() % 5);
+    if (gi.height[8] >= 360.0f) gi.height[8] -= 360.0f;
+    return true;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9071,6 +9136,9 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_3DAURA_2) {
         UpdateReference3DAura2(this); // Source case 0x1D ignores the bool result.
         return true;
+    }
+    if (m_type == PP_CHOOKGI) {
+        return UpdateReferenceChookGi(this); // Source tests this return; all helper paths return true.
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
         return UpdateReferenceScreenTexture(this);

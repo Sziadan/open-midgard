@@ -187,6 +187,7 @@ bool UpdateReferenceMapMagicZone(CEffectPrim*);
 bool UpdateReferenceMapParticle(CEffectPrim*);
 bool UpdateReference3DAura(CEffectPrim*);
 bool UpdateReference3DAura2(CEffectPrim*);
+bool UpdateReferenceChookGi(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -279,6 +280,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_MAPPARTICLE) { UpdateReferenceMapParticle(this); return active; }
         if (m_type == PP_3DAURA) { UpdateReference3DAura(this); return active; }
         if (m_type == PP_3DAURA_2) { UpdateReference3DAura2(this); return active; }
+        if (m_type == PP_CHOOKGI) return UpdateReferenceChookGi(this) && active;
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1543,6 +1545,55 @@ int main()
             && ordinary.vecTNowX == 0 && ordinary.vecTNowZ == 0 && ordinary.vecTNowY == 14
             && rngCursor == 4,
             "Prim3DAura_2 non-11 reset branch zeros x/z and draws y once for each falling vector");
+        texturePrim.m_type = PP_CHOOKGI; texturePrim.m_stateCnt = 0;
+        texturePrim.m_master->m_effectPos = {111, 222, 333}; testView.longitude = 15.5f;
+        for (auto& gi : texturePrim.m_gi) gi = {};
+        auto& chook = texturePrim.m_gi[0]; chook.life = 0; chook.process = 17; chook.alphaB = 19;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_pos.x == 111 && texturePrim.m_pos.y == 222
+            && texturePrim.m_pos.z == 333 && chook.process == 17 && chook.alphaB == 19
+            && chook.alphaT == 345 && texturePrim.m_gi[1].alphaT == 135 && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x20 updates camera angles and master position but skips inactive GI state before common tick");
+
+        texturePrim.m_stateCnt = 1; chook.life = 1; chook.process = 199; chook.alphaB = 10;
+        chook.flag[0] = 0; chook.height[0] = 10; chook.height[1] = 10;
+        chook.height[2] = 359; chook.height[3] = 360;
+        chook.height[4] = 5; chook.height[5] = 4;
+        chook.height[6] = 359; chook.height[7] = 20;
+        chook.height[8] = 358; chook.height[10] = 1;
+        rngValues = {10, 2, 4}; rngCursor = 0;
+        const int chookDrawStart = rngDraws;
+        check(texturePrim.OnProcess() == 1 && chook.process == 200 && chook.alphaB == 11
+            && chook.height[0] == 9 && chook.height[1] == 358
+            && chook.height[2] == 359 && chook.height[3] == 360
+            && chook.height[4] == 4 && chook.height[5] == 357 && chook.height[6] == 0
+            && std::fabs(chook.sparkX - (0.7f*GetSin(9))) < 0.00001f
+            && std::fabs(chook.sparkZ - (0.7f*GetSin(359)+5.5f)) < 0.00001f
+            && std::fabs(chook.sparkY - (0.7f*GetSin(4)+20)) < 0.00001f
+            && chook.height[8] == 7 && rngDraws == chookDrawStart + 3 && rngCursor == 3
+            && texturePrim.m_stateCnt == 2,
+            "OnProcess case 0x20 maps three angle pairs, process/alpha limit, special height10 vector, rotations and ordered RNG");
+
+        chook.process = 200; chook.alphaB = 12; chook.flag[0] = 0; chook.height[10] = 0;
+        chook.height[0] = 90; chook.height[1] = 200; chook.height[2] = 180; chook.height[3] = 200;
+        chook.height[4] = 270; chook.height[5] = 300; chook.height[6] = 359;
+        chook.height[7] = 5; chook.height[8] = 0; rngValues = {3}; rngCursor = 0;
+        check(UpdateReferenceChookGi(&texturePrim) && chook.process == 201 && chook.alphaB == 12
+            && chook.height[6] == 0
+            && std::fabs(chook.sparkX - GetSin(91)) < 0.00001f
+            && std::fabs(chook.sparkZ - (GetSin(181)+7.0f)) < 0.00001f
+            && std::fabs(chook.sparkY - (GetSin(271)+5.0f)) < 0.00001f
+            && chook.height[8] == 8 && rngCursor == 1,
+            "PrimCHOOKGI non-special vector uses flag-zero scale, wraps rotation and stops alpha growth after process 200");
+        chook.flag[0] = 1; chook.process = 201; chook.height[0] = chook.height[2] = chook.height[4] = 10;
+        chook.height[1] = chook.height[3] = chook.height[5] = 100; chook.height[6] = 20;
+        chook.height[7] = 2; chook.height[8] = 0; rngValues = {0}; rngCursor = 0;
+        check(UpdateReferenceChookGi(&texturePrim) && chook.process == 202 && chook.height[6] == 21
+            && std::fabs(chook.sparkX - (0.5f*GetSin(11)+7.0f*GetSin(21))) < 0.00001f
+            && std::fabs(chook.sparkZ - (0.5f*GetSin(11)+7.0f*GetCos(21))) < 0.00001f,
+            "PrimCHOOKGI nonzero flag uses half-scale vector and rotates only on even process");
+        chook.process = 202; chook.height[6] = 30; chook.height[8] = 0;
+        check(UpdateReferenceChookGi(&texturePrim) && chook.process == 203 && chook.height[6] == 30,
+            "PrimCHOOKGI odd process skips flag-controlled rotation while retaining final height randomization");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

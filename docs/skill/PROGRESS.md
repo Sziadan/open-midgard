@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
+Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D and 0x20 now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
 
-Next action: branch-compare source case 0x20 (`PP_CHOOKGI`) against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
+Next action: branch-compare source case 0x22 (`PP_GI_3`) against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
 
-Latest checkpoint (2026-10-26): `PP_MAPPARTICLE` case 0x1B is implemented and branch-compared against Ref/dhxj, Ref decompilation and canonical EXE. Inventory reports 55 source-only IDs; lifecycle suite passes 1,583 checks, all six CTest suites and seven Python reference-index tests pass. x64 Release build passes; OldRO SHA-256 is `4661871688DFBA310CD6A938C45ED58113D8891CE1332E7F4A8422C56426D749`; this checkpoint records the completed part. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `PP_MAPPARTICLE` case 0x1B is implemented and branch-compared against Ref/dhxj, Ref decompilation and canonical EXE. Inventory reports 54 source-only IDs; lifecycle suite passes 1,588 checks, all six CTest suites and seven Python reference-index tests pass. x64 Release build passes; OldRO SHA-256 is `39F94429FA46702603E60518EDB0D8AC14FC281A13A3BDA78217354613EB0523`; this checkpoint records the completed part. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26
@@ -631,3 +631,6 @@ Case 0x1C (`PP_3DAURA`) checkpoint (2026-10-26): source and canonical EXE `Prim3
 
 
 Case 0x1D (`PP_3DAURA_2`) checkpoint (2026-10-26): source and canonical EXE bodies match. Ported camera alphaT, master position, four life-gated bands, eight angle/target pairs and all four falling-vector groups including flag-11 reset paths. Preserved strict thresholds, source branch order and RNG draw schedule. Mechanical branch comparison passes; lifecycle suite passes 1,583 checks, all six CTest suites and seven Python tests pass. x64 Release build passes; OldRO SHA-256 `4661871688DFBA310CD6A938C45ED58113D8891CE1332E7F4A8422C56426D749` matches. 55 source IDs remain unmapped; overall OnProcess parity is open.
+
+
+Case 0x20 (`PP_CHOOKGI`) checkpoint (2026-10-26): Ref and canonical EXE helper bodies match. Ported camera angles, master position, GI0 life/process/alpha behavior, three target pairs, flag-dependent height[6] cadence, special height[10]==1 vector formula and regular flag-scaled vector formula, followed by unconditional height[8] random increment/wrap. Mechanical comparison covers source branches/order and dispatcher return handling. Lifecycle suite passes 1,588 checks; all six CTest suites, seven Python tests, x64 Release build and OldRO SHA-256 `39F94429FA46702603E60518EDB0D8AC14FC281A13A3BDA78217354613EB0523` pass. 54 source IDs remain unmapped; overall OnProcess parity is open.
