@@ -322,6 +322,18 @@ int main() {
         check(face->m_verts[0].color==0xFEFFFFFF&&face->srcAlphaMode==5&&face->destAlphaMode==6,"Hit5/6 screen streaks preserve stored alpha and ordinary alpha blend");
     }
     {
+        CTexture firstTexture,secondTexture;CEffectPrim napalm;napalm.m_pos={100,200,900};
+        napalm.m_widthSize=20;napalm.m_heightSize=20;napalm.m_argb=0x19FFFFFF;
+        napalm.m_texture={&firstTexture,&secondTexture};napalm.m_curMotion=1;
+        g_renderer.m_rpAlphaList.clear();RenderReferenceScreenTexture(napalm);auto* face=g_renderer.m_rpAlphaList[0].second;
+        check(g_renderer.m_rpAlphaList.size()==2&&face->tex==&secondTexture&&face->m_verts[0].color==0x19FFFFFF,
+            "Napalm screen renderer selects advanced animation texture and packed rising alpha");
+        check(near(face->m_verts[0].x,79.5f)&&near(face->m_verts[0].y,219.5f)&&near(face->m_verts[1].y,179.5f)&&near(face->m_verts[2].x,119.5f)
+            &&near(face->m_verts[2].y,219.5f),"Napalm centered square uses original unscaled screen half extents");
+        napalm.m_curMotion=2;g_renderer.m_rpAlphaList.clear();RenderReferenceScreenTexture(napalm);
+        check(g_renderer.m_rpAlphaList.empty(),"Napalm exhausted animation does not substitute a texture or glow");
+    }
+    {
         CEffectPrim circle;circle.m_numSegments=2;circle.m_size=2;circle.m_arcAngle=90;circle.m_renderFlag=0x201;
         circle.m_texture.push_back(&g_texMgr.texture);
         for(int i=0;i<4;++i)circle.m_matrix.m[i][i]=1;

@@ -6668,7 +6668,7 @@ bool CEffectPrim::UsesReferenceCrossTexture() const
 bool CEffectPrim::UsesReferenceScreenTexture() const
 {
     return m_type == PP_2DTEXTURE && m_master
-        && (m_master->GetEffectType() == 4 || m_master->GetEffectType() == 5 || m_master->GetEffectType() == 1 || m_master->GetEffectType() == 183 || m_master->GetEffectType() == 46);
+        && (m_master->GetEffectType() == 32 || m_master->GetEffectType() == 4 || m_master->GetEffectType() == 5 || m_master->GetEffectType() == 1 || m_master->GetEffectType() == 183 || m_master->GetEffectType() == 46);
 }
 
 bool CEffectPrim::UsesReferenceParticle() const
@@ -7952,7 +7952,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -9597,6 +9597,43 @@ bool CRagEffect::ProcessHit2Blue()
         if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) mode->SendMsg(135,1,0,0);
     }
     return ProcessEZ2STR(0.0f,-80.0f,0.0f);
+}
+
+// Ref/RagEffect.cpp:6626-6702 (0x5F9CD0), original id 32.
+void CRagEffect::SpawnNapalmBeat()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!master || !mode || !mode->m_view) return;
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos,mode->m_view->GetViewMatrix(),projected);
+    m_tlvertX = projected.x; m_tlvertY = projected.y;
+    // Ref retains this comparison against the remainder, not an equality gate.
+    if (!(m_stateCnt < 15 && m_stateCnt >= m_stateCnt % 5)) return;
+    if (m_stateCnt == 0 && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_NapalmBeat.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE,vector3d{});
+    prim->m_duration = 30;
+    const float length = static_cast<float>(rand() % 50 + 10);
+    const int angle = rand() % 360;
+    prim->m_deltaPos2.x = GetSin(angle) * length;
+    prim->m_deltaPos2.y = static_cast<float>(-(GetCos(angle) * length));
+    prim->m_deltaPos2.y = static_cast<float>(prim->m_deltaPos2.y - 20.0);
+    prim->m_heightSize = static_cast<float>(rand() % 40 + 20);
+    prim->m_widthSize = prim->m_heightSize;
+    prim->m_alpha = 0.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.1);
+    prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+    prim->m_repeatAnim = false; prim->m_animSpeed = 2; prim->m_totalTexture = 8;
+    for (int i = 0; i < prim->m_totalTexture; ++i) {
+        char path[128];
+        // Original format bytes at 0x71B730 (CP949), including uppercase extension.
+        std::snprintf(path,sizeof(path),"effect\\\xC6\xF8\xB9\xDF%d.TGA",i+1);
+        prim->m_texture.push_back(g_texMgr.GetTexture(path,false));
+    }
+    prim->m_gi[0].life = 0;
 }
 
 // HighPriest.exe.c:421318-421337, original id 401.
@@ -13044,6 +13081,10 @@ bool CRagEffect::ProcessEffectFrame()
         return true;
     }
     if (m_type == 183) return ProcessHit2Blue();
+    if (m_type == 32) {
+        SpawnNapalmBeat();
+        return true;
+    }
     if (m_type == 401) {
         ApplyNapalmHit();
         return true;

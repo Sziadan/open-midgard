@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Napalm Hit2 caller401, after Hit5/Hit6 checkpoint `cbe2a84`. Original frame gates, actor-origin refresh, exact wave and non-emitting Hit2 projection calls are now ported.
+Current work: WP5A NapalmBeat id32, after caller401 checkpoint `2ca77d7`. Original fifteen-frame emission window, recovered eight-texture sequence, screen projection, audio and nonrepeating animation are now ported.
 
-Next action: continue other emitters (including original NapalmBeat id32) and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue neighboring emitters (including FireArrow id31) and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## NapalmBeat animated screen emitter — 2026-10-26
+
+- Ref/RagEffect.cpp:6626-6702 (0x5F9CD0) -> SpawnNapalmBeat, original id32, direct ProcessEffectFrame/Init route; shared reference screen update/render bindings. Projects actor x/y every call before the source gate, preserving stored effect world origin/z. Preserves the original comparison state<15 && state>=state%5: all normal frames0..14 emit, including nonmultiples of five. Reduced-effects mode does not suppress emission. Only zero plays stored-origin horizontal EF_NapalmBeat audio before RNG.
+- Each frame emits one centered pattern0 PP_2DTEXTURE with three draws in radius/angle/square-size order: radius rand()%50+10, angle rand()%360, square half-size rand()%40+20. Source radial screen offset and y-20, duration30, alpha0/max254/rise max*0.1, fade20, divisor2/nonrepeat, eight textures and GI life0 are retained.
+- Recovered original CP949 format bytes at0x71B730: effect\\xC6\xF8\xB9\xDF%d.TGA (eight textures numbered1..8, uppercase extension). Original body pushes this address at0x5F9F50; no guessed name or fallback. Screen animation advances at primitive frame0, holds on odd frames, and returns false on the eighth advance at14, before duration30/fade20. Existing world-owned primitive cleanup protocol remains in force.
+
+Validation: release build, six silent C++ suites / 898 checks (723 lifecycle/primitive, 117 rendering, 58 other), six Python tests, two-literal executable byte audit, original format-pointer instruction audit and whitespace check pass. Added16 lifecycle and three rendering checks for ordered RNG/profiles, all fifteen emission frames, projection-before-gate, stored origin/audio, exact resource sequence, alpha rise/clamp, frame-zero advance/odd hold/final termination, current animation texture, centered screen geometry and no exhausted-texture substitution. Initial test expectations for immediate detachment and vertex order were corrected to the existing world cleanup protocol and source triangle order; production behavior did not change for those corrections. Exact wave0x71A790 and format0x71B730 match executable bytes. No media/live acceptance. Approved OldRO SHA-256: `7FEFF74561439E9360CB8A28E489F28AC3150E14BE9E6181675C562985F3FC98`. Other emitters/primitive controls, caller routing, specialized segment payloads, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Napalm Hit2 caller401 — 2026-10-26
 

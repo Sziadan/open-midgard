@@ -289,6 +289,7 @@ struct CRagEffect : CGameObject {
     void SpawnHit2(int);
     bool ProcessHit2Blue();
     void ApplyNapalmHit();
+    void SpawnNapalmBeat();
     void SpawnHit3();
     void SpawnHit4();
     void SpawnHit5();
@@ -2245,6 +2246,56 @@ int main()
         check(effect.m_primList.empty()&&rngDraws==beforeEnd,"Pierce level-three window excludes frame sixty");
         effect.m_stateCnt=0;effect.m_level=0;effect.SpawnPierce();check(effect.m_primList.empty(),"Pierce zero level has no invented minimum burst");
         check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,"Pierce cleanup balances all sprite/action locks");g_session.m_isMinEffect=false;
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;
+        effect.m_type=32;effect.m_master=&actor;effect.m_duration=100;effect.m_effectPos={30,50,40};effect.m_tlvertZ=123;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        rngValues={49,90,39};rngCursor=0;g_session.m_isMinEffect=true;effect.SpawnNapalmBeat();
+        auto* prim=effect.m_primList.front();tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_primList.size()==1&&rngDraws==draws+3&&prim->m_type==PP_2DTEXTURE&&prim->UsesReferenceScreenTexture(),
+            "Napalm emits one reference screen primitive with three ordered draws despite reduced effects");
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&effect.m_tlvertZ==123
+            &&effect.m_effectPos.x==30&&effect.m_effectPos.y==50&&effect.m_effectPos.z==40,
+            "Napalm projects actor x/y while retaining stored origin and projected z");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_NapalmBeat.wav"&&waveCalls[0].x==28&&waveCalls[0].y==0
+            &&waveCalls[0].z==36&&waveCalls[0].frameRng==draws,"Napalm zero-frame sound uses stored origin before RNG");
+        check(prim->m_deltaPos2.x==GetSin(90)*59&&prim->m_deltaPos2.y==static_cast<float>(-(GetCos(90)*59)-20.0)
+            &&prim->m_widthSize==59&&prim->m_heightSize==59,"Napalm draws radius then angle then shared square size");
+        check(prim->m_duration==30&&prim->m_pattern==0&&prim->m_alpha==0&&prim->m_maxAlpha==254
+            &&prim->m_alphaSpeed==static_cast<float>(254.0*0.1)&&prim->m_fadeOutCnt==20,
+            "Napalm preserves duration centered pivot alpha rise constructor maximum and duration-minus-third fade");
+        check(prim->m_totalTexture==8&&prim->m_texture.size()==8&&!prim->m_repeatAnim&&prim->m_animSpeed==2&&prim->m_gi[0].life==0,
+            "Napalm uses eight nonrepeating textures with divisor two and inactive GI slot");
+        bool paths=g_texMgr.requests.size()==8;
+        for(int i=0;i<8;++i) paths=paths&&g_texMgr.requests[i]==std::string("effect\\\xC6\xF8\xB9\xDF")+std::to_string(i+1)+".TGA";
+        check(paths&&g_resMgr.requests.empty(),"Napalm requests exact recovered CP949 uppercase texture sequence one through eight");
+        prim->m_alphaDelta=1;check(prim->OnProcess()==1&&prim->m_curMotion==1&&prim->m_stateCnt==1,
+            "Napalm animation advances on frame zero before next state count");
+        check(prim->m_alpha==static_cast<float>(254.0*0.1)&&prim->m_widthSize==59&&prim->m_heightSize==59
+            &&prim->m_pos.x==effect.m_tlvertX+prim->m_deltaPos2.x&&prim->m_pos.y==effect.m_tlvertY+prim->m_deltaPos2.y,
+            "Napalm screen update rises alpha while keeping source dimensions and projected offset");
+        check(prim->OnProcess()==1&&prim->m_curMotion==1,"Napalm odd frame holds current animation texture");
+        for(int frame=2;frame<14;++frame) prim->OnProcess();
+        check(prim->m_stateCnt==14&&prim->m_curMotion==7&&prim->m_alpha==254,
+            "Napalm animation reaches final texture and clamps alpha before frame fourteen");
+        check(prim->OnProcess()==0&&prim->m_curMotion==8&&prim->m_stateCnt==14,
+            "Napalm eighth animation advance terminates at frame fourteen before duration fade");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues={0,0,0};rngCursor=0;
+        for(int frame=1;frame<15;++frame) {effect.m_stateCnt=frame;effect.SpawnNapalmBeat();}
+        check(effect.m_primList.size()==14&&rngDraws==draws+45&&g_texMgr.requests.size()==120&&waveCalls.size()==1,
+            "Napalm remainder comparison emits every frame one through fourteen with no repeated sound");
+        prim=effect.m_primList.front();check(prim->m_widthSize==20&&prim->m_heightSize==20&&prim->m_deltaPos2.x==0&&prim->m_deltaPos2.y==-30,
+            "Napalm radius and size lower endpoints retain exact screen offsets");
+        actor.m_pos={40,60,120};effect.m_stateCnt=15;effect.SpawnNapalmBeat();ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_primList.size()==14&&rngDraws==draws+45&&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y,
+            "Napalm frame fifteen closes emission but still refreshes actor projection");
+        effect.m_stateCnt=30;effect.SpawnNapalmBeat();
+        check(effect.m_primList.size()==14&&rngDraws==draws+45&&waveCalls.size()==1&&effect.m_effectPos.x==30,
+            "Napalm later frames preserve closed emission and original stored world anchor");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};
