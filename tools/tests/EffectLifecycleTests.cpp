@@ -200,6 +200,7 @@ bool UpdateReferenceSakura(CEffectPrim*);
 void UpdateReferenceShieldBoomerang(CEffectPrim*);
 void UpdateReferenceIntimidate(CEffectPrim*);
 void UpdateReferenceTeiHit1(CEffectPrim*);
+void UpdateReferenceTeiHit2(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -302,6 +303,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SHIELDBOOMERANG) { UpdateReferenceShieldBoomerang(this); return active; }
         if (m_type == PP_INTIMIDATE) { UpdateReferenceIntimidate(this); return active; }
         if (m_type == PP_TEIHIT1) { UpdateReferenceTeiHit1(this); return active; }
+        if (m_type == PP_TEIHIT2) { UpdateReferenceTeiHit2(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -680,6 +682,55 @@ __declspec(noinline) void RunTeiHit1LifecycleChecks(CEffectPrim& prim, int& chec
     check(a.process==33 && a.distance==44 && a.alphaB==55,
         "case 0x2C requires life exactly one and leaves unrelated primitive position unchanged");
     g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunTeiHit2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_TEIHIT2; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={100,50,200}; prim.m_pos={7,8,9};
+    prim.m_deltaPos={110,0,200};
+    for (auto& gi : prim.m_gi) gi={};
+    auto& a=prim.m_gi[0]; a.life=1; a.process=0; a.fullDisplayAngle=3; a.alphaB=77;
+    a.height[1]=2; a.height[2]=4; a.sparkX=10; a.sparkY=20; a.sparkZ=30;
+    auto& b=prim.m_gi[1]; b.height[1]=1;
+    rngValues={0}; rngCursor=0; const int draws=rngDraws;
+    check(prim.OnProcess()==1 && prim.m_pos.x==100 && prim.m_pos.y==50 && prim.m_pos.z==200
+        && a.process==1 && a.rotStart==330 && a.fullDisplayAngle==358 && a.alphaB==77
+        && std::fabs(a.sparkY-24)<.00001f && std::fabs(a.sparkX-(10+2*g_cosTable[330]))<.00001f
+        && std::fabs(a.sparkZ-(30+2*g_sinTable[330]))<.00001f
+        && b.process==0 && rngDraws==draws+1 && rngCursor==1
+        && a.alphaT==345 && prim.m_gi[1].alphaT==135,
+        "case 0x2D initializes camera/master state and lower-wraps the first-frame randomized angle");
+
+    b.life=1; b.process=0; prim.m_deltaPos={100+10*g_cosTable[350],0,200+10*g_sinTable[350]};
+    rngValues={59}; rngCursor=0; const int upperWrapDraws=rngDraws; prim.OnProcess();
+    check(b.process==1 && b.rotStart==19 && rngDraws==upperWrapDraws+1 && rngCursor==1,
+        "case 0x2D upper-wraps the first-frame angle after one source random draw");
+
+    a={}; a.life=1; a.process=1; a.alphaB=10; a.height[1]=0; a.height[2]=2; a.fullDisplayAngle=3;
+    auto& c=prim.m_gi[2]; c={}; c.life=1; c.process=9; c.alphaB=20; c.fullDisplayAngle=4;
+    auto& d=prim.m_gi[3]; d={}; d.life=1; d.process=10; d.alphaB=3; d.height[2]=7; d.fullDisplayAngle=5;
+    b.process=10; b.alphaB=2; b.height[2]=9; b.fullDisplayAngle=6;
+    rngValues={}; rngCursor=0; const int fadeDraws=rngDraws; prim.OnProcess();
+    check(a.process==2 && a.alphaB==25 && a.life==1
+        && c.process==10 && c.alphaB==35 && c.life==1
+        && d.process==11 && d.alphaB==0 && d.life==1
+        && b.process==11 && b.alphaB==0 && b.life==0 && b.sparkY==9
+        && rngDraws==fadeDraws,
+        "case 0x2D canonical EXE alpha growth is +15; fade boundary, strict underflow death and same-frame movement match");
+
+    a.process=-1; a.alphaB=50; a.sparkY=81; a.fullDisplayAngle=92;
+    b.life=2; b.process=77; b.alphaB=78; b.sparkY=79; b.fullDisplayAngle=80;
+    prim.m_deltaPos={115,0,205}; const int inactiveDraws=rngDraws; prim.OnProcess();
+    check(a.process==0 && a.alphaB==50 && a.sparkY==81 && a.fullDisplayAngle==92
+        && b.life==2 && b.process==77 && b.alphaB==78 && b.sparkY==79 && b.fullDisplayAngle==80
+        && prim.m_pos.x==100 && prim.m_pos.z==200 && rngDraws==inactiveDraws,
+        "case 0x2D process-nonpositive and inactive guards preserve band state after master/camera setup");
+    rngValues={}; rngCursor=0; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
@@ -1982,6 +2033,7 @@ int main()
         RunShieldBoomerangLifecycleChecks(texturePrim, checks, failures);
         RunIntimidateLifecycleChecks(texturePrim, checks, failures);
         RunTeiHit1LifecycleChecks(texturePrim, checks, failures);
+        RunTeiHit2LifecycleChecks(texturePrim, checks, failures);
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

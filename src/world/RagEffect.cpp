@@ -8528,6 +8528,64 @@ void UpdateReferenceTeiHit1(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:14707 (case 0x2D); alpha growth follows canonical EXE.
+void UpdateReferenceTeiHit2(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode ? mode->m_view : nullptr;
+    if (view) {
+        prim->m_gi[0].alphaT = static_cast<short>(360 - static_cast<int>(view->GetCameraLongitude()));
+        prim->m_gi[1].alphaT = static_cast<short>(450 - static_cast<int>(view->GetCameraLatitude()));
+        if (prim->m_gi[1].alphaT >= 360) prim->m_gi[1].alphaT = static_cast<short>(prim->m_gi[1].alphaT - 360);
+    }
+    prim->m_pos = prim->m_master->EffectPosition();
+
+    const auto getAngle = [](float x, float z) {
+        const float squaredLength = x * x + z * z;
+        const double length = std::sqrt(static_cast<double>(squaredLength));
+        const float normalizedZ = static_cast<float>(z / length);
+        const float normalizedX = static_cast<float>(x / length);
+        int angle = 0;
+        while (normalizedX < g_cosTable[angle]) {
+            if (++angle > 180) { angle = 180; break; }
+        }
+        return normalizedZ < 0.0f ? 360 - angle : angle;
+    };
+
+    for (size_t index = 0; index < 4; ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle - 5);
+        if (gi.fullDisplayAngle < 0) gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + 360);
+
+        if (gi.process == 1) {
+            const float deltaX = prim->m_deltaPos.x - prim->m_pos.x;
+            const float deltaZ = prim->m_deltaPos.z - prim->m_pos.z;
+            gi.rotStart = static_cast<short>(getAngle(deltaX, deltaZ));
+            gi.rotStart = static_cast<short>(gi.rotStart + rand() % 60 - 30);
+            if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+            if (gi.rotStart < 0) gi.rotStart = static_cast<short>(gi.rotStart + 360);
+        } else if (gi.process > 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 3);
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+                gi.life = 0;
+            }
+        } else {
+            // Readable Ref says +25 here; Ref decompilation and canonical EXE both say +15.
+            gi.alphaB = static_cast<short>(gi.alphaB + 15);
+        }
+
+        gi.sparkY = static_cast<float>(static_cast<double>(gi.sparkY) + gi.height[2]);
+        gi.sparkX = static_cast<float>(static_cast<double>(gi.height[1]) * g_cosTable[gi.rotStart] + gi.sparkX);
+        gi.sparkZ = static_cast<float>(static_cast<double>(gi.height[1]) * g_sinTable[gi.rotStart] + gi.sparkZ);
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9557,6 +9615,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_TEIHIT1) {
         UpdateReferenceTeiHit1(this);
+        return true;
+    }
+    if (m_type == PP_TEIHIT2) {
+        UpdateReferenceTeiHit2(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
