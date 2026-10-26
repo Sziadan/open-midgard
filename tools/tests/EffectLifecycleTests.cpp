@@ -189,6 +189,7 @@ bool UpdateReference3DAura(CEffectPrim*);
 bool UpdateReference3DAura2(CEffectPrim*);
 bool UpdateReferenceChookGi(CEffectPrim*);
 void UpdateReferenceGi3(CEffectPrim*);
+bool UpdateReferenceGumGang(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -283,6 +284,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DAURA_2) { UpdateReference3DAura2(this); return active; }
         if (m_type == PP_CHOOKGI) return UpdateReferenceChookGi(this) && active;
         if (m_type == PP_GI_3) { UpdateReferenceGi3(this); return active; }
+        if (m_type == PP_GUMGANG || m_type == PP_DOUBLEGUMGANG) { UpdateReferenceGumGang(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1630,6 +1632,45 @@ int main()
         check(gi3b.life == 2 && gi3b.process == 77 && gi3b.distance == 88 && gi3b.alphaB == 99
             && gi3b.riseAngle == 66 && gi3b.height[20] == 55,
             "PrimGI3 skips any band whose life value is not exactly one");
+        texturePrim.m_type = PP_GUMGANG; texturePrim.m_stateCnt = 0; texturePrim.m_duration = 100;
+        texturePrim.m_master->m_effectPos = {401, 502, 603}; testView.longitude = 15.5f;
+        g_isSkipFrame = 1;
+        for (auto& gi : texturePrim.m_gi) gi = {};
+        auto& gum0 = texturePrim.m_gi[0]; gum0.life = 1; gum0.process = 7;
+        for (int index = 0; index <= 12; index += 4) { gum0.height[index] = 9; gum0.height[index+1] = 11; }
+        auto& gum1 = texturePrim.m_gi[1]; gum1.life = 1; gum1.process = 3;
+        gum1.height[0] = 8; gum1.height[1] = 5;
+        gum1.height[4] = 9; gum1.height[5] = 30;
+        gum1.height[8] = 0; gum1.height[9] = 0; gum1.height[12] = 0; gum1.height[13] = 0;
+        auto& gumInactive = texturePrim.m_gi[2]; gumInactive.life = 2; gumInactive.process = 44; gumInactive.height[0] = 55;
+        rngValues = {359,4,7,100,3,0,180,2,6,270,1,5}; rngCursor = 0;
+        const int gumDrawStart = rngDraws;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_pos.x == 401 && texturePrim.m_pos.y == 502
+            && texturePrim.m_pos.z == 603 && gum0.alphaT == 345 && texturePrim.m_gi[1].alphaT == 135
+            && gum0.process == 8 && gum0.height[0] == 0 && gum0.height[1] == 0
+            && gum0.height[2] == 4 && gum0.height[3] == 359 && gum0.height[4] == 0
+            && gum0.height[5] == 0 && gum0.height[6] == 3 && gum0.height[7] == 100
+            && gum0.height[8] == 0 && gum0.height[9] == 0 && gum0.height[10] == 2
+            && gum0.height[11] == 180 && gum0.height[12] == 0 && gum0.height[13] == 0
+            && gum0.height[14] == 1 && gum0.height[15] == 270
+            && gum0.arcBaselineY == -10 && gum0.sparkY == -3
+            && gum0.vecTPreY == -9 && gum0.vecTNowY == -8
+            && gum1.process == 4 && gum1.height[0] == 9 && gum1.height[1] == 30
+            && gum1.height[4] == 10 && gum1.height[5] == 18
+            && gum1.height[8] == 1 && gum1.height[9] == 25
+            && gum1.height[12] == 1 && gum1.height[13] == 25
+            && gumInactive.process == 44 && gumInactive.height[0] == 55
+            && rngDraws == gumDrawStart+12 && rngCursor == 12 && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x23 preserves four-group thresholds, vector assignment and 360/5/8 RNG order across live bands");
+        texturePrim.m_type = PP_DOUBLEGUMGANG; texturePrim.m_stateCnt = 1;
+        for (auto& gi : texturePrim.m_gi) gi = {};
+        texturePrim.m_gi[0].life = 1;
+        rngValues = {}; rngCursor = 0;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_stateCnt == 2
+            && texturePrim.m_gi[0].process == 1 && texturePrim.m_gi[0].height[0] == 1
+            && texturePrim.m_gi[0].height[1] == 25 && texturePrim.m_gi[0].height[12] == 1
+            && texturePrim.m_gi[0].height[13] == 25,
+            "OnProcess case 0x63 shares the PrimGumGang update body and common tick");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

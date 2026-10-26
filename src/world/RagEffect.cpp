@@ -8171,6 +8171,49 @@ void UpdateReferenceGi3(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:10162. Source ids 0x23 and 0x63 share this updater.
+bool UpdateReferenceGumGang(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode->m_view;
+    const short longitude = static_cast<short>(view->GetCameraLongitude());
+    prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+    const short latitude = static_cast<short>(view->GetCameraLatitude());
+    short cameraLatitude = static_cast<short>(360 - latitude + 90);
+    if (cameraLatitude >= 360) cameraLatitude = static_cast<short>(cameraLatitude - 360);
+    prim->m_gi[1].alphaT = cameraLatitude;
+    prim->m_pos = prim->m_master->EffectPosition();
+
+    constexpr int he = 8;
+    constexpr int tn = 5;
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        ++gi.process;
+        for (int index = 0; index <= 12; index += 4) {
+            gi.height[index] += 1.0f;
+            if (gi.height[index] < 10.0f) {
+                gi.height[index + 1] += 25.0f;
+            } else {
+                gi.height[index + 1] -= 12.0f;
+                if (gi.height[index + 1] < 12.0f) {
+                    gi.height[index] = 0.0f;
+                    gi.height[index + 1] = 0.0f;
+                    gi.height[index + 3] = static_cast<float>(rand() % 360);
+                    gi.height[index + 2] = static_cast<float>(rand() % tn);
+                    const float fallingHeight = static_cast<float>(rand() % he);
+                    switch (index) {
+                    case 0: gi.arcBaselineY = -fallingHeight - 3.0f; break;
+                    case 4: gi.sparkY = -fallingHeight - 3.0f; break;
+                    case 8: gi.vecTPreY = -fallingHeight - 3.0f; break;
+                    default: gi.vecTNowY = -fallingHeight - 3.0f; break;
+                    }
+                }
+            }
+        }
+    }
+    return true;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9168,6 +9211,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_GI_3) {
         UpdateReferenceGi3(this);
+        return true;
+    }
+    if (m_type == PP_GUMGANG || m_type == PP_DOUBLEGUMGANG) {
+        UpdateReferenceGumGang(this); // Source ids 0x23/0x63 ignore the bool result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
