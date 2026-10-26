@@ -11,6 +11,7 @@
 #include "render/DC.h"
 #include "render/Prim.h"
 #include "render/Renderer.h"
+#include "render3d/Device.h"
 #include "res/ActRes.h"
 #include "res/Sprite.h"
 #include "res/Texture.h"
@@ -8092,6 +8093,155 @@ bool UpdateReferenceNoMasterParticle(CEffectPrim* prim)
     return AnimateReferenceParticle(prim);
 }
 
+// Ref/RagEffectPrim.cpp:1316-1651. This texture primitive keeps its own
+// stored origin and source-specific collision, orientation, RGB and motion state.
+bool UpdateReferenceNoMasterTexture(CEffectPrim* prim)
+{
+    const vector3d origin = AddVec3(prim->m_orgPos, prim->m_deltaPos2);
+    if (prim->m_stateCnt == prim->m_changePoint) {
+        const float sentinel = 0.000099999997f;
+        if (prim->m_changeWidthSpeed != sentinel) prim->m_widthSpeed = prim->m_changeWidthSpeed;
+        if (prim->m_changeHeightSpeed != sentinel) prim->m_heightSpeed = prim->m_changeHeightSpeed;
+        if (prim->m_changeSpeed != sentinel) prim->m_speed = prim->m_changeSpeed;
+        if (prim->m_changeWidthAccel != sentinel) prim->m_widthAccel = prim->m_changeWidthAccel;
+        if (prim->m_changeHeightAccel != sentinel) prim->m_heightAccel = prim->m_changeHeightAccel;
+        if (prim->m_changeAccel != sentinel) prim->m_accel = prim->m_changeAccel;
+        if (prim->m_changeSpeed3d.x != sentinel) prim->m_speed3d.x = prim->m_changeSpeed3d.x;
+        if (prim->m_changeSpeed3d.y != sentinel) prim->m_speed3d.y = prim->m_changeSpeed3d.y;
+        if (prim->m_changeSpeed3d.z != sentinel) prim->m_speed3d.z = prim->m_changeSpeed3d.z;
+        if (prim->m_changeAccel3d.x != sentinel) prim->m_deltaPosAccel.x = prim->m_changeAccel3d.x;
+        if (prim->m_changeAccel3d.y != sentinel) prim->m_deltaPosAccel.y = prim->m_changeAccel3d.y;
+        if (prim->m_changeAccel3d.z != sentinel) prim->m_deltaPosAccel.z = prim->m_changeAccel3d.z;
+    }
+
+    prim->m_speed3d = AddVec3(prim->m_speed3d, prim->m_deltaPosAccel);
+    const int pattern = prim->m_pattern;
+    prim->m_widthSpeed += prim->m_widthAccel;
+    prim->m_heightSpeed += prim->m_heightAccel;
+    prim->m_longSpeed += prim->m_longAccel;
+    prim->m_latiSpeed += prim->m_latiAccel;
+    const double speed = static_cast<double>(prim->m_accel) + prim->m_speed;
+    prim->m_speed = static_cast<float>(speed);
+    if ((pattern & 0x400) != 0) {
+        prim->m_speed3d = {};
+        prim->m_speed3d = {
+            static_cast<float>(speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+            static_cast<float>(speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+            static_cast<float>(speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+        };
+    } else if ((pattern & 0x100) == 0) {
+        prim->m_speed3d = {
+            static_cast<float>(speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+            static_cast<float>(speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+            static_cast<float>(speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+        };
+    }
+    prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
+
+    if ((pattern & 0x400) != 0) {
+        const vector3d& target = prim->m_master->TargetPosition();
+        const double dx = static_cast<double>(target.x) - prim->m_pos.x;
+        const double dz = static_cast<double>(target.z) - prim->m_pos.z;
+        const float squared = static_cast<float>(dx * dx + dz * dz);
+        if (std::sqrt(static_cast<double>(squared)) <= 3.0) {
+            prim->m_isHit = true;
+            Trace("Hit!!");
+            return false;
+        }
+        prim->m_longitude = prim->m_roty;
+    }
+
+    prim->m_pos = AddVec3(origin, prim->m_deltaPos);
+    prim->m_widthSize += prim->m_widthSpeed;
+    prim->m_heightSize += prim->m_heightSpeed;
+    prim->m_longitude += prim->m_longSpeed;
+    prim->m_latitude += prim->m_latiSpeed;
+    if (prim->m_heightSize > prim->m_maxHeightSize) {
+        prim->m_heightAccel = 0.0f;
+        prim->m_heightSpeed = 0.0f;
+    }
+
+    if ((pattern & 0x200) != 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        MatrixIdentity(prim->m_rotMat);
+        if (mode && mode->m_view) MatrixAppendZRotation(prim->m_rotMat, mode->m_view->GetCameraLatitude());
+    } else {
+        if ((pattern & 0x40) != 0) {
+            CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+            if (mode && mode->m_view) {
+                prim->m_longitude = mode->m_view->GetCameraLongitude() + 90.0f;
+                prim->m_roll = mode->m_view->GetCameraLatitude();
+            }
+            MatrixIdentity(prim->m_rotMat);
+            MatrixAppendXRotation(prim->m_rotMat, GetRadian(static_cast<int>(prim->m_latitude)));
+            MatrixAppendZRotation(prim->m_rotMat, GetRadian(static_cast<int>(prim->m_roll)));
+        } else {
+            MatrixIdentity(prim->m_rotMat);
+            MatrixAppendZRotation(prim->m_rotMat, GetRadian(static_cast<int>(prim->m_roll)));
+            MatrixAppendXRotation(prim->m_rotMat, GetRadian(static_cast<int>(prim->m_latitude)));
+        }
+        prim->m_roty = prim->m_longitude;
+    }
+    MatrixAppendYRotation(prim->m_rotMat, GetRadian(static_cast<int>(prim->m_roty)));
+
+    if ((pattern & 2) != 0) {
+        const int count = prim->m_count++;
+        const double v = static_cast<double>(count) * 0.1;
+        prim->m_v1 = static_cast<float>(v);
+        prim->m_v2 = static_cast<float>(v + 1.0);
+        if (count == 9) prim->m_count = 0;
+    }
+    if ((pattern & 0x10) != 0) {
+        prim->m_master->AbsorbPrimDelta(AddVec3(prim->m_deltaPos2, prim->m_deltaPos));
+    }
+    if ((pattern & 4) != 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_attr
+            && mode->m_world->m_attr->GetHeight(prim->m_pos.x, prim->m_pos.z) < prim->m_pos.y) {
+            prim->m_speed = 0.0f;
+            prim->m_pattern &= ~4;
+            prim->m_stateCnt = prim->m_duration - 25;
+            prim->m_master->SetGroundHitFlag();
+        }
+    }
+    if ((prim->m_pattern & 0x20) != 0 && prim->m_stateCnt % prim->m_any == 0) {
+        prim->m_heightSpeed *= -1.0f;
+    }
+
+    if ((prim->m_pattern & 0x800) != 0
+        && (prim->m_red == 254 || prim->m_blue == 254 || prim->m_green == 254)) {
+        if (prim->m_rgbCycleDelay != 0) ++prim->m_rgbCycleCnt;
+        if (prim->m_rgbCycleDelay == prim->m_rgbCycleCnt) {
+            prim->m_rgbCycleCnt = 0;
+            prim->m_red += prim->m_redSpeed;
+            prim->m_green += prim->m_greenSpeed;
+            prim->m_blue += prim->m_blueSpeed;
+        }
+    } else {
+        prim->m_red += prim->m_redSpeed;
+        prim->m_green += prim->m_greenSpeed;
+        prim->m_blue += prim->m_blueSpeed;
+    }
+    if ((prim->m_pattern & 0x800) != 0) {
+        if (prim->m_red > 254) prim->m_red = 0; else if (prim->m_red < 0) prim->m_red = 254;
+        if (prim->m_green > 254) prim->m_green = 0; else if (prim->m_green < 0) prim->m_green = 254;
+        if (prim->m_blue > 254) prim->m_blue = 0; else if (prim->m_blue < 0) prim->m_blue = 254;
+    } else {
+        if (prim->m_red > 255) prim->m_red = 0; else if (prim->m_red < 0) prim->m_red = 255;
+        if (prim->m_green > 255) prim->m_green = 255; else if (prim->m_green < 0) prim->m_green = 0;
+        if (prim->m_blue > 255) prim->m_blue = 255; else if (prim->m_blue < 0) prim->m_blue = 0;
+    }
+    prim->m_tintColor = RGB(static_cast<u8>(prim->m_red), static_cast<u8>(prim->m_green), static_cast<u8>(prim->m_blue));
+    ProcessReferenceParticleAlpha(prim);
+    if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;
+    const int motion = ++prim->m_curMotion;
+    if (prim->m_repeatAnim) {
+        prim->m_curMotion = motion % prim->m_totalTexture;
+        return true;
+    }
+    return motion != prim->m_totalTexture;
+}
+
 // Ref/GameActor.cpp:10748-10928. Each sprite retains its own texture and
 // palette; clip color/zoom/rotation are never baked into a motion canvas.
 struct ParticleSprite {
@@ -8395,6 +8545,9 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_3DPARTICLE_NOMASTER) {
         return UpdateReferenceNoMasterParticle(this);
+    }
+    if (m_type == PP_3DTEXTURE_NOMASTER) {
+        return UpdateReferenceNoMasterTexture(this);
     }
     if (m_type == PP_GROUNDSAMPLE) {
         UpdateGroundSample(this);

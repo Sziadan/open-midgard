@@ -72,7 +72,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 60 and {0x04, 0x0E, 0x11, 0x14, 0x15}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 61 and {0x04, 0x0E, 0x11, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -103,6 +103,67 @@ check("case 0x15 branch and operation order maps change-point, 0x400/fade-in, 2/
       < current_no_master.index("ProcessReferenceParticleAlpha(prim);")
       < current_no_master.index("ShiftCircleSegments(prim);")
       < current_no_master.index("return AnimateReferenceParticle(prim);"))
+source_no_master_texture = body(REF, "bool __thiscall CEffectPrim::Prim3DTextureNoMaster(CEffectPrim *this)\n{")
+exe_no_master_texture = body(EXE, "bool __thiscall CEffectPrim::Prim3DTextureNoMaster(CEffectPrim *this)\n{")
+current_no_master_texture = body(CURRENT, "bool UpdateReferenceNoMasterTexture(CEffectPrim* prim)")
+check("source Prim3DTextureNoMaster Ref/EXE bodies match and case 0x16 routes to its dedicated helper",
+      re.sub(r"\s+", " ", source_no_master_texture) == re.sub(r"\s+", " ", exe_no_master_texture)
+      and re.search(r"case 0x16:\s*result = CEffectPrim::Prim3DTextureNoMaster\(this\);", source_dispatch) is not None
+      and "if (m_type == PP_3DTEXTURE_NOMASTER) {\n        return UpdateReferenceNoMasterTexture(this);" in current_dispatch)
+check("case 0x16 implementation preserves source branch and call order",
+      all(token in current_no_master_texture for token in (
+          "prim->m_stateCnt == prim->m_changePoint", "(pattern & 0x400)",
+          "(pattern & 0x100)", "(pattern & 0x200)", "(pattern & 0x40)",
+          "(pattern & 2)", "(pattern & 0x10)", "(pattern & 4)",
+          "prim->m_pattern & 0x20", "prim->m_pattern & 0x800", "ProcessReferenceParticleAlpha(prim);",
+          "return motion != prim->m_totalTexture;"))
+      and current_no_master_texture.index("(pattern & 0x400)")
+      < current_no_master_texture.index("AddVec3(origin, prim->m_deltaPos)")
+      < current_no_master_texture.index("(pattern & 0x200)")
+      < current_no_master_texture.index("(pattern & 2)")
+      < current_no_master_texture.index("(pattern & 0x10)")
+      < current_no_master_texture.index("(pattern & 4)")
+      < current_no_master_texture.index("prim->m_pattern & 0x20")
+      < current_no_master_texture.index("prim->m_pattern & 0x800")
+      < current_no_master_texture.index("ProcessReferenceParticleAlpha(prim);")
+      < current_no_master_texture.index("return motion != prim->m_totalTexture;"))
+def compact(text):
+    return re.sub(r"\s+", "", text)
+
+case16_branch_pairs = [
+    ("if ( (m_pattern & 0x400) != 0 )", "if ((pattern & 0x400) != 0)"),
+    ("if ( (m_pattern & 0x100) == 0 )", "else if ((pattern & 0x100) == 0)"),
+    ("this->m_speed3d.x = m_speed * this->m_matrix.v31 + this->m_matrix.v41;",
+     "static_cast<float>(speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0])"),
+    ("this->m_speed3d.y = m_speed * this->m_matrix.v32 + this->m_matrix.v42;",
+     "static_cast<float>(speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1])"),
+    ("this->m_speed3d.z = m_speed * this->m_matrix.v33 + this->m_matrix.v43;",
+     "static_cast<float>(speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])"),
+    ("if ( CRenderObject::CalcDist(this, this->m_master->m_deltaPos.x, this->m_master->m_deltaPos.z) <= 3.0 )",
+     "if (std::sqrt(static_cast<double>(squared)) <= 3.0)"),
+    ("if ( v20 > this->m_maxHeightSize )", "if (prim->m_heightSize > prim->m_maxHeightSize)"),
+    ("if ( (v21 & 0x200) != 0 )", "if ((pattern & 0x200) != 0)"),
+    ("if ( (v21 & 0x40) != 0 )", "if ((pattern & 0x40) != 0)"),
+    ("if ( (v26 & 2) != 0 )", "if ((pattern & 2) != 0)"),
+    ("if ( (v26 & 0x10) != 0 )", "if ((pattern & 0x10) != 0)"),
+    ("if ( (this->m_pattern & 4) != 0 )", "if ((pattern & 4) != 0)"),
+    ("C3dAttr::GetHeight(v31->m_world->m_attr, this->m_pos.x, this->m_pos.z) < (double)this->m_pos.y",
+     "GetHeight(prim->m_pos.x, prim->m_pos.z) < prim->m_pos.y"),
+    ("if ( (v35 & 0x20) != 0 && !(this->m_stateCnt % this->m_any) )",
+     "if ((prim->m_pattern & 0x20) != 0 && prim->m_stateCnt % prim->m_any == 0)"),
+    ("if ( v36 && ((m_red = this->m_red, m_red == 254) || this->m_blue == 254 || this->m_green == 254) )",
+     "if ((prim->m_pattern & 0x800) != 0\n        && (prim->m_red == 254 || prim->m_blue == 254 || prim->m_green == 254))"),
+    ("if ( v20 > this->m_maxHeightSize )\n  {\n    this->m_heightAccel = 0.0;\n    this->m_heightSpeed = 0.0;",
+     "if (prim->m_heightSize > prim->m_maxHeightSize) {\n        prim->m_heightAccel = 0.0f;\n        prim->m_heightSpeed = 0.0f;"),
+    ("if ( v49 <= 255 )\n    {\n      if ( v49 < 0 )\n        this->m_green = 0;\n    }\n    else\n    {\n      this->m_green = 255;",
+     "if (prim->m_green > 255) prim->m_green = 255; else if (prim->m_green < 0) prim->m_green = 0;"),
+    ("if ( this->m_stateCnt % this->m_animSpeed )\n    return 1;",
+     "if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;"),
+]
+check("case 0x16 source-to-implementation branch predicates and effects are paired",
+      all(compact(source_branch) in compact(source_no_master_texture)
+          and compact(current_branch) in compact(current_no_master_texture)
+          for source_branch, current_branch in case16_branch_pairs))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)

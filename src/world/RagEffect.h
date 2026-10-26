@@ -345,7 +345,12 @@ public:
     bool m_AlphaShow = false;
     int m_chCnt = 0;
     int m_count = 0;
+    int m_any = 0;
+    int m_red = 255, m_green = 255, m_blue = 255;
+    int m_redSpeed = 0, m_greenSpeed = 0, m_blueSpeed = 0;
+    int m_rgbCycleCnt = 0, m_rgbCycleDelay = 0;
     float m_v1 = 0.0f, m_v2 = 1.0f;
+    float m_latiAccel = 0.0f;
     int m_changePoint = -1;
     int m_fadeInCnt = -1;
     float m_changeSpeed = 0.000099999997f;
@@ -373,6 +378,7 @@ public:
     bool m_spriteRepeat;
     bool m_repeatAnim;
     bool m_isDisappear;
+    bool m_isHit = false;
     int m_bandController;
     std::array<EffectBandState, 4> m_bands;
     std::array<EffectGi, 4> m_gi;

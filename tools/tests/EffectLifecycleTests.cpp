@@ -17,6 +17,7 @@ using u32 = std::uint32_t;
 using msgparam_t = std::intptr_t;
 int g_isSkipFrame = 1;
 int primitiveDeaths = 0, effectDeaths = 0;
+void Trace(const char*, ...) {}
 struct Probe { int& deaths; ~Probe() { ++deaths; } };
 struct vector3d { float x = 0, y = 0, z = 0; };
 vector3d AddVec3(vector3d a, vector3d b) { return {a.x+b.x, a.y+b.y, a.z+b.z}; }
@@ -164,6 +165,7 @@ void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
 bool UpdateLinearReferenceParticle(CEffectPrim*);
 bool UpdateReferenceNoMasterParticle(CEffectPrim*);
+bool UpdateReferenceNoMasterTexture(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
 void UpdateReferenceQuadHorn(CEffectPrim*);
 void UpdateReferenceFlash(CEffectPrim*);
@@ -190,6 +192,7 @@ struct CEffectPrim : CGameObject {
     float m_roty=0;
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 1, m_minAlpha = 0;
     bool m_isDisappear = false;
+    bool m_isHit = false;
     matrix m_matrix = [] { matrix value; MatrixIdentity(value); return value; }();
     matrix m_rotMat = m_matrix;
     CSprRes* m_particleSprRes = nullptr;
@@ -198,8 +201,10 @@ struct CEffectPrim : CGameObject {
     int m_spriteAction=0,m_animSpeed=0,m_curMotion=0,m_numSegments=0;
     bool m_repeatAnim=false,m_spriteRepeat=false;
     float m_alpha=0,m_radius=0,m_alphaSpeed=0,m_maxAlpha=254,m_sizeSpeed=0,m_sizeAccel=0;
+    int m_any=0,m_red=255,m_green=255,m_blue=255,m_redSpeed=0,m_greenSpeed=0,m_blueSpeed=0;
+    int m_rgbCycleCnt=0,m_rgbCycleDelay=0;
     std::array<float,4> m_param{};
-    float m_gravSpeed=0,m_gravAccel=0,m_latiSpeed=0;
+    float m_gravSpeed=0,m_gravAccel=0,m_latiSpeed=0,m_latiAccel=0;
     vector3d m_speed3d;
     float m_longSpeed=0,m_longAccel=0,m_radiusSpeed=0,m_radiusAccel=0,m_innerSpeed=0,m_innerAccel=0,m_innerSize=0;
     u32 m_tintColor=0xFFFFFF,m_argb=0xFFFFFFFF;
@@ -243,6 +248,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_2DCIRCLE) { UpdateReferenceScreenCircle(this); return active; }
         if (m_type == PP_3DSPHERE) { UpdateReferenceSphere(this); return active; }
         if (m_type == PP_3DPARTICLE_NOMASTER) return UpdateReferenceNoMasterParticle(this);
+        if (m_type == PP_3DTEXTURE_NOMASTER) return UpdateReferenceNoMasterTexture(this);
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -932,6 +938,157 @@ int main()
         g_resMgr.act.count = oldNoMasterMotionCount;
         noMaster.m_particleActRes = nullptr; noMaster.m_master = nullptr;
         rngValues.clear(); rngCursor = 0;
+        auto textureMasterStorage = std::make_unique<CRagEffect>();
+        CRagEffect& textureMaster = *textureMasterStorage;
+        textureMaster.m_duration = 200;
+        textureMaster.m_deltaPos = {100,0,100};
+        auto textureStorage = std::make_unique<CEffectPrim>();
+        CEffectPrim& texturePrim = *textureStorage;
+        texturePrim.m_master = &textureMaster;
+        texturePrim.m_type = PP_3DTEXTURE_NOMASTER;
+        texturePrim.m_duration = 100;
+        texturePrim.m_animSpeed = 1;
+        texturePrim.m_repeatAnim = true;
+        texturePrim.m_totalTexture = 8;
+        texturePrim.m_orgPos = {10,20,30}; texturePrim.m_deltaPos2 = {1,2,3};
+        texturePrim.m_deltaPos = {0.5f,1,1.5f}; texturePrim.m_speed3d = {2,3,4};
+        texturePrim.m_deltaPosAccel = {1,2,-1}; texturePrim.m_changePoint = 0;
+        texturePrim.m_changeSpeed3d = {5,6,7}; texturePrim.m_changeAccel3d = {2,3,4};
+        texturePrim.m_speed = 3; texturePrim.m_accel = 1;
+        texturePrim.m_widthSize = 10; texturePrim.m_widthSpeed = 2; texturePrim.m_widthAccel = 1;
+        texturePrim.m_heightSize = 5; texturePrim.m_heightSpeed = 4; texturePrim.m_heightAccel = 2;
+        texturePrim.m_longitude = 10; texturePrim.m_longSpeed = 1; texturePrim.m_longAccel = 0.5f;
+        texturePrim.m_latitude = 20; texturePrim.m_latiSpeed = 2; texturePrim.m_latiAccel = 1;
+        texturePrim.m_maxHeightSize = 100; texturePrim.m_alpha = 100; texturePrim.m_fadeOutCnt = -1;
+        texturePrim.m_pattern = 0x100;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_speed3d.x == 7 && texturePrim.m_speed3d.y == 9
+            && texturePrim.m_speed3d.z == 11 && texturePrim.m_pos.x == 18.5f && texturePrim.m_pos.y == 32
+            && texturePrim.m_pos.z == 45.5f && texturePrim.m_widthSize == 13 && texturePrim.m_heightSize == 11
+            && texturePrim.m_speed == 4 && texturePrim.m_widthSpeed == 3 && texturePrim.m_heightSpeed == 6
+            && texturePrim.m_longitude == 11.5f && texturePrim.m_latitude == 23 && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x16 applies change-point values, 0x100 accumulated motion and stored-origin integration in source order");
+        texturePrim.m_changePoint = -1;
+        texturePrim.m_pattern = 2; texturePrim.m_stateCnt = 0; texturePrim.m_count = 8;
+        texturePrim.m_animSpeed = 100;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_count == 9 && texturePrim.m_v1 == 0.8f && texturePrim.m_v2 == 1.8f,
+            "OnProcess case 0x16 pattern 2 advances the source UV phase from count eight");
+        texturePrim.m_stateCnt = 0;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_count == 0 && texturePrim.m_v1 == 0.9f && texturePrim.m_v2 == 1.9f,
+            "OnProcess case 0x16 pattern 2 resets after using the count-nine UV phase");
+        texturePrim.m_pattern = 0x10; texturePrim.m_stateCnt = 0; texturePrim.m_deltaPos = {2,3,4};
+        texturePrim.m_deltaPos2 = {5,6,7}; texturePrim.m_speed3d = {}; texturePrim.m_deltaPosAccel = {};
+        texturePrim.m_speed = 0; texturePrim.m_accel = 0; texturePrim.m_widthSpeed = 0; texturePrim.m_widthAccel = 0;
+        texturePrim.m_heightSpeed = 0; texturePrim.m_heightAccel = 0; texturePrim.m_longSpeed = 0;
+        texturePrim.m_longAccel = 0; texturePrim.m_latiSpeed = 0; texturePrim.m_latiAccel = 0;
+        texturePrim.OnProcess();
+        check(textureMaster.m_deltaPos.x == 7 && textureMaster.m_deltaPos.y == 9 && textureMaster.m_deltaPos.z == 11,
+            "OnProcess case 0x16 pattern 0x10 copies deltaPos2 plus deltaPos back to its master");
+        texturePrim.m_pattern = 0x400; texturePrim.m_stateCnt = 0; texturePrim.m_pos = {20,30,40};
+        texturePrim.m_deltaPos = {}; texturePrim.m_speed = 1; texturePrim.m_accel = 0;
+        texturePrim.m_master->m_deltaPos = {23,0,40}; texturePrim.m_widthSize = 9;
+        check(texturePrim.OnProcess() == 0 && texturePrim.m_isHit && texturePrim.m_stateCnt == 0
+            && texturePrim.m_pos.x == 20 && texturePrim.m_pos.y == 30 && texturePrim.m_pos.z == 40
+            && texturePrim.m_widthSize == 9,
+            "OnProcess case 0x16 pattern 0x400 hit at distance three returns before visuals and shared frame tick");
+        texturePrim.m_pattern = 0x400; texturePrim.m_isHit = false; texturePrim.m_stateCnt = 0;
+        texturePrim.m_master->m_deltaPos = {100,0,100}; texturePrim.m_pos = {};
+        texturePrim.m_roty = 25; texturePrim.m_longitude = 10; texturePrim.m_longSpeed = 2;
+        texturePrim.m_orgPos = {10,20,30}; texturePrim.m_deltaPos2 = {1,2,3};
+        texturePrim.m_deltaPos = {}; texturePrim.m_speed3d = {}; texturePrim.m_deltaPosAccel = {};
+        texturePrim.m_speed = 0; texturePrim.m_accel = 0; texturePrim.m_heightSpeed = 0;
+        texturePrim.m_widthSpeed = 0; texturePrim.m_heightAccel = 0; texturePrim.m_widthAccel = 0;
+        texturePrim.m_latiSpeed = 0; texturePrim.m_latiAccel = 0; texturePrim.m_longAccel = 0;
+        MatrixIdentity(texturePrim.m_matrix);
+        texturePrim.m_matrix.m[2][0] = 2; texturePrim.m_matrix.m[2][1] = 0.5f; texturePrim.m_matrix.m[2][2] = -1;
+        texturePrim.m_matrix.m[3][0] = 0.25f; texturePrim.m_matrix.m[3][1] = 0.5f; texturePrim.m_matrix.m[3][2] = 0.75f;
+        texturePrim.m_speed = 2;
+        texturePrim.OnProcess();
+        check(!texturePrim.m_isHit && texturePrim.m_longitude == 27
+            && texturePrim.m_speed3d.x == 4.25f && texturePrim.m_speed3d.y == 1.5f
+            && texturePrim.m_speed3d.z == -1.25f && texturePrim.m_pos.x == 15.25f
+            && texturePrim.m_pos.y == 23.5f && texturePrim.m_pos.z == 31.75f,
+            "OnProcess case 0x16 pattern 0x400 rebuilds matrix velocity and translation before hit check and position integration");
+        texturePrim.m_pattern = 0; texturePrim.m_stateCnt = 0; texturePrim.m_orgPos = {};
+        texturePrim.m_deltaPos2 = {}; texturePrim.m_deltaPos = {}; texturePrim.m_pos = {};
+        texturePrim.m_speed3d = {}; texturePrim.m_deltaPosAccel = {};
+        texturePrim.m_speed = 0; texturePrim.m_accel = 0;
+        texturePrim.m_widthSpeed = 0; texturePrim.m_widthAccel = 0;
+        texturePrim.m_heightSize = 9; texturePrim.m_heightSpeed = 2; texturePrim.m_heightAccel = 0.5f;
+        texturePrim.m_maxHeightSize = 10; texturePrim.m_longSpeed = 0; texturePrim.m_longAccel = 0;
+        texturePrim.m_latiSpeed = 0; texturePrim.m_latiAccel = 0; texturePrim.m_animSpeed = 100;
+        texturePrim.OnProcess();
+        check(texturePrim.m_heightSize == 11.5f && texturePrim.m_heightSpeed == 0 && texturePrim.m_heightAccel == 0,
+            "OnProcess case 0x16 maximum-height branch preserves overshoot while stopping future vertical growth");
+        auto matrixNear = [](const matrix& actual, const matrix& expected) {
+            for (int row = 0; row < 4; ++row) for (int col = 0; col < 4; ++col)
+                if (std::fabs(actual.m[row][col] - expected.m[row][col]) > 0.00001f) return false;
+            return true;
+        };
+        texturePrim.m_stateCnt = 0; texturePrim.m_pattern = 0x200; texturePrim.m_roty = 37;
+        texturePrim.m_roll = 12; texturePrim.m_latitude = 21; texturePrim.m_longitude = 43;
+        texturePrim.m_speed = 0; texturePrim.m_accel = 0; texturePrim.m_longSpeed = 0;
+        texturePrim.m_longAccel = 0; texturePrim.m_latiSpeed = 0; texturePrim.m_latiAccel = 0;
+        texturePrim.OnProcess();
+        matrix expectedRot; MatrixIdentity(expectedRot);
+        MatrixAppendZRotation(expectedRot, gameMode.m_view->GetCameraLatitude());
+        MatrixAppendYRotation(expectedRot, GetRadian(37));
+        check(matrixNear(texturePrim.m_rotMat, expectedRot) && texturePrim.m_roty == 37,
+            "OnProcess case 0x16 pattern 0x200 uses source camera-Z rotation and retained roty");
+        texturePrim.m_stateCnt = 0; texturePrim.m_pattern = 0x40;
+        texturePrim.m_roll = 12; texturePrim.m_latitude = 21; texturePrim.m_longitude = 43;
+        texturePrim.OnProcess();
+        MatrixIdentity(expectedRot);
+        MatrixAppendXRotation(expectedRot, GetRadian(21));
+        MatrixAppendZRotation(expectedRot, GetRadian(-45));
+        MatrixAppendYRotation(expectedRot, GetRadian(105));
+        check(matrixNear(texturePrim.m_rotMat, expectedRot) && texturePrim.m_longitude == 105.5f
+            && texturePrim.m_roll == -45,
+            "OnProcess case 0x16 pattern 0x40 uses camera-facing X/Z/Y rotation order");
+        texturePrim.m_stateCnt = 0; texturePrim.m_pattern = 0;
+        texturePrim.m_roll = 12; texturePrim.m_latitude = 21; texturePrim.m_longitude = 43;
+        texturePrim.OnProcess();
+        MatrixIdentity(expectedRot);
+        MatrixAppendZRotation(expectedRot, GetRadian(12));
+        MatrixAppendXRotation(expectedRot, GetRadian(21));
+        MatrixAppendYRotation(expectedRot, GetRadian(43));
+        check(matrixNear(texturePrim.m_rotMat, expectedRot),
+            "OnProcess case 0x16 default orientation uses source roll/latitude/longitude order");
+        texturePrim.m_pattern = 0x20; texturePrim.m_stateCnt = 2; texturePrim.m_any = 2;
+        texturePrim.m_heightSpeed = 3; texturePrim.m_heightAccel = 0; texturePrim.m_heightSize = 5; texturePrim.OnProcess();
+        check(texturePrim.m_heightSpeed == -3 && texturePrim.m_heightSize == 8,
+            "OnProcess case 0x16 pattern 0x20 reverses height speed on its source modulo cadence");
+        SilentAttr textureGround; textureGround.height = 10; g_world.m_attr = &textureGround;
+        texturePrim.m_pattern = 4; texturePrim.m_stateCnt = 0; texturePrim.m_duration = 100;
+        texturePrim.m_pos = {5,20,7}; texturePrim.m_orgPos = texturePrim.m_pos;
+        texturePrim.m_deltaPos2 = {}; texturePrim.m_deltaPos = {}; texturePrim.m_speed3d = {};
+        texturePrim.m_deltaPosAccel = {}; texturePrim.m_speed = 0; texturePrim.m_accel = 0;
+        texturePrim.m_widthSpeed = 0; texturePrim.m_widthAccel = 0; texturePrim.m_heightSpeed = 0;
+        texturePrim.m_heightAccel = 0; texturePrim.m_longSpeed = 0; texturePrim.m_longAccel = 0;
+        texturePrim.m_latiSpeed = 0; texturePrim.m_latiAccel = 0; textureMaster.m_flag = 0;
+        texturePrim.OnProcess();
+        check((texturePrim.m_pattern & 4) == 0 && texturePrim.m_speed == 0 && texturePrim.m_stateCnt == 76
+            && textureMaster.m_flag == 1,
+            "OnProcess case 0x16 pattern 4 ground hit clears its bit, rewinds lifetime and sets master flag before shared tick");
+        g_world.m_attr = nullptr;
+        texturePrim.m_pattern = 0x800; texturePrim.m_stateCnt = 0; texturePrim.m_red = 254;
+        texturePrim.m_green = 100; texturePrim.m_blue = 50; texturePrim.m_redSpeed = 1;
+        texturePrim.m_greenSpeed = 1; texturePrim.m_blueSpeed = 1; texturePrim.m_rgbCycleDelay = 2;
+        texturePrim.m_rgbCycleCnt = 0; texturePrim.m_animSpeed = 100;
+        texturePrim.OnProcess();
+        check(texturePrim.m_rgbCycleCnt == 1 && texturePrim.m_red == 254 && texturePrim.m_tintColor == RGB(254,100,50),
+            "OnProcess case 0x16 pattern 0x800 waits the configured RGB cycle delay while clamping to 254");
+        texturePrim.m_stateCnt = 0; texturePrim.OnProcess();
+        check(texturePrim.m_rgbCycleCnt == 0 && texturePrim.m_red == 0 && texturePrim.m_green == 101
+            && texturePrim.m_blue == 51 && texturePrim.m_tintColor == RGB(0,101,51),
+            "OnProcess case 0x16 pattern 0x800 advances RGB at the delay and wraps channels above 254");
+        texturePrim.m_pattern = 0; texturePrim.m_stateCnt = 0; texturePrim.m_red = 0; texturePrim.m_green = 0;
+        texturePrim.m_blue = 0; texturePrim.m_redSpeed = -1; texturePrim.m_greenSpeed = -1;
+        texturePrim.m_blueSpeed = -1; texturePrim.m_animSpeed = 1; texturePrim.m_totalTexture = 1;
+        texturePrim.m_repeatAnim = false; texturePrim.m_curMotion = 0;
+        check(texturePrim.OnProcess() == 0 && texturePrim.m_red == 255 && texturePrim.m_green == 0
+            && texturePrim.m_blue == 0 && texturePrim.m_stateCnt == 0 && texturePrim.m_curMotion == 1,
+            "OnProcess case 0x16 preserves source asymmetric RGB underflow clamps and returns before shared tick on nonrepeat completion");
+        texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;
         const int copiedTypes[] = {0x17,0x1C,0x1D,0x1E,0x20,0x23,0x3C,0x44,0x63,0x68,0x69,0x6A,0x6C,0x6D,0x6F};
