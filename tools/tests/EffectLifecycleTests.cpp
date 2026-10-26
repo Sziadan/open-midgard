@@ -242,6 +242,7 @@ void UpdateReferenceStin2(CEffectPrim*);
 void UpdateReferenceTwilight(CEffectPrim*);
 bool UpdateReferenceKouenka(CEffectPrim*);
 void UpdateReferenceStin4(CEffectPrim*);
+void UpdateReferenceStin5(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -386,6 +387,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_TWILIGHT) { UpdateReferenceTwilight(this); return active; }
         if (m_type == PP_KOUENKA) return UpdateReferenceKouenka(this) && active;
         if (m_type == PP_STIN4) { UpdateReferenceStin4(this); return active; }
+        if (m_type == PP_STIN5) { UpdateReferenceStin5(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -868,6 +870,7 @@ __declspec(noinline) void RunStin2LifecycleChecks(CEffectPrim& prim, int& checks
 __declspec(noinline) void RunTwilightLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunKouenkaLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunStin4LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunStin5LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2178,6 +2181,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     RunTwilightLifecycleChecks(prim, checks, failures);
     RunKouenkaLifecycleChecks(prim, checks, failures);
     RunStin4LifecycleChecks(prim, checks, failures);
+    RunStin5LifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2780,6 +2784,66 @@ __declspec(noinline) void RunStin4LifecycleChecks(CEffectPrim& prim, int& checks
 
     rngValues.clear(); rngCursor=0;
     g_session.m_aid=oldAid; g_world.m_player=oldPlayer; g_world.lookupActor=oldLookupActor; g_world.lookupAid=oldLookupAid;
+    g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunStin5LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_STIN5; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={10,20,30}; prim.m_deltaPos={110,0,30};
+    for(auto& gi:prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=0; a.riseAngle=350; a.height[1]=2;
+    a.sparkX=1; a.sparkY=4; a.sparkZ=2;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(a.process==1&&a.riseAngle==20&&a.rotStart==0&&a.alphaB==0&&a.height[1]==2
+        &&a.sparkX==3&&a.sparkZ==2&&prim.m_pos.x==10&&prim.m_pos.y==20&&prim.m_pos.z==30&&rngDraws==draws,
+        "case 0x7E first process aims from delta position, wraps rise angle, moves without alpha/height growth or position copy");
+
+    a.process=1; a.alphaB=58; a.height[1]=2; a.sparkX=0; a.sparkZ=0;
+    prim.OnProcess();
+    check(a.process==2&&a.alphaB==60&&std::fabs(a.height[1]-2.04f)<0.00001f
+        &&std::fabs(a.sparkX-2.04f)<0.00001f&&std::fabs(a.sparkZ)<0.00001f,
+        "case 0x7E processes two through ten grow alpha by six with cap sixty and scale height by 1.02 before movement");
+
+    a.process=2; a.alphaB=51; a.height[1]=1; a.sparkX=4; a.sparkY=5; a.sparkZ=6;
+    a.rotStart=12;
+    prim.m_gi[1].sparkX=10; prim.m_gi[1].sparkY=11; prim.m_gi[1].sparkZ=12; prim.m_gi[1].rotStart=77;
+    prim.m_gi[2].sparkX=20; prim.m_gi[2].sparkY=21; prim.m_gi[2].sparkZ=22;
+    prim.m_gi[3].sparkX=30; prim.m_gi[3].sparkY=31; prim.m_gi[3].sparkZ=32;
+    prim.OnProcess();
+    check(a.process==3&&a.alphaB==57&&std::fabs(a.height[1]-1.02f)<0.00001f
+        &&std::fabs(a.sparkX-(4+1.02f*g_cosTable[12]))<0.0001f
+        &&std::fabs(a.sparkZ-(6+1.02f*g_sinTable[12]))<0.0001f
+        &&prim.m_gi[1].sparkX==a.sparkX&&prim.m_gi[1].sparkY==a.sparkY&&prim.m_gi[1].sparkZ==a.sparkZ
+        &&prim.m_gi[2].sparkX==10&&prim.m_gi[3].sparkX==20&&prim.m_gi[1].alphaB==45
+        &&prim.m_gi[1].riseAngle==a.riseAngle&&prim.m_gi[1].rotStart==77,
+        "case 0x7E third process snapshots vecB_now, truncated alpha and rise in descending order without copying RotStart");
+
+    a.process=9; a.alphaB=58; a.height[1]=1;
+    prim.OnProcess();
+    check(a.process==10&&a.alphaB==60&&std::fabs(a.height[1]-1.02f)<0.00001f,
+        "case 0x7E process ten remains in the growth phase and caps alpha");
+    a.process=10; a.alphaB=20; a.height[1]=1;
+    prim.OnProcess();
+    check(a.process==11&&a.alphaB==17&&std::fabs(a.height[1]-1.04f)<0.00001f,
+        "case 0x7E process eleven switches to three-point alpha fade and 1.04 height growth");
+
+    a.process=10; a.alphaB=2; a.height[1]=4; a.life=1; a.rotStart=0; a.sparkX=0; a.sparkZ=0;
+    prim.OnProcess();
+    check(a.process==11&&a.life==0&&a.alphaB==0&&std::fabs(a.height[1]-4.16f)<0.0001f
+        &&std::fabs(a.sparkX-4.16f)<0.0001f&&std::fabs(a.sparkZ)<0.00001f,
+        "case 0x7E negative alpha kills GI0 but retains height growth and same-frame movement");
+
+    a.life=2; a.process=7; a.riseAngle=88; prim.OnProcess();
+    const bool inactive=a.life==2&&a.process==7&&a.riseAngle==88;
+    a.life=1; a.process=-2; a.riseAngle=99; prim.OnProcess();
+    check(inactive&&a.process==-1&&a.riseAngle==99&&rngDraws==draws,
+        "case 0x7E exact-life and nonpositive post-increment gates leave the inactive lane unchanged without RNG");
     g_isSkipFrame=oldSkipFrame;
 }
 

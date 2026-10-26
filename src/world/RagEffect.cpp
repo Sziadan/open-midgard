@@ -10058,6 +10058,50 @@ void UpdateReferenceStin4(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:14225; canonical executable PrimSTIN5 at 0x626490 (case 0x7E).
+void UpdateReferenceStin5(CEffectPrim* prim)
+{
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) return;
+
+    ++gi.process;
+    if (gi.process <= 0) return;
+
+    gi.riseAngle = static_cast<short>(gi.riseAngle + 30);
+    if (gi.riseAngle >= 360) gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
+
+    if (gi.process == 1) {
+        const float deltaX = prim->m_deltaPos.x - prim->m_pos.x;
+        const float deltaZ = prim->m_deltaPos.z - prim->m_pos.z;
+        gi.rotStart = static_cast<short>(GetReferenceAngle(deltaX, deltaZ));
+    } else if (gi.process <= 10) {
+        gi.alphaB = static_cast<short>(gi.alphaB + 6);
+        if (gi.alphaB > 60) gi.alphaB = 60;
+        gi.height[1] *= 1.02f;
+    } else {
+        gi.alphaB = static_cast<short>(gi.alphaB - 3);
+        gi.height[1] *= 1.04f;
+        if (gi.alphaB < 0) {
+            gi.alphaB = 0;
+            gi.life = 0;
+        }
+    }
+
+    gi.sparkX += gi.height[1] * g_cosTable[gi.rotStart];
+    gi.sparkZ += gi.height[1] * g_sinTable[gi.rotStart];
+    if (gi.process % 3 == 0) {
+        for (int index = 3; index >= 1; --index) {
+            EffectGi& destination = prim->m_gi[static_cast<size_t>(index)];
+            const EffectGi& source = prim->m_gi[static_cast<size_t>(index - 1)];
+            destination.sparkX = source.sparkX;
+            destination.sparkY = source.sparkY;
+            destination.sparkZ = source.sparkZ;
+            destination.alphaB = static_cast<short>(static_cast<float>(source.alphaB) * 0.8f);
+            destination.riseAngle = source.riseAngle;
+        }
+    }
+}
+
 // Ref/dhxj/RagEffect2.cpp:1982; canonical executable PrimKouenka (case 0x7C).
 bool UpdateReferenceKouenka(CEffectPrim* prim)
 {
@@ -11422,6 +11466,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_STIN4) {
         UpdateReferenceStin4(this); // Source case 0x7D continues to the shared tick.
+        return true;
+    }
+    if (m_type == PP_STIN5) {
+        UpdateReferenceStin5(this); // Source case 0x7E continues to the shared tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
