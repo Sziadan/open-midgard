@@ -11475,8 +11475,8 @@ void CRagEffect::SpawnBeginSpell()
     case 55: ApplyBeginCasting("effect\\ring_yellow.tga",1,true); return;
     case 56: ApplyBeginCasting("effect\\Magic_Green.tga",33,true); return;
     case 57: ApplyBeginCasting("effect\\ring_yellow.tga",0,true); return;
-    case 59: ApplyBeginCasting("effect\\Magic_Violet.tga",33,true); return;
     case 58: {
+    case 59: ApplyBeginCasting("effect\\Magic_Violet.tga",33,true); return;
         CRenderObject* master = ResolveCurrentMaster();
         if (!master) return;
         m_effectPos = master->m_pos;

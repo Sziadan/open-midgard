@@ -4,7 +4,7 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A BeginSpell2–7 emitter setup for ids54-59, after PoisonHit checkpoint 06675d8. Direct dispatch, original profiles and missing SaintCasting texture are verified; casting primitive state/geometry still needs audit.
+Current work: WP5A casting primitive update and geometry audit, after BeginSpell2–7 emitter checkpoint 3d87f3d. The new ordered-ID and branch-level comparison gate is satisfied for the six emitter functions; casting primitive behavior is next.
 
 Next action: audit original PP_3DCASTING, PP_3DCASTING_3 and PP_GI_1 updates and geometry before continuing remaining emitters. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
