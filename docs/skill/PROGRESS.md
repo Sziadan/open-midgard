@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer parity. `RenderCloud`, `RenderGumGang` (0x23), `RenderDoubleGumGang` (0x63), `RenderPokJuk` (0x34), `RenderGuard` (0x3D), `RenderRainbow` (0x5D), `RenderTripleAttack` (0x45), `RenderGroundSample` (0x70), `PrimGroundSample` update, and `CRagEffect::GROUNDSAMPLE` emitter (0x201) are implemented and checkpointed.
+Current work: WP5A renderer and primitive-update parity. Previously implemented Cloud renderer and GroundSample functions are checkpointed. `PrimCloud` updater is now implemented and checkpointed; the separate `CRagEffect::Cloud` producer comparison is next.
 
-Next action: compare the Cloud producer/update path against the existing renderer: current weather scheduling/update builds segment state while reference `Cloud`/`PrimCloud` creates and advances four GI bands. Port the source-backed mismatch and add branch-level evidence before proceeding. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: mechanically compare and port `CRagEffect::Cloud` producer setup/dispatch so it initializes the GI records consumed by `PrimCloud` and `RenderCloud`. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
-Latest checkpoint (2026-10-26): `CRagEffect::GROUNDSAMPLE` passed six mechanical comparisons. The focused particle suite passes 554 checks, lifecycle suite passes 1501 checks, all six C++ suites and seven Python index tests pass. OldRO matches the release build at SHA-256 `961EDE87E4C937565C6631C3564DBA7EB7F3EB34C9C5E790701E332DDC468924`. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `CEffectPrim::PrimCloud` updater passed ten mechanical source comparisons. Lifecycle suite passes 1510 checks, all six C++ suites and seven Python index tests pass; release build and whitespace checks pass. OldRO matches the release build at SHA-256 `1ED0926DBC2ECAB1130AFDF32A0B850602FD363B4F8A4BE1AD9BB213B6FE00E5`. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26

@@ -272,6 +272,8 @@ struct CRagEffect : CGameObject {
     float m_latitude=0;
     float m_longitude = 0, m_param[4]{}, m_tlvertX=0, m_tlvertY=0, m_tlvertZ=0;
     vector3d m_strScreenOffset, m_strAnchorPosition, m_effectPos, m_cachedPos, m_deltaPos, m_deltaPos2, m_targetPos;
+    const vector3d& EffectPosition() const { return m_effectPos; }
+    vector3d ResolveBasePosition() const { return m_master ? AddVec3(m_master->m_pos, m_deltaPos) : AddVec3(m_cachedPos, m_deltaPos); }
     bool m_hasTargetPos = false;
     void* m_ezEffectRes = nullptr;
     KANICLIP* m_aniClips = nullptr;
@@ -368,7 +370,6 @@ struct CRagEffect : CGameObject {
     bool IsWorldEffect() const { return m_isWorldEffect; }
     int GetDuration() const { return m_duration; }
     int GetStateCount() const { return m_stateCnt; }
-    const vector3d& EffectPosition() const { return m_effectPos; }
     int GetEffectType() const { return m_type; }
     u8 OnProcess() override;
     bool ProcessEffectFrame() {
@@ -398,13 +399,13 @@ CRagEffect* CAbleToMakeEffect::LaunchEffect(int type, vector3d, float)
     return effect;
 }
 
+float g_sinTable[361]{};
 #define rand SilentRand
 #include "AttrWaveBodies.inc"
 #include "EffectLifecycleBodies.inc"
 #include "StrOnlyDispatchBody.inc"
 constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
 #include "CastingEmitterBodies.inc"
-float g_sinTable[360]{};
 #include "CastingUpdateBody.inc"
 #undef rand
 
@@ -415,6 +416,58 @@ int main()
         ++checks;
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
+    for (int angle=0; angle<=360; ++angle) g_sinTable[angle]=GetSin(angle);
+    check(!UpdateWeatherCloudPrimitive(nullptr), "PrimCloud null guard returns false");
+    {
+        CRenderObject actor;actor.m_pos={100,20,200};
+        auto masterStorage=std::make_unique<CRagEffect>();CRagEffect& master=*masterStorage;master.m_master=&actor;
+        auto primStorage=std::make_unique<CEffectPrim>();CEffectPrim& prim=*primStorage;prim.m_master=&master;prim.m_stateCnt=12;prim.m_duration=4;
+        EffectGi& gi=prim.m_gi[0];gi.life=1;gi.height[7]=2;gi.alphaB=0;gi.process=0;gi.rotStart=100;
+        gi.sparkX=1;gi.sparkY=2;gi.sparkZ=3;gi.height[0]=10;gi.height[1]=40;gi.height[2]=20;gi.height[3]=10;gi.height[8]=359;
+        testView.longitude=15.5f;
+        check(UpdateWeatherCloudPrimitive(&prim)&&prim.m_pos.x==100&&prim.m_pos.y==20&&prim.m_pos.z==200
+            &&gi.alphaT==345&&prim.m_gi[1].alphaT==135,
+            "PrimCloud refreshes master position and wraps the source camera latitude while storing longitude");
+        check(gi.process==1&&gi.alphaB==2&&gi.height[0]==11&&gi.height[2]==19&&gi.height[8]==0,
+            "PrimCloud mode two rises alpha by two, advances both bounded oscillators, wraps phase, and survives expiry");
+        check(std::fabs(gi.sparkX-(1.0f+g_sinTable[11]*0.05f))<0.00001f
+            &&std::fabs(gi.sparkZ-(3.0f+g_sinTable[19]*0.05f))<0.00001f,
+            "PrimCloud default cloud mode applies source sine sway to its world spark coordinates");
+        gi.height[7]=99;gi.alphaB=2;gi.process=7;gi.sparkX=13;gi.height[8]=10;
+        UpdateWeatherCloudPrimitive(&prim);
+        check(gi.process==7&&gi.alphaB==2&&gi.sparkX==13&&gi.height[8]==11,
+            "PrimCloud alpha-at-99 fast path skips motion but still advances the active band phase");
+    }
+    {
+        auto primStorage=std::make_unique<CEffectPrim>();CEffectPrim& prim=*primStorage;prim.m_stateCnt=0;prim.m_duration=20;
+        for (int mode : {0,3,4,5}) {
+            EffectGi& gi=prim.m_gi[static_cast<size_t>(mode==0?0:mode==3?1:mode==4?2:3)];
+            gi.life=1;gi.height[7]=static_cast<float>(mode);gi.height[6]=5;gi.process=0;gi.alphaB=0;gi.rotStart=100;
+        }
+        prim.m_pos.y=0;UpdateWeatherCloudPrimitive(&prim);
+        check(prim.m_gi[0].alphaB==2&&prim.m_gi[1].alphaB==1&&prim.m_gi[2].alphaB==3&&prim.m_gi[3].alphaB==2,
+            "PrimCloud source alpha ramps cover height-gated mode zero and modes three four and five");
+        prim.m_gi[0].process=0;prim.m_gi[0].height[6]=-1;prim.m_gi[0].alphaB=0;
+        UpdateWeatherCloudPrimitive(&prim);
+        check(prim.m_gi[0].alphaB==0&&prim.m_gi[0].process==1,
+            "PrimCloud mode zero withholds alpha growth while below its source height gate");
+    }
+    {
+        auto primStorage=std::make_unique<CEffectPrim>();CEffectPrim& prim=*primStorage;prim.m_master=nullptr;prim.m_pos={100,50,200};
+        EffectGi& gi=prim.m_gi[0];gi.life=1;gi.height[7]=2;gi.alphaB=1;gi.process=80;gi.rotStart=80;
+        gi.height[0]=0;gi.height[1]=300;gi.height[2]=0;gi.height[3]=300;
+        rngValues={0,299};rngCursor=0;const int oldDraws=rngDraws;
+        UpdateWeatherCloudPrimitive(&prim);
+        check(gi.process==0&&gi.alphaB==0&&rngDraws==oldDraws+2
+            &&gi.sparkX<=-49.0f&&gi.sparkX>=-50.0f&&gi.sparkZ>=349.0f&&gi.sparkZ<=350.0f,
+            "PrimCloud mode two decay recycles at process greater than rotStart with source offset draws");
+        SilentAttr attr;g_world.m_attr=&attr;prim.m_pos={100,50,200};
+        gi.height[7]=3;gi.alphaB=1;gi.process=170;gi.rotStart=170;gi.height[0]=0;gi.height[1]=300;gi.height[2]=0;gi.height[3]=300;
+        rngValues={149,149,4};rngCursor=0;UpdateWeatherCloudPrimitive(&prim);
+        check(attr.calls==1&&attr.lastX==99&&attr.lastZ==199&&gi.sparkY==976,
+            "PrimCloud mode three recycle samples terrain at translated offsets and subtracts source height and random drop");
+        g_world.m_attr=nullptr;rngValues.clear();rngCursor=0;
+    }
     CAbleToMakeEffect actor;
     g_world.m_player = &actor;
     {

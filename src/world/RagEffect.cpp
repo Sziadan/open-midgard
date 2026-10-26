@@ -1294,43 +1294,103 @@ bool UpdateWeatherCloudPrimitive(CEffectPrim* prim)
         return false;
     }
 
-    const int mapVariant = static_cast<int>(prim->m_param[0]);
-    const float fadeInFrames = mapVariant == 3 ? 24.0f : 50.0f;
-    const float fadeOutFrames = 96.0f;
-    bool anyVisible = false;
-    const int count = (std::min)(prim->m_numSegments, static_cast<int>(prim->m_segments.size()));
-    for (int index = 0; index < count; ++index) {
-        EffectSegmentState& segment = prim->m_segments[static_cast<size_t>(index)];
-        const float delay = segment.transform.m[1][0];
-        const float localTick = static_cast<float>(prim->m_stateCnt) - delay;
-        if (localTick < 0.0f) {
-            segment.alpha = 0.0f;
-            continue;
-        }
-
-        const float remaining = static_cast<float>(prim->m_duration - prim->m_stateCnt);
-        const float alphaCeiling = segment.transform.m[1][2];
-        float alpha = (std::min)(alphaCeiling, localTick * (alphaCeiling / fadeInFrames));
-        if (remaining < fadeOutFrames) {
-            alpha = (std::min)(alpha, (std::max)(0.0f, remaining) * (alphaCeiling / fadeOutFrames));
-        }
-        segment.alpha = alpha;
-        if (segment.alpha <= 0.0f) {
-            continue;
-        }
-
-        const float phase = segment.transform.m[1][1] + localTick * segment.transform.m[2][1];
-        const float sway = segment.transform.m[2][0];
-        segment.pos.x = segment.transform.m[3][0] + segment.transform.m[0][0] * localTick + std::sin(phase) * sway;
-        segment.pos.y = segment.transform.m[3][1] + segment.transform.m[0][1] * localTick + std::sin(phase * 0.47f) * segment.transform.m[2][2];
-        segment.pos.z = segment.transform.m[3][2] + segment.transform.m[0][2] * localTick + std::cos(phase * 0.83f) * sway;
-        segment.process = static_cast<int>(localTick);
-        segment.displayAngle = std::fmod(segment.displayAngle + (mapVariant == 3 ? 0.18f : 0.32f), 360.0f);
-        segment.phaseDegrees = std::fmod(segment.phaseDegrees + (mapVariant == 3 ? 0.9f : 1.4f), 360.0f);
-        anyVisible = true;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_view) {
+        EffectGi& first = prim->m_gi[0];
+        EffectGi& second = prim->m_gi[1];
+        first.alphaT = static_cast<short>(360 - static_cast<int>(mode->m_view->GetCameraLongitude()));
+        short latitudeAngle = static_cast<short>(450 - static_cast<int>(mode->m_view->GetCameraLatitude()));
+        if (latitudeAngle >= 360) latitudeAngle = static_cast<short>(latitudeAngle - 360);
+        second.alphaT = latitudeAngle;
     }
+    if (prim->m_master) prim->m_pos = prim->m_master->ResolveBasePosition();
 
-    return prim->m_stateCnt <= prim->m_duration || anyVisible;
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        if (gi.height[7] < 99.0f) {
+            ++gi.process;
+            const int modeType = static_cast<int>(gi.height[7]);
+            if (modeType == 0) {
+                if (gi.process < 80 && prim->m_pos.y < gi.height[6]) gi.alphaB = static_cast<short>(gi.alphaB + 2);
+            } else if (modeType == 2 || modeType == 5) {
+                if (gi.process < 80) gi.alphaB = static_cast<short>(gi.alphaB + 2);
+            } else if (modeType == 3) {
+                if (gi.process < 170) ++gi.alphaB;
+            } else if (gi.process < 80) {
+                gi.alphaB = static_cast<short>(gi.alphaB + 3);
+            }
+
+            if (gi.process > gi.rotStart && --gi.alphaB <= 0) {
+                gi.process = 0;
+                gi.alphaB = 0;
+                if (modeType == 0) {
+                    if (prim->m_pos.y > gi.height[6]) gi.process = 300;
+                } else if (modeType == 2 || modeType == 5) {
+                    gi.sparkX = static_cast<float>(rand() % 300 - 150);
+                    gi.sparkZ = static_cast<float>(rand() % 300 - 150);
+                } else if (modeType == 3) {
+                    gi.sparkX = static_cast<float>(rand() % 300 - 150);
+                    gi.sparkZ = static_cast<float>(rand() % 300 - 150);
+                    CGameMode* cloudMode = g_modeMgr.GetCurrentGameMode();
+                    if (cloudMode && cloudMode->m_world && cloudMode->m_world->m_attr) {
+                        const int heightRandom = rand() % 5;
+                        gi.sparkY = cloudMode->m_world->m_attr->GetHeight(prim->m_pos.x + gi.sparkX, prim->m_pos.z + gi.sparkZ) - 20.0f - static_cast<float>(heightRandom);
+                    } else {
+                        (void)rand();
+                    }
+                } else {
+                    gi.sparkX = static_cast<float>(rand() % 200 + 25);
+                    if ((rand() & 1) == 0) gi.sparkX = -gi.sparkX;
+                    gi.sparkZ = static_cast<float>(rand() % 200 + 25);
+                    if ((rand() & 1) == 0) gi.sparkZ = -gi.sparkZ;
+                }
+                gi.sparkX += prim->m_pos.x;
+                gi.sparkZ += prim->m_pos.z;
+            }
+
+            bool angle0Decreasing = false;
+            for (int angleIndex : {0, 2}) {
+                float& angle = gi.height[static_cast<size_t>(angleIndex)];
+                float& target = gi.height[static_cast<size_t>(angleIndex + 1)];
+                const bool decreasing = angle > target;
+                if (angleIndex == 0) angle0Decreasing = decreasing;
+                if (decreasing) {
+                    angle = (std::max)(0.0f, angle - 1.0f);
+                    if (angle <= target) {
+                        const int angleLimit = static_cast<int>(angle);
+                        target = static_cast<float>(angleLimit ? 359 - rand() % angleLimit : 359);
+                    }
+                } else {
+                    angle = (std::min)(359.0f, angle + 1.0f);
+                    if (angle > target) {
+                        const int angleLimit = static_cast<int>(angle);
+                        target = static_cast<float>(angleLimit ? rand() % angleLimit : 0);
+                    }
+                }
+            }
+
+            const int angleX = static_cast<int>(gi.height[0]);
+            const int angleZ = static_cast<int>(gi.height[2]);
+            if (modeType == 3) {
+                gi.sparkX += g_sinTable[angleX] * 0.015f;
+                gi.sparkZ += g_sinTable[angleZ] * 0.015f;
+            } else if (modeType == 4) {
+                const float sway = g_sinTable[angleX] * 0.2f;
+                gi.sparkX += angle0Decreasing ? -sway : sway;
+                gi.sparkZ += g_sinTable[angleZ] * 0.05f;
+            } else if (modeType == 5) {
+                gi.sparkX += g_sinTable[angleX] * 0.035f;
+                gi.sparkZ += g_sinTable[angleZ] * 0.035f;
+            } else {
+                const float sway = g_sinTable[angleX] * 0.05f;
+                gi.sparkX += angle0Decreasing ? -sway : sway;
+                gi.sparkZ += g_sinTable[angleZ] * 0.05f;
+            }
+        }
+        gi.height[8] += 1.0f;
+        if (gi.height[8] >= 360.0f) gi.height[8] -= 360.0f;
+    }
+    return true;
 }
 
 bool UpdateWaterfallPrimitive(CEffectPrim* prim)
