@@ -2164,6 +2164,30 @@ void RenderReferenceCrossTexture(const CEffectPrim& prim, const matrix& view)
     }
 }
 
+// Ref/RagEffectPrim.cpp:4965-5166 (0x646770), reachable SprayPond profiles.
+void RenderReferenceTexture(const CEffectPrim& prim, const matrix& view)
+{
+    if (prim.m_curMotion < 0 || prim.m_curMotion >= static_cast<int>(prim.m_texture.size())) return;
+    CTexture* texture = prim.m_texture[static_cast<size_t>(prim.m_curMotion)];
+    if (!texture || texture == &CTexMgr::s_dummy_texture) return;
+    const float w = prim.m_widthSize, h = prim.m_heightSize;
+    const vector3d local[4] = {{0,-h,w},{0,-h,-w},{0,h,w},{0,h,-w}};
+    vector3d points[4];
+    for (int i = 0; i < 4; ++i) {
+        float rotated[3];
+        for (int axis = 0; axis < 3; ++axis) {
+            rotated[axis] = static_cast<float>(static_cast<double>(local[i].z)*prim.m_rotMat.m[2][axis]
+                + static_cast<double>(local[i].y)*prim.m_rotMat.m[1][axis] + prim.m_rotMat.m[3][axis]);
+        }
+        points[i] = AddVec3(vector3d{rotated[0],rotated[1],rotated[2]},prim.m_pos);
+    }
+    const vector3d first[3] = {points[0],points[1],points[2]}, second[3] = {points[3],points[2],points[1]};
+    const float firstUV[3][2] = {{0,prim.m_v1},{1,prim.m_v1},{0,prim.m_v2}};
+    const float secondUV[3][2] = {{1,prim.m_v2},{0,prim.m_v2},{1,prim.m_v1}};
+    SubmitReferenceEffectTriangle(first,view,texture,prim.m_argb,firstUV,static_cast<int>(prim.m_renderFlag));
+    SubmitReferenceEffectTriangle(second,view,texture,prim.m_argb,secondUV,static_cast<int>(prim.m_renderFlag));
+}
+
 // Ref/RagEffectPrim.cpp:2722-2850 (0x644DD0), centered/bottom-pivot
 // screen triangles with integer-degree roll; no world projection/scaling.
 void RenderReferenceScreenTexture(const CEffectPrim& prim)
@@ -6550,7 +6574,8 @@ void UpdateReferenceQuadHorn(CEffectPrim* prim)
 
 // Ref/RagEffectPrim.cpp:966-1310 (0x643340), reachable Berserk/IceArrow:
 // fixed width/height/color, no change points. IceArrow enables parent delta
-// propagation and ground contact; both retain the launch matrix for rendering.
+// propagation and ground contact. SprayPond adds source rotation rebuilding
+// and pattern-two V scrolling; its motion and angular controls remain zero.
 bool UpdateReferenceCrossTexture(CEffectPrim* prim)
 {
     prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
@@ -6563,6 +6588,18 @@ bool UpdateReferenceCrossTexture(CEffectPrim* prim)
     };
     prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
     prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
+    if (prim->m_type == PP_3DTEXTURE) {
+        MatrixIdentity(prim->m_rotMat);
+        MatrixAppendZRotation(prim->m_rotMat,GetRadian(static_cast<int>(prim->m_roll)));
+        MatrixAppendXRotation(prim->m_rotMat,GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_rotMat,GetRadian(static_cast<int>(prim->m_longitude)));
+        if ((prim->m_pattern & 2) != 0) {
+            const int count = prim->m_count++;
+            const double v = count*0.1;
+            prim->m_v1 = static_cast<float>(v); prim->m_v2 = static_cast<float>(v+1.0);
+            if (count == 9) prim->m_count = 0;
+        }
+    }
     if ((prim->m_pattern & 0x10) != 0) {
         prim->m_master->AbsorbPrimDelta(AddVec3(prim->m_deltaPos, prim->m_deltaPos2));
     }
@@ -6896,7 +6933,12 @@ void CEffectPrim::SetParticleResources(const char* sprName, const char* actName,
 bool CEffectPrim::UsesReferenceCircle() const
 {
     return m_type == PP_3DCIRCLE && m_master
-        && (m_master->GetEffectType() == 17 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321);
+        && (m_master->GetEffectType() == 17 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 48 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321);
+}
+
+bool CEffectPrim::UsesReferenceTexture() const
+{
+    return m_type == PP_3DTEXTURE && m_master && m_master->GetEffectType() == 48;
 }
 
 bool CEffectPrim::UsesReferenceCylinder() const
@@ -7230,6 +7272,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (UsesReferenceCrossTexture()) {
         return UpdateReferenceCrossTexture(this);
     }
+    if (UsesReferenceTexture()) {
+        UpdateReferenceCrossTexture(this); // Original OnProcess ignores Prim3DTexture's return.
+        return true;
+    }
     if (m_type == PP_3DCROSSTEXTURE) {
         return UpdateCrossTexturePrimitive(this);
     }
@@ -7301,6 +7347,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (UsesReferenceCrossTexture()) {
         RenderReferenceCrossTexture(*this, *viewMatrix);
+        return;
+    }
+    if (UsesReferenceTexture()) {
+        RenderReferenceTexture(*this,*viewMatrix);
         return;
     }
     if (UsesReferenceCylinder()) {
@@ -8245,6 +8295,10 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     switch (effectId) {
     case 40: case 41:
         // Direct helpers own STR completion; load the reference catalog clip below.
+        m_handler = Handler::None;
+        break;
+    case 48:
+        // Direct reference SprayPond dispatch owns all three emission schedules.
         m_handler = Handler::None;
         break;
     case 371: {
@@ -12702,6 +12756,62 @@ bool CRagEffect::ProcessAngelus()
     return ProcessEZ2STR(0.0f,-80.0f,0.0f) != 0;
 }
 
+// Ref/RagEffect.cpp:8214-8312 (0x5F6AE0), original effect 48.
+void CRagEffect::SpawnSprayPond()
+{
+    if (m_stateCnt == 0) {
+        for (int degrees = 0; degrees < 360; degrees += 45) {
+            CEffectPrim* prim = LaunchEffectPrim(PP_3DTEXTURE,vector3d{});
+            prim->m_pattern = 2; prim->m_duration = 130;
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(degrees+22.5)));
+            prim->m_deltaPos2 = {
+                static_cast<float>(prim->m_matrix.m[2][0]*12.2+prim->m_matrix.m[3][0]),
+                static_cast<float>(prim->m_matrix.m[2][1]*12.2+prim->m_matrix.m[3][1]),
+                static_cast<float>(prim->m_matrix.m[2][2]*12.2+prim->m_matrix.m[3][2])
+            };
+            prim->m_deltaPos2.y -= 2.0f;
+            MatrixIdentity(prim->m_rotMat);
+            MatrixAppendYRotation(prim->m_rotMat,GetRadian(static_cast<int>(degrees+90+22.5)));
+            prim->m_alpha = 120.0f; prim->m_maxAlpha = 254.0f; prim->m_fadeOutCnt = -1;
+            prim->m_animSpeed = 4; prim->m_repeatAnim = true; prim->m_numSegments = 1;
+            prim->m_widthSize = 5.0f; prim->m_heightSize = 2.7f;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\pond_water.bmp",false));
+        }
+    }
+    if (m_stateCnt % 10 == 0) {
+        for (int degrees = 0; degrees < 360; degrees += 45) {
+            CEffectPrim* prim = LaunchEffectPrim(PP_3DTEXTURE,vector3d{});
+            prim->m_duration = 30;
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(degrees+22.5)));
+            prim->m_deltaPos2 = {
+                static_cast<float>(prim->m_matrix.m[2][0]*13.8+prim->m_matrix.m[3][0]),
+                static_cast<float>(prim->m_matrix.m[2][1]*13.8+prim->m_matrix.m[3][1]),
+                static_cast<float>(prim->m_matrix.m[2][2]*13.8+prim->m_matrix.m[3][2])
+            };
+            MatrixIdentity(prim->m_rotMat);
+            MatrixAppendZRotation(prim->m_rotMat,GetRadian(90));
+            MatrixAppendYRotation(prim->m_rotMat,GetRadian(static_cast<int>(degrees+90+22.5)));
+            prim->m_alpha = 100.0f; prim->m_maxAlpha = 254.0f; prim->m_fadeOutCnt = 0;
+            prim->m_animSpeed = 4; prim->m_repeatAnim = true; prim->m_numSegments = 1;
+            prim->m_widthSize = 5.5f; prim->m_heightSize = 1.0f;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga",false));
+        }
+    }
+    if (m_stateCnt % 20 == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE,vector3d{});
+        prim->m_duration = 25; prim->m_radius = 13.0f; prim->m_arcAngle = 10.0f;
+        prim->m_size = 1.25f; prim->m_latitude = 90.0f;
+        MatrixIdentity(prim->m_matrix); MatrixAppendXRotation(prim->m_matrix,GetRadian(90));
+        prim->m_radiusSpeed = 0.25f;
+        prim->m_radiusAccel = static_cast<float>(-(prim->m_radiusSpeed/static_cast<double>(prim->m_duration)));
+        prim->m_alpha = 100.0f; prim->m_maxAlpha = 254.0f; prim->m_fadeOutCnt = 0; prim->m_numSegments = 1;
+        InitReferenceSegments(prim);
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_center.tga",false));
+    }
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -13927,6 +14037,10 @@ bool CRagEffect::ProcessEffectFrame()
     if (m_type == 183) return ProcessHit2Blue();
     if (m_type == 40) return ProcessSignum();
     if (m_type == 41) return ProcessAngelus();
+    if (m_type == 48) {
+        SpawnSprayPond();
+        return true;
+    }
     if (m_type == 32) {
         SpawnNapalmBeat();
         return true;

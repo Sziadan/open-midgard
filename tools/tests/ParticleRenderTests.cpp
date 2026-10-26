@@ -49,6 +49,7 @@ struct CEffectPrim {
     matrix m_rotMat;
     vector3d m_pos;
     float m_innerSize=0,m_outerSize=0,m_heightSize=0,m_widthSize=0,m_radius=0;
+    float m_v1=0,m_v2=1;
     u32 m_argb=0xFFFFFFFF;
     std::vector<CTexture*> m_texture;
     std::array<EffectSegmentState,50> m_segments;
@@ -550,6 +551,33 @@ int main() {
             "no-depth queues clear and restore subsequent depth/blend state");
         clearQueues();g_renderer.AddReferenceEffectTriangle(face,0x201);g_renderer.FlushEffectNoDepthLists();const auto drawCount=silentDevice.draws.size();
         g_renderer.FlushEffectNoDepthLists();check(silentDevice.draws.size()==drawCount,"no-depth flush never redraws stale previous-frame faces");
+    }
+    {
+        CEffectPrim panel;panel.m_widthSize=5;panel.m_heightSize=2.7f;panel.m_pos={10,20,100};panel.m_argb=0x78FFFFFF;
+        panel.m_texture={&g_texMgr.texture};panel.m_renderFlag=1;panel.m_v1=0.9f;panel.m_v2=1.9f;
+        MatrixIdentity(panel.m_matrix);MatrixIdentity(panel.m_rotMat);
+        auto renderPanel=[&](){g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaNoDepthList.clear();RenderReferenceTexture(panel,view);};
+        auto matches=[&](const tlvertex3d& v,vector3d point){tlvertex3d expected;ProjectReferenceEffectVertex(point,view,expected);
+            return near(v.x,expected.x)&&near(v.y,expected.y)&&near(v.oow,expected.oow)&&near(v.z,expected.z);};
+        renderPanel();check(g_renderer.m_rpAlphaList.size()==2,"SprayPond 3D texture emits exactly two original triangles without billboard fallback");
+        auto* first=g_renderer.m_rpAlphaList[0].second;auto* second=g_renderer.m_rpAlphaList[1].second;
+        check(matches(first->m_verts[0],{10,17.3f,105})&&matches(first->m_verts[1],{10,17.3f,95})&&matches(first->m_verts[2],{10,22.7f,105}),
+            "SprayPond first triangle uses source local Y height and Z width with exact world projection");
+        check(matches(second->m_verts[0],{10,22.7f,95})&&matches(second->m_verts[1],{10,22.7f,105})&&matches(second->m_verts[2],{10,17.3f,95}),
+            "SprayPond second triangle retains original shared edge and winding");
+        check(first->m_verts[0].tu==0&&first->m_verts[0].tv==0.9f&&first->m_verts[1].tu==1&&first->m_verts[1].tv==0.9f
+            &&first->m_verts[2].tu==0&&first->m_verts[2].tv==1.9f&&second->m_verts[0].tu==1&&second->m_verts[0].tv==1.9f
+            &&second->m_verts[1].tv==1.9f&&second->m_verts[2].tv==0.9f,"SprayPond both triangle UVs preserve unwrapped source V scroll beyond one");
+        check(first->m_verts[0].color==0x78FFFFFF&&second->m_verts[2].color==0x78FFFFFF&&first->tex==&g_texMgr.texture&&first->srcAlphaMode==5&&first->destAlphaMode==6,
+            "SprayPond uses stored source ARGB and selected texture with original alpha blend");
+        MatrixAppendYRotation(panel.m_rotMat,GetRadian(90));panel.m_rotMat.m[3][0]=2;panel.m_rotMat.m[3][1]=3;panel.m_rotMat.m[3][2]=4;
+        panel.m_matrix.m[3][0]=900;renderPanel();
+        check(matches(g_renderer.m_rpAlphaList[0].second->m_verts[0],{17,20.3f,104}),
+            "SprayPond geometry uses retained render rotation and translation independently of motion matrix");
+        panel.m_renderFlag=0x201;renderPanel();check(g_renderer.m_rpAlphaList.empty()&&g_renderer.m_rpAlphaNoDepthList.size()==2,
+            "SprayPond renderer forwards original render flags instead of forcing alpha depth mode");
+        panel.m_texture.clear();renderPanel();check(g_renderer.m_rpAlphaList.empty()&&g_renderer.m_rpAlphaNoDepthList.empty(),
+            "SprayPond missing texture emits no replacement geometry");
     }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;

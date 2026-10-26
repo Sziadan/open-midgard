@@ -205,6 +205,7 @@ struct CEffectPrim : CGameObject {
     std::vector<float> m_chPoint,m_chVal1;
     bool m_chSpeed=false,m_AlphaShow=false;
     int m_chCnt=0,m_count=0,m_playWaveType=0;
+    float m_v1=0,m_v2=1;
     float m_changeSpeedY=0,m_changeAccelY=0;
     int m_changePoint=-1;
     float m_changeSpeed=0.000099999997f,m_changeAccel=0.000099999997f,m_changeHeightSpeed=0.000099999997f;
@@ -219,6 +220,7 @@ struct CEffectPrim : CGameObject {
     bool UsesReferenceCircle() const;
     bool UsesReferenceCylinder() const;
     bool UsesReferenceCrossTexture() const;
+    bool UsesReferenceTexture() const;
     bool UsesReferenceScreenTexture() const;
     bool UsesReferenceQuadHorn() const;
     bool UsesReferenceFlash() const;
@@ -238,6 +240,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle() && !UpdateReferenceGravityParticle(this)) return false;
         if (UsesReferenceScreenTexture() && !UpdateReferenceScreenTexture(this)) return false;
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
+        if (UsesReferenceTexture()) UpdateReferenceCrossTexture(this);
         if (UsesReferenceCylinder() && !UpdateReferenceCylinderState(this)) return false;
         if (m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle() && !UpdateWarpZoneOrbit(this)) return false;
         if (m_type == PP_3DPARTICLE && UsesReferenceParticle() && !UpdateLinearReferenceParticle(this)) return false;
@@ -309,6 +312,7 @@ struct CRagEffect : CGameObject {
     void ApplyBash();
     bool ProcessSignum();
     bool ProcessAngelus();
+    void SpawnSprayPond();
     void SpawnIncAgility();
     void SpawnDecAgility();
     void SpawnAqua();
@@ -3417,6 +3421,70 @@ int main()
         check(effect.m_primList.empty()&&rngDraws==draws&&g_texMgr.requests.empty()&&g_resMgr.requests.empty(),
             "Angelus helper emits no primitives RNG or extra resource requests");
         effect.m_ezEffectRes=nullptr;effect.m_aniClips=nullptr;g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor;actor.m_pos={900,800,700};auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;
+        effect.m_master=&actor;effect.m_type=48;effect.m_effectPos={10,20,100};effect.m_duration=300;
+        effect.m_tlvertX=12;effect.m_tlvertY=34;effect.m_tlvertZ=56;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;g_session.m_isMinEffect=true;
+        effect.SpawnSprayPond();
+        check(effect.m_primList.size()==17&&rngDraws==draws&&waveCalls.empty(),"SprayPond zero emits eight water panels eight fades then ring without RNG or sound despite reduced effects");
+        std::vector<CEffectPrim*> prims(effect.m_primList.begin(),effect.m_primList.end());
+        bool water=true,fade=true,offsets=true,rotations=true,textures=g_texMgr.requests.size()==17;
+        for(int i=0;i<8;++i){auto* p=prims[i];auto* f=prims[i+8];matrix radial;MatrixIdentity(radial);MatrixAppendYRotation(radial,GetRadian(i*45+22));
+            matrix facing;MatrixIdentity(facing);MatrixAppendYRotation(facing,GetRadian(i*45+112));
+            matrix tilted;MatrixIdentity(tilted);MatrixAppendZRotation(tilted,GetRadian(90));MatrixAppendYRotation(tilted,GetRadian(i*45+112));
+            water=water&&p->UsesReferenceTexture()&&p->m_pattern==2&&p->m_duration==130&&p->m_alpha==120&&p->m_maxAlpha==254
+                &&p->m_fadeOutCnt==-1&&p->m_widthSize==5&&p->m_heightSize==2.7f&&p->m_animSpeed==4&&p->m_repeatAnim&&p->m_v1==0&&p->m_v2==1;
+            fade=fade&&f->UsesReferenceTexture()&&f->m_pattern==0&&f->m_duration==30&&f->m_alpha==100&&f->m_maxAlpha==254
+                &&f->m_fadeOutCnt==0&&f->m_widthSize==5.5f&&f->m_heightSize==1&&f->m_animSpeed==4&&f->m_repeatAnim;
+            offsets=offsets&&p->m_deltaPos2.x==static_cast<float>(radial.m[2][0]*12.2)&&p->m_deltaPos2.y==-2
+                &&p->m_deltaPos2.z==static_cast<float>(radial.m[2][2]*12.2)&&f->m_deltaPos2.x==static_cast<float>(radial.m[2][0]*13.8)
+                &&f->m_deltaPos2.y==0&&f->m_deltaPos2.z==static_cast<float>(radial.m[2][2]*13.8);
+            for(int row=0;row<4;++row)for(int col=0;col<4;++col)rotations=rotations&&p->m_matrix.m[row][col]==radial.m[row][col]
+                &&p->m_rotMat.m[row][col]==facing.m[row][col]&&f->m_rotMat.m[row][col]==tilted.m[row][col];
+            textures=textures&&g_texMgr.requests[i]=="effect\\pond_water.bmp"&&g_texMgr.requests[i+8]=="effect\\alpha_down.tga";
+        }
+        check(water,"SprayPond water retains source pattern dimensions duration alpha and constructor fade animation UV defaults");
+        check(fade,"SprayPond fading panels retain distinct source dimensions alpha immediate fade and duration");
+        check(offsets,"SprayPond radial offsets use truncated twenty-two-degree phase with source radii and water-only minus-two height");
+        check(rotations,"SprayPond launch motion and retained render matrices preserve source Y versus Z-then-Y rotations");
+        check(textures&&g_texMgr.requests[16]=="effect\\alpha_center.tga"&&g_resMgr.requests.empty(),"SprayPond texture case and grouped request order match exact source without sprite resources");
+        auto* ring=prims[16];
+        check(ring->UsesReferenceCircle()&&ring->m_duration==25&&ring->m_radius==13&&ring->m_arcAngle==10&&ring->m_size==1.25f
+            &&ring->m_innerSize==0&&ring->m_latitude==90&&ring->m_radiusSpeed==0.25f&&ring->m_radiusAccel==-0.01f
+            &&ring->m_alpha==100&&ring->m_maxAlpha==254&&ring->m_fadeOutCnt==0,"SprayPond ring retains original radius thickness arc motion fade and zero inner-size default");
+        check(ring->m_numSegments==1&&ring->m_segments[0].radius==13&&ring->m_segments[0].size==1.25f&&ring->m_segments[0].argb==0x64FFFFFF
+            &&ring->m_segments[0].pos.x==10&&ring->m_segments[0].pos.y==20,"SprayPond initializes full ring segment at stored launch origin");
+        check(effect.m_effectPos.x==10&&effect.m_effectPos.y==20&&effect.m_effectPos.z==100&&effect.m_duration==300
+            &&effect.m_tlvertX==12&&effect.m_tlvertY==34&&effect.m_tlvertZ==56,"SprayPond preserves stored world origin parent lifetime and screen fields without actor refresh");
+        auto* panel=prims[0];auto* fading=prims[8];g_isSkipFrame=0;panel->OnProcess();
+        check(panel->m_stateCnt==0&&panel->m_count==0,"SprayPond texture respects ordinary skipped-frame gate without advancing scrolling");g_isSkipFrame=1;
+        panel->m_alphaDelta=1;panel->OnProcess();matrix identity;MatrixIdentity(identity);bool reset=true;
+        for(int row=0;row<4;++row)for(int col=0;col<4;++col)reset=reset&&panel->m_rotMat.m[row][col]==identity.m[row][col];
+        check(reset&&panel->m_count==1&&panel->m_v1==0&&panel->m_v2==1&&panel->m_alpha==120&&panel->m_curMotion==0,
+            "SprayPond original texture update rebuilds launch render matrix from zero angles and begins UV cycle before alpha animation");
+        check(panel->m_pos.x==10+panel->m_deltaPos2.x&&panel->m_pos.y==18&&panel->m_pos.z==100+panel->m_deltaPos2.z,
+            "SprayPond texture anchors at stored parent origin plus radial offset without drift");
+        for(int frame=1;frame<10;++frame)panel->OnProcess();
+        check(panel->m_count==0&&panel->m_v1==0.9f&&panel->m_v2==1.9f&&panel->m_alpha==120,"SprayPond V scroll reaches ninth source phase then resets count without fading water");
+        panel->OnProcess();check(panel->m_count==1&&panel->m_v1==0&&panel->m_v2==1,"SprayPond V scroll wraps to zero after ten updates");
+        fading->m_alphaDelta=1;fading->OnProcess();
+        check(fading->m_alphaSpeed==static_cast<float>(-100.0/30.0)&&fading->m_alpha==static_cast<float>(100.0+fading->m_alphaSpeed)
+            &&fading->m_v1==0&&fading->m_v2==1&&fading->m_count==0,"SprayPond plain panel starts thirty-frame fade without texture scrolling");
+        ring->m_alphaDelta=1;ring->OnProcess();
+        check(ring->m_radiusSpeed==0.24f&&ring->m_radius==13.24f&&ring->m_size==0&&ring->m_alpha==96&&ring->m_segments[0].argb==0x60FFFFFF,
+            "SprayPond ring integrates drag and fade then source zero inner-size replaces launch thickness at first update");
+        effect.m_stateCnt=1;effect.SpawnSprayPond();check(effect.m_primList.size()==17,"SprayPond off-cadence call emits nothing");
+        effect.m_stateCnt=10;effect.SpawnSprayPond();check(effect.m_primList.size()==25&&effect.m_primList.back()->m_type==PP_3DTEXTURE,
+            "SprayPond frame ten emits only eight fading panels");
+        effect.m_stateCnt=20;effect.SpawnSprayPond();check(effect.m_primList.size()==34&&effect.m_primList.back()->m_type==PP_3DCIRCLE,
+            "SprayPond frame twenty emits eight fades followed by ring without repeating water panels");
+        effect.m_effectPos={30,40,200};panel->OnProcess();
+        check(panel->m_pos.y==38&&panel->m_pos.x==30+panel->m_deltaPos2.x,"SprayPond texture follows persistent parent origin changes with fixed offset");
+        effect.m_stateCnt=0;panel->m_stateCnt=130;check(panel->OnProcess()==0&&panel->m_stateCnt==131&&panel->m_alpha==120,
+            "SprayPond water includes final duration frame and retires at original full alpha without invented fade");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_session.m_isMinEffect=false;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

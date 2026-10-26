@@ -266,6 +266,7 @@ public:
     bool UsesReferenceCircle() const;
     bool UsesReferenceCylinder() const;
     bool UsesReferenceCrossTexture() const;
+    bool UsesReferenceTexture() const;
     bool UsesReferenceScreenTexture() const;
     bool UsesReferenceQuadHorn() const;
     bool UsesReferenceFlash() const;
@@ -342,6 +343,7 @@ public:
     bool m_AlphaShow = false;
     int m_chCnt = 0;
     int m_count = 0;
+    float m_v1 = 0.0f, m_v2 = 1.0f;
     int m_changePoint = -1;
     float m_changeSpeed = 0.000099999997f;
     float m_changeAccel = 0.000099999997f;
@@ -492,6 +494,7 @@ private:
     void ApplyBash();
     bool ProcessSignum();
     bool ProcessAngelus();
+    void SpawnSprayPond();
     void ApplyProvidence(const char* textureName);
     void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);
     void ApplyBeginCasting(const char* textureName, int option, bool playWave);
