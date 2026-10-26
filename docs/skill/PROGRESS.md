@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Coin emitter and reference two-segment initialization, after Steal checkpoint `75bcac8`. Original id10 now preserves reduced-effects gating, ordered burst, source gravity/audio and STR/termination behavior.
+Current work: WP5A Hit1 emitter and reference cylinder/linear/gravity bindings, after Coin checkpoint `9399e6a`. Original id0 now preserves ordered emission, reduced-effects gating, facing and three-slot trails with original attenuation precision.
 
-Next action: continue remaining gravity/particle emitters and unported primitive controls. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue remaining hit variants (including HitDark and Pierce), gravity/particle callers and unported primitive controls. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Hit1 emitter / three-segment trails — 2026-10-26
+
+- Ref/RagEffect.cpp:5087-5224 (0x5F1A40) -> SpawnHit1/LaunchHit1Particle, original id 0, direct dispatcher/Init route. Facing truncates 180-master.roty before adding 360 for negatives. Zero emits source cylinder first; reduced-effects mode suppresses only the two linear/two gravity particles. Stored parent origin is preserved and no wave is added.
+- Cylinder duration 10, latitude -90, source X/Y matrix and offset(0,-10,0), speed 0.69999999/deceleration speed/duration*-0.5, outer 10/inner 5/height 3.5, constructor alpha/max 254 and fade 5; exact ring_blue texture. Id0 binds shared reference cylinder state/geometry/submission.
+- Two linear sprites then two gravity sprites preserve their distinct RNG sequences (six versus seven draws, 26 total). Original tilted spawn offsets/deltaPos3, linear yaw facing+rand()%80-40 versus gravity facing+rand()%80+140, latitude rand()%100-50, radius rand()%4+4, speed/duration/size profiles, fade 0 and three full initial segments. Gravity replaces its motion matrix with Y-only rotation and uses source vertical acceleration -(step+step); linear keeps launch tilt. Exact particle1 resources/locks. Both bind reference update/per-clip rendering for id 0.
+- Shared linear motion now keeps source double speed integration through vector multiplication before field rounding, matching the nonzero acceleration used here. ShiftCircleSegments alpha/size attenuation now uses original double division/intermediates, needed for thirds; existing one/two-slot checks remain passing. Initialization still uses full-state InitReferenceSegments, with attenuation only during later updates.
+
+Validation: release build, six silent C++ suites / 756 checks (590 lifecycle/primitive, 108 rendering, 58 other), six Python tests, three-literal executable byte audit and whitespace check pass. Added 15 checks for ordered groups/RNG, facing, cylinder/particle profiles, initial versus motion matrices, stored origin, resource order, full initial trails, first-frame fade, double-precision attenuation, reduced-effects gating and cleanup. No media/live acceptance. Approved OldRO SHA-256: `C0677312775E8871FC74E367EE754A1E508D049FC5EF04D521F4D9A3F104DE8F`. Other hit variants/gravity callers and primitive controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Coin emitter / two-segment initialization — 2026-10-26
 

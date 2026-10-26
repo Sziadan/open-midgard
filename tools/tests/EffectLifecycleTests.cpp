@@ -281,6 +281,7 @@ struct CRagEffect : CGameObject {
     void SpawnSandWind();
     void SpawnSteal();
     bool ProcessCoin();
+    void SpawnHit1();
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -2128,6 +2129,45 @@ int main()
         check(effect.ProcessCoin() &&effect.m_strScreenOffset.x==0 &&effect.m_strScreenOffset.y==-80 &&effect.m_strScreenOffset.z==0,
             "Coin still processes original STR offset when reduced effects suppress its particle burst");
         g_session.m_isMinEffect=false;g_world.m_player=oldPlayer;g_world.m_attr=oldAttr;rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor;actor.m_roty=270.9f;actor.m_pos={900,800,700};CRagEffect effect;effect.m_type=0;effect.m_master=&actor;
+        effect.m_duration=100;effect.m_effectPos={10,50,30};waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        g_session.m_isMinEffect=false;rngValues={79,99,3,89,23,99,0,0,0,0,0,0,79,99,3,23,89,89,99,0,0,0,0,0,0,0};rngCursor=0;
+        effect.SpawnHit1();auto it=effect.m_primList.begin();auto* cylinder=*it++;auto* linear=*it++;++it;auto* gravity=*it;
+        check(effect.m_primList.size()==5 && cylinder->m_type==PP_3DCYLINDER && linear->m_type==PP_3DPARTICLE && gravity->m_type==PP_3DPARTICLEGRAVITY
+            && rngDraws==draws+26 &&rngCursor==26,"Hit1 emits cylinder then two linear then two gravity sprites with ordered twenty-six draws");
+        check(cylinder->UsesReferenceCylinder()&&linear->UsesReferenceParticle()&&gravity->UsesReferenceParticle(),"Hit1 binds cylinder linear and gravity reference paths");
+        check(cylinder->m_longitude==270&&cylinder->m_latitude==-90&&cylinder->m_duration==10&&cylinder->m_deltaPos2.y==-10,
+            "Hit1 truncates negative source facing before adding three-sixty and initializes cylinder orientation");
+        check(cylinder->m_speed==0.69999999f&&cylinder->m_accel==static_cast<float>(0.69999999f/10.0*-0.5)
+            &&cylinder->m_outerSize==10&&cylinder->m_innerSize==5&&cylinder->m_heightSize==3.5f&&cylinder->m_fadeOutCnt==5&&cylinder->m_alpha==254,
+            "Hit1 cylinder preserves source motion dimensions fade and constructor alpha");
+        check(linear->m_longitude==309&&linear->m_latitude==49&&linear->m_duration==29&&linear->m_speed==static_cast<float>(149*0.0099999998)
+            &&linear->m_size==static_cast<float>(159*0.0099999998)&&linear->m_sizeSpeed==0,"Hit1 linear group preserves yaw pitch radius speed duration size draw order");
+        check(gravity->m_longitude==489&&gravity->m_latitude==49&&gravity->m_duration==29&&gravity->m_speed==static_cast<float>(149*0.0099999998)
+            &&gravity->m_gravSpeed==static_cast<float>(119*-0.0099999998),"Hit1 gravity group preserves unwrapped longitude and duration-before-speed draw order");
+        const double gravityStep=gravity->m_gravSpeed/29.0;
+        check(gravity->m_gravAccel==static_cast<float>(-(gravityStep+gravityStep))&&gravity->m_matrix.m[2][1]==0&&linear->m_matrix.m[2][1]!=0,
+            "Hit1 gravity replaces tilted spawn matrix with Y-only motion while linear retains launch matrix");
+        check(linear->m_deltaPos2.y==static_cast<float>(linear->m_deltaPos3.y-10.0)&&gravity->m_deltaPos2.y==static_cast<float>(gravity->m_deltaPos3.y-10.0)
+            &&effect.m_effectPos.y==50,"Hit1 stores source launch offsets and preserves parent world origin");
+        check(linear->m_numSegments==3&&gravity->m_numSegments==3&&linear->m_segments[2].alpha==254&&gravity->m_segments[2].alpha==254
+            &&linear->m_segments[2].size==linear->m_size&&linear->m_segments[2].longitude==309,"Hit1 initializes all three trail slots at full current state");
+        check(g_resMgr.requests.size()==8&&g_resMgr.requests[0]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr"
+            &&g_resMgr.requests[1]=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act"&&waveCalls.empty(),"Hit1 loads exact particle-one pairs without added sound");
+        linear->m_alphaDelta=1;gravity->m_alphaDelta=1;linear->OnProcess();gravity->OnProcess();
+        check(linear->m_alpha<254&&gravity->m_alpha<254&&linear->m_alphaSpeed==static_cast<float>(-254.0/29)&&gravity->m_alphaSpeed==static_cast<float>(-254.0/29),
+            "Hit1 both sprite groups begin source fade on frame zero");
+        const float alpha=linear->m_alpha;const float size=linear->m_size;
+        check(linear->m_segments[1].alpha==static_cast<float>(alpha-alpha/3.0)&&linear->m_segments[2].alpha==static_cast<float>(alpha-alpha/3.0*2)
+            &&linear->m_segments[2].size==static_cast<float>(size-size/3.0*2*0.5),"Hit1 three-slot attenuation preserves reference double intermediates");
+        effect.m_stateCnt=1;effect.SpawnHit1();check(effect.m_primList.size()==5,"Hit1 emits only at zero");
+        effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,"Hit1 releases all four resource pairs");
+        g_session.m_isMinEffect=true;effect.m_stateCnt=0;const int beforeReduced=rngDraws;g_resMgr.requests.clear();effect.SpawnHit1();
+        check(effect.m_primList.size()==1&&effect.m_primList.front()->m_type==PP_3DCYLINDER&&rngDraws==beforeReduced&&g_resMgr.requests.empty(),
+            "Hit1 reduced-effects mode preserves cylinder and skips all particle draws/resources");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     {
         CRagEffect effect;

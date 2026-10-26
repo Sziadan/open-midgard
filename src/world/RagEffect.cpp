@@ -1968,13 +1968,13 @@ void ShiftCircleSegments(CEffectPrim* prim)
     const int historyCount = (std::min)(prim->m_numSegments, static_cast<int>(prim->m_segments.size()));
     for (int index = historyCount - 1; index > 0; --index) {
         prim->m_segments[static_cast<size_t>(index)] = prim->m_segments[static_cast<size_t>(index - 1)];
-        const float step = static_cast<float>(index);
-        prim->m_segments[static_cast<size_t>(index)].alpha = prim->m_alpha
-            - prim->m_alpha / static_cast<float>((std::max)(historyCount, 1)) * step;
+        const double step = index;
+        prim->m_segments[static_cast<size_t>(index)].alpha = static_cast<float>(prim->m_alpha
+            - prim->m_alpha / static_cast<double>(prim->m_numSegments) * step);
         prim->m_segments[static_cast<size_t>(index)].argb = PackColor(
             static_cast<u8>(static_cast<long long>(prim->m_segments[static_cast<size_t>(index)].alpha)), prim->m_tintColor);
-        prim->m_segments[static_cast<size_t>(index)].size = prim->m_size
-            - prim->m_size / static_cast<float>((std::max)(historyCount, 1)) * step * 0.5f;
+        prim->m_segments[static_cast<size_t>(index)].size = static_cast<float>(prim->m_size
+            - prim->m_size / static_cast<double>(prim->m_numSegments) * step * 0.5);
     }
 
     prim->m_segments[0].pos = prim->m_pos;
@@ -6421,12 +6421,13 @@ bool UpdateWarpZoneOrbit(CEffectPrim* prim)
 bool UpdateLinearReferenceParticle(CEffectPrim* prim)
 {
     prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
-    prim->m_speed += prim->m_accel;
+    const double speed = static_cast<double>(prim->m_accel) + prim->m_speed;
+    prim->m_speed = static_cast<float>(speed);
     prim->m_sizeSpeed += prim->m_sizeAccel;
     prim->m_speed3d = {
-        static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
-        static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
-        static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+        static_cast<float>(speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
     };
     prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
     prim->m_roll += prim->m_rollSpeed;
@@ -6629,7 +6630,7 @@ bool CEffectPrim::UsesReferenceCylinder() const
 {
     if (m_type != PP_3DCYLINDER || !m_master) return false;
     switch (m_master->GetEffectType()) {
-    case 36: case 218: case 219: case 220: case 221: return true;
+    case 0: case 36: case 218: case 219: case 220: case 221: return true;
     default: return false;
     }
 }
@@ -6649,11 +6650,11 @@ bool CEffectPrim::UsesReferenceParticle() const
 {
     return m_type == PP_SUPERANGEL
         || (m_type == PP_3DPARTICLEGRAVITY && m_master
-            && (m_master->GetEffectType() == 10 || m_master->GetEffectType() == 18))
+            && (m_master->GetEffectType() == 0 || m_master->GetEffectType() == 10 || m_master->GetEffectType() == 18))
         || (m_type == PP_3DPARTICLEORBIT && m_master
             && (m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
-            && (m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
+            && (m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
 }
 
@@ -7925,7 +7926,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 18: case 35: case 36: case 45: case 46: case 61:
+    case 0: case 18: case 35: case 36: case 45: case 46: case 61:
         // ProcessEffectFrame dispatches Steal/ReadyPortal/Portal/FireFly/SandWind/WarpZone directly.
         m_handler = Handler::None;
         break;
@@ -9411,6 +9412,73 @@ bool CRagEffect::ProcessCoin()
     }
     ProcessEZ2STR(0.0f,-80.0f,0.0f); // Original deliberately ignores completion.
     return m_stateCnt < 100;
+}
+
+// Ref/RagEffect.cpp:5141-5220, the two ordered Hit1 particle groups.
+void LaunchHit1Particle(CRagEffect* effect, int facing, bool gravity)
+{
+    CEffectPrim* prim = effect->LaunchEffectPrim(gravity ? PP_3DPARTICLEGRAVITY : PP_3DPARTICLE, vector3d{});
+    prim->m_longitude = static_cast<float>(facing + rand() % 80 + (gravity ? 140 : -40));
+    prim->m_latitude = static_cast<float>(rand() % 100 - 50);
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+    MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+    const double radius = rand() % 4 + 4;
+    prim->m_deltaPos3 = {
+        static_cast<float>(radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+    };
+    prim->m_deltaPos2 = prim->m_deltaPos3;
+    prim->m_deltaPos2.y = static_cast<float>(prim->m_deltaPos3.y - 10.0);
+    if (gravity) {
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_duration = rand() % 24 + 6;
+    }
+    prim->m_speed = static_cast<float>(static_cast<double>(rand() % 90 + 60) * 0.0099999998);
+    if (!gravity) prim->m_duration = rand() % 24 + 6;
+    prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -0.5);
+    if (gravity) {
+        prim->m_gravSpeed = static_cast<float>(static_cast<double>(rand() % 90 + 30) * -0.0099999998);
+        const double acceleration = prim->m_gravSpeed / static_cast<double>(prim->m_duration);
+        prim->m_gravAccel = static_cast<float>(-(acceleration + acceleration));
+    }
+    prim->m_size = static_cast<float>(static_cast<double>(rand() % 100 + 60) * 0.0099999998);
+    prim->m_fadeOutCnt = 0;
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act");
+    prim->m_numSegments = 3;
+    InitReferenceSegments(prim);
+}
+
+// Ref/RagEffect.cpp:5087-5224 (0x5F1A40), original effect 0.
+void CRagEffect::SpawnHit1()
+{
+    if (m_stateCnt != 0) return;
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    int facing = static_cast<int>(180.0 - master->m_roty);
+    if (facing < 0) facing += 360;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
+    prim->m_duration = 10;
+    prim->m_longitude = static_cast<float>(facing);
+    prim->m_latitude = -90.0f;
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+    prim->m_deltaPos2 = {0.0f,-10.0f,0.0f};
+    prim->m_speed = 0.69999999f;
+    prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -0.5);
+    prim->m_outerSize = 10.0f; prim->m_innerSize = 5.0f; prim->m_heightSize = 3.5f;
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 2;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+    if (!g_session.m_isMinEffect) {
+        for (int i = 0; i < 2; ++i) LaunchHit1Particle(this, facing, false);
+        for (int i = 0; i < 2; ++i) LaunchHit1Particle(this, facing, true);
+    }
 }
 
 // Ref/RagEffect.cpp:7202-7261 (0x5F9170). The angle truncates before
@@ -12705,6 +12773,10 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 0) {
+        SpawnHit1();
+        return true;
+    }
     if (m_type == 10) return ProcessCoin();
     if (m_type == 18) {
         SpawnSteal();

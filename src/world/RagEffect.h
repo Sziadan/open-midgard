@@ -527,6 +527,7 @@ private:
     void SpawnSandWind();
     void SpawnSteal();
     bool ProcessCoin();
+    void SpawnHit1();
     void SpawnRuwach();
     void SpawnBlueFall();
     void SpawnWeatherCloud();
