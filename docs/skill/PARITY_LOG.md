@@ -796,3 +796,11 @@ Validation: release build succeeds. Six C++ suites pass (1903 total checks: 1496
 - Added the missing dispatch route and a dedicated TeiHit1 submission helper. This preserves the source overload's two triangles, primitive translation, additive destination mode and animated V-frame layout rather than using the unrelated generic quad UV mapping.
 
 Validation: release build succeeds. Six C++ suites pass (1935 total checks: 1496 lifecycle, 381 rendering, 58 other); seven Python regression tests pass; `git diff --check` passes. Added 32 numeric geometry checks across four full-display angles and both lateral flags. `tools/check_tei_hit1_parity.py` passes 15 mechanical branch/source comparisons, including exact custom UV layout and dispatch case `0x2C`. Deployed OldRO SHA-256 matches build: `8F8ABA373777945AD8254CA315C82A009A62FBDD94BE37F55E2B48897BD04B3D`. No live visual acceptance. Other render methods and broader backend acceptance remain open; WP5A and the plan remain incomplete.
+
+
+## RenderCloud four-band renderer — 2026-10-26
+
+- Ref/RagEffect2.cpp:12367 -> `RenderReferenceCloud`, reached for the 13 source IDs `0x21,0x2A,0x2D,0x2F,0x31,0x35,0x3A,0x3B,0x57,0x61,0x74,0x7B,0x7F`. Mechanically compared all 16 reachable outer pattern labels (0–4, 7–17) and nested pattern-9 labels 1–6. The global outer/nested selector comes from GI0; active-band geometry, alpha, and blend remain band-local.
+- Preserves source invalid-pattern no-submit branches, color/frame/reversed-corner mappings, four-angle pulse geometry and phase reset, height[9]==10 offset, shared TeiTowardScreen transforms, per-band spark anchor, custom two-triangle UV/frame mapping, and additive/inverse-source-alpha selection.
+
+Validation: 36 mechanical source/implementation assertions; 455 particle-render checks; 2009 total C++ checks across six suites; seven Python tests; release build and whitespace checks pass. OldRO deployed executable SHA-256 matches build: `C6E2965417F19A8EAE48A6D3B9F62706C0ED63DD4113DFB4AE0FDB1031061C26`. No media/live acceptance. `UpdateWeatherCloudPrimitive` still creates legacy segments instead of the GI bands consumed by this renderer; see MISMATCHES. WP5A and the overall plan remain incomplete.

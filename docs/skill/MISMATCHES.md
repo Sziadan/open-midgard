@@ -209,3 +209,6 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 - Corrected RenderWind 2026-10-26: restored full source size color/alpha/blend mapping, zero-alpha strip submission, scratch geometry history and double UV arithmetic. Mechanical comparison passed10 assertions; four numeric geometry checks, all six C++ suites and seven Python tests pass. Legacy world-effect payload routing remains a separate path; other renderer methods/backend acceptance remain open.
 
 - Implemented missing RenderGrandCross2 / PP_GRANDCROSS2 renderer 2026-10-26: source's four rotated corners feed four translucent sides and two half-alpha additive center faces, with original scratch-state writes. Mechanical comparison passed9 assertions; four corner tests, all six C++ suites and seven Python tests pass. Remaining renderer/backend acceptance stays open.
+
+
+- RenderCloud state producer mismatch (2026-10-26): `RenderCloud` now implements the reference renderer and is source-to-implementation checked, but `UpdateWeatherCloudPrimitive` still populates `m_segments` and does not initialize/update the four `m_GI` bands the renderer reads. The legacy weather-cloud producer therefore does not activate the new reference path. Port and compare that producer/state lifecycle before claiming end-to-end Cloud parity; renderer-only checkpoint does not close this mismatch.

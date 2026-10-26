@@ -137,6 +137,7 @@ vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.
 #include "LineLinkGeometryBody.inc"
 #include "IntimidateRenderGeometryBody.inc"
 #include "TeiHit1GeometryBody.inc"
+#include "CloudRenderGeometryBody.inc"
 #include "ReferenceTriangleQueueBodies.inc"
 
 int main() {
@@ -282,6 +283,45 @@ int main() {
             && near(corners[i].y,static_cast<float>(y[i]))
             && near(corners[i].z,static_cast<float>(static_cast<double>(static_cast<float>(x[i]))*sr)),
             "TeiHit1 corner matches source offset, perpendicular, and rise rotations");
+    }
+    struct ExpectedCloudStyle { int pattern,variant,frame;bool reverse;unsigned int rgb;bool valid; };
+    const ExpectedCloudStyle cloudStyles[]={
+        {0,0,1,false,0x00FFFFFFu,true},{1,0,0,false,0x009696FAu,true},
+        {2,0,0,true,0x008282FAu,true},{3,0,0,true,0x00C8C864u,true},
+        {4,0,1,true,0x00FFFFFFu,true},{5,0,0,false,0,false},{6,0,0,false,0,false},
+        {7,0,0,true,0x00FFFFFFu,true},{8,0,1,true,0x0087FF87u,true},
+        {9,1,1,true,0x00FF8787u,true},{9,2,1,true,0x00FFCD87u,true},
+        {9,3,1,true,0x00FFFF87u,true},{9,4,1,true,0x00FFFFFFu,true},
+        {9,5,1,true,0x008787FFu,true},{9,6,0,true,0x00FFFFFFu,true},
+        {9,7,0,false,0,false},{10,0,0,true,0x00FAFA96u,true},
+        {11,0,0,true,0x00DCFADCu,true},{12,0,1,true,0x00FCAB8Fu,true},
+        {13,0,0,true,0x00FA6464u,true},{14,0,1,true,0x005E0000u,true},
+        {15,0,1,false,0x00FFC8FFu,true},{16,0,1,true,0x00000000u,true},
+        {17,0,1,true,0x00FFB4B4u,true}
+    };
+    for(const auto& expected:cloudStyles) {
+        EffectGi gi{};gi.flag[2]=static_cast<unsigned char>(expected.pattern);gi.flag[3]=static_cast<unsigned char>(expected.variant);
+        const auto style=CloudStyle(gi);
+        check(style.valid==expected.valid && style.texturePart==expected.frame && style.reverse==expected.reverse
+            && style.rgb==expected.rgb,"RenderCloud pattern and nested color/frame dispatch matches source switch");
+    }
+    for(int fullAngle:{0,45,180,315}) for(int phase:{0,45,270}) {
+        EffectGi gi{};gi.distance=12.5f;gi.fullDisplayAngle=static_cast<short>(fullAngle);gi.height[8]=static_cast<float>(phase);
+        gi.height[9]=10.0f;vector3d corners[4]{};CloudCorners(gi,corners);
+        const double radius=gi.distance+GetSin(phase)*gi.distance*0.050000001;
+        for(int i=0;i<4;++i) {
+            const int angle=(fullAngle+90+i*90)%360;
+            check(near(corners[i].x,static_cast<float>(GetCos(angle)*radius+4.0))
+                && near(corners[i].y,0.0f)&&near(corners[i].z,static_cast<float>(GetSin(angle)*radius)),
+                "RenderCloud pulse ring follows source angle, size, and fixed-height offset");
+        }
+    }
+    for(float invalidPhase:{-1.0f,360.0f}) {
+        EffectGi gi{};gi.distance=2.0f;gi.height[8]=invalidPhase;vector3d corners[4]{};
+        CloudCorners(gi,corners);
+        check(gi.height[8]==0.0f && near(corners[0].x,static_cast<float>(GetCos(90)*2.0))
+            && near(corners[0].z,static_cast<float>(GetSin(90)*2.0)),
+            "RenderCloud resets negative or 360-degree source pulse phase to zero");
     }
     const int inverseSizes[]={0,2,3,12,13,14,100};
     for(int size=0;size<=100;++size) {

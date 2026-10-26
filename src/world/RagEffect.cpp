@@ -750,6 +750,53 @@ void SubmitTeiHit1Rect(const vector3d corners[4], const vector3d& translation,
     }
 }
 
+void SubmitCloudRect(const vector3d corners[4], const matrix& viewMatrix, CTexture* texture,
+    unsigned int color, int texturePart, bool reverse, bool inverseSourceAlpha, int renderFlags)
+{
+    if (!texture || texture == &CTexMgr::s_dummy_texture) {
+        return;
+    }
+    const float frame0 = static_cast<float>(static_cast<double>(texturePart) * 0.047619049);
+    const float frame1 = static_cast<float>(static_cast<double>(texturePart + 1) * 0.047619049);
+    const int order[2][4] = { { 0, 1, 2, 3 }, { 1, 0, 3, 2 } };
+    const int* indices = order[reverse ? 1 : 0];
+    const vector3d positions[2][3] = {
+        { corners[indices[0]], corners[indices[1]], corners[indices[2]] },
+        { corners[indices[3]], corners[indices[2]], corners[indices[0]] },
+    };
+    const float uvs[2][3][2] = {
+        { { 1.0f, frame0 }, { 1.0f, frame1 }, { 0.0f, frame1 } },
+        { { 0.0f, frame0 }, { 0.0f, frame1 }, { 1.0f, frame0 } },
+    };
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) {
+            return;
+        }
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = inverseSourceAlpha ? D3DBLEND_INVSRCALPHA : D3DBLEND_ONE;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            if (!ProjectPoint(positions[triangle][vertex], viewMatrix, &face->m_verts[vertex])) {
+                return;
+            }
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[triangle][vertex][0];
+            face->m_verts[vertex].tv = uvs[triangle][vertex][1];
+        }
+        g_renderer.AddRP(face, renderFlags);
+    }
+}
+
 
 float ResolveGroundHeight(const vector3d& position);
 
@@ -6727,6 +6774,113 @@ void TeiHit1Corners(const EffectGi& gi, vector3d corners[4])
     }
 }
 
+struct CloudRenderStyle {
+    unsigned int rgb=0;
+    int texturePart=0;
+    bool reverse=false;
+    bool valid=false;
+};
+
+CloudRenderStyle CloudStyle(const EffectGi& gi)
+{
+    const bool reverse=true;
+    switch (gi.flag[2]) {
+    case 0: return {0x00FFFFFFu,1,false,true};
+    case 1: return {0x009696FAu,0,false,true};
+    case 2: return {0x008282FAu,0,reverse,true};
+    case 3: return {0x00C8C864u,0,reverse,true};
+    case 4: return {0x00FFFFFFu,1,reverse,true};
+    case 7: return {0x00FFFFFFu,0,reverse,true};
+    case 8: return {0x0087FF87u,1,reverse,true};
+    case 9:
+        switch (gi.flag[3]) {
+        case 1: return {0x00FF8787u,1,reverse,true};
+        case 2: return {0x00FFCD87u,1,reverse,true};
+        case 3: return {0x00FFFF87u,1,reverse,true};
+        case 4: return {0x00FFFFFFu,1,reverse,true};
+        case 5: return {0x008787FFu,1,reverse,true};
+        case 6: return {0x00FFFFFFu,0,reverse,true};
+        default: return {};
+        }
+    case 10: return {0x00FAFA96u,0,reverse,true};
+    case 11: return {0x00DCFADCu,0,reverse,true};
+    case 12: return {0x00FCAB8Fu,1,reverse,true};
+    case 13: return {0x00FA6464u,0,reverse,true};
+    case 14: return {0x005E0000u,1,reverse,true};
+    case 15: return {0x00FFC8FFu,1,false,true};
+    case 16: return {0x00000000u,1,reverse,true};
+    case 17: return {0x00FFB4B4u,1,reverse,true};
+    default: return {};
+    }
+}
+
+void CloudCorners(EffectGi& gi, vector3d corners[4])
+{
+    int phase = 0;
+    if (gi.height[8] >= 0.0f && gi.height[8] < 360.0f) {
+        phase = static_cast<int>(gi.height[8]);
+    } else {
+        gi.height[8] = 0.0f;
+    }
+    const double pulseRadius = static_cast<double>(gi.distance)
+        + static_cast<double>(g_sinTable[phase]) * gi.distance * 0.050000001;
+    int angle = gi.fullDisplayAngle + 90;
+    if (angle >= 360) {
+        angle -= 360;
+    }
+    for (int i=0;i<4;++i) {
+        corners[i].x = static_cast<float>(static_cast<double>(g_cosTable[angle]) * pulseRadius);
+        corners[i].y = 0.0f;
+        corners[i].z = static_cast<float>(static_cast<double>(g_sinTable[angle]) * pulseRadius);
+        angle += 90;
+        if (angle >= 360) {
+            angle -= 360;
+        }
+    }
+    if (gi.height[9] == 10.0f) {
+        for (int i=0;i<4;++i) {
+            corners[i].x = static_cast<float>(static_cast<double>(corners[i].x) + 4.0);
+        }
+    }
+}
+
+bool IsCloudRendererType(EFFECTPRIMID type)
+{
+    switch (type) {
+    case PP_CLOUD: case PP_SHIELDBOOMERANG: case PP_TEIHIT2: case PP_BOTTOM:
+    case PP_BOTTOMOUT: case PP_THROWITEM: case PP_FIRSTAID: case PP_PARTICLE_UP:
+    case PP_PRESSURE: case PP_TANJI2: case PP_SHIELDBOOMERANG3: case PP_TWILIGHT:
+    case PP_BUBBLE_DROP: return true;
+    default: return false;
+    }
+}
+
+void RenderReferenceCloud(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (int band=0;band<4;++band) {
+        EffectGi& gi=prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        vector3d corners[4]{};
+        CloudCorners(gi,corners);
+        IntimidateTowardScreen(corners,prim.m_gi[0].alphaT,prim.m_gi[1].alphaT);
+        for (vector3d& corner : corners) {
+            corner.x=static_cast<float>(static_cast<double>(corner.x)+gi.sparkX);
+            corner.y=static_cast<float>(static_cast<double>(corner.y)+gi.sparkY);
+            corner.z=static_cast<float>(static_cast<double>(corner.z)+gi.sparkZ);
+        }
+        const CloudRenderStyle style=CloudStyle(prim.m_gi[0]);
+        if (!style.valid) {
+            continue;
+        }
+        const unsigned int color=(static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB))<<24)|style.rgb;
+        SubmitCloudRect(corners,viewMatrix,texture,color,style.texturePart,style.reverse,gi.flag[0]!=0,
+            static_cast<int>(prim.m_renderFlag));
+    }
+}
+
 void RenderTeiHit1(const CEffectPrim& prim, const matrix& viewMatrix)
 {
     CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
@@ -7843,6 +7997,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     if (!m_master || !viewMatrix) {
         return;
     }
+    if (IsCloudRendererType(m_type)) {
+        RenderReferenceCloud(*this, *viewMatrix);
+        return;
+    }
     if (UsesReferenceSphere()) {
         RenderReferenceSphere(*this,*viewMatrix);
         return;
@@ -8264,34 +8422,6 @@ void CEffectPrim::Render(matrix* viewMatrix)
                     0.0f,
                     renderFlags);
             }
-        }
-        break;
-    }
-    case PP_CLOUD: {
-        CTexture* texture = !m_texture.empty() ? m_texture[0] : GetSoftGlowTexture(true);
-        const int mapVariant = static_cast<int>(m_param[0]);
-        const int renderFlags = ResolveEffectRenderFlags(m_renderFlag, 1 | 2);
-        const D3DBLEND destBlend = ResolveEffectDestBlend(m_renderFlag);
-        const COLORREF tintColor = ResolveWeatherCloudTint(mapVariant);
-        const int count = (std::min)(m_numSegments, static_cast<int>(m_segments.size()));
-        for (int index = 0; index < count; ++index) {
-            const EffectSegmentState& segment = m_segments[static_cast<size_t>(index)];
-            if (segment.alpha <= 0.0f) {
-                continue;
-            }
-
-            const float sizePulse = 1.0f + std::sin(segment.phaseDegrees * (kPi / 180.0f)) * 0.05f;
-            const float width = (std::max)(56.0f, segment.radius * ResolveWeatherCloudWidthScale(mapVariant) * segment.size * sizePulse);
-            const float height = (std::max)(28.0f, segment.radius * ResolveWeatherCloudHeightScale(mapVariant) * segment.size * sizePulse);
-            SubmitBillboard(segment.pos,
-                *viewMatrix,
-                texture,
-                width,
-                height,
-                PackColor(static_cast<unsigned int>((std::max)(0.0f, (std::min)(255.0f, segment.alpha))), tintColor),
-                destBlend,
-                segment.displayAngle * (kPi / 180.0f),
-                renderFlags);
         }
         break;
     }
