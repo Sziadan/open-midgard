@@ -241,6 +241,7 @@ void UpdateReferenceSma2(CEffectPrim*);
 void UpdateReferenceStin2(CEffectPrim*);
 void UpdateReferenceTwilight(CEffectPrim*);
 bool UpdateReferenceKouenka(CEffectPrim*);
+void UpdateReferenceStin4(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -384,6 +385,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_STIN2) { UpdateReferenceStin2(this); return active; }
         if (m_type == PP_TWILIGHT) { UpdateReferenceTwilight(this); return active; }
         if (m_type == PP_KOUENKA) return UpdateReferenceKouenka(this) && active;
+        if (m_type == PP_STIN4) { UpdateReferenceStin4(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -865,6 +867,7 @@ __declspec(noinline) void RunSma2LifecycleChecks(CEffectPrim& prim, int& checks,
 __declspec(noinline) void RunStin2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunTwilightLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunKouenkaLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunStin4LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2174,6 +2177,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     RunStin2LifecycleChecks(prim, checks, failures);
     RunTwilightLifecycleChecks(prim, checks, failures);
     RunKouenkaLifecycleChecks(prim, checks, failures);
+    RunStin4LifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2691,6 +2695,92 @@ __declspec(noinline) void RunKouenkaLifecycleChecks(CEffectPrim& prim, int& chec
     prim.m_particleActRes=nullptr; g_resMgr.act.count=oldMotionCount; rngValues.clear(); rngCursor=0;
     prim.m_master->m_duration=oldMasterDuration; prim.m_master->m_stateCnt=oldMasterState;
     testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunStin4LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const u32 oldAid=g_session.m_aid;
+    CRenderObject* oldPlayer=g_world.m_player;
+    CRenderObject* oldLookupActor=g_world.lookupActor;
+    const u32 oldLookupAid=g_world.lookupAid;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    CRenderObject target; target.m_pos={100,0,0};
+    g_session.m_aid=77; g_world.m_player=nullptr; g_world.lookupActor=&target; g_world.lookupAid=42;
+    prim.m_type=PP_STIN4; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_deltaPos={0,42,0}; prim.m_pos={0,0,0};
+    for(auto& gi:prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=0; a.flag[2]=0;
+    a.riseAngle=350; a.height[1]=2; a.sparkX=1; a.sparkZ=2;
+    rngValues={20}; rngCursor=0; const int draws=rngDraws;
+    prim.OnProcess();
+    check(a.process==1&&a.riseAngle==20&&a.rotStart==45
+        &&std::fabs(a.sparkX-(1+2*g_cosTable[45]))<0.0001f
+        &&std::fabs(a.sparkZ-(2+2*g_sinTable[45]))<0.0001f
+        &&prim.m_pos.x==0&&prim.m_pos.y==0&&prim.m_pos.z==0&&rngDraws==draws+1,
+        "case 0x7D resolves a nonself AID, wraps rise angle, adds bounded first-aim jitter and moves without changing position");
+
+    a.process=0; a.flag[2]=1; a.riseAngle=0; a.sparkX=0; a.sparkZ=0;
+    rngValues={0}; rngCursor=0; const int subtractDraws=rngDraws;
+    prim.OnProcess();
+    check(a.rotStart==335&&rngDraws==subtractDraws+1,
+        "case 0x7D opposite first-aim direction subtracts its 25-degree base and one bounded random offset with one wrap");
+
+    target.m_pos={0,0,100}; a.process=5; a.flag[1]=0; a.flag[2]=0; a.rotStart=10;
+    a.alphaB=100; a.sparkX=0; a.sparkY=4; a.sparkZ=0; a.riseAngle=77; a.height[1]=2;
+    for(size_t i=1;i<4;++i){prim.m_gi[i].life=1;prim.m_gi[i].alphaB=90;prim.m_gi[i].sparkX=10*static_cast<float>(i);}
+    prim.OnProcess();
+    check(a.process==6&&a.alphaB==108&&a.rotStart==5
+        &&std::fabs(a.sparkX-2*g_cosTable[5])<0.0001f&&std::fabs(a.sparkZ-2*g_sinTable[5])<0.0001f
+        &&prim.m_gi[3].sparkX==20&&prim.m_gi[2].sparkX==10
+        &&prim.m_gi[1].sparkX==a.sparkX&&prim.m_gi[1].alphaB==86&&prim.m_gi[1].riseAngle==a.riseAngle,
+        "case 0x7D process six grows alpha, steers toward target, moves, then snapshots vector/truncated alpha/rise in descending order");
+
+    a.process=6; a.flag[1]=0; a.flag[2]=0; a.rotStart=87; a.alphaB=100; a.sparkX=0; a.sparkZ=0;
+    prim.OnProcess();
+    check(a.process==7&&a.flag[1]==10&&a.alphaB==108&&a.rotStart==87,
+        "case 0x7D inclusive three-degree target window enters fade without applying fade until the next frame");
+    for(size_t i=1;i<4;++i){prim.m_gi[i].life=1;prim.m_gi[i].alphaB=3;}
+    a.process=7; a.flag[1]=10; a.flag[2]=1; a.rotStart=359; a.alphaB=20;
+    const float beforeFadeX=a.sparkX;
+    prim.OnProcess();
+    check(a.process==8&&a.alphaB==23&&a.rotStart==0&&prim.m_gi[1].alphaB==0
+        &&prim.m_gi[1].life==0&&prim.m_gi[2].life==0&&prim.m_gi[3].life==0
+        &&std::fabs(a.sparkX-(beforeFadeX+2*g_cosTable[0]))<0.0001f,
+        "case 0x7D fade subtracts all four lanes, kills underflowed lanes, turns one degree with wrap and still moves");
+
+    for(auto& lane:prim.m_gi) lane={};
+    a.life=1; a.process=20; a.flag[1]=0; a.flag[2]=0; a.rotStart=10; a.alphaB=70; a.height[1]=1;
+    for(size_t i=1;i<4;++i){prim.m_gi[i].life=1;prim.m_gi[i].alphaB=40;}
+    prim.OnProcess();
+    check(a.process==21&&a.flag[1]==10&&a.alphaB==65&&a.rotStart==9
+        &&prim.m_gi[1].alphaB==52&&prim.m_gi[1].life==1,
+        "case 0x7D process 21 starts the all-lane fade, then snapshots its truncated alpha on the shared third-tick cadence");
+
+    g_world.lookupActor=nullptr; a.process=0; a.flag[1]=0; a.riseAngle=91; a.rotStart=123; a.sparkX=7; a.sparkZ=8;
+    const int missingDraws=rngDraws; prim.OnProcess();
+    check(a.process==1&&a.flag[1]==10&&a.riseAngle==91&&a.rotStart==123
+        &&a.sparkX==7&&a.sparkZ==8&&rngDraws==missingDraws,
+        "case 0x7D missing actor on process one breaks before rise, aim, motion or RNG");
+
+    a.process=5; a.flag[1]=0; a.flag[2]=0; a.alphaB=20; a.rotStart=10; a.height[1]=1;
+    prim.OnProcess();
+    check(a.process==6&&a.flag[1]==10&&a.alphaB==23&&a.rotStart==9&&a.sparkX>7,
+        "case 0x7D later actor loss enters fade but continues alpha phase, one-degree turn and vector movement");
+
+    a.life=2; a.process=7; a.flag[1]=0; a.riseAngle=88;
+    const int inactiveProcess=a.process; prim.OnProcess();
+    const bool inactiveSkipped=a.process==inactiveProcess&&a.riseAngle==88;
+    a.life=1; a.process=-2; a.flag[1]=0; a.riseAngle=99;
+    const int nonpositiveDraws=rngDraws; prim.OnProcess();
+    check(inactiveSkipped&&a.process==-1&&a.flag[1]==0&&a.riseAngle==99&&rngDraws==nonpositiveDraws,
+        "case 0x7D exact-life and nonpositive post-increment gates skip lookup and all later state");
+
+    rngValues.clear(); rngCursor=0;
+    g_session.m_aid=oldAid; g_world.m_player=oldPlayer; g_world.lookupActor=oldLookupActor; g_world.lookupAid=oldLookupAid;
+    g_isSkipFrame=oldSkipFrame;
 }
 
 int main()

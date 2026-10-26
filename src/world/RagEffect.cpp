@@ -9969,6 +9969,95 @@ void UpdateReferenceStin2(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:14425; canonical executable PrimSTIN4 at 0x626A10 (case 0x7D).
+void UpdateReferenceStin4(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) return;
+
+    ++gi.process;
+    if (gi.process <= 0) return;
+
+    CWorld* world = mode->m_world;
+    const u32 targetAid = static_cast<u32>(prim->m_deltaPos.y);
+    CRenderObject* target = static_cast<double>(g_session.m_aid) == static_cast<double>(prim->m_deltaPos.y)
+        ? world->m_player
+        : world->GetGameActorByAID(targetAid);
+    if (!target) {
+        gi.flag[1] = 10;
+        if (gi.process == 1) return;
+    }
+
+    gi.riseAngle = static_cast<short>(gi.riseAngle + 30);
+    if (gi.riseAngle >= 360) gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
+
+    if (gi.process == 1) {
+        const float deltaX = target->m_pos.x - prim->m_pos.x;
+        const float deltaZ = target->m_pos.z - prim->m_pos.z;
+        gi.rotStart = static_cast<short>(GetReferenceAngle(deltaX, deltaZ));
+        if (gi.flag[2] == 0) {
+            gi.rotStart = static_cast<short>(gi.rotStart + 25 + rand() % 21);
+            if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        } else {
+            gi.rotStart = static_cast<short>(gi.rotStart - 25 - rand() % 21);
+            if (gi.rotStart < 0) gi.rotStart = static_cast<short>(gi.rotStart + 360);
+        }
+    } else if (gi.process <= 20) {
+        gi.alphaB = static_cast<short>(gi.alphaB + 8);
+        if (gi.alphaB > 120) gi.alphaB = 120;
+    } else {
+        gi.flag[1] = 10;
+    }
+
+    if (gi.process > 5) {
+        if (gi.flag[1] == 0) {
+            const float deltaX = target->m_pos.x - gi.sparkX;
+            const float deltaZ = target->m_pos.z - gi.sparkZ;
+            const short targetAngle = static_cast<short>(GetReferenceAngle(deltaX, deltaZ));
+            if (gi.rotStart >= targetAngle - 3 && gi.rotStart <= targetAngle + 3) {
+                gi.flag[1] = 10;
+            } else if (gi.flag[2] == 0) {
+                gi.rotStart = static_cast<short>(gi.rotStart - 5);
+                if (gi.rotStart < 0) gi.rotStart = static_cast<short>(gi.rotStart + 360);
+            } else {
+                gi.rotStart = static_cast<short>(gi.rotStart + 5);
+                if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+            }
+        } else if (gi.flag[1] == 10) {
+            for (EffectGi& fadingGi : prim->m_gi) {
+                fadingGi.alphaB = static_cast<short>(fadingGi.alphaB - 5);
+                if (fadingGi.alphaB < 0) {
+                    fadingGi.alphaB = 0;
+                    fadingGi.life = 0;
+                }
+            }
+
+            if (gi.flag[2] == 0) {
+                gi.rotStart = static_cast<short>(gi.rotStart - 1);
+                if (gi.rotStart < 0) gi.rotStart = static_cast<short>(gi.rotStart + 360);
+            } else {
+                gi.rotStart = static_cast<short>(gi.rotStart + 1);
+                if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+            }
+        }
+    }
+
+    gi.sparkX += gi.height[1] * g_cosTable[gi.rotStart];
+    gi.sparkZ += gi.height[1] * g_sinTable[gi.rotStart];
+    if (gi.process % 3 == 0) {
+        for (int index = 3; index >= 1; --index) {
+            EffectGi& destination = prim->m_gi[static_cast<size_t>(index)];
+            const EffectGi& source = prim->m_gi[static_cast<size_t>(index - 1)];
+            destination.sparkX = source.sparkX;
+            destination.sparkY = source.sparkY;
+            destination.sparkZ = source.sparkZ;
+            destination.alphaB = static_cast<short>(static_cast<float>(source.alphaB) * 0.8f);
+            destination.riseAngle = source.riseAngle;
+        }
+    }
+}
+
 // Ref/dhxj/RagEffect2.cpp:1982; canonical executable PrimKouenka (case 0x7C).
 bool UpdateReferenceKouenka(CEffectPrim* prim)
 {
@@ -11330,6 +11419,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_KOUENKA) {
         return UpdateReferenceKouenka(this); // Source case 0x7C returns AnimMotion's completion result.
+    }
+    if (m_type == PP_STIN4) {
+        UpdateReferenceStin4(this); // Source case 0x7D continues to the shared tick.
+        return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
         return UpdateReferenceScreenTexture(this);

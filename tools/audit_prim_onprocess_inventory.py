@@ -76,7 +76,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 124 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A, 0x1B, 0x1C, 0x1D, 0x20, 0x22, 0x23, 0x25, 0x26, 0x27, 0x28, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x30, 0x33, 0x34, 0x3D, 0x43, 0x44, 0x45, 0x46, 0x4A, 0x50, 0x51, 0x54, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x60, 0x61, 0x62, 0x63, 0x64, 0x6D, 0x6F, 0x72, 0x73, 0x74, 0x75, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 125 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A, 0x1B, 0x1C, 0x1D, 0x20, 0x22, 0x23, 0x25, 0x26, 0x27, 0x28, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x30, 0x33, 0x34, 0x3D, 0x43, 0x44, 0x45, 0x46, 0x4A, 0x50, 0x51, 0x54, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x60, 0x61, 0x62, 0x63, 0x64, 0x6D, 0x6F, 0x72, 0x73, 0x74, 0x75, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -593,7 +593,7 @@ check("case 0x1B Ref and canonical EXE helper bodies match and dispatch ignores 
       and re.search(r"case\s+0x1B:\s*CEffectPrim::PrimMapParticle\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_MAPPARTICLE)" in current_dispatch
       and "UpdateReferenceMapParticle(this); // Source case 0x1B ignores the bool result." in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 map_particle_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[0].alphaT=360-m_GI[0].alphaT;",
     "m_GI[1].alphaT=360-m_GI[1].alphaT+90;", "if (m_GI[1].alphaT>=360)",
@@ -643,7 +643,7 @@ check("case 0x1C Ref and canonical EXE aura bodies match and dispatch discards a
       and re.search(r"case\s+0x1C:\s*CEffectPrim::Prim3DAura\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_3DAURA)" in current_dispatch
       and "UpdateReference3DAura(this); // Source case 0x1C ignores the bool result." in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 aura_source_effects = [
     "m_pos = m_master->m_pos;", "for (ec=0;ec<2;ec++)", "m_GI[ec].rise_angle+=3;",
     "if (m_GI[ec].rise_angle>=360)", "m_GI[ec].rise_angle-=360;",
@@ -676,7 +676,7 @@ check("case 0x1D Ref/EXE helper bodies match and the dispatcher ignores its retu
       and re.search(r"case\s+0x1D:\s*CEffectPrim::Prim3DAura_2\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_3DAURA_2)" in current_dispatch
       and "UpdateReference3DAura2(this); // Source case 0x1D ignores the bool result." in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 aura2_source_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[1].alphaT=360-m_GI[1].alphaT+90;",
     "if (m_GI[1].alphaT>=360)", "m_pos = m_master->m_pos;", "for (ec=0;ec<4;ec++)",
@@ -734,7 +734,7 @@ check("case 0x20 Ref/EXE helper bodies match and dispatcher honors the always-tr
       and re.search(r"case\s+0x20:\s*result = CEffectPrim::PrimCHOOKGI\(this\);\s*if\s*\(\s*!result\s*\)\s*return result;\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_CHOOKGI)" in current_dispatch
       and "return UpdateReferenceChookGi(this); // Source tests this return; all helper paths return true." in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 chook_source_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[1].alphaT=360-m_GI[1].alphaT+90;",
     "m_pos = m_master->m_pos;", "if ( m_GI[ec].life == 1 )", "m_GI[ec].process++;",
@@ -787,7 +787,7 @@ check("case 0x22 Ref/EXE helper bodies match, source has 21 samples and dispatch
       and "if (m_type == PP_GI_3)" in current_dispatch
       and "UpdateReferenceGi3(this);" in current_dispatch
       and re.search(r"#define\s+E_DIVISION\s+21", REF_DHXJ_EFFECT_HEADER)
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 gi3_source_effects = [
     "middle=(E_DIVISION-1)/2;", "m2=90/middle;", "for (;ec<4;ec++)",
     "if (m_GI[ec].life == 1)", "m_GI[ec].process+=1;", "m_GI[ec].distance-=0.01f;",
@@ -825,7 +825,7 @@ check("cases 0x23/0x63 Ref/EXE share PrimGumGang and the dispatcher ignores its 
       and re.search(r"case\s+0x23:\s*case\s+0x63:\s*CEffectPrim::PrimGumGang\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "m_type == PP_GUMGANG || m_type == PP_DOUBLEGUMGANG" in current_dispatch
       and "UpdateReferenceGumGang(this); // Source ids 0x23/0x63 ignore the bool result." in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 gumgang_source_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[1].alphaT=360-m_GI[1].alphaT+90;",
     "m_pos = m_master->m_pos;", "range=8;", "half=range/2;", "he=8;", "tn=5;",
@@ -875,7 +875,7 @@ check("case 0x25 Ref/EXE helper bodies match and source dispatch continues to th
       and re.search(r"case\s+0x25:\s*CEffectPrim::PrimGrandCross2\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_GRANDCROSS2)" in current_dispatch
       and "UpdateReferenceGrandCross2(this);" in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 grandcross_source_effects = [
     "middle=(E_DIVISION-1)/2;", "m2=90/middle;", "for (;ec<4;ec++)",
     "if (m_GI[ec].life == 1)", "m_GI[ec].process+=1;", "if (m_GI[ec].process>=10)",
@@ -1292,7 +1292,7 @@ check("case 0x33 Ref/decompiled Ref/EXE helper bodies match and dispatcher ignor
       and re.search(r"case\s+0x33:\s*CEffectPrim::PrimBottomSpr\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_BOTTOMSPR)" in current_dispatch
       and "UpdateReferenceBottomSpr(this); // Source case 0x33 ignores the animation result." in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 bottomspr_source_effects = [
     "m_pos = m_master->m_pos;", "for (ec=0;ec<1;ec++)", "if (m_GI[ec].life == 1)",
     "m_GI[ec].process++;", "if (m_GI[ec].flag1[4] == 1)", "m_pos = m_master->m_pos;",
@@ -1330,7 +1330,7 @@ check("case 0x34 decompiled Ref/EXE bodies match and source dispatch reaches com
       and re.search(r"case\s+0x34:\s*CEffectPrim::PrimPokJuk\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_POKJUK)" in current_dispatch
       and "UpdateReferencePokJuk(this);" in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 pokjuk_source_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[0].alphaT=360-m_GI[0].alphaT;",
     "m_GI[1].alphaT=pView->GetCurLatitude();", "m_GI[1].alphaT=360-m_GI[1].alphaT+90;",
@@ -1392,7 +1392,7 @@ check("case 0x3D decompiled Ref/EXE bodies match and dispatcher calls void handl
       and re.search(r"case\s+0x3D:\s*CEffectPrim::PrimGuard\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_GUARD)" in current_dispatch
       and "UpdateReferenceGuard(this);" in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 guard_source_effects = [
     "m_pos = m_master->m_pos;", "for (ec=0;ec<4;ec++)", "if (m_GI[ec].life == 1)",
     "m_GI[ec].process+=1;", "m_GI[ec].process<=1",
@@ -1430,7 +1430,7 @@ check("case 0x43 decompiled Ref/EXE bodies match and dispatcher continues after 
       and re.search(r"case\s+0x43:\s*CEffectPrim::PrimFoot\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_FOOT)" in current_dispatch
       and "UpdateReferenceFoot(this); // The source handler's true result is ignored before the common tick." in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 foot_source_effects = [
     "m_pos = m_master->m_pos;", "for (ec=0;ec<1;ec++)", "m_GI[ec].process++;",
     "if (m_GI[ec].process>0)", "m_GI[ec].process%2>=1", "m_GI[ec].alphaB--;",
@@ -1461,7 +1461,7 @@ check("case 0x44 decompiled Ref/EXE bodies match and dispatcher ignores handler 
       and re.search(r"case\s+0x44:\s*CEffectPrim::PrimAsuraCasting\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_ASURACASTING)" in current_dispatch
       and "UpdateReferenceAsuraCasting(this); // The source handler's true result is ignored before the common tick." in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 asura_branches = [
     ("source", ["m_GI[0].alphaT=360-m_GI[0].alphaT;", "m_GI[1].alphaT=360-m_GI[1].alphaT+90;",
       "if (m_GI[0].flag1[4] == 1)", "for (ec=0;ec<4;ec++)", "m_GI[ec].life == 1",
@@ -1498,7 +1498,7 @@ check("case 0x45 decompiled Ref/EXE bodies match and dispatcher ignores the bool
       and re.search(r"case\s+0x45:\s*CEffectPrim::PrimTripleAttack\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_TRIPLEATTACK)" in current_dispatch
       and "UpdateReferenceTripleAttack(this); // The source handler's true result is ignored before the common tick." in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 triple_source_effects = [
     "for (ec=0;ec<4;ec++)", "if (m_GI[ec].life>0)", "m_GI[ec].process++;",
     "if (m_GI[ec].process>0)", "m_GI[ec].process<=5", "m_GI[ec].height[4] == 2",
@@ -1535,7 +1535,7 @@ check("case 0x46 decompiled Ref/EXE bodies match and dispatcher continues to com
       and re.search(r"case\s+0x46:\s*CEffectPrim::PrimHitLine\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_HITLINE)" in current_dispatch
       and "UpdateReferenceHitLine(this);" in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 hitline_source_effects = [
     "for (ec=0;ec<4;ec++)", "if (m_GI[ec].life == 1)", "m_GI[ec].process+=1;",
     "m_GI[ec].process>0", "m_GI[ec].process>35", "m_GI[ec].alphaB-=5;",
@@ -1572,7 +1572,7 @@ check("case 0x4A decompiled Ref/EXE bodies match and dispatcher reaches common t
       and re.search(r"case\s+0x4A:\s*CEffectPrim::PrimCallZone\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_CALLZONE)" in current_dispatch
       and "UpdateReferenceCallZone(this);" in current_dispatch
-      and len(current_explicit_ids) == 124)
+      and len(current_explicit_ids) == 125)
 callzone_source_effects = [
     "m_pos = m_master->m_pos;", "for (ec=0;ec<4;ec++)", "if (m_GI[ec].life == 1)",
     "m_GI[ec].process++;", "m_GI[ec].process<=10", "m_GI[ec].alphaB<100", "m_GI[ec].alphaB+=1;",
@@ -3022,3 +3022,83 @@ check("case 0x7C branch map compares source and current lane, paired heights, RN
       < current_kouenka.index("ProcessReferenceParticleAlpha(prim);")
       < current_kouenka.index("ShiftReferenceSegments(prim);")
       < current_kouenka.index("return AnimateReferenceMotion(prim);"))
+
+source_stin4 = body(REF_DHXJ_EFFECT2, "void\tCEffectPrim :: PrimSTIN4()")
+source_stin4_decompiled = body(REF_EFFECT2, "void __thiscall CEffectPrim::PrimSTIN4(CEffectPrim *this)\n{")
+exe_stin4 = body(EXE, "void __thiscall CEffectPrim::PrimSTIN4(CEffectPrim *this)\n{")
+current_stin4 = body(CURRENT, "void UpdateReferenceStin4(CEffectPrim* prim)")
+source_stin4_angle = body(REF_DHXJ_EFFECT2, "void\tCEffectPrim :: Get_Angle(float move_x,float move_z,short *angle)")
+exe_stin4_angle = body(EXE, "void __thiscall CEffectPrim::Get_Angle(CEffectPrim *this, float move_x, float move_z, __int16 *angle)\n{")
+current_stin4_angle = body(CURRENT, "int GetReferenceAngle(float moveX, float moveZ)")
+check("case 0x7D readable/decompiled Ref and canonical EXE agree; void dispatch reaches shared tick without pre-copy or position writes",
+      compact(source_stin4_decompiled) == compact(exe_stin4)
+      and re.search(r"case\s+0x7D:\s*CEffectPrim::PrimSTIN4\(this\);\s*goto \$L145961;", source_dispatch)
+      and "if (m_type == PP_STIN4)" in current_dispatch
+      and "UpdateReferenceStin4(this);" in current_dispatch
+      and 0x7D not in current_copy_ids
+      and not re.search(r"\bm_pos\s*=", source_stin4)
+      and not re.search(r"prim->m_pos\s*=", current_stin4)
+      and all(helper not in current_stin4 for helper in ["ProcessReferenceParticleAlpha", "ShiftReferenceSegments", "AnimateReferenceMotion"]))
+check("case 0x7D source, canonical EXE and current branch map covers actor gates, aiming, steering, fade, movement and snapshots",
+      all(compact(branch) in compact(source_stin4) for branch in [
+          "for (ec=0;ec<1;ec++)", "if (m_GI[ec].life == 1)", "m_GI[ec].process++;", "if (m_GI[ec].process>0)",
+          "if (m_deltaPos.y == g_session.GetAid())", "gameMode->GetWorld()->m_player", "GetGameActorByAID(m_deltaPos.y)",
+          "if (tActor == NULL)", "m_GI[ec].flag1[1] = 10;", "if (m_GI[ec].process == 1)", "break;",
+          "m_GI[ec].rise_angle+=30;", "if (m_GI[ec].rise_angle>=360)", "Get_Angle(Rx,Rz,&m_GI[ec].RotStart);",
+          "if (m_GI[ec].flag1[2] == 0)", "m_GI[ec].RotStart+=25+random(21);", "m_GI[ec].RotStart-=25+random(21);",
+          "else if (m_GI[ec].process<=20)", "m_GI[ec].alphaB+=8;", "if (m_GI[ec].alphaB>120)",
+          "m_GI[ec].flag1[1] = 10;", "if (m_GI[ec].process > 5 )", "if (m_GI[ec].flag1[1] == 0)",
+          "Rx=tActor->m_pos.x-m_GI[ec].vecB_now.x;", "m_GI[ec].RotStart >= nAngle - 3", "m_GI[ec].RotStart <= nAngle + 3",
+          "m_GI[ec].RotStart-=5;", "m_GI[ec].RotStart+=5;", "else if (m_GI[ec].flag1[1] == 10)",
+          "for (int i=0;i<4;i++)", "m_GI[i].alphaB-=5;", "if (m_GI[i].alphaB<0)", "m_GI[i].life=0;",
+          "m_GI[ec].RotStart-=1;", "m_GI[ec].RotStart+=1;",
+          "m_GI[ec].vecB_now.x+=m_GI[ec].height[1]*g_cosTable[m_GI[ec].RotStart];",
+          "m_GI[ec].vecB_now.z+=m_GI[ec].height[1]*g_sinTable[m_GI[ec].RotStart];",
+          "if (m_GI[ec].process%3 == 0)", "for (int i=3;i>=1;i--)",
+          "m_GI[i].vecB_now = m_GI[i-1].vecB_now;", "m_GI[i].alphaB = m_GI[i-1].alphaB*0.8f;",
+          "m_GI[i].rise_angle = m_GI[i-1].rise_angle;"])
+      and all(compact(branch) in compact(exe_stin4) for branch in [
+          "if ( *((_BYTE *)i - 16) != 1 )", "v4 = *((_DWORD *)i - 1) + 1;", "if ( v4 <= 0 )",
+          "(double)g_session.m_aid == v1->m_deltaPos.y", "v2->m_world->m_player", "CWorld::GetGameActorByAID",
+          "*((_BYTE *)i + 89) = 10;", "if ( *((_DWORD *)i - 1) == 1 )", "i[55] + 30", "if ( v8 == 1 )",
+          "rand() % 21", "v8 > 20", "*(i - 7) += 8;", "if ( *(i - 7) > 120 )", "if ( *((int *)i - 1) <= 5 )",
+          "*p_alphaB -= 5;", "if ( *p_alphaB < 0 )", "v20 >= v18 - 3 && v20 <= v18 + 3",
+          "v19 - 5", "v19 + 5", "*((float *)i + 29) = g_cosTable[*i] * *((float *)i + 2) + *((float *)i + 29);",
+          "*((float *)i + 31) = g_sinTable[*i] * *((float *)i + 2) + *((float *)i + 31);",
+          "if ( !(*((_DWORD *)i - 1) % 3) )", "v28 = 3;", "p_y -= 45;"])
+      and all(compact(branch) in compact(current_stin4) for branch in [
+          "EffectGi& gi = prim->m_gi[0];", "if (gi.life != 1) return;", "++gi.process;", "if (gi.process <= 0) return;",
+          "static_cast<double>(g_session.m_aid) == static_cast<double>(prim->m_deltaPos.y)", "world->m_player", "GetGameActorByAID(targetAid)", "if (!target)",
+          "gi.flag[1] = 10;", "if (gi.process == 1) return;", "gi.riseAngle = static_cast<short>(gi.riseAngle + 30);",
+          "if (gi.process == 1)", "GetReferenceAngle(deltaX, deltaZ)", "rand() % 21",
+          "gi.alphaB = static_cast<short>(gi.alphaB + 8);", "if (gi.alphaB > 120)", "if (gi.process > 5)",
+          "if (gi.flag[1] == 0)", "target->m_pos.x - gi.sparkX", "targetAngle - 3 && gi.rotStart <= targetAngle + 3",
+          "gi.rotStart = static_cast<short>(gi.rotStart - 5);", "gi.rotStart = static_cast<short>(gi.rotStart + 5);",
+          "else if (gi.flag[1] == 10)", "for (EffectGi& fadingGi : prim->m_gi)",
+          "fadingGi.alphaB = static_cast<short>(fadingGi.alphaB - 5);", "fadingGi.life = 0;",
+          "gi.rotStart = static_cast<short>(gi.rotStart - 1);", "gi.rotStart = static_cast<short>(gi.rotStart + 1);",
+          "gi.sparkX += gi.height[1] * g_cosTable[gi.rotStart];", "gi.sparkZ += gi.height[1] * g_sinTable[gi.rotStart];",
+          "if (gi.process % 3 == 0)", "for (int index = 3; index >= 1; --index)",
+          "destination.sparkX = source.sparkX;", "destination.sparkY = source.sparkY;", "destination.sparkZ = source.sparkZ;",
+          "static_cast<float>(source.alphaB) * 0.8f", "destination.riseAngle = source.riseAngle;"])
+      and source_stin4.index("m_GI[ec].process++;") < source_stin4.index("if (m_GI[ec].process>0)")
+      < source_stin4.index("if (m_deltaPos.y == g_session.GetAid())")
+      < source_stin4.index("if (tActor == NULL)") < source_stin4.index("m_GI[ec].rise_angle+=30;")
+      < source_stin4.index("if (m_GI[ec].process == 1)", source_stin4.index("m_GI[ec].rise_angle+=30;"))
+      < source_stin4.index("else if (m_GI[ec].process<=20)") < source_stin4.index("if (m_GI[ec].process > 5 )")
+      < source_stin4.index("else if (m_GI[ec].flag1[1] == 10)")
+      < source_stin4.index("m_GI[ec].vecB_now.x+=") < source_stin4.index("if (m_GI[ec].process%3 == 0)")
+      and current_stin4.index("++gi.process;") < current_stin4.index("if (gi.process <= 0) return;")
+      < current_stin4.index("if (!target)") < current_stin4.index("gi.riseAngle =")
+      < current_stin4.index("if (gi.process == 1)", current_stin4.index("gi.riseAngle ="))
+      < current_stin4.index("else if (gi.process <= 20)")
+      < current_stin4.index("if (gi.process > 5)") < current_stin4.index("else if (gi.flag[1] == 10)")
+      < current_stin4.index("gi.sparkX +=") < current_stin4.index("if (gi.process % 3 == 0)"))
+check("case 0x7D reuses the source Get_Angle scan and preserves canonical EXE zero-vector behavior",
+      compact(body(REF_EFFECT2, "void __thiscall CEffectPrim::Get_Angle(CEffectPrim *this, float move_x, float move_z, __int16 *angle)\n{"))
+          == compact(exe_stin4_angle)
+      and "if((move_x)>=g_cosTable[ii])" in compact(source_stin4_angle)
+      and "while(move_xa<(double)g_cosTable[v5])" in compact(exe_stin4_angle)
+      and "while (normalizedX < g_cosTable[angle])" in current_stin4_angle
+      and "GetReferenceAngle(deltaX, deltaZ)" in current_stin4
+      and "normalizedZ < 0.0f ? 360 - angle : angle" in current_stin4_angle)
