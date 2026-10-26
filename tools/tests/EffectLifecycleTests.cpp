@@ -223,6 +223,7 @@ void UpdateReferenceRectUp2(CEffectPrim*);
 void UpdateReferenceSphereWind2(CEffectPrim*);
 void UpdateReferenceSoulBreaker2(CEffectPrim*);
 void UpdateReferenceRainbow(CEffectPrim*);
+bool UpdateReferencePeong(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -347,6 +348,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SPHEREWIND2) { UpdateReferenceSphereWind2(this); return active; }
         if (m_type == PP_SOULBREAKER2) { UpdateReferenceSoulBreaker2(this); return active; }
         if (m_type == PP_RAINBOW) { UpdateReferenceRainbow(this); return active; }
+        if (m_type == PP_PEONG) { UpdateReferencePeong(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -797,6 +799,7 @@ __declspec(noinline) void RunRectUp2LifecycleChecks(CEffectPrim& prim, int& chec
 __declspec(noinline) void RunSphereWind2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSoulBreaker2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunRainbowLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunPeongLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1779,6 +1782,52 @@ __declspec(noinline) void RunRainbowLifecycleChecks(CEffectPrim& prim, int& chec
     check(a.process==-1 && a.alphaB==5 && a.rotStart==13,
         "case 0x5D has no positive-process guard and mutates alpha/rotation when signed-positive life remains at negative process");
     g_isSkipFrame=oldSkipFrame;
+    RunPeongLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunPeongLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude; testView.longitude=20.0f;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_PEONG; prim.m_stateCnt=0; prim.m_duration=1000; prim.m_pos={9,8,7};
+    prim.m_master->m_effectPos={100,200,300};
+    for (auto& gi : prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=89; a.alphaB=0; a.maxHeight=2; a.riseAngle=0;
+    a.vecBPreX=1; a.vecBPreZ=2; a.sparkY=100;
+    EffectGi& b=prim.m_gi[1]; b.life=1; b.process=24; b.alphaB=5; b.maxHeight=3; b.riseAngle=90;
+    b.vecBPreX=4; b.vecBPreZ=5; b.sparkY=20;
+    EffectGi& c=prim.m_gi[2]; c.life=1; c.process=25; c.alphaB=10; c.maxHeight=4; c.riseAngle=180;
+    c.vecBPreX=7; c.vecBPreZ=8; c.sparkY=30;
+    EffectGi& d=prim.m_gi[3]; d.life=2; d.process=70; d.alphaB=12; d.vecBPreX=10; d.vecBPreZ=11;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==9 && prim.m_pos.y==8 && prim.m_pos.z==7
+        && a.process==90 && a.alphaB==0 && std::fabs(a.vecBPreX-3)<0.0001f
+        && std::fabs(a.vecBPreZ-2)<0.0001f && std::fabs(a.arcBaselineY-(100-g_sinTable[180]*2*50))<0.0001f
+        && b.process==25 && b.alphaB==7 && std::fabs(b.vecBPreX-4)<0.0001f
+        && std::fabs(b.vecBPreZ-8)<0.0001f && std::fabs(b.arcBaselineY-(20-g_sinTable[50]*3*50))<0.0001f
+        && c.process==26 && c.alphaB==10 && std::fabs(c.vecBPreX-3)<0.0001f
+        && std::fabs(c.vecBPreZ-8)<0.0001f
+        && std::fabs(c.arcBaselineY-(30-g_sinTable[52]*4*50))<0.0001f
+        && d.process==70 && d.alphaB==12 && d.vecBPreX==10 && d.vecBPreZ==11
+        && prim.m_gi[0].alphaT==340 && prim.m_gi[1].alphaT==135 && rngDraws==draws,
+        "case 0x5E updates camera angles, moves only through process 90, applies exact 25/26 alpha edge and ignores inactive life");
+
+    a.process=69; a.alphaB=4; prim.OnProcess();
+    check(a.process==70 && a.alphaB==4,
+        "case 0x5E process 70 leaves alpha unchanged while movement remains active");
+    a.process=70; a.alphaB=1; prim.OnProcess();
+    check(a.process==71 && a.alphaB==0,
+        "case 0x5E process 71 begins one-point alpha fade with lower clamp");
+    a.process=-2; a.alphaB=6; a.vecBPreX=10; a.vecBPreZ=20; a.sparkY=40;
+    const float previousHeight=a.arcBaselineY;
+    prim.OnProcess();
+    check(a.process==-1 && a.alphaB==6 && a.vecBPreX==10 && a.vecBPreZ==20 && a.arcBaselineY==previousHeight,
+        "case 0x5E skips per-slot mutation for a nonpositive post-increment process while refreshing camera state");
+    testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()

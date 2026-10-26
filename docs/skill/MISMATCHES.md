@@ -258,3 +258,9 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 - Readable source `Ref/dhxj/RagEffect2.cpp:13965-14054` clamps the derived decay angle above 90 to 90, then computes `max_height * g_sinTable[90]`.
 - Decompiled Ref `Ref/RagEffect2.cpp:6452-6533` and canonical EXE `HighPriest.exe.c:451839-451949` instead multiply max height by `flt_72CA64`; `HighPriest.exe.c:39691+` shows the first table value is `0.0`. The decompiled Ref and EXE handler bodies compare equal.
 - Followed the canonical EXE/decompiled behavior: when the derived angle exceeds 90 in the decay branch, `height[2]` becomes zero. Normal rise behavior still uses max height for process >=90 while process<=alphaT.
+
+
+## PrimPeong decompiler symbol misattribution (0x5E) - 2026-10-26
+
+- `Ref/RagEffect2.cpp:2217-2220` carries a `PrimPeong` signature banner but the actual function definition/body is `PrimPeongUp`, with update logic for the separate PP_PEONGUP handler. Canonical EXE has `PrimPeong` at `HighPriest.exe.c:443952` (`0x61BD50`), and `Ref/dhxj/RagEffect2.cpp:9955` provides readable PrimPeong source.
+- Do not use the mislabeled decompiled body as PrimPeong evidence. The 0x5E port is compared against the readable handler and canonical EXE; the EXE branch map matches the readable source.
