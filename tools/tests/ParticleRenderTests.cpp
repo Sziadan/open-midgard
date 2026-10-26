@@ -121,6 +121,7 @@ float g_cosTable[361],g_sinTable[361];
 vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
 #include "CircleRenderBodies.inc"
 #include "CastingColorBodies.inc"
+#include "CastingLowRiseBody.inc"
 #include "ReferenceTriangleQueueBodies.inc"
 
 int main() {
@@ -138,6 +139,14 @@ int main() {
     for(const auto& item:castingColors) check(CastingSizeRgb(item.first)==item.second,"casting size tint matches original RenderTeiRect case table");
     check(CastingSizeAlpha(2,175)==175 && CastingSizeAlpha(3,175)==80,
         "casting size three fixes alpha to80 while other sizes retain band alpha");
+    for(const auto& item:std::array<std::pair<int,float>,4>{{{0,100.0f},{45,10.0f},{90,5.0f},{180,3.0f}}}) {
+        double radialExtended=0;float radialStored=0,vertical=0;
+        CastingLowPolygonRise(item.first,item.second,&radialExtended,&radialStored,&vertical);
+        check(near(radialExtended,static_cast<double>(GetSin(item.first*4))*item.second)
+            && near(radialStored,static_cast<float>(radialExtended))
+            && near(vertical,-static_cast<double>(GetCos(item.first*4))*item.second),
+            "low polygon casting uses source four-times-angle sine radial and cosine vertical tables");
+    }
     const int inverseSizes[]={0,2,3,12,13,14,100};
     for(int size=0;size<=100;++size) {
         bool inverse=false;for(int value:inverseSizes)inverse|=size==value;

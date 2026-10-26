@@ -104,6 +104,8 @@ extract_body(circle_render "${effect_source}" "void ProjectReferenceEffectVertex
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CircleRenderBodies.inc" "${circle_render}")
 extract_body(casting_colors "${effect_source}" "unsigned int CastingSizeRgb(" "void RenderHealLow(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CastingColorBodies.inc" "${casting_colors}")
+extract_body(casting_low_rise "${effect_source}" "void CastingLowPolygonRise(" "unsigned int CastingSizeAlpha(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CastingLowRiseBody.inc" "${casting_low_rise}")
 file(READ "../../src/render/Renderer.cpp" renderer_source)
 extract_body(reference_triangle_queue "${renderer_source}" "void CRenderer::AddReferenceEffectTriangle(" "void CRenderer::AddLmRP(")
 string(REPLACE "CRenderer::" "SilentRenderer::" reference_triangle_queue "${reference_triangle_queue}")

@@ -3310,6 +3310,14 @@ unsigned int CastingSizeRgb(float size)
     }
 }
 
+void CastingLowPolygonRise(int riseAngle, float height, double* radialExtended, float* radialStored, float* vertical)
+{
+    const int tableIndex = riseAngle * 4;
+    *radialExtended = static_cast<double>(g_sinTable[tableIndex]) * height;
+    *radialStored = static_cast<float>(*radialExtended);
+    *vertical = static_cast<float>(-static_cast<double>(g_cosTable[tableIndex]) * height);
+}
+
 unsigned int CastingSizeAlpha(float size, unsigned int alpha)
 {
     return size == 3.0f ? 80u : alpha;
@@ -3351,21 +3359,19 @@ void RenderHealLow(const CEffectPrim& prim, const matrix& viewMatrix)
         bool keepGoing = true;
         while (keepGoing) {
             int angle = (count + gi.rotStart) % 360;
-            if (angle < 0) {
-                angle += 360;
-            }
             if (gi.fullDisplayAngle == 360 && sample == 10) {
-                angle = TableAngle(gi.rotStart);
+                angle = gi.rotStart;
             }
             const float cosine = g_cosTable[angle];
             const float sine = g_sinTable[angle];
             vector3d inner{ gi.distance * cosine, 0.0f, gi.distance * sine };
-            const int rise = TableAngle(gi.riseAngle);
-            const float radial = g_cosTable[rise] * gi.height[static_cast<size_t>(sample)];
+            double radialExtended = 0.0;
+            float radialStored = 0.0f, vertical = 0.0f;
+            CastingLowPolygonRise(gi.riseAngle, gi.height[static_cast<size_t>(sample)], &radialExtended, &radialStored, &vertical);
             vector3d outer{
-                radial * cosine + inner.x,
-                -(g_sinTable[rise] * gi.height[static_cast<size_t>(sample)]),
-                radial * sine + inner.z
+                static_cast<float>(radialExtended * cosine + inner.x),
+                vertical,
+                radialStored * sine + inner.z
             };
             if (gi.sparkY == 1234.5f) {
                 const float offsetX = gi.sparkX * g_cosTable[spin] - gi.sparkZ * g_sinTable[spin];
@@ -3375,10 +3381,10 @@ void RenderHealLow(const CEffectPrim& prim, const matrix& viewMatrix)
                 outer.x += offsetX;
                 outer.z += offsetZ;
             }
-            if (havePrevious && gi.alphaB > 0) {
+            if (havePrevious) {
                 const int part = sample - 1;
-                const float u0 = static_cast<float>(part) * 0.047619049f;
-                const float u1 = static_cast<float>(part + 1) * 0.047619049f;
+                const float u0 = static_cast<float>(static_cast<double>(part) * 0.047619049);
+                const float u1 = static_cast<float>(static_cast<double>(part + 1) * 0.047619049);
                 const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | rgb;
                 const vector3d previousInnerWorld{ prim.m_pos.x + previousInner.x, prim.m_pos.y + previousInner.y, prim.m_pos.z + previousInner.z };
                 const vector3d innerWorld{ prim.m_pos.x + inner.x, prim.m_pos.y + inner.y, prim.m_pos.z + inner.z };
