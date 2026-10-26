@@ -7380,6 +7380,30 @@ void RenderGroundSample(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+short GroundSampleShort(int value)
+{
+    const int bits = value & 0xFFFF;
+    return static_cast<short>(bits < 0x8000 ? bits : bits - 0x10000);
+}
+
+void UpdateGroundSample(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        const short previous = gi.rotStart;
+        short next = GroundSampleShort(static_cast<int>(previous) + 1);
+        const short before359 = GroundSampleShort(static_cast<int>(previous) - 359);
+        const short subtract360 = GroundSampleShort(static_cast<int>(next) - 360);
+        const bool overflow = next < 0 && subtract360 >= 0;
+        gi.rotStart = next;
+        if ((before359 < 0) == overflow) {
+            next = subtract360;
+            gi.rotStart = next;
+        }
+        gi.maxHeight = static_cast<float>(static_cast<double>(g_sinTable[gi.rotStart]) * 0.5 + 1.5);
+    }
+}
+
 void TeiHit1Corners(const EffectGi& gi, vector3d corners[4])
 {
     const double height = gi.height[1];
@@ -8360,6 +8384,10 @@ u8 CEffectPrim::OnProcess()
 
 bool CEffectPrim::ProcessPrimitiveFrame()
 {
+    if (m_type == PP_GROUNDSAMPLE) {
+        UpdateGroundSample(this);
+        return true;
+    }
     if (m_type == PP_SUPERANGEL) {
         UpdateSuperAngelPrimitive(this);
         return true;

@@ -1132,6 +1132,18 @@ int main() {
         gi.life=0;ground.calls.clear();RenderGroundSample(prim,view);
         check(ground.calls.empty(),"GroundSample skips bands whose life is not one");
     }
+    {
+        CEffectPrim prim;EffectGi& first=prim.m_gi[0];EffectGi& wrap=prim.m_gi[1];
+        first.life=1;first.alphaB=0;first.rotStart=0;first.maxHeight=99.0f;
+        wrap.life=1;wrap.rotStart=359;wrap.maxHeight=99.0f;
+        prim.m_gi[2].life=0;prim.m_gi[2].rotStart=17;prim.m_gi[2].maxHeight=88.0f;
+        UpdateGroundSample(&prim);
+        check(first.rotStart==1&&near(first.maxHeight,g_sinTable[1]*0.5f+1.5f)
+            &&wrap.rotStart==0&&near(wrap.maxHeight,1.5f),
+            "PrimGroundSample increments live rotations and wraps 359 to zero before recomputing scale");
+        check(prim.m_gi[2].rotStart==17&&near(prim.m_gi[2].maxHeight,88.0f),
+            "PrimGroundSample leaves non-live GI slots unchanged");
+    }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;
 }

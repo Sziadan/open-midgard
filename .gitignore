@@ -59,3 +59,4 @@ tools/tests/*
 !tools/check_rainbow_parity.py
 !tools/check_triple_attack_parity.py
 !tools/check_ground_sample_parity.py
+!tools/check_prim_ground_sample_parity.py
