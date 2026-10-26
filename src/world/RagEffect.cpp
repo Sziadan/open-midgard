@@ -8293,7 +8293,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     m_hasTargetPos = false;
 
     switch (effectId) {
-    case 40: case 41:
+    case 40: case 41: case 49:
         // Direct helpers own STR completion; load the reference catalog clip below.
         m_handler = Handler::None;
         break;
@@ -12812,6 +12812,21 @@ void CRagEffect::SpawnSprayPond()
     }
 }
 
+// Ref/RagEffect.cpp:361-377 (0x606CB0), original effect 49.
+bool CRagEffect::ProcessFireHit()
+{
+    if (m_stateCnt == 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            const float x = m_effectPos.x-listener.x, z = m_effectPos.z-listener.z;
+            const char* wave = g_session.GetAttrWaveName(3);
+            PlayWave(wave,x,0.0f,z,250,40,1.0f);
+        }
+    }
+    return ProcessEZ2STR(0.0f,-80.0f,0.0f) != 0;
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -14037,6 +14052,7 @@ bool CRagEffect::ProcessEffectFrame()
     if (m_type == 183) return ProcessHit2Blue();
     if (m_type == 40) return ProcessSignum();
     if (m_type == 41) return ProcessAngelus();
+    if (m_type == 49) return ProcessFireHit();
     if (m_type == 48) {
         SpawnSprayPond();
         return true;

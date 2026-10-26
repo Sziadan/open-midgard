@@ -4,10 +4,17 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A SprayPond id48, after Angelus checkpoint `ad36755`. Original three emission schedules, exact resources and source 3D texture rotation/UV state and two-triangle geometry now bind direct reference paths.
+Current work: WP5A FireHit id49, after SprayPond checkpoint `d2a9232`. Direct helper now plays source fire attribute audio with exact RNG timing and preserves per-call minus-eighty STR offset and completion.
 
-Next action: continue unported emitters/control helpers (including FireHit id49 and FireSplashHit id50) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters/control helpers (including FireSplashHit id50) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## FireHit attribute audio / STR offset — 2026-10-26
+
+- Ref/RagEffect.cpp:361-377 (0x606CB0), inlined in original OnProcess case49 -> ProcessFireHit, direct Init/ProcessEffectFrame route. Frame0 obtains stored effect-origin horizontal listener deltas, calls existing CSession::GetAttrWaveName(3) and plays selected wave at volume250/range40/frequency1 before returning ProcessEZ2STR(0,-80,0). Later frames process STR without sound or RNG. Preserves parent origin/lifetime and original id49 no-frame-time gate exception. No reduced-effects suppression or primitive emission.
+- Ref/Session.cpp:5369-5407 (0x66B470) -> existing CSession::GetAttrWaveName selector, unchanged. Fire attribute consumes exactly one rand()%2 and returns exact _enemy_hit_fire1.wav or _enemy_hit_fire2.wav. Silent lifecycle harness now compiles the production selector and wave tables, instrumenting only RNG calls. Existing exact FireHit1..3.str catalog selection and loader remain in use.
+
+Validation: release build, six silent C++ suites / 1263 checks (1047 lifecycle/primitive, 158 rendering, 58 other), six Python tests, executable audio literal/pointer and selector-call audits, catalog/resource and whitespace checks pass. Added13 lifecycle checks for both selected waves/one-draw ordering, missing/active/exhausted STR completion, exact stored-origin horizontal sound/source parameters, reduced-effects behavior, unchanged screen fields on missing STR, moving STR anchor/minus-eighty offset, unchanged parent fields, no repeated nonzero sound/RNG, no extra primitives/resources and existing tick-gate exception. Wave bytes0x723410/0x723428 and MOV return-pointer instructions0x66B50C/0x66B503 match original executable; FireHit selector CALL0x606CFB targets0x66B470. Both waves and all three STR variants exist in extracted GRF. No media/live acceptance. Approved OldRO SHA-256: `9547EFA9524E547666E13F3CCBEA6ED7AD357810E735CD3D5F77A5E83D5740A0`. Other emitters/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## SprayPond panels / scrolling 3D texture geometry — 2026-10-26
 

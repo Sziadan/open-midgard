@@ -67,6 +67,11 @@ extract_body(matrix_mult "${math_source}" "void MatrixMult(" "void MatrixInverse
 extract_body(matrix_rotations "${math_source}" "void MatrixAppendXRotation(" "// --- Intersection Tests")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ParticleMatrixBodies.inc" "${matrix_mult}\n${matrix_rotations}")
 file(READ "../../src/world/RagEffect.cpp" effect_source)
+extract_body(attr_wave_tables "${session_source}" "constexpr const char* kEnemyHitNormalWaves[]" "struct JobTokenEntry")
+extract_body(attr_wave_selector "${session_source}" "const char* CSession::GetAttrWaveName(" "const char* CSession::GetJobHitWaveName(")
+# Instrument the production selector's RNG with the same silent sequence as emitters.
+string(REPLACE "std::rand()" "SilentRand()" attr_wave_selector "${attr_wave_selector}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/AttrWaveBodies.inc" "${attr_wave_tables}\n${attr_wave_selector}")
 file(READ "../../src/res/Res.cpp" resource_source)
 extract_body(resource_lock "${resource_source}" "int CRes::Lock()" "bool CRes::LoadFromBuffer(")
 file(READ "../../src/world/RagEffect.h" effect_header)

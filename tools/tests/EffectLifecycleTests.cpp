@@ -153,7 +153,7 @@ struct CGameMode {
     int messages=0,lastMsg=0,lastArg=0;
     void SendMsg(int msg,msgparam_t arg,msgparam_t,msgparam_t) {++messages;lastMsg=msg;lastArg=static_cast<int>(arg);}
 } gameMode;
-struct SilentSession {bool m_isMinEffect=false;} g_session;
+struct CSession {bool m_isMinEffect=false;const char* GetAttrWaveName(int) const;} g_session;
 struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
 #include "PrimitiveEnum.inc"
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
@@ -312,6 +312,7 @@ struct CRagEffect : CGameObject {
     void ApplyBash();
     bool ProcessSignum();
     bool ProcessAngelus();
+    bool ProcessFireHit();
     void SpawnSprayPond();
     void SpawnIncAgility();
     void SpawnDecAgility();
@@ -387,6 +388,7 @@ CRagEffect* CAbleToMakeEffect::LaunchEffect(int type, vector3d, float)
 }
 
 #define rand SilentRand
+#include "AttrWaveBodies.inc"
 #include "EffectLifecycleBodies.inc"
 #undef rand
 
@@ -3485,6 +3487,47 @@ int main()
         effect.m_stateCnt=0;panel->m_stateCnt=130;check(panel->OnProcess()==0&&panel->m_stateCnt==131&&panel->m_alpha==120,
             "SprayPond water includes final duration frame and retires at original full alpha without invented fade");
         effect.ClearPrims();g_world.UpdateGameObjects();g_session.m_isMinEffect=false;
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;
+        effect.m_master=&actor;effect.m_type=49;effect.m_effectPos={30,50,40};effect.m_duration=100;
+        effect.m_tlvertX=12;effect.m_tlvertY=34;effect.m_tlvertZ=56;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        rngValues={0};rngCursor=0;g_session.m_isMinEffect=true;
+        check(!effect.ProcessFireHit()&&waveCalls.size()==1&&rngDraws==draws+1&&rngCursor==1,
+            "FireHit frame zero selects sound with one draw before propagating missing STR despite reduced effects");
+        check(waveCalls[0].name=="_enemy_hit_fire1.wav"&&waveCalls[0].frameRng==draws+1,
+            "FireHit uses original first fire attribute wave and plays after selector RNG");
+        check(waveCalls[0].x==28&&waveCalls[0].y==0&&waveCalls[0].z==36&&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "FireHit uses stored-origin horizontal listener deltas and original wave parameters");
+        check(effect.m_tlvertX==12&&effect.m_tlvertY==34&&effect.m_tlvertZ==56,
+            "FireHit missing STR leaves screen fields unchanged without an extra projection");
+        effect.m_stateCnt=1;check(!effect.ProcessFireHit()&&rngDraws==draws+1&&waveCalls.size()==1,
+            "FireHit later missing STR returns false without repeating selector RNG or audio");
+        auto clip=std::make_unique<KANICLIP>();clip->cLayer=2;KAC_KEYFRAME keys[2];keys[0].iFrame=0;keys[1].iFrame=100;
+        clip->aLayer[1].cAniKey=2;clip->aLayer[1].aAniKey=keys;effect.m_ezEffectRes=clip.get();effect.m_aniClips=clip.get();
+        effect.InitEZ2STRFrame();rngValues={1};rngCursor=0;g_session.m_isMinEffect=false;
+        check(effect.ProcessFireHit()&&effect.m_strFrameActive&&rngDraws==draws+2&&waveCalls.size()==2,
+            "FireHit normal mode selects one sound and continues active STR on zero frame");
+        check(waveCalls[1].name=="_enemy_hit_fire2.wav"&&waveCalls[1].frameRng==draws+2,
+            "FireHit production selector returns exact second fire wave for odd draw");
+        tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_strScreenOffset.x==0&&effect.m_strScreenOffset.y==-80&&effect.m_strScreenOffset.z==0
+            &&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y-80,
+            "FireHit active STR uses source minus-eighty vertical offset at actor projection");
+        actor.m_pos={20,30,120};effect.m_stateCnt=1;
+        check(effect.ProcessFireHit()&&rngDraws==draws+2&&waveCalls.size()==2,"FireHit later active STR avoids repeated audio and RNG");
+        ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y-80&&effect.m_strAnchorPosition.z==120
+            &&effect.m_effectPos.x==30&&effect.m_effectPos.y==50&&effect.m_effectPos.z==40&&effect.m_duration==100,
+            "FireHit STR follows moving actor while preserving stored effect origin and parent lifetime");
+        effect.m_iCurLayer=effect.m_cEndLayer;
+        check(!effect.ProcessFireHit()&&!effect.m_strFrameActive&&waveCalls.size()==2&&rngDraws==draws+2,
+            "FireHit propagates exhausted STR without extra audio or RNG");
+        check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&g_resMgr.requests.empty(),"FireHit helper adds no primitives or extra resource loads");
+        check(EffectTicksWhenNoFrameTime(49),"FireHit preserves original effect-level no-frame-time gate exception");
+        effect.m_ezEffectRes=nullptr;effect.m_aniClips=nullptr;g_world.m_player=oldPlayer;rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
