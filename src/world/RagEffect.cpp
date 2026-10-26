@@ -9226,6 +9226,47 @@ void UpdateReferenceBash3D(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:13965; canonical executable PrimRectUp2 at 0x625E50 (case 0x5A).
+void UpdateReferenceRectUp2(CEffectPrim* prim)
+{
+    auto updateHeight = [](EffectGi& gi) {
+        if (gi.process > gi.alphaT) {
+            const int baseAngle = gi.height[4] == 0.0f ? 2505 : 2475;
+            const int angle = baseAngle - gi.process;
+            if (angle > 90) {
+                // Canonical EXE multiplies by flt_72CA64, whose first value is 0.0.
+                gi.height[2] = 0.0f * gi.maxHeight;
+            } else {
+                const int clampedAngle = angle < 0 ? 0 : angle;
+                gi.height[2] = gi.maxHeight * g_sinTable[clampedAngle];
+            }
+        } else if (gi.process >= 90) {
+            gi.height[2] = gi.maxHeight;
+        } else {
+            gi.height[2] = gi.maxHeight * g_sinTable[gi.process];
+        }
+    };
+
+    for (int index = 0; index < 2; ++index) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(index)];
+        if (gi.life != 1) continue;
+        ++gi.process;
+        if (gi.process <= 0) continue;
+        updateHeight(gi);
+    }
+    for (int index = 2; index < 4; ++index) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(index)];
+        if (gi.life != 1) continue;
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        gi.distance += 0.5f;
+        const float wrapDistance = gi.height[0] * 8.0f;
+        if (gi.distance > wrapDistance) gi.distance -= wrapDistance;
+        updateHeight(gi);
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -10327,6 +10368,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_BASH3D) {
         UpdateReferenceBash3D(this); // Source case 0x59 continues to the common tick.
+        return true;
+    }
+    if (m_type == PP_RECT_UP2) {
+        UpdateReferenceRectUp2(this); // Source case 0x5A continues to the common tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

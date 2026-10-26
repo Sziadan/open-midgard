@@ -219,6 +219,7 @@ void UpdateReferenceSoulBreaker(CEffectPrim*);
 void UpdateReferencePressure(CEffectPrim*);
 void UpdateReferenceGroundShake(CEffectPrim*);
 void UpdateReferenceBash3D(CEffectPrim*);
+void UpdateReferenceRectUp2(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -339,6 +340,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_PRESSURE) { UpdateReferencePressure(this); return active; }
         if (m_type == PP_GROUNDSHAKE) { UpdateReferenceGroundShake(this); return active; }
         if (m_type == PP_BASH3D) { UpdateReferenceBash3D(this); return active; }
+        if (m_type == PP_RECT_UP2) { UpdateReferenceRectUp2(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -785,6 +787,7 @@ __declspec(noinline) void RunSoulBreakerLifecycleChecks(CEffectPrim& prim, int& 
 __declspec(noinline) void RunPressureLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunGroundShakeLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunBash3DLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunRectUp2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1591,6 +1594,49 @@ __declspec(noinline) void RunBash3DLifecycleChecks(CEffectPrim& prim, int& check
     prim.OnProcess();
     check(a.process==11 && a.alphaB==30 && std::fabs(a.distance-11.5f)<0.0001f,
         "case 0x59 values adjacent to selector 2 use the default multiplier and preserve the process-11 alpha gap");
+    g_isSkipFrame=oldSkipFrame;
+    RunRectUp2LifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunRectUp2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_RECT_UP2; prim.m_stateCnt=0; prim.m_duration=1000; prim.m_pos={9,8,7};
+    prim.m_master->m_effectPos={100,200,300};
+    for (auto& gi : prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=89; a.alphaT=100; a.maxHeight=12;
+    EffectGi& b=prim.m_gi[1]; b.life=1; b.process=100; b.alphaT=100; b.maxHeight=20; b.height[4]=0;
+    EffectGi& c=prim.m_gi[2]; c.life=1; c.process=0; c.alphaT=20; c.maxHeight=10; c.height[0]=2; c.height[4]=1; c.distance=15;
+    EffectGi& d=prim.m_gi[3]; d.life=1; d.process=-2; d.alphaT=20; d.maxHeight=8; d.height[0]=2; d.distance=6;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==9 && prim.m_pos.y==8 && prim.m_pos.z==7
+        && a.process==90 && a.height[2]==12
+        && b.process==101 && b.height[2]==0
+        && c.process==1 && std::fabs(c.distance-15.5f)<0.0001f
+        && std::fabs(c.height[2]-10*g_sinTable[1])<0.0001f
+        && d.process==-1 && d.distance==6 && rngDraws==draws,
+        "case 0x5A processes two GI groups, uses rise plateau/EXE zero-decay branches, preserves no-position-copy behavior and skips nonpositive process");
+
+    c.process=1; c.distance=15.5f; prim.OnProcess();
+    check(c.process==2 && c.distance==16.0f,
+        "case 0x5A outer distance equality does not wrap at the strict height0-times-eight boundary");
+    c.process=2; c.distance=16.0f; prim.OnProcess();
+    check(c.process==3 && c.distance==0.5f,
+        "case 0x5A outer distance subtracts its circumference once when strictly exceeded");
+
+    a.process=2414; a.alphaT=2414; a.height[4]=0; a.maxHeight=30; prim.OnProcess();
+    check(a.process==2415 && a.height[2]==30*g_sinTable[90],
+        "case 0x5A zero selector computes a 90-degree decay endpoint from 2505 minus process");
+    a.process=2384; a.alphaT=2384; a.height[4]=1; a.maxHeight=40; prim.OnProcess();
+    check(a.process==2385 && a.height[2]==40*g_sinTable[90],
+        "case 0x5A nonzero selector computes a 90-degree decay endpoint from 2475 minus process");
+    a.process=100; a.alphaT=100; a.height[4]=1; a.maxHeight=40; prim.OnProcess();
+    check(a.process==101 && a.height[2]==0,
+        "case 0x5A canonical EXE zeroes decay height when the derived angle exceeds 90 instead of readable Ref's clamp");
     g_isSkipFrame=oldSkipFrame;
 }
 

@@ -251,3 +251,10 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 - `Ref/dhxj/RagEffect2.cpp:26215-26240` (`Get_Angle`) normalizes by `sqrt(move_x*move_x + move_z*move_z)` and scans using `move_x >= g_cosTable[ii]`. With a zero vector, the normalized values are NaN, every `>=` comparison is false, and the readable helper assigns 180.
 - `Ref/RagEffect2.cpp` decompilation and canonical `HighPriest.exe.c:465574-465602` (`Get_Angle`, 0x63FED0) normalize identically but use the inverse loop condition `normalizedX < g_cosTable[ii]`; NaN makes the first loop test false, then the Z sign branch returns angle 0. This is confirmed by the decompiled Ref and executable bodies matching.
 - The 0x56 implementation follows the canonical executable and decompiled Ref, returning angle 0 for a zero vector. For finite nonzero vectors the readable and decompiled conditions are equivalent and the branch maps match. Runtime frequency of a zero direction has not been established.
+
+
+## PrimRectUp2 over-90 angle result (0x5A) - 2026-10-26
+
+- Readable source `Ref/dhxj/RagEffect2.cpp:13965-14054` clamps the derived decay angle above 90 to 90, then computes `max_height * g_sinTable[90]`.
+- Decompiled Ref `Ref/RagEffect2.cpp:6452-6533` and canonical EXE `HighPriest.exe.c:451839-451949` instead multiply max height by `flt_72CA64`; `HighPriest.exe.c:39691+` shows the first table value is `0.0`. The decompiled Ref and EXE handler bodies compare equal.
+- Followed the canonical EXE/decompiled behavior: when the derived angle exceeds 90 in the decay branch, `height[2]` becomes zero. Normal rise behavior still uses max height for process >=90 while process<=alphaT.
