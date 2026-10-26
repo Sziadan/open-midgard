@@ -8021,6 +8021,77 @@ bool UpdateLinearReferenceParticle(CEffectPrim* prim)
     return AnimateReferenceParticle(prim);
 }
 
+// Ref/RagEffectPrim.cpp:678-808. PP_3DPARTICLE_NOMASTER moves from its
+// stored origin and has distinct change-point and pattern-bit semantics.
+bool UpdateReferenceNoMasterParticle(CEffectPrim* prim)
+{
+    const vector3d origin = AddVec3(prim->m_orgPos, prim->m_deltaPos2);
+    if (prim->m_stateCnt == prim->m_changePoint) {
+        prim->m_speed3d = prim->m_changeSpeed3d;
+        prim->m_deltaPosAccel = prim->m_changeAccel3d;
+    }
+
+    const double speed = static_cast<double>(prim->m_accel) + prim->m_speed;
+    prim->m_speed = static_cast<float>(speed);
+    prim->m_sizeSpeed += prim->m_sizeAccel;
+    if ((prim->m_pattern & 0x400) != 0) {
+        prim->m_speed3d = AddVec3(prim->m_speed3d, prim->m_deltaPosAccel);
+        prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
+        prim->m_roll += prim->m_rollSpeed;
+        prim->m_size += prim->m_sizeSpeed;
+    } else if ((prim->m_pattern & 1) != 0 || prim->m_stateCnt > prim->m_fadeInCnt) {
+        prim->m_speed3d = {
+            static_cast<float>(speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+            static_cast<float>(speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+            static_cast<float>(speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+        };
+        prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
+        prim->m_roll += prim->m_rollSpeed;
+        prim->m_size += prim->m_sizeSpeed;
+    }
+
+    if ((prim->m_pattern & 2) != 0 && prim->m_stateCnt % prim->m_count == 0) {
+        prim->m_count = rand() % 8 + 12;
+        prim->m_deltaPos3.x = static_cast<float>((rand() % 5 + 5) * 0.0099999998);
+        prim->m_deltaPos3.z = static_cast<float>((rand() % 5 + 5) * 0.0099999998);
+        const auto reverseDirection = []() {
+            const int value = rand() & 0x80000001;
+            if (value == 0) return true;
+            return value < 0
+                && (((static_cast<int>(static_cast<unsigned char>(value)) - 1) | 0xFFFFFFFE) == -1);
+        };
+        if (reverseDirection()) prim->m_deltaPos3.x *= -1.0f;
+        if (reverseDirection()) prim->m_deltaPos3.z *= -1.0f;
+        prim->m_deltaPos.x += prim->m_deltaPos3.x;
+    }
+    if ((prim->m_pattern & 4) != 0 && prim->m_stateCnt % prim->m_count == 0) {
+        prim->m_speed = static_cast<float>((rand() % 35 + 15) * 0.0099999998);
+        prim->m_longitude = static_cast<float>(prim->m_longitude - 40.0 + rand() % 80);
+        prim->m_latitude = static_cast<float>(prim->m_latitude - 40.0 + rand() % 80);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+        prim->m_count = rand() % 10 + 5;
+    }
+    if ((prim->m_pattern & 8) != 0 && prim->m_stateCnt % prim->m_count == 0) {
+        prim->m_longitude = static_cast<float>(prim->m_longitude - 5.0 + rand() % 10);
+        prim->m_latitude = static_cast<float>(prim->m_latitude - 5.0 + rand() % 10);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_count = rand() % 15 + 5;
+    }
+
+    prim->m_pos = AddVec3(origin, prim->m_deltaPos);
+    if ((prim->m_pattern & 0x20) != 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_view) prim->m_roll = prim->m_roty - mode->m_view->GetCameraLongitude();
+    }
+    ProcessReferenceParticleAlpha(prim);
+    ShiftCircleSegments(prim);
+    return AnimateReferenceParticle(prim);
+}
+
 // Ref/GameActor.cpp:10748-10928. Each sprite retains its own texture and
 // palette; clip color/zoom/rotation are never baked into a motion canvas.
 struct ParticleSprite {
@@ -8321,6 +8392,9 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_3DSPHERE) {
         UpdateReferenceSphere(this);
         return true;
+    }
+    if (m_type == PP_3DPARTICLE_NOMASTER) {
+        return UpdateReferenceNoMasterParticle(this);
     }
     if (m_type == PP_GROUNDSAMPLE) {
         UpdateGroundSample(this);

@@ -347,6 +347,7 @@ public:
     int m_count = 0;
     float m_v1 = 0.0f, m_v2 = 1.0f;
     int m_changePoint = -1;
+    int m_fadeInCnt = -1;
     float m_changeSpeed = 0.000099999997f;
     float m_changeAccel = 0.000099999997f;
     float m_changeHeightSpeed = 0.000099999997f;
@@ -355,6 +356,8 @@ public:
     float m_changeHeightAccel = 0.000099999997f;
     float m_changeSpeedY = 0.0f;
     float m_changeAccelY = 0.0f;
+    vector3d m_changeSpeed3d{};
+    vector3d m_changeAccel3d{};
     int m_playWaveType = 0;
     std::vector<float> m_chVal2;
     std::string m_spriteActName;

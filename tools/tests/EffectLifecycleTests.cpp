@@ -163,6 +163,7 @@ constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
 void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
 bool UpdateLinearReferenceParticle(CEffectPrim*);
+bool UpdateReferenceNoMasterParticle(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
 void UpdateReferenceQuadHorn(CEffectPrim*);
 void UpdateReferenceFlash(CEffectPrim*);
@@ -211,8 +212,10 @@ struct CEffectPrim : CGameObject {
     float m_v1=0,m_v2=1;
     float m_changeSpeedY=0,m_changeAccelY=0;
     int m_changePoint=-1;
+    int m_fadeInCnt=-1;
     float m_changeSpeed=0.000099999997f,m_changeAccel=0.000099999997f,m_changeHeightSpeed=0.000099999997f;
     float m_changeWidthSpeed=0.000099999997f,m_changeWidthAccel=0.000099999997f,m_changeHeightAccel=0.000099999997f;
+    vector3d m_changeSpeed3d,m_changeAccel3d;
     std::vector<float> m_chVal2;
     bool active = true;
     ~CEffectPrim() override;
@@ -239,6 +242,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DLINE) { m_pos.y += 5.0f; return active; }
         if (m_type == PP_2DCIRCLE) { UpdateReferenceScreenCircle(this); return active; }
         if (m_type == PP_3DSPHERE) { UpdateReferenceSphere(this); return active; }
+        if (m_type == PP_3DPARTICLE_NOMASTER) return UpdateReferenceNoMasterParticle(this);
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -862,6 +866,72 @@ int main()
             && sphere.m_longitude == 12 && sphere.m_stateCnt == 1,
             "OnProcess case 0x0E always executes source sphere origin, radius, longitude and shared lifetime branches");
         sphere.m_master = nullptr;
+        auto noMasterEffectStorage = std::make_unique<CRagEffect>();
+        CRagEffect& noMasterEffect = *noMasterEffectStorage;
+        noMasterEffect.m_duration = 200;
+        auto noMasterStorage = std::make_unique<CEffectPrim>();
+        CEffectPrim& noMaster = *noMasterStorage;
+        noMaster.m_master = &noMasterEffect;
+        noMaster.m_type = PP_3DPARTICLE_NOMASTER;
+        noMaster.m_duration = 100;
+        noMaster.m_animSpeed = 4;
+        noMaster.m_orgPos = {10,20,30};
+        noMaster.m_deltaPos2 = {1,2,3};
+        noMaster.m_deltaPos = {1,1,1};
+        noMaster.m_pattern = 0x420;
+        noMaster.m_changePoint = 0;
+        noMaster.m_changeSpeed3d = {2,3,4};
+        noMaster.m_changeAccel3d = {1,-1,2};
+        noMaster.m_size = 5; noMaster.m_sizeSpeed = 3; noMaster.m_sizeAccel = 2;
+        noMaster.m_roll = 10; noMaster.m_rollSpeed = 4; noMaster.m_roty = 40;
+        check(noMaster.OnProcess() == 1 && noMaster.m_speed3d.x == 3 && noMaster.m_speed3d.y == 2
+            && noMaster.m_speed3d.z == 6 && noMaster.m_deltaPos.x == 4 && noMaster.m_deltaPos.y == 3
+            && noMaster.m_deltaPos.z == 7 && noMaster.m_pos.x == 15 && noMaster.m_pos.y == 25
+            && noMaster.m_pos.z == 40 && noMaster.m_sizeSpeed == 5 && noMaster.m_size == 10
+            && noMaster.m_roll == 24.5f && noMaster.m_stateCnt == 1,
+            "OnProcess case 0x15 uses change-point acceleration, pattern 0x400 motion and camera-relative 0x20 roll");
+        noMaster.m_pattern = 0; noMaster.m_stateCnt = 0; noMaster.m_fadeInCnt = 0;
+        noMaster.m_speed = 5; noMaster.m_accel = 1; noMaster.m_deltaPos = {};
+        noMaster.m_size = 2; noMaster.m_sizeSpeed = 1; noMaster.m_sizeAccel = 1;
+        check(noMaster.OnProcess() == 1 && noMaster.m_speed == 6 && noMaster.m_sizeSpeed == 2
+            && noMaster.m_size == 2 && noMaster.m_deltaPos.x == 0 && noMaster.m_stateCnt == 1,
+            "OnProcess case 0x15 observes the strict post-fade-in movement gate while integrating scalar speeds");
+        noMaster.m_pattern = 1; noMaster.m_stateCnt = 0; noMaster.m_fadeInCnt = 100;
+        noMaster.m_speed = 2; noMaster.m_accel = 1; noMaster.m_deltaPos = {};
+        noMaster.m_size = 2; noMaster.m_sizeSpeed = 0; noMaster.m_sizeAccel = 0;
+        MatrixIdentity(noMaster.m_matrix);
+        check(noMaster.OnProcess() == 1 && noMaster.m_speed3d.z == 3 && noMaster.m_deltaPos.z == 3
+            && noMaster.m_pos.x == 11 && noMaster.m_pos.y == 22 && noMaster.m_pos.z == 36,
+            "OnProcess case 0x15 pattern 1 bypasses fade-in and moves along the stored matrix direction");
+        noMaster.m_pattern = 2; noMaster.m_stateCnt = 0; noMaster.m_count = 1; noMaster.m_deltaPos = {};
+        rngValues = {3,2,4,0,1}; rngCursor = 0; const int noMasterRngStart = rngDraws;
+        check(noMaster.OnProcess() == 1 && rngDraws - noMasterRngStart == 5 && noMaster.m_count == 15
+            && std::fabs(noMaster.m_deltaPos3.x + 0.07f) < 0.000001f
+            && std::fabs(noMaster.m_deltaPos3.z - 0.09f) < 0.000001f
+            && std::fabs(noMaster.m_deltaPos.x + 0.07f) < 0.000001f,
+            "OnProcess case 0x15 pattern 2 preserves interval, drift and signed RNG draw order");
+        noMaster.m_pattern = 4; noMaster.m_stateCnt = 0; noMaster.m_count = 1;
+        noMaster.m_speed = 0; noMaster.m_accel = 0; noMaster.m_longitude = 0; noMaster.m_latitude = 0;
+        rngValues = {20,10,30,2}; rngCursor = 0; const int pattern4RngStart = rngDraws;
+        check(noMaster.OnProcess() == 1 && rngDraws - pattern4RngStart == 4
+            && std::fabs(noMaster.m_speed - 0.35f) < 0.000001f && noMaster.m_longitude == -30
+            && noMaster.m_latitude == -10 && noMaster.m_count == 7,
+            "OnProcess case 0x15 pattern 4 preserves randomized speed, angles, matrix rebuild and interval order");
+        noMaster.m_pattern = 8; noMaster.m_stateCnt = 0; noMaster.m_count = 1;
+        noMaster.m_longitude = 0; noMaster.m_latitude = 0;
+        rngValues = {6,3,2}; rngCursor = 0; const int pattern8RngStart = rngDraws;
+        check(noMaster.OnProcess() == 1 && rngDraws - pattern8RngStart == 3
+            && noMaster.m_longitude == 1 && noMaster.m_latitude == -2 && noMaster.m_count == 7,
+            "OnProcess case 0x15 pattern 8 preserves independent angle changes, rotation order and interval");
+        noMaster.m_pattern = 0; noMaster.m_stateCnt = 0; noMaster.m_animSpeed = 1;
+        noMaster.m_repeatAnim = false; noMaster.m_curMotion = 0;
+        const int oldNoMasterMotionCount = g_resMgr.act.count;
+        noMaster.m_particleActRes = &g_resMgr.act; g_resMgr.act.count = 1;
+        check(noMaster.OnProcess() == 0 && noMaster.m_curMotion == 1 && noMaster.m_stateCnt == 0,
+            "OnProcess case 0x15 animation completion returns before the shared state increment");
+        g_resMgr.act.count = oldNoMasterMotionCount;
+        noMaster.m_particleActRes = nullptr; noMaster.m_master = nullptr;
+        rngValues.clear(); rngCursor = 0;
         g_isSkipFrame = 0;
         prim.updates = 0;
         const int copiedTypes[] = {0x17,0x1C,0x1D,0x1E,0x20,0x23,0x3C,0x44,0x63,0x68,0x69,0x6A,0x6C,0x6D,0x6F};
@@ -1459,9 +1529,11 @@ int main()
         check(particle->m_numSegments==1 && particle->m_segments[0].argb==0xFAFFFFFF && shadow->m_segments[0].argb==0x96FFFFFF,
             "Ruwach initializes one colored segment before the first update");
         check(particle->UsesReferenceParticle() && shadow->UsesReferenceParticle(),"Ruwach uses reference particle dispatch");
-        check(particle->OnProcess()==1 && particle->m_stateCnt==1 && particle->m_curMotion==1 && std::fabs(particle->m_size-2.9f)<0.00001f
+        const u8 ruwachParticleResult=particle->OnProcess();
+        check(ruwachParticleResult==1 && particle->m_stateCnt==1 && particle->m_curMotion==1 && std::fabs(particle->m_size-2.9f)<0.00001f
             && particle->m_alpha==247,"Ruwach frame zero advances motion after shrinking and fading");
-        check(shadow->OnProcess()==1 && shadow->m_curMotion==1 && shadow->m_alpha==147.5f,"Ruwach shadow also advances motion on zero");
+        const u8 ruwachShadowResult=shadow->OnProcess();
+        check(ruwachShadowResult==1 && shadow->m_curMotion==1 && shadow->m_alpha==147.5f,"Ruwach shadow also advances motion on zero");
         check(particle->m_segments[0].argb==0xF7FFFFFF && std::fabs(particle->m_pos.y-10)<0.0001f,
             "Ruwach update stores segment alpha and parent-relative position");
         effect.m_effectPos={40,50,60};particle->m_stateCnt=1;particle->OnProcess();
