@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22 and shared GumGang IDs 0x23/0x63 now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
+Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, and 0x25 now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
 
-Next action: branch-compare source case 0x25 (`PP_GRANDCROSS2`) against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
+Next action: branch-compare source case 0x26 (`PP_LINELINK`) against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
 
-Latest checkpoint (2026-10-26): `PP_MAPPARTICLE` case 0x1B is implemented and branch-compared against Ref/dhxj, Ref decompilation and canonical EXE. Inventory reports 51 source-only IDs; lifecycle suite passes 1,592 checks, all six CTest suites and seven Python reference-index tests pass. x64 Release build passes; OldRO SHA-256 is `F15C1419FB12A7FCED8793ECA5C60B3BB377BABE121C7F10CBC49D3071042C43`; this checkpoint records the completed part. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `PP_MAPPARTICLE` case 0x1B is implemented and branch-compared against Ref/dhxj, Ref decompilation and canonical EXE. Inventory reports 50 source-only IDs; lifecycle suite passes 1,594 checks, all six CTest suites and seven Python reference-index tests pass. x64 Release build passes; OldRO SHA-256 is `1D778EACE6AD133A01D374DF7099058C5FA72C1CB8C6D7472DB490460895E5DD`; this checkpoint records the completed part. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26
@@ -640,3 +640,6 @@ Case 0x22 (`PP_GI_3`) checkpoint (2026-10-26): source and canonical EXE `PrimGI3
 
 
 Cases 0x23/0x63 (`PP_GUMGANG`/`PP_DOUBLEGUMGANG`) checkpoint (2026-10-26): source and canonical EXE `PrimGumGang` bodies match and share one updater. Both IDs now copy camera/master state and update four live-band groups; each group advances its angle, raises or lowers its height by source thresholds, and on reset consumes RNG in exact 360/5/8 order before assigning one of four vector Y values. Comparator verifies shared routing and ordered branch effects. Lifecycle suite passes 1,592 checks; all six CTest suites, seven Python tests, x64 Release build and OldRO hash `F15C1419FB12A7FCED8793ECA5C60B3BB377BABE121C7F10CBC49D3071042C43` pass. 51 source IDs remain unmapped; overall OnProcess parity is open.
+
+
+Case 0x25 (`PP_GRANDCROSS2`) checkpoint (2026-10-26): Ref and canonical EXE `PrimGrandCross2` match. The updater now advances only life==1 bands, follows source process>=10 alpha fade/clamp/expiry, then updates height[1], height[0], and height[2] from `maxHeight*sinTable[process]` in source order; it does not alter origin. Mechanical branch comparison and lifecycle tests pass (1,594 checks), as do all six CTest suites and seven Python tests. x64 Release and OldRO match SHA-256 `1D778EACE6AD133A01D374DF7099058C5FA72C1CB8C6D7472DB490460895E5DD`. 50 source IDs remain unmapped; overall OnProcess parity is open.

@@ -8214,6 +8214,28 @@ bool UpdateReferenceGumGang(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:13447 (case 0x25).
+void UpdateReferenceGrandCross2(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        if (gi.process >= 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB - 1);
+            if (gi.alphaB <= 0) {
+                gi.alphaB = 0;
+                if (gi.process > 30) gi.life = 0;
+            }
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB + 9);
+        }
+        gi.height[1] += 0.005f;
+        gi.height[0] += 0.005f;
+        gi.height[2] = gi.maxHeight * g_sinTable[gi.process];
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9215,6 +9237,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_GUMGANG || m_type == PP_DOUBLEGUMGANG) {
         UpdateReferenceGumGang(this); // Source ids 0x23/0x63 ignore the bool result.
+        return true;
+    }
+    if (m_type == PP_GRANDCROSS2) {
+        UpdateReferenceGrandCross2(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

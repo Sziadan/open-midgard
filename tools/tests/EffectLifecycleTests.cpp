@@ -190,6 +190,7 @@ bool UpdateReference3DAura2(CEffectPrim*);
 bool UpdateReferenceChookGi(CEffectPrim*);
 void UpdateReferenceGi3(CEffectPrim*);
 bool UpdateReferenceGumGang(CEffectPrim*);
+void UpdateReferenceGrandCross2(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -285,6 +286,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_CHOOKGI) return UpdateReferenceChookGi(this) && active;
         if (m_type == PP_GI_3) { UpdateReferenceGi3(this); return active; }
         if (m_type == PP_GUMGANG || m_type == PP_DOUBLEGUMGANG) { UpdateReferenceGumGang(this); return active; }
+        if (m_type == PP_GRANDCROSS2) { UpdateReferenceGrandCross2(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1671,6 +1673,40 @@ int main()
             && texturePrim.m_gi[0].height[1] == 25 && texturePrim.m_gi[0].height[12] == 1
             && texturePrim.m_gi[0].height[13] == 25,
             "OnProcess case 0x63 shares the PrimGumGang update body and common tick");
+        texturePrim.m_type = PP_GRANDCROSS2; texturePrim.m_stateCnt = 0;
+        texturePrim.m_pos = {17,18,19}; texturePrim.m_master->m_effectPos = {170,180,190};
+        for (auto& gi : texturePrim.m_gi) gi = {};
+        auto& cross0 = texturePrim.m_gi[0]; cross0.life=1; cross0.process=8; cross0.alphaB=2;
+        cross0.maxHeight=5; cross0.height[0]=1; cross0.height[1]=2; cross0.distance=15;
+        auto& cross1 = texturePrim.m_gi[1]; cross1.life=1; cross1.process=9; cross1.alphaB=1;
+        cross1.maxHeight=3; cross1.height[0]=0.5f; cross1.height[1]=1.5f;
+        auto& cross2 = texturePrim.m_gi[2]; cross2.life=1; cross2.process=29; cross2.alphaB=1;
+        cross2.maxHeight=2; cross2.height[0]=3; cross2.height[1]=4;
+        auto& cross3 = texturePrim.m_gi[3]; cross3.life=1; cross3.process=30; cross3.alphaB=1;
+        cross3.maxHeight=4; cross3.height[0]=5; cross3.height[1]=6;
+        const int crossDrawStart = rngDraws;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_stateCnt == 1
+            && texturePrim.m_pos.x == 17 && texturePrim.m_pos.y == 18 && texturePrim.m_pos.z == 19
+            && cross0.process == 9 && cross0.alphaB == 11
+            && cross0.height[0] == 1.005f && cross0.height[1] == 2.005f
+            && std::fabs(cross0.height[2]-5*GetSin(9)) < 0.00001f && cross0.distance == 15
+            && cross1.process == 10 && cross1.alphaB == 0 && cross1.life == 1
+            && std::fabs(cross1.height[0]-0.505f) < 0.000001f
+            && std::fabs(cross1.height[1]-1.505f) < 0.000001f
+            && std::fabs(cross1.height[2]-3*GetSin(10)) < 0.00001f
+            && cross2.process == 30 && cross2.alphaB == 0 && cross2.life == 1
+            && cross2.height[0] == 3.005f && cross2.height[1] == 4.005f
+            && std::fabs(cross2.height[2]-2*GetSin(30)) < 0.00001f
+            && cross3.process == 31 && cross3.alphaB == 0 && cross3.life == 0
+            && cross3.height[0] == 5.005f && cross3.height[1] == 6.005f
+            && std::fabs(cross3.height[2]-4*GetSin(31)) < 0.00001f
+            && rngDraws == crossDrawStart,
+            "OnProcess case 0x25 covers alpha boundaries, life expiry, ordered height mutations, no RNG and unchanged origin");
+        cross2.life=2; cross2.process=44; cross2.alphaB=55; cross2.height[0]=66; cross2.height[1]=77; cross2.height[2]=88;
+        UpdateReferenceGrandCross2(&texturePrim);
+        check(cross2.life == 2 && cross2.process == 44 && cross2.alphaB == 55
+            && cross2.height[0] == 66 && cross2.height[1] == 77 && cross2.height[2] == 88,
+            "PrimGrandCross2 skips GI bands unless life equals one");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;
