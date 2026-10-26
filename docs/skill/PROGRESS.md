@@ -6,9 +6,9 @@ Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 Last updated: 2026-10-26
 Current work: WP5A renderer parity, with `RenderCloud` completed and checkpointed after `RenderLineLink`, `RenderIntimidate`, and `RenderTeiHit1`. The Cloud renderer follows the reference four-band GI path for 13 dispatch IDs. Its style selector reads GI band 0 globally, while geometry, alpha, and blend remain per-band.
 
-Next action: select the next renderer from the source dispatch audit and complete its source-to-implementation comparison before coding. The adjacent `UpdateWeatherCloudPrimitive` state mismatch remains open: it populates legacy segments rather than the GI state consumed by `RenderCloud`. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Current source audit: `RenderGumGang` at Ref/RagEffect2.cpp:15279. The implementation dispatch has no PP_GUMGANG or PP_DOUBLEGUMGANG render route. Reference body comparison: four GI bands, one active-life gate, a flag1[4] red override, four strips per active band, each with its own facing-based corner-order branch and `RenderTeiRect` call; the calls use height slots (1,5,9,13) for texture part and (2,6,10,14) for blend, with source dimensions and alpha inputs.
 
-Next action: port and branch-compare all of `RenderCloud` before beginning another renderer. Mechanically compare dispatch IDs `0x21,0x2A,0x2D,0x2F,0x31,0x35,0x3A,0x3B,0x57,0x61,0x74,0x7B,0x7F`, all pattern-switch branches 0–17, and nested pattern-9 branches. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: resolve exact reference routing and complete the GumGang branch-level comparison, then implement the missing renderer if the canonical dispatch confirms these types. The adjacent `UpdateWeatherCloudPrimitive` state mismatch remains open: it populates legacy segments rather than the GI state consumed by `RenderCloud`. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26

@@ -212,3 +212,6 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 
 
 - RenderCloud state producer mismatch (2026-10-26): `RenderCloud` now implements the reference renderer and is source-to-implementation checked, but `UpdateWeatherCloudPrimitive` still populates `m_segments` and does not initialize/update the four `m_GI` bands the renderer reads. The legacy weather-cloud producer therefore does not activate the new reference path. Port and compare that producer/state lifecycle before claiming end-to-end Cloud parity; renderer-only checkpoint does not close this mismatch.
+
+
+- GumGang renderer gap under audit (2026-10-26): Ref/RagEffect2.cpp `RenderGumGang` has four active-band strips with four facing-dependent corner-order decisions per band, but current `CEffectPrim::Render` has no `PP_GUMGANG`/`PP_DOUBLEGUMGANG` specialized route. The legacy `Ref/dhxj` dispatcher routes both ids, while canonical Ref dispatcher evidence is still being resolved. Do not claim parity until source routing and the full per-strip branch mapping are verified and ported.
