@@ -110,6 +110,8 @@ extract_body(electric_path "${effect_source}" "void ElectricPathPoint(" "void Re
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ElectricPathBody.inc" "${electric_path}")
 extract_body(electric2_path "${effect_source}" "void Electric2PathPoint(" "void RenderElectric2(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/Electric2PathBody.inc" "${electric2_path}")
+extract_body(wind_sample "${effect_source}" "void WindRenderSample(" "void RenderWind(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WindSampleBody.inc" "${wind_sample}")
 file(READ "../../src/render/Renderer.cpp" renderer_source)
 extract_body(reference_triangle_queue "${renderer_source}" "void CRenderer::AddReferenceEffectTriangle(" "void CRenderer::AddLmRP(")
 string(REPLACE "CRenderer::" "SilentRenderer::" reference_triangle_queue "${reference_triangle_queue}")

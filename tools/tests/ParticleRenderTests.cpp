@@ -124,6 +124,7 @@ vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.
 #include "CastingLowRiseBody.inc"
 #include "ElectricPathBody.inc"
 #include "Electric2PathBody.inc"
+#include "WindSampleBody.inc"
 #include "ReferenceTriangleQueueBodies.inc"
 
 int main() {
@@ -182,6 +183,16 @@ int main() {
             && near(point.y,static_cast<float>(static_cast<double>(GetSin(static_cast<int>(angle)))*heightFactor*-15.0-0.2f-8.0+30.0f))
             && near(point.z,static_cast<float>(radial*GetSin(rise*4)+0.3f-4.0f)),
             "electric2 path sample uses four-times-rise trig and source vertical scale");
+    }
+    for(int rise:{0,23,45,90}) {
+        vector3d base{},top{};const int angle=rise*2+30;const float height=6.25f,distance=8.0f,maxHeight=2.5f;
+        WindRenderSample(angle,rise,height,distance,maxHeight,&base,&top);
+        const float radial=GetCos(rise)*height,vertical=GetSin(rise)*height;
+        check(near(base.x,GetCos(angle)*distance)&&near(base.y,-maxHeight)&&near(base.z,GetSin(angle)*distance)
+            && near(top.x,static_cast<double>(radial)*GetCos(angle)+base.x)
+            && near(top.y,-(static_cast<double>(vertical)+maxHeight))
+            && near(top.z,static_cast<double>(radial)*GetSin(angle)+base.z),
+            "wind casting sample matches source base/rise geometry and source float stores");
     }
     const int inverseSizes[]={0,2,3,12,13,14,100};
     for(int size=0;size<=100;++size) {

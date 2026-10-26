@@ -6332,55 +6332,56 @@ void UpdateWindPrimitive(CEffectPrim* prim)
     }
 }
 
-void RenderWind(const CEffectPrim& prim, const matrix& viewMatrix)
+void WindRenderSample(int angle, int riseAngle, float height, float distance, float maxHeight, vector3d* base, vector3d* top)
+{
+    const int spin = ((angle % 360) + 360) % 360;
+    const int rise = ((riseAngle % 360) + 360) % 360;
+    const float radial = static_cast<float>(static_cast<double>(g_cosTable[rise]) * height);
+    const float vertical = static_cast<float>(static_cast<double>(g_sinTable[rise]) * height);
+    base->x = static_cast<float>(static_cast<double>(g_cosTable[spin]) * distance);
+    base->y = -maxHeight;
+    base->z = static_cast<float>(static_cast<double>(g_sinTable[spin]) * distance);
+    top->x = static_cast<float>(static_cast<double>(radial) * g_cosTable[spin] + base->x);
+    top->y = static_cast<float>(-(static_cast<double>(vertical) + maxHeight));
+    top->z = static_cast<float>(static_cast<double>(radial) * g_sinTable[spin] + base->z);
+}
+
+void RenderWind(CEffectPrim& prim, const matrix& viewMatrix)
 {
     CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
-    const int sizeKey = static_cast<int>(prim.m_size);
-    unsigned int rgb = 0x00FFFFFFu;
-    if (sizeKey == 4) {
-        rgb = 0x006464FFu;
-    } else if (sizeKey == 8) {
-        rgb = 0x00FFFFAAu;
-    } else if (sizeKey == 10) {
-        rgb = 0x00FF59B6u;
-    }
-    for (const EffectGi& gi : prim.m_gi) {
-        if (gi.life != 1 || gi.fullDisplayAngle <= 0 || gi.alphaB <= 0) {
+    const unsigned int rgb = CastingSizeRgb(prim.m_size);
+    const D3DBLEND blend = CastingSizeBlend(prim.m_size);
+    for (EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1) {
             continue;
         }
-        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | rgb;
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(CastingSizeAlpha(prim.m_size, static_cast<unsigned int>(gi.alphaB)))) << 24) | rgb;
         const int basicAngle = gi.fullDisplayAngle / 21;
         if (basicAngle <= 0) {
             continue;
         }
-        const int rise = TableAngle(gi.riseAngle);
         bool havePrevious = false;
-        vector3d previousBase{};
-        vector3d previousTop{};
         int order = 0;
         for (int count = 0; count < gi.fullDisplayAngle; count += basicAngle) {
-            int angle = TableAngle(count + gi.rotStart);
+            int angle = (count + gi.rotStart) % 360;
             if (gi.fullDisplayAngle == 360 && order == 20) {
                 angle = TableAngle(gi.rotStart);
             }
-            const float cosine = g_cosTable[angle];
-            const float sine = g_sinTable[angle];
             const float sampleHeight = gi.height[static_cast<size_t>((std::min)(order, 20))];
-            const float radial = g_cosTable[rise] * sampleHeight;
-            const float vertical = g_sinTable[rise] * sampleHeight;
-            const vector3d base{
-                cosine * gi.distance,
-                -gi.maxHeight,
-                sine * gi.distance
-            };
-            const vector3d top{
-                base.x + radial * cosine,
-                -(vertical + gi.maxHeight),
-                base.z + radial * sine
-            };
+            vector3d base{}, top{};
+            WindRenderSample(angle, gi.riseAngle, sampleHeight, gi.distance, gi.maxHeight, &base, &top);
+            gi.sparkX = base.x;
+            gi.sparkY = base.y;
+            gi.sparkZ = base.z;
+            gi.vecTNowX = top.x;
+            gi.vecTNowY = top.y;
+            gi.vecTNowZ = top.z;
             if (havePrevious) {
-                const float u0 = order == 1 ? 0.0f : static_cast<float>(order - 1) * 0.047619049f;
-                const float u1 = static_cast<float>(order) * 0.047619049f;
+                const int part = order - 1;
+                const float u0 = static_cast<float>(static_cast<double>(part) * 0.047619049);
+                const float u1 = static_cast<float>(static_cast<double>(part + 1) * 0.047619049);
+                const vector3d previousBase{ gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ };
+                const vector3d previousTop{ gi.vecTPreX, gi.vecTPreY, gi.vecTPreZ };
                 const vector3d worldPreviousBase = AddVec3(previousBase, prim.m_pos);
                 const vector3d worldBase = AddVec3(base, prim.m_pos);
                 const vector3d worldTop = AddVec3(top, prim.m_pos);
@@ -6396,12 +6397,16 @@ void RenderWind(const CEffectPrim& prim, const matrix& viewMatrix)
                     u1,
                     1.0f,
                     0.0f,
-                    D3DBLEND_ONE,
+                    blend,
                     0.0f,
                     static_cast<int>(prim.m_renderFlag));
             }
-            previousBase = base;
-            previousTop = top;
+            gi.vecBPreX = gi.sparkX;
+            gi.arcBaselineY = gi.sparkY;
+            gi.vecBPreZ = gi.sparkZ;
+            gi.vecTPreX = gi.vecTNowX;
+            gi.vecTPreY = gi.vecTNowY;
+            gi.vecTPreZ = gi.vecTNowZ;
             havePrevious = true;
             ++order;
             if (order >= 21) {
