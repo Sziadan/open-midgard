@@ -46,7 +46,7 @@ struct CEffectPrim {
     matrix m_matrix;
     matrix m_rotMat;
     vector3d m_pos;
-    float m_innerSize=0,m_outerSize=0,m_heightSize=0,m_widthSize=0;
+    float m_innerSize=0,m_outerSize=0,m_heightSize=0,m_widthSize=0,m_radius=0;
     u32 m_argb=0xFFFFFFFF;
     std::vector<CTexture*> m_texture;
     std::array<EffectSegmentState,50> m_segments;
@@ -248,6 +248,37 @@ int main() {
         check(g_renderer.m_rpAlphaList.size()==2 && matches(g_renderer.m_rpAlphaList[0].second->m_verts[2],{14.5f,24,105+2*g_sinTable[360]}),
             "cylinder endpoint directly reads table index three-sixty");
         g_cosTable[360]=GetCos(360);
+    }
+    {
+        CEffectPrim ring;ring.m_pos={100,200,900};ring.m_radius=20;ring.m_size=5;ring.m_arcAngle=90;ring.m_argb=0xF7FFFFFF;
+        ring.m_texture={&g_texMgr.texture};ring.m_renderFlag=0x205;
+        auto renderRing=[&](){g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaNoDepthList.clear();RenderReferenceScreenCircle(ring);};
+        renderRing();auto* a=g_renderer.m_rpAlphaList[0].second;auto* b=g_renderer.m_rpAlphaList[1].second;
+        check(g_renderer.m_rpAlphaList.size()==8,"OverThrust screen circle submits two triangles per source wedge");
+        check(near(a->m_verts[0].x,115)&&near(a->m_verts[0].y,200)&&near(a->m_verts[1].x,100)&&near(a->m_verts[1].y,180)
+            &&near(a->m_verts[2].x,120)&&near(a->m_verts[2].y,200),"OverThrust first wedge preserves inner-start outer-end outer-start order without half-pixel shift");
+        check(near(b->m_verts[0].x,115)&&near(b->m_verts[0].y,200)&&near(b->m_verts[1].x,100)&&near(b->m_verts[1].y,185)
+            &&near(b->m_verts[2].x,100)&&near(b->m_verts[2].y,180),"OverThrust second wedge preserves inner-start inner-end outer-end order");
+        check(a->m_verts[0].tu==0&&a->m_verts[0].tv==1&&a->m_verts[1].tu==0.25f&&a->m_verts[1].tv==0
+            &&a->m_verts[2].tu==0&&a->m_verts[2].tv==0&&b->m_verts[1].tu==0.25f&&b->m_verts[1].tv==1,
+            "OverThrust circle preserves original quarter-phase wedge UVs");
+        check(a->m_verts[0].z==0.000001f&&a->m_verts[0].oow==0.99999899f&&a->m_verts[0].color==0xF7FFFFFF
+            &&a->m_verts[0].specular==0xFF000000&&a->tex==&g_texMgr.texture&&g_renderer.m_rpAlphaNoDepthList.empty(),
+            "OverThrust circle preserves fixed source depth packed alpha texture zero and hard-coded flag one");
+        ring.m_arcAngle=10;renderRing();check(g_renderer.m_rpAlphaList.size()==72&&g_renderer.m_rpAlphaList[8].second->m_verts[0].tu==0,
+            "OverThrust ten-degree circle uses seventy-two triangles and wraps UV every four wedges");
+        ring.m_arcAngle=72.5f;renderRing();check(g_renderer.m_rpAlphaList.size()==8
+            &&g_renderer.m_rpAlphaList.back().second->m_verts[2].x==static_cast<float>(static_cast<double>(g_cosTable[290])*20+100),
+            "screen circle retains fractional arc accumulation before integer endpoint lookup");
+        ring.m_arcAngle=360;const float savedEnd=g_cosTable[360];g_cosTable[360]=0.75f;renderRing();
+        check(g_renderer.m_rpAlphaList.size()==2&&g_renderer.m_rpAlphaList[0].second->m_verts[1].x==115,
+            "screen circle endpoint directly reads original table index three-sixty");g_cosTable[360]=savedEnd;
+        const float savedStart=g_cosTable[0];g_cosTable[0]=0.12345679f;ring.m_arcAngle=90;ring.m_radius=123.456f;ring.m_size=0;ring.m_pos.x=-15.24f;renderRing();
+        const float firstX=g_renderer.m_rpAlphaList[0].second->m_verts[0].x,secondX=g_renderer.m_rpAlphaList[1].second->m_verts[0].x;
+        check(firstX==static_cast<float>(static_cast<double>(g_cosTable[0])*ring.m_radius+ring.m_pos.x)
+            &&secondX==static_cast<float>(g_cosTable[0]*ring.m_radius)+ring.m_pos.x&&firstX!=secondX,
+            "screen circle preserves source first-inner double product versus second-inner stored float temporary");g_cosTable[0]=savedStart;
+        ring.m_texture.clear();renderRing();check(g_renderer.m_rpAlphaList.empty(),"OverThrust missing circle texture emits no replacement geometry");
     }
     {
         CEffectPrim flash;flash.m_pos={100,200,900};flash.m_longitude=90.9f;flash.m_arcAngle=10.2f;flash.m_heightSize=30;

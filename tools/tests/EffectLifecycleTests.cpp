@@ -163,6 +163,7 @@ bool UpdateLinearReferenceParticle(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
 void UpdateReferenceQuadHorn(CEffectPrim*);
 void UpdateReferenceFlash(CEffectPrim*);
+void UpdateReferenceScreenCircle(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReferenceScreenTexture(CEffectPrim*);
@@ -220,6 +221,7 @@ struct CEffectPrim : CGameObject {
     bool UsesReferenceScreenTexture() const;
     bool UsesReferenceQuadHorn() const;
     bool UsesReferenceFlash() const;
+    bool UsesReferenceScreenCircle() const;
     void SetParticleResources(const char*, const char*,bool = false);
     bool ProcessPrimitiveFrame() {
         ++updates;
@@ -229,6 +231,7 @@ struct CEffectPrim : CGameObject {
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
         if (UsesReferenceQuadHorn()) UpdateReferenceQuadHorn(this);
         if (UsesReferenceFlash()) UpdateReferenceFlash(this);
+        if (UsesReferenceScreenCircle()) UpdateReferenceScreenCircle(this);
         if (m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle() && !UpdateReferenceGravityParticle(this)) return false;
         if (UsesReferenceScreenTexture() && !UpdateReferenceScreenTexture(this)) return false;
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
@@ -295,6 +298,7 @@ struct CRagEffect : CGameObject {
     void ApplyHasteUp();
     void ApplyHealSP();
     void ApplyHeavensDrive();
+    void ApplyOverThrust();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1875,6 +1879,44 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=128;
+        effect.m_effectPos={30,50,40};effect.m_tlvertZ=123;effect.m_duration=20;g_session.m_isMinEffect=true;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;effect.ApplyOverThrust();auto* ring=effect.m_primList.front();
+        check(effect.m_primList.size()==1&&ring->UsesReferenceScreenCircle()&&effect.m_duration==9999&&rngDraws==draws,
+            "OverThrust emits one reference screen circle extends parent to nine-nine-nine-nine without RNG despite reduced effects");
+        check(waveCalls.size()==2&&waveCalls[0].name=="effect\\black_overthrust.wav"&&waveCalls[1].name=="effect\\EF_StoneCurse.wav"
+            &&waveCalls[0].x==28&&waveCalls[0].y==0&&waveCalls[0].z==36&&waveCalls[1].x==28&&waveCalls[1].y==0&&waveCalls[1].z==36,
+            "OverThrust plays both distinct original horizontal waves in source order from stored origin");
+        tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&effect.m_tlvertZ==123&&effect.m_effectPos.x==30&&effect.m_effectPos.y==50,
+            "OverThrust projects current actor x/y while retaining stored world origin and projected z");
+        check(ring->m_duration==40&&ring->m_deltaPos2.y==-20&&ring->m_arcAngle==10&&ring->m_innerSize==10
+            &&ring->m_radiusSpeed==7&&ring->m_radiusAccel==static_cast<float>(7.0/80*-2)&&ring->m_fadeOutCnt==0
+            &&ring->m_alpha==254&&ring->m_maxAlpha==254,"OverThrust preserves original ring duration offset arc width radius acceleration and immediate fade");
+        check(g_texMgr.requests==std::vector<std::string>({"effect\\alpha_center.tga"})&&g_resMgr.requests.empty(),
+            "OverThrust loads exact lowercase directory alpha-center texture without sprite resources");
+        ring->m_alphaDelta=1;const double speed=7.0+ring->m_radiusAccel;ring->OnProcess();
+        check(ring->m_radiusSpeed==static_cast<float>(speed)&&ring->m_radius==static_cast<float>(speed)&&ring->m_size==ring->m_radius
+            &&ring->m_pos.x==effect.m_tlvertX&&ring->m_pos.y==effect.m_tlvertY-20,
+            "OverThrust first screen-circle update integrates extended radius speed and fills initial disc at projected offset");
+        check(ring->m_alphaSpeed==static_cast<float>(-254.0/40)&&ring->m_alpha==static_cast<float>(254.0f+static_cast<float>(-254.0/40))
+            &&(ring->m_argb>>24)==247&&ring->m_curMotion==0,"OverThrust first update applies source fade and packed alpha without texture animation");
+        const float oldRadius=ring->m_radius;const double secondSpeed=static_cast<double>(ring->m_radiusAccel)+ring->m_radiusSpeed;ring->OnProcess();
+        check(ring->m_radius==static_cast<float>(secondSpeed+oldRadius)&&ring->m_size==10,
+            "OverThrust later ring radius keeps extended intermediate while width clamps at source inner size");
+        actor.m_pos={20,30,120};effect.m_stateCnt=1;effect.ApplyOverThrust();ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);ring->OnProcess();
+        check(effect.m_primList.size()==1&&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&ring->m_pos.x==projected.x
+            &&ring->m_pos.y==projected.y-20&&waveCalls.size()==2&&rngDraws==draws,"OverThrust later calls refresh actor projection without repeating ring audio or RNG");
+        for(int frame=3;frame<40;++frame)ring->OnProcess();check(ring->m_stateCnt==40&&ring->m_size==10&&ring->m_radius>0,
+            "OverThrust ring survives through source final duration frame with capped width");
+        check(ring->OnProcess()==0&&ring->m_stateCnt==41&&ring->m_alpha==0,
+            "OverThrust circle processes duration frame forty then expires with original alpha floor");
+        effect.m_stateCnt=9998;effect.ApplyOverThrust();check(effect.m_stateCnt==9998&&effect.m_duration==9999&&effect.m_primList.size()==1&&waveCalls.size()==2,
+            "OverThrust persistent parent does not invent a late frame reset or repeated burst");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;
     }
     {
         CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;

@@ -269,6 +269,7 @@ public:
     bool UsesReferenceScreenTexture() const;
     bool UsesReferenceQuadHorn() const;
     bool UsesReferenceFlash() const;
+    bool UsesReferenceScreenCircle() const;
     void SetParticleResources(const char* sprName, const char* actName, bool actionFirst = false);
     void SendMsg(CGameObject*, int msg, msgparam_t, msgparam_t, msgparam_t) override;
     void Render(matrix* viewMatrix) override;
@@ -483,6 +484,7 @@ private:
     void ApplyHasteUp();
     void ApplyHealSP();
     void ApplyHeavensDrive();
+    void ApplyOverThrust();
     void ApplyProvidence(const char* textureName);
     void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);
     void ApplyBeginCasting(const char* textureName, int option, bool playWave);

@@ -2275,6 +2275,61 @@ void RenderReferenceFlash(const CEffectPrim& prim)
     g_renderer.AddReferenceEffectTriangle(face,1);
 }
 
+// Ref/RagEffectPrim.cpp:2342-2544 (0x645520), original screen annulus.
+void RenderReferenceScreenCircle(const CEffectPrim& prim)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    if (!texture || texture == &CTexMgr::s_dummy_texture) return;
+    if (!(prim.m_arcAngle > 0.0f && prim.m_arcAngle <= 360.0f)) return;
+    const float inner = prim.m_radius-prim.m_size, stop = 360.0f-prim.m_arcAngle;
+    float angle = 0.0f, u = 0.0f;
+    for (;;) {
+        const double next = static_cast<double>(angle)+prim.m_arcAngle;
+        const int first = static_cast<int>(angle), second = static_cast<int>(next);
+        if (second > 360) return;
+        const double cosine1 = g_cosTable[first];
+        const float sine1 = g_sinTable[first], cosine2 = g_cosTable[second], sine2 = g_sinTable[second];
+        const float innerX = static_cast<float>(cosine1*inner), innerY = sine1*inner;
+        const float x[6] = {
+            static_cast<float>(cosine1*inner+prim.m_pos.x),
+            static_cast<float>(static_cast<double>(cosine2)*prim.m_radius+prim.m_pos.x),
+            static_cast<float>(cosine1*prim.m_radius+prim.m_pos.x),
+            innerX+prim.m_pos.x,
+            static_cast<float>(static_cast<double>(cosine2)*inner+prim.m_pos.x),
+            static_cast<float>(static_cast<double>(cosine2)*prim.m_radius+prim.m_pos.x)
+        };
+        const float y[6] = {
+            prim.m_pos.y-innerY,
+            static_cast<float>(prim.m_pos.y-static_cast<double>(sine2)*prim.m_radius),
+            static_cast<float>(prim.m_pos.y-static_cast<double>(sine1)*prim.m_radius),
+            prim.m_pos.y-innerY,
+            static_cast<float>(prim.m_pos.y-static_cast<double>(sine2)*inner),
+            static_cast<float>(prim.m_pos.y-static_cast<double>(sine2)*prim.m_radius)
+        };
+        const float nextU = u+0.25f;
+        const float uv[6][2] = {{u,1},{nextU,0},{u,0},{u,1},{nextU,1},{nextU,0}};
+        for (int triangle = 0; triangle < 2; ++triangle) {
+            RPFace* face = g_renderer.BorrowNullRP();
+            if (!face) return;
+            face->primType = D3DPT_TRIANGLELIST; face->numVerts = 3;
+            face->verts = face->m_verts; face->indices = nullptr; face->numIndices = 0;
+            face->tex = texture; face->mtPreset = 0; face->cullMode = D3DCULL_NONE;
+            face->srcAlphaMode = D3DBLEND_SRCALPHA; face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+            for (int i = 0; i < 3; ++i) {
+                const int j = triangle*3+i;
+                auto& vertex = face->m_verts[i];
+                vertex.x = x[j]; vertex.y = y[j]; vertex.z = 0.000001f; vertex.oow = 0.99999899f;
+                vertex.color = prim.m_argb; vertex.specular = 0xFF000000u;
+                vertex.tu = uv[j][0]; vertex.tv = uv[j][1];
+            }
+            g_renderer.AddReferenceEffectTriangle(face,1);
+        }
+        u = nextU >= 1.0f ? 0.0f : nextU;
+        angle = static_cast<float>(next);
+        if (next > stop) break;
+    }
+}
+
 void RenderCircleLayer(const CEffectPrim& prim,
     const EffectSegmentState& state,
     matrix& viewMatrix,
@@ -6366,6 +6421,21 @@ bool UpdateReferenceScreenTexture(CEffectPrim* prim)
     return prim->m_curMotion != prim->m_totalTexture;
 }
 
+// Ref/RagEffectPrim.cpp:1702-1722 (0x641D70), original 2D circle state.
+void UpdateReferenceScreenCircle(CEffectPrim* prim)
+{
+    const vector3d anchor = prim->m_master->ScreenPosition();
+    prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
+    prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
+    const double speed = static_cast<double>(prim->m_radiusAccel) + prim->m_radiusSpeed;
+    prim->m_radiusSpeed = static_cast<float>(speed);
+    const double radius = speed + prim->m_radius;
+    prim->m_radius = static_cast<float>(radius);
+    prim->m_size = (prim->m_pattern & 1) == 0 && radius >= prim->m_innerSize
+        ? prim->m_innerSize : static_cast<float>(radius);
+    ProcessReferenceParticleAlpha(prim);
+}
+
 // Ref/RagEffectPrim.cpp:1729-1773 (0x641DF0), original 2D flash state.
 void UpdateReferenceFlash(CEffectPrim* prim)
 {
@@ -6785,6 +6855,11 @@ bool CEffectPrim::UsesReferenceCrossTexture() const
         && (m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 220);
 }
 
+bool CEffectPrim::UsesReferenceScreenCircle() const
+{
+    return m_type == PP_2DCIRCLE && m_master && m_master->GetEffectType() == 128;
+}
+
 bool CEffectPrim::UsesReferenceFlash() const
 {
     return m_type == PP_2DFLASH && m_master && m_master->GetEffectType() == 98;
@@ -7072,6 +7147,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_3DPARTICLESPLINE) {
         return UpdateFreeParticlePrimitive(this, true, true);
     }
+    if (UsesReferenceScreenCircle()) {
+        UpdateReferenceScreenCircle(this);
+        return true;
+    }
     if (UsesReferenceFlash()) {
         UpdateReferenceFlash(this);
         return true;
@@ -7126,6 +7205,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
 void CEffectPrim::Render(matrix* viewMatrix)
 {
     if (!m_master || !viewMatrix) {
+        return;
+    }
+    if (UsesReferenceScreenCircle()) {
+        RenderReferenceScreenCircle(*this);
         return;
     }
     if (UsesReferenceFlash()) {
@@ -8095,7 +8178,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 18: case 27: case 28: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 123: case 132: case 142: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 18: case 27: case 28: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -12252,6 +12335,34 @@ void CRagEffect::ApplyHeavensDrive()
     }
 }
 
+// Ref/RagEffect.cpp:6709-6769 (0x6021B0), original effect 128.
+void CRagEffect::ApplyOverThrust()
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (m_stateCnt == 0 && mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\black_overthrust.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master || !mode || !mode->m_view) return;
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos,mode->m_view->GetViewMatrix(),projected);
+    m_tlvertX = projected.x; m_tlvertY = projected.y;
+    if (m_stateCnt != 0) return;
+    m_duration = 9999;
+    if (mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_StoneCurse.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    CEffectPrim* prim = LaunchEffectPrim(PP_2DCIRCLE,vector3d{});
+    prim->m_duration = 40; prim->m_deltaPos2.y = -20.0f;
+    prim->m_arcAngle = 10.0f; prim->m_innerSize = 10.0f;
+    prim->m_radiusSpeed = 7.0f;
+    prim->m_radiusAccel = static_cast<float>(prim->m_radiusSpeed/static_cast<double>(prim->m_duration+40)*-2.0);
+    prim->m_fadeOutCnt = 0; prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_center.tga",false));
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -13506,6 +13617,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 45) {
         SpawnFireFly();
+        return true;
+    }
+    if (m_type == 128) {
+        ApplyOverThrust();
         return true;
     }
     if (m_type == 142) {

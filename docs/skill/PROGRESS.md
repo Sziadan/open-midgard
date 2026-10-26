@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A HeavensDrive id142, after HealSP checkpoint `028c04c`. Original 25-spike grid, source sound/mode/duration controls and quad-horn reversal/stop/restart with skipped alpha processing are now ported.
+Current work: WP5A OverThrust id128, after HeavensDrive checkpoint `d06cae5`. Original dual audio, actor projection, persistent parent and fading ring now use reference screen-circle state/geometry.
 
-Next action: continue unported emitters (including OverThrust id128) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters (including Teleportation id34) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## OverThrust / reference screen-circle primitive — 2026-10-26
+
+- Ref/RagEffect.cpp:6709-6769 (0x6021B0) -> ApplyOverThrust, original id128, direct ProcessEffectFrame/Init route. Zero plays exact stored-origin horizontal black_overthrust wave, projects current actor x/y, sets parent duration9999, then plays distinct EF_StoneCurse wave and emits one screen circle. Nonzero calls still refresh projection without repeating sound/emission/duration setup. Preserves world origin/projected z; no RNG or reduced-effects suppression.
+- PP_2DCIRCLE profile: duration40, offset y-20, arc10, innerSize10, radiusSpeed7, source acceleration speed/(duration+40)*-2, constructor alpha/max254 and fade0; exact lowercase-directory alpha_center texture. No invented looping/reset for the persistent parent or texture animation.
+- Ref/RagEffectPrim.cpp:1702-1722 (0x641D70) -> UpdateReferenceScreenCircle, currently bound only to id128. Preserves projected anchor+offset, extended radius-speed sum through radius integration and pre-rounding width comparison, pattern1 bypass versus ordinary width clamp, then source alpha. Initial circle fills its radius until width reaches10; later growth uses the original fixed width and immediate forty-frame fade.
+- Ref/RagEffectPrim.cpp:2342-2544 (0x645520) -> RenderReferenceScreenCircle. Two original screen triangles per floating-angle wedge, radius-size inner edge, direct integer trig-table indices including360, source face/UV order and quarter-phase wrapping. Preserves first-inner extended cosine product versus second-inner stored-float temporary, stored sine temporary, source fixed depth/oow/ARGB/texture0/specular and hard-coded flag1. No half-pixel shift, perspective scaling or missing-texture substitute. Other screen-circle callers remain open.
+
+Validation: release build, six silent C++ suites / 1061 checks (861 lifecycle/primitive, 142 rendering, 58 other), six Python tests, three-literal executable byte audit, three original asset-pointer instruction audits and whitespace check pass. Added12 lifecycle and ten rendering checks for source audio order/profile, projection/origin, parent duration/no reset, extended radius integration/width clamp/fade/termination, motion-following anchor,72-triangle ten-degree ring, exact wedge geometry/UV/depth/flags, fractional arcs, direct360 table read and source differing inner-vertex rounding. Exact waves0x71A598/0x71BB9C and texture0x7192FC match executable bytes; original pushes at0x6021FC/0x6022C2/0x6023A5 verified. No media/live acceptance. Approved OldRO SHA-256: `3AD5F3A1354070CD2FBC4CF0894B0BD112973D32BB9162D2022227E94DB81D5C`. Other emitters/screen-circle callers/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## HeavensDrive grid / quad-horn change controls — 2026-10-26
 
