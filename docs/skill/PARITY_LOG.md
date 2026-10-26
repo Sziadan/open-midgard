@@ -1171,3 +1171,11 @@ Validation: 19 mechanical source/implementation comparisons; 477 particle-render
 - Ported four exact-life bands and positive post-increment process guard. For positive process, subtract alpha 5 only after process 35, clamp negatives, add 8 to height[0], subtract 180 once only when strictly above 180 and increment flag[0], then shift height and flag samples 0..19 into indices 1..20 in descending order. No RNG or position mutation.
 - Mechanical branch map checks Ref/EXE body parity, dispatcher, four slots, exact life/process predicates, strict process-35/height-180 edges, alpha clamp, single wrap/counter update and ordered descending history copies. Lifecycle suite passes 1,663 checks including process 34->35 and 35->36, exact-180 versus overflow, one-subtraction behavior, byte flag increment, all history values, inactive/nonpositive guards, unchanged origin and no RNG.
 - Validation: inventory passes with 34 source-only IDs; all six registered CTest suites pass; x64 Release build and `git diff --check` pass. Approved OldRO copy matches Release SHA-256 `A73D0499B67AA3FBEA2FFE74B8DDBF2ABA6035959D0D7B673F90573C1391D7CE`. Overall OnProcess parity remains open.
+
+
+## CEffectPrim::OnProcess case 0x4A - 2026-10-26
+
+- Readable Ref/dhxj `PrimCallZone` at RagEffect2.cpp:16102, decompiled Ref at RagEffect2.cpp:4201 (0x629370), and canonical EXE at HighPriest.exe.c:454480 compare equal. Dispatcher invokes the void handler and proceeds to common tick. Added unconditional `PP_CALLZONE` routing.
+- Ported master position and all four exact-life bands; each live slot increments process, then increments alphaB by one only for the new process<=10 and alphaB<100. It does not modify any other GI state, consume RNG or return a handler status.
+- Mechanical branch comparison checks Ref/EXE body parity, dispatcher, master copy, four slots, exact life gate, post-increment process boundary and alpha cap/order. Lifecycle suite passes 1,664 checks including process 9->10 versus 10->11, alpha 99->100 and already-capped 100, other life values, no RNG and common tick.
+- Validation: inventory passes with 33 source-only IDs; all six registered CTest suites pass; x64 Release build and `git diff --check` pass. Approved OldRO copy matches Release SHA-256 `CA3098A8BE551F438C79E09DF0E63A20B5BEDC79933F34B9DAA6C3ACB0D9C957`. Overall OnProcess parity remains open.

@@ -210,6 +210,7 @@ bool UpdateReferenceFoot(CEffectPrim*);
 bool UpdateReferenceAsuraCasting(CEffectPrim*);
 bool UpdateReferenceTripleAttack(CEffectPrim*);
 void UpdateReferenceHitLine(CEffectPrim*);
+void UpdateReferenceCallZone(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -322,6 +323,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_ASURACASTING) { UpdateReferenceAsuraCasting(this); return active; }
         if (m_type == PP_TRIPLEATTACK) { UpdateReferenceTripleAttack(this); return active; }
         if (m_type == PP_HITLINE) { UpdateReferenceHitLine(this); return active; }
+        if (m_type == PP_CALLZONE) { UpdateReferenceCallZone(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -760,6 +762,7 @@ __declspec(noinline) void RunFootLifecycleChecks(CEffectPrim& prim, int& checks,
 __declspec(noinline) void RunAsuraCastingLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunTripleAttackLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunHitLineLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunCallZoneLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1168,6 +1171,31 @@ __declspec(noinline) void RunHitLineLifecycleChecks(CEffectPrim& prim, int& chec
     prim.OnProcess();
     check(a.process==1 && a.alphaB==20 && a.height[0]==185 && a.flag[0]==255,
         "case 0x46 height wrap subtracts only 180 once and increments byte flag once, even when angle remains above 180");
+    g_isSkipFrame=oldSkipFrame;
+    RunCallZoneLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunCallZoneLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_CALLZONE; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={1001,1002,1003}; prim.m_pos={1,2,3};
+    for (auto& gi : prim.m_gi) gi={};
+    auto& a=prim.m_gi[0]; a.life=1; a.process=9; a.alphaB=99;
+    auto& b=prim.m_gi[1]; b.life=1; b.process=10; b.alphaB=50;
+    auto& c=prim.m_gi[2]; c.life=1; c.process=0; c.alphaB=100;
+    auto& d=prim.m_gi[3]; d.life=2; d.process=3; d.alphaB=4;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==1001 && prim.m_pos.y==1002 && prim.m_pos.z==1003
+        && a.process==10 && a.alphaB==100
+        && b.process==11 && b.alphaB==50
+        && c.process==1 && c.alphaB==100
+        && d.process==3 && d.alphaB==4 && rngDraws==draws,
+        "case 0x4A updates four life gates, includes process 10, caps alpha at 100, copies master and advances tick without RNG");
     g_isSkipFrame=oldSkipFrame;
 }
 

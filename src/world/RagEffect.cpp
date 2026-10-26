@@ -8857,6 +8857,17 @@ void UpdateReferenceHitLine(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:16102 (case 0x4A).
+void UpdateReferenceCallZone(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        ++gi.process;
+        if (gi.process <= 10 && gi.alphaB < 100) ++gi.alphaB;
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9926,6 +9937,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_HITLINE) {
         UpdateReferenceHitLine(this);
+        return true;
+    }
+    if (m_type == PP_CALLZONE) {
+        UpdateReferenceCallZone(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
