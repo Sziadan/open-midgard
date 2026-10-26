@@ -4368,33 +4368,53 @@ void UpdateElectric2Primitive(CEffectPrim* prim)
     }
 }
 
+void Electric2PathPoint(int riseAngle, int sample, float angle, float heightFactor, float distance,
+    float originX, float originY, float originZ, float jitterX, float jitterY, float jitterZ, vector3d* point)
+{
+    int angleIndex = static_cast<int>(angle) % 360;
+    if (angleIndex < 0) {
+        angleIndex += 360;
+    }
+    const int facing = 4 * riseAngle;
+    const double radial = static_cast<double>(sample) * 0.2 * distance;
+    point->x = static_cast<float>(radial * g_cosTable[facing]);
+    point->y = static_cast<float>(static_cast<double>(g_sinTable[angleIndex]) * heightFactor * -15.0);
+    point->z = static_cast<float>(radial * g_sinTable[facing]);
+    point->x = static_cast<float>(point->x + jitterX);
+    point->y = static_cast<float>(static_cast<double>(jitterY) - 8.0 + point->y);
+    point->z = static_cast<float>(point->z + jitterZ);
+    point->x += originX;
+    point->y += originY;
+    point->z += originZ;
+}
+
 void RenderElectric2(const CEffectPrim& prim, const matrix& viewMatrix)
 {
     CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
     for (const EffectGi& gi : prim.m_gi) {
         const int samples = static_cast<int>(gi.vecTNowY);
-        if (gi.life != 1 || gi.alphaB <= 0 || gi.process <= 0 || gi.vecTNowY <= 0.0f || samples <= 0) {
-            continue;
-        }
         float jitterY[21]{};
         float jitterX[21]{};
         float jitterZ[21]{};
-        const int jitterCount = (std::min)(samples + 1, 21);
-        for (int sample = 0; sample < jitterCount; ++sample) {
-            jitterY[sample] = static_cast<float>(rand() % 11) * 0.1f - 0.5f;
-            jitterX[sample] = static_cast<float>(rand() % 11) * 0.1f - 0.5f;
-            jitterZ[sample] = static_cast<float>(rand() % 11) * 0.1f - 0.5f;
+        int jitterSample = 0;
+        for (; static_cast<float>(jitterSample) < gi.vecTNowY; ++jitterSample) {
+            const float y = static_cast<float>(static_cast<double>(rand() % 11) * 0.1 - 0.5);
+            const float x = static_cast<float>(static_cast<double>(rand() % 11) * 0.1 - 0.5);
+            const float z = static_cast<float>(static_cast<double>(rand() % 11) * 0.1 - 0.5);
+            if (jitterSample < 21) {
+                jitterY[jitterSample] = y;
+                jitterX[jitterSample] = x;
+                jitterZ[jitterSample] = z;
+            }
         }
-        const int facing = TableAngle(gi.riseAngle);
+        if (gi.life != 1 || gi.alphaB <= 0 || gi.process <= 0 || gi.vecTNowY <= 0.0f || samples <= 0) {
+            continue;
+        }
         const auto pathPoint = [&](int sample) {
-            const float angle = gi.height[static_cast<size_t>(sample)];
-            const int angleIndex = TableAngle(static_cast<int>(angle));
-            const float radial = static_cast<float>(sample) * 0.2f * gi.distance;
-            return vector3d{
-                radial * g_cosTable[facing] + jitterX[sample] + gi.sparkX,
-                g_sinTable[angleIndex] * gi.vecTNowX * -15.0f + jitterY[sample] - 8.0f + gi.sparkY,
-                radial * g_sinTable[facing] + jitterZ[sample] + gi.sparkZ
-            };
+            vector3d point{};
+            Electric2PathPoint(gi.riseAngle, sample, gi.height[static_cast<size_t>(sample)], gi.vecTNowX, gi.distance,
+                gi.sparkX, gi.sparkY, gi.sparkZ, jitterX[sample], jitterY[sample], jitterZ[sample], &point);
+            return point;
         };
         int spread = -135;
         int span = 150;
