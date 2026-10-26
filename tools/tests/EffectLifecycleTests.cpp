@@ -238,6 +238,7 @@ void UpdateReferenceQuadHorn2(CEffectPrim*);
 void UpdateReferenceStin(CEffectPrim*);
 void UpdateReferenceSma(CEffectPrim*);
 void UpdateReferenceSma2(CEffectPrim*);
+void UpdateReferenceStin2(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -378,6 +379,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_STIN) { UpdateReferenceStin(this); return active; }
         if (m_type == PP_SMA) { UpdateReferenceSma(this); return active; }
         if (m_type == PP_SMA2) { UpdateReferenceSma2(this); return active; }
+        if (m_type == PP_STIN2) { UpdateReferenceStin2(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -856,6 +858,7 @@ __declspec(noinline) void RunQuadHorn2LifecycleChecks(CEffectPrim& prim, int& ch
 __declspec(noinline) void RunStinLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSmaLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSma2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunStin2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2162,6 +2165,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     RunStinLifecycleChecks(prim, checks, failures);
     RunSmaLifecycleChecks(prim, checks, failures);
     RunSma2LifecycleChecks(prim, checks, failures);
+    RunStin2LifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2510,6 +2514,77 @@ __declspec(noinline) void RunSma2LifecycleChecks(CEffectPrim& prim, int& checks,
     check(a.process==1&&a.rotStart==2&&a.alphaB==0
         &&prim.m_pos.x==positionBefore&&rngDraws==draws,
         "case 0x79 applies positive-distance alpha cap after growth and performs only one rotation wrap without position or RNG effects");
+    g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunStin2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const u32 oldAid=g_session.m_aid;
+    CRenderObject* oldPlayer=g_world.m_player;
+    CRenderObject* oldLookupActor=g_world.lookupActor;
+    const u32 oldLookupAid=g_world.lookupAid;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    CRenderObject target; target.m_pos={100,0,0};
+    g_session.m_aid=77; g_world.m_player=&target; g_world.lookupActor=nullptr; g_world.lookupAid=0;
+    prim.m_type=PP_STIN2; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_deltaPos={77,77,0}; prim.m_pos={0,0,0};
+    for(auto& gi:prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=0; a.riseAngle=350; a.height[1]=2.0f;
+    a.sparkX=0; a.sparkY=17; a.sparkZ=0;
+    const int draws=rngDraws; prim.OnProcess();
+    check(a.process==1&&a.riseAngle==20&&a.rotStart==90
+        &&std::fabs(a.sparkX)<0.0001f&&std::fabs(a.sparkZ-2.0f)<0.0001f
+        &&a.sparkY==17&&prim.m_pos.x==0&&rngDraws==draws,
+        "case 0x7A self-AID target lookup aims then applies the source quarter-turn, rise wrap and current-vector motion without RNG or position copy");
+
+    a.process=5; a.rotStart=10; a.flag[1]=0; a.flag[2]=0; a.alphaB=100;
+    a.sparkX=0; a.sparkZ=0; a.height[1]=1.0f;
+    prim.OnProcess();
+    check(a.process==6&&a.rotStart==5&&a.alphaB==115
+        &&a.sparkX>0.99f&&a.sparkZ>0.08f&&a.sparkZ<0.09f,
+        "case 0x7A process six steers five degrees toward a distant actor and then moves along the updated angle");
+
+    g_world.m_player=nullptr; prim.m_deltaPos.y=99; a.process=0; a.flag[1]=0;
+    a.riseAngle=40; a.rotStart=123; a.sparkX=7; a.sparkZ=8;
+    prim.OnProcess();
+    check(a.process==1&&a.flag[1]==10&&a.riseAngle==40&&a.rotStart==123
+        &&a.sparkX==7&&a.sparkZ==8,
+        "case 0x7A missing actor on first process sets fade state and breaks before rise, aim, or movement");
+
+    for(auto& gi:prim.m_gi) gi={};
+    a.life=1; a.process=5; a.flag[1]=0; a.flag[2]=0; a.alphaB=-14; a.height[1]=1.0f;
+    a.sparkX=0; a.sparkY=11; a.sparkZ=0; a.rotStart=0; a.riseAngle=10;
+    prim.m_gi[1].life=1; prim.m_gi[1].alphaB=2; prim.m_gi[1].sparkX=20; prim.m_gi[1].sparkY=21; prim.m_gi[1].sparkZ=22;
+    prim.m_gi[2].life=1; prim.m_gi[2].alphaB=8; prim.m_gi[2].sparkX=30; prim.m_gi[2].sparkY=31; prim.m_gi[2].sparkZ=32;
+    prim.m_gi[3].life=1; prim.m_gi[3].alphaB=10; prim.m_gi[3].sparkX=40; prim.m_gi[3].sparkY=41; prim.m_gi[3].sparkZ=42;
+    prim.OnProcess();
+    check(a.process==6&&a.flag[1]==10&&a.life==0&&a.alphaB==0&&a.rotStart==359
+        &&prim.m_gi[1].life==0&&prim.m_gi[2].life==1&&prim.m_gi[3].life==1
+        &&prim.m_gi[1].alphaB==0&&prim.m_gi[2].alphaB==0&&prim.m_gi[3].alphaB==2
+        &&prim.m_gi[1].sparkX==a.sparkX&&prim.m_gi[1].sparkY==a.sparkY&&prim.m_gi[1].sparkZ==a.sparkZ
+        &&prim.m_gi[1].riseAngle==a.riseAngle
+        &&prim.m_gi[2].sparkX==20&&prim.m_gi[2].sparkY==21&&prim.m_gi[2].sparkZ==22
+        &&prim.m_gi[3].sparkX==30&&prim.m_gi[3].sparkY==31&&prim.m_gi[3].sparkZ==32
+        &&prim.m_gi[3].riseAngle==0&&a.sparkX>0.99f&&a.sparkZ<0.0f,
+        "case 0x7A later actor loss fades all four lanes, kills only alpha underflow, rotates/moves the dying lane and shifts snapshots afterward");
+
+    g_world.lookupActor=&target; g_world.lookupAid=99; prim.m_deltaPos.y=99;
+    for(auto& gi:prim.m_gi) gi={};
+    a.life=1; a.process=140; a.flag[1]=0; a.rotStart=10; a.alphaB=20; a.height[1]=0;
+    prim.OnProcess();
+    check(a.process==141&&a.flag[1]==10&&a.alphaB==15&&a.rotStart==9,
+        "case 0x7A process 141 enters timeout fade and turns one degree after the all-lane alpha step");
+
+    a.life=2; a.process=7; a.flag[1]=0; a.riseAngle=88;
+    prim.OnProcess();
+    a.life=1; a.process=-1; a.flag[1]=0; a.riseAngle=99; prim.OnProcess();
+    check(a.process==0&&a.flag[1]==0&&a.riseAngle==99,
+        "case 0x7A exact-life and nonpositive post-increment gates skip actor resolution and all animation state");
+
+    g_session.m_aid=oldAid; g_world.m_player=oldPlayer; g_world.lookupActor=oldLookupActor; g_world.lookupAid=oldLookupAid;
     g_isSkipFrame=oldSkipFrame;
 }
 
