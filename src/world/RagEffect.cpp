@@ -7952,7 +7952,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -9597,6 +9597,23 @@ bool CRagEffect::ProcessHit2Blue()
         if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) mode->SendMsg(135,1,0,0);
     }
     return ProcessEZ2STR(0.0f,-80.0f,0.0f);
+}
+
+// HighPriest.exe.c:421318-421337, original id 401.
+void CRagEffect::ApplyNapalmHit()
+{
+    if (m_stateCnt != 20 && m_stateCnt != 30 && m_stateCnt != 40
+        && m_stateCnt != 50 && m_stateCnt != 60) return;
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_NapalmBeat.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    // The original helper only emits at frame zero; do not reset its frame here.
+    SpawnHit2(0);
 }
 
 // Ref/RagEffect.cpp:5330-5442 (0x5F2480), original effect 2.
@@ -13027,6 +13044,10 @@ bool CRagEffect::ProcessEffectFrame()
         return true;
     }
     if (m_type == 183) return ProcessHit2Blue();
+    if (m_type == 401) {
+        ApplyNapalmHit();
+        return true;
+    }
     if (m_type == 81) {
         SpawnPierce();
         return true;

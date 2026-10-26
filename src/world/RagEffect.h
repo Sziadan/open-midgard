@@ -535,6 +535,7 @@ private:
     void SpawnPierce();
     void SpawnHit2(int option);
     bool ProcessHit2Blue();
+    void ApplyNapalmHit();
     void SpawnHit3();
     void SpawnHit4();
     void SpawnHit5();

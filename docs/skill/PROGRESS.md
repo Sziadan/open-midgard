@@ -4,10 +4,17 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Hit5/Hit6 emitters, after Hit4 checkpoint `7925aee`. Original ids4/5 now preserve paired rotating screen streaks, distinct source profiles/audio and original roll integration precision.
+Current work: WP5A Napalm Hit2 caller401, after Hit5/Hit6 checkpoint `cbe2a84`. Original frame gates, actor-origin refresh, exact wave and non-emitting Hit2 projection calls are now ported.
 
-Next action: continue remaining hit callers (including Hit2 caller401), other emitters and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue other emitters (including original NapalmBeat id32) and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Napalm Hit2 caller401 — 2026-10-26
+
+- HighPriest.exe.c:421318-421337 -> ApplyNapalmHit, original id401, direct ProcessEffectFrame/Init route. Only frames20/30/40/50/60 copy the current actor position into stored effect origin, play exact horizontal EF_NapalmBeat wave relative to the current listener, then call Hit2 option0. Other frames preserve origin/projection and perform no helper work.
+- Preserved original nonzero frame count: Hit2 updates projected actor x/y but its zero-only emission gate rejects these calls. No invented frame reset, streak burst, second hit2 sound, resource request, RNG consumption or STR processing. Projected z remains unchanged. Existing Hit2 normal/blue helpers are unchanged.
+
+Validation: release build, six silent C++ suites / 879 checks (707 lifecycle/primitive, 114 rendering, 58 other), six Python tests, one-literal executable byte audit and whitespace check pass. Added14 checks covering all five gates, neighboring/rejected frames including zero, moving actor/listener origins, exact sound/count, projection/z and absence of emission/RNG/resources/STR. Exact wave literal at0x71A790 matches executable bytes. No media/live acceptance. Approved OldRO SHA-256: `AAB73B33D37F0BBE1D1774AE41815D8548B85D90B950ECA146804569FEB807CA`. Other emitters (including original NapalmBeat id32), primitive controls, caller routing, specialized segment payloads, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Hit5 / Hit6 rotating screen streaks — 2026-10-26
 

@@ -288,6 +288,7 @@ struct CRagEffect : CGameObject {
     void SpawnPierce();
     void SpawnHit2(int);
     bool ProcessHit2Blue();
+    void ApplyNapalmHit();
     void SpawnHit3();
     void SpawnHit4();
     void SpawnHit5();
@@ -2244,6 +2245,36 @@ int main()
         check(effect.m_primList.empty()&&rngDraws==beforeEnd,"Pierce level-three window excludes frame sixty");
         effect.m_stateCnt=0;effect.m_level=0;effect.SpawnPierce();check(effect.m_primList.empty(),"Pierce zero level has no invented minimum burst");
         check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,"Pierce cleanup balances all sprite/action locks");g_session.m_isMinEffect=false;
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;
+        effect.m_type=401;effect.m_master=&actor;effect.m_effectPos={30,50,40};
+        effect.m_tlvertX=-10;effect.m_tlvertY=-20;effect.m_tlvertZ=123;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        for(int frame:{0,19,21,29,31,39,41,49,51,59,61,70}) {effect.m_stateCnt=frame;effect.ApplyNapalmHit();}
+        check(waveCalls.empty()&&effect.m_primList.empty()&&rngDraws==draws,
+            "Napalm caller excludes zero and all frames outside the five exact gates");
+        check(effect.m_effectPos.x==30&&effect.m_effectPos.y==50&&effect.m_effectPos.z==40&&effect.m_tlvertX==-10&&effect.m_tlvertY==-20,
+            "Napalm caller leaves stored origin and projection unchanged outside gates");
+        for(int frame:{20,30,40,50,60}) {
+            actor.m_pos={static_cast<float>(frame),static_cast<float>(frame+1),static_cast<float>(frame+100)};
+            listener.m_pos.x=static_cast<float>(frame/2);effect.m_stateCnt=frame;effect.ApplyNapalmHit();
+            tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+            check(effect.m_effectPos.x==actor.m_pos.x&&effect.m_effectPos.y==actor.m_pos.y&&effect.m_effectPos.z==actor.m_pos.z
+                &&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&effect.m_tlvertZ==123,
+                "Napalm exact gate copies current actor origin then refreshes Hit2 projection preserving z");
+            const auto& wave=waveCalls.back();
+            check(waveCalls.size()==static_cast<size_t>((frame-20)/10+1)&&wave.name=="effect\\EF_NapalmBeat.wav"
+                &&wave.x==frame-frame/2&&wave.y==0&&wave.z==frame+96&&wave.frameRng==draws,
+                "Napalm exact gate plays one original horizontal wave from refreshed actor and listener positions");
+        }
+        check(effect.m_primList.empty()&&rngDraws==draws&&g_texMgr.requests.empty()&&g_resMgr.requests.empty(),
+            "Napalm nonzero Hit2 calls do not reset frame emit streaks consume RNG or request assets");
+        check(effect.m_stateCnt==60&&effect.m_strScreenOffset.y==0,
+            "Napalm caller preserves source state count and does not process STR");
+        g_world.m_player=oldPlayer;
     }
     {
         CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
