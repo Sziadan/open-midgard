@@ -8605,6 +8605,19 @@ bool UpdateReferenceChimTo(CEffectPrim* prim)
     return AnimateReferenceParticle(prim);
 }
 
+// Ref/dhxj/RagEffect2.cpp:23699 (case 0x30).
+void UpdateReferenceBottom2(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        ++gi.process;
+        gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + (gi.height[0] == 1.0f ? 4 : 2));
+        if (gi.fullDisplayAngle >= 360) gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle - 360);
+        gi.maxHeight = static_cast<float>(static_cast<double>(g_sinTable[gi.fullDisplayAngle]) * 10.0 + 20.0);
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9642,6 +9655,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_CHIMTO) {
         UpdateReferenceChimTo(this);
+        return true;
+    }
+    if (m_type == PP_BOTTOM2) {
+        UpdateReferenceBottom2(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

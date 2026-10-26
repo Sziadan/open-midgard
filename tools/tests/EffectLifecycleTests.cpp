@@ -202,6 +202,7 @@ void UpdateReferenceIntimidate(CEffectPrim*);
 void UpdateReferenceTeiHit1(CEffectPrim*);
 void UpdateReferenceTeiHit2(CEffectPrim*);
 bool UpdateReferenceChimTo(CEffectPrim*);
+void UpdateReferenceBottom2(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -306,6 +307,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_TEIHIT1) { UpdateReferenceTeiHit1(this); return active; }
         if (m_type == PP_TEIHIT2) { UpdateReferenceTeiHit2(this); return active; }
         if (m_type == PP_CHIMTO) { UpdateReferenceChimTo(this); return active; }
+        if (m_type == PP_BOTTOM2) { UpdateReferenceBottom2(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -735,6 +737,8 @@ __declspec(noinline) void RunTeiHit2LifecycleChecks(CEffectPrim& prim, int& chec
     rngValues={}; rngCursor=0; g_isSkipFrame=oldSkipFrame;
 }
 
+__declspec(noinline) void RunBottom2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
     const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
@@ -768,6 +772,37 @@ __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& check
     check(prim.m_pos.x==61 && prim.m_pos.y==62 && prim.m_pos.z==63 && gi.life==2,
         "case 0x2E updates position and shared helpers without mutating non-one life values");
     prim.m_particleActRes=nullptr; prim.m_numSegments=0; g_isSkipFrame=oldSkipFrame;
+    RunBottom2LifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunBottom2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_BOTTOM2; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={101,202,303}; prim.m_pos={7,8,9};
+    for (auto& gi : prim.m_gi) gi={};
+    auto& a=prim.m_gi[0]; a.life=1; a.process=4; a.fullDisplayAngle=358; a.height[0]=1.0f;
+    a.distance=17; a.alphaB=18;
+    auto& b=prim.m_gi[1]; b.life=1; b.process=-2; b.fullDisplayAngle=359; b.height[0]=1.0001f;
+    b.distance=27; b.alphaB=28;
+    auto& c=prim.m_gi[2]; c.life=2; c.process=30; c.fullDisplayAngle=90; c.height[0]=1.0f; c.maxHeight=99;
+    auto& d=prim.m_gi[3]; d.life=1; d.process=0; d.fullDisplayAngle=359; d.height[0]=1.0f;
+    const int draws=rngDraws;
+    check(prim.OnProcess()==1 && prim.m_stateCnt==1
+        && prim.m_pos.x==101 && prim.m_pos.y==202 && prim.m_pos.z==303
+        && a.process==5 && a.fullDisplayAngle==2
+        && a.maxHeight==static_cast<float>(static_cast<double>(g_sinTable[2])*10.0+20.0)
+        && b.process==-1 && b.fullDisplayAngle==1
+        && b.maxHeight==static_cast<float>(static_cast<double>(g_sinTable[1])*10.0+20.0)
+        && c.process==30 && c.fullDisplayAngle==90 && c.maxHeight==99
+        && d.process==1 && d.fullDisplayAngle==3
+        && d.maxHeight==static_cast<float>(static_cast<double>(g_sinTable[3])*10.0+20.0)
+        && a.distance==17 && a.alphaB==18 && rngDraws==draws,
+        "case 0x30 updates four bands with exact height[0] selector, process and angle wraps, sine height and no RNG");
+    g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
@@ -2072,7 +2107,7 @@ int main()
         RunTeiHit1LifecycleChecks(texturePrim, checks, failures);
         RunTeiHit2LifecycleChecks(texturePrim, checks, failures);
         RunChimToLifecycleChecks(texturePrim, checks, failures);
-        texturePrim.m_master = nullptr;
+            texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;
         const int copiedTypes[] = {0x17,0x1C,0x1D,0x1E,0x20,0x23,0x3C,0x44,0x63,0x68,0x69,0x6A,0x6C,0x6D,0x6F};
