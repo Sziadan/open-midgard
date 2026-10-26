@@ -2971,16 +2971,10 @@ CEffectPrim::CEffectPrim()
 void CEffectPrim::Init(CRagEffect* master, EFFECTPRIMID effectPrimId, const vector3d& deltaPos)
 {
     m_master = master;
-    m_type = effectPrimId;
     m_deltaPos = AddVec3(m_deltaPos, deltaPos);
+    m_type = effectPrimId;
     m_orgPos = master->EffectPosition();
     m_pos = m_orgPos;
-    m_roll = 0.0f;
-    m_rollSpeed = 0.0f;
-    m_rollAccel = 0.0f;
-    m_isDisappear = false;
-    m_alphaDelta = 1.0f;
-    m_minAlpha = 0.0f;
 }
 
 static_assert(offsetof(EffectGi, height) == 20, "GI height offset");

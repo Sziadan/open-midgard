@@ -187,7 +187,7 @@ struct CEffectPrim : CGameObject {
     float m_size = 1, m_heightSize = 0, m_longitude = 0, m_latitude = 0, m_speed = 0, m_accel = 0;
     vector3d m_deltaPos, m_deltaPos2, m_deltaPos3, m_deltaPosAccel, m_pos, m_orgPos;
     float m_roty=0;
-    float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 0, m_minAlpha = 0;
+    float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 1, m_minAlpha = 0;
     bool m_isDisappear = false;
     matrix m_matrix = [] { matrix value; MatrixIdentity(value); return value; }();
     matrix m_rotMat = m_matrix;
@@ -794,9 +794,16 @@ int main()
         check(effect.m_count == -3, "ordinary message 44 preserves negative count");
         CEffectPrim prim;
         prim.m_deltaPos = { 1, 2, 3 };
+        prim.m_roll = 13.0f;
+        prim.m_rollSpeed = 14.0f;
+        prim.m_rollAccel = 15.0f;
         prim.Init(&effect, Other, { 4, 5, 6 });
         check(prim.m_deltaPos.x == 5 && prim.m_deltaPos.y == 7 && prim.m_deltaPos.z == 9
-            && prim.m_pos.x == -2 && prim.m_orgPos.z == -2, "primitive Init adds delta and copies persistent parent position");
+            && prim.m_type == Other && prim.m_master == &effect
+            && prim.m_orgPos.x == -2 && prim.m_orgPos.y == -2 && prim.m_orgPos.z == -2
+            && prim.m_pos.x == -2 && prim.m_pos.y == -2 && prim.m_pos.z == -2
+            && prim.m_roll == 13.0f && prim.m_rollSpeed == 14.0f && prim.m_rollAccel == 15.0f,
+            "primitive Init adds delta then copies master world position without unrelated field resets");
         g_isSkipFrame = 0;
         const int copiedTypes[] = {0x17,0x1C,0x1D,0x1E,0x20,0x23,0x3C,0x44,0x63,0x68,0x69,0x6A,0x6C,0x6D,0x6F};
         for (int type : copiedTypes) {
