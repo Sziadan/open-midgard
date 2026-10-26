@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, 0x25 through 0x28, and 0x2A-0x2D now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
+Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, 0x25 through 0x28, and 0x2A-0x2E now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
 
-Next action: source-compare case 0x2E (`PP_CHIMTO`) against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
+Next action: source-compare case 0x30 against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
 
-Latest checkpoint (2026-10-26): `PP_TEIHIT2` case 0x2D is implemented and branch-compared against decompiled Ref and canonical EXE. Readable Ref says alpha +25 at processes 2-10; canonical says +15, which the updater follows. Inventory reports 43 source-only IDs; lifecycle suite passes 1,627 checks, all six CTest suites and seven Python reference-index tests pass. x64 Release build passes; OldRO SHA-256 is `FE7515F18E79F5425B8F22D9EB3E5A0AF0EC738DA649516755761B5F117D4D28`; this checkpoint records the completed part. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `PP_CHIMTO` case 0x2E is implemented and branch-compared against Ref/dhxj, decompiled Ref and canonical EXE. Inventory reports 42 source-only IDs; lifecycle suite passes 1,630 checks, all six CTest suites and seven Python reference-index tests pass. x64 Release build passes; OldRO SHA-256 is `7167CFD8F0D0CA0CB954A92F01F902039FFDD4D4D95B4F33ABC66A541EBD8301`; this checkpoint records the completed part. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26

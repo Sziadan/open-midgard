@@ -8586,6 +8586,25 @@ void UpdateReferenceTeiHit2(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:2042 (case 0x2E).
+bool UpdateReferenceChimTo(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    if (prim->m_gi[0].life == 1) {
+        const EffectGi& gi = prim->m_gi[0];
+        prim->m_deltaPos = {gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ};
+    }
+    prim->m_pos = prim->m_deltaPos;
+
+    if ((prim->m_pattern & 0x20) != 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_view) prim->m_roll = prim->m_roty - mode->m_view->GetCameraLongitude();
+    }
+    ProcessReferenceParticleAlpha(prim);
+    ShiftReferenceSegments(prim);
+    return AnimateReferenceParticle(prim);
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9619,6 +9638,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_TEIHIT2) {
         UpdateReferenceTeiHit2(this);
+        return true;
+    }
+    if (m_type == PP_CHIMTO) {
+        UpdateReferenceChimTo(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

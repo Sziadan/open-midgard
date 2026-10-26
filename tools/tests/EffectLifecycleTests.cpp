@@ -201,6 +201,7 @@ void UpdateReferenceShieldBoomerang(CEffectPrim*);
 void UpdateReferenceIntimidate(CEffectPrim*);
 void UpdateReferenceTeiHit1(CEffectPrim*);
 void UpdateReferenceTeiHit2(CEffectPrim*);
+bool UpdateReferenceChimTo(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -304,6 +305,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_INTIMIDATE) { UpdateReferenceIntimidate(this); return active; }
         if (m_type == PP_TEIHIT1) { UpdateReferenceTeiHit1(this); return active; }
         if (m_type == PP_TEIHIT2) { UpdateReferenceTeiHit2(this); return active; }
+        if (m_type == PP_CHIMTO) { UpdateReferenceChimTo(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -731,6 +733,41 @@ __declspec(noinline) void RunTeiHit2LifecycleChecks(CEffectPrim& prim, int& chec
         && prim.m_pos.x==100 && prim.m_pos.z==200 && rngDraws==inactiveDraws,
         "case 0x2D process-nonpositive and inactive guards preserve band state after master/camera setup");
     rngValues={}; rngCursor=0; g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_CHIMTO; prim.m_stateCnt=0; prim.m_duration=1000; prim.m_numSegments=2;
+    prim.m_master->m_effectPos={100,200,300}; prim.m_deltaPos={7,8,9}; prim.m_pos={1,2,3};
+    prim.m_pattern=0x20; prim.m_roty=50; prim.m_roll=0; prim.m_animSpeed=1; prim.m_curMotion=7;
+    prim.m_particleActRes=&g_resMgr.act; g_resMgr.act.count=8; prim.m_repeatAnim=false;
+    auto& gi=prim.m_gi[0]; gi={}; gi.life=1; gi.vecBPreX=11; gi.arcBaselineY=22; gi.vecBPreZ=33;
+    const int draws=rngDraws;
+    check(prim.OnProcess()==1 && prim.m_stateCnt==1
+        && prim.m_pos.x==11 && prim.m_pos.y==22 && prim.m_pos.z==33
+        && prim.m_deltaPos.x==11 && prim.m_deltaPos.y==22 && prim.m_deltaPos.z==33
+        && prim.m_roll==50-testView.longitude && prim.m_curMotion==8
+        && rngDraws==draws,
+        "case 0x2E active GI0 supplies stored position, camera roll and ignored animation completion still reaches shared tick");
+
+    prim.m_stateCnt=0; prim.m_pattern=0; prim.m_deltaPos={41,42,43}; prim.m_pos={51,52,53};
+    prim.m_master->m_effectPos={101,202,303}; prim.m_roll=77; prim.m_curMotion=0; prim.m_animSpeed=0;
+    gi.life=0; gi.vecBPreX=71; gi.arcBaselineY=72; gi.vecBPreZ=73;
+    prim.OnProcess();
+    check(prim.m_pos.x==41 && prim.m_pos.y==42 && prim.m_pos.z==43
+        && prim.m_deltaPos.x==41 && prim.m_deltaPos.y==42 && prim.m_deltaPos.z==43
+        && prim.m_roll==77 && gi.vecBPreX==71 && gi.arcBaselineY==72 && gi.vecBPreZ==73,
+        "case 0x2E inactive GI0 keeps m_deltaPos even after the handler first copies master position");
+
+    prim.m_pattern=0; prim.m_deltaPos={61,62,63}; prim.m_master->m_effectPos={201,202,203};
+    gi.life=2; prim.OnProcess();
+    check(prim.m_pos.x==61 && prim.m_pos.y==62 && prim.m_pos.z==63 && gi.life==2,
+        "case 0x2E updates position and shared helpers without mutating non-one life values");
+    prim.m_particleActRes=nullptr; prim.m_numSegments=0; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
@@ -2034,6 +2071,7 @@ int main()
         RunIntimidateLifecycleChecks(texturePrim, checks, failures);
         RunTeiHit1LifecycleChecks(texturePrim, checks, failures);
         RunTeiHit2LifecycleChecks(texturePrim, checks, failures);
+        RunChimToLifecycleChecks(texturePrim, checks, failures);
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;
