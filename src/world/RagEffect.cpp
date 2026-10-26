@@ -9687,6 +9687,58 @@ void UpdateReferenceParticleSpread(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:15142; canonical executable PrimShieldBoomerang3 at 0x627C30 (case 0x74).
+void UpdateReferenceShieldBoomerang3(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode ? mode->m_view : nullptr;
+    if (view) {
+        const short longitude = static_cast<short>(view->GetCameraLongitude());
+        prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+        const short latitude = static_cast<short>(view->GetCameraLatitude());
+        const short cameraLatitude = static_cast<short>(450 - latitude);
+        prim->m_gi[1].alphaT = static_cast<short>(cameraLatitude >= 360 ? cameraLatitude - 360 : cameraLatitude);
+    }
+
+    if (!prim->m_master) return;
+    prim->m_pos = prim->m_master->EffectPosition();
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) return;
+    ++gi.process;
+    if (gi.process <= 0) return;
+
+    if (gi.process % 3 == 0) {
+        auto copyTrail = [](EffectGi& destination, const EffectGi& source, short alphaLoss) {
+            destination.fullDisplayAngle = source.fullDisplayAngle;
+            destination.distance = source.distance;
+            destination.height[8] = source.height[8];
+            destination.alphaB = static_cast<short>(source.alphaB - alphaLoss);
+            if (destination.alphaB < 0) destination.alphaB = 0;
+            destination.sparkX = source.sparkX;
+            destination.sparkY = source.sparkY;
+            destination.sparkZ = source.sparkZ;
+            destination.fullDisplayAngle = source.fullDisplayAngle;
+            destination.flag[0] = source.flag[0];
+        };
+        if (gi.process > 3) copyTrail(prim->m_gi[3], prim->m_gi[2], 25);
+        if (gi.process > 2) copyTrail(prim->m_gi[2], prim->m_gi[1], 25);
+        if (gi.process > 1) copyTrail(prim->m_gi[1], gi, 150);
+    }
+
+    gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle - 15);
+    if (gi.fullDisplayAngle < 0) gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + 360);
+    if (gi.process <= 5) {
+        gi.alphaB = static_cast<short>(gi.alphaB + 45);
+        if (gi.alphaB > 255) gi.alphaB = 255;
+    }
+    if (gi.process >= 15) {
+        gi.alphaB = static_cast<short>(gi.alphaB - 10);
+        if (gi.alphaB < 0) gi.alphaB = 0;
+    }
+    gi.sparkX += gi.height[1] * g_cosTable[gi.rotStart];
+    gi.sparkZ += gi.height[1] * g_sinTable[gi.rotStart];
+}
+
 // Ref/dhxj/RagEffect2.cpp:15246; canonical executable PrimTanji2 at 0x627F30 (case 0x61).
 void UpdateReferenceTanji2(CEffectPrim* prim)
 {
@@ -10918,6 +10970,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_3DAURA_3) {
         UpdateReferenceParticleSpread(this); // Source case 0x73 continues to the shared tick.
+        return true;
+    }
+    if (m_type == PP_SHIELDBOOMERANG3) {
+        UpdateReferenceShieldBoomerang3(this); // Source case 0x74 continues to the shared tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

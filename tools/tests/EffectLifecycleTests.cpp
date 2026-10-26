@@ -233,6 +233,7 @@ bool UpdateReferenceSoulLinkLight(CEffectPrim*);
 bool UpdateReferenceSoulParticle(CEffectPrim*);
 bool UpdateReferenceHermode(CEffectPrim*);
 void UpdateReferenceParticleSpread(CEffectPrim*);
+void UpdateReferenceShieldBoomerang3(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -368,6 +369,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SOULPARTICLE) { UpdateReferenceSoulParticle(this); return active; }
         if (m_type == PP_HERMODE) { UpdateReferenceHermode(this); return active; }
         if (m_type == PP_3DAURA_3) { UpdateReferenceParticleSpread(this); return active; }
+        if (m_type == PP_SHIELDBOOMERANG3) { UpdateReferenceShieldBoomerang3(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -841,6 +843,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunHermodeLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunParticleSpreadLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunShieldBoomerang3LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2142,6 +2145,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     RunSoulParticleLifecycleChecks(prim, checks, failures);
     RunHermodeLifecycleChecks(prim, checks, failures);
     RunParticleSpreadLifecycleChecks(prim, checks, failures);
+    RunShieldBoomerang3LifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2272,6 +2276,56 @@ __declspec(noinline) void RunParticleSpreadLifecycleChecks(CEffectPrim& prim, in
         &&d.process==44&&d.maxHeight==19&&d.height[12]==31&&rngDraws==draws,
         "case 0x73 decays speed and three trailing heights only after process twenty-five, without a positive-process gate");
     testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunShieldBoomerang3LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude; testView.longitude=20.0f;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_SHIELDBOOMERANG3; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={7,8,9}; prim.m_master->m_effectPos={100,200,300};
+    for(auto& gi:prim.m_gi) gi={};
+    prim.OnProcess();
+    check(prim.m_pos.x==100&&prim.m_pos.y==200&&prim.m_pos.z==300
+        &&prim.m_gi[0].alphaT==340&&prim.m_gi[1].alphaT==135,
+        "case 0x74 copies master position and camera angles before the GI0 life gate");
+
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=5; a.alphaB=100; a.fullDisplayAngle=8;
+    a.distance=10; a.height[1]=4; a.height[8]=20; a.rotStart=90;
+    a.sparkX=1; a.sparkY=2; a.sparkZ=3; a.flag[0]=11;
+    EffectGi& b=prim.m_gi[1]; b.fullDisplayAngle=32; b.distance=20; b.height[8]=40; b.alphaB=10;
+    b.sparkX=4; b.sparkY=5; b.sparkZ=6; b.flag[0]=22;
+    EffectGi& c=prim.m_gi[2]; c.fullDisplayAngle=60; c.distance=30; c.height[8]=60; c.alphaB=20;
+    c.sparkX=7; c.sparkY=8; c.sparkZ=9; c.flag[0]=33;
+    const int draws=rngDraws; prim.OnProcess();
+    check(a.process==6&&a.fullDisplayAngle==353&&a.alphaB==100
+        &&b.fullDisplayAngle==8&&b.distance==10&&b.height[8]==20&&b.alphaB==0
+        &&b.sparkX==1&&b.sparkY==2&&b.sparkZ==3&&b.flag[0]==11
+        &&c.fullDisplayAngle==32&&c.distance==20&&c.height[8]==40&&c.alphaB==0
+        &&c.sparkX==4&&c.sparkY==5&&c.sparkZ==6&&c.flag[0]==22
+        &&prim.m_gi[3].fullDisplayAngle==60&&prim.m_gi[3].distance==30
+        &&prim.m_gi[3].height[8]==60&&prim.m_gi[3].alphaB==0
+        &&prim.m_gi[3].sparkX==7&&prim.m_gi[3].sparkY==8&&prim.m_gi[3].sparkZ==9
+        &&prim.m_gi[3].flag[0]==33&&std::fabs(a.sparkX-1)<0.0001f&&std::fabs(a.sparkZ-7)<0.0001f
+        &&rngDraws==draws,
+        "case 0x74 process six snapshots ordered GI2-to-GI3-to-GI2-to-GI1 with payload copies, alpha floors and GI0 movement");
+    a.process=3; a.alphaB=230; a.fullDisplayAngle=-400; a.height[1]=0; const float before=a.sparkX;
+    prim.OnProcess();
+    check(a.process==4&&a.fullDisplayAngle==-55&&a.alphaB==255&&a.sparkX==before
+        &&b.fullDisplayAngle==8,
+        "case 0x74 non-third process skips snapshots and preserves the source's single negative-angle wrap");
+    a.process=14; a.alphaB=5; a.fullDisplayAngle=30;
+    prim.OnProcess();
+    check(a.process==15&&a.alphaB==0&&a.fullDisplayAngle==15,
+        "case 0x74 process fifteen fades after the early alpha phase has ended");
+    a.process=-1; a.alphaB=3; a.fullDisplayAngle=0;
+    prim.OnProcess();
+    check(a.process==0&&a.alphaB==3&&a.fullDisplayAngle==0,
+        "case 0x74 nonpositive post-increment skips snapshots, angle, alpha and movement");
+    g_isSkipFrame=oldSkipFrame; testView.longitude=oldLongitude;
 }
 
 int main()
