@@ -4,9 +4,9 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Render3DCasting geometry checkpoint, after PP_3DCASTING_3 update comparison. Branch-level update and renderer comparisons are recorded; corrected band-three wrap and renderer size tint/blend mappings are deployed.
+Current work: WP5A renderer parity, after `RenderLineLink`, `RenderIntimidate`, and `RenderTeiHit1` checkpoints. The next source audit is `RenderCloud` at Ref/RagEffect2.cpp:12367, shared by 13 source dispatch IDs. The current `PP_CLOUD` weather-specific route is not an implementation of this function, and the other 12 IDs have no direct route.
 
-Next action: source-compare Render3DCasting_LowPolygon against RenderHealLow, then audit remaining GI renderer functions one at a time. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: port and branch-compare all of `RenderCloud` before beginning another renderer. Mechanically compare dispatch IDs `0x21,0x2A,0x2D,0x2F,0x31,0x35,0x3A,0x3B,0x57,0x61,0x74,0x7B,0x7F`, all pattern-switch branches 0–17, and nested pattern-9 branches. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26
