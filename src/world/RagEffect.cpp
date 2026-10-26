@@ -8750,6 +8750,66 @@ bool UpdateReferenceFoot(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:4740 (case 0x44).
+bool UpdateReferenceAsuraCasting(CEffectPrim* prim)
+{
+    CView* view = g_modeMgr.GetCurrentGameMode()->m_view;
+    prim->m_gi[0].alphaT = static_cast<short>(view->GetCameraLongitude());
+    prim->m_gi[0].alphaT = static_cast<short>(360 - prim->m_gi[0].alphaT);
+    prim->m_gi[1].alphaT = static_cast<short>(view->GetCameraLatitude());
+    prim->m_gi[1].alphaT = static_cast<short>(360 - prim->m_gi[1].alphaT + 90);
+    if (prim->m_gi[1].alphaT >= 360) prim->m_gi[1].alphaT = static_cast<short>(prim->m_gi[1].alphaT - 360);
+
+    if (prim->m_gi[0].flag[4] == 1) prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.flag[4] == 2) {
+            if (gi.process < 20) {
+                for (int index = 1; index < 11; ++index) {
+                    gi.height[static_cast<size_t>(index)] += 13.0f;
+                    const float cap = static_cast<float>(10 + index * 23);
+                    if (gi.height[static_cast<size_t>(index)] >= cap) gi.height[static_cast<size_t>(index)] = cap;
+                }
+            } else {
+                for (int index = 1; index < 9; ++index) {
+                    gi.height[static_cast<size_t>(index)] -= 2.0f;
+                    if (gi.height[static_cast<size_t>(index)] < 0.0f) gi.height[static_cast<size_t>(index)] = 0.0f;
+                }
+                if (gi.process > 100) {
+                    for (int index = 9; index < 11; ++index) {
+                        gi.height[static_cast<size_t>(index)] -= 5.0f;
+                        if (gi.height[static_cast<size_t>(index)] > 0.0f) gi.distance *= 1.005f;
+                        if (gi.height[static_cast<size_t>(index)] < 0.0f) gi.height[static_cast<size_t>(index)] = 0.0f;
+                    }
+                }
+            }
+        } else {
+            if (gi.process < 20) {
+                for (int index = 1; index < 11; ++index) {
+                    gi.height[static_cast<size_t>(index)] += 13.0f;
+                    const float cap = static_cast<float>(50 + index * 20);
+                    if (gi.height[static_cast<size_t>(index)] >= cap) gi.height[static_cast<size_t>(index)] = cap;
+                }
+            } else {
+                for (int index = 1; index < 10; ++index) {
+                    gi.height[static_cast<size_t>(index)] -= 5.0f;
+                    if (gi.height[static_cast<size_t>(index)] < 0.0f) gi.height[static_cast<size_t>(index)] = 0.0f;
+                }
+                if (gi.process > 140) {
+                    gi.height[10] -= 5.0f;
+                    if (gi.height[10] > 0.0f) gi.distance *= 1.01f;
+                    if (gi.height[10] < 0.0f) gi.height[10] = 0.0f;
+                }
+            }
+            if (gi.process < 50) gi.distance -= 0.1f;
+        }
+    }
+    return true;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9807,6 +9867,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_FOOT) {
         UpdateReferenceFoot(this); // The source handler's true result is ignored before the common tick.
+        return true;
+    }
+    if (m_type == PP_ASURACASTING) {
+        UpdateReferenceAsuraCasting(this); // The source handler's true result is ignored before the common tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

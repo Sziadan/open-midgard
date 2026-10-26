@@ -207,6 +207,7 @@ bool UpdateReferenceBottomSpr(CEffectPrim*);
 void UpdateReferencePokJuk(CEffectPrim*);
 void UpdateReferenceGuard(CEffectPrim*);
 bool UpdateReferenceFoot(CEffectPrim*);
+bool UpdateReferenceAsuraCasting(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -316,6 +317,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_POKJUK) { UpdateReferencePokJuk(this); return active; }
         if (m_type == PP_GUARD) { UpdateReferenceGuard(this); return active; }
         if (m_type == PP_FOOT) { UpdateReferenceFoot(this); return active; }
+        if (m_type == PP_ASURACASTING) { UpdateReferenceAsuraCasting(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -751,6 +753,7 @@ __declspec(noinline) void RunBottomSprLifecycleChecks(CEffectPrim& prim, int& ch
 __declspec(noinline) void RunPokJukLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunGuardLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunFootLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunAsuraCastingLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1021,6 +1024,66 @@ __declspec(noinline) void RunFootLifecycleChecks(CEffectPrim& prim, int& checks,
     check(a.process==9 && a.alphaB==0,
         "case 0x43 odd alpha decrement is floored at zero");
     g_isSkipFrame=oldSkipFrame;
+    RunAsuraCastingLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunAsuraCastingLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_ASURACASTING; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={801,802,803}; prim.m_pos={1,2,3};
+    testView.longitude=30;
+    for (auto& gi : prim.m_gi) gi={};
+    auto& soulRise=prim.m_gi[0]; soulRise.life=1; soulRise.process=18; soulRise.flag[4]=2;
+    soulRise.distance=10; soulRise.height[1]=100; soulRise.height[10]=230;
+    auto& normalRise=prim.m_gi[1]; normalRise.life=1; normalRise.process=19; normalRise.flag[4]=0;
+    normalRise.distance=5; normalRise.height[1]=60; normalRise.height[10]=245;
+    auto& soulFade=prim.m_gi[2]; soulFade.life=1; soulFade.process=100; soulFade.flag[4]=2;
+    soulFade.distance=2; soulFade.height[1]=1; soulFade.height[8]=3; soulFade.height[9]=10; soulFade.height[10]=4;
+    auto& normalFade=prim.m_gi[3]; normalFade.life=1; normalFade.process=140; normalFade.flag[4]=0;
+    normalFade.distance=3; normalFade.height[1]=3; normalFade.height[9]=11; normalFade.height[10]=6;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_pos.x==801 && prim.m_pos.y==802 && prim.m_pos.z==803
+        && soulRise.process==19 && soulRise.height[1]==33 && soulRise.height[10]==240 && soulRise.distance==10
+        && normalRise.process==20 && normalRise.height[1]==55 && normalRise.height[10]==245 && std::fabs(normalRise.distance-4.9f)<0.0001f
+        && soulFade.process==101 && soulFade.height[1]==0 && soulFade.height[8]==1
+        && soulFade.height[9]==5 && soulFade.height[10]==0 && std::fabs(soulFade.distance-2.01f)<0.0001f
+        && normalFade.process==141 && normalFade.height[1]==0 && normalFade.height[9]==6
+        && normalFade.height[10]==1 && std::fabs(normalFade.distance-3.03f)<0.0001f
+        && soulRise.alphaT==330 && normalRise.alphaT==135 && rngDraws==draws && prim.m_stateCnt==1,
+        "case 0x44 updates four slots with Soul Link and normal rise/fade profiles, caps/floors, delayed distance multipliers, camera and tick");
+
+    prim.m_stateCnt=0; for (auto& gi : prim.m_gi) gi={};
+    auto& normal=prim.m_gi[0]; normal.life=1; normal.flag[4]=0; normal.process=48; normal.distance=4;
+    normal.height[1]=100; normal.height[10]=100;
+    prim.OnProcess();
+    check(normal.process==49 && normal.distance==3.9f && normal.height[1]==95,
+        "case 0x44 normal pre-50 distance decrease is independent of the process-20 height fade");
+    prim.m_stateCnt=0; normal.process=49; normal.distance=4; normal.height[1]=100;
+    prim.OnProcess();
+    check(normal.process==50 && normal.distance==4 && normal.height[1]==95,
+        "case 0x44 strict process-50 boundary stops the normal distance decrease");
+
+    prim.m_stateCnt=0; for (auto& gi : prim.m_gi) gi={};
+    auto& guard=prim.m_gi[0]; guard.life=1; guard.process=-1; guard.flag[4]=2;
+    guard.height[1]=14; guard.distance=8;
+    prim.OnProcess();
+    check(guard.process==0 && guard.height[1]==14 && guard.distance==8,
+        "case 0x44 nonpositive post-increment process skips both mode profiles");
+
+    prim.m_pos={41,42,43}; prim.m_gi[0].flag[4]=0;
+    UpdateReferenceAsuraCasting(&prim);
+    check(prim.m_pos.x==41 && prim.m_pos.y==42 && prim.m_pos.z==43,
+        "case 0x44 handler itself copies master position only for exact GI0 mode flag one");
+    prim.m_gi[0].flag[4]=1; UpdateReferenceAsuraCasting(&prim);
+    check(prim.m_pos.x==801 && prim.m_pos.y==802 && prim.m_pos.z==803,
+        "case 0x44 exact GI0 mode flag one copies master position in handler");
+    testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
