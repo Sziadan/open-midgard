@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A NapalmBeat id32, after caller401 checkpoint `2ca77d7`. Original fifteen-frame emission window, recovered eight-texture sequence, screen projection, audio and nonrepeating animation are now ported.
+Current work: WP5A FireArrow id31, after NapalmBeat checkpoint `65f0571`. Original animated projectile, independent particle4 trail, source audio/count gates and yellow impact circle now use reference primitive paths.
 
-Next action: continue neighboring emitters (including FireArrow id31) and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue neighboring emitters (including FrostDiver ids27/28) and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## FireArrow projectile / trail / impact — 2026-10-26
+
+- Ref/RagEffect.cpp:3902-4050 (0x5F95B0) -> ApplyFireArrow, original id31, direct ProcessEffectFrame/Init route. Copies actor origin every call; frame12 draws one of three exact FireArrow sounds, plays horizontal actor/listener delta then multiplies count by10. Projectile gate preserves frame>=12, ten-frame cadence and strict flight<count, including zero count with no invented minimum.
+- Projectile retains ordered Z/X spawn then Z/X aim draws, source parent/primitive angle assignment and truncated X-then-Y matrix, offset y-60, duration70, pattern20, speed-2.75, width14/height3.5, constructor alpha/max254, fade50 and six repeating flame textures/divisor1. Exact CP949 names recovered at0x71B700/0x71B6EC/0x71B6D8/0x71B6C4/0x71B6B0/0x71B69C, preserving numbering1..6 and lowercase extension. Bound shared reference cross update/rendering; parent displacement propagation precedes strict terrain contact, stopping/resetting state and setting impact flag.
+- Independent positive-frame fourth-frame trail runs after projectile launch and before impact ring. Five draws preserve duration, longitude, latitude, speed and size order; source X/Y rotation, current parent displacement, drag/shrink, immediate fade and one full initial segment. Exact particle4 sprite/action with source lock order, alpha/max254, divisor4/repeat; bound shared reference linear update/per-clip renderer.
+- Impact flag is consumed once after other emissions, creating original latitude90 circle with duration30, radius speed1.2/deceleration, inner10, alpha0/rise max*0.1, fade20, one identity initial segment and exact ring_yellow. Bound shared circle update/rendering. Reduced-effects mode does not suppress these source paths.
+
+Validation: release build, six silent C++ suites / 926 checks (751 lifecycle/primitive, 117 rendering, 58 other), six Python tests, ten-literal executable byte audit, original wave/six texture pointer instruction audit and whitespace check pass. Added28 lifecycle checks for early/zero/count boundaries, ordered combined emission/RNG/audio, moving actor/listener origins, source angle/profile/resource order, trail shrink/fade/full segment/locks, six-frame animation wrap, parent feedback, strict ground equality/contact/reset, single impact consumption and reference ring growth. Existing shared primitive geometry/device suites remain passing. Exact wave format0x71B714, particle4 action/sprite0x71B66C/0x71B684 and ring0x7193E8 match executable bytes. No media/live acceptance. Approved OldRO SHA-256: `945EF43A365557C03CB66E51426EE2E19B3B7505ED5E0EC31CBB18DA934422B4`. Other emitters/primitive controls, count/caller routing, specialized segment payloads, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## NapalmBeat animated screen emitter — 2026-10-26
 

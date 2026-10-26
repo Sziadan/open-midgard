@@ -277,6 +277,7 @@ struct CRagEffect : CGameObject {
     void ApplyWarpZone2(const char*);
     void ApplyWarpZone();
     void ApplyIceArrow();
+    void ApplyFireArrow();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1857,6 +1858,92 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,50,30};listener.m_pos={2,500,4};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;auto* oldAttr=g_world.m_attr;SilentAttr attr;attr.height=1000;g_world.m_attr=&attr;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;
+        effect.m_type=31;effect.m_master=&actor;effect.m_duration=200;effect.m_count=2;effect.m_longitude=80;effect.m_latitude=20;
+        waveCalls.clear();g_resMgr.requests.clear();g_texMgr.requests.clear();const int initialDraws=rngDraws;
+        effect.m_stateCnt=0;effect.ApplyFireArrow();effect.m_stateCnt=3;effect.ApplyFireArrow();
+        check(effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==initialDraws&&effect.m_effectPos.y==50,
+            "FireArrow refreshes actor origin without emission at zero or frames outside cadence");
+        rngValues={23,39,19,89,29};rngCursor=0;effect.m_deltaPos={4,5,6};effect.m_stateCnt=4;g_session.m_isMinEffect=true;effect.ApplyFireArrow();
+        auto* trail=effect.m_primList.front();
+        check(effect.m_primList.size()==1&&trail->UsesReferenceParticle()&&rngDraws==initialDraws+5&&waveCalls.empty(),
+            "FireArrow emits five-draw linear trail before projectile launch despite reduced effects");
+        check(trail->m_duration==29&&trail->m_longitude==99&&trail->m_latitude==29&&trail->m_deltaPos2.x==4&&trail->m_deltaPos2.y==5&&trail->m_deltaPos2.z==6,
+            "FireArrow trail draws duration longitude latitude and copies current parent displacement");
+        check(trail->m_speed==static_cast<float>(149*0.0099999998)&&trail->m_size==static_cast<float>(49*0.0099999998)
+            &&trail->m_accel==static_cast<float>(trail->m_speed/29.0*-0.66666669)&&trail->m_sizeSpeed==static_cast<float>(-trail->m_size/29.0),
+            "FireArrow trail preserves ordered speed size source drag and shrink arithmetic");
+        matrix expected;MatrixIdentity(expected);MatrixAppendXRotation(expected,GetRadian(29));MatrixAppendYRotation(expected,GetRadian(99));
+        check(trail->m_matrix.m[2][1]==expected.m[2][1]&&trail->m_matrix.m[2][0]==expected.m[2][0]
+            &&trail->m_fadeOutCnt==0&&trail->m_alpha==254&&trail->m_animSpeed==4&&trail->m_repeatAnim&&trail->m_numSegments==1,
+            "FireArrow trail retains X then Y matrix constructor defaults immediate fade and one segment");
+        check(g_resMgr.requests==std::vector<std::string>({"\xC0\xCC\xC6\xD1\xC6\xAE\\particle4.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\particle4.act"})
+            &&trail->m_segments[0].argb==0xFEFFFFFF&&trail->m_segments[0].size==trail->m_size,
+            "FireArrow trail loads exact particle4 sprite then action and initializes full segment state");
+        trail->m_alphaDelta=1;const float oldSize=trail->m_size;trail->OnProcess();
+        check(trail->m_alpha<254&&trail->m_size<oldSize&&trail->m_pos.x!=10,
+            "FireArrow trail uses reference linear motion shrink and first-frame fade");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_resMgr.requests.clear();const int draws=rngDraws;
+        rngValues={2,1,8,3,0,23,39,19,89,29};rngCursor=0;effect.m_stateCnt=12;effect.ApplyFireArrow();
+        auto it=effect.m_primList.begin();auto* arrow=*it++;trail=*it;
+        check(effect.m_count==20&&effect.m_primList.size()==2&&arrow->m_type==PP_3DCROSSTEXTURE&&trail->m_type==PP_3DPARTICLE
+            &&rngDraws==draws+10&&rngCursor==10,"FireArrow frame twelve orders one wave draw four projectile draws then five trail draws");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_FireArrow3.wav"&&waveCalls[0].x==8&&waveCalls[0].y==0
+            &&waveCalls[0].z==26&&waveCalls[0].frameRng==draws+1,"FireArrow selects exact sound and horizontal actor listener delta before launch draws");
+        check(arrow->m_deltaPos2.x==33&&arrow->m_deltaPos2.y==-60&&arrow->m_deltaPos2.z==16&&arrow->UsesReferenceCrossTexture(),
+            "FireArrow projectile uses source Z-before-X spawn draws and reference cross path");
+        const float longitude=static_cast<float>(-EffectHeading(33,16,-2,1));
+        const float latitude=static_cast<float>(EffectHeading(-60,static_cast<float>(std::sqrt(1345.0)),0,0));
+        check(arrow->m_longitude==longitude&&arrow->m_latitude==latitude&&effect.m_longitude==longitude&&effect.m_latitude==latitude,
+            "FireArrow aim draws Z before X and updates parent launch angles for following trails");
+        MatrixIdentity(expected);MatrixAppendXRotation(expected,GetRadian(static_cast<int>(latitude)));MatrixAppendYRotation(expected,GetRadian(static_cast<int>(longitude)));
+        check(arrow->m_matrix.m[2][0]==expected.m[2][0]&&arrow->m_matrix.m[2][1]==expected.m[2][1]
+            &&arrow->m_duration==70&&arrow->m_pattern==20&&arrow->m_speed==-2.75f&&arrow->m_widthSize==14&&arrow->m_heightSize==3.5f,
+            "FireArrow projectile retains truncated source rotation duration contact pattern speed and distinct dimensions");
+        check(trail->m_longitude==static_cast<float>(longitude-20.0+39)&&trail->m_latitude==static_cast<float>(latitude-10.0+19),
+            "FireArrow same-frame trail follows newly assigned projectile angles");
+        bool paths=g_texMgr.requests.size()==6;for(int i=0;i<6;++i)
+            paths=paths&&g_texMgr.requests[i]==std::string("effect\\\xBA\xD2\xC8\xAD\xBB\xEC")+std::to_string(i+1)+".tga";
+        check(paths&&arrow->m_totalTexture==6&&arrow->m_animSpeed==1&&arrow->m_repeatAnim&&arrow->m_gi[0].life==0
+            &&arrow->m_fadeOutCnt==50&&arrow->m_alpha==254,"FireArrow loads six exact recovered flame textures with one-frame repeating animation");
+        arrow->m_alphaDelta=1;arrow->OnProcess();
+        check(arrow->m_curMotion==1&&arrow->m_argb==0xFEFFFFFF&&effect.m_deltaPos.x==arrow->m_deltaPos.x+33
+            &&effect.m_deltaPos.y==arrow->m_deltaPos.y-60&&effect.m_deltaPos.z==arrow->m_deltaPos.z+16,
+            "FireArrow frame-zero projectile advances flame texture and propagates displacement to parent");
+        for(int i=1;i<6;++i)arrow->OnProcess();check(arrow->m_curMotion==0&&attr.calls==6&&effect.m_flag==0,
+            "FireArrow cycles all six flame textures while querying in-flight terrain each frame");
+        attr.height=arrow->m_pos.y;arrow->m_speed=0;arrow->OnProcess();
+        check(arrow->m_pattern==20&&effect.m_flag==0,"FireArrow strict ground equality does not trigger impact");
+        attr.height=-1000;arrow->m_speed=-2.75f;arrow->OnProcess();
+        check(arrow->m_speed==0&&arrow->m_pattern==16&&effect.m_flag==1&&arrow->m_stateCnt==46,
+            "FireArrow ground contact stops projectile clears ground bit and resets source state before increment");
+        const int queries=attr.calls;arrow->OnProcess();check(attr.calls==queries,"FireArrow stopped projectile does not repeat ground queries");
+        actor.m_pos={20,60,40};effect.m_stateCnt=13;effect.ApplyFireArrow();auto* ring=effect.m_primList.back();
+        check(effect.m_primList.size()==3&&ring->UsesReferenceCircle()&&effect.m_flag==0&&effect.m_effectPos.y==60,
+            "FireArrow consumes projectile hit flag after updating current actor origin");
+        check(ring->m_duration==30&&ring->m_latitude==90&&ring->m_radiusSpeed==1.2f&&ring->m_radiusAccel==static_cast<float>(1.2f/70.0*-2.0)
+            &&ring->m_innerSize==10&&ring->m_alpha==0&&ring->m_alphaSpeed==static_cast<float>(254.0*0.1)&&ring->m_fadeOutCnt==20,
+            "FireArrow impact ring preserves source expansion alpha rise and fade profile");
+        check(g_texMgr.requests.back()=="effect\\ring_yellow.tga"&&ring->m_numSegments==1&&ring->m_segments[0].argb==0x00FFFFFF
+            &&ring->m_segments[0].transform.m[1][1]==1,"FireArrow yellow ring starts with full source identity segment");
+        ring->m_alphaDelta=1;ring->OnProcess();check(ring->m_pos.y==60&&ring->m_radius>0&&ring->m_alpha>0,
+            "FireArrow impact ring uses reference circle growth and stored actor origin without terrain substitution");
+        effect.ApplyFireArrow();check(effect.m_primList.size()==3,"FireArrow consumes impact flag once");
+        const int beforeSecond=rngDraws;effect.m_stateCnt=22;effect.ApplyFireArrow();
+        check(effect.m_primList.size()==4&&rngDraws==beforeSecond+4&&waveCalls.size()==1&&effect.m_count==20,
+            "FireArrow emits second projectile at ten-frame cadence without repeated wave count scaling or trail");
+        effect.m_stateCnt=32;effect.ApplyFireArrow();check(effect.m_primList.size()==5&&effect.m_primList.back()->m_type==PP_3DPARTICLE,
+            "FireArrow scaled count excludes equal flight boundary while independent fourth-frame trail continues");
+        effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,
+            "FireArrow cleanup balances all particle4 resource locks");
+        effect.m_count=0;effect.m_stateCnt=12;const int zeroDraws=rngDraws;effect.ApplyFireArrow();
+        check(effect.m_count==0&&effect.m_primList.size()==1&&effect.m_primList.front()->m_type==PP_3DPARTICLE&&rngDraws==zeroDraws+6,
+            "FireArrow zero count preserves wave and trail without inventing a minimum projectile burst");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;g_session.m_isMinEffect=false;g_world.m_attr=oldAttr;g_world.m_player=oldPlayer;
     }
     {
         CRenderObject actor,listener;actor.m_pos={10,50,30};listener.m_pos={2,500,4};

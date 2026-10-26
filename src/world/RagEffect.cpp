@@ -6647,7 +6647,7 @@ void CEffectPrim::SetParticleResources(const char* sprName, const char* actName,
 bool CEffectPrim::UsesReferenceCircle() const
 {
     return m_type == PP_3DCIRCLE && m_master
-        && (m_master->GetEffectType() == 26 || m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321);
+        && (m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321);
 }
 
 bool CEffectPrim::UsesReferenceCylinder() const
@@ -6662,7 +6662,7 @@ bool CEffectPrim::UsesReferenceCylinder() const
 bool CEffectPrim::UsesReferenceCrossTexture() const
 {
     return m_type == PP_3DCROSSTEXTURE && m_master
-        && (m_master->GetEffectType() == 26 || m_master->GetEffectType() == 220);
+        && (m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 220);
 }
 
 bool CEffectPrim::UsesReferenceScreenTexture() const
@@ -6679,7 +6679,7 @@ bool CEffectPrim::UsesReferenceParticle() const
         || (m_type == PP_3DPARTICLEORBIT && m_master
             && (m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
-            && (m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
+            && (m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
 }
 
@@ -7952,7 +7952,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -11858,6 +11858,94 @@ void CRagEffect::ApplyIceArrow()
     }
 }
 
+// Ref/RagEffect.cpp:3902-4050 (0x5F95B0), original effect 31.
+void CRagEffect::ApplyFireArrow()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt == 12) {
+        char waveName[64];
+        std::snprintf(waveName, sizeof(waveName), "effect\\EF_FireArrow%d.wav", rand() % 3 + 1);
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave(waveName, m_effectPos.x - listener.x, 0.0f, m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+        m_count *= 10;
+    }
+    const int flight = m_stateCnt - 12;
+    if (m_stateCnt >= 12 && flight % 10 == 0 && flight < m_count) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCROSSTEXTURE, vector3d{});
+        prim->m_duration = 70;
+        prim->m_pattern = 20;
+        const int spawnZ = rand() % 10;
+        const int spawnX = rand() % 10;
+        prim->m_deltaPos2 = {static_cast<float>(spawnX + 25), -60.0f, static_cast<float>(spawnZ + 15)};
+        const int aimZ = rand() % 4;
+        const int aimX = rand() % 4 - 2;
+        prim->m_longitude = static_cast<float>(-EffectHeading(prim->m_deltaPos2.x, prim->m_deltaPos2.z,
+            static_cast<float>(aimX), static_cast<float>(aimZ - 2)));
+        m_longitude = prim->m_longitude;
+        const double x = std::fabs(static_cast<double>(prim->m_deltaPos2.x));
+        const double z = std::fabs(static_cast<double>(prim->m_deltaPos2.z));
+        const float squared = static_cast<float>(x * x + z * z);
+        const float horizontal = static_cast<float>(std::sqrt(static_cast<double>(squared)));
+        prim->m_latitude = static_cast<float>(EffectHeading(-std::fabs(prim->m_deltaPos2.y), horizontal, 0.0f, 0.0f));
+        m_latitude = prim->m_latitude;
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_speed = -2.75f;
+        prim->m_widthSize = 14.0f;
+        prim->m_heightSize = 3.5f;
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_animSpeed = 1; prim->m_totalTexture = 6; prim->m_repeatAnim = true;
+        prim->m_fadeOutCnt = prim->m_duration - 20;
+        for (int i = 1; i <= 6; ++i) {
+            char textureName[64];
+            // Original CP949 names at 0x71B700 down through 0x71B69C.
+            std::snprintf(textureName,sizeof(textureName),"effect\\\xBA\xD2\xC8\xAD\xBB\xEC%d.tga",i);
+            prim->m_texture.push_back(g_texMgr.GetTexture(textureName,false));
+        }
+        prim->m_gi[0].life = 0;
+    }
+    if (m_stateCnt > 0 && (m_stateCnt & 3) == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE,vector3d{});
+        prim->m_duration = rand() % 24 + 6;
+        prim->m_longitude = static_cast<float>(m_longitude - 20.0 + rand() % 40);
+        prim->m_latitude = static_cast<float>(m_latitude - 10.0 + rand() % 20);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_deltaPos2 = m_deltaPos;
+        prim->m_speed = static_cast<float>((rand() % 90 + 60) * 0.0099999998);
+        prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -0.66666669);
+        prim->m_size = static_cast<float>((rand() % 30 + 20) * 0.0099999998);
+        prim->m_sizeSpeed = static_cast<float>(-(prim->m_size / static_cast<double>(prim->m_duration)));
+        prim->m_fadeOutCnt = 0;
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_numSegments = 1; prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle4.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\particle4.act");
+        InitReferenceSegments(prim);
+    }
+    if (m_flag != 0) {
+        m_flag = 0;
+        CEffectPrim* ring = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
+        ring->m_duration = 30;
+        ring->m_latitude = 90.0f;
+        ring->m_radiusSpeed = 1.2f;
+        ring->m_radiusAccel = static_cast<float>(ring->m_radiusSpeed / static_cast<double>(ring->m_duration + 40) * -2.0);
+        ring->m_innerSize = 10.0f;
+        ring->m_alpha = 0.0f; ring->m_maxAlpha = 254.0f;
+        ring->m_alphaSpeed = static_cast<float>(ring->m_maxAlpha * 0.1);
+        ring->m_fadeOutCnt = ring->m_duration - 10;
+        ring->m_numSegments = 1;
+        ShiftCircleSegments(ring);
+        ring->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_yellow.tga", false));
+    }
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -13112,6 +13200,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 45) {
         SpawnFireFly();
+        return true;
+    }
+    if (m_type == 31) {
+        ApplyFireArrow();
         return true;
     }
     if (m_type == 26) {
