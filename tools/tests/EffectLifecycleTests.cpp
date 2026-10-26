@@ -122,6 +122,7 @@ struct CGameObject {
 };
 struct CRenderObject : CGameObject {
     vector3d m_pos;
+    vector3d EffectPosition() const { return m_pos; }
     float m_roty = 0;
     int m_BodyLight = 0;
     char m_BeZero = 0;
@@ -215,6 +216,7 @@ void UpdateReferenceWaterfallParticle(CEffectPrim*);
 void UpdateReferenceLightSphere(CEffectPrim*);
 bool UpdateReferenceGhost(CEffectPrim*);
 void UpdateReferenceSoulBreaker(CEffectPrim*);
+void UpdateReferencePressure(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -332,6 +334,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_LIGHTSPHERE) { UpdateReferenceLightSphere(this); return active; }
         if (m_type == PP_GHOST) { UpdateReferenceGhost(this); return active; }
         if (m_type == PP_SOULBREAKER) { UpdateReferenceSoulBreaker(this); return active; }
+        if (m_type == PP_PRESSURE) { UpdateReferencePressure(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -775,6 +778,7 @@ __declspec(noinline) void RunWaterfallParticleLifecycleChecks(CEffectPrim& prim,
 __declspec(noinline) void RunLightSphereLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunGhostLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSoulBreakerLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunPressureLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1403,6 +1407,84 @@ __declspec(noinline) void RunSoulBreakerLifecycleChecks(CEffectPrim& prim, int& 
     prim.OnProcess();
     check(edge.rotStart==0 && edge.sparkX==1 && edge.sparkZ==0 && rngDraws-zeroVectorDraws==1,
         "case 0x56 zero direction follows canonical EXE Get_Angle NaN loop behavior and then applies neutral angle jitter");
+    g_isSkipFrame=oldSkipFrame;
+    RunPressureLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunPressureLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_PRESSURE; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={100,200,300};
+    for (auto& gi : prim.m_gi) gi={};
+    gameMode.messages=0; gameMode.lastMsg=0;
+    const float oldLongitude=testView.longitude; testView.longitude=15.0f;
+    const int pressureDraws=rngDraws;
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=0; a.alphaB=5; a.fullDisplayAngle=5;
+    a.height[1]=2; a.vecBPreX=1; a.arcBaselineY=3; a.vecBPreZ=4;
+    a.distance=10; a.height[8]=8; a.flag[0]=7;
+    EffectGi& b=prim.m_gi[1]; b.fullDisplayAngle=20; b.alphaB=50; b.distance=11; b.height[8]=9;
+    b.sparkX=10; b.sparkY=20; b.sparkZ=30; b.flag[0]=8;
+    EffectGi& c=prim.m_gi[2]; c.fullDisplayAngle=30; c.alphaB=10; c.distance=12; c.height[8]=10;
+    c.sparkX=40; c.sparkY=50; c.sparkZ=60; c.flag[0]=9;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==100 && prim.m_pos.y==200 && prim.m_pos.z==300
+        && a.process==1 && a.alphaB==25 && a.fullDisplayAngle==350 && a.arcBaselineY==5
+        && a.sparkX==101 && a.sparkY==205 && a.sparkZ==304
+        && prim.m_gi[1].alphaT==135 && prim.m_gi[0].alphaT==345,
+        "case 0x57 copies master and camera angles, raises alpha, rotates and moves the active pressure ring");
+
+    a.process=1; a.alphaB=50; a.fullDisplayAngle=10; a.height[1]=3; a.vecBPreX=2; a.arcBaselineY=4; a.vecBPreZ=5;
+    b={}; c={}; prim.m_gi[3]={}; b.fullDisplayAngle=21; b.alphaB=80; b.distance=22; b.height[8]=23;
+    b.sparkX=24; b.sparkY=25; b.sparkZ=26; b.flag[0]=27;
+    c.fullDisplayAngle=31; c.alphaB=20; c.distance=32; c.height[8]=33;
+    c.sparkX=34; c.sparkY=35; c.sparkZ=36; c.flag[0]=37;
+    prim.OnProcess();
+    check(a.process==2 && a.alphaB==70 && b.fullDisplayAngle==10 && b.alphaB==0 && b.distance==10
+        && b.height[8]==8 && b.sparkX==101 && b.sparkY==205 && b.sparkZ==304 && b.flag[0]==7,
+        "case 0x57 process 2 snapshots GI0 into GI1 before GI0 alpha and movement updates and clamps faded alpha");
+    a.process=2; b={}; b.life=1; b.process=0; b.fullDisplayAngle=41; b.alphaB=60; b.distance=42;
+    b.height[8]=43; b.sparkX=44; b.sparkY=45; b.sparkZ=46; b.flag[0]=47;
+    c={}; c.fullDisplayAngle=51; c.alphaB=20; c.distance=52; c.height[8]=53;
+    c.sparkX=54; c.sparkY=55; c.sparkZ=56; c.flag[0]=57;
+    prim.OnProcess();
+    check(a.process==3 && c.fullDisplayAngle==41 && c.alphaB==35 && c.distance==42 && c.height[8]==43
+        && c.sparkX==44 && c.sparkY==45 && c.sparkZ==46 && c.flag[0]==47,
+        "case 0x57 process 3 snapshots GI1 into GI2 with a 25-point clamped alpha decrement");
+    a.process=3; c.fullDisplayAngle=61; c.alphaB=10; c.distance=62; c.height[8]=63;
+    c.sparkX=64; c.sparkY=65; c.sparkZ=66; c.flag[0]=67;
+    prim.m_gi[3]={}; prim.OnProcess();
+    check(a.process==4 && prim.m_gi[3].fullDisplayAngle==61 && prim.m_gi[3].alphaB==0
+        && prim.m_gi[3].distance==62 && prim.m_gi[3].height[8]==63 && prim.m_gi[3].sparkX==64
+        && prim.m_gi[3].sparkY==65 && prim.m_gi[3].sparkZ==66 && prim.m_gi[3].flag[0]==67,
+        "case 0x57 process 4 snapshots GI2 into GI3 before later snapshot and movement branches");
+
+    a.process=23; a.flag[4]=1; a.fullDisplayAngle=90; a.height[1]=2; a.arcBaselineY=10;
+    gameMode.messages=0; prim.OnProcess();
+    check(a.process==24 && a.fullDisplayAngle==75 && a.arcBaselineY==12,
+        "case 0x57 flagged ring still rotates and rises through process 24");
+    a.process=24; a.fullDisplayAngle=90; a.arcBaselineY=10; prim.OnProcess();
+    check(a.process==25 && a.fullDisplayAngle==90 && a.arcBaselineY==10
+        && prim.m_gi[0].sparkX==prim.m_pos.x+a.vecBPreX && prim.m_gi[0].sparkY==prim.m_pos.y+a.arcBaselineY,
+        "case 0x57 flagged process 25 stops local rotation and rise but continues positioning vecB_now");
+    a.process=31; a.flag[4]=0; a.alphaB=15; a.fullDisplayAngle=4; a.arcBaselineY=10; prim.OnProcess();
+    check(a.process==32 && a.alphaB==15 && a.fullDisplayAngle==349 && a.arcBaselineY==12,
+        "case 0x57 process 32 remains in motion and growth through its inclusive boundary");
+    a.process=32; a.alphaB=4; a.flag[4]=0; gameMode.messages=0; prim.OnProcess();
+    check(a.process==33 && a.alphaB==0 && gameMode.messages==1 && gameMode.lastMsg==135,
+        "case 0x57 process 33 sends exactly one quake message and begins clamped fade");
+    a.process=32; a.flag[4]=1; a.alphaB=10; gameMode.messages=0; prim.OnProcess();
+    check(a.process==33 && a.alphaB==5 && gameMode.messages==0,
+        "case 0x57 flagged process 33 fades without sending quake");
+    a.life=0; a.process=4; gameMode.messages=0; const short inactiveProcess=a.process;
+    prim.OnProcess();
+    check(a.process==inactiveProcess && prim.m_pos.x==100 && prim.m_gi[0].alphaT==345
+        && gameMode.messages==0 && rngDraws==pressureDraws,
+        "case 0x57 inactive GI still refreshes camera and master position while leaving lifecycle untouched");
+    testView.longitude=oldLongitude;
     g_isSkipFrame=oldSkipFrame;
 }
 

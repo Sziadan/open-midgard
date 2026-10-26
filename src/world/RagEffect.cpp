@@ -9091,6 +9091,84 @@ void UpdateReferenceSoulBreaker(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:15404; canonical executable PrimPressure at 0x628360 (case 0x57).
+void UpdateReferencePressure(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode ? mode->m_view : nullptr;
+    if (view) {
+        prim->m_gi[0].alphaT = static_cast<short>(360 - static_cast<int>(view->GetCameraLongitude()));
+        const short latitudeAngle = static_cast<short>(450 - static_cast<int>(view->GetCameraLatitude()));
+        prim->m_gi[1].alphaT = latitudeAngle >= 360
+            ? static_cast<short>(latitudeAngle - 360) : latitudeAngle;
+    }
+
+    prim->m_pos = prim->m_master->EffectPosition();
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) return;
+
+    ++gi.process;
+    if (gi.process <= 0) return;
+
+    if (gi.process > 3) {
+        EffectGi& destination = prim->m_gi[3];
+        const EffectGi& source = prim->m_gi[2];
+        destination.fullDisplayAngle = source.fullDisplayAngle;
+        destination.distance = source.distance;
+        destination.height[8] = source.height[8];
+        destination.alphaB = static_cast<short>(source.alphaB - 25);
+        if (destination.alphaB < 0) destination.alphaB = 0;
+        destination.sparkX = source.sparkX;
+        destination.sparkY = source.sparkY;
+        destination.sparkZ = source.sparkZ;
+        destination.flag[0] = source.flag[0];
+    }
+    if (gi.process > 2) {
+        EffectGi& destination = prim->m_gi[2];
+        const EffectGi& source = prim->m_gi[1];
+        destination.fullDisplayAngle = source.fullDisplayAngle;
+        destination.distance = source.distance;
+        destination.height[8] = source.height[8];
+        destination.alphaB = static_cast<short>(source.alphaB - 25);
+        if (destination.alphaB < 0) destination.alphaB = 0;
+        destination.sparkX = source.sparkX;
+        destination.sparkY = source.sparkY;
+        destination.sparkZ = source.sparkZ;
+        destination.flag[0] = source.flag[0];
+    }
+    if (gi.process > 1) {
+        EffectGi& destination = prim->m_gi[1];
+        destination.fullDisplayAngle = gi.fullDisplayAngle;
+        destination.distance = gi.distance;
+        destination.height[8] = gi.height[8];
+        destination.alphaB = static_cast<short>(gi.alphaB - 100);
+        if (destination.alphaB < 0) destination.alphaB = 0;
+        destination.sparkX = gi.sparkX;
+        destination.sparkY = gi.sparkY;
+        destination.sparkZ = gi.sparkZ;
+        destination.flag[0] = gi.flag[0];
+    }
+
+    if (gi.process <= 10) gi.alphaB = static_cast<short>(gi.alphaB + 20);
+
+    if (gi.process <= 32) {
+        if (gi.flag[4] == 0 || gi.process <= 24) {
+            gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle - 15);
+            if (gi.fullDisplayAngle < 0) {
+                gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + 360);
+            }
+            gi.arcBaselineY += gi.height[1];
+        }
+        prim->m_gi[0].sparkX = prim->m_pos.x + gi.vecBPreX;
+        prim->m_gi[0].sparkY = prim->m_pos.y + gi.arcBaselineY;
+        prim->m_gi[0].sparkZ = prim->m_pos.z + gi.vecBPreZ;
+    } else {
+        if (gi.flag[4] == 0 && gi.process == 33 && mode) mode->SendMsg(135, 0, 0, 0);
+        gi.alphaB = static_cast<short>(gi.alphaB - 5);
+        if (gi.alphaB < 0) gi.alphaB = 0;
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -10180,6 +10258,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_SOULBREAKER) {
         UpdateReferenceSoulBreaker(this);
+        return true;
+    }
+    if (m_type == PP_PRESSURE) {
+        UpdateReferencePressure(this); // Source case 0x57 continues to the common tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
