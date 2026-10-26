@@ -9520,6 +9520,44 @@ void UpdateReferenceHitLine3(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:9821; canonical executable PrimSoulLinkLight at 0x61BA20 (case 0x6D).
+bool UpdateReferenceSoulLinkLight(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode ? mode->m_view : nullptr;
+    if (view) {
+        const short longitude = static_cast<short>(view->GetCameraLongitude());
+        prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+        const short latitude = static_cast<short>(view->GetCameraLatitude());
+        const short cameraLatitude = static_cast<short>(450 - latitude);
+        prim->m_gi[1].alphaT = static_cast<short>(cameraLatitude >= 360 ? cameraLatitude - 360 : cameraLatitude);
+    }
+
+    if (!prim->m_master) return true;
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.process <= 10) {
+            gi.height[13] += 20.0f;
+        } else if (gi.process > 170) {
+            gi.height[13] -= 5.0f;
+            if (gi.height[13] < 0.0f) gi.height[13] = 0.0f;
+        }
+
+        gi.vecTNowX = static_cast<float>(static_cast<double>(gi.process) * 0.033333335 + gi.vecTNowX);
+        if (gi.vecTNowX >= 359.0f) gi.vecTNowX = 359.0f;
+
+        const int angle = static_cast<int>(gi.vecTNowX);
+        gi.vecBPreX = static_cast<float>(static_cast<double>(angle) * 0.16666667 - 30.0);
+        gi.arcBaselineY = static_cast<float>(-(static_cast<double>(g_sinTable[angle]) * 20.0) - 40.0);
+        gi.vecBPreZ = 0.0f;
+    }
+    return true;
+}
+
 // Ref/dhxj/RagEffect2.cpp:15246; canonical executable PrimTanji2 at 0x627F30 (case 0x61).
 void UpdateReferenceTanji2(CEffectPrim* prim)
 {
@@ -10735,6 +10773,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_HITLINE3) {
         UpdateReferenceHitLine3(this); // Source case 0x64 ignores the handler's true result.
+        return true;
+    }
+    if (m_type == PP_SOULLINK) {
+        UpdateReferenceSoulLinkLight(this); // Source case 0x6D ignores the handler's true result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

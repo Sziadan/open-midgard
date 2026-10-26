@@ -3,12 +3,12 @@
 Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
-Last updated: 2026-10-26
-Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, 0x25 through 0x28, 0x2A-0x2E, 0x30, 0x33, 0x34, 0x3D, 0x43, 0x44, 0x45, 0x46, and 0x4A, 0x50, 0x51, 0x54, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x60, 0x61, 0x62, and 0x64 now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
+Last updated: 2026-10-27
+Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, 0x25 through 0x28, 0x2A-0x2E, 0x30, 0x33, 0x34, 0x3D, 0x43, 0x44, 0x45, 0x46, and 0x4A, 0x50, 0x51, 0x54, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x60, 0x61, 0x62, 0x64, and 0x6D now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
 
-Next action: source-compare case 0x6D against the implementation before editing that function. PP_AIRTEXTURE and PP_HITLINE3 render paths remain open, as do full renderer/fog/backend acceptance.
+Next action: source-compare case 0x6F against the implementation before editing that function. PP_AIRTEXTURE, PP_HITLINE3, and PP_SOULLINK render paths remain open, as do full renderer/fog/backend acceptance.
 
-Latest checkpoint (2026-10-26): `PP_HITLINE3` case 0x64 update is implemented and branch-compared against readable Ref, decompiled Ref, and canonical EXE. Inventory reports 16 source-only IDs; lifecycle suite passes 1,745 checks and all six registered CTest suites pass. x64 Release build passes. Approved OldRO deployment SHA-256 is `0AF74E064F5C98C4593306FF1304CEF96CD7CA83181E9D6CC1AB5E114A8AC0D0`; source and deployed hashes match. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-27): `PP_SOULLINK` case 0x6D update is implemented and branch-compared against readable Ref, decompiled Ref, and canonical EXE. Inventory reports 15 source-only IDs; lifecycle suite passes 1,751 checks and all six registered CTest suites pass. x64 Release build passes. OldRO deployment SHA-256 is `5FC40B51AE28F2B96D10722FAE98B5F4C66B5DA0309AEC2DD2F58D1C99C92010`; source and deployed hashes match. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26

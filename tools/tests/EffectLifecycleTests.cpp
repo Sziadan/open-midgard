@@ -229,6 +229,7 @@ bool UpdateReferencePeongUp(CEffectPrim*);
 void UpdateReferenceTanji2(CEffectPrim*);
 void UpdateReferenceAirTexture(CEffectPrim*);
 void UpdateReferenceHitLine3(CEffectPrim*);
+bool UpdateReferenceSoulLinkLight(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -360,6 +361,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_TANJI2) { UpdateReferenceTanji2(this); return active; }
         if (m_type == PP_AIRTEXTURE) { UpdateReferenceAirTexture(this); return active; }
         if (m_type == PP_HITLINE3) { UpdateReferenceHitLine3(this); return active; }
+        if (m_type == PP_SOULLINK) { UpdateReferenceSoulLinkLight(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -829,6 +831,7 @@ __declspec(noinline) void RunPeongUpLifecycleChecks(CEffectPrim& prim, int& chec
 __declspec(noinline) void RunTanji2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunAirTextureLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunHitLine3LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2088,6 +2091,45 @@ __declspec(noinline) void RunHitLine3LifecycleChecks(CEffectPrim& prim, int& che
         &&prim.m_pos.x==7&&prim.m_gi[0].alphaT==cameraAngle&&rngDraws==draws,
         "case 0x64 inactive and nonpositive bands skip motion/copy while primitive camera/origin/RNG remain untouched");
     g_isSkipFrame=oldSkipFrame;
+    RunSoulLinkLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude; testView.longitude=20.0f;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_SOULLINK; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={7,8,9}; prim.m_master->m_effectPos={100,200,300};
+    for(auto& gi:prim.m_gi) gi={};
+    prim.OnProcess();
+    check(prim.m_pos.x==100&&prim.m_pos.y==200&&prim.m_pos.z==300
+        &&prim.m_gi[0].alphaT==340&&prim.m_gi[1].alphaT==135,
+        "case 0x6D copies master position and camera angles even with all GI slots inactive");
+
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=9; a.height[13]=0; a.vecTNowX=0;
+    EffectGi& b=prim.m_gi[1]; b.life=1; b.process=10; b.height[13]=50; b.vecTNowX=350;
+    EffectGi& c=prim.m_gi[2]; c.life=1; c.process=169; c.height[13]=2; c.vecTNowX=358;
+    EffectGi& d=prim.m_gi[3]; d.life=1; d.process=170; d.height[13]=2; d.vecTNowX=358;
+    prim.OnProcess();
+    check(a.process==10&&a.height[13]==20&&a.vecTNowX>0.3f&&a.vecTNowX<0.34f
+        &&a.vecBPreX==-30&&a.arcBaselineY==-40&&a.vecBPreZ==0,
+        "case 0x6D process ten grows height and derives pre-vector from truncated accumulated angle");
+    check(b.process==11&&b.height[13]==50&&b.vecTNowX>350&&b.vecBPreZ==0,
+        "case 0x6D process eleven holds height after the growth window and updates angle-derived state");
+    check(c.process==170&&c.height[13]==2&&c.vecTNowX==359&&c.vecBPreX>29&&c.vecBPreZ==0,
+        "case 0x6D process one-seventy holds height and clamps accumulated angle at 359");
+    check(d.process==171&&d.height[13]==0&&d.vecTNowX==359&&d.vecBPreZ==0,
+        "case 0x6D process one-seventy-one decays height with a zero floor after angle clamp");
+
+    d.process=-2; d.height[13]=7; d.vecTNowX=25; d.vecBPreX=13;
+    const int draws=rngDraws; prim.OnProcess();
+    check(d.process==-1&&d.height[13]==7&&d.vecTNowX==25&&d.vecBPreX==13
+        &&rngDraws==draws,
+        "case 0x6D nonpositive post-increment skips height angle/vector updates and RNG");
+    testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
