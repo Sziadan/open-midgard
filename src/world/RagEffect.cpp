@@ -9475,6 +9475,23 @@ bool UpdateReferencePeongUp(CEffectPrim* prim)
 
 void SpawnTanjiAirTexture(CGameMode* mode, const vector3d& position);
 
+// Ref/dhxj/RagEffect2.cpp:15734; canonical executable PrimAirTexture at 0x628B40 (case 0x62).
+void UpdateReferenceAirTexture(CEffectPrim* prim)
+{
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) return;
+
+    ++gi.process;
+    if (gi.process < 50) gi.distance += 0.1f;
+    if (gi.process <= 5) {
+        gi.alphaB = static_cast<short>(gi.alphaB + 50);
+    }
+    if (gi.process > 5) {
+        gi.alphaB = static_cast<short>(gi.alphaB - 3);
+        if (gi.alphaB < 0) gi.alphaB = 0;
+    }
+}
+
 // Ref/dhxj/RagEffect2.cpp:15246; canonical executable PrimTanji2 at 0x627F30 (case 0x61).
 void UpdateReferenceTanji2(CEffectPrim* prim)
 {
@@ -10682,6 +10699,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_TANJI2) {
         UpdateReferenceTanji2(this); // Source case 0x61 ignores the handler's true result.
+        return true;
+    }
+    if (m_type == PP_AIRTEXTURE) {
+        UpdateReferenceAirTexture(this); // Source case 0x62 ignores the handler's true result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

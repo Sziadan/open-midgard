@@ -227,6 +227,7 @@ bool UpdateReferencePeong(CEffectPrim*);
 void UpdateReferenceEffectTexture2(CEffectPrim*);
 bool UpdateReferencePeongUp(CEffectPrim*);
 void UpdateReferenceTanji2(CEffectPrim*);
+void UpdateReferenceAirTexture(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -356,6 +357,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_EFFECTTEXTURE2) { UpdateReferenceEffectTexture2(this); return active; }
         if (m_type == PP_PEONGUP) { UpdateReferencePeongUp(this); return active; }
         if (m_type == PP_TANJI2) { UpdateReferenceTanji2(this); return active; }
+        if (m_type == PP_AIRTEXTURE) { UpdateReferenceAirTexture(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -823,6 +825,7 @@ __declspec(noinline) void RunPeongLifecycleChecks(CEffectPrim& prim, int& checks
 __declspec(noinline) void RunEffectTexture2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunPeongUpLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunTanji2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunAirTextureLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2005,6 +2008,45 @@ __declspec(noinline) void RunTanji2LifecycleChecks(CEffectPrim& prim, int& check
 
     player.DetachEffects(); g_world.UpdateGameObjects(); g_world.m_player=oldPlayer; prim.m_master=oldMaster;
     testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
+    RunAirTextureLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunAirTextureLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_AIRTEXTURE; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={7,8,9}; prim.m_master->m_effectPos={100,200,300};
+    for(auto& gi:prim.m_gi) gi={};
+    prim.m_gi[0].life=2; prim.m_gi[0].process=10; prim.m_gi[0].distance=4; prim.m_gi[0].alphaB=17;
+    prim.m_gi[1].life=1; prim.m_gi[1].process=20; prim.m_gi[1].distance=5; prim.m_gi[1].alphaB=25;
+    const int draws=rngDraws; const float alphaT=prim.m_gi[0].alphaT;
+    prim.OnProcess();
+    check(prim.m_gi[0].process==10&&prim.m_gi[0].distance==4&&prim.m_gi[0].alphaB==17
+        &&prim.m_gi[1].process==20&&prim.m_gi[1].distance==5&&prim.m_gi[1].alphaB==25
+        &&prim.m_pos.x==7&&prim.m_pos.y==8&&prim.m_pos.z==9&&prim.m_gi[0].alphaT==alphaT,
+        "case 0x62 exact-life guard updates no other GI or camera/master position state");
+
+    EffectGi& gi=prim.m_gi[0]; gi.life=1; gi.process=4; gi.distance=10; gi.alphaB=230;
+    prim.OnProcess();
+    check(gi.process==5&&std::fabs(gi.distance-10.1f)<0.0001f&&gi.alphaB==280,
+        "case 0x62 process five grows distance and adds fifty alpha without an upper clamp");
+    prim.OnProcess();
+    check(gi.process==6&&std::fabs(gi.distance-10.2f)<0.0001f&&gi.alphaB==277,
+        "case 0x62 process six crosses into the three-point alpha fade while distance still grows");
+    gi.process=48; gi.distance=20; gi.alphaB=0; prim.OnProcess();
+    check(gi.process==49&&std::fabs(gi.distance-20.1f)<0.0001f&&gi.alphaB==0,
+        "case 0x62 process forty-nine remains below the distance cutoff while alpha continues to fade");
+    gi.process=49; gi.distance=30; gi.alphaB=1; prim.OnProcess();
+    check(gi.process==50&&gi.distance==30&&gi.alphaB==0,
+        "case 0x62 process fifty stops distance growth and clamps fading alpha at zero");
+    gi.process=-2; gi.distance=40; gi.alphaB=12; prim.OnProcess();
+    check(gi.process==-1&&std::fabs(gi.distance-40.1f)<0.0001f&&gi.alphaB==62
+        &&rngDraws==draws,
+        "case 0x62 has no positive-process guard and performs no RNG");
+    g_isSkipFrame=oldSkipFrame;
 }
 
 int main()

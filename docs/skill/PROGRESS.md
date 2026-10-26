@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, 0x25 through 0x28, 0x2A-0x2E, 0x30, 0x33, 0x34, 0x3D, 0x43, 0x44, 0x45, 0x46, and 0x4A, 0x50, 0x51, 0x54, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x60, and 0x61 now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
+Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D, 0x20, 0x22, shared GumGang IDs 0x23/0x63, 0x25 through 0x28, 0x2A-0x2E, 0x30, 0x33, 0x34, 0x3D, 0x43, 0x44, 0x45, 0x46, and 0x4A, 0x50, 0x51, 0x54, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x60, 0x61, and 0x62 now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
 
-Next action: source-compare case 0x62 against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
+Next action: source-compare case 0x64 against the implementation before editing that function. The PP_AIRTEXTURE render path remains open, as do full renderer/fog/backend acceptance.
 
-Latest checkpoint (2026-10-26): `PP_TANJI2` case 0x61 is implemented and branch-compared against readable Ref, decompiled Ref, and canonical EXE. Inventory reports 18 source-only IDs; lifecycle suite passes 1,736 checks and all six registered CTest suites pass. x64 Release build passes. Approved OldRO deployment SHA-256 is `7B3693FDF4ED6D5AE662CD54EBB6691786698C769A81F2B26FBED36C4F55582B`; source and deployed hashes match. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `PP_AIRTEXTURE` case 0x62 update is implemented and branch-compared against readable Ref, decompiled Ref, and canonical EXE. Inventory reports 17 source-only IDs; lifecycle suite passes 1,742 checks and all six registered CTest suites pass. x64 Release build passes. Approved OldRO deployment SHA-256 is `0B2845CE18002F8C3B55AE40819B5D0E1587E920F154DDCF237E4BB71C029975`; source and deployed hashes match. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26
