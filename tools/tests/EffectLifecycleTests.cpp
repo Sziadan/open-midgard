@@ -203,6 +203,7 @@ void UpdateReferenceTeiHit1(CEffectPrim*);
 void UpdateReferenceTeiHit2(CEffectPrim*);
 bool UpdateReferenceChimTo(CEffectPrim*);
 void UpdateReferenceBottom2(CEffectPrim*);
+bool UpdateReferenceBottomSpr(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -308,6 +309,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_TEIHIT2) { UpdateReferenceTeiHit2(this); return active; }
         if (m_type == PP_CHIMTO) { UpdateReferenceChimTo(this); return active; }
         if (m_type == PP_BOTTOM2) { UpdateReferenceBottom2(this); return active; }
+        if (m_type == PP_BOTTOMSPR) { UpdateReferenceBottomSpr(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -738,6 +740,7 @@ __declspec(noinline) void RunTeiHit2LifecycleChecks(CEffectPrim& prim, int& chec
 }
 
 __declspec(noinline) void RunBottom2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunBottomSprLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -803,6 +806,53 @@ __declspec(noinline) void RunBottom2LifecycleChecks(CEffectPrim& prim, int& chec
         && a.distance==17 && a.alphaB==18 && rngDraws==draws,
         "case 0x30 updates four bands with exact height[0] selector, process and angle wraps, sine height and no RNG");
     g_isSkipFrame=oldSkipFrame;
+    RunBottomSprLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunBottomSprLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const int oldMotionCount=g_resMgr.act.count;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_BOTTOMSPR; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={101,202,303}; prim.m_pos={7,8,9};
+    prim.m_pattern=0x20; prim.m_roty=75; prim.m_roll=-10; prim.m_numSegments=2;
+    prim.m_alpha=40; prim.m_alphaSpeed=0; prim.m_minAlpha=0; prim.m_maxAlpha=254;
+    prim.m_animSpeed=1; prim.m_curMotion=0; prim.m_particleActRes=nullptr;
+    for (auto& gi : prim.m_gi) gi={};
+    auto& gi=prim.m_gi[0]; gi.life=1; gi.process=6; gi.flag[4]=1;
+    gi.vecBPreX=11; gi.arcBaselineY=22; gi.vecBPreZ=33;
+    const int draws=rngDraws;
+    check(prim.OnProcess()==1 && prim.m_stateCnt==1
+        && prim.m_pos.x==101 && prim.m_pos.y==202 && prim.m_pos.z==303
+        && gi.process==7 && prim.m_roll==75-testView.longitude
+        && prim.m_curMotion==1 && prim.m_segments[0].pos.x==101
+        && prim.m_segments[0].pos.y==202 && prim.m_segments[0].pos.z==303
+        && rngDraws==draws,
+        "case 0x33 live GI0 with NPC-stop flag keeps master position, increments process, rotates, shifts segments and advances animation/tick");
+
+    prim.m_stateCnt=0; prim.m_master->m_effectPos={201,202,203}; prim.m_pos={1,2,3};
+    prim.m_pattern=0; prim.m_roll=91; prim.m_curMotion=4; prim.m_animSpeed=0;
+    gi.process=20; gi.life=1; gi.flag[4]=2;
+    gi.vecBPreX=31; gi.arcBaselineY=32; gi.vecBPreZ=33;
+    prim.OnProcess();
+    check(prim.m_pos.x==31 && prim.m_pos.y==32 && prim.m_pos.z==33
+        && gi.process==21 && prim.m_roll==91 && prim.m_curMotion==4,
+        "case 0x33 live GI0 without exact NPC-stop flag uses stored vecB_pre and leaves roll unchanged without rotation flag");
+
+    prim.m_stateCnt=0; prim.m_master->m_effectPos={301,302,303}; prim.m_pos={41,42,43};
+    prim.m_pattern=0x20; prim.m_roll=0; gi.life=2; gi.process=30;
+    gi.flag[4]=0; gi.vecBPreX=71; gi.arcBaselineY=72; gi.vecBPreZ=73;
+    prim.m_particleActRes=&g_resMgr.act; g_resMgr.act.count=1;
+    prim.m_repeatAnim=false; prim.m_curMotion=0; prim.m_animSpeed=1;
+    const u8 result=prim.OnProcess();
+    check(result==1 && prim.m_pos.x==301 && prim.m_pos.y==302 && prim.m_pos.z==303
+        && gi.process==30 && prim.m_roll==75-testView.longitude && prim.m_curMotion==1
+        && prim.m_stateCnt==1,
+        "case 0x33 inactive GI0 preserves master anchor and process, while dispatcher ignores completed animation and advances tick");
+    prim.m_particleActRes=nullptr; prim.m_numSegments=0; g_resMgr.act.count=oldMotionCount; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()

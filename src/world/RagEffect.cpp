@@ -8618,6 +8618,28 @@ void UpdateReferenceBottom2(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:2071 (case 0x33).
+bool UpdateReferenceBottomSpr(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life == 1) {
+        ++gi.process;
+        if (gi.flag[4] == 1) {
+            prim->m_pos = prim->m_master->EffectPosition();
+        } else {
+            prim->m_pos = {gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ};
+        }
+    }
+    if ((prim->m_pattern & 0x20) != 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        prim->m_roll = prim->m_roty - mode->m_view->GetCameraLongitude();
+    }
+    ProcessReferenceParticleAlpha(prim);
+    ShiftReferenceSegments(prim);
+    return AnimateReferenceParticle(prim);
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9659,6 +9681,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_BOTTOM2) {
         UpdateReferenceBottom2(this);
+        return true;
+    }
+    if (m_type == PP_BOTTOMSPR) {
+        UpdateReferenceBottomSpr(this); // Source case 0x33 ignores the animation result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
