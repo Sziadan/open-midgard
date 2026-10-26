@@ -9969,6 +9969,53 @@ void UpdateReferenceStin2(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:1982; canonical executable PrimKouenka (case 0x7C).
+bool UpdateReferenceKouenka(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life == 1) {
+        for (int index = 0; index < 4; index += 2) {
+            float& lower = gi.height[static_cast<size_t>(index)];
+            float& upper = gi.height[static_cast<size_t>(index + 1)];
+            if (upper > lower) {
+                lower += 3.0f;
+                if (lower > 359.0f) lower = 359.0f;
+                if (lower > upper) {
+                    const int bound = static_cast<int>(lower);
+                    upper = static_cast<float>(bound > 0 ? rand() % bound : 0);
+                }
+            } else {
+                lower -= 2.0f;
+                if (lower < 0.0f) lower = 0.0f;
+                if (lower <= upper) {
+                    const int bound = static_cast<int>(lower);
+                    const int randomValue = bound > 0 ? rand() % bound : 0;
+                    upper = static_cast<float>(359 - randomValue);
+                }
+            }
+        }
+
+        gi.arcBaselineY -= gi.maxHeight;
+        prim->m_alpha -= 3.0f;
+        if (prim->m_alpha < 3.0f) prim->m_alpha = 0.0f;
+        gi.vecBPreX += 0.15f * g_sinTable[static_cast<int>(gi.height[0])];
+        gi.vecBPreZ += 0.15f * g_sinTable[static_cast<int>(gi.height[2])];
+        prim->m_deltaPos = {gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ};
+    }
+
+    prim->m_pos = prim->m_deltaPos;
+    if ((prim->m_pattern & 0x20) != 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        prim->m_roll = prim->m_roty - mode->m_view->GetCameraLongitude();
+    }
+
+    ProcessReferenceParticleAlpha(prim);
+    ShiftReferenceSegments(prim);
+    return AnimateReferenceMotion(prim);
+}
+
 // Ref/dhxj/RagEffect2.cpp:23232; canonical executable PrimTwilight at 0x63A070 (case 0x7B).
 void UpdateReferenceTwilight(CEffectPrim* prim)
 {
@@ -11280,6 +11327,9 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_TWILIGHT) {
         UpdateReferenceTwilight(this); // Source case 0x7B ignores the true handler result.
         return true;
+    }
+    if (m_type == PP_KOUENKA) {
+        return UpdateReferenceKouenka(this); // Source case 0x7C returns AnimMotion's completion result.
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
         return UpdateReferenceScreenTexture(this);

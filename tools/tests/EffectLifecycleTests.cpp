@@ -240,6 +240,7 @@ void UpdateReferenceSma(CEffectPrim*);
 void UpdateReferenceSma2(CEffectPrim*);
 void UpdateReferenceStin2(CEffectPrim*);
 void UpdateReferenceTwilight(CEffectPrim*);
+bool UpdateReferenceKouenka(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -382,6 +383,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SMA2) { UpdateReferenceSma2(this); return active; }
         if (m_type == PP_STIN2) { UpdateReferenceStin2(this); return active; }
         if (m_type == PP_TWILIGHT) { UpdateReferenceTwilight(this); return active; }
+        if (m_type == PP_KOUENKA) return UpdateReferenceKouenka(this) && active;
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -862,6 +864,7 @@ __declspec(noinline) void RunSmaLifecycleChecks(CEffectPrim& prim, int& checks, 
 __declspec(noinline) void RunSma2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunStin2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunTwilightLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunKouenkaLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2170,6 +2173,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     RunSma2LifecycleChecks(prim, checks, failures);
     RunStin2LifecycleChecks(prim, checks, failures);
     RunTwilightLifecycleChecks(prim, checks, failures);
+    RunKouenkaLifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2639,6 +2643,53 @@ __declspec(noinline) void RunTwilightLifecycleChecks(CEffectPrim& prim, int& che
     check(a.height[0]==0.0f&&a.height[1]==359.0f&&rngDraws==drawsBeforeZero,
         "case 0x7B random-zero bounds return zero without consuming RNG and preserve the lower height floor");
     rngValues.clear(); rngCursor=0;
+    testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunKouenkaLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude; testView.longitude=20.5f;
+    const int oldMasterDuration=prim.m_master->m_duration;
+    const int oldMasterState=prim.m_master->m_stateCnt;
+    const int oldMotionCount=g_resMgr.act.count;
+    prim.m_master->m_duration=1000; prim.m_master->m_stateCnt=0;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_KOUENKA; prim.m_stateCnt=0; prim.m_duration=1000; prim.m_fadeOutCnt=-1;
+    prim.m_alpha=25; prim.m_alphaSpeed=0; prim.m_pattern=0x20; prim.m_roty=70;
+    prim.m_master->m_effectPos={101,202,303}; prim.m_deltaPos={7,8,9}; prim.m_pos={1,2,3};
+    for(auto& gi:prim.m_gi) gi={};
+    const int draws=rngDraws;
+    const bool inactiveResult=prim.ProcessPrimitiveFrame();
+    check(inactiveResult&&prim.m_pos.x==7&&prim.m_pos.y==8&&prim.m_pos.z==9
+        &&prim.m_roll==49.5f&&prim.m_alpha==25&&rngDraws==draws,
+        "case 0x7C inactive GI still replaces master anchor with delta position, applies camera roll and shared tail without RNG");
+
+    for(auto& gi:prim.m_gi) gi={};
+    EffectGi& gi=prim.m_gi[0]; gi.life=1; gi.height[0]=357; gi.height[1]=358;
+    gi.height[2]=5; gi.height[3]=5; gi.height[8]=17;
+    gi.vecBPreX=10; gi.arcBaselineY=10; gi.vecBPreZ=20; gi.maxHeight=4;
+    prim.m_alpha=2; prim.m_alphaSpeed=0; prim.m_pattern=0; prim.m_deltaPos={-1,-2,-3};
+    rngValues={7,1}; rngCursor=0; const int drawsBeforeActive=rngDraws;
+    const bool activeResult=prim.ProcessPrimitiveFrame();
+    check(activeResult&&gi.height[0]==359&&gi.height[1]==7
+        &&gi.height[2]==3&&gi.height[3]==358&&gi.arcBaselineY==6
+        &&std::fabs(gi.vecBPreX-(10+0.15f*g_sinTable[359]))<0.00001f
+        &&std::fabs(gi.vecBPreZ-(20+0.15f*g_sinTable[3]))<0.00001f
+        &&prim.m_alpha==0&&prim.m_deltaPos.x==gi.vecBPreX&&prim.m_deltaPos.y==6&&prim.m_deltaPos.z==gi.vecBPreZ
+        &&prim.m_pos.x==gi.vecBPreX&&prim.m_pos.y==6&&prim.m_pos.z==gi.vecBPreZ
+        &&rngDraws==drawsBeforeActive+2,
+        "case 0x7C active lane caps growth, resets both paired heights in order, moves vecB_pre, fades alpha and copies delta position");
+
+    prim.m_stateCnt=0; prim.m_particleActRes=&g_resMgr.act; prim.m_particleActRes->count=1;
+    prim.m_animSpeed=1; prim.m_curMotion=0; prim.m_repeatAnim=false; prim.m_pattern=0;
+    const u8 finalMotionResult=prim.OnProcess();
+    check(finalMotionResult==0&&prim.m_curMotion==1&&prim.m_stateCnt==0,
+        "case 0x7C propagates AnimMotion exhaustion through OnProcess before the shared tick increments state");
+    prim.m_particleActRes=nullptr; g_resMgr.act.count=oldMotionCount; rngValues.clear(); rngCursor=0;
+    prim.m_master->m_duration=oldMasterDuration; prim.m_master->m_stateCnt=oldMasterState;
     testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
 }
 
