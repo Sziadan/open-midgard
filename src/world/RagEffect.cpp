@@ -9385,6 +9385,35 @@ bool UpdateReferencePeong(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:23653; canonical executable PrimEffectTexture2 at 0x63AAB0 (case 0x5F).
+void UpdateReferenceEffectTexture2(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode ? mode->m_view : nullptr;
+    if (view) {
+        const short longitude = static_cast<short>(view->GetCameraLongitude());
+        prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+        const short latitude = static_cast<short>(view->GetCameraLatitude());
+        short cameraLatitude = static_cast<short>(360 - latitude + 90);
+        if (cameraLatitude >= 360) cameraLatitude = static_cast<short>(cameraLatitude - 360);
+        prim->m_gi[1].alphaT = cameraLatitude;
+    }
+
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) return;
+
+    ++gi.process;
+    if (gi.height[8] >= 360.0f) gi.height[8] -= 360.0f;
+    if (gi.process <= 30) {
+        gi.alphaB = static_cast<short>(gi.alphaB + 10);
+        if (gi.alphaB > 255) gi.alphaB = 255;
+    } else {
+        gi.alphaB = static_cast<short>(gi.alphaB - 3);
+        if (gi.alphaB < 0) gi.alphaB = 0;
+    }
+    gi.sparkY = gi.arcBaselineY;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -10506,6 +10535,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_PEONG) {
         UpdateReferencePeong(this); // Source case 0x5E ignores the handler's true result.
+        return true;
+    }
+    if (m_type == PP_EFFECTTEXTURE2) {
+        UpdateReferenceEffectTexture2(this); // Source case 0x5F continues to the common tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

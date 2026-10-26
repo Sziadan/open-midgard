@@ -224,6 +224,7 @@ void UpdateReferenceSphereWind2(CEffectPrim*);
 void UpdateReferenceSoulBreaker2(CEffectPrim*);
 void UpdateReferenceRainbow(CEffectPrim*);
 bool UpdateReferencePeong(CEffectPrim*);
+void UpdateReferenceEffectTexture2(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -349,6 +350,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SOULBREAKER2) { UpdateReferenceSoulBreaker2(this); return active; }
         if (m_type == PP_RAINBOW) { UpdateReferenceRainbow(this); return active; }
         if (m_type == PP_PEONG) { UpdateReferencePeong(this); return active; }
+        if (m_type == PP_EFFECTTEXTURE2) { UpdateReferenceEffectTexture2(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -800,6 +802,7 @@ __declspec(noinline) void RunSphereWind2LifecycleChecks(CEffectPrim& prim, int& 
 __declspec(noinline) void RunSoulBreaker2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunRainbowLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunPeongLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunEffectTexture2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1827,6 +1830,46 @@ __declspec(noinline) void RunPeongLifecycleChecks(CEffectPrim& prim, int& checks
     prim.OnProcess();
     check(a.process==-1 && a.alphaB==6 && a.vecBPreX==10 && a.vecBPreZ==20 && a.arcBaselineY==previousHeight,
         "case 0x5E skips per-slot mutation for a nonpositive post-increment process while refreshing camera state");
+    testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
+    RunEffectTexture2LifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunEffectTexture2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude; testView.longitude=20.0f;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_EFFECTTEXTURE2; prim.m_stateCnt=0; prim.m_duration=1000; prim.m_pos={9,8,7};
+    prim.m_master->m_effectPos={100,200,300};
+    for (auto& gi : prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=29; a.alphaB=250; a.height[8]=360; a.arcBaselineY=45;
+    EffectGi& b=prim.m_gi[1]; b.life=1; b.process=80; b.alphaB=81; b.height[8]=82; b.arcBaselineY=83; b.sparkY=84;
+    EffectGi& c=prim.m_gi[2]; c.life=1; c.process=90; c.alphaB=91; c.height[8]=92; c.sparkY=94;
+    EffectGi& d=prim.m_gi[3]; d.life=1; d.process=100; d.alphaB=101; d.height[8]=102; d.sparkY=104;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==9 && prim.m_pos.y==8 && prim.m_pos.z==7
+        && prim.m_gi[0].alphaT==340 && prim.m_gi[1].alphaT==135
+        && a.process==30 && a.alphaB==255 && a.height[8]==0 && a.sparkY==45
+        && b.process==80 && b.alphaB==81 && b.height[8]==82 && b.sparkY==84
+        && c.process==90 && c.alphaB==91 && c.height[8]==92 && c.sparkY==94
+        && d.process==100 && d.alphaB==101 && d.height[8]==102 && d.sparkY==104
+        && rngDraws==draws,
+        "case 0x5F updates camera every call but only GI0, clamps process-30 alpha, wraps height once and copies pre-Y");
+
+    a.process=30; a.alphaB=2; a.height[8]=720; a.arcBaselineY=-15; prim.OnProcess();
+    check(a.process==31 && a.alphaB==0 && a.height[8]==360 && a.sparkY==-15,
+        "case 0x5F process 31 begins three-point fade, clamps below zero and subtracts 360 only once");
+    a.process=-2; a.alphaB=1; a.height[8]=359; a.arcBaselineY=27; prim.OnProcess();
+    check(a.process==-1 && a.alphaB==11 && a.height[8]==359 && a.sparkY==27,
+        "case 0x5F has no positive-process guard and processes negative values through rise alpha branch");
+    a.life=0; a.process=44; a.alphaB=55; a.height[8]=720; a.sparkY=66;
+    testView.longitude=30.0f; prim.OnProcess();
+    check(a.process==44 && a.alphaB==55 && a.height[8]==720 && a.sparkY==66
+        && prim.m_gi[0].alphaT==330 && prim.m_gi[1].alphaT==135,
+        "case 0x5F inactive GI receives camera updates but skips process, alpha, height and Y mutations");
     testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
 }
 
