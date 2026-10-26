@@ -535,6 +535,7 @@ private:
     void SpawnPierce();
     void SpawnHit2(int option);
     bool ProcessHit2Blue();
+    void SpawnHit3();
     void SpawnRuwach();
     void SpawnBlueFall();
     void SpawnWeatherCloud();

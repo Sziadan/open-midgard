@@ -6653,7 +6653,7 @@ bool CEffectPrim::UsesReferenceCylinder() const
 {
     if (m_type != PP_3DCYLINDER || !m_master) return false;
     switch (m_master->GetEffectType()) {
-    case 0: case 36: case 81: case 180: case 184: case 218: case 219: case 220: case 221: return true;
+    case 0: case 2: case 36: case 81: case 180: case 184: case 218: case 219: case 220: case 221: return true;
     default: return false;
     }
 }
@@ -6678,7 +6678,7 @@ bool CEffectPrim::UsesReferenceParticle() const
         || (m_type == PP_3DPARTICLEORBIT && m_master
             && (m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
-            && (m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
+            && (m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
 }
 
@@ -7951,7 +7951,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 18: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184:
+    case 0: case 1: case 2: case 18: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -9440,7 +9440,7 @@ bool CRagEffect::ProcessCoin()
 }
 
 // Ref/RagEffect.cpp:5141-5220,5802-5882: Hit1/HitDark particle groups.
-void LaunchHitParticle(CRagEffect* effect, int facing, bool gravity, bool dark, bool shrink)
+void LaunchHitParticle(CRagEffect* effect, int facing, bool gravity, bool dark, bool shrink, int speedRange = 90, int speedBase = 60)
 {
     CEffectPrim* prim = effect->LaunchEffectPrim(gravity ? PP_3DPARTICLEGRAVITY : PP_3DPARTICLE, vector3d{});
     prim->m_longitude = static_cast<float>(facing + rand() % 80 + (gravity ? 140 : -40));
@@ -9461,7 +9461,7 @@ void LaunchHitParticle(CRagEffect* effect, int facing, bool gravity, bool dark, 
         MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
         prim->m_duration = rand() % 24 + 6;
     }
-    prim->m_speed = static_cast<float>(static_cast<double>(rand() % 90 + 60) * 0.0099999998);
+    prim->m_speed = static_cast<float>(static_cast<double>(rand() % speedRange + speedBase) * 0.0099999998);
     if (!gravity) prim->m_duration = rand() % 24 + 6;
     prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -0.5);
     if (gravity) {
@@ -9596,6 +9596,41 @@ bool CRagEffect::ProcessHit2Blue()
         if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) mode->SendMsg(135,1,0,0);
     }
     return ProcessEZ2STR(0.0f,-80.0f,0.0f);
+}
+
+// Ref/RagEffect.cpp:5330-5442 (0x5F2480), original effect 2.
+void CRagEffect::SpawnHit3()
+{
+    if (m_stateCnt != 0) return;
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_hit3.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    int facing = static_cast<int>(180.0 - master->m_roty);
+    if (facing < 0) facing += 360;
+    for (int i = 0; i < 2; ++i) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER,vector3d{});
+        prim->m_duration = 15;
+        prim->m_longitude = static_cast<float>(facing); prim->m_latitude = -90.0f;
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_deltaPos2 = {0.0f,-10.0f,0.0f};
+        prim->m_speed = 0.69999999f;
+        prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -0.5);
+        prim->m_outerSize = i == 0 ? 1.5f : 4.0f;
+        prim->m_innerSize = 1.5f;
+        prim->m_heightSpeed = i == 0 ? 0.5f : 0.25f;
+        prim->m_heightAccel = 0.2f;
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+        prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\lens2.tga",false));
+    }
+    for (int i = 0; i < 8; ++i) LaunchHitParticle(this,facing,false,false,true,120,80);
 }
 
 // Ref/RagEffect.cpp:7202-7261 (0x5F9170). The angle truncates before
@@ -12890,6 +12925,10 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 2) {
+        SpawnHit3();
+        return true;
+    }
     if (m_type == 1) {
         SpawnHit2(0);
         return true;

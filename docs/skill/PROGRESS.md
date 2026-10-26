@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Hit2 normal/blue emitters (ids1/183) and reference rotating screen textures, after Pierce checkpoint `0957619`. Source streak profiles, alternate lenses, bottom pivot and blue caller control/STR handling are now ported.
+Current work: WP5A Hit3 emitter, after Hit2 checkpoint `f963dc0`. Original id2 now preserves its two distinct growing cylinders, faster eight-sprite burst, source audio and reference primitive paths.
 
-Next action: continue Hit3 and remaining hit callers (including Hit2 caller401), other emitters and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue Hit4 and remaining hit callers (including Hit2 caller401), other emitters and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Hit3 cylinders / faster shrinking sprite burst — 2026-10-26
+
+- Ref/RagEffect.cpp:5330-5442 (0x5F2480) -> SpawnHit3, original id 2, direct dispatcher/Init route. Frame 0 plays exact stored-origin horizontal EF_hit3 wave, computes truncated/wrapped actor facing, emits two cylinders then eight ordinary particles. No reduced-effects suppression, actor-position copy or repeat emission.
+- Both cylinders: duration 15, latitude -90, source X/Y matrix and offset(0,-10,0), speed 0.69999999/deceleration speed/duration*-0.5, inner 1.5, constructor height 0/alpha 254/max 254, height acceleration 0.2, fade 10 and exact lens2 texture. First outer 1.5/height speed 0.5; second outer 4/height speed 0.25. Id2 binds shared reference cylinder integration/geometry.
+- Eight linear sprites preserve six-draw order and source faster speed (rand()%120+80)*0.0099999998, random duration/size, source deceleration/shrink, immediate fade and three full initial trail slots. Shared LaunchHitParticle now takes source speed range/base parameters; existing Hit1/HitDark/Pierce defaults remain 90/60. Id2 binds reference linear state/per-clip rendering; no gravity particles are introduced.
+
+Validation: release build, six silent C++ suites / 825 checks (655 lifecycle/primitive, 112 rendering, 58 other), six Python tests, two-literal executable byte audit and whitespace check pass. Added 15 checks for ordered count/RNG, audio before emission, facing/profiles, distinct cylinder growth, faster sprite range, three-slot initialization, first-frame shrink/fade, reduced-effects behavior, no repeat and cleanup. Wave 0x71B218 and texture 0x71A3A4 match executable bytes; shared particle1 literals are unchanged. The enlarged standalone lifecycle test initially hit Windows stack limit (0xC00000FD); moving the new large effect fixture to heap resolved it before validation/deployment. No media/live acceptance. Approved OldRO SHA-256: `EC9B85B5FF6BF646E241204D0502EB4331654E316CD2355BCD18C65B6D5B353A`. Remaining hit variants/callers/primitive controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Hit2 normal / blue and rotated screen textures — 2026-10-26
 

@@ -288,6 +288,7 @@ struct CRagEffect : CGameObject {
     void SpawnPierce();
     void SpawnHit2(int);
     bool ProcessHit2Blue();
+    void SpawnHit3();
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -2280,6 +2281,40 @@ int main()
         check(effect.ProcessHit2Blue()&&effect.m_strScreenOffset.y==-80&&effect.m_strScreenOffset.x==0&&effect.m_strScreenOffset.z==0,
             "blue Hit2 processes original STR offset and propagates its active result");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor,listener;actor.m_roty=270.9f;actor.m_pos={900,800,700};listener.m_pos={2,500,4};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;auto effectStorage=std::make_unique<CRagEffect>();CRagEffect& effect=*effectStorage;effect.m_type=2;effect.m_master=&actor;
+        effect.m_duration=100;effect.m_effectPos={10,50,30};waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();
+        const int draws=rngDraws;rngValues={79,99,3,119,23,99};rngCursor=0;g_session.m_isMinEffect=true;effect.SpawnHit3();
+        auto it=effect.m_primList.begin();auto* first=*it++;auto* second=*it++;auto* particle=*it;
+        check(effect.m_primList.size()==10&&first->m_type==PP_3DCYLINDER&&second->m_type==PP_3DCYLINDER&&particle->m_type==PP_3DPARTICLE
+            &&rngDraws==draws+48,"Hit3 emits two cylinders then eight linear sprites with forty-eight draws despite reduced effects");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_hit3.wav"&&waveCalls[0].x==8&&waveCalls[0].y==0&&waveCalls[0].z==26
+            &&waveCalls[0].frameRng==draws,"Hit3 plays exact stored-origin horizontal wave before particle draws");
+        check(first->UsesReferenceCylinder()&&second->UsesReferenceCylinder()&&particle->UsesReferenceParticle(),"Hit3 binds original cylinder and linear reference paths");
+        check(first->m_longitude==270&&second->m_longitude==270&&first->m_latitude==-90&&first->m_deltaPos2.y==-10
+            &&first->m_duration==15&&second->m_duration==15,"Hit3 preserves shared source orientation offset and cylinder duration");
+        check(first->m_outerSize==1.5f&&second->m_outerSize==4&&first->m_innerSize==1.5f&&second->m_innerSize==1.5f
+            &&first->m_heightSize==0&&second->m_heightSize==0,"Hit3 preserves distinct outer radii and constructor-zero cylinder heights");
+        check(first->m_heightSpeed==0.5f&&second->m_heightSpeed==0.25f&&first->m_heightAccel==0.2f&&second->m_heightAccel==0.2f
+            &&first->m_fadeOutCnt==10&&second->m_fadeOutCnt==10,"Hit3 cylinders preserve distinct rise speeds common acceleration and fade");
+        check(g_texMgr.requests==std::vector<std::string>({"effect\\lens2.tga","effect\\lens2.tga"}),"Hit3 loads exact lens-two texture for both cylinders in order");
+        check(particle->m_longitude==309&&particle->m_latitude==49&&particle->m_speed==static_cast<float>(199*0.0099999998)
+            &&particle->m_duration==29&&particle->m_size==static_cast<float>(159*0.0099999998),"Hit3 uses source faster speed range and six-draw linear profile");
+        check(particle->m_sizeSpeed==static_cast<float>(-particle->m_size/29.0)&&particle->m_fadeOutCnt==0&&particle->m_numSegments==3
+            &&particle->m_segments[2].alpha==254,"Hit3 initializes shrinking particles and all three full trail slots");
+        check(g_resMgr.requests.size()==16&&effect.m_effectPos.y==50,"Hit3 preserves stored origin and eight exact resource-pair requests");
+        first->m_alphaDelta=1;second->m_alphaDelta=1;first->OnProcess();second->OnProcess();
+        check(first->m_heightSize==0.7f&&second->m_heightSize==0.45f&&first->m_alpha==254&&second->m_alpha==254,
+            "Hit3 reference cylinder update applies each height acceleration before geometry growth");
+        particle->m_alphaDelta=1;const float size=particle->m_size;particle->OnProcess();check(particle->m_size<size&&particle->m_alpha<254,
+            "Hit3 reference particle update applies original first-frame shrink and fade");
+        first->m_stateCnt=10;first->OnProcess();check(std::fabs(first->m_alphaSpeed+254.0f/5)<0.000001f&&first->m_alpha<254,
+            "Hit3 cylinder fade begins at source duration-minus-third frame");
+        effect.m_stateCnt=1;effect.SpawnHit3();check(effect.m_primList.size()==10&&waveCalls.size()==1,"Hit3 does not repeat zero-frame burst or audio");
+        effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,"Hit3 cleanup releases all eight sprite/action pairs");
+        g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     {
         CRagEffect effect;
