@@ -210,7 +210,7 @@ int ResolveRefWeatherCloudEffectId(const char* rswName)
             "gon_dun02.rsw",
             "ra_temsky.rsw",
             "que_temsky.rsw",
-            "schgld.rsw",
+            "sch_gld.rsw",
             "bat_fild02.rsw",
             "bat_b01.rsw",
             "bat_b02.rsw",
@@ -240,13 +240,13 @@ int ResolveRefWeatherCloudEffectId(const char* rswName)
     if (mapName == "thana_boss.rsw" || mapName == "moc_fild22.rsw") {
         return 592;
     }
-    if (mapName == "airplane.rsw" || mapName == "airplane01.rsw") {
+    if (mapName == "airplane.rsw" || mapName == "airplane_01.rsw") {
         return 516;
     }
-    if (mapName == "6@tower.rsw" || mapName == "6tower.rsw") {
+    if (mapName == "6@tower.rsw") {
         return 697;
     }
-    if (mapName == "5@tower.rsw" || mapName == "5tower.rsw") {
+    if (mapName == "5@tower.rsw") {
         return 698;
     }
     return 0;

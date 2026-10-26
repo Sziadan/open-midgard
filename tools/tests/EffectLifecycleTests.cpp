@@ -543,12 +543,18 @@ int main()
         const bool routes=ResolveRefWeatherCloudEffectId("gef_fild07.rsw")==229
             &&ResolveRefWeatherCloudEffectId("mjolnir_01.rsw")==229
             &&ResolveRefWeatherCloudEffectId("yuno.rsw")==230
+            &&ResolveRefWeatherCloudEffectId("sch_gld.rsw")==230
             &&ResolveRefWeatherCloudEffectId("valkyrie.rsw")==233
             &&ResolveRefWeatherCloudEffectId("einbroch.rsw")==515
             &&ResolveRefWeatherCloudEffectId("airplane.rsw")==516
+            &&ResolveRefWeatherCloudEffectId("airplane_01.rsw")==516
             &&ResolveRefWeatherCloudEffectId("thana_boss.rsw")==592
             &&ResolveRefWeatherCloudEffectId("6@tower.rsw")==697
             &&ResolveRefWeatherCloudEffectId("5@tower.rsw")==698
+            &&ResolveRefWeatherCloudEffectId("schgld.rsw")==0
+            &&ResolveRefWeatherCloudEffectId("airplane01.rsw")==0
+            &&ResolveRefWeatherCloudEffectId("6tower.rsw")==0
+            &&ResolveRefWeatherCloudEffectId("5tower.rsw")==0
             &&ResolveRefWeatherCloudEffectId("unknown.rsw")==0;
         check(routes,"weather map names resolve to the exact source effect ids including both map-zero aliases");
     }

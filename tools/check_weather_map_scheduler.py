@@ -32,8 +32,13 @@ finish = body(MODE, "void FinishMapLoading(CGameMode& mode)")
 on_update = body(MODE, "void CGameMode::OnUpdate()")
 
 
+checks = 0
+
+
 def check(label: str, condition: bool) -> None:
+    global checks
     assert condition, f"FAIL {label}"
+    checks += 1
     print(f"PASS {label}")
 
 
@@ -48,13 +53,46 @@ for map_id, effect_id in expected.items():
     source_route = ("this->m_Effect = CAbleToMakeEffect::LaunchEffect(m_player, 229" in ref_cloud if map_id == 0
                     else re.search(rf"case {map_id}:\s*memset\(&v5, 0, sizeof\(v5\)\);\s*this->m_Effect = CAbleToMakeEffect::LaunchEffect\(m_player, {effect_id}", ref_cloud) is not None)
     check(f"Cloud map {map_id} resolves to effect {effect_id}", source_route)
-check("source map-zero aliases and port resolver agree",
-      "aGefFild07Rsw" in REF_MODE and "aMjolnir01Rsw" in REF_MODE
-      and '"gef_fild07.rsw"' in resolver and '"mjolnir_01.rsw"' in resolver
-      and "return 229;" in resolver[:resolver.find("return 230;")])
-check("remaining source map groups map to the port's same effect ids",
-      all(f"return {effect_id};" in resolver for effect_id in (230, 233, 515, 516, 592, 697, 698))
-      and all(name in resolver for name in ("yuno.rsw", "valkyrie.rsw", "einbroch.rsw", "airplane.rsw", "thana_boss.rsw", "6@tower.rsw", "5@tower.rsw")))
+string_defs = dict(re.findall(r'char (a\w+Rsw)\[\d+\] = "([^"]+)";', EXE))
+source_weather_setup = REF_MODE[REF_MODE.index("if ( !strcmp(aGefFild07Rsw, this->m_rswName)"):REF_MODE.index("m_player = this->m_world->m_player", REF_MODE.index("if ( !strcmp(aGefFild07Rsw, this->m_rswName)"))]
+source_groups = {
+    229: ("aGefFild07Rsw", "aMjolnir01Rsw"),
+    230: ("aYunoRsw", "aGonryunRsw", "aGonDun02Rsw", "aRaTemskyRsw", "aQueTemskyRsw", "aSchGldRsw", "aBatFild02Rsw", "aBatB01Rsw", "aBatB02Rsw"),
+    233: ("aValkyrieRsw", "aRwc01Rsw", "aHiminnRsw", "aQueQsch01Rsw", "aQueQsch02Rsw", "aQueQsch03Rsw", "aQueQsch04Rsw", "aQueQsch05Rsw", "aQueQaru01Rsw", "aQueQaru02Rsw", "aQueQaru03Rsw", "aQueQaru04Rsw", "aQueQaru05Rsw"),
+    515: ("aEinbrochRsw",),
+    516: ("aAirplaneRsw", "aAirplane01Rsw"),
+    592: ("aThanaBossRsw", "aMocFild22Rsw"),
+    697: ("a6TowerRsw",),
+    698: ("a5TowerRsw",),
+}
+source_codes = {229: 0, 230: 1, 233: 2, 515: 3, 516: 4, 592: 5, 697: 7, 698: 8}
+resolver_segments = {}
+last_return_end = 0
+for match in re.finditer(r"return (\d+);", resolver):
+    effect_id = int(match.group(1))
+    resolver_segments[effect_id] = resolver[last_return_end:match.end()]
+    last_return_end = match.end()
+for effect_id, source_names in source_groups.items():
+    expected_names = {string_defs[name] for name in source_names}
+    actual_names = set(re.findall(r'"([^"\\]+\.rsw)"', resolver_segments[effect_id]))
+    first_source_name = source_names[0]
+    source_name_pos = source_weather_setup.index(first_source_name)
+    next_source_code = re.search(r"v71\._Res = (\d+);", source_weather_setup[source_name_pos:])
+    source_code_matches = (next_source_code is not None and int(next_source_code.group(1)) == source_codes[effect_id])
+    if effect_id in (697, 698):
+        source_code_matches = ("v71._Res = 7;" in source_weather_setup
+                               and "v71._Res = 8;" in source_weather_setup
+                               and "a6TowerRsw" in source_weather_setup
+                               and "a5TowerRsw" in source_weather_setup)
+    check(f"all source aliases map exactly to weather effect {effect_id}",
+          all(name in source_weather_setup for name in source_names)
+          and source_code_matches
+          and expected_names == actual_names)
+check("tower aliases are source literals, with no extra non-source variants",
+      string_defs["a6TowerRsw"] in resolver_segments[697]
+      and string_defs["a5TowerRsw"] in resolver_segments[698]
+      and set(re.findall(r'"([^"\\]+\.rsw)"', resolver_segments[697])) == {string_defs["a6TowerRsw"]}
+      and set(re.findall(r'"([^"\\]+\.rsw)"', resolver_segments[698])) == {string_defs["a5TowerRsw"]})
 check("source map setup resets weather before ScriptProcess and one-shot launch branches",
       "CWeather::Reset(&g_Weather);" in REF_MODE
       and REF_MODE.index("CWeather::Reset(&g_Weather);") < REF_MODE.index("CWeather::ScriptProcess(&g_Weather, v71);")
@@ -74,4 +112,4 @@ check("current OnUpdate no longer runs a weather reconciler every frame",
 check("source actor rebuild explicitly resets weather state",
       "CWeather::Reset(&g_Weather);" in body(REF_MODE, "void __thiscall CGameMode::RemoveGameActorAllAndMake(CGameMode *this)\n{"))
 
-print("18 mechanical weather map/lifecycle comparisons passed")
+print(f"{checks} mechanical weather map/lifecycle comparisons passed")
