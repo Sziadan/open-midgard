@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer and primitive-update parity. Previously implemented Cloud renderer and GroundSample functions are checkpointed. `PrimCloud` updater is now implemented and checkpointed; the separate `CRagEffect::Cloud` producer comparison is next.
+Current work: WP5A renderer and primitive-update parity. The Cloud renderer, `PrimCloud` updater and `CRagEffect::Cloud` producer are implemented and checkpointed with their route counts. GroundSample work also remains checkpointed.
 
-Next action: mechanically compare and port `CRagEffect::Cloud` producer setup/dispatch so it initializes the GI records consumed by `PrimCloud` and `RenderCloud`. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: audit and port the remaining weather/map scheduling path, starting with `CWeather::LaunchCloud` and its callers. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
-Latest checkpoint (2026-10-26): `CEffectPrim::PrimCloud` updater passed ten mechanical source comparisons. Lifecycle suite passes 1510 checks, all six C++ suites and seven Python index tests pass; release build and whitespace checks pass. OldRO matches the release build at SHA-256 `1ED0926DBC2ECAB1130AFDF32A0B850602FD363B4F8A4BE1AD9BB213B6FE00E5`. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `CRagEffect::Cloud` producer passed ten mechanical comparisons plus eight route/count checks. Lifecycle suite passes 1516 checks, all six C++ suites and seven Python index tests pass; release build and whitespace checks pass. OldRO matches the release build at SHA-256 `FBD70B84E8BD0BF3FB336326CF2BE67D7BD07EA60691C26316C9F1841C4BC238`. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26

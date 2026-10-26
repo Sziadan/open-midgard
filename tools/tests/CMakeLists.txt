@@ -98,6 +98,8 @@ extract_body(sight_emitters "${effect_source}" "void CRagEffect::ApplySight(" "v
 extract_body(fireball_emitter "${effect_source}" "void CRagEffect::SpawnFireBall()" "// Ref/RagEffect.cpp:7202-7261")
 extract_body(ground_sample_emitter "${effect_source}" "void CRagEffect::ProcessGroundSample()" "void CRagEffect::SpawnBlueFall()")
 extract_body(prim_cloud_update "${effect_source}" "bool UpdateWeatherCloudPrimitive(CEffectPrim* prim)" "bool UpdateWaterfallPrimitive(")
+extract_body(cloud_texture "${effect_source}" "CTexture* ResolveWeatherCloudTexture(int mapVariant)" "std::array<CTexture*, 3> ResolveBlueFallTextures(")
+extract_body(weather_cloud_emitter "${effect_source}" "void CRagEffect::SpawnWeatherCloud()" "void CRagEffect::ProcessGroundSample()")
 extract_body(sight_projection "${effect_source}" "void ProjectReferenceEffectVertex(" "void SubmitReferenceEffectTriangle(")
 extract_body(ruwach_emitter "${effect_source}" "void CRagEffect::SpawnRuwach()" "bool EffectTicksWhenNoFrameTime(")
 extract_body(angel_emitters "${effect_source}" "void CRagEffect::ApplySuperAngel(" "void CRagEffect::SpawnHideStart()")
@@ -165,7 +167,7 @@ extract_body(effect_messages "${effect_source}" "void CRagEffect::SendMsg(" "voi
 extract_body(actor_detach "${actor_source}" "void CAbleToMakeEffect::RemoveEffectById(" "CGameActor::CGameActor()")
 extract_body(world_update "${world_source}" "void CWorld::UpdateGameObjects()" "CGameActor* CWorld::GetGameActorByAID(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc"
-    "${resource_lock}\n${effect_gate}\n${primitive_lifetime}\n${primitive_init}\n${effect_tick}\n${effect_dtor}\n${effect_launch}\n${effect_messages}\n${actor_detach}\n${world_update}\n${grim_tooth}\n${str_delta}\n${str_process}\n${str_termination}\n${entry2}\n${str_render}\n${effect_render}\n${segment_shift}\n${slash_primitive}\n${angel_render}\n${job_emitters}\n${angel_emitters}\n${ruwach_emitter}\n${smoke_torch_emitters}\n${poison_emitters}\n${blessing_emitter}\n${sight_projection}\n${agility_emitters}\n${sight_emitters}\n${warp_band}\n${warp_helper}\n${warp_emitter}\n${ready_portal_emitter}\n${potion_emitters}\n${ice_arrow_emitter}\n${fireball_emitter}\n${ground_sample_emitter}\n${prim_cloud_update}")
+    "${resource_lock}\n${effect_gate}\n${primitive_lifetime}\n${primitive_init}\n${effect_tick}\n${effect_dtor}\n${effect_launch}\n${effect_messages}\n${actor_detach}\n${world_update}\n${grim_tooth}\n${str_delta}\n${str_process}\n${str_termination}\n${entry2}\n${str_render}\n${effect_render}\n${segment_shift}\n${slash_primitive}\n${angel_render}\n${job_emitters}\n${angel_emitters}\n${ruwach_emitter}\n${smoke_torch_emitters}\n${poison_emitters}\n${blessing_emitter}\n${sight_projection}\n${agility_emitters}\n${sight_emitters}\n${warp_band}\n${warp_helper}\n${warp_emitter}\n${ready_portal_emitter}\n${potion_emitters}\n${ice_arrow_emitter}\n${fireball_emitter}\n${ground_sample_emitter}\n${prim_cloud_update}\n${cloud_texture}\n${weather_cloud_emitter}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/render/Renderer.cpp ../../src/render/Prim.cpp ../../src/res/ActRes.h ../../src/world/RagEffect.cpp ../../src/world/RagEffect.h ../../src/world/World.cpp ../../src/res/EzEffectRes.h ../../src/res/Res.cpp)
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)

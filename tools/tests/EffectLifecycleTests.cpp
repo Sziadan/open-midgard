@@ -142,6 +142,7 @@ struct SilentAttr {
     float height=1000,lastX=0,lastZ=0;int calls=0;
     float GetHeight(float x,float z){++calls;lastX=x;lastZ=z;return height;}
 };
+using C3dAttr = SilentAttr;
 struct CWorld {
     SilentAttr* m_attr=nullptr;
     std::list<CGameObject*> m_gameObjectList;
@@ -321,6 +322,7 @@ struct CRagEffect : CGameObject {
     std::optional<bool> ProcessReferenceStrOnly();
     void SpawnFireSplashHit();
     void SpawnColdHit();
+    void SpawnWeatherCloud();
     void SpawnSprayPond();
     void SpawnIncAgility();
     void SpawnDecAgility();
@@ -417,6 +419,73 @@ int main()
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
     for (int angle=0; angle<=360; ++angle) g_sinTable[angle]=GetSin(angle);
+    {
+        CRenderObject player;player.m_pos={10,50,20};g_world.m_player=&player;
+        auto storage=std::make_unique<CRagEffect>();CRagEffect& effect=*storage;
+        effect.m_master=&player;effect.m_duration=47;effect.m_stateCnt=0;effect.m_param[0]=0;effect.m_param[1]=1;
+        rngValues.clear();rngCursor=0;g_texMgr.requests.clear();
+        effect.SpawnWeatherCloud();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_effectPos.x==10&&effect.m_effectPos.y==50&&effect.m_effectPos.z==20
+            &&effect.m_primList.size()==1&&prim&&prim->m_type==PP_CLOUD,
+            "Cloud producer refreshes the world-player origin and launches the requested primitive count");
+        check(prim&&prim->m_renderFlag==5&&prim->m_duration==47&&prim->m_totalTexture==3
+            &&prim->m_texture.size()==3&&prim->m_texture[0]==&g_texMgr.texture&&prim->m_texture[1]==nullptr&&prim->m_texture[2]==nullptr
+            &&g_texMgr.requests==std::vector<std::string>{"effect\\cloud4.tga"},
+            "Cloud producer preserves flags duration three texture slots and one exact randomized texture request");
+        bool fourBands=prim!=nullptr;
+        if(prim)for(const EffectGi& gi:prim->m_gi)
+            fourBands=fourBands&&gi.life==1&&gi.process==300&&gi.height[6]==-152&&gi.height[7]==0
+                &&gi.alphaB==0&&gi.fullDisplayAngle==45&&gi.rotStart==300&&gi.sparkY==-125
+                &&gi.sparkX==-140&&gi.sparkZ==-130&&gi.distance==30&&gi.flag[0]==0&&gi.flag[2]==0;
+        check(fourBands,"Cloud map zero initializes all four source GI bands including the -152 height gate and offsets");
+        const int draws=rngDraws;player.m_pos={40,60,80};effect.m_stateCnt=1;effect.SpawnWeatherCloud();
+        check(effect.m_effectPos.x==40&&effect.m_effectPos.y==60&&effect.m_effectPos.z==80
+            &&effect.m_primList.size()==1&&rngDraws==draws,
+            "Cloud later states follow the world player without relaunching or consuming initialization RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        bool allModes=true;
+        for(int mapVariant:{2,3,5,7,8}){
+            CRenderObject player;player.m_pos={10,50,20};g_world.m_player=&player;
+            auto storage=std::make_unique<CRagEffect>();CRagEffect& effect=*storage;
+            effect.m_master=&player;effect.m_duration=80;effect.m_param[0]=static_cast<float>(mapVariant);effect.m_param[1]=1;
+            SilentAttr attr;attr.height=1000;g_world.m_attr=mapVariant==3?&attr:nullptr;
+            rngValues.clear();rngCursor=0;g_texMgr.requests.clear();const int draws=rngDraws;
+            effect.SpawnWeatherCloud();
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            const bool fog=mapVariant==3;
+            const std::string expectedTexture=fog?"effect\\fog1.tga":"effect\\cloud4.tga";
+            bool bands=prim&&prim->m_texture.size()==3&&prim->m_texture[0]==&g_texMgr.texture
+                &&g_texMgr.requests==std::vector<std::string>{expectedTexture};
+            const float expectedY=mapVariant==2?0.0f:mapVariant==3?980.0f:mapVariant==5?20.0f:40.0f;
+            const float expectedX=mapVariant==7||mapVariant==8?-15.0f:-140.0f;
+            const float expectedZ=mapVariant==7||mapVariant==8?-5.0f:-130.0f;
+            const float expectedDistance=mapVariant==3?35.0f:30.0f;
+            const int expectedFlag=mapVariant==3?12:mapVariant==5?14:mapVariant==7?16:mapVariant==8?17:0;
+            if(prim)for(const EffectGi& gi:prim->m_gi)
+                bands=bands&&gi.life==1&&gi.process==0&&gi.height[7]==static_cast<float>(mapVariant)
+                    &&gi.fullDisplayAngle==45&&gi.alphaB==0&&gi.rotStart==300&&gi.sparkY==expectedY
+                    &&gi.sparkX==expectedX&&gi.sparkZ==expectedZ&&gi.height[0]==0&&gi.height[1]==0
+                    &&gi.height[2]==0&&gi.height[3]==0&&gi.distance==expectedDistance&&gi.height[8]==0&&gi.flag[2]==expectedFlag;
+            if(mapVariant==3) bands=bands&&attr.calls==4&&attr.lastX==-140&&attr.lastZ==-130;
+            allModes=allModes&&effect.m_primList.size()==1&&bands
+                &&rngDraws-draws==(mapVariant==7||mapVariant==8?49:41);
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        g_world.m_attr=nullptr;
+        check(allModes,"Cloud maps 2/3/5/default preserve four-band offsets terrain sample angles distances flags textures and RNG order");
+    }
+    {
+        CRenderObject player;player.m_pos={1,2,3};g_world.m_player=&player;
+        auto storage=std::make_unique<CRagEffect>();CRagEffect& effect=*storage;
+        effect.m_master=&player;effect.m_stateCnt=99999998;effect.m_duration=17;effect.m_param[0]=1;effect.m_param[1]=1;
+        effect.SpawnWeatherCloud();
+        check(effect.m_stateCnt==0&&effect.m_duration==99999999&&effect.m_primList.size()==1,
+            "Cloud producer converts the source sentinel duration and resets state before launch");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+    }
     check(!UpdateWeatherCloudPrimitive(nullptr), "PrimCloud null guard returns false");
     {
         CRenderObject actor;actor.m_pos={100,20,200};

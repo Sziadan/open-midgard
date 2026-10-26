@@ -1114,17 +1114,7 @@ CTexture* ResolveWeatherCloudTexture(int mapVariant)
     };
 
     const char* const* textureNames = mapVariant == 3 ? kFogTextures : kCloudTextures;
-    constexpr int kTextureCount = 3;
-    const int startIndex = rand() % kTextureCount;
-    for (int offset = 0; offset < kTextureCount; ++offset) {
-        if (CTexture* texture = ResolveEffectTextureCandidates({
-                textureNames[(startIndex + offset) % kTextureCount],
-            }, true)) {
-            return texture;
-        }
-    }
-
-    return GetSoftGlowTexture(true);
+    return g_texMgr.GetTexture(textureNames[rand() % 3], false);
 }
 
 std::array<CTexture*, 3> ResolveBlueFallTextures(int textureSet)
@@ -1165,127 +1155,6 @@ void ConfigureBlueFallBand(CEffectPrim* prim, int bandIndex, int axisMode, int h
     for (int segmentIndex = 0; segmentIndex <= 20; ++segmentIndex) {
         band.heights[static_cast<size_t>(segmentIndex)] = static_cast<float>(segmentIndex) * kWaterfallSegmentHeight;
     }
-}
-
-float ResolveWeatherCloudAlphaCeiling(int mapVariant)
-{
-    switch (mapVariant) {
-    case 3:
-        return 148.0f;
-    case 5:
-        return 176.0f;
-    case 7:
-        return 188.0f;
-    case 8:
-        return 208.0f;
-    default:
-        return 168.0f;
-    }
-}
-
-float ResolveWeatherCloudWidthScale(int mapVariant)
-{
-    return mapVariant == 3 ? 5.8f : 7.8f;
-}
-
-float ResolveWeatherCloudHeightScale(int mapVariant)
-{
-    return mapVariant == 3 ? 3.2f : 4.4f;
-}
-
-COLORREF ResolveWeatherCloudTint(int mapVariant)
-{
-    switch (mapVariant) {
-    case 3:
-        return RGB(252, 171, 143);
-    case 5:
-        return RGB(94, 0, 0);
-    case 7:
-        return RGB(0, 0, 0);
-    case 8:
-        return RGB(255, 180, 180);
-    default:
-        return RGB(255, 255, 255);
-    }
-}
-
-void InitWeatherCloudSegment(CEffectPrim* prim, int index, int mapVariant, const vector3d& center)
-{
-    if (!prim || index < 0 || index >= static_cast<int>(prim->m_segments.size())) {
-        return;
-    }
-
-    EffectSegmentState& segment = prim->m_segments[static_cast<size_t>(index)];
-    MatrixIdentity(segment.transform);
-
-    float offsetX = 0.0f;
-    float offsetY = 0.0f;
-    float offsetZ = 0.0f;
-    switch (mapVariant) {
-    case 0:
-        offsetY = -125.0f + static_cast<float>(rand() % 10);
-        offsetX = static_cast<float>(rand() % 300 - 150);
-        offsetZ = static_cast<float>(rand() % 300 - 150);
-        break;
-    case 2:
-        offsetY = static_cast<float>(rand() % 10);
-        offsetX = static_cast<float>(rand() % 300 - 150);
-        offsetZ = static_cast<float>(rand() % 300 - 150);
-        break;
-    case 3: {
-        offsetX = static_cast<float>(rand() % 300 - 150);
-        offsetZ = static_cast<float>(rand() % 300 - 150);
-        const float sampleX = center.x + offsetX;
-        const float sampleZ = center.z + offsetZ;
-        const float groundY = g_world.m_attr ? g_world.m_attr->GetHeight(sampleX, sampleZ) : center.y;
-        offsetY = groundY - center.y - 20.0f - static_cast<float>(rand() % 5);
-        break;
-    }
-    case 5:
-        offsetY = 20.0f + static_cast<float>(rand() % 10);
-        offsetX = static_cast<float>(rand() % 300 - 150);
-        offsetZ = static_cast<float>(rand() % 300 - 150);
-        break;
-    default:
-        offsetY = 40.0f + static_cast<float>(rand() % 10);
-        offsetX = static_cast<float>(rand() % 200 + 25);
-        if ((rand() & 1) == 0) {
-            offsetX = -offsetX;
-        }
-        offsetZ = static_cast<float>(rand() % 200 + 25);
-        if ((rand() & 1) == 0) {
-            offsetZ = -offsetZ;
-        }
-        break;
-    }
-
-    const vector3d origin = {
-        center.x + offsetX,
-        center.y + offsetY,
-        center.z + offsetZ,
-    };
-    segment.pos = origin;
-    segment.alpha = 0.0f;
-    segment.process = 0;
-    segment.displayAngle = static_cast<float>(rand() % 360);
-    segment.phaseDegrees = static_cast<float>(rand() % 360);
-    segment.radius = (mapVariant == 3 ? 35.0f : 30.0f) + static_cast<float>(rand() % (mapVariant == 3 ? 10 : 20));
-    segment.size = 0.85f + static_cast<float>(rand() % 40) * 0.01f;
-
-    const float basePhase = static_cast<float>(rand() % 360) * (kPi / 180.0f);
-    const float speedScale = 0.08f + static_cast<float>(rand() % 30) * 0.004f;
-    segment.transform.m[0][0] = ((rand() & 1) == 0 ? -1.0f : 1.0f) * speedScale;
-    segment.transform.m[0][1] = mapVariant == 3 ? 0.0f : (0.01f + static_cast<float>(rand() % 10) * 0.0015f);
-    segment.transform.m[0][2] = ((rand() & 1) == 0 ? -1.0f : 1.0f) * (speedScale * 0.6f);
-    segment.transform.m[1][0] = static_cast<float>(rand() % 60);
-    segment.transform.m[1][1] = basePhase;
-    segment.transform.m[1][2] = ResolveWeatherCloudAlphaCeiling(mapVariant);
-    segment.transform.m[2][0] = mapVariant == 3 ? 0.8f : 2.4f + static_cast<float>(rand() % 20) * 0.1f;
-    segment.transform.m[2][1] = 0.01f + static_cast<float>(rand() % 8) * 0.0025f;
-    segment.transform.m[2][2] = mapVariant == 3 ? 0.35f : 1.2f;
-    segment.transform.m[3][0] = origin.x;
-    segment.transform.m[3][1] = origin.y;
-    segment.transform.m[3][2] = origin.z;
 }
 
 bool UpdateWeatherCloudPrimitive(CEffectPrim* prim)
@@ -9761,7 +9630,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     case 230:
         m_handler = Handler::WeatherCloud;
         m_param[0] = 1.0f;
-        m_param[1] = 40.0f;
+        m_param[1] = 60.0f;
         break;
     case 231:
         m_handler = Handler::MapPillar;
@@ -9774,17 +9643,17 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     case 515:
         m_handler = Handler::WeatherCloud;
         m_param[0] = 3.0f;
-        m_param[1] = 40.0f;
+        m_param[1] = 80.0f;
         break;
     case 516:
         m_handler = Handler::WeatherCloud;
         m_param[0] = 4.0f;
-        m_param[1] = 40.0f;
+        m_param[1] = 80.0f;
         break;
     case 592:
         m_handler = Handler::WeatherCloud;
         m_param[0] = 5.0f;
-        m_param[1] = 40.0f;
+        m_param[1] = 80.0f;
         break;
     case 697:
         m_handler = Handler::WeatherCloud;
@@ -10422,13 +10291,26 @@ void CRagEffect::SpawnMapParticle()
 
 void CRagEffect::SpawnWeatherCloud()
 {
-    if (m_stateCnt != 0 || !m_master) {
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CRenderObject* player = mode && mode->m_world ? mode->m_world->m_player : nullptr;
+    if (player) {
+        m_effectPos = player->m_pos;
+    } else if (m_master) {
+        m_effectPos = m_master->m_pos;
+    } else {
+        return;
+    }
+
+    if (m_stateCnt == 99999998) {
+        m_duration = 99999999;
+        m_stateCnt = 0;
+    }
+    if (m_stateCnt != 0) {
         return;
     }
 
     const int mapVariant = static_cast<int>(m_param[0]);
     const int cloudCount = (std::max)(1, static_cast<int>(m_param[1]));
-    const vector3d center = ResolveBasePosition();
 
     for (int cloudIndex = 0; cloudIndex < cloudCount; ++cloudIndex) {
         CEffectPrim* prim = LaunchEffectPrim(PP_CLOUD, vector3d{});
@@ -10438,14 +10320,66 @@ void CRagEffect::SpawnWeatherCloud()
 
         prim->m_renderFlag = 5u;
         prim->m_duration = m_duration;
-        prim->m_alpha = 255.0f;
-        prim->m_maxAlpha = 255.0f;
-        prim->m_numSegments = 4;
-        prim->m_param[0] = static_cast<float>(mapVariant);
-        prim->m_tintColor = ResolveWeatherCloudTint(mapVariant);
-        prim->m_texture.push_back(ResolveWeatherCloudTexture(mapVariant));
-        for (int segmentIndex = 0; segmentIndex < prim->m_numSegments; ++segmentIndex) {
-            InitWeatherCloudSegment(prim, segmentIndex, mapVariant, center);
+        prim->m_totalTexture = 3;
+        prim->m_texture.resize(3, nullptr);
+        prim->m_texture[0] = ResolveWeatherCloudTexture(mapVariant);
+        for (EffectGi& gi : prim->m_gi) {
+            gi.life = 1;
+            gi.process = 0;
+            gi.height[7] = static_cast<float>(mapVariant);
+            gi.fullDisplayAngle = 45;
+            if (mapVariant == 0) {
+                gi.height[6] = -152.0f;
+                if (m_effectPos.y > gi.height[6]) gi.process = 300;
+            }
+            gi.alphaB = 0;
+            gi.flag[0] = 0;
+            gi.rotStart = static_cast<short>(rand() % 200 + 300);
+
+            if (mapVariant == 0) {
+                gi.sparkY = static_cast<float>(rand() % 10 - 125);
+                gi.sparkX = static_cast<float>(rand() % 300 - 150);
+                gi.sparkZ = static_cast<float>(rand() % 300 - 150);
+            } else if (mapVariant == 2) {
+                gi.sparkY = static_cast<float>(rand() % 10);
+                gi.sparkX = static_cast<float>(rand() % 300 - 150);
+                gi.sparkZ = static_cast<float>(rand() % 300 - 150);
+            } else if (mapVariant == 3) {
+                gi.sparkX = static_cast<float>(rand() % 300 - 150);
+                gi.sparkZ = static_cast<float>(rand() % 300 - 150);
+                const int heightRandom = rand() % 5;
+                C3dAttr* attr = mode && mode->m_world ? mode->m_world->m_attr : nullptr;
+                gi.sparkY = attr
+                    ? attr->GetHeight(m_effectPos.x + gi.sparkX, m_effectPos.z + gi.sparkZ) - 20.0f - static_cast<float>(heightRandom)
+                    : m_effectPos.y - 20.0f - static_cast<float>(heightRandom);
+            } else if (mapVariant == 5) {
+                gi.sparkY = static_cast<float>(rand() % 10 + 20);
+                gi.sparkX = static_cast<float>(rand() % 300 - 150);
+                gi.sparkZ = static_cast<float>(rand() % 300 - 150);
+            } else {
+                gi.sparkY = static_cast<float>(rand() % 10 + 40);
+                gi.sparkX = static_cast<float>(rand() % 200 + 25);
+                if ((rand() & 1) == 0) gi.sparkX = -gi.sparkX;
+                gi.sparkZ = static_cast<float>(rand() % 200 + 25);
+                if ((rand() & 1) == 0) gi.sparkZ = -gi.sparkZ;
+            }
+            gi.sparkX += m_effectPos.x;
+            gi.sparkZ += m_effectPos.z;
+            gi.height[0] = static_cast<float>(rand() % 360);
+            gi.height[1] = static_cast<float>(rand() % 360);
+            gi.height[2] = static_cast<float>(rand() % 360);
+            gi.height[3] = static_cast<float>(rand() % 360);
+            gi.distance = mapVariant == 3
+                ? static_cast<float>(rand() % 10 + 35)
+                : static_cast<float>(rand() % 20 + 30);
+            gi.height[8] = static_cast<float>(rand() % 360);
+            switch (mapVariant) {
+            case 3: gi.flag[2] = 12; break;
+            case 5: gi.flag[2] = 14; break;
+            case 7: gi.flag[2] = 16; break;
+            case 8: gi.flag[2] = 17; break;
+            default: gi.flag[2] = 0; break;
+            }
         }
     }
 }
