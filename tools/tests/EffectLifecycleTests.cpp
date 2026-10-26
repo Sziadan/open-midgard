@@ -195,6 +195,7 @@ void UpdateReferenceGi3(CEffectPrim*);
 bool UpdateReferenceGumGang(CEffectPrim*);
 void UpdateReferenceGrandCross2(CEffectPrim*);
 bool UpdateReferenceLineLink(CEffectPrim*);
+bool UpdateReferenceLandProtector(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -292,6 +293,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_GUMGANG || m_type == PP_DOUBLEGUMGANG) { UpdateReferenceGumGang(this); return active; }
         if (m_type == PP_GRANDCROSS2) { UpdateReferenceGrandCross2(this); return active; }
         if (m_type == PP_LINELINK) { UpdateReferenceLineLink(this); return active; }
+        if (m_type == PP_LANDPROTECTOR) { UpdateReferenceLandProtector(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1750,6 +1752,23 @@ int main()
         check(line.process == 41 && line.alphaB == 0 && line.life == 0,
             "OnProcess case 0x26 soulchange fades and clamps after process 40, then clears missing target");
         g_world.lookupAid = 0; g_world.lookupActor = nullptr; g_session.m_aid = 0;
+        texturePrim.m_type = PP_LANDPROTECTOR; texturePrim.m_stateCnt = 0; texturePrim.m_duration = 1000;
+        texturePrim.m_master->m_effectPos = {301, 402, 503};
+        auto& land0 = texturePrim.m_gi[0]; land0.life = 0; land0.height[4] = 2.0f;
+        land0.riseAngle = 359; land0.process = 17; land0.alphaB = 23;
+        auto& land1 = texturePrim.m_gi[1]; land1.life = 2; land1.height[4] = 2.0001f;
+        land1.riseAngle = 358; land1.process = 27; land1.alphaB = 33;
+        auto& landOther = texturePrim.m_gi[2]; landOther.riseAngle = 90; landOther.height[4] = 2.0f;
+        const int landDrawStart = rngDraws;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_pos.x == 301 && texturePrim.m_pos.y == 402
+            && texturePrim.m_pos.z == 503 && land0.riseAngle == 0 && land1.riseAngle == 1
+            && land0.life == 0 && land1.life == 2 && land0.process == 17 && land1.process == 27
+            && land0.alphaB == 23 && land1.alphaB == 33 && landOther.riseAngle == 90
+            && texturePrim.m_stateCnt == 1 && rngDraws == landDrawStart,
+            "OnProcess case 0x27 updates both slots regardless of life, exact mode equality, wraps once and advances common tick");
+        land0.riseAngle = 720;
+        check(UpdateReferenceLandProtector(&texturePrim) && land0.riseAngle == 361,
+            "PrimLandProtector subtracts 360 only once when the incremented angle remains above one turn");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

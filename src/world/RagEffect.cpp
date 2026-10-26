@@ -8282,6 +8282,18 @@ bool UpdateReferenceLineLink(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:9410 (case 0x27).
+bool UpdateReferenceLandProtector(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (size_t index = 0; index < 2; ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        gi.riseAngle = static_cast<short>(gi.riseAngle + (gi.height[4] == 2.0f ? 1 : 3));
+        if (gi.riseAngle >= 360) gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
+    }
+    return true;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9291,6 +9303,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_LINELINK) {
         UpdateReferenceLineLink(this); // Source case 0x26 ignores PrimLineLink's return.
+        return true;
+    }
+    if (m_type == PP_LANDPROTECTOR) {
+        UpdateReferenceLandProtector(this); // Source case 0x27 ignores PrimLandProtector's return.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
