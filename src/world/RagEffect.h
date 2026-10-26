@@ -6,6 +6,7 @@
 
 #include <array>
 #include <list>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -499,6 +500,7 @@ private:
     bool ProcessSignum();
     bool ProcessAngelus();
     bool ProcessFireHit();
+    std::optional<bool> ProcessReferenceStrOnly();
     void SpawnFireSplashHit();
     void SpawnColdHit();
     void SpawnSprayPond();

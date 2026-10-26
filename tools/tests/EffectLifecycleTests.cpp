@@ -8,6 +8,7 @@
 #include <array>
 #include <string>
 #include <memory>
+#include <optional>
 #include <type_traits>
 #include <set>
 
@@ -315,6 +316,7 @@ struct CRagEffect : CGameObject {
     bool ProcessSignum();
     bool ProcessAngelus();
     bool ProcessFireHit();
+    std::optional<bool> ProcessReferenceStrOnly();
     void SpawnFireSplashHit();
     void SpawnColdHit();
     void SpawnSprayPond();
@@ -394,6 +396,7 @@ CRagEffect* CAbleToMakeEffect::LaunchEffect(int type, vector3d, float)
 #define rand SilentRand
 #include "AttrWaveBodies.inc"
 #include "EffectLifecycleBodies.inc"
+#include "StrOnlyDispatchBody.inc"
 #undef rand
 
 int main()
@@ -3654,6 +3657,38 @@ int main()
         check(smoke->m_pos.y==preciseY&&smoke->m_pos.y!=smoke->m_deltaPos.y-999,
             "Reference screen drift retains extended Y displacement through anchor addition before rounding final position");
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+    }
+    {
+        const int ids[]={23,25,29,52,64,70,109,110,126,135,139,141,143,144,146,147,148,149,150,151,152,156,157,158,
+            167,168,169,181,182,186,187,188,189,190,191,192,193,194,195,197,199,213,214,235,268};
+        const int draws=rngDraws;waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();
+        auto clip=std::make_unique<KANICLIP>();clip->cLayer=2;KAC_KEYFRAME keys[2];keys[0].iFrame=0;keys[1].iFrame=100;
+        clip->aLayer[1].cAniKey=2;clip->aLayer[1].aAniKey=keys;
+        for(int id:ids){
+            CRenderObject actor;actor.m_pos={10,20,100};auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;
+            effect.m_type=id;effect.m_master=&actor;effect.m_duration=250;effect.m_effectPos={30,50,40};effect.m_tlvertX=12;effect.m_tlvertY=34;
+            const auto missing=effect.ProcessReferenceStrOnly();
+            check(missing.has_value()&&!*missing&&effect.m_tlvertX==12&&effect.m_tlvertY==34,"original STR-only case is handled and missing clip terminates without projection");
+            effect.m_ezEffectRes=clip.get();effect.m_aniClips=clip.get();effect.InitEZ2STRFrame();g_session.m_isMinEffect=true;
+            const auto active=effect.ProcessReferenceStrOnly();tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+            check(active.has_value()&&*active&&effect.m_strFrameActive&&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y-80
+                &&effect.m_strScreenOffset.x==0&&effect.m_strScreenOffset.y==-80&&effect.m_strScreenOffset.z==0,
+                "original STR-only case returns active clip result with exact minus-eighty offset despite reduced effects");
+            actor.m_pos={20,30,120};effect.m_stateCnt=1;g_session.m_isMinEffect=false;const auto moved=effect.ProcessReferenceStrOnly();
+            ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+            check(moved.has_value()&&*moved&&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y-80&&effect.m_strAnchorPosition.z==120
+                &&effect.m_effectPos.x==30&&effect.m_effectPos.y==50&&effect.m_effectPos.z==40&&effect.m_duration==250&&effect.m_primList.empty(),
+                "original STR-only case follows moving actor in normal mode while preserving parent origin duration and empty primitive list");
+            effect.m_iCurLayer=effect.m_cEndLayer;const auto ended=effect.ProcessReferenceStrOnly();
+            check(ended.has_value()&&!*ended&&!effect.m_strFrameActive,"original STR-only case distinguishes handled clip exhaustion from unhandled dispatch");
+            effect.m_ezEffectRes=nullptr;effect.m_aniClips=nullptr;
+        }
+        check(rngDraws==draws&&waveCalls.empty()&&g_texMgr.requests.empty()&&g_resMgr.requests.empty(),
+            "all forty-five original STR-only cases perform no extra RNG audio primitive or resource work during processing");
+        auto storage=std::make_unique<CRagEffect>();auto& other=*storage;other.m_strFrameActive=true;other.m_tlvertX=12;other.m_tlvertY=34;bool untouched=true;
+        for(int id:{0,22,24,26,30,41,49,51,53,65,145,183,185,218,269,709}){other.m_type=id;untouched=untouched&&!other.ProcessReferenceStrOnly().has_value();}
+        check(untouched&&other.m_strFrameActive&&other.m_tlvertX==12&&other.m_tlvertY==34,
+            "STR-only dispatch leaves neighboring primitive audio target-position and restarting-clip cases to their own handlers");
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

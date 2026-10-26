@@ -122,6 +122,28 @@ bool Example::Run2(
             token = anchor.removeprefix("case ").removesuffix(":")
             self.assertEqual(int(token, 0), int(row["case"]))
 
+    def test_runtime_str_only_cases_match_original_shared_jump(self):
+        original = read_function(ROOT / "HighPriest.exe.c", "CRagEffect::OnProcess")
+        pending = []
+        expected = None
+        for line in original.text.splitlines():
+            case = re.fullmatch(r"\s*case\s+(\d+)\s*:\s*", line)
+            if case:
+                pending.append(int(case.group(1)))
+            elif line.strip():
+                if line.strip() == "goto LABEL_424;" and 23 in pending:
+                    expected = set(pending)
+                    break
+                pending.clear()
+        self.assertIsNotNone(expected)
+        self.assertEqual(len(expected), 45)
+        runtime = read_function(ROOT / "src/world/RagEffect.cpp", "CRagEffect::ProcessReferenceStrOnly")
+        actual = list(map(int, re.findall(r"case\s+(\d+)\s*:", runtime.text)))
+        self.assertEqual(len(actual), len(expected))
+        self.assertEqual(set(actual), expected)
+        self.assertIn("return ProcessEZ2STR(0.0f,-80.0f,0.0f);", runtime.text)
+        self.assertRegex(original.text, r"LABEL_424:\s*result = CRagEffect::ProcessEZ2STR\(this, 0\.0, -80\.0, 0\.0\);")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,10 +4,17 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A ColdHit id51, after FireSplashHit checkpoint `97f93e0`. Original ice shards, two smoke emissions, screen-quad geometry and frame-ten smoke growth controls now use reference paths. Previous checkpoint tests, progress records, clean commit and OldRO hash were reverified before continuation.
+Current work: WP5A original 45-case STR-only dispatch group, after ColdHit checkpoint b184e94. Source minus-eighty offset and missing/exhausted clip termination now use direct reference dispatch.
 
-Next action: continue original STR-only dispatch group (including WindHit id52), then remaining emitters and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue remaining original emitters beginning with id53 and remaining primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Original STR-only dispatch group — 2026-10-26
+
+- HighPriest.exe.c:419760-419805 and 420847-420852 -> ProcessReferenceStrOnly. The original 45 consecutive cases share LABEL_424 and return ProcessEZ2STR(0,-80,0), terminating when the clip is exhausted. Exact ids: 23,25,29,52,64,70,109,110,126,135,139,141,143,144,146,147,148,149,150,151,152,156,157,158,167,168,169,181,182,186,187,188,189,190,191,192,193,194,195,197,199,213,214,235,268.
+- Replaces generic zero-offset handling for these cases. Optional dispatch distinguishes a handled false result from a nonmember, preserving original termination. Existing Init/catalog resource variants and tick gates remain; no extra sound, RNG, resources or primitives are introduced. WindHit id52 belongs to this STR-only group.
+
+Validation: release build, six silent C++ suites / 1489 checks (1265 lifecycle/primitive, 166 rendering, 58 other), seven Python tests and whitespace checks pass. Added182 lifecycle checks covering all45 ids with missing/active/exhausted clips, reduced mode, moving anchor, exact offset, preserved parent fields and neighboring nonmembers. New Python test compares all45 runtime cases directly with the original shared-jump group using a linear source scan. Approved OldRO SHA-256 matches the build: `53E6C5F7C3543577F8C72B909F37AAF400E619C7D856574A346AAB36FF5E8B54`. No media/live acceptance. Remaining emitters and primitive controls, caller routing, specialized segment payloads, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## ColdHit shards / smoke controls / screen quad — 2026-10-26
 

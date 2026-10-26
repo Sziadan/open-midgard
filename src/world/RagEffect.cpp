@@ -14161,9 +14161,29 @@ u8 CRagEffect::ProcessWorldEffect()
     return alive ? 1 : 0;
 }
 
+// HighPriest.exe.c:419760-419805: all 45 cases jump directly to LABEL_424
+// (420847-420852). No sound, RNG, emission or other helper runs for these ids.
+// An empty optional leaves dispatch to the remaining original cases.
+std::optional<bool> CRagEffect::ProcessReferenceStrOnly()
+{
+    switch (m_type) {
+    case 23: case 25: case 29: case 52: case 64: case 70: case 109: case 110:
+    case 126: case 135: case 139: case 141: case 143: case 144: case 146:
+    case 147: case 148: case 149: case 150: case 151: case 152: case 156:
+    case 157: case 158: case 167: case 168: case 169: case 181: case 182:
+    case 186: case 187: case 188: case 189: case 190: case 191: case 192:
+    case 193: case 194: case 195: case 197: case 199: case 213: case 214:
+    case 235: case 268:
+        return ProcessEZ2STR(0.0f,-80.0f,0.0f);
+    default:
+        return std::nullopt;
+    }
+}
+
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (const std::optional<bool> result = ProcessReferenceStrOnly()) return *result;
     if (m_type == 4) {
         SpawnHit5();
         return true;

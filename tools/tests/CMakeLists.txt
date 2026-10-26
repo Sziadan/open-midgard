@@ -124,6 +124,8 @@ extract_body(primitive_init "${effect_source}" "void CEffectPrim::Init(" "static
 extract_body(primitive_lifetime "${effect_source}" "CEffectPrim::~CEffectPrim()" "bool CEffectPrim::ProcessPrimitiveFrame()")
 extract_body(effect_gate "${effect_source}" "bool EffectTicksWhenNoFrameTime(" "void ConfigureHealBand(")
 extract_body(str_termination "${effect_source}" "bool EffectChecksStrResult(" "u8 CRagEffect::OnProcess()")
+extract_body(str_only_dispatch "${effect_source}" "std::optional<bool> CRagEffect::ProcessReferenceStrOnly()" "bool CRagEffect::ProcessEffectFrame()")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/StrOnlyDispatchBody.inc" "${str_only_dispatch}")
 extract_body(effect_tick "${effect_source}" "u8 CRagEffect::OnProcess()" "// Legacy RSW map-emitter scheduling.")
 extract_body(effect_dtor "${effect_source}" "CRagEffect::~CRagEffect()" "void CRagEffect::LoadEzEffect(")
 extract_body(effect_launch "${effect_source}" "CEffectPrim* CRagEffect::LaunchEffectPrim(" "void CRagEffect::OnActorDeleted(")
