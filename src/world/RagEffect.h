@@ -528,6 +528,8 @@ private:
     void SpawnSteal();
     bool ProcessCoin();
     void SpawnHit1();
+    void SpawnHitDark();
+    void SpawnHit(bool dark);
     void SpawnRuwach();
     void SpawnBlueFall();
     void SpawnWeatherCloud();

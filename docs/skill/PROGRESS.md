@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Hit1 emitter and reference cylinder/linear/gravity bindings, after Coin checkpoint `9399e6a`. Original id0 now preserves ordered emission, reduced-effects gating, facing and three-slot trails with original attenuation precision.
+Current work: WP5A HitDark ids180/184 and shared hit profiles, after Hit1 checkpoint `98a86e8`. Both dark variants now preserve source tint and unconditional particle emission with original reference primitive paths.
 
-Next action: continue remaining hit variants (including HitDark and Pierce), gravity/particle callers and unported primitive controls. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue Pierce and remaining hit/particle emitters and unported primitive controls. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## HitDark emitter / shared hit profiles — 2026-10-26
+
+- Ref/RagEffect.cpp:5747-5885 (0x603A60), original ids 180/184 -> SpawnHitDark. Direct dispatcher/Init route binds shared reference cylinder, linear-particle and gravity paths. Normalized assignment comparison against Hit1 confirms same geometry/motion/resource profiles; HitDark adds RGB 20/20/20 to both particle groups and has no reduced-effects suppression.
+- Shared SpawnHit/LaunchHitParticle preserve source white cylinder first, two linear then two gravity sprites, 26 RNG draws, facing truncation/wrap, stored origin, exact assets, source duration/speed/gravity sequencing and three full initial segments. Dark tint is assigned before segment initialization; all slots start with packed 0xFE141414. No added wave, actor-position copy or STR path.
+- Hit1 wrapper selects the original reduced-effects gate and white particles; HitDark wrapper selects unconditional particles and source dark tint. Existing Hit1 checks remain passing. No new resource literals or primitive behavior are introduced beyond binding the two dark ids.
+
+Validation: release build, six silent C++ suites / 776 checks (610 lifecycle/primitive, 108 rendering, 58 other), six Python tests and whitespace check pass. Added 20 checks across both ids for reduced-effects behavior, ordered particle count/RNG, reference bindings, white cylinder versus dark sprites, three initial segments, profiles/resources/origin/no audio, fade color preservation, no repeated emission and lock cleanup. No media/live acceptance. Approved OldRO SHA-256: `DFFD86BD30BC57FCC37ABF7B249A16EFFA6CAFD21D8086EBA2059C2C16CC1A27`. Remaining hit variants/primitive controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Hit1 emitter / three-segment trails — 2026-10-26
 

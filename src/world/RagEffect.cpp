@@ -6630,7 +6630,7 @@ bool CEffectPrim::UsesReferenceCylinder() const
 {
     if (m_type != PP_3DCYLINDER || !m_master) return false;
     switch (m_master->GetEffectType()) {
-    case 0: case 36: case 218: case 219: case 220: case 221: return true;
+    case 0: case 36: case 180: case 184: case 218: case 219: case 220: case 221: return true;
     default: return false;
     }
 }
@@ -6650,11 +6650,11 @@ bool CEffectPrim::UsesReferenceParticle() const
 {
     return m_type == PP_SUPERANGEL
         || (m_type == PP_3DPARTICLEGRAVITY && m_master
-            && (m_master->GetEffectType() == 0 || m_master->GetEffectType() == 10 || m_master->GetEffectType() == 18))
+            && (m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 10 || m_master->GetEffectType() == 18))
         || (m_type == PP_3DPARTICLEORBIT && m_master
             && (m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
-            && (m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
+            && (m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
 }
 
@@ -7926,7 +7926,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 18: case 35: case 36: case 45: case 46: case 61:
+    case 0: case 18: case 35: case 36: case 45: case 46: case 61: case 180: case 184:
         // ProcessEffectFrame dispatches Steal/ReadyPortal/Portal/FireFly/SandWind/WarpZone directly.
         m_handler = Handler::None;
         break;
@@ -9414,8 +9414,8 @@ bool CRagEffect::ProcessCoin()
     return m_stateCnt < 100;
 }
 
-// Ref/RagEffect.cpp:5141-5220, the two ordered Hit1 particle groups.
-void LaunchHit1Particle(CRagEffect* effect, int facing, bool gravity)
+// Ref/RagEffect.cpp:5141-5220,5802-5882: Hit1/HitDark particle groups.
+void LaunchHitParticle(CRagEffect* effect, int facing, bool gravity, bool dark)
 {
     CEffectPrim* prim = effect->LaunchEffectPrim(gravity ? PP_3DPARTICLEGRAVITY : PP_3DPARTICLE, vector3d{});
     prim->m_longitude = static_cast<float>(facing + rand() % 80 + (gravity ? 140 : -40));
@@ -9445,6 +9445,7 @@ void LaunchHit1Particle(CRagEffect* effect, int facing, bool gravity)
         prim->m_gravAccel = static_cast<float>(-(acceleration + acceleration));
     }
     prim->m_size = static_cast<float>(static_cast<double>(rand() % 100 + 60) * 0.0099999998);
+    if (dark) prim->m_tintColor = RGB(20,20,20);
     prim->m_fadeOutCnt = 0;
     prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
     prim->m_animSpeed = 4; prim->m_repeatAnim = true;
@@ -9454,7 +9455,7 @@ void LaunchHit1Particle(CRagEffect* effect, int facing, bool gravity)
 }
 
 // Ref/RagEffect.cpp:5087-5224 (0x5F1A40), original effect 0.
-void CRagEffect::SpawnHit1()
+void CRagEffect::SpawnHit(bool dark)
 {
     if (m_stateCnt != 0) return;
     CRenderObject* master = ResolveCurrentMaster();
@@ -9475,10 +9476,21 @@ void CRagEffect::SpawnHit1()
     prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
     prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 2;
     prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
-    if (!g_session.m_isMinEffect) {
-        for (int i = 0; i < 2; ++i) LaunchHit1Particle(this, facing, false);
-        for (int i = 0; i < 2; ++i) LaunchHit1Particle(this, facing, true);
+    if (dark || !g_session.m_isMinEffect) {
+        for (int i = 0; i < 2; ++i) LaunchHitParticle(this, facing, false, dark);
+        for (int i = 0; i < 2; ++i) LaunchHitParticle(this, facing, true, dark);
     }
+}
+
+void CRagEffect::SpawnHit1()
+{
+    SpawnHit(false);
+}
+
+// Ref/RagEffect.cpp:5747-5885 (0x603A60), ids 180/184.
+void CRagEffect::SpawnHitDark()
+{
+    SpawnHit(true);
 }
 
 // Ref/RagEffect.cpp:7202-7261 (0x5F9170). The angle truncates before
@@ -12773,6 +12785,10 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 180 || m_type == 184) {
+        SpawnHitDark();
+        return true;
+    }
     if (m_type == 0) {
         SpawnHit1();
         return true;

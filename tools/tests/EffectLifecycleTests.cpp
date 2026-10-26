@@ -282,6 +282,8 @@ struct CRagEffect : CGameObject {
     void SpawnSteal();
     bool ProcessCoin();
     void SpawnHit1();
+    void SpawnHitDark();
+    void SpawnHit(bool);
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -2168,6 +2170,32 @@ int main()
         check(effect.m_primList.size()==1&&effect.m_primList.front()->m_type==PP_3DCYLINDER&&rngDraws==beforeReduced&&g_resMgr.requests.empty(),
             "Hit1 reduced-effects mode preserves cylinder and skips all particle draws/resources");
         effect.ClearPrims();g_world.UpdateGameObjects();g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor;actor.m_roty=45.9f;actor.m_pos={900,800,700};waveCalls.clear();
+        for(int id:{180,184}){
+            CRagEffect effect;effect.m_type=id;effect.m_master=&actor;effect.m_duration=100;effect.m_effectPos={10,50,30};
+            g_session.m_isMinEffect=true;const int draws=rngDraws;g_resMgr.requests.clear();rngValues.clear();rngCursor=0;effect.SpawnHitDark();
+            auto it=effect.m_primList.begin();auto* cylinder=*it++;auto* linear=*it++;++it;auto* gravity=*it;
+            check(effect.m_primList.size()==5 &&rngDraws==draws+26,"HitDark emits both sprite groups despite reduced-effects mode");
+            check(cylinder->UsesReferenceCylinder()&&linear->UsesReferenceParticle()&&gravity->UsesReferenceParticle(),"both HitDark ids bind reference cylinder linear and gravity paths");
+            check(cylinder->m_longitude==134&&cylinder->m_tintColor==RGB(255,255,255)&&cylinder->m_alpha==254&&cylinder->m_duration==10
+                &&cylinder->m_innerSize==5&&cylinder->m_outerSize==10,"HitDark preserves shared facing and white cylinder profile");
+            check(linear->m_tintColor==RGB(20,20,20)&&gravity->m_tintColor==RGB(20,20,20)&&linear->m_alpha==254&&gravity->m_alpha==254,
+                "HitDark source tint applies to both particle groups without changing constructor alpha");
+            check(linear->m_numSegments==3&&gravity->m_numSegments==3&&linear->m_segments[2].argb==0xFE141414&&gravity->m_segments[2].argb==0xFE141414,
+                "HitDark initializes all three dark particle segments before updates");
+            check(linear->m_longitude==94&&gravity->m_longitude==274&&linear->m_duration==6&&gravity->m_duration==6
+                &&linear->m_sizeSpeed==0&&gravity->m_sizeSpeed==0&&linear->m_fadeOutCnt==0&&gravity->m_fadeOutCnt==0,
+                "HitDark preserves shared draw order profiles and immediate fade");
+            check(g_resMgr.requests.size()==8&&effect.m_effectPos.y==50&&waveCalls.empty(),"HitDark preserves stored origin exact resource call count and absence of audio");
+            linear->m_alphaDelta=1;gravity->m_alphaDelta=1;linear->OnProcess();gravity->OnProcess();
+            check((linear->m_segments[0].argb&0xFFFFFF)==0x141414&&(gravity->m_segments[0].argb&0xFFFFFF)==0x141414&&linear->m_alpha<254&&gravity->m_alpha<254,
+                "HitDark keeps original RGB through reference fade and segment updates");
+            effect.m_stateCnt=1;effect.SpawnHitDark();check(effect.m_primList.size()==5,"HitDark does not repeat zero-frame burst");
+            effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,"HitDark releases every resource lock");
+        }
+        g_session.m_isMinEffect=false;
     }
     {
         CRagEffect effect;
