@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A HealSP id14, after HasteUp checkpoint `b088c66`. Original three blue cylinders, two-draw even-frame orbit sprites, actor-origin refresh and exact root-level heal wave are now ported.
+Current work: WP5A HeavensDrive id142, after HealSP checkpoint `028c04c`. Original 25-spike grid, source sound/mode/duration controls and quad-horn reversal/stop/restart with skipped alpha processing are now ported.
 
-Next action: continue unported emitters (including HeavensDrive id142) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters (including OverThrust id128) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## HeavensDrive grid / quad-horn change controls — 2026-10-26
+
+- Ref/RagEffect.cpp:5008-5080 (0x602770) -> ApplyHeavensDrive, original id142, direct ProcessEffectFrame/Init route. Zero plays exact stored-origin horizontal wizard_earthspike wave, sends mode135/0 and extends parent duration by50, then emits a 5x5 grid with X inner/Z outer loops across -10/-5/0/5/10 and y10. No actor-origin copy, reduced-effects suppression or repeated work on nonzero frames.
+- Each of25 spikes consumes seven ordered draws: duration jitter, discarded angle/random, height, size, longitude and latitude (175 total). Preserves parentDuration+rand()%30-10, pattern3, size(300..349)*0.0099999998, height(heightDraw+1)*0.1+9, source X/Y launch and retained render matrices, speed1/acceleration0.0099999998, changePoint11/speed-1.2/accel0, stop count14, late speed-1/accel-0.0099999998 and exact stone texture. Constructor alpha254 and packed ARGB0xFFFFFFFF remain distinct.
+- Ref/RagEffectPrim.cpp:1919-1980 (0x642F10) -> UpdateReferenceQuadHorn now includes source change-point assignment before motion and pattern2 restart after motion/stop at duration-30. Pattern2 skips ProcessAlpha entirely, preserving packed color and omitting invented fades. Added original zero-default changeSpeedY/changeAccelY fields. Id142 binds existing source four-face quad-horn geometry. Earlier FrostDiver/GrimTooth profiles retain their default-disabled changes and normal alpha branch.
+
+Validation: release build, six silent C++ suites / 1039 checks (849 lifecycle/primitive, 132 rendering, 58 other), six Python tests, two-literal executable byte audit, two original asset-pointer instruction audits and whitespace check pass. Added17 lifecycle checks for all25 grid positions/175 draws, source mode/audio/origin/duration, upper/lower RNG profiles, matrices/resources, extended speed integration, frame11 reversal/frame14 stop/late restart ordering, skipped alpha processing, coincident stop/restart precedence and zero-only behavior. Existing shared quad-horn geometry/device and prior caller suites pass. Exact wave0x711E58 and stone0x71B858 match executable bytes; original pushes at0x6027C0/0x602A73 verified. No media/live acceptance. Approved OldRO SHA-256: `DFDAD0F8B2D3CFFE9F0752D759C873C9132C6D355803C886B9AA019CF4CF6ED8`. Other emitters/primitive types and controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## HealSP blue cylinders / orbit sprites — 2026-10-26
 

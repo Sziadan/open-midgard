@@ -6392,10 +6392,13 @@ void UpdateReferenceFlash(CEffectPrim* prim)
     ProcessReferenceParticleAlpha(prim);
 }
 
-// Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), FrostDiver pattern1 profile.
+// Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
     prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(),prim->m_deltaPos2);
+    if (prim->m_stateCnt == prim->m_changePoint) {
+        prim->m_speed = prim->m_changeSpeed; prim->m_accel = prim->m_changeAccel;
+    }
     const double speed = static_cast<double>(prim->m_accel) + prim->m_speed;
     prim->m_speed = static_cast<float>(speed);
     prim->m_speed3d = {
@@ -6408,7 +6411,13 @@ void UpdateReferenceQuadHorn(CEffectPrim* prim)
     if ((prim->m_pattern & 1) != 0 && prim->m_stateCnt == prim->m_count) {
         prim->m_accel = 0.0f; prim->m_speed = 0.0f;
     }
-    ProcessReferenceParticleAlpha(prim);
+    if ((prim->m_pattern & 2) != 0) {
+        if (prim->m_stateCnt == prim->m_duration-30) {
+            prim->m_speed = prim->m_changeSpeedY; prim->m_accel = prim->m_changeAccelY;
+        }
+    } else {
+        ProcessReferenceParticleAlpha(prim);
+    }
 }
 
 // Ref/RagEffectPrim.cpp:966-1310 (0x643340), reachable Berserk/IceArrow:
@@ -6784,7 +6793,7 @@ bool CEffectPrim::UsesReferenceFlash() const
 bool CEffectPrim::UsesReferenceQuadHorn() const
 {
     return m_type == PP_3DQUADHORN && m_master
-        && (m_master->GetEffectType() == 27 || m_master->GetEffectType() == 28 || m_master->GetEffectType() == 123 || m_master->GetEffectType() == 132);
+        && (m_master->GetEffectType() == 27 || m_master->GetEffectType() == 28 || m_master->GetEffectType() == 123 || m_master->GetEffectType() == 132 || m_master->GetEffectType() == 142);
 }
 
 bool CEffectPrim::UsesReferenceScreenTexture() const
@@ -8086,7 +8095,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 18: case 27: case 28: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 123: case 132: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 18: case 27: case 28: case 31: case 32: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 123: case 132: case 142: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -12205,6 +12214,44 @@ void CRagEffect::ApplyHealSP()
     InitReferenceSegments(prim);
 }
 
+// Ref/RagEffect.cpp:5008-5080 (0x602770), original effect 142.
+void CRagEffect::ApplyHeavensDrive()
+{
+    if (m_stateCnt != 0) return;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\wizard_earthspike.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    if (mode) mode->SendMsg(135,0,0,0);
+    m_duration += 50;
+    for (int z = -10; z < 15; z += 5) {
+        for (int x = -10; x < 15; x += 5) {
+            CEffectPrim* prim = LaunchEffectPrim(PP_3DQUADHORN,vector3d{});
+            prim->m_duration = m_duration + rand() % 30 - 10;
+            prim->m_pattern = 3;
+            const int angle = rand() % 360;
+            rand(); GetSin(angle); GetCos(angle);
+            const int height = rand() % 60;
+            prim->m_deltaPos2 = {static_cast<float>(x),10.0f,static_cast<float>(z)};
+            prim->m_size = static_cast<float>((rand() % 50 + 300)*0.0099999998);
+            prim->m_heightSize = static_cast<float>((height+1)*0.1+9.0);
+            prim->m_longitude = static_cast<float>(rand() % 360);
+            prim->m_latitude = static_cast<float>(rand() % 20 + 80);
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendXRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_latitude)));
+            MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_longitude)));
+            prim->m_rotMat = prim->m_matrix;
+            prim->m_changeSpeedY = -1.0f; prim->m_changeAccelY = -0.0099999998f;
+            prim->m_speed = 1.0f; prim->m_accel = 0.0099999998f;
+            prim->m_changePoint = 11; prim->m_changeSpeed = -1.2f; prim->m_changeAccel = 0.0f;
+            prim->m_count = 14;
+            prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f; prim->m_fadeOutCnt = -1;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\stone.bmp",false));
+        }
+    }
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -13459,6 +13506,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 45) {
         SpawnFireFly();
+        return true;
+    }
+    if (m_type == 142) {
+        ApplyHeavensDrive();
         return true;
     }
     if (m_type == 14) {

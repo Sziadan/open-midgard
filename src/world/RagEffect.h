@@ -344,6 +344,8 @@ public:
     float m_changeSpeed = 0.000099999997f;
     float m_changeAccel = 0.000099999997f;
     float m_changeHeightSpeed = 0.000099999997f;
+    float m_changeSpeedY = 0.0f;
+    float m_changeAccelY = 0.0f;
     int m_playWaveType = 0;
     std::vector<float> m_chVal2;
     std::string m_spriteActName;
@@ -480,6 +482,7 @@ private:
     void ApplyFrostDiver2();
     void ApplyHasteUp();
     void ApplyHealSP();
+    void ApplyHeavensDrive();
     void ApplyProvidence(const char* textureName);
     void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);
     void ApplyBeginCasting(const char* textureName, int option, bool playWave);

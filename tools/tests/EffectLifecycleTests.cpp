@@ -203,6 +203,7 @@ struct CEffectPrim : CGameObject {
     std::vector<float> m_chPoint,m_chVal1;
     bool m_chSpeed=false,m_AlphaShow=false;
     int m_chCnt=0,m_count=0,m_playWaveType=0;
+    float m_changeSpeedY=0,m_changeAccelY=0;
     int m_changePoint=-1;
     float m_changeSpeed=0.000099999997f,m_changeAccel=0.000099999997f,m_changeHeightSpeed=0.000099999997f;
     std::vector<float> m_chVal2;
@@ -293,6 +294,7 @@ struct CRagEffect : CGameObject {
     void ApplyFrostDiver2();
     void ApplyHasteUp();
     void ApplyHealSP();
+    void ApplyHeavensDrive();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1873,6 +1875,65 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={900,800,700};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=142;
+        effect.m_effectPos={30,50,40};effect.m_duration=40;g_session.m_isMinEffect=true;
+        waveCalls.clear();g_texMgr.requests.clear();const int draws=rngDraws,beforeMessages=gameMode.messages;
+        rngValues.clear();for(int i=0;i<25;++i)rngValues.insert(rngValues.end(),{29,359,123,59,49,359,19});
+        rngCursor=0;effect.ApplyHeavensDrive();auto* spike=effect.m_primList.front();
+        check(effect.m_primList.size()==25&&rngDraws==draws+175&&rngCursor==175&&effect.m_duration==90,
+            "HeavensDrive emits twenty-five seven-draw spikes and extends parent duration fifty despite reduced effects");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\wizard_earthspike.wav"&&waveCalls[0].x==28&&waveCalls[0].y==0&&waveCalls[0].z==36
+            &&waveCalls[0].frameRng==draws,"HeavensDrive plays exact stored-origin horizontal wave before emission RNG");
+        check(gameMode.messages==beforeMessages+1&&gameMode.lastMsg==135&&gameMode.lastArg==0,
+            "HeavensDrive sends original mode message one-thirty-five with zero argument");
+        int index=0;bool grid=true,profiles=true,matrices=true;
+        for(auto* prim:effect.m_primList) {
+            grid=grid&&prim->m_deltaPos2.x==-10+(index%5)*5&&prim->m_deltaPos2.y==10&&prim->m_deltaPos2.z==-10+(index/5)*5;
+            profiles=profiles&&prim->UsesReferenceQuadHorn()&&prim->m_duration==109&&prim->m_pattern==3&&prim->m_size==static_cast<float>(349*0.0099999998)
+                &&prim->m_heightSize==15&&prim->m_longitude==359&&prim->m_latitude==99&&prim->m_speed==1&&prim->m_accel==0.0099999998f
+                &&prim->m_changePoint==11&&prim->m_changeSpeed==-1.2f&&prim->m_changeAccel==0&&prim->m_count==14
+                &&prim->m_changeSpeedY==-1&&prim->m_changeAccelY==-0.0099999998f&&prim->m_alpha==254&&prim->m_fadeOutCnt==-1;
+            matrix expected;MatrixIdentity(expected);MatrixAppendXRotation(expected,GetRadian(99));MatrixAppendYRotation(expected,GetRadian(359));
+            matrices=matrices&&prim->m_matrix.m[2][0]==expected.m[2][0]&&prim->m_rotMat.m[2][1]==expected.m[2][1];++index;
+        }
+        check(grid&&index==25,"HeavensDrive grid iterates X inside Z across original minus-ten through ten coordinates");
+        check(profiles,"HeavensDrive preserves duration jitter discarded draws size height and all three motion control phases");
+        check(matrices&&g_texMgr.requests==std::vector<std::string>(25,"effect\\stone.bmp"),
+            "HeavensDrive retains source launch and render rotations with one exact stone texture per spike");
+        check(effect.m_effectPos.x==30&&effect.m_effectPos.y==50&&spike->m_argb==0xFFFFFFFF&&spike->m_renderFlag==1,
+            "HeavensDrive retains stored world anchor and original constructor packed color render flag");
+        spike->m_alphaDelta=1;spike->m_alphaSpeed=-3;spike->m_fadeOutCnt=0;const double firstSpeed=1.0+static_cast<double>(0.0099999998f);spike->OnProcess();
+        check(spike->m_speed==static_cast<float>(firstSpeed)&&spike->m_speed3d.y==static_cast<float>(firstSpeed*spike->m_matrix.m[2][1])
+            &&spike->m_pos.y==60+spike->m_deltaPos.y,"HeavensDrive spike uses original extended speed sum and stored parent-plus-grid origin");
+        check(spike->m_alpha==254&&spike->m_alphaSpeed==-3&&spike->m_argb==0xFFFFFFFF,
+            "HeavensDrive pattern two skips alpha integration fade and packed color rebuild");
+        for(int frame=1;frame<=10;++frame)spike->OnProcess();const vector3d beforeReverse=spike->m_deltaPos;
+        spike->OnProcess();check(spike->m_stateCnt==12&&spike->m_speed==-1.2f&&spike->m_accel==0
+            &&spike->m_deltaPos.y==beforeReverse.y+static_cast<float>(static_cast<double>(-1.2f)*spike->m_matrix.m[2][1]),
+            "HeavensDrive frame eleven replaces speed and acceleration before integrating reversal");
+        spike->OnProcess();spike->OnProcess();const vector3d beforeStop=spike->m_deltaPos;spike->OnProcess();
+        check(spike->m_stateCnt==15&&spike->m_speed==0&&spike->m_accel==0&&spike->m_deltaPos.y!=beforeStop.y,
+            "HeavensDrive frame fourteen integrates final reverse motion then stops");
+        const vector3d stopped=spike->m_deltaPos;spike->m_stateCnt=78;spike->OnProcess();
+        check(spike->m_deltaPos.x==stopped.x&&spike->m_deltaPos.y==stopped.y&&spike->m_speed==0,
+            "HeavensDrive remains stationary until thirty frames before primitive expiry");
+        spike->OnProcess();check(spike->m_stateCnt==80&&spike->m_deltaPos.y==stopped.y&&spike->m_speed==-1&&spike->m_accel==-0.0099999998f,
+            "HeavensDrive late phase installs new speed and acceleration after that frame motion");
+        spike->OnProcess();const double lateSpeed=-1.0+static_cast<double>(-0.0099999998f);
+        check(spike->m_speed==static_cast<float>(lateSpeed)&&spike->m_deltaPos.y==stopped.y+static_cast<float>(lateSpeed*spike->m_matrix.m[2][1])
+            &&spike->m_argb==0xFFFFFFFF,"HeavensDrive resumes accelerated motion on following frame without alpha fade");
+        // Original stop branch precedes the late restart, even if both gates coincide.
+        spike->m_duration=44;spike->m_stateCnt=14;spike->m_speed=-1.2f;spike->m_accel=0;spike->OnProcess();
+        check(spike->m_speed==-1&&spike->m_accel==-0.0099999998f,"HeavensDrive coincident stop and late gates preserve restart precedence");
+        effect.m_stateCnt=1;effect.ApplyHeavensDrive();check(effect.m_primList.size()==25&&effect.m_duration==90&&rngDraws==draws+175
+            &&waveCalls.size()==1&&gameMode.messages==beforeMessages+1,"HeavensDrive nonzero calls do not repeat burst sound mode message or duration extension");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_stateCnt=0;effect.m_duration=40;rngValues={0,0,0,0,0,0,0};rngCursor=0;effect.ApplyHeavensDrive();
+        spike=effect.m_primList.front();check(spike->m_duration==80&&spike->m_heightSize==9.1f&&spike->m_size==static_cast<float>(300*0.0099999998)
+            &&spike->m_longitude==0&&spike->m_latitude==80,"HeavensDrive duration height size and orientation lower endpoints match reference");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor,listener;actor.m_pos={10,50,30};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
