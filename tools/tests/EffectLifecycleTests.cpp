@@ -197,6 +197,7 @@ void UpdateReferenceGrandCross2(CEffectPrim*);
 bool UpdateReferenceLineLink(CEffectPrim*);
 bool UpdateReferenceLandProtector(CEffectPrim*);
 bool UpdateReferenceSakura(CEffectPrim*);
+void UpdateReferenceShieldBoomerang(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -296,6 +297,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_LINELINK) { UpdateReferenceLineLink(this); return active; }
         if (m_type == PP_LANDPROTECTOR) { UpdateReferenceLandProtector(this); return active; }
         if (m_type == PP_SAKURA) { UpdateReferenceSakura(this); return active; }
+        if (m_type == PP_SHIELDBOOMERANG) { UpdateReferenceShieldBoomerang(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -464,7 +466,7 @@ CRagEffect* CAbleToMakeEffect::LaunchEffect(int type, vector3d, float)
     return effect;
 }
 
-float g_sinTable[361]{};
+float g_sinTable[361]{}, g_cosTable[361]{};
 #define rand SilentRand
 #include "AttrWaveBodies.inc"
 #include "EffectLifecycleBodies.inc"
@@ -532,6 +534,80 @@ __declspec(noinline) void RunSakuraLifecycleChecks(CEffectPrim& texturePrim, int
     rngValues = {}; rngCursor = 0;
 }
 
+__declspec(noinline) void RunShieldBoomerangLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame = g_isSkipFrame;
+    g_isSkipFrame = 1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_SHIELDBOOMERANG; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={100,50,200};
+    auto& gi=prim.m_gi[0]; gi={}; gi.life=1; gi.height[1]=2; gi.height[2]=3;
+    gi.maxHeight=1000; gi.fullDisplayAngle=20; prim.m_deltaPos={-10,0,0};
+    int draws=rngDraws; prim.OnProcess();
+    check(prim.m_pos.x==100 && prim.m_pos.y==50 && prim.m_pos.z==200 && gi.alphaT==345
+        && prim.m_gi[1].alphaT==135 && gi.process==1 && gi.fullDisplayAngle==5 && gi.rotStart==180
+        && gi.sparkY==3 && std::fabs(gi.sparkX-2*g_cosTable[180])<.00001f
+        && std::fabs(gi.sparkZ-2*g_sinTable[180])<.00001f && rngDraws==draws,
+        "case 0x2A camera/master setup and initial launch movement");
+
+    gi.process=2; gi.fullDisplayAngle=20; gi.alphaB=220; gi.distance=11; gi.height[8]=12; gi.flag[0]=13;
+    gi.sparkX=10; gi.sparkY=20; gi.sparkZ=30;
+    auto& t1=prim.m_gi[1]; t1.fullDisplayAngle=31; t1.distance=32; t1.height[8]=33; t1.alphaB=10;
+    t1.sparkX=34; t1.sparkY=35; t1.sparkZ=36; t1.flag[0]=37;
+    auto& t2=prim.m_gi[2]; t2.fullDisplayAngle=41; t2.distance=42; t2.height[8]=43; t2.alphaB=20;
+    t2.sparkX=44; t2.sparkY=45; t2.sparkZ=46; t2.flag[0]=47;
+    auto& t3=prim.m_gi[3]; t3.fullDisplayAngle=51; t3.distance=52; t3.height[8]=53; t3.alphaB=5;
+    t3.sparkX=54; t3.sparkY=55; t3.sparkZ=56; t3.flag[0]=57;
+    prim.OnProcess();
+    check(gi.process==3 && t1.fullDisplayAngle==20 && t1.distance==11 && t1.height[8]==12
+        && t1.alphaB==70 && t1.sparkX==10 && t1.sparkY==20 && t1.sparkZ==30 && t1.flag[0]==13
+        && t2.fullDisplayAngle==31 && t2.alphaB==0 && t2.sparkX==34 && t2.flag[0]==37
+        && t3.fullDisplayAngle==51 && t3.alphaB==5 && t3.sparkX==54 && t3.flag[0]==57,
+        "case 0x2A cadence-three trail copies and alpha floor order");
+
+    gi={}; gi.life=1; gi.process=1; gi.flag[2]=1; gi.alphaB=240; gi.height[1]=2; gi.height[2]=4;
+    gi.maxHeight=1; gi.rotStart=350; gi.sparkX=10; gi.sparkY=20; gi.sparkZ=30;
+    prim.m_deltaPos={10,0,30}; rngValues={0,15}; rngCursor=0; draws=rngDraws; prim.OnProcess();
+    check(gi.process==2 && gi.flag[1]==2 && gi.height[1]==6 && gi.alphaB==255 && gi.rotStart==5
+        && gi.sparkY==24 && std::fabs(gi.sparkX-(10+6*g_cosTable[5]))<.00001f
+        && std::fabs(gi.sparkZ-(30+6*g_sinTable[5]))<.00001f && rngDraws==draws+2 && rngCursor==2,
+        "case 0x2A tether transition, angle wrap, speed tripling and two-draw RNG order");
+
+    gi={}; gi.life=1; gi.process=1; gi.flag[2]=1; gi.height[1]=2; gi.maxHeight=1;
+    gi.rotStart=2; rngValues={1,7}; rngCursor=0; draws=rngDraws; prim.OnProcess();
+    check(gi.flag[1]==2 && gi.rotStart==355 && rngDraws==draws+2 && rngCursor==2,
+        "case 0x2A alternate tether RNG branch subtracts and wraps its second draw");
+
+    gi={}; gi.life=1; gi.process=1; gi.height[1]=2; gi.maxHeight=1; gi.height[2]=3;
+    draws=rngDraws; prim.OnProcess();
+    check(gi.flag[1]==1 && gi.sparkY==3 && rngDraws==draws,
+        "case 0x2A non-tether outbound threshold switches to return without RNG");
+
+    gi={}; gi.life=1; gi.process=4; gi.flag[1]=1; gi.height[1]=1; gi.height[2]=2;
+    gi.maxHeight=1000; gi.rotStart=359; gi.sparkY=8; prim.m_master->m_effectPos={10,50,0};
+    rngValues={}; rngCursor=0; prim.OnProcess();
+    check(gi.process==5 && gi.flag[1]==1 && gi.rotStart==4,
+        "case 0x2A return steering advances five degrees with one wrap");
+    gi.process=5; gi.rotStart=3; gi.sparkX=0; gi.sparkZ=0;
+    prim.m_master->m_effectPos={10,50,10*g_sinTable[3]/g_cosTable[3]}; prim.OnProcess();
+    check(gi.flag[1]==2 && gi.rotStart==3, "case 0x2A return accepts inclusive four-degree tolerance");
+    gi.process=5; gi.flag[1]=2; gi.alphaB=5; gi.sparkY=3; prim.OnProcess();
+    check(gi.alphaB==0 && gi.sparkY==1, "case 0x2A fade clamps alpha and descends");
+
+    gi={}; gi.life=1; gi.height[1]=2; gi.maxHeight=2; gi.height[2]=1; prim.m_deltaPos={10,0,0}; prim.OnProcess();
+    check(gi.flag[1]==0, "case 0x2A outbound threshold is strict at equality");
+    gi.life=1; gi.process=-1; gi.alphaB=77; gi.fullDisplayAngle=88; draws=rngDraws; prim.OnProcess();
+    check(gi.process==0 && gi.alphaB==77 && gi.fullDisplayAngle==88 && rngDraws==draws,
+        "case 0x2A stops after nonpositive process increment");
+    gi.life=2; gi.process=9; gi.alphaB=71; gi.fullDisplayAngle=82; draws=rngDraws; prim.OnProcess();
+    check(gi.life==2 && gi.process==9 && gi.alphaB==71 && gi.fullDisplayAngle==82 && rngDraws==draws,
+        "case 0x2A inactive GI0 skips all band mutations");
+    rngValues={}; rngCursor=0;
+    g_isSkipFrame = oldSkipFrame;
+}
+
 int main()
 {
     int failures = 0, checks = 0;
@@ -539,7 +615,7 @@ int main()
         ++checks;
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
-    for (int angle=0; angle<=360; ++angle) g_sinTable[angle]=GetSin(angle);
+    for (int angle=0; angle<=360; ++angle) { g_sinTable[angle]=GetSin(angle); g_cosTable[angle]=GetCos(angle); }
     {
         auto segmentedStorage = std::make_unique<CEffectPrim>();
         CEffectPrim& segmented = *segmentedStorage;
@@ -1829,6 +1905,7 @@ int main()
         check(UpdateReferenceLandProtector(&texturePrim) && land0.riseAngle == 361,
             "PrimLandProtector subtracts 360 only once when the incremented angle remains above one turn");
         RunSakuraLifecycleChecks(texturePrim, checks, failures);
+        RunShieldBoomerangLifecycleChecks(texturePrim, checks, failures);
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

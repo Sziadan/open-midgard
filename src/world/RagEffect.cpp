@@ -8354,6 +8354,128 @@ bool UpdateReferenceSakura(CEffectPrim* prim)
     return AnimateReferenceParticle(prim);
 }
 
+// Ref/dhxj/RagEffect2.cpp:14966 (case 0x2A).
+void UpdateReferenceShieldBoomerang(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode ? mode->m_view : nullptr;
+    if (view) {
+        prim->m_gi[0].alphaT = static_cast<short>(360 - static_cast<int>(view->GetCameraLongitude()));
+        prim->m_gi[1].alphaT = static_cast<short>(450 - static_cast<int>(view->GetCameraLatitude()));
+        if (prim->m_gi[1].alphaT >= 360) prim->m_gi[1].alphaT = static_cast<short>(prim->m_gi[1].alphaT - 360);
+    }
+    prim->m_pos = prim->m_master->EffectPosition();
+
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) return;
+    ++gi.process;
+    if (gi.process <= 0) return;
+
+    const int cadence = gi.flag[2] == 1 ? 1 : 3;
+    if (gi.flag[2] == 1) {
+        if (gi.process <= 10) gi.alphaB = static_cast<short>(gi.alphaB + 25);
+        if (gi.alphaB >= 255) gi.alphaB = 255;
+    }
+    if (gi.process % cadence == 0) {
+        if (gi.process > 3) {
+            EffectGi& destination = prim->m_gi[3];
+            const EffectGi& source = prim->m_gi[2];
+            destination.fullDisplayAngle = source.fullDisplayAngle;
+            destination.distance = source.distance;
+            destination.height[8] = source.height[8];
+            destination.alphaB = static_cast<short>(source.alphaB - 25);
+            if (destination.alphaB < 0) destination.alphaB = 0;
+            destination.sparkX = source.sparkX;
+            destination.sparkY = source.sparkY;
+            destination.sparkZ = source.sparkZ;
+            destination.flag[0] = source.flag[0];
+        }
+        if (gi.process > 2) {
+            EffectGi& destination = prim->m_gi[2];
+            const EffectGi& source = prim->m_gi[1];
+            destination.fullDisplayAngle = source.fullDisplayAngle;
+            destination.distance = source.distance;
+            destination.height[8] = source.height[8];
+            destination.alphaB = static_cast<short>(source.alphaB - 25);
+            if (destination.alphaB < 0) destination.alphaB = 0;
+            destination.sparkX = source.sparkX;
+            destination.sparkY = source.sparkY;
+            destination.sparkZ = source.sparkZ;
+            destination.flag[0] = source.flag[0];
+        }
+        if (gi.process > 1) {
+            EffectGi& destination = prim->m_gi[1];
+            destination.fullDisplayAngle = gi.fullDisplayAngle;
+            destination.distance = gi.distance;
+            destination.height[8] = gi.height[8];
+            destination.alphaB = static_cast<short>(gi.alphaB - 150);
+            if (destination.alphaB < 0) destination.alphaB = 0;
+            destination.sparkX = gi.sparkX;
+            destination.sparkY = gi.sparkY;
+            destination.sparkZ = gi.sparkZ;
+            destination.flag[0] = gi.flag[0];
+        }
+    }
+
+    gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle - 15);
+    if (gi.fullDisplayAngle < 0) gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle + 360);
+
+    const auto getAngle = [](float x, float z) {
+        const float squaredLength = x * x + z * z;
+        const double length = std::sqrt(static_cast<double>(squaredLength));
+        const float normalizedZ = static_cast<float>(z / length);
+        const float normalizedX = static_cast<float>(x / length);
+        int angle = 0;
+        while (normalizedX < g_cosTable[angle]) {
+            if (++angle > 180) {
+                angle = 180;
+                break;
+            }
+        }
+        return normalizedZ < 0.0f ? 360 - angle : angle;
+    };
+
+    if (gi.process == 1) {
+        const float deltaX = prim->m_deltaPos.x - gi.sparkX;
+        const float deltaZ = prim->m_deltaPos.z - gi.sparkZ;
+        gi.rotStart = static_cast<short>(getAngle(deltaX, deltaZ));
+    }
+
+    if (gi.flag[1] == 0) {
+        if (static_cast<double>(gi.process) * gi.height[1] > gi.maxHeight) {
+            if (gi.flag[2] == 1) {
+                gi.flag[1] = 2;
+                gi.height[1] *= 3.0f;
+                if (rand() % 2 == 0) {
+                    gi.rotStart = static_cast<short>(gi.rotStart + rand() % 45);
+                    if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+                } else {
+                    gi.rotStart = static_cast<short>(gi.rotStart - rand() % 45);
+                    if (gi.rotStart < 0) gi.rotStart = static_cast<short>(gi.rotStart + 360);
+                }
+            } else {
+                gi.flag[1] = 1;
+            }
+        }
+        gi.sparkY = static_cast<float>(static_cast<double>(gi.sparkY) + gi.height[2]);
+    } else if (gi.flag[1] == 1) {
+        const int targetAngle = getAngle(prim->m_pos.x - gi.sparkX, prim->m_pos.z - gi.sparkZ);
+        if (gi.rotStart < targetAngle - 4 || gi.rotStart > targetAngle + 4) {
+            gi.rotStart = static_cast<short>(gi.rotStart + 5);
+            if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+        } else {
+            gi.flag[1] = 2;
+        }
+    } else {
+        gi.alphaB = static_cast<short>(gi.alphaB - 12);
+        if (gi.alphaB < 0) gi.alphaB = 0;
+        gi.sparkY = static_cast<float>(static_cast<double>(gi.sparkY) - gi.height[2] * 1.0);
+    }
+
+    gi.sparkX = static_cast<float>(static_cast<double>(gi.height[1]) * g_cosTable[gi.rotStart] + gi.sparkX);
+    gi.sparkZ = static_cast<float>(static_cast<double>(gi.height[1]) * g_sinTable[gi.rotStart] + gi.sparkZ);
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9371,6 +9493,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_SAKURA) {
         UpdateReferenceSakura(this); // Source case 0x28 ignores PrimSakura's return.
+        return true;
+    }
+    if (m_type == PP_SHIELDBOOMERANG) {
+        UpdateReferenceShieldBoomerang(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
