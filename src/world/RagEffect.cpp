@@ -9739,6 +9739,36 @@ void UpdateReferenceShieldBoomerang3(CEffectPrim* prim)
     gi.sparkZ += gi.height[1] * g_sinTable[gi.rotStart];
 }
 
+// Ref/dhxj/RagEffectPrim.cpp:1175; canonical executable Prim3DQuadHorn2 at 0x6430A0 (case 0x75).
+void UpdateReferenceQuadHorn2(CEffectPrim* prim)
+{
+    if (!prim->m_master) return;
+    prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
+
+    if (prim->m_stateCnt >= 550) {
+        if (prim->m_stateCnt == 550) {
+            prim->m_speed = prim->m_changeSpeed;
+            prim->m_accel = prim->m_changeAccel;
+        }
+    } else if (prim->m_stateCnt % 6 == 2) {
+        prim->m_speed = prim->m_changeSpeed;
+        prim->m_accel = prim->m_changeAccel;
+    } else if (prim->m_stateCnt % 6 == 5) {
+        prim->m_speed = 1.18f;
+        prim->m_accel = 0.01f;
+    }
+
+    prim->m_speed = static_cast<float>(static_cast<double>(prim->m_speed) + prim->m_accel);
+    prim->m_speed3d = {
+        static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+    };
+    prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
+    prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
+    ProcessReferenceParticleAlpha(prim);
+}
+
 // Ref/dhxj/RagEffect2.cpp:15246; canonical executable PrimTanji2 at 0x627F30 (case 0x61).
 void UpdateReferenceTanji2(CEffectPrim* prim)
 {
@@ -10974,6 +11004,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_SHIELDBOOMERANG3) {
         UpdateReferenceShieldBoomerang3(this); // Source case 0x74 continues to the shared tick.
+        return true;
+    }
+    if (m_type == PP_3DQUADHORN2) {
+        UpdateReferenceQuadHorn2(this); // Source case 0x75 continues to the shared tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

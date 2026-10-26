@@ -234,6 +234,7 @@ bool UpdateReferenceSoulParticle(CEffectPrim*);
 bool UpdateReferenceHermode(CEffectPrim*);
 void UpdateReferenceParticleSpread(CEffectPrim*);
 void UpdateReferenceShieldBoomerang3(CEffectPrim*);
+void UpdateReferenceQuadHorn2(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -370,6 +371,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_HERMODE) { UpdateReferenceHermode(this); return active; }
         if (m_type == PP_3DAURA_3) { UpdateReferenceParticleSpread(this); return active; }
         if (m_type == PP_SHIELDBOOMERANG3) { UpdateReferenceShieldBoomerang3(this); return active; }
+        if (m_type == PP_3DQUADHORN2) { UpdateReferenceQuadHorn2(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -844,6 +846,7 @@ __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int&
 __declspec(noinline) void RunHermodeLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunParticleSpreadLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunShieldBoomerang3LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunQuadHorn2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2146,6 +2149,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     RunHermodeLifecycleChecks(prim, checks, failures);
     RunParticleSpreadLifecycleChecks(prim, checks, failures);
     RunShieldBoomerang3LifecycleChecks(prim, checks, failures);
+    RunQuadHorn2LifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2326,6 +2330,50 @@ __declspec(noinline) void RunShieldBoomerang3LifecycleChecks(CEffectPrim& prim, 
     check(a.process==0&&a.alphaB==3&&a.fullDisplayAngle==0,
         "case 0x74 nonpositive post-increment skips snapshots, angle, alpha and movement");
     g_isSkipFrame=oldSkipFrame; testView.longitude=oldLongitude;
+}
+
+__declspec(noinline) void RunQuadHorn2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_3DQUADHORN2; prim.m_stateCnt=2; prim.m_duration=1000; prim.m_fadeOutCnt=-1;
+    prim.m_pattern=0; prim.m_alpha=20; prim.m_alphaSpeed=1; prim.m_alphaDelta=1;
+    prim.m_master->m_duration=1000; prim.m_master->m_stateCnt=0; prim.m_master->m_effectPos={100,200,300};
+    prim.m_deltaPos2={1,2,3}; prim.m_deltaPos={10,20,30};
+    prim.m_changeSpeed=5; prim.m_changeAccel=0.25f; prim.m_speed=1; prim.m_accel=0.5f;
+    MatrixIdentity(prim.m_matrix); prim.m_matrix.m[2][0]=0.5f; prim.m_matrix.m[3][0]=1;
+    prim.m_matrix.m[2][1]=-0.25f; prim.m_matrix.m[3][1]=2;
+    prim.m_matrix.m[2][2]=2; prim.m_matrix.m[3][2]=-3;
+    prim.OnProcess();
+    check(prim.m_orgPos.x==101&&prim.m_orgPos.y==202&&prim.m_orgPos.z==303
+        &&prim.m_speed==5.25f&&prim.m_accel==0.25f
+        &&prim.m_speed3d.x==3.625f&&prim.m_speed3d.y==0.6875f&&prim.m_speed3d.z==7.5f
+        &&prim.m_deltaPos.x==13.625f&&prim.m_deltaPos.y==20.6875f&&prim.m_deltaPos.z==37.5f
+        &&prim.m_pos.x==114.625f&&prim.m_pos.y==222.6875f&&prim.m_pos.z==340.5f
+        &&prim.m_alpha==21&&prim.m_stateCnt==3,
+        "case 0x75 state-two change values feed translated matrix motion, origin/delta position and ProcessAlpha");
+
+    prim.m_stateCnt=5; prim.m_speed=9; prim.m_accel=8; prim.m_deltaPos={};
+    prim.m_matrix={}; MatrixIdentity(prim.m_matrix);
+    prim.OnProcess();
+    check(std::fabs(prim.m_speed-1.19f)<0.00001f&&std::fabs(prim.m_accel-0.01f)<0.00001f
+        &&std::fabs(prim.m_speed3d.z-1.19f)<0.00001f,
+        "case 0x75 state-five alternate speed branch replaces prior speed and acceleration before integration");
+
+    prim.m_stateCnt=549; prim.m_speed=3; prim.m_accel=2; prim.m_deltaPos={}; prim.OnProcess();
+    check(prim.m_speed==5&&prim.m_accel==2,
+        "case 0x75 state 549 keeps configured speed and acceleration before integration");
+    prim.m_stateCnt=550; prim.m_speed=3; prim.m_accel=2; prim.m_changeSpeed=7; prim.m_changeAccel=0.5f;
+    prim.OnProcess();
+    check(prim.m_speed==7.5f&&prim.m_accel==0.5f,
+        "case 0x75 state 550 loads change values exactly at the terminal threshold");
+    prim.m_stateCnt=551; prim.m_speed=3; prim.m_accel=2; prim.m_changeSpeed=9; prim.m_changeAccel=4;
+    prim.OnProcess();
+    check(prim.m_speed==5&&prim.m_accel==2,
+        "case 0x75 states above 550 retain speed and acceleration while continuing movement");
+    g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
