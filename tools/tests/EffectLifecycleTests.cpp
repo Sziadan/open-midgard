@@ -152,10 +152,11 @@ struct CWorld {
 } g_world;
 struct CGameMode {
     CWorld* m_world = &g_world; CView* m_view = &testView;
+    char m_rswName[40]{};
     int messages=0,lastMsg=0,lastArg=0;
     void SendMsg(int msg,msgparam_t arg,msgparam_t,msgparam_t) {++messages;lastMsg=msg;lastArg=static_cast<int>(arg);}
 } gameMode;
-struct CSession {bool m_isMinEffect=false;const char* GetAttrWaveName(int) const;} g_session;
+struct CSession {bool m_isMinEffect=false,m_isEffectOn=false;const char* GetAttrWaveName(int) const;} g_session;
 struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
 #include "PrimitiveEnum.inc"
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
@@ -405,6 +406,7 @@ float g_sinTable[361]{};
 #define rand SilentRand
 #include "AttrWaveBodies.inc"
 #include "EffectLifecycleBodies.inc"
+#include "WeatherMapBodies.inc"
 #include "StrOnlyDispatchBody.inc"
 constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
 #include "CastingEmitterBodies.inc"
@@ -536,6 +538,53 @@ int main()
         check(attr.calls==1&&attr.lastX==99&&attr.lastZ==199&&gi.sparkY==976,
             "PrimCloud mode three recycle samples terrain at translated offsets and subtracts source height and random drop");
         g_world.m_attr=nullptr;rngValues.clear();rngCursor=0;
+    }
+    {
+        const bool routes=ResolveRefWeatherCloudEffectId("gef_fild07.rsw")==229
+            &&ResolveRefWeatherCloudEffectId("mjolnir_01.rsw")==229
+            &&ResolveRefWeatherCloudEffectId("yuno.rsw")==230
+            &&ResolveRefWeatherCloudEffectId("valkyrie.rsw")==233
+            &&ResolveRefWeatherCloudEffectId("einbroch.rsw")==515
+            &&ResolveRefWeatherCloudEffectId("airplane.rsw")==516
+            &&ResolveRefWeatherCloudEffectId("thana_boss.rsw")==592
+            &&ResolveRefWeatherCloudEffectId("6@tower.rsw")==697
+            &&ResolveRefWeatherCloudEffectId("5@tower.rsw")==698
+            &&ResolveRefWeatherCloudEffectId("unknown.rsw")==0;
+        check(routes,"weather map names resolve to the exact source effect ids including both map-zero aliases");
+    }
+    {
+        auto actorStorage=std::make_unique<CAbleToMakeEffect>();CAbleToMakeEffect& weatherPlayer=*actorStorage;
+        g_world.m_player=&weatherPlayer;gameMode.m_world=&g_world;g_session.m_isEffectOn=true;
+        std::strncpy(gameMode.m_rswName,"gef_fild07.rsw",sizeof(gameMode.m_rswName)-1);
+        EnsureMapWeatherEffects(gameMode);
+        CRagEffect* effect=weatherPlayer.m_effectList.empty()?nullptr:weatherPlayer.m_effectList.front();
+        check(weatherPlayer.launches==1&&effect&&effect->GetEffectType()==229,
+            "weather scheduler launches map-zero weather once for the first supported map alias");
+        if(effect)effect->m_duration=1000;
+        EnsureMapWeatherEffects(gameMode);
+        check(weatherPlayer.launches==1,"weather scheduler keeps a matching live effect when more than 300 frames remain");
+        if(effect)effect->m_duration=300;
+        EnsureMapWeatherEffects(gameMode);
+        check(weatherPlayer.launches==2,"weather scheduler refreshes the matching effect at the 300-frame boundary");
+        if(!weatherPlayer.m_effectList.empty())weatherPlayer.m_effectList.back()->m_duration=1000;
+        std::strncpy(gameMode.m_rswName,"einbroch.rsw",sizeof(gameMode.m_rswName)-1);
+        EnsureMapWeatherEffects(gameMode);
+        bool changed=false,oldWeather=false;
+        for(CRagEffect* current:weatherPlayer.m_effectList){
+            changed=changed||current->GetEffectType()==515;
+            oldWeather=oldWeather||current->GetEffectType()==229;
+        }
+        check(changed&&!oldWeather&&weatherPlayer.launches==3,
+            "weather scheduler removes stale weather ids before launching the new map variant");
+        g_session.m_isEffectOn=false;EnsureMapWeatherEffects(gameMode);
+        check(weatherPlayer.launches==3&&weatherPlayer.m_effectList.empty(),
+            "weather scheduler removes weather effects and does not launch while effects are disabled");
+        g_session.m_isEffectOn=true;std::strncpy(gameMode.m_rswName,"unknown.rsw",sizeof(gameMode.m_rswName)-1);
+        EnsureMapWeatherEffects(gameMode);
+        check(weatherPlayer.launches==3&&weatherPlayer.m_effectList.empty(),
+            "weather scheduler leaves unsupported maps without weather primitives");
+        weatherPlayer.DetachEffects();g_world.UpdateGameObjects();
+        g_world.m_player=nullptr;gameMode.m_world=&g_world;
     }
     CAbleToMakeEffect actor;
     g_world.m_player = &actor;

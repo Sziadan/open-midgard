@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer and primitive-update parity. The Cloud renderer, `PrimCloud` updater and `CRagEffect::Cloud` producer are implemented and checkpointed with their route counts. GroundSample work also remains checkpointed.
+Current work: WP5A renderer and primitive-update parity. The Cloud renderer, `PrimCloud` updater and `CRagEffect::Cloud` producer are implemented and checkpointed with their route counts. The map-0 weather aliases are now fixed and checkpointed; caller cadence and map-toggle lifecycle remain under comparison.
 
-Next action: audit and port the remaining weather/map scheduling path, starting with `CWeather::LaunchCloud` and its callers. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: finish the weather map caller-cadence/toggle lifecycle comparison, then continue with specialized segment payloads and map/resource scheduling. Full renderer/fog/backend acceptance remains open.
 
-Latest checkpoint (2026-10-26): `CRagEffect::Cloud` producer passed ten mechanical comparisons plus eight route/count checks. Lifecycle suite passes 1516 checks, all six C++ suites and seven Python index tests pass; release build and whitespace checks pass. OldRO matches the release build at SHA-256 `FBD70B84E8BD0BF3FB336326CF2BE67D7BD07EA60691C26316C9F1841C4BC238`. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): Weather map routing now includes the source map-0 aliases. Eight mechanical scheduler/launch comparisons pass; lifecycle suite passes 1523 checks, all six C++ suites and seven Python index tests pass. OldRO matches release at SHA-256 `421C133C0921DA33C4C20B58733111B61F35382B3350CFCD0306905DAC543F02`. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26

@@ -63,3 +63,4 @@ tools/tests/*
 !tools/check_ground_sample_emitter_parity.py
 !tools/check_prim_cloud_parity.py
 !tools/check_cloud_emitter_parity.py
+!tools/check_weather_map_scheduler.py

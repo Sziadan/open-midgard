@@ -67,6 +67,13 @@ extract_body(matrix_mult "${math_source}" "void MatrixMult(" "void MatrixInverse
 extract_body(matrix_rotations "${math_source}" "void MatrixAppendXRotation(" "// --- Intersection Tests")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ParticleMatrixBodies.inc" "${matrix_mult}\n${matrix_rotations}")
 file(READ "../../src/world/RagEffect.cpp" effect_source)
+extract_body(weather_map_helpers "${mode_source}" "std::string ToLowerAsciiMapName(" "int ResolveRefMapClearColor(")
+extract_body(weather_map_ensure "${mode_source}" "void EnsureMapWeatherEffects(CGameMode& mode)" "void UpdateMapAudio(")
+string(REPLACE "CAbleToMakeEffect* player = mode.m_world->m_player;"
+    "CAbleToMakeEffect* player = dynamic_cast<CAbleToMakeEffect*>(mode.m_world->m_player);"
+    weather_map_ensure "${weather_map_ensure}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WeatherMapBodies.inc"
+    "constexpr int kWeatherCloudRefreshThresholdFrames = 300;\nconstexpr int kWeatherCloudEffectIds[] = {229, 230, 233, 515, 516, 592, 697, 698};\n${weather_map_helpers}\n${weather_map_ensure}")
 extract_body(project_point "${effect_source}" "bool ProjectPoint(" "float ResolveEffectPixelRatio(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ProjectPointBody.inc" "${project_point}")
 extract_body(attr_wave_tables "${session_source}" "constexpr const char* kEnemyHitNormalWaves[]" "struct JobTokenEntry")
@@ -174,6 +181,7 @@ add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 add_test(NAME effect_lifecycle_checks COMMAND effect_lifecycle_checks)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ../../src/gamemode/GameMode.cpp)
 
 add_executable(particle_render_checks ParticleRenderTests.cpp)
 target_compile_features(particle_render_checks PRIVATE cxx_std_17)
