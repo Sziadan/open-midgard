@@ -10390,6 +10390,23 @@ void CRagEffect::SpawnWeatherCloud()
     }
 }
 
+void CRagEffect::ProcessGroundSample()
+{
+    m_effectPos = m_master->m_pos;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_GROUNDSAMPLE, vector3d{});
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.resize(static_cast<size_t>(prim->m_totalTexture), nullptr);
+    prim->m_texture[0] = g_texMgr.GetTexture("effect\\magic_target.tga", false);
+    for (int band = 0; band < 4; ++band) {
+        prim->m_gi[static_cast<size_t>(band)].life = 0;
+    }
+    prim->m_gi[0].life = 1;
+    prim->m_gi[0].rotStart = 0;
+}
+
 void CRagEffect::SpawnBlueFall()
 {
     if (m_stateCnt != 0 || !m_master) {
@@ -15529,6 +15546,10 @@ bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
     if (const std::optional<bool> result = ProcessReferenceStrOnly()) return *result;
+    if (m_type == 0x201) {
+        ProcessGroundSample();
+        return true;
+    }
     if (m_type == 4) {
         SpawnHit5();
         return true;

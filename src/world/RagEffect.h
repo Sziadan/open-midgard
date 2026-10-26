@@ -583,6 +583,7 @@ private:
     void SpawnRuwach();
     void SpawnBlueFall();
     void SpawnWeatherCloud();
+    void ProcessGroundSample();
 
     std::list<CEffectPrim*> m_primList;
     CRenderObject* m_master;

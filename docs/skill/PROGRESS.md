@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer parity. `RenderCloud`, `RenderGumGang` (0x23), `RenderDoubleGumGang` (0x63), `RenderPokJuk` (0x34), `RenderGuard` (0x3D), `RenderRainbow` (0x5D), `RenderTripleAttack` (0x45), `RenderGroundSample` (0x70), and `PrimGroundSample` update are implemented and checkpointed.
+Current work: WP5A renderer parity. `RenderCloud`, `RenderGumGang` (0x23), `RenderDoubleGumGang` (0x63), `RenderPokJuk` (0x34), `RenderGuard` (0x3D), `RenderRainbow` (0x5D), `RenderTripleAttack` (0x45), `RenderGroundSample` (0x70), `PrimGroundSample` update, and `CRagEffect::GROUNDSAMPLE` emitter (0x201) are implemented and checkpointed.
 
-Next action: compare and implement the `CRagEffect::GROUNDSAMPLE` emitter (Ref/RagEffect2.cpp:27175), which creates and initializes primitive type 0x70. The Cloud producer/updater mismatch remains open: current weather scheduling/update builds segment state while reference `Cloud`/`PrimCloud` creates and advances four GI bands. Compare those producer/update functions before porting them. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: compare the Cloud producer/update path against the existing renderer: current weather scheduling/update builds segment state while reference `Cloud`/`PrimCloud` creates and advances four GI bands. Port the source-backed mismatch and add branch-level evidence before proceeding. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
-Latest checkpoint (2026-10-26): `PrimGroundSample` passed eight mechanical comparisons. The focused particle suite passes 554 checks; all six C++ suites and seven Python index tests pass. OldRO matches the release build at SHA-256 `4D9195605BFEED0201718EDBBBA953A891BB587BB568E680B149A37EC9542207`. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `CRagEffect::GROUNDSAMPLE` passed six mechanical comparisons. The focused particle suite passes 554 checks, lifecycle suite passes 1501 checks, all six C++ suites and seven Python index tests pass. OldRO matches the release build at SHA-256 `961EDE87E4C937565C6631C3564DBA7EB7F3EB34C9C5E790701E332DDC468924`. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26

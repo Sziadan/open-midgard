@@ -328,6 +328,7 @@ struct CRagEffect : CGameObject {
     void SpawnPoisonHit();
     void SpawnAqua();
     void SpawnFireBall();
+    void ProcessGroundSample();
     void SpawnFireFly();
     void SpawnSandWind();
     void SpawnSteal();
@@ -3813,6 +3814,33 @@ int main()
         for(int id:{0,22,24,26,30,41,49,51,53,65,145,183,185,218,269,709}){other.m_type=id;untouched=untouched&&!other.ProcessReferenceStrOnly().has_value();}
         check(untouched&&other.m_strFrameActive&&other.m_tlvertX==12&&other.m_tlvertY==34,
             "STR-only dispatch leaves neighboring primitive audio target-position and restarting-clip cases to their own handlers");
+    }
+    {
+        auto actorStorage=std::make_unique<CAbleToMakeEffect>();CAbleToMakeEffect& actor=*actorStorage;
+        actor.m_pos={12.0f,34.0f,56.0f};
+        auto effectStorage=std::make_unique<CRagEffect>();CRagEffect& effect=*effectStorage;
+        effect.m_master=&actor;effect.m_duration=47;effect.m_stateCnt=0;effect.m_type=201;
+        g_texMgr.requests.clear();
+        effect.ProcessGroundSample();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_effectPos.x==12.0f&&effect.m_effectPos.y==34.0f&&effect.m_effectPos.z==56.0f,
+            "GroundSample emitter follows its master position on every invocation");
+        check(prim&&prim->m_type==PP_GROUNDSAMPLE&&prim->m_deltaPos.x==0&&prim->m_deltaPos.y==0&&prim->m_deltaPos.z==0
+            &&prim->m_duration==47&&prim->m_renderFlag==5,
+            "GroundSample launches one zero-delta primitive with source type, duration and render flags");
+        check(prim&&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture
+            &&g_texMgr.requests==std::vector<std::string>{"effect\\magic_target.tga"},
+            "GroundSample requests the exact magic-target texture once");
+        check(prim&&prim->m_gi[0].life==1&&prim->m_gi[0].rotStart==0
+            &&prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0,
+            "GroundSample activates only the first cleared GI slot at rotation zero");
+        if(prim) prim->m_gi[0].rotStart=19;
+        actor.m_pos={78.0f,90.0f,123.0f};effect.m_stateCnt=1;
+        effect.ProcessGroundSample();
+        check(effect.m_effectPos.x==78.0f&&effect.m_effectPos.y==90.0f&&effect.m_effectPos.z==123.0f
+            &&effect.m_primList.size()==1&&g_texMgr.requests.size()==1&&prim&&prim->m_gi[0].rotStart==19,
+            "GroundSample later states follow the master without relaunching or resetting primitive state");
+        effect.ClearPrims();g_world.UpdateGameObjects();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
