@@ -72,7 +72,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 66 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x11, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 67 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -394,6 +394,65 @@ check("case 0x0A/0x0B source-to-implementation origin, orbit, four vertices and 
       < current_spiral.index("ShiftReferenceSegments(prim);")
       < current_spiral.index("prim->m_longitude =")
       < current_spiral.index("prim->m_deltaPos2.y ="))
+source_texture3d = body(REF, "bool __thiscall CEffectPrim::Prim3DTexture(CEffectPrim *this)\n{")
+exe_texture3d = body(EXE, "bool __thiscall CEffectPrim::Prim3DTexture(CEffectPrim *this)\n{")
+current_texture3d = body(CURRENT, "bool UpdateReference3DTexture(CEffectPrim* prim)")
+check("source Prim3DTexture Ref/EXE bodies match and ids 0x0F/0x10 share an unconditional current route",
+      compact(source_texture3d) == compact(exe_texture3d)
+      and re.search(r"case\s+0xF:\s*case\s+0x10:\s*CEffectPrim::Prim3DTexture\(this\);", source_dispatch)
+      and "if (m_type == PP_3DTEXTURE || m_type == PP_3DCROSSTEXTURE)" in current_dispatch
+      and "UpdateReference3DTexture(this); // Source case 0x0F/0x10 ignores the bool result." in current_dispatch)
+texture3d_source_branches = [
+    "if ( this->m_ChangePoint == this->m_stateCnt )", "this->m_isChangeProcessed = 1;",
+    "if ( m_ChangeWidthSpeed != 0.000099999997 )", "if ( m_ChangeHeightSpeed != 0.000099999997 )",
+    "if ( m_ChangeSpeed != 0.000099999997 )", "if ( m_ChangeWidthAccel != 0.000099999997 )",
+    "if ( m_ChangeHeightAccel != 0.000099999997 )", "if ( m_ChangeAccel != 0.000099999997 )",
+    "if ( m_ChangeSpeedx != 0.000099999997 )", "if ( m_ChangeSpeedy != 0.000099999997 )",
+    "if ( m_ChangeSpeedz != 0.000099999997 )", "this->m_ChangeAccelx = 0.000099999997;",
+    "this->m_ChangeAccely = 0.000099999997;", "this->m_ChangeAccelz = 0.000099999997;",
+    "if ( (m_pattern & 0x400) != 0 )", "if ( (m_pattern & 0x100) == 0 )",
+    "CRenderObject::CalcDist(this, this->m_master->m_deltaPos.x, this->m_master->m_deltaPos.z) <= 3.0",
+    "this->m_heightSize = v19;", "this->m_longitude = this->m_longitude + this->m_longSpeed;",
+    "if ( (v20 & 0x200) != 0 )", "if ( (v20 & 0x40) != 0 )",
+    "if ( (v25 & 2) != 0 )", "if ( (v25 & 0x10) != 0 )",
+    "if ( (this->m_pattern & 4) != 0 )", "if ( (v34 & 0x20) != 0",
+    "if ( v35 &&", "if ( v45 <= 255 )", "CEffectPrim::ProcessAlpha(this);",
+    "return v51 != this->m_totalTexture;",
+]
+texture3d_current_branches = [
+    "if (prim->m_changePoint == prim->m_stateCnt)", "prim->m_isChangeProcessed = true;",
+    "if (prim->m_changeWidthSpeed != sentinel)", "if (prim->m_changeHeightSpeed != sentinel)",
+    "if (prim->m_changeSpeed != sentinel)", "if (prim->m_changeWidthAccel != sentinel)",
+    "if (prim->m_changeHeightAccel != sentinel)", "if (prim->m_changeAccel != sentinel)",
+    "if (prim->m_changeSpeed3d.x != sentinel)", "if (prim->m_changeSpeed3d.y != sentinel)",
+    "if (prim->m_changeSpeed3d.z != sentinel)", "prim->m_changeAccel3d = {sentinel, sentinel, sentinel};",
+    "if ((pattern & 0x400) != 0)", "else if ((pattern & 0x100) == 0)",
+    "if (std::sqrt(static_cast<double>(squared)) <= 3.0)",
+    "prim->m_heightSize += prim->m_heightSpeed;", "prim->m_longitude += prim->m_longSpeed;",
+    "if ((pattern & 0x200) != 0)", "if ((pattern & 0x40) != 0)",
+    "if ((pattern & 2) != 0)", "if ((pattern & 0x10) != 0)",
+    "if ((pattern & 4) != 0)", "if ((pattern & 0x20) != 0", "if ((pattern & 0x800) != 0",
+    "if (prim->m_red > 255)", "ProcessReferenceParticleAlpha(prim);",
+    "return motion != prim->m_totalTexture;",
+]
+check("case 0x0F/0x10 change-point, motion, collision, orientation, master, ground, RGB and animation branches are paired",
+      all(compact(branch) in compact(source_texture3d) for branch in texture3d_source_branches)
+      and all(compact(branch) in compact(current_texture3d) for branch in texture3d_current_branches)
+      and current_texture3d.index("prim->m_orgPos =") < current_texture3d.index("if (prim->m_changePoint")
+      < current_texture3d.index("prim->m_speed3d = AddVec3")
+      < current_texture3d.index("prim->m_widthSpeed +=")
+      < current_texture3d.index("if ((pattern & 0x400)")
+      < current_texture3d.index("prim->m_deltaPos = AddVec3")
+      < current_texture3d.index("if ((pattern & 0x400)", current_texture3d.index("prim->m_deltaPos = AddVec3"))
+      < current_texture3d.index("prim->m_pos = AddVec3")
+      < current_texture3d.index("if ((pattern & 0x200)")
+      < current_texture3d.index("if ((pattern & 2)")
+      < current_texture3d.index("if ((pattern & 0x10)")
+      < current_texture3d.index("if ((pattern & 4)")
+      < current_texture3d.index("if ((pattern & 0x20)")
+      < current_texture3d.index("if ((pattern & 0x800)")
+      < current_texture3d.index("ProcessReferenceParticleAlpha(prim);")
+      < current_texture3d.index("if (prim->m_stateCnt % prim->m_animSpeed"))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)

@@ -353,6 +353,7 @@ public:
     float m_v1 = 0.0f, m_v2 = 1.0f;
     float m_latiAccel = 0.0f;
     int m_changePoint = -1;
+    bool m_isChangeProcessed = false;
     int m_fadeInCnt = -1;
     float m_changeSpeed = 0.000099999997f;
     float m_changeAccel = 0.000099999997f;

@@ -237,3 +237,8 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 - Weather scheduler cadence follow-up (2026-10-26): supersedes the prior per-frame-cadence mismatch above. The port now launches at `FinishMapLoading` after actor sync; no per-frame reconciliation or dynamic effects-toggle cleanup remains. Source `RemoveGameActorAllAndMake` calls `CWeather::Reset` but does not launch weather itself; whether the current client has an equivalent reset point remains unverified.
 
 - Open complex primitive comparison gate (2026-10-26): `CEffectPrim::OnProcess` source bodies match between Ref and EXE, but current dispatch is split across `OnProcess` and `ProcessPrimitiveFrame`. The source has 128 unique switch ids and 119 `Prim*` call sites, plus inline branches for 0x04, 0x0E, and 0x14, a no-op 0x11, false-return exits from texture/particle handlers, and an illegal-id default. Current code has 56 explicit type selectors, context-dependent `UsesReference*` predicates and generic integration/alpha fallback. The outer gate and 15 pre-gate position-copy ids match; the complete case-to-current-branch mapping is not done. Do not mark OnProcess parity or advance to another primitive function until the branch comparison is complete.
+
+
+## Prim3DTexture nullable runtime guards - 2026-10-26
+
+- The source assumes game mode/view/world/terrain objects are valid when the corresponding 0x200, 0x40, and pattern-4 branches run. `UpdateReference3DTexture` checks these pointers before reading them, matching this port’s established defensive handling. Under valid runtime state, branch order and effects are compared; null-object behavior remains intentionally safer than source and is not claimed as exact parity.

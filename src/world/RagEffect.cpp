@@ -7911,10 +7911,152 @@ void UpdateReferenceSpiral(CEffectPrim* prim)
     prim->m_deltaPos2.y = prim->m_deltaPos2.y + prim->m_heightSpeed;
 }
 
-// Ref/RagEffectPrim.cpp:966-1310 (0x643340), reachable Berserk/IceArrow:
-// fixed width/height/color, no change points. IceArrow enables parent delta
-// propagation and ground contact. SprayPond adds source rotation rebuilding
-// and pattern-two V scrolling; its motion and angular controls remain zero.
+// Ref/RagEffectPrim.cpp:966-1310 (0x643340), source cases 0x0F/0x10.
+bool UpdateReference3DTexture(CEffectPrim* prim)
+{
+    prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
+    const float sentinel = 0.000099999997f;
+    if (prim->m_changePoint == prim->m_stateCnt) {
+        prim->m_isChangeProcessed = true;
+        if (prim->m_changeWidthSpeed != sentinel) prim->m_widthSpeed = prim->m_changeWidthSpeed;
+        if (prim->m_changeHeightSpeed != sentinel) prim->m_heightSpeed = prim->m_changeHeightSpeed;
+        if (prim->m_changeSpeed != sentinel) prim->m_speed = prim->m_changeSpeed;
+        if (prim->m_changeWidthAccel != sentinel) prim->m_widthAccel = prim->m_changeWidthAccel;
+        if (prim->m_changeHeightAccel != sentinel) prim->m_heightAccel = prim->m_changeHeightAccel;
+        if (prim->m_changeAccel != sentinel) prim->m_accel = prim->m_changeAccel;
+        if (prim->m_changeSpeed3d.x != sentinel) prim->m_speed3d.x = prim->m_changeSpeed3d.x;
+        if (prim->m_changeSpeed3d.y != sentinel) prim->m_speed3d.y = prim->m_changeSpeed3d.y;
+        if (prim->m_changeSpeed3d.z != sentinel) prim->m_speed3d.z = prim->m_changeSpeed3d.z;
+        prim->m_changeWidthSpeed = prim->m_changeHeightSpeed = prim->m_changeSpeed = sentinel;
+        prim->m_changeWidthAccel = prim->m_changeHeightAccel = prim->m_changeAccel = sentinel;
+        prim->m_changeSpeed3d = {sentinel, sentinel, sentinel};
+        prim->m_changeAccel3d = {sentinel, sentinel, sentinel};
+    }
+
+    prim->m_speed3d = AddVec3(prim->m_speed3d, prim->m_deltaPosAccel);
+    const int pattern = prim->m_pattern;
+    prim->m_widthSpeed += prim->m_widthAccel;
+    prim->m_heightSpeed += prim->m_heightAccel;
+    prim->m_longSpeed += prim->m_longAccel;
+    prim->m_latiSpeed += prim->m_latiAccel;
+    prim->m_speed = static_cast<float>(static_cast<double>(prim->m_accel) + prim->m_speed);
+    if ((pattern & 0x400) != 0) {
+        prim->m_speed3d = {};
+        prim->m_speed3d = {
+            static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+            static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+            static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+        };
+    } else if ((pattern & 0x100) == 0) {
+        prim->m_speed3d = {
+            static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+            static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+            static_cast<float>(static_cast<double>(prim->m_speed) * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+        };
+    }
+    prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
+    if ((pattern & 0x400) != 0) {
+        const vector3d& target = prim->m_master->TargetPosition();
+        const double dx = static_cast<double>(target.x) - prim->m_pos.x;
+        const double dz = static_cast<double>(target.z) - prim->m_pos.z;
+        const float squared = static_cast<float>(dx * dx + dz * dz);
+        if (std::sqrt(static_cast<double>(squared)) <= 3.0) {
+            prim->m_isHit = true;
+            Trace("Hit!!");
+            return false;
+        }
+        prim->m_longitude = prim->m_roty;
+    }
+
+    prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
+    prim->m_widthSize += prim->m_widthSpeed;
+    prim->m_heightSize += prim->m_heightSpeed;
+    prim->m_longitude += prim->m_longSpeed;
+    prim->m_latitude += prim->m_latiSpeed;
+    if (prim->m_heightSize > prim->m_maxHeightSize) {
+        prim->m_heightAccel = 0.0f;
+        prim->m_heightSpeed = 0.0f;
+    }
+
+    if ((pattern & 0x200) != 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        MatrixIdentity(prim->m_rotMat);
+        if (mode && mode->m_view) MatrixAppendZRotation(prim->m_rotMat, mode->m_view->GetCameraLatitude());
+    } else {
+        if ((pattern & 0x40) != 0) {
+            CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+            if (mode && mode->m_view) {
+                prim->m_longitude = mode->m_view->GetCameraLongitude() + 90.0f;
+                prim->m_roll = mode->m_view->GetCameraLatitude();
+            }
+            MatrixIdentity(prim->m_rotMat);
+            MatrixAppendXRotation(prim->m_rotMat, GetRadian(static_cast<int>(prim->m_latitude)));
+            MatrixAppendZRotation(prim->m_rotMat, GetRadian(static_cast<int>(prim->m_roll)));
+        } else {
+            MatrixIdentity(prim->m_rotMat);
+            MatrixAppendZRotation(prim->m_rotMat, GetRadian(static_cast<int>(prim->m_roll)));
+            MatrixAppendXRotation(prim->m_rotMat, GetRadian(static_cast<int>(prim->m_latitude)));
+        }
+        prim->m_roty = prim->m_longitude;
+    }
+    MatrixAppendYRotation(prim->m_rotMat, GetRadian(static_cast<int>(prim->m_roty)));
+    if ((pattern & 2) != 0) {
+        const int count = prim->m_count++;
+        const double v = static_cast<double>(count) * 0.1;
+        prim->m_v1 = static_cast<float>(v);
+        prim->m_v2 = static_cast<float>(v + 1.0);
+        if (count == 9) prim->m_count = 0;
+    }
+    if ((pattern & 0x10) != 0) {
+        prim->m_master->AbsorbPrimDelta(AddVec3(prim->m_deltaPos, prim->m_deltaPos2));
+    }
+    if ((pattern & 4) != 0) {
+        CGameMode* currentMode = g_modeMgr.GetCurrentGameMode();
+        if (currentMode && currentMode->m_world && currentMode->m_world->m_attr
+            && currentMode->m_world->m_attr->GetHeight(prim->m_pos.x, prim->m_pos.z) < prim->m_pos.y) {
+            prim->m_speed = 0.0f;
+            prim->m_stateCnt = prim->m_duration - 25;
+            prim->m_pattern &= ~4;
+            prim->m_master->SetGroundHitFlag();
+        }
+    }
+    if ((pattern & 0x20) != 0 && prim->m_stateCnt % prim->m_any == 0) {
+        prim->m_heightSpeed *= -1.0f;
+    }
+    if ((pattern & 0x800) != 0
+        && (prim->m_red == 254 || prim->m_blue == 254 || prim->m_green == 254)) {
+        if (prim->m_rgbCycleDelay != 0) ++prim->m_rgbCycleCnt;
+        if (prim->m_rgbCycleDelay == prim->m_rgbCycleCnt) {
+            prim->m_rgbCycleCnt = 0;
+            prim->m_red += prim->m_redSpeed;
+            prim->m_green += prim->m_greenSpeed;
+            prim->m_blue += prim->m_blueSpeed;
+        }
+    } else {
+        prim->m_red += prim->m_redSpeed;
+        prim->m_green += prim->m_greenSpeed;
+        prim->m_blue += prim->m_blueSpeed;
+    }
+    if ((pattern & 0x800) != 0) {
+        if (prim->m_red > 254) prim->m_red = 0; else if (prim->m_red < 0) prim->m_red = 254;
+        if (prim->m_green > 254) prim->m_green = 0; else if (prim->m_green < 0) prim->m_green = 254;
+        if (prim->m_blue > 254) prim->m_blue = 0; else if (prim->m_blue < 0) prim->m_blue = 254;
+    } else {
+        if (prim->m_red > 255) prim->m_red = 0; else if (prim->m_red < 0) prim->m_red = 255;
+        if (prim->m_green > 255) prim->m_green = 0; else if (prim->m_green < 0) prim->m_green = 0;
+        if (prim->m_blue > 255) prim->m_blue = 255; else if (prim->m_blue < 0) prim->m_blue = 0;
+    }
+    ProcessReferenceParticleAlpha(prim);
+    if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;
+    const int motion = ++prim->m_curMotion;
+    if (prim->m_repeatAnim) {
+        prim->m_curMotion = motion % prim->m_totalTexture;
+        return true;
+    }
+    return motion != prim->m_totalTexture;
+}
+
+// The source OnProcess cases 0x0F/0x10 ignore this return and still tick.
 bool UpdateReferenceCrossTexture(CEffectPrim* prim)
 {
     prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
@@ -8674,6 +8816,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_3DSPLINE || m_type == PP_3DSPIRAL) {
         UpdateReferenceSpiral(this);
+        return true;
+    }
+    if (m_type == PP_3DTEXTURE || m_type == PP_3DCROSSTEXTURE) {
+        UpdateReference3DTexture(this); // Source case 0x0F/0x10 ignores the bool result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

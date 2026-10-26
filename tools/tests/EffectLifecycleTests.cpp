@@ -176,6 +176,7 @@ void UpdateReferenceScreenCircle(CEffectPrim*);
 void UpdateReferenceSphere(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
+bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceScreenTexture(CEffectPrim*);
 bool UpdateReferenceGravityParticle(CEffectPrim*);
 bool UpdateWarpZoneOrbit(CEffectPrim*);
@@ -197,6 +198,7 @@ struct CEffectPrim : CGameObject {
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 1, m_minAlpha = 0;
     bool m_isDisappear = false;
     bool m_isHit = false;
+    bool m_isChangeProcessed = false;
     matrix m_matrix = [] { matrix value; MatrixIdentity(value); return value; }();
     matrix m_rotMat = m_matrix;
     CSprRes* m_particleSprRes = nullptr;
@@ -257,6 +259,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_2DTEXTUREORBIT) return UpdateReference2DTextureOrbit(this);
         if (m_type == PP_3DQUADHORN) { UpdateReferenceQuadHorn(this); return active; }
         if (m_type == PP_3DSPLINE || m_type == PP_3DSPIRAL) { UpdateReferenceSpiral(this); return active; }
+        if (m_type == PP_3DTEXTURE || m_type == PP_3DCROSSTEXTURE) { UpdateReference3DTexture(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1266,6 +1269,96 @@ int main()
             && texturePrim.m_longitude == 90 && texturePrim.m_deltaPos2.y == 4
             && texturePrim.m_stateCnt == 41,
             "OnProcess case 0x0B shares the source spiral handler and keeps the same update order");
+        texturePrim.m_type = PP_3DTEXTURE; texturePrim.m_stateCnt = 0; texturePrim.m_changePoint = 0;
+        texturePrim.m_pattern = 0x100; texturePrim.m_deltaPos2 = {1,2,3}; texturePrim.m_deltaPos = {1,2,3};
+        texturePrim.m_deltaPosAccel = {0.5f,1,1.5f}; texturePrim.m_speed3d = {};
+        texturePrim.m_changeSpeed3d = {5,6,7};
+        const float sentinel = 0.000099999997f;
+        texturePrim.m_changeAccel3d = {sentinel,sentinel,sentinel};
+        texturePrim.m_changeWidthSpeed = 2; texturePrim.m_changeWidthAccel = 1;
+        texturePrim.m_changeHeightSpeed = 3; texturePrim.m_changeHeightAccel = 0.5f;
+        texturePrim.m_changeSpeed = 4; texturePrim.m_changeAccel = 1;
+        texturePrim.m_widthSize = 10; texturePrim.m_heightSize = 20; texturePrim.m_maxHeightSize = 22;
+        texturePrim.m_widthSpeed = texturePrim.m_heightSpeed = texturePrim.m_speed = 0;
+        texturePrim.m_widthAccel = texturePrim.m_heightAccel = texturePrim.m_accel = 0;
+        texturePrim.m_longSpeed = texturePrim.m_longAccel = 0;
+        texturePrim.m_latiSpeed = texturePrim.m_latiAccel = 0;
+        texturePrim.m_alpha = 30; texturePrim.m_alphaSpeed = 0; texturePrim.m_fadeOutCnt = -1;
+        texturePrim.m_animSpeed = 100; texturePrim.m_curMotion = 0; texturePrim.m_totalTexture = 1;
+        texturePrim.m_repeatAnim = false; texturePrim.m_isChangeProcessed = false;
+        MatrixIdentity(texturePrim.m_matrix);
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_isChangeProcessed
+            && texturePrim.m_orgPos.x == 101 && texturePrim.m_orgPos.y == 202 && texturePrim.m_orgPos.z == 303
+            && texturePrim.m_speed3d.x == 5.5f && texturePrim.m_speed3d.y == 7 && texturePrim.m_speed3d.z == 8.5f
+            && texturePrim.m_deltaPos.x == 6.5f && texturePrim.m_deltaPos.y == 9 && texturePrim.m_deltaPos.z == 11.5f
+            && texturePrim.m_pos.x == 107.5f && texturePrim.m_pos.y == 211 && texturePrim.m_pos.z == 314.5f
+            && texturePrim.m_widthSize == 13 && texturePrim.m_heightSize == 23.5f
+            && texturePrim.m_widthSpeed == 3 && texturePrim.m_heightSpeed == 0
+            && texturePrim.m_curMotion == 1 && texturePrim.m_stateCnt == 1
+            && texturePrim.m_changeWidthSpeed == sentinel && texturePrim.m_changeSpeed3d.x == sentinel,
+            "OnProcess case 0x0F applies change-point controls, pattern-0x100 velocity and height overshoot before ignored animation return");
+        texturePrim.m_type = PP_3DCROSSTEXTURE; texturePrim.m_stateCnt = 5;
+        textureMaster.m_deltaPos = {100,200,300}; texturePrim.m_pos = {101,0,302};
+        texturePrim.m_pattern = 0x400; texturePrim.m_alpha = 45; texturePrim.m_alphaSpeed = 4;
+        texturePrim.m_animSpeed = 100; texturePrim.m_isHit = false;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_isHit && texturePrim.m_alpha == 45
+            && texturePrim.m_stateCnt == 6,
+            "OnProcess case 0x10 preserves the source 0x400 collision early return while still taking the common tick");
+        texturePrim.m_stateCnt = 2; texturePrim.m_pattern = 0x400; texturePrim.m_pos = {};
+        texturePrim.m_master->m_deltaPos = {1000,0,1000}; texturePrim.m_orgPos = {100,200,300};
+        texturePrim.m_deltaPos2 = {}; texturePrim.m_deltaPos = {}; texturePrim.m_deltaPosAccel = {}; texturePrim.m_speed = 2;
+        texturePrim.m_isHit = false;
+        texturePrim.m_accel = 0; texturePrim.m_matrix.m[2][0] = 0.5f;
+        texturePrim.m_matrix.m[2][1] = 0.25f; texturePrim.m_matrix.m[2][2] = 0.75f;
+        texturePrim.m_matrix.m[3][0] = 1; texturePrim.m_matrix.m[3][1] = 2; texturePrim.m_matrix.m[3][2] = 3;
+        texturePrim.m_longitude = 10; texturePrim.m_roty = 50; texturePrim.m_longSpeed = 5;
+        texturePrim.m_animSpeed = 100; texturePrim.m_alphaSpeed = 0;
+        check(UpdateReference3DTexture(&texturePrim) && texturePrim.m_speed3d.x == 2
+            && texturePrim.m_speed3d.y == 2.5f && texturePrim.m_speed3d.z == 4.5f
+            && texturePrim.m_pos.x == 102 && texturePrim.m_pos.y == 202.5f && texturePrim.m_pos.z == 304.5f
+            && texturePrim.m_longitude == 55 && texturePrim.m_roty == 55 && !texturePrim.m_isHit,
+            "Prim3DTexture pattern 0x400 rebuilds translated matrix velocity, checks distant collision, then advances from roty");
+        texturePrim.m_stateCnt = 4; texturePrim.m_pattern = 2 | 0x10 | 0x20;
+        texturePrim.m_any = 2; texturePrim.m_count = 9; texturePrim.m_heightSize = 0;
+        texturePrim.m_maxHeightSize = 100; texturePrim.m_heightSpeed = 3;
+        texturePrim.m_deltaPos = {3,4,5}; texturePrim.m_deltaPos2 = {1,2,3};
+        texturePrim.m_speed = texturePrim.m_accel = 0; texturePrim.m_speed3d = {};
+        texturePrim.m_matrix = [] { matrix value; MatrixIdentity(value); return value; }();
+        texturePrim.m_animSpeed = 100; texturePrim.m_v1 = 0; texturePrim.m_v2 = 1;
+        check(UpdateReference3DTexture(&texturePrim) && texturePrim.m_count == 0
+            && std::fabs(texturePrim.m_v1 - 0.9f) < 0.00001f
+            && std::fabs(texturePrim.m_v2 - 1.9f) < 0.00001f
+            && texturePrim.m_heightSpeed == -3
+            && texturePrim.m_master->m_deltaPos.x == 4 && texturePrim.m_master->m_deltaPos.y == 6
+            && texturePrim.m_master->m_deltaPos.z == 8,
+            "Prim3DTexture pattern 2 wraps V animation, pattern 0x10 absorbs parent delta, and pattern 0x20 reverses height on cadence");
+        SilentAttr spiralGround; spiralGround.height = 150; g_world.m_attr = &spiralGround;
+        textureMaster.m_effectPos = {10,200,20};
+        texturePrim.m_stateCnt = 5; texturePrim.m_duration = 100; texturePrim.m_pattern = 4;
+        texturePrim.m_pos = {10,200,20}; texturePrim.m_deltaPos = {}; texturePrim.m_deltaPos2 = {};
+        texturePrim.m_orgPos = {}; texturePrim.m_speed = 4; texturePrim.m_heightSpeed = 0;
+        texturePrim.m_matrix.m[2][2] = 0;
+        texturePrim.m_animSpeed = 100; texturePrim.m_master->m_flag = 0;
+        check(UpdateReference3DTexture(&texturePrim) && texturePrim.m_speed == 0
+            && texturePrim.m_stateCnt == 75 && texturePrim.m_pattern == 0
+            && texturePrim.m_master->m_flag == 1 && spiralGround.lastX == 10 && spiralGround.lastZ == 20,
+            "Prim3DTexture pattern 4 stops above the source terrain height, rewinds lifetime and flags the master");
+        g_world.m_attr = nullptr;
+        texturePrim.m_stateCnt = 3; texturePrim.m_pattern = 0x800; texturePrim.m_rgbCycleDelay = 2;
+        texturePrim.m_rgbCycleCnt = 0; texturePrim.m_red = 254; texturePrim.m_green = -1; texturePrim.m_blue = 255;
+        texturePrim.m_redSpeed = 1; texturePrim.m_greenSpeed = -1; texturePrim.m_blueSpeed = 1;
+        texturePrim.m_animSpeed = 100;
+        check(UpdateReference3DTexture(&texturePrim) && texturePrim.m_rgbCycleCnt == 1
+            && texturePrim.m_red == 254 && texturePrim.m_green == 254 && texturePrim.m_blue == 0,
+            "Prim3DTexture RGB-cycle delay preserves source 254 wrap and negative-channel clamps");
+        check(UpdateReference3DTexture(&texturePrim) && texturePrim.m_rgbCycleCnt == 0
+            && texturePrim.m_red == 0 && texturePrim.m_green == 253 && texturePrim.m_blue == 1,
+            "Prim3DTexture RGB-cycle applies delayed channel speeds and wraps over 254");
+        texturePrim.m_pattern = 0; texturePrim.m_red = -1; texturePrim.m_green = -1; texturePrim.m_blue = 256;
+        texturePrim.m_redSpeed = texturePrim.m_greenSpeed = texturePrim.m_blueSpeed = 0;
+        check(UpdateReference3DTexture(&texturePrim) && texturePrim.m_red == 255
+            && texturePrim.m_green == 0 && texturePrim.m_blue == 255,
+            "Prim3DTexture regular RGB branch preserves its three asymmetric clamps");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;
