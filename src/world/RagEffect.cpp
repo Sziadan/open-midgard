@@ -8950,6 +8950,98 @@ void UpdateReferenceLightSphere(CEffectPrim* prim)
     }
 }
 
+// Ref/RagEffectPrim.cpp:7-40 (0x640690). Ghost dispatch discards this result.
+bool AnimateReferenceMotion(CEffectPrim* prim)
+{
+    if (!prim->m_particleActRes) return true;
+    if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;
+
+    ++prim->m_curMotion;
+    const int motionCount = prim->m_particleActRes->GetMotionCount(prim->m_spriteAction);
+    if (prim->m_repeatAnim) {
+        prim->m_curMotion %= motionCount;
+    } else if ((prim->m_pattern & 0x800) != 0) {
+        if (prim->m_curMotion == motionCount) --prim->m_curMotion;
+    } else if (prim->m_curMotion == motionCount) {
+        return false;
+    }
+    return true;
+}
+
+// Ref/dhxj/RagEffect2.cpp:2106; canonical executable 0x60C130 (case 0x54).
+bool UpdateReferenceGhost(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life == 1) {
+        ++gi.process;
+        if (gi.process <= 250 && gi.height[1] > prim->m_alpha) prim->m_alpha += 1.0f;
+
+        if (gi.process >= 2600) {
+            const signed char rotationStep = static_cast<signed char>(gi.flag[0]);
+            const int interval = 360 / rotationStep;
+            const signed char mode = static_cast<signed char>(gi.flag[2]);
+            if (mode <= 1) {
+                if (gi.process % interval == 0) ++gi.flag[0];
+                gi.distance *= 1.002f;
+            }
+            if (gi.process % 15 == 0) {
+                prim->m_alpha -= mode == 2 ? 5.0f : 1.0f;
+                if (prim->m_alpha < 0.0f) prim->m_alpha = 0.0f;
+            }
+        }
+
+        gi.riseAngle = static_cast<short>(gi.riseAngle + 3);
+        if (gi.riseAngle >= 360) gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
+        const signed char rotationStep = static_cast<signed char>(gi.flag[0]);
+        gi.rotStart = static_cast<short>(gi.rotStart + rotationStep);
+        if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+
+        gi.vecBPreX = gi.sparkX;
+        gi.arcBaselineY = gi.sparkY;
+        gi.vecBPreZ = gi.sparkZ;
+        const signed char mode = static_cast<signed char>(gi.flag[2]);
+        if (mode == 2) {
+            int doubleAngle = 2 * gi.rotStart;
+            if (doubleAngle >= 360) doubleAngle -= 360;
+            gi.vecBPreX = static_cast<float>(g_cosTable[gi.rotStart] * gi.distance + gi.vecBPreX);
+            gi.vecBPreZ = static_cast<float>(g_sinTable[doubleAngle] * gi.distance + gi.vecBPreZ);
+        } else {
+            gi.vecBPreX = static_cast<float>(g_cosTable[gi.rotStart] * gi.distance + gi.vecBPreX);
+            gi.vecBPreZ = static_cast<float>(g_sinTable[gi.rotStart] * gi.distance + gi.vecBPreZ);
+        }
+        gi.arcBaselineY = static_cast<float>(g_sinTable[gi.riseAngle] * gi.maxHeight + gi.arcBaselineY);
+        prim->m_deltaPos = {gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ};
+
+        CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+        CView* view = gameMode ? gameMode->m_view : nullptr;
+        if (view) {
+            int cameraAngle = gi.rotStart + static_cast<int>(view->GetCameraLongitude());
+            if (cameraAngle < 0) cameraAngle += 360;
+            if (cameraAngle >= 360) cameraAngle -= 360;
+
+            if (mode == 0) {
+                if (cameraAngle >= 180 && cameraAngle < 270) {
+                    prim->m_spriteAction = 6;
+                } else if ((cameraAngle < 90 || cameraAngle >= 180)
+                           && static_cast<unsigned int>(cameraAngle) >= 0x5A) {
+                    prim->m_spriteAction = 6;
+                } else {
+                    prim->m_spriteAction = 0;
+                }
+            } else {
+                if (rand() % 999 == 1) prim->m_spriteAction = 1;
+                if (rand() % 1001 == 0) prim->m_spriteAction = 0;
+            }
+        }
+    }
+
+    prim->m_pos = prim->m_deltaPos;
+    ProcessReferenceParticleAlpha(prim);
+    ShiftReferenceSegments(prim);
+    return AnimateReferenceMotion(prim);
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -10031,6 +10123,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_LIGHTSPHERE) {
         UpdateReferenceLightSphere(this); // Source case 0x51 continues to the common tick.
+        return true;
+    }
+    if (m_type == PP_GHOST) {
+        UpdateReferenceGhost(this); // Source case 0x54 ignores the handler's animation result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
