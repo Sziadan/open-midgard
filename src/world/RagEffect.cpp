@@ -6980,7 +6980,7 @@ bool CEffectPrim::UsesReferenceQuadHorn() const
 bool CEffectPrim::UsesReferenceScreenTexture() const
 {
     return m_type == PP_2DTEXTURE && m_master
-        && (m_master->GetEffectType() == 38 || m_master->GetEffectType() == 37 || m_master->GetEffectType() == 43 || m_master->GetEffectType() == 32 || m_master->GetEffectType() == 4 || m_master->GetEffectType() == 5 || m_master->GetEffectType() == 1 || m_master->GetEffectType() == 183 || m_master->GetEffectType() == 46);
+        && (m_master->GetEffectType() == 38 || m_master->GetEffectType() == 37 || m_master->GetEffectType() == 43 || m_master->GetEffectType() == 32 || m_master->GetEffectType() == 4 || m_master->GetEffectType() == 5 || m_master->GetEffectType() == 1 || m_master->GetEffectType() == 183 || m_master->GetEffectType() == 46 || m_master->GetEffectType() == 50);
 }
 
 bool CEffectPrim::UsesReferenceParticle() const
@@ -8297,8 +8297,8 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         // Direct helpers own STR completion; load the reference catalog clip below.
         m_handler = Handler::None;
         break;
-    case 48:
-        // Direct reference SprayPond dispatch owns all three emission schedules.
+    case 48: case 50:
+        // Direct reference emitters own their primitive schedules.
         m_handler = Handler::None;
         break;
     case 371: {
@@ -12827,6 +12827,30 @@ bool CRagEffect::ProcessFireHit()
     return ProcessEZ2STR(0.0f,-80.0f,0.0f) != 0;
 }
 
+// Ref/RagEffect.cpp:4270-4328 (0x5FAF30), original effect 50.
+void CRagEffect::SpawnFireSplashHit()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!master || !mode || !mode->m_view) return;
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos,mode->m_view->GetViewMatrix(),projected);
+    m_tlvertX = projected.x; m_tlvertY = projected.y;
+    const int angle = rand() % 360;
+    if (m_stateCnt != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE,vector3d{});
+    prim->m_duration = 30; prim->m_deltaPos2.y = -20.0f;
+    prim->m_widthSize = 10.0f; prim->m_heightSize = 10.0f;
+    prim->m_widthSpeed = 5.6999998f; prim->m_heightSpeed = 5.6999998f;
+    prim->m_roll = static_cast<float>(angle); prim->m_rollSpeed = -18.0f;
+    prim->m_rollAccel = static_cast<float>(prim->m_rollSpeed/static_cast<double>(prim->m_duration)*-0.40000001);
+    prim->m_fadeOutCnt = prim->m_duration-prim->m_duration/2;
+    prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+    prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\FireRing.tga",false));
+    prim->m_gi[0].life = 0;
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -14053,6 +14077,10 @@ bool CRagEffect::ProcessEffectFrame()
     if (m_type == 40) return ProcessSignum();
     if (m_type == 41) return ProcessAngelus();
     if (m_type == 49) return ProcessFireHit();
+    if (m_type == 50) {
+        SpawnFireSplashHit();
+        return true;
+    }
     if (m_type == 48) {
         SpawnSprayPond();
         return true;

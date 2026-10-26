@@ -313,6 +313,7 @@ struct CRagEffect : CGameObject {
     bool ProcessSignum();
     bool ProcessAngelus();
     bool ProcessFireHit();
+    void SpawnFireSplashHit();
     void SpawnSprayPond();
     void SpawnIncAgility();
     void SpawnDecAgility();
@@ -3528,6 +3529,48 @@ int main()
         check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&g_resMgr.requests.empty(),"FireHit helper adds no primitives or extra resource loads");
         check(EffectTicksWhenNoFrameTime(49),"FireHit preserves original effect-level no-frame-time gate exception");
         effect.m_ezEffectRes=nullptr;effect.m_aniClips=nullptr;g_world.m_player=oldPlayer;rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor;actor.m_pos={10,20,100};auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;
+        effect.m_master=&actor;effect.m_type=50;effect.m_effectPos={30,50,40};effect.m_duration=100;effect.m_tlvertZ=123;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        rngValues={359,7};rngCursor=0;g_session.m_isMinEffect=true;effect.SpawnFireSplashHit();auto* prim=effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim->UsesReferenceScreenTexture()&&rngDraws==draws+1&&rngCursor==1,
+            "FireSplashHit emits one source screen texture and draws one roll despite reduced effects");
+        tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&effect.m_tlvertZ==123
+            &&effect.m_effectPos.x==30&&effect.m_effectPos.y==50&&effect.m_effectPos.z==40&&effect.m_duration==100,
+            "FireSplashHit projects actor x y while preserving projected z stored world origin and parent lifetime");
+        check(prim->m_duration==30&&prim->m_deltaPos2.y==-20&&prim->m_widthSize==10&&prim->m_heightSize==10
+            &&prim->m_widthSpeed==5.6999998f&&prim->m_heightSpeed==5.6999998f&&prim->m_roll==359&&prim->m_rollSpeed==-18
+            &&prim->m_rollAccel==static_cast<float>(-18.0/30.0*-0.40000001)&&prim->m_fadeOutCnt==15,
+            "FireSplashHit retains source dimensions growth random roll angular drag and half-duration fade");
+        check(prim->m_alpha==254&&prim->m_maxAlpha==254&&prim->m_alphaSpeed==0&&prim->m_animSpeed==4&&prim->m_repeatAnim&&prim->m_gi[0].life==0,
+            "FireSplashHit restores constructor full alpha and repeat animation with source GI life zero");
+        check(g_texMgr.requests==std::vector<std::string>{"effect\\FireRing.tga"}&&g_resMgr.requests.empty()&&waveCalls.empty(),
+            "FireSplashHit uses exact case-sensitive source texture with no sprite loads or wave");
+        g_isSkipFrame=0;prim->OnProcess();check(prim->m_stateCnt==0&&prim->m_widthSize==10&&prim->m_roll==359,
+            "FireSplashHit life-zero primitive honors ordinary skipped-frame gate");g_isSkipFrame=1;
+        prim->m_alphaDelta=1;const double speed=static_cast<double>(prim->m_rollAccel)-18.0;prim->OnProcess();
+        check(prim->m_rollSpeed==static_cast<float>(speed)&&prim->m_roll==static_cast<float>(359.0+speed)&&prim->m_widthSize==15.7f&&prim->m_heightSize==15.7f
+            &&prim->m_alpha==254&&prim->m_argb==0xFEFFFFFF&&prim->m_curMotion==0,
+            "FireSplashHit integrates extended angular speed growth and full alpha with original single-texture animation");
+        check(prim->m_pos.x==projected.x&&prim->m_pos.y==projected.y-20,"FireSplashHit reference screen state retains source minus-twenty anchor");
+        actor.m_pos={20,30,120};effect.m_stateCnt=1;effect.SpawnFireSplashHit();ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_primList.size()==1&&rngDraws==draws+2&&rngCursor==2&&g_texMgr.requests.size()==1&&prim->m_roll==static_cast<float>(359.0+speed),
+            "FireSplashHit later calls discard required angle draw without repeat emission texture request or roll reset");
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&effect.m_tlvertZ==123,
+            "FireSplashHit refreshes moving actor projection on nonzero frames");
+        prim->OnProcess();check(prim->m_pos.x==projected.x&&prim->m_pos.y==projected.y-20,"FireSplashHit existing primitive follows refreshed parent screen anchor");
+        while(prim->m_stateCnt<15)prim->OnProcess();const float beforeWidth=prim->m_widthSize;prim->OnProcess();
+        check(prim->m_alphaSpeed==static_cast<float>(-254.0/15.0)&&prim->m_alpha==static_cast<float>(254.0+prim->m_alphaSpeed)
+            &&prim->m_widthSize==beforeWidth+5.6999998f,"FireSplashHit starts fifteen-frame fade at frame fifteen while growth continues");
+        while(prim->m_stateCnt<30)prim->OnProcess();check(prim->OnProcess()==0&&prim->m_stateCnt==31&&prim->m_alpha==0,
+            "FireSplashHit processes final duration frame and reaches source alpha floor");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_stateCnt=0;g_session.m_isMinEffect=false;rngValues={0};rngCursor=0;effect.SpawnFireSplashHit();prim=effect.m_primList.front();
+        check(prim->m_roll==0&&prim->m_alpha==254&&effect.m_primList.size()==1&&!EffectTicksWhenNoFrameTime(50),
+            "FireSplashHit supports zero angle endpoint in normal mode and retains effect tick gate");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

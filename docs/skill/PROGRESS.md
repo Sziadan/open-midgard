@@ -4,10 +4,17 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A FireHit id49, after SprayPond checkpoint `d2a9232`. Direct helper now plays source fire attribute audio with exact RNG timing and preserves per-call minus-eighty STR offset and completion.
+Current work: WP5A FireSplashHit id50, after FireHit checkpoint `0bde848`. Direct helper now preserves per-call projection/discarded RNG and zero-only expanding spinning ring on the reference screen-texture path.
 
-Next action: continue unported emitters/control helpers (including FireSplashHit id50) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters/control helpers (including ColdHit id51) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## FireSplashHit expanding screen ring — 2026-10-26
+
+- Ref/RagEffect.cpp:4270-4320 (0x5FAF30) -> SpawnFireSplashHit, original id50, direct ProcessEffectFrame/Init route. Every call first projects actor x/y and draws rand()%360, even on nonzero frames where the draw is discarded. Zero emits one PP_2DTEXTURE; later calls refresh projection without repeated emission/resources or replacing primitive roll. Preserves stored effect origin, projected z, source parent duration and original ordinary effect tick gate. No sound, STR processing or reduced-effects suppression.
+- Source profile retains duration30/y-20/width10/height10/both growth rates5.6999998, random roll/rollSpeed-18/source roll deceleration speed/duration*-0.40000001/fade15, original constructor alpha/max254/single-texture repeat animation divisor4, exact FireRing.tga casing and GI life0. Bound reference screen-texture state/centered geometry: source extended roll-speed integration, continued growth through fade, moving projected parent anchor, ordinary skipped-frame gate and original final duration frame.
+
+Validation: release build, six silent C++ suites / 1277 checks (1061 lifecycle/primitive, 158 rendering, 58 other), six Python tests, executable texture literal/pointer audit and whitespace check pass. Added14 lifecycle checks for source emission/RNG/reduced-effects behavior, projection/preserved parent fields, exact profile/resources/defaults, life0 skip gate, angular/growth/alpha/single-texture integration, source offset/moving anchor, required nonzero discarded draw without roll reset or repeat resources, fade15 with continued growth, final duration retirement and zero-angle lower endpoint/ordinary effect gate. Existing shared screen geometry/device suites pass. Exact texture0x71B7DC and original push0x5FB0CC match executable bytes; extracted firering.tga exists. No media/live acceptance. Approved OldRO SHA-256: `E730B2A76331D8C6DF653BB27BA8AB77889114E4981D29541B57356B6DA1EC45`. Other emitters/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## FireHit attribute audio / STR offset — 2026-10-26
 

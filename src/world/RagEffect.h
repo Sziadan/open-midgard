@@ -495,6 +495,7 @@ private:
     bool ProcessSignum();
     bool ProcessAngelus();
     bool ProcessFireHit();
+    void SpawnFireSplashHit();
     void SpawnSprayPond();
     void ApplyProvidence(const char* textureName);
     void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);
