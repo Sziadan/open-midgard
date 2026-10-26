@@ -705,6 +705,51 @@ void SubmitWorldTeiRect(const vector3d& vec1,
     }
 }
 
+void SubmitTeiHit1Rect(const vector3d corners[4], const vector3d& translation,
+    const matrix& viewMatrix, CTexture* texture, unsigned int color, int texturePart, int renderFlags)
+{
+    if (!texture || texture == &CTexMgr::s_dummy_texture) {
+        return;
+    }
+    const float frame0 = static_cast<float>(static_cast<double>(texturePart) * 0.047619049);
+    const float frame1 = static_cast<float>(static_cast<double>(texturePart + 1) * 0.047619049);
+    const vector3d positions[2][3] = {
+        { AddVec3(corners[0], translation), AddVec3(corners[1], translation), AddVec3(corners[2], translation) },
+        { AddVec3(corners[3], translation), AddVec3(corners[2], translation), AddVec3(corners[0], translation) },
+    };
+    const float uvs[2][3][2] = {
+        { { 1.0f, frame0 }, { 1.0f, frame1 }, { 0.0f, frame1 } },
+        { { 0.0f, frame0 }, { 0.0f, frame1 }, { 1.0f, frame0 } },
+    };
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) {
+            return;
+        }
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = D3DBLEND_ONE;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            if (!ProjectPoint(positions[triangle][vertex], viewMatrix, &face->m_verts[vertex])) {
+                return;
+            }
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[triangle][vertex][0];
+            face->m_verts[vertex].tv = uvs[triangle][vertex][1];
+        }
+        g_renderer.AddRP(face, renderFlags);
+    }
+}
+
 
 float ResolveGroundHeight(const vector3d& position);
 
@@ -6653,6 +6698,64 @@ void RenderIntimidate(const CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void TeiHit1Corners(const EffectGi& gi, vector3d corners[4])
+{
+    const double height = gi.height[1];
+    const double offset = static_cast<double>(gi.flag[1]) * height + gi.distance;
+    const int fullAngle = gi.fullDisplayAngle;
+    const int riseAngle = gi.riseAngle;
+    const double cosineFull = g_cosTable[fullAngle];
+    const double sineFull = g_sinTable[fullAngle];
+    const double cosineRise = g_cosTable[riseAngle];
+    const double sineRise = g_sinTable[riseAngle];
+    const double leftX = cosineFull * offset - sineFull * height;
+    const double leftY = cosineFull * height + sineFull * offset;
+    const double rightOffset = static_cast<double>(-static_cast<int>(gi.flag[1])) * height + gi.distance;
+    const double rightX = cosineFull * rightOffset - sineFull * height;
+    const double rightY = cosineFull * height + sineFull * rightOffset;
+    const double rightLowerX = cosineFull * rightOffset + sineFull * height;
+    const double rightLowerY = sineFull * rightOffset - cosineFull * height;
+    const double leftLowerX = cosineFull * offset + sineFull * height;
+    const double leftLowerY = sineFull * offset - cosineFull * height;
+    const double xValues[4]{leftLowerX, leftX, rightX, rightLowerX};
+    const double yValues[4]{leftLowerY, leftY, rightY, rightLowerY};
+    for (int i = 0; i < 4; ++i) {
+        const float flatX = static_cast<float>(xValues[i]);
+        corners[i].x = static_cast<float>(static_cast<double>(flatX) * cosineRise);
+        corners[i].y = static_cast<float>(yValues[i]);
+        corners[i].z = static_cast<float>(sineRise * flatX);
+    }
+}
+
+void RenderTeiHit1(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (int band = 0; band < 4; ++band) {
+        const EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        vector3d corners[4]{};
+        TeiHit1Corners(gi, corners);
+        int texturePart = 0;
+        unsigned int tint = 0x00E1E150u;
+        switch (gi.flag[0]) {
+        case 0:
+            break;
+        case 1:
+            tint = 0x00FFFFFFu;
+            break;
+        default:
+            texturePart = 1;
+            tint = 0x00C8C8FFu;
+            break;
+        }
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | tint;
+        SubmitTeiHit1Rect(corners, prim.m_pos, viewMatrix, texture, color, texturePart,
+            static_cast<int>(prim.m_renderFlag));
+    }
+}
+
 // Ref/RagEffectPrim.cpp:5679, 6377. The world owns primitive objects;
 // the parent's list only tracks attachments.
 // HighPriest.exe.c:451706-451754 (0x625C30). Counter belongs to OnProcess.
@@ -7807,6 +7910,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_INTIMIDATE) {
         RenderIntimidate(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_TEIHIT1) {
+        RenderTeiHit1(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {

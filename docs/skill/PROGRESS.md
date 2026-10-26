@@ -588,3 +588,5 @@ Latest completed function gate (2026-10-26): `RenderGrandCross2` / PP_GRANDCROSS
 Latest completed function gate (2026-10-26): `RenderLineLink` / PP_LINELINK passed its 19-assertion source/implementation branch comparison, numeric checks, release build and all six C++ suites. `PARITY_LOG.md` records the evidence and deployment hash. The next function remains gated on comparison before implementation.
 
 Latest completed function gate (2026-10-26): `RenderIntimidate` / PP_INTIMIDATE passed its 19-assertion source/implementation branch comparison, numeric checks, release build and all six C++ suites. `PARITY_LOG.md` records the evidence and deployment hash. The next function remains gated on comparison before implementation.
+
+Latest completed function gate (2026-10-26): `RenderTeiHit1` / PP_TEIHIT1 passed its 15-assertion source/implementation branch comparison, numeric checks, release build and all six C++ suites. `PARITY_LOG.md` records the evidence and deployment hash. The next function remains gated on comparison before implementation.

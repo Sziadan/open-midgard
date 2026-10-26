@@ -136,6 +136,7 @@ vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.
 #include "GrandCross2CornersBody.inc"
 #include "LineLinkGeometryBody.inc"
 #include "IntimidateRenderGeometryBody.inc"
+#include "TeiHit1GeometryBody.inc"
 #include "ReferenceTriangleQueueBodies.inc"
 
 int main() {
@@ -268,6 +269,19 @@ int main() {
         check(near(center.x,GetCos(35)*fullX)&&near(center.y,GetSin(120)*9.0)
             && near(center.z,GetSin(35)*fullX),
             "Intimidate band center uses full-display then rise rotation");
+    }
+    for(int fullAngle:{0,45,135,270}) for(int flag:{0,1}) {
+        EffectGi gi{};gi.height[1]=3.25f;gi.distance=17.5f;gi.fullDisplayAngle=static_cast<short>(fullAngle);
+        gi.riseAngle=28;gi.flag[1]=static_cast<unsigned char>(flag);
+        vector3d corners[4]{};TeiHit1Corners(gi,corners);
+        const double c=GetCos(fullAngle),s=GetSin(fullAngle),cr=GetCos(28),sr=GetSin(28),h=gi.height[1];
+        const double left=gi.distance+flag*h,right=gi.distance-flag*h;
+        const double x[4]={c*left+s*h,c*left-s*h,c*right-s*h,c*right+s*h};
+        const double y[4]={s*left-c*h,s*left+c*h,s*right+c*h,s*right-c*h};
+        for(int i=0;i<4;++i) check(near(corners[i].x,static_cast<float>(static_cast<double>(static_cast<float>(x[i]))*cr))
+            && near(corners[i].y,static_cast<float>(y[i]))
+            && near(corners[i].z,static_cast<float>(static_cast<double>(static_cast<float>(x[i]))*sr)),
+            "TeiHit1 corner matches source offset, perpendicular, and rise rotations");
     }
     const int inverseSizes[]={0,2,3,12,13,14,100};
     for(int size=0;size<=100;++size) {
