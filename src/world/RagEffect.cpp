@@ -9626,6 +9626,20 @@ bool UpdateReferenceSoulParticle(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:9432; canonical executable PrimHermode at 0x61AE30 (case 0x72).
+bool UpdateReferenceHermode(CEffectPrim* prim)
+{
+    if (!prim->m_master) return true;
+    prim->m_pos = prim->m_master->EffectPosition();
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.alphaB < 140) gi.alphaB = static_cast<short>(gi.alphaB + 2);
+    gi.riseAngle = static_cast<short>(gi.riseAngle + 1);
+    if (gi.riseAngle >= 360) gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
+    gi.rotStart = static_cast<short>(gi.rotStart + 1);
+    if (gi.rotStart >= 360) gi.rotStart = static_cast<short>(gi.rotStart - 360);
+    return true;
+}
+
 // Ref/dhxj/RagEffect2.cpp:15246; canonical executable PrimTanji2 at 0x627F30 (case 0x61).
 void UpdateReferenceTanji2(CEffectPrim* prim)
 {
@@ -10849,6 +10863,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_SOULPARTICLE) {
         UpdateReferenceSoulParticle(this); // Source case 0x6F ignores the handler's true result.
+        return true;
+    }
+    if (m_type == PP_HERMODE) {
+        UpdateReferenceHermode(this); // Source case 0x72 ignores the handler's true result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

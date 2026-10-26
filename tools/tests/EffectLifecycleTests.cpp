@@ -231,6 +231,7 @@ void UpdateReferenceAirTexture(CEffectPrim*);
 void UpdateReferenceHitLine3(CEffectPrim*);
 bool UpdateReferenceSoulLinkLight(CEffectPrim*);
 bool UpdateReferenceSoulParticle(CEffectPrim*);
+bool UpdateReferenceHermode(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -364,6 +365,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_HITLINE3) { UpdateReferenceHitLine3(this); return active; }
         if (m_type == PP_SOULLINK) { UpdateReferenceSoulLinkLight(this); return active; }
         if (m_type == PP_SOULPARTICLE) { UpdateReferenceSoulParticle(this); return active; }
+        if (m_type == PP_HERMODE) { UpdateReferenceHermode(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -835,6 +837,7 @@ __declspec(noinline) void RunAirTextureLifecycleChecks(CEffectPrim& prim, int& c
 __declspec(noinline) void RunHitLine3LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunHermodeLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2134,6 +2137,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
         "case 0x6D nonpositive post-increment skips height angle/vector updates and RNG");
     testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
     RunSoulParticleLifecycleChecks(prim, checks, failures);
+    RunHermodeLifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2189,6 +2193,35 @@ __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int&
         &&inactive.process==44&&inactive.height[12]==55&&rngDraws==thresholdDraws,
         "case 0x6F holds process thirty, decays after thirty, runs post-increment zero, and skips non-exact life");
     testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunHermodeLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_HERMODE; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={7,8,9}; prim.m_master->m_effectPos={100,200,300};
+    for(auto& gi:prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.alphaB=139; a.riseAngle=359; a.rotStart=359;
+    prim.m_gi[1].alphaB=55; prim.m_gi[1].riseAngle=44; prim.m_gi[1].rotStart=33;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_pos.x==100&&prim.m_pos.y==200&&prim.m_pos.z==300
+        &&a.alphaB==141&&a.riseAngle==0&&a.rotStart==0
+        &&prim.m_gi[1].alphaB==55&&prim.m_gi[1].riseAngle==44&&prim.m_gi[1].rotStart==33
+        &&rngDraws==draws&&prim.m_stateCnt==1,
+        "case 0x72 copies master position, updates only GI0 and preserves source overshoot/single-wrap/shared-tick behavior");
+    a.life=0; a.alphaB=140; a.riseAngle=719; a.rotStart=-1;
+    prim.OnProcess();
+    check(a.alphaB==140&&a.riseAngle==360&&a.rotStart==0&&a.life==0,
+        "case 0x72 has no life gate, holds alpha at 140 and subtracts only one 360-degree wrap");
+    a.alphaB=138; a.riseAngle=-2; a.rotStart=360;
+    prim.OnProcess();
+    check(a.alphaB==140&&a.riseAngle==-1&&a.rotStart==1&&rngDraws==draws,
+        "case 0x72 preserves negative angles and increments alpha only below 140 without RNG");
+    g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
