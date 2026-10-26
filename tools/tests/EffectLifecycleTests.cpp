@@ -307,6 +307,7 @@ struct CRagEffect : CGameObject {
     void ApplySonicBlow();
     void ApplySonicBlowHit();
     void ApplyBash();
+    bool ProcessSignum();
     void SpawnIncAgility();
     void SpawnDecAgility();
     void SpawnAqua();
@@ -3313,6 +3314,73 @@ int main()
         }
         prim.m_type=PP_HEAL;effect.m_isWorldEffect=true;
         check(!prim.UsesLegacyBandPayload(),"legacy map payload exception is limited to its three original band kinds");
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=40;
+        effect.m_effectPos={30,50,40};effect.m_duration=100;effect.m_tlvertZ=123;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        g_session.m_isMinEffect=true;effect.m_stateCnt=29;
+        check(!effect.ProcessSignum()&&effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "Signum before frame thirty propagates missing STR without burst sound or RNG");
+        tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&effect.m_tlvertZ==123&&effect.m_effectPos.x==30,
+            "Signum projects actor before missing STR while preserving stored origin and projected z");
+        auto clip=std::make_unique<KANICLIP>();clip->cLayer=2;KAC_KEYFRAME keys[2];keys[0].iFrame=0;keys[1].iFrame=100;
+        clip->aLayer[1].cAniKey=2;clip->aLayer[1].aAniKey=keys;effect.m_ezEffectRes=clip.get();effect.m_aniClips=clip.get();
+        effect.InitEZ2STRFrame();effect.m_stateCnt=30;
+        rngValues.clear();for(int i=0;i<20;++i)rngValues.insert(rngValues.end(),{359,59,24,59,34});rngCursor=0;
+        check(effect.ProcessSignum()&&effect.m_primList.size()==21&&rngDraws==draws+100&&rngCursor==100,
+            "Signum frame thirty emits twenty-one primitives with one hundred ordered draws despite reduced effects");
+        check(waveCalls.size()==2&&waveCalls[0].name=="effect\\EF_Signum.wav"&&waveCalls[1].name=="effect\\EF_Bash.wav"
+            &&waveCalls[0].frameRng==draws&&waveCalls[1].frameRng==draws,
+            "Signum plays exact Signum then Bash waves before ray RNG");
+        bool audio=true;for(const auto& wave:waveCalls)audio=audio&&wave.x==28&&wave.y==0&&wave.z==36&&wave.volume==250&&wave.range==40&&wave.frequency==1;
+        check(audio,"Signum both waves retain stored-origin horizontal listener deltas and source audio parameters");
+        check(effect.m_strScreenOffset.x==0&&effect.m_strScreenOffset.y==-80&&effect.m_strScreenOffset.z==0
+            &&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y-80&&effect.m_duration==100&&effect.m_effectPos.y==50,
+            "Signum processes active STR after burst with original offset without changing parent origin or duration");
+        auto it=effect.m_primList.begin();auto* disc=*it++;auto* ray=*it;
+        check(disc->UsesReferenceScreenCircle()&&ray->UsesReferenceFlash(),"Signum binds original screen circle and flash state and rendering");
+        check(disc->m_duration==40&&disc->m_pattern==1&&disc->m_deltaPos2.y==-40&&disc->m_radius==100&&disc->m_radiusSpeed==0
+            &&disc->m_alpha==0&&disc->m_maxAlpha==170&&disc->m_alphaSpeed==static_cast<float>(170.0*0.16666667)&&disc->m_fadeOutCnt==27&&disc->m_arcAngle==36,
+            "Signum disc preserves source full width radius alpha rise and thirteen-frame fade");
+        bool rays=true;for(auto current=it;current!=effect.m_primList.end();++current){const auto* p=*current;
+            rays=rays&&p->m_type==PP_2DFLASH&&p->m_duration==35&&p->m_deltaPos2.y==-40&&p->m_longitude==359&&p->m_longSpeed==6.9f
+                &&p->m_longAccel==static_cast<float>(6.9f/35.0*-0.66666669)&&p->m_arcAngle==3.9f&&p->m_heightSize==89&&p->m_heightSpeed==12.9f
+                &&p->m_alpha==0&&p->m_maxAlpha==200&&p->m_alphaSpeed==20&&p->m_fadeOutCnt==-1&&p->m_changePoint==-1;}
+        check(rays,"Signum rays preserve five-draw ranges drag duration alpha and disabled constructor fade and change gates");
+        bool textures=g_texMgr.requests.size()==21&&g_texMgr.requests[0]=="effect\\alpha_down.tga";
+        for(size_t i=1;i<g_texMgr.requests.size();++i)textures=textures&&g_texMgr.requests[i]=="EFFECT\\alpha_center.tga";
+        check(textures&&g_resMgr.requests.empty(),"Signum preserves exact texture case source order and no sprite resources");
+        disc->m_alphaDelta=1;disc->OnProcess();
+        check(disc->m_radius==100&&disc->m_size==100&&disc->m_pos.y==projected.y-120&&disc->m_alpha==static_cast<float>(170.0*0.16666667),
+            "Signum disc applies offset to STR-updated parent screen anchor and retains full disc width");
+        ray->m_alphaDelta=1;const double angular=static_cast<double>(ray->m_longAccel)+ray->m_longSpeed;ray->OnProcess();
+        check(ray->m_longitude==static_cast<float>(359+angular)&&ray->m_heightSize==101.9f&&ray->m_alpha==20&&ray->m_argb==0x14FFFFFF,
+            "Signum ray integrates source angular drag height growth and alpha before any fade");
+        for(int frame=1;frame<=27;++frame)disc->OnProcess();
+        check(disc->m_alphaSpeed==static_cast<float>(-170.0/13.0)&&disc->m_alpha==static_cast<float>(170.0+disc->m_alphaSpeed),
+            "Signum circle starts original thirteen-frame fade at twenty-seven");
+        while(ray->m_stateCnt<35)ray->OnProcess();
+        check(ray->m_alpha==200&&ray->m_alphaSpeed==20&&ray->m_fadeOutCnt==-1,"Signum rays remain at alpha cap through frame thirty-four without invented fade");
+        check(ray->OnProcess()==0&&ray->m_stateCnt==36&&ray->m_alpha==200,"Signum ray includes final duration frame and retires at full alpha");
+        actor.m_pos={20,30,120};effect.m_stateCnt=31;const size_t resources=g_texMgr.requests.size();
+        check(effect.ProcessSignum()&&effect.m_primList.size()==21&&waveCalls.size()==2&&g_texMgr.requests.size()==resources&&rngDraws==draws+100,
+            "Signum subsequent calls continue STR without repeating burst audio resources or RNG");
+        ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y-80&&effect.m_strAnchorPosition.z==120,
+            "Signum continues projecting moving actor and STR anchor on nonburst frames");
+        effect.m_iCurLayer=effect.m_cEndLayer;
+        check(!effect.ProcessSignum(),"Signum propagates STR exhaustion even with live burst primitives");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_ezEffectRes=nullptr;effect.m_aniClips=nullptr;
+        effect.m_stateCnt=30;rngValues.assign(100,0);rngCursor=0;waveCalls.clear();
+        check(!effect.ProcessSignum()&&effect.m_primList.size()==21&&waveCalls.size()==2,"Signum burst precedes missing STR completion on frame thirty");
+        it=effect.m_primList.begin();++it;ray=*it;
+        check(ray->m_longitude==0&&ray->m_longSpeed==1&&ray->m_arcAngle==1.5f&&ray->m_heightSize==30&&ray->m_heightSpeed==9.5f,
+            "Signum lower ray range endpoints match source without Bash profile substitution");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

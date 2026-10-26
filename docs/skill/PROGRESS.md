@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Aqua id39, after DecAgility checkpoint `69eddc2`. Original actor-following nonrepeating sprite animation, exact recovered resources/audio and world cleanup now bind the reference particle path.
+Current work: WP5A Signum id40, after Aqua checkpoint `eefd353`. Original frame-thirty disc/rays and ordered sounds now bind reference primitive paths while preserving per-call STR completion and offset.
 
-Next action: continue unported emitters (including Signum id40) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters/control helpers (including Angelus id41) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Signum frame-thirty burst / STR completion — 2026-10-26
+
+- Ref/RagEffect.cpp:1390-1477 (0x604F70) -> ProcessSignum, original id40, direct ProcessEffectFrame/Init route. Projects actor x/y every call, preserving stored world origin. At frame30 plays exact stored-origin horizontal EF_Signum then EF_Bash waves and emits one disc followed by20 rays, with no reduced-effects suppression. Every call then returns ProcessEZ2STR(0,-80,0), preserving active/missing/exhausted STR completion. Existing exact Cross.str catalog and loader remain in use; active STR updates final screen fields after the initial projection.
+- Disc retains duration40/pattern1/y-40/radius100/zero radial speed/arc36, alpha0/max170/rise max*0.16666667/fade27 and exact lowercase alpha_down texture. Bound reference screen-circle state/geometry.
+- Rays retain duration35/y-40, five draws each in longitude/angular-speed/arc/height/height-speed order, angular drag speed/duration*-0.66666669, arc1.5..3.9/height30..89/growth9.5..12.9, alpha0/max200/rise20 and exact uppercase EFFECT directory alpha_center texture. Explicit original constructor fade-1 and default-disabled change point prevent an invented fade/transition; rays reach their final duration frame at full alpha when parent lifetime permits. Bound reference flash state/geometry.
+
+Validation: release build, six silent C++ suites / 1211 checks (1003 lifecycle/primitive, 150 rendering, 58 other), six Python tests, four-literal executable byte audit, four original asset-pointer instruction audits and whitespace check pass. Added20 lifecycle checks for delayed burst, ordered audio before100 RNG draws, source ranges/profiles/resources/casing, reduced-effects behavior, initial projection versus final STR anchor/offset, disc fade27, ray full-alpha retirement, missing/active/exhausted STR propagation and no repeated nonburst work. Exact waves0x71BCA8/0x71A4A4 and textures0x719498/0x71B398 match executable bytes; pushes at0x60502B/0x605059/0x605152/0x6052F8 verified. Both waves, textures and cross.str exist in extracted GRF resources. Existing shared screen-circle/flash geometry/device suites pass. No media/live acceptance. Approved OldRO SHA-256: `38011BA8AA90A36991AD374BE77ECAE94C01AB077CC173D37D31C585F6A29BDC`. Other emitters/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Aqua actor-following sprite animation — 2026-10-26
 

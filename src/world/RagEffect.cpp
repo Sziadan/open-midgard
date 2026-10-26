@@ -6922,12 +6922,12 @@ bool CEffectPrim::UsesReferenceSphere() const
 
 bool CEffectPrim::UsesReferenceScreenCircle() const
 {
-    return m_type == PP_2DCIRCLE && m_master && (m_master->GetEffectType() == 16 || m_master->GetEffectType() == 121 || m_master->GetEffectType() == 128);
+    return m_type == PP_2DCIRCLE && m_master && (m_master->GetEffectType() == 16 || m_master->GetEffectType() == 40 || m_master->GetEffectType() == 121 || m_master->GetEffectType() == 128);
 }
 
 bool CEffectPrim::UsesReferenceFlash() const
 {
-    return m_type == PP_2DFLASH && m_master && (m_master->GetEffectType() == 16 || m_master->GetEffectType() == 98);
+    return m_type == PP_2DFLASH && m_master && (m_master->GetEffectType() == 16 || m_master->GetEffectType() == 40 || m_master->GetEffectType() == 98);
 }
 
 bool CEffectPrim::UsesReferenceQuadHorn() const
@@ -8244,6 +8244,10 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     m_hasTargetPos = false;
 
     switch (effectId) {
+    case 40:
+        // ProcessSignum owns primitive emission and STR completion; load Cross.str below.
+        m_handler = Handler::None;
+        break;
     case 371: {
         m_handler = Handler::EzStr;
         const std::string strName = ResolveStrName(effectId);
@@ -12647,6 +12651,45 @@ void CRagEffect::ApplyBash()
     }
 }
 
+// Ref/RagEffect.cpp:1390-1477 (0x604F70), original effect 40.
+bool CRagEffect::ProcessSignum()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!master || !mode || !mode->m_view) return false;
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos,mode->m_view->GetViewMatrix(),projected);
+    m_tlvertX = projected.x; m_tlvertY = projected.y;
+    if (m_stateCnt == 30) {
+        if (mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\EF_Signum.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+            PlayWave("effect\\EF_Bash.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+        }
+        CEffectPrim* prim = LaunchEffectPrim(PP_2DCIRCLE,vector3d{});
+        prim->m_duration = 40; prim->m_pattern |= 1; prim->m_deltaPos2.y = -40.0f;
+        prim->m_radius = 100.0f; prim->m_alpha = 0.0f; prim->m_maxAlpha = 170.0f;
+        prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha*0.16666667);
+        prim->m_fadeOutCnt = prim->m_duration-prim->m_duration/3;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga",false));
+        for (int i = 0; i < 20; ++i) {
+            prim = LaunchEffectPrim(PP_2DFLASH,vector3d{});
+            prim->m_duration = 35; prim->m_deltaPos2.y = -40.0f;
+            prim->m_alpha = 0.0f;
+            prim->m_longitude = static_cast<float>(rand() % 360);
+            prim->m_longSpeed = static_cast<float>((rand() % 60 + 10)*0.1);
+            prim->m_longAccel = static_cast<float>(prim->m_longSpeed/static_cast<double>(prim->m_duration)*-0.66666669);
+            prim->m_arcAngle = static_cast<float>((rand() % 25 + 15)*0.1);
+            prim->m_heightSize = static_cast<float>(rand() % 60 + 30);
+            prim->m_heightSpeed = static_cast<float>((rand() % 35 + 95)*0.1);
+            prim->m_maxAlpha = 200.0f; prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha*0.1);
+            prim->m_fadeOutCnt = -1; // Original constructor; Signum never assigns a ray fade gate.
+            prim->m_texture.push_back(g_texMgr.GetTexture("EFFECT\\alpha_center.tga",false));
+        }
+    }
+    return ProcessEZ2STR(0.0f,-80.0f,0.0f) != 0;
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -13870,6 +13913,7 @@ bool CRagEffect::ProcessEffectFrame()
         return true;
     }
     if (m_type == 183) return ProcessHit2Blue();
+    if (m_type == 40) return ProcessSignum();
     if (m_type == 32) {
         SpawnNapalmBeat();
         return true;
