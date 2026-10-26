@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <cstdarg>
 #include <list>
 #include <cmath>
 #include <cstring>
@@ -17,7 +18,12 @@ using u32 = std::uint32_t;
 using msgparam_t = std::intptr_t;
 int g_isSkipFrame = 1;
 int primitiveDeaths = 0, effectDeaths = 0;
-void Trace(const char*, ...) {}
+std::vector<std::string> traceCalls;
+void Trace(const char* format, ...) {
+    char buffer[256]{};
+    va_list args; va_start(args, format); std::vsnprintf(buffer, sizeof(buffer), format, args); va_end(args);
+    traceCalls.emplace_back(buffer);
+}
 struct Probe { int& deaths; ~Probe() { ++deaths; } };
 struct vector3d { float x = 0, y = 0, z = 0; };
 vector3d AddVec3(vector3d a, vector3d b) { return {a.x+b.x, a.y+b.y, a.z+b.z}; }
@@ -262,6 +268,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DSPLINE || m_type == PP_3DSPIRAL) { UpdateReferenceSpiral(this); return active; }
         if (m_type == PP_3DTEXTURE || m_type == PP_3DCROSSTEXTURE) { UpdateReference3DTexture(this); return active; }
         if (m_type == PP_3DCYLINDERHALF) { UpdateReferenceCylinderState(this); return active; }
+        if (m_type == PP_3DFLASH) { UpdateReferenceFlash(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1372,6 +1379,23 @@ int main()
         texturePrim.m_totalTexture = 1; texturePrim.m_repeatAnim = false;
         check(texturePrim.OnProcess() == 1 && texturePrim.m_curMotion == 1 && texturePrim.m_stateCnt == 1,
             "OnProcess case 0x12 ignores CylinderHalf animation completion and still takes the common tick");
+        texturePrim.m_type = PP_3DFLASH; texturePrim.m_stateCnt = 0; texturePrim.m_pattern = 1;
+        textureMaster.m_tlvertX = 50; textureMaster.m_tlvertY = 60;
+        texturePrim.m_deltaPos2 = {5,6,0}; texturePrim.m_heightSize = -2;
+        texturePrim.m_heightSpeed = 8; texturePrim.m_heightAccel = 9;
+        texturePrim.m_changePoint = 0; texturePrim.m_changeHeightSpeed = 2;
+        texturePrim.m_changeSpeed = 3; texturePrim.m_changeAccel = 4;
+        texturePrim.m_longSpeed = 0; texturePrim.m_longAccel = 0; texturePrim.m_longitude = 10;
+        texturePrim.m_widthSpeed = 5; texturePrim.m_arcAngle = 10;
+        texturePrim.m_alpha = 20; texturePrim.m_alphaSpeed = 0; texturePrim.m_fadeOutCnt = -1;
+        traceCalls.clear();
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_pos.x == 55 && texturePrim.m_pos.y == 66
+            && texturePrim.m_heightSpeed == -2 && texturePrim.m_heightAccel == 0
+            && texturePrim.m_longSpeed == 7 && texturePrim.m_longitude == 17
+            && texturePrim.m_arcAngle == 15 && texturePrim.m_heightSize == -2
+            && !traceCalls.empty() && traceCalls.back() == "m_heightSize  = 0"
+            && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x13 preserves Y/X anchoring, early height trace, change/reflection order and common tick");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

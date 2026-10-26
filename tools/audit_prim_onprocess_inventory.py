@@ -72,7 +72,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 68 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 69 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -498,6 +498,53 @@ check("case 0x12 anchor, speed, matrix, dimensions, fade branch and animation re
       < current_cylinder.index("prim->m_longitude +=") < current_cylinder.index("prim->m_outerSize +=")
       < current_cylinder.index("ProcessReferenceParticleAlpha(prim);")
       < current_cylinder.index("if (prim->m_stateCnt % prim->m_animSpeed"))
+source_flash3d = body(REF, "void __thiscall CEffectPrim::Prim3DFlash(CEffectPrim *this)\n{")
+exe_flash3d = body(EXE, "void __thiscall CEffectPrim::Prim3DFlash(CEffectPrim *this)\n{")
+current_flash3d = body(CURRENT, "void UpdateReferenceFlash(CEffectPrim* prim)")
+check("source Prim3DFlash Ref/EXE bodies match and case 0x13 reaches an unconditional current route",
+      compact(source_flash3d) == compact(exe_flash3d)
+      and re.search(r"case\s+0x13:\s*CEffectPrim::Prim3DFlash\(this\);\s*goto\s+\$L145961;", source_dispatch)
+      and "if (m_type == PP_3DFLASH)" in current_dispatch
+      and "UpdateReferenceFlash(this);" in current_dispatch)
+flash_source_effects = [
+    "this->m_pos.y = m_master->m_tlvertY + this->m_deltaPos2.y;",
+    "this->m_pos.x = m_master->m_tlvertX + this->m_deltaPos2.x;",
+    "if ( !v3 && this->m_heightSize <= 0.0 )", "this->m_heightSpeed = 0.0;",
+    "this->m_heightAccel = 0.0;", 'Trace("m_heightSize  = %d", LODWORD(m_heightSize));',
+    "if ( this->m_stateCnt == this->m_ChangePoint )",
+    "this->m_heightSpeed = this->m_ChangeHeightSpeed;",
+    "this->m_longSpeed = m_ChangeSpeed;", "this->m_longAccel = m_ChangeAccel;",
+    "if ( this->m_heightSize < 0.0 )", "this->m_heightSize = 0.0;",
+    "this->m_heightSpeed = v7;", "this->m_arcAngle = this->m_widthSpeed + this->m_arcAngle;",
+    "this->m_longitude = v8 + this->m_longitude;",
+    "this->m_heightSize = v9 + this->m_heightSize;", "CEffectPrim::ProcessAlpha(this);",
+]
+flash_current_effects = [
+    "prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;",
+    "prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;",
+    "(prim->m_pattern & 1) != 0 && prim->m_heightSize <= 0.0f",
+    "prim->m_heightSpeed = 0.0f;", "prim->m_heightAccel = 0.0f;",
+    "Trace(\"m_heightSize  = %d\", static_cast<int>(traceValue));",
+    "prim->m_stateCnt == prim->m_changePoint", "prim->m_heightSpeed = prim->m_changeHeightSpeed;",
+    "prim->m_longSpeed = prim->m_changeSpeed;", "prim->m_longAccel = prim->m_changeAccel;",
+    "prim->m_heightSize = 0.0f;", "prim->m_heightSpeed *= -1.0f;",
+    "prim->m_arcAngle += prim->m_widthSpeed;", "prim->m_longitude = static_cast<float>(angularSpeed + prim->m_longitude);",
+    "prim->m_heightSize += prim->m_heightSpeed;", "ProcessReferenceParticleAlpha(prim);",
+]
+check("case 0x13 Y/X anchor, pattern stop and trace, change point, reflection and alpha branches are paired in order",
+      all(compact(effect) in compact(source_flash3d) for effect in flash_source_effects)
+      and all(compact(effect) in compact(current_flash3d) for effect in flash_current_effects)
+      and current_flash3d.index("prim->m_pos.y =") < current_flash3d.index("prim->m_pos.x =")
+      < current_flash3d.index("if ((prim->m_pattern & 1)")
+      < current_flash3d.index("Trace(")
+      < current_flash3d.index("if (prim->m_stateCnt == prim->m_changePoint)")
+      < current_flash3d.index("if (prim->m_heightSize < 0.0f)")
+      < current_flash3d.index("prim->m_longSpeed = static_cast<float>(angularSpeed)")
+      < current_flash3d.index("prim->m_heightSpeed +=")
+      < current_flash3d.index("prim->m_arcAngle +=")
+      < current_flash3d.index("prim->m_longitude =")
+      < current_flash3d.index("prim->m_heightSize +=")
+      < current_flash3d.index("ProcessReferenceParticleAlpha(prim);"))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)

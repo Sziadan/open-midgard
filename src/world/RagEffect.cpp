@@ -7831,10 +7831,14 @@ void UpdateReferenceScreenCircle(CEffectPrim* prim)
 void UpdateReferenceFlash(CEffectPrim* prim)
 {
     const vector3d anchor = prim->m_master->ScreenPosition();
-    prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
     prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
+    prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
     if ((prim->m_pattern & 1) != 0 && prim->m_heightSize <= 0.0f) {
         prim->m_heightSpeed = 0.0f; prim->m_heightAccel = 0.0f;
+        const double heightSize = prim->m_heightSize;
+        u32 traceValue = 0;
+        std::memcpy(&traceValue, &heightSize, sizeof(traceValue));
+        Trace("m_heightSize  = %d", static_cast<int>(traceValue));
     }
     if (prim->m_stateCnt == prim->m_changePoint) {
         prim->m_heightSpeed = prim->m_changeHeightSpeed;
@@ -7847,9 +7851,9 @@ void UpdateReferenceFlash(CEffectPrim* prim)
     const double angularSpeed = static_cast<double>(prim->m_longAccel) + prim->m_longSpeed;
     prim->m_longSpeed = static_cast<float>(angularSpeed);
     prim->m_heightSpeed += prim->m_heightAccel;
+    prim->m_arcAngle += prim->m_widthSpeed;
     prim->m_longitude = static_cast<float>(angularSpeed + prim->m_longitude);
     prim->m_heightSize += prim->m_heightSpeed;
-    prim->m_arcAngle += prim->m_widthSpeed;
     ProcessReferenceParticleAlpha(prim);
 }
 
@@ -8823,6 +8827,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_3DCYLINDERHALF) {
         UpdateReferenceCylinderState(this); // Source case 0x12 ignores the bool result.
+        return true;
+    }
+    if (m_type == PP_3DFLASH) {
+        UpdateReferenceFlash(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
