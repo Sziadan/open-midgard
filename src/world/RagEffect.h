@@ -290,6 +290,8 @@ public:
     float m_alphaDelta;
     float m_minAlpha;
     float m_widthSize;
+    float m_widthSpeed;
+    float m_widthAccel;
     float m_size;
     float m_sizeSpeed;
     float m_sizeAccel;
@@ -531,6 +533,8 @@ private:
     void SpawnHitDark();
     void SpawnHit(bool dark);
     void SpawnPierce();
+    void SpawnHit2(int option);
+    bool ProcessHit2Blue();
     void SpawnRuwach();
     void SpawnBlueFall();
     void SpawnWeatherCloud();

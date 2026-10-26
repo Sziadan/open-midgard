@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Pierce emitter and repeated shrinking hit bursts, after HitDark checkpoint `797e06e`. Original id81 now preserves source level/frame gate, growing cylinders, ordered sprite bursts and per-particle shrinking profiles.
+Current work: WP5A Hit2 normal/blue emitters (ids1/183) and reference rotating screen textures, after Pierce checkpoint `0957619`. Source streak profiles, alternate lenses, bottom pivot and blue caller control/STR handling are now ported.
 
-Next action: continue remaining hit variants (including Hit2) and other unported emitters/primitive controls. Caller level routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue Hit3 and remaining hit callers (including Hit2 caller401), other emitters and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Hit2 normal / blue and rotated screen textures — 2026-10-26
+
+- Ref/RagEffect.cpp:5230-5323 (0x5F2100) -> SpawnHit2, normal id 1/option 0 and blue id 183/option 1. Projects actor x/y on each helper call before zero-frame emission gate, preserving stored effect origin/z. Zero plays exact case-sensitive EF_hit2 wave, then eight screen streaks at 45-degree base-angle increments with 48 RNG draws: duration, roll jitter, speed, width, height, radial offset. Source duration/drag, width shrink, height growth/acceleration, alpha 0/rise max*0.125, fade -1, bottom-pivot pattern 1 and alternating lens1/lens2 textures preserved.
+- HighPriest.exe.c:420528-420542 -> ProcessHit2Blue, id 183. Calls blue helper only on zero, sends mode 135/1 at 3/7/9, and processes STR(0,-80,0) every call with its return propagated. Normal id 1 directly calls option0; existing STR initialization for id 183 remains available. Other caller 401 is not newly ported.
+- Ref/RagEffectPrim.cpp:77-224 -> UpdateReferenceScreenTexture (renamed from SandWind-only updater), now handles reachable Hit2 speed/width/height acceleration and roll integration as well as SandWind drift. Steering remains conditional on pattern 8, so Hit2's pattern 1 consumes no extra RNG or zero-divisor operation. Original alpha/texture-animation order retained.
+- Ref/RagEffectPrim.cpp:2722-2850 -> RenderReferenceScreenTexture (renamed from SandWind-only renderer), now preserves original integer-degree roll, centered/bottom-origin pivot, source float/double rotation temporaries, corner/UV order, half-pixel coordinates, fixed depth/oow, stored color/current texture and hard-coded alpha flag 1. Ids 1/183/46 bind this path. Other 2D control branches remain open.
+
+Validation: release build, six silent C++ suites / 810 checks (640 lifecycle/primitive, 112 rendering, 58 other), six Python tests, three-literal executable byte audit and whitespace check pass. Added 14 lifecycle/emitter/control checks and four geometry checks. Exact wave 0x719BC8 and lenses 0x71A490/0x71A3A4 match executable bytes. Checks cover ordered RNG, both variants, projected versus stored position, alternating resources, size/alpha updates, mode messages/STR propagation, rotated bottom pivot and UV/depth/color. No media/live acceptance. Approved OldRO SHA-256: `28BE7F7163758DF31F6029B961AD378C0A2950F51EBFB729A0789DAC404826C3`. Other callers/hit variants/primitive controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Pierce emitter / repeated shrinking hit bursts — 2026-10-26
 

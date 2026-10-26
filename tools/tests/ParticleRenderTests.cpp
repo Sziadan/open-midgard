@@ -280,7 +280,7 @@ int main() {
         CTexture secondTexture;CEffectPrim sand;sand.m_pos={100,200,900};sand.m_widthSize=30;sand.m_heightSize=30;sand.m_argb=0x80FFFFFF;
         sand.m_texture={&g_texMgr.texture,&secondTexture};sand.m_curMotion=1;sand.m_renderFlag=0x205;
         auto renderSand=[&](){g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaNoDepthList.clear();
-            RenderSandWindScreenTexture(sand);};
+            RenderReferenceScreenTexture(sand);};
         renderSand();check(g_renderer.m_rpAlphaList.size()==2,"SandWind submits exactly two screen triangles");
         auto* first=g_renderer.m_rpAlphaList[0].second;auto* second=g_renderer.m_rpAlphaList[1].second;
         check(first->m_verts[0].x==69.5f&&first->m_verts[0].y==229.5f&&first->m_verts[1].x==69.5f&&first->m_verts[1].y==169.5f
@@ -295,6 +295,22 @@ int main() {
             "SandWind uses original hard-coded alpha flag one regardless of renderFlag");
         sand.m_argb=0;renderSand();check(g_renderer.m_rpAlphaList.size()==2&&g_renderer.m_rpAlphaList[0].second->m_verts[0].color==0,"SandWind retains source zero-alpha submissions");
         sand.m_texture[1]=&CTexMgr::s_dummy_texture;renderSand();check(g_renderer.m_rpAlphaList.empty(),"SandWind missing texture draws no glow substitute");
+    }
+    {
+        CEffectPrim hit;hit.m_pos={100,200,900};hit.m_widthSize=10;hit.m_heightSize=20;hit.m_pattern=1;hit.m_argb=0x1F7878FF;
+        hit.m_texture={&g_texMgr.texture};
+        auto renderHit=[&](){g_renderer.m_rpAlphaList.clear();RenderReferenceScreenTexture(hit);};
+        renderHit();auto* first=g_renderer.m_rpAlphaList[0].second;
+        check(g_renderer.m_rpAlphaList.size()==2&&first->m_verts[0].x==89.5f&&first->m_verts[0].y==199.5f
+            &&first->m_verts[1].x==89.5f&&first->m_verts[1].y==159.5f&&first->m_verts[2].x==109.5f&&first->m_verts[2].y==199.5f,
+            "Hit2 bottom-pivot geometry extends twice source height above anchor");
+        hit.m_roll=90.9f;renderHit();first=g_renderer.m_rpAlphaList[0].second;
+        check(near(first->m_verts[0].x,99.5f)&&near(first->m_verts[0].y,189.5f)&&near(first->m_verts[1].x,139.5f)
+            &&near(first->m_verts[1].y,189.5f)&&near(first->m_verts[2].y,209.5f),"Hit2 screen renderer truncates roll before source trig-table rotation");
+        check(first->m_verts[0].color==0x1F7878FF&&first->m_verts[0].z==0.000001f&&first->m_verts[0].oow==0.99999899f,
+            "Hit2 retains packed blue tint and original fixed screen depth");
+        check(first->m_verts[0].tu==0&&first->m_verts[0].tv==1&&first->m_verts[1].tu==0&&first->m_verts[1].tv==0
+            &&first->m_verts[2].tu==1&&first->m_verts[2].tv==1,"Hit2 preserves source UVs after rotated bottom pivot");
     }
     {
         CEffectPrim circle;circle.m_numSegments=2;circle.m_size=2;circle.m_arcAngle=90;circle.m_renderFlag=0x201;

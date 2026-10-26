@@ -2165,15 +2165,29 @@ void RenderReferenceCrossTexture(const CEffectPrim& prim, const matrix& view)
     }
 }
 
-// Ref/RagEffectPrim.cpp:2722-2850 (0x644DD0), reachable SandWind profile.
-// Fixed roll zero and centered dimensions: source screen triangles, no projection.
-void RenderSandWindScreenTexture(const CEffectPrim& prim)
+// Ref/RagEffectPrim.cpp:2722-2850 (0x644DD0), centered/bottom-pivot
+// screen triangles with integer-degree roll; no world projection/scaling.
+void RenderReferenceScreenTexture(const CEffectPrim& prim)
 {
     if (prim.m_curMotion < 0 || prim.m_curMotion >= static_cast<int>(prim.m_texture.size())) return;
     CTexture* texture = prim.m_texture[static_cast<size_t>(prim.m_curMotion)];
     if (!texture || texture == &CTexMgr::s_dummy_texture) return;
     const float x = prim.m_pos.x, y = prim.m_pos.y, w = prim.m_widthSize, h = prim.m_heightSize;
-    const vector3d corners[4] = {{-w,h,0},{-w,-h,0},{w,h,0},{w,-h,0}};
+    const float sine = GetSin(static_cast<int>(prim.m_roll));
+    const double cosine = GetCos(static_cast<int>(prim.m_roll));
+    const double top = (prim.m_pattern & 1) != 0 ? static_cast<double>(h) * -2.0 : -static_cast<double>(h);
+    const float bottom = (prim.m_pattern & 1) != 0 ? 0.0f : h;
+    const float leftCos = static_cast<float>(-static_cast<double>(w) * cosine);
+    const float topSin = static_cast<float>(top * sine), topCos = static_cast<float>(top * cosine);
+    const double leftSin = -static_cast<double>(w) * sine, rightCos = static_cast<double>(w) * cosine;
+    const float rightCosStored = static_cast<float>(rightCos);
+    const double rightSin = static_cast<double>(w) * sine;
+    const float rightSinStored = static_cast<float>(rightSin), bottomSin = bottom * sine;
+    const double bottomCos = bottom * cosine;
+    const float bottomCosStored = static_cast<float>(bottomCos);
+    const float localX[4] = {leftCos-bottomSin,leftCos-topSin,rightCosStored-bottomSin,static_cast<float>(rightCos-topSin)};
+    const double localY[4] = {bottomCos+leftSin,static_cast<float>(leftSin+topCos),
+        static_cast<float>(bottomCosStored+rightSinStored),static_cast<float>(rightSin+topCos)};
     const int order[2][3] = {{0,1,2},{2,1,3}};
     const float uv[4][2] = {{0,1},{0,0},{1,1},{1,0}};
     for (const auto& triangle : order) {
@@ -2186,8 +2200,8 @@ void RenderSandWindScreenTexture(const CEffectPrim& prim)
         for (int i = 0; i < 3; ++i) {
             const int corner = triangle[i];
             tlvertex3d& vertex = face->m_verts[i];
-            vertex.x = static_cast<float>(static_cast<double>(corners[corner].x) + x - 0.5);
-            vertex.y = static_cast<float>(static_cast<double>(corners[corner].y) + y - 0.5);
+            vertex.x = static_cast<float>(static_cast<double>(localX[corner]) + x - 0.5);
+            vertex.y = static_cast<float>(localY[corner] + y - 0.5);
             vertex.z = 0.000001f; vertex.oow = 0.99999899f;
             vertex.color = prim.m_argb; vertex.specular = 0xFF000000u;
             vertex.tu = uv[corner][0]; vertex.tv = uv[corner][1];
@@ -2643,6 +2657,8 @@ CEffectPrim::CEffectPrim()
     , m_alphaDelta(1.0f)
     , m_minAlpha(0.0f)
     , m_widthSize(0.0f)
+    , m_widthSpeed(0.0f)
+    , m_widthAccel(0.0f)
     , m_size(1.0f)
     , m_sizeSpeed(0.0f)
     , m_sizeAccel(0.0f)
@@ -6251,18 +6267,25 @@ bool UpdateReferenceGravityParticle(CEffectPrim* prim)
     return AnimateReferenceParticle(prim);
 }
 
-// Ref/RagEffectPrim.cpp:77-224 (0x641760), reachable SandWind profile:
-// pattern 8, fixed dimensions/roll/color, no change point or acceleration.
-bool UpdateSandWindScreenTexture(CEffectPrim* prim)
+// Ref/RagEffectPrim.cpp:77-224 (0x641760), reachable SandWind/Hit2:
+// projected anchor, size acceleration and pattern-8 drift; no change points.
+bool UpdateReferenceScreenTexture(CEffectPrim* prim)
 {
     const vector3d anchor = prim->m_master->ScreenPosition();
     prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
     prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
+    prim->m_speed += prim->m_accel;
+    prim->m_rollSpeed += prim->m_rollAccel;
+    prim->m_widthSpeed += prim->m_widthAccel;
+    prim->m_heightSpeed += prim->m_heightAccel;
+    prim->m_roll += prim->m_rollSpeed;
+    prim->m_widthSize += prim->m_widthSpeed;
+    prim->m_heightSize += prim->m_heightSpeed;
     prim->m_deltaPos.x = static_cast<float>(static_cast<double>(GetSin(static_cast<int>(prim->m_longitude))) * prim->m_speed + prim->m_deltaPos.x);
     prim->m_deltaPos.y = static_cast<float>(prim->m_deltaPos.y - static_cast<double>(GetCos(static_cast<int>(prim->m_longitude))) * prim->m_speed);
     prim->m_pos.x += prim->m_deltaPos.x;
     prim->m_pos.y += prim->m_deltaPos.y;
-    if (prim->m_stateCnt % prim->m_count == 0) {
+    if ((prim->m_pattern & 8) != 0 && prim->m_stateCnt % prim->m_count == 0) {
         prim->m_longitude = static_cast<float>(prim->m_longitude - 8.0 + rand() % 16);
         prim->m_count = rand() % 10 + 10;
     }
@@ -6643,7 +6666,8 @@ bool CEffectPrim::UsesReferenceCrossTexture() const
 
 bool CEffectPrim::UsesReferenceScreenTexture() const
 {
-    return m_type == PP_2DTEXTURE && m_master && m_master->GetEffectType() == 46;
+    return m_type == PP_2DTEXTURE && m_master
+        && (m_master->GetEffectType() == 1 || m_master->GetEffectType() == 183 || m_master->GetEffectType() == 46);
 }
 
 bool CEffectPrim::UsesReferenceParticle() const
@@ -6923,7 +6947,7 @@ bool CEffectPrim::ProcessPrimitiveFrame()
         return UpdateCrossTexturePrimitive(this);
     }
     if (UsesReferenceScreenTexture()) {
-        return UpdateSandWindScreenTexture(this);
+        return UpdateReferenceScreenTexture(this);
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DFLASH || m_type == PP_2DCIRCLE) {
         return UpdateScreenTexturePrimitive(this);
@@ -6965,7 +6989,7 @@ void CEffectPrim::Render(matrix* viewMatrix)
         return;
     }
     if (UsesReferenceScreenTexture()) {
-        RenderSandWindScreenTexture(*this);
+        RenderReferenceScreenTexture(*this);
         return;
     }
     if (UsesReferenceCircle()) {
@@ -7927,7 +7951,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 18: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184:
+    case 0: case 1: case 18: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -9522,6 +9546,56 @@ void CRagEffect::SpawnPierce()
         for (int i = 0; i < 4; ++i) LaunchHitParticle(this, facing, false, false, true);
         for (int i = 0; i < 4; ++i) LaunchHitParticle(this, facing, true, false, true);
     }
+}
+
+// Ref/RagEffect.cpp:5230-5323 (0x5F2100), original Hit2 options 0/1.
+void CRagEffect::SpawnHit2(int option)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!master || !mode || !mode->m_view) return;
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos, mode->m_view->GetViewMatrix(), projected);
+    m_tlvertX = projected.x; m_tlvertY = projected.y;
+    if (m_stateCnt != 0) return;
+    if (mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_hit2.wav", m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    for (int i = 0; i < 8; ++i) {
+        const float angle = static_cast<float>(i * 45);
+        CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE, vector3d{});
+        prim->m_pattern = 1;
+        prim->m_duration = rand() % 20 + 10;
+        prim->m_roll = static_cast<float>(angle - 15.0 + rand() % 30);
+        prim->m_longitude = prim->m_roll;
+        prim->m_speed = static_cast<float>(static_cast<double>(rand() % 45 + 5) * 0.1);
+        prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -0.5);
+        prim->m_widthSize = static_cast<float>(rand() % 15 + 5);
+        prim->m_heightSize = static_cast<float>(rand() % 20 + 20);
+        prim->m_widthSpeed = static_cast<float>(-(prim->m_widthSize / static_cast<double>(prim->m_duration)));
+        prim->m_heightSpeed = 1.5f; prim->m_heightAccel = 0.25f;
+        const float length = static_cast<float>(rand() % 5);
+        prim->m_deltaPos2.x = GetSin(static_cast<int>(angle)) * length;
+        prim->m_deltaPos2.y = static_cast<float>(-(GetCos(static_cast<int>(angle)) * length));
+        prim->m_deltaPos2.y = static_cast<float>(prim->m_deltaPos2.y - 20.0);
+        if (option != 0) prim->m_tintColor = RGB(120,120,255);
+        prim->m_alpha = 0.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.125);
+        prim->m_gi[0].life = 0;
+        prim->m_fadeOutCnt = -1; prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+        prim->m_texture.push_back(g_texMgr.GetTexture(i % 2 == 0 ? "effect\\lens1.tga" : "effect\\lens2.tga", false));
+    }
+}
+
+// HighPriest.exe.c:420528-420542, original id 183.
+bool CRagEffect::ProcessHit2Blue()
+{
+    if (m_stateCnt == 0) SpawnHit2(1);
+    else if (m_stateCnt == 3 || m_stateCnt == 7 || m_stateCnt == 9) {
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) mode->SendMsg(135,1,0,0);
+    }
+    return ProcessEZ2STR(0.0f,-80.0f,0.0f);
 }
 
 // Ref/RagEffect.cpp:7202-7261 (0x5F9170). The angle truncates before
@@ -12816,6 +12890,11 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 1) {
+        SpawnHit2(0);
+        return true;
+    }
+    if (m_type == 183) return ProcessHit2Blue();
     if (m_type == 81) {
         SpawnPierce();
         return true;

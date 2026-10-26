@@ -46,7 +46,8 @@ struct CTexture { int m_w = 64, m_h = 64, m_updateWidth = 32, m_updateHeight = 1
 struct TexMgr {
     CTexture texture;
     const char* lastPath = nullptr;
-    CTexture* GetTexture(const char* path, bool) { lastPath = path; return &texture; }
+    std::vector<std::string> requests;
+    CTexture* GetTexture(const char* path, bool) { lastPath = path; requests.emplace_back(path); return &texture; }
 } g_texMgr;
 u32 resourceTick = 123;
 u32 timeGetTime() { return resourceTick; }
@@ -162,7 +163,7 @@ bool UpdateLinearReferenceParticle(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
-bool UpdateSandWindScreenTexture(CEffectPrim*);
+bool UpdateReferenceScreenTexture(CEffectPrim*);
 bool UpdateReferenceGravityParticle(CEffectPrim*);
 bool UpdateWarpZoneOrbit(CEffectPrim*);
 struct CEffectPrim : CGameObject {
@@ -173,7 +174,7 @@ struct CEffectPrim : CGameObject {
     u32 m_renderFlag = 1;
     int m_stateCnt = 0, m_duration = 10, updates = 0, observedFrame = -1, resetFrame = -1;
     int m_pattern = 0, m_spawnCount = 0, m_fadeOutCnt = 0;
-    float m_outerSize = 0, m_arcAngle = 36, m_maxHeightSize = 100, m_widthSize=0;
+    float m_outerSize = 0, m_arcAngle = 36, m_maxHeightSize = 100, m_widthSize=0,m_widthSpeed=0,m_widthAccel=0;
     float m_outerSpeed=0,m_outerAccel=0,m_heightSpeed=0,m_heightAccel=0;
     int m_totalTexture=1;
     float m_size = 1, m_heightSize = 0, m_longitude = 0, m_latitude = 0, m_speed = 0, m_accel = 0;
@@ -219,7 +220,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
         if (m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle() && !UpdateReferenceGravityParticle(this)) return false;
-        if (UsesReferenceScreenTexture() && !UpdateSandWindScreenTexture(this)) return false;
+        if (UsesReferenceScreenTexture() && !UpdateReferenceScreenTexture(this)) return false;
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
         if (UsesReferenceCylinder() && !UpdateReferenceCylinderState(this)) return false;
         if (m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle() && !UpdateWarpZoneOrbit(this)) return false;
@@ -285,6 +286,8 @@ struct CRagEffect : CGameObject {
     void SpawnHitDark();
     void SpawnHit(bool);
     void SpawnPierce();
+    void SpawnHit2(int);
+    bool ProcessHit2Blue();
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -2236,6 +2239,47 @@ int main()
         check(effect.m_primList.empty()&&rngDraws==beforeEnd,"Pierce level-three window excludes frame sixty");
         effect.m_stateCnt=0;effect.m_level=0;effect.SpawnPierce();check(effect.m_primList.empty(),"Pierce zero level has no invented minimum burst");
         check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,"Pierce cleanup balances all sprite/action locks");g_session.m_isMinEffect=false;
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=1;effect.m_master=&actor;effect.m_duration=100;effect.m_effectPos={30,50,40};effect.m_tlvertZ=123;
+        waveCalls.clear();g_texMgr.requests.clear();const int draws=rngDraws;rngValues={19,29,44,14,19,4};rngCursor=0;
+        effect.SpawnHit2(0);auto* prim=effect.m_primList.front();
+        check(effect.m_primList.size()==8&&rngDraws==draws+48,"Hit2 emits eight screen streaks with six ordered RNG draws each");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_hit2.wav"&&waveCalls[0].x==28&&waveCalls[0].y==0&&waveCalls[0].z==36
+            &&waveCalls[0].frameRng==draws,"Hit2 plays exact case-sensitive stored-origin wave before emission draws");
+        tlvertex3d expected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,expected);
+        check(effect.m_tlvertX==expected.x&&effect.m_tlvertY==expected.y&&effect.m_tlvertZ==123&&effect.m_effectPos.x==30,
+            "Hit2 projects actor x/y without replacing stored origin or z");
+        check(prim->UsesReferenceScreenTexture()&&prim->m_pattern==1&&prim->m_duration==29&&prim->m_roll==14&&prim->m_longitude==14
+            &&prim->m_speed==4.9f&&prim->m_widthSize==19&&prim->m_heightSize==39&&prim->m_deltaPos2.x==0&&prim->m_deltaPos2.y==-24,
+            "Hit2 preserves duration roll speed width height offset draw order and bottom pivot profile");
+        check(prim->m_widthSpeed==static_cast<float>(-19.0/29)&&prim->m_heightSpeed==1.5f&&prim->m_heightAccel==0.25f
+            &&prim->m_alpha==0&&prim->m_alphaSpeed==31.75f&&prim->m_maxAlpha==254&&prim->m_fadeOutCnt==-1,
+            "Hit2 restores original width shrink height acceleration alpha rise and constructor fade");
+        bool alternating=g_texMgr.requests.size()==8;for(size_t i=0;i<g_texMgr.requests.size();++i)
+            alternating=alternating&&g_texMgr.requests[i]==(i%2==0?"effect\\lens1.tga":"effect\\lens2.tga");
+        check(alternating,"Hit2 alternates exact lens textures in original streak order");
+        prim->m_alphaDelta=1;prim->OnProcess();
+        check(prim->m_widthSize<19&&prim->m_heightSize==40.75f&&prim->m_alpha==31.75f&&prim->m_curMotion==0,
+            "Hit2 update integrates size acceleration and alpha before source texture animation");
+        check(prim->m_roll==14&&prim->m_longitude==14&&rngDraws==draws+48,"Hit2 pattern-one update avoids SandWind steering and extra RNG");
+        actor.m_pos.x=20;effect.m_stateCnt=1;effect.SpawnHit2(0);ProjectReferenceEffectVertex(actor.m_pos,testView.view,expected);
+        check(effect.m_primList.size()==8&&effect.m_tlvertX==expected.x&&waveCalls.size()==1,"Hit2 nonzero calls refresh projection without repeat emission/audio");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+        effect.m_type=183;effect.m_stateCnt=0;const int beforeMessages=gameMode.messages;
+        check(!effect.ProcessHit2Blue()&&effect.m_primList.size()==8,"blue Hit2 propagates missing STR completion after zero-frame emission");
+        prim=effect.m_primList.front();check(prim->UsesReferenceScreenTexture()&&prim->m_tintColor==RGB(120,120,255),"blue Hit2 retains source RGB variant and reference binding");
+        for(int frame:{3,7,9}){effect.m_stateCnt=frame;effect.ProcessHit2Blue();}
+        check(gameMode.messages==beforeMessages+3&&gameMode.lastMsg==135&&gameMode.lastArg==1&&effect.m_primList.size()==8,
+            "blue Hit2 sends only original three mode messages after initial burst");
+        effect.m_stateCnt=8;effect.ProcessHit2Blue();check(gameMode.messages==beforeMessages+3,"blue Hit2 leaves other frames without mode message");
+        auto clip=std::make_unique<KANICLIP>();clip->cLayer=2;KAC_KEYFRAME keys[2];keys[0].iFrame=0;keys[1].iFrame=100;
+        clip->aLayer[1].cAniKey=2;clip->aLayer[1].aAniKey=keys;effect.m_ezEffectRes=clip.get();effect.m_aniClips=clip.get();
+        effect.InitEZ2STRFrame();effect.m_stateCnt=1;
+        check(effect.ProcessHit2Blue()&&effect.m_strScreenOffset.y==-80&&effect.m_strScreenOffset.x==0&&effect.m_strScreenOffset.z==0,
+            "blue Hit2 processes original STR offset and propagates its active result");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
     }
     {
         CRagEffect effect;
