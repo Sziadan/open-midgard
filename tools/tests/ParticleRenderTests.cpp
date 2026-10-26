@@ -313,6 +313,15 @@ int main() {
             &&first->m_verts[2].tu==1&&first->m_verts[2].tv==1,"Hit2 preserves source UVs after rotated bottom pivot");
     }
     {
+        CEffectPrim hit;hit.m_pos={100,200,900};hit.m_widthSize=10;hit.m_heightSize=20;hit.m_pattern=0;hit.m_roll=90;
+        hit.m_argb=0xFEFFFFFF;hit.m_texture={&g_texMgr.texture};g_renderer.m_rpAlphaList.clear();RenderReferenceScreenTexture(hit);
+        auto* face=g_renderer.m_rpAlphaList[0].second;
+        check(near(face->m_verts[0].x,79.5f)&&near(face->m_verts[0].y,189.5f)&&near(face->m_verts[1].x,119.5f)
+            &&near(face->m_verts[1].y,189.5f)&&near(face->m_verts[2].x,79.5f)&&near(face->m_verts[2].y,209.5f),
+            "Hit5/6 centered rotated geometry retains source pivot rather than Hit2 bottom origin");
+        check(face->m_verts[0].color==0xFEFFFFFF&&face->srcAlphaMode==5&&face->destAlphaMode==6,"Hit5/6 screen streaks preserve stored alpha and ordinary alpha blend");
+    }
+    {
         CEffectPrim circle;circle.m_numSegments=2;circle.m_size=2;circle.m_arcAngle=90;circle.m_renderFlag=0x201;
         circle.m_texture.push_back(&g_texMgr.texture);
         for(int i=0;i<4;++i)circle.m_matrix.m[i][i]=1;

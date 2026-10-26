@@ -6275,10 +6275,11 @@ bool UpdateReferenceScreenTexture(CEffectPrim* prim)
     prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
     prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
     prim->m_speed += prim->m_accel;
-    prim->m_rollSpeed += prim->m_rollAccel;
+    const double rollSpeed = static_cast<double>(prim->m_rollAccel) + prim->m_rollSpeed;
+    prim->m_rollSpeed = static_cast<float>(rollSpeed);
     prim->m_widthSpeed += prim->m_widthAccel;
     prim->m_heightSpeed += prim->m_heightAccel;
-    prim->m_roll += prim->m_rollSpeed;
+    prim->m_roll = static_cast<float>(rollSpeed + prim->m_roll);
     prim->m_widthSize += prim->m_widthSpeed;
     prim->m_heightSize += prim->m_heightSpeed;
     prim->m_deltaPos.x = static_cast<float>(static_cast<double>(GetSin(static_cast<int>(prim->m_longitude))) * prim->m_speed + prim->m_deltaPos.x);
@@ -6667,7 +6668,7 @@ bool CEffectPrim::UsesReferenceCrossTexture() const
 bool CEffectPrim::UsesReferenceScreenTexture() const
 {
     return m_type == PP_2DTEXTURE && m_master
-        && (m_master->GetEffectType() == 1 || m_master->GetEffectType() == 183 || m_master->GetEffectType() == 46);
+        && (m_master->GetEffectType() == 4 || m_master->GetEffectType() == 5 || m_master->GetEffectType() == 1 || m_master->GetEffectType() == 183 || m_master->GetEffectType() == 46);
 }
 
 bool CEffectPrim::UsesReferenceParticle() const
@@ -7951,7 +7952,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 18: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 18: case 35: case 36: case 45: case 46: case 61: case 81: case 180: case 184:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -9665,6 +9666,52 @@ void CRagEffect::SpawnHit4()
     prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
     prim->m_texture.push_back(g_texMgr.GetTexture("effect\\lens2.tga",false));
     for (int i = 0; i < 5; ++i) LaunchHitParticle(this,facing,false,false,true);
+}
+
+// Ref/RagEffect.cpp:5585-5739 (0x5F2FA0/0x5F3220), Hit5/Hit6.
+void CRagEffect::SpawnCrossLensHit(bool compact)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!master || !mode || !mode->m_view) return;
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos,mode->m_view->GetViewMatrix(),projected);
+    m_tlvertX = projected.x; m_tlvertY = projected.y;
+    if (m_stateCnt != 0) return;
+    if (mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave(compact ? "effect\\EF_hit6.wav" : "effect\\EF_hit5.wav",
+            m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+    }
+    const int angle = rand() % 360;
+    for (int i = 0; i < 2; ++i) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE,vector3d{});
+        prim->m_duration = 17;
+        prim->m_deltaPos2.y = -20.0f;
+        prim->m_roll = static_cast<float>(angle + 90 * i);
+        prim->m_rollSpeed = -5.0f;
+        prim->m_rollAccel = static_cast<float>(prim->m_rollSpeed / static_cast<double>(prim->m_duration) * -0.66666669);
+        prim->m_widthSize = static_cast<float>(rand() % 5 + (compact ? 10 : 20));
+        prim->m_heightSize = static_cast<float>(rand() % (compact ? 5 : 10) + (compact ? 15 : 30));
+        prim->m_widthSpeed = static_cast<float>(-(prim->m_widthSize / static_cast<double>(prim->m_duration)));
+        prim->m_heightSpeed = compact ? 1.7f : 2.5f;
+        prim->m_heightAccel = 0.5f;
+        prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 2;
+        prim->m_alpha = 254.0f; prim->m_maxAlpha = 254.0f;
+        prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\lens2.tga",false));
+        prim->m_gi[0].life = 0;
+    }
+}
+
+void CRagEffect::SpawnHit5()
+{
+    SpawnCrossLensHit(false);
+}
+
+void CRagEffect::SpawnHit6()
+{
+    SpawnCrossLensHit(true);
 }
 
 // Ref/RagEffect.cpp:7202-7261 (0x5F9170). The angle truncates before
@@ -12959,6 +13006,14 @@ u8 CRagEffect::ProcessWorldEffect()
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
+    if (m_type == 4) {
+        SpawnHit5();
+        return true;
+    }
+    if (m_type == 5) {
+        SpawnHit6();
+        return true;
+    }
     if (m_type == 3) {
         SpawnHit4();
         return true;

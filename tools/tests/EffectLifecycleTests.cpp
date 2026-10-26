@@ -290,6 +290,9 @@ struct CRagEffect : CGameObject {
     bool ProcessHit2Blue();
     void SpawnHit3();
     void SpawnHit4();
+    void SpawnHit5();
+    void SpawnHit6();
+    void SpawnCrossLensHit(bool);
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -2350,6 +2353,47 @@ int main()
         check(effect.m_tlvertX==expected.x&&effect.m_tlvertY==expected.y&&effect.m_primList.size()==6&&waveCalls.size()==1,
             "Hit4 refreshes actor projection before nonzero emission gate without repeat burst/audio");
         effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,"Hit4 cleanup balances all sprite/action locks");
+        g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        for(int id:{4,5}){
+            auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_type=id;effect.m_master=&actor;effect.m_duration=100;
+            effect.m_effectPos={30,50,40};effect.m_tlvertZ=123;waveCalls.clear();g_texMgr.requests.clear();const int draws=rngDraws;
+            rngValues={359,4,9,0,0};rngCursor=0;g_session.m_isMinEffect=true;
+            if(id==4)effect.SpawnHit5();else effect.SpawnHit6();auto it=effect.m_primList.begin();auto* first=*it++;auto* second=*it;
+            check(effect.m_primList.size()==2&&rngDraws==draws+5&&rngCursor==5,"Hit5/6 consume one shared angle draw then two size draws per streak");
+            check(first->UsesReferenceScreenTexture()&&second->UsesReferenceScreenTexture()&&first->m_type==PP_2DTEXTURE,
+                "Hit5/6 use reference screen-texture state and renderer");
+            check(first->m_roll==359&&second->m_roll==449&&first->m_pattern==0&&second->m_pattern==0,
+                "Hit5/6 preserve unwrapped perpendicular angles and centered constructor pattern");
+            check(first->m_duration==17&&first->m_deltaPos2.y==-20&&first->m_rollSpeed==-5
+                &&first->m_rollAccel==static_cast<float>(-5.0/17*-0.66666669)&&first->m_fadeOutCnt==9,
+                "Hit5/6 preserve source lifetime anchor roll acceleration and fade");
+            check(first->m_widthSize==(id==4?24:14)&&first->m_heightSize==(id==4?39:19)&&second->m_widthSize==(id==4?20:10)
+                &&second->m_heightSize==(id==4?30:15),"Hit5/6 retain distinct source width and height RNG ranges");
+            check(first->m_heightSpeed==(id==4?2.5f:1.7f)&&first->m_heightAccel==0.5f&&first->m_alpha==254&&first->m_alphaSpeed==0
+                &&first->m_maxAlpha==254&&first->m_animSpeed==4&&first->m_repeatAnim&&first->m_gi[0].life==0,
+                "Hit5/6 preserve distinct growth speeds and original alpha animation GI defaults");
+            check(g_texMgr.requests==std::vector<std::string>({"effect\\lens2.tga","effect\\lens2.tga"}),"Hit5/6 load exact lens-two texture for each streak");
+            check(waveCalls.size()==1&&waveCalls[0].name==(id==4?"effect\\EF_hit5.wav":"effect\\EF_hit6.wav")&&waveCalls[0].x==28
+                &&waveCalls[0].y==0&&waveCalls[0].z==36&&waveCalls[0].frameRng==draws,"Hit5/6 use distinct exact stored-origin waves before RNG");
+            tlvertex3d expected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,expected);
+            check(effect.m_tlvertX==expected.x&&effect.m_tlvertY==expected.y&&effect.m_tlvertZ==123&&effect.m_effectPos.x==30,
+                "Hit5/6 update actor projection while preserving stored origin and z");
+            const float initialHeight=first->m_heightSize,initialWidth=first->m_widthSize;const double rollSpeed=first->m_rollSpeed+static_cast<double>(first->m_rollAccel);
+            first->m_alphaDelta=1;first->OnProcess();
+            check(first->m_roll==static_cast<float>(359+rollSpeed)&&first->m_rollSpeed==static_cast<float>(rollSpeed)
+                &&first->m_widthSize<initialWidth&&first->m_heightSize>initialHeight,"Hit5/6 keep extended-precision roll integration with shrink and height growth");
+            check(first->m_pos.x==expected.x&&first->m_pos.y==expected.y-20&&first->m_alpha==254&&first->m_curMotion==0,
+                "Hit5/6 stationary screen anchor and source alpha persist through first animation wrap");
+            first->m_stateCnt=9;first->OnProcess();check(first->m_alphaSpeed==-31.75f&&first->m_alpha==222.25f,
+                "Hit5/6 begin current-alpha fade exactly at frame nine");
+            effect.m_stateCnt=1;actor.m_pos.x+=10;if(id==4)effect.SpawnHit5();else effect.SpawnHit6();ProjectReferenceEffectVertex(actor.m_pos,testView.view,expected);
+            check(effect.m_tlvertX==expected.x&&effect.m_primList.size()==2&&waveCalls.size()==1&&rngDraws==draws+5,
+                "Hit5/6 refresh projection on nonzero frames without repeated emission sound or draws");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
         g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     {

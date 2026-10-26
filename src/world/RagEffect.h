@@ -537,6 +537,9 @@ private:
     bool ProcessHit2Blue();
     void SpawnHit3();
     void SpawnHit4();
+    void SpawnHit5();
+    void SpawnHit6();
+    void SpawnCrossLensHit(bool compact);
     void SpawnRuwach();
     void SpawnBlueFall();
     void SpawnWeatherCloud();

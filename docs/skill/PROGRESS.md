@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Hit4 emitter, after Hit3 checkpoint `dabe8fe`. Original id3 now preserves projection-before-gate, its distinct growing cylinder, source audio and five-sprite shrinking burst.
+Current work: WP5A Hit5/Hit6 emitters, after Hit4 checkpoint `7925aee`. Original ids4/5 now preserve paired rotating screen streaks, distinct source profiles/audio and original roll integration precision.
 
-Next action: continue Hit5 and remaining hit callers (including Hit2 caller401), other emitters and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue remaining hit callers (including Hit2 caller401), other emitters and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Hit5 / Hit6 rotating screen streaks — 2026-10-26
+
+- Ref/RagEffect.cpp:5585-5659 (0x5F2FA0) and 5666-5739 (0x5F3220) -> SpawnHit5/SpawnHit6 through shared SpawnCrossLensHit, original ids 4/5. Both project actor x/y before the frame gate on every call, preserving stored world origin/z. Zero frame plays the distinct stored-origin horizontal wave before emission; reduced-effects mode does not suppress either helper.
+- Two centered pattern0 lens2 screen streaks share one rand()%360 angle; second roll is raw angle+90 without wrapping. Width/height each draw separately, for five draws total. Both use duration17, screen offset y-20, roll speed-5 and source roll acceleration, width shrink, height acceleration0.5, fade9, constructor alpha/max254, divisor4/repeat and GI life0. Hit5 uses width20..24/height30..39/growth2.5; Hit6 uses width10..14/height15..19/growth1.7.
+- Reference screen updater/rendering now bind ids4/5. Roll integration retains the original extended double speed sum through the roll addition before rounding the fields, matching Ref/RagEffectPrim.cpp:77-224. Centered integer-angle geometry uses the existing source screen renderer (0x644DD0); broader 2D control branches remain open.
+
+Validation: release build, six silent C++ suites / 865 checks (693 lifecycle/primitive, 114 rendering, 58 other), six Python tests, three-literal executable byte audit and whitespace check pass. Added 26 lifecycle and two rendering checks for ordered RNG/audio, raw359/449 angles, distinct profiles, projection/origin, precision, fade, no repeat, centered rotated geometry and cleanup. Exact waves 0x71B22C/0x71B240 and lens2 texture 0x71A3A4 match executable bytes. Renamed a Windows-macro-conflicting parameter before the successful production build. No media/live acceptance. Approved OldRO SHA-256: `38674D640DAE032130C0B589E90026BD407DBDB3AAA5AAFFF5CE77DE80DBCAD3`. Hit1 through Hit6 helpers are now migrated; Hit2 caller401, other emitters/primitive controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Hit4 emitter / projected actor and growing cylinder — 2026-10-26
 
