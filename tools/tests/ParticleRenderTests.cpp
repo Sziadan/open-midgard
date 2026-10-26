@@ -129,6 +129,7 @@ int main() {
     for(int i=0;i<=360;++i){g_cosTable[i]=GetCos(i);g_sinTable[i]=GetSin(i);}
     int checks=0,failures=0;
     auto check=[&](bool ok,const char* message){++checks;if(!ok){++failures;std::printf("FAIL: %s\n",message);}};
+    auto near=[](float a,float b){return std::fabs(a-b)<0.0001f;};
     const std::pair<float,u32> castingColors[]={
         {0.0f,0x00FFFFFFu},{1.0f,0x00FFAFAFu},{2.0f,0x00C3C3FFu},{3.0f,0x00FFFFFFu},
         {4.0f,0x006464FFu},{5.0f,0x00FFFFFFu},{6.0f,0x00FF6464u},{7.0f,0x0064FF64u},
@@ -139,13 +140,27 @@ int main() {
     for(const auto& item:castingColors) check(CastingSizeRgb(item.first)==item.second,"casting size tint matches original RenderTeiRect case table");
     check(CastingSizeAlpha(2,175)==175 && CastingSizeAlpha(3,175)==80,
         "casting size three fixes alpha to80 while other sizes retain band alpha");
-    for(const auto& item:std::array<std::pair<int,float>,4>{{{0,100.0f},{45,10.0f},{90,5.0f},{180,3.0f}}}) {
+    for(const auto& item:std::array<std::pair<int,float>,4>{{{0,100.0f},{22,10.0f},{45,5.0f},{90,3.0f}}}) {
         double radialExtended=0;float radialStored=0,vertical=0;
         CastingLowPolygonRise(item.first,item.second,&radialExtended,&radialStored,&vertical);
         check(near(radialExtended,static_cast<double>(GetSin(item.first*4))*item.second)
             && near(radialStored,static_cast<float>(radialExtended))
             && near(vertical,-static_cast<double>(GetCos(item.first*4))*item.second),
             "low polygon casting uses source four-times-angle sine radial and cosine vertical tables");
+    }
+    for(int band=0;band<4;++band) {
+        vector3d inner{},outer{};
+        const int angle=band*45+30, rise=band*20+10;
+        const float height=7.25f,distance=4.5f;
+        CastingGi3Sample(band,angle,rise,height,distance,&inner,&outer);
+        const int rawSide=std::array<int,4>{{450,270,90,630}}[band]-angle;
+        const int side=(rawSide%360+360)%360;
+        const double radius=static_cast<double>(GetCos(rise))*height;
+        check(near(inner.x,GetCos(angle)*distance)&&near(inner.z,GetSin(angle)*distance)
+            && near(outer.x,static_cast<double>(GetCos(side))*radius+inner.x)
+            && near(outer.y,-static_cast<double>(GetSin(rise))*height)
+            && near(outer.z,static_cast<double>(GetSin(side))*radius+inner.z),
+            "GI3 casting sample matches source band rotation and radial/vertical branches");
     }
     const int inverseSizes[]={0,2,3,12,13,14,100};
     for(int size=0;size<=100;++size) {
@@ -154,7 +169,6 @@ int main() {
             "casting destination blend matches original RenderTeiRect case table");
     }
 
-    auto near=[](float a,float b){return std::fabs(a-b)<0.0001f;};
     SprImg indexed;
     indexed.indices={0,1,2,1};
     CSprRes sprites;

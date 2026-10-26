@@ -574,3 +574,5 @@ Validation: release build, six silent C++ suites / 515 checks (386 lifecycle/pri
 5. Build, when code changes need it: `cmake --preset vs2022-x64 -DRO_ENABLE_DEV_DEPLOY=ON` then `cmake --build --preset build-release-x64`.
 
 Latest completed function gate (2026-10-26): `Render3DCasting_LowPolygon` completed source-to-implementation branch comparison and checkpoint validation. Evidence is in `PARITY_LOG.md`; no next function should begin before this comparison passes. The next casting renderer method remains subject to the same mechanical case/branch comparison gate.
+
+Latest completed function gate (2026-10-26): `Render3DCasting2` / PP_GI_3 completed its branch-level source comparison and checkpoint validation. Evidence is in `PARITY_LOG.md`; the next function remains gated on a passed mechanical source-to-implementation comparison.

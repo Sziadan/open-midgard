@@ -3318,6 +3318,21 @@ void CastingLowPolygonRise(int riseAngle, float height, double* radialExtended, 
     *vertical = static_cast<float>(-static_cast<double>(g_cosTable[tableIndex]) * height);
 }
 
+void CastingGi3Sample(int band, int angle, int riseAngle, float height, float distance, vector3d* inner, vector3d* outer)
+{
+    const int wrappedAngle = ((angle % 360) + 360) % 360;
+    inner->x = static_cast<float>(static_cast<double>(g_cosTable[wrappedAngle]) * distance);
+    inner->y = 0.0f;
+    inner->z = static_cast<float>(static_cast<double>(g_sinTable[wrappedAngle]) * distance);
+    const double radial = static_cast<double>(g_cosTable[riseAngle]) * height;
+    const float vertical = static_cast<float>(static_cast<double>(g_sinTable[riseAngle]) * height);
+    const int rotationBase[] = { 450, 270, 90, 630 };
+    const int side = ((rotationBase[band] - wrappedAngle) % 360 + 360) % 360;
+    outer->x = static_cast<float>(static_cast<double>(g_cosTable[side]) * radial + inner->x);
+    outer->y = -vertical;
+    outer->z = static_cast<float>(static_cast<double>(g_sinTable[side]) * radial + inner->z);
+}
+
 unsigned int CastingSizeAlpha(float size, unsigned int alpha)
 {
     return size == 3.0f ? 80u : alpha;
@@ -3399,6 +3414,59 @@ void RenderHealLow(const CEffectPrim& prim, const matrix& viewMatrix)
             previousOuter = outer;
             havePrevious = true;
             keepGoing = basicAngle + count <= gi.fullDisplayAngle;
+            count += basicAngle;
+        }
+    }
+}
+
+void RenderGi3(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    const unsigned int rgb = CastingSizeRgb(prim.m_size);
+    const D3DBLEND blend = CastingSizeBlend(prim.m_size);
+    for (int band = 0; band < 4; ++band) {
+        EffectGi& gi = prim.m_gi[static_cast<size_t>(band)];
+        if (gi.life != 1 || gi.fullDisplayAngle <= 0) {
+            continue;
+        }
+        const int basicAngle = gi.fullDisplayAngle / 9;
+        int count = 0;
+        int sample = 0;
+        bool havePrevious = false;
+        while (count < gi.fullDisplayAngle) {
+            int angle = (gi.rotStart + count) % 360;
+            if (gi.fullDisplayAngle == 360 && sample == 20) {
+                angle = gi.rotStart;
+            }
+            vector3d inner{}, outer{};
+            CastingGi3Sample(band, angle, gi.riseAngle, gi.height[static_cast<size_t>(sample)], gi.distance, &inner, &outer);
+            gi.sparkX = inner.x;
+            gi.sparkY = inner.y;
+            gi.sparkZ = inner.z;
+            gi.vecTNowX = outer.x;
+            gi.vecTNowY = outer.y;
+            gi.vecTNowZ = outer.z;
+            if (havePrevious) {
+                const int part = sample - 1;
+                const float u0 = static_cast<float>(static_cast<double>(part) * 0.047619049);
+                const float u1 = static_cast<float>(static_cast<double>(part + 1) * 0.047619049);
+                const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | rgb;
+                const vector3d previousInnerWorld{ prim.m_pos.x + gi.vecBPreX, prim.m_pos.y + gi.arcBaselineY, prim.m_pos.z + gi.vecBPreZ };
+                const vector3d innerWorld{ prim.m_pos.x + inner.x, prim.m_pos.y + inner.y, prim.m_pos.z + inner.z };
+                const vector3d outerWorld{ prim.m_pos.x + outer.x, prim.m_pos.y + outer.y, prim.m_pos.z + outer.z };
+                const vector3d previousOuterWorld{ prim.m_pos.x + gi.vecTPreX, prim.m_pos.y + gi.vecTPreY, prim.m_pos.z + gi.vecTPreZ };
+                SubmitWorldTeiRect(previousInnerWorld, innerWorld, outerWorld, previousOuterWorld, viewMatrix, texture, color, u0, u1, 1.0f, 0.0f, blend, 0.0f, static_cast<int>(prim.m_renderFlag));
+            }
+            gi.vecBPreX = gi.sparkX;
+            gi.arcBaselineY = gi.sparkY;
+            gi.vecBPreZ = gi.sparkZ;
+            gi.vecTPreX = gi.vecTNowX;
+            gi.vecTPreY = gi.vecTNowY;
+            gi.vecTPreZ = gi.vecTNowZ;
+            if (++sample >= 21) {
+                sample = 20;
+            }
+            havePrevious = true;
             count += basicAngle;
         }
     }
@@ -7441,6 +7509,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     if ((m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting3)
         || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi5) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi1) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeTeleport2) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeHeal) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGiExplosion) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeAcidDemon) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeFlowerCast) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting2) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeMapPillar) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi2)) && !UsesLegacyBandPayload()) {
         RenderHealCasting(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_GI_3) {
+        RenderGi3(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {
