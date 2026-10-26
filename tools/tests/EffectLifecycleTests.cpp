@@ -212,6 +212,7 @@ bool UpdateReferenceTripleAttack(CEffectPrim*);
 void UpdateReferenceHitLine(CEffectPrim*);
 void UpdateReferenceCallZone(CEffectPrim*);
 void UpdateReferenceWaterfallParticle(CEffectPrim*);
+void UpdateReferenceLightSphere(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -326,6 +327,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_HITLINE) { UpdateReferenceHitLine(this); return active; }
         if (m_type == PP_CALLZONE) { UpdateReferenceCallZone(this); return active; }
         if (m_type == PP_WATERFALLPARTICLE) { UpdateReferenceWaterfallParticle(this); return active; }
+        if (m_type == PP_LIGHTSPHERE) { UpdateReferenceLightSphere(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -766,6 +768,7 @@ __declspec(noinline) void RunTripleAttackLifecycleChecks(CEffectPrim& prim, int&
 __declspec(noinline) void RunHitLineLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunCallZoneLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunWaterfallParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunLightSphereLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1242,6 +1245,37 @@ __declspec(noinline) void RunWaterfallParticleLifecycleChecks(CEffectPrim& prim,
         && rngDraws-narrowDraws==3,
         "case 0x50 below-minus-eight respawn uses narrow flag-12 X range without swap and consumes three ordered random values");
     rngValues.clear(); rngCursor=0; g_isSkipFrame=oldSkipFrame;
+    RunLightSphereLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunLightSphereLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_LIGHTSPHERE; prim.m_stateCnt=0; prim.m_duration=1000;
+    for (auto& gi : prim.m_gi) gi={};
+    prim.m_pos={1,2,3}; prim.m_master->m_effectPos={101,102,103};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=500; a.distance=9; a.alphaB=1; a.fullDisplayAngle=350; a.maxHeight=11.75f;
+    EffectGi& b=prim.m_gi[1]; b.life=127; b.process=499; b.distance=10; b.alphaB=0; b.fullDisplayAngle=359; b.maxHeight=2;
+    EffectGi& c=prim.m_gi[2]; c.life=128; c.process=10; c.distance=9; c.alphaB=5; c.fullDisplayAngle=25; c.maxHeight=50;
+    EffectGi& d=prim.m_gi[3]; d.life=255; d.process=20; d.distance=-5; d.alphaB=6; d.fullDisplayAngle=35; d.maxHeight=70;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==101 && prim.m_pos.y==102 && prim.m_pos.z==103
+        && a.process==501 && std::fabs(a.distance-9.18f)<0.0001f && a.alphaB==0 && a.fullDisplayAngle==1
+        && b.process==500 && b.distance==10 && b.alphaB==0 && b.fullDisplayAngle==1
+        && c.process==10 && c.distance==9 && c.alphaB==5 && c.fullDisplayAngle==25
+        && d.process==20 && d.distance==-5 && d.alphaB==6 && d.fullDisplayAngle==35
+        && rngDraws==draws,
+        "case 0x51 copies master, gates signed life bytes, applies strict distance/process/alpha predicates and one angle wrap without RNG");
+
+    c.life=2; c.process=500; c.distance=-5; c.alphaB=2; c.fullDisplayAngle=300; c.maxHeight=500.5f;
+    prim.OnProcess();
+    check(c.process==501 && std::fabs(c.distance+5.1f)<0.0001f && c.alphaB==1 && c.fullDisplayAngle==440,
+        "case 0x51 positive life updates negative distance and subtracts 360 only once after a large angle overflow");
+    g_isSkipFrame=oldSkipFrame;
 }
 
 int main()

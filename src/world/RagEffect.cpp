@@ -8931,6 +8931,25 @@ void UpdateReferenceWaterfallParticle(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:6026; canonical executable 0x613A20 (case 0x51).
+void UpdateReferenceLightSphere(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (static_cast<signed char>(gi.life) <= 0) continue;
+
+        ++gi.process;
+        if (gi.distance < 10.0f) gi.distance *= 1.02f;
+        if (gi.process > 500 && gi.alphaB > 0) --gi.alphaB;
+        const long long angle = static_cast<long long>(
+            static_cast<double>(gi.fullDisplayAngle) + static_cast<double>(gi.maxHeight));
+        gi.fullDisplayAngle = static_cast<short>(angle);
+        if (gi.fullDisplayAngle >= 360) {
+            gi.fullDisplayAngle = static_cast<short>(gi.fullDisplayAngle - 360);
+        }
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -10008,6 +10027,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_WATERFALLPARTICLE) {
         UpdateReferenceWaterfallParticle(this); // Source case 0x50 continues to the common tick.
+        return true;
+    }
+    if (m_type == PP_LIGHTSPHERE) {
+        UpdateReferenceLightSphere(this); // Source case 0x51 continues to the common tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
