@@ -9492,6 +9492,34 @@ void UpdateReferenceAirTexture(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:4891; canonical executable PrimHitLine3 at 0x6122C0 (case 0x64).
+void UpdateReferenceHitLine3(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.process > 35) gi.alphaB = static_cast<short>(gi.alphaB - 5);
+        if (gi.alphaB < 0) gi.alphaB = 0;
+
+        gi.height[0] += 6.0f;
+        if (gi.height[0] > 180.0f) gi.height[0] = 180.0f;
+
+        const int historyLength = static_cast<int>(gi.vecTNowY);
+        for (int index = historyLength; index >= 1; --index) {
+            gi.height[static_cast<size_t>(index)] = gi.height[static_cast<size_t>(index - 1)];
+            gi.flag[static_cast<size_t>(index)] = gi.flag[static_cast<size_t>(index - 1)];
+        }
+
+        const vector3d& masterPosition = prim->m_master->EffectPosition();
+        gi.sparkX = masterPosition.x;
+        gi.sparkY = masterPosition.y;
+        gi.sparkZ = masterPosition.z;
+    }
+}
+
 // Ref/dhxj/RagEffect2.cpp:15246; canonical executable PrimTanji2 at 0x627F30 (case 0x61).
 void UpdateReferenceTanji2(CEffectPrim* prim)
 {
@@ -10703,6 +10731,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_AIRTEXTURE) {
         UpdateReferenceAirTexture(this); // Source case 0x62 ignores the handler's true result.
+        return true;
+    }
+    if (m_type == PP_HITLINE3) {
+        UpdateReferenceHitLine3(this); // Source case 0x64 ignores the handler's true result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

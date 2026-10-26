@@ -228,6 +228,7 @@ void UpdateReferenceEffectTexture2(CEffectPrim*);
 bool UpdateReferencePeongUp(CEffectPrim*);
 void UpdateReferenceTanji2(CEffectPrim*);
 void UpdateReferenceAirTexture(CEffectPrim*);
+void UpdateReferenceHitLine3(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -358,6 +359,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_PEONGUP) { UpdateReferencePeongUp(this); return active; }
         if (m_type == PP_TANJI2) { UpdateReferenceTanji2(this); return active; }
         if (m_type == PP_AIRTEXTURE) { UpdateReferenceAirTexture(this); return active; }
+        if (m_type == PP_HITLINE3) { UpdateReferenceHitLine3(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -826,6 +828,7 @@ __declspec(noinline) void RunEffectTexture2LifecycleChecks(CEffectPrim& prim, in
 __declspec(noinline) void RunPeongUpLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunTanji2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunAirTextureLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunHitLine3LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2046,6 +2049,44 @@ __declspec(noinline) void RunAirTextureLifecycleChecks(CEffectPrim& prim, int& c
     check(gi.process==-1&&std::fabs(gi.distance-40.1f)<0.0001f&&gi.alphaB==62
         &&rngDraws==draws,
         "case 0x62 has no positive-process guard and performs no RNG");
+    g_isSkipFrame=oldSkipFrame;
+    RunHitLine3LifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunHitLine3LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_HITLINE3; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={7,8,9}; prim.m_master->m_effectPos={100,200,300};
+    for(auto& gi:prim.m_gi) gi={};
+    for(int band=0;band<4;++band) {
+        EffectGi& gi=prim.m_gi[static_cast<size_t>(band)];
+        gi.life=1; gi.process=band==0?34:35; gi.alphaB=band==0?20:3;
+        gi.height[0]=band==0?174.0f:band==1?175.0f:band==2?180.0f:181.0f;
+        gi.vecTNowY=3.9f;
+        for(int i=0;i<5;++i) { gi.height[static_cast<size_t>(i)]=static_cast<float>(i+10); gi.flag[static_cast<size_t>(i)]=static_cast<u8>(i+20); }
+        gi.height[0]=band==0?174.0f:band==1?175.0f:band==2?180.0f:181.0f;
+    }
+    prim.m_gi[2].life=0; prim.m_gi[2].process=12; prim.m_gi[2].alphaB=60;
+    prim.m_gi[3].process=-2; prim.m_gi[3].alphaB=60;
+    prim.m_gi[3].height[0]=50; prim.m_gi[3].sparkX=77;
+    const int draws=rngDraws; const float cameraAngle=prim.m_gi[0].alphaT;
+    prim.OnProcess();
+    const EffectGi& a=prim.m_gi[0]; const EffectGi& b=prim.m_gi[1];
+    check(a.process==35&&a.alphaB==20&&a.height[0]==180&&a.height[3]==12&&a.flag[3]==22
+        &&a.sparkX==100&&a.sparkY==200&&a.sparkZ==300,
+        "case 0x64 process thirty-five preserves alpha then advances capped rise history and master position");
+    check(b.process==36&&b.alphaB==0&&b.height[0]==180&&b.height[1]==180&&b.height[2]==11&&b.height[3]==12
+        &&b.flag[1]==20&&b.flag[2]==21&&b.flag[3]==22
+        &&b.sparkX==100&&b.sparkY==200&&b.sparkZ==300,
+        "case 0x64 process thirty-six fades and shifts float-bounded height/flag histories in descending order");
+    check(prim.m_gi[2].process==12&&prim.m_gi[2].alphaB==60&&prim.m_gi[3].process==-1
+        &&prim.m_gi[3].alphaB==60&&prim.m_gi[3].height[0]==50&&prim.m_gi[3].sparkX==77
+        &&prim.m_pos.x==7&&prim.m_gi[0].alphaT==cameraAngle&&rngDraws==draws,
+        "case 0x64 inactive and nonpositive bands skip motion/copy while primitive camera/origin/RNG remain untouched");
     g_isSkipFrame=oldSkipFrame;
 }
 
