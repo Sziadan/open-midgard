@@ -412,7 +412,6 @@ private:
         MapMagicZone,
         MapParticle,
         HideStart,
-        IncAgility,
         EnchantPoison,
         EnchantPoison2,
         Blessing,

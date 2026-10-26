@@ -4,10 +4,19 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Bash id16, after SonicBlow checkpoint `3898e96`. Original full reduced-effects gate, projected fixed disc and twenty source flash rays now use verified primitive paths with exact audio/resources and distinct alpha profiles.
+Current work: WP5A IncAgility/IncAGIDEX ids37/43, after Bash checkpoint `5975bb6`. Shared approximation and fallback candidates are replaced by original overlay/cross profiles, exact variant assets and life99-versus0 skipped-frame behavior.
 
-Next action: continue unported emitters (including IncAgility id37) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters (including DecAgility id38) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## IncAgility / IncAGIDEX source overlays and trails — 2026-10-26
+
+- Ref/RagEffect.cpp:6160-6250 (0x5FA640) and6063-6153 (0x5F46F0) -> SpawnIncAgility, original ids37/43. Replaced the shared approximate emitter and fallback candidate lists with source profiles. Each call projects actor x/y then copies current actor world origin; zero plays the variant-specific horizontal wave and emits a parent-duration screen overlay, and every even frame emits one cross texture. No reduced-effects suppression or parent-duration override.
+- Overlays retain source longitude0/speed1.5/drag speed/duration*-1.2, actual width40/height20 (not scaled outerSize/height), alpha0/max200/rise max*0.06666667, fade duration-15 and exact agi_up.bmp versus dex_agi_up.bmp. Bound reference screen update/centered geometry.
+- Cross trails consume four draws in radial angle/radius/speed/width order, use duration50, source radial Y matrix/offset, then replace motion matrix with pure X90. Preserve speed(range20..69)*0.0099999998, width(range30..89)*0.1, height0.18000001, alpha0/max200/rise max*0.050000001/fade30 and exact ac_center2 texture. Bound reference cross state/geometry instead of generic scaled-width approximation.
+- Preserved key variant difference: both id37 primitive kinds set GI life99, while id43 sets life0. Original OnProcess consequently updates id37 even when g_isSkipFrame is zero, while id43 waits. Source sounds remain distinct EF_IncAgility versus EF_IncAgiDex. Removed obsolete IncAgility handler routing; ids37/43 now dispatch directly and select reference-only Init routes.
+
+Validation: release build, six silent C++ suites / 1160 checks (952 lifecycle/primitive, 150 rendering, 58 other), six Python tests, five-unique-literal executable byte audit, six original asset-pointer instruction audits and whitespace check pass. Added32 lifecycle checks across both ids for primitive/RNG/resource order, exact dimensions/matrices/ranges/alpha, sound after actor-origin refresh, screen projection/z, life99 versus0 skipped-frame behavior, source screen drift/cross motion, odd/even cadence, moving parent anchors and fade profiles. Existing shared screen/cross geometry/device suites pass. Exact normal wave0x71A760/overlay0x71B77C, dex wave0x71B304/overlay0x71B2EC and shared cross0x71B2D4 match executable bytes; original pushes at0x5FA71A/0x5FA814/0x5FA9E9/0x5F47CA/0x5F48C4/0x5F4A99 verified. No media/live acceptance. Approved OldRO SHA-256: `D6733442F21F1B6D4D51D2E5215614625B588942EE28E95D21892439B31DC11D`. Other emitters/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Bash fixed disc / rotating rays — 2026-10-26
 

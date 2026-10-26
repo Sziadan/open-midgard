@@ -6911,7 +6911,7 @@ bool CEffectPrim::UsesReferenceCylinder() const
 bool CEffectPrim::UsesReferenceCrossTexture() const
 {
     return m_type == PP_3DCROSSTEXTURE && m_master
-        && (m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 220);
+        && (m_master->GetEffectType() == 37 || m_master->GetEffectType() == 43 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 220);
 }
 
 bool CEffectPrim::UsesReferenceSphere() const
@@ -6938,7 +6938,7 @@ bool CEffectPrim::UsesReferenceQuadHorn() const
 bool CEffectPrim::UsesReferenceScreenTexture() const
 {
     return m_type == PP_2DTEXTURE && m_master
-        && (m_master->GetEffectType() == 32 || m_master->GetEffectType() == 4 || m_master->GetEffectType() == 5 || m_master->GetEffectType() == 1 || m_master->GetEffectType() == 183 || m_master->GetEffectType() == 46);
+        && (m_master->GetEffectType() == 37 || m_master->GetEffectType() == 43 || m_master->GetEffectType() == 32 || m_master->GetEffectType() == 4 || m_master->GetEffectType() == 5 || m_master->GetEffectType() == 1 || m_master->GetEffectType() == 183 || m_master->GetEffectType() == 46);
 }
 
 bool CEffectPrim::UsesReferenceParticle() const
@@ -8250,7 +8250,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 45: case 46: case 61: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 43: case 45: case 46: case 61: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -8316,10 +8316,6 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         break;
     case 247:
         m_handler = Handler::MapPillar;
-        break;
-    case 37:
-    case 43:
-        m_handler = Handler::IncAgility;
         break;
     case 20:
     case 125:
@@ -9197,68 +9193,59 @@ void CRagEffect::SpawnGrimToothAtk()
     }
 }
 
+// Ref/RagEffect.cpp:6063-6153/6160-6250 (0x5F46F0/0x5FA640), ids43/37.
 void CRagEffect::SpawnIncAgility()
 {
-    const bool dexVariant = m_type == 43;
-    const vector3d base = ResolveBasePosition();
-    CTexture* overlayTexture = ResolveEffectTextureCandidates({
-        dexVariant ? "effect\\dex_agi_up.bmp" : "effect\\agi_up.bmp",
-        dexVariant ? "effect\\agi_up.bmp" : "effect\\dex_agi_up.bmp",
-        "effect\\alpha_center.tga",
-    }, false);
-    CTexture* trailTexture = ResolveEffectTextureCandidates({
-        "effect\\ac_center2.tga",
-        "effect\\alpha_center.tga",
-        "effect\\magic_blue.tga",
-        "effect\\magic_blue.bmp",
-    }, false);
-
+    CRenderObject* master = ResolveCurrentMaster();
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!master || !mode || !mode->m_view) return;
+    const bool dex = m_type == 43;
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos,mode->m_view->GetViewMatrix(),projected);
+    m_tlvertX = projected.x; m_tlvertY = projected.y;
+    m_effectPos = master->m_pos;
     if (m_stateCnt == 0) {
-        TryPlayEffectWaveAt(base, dexVariant ? "effect\\EF_IncAgiDex.wav" : "effect\\EF_IncAgility.wav");
-
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE, vector3d{})) {
-            prim->m_duration = m_duration;
-            prim->m_longitude = 0.0f;
-            prim->m_speed = 1.5f;
-            prim->m_accel = prim->m_speed / static_cast<float>(prim->m_duration) * -1.2f;
-            prim->m_outerSize = 40.0f / 12.0f;
-            prim->m_heightSize = 20.0f / 12.0f;
-            prim->m_alpha = 0.0f;
-            prim->m_maxAlpha = 200.0f;
-            prim->m_alphaSpeed = prim->m_maxAlpha * 0.06666667f;
-            prim->m_fadeOutCnt = prim->m_duration - 15;
-            prim->m_texture.push_back(overlayTexture);
-            prim->m_tintColor = RGB(255, 255, 255);
+        if (mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave(dex ? "effect\\EF_IncAgiDex.wav" : "effect\\EF_IncAgility.wav",
+                m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
         }
+        CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE,vector3d{});
+        prim->m_duration = m_duration; prim->m_longitude = 0.0f;
+        prim->m_speed = 1.5f;
+        prim->m_accel = static_cast<float>(prim->m_speed/static_cast<double>(prim->m_duration)*-1.2);
+        prim->m_widthSize = 40.0f; prim->m_heightSize = 20.0f;
+        prim->m_alpha = 0.0f; prim->m_maxAlpha = 200.0f;
+        prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha*0.06666667);
+        prim->m_fadeOutCnt = prim->m_duration-15;
+        prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+        prim->m_texture.push_back(g_texMgr.GetTexture(dex ? "effect\\dex_agi_up.bmp" : "effect\\agi_up.bmp",false));
+        prim->m_gi[0].life = dex ? 0 : 99;
     }
-
-    if ((m_stateCnt % 2) == 0) {
-        if (CEffectPrim* prim = LaunchEffectPrim(PP_3DCROSSTEXTURE, vector3d{})) {
-            prim->m_duration = 50;
-            const float angle = static_cast<float>(rand() % 360);
-            MatrixIdentity(prim->m_matrix);
-            MatrixAppendYRotation(prim->m_matrix, angle * (kPi / 180.0f));
-
-            const float radius = static_cast<float>(rand() % 7 + 2);
-            prim->m_deltaPos2 = {
-                radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
-                radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
-                radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
-            };
-
-            MatrixIdentity(prim->m_matrix);
-            MatrixAppendXRotation(prim->m_matrix, 90.0f * (kPi / 180.0f));
-            prim->m_speed = static_cast<float>(rand() % 50 + 20) * 0.01f;
-            prim->m_size = static_cast<float>(rand() % 60 + 30) * (0.1f / 34.0f);
-            prim->m_heightSize = 0.18000001f;
-            prim->m_alpha = 0.0f;
-            prim->m_maxAlpha = 200.0f;
-            prim->m_alphaSpeed = prim->m_maxAlpha * 0.050000001f;
-            prim->m_fadeOutCnt = prim->m_duration - 20;
-            prim->m_texture.push_back(trailTexture);
-            prim->m_tintColor = RGB(255, 255, 255);
-        }
-    }
+    if (m_stateCnt % 2 != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DCROSSTEXTURE,vector3d{});
+    prim->m_duration = 50;
+    const int angle = rand() % 360;
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix,GetRadian(angle));
+    const double radius = rand() % 7 + 2;
+    prim->m_deltaPos2 = {
+        static_cast<float>(radius*prim->m_matrix.m[2][0]+prim->m_matrix.m[3][0]),
+        static_cast<float>(radius*prim->m_matrix.m[2][1]+prim->m_matrix.m[3][1]),
+        static_cast<float>(radius*prim->m_matrix.m[2][2]+prim->m_matrix.m[3][2])
+    };
+    // Source replaces the radial Y matrix with a pure X rotation for motion.
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix,GetRadian(90));
+    prim->m_speed = static_cast<float>((rand() % 50 + 20)*0.0099999998);
+    prim->m_widthSize = static_cast<float>((rand() % 60 + 30)*0.1);
+    prim->m_heightSize = 0.18000001f;
+    prim->m_alpha = 0.0f; prim->m_maxAlpha = 200.0f;
+    prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha*0.050000001);
+    prim->m_fadeOutCnt = prim->m_duration-20;
+    prim->m_animSpeed = 4; prim->m_repeatAnim = true;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ac_center2.tga",false));
+    prim->m_gi[0].life = dex ? 0 : 99;
 }
 
 // Ref/RagEffect.cpp:2125-2219 (0x5F4260). Preserve all three emission
@@ -13840,6 +13827,10 @@ bool CRagEffect::ProcessEffectFrame()
         SpawnFireFly();
         return true;
     }
+    if (m_type == 37 || m_type == 43) {
+        SpawnIncAgility();
+        return true;
+    }
     if (m_type == 16) {
         ApplyBash();
         return true;
@@ -14389,9 +14380,6 @@ bool CRagEffect::ProcessEffectFrame()
             break;
         case Handler::HideStart:
             SpawnHideStart();
-            break;
-        case Handler::IncAgility:
-            SpawnIncAgility();
             break;
         case Handler::EnchantPoison:
             SpawnEnchantPoison();

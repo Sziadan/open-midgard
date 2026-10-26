@@ -307,6 +307,7 @@ struct CRagEffect : CGameObject {
     void ApplySonicBlow();
     void ApplySonicBlowHit();
     void ApplyBash();
+    void SpawnIncAgility();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
@@ -1887,6 +1888,63 @@ int main()
         actor.m_oldColor={55,66,77,88};effect.m_stateCnt=0;effect.ApplyPotionBerserk();
         check(actor.m_oldColor.a==55 && actor.m_oldColor.r==66,"Berserk does not overwrite already saved actor color");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    for(int type:{37,43}) {
+        CRenderObject actor,listener;actor.m_pos={10,50,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=type;
+        effect.m_effectPos={900,800,700};effect.m_duration=60;effect.m_tlvertZ=123;g_session.m_isMinEffect=true;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;rngValues={90,6,49,59};rngCursor=0;effect.SpawnIncAgility();
+        auto it=effect.m_primList.begin();auto* overlay=*it++;auto* trail=*it;
+        check(effect.m_primList.size()==2&&overlay->UsesReferenceScreenTexture()&&trail->UsesReferenceCrossTexture()&&rngDraws==draws+4&&rngCursor==4,
+            "Agility variants emit source overlay then four-draw cross trail despite reduced effects");
+        check(waveCalls.size()==1&&waveCalls[0].name==(type==37?"effect\\EF_IncAgility.wav":"effect\\EF_IncAgiDex.wav")
+            &&waveCalls[0].x==8&&waveCalls[0].y==0&&waveCalls[0].z==96&&waveCalls[0].frameRng==draws,
+            "Agility variants play distinct exact wave from newly copied actor origin before trail RNG");
+        tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_effectPos.x==10&&effect.m_effectPos.y==50&&effect.m_effectPos.z==100&&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y
+            &&effect.m_tlvertZ==123&&effect.m_duration==60,"Agility variants project actor then copy world origin preserving z and parent duration");
+        check(overlay->m_duration==60&&overlay->m_longitude==0&&overlay->m_speed==1.5f&&overlay->m_accel==static_cast<float>(1.5/60*-1.2)
+            &&overlay->m_widthSize==40&&overlay->m_heightSize==20&&overlay->m_alpha==0&&overlay->m_maxAlpha==200
+            &&overlay->m_alphaSpeed==static_cast<float>(200.0*0.06666667)&&overlay->m_fadeOutCnt==45,
+            "Agility overlay preserves source unscaled dimensions drag alpha rise and fade");
+        check(g_texMgr.requests==std::vector<std::string>({type==37?"effect\\agi_up.bmp":"effect\\dex_agi_up.bmp","effect\\ac_center2.tga"})
+            &&g_resMgr.requests.empty(),"Agility variants use exactly their reference overlay and cross texture without fallback candidates");
+        matrix radial;MatrixIdentity(radial);MatrixAppendYRotation(radial,GetRadian(90));
+        check(trail->m_deltaPos2.x==static_cast<float>(8.0*radial.m[2][0])&&trail->m_deltaPos2.y==0
+            &&trail->m_deltaPos2.z==static_cast<float>(8.0*radial.m[2][2])&&trail->m_duration==50,
+            "Agility cross draws radial angle then radius and retains original launch offset");
+        matrix motion;MatrixIdentity(motion);MatrixAppendXRotation(motion,GetRadian(90));
+        check(trail->m_matrix.m[2][0]==motion.m[2][0]&&trail->m_matrix.m[2][1]==motion.m[2][1]
+            &&trail->m_speed==static_cast<float>(69*0.0099999998)&&trail->m_widthSize==8.9f&&trail->m_heightSize==0.18000001f,
+            "Agility cross replaces radial matrix with pure X motion and preserves source speed width height draw profiles");
+        check(trail->m_alpha==0&&trail->m_maxAlpha==200&&trail->m_alphaSpeed==static_cast<float>(200.0*0.050000001)&&trail->m_fadeOutCnt==30
+            &&overlay->m_gi[0].life==(type==37?99:0)&&trail->m_gi[0].life==(type==37?99:0),
+            "Agility variants preserve trail alpha profile and distinct life-ninety-nine versus zero flags");
+        overlay->m_alphaDelta=1;trail->m_alphaDelta=1;g_isSkipFrame=0;overlay->OnProcess();trail->OnProcess();
+        check(overlay->m_stateCnt==(type==37?1:0)&&trail->m_stateCnt==(type==37?1:0),
+            "Only IncAgility life-ninety-nine primitives bypass original no-frame-time gate");
+        g_isSkipFrame=1;if(type==43){overlay->OnProcess();trail->OnProcess();}
+        const float screenSpeed=1.5f+static_cast<float>(1.5/60*-1.2);
+        check(overlay->m_deltaPos.y==-screenSpeed&&overlay->m_pos.y==projected.y-screenSpeed&&overlay->m_widthSize==40&&overlay->m_heightSize==20
+            &&overlay->m_alpha==static_cast<float>(200.0*0.06666667),"Agility overlay uses source screen drift and alpha without perspective scaling");
+        check(trail->m_pos.x==18&&trail->m_pos.y==50+trail->m_deltaPos.y&&trail->m_deltaPos.y<0&&trail->m_widthSize==8.9f&&trail->m_alpha==10,
+            "Agility cross moves upward from current parent plus radial offset with original alpha rise");
+        actor.m_pos={20,60,120};effect.m_stateCnt=1;effect.SpawnIncAgility();ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_effectPos.y==60&&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y&&effect.m_primList.size()==2
+            &&waveCalls.size()==1&&rngDraws==draws+4,"Agility odd frames refresh world and screen anchor without new trail sound or RNG");
+        trail->OnProcess();check(trail->m_pos.x==28&&trail->m_pos.y==60+trail->m_deltaPos.y,
+            "Agility existing cross follows newly copied actor origin through reference update");
+        rngValues={0,0,0,0};rngCursor=0;effect.m_stateCnt=2;effect.SpawnIncAgility();auto* next=effect.m_primList.back();
+        check(effect.m_primList.size()==3&&rngDraws==draws+8&&waveCalls.size()==1&&next->m_speed==static_cast<float>(20*0.0099999998)
+            &&next->m_widthSize==3&&next->m_deltaPos2.x==0&&next->m_deltaPos2.z==2,
+            "Agility even frames continue independent four-draw source trail with lower range endpoints");
+        const float alpha=trail->m_alpha;trail->m_stateCnt=30;trail->OnProcess();
+        check(trail->m_alphaSpeed==static_cast<float>(-alpha/20.0)&&trail->m_alpha<alpha,
+            "Agility cross applies original twenty-frame fade at frame thirty");
+        const float overlayAlpha=overlay->m_alpha;overlay->m_stateCnt=45;overlay->OnProcess();
+        check(overlay->m_alphaSpeed==static_cast<float>(-overlayAlpha/15.0)&&overlay->m_alpha<overlayAlpha,
+            "Agility overlay applies original parent-duration-minus-fifteen fade");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
