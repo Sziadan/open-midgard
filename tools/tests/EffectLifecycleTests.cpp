@@ -185,6 +185,7 @@ void UpdateReferenceSphere(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceMapMagicZone(CEffectPrim*);
 bool UpdateReferenceMapParticle(CEffectPrim*);
+bool UpdateReference3DAura(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -275,6 +276,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DFLASH) { UpdateReferenceFlash(this); return active; }
         if (m_type == PP_MAPMAGICZONE) { UpdateReferenceMapMagicZone(this); return active; }
         if (m_type == PP_MAPPARTICLE) { UpdateReferenceMapParticle(this); return active; }
+        if (m_type == PP_3DAURA) { UpdateReference3DAura(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1459,6 +1461,23 @@ int main()
             && mapBand.height[2] == 4.5f && mapBand.height[3] == 356.0f
             && rngDraws == drawsBeforeMapParticle + 2 && rngCursor == 2,
             "PrimMapParticle preserves increasing/decreasing threshold branch order and random(int) modulo schedule");
+        texturePrim.m_type = PP_3DAURA; texturePrim.m_stateCnt = 0;
+        texturePrim.m_master->m_effectPos = {71, 82, 93};
+        texturePrim.m_gi[0].life = texturePrim.m_gi[1].life = 0;
+        texturePrim.m_gi[0].riseAngle = 357; texturePrim.m_gi[1].riseAngle = 359;
+        texturePrim.m_animSpeed = 2; texturePrim.m_curMotion = 0;
+        texturePrim.m_totalTexture = 1; texturePrim.m_repeatAnim = false;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_pos.x == 71 && texturePrim.m_pos.y == 82
+            && texturePrim.m_pos.z == 93 && texturePrim.m_gi[0].riseAngle == 0
+            && texturePrim.m_gi[1].riseAngle == 2 && texturePrim.m_curMotion == 1
+            && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x1C updates both short rise angles without a life gate and ignores animation completion before common tick");
+        check(UpdateReference3DAura(&texturePrim) && texturePrim.m_gi[0].riseAngle == 3
+            && texturePrim.m_gi[1].riseAngle == 5 && texturePrim.m_curMotion == 1,
+            "Prim3DAura advances angles on noncadence frames while AnimTexture leaves motion unchanged");
+        texturePrim.m_stateCnt = 2; texturePrim.m_repeatAnim = true;
+        check(UpdateReference3DAura(&texturePrim) && texturePrim.m_curMotion == 0,
+            "Prim3DAura repeating AnimTexture wraps motion by total texture count");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

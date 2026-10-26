@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer and primitive-update parity. Cases 0x1A and 0x1B now have branch-compared updater routes. The next primitive comparison must finish before another function begins; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
+Current work: WP5A renderer and primitive-update parity. Cases 0x1A, 0x1B and 0x1C now have branch-compared updater routes. Continue one source function at a time; caller cadence, map/resource scheduling and full renderer/backend acceptance remain open.
 
-Next action: branch-compare source case 0x1C (`PP_3DAURA`) against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
+Next action: branch-compare source case 0x1D (`PP_3DAURA_2`) against the implementation before editing that function. Full renderer/fog/backend acceptance remains open.
 
-Latest checkpoint (2026-10-26): `PP_MAPPARTICLE` case 0x1B is implemented and branch-compared against Ref/dhxj, Ref decompilation and canonical EXE. Inventory reports 57 source-only IDs; lifecycle suite passes 1,576 checks, all six CTest suites and seven Python reference-index tests pass. x64 Release build passes; OldRO SHA-256 is `A8B0F0480677472F317BA1564B40CDFFD072E7C2CC9F7BF20A62B0480DB97AF7`; this checkpoint records the completed part. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `PP_MAPPARTICLE` case 0x1B is implemented and branch-compared against Ref/dhxj, Ref decompilation and canonical EXE. Inventory reports 56 source-only IDs; lifecycle suite passes 1,579 checks, all six CTest suites and seven Python reference-index tests pass. x64 Release build passes; OldRO SHA-256 is `BB724C4245E931B4D6BF3E46E1F9E20009AC1EA38A094DF896A302044E1E426D`; this checkpoint records the completed part. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26
@@ -625,3 +625,6 @@ Case 0x1A (`PP_MAPMAGICZONE`) checkpoint (2026-10-26): no Ref method body exists
 
 
 Case 0x1B (`PP_MAPPARTICLE`) checkpoint (2026-10-26): Ref/dhxj source and decompiled Ref/EXE bodies agree; the original source resolves the decompiler�s condition flags as advancing when target > angle, otherwise decreasing. Ported view angles, master position, four life-gated bands, pair target crossings and `random(int)` zero/modulo behavior, phase wrap, four orbit vectors and each independent negative-y correction. Existing GI payload aliases represent B-pre Y as `arcBaselineY`, B-now Y as `sparkY`, and T-pre/T-now Y as their named fields. Mechanical comparator covers every branch and operation order. Lifecycle suite passes 1,576 checks, all six CTest suites and seven Python tests pass. x64 Release build and OldRO deployment pass (SHA-256 `A8B0F0480677472F317BA1564B40CDFFD072E7C2CC9F7BF20A62B0480DB97AF7`); checkpoint commit follows; 57 source-only IDs remain, so overall OnProcess parity is open.
+
+
+Case 0x1C (`PP_3DAURA`) checkpoint (2026-10-26): source and canonical EXE `Prim3DAura` bodies match. The unconditional route copies master position, increments both short rise angles by 3 with source one-step 360 wrap, then performs source AnimTexture cadence/repeat/completion behavior while ignoring its return in the dispatcher. Branch comparator covers handler/animation bodies, ordered mutations and dispatcher tick semantics. Lifecycle suite passes 1,579 checks; all six CTest suites, seven Python tests, x64 Release build and OldRO SHA-256 `BB724C4245E931B4D6BF3E46E1F9E20009AC1EA38A094DF896A302044E1E426D` pass. 56 source IDs remain unmapped; overall OnProcess parity is open.

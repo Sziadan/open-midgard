@@ -7953,6 +7953,28 @@ bool UpdateReferenceMapParticle(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:9320 (case 0x1C). The source dispatcher ignores
+// the AnimTexture completion result and continues through the shared tick.
+bool UpdateReference3DAura(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (int index = 0; index < 2; ++index) {
+        const short riseAngle = static_cast<short>(prim->m_gi[index].riseAngle + 3);
+        prim->m_gi[index].riseAngle = riseAngle;
+        if (riseAngle >= 360) prim->m_gi[index].riseAngle = static_cast<short>(riseAngle - 360);
+    }
+
+    if (prim->m_stateCnt % prim->m_animSpeed == 0) {
+        const int motion = ++prim->m_curMotion;
+        if (prim->m_repeatAnim) {
+            prim->m_curMotion = motion % prim->m_totalTexture;
+        } else if (motion == prim->m_totalTexture) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -8935,6 +8957,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_MAPPARTICLE) {
         UpdateReferenceMapParticle(this); // Source case 0x1B ignores the bool result.
+        return true;
+    }
+    if (m_type == PP_3DAURA) {
+        UpdateReference3DAura(this); // Source case 0x1C ignores the bool result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

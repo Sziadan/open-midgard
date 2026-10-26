@@ -74,7 +74,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 71 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A, 0x1B}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 72 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A, 0x1B, 0x1C}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -591,7 +591,7 @@ check("case 0x1B Ref and canonical EXE helper bodies match and dispatch ignores 
       and re.search(r"case\s+0x1B:\s*CEffectPrim::PrimMapParticle\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_MAPPARTICLE)" in current_dispatch
       and "UpdateReferenceMapParticle(this); // Source case 0x1B ignores the bool result." in current_dispatch
-      and len(current_explicit_ids) == 71)
+      and len(current_explicit_ids) == 72)
 map_particle_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[0].alphaT=360-m_GI[0].alphaT;",
     "m_GI[1].alphaT=360-m_GI[1].alphaT+90;", "if (m_GI[1].alphaT>=360)",
@@ -630,6 +630,41 @@ check("case 0x1B branch predicates, mutations and all four orbit correction bran
       < current_map_particle.index("if (gi.sparkY <")
       < current_map_particle.index("if (gi.vecTPreY <")
       < current_map_particle.index("if (gi.vecTNowY <"))
+source_aura_decompiled = body(REF_EFFECT2, "bool __thiscall CEffectPrim::Prim3DAura(CEffectPrim *this)\n{")
+exe_aura = body(EXE, "bool __thiscall CEffectPrim::Prim3DAura(CEffectPrim *this)\n{")
+source_aura = body(REF_DHXJ_EFFECT2, "CEffectPrim :: Prim3DAura()")
+current_aura = body(CURRENT, "bool UpdateReference3DAura(CEffectPrim* prim)")
+source_anim_texture = body(REF, "unsigned __int8 __thiscall CEffectPrim::AnimTexture(CEffectPrim *this)\n{")
+exe_anim_texture = body(EXE, "unsigned __int8 __thiscall CEffectPrim::AnimTexture(CEffectPrim *this)\n{")
+check("case 0x1C Ref and canonical EXE aura bodies match and dispatch discards animation completion",
+      compact(source_aura_decompiled) == compact(exe_aura)
+      and re.search(r"case\s+0x1C:\s*CEffectPrim::Prim3DAura\(this\);\s*goto\s+\$L145961;", source_dispatch)
+      and "if (m_type == PP_3DAURA)" in current_dispatch
+      and "UpdateReference3DAura(this); // Source case 0x1C ignores the bool result." in current_dispatch
+      and len(current_explicit_ids) == 72)
+aura_source_effects = [
+    "m_pos = m_master->m_pos;", "for (ec=0;ec<2;ec++)", "m_GI[ec].rise_angle+=3;",
+    "if (m_GI[ec].rise_angle>=360)", "m_GI[ec].rise_angle-=360;",
+    "if (!AnimTexture())", "return false;", "return true;",
+]
+aura_current_effects = [
+    "prim->m_pos = prim->m_master->EffectPosition();", "for (int index = 0; index < 2; ++index)",
+    "prim->m_gi[index].riseAngle + 3", "if (riseAngle >= 360)",
+    "riseAngle - 360", "if (prim->m_stateCnt % prim->m_animSpeed == 0)",
+    "const int motion = ++prim->m_curMotion;", "if (prim->m_repeatAnim)",
+    "motion % prim->m_totalTexture", "else if (motion == prim->m_totalTexture)",
+    "return false;", "return true;",
+]
+check("case 0x1C source-to-implementation maps both unconditional angle updates and AnimTexture branches in order",
+      compact(source_anim_texture) == compact(exe_anim_texture)
+      and all(compact(effect) in compact(source_aura) for effect in aura_source_effects)
+      and all(compact(effect) in compact(current_aura) for effect in aura_current_effects)
+      and current_aura.index("prim->m_pos =") < current_aura.index("for (int index")
+      < current_aura.index("const short riseAngle")
+      < current_aura.index("if (prim->m_stateCnt %")
+      < current_aura.index("const int motion =")
+      < current_aura.index("if (prim->m_repeatAnim)")
+      < current_aura.index("else if (motion =="))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)
