@@ -251,6 +251,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DPARTICLE_NOMASTER) return UpdateReferenceNoMasterParticle(this);
         if (m_type == PP_3DTEXTURE_NOMASTER) return UpdateReferenceNoMasterTexture(this);
         if (m_type == PP_2DTEXTUREORBIT) return UpdateReference2DTextureOrbit(this);
+        if (m_type == PP_3DQUADHORN) { UpdateReferenceQuadHorn(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1172,6 +1173,32 @@ int main()
         check(texturePrim.OnProcess() == 1 && texturePrim.m_pos.x == 101 && texturePrim.m_pos.y == 202
             && texturePrim.m_stateCnt == 13,
             "OnProcess case 0x02 routes every 2D quad through the source master-projected texture path");
+        CRenderObject quadActor; quadActor.m_pos = {900,800,700}; textureMaster.m_master = &quadActor;
+        textureMaster.m_effectPos = {100,200,300};
+        texturePrim.m_type = PP_3DQUADHORN; texturePrim.m_stateCnt = 4; texturePrim.m_duration = 100;
+        texturePrim.m_changePoint = 4; texturePrim.m_changeSpeed = 6; texturePrim.m_changeAccel = 2;
+        texturePrim.m_pattern = 1; texturePrim.m_count = 4; texturePrim.m_deltaPos2 = {5,6,7};
+        texturePrim.m_deltaPos = {1,2,3}; texturePrim.m_speed = 1; texturePrim.m_accel = 0;
+        texturePrim.m_changeSpeedY = 9; texturePrim.m_changeAccelY = 3;
+        MatrixIdentity(texturePrim.m_matrix);
+        texturePrim.m_matrix.m[3][0] = 0.5f; texturePrim.m_matrix.m[3][1] = -1;
+        texturePrim.m_matrix.m[3][2] = 2;
+        texturePrim.m_alpha = 20; texturePrim.m_alphaSpeed = 1; texturePrim.m_fadeOutCnt = -1;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_orgPos.x == 105 && texturePrim.m_orgPos.y == 206
+            && texturePrim.m_orgPos.z == 307 && texturePrim.m_speed == 0 && texturePrim.m_accel == 0
+            && texturePrim.m_speed3d.x == 0.5f && texturePrim.m_speed3d.y == -1 && texturePrim.m_speed3d.z == 10
+            && texturePrim.m_pos.x == 106.5f && texturePrim.m_pos.y == 207 && texturePrim.m_pos.z == 320
+            && texturePrim.m_alpha == 21 && texturePrim.m_stateCnt == 5,
+            "OnProcess case 0x09 uses stored effect origin, translated matrix motion, post-move pattern-1 stop and alpha path");
+        texturePrim.m_stateCnt = 70; texturePrim.m_pattern = 2; texturePrim.m_changePoint = -1;
+        texturePrim.m_deltaPos2 = {}; texturePrim.m_deltaPos = {}; texturePrim.m_speed = 2;
+        texturePrim.m_accel = 3; texturePrim.m_alpha = 50; texturePrim.m_alphaSpeed = 4;
+        texturePrim.m_speed3d = {}; MatrixIdentity(texturePrim.m_matrix);
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_speed == 9 && texturePrim.m_accel == 3
+            && texturePrim.m_deltaPos.z == 5 && texturePrim.m_pos.x == 100
+            && texturePrim.m_pos.y == 200 && texturePrim.m_pos.z == 305
+            && texturePrim.m_alpha == 50 && texturePrim.m_stateCnt == 71,
+            "OnProcess case 0x09 pattern 2 applies duration-minus-thirty speed controls after movement and skips alpha");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

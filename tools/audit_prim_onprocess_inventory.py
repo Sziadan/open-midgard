@@ -72,7 +72,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 63 and {0x00, 0x01, 0x02, 0x04, 0x0E, 0x11, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 64 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0E, 0x11, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -268,6 +268,48 @@ check("case 0x02 source-to-implementation predicates, RGB, RNG and animation eff
       < source_texture.index("if ( (this->m_pattern & 8) != 0")
       < source_texture.index("CEffectPrim::ProcessAlpha(this);")
       < source_texture.index("if ( this->m_stateCnt % this->m_animSpeed )"))
+source_quad = body(REF, "void __thiscall CEffectPrim::Prim3DQuadHorn(CEffectPrim *this)\n{")
+exe_quad = body(EXE, "void __thiscall CEffectPrim::Prim3DQuadHorn(CEffectPrim *this)\n{")
+current_quad = body(CURRENT, "void UpdateReferenceQuadHorn(CEffectPrim* prim)")
+check("source Prim3DQuadHorn Ref/EXE bodies match and case 0x09 routes every type unconditionally",
+      compact(source_quad) == compact(exe_quad)
+      and re.search(r"case 9:\s*CEffectPrim::Prim3DQuadHorn\(this\);", source_dispatch) is not None
+      and "if (m_type == PP_3DQUADHORN) {\n        UpdateReferenceQuadHorn(this);\n        return true;" in current_dispatch)
+quad_branch_pairs = [
+    ("this->m_master->m_pos.x + this->m_deltaPos2.x", "prim->m_master->EffectPosition(),prim->m_deltaPos2"),
+    ("this->m_master->m_pos.y + this->m_deltaPos2.y", "prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(),prim->m_deltaPos2)"),
+    ("this->m_master->m_pos.z + this->m_deltaPos2.z", "prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(),prim->m_deltaPos2)"),
+    ("if ( this->m_stateCnt == this->m_ChangePoint )", "if (prim->m_stateCnt == prim->m_changePoint)"),
+    ("this->m_speed = this->m_ChangeSpeed;", "prim->m_speed = prim->m_changeSpeed;"),
+    ("this->m_accel = m_ChangeAccel;", "prim->m_accel = prim->m_changeAccel;"),
+    ("this->m_speed3d.x = v4 * this->m_matrix.v31 + this->m_matrix.v41;",
+     "static_cast<float>(speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0])"),
+    ("this->m_speed3d.y = v4 * this->m_matrix.v32 + this->m_matrix.v42;",
+     "static_cast<float>(speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1])"),
+    ("this->m_speed3d.z = v4 * this->m_matrix.v33 + this->m_matrix.v43;",
+     "static_cast<float>(speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])"),
+    ("if ( (m_pattern & 1) != 0 && this->m_stateCnt == this->m_count )",
+     "if ((prim->m_pattern & 1) != 0 && prim->m_stateCnt == prim->m_count)"),
+    ("this->m_stateCnt == this->m_duration - 30", "prim->m_stateCnt == prim->m_duration-30"),
+    ("this->m_speed = this->m_ChangeSpeedy;", "prim->m_speed = prim->m_changeSpeedY;"),
+    ("this->m_accel = m_ChangeAccely;", "prim->m_accel = prim->m_changeAccelY;"),
+    ("CEffectPrim::ProcessAlpha(this);", "ProcessReferenceParticleAlpha(prim);"),
+]
+check("case 0x09 source-to-implementation anchor, matrix, stop, restart and alpha branches are paired",
+      all(compact(source_branch) in compact(source_quad)
+          and compact(current_branch) in compact(current_quad)
+          for source_branch, current_branch in quad_branch_pairs)
+      and current_quad.index("prim->m_orgPos =")
+      < current_quad.index("if (prim->m_stateCnt == prim->m_changePoint)")
+      < current_quad.index("prim->m_speed3d = {")
+      < current_quad.index("prim->m_pos = AddVec3(prim->m_orgPos,prim->m_deltaPos);")
+      < current_quad.index("if ((prim->m_pattern & 1) != 0")
+      < current_quad.index("if ((prim->m_pattern & 2) != 0)")
+      < current_quad.index("ProcessReferenceParticleAlpha(prim);")
+      and source_quad.index("this->m_pos.y = v10;")
+      < source_quad.index("if ( (m_pattern & 1) != 0")
+      < source_quad.index("if ( (m_pattern & 2) != 0")
+      < source_quad.index("CEffectPrim::ProcessAlpha(this);"))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)

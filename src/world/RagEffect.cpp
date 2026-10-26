@@ -8607,6 +8607,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_2DTEXTUREORBIT) {
         return UpdateReference2DTextureOrbit(this);
     }
+    if (m_type == PP_3DQUADHORN) {
+        UpdateReferenceQuadHorn(this);
+        return true;
+    }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
         return UpdateReferenceScreenTexture(this);
     }
