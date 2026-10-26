@@ -72,7 +72,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 69 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 70 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -545,6 +545,41 @@ check("case 0x13 Y/X anchor, pattern stop and trace, change point, reflection an
       < current_flash3d.index("prim->m_longitude =")
       < current_flash3d.index("prim->m_heightSize +=")
       < current_flash3d.index("ProcessReferenceParticleAlpha(prim);"))
+source_map_magic = body(EXE, "bool __thiscall CEffectPrim::PrimMapMagicZone(CEffectPrim *this)\n{")
+current_map_magic = body(CURRENT, "bool UpdateReferenceMapMagicZone(CEffectPrim* prim)")
+check("case 0x1A Ref dispatch and canonical EXE helper map to a dedicated current route",
+      re.search(r"case\s+0x1A:\s*CEffectPrim::PrimMapMagicZone\(this\);\s*goto\s+\$L145961;", source_dispatch)
+      and "if (m_type == PP_MAPMAGICZONE)" in current_dispatch
+      and "UpdateReferenceMapMagicZone(this); // Source case 0x1A ignores the bool result." in current_dispatch
+      and "return true;" in current_dispatch[current_dispatch.index("if (m_type == PP_MAPMAGICZONE)"):])
+map_magic_source_effects = [
+    "this->m_pos = this->m_master->m_pos;",
+    "LODWORD(this->m_GI[0].height[4]) == 1096810496",
+    "v1 = --this->m_GI[0].RotStart;", "if ( v1 < 0 )",
+    "this->m_GI[0].RotStart = v1 + 360;",
+    "return CEffectPrim::AnimTexture(this) != 0;",
+    "v3 = ++this->m_GI[0].RotStart;", "if ( v3 >= 360 )",
+    "this->m_GI[0].RotStart = v3 - 360;",
+]
+map_magic_current_effects = [
+    "prim->m_pos = prim->m_master->EffectPosition();",
+    "std::memcpy(&heightBits, &prim->m_gi[0].height[4], sizeof(heightBits));",
+    "if (heightBits == 1096810496u)", "prim->m_gi[0].rotStart - 1",
+    "if (rotStart < 0)", "rotStart + 360",
+    "prim->m_gi[0].rotStart + 1", "if (rotStart >= 360)", "rotStart - 360",
+    "if (prim->m_stateCnt % prim->m_animSpeed != 0)", "++prim->m_curMotion;",
+    "prim->m_curMotion %= prim->m_totalTexture;", "return motion != prim->m_totalTexture;",
+]
+check("case 0x1A bit-pattern direction, signed wrap, master position and animation branches are paired",
+      all(compact(effect) in compact(source_map_magic) for effect in map_magic_source_effects)
+      and all(compact(effect) in compact(current_map_magic) for effect in map_magic_current_effects)
+      and current_map_magic.index("prim->m_pos =") < current_map_magic.index("std::memcpy")
+      < current_map_magic.index("if (heightBits ==")
+      < current_map_magic.index("prim->m_gi[0].rotStart - 1")
+      < current_map_magic.index("if (rotStart < 0)")
+      < current_map_magic.index("prim->m_gi[0].rotStart + 1")
+      < current_map_magic.index("if (prim->m_stateCnt % prim->m_animSpeed")
+      < current_map_magic.index("++prim->m_curMotion;"))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)

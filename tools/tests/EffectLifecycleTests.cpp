@@ -181,6 +181,7 @@ void UpdateReferenceFlash(CEffectPrim*);
 void UpdateReferenceScreenCircle(CEffectPrim*);
 void UpdateReferenceSphere(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
+bool UpdateReferenceMapMagicZone(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -269,6 +270,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DTEXTURE || m_type == PP_3DCROSSTEXTURE) { UpdateReference3DTexture(this); return active; }
         if (m_type == PP_3DCYLINDERHALF) { UpdateReferenceCylinderState(this); return active; }
         if (m_type == PP_3DFLASH) { UpdateReferenceFlash(this); return active; }
+        if (m_type == PP_MAPMAGICZONE) { UpdateReferenceMapMagicZone(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1396,6 +1398,24 @@ int main()
             && !traceCalls.empty() && traceCalls.back() == "m_heightSize  = 0"
             && texturePrim.m_stateCnt == 1,
             "OnProcess case 0x13 preserves Y/X anchoring, early height trace, change/reflection order and common tick");
+        texturePrim.m_type = PP_MAPMAGICZONE; texturePrim.m_master->m_effectPos = {300,400,500};
+        texturePrim.m_stateCnt = 0; texturePrim.m_duration = 100; texturePrim.m_gi[0].life = 0;
+        texturePrim.m_gi[0].height[4] = 14.0f; texturePrim.m_gi[0].rotStart = 0;
+        texturePrim.m_animSpeed = 1; texturePrim.m_curMotion = 0; texturePrim.m_totalTexture = 1;
+        texturePrim.m_repeatAnim = false;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_pos.x == 300 && texturePrim.m_pos.y == 400
+            && texturePrim.m_pos.z == 500 && texturePrim.m_gi[0].rotStart == 359
+            && texturePrim.m_curMotion == 1 && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x1A decrements/wraps RotStart and ignores AnimTexture completion before common tick");
+        texturePrim.m_stateCnt = 1; texturePrim.m_animSpeed = 3; texturePrim.m_gi[0].rotStart = 1;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_gi[0].rotStart == 0
+            && texturePrim.m_curMotion == 1 && texturePrim.m_stateCnt == 2,
+            "OnProcess case 0x1A keeps the nonnegative decrement path and skips animation on noncadence frames");
+        texturePrim.m_stateCnt = 2; texturePrim.m_gi[0].height[4] = 13.0f;
+        texturePrim.m_gi[0].rotStart = 359;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_gi[0].rotStart == 0
+            && texturePrim.m_stateCnt == 3,
+            "OnProcess case 0x1A uses the alternate increment-and-wrap path for other height bits");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

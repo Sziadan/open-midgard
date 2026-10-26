@@ -7857,6 +7857,31 @@ void UpdateReferenceFlash(CEffectPrim* prim)
     ProcessReferenceParticleAlpha(prim);
 }
 
+// HighPriest.exe.c:443213; source dispatch case 0x1A has no Ref body.
+bool UpdateReferenceMapMagicZone(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    u32 heightBits = 0;
+    std::memcpy(&heightBits, &prim->m_gi[0].height[4], sizeof(heightBits));
+    if (heightBits == 1096810496u) {
+        const short rotStart = static_cast<short>(prim->m_gi[0].rotStart - 1);
+        prim->m_gi[0].rotStart = rotStart;
+        if (rotStart < 0) prim->m_gi[0].rotStart = static_cast<short>(rotStart + 360);
+    } else {
+        const short rotStart = static_cast<short>(prim->m_gi[0].rotStart + 1);
+        prim->m_gi[0].rotStart = rotStart;
+        if (rotStart >= 360) prim->m_gi[0].rotStart = static_cast<short>(rotStart - 360);
+    }
+
+    if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;
+    const int motion = ++prim->m_curMotion;
+    if (prim->m_repeatAnim) {
+        prim->m_curMotion %= prim->m_totalTexture;
+        return true;
+    }
+    return motion != prim->m_totalTexture;
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -8831,6 +8856,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_3DFLASH) {
         UpdateReferenceFlash(this);
+        return true;
+    }
+    if (m_type == PP_MAPMAGICZONE) {
+        UpdateReferenceMapMagicZone(this); // Source case 0x1A ignores the bool result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
