@@ -4,10 +4,18 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Hit3 emitter, after Hit2 checkpoint `f963dc0`. Original id2 now preserves its two distinct growing cylinders, faster eight-sprite burst, source audio and reference primitive paths.
+Current work: WP5A Hit4 emitter, after Hit3 checkpoint `dabe8fe`. Original id3 now preserves projection-before-gate, its distinct growing cylinder, source audio and five-sprite shrinking burst.
 
-Next action: continue Hit4 and remaining hit callers (including Hit2 caller401), other emitters and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue Hit5 and remaining hit callers (including Hit2 caller401), other emitters and unported primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Hit4 emitter / projected actor and growing cylinder — 2026-10-26
+
+- Ref/RagEffect.cpp:5449-5578 (0x5F2AB0) -> SpawnHit4, original id 3, direct dispatcher/Init route. Projects actor x/y before the frame gate on every call, preserving stored effect world origin/z. Frame 0 plays exact stored-origin horizontal EF_hit4 wave, computes truncated/wrapped facing and emits one cylinder then five shrinking linear sprites; reduced-effects mode does not suppress emission.
+- Cylinder duration 15, latitude -90, source X/Y matrix and offset(0,-10,0), speed 0.69999999/source deceleration, outer 4/inner 0.5, constructor height 0/alpha 254/max 254, height speed 0.25/acceleration 0.15000001, fade 10 and exact lens2 texture. Shared reference cylinder integration/geometry now binds id 3.
+- Five sprites retain original six-draw profiles (30 draws total), tilted spawn offsets, speed range 90+60, random lifetime/size, source acceleration/shrink, immediate fade and three full initial trail slots. Uses shared original particle1 resources, update and per-clip rendering. No invented position refresh, gravity group, extra wave or STR processing.
+
+Validation: release build, six silent C++ suites / 837 checks (667 lifecycle/primitive, 112 rendering, 58 other), six Python tests, two-literal executable byte audit and whitespace check pass. Added 12 checks for count/order/RNG, pre-gate projection, wave ordering/coordinates, profiles, exact texture/resource order, full trails, growth/shrink/fade, reduced-effects behavior, nonzero gate and cleanup. Wave 0x71A2F4 and texture 0x71A3A4 match executable bytes; shared particle1 literals are unchanged. New large fixture uses heap storage to stay within standalone Windows stack limits. No media/live acceptance. Approved OldRO SHA-256: `766DF61BC175F0C959365995B5CEFECE92AA56611ABB4E1FA4839E48DDF73B96`. Remaining hit variants/callers/primitive controls, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Hit3 cylinders / faster shrinking sprite burst — 2026-10-26
 

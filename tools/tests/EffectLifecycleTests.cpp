@@ -289,6 +289,7 @@ struct CRagEffect : CGameObject {
     void SpawnHit2(int);
     bool ProcessHit2Blue();
     void SpawnHit3();
+    void SpawnHit4();
     void ApplyPotionPillar(float,int);
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
@@ -2314,6 +2315,41 @@ int main()
             "Hit3 cylinder fade begins at source duration-minus-third frame");
         effect.m_stateCnt=1;effect.SpawnHit3();check(effect.m_primList.size()==10&&waveCalls.size()==1,"Hit3 does not repeat zero-frame burst or audio");
         effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,"Hit3 cleanup releases all eight sprite/action pairs");
+        g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor,listener;actor.m_roty=270.9f;actor.m_pos={10,20,100};listener.m_pos={2,500,4};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;
+        effect.m_type=3;effect.m_master=&actor;effect.m_duration=100;effect.m_effectPos={30,50,40};effect.m_tlvertZ=123;
+        waveCalls.clear();g_resMgr.requests.clear();g_texMgr.requests.clear();const int draws=rngDraws;
+        rngValues={79,99,3,89,23,99};rngCursor=0;g_session.m_isMinEffect=true;effect.SpawnHit4();
+        auto it=effect.m_primList.begin();auto* cylinder=*it++;auto* particle=*it;
+        check(effect.m_primList.size()==6&&cylinder->m_type==PP_3DCYLINDER&&particle->m_type==PP_3DPARTICLE&&rngDraws==draws+30,
+            "Hit4 emits cylinder then five shrinking sprites with thirty draws despite reduced effects");
+        tlvertex3d expected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,expected);
+        check(effect.m_tlvertX==expected.x&&effect.m_tlvertY==expected.y&&effect.m_tlvertZ==123&&effect.m_effectPos.x==30,
+            "Hit4 projects actor x/y while preserving stored world origin and z");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_hit4.wav"&&waveCalls[0].x==28&&waveCalls[0].y==0&&waveCalls[0].z==36
+            &&waveCalls[0].frameRng==draws,"Hit4 plays exact stored-origin horizontal wave before sprite draws");
+        check(cylinder->UsesReferenceCylinder()&&particle->UsesReferenceParticle()&&cylinder->m_longitude==270&&cylinder->m_latitude==-90,
+            "Hit4 preserves truncated wrapped facing and reference cylinder/linear bindings");
+        check(cylinder->m_duration==15&&cylinder->m_outerSize==4&&cylinder->m_innerSize==0.5f&&cylinder->m_heightSize==0
+            &&cylinder->m_heightSpeed==0.25f&&cylinder->m_heightAccel==0.15000001f&&cylinder->m_fadeOutCnt==10,
+            "Hit4 restores source cylinder radii initial height growth acceleration and fade");
+        check(cylinder->m_speed==0.69999999f&&cylinder->m_accel==static_cast<float>(0.69999999f/15.0*-0.5)&&cylinder->m_deltaPos2.y==-10
+            &&g_texMgr.requests==std::vector<std::string>{"effect\\lens2.tga"},"Hit4 preserves source cylinder motion offset and exact lens texture");
+        check(particle->m_longitude==309&&particle->m_latitude==49&&particle->m_duration==29&&particle->m_speed==static_cast<float>(149*0.0099999998)
+            &&particle->m_sizeSpeed<0&&particle->m_fadeOutCnt==0,"Hit4 preserves shared six-draw source sprite profile");
+        check(particle->m_numSegments==3&&particle->m_segments[2].alpha==254&&particle->m_segments[2].size==particle->m_size
+            &&g_resMgr.requests.size()==10,"Hit4 initializes all three trail slots after five exact resource-pair requests");
+        cylinder->m_alphaDelta=1;cylinder->OnProcess();check(cylinder->m_heightSize==0.25f+0.15000001f&&cylinder->m_alpha==254,
+            "Hit4 reference cylinder integrates height acceleration before geometry growth");
+        particle->m_alphaDelta=1;const float size=particle->m_size;particle->OnProcess();check(particle->m_alpha<254&&particle->m_size<size,
+            "Hit4 reference sprite update applies original first-frame fade and shrink");
+        actor.m_pos={20,30,100};effect.m_stateCnt=1;effect.SpawnHit4();ProjectReferenceEffectVertex(actor.m_pos,testView.view,expected);
+        check(effect.m_tlvertX==expected.x&&effect.m_tlvertY==expected.y&&effect.m_primList.size()==6&&waveCalls.size()==1,
+            "Hit4 refreshes actor projection before nonzero emission gate without repeat burst/audio");
+        effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,"Hit4 cleanup balances all sprite/action locks");
         g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     {
