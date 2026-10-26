@@ -491,6 +491,7 @@ private:
     void ApplySonicBlowHit();
     void ApplyBash();
     bool ProcessSignum();
+    bool ProcessAngelus();
     void ApplyProvidence(const char* textureName);
     void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);
     void ApplyBeginCasting(const char* textureName, int option, bool playWave);

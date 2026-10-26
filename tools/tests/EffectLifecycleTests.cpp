@@ -308,6 +308,7 @@ struct CRagEffect : CGameObject {
     void ApplySonicBlowHit();
     void ApplyBash();
     bool ProcessSignum();
+    bool ProcessAngelus();
     void SpawnIncAgility();
     void SpawnDecAgility();
     void SpawnAqua();
@@ -3381,6 +3382,41 @@ int main()
         check(ray->m_longitude==0&&ray->m_longSpeed==1&&ray->m_arcAngle==1.5f&&ray->m_heightSize==30&&ray->m_heightSpeed==9.5f,
             "Signum lower ray range endpoints match source without Bash profile substitution");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,20,100};listener.m_pos={2,500,4};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        auto storage=std::make_unique<CRagEffect>();auto& effect=*storage;effect.m_master=&actor;effect.m_type=41;
+        effect.m_effectPos={30,50,40};effect.m_duration=100;effect.m_tlvertX=12;effect.m_tlvertY=34;effect.m_tlvertZ=56;
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        g_session.m_isMinEffect=true;
+        check(!effect.ProcessAngelus()&&waveCalls.size()==1,"Angelus plays zero-frame audio before propagating missing STR despite reduced effects");
+        check(waveCalls[0].name=="effect\\EF_Angelus.wav"&&waveCalls[0].x==28&&waveCalls[0].y==0&&waveCalls[0].z==36
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "Angelus exact sound uses stored effect origin and horizontal listener deltas with source parameters");
+        check(effect.m_tlvertX==12&&effect.m_tlvertY==34&&effect.m_tlvertZ==56,
+            "Angelus missing STR preserves screen fields without extra actor projection");
+        effect.m_stateCnt=1;
+        check(!effect.ProcessAngelus()&&waveCalls.size()==1,"Angelus missing STR on later frames returns false without repeating audio");
+        auto clip=std::make_unique<KANICLIP>();clip->cLayer=2;KAC_KEYFRAME keys[2];keys[0].iFrame=0;keys[1].iFrame=100;
+        clip->aLayer[1].cAniKey=2;clip->aLayer[1].aAniKey=keys;effect.m_ezEffectRes=clip.get();effect.m_aniClips=clip.get();
+        effect.InitEZ2STRFrame();waveCalls.clear();
+        check(effect.ProcessAngelus()&&waveCalls.size()==1&&effect.m_strFrameActive,"Angelus active STR continues after zero-frame sound");
+        tlvertex3d projected;ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_strScreenOffset.x==0&&effect.m_strScreenOffset.y==-80&&effect.m_strScreenOffset.z==0
+            &&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y-80,
+            "Angelus STR applies original minus-eighty offset to actor projection");
+        actor.m_pos={20,30,120};effect.m_stateCnt=1;g_session.m_isMinEffect=false;
+        check(effect.ProcessAngelus()&&waveCalls.size()==1,"Angelus later active frame refreshes STR without repeated sound in normal mode");
+        ProjectReferenceEffectVertex(actor.m_pos,testView.view,projected);
+        check(effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y-80&&effect.m_strAnchorPosition.z==120
+            &&effect.m_effectPos.x==30&&effect.m_effectPos.y==50&&effect.m_effectPos.z==40&&effect.m_duration==100,
+            "Angelus follows moving actor for STR while retaining stored audio origin and parent lifetime");
+        effect.m_iCurLayer=effect.m_cEndLayer;
+        check(!effect.ProcessAngelus()&&!effect.m_strFrameActive&&waveCalls.size()==1,"Angelus propagates exhausted STR completion without extra audio");
+        check(effect.m_primList.empty()&&rngDraws==draws&&g_texMgr.requests.empty()&&g_resMgr.requests.empty(),
+            "Angelus helper emits no primitives RNG or extra resource requests");
+        effect.m_ezEffectRes=nullptr;effect.m_aniClips=nullptr;g_world.m_player=oldPlayer;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

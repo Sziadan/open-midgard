@@ -4,10 +4,17 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A Signum id40, after Aqua checkpoint `eefd353`. Original frame-thirty disc/rays and ordered sounds now bind reference primitive paths while preserving per-call STR completion and offset.
+Current work: WP5A Angelus id41, after Signum checkpoint `e430180`. Direct reference helper now preserves stored-origin audio, minus-eighty STR offset and per-call completion while retaining original normal/reduced clip selection.
 
-Next action: continue unported emitters/control helpers (including Angelus id41) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: continue unported emitters/control helpers (including SprayPond id48) and primitive controls. Caller routing, specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
+
+## Angelus stored-origin sound / STR offset — 2026-10-26
+
+- Ref/RagEffect.cpp:7-22 (0x604F00), also inlined at HighPriest.exe.c:419857-419865 -> ProcessAngelus, original id41, direct ProcessEffectFrame/Init route. Zero plays exact stored-origin horizontal EF_Angelus wave with volume250/range40/frequency1. Every call returns ProcessEZ2STR(0,-80,0), preserving missing/active/exhausted completion. No additional projection, actor-origin refresh, primitive emission or RNG. No reduced-effects suppression.
+- Removed id41 from generic clip-wave table, whose sound used current actor origin, and bypassed generic zero-offset STR handling. Existing reference catalog still selects Angelus.str normally and jong_mini.str under reduced effects; loader and source parent duration remain unchanged. Active STR follows current actor anchor while the stored effect origin used for audio remains fixed.
+
+Validation: release build, six silent C++ suites / 1221 checks (1013 lifecycle/primitive, 150 rendering, 58 other), six Python tests, executable wave-literal/pointer audit, catalog/resource checks and whitespace check pass. Added10 lifecycle checks covering exact stored-origin horizontal audio/source parameters, reduced-effects emission, missing STR with unchanged screen fields, zero-only sound, active/moving STR minus-eighty offset, retained parent origin/duration, exhausted STR completion and absence of extra primitives/RNG/resource loads. Wave literal0x71A220 and original push0x604F44 verified against executable bytes. Exact normal/reduced catalog entries and extracted ef_angelus.wav/angelus.str/jong_mini.str resources verified. No media/live acceptance. Approved OldRO SHA-256: `D14BCD01078A590A04B7594C357938200813872F984412DBDFDA50D40CBF1332`. Other emitters/primitive controls, specialized segment payloads, caller routing, map scheduling, resource/cache and full renderer/fog/backend acceptance remain open. WP5A and the overall plan remain incomplete.
 
 ## Signum frame-thirty burst / STR completion — 2026-10-26
 

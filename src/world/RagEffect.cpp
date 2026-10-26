@@ -1326,7 +1326,6 @@ struct ProvenClipWave {
 
 const ProvenClipWave kProvenClipWaves[] = {
     { 30, 0, 0.0f, "effect\\magician_thunderstorm.wav", 0, -1 },
-    { 41, 0, 0.0f, "effect\\EF_Angelus.wav", 0, -1 },
     { 65, 0, 0.0f, "effect\\thief_invenom.wav", 0, -1 },
     { 66, 0, 0.0f, "effect\\Acolyte_cure.wav", 0, -1 },
     { 68, 0, 0.0f, "effect\\st_mvp.wav", 0, -1 },
@@ -8244,8 +8243,8 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     m_hasTargetPos = false;
 
     switch (effectId) {
-    case 40:
-        // ProcessSignum owns primitive emission and STR completion; load Cross.str below.
+    case 40: case 41:
+        // Direct helpers own STR completion; load the reference catalog clip below.
         m_handler = Handler::None;
         break;
     case 371: {
@@ -12690,6 +12689,19 @@ bool CRagEffect::ProcessSignum()
     return ProcessEZ2STR(0.0f,-80.0f,0.0f) != 0;
 }
 
+// Ref/RagEffect.cpp:7-22 (0x604F00), inlined in original OnProcess case 41.
+bool CRagEffect::ProcessAngelus()
+{
+    if (m_stateCnt == 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\EF_Angelus.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
+        }
+    }
+    return ProcessEZ2STR(0.0f,-80.0f,0.0f) != 0;
+}
+
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -13914,6 +13926,7 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 183) return ProcessHit2Blue();
     if (m_type == 40) return ProcessSignum();
+    if (m_type == 41) return ProcessAngelus();
     if (m_type == 32) {
         SpawnNapalmBeat();
         return true;
