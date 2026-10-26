@@ -9188,6 +9188,44 @@ void UpdateReferenceGroundShake(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:15628; canonical executable PrimBash3D at 0x628970 (case 0x59).
+void UpdateReferenceBash3D(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.height[4] == 2.0f) {
+            if (gi.process <= 10) {
+                gi.alphaB = static_cast<short>(gi.alphaB + 10);
+            } else if (gi.process > 11) {
+                gi.alphaB = static_cast<short>(gi.alphaB - 3);
+                if (gi.alphaB < 0) gi.alphaB = 0;
+            }
+            gi.distance += 3.0f;
+        } else if (gi.height[4] == 3.0f) {
+            if (gi.process <= 10) {
+                gi.alphaB = static_cast<short>(gi.alphaB + 6);
+            } else if (gi.process > 11) {
+                gi.alphaB = static_cast<short>(gi.alphaB - 1);
+                if (gi.alphaB < 0) gi.alphaB = 0;
+            }
+            gi.distance += 3.0f;
+        } else {
+            if (gi.process <= 10) {
+                gi.alphaB = static_cast<short>(gi.alphaB + 20);
+            } else if (gi.process > 12) {
+                gi.alphaB = static_cast<short>(gi.alphaB - 15);
+                if (gi.alphaB < 0) gi.alphaB = 0;
+            }
+            gi.distance *= 1.15f;
+        }
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -10285,6 +10323,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_GROUNDSHAKE) {
         UpdateReferenceGroundShake(this); // Source case 0x58 continues to the common tick.
+        return true;
+    }
+    if (m_type == PP_BASH3D) {
+        UpdateReferenceBash3D(this); // Source case 0x59 continues to the common tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

@@ -218,6 +218,7 @@ bool UpdateReferenceGhost(CEffectPrim*);
 void UpdateReferenceSoulBreaker(CEffectPrim*);
 void UpdateReferencePressure(CEffectPrim*);
 void UpdateReferenceGroundShake(CEffectPrim*);
+void UpdateReferenceBash3D(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -337,6 +338,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SOULBREAKER) { UpdateReferenceSoulBreaker(this); return active; }
         if (m_type == PP_PRESSURE) { UpdateReferencePressure(this); return active; }
         if (m_type == PP_GROUNDSHAKE) { UpdateReferenceGroundShake(this); return active; }
+        if (m_type == PP_BASH3D) { UpdateReferenceBash3D(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -782,6 +784,7 @@ __declspec(noinline) void RunGhostLifecycleChecks(CEffectPrim& prim, int& checks
 __declspec(noinline) void RunSoulBreakerLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunPressureLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunGroundShakeLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunBash3DLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1534,6 +1537,60 @@ __declspec(noinline) void RunGroundShakeLifecycleChecks(CEffectPrim& prim, int& 
         allBands=allBands&&gi.process==1&&gi.alphaB==4&&std::fabs(gi.distance-1.0700001f)<0.0001f;
     }
     check(allBands,"case 0x58 updates each of the four GI slots independently");
+    g_isSkipFrame=oldSkipFrame;
+    RunBash3DLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunBash3DLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_BASH3D; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_master->m_effectPos={71,72,73};
+    for (auto& gi : prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=9; a.height[4]=2; a.alphaB=5; a.distance=1;
+    EffectGi& b=prim.m_gi[1]; b.life=1; b.process=10; b.height[4]=3; b.alphaB=5; b.distance=2;
+    EffectGi& c=prim.m_gi[2]; c.life=1; c.process=11; c.height[4]=4; c.alphaB=30; c.distance=4;
+    EffectGi& d=prim.m_gi[3]; d.life=2; d.process=9; d.height[4]=2; d.alphaB=50; d.distance=5;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==71 && prim.m_pos.y==72 && prim.m_pos.z==73
+        && a.process==10 && a.alphaB==15 && a.distance==4
+        && b.process==11 && b.alphaB==5 && b.distance==5
+        && c.process==12 && c.alphaB==30 && std::fabs(c.distance-4.6f)<0.0001f
+        && d.process==9 && d.alphaB==50 && d.distance==5 && rngDraws==draws,
+        "case 0x59 copies master, updates exact-life slots, selects exact modes and applies process-10 growth/distance mutations");
+
+    a.process=10; a.alphaB=5; const float aDistance=a.distance;
+    b.process=10; b.alphaB=5; const float bDistance=b.distance;
+    c.process=10; c.alphaB=5; const float cDistance=c.distance;
+    prim.OnProcess();
+    check(a.process==11 && a.alphaB==5 && a.distance==aDistance+3
+        && b.process==11 && b.alphaB==5 && b.distance==bDistance+3
+        && c.process==11 && c.alphaB==5 && std::fabs(c.distance-cDistance*1.15f)<0.0001f,
+        "case 0x59 selectors 2/3 preserve alpha at process 11 and default selector preserves alpha through process 11");
+
+    a.process=11; a.alphaB=2; const float aDistance2=a.distance;
+    b.process=11; b.alphaB=0; const float bDistance2=b.distance;
+    c.process=11; c.alphaB=10; const float cDistance2=c.distance;
+    prim.OnProcess();
+    check(a.process==12 && a.alphaB==0 && a.distance==aDistance2+3
+        && b.process==12 && b.alphaB==0 && b.distance==bDistance2+3
+        && c.process==12 && c.alphaB==10 && std::fabs(c.distance-cDistance2*1.15f)<0.0001f,
+        "case 0x59 selectors 2/3 fade after process 11 with zero clamp while default selector retains its process-12 gap");
+
+    c.process=12; c.alphaB=10; const float cDistance3=c.distance;
+    prim.OnProcess();
+    check(c.process==13 && c.alphaB==0 && std::fabs(c.distance-cDistance3*1.15f)<0.0001f,
+        "case 0x59 default selector starts alpha fade only above process 12");
+
+    for (auto& gi : prim.m_gi) gi={};
+    a.life=1; a.process=10; a.height[4]=2.0001f; a.alphaB=30; a.distance=10;
+    prim.OnProcess();
+    check(a.process==11 && a.alphaB==30 && std::fabs(a.distance-11.5f)<0.0001f,
+        "case 0x59 values adjacent to selector 2 use the default multiplier and preserve the process-11 alpha gap");
     g_isSkipFrame=oldSkipFrame;
 }
 
