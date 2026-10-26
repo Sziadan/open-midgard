@@ -9558,6 +9558,74 @@ bool UpdateReferenceSoulLinkLight(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:9734; canonical executable PrimSoulParticle at 0x61B760 (case 0x6F).
+bool UpdateReferenceSoulParticle(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode ? mode->m_view : nullptr;
+    if (view) {
+        const short longitude = static_cast<short>(view->GetCameraLongitude());
+        prim->m_gi[0].alphaT = static_cast<short>(360 - longitude);
+        const short latitude = static_cast<short>(view->GetCameraLatitude());
+        const short cameraLatitude = static_cast<short>(450 - latitude);
+        prim->m_gi[1].alphaT = static_cast<short>(cameraLatitude >= 360 ? cameraLatitude - 360 : cameraLatitude);
+    }
+
+    if (!prim->m_master) return true;
+    prim->m_pos = prim->m_master->EffectPosition();
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        ++gi.process;
+
+        for (int index = 0; index < 12; index += 2) {
+            float& angle = gi.height[static_cast<size_t>(index)];
+            float& target = gi.height[static_cast<size_t>(index + 1)];
+            if (target > angle) {
+                angle += 3.0f;
+                if (angle > 359.0f) angle = 359.0f;
+                if (angle > target) {
+                    const int range = static_cast<int>(angle);
+                    target = static_cast<float>(range ? rand() % range : 0);
+                }
+            } else {
+                angle -= 2.0f;
+                if (angle < 0.0f) angle = 0.0f;
+                if (angle <= target) {
+                    const int range = static_cast<int>(angle);
+                    target = static_cast<float>(359 - (range ? rand() % range : 0));
+                }
+            }
+        }
+
+        for (int index = 12; index < 15; ++index) {
+            if (gi.process < 10) {
+                gi.height[static_cast<size_t>(index)] += 20.0f;
+            } else if (gi.process > 30) {
+                gi.height[static_cast<size_t>(index)] -= 3.0f;
+                if (gi.height[static_cast<size_t>(index)] < 0.0f) gi.height[static_cast<size_t>(index)] = 0.0f;
+            }
+        }
+
+        if (gi.arcBaselineY < 0.0f) {
+            gi.vecBPreX += gi.maxHeight * g_sinTable[static_cast<int>(gi.height[0])];
+            gi.vecBPreZ += gi.maxHeight * g_sinTable[static_cast<int>(gi.height[2])];
+        }
+        gi.arcBaselineY -= gi.maxHeight;
+
+        if (gi.sparkY < 0.0f) {
+            gi.sparkX -= gi.maxHeight * g_sinTable[static_cast<int>(gi.height[4])];
+            gi.sparkZ -= gi.maxHeight * g_sinTable[static_cast<int>(gi.height[6])];
+        }
+        gi.sparkY += gi.maxHeight;
+
+        if (gi.vecTPreY < 0.0f) {
+            gi.vecTPreX += gi.maxHeight * 1.2f * g_sinTable[static_cast<int>(gi.height[8])];
+            gi.vecTPreZ -= gi.maxHeight * 1.2f * g_sinTable[static_cast<int>(gi.height[10])];
+        }
+    }
+    return true;
+}
+
 // Ref/dhxj/RagEffect2.cpp:15246; canonical executable PrimTanji2 at 0x627F30 (case 0x61).
 void UpdateReferenceTanji2(CEffectPrim* prim)
 {
@@ -10777,6 +10845,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_SOULLINK) {
         UpdateReferenceSoulLinkLight(this); // Source case 0x6D ignores the handler's true result.
+        return true;
+    }
+    if (m_type == PP_SOULPARTICLE) {
+        UpdateReferenceSoulParticle(this); // Source case 0x6F ignores the handler's true result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

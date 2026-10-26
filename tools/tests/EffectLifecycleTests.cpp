@@ -230,6 +230,7 @@ void UpdateReferenceTanji2(CEffectPrim*);
 void UpdateReferenceAirTexture(CEffectPrim*);
 void UpdateReferenceHitLine3(CEffectPrim*);
 bool UpdateReferenceSoulLinkLight(CEffectPrim*);
+bool UpdateReferenceSoulParticle(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -362,6 +363,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_AIRTEXTURE) { UpdateReferenceAirTexture(this); return active; }
         if (m_type == PP_HITLINE3) { UpdateReferenceHitLine3(this); return active; }
         if (m_type == PP_SOULLINK) { UpdateReferenceSoulLinkLight(this); return active; }
+        if (m_type == PP_SOULPARTICLE) { UpdateReferenceSoulParticle(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -832,6 +834,7 @@ __declspec(noinline) void RunTanji2LifecycleChecks(CEffectPrim& prim, int& check
 __declspec(noinline) void RunAirTextureLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunHitLine3LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2129,6 +2132,62 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     check(d.process==-1&&d.height[13]==7&&d.vecTNowX==25&&d.vecBPreX==13
         &&rngDraws==draws,
         "case 0x6D nonpositive post-increment skips height angle/vector updates and RNG");
+    testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
+    RunSoulParticleLifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude; testView.longitude=20.0f;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_SOULPARTICLE; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={7,8,9}; prim.m_master->m_effectPos={100,200,300};
+    for(auto& gi:prim.m_gi) gi={};
+    const int initialDraws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_pos.x==100&&prim.m_pos.y==200&&prim.m_pos.z==300
+        &&prim.m_gi[0].alphaT==340&&prim.m_gi[1].alphaT==135&&rngDraws==initialDraws,
+        "case 0x6F updates camera/master state with inactive lanes and no RNG");
+
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=8; a.maxHeight=2;
+    a.height[0]=10; a.height[1]=11; a.height[2]=5; a.height[3]=5;
+    a.height[4]=0; a.height[5]=0; a.height[6]=10; a.height[7]=20;
+    a.height[8]=359; a.height[9]=360; a.height[10]=8; a.height[11]=7;
+    a.height[12]=5; a.height[13]=10; a.height[14]=15;
+    a.vecBPreX=1; a.arcBaselineY=-1; a.vecBPreZ=2;
+    a.sparkX=10; a.sparkY=-1; a.sparkZ=11;
+    a.vecTPreX=1; a.vecTPreY=-1; a.vecTPreZ=2;
+    rngValues={7,4,8}; rngCursor=0;
+    const int drawStart=rngDraws;
+    prim.OnProcess();
+    check(a.process==9&&a.height[0]==13&&a.height[1]==7&&a.height[2]==3&&a.height[3]==358
+        &&a.height[4]==0&&a.height[5]==359&&a.height[6]==13&&a.height[7]==20
+        &&a.height[8]==359&&a.height[9]==360&&a.height[10]==6&&a.height[11]==357
+        &&rngDraws==drawStart+3&&rngCursor==3,
+        "case 0x6F processes six alternating angle pairs, conditional target RNG and zero-range no-draw");
+    check(a.height[12]==25&&a.height[13]==30&&a.height[14]==35
+        &&std::fabs(a.vecBPreX-(1+2*GetSin(13)))<0.00001f
+        &&std::fabs(a.vecBPreZ-(2+2*GetSin(3)))<0.00001f&&a.arcBaselineY==-3
+        &&std::fabs(a.sparkX-(10-2*GetSin(0)))<0.00001f
+        &&std::fabs(a.sparkZ-(11-2*GetSin(13)))<0.00001f&&a.sparkY==1
+        &&std::fabs(a.vecTPreX-(1+2.4f*GetSin(359)))<0.00001f
+        &&std::fabs(a.vecTPreZ-(2-2.4f*GetSin(6)))<0.00001f&&a.vecTPreY==-1,
+        "case 0x6F grows early heights and applies conditional pre/now/top motion while preserving top Y");
+
+    for(auto& gi:prim.m_gi) { gi.height.fill(0); gi.height[1]=0; gi.height[3]=0; gi.height[5]=0; gi.height[7]=0; gi.height[9]=0; gi.height[11]=0; gi.maxHeight=0; }
+    auto& hold=prim.m_gi[1]; hold.life=1; hold.process=29; hold.height[12]=11; hold.height[13]=12; hold.height[14]=13;
+    auto& decay=prim.m_gi[2]; decay.life=1; decay.process=30; decay.height[12]=2; decay.height[13]=3; decay.height[14]=4;
+    auto& nonpositive=prim.m_gi[3]; nonpositive.life=1; nonpositive.process=-1; nonpositive.height[12]=1;
+    auto& inactive=prim.m_gi[0]; inactive.life=2; inactive.process=44; inactive.height[12]=55;
+    const int thresholdDraws=rngDraws; prim.OnProcess();
+    check(hold.process==30&&hold.height[12]==11&&hold.height[13]==12&&hold.height[14]==13
+        &&decay.process==31&&decay.height[12]==0&&decay.height[13]==0&&decay.height[14]==1
+        &&nonpositive.process==0&&nonpositive.height[12]==21
+        &&inactive.process==44&&inactive.height[12]==55&&rngDraws==thresholdDraws,
+        "case 0x6F holds process thirty, decays after thirty, runs post-increment zero, and skips non-exact life");
     testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
 }
 
