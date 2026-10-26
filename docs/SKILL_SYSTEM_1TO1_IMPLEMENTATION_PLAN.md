@@ -60,6 +60,16 @@ Every work package produces, in addition to code:
 * A clean build with the commands above.
 * The checklist in the work package ticked with evidence (log lines, table diff output, etc.).
 
+### 0.7 Finish and compare one function before starting another
+
+Port functions serially. Do not begin editing or porting another function until the current function has passed a source-to-implementation comparison and that comparison is recorded. A successful build is necessary where required, but it does not establish parity: both versions can compile while implementing different behavior.
+
+For every function, compare its complete control flow and behavior against its reference before marking it complete. For switches, mechanically extract the reference case IDs and implementation case IDs, normalize their representation, and compare the complete ordered lists (and counts). Record the extraction commands or script, both ID lists, and the comparison result. Do not rely on visual spot checks or a manually copied list.
+
+Case-label equality is only a structural check. For complex functions, also produce a branch-level comparison: enumerate each conditional and switch branch, its guards, operation order, calls, state/resource mutations, return or termination behavior, and relevant constants; map each reference branch to its implementation branch and mark it matched or explain a source-supported discrepancy. Mechanically compare tables and other finite dispatch data as well. If the source cannot be parsed reliably, improve the extractor or document the bounded manual method and its evidence; do not treat compilation as a substitute.
+
+The function is not complete, and work on the next function must not start, while any case, branch, table entry, call-order rule, or behavior remains unaccounted for. Add the comparison evidence to the function's parity-log entry. If a mismatch cannot be resolved from the reference, record it in docs/skill/MISMATCHES.md or docs/skill/BLOCKED.md as appropriate and keep the function open.
+
 ---
 
 ## 1. How the original client does skills (reference architecture)
@@ -629,5 +639,6 @@ From `Ref/RagEffect2.cpp` (334 methods): enumerate with `rg -n "^// Original Sig
 3. For every string symbol (`aXxx`, `byte_XXXXXX`): look it up in `docs/skill/generated/playwave_callsites.tsv` / the generated tables / `tools/ro_exe_resolve.py`. If unresolved → `BLOCKED.md`, stop that branch (leave the exact call with a compile-time `static_assert`-style marker is **not** allowed; instead do not merge until resolved or owner-accepted).
 4. For every `SendMsg(x, id, ...)`: confirm the receiving class implements message `id` (grep `case id:` in the receiver's `SendMsg`). If not, port that case too (it is in scope).
 5. For every `LaunchEffect(id)`/`PlaceEffect(..., id, ...)`: confirm `id` has a dispatcher case and handler (WP5). If not, add it to the WP5 batch backlog in `PARITY_LOG.md`; the packet/actor code still launches the id.
-6. Build. Trigger the behaviour (live or by packet replay). Capture the debug log. Compare with the Ref walk-through.
-7. Append the parity note.
+6. Before starting another function, mechanically compare this function's reference and implementation. Extract and compare complete ordered case-ID lists for every switch, plus table or finite dispatch entries. For complex functions, create a branch-by-branch mapping of guards, operations, calls, mutations, constants, and exits. Resolve every mismatch or record why the function remains open. Save the comparison commands/script, output, and branch mapping with the parity evidence.
+7. Build and run the relevant focused checks. Trigger the behaviour (live or by packet replay) when available and safe; capture the debug log. Compare the result with the Ref walk-through. Build success alone does not pass the source comparison.
+8. Append the parity note with the comparison evidence. Only then mark the function complete and proceed to the next function.
