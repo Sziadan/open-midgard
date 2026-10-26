@@ -236,6 +236,7 @@ void UpdateReferenceParticleSpread(CEffectPrim*);
 void UpdateReferenceShieldBoomerang3(CEffectPrim*);
 void UpdateReferenceQuadHorn2(CEffectPrim*);
 void UpdateReferenceStin(CEffectPrim*);
+void UpdateReferenceSma(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -374,6 +375,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_SHIELDBOOMERANG3) { UpdateReferenceShieldBoomerang3(this); return active; }
         if (m_type == PP_3DQUADHORN2) { UpdateReferenceQuadHorn2(this); return active; }
         if (m_type == PP_STIN) { UpdateReferenceStin(this); return active; }
+        if (m_type == PP_SMA) { UpdateReferenceSma(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -850,6 +852,7 @@ __declspec(noinline) void RunParticleSpreadLifecycleChecks(CEffectPrim& prim, in
 __declspec(noinline) void RunShieldBoomerang3LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunQuadHorn2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunStinLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunSmaLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2154,6 +2157,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     RunShieldBoomerang3LifecycleChecks(prim, checks, failures);
     RunQuadHorn2LifecycleChecks(prim, checks, failures);
     RunStinLifecycleChecks(prim, checks, failures);
+    RunSmaLifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2429,6 +2433,36 @@ __declspec(noinline) void RunStinLifecycleChecks(CEffectPrim& prim, int& checks,
     a.life=1; a.process=-2; const int negativeRise=a.riseAngle; prim.OnProcess();
     check(a.process==-1&&a.riseAngle==negativeRise,
         "case 0x77 nonpositive post-increment process skips remaining branches");
+    g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunSmaLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_SMA; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={10,20,30}; prim.m_deltaPos={110,40,30}; prim.m_master->m_effectPos={100,200,300};
+    for(auto& gi:prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=0; a.rotStart=99; a.height[1]=5; a.sparkX=1; a.sparkZ=2;
+    EffectGi& b=prim.m_gi[1]; b.life=1; b.process=-1; b.rotStart=45; b.height[1]=7; b.sparkX=10; b.sparkZ=11;
+    EffectGi& c=prim.m_gi[2]; c.life=1; c.process=0; c.rotStart=180; c.height[1]=2; c.sparkX=20; c.sparkZ=21;
+    EffectGi& d=prim.m_gi[3]; d.life=2; d.process=4; d.rotStart=90; d.height[1]=9; d.sparkX=30; d.sparkZ=31;
+    const int draws=rngDraws; prim.OnProcess();
+    check(a.process==1&&a.rotStart==0&&a.sparkX==6&&a.sparkZ==2
+        &&b.process==0&&b.rotStart==45&&b.sparkX==10&&b.sparkZ==11
+        &&c.process==1&&c.rotStart==0&&c.sparkX==22&&c.sparkZ==21
+        &&d.life==2&&d.process==4&&d.rotStart==90&&d.sparkX==30&&d.sparkZ==31
+        &&prim.m_pos.x==10&&prim.m_pos.y==20&&prim.m_pos.z==30&&rngDraws==draws,
+        "case 0x78 aims and moves only exact-life bands whose incremented process is positive without copying origin or using RNG");
+
+    a.process=1; a.rotStart=90; a.height[1]=3; a.sparkX=6; a.sparkZ=2;
+    b.process=-2; b.life=1; b.height[1]=10; b.sparkX=10; b.sparkZ=11;
+    prim.OnProcess();
+    check(a.process==2&&a.rotStart==90&&std::fabs(a.sparkX-6)<0.0001f&&a.sparkZ==5
+        &&b.process==-1&&b.sparkX==10&&b.sparkZ==11,
+        "case 0x78 non-first positive process retains its angle and advances X/Z while nonpositive lanes skip movement");
     g_isSkipFrame=oldSkipFrame;
 }
 

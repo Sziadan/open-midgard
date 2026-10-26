@@ -9813,6 +9813,24 @@ void UpdateReferenceStin(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:14562; canonical executable PrimSMA at 0x626DA0 (case 0x78).
+void UpdateReferenceSma(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.process == 1) {
+            const float deltaX = prim->m_deltaPos.x - prim->m_pos.x;
+            const float deltaZ = prim->m_deltaPos.z - prim->m_pos.z;
+            gi.rotStart = static_cast<short>(GetReferenceAngle(deltaX, deltaZ));
+        }
+        gi.sparkX += gi.height[1] * g_cosTable[gi.rotStart];
+        gi.sparkZ += gi.height[1] * g_sinTable[gi.rotStart];
+    }
+}
+
 // Ref/dhxj/RagEffect2.cpp:15246; canonical executable PrimTanji2 at 0x627F30 (case 0x61).
 void UpdateReferenceTanji2(CEffectPrim* prim)
 {
@@ -11056,6 +11074,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_STIN) {
         UpdateReferenceStin(this); // Source case 0x77 continues to the shared tick.
+        return true;
+    }
+    if (m_type == PP_SMA) {
+        UpdateReferenceSma(this); // Source case 0x78 continues to the shared tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
