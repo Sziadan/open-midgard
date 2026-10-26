@@ -125,6 +125,7 @@ vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.
 #include "ElectricPathBody.inc"
 #include "Electric2PathBody.inc"
 #include "WindSampleBody.inc"
+#include "GrandCross2CornersBody.inc"
 #include "ReferenceTriangleQueueBodies.inc"
 
 int main() {
@@ -193,6 +194,16 @@ int main() {
             && near(top.y,-(static_cast<double>(vertical)+maxHeight))
             && near(top.z,static_cast<double>(radial)*GetSin(angle)+base.z),
             "wind casting sample matches source base/rise geometry and source float stores");
+    }
+    for(int angle:{0,90,180,270}) {
+        vector3d corners[4]{};const float horizontal=23.0f,diagonal=-23.0f;
+        GrandCross2Corners(angle,horizontal,diagonal,corners);
+        const double c=GetCos(angle),s=GetSin(angle),hx=horizontal*c,hz=horizontal*s,dx=diagonal*c,dz=diagonal*s;
+        check(near(corners[0].x,hx-dz)&&near(corners[0].y,-1.0f)&&near(corners[0].z,hz+dx)
+            && near(corners[1].x,hx+dz)&&near(corners[1].z,hz-dx)
+            && near(corners[2].x,-hx+dz)&&near(corners[2].z,-hz-dx)
+            && near(corners[3].x,-hx-dz)&&near(corners[3].z,-hz+dx),
+            "Grand Cross2 four rotated corners match source quadrant formula");
     }
     const int inverseSizes[]={0,2,3,12,13,14,100};
     for(int size=0;size<=100;++size) {

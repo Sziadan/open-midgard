@@ -6416,6 +6416,63 @@ void RenderWind(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void GrandCross2Corners(int rotStart, float horizontal, float diagonal, vector3d (&corners)[4])
+{
+    const int angle = ((rotStart % 360) + 360) % 360;
+    const double cosine = g_cosTable[angle];
+    const double sine = g_sinTable[angle];
+    const float hx = static_cast<float>(static_cast<double>(horizontal) * cosine);
+    const float hz = static_cast<float>(static_cast<double>(horizontal) * sine);
+    const float dx = static_cast<float>(static_cast<double>(diagonal) * cosine);
+    const float dz = static_cast<float>(static_cast<double>(diagonal) * sine);
+    corners[0] = { static_cast<float>(hx - dz), -1.0f, static_cast<float>(hz + dx) };
+    corners[1] = { static_cast<float>(hx + dz), -1.0f, static_cast<float>(hz - dx) };
+    corners[2] = { static_cast<float>(-hx + dz), -1.0f, static_cast<float>(-hz - dx) };
+    corners[3] = { static_cast<float>(-hx - dz), -1.0f, static_cast<float>(-hz + dx) };
+}
+
+void RenderGrandCross2(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+        vector3d corners[4]{};
+        vector3d top[4]{};
+        GrandCross2Corners(gi.rotStart, gi.height[0], gi.height[1], corners);
+        const float topY = static_cast<float>(-1.0 - static_cast<double>(gi.height[2]));
+        for (int corner = 0; corner < 4; ++corner) {
+            top[corner] = corners[corner];
+            top[corner].y = topY;
+        }
+        // The original renderer leaves its generated corners in GI scratch slots.
+        gi.sparkX = corners[1].x; gi.sparkY = corners[1].y; gi.sparkZ = corners[1].z;
+        gi.vecTNowX = corners[2].x; gi.vecTNowY = corners[2].y; gi.vecTNowZ = corners[2].z;
+        gi.vecBPreX = corners[0].x; gi.arcBaselineY = corners[0].y; gi.vecBPreZ = corners[0].z;
+        gi.vecTPreX = corners[3].x; gi.vecTPreY = corners[3].y; gi.vecTPreZ = corners[3].z;
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | 0x00FFFFFFu;
+        for (int side = 0; side < 4; ++side) {
+            const int next = (side + 1) % 4;
+            const vector3d worldBase{ prim.m_pos.x + corners[side].x, prim.m_pos.y + corners[side].y, prim.m_pos.z + corners[side].z };
+            const vector3d worldNextBase{ prim.m_pos.x + corners[next].x, prim.m_pos.y + corners[next].y, prim.m_pos.z + corners[next].z };
+            const vector3d worldNextTop{ prim.m_pos.x + top[next].x, prim.m_pos.y + top[next].y, prim.m_pos.z + top[next].z };
+            const vector3d worldTop{ prim.m_pos.x + top[side].x, prim.m_pos.y + top[side].y, prim.m_pos.z + top[side].z };
+            SubmitWorldTeiRect(worldBase, worldNextBase, worldNextTop, worldTop, viewMatrix, texture, color,
+                0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_INVSRCALPHA, 0.0f, static_cast<int>(prim.m_renderFlag));
+        }
+        const unsigned int innerColor = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB / 2)) << 24) | 0x00FFFFFFu;
+        const vector3d floor0 = AddVec3(corners[0], prim.m_pos);
+        const vector3d floor1 = AddVec3(corners[1], prim.m_pos);
+        const vector3d floor2 = AddVec3(corners[2], prim.m_pos);
+        const vector3d floor3 = AddVec3(corners[3], prim.m_pos);
+        SubmitWorldTeiRect(floor0, floor1, floor2, floor3, viewMatrix, texture, innerColor,
+            0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+        SubmitWorldTeiRect(floor3, floor2, floor1, floor0, viewMatrix, texture, innerColor,
+            0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+    }
+}
+
 // Ref/RagEffectPrim.cpp:5679, 6377. The world owns primitive objects;
 // the parent's list only tracks attachments.
 // HighPriest.exe.c:451706-451754 (0x625C30). Counter belongs to OnProcess.
@@ -7558,6 +7615,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_GI_3) {
         RenderGi3(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_GRANDCROSS2) {
+        RenderGrandCross2(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {
