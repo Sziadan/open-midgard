@@ -188,6 +188,7 @@ bool UpdateReferenceMapParticle(CEffectPrim*);
 bool UpdateReference3DAura(CEffectPrim*);
 bool UpdateReference3DAura2(CEffectPrim*);
 bool UpdateReferenceChookGi(CEffectPrim*);
+void UpdateReferenceGi3(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -281,6 +282,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DAURA) { UpdateReference3DAura(this); return active; }
         if (m_type == PP_3DAURA_2) { UpdateReference3DAura2(this); return active; }
         if (m_type == PP_CHOOKGI) return UpdateReferenceChookGi(this) && active;
+        if (m_type == PP_GI_3) { UpdateReferenceGi3(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1594,6 +1596,40 @@ int main()
         chook.process = 202; chook.height[6] = 30; chook.height[8] = 0;
         check(UpdateReferenceChookGi(&texturePrim) && chook.process == 203 && chook.height[6] == 30,
             "PrimCHOOKGI odd process skips flag-controlled rotation while retaining final height randomization");
+        texturePrim.m_type = PP_GI_3; texturePrim.m_stateCnt = 0; texturePrim.m_pos = {7,8,9};
+        texturePrim.m_master->m_effectPos = {700,800,900};
+        for (auto& gi : texturePrim.m_gi) gi = {};
+        auto& gi3a = texturePrim.m_gi[0]; gi3a.life=1; gi3a.process=8; gi3a.distance=10;
+        gi3a.alphaB=2; gi3a.maxHeight=5; gi3a.riseAngle=100;
+        auto& gi3b = texturePrim.m_gi[1]; gi3b.life=1; gi3b.process=9; gi3b.distance=10;
+        gi3b.alphaB=1; gi3b.maxHeight=4; gi3b.riseAngle=0;
+        auto& gi3c = texturePrim.m_gi[2]; gi3c.life=1; gi3c.process=29; gi3c.distance=30;
+        gi3c.alphaB=5; gi3c.maxHeight=3; gi3c.riseAngle=25;
+        auto& gi3d = texturePrim.m_gi[3]; gi3d.life=1; gi3d.process=30; gi3d.distance=4;
+        gi3d.alphaB=1; gi3d.maxHeight=2; gi3d.riseAngle=3;
+        const int gi3DrawStart = rngDraws;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_pos.x == 7 && texturePrim.m_pos.y == 8
+            && texturePrim.m_pos.z == 9 && texturePrim.m_stateCnt == 1
+            && gi3a.process == 9 && gi3a.alphaB == 12
+            && gi3a.distance == static_cast<float>(static_cast<double>(10)-0.0099999998)
+            && std::fabs(gi3a.height[0]-5*GetSin(9)) < 0.00001f
+            && std::fabs(gi3a.height[20]-5*GetSin(9)) < 0.00001f
+            && gi3b.process == 10 && gi3b.alphaB == 0 && gi3b.life == 1
+            && gi3b.distance == 20 && gi3b.riseAngle == 90
+            && std::fabs(gi3b.height[20]-4*GetSin(10)) < 0.00001f
+            && gi3c.process == 30 && gi3c.alphaB == 4 && gi3c.life == 1
+            && gi3c.distance == static_cast<float>(static_cast<double>(30)-0.0099999998)
+            && std::fabs(gi3c.height[20]-3*GetSin(30)) < 0.00001f
+            && gi3d.process == 31 && gi3d.alphaB == 0 && gi3d.life == 0
+            && gi3d.distance == 20 && gi3d.riseAngle == 90
+            && std::fabs(gi3d.height[20]-2*GetSin(31)) < 0.00001f
+            && rngDraws == gi3DrawStart,
+            "OnProcess case 0x22 covers live-band process/alpha boundaries, lifetime reset, all 21 heights, unchanged origin and shared tick");
+        gi3b.life=2; gi3b.process=77; gi3b.distance=88; gi3b.alphaB=99; gi3b.riseAngle=66; gi3b.height[20]=55;
+        UpdateReferenceGi3(&texturePrim);
+        check(gi3b.life == 2 && gi3b.process == 77 && gi3b.distance == 88 && gi3b.alphaB == 99
+            && gi3b.riseAngle == 66 && gi3b.height[20] == 55,
+            "PrimGI3 skips any band whose life value is not exactly one");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

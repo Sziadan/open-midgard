@@ -8145,6 +8145,32 @@ bool UpdateReferenceChookGi(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:13777 (case 0x22). This updater does not move the
+// primitive origin; the source loop only mutates live GI bands.
+void UpdateReferenceGi3(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        gi.distance = static_cast<float>(static_cast<double>(gi.distance) - 0.0099999998);
+        if (gi.process < 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 10);
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - 1);
+            if (gi.alphaB <= 0) {
+                gi.alphaB = 0;
+                if (gi.process > 30) gi.life = 0;
+                gi.distance = 20.0f;
+                gi.riseAngle = static_cast<short>(81 + 9);
+            }
+        }
+        for (int index = 0; index < 21; ++index) {
+            gi.height[static_cast<size_t>(index)] = gi.maxHeight * g_sinTable[gi.process];
+        }
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9139,6 +9165,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_CHOOKGI) {
         return UpdateReferenceChookGi(this); // Source tests this return; all helper paths return true.
+    }
+    if (m_type == PP_GI_3) {
+        UpdateReferenceGi3(this);
+        return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
         return UpdateReferenceScreenTexture(this);

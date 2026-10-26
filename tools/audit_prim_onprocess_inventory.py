@@ -8,6 +8,7 @@ EXE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
 REF = (ROOT / "Ref/RagEffectPrim.cpp").read_text(encoding="utf-8", errors="replace")
 REF_EFFECT2 = (ROOT / "Ref/RagEffect2.cpp").read_text(encoding="utf-8", errors="replace")
 REF_DHXJ_EFFECT2 = (ROOT / "Ref/dhxj/RagEffect2.cpp").read_text(encoding="cp1252", errors="replace")
+REF_DHXJ_EFFECT_HEADER = (ROOT / "Ref/dhxj/RagEffect.h").read_text(encoding="cp1252", errors="replace")
 CURRENT = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 HEADER = (ROOT / "src/world/RagEffect.h").read_text(encoding="utf-8")
 
@@ -74,7 +75,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 74 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A, 0x1B, 0x1C, 0x1D, 0x20}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 75 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x1A, 0x1B, 0x1C, 0x1D, 0x20, 0x22}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -591,7 +592,7 @@ check("case 0x1B Ref and canonical EXE helper bodies match and dispatch ignores 
       and re.search(r"case\s+0x1B:\s*CEffectPrim::PrimMapParticle\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_MAPPARTICLE)" in current_dispatch
       and "UpdateReferenceMapParticle(this); // Source case 0x1B ignores the bool result." in current_dispatch
-      and len(current_explicit_ids) == 74)
+      and len(current_explicit_ids) == 75)
 map_particle_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[0].alphaT=360-m_GI[0].alphaT;",
     "m_GI[1].alphaT=360-m_GI[1].alphaT+90;", "if (m_GI[1].alphaT>=360)",
@@ -641,7 +642,7 @@ check("case 0x1C Ref and canonical EXE aura bodies match and dispatch discards a
       and re.search(r"case\s+0x1C:\s*CEffectPrim::Prim3DAura\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_3DAURA)" in current_dispatch
       and "UpdateReference3DAura(this); // Source case 0x1C ignores the bool result." in current_dispatch
-      and len(current_explicit_ids) == 74)
+      and len(current_explicit_ids) == 75)
 aura_source_effects = [
     "m_pos = m_master->m_pos;", "for (ec=0;ec<2;ec++)", "m_GI[ec].rise_angle+=3;",
     "if (m_GI[ec].rise_angle>=360)", "m_GI[ec].rise_angle-=360;",
@@ -674,7 +675,7 @@ check("case 0x1D Ref/EXE helper bodies match and the dispatcher ignores its retu
       and re.search(r"case\s+0x1D:\s*CEffectPrim::Prim3DAura_2\(this\);\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_3DAURA_2)" in current_dispatch
       and "UpdateReference3DAura2(this); // Source case 0x1D ignores the bool result." in current_dispatch
-      and len(current_explicit_ids) == 74)
+      and len(current_explicit_ids) == 75)
 aura2_source_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[1].alphaT=360-m_GI[1].alphaT+90;",
     "if (m_GI[1].alphaT>=360)", "m_pos = m_master->m_pos;", "for (ec=0;ec<4;ec++)",
@@ -732,7 +733,7 @@ check("case 0x20 Ref/EXE helper bodies match and dispatcher honors the always-tr
       and re.search(r"case\s+0x20:\s*result = CEffectPrim::PrimCHOOKGI\(this\);\s*if\s*\(\s*!result\s*\)\s*return result;\s*goto\s+\$L145961;", source_dispatch)
       and "if (m_type == PP_CHOOKGI)" in current_dispatch
       and "return UpdateReferenceChookGi(this); // Source tests this return; all helper paths return true." in current_dispatch
-      and len(current_explicit_ids) == 74)
+      and len(current_explicit_ids) == 75)
 chook_source_effects = [
     "m_GI[0].alphaT=pView->GetCurLongitude();", "m_GI[1].alphaT=360-m_GI[1].alphaT+90;",
     "m_pos = m_master->m_pos;", "if ( m_GI[ec].life == 1 )", "m_GI[ec].process++;",
@@ -775,6 +776,45 @@ check("case 0x20 source-to-implementation maps alpha/process/angle/vector branch
       < current_chook.index("gi.sparkY += gi.height[7];")
       < current_chook.index("gi.height[8] += static_cast<float>(5 + rand() % 5);")
       < current_chook.rindex("return true;"))
+source_gi3_decompiled = body(REF_EFFECT2, "void __thiscall CEffectPrim::PrimGI3(CEffectPrim *this)\n{")
+exe_gi3 = body(EXE, "void __thiscall CEffectPrim::PrimGI3(CEffectPrim *this)\n{")
+source_gi3 = body(REF_DHXJ_EFFECT2, "CEffectPrim :: PrimGI3()")
+current_gi3 = body(CURRENT, "void UpdateReferenceGi3(CEffectPrim* prim)")
+check("case 0x22 Ref/EXE helper bodies match, source has 21 samples and dispatcher keeps the shared tick",
+      compact(source_gi3_decompiled) == compact(exe_gi3)
+      and re.search(r"case\s+0x22:\s*CEffectPrim::PrimGI3\(this\);\s*goto\s+\$L145961;", source_dispatch)
+      and "if (m_type == PP_GI_3)" in current_dispatch
+      and "UpdateReferenceGi3(this);" in current_dispatch
+      and re.search(r"#define\s+E_DIVISION\s+21", REF_DHXJ_EFFECT_HEADER)
+      and len(current_explicit_ids) == 75)
+gi3_source_effects = [
+    "middle=(E_DIVISION-1)/2;", "m2=90/middle;", "for (;ec<4;ec++)",
+    "if (m_GI[ec].life == 1)", "m_GI[ec].process+=1;", "m_GI[ec].distance-=0.01f;",
+    "if (m_GI[ec].process>=10)", "m_GI[ec].alphaB-=1;", "if (m_GI[ec].alphaB<=0)",
+    "m_GI[ec].alphaB = 0;", "if (m_GI[ec].process>30)", "m_GI[ec].life=0;",
+    "m_GI[ec].distance = 20.0f;", "m_GI[ec].rise_angle=81 + 9;",
+    "m_GI[ec].alphaB+=10;", "for (i = 0 ; i<E_DIVISION ; i++)",
+    "m_GI[ec].height[i]=m_GI[ec].max_height*g_sinTable[m_GI[ec].process];",
+]
+gi3_current_effects = [
+    "for (EffectGi& gi : prim->m_gi)", "if (gi.life != 1) continue;", "++gi.process;",
+    "static_cast<double>(gi.distance) - 0.0099999998", "if (gi.process < 10)",
+    "gi.alphaB = static_cast<short>(gi.alphaB + 10);", "gi.alphaB = static_cast<short>(gi.alphaB - 1);",
+    "if (gi.alphaB <= 0)", "gi.alphaB = 0;", "if (gi.process > 30) gi.life = 0;",
+    "gi.distance = 20.0f;", "gi.riseAngle = static_cast<short>(81 + 9);",
+    "for (int index = 0; index < 21; ++index)",
+    "gi.height[static_cast<size_t>(index)] = gi.maxHeight * g_sinTable[gi.process];",
+]
+check("case 0x22 source-to-implementation compares process/alpha/reset branches and post-reset height order",
+      all(compact(effect) in compact(source_gi3) for effect in gi3_source_effects)
+      and all(compact(effect) in compact(current_gi3) for effect in gi3_current_effects)
+      and current_gi3.index("++gi.process;") < current_gi3.index("gi.distance =")
+      < current_gi3.index("if (gi.process < 10)")
+      < current_gi3.index("gi.alphaB = static_cast<short>(gi.alphaB - 1);")
+      < current_gi3.index("if (gi.alphaB <= 0)")
+      < current_gi3.index("if (gi.process > 30) gi.life = 0;")
+      < current_gi3.index("gi.distance = 20.0f;")
+      < current_gi3.index("for (int index = 0; index < 21; ++index)"))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)
