@@ -177,6 +177,7 @@ void UpdateReferenceSphere(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
+bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceScreenTexture(CEffectPrim*);
 bool UpdateReferenceGravityParticle(CEffectPrim*);
 bool UpdateWarpZoneOrbit(CEffectPrim*);
@@ -260,6 +261,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DQUADHORN) { UpdateReferenceQuadHorn(this); return active; }
         if (m_type == PP_3DSPLINE || m_type == PP_3DSPIRAL) { UpdateReferenceSpiral(this); return active; }
         if (m_type == PP_3DTEXTURE || m_type == PP_3DCROSSTEXTURE) { UpdateReference3DTexture(this); return active; }
+        if (m_type == PP_3DCYLINDERHALF) { UpdateReferenceCylinderState(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -1359,6 +1361,17 @@ int main()
         check(UpdateReference3DTexture(&texturePrim) && texturePrim.m_red == 255
             && texturePrim.m_green == 0 && texturePrim.m_blue == 255,
             "Prim3DTexture regular RGB branch preserves its three asymmetric clamps");
+        texturePrim.m_type = PP_3DCYLINDERHALF; texturePrim.m_stateCnt = 0; texturePrim.m_duration = 30;
+        texturePrim.m_pattern = 0; texturePrim.m_deltaPos2 = {}; texturePrim.m_deltaPos = {};
+        texturePrim.m_speed = texturePrim.m_accel = 0; texturePrim.m_outerSpeed = texturePrim.m_outerAccel = 0;
+        texturePrim.m_innerSpeed = texturePrim.m_innerAccel = 0; texturePrim.m_heightSpeed = texturePrim.m_heightAccel = 0;
+        texturePrim.m_heightSize = 1; texturePrim.m_maxHeightSize = 100; texturePrim.m_outerSize = 2;
+        texturePrim.m_innerSize = 3; texturePrim.m_longitude = texturePrim.m_latitude = 0;
+        texturePrim.m_longSpeed = 0; texturePrim.m_alpha = 20; texturePrim.m_alphaSpeed = 0;
+        texturePrim.m_fadeOutCnt = -1; texturePrim.m_animSpeed = 1; texturePrim.m_curMotion = 0;
+        texturePrim.m_totalTexture = 1; texturePrim.m_repeatAnim = false;
+        check(texturePrim.OnProcess() == 1 && texturePrim.m_curMotion == 1 && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x12 ignores CylinderHalf animation completion and still takes the common tick");
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

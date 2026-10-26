@@ -72,7 +72,7 @@ check("current wrapper retains null, frame-skip, failure, single-tick and inclus
       and current_body.count("++m_stateCnt;") == 1
       and "return m_stateCnt <= m_duration;" in current_body)
 check("current split dispatch has an explicit route inventory for review",
-      len(current_explicit_ids) == 67 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
+      len(current_explicit_ids) == 68 and {0x00, 0x01, 0x02, 0x04, 0x09, 0x0A, 0x0B, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x14, 0x15, 0x16}.issubset(current_explicit_ids)
       and "bool CEffectPrim::ProcessPrimitiveFrame()" in CURRENT)
 check("case 0x04/0x0E inline circle/sphere mutations are routed unconditionally",
       re.search(r"case 4:.*?ProcessAlpha\(this\);", source_dispatch, re.S) is not None
@@ -453,6 +453,51 @@ check("case 0x0F/0x10 change-point, motion, collision, orientation, master, grou
       < current_texture3d.index("if ((pattern & 0x800)")
       < current_texture3d.index("ProcessReferenceParticleAlpha(prim);")
       < current_texture3d.index("if (prim->m_stateCnt % prim->m_animSpeed"))
+source_cylinder_half = body(REF, "bool __thiscall CEffectPrim::Prim3DCylinderHalf(CEffectPrim *this)\n{")
+exe_cylinder_half = body(EXE, "bool __thiscall CEffectPrim::Prim3DCylinderHalf(CEffectPrim *this)\n{")
+current_cylinder = body(CURRENT, "bool UpdateReferenceCylinderState(CEffectPrim* prim)")
+check("source CylinderHalf Ref duplicates and canonical EXE body match; case 0x12 ignores the helper result",
+      compact(source_cylinder_half) == compact(exe_cylinder_half)
+      and re.search(r"case\s+0x12:\s*CEffectPrim::Prim3DCylinderHalf\(this\);\s*goto\s+\$L145961;", source_dispatch)
+      and "if (m_type == PP_3DCYLINDERHALF)" in current_dispatch
+      and "UpdateReferenceCylinderState(this); // Source case 0x12 ignores the bool result." in current_dispatch
+      and re.search(r"if \(m_type == PP_3DCYLINDERHALF\)\s*\{\s*UpdateReferenceCylinderState\(this\);[^}]*return true;", current_dispatch))
+cylinder_source_effects = [
+    "this->m_master->m_pos.x + this->m_deltaPos2.x", "this->m_master->m_pos.y + this->m_deltaPos2.y",
+    "this->m_master->m_pos.z + this->m_deltaPos2.z", "this->m_speed = this->m_accel + this->m_speed;",
+    "this->m_outerSpeed = this->m_outerAccel + this->m_outerSpeed;",
+    "this->m_innerSpeed = this->m_innerAccel + this->m_innerSpeed;",
+    "this->m_heightSpeed = this->m_heightAccel + this->m_heightSpeed;",
+    "matrix::MakeXRotation(p_m_matrix, angle);", "matrix::AppendYRotation(p_m_matrix, anglea);",
+    "this->m_speed3d.x = v5 * p_m_matrix->v21 + p_m_matrix->v41;",
+    "this->m_deltaPos.x = this->m_speed3d.x + this->m_deltaPos.x;",
+    "this->m_longitude = this->m_longSpeed + this->m_longitude;",
+    "this->m_outerSize = v18;", "this->m_innerSize = v6;", "this->m_heightSize = v7;",
+    "if ( v7 > this->m_maxHeightSize )", "if ( (this->m_pattern & 1) != 0 )",
+    "CEffectPrim::ProcessAlpha(this);", "return v10 != this->m_totalTexture;",
+]
+cylinder_current_effects = [
+    "AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2)",
+    "prim->m_speed += prim->m_accel;", "prim->m_outerSpeed += prim->m_outerAccel;",
+    "prim->m_innerSpeed += prim->m_innerAccel;", "prim->m_heightSpeed += prim->m_heightAccel;",
+    "MatrixAppendXRotation(prim->m_matrix", "MatrixAppendYRotation(prim->m_matrix",
+    "move * prim->m_matrix.m[1][0] + prim->m_matrix.m[3][0]",
+    "prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);",
+    "prim->m_longitude += prim->m_longSpeed;", "prim->m_outerSize += prim->m_outerSpeed;",
+    "prim->m_innerSize += prim->m_innerSpeed;", "prim->m_heightSize += prim->m_heightSpeed;",
+    "if (prim->m_heightSize > prim->m_maxHeightSize)",
+    "if ((prim->m_pattern & 1) != 0 && prim->m_stateCnt == prim->m_fadeOutCnt)",
+    "ProcessReferenceParticleAlpha(prim);", "return prim->m_curMotion != prim->m_totalTexture;",
+]
+check("case 0x12 anchor, speed, matrix, dimensions, fade branch and animation return are paired",
+      all(compact(effect) in compact(source_cylinder_half) for effect in cylinder_source_effects)
+      and all(compact(effect) in compact(current_cylinder) for effect in cylinder_current_effects)
+      and current_cylinder.index("prim->m_orgPos =") < current_cylinder.index("prim->m_speed +=")
+      < current_cylinder.index("MatrixIdentity") < current_cylinder.index("prim->m_speed3d =")
+      < current_cylinder.index("prim->m_deltaPos =") < current_cylinder.index("prim->m_pos =")
+      < current_cylinder.index("prim->m_longitude +=") < current_cylinder.index("prim->m_outerSize +=")
+      < current_cylinder.index("ProcessReferenceParticleAlpha(prim);")
+      < current_cylinder.index("if (prim->m_stateCnt % prim->m_animSpeed"))
 check("current unmatched route has a generic fallback while source reports illegal primitive ids",
       "alpha > 0.0f" in current_dispatch
       and "Illegal Effect PrimitiveId" in source_dispatch)

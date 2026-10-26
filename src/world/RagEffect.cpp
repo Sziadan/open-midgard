@@ -8104,9 +8104,8 @@ bool UpdateReferenceCrossTexture(CEffectPrim* prim)
     return prim->m_curMotion != prim->m_totalTexture;
 }
 
-// Ref/RagEffectPrim.cpp:288-365 (0x6443E0), Prim3DCylinder.
-// Ref's body is mislabeled Prim3DCylinderHalf; signature/address and dispatch
-// identify the full cylinder. Bound to original Portal while other callers migrate.
+// Ref/RagEffectPrim.cpp:288-365 (0x6443E0), used by source case 0x12 and Portal.
+// The source label says CylinderHalf; the body is shared with its duplicate.
 bool UpdateReferenceCylinderState(CEffectPrim* prim)
 {
     prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
@@ -8820,6 +8819,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_3DTEXTURE || m_type == PP_3DCROSSTEXTURE) {
         UpdateReference3DTexture(this); // Source case 0x0F/0x10 ignores the bool result.
+        return true;
+    }
+    if (m_type == PP_3DCYLINDERHALF) {
+        UpdateReferenceCylinderState(this); // Source case 0x12 ignores the bool result.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
