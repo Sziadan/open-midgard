@@ -102,6 +102,8 @@ extract_body(angel_render "${effect_source}" "void RenderReferenceParticlePrimit
 extract_body(particle_render "${effect_source}" "struct ParticleSprite {" "void RenderReferenceParticlePrimitive(")
 extract_body(circle_render "${effect_source}" "void ProjectReferenceEffectVertex(" "void RenderCircleLayer(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CircleRenderBodies.inc" "${circle_render}")
+extract_body(casting_colors "${effect_source}" "unsigned int CastingSizeRgb(" "void RenderHealLow(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CastingColorBodies.inc" "${casting_colors}")
 file(READ "../../src/render/Renderer.cpp" renderer_source)
 extract_body(reference_triangle_queue "${renderer_source}" "void CRenderer::AddReferenceEffectTriangle(" "void CRenderer::AddLmRP(")
 string(REPLACE "CRenderer::" "SilentRenderer::" reference_triangle_queue "${reference_triangle_queue}")

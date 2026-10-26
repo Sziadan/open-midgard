@@ -54,6 +54,7 @@ struct CEffectPrim {
     std::vector<CTexture*> m_texture;
     std::array<EffectSegmentState,50> m_segments;
 };
+using D3DBLEND=int;
 constexpr int PF_A8R8G8B8=4, D3DPT_TRIANGLESTRIP=5, D3DPT_TRIANGLELIST=4, D3DCULL_NONE=1;
 constexpr int D3DRENDERSTATE_ZENABLE=0,D3DRENDERSTATE_ZWRITEENABLE=1,D3DRENDERSTATE_SRCBLEND=2,D3DRENDERSTATE_DESTBLEND=3;
 constexpr int TRUE=1,FALSE=0,D3DZB_FALSE=0,D3DZB_TRUE=1;
@@ -119,12 +120,31 @@ float GetSin(int angle) { return std::sin(angle*3.14159265f/180.0f); }
 float g_cosTable[361],g_sinTable[361];
 vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
 #include "CircleRenderBodies.inc"
+#include "CastingColorBodies.inc"
 #include "ReferenceTriangleQueueBodies.inc"
 
 int main() {
+
     for(int i=0;i<=360;++i){g_cosTable[i]=GetCos(i);g_sinTable[i]=GetSin(i);}
     int checks=0,failures=0;
     auto check=[&](bool ok,const char* message){++checks;if(!ok){++failures;std::printf("FAIL: %s\n",message);}};
+    const std::pair<float,u32> castingColors[]={
+        {0.0f,0x00FFFFFFu},{1.0f,0x00FFAFAFu},{2.0f,0x00C3C3FFu},{3.0f,0x00FFFFFFu},
+        {4.0f,0x006464FFu},{5.0f,0x00FFFFFFu},{6.0f,0x00FF6464u},{7.0f,0x0064FF64u},
+        {8.0f,0x00FFFFAAu},{9.0f,0x008CD28Cu},{10.0f,0x00FF59B6u},{11.0f,0x00AAAAFFu},
+        {12.0f,0x00323232u},{13.0f,0x00FF32FFu},{14.0f,0x007878FFu},{15.0f,0x000AFF0Au},
+        {100.0f,0x00FAFAFFu}
+    };
+    for(const auto& item:castingColors) check(CastingSizeRgb(item.first)==item.second,"casting size tint matches original RenderTeiRect case table");
+    check(CastingSizeAlpha(2,175)==175 && CastingSizeAlpha(3,175)==80,
+        "casting size three fixes alpha to80 while other sizes retain band alpha");
+    const int inverseSizes[]={0,2,3,12,13,14,100};
+    for(int size=0;size<=100;++size) {
+        bool inverse=false;for(int value:inverseSizes)inverse|=size==value;
+        check(CastingSizeBlend(static_cast<float>(size))==(inverse?D3DBLEND_INVSRCALPHA:D3DBLEND_ONE),
+            "casting destination blend matches original RenderTeiRect case table");
+    }
+
     auto near=[](float a,float b){return std::fabs(a-b)<0.0001f;};
     SprImg indexed;
     indexed.indices={0,1,2,1};

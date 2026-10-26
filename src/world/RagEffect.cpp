@@ -3277,6 +3277,8 @@ void UpdateHealPrimitive(CEffectPrim* prim)
 unsigned int CastingSizeRgb(float size)
 {
     switch (static_cast<unsigned int>(static_cast<long long>(size))) {
+    case 2u:
+        return 0x00C3C3FFu;
     case 1u:
         return 0x00FFAFAFu;
     case 4u:
@@ -3301,14 +3303,22 @@ unsigned int CastingSizeRgb(float size)
         return 0x007878FFu;
     case 15u:
         return 0x000AFF0Au;
+    case 100u:
+        return 0x00FAFAFFu;
     default:
         return 0x00FFFFFFu;
     }
 }
 
+unsigned int CastingSizeAlpha(float size, unsigned int alpha)
+{
+    return size == 3.0f ? 80u : alpha;
+}
+
 D3DBLEND CastingSizeBlend(float size)
 {
     switch (static_cast<unsigned int>(static_cast<long long>(size))) {
+    case 0u:
     case 2u:
     case 3u:
     case 12u:
@@ -3404,14 +3414,8 @@ void RenderHealCasting(const CEffectPrim& prim, const matrix& viewMatrix)
         vector3d previousTop{};
         do {
             int angle = (count + gi.rotStart) % 360;
-            if (angle < 0) {
-                angle += 360;
-            }
             if (gi.fullDisplayAngle == 360 && sample == 20) {
                 angle = gi.rotStart;
-                if (angle < 0) {
-                    angle += 360;
-                }
             }
             const float cosine = g_cosTable[angle];
             const float sine = g_sinTable[angle];
@@ -3425,30 +3429,39 @@ void RenderHealCasting(const CEffectPrim& prim, const matrix& viewMatrix)
                 baseY = -1.0f;
                 topLift = 1.0f;
             }
-            const int rise = gi.riseAngle < 0 ? gi.riseAngle + 360 : gi.riseAngle;
-            const int riseAngle = rise % 360;
+            const int riseAngle = gi.riseAngle;
             const float sampleHeight = gi.height[static_cast<size_t>((std::min)(sample, 20))];
-            const float radial = g_cosTable[riseAngle] * sampleHeight;
-            const float vertical = g_sinTable[riseAngle] * sampleHeight;
+            // Ref uses x87 temporaries for these products, then stores each local
+            // vertex and its later parent translation back to float separately.
+            const double baseLocalXWide = static_cast<double>(cosine) * gi.distance;
+            const double baseLocalZWide = static_cast<double>(sine) * gi.distance;
+            const float baseLocalX = static_cast<float>(baseLocalXWide);
+            const float baseLocalZ = static_cast<float>(baseLocalZWide);
+            const double radial = static_cast<double>(g_cosTable[riseAngle]) * sampleHeight;
+            const float vertical = static_cast<float>(static_cast<double>(g_sinTable[riseAngle]) * sampleHeight);
+            const float topLocalX = static_cast<float>(radial * cosine + baseLocalX);
+            const float topLocalY = static_cast<float>(-(static_cast<double>(vertical) + topLift));
+            const float topLocalZ = static_cast<float>(radial * sine + baseLocalZ);
             const vector3d base = {
-                prim.m_pos.x + cosine * gi.distance,
-                prim.m_pos.y + baseY,
-                prim.m_pos.z + sine * gi.distance
+                static_cast<float>(static_cast<double>(prim.m_pos.x) + baseLocalX),
+                static_cast<float>(static_cast<double>(prim.m_pos.y) + baseY),
+                static_cast<float>(static_cast<double>(prim.m_pos.z) + baseLocalZ)
             };
             const vector3d top = {
-                prim.m_pos.x + radial * cosine + cosine * gi.distance,
-                prim.m_pos.y - (vertical + topLift),
-                prim.m_pos.z + radial * sine + sine * gi.distance
+                static_cast<float>(static_cast<double>(prim.m_pos.x) + topLocalX),
+                static_cast<float>(static_cast<double>(prim.m_pos.y) + topLocalY),
+                static_cast<float>(static_cast<double>(prim.m_pos.z) + topLocalZ)
             };
             if (sample > 0 && havePrevious) {
                 const int texPart = sample - 1;
-                float u0 = static_cast<float>(texPart) * 0.047619049f;
-                float u1 = static_cast<float>(texPart + 1) * 0.047619049f;
+                float u0 = static_cast<float>(static_cast<double>(texPart) * 0.047619049);
+                float u1 = static_cast<float>(static_cast<double>(texPart + 1) * 0.047619049);
                 if (texPart == 0) {
                     u0 = 0.0f;
                 }
-                const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24)
-                    | CastingSizeRgb(prim.m_size);
+                const unsigned int alpha = CastingSizeAlpha(prim.m_size,
+                    static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)));
+                const unsigned int color = (alpha << 24) | CastingSizeRgb(prim.m_size);
                 SubmitWorldTeiRect(previousBase,
                     base,
                     top,
