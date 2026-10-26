@@ -4,11 +4,11 @@ Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-26
-Current work: WP5A renderer parity. `RenderCloud`, `RenderGumGang` (0x23), `RenderDoubleGumGang` (0x63), `RenderPokJuk` (0x34), `RenderGuard` (0x3D), `RenderRainbow` (0x5D), and `RenderTripleAttack` (0x45) are implemented and checkpointed.
+Current work: WP5A renderer parity. `RenderCloud`, `RenderGumGang` (0x23), `RenderDoubleGumGang` (0x63), `RenderPokJuk` (0x34), `RenderGuard` (0x3D), `RenderRainbow` (0x5D), `RenderTripleAttack` (0x45), and `RenderGroundSample` (0x70) are implemented and checkpointed.
 
-Next action: compare `RenderGroundSample` (type 0x70) branch-by-branch; it depends on map/ground queries. The Cloud producer/updater mismatch remains open: current weather scheduling/update builds segment state while reference `Cloud`/`PrimCloud` creates and advances four GI bands. Compare those producer/update functions before porting them. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
+Next action: compare and implement `PrimGroundSample` (Ref/RagEffect2.cpp:5412) so its live-band rotation and scale updates feed the renderer. The Cloud producer/updater mismatch remains open: current weather scheduling/update builds segment state while reference `Cloud`/`PrimCloud` creates and advances four GI bands. Compare those producer/update functions before porting them. Specialized segment payloads, map initialization/scheduling, resource-loader/cache and full renderer/fog/backend acceptance remain open.
 
-Latest checkpoint (2026-10-26): `RenderTripleAttack` passed eleven mechanical branch comparisons. The focused particle suite passes 547 checks; all six C++ suites and seven Python index tests pass. The release deployed to OldRO with matching executable hashes. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-26): `RenderGroundSample` passed eleven mechanical branch comparisons. The focused particle suite passes 552 checks; all six C++ suites and seven Python index tests pass. OldRO matches the release build at SHA-256 `34F7A3AFDF52E100C9D994D68052BC2896738E1A2D44D9CF54F221777818D461`. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26

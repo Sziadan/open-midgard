@@ -10,6 +10,7 @@
 using u32 = std::uint32_t;
 struct RECT { long left, top, right, bottom; };
 #include "ParticleActTypes.inc"
+struct vector2d { float x=0, y=0; };
 struct vector3d { float x=0, y=0, z=0; };
 struct matrix { float m[4][4]{}; };
 struct EffectGi {
@@ -31,6 +32,24 @@ struct CTexture {
     unsigned int m_w=4, m_h=4, m_updateWidth=2, m_updateHeight=2;
     unsigned int m_surfaceUpdateWidth=2,m_surfaceUpdateHeight=2;
 };
+struct GroundTileCall { int x=0,y=0;u32 color=0;CTexture* texture=nullptr;vector2d uv[4]{}; };
+struct C3dGround {
+    std::vector<GroundTileCall> calls;
+    void RenderGroundTile(const matrix&,int x,int y,u32 color,CTexture* texture,const vector2d uv[4]) {
+        GroundTileCall call;call.x=x;call.y=y;call.color=color;call.texture=texture;
+        for(int i=0;i<4;++i)call.uv[i]=uv[i];
+        calls.push_back(call);
+    }
+};
+struct CWorld { C3dGround* m_ground=nullptr; };
+struct CGameMode {
+    CWorld* m_world=nullptr;int serverX=0,serverY=0,coordinateCalls=0;
+    void GetServerCoor(float,float,int& x,int& y) {++coordinateCalls;x=serverX;y=serverY;}
+};
+struct CModeMgr {
+    CGameMode* current=nullptr;int lookups=0;
+    CGameMode* GetCurrentGameMode() {++lookups;return current;}
+} g_modeMgr;
 struct SprImg {
     int width=2, height=2, isHalfW=0, isHalfH=0;
     CTexture* tex=nullptr;
@@ -83,6 +102,7 @@ struct CTexMgr {
         ++calls;lastWidth=w;lastHeight=h;pixels.assign(data,data+w*h);
         return fail?&s_dummy_texture:&texture;
     }
+    CTexture* GetTexture(const char*,bool) { return &texture; }
 } g_texMgr;
 CTexture CTexMgr::s_dummy_texture;
 struct tlvertex3d { float x=0,y=0,z=0,oow=0; u32 color=0,specular=0; float tu=0,tv=0; };
@@ -1084,6 +1104,33 @@ int main() {
         check(g_renderer.submissions.size()==20,"TripleAttack skips only the alpha-gated first band");
         gi.life=0;prim.m_gi[1].life=0;g_renderer.submissions.clear();RenderTripleAttack(prim,view);
         check(g_renderer.submissions.empty(),"TripleAttack skips inactive bands");
+    }
+    {
+        C3dGround ground;CWorld world;world.m_ground=&ground;
+        CGameMode mode;mode.m_world=&world;mode.serverX=10;mode.serverY=20;
+        g_modeMgr.current=&mode;g_modeMgr.lookups=0;
+        CEffectPrim prim;prim.m_pos={12,0,34};EffectGi& gi=prim.m_gi[0];
+        gi.life=1;gi.alphaB=0;gi.rotStart=0;gi.maxHeight=1.0f;
+        RenderGroundSample(prim,view);
+        check(ground.calls.size()==98,"GroundSample renders both 7x7 tile layers for a live band without an alpha gate");
+        if(ground.calls.size()==98) {
+            const GroundTileCall& first=ground.calls[0];
+            const GroundTileCall& second=ground.calls[1];
+            const GroundTileCall& last=ground.calls[97];
+            check(first.x==7&&first.y==17&&last.x==13&&last.y==23
+                &&mode.coordinateCalls==1&&g_modeMgr.lookups==2,
+                "GroundSample converts the primitive position once and uses the source 7x7 map window");
+            check(first.color==0xAA9999FFu&&second.color==0x559999FFu
+                &&first.texture==&g_texMgr.texture&&second.texture==&g_texMgr.texture,
+                "GroundSample submits the two source layer colors and exact texture");
+            check(near(first.uv[0].x,0.0f)&&near(first.uv[0].y,0.0f)
+                &&near(first.uv[1].x,1.0f/7.0f)&&near(first.uv[1].y,0.0f)
+                &&near(first.uv[2].x,0.0f)&&near(first.uv[2].y,1.0f/7.0f)
+                &&near(second.uv[0].x,-0.05f)&&near(second.uv[0].y,-0.05f),
+                "GroundSample preserves normalized inner and expanded outer UV geometry");
+        }
+        gi.life=0;ground.calls.clear();RenderGroundSample(prim,view);
+        check(ground.calls.empty(),"GroundSample skips bands whose life is not one");
     }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;

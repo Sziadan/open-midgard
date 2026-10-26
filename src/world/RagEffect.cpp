@@ -7331,6 +7331,55 @@ void RenderTripleAttack(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void RenderGroundSample(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    for (int bandIndex = 0; bandIndex < 4; ++bandIndex) {
+        EffectGi& gi = prim.m_gi[static_cast<size_t>(bandIndex)];
+        if (gi.life != 1) continue;
+
+        CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+        CGameMode* worldMode = g_modeMgr.GetCurrentGameMode();
+        C3dGround* ground = worldMode->m_world->m_ground;
+        int attrX = 0, attrY = 0;
+        gameMode->GetServerCoor(prim.m_pos.x, prim.m_pos.z, attrX, attrY);
+        attrY -= 3;
+        attrX -= 3;
+        const float sinRotation = g_sinTable[gi.rotStart];
+        const float cosRotation = g_cosTable[gi.rotStart];
+        CTexture* texture = nullptr;
+
+        for (int i = 0; i < 7; ++i) {
+            const double row0 = static_cast<double>(i) - 3.5;
+            const double row1 = static_cast<double>(i + 1) - 3.5;
+            for (int j = 0; j < 7; ++j) {
+                const double col0 = static_cast<double>(j) - 3.5;
+                const double col1 = static_cast<double>(j + 1) - 3.5;
+                const vector2d rawUv[4] = {
+                    { static_cast<float>(row0 * sinRotation + col0 * cosRotation), static_cast<float>(row0 * cosRotation - col0 * sinRotation) },
+                    { static_cast<float>(row0 * sinRotation + col1 * cosRotation), static_cast<float>(row0 * cosRotation - col1 * sinRotation) },
+                    { static_cast<float>(row1 * sinRotation + col0 * cosRotation), static_cast<float>(row1 * cosRotation - col0 * sinRotation) },
+                    { static_cast<float>(row1 * sinRotation + col1 * cosRotation), static_cast<float>(row1 * cosRotation - col1 * sinRotation) },
+                };
+                vector2d uv[4] = { rawUv[0], rawUv[1], rawUv[2], rawUv[3] };
+                for (vector2d& point : uv) {
+                    point.x = static_cast<float>((point.x * gi.maxHeight + 3.5) * 0.14285715);
+                    point.y = static_cast<float>((point.y * gi.maxHeight + 3.5) * 0.14285715);
+                }
+                texture = g_texMgr.GetTexture("effect\\magic_target.tga", false);
+                ground->RenderGroundTile(viewMatrix, attrX + j, attrY + i, 0xAA9999FFu, texture, uv);
+
+                const double outerScale = static_cast<double>(gi.maxHeight) + 0.1;
+                for (int corner = 0; corner < 4; ++corner) {
+                    uv[corner].x = static_cast<float>((outerScale * rawUv[corner].x + 3.5) * 0.14285715);
+                    uv[corner].y = static_cast<float>((outerScale * rawUv[corner].y + 3.5) * 0.14285715);
+                }
+                texture = g_texMgr.GetTexture("effect\\magic_target.tga", false);
+                ground->RenderGroundTile(viewMatrix, attrX + j, attrY + i, 0x559999FFu, texture, uv);
+            }
+        }
+    }
+}
+
 void TeiHit1Corners(const EffectGi& gi, vector3d corners[4])
 {
     const double height = gi.height[1];
@@ -8682,6 +8731,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_TRIPLEATTACK) {
         RenderTripleAttack(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_GROUNDSAMPLE) {
+        RenderGroundSample(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)) {
