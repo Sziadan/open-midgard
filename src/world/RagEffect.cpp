@@ -8509,6 +8509,25 @@ void UpdateReferenceIntimidate(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:13933 (case 0x2C).
+void UpdateReferenceTeiHit1(CEffectPrim* prim)
+{
+    for (size_t index = 0; index < 4; ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        if (gi.process > 0) gi.distance += gi.height[0];
+
+        if (gi.process <= 20 && gi.process > 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 15);
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - 5);
+            if (gi.alphaB <= 0) gi.alphaB = 0;
+        }
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9534,6 +9553,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_INTIMIDATE) {
         UpdateReferenceIntimidate(this);
+        return true;
+    }
+    if (m_type == PP_TEIHIT1) {
+        UpdateReferenceTeiHit1(this);
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
