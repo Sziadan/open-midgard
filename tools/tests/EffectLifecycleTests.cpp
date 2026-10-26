@@ -196,6 +196,7 @@ bool UpdateReferenceGumGang(CEffectPrim*);
 void UpdateReferenceGrandCross2(CEffectPrim*);
 bool UpdateReferenceLineLink(CEffectPrim*);
 bool UpdateReferenceLandProtector(CEffectPrim*);
+bool UpdateReferenceSakura(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -294,6 +295,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_GRANDCROSS2) { UpdateReferenceGrandCross2(this); return active; }
         if (m_type == PP_LINELINK) { UpdateReferenceLineLink(this); return active; }
         if (m_type == PP_LANDPROTECTOR) { UpdateReferenceLandProtector(this); return active; }
+        if (m_type == PP_SAKURA) { UpdateReferenceSakura(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -472,6 +474,63 @@ constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeCasting=PP_3DCASTING, kPrimTypeCast
 #include "CastingEmitterBodies.inc"
 #include "CastingUpdateBody.inc"
 #undef rand
+
+__declspec(noinline) void RunSakuraLifecycleChecks(CEffectPrim& texturePrim, int& checks, int& failures)
+{
+    auto check = [&](bool condition, const char* name) {
+        ++checks;
+        if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    texturePrim.m_type = PP_SAKURA; texturePrim.m_stateCnt = 0; texturePrim.m_duration = 1000;
+    texturePrim.m_master->m_effectPos = {300, 100, 500}; texturePrim.m_master->m_duration = 1000;
+    texturePrim.m_pattern = 0x20; texturePrim.m_roty = 50; texturePrim.m_numSegments = 2;
+    texturePrim.m_alpha = 100; texturePrim.m_alphaSpeed = 0; texturePrim.m_fadeOutCnt = -1;
+    texturePrim.m_animSpeed = 0; texturePrim.m_curMotion = 0; texturePrim.m_particleActRes = nullptr;
+    auto& sakura = texturePrim.m_gi[0]; sakura.life = 1; sakura.flag[0] = 0;
+    sakura.height[0] = 356; sakura.height[1] = 357; sakura.height[2] = 4; sakura.height[3] = 3;
+    sakura.maxHeight = 2; sakura.vecBPreX = 10; sakura.arcBaselineY = 0; sakura.vecBPreZ = 20;
+    rngValues = {5, 1}; rngCursor = 0;
+    const int sakuraDrawStart = rngDraws;
+    check(texturePrim.OnProcess() == 1 && texturePrim.m_stateCnt == 1 && texturePrim.m_pos.x == texturePrim.m_deltaPos.x
+        && sakura.height[0] == 359 && sakura.height[1] == 5 && sakura.height[2] == 2 && sakura.height[3] == 358
+        && std::fabs(sakura.vecBPreX - (10 + g_sinTable[359] * 0.23999999f)) < 0.00001f
+        && std::fabs(sakura.vecBPreZ - (20 + g_sinTable[2] * 0.30000001f)) < 0.00001f
+        && sakura.arcBaselineY == 2 && texturePrim.m_deltaPos.x == sakura.vecBPreX
+        && texturePrim.m_deltaPos.y == sakura.arcBaselineY && texturePrim.m_deltaPos.z == sakura.vecBPreZ
+        && texturePrim.m_roll == 50 - testView.longitude && rngDraws == sakuraDrawStart + 2 && rngCursor == 2,
+        "OnProcess case 0x28 grows and caps paired angles, preserves ordered random replacements, non-maple drift and camera roll");
+    sakura.flag[0] = 1; sakura.height[0] = 90; sakura.height[1] = 100; sakura.height[2] = 180; sakura.height[3] = 200;
+    sakura.maxHeight = 1; sakura.vecBPreX = 10; sakura.arcBaselineY = 0; sakura.vecBPreZ = 20;
+    rngValues = {}; rngCursor = 0;
+    const int mapleDrawStart = rngDraws;
+    texturePrim.OnProcess();
+    check(sakura.height[0] == 93 && sakura.height[2] == 183
+        && std::fabs(sakura.vecBPreX - (10 + g_sinTable[93] * 0.12f)) < 0.00001f
+        && std::fabs(sakura.vecBPreZ - (20 + g_sinTable[183] * 0.15000001f)) < 0.00001f
+        && sakura.arcBaselineY == 1 && rngDraws == mapleDrawStart,
+        "OnProcess case 0x28 maple flag uses its smaller sine drift without respawn or RNG");
+    sakura.flag[0] = 1; sakura.height[0] = 0; sakura.height[1] = 0; sakura.height[2] = 1; sakura.height[3] = 0;
+    sakura.maxHeight = 201; sakura.vecBPreX = 3; sakura.arcBaselineY = 0; sakura.vecBPreZ = 4;
+    rngValues = {123, 276}; rngCursor = 0;
+    const int sakuraResetDrawStart = rngDraws;
+    texturePrim.OnProcess();
+    check(sakura.height[0] == 0 && sakura.height[1] == 359 && sakura.height[2] == 0 && sakura.height[3] == 359
+        && sakura.vecBPreX == 273 && sakura.arcBaselineY == -100 && sakura.vecBPreZ == 626
+        && texturePrim.m_deltaPos.x == 273 && texturePrim.m_deltaPos.y == -100 && texturePrim.m_deltaPos.z == 626
+        && rngDraws == sakuraResetDrawStart + 2 && rngCursor == 2,
+        "OnProcess case 0x28 zero-bound pair replacements consume no RNG and respawn uses ordered x/z draws");
+    sakura.life = 0; sakura.vecBPreX = 71; sakura.arcBaselineY = 82; sakura.vecBPreZ = 93;
+    texturePrim.m_deltaPos = {7, 8, 9}; texturePrim.m_roll = 0; texturePrim.m_animSpeed = 0;
+    texturePrim.m_curMotion = 0; texturePrim.m_particleActRes = nullptr;
+    const int sakuraInactiveDrawStart = rngDraws;
+    const u8 sakuraInactiveResult = texturePrim.OnProcess();
+    check(sakuraInactiveResult == 1 && texturePrim.m_pos.x == 7 && texturePrim.m_pos.y == 8 && texturePrim.m_pos.z == 9
+        && sakura.vecBPreX == 71 && sakura.arcBaselineY == 82 && sakura.vecBPreZ == 93
+        && texturePrim.m_roll == 50 - testView.longitude && texturePrim.m_curMotion == 0
+        && rngDraws == sakuraInactiveDrawStart,
+        "OnProcess case 0x28 inactive GI keeps its stored delta position, rotates and reaches the shared tick");
+    rngValues = {}; rngCursor = 0;
+}
 
 int main()
 {
@@ -1769,6 +1828,7 @@ int main()
         land0.riseAngle = 720;
         check(UpdateReferenceLandProtector(&texturePrim) && land0.riseAngle == 361,
             "PrimLandProtector subtracts 360 only once when the incremented angle remains above one turn");
+        RunSakuraLifecycleChecks(texturePrim, checks, failures);
         texturePrim.m_master = nullptr;
         g_isSkipFrame = 0;
         prim.updates = 0;

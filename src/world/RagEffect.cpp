@@ -8294,6 +8294,66 @@ bool UpdateReferenceLandProtector(CEffectPrim* prim)
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:1910 (case 0x28).
+bool UpdateReferenceSakura(CEffectPrim* prim)
+{
+    prim->m_pos = prim->m_master->EffectPosition();
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life == 1) {
+        for (int index = 0; index < 4; index += 2) {
+            if (gi.height[static_cast<size_t>(index + 1)] > gi.height[static_cast<size_t>(index)]) {
+                gi.height[static_cast<size_t>(index)] += 3.0f;
+                if (gi.height[static_cast<size_t>(index)] > 359.0f) {
+                    gi.height[static_cast<size_t>(index)] = 359.0f;
+                }
+                if (gi.height[static_cast<size_t>(index)] > gi.height[static_cast<size_t>(index + 1)]) {
+                    const int bound = static_cast<int>(gi.height[static_cast<size_t>(index)]);
+                    gi.height[static_cast<size_t>(index + 1)] = bound > 0 ? static_cast<float>(rand() % bound) : 0.0f;
+                }
+            } else {
+                gi.height[static_cast<size_t>(index)] -= 2.0f;
+                if (gi.height[static_cast<size_t>(index)] < 0.0f) {
+                    gi.height[static_cast<size_t>(index)] = 0.0f;
+                }
+                if (gi.height[static_cast<size_t>(index)] <= gi.height[static_cast<size_t>(index + 1)]) {
+                    const int bound = static_cast<int>(gi.height[static_cast<size_t>(index)]);
+                    const int randomValue = bound > 0 ? rand() % bound : 0;
+                    gi.height[static_cast<size_t>(index + 1)] = static_cast<float>(359 - randomValue);
+                }
+            }
+        }
+
+        gi.arcBaselineY = static_cast<float>(static_cast<double>(gi.arcBaselineY) + gi.maxHeight);
+        const int xAngle = static_cast<int>(gi.height[0]);
+        const int zAngle = static_cast<int>(gi.height[2]);
+        if (gi.flag[0] == 0) {
+            gi.vecBPreX = static_cast<float>(static_cast<double>(gi.vecBPreX) + g_sinTable[xAngle] * 0.23999999);
+            gi.vecBPreZ = static_cast<float>(static_cast<double>(gi.vecBPreZ) + g_sinTable[zAngle] * 0.30000001);
+        } else {
+            gi.vecBPreX = static_cast<float>(static_cast<double>(gi.vecBPreX) + g_sinTable[xAngle] * 0.12);
+            gi.vecBPreZ = static_cast<float>(static_cast<double>(gi.vecBPreZ) + g_sinTable[zAngle] * 0.15000001);
+        }
+
+        if (gi.arcBaselineY > prim->m_pos.y) {
+            gi.vecBPreX = static_cast<float>(static_cast<double>(rand() % 300) + prim->m_pos.x - 150.0);
+            gi.arcBaselineY = prim->m_pos.y - 200.0f;
+            gi.vecBPreZ = static_cast<float>(static_cast<double>(rand() % 300) + prim->m_pos.z - 150.0);
+        }
+        prim->m_deltaPos = {gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ};
+    }
+
+    prim->m_pos = prim->m_deltaPos;
+    if ((prim->m_pattern & 0x20) != 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_view) {
+            prim->m_roll = prim->m_roty - mode->m_view->GetCameraLongitude();
+        }
+    }
+    ProcessReferenceParticleAlpha(prim);
+    ShiftReferenceSegments(prim);
+    return AnimateReferenceParticle(prim);
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -9307,6 +9367,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_LANDPROTECTOR) {
         UpdateReferenceLandProtector(this); // Source case 0x27 ignores PrimLandProtector's return.
+        return true;
+    }
+    if (m_type == PP_SAKURA) {
+        UpdateReferenceSakura(this); // Source case 0x28 ignores PrimSakura's return.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
