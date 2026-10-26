@@ -221,6 +221,7 @@ void UpdateReferenceGroundShake(CEffectPrim*);
 void UpdateReferenceBash3D(CEffectPrim*);
 void UpdateReferenceRectUp2(CEffectPrim*);
 void UpdateReferenceSphereWind2(CEffectPrim*);
+void UpdateReferenceSoulBreaker2(CEffectPrim*);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
@@ -343,6 +344,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_BASH3D) { UpdateReferenceBash3D(this); return active; }
         if (m_type == PP_RECT_UP2) { UpdateReferenceRectUp2(this); return active; }
         if (m_type == PP_SPHEREWIND2) { UpdateReferenceSphereWind2(this); return active; }
+        if (m_type == PP_SOULBREAKER2) { UpdateReferenceSoulBreaker2(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -791,6 +793,7 @@ __declspec(noinline) void RunGroundShakeLifecycleChecks(CEffectPrim& prim, int& 
 __declspec(noinline) void RunBash3DLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunRectUp2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunSphereWind2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunSoulBreaker2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -1693,6 +1696,51 @@ __declspec(noinline) void RunSphereWind2LifecycleChecks(CEffectPrim& prim, int& 
     check(a.alphaB==0 && a.rotStart==static_cast<short>(32770.0f),
         "case 0x5B alpha and accumulated rotation retain source signed-short narrowing semantics");
     rngValues.clear(); rngCursor=0; g_isSkipFrame=oldSkipFrame;
+    RunSoulBreaker2LifecycleChecks(prim, checks, failures);
+}
+
+__declspec(noinline) void RunSoulBreaker2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_SOULBREAKER2; prim.m_stateCnt=0; prim.m_duration=1000; prim.m_pos={9,8,7};
+    prim.m_master->m_effectPos={100,200,300};
+    for (auto& gi : prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=0; a.alphaB=5; a.height[1]=2; a.rotStart=0; a.sparkX=1; a.sparkY=2; a.sparkZ=3;
+    EffectGi& b=prim.m_gi[1]; b.life=1; b.process=1; b.alphaB=4; b.height[1]=3; b.rotStart=90; b.sparkX=4; b.sparkY=5; b.sparkZ=6;
+    EffectGi& c=prim.m_gi[2]; c.life=1; c.process=10; c.alphaB=4; c.height[1]=4; c.rotStart=0; c.sparkX=7; c.sparkY=8; c.sparkZ=9;
+    EffectGi& d=prim.m_gi[3]; d.life=2; d.process=10; d.alphaB=30; d.height[1]=5; d.rotStart=180; d.sparkX=10; d.sparkZ=11;
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_stateCnt==1 && prim.m_pos.x==9 && prim.m_pos.y==8 && prim.m_pos.z==7
+        && a.process==1 && a.alphaB==5 && a.height[1]==2 && a.sparkX==3 && a.sparkZ==3
+        && b.process==2 && b.alphaB==14 && std::fabs(b.height[1]-3.06f)<0.0001f
+        && std::fabs(b.sparkX-4)<0.0001f && std::fabs(b.sparkZ-(6+3.06f))<0.0001f
+        && c.process==11 && c.alphaB==0 && c.life==0 && std::fabs(c.height[1]-4.16f)<0.0001f
+        && std::fabs(c.sparkX-11.16f)<0.0001f && d.process==10 && d.alphaB==30 && d.height[1]==5
+        && d.sparkX==10 && d.sparkZ==11 && rngDraws==draws,
+        "case 0x5C updates exact-life slots, keeps process-1 state unchanged but moves, grows/fades later phases and moves on death tick without RNG/origin copy");
+
+    a.process=-2; a.alphaB=20; a.height[1]=7; a.sparkX=30; a.sparkZ=40;
+    prim.OnProcess();
+    check(a.process==-1 && a.alphaB==20 && a.height[1]==7 && a.sparkX==30 && a.sparkZ==40,
+        "case 0x5C skips branch effects and movement when the incremented process remains nonpositive");
+    a.process=9; a.alphaB=10; a.height[1]=10; a.sparkX=0; a.sparkZ=0; a.rotStart=0;
+    prim.OnProcess();
+    check(a.process==10 && a.alphaB==20 && a.height[1]==10.2f && std::fabs(a.sparkX-10.2f)<0.0001f,
+        "case 0x5C process 10 remains in the growth branch and moves using updated speed");
+    a.process=10; a.alphaB=5; a.height[1]=10; a.sparkX=0; a.sparkZ=0; a.rotStart=0;
+    prim.OnProcess();
+    check(a.process==11 && a.alphaB==0 && a.life==1 && a.height[1]==10.4f && std::fabs(a.sparkX-10.4f)<0.0001f,
+        "case 0x5C process 11 permits exactly-zero alpha to remain alive and still applies updated-speed movement");
+    a.process=11; a.alphaB=0; a.height[1]=10; a.sparkX=0; a.sparkZ=0; a.rotStart=0;
+    prim.OnProcess();
+    check(a.process==12 && a.alphaB==0 && a.life==0 && std::fabs(a.height[1]-10.4f)<0.0001f
+        && std::fabs(a.sparkX-10.4f)<0.0001f,
+        "case 0x5C clears life only after alpha becomes negative and moves on that death tick");
+    g_isSkipFrame=oldSkipFrame;
 }
 
 int main()

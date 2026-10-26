@@ -9294,6 +9294,34 @@ void UpdateReferenceSphereWind2(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:14663; canonical executable PrimSoulBreaker2 at 0x627020 (case 0x5C).
+void UpdateReferenceSoulBreaker2(CEffectPrim* prim)
+{
+    for (EffectGi& gi : prim->m_gi) {
+        if (gi.life != 1) continue;
+
+        ++gi.process;
+        if (gi.process <= 0) continue;
+
+        if (gi.process == 1) {
+            // The first active process tick intentionally skips alpha and speed changes.
+        } else if (gi.process <= 10) {
+            gi.alphaB = static_cast<short>(gi.alphaB + 10);
+            gi.height[1] *= 1.02f;
+        } else {
+            gi.alphaB = static_cast<short>(gi.alphaB - 5);
+            gi.height[1] *= 1.04f;
+            if (gi.alphaB < 0) {
+                gi.alphaB = 0;
+                gi.life = 0;
+            }
+        }
+
+        gi.sparkX = static_cast<float>(gi.sparkX + gi.height[1] * g_cosTable[gi.rotStart]);
+        gi.sparkZ = static_cast<float>(gi.sparkZ + gi.height[1] * g_sinTable[gi.rotStart]);
+    }
+}
+
 // Ref/RagEffectPrim.cpp:1919-1980 (0x642F10), quad-horn change points, stop and pattern2 restart.
 void UpdateReferenceQuadHorn(CEffectPrim* prim)
 {
@@ -10403,6 +10431,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_SPHEREWIND2) {
         UpdateReferenceSphereWind2(this); // Source case 0x5B continues to the common tick.
+        return true;
+    }
+    if (m_type == PP_SOULBREAKER2) {
+        UpdateReferenceSoulBreaker2(this); // Source case 0x5C continues to the common tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {
