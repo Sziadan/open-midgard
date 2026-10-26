@@ -235,6 +235,7 @@ bool UpdateReferenceHermode(CEffectPrim*);
 void UpdateReferenceParticleSpread(CEffectPrim*);
 void UpdateReferenceShieldBoomerang3(CEffectPrim*);
 void UpdateReferenceQuadHorn2(CEffectPrim*);
+void UpdateReferenceStin(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -372,6 +373,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DAURA_3) { UpdateReferenceParticleSpread(this); return active; }
         if (m_type == PP_SHIELDBOOMERANG3) { UpdateReferenceShieldBoomerang3(this); return active; }
         if (m_type == PP_3DQUADHORN2) { UpdateReferenceQuadHorn2(this); return active; }
+        if (m_type == PP_STIN) { UpdateReferenceStin(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -847,6 +849,7 @@ __declspec(noinline) void RunHermodeLifecycleChecks(CEffectPrim& prim, int& chec
 __declspec(noinline) void RunParticleSpreadLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunShieldBoomerang3LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunQuadHorn2LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunStinLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2150,6 +2153,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     RunParticleSpreadLifecycleChecks(prim, checks, failures);
     RunShieldBoomerang3LifecycleChecks(prim, checks, failures);
     RunQuadHorn2LifecycleChecks(prim, checks, failures);
+    RunStinLifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2373,6 +2377,58 @@ __declspec(noinline) void RunQuadHorn2LifecycleChecks(CEffectPrim& prim, int& ch
     prim.OnProcess();
     check(prim.m_speed==5&&prim.m_accel==2,
         "case 0x75 states above 550 retain speed and acceleration while continuing movement");
+    g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunStinLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_STIN; prim.m_stateCnt=0; prim.m_duration=1000;
+    prim.m_pos={10,20,30}; prim.m_deltaPos={10,40,30}; prim.m_master->m_effectPos={100,200,300};
+    for(auto& gi:prim.m_gi) gi={};
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=0; a.riseAngle=350; a.alphaB=100;
+    a.height[1]=5; a.rotStart=99; a.sparkX=3; a.sparkY=4; a.sparkZ=5;
+    const int draws=rngDraws; prim.OnProcess();
+    check(a.process==1&&a.riseAngle==20&&a.rotStart==0&&a.alphaB==100&&a.height[1]==5
+        &&a.sparkX==8&&a.sparkZ==5&&prim.m_pos.x==10&&prim.m_pos.y==20&&prim.m_pos.z==30
+        &&rngDraws==draws,
+        "case 0x77 first process derives canonical zero-vector angle, wraps rise once, moves GI0 and leaves primitive origin/RNG unchanged");
+
+    a.process=1; a.riseAngle=20; a.alphaB=240; a.height[1]=10; a.rotStart=0; a.sparkX=0; a.sparkZ=0;
+    prim.OnProcess();
+    check(a.process==2&&a.riseAngle==50&&a.alphaB==250&&std::fabs(a.height[1]-10.2f)<0.0001f
+        &&std::fabs(a.sparkX-10.2f)<0.0001f&&std::fabs(a.sparkZ)<0.0001f,
+        "case 0x77 processes two through ten grow capped alpha and height before current-vector motion");
+
+    a.process=10; a.riseAngle=330; a.alphaB=4; a.height[1]=2; a.rotStart=90; a.sparkX=1; a.sparkZ=2;
+    prim.OnProcess();
+    check(a.process==11&&a.riseAngle==0&&a.alphaB==0&&a.life==0&&std::fabs(a.height[1]-2.08f)<0.0001f
+        &&std::fabs(a.sparkX-1)<0.0001f&&std::fabs(a.sparkZ-4.08f)<0.0001f,
+        "case 0x77 process eleven fades, grows speed, kills at alpha floor, then still applies current-vector motion");
+
+    for(auto& gi:prim.m_gi) gi={};
+    a.life=1; a.process=2; a.riseAngle=30; a.alphaB=101; a.height[1]=1.0f; a.rotStart=0;
+    a.sparkX=0; a.sparkY=50; a.sparkZ=0;
+    auto& b=prim.m_gi[1]; b.alphaB=90; b.riseAngle=202; b.sparkX=20; b.sparkY=21; b.sparkZ=22;
+    auto& c=prim.m_gi[2]; c.alphaB=73; c.riseAngle=303; c.sparkX=30; c.sparkY=31; c.sparkZ=32;
+    const int positionBefore=prim.m_pos.x; const int drawStart=rngDraws;
+    prim.OnProcess();
+    check(a.process==3&&a.sparkX>1.0f&&b.sparkX==a.sparkX&&b.sparkY==50&&b.sparkZ==0
+        &&b.alphaB==100&&b.riseAngle==60
+        &&c.sparkX==20&&c.sparkY==21&&c.sparkZ==22&&c.alphaB==72&&c.riseAngle==202
+        &&prim.m_gi[3].sparkX==30&&prim.m_gi[3].sparkY==31&&prim.m_gi[3].sparkZ==32
+        &&prim.m_gi[3].alphaB==58&&prim.m_gi[3].riseAngle==303
+        &&prim.m_pos.x==positionBefore&&rngDraws==drawStart,
+        "case 0x77 process-three trail shift runs descending after movement and truncates 80-percent alpha copies");
+    a.life=2; a.process=7; const int inactiveProcess=a.process; prim.OnProcess();
+    check(a.life==2&&a.process==inactiveProcess,
+        "case 0x77 exact-life gate skips all GI0 process and motion updates");
+    a.life=1; a.process=-2; const int negativeRise=a.riseAngle; prim.OnProcess();
+    check(a.process==-1&&a.riseAngle==negativeRise,
+        "case 0x77 nonpositive post-increment process skips remaining branches");
     g_isSkipFrame=oldSkipFrame;
 }
 
