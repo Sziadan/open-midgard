@@ -7829,6 +7829,36 @@ int main()
             &&rngDraws==laterDraws&&waveCalls.empty()&&g_texMgr.requests.empty(),"Bash3D5 later ticks refresh through six helper calls without sound or respawn");
         g_world.m_player=nullptr;rngValues.clear();rngCursor=0;
     }
+    {
+        CRagEffect master; CEffectPrim prim; prim.m_master=&master; prim.m_type=PP_CHOOKGI; prim.m_renderFlag=5;
+        prim.m_pos={10,20,100}; prim.m_texture.push_back(&g_texMgr.texture);
+        EffectGi& gi=prim.m_gi[0];gi.life=1;gi.alphaB=128;gi.distance=10;gi.height[8]=0;gi.sparkX=2;gi.sparkY=3;gi.sparkZ=4;
+        prim.m_gi[1].alphaT=0;gi.alphaT=0;gi.flag[0]=0;
+        slashQuads.clear();RenderChookGi(prim,testView.view);
+        check(slashQuads.size()==2&&slashQuads[0].color==0x800000FF&&slashQuads[1].color==0x80FFFF00,
+            "ChookGi renderer submits outer blue and inner yellow additive passes at source alpha");
+        bool geometry=slashQuads.size()==2;
+        if(geometry){
+            const float outerRadius=gi.distance+g_sinTable[static_cast<int>(gi.height[8])]*gi.distance*0.05f;
+            const float innerRadius=gi.distance*0.5f+g_sinTable[static_cast<int>(gi.height[8])]*gi.distance*0.05f;
+            geometry=std::fabs(slashQuads[0].points[0].x-(12+g_cosTable[0]*outerRadius))<0.0001f
+                &&slashQuads[0].points[0].y==23&&slashQuads[0].points[0].z==104
+                &&std::fabs(slashQuads[0].points[1].x-(12+g_cosTable[90]*outerRadius))<0.0001f
+                &&std::fabs(slashQuads[0].points[1].z-(104+g_sinTable[90]*outerRadius))<0.0001f
+                &&std::fabs(slashQuads[1].points[0].x-(12+g_cosTable[0]*innerRadius))<0.0001f
+                &&slashQuads[1].points[0].y==23
+                &&std::fabs(slashQuads[1].points[1].z-(104+g_sinTable[90]*innerRadius))<0.0001f
+                &&slashQuads[0].u0==0&&slashQuads[0].u1==1&&slashQuads[0].v0==1&&slashQuads[0].v1==0
+                &&slashQuads[0].blend==D3DBLEND_ONE&&slashQuads[1].flags==5;
+        }
+        check(geometry,"ChookGi renderer preserves both radii, GI offset, parent origin, full UV range and render flags");
+        gi.flag[0]=1;slashQuads.clear();RenderChookGi(prim,testView.view);
+        check(slashQuads.size()==2&&slashQuads[0].color==0x80442A1E&&slashQuads[1].color==0x80FFFFFF,
+            "ChookGi flag-one branch selects the source brown outer pass and white inner pass");
+        gi.life=0;slashQuads.clear();RenderChookGi(prim,testView.view);
+        gi.life=1;gi.alphaB=0;RenderChookGi(prim,testView.view);
+        check(slashQuads.empty(),"ChookGi renderer emits nothing unless lane zero is live with positive alpha");
+    }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
 }

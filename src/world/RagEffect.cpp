@@ -12484,6 +12484,43 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     return m_stateCnt <= m_duration || m_alpha > 0.0f;
 }
 
+void RenderChookGi(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    const EffectGi& gi = prim.m_gi[0];
+    if (gi.life != 1 || gi.alphaB <= 0 || prim.m_texture.empty()) return;
+
+    const auto renderPass = [&](float radius, unsigned char red, unsigned char green, unsigned char blue) {
+        vector3d corners[4];
+        for (int corner = 0; corner < 4; ++corner) {
+            const int angle = corner * 90;
+            corners[corner] = {g_cosTable[angle] * radius, 0.0f, g_sinTable[angle] * radius};
+            float z=corners[corner].z, y=corners[corner].y;
+            corners[corner].z=z*g_cosTable[prim.m_gi[1].alphaT]-y*g_sinTable[prim.m_gi[1].alphaT];
+            corners[corner].y=z*g_sinTable[prim.m_gi[1].alphaT]+y*g_cosTable[prim.m_gi[1].alphaT];
+            const float x=corners[corner].x;
+            z=corners[corner].z;
+            corners[corner].x=x*g_cosTable[gi.alphaT]-z*g_sinTable[gi.alphaT];
+            corners[corner].z=x*g_sinTable[gi.alphaT]+z*g_cosTable[gi.alphaT];
+            const vector3d offset={gi.sparkX,gi.sparkY,gi.sparkZ};
+            corners[corner] = AddVec3(AddVec3(corners[corner], offset), prim.m_pos);
+        }
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24)
+            | (static_cast<unsigned int>(red) << 16) | (static_cast<unsigned int>(green) << 8) | blue;
+        SubmitWorldTeiRect(corners[0], corners[1], corners[2], corners[3], viewMatrix,
+            prim.m_texture[0], color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f,
+            static_cast<int>(prim.m_renderFlag));
+    };
+
+    float outerRadius = gi.distance;
+    outerRadius += g_sinTable[static_cast<int>(gi.height[8])] * gi.distance * 0.05f;
+    const bool modeThree = gi.flag[0] == 1;
+    renderPass(outerRadius, modeThree ? 68 : 0, modeThree ? 42 : 0, modeThree ? 30 : 255);
+
+    float innerRadius = gi.distance * 0.5f;
+    innerRadius += g_sinTable[static_cast<int>(gi.height[8])] * gi.distance * 0.05f;
+    renderPass(innerRadius, 255, 255, modeThree ? 255 : 0);
+}
+
 void CEffectPrim::Render(matrix* viewMatrix)
 {
     if (!m_master || !viewMatrix) {
@@ -12523,6 +12560,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_BASH3D) {
         RenderBash3D(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_CHOOKGI) {
+        RenderChookGi(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_3DQUADHORN2 || UsesReferenceQuadHorn()) {
