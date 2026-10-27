@@ -588,6 +588,7 @@ private:
     void ApplySight(float initialAlpha, bool includeShadow);
     void SpawnSight();
     void SpawnSight2();
+    void ApplySightrasher();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();

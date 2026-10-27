@@ -1639,3 +1639,11 @@ Validation: 19 mechanical source/implementation comparisons; 477 particle-render
 - x64 Release build passes; all six CTest suites pass; lifecycle executable reports 1,889 checks; `git diff --check` passes. Two pre-existing C4244 warnings remain in the linear particle curve/blow angle assignments. No media or live visual/backend acceptance is claimed.
 - Current callers that populate the keyed-radius arrays remain a separate emitter parity question; this checkpoint covers the primitive updater and route. Next: compare the next primitive helper before editing.
 - User-authorized OldRO copy matches the Release build SHA-256: `BB18CD867797030A329C809C67E792AE09EC628C4ABD41541DBB03D9CD980A32`.
+
+## `CRagEffect::Sightrasher` / EF_SIGHTRASHER (0x3E) — 2026-10-27
+
+- Readable Ref `Ref/dhxj/RagEffect.cpp:10326-10404`; canonical `HighPriest.exe.c:426972-427160`; current `ApplySightrasher` and effect-62 dispatch in `src/world/RagEffect.cpp`.
+- Branch comparison covers projection every frame; state-zero delete message and sound; state `%5==0 && <20` emission gate; two ordered groups of eight PP_3DPARTICLE children; first-group-only random animation speeds; 0x400 delta-speed setup and per-axis change-point speed/acceleration fields; exact sprite/action paths and fade/duration/size/alpha; and frame-10 PP_3DCIRCLE fields, texture and ordering. Ref and EXE agree on these branches; canonical effect switch maps EF_SIGHTRASHER to numeric 62.
+- Added `tools/tests/check_sightrasher.py` to verify Ref, EXE and implementation order/payload/RNG/resource/dispatch anchors. Lifecycle assertions exercise state 0 and 10, all 16 ordered particles, exact 8 RNG draws, the message/audio payload and the terminal circle. All six CTest suites pass; lifecycle executable reports 1,891 checks. `check_sightrasher.py`, both adjacent 3D particle comparators, x64 Release build and `git diff --check` pass.
+- Build emits the two prior C4244 warnings in `UpdateLinearReferenceParticle` at `RagEffect.cpp:11450-11451`. OldRO deploy copy will be hash-verified for this checkpoint. No live audio or visual/backend acceptance is claimed. Next: source-compare the next remaining handler/caller before implementation.
+- User-authorized OldRO deployment matches the Release build SHA-256: `8F4BB45CB5C71C83C2DAB41BE815EF4606C977E04F3A3D8B92D1C13A01DF0D74`.

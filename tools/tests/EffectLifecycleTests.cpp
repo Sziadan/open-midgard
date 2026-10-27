@@ -123,6 +123,10 @@ struct CGameObject {
 };
 struct CRenderObject : CGameObject {
     vector3d m_pos;
+    int lastSentMsg=0,lastSentArg=0;
+    void SendMsg(CGameObject*, int msg, msgparam_t arg, msgparam_t, msgparam_t) override {
+        lastSentMsg=msg; lastSentArg=static_cast<int>(arg);
+    }
     vector3d EffectPosition() const { return m_pos; }
     float m_roty = 0;
     int m_BodyLight = 0;
@@ -177,6 +181,10 @@ struct CGameMode {
 } gameMode;
 struct CSession {bool m_isMinEffect=false,m_isEffectOn=false;u32 m_aid=0;const char* GetAttrWaveName(int) const;} g_session;
 struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
+bool TryPlayEffectWaveAt(const vector3d& soundPos, const char* name) {
+    const vector3d& listener=g_modeMgr.GetCurrentGameMode()->m_world->m_player->m_pos;
+    return PlayWave(name,soundPos.x-listener.x,soundPos.y-listener.y,soundPos.z-listener.z,250,40,1.0f);
+}
 #include "PrimitiveEnum.inc"
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
 void UpdateSlash1Primitive(CEffectPrim*);
@@ -538,6 +546,7 @@ struct CRagEffect : CGameObject {
     bool ProcessPotionConcentration();
     bool ApplyPotionBerserk();
     void ApplySight(float,bool);
+    void ApplySightrasher();
     void SpawnSight();
     void SpawnSight2();
     void SpawnBlessing();
@@ -8008,6 +8017,41 @@ int main()
         gi.life=0;slashQuads.clear();RenderChookGi(prim,testView.view);
         gi.life=1;gi.alphaB=0;RenderChookGi(prim,testView.view);
         check(slashQuads.empty(),"ChookGi renderer emits nothing unless lane zero is live with positive alpha");
+    }
+    {
+        CRagEffect effect; CRenderObject actor, player;
+        actor.m_pos={10,20,30}; player.m_pos={1,2,3}; g_world.m_player=&player;
+        effect.m_type=62; effect.m_master=&actor; effect.m_effectPos={20,10,50}; effect.m_stateCnt=0;
+        rngValues.assign(8,1); rngCursor=0; waveCalls.clear(); g_resMgr.requests.clear();
+        const int drawStart=rngDraws;
+        effect.ApplySightrasher();
+        bool firstGroup=effect.m_primList.size()==16; int index=0;
+        for(auto* prim:effect.m_primList){
+            firstGroup=firstGroup&&prim->m_type==PP_3DPARTICLE&&prim->m_pattern==0x400
+                &&prim->m_changePoint==35&&prim->m_changeAccel3d.x==-0.004f&&prim->m_changeAccel3d.z==0.004f;
+            if(index<8) firstGroup=firstGroup&&prim->m_spriteSprName=="misc\\Sight.spr"
+                &&prim->m_animSpeed==4&&prim->m_deltaPos2.y==-20&&prim->m_changeSpeed3d.y==0;
+            else firstGroup=firstGroup&&prim->m_spriteSprName=="Shadow.spr"
+                &&prim->m_animSpeed==3&&prim->m_deltaPos2.y==0;
+            ++index;
+        }
+        check(firstGroup&&rngDraws==drawStart+8&&rngCursor==8&&actor.lastSentMsg==109&&actor.lastSentArg==22
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\wizard_sightrasher.wav"
+            &&waveCalls[0].x==9&&waveCalls[0].y==18&&waveCalls[0].z==27,
+            "Sightrasher state zero projects, deletes Sight, plays the source-position sound, and emits ordered 8+8 delta-speed particles with exact RNG");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); effect.m_stateCnt=10;
+        rngValues.assign(8,0); rngCursor=0; g_texMgr.requests.clear();
+        const int circleDrawStart=rngDraws;
+        effect.ApplySightrasher();
+        CEffectPrim* circle=effect.m_primList.empty()?nullptr:effect.m_primList.back();
+        check(effect.m_primList.size()==17&&circle&&circle->m_type==PP_3DCIRCLE
+            &&circle->m_duration==30&&circle->m_latitude==90&&circle->m_radiusSpeed==2.5f
+            &&circle->m_innerSize==-10&&circle->m_fadeOutCnt==20
+            &&g_texMgr.lastPath&&std::string(g_texMgr.lastPath)=="effect\\ring_yellow.tga"
+            &&rngDraws==circleDrawStart+8&&rngCursor==8,
+            "Sightrasher frame ten appends the configured yellow circle after both particle groups");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); g_world.m_player=nullptr;
+        rngValues.clear(); rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
