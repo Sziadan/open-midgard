@@ -4751,6 +4751,18 @@ void HandleTalkboxChatContents(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleChangeGuild(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 12 || mode.m_world == nullptr) {
+        return;
+    }
+
+    CGameActor* actor = mode.m_world->GetGameActorByAID(ReadLE32(packet.data + 2));
+    if (actor != nullptr) {
+        actor->SetGuildInfo(ReadLE32(packet.data + 6), static_cast<s16>(ReadLE16(packet.data + 10)));
+    }
+}
+
 void DecodePosDir(const u8* src, int& posX, int& posY, int& dir)
 {
     if (!src) {
@@ -7918,6 +7930,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x023C, HandleStoragePasswordResult);
     router.Register(0x0284, HandleNotifyEffect3);
     router.Register(0x0191, HandleTalkboxChatContents);
+    router.Register(0x01B4, HandleChangeGuild);
     RegisterHandlerIfValid(router, receiveProfile.itemRemoveExtended, HandleItemRemove);
     router.Register(0x0100, HandleIgnorePacket);
 

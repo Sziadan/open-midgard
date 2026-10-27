@@ -61,6 +61,8 @@ tools/tests/*
 !tools/tests/check_talkbox_chat_contents_packet.py
 !tools/tests/SkillTalkboxTextTests.cpp
 !tools/tests/check_skill_talkbox_receiver.py
+!tools/tests/ChangeGuildTests.cpp
+!tools/tests/check_change_guild_source.py
 
 !tools/check_double_gumgang_parity.py
 !tools/check_pokjuk_parity.py

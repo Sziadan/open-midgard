@@ -4465,6 +4465,20 @@ void CGameActor::SetChatBubbleText(const std::string& text, u32 untilTick)
     m_chatTick = untilTick;
 }
 
+void CGameActor::SetGuildInfo(int guildId, int emblemVersion)
+{
+    if (guildId < 1 || (emblemVersion < 1 && m_job != 722)) {
+        return;
+    }
+    const bool isGuildActor = m_isPc != 0
+        || m_job == 1285 || m_job == 1286 || m_job == 1287 || m_job == 722;
+    if (!isGuildActor) {
+        return;
+    }
+    m_gdid = guildId;
+    m_emblemVersion = emblemVersion;
+}
+
 void CGameActor::ClearChatBubbleText()
 {
     m_chatBubbleText.clear();

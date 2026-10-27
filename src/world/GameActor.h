@@ -230,6 +230,7 @@ public:
     void ClearChatBubbleText();
     bool HasActiveChatBubble(u32 now) const;
     const std::string& GetChatBubbleText() const { return m_chatBubbleText; }
+    void SetGuildInfo(int guildId, int emblemVersion);
 
     int m_moveDestX, m_moveDestY;
     int m_moveSrcX, m_moveSrcY;
