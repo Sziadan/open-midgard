@@ -498,6 +498,7 @@ private:
     bool ApplyPotionBerserk();
     void ApplyIceArrow();
     void ApplyFireArrow();
+    void SpawnBash3D(const char* textureName, char f1, char f2);
     void ApplyFrostDiver();
     void ApplyFrostDiver2();
     void ApplyHasteUp();

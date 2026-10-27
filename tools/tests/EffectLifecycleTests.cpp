@@ -464,6 +464,7 @@ struct CRagEffect : CGameObject {
     void ApplyWarpZone();
     void ApplyIceArrow();
     void ApplyFireArrow();
+    void SpawnBash3D(const char*,char,char);
     void ApplyFrostDiver();
     void ApplyFrostDiver2();
     void ApplyHasteUp();
@@ -2971,6 +2972,48 @@ int main()
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
     for (int angle=0; angle<=360; ++angle) { g_sinTable[angle]=GetSin(angle); g_cosTable[angle]=GetCos(angle); }
+    {
+        CRenderObject master;master.m_pos={40,50,60};
+        CRagEffect effect;effect.m_master=&master;effect.m_duration=77;effect.m_stateCnt=0;
+        rngValues={13,91,179,267};rngCursor=0;const int before=rngDraws;
+        effect.SpawnBash3D("effect\\alpha_center.tga",1,2);
+        check(effect.m_effectPos.x==40&&effect.m_effectPos.y==50&&effect.m_effectPos.z==60&&effect.m_primList.size()==1,
+            "BASH3D refreshes parent position and emits one primitive only at frame zero");
+        if(!effect.m_primList.empty()) {
+            CEffectPrim* prim=effect.m_primList.front();
+            check(prim->m_type==PP_BASH3D&&prim->m_duration==77&&prim->m_renderFlag==5
+                &&prim->m_texture.size()==1&&g_texMgr.lastPath&&std::string(g_texMgr.lastPath)=="effect\\alpha_center.tga",
+                "BASH3D binds source texture0, parent duration, and RF_EFFECT");
+            bool lanes=true;
+            const int expectedAngles[4]={22,112,202,292};
+            for(int i=0;i<4;++i) {
+                const EffectGi& gi=prim->m_gi[i];
+                lanes=lanes&&gi.life==1&&gi.height[4]==2.0f&&gi.process==0&&gi.distance==2.0f
+                    &&gi.riseAngle==expectedAngles[i]&&gi.rotStart==std::array<int,4>{13,91,179,267}[i]
+                    &&gi.alphaB==0&&gi.height[0]==-12.0f;
+            }
+            check(lanes&&rngDraws==before+4&&rngCursor==4,
+                "BASH3D initializes four mode-two lanes in source order with exactly four angle draws");
+        }
+        effect.m_stateCnt=1;master.m_pos={70,80,90};effect.SpawnBash3D("ignored.tga",1,2);
+        check(effect.m_effectPos.x==70&&effect.m_effectPos.y==80&&effect.m_effectPos.z==90&&effect.m_primList.size()==1
+            &&rngDraws==before+4,"BASH3D refreshes parent every frame but spawns and randomizes only on frame zero");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+
+        CRagEffect modeThree;modeThree.m_master=&master;modeThree.m_duration=31;
+        rngValues={0,1,2,3};rngCursor=0;modeThree.SpawnBash3D("effect\\alpha_center.tga",2,3);
+        const bool spread3=modeThree.m_primList.size()==1&&modeThree.m_primList.front()->m_gi[0].riseAngle==14
+            &&modeThree.m_primList.front()->m_gi[1].riseAngle==104&&modeThree.m_primList.front()->m_gi[0].process==0;
+        check(spread3,"BASH3D mode three uses seven-degree offsets and a zero process start");
+        modeThree.ClearPrims();g_world.UpdateGameObjects();
+
+        CRagEffect otherMode;otherMode.m_master=&master;
+        rngValues={359,0,1,2};rngCursor=0;otherMode.SpawnBash3D("effect\\alpha_center.tga",1,5);
+        const bool other=otherMode.m_primList.size()==1&&otherMode.m_primList.front()->m_gi[0].riseAngle==22
+            &&otherMode.m_primList.front()->m_gi[1].riseAngle==112&&otherMode.m_primList.front()->m_gi[0].process==-24;
+        check(other,"BASH3D non-2/3 modes use twenty-two-degree offsets and process minus twenty-four");
+        otherMode.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+    }
     {
         auto segmentedStorage = std::make_unique<CEffectPrim>();
         CEffectPrim& segmented = *segmentedStorage;

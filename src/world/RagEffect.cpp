@@ -18266,6 +18266,32 @@ void CRagEffect::ApplyAuraBladeCasting()
     ApplySaintCasting(25, "effect\\ring_yellow.tga", 22);
 }
 
+// Ref/dhxj/RagEffect2.cpp:3601; canonical CRagEffect::BASH3D at 0x60FA40.
+void CRagEffect::SpawnBash3D(const char* textureName, char f1, char f2)
+{
+    if (CRenderObject* master = ResolveCurrentMaster()) {
+        m_effectPos = master->m_pos;
+    }
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_BASH3D, vector3d{});
+    if (!prim) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    for (int index = 0; index < 4; ++index) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(index)];
+        gi.life = 1;
+        gi.height[4] = static_cast<float>(f2);
+        gi.process = f2 == 2 || f2 == 3 ? 0 : -24;
+        gi.distance = 2.0f;
+        gi.riseAngle = static_cast<short>(90 * index + f1 * (f2 == 3 ? 7 : 22));
+        gi.rotStart = static_cast<short>(rand() % 360);
+        gi.alphaB = 0;
+        gi.height[0] = -12.0f;
+    }
+}
+
 void CRagEffect::ApplyColorPaper(const char* textureName)
 {
     CRenderObject* master = ResolveCurrentMaster();
