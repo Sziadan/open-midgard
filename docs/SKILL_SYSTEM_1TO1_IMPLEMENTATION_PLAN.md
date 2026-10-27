@@ -237,7 +237,9 @@ The current `src/world/RagEffect.cpp` hard-codes different durations (e.g. id 12
 | `0x013D` | ZC_RECOVERY | 6 | | | `Zc_recovery` 33505 |
 | `0x043D` | ZC_SKILL_POSTDELAY | 8 | skill.W@2 tick.L@4 | 4633 | (2008-11-12+; present in `packet_db` ver 23 table) |
 | `0x010F`/`0x010E`/`0x0111`/`0x0235`/`0x029D` | skill lists / updates | -1 / 11 / 39 / -1 / -1 | | 4389 / 4476 / 4425 / 14765 | `Zc_Skillinfo_List` 25700 etc. |
-| `0x0162`/`0x0145`/`0x01B4` | guild skill info | | | 7320 | `Zc_GuildSkillInfo` 11880 |
+| `0x0162` | ZC_GUILD_SKILLINFO | variable (`packet_db`: -1) | skill records, 37 bytes each from `+6`; points at `+4` | 7320 | `Zc_GuildSkillInfo` 11880 (dispatch 354) |
+| `0x0145` | ZC_SHOW_IMAGE | 19 | name[16]@`+2`, type.B@`+18` (`255` → `-1`) | — | `Zc_show_image` 33679 (dispatch 325) |
+| `0x01B4` | ZC_CHANGE_GUILD | 12-byte minimum (no `packet_db` row found) | aid.L@`+2`, guild id.L@`+6`, emblem version.sW@`+10` | — | `Zc_ChangeGuild` 9948 (dispatch 436) |
 
 Client-send (packet_ver 23 block, `packet_db.txt` line 1252 ff.): `0x0438,10,useskilltoid,2:4:6`; `0x0113` is **not** useskilltoid in ver 23 (it is in the old block, line 191). `0x0116,10,useskilltopos,2:4:6:8`; `0x0190,90,useskilltoposinfo,2:4:6:8:10`; `0x011B,20,useskillmap,2:4`; `0x0112,4,skillup,2`. Confirm each against `PACKET_VERSION_ALIGNMENT.md` before use (the document is authoritative for the send side).
 
@@ -445,10 +447,12 @@ Remove: `ResolveGroundSkillEffectId`, `PlayGroundSkillImpactSound`, `ResolveUseS
 | `0x01D3` | `Zc_Sound` 25976 | server-triggered waves (used by some skill scripts). |
 | `0x01D0`, `0x01E1` | `Zc_Spirits/2` 26133 / 26218 | spirit spheres (Monk/Champion/Gunslinger). |
 | `0x01CF` | `Zc_DevotionList` 10555 | devotion link visuals. |
-| `0x01CD` | `Zc_AutoSpellList` 8618 | autospell window. |
+| `0x01CD` | `Zc_AutoSpellList` 8618 | seven skill IDs, nonzero-only message 31 to window 99; full receiver `UISpellListWnd` is absent, so include it in the port before claiming visible parity. |
 | `0x01D1`, `0x01D2` | bladestop / combo delay | |
 | `0x0148`, `0x013D` | `Zc_resurrection` 33654, `Zc_recovery` 33505 | |
 | `0x0191` | `Zc_talkbox_chat_contents` 33736 | resolves the skill AID and forwards message 7 with the raw packet payload at +6; the receiver now displays nonempty text for five seconds as a red skill speech bubble through the Qt overlay. |
+| `0x0145` | `Zc_show_image` 33679 | sends message 113 with a fixed 16-byte name and type; the current message receiver and image presentation are absent. |
+| `0x01B4` | `Zc_ChangeGuild` 9948 | resolves actor AID and calls `SetGuildInfo(guildId, emblemVersion)`; actor setter and emblem resource/request path are absent. |
 | skill list family | `Zc_Skillinfo_List` 25700, `Zc_Skillinfo_Update` 25841, `Zc_Add_Skill` 8267, `Zc_GuildSkillInfo` 11880, homun/mer skill lists | keep existing if already exact; verify. |
 
 Register every opcode in the dispatch table; nothing skill-related may remain on `HandleIgnorePacket`.
