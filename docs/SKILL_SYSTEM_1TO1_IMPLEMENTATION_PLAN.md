@@ -424,6 +424,8 @@ Progress (2026-10-27): read-only source audit found canonical Ref/EXE equality f
 
 Update (2026-10-27): base `CGameActor::SetState` now matches the enumerated Ref/EXE state IDs and branch-level presets. `tools/tests/check_actor_setstate_source.py` checks the complete source bodies, exact state inventory and order, state 0–13 actions/guards/messages, states 16–42 force tuples/timers/effects/RNG, and common tail. All 37 source-check CTests and x64 Release build pass. See `PARITY_LOG.md`; the broader WP2.7 work remains open.
 
+Update (2026-10-27): `CGameActor::ProcessState` has now been source-audited before implementation. Ref and canonical EXE complete bodies match (12,532 normalized characters); mechanically extracted source state IDs are `[0,1,2,9,12,3,4,5,7,8,10,11,13,16–28,30–42]`. Current code covers only part of that inventory and differs in movement, hit reaction, death, casting, and the common tail. See `PARITY_LOG.md` and `MISMATCHES.md`; do not start another function before this one passes its branch-level source/current gate.
+
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
 * `CPc::SetState` Ref/Pc.cpp:5678, `ProcessState` 2382.
 * `CPlayer::SetState` Ref/Player.cpp:523, `ProcessState` 87.
