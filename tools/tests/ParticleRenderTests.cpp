@@ -1753,6 +1753,38 @@ int main() {
         check(g_renderer.submissions.empty(),"PeongUp skips every GI lane whose life is not one");
     }
     {
+        CTexture texture;CEffectPrim prim;prim.m_texture={&texture};prim.m_pos={100,200,300};prim.m_renderFlag=11;
+        EffectGi& first=prim.m_gi[0];first.life=1;first.alphaB=0;first.distance=9;
+        first.vecBPreX=3;first.arcBaselineY=-4;first.vecBPreZ=5;
+        EffectGi& second=prim.m_gi[1];second.life=1;second.alphaB=120;second.distance=17;
+        second.vecBPreX=-2;second.arcBaselineY=8;second.vecBPreZ=1;
+        second.height[0]=123; // Canonical radius is distance, not height[0].
+        g_renderer.submissions.clear();g_renderer.flags.clear();g_modeMgr.lookups=0;
+        RenderReferencePeong(prim,view);
+        check(g_renderer.submissions.size()==4,
+            "Peong renders every live lane with no alpha or vertical visibility gate");
+        if(g_renderer.submissions.size()==4){
+            const RPFace& firstFace=g_renderer.submissions[0];const RPFace& secondFace=g_renderer.submissions[2];
+            check(firstFace.tex==&texture&&firstFace.m_verts[0].color==0x00FFFFFFu
+                &&secondFace.m_verts[0].color==0x78FFFFFFu,
+                "Peong uses texture slot zero, white RGB, and the stored alphaB even when it is zero");
+            check(firstFace.destAlphaMode==D3DBLEND_INVSRCALPHA
+                &&firstFace.m_verts[0].tu==0.0f&&firstFace.m_verts[0].tv==1.0f
+                &&g_renderer.flags[0]==11&&g_renderer.flags[3]==11,
+                "Peong preserves PW=1 blend, full UVs, and raw primitive render flags");
+            tlvertex3d expected{};ProjectReferenceEffectVertex({103,196,305},view,expected);
+            check(near(firstFace.m_verts[0].x,expected.x)&&near(firstFace.m_verts[0].y,expected.y)
+                &&near(firstFace.m_verts[0].x,firstFace.m_verts[1].x),
+                "Peong follows executable-zero orientation, offsets by BPre and primitive position, and produces degenerate corners");
+        }
+        check(g_modeMgr.lookups==0,"Peong render has no effect-launch or game-mode side effects");
+        second.life=0;first.life=0;g_renderer.submissions.clear();RenderReferencePeong(prim,view);
+        check(g_renderer.submissions.empty(),"Peong skips lanes whose life is not one");
+        for(EffectGi& gi:prim.m_gi)gi.life=1;
+        g_renderer.submissions.clear();RenderReferencePeong(prim,view);
+        check(g_renderer.submissions.size()==8,"Peong visits all four live GI lanes and submits one two-face rectangle each");
+    }
+    {
         CTexture texture; CEffectPrim prim; prim.m_texture={&texture}; prim.m_pos={10,20,30}; prim.m_renderFlag=7;
         for(int i=0;i<2;++i){auto& gi=prim.m_gi[static_cast<size_t>(i)];gi.life=1;gi.alphaB=180;
             gi.height[0]=2;gi.height[1]=3;gi.height[2]=4;}

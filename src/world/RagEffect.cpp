@@ -12110,7 +12110,7 @@ void RenderReferenceSoulBreaker(const CEffectPrim& prim, const matrix& view)
 // Canonical HighPriest.exe.c:447524 / Ref/RagEffect2.cpp:19059.
 void SubmitReferenceRectUp2Rect(int& rpCount, const vector3d corners[4],
     const CEffectPrim& prim, const matrix& view, int alpha,
-    unsigned char red, unsigned char green, unsigned char blue)
+    unsigned char red, unsigned char green, unsigned char blue, bool addParentPosition)
 {
     if (rpCount >= 510) return;
     const int triangles[2][3] = {{0, 1, 2}, {3, 2, 0}};
@@ -12135,10 +12135,11 @@ void SubmitReferenceRectUp2Rect(int& rpCount, const vector3d corners[4],
         face->alphaSortKey = 0.0f;
         for (int vertex = 0; vertex < 3; ++vertex) {
             const int corner = triangles[triangle][vertex];
+            const vector3d translation = addParentPosition ? prim.m_pos : vector3d{};
             const vector3d position{
-                static_cast<float>(static_cast<double>(corners[corner].x) + prim.m_pos.x),
-                static_cast<float>(static_cast<double>(corners[corner].y) + prim.m_pos.y),
-                static_cast<float>(static_cast<double>(corners[corner].z) + prim.m_pos.z)};
+                static_cast<float>(static_cast<double>(corners[corner].x) + translation.x),
+                static_cast<float>(static_cast<double>(corners[corner].y) + translation.y),
+                static_cast<float>(static_cast<double>(corners[corner].z) + translation.z)};
             ProjectReferenceEffectVertex(position, view, face->m_verts[vertex]);
             face->m_verts[vertex].color = color;
             face->m_verts[vertex].specular = 0xFF000000u;
@@ -12167,13 +12168,13 @@ void RenderReferenceRectUp2(CEffectPrim& prim, const matrix& view)
         vector3d tnowLocal = local(tnow), tpreLocal = local(tpre);
         vector3d rect[4]{};
         rect[0]=bpre; rect[1]=bnow; rect[2]=bnowLocal; rect[3]=bpreLocal;
-        SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,200,250,200);
+        SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,200,250,200,true);
         rect[0]=bnow; rect[1]=tnow; rect[2]=tnowLocal; rect[3]=bnowLocal;
-        SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,200,250,200);
+        SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,200,250,200,true);
         rect[0]=tnow; rect[1]=tpre; rect[2]=tpreLocal; rect[3]=tnowLocal;
-        SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,200,250,200);
+        SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,200,250,200,true);
         rect[0]=tpre; rect[1]=bpre; rect[2]=bpreLocal; rect[3]=tpreLocal;
-        SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,200,250,200);
+        SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,200,250,200,true);
     }
 
     for (int lane = 2; lane < 4; ++lane) {
@@ -12206,7 +12207,7 @@ void RenderReferenceRectUp2(CEffectPrim& prim, const matrix& view)
         vector3d rect[4]{};
         const auto draw = [&](const vector3d& a,const vector3d& b,const vector3d& c,const vector3d& e) {
             rect[0]=a; rect[1]=b; rect[2]=c; rect[3]=e;
-            SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,150,250,150);
+            SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,150,250,150,true);
         };
         if (interval==0) { draw(bpre,bnow,bnowLocal,bpreLocal); if(left>0) draw(bnow,tnow,tnowLocal,bnowLocal); }
         else if (interval==1) { draw(bnow,tnow,tnowLocal,bnowLocal); if(left>0) draw(tnow,tpre,tpreLocal,tnowLocal); }
@@ -12241,7 +12242,30 @@ void RenderReferencePeongUp(const CEffectPrim& prim, const matrix& view)
         if (gi.flag[0]==2) color=105;
         else if (gi.flag[0]==3) color=55;
         const unsigned char blue=gi.flag[0]==2 ? 225 : color;
-        SubmitReferenceRectUp2Rect(rpCount,corners,prim,view,gi.alphaB,color,color,blue);
+        SubmitReferenceRectUp2Rect(rpCount,corners,prim,view,gi.alphaB,color,color,blue,true);
+    }
+}
+
+// Canonical HighPriest.exe.c:446790 / dhxj readable fallback:11135.
+void RenderReferencePeong(const CEffectPrim& prim, const matrix& view)
+{
+    int rpCount=0;
+    // The executable's eight orientation globals are zero (file-backed or PE zero-fill).
+    constexpr float orientation[4][2]={{0.0f,0.0f},{0.0f,0.0f},{0.0f,0.0f},{0.0f,0.0f}};
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life!=1) continue;
+        vector3d corners[4]{};
+        for (int corner=0;corner<4;++corner) {
+            corners[corner].x=orientation[corner][0]*gi.distance;
+            corners[corner].z=orientation[corner][1]*gi.distance;
+        }
+        IntimidateTowardScreen(corners,prim.m_gi[0].alphaT,prim.m_gi[1].alphaT);
+        for (vector3d& corner : corners) {
+            corner.x=static_cast<float>(static_cast<double>(corner.x)+gi.vecBPreX);
+            corner.y=static_cast<float>(static_cast<double>(corner.y)+gi.arcBaselineY);
+            corner.z=static_cast<float>(static_cast<double>(corner.z)+gi.vecBPreZ);
+        }
+        SubmitReferenceRectUp2Rect(rpCount,corners,prim,view,gi.alphaB,255,255,255,true);
     }
 }
 
@@ -12998,7 +13022,8 @@ void RenderChookGi(CEffectPrim& prim, const matrix& viewMatrix)
 
 void CEffectPrim::Render(matrix* viewMatrix)
 {
-    if ((!m_master && m_type != PP_3DTEXTURE_NOMASTER && m_type != PP_MAPPARTICLE && m_type != PP_PEONGUP
+    if ((!m_master && m_type != PP_3DTEXTURE_NOMASTER && m_type != PP_MAPPARTICLE
+        && m_type != PP_PEONG && m_type != PP_PEONGUP
         && m_type != PP_SOULBREAKER && m_type != PP_SOULBREAKER2) || !viewMatrix) {
         return;
     }
@@ -13042,6 +13067,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_PEONGUP) {
         RenderReferencePeongUp(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_PEONG) {
+        RenderReferencePeong(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_STIN || m_type == PP_STIN2 || m_type == PP_STIN4) {

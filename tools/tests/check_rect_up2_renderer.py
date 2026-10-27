@@ -41,7 +41,7 @@ renderer = body(ROOT / "src/world/RagEffect.cpp", r"^void RenderReferenceRectUp2
 for expected in (
     "for (int lane = 0; lane < 2; ++lane)",
     "gi.life != 1 || gi.alphaB <= 0",
-    "SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,200,250,200)",
+    "SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,200,250,200,true)",
     "for (int lane = 2; lane < 4; ++lane)",
     "const float d = gi.distance, span = gi.height[3]",
     "if (d < w*2.0f)", "else if (d < w*4.0f)", "else if (d < w*6.0f)",
@@ -52,7 +52,7 @@ for expected in (
     "draw(bpre,bnow,bnowLocal,bpreLocal)", "draw(bnow,tnow,tnowLocal,bnowLocal)",
     "draw(tnow,tpre,tpreLocal,tnowLocal)", "draw(tpre,bpre,bpreLocal,tpreLocal)",
     "draw(bnow,tnow,tnowLocal,bnowLocal)",
-    "SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,150,250,150)",
+    "SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,150,250,150,true)",
 ):
     assert compact(expected) in compact(renderer), f"current branch map missing {expected!r}"
 assert "RenderReferenceRectUp2" in (ROOT / "tools/tests/ParticleRenderTests.cpp").read_text(encoding="utf-8")
