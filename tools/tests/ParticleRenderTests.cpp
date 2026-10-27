@@ -1039,19 +1039,19 @@ int main() {
         const double ratio=static_cast<double>(oow)*g_renderer.m_hpc*0.14285715;
         const float right=static_cast<float>(static_cast<double>(static_cast<float>(ratio*billboard.m_widthSize))+x);
         const float bottom=static_cast<float>(static_cast<double>(y)-static_cast<float>(ratio*billboard.m_heightSize));
-        g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaNoDepthList.clear();
+        g_renderer.submissions.clear();g_renderer.flags.clear();
         RenderReference3DTextureBillboard(billboard,billboardView);
-        check(g_renderer.m_rpAlphaOPList.size()==2&&g_renderer.m_rpAlphaList.empty(),
-            "3D texture billboard submits two ordered faces through raw render flag five");
-        auto* a=g_renderer.m_rpAlphaOPList[0];auto* b=g_renderer.m_rpAlphaOPList[1];
-        check(a->tex==&secondTexture&&b->tex==&secondTexture&&a->m_verts[0].x==x&&a->m_verts[0].y==y
-            &&a->m_verts[1].x==right&&a->m_verts[1].y==y&&a->m_verts[2].x==x&&a->m_verts[2].y==bottom
-            &&b->m_verts[0].x==right&&b->m_verts[0].y==y&&b->m_verts[1].x==x&&b->m_verts[1].y==bottom
-            &&b->m_verts[2].x==right&&b->m_verts[2].y==bottom,
+        check(g_renderer.submissions.size()==2&&g_renderer.flags==std::vector<int>({5,5}),
+            "3D texture billboard submits two ordered faces through legacy AddRP with raw render flag five");
+        auto& a=g_renderer.submissions[0];auto& b=g_renderer.submissions[1];
+        check(a.tex==&secondTexture&&b.tex==&secondTexture&&a.m_verts[0].x==x&&a.m_verts[0].y==y
+            &&a.m_verts[1].x==right&&a.m_verts[1].y==y&&a.m_verts[2].x==x&&a.m_verts[2].y==bottom
+            &&b.m_verts[0].x==right&&b.m_verts[0].y==y&&b.m_verts[1].x==x&&b.m_verts[1].y==bottom
+            &&b.m_verts[2].x==right&&b.m_verts[2].y==bottom,
             "3D texture billboard projects source anchor and preserves the two-triangle top-left quad order");
-        check(a->m_verts[0].z==0.80000001f&&a->m_verts[0].oow==1&&a->m_verts[0].color==0xA1B2C3D4
-            &&a->m_verts[0].tu==0&&a->m_verts[0].tv==0&&a->m_verts[1].tu==1&&a->m_verts[2].tv==1
-            &&b->m_verts[2].tu==1&&b->m_verts[2].tv==1,
+        check(a.m_verts[0].z==0.80000001f&&a.m_verts[0].oow==1&&a.m_verts[0].color==0xA1B2C3D4
+            &&a.m_verts[0].tu==0&&a.m_verts[0].tv==0&&a.m_verts[1].tu==1&&a.m_verts[2].tv==1
+            &&b.m_verts[2].tu==1&&b.m_verts[2].tv==1,
             "3D texture billboard retains fixed source depth, reciprocal depth, color and complete quad UVs");
     }
     {

@@ -66,7 +66,7 @@ def main() -> int:
         "{{0,1,2},{1,2,3}}",
         "output.z = 0.80000001f; output.oow = 1.0f;",
         "output.color = prim.m_argb",
-        "static_cast<int>(prim.m_renderFlag)",
+        "g_renderer.AddRP(face, static_cast<int>(prim.m_renderFlag))",
     )
     cursor = -1
     for token in ordered:
@@ -74,7 +74,7 @@ def main() -> int:
         assert cursor >= 0, f"current billboard helper omits or reorders source operation: {token}"
 
     for token in (
-        "3D texture billboard submits two ordered faces through raw render flag five",
+        "3D texture billboard submits two ordered faces through legacy AddRP with raw render flag five",
         "3D texture billboard projects source anchor and preserves the two-triangle top-left quad order",
         "3D texture billboard retains fixed source depth, reciprocal depth, color and complete quad UVs",
     ):

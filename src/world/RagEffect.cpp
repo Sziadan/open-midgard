@@ -2461,7 +2461,7 @@ void RenderReference3DTextureBillboard(const CEffectPrim& prim, const matrix& vi
             output.color = prim.m_argb; output.specular = 0xFF000000u;
             output.tu = uvs[source][0]; output.tv = uvs[source][1];
         }
-        g_renderer.AddReferenceEffectTriangle(face, static_cast<int>(prim.m_renderFlag));
+        g_renderer.AddRP(face, static_cast<int>(prim.m_renderFlag));
     }
 }
 
