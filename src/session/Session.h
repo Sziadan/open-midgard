@@ -197,6 +197,7 @@ public:
     void ClearEquipmentInventoryItems();
     void ClearStorageItems();
     void ClearSkillItems();
+    void ClearGuildSkillItems();
     void ClearHomunSkillItems();
     void ClearMercSkillItems();
     void SetInventoryItem(const ITEM_INFO& itemInfo);
@@ -206,6 +207,7 @@ public:
     void SetStorageItem(const ITEM_INFO& itemInfo);
     void AddStorageItem(const ITEM_INFO& itemInfo);
     void SetSkillItem(const PLAYER_SKILL_INFO& skillInfo);
+    bool SetGuildSkillItem(const PLAYER_SKILL_INFO& skillInfo);
     void SetHomunSkillItem(const PLAYER_SKILL_INFO& skillInfo);
     void SetMercSkillItem(const PLAYER_SKILL_INFO& skillInfo);
     void RemoveInventoryItem(unsigned int itemIndex, int amount);
@@ -222,6 +224,9 @@ public:
     int GetStorageCurrentCount() const;
     int GetStorageMaxCount() const;
     const std::list<PLAYER_SKILL_INFO>& GetSkillItems() const;
+    const std::list<PLAYER_SKILL_INFO>& GetGuildSkillItems() const;
+    int GetGuildSkillPoint() const;
+    void SetGuildSkillPoint(int points);
     const std::list<PLAYER_SKILL_INFO>& GetHomunSkillItems() const;
     const std::list<PLAYER_SKILL_INFO>& GetMercSkillItems() const;
     const PLAYER_SKILL_INFO* GetSkillItemBySkillId(int skillId) const;
@@ -327,6 +332,8 @@ private:
     std::list<ITEM_INFO> m_inventoryItems;
     std::list<ITEM_INFO> m_storageItems;
     std::list<PLAYER_SKILL_INFO> m_skillItems;
+    std::list<PLAYER_SKILL_INFO> m_guildSkillItems;
+    int m_guildSkillPoint = 0;
     std::list<PLAYER_SKILL_INFO> m_homunSkillItems;
     std::list<PLAYER_SKILL_INFO> m_mercSkillItems;
     mutable std::mutex m_jobDisplayNameMutex;

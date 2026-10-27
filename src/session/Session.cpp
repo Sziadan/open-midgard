@@ -1495,6 +1495,11 @@ void CSession::ClearSkillItems()
     m_skillItems.clear();
 }
 
+void CSession::ClearGuildSkillItems()
+{
+    m_guildSkillItems.clear();
+}
+
 void CSession::ClearActiveStatusIcons()
 {
     m_activeStatusIcons.clear();
@@ -1658,6 +1663,24 @@ void CSession::SetSkillItem(const PLAYER_SKILL_INFO& skillInfo)
     }
 
     m_skillItems.push_back(skillInfo);
+}
+
+bool CSession::SetGuildSkillItem(const PLAYER_SKILL_INFO& skillInfo)
+{
+    auto it = std::find_if(m_guildSkillItems.begin(), m_guildSkillItems.end(), [&](const PLAYER_SKILL_INFO& existing) {
+        return existing.SKID == skillInfo.SKID;
+    });
+
+    if (it != m_guildSkillItems.end()) {
+        it->level = skillInfo.level;
+        it->spcost = skillInfo.spcost;
+        it->attackRange = skillInfo.attackRange;
+        it->upgradable = skillInfo.upgradable;
+        return false;
+    }
+
+    m_guildSkillItems.push_back(skillInfo);
+    return true;
 }
 
 void CSession::SetHomunSkillItem(const PLAYER_SKILL_INFO& skillInfo)
@@ -1908,6 +1931,21 @@ int CSession::GetStorageMaxCount() const
 const std::list<PLAYER_SKILL_INFO>& CSession::GetSkillItems() const
 {
     return m_skillItems;
+}
+
+const std::list<PLAYER_SKILL_INFO>& CSession::GetGuildSkillItems() const
+{
+    return m_guildSkillItems;
+}
+
+int CSession::GetGuildSkillPoint() const
+{
+    return m_guildSkillPoint;
+}
+
+void CSession::SetGuildSkillPoint(int points)
+{
+    m_guildSkillPoint = points;
 }
 
 const std::list<PLAYER_SKILL_INFO>& CSession::GetHomunSkillItems() const

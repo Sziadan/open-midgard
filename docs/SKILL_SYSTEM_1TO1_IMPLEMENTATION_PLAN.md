@@ -237,7 +237,7 @@ The current `src/world/RagEffect.cpp` hard-codes different durations (e.g. id 12
 | `0x013D` | ZC_RECOVERY | 6 | | | `Zc_recovery` 33505 |
 | `0x043D` | ZC_SKILL_POSTDELAY | 8 | skill.W@2 tick.L@4 | 4633 | Later protocol addition (2008-11-12+); absent from the canonical 2008 `HighPriest.exe` dispatcher and excluded from this plan's required target-opcode inventory. |
 | `0x010F`/`0x010E`/`0x0111`/`0x0235`/`0x029D` | skill lists / updates | -1 / 11 / 39 / -1 / -1 | | 4389 / 4476 / 4425 / 14765 | `Zc_Skillinfo_List` 25700 etc. |
-| `0x0162` | ZC_GUILD_SKILLINFO | variable (`packet_db`: -1) | skill records, 37 bytes each from `+6`; points at `+4` | 7320 | `Zc_GuildSkillInfo` 11880 (dispatch 354) |
+| `0x0162` | ZC_GUILD_SKILLINFO | variable (`packet_db`: -1) | skill records, 37 bytes each from `+6`; points at `+4` | 7320 | `Zc_GuildSkillInfo` 11880 (dispatch 354); packet/state port stores records and points. `UIGuildSkillWnd` invalidation/message-23 receiver remains absent, so visible parity is open. |
 | `0x0145` | ZC_SHOW_IMAGE | 19 | name[16]@`+2`, type.B@`+18` (`255` → `-1`) | — | `Zc_show_image` 33679 (dispatch 325) |
 | `0x01B4` | ZC_CHANGE_GUILD | 12 | aid.L@`+2`, guild id.L@`+6`, emblem version.sW@`+10` | — | `Zc_ChangeGuild` 9948 (dispatch 436) |
 

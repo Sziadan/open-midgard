@@ -4763,6 +4763,56 @@ void HandleChangeGuild(CGameMode& mode, const PacketView& packet)
     }
 }
 
+namespace {
+
+constexpr const char* kGuildSkillIdNames[16] = {
+    "GD_APPROVAL", "GD_KAFRACONTRACT", "GD_GUARDRESEARCH", "GD_GUARDUP",
+    "GD_EXTENSION", "GD_GLORYGUILD", "GD_LEADERSHIP", "GD_GLORYWOUNDS",
+    "GD_SOULCOLD", "GD_HAWKEYES", "GD_BATTLEORDER", "GD_REGENERATION",
+    "GD_RESTORE", "GD_EMERGENCYCALL", "GD_DEVELOPMENT", "GD_ITEMEMERGENCYCALL",
+};
+
+const char* GetGuildSkillIdName(int skillId)
+{
+    if (skillId < 10000 || skillId >= 10016) {
+        return "SKILL-UNKNOWN";
+    }
+    return kGuildSkillIdNames[skillId - 10000];
+}
+
+} // namespace
+
+void HandleGuildSkillInfo(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 6) {
+        return;
+    }
+
+    mode.m_isReqUpgradeSkillLevel = 0;
+    g_session.ClearGuildSkillItems();
+
+    const int sourceLength = static_cast<int>(static_cast<s16>(packet.packetLength));
+    const int recordCount = (sourceLength - 6) / 37;
+    size_t offset = 6;
+    for (int index = 0; index < recordCount; ++index, offset += 37) {
+        PLAYER_SKILL_INFO skillInfo{};
+        skillInfo.m_isValid = 1;
+        skillInfo.SKID = static_cast<int>(ReadLE16(packet.data + offset));
+        skillInfo.type = static_cast<int>(ReadLE32(packet.data + offset + 2));
+        skillInfo.level = static_cast<int>(static_cast<s16>(ReadLE16(packet.data + offset + 6)));
+        skillInfo.spcost = static_cast<int>(static_cast<s16>(ReadLE16(packet.data + offset + 8)));
+        skillInfo.upgradable = packet.data[offset + 36];
+
+        if (skillInfo.SKID >= 10000 && skillInfo.SKID < 10016) {
+            skillInfo.skillIdName = GetGuildSkillIdName(skillInfo.SKID);
+            skillInfo.skillName = skillInfo.skillIdName;
+            g_session.SetGuildSkillItem(skillInfo);
+        }
+    }
+
+    g_session.SetGuildSkillPoint(static_cast<int>(static_cast<s16>(ReadLE16(packet.data + 4))));
+}
+
 void HandleShowImage(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 19) {
@@ -7948,6 +7998,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0191, HandleTalkboxChatContents);
     router.Register(0x01B4, HandleChangeGuild);
     router.Register(0x0145, HandleShowImage);
+    router.Register(0x0162, HandleGuildSkillInfo);
     RegisterHandlerIfValid(router, receiveProfile.itemRemoveExtended, HandleItemRemove);
     router.Register(0x0100, HandleIgnorePacket);
 
