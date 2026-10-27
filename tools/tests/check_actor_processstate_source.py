@@ -153,12 +153,18 @@ for description, pattern in source_anchors.items():
 
 # Required source-to-current branch behavior. Each grouped case arm is checked
 # as a whole because adjacent labels in C++ share one body.
+global_anchors = {
+    "freeze expiry uses strict source boundary": r"m_freezeEndTick\s*(?:!=\s*0\s*)?&&\s*timeGetTime\(\)\s*>\s*m_freezeEndTick",
+    "vanish early return and alpha update": r"if\s*\(\s*Time\s*>\s*m_vanishTime\s*\)[\s\S]*?return\s+0[\s\S]*?m_(?:u28\.)?m_sprColor(?:\.u\.s)?\.a",
+}
+for description, pattern in global_anchors.items():
+    check(has(impl, pattern), f"current implementation mismatch: {description}")
+
 current_anchors = {
-    "freeze expiry uses strict source boundary": r"m_freezeEndTick\s*&&\s*timeGetTime\(\)\s*>\s*m_freezeEndTick",
-    "vanish early return and alpha update": r"if\s*\(\s*Time\s*>\s*m_vanishTime\s*\)[\s\S]*?return\s+0[\s\S]*?m_sprColor\.a",
     "state 0 idle completion and pet emotion": (0, r"m_motionType\s*==\s*1[\s\S]*?ProcessMotion\(\)[\s\S]*?m_petEmotionStartTick[\s\S]*?rand\(\)\s*%\s*100\s*<\s*25[\s\S]*?PetTalkNumber"),
-    "state 1 path-cell timing and movement-motion distance": (1, r"FindActivePathSegment|GetNextCellInfo[\s\S]*?m_lastServerTime[\s\S]*?m_dist[\s\S]*?ProcessMotionWithDist"),
-    "state 1 special stance and Asura force tuple/timer": (1, r"m_gid\s*==\s*3[\s\S]*?SetState\(11\)[\s\S]*?m_isAsuraAttack[\s\S]*?m_forceAct\s*=\s*96[\s\S]*?m_forceStateEndTick\s*=\s*timeGetTime\(\)\s*\+\s*3000"),
+    "state 1 dispatches movement processing": (1, r"ProcessMovementState\(\)"),
+    "state 1 applies source stance completion route": (1, r"m_gid\s*==\s*3[\s\S]*?g_curStance\s*==\s*2[\s\S]*?g_curScreen\s*==\s*12[\s\S]*?SetState\(11\)"),
+    "state 1 applies Asura force tuple and timeout": (1, r"m_isAsuraAttack[\s\S]*?m_forceAct\s*=\s*96[\s\S]*?m_forceStateEndTick\s*=\s*timeGetTime\(\)\s*\+\s*3000"),
     "states 2/9/12 process then return idle": (2, 9, 12, r"ProcessMotion\(\)[\s\S]*?m_isMotionFinished[\s\S]*?SetState\(0\)"),
     "state 3 waits for attacks, sends 13, and creates corpse": (3, r"m_isForceState\s*=\s*0[\s\S]*?ProcessMotion\(\)[\s\S]*?m_willBeAttackedList\.empty\(\)[\s\S]*?SendMsg\([^;]*13[\s\S]*?MakeCorpse"),
     "state 4 interpolates damage destination from prior process time": (4, r"m_damageDestX[\s\S]*?m_lastProcessStateTime[\s\S]*?m_damageDestZ[\s\S]*?SetState\(0\)"),
@@ -172,6 +178,28 @@ current_anchors = {
 for description, entry in current_anchors.items():
     *states, pattern = entry
     check(has(current_group(*states), pattern), f"current implementation mismatch: {description}")
+movement_lambda = re.search(r"const auto ProcessMovementState\s*=\s*\[[^]]*\]\(\)\s*\{", impl)
+check(bool(movement_lambda), "current implementation mismatch: state-1 movement lambda is missing")
+if movement_lambda:
+    movement_open = impl.index("{", movement_lambda.start())
+    depth = 0
+    movement_close = -1
+    for pos in range(movement_open, len(impl)):
+        if impl[pos] == "{":
+            depth += 1
+        elif impl[pos] == "}":
+            depth -= 1
+            if depth == 0:
+                movement_close = pos
+                break
+    movement_body = impl[movement_open + 1:movement_close] if movement_close >= 0 else ""
+    check(has(movement_body, r"FindActivePathSegment[\s\S]*?m_lastServerTime[\s\S]*?m_dist[\s\S]*?ProcessMotionWithDist\(\)\s*;"),
+          "current implementation mismatch: movement lambda lacks path timing, traveled distance, or distance-based motion")
+    movement_calls = list(re.finditer(r"ProcessMovementState\s*\(\s*\)", impl))
+    state1_start = impl.find("case kMoveStateId:")
+    state1_end = impl.find("case 2:", state1_start)
+    check(len(movement_calls) == 1 and state1_start < movement_calls[0].start() < state1_end,
+          "current implementation mismatch: movement lambda must be called only by source state 1")
 check(has(impl, r"m_lastProcessStateTime\s*=\s*timeGetTime\(\)[\s\S]*?m_lastServerTime\s*=\s*serverTime[\s\S]*?if\s*\(\s*posChanged\s*\)[\s\S]*?GetHeight"),
       "current implementation mismatch: common timestamp and conditional terrain-height tail")
 
