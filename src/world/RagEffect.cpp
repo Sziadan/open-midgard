@@ -5309,7 +5309,7 @@ void RenderSoulLink(const CEffectPrim& prim, const matrix& viewMatrix)
             CWorld* world = mode != nullptr ? mode->m_world : nullptr;
             if (world != nullptr) {
                 CAbleToMakeEffect* target = nullptr;
-                if (static_cast<float>(g_session.m_aid) == gi.height[10]) {
+                if (static_cast<double>(g_session.m_aid) == gi.height[10]) {
                     target = world->m_player;
                 } else {
                     target = world->GetGameActorByAID(static_cast<u32>(gi.height[10]));
@@ -5401,6 +5401,65 @@ void RenderSoulParticle(const CEffectPrim& prim, const matrix& viewMatrix)
                 texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f,
                 static_cast<int>(prim.m_renderFlag));
         }
+    }
+}
+
+void RenderHermode(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+
+        int angle = gi.rotStart;
+        const float sineStart = g_sinTable[angle];
+        const float topY = gi.height[0] + sineStart * 2.0f;
+        const float radius = gi.distance * 0.8f
+            + gi.distance * 0.1f * (g_sinTable[gi.riseAngle] + 1.0f);
+        vector3d topVertices[4]{};
+        for (vector3d& vertex : topVertices) {
+            vertex.x = g_cosTable[angle] * radius;
+            vertex.y = topY;
+            vertex.z = g_sinTable[angle] * radius;
+            angle += 90;
+            if (angle >= 360) {
+                angle -= 360;
+            }
+        }
+        gi.vecBPreX = topVertices[0].x; gi.arcBaselineY = topVertices[0].y; gi.vecBPreZ = topVertices[0].z;
+        gi.sparkX = topVertices[1].x; gi.sparkY = topVertices[1].y; gi.sparkZ = topVertices[1].z;
+        gi.vecTNowX = topVertices[2].x; gi.vecTNowY = topVertices[2].y; gi.vecTNowZ = topVertices[2].z;
+        gi.vecTPreX = topVertices[3].x; gi.vecTPreY = topVertices[3].y; gi.vecTPreZ = topVertices[3].z;
+
+        vector3d bottomPre{gi.vecBPreX, gi.arcBaselineY - gi.distance, gi.vecBPreZ};
+        vector3d bottomNow{gi.sparkX, gi.sparkY - gi.distance, gi.sparkZ};
+        vector3d bottomTPre{gi.vecTPreX, gi.vecTPreY - gi.distance, gi.vecTPreZ};
+        vector3d bottomTNow{gi.vecTNowX, gi.vecTNowY - gi.distance, gi.vecTNowZ};
+        const vector3d topPre{gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ};
+        const vector3d topNow{gi.sparkX, gi.sparkY, gi.sparkZ};
+        const vector3d topTNow{gi.vecTNowX, gi.vecTNowY, gi.vecTNowZ};
+        const vector3d topTPre{gi.vecTPreX, gi.vecTPreY, gi.vecTPreZ};
+
+        const unsigned int alpha = static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24;
+        const unsigned int redGreen = static_cast<unsigned int>(gi.flag[0]) << 16
+            | static_cast<unsigned int>(gi.flag[0]) << 8;
+        const auto draw = [&](const vector3d& a, const vector3d& b, const vector3d& c,
+                              const vector3d& d, unsigned int blue) {
+            vector3d worldA{a.x + prim.m_pos.x, a.y + prim.m_pos.y, a.z + prim.m_pos.z};
+            vector3d worldB{b.x + prim.m_pos.x, b.y + prim.m_pos.y, b.z + prim.m_pos.z};
+            vector3d worldC{c.x + prim.m_pos.x, c.y + prim.m_pos.y, c.z + prim.m_pos.z};
+            vector3d worldD{d.x + prim.m_pos.x, d.y + prim.m_pos.y, d.z + prim.m_pos.z};
+            SubmitWorldTeiRect(worldA, worldB, worldC, worldD, viewMatrix, texture,
+                alpha | redGreen | blue, 0.0f, 1.0f, 1.0f, 0.0f,
+                D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+        };
+        draw(topPre, topNow, topTNow, topTPre, 250u);
+        draw(topPre, topNow, bottomNow, bottomPre, 220u);
+        draw(topNow, topTNow, bottomTNow, bottomNow, 190u);
+        draw(topTNow, topTPre, bottomTPre, bottomTNow, 130u);
+        draw(topTPre, topPre, bottomPre, bottomTPre, 160u);
+        draw(bottomPre, bottomNow, bottomTNow, bottomTPre, 250u);
     }
 }
 
@@ -12263,6 +12322,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_SOULPARTICLE || m_type == PP_3DAURA_3) {
         RenderSoulParticle(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_HERMODE) {
+        RenderHermode(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_EFFECTTEXTURE || m_type == PP_EFFECTTEXTURE2 || m_type == PP_EFFECTTEXTURE_ANI) {

@@ -208,6 +208,7 @@ void SubmitWorldTeiRect(const vector3d& a,const vector3d& b,const vector3d& c,co
 #include "HitLine3RendererBody.inc"
 #include "SoulLinkRendererBody.inc"
 #include "SoulParticleRendererBody.inc"
+#include "HermodeRendererBody.inc"
 vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
 constexpr float kSubmitNearPlane=80.0f,kNearPlane=10.0f;
 #include "ProjectPointBody.inc"
@@ -299,8 +300,14 @@ int main() {
         gi.process=10; gi.height[10]=77.0f; RenderSoulLink(soul,view);
         check(other.launchCount==1&&other.effect.sendCount==1,
             "soul link resolves non-self AID and sends position to the actor effect");
+        g_session.m_aid=16777217u; world.actorAid=16777216u; gi.height[10]=16777216.0f;
+        const int precisionLaunches=other.launchCount; RenderSoulLink(soul,view);
+        check(other.launchCount==precisionLaunches+1,
+            "soul link compares high self AIDs in double precision before actor lookup");
+        g_session.m_aid=42;
+        const int actorLaunchesBeforeMissing=other.launchCount;
         gi.height[10]=88.0f; RenderSoulLink(soul,view);
-        check(other.launchCount==1,"soul link missing actor skips only the side effect");
+        check(other.launchCount==actorLaunchesBeforeMissing,"soul link missing actor skips only the side effect");
         gi.height[10]=42.0f; player.effectAvailable=false; const int sentBefore=player.effect.sendCount;
         RenderSoulLink(soul,view);
         check(player.launchCount==2&&player.effect.sendCount==sentBefore,
@@ -335,6 +342,29 @@ int main() {
             "soul particle mode one tint applies to the visible first and second copies");
         gi.height[15]=4.0f; airTextureQuadCalls.clear(); RenderSoulParticle(soulParticle,view);
         check(airTextureQuadCalls.empty(),"soul particle unsupported tint mode submits no copies");
+    }
+    {
+        CEffectPrim hermode;
+        hermode.m_texture={&g_texMgr.texture}; hermode.m_pos={1.0f,2.0f,3.0f};
+        auto& gi=hermode.m_gi[0];
+        gi.life=1; gi.rotStart=0; gi.distance=10.0f; gi.riseAngle=90; gi.height[0]=3.0f;
+        gi.alphaB=100; gi.flag[0]=40;
+        airTextureQuadCalls.clear(); matrix view{}; RenderHermode(hermode,view);
+        check(airTextureQuadCalls.size()==6,"hermode submits all six ordered faces for a live lane");
+        if(airTextureQuadCalls.size()==6) {
+            check(airTextureQuadCalls[0].color==0x642828FAu&&airTextureQuadCalls[1].color==0x642828DCu
+                &&airTextureQuadCalls[2].color==0x642828BEu&&airTextureQuadCalls[3].color==0x64282882u
+                &&airTextureQuadCalls[4].color==0x642828A0u&&airTextureQuadCalls[5].color==0x642828FAu,
+                "hermode face order preserves source blue-channel palette");
+            check(near(airTextureQuadCalls[0].a.x,11.0f)&&near(airTextureQuadCalls[0].a.y,5.0f)
+                &&near(airTextureQuadCalls[0].b.z,13.0f)&&near(airTextureQuadCalls[0].c.x,-9.0f)
+                &&near(airTextureQuadCalls[5].a.y,-5.0f),
+                "hermode uses source angle/radius vertices, bottom offset and primitive translation");
+            check(airTextureQuadCalls[0].blend==D3DBLEND_ONE&&airTextureQuadCalls[0].texture==&g_texMgr.texture,
+                "hermode faces use source additive blend and texture slot zero");
+        }
+        hermode.m_gi[0].life=0; airTextureQuadCalls.clear(); RenderHermode(hermode,view);
+        check(airTextureQuadCalls.empty(),"hermode skips inactive GI lanes");
     }
     const std::pair<float,u32> castingColors[]={
         {0.0f,0x00FFFFFFu},{1.0f,0x00FFAFAFu},{2.0f,0x00C3C3FFu},{3.0f,0x00FFFFFFu},
