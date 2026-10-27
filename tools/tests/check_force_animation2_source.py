@@ -6,6 +6,7 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 REF = (ROOT / "Ref/GameActor.cpp").read_text(encoding="utf-8", errors="replace")
 EXE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
+IMPL = (ROOT / "src/world/GameActor.cpp").read_text(encoding="utf-8")
 
 MARKER = "void __thiscall CRenderObject::SetForceAnimation2(\n        CRenderObject *this,"
 
@@ -39,6 +40,8 @@ def function_parts(text: str, marker: str) -> tuple[str, str]:
 
 ref_signature, ref_body = function_parts(REF, MARKER)
 exe_signature, exe_body = function_parts(EXE, MARKER)
+impl_marker = "void CRenderObject::SetForceAnimation2(u8 act, u8 mot, u8 act2, u8 mot2, u8 act3, u8 mot3,"
+impl_signature, impl_body = function_parts(IMPL, impl_marker)
 normalize = lambda value: re.sub(r"\s+", " ", value).strip()
 assert normalize(ref_signature) == normalize(exe_signature), "Ref and executable SetForceAnimation2 signatures differ"
 assert normalize(ref_body) == normalize(exe_body), "Ref and executable SetForceAnimation2 bodies differ"
@@ -75,3 +78,26 @@ timer_if = re.search(r"if \( isAnim \)\s*v15 = endTick \+ timeGetTime\(\);", ref
 assert timer_if, "end timer must be set only when isAnim is true"
 assert ref_body.index("v15 = 0") < timer_if.start() < ref_body.index("m_forceStateEndTick = v15")
 print("PASS ordered five-frame action/motion writes, force-state flags, and conditional end timer")
+
+implementation_operations = [
+    r"m_forceAct2\[1\]\s*=\s*act2", r"m_forceMot2\[1\]\s*=\s*mot2",
+    r"m_forceAct2\[2\]\s*=\s*act3", r"m_forceMot2\[2\]\s*=\s*mot3",
+    r"m_forceAct2\[3\]\s*=\s*act4", r"m_forceMot2\[0\]\s*=\s*mot",
+    r"m_forceMot\s*=\s*mot", r"m_forceMot2\[3\]\s*=\s*mot4",
+    r"m_forceAct2\[0\]\s*=\s*act", r"m_forceAct\s*=\s*act",
+    r"m_isForceAnimLoop\s*=\s*isLoop", r"m_forceAct2\[4\]\s*=\s*act5",
+    r"m_forceMot2\[4\]\s*=\s*mot5", r"m_forceStartMot\s*=\s*0",
+    r"m_forceMaxMot\s*=\s*4", r"m_isForceAnimation\s*=\s*isAnim",
+    r"m_isForceAnimFinish\s*=\s*0", r"m_isForceState2\s*=\s*1",
+    r"m_isForceState\s*=\s*0", r"m_isForceState3\s*=\s*0",
+    r"m_forceStateEndTick\s*=\s*isAnim\s*\?\s*endTick\s*\+\s*timeGetTime\(\)\s*:\s*0",
+    r"m_forceStateCnt\s*=\s*1",
+]
+impl_positions = []
+for operation in implementation_operations:
+    match = re.search(operation, impl_body)
+    assert match, f"current SetForceAnimation2 operation missing: {operation}"
+    impl_positions.append(match.start())
+assert impl_positions == sorted(impl_positions), "current SetForceAnimation2 operation order differs from source"
+assert len(re.findall(r"timeGetTime\s*\(\)", impl_body)) == 1, "current helper must sample the clock at most once"
+print("PASS source-to-current ordered action/motion writes, flags, and conditional timer")

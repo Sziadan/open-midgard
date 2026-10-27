@@ -8,6 +8,7 @@
 #include "gamemode/Mode.h"
 #include "main/WinMain.h"
 #include "DebugLog.h"
+#include "core/Globals.h"
 #include "render/DC.h"
 #include "render3d/Device.h"
 #include "render3d/RenderDevice.h"
@@ -506,6 +507,12 @@ CGameActor* FindAttacker(u32 gid)
 bool IsPlayerJob(int job)
 {
     return (job >= 0 && job < 28) || (job > 4000 && job < 6000);
+}
+
+bool IsEventAID(u32 aid)
+{
+    return g_serviceType == ServiceKorea && aid >= 0x2C8C7D
+        && (aid <= 0x2C8C80 || aid == 2919554);
 }
 
 bool IsPortalFallbackJob(int job)
@@ -5867,128 +5874,386 @@ void CRenderObject::SetForceAnimEndTick(u32 tick)
 }
 
 void CGameActor::SetState(int state) {
-    if (m_stateId == kHitReactionStateId) {
-        m_pos.x = m_damageDestX;
-        m_pos.z = m_damageDestZ;
+    if (state == -1) {
+        return;
     }
 
-    if (state == kHitReactionStateId && (m_isForceState || m_isForceState2 || m_isForceState3)) {
-        return;
+    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+    CWorld* world = gameMode ? gameMode->m_world : nullptr;
+    if (m_stateId == 4) {
+        m_pos.x = m_damageDestX;
+        m_pos.z = m_damageDestZ;
+        if (world && world->m_attr) {
+            m_pos.y = world->m_attr->GetHeight(m_pos.x, m_pos.z);
+        }
+    }
+
+    if (state == 4 && m_stateId == 1) {
+        m_stateId = 0;
     }
 
     switch (state) {
     case 0:
-        m_attackMotion = -1.0f;
-        m_isMotionFreezed = 0;
         SetAction(0, 4, 0);
-        m_isMotionFinished = 1;
+        if (!IsEventAID(m_gid)) {
+            m_isMotionFinished = 1;
+        }
         break;
-    case kMoveStateId:
-        m_attackMotion = -1.0f;
-        m_isMotionFinished = 0;
-        m_isMotionFreezed = 0;
+    case 1:
         if (!m_isAsuraAttack) {
             SetAction(8, 6, 0);
         }
         break;
-    case kGameActorSkillStateId:
-        m_isMoving = 0;
-        m_path.Reset();
-        m_isMotionFinished = 0;
-        m_isMotionFreezed = 0;
-        SetAction(80, 3, 1);
+    case 2:
+    case 9: {
+        if (state == 9) {
+            SetAction(88, 3, 1);
+        } else {
+            SetAction(80, 3, 1);
+        }
+        CGameActor* target = nullptr;
+        if (world) {
+            target = m_targetGid == g_session.m_aid
+                ? static_cast<CGameActor*>(world->m_player)
+                : world->GetGameActorByAID(m_targetGid);
+        }
+        if (target) {
+            double rotation = std::atan2(static_cast<double>(target->m_pos.x) - m_pos.x,
+                -(static_cast<double>(target->m_pos.z) - m_pos.z)) / 3.141592 * 180.0;
+            m_roty = static_cast<float>(rotation);
+            if (rotation >= 360.0) {
+                m_roty = static_cast<float>(rotation - 360.0);
+            }
+            if (m_roty < 0.0f) {
+                m_roty += 360.0f;
+            }
+        }
+        if (m_job == 1285 && gameMode) {
+            gameMode->MakeArrowEffect(m_pos, m_targetGid, 28.0f, m_job);
+        }
         m_attackMotion = static_cast<float>(GetAttackMotion());
         break;
-    case kGameActorPickupStateId:
-        m_isMoving = 0;
-        m_path.Reset();
+    }
+    case 3:
+        m_isForceState = 0;
+        m_isForceState2 = 0;
+        m_isForceState3 = 0;
+        m_isMotionFreezed = 0;
+        if (m_bodyState == 2) {
+            SendMsg(nullptr, 59, 0, 0, 0);
+            SendMsg(nullptr, 62, 0, 0, 0);
+        }
+        m_isLieOnGround = 1;
         m_isMotionFinished = 0;
         m_isMotionFreezed = 0;
+        SetAction(64, 4, 1);
+        break;
+    case 4: {
+        if (m_isForceState || m_isForceState2 || m_isForceState3) {
+            return;
+        }
+        CGameActor* target = nullptr;
+        if (world) {
+            target = m_targetGid == g_session.m_aid
+                ? static_cast<CGameActor*>(world->m_player)
+                : world->GetGameActorByAID(m_targetGid);
+        }
+        if (target) {
+            target->SendMsg(this, 87, 0, 0, 0);
+        }
+        SetAction(48, 5, 1);
+        break;
+    }
+    case 5:
         m_isCounter = 0;
-        m_attackMotion = -1.0f;
+        m_isMotionFreezed = 0;
         SetAction(24, 6, 1);
         break;
-    case kGameActorAttackStateId:
-    case kSecondAttackStateId:
-        m_isMoving = 0;
-        m_path.Reset();
-        m_isMotionFinished = 0;
-        SetAction(state == kSecondAttackStateId
-                ? 88
-                : (m_isPc != 0 ? ResolvePcAttackAction(*this) : 16),
-            3,
-            1);
-        m_attackMotion = static_cast<float>(GetAttackMotion());
+    case 7:
+        if (m_stateId == 6) {
+            return;
+        }
+        SetAction(80, 3, 1);
+        {
+            CGameActor* target = nullptr;
+            if (world) {
+                target = m_targetGid == g_session.m_aid
+                    ? static_cast<CGameActor*>(world->m_player)
+                    : world->GetGameActorByAID(m_targetGid);
+            }
+            if (target) {
+                double rotation = std::atan2(static_cast<double>(target->m_pos.x) - m_pos.x,
+                    -(static_cast<double>(target->m_pos.z) - m_pos.z)) / 3.141592 * 180.0;
+                m_roty = static_cast<float>(rotation);
+                if (rotation >= 360.0) {
+                    m_roty = static_cast<float>(rotation - 360.0);
+                }
+                if (m_roty < 0.0f) {
+                    m_roty += 360.0f;
+                }
+            }
+            if (m_job == 1285 && gameMode) {
+                gameMode->MakeArrowEffect(m_pos, m_targetGid, 28.0f, m_job);
+            }
+            m_attackMotion = static_cast<float>(GetAttackMotion());
+        }
         break;
-    case kGameActorCastingStateId:
-        m_isMoving = 0;
-        m_path.Reset();
-        m_isMotionFinished = 0;
-        m_isMotionFreezed = 0;
+    case 11:
+        SetAction(32, 6, 1);
         break;
-    case kGameActorCastingLoopStateId:
-        m_isMoving = 0;
-        m_path.Reset();
-        m_isMotionFinished = 0;
-        m_isCounter = 0;
-        if (m_isPc != 0) {
-            SetAction(ResolvePcAttackAction(*this), 4, 1);
+    case 12:
+        SetAction(40, 3, 1);
+        break;
+    case 13:
+        if (IsPlayerJob(m_job)) {
+            const bool secondAttack = g_session.IsSecondAttack(m_job, m_sex, GetWeapon());
+            SetAction(secondAttack ? 88 : 80, 4, 1);
         } else {
             SetAction(16, 4, 1);
         }
         m_isMotionFreezed = 1;
         break;
-    case kHitReactionStateId:
-        m_isMoving = 0;
-        m_path.Reset();
-        m_moveStartPos = m_pos;
-        m_moveEndPos = m_pos;
-        m_moveEndPos.x = m_damageDestX;
-        m_moveEndPos.z = m_damageDestZ;
-        m_targetGid = 0;
-        m_isMotionFinished = 0;
-        m_isMotionFreezed = 0;
-        SetAction(kHitReactionAction, kHitReactionMotion, 1);
+    case 16:
+        m_forceAnimSpeed = 10;
+        m_forceAct = 96; m_forceMot = 1; m_forceStartMot = 1; m_forceMaxMot = 3;
+        m_forceFinishedAct = 0; m_forceFinishedMot = 0;
+        m_isForceAnimLoop = 1; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 99999999; m_forceStateCnt = 1;
         break;
-    case kDeathStateId:
-        m_isMoving = 0;
-        m_path.Reset();
-        m_moveStartPos = m_pos;
-        m_moveEndPos = m_pos;
-        m_moveStartTime = 0;
-        m_moveEndTime = 0;
-        m_targetGid = 0;
-        m_attackMotion = -1.0f;
-        m_isLieOnGround = 1;
-        m_isMotionFinished = 0;
-        m_isMotionFreezed = 0;
-        SetAction(kDeathAction, kDeathMotion, 1);
+    case 17:
+        m_forceAnimSpeed = 10;
+        m_forceAct = 96; m_forceMot = 1; m_forceStartMot = 1; m_forceMaxMot = 3;
+        m_forceFinishedAct = 96; m_forceFinishedMot = 1;
+        m_isForceAnimLoop = 1; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 99999999; m_forceStateCnt = 1;
+        break;
+    case 18:
+        m_forceAnimSpeed = 10;
+        m_forceAct = 88; m_forceMot = 0; m_forceStartMot = 0; m_forceMaxMot = 0;
+        m_forceFinishedAct = 88; m_forceFinishedMot = 0;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 3000; m_forceStateCnt = 1;
+        break;
+    case 19:
+        m_forceAnimSpeed = 10;
+        SetForceAnimation2(40, 0, 40, 0, 40, 0, 40, 1, 40, 1, 1, 3000, 0);
+        while (true) {
+            const auto effect = std::find_if(m_effectList.begin(), m_effectList.end(), [](const CRagEffect* entry) {
+                return entry && entry->GetEffectType() == 446;
+            });
+            if (effect == m_effectList.end()) break;
+            SendMsg(nullptr, 109, 446, 0, 0);
+        }
+        while (true) {
+            const auto effect = std::find_if(m_effectList.begin(), m_effectList.end(), [](const CRagEffect* entry) {
+                return entry && entry->GetEffectType() == 445;
+            });
+            if (effect == m_effectList.end()) break;
+            SendMsg(nullptr, 109, 445, 0, 0);
+        }
+        LaunchEffect(445, vector3d{}, 0.0f);
+        LaunchEffect(411, vector3d{}, 0.0f);
+        break;
+    case 20:
+        m_forceAnimSpeed = 10;
+        SetForceAnimation2(24, 1, 24, 1, 24, 1, 24, 1, 8, 5, 1, 3000, 0);
+        break;
+    case 21:
+        m_forceAnimSpeed = 10;
+        m_forceAct = 96; m_forceMot = 0; m_forceStartMot = 0; m_forceMaxMot = 0;
+        m_forceFinishedAct = 96; m_forceFinishedMot = 0;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 2000; m_forceStateCnt = 1;
+        LaunchEffect(449, vector3d{}, 0.0f);
+        break;
+    case 22:
+        m_forceAnimSpeed = 10;
+        m_forceAct = 96; m_forceMot = 2; m_forceStartMot = 2; m_forceMaxMot = 2;
+        m_forceFinishedAct = 96; m_forceFinishedMot = 2;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 2000; m_forceStateCnt = 1;
+        LaunchEffect(449, vector3d{}, 0.0f);
+        break;
+    case 23:
+        m_forceAnimSpeed = 10;
+        m_forceAct = 96; m_forceMot = 3; m_forceStartMot = 3; m_forceMaxMot = 3;
+        m_forceFinishedAct = 96; m_forceFinishedMot = 3;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 2000; m_forceStateCnt = 1;
+        LaunchEffect(449, vector3d{}, 0.0f);
+        break;
+    case 24:
+        m_forceAnimSpeed = 10;
+        m_forceAct = 96; m_forceMot = 4; m_forceStartMot = 4; m_forceMaxMot = 4;
+        m_forceFinishedAct = 96; m_forceFinishedMot = 4;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 2000; m_forceStateCnt = 1;
+        LaunchEffect(449, vector3d{}, 0.0f);
+        break;
+    case 25:
+        m_forceAnimSpeed = 10;
+        m_forceAct = 24; m_forceMot = 1; m_forceStartMot = 1; m_forceMaxMot = 1;
+        m_forceFinishedAct = 24; m_forceFinishedMot = 1;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 2000; m_forceStateCnt = 1;
+        LaunchEffect(449, vector3d{}, 0.0f);
+        break;
+    case 26:
+        m_forceAnimSpeed = 4;
+        if (m_job == 4049) {
+            SetForceAnimation2(88, 4, 88, 5, 88, 6, 88, 7, 88, 2, 1, 500, 0);
+        } else {
+            SetForceAnimation2(40, 2, 40, 3, 40, 4, 40, 4, 40, 4, 1, 500, 0);
+        }
+        break;
+    case 27:
+        m_forceAnimSpeed = 10;
+        m_forceAct = 96; m_forceMot = 5; m_forceStartMot = 5; m_forceMaxMot = 5;
+        m_forceFinishedAct = 96; m_forceFinishedMot = 5;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 3000; m_forceStateCnt = 1;
+        break;
+    case 28:
+        m_forceAnimSpeed = 10;
+        SetForceAnimation2(40, 0, 40, 1, 40, 2, 40, 3, 40, 4, 1, 1000, 0);
+        break;
+    case 30:
+        m_forceAnimSpeed = 10;
+        m_forceAct = 96; m_forceMot = 1; m_forceStartMot = 1; m_forceMaxMot = 1;
+        m_forceFinishedAct = 96; m_forceFinishedMot = 1;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 2000; m_forceStateCnt = 1;
+        break;
+    case 31:
+        m_forceAnimSpeed = 5;
+        SetForceAnimation2(80, 3, 80, 5, 80, 7, 80, 8, 80, 2, 1, 500, 0);
+        break;
+    case 32:
+        m_forceAnimSpeed = 5;
+        SetForceAnimation2(88, 4, 88, 5, 88, 6, 88, 7, 88, 2, 1, 500, 0);
+        break;
+    case 33:
+        m_forceAnimSpeed = 10; m_forceAct = 96; m_forceMot = 2; m_forceStartMot = 2;
+        m_forceMaxMot = 2; m_forceFinishedAct = 96; m_forceFinishedMot = 2;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 1000; m_forceStateCnt = 1;
+        break;
+    case 34:
+        m_forceAnimSpeed = 10; m_forceAct = 96; m_forceMot = 3; m_forceStartMot = 3;
+        m_forceMaxMot = 3; m_forceFinishedAct = 96; m_forceFinishedMot = 3;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 1000; m_forceStateCnt = 1;
+        break;
+    case 35:
+        m_forceAnimSpeed = 6; m_forceAct = 96; m_forceMot = 0; m_forceStartMot = 0;
+        m_forceMaxMot = 1; m_forceFinishedAct = 96; m_forceFinishedMot = 1;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 500; m_forceStateCnt = 1;
+        break;
+    case 36:
+        m_forceAnimSpeed = 6; m_forceAct = 96; m_forceMot = 2; m_forceStartMot = 2;
+        m_forceMaxMot = 5; m_forceFinishedAct = 96; m_forceFinishedMot = 5;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 1000; m_forceStateCnt = 1;
+        break;
+    case 37: {
+        m_forceAnimSpeed = 10;
+        const u32 randomValue = static_cast<u32>(std::rand()) & 0x80000001u;
+        m_forceAct = 96;
+        if (randomValue == 0) {
+            m_forceMot = 2; m_forceStartMot = 2; m_forceMaxMot = 2;
+            m_forceFinishedAct = 96; m_forceFinishedMot = 2;
+        } else {
+            m_forceMot = 3; m_forceStartMot = 3; m_forceMaxMot = 3;
+            m_forceFinishedAct = 96; m_forceFinishedMot = 3;
+        }
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 500; m_forceStateCnt = 1;
+        break;
+    }
+    case 38:
+        m_forceAnimSpeed = 6;
+        if ((static_cast<u32>(std::rand()) & 0x80000001u) == 0) {
+            m_forceAct = 96; m_forceMot = 0; m_forceStartMot = 0; m_forceMaxMot = 3;
+            m_forceFinishedAct = 96; m_forceFinishedMot = 3;
+            m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+            m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+            m_forceStateEndTick = timeGetTime() + 1000; m_forceStateCnt = 1;
+        } else {
+            SetForceAnimation2(96, 3, 96, 2, 96, 1, 96, 0, 96, 0, 1, 1000, 0);
+        }
+        break;
+    case 39:
+        m_forceAnimSpeed = 6; m_forceAct = 96; m_forceMot = 4; m_forceStartMot = 4;
+        m_forceMaxMot = 5; m_forceFinishedAct = 96; m_forceFinishedMot = 5;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 500; m_forceStateCnt = 1;
+        break;
+    case 40:
+        m_forceAnimSpeed = 6; m_forceAct = 40; m_forceMot = 0; m_forceStartMot = 0;
+        m_forceMaxMot = 2; m_forceFinishedAct = 40; m_forceFinishedMot = 2;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 500; m_forceStateCnt = 1;
+        break;
+    case 41: {
+        m_forceAnimSpeed = 10;
+        const u32 randomValue = static_cast<u32>(std::rand()) & 0x80000001u;
+        m_forceAct = 96;
+        if (randomValue == 0) {
+            m_forceMot = 1; m_forceStartMot = 1; m_forceMaxMot = 1;
+            m_forceFinishedAct = 96; m_forceFinishedMot = 1;
+        } else {
+            m_forceMot = 2; m_forceStartMot = 2; m_forceMaxMot = 2;
+            m_forceFinishedAct = 96; m_forceFinishedMot = 2;
+        }
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 500; m_forceStateCnt = 1;
+        break;
+    }
+    case 42:
+        m_forceAnimSpeed = 10; m_forceAct = 40; m_forceMot = 0; m_forceStartMot = 0;
+        m_forceMaxMot = 0; m_forceFinishedAct = 40; m_forceFinishedMot = 0;
+        m_isForceAnimLoop = 0; m_isForceAnimation = 1; m_isForceAnimFinish = 0;
+        m_isForceState = 1; m_isForceState3 = 0; m_isForceState2 = 0;
+        m_forceStateEndTick = timeGetTime() + 500; m_forceStateCnt = 1;
         break;
     default:
-        return;
+        break;
     }
 
     m_curAction = m_baseAction + Get8Dir(m_roty);
     if (m_stateId == 0 || m_stateId == 6) {
         m_oldstateId = m_stateId;
     }
-    m_stateId = state;
+    if (state != 4) {
+        m_stateId = state;
+    }
     m_stateStartTick = timeGetTime();
 
     const bool isLocalPlayer = m_gid != 0 && (m_gid == g_session.m_gid || m_gid == g_session.m_aid);
-    if (isLocalPlayer && (state == kAttackStateId || state == kSecondAttackStateId || state == kGameActorPickupStateId)) {
+    if (isLocalPlayer && (state == 2 || state == 9 || state == 5)) {
         DbgLog("[ActorTrace] SetState gid=%u state=%d base=%d cur=%d motion=%d roty=%.1f dir=%d atkMotion=%.1f weapon=%d shield=%d isPc=%d\n",
-            m_gid,
-            state,
-            m_baseAction,
-            m_curAction,
-            m_curMotion,
-            m_roty,
-            Get8Dir(m_roty),
-            m_attackMotion,
+            m_gid, state, m_baseAction, m_curAction, m_curMotion, m_roty, Get8Dir(m_roty), m_attackMotion,
             dynamic_cast<CPc*>(this) ? dynamic_cast<CPc*>(this)->m_weapon : -1,
-            dynamic_cast<CPc*>(this) ? dynamic_cast<CPc*>(this)->m_shield : -1,
-            m_isPc);
+            dynamic_cast<CPc*>(this) ? dynamic_cast<CPc*>(this)->m_shield : -1, m_isPc);
     }
 }
 
