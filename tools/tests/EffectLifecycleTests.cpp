@@ -167,7 +167,12 @@ struct CGameMode {
     CWorld* m_world = &g_world; CView* m_view = &testView;
     char m_rswName[40]{};
     int messages=0,lastMsg=0,lastArg=0;
-    void SendMsg(int msg,msgparam_t arg,msgparam_t,msgparam_t) {++messages;lastMsg=msg;lastArg=static_cast<int>(arg);}
+    std::vector<int> messageIds;
+    float quakeSide=0,quakeFront=0,quakeLatitude=0;
+    void SendMsg(int msg,msgparam_t arg,msgparam_t second,msgparam_t third) {
+        ++messages;lastMsg=msg;lastArg=static_cast<int>(arg);messageIds.push_back(msg);
+        if(msg==148){quakeSide=*reinterpret_cast<float*>(arg);quakeFront=*reinterpret_cast<float*>(second);quakeLatitude=*reinterpret_cast<float*>(third);}
+    }
 } gameMode;
 struct CSession {bool m_isMinEffect=false,m_isEffectOn=false;u32 m_aid=0;const char* GetAttrWaveName(int) const;} g_session;
 struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
@@ -466,6 +471,7 @@ struct CRagEffect : CGameObject {
     void ApplyIceArrow();
     void ApplyFireArrow();
     void ApplyKouenka();
+    void ApplyEarthSpike(char);
     void SpawnBash3D(const char*,char,char);
     void ApplyFrostDiver();
     void ApplyFrostDiver2();
@@ -2975,6 +2981,54 @@ int main()
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
     for (int angle=0; angle<=360; ++angle) { g_sinTable[angle]=GetSin(angle); g_cosTable[angle]=GetCos(angle); }
+    {
+        CRenderObject actor,listener;actor.m_pos={30,40,50};listener.m_pos={5,200,8};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_master=&actor;effect.m_effectPos=actor.m_pos;effect.m_duration=250;effect.m_stateCnt=0;
+        const std::vector<int> draws={2,11,3,49,270,19,59,90,1,99,119,180,2,0,179,270,3,50,
+            239,0,0,75,299,45,1,25,359,315,2,99};
+        rngValues=draws;rngCursor=0;waveCalls.clear();g_texMgr.requests.clear();gameMode.messages=0;gameMode.messageIds.clear();
+        effect.ApplyEarthSpike(2);
+        check(effect.m_primList.size()==7&&rngCursor==30&&waveCalls.size()==1
+            &&waveCalls[0].name=="effect\\EF_IceArrow3.wav"&&waveCalls[0].x==25&&waveCalls[0].z==42,
+            "EarthSpike mode two emits seven horns, consumes one sound plus twenty-nine source draws, and plays listener-relative IceArrow audio");
+        check(gameMode.messageIds==std::vector<int>({135,148})&&gameMode.quakeSide==1.0f
+            &&gameMode.quakeFront==0.24f&&gameMode.quakeLatitude==0.2f,
+            "EarthSpike sends source quake and quake-info messages in order with exact three amplitudes");
+        if(effect.m_primList.size()==7) {
+            auto it=effect.m_primList.begin();CEffectPrim* primary=*it++;
+            check(primary->m_type==PP_3DQUADHORN&&primary->m_duration==240&&primary->m_pattern==3
+                &&primary->m_deltaPos2.x==0&&primary->m_deltaPos2.y==10&&primary->m_deltaPos2.z==0
+                &&primary->m_size==3.49f&&primary->m_heightSize==18&&primary->m_longitude==270
+                &&primary->m_latitude==99&&primary->m_speed==1&&primary->m_accel==0.01f&&primary->m_alpha==250
+                &&primary->m_count==15&&primary->m_changePoint==12&&primary->m_changeSpeed==-1.2f
+                &&primary->m_changeAccel==0&&primary->m_fadeOutCnt==230&&primary->m_texture.size()==1
+                &&g_texMgr.requests==std::vector<std::string>({"effect\\ice.tga","effect\\ice.tga","effect\\ice.tga","effect\\ice.tga","effect\\ice.tga","effect\\ice.tga","effect\\ice.tga"}),
+                "EarthSpike primary horn preserves source profile and mode-two texture selection");
+            const int expectedDegrees[6]={59,179,299,360,360,360};
+            int lane=0;bool children=true;
+            for(;it!=effect.m_primList.end();++it,++lane){const auto* p=*it;children=children&&p->m_type==PP_3DQUADHORN
+                &&p->m_duration==240&&p->m_pattern==1&&p->m_deltaPos2.y==20
+                &&p->m_size==static_cast<float>(draws[9+lane*4]%100+400)/100.0f
+                &&p->m_heightSize==20&&p->m_longitude==expectedDegrees[lane]&&p->m_latitude==100&&p->m_speed==1.5f
+                &&p->m_accel==0&&p->m_alpha==250&&p->m_count==2&&p->m_fadeOutCnt==230&&p->m_texture.size()==1;}
+            check(children&&lane==6,"EarthSpike six children clamp degrees above 360 and retain source pattern, motion, fade, and texture fields");
+        }
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        CRagEffect modeZero;modeZero.m_master=&actor;modeZero.m_effectPos=actor.m_pos;modeZero.m_stateCnt=0;
+        rngValues.assign(29,0);rngCursor=0;waveCalls.clear();g_texMgr.requests.clear();gameMode.messageIds.clear();
+        modeZero.ApplyEarthSpike(0);
+        check(rngCursor==29&&waveCalls.size()==1&&waveCalls[0].name=="effect\\wizard_earthspike.wav"
+            &&g_texMgr.requests.size()==7&&g_texMgr.requests.front()=="effect\\stone.bmp"
+            &&gameMode.messageIds==std::vector<int>({135,148}),
+            "EarthSpike mode zero has fixed audio, stone texture, same quake call order, and no extra sound RNG");
+        modeZero.ClearPrims();g_world.UpdateGameObjects();
+        CRagEffect later;later.m_master=&actor;later.m_stateCnt=1;gameMode.messageIds.clear();waveCalls.clear();
+        rngValues={1};rngCursor=0;later.ApplyEarthSpike(2);
+        check(later.m_primList.empty()&&rngCursor==0&&gameMode.messageIds.empty()&&waveCalls.empty(),
+            "EarthSpike only produces quake, sound, draws, and primitives on state zero");
+        later.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;rngValues.clear();rngCursor=0;
+    }
     {
         CRenderObject master, listener; master.m_pos={12,34,56}; listener.m_pos={2,4,6};
         g_world.m_player=&listener;

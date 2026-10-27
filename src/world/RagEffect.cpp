@@ -18419,6 +18419,89 @@ void CRagEffect::ApplySphereWind(const char* textureName, short time, int varian
     }
 }
 
+// Ref/dhxj/RagEffect.cpp:10587+; canonical CRagEffect::EarthSpike at 0x5FD160.
+void CRagEffect::ApplyEarthSpike(char variant)
+{
+    if (m_stateCnt != 0 || (variant != 0 && variant != 2)) return;
+
+    const char* textureName = nullptr;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (!mode) return;
+    if (variant == 0) {
+        textureName = "effect\\stone.bmp";
+        if (mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\wizard_earthspike.wav", m_effectPos.x-listener.x, 0.0f,
+                m_effectPos.z-listener.z, 250, 40, 1.0f);
+        }
+    } else {
+        char waveName[50];
+        std::snprintf(waveName, sizeof(waveName), "effect\\EF_IceArrow%d.wav", rand()%3+1);
+        textureName = "effect\\ice.tga";
+        if (mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave(waveName, m_effectPos.x-listener.x, 0.0f, m_effectPos.z-listener.z, 250, 40, 1.0f);
+        }
+    }
+
+    mode->SendMsg(135, 1, 0, 0);
+    // Ref's following message reassigns the same amplitudes as the current quake handler.
+    float side = 1.0f, front = 0.24f, latitude = 0.2f;
+    mode->SendMsg(148, reinterpret_cast<msgparam_t>(&side),
+        reinterpret_cast<msgparam_t>(&front), reinterpret_cast<msgparam_t>(&latitude));
+
+    CEffectPrim* primary = LaunchEffectPrim(PP_3DQUADHORN, vector3d{});
+    if (!primary) return;
+    primary->m_duration = 240;
+    primary->m_pattern = 1 | 2;
+    const int angle = rand()%360;
+    (void)(rand()%4);
+    const float sn = GetSin(angle);
+    const float cs = GetCos(angle);
+    (void)sn; (void)cs;
+    primary->m_deltaPos2 = {0.0f, 10.0f, 0.0f};
+    primary->m_size = static_cast<float>(rand()%50+300) / 100.0f;
+    primary->m_heightSize = 18.0f;
+    primary->m_longitude = static_cast<float>(rand()%360);
+    primary->m_latitude = static_cast<float>(rand()%20+80);
+    MatrixIdentity(primary->m_matrix);
+    MatrixAppendXRotation(primary->m_matrix, GetRadian(static_cast<int>(primary->m_latitude)));
+    MatrixAppendYRotation(primary->m_matrix, GetRadian(static_cast<int>(primary->m_longitude)));
+    primary->m_rotMat = primary->m_matrix;
+    primary->m_speed = 1.0f; primary->m_accel = 0.01f; primary->m_alpha = 250.0f;
+    primary->m_count = 15; primary->m_changePoint = 12;
+    primary->m_changeSpeed = -1.2f; primary->m_changeAccel = 0.0f;
+    primary->m_fadeOutCnt = primary->m_duration - 10;
+    primary->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+
+    for (int index = 0; index < 6; ++index) {
+        int degree = rand()%((index+1)*60) + index*60;
+        if (degree > 360) degree = 360;
+        constexpr float radius = 3.5f;
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DQUADHORN, vector3d{});
+        if (!prim) continue;
+        prim->m_duration = 240;
+        prim->m_pattern |= 1;
+        const int childAngle = rand()%360;
+        (void)(rand()%4);
+        const float childSin = GetSin(childAngle);
+        const float childCos = GetCos(childAngle);
+        prim->m_deltaPos2 = {radius*childSin, 20.0f, -radius*childCos};
+        prim->m_size = static_cast<float>(rand()%100+400) / 100.0f;
+        prim->m_heightSize = 20.0f;
+        prim->m_longitude = static_cast<float>(degree);
+        prim->m_latitude = 100.0f;
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(100));
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(degree));
+        prim->m_rotMat = prim->m_matrix;
+        prim->m_speed = 1.5f; prim->m_accel = 0.0f; prim->m_alpha = 250.0f;
+        prim->m_count = 2;
+        prim->m_fadeOutCnt = prim->m_duration - 10;
+        prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    }
+}
+
 void CRagEffect::ApplyMagnum2(const char* textureName)
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -19699,6 +19782,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 31) {
         ApplyFireArrow();
+        return true;
+    }
+    if (m_type == 79 || m_type == 619) {
+        ApplyEarthSpike(m_type == 79 ? 0 : 2);
         return true;
     }
     if (m_type == 618) {
