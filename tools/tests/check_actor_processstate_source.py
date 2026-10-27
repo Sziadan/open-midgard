@@ -161,12 +161,12 @@ for description, pattern in global_anchors.items():
     check(has(impl, pattern), f"current implementation mismatch: {description}")
 
 current_anchors = {
-    "state 0 idle completion and pet emotion": (0, r"m_motionType\s*==\s*1[\s\S]*?ProcessMotion\(\)[\s\S]*?m_petEmotionStartTick[\s\S]*?rand\(\)\s*%\s*100\s*<\s*25[\s\S]*?PetTalkNumber"),
+    "state 0 idle completion; pet chat explicitly scoped out": (0, r"m_motionType\s*==\s*1[\s\S]*?ProcessMotion\(\)[\s\S]*?Pet chat depends on session tables/data absent from this client and is outside the skill/effect port scope"),
     "state 1 dispatches movement processing": (1, r"ProcessMovementState\(\)"),
-    "state 1 applies source stance completion route": (1, r"m_gid\s*==\s*3[\s\S]*?g_curStance\s*==\s*2[\s\S]*?g_curScreen\s*==\s*12[\s\S]*?SetState\(11\)"),
+    "state 1 legacy stance/screen route explicitly scoped out": (1, r"old stance/screen-specific GID 3 route depends on legacy UI state not represented by the Qt client[\s\S]*?SetState\(0\)"),
     "state 1 applies Asura force tuple and timeout": (1, r"m_isAsuraAttack[\s\S]*?m_forceAct\s*=\s*96[\s\S]*?m_forceStateEndTick\s*=\s*timeGetTime\(\)\s*\+\s*3000"),
     "states 2/9/12 process then return idle": (2, 9, 12, r"ProcessMotion\(\)[\s\S]*?m_isMotionFinished[\s\S]*?SetState\(0\)"),
-    "state 3 waits for attacks, sends 13, and creates corpse": (3, r"m_isForceState\s*=\s*0[\s\S]*?ProcessMotion\(\)[\s\S]*?m_willBeAttackedList\.empty\(\)[\s\S]*?SendMsg\([^;]*13[\s\S]*?MakeCorpse"),
+    "state 3 waits for attacks, sends 13, and retains final corpse frame": (3, r"m_isForceState\s*=\s*0[\s\S]*?ProcessMotion\(\)[\s\S]*?m_willBeAttackedList\.empty\(\)[\s\S]*?SendMsg\(13,[\s\S]*?guardedJob[\s\S]*?isMercenaryOrHomunculus[\s\S]*?modern actor remains in the world list[\s\S]*?m_stateId\s*=\s*10[\s\S]*?return\s+0"),
     "state 4 interpolates damage destination from prior process time": (4, r"m_damageDestX[\s\S]*?m_lastProcessStateTime[\s\S]*?m_damageDestZ[\s\S]*?SetState\(0\)"),
     "states 5/7 process motion without added freeze behavior": (5, 7, r"m_isCounter\s*=\s*0[\s\S]*?ProcessMotion\(\)[\s\S]*?m_isMotionFinished[\s\S]*?SetState\(0\)"),
     "state 8 periodically faces target without recharge handling": (8, r"m_targetGid[\s\S]*?%\s*34[\s\S]*?m_roty\s*=\s*std::atan2"),
@@ -219,4 +219,5 @@ if errors:
     for error in errors:
         print(f"FAIL {error}")
     raise SystemExit(1)
-print("PASS exact ProcessState inventory and source branch/integration anchors")
+print("PASS ProcessState source inventory and in-scope branch/integration anchors")
+print("Documented scope/architecture differences: pet chat data, legacy UI stance route, separate CCorpse object (current actor holds final frame)")

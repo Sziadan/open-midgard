@@ -426,6 +426,8 @@ Update (2026-10-27): base `CGameActor::SetState` now matches the enumerated Ref/
 
 Update (2026-10-27): `CGameActor::ProcessState` has now been source-audited before implementation. Ref and canonical EXE complete bodies match (12,532 normalized characters); mechanically extracted source state IDs are `[0,1,2,9,12,3,4,5,7,8,10,11,13,16–28,30–42]`. Current code covers only part of that inventory and differs in movement, hit reaction, death, casting, and the common tail. See `PARITY_LOG.md` and `MISMATCHES.md`; do not start another function before this one passes its branch-level source/current gate.
 
+Completion update (2026-10-27): base `CGameActor::ProcessState` now passes the full source inventory and in-scope branch comparison. Pet chat and the GID 3 stance/screen route are explicitly out of scope because they require pet UI/session data and legacy UI state. State 3 retains the actor's finished death frame in state 10 as the modern equivalent of the source's separate `CCorpse` object. See the latest gate in `docs/skill/PROGRESS.md` and `PARITY_LOG.md`.
+
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
 * `CPc::SetState` Ref/Pc.cpp:5678, `ProcessState` 2382.
 * `CPlayer::SetState` Ref/Player.cpp:523, `ProcessState` 87.

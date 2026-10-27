@@ -4779,7 +4779,8 @@ u8 CGameActor::ProcessState() {
             const bool guardedJob = (m_job <= 28 || m_job >= 4000) && m_objectType != 9;
             const bool isMercenaryOrHomunculus = m_job > 6000 && m_job < 6048;
             if (!guardedJob || isMercenaryOrHomunculus) {
-                // CCorpse rendering is not implemented by the current world/effect layer.
+                // The modern actor remains in the world list; state 10 holds its final death frame as the corpse visual.
+                m_stateId = 10;
                 return 0;
             }
         }
