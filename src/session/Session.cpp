@@ -1182,7 +1182,7 @@ CSession::CSession() : m_aid(0), m_authCode(0), m_sex(0), m_isEffectOn(true), m_
     m_charServerPort(0), m_pendingReturnToCharSelect(0),
     m_playerPosX(0), m_playerPosY(0), m_playerDir(0), m_playerJob(0), m_playerHead(0), m_playerBodyPalette(0),
     m_playerHeadPalette(0), m_playerWeapon(0), m_playerShield(0), m_playerAccessory(0), m_playerAccessory2(0),
-    m_playerAccessory3(0), m_serverTime(0), m_numLatePacket(0), m_hasSelectedCharacterInfo(false), m_baseExpValue(0),
+    m_playerAccessory3(0), m_serverTime(0), m_numLatePacket(0), m_averagePingTime(0), m_hasSelectedCharacterInfo(false), m_baseExpValue(0),
     m_nextBaseExpValue(0), m_jobExpValue(0), m_nextJobExpValue(0), m_hasBaseExpValue(false),
     m_hasNextBaseExpValue(false), m_hasJobExpValue(false), m_hasNextJobExpValue(false),
     m_fogParameterTableLoaded(false), m_accessoryNameTableLoaded(false), m_GaugePacket(0)
@@ -1336,6 +1336,25 @@ void CSession::UpdateServerTime(u32 time)
 u32 CSession::GetServerTime() const
 {
     return timeGetTime() - m_serverTime - kServerTimeLeadMs;
+}
+
+void CSession::RecalcAveragePingTime(u32 pingTime)
+{
+    m_pingTimeList.push_front(pingTime);
+    while (m_pingTimeList.size() > 3) {
+        m_pingTimeList.pop_back();
+    }
+
+    u32 totalPingTime = 0;
+    for (const u32 sample : m_pingTimeList) {
+        totalPingTime += sample;
+    }
+    m_averagePingTime = totalPingTime / static_cast<u32>(m_pingTimeList.size());
+}
+
+u32 CSession::GetAveragePingTime() const
+{
+    return m_averagePingTime;
 }
 
 void CSession::SetPlayerPosDir(int x, int y, int dir)

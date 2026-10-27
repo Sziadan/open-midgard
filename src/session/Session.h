@@ -183,6 +183,8 @@ public:
     void SetServerTime(u32 time);
     void UpdateServerTime(u32 time);
     u32 GetServerTime() const;
+    void RecalcAveragePingTime(u32 pingTime);
+    u32 GetAveragePingTime() const;
     bool GetFogParameter(const char* rswName, SessionFogParameter* outParameter);
     void SetPlayerPosDir(int x, int y, int dir);
     void SetSelectedCharacterAppearance(const CHARACTER_INFO& info);
@@ -321,6 +323,8 @@ private:
     int NormalizeJob(int job) const;
     u32 m_serverTime;
     int m_numLatePacket;
+    std::list<u32> m_pingTimeList;
+    u32 m_averagePingTime;
     CHARACTER_INFO m_selectedCharacterInfo;
     bool m_hasSelectedCharacterInfo;
     int m_baseExpValue;

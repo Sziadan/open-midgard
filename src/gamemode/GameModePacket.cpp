@@ -3093,8 +3093,10 @@ void HandleNotifyTime(CGameMode& mode, const PacketView& packet)
     } else {
         g_session.SetServerTime(serverTick);
     }
-    mode.m_receiveSyneRequestTime = static_cast<int>(timeGetTime());
+    mode.m_receiveSyneRequestTime = 1;
     ++mode.m_numNotifyTime;
+    const u32 receiveTick = timeGetTime();
+    g_session.RecalcAveragePingTime(receiveTick - mode.m_syncRequestTime);
     DbgLog("[GameMode] notify time tick=%u count=%u\n",
         static_cast<unsigned int>(serverTick),
         static_cast<unsigned int>(mode.m_numNotifyTime));
