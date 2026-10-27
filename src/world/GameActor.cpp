@@ -4936,6 +4936,29 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         }
         return;
     }
+    case 127:
+        LaunchEffect(336, vector3d{}, 0.0f);
+        return;
+    case 128: {
+        m_isSprArgbFixed = 1;
+        if (!m_oldColor.a && !m_oldColor.r && !m_oldColor.g && !m_oldColor.b) {
+            m_oldColor.a = static_cast<u8>((m_u28.m_sprArgb >> 24) & 0xff);
+            m_oldColor.r = static_cast<u8>((m_u28.m_sprArgb >> 16) & 0xff);
+            m_oldColor.g = static_cast<u8>((m_u28.m_sprArgb >> 8) & 0xff);
+            m_oldColor.b = static_cast<u8>(m_u28.m_sprArgb & 0xff);
+        }
+        const u8 red = static_cast<u8>(par1);
+        const u8 green = static_cast<u8>(par2);
+        const u8 blue = static_cast<u8>(par3);
+        m_curColor = ACTOR_COLOR{ 255, red, green, blue };
+        m_u28.m_sprArgb = (0xff000000u | (static_cast<u32>(red) << 16)
+            | (static_cast<u32>(green) << 8) | static_cast<u32>(blue));
+        return;
+    }
+    case 129:
+        m_oldColor = ACTOR_COLOR{ 0, 0, 0, 0 };
+        m_isSprArgbFixed = 0;
+        return;
     case 98:
         m_willBeDead = 0;
         m_vanishTime = 0;

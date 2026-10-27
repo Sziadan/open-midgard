@@ -1989,3 +1989,10 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - The current dispatcher now performs both operations in source order. `tools/tests/check_actor_sendmsg_effect_cases.py` checks full source-body equality and branch-level implementation mappings; it is registered as CTest `actor_sendmsg_effect_cases_source_check`.
 - The inventory now has 52 direct current arms and 29 source arms still needing mapping. This closes only the two gameplay effect branches, not the full `SendMsg` comparison.
 - x64 Release build succeeded and all 31 CTests passed. Authorized deployment to `D:\Spel\OldRO\open-midgard.exe` matches Release SHA-256 `59D0E2047D3EC8D84F8A3D257ADD98D8C31F3265BC9C8D14694EB3D6589B46D5`.
+
+## `CGameActor::SendMsg` effect and tint arms 127–129 — 2026-10-27
+
+- Ref and canonical EXE `SendMsg` bodies match. Message 127 launches effect 336. Message 128 preserves the old ARGB bytes only when the saved color is zero, sets the fixed-tint flag and current RGB, and packs opaque ARGB. Message 129 clears saved color and disables the fixed tint flag.
+- The implementation now follows those operations using the existing actor color fields. `tools/tests/check_actor_sendmsg_color_cases.py` compares the complete source bodies and verifies each mapped branch; it is registered as CTest `actor_sendmsg_color_cases_source_check`.
+- The direct current switch now has 55 of the 79 source message IDs; 26 remain without direct arms. The `SendMsg` function remains in progress.
+- x64 Release build succeeded and all 32 CTests passed. Authorized deployment to `D:\Spel\OldRO\open-midgard.exe` matches Release SHA-256 `55D2ACEE75DDD0E5026B3ACB5E4B2742F9FBBC89A97E89D0D8958321D9FC3585`.
