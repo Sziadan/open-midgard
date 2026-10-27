@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Branch-level comparisons for canonical PP_2DFLASH update and rendering."""
+"""Branch-level comparisons for canonical flash primitive updates and rendering."""
 from __future__ import annotations
 
 import re
@@ -88,10 +88,19 @@ def main() -> int:
     flash_case = visible_switch[flash_case_start:flash_case_end]
     assert "Render2DFlash(this)" in flash_case
 
+    flash3_signature = "void __thiscall CEffectPrim::Render3DFlash(CEffectPrim *this, matrix *wtm)"
+    ref_render3d = function_body(ref, flash3_signature)
+    exe_render3d = function_body(exe, flash3_signature)
+    assert compact(ref_render3d) == compact(exe_render3d), "Ref Render3DFlash body differs from canonical executable"
+    flash3_case_start = visible_switch.index("case 0x13:")
+    flash3_case_end = visible_switch.index("case 0x14:", flash3_case_start)
+    flash3_case = visible_switch[flash3_case_start:flash3_case_end]
+    assert "Render3DFlash(this, wtm)" in flash3_case
+
     render_signature_current = "void CEffectPrim::Render(matrix* viewMatrix)"
     current_render = function_body(current, render_signature_current)
-    flash_route = "if (m_type == PP_2DFLASH)"
-    assert flash_route in current_render, "current renderer does not route every PP_2DFLASH to the reference helper"
+    flash_route = "if (m_type == PP_2DFLASH || m_type == PP_3DFLASH)"
+    assert flash_route in current_render, "current renderer does not route both flash types to the reference helper"
     route_start = current_render.index(flash_route)
     route_end = current_render.index("if (m_type == PP_STIN", route_start)
     assert "RenderReferenceFlash(*this);" in current_render[route_start:route_end]
@@ -120,7 +129,7 @@ def main() -> int:
     ):
         assert token in render_helper, f"current flash renderer missing source field/submission: {token}"
 
-    print("Prim2DFlash/Render2DFlash comparison passed: EXE/Ref updater body, EXE render case, unconditional current route, ordered geometry, and common tick")
+    print("Flash primitive comparison passed: EXE/Ref updater and Render3DFlash bodies, EXE render cases, current routes, ordered geometry, and common tick")
     return 0
 
 
