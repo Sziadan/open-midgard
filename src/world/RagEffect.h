@@ -591,6 +591,7 @@ private:
     void ApplySightrasher();
     void ApplyBarrier();
     void ApplyCone();
+    void ApplySphere();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();

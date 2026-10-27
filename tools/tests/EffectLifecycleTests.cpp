@@ -549,6 +549,7 @@ struct CRagEffect : CGameObject {
     void ApplySightrasher();
     void ApplyBarrier();
     void ApplyCone();
+    void ApplySphere();
     void SpawnSight();
     void SpawnSight2();
     void SpawnBlessing();
@@ -8101,6 +8102,33 @@ int main()
         check(effect.m_primList.size()==1&&effect.m_duration==200&&rngDraws==draws,
             "Cone emits again at state 130 with no random or audio branches");
         effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        CRagEffect effect; CRenderObject actor;
+        actor.m_pos={4,5,6}; effect.m_type=72; effect.m_master=&actor; effect.m_stateCnt=0;
+        rngValues.clear(); rngCursor=0; g_resMgr.requests.clear();
+        const int draws=rngDraws;
+        effect.ApplySphere();
+        CEffectPrim* sphere=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_effectPos.x==4&&effect.m_effectPos.y==5&&effect.m_effectPos.z==6
+            &&effect.m_duration==500&&effect.m_primList.size()==1&&sphere
+            &&sphere->m_type==PP_3DPARTICLEORBIT&&sphere->m_duration==300
+            &&sphere->m_radius==0.1f&&sphere->m_radiusSpeed==0.15f&&sphere->m_gravSpeed==0.15f
+            &&sphere->m_gravAccel==0&&sphere->m_longitude==2&&sphere->m_longSpeed==8
+            &&sphere->m_longAccel==-0.01f&&sphere->m_size==1.2f
+            &&sphere->m_chRadiSpeed&&sphere->m_chCnt==0&&sphere->m_chPoint.size()==1&&sphere->m_chPoint[0]==95
+            &&sphere->m_chVal1.size()==1&&sphere->m_chVal1[0]==-0.15f
+            &&sphere->m_chVal2.size()==1&&sphere->m_chVal2[0]==0
+            &&g_resMgr.requests.size()==2&&rngDraws==draws,
+            "Sphere state zero launches an orbit with the source keyed radius reversal and no RNG");
+        actor.m_pos={7,8,9}; effect.m_stateCnt=1; effect.ApplySphere();
+        check(effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9
+            &&effect.m_primList.size()==1&&rngDraws==draws,
+            "Sphere refreshes the parent position every frame without off-cadence spawn");
+        effect.m_stateCnt=10; effect.ApplySphere();
+        check(effect.m_duration==490&&effect.m_primList.size()==2&&rngDraws==draws,
+            "Sphere emits again every tenth state and updates the parent duration");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); rngValues.clear(); rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

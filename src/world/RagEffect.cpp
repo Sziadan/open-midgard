@@ -13690,7 +13690,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 38: case 39: case 43: case 45: case 46: case 61: case 62: case 63: case 71: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 38: case 39: case 43: case 45: case 46: case 61: case 62: case 63: case 71: case 72: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -15212,6 +15212,38 @@ void CRagEffect::ApplyCone()
         prim->m_matrix.m[3][1] - 30.0f * prim->m_matrix.m[1][1] + prim->m_radius * prim->m_matrix.m[2][1],
         prim->m_matrix.m[3][2] - 30.0f * prim->m_matrix.m[1][2] + prim->m_radius * prim->m_matrix.m[2][2]
     };
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act");
+    prim->m_numSegments = 1;
+    ShiftCircleSegments(prim);
+}
+
+// Ref/RagEffect.cpp:10464-10491; HighPriest.exe.c:427198-427270.
+void CRagEffect::ApplySphere()
+{
+    m_effectPos = m_master->m_pos;
+    if (m_stateCnt % 10 != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{});
+    m_duration = 500 - m_stateCnt;
+    prim->m_duration = 300;
+    prim->m_radius = 0.1f;
+    prim->m_radiusSpeed = 0.15f;
+    prim->m_gravSpeed = 0.15f;
+    prim->m_longitude = 2.0f;
+    prim->m_longSpeed = 8.0f;
+    prim->m_longAccel = -0.01f;
+    prim->m_size = 1.2f;
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+    prim->m_deltaPos2 = {
+        prim->m_matrix.m[3][0] - 30.0f * prim->m_matrix.m[1][0] + prim->m_radius * prim->m_matrix.m[2][0],
+        prim->m_matrix.m[3][1] - 30.0f * prim->m_matrix.m[1][1] + prim->m_radius * prim->m_matrix.m[2][1],
+        prim->m_matrix.m[3][2] - 30.0f * prim->m_matrix.m[1][2] + prim->m_radius * prim->m_matrix.m[2][2]
+    };
+    prim->m_chRadiSpeed = true;
+    prim->m_chCnt = 0;
+    prim->m_chPoint.push_back(95.0f);
+    prim->m_chVal1.push_back(-0.15f);
+    prim->m_chVal2.push_back(prim->m_radiusAccel);
     prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act");
     prim->m_numSegments = 1;
     ShiftCircleSegments(prim);
@@ -20185,6 +20217,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 71) {
         ApplyCone();
+        return true;
+    }
+    if (m_type == 72) {
+        ApplySphere();
         return true;
     }
     if (m_type == 0x201) {
