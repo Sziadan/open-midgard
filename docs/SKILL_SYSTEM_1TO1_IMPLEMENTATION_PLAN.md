@@ -420,6 +420,8 @@ Reference behavior: for each entry with `curTime >= time`, dispatch `CGameObject
 
 ### WP2.7 `SetState` / `ProcessState` for all actor classes
 
+Progress (2026-10-27): read-only source audit found canonical Ref/EXE equality for the reviewed functions. Current parity is incomplete: base `CGameActor::SetState` has only states `[0,1,2,3,4,5,7,8,9,13]` versus source `[0,1,2,3,4,5,7,9,11,12,13,16–28,30–42]`, and several shared state semantics differ. `CGameActor::ProcessState` also lacks source states and has timer/movement differences. `CPc::ProcessState`, `CPlayer`, and `CNpc` overrides are absent; current `CPc::SetState` does not cover the source branch set. `ProcessEffectState`, `MakePartyEffect`, and `MakeSpecialAttackEffect` have no current definitions. Detailed findings are in `docs/skill/PARITY_LOG.md` and `docs/skill/MISMATCHES.md`. Work must proceed one complete function at a time with branch-level source/current gates.
+
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
 * `CPc::SetState` Ref/Pc.cpp:5678, `ProcessState` 2382.
 * `CPlayer::SetState` Ref/Player.cpp:523, `ProcessState` 87.
