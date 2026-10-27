@@ -2327,3 +2327,11 @@ Runtime-wave producer checkpoint (2026-10-27): `CPc::OnProcess` Ref/Pc.cpp and c
 - `tools/tests/check_player_onprocess_source.py` checks complete Ref/EXE equality, source body order, current queued-wave route, and confirms that the still-missing movement/proceed branches remain visible. Its pass means the source audit is reproducible; it does not mean the full method is at parity.
 
 - Validation: all 59 source-check/trace CTests pass, including `player_onprocess_source_audit`; this audit-only producer checkpoint changes no runtime behavior and does not claim full CPlayer parity.
+
+# `CPlayer::ProcessProceed` full-source and skill-branch audit — 2026-10-27
+
+- Canonical function: Ref `Player.cpp:742`, EXE decompilation `HighPriest.exe.c:415575`, VA `0x005E4920`. `tools/tests/check_player_proceed_source.py` avoids the EXE forward declaration and brace-extracts each definition; after comment removal and whitespace collapse, both bodies are 11,462 characters with SHA-256 `ed080d5eeab20024709f8ed6223f6388c6a663d1d3b45ad8886075cd44418e2b`. Full body equality passes.
+- Mechanically extracted case IDs match in order: `PT_ATTACK`, `PT_ATTACK_2`, `PT_PICKUPITEM`, `PT_SKILL`, `PT_GROUNDSKILL`, `PT_TOUCH_SKILL`. `PT_ATTACK` and `PT_ATTACK_2` share the first body. The five distinct branch-body character counts are 3,861 / 1,119 / 2,599 / 1,045 / 1,656.
+- Current-route comparison is recorded branch by branch in `generated/PLAYER_PROCEED_BRANCH_AUDIT.md`. The targeted-skill route does not match source state, range, monster adjustment, approach sector or message dispatch gates. Ground skill currently sends from selected coordinates without source pursuit. Touch-skill has no current equivalent. These three branches remain in-scope and unresolved. Attack and pickup branches are fully included in the source inventory but excluded from the plan's skill-only implementation scope.
+- Legacy trap/graffiti window creation in `CPlayer::SendMsg` message 66 is excluded as UI; message 66→mode message 77's gameplay packet route remains in scope.
+- Added `player_proceed_source_comparison` to focused CTest registration. Standalone comparator passes. No production code, build, deployment or runtime behavior changed. This is an audit checkpoint only; `CPlayer::ProcessProceed` remains open and the next function gate has not been passed.
