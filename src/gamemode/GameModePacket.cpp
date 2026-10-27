@@ -709,6 +709,47 @@ void HandleNotifyEffect2(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleSpirits(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 8 || packet.packetId != 0x01D0 || !g_session.m_isEffectOn) {
+        return;
+    }
+
+    const u32 aid = ReadLE32(packet.data + 2);
+    CGameActor* actor = nullptr;
+    if (aid == g_session.m_aid) {
+        actor = mode.m_world ? mode.m_world->m_player : nullptr;
+    } else if (mode.m_world) {
+        actor = mode.m_world->GetGameActorByAID(aid);
+    }
+    if (!actor) {
+        return;
+    }
+
+    const int job = actor->m_job;
+    const int effectId = job == 4038 ? 504 : (job == 24 ? 629 : 228);
+    actor->SendMsg(nullptr, 109, effectId, 0, 0);
+
+    if (aid == 0) {
+        return;
+    }
+
+    const bool hidden = HasEffectStateFlag(actor->m_effectState, kEffectStateBurrowMask)
+        || HasEffectStateFlag(actor->m_effectState, kEffectStateHidingMask);
+    if (hidden) {
+        actor->SendMsg(nullptr, 109, effectId, 0, 0);
+        return;
+    }
+
+    CRagEffect* effect = actor->LaunchEffect(effectId, vector3d{ 0.0f, 0.0f, 0.0f }, 0.0f);
+    const vector3d position{ static_cast<float>(static_cast<s16>(ReadLE16(packet.data + 6))), 0.0f, 0.0f };
+    if (effect) {
+        // The executable initializes only X before sending this vector. The
+        // reconstructed client uses deterministic zeroes for the untouched axes.
+        effect->SendMsg(nullptr, 14, reinterpret_cast<msgparam_t>(&position), 0, 0);
+    }
+}
+
 void InvalidateWindowTree(UIWindow* window)
 {
     if (!window) {
@@ -8065,7 +8106,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     RegisterHandlerIfValid(router, receiveProfile.skillUnitSetExtended, HandleSkillUnitSet2);
     router.Register(0x01AC, HandleSkillUpdate);
     router.Register(0x01CF, HandleIgnorePacket);
-    router.Register(0x01D0, HandleIgnorePacket);
+    router.Register(0x01D0, HandleSpirits);
     router.Register(0x01D3, HandleSound);
     router.Register(0x01D2, HandleComboDelay);
     router.Register(0x01D1, HandleBladeStop);

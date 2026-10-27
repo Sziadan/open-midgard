@@ -337,6 +337,15 @@ target_include_directories(auto_spell_packet_checks PRIVATE "${CMAKE_CURRENT_BIN
 add_test(NAME auto_spell_packet_checks COMMAND auto_spell_packet_checks)
 add_test(NAME auto_spell_packet_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_autospell_packet.py")
+add_test(NAME spirits_packet_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_spirits_packet_source.py")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    ../../HighPriest.exe.c
+    ../../Ref/GameModePacket.cpp
+    ../../Ref/RunningServer/packet_db.txt
+    ../../src/gamemode/GameModePacket.cpp
+    ../../src/network/GronPacket.cpp
+    check_spirits_packet_source.py)
 add_executable(ui_spell_list_receiver_checks UISpellListWndReceiverTests.cpp)
 target_compile_features(ui_spell_list_receiver_checks PRIVATE cxx_std_17)
 add_test(NAME ui_spell_list_receiver_checks COMMAND ui_spell_list_receiver_checks)

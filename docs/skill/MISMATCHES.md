@@ -335,3 +335,7 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 
 - Canonical `Zc_AutoSpellList` at VA `0x5A7DC0` and `Ref/GameModePacket.cpp:8618` agree: scan seven 32-bit IDs at `+2,+6,...,+26`; open WID 99 only if any is nonzero; send message 31 for each nonzero ID. The exact 101-byte PE body, dispatcher case 461, and `packet_db` length 30 are mechanically checked.
 - Message 31/60 of executable `UISpellListWnd::SendMsg` at VA `0x48D570` and Ref match. The bounded receiver model is retained as optional groundwork. Its absent legacy factory, rendering, scrolling integration, selection, message 177, and close handling are outside gameplay-scope acceptance and are not blockers. Existing Modern Qt UI code was not modified.
+
+# `0x01D0` spirit position has partially uninitialized source vector (2026-10-27)
+
+- Canonical `Zc_Spirits` and Ref assign only `pos.x` from the signed packet short at `+6` before passing `&pos` to effect message 14; `pos.y` and `pos.z` are not initialized in the source body. The reconstructed handler sets Y/Z to zero so runtime behavior is deterministic. The branch/order comparison otherwise matches; exact values of those two source fields are undefined and cannot be meaningfully copied. No UI behavior is involved.
