@@ -448,7 +448,7 @@ Remove: `ResolveGroundSkillEffectId`, `PlayGroundSkillImpactSound`, `ResolveUseS
 | `0x01CD` | `Zc_AutoSpellList` 8618 | autospell window. |
 | `0x01D1`, `0x01D2` | bladestop / combo delay | |
 | `0x0148`, `0x013D` | `Zc_resurrection` 33654, `Zc_recovery` 33505 | |
-| `0x0191` | `Zc_talkbox_chat_contents` 33736 | talkie box unit text. |
+| `0x0191` | `Zc_talkbox_chat_contents` 33736 | now resolves the skill AID and forwards message 7 with the raw packet payload at +6; the `CSkill::SendMsg` message-7 receiver is still missing, so visible talkbox parity remains open. |
 | skill list family | `Zc_Skillinfo_List` 25700, `Zc_Skillinfo_Update` 25841, `Zc_Add_Skill` 8267, `Zc_GuildSkillInfo` 11880, homun/mer skill lists | keep existing if already exact; verify. |
 
 Register every opcode in the dispatch table; nothing skill-related may remain on `HandleIgnorePacket`.

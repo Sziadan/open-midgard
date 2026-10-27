@@ -4739,6 +4739,18 @@ void HandleSkillUpdate(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleTalkboxChatContents(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 86 || mode.m_world == nullptr) {
+        return;
+    }
+
+    CSkill* skill = mode.m_world->GetSkillByAID(ReadLE32(packet.data + 2));
+    if (skill != nullptr) {
+        skill->SendMsg(skill, 7, reinterpret_cast<msgparam_t>(packet.data + 6), 0, 0);
+    }
+}
+
 void DecodePosDir(const u8* src, int& posX, int& posY, int& dir)
 {
     if (!src) {
@@ -7905,6 +7917,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x023A, HandleStoragePasswordRequest);
     router.Register(0x023C, HandleStoragePasswordResult);
     router.Register(0x0284, HandleNotifyEffect3);
+    router.Register(0x0191, HandleTalkboxChatContents);
     RegisterHandlerIfValid(router, receiveProfile.itemRemoveExtended, HandleItemRemove);
     router.Register(0x0100, HandleIgnorePacket);
 
