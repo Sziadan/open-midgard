@@ -11,7 +11,7 @@ callVA	function	srcAnchor	status
 0x5D6A53	CSoundMaker::OnProcess	src/gamemode/GameMode.cpp	port-anchor-present (runtime parity unverified)
 0x5D9E95	CPc::OnProcess	src/world/GameActor.cpp	port-anchor-present (runtime parity unverified)
 0x5E0FD6	CGrannyPc::OnProcess	src/world/GameActor.cpp	port-anchor-present (runtime parity unverified)
-0x5E48A1	CPlayer::OnProcess		producer port pending
+0x5E48A1	CPlayer::OnProcess	src/world/GameActor.cpp	port-anchor-present (runtime parity unverified)
 0x5F862A	CRagEffect::IceArrow	src/world/RagEffect.cpp	port-anchor-present (runtime parity unverified)
 0x5F963C	CRagEffect::FireArrow		producer port pending
 0x5FD22D	CRagEffect::EarthSpike		producer port pending
