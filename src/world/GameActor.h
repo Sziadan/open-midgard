@@ -295,6 +295,7 @@ public:
     CMsgEffect* m_chatProhibitEffect = nullptr;
     CMsgEffect* m_pkEffect = nullptr;
     CMsgEffect* m_crusisEffect = nullptr;
+    CMsgEffect* m_cursorEffect = nullptr;
     std::list<CMsgEffect*> m_msgEffectList;
     vector3d m_moveStartPos;
     vector3d m_moveEndPos;

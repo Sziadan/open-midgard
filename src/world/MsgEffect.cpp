@@ -2127,6 +2127,14 @@ void CMsgEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam
     case 53:
         m_isDisappear = 1;
         return;
+    case 139: {
+        m_masterActor = static_cast<CGameActor*>(sender);
+        if (sender) {
+            m_pos.x = static_cast<float>(static_cast<double>(rand() % 11 - 5) * 0.1 + m_masterActor->m_pos.x);
+            m_pos.z = static_cast<float>(static_cast<double>(rand() % 11 - 5) * 0.1 + m_masterActor->m_pos.z);
+        }
+        return;
+    }
     case 64: {
         const vector3d* pos = reinterpret_cast<const vector3d*>(par1);
         if (!pos) {

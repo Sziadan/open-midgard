@@ -4477,6 +4477,7 @@ CGameActor::~CGameActor()
     m_chatProhibitEffect = nullptr;
     m_pkEffect = nullptr;
     m_crusisEffect = nullptr;
+    m_cursorEffect = nullptr;
     for (CMsgEffect* effect : ownedMsgEffects) {
         if (!effect) {
             continue;
@@ -5536,6 +5537,30 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
             }
         }
         return;
+    case 135:
+        if (!m_cursorEffect) {
+            m_cursorEffect = SpawnMsgSprite(26,
+                "cursors.spr",
+                "cursors.act",
+                10,
+                1.0f);
+            if (m_cursorEffect) {
+                m_cursorEffect->m_pos.y -= 20.0f;
+                m_cursorEffect->m_orgPos = m_cursorEffect->m_pos;
+            }
+        }
+        return;
+    case 136:
+        if (m_cursorEffect) {
+            m_cursorEffect->SendMsg(this, 53, 0, 0, 0);
+            m_cursorEffect = nullptr;
+        }
+        return;
+    case 139:
+        if (m_iceEffect) {
+            m_iceEffect->SendMsg(this, 139, 0, 0, 0);
+        }
+        return;
     case 127:
         LaunchEffect(336, vector3d{}, 0.0f);
         return;
@@ -6297,6 +6322,9 @@ void CGameActor::DeleteMatchingEffect(CMsgEffect* effect)
     }
     if (m_crusisEffect == effect) {
         m_crusisEffect = nullptr;
+    }
+    if (m_cursorEffect == effect) {
+        m_cursorEffect = nullptr;
     }
 
     const auto it = std::find(m_msgEffectList.begin(), m_msgEffectList.end(), effect);
