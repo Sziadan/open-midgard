@@ -2087,3 +2087,12 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - Inventory: 65 direct current cases; 10 remaining in-scope IDs without direct/inherited routes: `[21, 56, 57, 78, 79, 110, 118, 135, 136, 139]`.
 - Seven focused source gates (inventory, aura, ordinary movement, spawn, identity, movement update, and subcell movement) pass; x64 Release build succeeds; `git diff --check` passes. The full test-project rebuild is still blocked by unrelated extracted packet-test stub compile errors recorded earlier.
 - Authorized OldRO deployment matches Release SHA-256 `22907808276006E5F968D87F6515D8D168E5AE12D406A3279CB8EE237037694B`. No live runtime movement acceptance is claimed.
+
+# `CGameActor::SendMsg` message 21 emotion effect (2026-10-27)
+
+- Ref and canonical EXE complete actor send functions/message 21 branches match. `CGameMode::MakeEmotion` also matches Ref/EXE; mechanically compared its full 79-action emotion map and special emotion 34 route. Canonical EXE data strings identify the legacy face sprite and `emotion.act` assets.
+- Ported current world-space sprite effects for emotion IDs 1–80, including the special persistent red chat-prohibition indicator (34), actor ownership, and the source's finish-after-one-motion behavior. Current `CMsgEffect::OnProcess` maps the 24-fps action motion progression and persistent indicator animation.
+- `tools/tests/check_actor_sendmsg_emotion_case.py` checks full Ref/EXE `SendMsg`, `MakeEmotion`, and `CMsgEffect::OnProcess` equality, all 79 action mappings, and implementation routing/lifecycle anchors. Registered as CTest `actor_sendmsg_emotion_source_check`.
+- Known mode-side mismatch: source `CMsgEffect::OnProcess` sends `CMode::SendMsg(35)` after the local player's emotion animation completes. That old mode/UI request path has no current equivalent and remains open; no UI window recreation was attempted.
+- Inventory: 66 direct current cases; 9 remaining in-scope IDs without direct/inherited routing: `[56, 57, 78, 79, 110, 118, 135, 136, 139]`.
+- Focused gates, Release build, OldRO deployment, and checkpoint commit are pending.

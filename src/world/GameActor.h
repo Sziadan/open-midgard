@@ -292,6 +292,7 @@ public:
     CMsgEffect* m_angelusEffect;
     CMsgEffect* m_cartEffect;
     CMsgEffect* m_lastDamageNumberEffect;
+    CMsgEffect* m_chatProhibitEffect = nullptr;
     std::list<CMsgEffect*> m_msgEffectList;
     vector3d m_moveStartPos;
     vector3d m_moveEndPos;

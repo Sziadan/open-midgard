@@ -1867,6 +1867,22 @@ u8 CMsgEffect::OnProcess()
 
     const float stateCount = static_cast<float>(timeGetTime() - m_stateStartTick) * 0.041666668f;
     switch (m_msgEffectType) {
+    case 1: {
+        if (m_masterActor && m_masterActor->m_chatProhibitEffect == this) {
+            m_spriteMotionIndex = 15;
+            m_colorArgb = 0xFFFA5050u;
+            break;
+        }
+        const int motionCount = ResolveMsgSpriteMotionCountForEffect(*this, m_spriteActionIndex);
+        if (motionCount <= 0) {
+            return 1;
+        }
+        m_spriteMotionIndex = static_cast<int>(stateCount) % motionCount;
+        if (stateCount / static_cast<float>(motionCount) >= 1.0f) {
+            m_isDisappear = 1;
+        }
+        break;
+    }
     case kAttachedActorSpriteMsgEffectType:
         if (!m_masterActor) {
             m_isDisappear = 1;
