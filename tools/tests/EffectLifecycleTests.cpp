@@ -554,6 +554,7 @@ struct CRagEffect : CGameObject {
     void ApplyBowlingBash();
     bool ApplyCartRevolution();
     void ApplyVenomDust2();
+    void ApplyCurseAttack();
     void SpawnSight();
     void SpawnSight2();
     void SpawnBlessing();
@@ -8272,6 +8273,23 @@ int main()
                 &&effect.m_cachedPos.x==4&&g_texMgr.requests.empty(),
                 "Elemental change effects do not invoke BeginCasting or refresh their origin after frame zero");
         }
+    }
+    {
+        CRagEffect effect; effect.m_type=196; effect.m_stateCnt=0; effect.m_duration=150;
+        const int draws=rngDraws; waveCalls.clear(); g_texMgr.requests.clear();
+        effect.ApplyCurseAttack();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DTEXTURE
+            &&prim->m_duration==9999&&prim->m_longitude==0&&prim->m_longSpeed==4.5f
+            &&prim->m_deltaPos2.x==0&&prim->m_deltaPos2.y==-30&&prim->m_deltaPos2.z==0
+            &&prim->m_widthSize==4&&prim->m_heightSize==4&&effect.m_duration==150
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\curse.bmp"
+            &&rngDraws==draws&&waveCalls.empty(),
+            "CurseAttack frame zero launches the source curse texture primitive without RNG, audio, or parent-duration mutation");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); effect.m_stateCnt=1; g_texMgr.requests.clear();
+        effect.ApplyCurseAttack();
+        check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==draws,
+            "CurseAttack does not repeat its primitive or resource request after frame zero");
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

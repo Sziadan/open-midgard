@@ -13690,7 +13690,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 38: case 39: case 43: case 45: case 46: case 61: case 62: case 63: case 71: case 72: case 73: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 170: case 171: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 38: case 39: case 43: case 45: case 46: case 61: case 62: case 63: case 71: case 72: case 73: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 170: case 171: case 180: case 184: case 196: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -15357,6 +15357,20 @@ void CRagEffect::ApplyVenomDust2()
         "\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.act"); // 0x71BC24 / 0x71BC0C
     prim->m_numSegments = 1;
     ShiftCircleSegments(prim);
+}
+
+// Ref/dhxj/RagEffect.cpp:12379-12399; HighPriest.exe.c:430263-430279.
+void CRagEffect::ApplyCurseAttack()
+{
+    if (m_stateCnt != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+    prim->m_duration = 9999;
+    prim->m_longitude = 0.0f;
+    prim->m_longSpeed = 4.5f;
+    prim->m_deltaPos2.y -= 30.0f;
+    prim->m_widthSize = 4.0f;
+    prim->m_heightSize = 4.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\curse.bmp", false));
 }
 
 void CRagEffect::SpawnSight()
@@ -20357,6 +20371,10 @@ bool CRagEffect::ProcessEffectFrame()
     if (m_type == 170) return ApplyCartRevolution();
     if (m_type == 171) {
         ApplyVenomDust2();
+        return true;
+    }
+    if (m_type == 196) {
+        ApplyCurseAttack();
         return true;
     }
     if (m_type == 0x201) {
