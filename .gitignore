@@ -69,6 +69,9 @@ tools/tests/*
 !tools/tests/check_guild_skill_packet.py
 !tools/tests/UIInvalidateTests.cpp
 !tools/tests/check_ui_invalidate_source.py
+!tools/tests/AutoSpellPacketTests.cpp
+!tools/tests/check_autospell_packet.py
+!tools/tests/UISpellListWndReceiverTests.cpp
 
 !tools/check_double_gumgang_parity.py
 !tools/check_pokjuk_parity.py

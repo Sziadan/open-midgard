@@ -4830,6 +4830,34 @@ void HandleShowImage(CGameMode& mode, const PacketView& packet)
     mode.SendMsg(113, reinterpret_cast<msgparam_t>(imageName), imageType, 0);
 }
 
+void HandleAutoSpellList(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 30) {
+        return;
+    }
+
+    bool hasAnySpell = false;
+    for (size_t index = 0; index < 7; ++index) {
+        if (ReadLE32(packet.data + 2 + index * 4) != 0) {
+            hasAnySpell = true;
+        }
+    }
+    if (!hasAnySpell) {
+        return;
+    }
+
+    UIWindow* const window = g_windowMgr.MakeWindow(UIWindowMgr::WID_SPELLLISTWND);
+    if (!window) {
+        return;
+    }
+    for (size_t index = 0; index < 7; ++index) {
+        const u32 skillId = ReadLE32(packet.data + 2 + index * 4);
+        if (skillId != 0) {
+            window->SendMsg(nullptr, 31, static_cast<msgparam_t>(skillId), 0, 0);
+        }
+    }
+}
+
 void DecodePosDir(const u8* src, int& posX, int& posY, int& dir)
 {
     if (!src) {
@@ -8000,6 +8028,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01B4, HandleChangeGuild);
     router.Register(0x0145, HandleShowImage);
     router.Register(0x0162, HandleGuildSkillInfo);
+    router.Register(0x01CD, HandleAutoSpellList);
     RegisterHandlerIfValid(router, receiveProfile.itemRemoveExtended, HandleItemRemove);
     router.Register(0x0100, HandleIgnorePacket);
 

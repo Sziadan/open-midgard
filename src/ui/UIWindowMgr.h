@@ -90,6 +90,7 @@ public:
         WID_OPTIONWND         = 13,
         WID_EQUIPWND          = 14,
         WID_SKILLLISTWND      = 15,
+        WID_SPELLLISTWND      = 99,
         WID_NPCINPUTWND       = 16,
         WID_CHOOSESELLBUYWND  = 18,
         WID_ITEMSHOPWND       = 19,

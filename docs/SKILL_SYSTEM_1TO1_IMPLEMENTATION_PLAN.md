@@ -224,7 +224,7 @@ The current `src/world/RagEffect.cpp` hard-codes different durations (e.g. id 12
 | `0x0196` / `0x043F` | ZC_MSG_STATE_CHANGE / 2 | 9 / 25 | index.W@2 aid.L@4 state.B@8 (+ remain.L val1..3.L) | 5134 | `Zc_Msg_State_Change` 15260 |
 | `0x01D0`/`0x01E1` | spirits | 8 / 8 | aid.L@2 num.W@6 | 6804 | `Zc_Spirits` 26130 / `Zc_Spirits2` 26215 |
 | `0x01CF` | devotion | 28 | | 6767 | `Zc_DevotionList` 10555 |
-| `0x01CD` | autospell | 30 | | 6712 | `Zc_AutoSpellList` 8618 |
+| `0x01CD` | autospell | 30 | seven 32-bit skill IDs at `+2,+6,...,+26` | 461 | `Zc_AutoSpellList` 8618 |
 | `0x01D1` | bladestop | 14 | | 6831 | `Zc_BladeStop` 8805 |
 | `0x01D2` | combo delay | 10 | | 6813 | `Zc_ComboDelay` 10255 |
 | `0x0215` | ZC_SKILLMSG | 6 | msg id.L@2 | 8398 (`Ref/eAthena_src_2011/map/clif.c`) | `Zc_SKILLMSG` 25035 |
@@ -447,7 +447,7 @@ Remove: `ResolveGroundSkillEffectId`, `PlayGroundSkillImpactSound`, `ResolveUseS
 | `0x01D3` | `Zc_Sound` 25976 | server-triggered waves (used by some skill scripts). |
 | `0x01D0`, `0x01E1` | `Zc_Spirits/2` 26133 / 26218 | spirit spheres (Monk/Champion/Gunslinger). |
 | `0x01CF` | `Zc_DevotionList` 10555 | devotion link visuals. |
-| `0x01CD` | `Zc_AutoSpellList` 8618 | seven skill IDs, nonzero-only message 31 to window 99; full receiver `UISpellListWnd` is absent, so include it in the port before claiming visible parity. |
+| `0x01CD` | `Zc_AutoSpellList` 8618 | Handler is routed and source-compared; it creates window 99 only if any of seven IDs is nonzero and sends message 31 for each nonzero ID. Receiver message-31/60 state model is source-compared; `UIWindowMgr` factory integration, real spell-list rendering, scrolling, selection, and close behavior remain open. Do not claim visible parity. |
 | `0x01D1`, `0x01D2` | bladestop / combo delay | |
 | `0x0148`, `0x013D` | `Zc_resurrection` 33654, `Zc_recovery` 33505 | |
 | `0x0191` | `Zc_talkbox_chat_contents` 33736 | resolves the skill AID and forwards message 7 with the raw packet payload at +6; the receiver now displays nonempty text for five seconds as a red skill speech bubble through the Qt overlay. |

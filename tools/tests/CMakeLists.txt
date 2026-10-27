@@ -327,3 +327,25 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../HighPriest.exe
     ../../HighPriest.exe.c
     ../../Ref/UIGuildWnd.cpp)
+
+file(READ "../../src/gamemode/GameModePacket.cpp" auto_spell_packet_source)
+extract_body(auto_spell_packet "${auto_spell_packet_source}" "void HandleAutoSpellList(" "void DecodePosDir(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/AutoSpellPacketBody.inc" "${auto_spell_packet}")
+add_executable(auto_spell_packet_checks AutoSpellPacketTests.cpp)
+target_compile_features(auto_spell_packet_checks PRIVATE cxx_std_17)
+target_include_directories(auto_spell_packet_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME auto_spell_packet_checks COMMAND auto_spell_packet_checks)
+add_test(NAME auto_spell_packet_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_autospell_packet.py")
+add_executable(ui_spell_list_receiver_checks UISpellListWndReceiverTests.cpp)
+target_compile_features(ui_spell_list_receiver_checks PRIVATE cxx_std_17)
+add_test(NAME ui_spell_list_receiver_checks COMMAND ui_spell_list_receiver_checks)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    ../../src/gamemode/GameModePacket.cpp
+    ../../HighPriest.exe
+    ../../HighPriest.exe.c
+    ../../Ref/GameModePacket.cpp
+    ../../Ref/RunningServer/packet_db.txt
+    ../../src/ui/UISpellListWnd.cpp
+    ../../src/ui/UISpellListWnd.h
+    UISpellListWndReceiverTests.cpp)
