@@ -481,6 +481,7 @@ struct CRagEffect : CGameObject {
     void ApplyRgCoin3();
     void SpawnRgCoin2(const char*,float);
     void ApplyBash3D5();
+    void SpawnChookgi(char);
     void ApplyChemical3(short);
     void SpawnBash3D(const char*,char,char);
     void ApplyFrostDiver();
@@ -7828,6 +7829,58 @@ int main()
         check(effect.m_primList.empty()&&effect.m_effectPos.x==70&&effect.m_effectPos.y==80&&effect.m_effectPos.z==90
             &&rngDraws==laterDraws&&waveCalls.empty()&&g_texMgr.requests.empty(),"Bash3D5 later ticks refresh through six helper calls without sound or respawn");
         g_world.m_player=nullptr;rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor; actor.m_pos={30,40,50};
+        auto storage=std::make_unique<CRagEffect>(); auto& effect=*storage;
+        effect.m_master=&actor; effect.m_duration=200; effect.m_stateCnt=0;
+        rngValues.clear(); for(int i=0;i<14;++i) rngValues.push_back(i); rngCursor=0;
+        g_texMgr.requests.clear(); const int draws=rngDraws;
+        effect.m_deltaPos.x=2.5f; effect.SpawnChookgi(0);
+        check(effect.m_primList.size()==2&&rngDraws==draws+14&&rngCursor==14,
+            "Chookgi variant zero truncates 2.5 children to two and consumes seven ordered draws per child");
+        bool common=true; int child=0;
+        for(auto* prim:effect.m_primList){
+            const auto& gi=prim->m_gi[0];
+            common=common&&prim->m_type==PP_CHOOKGI&&prim->m_renderFlag==5&&prim->m_duration==200
+                &&prim->m_pos.x==30&&prim->m_pos.y==40&&prim->m_pos.z==50&&prim->m_texture.size()==1
+                &&g_texMgr.requests[static_cast<size_t>(child)]=="effect\\thunder_center.bmp"
+                &&gi.life==1&&gi.height[0]==child*7&&gi.height[1]==child*7+1&&gi.height[2]==child*7+2
+                &&gi.height[3]==child*7+3&&gi.height[4]==child*7+4&&gi.height[5]==child*7+5
+                &&gi.height[6]==child*72&&gi.height[7]==-15&&gi.distance==2&&gi.height[8]==child*7+6
+                &&gi.height[10]==0&&gi.flag[0]==0&&gi.alphaB==0&&gi.process==0;
+            ++child;
+        }
+        check(common&&child==2,"Chookgi default branch initializes source GI payload, exact texture and child order");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); rngValues={0,1,2,3,4,5,6}; rngCursor=0;
+        effect.m_deltaPos.x=1; const int variant1Draws=rngDraws; effect.SpawnChookgi(1);
+        auto* wave=effect.m_primList.front(); const auto& waveGi=wave->m_gi[0];
+        check(effect.m_primList.size()==1&&rngDraws==variant1Draws+7&&waveGi.height[6]==0&&waveGi.height[7]==-14
+            &&waveGi.distance==1.3f&&waveGi.height[10]==1&&waveGi.flag[0]==0,
+            "Chookgi variant one preserves special wave profile and seven draws");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); rngValues.assign(35,0); rngCursor=0;
+        effect.m_deltaPos.x=7; const int variant3LargeDraws=rngDraws; effect.SpawnChookgi(3);
+        bool large=true; child=0;
+        for(auto* prim:effect.m_primList){const auto& gi=prim->m_gi[0];
+            large=large&&gi.height[6]==child*72&&gi.height[7]==-15&&gi.height[10]==0&&gi.flag[0]==1
+                &&gi.distance==(child<2?2.0f:1.0f); ++child;}
+        check(effect.m_primList.size()==5&&child==5&&large&&rngDraws==variant3LargeDraws+35,
+            "Chookgi variant three clamps to five and preserves large-count spacing/distance split");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); rngValues.assign(28,0); rngCursor=0;
+        effect.m_deltaPos.x=4; const int variant3SmallDraws=rngDraws; effect.SpawnChookgi(3);
+        bool small=effect.m_primList.size()==4; child=0;
+        for(auto* prim:effect.m_primList){small=small&&prim->m_gi[0].height[6]==child*90&&prim->m_gi[0].distance==1; ++child;}
+        check(small&&rngDraws==variant3SmallDraws+28,
+            "Chookgi variant three divides a small positive count into equal angular spacing");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); actor.m_pos={70,80,90};
+        effect.m_deltaPos.x=2; effect.m_stateCnt=1; rngValues.clear(); rngCursor=0; g_texMgr.requests.clear();
+        const int laterDraws=rngDraws; effect.SpawnChookgi(3);
+        check(effect.m_primList.empty()&&effect.m_effectPos.x==70&&effect.m_effectPos.y==80&&effect.m_effectPos.z==90
+            &&rngDraws==laterDraws&&g_texMgr.requests.empty(),
+            "Chookgi later frames refresh parent origin without spawning, RNG or texture requests");
+        effect.m_stateCnt=0; effect.m_deltaPos.x=0; effect.SpawnChookgi(0);
+        check(effect.m_primList.empty()&&rngDraws==laterDraws,"Chookgi zero count safely emits nothing");
+        rngValues.clear(); rngCursor=0;
     }
     {
         CRagEffect master; CEffectPrim prim; prim.m_master=&master; prim.m_type=PP_CHOOKGI; prim.m_renderFlag=5;

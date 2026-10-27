@@ -483,6 +483,7 @@ private:
     void ApplyRgCoin3();
     void SpawnRgCoin2(const char* textureName, float size);
     void ApplyBash3D5();
+    void SpawnChookgi(char variant);
     void ApplyEarthSpike(char variant);
     void ApplyColorPaper(const char* textureName);
     void ApplySaintCasting(short time, const char* textureName, int variant);

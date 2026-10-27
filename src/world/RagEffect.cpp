@@ -18915,6 +18915,63 @@ void CRagEffect::ApplyBash3D5()
     }
 }
 
+void CRagEffect::SpawnChookgi(char variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return;
+
+    int maxCount = static_cast<int>(m_deltaPos.x);
+    if (maxCount > 5) maxCount = 5;
+    for (int index = 0; index < maxCount; ++index) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_CHOOKGI, vector3d{});
+        if (prim == nullptr) return;
+        prim->m_renderFlag = 5;
+        prim->m_duration = m_duration;
+        EffectGi& gi = prim->m_gi[0];
+        gi.life = 1;
+        gi.height[0] = static_cast<float>(rand() % 360);
+        gi.height[1] = static_cast<float>(rand() % 360);
+        gi.height[2] = static_cast<float>(rand() % 360);
+        gi.height[3] = static_cast<float>(rand() % 360);
+        gi.height[4] = static_cast<float>(rand() % 360);
+        gi.height[5] = static_cast<float>(rand() % 360);
+
+        if (variant == 1) {
+            gi.height[6] = static_cast<float>(index * 72);
+            gi.height[7] = -14.0f;
+            gi.distance = 1.3f;
+            gi.height[10] = 1.0f;
+            gi.flag[0] = 0;
+        } else if (variant == 3) {
+            if (m_deltaPos.x <= 5.0f) {
+                gi.height[6] = static_cast<float>(index * 360 / m_deltaPos.x);
+            } else {
+                gi.height[6] = static_cast<float>(index * 72);
+            }
+            gi.height[7] = -15.0f;
+            gi.distance = 1.0f;
+            if (m_deltaPos.x > 5.0f && m_deltaPos.x - static_cast<float>(index) >= 6.0f) {
+                gi.distance = 2.0f;
+            }
+            gi.height[10] = 0.0f;
+            gi.flag[0] = 1;
+        } else {
+            gi.height[6] = static_cast<float>(index * 72);
+            gi.height[7] = -15.0f;
+            gi.distance = 2.0f;
+            gi.height[10] = 0.0f;
+            gi.flag[0] = 0;
+        }
+
+        gi.height[8] = static_cast<float>(rand() % 360);
+        gi.alphaB = 0;
+        gi.process = 0;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\thunder_center.bmp", false));
+    }
+}
+
 void CRagEffect::ApplyBottomMagnus(const char* textureName, int variant)
 {
     if (textureName == nullptr || m_stateCnt != 0) {
@@ -20059,6 +20116,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 628) {
         ApplyBash3D5();
+        return true;
+    }
+    if (m_type == 228 || m_type == 504 || m_type == 629) {
+        SpawnChookgi(m_type == 228 ? 0 : (m_type == 504 ? 1 : 3));
         return true;
     }
     if (m_type == 618) {
