@@ -289,6 +289,12 @@ public:
     int m_skillChaseSkillLevel;
     int m_skillChaseRange;
     int m_hasSkillChase;
+    int m_groundSkillCellX;
+    int m_groundSkillCellY;
+    int m_groundSkillId;
+    int m_groundSkillLevel;
+    int m_groundSkillRange;
+    int m_hasGroundSkillChase;
     int m_mapLoadingStage;
     u32 m_mapLoadingStartTick;
     u32 m_mapLoadingAckTick;

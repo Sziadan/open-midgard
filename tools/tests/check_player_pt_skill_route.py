@@ -102,6 +102,7 @@ for token in (
 mode_source = (ROOT / "src/gamemode/GameMode.cpp").read_text(encoding="utf-8", errors="replace")
 input_route = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "bool TryRequestPendingSkillFromScreenPoint(")
 pump_route = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "void PumpSkillChaseRequest(")
+targeted_pump_route = pump_route[pump_route.index("const u16 skillId = static_cast<u16>(mode.m_skillChaseSkillId") :]
 begin_chase = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "void BeginSkillChase(")
 assert "BeginSkillChase(mode, targetGid, skillId, skillLevel, skillRange);" in input_route
 assert "const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId))" in input_route
@@ -137,21 +138,21 @@ ordered_current = (
     "player->m_moveReqTick = timeGetTime()",
     "SendMoveRequestPacket(moveTileX, moveTileY)",
 )
-positions = [pump_route.find(token) for token in ordered_current]
+positions = [targeted_pump_route.find(token) for token in ordered_current]
 assert all(position >= 0 for position in positions), "missing current PT_SKILL route operation"
 assert positions == sorted(positions), "current PT_SKILL source operations changed order"
-dispatch_pos = pump_route.find("const bool sent = SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid)")
-assert dispatch_pos >= 0 and pump_route.find("ClearSkillChase(mode);", dispatch_pos) > dispatch_pos
-assert "IsAttackTargetWithinRange" not in pump_route
-assert "ResolveAttackChaseCell" not in pump_route
-assert "m_isLeftButtonHeld" not in pump_route and "m_hasHeldMoveTarget" not in pump_route
-assert "normalizedDirectionZ" not in pump_route
-assert "const float normalizedDirectionX = static_cast<float>(inverseLength * deltaX)" in pump_route
-assert "const float projectedOffsetX = static_cast<float>(static_cast<double>(5 * skillRange) * normalizedDirectionX)" in pump_route
-assert "const float projectedOffsetZ = static_cast<float>(static_cast<double>(5 * skillRange) * (inverseLength * deltaZ))" in pump_route
-assert "TryRequestMoveToCell" not in pump_route, "source PT_SKILL must not route through generalized path candidate selection"
+dispatch_pos = targeted_pump_route.find("const bool sent = SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid)")
+assert dispatch_pos >= 0 and targeted_pump_route.find("ClearSkillChase(mode);", dispatch_pos) > dispatch_pos
+assert "IsAttackTargetWithinRange" not in targeted_pump_route
+assert "ResolveAttackChaseCell" not in targeted_pump_route
+assert "m_isLeftButtonHeld" not in targeted_pump_route and "m_hasHeldMoveTarget" not in targeted_pump_route
+assert "normalizedDirectionZ" not in targeted_pump_route
+assert "const float normalizedDirectionX = static_cast<float>(inverseLength * deltaX)" in targeted_pump_route
+assert "const float projectedOffsetX = static_cast<float>(static_cast<double>(5 * skillRange) * normalizedDirectionX)" in targeted_pump_route
+assert "const float projectedOffsetZ = static_cast<float>(static_cast<double>(5 * skillRange) * (inverseLength * deltaZ))" in targeted_pump_route
+assert "TryRequestMoveToCell" not in targeted_pump_route, "source PT_SKILL must not route through generalized path candidate selection"
 
-normalized_pump = normalize(pump_route)
+normalized_pump = normalize(targeted_pump_route)
 expected_neighbors = "{{1, 0}}, {{1, 1}}, {{1, -1}}, {{-1, 0}}, {{-1, 1}}, {{-1, -1}}, {{0, 1}}, {{0, -1}}"
 assert expected_neighbors in normalized_pump, "current closest-safe-cell neighbor order changed"
 expected_sector_chain = re.compile(

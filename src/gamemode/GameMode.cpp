@@ -4376,6 +4376,12 @@ void ClearSkillChase(CGameMode& mode)
     mode.m_skillChaseSkillLevel = 0;
     mode.m_skillChaseRange = 1;
     mode.m_hasSkillChase = 0;
+    mode.m_groundSkillCellX = 0;
+    mode.m_groundSkillCellY = 0;
+    mode.m_groundSkillId = 0;
+    mode.m_groundSkillLevel = 0;
+    mode.m_groundSkillRange = 0;
+    mode.m_hasGroundSkillChase = 0;
 }
 
 void ClearPickupIntent(CGameMode& mode)
@@ -5528,6 +5534,7 @@ void BeginSkillChase(CGameMode& mode, u32 targetGid, u16 skillId, u16 skillLevel
     mode.m_skillChaseSkillLevel = static_cast<int>(skillLevel);
     mode.m_skillChaseRange = skillRange;
     mode.m_lastSkillChaseRequestTick = 0;
+    mode.m_hasGroundSkillChase = 0;
     mode.m_hasSkillChase = 1;
 }
 
@@ -5593,10 +5600,23 @@ bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode, int screenX, int scr
 
     int attrX = -1;
     int attrY = -1;
-    if (mode.m_view->ScreenToHoveredAttrCell(screenX, screenY, &attrX, &attrY)
-        && SendUseSkillToPosPacket(skillId, skillLevel, attrX, attrY)) {
+    if (mode.m_view->ScreenToHoveredAttrCell(screenX, screenY, &attrX, &attrY)) {
         ClearSkillChase(mode);
+        const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId));
+        mode.m_groundSkillCellX = attrX;
+        mode.m_groundSkillCellY = attrY;
+        mode.m_groundSkillId = static_cast<int>(skillId);
+        mode.m_groundSkillLevel = static_cast<int>(skillLevel);
+        mode.m_groundSkillRange = skillInfo ? skillInfo->attackRange : 0;
+        mode.m_hasGroundSkillChase = 1;
+        mode.m_hasSkillChase = 1;
         ClearPendingSkillUse(mode);
+        DbgLog("[GameMode] ground skill intent armed skillId=%u level=%u cell=(%d,%d) range=%d\n",
+            static_cast<unsigned int>(skillId),
+            static_cast<unsigned int>(skillLevel),
+            attrX,
+            attrY,
+            mode.m_groundSkillRange);
         return true;
     }
 
@@ -6577,11 +6597,128 @@ void PumpHeldMoveRequest(CGameMode& mode)
 
 void PumpSkillChaseRequest(CGameMode& mode)
 {
-    if (!mode.m_world || !mode.m_world->m_player || !mode.m_hasSkillChase || mode.m_skillChaseTargetGid == 0) {
+    if (!mode.m_world || !mode.m_world->m_player) {
         return;
     }
 
     CPlayer* player = mode.m_world->m_player;
+    if (mode.m_hasGroundSkillChase) {
+        const u16 groundSkillId = static_cast<u16>(mode.m_groundSkillId & 0xFFFF);
+        const u16 groundSkillLevel = static_cast<u16>(mode.m_groundSkillLevel & 0xFFFF);
+        const int skillRange = mode.m_groundSkillRange;
+        C3dAttr* attr = mode.m_world->m_attr;
+        if (groundSkillId == 0 || groundSkillLevel == 0 || !attr || attr->m_zoom <= 0
+            || attr->m_width <= 0 || attr->m_height <= 0
+            || attr->m_cells.size() < static_cast<size_t>(attr->m_width) * static_cast<size_t>(attr->m_height)) {
+            return;
+        }
+
+        int sourceTileX = -1;
+        int sourceTileY = -1;
+        mode.GetServerCoor(player->m_pos.x, player->m_pos.z, sourceTileX, sourceTileY);
+
+        float targetWorldX = 0.0f;
+        float targetWorldZ = 0.0f;
+        mode.GetClientCoor(mode.m_groundSkillCellX, mode.m_groundSkillCellY, targetWorldX, targetWorldZ);
+
+        // Ref ConvertToNumCellCloseAndFindNoRedCell (Ref/GameMode.cpp:8533,
+        // EXE VA 0x5709E0), with the selected server cell converted to its
+        // client-space center before projecting the range approach.
+        const float deltaX = player->m_pos.x - targetWorldX;
+        const float deltaZ = player->m_pos.z - targetWorldZ;
+        const float lengthSquared = deltaX * deltaX + deltaZ * deltaZ;
+        int approachTileX = sourceTileX;
+        int approachTileY = sourceTileY;
+        if (lengthSquared > 0.0f) {
+            const double inverseLength = 1.0 / std::sqrt(static_cast<double>(lengthSquared));
+            const float normalizedDirectionX = static_cast<float>(inverseLength * deltaX);
+            const float projectedOffsetX = static_cast<float>(static_cast<double>(5 * skillRange) * normalizedDirectionX);
+            const float projectedOffsetZ = static_cast<float>(static_cast<double>(5 * skillRange) * (inverseLength * deltaZ));
+            const float approachWorldX = projectedOffsetX + targetWorldX;
+            const float approachWorldZ = projectedOffsetZ + targetWorldZ;
+            const float zoom = static_cast<float>(attr->m_zoom);
+            approachTileX = static_cast<int>(std::floor(static_cast<double>(approachWorldX / zoom)
+                + static_cast<double>(attr->m_width / 2)));
+            approachTileY = static_cast<int>(std::floor(static_cast<double>(approachWorldZ / zoom)
+                + static_cast<double>(attr->m_height / 2)));
+        }
+
+        constexpr std::array<std::array<int, 2>, 8> kGroundRefNeighborOrder{{
+            {{1, 0}}, {{1, 1}}, {{1, -1}}, {{-1, 0}},
+            {{-1, 1}}, {{-1, -1}}, {{0, 1}}, {{0, -1}},
+        }};
+        const auto isSourceWalkableGroundCell = [attr](int x, int y) {
+            if (x < 0 || x >= attr->m_width || y < 0 || y >= attr->m_height) {
+                return false;
+            }
+            const CAttrCell& cell = attr->m_cells[static_cast<size_t>(x + y * attr->m_width)];
+            return cell.flag != 1 && cell.flag != 5;
+        };
+        if (!isSourceWalkableGroundCell(approachTileX, approachTileY)) {
+            const int projectedX = approachTileX;
+            const int projectedY = approachTileY;
+            for (const auto& offset : kGroundRefNeighborOrder) {
+                approachTileX = projectedX + offset[0];
+                approachTileY = projectedY + offset[1];
+                if (isSourceWalkableGroundCell(approachTileX, approachTileY)) {
+                    break;
+                }
+            }
+        }
+
+        // Ref allows states below 2, state 4, and states 16 or above.
+        if (player->m_stateId >= 2 && player->m_stateId != 4 && player->m_stateId < 16) {
+            return;
+        }
+
+        const float dx = player->m_pos.x - targetWorldX;
+        const float dz = player->m_pos.z - targetWorldZ;
+        const float dy = 0.0f; // Ref calls CalcDist with the player's own Y for the ground target.
+        const float horizontalDistanceSquared = dx * dx + dz * dz;
+        const double horizontalDistance = std::sqrt(static_cast<double>(horizontalDistanceSquared));
+        const float distanceSquared = static_cast<float>(horizontalDistance * horizontalDistance + dy * dy);
+        const double distance = std::sqrt(static_cast<double>(distanceSquared));
+        const bool destinationIsPlayerCell = player->m_destCellX == sourceTileX
+            && player->m_destCellZ == sourceTileY;
+        if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) {
+            // Ref message 66 reaches mode message 77; keep the current packet
+            // API and complete the intent after the packet attempt.
+            const bool sent = SendUseSkillToPosPacket(
+                groundSkillId,
+                groundSkillLevel,
+                mode.m_groundSkillCellX,
+                mode.m_groundSkillCellY);
+            DbgLog("[GameMode] source-range ground skill dispatch skillId=%u level=%u cell=(%d,%d) sent=%d\n",
+                static_cast<unsigned int>(groundSkillId),
+                static_cast<unsigned int>(groundSkillLevel),
+                mode.m_groundSkillCellX,
+                mode.m_groundSkillCellY,
+                sent ? 1 : 0);
+            ClearSkillChase(mode);
+            return;
+        }
+
+        if (player->m_destCellX == approachTileX && player->m_destCellZ == approachTileY) {
+            return;
+        }
+        if (player->m_stateId == 2) {
+            return;
+        }
+
+        player->m_destCellX = approachTileX;
+        player->m_destCellZ = approachTileY;
+        if (!player->m_isWaitingMoveAck || timeGetTime() > player->m_moveReqTick + 1000) {
+            player->m_isWaitingMoveAck = 1;
+            player->m_moveReqTick = timeGetTime();
+            SendMoveRequestPacket(approachTileX, approachTileY);
+        }
+        return;
+    }
+
+    if (!mode.m_hasSkillChase || mode.m_skillChaseTargetGid == 0) {
+        return;
+    }
+
     CGameActor* target = nullptr;
     if (mode.m_skillChaseTargetGid == g_session.m_gid
         || mode.m_skillChaseTargetGid == g_session.m_aid) {
@@ -9288,6 +9425,7 @@ CGameMode::CGameMode()
         m_lastAttackChaseHintTick(0), m_attackChaseTargetGid(0), m_attackChaseTargetCellX(-1), m_attackChaseTargetCellY(-1),
         m_attackChaseSourceCellX(-1), m_attackChaseSourceCellY(-1), m_attackChaseRange(1), m_hasAttackChaseHint(0),
         m_skillChaseTargetGid(0), m_lastSkillChaseRequestTick(0), m_skillChaseSkillId(0), m_skillChaseSkillLevel(0), m_skillChaseRange(1), m_hasSkillChase(0),
+        m_groundSkillCellX(0), m_groundSkillCellY(0), m_groundSkillId(0), m_groundSkillLevel(0), m_groundSkillRange(0), m_hasGroundSkillChase(0),
         m_mapLoadingStage(MapLoading_None), m_mapLoadingStartTick(0), m_mapLoadingAckTick(0), m_lastActorBootstrapPacketTick(0),
         m_worldProcessTick(GetTickCount()), m_worldProcessCarryMs(kWorldProcessTickMs), m_lastHoverRefreshTick(0),
         m_hasPendingPartyCreateOptions(0), m_pendingPartyCreateExpShare(0), m_pendingPartyCreateItemShare(0), m_pendingPartyCreateItemSharingType(0),
