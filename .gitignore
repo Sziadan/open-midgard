@@ -76,6 +76,7 @@ tools/tests/*
 !tools/tests/check_clif_skill_setunit_source.py
 !tools/tests/check_clif_skill_disappear_source.py
 !tools/tests/check_clif_skill_update_source.py
+!tools/tests/check_skill_cast_ack_source.py
 !tools/tests/ShowImageTests.cpp
 !tools/tests/check_show_image_packet.py
 !tools/tests/GuildSkillTests.cpp

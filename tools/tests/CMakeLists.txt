@@ -526,6 +526,8 @@ add_test(NAME clif_skill_disappear_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_clif_skill_disappear_source.py")
 add_test(NAME clif_skill_update_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_clif_skill_update_source.py")
+add_test(NAME skill_cast_ack_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_ack_source.py")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../HighPriest.exe.c
     ../../Ref/GameModePacket.cpp
@@ -548,6 +550,8 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_clif_skill_disappear_source.py
     ../../src/world/SkillUnit.cpp
     check_clif_skill_update_source.py
+    ../../src/gamemode/GameModePacket.cpp
+    check_skill_cast_ack_source.py
     check_prim2dflash.py
     check_spirits_packet_source.py
     check_spirits2_packet_source.py

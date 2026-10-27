@@ -4248,6 +4248,15 @@ void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
         return;
     }
 
+    const auto findExistingActor = [&mode](u32 actorId) -> CGameActor* {
+        if (mode.m_world == nullptr) {
+            return nullptr;
+        }
+        return actorId == g_session.m_aid
+            ? mode.m_world->m_player
+            : mode.m_world->GetGameActorByAID(actorId);
+    };
+
     const u32 srcGid = ReadLE32(packet.data + 2);
     const u32 dstGid = ReadLE32(packet.data + 6);
     const int cellX = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 10)));
@@ -4256,7 +4265,7 @@ void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
     const u32 property = ReadLE32(packet.data + 16);
     const int castTimeMs = static_cast<int>(ReadLE32(packet.data + 20));
 
-    CGameActor* sourceActor = ResolveCombatActor(mode, srcGid, true);
+    CGameActor* sourceActor = findExistingActor(srcGid);
     if (sourceActor == nullptr) {
         DbgLog("[GameMode] skill cast ack unresolved src=%u dst=%u skill=%u\n",
             srcGid,
@@ -4292,7 +4301,7 @@ void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
     }
 
     if (dstGid != 0) {
-        CGameActor* targetActor = ResolveCombatActor(mode, dstGid, true);
+        CGameActor* targetActor = findExistingActor(dstGid);
         if (targetActor != nullptr && targetActor != sourceActor) {
             const bool mercenaryOrHomun = targetActor->m_job > 6000 && targetActor->m_job < 6048;
             const bool pkOrSiege = mode.m_world != nullptr
