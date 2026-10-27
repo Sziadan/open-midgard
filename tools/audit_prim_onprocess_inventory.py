@@ -1766,7 +1766,7 @@ check("case 0x54 AnimMotion helper compares readable Ref, Ref decompilation, can
 source_angle_helper = body(REF_DHXJ_EFFECT2, "CEffectPrim :: Get_Angle(")
 source_angle_decompiled = body(REF_EFFECT2, "void __thiscall CEffectPrim::Get_Angle(CEffectPrim *this, float move_x, float move_z, __int16 *angle)\n{")
 exe_angle_helper = body(EXE, "void __thiscall CEffectPrim::Get_Angle(CEffectPrim *this, float move_x, float move_z, __int16 *angle)\n{")
-current_angle_helper = body(CURRENT, "int GetReferenceAngle(float moveX, float moveZ)")
+current_angle_helper = body(CURRENT, "int GetReferenceAngle(float moveX, float moveZ)\n{")
 check("case 0x56 Get_Angle helper compares canonical Ref/EXE and maps the finite-vector scan and quadrant branch",
       compact(source_angle_decompiled) == compact(exe_angle_helper)
       and all(compact(branch) in compact(source_angle_helper) for branch in [
@@ -2700,7 +2700,7 @@ source_stin = body(REF_DHXJ_EFFECT2, "void\tCEffectPrim :: PrimSTIN()")
 source_stin_decompiled = body(REF_EFFECT2, "void __thiscall CEffectPrim::PrimSTIN(CEffectPrim *this)\n{")
 exe_stin = body(EXE, "void __thiscall CEffectPrim::PrimSTIN(CEffectPrim *this)\n{")
 current_stin = body(CURRENT, "void UpdateReferenceStin(CEffectPrim* prim)")
-current_get_angle = body(CURRENT, "int GetReferenceAngle(float moveX, float moveZ)")
+current_get_angle = body(CURRENT, "int GetReferenceAngle(float moveX, float moveZ)\n{")
 source_get_angle = body(REF_DHXJ_EFFECT2, "void\tCEffectPrim :: Get_Angle(float move_x,float move_z,short *angle)")
 exe_get_angle = body(EXE, "void __thiscall CEffectPrim::Get_Angle(CEffectPrim *this, float move_x, float move_z, __int16 *angle)\n{")
 check("case 0x77 decompiled Ref and canonical EXE match and dispatcher continues to common tick without pre-copying position",
@@ -2902,7 +2902,7 @@ check("case 0x7A branch map pairs target resolution/loss, first aim, alpha/steer
       < current_stin2.index("else if (gi.process <= 20)")
       < current_stin2.index("if (gi.process > 5)") < current_stin2.index("gi.sparkX +=")
       < current_stin2.index("if (gi.process % 3 == 0)")
-      and "while(normalizedX<g_cosTable[angle])" in compact(body(CURRENT, "int GetReferenceAngle(float moveX, float moveZ)"))
+      and "while(normalizedX<g_cosTable[angle])" in compact(body(CURRENT, "int GetReferenceAngle(float moveX, float moveZ)\n{"))
       and "while(v40<(double)g_cosTable[v11])" in compact(exe_stin2)
       and "GetReferenceAngle(deltaX, deltaZ)" in current_stin2)
 
@@ -2971,11 +2971,12 @@ source_kouenka = body(REF_DHXJ_EFFECT2, "bool\tCEffectPrim :: PrimKouenka()")
 source_kouenka_decompiled = body(REF_EFFECT2, "bool __thiscall CEffectPrim::PrimKouenka(CEffectPrim *this)\n{")
 exe_kouenka = body(EXE, "bool __thiscall CEffectPrim::PrimKouenka(CEffectPrim *this)\n{")
 current_kouenka = body(CURRENT, "bool UpdateReferenceKouenka(CEffectPrim* prim)")
-check("case 0x7C readable/decompiled Ref and canonical EXE agree; dispatcher uses PrimKouenka and current route returns updater result",
+check("case 0x7C readable/decompiled Ref and canonical EXE agree; dispatcher ignores PrimKouenka result and current route continues",
       compact(source_kouenka_decompiled) == compact(exe_kouenka)
       and re.search(r"case\s+0x7C:\s*CEffectPrim::PrimKouenka\(this\);\s*goto \$L145961;", source_dispatch)
       and "if (m_type == PP_KOUENKA)" in current_dispatch
-      and "return UpdateReferenceKouenka(this);" in current_dispatch
+      and "UpdateReferenceKouenka(this); // Source case 0x7C ignores PrimKouenka's result." in current_dispatch
+      and "return true;" in current_dispatch[current_dispatch.index("if (m_type == PP_KOUENKA)"):]
       and 0x7C not in current_copy_ids)
 check("case 0x7C branch map compares source and current lane, paired heights, RNG zero guard, motion and tail order",
       all(compact(branch) in compact(source_kouenka) for branch in [
@@ -3036,7 +3037,7 @@ exe_stin4 = body(EXE, "void __thiscall CEffectPrim::PrimSTIN4(CEffectPrim *this)
 current_stin4 = body(CURRENT, "void UpdateReferenceStin4(CEffectPrim* prim)")
 source_stin4_angle = body(REF_DHXJ_EFFECT2, "void\tCEffectPrim :: Get_Angle(float move_x,float move_z,short *angle)")
 exe_stin4_angle = body(EXE, "void __thiscall CEffectPrim::Get_Angle(CEffectPrim *this, float move_x, float move_z, __int16 *angle)\n{")
-current_stin4_angle = body(CURRENT, "int GetReferenceAngle(float moveX, float moveZ)")
+current_stin4_angle = body(CURRENT, "int GetReferenceAngle(float moveX, float moveZ)\n{")
 check("case 0x7D readable/decompiled Ref and canonical EXE agree; void dispatch reaches shared tick without pre-copy or position writes",
       compact(source_stin4_decompiled) == compact(exe_stin4)
       and re.search(r"case\s+0x7D:\s*CEffectPrim::PrimSTIN4\(this\);\s*goto \$L145961;", source_dispatch)

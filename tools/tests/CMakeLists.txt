@@ -345,6 +345,8 @@ add_test(NAME devotion_packet_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_devotion_packet_source.py")
 add_test(NAME prim2dflash_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim2dflash.py")
+add_test(NAME prim_onprocess_inventory_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../audit_prim_onprocess_inventory.py")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../HighPriest.exe.c
     ../../Ref/GameModePacket.cpp
