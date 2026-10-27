@@ -2051,3 +2051,11 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - Inventory: 59 direct current message cases; 16 remaining in-scope IDs without direct or inherited routing: `[3, 4, 5, 6, 21, 56, 57, 78, 79, 110, 118, 122, 123, 135, 136, 139]`.
 - The x64 Release build succeeds. The three focused CTests for inventory, aura, and movement source gates pass; all other previously built source checks remain available. A whole test-project rebuild currently fails while compiling unrelated `ChangeGuildPacketBody.inc` and `TalkboxChatContentsBody.inc` extracted tests because their stubs lack production declarations (`CGameMode::m_isReqUpgradeSkillLevel`, `g_session`, `PLAYER_SKILL_INFO`, and related types); this does not involve the movement branch. `git diff --check` passes.
 - Authorized OldRO deployment matches Release SHA-256 `6D04D3D4354A1F665469CC1AC5B9DF8A4A8BF576C09DEB257A96D66C15DB346B`.
+
+# `CGameActor::SendMsg` message 3 spawn/update initialization (2026-10-27)
+
+- Ref and canonical EXE message 3 branches match. Ported cell-to-world X/Z and terrain height, facing angle `45 * (direction + 4)`, actor dimensions, destination cell, head type with special value `7 -> 100`, body/effect/health state, idle state, and guild ID/emblem version in source order.
+- `tools/tests/check_actor_sendmsg_spawn_case.py` compares complete Ref/EXE `SendMsg` bodies and message 3 branches, then checks payload fields and branch operation order against the current code. Registered as CTest `actor_sendmsg_spawn_source_check`.
+- The actor inventory now reports 60 direct current cases and 15 remaining in-scope IDs without direct/inherited routes: `[4, 5, 6, 21, 56, 57, 78, 79, 110, 118, 122, 123, 135, 136, 139]`.
+- The x64 Release build succeeds; four focused source checks (inventory, aura, movement and spawn) pass. A full test-project rebuild remains blocked by the unrelated extracted packet-test stub errors recorded in the preceding checkpoint. `git diff --check` passes.
+- Authorized OldRO deployment matches Release SHA-256 `ADE8CEEE07B886ECF286ADDF203008789F54201D6E4D814357D0434F0C8D6EDC`.

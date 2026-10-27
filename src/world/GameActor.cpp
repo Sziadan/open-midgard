@@ -4839,6 +4839,28 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
     case 20:
         LaunchEffect(7, vector3d{}, 0.0f);
         return;
+    case 3: {
+        const int* actorArgs = reinterpret_cast<const int*>(par1);
+        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+            gameMode->GetClientCoor(actorArgs[3], actorArgs[4], m_pos.x, m_pos.z);
+            if (gameMode->m_world && gameMode->m_world->m_attr) {
+                m_pos.y = gameMode->m_world->m_attr->GetHeight(m_pos.x, m_pos.z);
+            }
+        }
+        m_roty = static_cast<float>(45 * (actorArgs[5] + 4));
+        m_xSize = actorArgs[7];
+        m_ySize = actorArgs[8];
+        m_moveDestX = actorArgs[3];
+        m_moveDestY = actorArgs[4];
+        m_headType = actorArgs[9];
+        if (actorArgs[20] == 7) {
+            m_headType = 100;
+        }
+        SetAttrState(actorArgs[13], actorArgs[15], actorArgs[14], false);
+        SetState(0);
+        SetGuildInfo(actorArgs[23], actorArgs[24]);
+        return;
+    }
     case 0: {
         const int* pathArgs = reinterpret_cast<const int*>(par1);
         m_moveStartTime = timeGetTime();
