@@ -11879,7 +11879,7 @@ bool CEffectPrim::UsesReferenceParticle() const
             && (m_master->GetEffectType() == 14 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
             && (m_master->GetEffectType() == 53 || m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
-                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47));
+                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 622));
 }
 
 CEffectPrim::~CEffectPrim()
@@ -18715,6 +18715,32 @@ void CRagEffect::SpawnStin4(const char* textureName, char variant)
     }
 }
 
+void CRagEffect::ApplyThunderStorm2()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return;
+
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_ThunderStorm.wav", m_effectPos.x-listener.x, 0.0f,
+            m_effectPos.z-listener.z, 250, 40, 1.0f);
+    }
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+    if (!prim) return;
+    prim->m_duration = m_duration;
+    prim->m_renderFlag |= 0x200;
+    prim->m_pattern |= 0x200;
+    prim->m_deltaPos2.y = -4.5f;
+    prim->m_animSpeed = 2;
+    prim->m_size = 2.5f;
+    prim->m_numSegments = 1;
+    prim->SetParticleResources("misc\\thunder_storm.spr", "misc\\thunder_storm.act");
+    InitReferenceSegments(prim);
+}
+
 void CRagEffect::ApplyBottomMagnus(const char* textureName, int variant)
 {
     if (textureName == nullptr || m_stateCnt != 0) {
@@ -19843,6 +19869,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 621) {
         ApplyStin4();
+        return true;
+    }
+    if (m_type == 622) {
+        ApplyThunderStorm2();
         return true;
     }
     if (m_type == 618) {

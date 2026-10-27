@@ -474,6 +474,7 @@ struct CRagEffect : CGameObject {
     void ApplyEarthSpike(char);
     void ApplyStin4();
     void SpawnStin4(const char*,char);
+    void ApplyThunderStorm2();
     void SpawnBash3D(const char*,char,char);
     void ApplyFrostDiver();
     void ApplyFrostDiver2();
@@ -2983,6 +2984,35 @@ int main()
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
     for (int angle=0; angle<=360; ++angle) { g_sinTable[angle]=GetSin(angle); g_cosTable[angle]=GetCos(angle); }
+    {
+        CRenderObject actor,listener;actor.m_pos={30,40,50};listener.m_pos={5,300,8};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_master=&actor;effect.m_duration=200;
+        effect.ApplyThunderStorm2();
+        check(effect.m_effectPos.x==30&&effect.m_effectPos.y==40&&effect.m_effectPos.z==50
+            &&effect.m_primList.size()==1&&waveCalls.size()==1
+            &&waveCalls[0].name=="effect\\EF_ThunderStorm.wav"&&waveCalls[0].x==25&&waveCalls[0].z==42,
+            "ThunderStorm2 frame zero follows its master, emits one particle, and plays listener-relative audio");
+        if(!effect.m_primList.empty()) {
+            const CEffectPrim* prim=effect.m_primList.front();
+            check(prim->m_type==PP_3DPARTICLE&&prim->m_duration==200&&prim->m_renderFlag==0x201
+                &&prim->m_pattern==0x200&&prim->m_deltaPos2.y==-4.5f&&prim->m_animSpeed==2
+                &&prim->m_size==2.5f&&prim->m_numSegments==1&&prim->UsesReferenceParticle(),
+                "ThunderStorm2 particle preserves type, duration, inherited alpha plus node-depth flag, pattern, offset, animation, and segment count");
+            check(prim->m_spriteSprName=="misc\\thunder_storm.spr"
+                &&prim->m_spriteActName=="misc\\thunder_storm.act"
+                &&g_resMgr.requests==std::vector<std::string>({"misc\\thunder_storm.spr","misc\\thunder_storm.act"}),
+                "ThunderStorm2 binds exact source sprite/action paths in order");
+            check(prim->m_segments[0].pos.x==30&&prim->m_segments[0].pos.y==40&&prim->m_segments[0].pos.z==50,
+                "ThunderStorm2 InitSegment equivalent seeds the current segment at the parent origin");
+        }
+        effect.ClearPrims();g_world.UpdateGameObjects();actor.m_pos={70,80,90};effect.m_stateCnt=1;waveCalls.clear();
+        effect.ApplyThunderStorm2();
+        check(effect.m_effectPos.x==70&&effect.m_effectPos.y==80&&effect.m_effectPos.z==90
+            &&effect.m_primList.empty()&&waveCalls.empty(),
+            "ThunderStorm2 refreshes master position after frame zero without repeating sound or emission");
+        g_world.m_player=oldPlayer;
+    }
     {
         CRenderObject actor,listener;actor.m_pos={30,40,50};listener.m_pos={5,300,8};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;

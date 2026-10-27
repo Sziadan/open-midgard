@@ -477,6 +477,7 @@ private:
     void ApplySphereWind(const char* textureName, short time, int variant);
     void ApplyStin4();
     void SpawnStin4(const char* textureName, char variant);
+    void ApplyThunderStorm2();
     void ApplyEarthSpike(char variant);
     void ApplyColorPaper(const char* textureName);
     void ApplySaintCasting(short time, const char* textureName, int variant);
