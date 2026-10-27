@@ -4979,6 +4979,56 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         m_oldColor = ACTOR_COLOR{ 0, 0, 0, 0 };
         m_isSprArgbFixed = 0;
         return;
+    case 126: {
+        if (m_99 == 99
+            || (m_effectState & kEffectStateSpecialHidingMask) != 0
+            || (m_effectState & kEffectStateBurrowMask) != 0
+            || (m_effectState & kEffectStateHidingMask) != 0) {
+            m_is99 = 1;
+            return;
+        }
+
+        m_99 = 99;
+        const int job = m_job;
+        const bool specialJob = (job >= 1324 && job <= 1363)
+            || job == 1732
+            || (job >= 1938 && job <= 1955);
+        const auto launchTwice = [this](int effectId) {
+            LaunchEffect(effectId, vector3d{}, 0.0f);
+            LaunchEffect(effectId, vector3d{}, 0.0f);
+        };
+
+        if (g_session.m_isAura != 1) {
+            if (job > 4000 || job == 23) {
+                launchTwice(362);
+            } else if (!specialJob) {
+                launchTwice(job < 1638 ? 202 : 362);
+            }
+            m_is99 = 1;
+            return;
+        }
+
+        if (job > 4000 || job == 23) {
+            launchTwice(362);
+            LaunchEffect(397, vector3d{}, 0.0f);
+            LaunchEffect(398, vector3d{}, 0.0f);
+            m_is99 = 1;
+            return;
+        }
+
+        if (specialJob) {
+            m_is99 = 1;
+            return;
+        }
+
+        launchTwice(362);
+        if (job < 1638 || job > 1663) {
+            LaunchEffect(200, vector3d{}, 0.0f);
+            LaunchEffect(201, vector3d{}, 0.0f);
+        }
+        m_is99 = 1;
+        return;
+    }
     case 98:
         m_willBeDead = 0;
         m_vanishTime = 0;

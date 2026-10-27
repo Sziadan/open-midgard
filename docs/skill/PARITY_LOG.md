@@ -2031,3 +2031,14 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - Ref and EXE have 79 matching IDs. Current has 57 direct IDs plus local-only gauge UI cases 34/35. Message 48 is represented through the effect destructor owner-cleanup path. UI-only IDs 7/32/33/54/55 are tied to their Ref balloon/title UI fields and excluded by the implementation plan.
 - The remaining in-scope unmapped set is `[0, 3, 4, 5, 6, 21, 56, 57, 78, 79, 110, 118, 122, 123, 126, 135, 136, 139]`. The inventory test does not claim branch parity for these IDs.
 - All 37 CTest tests pass. No runtime code changed.
+
+# `CGameActor::SendMsg` message 126 level-99 aura (2026-10-27)
+
+- Ref and canonical `HighPriest.exe.c` complete `CGameActor::SendMsg` bodies and case 126 normalize identically. `tools/tests/check_actor_sendmsg_aura_case.py` maps its branch guards, operation order, job gates, and every launched effect to the current case.
+- The source first suppresses launch when `m_99 == 99` or effect state has special hiding, burrow, or hiding; it still sets `m_is99 = 1`. Otherwise it sets `m_99 = 99` and selects between `m_isAura != 1` and enabled paths.
+- Disabled path: jobs above 4000 or job 23 launch effect 362 twice; nonspecial jobs launch 202 twice below job 1638, otherwise 362 twice; excluded ranges launch nothing. Each route sets `m_is99`.
+- Enabled path: jobs above 4000 or job 23 launch 362 twice then 397 and 398. Excluded jobs 1324–1363, 1732, and 1938–1955 launch nothing. Other jobs launch 362 twice; jobs below 1638 or above 1663 additionally launch 200 then 201. Each route sets `m_is99`.
+- Canonical Ref and EXE `CSession` constructors set `m_isAura = 1`; the current field has that in-class default. The source toggle `TT_AURA_ON_OFF` reports through legacy UI and is outside the UI parity scope; current code can use either flag value if a modern setting changes it.
+- Source handler inventory confirms IDs 200/201/202/397/398 map to `Level99` handlers and 362 to `Level99_3`. The current effect catalog and handler source do not implement these six effects; their `EffectTicksWhenNoFrameTime` mentions are cadence only. Added all six to the WP5 handler backlog in `MISMATCHES.md`; the actor caller still issues the exact source launches per the plan's dependency protocol.
+- `tools/tests/check_actor_sendmsg_aura_case.py` is registered as `actor_sendmsg_aura_source_check`. All 38 CTests pass. The x64 Release build succeeds with existing unrelated C4244 warnings at `RagEffect.cpp:11555-11556`. Authorized OldRO executable SHA-256 matches Release: `510B23C9C0076A638771668E807D795BCB7D34619D3203A23AD96317AF76D893`.
+- The actor inventory now has 58 direct current cases and 17 in-scope source IDs without direct/inherited routes. No live aura/render acceptance is claimed.
