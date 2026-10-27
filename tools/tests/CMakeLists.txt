@@ -15,6 +15,15 @@ string(FIND "${packet_source}" "void HandleIgnorePacket(" sound_end)
 math(EXPR sound_length "${sound_end} - ${sound_start}")
 string(SUBSTRING "${packet_source}" ${sound_start} ${sound_length} sound_body)
 file(READ "../../src/gamemode/GameMode.cpp" mode_source)
+string(FIND "${mode_source}" "struct AmbientSoundTrigger {" ambient_sound_start)
+string(FIND "${mode_source}" "float g_savedOutdoorCameraLatitude" ambient_sound_end)
+math(EXPR ambient_sound_length "${ambient_sound_end} - ${ambient_sound_start}")
+string(SUBSTRING "${mode_source}" ${ambient_sound_start} ${ambient_sound_length} ambient_sound_body)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/AmbientSoundGeometry.inc" "${ambient_sound_body}")
+add_executable(ambient_sound_checks AmbientSoundTests.cpp)
+target_compile_features(ambient_sound_checks PRIVATE cxx_std_17)
+target_include_directories(ambient_sound_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME ambient_sound_checks COMMAND ambient_sound_checks)
 string(FIND "${mode_source}" "void CGameMode::ProcessPlayWave()" update_start)
 string(FIND "${mode_source}" "void CGameMode::OnUpdate()" update_end)
 math(EXPR update_length "${update_end} - ${update_start}")
@@ -393,6 +402,8 @@ add_test(NAME processsound_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_processsound_source.py")
 add_test(NAME process_damage_situation_scope_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_process_damage_situation_scope.py")
+add_test(NAME soundmaker_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_soundmaker_source.py")
 add_test(NAME dummy_effect_launcher_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_dummy_effect_launcher.py")
 add_test(NAME actor_sendmsg_effect_cases_source_check

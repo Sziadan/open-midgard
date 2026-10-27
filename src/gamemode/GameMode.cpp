@@ -134,13 +134,61 @@ constexpr float kRefIndoorLatitudeMin = -55.0f;
 constexpr float kRefIndoorLatitudeMax = -35.0f;
 constexpr float kRefOutdoorLatitudeMin = -65.0f;
 constexpr float kRefOutdoorLatitudeMax = -25.0f;
-constexpr u32 kAmbientSoundRetryMs = 200;
-constexpr float kAmbientSoundDefaultExtent = 3.0f;
 constexpr float kAmbientSoundBoundarySlack = 75.0f;
 constexpr float kAmbientSoundCullSlack = 130.0f;
-constexpr float kAmbientSoundMinRangeFactor = 1.0f / 6.0f;
-constexpr int kAmbientSoundMaxDist = 250;
-constexpr int kAmbientSoundMinDist = 40;
+
+struct AmbientSoundTrigger {
+    float relativeX = 0.0f;
+    float relativeZ = 0.0f;
+};
+
+bool ResolveAmbientSoundTrigger(float playerX, float playerZ, float soundX, float soundZ,
+    int soundWidth, int soundHeight, float soundRange, float soundDiagonal,
+    AmbientSoundTrigger* outTrigger)
+{
+    if (!outTrigger) {
+        return false;
+    }
+
+    const float playerDx = playerX - soundX;
+    const float playerDz = playerZ - soundZ;
+    const float centerDistance = std::sqrt(playerDx * playerDx + playerDz * playerDz);
+    if (centerDistance - (soundDiagonal + soundRange) > kAmbientSoundCullSlack) {
+        return false;
+    }
+
+    const bool verticalAxis = playerDx == 0.0f || soundWidth == 0;
+    const float slope = verticalAxis ? 0.0f : playerDz / playerDx;
+    const int integerAspect = soundWidth != 0 ? soundHeight / soundWidth : 0;
+    const std::int64_t integerSlope = verticalAxis ? 0 : static_cast<std::int64_t>(slope);
+    const std::int64_t absoluteSlope = integerSlope < 0 ? -integerSlope : integerSlope;
+    const bool useHorizontalEdge = !verticalAxis && absoluteSlope <= integerAspect;
+    const float xDirection = playerDx >= 0.0f ? 1.0f : -1.0f;
+    const float zDirection = playerDz >= 0.0f ? 1.0f : -1.0f;
+
+    float edgeOffsetX = 0.0f;
+    float edgeOffsetZ = 0.0f;
+    if (useHorizontalEdge) {
+        edgeOffsetX = static_cast<float>(soundWidth) * xDirection * 0.5f;
+        edgeOffsetZ = edgeOffsetX * slope;
+    } else {
+        edgeOffsetZ = static_cast<float>(soundHeight) * zDirection * 0.5f;
+        edgeOffsetX = verticalAxis ? 0.0f : edgeOffsetZ / slope;
+    }
+
+    const float edgeX = soundX + edgeOffsetX;
+    const float edgeZ = soundZ + edgeOffsetZ;
+    const float edgeDx = edgeX - playerX;
+    const float edgeDz = edgeZ - playerZ;
+    const float edgeDistance = std::sqrt(edgeDx * edgeDx + edgeDz * edgeDz);
+    if (edgeDistance - soundRange > kAmbientSoundBoundarySlack) {
+        return false;
+    }
+
+    outTrigger->relativeX = edgeDx;
+    outTrigger->relativeZ = edgeDz;
+    return true;
+}
 
 float g_savedOutdoorCameraLatitude = -45.0f;
 float g_savedOutdoorCameraDistance = kRefAverageCameraDistance;
@@ -368,71 +416,6 @@ void UpdateMapAudio(CGameMode& mode)
     const vector3d listenerPos = mode.m_world->m_player->m_pos;
     const u32 now = GetTickCount();
 
-    auto resolveSoundExtent = [](int rawExtent) {
-        return rawExtent > 0 ? static_cast<float>(rawExtent) : kAmbientSoundDefaultExtent;
-    };
-
-    auto resolveSoundRange = [](float rawRange) {
-        return rawRange > 0.0f ? rawRange : static_cast<float>(kAmbientSoundMaxDist);
-    };
-
-    auto clampUnitVolume = [](float value) {
-        return (std::max)(0.0f, (std::min)(1.0f, value));
-    };
-
-    auto tryResolveSoundTrigger = [&](const C3dWorldRes::soundSrcInfo& sound, float* outEdgeDistance, float* outRange) {
-        if (!outEdgeDistance || !outRange) {
-            return false;
-        }
-
-        const float width = resolveSoundExtent(sound.width);
-        const float height = resolveSoundExtent(sound.height);
-        const float range = resolveSoundRange(sound.range);
-        const float listenerDx = listenerPos.x - sound.pos.x;
-        const float listenerDz = listenerPos.z - sound.pos.z;
-        const float centerDistance = std::sqrt(listenerDx * listenerDx + listenerDz * listenerDz);
-        const float diagonal = std::sqrt(width * width + height * height);
-        if (centerDistance - (diagonal + range) > kAmbientSoundCullSlack) {
-            return false;
-        }
-
-        const float halfWidth = width * 0.5f;
-        const float halfHeight = height * 0.5f;
-        float edgeX = sound.pos.x;
-        float edgeZ = sound.pos.z;
-        constexpr float kEpsilon = 0.0001f;
-        if (std::fabs(listenerDx) <= kEpsilon && std::fabs(listenerDz) <= kEpsilon) {
-            edgeX += halfWidth;
-        } else if (std::fabs(listenerDx) <= kEpsilon) {
-            edgeZ += listenerDz >= 0.0f ? halfHeight : -halfHeight;
-        } else if (std::fabs(listenerDz) <= kEpsilon) {
-            edgeX += listenerDx >= 0.0f ? halfWidth : -halfWidth;
-        } else {
-            const float slope = listenerDz / listenerDx;
-            const float aspect = halfWidth > kEpsilon ? (halfHeight / halfWidth) : 0.0f;
-            if (halfHeight <= kEpsilon || std::fabs(slope) <= aspect) {
-                const float edgeOffsetX = listenerDx >= 0.0f ? halfWidth : -halfWidth;
-                edgeX += edgeOffsetX;
-                edgeZ += edgeOffsetX * slope;
-            } else {
-                const float edgeOffsetZ = listenerDz >= 0.0f ? halfHeight : -halfHeight;
-                edgeZ += edgeOffsetZ;
-                edgeX += edgeOffsetZ / slope;
-            }
-        }
-
-        const float edgeDx = edgeX - listenerPos.x;
-        const float edgeDz = edgeZ - listenerPos.z;
-        const float edgeDistance = std::sqrt(edgeDx * edgeDx + edgeDz * edgeDz);
-        if (edgeDistance - range > kAmbientSoundBoundarySlack) {
-            return false;
-        }
-
-        *outEdgeDistance = edgeDistance;
-        *outRange = range;
-        return true;
-    };
-
     size_t soundIndex = 0;
     for (C3dWorldRes::soundSrcInfo* sound : worldRes->m_sounds) {
         if (!sound || sound->waveName[0] == '\0') {
@@ -441,8 +424,7 @@ void UpdateMapAudio(CGameMode& mode)
         }
 
         const std::string wavName = sound->waveName;
-        const float volumeFactor = (std::max)(0.0f, sound->vol);
-        const u32 cycleMs = sound->cycle > 0.0f ? static_cast<u32>(sound->cycle * 1000.0f) : kAmbientSoundRetryMs;
+        const u32 cycleMs = static_cast<u32>(static_cast<s64>(sound->cycle * 1000.0f));
         PLAY_WAVE_INFO* playingState = nullptr;
         for (PLAY_WAVE_INFO& playing : mode.m_ambientWaveList) {
             if (playing.wavName == wavName && playing.nAID == static_cast<u32>(soundIndex)) {
@@ -456,40 +438,34 @@ void UpdateMapAudio(CGameMode& mode)
             info.wavName = wavName;
             info.nAID = static_cast<u32>(soundIndex);
             info.term = cycleMs;
-            info.endTick = cycleMs > now ? 0u : now - cycleMs;
+            info.endTick = now - cycleMs;
             info.pos = sound->pos;
-            info.volumeFactor = volumeFactor;
-            info.volumeMaxDist = sound->width;
-            info.volumeMinDist = sound->height;
+            info.volumeFactor = sound->vol;
+            info.volumeMaxDist = static_cast<int>(sound->range);
+            info.volumeMinDist = static_cast<int>(sound->range * 0.16666667f);
             mode.m_ambientWaveList.push_back(info);
             playingState = &mode.m_ambientWaveList.back();
         }
 
         playingState->term = cycleMs;
-
-        float edgeDistance = 0.0f;
-        float audibleRange = 0.0f;
-        if (!tryResolveSoundTrigger(*sound, &edgeDistance, &audibleRange)) {
+        const int diagonalSquared = sound->width * sound->width + sound->height * sound->height;
+        const float diagonal = std::sqrt(static_cast<float>(diagonalSquared));
+        AmbientSoundTrigger trigger;
+        if (!ResolveAmbientSoundTrigger(listenerPos.x, listenerPos.z,
+                sound->pos.x, sound->pos.z, sound->width, sound->height,
+                sound->range, diagonal, &trigger)) {
             ++soundIndex;
             continue;
         }
 
-        if (playingState->endTick <= now) {
-            const float minDistance = (std::max)(audibleRange * kAmbientSoundMinRangeFactor, 1.0f);
-            const float maxDistance = (std::max)(audibleRange + kAmbientSoundBoundarySlack, minDistance);
-            float distanceFactor = 1.0f;
-            if (edgeDistance >= maxDistance) {
-                distanceFactor = 0.0f;
-            } else if (edgeDistance > minDistance) {
-                distanceFactor = minDistance / edgeDistance;
-            }
-
-            if (distanceFactor > 0.0f
-                && audio->PlaySound(wavName.c_str(), clampUnitVolume(volumeFactor * distanceFactor))) {
-                playingState->endTick = now + cycleMs;
-            } else {
-                playingState->endTick = now + kAmbientSoundRetryMs;
-            }
+        if (now > playingState->endTick + playingState->term) {
+            // Ref CSoundMaker::OnProcess stores the tick before attempting playback.
+            playingState->endTick = GetTickCount();
+            // Ref runtime-wave: 0x5D6A53. Name comes from this map RSW sound source.
+            PlayWave(wavName.c_str(), trigger.relativeX, 0.0f, trigger.relativeZ,
+                static_cast<int>(sound->range),
+                static_cast<int>(sound->range * 0.16666667f),
+                sound->vol);
         }
 
         ++soundIndex;

@@ -4,7 +4,6 @@ Runtime-name entries require a producer port; they do not establish that an asse
 Source anchors already ported are listed separately in `generated/runtime_wave_callsites.tsv`; none is a live-verification claim.
 
 <!-- generated:begin -->
-- PlayWave at 0x5D6A53 in CSoundMaker::OnProcess uses a runtime name; trace and port its producer (not an unrecoverable literal)
 - PlayWave at 0x5D9E95 in CPc::OnProcess uses a runtime name; trace and port its producer (not an unrecoverable literal)
 - PlayWave at 0x5E0FD6 in CGrannyPc::OnProcess uses a runtime name; trace and port its producer (not an unrecoverable literal)
 - PlayWave at 0x5E48A1 in CPlayer::OnProcess uses a runtime name; trace and port its producer (not an unrecoverable literal)

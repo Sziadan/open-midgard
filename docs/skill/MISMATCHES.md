@@ -386,3 +386,8 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 
 - Ref and canonical EXE function bodies compare equal. Its sole sound branch runs only for a due, nonlethal positive damage entry targeting a non-PC when `g_used_Skill` is false; it calls `GetWeaponHitWaveName(-1)` then plays at zero offsets. That selector chooses one of four `_hit_normal.wav` names with `rand()%4`.
 - The queue is populated only by 17 Ref callsites in `Ref/HP_Battle.cpp`, within `UIWindowMgr::{Aco_Battle,Boy_ActinField,Help_Battle,Mob_Battle}`; all 17 EXE callsites are in the corresponding legacy UI battle functions. Current code has no `g_DM_List`/`SetDamageSituation`; network damage uses `HandleSkillDamageNotify` and WBA with different semantics. Exclude the queue and its hit sound as legacy battle UI, not as an unresolved skill sound port.
+
+# Map ambience defensive inputs and timer width (2026-10-27)
+
+- Source `CSoundMaker::OnProcess` divides by `m_width` and derives edge offsets from the player-to-source slope. The current helper avoids division when width is zero or the player is exactly on the vertical axis; these are defensive definitions for degenerate RSW records/coordinates where source arithmetic is undefined or can divide by zero. Ordinary nonzero-width, off-axis inputs follow the source truncated-slope/integer-aspect branch and are regression tested.
+- Current `PLAY_WAVE_INFO` stores cycle/end ticks as 32-bit unsigned values while the decompiled class stores a wider cycle and tick. Normal map cycles are matched modulo the current timer representation; very long/negative or wraparound cycle values need runtime validation.

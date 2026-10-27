@@ -8,7 +8,7 @@ callVA	function	srcAnchor	status
 0x57E27C	CGameMode::ProcessDamageSituation	docs/skill/MISMATCHES.md	scope-excluded (legacy HP_Battle UI damage queue; no current counterpart)
 0x5A8845	CGameMode::Zc_Sound	src/gamemode/GameModePacket.cpp	port-anchor-present (runtime parity unverified)
 0x5A88C7	CGameMode::Zc_Sound	src/gamemode/GameModePacket.cpp	port-anchor-present (runtime parity unverified)
-0x5D6A53	CSoundMaker::OnProcess		producer port pending
+0x5D6A53	CSoundMaker::OnProcess	src/gamemode/GameMode.cpp	port-anchor-present (runtime parity unverified)
 0x5D9E95	CPc::OnProcess		producer port pending
 0x5E0FD6	CGrannyPc::OnProcess		producer port pending
 0x5E48A1	CPlayer::OnProcess		producer port pending
