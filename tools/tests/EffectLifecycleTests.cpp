@@ -296,7 +296,7 @@ struct CEffectPrim : CGameObject {
     CSprRes* m_particleSprRes = nullptr;
     CActRes* m_particleActRes = nullptr;
     std::string m_spriteActName,m_spriteSprName;
-    int m_spriteAction=0,m_animSpeed=0,m_curMotion=0,m_numSegments=0;
+    int m_spriteAction=0,m_spriteMotionBase=0,m_animSpeed=0,m_curMotion=0,m_numSegments=0;
     bool m_repeatAnim=false,m_spriteRepeat=false;
     float m_alpha=0,m_radius=0,m_alphaSpeed=0,m_maxAlpha=254,m_sizeSpeed=0,m_sizeAccel=0;
     int m_any=0,m_red=255,m_green=255,m_blue=255,m_redSpeed=0,m_greenSpeed=0,m_blueSpeed=0;
@@ -569,6 +569,7 @@ struct CRagEffect : CGameObject {
     void SpawnTopRank();
     void SpawnParty();
     void SpawnSnow();
+    void SpawnSakura();
     void SpawnTorch();
     void SpawnEnchantPoison();
     void SpawnEnchantPoison2();
@@ -5600,6 +5601,46 @@ int main()
             "Snow does not emit when remaining duration equals the strict 160-frame cutoff");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_attr=oldAttr;g_world.m_player=oldPlayer;
         rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor;actor.m_pos={10,120,30};
+        CRagEffect effect;effect.m_type=163;effect.m_master=&actor;effect.m_duration=99999999;
+        const int draws=rngDraws;g_resMgr.requests.clear();
+        rngValues={1,5,10,20,30,40,299,0,2};rngCursor=0;effect.SpawnSakura();
+        check(effect.m_effectPos.x==10&&effect.m_effectPos.y==120&&effect.m_effectPos.z==30
+            &&effect.m_primList.size()==1&&rngDraws-draws==9&&rngCursor==9,
+            "Sakura projects its master and consumes nine ordered draws at state zero");
+        auto* first=effect.m_primList.front();const EffectGi& gi=first->m_gi[0];
+        check(first->m_type==PP_SAKURA&&first->m_duration==99999999&&first->m_alpha==200
+            &&first->m_size==0.27f&&first->m_numSegments==1&&gi.life==1
+            &&std::fabs(gi.maxHeight-0.3f)<0.000001f,
+            "Sakura sets primitive lifetime, alpha, size and active GI0 profile");
+        check(gi.height[0]==10&&gi.height[1]==20&&gi.height[2]==30&&gi.height[3]==40
+            &&gi.vecBPreX==159&&gi.arcBaselineY==-80&&gi.vecBPreZ==-120&&gi.flag[0]==0
+            &&first->m_gi[1].life==0&&first->m_gi[2].life==0&&first->m_gi[3].life==0,
+            "Sakura preserves four phase draws, randomized anchor and inactive GI lanes");
+        check(first->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\sakura01.spr"
+            &&first->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\sakura01.act"
+            &&first->m_spriteAction==2&&first->m_spriteMotionBase==36&&first->m_spriteRepeat
+            &&first->m_curMotion==0&&g_resMgr.requests.size()==2,
+            "Sakura binds canonical resources and looping action/motion selection");
+        actor.m_pos={20,100,40};effect.m_stateCnt=1;rngCursor=0;effect.SpawnSakura();
+        check(effect.m_effectPos.x==20&&effect.m_effectPos.y==100&&effect.m_effectPos.z==40
+            &&effect.m_primList.size()==1&&rngDraws-draws==9,
+            "Sakura refreshes master position without emitting on odd states");
+        effect.m_stateCnt=2;rngValues={0,0,359,358,357,356,0,299,1};rngCursor=0;effect.SpawnSakura();
+        check(effect.m_primList.size()==2&&rngDraws-draws==18&&effect.m_primList.back()->m_gi[0].height[0]==359,
+            "Sakura emits on even state two with an independent nine-draw profile");
+        effect.m_stateCnt=300;effect.SpawnSakura();effect.m_stateCnt=301;effect.SpawnSakura();
+        check(effect.m_primList.size()==2&&rngDraws-draws==18,
+            "Sakura stops emission at state300 and on odd states");
+        effect.m_stateCnt=99999998;effect.m_duration=100;actor.m_pos={30,80,50};rngValues={0,0,1,2,3,4,5,6,2};rngCursor=0;
+        effect.SpawnSakura();
+        check(effect.m_stateCnt==0&&effect.m_duration==99999999&&effect.m_primList.size()==3
+            &&effect.m_primList.back()->m_duration==99999999&&rngDraws-draws==27,
+            "Sakura resets terminal state and duration before the same-call state-zero emission");
+        check(g_resMgr.requests.size()==6,"Sakura requests its sprite/action pair once per emission");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor;actor.m_pos={5,20,25};

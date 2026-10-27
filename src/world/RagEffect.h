@@ -594,6 +594,7 @@ private:
     void SpawnTopRank();
     void SpawnParty();
     void SpawnSnow();
+    void SpawnSakura();
     void SpawnTorch();
     void ApplySight(float initialAlpha, bool includeShadow);
     void SpawnSight();

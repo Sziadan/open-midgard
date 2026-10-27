@@ -13711,6 +13711,10 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         // ProcessEffectFrame owns the source Snow emitter for EF_SNOW.
         m_handler = Handler::None;
         break;
+    case 163:
+        // ProcessEffectFrame owns the source Sakura emitter for EF_SAKURA.
+        m_handler = Handler::None;
+        break;
     case 22:
         m_handler = Handler::Sight;
         break;
@@ -15244,6 +15248,45 @@ void CRagEffect::SpawnSnow()
                 "\xC0\xCC\xC6\xD1\xC6\xAE\\ef_snow.act");
             prim->m_numSegments = 1;
             InitReferenceSegments(prim);
+        }
+    }
+}
+
+// Ref/dhxj/RagEffect2.cpp:1194-1245; canonical HighPriest.exe.c:433311-433352.
+void CRagEffect::SpawnSakura()
+{
+    m_effectPos = m_master->m_pos;
+    if (m_stateCnt == 99999998) {
+        m_stateCnt = 0;
+        m_duration = 99999999;
+    }
+
+    if (m_stateCnt % 2 == 0 && m_stateCnt < 300) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_SAKURA, vector3d{});
+        prim->m_duration = m_duration;
+        EffectGi& gi = prim->m_gi[0];
+        gi.life = 1;
+        gi.maxHeight = static_cast<float>(rand() % 2 + 2) * 0.1f;
+        prim->m_size = static_cast<float>(rand() % 6 + 22) / 100.0f;
+        gi.height[0] = static_cast<float>(rand() % 360);
+        gi.height[1] = static_cast<float>(rand() % 360);
+        gi.height[2] = static_cast<float>(rand() % 360);
+        gi.height[3] = static_cast<float>(rand() % 360);
+        gi.vecBPreX = static_cast<float>(static_cast<double>(rand() % 300) + m_effectPos.x - 150.0);
+        gi.arcBaselineY = m_effectPos.y - 200.0f;
+        gi.vecBPreZ = static_cast<float>(static_cast<double>(rand() % 300) + m_effectPos.z - 150.0);
+        gi.flag[0] = 0;
+        prim->m_alpha = 200.0f;
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\sakura01.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\sakura01.act");
+        prim->m_spriteAction = rand() % 3;
+        prim->m_spriteMotionBase = 36;
+        prim->m_spriteRepeat = true;
+        prim->m_curMotion = 0;
+        prim->m_numSegments = 1;
+        InitReferenceSegments(prim);
+        for (int index = 1; index < 4; ++index) {
+            prim->m_gi[static_cast<size_t>(index)].life = 0;
         }
     }
 }
@@ -20699,6 +20742,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 162) {
         SpawnSnow();
+        return true;
+    }
+    if (m_type == 163) {
+        SpawnSakura();
         return true;
     }
     if (m_type == 709) {
