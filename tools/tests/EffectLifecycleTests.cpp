@@ -261,7 +261,7 @@ bool UpdateReference3DTexture(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
 bool UpdateReferenceScreenTexture(CEffectPrim*);
 bool UpdateReferenceGravityParticle(CEffectPrim*);
-bool UpdateWarpZoneOrbit(CEffectPrim*);
+bool UpdateReferenceOrbitParticle(CEffectPrim*);
 struct CEffectPrim : CGameObject {
     Probe deaths{ primitiveDeaths };
     CRagEffect* m_master = nullptr;
@@ -302,7 +302,7 @@ struct CEffectPrim : CGameObject {
 
     std::vector<CTexture*> m_texture;
     std::vector<float> m_chPoint,m_chVal1;
-    bool m_chSpeed=false,m_AlphaShow=false;
+    bool m_chRadiSpeed=false,m_chSpeed=false,m_AlphaShow=false;
     int m_chCnt=0,m_count=0,m_playWaveType=0;
     float m_v1=0,m_v2=1;
     float m_changeSpeedY=0,m_changeAccelY=0;
@@ -416,7 +416,7 @@ struct CEffectPrim : CGameObject {
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
         if (UsesReferenceTexture()) UpdateReferenceCrossTexture(this);
         if (UsesReferenceCylinder() && !UpdateReferenceCylinderState(this)) return false;
-        if (m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle() && !UpdateWarpZoneOrbit(this)) return false;
+        if (m_type == PP_3DPARTICLEORBIT && !UpdateReferenceOrbitParticle(this)) return false;
         if (m_type == PP_3DPARTICLE && !UpdateLinearReferenceParticle(this)) return false;
         if (resetFrame >= 0) m_stateCnt = resetFrame;
         return active;

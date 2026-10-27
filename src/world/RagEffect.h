@@ -343,6 +343,7 @@ public:
     std::vector<CTexture*> m_texture;
     std::vector<float> m_chPoint;
     std::vector<float> m_chVal1;
+    bool m_chRadiSpeed = false;
     bool m_chSpeed = false;
     bool m_AlphaShow = false;
     int m_chCnt = 0;

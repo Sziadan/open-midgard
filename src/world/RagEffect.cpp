@@ -11378,10 +11378,8 @@ bool UpdateReferenceCircleState(CEffectPrim* prim)
     return true;
 }
 
-// Ref/RagEffectPrim.cpp:816-891 (0x642CE0), reachable WarpZone/WarpZone2 profiles.
-// It has no change point or keyed radius schedule. Position is computed before
-// the raw-radian Z rotation, then alpha/segments precede motion advancement.
-bool UpdateWarpZoneOrbit(CEffectPrim* prim)
+// Ref/RagEffectPrim.cpp:1096-1132; HighPriest.exe.c:467400-467469.
+bool UpdateReferenceOrbitParticle(CEffectPrim* prim)
 {
     prim->m_orgPos = prim->m_master->EffectPosition();
     prim->m_radiusSpeed += prim->m_radiusAccel;
@@ -11392,6 +11390,17 @@ bool UpdateWarpZoneOrbit(CEffectPrim* prim)
     prim->m_deltaPos2.y += prim->m_gravSpeed;
     prim->m_orgPos = AddVec3(prim->m_orgPos, prim->m_deltaPos2);
     prim->m_roll += prim->m_rollSpeed;
+    if (prim->m_stateCnt == prim->m_changePoint) {
+        prim->m_gravSpeed = prim->m_changeSpeed;
+        prim->m_gravAccel = prim->m_changeAccel;
+    }
+    if (prim->m_chRadiSpeed) {
+        if (prim->m_stateCnt == prim->m_chPoint[prim->m_chCnt]) {
+            prim->m_radiusSpeed = prim->m_chVal1[prim->m_chCnt];
+            prim->m_radiusAccel = prim->m_chVal2[prim->m_chCnt];
+            ++prim->m_chCnt;
+        }
+    }
     MatrixIdentity(prim->m_matrix);
     MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
     prim->m_deltaPos = {
@@ -12498,11 +12507,8 @@ bool CEffectPrim::ProcessPrimitiveFrame()
         UpdateCylinderPrimitive(this);
         return true;
     }
-    if (m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle()) {
-        return UpdateWarpZoneOrbit(this);
-    }
     if (m_type == PP_3DPARTICLEORBIT) {
-        return UpdateParticleOrbitPrimitive(this);
+        return UpdateReferenceOrbitParticle(this);
     }
     if (m_type == PP_3DPARTICLE) {
         return UpdateLinearReferenceParticle(this);
