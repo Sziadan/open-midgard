@@ -11,6 +11,7 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 EXE_C = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8")
 REF = (ROOT / "Ref/GameModePacket.cpp").read_text(encoding="utf-8")
+REF_ACTOR = (ROOT / "Ref/GameActor.cpp").read_text(encoding="utf-8")
 PACKET_DB = (ROOT / "Ref/RunningServer/packet_db.txt").read_text(encoding="utf-8", errors="replace")
 IMPLEMENTATION = (ROOT / "src/gamemode/GameModePacket.cpp").read_text(encoding="utf-8")
 
@@ -42,6 +43,19 @@ exe_body = body(EXE_C[exe_anchor:exe_end], signature)
 ref_body = body(REF[ref_anchor:ref_end], signature)
 assert compact(exe_body) == compact(ref_body), "canonical EXE and Ref Zc_Spirits bodies differ"
 
+# Source calls GetJob, while current code directly reads m_job. Prove this is
+# equivalent for the only special comparisons (4038 and 24): GetJob transforms
+# other IDs but has no branch transforming either value.
+get_job_signature = "int __thiscall CGameActor::GetJob(CGameActor *this)"
+exe_job_anchor = EXE_C.index("//----- (0055B430)")
+exe_job_end = EXE_C.index("//----- (0055B540)", exe_job_anchor)
+ref_job_anchor = REF_ACTOR.index("// Original Signature: public: int __thiscall CGameActor::GetJob(void)")
+ref_job_end = REF_ACTOR.index("// Original Signature:", ref_job_anchor + 80)
+exe_job = body(EXE_C[exe_job_anchor:exe_job_end], get_job_signature)
+ref_job = body(REF_ACTOR[ref_job_anchor:ref_job_end], get_job_signature)
+assert compact(exe_job) == compact(ref_job), "canonical EXE and Ref GetJob bodies differ"
+assert "m_job == 4038" not in exe_job and "m_job == 24" not in exe_job
+
 # Ordered branch/operation anchors. Their order is checked independently in
 # both bodies, then full normalized body equality proves the remaining syntax.
 checklist = [
@@ -65,6 +79,7 @@ for label, token in checklist:
     assert exe_body.count(token) == ref_body.count(token), f"anchor occurrence mismatch: {label}"
 
 impl_body = body(IMPLEMENTATION, "void HandleSpirits(")
+assert "const int job = actor->m_job;" in impl_body
 implementation_checks = [
     ("Effect toggle gate", "!g_session.m_isEffectOn"),
     ("Self AID resolves to local player; otherwise resolve actor by AID", "aid == g_session.m_aid"),

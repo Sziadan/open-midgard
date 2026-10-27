@@ -2,7 +2,7 @@
 
 Source comparison: `python tools/tests/check_spirits_packet_source.py` compares the complete normalized canonical EXE body (`HighPriest.exe.c`, VA `0x5A7F30`) to `Ref/GameModePacket.cpp:26133`, checks ordered gameplay branch anchors against `src/gamemode/GameModePacket.cpp::HandleSpirits`, verifies dispatch ID 464 in both sources, and verifies `Ref/RunningServer/packet_db.txt` declares `0x01d0,8`.
 
-The checker confirms the full EXE/Ref handler bodies match and validates ordered branch anchors in the implementation:
+The checker confirms the full EXE/Ref handler bodies match and validates ordered branch anchors in the implementation. It also verifies the canonical EXE and Ref `CGameActor::GetJob` bodies match and confirms `GetJob` never transforms jobs 4038 or 24; this proves the implementation's direct `m_job` comparisons preserve the special job branches.
 
 1. Effects-enabled gate.
 2. Resolve the local player when packet AID equals session AID; otherwise resolve actor by AID.

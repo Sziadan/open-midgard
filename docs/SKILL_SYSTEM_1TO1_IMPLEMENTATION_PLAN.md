@@ -228,7 +228,7 @@ The current `src/world/RagEffect.cpp` hard-codes different durations (e.g. id 12
 | `0x008A` / `0x02E1` | ZC_NOTIFY_ACT / 2 | 29 / 33 | ACTSTRUCT | 3999 | `Zc_Notify_Act` 16724, `Zc_Notify_Actentry` 16871 |
 | `0x0119` / `0x0229` | ZC_STATE_CHANGE / 3 | 13 / 15 | aid.L@2 body.W@6 health.W@8 effect.W@10 (+ .L@10 for 0x0229) pk.B | 3225 / 3241 | `Zc_State_Change` 26879 |
 | `0x0196` / `0x043F` | ZC_MSG_STATE_CHANGE / 2 | 9 / 25 | index.W@2 aid.L@4 state.B@8 (+ remain.L val1..3.L) | 5134 | `Zc_Msg_State_Change` 15260 |
-| `0x01D0`/`0x01E1` | spirits | 8 / 8 | aid.L@2 num.W@6 | 6804 | `Zc_Spirits` 26130 / `Zc_Spirits2` 26215 |
+| `0x01D0`/`0x01E1` | spirits | 8 / 8 | aid.L@2 num.W@6 | 6804 | `Zc_Spirits` 26130 / `Zc_Spirits2` 26215; both gameplay packet handlers are ported and branch-compared (see parity log) |
 | `0x01CF` | devotion | 28 | | 6767 | `Zc_DevotionList` 10555 |
 | `0x01CD` | autospell | 30 | seven 32-bit skill IDs at `+2,+6,...,+26` | 461 | `Zc_AutoSpellList` 8618 (UI-only; excluded from gameplay acceptance) |
 | `0x01D1` | bladestop | 14 | | 6831 | `Zc_BladeStop` 8805 |

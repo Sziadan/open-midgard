@@ -136,6 +136,7 @@ void SendActorNameRequestIfNeeded(CGameMode& mode, u32 gid)
 }
 
 void StartLocalPickupAnimation(CGameMode& mode, u32 objectAid);
+bool EffectExists(CAbleToMakeEffect* actor, int effectId);
 
 constexpr u32 kStatusSpeed = 0;
 constexpr u32 kStatusBaseExp = 1;
@@ -726,6 +727,8 @@ void HandleSpirits(CGameMode& mode, const PacketView& packet)
         return;
     }
 
+    // Canonical GetJob transforms other job IDs, never 4038 or 24; these two
+    // comparisons are therefore equivalent while all other jobs use the default.
     const int job = actor->m_job;
     const int effectId = job == 4038 ? 504 : (job == 24 ? 629 : 228);
     actor->SendMsg(nullptr, 109, effectId, 0, 0);
@@ -747,6 +750,45 @@ void HandleSpirits(CGameMode& mode, const PacketView& packet)
         // The executable initializes only X before sending this vector. The
         // reconstructed client uses deterministic zeroes for the untouched axes.
         effect->SendMsg(nullptr, 14, reinterpret_cast<msgparam_t>(&position), 0, 0);
+    }
+}
+
+void HandleSpirits2(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 8 || packet.packetId != 0x01E1 || !g_session.m_isEffectOn) {
+        return;
+    }
+
+    const u32 aid = ReadLE32(packet.data + 2);
+    CGameActor* actor = nullptr;
+    if (aid == g_session.m_aid) {
+        actor = mode.m_world ? mode.m_world->m_player : nullptr;
+    } else if (mode.m_world) {
+        actor = mode.m_world->GetGameActorByAID(aid);
+    }
+    if (!actor) {
+        return;
+    }
+
+    // Canonical GetJob transforms other job IDs, never 4038 or 24; these two
+    // comparisons are therefore equivalent while all other jobs use the default.
+    const int job = actor->m_job;
+    const int effectId = job == 4038 ? 504 : (job == 24 ? 629 : 228);
+    const bool hidden = HasEffectStateFlag(actor->m_effectState, kEffectStateBurrowMask)
+        || HasEffectStateFlag(actor->m_effectState, kEffectStateHidingMask);
+    if (hidden) {
+        actor->SendMsg(nullptr, 109, effectId, 0, 0);
+        return;
+    }
+
+    if (!EffectExists(actor, effectId) && aid != 0) {
+        vector3d position{};
+        const vector3d offset{};
+        CRagEffect* effect = actor->LaunchEffect(effectId, offset, 0.0f);
+        position.x = static_cast<float>(static_cast<s16>(ReadLE16(packet.data + 6)));
+        if (effect) {
+            effect->SendMsg(nullptr, 14, reinterpret_cast<msgparam_t>(&position), 0, 0);
+        }
     }
 }
 
@@ -8114,7 +8156,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01D6, HandleIgnorePacket); // map type / mapflags hint; framing only for now
     router.Register(0x01D7, HandleActorSpriteChange);
     RegisterHandlerIfValid(router, receiveProfile.skillDamageNotifyExtended, HandleSkillDamageNotify);
-    router.Register(0x01E1, HandleIgnorePacket);
+    router.Register(0x01E1, HandleSpirits2);
     RegisterHandlerIfValid(router, receiveProfile.notifyEffectDirect, HandleNotifyEffect2);
     router.Register(0x0201, HandleFriendsList);
     router.Register(0x0206, HandleFriendState);
