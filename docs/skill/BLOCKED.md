@@ -22,3 +22,7 @@ Source anchors already ported are listed separately in `generated/runtime_wave_c
 ## Manually reviewed dependencies
 
 - WP5 FireArrow (`Ref/RagEffect.cpp:3983-3988`, 0x5F95B0): `aEffect_149`, `aEffect_14`, `aEffect_77`, `aEffect_119`, `aEffect_131`, `aEffect_33` resolve through SymbolTable only to the truncated `effect\` prefix. The six CTexMgr string pushes still need call-site resolution before porting that branch. Do not infer paths from the `_N` suffixes.
+
+## Open function ports
+
+- EF_STATUS_STATE (164), canonical `CRagEffect::StatusState` at `HighPriest.exe.c:429596-429694`: the effect's HUD branch depends on `CSession::GetStateFileName` for 186 canonical status IDs and runtime `GetBufIcon` overrides. The canonical decompilation references filename symbols whose definitions are absent from the available reference tree; the readable `Ref/dhxj` mapping is a distinct build variant and its equivalence has not been established. The 24-entry Qt catalog is incomplete. Do not port only the readable reset/notification body or infer missing filenames. Resume when the canonical symbols can be resolved or the readable mapping and runtime override inputs can be fully compared to the target build.
