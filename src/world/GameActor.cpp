@@ -9,6 +9,7 @@
 #include "main/WinMain.h"
 #include "DebugLog.h"
 #include "core/Globals.h"
+#include "core/Timer.h"
 #include "render/DC.h"
 #include "render3d/Device.h"
 #include "render3d/RenderDevice.h"
@@ -85,7 +86,9 @@ constexpr int kJobWarpPortal = 0x80;
 constexpr int kJobPreWarpPortal = 0x81;
 constexpr u32 kRemoteMoveStallLogThresholdMs = 250;
 constexpr u32 kRuwachRelaunchTicks = 200;
+constexpr u32 kSightRelaunchTicks = 270;
 constexpr int kEffectStateRuwachMask = 0x2000;
+constexpr int kEffectStateSightMask = 0x0001;
 constexpr int kEffectStateHidingMask = 0x0004;
 constexpr int kEffectStateSpecialHidingMask = 0x0040;
 constexpr int kEffectStateBurrowMask = 0x0002;
@@ -4569,6 +4572,8 @@ u32 CGameActor::GetHideFadeAlpha(u32 now) const
 }
 
 u8 CGameActor::ProcessState() {
+    ProcessEffectState();
+
     if (m_freezeEndTick != 0 && timeGetTime() > m_freezeEndTick) {
         m_isMotionFreezed = 0;
         m_freezeEndTick = 0;
@@ -4593,19 +4598,6 @@ u8 CGameActor::ProcessState() {
         m_isVisibleBody = (!(hiding || specialHiding || burrow)) ? 1 : 0;
         m_isVisible = (!(hiding || specialHiding)) ? 1 : 0;
         m_shadowOn = (!(hiding || specialHiding || burrow)) ? 1 : 0;
-    }
-
-    if (m_effectState == 0) {
-        m_effectLaunchCnt = 36000;
-    } else {
-        if ((m_effectState & kEffectStateRuwachMask) != 0 && m_effectLaunchCnt >= kRuwachRelaunchTicks) {
-            m_effectLaunchCnt = 0;
-            if (CRagEffect* effect = LaunchEffect(33, vector3d{}, 0.0f)) {
-                effect->SendMsg(effect, 44, (timeGetTime() >> 4) % 10 + 1, 0, 0);
-            }
-        }
-
-        ++m_effectLaunchCnt;
     }
 
     const u32 serverTime = g_session.GetServerTime();
@@ -4889,6 +4881,35 @@ u8 CGameActor::ProcessState() {
     }
 
     return 1;
+}
+
+void CGameActor::ProcessEffectState() {
+    if (g_isSkipFrame > 0 && m_BeZero == 1) {
+        m_BodyLight = 0;
+        m_BeZero = 0;
+    }
+
+    if (m_effectState == 0) {
+        m_effectLaunchCnt = 36000;
+    } else {
+        if ((m_effectState & kEffectStateSightMask) != 0
+            && m_effectLaunchCnt >= kSightRelaunchTicks) {
+            m_effectLaunchCnt = 0;
+            if (CRagEffect* effect = LaunchEffect(22, vector3d{}, 0.0f)) {
+                effect->SendMsg(effect, 44, (timeGetTime() >> 4) % 10 + 1, 0, 0);
+            }
+        }
+
+        if ((m_effectState & kEffectStateRuwachMask) != 0
+            && m_effectLaunchCnt >= kRuwachRelaunchTicks) {
+            m_effectLaunchCnt = 0;
+            if (CRagEffect* effect = LaunchEffect(33, vector3d{}, 0.0f)) {
+                effect->SendMsg(effect, 44, (timeGetTime() >> 4) % 10 + 1, 0, 0);
+            }
+        }
+
+        ++m_effectLaunchCnt;
+    }
 }
 
 CMsgEffect* CGameActor::SpawnMsgSprite(int processType, const char* spritePath, const char* actPath, int action, float zoom)

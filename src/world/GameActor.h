@@ -306,6 +306,7 @@ public:
     std::string m_chatBubbleText;
 
     virtual u8   ProcessState();
+    void ProcessEffectState();
     virtual void SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override;
     virtual int  Get8Dir(float rot) override;
     virtual void SetState(int state);

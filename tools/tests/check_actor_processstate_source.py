@@ -208,12 +208,14 @@ check(has(impl, r"m_lastProcessStateTime\s*=\s*timeGetTime\(\)[\s\S]*?m_lastServ
 integration_anchors = {
     "queued attack dispatch": r"ProcessWillBeAttacked\(\)",
     "current hide-fade integration": r"CancelHideFade\(\)",
-    "current effect-state integration": r"m_effectLaunchCnt",
+    "current effect-state integration": r"ProcessEffectState\(\)",
     "queued hit-wave integration": r"ProcessQueuedHitWave\(\s*(?:\*this)?\s*\)",
     "movement-stall diagnostic integration": r"g_moveStallTraceByGid",
 }
 for description, pattern in integration_anchors.items():
     check(has(impl, pattern), f"permitted current integration missing: {description}")
+check(impl.find("ProcessEffectState()") < impl.find("ProcessWillBeAttacked()"),
+      "current ProcessEffectState call must precede queued-hit dispatch as in source OnProcess")
 
 if errors:
     for error in errors:
