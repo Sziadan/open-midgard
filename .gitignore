@@ -71,6 +71,7 @@ tools/tests/*
 !tools/tests/SkillActionInfo2ParityTests.cpp
 !tools/tests/SkillActionInfoParityTests.cpp
 !tools/tests/check_clif_skill_nodamage_source.py
+!tools/tests/check_clif_skill_damage_source.py
 !tools/tests/ShowImageTests.cpp
 !tools/tests/check_show_image_packet.py
 !tools/tests/GuildSkillTests.cpp

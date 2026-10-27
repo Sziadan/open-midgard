@@ -4464,8 +4464,8 @@ void HandleSkillDamageNotify(CGameMode& mode, const PacketView& packet)
     const int damage = isLongDamage
         ? static_cast<int>(ReadLE32(packet.data + 24))
         : static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 24)));
-    const u16 level = ReadLE16(packet.data + (isLongDamage ? 28 : 26));
-    const u16 div = ReadLE16(packet.data + (isLongDamage ? 30 : 28));
+    const int level = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + (isLongDamage ? 28 : 26))));
+    const int div = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + (isLongDamage ? 30 : 28))));
     const u8 actionType = packet.data[isLongDamage ? 32 : 30];
 
     SkillUseArgs args{};
