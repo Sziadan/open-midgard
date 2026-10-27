@@ -5004,6 +5004,94 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         }
         return;
     }
+    case 6:
+    case 122: {
+        int* moveArgs = reinterpret_cast<int*>(par1);
+        constexpr int chickenMask = 0x0020;
+        constexpr int star2Mask = 0x8000;
+        m_gid = static_cast<u32>(moveArgs[0]);
+        const int originalJob = moveArgs[1];
+        const int effectState = moveArgs[16];
+        int resolvedJob = originalJob;
+        if ((effectState & chickenMask) != 0) {
+            switch (originalJob) {
+            case 7: resolvedJob = 13; break;
+            case 14: resolvedJob = 21; break;
+            case 4008: resolvedJob = 4014; break;
+            case 4030: resolvedJob = 4036; break;
+            case 4015: resolvedJob = 4022; break;
+            case 4037: resolvedJob = 4044; break;
+            default: break;
+            }
+        }
+        if (originalJob == 4047 && (effectState & star2Mask) != 0) {
+            resolvedJob = 4048;
+        }
+        moveArgs[1] = resolvedJob;
+        m_headType = moveArgs[11];
+        if (moveArgs[21] == 7) {
+            m_headType = 100;
+        }
+        m_job = resolvedJob;
+        m_sex = moveArgs[2];
+        if (CPc* pcActor = dynamic_cast<CPc*>(this)) {
+            pcActor->InvalidateBillboard();
+        }
+        SetAttrState(moveArgs[14], effectState, moveArgs[15], false);
+        m_pkState = moveArgs[17];
+        SetGuildInfo(moveArgs[24], moveArgs[25]);
+        if (CPc* pcActor = dynamic_cast<CPc*>(this)) {
+            pcActor->m_honor = moveArgs[26];
+            pcActor->m_virtue = moveArgs[27];
+        } else if (CGrannyPc* grannyPc = dynamic_cast<CGrannyPc*>(this)) {
+            grannyPc->m_honor = moveArgs[26];
+            grannyPc->m_virtue = moveArgs[27];
+        }
+
+        m_speed = static_cast<u32>(moveArgs[10]);
+        m_moveStartTime = static_cast<u32>(moveArgs[3]);
+        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+            gameMode->GetClientCoor(moveArgs[4], moveArgs[5], m_pos.x, m_pos.z);
+            if (gameMode->m_world && gameMode->m_world->m_attr) {
+                const double cellScale = static_cast<double>(gameMode->m_world->m_attr->m_zoom) * 0.0625;
+                m_pos.x = static_cast<float>(static_cast<double>(moveArgs[6] - 8) * cellScale + m_pos.x);
+                m_pos.z = static_cast<float>(static_cast<double>(moveArgs[7] - 8) * cellScale + m_pos.z);
+                m_pos.y = gameMode->m_world->m_attr->GetHeight(m_pos.x, m_pos.z);
+            }
+        }
+
+        const auto findPath = [this, moveArgs](u32 startTime, int speedFactor) {
+            return g_pathFinder.FindPath(startTime,
+                moveArgs[4],
+                moveArgs[5],
+                moveArgs[6],
+                moveArgs[7],
+                moveArgs[8],
+                moveArgs[9],
+                speedFactor,
+                &m_path);
+        };
+        bool foundPath = findPath(m_moveStartTime, static_cast<int>(m_speed));
+        if (foundPath) {
+            const u32 lastCellTime = m_path.m_cells.empty()
+                ? 0xFFFFFFFCu
+                : m_path.m_cells.back().arrivalTime;
+            const u32 serverTime = g_session.GetServerTime();
+            if (lastCellTime <= serverTime) {
+                m_moveStartTime = serverTime;
+                foundPath = findPath(serverTime, 10 * static_cast<int>(m_speed) / 13);
+            }
+        }
+        if (foundPath) {
+            m_moveDestX = moveArgs[8];
+            m_moveDestY = moveArgs[9];
+            SetState(1);
+            m_pathStartCell = 0;
+        } else {
+            SetState(0);
+        }
+        return;
+    }
     case 0: {
         const int* pathArgs = reinterpret_cast<const int*>(par1);
         m_moveStartTime = timeGetTime();

@@ -2078,3 +2078,12 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - Inventory: 63 direct current cases; 12 remaining in-scope IDs without direct/inherited routing: `[6, 21, 56, 57, 78, 79, 110, 118, 122, 135, 136, 139]`.
 - Six focused source gates (inventory, aura, movement, spawn, identity and movement update) pass; x64 Release build succeeds; `git diff --check` passes. Full test-project compilation remains blocked by the unrelated extracted packet-test stub errors documented in preceding checkpoints.
 - Authorized OldRO deployment matches Release SHA-256 `8310F5FB4529743414D63D625F97A1BD25A2BFC47DE525AD2F666FB14A39F75B`. No live runtime movement acceptance is claimed.
+
+# `CGameActor::SendMsg` messages 6/122 subcell movement update (2026-10-27)
+
+- Ref and canonical EXE share the same message 6/122 branch. It updates actor identity/status, moves from server cell coordinates by the packet's subcell offsets scaled by `m_zoom * 0.0625`, sets terrain height, and runs the standard path scheduling helper. Success updates destination and sets moving state; path failure reaches the shared stop-state label.
+- Ported both message IDs, preserving double-precision offset arithmetic before storing the resulting coordinates as floats, path helper replan timing, and the distinct failure transition to idle.
+- `tools/tests/check_actor_sendmsg_move_subcell_case.py` compares full Ref/EXE function bodies and shared branch, and verifies field mapping, offset formula, operation order, and both path exits. Registered as CTest `actor_sendmsg_move_subcell_source_check`.
+- Inventory: 65 direct current cases; 10 remaining in-scope IDs without direct/inherited routes: `[21, 56, 57, 78, 79, 110, 118, 135, 136, 139]`.
+- Seven focused source gates (inventory, aura, ordinary movement, spawn, identity, movement update, and subcell movement) pass; x64 Release build succeeds; `git diff --check` passes. The full test-project rebuild is still blocked by unrelated extracted packet-test stub compile errors recorded earlier.
+- Authorized OldRO deployment matches Release SHA-256 `22907808276006E5F968D87F6515D8D168E5AE12D406A3279CB8EE237037694B`. No live runtime movement acceptance is claimed.
