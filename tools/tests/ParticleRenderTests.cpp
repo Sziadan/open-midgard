@@ -2,6 +2,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <utility>
 #include <cstdio>
 #include <vector>
 #include <string>
@@ -41,7 +42,30 @@ struct C3dGround {
         calls.push_back(call);
     }
 };
-struct CWorld { C3dGround* m_ground=nullptr; };
+using msgparam_t = std::uintptr_t;
+struct CRagEffect {
+    int sendCount=0,lastMessage=0;
+    vector3d lastPosition{};
+    void SendMsg(void*,int message,msgparam_t parameter,msgparam_t,msgparam_t) {
+        ++sendCount;lastMessage=message;
+        if(parameter)lastPosition=*reinterpret_cast<vector3d*>(parameter);
+    }
+};
+struct CAbleToMakeEffect {
+    CRagEffect effect;
+    bool effectAvailable=true;
+    int launchCount=0,lastEffectId=0;
+    CRagEffect* LaunchEffect(int effectId,vector3d,float) {
+        ++launchCount;lastEffectId=effectId;return effectAvailable?&effect:nullptr;
+    }
+};
+struct CWorld {
+    C3dGround* m_ground=nullptr;
+    CAbleToMakeEffect* m_player=nullptr;
+    CAbleToMakeEffect* m_actor=nullptr;
+    u32 actorAid=0;
+    CAbleToMakeEffect* GetGameActorByAID(u32 aid) const {return aid==actorAid?m_actor:nullptr;}
+};
 struct CGameMode {
     CWorld* m_world=nullptr;int serverX=0,serverY=0,coordinateCalls=0;
     void GetServerCoor(float,float,int& x,int& y) {++coordinateCalls;x=serverX;y=serverY;}
@@ -50,6 +74,7 @@ struct CModeMgr {
     CGameMode* current=nullptr;int lookups=0;
     CGameMode* GetCurrentGameMode() {++lookups;return current;}
 } g_modeMgr;
+struct TestSession { u32 m_aid=0; } g_session;
 struct SprImg {
     int width=2, height=2, isHalfW=0, isHalfH=0;
     CTexture* tex=nullptr;
@@ -153,6 +178,7 @@ void ProjectReferenceEffectVertex(const vector3d&,const matrix&,tlvertex3d&);
 extern float g_cosTable[361],g_sinTable[361];
 int TableAngle(int angle);
 int GetReferenceAngle(float moveX,float moveZ);
+void RotateCornerTowardScreen(vector3d* corner,int rot0,int rot1);
 struct AirTextureQuadCall { vector3d a,b,c,d; CTexture* texture=nullptr; u32 color=0; D3DBLEND blend=0; int flags=0; };
 std::vector<AirTextureQuadCall> airTextureQuadCalls;
 void SubmitWorldTeiRect(const vector3d&,const vector3d&,const vector3d&,const vector3d&,
@@ -166,12 +192,21 @@ int GetReferenceAngle(float moveX,float moveZ) {
     int angle=0;while(normalizedX<g_cosTable[angle]){if(++angle>180){angle=180;break;}}
     return normalizedZ<0.0f?360-angle:angle;
 }
+void RotateCornerTowardScreen(vector3d* corner,int rot0,int rot1) {
+    const float oldZ=corner->z,oldY=corner->y;
+    corner->z=oldZ*g_cosTable[rot1]-oldY*g_sinTable[rot1];
+    corner->y=oldZ*g_sinTable[rot1]+oldY*g_cosTable[rot1];
+    const float oldX=corner->x,rotatedZ=corner->z;
+    corner->x=oldX*g_cosTable[rot0]-rotatedZ*g_sinTable[rot0];
+    corner->z=oldX*g_sinTable[rot0]+rotatedZ*g_cosTable[rot0];
+}
 void SubmitWorldTeiRect(const vector3d& a,const vector3d& b,const vector3d& c,const vector3d& d,
     const matrix&,CTexture* texture,unsigned int color,float,float,float,float,D3DBLEND blend,float,int flags) {
     airTextureQuadCalls.push_back({a,b,c,d,texture,color,blend,flags});
 }
 #include "AirTextureRendererBody.inc"
 #include "HitLine3RendererBody.inc"
+#include "SoulLinkRendererBody.inc"
 vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
 constexpr float kSubmitNearPlane=80.0f,kNearPlane=10.0f;
 #include "ProjectPointBody.inc"
@@ -238,6 +273,42 @@ int main() {
         gi.alphaT=4; airTextureQuadCalls.clear(); RenderHitLine3(hit,view);
         check(airTextureQuadCalls.size()==3&&airTextureQuadCalls[0].color==0x64696969u,
             "hitline3 higher modes draw grayscale narrow rings without the mode-three wide pass");
+    }
+    {
+        CEffectPrim soul;
+        soul.m_texture={&g_texMgr.texture}; soul.m_pos={1.0f,2.0f,3.0f};
+        auto& gi=soul.m_gi[0];
+        gi.life=1; gi.alphaB=0; gi.distance=2.0f; gi.process=179;
+        gi.height[10]=42.0f; gi.height[13]=77.0f;
+        gi.vecBPreX=3.0f; gi.arcBaselineY=-1.0f; gi.vecBPreZ=9.0f;
+        CWorld world; CAbleToMakeEffect player; world.m_player=&player;
+        CGameMode mode; mode.m_world=&world; g_modeMgr.current=&mode; g_session.m_aid=42;
+        matrix view{}; airTextureQuadCalls.clear(); RenderSoulLink(soul,view);
+        check(airTextureQuadCalls.size()==1&&airTextureQuadCalls[0].color==0x4D7D7DFFu
+            &&airTextureQuadCalls[0].blend==D3DBLEND_ONE,
+            "soul link draws a live lane despite zero alpha using the source additive tint");
+        check(player.launchCount==1&&player.lastEffectId==506&&player.effect.sendCount==1
+            &&player.effect.lastMessage==14&&near(player.effect.lastPosition.x,3.0f)
+            &&near(player.effect.lastPosition.y,-1.0f)&&near(player.effect.lastPosition.z,0.0f),
+            "soul link self-AID path launches SoulLight and sends its projected position");
+        gi.process=180; RenderSoulLink(soul,view);
+        check(player.launchCount==1&&airTextureQuadCalls.size()==2,
+            "soul link process 180 stops effect launches while retaining the visible quad");
+        CAbleToMakeEffect other; world.actorAid=77; world.m_actor=&other;
+        gi.process=10; gi.height[10]=77.0f; RenderSoulLink(soul,view);
+        check(other.launchCount==1&&other.effect.sendCount==1,
+            "soul link resolves non-self AID and sends position to the actor effect");
+        gi.height[10]=88.0f; RenderSoulLink(soul,view);
+        check(other.launchCount==1,"soul link missing actor skips only the side effect");
+        gi.height[10]=42.0f; player.effectAvailable=false; const int sentBefore=player.effect.sendCount;
+        RenderSoulLink(soul,view);
+        check(player.launchCount==2&&player.effect.sendCount==sentBefore,
+            "soul link failed effect creation omits the position message");
+        gi.arcBaselineY=1.0f; const size_t beforeHidden=airTextureQuadCalls.size();
+        const int launchesBefore=player.launchCount; RenderSoulLink(soul,view);
+        check(airTextureQuadCalls.size()==beforeHidden&&player.launchCount==launchesBefore,
+            "soul link positive-Y corner gate suppresses both render and launch");
+        g_modeMgr.current=nullptr;
     }
     const std::pair<float,u32> castingColors[]={
         {0.0f,0x00FFFFFFu},{1.0f,0x00FFAFAFu},{2.0f,0x00C3C3FFu},{3.0f,0x00FFFFFFu},

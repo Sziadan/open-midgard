@@ -5270,6 +5270,72 @@ void RenderHitLine3(const CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void RenderSoulLink(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    const int cameraLongitude = TableAngle(prim.m_gi[0].alphaT);
+    const int cameraLatitude = TableAngle(prim.m_gi[1].alphaT);
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+
+        vector3d corners[4]{};
+        for (int corner = 0; corner < 4; ++corner) {
+            const int angle = 45 + corner * 90;
+            corners[corner].x = g_cosTable[angle] * gi.distance;
+            corners[corner].z = g_sinTable[angle] * gi.distance;
+        }
+        for (vector3d& corner : corners) {
+            RotateCornerTowardScreen(&corner, cameraLongitude, cameraLatitude);
+        }
+
+        vector3d position{gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ};
+        const float radial = gi.vecBPreX;
+        position.x = radial * g_cosTable[cameraLongitude];
+        position.z = radial * g_sinTable[cameraLongitude];
+        for (vector3d& corner : corners) {
+            corner.x += position.x;
+            corner.y += position.y;
+            corner.z += position.z;
+        }
+        const int alpha = static_cast<int>(gi.height[13]);
+        if (corners[0].y > 0.0f) {
+            continue;
+        }
+
+        if (gi.process < 180) {
+            CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+            CWorld* world = mode != nullptr ? mode->m_world : nullptr;
+            if (world != nullptr) {
+                CAbleToMakeEffect* target = nullptr;
+                if (static_cast<float>(g_session.m_aid) == gi.height[10]) {
+                    target = world->m_player;
+                } else {
+                    target = world->GetGameActorByAID(static_cast<u32>(gi.height[10]));
+                }
+                if (target != nullptr) {
+                    if (CRagEffect* soulLight = target->LaunchEffect(506, vector3d{}, 0.0f)) {
+                        vector3d effectPosition = position;
+                        soulLight->SendMsg(nullptr, 14,
+                            reinterpret_cast<msgparam_t>(&effectPosition), 0, 0);
+                    }
+                }
+            }
+        }
+
+        for (vector3d& corner : corners) {
+            corner.x += prim.m_pos.x;
+            corner.y += prim.m_pos.y;
+            corner.z += prim.m_pos.z;
+        }
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(alpha)) << 24) | 0x007D7DFFu;
+        SubmitWorldTeiRect(corners[0], corners[1], corners[2], corners[3], viewMatrix,
+            texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f,
+            static_cast<int>(prim.m_renderFlag));
+    }
+}
+
 void UpdateChemicalPrimitive(CEffectPrim* prim)
 {
     int longitude = 0;
@@ -12121,6 +12187,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_HITLINE3) {
         RenderHitLine3(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_SOULLINK) {
+        RenderSoulLink(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_EFFECTTEXTURE || m_type == PP_EFFECTTEXTURE2 || m_type == PP_EFFECTTEXTURE_ANI) {
