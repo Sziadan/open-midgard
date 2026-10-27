@@ -295,3 +295,5 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 - RenderSMA secondary position initialization (2026-10-27): readable `Ref/dhxj/RagEffect2.cpp:12043-12080` declares `pos2` without initializing Z before setting X/Y; decompiled Ref `Ref/RagEffect2.cpp:19554-19608` and canonical `HighPriest.exe.c:448595-448648` zero the complete vector first. The renderer follows the canonical zero Z.
 
 - RenderSMA2 texture guard (2026-10-27): readable `RenderTeiRect` (`Ref/dhxj/RagEffect2.cpp:4427+`) skips submission for null or dummy texture0, while canonical `HighPriest.exe.c:436484+` has no corresponding guard. `SubmitSma2Rect` follows canonical submission behavior for null/dummy texture. Tests validate normal texture0 behavior; runtime incidence of null/dummy SMA2 texture is unknown.
+
+- CartRevolution (effect170): readable `Ref/dhxj/RagEffect.cpp:13398` names `effect\bigbang.tga`, while canonical `HighPriest.exe.c:431738` passes `aEffect_27`, whose decompiler string is only `effect\`. Current implementation follows the explicit Ref filename. The original asset and live playback/render remain unverified.

@@ -13690,7 +13690,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 38: case 39: case 43: case 45: case 46: case 61: case 62: case 63: case 71: case 72: case 73: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 38: case 39: case 43: case 45: case 46: case 61: case 62: case 63: case 71: case 72: case 73: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 170: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -15290,6 +15290,46 @@ void CRagEffect::ApplyBowlingBash()
         ShiftCircleSegments(prim);
         prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_yellow.tga", false));
     }
+}
+
+// Ref/RagEffect.cpp:13366-13413; HighPriest.exe.c:431694-431741.
+bool CRagEffect::ApplyCartRevolution()
+{
+    if (m_stateCnt == 7 || m_stateCnt == 20) {
+        const vector3d& playerPos = g_modeMgr.GetCurrentGameMode()->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_MagnumBreak.wav", m_effectPos.x - playerPos.x, 0.0f,
+            m_effectPos.z - playerPos.z, 250, 40, 1.0f);
+
+        CEffectPrim* circle = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
+        circle->m_duration = 20;
+        circle->m_renderFlag |= 0x200;
+        circle->m_maxAlpha = 180.0f;
+        circle->m_latitude = 90.0f;
+        circle->m_radiusSpeed = 1.75f;
+        circle->m_radiusAccel = -(circle->m_radiusSpeed / circle->m_duration) / 2.0f;
+        circle->m_innerSize = 5.0f;
+        circle->m_alpha = 0.0f;
+        circle->m_alphaSpeed = circle->m_maxAlpha / 15;
+        circle->m_fadeOutCnt = circle->m_duration - 15;
+        circle->m_numSegments = 1;
+        ShiftCircleSegments(circle);
+        circle->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_yellow.tga", false));
+
+        CEffectPrim* sphere = LaunchEffectPrim(PP_3DSPHERE, vector3d{});
+        sphere->m_duration = 20;
+        sphere->m_radiusSpeed = 1.35f;
+        sphere->m_radiusAccel = -(sphere->m_radiusSpeed / sphere->m_duration) / 2.0f;
+        sphere->m_longSpeed = 3.0f;
+        sphere->m_alpha = 0.0f;
+        sphere->m_maxAlpha = 240.0f;
+        sphere->m_alphaSpeed = sphere->m_maxAlpha / 7;
+        sphere->m_fadeOutCnt = sphere->m_duration - 15;
+        sphere->m_texture.push_back(g_texMgr.GetTexture("effect\\bigbang.tga", false));
+    }
+
+    if (m_stateCnt >= 300) return false;
+    ProcessEZ2STR();
+    return true;
 }
 
 void CRagEffect::SpawnSight()
@@ -20270,6 +20310,7 @@ bool CRagEffect::ProcessEffectFrame()
         ApplyBowlingBash();
         return true;
     }
+    if (m_type == 170) return ApplyCartRevolution();
     if (m_type == 0x201) {
         ProcessGroundSample();
         return true;

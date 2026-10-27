@@ -551,6 +551,7 @@ struct CRagEffect : CGameObject {
     void ApplyCone();
     void ApplySphere();
     void ApplyBowlingBash();
+    bool ApplyCartRevolution();
     void SpawnSight();
     void SpawnSight2();
     void SpawnBlessing();
@@ -8162,6 +8163,49 @@ int main()
             &&second->m_duration==15&&second->m_longitude==450&&second->m_alpha==205
             &&rngDraws==draws,"BowlingBash frame five emits only the second cylinder with source angle, duration and alpha");
         effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        CRagEffect effect; CRenderObject listener;
+        listener.m_pos={10,500,20}; g_world.m_player=&listener;
+        effect.m_type=170; effect.m_effectPos={40,7,80}; effect.m_stateCnt=7;
+        waveCalls.clear(); g_texMgr.requests.clear();
+        const int draws=rngDraws;
+        const bool alive=effect.ApplyCartRevolution();
+        auto it=effect.m_primList.begin();
+        CEffectPrim* circle=it==effect.m_primList.end()?nullptr:*it++;
+        CEffectPrim* sphere=it==effect.m_primList.end()?nullptr:*it;
+        check(alive&&effect.m_primList.size()==2&&circle&&sphere
+            &&circle->m_type==PP_3DCIRCLE&&circle->m_duration==20&&(circle->m_renderFlag&0x200)
+            &&circle->m_maxAlpha==180&&circle->m_latitude==90&&circle->m_radiusSpeed==1.75f
+            &&std::fabs(circle->m_radiusAccel+0.04375f)<0.000001f&&circle->m_innerSize==5
+            &&circle->m_alpha==0&&circle->m_alphaSpeed==12&&circle->m_fadeOutCnt==5
+            &&circle->m_numSegments==1&&sphere->m_type==PP_3DSPHERE&&sphere->m_duration==20
+            &&sphere->m_radiusSpeed==1.35f&&std::fabs(sphere->m_radiusAccel+0.03375f)<0.000001f
+            &&sphere->m_longSpeed==3&&sphere->m_alpha==0&&sphere->m_maxAlpha==240
+            &&std::fabs(sphere->m_alphaSpeed-(240.0f/7.0f))<0.00001f&&sphere->m_fadeOutCnt==5
+            &&g_texMgr.requests.size()==2&&g_texMgr.requests[0]=="effect\\ring_yellow.tga"
+            &&g_texMgr.requests[1]=="effect\\bigbang.tga"
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_MagnumBreak.wav"
+            &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==60
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&rngDraws==draws,
+            "CartRevolution state seven plays the source wave and emits ordered circle/sphere profiles without RNG");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); effect.m_stateCnt=20;
+        waveCalls.clear(); g_texMgr.requests.clear();
+        check(effect.ApplyCartRevolution()&&effect.m_primList.size()==2&&waveCalls.size()==1
+            &&waveCalls[0].x==30&&waveCalls[0].z==60&&g_texMgr.requests.size()==2,
+            "CartRevolution repeats its two effects and source wave at state twenty");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); effect.m_stateCnt=6;
+        waveCalls.clear(); g_texMgr.requests.clear();
+        check(effect.ApplyCartRevolution()&&effect.m_primList.empty()&&waveCalls.empty()
+            &&g_texMgr.requests.empty(),"CartRevolution has no emission between states seven and twenty");
+        effect.m_stateCnt=299;
+        check(effect.ApplyCartRevolution()&&effect.m_primList.empty(),
+            "CartRevolution state 299 ignores an exhausted/missing STR clip and remains alive");
+        effect.m_stateCnt=300;
+        check(!effect.ApplyCartRevolution()&&effect.m_primList.empty(),
+            "CartRevolution expires at state 300 before attempting STR processing");
+        g_world.m_player=nullptr; rngValues.clear(); rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

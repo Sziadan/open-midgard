@@ -1,3 +1,4 @@
+Latest checkpoint (2026-10-27): `CRagEffect::CartRevolution` / effect170 passed branch-level Ref/canonical EXE/current comparison, lifecycle coverage (1,907 checks), all six CTest suites and x64 Release build. The canonical EXE big-bang texture token remains truncated relative to the readable Ref path and is documented in `MISMATCHES.md`. Authorized OldRO deployment matches SHA-256 `4CAC9D84B0A61098D99399AAC9BFED9F5CF17593ECB6C243E1EFBCB0E11E0E18`. Continue only after mechanically comparing the next function before editing.
 # Skill system implementation progress
 
 Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`

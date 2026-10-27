@@ -593,6 +593,7 @@ private:
     void ApplyCone();
     void ApplySphere();
     void ApplyBowlingBash();
+    bool ApplyCartRevolution();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
