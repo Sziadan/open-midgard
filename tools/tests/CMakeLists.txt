@@ -389,6 +389,8 @@ add_test(NAME wba_acceptance_trace_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_wba_acceptance_trace.py")
 add_test(NAME player_processstate_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_player_processstate_source.py")
+add_test(NAME processsound_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_processsound_source.py")
 add_test(NAME dummy_effect_launcher_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_dummy_effect_launcher.py")
 add_test(NAME actor_sendmsg_effect_cases_source_check
@@ -437,6 +439,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../HighPriest.exe.c
     ../../Ref/GameModePacket.cpp
     ../../Ref/GameActor.cpp
+    ../../src/world/GameActor.cpp
     ../../Ref/eAthena_src_2011/map/clif.c
     ../../Ref/RunningServer/packet_db.txt
     ../../src/gamemode/GameModePacket.cpp

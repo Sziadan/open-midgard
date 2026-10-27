@@ -366,25 +366,17 @@ bool TryPlayQueuedWaveAtActor(const CGameActor& actor, const char* waveName)
         return false;
     }
     const vector3d& listener = mode->m_world->m_player->m_pos;
-    return PlayWave(waveName, actor.m_pos.x - listener.x, actor.m_pos.y - listener.y,
+    return PlayWave(waveName, actor.m_pos.x - listener.x, 0.0f,
         actor.m_pos.z - listener.z);
 }
 
-bool ContainsAsciiCaseInsensitive(const char* text, const char* token)
+bool ContainsAsciiCaseSensitive(const char* text, const char* token)
 {
     if (!text || !token || !*text || !*token) {
         return false;
     }
 
-    std::string loweredText(text);
-    std::string loweredToken(token);
-    std::transform(loweredText.begin(), loweredText.end(), loweredText.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
-    std::transform(loweredToken.begin(), loweredToken.end(), loweredToken.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
-    return loweredText.find(loweredToken) != std::string::npos;
+    return std::string(text).find(token) != std::string::npos;
 }
 
 std::string NormalizeWaveEventPath(const char* eventName)
@@ -396,7 +388,7 @@ std::string NormalizeWaveEventPath(const char* eventName)
 
 bool TryPlayActorMotionWave(CGameActor& actor, const char* eventName)
 {
-    if (!ShouldPlayMotionWaveForActor(actor) || !ContainsAsciiCaseInsensitive(eventName, ".wav")) {
+    if (!ShouldPlayMotionWaveForActor(actor) || !ContainsAsciiCaseSensitive(eventName, ".wav")) {
         return false;
     }
     if (actor.m_isPc != 0) {
