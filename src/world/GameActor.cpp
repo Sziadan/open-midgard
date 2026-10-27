@@ -6018,8 +6018,7 @@ void CGameActor::ProcessWillBeAttacked()
             continue;
         }
 
-        const WBA hit = *it;
-        SendMsg(this, hit.message, reinterpret_cast<msgparam_t>(&hit), 0, 0);
+        SendMsg(nullptr, it->message, reinterpret_cast<msgparam_t>(&*it), 0, 0);
         it = m_willBeAttackedList.erase(it);
     }
 }

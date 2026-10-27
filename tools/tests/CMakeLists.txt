@@ -357,6 +357,8 @@ add_test(NAME primitive_anim_texture_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_primitive_anim_texture.py")
 add_test(NAME groundskill_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_groundskill_source.py")
+add_test(NAME process_wba_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_process_wba_source.py")
 add_test(NAME dummy_effect_launcher_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_dummy_effect_launcher.py")
 add_test(NAME actor_sendmsg_effect_cases_source_check

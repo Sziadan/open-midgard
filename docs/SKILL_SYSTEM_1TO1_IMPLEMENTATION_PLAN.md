@@ -414,7 +414,9 @@ Port the per-skill `PlaceEffect(pos, effectId, duration+10)` table verbatim (21â
 
 ### WP2.6 `ProcessWillBeAttacked` (Ref/GameActor.cpp:8039)
 
-Replace the current implementation with the Ref loop: for each entry with `curTime >= time`: `SendMsg(this, wba.message, &wba)` then erase. Delete `ApplyQueuedHitReaction`.
+Status: implemented and source-compared. `tools/tests/check_process_wba_source.py` checks full Ref/EXE body equality and branch order. The port samples time once, dispatches due entries in list order with a null sender and the exact list-node `WBA` address, then erases each entry; future entries remain queued. `ApplyQueuedHitReaction` is absent. See `docs/skill/PARITY_LOG.md`.
+
+Reference behavior: for each entry with `curTime >= time`, dispatch `CGameObject::SendMsg(sender=null, wba.message, &wba)` and then erase.
 
 ### WP2.7 `SetState` / `ProcessState` for all actor classes
 
