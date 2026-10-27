@@ -339,3 +339,7 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 # `0x01D0` spirit position has partially uninitialized source vector (2026-10-27)
 
 - Canonical `Zc_Spirits` and Ref assign only `pos.x` from the signed packet short at `+6` before passing `&pos` to effect message 14; `pos.y` and `pos.z` are not initialized in the source body. The reconstructed handler sets Y/Z to zero so runtime behavior is deterministic. The branch/order comparison otherwise matches; exact values of those two source fields are undefined and cannot be meaningfully copied. No UI behavior is involved.
+
+# `0x01CF` devotion position has uninitialized source Z (2026-10-27)
+
+- Canonical `Zc_DevotionList` and Ref set position X from the devoter AID and Y from each devotee AID, but do not initialize position Z before passing the vector to message 14. The reconstructed handler sets Z to zero deterministically. All defined coordinates and gameplay effect branches are source-compared; source Z is undefined.

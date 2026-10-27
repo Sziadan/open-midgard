@@ -792,6 +792,43 @@ void HandleSpirits2(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleDevotionList(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 28 || packet.packetId != 0x01CF || !g_session.m_isEffectOn) {
+        return;
+    }
+
+    const u32 devoterAid = ReadLE32(packet.data + 2);
+    CGameActor* devoter = nullptr;
+    if (devoterAid == g_session.m_aid) {
+        devoter = mode.m_world ? mode.m_world->m_player : nullptr;
+    } else if (mode.m_world) {
+        devoter = mode.m_world->GetGameActorByAID(devoterAid);
+    }
+
+    if (devoter) {
+        for (int index = 0; index < 5; ++index) {
+            devoter->SendMsg(nullptr, 109, 232, 0, 0);
+        }
+    }
+
+    for (int index = 0; index < 5; ++index) {
+        const u32 devoteeAid = ReadLE32(packet.data + 6 + index * 4);
+        if (devoteeAid == 0) {
+            continue;
+        }
+
+        const vector3d position{ static_cast<float>(devoterAid), static_cast<float>(devoteeAid), 0.0f };
+        if (devoter) {
+            const vector3d offset{};
+            CRagEffect* effect = devoter->LaunchEffect(232, offset, 0.0f);
+            if (effect) {
+                effect->SendMsg(nullptr, 14, reinterpret_cast<msgparam_t>(&position), 0, 0);
+            }
+        }
+    }
+}
+
 void InvalidateWindowTree(UIWindow* window)
 {
     if (!window) {
@@ -8147,7 +8184,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0192, HandleIgnorePacket);
     RegisterHandlerIfValid(router, receiveProfile.skillUnitSetExtended, HandleSkillUnitSet2);
     router.Register(0x01AC, HandleSkillUpdate);
-    router.Register(0x01CF, HandleIgnorePacket);
+    router.Register(0x01CF, HandleDevotionList);
     router.Register(0x01D0, HandleSpirits);
     router.Register(0x01D3, HandleSound);
     router.Register(0x01D2, HandleComboDelay);
