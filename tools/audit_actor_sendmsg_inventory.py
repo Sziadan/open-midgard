@@ -53,11 +53,14 @@ actor_cases = top_level_cases(actor)
 able_cases = top_level_cases(able)
 assert ref_cases == exe_cases, f"Ref/EXE case mismatch: Ref-only={sorted(ref_cases - exe_cases)}, EXE-only={sorted(exe_cases - ref_cases)}"
 
-inherited = ref_cases & able_cases - actor_cases
-unmapped = ref_cases - actor_cases - able_cases
+able_inherited = ref_cases & able_cases - actor_cases
+actor_lifecycle_inherited = {48}
+inherited = able_inherited | (actor_lifecycle_inherited - actor_cases)
+unmapped = ref_cases - actor_cases - able_cases - actor_lifecycle_inherited
 print(f"Ref and canonical EXE top-level message IDs: {len(ref_cases)}")
 print(f"Current CGameActor::SendMsg direct IDs: {len(actor_cases)}")
-print(f"IDs delegated to the current CAbleToMakeEffect::SendMsg: {sorted(inherited)}")
+print(f"IDs delegated to the current CAbleToMakeEffect::SendMsg: {sorted(able_inherited)}")
+print(f"Actor lifecycle callbacks represented outside SendMsg: {sorted(actor_lifecycle_inherited - actor_cases)}")
 print(f"Remaining source IDs without a direct/inherited current case: {len(unmapped)}")
 print("Remaining IDs:", sorted(unmapped))
 print("Inventory only; this is not a branch-parity pass. Compare each source arm and its inherited behavior before marking WP2.2 complete.")

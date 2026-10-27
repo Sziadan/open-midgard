@@ -2017,3 +2017,10 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - `tools/tests/check_actor_sendmsg_target_case.py` extracts the function and case mechanically and verifies the full Ref/EXE equality, branch equality, current assignment, and no extra state/effect/path operations. It is registered as `actor_sendmsg_target_case_source_check`.
 - Validation: all 35 CTest tests passed; x64 Release build succeeded. The build's best-effort automatic OldRO copy reports permission denied; no deploy was needed because the executable did not change.
 - This closes only the case-81 sub-branch audit. The full `CGameActor::SendMsg` parity gate remains open; inventory reports 57 direct current cases and 24 source IDs without a direct/inherited route.
+
+# `CGameActor::SendMsg` message 48 owner detach (2026-10-27)
+
+- Ref and canonical EXE complete `SendMsg` bodies and message 48 branch normalize identically. The branch finds the sender in the actor's effect list, clears its tracked owner pointer through `DeleteMatchingEffect`, and removes the list node.
+- Ref and EXE `CMsgEffect` destructors send message 48 to the master actor. Current `CMsgEffect` destruction calls `DeleteMatchingEffect` directly; the current helper erases the effect from `m_msgEffectList`. The `m_removedFromOwner` guard suppresses duplicate owner cleanup after existing removal paths.
+- `tools/tests/check_actor_sendmsg_effect_detach_case.py` compares the Ref/EXE actor function and branch, the Ref/EXE destructor, and current destructor/owner cleanup. CTest `actor_sendmsg_effect_detach_source_check` passes. All 36 CTest tests pass.
+- The inventory recognizes 48 as an inherited current lifecycle route; 23 source IDs remain without a current route. Missing legacy owner slots and related messages are listed in `MISMATCHES.md`. This is a structural comparison only; no live playback acceptance is claimed.

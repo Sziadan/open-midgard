@@ -343,3 +343,9 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 # `0x01CF` devotion position has uninitialized source Z (2026-10-27)
 
 - Canonical `Zc_DevotionList` and Ref set position X from the devoter AID and Y from each devotee AID, but do not initialize position Z before passing the vector to message 14. The reconstructed handler sets Z to zero deterministically. All defined coordinates and gameplay effect branches are source-compared; source Z is undefined.
+
+# Actor message 48 effect-owner cleanup representation (2026-10-27)
+
+- Canonical `CGameActor::SendMsg` message 48 finds the sender in `m_msgEffectList`, calls `DeleteMatchingEffect` to clear its tracked owner slot, then removes the list node. `CMsgEffect::~CMsgEffect` sends message 48 to its master actor.
+- Current `CMsgEffect::~CMsgEffect` calls `CGameActor::DeleteMatchingEffect` directly (guarded by `m_removedFromOwner`), and that method clears current owner slots and erases the effect from the owner list. This covers the current lifecycle path without a second message dispatch.
+- The legacy actor has tracked slots for `m_pkEffect`, `m_crusisEffect`, `m_chatProhibitEffect`, and `m_cursorEffect` that are absent from the current model. Messages 56/57, 78/79, 118, and 135/136 remain separately unaudited; message 48’s inherited route does not establish those behaviors.
