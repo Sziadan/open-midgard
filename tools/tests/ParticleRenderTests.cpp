@@ -1721,6 +1721,38 @@ int main() {
         check(g_renderer.submissions.empty(),"SoulBreaker emits nothing when all four GI lanes are inactive");
     }
     {
+        CTexture texture;CEffectPrim prim;prim.m_texture={&texture};
+        prim.m_pos={10,20,30};prim.m_renderFlag=9;
+        EffectGi& red=prim.m_gi[0];red.life=1;red.alphaB=0;red.flag[0]=2;
+        red.height[0]=8;red.vecBPreX=3;red.arcBaselineY=0;red.vecBPreZ=4;
+        EffectGi& gray=prim.m_gi[1];gray.life=1;gray.alphaB=120;gray.flag[0]=3;
+        gray.height[0]=6;gray.arcBaselineY=-1;
+        EffectGi& white=prim.m_gi[2];white.life=1;white.alphaB=200;white.height[0]=5;
+        white.arcBaselineY=1;
+        g_renderer.submissions.clear();g_renderer.flags.clear();RenderReferencePeongUp(prim,view);
+        check(g_renderer.submissions.size()==4,
+            "PeongUp routes with no master and draws live lanes at relative Y<=0 without an alpha gate");
+        if(g_renderer.submissions.size()==4){
+            const RPFace& first=g_renderer.submissions[0];const RPFace& grayFace=g_renderer.submissions[2];
+            check(first.tex==&texture&&first.m_verts[0].color==0x006969E1u
+                &&grayFace.m_verts[0].color==0x78373737u,
+                "PeongUp selects flag-2 blue and flag-3 gray RGB with lane alphaB");
+            check(first.srcAlphaMode==D3DBLEND_SRCALPHA&&first.destAlphaMode==D3DBLEND_INVSRCALPHA
+                &&first.m_verts[0].tu==0.0f&&first.m_verts[0].tv==1.0f
+                &&g_renderer.flags[0]==9&&g_renderer.flags[3]==9,
+                "PeongUp uses RenderTeiRect texture, blend, UV, and raw flag semantics");
+            tlvertex3d expected{};ProjectReferenceEffectVertex({13,20,34},view,expected);
+            check(near(first.m_verts[0].x,expected.x)&&near(first.m_verts[0].y,expected.y)
+                &&near(first.m_verts[0].x,first.m_verts[1].x),
+                "PeongUp follows executable-zero orientation globals, adds BPre and parent position, and keeps degenerate corners");
+        }
+        white.arcBaselineY=0;g_renderer.submissions.clear();RenderReferencePeongUp(prim,view);
+        check(g_renderer.submissions.size()==6&&g_renderer.submissions[4].m_verts[0].color==0xC8FFFFFFu,
+            "PeongUp includes the zero-Y boundary and uses white RGB for other flags");
+        gray.life=0;red.life=0;white.life=0;g_renderer.submissions.clear();RenderReferencePeongUp(prim,view);
+        check(g_renderer.submissions.empty(),"PeongUp skips every GI lane whose life is not one");
+    }
+    {
         CTexture texture; CEffectPrim prim; prim.m_texture={&texture}; prim.m_pos={10,20,30}; prim.m_renderFlag=7;
         for(int i=0;i<2;++i){auto& gi=prim.m_gi[static_cast<size_t>(i)];gi.life=1;gi.alphaB=180;
             gi.height[0]=2;gi.height[1]=3;gi.height[2]=4;}
