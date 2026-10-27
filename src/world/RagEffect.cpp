@@ -2391,6 +2391,40 @@ void RenderReferenceFlash(const CEffectPrim& prim)
     g_renderer.AddReferenceEffectTriangle(face,1);
 }
 
+// HighPriest.exe.c:469010 / Ref/RagEffectPrim.cpp:3868. The line is a
+// three-vertex alpha-operation face built from two projected world points.
+void RenderReference3DLine(const CEffectPrim& prim, const matrix& view)
+{
+    tlvertex3d top{};
+    top.specular = 0xFF000000u;
+    ProjectReferenceEffectVertex(prim.m_pos, view, top);
+    vector3d lowerPosition = prim.m_pos;
+    lowerPosition.y -= 10.0f;
+    tlvertex3d lower{};
+    lower.specular = 0xFF000000u;
+    ProjectReferenceEffectVertex(lowerPosition, view, lower);
+
+    RPFace* face = g_renderer.BorrowNullRP();
+    if (!face) return;
+    face->primType = D3DPT_TRIANGLELIST; face->numVerts = 3;
+    face->verts = face->m_verts; face->indices = nullptr; face->numIndices = 0;
+    face->tex = nullptr; face->mtPreset = 0; face->cullMode = D3DCULL_NONE;
+    face->srcAlphaMode = D3DBLEND_SRCALPHA; face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+    face->m_verts[0] = top;
+    face->m_verts[1] = top;
+    face->m_verts[2] = lower;
+    face->m_verts[1].x = static_cast<float>(static_cast<double>(top.x) + 1.0);
+    for (int index = 0; index < 3; ++index) {
+        face->m_verts[index].oow = 0.99999899f;
+        face->m_verts[index].tu = 0.0f;
+        face->m_verts[index].tv = 0.0f;
+    }
+    face->m_verts[0].color = 0x9DFFFFFFu;
+    face->m_verts[1].color = 0x9BFFFFFFu;
+    face->m_verts[2].color = 0x9BFFFFFFu;
+    g_renderer.AddReferenceEffectTriangle(face,5);
+}
+
 // Ref/RagEffectPrim.cpp:2342-2544 (0x645520), original screen annulus.
 void RenderReferenceScreenCircle(const CEffectPrim& prim)
 {
@@ -12661,6 +12695,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     // types to the same triangle geometry, independent of parent effect ID.
     if (m_type == PP_2DFLASH || m_type == PP_3DFLASH) {
         RenderReferenceFlash(*this);
+        return;
+    }
+    if (m_type == PP_3DLINE) {
+        RenderReference3DLine(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_STIN || m_type == PP_STIN2 || m_type == PP_STIN4) {

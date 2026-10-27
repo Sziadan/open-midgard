@@ -992,6 +992,31 @@ int main() {
         flash.m_texture.clear();renderFlash();check(g_renderer.m_rpAlphaList.empty(),"HasteUp missing flash texture emits no replacement geometry");
     }
     {
+        CEffectPrim line;line.m_pos={12,24,120};
+        matrix lineView{};for(int i=0;i<4;++i)lineView.m[i][i]=1;
+        tlvertex3d topExpected{},lowerExpected{};
+        ProjectReferenceEffectVertex(line.m_pos,lineView,topExpected);
+        vector3d lowerPosition=line.m_pos;lowerPosition.y-=10.0f;
+        ProjectReferenceEffectVertex(lowerPosition,lineView,lowerExpected);
+        g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaNoDepthList.clear();
+        RenderReference3DLine(line,lineView);
+        check(g_renderer.m_rpAlphaOPList.size()==1&&g_renderer.m_rpAlphaList.empty(),
+            "3D line submits exactly one source alpha-operation face with flag five");
+        auto* face=g_renderer.m_rpAlphaOPList[0];
+        check(face->numVerts==3&&face->tex==nullptr
+            &&face->m_verts[0].x==topExpected.x&&face->m_verts[0].y==topExpected.y&&face->m_verts[0].z==topExpected.z
+            &&face->m_verts[1].x==static_cast<float>(static_cast<double>(topExpected.x)+1.0)
+            &&face->m_verts[1].y==topExpected.y&&face->m_verts[1].z==topExpected.z
+            &&face->m_verts[2].x==lowerExpected.x&&face->m_verts[2].y==lowerExpected.y&&face->m_verts[2].z==lowerExpected.z,
+            "3D line uses top/top-plus-one/lower projected vertex order and source ten-unit world offset");
+        check(face->m_verts[0].color==0x9DFFFFFFu&&face->m_verts[1].color==0x9BFFFFFFu
+            &&face->m_verts[2].color==0x9BFFFFFFu&&face->m_verts[0].oow==0.99999899f
+            &&face->m_verts[1].oow==0.99999899f&&face->m_verts[2].oow==0.99999899f
+            &&face->m_verts[0].tu==0&&face->m_verts[1].tu==0&&face->m_verts[2].tu==0
+            &&face->m_verts[0].tv==0&&face->m_verts[1].tv==0&&face->m_verts[2].tv==0,
+            "3D line preserves fixed source colors, reciprocal-depth values and zero UVs");
+    }
+    {
         CEffectPrim ice;ice.m_pos={10,20,100};ice.m_size=2;ice.m_heightSize=15;ice.m_argb=0xC8FFFFFF;
         ice.m_texture={&g_texMgr.texture};ice.m_renderFlag=0x205;
         for(int i=0;i<4;++i)ice.m_rotMat.m[i][i]=1;
