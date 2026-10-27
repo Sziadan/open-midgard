@@ -145,6 +145,7 @@ public:
     // Ref/GameMode.cpp:11527. hideTime is in 24 Hz frames.
     void MakeArrowEffectPos(const vector3d& sourcePos, const vector3d& targetPos, float hideTime);
     void MakeArrowEffect(const vector3d& sourcePos, unsigned int targetGid, float hideTime, int job);
+    void PlaceEffect(const vector3d& pos, int effectId, int lastTime, int extra);
     void GetServerCoor(float clientX, float clientZ, int& serverX, int& serverY) const;
     void GetClientCoor(int serverX, int serverY, float& clientX, float& clientZ) const;
 

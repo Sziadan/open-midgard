@@ -201,6 +201,16 @@ public:
     CRagEffect* m_magicTargetEffect;
 };
 
+class CDummyEffectLauncher : public CAbleToMakeEffect {
+public:
+    u8 OnProcess() override;
+    void SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override;
+    void Initialize(const vector3d& pos, int effectId, int lastTime, int extra);
+
+private:
+    int m_lastCnt = 300;
+};
+
 class CGroundScope : public CAbleToMakeEffect {
 public:
     CGroundScope();

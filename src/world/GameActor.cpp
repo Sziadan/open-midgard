@@ -4205,6 +4205,38 @@ CRagEffect* CAbleToMakeEffect::LaunchEffect(int effectId, vector3d deltaPos, flo
     return effect;
 }
 
+u8 CDummyEffectLauncher::OnProcess()
+{
+    const double elapsedFrames = static_cast<double>(timeGetTime() - m_stateStartTick) * 0.041666668;
+    return elapsedFrames <= static_cast<double>(m_lastCnt);
+}
+
+void CDummyEffectLauncher::Initialize(const vector3d& pos, int effectId, int lastTime, int extra)
+{
+    m_pos = pos;
+    m_isVisible = 0;
+    m_stateStartTick = timeGetTime();
+    const vector3d zero{};
+    CRagEffect* effect = LaunchEffect(effectId, zero, 0.0f);
+    m_lastCnt = lastTime != 0 ? lastTime : 300;
+    if (lastTime == 333 && effect) {
+        const vector3d offset{ static_cast<float>(extra), 0.0f, 0.0f };
+        effect->SendMsg(effect, 14, reinterpret_cast<msgparam_t>(&offset), 0, 0);
+    }
+}
+
+void CDummyEffectLauncher::SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3)
+{
+    if (msg == 14) {
+        const auto* pos = reinterpret_cast<const vector3d*>(par1);
+        if (pos) {
+            Initialize(*pos, static_cast<int>(par2), static_cast<int>(par3), 0);
+        }
+        return;
+    }
+    CAbleToMakeEffect::SendMsg(sender, msg, par1, par2, par3);
+}
+
 void CAbleToMakeEffect::RemoveEffectById(int effectId)
 {
     for (auto it = m_effectList.begin(); it != m_effectList.end();) {

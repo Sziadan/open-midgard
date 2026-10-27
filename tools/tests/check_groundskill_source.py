@@ -69,6 +69,6 @@ for skill, pattern in {
     538: r"case 538:[\s\S]*?PlayWave\(aEffect_117",
 }.items():
     assert re.search(pattern, exe), f"canonical special branch missing for skill {skill}"
-assert re.search(r"effect->SendMsg\(effect, 80, kRagEffectDurationTable\[effectId\] \+ 10, 0, 0\);", IMPL)
+assert re.search(r"gameMode->PlaceEffect\(pos, effectId, kRagEffectDurationTable\[effectId\] \+ 10, 0\);", IMPL)
 assert re.search(r"m_targetGid = 0;", impl)
 print("PASS special branches, world-effect lifetime (+10 frames), and target reset")

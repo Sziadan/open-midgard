@@ -9614,6 +9614,16 @@ void CGameMode::ProcessPlayWave()
     }
 }
 
+void CGameMode::PlaceEffect(const vector3d& pos, int effectId, int lastTime, int extra)
+{
+    if (!m_world) {
+        return;
+    }
+    auto* launcher = new CDummyEffectLauncher();
+    launcher->Initialize(pos, effectId, lastTime, extra);
+    m_world->m_gameObjectList.push_back(launcher);
+}
+
 void CGameMode::OnUpdate() {
     DestroyDeferredRuntimeActors(*this);
     EnsureBootstrapSelfActor(*this);

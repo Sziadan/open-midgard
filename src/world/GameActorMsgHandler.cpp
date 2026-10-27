@@ -68,13 +68,7 @@ void PlaceGroundEffect(const vector3d& pos, int effectId)
     if (!gameMode || !gameMode->m_world) {
         return;
     }
-    CRagEffect* effect = new CRagEffect();
-    if (!effect) {
-        return;
-    }
-    effect->InitAtWorldPosition(effectId, pos);
-    effect->SendMsg(effect, 80, kRagEffectDurationTable[effectId] + 10, 0, 0);
-    gameMode->m_world->m_gameObjectList.push_back(effect);
+    gameMode->PlaceEffect(pos, effectId, kRagEffectDurationTable[effectId] + 10, 0);
 }
 
 CRagEffect* LaunchCounted(CAbleToMakeEffect& owner, int effectId, int count)
