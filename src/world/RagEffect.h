@@ -488,6 +488,7 @@ private:
     void SpawnChookgi(char variant);
     void ApplyEarthSpike(char variant);
     void ApplyColorPaper(const char* textureName);
+    void SpawnStatusState();
     void ApplySaintCasting(short time, const char* textureName, int variant);
     void ApplyCoupleCasting(const char* textureName);
     void ApplyHeartCasting(const char* textureName, float offsetX, float offsetZ);

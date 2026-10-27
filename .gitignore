@@ -46,6 +46,8 @@ tools/*
 !tools/tests/
 tools/tests/*
 !tools/tests/CMakeLists.txt
+!tools/tests/check_status_state.py
+!tools/tests/status_state_exe_map.tsv
 !tools/tests/WaveMathTests.cpp
 !tools/tests/ServerSoundTests.cpp
 !tools/tests/WaveDispatchTests.cpp

@@ -2974,6 +2974,24 @@ bool UpdateReferenceParticleSpline(CEffectPrim* prim)
     return AnimateReferenceParticle(prim);
 }
 
+struct StatusStateIconEntry {
+    int priority;
+    int status;
+    const char* standardPath;
+    const char* specialPath;
+};
+#include "StatusStateIconMap.generated.inc"
+
+const StatusStateIconEntry* FindStatusStateIcon(int priority, int status)
+{
+    for (const StatusStateIconEntry& entry : kStatusStateIconEntries) {
+        if (entry.priority == priority && entry.status == status) {
+            return &entry;
+        }
+    }
+    return nullptr;
+}
+
 } // namespace
 
 CEffectPrim::CEffectPrim()
@@ -12675,6 +12693,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
         RenderReferenceQuadHorn(*this,*viewMatrix);
         return;
     }
+    if (m_type == PP_2DTEXTURE && (m_pattern & 4) != 0) {
+        RenderReferenceScreenTexture(*this);
+        return;
+    }
     if (UsesReferenceScreenTexture()) {
         RenderReferenceScreenTexture(*this);
         return;
@@ -13713,6 +13735,10 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         break;
     case 163:
         // ProcessEffectFrame owns the source Sakura emitter for EF_SAKURA.
+        m_handler = Handler::None;
+        break;
+    case 164:
+        // ProcessEffectFrame owns the canonical HUD status icon emitter.
         m_handler = Handler::None;
         break;
     case 22:
@@ -20683,6 +20709,71 @@ std::optional<bool> CRagEffect::ProcessReferenceStrOnly()
     }
 }
 
+void CRagEffect::SpawnStatusState()
+{
+    // Ref/RagEffect.cpp:8313-8400 (0x602E00); path table extracted from the
+    // canonical HighPriest.exe GetStateFileName branch targets.
+    if (m_stateCnt == 9998) {
+        m_stateCnt = 0;
+    }
+    if (m_count != 0) {
+        m_count = 0;
+        m_stateCnt = 0;
+        SendMsg(nullptr, 25, 100, 0, 0);
+    }
+    if (m_stateCnt != 0) {
+        return;
+    }
+
+    const int job = g_world.m_player ? g_world.m_player->m_job : 0;
+    const bool specialJob = job >= 4046 && job <= 4049;
+    const auto& active = g_session.GetActiveStatusIcons();
+    std::vector<int> drawList;
+    drawList.reserve((std::min)(active.size(), size_t{99}));
+    int x = 0;
+    int y = 0;
+    int visibleCount = 0;
+
+    for (int priority = 0; priority < 4; ++priority) {
+        for (const ACTIVE_STATUS_ICON& icon : active) {
+            const StatusStateIconEntry* entry = FindStatusStateIcon(priority, icon.statusType);
+            if (!entry) {
+                continue;
+            }
+            const int drawId = icon.statusType == 42 ? 12 : icon.statusType;
+            if (std::find(drawList.begin(), drawList.end(), drawId) != drawList.end()) {
+                continue;
+            }
+
+            CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE, vector3d{});
+            if (!prim) {
+                continue;
+            }
+            prim->m_pattern = 4;
+            prim->m_duration = 9999;
+            prim->m_widthSize = 16.0f;
+            prim->m_heightSize = 16.0f;
+            if (35 * visibleCount + 150 < g_renderer.m_height - 50) {
+                y += 35;
+            } else {
+                y = 35;
+                x -= 35;
+                visibleCount = 0;
+            }
+            prim->m_deltaPos2.x = static_cast<float>(g_renderer.m_width + x - 32);
+            prim->m_deltaPos2.y = static_cast<float>(y + 150);
+            prim->m_gi[0].life = 0;
+            const char* path = specialJob && entry->specialPath ? entry->specialPath : entry->standardPath;
+            prim->m_texture.push_back(g_texMgr.GetTexture(path, false));
+
+            if (drawList.size() < 99) {
+                drawList.push_back(drawId);
+                ++visibleCount;
+            }
+        }
+    }
+}
+
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
@@ -20746,6 +20837,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 163) {
         SpawnSakura();
+        return true;
+    }
+    if (m_type == 164) {
+        SpawnStatusState();
         return true;
     }
     if (m_type == 709) {
