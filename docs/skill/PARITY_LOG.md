@@ -34,6 +34,7 @@ Ports are listed as `Ref location -> src location`. A row is not a claim that th
 - `CGameMode::GetServerCoor` / `GetClientCoor`, `Ref/GameMode.cpp:10275` and `:10311` -> `src/world/ArrowEffect.cpp`. Skill 47 uses the two-integer server cell.
 - `LaunchSkillSpecialEffect` skill 47, `Ref/Session2.cpp:7358` -> `src/world/SkillSpecialEffect.cpp`. One arrow at the target, then one at each of the eight neighboring cells, hide time 18 frames.
 
+
 WP1 functions `Am_Skill` calls are now present. The action-info check was a case-label comparison, not an execution of every skill id.
 
 ## WP2
@@ -2380,3 +2381,7 @@ Runtime-wave producer checkpoint (2026-10-27): `CPc::OnProcess` Ref/Pc.cpp and c
 - Complete Ref/decompiled-EXE function bodies compare equal after comment removal and whitespace normalization: FireArrow 4,472 chars / SHA-256 `27d730a0cb2372e3bde3b15b2d7b7fe199a52ba364e4ff156aa04147eca1c44b`; EarthSpike 3,729 / `884162b2902537bc41e7f1957d7bcccd427f0d1b566f3d187569eb274b269ea3`; FireHit 389 / `ac2b1140e5c8da99bafe37abaacfe9c5ef32419ba880ccdcf5993ca11bff92e3`; Kouenka 1,667 / `4d57391abc811b0fab7cdbc1b9003a0ce9ec66a6583411a72fdf8f5a22499207`; Prim3DParticleGravity 1,889 / `6796a9fa76012913eaf49d49bafa79ed76a14869a4f01c767a11431a07df394a`.
 - `check_runtime_wave_pending_producers.py` checks those complete Ref/EXE bodies, exact PE string bytes and VAs, source-to-current sound-branch order, and current source anchors. Existing FireArrow lifecycle, EarthSpike caller, Kouenka caller and gravity-particle checks cover their larger implementation routes. The generated manifest now lists all five producer anchors and `BLOCKED.md` reports no unresolved runtime-name producer. No live playback acceptance is claimed.
 - The full x64 Release build succeeds; the authorized OldRO copy matches SHA-256 `AA4E97621FD9EF03E4CE07AFF14A6BBAD8E4889E10F36795C8628A4B99F08C14`. Static extraction still reports 19 dynamic-name callsites as unresolved because their runtime names are formatted or selected through tables; 18 now have source anchors and one legacy UI producer is excluded.
+
+## WP8 packet encoder trace
+
+- `clif_skill_nodamage`, `Ref/eAthena_src_2011/map/clif.c:4798` -> packet `0x011A` -> Ref/EXE `CGameMode::Zc_Use_Skill` -> `HandleSkillNoDamageNotify`. `tools/tests/check_clif_skill_nodamage_source.py` compares ordered wire-field writes, disguised-destination/source send branches, packet_ver 23 length, receive profile/registration, signed value decoding, and receiver dispatch. The server helper writes skill id W@2, capped value W@4, destination L@6, source-or-zero L@10, and result B@14. Client-side handling does not reflect the server's per-recipient disguise fanout; that remains transport routing. This validates one encoder/receiver route, not all per-skill packet emissions.
