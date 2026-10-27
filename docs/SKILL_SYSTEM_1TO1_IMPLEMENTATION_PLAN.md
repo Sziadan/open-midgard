@@ -430,6 +430,8 @@ Completion update (2026-10-27): base `CGameActor::ProcessState` now passes the f
 
 Completion update (2026-10-27): `CGameActor::ProcessEffectState` now passes its ordered branch-level source comparison and is integrated before queued-hit dispatch in `ProcessState`. See the latest function gate in `docs/skill/PROGRESS.md`; next function is `CGameActor::MakeSpecialAttackEffect` and must be fully source-compared before implementation.
 
+Source-audit update (2026-10-27): `CGameActor::MakeSpecialAttackEffect` Ref/EXE bodies match (1,501 normalized characters). Its Mandra and arrow job predicates and exact job sets are recorded in `docs/skill/PARITY_LOG.md`; current `src` has no wrapper and lacks the Mandra effect factory/renderable. Continue implementing this function only after preserving the branch-level comparator gate.
+
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
 * `CPc::SetState` Ref/Pc.cpp:5678, `ProcessState` 2382.
 * `CPlayer::SetState` Ref/Player.cpp:523, `ProcessState` 87.
