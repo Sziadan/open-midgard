@@ -29,6 +29,7 @@ struct vector3d { float x = 0, y = 0, z = 0; };
 vector3d AddVec3(vector3d a, vector3d b) { return {a.x+b.x, a.y+b.y, a.z+b.z}; }
 #include "EffectGiTypes.inc"
 constexpr int kPrimTypeHeal = 0x3C;
+constexpr int kPrimTypeChemical3 = 0x38;
 struct matrix { float m[4][4]{}; };
 #include "EffectSegmentTypes.inc"
 void MatrixIdentity(matrix& m) { m = {}; for (int i = 0; i < 4; ++i) m.m[i][i] = 1; }
@@ -477,6 +478,7 @@ struct CRagEffect : CGameObject {
     void ApplyThunderStorm2();
     void ApplyStin5();
     void SpawnStin5(const char*);
+    void ApplyChemical3(short);
     void SpawnBash3D(const char*,char,char);
     void ApplyFrostDiver();
     void ApplyFrostDiver2();
@@ -2986,6 +2988,35 @@ int main()
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
     for (int angle=0; angle<=360; ++angle) { g_sinTable[angle]=GetSin(angle); g_cosTable[angle]=GetCos(angle); }
+    {
+        CRenderObject actor;actor.m_pos={30,40,50};
+        CRagEffect effect;effect.m_master=&actor;effect.m_duration=300;effect.m_deltaPos={0,0,0};
+        const short times[4]={0,10,20,21};const float maxHeights[4]={0.30000001f,0.5f,0.40000001f,0.40000001f};
+        const float heights2[4]={20,40,30,30};const int flags[4]={0,10,20,20};
+        const float heights3[4]={1.5f,1.0f,1.5f,1.5f};
+        bool payloads=true;
+        for(int variant=0;variant<4;++variant) {
+            rngValues.assign(24,0);rngCursor=0;effect.ApplyChemical3(times[variant]);
+            const CEffectPrim* prim=effect.m_primList.back();
+            payloads=payloads&&prim->m_type==PP_CHEMICAL3&&prim->m_renderFlag==513&&prim->m_duration==300
+                &&prim->m_totalTexture==1&&prim->m_texture.size()==1
+                &&prim->m_pos.x==30&&prim->m_pos.y==40&&prim->m_pos.z==50;
+            for(int lane=0;lane<4;++lane){const auto& gi=prim->m_gi[lane];payloads=payloads
+                &&gi.life==1&&gi.process==0&&gi.distance==100&&gi.alphaB==0
+                &&std::fabs(gi.maxHeight-maxHeights[variant])<0.000001f
+                &&gi.height[0]==(times[variant]%10==1?15.0f:-15.0f)&&gi.height[1]==0
+                &&gi.height[2]==heights2[variant]&&gi.height[3]==heights3[variant]
+                &&gi.flag[0]==flags[variant]&&gi.riseAngle==prim->m_gi[0].riseAngle;}
+            payloads=payloads&&rngCursor==24&&g_texMgr.requests.back()==(times[variant]<10?"effect\\line3.tga":"effect\\line3y.tga");
+        }
+        check(payloads&&effect.m_primList.size()==4,
+            "CHEMICAL3 covers time<10, 10..19, 20+, and 21 texture/profile branches with 24 ordered draws each");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngCursor=0;rngValues.assign(192,0);g_texMgr.requests.clear();
+        for(int repeat=0;repeat<4;++repeat){effect.ApplyChemical3(20);effect.ApplyChemical3(21);}
+        check(effect.m_primList.size()==8&&rngCursor==192,
+            "CHEMICAL4 caller's four pairs of CHEMICAL3(20/21) emit eight children and consume 192 draws");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;g_texMgr.requests.clear();
+    }
     {
         CRenderObject actor,listener;actor.m_pos={30,40,50};listener.m_pos={5,300,8};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;

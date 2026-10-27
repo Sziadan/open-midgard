@@ -20267,7 +20267,7 @@ bool CRagEffect::ProcessEffectFrame()
                     wavePos.y = mode->m_world->m_player->m_pos.y;
                 }
             }
-            TryPlayEffectWaveAt(wavePos, "effect\\\xC7\xC7\xBE\xEE\xBD\xCC\xBC\xA6.wav");
+            TryPlayEffectWaveAt(wavePos, "effect\\chemical4.wav");
         }
         const short slashTime = static_cast<short>(m_type == 512 ? 10 : (m_type == 623 ? 20 : 0));
         for (int repeat = 0; repeat < 4; ++repeat) {
