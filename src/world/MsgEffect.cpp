@@ -111,21 +111,13 @@ bool ResolveMsgSpriteResources(const std::string& spritePath,
     return *outSprite != nullptr && *outAct != nullptr;
 }
 
-bool ContainsAsciiCaseInsensitive(const char* text, const char* token)
+bool ContainsAsciiCaseSensitive(const char* text, const char* token)
 {
     if (!text || !token || !*text || !*token) {
         return false;
     }
 
-    std::string loweredText(text);
-    std::string loweredToken(token);
-    std::transform(loweredText.begin(), loweredText.end(), loweredText.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
-    std::transform(loweredToken.begin(), loweredToken.end(), loweredToken.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
-    return loweredText.find(loweredToken) != std::string::npos;
+    return std::string(text).find(token) != std::string::npos;
 }
 
 std::string NormalizeWaveEventPath(const char* eventName)
@@ -159,16 +151,16 @@ bool TryPlayMsgSpriteMotionEvent(const CMsgEffect& effect, int motionIndex)
         return false;
     }
     const char* eventName = act->GetEventName(motion->eventId);
-    if (!ContainsAsciiCaseInsensitive(eventName, ".wav")) {
+    if (!ContainsAsciiCaseSensitive(eventName, ".wav")) {
         return false;
     }
     CGameMode* mode = g_modeMgr.GetCurrentGameMode();
     if (!mode || !mode->m_world || !mode->m_world->m_player) {
         return false;
     }
-    const vector3d& origin = effect.m_masterActor ? effect.m_masterActor->m_pos : effect.m_pos;
+    const vector3d& origin = effect.m_pos;
     const vector3d& listener = mode->m_world->m_player->m_pos;
-    return PlayWave(eventName, origin.x - listener.x, origin.y - listener.y, origin.z - listener.z);
+    return PlayWave(eventName, origin.x - listener.x, 0.0f, origin.z - listener.z);
 }
 
 bool ProjectMsgEffectPoint(const matrix& viewMatrix, const vector3d& point, tlvertex3d* outVertex)

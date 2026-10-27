@@ -5,8 +5,10 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 REF = (ROOT / "Ref/GameActor.cpp").read_text(encoding="utf-8", errors="replace")
+GAME_MODE_REF = (ROOT / "Ref/GameMode.cpp").read_text(encoding="utf-8", errors="replace")
 EXE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
 CURRENT = (ROOT / "src/world/GameActor.cpp").read_text(encoding="utf-8")
+MSG_EFFECT = (ROOT / "src/world/MsgEffect.cpp").read_text(encoding="utf-8")
 
 
 def body(text: str, marker: str) -> tuple[str, str]:
@@ -62,4 +64,17 @@ assert "dynamic_cast<CGameActor*>(object)" in CURRENT
 assert "trackMotionWaveEventsInProcessMotion" in CURRENT
 assert "actor.m_isPc != 0" in CURRENT
 assert "ProcessQueuedHitWave(*this)" in CURRENT
-print("PASS Ref/EXE ProcessSound body equality (5,686 normalized chars), ordered forward/wrap branches, event filter, Y=0 playback, and current actor route; generic CRenderObject caller coverage remains an explicit limitation")
+assert "bool ContainsAsciiCaseSensitive(" in MSG_EFFECT
+assert 'ContainsAsciiCaseSensitive(eventName, ".wav")' in MSG_EFFECT
+assert "ContainsAsciiCaseInsensitive" not in MSG_EFFECT
+assert "const vector3d& origin = effect.m_pos;" in MSG_EFFECT
+assert "PlayWave(eventName, origin.x - listener.x, 0.0f, origin.z - listener.z)" in MSG_EFFECT
+
+# The only other EXE caller is CBlowEffect::OnProcess, but its sole constructor
+# factory has no caller in either canonical EXE or Ref, so it is dead-code scope.
+make_marker = "void __thiscall CGameMode::MakeBlowEffect(CGameMode *this, float cx, float cy, float cz)"
+_, make_body = body(EXE, make_marker)
+assert EXE.count("CGameMode::MakeBlowEffect(") == 2, "MakeBlowEffect gained an executable callsite"
+assert "CBlowEffect::CBlowEffect(v5)" in make_body
+assert GAME_MODE_REF.count("CGameMode::MakeBlowEffect(") == 2, "Ref gained a MakeBlowEffect callsite"
+print("PASS Ref/EXE ProcessSound body equality (5,686 normalized chars), ordered forward/wrap branches, event filter, Y=0 playback, actor/CMsgEffect producers, and no live MakeBlowEffect/CBlowEffect factory route")

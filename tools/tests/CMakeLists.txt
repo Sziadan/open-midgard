@@ -439,7 +439,9 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../HighPriest.exe.c
     ../../Ref/GameModePacket.cpp
     ../../Ref/GameActor.cpp
+    ../../Ref/GameMode.cpp
     ../../src/world/GameActor.cpp
+    ../../src/world/MsgEffect.cpp
     ../../Ref/eAthena_src_2011/map/clif.c
     ../../Ref/RunningServer/packet_db.txt
     ../../src/gamemode/GameModePacket.cpp
