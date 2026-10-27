@@ -672,3 +672,5 @@ Cases 0x23/0x63 (`PP_GUMGANG`/`PP_DOUBLEGUMGANG`) checkpoint (2026-10-26): sourc
 
 
 Case 0x25 (`PP_GRANDCROSS2`) checkpoint (2026-10-26): Ref and canonical EXE `PrimGrandCross2` match. The updater now advances only life==1 bands, follows source process>=10 alpha fade/clamp/expiry, then updates height[1], height[0], and height[2] from `maxHeight*sinTable[process]` in source order; it does not alter origin. Mechanical branch comparison and lifecycle tests pass (1,594 checks), as do all six CTest suites and seven Python tests. x64 Release and OldRO match SHA-256 `1D778EACE6AD133A01D374DF7099058C5FA72C1CB8C6D7472DB490460895E5DD`. 50 source IDs remain unmapped; overall OnProcess parity is open.
+
+Latest completed function gate (2026-10-27): `CEffectPrim::Prim3DParticle` / PP_3DPARTICLE passed its mechanical Ref-to-canonical-to-current branch comparison, x64 Release build and all six CTest suites. Evidence, lifecycle checks, shared-helper limitations, and the outstanding Sightrasher caller payload gap are recorded in `PARITY_LOG.md`. The next primitive function remains gated on a passed source-to-implementation comparison.

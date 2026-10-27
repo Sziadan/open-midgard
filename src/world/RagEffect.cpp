@@ -11408,27 +11408,49 @@ bool UpdateWarpZoneOrbit(CEffectPrim* prim)
     return AnimateReferenceParticle(prim);
 }
 
-// Ref/RagEffectPrim.cpp:456-594,2184-2328. Poison, Ruwach, Smoke and Torch use
-// linear PP_3DPARTICLE state with no change points or movement-pattern bits.
-// Blessing adds the 0x80 alpha-twinkle pattern handled by the shared alpha port.
-// FireBall adds 0x100 target termination and 0x20 camera-relative roll.
-// FireFly adds periodic 0x4 steering and keyed alpha/max-alpha changes.
-// Torch's 0x200 bit selects clip color only. Other callers still need their
-// additional pattern/control branches.
+// Ref/RagEffectPrim.cpp:825-923; HighPriest.exe.c:466988-467174.
 bool UpdateLinearReferenceParticle(CEffectPrim* prim)
 {
     prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
+    if (prim->m_stateCnt == prim->m_changePoint) {
+        prim->m_speed3d = prim->m_changeSpeed3d;
+        prim->m_deltaPosAccel = prim->m_changeAccel3d;
+    }
     const double speed = static_cast<double>(prim->m_accel) + prim->m_speed;
     prim->m_speed = static_cast<float>(speed);
     prim->m_sizeSpeed += prim->m_sizeAccel;
-    prim->m_speed3d = {
-        static_cast<float>(speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
-        static_cast<float>(speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
-        static_cast<float>(speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
-    };
-    prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
-    prim->m_roll += prim->m_rollSpeed;
-    prim->m_size += prim->m_sizeSpeed;
+    if ((prim->m_pattern & 0x400) != 0) {
+        prim->m_speed3d = AddVec3(prim->m_speed3d, prim->m_deltaPosAccel);
+        prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
+        prim->m_roll += prim->m_rollSpeed;
+        prim->m_size += prim->m_sizeSpeed;
+    } else if ((prim->m_pattern & 1) != 0 || prim->m_stateCnt > prim->m_fadeInCnt) {
+        prim->m_speed3d = {
+            static_cast<float>(speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+            static_cast<float>(speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+            static_cast<float>(speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+        };
+        prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
+        prim->m_roll += prim->m_rollSpeed;
+        prim->m_size += prim->m_sizeSpeed;
+    }
+
+    if ((prim->m_pattern & 2) != 0) {
+        if (prim->m_stateCnt % prim->m_count == 0) {
+            prim->m_count = rand() % 8 + 12;
+            prim->m_deltaPos3.x = static_cast<float>(rand() % 5 + 5) * 0.0099999998;
+            prim->m_deltaPos3.z = static_cast<float>(rand() % 5 + 5) * 0.0099999998;
+            const auto reverseDirection = []() {
+                const int value = rand() & 0x80000001;
+                if (value == 0) return true;
+                return value < 0
+                    && (((static_cast<int>(static_cast<unsigned char>(value)) - 1) | 0xFFFFFFFE) == -1);
+            };
+            if (reverseDirection()) prim->m_deltaPos3.x *= -1.0f;
+            if (reverseDirection()) prim->m_deltaPos3.z *= -1.0f;
+        }
+        prim->m_deltaPos.x += prim->m_deltaPos3.x;
+    }
     if ((prim->m_pattern & 4) != 0 && prim->m_stateCnt % prim->m_count == 0) {
         prim->m_speed = static_cast<float>(static_cast<double>(rand() % 35 + 15) * 0.0099999998);
         prim->m_longitude = static_cast<float>(prim->m_longitude - 40.0 + rand() % 80);
@@ -11437,6 +11459,14 @@ bool UpdateLinearReferenceParticle(CEffectPrim* prim)
         MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
         MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
         prim->m_count = rand() % 10 + 5;
+    }
+    if ((prim->m_pattern & 8) != 0 && prim->m_stateCnt % prim->m_count == 0) {
+        prim->m_longitude = static_cast<float>(prim->m_longitude - 5.0 + rand() % 10);
+        prim->m_latitude = static_cast<float>(prim->m_latitude - 5.0 + rand() % 10);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_count = rand() % 15 + 5;
     }
     prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
     if ((prim->m_pattern & 0x100) != 0) {
@@ -11448,7 +11478,7 @@ bool UpdateLinearReferenceParticle(CEffectPrim* prim)
     }
     if ((prim->m_pattern & 0x20) != 0) {
         CGameMode* mode = g_modeMgr.GetCurrentGameMode();
-        if (mode && mode->m_view) prim->m_roll = prim->m_roty - mode->m_view->GetCameraLongitude();
+        prim->m_roll = prim->m_roty - mode->m_view->GetCameraLongitude();
     }
     ProcessReferenceParticleAlpha(prim);
     ShiftCircleSegments(prim);
@@ -12474,11 +12504,8 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_3DPARTICLEORBIT) {
         return UpdateParticleOrbitPrimitive(this);
     }
-    if (m_type == PP_3DPARTICLE && UsesReferenceParticle()) {
-        return UpdateLinearReferenceParticle(this);
-    }
     if (m_type == PP_3DPARTICLE) {
-        return UpdateFreeParticlePrimitive(this, false, false);
+        return UpdateLinearReferenceParticle(this);
     }
     if (m_type == PP_3DPARTICLEGRAVITY) {
         return UpdateReferenceGravityParticle(this);

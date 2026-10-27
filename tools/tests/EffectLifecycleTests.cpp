@@ -417,7 +417,7 @@ struct CEffectPrim : CGameObject {
         if (UsesReferenceTexture()) UpdateReferenceCrossTexture(this);
         if (UsesReferenceCylinder() && !UpdateReferenceCylinderState(this)) return false;
         if (m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle() && !UpdateWarpZoneOrbit(this)) return false;
-        if (m_type == PP_3DPARTICLE && UsesReferenceParticle() && !UpdateLinearReferenceParticle(this)) return false;
+        if (m_type == PP_3DPARTICLE && !UpdateLinearReferenceParticle(this)) return false;
         if (resetFrame >= 0) m_stateCnt = resetFrame;
         return active;
     }
@@ -6920,6 +6920,67 @@ int main()
         effect.m_stateCnt=1;effect.SpawnFireFly();check(effect.m_primList.size()==1 && waveCalls.empty(),"FireFly emits only on zero and has no wave");
         effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"FireFly cleanup balances resource locks");
         rngValues.clear();rngCursor=0;
+    }
+    {
+        CRagEffect master; master.m_effectPos = {100, 200, 300}; master.m_duration = 100;
+        CEffectPrim delta; delta.m_master = &master; delta.m_stateCnt = 5; delta.m_changePoint = 5;
+        delta.m_changeSpeed3d = {1, 2, 3}; delta.m_changeAccel3d = {0.5f, -1, 2};
+        delta.m_pattern = 0x400; delta.m_speed = 4; delta.m_accel = 0.5f;
+        delta.m_deltaPos = {10, 20, 30}; delta.m_rollSpeed = 2; delta.m_size = 4;
+        delta.m_sizeSpeed = 1; delta.m_sizeAccel = 0.25f;
+        check(UpdateLinearReferenceParticle(&delta) && delta.m_speed3d.x == 1.5f && delta.m_speed3d.y == 1
+            && delta.m_speed3d.z == 5 && delta.m_deltaPos.x == 11.5f && delta.m_deltaPos.y == 21
+            && delta.m_deltaPos.z == 35 && delta.m_roll == 2 && delta.m_sizeSpeed == 1.25f
+            && delta.m_size == 5.25f && delta.m_pos.x == 111.5f && delta.m_pos.y == 221 && delta.m_pos.z == 335,
+            "PP_3DPARTICLE change-point copies XYZ speed/acceleration before 0x400 delta-speed integration");
+
+        CEffectPrim fade; fade.m_master = &master; fade.m_stateCnt = 5; fade.m_fadeInCnt = 5;
+        fade.m_speed = 3; fade.m_accel = 1; fade.m_size = 10; fade.m_sizeSpeed = 2; fade.m_sizeAccel = 0.5f;
+        fade.m_roll = 7; fade.m_rollSpeed = 4;
+        check(UpdateLinearReferenceParticle(&fade) && fade.m_speed == 4 && fade.m_sizeSpeed == 2.5f
+            && fade.m_size == 10 && fade.m_roll == 7 && fade.m_deltaPos.x == 0 && fade.m_deltaPos.y == 0
+            && fade.m_deltaPos.z == 0,
+            "PP_3DPARTICLE fade-in movement gate is strict while scalar speed and size-speed still integrate");
+
+        CEffectPrim sprinkle; sprinkle.m_master = &master; sprinkle.m_pattern = 2; sprinkle.m_stateCnt = 0; sprinkle.m_count = 1;
+        rngValues = {3, 1, 2, 0, 1}; rngCursor = 0; const int sprinkleDrawStart = rngDraws;
+        check(UpdateLinearReferenceParticle(&sprinkle) && sprinkle.m_count == 15
+            && std::fabs(sprinkle.m_deltaPos3.x + 0.06f) < 0.000001f
+            && std::fabs(sprinkle.m_deltaPos3.z - 0.07f) < 0.000001f
+            && std::fabs(sprinkle.m_deltaPos.x + 0.06f) < 0.000001f
+            && rngDraws - sprinkleDrawStart == 5,
+            "PP_3DPARTICLE 0x2 sprinkle preserves count, X/Z magnitude, sign RNG order and same-frame drift");
+        sprinkle.m_stateCnt = 1;
+        check(UpdateLinearReferenceParticle(&sprinkle) && rngDraws - sprinkleDrawStart == 5
+            && std::fabs(sprinkle.m_deltaPos.x + 0.12f) < 0.000001f,
+            "PP_3DPARTICLE 0x2 sprinkle applies stored X drift every frame between random resets");
+
+        CEffectPrim curve; curve.m_master = &master; curve.m_pattern = 4; curve.m_stateCnt = 0; curve.m_count = 1;
+        rngValues = {20, 10, 30, 2}; rngCursor = 0; const int curveDrawStart = rngDraws;
+        check(UpdateLinearReferenceParticle(&curve) && std::fabs(curve.m_speed - 0.35f) < 0.000001f
+            && curve.m_longitude == -30 && curve.m_latitude == -10 && curve.m_count == 7
+            && rngDraws - curveDrawStart == 4,
+            "PP_3DPARTICLE 0x4 curve preserves randomized speed, heading, tilt and replacement interval order");
+
+        CEffectPrim blow; blow.m_master = &master; blow.m_pattern = 8; blow.m_stateCnt = 0; blow.m_count = 1;
+        rngValues = {6, 3, 2}; rngCursor = 0; const int blowDrawStart = rngDraws;
+        check(UpdateLinearReferenceParticle(&blow) && blow.m_longitude == 1 && blow.m_latitude == -2
+            && blow.m_count == 7 && rngDraws - blowDrawStart == 3,
+            "PP_3DPARTICLE 0x8 blow preserves independently randomized angles and replacement interval");
+
+        CEffectPrim cameraRoll; cameraRoll.m_master = &master; cameraRoll.m_pattern = 0x20;
+        cameraRoll.m_roty = 100; const float oldLongitude = testView.longitude; testView.longitude = 22;
+        check(UpdateLinearReferenceParticle(&cameraRoll) && cameraRoll.m_roll == 78,
+            "PP_3DPARTICLE 0x20 camera roll uses the source view longitude");
+        testView.longitude = oldLongitude;
+
+        CRagEffect otherParent; otherParent.m_type = 999; otherParent.m_effectPos = {10, 20, 30};
+        CEffectPrim unconditional; unconditional.m_master = &otherParent; unconditional.m_type = PP_3DPARTICLE;
+        unconditional.m_speed = 2; unconditional.m_duration = 100;
+        check(!unconditional.UsesReferenceParticle() && unconditional.OnProcess() == 1
+            && unconditional.m_deltaPos.z == 2 && unconditional.m_stateCnt == 1,
+            "OnProcess case 0x05 uses the source linear helper and shared tick regardless of parent effect type");
+        rngValues.clear(); rngCursor = 0;
     }
     {
         CRagEffect effect;effect.m_duration=200;CEffectPrim prim;prim.m_master=&effect;prim.m_duration=100;prim.m_fadeOutCnt=-1;
