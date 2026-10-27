@@ -15117,6 +15117,32 @@ void CRagEffect::SpawnEnergyDrain()
     }
 }
 
+// Ref/RagEffect.cpp:12569-12596; canonical HighPriest.exe.c:430552-430582.
+void CRagEffect::SpawnTestEffect()
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (m_stateCnt % 5 == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+        prim->m_duration = 10;
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(rand() % 360));
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(90));
+        prim->m_speed = static_cast<float>(rand() % 20 + 20) / 80.0f;
+        prim->m_accel = -(prim->m_speed / prim->m_duration) / 2.0f;
+        prim->m_size = static_cast<float>(80) / 100.0f;
+        prim->m_rollSpeed = 3.0f;
+        prim->m_alpha = 70.0f;
+        prim->m_alphaSpeed = prim->m_maxAlpha / 10.0f;
+        prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 5;
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.act");
+        prim->m_numSegments = 1;
+        InitReferenceSegments(prim);
+    }
+    m_effectPos.y = mode->m_world->m_attr->GetHeight(m_effectPos.x, m_effectPos.z) - 4.5f;
+}
+
 // Ref/RagEffect.cpp:8826-8852 (0x5F69B0). Size and divisor defaults modify
 // the parent's parameters; constructor alpha remains 254, without a fade-in.
 void CRagEffect::SpawnTorch()
@@ -20556,6 +20582,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 217) {
         SpawnEnergyDrain();
+        return true;
+    }
+    if (m_type == 709) {
+        SpawnTestEffect();
         return true;
     }
     if (m_type == 0x201) {

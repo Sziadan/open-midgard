@@ -565,6 +565,7 @@ struct CRagEffect : CGameObject {
     void SpawnSummonSlave();
     void SpawnBloodDrain();
     void SpawnEnergyDrain();
+    void SpawnTestEffect();
     void SpawnTorch();
     void SpawnEnchantPoison();
     void SpawnEnchantPoison2();
@@ -5444,6 +5445,45 @@ int main()
         check(effect.m_primList.size()==3 && rngDraws==draws,
             "EnergyDrain does not emit again after state zero");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        SilentAttr attr;SilentAttr* oldAttr=g_world.m_attr;g_world.m_attr=&attr;
+        CRagEffect effect;effect.m_type=709;effect.m_duration=9999;effect.m_effectPos={5,90,9};
+        const int beforeWaves=waves,draws=rngDraws;g_resMgr.requests.clear();
+        attr.height=40;rngValues={359,19};rngCursor=0;effect.SpawnTestEffect();
+        check(effect.m_effectPos.x==5 && effect.m_effectPos.z==9 && effect.m_effectPos.y==35.5f
+            && attr.lastX==5 && attr.lastZ==9,
+            "EF_TEST updates its vertical origin from terrain at the current XZ position");
+        check(effect.m_primList.size()==1 && rngDraws-draws==2 && rngCursor==2 && waves==beforeWaves,
+            "EF_TEST emits on state zero with exactly two ordered RNG draws and no wave");
+        auto* first=effect.m_primList.front();
+        check(first->m_type==PP_3DPARTICLE && first->m_duration==10 && first->m_numSegments==1
+            && first->m_pos.y==90
+            && std::fabs(first->m_speed-0.4875f)<0.000001f
+            && std::fabs(first->m_accel+0.024375f)<0.000001f,
+            "EF_TEST preserves duration, final speed draw and source acceleration");
+        check(std::fabs(first->m_size-0.8f)<0.000001f && first->m_rollSpeed==3
+            && first->m_alpha==70 && first->m_alphaSpeed==first->m_maxAlpha/10.0f
+            && first->m_fadeOutCnt==8,
+            "EF_TEST preserves size, roll, alpha ramp and source fade point");
+        check(first->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.spr"
+            && first->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.act",
+            "EF_TEST loads the exact canonical particle3 assets");
+        attr.height=55;effect.m_stateCnt=1;effect.SpawnTestEffect();
+        check(effect.m_effectPos.y==50.5f && effect.m_primList.size()==1 && rngDraws==draws+2,
+            "EF_TEST refreshes ground height on non-emission states");
+        attr.height=80;effect.m_stateCnt=5;rngValues={123,0};effect.SpawnTestEffect();
+        check(effect.m_effectPos.y==75.5f && effect.m_primList.size()==2 && rngDraws==draws+4
+            && effect.m_primList.back()->m_pos.y==50.5f
+            && std::fabs(effect.m_primList.back()->m_speed-0.25f)<0.000001f,
+            "EF_TEST emits again on every fifth state and consumes the speed draw second");
+        const auto* second=effect.m_primList.back();
+        bool sameRotation=true;
+        for (int row=0;row<4;++row) for (int col=0;col<4;++col)
+            sameRotation = sameRotation && std::fabs(first->m_matrix.m[row][col]-second->m_matrix.m[row][col])<0.000001f;
+        check(sameRotation,"EF_TEST's fixed X rotation overwrites each random Y rotation");
+        check(g_resMgr.requests.size()==4,"EF_TEST requests particle3 sprite/action per emitted primitive");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_attr=oldAttr;rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor;actor.m_pos={5,20,25};

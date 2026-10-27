@@ -590,6 +590,7 @@ private:
     void SpawnSummonSlave();
     void SpawnBloodDrain();
     void SpawnEnergyDrain();
+    void SpawnTestEffect();
     void SpawnTorch();
     void ApplySight(float initialAlpha, bool includeShadow);
     void SpawnSight();
