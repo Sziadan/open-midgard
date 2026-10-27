@@ -10172,6 +10172,35 @@ void UpdateReferenceBubbleDrop(CEffectPrim* prim)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:23602; canonical executable PrimEffectTexture_Ani at 0x63A9A0 (case 0x80).
+void UpdateReferenceEffectTextureAni(CEffectPrim* prim)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode->m_view;
+    prim->m_gi[0].alphaT = static_cast<short>(360 - static_cast<int>(view->GetCameraLongitude()));
+    prim->m_gi[1].alphaT = static_cast<short>(450 - static_cast<int>(view->GetCameraLatitude()));
+    if (prim->m_gi[1].alphaT >= 360) {
+        prim->m_gi[1].alphaT = static_cast<short>(prim->m_gi[1].alphaT - 360);
+    }
+    prim->m_pos = prim->m_master->EffectPosition();
+
+    EffectGi& gi = prim->m_gi[0];
+    if (gi.life != 1) return;
+    ++gi.process;
+    const int textureInterval = gi.flag[4] == 0 ? 8 : 6;
+    if (gi.process % textureInterval == 0) {
+        signed char textureIndex = static_cast<signed char>(gi.flag[0]);
+        textureIndex = static_cast<signed char>(textureIndex + 1);
+        gi.flag[0] = static_cast<u8>(textureIndex);
+        if (textureIndex >= prim->m_totalTexture) gi.flag[0] = 0;
+    }
+    if (gi.alphaB >= 255) gi.alphaB = 255;
+    if (gi.alphaB < 0) gi.alphaB = 0;
+    gi.sparkY = gi.arcBaselineY;
+    gi.sparkX = prim->m_pos.x;
+    gi.sparkZ = prim->m_pos.z;
+}
+
 // Ref/dhxj/RagEffect2.cpp:1982; canonical executable PrimKouenka (case 0x7C).
 bool UpdateReferenceKouenka(CEffectPrim* prim)
 {
@@ -11544,6 +11573,10 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_BUBBLE_DROP) {
         UpdateReferenceBubbleDrop(this); // Source case 0x7F continues to the shared tick.
+        return true;
+    }
+    if (m_type == PP_EFFECTTEXTURE_ANI) {
+        UpdateReferenceEffectTextureAni(this); // Source case 0x80 continues to the shared tick.
         return true;
     }
     if (m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) {

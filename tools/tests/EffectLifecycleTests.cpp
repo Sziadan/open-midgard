@@ -244,6 +244,7 @@ bool UpdateReferenceKouenka(CEffectPrim*);
 void UpdateReferenceStin4(CEffectPrim*);
 void UpdateReferenceStin5(CEffectPrim*);
 void UpdateReferenceBubbleDrop(CEffectPrim*);
+void UpdateReferenceEffectTextureAni(CEffectPrim*);
 void SpawnTanjiAirTexture(CGameMode*, const vector3d&);
 bool UpdateReferenceCrossTexture(CEffectPrim*);
 bool UpdateReference3DTexture(CEffectPrim*);
@@ -390,6 +391,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_STIN4) { UpdateReferenceStin4(this); return active; }
         if (m_type == PP_STIN5) { UpdateReferenceStin5(this); return active; }
         if (m_type == PP_BUBBLE_DROP) { UpdateReferenceBubbleDrop(this); return active; }
+        if (m_type == PP_EFFECTTEXTURE_ANI) { UpdateReferenceEffectTextureAni(this); return active; }
         if (m_type == PP_SLASH1) UpdateSlash1Primitive(this);
         if (m_type == PP_SUPERANGEL) UpdateSuperAngelPrimitive(this);
         if (UsesReferenceCircle()) UpdateReferenceCircleState(this);
@@ -874,6 +876,7 @@ __declspec(noinline) void RunKouenkaLifecycleChecks(CEffectPrim& prim, int& chec
 __declspec(noinline) void RunStin4LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunStin5LifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 __declspec(noinline) void RunBubbleDropLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
+__declspec(noinline) void RunEffectTextureAniLifecycleChecks(CEffectPrim& prim, int& checks, int& failures);
 
 __declspec(noinline) void RunChimToLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
 {
@@ -2186,6 +2189,7 @@ __declspec(noinline) void RunSoulLinkLifecycleChecks(CEffectPrim& prim, int& che
     RunStin4LifecycleChecks(prim, checks, failures);
     RunStin5LifecycleChecks(prim, checks, failures);
     RunBubbleDropLifecycleChecks(prim, checks, failures);
+    RunEffectTextureAniLifecycleChecks(prim, checks, failures);
 }
 
 __declspec(noinline) void RunSoulParticleLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
@@ -2907,6 +2911,56 @@ __declspec(noinline) void RunBubbleDropLifecycleChecks(CEffectPrim& prim, int& c
     check(exactLifeSkipped&&a.process==0&&a.alphaB==29&&a.fullDisplayAngle==13&&rngDraws==inactiveDraws,
         "case 0x7F exact-life and nonpositive post-increment gates skip all animation and consume no RNG");
     testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
+}
+
+__declspec(noinline) void RunEffectTextureAniLifecycleChecks(CEffectPrim& prim, int& checks, int& failures)
+{
+    const int oldSkipFrame=g_isSkipFrame; g_isSkipFrame=1;
+    const float oldLongitude=testView.longitude; testView.longitude=20.5f;
+    const int oldTotalTexture=prim.m_totalTexture;
+    auto check = [&](bool condition, const char* name) {
+        ++checks; if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
+    };
+    prim.m_type=PP_EFFECTTEXTURE_ANI; prim.m_stateCnt=0; prim.m_duration=1000; prim.m_totalTexture=3;
+    prim.m_master->m_effectPos={101,202,303}; prim.m_pos={1,2,3};
+    for(auto& gi:prim.m_gi) gi={};
+    const int draws=rngDraws;
+    prim.OnProcess();
+    check(prim.m_gi[0].alphaT==340&&prim.m_gi[1].alphaT==135
+        &&prim.m_pos.x==101&&prim.m_pos.y==202&&prim.m_pos.z==303&&prim.m_gi[0].process==0,
+        "case 0x80 refreshes camera angles and copies master position before the exact-life GI0 gate");
+
+    EffectGi& a=prim.m_gi[0]; a.life=1; a.process=6; a.flag[0]=1; a.flag[4]=0;
+    a.alphaB=300; a.arcBaselineY=44; a.sparkX=-1; a.sparkY=-2; a.sparkZ=-3;
+    prim.OnProcess();
+    check(a.process==7&&a.flag[0]==1&&a.alphaB==255&&a.sparkX==101&&a.sparkY==44&&a.sparkZ==303,
+        "case 0x80 default eight-frame cadence preserves texture until due while clamping alpha and refreshing current vector each active frame");
+
+    a.process=7; a.alphaB=-5; a.flag[0]=1; a.arcBaselineY=45;
+    prim.OnProcess();
+    check(a.process==8&&a.flag[0]==2&&a.alphaB==0&&a.sparkX==101&&a.sparkY==45&&a.sparkZ==303,
+        "case 0x80 frame-eight texture advance wraps against totalTexture and clamps negative alpha");
+
+    a.process=5; a.flag[0]=2; a.flag[4]=1; a.alphaB=200; a.arcBaselineY=46;
+    prim.OnProcess();
+    check(a.process==6&&a.flag[0]==0&&a.alphaB==200&&a.sparkY==46,
+        "case 0x80 nonzero flag selects six-frame cadence and resets texture index at totalTexture");
+
+    a.process=5; a.flag[4]=1; a.flag[0]=127; prim.m_totalTexture=100;
+    prim.OnProcess();
+    check(a.process==6&&a.flag[0]==128,
+        "case 0x80 texture index increment retains source signed-char overflow before comparison to totalTexture");
+
+    a.process=-1; a.flag[4]=0; a.flag[0]=4; prim.m_totalTexture=10; a.alphaB=0;
+    prim.OnProcess();
+    check(a.process==0&&a.flag[0]==5&&a.alphaB==0&&a.sparkY==a.arcBaselineY&&rngDraws==draws,
+        "case 0x80 does not gate nonpositive process values after increment and can advance cadence on process zero without RNG");
+
+    a.life=2; a.process=8; a.alphaB=11; a.flag[0]=6;
+    const int inactiveProcess=a.process; prim.OnProcess();
+    check(a.life==2&&a.process==inactiveProcess&&a.alphaB==11&&a.flag[0]==6,
+        "case 0x80 exact-life gate skips GI0 animation while retaining camera and master refresh");
+    prim.m_totalTexture=oldTotalTexture; testView.longitude=oldLongitude; g_isSkipFrame=oldSkipFrame;
 }
 
 int main()
@@ -4373,7 +4427,7 @@ int main()
         effect.m_master = &actor;
         CEffectPrim prim;
         prim.m_master = &effect;
-        prim.m_type = PP_EFFECTTEXTURE_ANI;
+        prim.m_type = static_cast<EFFECTPRIMID>(0x81);
         prim.m_duration = 5;
         check(prim.OnProcess() == 1 && prim.observedFrame == 0 && prim.m_stateCnt == 1,
             "primitive handler observes frame zero before shared outer increment");
