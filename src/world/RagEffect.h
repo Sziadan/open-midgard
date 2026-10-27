@@ -593,6 +593,7 @@ private:
     void SpawnTestEffect();
     void SpawnTopRank();
     void SpawnParty();
+    void SpawnSnow();
     void SpawnTorch();
     void ApplySight(float initialAlpha, bool includeShadow);
     void SpawnSight();

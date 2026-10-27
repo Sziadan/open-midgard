@@ -568,6 +568,7 @@ struct CRagEffect : CGameObject {
     void SpawnTestEffect();
     void SpawnTopRank();
     void SpawnParty();
+    void SpawnSnow();
     void SpawnTorch();
     void SpawnEnchantPoison();
     void SpawnEnchantPoison2();
@@ -5552,6 +5553,53 @@ int main()
         check(g_texMgr.requests.size()==2&&rngDraws==draws&&waves==beforeWaves,
             "Party requests one texture per emission and has no extra side effects");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_attr=oldAttr;
+    }
+    {
+        SilentAttr attr;SilentAttr* oldAttr=g_world.m_attr;g_world.m_attr=&attr;
+        CRenderObject player;CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&player;
+        player.m_pos={10,120,30};
+        CRagEffect effect;effect.m_type=162;effect.m_duration=99999999;
+        const int draws=rngDraws,beforeWaves=waves;g_resMgr.requests.clear();
+        attr.height=40;rngValues={359,299,14,0,0,0};rngCursor=0;effect.SpawnSnow();
+        check(effect.m_effectPos.x==10&&effect.m_effectPos.y==120&&effect.m_effectPos.z==30,
+            "Snow anchors its effect to the current player position");
+        check(effect.m_primList.size()==2&&rngDraws-draws==6&&rngCursor==6&&waves==beforeWaves
+            &&attr.calls==2&&attr.lastX==10&&attr.lastZ==30,
+            "Snow emits two children with three ordered RNG draws and one terrain sample each");
+        auto* first=effect.m_primList.front();auto* second=effect.m_primList.back();
+        matrix randomY;MatrixIdentity(randomY);MatrixAppendYRotation(randomY,GetRadian(359));
+        matrix randomY2;MatrixIdentity(randomY2);MatrixAppendYRotation(randomY2,GetRadian(0));
+        const float yOffset=attr.height-100.0f;const int firstZ=-1,secondZ=-300;
+        const auto transformed=[&](int z,const matrix& rotation) { return vector3d{
+            z*rotation.m[2][0]+yOffset*rotation.m[1][0]+rotation.m[3][0],
+            z*rotation.m[2][1]+yOffset*rotation.m[1][1]+rotation.m[3][1],
+            z*rotation.m[2][2]+yOffset*rotation.m[1][2]+rotation.m[3][2]}; };
+        const vector3d expectedFirst=transformed(firstZ,randomY),expectedSecond=transformed(secondZ,randomY2);
+        check(first->m_type==PP_3DPARTICLE_NOMASTER&&second->m_type==PP_3DPARTICLE_NOMASTER
+            &&first->m_orgPos.x==10&&first->m_orgPos.y==120&&first->m_orgPos.z==30
+            &&first->m_duration==320&&first->m_numSegments==1
+            &&std::fabs(first->m_deltaPos2.x-expectedFirst.x)<0.0001f
+            &&std::fabs(first->m_deltaPos2.y-expectedFirst.y)<0.0001f
+            &&std::fabs(first->m_deltaPos2.z-expectedFirst.z)<0.0001f
+            &&std::fabs(second->m_deltaPos2.x-expectedSecond.x)<0.0001f
+            &&std::fabs(second->m_deltaPos2.y-expectedSecond.y)<0.0001f
+            &&std::fabs(second->m_deltaPos2.z-expectedSecond.z)<0.0001f,
+            "Snow stores exact terrain-relative, random-Y transformed child offsets and no-master origins");
+        check(first->m_speed==-0.5f&&first->m_accel==0&&first->m_size==0.78f
+            &&second->m_size==0.5f&&first->m_alpha==0&&first->m_alphaSpeed==first->m_maxAlpha/10.0f
+            &&first->m_fadeOutCnt==256&&first->m_rollSpeed==0,
+            "Snow preserves per-child speed, size RNG order, alpha and fade payload");
+        check(first->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\ef_snow.spr"
+            &&first->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\ef_snow.act"
+            &&g_resMgr.requests.size()==4,
+            "Snow loads the canonical effect sprite/action for both particles");
+        effect.m_stateCnt=10;effect.m_duration=170;player.m_pos={20,80,40};
+        const int exactWindowDraws=rngDraws;effect.SpawnSnow();
+        check(effect.m_effectPos.x==20&&effect.m_effectPos.y==80&&effect.m_effectPos.z==40
+            &&effect.m_primList.size()==2&&rngDraws==exactWindowDraws,
+            "Snow does not emit when remaining duration equals the strict 160-frame cutoff");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_attr=oldAttr;g_world.m_player=oldPlayer;
+        rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor;actor.m_pos={5,20,25};

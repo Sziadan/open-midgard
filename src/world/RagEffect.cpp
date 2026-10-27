@@ -13707,6 +13707,10 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         // ProcessEffectFrame owns the source Party emitter for EF_PARTY.
         m_handler = Handler::None;
         break;
+    case 162:
+        // ProcessEffectFrame owns the source Snow emitter for EF_SNOW.
+        m_handler = Handler::None;
+        break;
     case 22:
         m_handler = Handler::Sight;
         break;
@@ -15203,6 +15207,45 @@ void CRagEffect::SpawnParty()
 
     m_effectPos.y = g_modeMgr.GetCurrentGameMode()->m_world->m_attr->GetHeight(
         m_effectPos.x, m_effectPos.z) - 2.0f;
+}
+
+// Ref/RagEffect.cpp:8992-9028; canonical HighPriest.exe.c:425271-425320.
+// CEffectPrim in the current port defaults m_numSegments to zero, while the
+// Ref constructor defaults m_numSegment to one before InitSegment.
+void CRagEffect::SpawnSnow()
+{
+    CWorld* world = g_modeMgr.GetCurrentGameMode()->m_world;
+    m_effectPos = world->m_player->m_pos;
+
+    if (m_duration - m_stateCnt > 160) {
+        for (int index = 0; index < 2; ++index) {
+            CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE_NOMASTER, vector3d{});
+            prim->m_orgPos = m_effectPos;
+            prim->m_duration = 320;
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendYRotation(prim->m_matrix, GetRadian(rand() % 360));
+            const int zOffset = rand() % 300 - 300;
+            const float yOffset = world->m_attr->GetHeight(m_effectPos.x, m_effectPos.z) - 100.0f;
+            prim->m_deltaPos2 = {
+                static_cast<float>(zOffset * prim->m_matrix.m[2][0] + yOffset * prim->m_matrix.m[1][0] + prim->m_matrix.m[3][0]),
+                static_cast<float>(zOffset * prim->m_matrix.m[2][1] + yOffset * prim->m_matrix.m[1][1] + prim->m_matrix.m[3][1]),
+                static_cast<float>(zOffset * prim->m_matrix.m[2][2] + yOffset * prim->m_matrix.m[1][2] + prim->m_matrix.m[3][2])
+            };
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendXRotation(prim->m_matrix, GetRadian(90));
+            prim->m_speed = -0.5f;
+            prim->m_accel = 0.0f;
+            prim->m_size = static_cast<float>(rand() % 15 + 25) / 50.0f;
+            prim->m_rollSpeed = 0.0f;
+            prim->m_alpha = 0.0f;
+            prim->m_alphaSpeed = prim->m_maxAlpha / 10.0f;
+            prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 5;
+            prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\ef_snow.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\ef_snow.act");
+            prim->m_numSegments = 1;
+            InitReferenceSegments(prim);
+        }
+    }
 }
 
 // Ref/RagEffect.cpp:8826-8852 (0x5F69B0). Size and divisor defaults modify
@@ -20652,6 +20695,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 160) {
         SpawnParty();
+        return true;
+    }
+    if (m_type == 162) {
+        SpawnSnow();
         return true;
     }
     if (m_type == 709) {
