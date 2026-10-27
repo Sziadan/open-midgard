@@ -13,6 +13,7 @@
 #include "RagEffectDurationTable.generated.inc"
 
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 
@@ -73,9 +74,6 @@ void PlaceGroundEffect(const vector3d& pos, int effectId)
 
 CRagEffect* LaunchCounted(CAbleToMakeEffect& owner, int effectId, int count)
 {
-    if (effectId < 0) {
-        return nullptr;
-    }
     CRagEffect* effect = owner.LaunchEffect(effectId, vector3d{}, 0.0f);
     if (effect) {
         effect->SendMsg(effect, 44, count, 0, 0);
@@ -85,7 +83,7 @@ CRagEffect* LaunchCounted(CAbleToMakeEffect& owner, int effectId, int count)
 
 int ResolveSkillAttackEffect(int skillId, int damage, int& effectId2)
 {
-    int effectId = -1;
+    int effectId = 0;
     if (skillId >= 411 && skillId <= 472) {
         effectId = -1;
     } else if (skillId >= 493) {
@@ -416,16 +414,30 @@ void CGameActor::Am_Skill(const int* arg1)
     m_targetGid = targetGid;
     const int damage = count > 0 ? totalDamage / count : totalDamage;
 
-    CGameActor* target = FindActorByGid(targetGid);
-    if (target && (skillId == 129 || skillId == 381) && m_birdEffect) {
-        m_birdEffect->SendMsg(nullptr, 29, reinterpret_cast<msgparam_t>(&target->m_pos), 0, 0);
+    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+    CWorld* world = gameMode ? gameMode->m_world : nullptr;
+    CGameActor* player = world ? world->m_player : nullptr;
+    CGameActor* target = nullptr;
+    if (world) {
+        if (g_session.m_aid == targetGid) {
+            target = player;
+        } else {
+            target = world->GetGameActorByAID(targetGid);
+            if (target) {
+                if ((skillId == 129 || skillId == 381) && m_birdEffect) {
+                    m_birdEffect->SendMsg(nullptr, 29, reinterpret_cast<msgparam_t>(&target->m_pos), 0, 0);
+                }
+            } else {
+                target = world->GetSkillByAID(targetGid);
+            }
+        }
     }
 
     vector3d targetPos = m_pos;
     if (target) {
         targetPos = target->m_pos;
-    } else if (g_world.m_player) {
-        const vector3d& playerPos = g_world.m_player->m_pos;
+    } else if (player) {
+        const vector3d& playerPos = player->m_pos;
         targetPos.x = m_pos.x - (playerPos.x - m_pos.x);
         targetPos.y = m_pos.y - (playerPos.y - m_pos.y);
         targetPos.z = m_pos.z - (playerPos.z - m_pos.z);
@@ -445,7 +457,7 @@ void CGameActor::Am_Skill(const int* arg1)
         hit.tCellX = cellX;
         hit.tCellY = cellY;
         hit.effectLevel = level;
-        hit.attackedSpeedFactor = static_cast<float>(attackedMT) * kAttackedMotionFactor;
+        hit.attackedSpeedFactor = static_cast<float>(static_cast<double>(attackedMT) * 0.0034722222);
         hit.message = 96;
         target->SendMsg(this, 27, reinterpret_cast<msgparam_t>(&hit), 0, 0);
         return;
@@ -526,7 +538,7 @@ void CGameActor::Am_Skill(const int* arg1)
     hit.message = message;
     hit.tCellX = cellX;
     hit.effectId1 = effectId1;
-    hit.attackedSpeedFactor = static_cast<float>(attackedMT) * kAttackedMotionFactor;
+    hit.attackedSpeedFactor = static_cast<float>(static_cast<double>(attackedMT) * 0.0034722222);
     hit.effectLevel = level;
     hit.time = delay + timeGetTime();
     hit.targetGid = m_gid;
@@ -536,7 +548,7 @@ void CGameActor::Am_Skill(const int* arg1)
     }
 
     const int savedMessage = message;
-    if (skillId == 413 || skillId == 419 || skillId == 421) {
+    if (skillId == 5 || skillId == 62 || skillId == 413 || skillId == 419 || skillId == 421) {
         target->SendMsg(this, 131, reinterpret_cast<msgparam_t>(&hit), damage, 0);
     } else if (skillId == 415 || skillId == 417) {
         hit.time += 300;
@@ -626,6 +638,9 @@ void CGameActor::Am_Skill(const int* arg1)
             hit.effectId2 = 122;
             SendMsg(this, 27, reinterpret_cast<msgparam_t>(&hit), 0, 0);
             if (extra == 2) {
+                if (hit.damage / 10) {
+                    std::rand();
+                }
                 hit.effectId1 = 1;
             }
             hit.message = savedMessage;
