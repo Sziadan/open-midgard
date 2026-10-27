@@ -2024,3 +2024,10 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - Ref and EXE `CMsgEffect` destructors send message 48 to the master actor. Current `CMsgEffect` destruction calls `DeleteMatchingEffect` directly; the current helper erases the effect from `m_msgEffectList`. The `m_removedFromOwner` guard suppresses duplicate owner cleanup after existing removal paths.
 - `tools/tests/check_actor_sendmsg_effect_detach_case.py` compares the Ref/EXE actor function and branch, the Ref/EXE destructor, and current destructor/owner cleanup. CTest `actor_sendmsg_effect_detach_source_check` passes. All 36 CTest tests pass.
 - The inventory recognizes 48 as an inherited current lifecycle route; 23 source IDs remain without a current route. Missing legacy owner slots and related messages are listed in `MISMATCHES.md`. This is a structural comparison only; no live playback acceptance is claimed.
+
+# Actor message inventory scope gate (2026-10-27)
+
+- The new `actor_sendmsg_inventory_source_check` CTest runs `tools/audit_actor_sendmsg_inventory.py`, which mechanically extracts all top-level case IDs from Ref, canonical EXE, and current `CGameActor::SendMsg`.
+- Ref and EXE have 79 matching IDs. Current has 57 direct IDs plus local-only gauge UI cases 34/35. Message 48 is represented through the effect destructor owner-cleanup path. UI-only IDs 7/32/33/54/55 are tied to their Ref balloon/title UI fields and excluded by the implementation plan.
+- The remaining in-scope unmapped set is `[0, 3, 4, 5, 6, 21, 56, 57, 78, 79, 110, 118, 122, 123, 126, 135, 136, 139]`. The inventory test does not claim branch parity for these IDs.
+- All 37 CTest tests pass. No runtime code changed.

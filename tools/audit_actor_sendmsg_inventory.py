@@ -89,9 +89,15 @@ ui_evidence = {
 }
 for case_id, ui_class in ui_evidence.items():
     assert case_id in out_of_scope_ui and ui_class in ref_bodies[case_id], f"case {case_id} UI scope evidence changed"
+assert ref_cases == exe_cases, "canonical source case inventory drifted"
+current_only = actor_cases - ref_cases
+assert current_only == {34, 35}, f"current-only actor IDs changed: {sorted(current_only)}"
+assert actor_lifecycle_inherited.isdisjoint(actor_cases | out_of_scope_ui)
+assert len(ref_cases) == 79, f"expected 79 canonical actor message IDs, found {len(ref_cases)}"
 unmapped = ref_cases - actor_cases - able_cases - actor_lifecycle_inherited - out_of_scope_ui
 print(f"Ref and canonical EXE top-level message IDs: {len(ref_cases)}")
 print(f"Current CGameActor::SendMsg direct IDs: {len(actor_cases)}")
+print(f"Current-only actor UI extension IDs: {sorted(current_only)}")
 print(f"IDs delegated to the current CAbleToMakeEffect::SendMsg: {sorted(able_inherited)}")
 print(f"Actor lifecycle callbacks represented outside SendMsg: {sorted(actor_lifecycle_inherited - actor_cases)}")
 print(f"UI-only source IDs excluded by plan scope: {sorted(out_of_scope_ui)}")
