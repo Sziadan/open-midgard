@@ -24,6 +24,10 @@ add_executable(ambient_sound_checks AmbientSoundTests.cpp)
 target_compile_features(ambient_sound_checks PRIVATE cxx_std_17)
 target_include_directories(ambient_sound_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 add_test(NAME ambient_sound_checks COMMAND ambient_sound_checks)
+add_executable(actor_tint_checks ActorTintTests.cpp)
+target_compile_features(actor_tint_checks PRIVATE cxx_std_17)
+target_include_directories(actor_tint_checks PRIVATE "../../src")
+add_test(NAME actor_tint_checks COMMAND actor_tint_checks)
 string(FIND "${mode_source}" "void CGameMode::ProcessPlayWave()" update_start)
 string(FIND "${mode_source}" "void CGameMode::OnUpdate()" update_end)
 math(EXPR update_length "${update_end} - ${update_start}")
@@ -406,6 +410,8 @@ add_test(NAME soundmaker_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_soundmaker_source.py")
 add_test(NAME pc_onprocess_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_pc_onprocess_source.py")
+add_test(NAME actor_tint_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_actor_tint_source.py")
 add_test(NAME dummy_effect_launcher_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_dummy_effect_launcher.py")
 add_test(NAME actor_sendmsg_effect_cases_source_check

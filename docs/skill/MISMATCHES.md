@@ -395,5 +395,4 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 # `CPc::OnProcess` adjacent visual branches (2026-10-27)
 
 - `ProcessChatBalloon` handles only legacy `UIBalloonText`, `UIChatRoomTitle`, `UIMerchantShopTitle`, and `UIRechargeGage` expiry/placement; those window branches and the PC gauge move are out of the skill/effect scope.
-- `m_isSingleColor` expiry after 100 ms resets actor tint and is gameplay visual behavior. Current hit handling sets the flag/start time/color, but the current actor path has no corresponding reads/reset yet.
-- `CRenderObject::ModifyArgb` adds 8 to each sprite color channel (clamped 0–255) while the actor sprite ARGB is active and color is not fixed. Current message 128/129 handling stores actor color state but has no per-tick equivalent. These tint branches remain an in-scope visual parity gap separate from the queued hit-wave producer checkpoint.
+- Resolved in the 2026-10-27 tint checkpoint: the modern actor process now performs the strict 100 ms reset and source `ModifyArgb` +8/clamp step when ARGB is active and not fixed. `RenderCachedBillboard` consumes actor tint and single-red state, combining actor alpha with hide/vanish transparency. Source and numeric CTests gate the path. Current rendering remains the Modern billboard implementation rather than the old sprite/window renderer.

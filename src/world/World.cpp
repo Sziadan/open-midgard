@@ -1,5 +1,6 @@
 #include "World.h"
 #include "world/GameActor.h"
+#include "world/ActorTint.h"
 #include "world/MsgEffect.h"
 #include "world/3dActor.h"
 #include "world/RagEffect.h"
@@ -2704,7 +2705,13 @@ bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
         alpha = (std::min)(alpha, clampedAlpha);
     }
 
-    const u32 billboardColor = (alpha << 24) | 0x00FFFFFFu;
+    const u32 billboardColor = ro::actor::ResolveBillboardColor(alpha,
+        actor->m_u28.m_sprColor.u.s.a,
+        actor->m_u28.m_sprColor.u.s.r,
+        actor->m_u28.m_sprColor.u.s.g,
+        actor->m_u28.m_sprColor.u.s.b,
+        actor->m_isSingleColor != 0,
+        actor->m_colorOfSingleColor);
 
     RPFace* face = g_renderer.BorrowNullRP();
     if (!face) {

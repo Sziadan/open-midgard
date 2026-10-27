@@ -1,4 +1,5 @@
 #include "GameActor.h"
+#include "ActorTint.h"
 #include "MsgEffect.h"
 #include "RagEffect.h"
 #include "World.h"
@@ -4609,6 +4610,19 @@ u8 CGameActor::ProcessState() {
     }
 
     ProcessWillBeAttacked();
+
+    if (ro::actor::IsSingleColorExpired(m_isSingleColor != 0,
+            m_singleColorStartTick, [] { return timeGetTime(); })) {
+        m_colorOfSingleColor = 0xFFFF0000u;
+        m_isSingleColor = 0;
+    }
+    if (m_u28.m_sprArgb != 0xFFFFFFFFu) {
+        ro::actor::AdvanceTint(m_u28.m_sprColor.u.s.a,
+            m_u28.m_sprColor.u.s.r,
+            m_u28.m_sprColor.u.s.g,
+            m_u28.m_sprColor.u.s.b,
+            m_isSprArgbFixed != 0);
+    }
 
     if (m_hideFadeEndTick != 0 && timeGetTime() >= m_hideFadeEndTick) {
         const bool hiding = (m_effectState & kEffectStateHidingMask) != 0;
