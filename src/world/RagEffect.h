@@ -331,6 +331,7 @@ public:
     float m_roll;
     float m_rollSpeed;
     float m_rollAccel;
+    std::array<float, 3> m_rotAxis{};
     COLORREF m_tintColor;
     vector3d m_orgPos;
     vector3d m_pos;

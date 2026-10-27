@@ -183,6 +183,9 @@ void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
 bool UpdateLinearReferenceParticle(CEffectPrim*);
 bool UpdateReferenceNoMasterParticle(CEffectPrim*);
+bool UpdateReferenceParticleSpline(CEffectPrim*);
+void ProcessReferenceParticleAlpha(CEffectPrim*);
+bool AnimateReferenceParticle(CEffectPrim*);
 bool UpdateReferenceNoMasterTexture(CEffectPrim*);
 bool UpdateReference2DTextureOrbit(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
@@ -275,6 +278,7 @@ struct CEffectPrim : CGameObject {
     std::array<vector3d,4> m_segPos{};
     float m_roty=0;
     float m_roll = 0, m_rollSpeed = 0, m_rollAccel = 0, m_alphaDelta = 1, m_minAlpha = 0;
+    std::array<float, 3> m_rotAxis{};
     bool m_isDisappear = false;
     bool m_isHit = false;
     bool m_isChangeProcessed = false;
@@ -334,6 +338,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_2DCIRCLE) { UpdateReferenceScreenCircle(this); return active; }
         if (m_type == PP_3DSPHERE) { UpdateReferenceSphere(this); return active; }
         if (m_type == PP_3DPARTICLE_NOMASTER) return UpdateReferenceNoMasterParticle(this);
+        if (m_type == PP_3DPARTICLESPLINE) { UpdateReferenceParticleSpline(this); return active; }
         if (m_type == PP_3DTEXTURE_NOMASTER) return UpdateReferenceNoMasterTexture(this);
         if (m_type == PP_2DTEXTUREORBIT) return UpdateReference2DTextureOrbit(this);
         if (m_type == PP_3DQUADHORN) { UpdateReferenceQuadHorn(this); return active; }
@@ -3723,6 +3728,37 @@ int main()
             && sphere.m_longitude == 12 && sphere.m_stateCnt == 1,
             "OnProcess case 0x0E always executes source sphere origin, radius, longitude and shared lifetime branches");
         sphere.m_master = nullptr;
+        {
+            CRagEffect splineMaster; splineMaster.m_effectPos = {100, 200, 300};
+            CEffectPrim spline; spline.m_master = &splineMaster; spline.m_stateCnt = 0;
+            spline.m_deltaPos2 = {1, 2, 3}; spline.m_deltaPos = {10, 20, 30};
+            spline.m_speed = 5; spline.m_accel = 1; spline.m_gravSpeed = 1; spline.m_gravAccel = 0.5f;
+            spline.m_matrix.m[2][0] = 0.5f; spline.m_matrix.m[2][1] = -0.25f; spline.m_matrix.m[2][2] = 2;
+            spline.m_matrix.m[3][0] = 1; spline.m_matrix.m[3][1] = 2; spline.m_matrix.m[3][2] = -3;
+            spline.m_latiSpeed = 2; spline.m_latiAccel = 1; spline.m_latitude = 10;
+            spline.m_rotAxis = {0, 0, 1}; spline.m_roll = 90.9f;
+            spline.m_size = 2; spline.m_sizeSpeed = 0.5f; spline.m_sizeAccel = 9;
+            spline.m_radiusSpeed = 17; spline.m_longSpeed = 19;
+            const bool splineAlive = UpdateReferenceParticleSpline(&spline);
+            check(splineAlive && spline.m_orgPos.x == 101 && spline.m_orgPos.y == 202 && spline.m_orgPos.z == 303
+                && spline.m_speed == 6 && spline.m_gravSpeed == 1.5f && spline.m_latitude == 12 && spline.m_latiSpeed == 3
+                && spline.m_speed3d.x == 3.25f && spline.m_speed3d.y == 0.875f && spline.m_speed3d.z == 6
+                && spline.m_deltaPos.x == 6.75f && spline.m_deltaPos.y == 19.125f && spline.m_deltaPos.z == 24
+                && std::fabs(spline.m_deltaPos3.x + 12) < 0.0001f && std::fabs(spline.m_deltaPos3.y) < 0.00001f
+                && std::fabs(spline.m_pos.x - 95.75f) < 0.0001f && std::fabs(spline.m_pos.y - 221.125f) < 0.0001f && spline.m_pos.z == 327
+                && spline.m_size == 2.5f && spline.m_sizeSpeed == 0.5f && spline.m_radiusSpeed == 17
+                && spline.m_longSpeed == 19,
+                "PP_3DPARTICLESPLINE matches source gravity-adjusted matrix motion, axis rotation, integration order and untouched fields");
+            spline.m_type = PP_3DPARTICLESPLINE; spline.m_stateCnt = 0; spline.m_duration = 2;
+            CActRes splineAct; splineAct.count = 1;
+            spline.m_animSpeed = 1; spline.m_particleActRes = &splineAct;
+            spline.m_curMotion = 0; spline.m_pattern = 0;
+            check(!UpdateReferenceParticleSpline(&spline) && spline.m_curMotion == 1,
+                "PP_3DPARTICLESPLINE helper returns the source animation completion result");
+            spline.m_curMotion = 0; spline.m_stateCnt = 0;
+            check(spline.OnProcess() == 1 && spline.m_stateCnt == 1 && spline.m_curMotion == 1,
+                "OnProcess case 0x08 ignores the helper false result and performs the shared lifetime tick");
+        }
         auto noMasterEffectStorage = std::make_unique<CRagEffect>();
         CRagEffect& noMasterEffect = *noMasterEffectStorage;
         noMasterEffect.m_duration = 200;

@@ -108,7 +108,7 @@ for marker in ("return UpdateReferenceScreenTexture(this);", "return UpdateRefer
 require("UpdateReferenceKouenka(this); // Source case 0x7C ignores PrimKouenka's result." in current_dispatch
         and "return UpdateReferenceKouenka(this)" not in current_dispatch,
         "void PrimKouenka return is ignored")
-for marker in ("UpdateFreeParticlePrimitive(this, true, true);", "UpdateReferenceCircleState(this);",
+for marker in ("UpdateReferenceParticleSpline(this); // Ref case 0x08 ignores Prim3DParticleSpline's result.", "UpdateReferenceCircleState(this);",
                "UpdateCirclePrimitive(this);", "UpdateReferenceCylinderState(this);", "UpdateCylinderPrimitive(this);",
                "UpdateReferenceCrossTexture(this); // Source case 0x10 ignores Prim3DTexture's result.",
                "UpdateCrossTexturePrimitive(this);", "UpdateScreenTexturePrimitive(this);",

@@ -30,6 +30,9 @@
 #include <map>
 #include <vector>
 
+bool AnimateReferenceParticle(CEffectPrim* prim);
+void ProcessReferenceParticleAlpha(CEffectPrim* prim);
+
 namespace {
 
 constexpr float kNearPlane = 10.0f;
@@ -2917,6 +2920,58 @@ bool UpdateFreeParticlePrimitive(CEffectPrim* prim, bool applyGravity, bool spli
         return false;
     }
     return prim->m_stateCnt <= prim->m_duration || prim->m_alpha > 0.0f;
+}
+
+// Ref/RagEffectPrim.cpp:1035-1053; HighPriest.exe.c:467264-467310.
+bool UpdateReferenceParticleSpline(CEffectPrim* prim)
+{
+    prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
+    prim->m_speed += prim->m_accel;
+    prim->m_latitude += prim->m_latiSpeed;
+    prim->m_latiSpeed += prim->m_latiAccel;
+    prim->m_gravSpeed += prim->m_gravAccel;
+    const float speed = prim->m_speed - prim->m_gravSpeed;
+    prim->m_speed3d = {
+        speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
+        speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
+        speed * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
+    };
+
+    const float halfAngle = GetRadian(static_cast<int>(prim->m_roll)) * 0.5f;
+    const float sine = std::sin(halfAngle);
+    const float qx = prim->m_rotAxis[0] * sine;
+    const float qy = prim->m_rotAxis[1] * sine;
+    const float qz = prim->m_rotAxis[2] * sine;
+    const float qw = std::cos(halfAngle);
+    const float x2 = qx + qx, y2 = qy + qy, z2 = qz + qz;
+    const float wx = qw * x2, wy = qw * y2, wz = qw * z2;
+    const float xx = qx * x2, xy = qx * y2, xz = qx * z2;
+    const float yy = qy * y2, yz = qy * z2, zz = qz * z2;
+    prim->m_rotMat.m[0][0] = 1.0f - (yy + zz);
+    prim->m_rotMat.m[0][1] = xy + wz;
+    prim->m_rotMat.m[0][2] = xz - wy;
+    prim->m_rotMat.m[1][0] = xy - wz;
+    prim->m_rotMat.m[1][1] = 1.0f - (xx + zz);
+    prim->m_rotMat.m[1][2] = yz + wx;
+    prim->m_rotMat.m[2][0] = xz + wy;
+    prim->m_rotMat.m[2][1] = yz - wx;
+    prim->m_rotMat.m[2][2] = 1.0f - (xx + yy);
+    prim->m_rotMat.m[3][0] = prim->m_rotMat.m[3][1] = prim->m_rotMat.m[3][2] = 0.0f;
+    prim->m_deltaPos3 = {
+        prim->m_latitude * prim->m_rotMat.m[1][0],
+        prim->m_latitude * prim->m_rotMat.m[1][1],
+        prim->m_latitude * prim->m_rotMat.m[1][2]
+    };
+    prim->m_size += prim->m_sizeSpeed;
+    prim->m_deltaPos = {
+        prim->m_deltaPos.x - prim->m_speed3d.x,
+        prim->m_deltaPos.y - prim->m_speed3d.y,
+        prim->m_deltaPos.z - prim->m_speed3d.z
+    };
+    prim->m_pos = AddVec3(AddVec3(prim->m_orgPos, prim->m_deltaPos), prim->m_deltaPos3);
+    ProcessReferenceParticleAlpha(prim);
+    ShiftCircleSegments(prim);
+    return AnimateReferenceParticle(prim);
 }
 
 } // namespace
@@ -12432,7 +12487,7 @@ bool CEffectPrim::ProcessPrimitiveFrame()
         return UpdateFreeParticlePrimitive(this, true, false);
     }
     if (m_type == PP_3DPARTICLESPLINE) {
-        UpdateFreeParticlePrimitive(this, true, true);
+        UpdateReferenceParticleSpline(this); // Ref case 0x08 ignores Prim3DParticleSpline's result.
         return true;
     }
     if (UsesReferenceSphere()) {
