@@ -7583,6 +7583,30 @@ void RenderStin5(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:12043; canonical RenderSMA at 0x622190.
+void RenderSma(CEffectPrim& prim)
+{
+    const EffectGi& gi = prim.m_gi[0];
+    if (gi.life != 1) return;
+
+    if (gi.flag[0] == 0) {
+        if (gi.process % 8 != 0) return;
+        CRagEffect* effect = g_modeMgr.GetCurrentGameMode()->m_world->m_player->LaunchEffect(552, vector3d{}, 0.0f);
+        if (effect) {
+            vector3d position{gi.sparkX, gi.sparkY, gi.sparkZ};
+            vector3d position2{static_cast<float>(gi.process), gi.process % 16 == 0 ? 0.0f : 1.0f, 0.0f};
+            effect->SendMsg(nullptr, 14, reinterpret_cast<msgparam_t>(&position),
+                reinterpret_cast<msgparam_t>(&position2), 0);
+        }
+    } else if (gi.flag[0] == 1) {
+        CRagEffect* effect = g_modeMgr.GetCurrentGameMode()->m_world->m_player->LaunchEffect(556, vector3d{}, 0.0f);
+        if (effect) {
+            vector3d position{gi.sparkX, gi.sparkY, gi.sparkZ};
+            effect->SendMsg(nullptr, 14, reinterpret_cast<msgparam_t>(&position), 0, 0);
+        }
+    }
+}
+
 void RenderRainbow(CEffectPrim& prim, const matrix& viewMatrix)
 {
     int rpCount = 0;
@@ -12318,6 +12342,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_STIN5) {
         RenderStin5(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_SMA) {
+        RenderSma(*this);
         return;
     }
     if (m_type == PP_3DQUADHORN2 || UsesReferenceQuadHorn()) {

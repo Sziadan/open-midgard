@@ -45,18 +45,22 @@ struct C3dGround {
 using msgparam_t = std::uintptr_t;
 struct CRagEffect {
     int sendCount=0,lastMessage=0;
-    vector3d lastPosition{};
-    void SendMsg(void*,int message,msgparam_t parameter,msgparam_t,msgparam_t) {
+    msgparam_t lastParameter2=0;
+    vector3d lastPosition{},lastPosition2{};
+    void SendMsg(void*,int message,msgparam_t parameter,msgparam_t parameter2,msgparam_t) {
         ++sendCount;lastMessage=message;
         if(parameter)lastPosition=*reinterpret_cast<vector3d*>(parameter);
+        lastParameter2=parameter2;
+        if(parameter2)lastPosition2=*reinterpret_cast<vector3d*>(parameter2);
     }
 };
 struct CAbleToMakeEffect {
     CRagEffect effect;
     bool effectAvailable=true;
     int launchCount=0,lastEffectId=0;
-    CRagEffect* LaunchEffect(int effectId,vector3d,float) {
-        ++launchCount;lastEffectId=effectId;return effectAvailable?&effect:nullptr;
+    vector3d lastDelta{};float lastRotation=0;
+    CRagEffect* LaunchEffect(int effectId,vector3d delta,float rotation) {
+        ++launchCount;lastEffectId=effectId;lastDelta=delta;lastRotation=rotation;return effectAvailable?&effect:nullptr;
     }
 };
 struct CWorld {
@@ -232,6 +236,35 @@ int main() {
     int checks=0,failures=0;
     auto check=[&](bool ok,const char* message){++checks;if(!ok){++failures;std::printf("FAIL: %s\n",message);}};
     auto near=[](float a,float b){return std::fabs(a-b)<0.0001f;};
+    {
+        CAbleToMakeEffect player;CWorld world;world.m_player=&player;CGameMode mode;mode.m_world=&world;
+        CGameMode* previousMode=g_modeMgr.current;g_modeMgr.current=&mode;g_modeMgr.lookups=0;
+        CEffectPrim sma;EffectGi& gi=sma.m_gi[0];gi.life=1;gi.alphaB=180;gi.flag[0]=0;gi.process=16;
+        gi.sparkX=7;gi.sparkY=8;gi.sparkZ=9;
+        RenderSma(sma);
+        check(player.launchCount==1&&player.lastEffectId==552&&player.lastDelta.x==0&&player.lastDelta.y==0
+            &&player.lastDelta.z==0&&player.lastRotation==0,
+            "SMA branch zero launches effect 552 with zero offset and rotation at process multiples of eight");
+        check(player.effect.sendCount==1&&player.effect.lastMessage==14&&player.effect.lastPosition.x==7
+            &&player.effect.lastPosition.y==8&&player.effect.lastPosition.z==9
+            &&player.effect.lastPosition2.x==16&&player.effect.lastPosition2.y==0&&player.effect.lastPosition2.z==0,
+            "SMA process sixteen sends current anchor and zeroed secondary position with message fourteen");
+        player=CAbleToMakeEffect{};gi.process=8;RenderSma(sma);
+        check(player.lastEffectId==552&&player.effect.sendCount==1&&player.effect.lastPosition2.x==8
+            &&player.effect.lastPosition2.y==1&&player.effect.lastPosition2.z==0,
+            "SMA non-sixteen multiple of eight sets secondary Y to one");
+        player=CAbleToMakeEffect{};player.effectAvailable=false;RenderSma(sma);
+        check(player.launchCount==1&&player.effect.sendCount==0,"SMA sends no position when effect 552 launch fails");
+        player=CAbleToMakeEffect{};gi.flag[0]=1;gi.process=7;RenderSma(sma);
+        check(player.launchCount==1&&player.lastEffectId==556&&player.effect.sendCount==1
+            &&player.effect.lastPosition.x==7&&player.effect.lastPosition2.x==0,
+            "SMA selector one launches effect 556 on every live render and sends only current position");
+        player=CAbleToMakeEffect{};gi.flag[0]=2;RenderSma(sma);
+        check(player.launchCount==0&&player.effect.sendCount==0,"SMA selectors other than zero and one do nothing");
+        gi.flag[0]=1;gi.life=0;RenderSma(sma);
+        check(player.launchCount==0&&g_modeMgr.lookups==4,"SMA exact-life gate avoids mode lookup and launch");
+        g_modeMgr.current=previousMode;
+    }
     {
         CEffectPrim stin;stin.m_pos={100,200,300};stin.m_texture={&g_texMgr.texture};stin.m_renderFlag=0x205;
         EffectGi& blue=stin.m_gi[0];blue.life=1;blue.alphaB=64;blue.flag[3]=0;blue.riseAngle=270;
