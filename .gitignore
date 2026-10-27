@@ -67,6 +67,8 @@ tools/tests/*
 !tools/tests/check_player_premove_route.py
 !tools/tests/check_runtime_wave_pending_producers.py
 !tools/tests/check_skill_action_info_source.py
+!tools/tests/check_skill_action_info2_source.py
+!tools/tests/SkillActionInfo2ParityTests.cpp
 !tools/tests/ShowImageTests.cpp
 !tools/tests/check_show_image_packet.py
 !tools/tests/GuildSkillTests.cpp

@@ -270,8 +270,8 @@ void GetSkillActionInfo2(int skillId, int& beginEffectId, int& motionType, int p
                 beginEffectId = 342;
                 break;
             case 271:
-                // Ref folds job 4016 vs others into effect id 510 vs 556.
-                beginEffectId = (job == 4016) ? 510 : 556;
+                // Ref's LOBYTE mask maps non-4016 jobs to signed value -182.
+                beginEffectId = (job == 4016) ? 510 : 328;
                 break;
             case 334:
             case 336:
@@ -283,7 +283,6 @@ void GetSkillActionInfo2(int skillId, int& beginEffectId, int& motionType, int p
             case 361:
             case 362:
             case 367:
-                motionType = 0;
                 beginEffectId = 58;
                 break;
             default:
@@ -310,7 +309,6 @@ void GetSkillActionInfo2(int skillId, int& beginEffectId, int& motionType, int p
             case 480:
             case 483:
             case 489:
-                motionType = 0;
                 beginEffectId = 58;
                 break;
             case 389:
@@ -572,7 +570,6 @@ void GetSkillActionInfo2(int skillId, int& beginEffectId, int& motionType, int p
                     motionType = 7;
                     break;
                 case 691:
-                    motionType = 0;
                     beginEffectId = 58;
                     break;
                 case 694:
