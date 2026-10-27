@@ -475,6 +475,8 @@ struct CRagEffect : CGameObject {
     void ApplyStin4();
     void SpawnStin4(const char*,char);
     void ApplyThunderStorm2();
+    void ApplyStin5();
+    void SpawnStin5(const char*);
     void SpawnBash3D(const char*,char,char);
     void ApplyFrostDiver();
     void ApplyFrostDiver2();
@@ -2984,6 +2986,36 @@ int main()
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
     for (int angle=0; angle<=360; ++angle) { g_sinTable[angle]=GetSin(angle); g_cosTable[angle]=GetCos(angle); }
+    {
+        CRenderObject actor,listener;actor.m_pos={30,40,50};listener.m_pos={5,300,8};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_master=&actor;effect.m_duration=200;effect.m_deltaPos={1,2,3};
+        rngValues.assign(40,0);rngCursor=0;waveCalls.clear();g_texMgr.requests.clear();
+        const float expectedX[5]={30,35,25,30,30};const float expectedZ[5]={50,50,50,55,45};
+        bool lanes=true;
+        for(int state=0;state<5;++state) {
+            effect.m_stateCnt=state;effect.ApplyStin5();
+            const CEffectPrim* prim=effect.m_primList.back();
+            lanes=lanes&&prim->m_type==PP_STIN5&&prim->m_renderFlag==5&&prim->m_duration==200
+                &&prim->m_totalTexture==1&&prim->m_texture.size()==1&&prim->m_size==0
+                &&prim->m_pos.x==30&&prim->m_pos.y==40&&prim->m_pos.z==50
+                &&prim->m_deltaPos.x==1&&prim->m_deltaPos.y==2&&prim->m_deltaPos.z==3
+                &&g_texMgr.requests.back()=="effect\\wind.tga";
+            for(int lane=0;lane<4;++lane){const auto& gi=prim->m_gi[lane];lanes=lanes
+                &&gi.life==1&&gi.process==-3+lane&&gi.distance==20&&gi.alphaB==0
+                &&gi.vecBPreX==expectedX[state]&&gi.vecBPreZ==expectedZ[state]&&gi.arcBaselineY==30
+                &&gi.rotStart==0&&gi.riseAngle==lane&&gi.height[1]==1.5f&&gi.flag[0]==0&&gi.flag[3]==1;}
+        }
+        check(lanes&&effect.m_primList.size()==5&&rngCursor==40&&waveCalls.size()==1
+            &&waveCalls[0].name=="effect\\stin5.wav"&&waveCalls[0].x==25&&waveCalls[0].z==42,
+            "STIN5 states zero through four emit exact offset lane profiles, consume eight draws each, and play once at state one");
+        effect.ClearPrims();g_world.UpdateGameObjects();actor.m_pos={70,80,90};effect.m_stateCnt=5;waveCalls.clear();
+        effect.ApplyStin5();
+        check(effect.m_effectPos.x==70&&effect.m_effectPos.y==80&&effect.m_effectPos.z==90
+            &&effect.m_primList.empty()&&rngCursor==40&&waveCalls.empty(),
+            "STIN5 refreshes parent position after its five-frame spawn window without more work");
+        g_world.m_player=oldPlayer;rngValues.clear();rngCursor=0;waveCalls.clear();g_texMgr.requests.clear();
+    }
     {
         CRenderObject actor,listener;actor.m_pos={30,40,50};listener.m_pos={5,300,8};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;

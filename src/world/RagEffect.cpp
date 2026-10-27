@@ -18741,6 +18741,68 @@ void CRagEffect::ApplyThunderStorm2()
     InitReferenceSegments(prim);
 }
 
+void CRagEffect::ApplyStin5()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt == 1) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\stin5.wav", m_effectPos.x-listener.x, 0.0f,
+                m_effectPos.z-listener.z, 250, 40, 1.0f);
+        }
+    }
+    SpawnStin5("effect\\wind.tga");
+}
+
+void CRagEffect::SpawnStin5(const char* textureName)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt >= 5) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_STIN5, vector3d{});
+    if (!prim) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_totalTexture = 1;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    prim->m_size = 0.0f;
+    prim->m_deltaPos = m_deltaPos;
+    prim->m_pos = m_effectPos;
+    for (int lane = 0; lane < 4; ++lane) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(lane)];
+        gi.life = 1;
+        gi.process = -3 + lane;
+        gi.distance = 20.0f;
+        gi.alphaB = 0;
+        if (m_stateCnt == 0) {
+            gi.vecBPreX = m_effectPos.x;
+            gi.vecBPreZ = m_effectPos.z;
+        } else if (m_stateCnt == 1) {
+            gi.vecBPreX = m_effectPos.x + 5.0f;
+            gi.vecBPreZ = m_effectPos.z;
+        } else if (m_stateCnt == 2) {
+            gi.vecBPreX = m_effectPos.x - 5.0f;
+            gi.vecBPreZ = m_effectPos.z;
+        } else if (m_stateCnt == 3) {
+            gi.vecBPreX = m_effectPos.x;
+            gi.vecBPreZ = m_effectPos.z + 5.0f;
+        } else {
+            gi.vecBPreX = m_effectPos.x;
+            gi.vecBPreZ = m_effectPos.z - 5.0f;
+        }
+        gi.arcBaselineY = m_effectPos.y - 10.0f + static_cast<float>(rand() % 5);
+        gi.rotStart = static_cast<short>(rand() % 360);
+        gi.riseAngle = static_cast<short>(lane);
+        gi.height[1] = 1.5f;
+        gi.flag[0] = 0;
+        gi.flag[3] = 1;
+    }
+}
+
 void CRagEffect::ApplyBottomMagnus(const char* textureName, int variant)
 {
     if (textureName == nullptr || m_stateCnt != 0) {
@@ -19873,6 +19935,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 622) {
         ApplyThunderStorm2();
+        return true;
+    }
+    if (m_type == 624) {
+        ApplyStin5();
         return true;
     }
     if (m_type == 618) {
