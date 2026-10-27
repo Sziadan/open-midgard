@@ -12050,6 +12050,63 @@ void RenderReferenceMapParticle(const CEffectPrim& prim, const matrix& view)
     }
 }
 
+// Canonical HighPriest.exe.c:447446 / Ref/RagEffect2.cpp:20292.
+void SubmitReferenceSoulBreakerRect(int& rpCount, const vector3d corners[4],
+    const CEffectPrim& prim, const matrix& view, int alpha)
+{
+    if (rpCount >= 510) return;
+    const int triangles[2][3] = {{0, 1, 2}, {3, 2, 0}};
+    const float uvs[4][2] = {{0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}};
+    const unsigned int color = (static_cast<unsigned int>(alpha) << 24)
+        | (200u << 16) | (200u << 8) | 255u;
+    CTexture* texture = prim.m_texture[0]; // RenderTeiRect TN=0; F1=1 still selects slot0.
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) return;
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            const int corner = triangles[triangle][vertex];
+            ProjectReferenceEffectVertex(corners[corner], view, face->m_verts[vertex]);
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[corner][0];
+            face->m_verts[vertex].tv = uvs[corner][1];
+        }
+        g_renderer.AddRP(face, static_cast<int>(prim.m_renderFlag));
+        ++rpCount;
+    }
+}
+
+void RenderReferenceSoulBreaker(const CEffectPrim& prim, const matrix& view)
+{
+    int rpCount = 0;
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) continue;
+        vector3d corners[4]{};
+        int angle = static_cast<int>(gi.rotStart) - 45;
+        for (int corner = 0; corner < 4; ++corner) {
+            angle += 90;
+            if (angle >= 360) angle -= 360;
+            corners[corner].x = static_cast<float>(static_cast<double>(g_cosTable[angle]) * gi.distance);
+            corners[corner].z = static_cast<float>(static_cast<double>(g_sinTable[angle]) * gi.distance);
+            corners[corner].x = static_cast<float>(static_cast<double>(gi.sparkX) + corners[corner].x);
+            corners[corner].y = gi.sparkY;
+            corners[corner].z = static_cast<float>(static_cast<double>(gi.sparkZ) + corners[corner].z);
+        }
+        SubmitReferenceSoulBreakerRect(rpCount, corners, prim, view, gi.alphaB);
+    }
+}
+
 void RenderReferenceParticlePrimitive(const CEffectPrim& prim, matrix& view)
 {
     if (!prim.m_particleSprRes || !prim.m_particleActRes) return;
@@ -12803,7 +12860,8 @@ void RenderChookGi(CEffectPrim& prim, const matrix& viewMatrix)
 
 void CEffectPrim::Render(matrix* viewMatrix)
 {
-    if ((!m_master && m_type != PP_3DTEXTURE_NOMASTER && m_type != PP_MAPPARTICLE) || !viewMatrix) {
+    if ((!m_master && m_type != PP_3DTEXTURE_NOMASTER && m_type != PP_MAPPARTICLE
+        && m_type != PP_SOULBREAKER && m_type != PP_SOULBREAKER2) || !viewMatrix) {
         return;
     }
     if (IsCloudRendererType(m_type)) {
@@ -12834,6 +12892,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_MAPPARTICLE) {
         RenderReferenceMapParticle(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_SOULBREAKER || m_type == PP_SOULBREAKER2) {
+        RenderReferenceSoulBreaker(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_STIN || m_type == PP_STIN2 || m_type == PP_STIN4) {

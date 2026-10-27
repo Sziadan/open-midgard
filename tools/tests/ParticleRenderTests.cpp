@@ -1683,6 +1683,43 @@ int main() {
         check(g_renderer.submissions.size()==32,
             "MapParticle visits all four live GI lanes and submits all four bands per lane");
     }
+    {
+        CTexture texture;CEffectPrim prim;prim.m_texture={&texture};prim.m_pos={100,200,300};prim.m_renderFlag=5;
+        EffectGi& firstLane=prim.m_gi[0];firstLane.life=1;firstLane.alphaB=170;
+        firstLane.distance=10;firstLane.rotStart=0;firstLane.sparkX=4;firstLane.sparkY=-2;firstLane.sparkZ=6;
+        EffectGi& wrappedLane=prim.m_gi[1];wrappedLane.life=1;wrappedLane.alphaB=100;
+        wrappedLane.distance=5;wrappedLane.rotStart=355;wrappedLane.sparkX=11;wrappedLane.sparkY=12;wrappedLane.sparkZ=13;
+        g_renderer.submissions.clear();g_renderer.flags.clear();RenderReferenceSoulBreaker(prim,view);
+        check(g_renderer.submissions.size()==4,
+            "SoulBreaker renders two live positive-alpha lanes as two triangles each");
+        if(g_renderer.submissions.size()==4) {
+            const RPFace& first=g_renderer.submissions[0];
+            const RPFace& wrap=g_renderer.submissions[2];
+            check(first.tex==&texture&&first.destAlphaMode==D3DBLEND_INVSRCALPHA
+                &&first.srcAlphaMode==D3DBLEND_SRCALPHA&&first.m_verts[0].color==0xAAC8C8FFu,
+                "SoulBreaker uses texture zero, source inverse-alpha blend, and canonical RGB 200/200/255");
+            check(first.m_verts[0].tu==0.0f&&first.m_verts[0].tv==1.0f
+                &&first.m_verts[1].tu==1.0f&&first.m_verts[1].tv==1.0f
+                &&first.m_verts[2].tu==1.0f&&first.m_verts[2].tv==0.0f
+                &&g_renderer.flags[0]==5&&g_renderer.flags[3]==5,
+                "SoulBreaker preserves RenderTeiRect triangle order, UVs, and raw render flags");
+            tlvertex3d expected{};
+            ProjectReferenceEffectVertex({static_cast<float>(g_cosTable[45]*10.0+4.0),-2.0f,
+                static_cast<float>(g_sinTable[45]*10.0+6.0)},view,expected);
+            check(near(first.m_verts[0].x,expected.x)&&near(first.m_verts[0].y,expected.y),
+                "SoulBreaker begins at RotStart minus 45 plus 90 and omits parent-position translation");
+            ProjectReferenceEffectVertex({static_cast<float>(g_cosTable[40]*5.0+11.0),12.0f,
+                static_cast<float>(g_sinTable[40]*5.0+13.0)},view,expected);
+            check(near(wrap.m_verts[0].x,expected.x)&&near(wrap.m_verts[0].y,expected.y),
+                "SoulBreaker wraps the first angle above 360 exactly once");
+        }
+        wrappedLane.alphaB=0;g_renderer.submissions.clear();RenderReferenceSoulBreaker(prim,view);
+        check(g_renderer.submissions.size()==2,"SoulBreaker skips a live lane when alphaB is not positive");
+        firstLane.life=0;wrappedLane.alphaB=100;g_renderer.submissions.clear();RenderReferenceSoulBreaker(prim,view);
+        check(g_renderer.submissions.size()==2,"SoulBreaker skips a lane whose life is not one");
+        wrappedLane.life=0;g_renderer.submissions.clear();RenderReferenceSoulBreaker(prim,view);
+        check(g_renderer.submissions.empty(),"SoulBreaker emits nothing when all four GI lanes are inactive");
+    }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;
 }
