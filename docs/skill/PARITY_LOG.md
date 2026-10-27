@@ -1982,3 +1982,10 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 
 - `tools/audit_actor_sendmsg_inventory.py` extracts only labels at the top level of the message switch, avoiding nested switches. The EXE and Ref agree on 79 IDs. Current `CGameActor::SendMsg` has 50 direct arms; 31 source IDs remain unmapped: `0, 3, 4, 5, 6, 7, 20, 21, 32, 33, 36, 48, 54, 55, 56, 57, 61, 78, 79, 99, 110, 118, 122, 123, 126, 127, 128, 129, 135, 136, 139`.
 - This is an inventory checkpoint only, not the required branch-level comparison. Some missing branches create old title/chat windows and are outside 1:1 UI scope. The remaining skill/effect, world-object, and actor-state branches must be compared to their implementation before WP2.2 is marked complete or work moves to another function.
+
+## `CGameActor::SendMsg` effect arms 20 and 36 — 2026-10-27
+
+- Ref and canonical EXE `SendMsg` bodies match after whitespace normalization. Branch 20 launches effect 7. Branch 36 launches effect 68, then sends message 50 to that effect; `CRagEffect::SendMsg` has no message-50 arm, so its default is a no-op in both source and port.
+- The current dispatcher now performs both operations in source order. `tools/tests/check_actor_sendmsg_effect_cases.py` checks full source-body equality and branch-level implementation mappings; it is registered as CTest `actor_sendmsg_effect_cases_source_check`.
+- The inventory now has 52 direct current arms and 29 source arms still needing mapping. This closes only the two gameplay effect branches, not the full `SendMsg` comparison.
+- x64 Release build succeeded and all 31 CTests passed. Authorized deployment to `D:\Spel\OldRO\open-midgard.exe` matches Release SHA-256 `59D0E2047D3EC8D84F8A3D257ADD98D8C31F3265BC9C8D14694EB3D6589B46D5`.

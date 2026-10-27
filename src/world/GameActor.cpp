@@ -4836,6 +4836,9 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
     case 19:
         StartMoveToCell(static_cast<int>(par1), static_cast<int>(par2), static_cast<int>(par3));
         return;
+    case 20:
+        LaunchEffect(7, vector3d{}, 0.0f);
+        return;
     case 26:
     case 39:
     case 93:
@@ -4924,6 +4927,12 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         if (pcActor && pcActor->m_gage) {
             g_windowMgr.DeleteWindow(pcActor->m_gage);
             pcActor->m_gage = nullptr;
+        }
+        return;
+    }
+    case 36: {
+        if (CRagEffect* effect = LaunchEffect(68, vector3d{}, 0.0f)) {
+            effect->SendMsg(this, 50, 0, 0, 0);
         }
         return;
     }
