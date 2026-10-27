@@ -408,6 +408,8 @@ Port verbatim, including: action 5 → WBA message 96 to target unless skill ∈
 
 ### WP2.5 `Am_Groundskill` (Ref/GameActorMsgHandler.cpp:336–606)
 
+Status: implemented; source comparison complete. The Ref and canonical EXE bodies match; `tools/tests/check_groundskill_source.py` checks the source routes, current route mapping, branch ordering, special effects, wave calls, the 478 thresholds, source-equivalent `IsThisPC` job predicate, coordinate setup, and `duration+10`. Skill 83 assigns `motionCount - 1` even when the count is zero; the port now does the same when an action resource exists. A null action resource remains a defensive guard. x64 Release builds; source comparator passes. Authorized OldRO deployment matches the build hash. No live packet/visual acceptance is claimed. See `docs/skill/PARITY_LOG.md` for evidence.
+
 Port the per-skill `PlaceEffect(pos, effectId, duration+10)` table verbatim (21→30, 25→141, 69/694→91, 70→83, 79→113, 83→92 + force action 88 last motion, 85→90, 87→74, 89→89, 91→142, 92→95, 110→102, 111/459→98, 115→69, 130→119 + bird msg 29, 140→124, 264 → `IsThisPC` → effect 166 + `SendMsg(19, x, y, 15)` + `SetAction(base+80, 6, 1)` freeze, 285→225, 286→236, 287→237, 288→238, 478→497/498/499 by level + `assulter_attack.wav`, 483→223 + `EF_FireWall.wav`, 484 → `wizard_earthspike.wav`, 491 → `LaunchEffect(58)`, 521/538 → waves) and everything else in that range.
 
 ### WP2.6 `ProcessWillBeAttacked` (Ref/GameActor.cpp:8039)

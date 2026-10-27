@@ -693,10 +693,7 @@ void CGameActor::Am_Groundskill(const int* arg1)
     if (skillId == 83) {
         m_curAction = 88;
         if (m_actRes) {
-            const int motions = m_actRes->GetMotionCount(88);
-            if (motions > 0) {
-                m_curMotion = motions - 1;
-            }
+            m_curMotion = m_actRes->GetMotionCount(88) - 1;
         }
         ApplyGroundEffect(skillId, level, dest);
         return;
