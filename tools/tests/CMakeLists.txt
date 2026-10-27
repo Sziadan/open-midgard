@@ -520,6 +520,8 @@ add_test(NAME clif_skill_damage_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_clif_skill_damage_source.py")
 add_test(NAME clif_skill_poseffect_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_clif_skill_poseffect_source.py")
+add_test(NAME clif_skill_setunit_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_clif_skill_setunit_source.py")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../HighPriest.exe.c
     ../../Ref/GameModePacket.cpp
