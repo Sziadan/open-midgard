@@ -2974,13 +2974,7 @@ bool UpdateReferenceParticleSpline(CEffectPrim* prim)
     return AnimateReferenceParticle(prim);
 }
 
-struct StatusStateIconEntry {
-    int priority;
-    int status;
-    const char* standardPath;
-    const char* specialPath;
-};
-#include "StatusStateIconMap.generated.inc"
+#include "StatusStateIconMap.h"
 
 const StatusStateIconEntry* FindStatusStateIcon(int priority, int status)
 {
@@ -8536,8 +8530,8 @@ void UpdateReferenceScreenCircle(CEffectPrim* prim)
 void UpdateReferenceFlash(CEffectPrim* prim)
 {
     const vector3d anchor = prim->m_master->ScreenPosition();
-    prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
     prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
+    prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
     if ((prim->m_pattern & 1) != 0 && prim->m_heightSize <= 0.0f) {
         prim->m_heightSpeed = 0.0f; prim->m_heightAccel = 0.0f;
         const double heightSize = prim->m_heightSize;
@@ -8551,14 +8545,16 @@ void UpdateReferenceFlash(CEffectPrim* prim)
         prim->m_longAccel = prim->m_changeAccel;
     }
     if (prim->m_heightSize < 0.0f) {
-        prim->m_heightSize = 0.0f; prim->m_heightSpeed *= -1.0f;
+        const double reflectedSpeed = static_cast<double>(prim->m_heightSpeed) * -1.0;
+        prim->m_heightSize = 0.0f;
+        prim->m_heightSpeed = static_cast<float>(reflectedSpeed);
     }
     const double angularSpeed = static_cast<double>(prim->m_longAccel) + prim->m_longSpeed;
     prim->m_longSpeed = static_cast<float>(angularSpeed);
     prim->m_heightSpeed += prim->m_heightAccel;
-    prim->m_arcAngle += prim->m_widthSpeed;
     prim->m_longitude = static_cast<float>(angularSpeed + prim->m_longitude);
     prim->m_heightSize += prim->m_heightSpeed;
+    prim->m_arcAngle += prim->m_widthSpeed;
     ProcessReferenceParticleAlpha(prim);
 }
 
@@ -12096,7 +12092,7 @@ bool CEffectPrim::ProcessPrimitiveFrame()
         UpdateReferenceCylinderState(this); // Source case 0x12 ignores the bool result.
         return true;
     }
-    if (m_type == PP_3DFLASH) {
+    if (m_type == PP_2DFLASH || m_type == PP_3DFLASH) {
         UpdateReferenceFlash(this);
         return true;
     }
@@ -20709,71 +20705,6 @@ std::optional<bool> CRagEffect::ProcessReferenceStrOnly()
     }
 }
 
-void CRagEffect::SpawnStatusState()
-{
-    // Ref/RagEffect.cpp:8313-8400 (0x602E00); path table extracted from the
-    // canonical HighPriest.exe GetStateFileName branch targets.
-    if (m_stateCnt == 9998) {
-        m_stateCnt = 0;
-    }
-    if (m_count != 0) {
-        m_count = 0;
-        m_stateCnt = 0;
-        SendMsg(nullptr, 25, 100, 0, 0);
-    }
-    if (m_stateCnt != 0) {
-        return;
-    }
-
-    const int job = g_world.m_player ? g_world.m_player->m_job : 0;
-    const bool specialJob = job >= 4046 && job <= 4049;
-    const auto& active = g_session.GetActiveStatusIcons();
-    std::vector<int> drawList;
-    drawList.reserve((std::min)(active.size(), size_t{99}));
-    int x = 0;
-    int y = 0;
-    int visibleCount = 0;
-
-    for (int priority = 0; priority < 4; ++priority) {
-        for (const ACTIVE_STATUS_ICON& icon : active) {
-            const StatusStateIconEntry* entry = FindStatusStateIcon(priority, icon.statusType);
-            if (!entry) {
-                continue;
-            }
-            const int drawId = icon.statusType == 42 ? 12 : icon.statusType;
-            if (std::find(drawList.begin(), drawList.end(), drawId) != drawList.end()) {
-                continue;
-            }
-
-            CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE, vector3d{});
-            if (!prim) {
-                continue;
-            }
-            prim->m_pattern = 4;
-            prim->m_duration = 9999;
-            prim->m_widthSize = 16.0f;
-            prim->m_heightSize = 16.0f;
-            if (35 * visibleCount + 150 < g_renderer.m_height - 50) {
-                y += 35;
-            } else {
-                y = 35;
-                x -= 35;
-                visibleCount = 0;
-            }
-            prim->m_deltaPos2.x = static_cast<float>(g_renderer.m_width + x - 32);
-            prim->m_deltaPos2.y = static_cast<float>(y + 150);
-            prim->m_gi[0].life = 0;
-            const char* path = specialJob && entry->specialPath ? entry->specialPath : entry->standardPath;
-            prim->m_texture.push_back(g_texMgr.GetTexture(path, false));
-
-            if (drawList.size() < 99) {
-                drawList.push_back(drawId);
-                ++visibleCount;
-            }
-        }
-    }
-}
-
 bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
@@ -21518,6 +21449,71 @@ bool CRagEffect::ProcessEffectFrame()
     }
 
     return FinishEffectFrame();
+}
+
+void CRagEffect::SpawnStatusState()
+{
+    // Ref/RagEffect.cpp:8313-8400 (0x602E00); path table extracted from the
+    // canonical HighPriest.exe GetStateFileName branch targets.
+    if (m_stateCnt == 9998) {
+        m_stateCnt = 0;
+    }
+    if (m_count != 0) {
+        m_count = 0;
+        m_stateCnt = 0;
+        SendMsg(nullptr, 25, 100, 0, 0);
+    }
+    if (m_stateCnt != 0) {
+        return;
+    }
+
+    const int job = g_world.m_player ? g_world.m_player->m_job : 0;
+    const bool specialJob = job >= 4046 && job <= 4049;
+    const auto& active = g_session.GetActiveStatusIcons();
+    std::vector<int> drawList;
+    drawList.reserve((std::min)(active.size(), size_t{99}));
+    int x = 0;
+    int y = 0;
+    int visibleCount = 0;
+
+    for (int priority = 0; priority < 4; ++priority) {
+        for (const ACTIVE_STATUS_ICON& icon : active) {
+            const StatusStateIconEntry* entry = FindStatusStateIcon(priority, icon.statusType);
+            if (!entry) {
+                continue;
+            }
+            const int drawId = icon.statusType == 42 ? 12 : icon.statusType;
+            if (std::find(drawList.begin(), drawList.end(), drawId) != drawList.end()) {
+                continue;
+            }
+
+            CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE, vector3d{});
+            if (!prim) {
+                continue;
+            }
+            prim->m_pattern = 4;
+            prim->m_duration = 9999;
+            prim->m_widthSize = 16.0f;
+            prim->m_heightSize = 16.0f;
+            if (35 * visibleCount + 150 < g_renderer.m_height - 50) {
+                y += 35;
+            } else {
+                y = 35;
+                x -= 35;
+                visibleCount = 0;
+            }
+            prim->m_deltaPos2.x = static_cast<float>(g_renderer.m_width + x - 32);
+            prim->m_deltaPos2.y = static_cast<float>(y + 150);
+            prim->m_gi[0].life = 0;
+            const char* path = specialJob && entry->specialPath ? entry->specialPath : entry->standardPath;
+            prim->m_texture.push_back(g_texMgr.GetTexture(path, false));
+
+            if (drawList.size() < 99) {
+                drawList.push_back(drawId);
+                ++visibleCount;
+            }
+        }
+    }
 }
 
 void CRagEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3)

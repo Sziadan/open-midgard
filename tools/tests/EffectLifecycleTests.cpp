@@ -354,7 +354,7 @@ struct CEffectPrim : CGameObject {
         if (m_type == PP_3DSPLINE || m_type == PP_3DSPIRAL) { UpdateReferenceSpiral(this); return active; }
         if (m_type == PP_3DTEXTURE || m_type == PP_3DCROSSTEXTURE) { UpdateReference3DTexture(this); return active; }
         if (m_type == PP_3DCYLINDERHALF) { UpdateReferenceCylinderState(this); return active; }
-        if (m_type == PP_3DFLASH) { UpdateReferenceFlash(this); return active; }
+        if (m_type == PP_2DFLASH || m_type == PP_3DFLASH) { UpdateReferenceFlash(this); return active; }
         if (m_type == PP_MAPMAGICZONE) { UpdateReferenceMapMagicZone(this); return active; }
         if (m_type == PP_MAPPARTICLE) { UpdateReferenceMapParticle(this); return active; }
         if (m_type == PP_3DAURA) { UpdateReference3DAura(this); return active; }
@@ -3025,6 +3025,36 @@ int main()
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
     for (int angle=0; angle<=360; ++angle) { g_sinTable[angle]=GetSin(angle); g_cosTable[angle]=GetCos(angle); }
+    {
+        const int oldSkipFrame = g_isSkipFrame;
+        g_isSkipFrame = 1;
+        CRagEffect master; master.m_tlvertX = 100.0f; master.m_tlvertY = 200.0f; master.m_type = 999; master.m_duration = 1000;
+        CEffectPrim flash; flash.m_master = &master; flash.m_type = PP_2DFLASH; flash.m_pattern = 1;
+        flash.m_duration = 20; flash.m_changePoint = 0; flash.m_changeSpeed = 7.0f;
+        flash.m_changeAccel = 2.0f; flash.m_changeHeightSpeed = 3.0f;
+        flash.m_deltaPos2 = {7.0f, -8.0f, 99.0f}; flash.m_pos = {-1.0f, -1.0f, 123.0f};
+        flash.m_heightSize = 0.0f; flash.m_heightSpeed = 4.0f; flash.m_heightAccel = 2.0f;
+        flash.m_longitude = 30.0f; flash.m_longSpeed = 1.0f; flash.m_longAccel = 0.0f;
+        flash.m_arcAngle = 1.0f; flash.m_widthSpeed = 5.0f;
+        flash.m_size = 6.0f; flash.m_sizeSpeed = 2.0f; flash.m_roll = 12.0f; flash.m_rollSpeed = 3.0f;
+        flash.m_alpha = 10.0f; flash.m_alphaSpeed = 1.0f; flash.m_fadeOutCnt = -1;
+        const u8 flashResult = flash.OnProcess();
+        check(flashResult == 1 && flash.m_pos.x == 107.0f && flash.m_pos.y == 192.0f
+            && flash.m_pos.z == 123.0f && flash.m_heightSpeed == 3.0f && flash.m_heightAccel == 0.0f
+            && flash.m_heightSize == 3.0f && flash.m_longSpeed == 9.0f && flash.m_longitude == 39.0f
+            && flash.m_arcAngle == 6.0f && flash.m_alpha == 11.0f && flash.m_stateCnt == 1
+            && flash.m_size == 6.0f && flash.m_roll == 12.0f && flash.m_deltaPos2.y == -8.0f,
+            "PP_2DFLASH routes regardless of parent type and preserves source anchor, change-point, clamp and alpha branches");
+        flash.m_pattern = 0; flash.m_stateCnt = 1; flash.m_changePoint = 0;
+        flash.m_heightSize = -1.0f; flash.m_heightSpeed = 4.0f; flash.m_heightAccel = 1.0f;
+        flash.m_longitude = 10.0f; flash.m_longSpeed = 0.0f; flash.m_longAccel = 0.0f;
+        flash.m_alphaSpeed = 0.0f;
+        flash.OnProcess();
+        check(flash.m_heightSize == -3.0f && flash.m_heightSpeed == -3.0f
+            && flash.m_longitude == 10.0f && flash.m_size == 6.0f && flash.m_roll == 12.0f,
+            "PP_2DFLASH reflects negative height speed before source acceleration integration without generic size/roll updates");
+        g_isSkipFrame = oldSkipFrame;
+    }
     {
         CRenderObject actor;actor.m_pos={30,40,50};
         CRagEffect effect;effect.m_master=&actor;effect.m_duration=300;effect.m_deltaPos={0,0,0};

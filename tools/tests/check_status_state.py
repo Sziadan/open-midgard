@@ -122,7 +122,8 @@ def main() -> int:
     header = (ROOT / "src/world/RagEffect.h").read_text(encoding="utf-8")
     decomp = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8")
     primitive_decomp = (ROOT / "Ref/RagEffectPrim.cpp").read_text(encoding="utf-8")
-    caller = source[source.index("void CRagEffect::SpawnStatusState()"):source.index("bool CRagEffect::ProcessEffectFrame()")]
+    caller_start = source.index("void CRagEffect::SpawnStatusState()")
+    caller = source[caller_start : source.index("void CRagEffect::SendMsg(", caller_start)]
     canonical = decomp[decomp.index("void __thiscall CRagEffect::StatusState"):]
     canonical = canonical[: canonical.index("\n}") + 2]
     required_source = (
