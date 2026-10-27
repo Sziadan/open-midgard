@@ -45,12 +45,13 @@ for expected in (
     "for (int lane = 2; lane < 4; ++lane)",
     "const float d = gi.distance, span = gi.height[3]",
     "if (d < w*2.0f)", "else if (d < w*4.0f)", "else if (d < w*6.0f)",
-    "if(left>0)", "bpre.z=d-depth", "bnow.z=bpre.z-span", "tnow.x=bnow.x-left",
+    "if(left>0)", "bpre.z=depth-d", "bnow.z=bpre.z-span", "tnow.x=bnow.x-left",
     "bnow.x=w-(d-w*2.0f)", "tnow.x=bnow.x-span", "tpre.z=tnow.z+left",
     "tnow.z=-depth+(d-w*4.0f)", "tpre.z=tnow.z+span", "bpre.x=tpre.x+left",
     "tpre.x=-w+(d-w*6.0f)", "bpre.x=tpre.x+span", "bnow.z=bpre.z-left",
     "draw(bpre,bnow,bnowLocal,bpreLocal)", "draw(bnow,tnow,tnowLocal,bnowLocal)",
     "draw(tnow,tpre,tpreLocal,tnowLocal)", "draw(tpre,bpre,bpreLocal,tpreLocal)",
+    "draw(bnow,tnow,tnowLocal,bnowLocal)",
 ):
     assert compact(expected) in compact(renderer), f"current branch map missing {expected!r}"
 assert "RenderReferenceRectUp2" in (ROOT / "tools/tests/ParticleRenderTests.cpp").read_text(encoding="utf-8")

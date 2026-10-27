@@ -1755,7 +1755,8 @@ int main() {
         check(g_renderer.submissions.size()==2,"RectUp2 routes distance beyond 6w into interval four");
         auto& sweep=prim.m_gi[2];
         sweep.height[3]=30;sweep.distance=5;g_renderer.submissions.clear();RenderReferenceRectUp2(prim,view);
-        check(g_renderer.submissions.size()==4&&near(sweep.sparkZ,-10)&&near(sweep.vecTNowX,-15),
+        check(g_renderer.submissions.size()==4&&near(sweep.vecBPreZ,5)&&near(sweep.sparkZ,-10)
+            &&near(sweep.vecTNowX,-5),
             "RectUp2 interval one clamps the bottom edge and advances the adjacent edge on overflow");
         sweep.distance=25;g_renderer.submissions.clear();RenderReferenceRectUp2(prim,view);
         check(g_renderer.submissions.size()==4&&near(sweep.vecTNowX,-10)&&near(sweep.vecTPreZ,5),
@@ -1766,6 +1767,11 @@ int main() {
         sweep.distance=75;g_renderer.submissions.clear();RenderReferenceRectUp2(prim,view);
         check(g_renderer.submissions.size()==4&&near(sweep.vecBPreX,10)&&near(sweep.sparkZ,-15),
             "RectUp2 interval four clamps the right edge and transfers the overflow to the next corner");
+        if(g_renderer.submissions.size()==4){tlvertex3d expected{};
+            ProjectReferenceEffectVertex({20,19,15},view,expected);
+            check(near(g_renderer.submissions[2].m_verts[0].x,expected.x)
+                &&near(g_renderer.submissions[2].m_verts[0].y,expected.y),
+                "RectUp2 interval four overflow submits the BNow-to-TNow edge after the base edge");}
     }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;

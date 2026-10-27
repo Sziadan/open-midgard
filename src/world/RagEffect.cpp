@@ -12183,7 +12183,7 @@ void RenderReferenceRectUp2(CEffectPrim& prim, const matrix& view)
         const float d = gi.distance, span = gi.height[3];
         int interval;
         if (d < w*2.0f) {
-            interval=0; bpre.z=d-depth; bnow.z=bpre.z-span;
+            interval=0; bpre.z=depth-d; bnow.z=bpre.z-span;
             if (bnow.z < -depth) { left=-depth-bnow.z; bnow.z=-depth; tnow.x=bnow.x-left; }
         } else if (d < w*4.0f) {
             interval=1; bnow.x=w-(d-w*2.0f); tnow.x=bnow.x-span;
@@ -12209,7 +12209,7 @@ void RenderReferenceRectUp2(CEffectPrim& prim, const matrix& view)
         if (interval==0) { draw(bpre,bnow,bnowLocal,bpreLocal); if(left>0) draw(bnow,tnow,tnowLocal,bnowLocal); }
         else if (interval==1) { draw(bnow,tnow,tnowLocal,bnowLocal); if(left>0) draw(tnow,tpre,tpreLocal,tnowLocal); }
         else if (interval==2) { draw(tnow,tpre,tpreLocal,tnowLocal); if(left>0) draw(tpre,bpre,bpreLocal,tpreLocal); }
-        else { draw(tpre,bpre,bpreLocal,tpreLocal); if(left>0) draw(bpre,bnow,bnowLocal,bpreLocal); }
+        else { draw(tpre,bpre,bpreLocal,tpreLocal); if(left>0) draw(bnow,tnow,tnowLocal,bnowLocal); }
     }
 }
 
