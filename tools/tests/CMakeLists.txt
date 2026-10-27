@@ -343,6 +343,8 @@ add_test(NAME spirits2_packet_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_spirits2_packet_source.py")
 add_test(NAME devotion_packet_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_devotion_packet_source.py")
+add_test(NAME prim2dflash_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim2dflash.py")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../HighPriest.exe.c
     ../../Ref/GameModePacket.cpp
@@ -352,6 +354,8 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/gamemode/GameModePacket.cpp
     ../../src/network/GronPacket.cpp
     ../../src/world/RagEffect.h
+    ../../src/world/RagEffect.cpp
+    check_prim2dflash.py
     check_spirits_packet_source.py
     check_spirits2_packet_source.py
     check_devotion_packet_source.py)

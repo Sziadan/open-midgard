@@ -508,7 +508,7 @@ current_flash3d = body(CURRENT, "void UpdateReferenceFlash(CEffectPrim* prim)")
 check("source Prim3DFlash Ref/EXE bodies match and case 0x13 reaches an unconditional current route",
       compact(source_flash3d) == compact(exe_flash3d)
       and re.search(r"case\s+0x13:\s*CEffectPrim::Prim3DFlash\(this\);\s*goto\s+\$L145961;", source_dispatch)
-      and "if (m_type == PP_3DFLASH)" in current_dispatch
+      and "if (m_type == PP_2DFLASH || m_type == PP_3DFLASH)" in current_dispatch
       and "UpdateReferenceFlash(this);" in current_dispatch)
 flash_source_effects = [
     "this->m_pos.y = m_master->m_tlvertY + this->m_deltaPos2.y;",
@@ -531,10 +531,16 @@ flash_current_effects = [
     "Trace(\"m_heightSize  = %d\", static_cast<int>(traceValue));",
     "prim->m_stateCnt == prim->m_changePoint", "prim->m_heightSpeed = prim->m_changeHeightSpeed;",
     "prim->m_longSpeed = prim->m_changeSpeed;", "prim->m_longAccel = prim->m_changeAccel;",
-    "prim->m_heightSize = 0.0f;", "prim->m_heightSpeed *= -1.0f;",
+    "prim->m_heightSize = 0.0f;", "prim->m_heightSpeed = static_cast<float>(reflectedSpeed);",
     "prim->m_arcAngle += prim->m_widthSpeed;", "prim->m_longitude = static_cast<float>(angularSpeed + prim->m_longitude);",
     "prim->m_heightSize += prim->m_heightSpeed;", "ProcessReferenceParticleAlpha(prim);",
 ]
+flash3_anchor = current_flash3d[current_flash3d.index("if (is3dFlash)"):current_flash3d.index("} else {", current_flash3d.index("if (is3dFlash)"))]
+flash2_anchor_start = current_flash3d.index("} else {", current_flash3d.index("if (is3dFlash)"))
+flash2_anchor = current_flash3d[flash2_anchor_start:current_flash3d.index("if ((prim->m_pattern & 1)")]
+flash3_integrate_start = current_flash3d.index("if (is3dFlash)", current_flash3d.index("prim->m_heightSpeed +="))
+flash3_integrate = current_flash3d[flash3_integrate_start:current_flash3d.index("} else {", flash3_integrate_start)]
+flash2_integrate = current_flash3d[current_flash3d.index("} else {", flash3_integrate_start):]
 check("case 0x13 Y/X anchor, pattern stop and trace, change point, reflection and alpha branches are paired in order",
       all(compact(effect) in compact(source_flash3d) for effect in flash_source_effects)
       and all(compact(effect) in compact(current_flash3d) for effect in flash_current_effects)
@@ -545,10 +551,11 @@ check("case 0x13 Y/X anchor, pattern stop and trace, change point, reflection an
       < current_flash3d.index("if (prim->m_heightSize < 0.0f)")
       < current_flash3d.index("prim->m_longSpeed = static_cast<float>(angularSpeed)")
       < current_flash3d.index("prim->m_heightSpeed +=")
-      < current_flash3d.index("prim->m_arcAngle +=")
-      < current_flash3d.index("prim->m_longitude =")
-      < current_flash3d.index("prim->m_heightSize +=")
-      < current_flash3d.index("ProcessReferenceParticleAlpha(prim);"))
+      < current_flash3d.index("ProcessReferenceParticleAlpha(prim);")
+      and flash3_anchor.index("prim->m_pos.y =") < flash3_anchor.index("prim->m_pos.x =")
+      and flash2_anchor.index("prim->m_pos.x =") < flash2_anchor.index("prim->m_pos.y =")
+      and flash3_integrate.index("prim->m_arcAngle +=") < flash3_integrate.index("prim->m_longitude =") < flash3_integrate.index("prim->m_heightSize +=")
+      and flash2_integrate.index("prim->m_longitude =") < flash2_integrate.index("prim->m_heightSize +=") < flash2_integrate.index("prim->m_arcAngle +="))
 source_map_magic = body(EXE, "bool __thiscall CEffectPrim::PrimMapMagicZone(CEffectPrim *this)\n{")
 current_map_magic = body(CURRENT, "bool UpdateReferenceMapMagicZone(CEffectPrim* prim)")
 check("case 0x1A Ref dispatch and canonical EXE helper map to a dedicated current route",

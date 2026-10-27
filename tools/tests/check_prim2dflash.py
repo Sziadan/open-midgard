@@ -43,9 +43,13 @@ def main() -> int:
     assert "0x03\tPP_2DFLASH\tPrim2DFlash\tcontinues" in dispatcher
 
     updater = function_body(current, "void UpdateReferenceFlash(CEffectPrim* prim)")
+    anchor3_start = updater.index("if (is3dFlash)")
+    anchor3_end = updater.index("} else {", anchor3_start)
+    anchor3_branch = updater[anchor3_start:anchor3_end]
+    anchor2_branch = updater[anchor3_end:updater.index("if ((prim->m_pattern & 1)")]
+    assert anchor2_branch.index("prim->m_pos.x =") < anchor2_branch.index("prim->m_pos.y =")
+    assert anchor3_branch.index("prim->m_pos.y =") < anchor3_branch.index("prim->m_pos.x =")
     ordered = (
-        "prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;",
-        "prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;",
         "(prim->m_pattern & 1) != 0 && prim->m_heightSize <= 0.0f",
         "prim->m_heightSpeed = 0.0f;",
         "prim->m_heightAccel = 0.0f;",
@@ -59,15 +63,33 @@ def main() -> int:
         "prim->m_heightSpeed = static_cast<float>(reflectedSpeed);",
         "static_cast<double>(prim->m_longAccel) + prim->m_longSpeed",
         "prim->m_heightSpeed += prim->m_heightAccel;",
-        "prim->m_longitude = static_cast<float>(angularSpeed + prim->m_longitude);",
-        "prim->m_heightSize += prim->m_heightSpeed;",
-        "prim->m_arcAngle += prim->m_widthSpeed;",
         "ProcessReferenceParticleAlpha(prim);",
     )
     cursor = -1
     for token in ordered:
         cursor = updater.find(token, cursor + 1)
         assert cursor >= 0, f"current flash branch missing or out of order: {token}"
+    integration3_start = updater.index("if (is3dFlash)", updater.index("prim->m_heightSpeed +="))
+    integration3_end = updater.index("} else {", integration3_start)
+    integration3_branch = updater[integration3_start:integration3_end]
+    integration2_branch = updater[integration3_end:]
+    for branch, sequence, label in (
+        (integration2_branch, ("prim->m_longitude =", "prim->m_heightSize +=", "prim->m_arcAngle +="), "2D"),
+        (integration3_branch, ("prim->m_arcAngle +=", "prim->m_longitude =", "prim->m_heightSize +="), "3D"),
+    ):
+        branch_cursor = -1
+        for token in sequence:
+            branch_cursor = branch.find(token, branch_cursor + 1)
+            assert branch_cursor >= 0, f"current {label} flash integration order differs from source: {token}"
+
+    flash3_signature = "void __thiscall CEffectPrim::Prim3DFlash(CEffectPrim *this)"
+    ref_flash3 = function_body(ref, flash3_signature)
+    exe_flash3 = function_body(exe, flash3_signature)
+    assert compact(ref_flash3) == compact(exe_flash3), "Ref Prim3DFlash body differs from canonical executable decompilation"
+    ref_onprocess_case = ref_dispatch[ref_dispatch.index("case 0x13:"):ref_dispatch.index("case 0x14:", ref_dispatch.index("case 0x13:"))]
+    exe_onprocess_case = exe_dispatch[exe_dispatch.index("case 0x13:"):exe_dispatch.index("case 0x14:", exe_dispatch.index("case 0x13:"))]
+    assert "Prim3DFlash(this)" in ref_onprocess_case and "goto $L145961" in ref_onprocess_case
+    assert "Prim3DFlash(this)" in exe_onprocess_case and "goto $L145961" in exe_onprocess_case
 
     processing = function_body(current, "bool CEffectPrim::ProcessPrimitiveFrame()")
     route = "if (m_type == PP_2DFLASH || m_type == PP_3DFLASH)"

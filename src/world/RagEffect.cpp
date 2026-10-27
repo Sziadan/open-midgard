@@ -8604,8 +8604,16 @@ void UpdateReferenceScreenCircle(CEffectPrim* prim)
 void UpdateReferenceFlash(CEffectPrim* prim)
 {
     const vector3d anchor = prim->m_master->ScreenPosition();
-    prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
-    prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
+    const bool is3dFlash = prim->m_type == PP_3DFLASH;
+    if (is3dFlash) {
+        // Ref/RagEffectPrim.cpp:1858 / EXE VA 0x641C30 writes Y then X.
+        prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
+        prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
+    } else {
+        // Ref/RagEffectPrim.cpp:1729 / EXE VA 0x641DF0 writes X then Y.
+        prim->m_pos.x = anchor.x + prim->m_deltaPos2.x;
+        prim->m_pos.y = anchor.y + prim->m_deltaPos2.y;
+    }
     if ((prim->m_pattern & 1) != 0 && prim->m_heightSize <= 0.0f) {
         prim->m_heightSpeed = 0.0f; prim->m_heightAccel = 0.0f;
         const double heightSize = prim->m_heightSize;
@@ -8626,9 +8634,17 @@ void UpdateReferenceFlash(CEffectPrim* prim)
     const double angularSpeed = static_cast<double>(prim->m_longAccel) + prim->m_longSpeed;
     prim->m_longSpeed = static_cast<float>(angularSpeed);
     prim->m_heightSpeed += prim->m_heightAccel;
-    prim->m_longitude = static_cast<float>(angularSpeed + prim->m_longitude);
-    prim->m_heightSize += prim->m_heightSpeed;
-    prim->m_arcAngle += prim->m_widthSpeed;
+    if (is3dFlash) {
+        // The 3D source updates arc before longitude and height.
+        prim->m_arcAngle += prim->m_widthSpeed;
+        prim->m_longitude = static_cast<float>(angularSpeed + prim->m_longitude);
+        prim->m_heightSize += prim->m_heightSpeed;
+    } else {
+        // The 2D source updates longitude and height before arc.
+        prim->m_longitude = static_cast<float>(angularSpeed + prim->m_longitude);
+        prim->m_heightSize += prim->m_heightSpeed;
+        prim->m_arcAngle += prim->m_widthSpeed;
+    }
     ProcessReferenceParticleAlpha(prim);
 }
 
