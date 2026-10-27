@@ -478,6 +478,8 @@ struct CRagEffect : CGameObject {
     void ApplyThunderStorm2();
     void ApplyStin5();
     void SpawnStin5(const char*);
+    void ApplyRgCoin3();
+    void SpawnRgCoin2(const char*,float);
     void ApplyChemical3(short);
     void SpawnBash3D(const char*,char,char);
     void ApplyFrostDiver();
@@ -7764,6 +7766,40 @@ int main()
             &&effect.m_primList.size()==1&&g_texMgr.requests.size()==1&&prim&&prim->m_gi[0].rotStart==19,
             "GroundSample later states follow the master without relaunching or resetting primitive state");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor, listener; actor.m_pos={30,40,50}; listener.m_pos={5,300,8};
+        auto storage=std::make_unique<CRagEffect>(); auto& effect=*storage;
+        effect.m_master=&actor; effect.m_duration=300; effect.m_stateCnt=0; effect.m_deltaPos={1,2,3};
+        g_world.m_player=&listener; waveCalls.clear(); g_texMgr.requests.clear(); g_resMgr.requests.clear();
+        rngValues.assign(80,0); rngCursor=0; const int draws=rngDraws;
+        effect.ApplyRgCoin3();
+        const std::vector<std::string> expectedTextures={"UserInterface\\item\\gold_lux.bmp","UserInterface\\item\\deogaeriseun.bmp",
+            "UserInterface\\item\\double_shotgun.bmp","UserInterface\\item\\deoseukeu.bmp"};
+        check(effect.m_primList.size()==4&&rngDraws==draws+80&&rngCursor==80&&waveCalls.empty(),
+            "RgCoin3 state zero emits four RG_COIN2 primitives and consumes twenty ordered draws each without sound");
+        check(g_texMgr.requests==expectedTextures&&g_resMgr.requests.empty(),"RgCoin3 requests its four exact source textures in caller order");
+        bool prims=true,lanes=true; int index=0;
+        for(auto* prim:effect.m_primList){
+            prims=prims&&prim->m_type==PP_INTIMIDATE&&prim->m_renderFlag==5&&prim->m_duration==300
+                &&prim->m_texture.size()==1&&prim->m_pos.x==30&&prim->m_pos.y==40&&prim->m_pos.z==50;
+            for(const auto& gi:prim->m_gi){lanes=lanes&&gi.life==1&&gi.process==-18&&gi.distance==12&&gi.height[0]==1
+                &&gi.riseAngle==0&&gi.fullDisplayAngle==0&&gi.rotStart==0&&gi.height[2]==0&&gi.height[1]==5
+                &&gi.alphaB==0&&gi.flag[0]==2&&gi.vecBPreX==1&&gi.arcBaselineY==2&&gi.vecBPreZ==3;}
+            ++index;
+        }
+        check(prims&&lanes&&effect.m_effectPos.x==30&&effect.m_effectPos.y==28&&effect.m_effectPos.z==50,
+            "RgCoin2 keeps captured origin, shifts parent after launch, and initializes all four exact GI lanes");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        actor.m_pos={70,80,90};effect.m_stateCnt=21;waveCalls.clear();g_texMgr.requests.clear();
+        const int laterDraws=rngDraws;const size_t laterPrims=effect.m_primList.size();
+        effect.ApplyRgCoin3();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\disarm.wav"&&waveCalls[0].x==65&&waveCalls[0].y==0
+            &&waveCalls[0].z==82&&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "RgCoin3 state twenty-one refreshes master position and plays exact player-relative disarm wave");
+        check(effect.m_effectPos.x==70&&effect.m_effectPos.y==80&&effect.m_effectPos.z==90&&effect.m_primList.size()==laterPrims
+            &&rngDraws==laterDraws&&g_texMgr.requests.empty(),"RgCoin3 nonzero state skips all four emitters without RNG or texture work");
+        g_world.m_player=nullptr;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

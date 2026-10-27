@@ -18803,6 +18803,58 @@ void CRagEffect::SpawnStin5(const char* textureName)
     }
 }
 
+void CRagEffect::ApplyRgCoin3()
+{
+    if (m_stateCnt == 21) {
+        CRenderObject* master = ResolveCurrentMaster();
+        if (master != nullptr) {
+            m_effectPos = master->m_pos;
+            CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+            if (mode && mode->m_world && mode->m_world->m_player) {
+                const vector3d& listener = mode->m_world->m_player->m_pos;
+                PlayWave("effect\\disarm.wav", m_effectPos.x-listener.x, 0.0f,
+                    m_effectPos.z-listener.z, 250, 40, 1.0f);
+            }
+        }
+    }
+    SpawnRgCoin2("UserInterface\\item\\gold_lux.bmp", 5.0f);
+    SpawnRgCoin2("UserInterface\\item\\deogaeriseun.bmp", 5.0f);
+    SpawnRgCoin2("UserInterface\\item\\double_shotgun.bmp", 5.0f);
+    SpawnRgCoin2("UserInterface\\item\\deoseukeu.bmp", 5.0f);
+}
+
+void CRagEffect::SpawnRgCoin2(const char* textureName, float size)
+{
+    if (m_stateCnt != 0) return;
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    CEffectPrim* prim = LaunchEffectPrim(PP_INTIMIDATE, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    // Ref shifts the parent after launch captured the primitive origin.
+    m_effectPos.y -= 12.0f;
+    for (int lane = 0; lane < 4; ++lane) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(lane)];
+        gi.life = 1;
+        gi.vecBPreX = m_deltaPos.x;
+        gi.arcBaselineY = m_deltaPos.y;
+        gi.vecBPreZ = m_deltaPos.z;
+        gi.process = -18 - rand() % 30;
+        gi.distance = 12.0f;
+        gi.height[0] = 1.0f;
+        gi.riseAngle = static_cast<short>(rand() % 360);
+        gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+        gi.rotStart = static_cast<short>(rand() % 360);
+        gi.height[2] = static_cast<float>(rand() % 360);
+        gi.height[1] = size;
+        gi.alphaB = 0;
+        gi.flag[0] = 2;
+    }
+}
+
 void CRagEffect::ApplyBottomMagnus(const char* textureName, int variant)
 {
     if (textureName == nullptr || m_stateCnt != 0) {
@@ -19939,6 +19991,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 624) {
         ApplyStin5();
+        return true;
+    }
+    if (m_type == 627) {
+        ApplyRgCoin3();
         return true;
     }
     if (m_type == 618) {
