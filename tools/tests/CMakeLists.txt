@@ -371,6 +371,8 @@ add_test(NAME make_special_attack_effect_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_make_special_attack_effect_source.py")
 add_test(NAME mandra_attack_effect_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_mandra_attack_effect_source.py")
+add_test(NAME make_party_effect_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_make_party_effect_source.py")
 add_test(NAME dummy_effect_launcher_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_dummy_effect_launcher.py")
 add_test(NAME actor_sendmsg_effect_cases_source_check
