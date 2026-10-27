@@ -317,6 +317,10 @@ public:
         u32 gid,
         int* outCenterX,
         int* outBottomY) const;
+    bool GetSkillSpeechBubbleAnchor(const matrix& viewMatrix,
+        u32 aid,
+        int* outCenterX,
+        int* outBottomY) const;
     bool FindHoveredActorScreen(const matrix& viewMatrix,
         float cameraLongitude,
         int screenX,

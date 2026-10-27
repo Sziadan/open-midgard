@@ -3419,6 +3419,15 @@ QVariantMap MakeSpeechBubbleAnchor(const QString& text,
     return anchor;
 }
 
+QVariantMap MakeSkillTalkboxAnchor(const QString& text, int centerX, int bottomY)
+{
+    QVariantMap anchor = MakeSpeechBubbleAnchor(text, centerX, bottomY);
+    anchor.insert(QStringLiteral("background"), QStringLiteral("#00000000"));
+    anchor.insert(QStringLiteral("foreground"), QStringLiteral("#ff8080"));
+    anchor.insert(QStringLiteral("maxTextWidth"), 490);
+    return anchor;
+}
+
 QVariantMap MakePartyHpBarAnchor(int centerX, int topY, int currentHp, int maxHp)
 {
     QVariantMap anchor;
@@ -3680,6 +3689,16 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
             }
             appendPartyHpAnchor(actor);
             appendChatBubbleAnchor(actor);
+        }
+        for (const CSkill* skill : mode.m_world->m_skillList) {
+            if (!skill || !skill->m_isVisible || !skill->HasActiveChatBubble(now)) {
+                continue;
+            }
+            int bubbleX = 0;
+            int bubbleBottomY = 0;
+            if (mode.m_world->GetSkillSpeechBubbleAnchor(viewMatrix, skill->m_aid, &bubbleX, &bubbleBottomY)) {
+                anchors.push_back(MakeSkillTalkboxAnchor(ToQString(skill->GetChatBubbleText()), bubbleX, bubbleBottomY));
+            }
         }
 
         const bool hasUiItemHover = TryAppendHoveredUiItemAnchor(&anchors);

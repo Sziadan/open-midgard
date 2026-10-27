@@ -128,6 +128,16 @@ CSkill::~CSkill()
     m_balloon = nullptr;
 }
 
+void SetSkillTalkboxText(CSkill& skill, const char* text)
+{
+    if (text == nullptr || text[0] == '\0') {
+        return;
+    }
+    const char* const terminator = static_cast<const char*>(std::memchr(text, '\0', 80));
+    const size_t textLength = terminator != nullptr ? static_cast<size_t>(terminator - text) : 80;
+    skill.SetChatBubbleText(std::string(text, textLength), timeGetTime() + 5000);
+}
+
 void CSkill::HideModel()
 {
     delete m_3dactor;
@@ -535,6 +545,9 @@ void CSkill::Render(matrix* viewMatrix)
 void CSkill::SendMsg(CGameObject* sender, int message, msgparam_t arg1, msgparam_t arg2, msgparam_t arg3)
 {
     switch (message) {
+    case 7:
+        SetSkillTalkboxText(*this, reinterpret_cast<const char*>(arg1));
+        return;
     case 37: {
         if (arg1 == 0) {
             return;

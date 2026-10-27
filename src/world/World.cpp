@@ -6397,6 +6397,44 @@ bool CWorld::GetActorSpeechBubbleAnchor(const matrix& viewMatrix,
     return true;
 }
 
+bool CWorld::GetSkillSpeechBubbleAnchor(const matrix& viewMatrix,
+    u32 aid,
+    int* outCenterX,
+    int* outBottomY) const
+{
+    if (outCenterX) {
+        *outCenterX = 0;
+    }
+    if (outBottomY) {
+        *outBottomY = 0;
+    }
+
+    const CSkill* skill = nullptr;
+    for (const CSkill* entry : m_skillList) {
+        if (entry && entry->m_aid == aid) {
+            skill = entry;
+            break;
+        }
+    }
+    if (!skill || !skill->m_isVisible) {
+        return false;
+    }
+
+    tlvertex3d projectedBase{};
+    if (!ProjectPoint(g_renderer, viewMatrix, skill->m_pos, &projectedBase)) {
+        return false;
+    }
+    const int screenHeight = g_renderer.m_height;
+    const int verticalOffsetPx = (110 * screenHeight) / 480;
+    if (outCenterX) {
+        *outCenterX = static_cast<int>(std::lround(projectedBase.x));
+    }
+    if (outBottomY) {
+        *outBottomY = static_cast<int>(std::lround(projectedBase.y)) - verticalOffsetPx;
+    }
+    return true;
+}
+
 bool CWorld::FindHoveredActorScreen(const matrix& viewMatrix,
     float cameraLongitude,
     int screenX,
