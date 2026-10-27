@@ -1959,3 +1959,8 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 
 - Decompiled Ref and canonical EXE bodies match after whitespace normalization. Source order: fetch action resource; cadence gate; increment motion; repeat modulo branch; stop-at-last hold branch; otherwise return false at motion count; return true for the remaining valid-resource paths.
 - Current `AnimateReferenceMotion` maps those branches in the same order. `tools/tests/check_primitive_anim_motion.py` verifies the full EXE/Ref body equality and ordered source/current branch effects. It passes. Current null-action-resource guard is extra behavior for invalid state and remains documented in `MISMATCHES.md`; the valid action-resource contract is what the source port covers. No implementation changed.
+
+## `CEffectPrim::AnimTexture` via `Prim3DAura` — 2026-10-27
+
+- Canonical EXE and decompiled Ref bodies match for both standalone `AnimTexture` and its `Prim3DAura` caller. The optimized aura caller updates GI0/GI1 rise angles by 3 with one-step wraps, then returns the `AnimTexture` result. The animation helper advances only at `stateCnt % animSpeed == 0`, increments once, wraps repeat animations by `m_totalTexture`, and returns false only when a non-repeating animation reaches that count.
+- Current `UpdateReference3DAura` uses the same two-lane updates and equivalent inlined cadence/repeat/completion branches. `tools/tests/check_primitive_anim_texture.py` asserts the EXE/Ref function bodies and maps the ordered current behavior. It is registered as CTest `primitive_anim_texture_source_check` and passes. No implementation change.
