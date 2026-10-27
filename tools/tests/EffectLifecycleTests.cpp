@@ -519,6 +519,7 @@ struct CRagEffect : CGameObject {
     void SpawnIncAgility();
     void SpawnDecAgility();
     void ApplyBeginCasting(const char*,int,bool);
+    void ApplyElementalChangeCasting();
     void ApplySaintCasting(short,const char*,int);
     void SpawnBeginSpell();
     void SpawnPoisonHit();
@@ -8236,6 +8237,41 @@ int main()
             &&rngDraws==betweenDraws+2&&rngCursor==2,
             "VenomDust2 repeats at frame five with the source lower-bound speed and two draws");
         effect.ClearPrims(); g_world.UpdateGameObjects(); rngValues.clear(); rngCursor=0;
+    }
+    {
+        const int ids[]={172,173,174,175,176,177,178,179};
+        const char* textures[]={"effect\\ring_black.tga","effect\\ring_red.tga","effect\\ring_blue.tga",
+            "effect\\ring_yellow.tga","effect\\ring_jadu.tga","effect\\ring_brown.tga",
+            "effect\\ring_white.tga","effect\\ring_purple.tga"};
+        CRenderObject actor; actor.m_pos={40,50,60};
+        waveCalls.clear(); g_texMgr.requests.clear();
+        for(int i=0;i<8;++i) {
+            actor.m_pos={40,50,60};
+            CRagEffect effect; effect.m_master=&actor; effect.m_type=ids[i]; effect.m_duration=40;
+            effect.ApplyElementalChangeCasting();
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            bool bands=prim!=nullptr; const float heights[]={25,22,19,250},distances[]={4.5f,5,5.5f,4};
+            const short spins[]={0,90,180,0},rises[]={70,57,45,89},alphas[]={180,180,180,70},spans[]={315,315,315,360};
+            if(prim) for(int band=0;band<4;++band) {
+                const auto& gi=prim->m_gi[band];
+                bands&=gi.life==1&&gi.process==0&&gi.fullDisplayAngle==spans[band]
+                    &&gi.maxHeight==heights[band]&&gi.rotStart==spins[band]&&gi.alphaB==alphas[band]
+                    &&gi.distance==distances[band]&&gi.riseAngle==rises[band]&&gi.sparkY==0;
+                for(int sample=0;sample<21;++sample) bands&=gi.height[sample]==0&&gi.flag[sample]==0;
+            }
+            check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DCASTING&&prim->m_size==3
+                &&prim->m_duration==70&&prim->m_renderFlag==5&&prim->m_pos.x==40
+                &&effect.m_effectPos.x==40&&g_texMgr.requests.size()==1&&g_texMgr.requests[0]==textures[i]
+                &&waveCalls.empty()&&bands,
+                "Elemental change effect frame zero maps its source ID to the exact option-three casting texture");
+            effect.ClearPrims(); g_world.UpdateGameObjects(); g_texMgr.requests.clear();
+
+            effect.m_effectPos={1,2,3}; effect.m_cachedPos={4,5,6}; effect.m_stateCnt=1;
+            actor.m_pos={70,80,90}; effect.ApplyElementalChangeCasting();
+            check(effect.m_primList.empty()&&effect.m_effectPos.x==1&&effect.m_effectPos.y==2
+                &&effect.m_cachedPos.x==4&&g_texMgr.requests.empty(),
+                "Elemental change effects do not invoke BeginCasting or refresh their origin after frame zero");
+        }
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

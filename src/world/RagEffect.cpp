@@ -17212,6 +17212,23 @@ void CRagEffect::ApplyBeginCasting(const char* textureName, int option, bool pla
     }
 }
 
+// Ref/RagEffect.cpp:12241-12300; HighPriest.exe.c:420492-420520.
+void CRagEffect::ApplyElementalChangeCasting()
+{
+    if (m_stateCnt != 0) return;
+    switch (m_type) {
+    case 172: ApplyBeginCasting("effect\\ring_black.tga", 3, false); break;
+    case 173: ApplyBeginCasting("effect\\ring_red.tga", 3, false); break;
+    case 174: ApplyBeginCasting("effect\\ring_blue.tga", 3, false); break;
+    case 175: ApplyBeginCasting("effect\\ring_yellow.tga", 3, false); break;
+    case 176: ApplyBeginCasting("effect\\ring_jadu.tga", 3, false); break;
+    case 177: ApplyBeginCasting("effect\\ring_brown.tga", 3, false); break;
+    case 178: ApplyBeginCasting("effect\\ring_white.tga", 3, false); break;
+    case 179: ApplyBeginCasting("effect\\ring_purple.tga", 3, false); break;
+    default: break;
+    }
+}
+
 void CRagEffect::ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset)
 {
     if (playWave && m_stateCnt == 0) {
@@ -20657,34 +20674,7 @@ bool CRagEffect::ProcessEffectFrame()
     } else if (dispatchHandler && m_type == 454) {
         ApplyPairedSaintCasting("effect\\ring_black.tga", 6, true, 0.0f);
     } else if (beginCast) {
-        switch (m_type) {
-        case 172:
-            ApplyBeginCasting("effect\\ring_black.tga", 3, false);
-            break;
-        case 173:
-            ApplyBeginCasting("effect\\ring_red.tga", 3, false);
-            break;
-        case 174:
-            ApplyBeginCasting("effect\\ring_blue.tga", 3, false);
-            break;
-        case 175:
-            ApplyBeginCasting("effect\\ring_yellow.tga", 3, false);
-            break;
-        case 176:
-            ApplyBeginCasting("effect\\ring_jadu.tga", 3, false);
-            break;
-        case 177:
-            ApplyBeginCasting("effect\\ring_brown.tga", 3, false);
-            break;
-        case 178:
-            ApplyBeginCasting("effect\\ring_white.tga", 3, false);
-            break;
-        case 179:
-            ApplyBeginCasting("effect\\ring_purple.tga", 3, false);
-            break;
-        default:
-            break;
-        }
+        ApplyElementalChangeCasting();
     } else if (healBlue) {
         if (m_stateCnt == 0) {
             CRenderObject* healMaster = ResolveCurrentMaster();

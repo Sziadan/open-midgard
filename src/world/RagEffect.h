@@ -533,6 +533,7 @@ private:
     void ApplyProvidence(const char* textureName);
     void ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset);
     void ApplyBeginCasting(const char* textureName, int option, bool playWave);
+    void ApplyElementalChangeCasting();
     void ApplyBottomMusic(const char* textureName, int variant);
     void ApplyBottomLight(const char* textureName, int size);
     void ApplyBottomOut(const char* textureName, int variant);
