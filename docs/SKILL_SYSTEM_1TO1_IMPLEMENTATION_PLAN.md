@@ -434,6 +434,8 @@ Completion update (2026-10-27): `CGameActor::MakeSpecialAttackEffect` now passes
 
 Completion update (2026-10-27): `CGameActor::MakePartyEffect` passes the branch comparator for PK/event-PvP gating, party AID membership, type-160 deduplication, and conditional zero-offset launch. It is wired to message 123 for PC and Granny-PC actors; the unified current message handler uses a runtime-class guard to preserve source caller scope. See `docs/skill/PROGRESS.md` for test/build/deployment checkpoint.
 
+Source-audit update (2026-10-27): `CPc::SetState` Ref/EXE bodies match (5,955 normalized characters). Source state IDs are `{0,1,2,6,7,8,9}`, while current explicit cases are `{0,1,2,9}`; the branch gate inventories state-6/7/8 animations and the attack arrow routes before implementation.
+
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
 * `CPc::SetState` Ref/Pc.cpp:5678, `ProcessState` 2382.
 * `CPlayer::SetState` Ref/Player.cpp:523, `ProcessState` 87.
