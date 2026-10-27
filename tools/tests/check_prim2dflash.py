@@ -104,6 +104,10 @@ def main() -> int:
 
     render_signature = "void __thiscall CEffectPrim::Render(CEffectPrim *this, matrix *wtm)"
     exe_render = function_body(exe, render_signature)
+    flash2_render_signature = "void __thiscall CEffectPrim::Render2DFlash(CEffectPrim *this)"
+    ref_render2d = function_body(ref, flash2_render_signature)
+    exe_render2d = function_body(exe, flash2_render_signature)
+    assert compact(ref_render2d) == compact(exe_render2d), "Ref Render2DFlash body differs from canonical executable"
     visible_switch = exe_render[exe_render.index("if ( this->m_isVisible )") :]
     flash_case_start = visible_switch.index("case 3:")
     flash_case_end = visible_switch.index("case 4:", flash_case_start)
@@ -151,7 +155,7 @@ def main() -> int:
     ):
         assert token in render_helper, f"current flash renderer missing source field/submission: {token}"
 
-    print("Flash primitive comparison passed: EXE/Ref updater and Render3DFlash bodies, EXE render cases, current routes, ordered geometry, and common tick")
+    print("Flash primitive comparison passed: EXE/Ref updater and both renderer bodies, EXE render cases, current routes, ordered geometry, and common tick")
     return 0
 
 
