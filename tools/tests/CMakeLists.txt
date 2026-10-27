@@ -367,6 +367,8 @@ add_test(NAME actor_sendmsg_vanish_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_actor_sendmsg_vanish.py")
 add_test(NAME actor_sendmsg_position_case_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_actor_sendmsg_position_case.py")
+add_test(NAME actor_sendmsg_target_case_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_actor_sendmsg_target_case.py")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../HighPriest.exe.c
     ../../Ref/GameModePacket.cpp

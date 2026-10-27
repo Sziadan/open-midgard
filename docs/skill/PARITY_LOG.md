@@ -2010,3 +2010,10 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - The current branch now performs those writes and calls `GetClientCoor` in source order. `tools/tests/check_actor_sendmsg_position_case.py` compares complete source bodies and the branch mapping; it is registered as CTest `actor_sendmsg_position_case_source_check`.
 - The direct current switch has 57 source message IDs, with 24 remaining unmapped. The complete `SendMsg` comparison remains open.
 - x64 Release build succeeded and all 34 CTests passed. Authorized deployment to `D:\Spel\OldRO\open-midgard.exe` matches Release SHA-256 `B0D316988CF60471E3E152C730794DFDE278180F44135A7DFC3D022A4772E8F1`.
+# `CGameActor::SendMsg` message 81 source gate (2026-10-27)
+
+- Ref and canonical `HighPriest.exe.c` complete `CGameActor::SendMsg` bodies normalize identically; case 81 in both writes `m_targetGid = arg1` and returns.
+- The existing current case performs the same unsigned GID store from `par1` and returns without other actor mutations. No production code change was needed.
+- `tools/tests/check_actor_sendmsg_target_case.py` extracts the function and case mechanically and verifies the full Ref/EXE equality, branch equality, current assignment, and no extra state/effect/path operations. It is registered as `actor_sendmsg_target_case_source_check`.
+- Validation: all 35 CTest tests passed; x64 Release build succeeded. The build's best-effort automatic OldRO copy reports permission denied; no deploy was needed because the executable did not change.
+- This closes only the case-81 sub-branch audit. The full `CGameActor::SendMsg` parity gate remains open; inventory reports 57 direct current cases and 24 source IDs without a direct/inherited route.
