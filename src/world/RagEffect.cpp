@@ -18718,6 +18718,7 @@ void CRagEffect::ApplyIceArrow()
     if (!master) return;
     m_effectPos = master->m_pos;
     if (m_stateCnt == 12) {
+        // Ref runtime-wave: 0x5F862A.
         char waveName[64];
         std::snprintf(waveName, sizeof(waveName), "effect\\EF_IceArrow%d.wav", rand() % 3 + 1);
         CGameMode* mode = g_modeMgr.GetCurrentGameMode();

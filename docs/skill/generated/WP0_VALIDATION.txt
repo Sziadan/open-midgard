@@ -3,5 +3,5 @@ str cases parsed: 167
 playwave calls: 391 unresolved: 19
 effect handler rows: 693
 skill behaviour rows: 2526
-blocked: 13
+blocked: 9
 validation errors: 0

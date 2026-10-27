@@ -69,6 +69,10 @@ assert 'ContainsAsciiCaseSensitive(eventName, ".wav")' in MSG_EFFECT
 assert "ContainsAsciiCaseInsensitive" not in MSG_EFFECT
 assert "const vector3d& origin = effect.m_pos;" in MSG_EFFECT
 assert "PlayWave(eventName, origin.x - listener.x, 0.0f, origin.z - listener.z)" in MSG_EFFECT
+wave_rows = (ROOT / "docs/skill/generated/runtime_wave_callsites.tsv").read_text(encoding="utf-8").splitlines()
+for va in ("0x555B8E", "0x555CCF", "0x555E5F"):
+    row = next(row for row in wave_rows if row.startswith(va + "\t"))
+    assert "src/world/GameActor.cpp" in row and "port-anchor-present" in row
 
 # The only other EXE caller is CBlowEffect::OnProcess, but its sole constructor
 # factory has no caller in either canonical EXE or Ref, so it is dead-code scope.

@@ -445,12 +445,20 @@ def write_playwave(image: ExeImage, symbols: SymbolTable, spans, blocked: list[s
                 for address in re.findall(r"0x[0-9A-Fa-f]+", line):
                     runtime_ports[int(address, 16)] = path.relative_to(ROOT).as_posix()
     runtime_rows = ["callVA\tfunction\tsrcAnchor\tstatus"]
+    runtime_scope_exclusions = {
+        0x57E27C: (
+            "docs/skill/MISMATCHES.md",
+            "scope-excluded (legacy HP_Battle UI damage queue; no current counterpart)",
+        ),
+    }
     for call in calls:
         if call.status != "ok":
             anchor = runtime_ports.get(call.call_va, "")
             status = "port-anchor-present (runtime parity unverified)" if anchor else "producer port pending"
+            if call.call_va in runtime_scope_exclusions:
+                anchor, status = runtime_scope_exclusions[call.call_va]
             runtime_rows.append(f"0x{call.call_va:X}\t{call.function}\t{anchor}\t{status}")
-            if not anchor:
+            if status == "producer port pending":
                 blocked.append(
                     f"PlayWave at 0x{call.call_va:X} in {call.function or '(no function span)'} "
                     "uses a runtime name; trace and port its producer (not an unrecoverable literal)"

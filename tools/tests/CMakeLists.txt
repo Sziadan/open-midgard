@@ -391,6 +391,8 @@ add_test(NAME player_processstate_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_player_processstate_source.py")
 add_test(NAME processsound_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_processsound_source.py")
+add_test(NAME process_damage_situation_scope_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_process_damage_situation_scope.py")
 add_test(NAME dummy_effect_launcher_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_dummy_effect_launcher.py")
 add_test(NAME actor_sendmsg_effect_cases_source_check
@@ -440,11 +442,14 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../Ref/GameModePacket.cpp
     ../../Ref/GameActor.cpp
     ../../Ref/GameMode.cpp
+    ../../Ref/HP_Battle.cpp
+    ../../Ref/Session2.cpp
+    ../../src/gamemode/GameMode.cpp
+    ../../src/gamemode/GameModePacket.cpp
     ../../src/world/GameActor.cpp
     ../../src/world/MsgEffect.cpp
     ../../Ref/eAthena_src_2011/map/clif.c
     ../../Ref/RunningServer/packet_db.txt
-    ../../src/gamemode/GameModePacket.cpp
     ../../src/network/GronPacket.cpp
     ../../src/world/RagEffect.h
     ../../src/world/RagEffect.cpp

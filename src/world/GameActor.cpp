@@ -315,6 +315,8 @@ int ResolveDisplayJob(const CGameActor& actor)
     return ShouldUseGameMasterAppearance(actor) ? JT_G_MASTER : actor.m_job;
 }
 
+// Ref runtime-wave: 0x555B8E 0x555CCF 0x555E5F. ProcessSound resolves these
+// forward and wrapped animation events from the action resource at runtime.
 std::string NormalizeWaveEventPath(const char* eventName);
 
 bool QueueActorHitWave(CGameActor& actor, const char* eventName)
