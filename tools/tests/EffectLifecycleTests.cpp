@@ -547,6 +547,7 @@ struct CRagEffect : CGameObject {
     bool ApplyPotionBerserk();
     void ApplySight(float,bool);
     void ApplySightrasher();
+    void ApplyBarrier();
     void SpawnSight();
     void SpawnSight2();
     void SpawnBlessing();
@@ -8052,6 +8053,24 @@ int main()
             "Sightrasher frame ten appends the configured yellow circle after both particle groups");
         effect.ClearPrims(); g_world.UpdateGameObjects(); g_world.m_player=nullptr;
         rngValues.clear(); rngCursor=0;
+    }
+    {
+        CRagEffect effect; CRenderObject actor;
+        effect.m_type=63; effect.m_master=&actor; effect.m_stateCnt=0;
+        g_texMgr.requests.clear(); waveCalls.clear();
+        const int draws=rngDraws;
+        effect.ApplyBarrier();
+        CEffectPrim* sphere=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&sphere&&sphere->m_type==PP_3DSPHERE
+            &&sphere->m_duration==250&&sphere->m_radius==13.5f&&sphere->m_deltaPos2.y==-10
+            &&sphere->m_longitude==2&&sphere->m_alpha==100&&sphere->m_texture.size()==1
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\bigbang.tga"
+            &&rngDraws==draws&&waveCalls.empty(),
+            "Barrier frame zero launches and textures the exact source sphere without RNG or audio");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); effect.m_stateCnt=1; g_texMgr.requests.clear();
+        effect.ApplyBarrier();
+        check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==draws,
+            "Barrier later frames do not respawn or reload its sphere");
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

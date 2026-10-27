@@ -589,6 +589,7 @@ private:
     void SpawnSight();
     void SpawnSight2();
     void ApplySightrasher();
+    void ApplyBarrier();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();

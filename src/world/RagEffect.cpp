@@ -13690,7 +13690,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 38: case 39: case 43: case 45: case 46: case 61: case 62: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 38: case 39: case 43: case 45: case 46: case 61: case 62: case 63: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -15175,6 +15175,19 @@ void CRagEffect::ApplySightrasher()
         ShiftCircleSegments(prim);
         prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_yellow.tga", false));
     }
+}
+
+// Ref/RagEffect.cpp:10425-10439; HighPriest.exe.c:427147-427161.
+void CRagEffect::ApplyBarrier()
+{
+    if (m_stateCnt != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DSPHERE, vector3d{});
+    prim->m_duration = 250;
+    prim->m_radius = 13.5f;
+    prim->m_deltaPos2.y = -10.0f;
+    prim->m_longitude = 2.0f;
+    prim->m_alpha = 100.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\bigbang.tga", false));
 }
 
 void CRagEffect::SpawnSight()
@@ -20137,6 +20150,10 @@ bool CRagEffect::ProcessEffectFrame()
     if (const std::optional<bool> result = ProcessReferenceStrOnly()) return *result;
     if (m_type == 62) {
         ApplySightrasher();
+        return true;
+    }
+    if (m_type == 63) {
+        ApplyBarrier();
         return true;
     }
     if (m_type == 0x201) {
