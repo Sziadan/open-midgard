@@ -7474,6 +7474,84 @@ void SubmitRainbowRect(int& rpCount, const vector3d& vec1, const vector3d& vec2,
     rpCount += 2;
 }
 
+// Ref/dhxj/RagEffect2.cpp:11960; canonical RenderSTIN at 0x621E10.
+void StinCorners(const EffectGi& gi, vector3d corners[4])
+{
+    float cosine = 0.0f, sine = 0.0f;
+    int angle = gi.riseAngle;
+    for (int index = 0; index < 4; ++index) {
+        angle += 90;
+        if (angle >= 360) angle -= 360;
+        cosine = g_cosTable[angle];
+        sine = g_sinTable[angle];
+        corners[index].x = static_cast<float>(static_cast<double>(cosine) * gi.distance);
+        corners[index].z = static_cast<float>(static_cast<double>(sine) * gi.distance);
+        corners[index].y = 0.0f;
+        corners[index].x = static_cast<float>(static_cast<double>(corners[index].x) + gi.sparkX);
+        corners[index].y = static_cast<float>(static_cast<double>(corners[index].y) + gi.sparkY);
+        corners[index].z = static_cast<float>(static_cast<double>(corners[index].z) + gi.sparkZ);
+    }
+}
+
+void SubmitStinRect(int& rpCount, const vector3d corners[4], const matrix& viewMatrix,
+    CTexture* texture, unsigned int color, int renderFlags)
+{
+    if (rpCount >= 510) return;
+
+    const int triangles[2][3] = {{0,1,2},{3,2,0}};
+    const float uvs[4][2] = {{0,1},{1,1},{1,0},{0,0}};
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) return;
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = D3DBLEND_ONE;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            const int corner = triangles[triangle][vertex];
+            ProjectReferenceEffectVertex(corners[corner], viewMatrix, face->m_verts[vertex]);
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[corner][0];
+            face->m_verts[vertex].tv = uvs[corner][1];
+        }
+        g_renderer.AddRP(face, renderFlags);
+        ++rpCount;
+    }
+}
+
+void RenderStin(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+
+    int rpCount = 0;
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) continue;
+
+        unsigned int red = 0, green = 0, blue = 0;
+        if (gi.flag[3] == 0) {
+            red = 80; green = 80; blue = 255;
+        } else if (gi.flag[3] == 1) {
+            red = 80; green = 255; blue = 80;
+        } else {
+            continue;
+        }
+
+        vector3d corners[4]{};
+        StinCorners(gi, corners);
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24)
+            | (red << 16) | (green << 8) | blue;
+        SubmitStinRect(rpCount, corners, viewMatrix, texture, color, static_cast<int>(prim.m_renderFlag));
+    }
+}
+
 void RenderRainbow(CEffectPrim& prim, const matrix& viewMatrix)
 {
     int rpCount = 0;
@@ -12201,6 +12279,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (UsesReferenceFlash()) {
         RenderReferenceFlash(*this);
+        return;
+    }
+    if (m_type == PP_STIN || m_type == PP_STIN2 || m_type == PP_STIN4) {
+        RenderStin(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_3DQUADHORN2 || UsesReferenceQuadHorn()) {

@@ -233,6 +233,49 @@ int main() {
     auto check=[&](bool ok,const char* message){++checks;if(!ok){++failures;std::printf("FAIL: %s\n",message);}};
     auto near=[](float a,float b){return std::fabs(a-b)<0.0001f;};
     {
+        CEffectPrim stin;stin.m_pos={100,200,300};stin.m_texture={&g_texMgr.texture};stin.m_renderFlag=0x205;
+        EffectGi& blue=stin.m_gi[0];blue.life=1;blue.alphaB=64;blue.flag[3]=0;blue.riseAngle=270;
+        blue.distance=5;blue.sparkX=10;blue.sparkY=20;blue.sparkZ=30;
+        EffectGi& green=stin.m_gi[1];green.life=1;green.alphaB=127;green.flag[3]=1;green.riseAngle=359;
+        green.distance=2;green.sparkX=-1;green.sparkY=3;green.sparkZ=4;
+        stin.m_gi[2].life=1;stin.m_gi[2].alphaB=88;stin.m_gi[2].flag[3]=2;
+        stin.m_gi[3].life=2;stin.m_gi[3].alphaB=200;stin.m_gi[3].flag[3]=0;
+        g_renderer.submissions.clear();g_renderer.flags.clear();
+        matrix identity{};MatrixIdentity(identity);RenderStin(stin,identity);
+        check(g_renderer.submissions.size()==4,"STIN emits two source triangles for each valid color lane");
+        if(g_renderer.submissions.size()==4) {
+            auto projectedX=[&](vector3d point){tlvertex3d value{};ProjectReferenceEffectVertex(point,identity,value);return value.x;};
+            const RPFace& first=g_renderer.submissions[0];const RPFace& second=g_renderer.submissions[1];
+            tlvertex3d expected{};ProjectReferenceEffectVertex({15,20,30},identity,expected);
+            check(near(first.m_verts[0].x,expected.x)&&near(first.m_verts[0].y,expected.y)
+                &&near(first.m_verts[0].oow,expected.oow),"STIN starts the blue band at its first one-step-wrapped radius corner");
+            check(near(first.m_verts[1].x,projectedX({10,20,35}))
+                &&near(first.m_verts[2].x,projectedX({5,20,30})),"STIN first triangle preserves the next two source corners");
+            check(near(second.m_verts[0].x,projectedX({10,20,25}))
+                &&near(second.m_verts[1].x,first.m_verts[2].x)&&near(second.m_verts[2].x,first.m_verts[0].x),
+                "STIN second triangle preserves source vec3/vec1 winding");
+            check(first.m_verts[0].color==0x405050FFu&&second.m_verts[2].color==0x405050FFu
+                &&g_renderer.submissions[2].m_verts[0].color==0x7F50FF50u,
+                "STIN packs source alpha with blue and green selector tints");
+            check(first.srcAlphaMode==D3DBLEND_SRCALPHA&&first.destAlphaMode==D3DBLEND_ONE
+                &&g_renderer.flags.size()==4&&g_renderer.flags[0]==0x205&&first.tex==&g_texMgr.texture,
+                "STIN keeps texture zero, source-alpha/one blending and the primitive render flag");
+            check(first.m_verts[0].tu==0&&first.m_verts[0].tv==1&&first.m_verts[1].tu==1&&first.m_verts[1].tv==1
+                &&first.m_verts[2].tu==1&&first.m_verts[2].tv==0&&second.m_verts[0].tu==0&&second.m_verts[0].tv==0,
+                "STIN preserves both RenderTeiRect triangle UV orders");
+            check(near(g_renderer.submissions[2].m_verts[0].x,projectedX({-1+2*GetCos(89),3,4+2*GetSin(89)})),
+                "STIN subtracts 360 once from the 359-degree initial angle step");
+        }
+        check(stin.m_pos.x==100&&blue.riseAngle==270&&green.riseAngle==359,
+            "STIN renderer does not mutate primitive position or GI angles");
+        stin.m_texture.clear();g_renderer.submissions.clear();RenderStin(stin,identity);
+        check(g_renderer.submissions.size()==4&&g_renderer.submissions[0].tex==nullptr,
+            "STIN follows canonical executable behavior and does not invent a missing-texture guard");
+        stin.m_texture={&CTexMgr::s_dummy_texture};g_renderer.submissions.clear();RenderStin(stin,identity);
+        check(g_renderer.submissions.size()==4&&g_renderer.submissions[0].tex==&CTexMgr::s_dummy_texture,
+            "STIN submits the dummy texture as canonical executable RenderTeiRect does");
+    }
+    {
         CEffectPrim air;
         air.m_texture={&g_texMgr.texture};
         air.m_gi[0].life=1; air.m_gi[0].alphaB=100; air.m_gi[0].distance=2.0f;
