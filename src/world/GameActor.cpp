@@ -8038,6 +8038,44 @@ CPlayer::CPlayer()
 {
 }
 
+void CPlayer::SetState(int state)
+{
+    const int previousState = m_stateId;
+    if (previousState == 3) {
+        return;
+    }
+
+    int nextState = state;
+    if (state != 1) {
+        m_destCellX = -1;
+        m_destCellZ = -1;
+    }
+
+    if (m_isPreengageStateOfMove
+        && (previousState == 2 || previousState == 5 || previousState == 6)) {
+        m_preengageXOfMove = -1;
+        m_preengageYOfMove = -1;
+        m_isPreengageStateOfMove = 0;
+
+        // Ref routes message 91 through CPlayer::SendMsg. Its gameplay state
+        // updates are retained here; the following CMode message 151 is a no-op.
+        if (!m_isWaitingMoveAck || timeGetTime() > m_moveReqTick + 1000) {
+            m_isWaitingMoveAck = 1;
+            m_moveReqTick = timeGetTime();
+        }
+    }
+
+    if (state == 3) {
+        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+            gameMode->PlaceEffect(m_pos, 372, 300, 0);
+        }
+        // The Ref g_se_go assignment controls its legacy full-screen renderer effect.
+        nextState = 3;
+    }
+
+    CPc::SetState(nextState);
+}
+
 CPlayer::~CPlayer()
 {
 }

@@ -489,6 +489,7 @@ class CPlayer : public CPc {
 public:
     CPlayer();
     virtual ~CPlayer();
+    void SetState(int state) override;
 
     void ProcessPreMove();
 

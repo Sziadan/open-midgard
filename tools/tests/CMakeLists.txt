@@ -377,6 +377,8 @@ add_test(NAME pc_setstate_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_pc_setstate_source.py")
 add_test(NAME pc_processstate_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_pc_processstate_source.py")
+add_test(NAME player_setstate_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_player_setstate_source.py")
 add_test(NAME dummy_effect_launcher_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_dummy_effect_launcher.py")
 add_test(NAME actor_sendmsg_effect_cases_source_check
