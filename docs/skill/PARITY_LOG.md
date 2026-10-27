@@ -2062,9 +2062,19 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 
 # `CGameActor::SendMsg` message 4 identity and state update (2026-10-27)
 
-- Ref and canonical EXE complete `SendMsg` functions and message 4 branches match. The canonical `GetProperJob` helper also matches Ref; its chicken transformations (7→13, 14→21, 4008→4014, 4030→4036, 4015→4022, 4037→4044) and Star2 transformation (4047→4048 when Star2 is not active) were checked against the implementation.
+- Ref and canonical EXE complete `SendMsg` functions and message 4 branches match. The canonical `GetProperJob` helper also matches Ref; its chicken transformations (7→13, 14→21, 4008→4014, 4030→4036, 4015→4022, 4037→4044) and Star2 transformation (4047→4048 when Star2 is active) were checked against the implementation. The branch comparator caught and corrected the initially reversed Star2 condition before the checkpoint was finalized.
 - Ported actor GID/job/sex, cell position and height, facing, dimensions, move destination/speed, head override, body/effect/health state, idle state, PK state, guild fields for job 722, PC/granny propensity fields, tint override, and gated effect 344 launch. The modern CPc billboard is invalidated after its job/propensity changes; no legacy UI window was recreated.
 - `tools/tests/check_actor_sendmsg_identity_case.py` compares complete Ref/EXE SendMsg bodies and message 4 branches, independently checks the helper, and verifies operation order and each source job/effect gate. Registered as CTest `actor_sendmsg_identity_source_check`.
-- Actor inventory: 61 direct cases; 14 remaining in-scope source IDs without direct/inherited routing: `[5, 6, 21, 56, 57, 78, 79, 110, 118, 122, 123, 135, 136, 139]`.
+- Actor inventory at the time of this checkpoint: 61 direct cases; 14 remaining in-scope source IDs without direct/inherited routing: `[5, 6, 21, 56, 57, 78, 79, 110, 118, 122, 123, 135, 136, 139]`.
 - Five focused source gates (inventory, aura, path, spawn, identity) pass; x64 Release build succeeds; `git diff --check` passes. The full test-project compile remains blocked by the unrelated extracted packet-test stub failures from earlier checkpoints.
 - Authorized OldRO deployment matches Release SHA-256 `755ECDF64766A20E2E433FB1AF9E6ECCE18895847E7164D96B31B3ABDCD2A074`.
+
+# `CGameActor::SendMsg` messages 5/123 identity and movement update (2026-10-27)
+
+- Source labels 5 and 123 share one branch. Ref and canonical EXE complete `SendMsg` bodies and shared branch match. The branch applies packet speed/start time, chicken/star job transforms, head type, actor status/PK/guild/propensity, then recalculates the path; only a successful path changes destination and movement state.
+- Ported both message IDs with the correct payload mapping and the same server-time replan rule as message 0. A failed path leaves actor state unchanged as the source does. Modern CPc/Granny propensity state is updated from the equivalent source fields.
+- The message 4 comparator exposed a reversed Star2 predicate in the initial implementation; corrected it to map job 4047 to 4048 only when Star2 is active, matching `GetProperJob` and message 123's source gate.
+- `tools/tests/check_actor_sendmsg_move_update_case.py` verifies full Ref/EXE function equality, the aliased labels, source operation order, payload indices, replan behavior, and the no-failure-mutation rule. Registered as CTest `actor_sendmsg_move_update_source_check`.
+- Inventory: 63 direct current cases; 12 remaining in-scope IDs without direct/inherited routing: `[6, 21, 56, 57, 78, 79, 110, 118, 122, 135, 136, 139]`.
+- Six focused source gates (inventory, aura, movement, spawn, identity and movement update) pass; x64 Release build succeeds; `git diff --check` passes. Full test-project compilation remains blocked by the unrelated extracted packet-test stub errors documented in preceding checkpoints.
+- Authorized OldRO deployment matches Release SHA-256 `8310F5FB4529743414D63D625F97A1BD25A2BFC47DE525AD2F666FB14A39F75B`. No live runtime movement acceptance is claimed.

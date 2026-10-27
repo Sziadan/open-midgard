@@ -109,7 +109,7 @@ for payload_index in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 16, 17, 18, 19, 
     assert f"actorArgs[{payload_index}]" in impl_case, f"actor payload index {payload_index} missing"
 for old_job, replacement in ((7, 13), (14, 21), (4008, 4014), (4030, 4036), (4015, 4022), (4037, 4044)):
     assert f"case {old_job}: resolvedJob = {replacement};" in impl_case
-assert "originalJob == 4047 && (effectState & star2Mask) == 0" in impl_case
+assert "originalJob == 4047 && (effectState & star2Mask) != 0" in impl_case
 assert "m_headType = 100" in impl_case
 assert "m_u28.m_sprArgb = 1157627903u" in impl_case
 assert "LaunchEffect(344, vector3d{}, 0.0f)" in impl_case
