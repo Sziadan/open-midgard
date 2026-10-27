@@ -391,3 +391,9 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 
 - Source `CSoundMaker::OnProcess` divides by `m_width` and derives edge offsets from the player-to-source slope. The current helper avoids division when width is zero or the player is exactly on the vertical axis; these are defensive definitions for degenerate RSW records/coordinates where source arithmetic is undefined or can divide by zero. Ordinary nonzero-width, off-axis inputs follow the source truncated-slope/integer-aspect branch and are regression tested.
 - Current `PLAY_WAVE_INFO` stores cycle/end ticks as 32-bit unsigned values while the decompiled class stores a wider cycle and tick. Normal map cycles are matched modulo the current timer representation; very long/negative or wraparound cycle values need runtime validation.
+
+# `CPc::OnProcess` adjacent visual branches (2026-10-27)
+
+- `ProcessChatBalloon` handles only legacy `UIBalloonText`, `UIChatRoomTitle`, `UIMerchantShopTitle`, and `UIRechargeGage` expiry/placement; those window branches and the PC gauge move are out of the skill/effect scope.
+- `m_isSingleColor` expiry after 100 ms resets actor tint and is gameplay visual behavior. Current hit handling sets the flag/start time/color, but the current actor path has no corresponding reads/reset yet.
+- `CRenderObject::ModifyArgb` adds 8 to each sprite color channel (clamped 0–255) while the actor sprite ARGB is active and color is not fixed. Current message 128/129 handling stores actor color state but has no per-tick equivalent. These tint branches remain an in-scope visual parity gap separate from the queued hit-wave producer checkpoint.

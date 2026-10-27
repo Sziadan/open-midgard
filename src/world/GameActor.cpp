@@ -475,14 +475,12 @@ void ProcessRenderMotionWaveEvents(CRenderObject* object, CActRes* actRes, int a
 
 void ProcessQueuedHitWave(CGameActor& actor)
 {
-    if (actor.m_isPlayHitWave == 0 || actor.m_hitWaveName[0] == '\0') {
+    if (actor.m_isPlayHitWave == 0) {
         return;
     }
 
-    actor.m_isPlayHitWave = 0;
     TryPlayQueuedWaveAtActor(actor, actor.m_hitWaveName);
-
-    actor.m_hitWaveName[0] = '\0';
+    actor.m_isPlayHitWave = 0;
 }
 
 CGameActor* FindAttacker(u32 gid)
@@ -4900,6 +4898,7 @@ u8 CGameActor::ProcessState() {
     if (m_stateId != kMoveStateId && m_gid != 0 && m_isPc == 0) {
         g_moveStallTraceByGid.erase(m_gid);
     }
+    // Ref runtime-wave: 0x5D9E95. CPc::OnProcess consumes this queued hit name.
     ProcessQueuedHitWave(*this);
 
     m_lastProcessStateTime = timeGetTime();
