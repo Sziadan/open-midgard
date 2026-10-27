@@ -198,6 +198,7 @@ public:
     void ClearStorageItems();
     void ClearSkillItems();
     void ClearGuildSkillItems();
+    void InvalidateUI();
     void ClearHomunSkillItems();
     void ClearMercSkillItems();
     void SetInventoryItem(const ITEM_INFO& itemInfo);

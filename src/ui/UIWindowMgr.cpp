@@ -591,7 +591,7 @@ UIWindowMgr::UIWindowMgr()
     : m_chatWndX(0), m_chatWndY(0), m_chatWndHeight(0), m_chatWndShow(0),
       m_gronMsnWndShow(0), m_gronMsgWndShow(0), m_chatWndStatus(0),
       m_miniMapZoomFactor(1.0f), m_miniMapArgb(0), m_isDrawCompass(0),
-      m_isDragAll(0), m_conversionMode(0),
+      m_isDragAll(0), m_conversionMode(0), m_isInvalidatedByForce(false),
     m_captureWindow(nullptr), m_editWindow(nullptr), m_modalWindow(nullptr), m_lastHitWindow(nullptr),
         m_loadingWnd(nullptr), m_roMapWnd(nullptr), m_minimapZoomWnd(nullptr), m_statusWnd(nullptr), m_sayDialogWnd(nullptr), m_npcMenuWnd(nullptr), m_playerContextMenuWnd(nullptr), m_joinPartyAcceptWnd(nullptr), m_messengerGroupWnd(nullptr), m_partyOptionWnd(nullptr), m_npcInputWnd(nullptr), m_chooseSellBuyWnd(nullptr), m_itemShopWnd(nullptr), m_itemPurchaseWnd(nullptr), m_itemSellWnd(nullptr), m_storageWnd(nullptr), m_shortCutWnd(nullptr), m_chatWnd(nullptr),
             m_loginWnd(nullptr), m_selectServerWnd(nullptr), m_selectCharWnd(nullptr), m_makeCharWnd(nullptr), m_waitWnd(nullptr), m_chooseWnd(nullptr), m_selectCartWnd(nullptr), m_optionWnd(nullptr), m_itemWnd(nullptr), m_itemInfoWnd(nullptr), m_itemCollectionWnd(nullptr), m_itemCompositionWnd(nullptr), m_itemIdentifyWnd(nullptr), m_questWnd(nullptr), m_basicInfoWnd(nullptr), m_notifyLevelUpWnd(nullptr), m_notifyJobLevelUpWnd(nullptr), m_equipWnd(nullptr), m_skillDescribeWnd(nullptr), m_skillListWnd(nullptr),
@@ -1730,6 +1730,7 @@ bool UIWindowMgr::GetRoMapRect(RECT* outRect) const
 }
 
 void UIWindowMgr::RenderWallPaper() {
+    m_isInvalidatedByForce = false;
     if (!m_wallpaperSurface || !g_hMainWnd) {
         return;
     }
@@ -1743,6 +1744,19 @@ void UIWindowMgr::RenderWallPaper() {
     }
 
     m_wallpaperSurface->DrawSurfaceStretch(0, 0, w, h);
+}
+
+void UIWindowMgr::InvalidateUpdateNeededUI()
+{
+    if (m_isInvalidatedByForce) {
+        return;
+    }
+    m_isInvalidatedByForce = true;
+    for (UIWindow* window : m_children) {
+        if (window && window->IsUpdateNeed()) {
+            window->InvalidateChildren();
+        }
+    }
 }
 
 void UIWindowMgr::DrawWallpaperToDC(HDC targetDC, int width, int height) {

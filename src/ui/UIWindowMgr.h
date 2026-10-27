@@ -111,6 +111,7 @@ public:
     void Reset();
     void OnProcess();
     void OnDraw();
+    void InvalidateUpdateNeededUI();
     void DrawVisibleWindowsToHdc(HDC targetDC, bool includeRoMap);
     bool HasDirtyVisualState() const;
     bool HasDirtyVisualStateExcludingRoMap() const;
@@ -178,6 +179,7 @@ public:
     int m_isDrawCompass;
     int m_isDragAll;
     int m_conversionMode;
+    bool m_isInvalidatedByForce;
     
     std::list<UIWindow*> m_children;
     std::list<UIWindow*> m_quitWindow;

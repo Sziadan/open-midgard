@@ -1,4 +1,6 @@
 add_library(ro_ui STATIC
+    GuildSkillWndRows.h
+    GuildSkillWndRows.cpp
     UIWindow.h
     UIWindow.cpp
     UiScale.h

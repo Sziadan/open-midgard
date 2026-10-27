@@ -67,6 +67,8 @@ tools/tests/*
 !tools/tests/check_show_image_packet.py
 !tools/tests/GuildSkillTests.cpp
 !tools/tests/check_guild_skill_packet.py
+!tools/tests/UIInvalidateTests.cpp
+!tools/tests/check_ui_invalidate_source.py
 
 !tools/check_double_gumgang_parity.py
 !tools/check_pokjuk_parity.py

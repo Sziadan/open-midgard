@@ -40,6 +40,7 @@ public:
     bool BlitArgbBitsToDrawTarget(const void* bits, int width, int height) const;
 
     virtual void Invalidate();
+    void InvalidateChildren();
     virtual void InvalidateWallPaper();
     virtual void Resize(int w, int h);
     virtual bool IsFrameWnd();

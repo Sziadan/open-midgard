@@ -41,6 +41,9 @@ public:
     const std::list<PLAYER_SKILL_INFO>& GetGuildSkillItems() const;
     int GetGuildSkillPoint() const;
     void SetGuildSkillPoint(int points);
+    void InvalidateUI();
+    int m_invalidationCount = 0;
+    int m_lastInvalidatedGuildSkillPoint = 0;
 
 private:
     std::list<PLAYER_SKILL_INFO> m_guildSkillItems;
@@ -69,6 +72,12 @@ u32 ReadLE32(const u8* data)
 
 #include "GuildSkillSessionBodies.inc"
 #include "GuildSkillPacketBody.inc"
+
+void CSession::InvalidateUI()
+{
+    ++m_invalidationCount;
+    m_lastInvalidatedGuildSkillPoint = GetGuildSkillPoint();
+}
 
 void Put16(std::vector<u8>& bytes, size_t offset, u16 value)
 {
@@ -116,6 +125,7 @@ int main()
     assert(duplicate.type == 0x11223344); // duplicate add preserves original fields other than level/SP/range/upgradable
     assert(duplicate.level == 8 && duplicate.spcost == 13 && duplicate.upgradable == 0);
     assert(duplicate.skillIdName == "GD_GUARDUP" && duplicate.skillName == "GD_GUARDUP");
+    assert(g_session.m_invalidationCount == 1 && g_session.m_lastInvalidatedGuildSkillPoint == -3);
 
     std::vector<u8> invalidOnly(43, 0);
     Put16(invalidOnly, 2, static_cast<u16>(invalidOnly.size()));
@@ -124,16 +134,19 @@ int main()
     HandleGuildSkillInfo(mode, PacketView{0x0162, static_cast<u16>(invalidOnly.size()), invalidOnly.data()});
     assert(g_session.GetGuildSkillItems().empty());
     assert(g_session.GetGuildSkillPoint() == 9);
+    assert(g_session.m_invalidationCount == 2 && g_session.m_lastInvalidatedGuildSkillPoint == 9);
 
     std::vector<u8> noRecords(42, 0);
     Put16(noRecords, 2, static_cast<u16>(noRecords.size()));
     Put16(noRecords, 4, 11);
     HandleGuildSkillInfo(mode, PacketView{0x0162, static_cast<u16>(noRecords.size()), noRecords.data()});
     assert(g_session.GetGuildSkillItems().empty() && g_session.GetGuildSkillPoint() == 11);
+    assert(g_session.m_invalidationCount == 3 && g_session.m_lastInvalidatedGuildSkillPoint == 11);
 
     const int previousPoints = g_session.GetGuildSkillPoint();
     HandleGuildSkillInfo(mode, PacketView{0x0162, 5, noRecords.data()});
     HandleGuildSkillInfo(mode, PacketView{0x0162, 6, nullptr});
     assert(g_session.GetGuildSkillItems().empty() && g_session.GetGuildSkillPoint() == previousPoints);
+    assert(g_session.m_invalidationCount == 3);
     return 0;
 }

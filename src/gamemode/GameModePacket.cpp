@@ -4811,6 +4811,7 @@ void HandleGuildSkillInfo(CGameMode& mode, const PacketView& packet)
     }
 
     g_session.SetGuildSkillPoint(static_cast<int>(static_cast<s16>(ReadLE16(packet.data + 4))));
+    g_session.InvalidateUI();
 }
 
 void HandleShowImage(CGameMode& mode, const PacketView& packet)

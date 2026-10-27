@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(SkillParityChecks LANGUAGES CXX)
 enable_testing()
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 add_executable(wave_math_checks WaveMathTests.cpp)
 target_compile_features(wave_math_checks PRIVATE cxx_std_17)
 target_include_directories(wave_math_checks PRIVATE ../../src)
@@ -118,7 +119,7 @@ file(READ "../../src/gamemode/GameModePacket.cpp" guild_skill_packet_source)
 extract_body(guild_skill_packet "${guild_skill_packet_source}" "namespace {\n\nconstexpr const char* kGuildSkillIdNames[16]" "void HandleShowImage(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/GuildSkillPacketBody.inc" "${guild_skill_packet}")
 file(READ "../../src/session/Session.cpp" guild_skill_session_source)
-extract_body(guild_skill_session "${guild_skill_session_source}" "void CSession::ClearGuildSkillItems()" "void CSession::ClearActiveStatusIcons()")
+extract_body(guild_skill_session "${guild_skill_session_source}" "void CSession::ClearGuildSkillItems()" "void CSession::InvalidateUI()")
 set(guild_skill_session_body "${guild_skill_session}")
 extract_body(guild_skill_session "${guild_skill_session_source}" "bool CSession::SetGuildSkillItem(const PLAYER_SKILL_INFO& skillInfo)" "void CSession::SetHomunSkillItem(")
 string(APPEND guild_skill_session_body "\n${guild_skill_session}")
@@ -130,6 +131,20 @@ target_compile_features(guild_skill_checks PRIVATE cxx_std_17)
 target_include_directories(guild_skill_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 add_test(NAME guild_skill_checks COMMAND guild_skill_checks)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ../../src/gamemode/GameModePacket.cpp ../../src/session/Session.cpp)
+file(READ "../../src/ui/UIWindow.cpp" ui_invalidate_source)
+extract_body(ui_invalidate_children "${ui_invalidate_source}" "void UIWindow::InvalidateChildren()" "void UIWindow::InvalidateWallPaper()")
+file(READ "../../src/ui/UIWindowMgr.cpp" ui_manager_invalidate_source)
+extract_body(ui_manager_invalidate "${ui_manager_invalidate_source}" "void UIWindowMgr::InvalidateUpdateNeededUI()" "void UIWindowMgr::DrawWallpaperToDC(")
+file(READ "../../src/session/Session.cpp" session_invalidate_source)
+extract_body(session_invalidate "${session_invalidate_source}" "void CSession::InvalidateUI()" "void CSession::ClearActiveStatusIcons()")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/UIInvalidateBodies.inc" "${ui_invalidate_children}\n${ui_manager_invalidate}\n${session_invalidate}")
+add_executable(ui_invalidate_checks UIInvalidateTests.cpp)
+target_compile_features(ui_invalidate_checks PRIVATE cxx_std_17)
+target_include_directories(ui_invalidate_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME ui_invalidate_checks COMMAND ui_invalidate_checks)
+add_test(NAME ui_invalidate_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_ui_invalidate_source.py")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ../../src/ui/UIWindow.cpp ../../src/ui/UIWindowMgr.cpp ../../src/session/Session.cpp)
 file(READ "../../src/render/Prim.cpp" math_source)
 extract_body(matrix_mult "${math_source}" "void MatrixMult(" "void MatrixInverse(")
 extract_body(matrix_rotations "${math_source}" "void MatrixAppendXRotation(" "// --- Intersection Tests")
@@ -288,3 +303,27 @@ add_executable(particle_render_checks ParticleRenderTests.cpp)
 target_compile_features(particle_render_checks PRIVATE cxx_std_17)
 target_include_directories(particle_render_checks PRIVATE ../../src "${CMAKE_CURRENT_BINARY_DIR}")
 add_test(NAME particle_render_checks COMMAND particle_render_checks)
+
+# Compile the production guild skill row refresh body against silent hooks, and
+# compare its behavior/order to the executable dispatch and Ref decompilation.
+file(READ "../../src/ui/GuildSkillWndRows.cpp" guild_skill_refresh_source)
+string(FIND "${guild_skill_refresh_source}" "void GuildSkillWndRows::RefreshFromGuildSkillItems(" guild_skill_refresh_start)
+if(guild_skill_refresh_start LESS 0)
+    message(FATAL_ERROR "Cannot locate production guild skill refresh body")
+endif()
+string(SUBSTRING "${guild_skill_refresh_source}" ${guild_skill_refresh_start} -1 guild_skill_refresh_body)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/GuildSkillWndRefreshBody.inc" "${guild_skill_refresh_body}")
+add_executable(guild_skill_wnd_refresh_checks ../GuildSkillWndRefreshTests.cpp)
+target_compile_features(guild_skill_wnd_refresh_checks PRIVATE cxx_std_17)
+target_include_directories(guild_skill_wnd_refresh_checks PRIVATE ../../src "${CMAKE_CURRENT_BINARY_DIR}")
+target_compile_definitions(guild_skill_wnd_refresh_checks PRIVATE
+    GUILD_SKILL_EXE_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/../../HighPriest.exe\"
+    GUILD_SKILL_DECOMP_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/../../HighPriest.exe.c\"
+    GUILD_SKILL_REF_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/UIGuildWnd.cpp\")
+add_test(NAME guild_skill_wnd_refresh_checks COMMAND guild_skill_wnd_refresh_checks)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    ../../src/ui/GuildSkillWndRows.cpp
+    ../../src/ui/GuildSkillWndRows.h
+    ../../HighPriest.exe
+    ../../HighPriest.exe.c
+    ../../Ref/UIGuildWnd.cpp)

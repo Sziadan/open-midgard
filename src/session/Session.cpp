@@ -4,6 +4,7 @@
 #include "../core/Xml.h"
 #include "../lua/LuaBridge.h"
 #include "DebugLog.h"
+#include "ui/UIWindowMgr.h"
 
 #include <algorithm>
 #include <cctype>
@@ -1498,6 +1499,11 @@ void CSession::ClearSkillItems()
 void CSession::ClearGuildSkillItems()
 {
     m_guildSkillItems.clear();
+}
+
+void CSession::InvalidateUI()
+{
+    g_windowMgr.InvalidateUpdateNeededUI();
 }
 
 void CSession::ClearActiveStatusIcons()

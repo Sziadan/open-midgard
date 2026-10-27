@@ -454,6 +454,17 @@ void UIWindow::Invalidate()
     }
 }
 
+void UIWindow::InvalidateChildren()
+{
+    m_isDirty = 1;
+    InvalidateWallPaper();
+    for (UIWindow* child : m_children) {
+        if (child) {
+            child->InvalidateChildren();
+        }
+    }
+}
+
 void UIWindow::InvalidateWallPaper()
 {
     Invalidate();
