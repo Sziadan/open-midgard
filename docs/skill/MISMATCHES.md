@@ -258,6 +258,8 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 
 - PP_MAPPARTICLE alias note (2026-10-26): current `EffectGi` retains the legacy vector Y fields at their original payload offsets as `arcBaselineY` (B-pre), `sparkY` (B-now), `vecTPreY`, and `vecTNowY`. `Ref/dhxj/Base/Util.h` confirms `random(n)` equals `n == 0 ? 0 : rand()%n`; no RNG mismatch is recorded for this helper.
 
+- `RenderMapParticle` orientation (2026-10-27): canonical `HighPriest.exe.c:445654` and `Ref/RagEffect2.cpp:17538` use eight globals at VAs `0x72C9B0`, `0x72CB18`, `0x72CC80`, `0x72CDE8`, `0x72D4F8`, `0x72D660`, `0x72D7C8`, and `0x72D930` to construct four corners. In the actual `HighPriest.exe`, the first four have zero raw bytes and the latter four are in `.data` zero-fill. Raw `.text` inspection shows every absolute operand is an x87 `FLD` load with no store; one apparent `0x72CDE8` occurrence is an `E8` relative-call byte coincidence. Thus the executable's runtime corner offsets are zero. `Ref/dhxj/RagEffect2.cpp:10684-10725` instead sets `Angle = 45` and builds a non-degenerate diamond. Following the executable-first rule, `RenderReferenceMapParticle` uses the zero values; the triangles collapse at each translated center. The `dhxj` angle is explicitly rejected as lower-priority conflicting evidence, not used as a fallback. Live visual impact was not tested.
+
 
 ## Get_Angle zero-vector comparison for PP_SOULBREAKER (0x56) - 2026-10-26
 

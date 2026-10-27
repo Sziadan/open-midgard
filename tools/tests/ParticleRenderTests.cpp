@@ -180,6 +180,7 @@ float GetCos(int angle) { return std::cos(angle*3.14159265f/180.0f); }
 float GetSin(int angle) { return std::sin(angle*3.14159265f/180.0f); }
 void ProjectReferenceEffectVertex(const vector3d&,const matrix&,tlvertex3d&);
 extern float g_cosTable[361],g_sinTable[361];
+void IntimidateTowardScreen(vector3d corners[4],int rotationX,int rotationYZ);
 int TableAngle(int angle);
 int GetReferenceAngle(float moveX,float moveZ);
 void RotateCornerTowardScreen(vector3d* corner,int rot0,int rot1);
@@ -1635,6 +1636,52 @@ int main() {
             "PrimGroundSample increments live rotations and wraps 359 to zero before recomputing scale");
         check(prim.m_gi[2].rotStart==17&&near(prim.m_gi[2].maxHeight,88.0f),
             "PrimGroundSample leaves non-live GI slots unchanged");
+    }
+    {
+        CTexture texture;CEffectPrim prim;prim.m_texture={&texture};prim.m_pos={10,20,30};prim.m_renderFlag=5;
+        EffectGi& gi=prim.m_gi[0];gi.life=1;gi.distance=10;gi.flag[1]=2;
+        gi.vecBPreX=4;gi.arcBaselineY=-1;gi.vecBPreZ=6;
+        gi.sparkX=7;gi.sparkY=-3;gi.sparkZ=8;
+        gi.vecTPreY=0.5f;
+        gi.vecTNowX=9;gi.vecTNowY=-40;gi.vecTNowZ=11;
+        g_renderer.submissions.clear();g_renderer.flags.clear();
+        RenderReferenceMapParticle(prim,view);
+        check(g_renderer.submissions.size()==6,
+            "MapParticle renders the three visible ordered bands as two triangles each and skips positive Y");
+        if(g_renderer.submissions.size()==6) {
+            const RPFace& first=g_renderer.submissions[0];
+            const RPFace& secondBand=g_renderer.submissions[2];
+            const RPFace& clampedBand=g_renderer.submissions[4];
+            check(first.tex==&texture&&first.primType==D3DPT_TRIANGLELIST
+                &&first.srcAlphaMode==D3DBLEND_SRCALPHA&&first.destAlphaMode==D3DBLEND_ONE,
+                "MapParticle uses texture zero, triangle submission, and source additive blend state");
+            check(first.m_verts[0].color==0x969BFF9Bu&&secondBand.m_verts[0].color==0x7A9BFF9Bu
+                &&clampedBand.m_verts[0].color==0x009BFF9Bu,
+                "MapParticle preserves base alpha, vertical fade alpha, and lower clamp branches");
+            check(first.m_verts[0].tu==0.0f&&first.m_verts[0].tv==1.0f
+                &&first.m_verts[1].tu==1.0f&&first.m_verts[1].tv==1.0f
+                &&first.m_verts[2].tu==1.0f&&first.m_verts[2].tv==0.0f
+                &&g_renderer.flags[0]==5&&g_renderer.flags[5]==5,
+                "MapParticle preserves the canonical triangle corner/UV order and primitive render flags");
+            tlvertex3d expected{};
+            ProjectReferenceEffectVertex({14.0f,19.0f,36.0f},view,expected);
+            check(near(first.m_verts[0].x,expected.x)&&near(first.m_verts[0].y,expected.y),
+                "MapParticle uses executable-zero orientation values and parent translation");
+            check(near(first.m_verts[0].x,first.m_verts[1].x)
+                &&near(first.m_verts[0].y,first.m_verts[1].y),
+                "MapParticle preserves the executable's degenerate zero-radius corner geometry");
+        }
+        gi.flag[1]=0;gi.arcBaselineY=-0.5f;gi.sparkY=0.5f;gi.vecTPreY=0.5f;gi.vecTNowY=0.5f;
+        g_renderer.submissions.clear();g_renderer.flags.clear();RenderReferenceMapParticle(prim,view);
+        check(g_renderer.submissions.size()==2&&g_renderer.submissions[0].m_verts[0].color==0x82FFFFFFu,
+            "MapParticle non-mode-two branch uses white RGB and the base alpha");
+        gi.life=0;g_renderer.submissions.clear();RenderReferenceMapParticle(prim,view);
+        check(g_renderer.submissions.empty(),"MapParticle skips GI lanes whose life is not one");
+        for(EffectGi& lane:prim.m_gi){lane.life=1;lane.distance=5.0f;lane.arcBaselineY=0;
+            lane.sparkY=0;lane.vecTPreY=0;lane.vecTNowY=0;}
+        g_renderer.submissions.clear();RenderReferenceMapParticle(prim,view);
+        check(g_renderer.submissions.size()==32,
+            "MapParticle visits all four live GI lanes and submits all four bands per lane");
     }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;

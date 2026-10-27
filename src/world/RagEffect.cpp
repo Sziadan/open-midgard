@@ -11963,6 +11963,93 @@ void RenderParticleSprites(const CEffectPrim& prim, CSprRes& sprites, const CAct
     }
 }
 
+// Canonical HighPriest.exe.c:445654 / Ref/RagEffect2.cpp:17538.
+// All eight orientation globals read by the executable are zero in its .data
+// image or PE zero-fill tail, and executable code only loads them. Keep that
+// binary behavior even though Ref/dhxj expresses the corners as 45-degree arcs.
+void SubmitReferenceMapParticleRect(int& rpCount, const vector3d corners[4],
+    const CEffectPrim& prim, const matrix& view, int alpha, bool modeTwo)
+{
+    if (rpCount >= 510) return;
+    const int triangles[2][3] = {{0, 1, 2}, {3, 2, 0}};
+    const float uvs[4][2] = {{0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}};
+    const unsigned int color = (static_cast<unsigned int>(alpha) << 24)
+        | (static_cast<unsigned int>(modeTwo ? 155 : 255) << 16)
+        | (255u << 8) | static_cast<unsigned int>(modeTwo ? 155 : 255);
+    CTexture* texture = prim.m_texture[0];
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) return;
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = D3DBLEND_ONE;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            const int corner = triangles[triangle][vertex];
+            const vector3d position{
+                static_cast<float>(static_cast<double>(corners[corner].x) + prim.m_pos.x),
+                static_cast<float>(static_cast<double>(corners[corner].y) + prim.m_pos.y),
+                static_cast<float>(static_cast<double>(corners[corner].z) + prim.m_pos.z)};
+            ProjectReferenceEffectVertex(position, view, face->m_verts[vertex]);
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[corner][0];
+            face->m_verts[vertex].tv = uvs[corner][1];
+        }
+        g_renderer.AddRP(face, static_cast<int>(prim.m_renderFlag));
+        ++rpCount;
+    }
+}
+
+void RenderReferenceMapParticle(const CEffectPrim& prim, const matrix& view)
+{
+    int rpCount = 0;
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1) continue;
+
+        vector3d corners[4]{};
+        constexpr float orientation[4][2] = {{0.0f, 0.0f}, {0.0f, 0.0f},
+            {0.0f, 0.0f}, {0.0f, 0.0f}};
+        for (int corner = 0; corner < 4; ++corner) {
+            corners[corner].x = static_cast<float>(static_cast<double>(orientation[corner][0]) * gi.distance);
+            corners[corner].z = static_cast<float>(static_cast<double>(orientation[corner][1]) * gi.distance);
+        }
+        IntimidateTowardScreen(corners, prim.m_gi[0].alphaT, prim.m_gi[1].alphaT);
+        const vector3d rotated[4] = {corners[0], corners[1], corners[2], corners[3]};
+        const vector3d centers[4] = {
+            {gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ},
+            {gi.sparkX, gi.sparkY, gi.sparkZ},
+            {gi.vecTPreX, gi.vecTPreY, gi.vecTPreZ},
+            {gi.vecTNowX, gi.vecTNowY, gi.vecTNowZ},
+        };
+        const bool modeTwo = gi.flag[1] == 2;
+        for (const vector3d& center : centers) {
+            vector3d translated[4]{};
+            for (int corner = 0; corner < 4; ++corner) {
+                translated[corner].x = static_cast<float>(static_cast<double>(rotated[corner].x) + center.x);
+                translated[corner].y = static_cast<float>(static_cast<double>(rotated[corner].y) + center.y);
+                translated[corner].z = static_cast<float>(static_cast<double>(rotated[corner].z) + center.z);
+            }
+
+            int alpha = modeTwo ? 150 : 130;
+            if (translated[0].y < -1.0f) {
+                alpha = static_cast<int>((static_cast<double>(translated[0].y) + 1.0) * 4.0 + 130.0);
+            }
+            if (alpha < 0) alpha = 0;
+            if (translated[0].y <= 0.0f) {
+                SubmitReferenceMapParticleRect(rpCount, translated, prim, view, alpha, modeTwo);
+            }
+        }
+    }
+}
+
 void RenderReferenceParticlePrimitive(const CEffectPrim& prim, matrix& view)
 {
     if (!prim.m_particleSprRes || !prim.m_particleActRes) return;
@@ -12716,7 +12803,7 @@ void RenderChookGi(CEffectPrim& prim, const matrix& viewMatrix)
 
 void CEffectPrim::Render(matrix* viewMatrix)
 {
-    if ((!m_master && m_type != PP_3DTEXTURE_NOMASTER) || !viewMatrix) {
+    if ((!m_master && m_type != PP_3DTEXTURE_NOMASTER && m_type != PP_MAPPARTICLE) || !viewMatrix) {
         return;
     }
     if (IsCloudRendererType(m_type)) {
@@ -12743,6 +12830,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_3DTEXTURE_NOMASTER) {
         RenderReference3DTextureBillboard(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_MAPPARTICLE) {
+        RenderReferenceMapParticle(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_STIN || m_type == PP_STIN2 || m_type == PP_STIN4) {
@@ -13329,35 +13420,6 @@ void CEffectPrim::Render(matrix* viewMatrix)
     case PP_3DQUADHORN:
         RenderQuadHornPrimitive(*this, base, *viewMatrix, normalizedAlpha);
         break;
-    case PP_MAPPARTICLE: {
-        const int particles = (std::max)(4, m_spawnCount);
-        CTexture* texture = !m_texture.empty() ? m_texture[0] : GetSoftGlowTexture(true);
-        const int renderFlags = ResolveEffectRenderFlags(m_renderFlag, 1 | 2);
-        const D3DBLEND destBlend = ResolveEffectDestBlend(m_renderFlag);
-        for (int index = 0; index < particles; ++index) {
-            const float seed = (static_cast<float>(index) + 0.5f) / static_cast<float>(particles);
-            const float life = WrapUnit(timeSeconds / (std::max)(0.3f, m_emitSpeed) + seed);
-            const float angle = (2.0f * kPi * seed) + life * 6.0f + timeSeconds * (m_longSpeed * 0.03f + 1.2f);
-            const float radius = (std::max)(1.0f, m_radius + m_param[0] * 0.05f) * (0.85f + 0.25f * std::sin(timeSeconds * 2.3f + seed * 9.0f));
-            const vector3d pos = {
-                base.x + std::cos(angle) * radius,
-                ResolveGroundHeight(base) - life * (m_heightSize > 0.0f ? m_heightSize : 4.0f),
-                base.z + std::sin(angle) * radius
-            };
-            const float size = (std::max)(0.6f, m_size + seed * 0.3f);
-            const float alphaScale = std::sin(life * kPi);
-            SubmitBillboard(pos,
-                *viewMatrix,
-                texture,
-                size * 18.0f,
-                size * 18.0f,
-                PackColor(static_cast<unsigned int>(normalizedAlpha * (std::max)(0.0f, alphaScale)), m_tintColor),
-                destBlend,
-                0.0f,
-                renderFlags);
-        }
-        break;
-    }
     case PP_2DTEXTURE:
     case PP_2DFLASH:
     case PP_2DCIRCLE: {

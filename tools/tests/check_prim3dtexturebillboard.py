@@ -42,7 +42,9 @@ def main() -> int:
     assert "Render3DTextureBillboard(this, wtm)" in public[start:end]
 
     current_render = function_body(current, "void CEffectPrim::Render(matrix* viewMatrix)")
-    assert "(!m_master && m_type != PP_3DTEXTURE_NOMASTER)" in current_render, "masterless type is rejected before its renderer route"
+    master_guard = current_render.split("if ((!m_master", 1)[1].split("|| !viewMatrix", 1)[0]
+    assert "m_type != PP_3DTEXTURE_NOMASTER" in master_guard and "m_type != PP_MAPPARTICLE" in master_guard, \
+        "masterless renderer types are rejected before their specialized routes"
     route = "if (m_type == PP_3DTEXTURE_NOMASTER)"
     assert route in current_render, "type0x16 billboard route is absent"
     start = current_render.index(route)

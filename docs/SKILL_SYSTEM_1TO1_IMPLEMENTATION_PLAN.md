@@ -21,21 +21,21 @@ These rules apply to every work package in this document. A task is not finished
 ### 0.2 No stubs, no placeholders, no "close enough"
 
 1. No `TODO`, `FIXME`, `// not implemented`, `return;` bodies, empty `case` labels that `Ref` fills, or "fallback" branches that `Ref` does not have.
-2. No guessed asset names. If a `.wav`/`.str`/`.rsm`/`.spr` name cannot be read from `Ref` or from `HighPriest.exe` (see WP0), the task is BLOCKED: record the exact symbol (e.g. `aEffectT_24`) in `docs/skill/BLOCKED.md` with the call site, and stop. Do not substitute "a similar sound".
+2. No guessed asset names. Resolve exact `.wav`/`.str`/`.rsm`/`.spr` names from `HighPriest.exe` bytes first with WP0.1; use `Ref` to corroborate the recovered literal and call site. If the executable and `Ref` cannot resolve a name, the task is BLOCKED: record the exact symbol (e.g. `aEffectT_24`) in `docs/skill/BLOCKED.md` with the call site, and stop. Use `dhxj` only as a documented last resort after both higher-priority sources fail. Do not substitute "a similar sound".
 3. No candidate-path lists ("try `ef_firebolt.wav`, then `firebolt.wav`, then ..."). One exact path per call site, as `Ref` has it.
 4. Existing "close enough" code in `src/` that the work package replaces must be deleted, not left alongside the port. (A list of the known offenders is in section 3.)
 5. The existing Lua bridge override (`g_buabridge.GetSkillEffectInfoBySkillId`) in the skill pipeline is not part of the 2008 client and must be removed from the skill code paths (WP3).
 
 ### 0.3 Source precedence
 
-| Question | Use first | Then |
+| Question | Authority | Corroboration / fallback |
 |---|---|---|
-| What does the client do visually / audibly / animation-wise? | `Ref/*.cpp` (decompiled client) | `HighPriest.exe.c` (raw IDA output) and `HighPriest.exe` (bytes) when `Ref` symbols are truncated |
+| What does the client do visually / audibly / animation-wise? | `HighPriest.exe` (the executable's code and data bytes; use the matching root `HighPriest.exe.c` decompilation to inspect control flow) | `Ref/*.cpp` is the next proof/check. Consult `Ref/dhxj/*` only when the executable and `Ref` leave a specific detail unresolved, and record that fallback in `MISMATCHES.md`. |
 | Packet opcodes, lengths, field layouts, which packet the server actually sends | `PACKET_VERSION_ALIGNMENT.md`, then `Ref/eAthena_src_2011/map/clif.c` and `Ref/RunningServer/packet_db.txt` | `Ref/GameModePacket.cpp` for how the client consumes the fields |
-| Asset existence / exact file name bytes | `Ref/GRF-Content/data/...` | — |
+| Asset existence / exact file name bytes | `HighPriest.exe` bytes via `tools/ro_exe_resolve.py` / WP0.1 | `Ref` source and `Ref/GRF-Content/data/...` corroborate the literal/use and existence; `dhxj` is last-resort evidence only if the executable and `Ref` cannot recover it. |
 | Skill ids / unit ids the server can emit | `Ref/eAthena_src_2011/map/skill.h` (`enum e_skill`, `enum skill_unit_id`) and `Ref/eAthena_src_2011/db/*skill_db.txt` | `src/skill/SkillEnumIdTable.inc` |
 
-If two sources disagree, write the disagreement into `docs/skill/MISMATCHES.md` (file, line, both values, which one you followed and why). Known mismatches are pre-listed in section 9.
+If the executable, `Ref`, and `dhxj` disagree, follow the executable, use `Ref` as the second-source proof/check, and consult `dhxj` only for unresolved details. Write disagreements or last-resort fallbacks into `docs/skill/MISMATCHES.md` (file, line, values, which source you followed, and why). Known mismatches are pre-listed in section 9.
 
 Packet version: the rebuilt client targets `packet_ver 23` (2008-09-10aSakexe). `Ref` is the same client family, but do not assume opcode layouts from `Ref` without confirming them against `clif.c` for the layout and `packet_db.txt` `packet_ver: 23` block for the length.
 
@@ -634,8 +634,8 @@ From `Ref/RagEffect2.cpp` (334 methods): enumerate with `rg -n "^// Original Sig
 
 ### 10.4 Agent working protocol for a single function port
 
-1. Open the Ref anchor. Read the whole function, including the IDA local-variable preamble (it tells you struct field indices like `v8[6]`).
-2. Write the `src` function with the same parameters and the same order of operations. Keep every branch. Keep every constant.
+1. Start from the function address and code/data bytes in `HighPriest.exe`; inspect its matching `HighPriest.exe.c` body and IDA local-variable preamble (which can expose struct field indices like `v8[6]`). Then read the corresponding `Ref/*.cpp` body as the second-source proof/check. Use `Ref/dhxj/*` only for a detail the executable and `Ref` leave unresolved, and record that fallback.
+2. Write the `src` function to match the executable's parameters and order of operations. Keep every branch and constant; use `Ref` to validate the interpretation.
 3. For every string symbol (`aXxx`, `byte_XXXXXX`): look it up in `docs/skill/generated/playwave_callsites.tsv` / the generated tables / `tools/ro_exe_resolve.py`. If unresolved → `BLOCKED.md`, stop that branch (leave the exact call with a compile-time `static_assert`-style marker is **not** allowed; instead do not merge until resolved or owner-accepted).
 4. For every `SendMsg(x, id, ...)`: confirm the receiving class implements message `id` (grep `case id:` in the receiver's `SendMsg`). If not, port that case too (it is in scope).
 5. For every `LaunchEffect(id)`/`PlaceEffect(..., id, ...)`: confirm `id` has a dispatcher case and handler (WP5). If not, add it to the WP5 batch backlog in `PARITY_LOG.md`; the packet/actor code still launches the id.
