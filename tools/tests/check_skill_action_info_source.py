@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import argparse
 import re
 from pathlib import Path
 
@@ -130,6 +131,9 @@ def assignments(source: str) -> list[tuple[str, str]]:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--emit-oracle", type=Path)
+    args = parser.parse_args()
     ref = extract_body(ROOT / "Ref/Session2.cpp", "GetSkillActionInfo(")
     exe = extract_body(ROOT / "HighPriest.exe.c", "GetSkillActionInfo(")
     current = extract_body(ROOT / "src/session/SkillActionInfo.cpp", "void GetSkillActionInfo(")
@@ -172,6 +176,16 @@ def main() -> None:
         r"\$L153920\s*:\s*\*\s*beginEffectId\s*=\s*-1\s*;\s*"
         r"\*\s*motionType\s*=\s*12\s*;\s*}", current_code
     ), "skill 1004 final output label is not the terminal (-1, 12) route"
+
+    if args.emit_oracle:
+        oracle_body = re.sub(r"\$([A-Za-z_]\w*)", r"\1", ref_code)
+        args.emit_oracle.parent.mkdir(parents=True, exist_ok=True)
+        args.emit_oracle.write_text(
+            "void RefGetSkillActionInfo(int skillId, int* beginEffectId, int* motionType) "
+            + oracle_body
+            + "\n",
+            encoding="utf-8",
+        )
 
     print(
         "GetSkillActionInfo source gate passed: Ref/EXE body SHA-256 "

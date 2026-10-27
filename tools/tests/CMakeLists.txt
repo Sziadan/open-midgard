@@ -476,6 +476,24 @@ add_test(NAME actor_am_skill_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_am_skill_source_case.py")
 add_test(NAME skill_action_info_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_action_info_source.py")
+set(skill_action_info_oracle "${CMAKE_CURRENT_BINARY_DIR}/SkillActionInfoSourceOracle.cpp")
+add_custom_command(
+    OUTPUT "${skill_action_info_oracle}"
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_action_info_source.py"
+            --emit-oracle "${skill_action_info_oracle}"
+    DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_action_info_source.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/Session2.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../HighPriest.exe.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../src/session/SkillActionInfo.cpp"
+    VERBATIM)
+add_executable(skill_action_info_runtime_parity_checks
+    SkillActionInfoParityTests.cpp
+    "${skill_action_info_oracle}"
+    ../../src/session/SkillActionInfo.cpp)
+target_compile_features(skill_action_info_runtime_parity_checks PRIVATE cxx_std_17)
+target_include_directories(skill_action_info_runtime_parity_checks PRIVATE ../../src)
+add_test(NAME skill_action_info_runtime_parity COMMAND skill_action_info_runtime_parity_checks)
 set(skill_action_info2_oracle "${CMAKE_CURRENT_BINARY_DIR}/SkillActionInfo2SourceOracle.cpp")
 add_custom_command(
     OUTPUT "${skill_action_info2_oracle}"
