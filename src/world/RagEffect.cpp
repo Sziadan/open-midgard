@@ -13690,7 +13690,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 38: case 39: case 43: case 45: case 46: case 61: case 62: case 63: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 38: case 39: case 43: case 45: case 46: case 61: case 62: case 63: case 71: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -15188,6 +15188,33 @@ void CRagEffect::ApplyBarrier()
     prim->m_longitude = 2.0f;
     prim->m_alpha = 100.0f;
     prim->m_texture.push_back(g_texMgr.GetTexture("effect\\bigbang.tga", false));
+}
+
+// Ref/RagEffect.cpp:10445-10462; HighPriest.exe.c:427166-427194.
+void CRagEffect::ApplyCone()
+{
+    if (m_stateCnt % 130 != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{});
+    m_duration = 200;
+    prim->m_duration = 300;
+    prim->m_radius = 0.1f;
+    prim->m_radiusSpeed = 0.2f;
+    prim->m_gravSpeed = 0.1f;
+    prim->m_gravAccel = 0.005f;
+    prim->m_longitude = 2.0f;
+    prim->m_longSpeed = 15.0f;
+    prim->m_longAccel = -0.01f;
+    prim->m_size = 1.2f;
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+    prim->m_deltaPos2 = {
+        prim->m_matrix.m[3][0] - 30.0f * prim->m_matrix.m[1][0] + prim->m_radius * prim->m_matrix.m[2][0],
+        prim->m_matrix.m[3][1] - 30.0f * prim->m_matrix.m[1][1] + prim->m_radius * prim->m_matrix.m[2][1],
+        prim->m_matrix.m[3][2] - 30.0f * prim->m_matrix.m[1][2] + prim->m_radius * prim->m_matrix.m[2][2]
+    };
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act");
+    prim->m_numSegments = 1;
+    ShiftCircleSegments(prim);
 }
 
 void CRagEffect::SpawnSight()
@@ -20154,6 +20181,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 63) {
         ApplyBarrier();
+        return true;
+    }
+    if (m_type == 71) {
+        ApplyCone();
         return true;
     }
     if (m_type == 0x201) {

@@ -590,6 +590,7 @@ private:
     void SpawnSight2();
     void ApplySightrasher();
     void ApplyBarrier();
+    void ApplyCone();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();

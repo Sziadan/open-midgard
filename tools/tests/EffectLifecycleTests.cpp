@@ -548,6 +548,7 @@ struct CRagEffect : CGameObject {
     void ApplySight(float,bool);
     void ApplySightrasher();
     void ApplyBarrier();
+    void ApplyCone();
     void SpawnSight();
     void SpawnSight2();
     void SpawnBlessing();
@@ -8071,6 +8072,35 @@ int main()
         effect.ApplyBarrier();
         check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==draws,
             "Barrier later frames do not respawn or reload its sphere");
+    }
+    {
+        CRagEffect effect; CRenderObject actor;
+        effect.m_type=71; effect.m_master=&actor; effect.m_stateCnt=0;
+        rngValues.clear(); rngCursor=0; g_resMgr.requests.clear();
+        const int draws=rngDraws;
+        effect.ApplyCone();
+        CEffectPrim* cone=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        matrix expected; MatrixIdentity(expected); MatrixAppendYRotation(expected,GetRadian(2));
+        const vector3d expectedOffset={
+            expected.m[3][0]-30*expected.m[1][0]+0.1f*expected.m[2][0],
+            expected.m[3][1]-30*expected.m[1][1]+0.1f*expected.m[2][1],
+            expected.m[3][2]-30*expected.m[1][2]+0.1f*expected.m[2][2]};
+        check(effect.m_duration==200&&effect.m_primList.size()==1&&cone&&cone->m_type==PP_3DPARTICLEORBIT
+            &&cone->m_duration==300&&cone->m_radius==0.1f&&cone->m_radiusSpeed==0.2f
+            &&cone->m_gravSpeed==0.1f&&cone->m_gravAccel==0.005f&&cone->m_longitude==2
+            &&cone->m_longSpeed==15&&cone->m_longAccel==-0.01f&&cone->m_size==1.2f
+            &&std::fabs(cone->m_deltaPos2.x-expectedOffset.x)<0.00001f
+            &&std::fabs(cone->m_deltaPos2.y-expectedOffset.y)<0.00001f
+            &&std::fabs(cone->m_deltaPos2.z-expectedOffset.z)<0.00001f
+            &&g_resMgr.requests.size()==2&&rngDraws==draws,
+            "Cone state zero emits the source orbit particle and transformed offset without RNG");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); effect.m_stateCnt=129;
+        effect.ApplyCone();
+        check(effect.m_primList.empty(),"Cone does not emit between 130-frame intervals");
+        effect.m_stateCnt=130; effect.ApplyCone();
+        check(effect.m_primList.size()==1&&effect.m_duration==200&&rngDraws==draws,
+            "Cone emits again at state 130 with no random or audio branches");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
