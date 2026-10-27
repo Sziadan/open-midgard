@@ -12107,6 +12107,112 @@ void RenderReferenceSoulBreaker(const CEffectPrim& prim, const matrix& view)
     }
 }
 
+// Canonical HighPriest.exe.c:447524 / Ref/RagEffect2.cpp:19059.
+void SubmitReferenceRectUp2Rect(int& rpCount, const vector3d corners[4],
+    const CEffectPrim& prim, const matrix& view, int alpha, bool darkGreen)
+{
+    if (rpCount >= 510) return;
+    const int triangles[2][3] = {{0, 1, 2}, {3, 2, 0}};
+    const float uvs[4][2] = {{0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}};
+    const unsigned int color = (static_cast<unsigned int>(alpha) << 24)
+        | (darkGreen ? ((150u << 16) | (250u << 8) | 150u) : ((200u << 16) | (250u << 8) | 200u));
+    CTexture* texture = prim.m_texture[0];
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) return;
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            const int corner = triangles[triangle][vertex];
+            const vector3d position{
+                static_cast<float>(static_cast<double>(corners[corner].x) + prim.m_pos.x),
+                static_cast<float>(static_cast<double>(corners[corner].y) + prim.m_pos.y),
+                static_cast<float>(static_cast<double>(corners[corner].z) + prim.m_pos.z)};
+            ProjectReferenceEffectVertex(position, view, face->m_verts[vertex]);
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[corner][0];
+            face->m_verts[vertex].tv = uvs[corner][1];
+        }
+        g_renderer.AddRP(face, static_cast<int>(prim.m_renderFlag));
+        ++rpCount;
+    }
+}
+
+void RenderReferenceRectUp2(CEffectPrim& prim, const matrix& view)
+{
+    int rpCount = 0;
+    for (int lane = 0; lane < 2; ++lane) {
+        EffectGi& gi = prim.m_gi[static_cast<size_t>(lane)];
+        if (gi.life != 1 || gi.alphaB <= 0) continue;
+        const float w = gi.height[0], d = gi.height[1], y = -1.0f;
+        vector3d bpre{w, y, d}, bnow{w, y, -d}, tnow{-w, y, -d}, tpre{-w, y, d};
+        gi.vecBPreX = bpre.x; gi.arcBaselineY = bpre.y; gi.vecBPreZ = bpre.z;
+        gi.sparkX = bnow.x; gi.sparkY = bnow.y; gi.sparkZ = bnow.z;
+        gi.vecTNowX = tnow.x; gi.vecTNowY = tnow.y; gi.vecTNowZ = tnow.z;
+        gi.vecTPreX = tpre.x; gi.vecTPreY = tpre.y; gi.vecTPreZ = tpre.z;
+        const auto local = [&](vector3d v) { v.y -= gi.height[2]; return v; };
+        vector3d bpreLocal = local(bpre), bnowLocal = local(bnow);
+        vector3d tnowLocal = local(tnow), tpreLocal = local(tpre);
+        vector3d rect[4]{};
+        rect[0]=bpre; rect[1]=bnow; rect[2]=bnowLocal; rect[3]=bpreLocal;
+        SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,false);
+        rect[0]=bnow; rect[1]=tnow; rect[2]=tnowLocal; rect[3]=bnowLocal;
+        SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,false);
+        rect[0]=tnow; rect[1]=tpre; rect[2]=tpreLocal; rect[3]=tnowLocal;
+        SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,false);
+        rect[0]=tpre; rect[1]=bpre; rect[2]=bpreLocal; rect[3]=tpreLocal;
+        SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,false);
+    }
+
+    for (int lane = 2; lane < 4; ++lane) {
+        EffectGi& gi = prim.m_gi[static_cast<size_t>(lane)];
+        if (gi.life != 1 || gi.alphaB <= 0) continue;
+        const float w = gi.height[0], depth = gi.height[1], y = -1.0f;
+        vector3d bpre{w,y,depth}, bnow{w,y,-depth}, tnow{-w,y,-depth}, tpre{-w,y,depth};
+        float left = 0.0f;
+        const float d = gi.distance, span = gi.height[3];
+        int interval;
+        if (d < w*2.0f) {
+            interval=0; bpre.z=d-depth; bnow.z=bpre.z-span;
+            if (bnow.z < -depth) { left=-depth-bnow.z; bnow.z=-depth; tnow.x=bnow.x-left; }
+        } else if (d < w*4.0f) {
+            interval=1; bnow.x=w-(d-w*2.0f); tnow.x=bnow.x-span;
+            if (tnow.x < -w) { left=-w-tnow.x; tnow.x=-w; tpre.z=tnow.z+left; }
+        } else if (d < w*6.0f) {
+            interval=2; tnow.z=-depth+(d-w*4.0f); tpre.z=tnow.z+span;
+            if (tpre.z > depth) { left=tpre.z-depth; tpre.z=depth; bpre.x=tpre.x+left; }
+        } else {
+            interval=3; tpre.x=-w+(d-w*6.0f); bpre.x=tpre.x+span;
+            if (bpre.x > w) { left=bpre.x-w; bpre.x=w; bnow.z=bpre.z-left; }
+        }
+        gi.vecBPreX=bpre.x; gi.arcBaselineY=bpre.y; gi.vecBPreZ=bpre.z;
+        gi.sparkX=bnow.x; gi.sparkY=bnow.y; gi.sparkZ=bnow.z;
+        gi.vecTNowX=tnow.x; gi.vecTNowY=tnow.y; gi.vecTNowZ=tnow.z;
+        gi.vecTPreX=tpre.x; gi.vecTPreY=tpre.y; gi.vecTPreZ=tpre.z;
+        const auto local = [&](vector3d v) { v.y -= gi.height[2]; return v; };
+        vector3d bpreLocal=local(bpre), bnowLocal=local(bnow), tnowLocal=local(tnow), tpreLocal=local(tpre);
+        vector3d rect[4]{};
+        const auto draw = [&](const vector3d& a,const vector3d& b,const vector3d& c,const vector3d& e) {
+            rect[0]=a; rect[1]=b; rect[2]=c; rect[3]=e;
+            SubmitReferenceRectUp2Rect(rpCount,rect,prim,view,gi.alphaB,true);
+        };
+        if (interval==0) { draw(bpre,bnow,bnowLocal,bpreLocal); if(left>0) draw(bnow,tnow,tnowLocal,bnowLocal); }
+        else if (interval==1) { draw(bnow,tnow,tnowLocal,bnowLocal); if(left>0) draw(tnow,tpre,tpreLocal,tnowLocal); }
+        else if (interval==2) { draw(tnow,tpre,tpreLocal,tnowLocal); if(left>0) draw(tpre,bpre,bpreLocal,tpreLocal); }
+        else { draw(tpre,bpre,bpreLocal,tpreLocal); if(left>0) draw(bpre,bnow,bnowLocal,bpreLocal); }
+    }
+}
+
 void RenderReferenceParticlePrimitive(const CEffectPrim& prim, matrix& view)
 {
     if (!prim.m_particleSprRes || !prim.m_particleActRes) return;
@@ -12896,6 +13002,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_SOULBREAKER || m_type == PP_SOULBREAKER2) {
         RenderReferenceSoulBreaker(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_RECT_UP2) {
+        RenderReferenceRectUp2(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_STIN || m_type == PP_STIN2 || m_type == PP_STIN4) {

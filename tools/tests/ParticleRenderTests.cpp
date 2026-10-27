@@ -1720,6 +1720,53 @@ int main() {
         wrappedLane.life=0;g_renderer.submissions.clear();RenderReferenceSoulBreaker(prim,view);
         check(g_renderer.submissions.empty(),"SoulBreaker emits nothing when all four GI lanes are inactive");
     }
+    {
+        CTexture texture; CEffectPrim prim; prim.m_texture={&texture}; prim.m_pos={10,20,30}; prim.m_renderFlag=7;
+        for(int i=0;i<2;++i){auto& gi=prim.m_gi[static_cast<size_t>(i)];gi.life=1;gi.alphaB=180;
+            gi.height[0]=2;gi.height[1]=3;gi.height[2]=4;}
+        prim.m_gi[2].life=1;prim.m_gi[2].alphaB=180;prim.m_gi[2].height[0]=10;
+        prim.m_gi[2].height[1]=10;prim.m_gi[2].height[2]=2;prim.m_gi[2].height[3]=5;prim.m_gi[2].distance=5;
+        g_renderer.submissions.clear();g_renderer.flags.clear();RenderReferenceRectUp2(prim,view);
+        check(g_renderer.submissions.size()==18,
+            "RectUp2 submits four rectangles for each first-pass lane and one sweep rectangle for GI2");
+        if(g_renderer.submissions.size()==18){
+            const RPFace& first=g_renderer.submissions[0];const RPFace& sweep=g_renderer.submissions[16];
+            check(first.tex==&texture&&first.srcAlphaMode==D3DBLEND_SRCALPHA
+                &&first.destAlphaMode==D3DBLEND_INVSRCALPHA&&first.m_verts[0].color==0xB4C8FAC8u,
+                "RectUp2 uses slot zero, inverse-alpha blending, and the first-pass green color");
+            check(sweep.m_verts[0].color==0xB496FA96u&&first.m_verts[0].tu==0.0f
+                &&first.m_verts[0].tv==1.0f&&g_renderer.flags[0]==7&&g_renderer.flags[17]==7,
+                "RectUp2 preserves sweep color, RenderTeiRect UV order, and raw render flags");
+            tlvertex3d expected{};ProjectReferenceEffectVertex({12,19,33},view,expected);
+            check(near(first.m_verts[0].x,expected.x)&&near(first.m_verts[0].y,expected.y),
+                "RectUp2 adds parent position because canonical RenderTeiRect F1 is zero");
+            check(near(prim.m_gi[0].arcBaselineY,-1)&&near(prim.m_gi[0].sparkY,-1)
+                &&near(prim.m_gi[0].vecTNowY,-1)&&near(prim.m_gi[0].vecTPreY,-1),
+                "RectUp2 stores source-space corners at Y=-1 before local height translation");
+        }
+        prim.m_gi[0].alphaB=0;prim.m_gi[1].life=0;g_renderer.submissions.clear();
+        RenderReferenceRectUp2(prim,view);
+        check(g_renderer.submissions.size()==2,"RectUp2 independently gates the first-pass life and alpha and retains GI2");
+        prim.m_gi[2].distance=20;g_renderer.submissions.clear();RenderReferenceRectUp2(prim,view);
+        check(g_renderer.submissions.size()==2,"RectUp2 uses strict interval boundaries so distance 2w enters interval two");
+        prim.m_gi[2].distance=45;g_renderer.submissions.clear();RenderReferenceRectUp2(prim,view);
+        check(g_renderer.submissions.size()==2,"RectUp2 uses strict interval boundaries so distance 4w enters interval three");
+        prim.m_gi[2].distance=65;g_renderer.submissions.clear();RenderReferenceRectUp2(prim,view);
+        check(g_renderer.submissions.size()==2,"RectUp2 routes distance beyond 6w into interval four");
+        auto& sweep=prim.m_gi[2];
+        sweep.height[3]=30;sweep.distance=5;g_renderer.submissions.clear();RenderReferenceRectUp2(prim,view);
+        check(g_renderer.submissions.size()==4&&near(sweep.sparkZ,-10)&&near(sweep.vecTNowX,-15),
+            "RectUp2 interval one clamps the bottom edge and advances the adjacent edge on overflow");
+        sweep.distance=25;g_renderer.submissions.clear();RenderReferenceRectUp2(prim,view);
+        check(g_renderer.submissions.size()==4&&near(sweep.vecTNowX,-10)&&near(sweep.vecTPreZ,5),
+            "RectUp2 interval two clamps the left edge and transfers the overflow to the next corner");
+        sweep.distance=55;g_renderer.submissions.clear();RenderReferenceRectUp2(prim,view);
+        check(g_renderer.submissions.size()==4&&near(sweep.vecTPreZ,10)&&near(sweep.vecBPreX,15),
+            "RectUp2 interval three clamps the top edge and transfers the overflow to the next corner");
+        sweep.distance=75;g_renderer.submissions.clear();RenderReferenceRectUp2(prim,view);
+        check(g_renderer.submissions.size()==4&&near(sweep.vecBPreX,10)&&near(sweep.sparkZ,-15),
+            "RectUp2 interval four clamps the right edge and transfers the overflow to the next corner");
+    }
     std::printf("%d particle render checks passed; no media loaded or rendered.\n",checks-failures);
     return failures?1:0;
 }
