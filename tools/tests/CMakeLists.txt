@@ -100,6 +100,7 @@ extract_body(blessing_emitter "${effect_source}" "void CRagEffect::SpawnBlessing
 extract_body(smoke_torch_emitters "${effect_source}" "void CRagEffect::SpawnSmoke()" "// Ref/RagEffect.cpp:3442-3555")
 extract_body(poison_emitters "${effect_source}" "void ConfigureEnchantPoisonParticle(" "// Ref/RagEffect.cpp:7327-7411")
 extract_body(sight_emitters "${effect_source}" "void CRagEffect::ApplySight(" "void CRagEffect::SpawnFireBall()")
+string(REPLACE "rand()" "SilentRand()" sight_emitters "${sight_emitters}")
 extract_body(fireball_emitter "${effect_source}" "void CRagEffect::SpawnFireBall()" "// Ref/RagEffect.cpp:7202-7261")
 extract_body(bash3d_emitter "${effect_source}" "void CRagEffect::SpawnBash3D(" "void CRagEffect::ApplyColorPaper(")
 string(REPLACE "rand()" "SilentRand()" bash3d_emitter "${bash3d_emitter}")

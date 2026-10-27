@@ -552,6 +552,7 @@ struct CRagEffect : CGameObject {
     void ApplySphere();
     void ApplyBowlingBash();
     bool ApplyCartRevolution();
+    void ApplyVenomDust2();
     void SpawnSight();
     void SpawnSight2();
     void SpawnBlessing();
@@ -8206,6 +8207,35 @@ int main()
         check(!effect.ApplyCartRevolution()&&effect.m_primList.empty(),
             "CartRevolution expires at state 300 before attempting STR processing");
         g_world.m_player=nullptr; rngValues.clear(); rngCursor=0;
+    }
+    {
+        CRagEffect effect; effect.m_type=171; effect.m_stateCnt=0;
+        rngValues={359,19}; rngCursor=0; const int draws=rngDraws;
+        waveCalls.clear(); g_resMgr.requests.clear();
+        effect.ApplyVenomDust2();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+            &&prim->m_duration==10&&std::fabs(prim->m_speed-0.4875f)<0.000001f
+            &&std::fabs(prim->m_accel+0.024375f)<0.000001f&&prim->m_size==0.8f
+            &&prim->m_rollSpeed==3&&prim->m_alpha==70
+            &&prim->m_alphaSpeed==prim->m_maxAlpha/10.0f&&prim->m_fadeOutCnt==8
+            &&prim->m_numSegments==1&&prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.spr"
+            &&prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.act"
+            &&std::fabs(prim->m_matrix.m[1][1])<0.00001f&&prim->m_matrix.m[1][2]>0.99999f
+            &&rngDraws==draws+2&&rngCursor==2&&waveCalls.empty(),
+            "VenomDust2 frame zero emits one particle with two ordered RNG draws, X-90 motion, source profile and particle3 resources");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); effect.m_stateCnt=4;
+        const int betweenDraws=rngDraws;
+        effect.ApplyVenomDust2();
+        check(effect.m_primList.empty()&&rngDraws==betweenDraws,
+            "VenomDust2 does not emit or consume RNG between five-frame triggers");
+        effect.m_stateCnt=5; rngValues={0,0}; rngCursor=0;
+        effect.ApplyVenomDust2();
+        prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&std::fabs(prim->m_speed-0.25f)<0.000001f
+            &&rngDraws==betweenDraws+2&&rngCursor==2,
+            "VenomDust2 repeats at frame five with the source lower-bound speed and two draws");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); rngValues.clear(); rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

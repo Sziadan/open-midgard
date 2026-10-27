@@ -594,6 +594,7 @@ private:
     void ApplySphere();
     void ApplyBowlingBash();
     bool ApplyCartRevolution();
+    void ApplyVenomDust2();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();
