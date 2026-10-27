@@ -107,7 +107,7 @@ struct CEffectPrim {
     float m_roll=0,m_size=1,m_arcAngle=36,m_longitude=0;
     matrix m_matrix;
     matrix m_rotMat;
-    vector3d m_pos;
+    vector3d m_pos,m_deltaPos;
     float m_innerSize=0,m_outerSize=0,m_heightSize=0,m_widthSize=0,m_radius=0;
     float m_v1=0,m_v2=1;
     u32 m_argb=0xFFFFFFFF;
@@ -349,6 +349,64 @@ int main() {
         }
         check(stin5.m_pos.x==100&&active.riseAngle==359&&active.rotStart==90,
             "STIN5 rendering leaves primitive position and lane angles unchanged");
+    }
+    {
+        CEffectPrim sma2;sma2.m_pos={100,200,300};sma2.m_deltaPos={3,4,5};
+        sma2.m_texture={&g_texMgr.texture};sma2.m_renderFlag=0x205;
+        EffectGi& gi=sma2.m_gi[0];gi.life=1;gi.alphaB=0;gi.fullDisplayAngle=360;gi.rotStart=37;gi.riseAngle=55;gi.distance=2.4f;
+        for(int i=0;i<21;++i)gi.height[static_cast<size_t>(i)]=static_cast<float>(i+1);
+        sma2.m_gi[1].life=0;sma2.m_gi[1].alphaB=180;sma2.m_gi[1].fullDisplayAngle=360;
+        g_renderer.submissions.clear();g_renderer.flags.clear();
+        matrix identity{};MatrixIdentity(identity);RenderSma2(sma2,identity);
+        check(g_renderer.submissions.size()==40,"SMA2 draws twenty quads for the active 360-degree lane without an alpha gate");
+        auto sample=[&](int count,int order) {
+            int angle=(count+gi.rotStart)%360;if(gi.fullDisplayAngle==360&&order==20)angle=gi.rotStart;
+            const float cosine=GetCos(angle),sine=GetSin(angle);
+            const vector3d base{static_cast<float>(cosine*gi.distance),-0.0f,static_cast<float>(sine*gi.distance)};
+            const double radial=static_cast<double>(GetCos(gi.riseAngle))*gi.height[static_cast<size_t>(order)];
+            const double vertical=static_cast<double>(GetSin(gi.riseAngle))*gi.height[static_cast<size_t>(order)];
+            const float radialForZ=static_cast<float>(radial);
+            const vector3d top{static_cast<float>(static_cast<double>(base.x)+cosine*radial),static_cast<float>(-vertical),
+                static_cast<float>(static_cast<double>(base.z)+sine*radialForZ)};
+            return std::pair<vector3d,vector3d>{{base.x+sma2.m_deltaPos.x,base.y+sma2.m_deltaPos.y,base.z+sma2.m_deltaPos.z},
+                {top.x+sma2.m_deltaPos.x,top.y+sma2.m_deltaPos.y,top.z+sma2.m_deltaPos.z}};
+        };
+        if(g_renderer.submissions.size()==40) {
+            const auto start=sample(0,0),end=sample(18,1);
+            const vector3d expected[6]={start.first,end.first,end.second,start.second,end.second,start.first};
+            const int faceOrder[6]={0,1,2,3,4,5};
+            for(int i=0;i<6;++i) {
+                tlvertex3d projected{};ProjectReferenceEffectVertex(expected[faceOrder[i]],identity,projected);
+                const RPFace& face=g_renderer.submissions[static_cast<size_t>(i/3)];
+                const tlvertex3d& actual=face.m_verts[i%3];
+                check(near(actual.x,projected.x)&&near(actual.y,projected.y)&&near(actual.oow,projected.oow),
+                    "SMA2 first ribbon quad follows base/radial-height/vertical-height geometry and delta position");
+            }
+            const RPFace& first=g_renderer.submissions[0];const RPFace& second=g_renderer.submissions[1];
+            check(first.m_verts[0].color==0x005A5AFFu&&first.srcAlphaMode==D3DBLEND_SRCALPHA
+                &&first.m_verts[0].specular==0xFF000000u&&first.destAlphaMode==D3DBLEND_ONE
+                &&first.tex==&g_texMgr.texture&&g_renderer.flags.size()==40&&g_renderer.flags[0]==0x205,
+                "SMA2 retains fixed blue tint zero alpha source-alpha/one blend texture and render flag");
+            check(near(first.m_verts[0].tu,0)&&first.m_verts[0].tv==1
+                &&near(first.m_verts[1].tu,1.0f/21.0f)&&first.m_verts[1].tv==1
+                &&near(first.m_verts[2].tu,1.0f/21.0f)&&first.m_verts[2].tv==0
+                &&second.m_verts[0].tu==0&&second.m_verts[0].tv==0,
+                "SMA2 advances source U fractions by order and preserves both ribbon triangle UV layouts");
+            const auto seam=sample(360,20);
+            tlvertex3d projectedSeam{};ProjectReferenceEffectVertex(seam.first,identity,projectedSeam);
+            const RPFace& finalFace=g_renderer.submissions[38];
+            check(near(finalFace.m_verts[1].x,projectedSeam.x)&&near(finalFace.m_verts[1].y,projectedSeam.y)
+                &&near(finalFace.m_verts[1].oow,projectedSeam.oow),"SMA2 full-circle final segment closes at RotStart");
+        }
+        check(gi.fullDisplayAngle==360&&gi.rotStart==37&&sma2.m_pos.x==100,
+            "SMA2 renderer does not mutate GI angles or use primitive world position");
+        gi.fullDisplayAngle=315;g_renderer.submissions.clear();RenderSma2(sma2,identity);
+        check(g_renderer.submissions.size()==42
+            &&near(g_renderer.submissions[40].m_verts[0].tu,19.0f/21.0f)
+            &&near(g_renderer.submissions[40].m_verts[1].tu,20.0f/21.0f),
+            "SMA2 partial 315-degree range retains its truncated 15-degree steps and capped final U band");
+        gi.fullDisplayAngle=-1;g_renderer.submissions.clear();RenderSma2(sma2,identity);
+        check(g_renderer.submissions.empty(),"SMA2 negative full angle emits no samples");
     }
     {
         CEffectPrim air;

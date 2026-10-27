@@ -7607,6 +7607,95 @@ void RenderSma(CEffectPrim& prim)
     }
 }
 
+void SubmitSma2Rect(int& rpCount, const vector3d& previousBase, const vector3d& currentBase,
+    const vector3d& currentTop, const vector3d& previousTop, const matrix& viewMatrix,
+    CTexture* texture, unsigned int color, float u0, float u1, int renderFlags)
+{
+    if (rpCount >= 510) return;
+    const int triangles[2][3] = {{0,1,2},{3,2,0}};
+    const vector3d corners[4] = {previousBase,currentBase,currentTop,previousTop};
+    const float uvs[4][2] = {{u0,1.0f},{u1,1.0f},{u1,0.0f},{u0,0.0f}};
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) return;
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = D3DBLEND_ONE;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            const int corner = triangles[triangle][vertex];
+            ProjectReferenceEffectVertex(corners[corner], viewMatrix, face->m_verts[vertex]);
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[corner][0];
+            face->m_verts[vertex].tv = uvs[corner][1];
+        }
+        g_renderer.AddRP(face, renderFlags);
+        ++rpCount;
+    }
+}
+
+// Ref/dhxj/RagEffect2.cpp:12082; canonical RenderSMA2 at 0x622300.
+void RenderSma2(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    int rpCount = 0;
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1) continue;
+
+        const int basicAngle = static_cast<int>(gi.fullDisplayAngle) / 20;
+        int order = 0;
+        int count = 0;
+        vector3d previousBase{}, previousTop{};
+        while (gi.fullDisplayAngle >= 0 && count <= gi.fullDisplayAngle) {
+            int angle = (count + gi.rotStart) % 360;
+            if (gi.fullDisplayAngle == 360 && order == 20) angle = gi.rotStart;
+
+            const float cosine = g_cosTable[angle];
+            const float sine = g_sinTable[angle];
+            vector3d currentBase{
+                static_cast<float>(static_cast<double>(cosine) * gi.distance),
+                -0.0f,
+                static_cast<float>(static_cast<double>(sine) * gi.distance)
+            };
+            const double radialHeight = static_cast<double>(g_cosTable[gi.riseAngle]) * gi.height[static_cast<size_t>(order)];
+            const double verticalHeight = static_cast<double>(g_sinTable[gi.riseAngle]) * gi.height[static_cast<size_t>(order)];
+            const float radialHeightForZ = static_cast<float>(radialHeight);
+            const double xOffset = static_cast<double>(cosine) * radialHeight;
+            const double zOffset = static_cast<double>(radialHeightForZ) * sine;
+            vector3d currentTop{
+                static_cast<float>(static_cast<double>(currentBase.x) + xOffset),
+                static_cast<float>(-verticalHeight),
+                static_cast<float>(static_cast<double>(currentBase.z) + zOffset)
+            };
+            currentBase = AddVec3(currentBase, prim.m_deltaPos);
+            currentTop = AddVec3(currentTop, prim.m_deltaPos);
+
+            if (order > 0) {
+                const float u0 = static_cast<float>(order - 1) / 21.0f;
+                const float u1 = static_cast<float>(order) / 21.0f;
+                const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24)
+                    | (90u << 16) | (90u << 8) | 255u;
+                SubmitSma2Rect(rpCount, previousBase, currentBase, currentTop, previousTop,
+                    viewMatrix, texture, color, u0, u1, static_cast<int>(prim.m_renderFlag));
+            }
+
+            ++order;
+            if (order >= 21) order = 20;
+            previousBase = currentBase;
+            previousTop = currentTop;
+            count += basicAngle;
+        }
+    }
+}
+
 void RenderRainbow(CEffectPrim& prim, const matrix& viewMatrix)
 {
     int rpCount = 0;
@@ -12346,6 +12435,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_SMA) {
         RenderSma(*this);
+        return;
+    }
+    if (m_type == PP_SMA2) {
+        RenderSma2(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_3DQUADHORN2 || UsesReferenceQuadHorn()) {
