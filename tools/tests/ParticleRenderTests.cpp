@@ -276,6 +276,48 @@ int main() {
             "STIN submits the dummy texture as canonical executable RenderTeiRect does");
     }
     {
+        CEffectPrim stin5;stin5.m_pos={100,200,300};stin5.m_texture={&g_texMgr.texture};stin5.m_renderFlag=0x205;
+        EffectGi& active=stin5.m_gi[0];active.life=1;active.alphaB=150;active.riseAngle=359;active.rotStart=90;
+        active.distance=4;active.sparkX=5;active.sparkY=6;active.sparkZ=7;
+        stin5.m_gi[1].life=1;stin5.m_gi[1].alphaB=0;
+        stin5.m_gi[2].life=0;stin5.m_gi[2].alphaB=80;
+        EffectGi& other=stin5.m_gi[3];other.life=1;other.alphaB=20;other.riseAngle=270;other.rotStart=0;other.distance=2;
+        g_renderer.submissions.clear();g_renderer.flags.clear();
+        matrix identity{};MatrixIdentity(identity);RenderStin5(stin5,identity);
+        check(g_renderer.submissions.size()==4,"STIN5 emits two fixed-green source triangles per live positive-alpha lane");
+        if(g_renderer.submissions.size()==4) {
+            const int order[6]={0,1,2,3,2,0};int angle=active.riseAngle;
+            vector3d expectedCorners[4]{};
+            for(int i=0;i<4;++i) {
+                angle+=90;if(angle>=360)angle-=360;
+                const double radial=static_cast<double>(GetCos(angle))*active.distance;
+                expectedCorners[i]={static_cast<float>(GetCos(active.rotStart)*radial+active.sparkX),
+                    static_cast<float>(static_cast<double>(GetSin(angle))*active.distance+active.sparkY),
+                    static_cast<float>(static_cast<double>(GetSin(active.rotStart))*radial+active.sparkZ)};
+            }
+            for(int i=0;i<6;++i) {
+                tlvertex3d expected{};ProjectReferenceEffectVertex(expectedCorners[order[i]],identity,expected);
+                const RPFace& face=g_renderer.submissions[static_cast<size_t>(i/3)];
+                const tlvertex3d& actual=face.m_verts[i%3];
+                check(near(actual.x,expected.x)&&near(actual.y,expected.y)&&near(actual.oow,expected.oow),
+                    "STIN5 rotates each cosine radius around RotStart while sine controls vertical height");
+            }
+            check(g_renderer.submissions[0].m_verts[0].color==0x9650FF50u
+                &&g_renderer.submissions[2].m_verts[0].color==0x1450FF50u,
+                "STIN5 uses one fixed green tint with each lane alpha");
+            check(g_renderer.submissions[0].srcAlphaMode==D3DBLEND_SRCALPHA
+                &&g_renderer.submissions[0].destAlphaMode==D3DBLEND_ONE
+                &&g_renderer.submissions[0].tex==&g_texMgr.texture
+                &&g_renderer.flags.size()==4&&g_renderer.flags[0]==0x205,
+                "STIN5 reuses canonical RenderTeiRect texture blend and primitive render flag");
+            check(g_renderer.submissions[0].m_verts[0].tu==0&&g_renderer.submissions[0].m_verts[0].tv==1
+                &&g_renderer.submissions[0].m_verts[1].tu==1&&g_renderer.submissions[0].m_verts[2].tv==0,
+                "STIN5 retains the shared source triangle UV order");
+        }
+        check(stin5.m_pos.x==100&&active.riseAngle==359&&active.rotStart==90,
+            "STIN5 rendering leaves primitive position and lane angles unchanged");
+    }
+    {
         CEffectPrim air;
         air.m_texture={&g_texMgr.texture};
         air.m_gi[0].life=1; air.m_gi[0].alphaB=100; air.m_gi[0].distance=2.0f;

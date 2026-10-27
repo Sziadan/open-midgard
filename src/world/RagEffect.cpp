@@ -7552,6 +7552,37 @@ void RenderStin(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void Stin5Corners(const EffectGi& gi, vector3d corners[4])
+{
+    int angle = gi.riseAngle;
+    for (int index = 0; index < 4; ++index) {
+        angle += 90;
+        if (angle >= 360) angle -= 360;
+        const double radius = static_cast<double>(g_cosTable[angle]) * gi.distance;
+        corners[index].x = static_cast<float>(static_cast<double>(g_cosTable[gi.rotStart]) * radius);
+        corners[index].z = static_cast<float>(static_cast<double>(g_sinTable[gi.rotStart]) * radius);
+        corners[index].y = static_cast<float>(static_cast<double>(g_sinTable[angle]) * gi.distance);
+        corners[index].x = static_cast<float>(static_cast<double>(corners[index].x) + gi.sparkX);
+        corners[index].y = static_cast<float>(static_cast<double>(corners[index].y) + gi.sparkY);
+        corners[index].z = static_cast<float>(static_cast<double>(corners[index].z) + gi.sparkZ);
+    }
+}
+
+void RenderStin5(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    int rpCount = 0;
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) continue;
+
+        vector3d corners[4]{};
+        Stin5Corners(gi, corners);
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24)
+            | (80u << 16) | (255u << 8) | 80u;
+        SubmitStinRect(rpCount, corners, viewMatrix, texture, color, static_cast<int>(prim.m_renderFlag));
+    }
+}
+
 void RenderRainbow(CEffectPrim& prim, const matrix& viewMatrix)
 {
     int rpCount = 0;
@@ -12283,6 +12314,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_STIN || m_type == PP_STIN2 || m_type == PP_STIN4) {
         RenderStin(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_STIN5) {
+        RenderStin5(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_3DQUADHORN2 || UsesReferenceQuadHorn()) {
