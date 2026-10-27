@@ -1996,3 +1996,10 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - The implementation now follows those operations using the existing actor color fields. `tools/tests/check_actor_sendmsg_color_cases.py` compares the complete source bodies and verifies each mapped branch; it is registered as CTest `actor_sendmsg_color_cases_source_check`.
 - The direct current switch now has 55 of the 79 source message IDs; 26 remain without direct arms. The `SendMsg` function remains in progress.
 - x64 Release build succeeded and all 32 CTests passed. Authorized deployment to `D:\Spel\OldRO\open-midgard.exe` matches Release SHA-256 `55D2ACEE75DDD0E5026B3ACB5E4B2742F9FBBC89A97E89D0D8958321D9FC3585`.
+
+## `CGameActor::SendMsg` vanish arm 99 — 2026-10-27
+
+- Ref and canonical EXE `SendMsg` bodies match. Message 99 invalidates the actor GID, clears `m_99`, disables its shadow, and sets a 510 ms vanish deadline, replacing a wrapped-zero deadline with 1.
+- The implementation now follows those state writes in source order. `tools/tests/check_actor_sendmsg_vanish.py` checks the complete Ref/EXE body equality and the mapped branch; it is registered as CTest `actor_sendmsg_vanish_source_check`.
+- The current direct switch now covers 56 source message IDs; 25 remain without a direct arm. This does not finish the `SendMsg` comparison.
+- x64 Release build succeeded and all 33 CTests passed. Authorized deployment to `D:\Spel\OldRO\open-midgard.exe` matches Release SHA-256 `C6E897A67760DCC5E0A8B6EB5C992D6779BFE249CFCEC2188F32E205AC47F668`.

@@ -4936,6 +4936,16 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         }
         return;
     }
+    case 99: {
+        m_gid = static_cast<u32>(-1);
+        m_99 = 0;
+        m_shadowOn = 0;
+        m_vanishTime = timeGetTime() + 510;
+        if (m_vanishTime == 0) {
+            m_vanishTime = 1;
+        }
+        return;
+    }
     case 127:
         LaunchEffect(336, vector3d{}, 0.0f);
         return;
