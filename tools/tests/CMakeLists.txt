@@ -418,6 +418,8 @@ add_test(NAME player_onprocess_source_audit
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_player_onprocess_source.py")
 add_test(NAME player_premove_route_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_player_premove_route.py")
+add_test(NAME runtime_wave_pending_producers_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_runtime_wave_pending_producers.py")
 add_test(NAME player_proceed_source_comparison
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_player_proceed_source.py")
 add_test(NAME player_pt_skill_route_source_check

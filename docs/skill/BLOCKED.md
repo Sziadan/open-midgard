@@ -4,13 +4,9 @@ Runtime-name entries require a producer port; they do not establish that an asse
 Source anchors already ported are listed separately in `generated/runtime_wave_callsites.tsv`; none is a live-verification claim.
 
 <!-- generated:begin -->
-- PlayWave at 0x5F963C in CRagEffect::FireArrow uses a runtime name; trace and port its producer (not an unrecoverable literal)
-- PlayWave at 0x5FD22D in CRagEffect::EarthSpike uses a runtime name; trace and port its producer (not an unrecoverable literal)
-- PlayWave at 0x606D01 in CRagEffect::FireHit uses a runtime name; trace and port its producer (not an unrecoverable literal)
-- PlayWave at 0x60A8EE in CRagEffect::Kouenka uses a runtime name; trace and port its producer (not an unrecoverable literal)
-- PlayWave at 0x642CAD in CEffectPrim::Prim3DParticleGravity uses a runtime name; trace and port its producer (not an unrecoverable literal)
+None.
 <!-- generated:end -->
 
 ## Manually reviewed dependencies
 
-- WP5 FireArrow (`Ref/RagEffect.cpp:3983-3988`, 0x5F95B0): `aEffect_149`, `aEffect_14`, `aEffect_77`, `aEffect_119`, `aEffect_131`, `aEffect_33` resolve through SymbolTable only to the truncated `effect\` prefix. The six CTexMgr string pushes still need call-site resolution before porting that branch. Do not infer paths from the `_N` suffixes.
+- FireArrow's six CTexMgr sprite strings were already resolved from canonical executable bytes and checked in the FireArrow lifecycle checkpoint (`PARITY_LOG.md`, “FireArrow projectile / trail / impact”). Their addresses are `0x71B700`, `0x71B6EC`, `0x71B6D8`, `0x71B6C4`, `0x71B6B0`, and `0x71B69C`; no blocked dependency remains here.

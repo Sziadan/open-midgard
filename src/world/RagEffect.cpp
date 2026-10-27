@@ -8496,6 +8496,7 @@ bool UpdateReferenceGravityParticle(CEffectPrim* prim)
         prim->m_gravSpeed = static_cast<float>(prim->m_gravSpeed * -0.66666669);
         if (prim->m_playWaveType == 1) {
             char waveName[50];
+            // Ref runtime-wave: 0x642CAD, effect\EF_Coin[1-3].wav.
             std::sprintf(waveName, "effect\\EF_Coin%d.wav", rand() % 3 + 1);
             CGameMode* soundMode = g_modeMgr.GetCurrentGameMode();
             const vector3d& listener = soundMode->m_world->m_player->m_pos;
@@ -18783,6 +18784,7 @@ void CRagEffect::ApplyFireArrow()
     if (!master) return;
     m_effectPos = master->m_pos;
     if (m_stateCnt == 12) {
+        // Ref runtime-wave: 0x5F963C, effect\EF_FireArrow[1-3].wav.
         char waveName[64];
         std::snprintf(waveName, sizeof(waveName), "effect\\EF_FireArrow%d.wav", rand() % 3 + 1);
         CGameMode* mode = g_modeMgr.GetCurrentGameMode();
@@ -19368,6 +19370,7 @@ bool CRagEffect::ProcessFireHit()
             const vector3d& listener = mode->m_world->m_player->m_pos;
             const float x = m_effectPos.x-listener.x, z = m_effectPos.z-listener.z;
             const char* wave = g_session.GetAttrWaveName(3);
+            // Ref runtime-wave: 0x606D01, _enemy_hit_fire[1-2].wav.
             PlayWave(wave,x,0.0f,z,250,40,1.0f);
         }
     }
@@ -19534,6 +19537,7 @@ void CRagEffect::ApplyKouenka()
     m_effectPos = master->m_pos;
 
     if (m_stateCnt >= 12 && m_stateCnt <= 15) {
+        // Ref runtime-wave: 0x60A8EE, effect\EF_FireArrow[1-3].wav.
         char waveName[50];
         std::snprintf(waveName, sizeof(waveName), "effect\\EF_FireArrow%d.wav", rand() % 3 + 1);
         CGameMode* mode = g_modeMgr.GetCurrentGameMode();
@@ -19634,6 +19638,7 @@ void CRagEffect::ApplyEarthSpike(char variant)
         textureName = "effect\\ice.tga";
         if (mode->m_world && mode->m_world->m_player) {
             const vector3d& listener = mode->m_world->m_player->m_pos;
+            // Ref runtime-wave: 0x5FD22D, effect\EF_IceArrow[1-3].wav.
             PlayWave(waveName, m_effectPos.x-listener.x, 0.0f, m_effectPos.z-listener.z, 250, 40, 1.0f);
         }
     }
