@@ -4419,6 +4419,11 @@ CGameActor::CGameActor()
     , m_xSize(0)
     , m_ySize(0)
     , m_headType(0)
+    , m_doesLaunchEffect(0)
+    , m_x1(0.0f)
+    , m_z1(0.0f)
+    , m_x2(0.0f)
+    , m_z2(0.0f)
     , m_willBeDead(0)
     , m_is99(0)
     , m_99(0)
@@ -6024,7 +6029,192 @@ void CRenderObject::SetForceAnimEndTick(u32 tick)
     m_forceStateEndTick = tick + timeGetTime();
 }
 
+void CGameActor::SetNpcState(int state)
+{
+    if (state == 4 && m_stateId == 1) {
+        m_stateId = 0;
+    } else if (state == -1) {
+        return;
+    }
+
+    if (m_job == 45) {
+        if (m_ySize <= 10) m_ySize = 10;
+        if (m_xSize <= 10) m_xSize = 10;
+        const float halfWidth = static_cast<float>(m_xSize / 2);
+        const float halfHeight = static_cast<float>(m_ySize / 2);
+        m_x1 = m_pos.x - halfWidth;
+        m_z1 = m_pos.z - halfHeight;
+        m_x2 = m_pos.x + halfWidth;
+        m_z2 = m_pos.z + halfHeight;
+        if (!m_doesLaunchEffect && m_isVisibleBody) {
+            m_doesLaunchEffect = 1;
+            LaunchEffect(321, vector3d{}, 0.0f);
+        }
+    } else if (m_job == 104) {
+        m_pos.y -= static_cast<float>(5 * m_ySize);
+    } else if (m_job == 111) {
+        m_xSize *= 2;
+        m_ySize *= 2;
+    } else if (m_job != 139 && m_job < 1000) {
+        SetAction(0, 4, 0);
+        RegisterPos();
+    } else if (m_job >= 1000) {
+        if (m_stateId == 4) {
+            m_pos.x = m_damageDestX;
+            m_pos.z = m_damageDestZ;
+        }
+
+        switch (state) {
+        case 0:
+            m_isLieOnGround = 0;
+            m_shouldAddPickInfo = 1;
+            SetAction(0, 4, 0);
+            if (m_pkState) {
+                int petAction = 40;
+                switch (m_pkState) {
+                case 1: petAction = 40; break;
+                case 2: petAction = 48; break;
+                case 3: petAction = 56; break;
+                case 4: petAction = 64; break;
+                default: break;
+                }
+                SetAction(petAction, 4, 1);
+                m_pkState = 0;
+                m_isMotionFinished = 0;
+                RegisterPos();
+            } else {
+                if (m_stateId) m_petEmotionStartTick = timeGetTime();
+                RegisterPos();
+            }
+            break;
+        case 1:
+            if (m_bodyState != 1 && m_bodyState != 2) {
+                m_isMotionFreezed = 0;
+            }
+            SetAction(8, (m_job >= 6017 && m_job <= 6046) ? 6 : 4, 0);
+            UnRegisterPos();
+            break;
+        case 2: {
+            if (m_bodyState != 1 && m_bodyState != 2) {
+                m_isMotionFreezed = 0;
+            }
+            if (m_job >= 6001 && m_job <= 6016) {
+                const int randomBits = std::rand() & static_cast<int>(0x80000001u);
+                const bool selectAction48 = randomBits == 0
+                    || (randomBits < 0
+                        && ((static_cast<unsigned int>(static_cast<unsigned char>(randomBits)) - 1u)
+                            | 0xFFFFFFFEu) == 0xFFFFFFFFu);
+                if (selectAction48) {
+                    SetAction(48, 4, 1);
+                } else {
+                    SetAction(16, 4, 1);
+                }
+            } else if (m_job >= 6017 && m_job <= 6046) {
+                SetAction(80, 3, 1);
+            } else {
+                SetAction(16, 4, 1);
+            }
+
+            const auto calcDir = [this](float x, float z) {
+                const long double rotation = std::atan2(
+                    static_cast<long double>(x) - m_pos.x,
+                    -(static_cast<long double>(z) - m_pos.z)) / 3.141592L * 180.0L;
+                m_roty = static_cast<float>(rotation);
+                if (rotation >= 360.0L) {
+                    m_roty = static_cast<float>(rotation - 360.0L);
+                }
+                if (m_roty < 0.0f) {
+                    m_roty += 360.0f;
+                }
+            };
+            if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+                CWorld* world = gameMode->m_world;
+                if (m_targetGid == g_session.m_aid) {
+                    if (world && world->m_player) {
+                        calcDir(world->m_player->m_pos.x, world->m_player->m_pos.z);
+                    }
+                } else if (world) {
+                    if (CGameActor* target = world->GetGameActorByAID(m_targetGid)) {
+                        calcDir(target->m_pos.x, target->m_pos.z);
+                    }
+                }
+            }
+            m_attackMotion = static_cast<float>(GetAttackMotion());
+            RegisterPos();
+            const float hideTime = m_motionSpeed * m_attackMotion;
+            MakeSpecialAttackEffect(m_targetGid, hideTime);
+            break;
+        }
+        case 3: {
+            const int bodyState = m_bodyState;
+            m_isForceState = 0;
+            m_isForceState2 = 0;
+            m_isForceState3 = 0;
+            m_isMotionFreezed = 0;
+            if (bodyState == 2) {
+                SendMsg(nullptr, 59, 0, 0, 0);
+                SendMsg(nullptr, 62, 0, 0, 0);
+            }
+            m_isLieOnGround = 1;
+            m_isMotionFreezed = 0;
+            m_shouldAddPickInfo = 0;
+            if (m_job >= 6017 && m_job <= 6046) {
+                SetAction(64, 4, 1);
+            } else {
+                SetAction(32, 8, 1);
+            }
+            UnRegisterPos();
+            break;
+        }
+        case 4:
+            if (m_isForceState || m_isForceState2 || m_isForceState3) {
+                return;
+            }
+            if (m_job >= 6017 && m_job <= 6046) {
+                SetAction(48, 5, 1);
+            } else if (m_curAction < 40) {
+                SetAction(24, 4, 1);
+            } else {
+                ProcessMotion();
+            }
+            break;
+        case 7:
+            if (m_objectType == 9) {
+                SetAction(16, 4, 1);
+            }
+            if (m_job >= 6001 && m_job <= 6016) {
+                SetAction(40, 4, 1);
+            } else if (m_job >= 6017 && m_job <= 6046) {
+                SetAction(96, 6, 1);
+            }
+            break;
+        case 10:
+            if (m_bodyState == 2) {
+                SendMsg(nullptr, 59, 0, 0, 0);
+                SendMsg(nullptr, 62, 0, 0, 0);
+            }
+            m_isLieOnGround = 0;
+            m_isMotionFinished = 1;
+            m_isMotionFreezed = 1;
+            SetAction(0, 8, 1);
+            break;
+        default:
+            break;
+        }
+    }
+
+    m_curAction = m_baseAction + Get8Dir(m_roty);
+    if (state != 4) {
+        m_stateId = state;
+    }
+    m_stateStartTick = timeGetTime();
+}
+
 void CGameActor::SetState(int state) {
+    if (m_isPc == 0 && dynamic_cast<CSkill*>(this) == nullptr) {
+        SetNpcState(state);
+        return;
+    }
     if (state == -1) {
         return;
     }

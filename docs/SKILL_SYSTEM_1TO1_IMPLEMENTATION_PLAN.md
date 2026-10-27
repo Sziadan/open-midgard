@@ -440,6 +440,8 @@ Completion update (2026-10-27): `CPc::ProcessState` passes Ref/EXE body equality
 
 Completion update (2026-10-27): `CPlayer::SetState` now passes complete Ref/EXE and current branch comparisons. Its move/pre-engage state handling, message-91 movement-ack gate, state-3 effect 372, and delegation to `CPc::SetState` are represented. Anti-cheat and the legacy full-screen renderer toggle are outside scope; see `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`.
 
+Completion update (2026-10-27): `CNpc::SetState` passes the Ref/EXE body and ordered branch-level comparison. The unified `CGameActor` path covers NPC states 0/1/2/3/4/7/10, pet substates, job exceptions 45/104/111/139 and 6001–6046, including attack facing/effect, death/freeze, and registration side effects. Skill-unit actors are excluded from the NPC route. See the latest `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`; next WP2.7 function is `CNpc::SendMsg`.
+
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
 * `CPc::SetState` Ref/Pc.cpp:5678, `ProcessState` 2382.
 * `CPlayer::SetState` Ref/Player.cpp:523, `ProcessState` 87.

@@ -273,6 +273,8 @@ public:
     UIRechargeGage* m_skillRechargeGage = nullptr;
     u32 m_freezeEndTick, m_petEmotionStartTick, m_skillRechargeEndTick = 0, m_skillRechargeStartTick = 0;
     int m_chatWidth, m_chatHeight, m_nameWidth, m_xSize, m_ySize, m_headType;
+    int m_doesLaunchEffect;
+    float m_x1, m_z1, m_x2, m_z2;
     std::list<WBA> m_willBeAttackList, m_willBeAttackedList;
     int m_willBeDead, m_is99;
     char m_99;
@@ -312,6 +314,7 @@ public:
     virtual void SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override;
     virtual int  Get8Dir(float rot) override;
     virtual void SetState(int state);
+    void SetNpcState(int state);
     virtual void ProcessWillBeAttacked();
     virtual void SetModifyFactorOfmotionSpeed(int attackMT);
     virtual int GetAttackMotion();
