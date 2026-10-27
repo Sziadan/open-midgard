@@ -3711,6 +3711,56 @@ void HandleSkillFailAck(CGameMode& mode, const PacketView& packet)
         static_cast<int>(kSystemNoticeColor));
 }
 
+void HandleSkillMessage(CGameMode&, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 6) {
+        return;
+    }
+
+    const char* message = nullptr;
+    switch (ReadLE32(packet.data + 2)) {
+    case 0x15:
+        message = "All abnormal status effects have been removed.";
+        break;
+    case 0x16:
+        message = "You will be immune to abnormal status effects for the next minute.";
+        break;
+    case 0x17:
+        message = "Your Max HP will stay increased for the next minute.";
+        break;
+    case 0x18:
+        message = "Your Max SP will stay increased for the next minute.";
+        break;
+    case 0x19:
+        message = "All of your Stats will stay increased for the next minute.";
+        break;
+    case 0x1C:
+        message = "Your weapon will remain blessed with Holy power for the next minute.";
+        break;
+    case 0x1D:
+        message = "Your armor will remain blessed with Holy power for the next minute.";
+        break;
+    case 0x1E:
+        message = "Your Defense will stay increased for the next 10 seconds.";
+        break;
+    case 0x1F:
+        message = "Your Attack strength will be increased for the next minute.";
+        break;
+    case 0x20:
+        message = "Your Accuracy and Flee Rate will be increased for the next minute.";
+        break;
+    case 0x28:
+        // Decoded from the canonical executable's CP949 MSI_FULLSTRIP resource:
+        // "완벽하게 코팅되어있어서 풀스트립이 통하지 않습니다."
+        message = "This target is fully coated, so Full Strip will not work.";
+        break;
+    default:
+        return;
+    }
+
+    g_windowMgr.PushChatEvent(message, 10198015u, 7);
+}
+
 bool SessionIsAttack(int action)
 {
     return action == 0 || action == 4;
@@ -7680,6 +7730,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     RegisterHandlerIfValid(router, receiveProfile.skillNoDamageNotify, HandleSkillNoDamageNotify);
     router.Register(0x0139, HandleAttackFailureForDistance);
     router.Register(0x013A, HandleAttackRange);
+    router.Register(0x0215, HandleSkillMessage);
     RegisterHandlerIfValid(router, receiveProfile.actorStateChangeExtended, HandleActorStateChange);
     router.Register(0x0121, HandleCartInfo);
     router.Register(0x012B, HandleCartOff);

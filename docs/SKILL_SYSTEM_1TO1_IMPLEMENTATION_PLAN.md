@@ -227,7 +227,7 @@ The current `src/world/RagEffect.cpp` hard-codes different durations (e.g. id 12
 | `0x01CD` | autospell | 30 | | 6712 | `Zc_AutoSpellList` 8618 |
 | `0x01D1` | bladestop | 14 | | 6831 | `Zc_BladeStop` 8805 |
 | `0x01D2` | combo delay | 10 | | 6813 | `Zc_ComboDelay` 10255 |
-| `0x0215` | ZC_SKILLMSG | 6 | | | `Zc_SKILLMSG` 25035 |
+| `0x0215` | ZC_SKILLMSG | 6 | msg id.L@2 | 8398 (`Ref/eAthena_src_2011/map/clif.c`) | `Zc_SKILLMSG` 25035 |
 | `0x01F3` | ZC_NOTIFY_EFFECT2 | 10 | aid.L@2 effectId.L@6 | 8012 | `Zc_Notify_Effect2` 17110 |
 | `0x0284` | ZC_NOTIFY_EFFECT3 | 14 | aid.L@2 effectId.L@6 num.L@10 | 8048 | `Zc_Notify_Effect3` 17131 |
 | `0x019B` | ZC_NOTIFY_EFFECT | 10 | aid.L@2 type.L@6 | 3196 | `Zc_Notify_Effect` 17050 |
