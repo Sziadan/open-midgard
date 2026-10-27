@@ -23,7 +23,7 @@ def ordered(body: str, patterns: list[str], label: str) -> None:
     for pattern in patterns:
         match = re.search(pattern, body[cursor:], re.S)
         assert match, f"{label}: missing/out-of-order branch token {pattern}"
-        cursor += match.end()
+        cursor = cursor + match.end()
 
 
 source = (ROOT / "Ref/dhxj/RagEffect2.cpp").read_text(encoding="cp949", errors="replace")
