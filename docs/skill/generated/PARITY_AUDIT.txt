@@ -1,14 +1,14 @@
 Static skill parity audit (not runtime verification)
 Reference dispatch case labels: 693
 OnProcess: 416, OnProcess2: 73, OnProcess3: 204
-Packet handlers registered and not ignored: 35/41
+Packet handlers registered and not ignored: 35/40
 Registration does not establish a 1:1 handler body or receiver implementation.
+0x043D is excluded: absent from the target EXE dispatcher; later packet-db entry only.
 Open packet routes:
   0x01D0: HandleIgnorePacket
   0x01E1: HandleIgnorePacket
   0x01CF: HandleIgnorePacket
   0x01CD: MISSING
-  0x043D: MISSING
   0x0162: MISSING
 SKILL_MATRIX.md: MISSING
 Effect bodies/primitives: incomplete; see PROGRESS.md and PARITY_LOG.md.
