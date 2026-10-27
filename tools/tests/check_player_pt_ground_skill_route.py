@@ -113,6 +113,7 @@ ordered_current = (
     "player->m_destCellX = approachTileX",
     "timeGetTime() > player->m_moveReqTick + 1000",
     "SendMoveRequestPacket(approachTileX, approachTileY)",
+    "if (mode.m_hasTouchSkillChase)",
     "if (!mode.m_hasSkillChase || mode.m_skillChaseTargetGid == 0)",
 )
 positions = [pump_route.find(token) for token in ordered_current]

@@ -6607,6 +6607,54 @@ bool CWorld::FindHoveredActorScreen(const matrix& viewMatrix,
     return false;
 }
 
+bool CWorld::FindHoveredSkillScreen(const matrix& viewMatrix,
+    int screenX,
+    int screenY,
+    CSkill** outSkill) const
+{
+    if (outSkill) {
+        *outSkill = nullptr;
+    }
+
+    // Skill units are ground-anchored effects rather than actor billboards.
+    // Use a small screen-space target around each visible unit's projected
+    // origin so modern skill-target skills can select them without legacy UI.
+    const float radius = static_cast<float>((std::max)(12, (24 * g_renderer.m_height) / 480));
+    const float radiusSquared = radius * radius;
+    const float mouseX = static_cast<float>(screenX);
+    const float mouseY = static_cast<float>(screenY);
+    float bestDepth = 1.0f;
+    float bestDistanceSquared = radiusSquared;
+    CSkill* bestSkill = nullptr;
+    for (CSkill* skill : m_skillList) {
+        if (!skill || !skill->m_isVisible) {
+            continue;
+        }
+
+        tlvertex3d projected{};
+        if (!ProjectPoint(g_renderer, viewMatrix, skill->m_pos, &projected)) {
+            continue;
+        }
+        const float dx = mouseX - projected.x;
+        const float dy = mouseY - projected.y;
+        const float distanceSquared = dx * dx + dy * dy;
+        if (distanceSquared > radiusSquared) {
+            continue;
+        }
+        if (!bestSkill || projected.z < bestDepth
+            || (projected.z == bestDepth && distanceSquared < bestDistanceSquared)) {
+            bestSkill = skill;
+            bestDepth = projected.z;
+            bestDistanceSquared = distanceSquared;
+        }
+    }
+
+    if (outSkill) {
+        *outSkill = bestSkill;
+    }
+    return bestSkill != nullptr;
+}
+
 bool CWorld::GetGroundItemScreenMarker(const matrix& viewMatrix,
     u32 aid,
     int* outCenterX,

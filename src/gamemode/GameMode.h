@@ -295,6 +295,11 @@ public:
     int m_groundSkillLevel;
     int m_groundSkillRange;
     int m_hasGroundSkillChase;
+    u32 m_touchSkillTargetAid;
+    int m_touchSkillId;
+    int m_touchSkillLevel;
+    int m_touchSkillRange;
+    int m_hasTouchSkillChase;
     int m_mapLoadingStage;
     u32 m_mapLoadingStartTick;
     u32 m_mapLoadingAckTick;

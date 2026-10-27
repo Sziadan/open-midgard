@@ -2882,12 +2882,14 @@ void SetModeCursorAction(CGameMode& mode, CursorAction cursorActNum)
 
 constexpr int kSkillInfGroundSkill = 0x02;
 constexpr int kSkillInfSelfSkill = 0x04;
+constexpr int kSkillInfTargetSkill = 0x20; // Ref SKILLTYPE_TOSKILL / SUT_TO_SKILL
 constexpr u16 kSkillMerchantChangeCart = 154;
 constexpr int kEffectStatePushCartMask = 0x0008 | 0x0080 | 0x0100 | 0x0200 | 0x0400;
 
 enum class ShortcutSkillUseMode {
     ActorTarget,
     GroundTarget,
+    SkillTarget,
     ImmediateSelf,
     CartSelect,
 };
@@ -2906,6 +2908,9 @@ ShortcutSkillUseMode ResolveShortcutSkillUseMode(u16 skillId)
     const int skillInf = skillInfo->type;
     if ((skillInf & kSkillInfGroundSkill) != 0) {
         return ShortcutSkillUseMode::GroundTarget;
+    }
+    if (skillInf == kSkillInfTargetSkill) {
+        return ShortcutSkillUseMode::SkillTarget;
     }
     if ((skillInf & kSkillInfSelfSkill) != 0) {
         return ShortcutSkillUseMode::ImmediateSelf;
@@ -3131,6 +3136,19 @@ void UpdateGameplayCursor(CGameMode& mode)
                 SetModeCursorAction(mode, CursorAction::Forbidden);
             }
             return;
+        case ShortcutSkillUseMode::SkillTarget: {
+            CSkill* hoveredSkill = nullptr;
+            if (mode.m_world->FindHoveredSkillScreen(mode.m_view->GetViewMatrix(),
+                mode.m_oldMouseX,
+                mode.m_oldMouseY,
+                &hoveredSkill)
+                && hoveredSkill) {
+                SetModeCursorAction(mode, CursorAction::SkillTargetAlt);
+            } else {
+                SetModeCursorAction(mode, CursorAction::Forbidden);
+            }
+            return;
+        }
         case ShortcutSkillUseMode::ImmediateSelf:
         case ShortcutSkillUseMode::CartSelect:
             break;
@@ -4382,6 +4400,11 @@ void ClearSkillChase(CGameMode& mode)
     mode.m_groundSkillLevel = 0;
     mode.m_groundSkillRange = 0;
     mode.m_hasGroundSkillChase = 0;
+    mode.m_touchSkillTargetAid = 0;
+    mode.m_touchSkillId = 0;
+    mode.m_touchSkillLevel = 0;
+    mode.m_touchSkillRange = 0;
+    mode.m_hasTouchSkillChase = 0;
 }
 
 void ClearPickupIntent(CGameMode& mode)
@@ -5535,6 +5558,20 @@ void BeginSkillChase(CGameMode& mode, u32 targetGid, u16 skillId, u16 skillLevel
     mode.m_skillChaseRange = skillRange;
     mode.m_lastSkillChaseRequestTick = 0;
     mode.m_hasGroundSkillChase = 0;
+    mode.m_hasTouchSkillChase = 0;
+    mode.m_hasSkillChase = 1;
+}
+
+void BeginTouchSkillChase(CGameMode& mode, u32 targetAid, u16 skillId, u16 skillLevel, int skillRange)
+{
+    mode.m_lastMonGid = 0;
+    mode.m_lastLockOnMonGid = 0;
+    mode.m_touchSkillTargetAid = targetAid;
+    mode.m_touchSkillId = static_cast<int>(skillId);
+    mode.m_touchSkillLevel = static_cast<int>(skillLevel);
+    mode.m_touchSkillRange = skillRange;
+    mode.m_hasGroundSkillChase = 0;
+    mode.m_hasTouchSkillChase = 1;
     mode.m_hasSkillChase = 1;
 }
 
@@ -5560,6 +5597,37 @@ bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode, int screenX, int scr
             ClearPendingSkillUse(mode);
             return true;
         }
+        return false;
+    }
+
+    CSkill* hoveredSkill = nullptr;
+    if (mode.m_world->FindHoveredSkillScreen(mode.m_view->GetViewMatrix(), screenX, screenY, &hoveredSkill)
+        && hoveredSkill) {
+        const bool specialSkillUnitJob = hoveredSkill->m_job == 141
+            || hoveredSkill->m_job == 143
+            || hoveredSkill->m_job == 152;
+        const bool excludedSpecialSkill = skillId >= 215 && skillId <= 218;
+        if (specialSkillUnitJob ? !excludedSpecialSkill : skillUseMode == ShortcutSkillUseMode::SkillTarget) {
+            const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId));
+            const int skillRange = skillInfo ? skillInfo->attackRange : 0;
+            ClearSkillChase(mode);
+            BeginTouchSkillChase(mode, hoveredSkill->m_aid, skillId, skillLevel, skillRange);
+            ClearAttackChaseHint(mode);
+            ClearPendingSkillUse(mode);
+            DbgLog("[GameMode] touch skill intent armed skillId=%u level=%u target=%u job=%d range=%d\n",
+                static_cast<unsigned int>(skillId),
+                static_cast<unsigned int>(skillLevel),
+                static_cast<unsigned int>(hoveredSkill->m_aid),
+                hoveredSkill->m_job,
+                skillRange);
+            return true;
+        }
+        if (specialSkillUnitJob && excludedSpecialSkill) {
+            return true;
+        }
+    }
+
+    if (skillUseMode == ShortcutSkillUseMode::SkillTarget) {
         return false;
     }
 
@@ -5881,6 +5949,7 @@ bool RequestShortcutSlotUse(int visibleSlot)
     }
     case ShortcutSkillUseMode::GroundTarget:
     case ShortcutSkillUseMode::ActorTarget:
+    case ShortcutSkillUseMode::SkillTarget:
         ClearSkillChase(*gameMode);
         gameMode->m_lastMonGid = 0;
         gameMode->m_lastLockOnMonGid = 0;
@@ -6702,6 +6771,124 @@ void PumpSkillChaseRequest(CGameMode& mode)
             return;
         }
         if (player->m_stateId == 2) {
+            return;
+        }
+
+        player->m_destCellX = approachTileX;
+        player->m_destCellZ = approachTileY;
+        if (!player->m_isWaitingMoveAck || timeGetTime() > player->m_moveReqTick + 1000) {
+            player->m_isWaitingMoveAck = 1;
+            player->m_moveReqTick = timeGetTime();
+            SendMoveRequestPacket(approachTileX, approachTileY);
+        }
+        return;
+    }
+
+    if (mode.m_hasTouchSkillChase) {
+        const u32 targetAid = mode.m_touchSkillTargetAid;
+        CSkill* target = targetAid != 0 ? mode.m_world->GetSkillByAID(targetAid) : nullptr;
+        if (!target) {
+            // Missing source target resolves to message 13 (clear proceed).
+            ClearSkillChase(mode);
+            return;
+        }
+
+        const u16 skillId = static_cast<u16>(mode.m_touchSkillId & 0xFFFF);
+        const u16 skillLevel = static_cast<u16>(mode.m_touchSkillLevel & 0xFFFF);
+        const int skillRange = mode.m_touchSkillRange;
+        C3dAttr* attr = mode.m_world->m_attr;
+        if (!attr || attr->m_zoom <= 0 || attr->m_width <= 0 || attr->m_height <= 0
+            || attr->m_cells.size() < static_cast<size_t>(attr->m_width) * static_cast<size_t>(attr->m_height)) {
+            return;
+        }
+
+        int sourceTileX = -1;
+        int sourceTileY = -1;
+        mode.GetServerCoor(player->m_pos.x, player->m_pos.z, sourceTileX, sourceTileY);
+        int skillTileX = -1;
+        int skillTileY = -1;
+        mode.GetServerCoor(target->m_pos.x, target->m_pos.z, skillTileX, skillTileY);
+        float targetWorldX = 0.0f;
+        float targetWorldZ = 0.0f;
+        mode.GetClientCoor(skillTileX, skillTileY, targetWorldX, targetWorldZ);
+
+        // Ref PT_TOUCH_SKILL passes the skill unit's server-cell center to the
+        // same closest-safe-cell helper used for targeted actor skills.
+        const float deltaX = player->m_pos.x - targetWorldX;
+        const float deltaZ = player->m_pos.z - targetWorldZ;
+        const float lengthSquared = deltaX * deltaX + deltaZ * deltaZ;
+        int approachTileX = sourceTileX;
+        int approachTileY = sourceTileY;
+        if (lengthSquared > 0.0f) {
+            const double inverseLength = 1.0 / std::sqrt(static_cast<double>(lengthSquared));
+            const float normalizedDirectionX = static_cast<float>(inverseLength * deltaX);
+            const float projectedOffsetX = static_cast<float>(static_cast<double>(5 * skillRange) * normalizedDirectionX);
+            const float projectedOffsetZ = static_cast<float>(static_cast<double>(5 * skillRange) * (inverseLength * deltaZ));
+            const float approachWorldX = projectedOffsetX + targetWorldX;
+            const float approachWorldZ = projectedOffsetZ + targetWorldZ;
+            const float zoom = static_cast<float>(attr->m_zoom);
+            approachTileX = static_cast<int>(std::floor(static_cast<double>(approachWorldX / zoom)
+                + static_cast<double>(attr->m_width / 2)));
+            approachTileY = static_cast<int>(std::floor(static_cast<double>(approachWorldZ / zoom)
+                + static_cast<double>(attr->m_height / 2)));
+        }
+
+        constexpr std::array<std::array<int, 2>, 8> kTouchRefNeighborOrder{{
+            {{1, 0}}, {{1, 1}}, {{1, -1}}, {{-1, 0}},
+            {{-1, 1}}, {{-1, -1}}, {{0, 1}}, {{0, -1}},
+        }};
+        const auto isSourceWalkableTouchCell = [attr](int x, int y) {
+            if (x < 0 || x >= attr->m_width || y < 0 || y >= attr->m_height) {
+                return false;
+            }
+            const CAttrCell& cell = attr->m_cells[static_cast<size_t>(x + y * attr->m_width)];
+            return cell.flag != 1 && cell.flag != 5;
+        };
+        if (!isSourceWalkableTouchCell(approachTileX, approachTileY)) {
+            const int projectedX = approachTileX;
+            const int projectedY = approachTileY;
+            for (const auto& offset : kTouchRefNeighborOrder) {
+                approachTileX = projectedX + offset[0];
+                approachTileY = projectedY + offset[1];
+                if (isSourceWalkableTouchCell(approachTileX, approachTileY)) {
+                    break;
+                }
+            }
+        }
+
+        if (player->m_stateId >= 2 && player->m_stateId != 4 && player->m_stateId < 16) {
+            return;
+        }
+
+        const float dx = player->m_pos.x - targetWorldX;
+        const float dz = player->m_pos.z - targetWorldZ;
+        const float dy = 0.0f;
+        const float horizontalDistanceSquared = dx * dx + dz * dz;
+        const double horizontalDistance = std::sqrt(static_cast<double>(horizontalDistanceSquared));
+        const float distanceSquared = static_cast<float>(horizontalDistance * horizontalDistance + dy * dy);
+        const double distance = std::sqrt(static_cast<double>(distanceSquared));
+        const bool destinationIsPlayerCell = player->m_destCellX == sourceTileX
+            && player->m_destCellZ == sourceTileY;
+        if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) {
+            const bool specialSkillUnitJob = target->m_job == 141 || target->m_job == 143 || target->m_job == 152;
+            if (specialSkillUnitJob && skillId == 0) {
+                // Ref message 29 issues base CMode message 150 and returns
+                // without message 13. The base handler has no message-150
+                // behavior, so preserve the source no-op and pending intent.
+                return;
+            } else {
+                // Ref message 42 maps to mode message 76 and actor-skill use.
+                SendUseSkillToIdPacket(skillId, skillLevel, targetAid);
+            }
+            ClearSkillChase(mode);
+            return;
+        }
+
+        if (player->m_destCellX == approachTileX && player->m_destCellZ == approachTileY) {
+            return;
+        }
+        const bool specialSkillUnitJob = target->m_job == 141 || target->m_job == 143 || target->m_job == 152;
+        if (player->m_stateId == 2 && !specialSkillUnitJob) {
             return;
         }
 
@@ -9426,6 +9613,7 @@ CGameMode::CGameMode()
         m_attackChaseSourceCellX(-1), m_attackChaseSourceCellY(-1), m_attackChaseRange(1), m_hasAttackChaseHint(0),
         m_skillChaseTargetGid(0), m_lastSkillChaseRequestTick(0), m_skillChaseSkillId(0), m_skillChaseSkillLevel(0), m_skillChaseRange(1), m_hasSkillChase(0),
         m_groundSkillCellX(0), m_groundSkillCellY(0), m_groundSkillId(0), m_groundSkillLevel(0), m_groundSkillRange(0), m_hasGroundSkillChase(0),
+        m_touchSkillTargetAid(0), m_touchSkillId(0), m_touchSkillLevel(0), m_touchSkillRange(0), m_hasTouchSkillChase(0),
         m_mapLoadingStage(MapLoading_None), m_mapLoadingStartTick(0), m_mapLoadingAckTick(0), m_lastActorBootstrapPacketTick(0),
         m_worldProcessTick(GetTickCount()), m_worldProcessCarryMs(kWorldProcessTickMs), m_lastHoverRefreshTick(0),
         m_hasPendingPartyCreateOptions(0), m_pendingPartyCreateExpShare(0), m_pendingPartyCreateItemShare(0), m_pendingPartyCreateItemSharingType(0),

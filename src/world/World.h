@@ -334,6 +334,10 @@ public:
         CGameActor** outActor,
         int* outLabelX,
         int* outLabelY) const;
+    bool FindHoveredSkillScreen(const matrix& viewMatrix,
+        int screenX,
+        int screenY,
+        CSkill** outSkill) const;
     bool GetGroundItemScreenMarker(const matrix& viewMatrix,
         u32 aid,
         int* outCenterX,
