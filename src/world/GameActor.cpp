@@ -4839,6 +4839,16 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
     case 20:
         LaunchEffect(7, vector3d{}, 0.0f);
         return;
+    case 61: {
+        const int cellX = static_cast<int>(par1);
+        const int cellY = static_cast<int>(par2);
+        m_moveDestX = cellX;
+        m_moveDestY = cellY;
+        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+            gameMode->GetClientCoor(cellX, cellY, m_pos.x, m_pos.z);
+        }
+        return;
+    }
     case 26:
     case 39:
     case 93:

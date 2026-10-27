@@ -2003,3 +2003,10 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - The implementation now follows those state writes in source order. `tools/tests/check_actor_sendmsg_vanish.py` checks the complete Ref/EXE body equality and the mapped branch; it is registered as CTest `actor_sendmsg_vanish_source_check`.
 - The current direct switch now covers 56 source message IDs; 25 remain without a direct arm. This does not finish the `SendMsg` comparison.
 - x64 Release build succeeded and all 33 CTests passed. Authorized deployment to `D:\Spel\OldRO\open-midgard.exe` matches Release SHA-256 `C6E897A67760DCC5E0A8B6EB5C992D6779BFE249CFCEC2188F32E205AC47F668`.
+
+## `CGameActor::SendMsg` destination update arm 61 — 2026-10-27
+
+- Ref and canonical EXE `SendMsg` bodies match. Message 61 stores the two server cell coordinates in `m_moveDestX/Y` and converts them into the actor's client-space `m_pos.x/z`; it does not start pathfinding or change motion state.
+- The current branch now performs those writes and calls `GetClientCoor` in source order. `tools/tests/check_actor_sendmsg_position_case.py` compares complete source bodies and the branch mapping; it is registered as CTest `actor_sendmsg_position_case_source_check`.
+- The direct current switch has 57 source message IDs, with 24 remaining unmapped. The complete `SendMsg` comparison remains open.
+- x64 Release build succeeded and all 34 CTests passed. Authorized deployment to `D:\Spel\OldRO\open-midgard.exe` matches Release SHA-256 `B0D316988CF60471E3E152C730794DFDE278180F44135A7DFC3D022A4772E8F1`.
