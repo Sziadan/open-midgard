@@ -4475,6 +4475,7 @@ CGameActor::~CGameActor()
     m_cartEffect = nullptr;
     m_lastDamageNumberEffect = nullptr;
     m_chatProhibitEffect = nullptr;
+    m_pkEffect = nullptr;
     for (CMsgEffect* effect : ownedMsgEffects) {
         if (!effect) {
             continue;
@@ -4899,6 +4900,21 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         }
         return;
     }
+    case 56:
+        if (!m_pkEffect) {
+            m_pkEffect = SpawnMsgSprite(4,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.act",
+                8,
+                1.0f);
+            if (m_pkEffect) {
+                m_pkEffect->m_colorArgb = 0x7FFF0000u;
+            }
+        }
+        return;
+    case 57:
+        ReleaseMsgSprite(m_pkEffect);
+        return;
     case 3: {
         const int* actorArgs = reinterpret_cast<const int*>(par1);
         if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
@@ -6058,6 +6074,12 @@ void CGameActor::DeleteMatchingEffect(CMsgEffect* effect)
     }
     if (m_lastDamageNumberEffect == effect) {
         m_lastDamageNumberEffect = nullptr;
+    }
+    if (m_chatProhibitEffect == effect) {
+        m_chatProhibitEffect = nullptr;
+    }
+    if (m_pkEffect == effect) {
+        m_pkEffect = nullptr;
     }
 
     const auto it = std::find(m_msgEffectList.begin(), m_msgEffectList.end(), effect);

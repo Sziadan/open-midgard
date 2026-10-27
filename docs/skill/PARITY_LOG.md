@@ -2096,3 +2096,12 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - Known mode-side mismatch: source `CMsgEffect::OnProcess` sends `CMode::SendMsg(35)` after the local player's emotion animation completes. That old mode/UI request path has no current equivalent and remains open; no UI window recreation was attempted.
 - Inventory: 66 direct current cases; 9 remaining in-scope IDs without direct/inherited routing: `[56, 57, 78, 79, 110, 118, 135, 136, 139]`.
 - Focused gates, Release build, OldRO deployment, and checkpoint commit are pending.
+
+
+# `CGameActor::SendMsg` messages 56/57 PK indicator sprite (2026-10-27)
+
+- Ref and canonical EXE complete `CGameActor::SendMsg` bodies and messages 56/57 match. `CGameMode::MakeMsgEffect` complete bodies match; type 2 selects process type 4, action 8, and the `emotion.act` action asset. The canonical type-4 `CMsgEffect::SendMsg` branch applies ARGB `(127,255,0,0)`. Complete `CMsgEffect::OnProcess` and `ProcessPosition` Ref/EXE bodies match; their type-4 branches loop animation motions and follow the master actor at Y-15.
+- Ported a tracked `m_pkEffect` slot, spawn-once/release-on-57 actor routes, owner cleanup, red tint, and type-4 attachment/loop processing. `tools/tests/check_actor_sendmsg_pk_effect_case.py` enforces these source and implementation anchors and is registered as CTest `actor_sendmsg_pk_effect_source_check`.
+- The canonical `sprName` global does not resolve to a readable path in `HighPriest.exe.c`; current `emotion.spr` path is an informed family-based assumption, explicitly not claimed as verified. No legacy window behavior was recreated.
+- Inventory: 68 direct current actor cases; 7 remaining in-scope IDs without direct/inherited routes: `[78, 79, 110, 118, 135, 136, 139]`.
+- All nine focused actor source tests pass; x64 Release build and `git diff --check` pass. Authorized OldRO copy matches Release SHA-256 `DB7553CDE64267D353E601511DD28AC944DD06DACD2E31096A52F32440C390F9`. No live visual acceptance is claimed.
