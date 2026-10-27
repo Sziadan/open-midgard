@@ -2059,3 +2059,12 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - The actor inventory now reports 60 direct current cases and 15 remaining in-scope IDs without direct/inherited routes: `[4, 5, 6, 21, 56, 57, 78, 79, 110, 118, 122, 123, 135, 136, 139]`.
 - The x64 Release build succeeds; four focused source checks (inventory, aura, movement and spawn) pass. A full test-project rebuild remains blocked by the unrelated extracted packet-test stub errors recorded in the preceding checkpoint. `git diff --check` passes.
 - Authorized OldRO deployment matches Release SHA-256 `ADE8CEEE07B886ECF286ADDF203008789F54201D6E4D814357D0434F0C8D6EDC`.
+
+# `CGameActor::SendMsg` message 4 identity and state update (2026-10-27)
+
+- Ref and canonical EXE complete `SendMsg` functions and message 4 branches match. The canonical `GetProperJob` helper also matches Ref; its chicken transformations (7→13, 14→21, 4008→4014, 4030→4036, 4015→4022, 4037→4044) and Star2 transformation (4047→4048 when Star2 is not active) were checked against the implementation.
+- Ported actor GID/job/sex, cell position and height, facing, dimensions, move destination/speed, head override, body/effect/health state, idle state, PK state, guild fields for job 722, PC/granny propensity fields, tint override, and gated effect 344 launch. The modern CPc billboard is invalidated after its job/propensity changes; no legacy UI window was recreated.
+- `tools/tests/check_actor_sendmsg_identity_case.py` compares complete Ref/EXE SendMsg bodies and message 4 branches, independently checks the helper, and verifies operation order and each source job/effect gate. Registered as CTest `actor_sendmsg_identity_source_check`.
+- Actor inventory: 61 direct cases; 14 remaining in-scope source IDs without direct/inherited routing: `[5, 6, 21, 56, 57, 78, 79, 110, 118, 122, 123, 135, 136, 139]`.
+- Five focused source gates (inventory, aura, path, spawn, identity) pass; x64 Release build succeeds; `git diff --check` passes. The full test-project compile remains blocked by the unrelated extracted packet-test stub failures from earlier checkpoints.
+- Authorized OldRO deployment matches Release SHA-256 `755ECDF64766A20E2E433FB1AF9E6ECCE18895847E7164D96B31B3ABDCD2A074`.

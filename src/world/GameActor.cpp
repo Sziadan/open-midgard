@@ -4861,6 +4861,73 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         SetGuildInfo(actorArgs[23], actorArgs[24]);
         return;
     }
+    case 4: {
+        int* actorArgs = reinterpret_cast<int*>(par1);
+        constexpr int chickenMask = 0x0020;
+        constexpr int star2Mask = 0x8000;
+        constexpr int specialHidingMask = 0x0040;
+        const int originalJob = actorArgs[1];
+        const int effectState = actorArgs[15];
+        int resolvedJob = originalJob;
+        if ((effectState & chickenMask) != 0) {
+            switch (originalJob) {
+            case 7: resolvedJob = 13; break;
+            case 14: resolvedJob = 21; break;
+            case 4008: resolvedJob = 4014; break;
+            case 4030: resolvedJob = 4036; break;
+            case 4015: resolvedJob = 4022; break;
+            case 4037: resolvedJob = 4044; break;
+            default: break;
+            }
+        }
+        if (originalJob == 4047 && (effectState & star2Mask) == 0) {
+            resolvedJob = 4048;
+        }
+        actorArgs[1] = resolvedJob;
+        m_gid = static_cast<u32>(actorArgs[0]);
+        m_job = resolvedJob;
+        m_sex = actorArgs[2];
+        if (CPc* pcActor = dynamic_cast<CPc*>(this)) {
+            pcActor->InvalidateBillboard();
+        }
+        if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+            gameMode->GetClientCoor(actorArgs[3], actorArgs[4], m_pos.x, m_pos.z);
+            if (gameMode->m_world && gameMode->m_world->m_attr) {
+                m_pos.y = gameMode->m_world->m_attr->GetHeight(m_pos.x, m_pos.z);
+            }
+        }
+        m_roty = static_cast<float>(45 * (actorArgs[5] + 4));
+        m_xSize = actorArgs[7];
+        m_ySize = actorArgs[8];
+        m_moveDestX = actorArgs[3];
+        m_moveDestY = actorArgs[4];
+        m_speed = static_cast<u32>(actorArgs[6]);
+        m_headType = actorArgs[9];
+        if (actorArgs[20] == 7) {
+            m_headType = 100;
+        }
+        SetAttrState(actorArgs[13], effectState, actorArgs[14], false);
+        SetState(0);
+        m_pkState = actorArgs[16];
+        if (resolvedJob == 722) {
+            const int guildId = (actorArgs[18] << 16) | (actorArgs[19] & 0xffff);
+            SetGuildInfo(guildId, actorArgs[17]);
+        }
+        if (CPc* pcActor = dynamic_cast<CPc*>(this)) {
+            pcActor->m_honor = actorArgs[25];
+            pcActor->m_virtue = actorArgs[26];
+            pcActor->InvalidateBillboard();
+        } else if (CGrannyPc* grannyPc = dynamic_cast<CGrannyPc*>(this)) {
+            grannyPc->m_honor = actorArgs[25];
+            grannyPc->m_virtue = actorArgs[26];
+        }
+        if (static_cast<int>(par2) == 1) {
+            m_u28.m_sprArgb = 1157627903u;
+        } else if (static_cast<int>(par2) == 2 && (effectState & specialHidingMask) == 0) {
+            LaunchEffect(344, vector3d{}, 0.0f);
+        }
+        return;
+    }
     case 0: {
         const int* pathArgs = reinterpret_cast<const int*>(par1);
         m_moveStartTime = timeGetTime();
