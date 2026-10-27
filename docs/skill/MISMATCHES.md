@@ -274,3 +274,5 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 - Followed the canonical executable: no visibility or hit gate, and literal effect ID 416. Remaining camera, single-GI process/fade, descending trail snapshot, angle scan and movement branches align. Both implementations normalize the x/z direction by its length without a zero-length guard; zero-vector runtime behavior remains an edge case.
 
 - Resolved renderer mismatch (2026-10-27): `PP_EFFECTTEXTURE`, `PP_EFFECTTEXTURE2`, and `PP_EFFECTTEXTURE_ANI` now share the source `RenderEffectTexture` route. See the branch-level comparison and remaining runtime-validation limitation in `PARITY_LOG.md`.
+
+- Readable/canonical renderer discrepancy (2026-10-27): readable `Ref/dhxj/RagEffect2.cpp:12161` includes a PP_AIRTEXTURE color override from GI0 flags 3-5 when flag6 is 1. Decompiled Ref `Ref/RagEffect2.cpp:10264` and canonical EXE `HighPriest.exe.c:448769` omit it and always submit RGB (60,60,255). The port follows the canonical executable; no runtime evidence establishes the readable-only branch's use.

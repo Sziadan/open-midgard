@@ -5162,6 +5162,35 @@ void RenderEffectTexture(const CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void RenderAirTexture(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) {
+            continue;
+        }
+
+        vector3d corners[4]{};
+        int angle = 0;
+        const int rise = TableAngle(gi.riseAngle);
+        for (vector3d& corner : corners) {
+            angle += 90;
+            if (angle >= 360) {
+                angle -= 360;
+            }
+            const float radialX = g_cosTable[angle] * gi.distance;
+            corner.x = g_cosTable[rise] * radialX + gi.sparkX;
+            corner.y = g_sinTable[angle] * gi.distance + gi.sparkY;
+            corner.z = g_sinTable[rise] * radialX + gi.sparkZ;
+        }
+
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | 0x003C3CFFu;
+        SubmitWorldTeiRect(corners[0], corners[1], corners[2], corners[3], viewMatrix,
+            texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f,
+            static_cast<int>(prim.m_renderFlag));
+    }
+}
+
 void UpdateChemicalPrimitive(CEffectPrim* prim)
 {
     int longitude = 0;
@@ -12005,6 +12034,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical3)) {
         RenderChemical3(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_AIRTEXTURE) {
+        RenderAirTexture(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_EFFECTTEXTURE || m_type == PP_EFFECTTEXTURE2 || m_type == PP_EFFECTTEXTURE_ANI) {

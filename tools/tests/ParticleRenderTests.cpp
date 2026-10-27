@@ -150,8 +150,20 @@ float GetRadian(int angle){return angle*3.14159265f/180.0f;}
 float GetCos(int angle) { return std::cos(angle*3.14159265f/180.0f); }
 float GetSin(int angle) { return std::sin(angle*3.14159265f/180.0f); }
 void ProjectReferenceEffectVertex(const vector3d&,const matrix&,tlvertex3d&);
+extern float g_cosTable[361],g_sinTable[361];
+int TableAngle(int angle);
+struct AirTextureQuadCall { vector3d a,b,c,d; CTexture* texture=nullptr; u32 color=0; D3DBLEND blend=0; int flags=0; };
+std::vector<AirTextureQuadCall> airTextureQuadCalls;
+void SubmitWorldTeiRect(const vector3d&,const vector3d&,const vector3d&,const vector3d&,
+    const matrix&,CTexture*,unsigned int,float,float,float,float,D3DBLEND,float,int);
 #include "ParticleRenderBodies.inc"
 float g_cosTable[361],g_sinTable[361];
+int TableAngle(int angle) { angle %= 360; return angle < 0 ? angle + 360 : angle; }
+void SubmitWorldTeiRect(const vector3d& a,const vector3d& b,const vector3d& c,const vector3d& d,
+    const matrix&,CTexture* texture,unsigned int color,float,float,float,float,D3DBLEND blend,float,int flags) {
+    airTextureQuadCalls.push_back({a,b,c,d,texture,color,blend,flags});
+}
+#include "AirTextureRendererBody.inc"
 vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
 constexpr float kSubmitNearPlane=80.0f,kNearPlane=10.0f;
 #include "ProjectPointBody.inc"
@@ -175,6 +187,26 @@ int main() {
     int checks=0,failures=0;
     auto check=[&](bool ok,const char* message){++checks;if(!ok){++failures;std::printf("FAIL: %s\n",message);}};
     auto near=[](float a,float b){return std::fabs(a-b)<0.0001f;};
+    {
+        CEffectPrim air;
+        air.m_texture={&g_texMgr.texture};
+        air.m_gi[0].life=1; air.m_gi[0].alphaB=100; air.m_gi[0].distance=2.0f;
+        air.m_gi[0].riseAngle=90; air.m_gi[0].sparkX=10.0f; air.m_gi[0].sparkY=20.0f; air.m_gi[0].sparkZ=30.0f;
+        air.m_gi[1].life=1; air.m_gi[1].alphaB=0; air.m_gi[1].distance=3.0f;
+        airTextureQuadCalls.clear();
+        matrix view{}; RenderAirTexture(air,view);
+        check(airTextureQuadCalls.size()==1,"air texture renderer draws only active positive-alpha GI lanes");
+        if(airTextureQuadCalls.size()==1) {
+            const auto& quad=airTextureQuadCalls[0];
+            check(quad.texture==&g_texMgr.texture&&quad.color==0x643C3CFFu&&quad.blend==D3DBLEND_ONE,
+                "air texture renderer uses texture slot zero, source blue tint and additive blend");
+            check(near(quad.b.x,10.0f)&&near(quad.b.y,20.0f)&&near(quad.b.z,28.0f),
+                "air texture renderer applies rise rotation and lane position to the second corner");
+        }
+        air.m_gi[1].alphaB=1;
+        airTextureQuadCalls.clear(); RenderAirTexture(air,view);
+        check(airTextureQuadCalls.size()==2,"air texture renderer emits one quad for each active lane");
+    }
     const std::pair<float,u32> castingColors[]={
         {0.0f,0x00FFFFFFu},{1.0f,0x00FFAFAFu},{2.0f,0x00C3C3FFu},{3.0f,0x00FFFFFFu},
         {4.0f,0x006464FFu},{5.0f,0x00FFFFFFu},{6.0f,0x00FF6464u},{7.0f,0x0064FF64u},

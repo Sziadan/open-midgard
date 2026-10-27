@@ -110,6 +110,8 @@ extract_body(angel_emitters "${effect_source}" "void CRagEffect::ApplySuperAngel
 extract_body(slash_primitive "${effect_source}" "void UpdateSlash1Primitive(" "// Ref/GameActor.cpp:10748-10928.")
 extract_body(angel_render "${effect_source}" "void RenderReferenceParticlePrimitive(" "CEffectPrim::~CEffectPrim()")
 extract_body(particle_render "${effect_source}" "struct ParticleSprite {" "void RenderReferenceParticlePrimitive(")
+extract_body(air_texture_renderer "${effect_source}" "void RenderAirTexture(" "void UpdateChemicalPrimitive(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/AirTextureRendererBody.inc" "${air_texture_renderer}")
 extract_body(circle_render "${effect_source}" "void ProjectReferenceEffectVertex(" "void RenderCircleLayer(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CircleRenderBodies.inc" "${circle_render}")
 extract_body(casting_colors "${effect_source}" "unsigned int CastingSizeRgb(" "void CastingLowPolygonRise(")
