@@ -2425,6 +2425,46 @@ void RenderReference3DLine(const CEffectPrim& prim, const matrix& view)
     g_renderer.AddReferenceEffectTriangle(face,5);
 }
 
+void RenderReference3DTextureBillboard(const CEffectPrim& prim, const matrix& view)
+{
+    const vector3d& point = prim.m_pos;
+    const double reciprocal = 1.0 / (static_cast<double>(view.m[2][2]) * point.z
+        + static_cast<double>(view.m[1][2]) * point.y + static_cast<double>(view.m[0][2]) * point.x + view.m[3][2]);
+    const float oow = static_cast<float>(reciprocal);
+    const float x = static_cast<float>((static_cast<double>(view.m[2][0]) * point.z
+        + static_cast<double>(view.m[1][0]) * point.y + static_cast<double>(point.x) * view.m[0][0] + view.m[3][0])
+        * reciprocal * g_renderer.m_hpc + g_renderer.m_xoffset);
+    const float y = static_cast<float>((static_cast<double>(view.m[2][1]) * point.z
+        + static_cast<double>(view.m[1][1]) * point.y + static_cast<double>(view.m[0][1]) * point.x + view.m[3][1])
+        * g_renderer.m_vpc * oow + g_renderer.m_yoffset);
+    const double pixelRatio = static_cast<double>(oow) * g_renderer.m_hpc * 0.14285715;
+    const float width = static_cast<float>(pixelRatio * prim.m_widthSize);
+    const float height = static_cast<float>(pixelRatio * prim.m_heightSize);
+    const float right = static_cast<float>(static_cast<double>(width) + x);
+    const float bottom = static_cast<float>(static_cast<double>(y) - height);
+    CTexture* texture = prim.m_texture[static_cast<size_t>(prim.m_curMotion)];
+    const float positions[4][2] = {{x,y},{right,y},{x,bottom},{right,bottom}};
+    const float uvs[4][2] = {{0,0},{1,0},{0,1},{1,1}};
+    const int triangles[2][3] = {{0,1,2},{1,2,3}};
+    for (const auto& triangle : triangles) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) return;
+        face->primType = D3DPT_TRIANGLELIST; face->numVerts = 3;
+        face->verts = face->m_verts; face->indices = nullptr; face->numIndices = 0;
+        face->tex = texture; face->mtPreset = 0; face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA; face->destAlphaMode = D3DBLEND_INVSRCALPHA;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            const int source = triangle[vertex];
+            auto& output = face->m_verts[vertex];
+            output.x = positions[source][0]; output.y = positions[source][1];
+            output.z = 0.80000001f; output.oow = 1.0f;
+            output.color = prim.m_argb; output.specular = 0xFF000000u;
+            output.tu = uvs[source][0]; output.tv = uvs[source][1];
+        }
+        g_renderer.AddReferenceEffectTriangle(face, static_cast<int>(prim.m_renderFlag));
+    }
+}
+
 // Ref/RagEffectPrim.cpp:2342-2544 (0x645520), original screen annulus.
 void RenderReferenceScreenCircle(const CEffectPrim& prim)
 {
@@ -12676,7 +12716,7 @@ void RenderChookGi(CEffectPrim& prim, const matrix& viewMatrix)
 
 void CEffectPrim::Render(matrix* viewMatrix)
 {
-    if (!m_master || !viewMatrix) {
+    if ((!m_master && m_type != PP_3DTEXTURE_NOMASTER) || !viewMatrix) {
         return;
     }
     if (IsCloudRendererType(m_type)) {
@@ -12699,6 +12739,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_3DLINE) {
         RenderReference3DLine(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_3DTEXTURE_NOMASTER) {
+        RenderReference3DTextureBillboard(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_STIN || m_type == PP_STIN2 || m_type == PP_STIN4) {

@@ -1017,6 +1017,44 @@ int main() {
             "3D line preserves fixed source colors, reciprocal-depth values and zero UVs");
     }
     {
+        CEffectPrim billboard;billboard.m_pos={2,3,20};billboard.m_widthSize=5;billboard.m_heightSize=3;
+        billboard.m_curMotion=1;billboard.m_argb=0xA1B2C3D4;billboard.m_renderFlag=5;
+        CTexture firstTexture,secondTexture;billboard.m_texture={&firstTexture,&secondTexture};
+        matrix billboardView{};for(int i=0;i<4;++i)billboardView.m[i][i]=1;
+        billboardView.m[0][0]=1.25f;billboardView.m[1][0]=0.125f;billboardView.m[3][0]=4;
+        billboardView.m[0][1]=-0.25f;billboardView.m[1][1]=0.75f;billboardView.m[3][1]=-2;
+        billboardView.m[3][2]=100;
+        const double reciprocal=1.0/(static_cast<double>(billboardView.m[2][2])*billboard.m_pos.z
+            +static_cast<double>(billboardView.m[1][2])*billboard.m_pos.y
+            +static_cast<double>(billboardView.m[0][2])*billboard.m_pos.x+billboardView.m[3][2]);
+        const float oow=static_cast<float>(reciprocal);
+        const float x=static_cast<float>((static_cast<double>(billboardView.m[2][0])*billboard.m_pos.z
+            +static_cast<double>(billboardView.m[1][0])*billboard.m_pos.y
+            +static_cast<double>(billboard.m_pos.x)*billboardView.m[0][0]+billboardView.m[3][0])
+            *reciprocal*g_renderer.m_hpc+g_renderer.m_xoffset);
+        const float y=static_cast<float>((static_cast<double>(billboardView.m[2][1])*billboard.m_pos.z
+            +static_cast<double>(billboardView.m[1][1])*billboard.m_pos.y
+            +static_cast<double>(billboard.m_pos.x)*billboardView.m[0][1]+billboardView.m[3][1])
+            *g_renderer.m_vpc*oow+g_renderer.m_yoffset);
+        const double ratio=static_cast<double>(oow)*g_renderer.m_hpc*0.14285715;
+        const float right=static_cast<float>(static_cast<double>(static_cast<float>(ratio*billboard.m_widthSize))+x);
+        const float bottom=static_cast<float>(static_cast<double>(y)-static_cast<float>(ratio*billboard.m_heightSize));
+        g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaNoDepthList.clear();
+        RenderReference3DTextureBillboard(billboard,billboardView);
+        check(g_renderer.m_rpAlphaOPList.size()==2&&g_renderer.m_rpAlphaList.empty(),
+            "3D texture billboard submits two ordered faces through raw render flag five");
+        auto* a=g_renderer.m_rpAlphaOPList[0];auto* b=g_renderer.m_rpAlphaOPList[1];
+        check(a->tex==&secondTexture&&b->tex==&secondTexture&&a->m_verts[0].x==x&&a->m_verts[0].y==y
+            &&a->m_verts[1].x==right&&a->m_verts[1].y==y&&a->m_verts[2].x==x&&a->m_verts[2].y==bottom
+            &&b->m_verts[0].x==right&&b->m_verts[0].y==y&&b->m_verts[1].x==x&&b->m_verts[1].y==bottom
+            &&b->m_verts[2].x==right&&b->m_verts[2].y==bottom,
+            "3D texture billboard projects source anchor and preserves the two-triangle top-left quad order");
+        check(a->m_verts[0].z==0.80000001f&&a->m_verts[0].oow==1&&a->m_verts[0].color==0xA1B2C3D4
+            &&a->m_verts[0].tu==0&&a->m_verts[0].tv==0&&a->m_verts[1].tu==1&&a->m_verts[2].tv==1
+            &&b->m_verts[2].tu==1&&b->m_verts[2].tv==1,
+            "3D texture billboard retains fixed source depth, reciprocal depth, color and complete quad UVs");
+    }
+    {
         CEffectPrim ice;ice.m_pos={10,20,100};ice.m_size=2;ice.m_heightSize=15;ice.m_argb=0xC8FFFFFF;
         ice.m_texture={&g_texMgr.texture};ice.m_renderFlag=0x205;
         for(int i=0;i<4;++i)ice.m_rotMat.m[i][i]=1;
