@@ -411,7 +411,7 @@ struct CEffectPrim : CGameObject {
         if (UsesReferenceFlash()) UpdateReferenceFlash(this);
         if (UsesReferenceScreenCircle()) UpdateReferenceScreenCircle(this);
         if (UsesReferenceSphere()) UpdateReferenceSphere(this);
-        if (m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle() && !UpdateReferenceGravityParticle(this)) return false;
+        if (m_type == PP_3DPARTICLEGRAVITY && !UpdateReferenceGravityParticle(this)) return false;
         if ((m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) && !UpdateReferenceScreenTexture(this)) return false;
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
         if (UsesReferenceTexture()) UpdateReferenceCrossTexture(this);

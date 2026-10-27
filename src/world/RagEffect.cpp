@@ -8388,10 +8388,11 @@ void ProcessReferenceParticleAlpha(CEffectPrim* prim)
 bool UpdateReferenceGravityParticle(CEffectPrim* prim)
 {
     prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
-    const double integratedSpeed = static_cast<double>(prim->m_accel) + prim->m_speed;
-    const double speed = integratedSpeed < 0.0 ? 0.0 : integratedSpeed;
+    double speed = static_cast<double>(prim->m_accel) + prim->m_speed;
     prim->m_speed = static_cast<float>(speed);
     prim->m_gravSpeed += prim->m_gravAccel;
+    if (speed < 0.0) speed = 0.0;
+    prim->m_speed = static_cast<float>(speed);
     prim->m_speed3d = {
         static_cast<float>(speed * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
         static_cast<float>(speed * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
@@ -8403,16 +8404,15 @@ bool UpdateReferenceGravityParticle(CEffectPrim* prim)
     prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
     prim->m_size += prim->m_sizeSpeed;
     CGameMode* mode = g_modeMgr.GetCurrentGameMode();
-    if (prim->m_gravSpeed > 0.0f && mode && mode->m_world && mode->m_world->m_attr
-        && mode->m_world->m_attr->GetHeight(prim->m_pos.x, prim->m_pos.z) < prim->m_pos.y) {
+    if (prim->m_gravSpeed > 0.0f
+        && prim->m_pos.y > mode->m_world->m_attr->GetHeight(prim->m_pos.x, prim->m_pos.z)) {
         prim->m_gravSpeed = static_cast<float>(prim->m_gravSpeed * -0.66666669);
         if (prim->m_playWaveType == 1) {
-            char waveName[56];
-            std::snprintf(waveName, sizeof(waveName), "effect\\EF_Coin%d.wav", rand() % 3 + 1); // 0x71D44C
-            if (mode->m_world->m_player) {
-                const vector3d& listener = mode->m_world->m_player->m_pos;
-                PlayWave(waveName, prim->m_pos.x - listener.x, 0.0f, prim->m_pos.z - listener.z, 250, 40, 1.0f);
-            }
+            char waveName[50];
+            std::sprintf(waveName, "effect\\EF_Coin%d.wav", rand() % 3 + 1);
+            CGameMode* soundMode = g_modeMgr.GetCurrentGameMode();
+            const vector3d& listener = soundMode->m_world->m_player->m_pos;
+            PlayWave(waveName, prim->m_pos.x - listener.x, 0.0f, prim->m_pos.z - listener.z, 250, 40, 1.0f);
         }
     }
     ProcessReferenceParticleAlpha(prim);
@@ -12480,11 +12480,8 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     if (m_type == PP_3DPARTICLE) {
         return UpdateFreeParticlePrimitive(this, false, false);
     }
-    if (m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle()) {
-        return UpdateReferenceGravityParticle(this);
-    }
     if (m_type == PP_3DPARTICLEGRAVITY) {
-        return UpdateFreeParticlePrimitive(this, true, false);
+        return UpdateReferenceGravityParticle(this);
     }
     if (m_type == PP_3DPARTICLESPLINE) {
         UpdateReferenceParticleSpline(this); // Ref case 0x08 ignores Prim3DParticleSpline's result.
