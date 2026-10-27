@@ -11792,7 +11792,7 @@ bool CEffectPrim::UsesReferenceScreenQuad() const
 
 bool CEffectPrim::UsesReferenceParticle() const
 {
-    return m_type == PP_SUPERANGEL
+    return m_type == PP_KOUENKA || m_type == PP_SUPERANGEL
         || (m_type == PP_3DPARTICLEGRAVITY && m_master
             && (m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 10 || m_master->GetEffectType() == 18))
         || (m_type == PP_3DPARTICLEORBIT && m_master
