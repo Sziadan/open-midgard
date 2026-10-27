@@ -564,6 +564,7 @@ struct CRagEffect : CGameObject {
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
+    void SpawnEnergyDrain();
     void SpawnTorch();
     void SpawnEnchantPoison();
     void SpawnEnchantPoison2();
@@ -5421,6 +5422,27 @@ int main()
         effect.m_stateCnt=1;effect.SpawnBloodDrain();
         check(static_cast<int>(effect.m_primList.size())==primCount && rngDraws==draws,
             "BloodDrain does not emit again after state zero");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRagEffect effect;effect.m_type=217;effect.m_effectPos={0,0,0};effect.m_deltaPos={3,999,4};
+        const int draws=rngDraws;g_resMgr.requests.clear();
+        effect.SpawnEnergyDrain();
+        check(effect.m_primList.size()==3 && rngDraws==draws,
+            "EnergyDrain emits three spline particles at state zero without RNG");
+        for (CEffectPrim* prim:effect.m_primList) {
+            check(prim->m_type==PP_3DPARTICLESPLINE && prim->m_duration==60
+                && std::fabs(prim->m_radius-5.0f)<0.00001f && prim->m_deltaPos2.y==-10
+                && prim->m_size==1.7f && prim->m_numSegments==7,
+                "EnergyDrain matches BloodDrain spline geometry and lifetime");
+            check(prim->m_red==100 && prim->m_green==100 && prim->m_blue==250
+                && prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr"
+                && prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act",
+                "EnergyDrain keeps its distinct blue tint and canonical particle1 assets");
+        }
+        effect.m_stateCnt=1;effect.SpawnEnergyDrain();
+        check(effect.m_primList.size()==3 && rngDraws==draws,
+            "EnergyDrain does not emit again after state zero");
         effect.ClearPrims();g_world.UpdateGameObjects();
     }
     {
