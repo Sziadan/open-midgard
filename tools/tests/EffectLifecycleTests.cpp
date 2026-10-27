@@ -182,6 +182,7 @@ bool UpdateReference2DTextureOrbit(CEffectPrim*);
 bool UpdateReferenceCircleState(CEffectPrim*);
 void UpdateReferenceQuadHorn(CEffectPrim*);
 void ShiftReferenceSegments(CEffectPrim*);
+void InitReferenceSegments(CEffectPrim*);
 void UpdateReferenceSpiral(CEffectPrim*);
 void UpdateReferenceFlash(CEffectPrim*);
 void UpdateReferenceScreenCircle(CEffectPrim*);
@@ -464,6 +465,7 @@ struct CRagEffect : CGameObject {
     void ApplyWarpZone();
     void ApplyIceArrow();
     void ApplyFireArrow();
+    void ApplyKouenka();
     void SpawnBash3D(const char*,char,char);
     void ApplyFrostDiver();
     void ApplyFrostDiver2();
@@ -579,6 +581,7 @@ float g_sinTable[361]{}, g_cosTable[361]{};
 #define rand SilentRand
 #include "AttrWaveBodies.inc"
 #include "EffectLifecycleBodies.inc"
+
 #include "WeatherMapBodies.inc"
 #include "StrOnlyDispatchBody.inc"
 constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
@@ -2972,6 +2975,44 @@ int main()
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
     for (int angle=0; angle<=360; ++angle) { g_sinTable[angle]=GetSin(angle); g_cosTable[angle]=GetCos(angle); }
+    {
+        CRenderObject master, listener; master.m_pos={12,34,56}; listener.m_pos={2,4,6};
+        g_world.m_player=&listener;
+        CRagEffect effect; effect.m_master=&master; effect.m_duration=77; effect.m_stateCnt=0;
+        rngValues={1,2,90,10,20,30,40,2, 11,22,33,44, 55,66,77,88}; rngCursor=0;
+        const int before=rngDraws;
+        effect.ApplyKouenka();
+        check(effect.m_effectPos.x==12&&effect.m_effectPos.y==34&&effect.m_effectPos.z==56
+            &&effect.m_primList.size()==3,"Kouenka refreshes master position and emits one petal plus two BASH3D primitives");
+        if(effect.m_primList.size()==3) {
+            auto it=effect.m_primList.begin(); CEffectPrim* petal=*it++;
+            check(petal->m_type==PP_KOUENKA&&petal->m_duration==77&&petal->m_alpha==250
+                &&petal->m_gi[0].life==1&&petal->m_gi[1].life==0&&petal->m_gi[2].life==0&&petal->m_gi[3].life==0
+                &&petal->m_spriteSprName=="misc\\sakura01.spr"&&petal->m_spriteActName=="misc\\sakura01.act"
+                &&petal->m_spriteAction==2&&petal->m_numSegments==1&&petal->m_animSpeed==4&&petal->m_repeatAnim,
+                "Kouenka petal retains source duration, active lane, assets, action, and segment defaults");
+            const float expectedMax=(1%3+2)*0.15000001f, expectedSize=(2%6+22)*0.014285714f;
+            check(std::fabs(petal->m_gi[0].maxHeight-expectedMax)<1e-6f&&std::fabs(petal->m_size-expectedSize)<1e-6f
+                &&petal->m_gi[0].height[0]==10&&petal->m_gi[0].height[3]==40
+                &&std::fabs(petal->m_gi[0].vecBPreX-(12+8*g_cosTable[90]))<1e-5f,
+                "Kouenka consumes source random values in height, size, angle, and four lane-height order");
+            check((*it)->m_type==PP_BASH3D&&(*std::next(it))->m_type==PP_BASH3D
+                &&rngDraws==before+16&&rngCursor==16,"Kouenka follows petal RNG with exactly eight BASH3D angle draws");
+        }
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        CRagEffect sound; sound.m_master=&master; sound.m_duration=77; sound.m_stateCnt=12;
+        rngValues={2,0,0,0,0,0,0,0,0};rngCursor=0;waveCalls.clear();
+        sound.ApplyKouenka();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_FireArrow3.wav"
+            &&waveCalls[0].x==10&&waveCalls[0].z==50&&waveCalls[0].volume==250&&waveCalls[0].range==40
+            &&rngCursor==9,"Kouenka state 12 audio consumes its draw before petal and BASH3D draws");
+        sound.ClearPrims();g_world.UpdateGameObjects();
+        CRagEffect expired; expired.m_master=&master; expired.m_duration=77; expired.m_stateCnt=20;
+        rngValues={3,4,5,6,7,8,9,10};rngCursor=0;
+        expired.ApplyKouenka();
+        check(expired.m_primList.empty()&&rngCursor==0,"Kouenka state 20 omits petals and frame-zero BASH3D draws");
+        expired.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;g_world.m_player=nullptr;waveCalls.clear();waves=0;
+    }
     {
         CRenderObject master;master.m_pos={40,50,60};
         CRagEffect effect;effect.m_master=&master;effect.m_duration=77;effect.m_stateCnt=0;

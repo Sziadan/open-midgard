@@ -18328,6 +18328,59 @@ void CRagEffect::ApplyColorPaper(const char* textureName)
     }
 }
 
+// Ref/dhxj/RagEffect2.cpp:1246; canonical CRagEffect::Kouenka at 0x60A860.
+void CRagEffect::ApplyKouenka()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) {
+        SpawnBash3D("effect\\alpha_center.tga", 0, 2);
+        SpawnBash3D("effect\\alpha_center.tga", 1, 2);
+        return;
+    }
+    m_effectPos = master->m_pos;
+
+    if (m_stateCnt >= 12 && m_stateCnt <= 15) {
+        char waveName[50];
+        std::snprintf(waveName, sizeof(waveName), "effect\\EF_FireArrow%d.wav", rand() % 3 + 1);
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave(waveName, m_effectPos.x - listener.x, 0.0f, m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+    }
+
+    if (m_stateCnt < 20) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_KOUENKA, vector3d{});
+        if (prim) {
+            prim->m_duration = m_duration;
+            EffectGi& gi = prim->m_gi[0];
+            gi.life = 1;
+            gi.maxHeight = static_cast<float>(rand() % 3 + 2) * 0.15000001f;
+            prim->m_size = static_cast<float>(rand() % 6 + 22) * 0.014285714f;
+            gi.arcBaselineY = m_effectPos.y;
+            const int startAngle = rand() % 360;
+            gi.vecBPreX = m_effectPos.x + 8.0f * g_cosTable[startAngle];
+            gi.vecBPreZ = m_effectPos.z + 8.0f * g_sinTable[startAngle];
+            for (int index = 0; index < 4; ++index) {
+                gi.height[static_cast<size_t>(index)] = static_cast<float>(rand() % 360);
+            }
+            for (int index = 1; index < 4; ++index) prim->m_gi[static_cast<size_t>(index)].life = 0;
+            prim->m_alpha = 250.0f;
+            prim->SetParticleResources("misc\\sakura01.spr", "misc\\sakura01.act");
+            prim->m_spriteAction = rand() % 3;
+            prim->m_curMotion = 0;
+            prim->m_animSpeed = 4; // CEffectPrim constructor default retained by source SetAction.
+            prim->m_repeatAnim = true;
+            prim->m_numSegments = 1;
+            InitReferenceSegments(prim);
+        }
+    }
+
+    SpawnBash3D("effect\\alpha_center.tga", 0, 2);
+    SpawnBash3D("effect\\alpha_center.tga", 1, 2);
+}
+
+
 void CRagEffect::ApplySphereWind(const char* textureName, short time, int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -19646,6 +19699,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 31) {
         ApplyFireArrow();
+        return true;
+    }
+    if (m_type == 618) {
+        ApplyKouenka();
         return true;
     }
     if (m_type == 26) {
