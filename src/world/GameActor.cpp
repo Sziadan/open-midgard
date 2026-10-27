@@ -4781,10 +4781,10 @@ u8 CGameActor::ProcessState() {
         if (m_isMotionFinished) SetState(0);
         break;
     case 3:
-        m_isMotionFreezed = 0;
         m_isForceState = 0;
         m_isForceState2 = 0;
         m_isForceState3 = 0;
+        m_isMotionFreezed = 0;
         m_isCounter = 0;
         ProcessMotion();
         if (m_isMotionFinished && m_willBeAttackedList.empty()) {
@@ -4825,6 +4825,15 @@ u8 CGameActor::ProcessState() {
         break;
     }
     case 5:
+        m_isCounter = 0;
+        ProcessMotion();
+        if (m_isMotionFinished) SetState(0);
+        break;
+    case 6:
+        // Ref's CPc::ProcessState advances the sit animation in state 6.
+        // Keep the class-specific behavior in the consolidated actor update.
+        if (m_isPc) ProcessMotion();
+        break;
     case 7:
         m_isCounter = 0;
         ProcessMotion();
@@ -4835,14 +4844,15 @@ u8 CGameActor::ProcessState() {
         ProcessMotion();
         if (m_targetGid != 0) {
             const u32 nCx = timeGetTime() - m_stateStartTick;
-            const int slice = static_cast<int>(static_cast<double>(nCx) * (1.0 / 24.0));
+            const int slice = static_cast<int>(static_cast<double>(nCx) * 0.041666668);
             if (slice % 34 == 0) {
                 if (CGameActor* target = ResolveActorByGidForCastRetarget(m_targetGid)) {
-                    const float dx = target->m_pos.x - m_pos.x;
-                    const float dz = target->m_pos.z - m_pos.z;
-                    m_roty = std::atan2(dx, -dz) * (180.0f / 3.14159265f);
-                    if (m_roty >= 360.0f) {
-                        m_roty -= 360.0f;
+                    const long double rotation = std::atan2(
+                        static_cast<long double>(target->m_pos.x) - m_pos.x,
+                        -(static_cast<long double>(target->m_pos.z) - m_pos.z)) / 3.141592L * 180.0L;
+                    m_roty = static_cast<float>(rotation);
+                    if (rotation >= 360.0L) {
+                        m_roty = static_cast<float>(rotation - 360.0L);
                     }
                     if (m_roty < 0.0f) {
                         m_roty += 360.0f;

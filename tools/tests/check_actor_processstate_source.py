@@ -118,11 +118,15 @@ exe_ids = set(ordered_ids(exe_cases))
 current_ids = set(ordered_ids(impl_cases))
 check(source_ids == exe_ids, f"Ref/EXE ProcessState IDs differ: {source_ids ^ exe_ids}")
 check(ordered_ids(ref_cases) == ordered_ids(exe_cases), "Ref/EXE ProcessState branch order differs")
-check(current_ids == source_ids,
-      f"current ProcessState IDs differ: missing={source_ids-current_ids}, extra={current_ids-source_ids}")
-check(ordered_ids(impl_cases) == ordered_ids(ref_cases), "current ProcessState state order differs from source")
+check(source_ids.issubset(current_ids),
+      f"current ProcessState IDs missing source states: {source_ids-current_ids}")
+check(current_ids - source_ids == {6},
+      f"unexpected current-only ProcessState IDs: {current_ids-source_ids}")
+current_source_order = [state for state in ordered_ids(impl_cases) if state in source_ids]
+check(current_source_order == ordered_ids(ref_cases), "current ProcessState source state order differs")
 print(f"Source ordered state IDs: {ordered_ids(ref_cases)}")
 print(f"Current ordered state IDs: {ordered_ids(impl_cases)}")
+print("Current-only state 6 is the CPc sit-animation route; its class guard is checked by the CPc comparator")
 
 
 def has(text: str, pattern: str) -> bool:
@@ -169,7 +173,7 @@ current_anchors = {
     "state 3 waits for attacks, sends 13, and retains final corpse frame": (3, r"m_isForceState\s*=\s*0[\s\S]*?ProcessMotion\(\)[\s\S]*?m_willBeAttackedList\.empty\(\)[\s\S]*?SendMsg\(13,[\s\S]*?guardedJob[\s\S]*?isMercenaryOrHomunculus[\s\S]*?modern actor remains in the world list[\s\S]*?m_stateId\s*=\s*10[\s\S]*?return\s+0"),
     "state 4 interpolates damage destination from prior process time": (4, r"m_damageDestX[\s\S]*?m_lastProcessStateTime[\s\S]*?m_damageDestZ[\s\S]*?SetState\(0\)"),
     "states 5/7 process motion without added freeze behavior": (5, 7, r"m_isCounter\s*=\s*0[\s\S]*?ProcessMotion\(\)[\s\S]*?m_isMotionFinished[\s\S]*?SetState\(0\)"),
-    "state 8 periodically faces target without recharge handling": (8, r"m_targetGid[\s\S]*?%\s*34[\s\S]*?m_roty\s*=\s*std::atan2"),
+    "state 8 periodically faces target without recharge handling": (8, r"m_targetGid[\s\S]*?%\s*34[\s\S]*?std::atan2[\s\S]*?m_roty\s*=\s*static_cast<float>\(rotation\)"),
     "state 10 clears counter only": (10, r"m_isCounter\s*=\s*0"),
     "state 11 repeats state after motion finishes": (11, r"ProcessMotion\(\)[\s\S]*?SetState\(11\)"),
     "state 13 selects attack action, freezes, then completes recharge": (13, r"IsSecondAttack\([\s\S]*?SetAction\(secondAttack\s*\?\s*88\s*:\s*80[\s\S]*?m_isMotionFreezed\s*=\s*1[\s\S]*?m_skillRechargeEndTick[\s\S]*?SendMsg\(this,\s*83"),

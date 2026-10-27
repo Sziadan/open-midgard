@@ -436,6 +436,8 @@ Completion update (2026-10-27): `CGameActor::MakePartyEffect` passes the branch 
 
 Completion update (2026-10-27): `CPc::SetState` passes the source/current branch gate for all seven states, including attack RNG and arrow timing plus skill/cast/sit animation branches. Only the case-0 camera-distance and item-ack side effects remain excluded as UI/input behavior. Next function: `CPc::ProcessState`; see the recorded checkpoint in `docs/skill/PROGRESS.md`.
 
+Completion update (2026-10-27): `CPc::ProcessState` passes Ref/EXE body equality and its current branch-level source comparison for states 2/3/6/7/8. The consolidated modern `CGameActor::ProcessState` now advances PC state 6 (sit) motion, uses the source cast-frame factor and `CalcDir` arithmetic for state 8, and preserves modern effect/hit processing. The state-3 final-death-frame architecture difference is documented. See `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md` for gates and build/deployment evidence.
+
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
 * `CPc::SetState` Ref/Pc.cpp:5678, `ProcessState` 2382.
 * `CPlayer::SetState` Ref/Player.cpp:523, `ProcessState` 87.
