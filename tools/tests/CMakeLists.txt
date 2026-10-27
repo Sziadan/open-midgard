@@ -375,6 +375,8 @@ add_test(NAME actor_sendmsg_inventory_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../audit_actor_sendmsg_inventory.py")
 add_test(NAME actor_sendmsg_aura_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_actor_sendmsg_aura_case.py")
+add_test(NAME actor_sendmsg_move_path_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_actor_sendmsg_move_path_case.py")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../HighPriest.exe.c
     ../../Ref/GameModePacket.cpp

@@ -4839,6 +4839,43 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
     case 20:
         LaunchEffect(7, vector3d{}, 0.0f);
         return;
+    case 0: {
+        const int* pathArgs = reinterpret_cast<const int*>(par1);
+        m_moveStartTime = timeGetTime();
+        const auto findPath = [this, pathArgs](u32 startTime, int speedFactor) {
+            return g_pathFinder.FindPath(startTime,
+                pathArgs[1],
+                pathArgs[2],
+                pathArgs[3],
+                pathArgs[4],
+                pathArgs[5],
+                pathArgs[6],
+                speedFactor,
+                &m_path);
+        };
+
+        bool foundPath = findPath(m_moveStartTime, static_cast<int>(m_speed));
+        if (foundPath) {
+            const u32 lastCellTime = m_path.m_cells.empty()
+                ? 0xFFFFFFFCu
+                : m_path.m_cells.back().arrivalTime;
+            const u32 serverTime = g_session.GetServerTime();
+            if (lastCellTime <= serverTime) {
+                m_moveStartTime = serverTime;
+                foundPath = findPath(serverTime, 10 * static_cast<int>(m_speed) / 13);
+            }
+        }
+
+        if (foundPath) {
+            m_moveDestX = pathArgs[5];
+            m_moveDestY = pathArgs[6];
+            SetState(1);
+            m_pathStartCell = 0;
+        } else {
+            SetState(0);
+        }
+        return;
+    }
     case 61: {
         const int cellX = static_cast<int>(par1);
         const int cellY = static_cast<int>(par2);
