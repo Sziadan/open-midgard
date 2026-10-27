@@ -230,7 +230,10 @@ public:
     int m_isEventPVPMode;
     vector3d m_bgLightDir;
     vector3d m_bgDiffuseCol;
+    vector3d m_bgMaxDiffuseCol;
     vector3d m_bgAmbientCol;
+    vector3d m_bgEnvDiffuseCol;
+    bool m_isNightMode;
     C3dActor* m_skyActor;
     bool m_skyLoadAttempted;
     SceneGraphNode m_rootNode;
@@ -297,6 +300,8 @@ public:
         size_t* outNextIndex,
         bool clearExisting);
     void UpdateGameObjects();
+    void SetNightMode(bool enabled);
+    void UpdateNightLighting();
     void RenderGameObjects(const matrix& viewMatrix, u32* outRenderedObjects = nullptr, u32* outRenderedFixedEffects = nullptr) const;
     void UpdateBackgroundObjects(const matrix* viewMatrix);
     void UpdateActors();

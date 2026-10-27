@@ -4928,6 +4928,198 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
     case 79:
         ReleaseMsgSprite(m_crusisEffect);
         return;
+    case 110: {
+        const int skillStatus = static_cast<int>(par1);
+        const bool enabled = par2 != 0;
+        auto hasEffect = [this](int effectId) {
+            return std::any_of(m_effectList.begin(), m_effectList.end(), [effectId](const CRagEffect* effect) {
+                return effect && effect->GetEffectType() == effectId;
+            });
+        };
+        auto removeOne = [this](int effectId) {
+            SendMsg(this, 109, effectId, 0, 0);
+        };
+        auto removeAll = [&hasEffect, &removeOne](int effectId) {
+            while (hasEffect(effectId)) {
+                removeOne(effectId);
+            }
+        };
+        auto launch = [this](int effectId) {
+            return LaunchEffect(effectId, vector3d{}, 0.0f);
+        };
+        auto launchMarked = [&launch](int effectId, int marker, int option) {
+            if (CRagEffect* effect = launch(effectId)) {
+                effect->SendMsg(effect, 44, marker, option, 0);
+            }
+        };
+        auto replace = [&removeAll, &launch, enabled](int effectId) {
+            removeAll(effectId);
+            if (enabled) {
+                launch(effectId);
+            }
+        };
+
+        if (skillStatus <= 149) {
+            switch (skillStatus) {
+            case 2:
+                removeAll(166);
+                if (enabled) launchMarked(166, 0xFFFF, 130);
+                return;
+            case 25:
+            case 188:
+                removeAll(166);
+                if (enabled) launchMarked(166, 0xFFFF, 128);
+                return;
+            case 29:
+                if (!enabled) {
+                    m_isTrickDead = 0;
+                    m_stateId = 0;
+                    m_isLieOnGround = 0;
+                    m_shouldAddPickInfo = 1;
+                    SetState(0);
+                    m_isMotionFreezed = 0;
+                } else {
+                    m_isTrickDead = 1;
+                    SetAction(64, 4, 1);
+                    m_isMotionFreezed = 1;
+                }
+                return;
+            case 31:
+                removeAll(166);
+                if (enabled) launchMarked(166, 0xFFFF, 169);
+                return;
+            case 34:
+            case 264:
+                // The source only toggles legacy delayed skill-sound globals here.
+                return;
+            case 68:
+            case 149:
+                if (m_gid == g_session.m_gid) {
+                    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                        if (mode->m_world) mode->m_world->SetNightMode(enabled);
+                    }
+                }
+                if (!enabled) removeAll(424);
+                return;
+            case 86:
+                removeAll(203);
+                if (enabled) launch(203);
+                removeAll(166);
+                if (enabled) launchMarked(166, 0xFFFE, 128);
+                return;
+            case 87:
+            case 235:
+                replace(254);
+                return;
+            case 95:
+                removeAll(453);
+                return;
+            case 97:
+                if (!enabled) {
+                    while (hasEffect(655)) {
+                        removeOne(655);
+                        launch(656);
+                    }
+                } else if (!hasEffect(655)) {
+                    launch(655);
+                }
+                return;
+            case 103:
+                removeAll(367);
+                removeAll(474);
+                if (enabled) {
+                    launch(367);
+                    launch(474);
+                }
+                return;
+            case 105:
+                removeOne(369);
+                if (enabled) launch(369);
+                return;
+            case 107: replace(368); return;
+            case 110: removeAll(375); return;
+            case 113: replace(382); return;
+            case 121:
+                removeOne(395);
+                removeAll(396);
+                if (enabled) launch(396);
+                return;
+            case 122: replace(396); return;
+            case 123: replace(394); return;
+            case 133:
+                if (hasEffect(442)) launch(443);
+                removeOne(442);
+                return;
+            case 134:
+                launch(426);
+                if (hasEffect(442)) removeOne(442);
+                return;
+            default:
+                return;
+            }
+        }
+
+        switch (skillStatus) {
+        case 152:
+            if (m_gid == g_session.m_gid) {
+                const PLAYER_SKILL_INFO* skill = g_session.GetSkillItemBySkillId(441);
+                const int level = skill ? skill->level : 0;
+                if (level >= 1 && level <= 10 && !hasEffect(level + 474)) {
+                    launch(level + 474);
+                    launch(487);
+                }
+            }
+            return;
+        case 153:
+            replace(419);
+            return;
+        case 161:
+            removeAll(166);
+            if (enabled) launchMarked(166, 0xFFFF, 130);
+            return;
+        case 159:
+            if (enabled) launch(546);
+            return;
+        case 160:
+            if (m_gid == g_session.m_gid) {
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    if (mode->m_world) mode->m_world->SetNightMode(enabled);
+                }
+            }
+            return;
+        case 165:
+        case 166:
+        case 167:
+        case 232:
+            removeAll(418);
+            removeAll(544);
+            if (enabled) {
+                launch(418);
+                launch(544);
+            }
+            return;
+        case 198: replace(601); return;
+        case 200:
+        case 201: replace(604); return;
+        case 207:
+            removeAll(617);
+            if (enabled) launchMarked(617, 0xFFFF, 130);
+            return;
+        case 263: replace(586); return;
+        case 266:
+            return;
+        case 277:
+        case 278:
+        case 279:
+        case 280:
+        case 281:
+            // Legacy sends a floating stat text through UI message 7; keep only the visual gameplay effect.
+            launch(456);
+            return;
+        default:
+            return;
+        }
+    }
     case 3: {
         const int* actorArgs = reinterpret_cast<const int*>(par1);
         if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {

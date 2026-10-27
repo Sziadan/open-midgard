@@ -5218,7 +5218,7 @@ CWorld::CWorld()
     : m_curMode(nullptr), m_ground(nullptr), m_player(nullptr), m_attr(nullptr)
     , m_bgObjCount(0), m_bgObjThread(0), m_isPKZone(0), m_isSiegeMode(0)
     , m_isBattleFieldMode(0), m_isEventPVPMode(0)
-    , m_bgLightDir{ 0.0f, 1.0f, 0.0f }, m_bgDiffuseCol{ 1.0f, 1.0f, 1.0f }, m_bgAmbientCol{ 0.3f, 0.3f, 0.3f }
+    , m_bgLightDir{ 0.0f, 1.0f, 0.0f }, m_bgDiffuseCol{ 1.0f, 1.0f, 1.0f }, m_bgMaxDiffuseCol{ 1.0f, 1.0f, 1.0f }, m_bgAmbientCol{ 0.3f, 0.3f, 0.3f }, m_bgEnvDiffuseCol{ 1.0f, 1.0f, 1.0f }, m_isNightMode(false)
     , m_skyActor(nullptr), m_skyLoadAttempted(false)
     , m_billboardFrameZoom(0.0f)
     , m_billboardActorFingerprint(0)
@@ -5609,6 +5609,7 @@ bool CWorld::BuildGroundFromGnd(const CGndRes& gnd,
     ClearGround();
     m_bgLightDir = lightDir;
     m_bgDiffuseCol = diffuseCol;
+    m_bgMaxDiffuseCol = diffuseCol;
     m_bgAmbientCol = ambientCol;
 
     C3dGround* ground = new C3dGround();
@@ -5672,6 +5673,7 @@ bool CWorld::AppendBackgroundObjects(const C3dWorldRes& worldRes,
 
     m_bgLightDir = lightDir;
     m_bgDiffuseCol = diffuseCol;
+    m_bgMaxDiffuseCol = diffuseCol;
     m_bgAmbientCol = ambientCol;
 
     std::map<std::string, bool> unresolvedModelNames;
@@ -5994,6 +5996,7 @@ void CWorld::UpdateBackgroundObjects(const matrix* viewMatrix)
 
 void CWorld::UpdateActors()
 {
+    UpdateNightLighting();
     UpdateGameObjects();
 
     for (CItem* item : m_itemList) {
@@ -6015,6 +6018,42 @@ void CWorld::UpdateActors()
     }
 
     UpdateBillboardActorFingerprint();
+}
+
+void CWorld::SetNightMode(bool enabled)
+{
+    m_isNightMode = enabled;
+}
+
+void CWorld::UpdateNightLighting()
+{
+    constexpr float step = 0.0049999999f;
+    if (m_isNightMode) {
+        if (m_bgDiffuseCol.x > 0.5f) {
+            m_bgDiffuseCol.x -= step;
+        }
+        if (m_bgDiffuseCol.y > 0.5f) {
+            m_bgDiffuseCol.y -= step;
+        }
+    } else {
+        if (m_bgDiffuseCol.x < 1.0f && m_bgDiffuseCol.x < m_bgMaxDiffuseCol.x) {
+            m_bgDiffuseCol.x += step;
+        }
+        if (m_bgDiffuseCol.y < 1.0f && m_bgDiffuseCol.y < m_bgMaxDiffuseCol.y) {
+            m_bgDiffuseCol.y += step;
+        }
+    }
+
+    m_bgEnvDiffuseCol.x = 1.0f - (1.0f - m_bgAmbientCol.x) * (1.0f - m_bgDiffuseCol.x);
+    m_bgEnvDiffuseCol.y = 1.0f - (1.0f - m_bgAmbientCol.y) * (1.0f - m_bgDiffuseCol.y);
+    m_bgEnvDiffuseCol.z = 1.0f - (1.0f - m_bgAmbientCol.z) * (1.0f - m_bgDiffuseCol.z);
+    if (m_ground) {
+        m_ground->m_diffuseCol = m_bgDiffuseCol;
+    }
+    vector3d lightDir = m_bgLightDir;
+    vector3d diffuse = m_bgDiffuseCol;
+    vector3d ambient = m_bgAmbientCol;
+    g_renderer.SetLight(&lightDir, &diffuse, &ambient);
 }
 
 void CWorld::ProcessActorSkillRechargeGages(const matrix& viewMatrix, float cameraLongitude)
