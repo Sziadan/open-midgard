@@ -444,6 +444,8 @@ Completion update (2026-10-27): `CNpc::SetState` passes the Ref/EXE body and ord
 
 Completion update (2026-10-27): `CNpc::SendMsg` passes complete Ref/EXE body and ordered message-branch comparison. Its message-4 NPC visibility rule now runs in the consolidated actor route; guild metadata is handled by the existing message-4 path. Legacy gauge messages 34/35/125/138 are UI-only and excluded. See `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`; next WP2.7 function is `CGameActor::SetAttrState`.
 
+Completion update (2026-10-27): `CGameActor::SetAttrState` passes complete Ref/EXE body comparison and source-derived branch gates for sight/Ruwach, burrow/hiding transitions, attachment changes, body states, health states, cleanup, and reveal effects. Restored Delete99LevelEffects ordering, master-aid exceptions, message-126 re-launches, horizontal wave offsets, and RGB-only tint writes. Legacy emblem/word windows and the old self-hide/blur tail are documented scope/architecture differences. See `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`.
+
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
 * `CPc::SetState` Ref/Pc.cpp:5678, `ProcessState` 2382.
 * `CPlayer::SetState` Ref/Player.cpp:523, `ProcessState` 87.

@@ -2,6 +2,8 @@
 #include "RagEffect.h"
 #include "World.h"
 #include "audio/Audio.h"
+#include "core/ClientInfoLocale.h"
+#include "core/Globals.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/Mode.h"
 #include "DebugLog.h"
@@ -772,7 +774,7 @@ void PlayStateWave(const CGameActor& actor, const char* waveName)
         return;
     }
     const vector3d& listener = g_world.m_player->m_pos;
-    PlayWave(waveName, actor.m_pos.x - listener.x, actor.m_pos.y - listener.y,
+    PlayWave(waveName, actor.m_pos.x - listener.x, 0.0f,
         actor.m_pos.z - listener.z);
 }
 
@@ -789,7 +791,6 @@ bool HasLaunchedEffect(const CGameActor& actor, int effectId)
 void TintActor(CGameActor& actor, u8 red, u8 green, u8 blue)
 {
     actor.m_isSprArgbFixed = 1;
-    actor.m_u28.m_sprColor.u.s.a = 255;
     actor.m_u28.m_sprColor.u.s.r = red;
     actor.m_u28.m_sprColor.u.s.g = green;
     actor.m_u28.m_sprColor.u.s.b = blue;
@@ -798,7 +799,6 @@ void TintActor(CGameActor& actor, u8 red, u8 green, u8 blue)
 void ClearActorTint(CGameActor& actor)
 {
     actor.m_isSprArgbFixed = 0;
-    actor.m_u28.m_sprColor.u.s.a = 255;
     actor.m_u28.m_sprColor.u.s.r = 255;
     actor.m_u28.m_sprColor.u.s.g = 255;
     actor.m_u28.m_sprColor.u.s.b = 255;
@@ -814,6 +814,31 @@ void CGameActor::SetAttrState(int bodyState, int effectState, int healthState, b
     m_effectState = effectState;
     m_healthState = healthState;
     const bool localPlayer = m_gid == g_session.m_aid;
+    const auto isMasterAid = [](int showLevel) {
+        const u32 aid = g_session.m_aid;
+        if (IsGravityAid(aid) && showLevel == 7) {
+            return true;
+        }
+        if (g_serviceType != ServiceKorea) {
+            return false;
+        }
+        if (aid > 0x2C8C83u) {
+            return aid == 2919558u && (showLevel == 1 || showLevel == 2);
+        }
+        if (aid == 2919555u) {
+            return showLevel == 1 || showLevel == 2;
+        }
+        if (aid == 100025u) {
+            return showLevel == 5;
+        }
+        return aid == 234073u && showLevel == 1;
+    };
+    const auto delete99LevelEffects = [this]() {
+        m_99 = 0;
+        for (const int effectId : { 200, 397, 398, 362, 362, 201, 202, 202 }) {
+            SendMsg(this, 109, effectId, 0, 0);
+        }
+    };
 
     if (BitChanged(effectState, oldEffectState, kSightBit) && HasBit(effectState, kSightBit)) {
         PlayStateWave(*this, "effect\\EF_Sight.wav");
@@ -823,6 +848,7 @@ void CGameActor::SetAttrState(int bodyState, int effectState, int healthState, b
     }
 
     if (BitChanged(effectState, oldEffectState, kBurrowBit)) {
+        delete99LevelEffects();
         if (HasBit(effectState, kBurrowBit)) {
             if (changedNow) {
                 SendMsg(this, 63, 0, 0, 0);
@@ -831,7 +857,7 @@ void CGameActor::SetAttrState(int bodyState, int effectState, int healthState, b
                 }
             }
             m_isVisibleBody = 0;
-            if (!localPlayer) {
+            if (!localPlayer && !isMasterAid(7)) {
                 m_shadowOn = 0;
                 SendMsg(this, 109, 159, 0, 0);
                 SendMsg(this, 35, 0, 0, 0);
@@ -857,14 +883,18 @@ void CGameActor::SetAttrState(int bodyState, int effectState, int healthState, b
             if (HasBit(effectState, kBirdBit)) {
                 SendMsg(this, 101, 0, 0, 0);
             }
+            if (m_is99) {
+                SendMsg(this, 126, 0, 0, 0);
+            }
         }
     }
 
     if (BitChanged(effectState, oldEffectState, kHidingBit)) {
+        delete99LevelEffects();
         if (HasBit(effectState, kHidingBit)) {
             m_isVisibleBody = 0;
             m_isVisible = 0;
-            if (!localPlayer) {
+            if (!localPlayer && !isMasterAid(7)) {
                 m_shadowOn = 0;
                 SendMsg(this, 35, 0, 0, 0);
                 SendMsg(this, 109, 159, 0, 0);
@@ -887,6 +917,9 @@ void CGameActor::SetAttrState(int bodyState, int effectState, int healthState, b
             if (HasBit(effectState, kBirdBit)) {
                 SendMsg(this, 101, 0, 0, 0);
             }
+            if (m_is99) {
+                SendMsg(this, 126, 0, 0, 0);
+            }
         }
     }
 
@@ -904,11 +937,17 @@ void CGameActor::SetAttrState(int bodyState, int effectState, int healthState, b
     }
 
     if (BitChanged(effectState, oldEffectState, kCloakBit)) {
+        delete99LevelEffects();
         if (HasBit(effectState, kCloakBit)) {
-            m_isVisibleBody = 0;
-            m_isVisible = 0;
             m_shadowOn = 0;
-            SendMsg(this, 109, 159, 0, 0);
+            if (isMasterAid(8)) {
+                m_isVisibleBody = 1;
+                m_isVisible = 1;
+            } else {
+                m_isVisibleBody = 0;
+                m_isVisible = 0;
+                SendMsg(this, 109, 159, 0, 0);
+            }
             if (HasBit(effectState, kCartBits)) {
                 SendMsg(this, 52, 0, 0, 0);
             }
@@ -924,6 +963,9 @@ void CGameActor::SetAttrState(int bodyState, int effectState, int healthState, b
             }
             if (HasBit(effectState, kBirdBit)) {
                 SendMsg(this, 101, 0, 0, 0);
+            }
+            if (m_is99) {
+                SendMsg(this, 126, 0, 0, 0);
             }
         }
     }
