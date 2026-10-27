@@ -4912,7 +4912,7 @@ u8 CGameActor::ProcessState() {
     if (m_stateId != kMoveStateId && m_gid != 0 && m_isPc == 0) {
         g_moveStallTraceByGid.erase(m_gid);
     }
-    // Ref runtime-wave: 0x5D9E95. CPc::OnProcess consumes this queued hit name.
+    // Ref runtime-wave: 0x5D9E95 0x5E0FD6. PC actor OnProcess consumes this queued hit name.
     ProcessQueuedHitWave(*this);
 
     m_lastProcessStateTime = timeGetTime();

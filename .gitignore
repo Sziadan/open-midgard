@@ -74,6 +74,7 @@ tools/tests/*
 !tools/tests/check_pc_onprocess_source.py
 !tools/tests/ActorTintTests.cpp
 !tools/tests/check_actor_tint_source.py
+!tools/tests/check_grannypc_onprocess_source.py
 !tools/tests/AutoSpellPacketTests.cpp
 !tools/tests/check_autospell_packet.py
 !tools/tests/UISpellListWndReceiverTests.cpp

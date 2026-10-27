@@ -396,3 +396,7 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 
 - `ProcessChatBalloon` handles only legacy `UIBalloonText`, `UIChatRoomTitle`, `UIMerchantShopTitle`, and `UIRechargeGage` expiry/placement; those window branches and the PC gauge move are out of the skill/effect scope.
 - Resolved in the 2026-10-27 tint checkpoint: the modern actor process now performs the strict 100 ms reset and source `ModifyArgb` +8/clamp step when ARGB is active and not fixed. `RenderCachedBillboard` consumes actor tint and single-red state, combining actor alpha with hide/vanish transparency. Source and numeric CTests gate the path. Current rendering remains the Modern billboard implementation rather than the old sprite/window renderer.
+
+# Dormant `CGrannyPc` rotation smoothing (2026-10-27)
+
+- Source `CGrannyPc::OnProcess` normalizes `m_roty` and initializes/eases `m_fCurRot` toward the target in 16-degree increments. Current `CGrannyPc` still has the storage fields, but `src` has no construction expression and its `Render` is a stub; active player actors use the CPc billboard path. The associated runtime hit-wave branch is mapped through shared `CGameActor::ProcessState`, but this legacy class's rotation tail is not implemented or claimed as parity. Revisit if a current CGranny actor construction/render path is introduced.
