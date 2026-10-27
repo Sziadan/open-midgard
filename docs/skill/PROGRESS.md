@@ -8,7 +8,7 @@ Current work: WP5A renderer and primitive-update parity. Cases 0x1A through 0x1D
 
 Next action: source-compare PP_3DQUADHORN2 before editing. PP_HERMODE now matches readable Ref and canonical `HighPriest.exe.c`; PP_SOULLINK, PP_SOULPARTICLE, PP_3DAURA_3, PP_AIRTEXTURE, and PP_HITLINE3 have dedicated source-compared renderer routes. Full fog/backend acceptance remains open. Specialized PP_3DQUADHORN2, PP_STIN, PP_STIN2, PP_STIN4, PP_STIN5, PP_SMA, PP_SMA2, and PP_KOUENKA render paths remain open.
 
-Latest checkpoint (2026-10-27): `PP_HERMODE` renderer is ported against readable Ref and canonical `HighPriest.exe.c`. Tests cover its six face passes, color order, geometry, primitive translation and inactive lanes; all six CTest suites and 582 particle-render checks pass. The same checkpoint corrects SoulLink's high-AID comparison to match canonical double promotion. Release artifact SHA-256 is `F2A67FFE5BF7B476EA3971D44EA41667734AB89E08D5D95B7975C373B8E81D63`; OldRO deployment is pending. Full details are in `PARITY_LOG.md`.
+Latest checkpoint (2026-10-27): `PP_HERMODE` renderer is ported against readable Ref and canonical `HighPriest.exe.c`. Tests cover its six face passes, color order, geometry, primitive translation and inactive lanes; all six CTest suites and 582 particle-render checks pass. The same checkpoint corrects SoulLink's high-AID comparison to match canonical double promotion. Release and deployed OldRO SHA-256 are `F2A67FFE5BF7B476EA3971D44EA41667734AB89E08D5D95B7975C373B8E81D63`; commit `420df2e`. Full details are in `PARITY_LOG.md`.
 
 
 ## BeginSpell2–7 casting emitter setup — 2026-10-26
