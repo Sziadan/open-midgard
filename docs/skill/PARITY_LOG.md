@@ -2035,11 +2035,11 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - Current unified `CGameActor::SendMsg` folds source `CPc::SendMsg` and `CGrannyPc::SendMsg` spawn handling together. Message 123 applies the party effect only to those two current runtime classes; message 5 and base actors do not receive the call. The source/current caller gate checks the Ref/EXE subclass call branches and the current runtime-class guard.
 - `tools/tests/check_make_party_effect_source.py` and `check_actor_sendmsg_move_update_case.py` pass. All 42 source-check CTests pass; x64 Release builds. OldRO deployment matches the Release executable at SHA-256 `7AF813BD2B6524C09D0816BACF6389F640621B15DD94B24DBB818E5C51618E94`.
 
-## `CPc::SetState` source audit — 2026-10-27
+## `CPc::SetState` implementation checkpoint — 2026-10-27
 
-- Complete Ref/Pc.cpp and canonical EXE bodies match after whitespace normalization (5,955 characters). Source cases/order are `{0,1,2,6,7,8,9}`; current explicit cases are `{0,1,2,9}`, with 2/9 currently merged.
+- Complete Ref/Pc.cpp and canonical EXE bodies match after whitespace normalization (5,955 characters). Source and current case order now both equal `{0,1,2,6,7,8,9}`.
 - In-scope branch inventory: case 6 registers position and selects sit action/motion; case 7 performs job/sex-specific skill actions, including three forced animation sequences and attack-motion setup; case 8 registers position and selects the cast animation; case 2 includes the job 4046–4048 70% second-attack random branch and weapon-type-11 arrow timing; case 9 uses weapon IDs 13/14 for arrow timing. The source arrow hide time is `m_attackMotion * m_motionSpeed`, then extends attack motion by `8.0 / m_motionSpeed`.
-- Case 0's camera-distance clamp and item-ack reset are outside the agreed skill/effect/animation scope. `tools/tests/check_pc_setstate_source.py` compares full Ref/EXE bodies, mechanically extracts top-level state labels, and validates source operations before implementation. Current implementation gaps are recorded in `docs/skill/PROGRESS.md`.
+- Case 0's camera-distance clamp and item-ack reset are outside the agreed skill/effect/animation scope. `tools/tests/check_pc_setstate_source.py` compares complete Ref/EXE bodies, extracts state labels, and checks ordered branch operations, job/sex animation routes, RNG, arrow timing, force tuples, and the common tail. Zero motion-speed guards remain for invalid state. All 43 source-check CTests pass; x64 Release builds; OldRO deployment matches SHA-256 `45670D14E8858DB4C2772794E8CA838882E6EAED152D9804480505FC9B3B8F1E`.
 
 ### Am_Groundskill implementation gate update — 2026-10-27
 

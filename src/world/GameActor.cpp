@@ -7379,7 +7379,6 @@ void CPc::SetState(int state)
         m_curMotion = m_headDir;
         if (previousState == kHitReactionStateId
             || previousState == kAttackStateId
-            || previousState == kSecondAttackStateId
             || m_pkState
             || previousState == kGameActorCastingStateId) {
             SetAction(32, 4, 0);
@@ -7393,7 +7392,87 @@ void CPc::SetState(int state)
         m_headDir = 0;
         CGameActor::SetState(kMoveStateId);
         break;
-    case kAttackStateId:
+    case kAttackStateId: {
+        m_isCounter = 0;
+        if (m_bodyState != 1 && m_bodyState != 2) {
+            m_isMotionFreezed = 0;
+        }
+        SendMsg(this, 83, 0, 0, 0);
+
+        bool secondAttack = g_session.IsSecondAttack(m_job, m_sex, m_weapon);
+        if (m_job >= 4046 && m_job <= 4048) {
+            if (std::rand() % 10 < 7) {
+                secondAttack = true;
+                CGameActor::SetState(kSecondAttackStateId);
+            } else {
+                secondAttack = false;
+                CGameActor::SetState(kAttackStateId);
+            }
+        } else {
+            CGameActor::SetState(secondAttack ? kSecondAttackStateId : kAttackStateId);
+        }
+
+        m_attackMotion = g_session.GetPCAttackMotion(m_job, m_sex, m_weapon, secondAttack ? 1 : 0);
+        int weaponType = m_weapon;
+        if (weaponType > 31) {
+            weaponType = g_session.GetWeaponTypeByItemId(weaponType);
+        }
+        if (weaponType == 11) {
+            const float hideTime = m_attackMotion * m_motionSpeed;
+            if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+                gameMode->MakeArrowEffect(m_pos, m_targetGid, hideTime, 0);
+            }
+            if (m_motionSpeed != 0.0f) {
+                m_attackMotion = 8.0f / m_motionSpeed + m_attackMotion;
+            }
+        }
+        break;
+    }
+    case 6:
+        RegisterPos();
+        SetAction(16, 4, 1);
+        m_isMotionFinished = 1;
+        m_curMotion = m_headDir;
+        break;
+    case 7: {
+        if (previousState == 6) {
+            return;
+        }
+
+        const bool standardAction32 = m_job == 19 || m_job == 20 || m_job == 14
+            || m_job == 4042 || m_job == 4043 || m_job == 4037;
+        const bool genderedSkillJob = m_job == 15 || m_job == 4016 || m_job == 4038;
+        const bool forceAction96 = m_job == 4020 || m_job == 4021 || m_job == 4015
+            || (genderedSkillJob && m_sex != 0);
+        const bool action32 = standardAction32
+            || (genderedSkillJob && m_sex == 0)
+            || (m_job >= 4046 && m_job <= 4048);
+
+        if (forceAction96) {
+            SetAction(96, 6, 1);
+            m_forceAnimSpeed = 4;
+            SetForceAnimation(96, 0, 0, 96, 0, 1, 0x190u, 0);
+        } else if (action32) {
+            SetAction(32, 6, 1);
+        } else if (m_job == 25) {
+            SetAction(96, 6, 1);
+            m_forceAnimSpeed = 4;
+            SetForceAnimation(96, 2, 5, 96, 5, 1, 0x3E8u, 0);
+        } else if (m_job == 24) {
+            SetAction(32, 6, 1);
+            m_forceAnimSpeed = 4;
+            SetForceAnimation(96, 0, 3, 96, 3, 1, 0x3E8u, 0);
+        } else {
+            SetAction(96, 6, 1);
+        }
+        m_attackMotion = 6.0f;
+        break;
+    }
+    case 8:
+        RegisterPos();
+        SetAction(96, 6, 1);
+        m_isMotionFinished = 1;
+        break;
     case kSecondAttackStateId: {
         m_isCounter = 0;
         if (m_bodyState != 1 && m_bodyState != 2) {
@@ -7401,19 +7480,29 @@ void CPc::SetState(int state)
         }
         SendMsg(this, 83, 0, 0, 0);
 
-        const bool secondAttack = g_session.IsSecondAttack(
-            m_job,
-            m_sex,
-            ResolvePcAttackWeaponValue(*this));
+        const bool secondAttack = g_session.IsSecondAttack(m_job, m_sex, m_weapon);
         CGameActor::SetState(secondAttack ? kSecondAttackStateId : kAttackStateId);
-        m_attackMotion = ResolvePcAttackMotionTiming(*this, secondAttack);
+        m_attackMotion = g_session.GetPCAttackMotion(m_job, m_sex, m_weapon, secondAttack ? 1 : 0);
+        if (m_weapon == 14 || m_weapon == 13) {
+            const float hideTime = m_attackMotion * m_motionSpeed;
+            if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+                gameMode->MakeArrowEffect(m_pos, m_targetGid, hideTime, 0);
+            }
+            if (m_motionSpeed != 0.0f) {
+                m_attackMotion = 8.0f / m_motionSpeed + m_attackMotion;
+            }
+        }
         break;
     }
     default:
         CGameActor::SetState(state);
-        break;
+        InvalidateBillboard();
+        return;
     }
 
+    m_curAction = m_baseAction + Get8Dir(m_roty);
+    m_stateId = state;
+    m_stateStartTick = timeGetTime();
     InvalidateBillboard();
 }
 

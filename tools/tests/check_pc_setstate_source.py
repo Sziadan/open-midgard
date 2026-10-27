@@ -95,6 +95,28 @@ impl_marker = "void CPc::SetState(int state)"
 assert impl_marker in IMPL and re.search(r"void SetState\(int state\) override;", HEADER), "current CPc::SetState implementation/declaration missing"
 _, impl_body = body(IMPL, impl_marker)
 impl_cases = top_level_cases(impl_body, "state")
-print(f"Current state labels: {list(impl_cases)}; source labels: {list(ref_cases)}")
-missing = sorted(set(ref_cases) - set(impl_cases))
-print(f"Current explicit state gaps before port: {missing}; state-2/state-9 attack semantics are currently combined")
+assert list(impl_cases) == list(ref_cases), f"current state inventory/order differs: {list(impl_cases)}"
+print(f"PASS current state inventory/order: {list(impl_cases)}")
+
+impl_requirements = {
+    0: [r"CGameActor::SetState\(0\)", r"m_curMotion\s*=\s*m_headDir", r"previousState\s*==\s*kHitReactionStateId", r"SetAction\(32,\s*4,\s*0\)"],
+    1: [r"m_isCounter\s*=\s*0", r"m_bodyState\s*!=\s*1", r"m_isMotionFreezed\s*=\s*0", r"m_headDir\s*=\s*0", r"CGameActor::SetState\(kMoveStateId\)"],
+    2: [r"SendMsg\(this,\s*83", r"g_session\.IsSecondAttack\(m_job,\s*m_sex,\s*m_weapon\)", r"m_job\s*>=\s*4046\s*&&\s*m_job\s*<=\s*4048", r"std::rand\(\)\s*%\s*10\s*<\s*7", r"CGameActor::SetState\(kSecondAttackStateId\)", r"g_session\.GetPCAttackMotion", r"weaponType\s*==\s*11", r"MakeArrowEffect\(m_pos,\s*m_targetGid,\s*hideTime,\s*0\)", r"8\.0f\s*/\s*m_motionSpeed"],
+    6: [r"RegisterPos\(\)", r"SetAction\(16,\s*4,\s*1\)", r"m_isMotionFinished\s*=\s*1", r"m_curMotion\s*=\s*m_headDir"],
+    7: [r"previousState\s*==\s*6", r"m_job\s*==\s*19\s*\|\|\s*m_job\s*==\s*20\s*\|\|\s*m_job\s*==\s*14", r"m_job\s*==\s*4042\s*\|\|\s*m_job\s*==\s*4043\s*\|\|\s*m_job\s*==\s*4037", r"m_job\s*==\s*15\s*\|\|\s*m_job\s*==\s*4016\s*\|\|\s*m_job\s*==\s*4038", r"m_job\s*==\s*4020\s*\|\|\s*m_job\s*==\s*4021\s*\|\|\s*m_job\s*==\s*4015", r"genderedSkillJob\s*&&\s*m_sex\s*!=\s*0", r"genderedSkillJob\s*&&\s*m_sex\s*==\s*0", r"m_job\s*>=\s*4046\s*&&\s*m_job\s*<=\s*4048", r"SetAction\(96,\s*6,\s*1\)[\s\S]*?SetForceAnimation\(96,\s*0,\s*0,\s*96,\s*0,\s*1,\s*0x190u,\s*0\)", r"SetAction\(32,\s*6,\s*1\)", r"m_job\s*==\s*25", r"SetForceAnimation\(96,\s*2,\s*5,\s*96,\s*5,\s*1,\s*0x3E8u,\s*0\)", r"m_job\s*==\s*24", r"SetForceAnimation\(96,\s*0,\s*3,\s*96,\s*3,\s*1,\s*0x3E8u,\s*0\)", r"else\s*\{\s*SetAction\(96,\s*6,\s*1\)", r"m_attackMotion\s*=\s*6\.0f"],
+    8: [r"RegisterPos\(\)", r"SetAction\(96,\s*6,\s*1\)", r"m_isMotionFinished\s*=\s*1"],
+    9: [r"SendMsg\(this,\s*83", r"g_session\.IsSecondAttack\(m_job,\s*m_sex,\s*m_weapon\)", r"g_session\.GetPCAttackMotion", r"m_weapon\s*==\s*14\s*\|\|\s*m_weapon\s*==\s*13", r"MakeArrowEffect\(m_pos,\s*m_targetGid,\s*hideTime,\s*0\)", r"8\.0f\s*/\s*m_motionSpeed"],
+}
+for state, patterns in impl_requirements.items():
+    branch = impl_cases[state]
+    cursor = 0
+    for pattern in patterns:
+        match = re.search(pattern, branch[cursor:])
+        assert match, f"current state {state} missing/out-of-order branch operation: {pattern}"
+        cursor += match.end()
+
+assert re.search(r"m_curAction\s*=\s*m_baseAction\s*\+\s*Get8Dir\(m_roty\)[\s\S]*?m_stateId\s*=\s*state[\s\S]*?m_stateStartTick\s*=\s*timeGetTime\(\)", impl_body), "current shared state/action/tick tail missing or reordered"
+assert re.search(r"previousState\s*==\s*kHitReactionStateId\s*\|\|\s*previousState\s*==\s*kAttackStateId\s*\|\|\s*m_pkState\s*\|\|\s*previousState\s*==\s*kGameActorCastingStateId", impl_cases[0]), "state-0 action guard differs"
+assert "previousState == kSecondAttackStateId" not in impl_cases[0], "source state-0 action guard does not include prior state 9"
+assert "m_waitingUseItemAck" not in impl_cases[0] and "m_view" not in impl_cases[0], "out-of-scope UI/input actions were added to the port"
+print("PASS current branch comparison: state 0/1, independent 2/9 attack routes, state 6/7/8 animations, force tuples, RNG, arrow timings, and common tail")
