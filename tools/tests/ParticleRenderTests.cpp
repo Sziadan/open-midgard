@@ -409,6 +409,68 @@ int main() {
         check(g_renderer.submissions.empty(),"SMA2 negative full angle emits no samples");
     }
     {
+        CEffectPrim bash;bash.m_pos={11,20,30};bash.m_renderFlag=0x205;bash.m_texture={&g_texMgr.texture};
+        const int modes[4]={2,3,4,0};
+        for(int lane=0;lane<4;++lane) {
+            EffectGi& gi=bash.m_gi[static_cast<size_t>(lane)];
+            gi.life=1;gi.alphaB=static_cast<short>(100-lane*10);gi.riseAngle=359;gi.rotStart=0;gi.distance=10;
+            gi.height[0]=2;gi.height[4]=static_cast<float>(modes[lane]);
+        }
+        g_renderer.submissions.clear();g_renderer.flags.clear();
+        matrix identity{};MatrixIdentity(identity);RenderBash3D(bash,identity);
+        check(g_renderer.submissions.size()==16,"BASH3D submits narrow and wide two-triangle passes for four active lanes");
+        if(g_renderer.submissions.size()==16) {
+            const unsigned int narrowColors[4]={0x640000FAu,0x5AFAFAFAu,0x500000FAu,0x4600FAFAu};
+            const unsigned int wideColors[4]={0x64FAFA00u,0x5AFAFAFAu,0x50FAFA00u,0x46FA0000u};
+            for(int lane=0;lane<4;++lane) {
+                const RPFace& narrow=g_renderer.submissions[static_cast<size_t>(lane*4)];
+                const RPFace& wide=g_renderer.submissions[static_cast<size_t>(lane*4+2)];
+                check(narrow.m_verts[0].color==narrowColors[lane]&&wide.m_verts[0].color==wideColors[lane],
+                    "BASH3D mode selects exact narrow and wide pass tint with lane alpha");
+                check(narrow.destAlphaMode==D3DBLEND_ONE
+                    &&wide.destAlphaMode==(lane==1||lane==2?D3DBLEND_INVSRCALPHA:D3DBLEND_ONE)
+                    &&g_renderer.flags[static_cast<size_t>(lane*4)]==0x205,
+                    "BASH3D preserves pass blend selector and source render flags");
+            }
+            const float lowRadius=GetCos(358)*10.0f;
+            const vector3d low{bash.m_pos.x+GetCos(0)*lowRadius,bash.m_pos.y+GetSin(0)*lowRadius+2,bash.m_pos.z+GetSin(358)*10.0f};
+            const float highRadius=GetCos(0)*10.0f;
+            const vector3d high{bash.m_pos.x+GetCos(0)*highRadius,bash.m_pos.y+GetSin(0)*highRadius+2,bash.m_pos.z+GetSin(0)*10.0f};
+            tlvertex3d projectedLow{},projectedHigh{};
+            ProjectReferenceEffectVertex(low,identity,projectedLow);ProjectReferenceEffectVertex(high,identity,projectedHigh);
+            check(near(g_renderer.submissions[0].m_verts[0].x,projectedLow.x)
+                &&near(g_renderer.submissions[0].m_verts[0].y,projectedLow.y)
+                &&near(g_renderer.submissions[0].m_verts[0].oow,projectedLow.oow)
+                &&near(g_renderer.submissions[0].m_verts[1].x,projectedHigh.x)
+                &&near(g_renderer.submissions[0].m_verts[1].y,projectedHigh.y)
+                &&near(g_renderer.submissions[0].m_verts[1].oow,projectedHigh.oow),
+                "BASH3D endpoints preserve wrapped rise angles, RotStart radius rotation and primitive position");
+            check(g_renderer.submissions[0].tex==&g_texMgr.texture
+                &&g_renderer.submissions[0].m_verts[0].tu==0
+                &&g_renderer.submissions[0].m_verts[0].tv==1,
+                "BASH3D uses texture0 and full source UV range");
+        }
+        bash.m_gi[3].height[4]=5;g_renderer.submissions.clear();RenderBash3D(bash,identity);
+        check(g_renderer.submissions.size()==16&&g_renderer.submissions[12].m_verts[0].color==0x46323232u
+            &&g_renderer.submissions[14].m_verts[0].color==0x46FAFAFAu
+            &&g_renderer.submissions[14].destAlphaMode==D3DBLEND_INVSRCALPHA,
+            "BASH3D mode five keeps gray narrow and white inverse-alpha wide passes");
+        bash.m_gi[0].height[4]=2.5f;g_renderer.submissions.clear();RenderBash3D(bash,identity);
+        check(g_renderer.submissions.size()==16&&g_renderer.submissions[0].m_verts[0].color==0x6400FAFAu
+            &&g_renderer.submissions[2].m_verts[0].color==0x64FA0000u,
+            "BASH3D fractional selectors take the source default tint branches");
+        bash.m_gi[3].alphaB=0;g_renderer.submissions.clear();RenderBash3D(bash,identity);
+        check(g_renderer.submissions.size()==12,"BASH3D skips lanes with nonpositive alpha");
+        bash.m_gi[3].alphaB=40;bash.m_gi[3].life=0;g_renderer.submissions.clear();RenderBash3D(bash,identity);
+        check(g_renderer.submissions.size()==12,"BASH3D skips inactive lanes");
+        bash.m_gi[3].life=1;bash.m_texture.clear();g_renderer.submissions.clear();RenderBash3D(bash,identity);
+        check(g_renderer.submissions.size()==16&&g_renderer.submissions[0].tex==nullptr,
+            "BASH3D follows canonical submission when texture0 is null");
+        bash.m_texture={&CTexMgr::s_dummy_texture};g_renderer.submissions.clear();RenderBash3D(bash,identity);
+        check(g_renderer.submissions.size()==16&&g_renderer.submissions[0].tex==&CTexMgr::s_dummy_texture,
+            "BASH3D follows canonical submission when texture0 is dummy");
+    }
+    {
         CEffectPrim air;
         air.m_texture={&g_texMgr.texture};
         air.m_gi[0].life=1; air.m_gi[0].alphaB=100; air.m_gi[0].distance=2.0f;

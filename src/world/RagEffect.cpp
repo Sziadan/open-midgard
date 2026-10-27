@@ -7696,6 +7696,88 @@ void RenderSma2(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void SubmitBash3dRect(int& rpCount, const vector3d& vec1, const vector3d& vec2,
+    const vector3d& vec3, const vector3d& vec4, const vector3d& translation,
+    const matrix& viewMatrix, CTexture* texture, short alpha, unsigned char red,
+    unsigned char green, unsigned char blue, short pw, int renderFlags)
+{
+    if (rpCount >= 510) return;
+    const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(alpha)) << 24)
+        | (static_cast<unsigned int>(red) << 16) | (static_cast<unsigned int>(green) << 8) | blue;
+    const vector3d corners[4] = {vec1,vec2,vec3,vec4};
+    const int triangles[2][3] = {{0,1,2},{3,2,0}};
+    const float uvs[4][2] = {{0.0f,1.0f},{1.0f,1.0f},{1.0f,0.0f},{0.0f,0.0f}};
+    const D3DBLEND destBlend = pw == 0 || pw == 777 ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA;
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) return;
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = destBlend;
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            const int corner = triangles[triangle][vertex];
+            ProjectReferenceEffectVertex(AddVec3(corners[corner], translation), viewMatrix, face->m_verts[vertex]);
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[corner][0];
+            face->m_verts[vertex].tv = uvs[corner][1];
+        }
+        g_renderer.AddRP(face, renderFlags);
+        ++rpCount;
+    }
+}
+
+// Ref/dhxj/RagEffect2.cpp:24192; canonical RenderBash3D at 0x649B10.
+void RenderBash3D(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    int rpCount = 0;
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) continue;
+        const vector3d base{0.0f,gi.height[0],0.0f};
+        const auto endpoint = [&](int angle) {
+            const float radius = static_cast<float>(g_cosTable[angle] * gi.distance);
+            return vector3d{
+                static_cast<float>(g_cosTable[gi.rotStart] * radius),
+                static_cast<float>(g_sinTable[gi.rotStart] * radius + gi.height[0]),
+                static_cast<float>(g_sinTable[angle] * gi.distance)
+            };
+        };
+        const auto submitPass = [&](int spread, unsigned char red, unsigned char green,
+            unsigned char blue, short pw) {
+            int lowAngle = gi.riseAngle - spread;
+            if (lowAngle < 0) lowAngle += 360;
+            int highAngle = gi.riseAngle + spread;
+            if (highAngle >= 360) highAngle -= 360;
+            const vector3d low = endpoint(lowAngle);
+            const vector3d high = endpoint(highAngle);
+            SubmitBash3dRect(rpCount, low, high, base, base, prim.m_pos, viewMatrix,
+                texture, gi.alphaB, red, green, blue, pw, static_cast<int>(prim.m_renderFlag));
+        };
+
+        const float mode = gi.height[4];
+        const int narrowSpread = mode == 2.0f ? 1 : 2;
+        if (mode == 2.0f || mode == 4.0f) submitPass(narrowSpread, 0, 0, 250, 0);
+        else if (mode == 3.0f) submitPass(narrowSpread, 250, 250, 250, 0);
+        else if (mode == 5.0f) submitPass(narrowSpread, 50, 50, 50, 0);
+        else submitPass(narrowSpread, 0, 250, 250, 0);
+
+        const int wideSpread = mode == 2.0f ? 2 : 5;
+        if (mode == 2.0f) submitPass(wideSpread, 250, 250, 0, 0);
+        else if (mode == 3.0f || mode == 5.0f) submitPass(wideSpread, 250, 250, 250, 1);
+        else if (mode == 4.0f) submitPass(wideSpread, 250, 250, 0, 1);
+        else submitPass(wideSpread, 250, 0, 0, 0);
+    }
+}
+
 void RenderRainbow(CEffectPrim& prim, const matrix& viewMatrix)
 {
     int rpCount = 0;
@@ -12439,6 +12521,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_SMA2) {
         RenderSma2(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_BASH3D) {
+        RenderBash3D(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_3DQUADHORN2 || UsesReferenceQuadHorn()) {
