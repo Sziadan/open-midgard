@@ -6705,6 +6705,11 @@ int main()
         ProcessReferenceParticleAlpha(&prim);
         check(prim.m_alphaSpeed==-1 && prim.m_alpha==99,
             "source ProcessAlpha applies an ordinary fade when fade frame and state are both zero");
+        prim.m_stateCnt=1;prim.m_fadeOutCnt=-1;prim.m_alpha=123;prim.m_alphaSpeed=0;prim.m_pattern=0;
+        prim.m_red=10;prim.m_green=20;prim.m_blue=30;prim.m_tintColor=RGB(200,201,202);
+        ProcessReferenceParticleAlpha(&prim);
+        check(prim.m_argb==0x7B0A141E,
+            "ProcessAlpha packs the independent source RGB fields instead of a stale tint cache");
         prim.m_master=nullptr;
     }
     {

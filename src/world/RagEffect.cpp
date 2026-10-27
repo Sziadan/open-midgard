@@ -8290,19 +8290,16 @@ bool AnimateReferenceParticle(CEffectPrim* prim)
 void ProcessReferenceParticleAlpha(CEffectPrim* prim)
 {
     if (prim->m_AlphaShow) {
-        if (prim->m_chCnt < 0 || prim->m_chCnt >= static_cast<int>(prim->m_chPoint.size())) prim->m_chCnt = 0;
-        const size_t key = static_cast<size_t>(prim->m_chCnt);
-        if (key < prim->m_chPoint.size() && key < prim->m_chVal1.size() && key < prim->m_chVal2.size()
-            && static_cast<double>(prim->m_stateCnt) == prim->m_chPoint[key]) {
-            prim->m_alpha = prim->m_chVal1[key];
-            prim->m_maxAlpha = prim->m_chVal2[key];
+        if (prim->m_chCnt < 0 || prim->m_chCnt > prim->m_chPoint.size() - 1) prim->m_chCnt = 0;
+        if (static_cast<double>(prim->m_stateCnt) == prim->m_chPoint[prim->m_chCnt]) {
+            prim->m_alpha = prim->m_chVal1[prim->m_chCnt];
+            prim->m_maxAlpha = prim->m_chVal2[prim->m_chCnt];
             ++prim->m_chCnt;
         }
     } else if (prim->m_chSpeed) {
-        const size_t key = static_cast<size_t>(prim->m_chCnt);
-        if (key < prim->m_chPoint.size() && key < prim->m_chVal1.size()
-            && static_cast<double>(prim->m_stateCnt) == prim->m_chPoint[key]) {
-            prim->m_alphaSpeed = prim->m_chVal1[key];
+        if (prim->m_chCnt < 0 || prim->m_chCnt > prim->m_chPoint.size() - 1) prim->m_chCnt = 0;
+        if (static_cast<double>(prim->m_stateCnt) == prim->m_chPoint[prim->m_chCnt]) {
+            prim->m_alphaSpeed = prim->m_chVal1[prim->m_chCnt];
             ++prim->m_chCnt;
         }
     }
@@ -8327,7 +8324,8 @@ void ProcessReferenceParticleAlpha(CEffectPrim* prim)
     prim->m_alpha += prim->m_alphaSpeed;
     if (prim->m_alpha < prim->m_minAlpha) prim->m_alpha = prim->m_minAlpha;
     if (prim->m_alpha > prim->m_maxAlpha) prim->m_alpha = prim->m_maxAlpha;
-    prim->m_argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)), prim->m_tintColor);
+    prim->m_argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)),
+        RGB(static_cast<u8>(prim->m_red), static_cast<u8>(prim->m_green), static_cast<u8>(prim->m_blue)));
 }
 
 // Ref/RagEffectPrim.cpp:602-671 (0x642AB0), original gravity particle.
@@ -17498,6 +17496,7 @@ bool CRagEffect::ApplyPotionBerserk()
             prim->m_fadeOutCnt = prim->m_duration - 20;
             prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ac_center2.tga", false));
             prim->m_tintColor = RGB(240, 0, 0);
+            prim->m_red = 240; prim->m_green = 0; prim->m_blue = 0;
             prim->m_gi[0].life = 0;
         }
     }
@@ -17809,6 +17808,7 @@ void CRagEffect::ApplyHealSP()
             prim->m_longSpeed = 5.0f;
             prim->m_outerSize = radii[i]; prim->m_innerSize = radii[i]; prim->m_heightSize = heights[i];
             prim->m_tintColor = RGB(32,176,232);
+            prim->m_red = 32; prim->m_green = 176; prim->m_blue = 232;
             prim->m_alpha = 0.0f; prim->m_maxAlpha = maxima[i];
             prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha*0.033333335);
             prim->m_fadeOutCnt = prim->m_duration-20;
