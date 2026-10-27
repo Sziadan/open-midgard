@@ -12203,7 +12203,7 @@ void CEffectPrim::Render(matrix* viewMatrix)
         RenderReferenceFlash(*this);
         return;
     }
-    if (UsesReferenceQuadHorn()) {
+    if (m_type == PP_3DQUADHORN2 || UsesReferenceQuadHorn()) {
         RenderReferenceQuadHorn(*this,*viewMatrix);
         return;
     }
