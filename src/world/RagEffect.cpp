@@ -5084,53 +5084,81 @@ void UpdateEffectTexturePrimitive(CEffectPrim* prim)
     }
 }
 
-int EffectTextureStep(float heightMode, int which)
-{
-    const u32 bits = FloatBits(heightMode);
-    if (bits == 0x3F800000u) {
-        return which == 1 ? 120 : 60;
-    }
-    if (bits == 0x40000000u) {
-        return which == 1 ? 50 : 130;
-    }
-    return 90;
-}
-
 void RenderEffectTexture(const CEffectPrim& prim, const matrix& viewMatrix)
 {
     const int rot0 = TableAngle(prim.m_gi[0].alphaT);
     const int rot1 = TableAngle(prim.m_gi[1].alphaT);
+    const int renderMode = prim.m_gi[0].flag[2];
     for (const EffectGi& gi : prim.m_gi) {
-        if (gi.life != 1 || gi.alphaB <= 0 || (gi.flag[2] != 0 && gi.flag[2] != 2 && gi.flag[2] != 3)) {
+        if (gi.life != 1 || gi.alphaB <= 0) {
             continue;
         }
         const int tilt = TableAngle(static_cast<int>(gi.height[8]));
         const float radius = g_sinTable[tilt] * gi.distance * 0.050000001f + gi.distance;
         int angle = TableAngle(gi.fullDisplayAngle);
         vector3d corners[4]{};
+        int steps[3] = { 90, 90, 90 };
+        if (gi.height[10] == 1.0f) {
+            steps[0] = 60;
+            steps[1] = 120;
+            steps[2] = 60;
+        } else if (gi.height[10] == 2.0f) {
+            steps[0] = 130;
+            steps[1] = 50;
+            steps[2] = 130;
+        }
         for (int corner = 0; corner < 4; ++corner) {
             corners[corner].x = g_cosTable[angle] * radius;
             corners[corner].z = g_sinTable[angle] * radius;
             if (corner < 3) {
-                angle = TableAngle(angle - EffectTextureStep(gi.height[10], corner));
+                angle = TableAngle(angle - steps[corner]);
             }
-            RotateCornerTowardScreen(&corners[corner], rot0, rot1);
-            corners[corner].x += gi.sparkX;
-            corners[corner].y += gi.sparkY;
-            corners[corner].z += gi.sparkZ;
+        }
+        if (renderMode == 3) {
+            for (vector3d& corner : corners) {
+                corner.x += 3.1f;
+                corner.z += 6.0f;
+            }
+        }
+        for (vector3d& corner : corners) {
+            RotateCornerTowardScreen(&corner, rot0, rot1);
+        }
+        for (vector3d& corner : corners) {
+            corner.x += gi.sparkX;
+            corner.y += gi.sparkY;
+            corner.z += gi.sparkZ;
         }
         const int textureIndex = gi.flag[0];
         CTexture* texture = textureIndex >= 0 && textureIndex < static_cast<int>(prim.m_texture.size())
             ? prim.m_texture[static_cast<size_t>(textureIndex)]
             : nullptr;
-        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | 0x00FFFFFFu;
-        if (gi.flag[2] == 2) {
-            const unsigned int tinted = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | 0x00FA8282u;
-            SubmitWorldTeiRect(corners[1], corners[0], corners[3], corners[2], viewMatrix, texture, tinted, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
-            SubmitWorldTeiRect(corners[1], corners[0], corners[3], corners[2], viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
-            continue;
+        const auto draw = [&](const vector3d& a, const vector3d& b, const vector3d& c, const vector3d& d,
+                              unsigned int rgb, D3DBLEND blend) {
+            const unsigned int packedColor = (static_cast<unsigned int>(static_cast<unsigned short>(gi.alphaB)) << 24) | rgb;
+            SubmitWorldTeiRect(a, b, c, d, viewMatrix, texture, packedColor,
+                0.0f, 1.0f, 1.0f, 0.0f, blend, 0.0f, static_cast<int>(prim.m_renderFlag));
+        };
+        switch (renderMode) {
+        case 0:
+        case 3:
+            draw(corners[0], corners[1], corners[2], corners[3], 0x00FFFFFFu, D3DBLEND_INVSRCALPHA);
+            break;
+        case 2:
+            draw(corners[1], corners[0], corners[3], corners[2], 0x008282FAu, D3DBLEND_ONE);
+            [[fallthrough]];
+        case 4:
+            draw(corners[1], corners[0], corners[3], corners[2], 0x00FFFFFFu, D3DBLEND_ONE);
+            [[fallthrough]];
+        case 10:
+            draw(corners[1], corners[0], corners[3], corners[2], 0x00969696u, D3DBLEND_ONE);
+            [[fallthrough]];
+        case 12:
+            draw(corners[1], corners[0], corners[3], corners[2], 0x00323232u, D3DBLEND_ONE);
+            break;
+        case 100:
+            draw(corners[1], corners[0], corners[3], corners[2], 0x009B3232u, D3DBLEND_INVSRCALPHA);
+            break;
         }
-        SubmitWorldTeiRect(corners[0], corners[1], corners[2], corners[3], viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_INVSRCALPHA, 0.0f, static_cast<int>(prim.m_renderFlag));
     }
 }
 
@@ -11979,7 +12007,7 @@ void CEffectPrim::Render(matrix* viewMatrix)
         RenderChemical3(*this, *viewMatrix);
         return;
     }
-    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeEffectTexture)) {
+    if (m_type == PP_EFFECTTEXTURE || m_type == PP_EFFECTTEXTURE2 || m_type == PP_EFFECTTEXTURE_ANI) {
         RenderEffectTexture(*this, *viewMatrix);
         return;
     }
