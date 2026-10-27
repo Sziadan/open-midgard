@@ -11974,7 +11974,7 @@ bool CEffectPrim::UsesReferenceParticle() const
             && (m_master->GetEffectType() == 14 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
             && (m_master->GetEffectType() == 53 || m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
-                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 622));
+                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622));
 }
 
 CEffectPrim::~CEffectPrim()
@@ -14953,6 +14953,34 @@ void CRagEffect::SpawnSmoke()
         prim->m_animSpeed = 4; prim->m_repeatAnim = true; prim->m_numSegments = 1;
         ShiftCircleSegments(prim);
     }
+}
+
+// Ref/RagEffect.cpp:12399-12420; canonical HighPriest.exe.c:430283-430310.
+// DragonSmoke shares the chimney-smoke assets with effect 44, but emits one
+// particle and consumes only its three ordered angle/speed RNG draws.
+void CRagEffect::SpawnDragonSmoke()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, m_deltaPos);
+    prim->m_duration = m_duration;
+    prim->m_rollSpeed = 0.75f;
+    const float xAngle = GetRadian(rand() % 30 + 75);
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix, xAngle);
+    const float yAngle = GetRadian(rand() % 360);
+    MatrixAppendYRotation(prim->m_matrix, yAngle);
+    prim->m_deltaPos2.y = -9.0f;
+    prim->m_speed = static_cast<float>(static_cast<double>(rand() % 3 + 3) * 0.1);
+    prim->m_size = 1.5f;
+    prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xBC\xB6\xD2\xBF\xAC\xB1\xE2.spr",
+        "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xBC\xB6\xD2\xBF\xAC\xB1\xE2.act");
+    prim->m_numSegments = 1;
+    InitReferenceSegments(prim);
 }
 
 // Ref/RagEffect.cpp:8826-8852 (0x5F69B0). Size and divisor defaults modify
@@ -19940,6 +19968,9 @@ bool CRagEffect::OnProcess2()
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d soundPos = master != nullptr ? master->m_pos : m_cachedPos;
     switch (m_type) {
+    case 373:
+        SpawnDragonSmoke();
+        return true;
     case 338:
         ProcessSuperAngelEffect();
         return true;

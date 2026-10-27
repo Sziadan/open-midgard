@@ -98,6 +98,7 @@ extract_body(warp_emitter "${effect_source}" "void CRagEffect::ApplyWarpZone2(" 
 extract_body(agility_emitters "${effect_source}" "void CRagEffect::SpawnIncAgility()" "void CRagEffect::SpawnBlessing()")
 extract_body(blessing_emitter "${effect_source}" "void CRagEffect::SpawnBlessing()" "// Ref/RagEffect.cpp:7721-7761")
 extract_body(smoke_torch_emitters "${effect_source}" "void CRagEffect::SpawnSmoke()" "// Ref/RagEffect.cpp:3442-3555")
+string(REPLACE "rand()" "SilentRand()" smoke_torch_emitters "${smoke_torch_emitters}")
 extract_body(poison_emitters "${effect_source}" "void ConfigureEnchantPoisonParticle(" "// Ref/RagEffect.cpp:7327-7411")
 extract_body(sight_emitters "${effect_source}" "void CRagEffect::ApplySight(" "void CRagEffect::SpawnFireBall()")
 string(REPLACE "rand()" "SilentRand()" sight_emitters "${sight_emitters}")

@@ -559,6 +559,7 @@ struct CRagEffect : CGameObject {
     void SpawnSight2();
     void SpawnBlessing();
     void SpawnSmoke();
+    void SpawnDragonSmoke();
     void SpawnTorch();
     void SpawnEnchantPoison();
     void SpawnEnchantPoison2();
@@ -5285,6 +5286,39 @@ int main()
         check(effect.m_primList.size()==4,"Smoke maximum count draw emits exactly four particles");
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
         check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"Smoke world cleanup releases each resource lock");
+    }
+    {
+        CRenderObject actor;actor.m_pos={17,28,39};
+        CRagEffect effect;effect.m_type=373;effect.m_master=&actor;effect.m_duration=50;
+        effect.m_deltaPos={2,3,4};
+        const int beforeRng=rngDraws,beforeWaves=waves;
+        rngValues={0,90,2};rngCursor=0;g_resMgr.requests.clear();
+        effect.SpawnDragonSmoke();
+        check(effect.m_primList.size()==1 && rngDraws-beforeRng==3 && rngCursor==3,
+            "DragonSmoke emits exactly one particle using ordered X-angle, Y-angle and speed draws");
+        auto* prim=effect.m_primList.front();
+        check(effect.m_effectPos.x==17 && prim->m_deltaPos.x==2 && prim->m_deltaPos.y==3 && prim->m_deltaPos.z==4,
+            "DragonSmoke refreshes parent position and passes the effect delta to the primitive");
+        check(prim->m_duration==50 && prim->m_rollSpeed==0.75f && prim->m_size==1.5f
+            && prim->m_deltaPos2.y==-9 && prim->m_fadeOutCnt==34,
+            "DragonSmoke preserves duration, roll, offset, size and source fade calculation");
+        check(std::fabs(prim->m_speed-0.5f)<0.000001f
+            && std::fabs(prim->m_matrix.m[2][0]-std::cos(GetRadian(75)))<0.000001f
+            && std::fabs(prim->m_matrix.m[2][1]+std::sin(GetRadian(75)))<0.000001f,
+            "DragonSmoke uses X-angle lower bound before appending the Y rotation and uses speed upper bound");
+        check(prim->m_numSegments==1 && prim->m_segments[0].pos.x==prim->m_pos.x
+            && prim->m_segments[0].alpha==prim->m_alpha,
+            "DragonSmoke initializes one segment from the emitted particle position and alpha");
+        check(prim->UsesReferenceParticle(),"DragonSmoke uses the reference particle update route");
+        check(g_resMgr.requests.size()==2 && prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xBC\xB6\xD2\xBF\xAC\xB1\xE2.spr"
+            && prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xBC\xB6\xD2\xBF\xAC\xB1\xE2.act",
+            "DragonSmoke loads only the recovered chimney-smoke sprite and action");
+        effect.m_stateCnt=1;actor.m_pos.x=29;const int laterRng=rngDraws;effect.SpawnDragonSmoke();
+        check(effect.m_primList.size()==1 && rngDraws==laterRng && effect.m_effectPos.x==29,
+            "DragonSmoke follows the parent on later states without re-emission or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+        check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,
+            "DragonSmoke cleanup releases sprite and action resource locks");
     }
     {
         CRenderObject actor;actor.m_pos={5,20,25};

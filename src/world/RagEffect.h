@@ -585,6 +585,7 @@ private:
     void ProcessEnchantPoison2();
     void SpawnBlessing();
     void SpawnSmoke();
+    void SpawnDragonSmoke();
     void SpawnTorch();
     void ApplySight(float initialAlpha, bool includeShadow);
     void SpawnSight();
