@@ -75,6 +75,24 @@ expected_packet_code = bytes.fromhex(
 )
 assert packet_code == expected_packet_code, packet_code.hex(" ")
 
+# DrawIllustImage exists in the image but is never reached from the canonical
+# OnRun render loop: prove both source-level call absence and executable xrefs.
+exe_on_run = body_between(exe_c, "//----- (0056B6F0)", "//----- (0056B8F0)")
+assert "DrawIllustImage" not in exe_on_run
+assert exe_c.count("CGameMode::DrawIllustImage(") == 2  # declaration + definition; no caller
+draw_illust_va = 0x56C740
+draw_illust_pointer = draw_illust_va.to_bytes(4, "little")
+assert binary.count(draw_illust_pointer) == 0, "unexpected absolute pointer/reference to DrawIllustImage"
+text_start = 0x1000
+text_end = 0x2CC000
+relative_callers = []
+for offset in range(text_start, text_end - 4):
+    if binary[offset] == 0xE8:
+        destination = 0x400000 + offset + 5 + int.from_bytes(binary[offset + 1:offset + 5], "little", signed=True)
+        if destination == draw_illust_va:
+            relative_callers.append(0x400000 + offset)
+assert not relative_callers, [hex(address) for address in relative_callers]
+
 send_mode = body_between(ref_mode, "ENUM_SKILL_USE_TYPE __thiscall CGameMode::SendMsg(", "// ================================================\n// Original Signature:")
 send_case_start = send_mode.index("case 0x71u:")
 send_case = send_mode[send_case_start:send_mode.index("case 0x72u:", send_case_start)]
@@ -109,4 +127,5 @@ assert "case 113:" in current_send and "UpdateShowImageInfo(*this" in current_se
 
 print("0x0145 Zc_show_image and message-113 state branch comparison passed")
 print("Canonical PE bytes at 0x5A10D0 confirm the 16-byte name, type byte, 255-to-minus-one mapping, and message 113 dispatch.")
-print("EXE/Ref case 0x71 stores the image name/type and normalizes the BMP suffix; current source maps those effects. UI image presentation remains a tracked follow-up.")
+print("EXE/Ref case 0x71 stores the image name/type and normalizes the BMP suffix; current source maps those effects.")
+print("DrawIllustImage at VA 0x56C740 has no EXE OnRun call or direct code/data xref; Ref/dhxj's invocation is not part of target-executable behavior.")

@@ -451,7 +451,7 @@ Remove: `ResolveGroundSkillEffectId`, `PlayGroundSkillImpactSound`, `ResolveUseS
 | `0x01D1`, `0x01D2` | bladestop / combo delay | |
 | `0x0148`, `0x013D` | `Zc_resurrection` 33654, `Zc_recovery` 33505 | |
 | `0x0191` | `Zc_talkbox_chat_contents` 33736 | resolves the skill AID and forwards message 7 with the raw packet payload at +6; the receiver now displays nonempty text for five seconds as a red skill speech bubble through the Qt overlay. |
-| `0x0145` | `Zc_show_image` 33679 | sends message 113 with a fixed 16-byte name and type; message 113 now stores the name/type and applies the source `.bmp` suffix rule. The `UIIllustWnd` creation, image loading, positioning and close behavior remain absent, so visible parity is open. |
+| `0x0145` | `Zc_show_image` 33679 | sends message 113 with a fixed 16-byte name and type; message 113 stores the name/type and applies the source `.bmp` suffix rule. The EXE contains `DrawIllustImage` at VA `0x56C740`, but it has no call site/xref and is absent from the EXE `OnRun` render path; `Ref/dhxj`'s call is later-source behavior and is excluded. Do not add image display to this target port. |
 | `0x01B4` | `Zc_ChangeGuild` 9948 | resolves actor AID and calls `SetGuildInfo(guildId, emblemVersion)`; actor category/version gates and guild/emblem state are ported. Emblem-file lookup and missing-resource notification remain open. |
 | skill list family | `Zc_Skillinfo_List` 25700, `Zc_Skillinfo_Update` 25841, `Zc_Add_Skill` 8267, `Zc_GuildSkillInfo` 11880, homun/mer skill lists | keep existing if already exact; verify. |
 
