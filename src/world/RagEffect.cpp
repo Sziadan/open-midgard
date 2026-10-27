@@ -3033,6 +3033,7 @@ u32 FloatBits(float value)
 }
 
 int TableAngle(int angle);
+int GetReferenceAngle(float moveX, float moveZ);
 
 void UpdateCastingHeights(EffectGi& gi)
 {
@@ -5188,6 +5189,84 @@ void RenderAirTexture(const CEffectPrim& prim, const matrix& viewMatrix)
         SubmitWorldTeiRect(corners[0], corners[1], corners[2], corners[3], viewMatrix,
             texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f,
             static_cast<int>(prim.m_renderFlag));
+    }
+}
+
+void RenderHitLine3(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    const auto rgb = [](int red, int green, int blue) {
+        return (static_cast<unsigned int>(static_cast<unsigned char>(red)) << 16)
+            | (static_cast<unsigned int>(static_cast<unsigned char>(green)) << 8)
+            | static_cast<unsigned int>(static_cast<unsigned char>(blue));
+    };
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0 || gi.process <= 0) {
+            continue;
+        }
+        for (int segment = 0; static_cast<float>(segment) < gi.vecTNowY; ++segment) {
+            vector3d a{};
+            vector3d b{};
+            const float heightA = gi.height[static_cast<size_t>(segment)];
+            const float heightB = gi.height[static_cast<size_t>(segment + 1)];
+            const float speedA = heightA > 0.0f ? (heightA / 90.0f) * gi.distance : 0.0f;
+            const float speedB = heightB > 0.0f ? (heightB / 90.0f) * gi.distance : 0.0f;
+            const int rise = gi.riseAngle;
+            a.x = speedA * g_cosTable[rise];
+            a.y = -gi.distance * g_sinTable[static_cast<int>(heightA)] * gi.vecTNowX;
+            a.z = speedA * g_sinTable[rise];
+            b.x = speedB * g_cosTable[rise];
+            b.y = -gi.distance * g_sinTable[static_cast<int>(heightB)] * gi.vecTNowX;
+            b.z = speedB * g_sinTable[rise];
+
+            int angle = GetReferenceAngle(a.x - b.x, a.z - b.z) + 90;
+            if (angle >= 360) {
+                angle -= 360;
+            }
+            a.x += gi.sparkX; a.y += gi.sparkY; a.z += gi.sparkZ;
+            b.x += gi.sparkX; b.y += gi.sparkY; b.z += gi.sparkZ;
+
+            const auto drawStrip = [&](float radius, int alpha, unsigned int rgb) {
+                vector3d previousA{};
+                vector3d previousB{};
+                for (int ring = 0; ring <= 3; ++ring) {
+                    const int ringAngle = ring * 120;
+                    const float radial = radius * g_cosTable[ringAngle];
+                    const float vertical = radius * g_sinTable[ringAngle] - 5.0f;
+                    const float offsetX = radial * g_cosTable[angle];
+                    const float offsetZ = radial * g_sinTable[angle];
+                    vector3d currentA{a.x + offsetX, a.y + vertical, a.z + offsetZ};
+                    vector3d currentB{b.x + offsetX, b.y + vertical, b.z + offsetZ};
+                    if (ring > 0 && alpha > 0) {
+                        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(alpha)) << 24) | rgb;
+                        SubmitWorldTeiRect(currentA, currentB, previousB, previousA, viewMatrix,
+                            texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f,
+                            static_cast<int>(prim.m_renderFlag));
+                    }
+                    previousA = currentA;
+                    previousB = currentB;
+                }
+            };
+
+            const int alpha = gi.alphaB - segment * 10;
+            if (gi.alphaT == 0) {
+                drawStrip(gi.maxHeight, alpha, rgb(255, 200, 150 - ((5 - segment) * 30)));
+            } else if (gi.alphaT == 1) {
+                const int channel = 120 - ((5 - segment) * 22);
+                drawStrip(gi.maxHeight, alpha, rgb(channel, channel, 255));
+            } else if (gi.alphaT == 2) {
+                drawStrip(gi.maxHeight, alpha, rgb(255, 200, 150 - ((3 - segment) * 50)));
+            } else if (gi.alphaT >= 3) {
+                const int channel = 255 - ((5 - segment) * 30);
+                drawStrip(gi.maxHeight, alpha, rgb(channel, channel, channel));
+            }
+            if (gi.alphaT >= 3) {
+                const int wideAlpha = static_cast<int>(static_cast<float>(alpha) * 0.5f);
+                if (gi.alphaT == 3) {
+                    drawStrip(gi.maxHeight * 4.0f, wideAlpha, 0x000000FFu);
+                }
+            }
+        }
     }
 }
 
@@ -12038,6 +12117,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_AIRTEXTURE) {
         RenderAirTexture(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_HITLINE3) {
+        RenderHitLine3(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_EFFECTTEXTURE || m_type == PP_EFFECTTEXTURE2 || m_type == PP_EFFECTTEXTURE_ANI) {

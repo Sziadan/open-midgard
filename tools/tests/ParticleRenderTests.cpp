@@ -152,6 +152,7 @@ float GetSin(int angle) { return std::sin(angle*3.14159265f/180.0f); }
 void ProjectReferenceEffectVertex(const vector3d&,const matrix&,tlvertex3d&);
 extern float g_cosTable[361],g_sinTable[361];
 int TableAngle(int angle);
+int GetReferenceAngle(float moveX,float moveZ);
 struct AirTextureQuadCall { vector3d a,b,c,d; CTexture* texture=nullptr; u32 color=0; D3DBLEND blend=0; int flags=0; };
 std::vector<AirTextureQuadCall> airTextureQuadCalls;
 void SubmitWorldTeiRect(const vector3d&,const vector3d&,const vector3d&,const vector3d&,
@@ -159,11 +160,18 @@ void SubmitWorldTeiRect(const vector3d&,const vector3d&,const vector3d&,const ve
 #include "ParticleRenderBodies.inc"
 float g_cosTable[361],g_sinTable[361];
 int TableAngle(int angle) { angle %= 360; return angle < 0 ? angle + 360 : angle; }
+int GetReferenceAngle(float moveX,float moveZ) {
+    const float length=std::sqrt(moveX*moveX+moveZ*moveZ);
+    const float normalizedX=moveX/length,normalizedZ=moveZ/length;
+    int angle=0;while(normalizedX<g_cosTable[angle]){if(++angle>180){angle=180;break;}}
+    return normalizedZ<0.0f?360-angle:angle;
+}
 void SubmitWorldTeiRect(const vector3d& a,const vector3d& b,const vector3d& c,const vector3d& d,
     const matrix&,CTexture* texture,unsigned int color,float,float,float,float,D3DBLEND blend,float,int flags) {
     airTextureQuadCalls.push_back({a,b,c,d,texture,color,blend,flags});
 }
 #include "AirTextureRendererBody.inc"
+#include "HitLine3RendererBody.inc"
 vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
 constexpr float kSubmitNearPlane=80.0f,kNearPlane=10.0f;
 #include "ProjectPointBody.inc"
@@ -206,6 +214,30 @@ int main() {
         air.m_gi[1].alphaB=1;
         airTextureQuadCalls.clear(); RenderAirTexture(air,view);
         check(airTextureQuadCalls.size()==2,"air texture renderer emits one quad for each active lane");
+    }
+    {
+        CEffectPrim hit;
+        hit.m_texture={&g_texMgr.texture};
+        auto& gi=hit.m_gi[0];
+        gi.life=1; gi.alphaB=100; gi.alphaT=0; gi.process=1; gi.distance=90.0f;
+        gi.maxHeight=2.0f; gi.vecTNowX=1.0f; gi.vecTNowY=1.0f; gi.height[0]=0.0f; gi.height[1]=30.0f;
+        hit.m_gi[1].life=1; hit.m_gi[1].alphaB=100; hit.m_gi[1].process=0;
+        airTextureQuadCalls.clear();
+        matrix view{}; RenderHitLine3(hit,view);
+        check(airTextureQuadCalls.size()==3,"hitline3 emits three narrow ring strips for one segment and skips nonpositive process");
+        if(!airTextureQuadCalls.empty()) {
+            check(airTextureQuadCalls[0].color==0x64FFC800u&&airTextureQuadCalls[0].blend==D3DBLEND_ONE,
+                "hitline3 mode zero uses source segment tint, alpha and additive blend");
+        }
+        gi.alphaT=3; airTextureQuadCalls.clear(); RenderHitLine3(hit,view);
+        check(airTextureQuadCalls.size()==6,"hitline3 mode three emits narrow and wide rings");
+        if(airTextureQuadCalls.size()==6) {
+            check(airTextureQuadCalls[3].color==0x320000FFu,
+                "hitline3 wide ring halves segment alpha and uses blue tint");
+        }
+        gi.alphaT=4; airTextureQuadCalls.clear(); RenderHitLine3(hit,view);
+        check(airTextureQuadCalls.size()==3&&airTextureQuadCalls[0].color==0x64696969u,
+            "hitline3 higher modes draw grayscale narrow rings without the mode-three wide pass");
     }
     const std::pair<float,u32> castingColors[]={
         {0.0f,0x00FFFFFFu},{1.0f,0x00FFAFAFu},{2.0f,0x00C3C3FFu},{3.0f,0x00FFFFFFu},
