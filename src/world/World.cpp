@@ -5866,6 +5866,25 @@ CSkill* CWorld::GetSkillByAID(u32 aid)
     return nullptr;
 }
 
+bool CWorld::RemoveGameObject(CGameObject* object)
+{
+    if (!object) {
+        return false;
+    }
+
+    const auto it = std::find(m_gameObjectList.begin(), m_gameObjectList.end(), object);
+    if (it == m_gameObjectList.end()) {
+        return false;
+    }
+
+    if (CSkill* skill = dynamic_cast<CSkill*>(object)) {
+        m_skillList.remove(skill);
+    }
+    m_gameObjectList.erase(it);
+    delete object;
+    return true;
+}
+
 CSkill* CWorld::MakeSkill(int job, int cellX, int cellY)
 {
     u32 aid = 199;

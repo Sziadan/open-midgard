@@ -5527,6 +5527,15 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         }
         return;
     }
+    case 118:
+        if (m_chatProhibitEffect) {
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world) {
+                    mode->m_world->RemoveGameObject(m_chatProhibitEffect);
+                }
+            }
+        }
+        return;
     case 127:
         LaunchEffect(336, vector3d{}, 0.0f);
         return;

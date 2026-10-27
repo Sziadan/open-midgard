@@ -266,6 +266,7 @@ public:
     void UnregisterActor(CGameActor* actor);
     CSkill* GetSkillByAID(u32 aid);
     CGameActor* GetGameActorByAID(u32 aid) const;
+    bool RemoveGameObject(CGameObject* object);
     CSkill* MakeSkill(int job, int cellX, int cellY);
     bool RemoveSkill(u32 aid);
     bool RemoveSkillByJob(int job);
