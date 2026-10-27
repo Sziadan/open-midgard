@@ -428,11 +428,11 @@ Update (2026-10-27): `CGameActor::ProcessState` has now been source-audited befo
 
 Completion update (2026-10-27): base `CGameActor::ProcessState` now passes the full source inventory and in-scope branch comparison. Pet chat and the GID 3 stance/screen route are explicitly out of scope because they require pet UI/session data and legacy UI state. State 3 retains the actor's finished death frame in state 10 as the modern equivalent of the source's separate `CCorpse` object. See the latest gate in `docs/skill/PROGRESS.md` and `PARITY_LOG.md`.
 
-Completion update (2026-10-27): `CGameActor::ProcessEffectState` passes its ordered branch-level source comparison and is integrated before queued-hit dispatch in `ProcessState`. Subsequent completion updates cover `MakeSpecialAttackEffect`; next function is `CGameActor::MakePartyEffect`.
+Completion update (2026-10-27): `CGameActor::ProcessEffectState` passes its ordered branch-level source comparison and is integrated before queued-hit dispatch in `ProcessState`. Subsequent completion updates cover `MakeSpecialAttackEffect` and `MakePartyEffect`; next function is `CPc::SetState`.
 
 Completion update (2026-10-27): `CGameActor::MakeSpecialAttackEffect` now passes its exact job-route/call-argument comparator; Mandra's standalone current world-effect route is implemented with source sprite mapping, timing, and animation checks. The legacy sprite renderer is represented by the current arrow billboard path, so live visual acceptance remains open. See the latest checkpoint in `docs/skill/PROGRESS.md`.
 
-Source-audit update (2026-10-27): `CGameActor::MakePartyEffect` Ref/EXE bodies match (2,003 normalized characters). Its valid route is PK/event-PvP mode plus matching party AID, followed by an existing-effect-160 check and a zero-offset type-160 launch only when absent. The current method is missing; the branch-level comparator is now registered before implementation.
+Completion update (2026-10-27): `CGameActor::MakePartyEffect` passes the branch comparator for PK/event-PvP gating, party AID membership, type-160 deduplication, and conditional zero-offset launch. It is wired to message 123 for PC and Granny-PC actors; the unified current message handler uses a runtime-class guard to preserve source caller scope. See `docs/skill/PROGRESS.md` for test/build/deployment checkpoint.
 
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
 * `CPc::SetState` Ref/Pc.cpp:5678, `ProcessState` 2382.

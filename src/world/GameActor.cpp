@@ -4538,6 +4538,29 @@ bool CGameActor::HasActiveChatBubble(u32 now) const
         && static_cast<s32>(m_chatTick - now) > 0;
 }
 
+void CGameActor::MakePartyEffect(int AID)
+{
+    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+    CWorld* world = gameMode ? gameMode->m_world : nullptr;
+    if (world == nullptr) {
+        return;
+    }
+    if (!(world->m_isPKZone || world->m_isEventPVPMode)) {
+        return;
+    }
+    if (g_session.GetNumParty() == 0
+        || g_session.FindPartyMemberByAid(static_cast<unsigned int>(AID)) == nullptr) {
+        return;
+    }
+
+    const bool hasPartyEffect = std::any_of(m_effectList.begin(), m_effectList.end(), [](const CRagEffect* effect) {
+        return effect != nullptr && effect->GetEffectType() == 160;
+    });
+    if (!hasPartyEffect) {
+        LaunchEffect(160, vector3d{}, 0.0f);
+    }
+}
+
 void CGameActor::StartHideFade(u32 durationMs)
 {
     const u32 now = timeGetTime();
@@ -5405,6 +5428,9 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
             m_moveDestY = moveArgs[9];
             SetState(1);
             m_pathStartCell = 0;
+        }
+        if (msg == 123 && (dynamic_cast<CPc*>(this) != nullptr || dynamic_cast<CGrannyPc*>(this) != nullptr)) {
+            MakePartyEffect(moveArgs[0]);
         }
         return;
     }

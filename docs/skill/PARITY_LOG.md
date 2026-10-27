@@ -2029,6 +2029,12 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - Added `CMandraAttackEffect` and `CGameMode::MakeMandraAttackEffect` using the current world-object/billboard renderer. The Ref/EXE source gate validates the exact 11 job-to-sprite assignments (Hydra, Mavka, Tha Odium, Drosera, Entweihen and default Mandragora), target placement, hide timing, delay-based action-zero animation, job 1068 speed 2 override, final-motion termination, and factory message arguments. Current-branch checks compare the exact job-to-resource mapping and ordered animation lifecycle.
 - The current Mandra object reuses the arrow billboard drawing path as a modern rendering equivalent; legacy renderer direction/frame presentation has not received live visual acceptance. Source comparison and the x64 Release build pass; full source-check suite and deployment are pending.
 
+## `CGameActor::MakePartyEffect` implementation checkpoint — 2026-10-27
+
+- Complete Ref and canonical EXE bodies match (2,003 normalized characters). The method now checks PK/event-PvP world state, requires party membership for the supplied AID, scans the actor's effect list for type 160, and launches effect 160 at zero offset only if absent.
+- Current unified `CGameActor::SendMsg` folds source `CPc::SendMsg` and `CGrannyPc::SendMsg` spawn handling together. Message 123 applies the party effect only to those two current runtime classes; message 5 and base actors do not receive the call. The source/current caller gate checks the Ref/EXE subclass call branches and the current runtime-class guard.
+- `tools/tests/check_make_party_effect_source.py` and `check_actor_sendmsg_move_update_case.py` pass. All 42 source-check CTests pass; x64 Release builds. OldRO deployment matches the Release executable at SHA-256 `7AF813BD2B6524C09D0816BACF6389F640621B15DD94B24DBB818E5C51618E94`.
+
 ### Am_Groundskill implementation gate update — 2026-10-27
 
 - The follow-up `CGameMode::PlaceEffect` / `CDummyEffectLauncher` checkpoint has since ported and source-compared the launcher path; the prior lifecycle limitation above is closed for the current valid-world route. This gate extends `tools/tests/check_groundskill_source.py` with exact current skill-case membership, exact route mapping, skill 264 `IsThisPC` equivalence (the canonical predicate is `(job > 4000 && job < 6000) || (unsigned int)job < 28`), ordered branch actions, and ground-position initialization.

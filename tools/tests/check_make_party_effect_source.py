@@ -63,7 +63,7 @@ else:
     ordered = [
         r"GetCurrentGameMode\(\)", r"m_world", r"m_isPKZone\s*\|\|\s*[^;]*m_isEventPVPMode",
         r"FindPartyMemberByAid\(\s*static_cast<unsigned int>\(AID\)\s*\)",
-        r"m_effectList", r"m_type\s*==\s*160", r"LaunchEffect\(160,\s*vector3d\{\s*\},\s*0\.0f\)",
+        r"m_effectList", r"GetEffectType\(\)\s*==\s*160", r"LaunchEffect\(160,\s*vector3d\{\s*\},\s*0\.0f\)",
     ]
     cursor = 0
     for pattern in ordered:

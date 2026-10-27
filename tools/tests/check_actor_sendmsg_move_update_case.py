@@ -6,6 +6,7 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 REF = (ROOT / "Ref/GameActor.cpp").read_text(encoding="utf-8", errors="replace")
 EXE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
+REF_PC = (ROOT / "Ref/Pc.cpp").read_text(encoding="utf-8", errors="replace")
 IMPL = (ROOT / "src/world/GameActor.cpp").read_text(encoding="utf-8")
 
 
@@ -86,6 +87,16 @@ assert source_positions == sorted(source_positions), "source movement update ope
 assert "IsEffectStateStar2(v163[16])" in source
 assert "m_headType = 100" in source
 
+# The separate source CPc and CGrannyPc message-123 overrides both apply the
+# party aura. Current source folds these classes into CGameActor::SendMsg, so
+# it must preserve that route behind an explicit runtime-class guard.
+for class_name in ("CPc", "CGrannyPc"):
+    marker = f"void __thiscall {class_name}::SendMsg({class_name} *this, CGameObject *sender, int message, int *arg1, int arg2, int arg3)\n{{"
+    pc_ref = body(REF_PC, marker)
+    pc_exe = body(EXE, marker)
+    assert normalize(pc_ref) == normalize(pc_exe), f"{class_name} Ref/EXE message bodies differ"
+    assert re.search(r"case\s+123\s*:[\s\S]*?MakePartyEffect", pc_ref), f"{class_name} message-123 spawn branch must update party effect"
+
 impl = normalize(impl_branch)
 impl_order = [
     "m_speed = static_cast<u32>(moveArgs[10])",
@@ -102,6 +113,8 @@ impl_order = [
     "m_moveDestY = moveArgs[9]",
     "SetState(1)",
     "m_pathStartCell = 0",
+    "if (msg == 123 && (dynamic_cast<CPc*>(this) != nullptr || dynamic_cast<CGrannyPc*>(this) != nullptr))",
+    "MakePartyEffect(moveArgs[0])",
 ]
 impl_positions = [impl.index(token) for token in impl_order]
 assert impl_positions == sorted(impl_positions), "implementation operation order changed"
@@ -110,5 +123,6 @@ for index in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 21, 24, 25, 26,
 assert "originalJob == 4047 && (effectState & star2Mask) != 0" in impl_branch
 assert "lastCellTime <= serverTime" in impl_branch
 assert "10 * static_cast<int>(m_speed) / 13" in impl_branch
+assert re.search(r"if\s*\(msg\s*==\s*123\s*&&\s*\(dynamic_cast<CPc\*>\(this\)\s*!=\s*nullptr\s*\|\|\s*dynamic_cast<CGrannyPc\*>\(this\)\s*!=\s*nullptr\)\)\s*\{\s*MakePartyEffect\(moveArgs\[0\]\);", impl_branch), "party effect must be limited to PC/GrannyPC spawn message 123, not the shared message-5 or base actor routes"
 assert "if (foundPath)" in impl_branch and "else {\n            SetState" not in impl_branch
 print("PASS messages 5/123 shared Ref/EXE branch, state/job fields, helper replan, success path, and no failure-state mutation")
