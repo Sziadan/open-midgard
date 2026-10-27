@@ -4569,6 +4569,20 @@ u32 CGameActor::GetHideFadeAlpha(u32 now) const
 }
 
 u8 CGameActor::ProcessState() {
+    if (m_freezeEndTick != 0 && timeGetTime() > m_freezeEndTick) {
+        m_isMotionFreezed = 0;
+        m_freezeEndTick = 0;
+    }
+
+    if (m_vanishTime != 0) {
+        const u32 Time = timeGetTime();
+        if (Time > m_vanishTime) {
+            return 0;
+        }
+        const u32 alpha = (m_vanishTime - Time) >> 1;
+        m_u28.m_sprColor.u.s.a = static_cast<u8>((std::min)(alpha, 255u));
+    }
+
     ProcessWillBeAttacked();
 
     if (m_hideFadeEndTick != 0 && timeGetTime() >= m_hideFadeEndTick) {
@@ -4594,18 +4608,41 @@ u8 CGameActor::ProcessState() {
         ++m_effectLaunchCnt;
     }
 
-    if (m_isMoving) {
-        const u32 now = g_session.GetServerTime();
+    const u32 serverTime = g_session.GetServerTime();
+    bool posChanged = false;
+    const auto ProcessMovementState = [this, serverTime, &posChanged]() {
+        const u32 now = serverTime;
         const u32 wallNow = timeGetTime();
         const vector3d prevPos = m_pos;
-        if (m_path.m_cells.size() >= 2 && InterpolatePathPosition(*this, now, &m_pos)) {
-            if (now >= m_moveEndTime) {
+        size_t activeSegment = 0;
+        const bool hasActiveSegment = FindActivePathSegment(m_path, now, &activeSegment);
+        const u32 lastServerTime = m_lastServerTime;
+        if (m_path.m_cells.size() >= 2) {
+            if (now >= m_path.m_cells.back().arrivalTime) {
                 m_pos = m_moveEndPos;
                 m_isMoving = 0;
+                m_pathStartCell = -1;
+            } else if (hasActiveSegment) {
+                m_pathStartCell = static_cast<int>(activeSegment);
+                const u32 nextCellTime = m_path.m_cells[activeSegment + 1].arrivalTime;
+                int blockDeltaTime = static_cast<int>(nextCellTime - lastServerTime);
+                int deltaTime = static_cast<int>(now - lastServerTime);
+                if (blockDeltaTime < 0) blockDeltaTime = 0;
+                if (deltaTime < 0) deltaTime = 0;
+                if (blockDeltaTime > 0 && deltaTime > 0) {
+                    vector3d nextCellPos{};
+                    if (InterpolatePathPosition(*this, nextCellTime, &nextCellPos)) {
+                        const float ratio = static_cast<float>(deltaTime) / static_cast<float>(blockDeltaTime);
+                        m_pos.x = (nextCellPos.x - prevPos.x) * ratio + prevPos.x;
+                        m_pos.z = (nextCellPos.z - prevPos.z) * ratio + prevPos.z;
+                        posChanged = true;
+                    }
+                }
             }
         } else if (m_moveEndTime <= m_moveStartTime || now >= m_moveEndTime) {
             m_pos = m_moveEndPos;
             m_isMoving = 0;
+            m_pathStartCell = -1;
         } else {
             const float duration = static_cast<float>(m_moveEndTime - m_moveStartTime);
             const float ratio = static_cast<float>(now - m_moveStartTime) / duration;
@@ -4616,18 +4653,26 @@ u8 CGameActor::ProcessState() {
         }
 
         if (prevPos.x != m_pos.x || prevPos.z != m_pos.z) {
-            const float dx = m_pos.x - prevPos.x;
-            const float dz = m_pos.z - prevPos.z;
-            m_dist += std::sqrt(dx * dx + dz * dz);
+            posChanged = true;
             const float rotation = std::atan2(m_pos.x - prevPos.x, -(m_pos.z - prevPos.z)) * (180.0f / 3.14159265f);
             m_roty = NormalizeAngle360(rotation);
         }
+        const float dx = m_pos.x - prevPos.x;
+        const float dz = m_pos.z - prevPos.z;
+        m_dist += std::sqrt(dx * dx + dz * dz);
 
         if (!m_isNeverAnimation) {
             m_curAction = m_baseAction + Get8Dir(m_roty);
+            const auto ProcessMotionWithDist = [this]() {
+                const int motionCount = m_actRes ? m_actRes->GetMotionCount(m_curAction) : 0;
+                if (motionCount > 0 && m_motionSpeed != 0.0f) {
+                    m_curMotion = static_cast<int>(static_cast<double>(m_dist) * 1.48 / m_motionSpeed) % motionCount;
+                }
+            };
+            ProcessMotionWithDist();
         }
 
-        if (m_gid != 0 && m_isPc == 0 && m_stateId != kDeathStateId) {
+        if (m_gid != 0 && m_isPc == 0) {
             MoveStallTraceState& trace = g_moveStallTraceByGid[m_gid];
             const bool movedThisFrame = prevPos.x != m_pos.x || prevPos.z != m_pos.z;
             if (movedThisFrame) {
@@ -4655,7 +4700,7 @@ u8 CGameActor::ProcessState() {
                     trace.lastMoveWallTick = wallNow;
                 }
                 const u32 stalledForMs = wallNow - trace.lastMoveWallTick;
-                const bool moveShouldStillAdvance = m_moveEndTime > m_moveStartTime && now < m_moveEndTime;
+                const bool moveShouldStillAdvance = m_pathStartCell != -1 && m_path.m_cells.size() >= 2;
                 if (moveShouldStillAdvance
                     && stalledForMs >= kRemoteMoveStallLogThresholdMs
                     && (trace.lastLogWallTick == 0 || wallNow - trace.lastLogWallTick >= kRemoteMoveStallLogThresholdMs)) {
@@ -4675,55 +4720,102 @@ u8 CGameActor::ProcessState() {
                 }
             }
         }
-    }
-    else if (m_gid != 0 && m_isPc == 0) {
-        g_moveStallTraceByGid.erase(m_gid);
-    }
+    };
 
     switch (m_stateId) {
-    case kMoveStateId:
-        if (!m_isMoving) {
+    case 0:
+        if (m_motionType == 1 && m_isMotionFinished) {
             SetState(0);
-        }
-        break;
-    case kGameActorPickupStateId:
-        m_isCounter = 0;
-        m_isMotionFreezed = 0;
-        ProcessMotion();
-        if (m_isMotionFinished) {
-            SetState(0);
-        }
-        break;
-    case kAttackStateId:
-    case kSecondAttackStateId: {
-        if (m_freezeEndTick != 0) {
-            if (timeGetTime() >= m_freezeEndTick) {
-                m_freezeEndTick = 0;
-                m_isMotionFreezed = 0;
-            } else {
-                m_isMotionFreezed = 1;
-            }
+            ProcessMotion();
         } else {
-            m_isMotionFreezed = 0;
+            ProcessMotion();
         }
+        // Pet chat depends on session tables/data absent from this client and is outside the skill/effect port scope.
+        break;
+    case kMoveStateId:
+        ProcessMovementState();
+        if (m_pathStartCell == -1
+            && serverTime >= (m_path.m_cells.empty() ? m_moveEndTime : m_path.m_cells.back().arrivalTime)) {
+            // The old stance/screen-specific GID 3 route depends on legacy UI state not represented by the Qt client.
+            SetState(0);
+            m_isNeverAnimation = 0;
+            m_isMotionFreezed = 0;
+            if (m_isAsuraAttack) {
+                m_isAsuraAttack = 0;
+                m_forceAct = 96;
+                m_forceMot = 2;
+                m_forceStartMot = 2;
+                m_forceMaxMot = 2;
+                m_forceFinishedAct = 96;
+                m_forceFinishedMot = 2;
+                m_isForceAnimLoop = 0;
+                m_isForceAnimation = 1;
+                m_isForceAnimFinish = 0;
+                m_isForceState = 1;
+                m_isForceState3 = 0;
+                m_isForceState2 = 0;
+                m_forceStateCnt = 1;
+                m_forceStateEndTick = timeGetTime() + 3000;
+            }
+        }
+        break;
+    case 2:
+    case 9:
+    case 12:
         ProcessMotion();
-        if (m_isMotionFinished && m_freezeEndTick == 0) {
-            m_stateId = 0;
-            m_attackMotion = -1.0f;
+        if (m_isMotionFinished) SetState(0);
+        break;
+    case 3:
+        m_isMotionFreezed = 0;
+        m_isForceState = 0;
+        m_isForceState2 = 0;
+        m_isForceState3 = 0;
+        m_isCounter = 0;
+        ProcessMotion();
+        if (m_isMotionFinished && m_willBeAttackedList.empty()) {
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                mode->SendMsg(13, m_gid, 0, 0);
+            }
+            const bool guardedJob = (m_job <= 28 || m_job >= 4000) && m_objectType != 9;
+            const bool isMercenaryOrHomunculus = m_job > 6000 && m_job < 6048;
+            if (!guardedJob || isMercenaryOrHomunculus) {
+                // CCorpse rendering is not implemented by the current world/effect layer.
+                return 0;
+            }
+        }
+        break;
+    case 4: {
+        m_isCounter = 0;
+        ProcessMotion();
+        const float deltaX = m_damageDestX - m_pos.x;
+        const float previousX = m_pos.x;
+        const float previousZ = m_pos.z;
+        const u32 remaining = m_stateStartTick - timeGetTime() + 200;
+        int elapsed = static_cast<int>(timeGetTime() - m_lastProcessStateTime);
+        if (elapsed < 0) elapsed = 0;
+        const float deltaZ = m_damageDestZ - previousZ;
+        if (remaining != 0) {
+            posChanged = true;
+            const float ratio = static_cast<float>(elapsed) / static_cast<float>(remaining);
+            m_pos.x = deltaX * ratio + previousX;
+            m_pos.z = deltaZ * ratio + previousZ;
+        }
+        if (m_isMotionFinished) {
+            m_pos.x = m_damageDestX;
+            m_pos.z = m_damageDestZ;
+            posChanged = true;
+            SetState(0);
         }
         break;
     }
-    case kGameActorSkillStateId:
+    case 5:
+    case 7:
         m_isCounter = 0;
-        m_isMotionFreezed = 0;
         ProcessMotion();
-        if (m_isMotionFinished) {
-            SetState(0);
-        }
+        if (m_isMotionFinished) SetState(0);
         break;
-    case kGameActorCastingStateId:
+    case 8:
         m_isCounter = 0;
-        m_isMotionFreezed = 0;
         ProcessMotion();
         if (m_targetGid != 0) {
             const u32 nCx = timeGetTime() - m_stateStartTick;
@@ -4742,15 +4834,26 @@ u8 CGameActor::ProcessState() {
                 }
             }
         }
-        if (m_skillRechargeEndTick != 0 && timeGetTime() > m_skillRechargeEndTick) {
-            m_skillRechargeStartTick = 0;
-            m_skillRechargeEndTick = 0;
-            SendMsg(this, 83, 0, 0, 0);
-            SetState(0);
-        }
         break;
-    case kGameActorCastingLoopStateId:
-        if (m_skillRechargeEndTick != 0 && timeGetTime() >= m_skillRechargeEndTick) {
+    case 10:
+        m_isCounter = 0;
+        break;
+    case 11:
+        ProcessMotion();
+        if (m_isMotionFinished) SetState(11);
+        break;
+    case 13:
+        if (!m_isCounter) {
+            m_isCounter = 1;
+            if (m_isPc) {
+                const bool secondAttack = g_session.IsSecondAttack(m_job, m_sex, GetWeapon());
+                SetAction(secondAttack ? 88 : 80, 4, 1);
+            } else {
+                SetAction(16, 4, 1);
+            }
+            m_isMotionFreezed = 1;
+        }
+        if (timeGetTime() >= m_skillRechargeEndTick) {
             m_isCounter = 0;
             m_isMotionFreezed = 0;
             SetState(0);
@@ -4758,41 +4861,31 @@ u8 CGameActor::ProcessState() {
         }
         ProcessMotion();
         break;
-    case kDeathStateId:
-        m_isMotionFreezed = 0;
-        m_isForceState = 0;
-        m_isForceState2 = 0;
-        m_isForceState3 = 0;
+    case 16: case 17: case 18: case 19: case 20: case 21: case 22:
+    case 23: case 24: case 25: case 26: case 27: case 28:
+    case 30: case 31: case 32: case 33: case 34: case 35: case 36:
+    case 37: case 38: case 39: case 40: case 41: case 42:
+        m_isCounter = 0;
         ProcessMotion();
-        LogDeathMotionProgress(*this);
         break;
-    case kHitReactionStateId: {
-        m_isMotionFreezed = 0;
-        ProcessMotion();
-
-        const u32 elapsedMs = timeGetTime() - m_stateStartTick;
-        const float ratio = (std::min)(1.0f, static_cast<float>(elapsedMs) / static_cast<float>(kHitReactionDurationMs));
-        m_pos.x = m_moveStartPos.x + (m_moveEndPos.x - m_moveStartPos.x) * ratio;
-        m_pos.z = m_moveStartPos.z + (m_moveEndPos.z - m_moveStartPos.z) * ratio;
-
-        if (m_isMotionFinished || elapsedMs >= kHitReactionDurationMs) {
-            m_pos.x = m_moveEndPos.x;
-            m_pos.z = m_moveEndPos.z;
-            m_targetGid = 0;
-            m_attackMotion = -1.0f;
-            if (m_willBeDead != 0 && m_willBeAttackedList.empty()) {
-                SetState(kDeathStateId);
-            } else {
-                SetState(0);
-            }
-        }
-        break;
-    }
     default:
         break;
     }
 
+    if (m_stateId != kMoveStateId && m_gid != 0 && m_isPc == 0) {
+        g_moveStallTraceByGid.erase(m_gid);
+    }
     ProcessQueuedHitWave(*this);
+
+    m_lastProcessStateTime = timeGetTime();
+    m_lastServerTime = serverTime;
+    if (posChanged) {
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world && mode->m_world->m_attr) {
+                m_pos.y = mode->m_world->m_attr->GetHeight(m_pos.x, m_pos.z);
+            }
+        }
+    }
 
     return 1;
 }
