@@ -79,6 +79,7 @@ CTexture* KAC_LAYER::GetTexture(int frame) { lastTextureFrame = frame; return &g
 using D3DBLEND = int;
 constexpr int D3DPT_TRIANGLESTRIP = 5, D3DCULL_NONE = 1, D3DBLEND_ONE = 2, D3DBLEND_INVSRCALPHA = 6;
 struct tlvertex3d { float x=0,y=0,z=0,oow=0; u32 color=0,specular=0; float tu=0,tv=0; };
+void ProjectReferenceEffectVertex(const vector3d&, const matrix&, tlvertex3d&);
 struct RPFace {
     int primType=0, numVerts=0, numIndices=0, mtPreset=0, cullMode=0;
     tlvertex3d m_verts[6], *verts=nullptr;
@@ -561,6 +562,7 @@ struct CRagEffect : CGameObject {
     void SpawnSmoke();
     void SpawnDragonSmoke();
     void SpawnDarkBreath();
+    void SpawnSummonSlave();
     void SpawnTorch();
     void SpawnEnchantPoison();
     void SpawnEnchantPoison2();
@@ -5344,6 +5346,39 @@ int main()
         check(effect.m_primList.size()==1 && rngDraws==draws,
             "DarkBreath does not emit again after state zero");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor;actor.m_pos={20,30,80};
+        CRagEffect effect;effect.m_type=215;effect.m_master=&actor;effect.m_duration=500;
+        rngValues.clear();
+        for (int i=0;i<20;++i) rngValues.insert(rngValues.end(),{359,59,24,39,29});
+        rngCursor=0;const int draws=rngDraws;g_texMgr.requests.clear();
+        tlvertex3d expected{};ProjectReferenceEffectVertex(actor.m_pos,testView.GetViewMatrix(),expected);
+        effect.SpawnSummonSlave();
+        check(effect.m_primList.size()==20 && rngDraws-draws==100 && rngCursor==100,
+            "SummonSlave emits twenty flashes and consumes five ordered RNG draws per particle");
+        auto* prim=effect.m_primList.front();
+        check(effect.m_tlvertX==expected.x && effect.m_tlvertY==expected.y,
+            "SummonSlave projects the master into the source screen anchor on every call");
+        check(prim->m_type==PP_2DFLASH && prim->m_duration==40 && prim->m_deltaPos2.y==-40
+            && prim->m_longitude==359 && std::fabs(prim->m_longSpeed-6.9f)<0.000001f
+            && std::fabs(prim->m_longAccel-(-(6.9f/40.0f)/1.5f))<0.000001f,
+            "SummonSlave first flash preserves primitive identity, duration, offset and longitude dynamics");
+        check(std::fabs(prim->m_arcAngle-2.9f)<0.000001f && prim->m_heightSize==59
+            && std::fabs(prim->m_heightSpeed-4.9f)<0.000001f && prim->m_alpha==0
+            && prim->m_maxAlpha==200 && prim->m_alphaSpeed==20 && prim->m_fadeOutCnt==27,
+            "SummonSlave first flash consumes arc and height draws in source order and sets alpha fade");
+        check(g_texMgr.requests.size()==20 && prim->m_texture.size()==1
+            && prim->m_texture[0]==&g_texMgr.texture && g_texMgr.requests.front()=="EFFECT\\alpha_center.tga",
+            "SummonSlave requests one canonical alpha-center texture for each flash");
+        effect.m_stateCnt=1;const int laterDraws=rngDraws;effect.SpawnSummonSlave();
+        check(effect.m_primList.size()==20 && rngDraws==laterDraws && actor.lastSentMsg==0,
+            "SummonSlave does nothing at intermediate states beyond refreshing its screen anchor");
+        effect.m_stateCnt=35;effect.SpawnSummonSlave();
+        check(effect.m_primList.size()==20 && rngDraws==laterDraws && actor.lastSentMsg==0
+            && actor.lastSentArg==63,
+            "SummonSlave sends the source smoke-effect message exactly at state 35");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor;actor.m_pos={5,20,25};

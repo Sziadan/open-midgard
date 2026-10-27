@@ -15002,6 +15002,37 @@ void CRagEffect::SpawnDarkBreath()
     InitReferenceSegments(prim);
 }
 
+// Ref/RagEffect.cpp:12441-12469; canonical HighPriest.exe.c:430334-430394.
+void CRagEffect::SpawnSummonSlave()
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CRenderObject* master = ResolveCurrentMaster();
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos, mode->m_view->GetViewMatrix(), projected);
+    m_tlvertX = projected.x;
+    m_tlvertY = projected.y;
+    if (m_stateCnt == 0) {
+        for (int i = 0; i < 20; ++i) {
+            CEffectPrim* prim = LaunchEffectPrim(PP_2DFLASH, vector3d{});
+            prim->m_duration = 40;
+            prim->m_deltaPos2.y = -40.0f;
+            prim->m_longitude = static_cast<float>(rand() % 360);
+            prim->m_longSpeed = static_cast<float>(rand() % 60 + 10) / 10.0f;
+            prim->m_longAccel = -(prim->m_longSpeed / prim->m_duration) / 1.5f;
+            prim->m_arcAngle = static_cast<float>(rand() % 25 + 5) / 10.0f;
+            prim->m_heightSize = static_cast<float>(rand() % 40 + 20);
+            prim->m_heightSpeed = static_cast<float>(rand() % 30 + 20) / 10.0f;
+            prim->m_alpha = 0.0f;
+            prim->m_maxAlpha = 200.0f;
+            prim->m_alphaSpeed = prim->m_maxAlpha / 10.0f;
+            prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+            prim->m_texture.push_back(g_texMgr.GetTexture("EFFECT\\alpha_center.tga", false));
+        }
+    } else if (m_stateCnt == 35 && master) {
+        master->SendMsg(nullptr, 0, 63, 0, 0);
+    }
+}
+
 // Ref/RagEffect.cpp:8826-8852 (0x5F69B0). Size and divisor defaults modify
 // the parent's parameters; constructor alpha remains 254, without a fade-in.
 void CRagEffect::SpawnTorch()
@@ -20429,6 +20460,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 212) {
         SpawnDarkBreath();
+        return true;
+    }
+    if (m_type == 215) {
+        SpawnSummonSlave();
         return true;
     }
     if (m_type == 0x201) {
