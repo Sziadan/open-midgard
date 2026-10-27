@@ -441,7 +441,7 @@ Remove: `ResolveGroundSkillEffectId`, `PlayGroundSkillImpactSound`, `ResolveUseS
 | `0x008A`, `0x02E1`, `0x008D`? | `Zc_Notify_Act` 16727, `Zc_Notify_Act_Position` 16833 | `attackMT 0 → 1440`; position variant 432/288; `SendMsg(11)`. (Needed because counter/auto-attack visuals share the WBA path.) |
 | `0x0119`, `0x0229` | `Zc_State_Change` 14217 / 15263 | `SendMsg(43)` → `SetAttrState`. |
 | `0x0196`, `0x043F` | `Zc_Msg_State_Change` | status icons + `CSession` effect-state list used by `IsExistEffectState(19/104)` in the hit path. |
-| `0x019B`, `0x01F3`, `0x0284` | `Zc_Notify_Effect/2/3` 17050 / 17110 / 17131 | generic `LaunchEffect` by id. |
+| `0x019B`, `0x01F3`, `0x0284` | `Zc_Notify_Effect/2/3` 17050 / 17110 / 17131 | `0x0284` now also emits message 88 (type 114) with effect-specific color, launches the requested effect, and updates self HP/SP for ids 331/332 while preserving source RNG consumption. |
 | `0x01D3` | `Zc_Sound` 25976 | server-triggered waves (used by some skill scripts). |
 | `0x01D0`, `0x01E1` | `Zc_Spirits/2` 26133 / 26218 | spirit spheres (Monk/Champion/Gunslinger). |
 | `0x01CF` | `Zc_DevotionList` 10555 | devotion link visuals. |

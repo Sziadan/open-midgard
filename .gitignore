@@ -55,6 +55,8 @@ tools/tests/*
 !tools/tests/ForcedMotionTests.cpp
 !tools/tests/EffectLifecycleTests.cpp
 !tools/tests/ParticleRenderTests.cpp
+!tools/tests/NotifyEffect3Tests.cpp
+!tools/tests/check_notify_effect3_packet.py
 
 !tools/check_double_gumgang_parity.py
 !tools/check_pokjuk_parity.py

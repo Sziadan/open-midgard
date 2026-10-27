@@ -45,6 +45,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cstdlib>
 #include <cstring>
 #include <cstdio>
 #include <initializer_list>
@@ -470,6 +471,8 @@ float TileToWorldCoordZ(const CWorld* world, int tileY);
 float ResolveActorHeight(const CWorld* world, float worldX, float worldZ);
 float PacketDirToRotationDegrees(int dir);
 bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value);
+void InvalidateStatusWindows();
+void InvalidateBasicInfoWindow();
 
 
 int ResolveRecoveryEffectId(u32 statusType)
@@ -704,6 +707,110 @@ void HandleNotifyEffect2(CGameMode& mode, const PacketView& packet)
             static_cast<unsigned int>(actorId),
             static_cast<unsigned int>(effectId));
     }
+}
+
+void InvalidateWindowTree(UIWindow* window)
+{
+    if (!window) {
+        return;
+    }
+    window->Invalidate();
+    for (UIWindow* child : window->m_children) {
+        InvalidateWindowTree(child);
+    }
+}
+
+void InvalidateBasicInfoWindow()
+{
+    InvalidateWindowTree(g_windowMgr.m_basicInfoWnd);
+}
+
+void AdvanceEffectStatusRandomState()
+{
+    // The canonical ChangeXorValue uses this number of rand() calls to rotate
+    // encoded HP/SP slots. This client keeps those values directly on CPlayer,
+    // so preserve the shared RNG sequence while using the direct representation.
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        for (int index = 0; index < 5; ++index) {
+            std::rand();
+        }
+    }
+    for (int index = 0; index < 5; ++index) {
+        std::rand();
+    }
+    for (int index = 0; index < 12; ++index) {
+        std::rand();
+    }
+}
+
+void HandleNotifyEffect3(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 14 || !mode.m_world) {
+        return;
+    }
+
+    const u32 actorId = ReadLE32(packet.data + 2);
+    const u32 effectId = ReadLE32(packet.data + 6);
+    const u32 value = ReadLE32(packet.data + 10);
+    CGameActor* actor = actorId == g_session.m_aid
+        ? static_cast<CGameActor*>(mode.m_world->m_player)
+        : mode.m_world->GetGameActorByAID(actorId);
+    if (!actor) {
+        return;
+    }
+
+    if (actorId == g_session.m_aid && (effectId == 331 || effectId == 332)) {
+        AdvanceEffectStatusRandomState();
+        const u32 previousValue = effectId == 331 ? actor->m_Hp : actor->m_Sp;
+        const u32 updatedValue = previousValue + value;
+        if (updatedValue != previousValue) {
+            if (effectId == 331) {
+                actor->m_Hp = static_cast<u16>(updatedValue);
+            } else {
+                actor->m_Sp = static_cast<u16>(updatedValue);
+            }
+            InvalidateBasicInfoWindow();
+        }
+    }
+
+    u32 color = 0xFF0000FFu;
+    switch (effectId) {
+    case 331:
+        color = 0xFF00FF00u;
+        break;
+    case 332:
+        break;
+    case 657:
+        color = 0xFF00FF00u;
+        break;
+    case 658:
+        break;
+    case 659:
+        color = 0xFFFF0000u;
+        break;
+    case 660:
+        color = 0xFFFF00FFu;
+        break;
+    case 661:
+        color = 0xFF000000u;
+        break;
+    case 662:
+        color = 0xFFFFFFFFu;
+        break;
+    case 663:
+        color = 0xFFFFFF00u;
+        break;
+    case 664:
+        color = 0xFFFF55B1u;
+        break;
+    default:
+        break;
+    }
+
+    actor->SendMsg(actor, 88, static_cast<s32>(value), static_cast<s32>(color), 114);
+    actor->LaunchEffect(static_cast<int>(effectId), vector3d{0.0f, 0.0f, 0.0f}, 0.0f);
 }
 
 void HandleSkillCastCancel(CGameMode& mode, const PacketView& packet)
@@ -7797,6 +7904,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x01F8, HandleIgnorePacket);
     router.Register(0x023A, HandleStoragePasswordRequest);
     router.Register(0x023C, HandleStoragePasswordResult);
+    router.Register(0x0284, HandleNotifyEffect3);
     RegisterHandlerIfValid(router, receiveProfile.itemRemoveExtended, HandleItemRemove);
     router.Register(0x0100, HandleIgnorePacket);
 
