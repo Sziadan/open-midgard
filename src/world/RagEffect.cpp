@@ -5336,6 +5336,74 @@ void RenderSoulLink(const CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+void RenderSoulParticle(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    const int cameraLongitude = TableAngle(prim.m_gi[0].alphaT);
+    const int cameraLatitude = TableAngle(prim.m_gi[1].alphaT);
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1) {
+            continue;
+        }
+
+        vector3d corners[4]{};
+        for (int corner = 0; corner < 4; ++corner) {
+            const int angle = 45 + corner * 90;
+            corners[corner].x = g_cosTable[angle] * gi.distance;
+            corners[corner].z = g_sinTable[angle] * gi.distance;
+        }
+        for (vector3d& corner : corners) {
+            RotateCornerTowardScreen(&corner, cameraLongitude, cameraLatitude);
+        }
+
+        const vector3d positions[3] = {
+            { gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ },
+            { gi.sparkX, gi.sparkY, gi.sparkZ },
+            { gi.vecTPreX, gi.vecTPreY, gi.vecTPreZ },
+        };
+        const int alphaSlots[3] = { 12, 13, 14 };
+        const float* modeValue = &gi.height[15];
+        unsigned int tint = 0;
+        if (*modeValue == 0.0f) {
+            tint = 0x005050FFu;
+        } else if (*modeValue == 1.0f) {
+            tint = 0x00FFC8C8u;
+        } else if (*modeValue == 2.0f) {
+            tint = 0x00FFA0A0u;
+        } else if (*modeValue == 3.0f) {
+            tint = 0x00FF7878u;
+        } else {
+            continue;
+        }
+
+        for (int copy = 0; copy < 3; ++copy) {
+            vector3d translated[4]{};
+            for (int corner = 0; corner < 4; ++corner) {
+                translated[corner].x = corners[corner].x + positions[copy].x;
+                translated[corner].y = corners[corner].y + positions[copy].y;
+                translated[corner].z = corners[corner].z + positions[copy].z;
+            }
+            if (translated[0].y > 0.0f) {
+                continue;
+            }
+
+            for (vector3d& corner : translated) {
+                corner.x += prim.m_pos.x;
+                corner.y += prim.m_pos.y;
+                corner.z += prim.m_pos.z;
+            }
+            int alpha = static_cast<int>(gi.height[alphaSlots[copy]]);
+            if (alpha < 0) {
+                alpha = 0;
+            }
+            const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(alpha)) << 24) | tint;
+            SubmitWorldTeiRect(translated[0], translated[1], translated[2], translated[3], viewMatrix,
+                texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f,
+                static_cast<int>(prim.m_renderFlag));
+        }
+    }
+}
+
 void UpdateChemicalPrimitive(CEffectPrim* prim)
 {
     int longitude = 0;
@@ -12191,6 +12259,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_SOULLINK) {
         RenderSoulLink(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_SOULPARTICLE || m_type == PP_3DAURA_3) {
+        RenderSoulParticle(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_EFFECTTEXTURE || m_type == PP_EFFECTTEXTURE2 || m_type == PP_EFFECTTEXTURE_ANI) {

@@ -207,6 +207,7 @@ void SubmitWorldTeiRect(const vector3d& a,const vector3d& b,const vector3d& c,co
 #include "AirTextureRendererBody.inc"
 #include "HitLine3RendererBody.inc"
 #include "SoulLinkRendererBody.inc"
+#include "SoulParticleRendererBody.inc"
 vector3d AddVec3(const vector3d& a,const vector3d& b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
 constexpr float kSubmitNearPlane=80.0f,kNearPlane=10.0f;
 #include "ProjectPointBody.inc"
@@ -309,6 +310,31 @@ int main() {
         check(airTextureQuadCalls.size()==beforeHidden&&player.launchCount==launchesBefore,
             "soul link positive-Y corner gate suppresses both render and launch");
         g_modeMgr.current=nullptr;
+    }
+    {
+        CEffectPrim soulParticle;
+        soulParticle.m_texture={&g_texMgr.texture}; soulParticle.m_pos={0.0f,3.0f,0.0f};
+        auto& gi=soulParticle.m_gi[0];
+        gi.life=1; gi.process=0; gi.distance=2.0f; gi.height[15]=2.0f;
+        gi.height[12]=-8.0f; gi.height[13]=50.0f; gi.height[14]=44.0f;
+        gi.arcBaselineY=-1.0f; gi.sparkY=1.0f; gi.vecTPreY=0.0f;
+        airTextureQuadCalls.clear(); matrix view{}; RenderSoulParticle(soulParticle,view);
+        check(airTextureQuadCalls.size()==2,"soul particle independently gates the three source position copies");
+        if(airTextureQuadCalls.size()==2) {
+            check(airTextureQuadCalls[0].color==0x00FFA0A0u&&airTextureQuadCalls[1].color==0x2CFFA0A0u,
+                "soul particle clamps negative alpha to zero and keeps per-copy alpha values");
+            check(airTextureQuadCalls[0].blend==D3DBLEND_ONE&&airTextureQuadCalls[0].texture==&g_texMgr.texture,
+                "soul particle uses source additive blend and texture slot zero");
+            check(near(airTextureQuadCalls[0].a.y,2.0f),
+                "soul particle adds primitive position after applying its per-copy visibility gate");
+        }
+        gi.height[15]=1.0f; gi.sparkY=-1.0f; gi.vecTPreY=2.0f;
+        airTextureQuadCalls.clear(); RenderSoulParticle(soulParticle,view);
+        check(airTextureQuadCalls.size()==2&&airTextureQuadCalls[0].color==0x00FFC8C8u
+            &&airTextureQuadCalls[1].color==0x32FFC8C8u,
+            "soul particle mode one tint applies to the visible first and second copies");
+        gi.height[15]=4.0f; airTextureQuadCalls.clear(); RenderSoulParticle(soulParticle,view);
+        check(airTextureQuadCalls.empty(),"soul particle unsupported tint mode submits no copies");
     }
     const std::pair<float,u32> castingColors[]={
         {0.0f,0x00FFFFFFu},{1.0f,0x00FFAFAFu},{2.0f,0x00C3C3FFu},{3.0f,0x00FFFFFFu},
