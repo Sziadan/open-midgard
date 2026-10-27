@@ -200,7 +200,7 @@ void ApplyGroundEffect(int skillId, int level, const vector3d& pos)
         PlaceGroundEffect(pos, 238);
         break;
     case 478:
-        PlaySkillWaveAtPlayer("assulter_attack.wav");
+        PlayWave("assulter_attack.wav", 0.0f, -150.0f, 0.0f);
         if (level >= 10) {
             PlaceGroundEffect(pos, 499);
         } else if (level >= 6) {
