@@ -41,6 +41,7 @@ struct SKILL_USE_INFO {
 
 struct SHOW_IMAGE_INFO {
     std::string name;
+    int type = -1;
     int x, y;
 };
 

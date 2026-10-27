@@ -9882,12 +9882,27 @@ void SendTalkScriptLine(int variant)
     SendGlobalChatMessage(g_session.GetPlayerName(), text);
 }
 
+void UpdateShowImageInfo(CGameMode& mode, const char* imageName, int type)
+{
+    if (imageName == nullptr) {
+        return;
+    }
+    mode.m_showImageInfo.type = type;
+    mode.m_showImageInfo.name = imageName;
+    if (mode.m_showImageInfo.name.find(".bmp") == std::string::npos
+        && mode.m_showImageInfo.name.find(".BMP") == std::string::npos) {
+        mode.m_showImageInfo.name += ".bmp";
+    }
+}
+
 msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
     (void)extra;
-    (void)lparam;
 
     switch (msg) {
+    case 113:
+        UpdateShowImageInfo(*this, reinterpret_cast<const char*>(wparam), static_cast<int>(lparam));
+        return 0;
     case GameMsg_LButtonDown: {
         const int mouseX = static_cast<int>(wparam);
         const int mouseY = static_cast<int>(lparam);

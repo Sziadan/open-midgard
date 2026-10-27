@@ -4763,6 +4763,22 @@ void HandleChangeGuild(CGameMode& mode, const PacketView& packet)
     }
 }
 
+void HandleShowImage(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetLength < 19) {
+        return;
+    }
+
+    char imageName[17]{};
+    std::memcpy(imageName, packet.data + 2, 16);
+    imageName[16] = '\0';
+    int imageType = packet.data[18];
+    if (imageType == 255) {
+        imageType = -1;
+    }
+    mode.SendMsg(113, reinterpret_cast<msgparam_t>(imageName), imageType, 0);
+}
+
 void DecodePosDir(const u8* src, int& posX, int& posY, int& dir)
 {
     if (!src) {
@@ -7931,6 +7947,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0284, HandleNotifyEffect3);
     router.Register(0x0191, HandleTalkboxChatContents);
     router.Register(0x01B4, HandleChangeGuild);
+    router.Register(0x0145, HandleShowImage);
     RegisterHandlerIfValid(router, receiveProfile.itemRemoveExtended, HandleItemRemove);
     router.Register(0x0100, HandleIgnorePacket);
 
