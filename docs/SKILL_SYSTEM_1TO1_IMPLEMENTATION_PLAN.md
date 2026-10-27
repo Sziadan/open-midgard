@@ -1,7 +1,7 @@
 # Skill System 1:1 Implementation Plan
 
 Status: IN PROGRESS — partial implementation; see `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`. Full acceptance has not passed.
-Scope: every skill-related behaviour of the original 2008 HighPriest client, reproduced exactly in `src/`.
+Scope: gameplay-relevant skill and spell logic, state, effects, and animations from the original 2008 HighPriest client. Preserve these behaviours in `src/`; do not recreate the original UI windows, layout, input, or rendering 1:1.
 Audience: implementation agents of any capability level. Every work package below is written so it can be executed in isolation, with exact reference anchors, exact output locations, and a pass/fail checklist.
 
 ---
@@ -10,13 +10,14 @@ Audience: implementation agents of any capability level. Every work package belo
 
 These rules apply to every work package in this document. A task is not finished if any of them is violated.
 
-### 0.1 "1:1" means transcription, not interpretation
+### 0.1 In-scope gameplay logic is transcribed, not interpreted
 
 1. The decompiled original client under `Ref/` is the specification. You port its control flow, its numeric constants, its table contents, its call order and its timing. You do not "improve" it, "simplify" it, or reproduce "the general idea".
 2. Every numeric constant (effect id, wave name, motion type, state id, delay in ms, frame count, colour, offset, factor such as `0.0023148148`) is copied from `Ref` verbatim. Never invent a value. Never round. Never pick "a similar effect".
 3. If `Ref` has a `switch` with N cases, the port has N cases with the same ids and the same bodies. If `Ref` has a table with N entries, the port has N entries with the same values.
 4. If `Ref` does something you do not understand, port it anyway and add a one-line comment `// Ref: <file>:<line>` explaining where it came from. Do not drop it.
-5. A port that handles "the common skills" and falls back to a generic path for the rest is NOT acceptable. The default path is acceptable only for skill ids that take the default path in `Ref` as well.
+5. A port that handles "the common skills" and falls back to a generic path for the rest is NOT acceptable. The default path is acceptable only for skill ids that take the default path in the canonical executable and corroborating source as well.
+6. UI presentation is not a 1:1 acceptance target. Existing/new UI systems may expose skill data or invoke equivalent actions, but do not port legacy window classes, pixel layout, art composition, controls, or input flows unless a specific gameplay behavior depends on them. UI-only branches are recorded as out of scope; they do not block skill/effect parity.
 
 ### 0.2 No stubs, no placeholders, no "close enough"
 
@@ -39,11 +40,16 @@ If the executable, `Ref`, and `dhxj` disagree, follow the executable, use `Ref` 
 
 Packet version: the rebuilt client targets `packet_ver 23` (2008-09-10aSakexe). `Ref` is the same client family, but do not assume opcode layouts from `Ref` without confirming them against `clif.c` for the layout and `packet_db.txt` `packet_ver: 23` block for the length.
 
-### 0.4 Media rule
+
+### 0.4 UI boundary
+
+This plan covers skills, spells, gameplay state, effects, and animations. It does not require the modern UI to reproduce the 2008 client’s window classes, rendering, layout, controls, or input behavior. Keep source-faithful skill data models or receiver sketches as optional groundwork when they do not interfere with the existing Modern Qt UI. UI-only effects such as opening a legacy list window are documented, but they are not gameplay-parity blockers. If a UI branch sends a gameplay command (for example, using a selected skill), preserve that command semantics through the current UI architecture without recreating the source window.
+
+### 0.5 Media rule
 
 Never open, render, or play a media file to "see what it looks like". Inspect bytes/headers only (`.str` header, `.wav` RIFF header, `.spr/.act` headers). Correctness is established by matching `Ref`, not by eyeballing.
 
-### 0.5 Build and verification commands
+### 0.6 Build and verification commands
 
 ```
 cmake --preset vs2022-x64 -DRO_ENABLE_DEV_DEPLOY=ON
@@ -52,7 +58,7 @@ cmake --build --preset build-release-x64
 
 Any throwaway probe script lives outside the repository (e.g. `%TEMP%\ro_probe_*.py`, run with `.venv/Scripts/python.exe`). Do not commit probe scripts. Generators that produce committed `*.generated.inc` files live in `tools/` and are committed.
 
-### 0.6 Deliverable per task
+### 0.7 Deliverable per task
 
 Every work package produces, in addition to code:
 
@@ -60,7 +66,7 @@ Every work package produces, in addition to code:
 * A clean build with the commands above.
 * The checklist in the work package ticked with evidence (log lines, table diff output, etc.).
 
-### 0.7 Finish and compare one function before starting another
+### 0.8 Finish and compare one function before starting another
 
 Port functions serially. Do not begin editing or porting another function until the current function has passed a source-to-implementation comparison and that comparison is recorded. A successful build is necessary where required, but it does not establish parity: both versions can compile while implementing different behavior.
 
@@ -224,7 +230,7 @@ The current `src/world/RagEffect.cpp` hard-codes different durations (e.g. id 12
 | `0x0196` / `0x043F` | ZC_MSG_STATE_CHANGE / 2 | 9 / 25 | index.W@2 aid.L@4 state.B@8 (+ remain.L val1..3.L) | 5134 | `Zc_Msg_State_Change` 15260 |
 | `0x01D0`/`0x01E1` | spirits | 8 / 8 | aid.L@2 num.W@6 | 6804 | `Zc_Spirits` 26130 / `Zc_Spirits2` 26215 |
 | `0x01CF` | devotion | 28 | | 6767 | `Zc_DevotionList` 10555 |
-| `0x01CD` | autospell | 30 | seven 32-bit skill IDs at `+2,+6,...,+26` | 461 | `Zc_AutoSpellList` 8618 |
+| `0x01CD` | autospell | 30 | seven 32-bit skill IDs at `+2,+6,...,+26` | 461 | `Zc_AutoSpellList` 8618 (UI-only; excluded from gameplay acceptance) |
 | `0x01D1` | bladestop | 14 | | 6831 | `Zc_BladeStop` 8805 |
 | `0x01D2` | combo delay | 10 | | 6813 | `Zc_ComboDelay` 10255 |
 | `0x0215` | ZC_SKILLMSG | 6 | msg id.L@2 | 8398 (`Ref/eAthena_src_2011/map/clif.c`) | `Zc_SKILLMSG` 25035 |
@@ -237,8 +243,8 @@ The current `src/world/RagEffect.cpp` hard-codes different durations (e.g. id 12
 | `0x013D` | ZC_RECOVERY | 6 | | | `Zc_recovery` 33505 |
 | `0x043D` | ZC_SKILL_POSTDELAY | 8 | skill.W@2 tick.L@4 | 4633 | Later protocol addition (2008-11-12+); absent from the canonical 2008 `HighPriest.exe` dispatcher and excluded from this plan's required target-opcode inventory. |
 | `0x010F`/`0x010E`/`0x0111`/`0x0235`/`0x029D` | skill lists / updates | -1 / 11 / 39 / -1 / -1 | | 4389 / 4476 / 4425 / 14765 | `Zc_Skillinfo_List` 25700 etc. |
-| `0x0162` | ZC_GUILD_SKILLINFO | variable (`packet_db`: -1) | skill records, 37 bytes each from `+6`; points at `+4` | 7320 | `Zc_GuildSkillInfo` 11880 (dispatch 354); packet/state port stores records and points. `InvalidateUI` and manager/tree invalidation are byte-compared and ported; message-23 selector/refresh branch is compared with a tested row model. Real `UIGuildSkillWnd` receiver remains absent, so visible parity is open. |
-| `0x0145` | ZC_SHOW_IMAGE | 19 | name[16]@`+2`, type.B@`+18` (`255` → `-1`) | — | `Zc_show_image` 33679 (dispatch 325) |
+| `0x0162` | ZC_GUILD_SKILLINFO | variable (`packet_db`: -1) | skill records, 37 bytes each from `+6`; points at `+4` | 7320 | `Zc_GuildSkillInfo` 11880 (dispatch 354); packet/state port stores records and points. Legacy invalidation/message-23 receiver behavior is UI-only; the tested model is optional groundwork and the modern UI may consume the state through its own architecture. |
+| `0x0145` | ZC_SHOW_IMAGE | 19 | name[16]@`+2`, type.B@`+18` (`255` → `-1`) | — | `Zc_show_image` 33679 (dispatch 325; UI-only, excluded from gameplay acceptance) |
 | `0x01B4` | ZC_CHANGE_GUILD | 12 | aid.L@`+2`, guild id.L@`+6`, emblem version.sW@`+10` | — | `Zc_ChangeGuild` 9948 (dispatch 436) |
 
 Client-send (packet_ver 23 block, `packet_db.txt` line 1252 ff.): `0x0438,10,useskilltoid,2:4:6`; `0x0113` is **not** useskilltoid in ver 23 (it is in the old block, line 191). `0x0116,10,useskilltopos,2:4:6:8`; `0x0190,90,useskilltoposinfo,2:4:6:8:10`; `0x011B,20,useskillmap,2:4`; `0x0112,4,skillup,2`. Confirm each against `PACKET_VERSION_ALIGNMENT.md` before use (the document is authoritative for the send side).
@@ -447,7 +453,7 @@ Remove: `ResolveGroundSkillEffectId`, `PlayGroundSkillImpactSound`, `ResolveUseS
 | `0x01D3` | `Zc_Sound` 25976 | server-triggered waves (used by some skill scripts). |
 | `0x01D0`, `0x01E1` | `Zc_Spirits/2` 26133 / 26218 | spirit spheres (Monk/Champion/Gunslinger). |
 | `0x01CF` | `Zc_DevotionList` 10555 | devotion link visuals. |
-| `0x01CD` | `Zc_AutoSpellList` 8618 | Handler is routed and source-compared; it creates window 99 only if any of seven IDs is nonzero and sends message 31 for each nonzero ID. Receiver message-31/60 state model is source-compared; `UIWindowMgr` factory integration, real spell-list rendering, scrolling, selection, and close behavior remain open. Do not claim visible parity. |
+| `0x01CD` | `Zc_AutoSpellList` 8618 | UI-only auto-spell list. Its packet and receiver model are retained as groundwork; factory, rendering, scrolling, selection, and close-window fidelity are outside this plan’s acceptance scope. |
 | `0x01D1`, `0x01D2` | bladestop / combo delay | |
 | `0x0148`, `0x013D` | `Zc_resurrection` 33654, `Zc_recovery` 33505 | |
 | `0x0191` | `Zc_talkbox_chat_contents` 33736 | resolves the skill AID and forwards message 7 with the raw packet payload at +6; the receiver now displays nonempty text for five seconds as a red skill speech bubble through the Qt overlay. |
