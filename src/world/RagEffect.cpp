@@ -18662,6 +18662,59 @@ void CRagEffect::ApplyForestLight(const char* textureName, int variant)
     }
 }
 
+void CRagEffect::ApplyStin4()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    if (m_stateCnt == 0) {
+        m_effectPos = master->m_pos;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\stin4.wav", m_effectPos.x-listener.x, 0.0f,
+                m_effectPos.z-listener.z, 250, 40, 1.0f);
+        }
+    }
+    for (int index = 0; index < m_count; ++index) {
+        SpawnStin4("effect\\wind.tga", static_cast<char>(index % 2));
+    }
+}
+
+void CRagEffect::SpawnStin4(const char* textureName, char variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_STIN4, vector3d{});
+    if (!prim) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_totalTexture = 1;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    prim->m_size = 0.0f;
+    prim->m_deltaPos = m_deltaPos;
+    prim->m_pos = m_effectPos;
+    for (int lane = 0; lane < 4; ++lane) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(lane)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.distance = 10.0f + static_cast<float>(rand() % 11) * 0.5f;
+        gi.alphaB = 0;
+        gi.vecBPreX = m_effectPos.x;
+        gi.arcBaselineY = m_effectPos.y - 10.0f;
+        gi.vecBPreZ = m_effectPos.z;
+        gi.rotStart = 0;
+        gi.riseAngle = static_cast<short>(lane);
+        gi.height[1] = 1.0f + static_cast<float>(rand() % 21) * 0.1f;
+        gi.flag[0] = 0;
+        gi.flag[1] = 0;
+        if (variant == 0) gi.flag[2] = 0;
+        else if (variant == 1) gi.flag[2] = 1;
+        gi.flag[3] = 1;
+    }
+}
+
 void CRagEffect::ApplyBottomMagnus(const char* textureName, int variant)
 {
     if (textureName == nullptr || m_stateCnt != 0) {
@@ -19786,6 +19839,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 79 || m_type == 619) {
         ApplyEarthSpike(m_type == 79 ? 0 : 2);
+        return true;
+    }
+    if (m_type == 621) {
+        ApplyStin4();
         return true;
     }
     if (m_type == 618) {

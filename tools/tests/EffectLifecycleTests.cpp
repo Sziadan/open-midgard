@@ -472,6 +472,8 @@ struct CRagEffect : CGameObject {
     void ApplyFireArrow();
     void ApplyKouenka();
     void ApplyEarthSpike(char);
+    void ApplyStin4();
+    void SpawnStin4(const char*,char);
     void SpawnBash3D(const char*,char,char);
     void ApplyFrostDiver();
     void ApplyFrostDiver2();
@@ -2981,6 +2983,47 @@ int main()
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
     for (int angle=0; angle<=360; ++angle) { g_sinTable[angle]=GetSin(angle); g_cosTable[angle]=GetCos(angle); }
+    {
+        CRenderObject actor,listener;actor.m_pos={30,40,50};listener.m_pos={5,300,8};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_master=&actor;effect.m_duration=200;effect.m_deltaPos={1,2,3};
+        check(effect.m_count==0,"CRagEffect constructor preserves the canonical executable default count");
+        rngValues={0,20,10,0,5,1,10,0};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
+        effect.ApplyStin4();
+        check(effect.m_effectPos.x==30&&effect.m_effectPos.y==40&&effect.m_effectPos.z==50
+            &&effect.m_primList.empty()&&rngCursor==0&&waveCalls.size()==1
+            &&waveCalls[0].name=="effect\\stin4.wav"&&waveCalls[0].x==25&&waveCalls[0].z==42,
+            "STIN4 canonical default count plays frame-zero sound without emitting children");
+        effect.m_count=1;effect.ApplyStin4();
+        check(effect.m_primList.size()==1&&rngCursor==8&&waveCalls.size()==2,
+            "STIN4 explicit count one emits one child with eight lane draws");
+        if(!effect.m_primList.empty()) {
+            const CEffectPrim* prim=effect.m_primList.front();
+            check(prim->m_type==PP_STIN4&&prim->m_renderFlag==5&&prim->m_duration==200&&prim->m_totalTexture==1
+                &&prim->m_texture.size()==1&&prim->m_size==0&&prim->m_pos.x==30&&prim->m_pos.y==40&&prim->m_pos.z==50
+                &&prim->m_deltaPos.x==1&&prim->m_deltaPos.y==2&&prim->m_deltaPos.z==3
+                &&g_texMgr.requests==std::vector<std::string>({"effect\\wind.tga"}),
+                "STIN4 child preserves exact source primitive profile, parent delta, position, and wind texture");
+            const float expectedDistance[4]={10.0f,15.0f,12.5f,15.0f};const float expectedHeight[4]={3.0f,1.0f,1.1f,1.0f};
+            bool lanes=true;for(int lane=0;lane<4;++lane){const auto& gi=prim->m_gi[lane];lanes=lanes
+                &&gi.life==1&&gi.process==0&&gi.distance==expectedDistance[lane]&&gi.alphaB==0
+                &&gi.vecBPreX==30&&gi.arcBaselineY==30&&gi.vecBPreZ==50&&gi.rotStart==0&&gi.riseAngle==lane
+                &&gi.height[1]==expectedHeight[lane]&&gi.flag[0]==0&&gi.flag[1]==0&&gi.flag[2]==0&&gi.flag[3]==1;}
+            check(lanes,"STIN4 four lanes retain ordered random distance/height values and flag profile");
+        }
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        actor.m_pos={70,80,90};effect.m_stateCnt=1;const int draws=rngDraws;waveCalls.clear();
+        effect.ApplyStin4();
+        check(effect.m_effectPos.x==70&&effect.m_effectPos.y==80&&effect.m_effectPos.z==90
+            &&effect.m_primList.empty()&&rngDraws==draws&&waveCalls.empty(),
+            "STIN4 refreshes master position on later ticks without repeating emission, audio, or randomness");
+        effect.m_stateCnt=0;effect.m_count=2;rngValues.assign(16,0);rngCursor=0;waveCalls.clear();g_texMgr.requests.clear();
+        effect.ApplyStin4();
+        check(effect.m_primList.size()==2&&rngCursor==16&&waveCalls.size()==1
+            &&effect.m_primList.front()->m_gi[0].flag[2]==0&&effect.m_primList.back()->m_gi[0].flag[2]==1,
+            "STIN4 dispatcher repeats once per source count with alternating 0/1 lane flags");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;rngValues.clear();rngCursor=0;
+    }
     {
         CRenderObject actor,listener;actor.m_pos={30,40,50};listener.m_pos={5,200,8};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;

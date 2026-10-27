@@ -2,6 +2,8 @@
 
 Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`. New disagreements found while implementing:
 
+- EF_STIN4 constructor-count discrepancy: readable `Ref/dhxj/RagEffect.cpp:1695` initializes `CRagEffect::m_count` to 1, while decompiled `Ref/RagEffect.cpp:9868+` and canonical `HighPriest.exe.c:416976+` initialize it to 0. The current port retains 0 to match the target executable. Consequently the canonical default EF_STIN4 caller plays its frame-zero sound but emits no STIN4 primitives until a caller explicitly supplies a positive count; readable-Ref behavior would emit one. The case-specific branch remains implemented and tested for explicit counts. Do not change the shared constructor default without re-auditing all effect callers.
+
 - Resolved 2026-10-26, `RenderLineLink`: the default outer ring is RGB `0xFFFF00` (source channel arguments red=-1, green=-1, blue=0), not blue. Its heading also uses source float-normalized deltas after an extended-precision square root; the generic electric heading helper did not preserve that sequence.
 
 - `CRagEffect::OnProcess` and `CRagEffect::OnProcess2` are both annotated in `Ref/RagEffect.cpp` as decompiled from `0x5E6E50`. The function body that actually dispatches effect ids 0–299 and 374–490 is `HighPriest.exe.c` `CRagEffect::OnProcess`. `OnProcess2` in `Ref/RagEffect.cpp:10606` is the 300–373 tier. The handler index follows that split.
