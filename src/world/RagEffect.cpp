@@ -13690,7 +13690,7 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         InitEZ2STRFrame();
         break;
     }
-    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 38: case 39: case 43: case 45: case 46: case 61: case 62: case 63: case 71: case 72: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
+    case 0: case 1: case 2: case 3: case 4: case 5: case 14: case 16: case 17: case 18: case 27: case 28: case 31: case 32: case 34: case 35: case 36: case 37: case 38: case 39: case 43: case 45: case 46: case 61: case 62: case 63: case 71: case 72: case 73: case 81: case 98: case 121: case 122: case 123: case 128: case 132: case 142: case 180: case 184: case 401:
         // ProcessEffectFrame owns reference primitive-only dispatch for these ids.
         m_handler = Handler::None;
         break;
@@ -15247,6 +15247,49 @@ void CRagEffect::ApplySphere()
     prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act");
     prim->m_numSegments = 1;
     ShiftCircleSegments(prim);
+}
+
+// Ref/RagEffect.cpp:10493-10537; HighPriest.exe.c:427294-427348.
+void CRagEffect::ApplyBowlingBash()
+{
+    if (m_stateCnt == 0 || m_stateCnt == 5) {
+        int angle = static_cast<int>(180.0f - m_master->m_roty);
+        if (angle < 0) angle += 360;
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
+        prim->m_duration = 20 - m_stateCnt;
+        prim->m_longitude = static_cast<float>(angle + m_stateCnt * 20);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_outerSize = 8.0f;
+        prim->m_outerSpeed = 0.5f;
+        prim->m_outerAccel = -0.03f;
+        prim->m_innerSize = 3.0f;
+        prim->m_innerSpeed = 0.5f;
+        prim->m_innerAccel = -0.03f;
+        prim->m_heightSize = 3.5f;
+        prim->m_alpha = static_cast<float>(240 - m_stateCnt * 7);
+        prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 2;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+    }
+    if (m_stateCnt == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
+        prim->m_duration = 50;
+        prim->m_renderFlag |= 0x200;
+        prim->m_latitude = 90.0f;
+        prim->m_radius = 8.0f;
+        prim->m_radiusSpeed = 0.7f;
+        prim->m_radiusAccel = -(prim->m_radiusSpeed / 30.0f);
+        prim->m_innerSize = 5.0f;
+        prim->m_changePoint = 20;
+        prim->m_changeAccel = 0.0f;
+        prim->m_changeSpeed = 0.08f;
+        prim->m_alpha = 45.0f;
+        prim->m_fadeOutCnt = 35;
+        prim->m_numSegments = 1;
+        ShiftCircleSegments(prim);
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_yellow.tga", false));
+    }
 }
 
 void CRagEffect::SpawnSight()
@@ -20221,6 +20264,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 72) {
         ApplySphere();
+        return true;
+    }
+    if (m_type == 73) {
+        ApplyBowlingBash();
         return true;
     }
     if (m_type == 0x201) {

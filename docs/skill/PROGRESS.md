@@ -684,3 +684,5 @@ Latest completed effect handler gate (2026-10-27): `CRagEffect::Barrier` / effec
 Latest completed effect handler gate (2026-10-27): `CRagEffect::Cone` / effect 71 passed the mechanical source/EXE/current branch comparison, lifecycle assertions, x64 Release build and all six CTest suites. The resource pointer ambiguity and current mapping are recorded in `PARITY_LOG.md`. Continue with a fresh source comparison before changing another function.
 
 Latest completed effect handler gate (2026-10-27): `CRagEffect::Sphere` / effect 72 passed the mechanical source/EXE/current comparison, lifecycle assertions, x64 Release build and all six CTest suites. Its keyed-radius schedule and resource pointer uncertainty are recorded in `PARITY_LOG.md`. Continue with a fresh source comparison before changing another function.
+
+Latest completed effect handler gate (2026-10-27): `CRagEffect::BowlingBash` / effect 73 passed the mechanical Ref/EXE/current branch comparison, lifecycle assertions, x64 Release build and all six CTest suites. Texture strings were verified in canonical EXE data. Continue with a fresh source comparison before changing another function.

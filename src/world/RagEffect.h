@@ -592,6 +592,7 @@ private:
     void ApplyBarrier();
     void ApplyCone();
     void ApplySphere();
+    void ApplyBowlingBash();
     void SpawnFireBall();
     void SpawnFireFly();
     void SpawnSandWind();

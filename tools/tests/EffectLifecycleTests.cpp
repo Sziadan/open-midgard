@@ -550,6 +550,7 @@ struct CRagEffect : CGameObject {
     void ApplyBarrier();
     void ApplyCone();
     void ApplySphere();
+    void ApplyBowlingBash();
     void SpawnSight();
     void SpawnSight2();
     void SpawnBlessing();
@@ -8129,6 +8130,38 @@ int main()
         check(effect.m_duration==490&&effect.m_primList.size()==2&&rngDraws==draws,
             "Sphere emits again every tenth state and updates the parent duration");
         effect.ClearPrims(); g_world.UpdateGameObjects(); rngValues.clear(); rngCursor=0;
+    }
+    {
+        CRagEffect effect; CRenderObject actor;
+        actor.m_roty=190; effect.m_type=73; effect.m_master=&actor; effect.m_stateCnt=0;
+        g_texMgr.requests.clear(); rngValues.clear(); rngCursor=0;
+        const int draws=rngDraws;
+        effect.ApplyBowlingBash();
+        auto it=effect.m_primList.begin();
+        CEffectPrim* cylinder=it==effect.m_primList.end()?nullptr:*it++;
+        CEffectPrim* circle=it==effect.m_primList.end()?nullptr:*it;
+        check(effect.m_primList.size()==2&&cylinder&&circle&&cylinder->m_type==PP_3DCYLINDER
+            &&cylinder->m_duration==20&&cylinder->m_longitude==350&&cylinder->m_outerSize==8
+            &&cylinder->m_outerSpeed==0.5f&&cylinder->m_outerAccel==-0.03f
+            &&cylinder->m_innerSize==3&&cylinder->m_innerSpeed==0.5f&&cylinder->m_innerAccel==-0.03f
+            &&cylinder->m_heightSize==3.5f&&cylinder->m_alpha==240&&cylinder->m_fadeOutCnt==10
+            &&circle->m_type==PP_3DCIRCLE&&circle->m_duration==50&&(circle->m_renderFlag&0x200)
+            &&circle->m_latitude==90&&circle->m_radius==8&&circle->m_radiusSpeed==0.7f
+            &&std::fabs(circle->m_radiusAccel+0.7f/30.0f)<0.000001f&&circle->m_innerSize==5
+            &&circle->m_changePoint==20&&circle->m_changeAccel==0&&circle->m_changeSpeed==0.08f
+            &&circle->m_alpha==45&&circle->m_fadeOutCnt==35&&g_texMgr.requests.size()==2
+            &&g_texMgr.requests[0]=="effect\\ring_blue.tga"&&g_texMgr.requests[1]=="effect\\ring_yellow.tga"
+            &&rngDraws==draws,
+            "BowlingBash frame zero emits the source cylinder and circle profiles in order without RNG");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); effect.m_stateCnt=1;
+        effect.ApplyBowlingBash();
+        check(effect.m_primList.empty(),"BowlingBash does not emit between source trigger frames");
+        effect.m_stateCnt=5; effect.ApplyBowlingBash();
+        CEffectPrim* second=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&second&&second->m_type==PP_3DCYLINDER
+            &&second->m_duration==15&&second->m_longitude==450&&second->m_alpha==205
+            &&rngDraws==draws,"BowlingBash frame five emits only the second cylinder with source angle, duration and alpha");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
