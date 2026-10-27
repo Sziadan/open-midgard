@@ -18855,6 +18855,25 @@ void CRagEffect::SpawnRgCoin2(const char* textureName, float size)
     }
 }
 
+void CRagEffect::ApplyBash3D5()
+{
+    if (m_stateCnt == 0) {
+        CRenderObject* master = ResolveCurrentMaster();
+        if (master != nullptr) {
+            m_effectPos = master->m_pos;
+            CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+            if (mode && mode->m_world && mode->m_world->m_player) {
+                const vector3d& listener = mode->m_world->m_player->m_pos;
+                PlayWave("effect\\bash3d5.wav", m_effectPos.x-listener.x, 0.0f,
+                    m_effectPos.z-listener.z, 250, 40, 1.0f);
+            }
+        }
+    }
+    for (int lane = 0; lane < 6; ++lane) {
+        SpawnBash3D("effect\\alpha_center.tga", static_cast<char>(lane), 5);
+    }
+}
+
 void CRagEffect::ApplyBottomMagnus(const char* textureName, int variant)
 {
     if (textureName == nullptr || m_stateCnt != 0) {
@@ -19995,6 +20014,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 627) {
         ApplyRgCoin3();
+        return true;
+    }
+    if (m_type == 628) {
+        ApplyBash3D5();
         return true;
     }
     if (m_type == 618) {

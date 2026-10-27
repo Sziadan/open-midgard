@@ -2,6 +2,8 @@
 
 Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`. New disagreements found while implementing:
 
+- EF_BASH3D5 audio symbol: readable `Ref/dhxj/RagEffect.cpp:2929` names `effect\\bash3d5.wav`. Canonical `HighPriest.exe.c:418885` calls `PlayWave(aEffect_56, ...)`, while its symbol definition at `HighPriest.exe.c:33190` is only `"effect\\"`; the extracted executable bytes also contain no `bash3d5.wav` literal. Follow the readable Ref path because the plan's source-precedence table makes Ref the visual/audio specification and treats canonical output as secondary when symbols are incomplete. Record this as unresolved executable-string parity; do not claim confirmed original playback of this WAV.
+
 - EF_STIN4 constructor-count discrepancy: readable `Ref/dhxj/RagEffect.cpp:1695` initializes `CRagEffect::m_count` to 1, while decompiled `Ref/RagEffect.cpp:9868+` and canonical `HighPriest.exe.c:416976+` initialize it to 0. The current port retains 0 to match the target executable. Consequently the canonical default EF_STIN4 caller plays its frame-zero sound but emits no STIN4 primitives until a caller explicitly supplies a positive count; readable-Ref behavior would emit one. The case-specific branch remains implemented and tested for explicit counts. Do not change the shared constructor default without re-auditing all effect callers.
 
 - Resolved 2026-10-26, `RenderLineLink`: the default outer ring is RGB `0xFFFF00` (source channel arguments red=-1, green=-1, blue=0), not blue. Its heading also uses source float-normalized deltas after an extended-precision square root; the generic electric heading helper did not preserve that sequence.

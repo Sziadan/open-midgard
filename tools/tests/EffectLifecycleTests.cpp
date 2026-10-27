@@ -480,6 +480,7 @@ struct CRagEffect : CGameObject {
     void SpawnStin5(const char*);
     void ApplyRgCoin3();
     void SpawnRgCoin2(const char*,float);
+    void ApplyBash3D5();
     void ApplyChemical3(short);
     void SpawnBash3D(const char*,char,char);
     void ApplyFrostDiver();
@@ -7800,6 +7801,33 @@ int main()
         check(effect.m_effectPos.x==70&&effect.m_effectPos.y==80&&effect.m_effectPos.z==90&&effect.m_primList.size()==laterPrims
             &&rngDraws==laterDraws&&g_texMgr.requests.empty(),"RgCoin3 nonzero state skips all four emitters without RNG or texture work");
         g_world.m_player=nullptr;
+    }
+    {
+        CRenderObject actor, listener; actor.m_pos={30,40,50}; listener.m_pos={5,300,8};
+        auto storage=std::make_unique<CRagEffect>(); auto& effect=*storage;
+        effect.m_master=&actor; effect.m_duration=200; effect.m_stateCnt=0;
+        g_world.m_player=&listener; waveCalls.clear(); g_texMgr.requests.clear(); g_resMgr.requests.clear();
+        rngValues.clear();for(int draw=0;draw<24;++draw)rngValues.push_back(draw);rngCursor=0;
+        const int draws=rngDraws;effect.ApplyBash3D5();
+        check(effect.m_primList.size()==6&&rngDraws==draws+24&&rngCursor==24,"Bash3D5 state zero creates six ordered BASH3D children with four draws per child");
+        bool audio=waveCalls.size()==1&&waveCalls[0].name=="effect\\bash3d5.wav"&&waveCalls[0].x==25&&waveCalls[0].y==0
+            &&waveCalls[0].z==42&&waveCalls[0].frameRng==draws&&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1;
+        check(audio,"Bash3D5 state zero refreshes origin and plays exact player-relative wave before child RNG");
+        bool children=g_texMgr.requests.size()==6;int childIndex=0;
+        for(auto* prim:effect.m_primList){
+            children=children&&prim->m_type==PP_BASH3D&&prim->m_renderFlag==5&&prim->m_duration==200&&prim->m_texture.size()==1
+                &&prim->m_pos.x==30&&prim->m_pos.y==40&&prim->m_pos.z==50&&g_texMgr.requests[static_cast<size_t>(childIndex)]=="effect\\alpha_center.tga";
+            for(int lane=0;lane<4;++lane){const auto& gi=prim->m_gi[static_cast<size_t>(lane)];
+                children=children&&gi.life==1&&gi.height[4]==5&&gi.process==-24&&gi.distance==2
+                    &&gi.riseAngle==90*lane+22*childIndex&&gi.rotStart==childIndex*4+lane&&gi.alphaB==0&&gi.height[0]==-12;}
+            ++childIndex;
+        }
+        check(children&&childIndex==6,"Bash3D5 children preserve six modes0-5 four-lane mode-five payload and texture order");
+        effect.ClearPrims();g_world.UpdateGameObjects();actor.m_pos={70,80,90};effect.m_stateCnt=1;
+        waveCalls.clear();g_texMgr.requests.clear();const int laterDraws=rngDraws;effect.ApplyBash3D5();
+        check(effect.m_primList.empty()&&effect.m_effectPos.x==70&&effect.m_effectPos.y==80&&effect.m_effectPos.z==90
+            &&rngDraws==laterDraws&&waveCalls.empty()&&g_texMgr.requests.empty(),"Bash3D5 later ticks refresh through six helper calls without sound or respawn");
+        g_world.m_player=nullptr;rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
