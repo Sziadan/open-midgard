@@ -98,6 +98,8 @@ public:
     CRenderObject();
 
     void SetForceAnimation(int act, int mot, int maxMot, int finishAct, int finishMot, int isAnim, u32 endTick, int isLoop);
+    void SetForceAnimation2(u8 act, u8 mot, u8 act2, u8 mot2, u8 act3, u8 mot3,
+        u8 act4, u8 mot4, u8 act5, u8 mot5, int isAnim, u32 endTick, int isLoop);
     void SetForceAnimEndTick(u32 tick);
     void ProcessForcedMotion();
     void SetArgb(int alpha, int red, int green, int blue);

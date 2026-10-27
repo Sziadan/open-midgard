@@ -5833,6 +5833,33 @@ void CRenderObject::SetForceAnimation(int act, int mot, int maxMot, int finishAc
     m_forceStateEndTick = isAnim ? endTick + timeGetTime() : 0;
 }
 
+void CRenderObject::SetForceAnimation2(u8 act, u8 mot, u8 act2, u8 mot2, u8 act3, u8 mot3,
+    u8 act4, u8 mot4, u8 act5, u8 mot5, int isAnim, u32 endTick, int isLoop)
+{
+    m_forceAct2[1] = act2;
+    m_forceMot2[1] = mot2;
+    m_forceAct2[2] = act3;
+    m_forceMot2[2] = mot3;
+    m_forceAct2[3] = act4;
+    m_forceMot2[0] = mot;
+    m_forceMot = mot;
+    m_forceMot2[3] = mot4;
+    m_forceAct2[0] = act;
+    m_forceAct = act;
+    m_isForceAnimLoop = isLoop;
+    m_forceAct2[4] = act5;
+    m_forceMot2[4] = mot5;
+    m_forceStartMot = 0;
+    m_forceMaxMot = 4;
+    m_isForceAnimation = isAnim;
+    m_isForceAnimFinish = 0;
+    m_isForceState2 = 1;
+    m_isForceState = 0;
+    m_isForceState3 = 0;
+    m_forceStateEndTick = isAnim ? endTick + timeGetTime() : 0;
+    m_forceStateCnt = 1;
+}
+
 // Ref/GameActor.cpp:11191 (0x563300).
 void CRenderObject::SetForceAnimEndTick(u32 tick)
 {

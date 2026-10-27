@@ -1985,6 +1985,11 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - `CPc::SetState` and `CPc::ProcessState` Ref/EXE bodies match (7,136 and 1,784 normalized chars). Current `CPc::SetState` only covers a small set of branches; there is no `CPc::ProcessState` override. `CPlayer::SetState` and `CNpc::SetState` also match Ref/EXE but have no current class overrides. `CPlayer::ProcessState` in Ref is a thunk to `CPc::ProcessState`. `ProcessEffectState`, `MakePartyEffect`, and `MakeSpecialAttackEffect` are likewise absent from current `src`.
 - This is an audit checkpoint, not a parity pass. WP2.7 remains in progress. Port one full function at a time and add branch-level comparators before starting the next function.
 
+## `CRenderObject::SetForceAnimation2` — 2026-10-27
+
+- Ref and canonical EXE complete signatures/bodies match. Added the current helper with the source's five ordered action/motion byte writes, base action/motion, force sequence index and max, loop/animation/force-state flags, conditional `endTick + timeGetTime()`, and initial sequence count.
+- `tools/tests/check_force_animation2_source.py` compares the complete Ref/EXE helper bodies and checks ordered writes and timer behavior. It passes. The production Release build passes; this helper is not wired to a caller until the source-compared `CGameActor::SetState` checkpoint. No OldRO deployment was made for this unused helper alone.
+
 ### Am_Groundskill implementation gate update — 2026-10-27
 
 - The follow-up `CGameMode::PlaceEffect` / `CDummyEffectLauncher` checkpoint has since ported and source-compared the launcher path; the prior lifecycle limitation above is closed for the current valid-world route. This gate extends `tools/tests/check_groundskill_source.py` with exact current skill-case membership, exact route mapping, skill 264 `IsThisPC` equivalence (the canonical predicate is `(job > 4000 && job < 6000) || (unsigned int)job < 28`), ordered branch actions, and ground-position initialization.
