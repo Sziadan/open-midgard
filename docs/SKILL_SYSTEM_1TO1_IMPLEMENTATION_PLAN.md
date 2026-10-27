@@ -396,6 +396,8 @@ Port every case. The skill-critical ones, with their Ref lines:
 
 ### WP2.3 `Am_Action` (Ref/GameActorMsgHandler.cpp:52–329)
 
+Progress (2026-10-27): implementation and branch-level Ref/EXE/current comparator are complete. The comparator covers the ordered action labels, target lookup including skill units, counter effect sender, action-to-WBA message map, delay bonuses, WBA fields, and multi-hit/residual-damage timing. See `docs/skill/PARITY_LOG.md`; no live packet-replay acceptance is claimed.
+
 Port verbatim: actions 0/4/8/9/10/11 attack path (counter effect 131 for action 11? — follow Ref), `SetModifyFactorOfmotionSpeed`, `SetState(2)`, `CalcDir`, `WBA` with message 26/39/93/94 by action type, multi-hit spacing with `doubleAttackTerm`, `leftDamage`, action 1 → `SetState(5)`, 2 → `SetState(6)`, 3 → `SetState(0)`, job-specific delay additions (1016/1420 +192; 1285/1830 +912; 1286/1829/1287 +408).
 
 ### WP2.4 `Am_Skill` (Ref/GameActorMsgHandler.cpp:748–1321)

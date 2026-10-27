@@ -230,12 +230,25 @@ void CGameActor::Am_Action(const int* arg1)
     const int totalDamage = arg1[0];
     m_targetGid = targetGid;
 
-    CGameActor* target = FindActorByGid(targetGid);
+    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+    CWorld* world = gameMode ? gameMode->m_world : nullptr;
+    CGameActor* player = world ? world->m_player : nullptr;
+    CGameActor* target = nullptr;
+    if (world) {
+        if (g_session.m_aid == targetGid) {
+            target = player;
+        } else {
+            target = world->GetGameActorByAID(targetGid);
+            if (!target) {
+                target = world->GetSkillByAID(targetGid);
+            }
+        }
+    }
     vector3d targetPos = m_pos;
     if (target) {
         targetPos = target->m_pos;
-    } else if (g_world.m_player) {
-        const vector3d& playerPos = g_world.m_player->m_pos;
+    } else if (player) {
+        const vector3d& playerPos = player->m_pos;
         targetPos.x = m_pos.x - (playerPos.x - m_pos.x);
         targetPos.z = m_pos.z - (playerPos.z - m_pos.z);
     }
@@ -272,7 +285,7 @@ void CGameActor::Am_Action(const int* arg1)
 
     if (m_isCounter) {
         if (CRagEffect* counter = LaunchEffect(131, vector3d{}, 0.0f)) {
-            counter->SendMsg(counter, 50, 0, 0, 0);
+            counter->SendMsg(this, 50, 0, 0, 0);
         }
         m_isCounter = 0;
     }
@@ -281,7 +294,15 @@ void CGameActor::Am_Action(const int* arg1)
     if (targetGid != m_gid) {
         SetState(2);
     }
-    FaceToward(*this, targetPos.x, targetPos.z);
+    double rotation = std::atan2(static_cast<double>(targetPos.x) - m_pos.x,
+        -(static_cast<double>(targetPos.z) - m_pos.z)) / 3.141592 * 180.0;
+    m_roty = static_cast<float>(rotation);
+    if (rotation >= 360.0) {
+        m_roty = static_cast<float>(rotation - 360.0);
+    }
+    if (m_roty < 0.0) {
+        m_roty += 360.0;
+    }
 
     u32 delay = static_cast<u32>(m_attackMotion * m_motionSpeed * 24.0f);
     if (m_job == 1016 || m_job == 1420) {
@@ -329,7 +350,7 @@ void CGameActor::Am_Action(const int* arg1)
     hit.effectId2 = effectId2;
     hit.effectLevel = 1;
     hit.damage = perHit;
-    hit.attackedSpeedFactor = static_cast<float>(attackedMT) * kAttackedMotionFactor;
+    hit.attackedSpeedFactor = static_cast<float>(static_cast<double>(attackedMT) * 0.0034722222);
 
     if (count == 1) {
         target->SendMsg(this, 27, reinterpret_cast<msgparam_t>(&hit), 0, 0);
