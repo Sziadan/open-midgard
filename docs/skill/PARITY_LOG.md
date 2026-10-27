@@ -1944,3 +1944,8 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 
 - The 0x56 `Get_Angle` audit failure was a checker defect: `body(CURRENT, "int GetReferenceAngle(...)")` matched a forward declaration and extracted the next function body. Updated every such selector to include the function opening brace. This also repaired dependent source comparisons for 0x77, 0x7A and 0x7D. The 0x7C route assertion was stale: both canonical sources ignore `PrimKouenka`'s bool and continue to the common tick, which the current route does. Corrected that assertion.
 - The complete `tools/audit_prim_onprocess_inventory.py` now passes through canonical primitive ID 0x80 and validates ID-range/default handling. Registered it as `prim_onprocess_inventory_source_check` in CTest. No gameplay implementation changed in this audit-only correction; the prior OldRO binary remains the flash build verified above.
+
+## `CEffectPrim::SendMsg` — 2026-10-27
+
+- Canonical EXE body at VA `0x649180` and `Ref/RagEffectPrim.cpp:6377` match after whitespace normalization. The only branch checks `msgid == 24` and clears `m_master`; sender and values 1–3 are unused.
+- Current `CEffectPrim::SendMsg` implements the same branch. `tools/tests/check_effectprim_sendmsg.py` compares EXE/Ref bodies and verifies the current message-24 mutation and unused arguments. It is registered as CTest `effectprim_sendmsg_source_check`; the comparator passes. No runtime behavior was changed.
