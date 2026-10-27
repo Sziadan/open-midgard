@@ -560,6 +560,7 @@ struct CRagEffect : CGameObject {
     void SpawnBlessing();
     void SpawnSmoke();
     void SpawnDragonSmoke();
+    void SpawnDarkBreath();
     void SpawnTorch();
     void SpawnEnchantPoison();
     void SpawnEnchantPoison2();
@@ -5319,6 +5320,30 @@ int main()
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
         check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,
             "DragonSmoke cleanup releases sprite and action resource locks");
+    }
+    {
+        CRagEffect effect;effect.m_type=212;effect.m_duration=500;
+        const int draws=rngDraws;g_resMgr.requests.clear();
+        effect.SpawnDarkBreath();
+        check(effect.m_primList.size()==1 && rngDraws==draws,
+            "DarkBreath emits one state-zero particle without RNG");
+        auto* prim=effect.m_primList.front();
+        check(prim->m_duration==65 && (prim->m_renderFlag & 0x200)!=0
+            && prim->m_deltaPos2.y==-20 && std::fabs(prim->m_size-0.8f)<0.000001f
+            && prim->m_animSpeed==1,
+            "DarkBreath preserves its particle lifetime, depth flag, offset, size and animation speed");
+        check(prim->m_green==0 && prim->m_blue==0 && prim->m_fadeOutCnt==60
+            && prim->m_numSegments==1 && prim->m_segments[0].size==prim->m_size,
+            "DarkBreath sets dark tint channels and initializes its single segment");
+        check(g_resMgr.requests.size()==2
+            && prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\DarkBreath.spr"
+            && prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\DarkBreath.act"
+            && prim->UsesReferenceParticle(),
+            "DarkBreath uses only its canonical sprite/action and reference particle update route");
+        effect.m_stateCnt=1;effect.SpawnDarkBreath();
+        check(effect.m_primList.size()==1 && rngDraws==draws,
+            "DarkBreath does not emit again after state zero");
+        effect.ClearPrims();g_world.UpdateGameObjects();
     }
     {
         CRenderObject actor;actor.m_pos={5,20,25};

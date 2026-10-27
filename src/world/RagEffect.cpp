@@ -11974,7 +11974,7 @@ bool CEffectPrim::UsesReferenceParticle() const
             && (m_master->GetEffectType() == 14 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
             && (m_master->GetEffectType() == 53 || m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
-                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622));
+                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 212 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622));
 }
 
 CEffectPrim::~CEffectPrim()
@@ -14979,6 +14979,25 @@ void CRagEffect::SpawnDragonSmoke()
     prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
     prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xBC\xB6\xD2\xBF\xAC\xB1\xE2.spr",
         "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xBC\xB6\xD2\xBF\xAC\xB1\xE2.act");
+    prim->m_numSegments = 1;
+    InitReferenceSegments(prim);
+}
+
+// Ref/RagEffect.cpp:12423-12438; canonical HighPriest.exe.c:420630-420640.
+void CRagEffect::SpawnDarkBreath()
+{
+    if (m_stateCnt != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+    prim->m_duration = 65;
+    prim->m_renderFlag |= 0x200;
+    prim->m_deltaPos2.y -= 20.0f;
+    prim->m_size = static_cast<float>(80) / 100.0f;
+    prim->m_animSpeed = 1;
+    prim->m_green = 0;
+    prim->m_blue = 0;
+    prim->m_fadeOutCnt = 60;
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\DarkBreath.spr",
+        "\xC0\xCC\xC6\xD1\xC6\xAE\\DarkBreath.act");
     prim->m_numSegments = 1;
     InitReferenceSegments(prim);
 }
@@ -20406,6 +20425,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 196) {
         ApplyCurseAttack();
+        return true;
+    }
+    if (m_type == 212) {
+        SpawnDarkBreath();
         return true;
     }
     if (m_type == 0x201) {

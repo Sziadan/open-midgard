@@ -586,6 +586,7 @@ private:
     void SpawnBlessing();
     void SpawnSmoke();
     void SpawnDragonSmoke();
+    void SpawnDarkBreath();
     void SpawnTorch();
     void ApplySight(float initialAlpha, bool includeShadow);
     void SpawnSight();
