@@ -5329,6 +5329,9 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         m_gid = static_cast<u32>(actorArgs[0]);
         m_job = resolvedJob;
         m_sex = actorArgs[2];
+        // Ref CNpc::SendMsg applies CSession::IsVisibleNPC after the base spawn update.
+        // These job IDs are WARPNPC, EFFECTLAUNCHER, and HIDDEN_NPC in the source job table.
+        m_isVisible = (resolvedJob != 0x2D && resolvedJob != 0x68 && resolvedJob != 0x6F);
         if (CPc* pcActor = dynamic_cast<CPc*>(this)) {
             pcActor->InvalidateBillboard();
         }

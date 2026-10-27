@@ -442,6 +442,8 @@ Completion update (2026-10-27): `CPlayer::SetState` now passes complete Ref/EXE 
 
 Completion update (2026-10-27): `CNpc::SetState` passes the Ref/EXE body and ordered branch-level comparison. The unified `CGameActor` path covers NPC states 0/1/2/3/4/7/10, pet substates, job exceptions 45/104/111/139 and 6001–6046, including attack facing/effect, death/freeze, and registration side effects. Skill-unit actors are excluded from the NPC route. See the latest `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`; next WP2.7 function is `CNpc::SendMsg`.
 
+Completion update (2026-10-27): `CNpc::SendMsg` passes complete Ref/EXE body and ordered message-branch comparison. Its message-4 NPC visibility rule now runs in the consolidated actor route; guild metadata is handled by the existing message-4 path. Legacy gauge messages 34/35/125/138 are UI-only and excluded. See `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`; next WP2.7 function is `CGameActor::SetAttrState`.
+
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
 * `CPc::SetState` Ref/Pc.cpp:5678, `ProcessState` 2382.
 * `CPlayer::SetState` Ref/Player.cpp:523, `ProcessState` 87.
