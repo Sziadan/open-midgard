@@ -12657,7 +12657,9 @@ void CEffectPrim::Render(matrix* viewMatrix)
         RenderReferenceScreenCircle(*this);
         return;
     }
-    if (UsesReferenceFlash()) {
+    // The canonical CEffectPrim::Render switch routes every visible PP_2DFLASH
+    // to Render2DFlash, independent of its parent effect ID.
+    if (m_type == PP_2DFLASH) {
         RenderReferenceFlash(*this);
         return;
     }
