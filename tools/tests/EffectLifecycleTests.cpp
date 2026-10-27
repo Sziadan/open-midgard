@@ -3347,6 +3347,21 @@ int main()
         check(segmented.m_segments[0].pos.x == 200 && segmented.m_segmentQuadPositions[0][3].z == 60
             && segmented.m_segments[0].alpha == 80,
             "ShiftSegment preserves unconditional slot-zero writes when segment count is zero");
+
+        segmented.m_numSegments = 3; segmented.m_pos = {300,400,500};
+        segmented.m_segPos = {{{101,102,103},{104,105,106},{107,108,109},{110,111,112}}};
+        segmented.m_radius = 17; segmented.m_size = 19; segmented.m_longitude = 21;
+        segmented.m_alpha = 88; segmented.m_tintColor = RGB(10,20,30);
+        segmented.m_matrix.m[3][1] = 23;
+        InitReferenceSegments(&segmented);
+        check(segmented.m_segments[0].pos.x == 300 && segmented.m_segments[0].radius == 17
+            && segmented.m_segments[0].size == 19 && segmented.m_segments[0].longitude == 21
+            && segmented.m_segments[0].alpha == 88 && segmented.m_segments[0].transform.m[3][1] == 23
+            && segmented.m_segments[0].argb == PackColor(88, RGB(10,20,30))
+            && segmented.m_segmentQuadPositions[0][0].x == 101 && segmented.m_segmentQuadPositions[0][1].x == 104
+            && segmented.m_segmentQuadPositions[0][2].x == 107 && segmented.m_segmentQuadPositions[0][3].x == 110
+            && segmented.m_segmentQuadPositions[1][3].z == 112 && segmented.m_segmentQuadPositions[2][3].z == 112,
+            "InitSegment seeds all four cross-section vectors and full segment state into every active slot");
     }
     {
         CRenderObject player;player.m_pos={10,50,20};g_world.m_player=&player;

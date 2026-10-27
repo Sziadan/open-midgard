@@ -1949,3 +1949,8 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 
 - Canonical EXE body at VA `0x649180` and `Ref/RagEffectPrim.cpp:6377` match after whitespace normalization. The only branch checks `msgid == 24` and clears `m_master`; sender and values 1–3 are unused.
 - Current `CEffectPrim::SendMsg` implements the same branch. `tools/tests/check_effectprim_sendmsg.py` compares EXE/Ref bodies and verifies the current message-24 mutation and unused arguments. It is registered as CTest `effectprim_sendmsg_source_check`; the comparator passes. No runtime behavior was changed.
+
+## `CEffectPrim::InitSegment` — 2026-10-27
+
+- Canonical EXE at VA `0x640520` and `Ref/RagEffectPrim.cpp:1660` have identical bodies. For each active segment they copy primitive position, all four `m_segPos` vectors, radius, size, longitude, matrix, alpha, RGB and packed color. The current model stores the four cross-section vectors separately in `m_segmentQuadPositions`.
+- Comparison found `InitReferenceSegments` copied the scalar/render state but left each active slot's four-vector array stale. It now copies `m_segPos` into the corresponding slot before the remaining fields. `tools/tests/check_initsegment_source.py` checks EXE/Ref equality and maps all source payload writes and loop behavior to the implementation. Lifecycle coverage exercises all four points across three active slots plus the segment position, dimensions, transform, alpha and color. Source comparator and focused lifecycle CTest pass; x64 Release build succeeds with existing unrelated C4244 warnings at `RagEffect.cpp:11555-11556`. Authorized OldRO deployment matches Release SHA-256 `92F1C420573179643E22A9245EE337CFE7CD3BF4B1F490851984104F47BCFF4B`.

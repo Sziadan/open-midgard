@@ -2050,12 +2050,13 @@ void InitReferenceSegments(CEffectPrim* prim)
     for (int i = 0; i < count; ++i) {
         EffectSegmentState& segment = prim->m_segments[static_cast<size_t>(i)];
         segment.pos = prim->m_pos;
+        prim->m_segmentQuadPositions[static_cast<size_t>(i)] = prim->m_segPos;
         segment.radius = prim->m_radius;
-        segment.longitude = prim->m_longitude;
         segment.size = prim->m_size;
+        segment.longitude = prim->m_longitude;
+        segment.transform = prim->m_matrix;
         segment.alpha = prim->m_alpha;
         segment.argb = PackColor(static_cast<u8>(static_cast<long long>(prim->m_alpha)), prim->m_tintColor);
-        segment.transform = prim->m_matrix;
     }
 }
 
