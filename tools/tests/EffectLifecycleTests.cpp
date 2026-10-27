@@ -567,6 +567,7 @@ struct CRagEffect : CGameObject {
     void SpawnEnergyDrain();
     void SpawnTestEffect();
     void SpawnTopRank();
+    void SpawnParty();
     void SpawnTorch();
     void SpawnEnchantPoison();
     void SpawnEnchantPoison2();
@@ -5519,6 +5520,37 @@ int main()
             "TopRank resets state9998 before emitting and grounds after launch");
         check(g_texMgr.requests.size()==3&&rngDraws==draws&&waves==beforeWaves,
             "TopRank requests one texture per emission with no extra side effects");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_attr=oldAttr;
+    }
+    {
+        SilentAttr attr;SilentAttr* oldAttr=g_world.m_attr;g_world.m_attr=&attr;
+        CRenderObject actor;actor.m_pos={4,80,12};
+        CRagEffect effect;effect.m_type=160;effect.m_master=&actor;effect.m_duration=9999;
+        const int draws=rngDraws,beforeWaves=waves;g_texMgr.requests.clear();
+        attr.height=35;effect.SpawnParty();
+        check(effect.m_effectPos.x==4&&effect.m_effectPos.y==33&&effect.m_effectPos.z==12
+            &&attr.lastX==4&&attr.lastZ==12,
+            "Party projects its master and updates terrain after emission");
+        check(effect.m_primList.size()==1&&rngDraws==draws&&waves==beforeWaves,
+            "Party emits at state zero without RNG or audio");
+        auto* first=effect.m_primList.front();
+        check(first->m_type==PP_3DTEXTURE&&first->m_duration==9999&&first->m_pos.x==4
+            &&first->m_pos.y==80&&first->m_pos.z==12&&first->m_longitude==0&&first->m_longSpeed==0
+            &&first->m_roll==90&&first->m_widthSize==4&&first->m_heightSize==4,
+            "Party preserves pre-ground origin, lifetime, motion defaults and texture dimensions");
+        check(first->m_red==50&&first->m_green==50&&first->m_blue==253
+            &&first->m_texture.size()==1&&g_texMgr.requests.back()=="effect\\party.tga",
+            "Party uses canonical RGB and party.tga resource");
+        actor.m_pos={6,55,14};attr.height=45;effect.m_stateCnt=1;effect.SpawnParty();
+        check(effect.m_effectPos.x==6&&effect.m_effectPos.y==43&&effect.m_effectPos.z==14
+            &&effect.m_primList.size()==1,
+            "Party refreshes master and terrain on non-emission states");
+        actor.m_pos={8,65,16};attr.height=75;effect.m_stateCnt=9998;effect.SpawnParty();
+        check(effect.m_stateCnt==0&&effect.m_primList.size()==2&&effect.m_effectPos.y==73
+            &&effect.m_primList.back()->m_pos.y==65,
+            "Party resets at state9998 before emitting from the old vertical origin");
+        check(g_texMgr.requests.size()==2&&rngDraws==draws&&waves==beforeWaves,
+            "Party requests one texture per emission and has no extra side effects");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_attr=oldAttr;
     }
     {
