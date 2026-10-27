@@ -140,8 +140,8 @@ def main() -> None:
         raise SystemExit(f"unexpected IDs without EXE/Ref names: {unknown_name_ids[:20]}")
 
     current_paths = {
-        "CSession::GetSkillActionInfo": "src/session/Session.cpp",
-        "CSession::GetSkillActionInfo2": "src/session/Session.cpp",
+        "CSession::GetSkillActionInfo": "src/session/SkillActionInfo.cpp",
+        "CSession::GetSkillActionInfo2": "src/session/SkillActionInfo2.cpp",
         "CSession::InitSkillEffectIdTable": "src/session/Session.cpp",
         "CSession::LaunchSkillSpecialEffect": "src/session/Session.cpp",
         "CGameMode::Zc_Use_Skill": "src/gamemode/GameModePacket.cpp",
@@ -150,6 +150,9 @@ def main() -> None:
         "CGameActor::Am_Groundskill": "src/world/GameActorMsgHandler.cpp",
         "CSkill::SendMsg": "src/world/SkillUnit.cpp",
     }
+    for function, relative_path in current_paths.items():
+        if not (ROOT / relative_path).is_file():
+            raise SystemExit(f"current implementation path missing for {function}: {relative_path}")
 
     columns = [
         "id", "name", "packets", "cast begin effect / motion", "caster effects",
