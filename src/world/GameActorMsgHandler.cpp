@@ -451,6 +451,7 @@ void CGameActor::Am_Skill(const int* arg1)
 
     if (action == 5 && target && skillId != 47 && skillId != 11 && skillId != 413 && skillId != 273) {
         WBA hit{};
+        hit.sourceSkillId = skillId;
         hit.time = timeGetTime() + static_cast<u32>(m_attackMotion * m_motionSpeed * 24.0f);
         hit.targetGid = m_gid;
         hit.damage = damage;
@@ -535,6 +536,7 @@ void CGameActor::Am_Skill(const int* arg1)
     }
 
     WBA hit{};
+    hit.sourceSkillId = skillId;
     hit.damage = damage;
     hit.effectId2 = effectId2;
     hit.message = message;

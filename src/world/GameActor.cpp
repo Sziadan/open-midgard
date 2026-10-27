@@ -6747,14 +6747,6 @@ void CGameActor::HandleAttacked(const WBA& hit)
         gameMode->GetClientCoor(hit.tCellX, hit.tCellY, m_damageDestX, m_damageDestZ);
     }
 
-    DbgLog("[WBA] msg=%d skillEffect=%d/%d damage=%d level=%d delivery=%u\n",
-        hit.message,
-        hit.effectId1,
-        hit.effectId2,
-        hit.damage,
-        hit.effectLevel,
-        hit.time);
-
     if (hit.message == 96 || hit.message == 97) {
         m_colorOfSingleColor = 0xFFFF0000u;
         if (hit.effectId2 == 198) {
@@ -6796,14 +6788,14 @@ void CGameActor::HandleAttacked(const WBA& hit)
     }
 
     m_singleColorStartTick = timeGetTime();
+    const char* hitWave = nullptr;
     if (hit.effectId2 != -2) {
         m_isSingleColor = 1;
         // Ref runtime-wave: 0x55EA45 (session hit-wave lookup).
-        const char* wave = nullptr;
         if (hit.message == 96 || hit.message == 97) {
-            wave = g_session.GetWeaponHitWaveName(-1);
+            hitWave = g_session.GetWeaponHitWaveName(-1);
         } else if (IsPlayerJob(m_job)) {
-            wave = g_session.GetJobHitWaveName(m_job);
+            hitWave = g_session.GetJobHitWaveName(m_job);
         } else {
             // Ref/GameActor.cpp:4022-4051. Assassins use the low word of
             // the packed weapon pair. Item ids are converted after that.
@@ -6814,15 +6806,25 @@ void CGameActor::HandleAttacked(const WBA& hit)
             if (weapon > 1000) {
                 weapon = g_session.GetWeaponTypeByItemId(weapon);
             }
-            wave = g_session.GetWeaponHitWaveName(weapon);
+            hitWave = g_session.GetWeaponHitWaveName(weapon);
         }
-        if (wave && g_world.m_player) {
+        if (hitWave && g_world.m_player) {
             const vector3d& player = g_world.m_player->m_pos;
-            PlayWave(wave, m_pos.x - player.x, 0.0f, m_pos.z - player.z);
+            PlayWave(hitWave, m_pos.x - player.x, 0.0f, m_pos.z - player.z);
         }
     } else {
         m_isSingleColor = 0;
     }
+
+    DbgLog("[WBA] msg=%d skill=%d effect=%d/%d wave=%s delivery=%u damage=%d level=%d\n",
+        hit.message,
+        hit.sourceSkillId,
+        hit.effectId1,
+        hit.effectId2,
+        hitWave ? hitWave : "(none)",
+        hit.time,
+        hit.damage,
+        hit.effectLevel);
 
     if (hit.effectId1 >= 0) {
         if (CRagEffect* first = LaunchEffect(hit.effectId1, vector3d{}, 0.0f)) {

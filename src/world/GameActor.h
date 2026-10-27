@@ -52,10 +52,11 @@ struct CPathInfo {
     }
 };
 
-// 2008 WBA is 40 bytes. attackedSpeedFactor sits at offset 32 (HighPriest message 27
+// The source-compatible WBA prefix is 40 bytes. attackedSpeedFactor sits at offset 32 (HighPriest message 27
 // writes a float there). targetGid holds the attacker's gid. Message 27/131/134
 // overwrite that float's bits with the running damage and change message to
-// 111/130/133 when the running damage is non-zero.
+// 111/130/133 when the running damage is non-zero. sourceSkillId is current-only
+// diagnostic metadata appended after the source-compatible payload.
 struct WBA {
     int message = 0;
     int damage = 0;
@@ -67,6 +68,7 @@ struct WBA {
     int effectId2 = -1;
     float attackedSpeedFactor = 1.0f;
     int effectLevel = 1;
+    int sourceSkillId = -1;
 };
 struct _MSG2AI { u8 gap[32]; };
 struct PROCEEDTYPE { int type; };
