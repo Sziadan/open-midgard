@@ -4476,6 +4476,7 @@ CGameActor::~CGameActor()
     m_lastDamageNumberEffect = nullptr;
     m_chatProhibitEffect = nullptr;
     m_pkEffect = nullptr;
+    m_crusisEffect = nullptr;
     for (CMsgEffect* effect : ownedMsgEffects) {
         if (!effect) {
             continue;
@@ -4914,6 +4915,18 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         return;
     case 57:
         ReleaseMsgSprite(m_pkEffect);
+        return;
+    case 78:
+        if (!m_crusisEffect) {
+            m_crusisEffect = SpawnMsgSprite(12,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\msg.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\msg.act",
+                2,
+                1.0f);
+        }
+        return;
+    case 79:
+        ReleaseMsgSprite(m_crusisEffect);
         return;
     case 3: {
         const int* actorArgs = reinterpret_cast<const int*>(par1);
@@ -6080,6 +6093,9 @@ void CGameActor::DeleteMatchingEffect(CMsgEffect* effect)
     }
     if (m_pkEffect == effect) {
         m_pkEffect = nullptr;
+    }
+    if (m_crusisEffect == effect) {
+        m_crusisEffect = nullptr;
     }
 
     const auto it = std::find(m_msgEffectList.begin(), m_msgEffectList.end(), effect);

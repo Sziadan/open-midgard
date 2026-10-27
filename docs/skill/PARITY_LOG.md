@@ -2105,3 +2105,11 @@ The implementation plan covers gameplay skill/spell logic and state, effects, an
 - The canonical `sprName` global does not resolve to a readable path in `HighPriest.exe.c`; current `emotion.spr` path is an informed family-based assumption, explicitly not claimed as verified. No legacy window behavior was recreated.
 - Inventory: 68 direct current actor cases; 7 remaining in-scope IDs without direct/inherited routes: `[78, 79, 110, 118, 135, 136, 139]`.
 - All nine focused actor source tests pass; x64 Release build and `git diff --check` pass. Authorized OldRO copy matches Release SHA-256 `DB7553CDE64267D353E601511DD28AC944DD06DACD2E31096A52F32440C390F9`. No live visual acceptance is claimed.
+
+
+# `CGameActor::SendMsg` messages 78/79 Crusis indicator (2026-10-27)
+
+- Ref and canonical EXE complete actor send functions and cases 78/79 match. Complete `MakeMsgEffect` bodies match; type `0xB` uses executable byte arrays for `msg.spr` / `msg.act`, action 2, and process type 12. Complete `CMsgEffect::OnProcess` and `ProcessPosition` bodies match; process type 12 sends master actor message 77 each 34 ticks and follows its position at Y-20. Neither canonical nor current actor send switch implements message 77, so it is a no-op in both.
+- Ported an owned `m_crusisEffect`, spawn-once/release-on-79 routing, sprite/action mapping, attached positioning, and the periodic no-op actor message. `tools/tests/check_actor_sendmsg_crusis_case.py` compares the complete source bodies and relevant branches, resource bytes, and current behavior.
+- Inventory: 70 direct actor cases; 5 remaining in-scope IDs without direct/inherited routes: `[110, 118, 135, 136, 139]`.
+- All ten focused actor source gates, x64 Release build, and `git diff --check` pass. Authorized OldRO copy matches Release SHA-256 `6F2C1DE940C8CF3DDB44A56310C3A469E31E6E811EE5CBABF88E60CBE39E899C`. No live visual acceptance is claimed.

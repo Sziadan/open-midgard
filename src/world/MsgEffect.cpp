@@ -1867,6 +1867,15 @@ u8 CMsgEffect::OnProcess()
 
     const float stateCount = static_cast<float>(timeGetTime() - m_stateStartTick) * 0.041666668f;
     switch (m_msgEffectType) {
+    case 12:
+        if (m_masterActor) {
+            m_pos = m_masterActor->m_pos;
+            m_pos.y -= 20.0f;
+            if (static_cast<int>(stateCount) % 34 == 0) {
+                m_masterActor->SendMsg(nullptr, 77, 0, 0, 0);
+            }
+        }
+        break;
     case 4: {
         if (!m_masterActor) {
             m_isDisappear = 1;
