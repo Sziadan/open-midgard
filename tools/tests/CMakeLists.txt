@@ -474,6 +474,8 @@ add_test(NAME actor_am_action_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_am_action_source_case.py")
 add_test(NAME actor_am_skill_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_am_skill_source_case.py")
+add_test(NAME skill_action_info_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_action_info_source.py")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../HighPriest.exe.c
     ../../Ref/GameModePacket.cpp
