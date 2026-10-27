@@ -446,6 +446,8 @@ Completion update (2026-10-27): `CNpc::SendMsg` passes complete Ref/EXE body and
 
 Completion update (2026-10-27): `CGameActor::SetAttrState` passes complete Ref/EXE body comparison and source-derived branch gates for sight/Ruwach, burrow/hiding transitions, attachment changes, body states, health states, cleanup, and reveal effects. Restored Delete99LevelEffects ordering, master-aid exceptions, message-126 re-launches, horizontal wave offsets, and RGB-only tint writes. Legacy emblem/word windows and the old self-hide/blur tail are documented scope/architecture differences. See `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`.
 
+Completion update (2026-10-27): `CPlayer::ProcessState` is verified as a direct thunk in Ref and by canonical EXE bytes (VA `0x5E5630` relative-jumps to `CPc::ProcessState` at `0x5D9EB0`). The current CPlayer inherits the consolidated CGameActor process handler through CPc; its PC state-6 behavior is covered by the existing process-state comparator. See `check_player_processstate_source.py` and the parity log.
+
 Acceptance update (2026-10-27): source walk-throughs for Bash (5), Double Strafe (46), Fire Bolt (19), Heal (28), Sonic Blow (136), Asura Strike (271), Grimtooth (137), Storm Gust (89), and Sanctuary (70) are recorded in `docs/skill/PARITY_LOG.md`. WBA debug tracing now includes message, skill, effect IDs, resolved wave, and delivery tick. Source checks/build pass, but live packet-replay comparison remains open.
 
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
