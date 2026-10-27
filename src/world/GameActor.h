@@ -496,6 +496,7 @@ public:
     virtual ~CPlayer();
     void SetState(int state) override;
 
+    void BeginPreMove(int destCellX, int destCellZ);
     void ProcessPreMove();
 
     int m_destCellX, m_destCellZ;

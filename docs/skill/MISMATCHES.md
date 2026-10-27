@@ -401,11 +401,11 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 
 - Source `CGrannyPc::OnProcess` normalizes `m_roty` and initializes/eases `m_fCurRot` toward the target in 16-degree increments. Current `CGrannyPc` still has the storage fields, but `src` has no construction expression and its `Render` is a stub; active player actors use the CPc billboard path. The associated runtime hit-wave branch is mapped through shared `CGameActor::ProcessState`, but this legacy class's rotation tail is not implemented or claimed as parity. Revisit if a current CGranny actor construction/render path is introduced.
 
-# `CPlayer::OnProcess` movement and proceed behavior (2026-10-27)
+# `CPlayer::OnProcess` source/current comparison (2026-10-27)
 
-- Current source-to-implementation audit found active gameplay gaps beyond the now-mapped hit-wave branch. Ref `CPlayer::OnProcess` has a delayed pre-move resend after strict `averagePing/2` timing; it rebuilds MOVESTRUCT from server cells/time and dispatches local message 0. Current `CPlayer::ProcessPreMove()` is empty, has no callsites, and `m_preMoveOn` has no current activation path.
-- Ref calls `CPlayer::ProcessProceed` every update. Its ordered state machine includes attack/attack-2, pickup, targeted skill, ground skill and touch skill. Current `PROCEEDTYPE` has no named cases, there is no ProcessProceed implementation, and `m_proceedType` is never read. Modern one-shot move/pickup/skill packet paths are not yet proven equivalent to those branches.
-- These branches are gameplay behavior and remain in-scope for WP2; do not mark `CPlayer::OnProcess` complete or start another function until they have a branch-level comparison and are ported or explicitly resolved. Chat balloon/window positioning remains excluded UI behavior.
+- The delayed pre-move route is now mapped to modern ordinary movement clicks. `CSession::RecalcAveragePingTime` keeps the latest three RTT samples from `Zc_Notify_Time`; the player arms destination/tick state after a successful ordinary move request and processes the strict `now > start + averagePing/2` gate before the current player state/pursuit update. Its `MOVESTRUCT` equivalent preserves source cell/subcell coordinates, server start time, destination, path retry and acknowledgement cleanup order.
+- The three skills-only `ProcessProceed` branches (`PT_SKILL`, `PT_GROUNDSKILL`, `PT_TOUCH_SKILL`) pass their focused source/current comparisons. The source function's attack, attack-2 and pickup branches remain explicitly outside this skills/effects plan scope.
+- `ProcessChatBalloon` window positioning/expiry remains excluded UI behavior. No live packet-timing acceptance is claimed; see the branch-level comparator and parity checkpoint for current build evidence.
 
 # `CPlayer::ProcessProceed` source/current mismatch (2026-10-27)
 

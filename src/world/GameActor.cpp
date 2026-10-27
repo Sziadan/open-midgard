@@ -8282,8 +8282,93 @@ CPlayer::~CPlayer()
 {
 }
 
+void CPlayer::BeginPreMove(int destCellX, int destCellZ)
+{
+    m_preMoveOn = 1;
+    m_preMoveStartTick = timeGetTime();
+    m_destCellX = destCellX;
+    m_destCellZ = destCellZ;
+}
+
 void CPlayer::ProcessPreMove()
 {
+    if (!m_preMoveOn) {
+        return;
+    }
+
+    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+    if (!gameMode || !gameMode->m_world || !gameMode->m_world->m_attr) {
+        return;
+    }
+
+    if (timeGetTime() <= (g_session.GetAveragePingTime() >> 1) + m_preMoveStartTick) {
+        return;
+    }
+
+    C3dAttr* const attr = gameMode->m_world->m_attr;
+    if (attr->m_zoom <= 0) {
+        return;
+    }
+
+    const auto getSourceServerCoor = [this, attr](int& serverX, int& serverY, int& cellX, int& cellY) {
+        const float zoom = static_cast<float>(attr->m_zoom);
+        const float scaledX = m_pos.x / zoom;
+        const float scaledZ = m_pos.z / zoom;
+        const double mapX = static_cast<double>(attr->m_width / 2) + scaledX;
+        const double mapY = static_cast<double>(attr->m_height / 2) + scaledZ;
+        serverX = static_cast<int>(std::floor(mapX));
+        serverY = static_cast<int>(std::floor(mapY));
+        cellX = static_cast<int>(std::floor((mapX - serverX) * 16.0)) % 16;
+        cellY = static_cast<int>(std::floor((mapY - serverY) * 16.0)) % 16;
+    };
+
+    int startX = 0;
+    int startY = 0;
+    int startCellX = 0;
+    int startCellY = 0;
+    getSourceServerCoor(startX, startY, startCellX, startCellY);
+    const u32 moveStartTime = g_session.GetServerTime();
+    const int requestedDestX = m_destCellX;
+    const int requestedDestY = m_destCellZ;
+
+    // Source CPlayer::SendMsg(0) consumes MOVESTRUCT, clears the pending
+    // resend/ack state, and attempts the path from its precise 1/16-cell start.
+    m_isWaitingMoveAck = 0;
+    m_preMoveOn = 0;
+    m_moveStartTime = moveStartTime;
+    if (g_pathFinder.FindPath(moveStartTime,
+        startX,
+        startY,
+        startCellX,
+        startCellY,
+        requestedDestX,
+        requestedDestY,
+        static_cast<int>(m_speed),
+        &m_path)) {
+        m_moveDestX = requestedDestX;
+        m_moveDestY = requestedDestY;
+        SetState(1);
+        m_pathStartCell = 0;
+        return;
+    }
+
+    // Ref retries from the current server position if its saved movement
+    // structure cannot produce a path. The source call recalculates the same
+    // fields at this point, so retain its separate fallback call and effects.
+    getSourceServerCoor(startX, startY, startCellX, startCellY);
+    if (g_pathFinder.FindPath(moveStartTime,
+        startX,
+        startY,
+        startCellX,
+        startCellY,
+        requestedDestX,
+        requestedDestY,
+        static_cast<int>(m_speed),
+        &m_path)) {
+        m_moveDestX = requestedDestX;
+        m_moveDestY = requestedDestY;
+        SetState(1);
+    }
 }
 
 // CGrannyPc implementation moved to Granny.cpp

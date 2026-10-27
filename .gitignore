@@ -63,6 +63,7 @@ tools/tests/*
 !tools/tests/check_skill_talkbox_receiver.py
 !tools/tests/ChangeGuildTests.cpp
 !tools/tests/check_change_guild_source.py
+!tools/tests/check_player_premove_route.py
 !tools/tests/ShowImageTests.cpp
 !tools/tests/check_show_image_packet.py
 !tools/tests/GuildSkillTests.cpp

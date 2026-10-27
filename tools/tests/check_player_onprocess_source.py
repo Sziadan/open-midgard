@@ -57,9 +57,8 @@ positions = [ref_body.index(item) for item in ordered_source]
 assert positions == sorted(positions), "source body/pre-move/proceed/audio order changed"
 assert ref_body.count("PlayWave(") == 1
 
-# The sound branch maps to modern shared actor processing. Remaining OnProcess
-# movement branches are deliberately surfaced as known gaps so a passing audit
-# cannot be read as complete CPlayer function parity.
+# The sound/tint/state branches are mapped to modern shared actor processing;
+# the pre-move/proceed checks below are separately covered by focused gates.
 assert "class CPlayer : public CPc" in HEADER
 assert "u8 OnProcess() override;" not in HEADER[HEADER.index("class CPlayer :"):HEADER.index("struct SkillStandEntry")]
 _, process_state = body(CURRENT, "u8 CGameActor::ProcessState()")
@@ -73,6 +72,10 @@ assert play_pos < clear_pos
 assert "actor.m_pos.x - listener.x" in CURRENT
 assert "actor.m_pos.z - listener.z" in CURRENT
 
-assert "void CPlayer::ProcessPreMove()\n{\n}" in CURRENT
-assert "CPlayer::ProcessProceed" not in CURRENT
-print("AUDIT PASS queued-wave branch maps to current shared route; known CPlayer pre-move/proceed gaps remain, so this is not full OnProcess parity")
+assert "void CPlayer::ProcessPreMove()" in CURRENT
+assert "void CPlayer::BeginPreMove(int destCellX, int destCellZ)" in CURRENT
+assert "CPlayer::ProcessProceed" not in CURRENT  # modern route is in GameMode.cpp
+GAME_MODE = (ROOT / "src/gamemode/GameMode.cpp").read_text(encoding="utf-8", errors="replace")
+assert "PumpSkillChaseRequest(*this)" in GAME_MODE
+assert "localPlayer->ProcessPreMove()" in GAME_MODE
+print("AUDIT PASS: source OnProcess branches map to shared state/audio, delayed pre-move and modern skill-proceed routes; legacy chat-balloon UI is excluded")

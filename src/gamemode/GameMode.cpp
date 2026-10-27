@@ -5107,7 +5107,15 @@ bool TryRequestMoveFromScreenPoint(CGameMode& mode, int screenX, int screenY)
         return false;
     }
 
-    return TryRequestMoveToCell(mode, attrX, attrY);
+    if (!TryRequestMoveToCell(mode, attrX, attrY)) {
+        return false;
+    }
+    if (mode.m_world) {
+        if (CPlayer* const localPlayer = dynamic_cast<CPlayer*>(mode.m_world->m_player)) {
+            localPlayer->BeginPreMove(attrX, attrY);
+        }
+    }
+    return true;
 }
 
 bool TryRequestChangeDirToCell(CGameMode& mode, int attrX, int attrY)
@@ -10096,6 +10104,9 @@ void CGameMode::OnUpdate() {
             CleanupPendingActorDespawns(*this);
         }
         if (m_world->m_player) {
+            if (CPlayer* const localPlayer = dynamic_cast<CPlayer*>(m_world->m_player)) {
+                localPlayer->ProcessPreMove();
+            }
             // Present the local player at the current frame time even when the
             // wider world simulation remains budgeted on the coarser step. The
             // self actor now bypasses the shared billboard helper cache, so this
