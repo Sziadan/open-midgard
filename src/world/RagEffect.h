@@ -591,6 +591,7 @@ private:
     void SpawnBloodDrain();
     void SpawnEnergyDrain();
     void SpawnTestEffect();
+    void SpawnTopRank();
     void SpawnTorch();
     void ApplySight(float initialAlpha, bool includeShadow);
     void SpawnSight();

@@ -13700,7 +13700,8 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         m_handler = Handler::None;
         break;
     case 159:
-        m_handler = Handler::HideStart;
+        // ProcessEffectFrame owns the source TopRank emitter for EF_TOPRANK.
+        m_handler = Handler::None;
         break;
     case 22:
         m_handler = Handler::Sight;
@@ -15141,6 +15142,38 @@ void CRagEffect::SpawnTestEffect()
         InitReferenceSegments(prim);
     }
     m_effectPos.y = mode->m_world->m_attr->GetHeight(m_effectPos.x, m_effectPos.z) - 4.5f;
+}
+
+// Ref/RagEffect.cpp:11949-11980; canonical HighPriest.exe.c:429530-429562.
+void CRagEffect::SpawnTopRank()
+{
+    m_effectPos = m_master->m_pos;
+    if (m_stateCnt == 9998) {
+        m_stateCnt = 0;
+    }
+
+    if (m_stateCnt == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+        prim->m_duration = 9999;
+        prim->m_longitude = 0.0f;
+        prim->m_longSpeed = 4.5f;
+        prim->m_roll = 90.0f;
+        prim->m_widthSize = 4.0f;
+        prim->m_heightSize = 4.0f;
+        if (m_count != 11) {
+            prim->m_red = 250;
+            prim->m_blue = (10 - m_count) * 25;
+            prim->m_green = (10 - m_count) * 25;
+        } else {
+            prim->m_red = 0;
+            prim->m_blue = 0;
+            prim->m_green = 250;
+        }
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\LockOn128.tga", false));
+    }
+
+    m_effectPos.y = g_modeMgr.GetCurrentGameMode()->m_world->m_attr->GetHeight(
+        m_effectPos.x, m_effectPos.z) - 2.0f;
 }
 
 // Ref/RagEffect.cpp:8826-8852 (0x5F69B0). Size and divisor defaults modify
@@ -20582,6 +20615,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 217) {
         SpawnEnergyDrain();
+        return true;
+    }
+    if (m_type == 159) {
+        SpawnTopRank();
         return true;
     }
     if (m_type == 709) {

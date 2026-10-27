@@ -566,6 +566,7 @@ struct CRagEffect : CGameObject {
     void SpawnBloodDrain();
     void SpawnEnergyDrain();
     void SpawnTestEffect();
+    void SpawnTopRank();
     void SpawnTorch();
     void SpawnEnchantPoison();
     void SpawnEnchantPoison2();
@@ -5484,6 +5485,41 @@ int main()
         check(sameRotation,"EF_TEST's fixed X rotation overwrites each random Y rotation");
         check(g_resMgr.requests.size()==4,"EF_TEST requests particle3 sprite/action per emitted primitive");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_attr=oldAttr;rngValues.clear();rngCursor=0;
+    }
+    {
+        SilentAttr attr;SilentAttr* oldAttr=g_world.m_attr;g_world.m_attr=&attr;
+        CRenderObject actor;actor.m_pos={5,90,9};
+        CRagEffect effect;effect.m_type=159;effect.m_master=&actor;effect.m_duration=9999;effect.m_count=2;
+        const int draws=rngDraws,beforeWaves=waves;g_texMgr.requests.clear();
+        attr.height=40;effect.SpawnTopRank();
+        check(effect.m_effectPos.x==5&&effect.m_effectPos.y==38&&effect.m_effectPos.z==9
+            &&attr.lastX==5&&attr.lastZ==9,
+            "TopRank projects its master before updating terrain height");
+        check(effect.m_primList.size()==1&&rngDraws==draws&&waves==beforeWaves,
+            "TopRank emits once at state zero without RNG or audio");
+        auto* first=effect.m_primList.front();
+        check(first->m_type==PP_3DTEXTURE&&first->m_duration==9999&&first->m_pos.x==5&&first->m_pos.y==90&&first->m_pos.z==9
+            &&first->m_longitude==0&&first->m_longSpeed==4.5f&&first->m_roll==90
+            &&first->m_widthSize==4&&first->m_heightSize==4,
+            "TopRank launches from the pre-ground master origin with canonical lifetime and motion");
+        check(first->m_red==250&&first->m_green==200&&first->m_blue==200
+            &&first->m_texture.size()==1&&g_texMgr.requests.back()=="effect\\LockOn128.tga",
+            "TopRank count-based RGB and LockOn128 texture match source");
+        actor.m_pos={7,60,11};attr.height=50;effect.m_stateCnt=1;effect.SpawnTopRank();
+        check(effect.m_effectPos.x==7&&effect.m_effectPos.y==48&&effect.m_effectPos.z==11
+            &&effect.m_primList.size()==1,
+            "TopRank refreshes its master position and terrain height on non-emission states");
+        effect.m_stateCnt=0;effect.m_count=11;attr.height=70;effect.SpawnTopRank();
+        check(effect.m_primList.size()==2&&effect.m_primList.back()->m_red==0
+            &&effect.m_primList.back()->m_green==250&&effect.m_primList.back()->m_blue==0,
+            "TopRank uses green RGB only for count eleven");
+        actor.m_pos={8,70,12};effect.m_stateCnt=9998;attr.height=80;effect.SpawnTopRank();
+        check(effect.m_stateCnt==0&&effect.m_primList.size()==3&&effect.m_effectPos.y==78
+            &&effect.m_primList.back()->m_pos.y==70,
+            "TopRank resets state9998 before emitting and grounds after launch");
+        check(g_texMgr.requests.size()==3&&rngDraws==draws&&waves==beforeWaves,
+            "TopRank requests one texture per emission with no extra side effects");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_attr=oldAttr;
     }
     {
         CRenderObject actor;actor.m_pos={5,20,25};
