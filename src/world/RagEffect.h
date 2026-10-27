@@ -588,6 +588,7 @@ private:
     void SpawnDragonSmoke();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
+    void SpawnBloodDrain();
     void SpawnTorch();
     void ApplySight(float initialAlpha, bool includeShadow);
     void SpawnSight();

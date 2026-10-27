@@ -563,6 +563,7 @@ struct CRagEffect : CGameObject {
     void SpawnDragonSmoke();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
+    void SpawnBloodDrain();
     void SpawnTorch();
     void SpawnEnchantPoison();
     void SpawnEnchantPoison2();
@@ -5379,6 +5380,48 @@ int main()
             && actor.lastSentArg==63,
             "SummonSlave sends the source smoke-effect message exactly at state 35");
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRagEffect effect;effect.m_type=216;effect.m_effectPos={0,0,0};effect.m_deltaPos={3,999,4};
+        const int draws=rngDraws,beforeWaves=waves;g_resMgr.requests.clear();
+        effect.SpawnBloodDrain();
+        check(effect.m_primList.size()==3 && rngDraws==draws && waves==beforeWaves,
+            "BloodDrain emits three spline particles at state zero without RNG or waves");
+        const int expectedRolls[3]={-90,0,90};
+        int index=0;
+        for (CEffectPrim* prim:effect.m_primList) {
+            check(prim->m_type==PP_3DPARTICLESPLINE && prim->m_duration==60
+                && prim->m_deltaPos2.x==0 && prim->m_deltaPos2.y==-10 && prim->m_deltaPos2.z==0,
+                "BloodDrain preserves spline type, lifetime and source vertical offset");
+            check(std::fabs(prim->m_radius-5.0f)<0.00001f
+                && std::fabs(prim->m_roty-143.1301f)<0.001f
+                && std::fabs(prim->m_longitude+prim->m_roty)<0.00001f
+                && prim->m_pos.x==0 && prim->m_pos.y==0 && prim->m_pos.z==0
+                && std::fabs(prim->m_speed-(5.0f/60.0f*2.0f))<0.00001f,
+                "BloodDrain preserves primitive origin and uses XZ distance and normalized atan2 yaw");
+            check(prim->m_gravSpeed==2 && std::fabs(prim->m_gravAccel+2.0f/30.0f)<0.00001f
+                && prim->m_latiSpeed==-2 && std::fabs(prim->m_latiAccel-2.0f/30.0f)<0.00001f
+                && prim->m_roll==expectedRolls[index] && prim->m_size==1.7f,
+                "BloodDrain preserves gravity, lateral acceleration, three roll lanes and size");
+            check(prim->m_red==250 && prim->m_green==100 && prim->m_blue==100
+                && prim->m_numSegments==7 && prim->m_segments[6].size==1.7f
+                && std::fabs(prim->m_matrix.m[2][0]-std::sin(GetRadian(-143)))<0.00001f
+                && std::fabs(prim->m_matrix.m[2][2]-std::cos(GetRadian(-143)))<0.00001f
+                && prim->m_rotAxis[0]==prim->m_deltaPos3.x
+                && prim->m_rotAxis[1]==prim->m_deltaPos3.y
+                && prim->m_rotAxis[2]==prim->m_deltaPos3.z,
+                "BloodDrain copies source color, seven initialized segments and rotation axis");
+            check(prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr"
+                && prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act",
+                "BloodDrain binds the canonical particle1 sprite/action pair");
+            ++index;
+        }
+        check(g_resMgr.requests.size()==6,"BloodDrain requests sprite and action once per spline particle");
+        const int primCount=static_cast<int>(effect.m_primList.size());
+        effect.m_stateCnt=1;effect.SpawnBloodDrain();
+        check(static_cast<int>(effect.m_primList.size())==primCount && rngDraws==draws,
+            "BloodDrain does not emit again after state zero");
+        effect.ClearPrims();g_world.UpdateGameObjects();
     }
     {
         CRenderObject actor;actor.m_pos={5,20,25};

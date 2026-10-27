@@ -15033,6 +15033,48 @@ void CRagEffect::SpawnSummonSlave()
     }
 }
 
+// Ref/RagEffect.cpp:12474-12506; canonical HighPriest.exe.c:430411-430472.
+void CRagEffect::SpawnBloodDrain()
+{
+    if (m_stateCnt != 0) return;
+    for (int index = 0; index < 3; ++index) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLESPLINE, vector3d{});
+        prim->m_duration = 60;
+        prim->m_deltaPos2 = {0.0f, -10.0f, 0.0f};
+
+        const float dx = m_deltaPos.x - prim->m_pos.x;
+        const float dz = m_deltaPos.z - prim->m_pos.z;
+        prim->m_radius = std::sqrt(dx * dx + dz * dz);
+        prim->m_roty = (std::atan2(dx, -dz) / 3.1415926283f) * 180.0f;
+        if (prim->m_roty >= 360.0f) prim->m_roty -= 360.0f;
+        if (prim->m_roty < 0.0f) prim->m_roty += 360.0f;
+        prim->m_longitude = -prim->m_roty;
+        prim->m_speed = (prim->m_radius / prim->m_duration) * 2.0f;
+        prim->m_gravSpeed = 2.0f;
+        prim->m_gravAccel = -(prim->m_gravSpeed / prim->m_duration) * 2.0f;
+        prim->m_latiSpeed = -2.0f;
+        prim->m_latiAccel = -(prim->m_latiSpeed / prim->m_duration) * 2.0f;
+        prim->m_roll = static_cast<float>(-90 + index * 90);
+
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_deltaPos3 = {
+            prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0],
+            prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1],
+            prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2]
+        };
+        prim->m_rotAxis = {prim->m_deltaPos3.x, prim->m_deltaPos3.y, prim->m_deltaPos3.z};
+        prim->m_red = 250;
+        prim->m_green = 100;
+        prim->m_blue = 100;
+        prim->m_size = 1.7f;
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act");
+        prim->m_numSegments = 7;
+        InitReferenceSegments(prim);
+    }
+}
+
 // Ref/RagEffect.cpp:8826-8852 (0x5F69B0). Size and divisor defaults modify
 // the parent's parameters; constructor alpha remains 254, without a fade-in.
 void CRagEffect::SpawnTorch()
@@ -20464,6 +20506,10 @@ bool CRagEffect::ProcessEffectFrame()
     }
     if (m_type == 215) {
         SpawnSummonSlave();
+        return true;
+    }
+    if (m_type == 216) {
+        SpawnBloodDrain();
         return true;
     }
     if (m_type == 0x201) {
