@@ -6044,7 +6044,7 @@ void CGameActor::SetState(int state) {
             }
         }
         if (m_job == 1285 && gameMode) {
-            gameMode->MakeArrowEffect(m_pos, m_targetGid, 28.0f, m_job);
+            MakeSpecialAttackEffect(m_targetGid, 28.0f);
         }
         m_attackMotion = static_cast<float>(GetAttackMotion());
         break;
@@ -6108,7 +6108,7 @@ void CGameActor::SetState(int state) {
                 }
             }
             if (m_job == 1285 && gameMode) {
-                gameMode->MakeArrowEffect(m_pos, m_targetGid, 28.0f, m_job);
+                MakeSpecialAttackEffect(m_targetGid, 28.0f);
             }
             m_attackMotion = static_cast<float>(GetAttackMotion());
         }
@@ -6413,6 +6413,72 @@ void CGameActor::ProcessSkillRechargeGageOverlay(int screenCenterX, int screenTo
         if (m_stateId == kGameActorCastingStateId) {
             SetState(0);
         }
+    }
+}
+
+void CGameActor::MakeSpecialAttackEffect(unsigned int targetGid, float hideTime)
+{
+    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+    if (gameMode == nullptr) {
+        return;
+    }
+
+    const int job = m_job;
+    switch (job) {
+    case 1020:
+    case 1068:
+    case 1704:
+    case 1709:
+    case 1781:
+    case 1884:
+    case 1886:
+    case 1957:
+    case 1958:
+    case 1959:
+    case 1960:
+    case 1961:
+        gameMode->MakeMandraAttackEffect(targetGid, job, 0.0f);
+        return;
+
+    case 1016:
+    case 1189:
+    case 1253:
+    case 1258:
+    case 1276:
+    case 1282:
+    case 1285:
+    case 1410:
+    case 1412:
+    case 1420:
+    case 1453:
+    case 1455:
+    case 1473:
+    case 1495:
+    case 1498:
+    case 1500:
+    case 1531:
+    case 1550:
+    case 1555:
+    case 1664:
+    case 1665:
+    case 1666:
+    case 1667:
+    case 1688:
+    case 1865:
+    case 6017:
+    case 6018:
+    case 6019:
+    case 6020:
+    case 6021:
+    case 6022:
+    case 6023:
+    case 6024:
+    case 6025:
+    case 6026:
+        gameMode->MakeArrowEffect(m_pos, targetGid, hideTime, job);
+        return;
+    default:
+        return;
     }
 }
 

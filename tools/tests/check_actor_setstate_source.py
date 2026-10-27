@@ -139,7 +139,7 @@ base_anchors = {
     3: r"m_isForceState\s*=\s*0[\s\S]*?m_isForceState2\s*=\s*0[\s\S]*?m_isForceState3\s*=\s*0[\s\S]*?SendMsg\(nullptr,\s*59[\s\S]*?SendMsg\(nullptr,\s*62[\s\S]*?SetAction\(64,\s*4,\s*1\)",
     4: r"m_isForceState[\s\S]*?m_isForceState2[\s\S]*?m_isForceState3[\s\S]*?SendMsg\([^,]*,\s*87[\s\S]*?SetAction\(48,\s*5,\s*1\)",
     5: r"m_isCounter\s*=\s*0[\s\S]*?m_isMotionFreezed\s*=\s*0[\s\S]*?SetAction\(24,\s*6,\s*1\)",
-    7: r"m_stateId\s*==\s*6[\s\S]*?SetAction\(80,\s*3,\s*1\)[\s\S]*?m_targetGid[\s\S]*?MakeArrowEffect\(m_pos,\s*m_targetGid,\s*28\.0f,\s*m_job\)[\s\S]*?m_attackMotion",
+    7: r"m_stateId\s*==\s*6[\s\S]*?SetAction\(80,\s*3,\s*1\)[\s\S]*?m_targetGid[\s\S]*?MakeSpecialAttackEffect\(m_targetGid,\s*28\.0f\)[\s\S]*?m_attackMotion",
     9: r"SetAction\(88,\s*3,\s*1\)[\s\S]*?atan2[\s\S]*?GetAttackMotion\(\)",
     11: r"SetAction\(32,\s*6,\s*1\)",
     12: r"SetAction\(40,\s*3,\s*1\)",
@@ -151,7 +151,7 @@ for state_id, pattern in base_anchors.items():
         branch_text += branch(9)
     check(bool(re.search(pattern, branch_text)), f"state {state_id} implementation branch anchor missing or incomplete")
 for state_id in (2, 7, 9):
-    check(bool(re.search(r"m_job\s*==\s*1285[\s\S]*?MakeArrowEffect\(m_pos,\s*m_targetGid,\s*28\.0f,\s*m_job\)", branch(state_id) + (branch(9) if state_id == 2 else ""))),
+    check(bool(re.search(r"m_job\s*==\s*1285[\s\S]*?MakeSpecialAttackEffect\(m_targetGid,\s*28\.0f\)", branch(state_id) + (branch(9) if state_id == 2 else ""))),
           f"state {state_id} job-1285 special attack arrow route missing")
 
 # Direct preset states: (action, motion, start, max, finish action, finish

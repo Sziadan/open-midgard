@@ -428,9 +428,9 @@ Update (2026-10-27): `CGameActor::ProcessState` has now been source-audited befo
 
 Completion update (2026-10-27): base `CGameActor::ProcessState` now passes the full source inventory and in-scope branch comparison. Pet chat and the GID 3 stance/screen route are explicitly out of scope because they require pet UI/session data and legacy UI state. State 3 retains the actor's finished death frame in state 10 as the modern equivalent of the source's separate `CCorpse` object. See the latest gate in `docs/skill/PROGRESS.md` and `PARITY_LOG.md`.
 
-Completion update (2026-10-27): `CGameActor::ProcessEffectState` now passes its ordered branch-level source comparison and is integrated before queued-hit dispatch in `ProcessState`. See the latest function gate in `docs/skill/PROGRESS.md`; next function is `CGameActor::MakeSpecialAttackEffect` and must be fully source-compared before implementation.
+Completion update (2026-10-27): `CGameActor::ProcessEffectState` passes its ordered branch-level source comparison and is integrated before queued-hit dispatch in `ProcessState`. Subsequent completion updates cover `MakeSpecialAttackEffect`; next function is `CGameActor::MakePartyEffect`.
 
-Source-audit update (2026-10-27): `CGameActor::MakeSpecialAttackEffect` Ref/EXE bodies match (1,501 normalized characters). Its Mandra and arrow job predicates and exact job sets are recorded in `docs/skill/PARITY_LOG.md`; current `src` has no wrapper and lacks the Mandra effect factory/renderable. Continue implementing this function only after preserving the branch-level comparator gate.
+Completion update (2026-10-27): `CGameActor::MakeSpecialAttackEffect` now passes its exact job-route/call-argument comparator; Mandra's standalone current world-effect route is implemented with source sprite mapping, timing, and animation checks. The legacy sprite renderer is represented by the current arrow billboard path, so live visual acceptance remains open. See the latest checkpoint in `docs/skill/PROGRESS.md`.
 
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
 * `CPc::SetState` Ref/Pc.cpp:5678, `ProcessState` 2382.

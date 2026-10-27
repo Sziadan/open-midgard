@@ -72,11 +72,12 @@ if impl_marker not in IMPL:
 else:
     _, impl_body = body(IMPL, impl_marker)
     cases = {int(value) for value in re.findall(r"case\s+(\d+)\s*:", impl_body)}
+    switch_start = impl_body.find("switch (job)")
     mandra_call = impl_body.find("MakeMandraAttackEffect")
     arrow_call = impl_body.find("MakeArrowEffect")
-    assert mandra_call >= 0 and arrow_call >= 0, "both source routes must be implemented"
-    mandra_cases = {int(value) for value in re.findall(r"case\s+(\d+)\s*:", impl_body[:arrow_call])}
-    arrow_cases = {int(value) for value in re.findall(r"case\s+(\d+)\s*:", impl_body[arrow_call:])}
+    assert switch_start >= 0 and mandra_call >= 0 and arrow_call > mandra_call, "both ordered source routes must be implemented"
+    mandra_cases = {int(value) for value in re.findall(r"case\s+(\d+)\s*:", impl_body[switch_start:mandra_call])}
+    arrow_cases = {int(value) for value in re.findall(r"case\s+(\d+)\s*:", impl_body[mandra_call:arrow_call])}
     assert mandra_cases == MANDRA, f"Mandra case mismatch: {sorted(mandra_cases ^ MANDRA)}"
     assert arrow_cases == ARROW, f"arrow case mismatch: {sorted(arrow_cases ^ ARROW)}"
     assert cases == MANDRA | ARROW, f"unexpected or missing implementation cases: {sorted(cases ^ (MANDRA | ARROW))}"

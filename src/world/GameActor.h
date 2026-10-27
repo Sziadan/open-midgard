@@ -307,6 +307,7 @@ public:
 
     virtual u8   ProcessState();
     void ProcessEffectState();
+    void MakeSpecialAttackEffect(unsigned int targetGid, float hideTime);
     virtual void SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override;
     virtual int  Get8Dir(float rot) override;
     virtual void SetState(int state);
@@ -572,7 +573,7 @@ public:
     // message signature does not, so MakeArrowEffect stores the job here first.
     void SetSpriteJob(int job);
 
-private:
+protected:
     void ApplySpriteForJob(int job);
     void LoadSpriteResources();
     bool EnsureBillboard();
@@ -589,6 +590,17 @@ private:
     std::string m_actName;
     CTexture* m_billboardTexture;
     int m_cachedBillboardMotion;
+};
+
+class CMandraAttackEffect final : public CArrowEffect {
+public:
+    u8 OnProcess() override;
+    void SendMsg(CGameObject* sender, int message, msgparam_t arg1, msgparam_t arg2, msgparam_t arg3) override;
+
+private:
+    float m_mandraHideTime = 0.0f;
+    float m_motionSpeed = 1.0f;
+    bool m_mandraMotionFinished = false;
 };
 
 class CItem : public CRenderObject {

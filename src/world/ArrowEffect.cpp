@@ -24,6 +24,8 @@ constexpr int kArrowBillboardAnchor = 48;
 
 constexpr const char* kDefaultArrowSpr = "\xB8\xF3\xBD\xBA\xC5\xCD\\skel_archer_arrow.spr";
 constexpr const char* kDefaultArrowAct = "\xB8\xF3\xBD\xBA\xC5\xCD\\skel_archer_arrow.act";
+constexpr const char* kDefaultMandraSpr = "\xB8\xF3\xBD\xBA\xC5\xCD\\mandragora_atk.spr";
+constexpr const char* kDefaultMandraAct = "\xB8\xF3\xBD\xBA\xC5\xCD\\mandragora_atk.act";
 
 struct ArrowSpritePair {
     int job;
@@ -461,6 +463,114 @@ void CArrowEffect::SendMsg(CGameObject*, int message, msgparam_t arg1, msgparam_
     }
 }
 
+u8 CMandraAttackEffect::OnProcess()
+{
+    const float elapsedFrames = ArrowStateFrames(m_stateStartTick);
+    if (elapsedFrames < m_mandraHideTime) {
+        m_isVisible = 0;
+        return 1;
+    }
+
+    m_isVisible = 1;
+    const float animationFrames = elapsedFrames - m_mandraHideTime;
+    if (m_mandraMotionFinished) {
+        return 0;
+    }
+
+    LoadSpriteResources();
+    if (m_actRes == nullptr) {
+        return 1;
+    }
+    const int motionCount = m_actRes->GetMotionCount(m_curAction);
+    if (motionCount <= 0) {
+        return 1;
+    }
+
+    const double motionFrame = static_cast<double>(animationFrames) / m_motionSpeed;
+    m_curMotion = static_cast<int>(motionFrame) % motionCount;
+    if (motionFrame / static_cast<double>(motionCount) >= 1.0) {
+        m_mandraMotionFinished = true;
+        m_curMotion = motionCount - 1;
+        return 0;
+    }
+    m_sprAngle = static_cast<int>(ViewRelativeDir(m_roty));
+    return 1;
+}
+
+void CMandraAttackEffect::SendMsg(CGameObject* sender, int message, msgparam_t arg1, msgparam_t arg2, msgparam_t arg3)
+{
+    if (message != 14) {
+        CRenderObject::SendMsg(sender, message, arg1, arg2, arg3);
+        return;
+    }
+
+    const int job = static_cast<int>(arg3);
+    const char* sprite = kDefaultMandraSpr;
+    const char* action = kDefaultMandraAct;
+    switch (job) {
+    case 1884:
+    case 1886:
+        sprite = "\xB8\xF3\xBD\xBA\xC5\xCD\\drosera_bullet.spr";
+        action = "\xB8\xF3\xBD\xBA\xC5\xCD\\drosera_bullet.act";
+        break;
+    case 1957:
+    case 1958:
+    case 1959:
+    case 1960:
+    case 1961:
+        sprite = "\xB8\xF3\xBD\xBA\xC5\xCD\\ENTWEIHEN_BULLET.spr";
+        action = "\xB8\xF3\xBD\xBA\xC5\xCD\\ENTWEIHEN_BULLET.act";
+        break;
+    case 1781:
+        sprite = "\xB8\xF3\xBD\xBA\xC5\xCD\\hydra_atk.spr";
+        action = "\xB8\xF3\xBD\xBA\xC5\xCD\\hydra_atk.act";
+        break;
+    case 1068:
+        sprite = "\xB8\xF3\xBD\xBA\xC5\xCD\\MAVKA_BULLET.spr";
+        action = "\xB8\xF3\xBD\xBA\xC5\xCD\\MAVKA_BULLET.act";
+        break;
+    case 1704:
+    case 1709:
+        sprite = "\xB8\xF3\xBD\xBA\xC5\xCD\\tha_odium_ef.spr";
+        action = "\xB8\xF3\xBD\xBA\xC5\xCD\\tha_odium_ef.act";
+        break;
+    default:
+        break;
+    }
+
+    m_sprName = sprite;
+    m_actName = action;
+    m_sprRes = nullptr;
+    m_actRes = nullptr;
+    m_billboardTexture = nullptr;
+    m_cachedBillboardMotion = -1;
+    m_curAction = 0;
+    m_curMotion = 0;
+    m_mandraMotionFinished = false;
+    m_isVisible = 1;
+
+    const unsigned int targetGid = static_cast<unsigned int>(arg1);
+    vector3d targetPos{};
+    GetTargetPos(*this, targetGid, &targetPos);
+    m_pos = targetPos;
+    m_targetGid = targetGid;
+    m_stateStartTick = timeGetTime();
+    m_motionSpeed = 1.0f;
+    LoadSpriteResources();
+    if (m_actRes != nullptr) {
+        const float sourceDelay = m_actRes->GetDelay(0);
+        if (sourceDelay > 0.0f) {
+            m_motionSpeed = sourceDelay;
+        }
+    }
+    if (job == 1068) {
+        m_motionSpeed = 2.0f;
+    }
+    if (arg2 != 0) {
+        m_mandraHideTime = *reinterpret_cast<const float*>(arg2);
+    }
+}
+
 void CGameMode::MakeArrowEffectPos(const vector3d& sourcePos, const vector3d& targetPos, float hideTime)
 {
     if (m_world == nullptr) {
@@ -488,6 +598,23 @@ void CGameMode::MakeArrowEffect(const vector3d& sourcePos, unsigned int targetGi
         reinterpret_cast<msgparam_t>(&sourcePos),
         static_cast<msgparam_t>(targetGid),
         reinterpret_cast<msgparam_t>(&hideTime));
+}
+
+void CGameMode::MakeMandraAttackEffect(unsigned int targetGid, int job, float hideTime)
+{
+    if (m_world == nullptr || targetGid == 0) {
+        return;
+    }
+    CMandraAttackEffect* effect = new CMandraAttackEffect();
+    if (effect == nullptr) {
+        return;
+    }
+    m_world->m_gameObjectList.push_back(effect);
+    effect->SendMsg(nullptr,
+        14,
+        static_cast<msgparam_t>(targetGid),
+        reinterpret_cast<msgparam_t>(&hideTime),
+        static_cast<msgparam_t>(job));
 }
 
 void CGameMode::GetServerCoor(float clientX, float clientZ, int& serverX, int& serverY) const
