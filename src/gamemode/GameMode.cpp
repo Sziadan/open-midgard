@@ -5526,7 +5526,7 @@ void BeginSkillChase(CGameMode& mode, u32 targetGid, u16 skillId, u16 skillLevel
     mode.m_skillChaseTargetGid = targetGid;
     mode.m_skillChaseSkillId = static_cast<int>(skillId);
     mode.m_skillChaseSkillLevel = static_cast<int>(skillLevel);
-    mode.m_skillChaseRange = (std::max)(1, skillRange);
+    mode.m_skillChaseRange = skillRange;
     mode.m_lastSkillChaseRequestTick = 0;
     mode.m_hasSkillChase = 1;
 }
@@ -5573,18 +5573,10 @@ bool TryRequestPendingSkillFromScreenPoint(CGameMode& mode, int screenX, int scr
             const u32 targetGid = isSelfTarget
                 ? ResolveSelfSkillTargetId()
                 : hoveredActor->m_gid;
-            const int skillRange = ResolveSkillUseRange(skillId);
+            const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId));
+            const int skillRange = skillInfo ? skillInfo->attackRange : 0;
             mode.m_lastMonGid = 0;
             mode.m_lastLockOnMonGid = 0;
-
-            if (IsAttackTargetWithinRange(mode, *hoveredActor, skillRange)) {
-                if (SendUseSkillToIdPacket(skillId, skillLevel, targetGid)) {
-                    ClearSkillChase(mode);
-                    ClearPendingSkillUse(mode);
-                    return true;
-                }
-                return false;
-            }
 
             BeginSkillChase(mode, targetGid, skillId, skillLevel, skillRange);
             ClearAttackChaseHint(mode);
@@ -6589,84 +6581,177 @@ void PumpSkillChaseRequest(CGameMode& mode)
         return;
     }
 
-    if (mode.m_isLeftButtonHeld || mode.m_hasHeldMoveTarget) {
-        return;
+    CPlayer* player = mode.m_world->m_player;
+    CGameActor* target = nullptr;
+    if (mode.m_skillChaseTargetGid == g_session.m_gid
+        || mode.m_skillChaseTargetGid == g_session.m_aid) {
+        target = player;
+    } else {
+        const auto targetIt = mode.m_runtimeActors.find(mode.m_skillChaseTargetGid);
+        if (targetIt != mode.m_runtimeActors.end()) {
+            target = targetIt->second;
+        }
     }
-
-    const auto targetIt = mode.m_runtimeActors.find(mode.m_skillChaseTargetGid);
-    if (targetIt == mode.m_runtimeActors.end() || !targetIt->second) {
+    if (!target) {
         ClearSkillChase(mode);
-        return;
-    }
-
-    CGameActor* target = targetIt->second;
-    if (!target->m_isVisible) {
         return;
     }
 
     const u16 skillId = static_cast<u16>(mode.m_skillChaseSkillId & 0xFFFF);
     const u16 skillLevel = static_cast<u16>(mode.m_skillChaseSkillLevel & 0xFFFF);
-    const int skillRange = (std::max)(1, mode.m_skillChaseRange);
+    const int skillRange = mode.m_skillChaseRange;
     if (skillId == 0 || skillLevel == 0) {
         ClearSkillChase(mode);
         return;
     }
 
-    const u32 now = GetTickCount();
-    if (IsAttackTargetWithinRange(mode, *target, skillRange)) {
-        if (mode.m_lastSkillChaseRequestTick != 0
-            && now - mode.m_lastSkillChaseRequestTick < kAttackRetryIntervalMs) {
-            return;
-        }
-
-        if (SendUseSkillToIdPacket(skillId, skillLevel, target->m_gid)) {
-            mode.m_lastSkillChaseRequestTick = now;
-            ClearSkillChase(mode);
-        }
-        return;
-    }
-
-    if (IsCurrentMoveDestinationWithinRange(mode, *target, skillRange)) {
+    C3dAttr* attr = mode.m_world->m_attr;
+    if (!attr || attr->m_zoom <= 0 || attr->m_width <= 0 || attr->m_height <= 0
+        || attr->m_cells.size() < static_cast<size_t>(attr->m_width) * static_cast<size_t>(attr->m_height)) {
         return;
     }
 
     int sourceTileX = -1;
     int sourceTileY = -1;
-    if (!ResolveAttackChaseSourceTile(mode, &sourceTileX, &sourceTileY)) {
+    mode.GetServerCoor(player->m_pos.x, player->m_pos.z, sourceTileX, sourceTileY);
+
+    // Ref ConvertToNumCellCloseAndFindNoRedCell (Ref/GameMode.cpp:8533,
+    // EXE VA 0x5709E0): project 5*range world units from the target toward
+    // the player, floor to the attr cell, then scan its fixed neighbor order
+    // only when the projected cell is red or outside the map.
+    const float deltaX = player->m_pos.x - target->m_pos.x;
+    const float deltaZ = player->m_pos.z - target->m_pos.z;
+    const float lengthSquared = deltaX * deltaX + deltaZ * deltaZ;
+    // The source helper divides by sqrt(lengthSquared); a coincident target
+    // makes its cell projection undefined. Keep the current player cell as a
+    // safe placeholder; the source distance branch below still dispatches an
+    // in-range skill for a valid nonnegative range.
+    int chaseTileX = sourceTileX;
+    int chaseTileY = sourceTileY;
+    if (lengthSquared > 0.0f) {
+        const double inverseLength = 1.0 / std::sqrt(static_cast<double>(lengthSquared));
+        const float normalizedDirectionX = static_cast<float>(inverseLength * deltaX);
+        const float projectedOffsetX = static_cast<float>(static_cast<double>(5 * skillRange) * normalizedDirectionX);
+        const float projectedOffsetZ = static_cast<float>(static_cast<double>(5 * skillRange) * (inverseLength * deltaZ));
+        const float approachWorldX = projectedOffsetX + target->m_pos.x;
+        const float approachWorldZ = projectedOffsetZ + target->m_pos.z;
+        const float zoom = static_cast<float>(attr->m_zoom);
+        chaseTileX = static_cast<int>(std::floor(static_cast<double>(approachWorldX / zoom)
+            + static_cast<double>(attr->m_width / 2)));
+        chaseTileY = static_cast<int>(std::floor(static_cast<double>(approachWorldZ / zoom)
+            + static_cast<double>(attr->m_height / 2)));
+    }
+
+    constexpr std::array<std::array<int, 2>, 8> kRefNeighborOrder{{
+        {{1, 0}}, {{1, 1}}, {{1, -1}}, {{-1, 0}},
+        {{-1, 1}}, {{-1, -1}}, {{0, 1}}, {{0, -1}},
+    }};
+    const auto isSourceWalkableCell = [attr](int x, int y) {
+        if (x < 0 || x >= attr->m_width || y < 0 || y >= attr->m_height) {
+            return false;
+        }
+        const CAttrCell& cell = attr->m_cells[static_cast<size_t>(x + y * attr->m_width)];
+        return cell.flag != 1 && cell.flag != 5;
+    };
+    if (!isSourceWalkableCell(chaseTileX, chaseTileY)) {
+        const int projectedX = chaseTileX;
+        const int projectedY = chaseTileY;
+        for (const auto& offset : kRefNeighborOrder) {
+            chaseTileX = projectedX + offset[0];
+            chaseTileY = projectedY + offset[1];
+            if (isSourceWalkableCell(chaseTileX, chaseTileY)) {
+                break;
+            }
+        }
+    }
+
+    // Ref evaluates the state gate after calculating the approach cell.
+    if (player->m_stateId >= 2 && player->m_stateId != 4 && player->m_stateId < 16) {
         return;
     }
 
-    int targetTileX = -1;
-    int targetTileY = -1;
-    if (!WorldToAttrCell(mode.m_world, target->m_pos.x, target->m_pos.z, &targetTileX, &targetTileY)) {
+    const float dx = player->m_pos.x - target->m_pos.x;
+    const float dz = player->m_pos.z - target->m_pos.z;
+    const float dy = player->m_pos.y - target->m_pos.y;
+    const float horizontalDistanceSquared = dx * dx + dz * dz;
+    const double horizontalDistance = std::sqrt(static_cast<double>(horizontalDistanceSquared));
+    const float distanceSquared = static_cast<float>(horizontalDistance * horizontalDistance + dy * dy);
+    double distance = std::sqrt(static_cast<double>(distanceSquared));
+    if (target->m_actorType == 1) {
+        distance -= 20.0f;
+        if (distance < 0.0f) {
+            distance = 0.0f;
+        }
+    }
+
+    const bool destinationIsPlayerCell = player->m_destCellX == sourceTileX
+        && player->m_destCellZ == sourceTileY;
+    if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) {
+        // Ref message 42 dispatches mode message 76, then message 13 clears
+        // the proceed state even when the packet send cannot be completed.
+        const bool sent = SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid);
+        DbgLog("[GameMode] source-range skill dispatch skillId=%u level=%u target=%u sent=%d\n",
+            static_cast<unsigned int>(skillId),
+            static_cast<unsigned int>(skillLevel),
+            static_cast<unsigned int>(mode.m_skillChaseTargetGid),
+            sent ? 1 : 0);
+        ClearSkillChase(mode);
         return;
     }
 
-    int chaseTileX = -1;
-    int chaseTileY = -1;
-    if (!ResolveAttackChaseCell(mode,
-        sourceTileX,
-        sourceTileY,
-        targetTileX,
-        targetTileY,
-        skillRange,
-        target->m_gid,
-        &chaseTileX,
-        &chaseTileY)) {
+    if (player->m_destCellX == chaseTileX && player->m_destCellZ == chaseTileY) {
+        return;
+    }
+    if (player->m_stateId == 2) {
         return;
     }
 
-    if (mode.m_lastMoveRequestTick != 0 && now - mode.m_lastMoveRequestTick < kAttackChaseRequestIntervalMs) {
-        return;
+    // Ref stores the requested approach cell before message 91. CPlayer::SendMsg
+    // then applies its strict one-second resend gate before message 151.
+    player->m_destCellX = chaseTileX;
+    player->m_destCellZ = chaseTileY;
+
+    int moveTileX = chaseTileX;
+    int moveTileY = chaseTileY;
+    if (target->m_actorType == 1) {
+        long double angle = std::atan2(static_cast<long double>(target->m_pos.x - player->m_pos.x),
+            -static_cast<long double>(target->m_pos.z - player->m_pos.z)) / 3.141592 * 180.0;
+        if (angle >= 360.0) {
+            angle -= 360.0;
+        }
+        if (angle < 0.0) {
+            angle += 360.0;
+        }
+
+        if (angle < 25.0) {
+            moveTileY += 5;
+        } else if (angle < 70.0) {
+            moveTileX += 5;
+            moveTileY += 5;
+        } else if (angle < 115.0) {
+            moveTileX += 5;
+        } else if (angle < 160.0) {
+            moveTileX += 5;
+            moveTileY -= 5;
+        } else if (angle < 205.0) {
+            moveTileY -= 5;
+        } else if (angle < 250.0) {
+            moveTileX -= 5;
+            moveTileY += 5;
+        } else if (angle < 295.0) {
+            moveTileX -= 5;
+        } else if (angle < 340.0) {
+            moveTileX -= 5;
+            moveTileY -= 5;
+        } else {
+            moveTileY += 5;
+        }
     }
 
-    if (TryRequestMoveToCell(mode,
-        sourceTileX,
-        sourceTileY,
-        chaseTileX,
-        chaseTileY,
-        true)) {
-        mode.m_lastMoveRequestTick = now;
+    if (!player->m_isWaitingMoveAck || timeGetTime() > player->m_moveReqTick + 1000) {
+        player->m_isWaitingMoveAck = 1;
+        player->m_moveReqTick = timeGetTime();
+        SendMoveRequestPacket(moveTileX, moveTileY);
     }
 }
 
