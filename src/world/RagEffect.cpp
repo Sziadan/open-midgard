@@ -8,6 +8,7 @@
 #include "gamemode/GameMode.h"
 #include "gamemode/View.h"
 #include "gamemode/Mode.h"
+#include "main/WinMain.h"
 #include "render/DC.h"
 #include "render/Prim.h"
 #include "render/Renderer.h"
@@ -11936,6 +11937,13 @@ u8 CEffectPrim::OnProcess()
 
 bool CEffectPrim::ProcessPrimitiveFrame()
 {
+    const int primitiveType = static_cast<int>(m_type);
+    if (primitiveType < 0 || primitiveType > 0x80 || primitiveType == 0x53) {
+        char message[128];
+        std::snprintf(message, sizeof(message), "Illegal Effect PrimitiveId %d", primitiveType);
+        ErrorMsg(message);
+        return true;
+    }
     if (m_type == PP_3DSHINELIGHT) {
         return true;
     }
@@ -12192,7 +12200,8 @@ bool CEffectPrim::ProcessPrimitiveFrame()
         return true;
     }
     if (m_type == PP_KOUENKA) {
-        return UpdateReferenceKouenka(this); // Source case 0x7C returns AnimMotion's completion result.
+        UpdateReferenceKouenka(this); // Source case 0x7C ignores PrimKouenka's result.
+        return true;
     }
     if (m_type == PP_STIN4) {
         UpdateReferenceStin4(this); // Source case 0x7D continues to the shared tick.
@@ -12389,16 +12398,20 @@ bool CEffectPrim::ProcessPrimitiveFrame()
         return true;
     }
     if (UsesReferenceCircle()) {
-        return UpdateReferenceCircleState(this);
+        UpdateReferenceCircleState(this);
+        return true;
     }
     if (m_type == PP_3DCIRCLE) {
-        return UpdateCirclePrimitive(this);
+        UpdateCirclePrimitive(this);
+        return true;
     }
     if (UsesReferenceCylinder()) {
-        return UpdateReferenceCylinderState(this);
+        UpdateReferenceCylinderState(this);
+        return true;
     }
     if (m_type == PP_3DCYLINDER) {
-        return UpdateCylinderPrimitive(this);
+        UpdateCylinderPrimitive(this);
+        return true;
     }
     if (m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle()) {
         return UpdateWarpZoneOrbit(this);
@@ -12419,7 +12432,8 @@ bool CEffectPrim::ProcessPrimitiveFrame()
         return UpdateFreeParticlePrimitive(this, true, false);
     }
     if (m_type == PP_3DPARTICLESPLINE) {
-        return UpdateFreeParticlePrimitive(this, true, true);
+        UpdateFreeParticlePrimitive(this, true, true);
+        return true;
     }
     if (UsesReferenceSphere()) {
         UpdateReferenceSphere(this);
@@ -12438,37 +12452,43 @@ bool CEffectPrim::ProcessPrimitiveFrame()
         return true;
     }
     if (UsesReferenceCrossTexture()) {
-        return UpdateReferenceCrossTexture(this);
+        UpdateReferenceCrossTexture(this); // Source case 0x10 ignores Prim3DTexture's result.
+        return true;
     }
     if (UsesReferenceTexture()) {
         UpdateReferenceCrossTexture(this); // Original OnProcess ignores Prim3DTexture's return.
         return true;
     }
     if (m_type == PP_3DCROSSTEXTURE) {
-        return UpdateCrossTexturePrimitive(this);
+        UpdateCrossTexturePrimitive(this);
+        return true;
     }
     if (UsesReferenceScreenTexture() || UsesReferenceScreenQuad()) {
         return UpdateReferenceScreenTexture(this);
     }
     if (m_type == PP_2DFLASH || m_type == PP_2DCIRCLE) {
-        return UpdateScreenTexturePrimitive(this);
+        UpdateScreenTexturePrimitive(this);
+        return true;
     }
     if (m_type == PP_PORTAL) {
         UpdatePortalBands(this);
-        return m_stateCnt <= m_duration || std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active; });
+        return true;
     }
     if (m_type == PP_WIND) {
         UpdateWindBands(this);
-        return m_stateCnt <= m_duration || std::any_of(m_bands.begin(), m_bands.end(), [](const EffectBandState& band) { return band.active && band.alpha > 0.0f; });
+        return true;
     }
     if (m_type == PP_WATERFALL) {
-        return UpdateWaterfallPrimitive(this);
+        UpdateWaterfallPrimitive(this);
+        return true;
     }
     if (m_type == PP_CLOUD) {
-        return UpdateWeatherCloudPrimitive(this);
+        UpdateWeatherCloudPrimitive(this);
+        return true;
     }
     if (m_type == PP_MAPPILLAR) {
-        return UpdateMapPillarPrimitive(this);
+        UpdateMapPillarPrimitive(this);
+        return true;
     }
     m_size += m_sizeSpeed;
     m_sizeSpeed += m_sizeAccel;

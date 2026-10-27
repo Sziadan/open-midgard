@@ -1,0 +1,143 @@
+case_id	Ref_case	Ref_handler_and_return	Ref_contract	current_guard	current_handler_and_return
+0x00	PP_2DTEXTURE	Prim2DTexture	returns-false	m_type == PP_2DTEXTURE || m_type == PP_2DQUAD	UpdateReferenceScreenTexture; bool-return
+0x01	PP_2DTEXTUREORBIT	Prim2DTextureOrbit	returns-false	m_type == PP_2DTEXTUREORBIT	UpdateReference2DTextureOrbit; bool-return
+0x02	PP_2DQUAD	Prim2DTexture	returns-false	m_type == PP_2DTEXTURE || m_type == PP_2DQUAD	UpdateReferenceScreenTexture; bool-return
+0x03	PP_2DFLASH	Prim2DFlash	continues	m_type == PP_2DFLASH || m_type == PP_2DCIRCLE	UpdateScreenTexturePrimitive; continues
+0x04	PP_2DCIRCLE	Prim2DCircle	continues	m_type == PP_2DCIRCLE	UpdateReferenceScreenCircle; continues
+0x04	PP_2DCIRCLE	Prim2DCircle	continues	m_type == PP_2DFLASH || m_type == PP_2DCIRCLE	UpdateScreenTexturePrimitive; continues
+0x05	PP_3DPARTICLE	Prim3DParticle	returns-false	m_type == PP_3DPARTICLE	UpdateFreeParticlePrimitive; bool-return
+0x05	PP_3DPARTICLE	Prim3DParticle	returns-false	m_type == PP_3DPARTICLE && UsesReferenceParticle()	UpdateLinearReferenceParticle; bool-return
+0x06	PP_3DPARTICLEGRAVITY	Prim3DParticleGravity	returns-false	m_type == PP_3DPARTICLEGRAVITY	UpdateFreeParticlePrimitive; bool-return
+0x06	PP_3DPARTICLEGRAVITY	Prim3DParticleGravity	returns-false	m_type == PP_3DPARTICLEGRAVITY && UsesReferenceParticle()	UpdateReferenceGravityParticle; bool-return
+0x07	PP_3DPARTICLEORBIT	Prim3DParticleOrbit	returns-false	m_type == PP_3DPARTICLEORBIT	UpdateParticleOrbitPrimitive; bool-return
+0x07	PP_3DPARTICLEORBIT	Prim3DParticleOrbit	returns-false	m_type == PP_3DPARTICLEORBIT && UsesReferenceParticle()	UpdateWarpZoneOrbit; bool-return
+0x08	PP_3DPARTICLESPLINE	Prim3DParticleSpline	continues	m_type == PP_3DPARTICLESPLINE	UpdateFreeParticlePrimitive; continues
+0x09	PP_3DQUADHORN	Prim3DQuadHorn	continues	m_type == PP_3DQUADHORN	UpdateReferenceQuadHorn; continues
+0x0A	PP_3DSPLINE	Prim3DSpiral	continues	m_type == PP_3DSPLINE || m_type == PP_3DSPIRAL	UpdateReferenceSpiral; continues
+0x0B	PP_3DSPIRAL	Prim3DSpiral	continues	m_type == PP_3DSPLINE || m_type == PP_3DSPIRAL	UpdateReferenceSpiral; continues
+0x0C	PP_3DCIRCLE	Prim3DCircle	continues	m_type == PP_3DCIRCLE	UpdateCirclePrimitive; continues
+0x0D	PP_3DCYLINDER	Prim3DCylinder	continues	m_type == PP_3DCYLINDER	UpdateCylinderPrimitive; continues
+0x0E	PP_3DSPHERE	Prim3DSphere	continues	m_type == PP_3DSPHERE	UpdateReferenceSphere; continues
+0x0F	PP_3DTEXTURE	Prim3DTexture	continues	m_type == PP_3DTEXTURE || m_type == PP_3DCROSSTEXTURE	UpdateReference3DTexture; continues
+0x10	PP_3DCROSSTEXTURE	Prim3DTexture	continues	m_type == PP_3DCROSSTEXTURE	UpdateCrossTexturePrimitive; continues
+0x10	PP_3DCROSSTEXTURE	Prim3DTexture	continues	m_type == PP_3DTEXTURE || m_type == PP_3DCROSSTEXTURE	UpdateReference3DTexture; continues
+0x11	PP_3DSHINELIGHT	Prim3DShineLight	continues	m_type == PP_3DSHINELIGHT	inline/shared; continues
+0x12	PP_3DCYLINDERHALF	Prim3DCylinderHalf	continues	m_type == PP_3DCYLINDERHALF	UpdateReferenceCylinderState; continues
+0x13	PP_3DFLASH	Prim3DFlash	continues	m_type == PP_3DFLASH	UpdateReferenceFlash; continues
+0x14	PP_3DLINE	Prim3DLine	continues	m_type == PP_3DLINE	inline/shared; continues
+0x15	PP_3DPARTICLE_NOMASTER	Prim3DParticleNoMaster	returns-false	m_type == PP_3DPARTICLE_NOMASTER	UpdateReferenceNoMasterParticle; bool-return
+0x16	PP_3DTEXTURE_NOMASTER	Prim3DTextureNoMaster	returns-false	m_type == PP_3DTEXTURE_NOMASTER	UpdateReferenceNoMasterTexture; bool-return
+0x17	PP_3DCASTING	Prim3DCasting	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting)	Update3DCastingPrimitive; continues
+0x18	PP_3DCASTING_2	Prim3DCasting2	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting2)	UpdateDefenderPrimitive; continues
+0x19	PP_3DCASTING_3	Prim3DCasting3	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting3)	Update3DCasting3Primitive; continues
+0x1A	PP_MAPMAGICZONE	PrimMapMagicZone	continues	m_type == PP_MAPMAGICZONE	UpdateReferenceMapMagicZone; continues
+0x1B	PP_MAPPARTICLE	PrimMapParticle	continues	m_type == PP_MAPPARTICLE	UpdateReferenceMapParticle; continues
+0x1C	PP_3DAURA	Prim3DAura	continues	m_type == PP_3DAURA	UpdateReference3DAura; continues
+0x1D	PP_3DAURA_2	Prim3DAura_2	continues	m_type == PP_3DAURA_2	UpdateReference3DAura2; continues
+0x1E	PP_GI_1	PrimGI1	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi1)	UpdateGi1Primitive; continues
+0x1F	PP_GI_2	PrimGI2	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi2)	UpdateGi2Primitive; continues
+0x20	PP_CHOOKGI	PrimCHOOKGI	returns-false	m_type == PP_CHOOKGI	UpdateReferenceChookGi; bool-return
+0x21	PP_CLOUD	PrimCloud	continues	m_type == PP_CLOUD	UpdateWeatherCloudPrimitive; continues
+0x22	PP_GI_3	PrimGI3	continues	m_type == PP_GI_3	UpdateReferenceGi3; continues
+0x23	PP_GUMGANG	PrimGumGang	continues	m_type == PP_GUMGANG || m_type == PP_DOUBLEGUMGANG	UpdateReferenceGumGang; continues
+0x24	PP_GI_4	PrimGI4	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi4)	UpdateGi4Primitive; continues
+0x25	PP_GRANDCROSS2	PrimGrandCross2	continues	m_type == PP_GRANDCROSS2	UpdateReferenceGrandCross2; continues
+0x26	PP_LINELINK	PrimLineLink	continues	m_type == PP_LINELINK	UpdateReferenceLineLink; continues
+0x27	PP_LANDPROTECTOR	PrimLandProtector	continues	m_type == PP_LANDPROTECTOR	UpdateReferenceLandProtector; continues
+0x28	PP_SAKURA	PrimSakura	continues	m_type == PP_SAKURA	UpdateReferenceSakura; continues
+0x29	PP_MAPPILLAR	PrimMapPillar	continues	m_type == PP_MAPPILLAR	UpdateMapPillarPrimitive; continues
+0x29	PP_MAPPILLAR	PrimMapPillar	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeMapPillar) && !UsesLegacyBandPayload()	UpdateMapPillarGi; continues
+0x2A	PP_SHIELDBOOMERANG	PrimShieldBoomerang	continues	m_type == PP_SHIELDBOOMERANG	UpdateReferenceShieldBoomerang; continues
+0x2B	PP_INTIMIDATE	PrimIntimidate	continues	m_type == PP_INTIMIDATE	UpdateReferenceIntimidate; continues
+0x2C	PP_TEIHIT1	PrimTeiHit1	continues	m_type == PP_TEIHIT1	UpdateReferenceTeiHit1; continues
+0x2D	PP_TEIHIT2	PrimTeiHit2	continues	m_type == PP_TEIHIT2	UpdateReferenceTeiHit2; continues
+0x2E	PP_CHIMTO	PrimChimTo	continues	m_type == PP_CHIMTO	UpdateReferenceChimTo; continues
+0x2F	PP_BOTTOM	PrimBottom	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeBottom)	UpdateBottomPrimitive; continues
+0x30	PP_BOTTOM2	PrimBottom2	continues	m_type == PP_BOTTOM2	UpdateReferenceBottom2; continues
+0x31	PP_BOTTOMOUT	PrimBottomOut	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeBottomOut)	UpdateBottomOutPrimitive; continues
+0x32	PP_GI_5	PrimGI5	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeGi5)	UpdateGi5Primitive; continues
+0x33	PP_BOTTOMSPR	PrimBottomSpr	continues	m_type == PP_BOTTOMSPR	UpdateReferenceBottomSpr; continues
+0x34	PP_POKJUK	PrimPokJuk	continues	m_type == PP_POKJUK	UpdateReferencePokJuk; continues
+0x35	PP_THROWITEM	PrimThrowItem	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeThrowItem)	UpdateThrowItemPrimitive; continues
+0x36	PP_CHEMICALPROTECTION	PrimChemical	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical)	UpdateChemicalPrimitive; continues
+0x37	PP_CHEMICAL2	PrimChemical2	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical2)	UpdateChemical2Primitive; continues
+0x38	PP_CHEMICAL3	PrimChemical3	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeChemical3)	UpdateChemical3Primitive; continues
+0x39	PP_TELEPORTATION2	PrimTeleportation2	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeTeleport2)	UpdateTeleportation2Primitive; continues
+0x3A	PP_FIRSTAID	PrimFirstAid	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeFirstAid)	UpdateFirstAidPrimitive; continues
+0x3B	PP_PARTICLE_UP	PrimParticleUp	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeParticleUp)	UpdateParticleUpPrimitive; continues
+0x3C	PP_HEAL	PrimHeal	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeHeal) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow)	UpdateHealPrimitive; continues
+0x3D	PP_GUARD	PrimGuard	continues	m_type == PP_GUARD	UpdateReferenceGuard; continues
+0x3E	PP_WIND	PrimWind	continues	m_type == PP_WIND	UpdateWindBands; continues
+0x3E	PP_WIND	PrimWind	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeWind) && !UsesLegacyBandPayload()	UpdateWindPrimitive; continues
+0x3F	PP_PORTAL	PrimPortal	continues	m_type == PP_PORTAL	UpdatePortalBands; continues
+0x3F	PP_PORTAL	PrimPortal	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypePortal) && !UsesLegacyBandPayload()	UpdatePortalPrimitive; continues
+0x40	PP_RECT_UP	PrimRectUp	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeRectUp)	UpdateRectUpPrimitive; continues
+0x41	PP_3DCASTING_4	Prim3DCasting4	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting4)	UpdateCasting4Primitive; continues
+0x42	PP_FOREST	PrimForest	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeForest)	UpdateForestPrimitive; continues
+0x43	PP_FOOT	PrimFoot	continues	m_type == PP_FOOT	UpdateReferenceFoot; continues
+0x44	PP_ASURACASTING	PrimAsuraCasting	continues	m_type == PP_ASURACASTING	UpdateReferenceAsuraCasting; continues
+0x45	PP_TRIPLEATTACK	PrimTripleAttack	continues	m_type == PP_TRIPLEATTACK	UpdateReferenceTripleAttack; continues
+0x46	PP_HITLINE	PrimHitLine	continues	m_type == PP_HITLINE	UpdateReferenceHitLine; continues
+0x47	PP_BLIND	PrimBlind	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeBlind)	UpdateBlindPrimitive; continues
+0x48	PP_POISON	PrimPoison	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypePoison)	UpdatePoisonPrimitive; continues
+0x49	PP_MAGNUM2	PrimMagnum2	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeMagnum2)	UpdateMagnum2Primitive; continues
+0x4A	PP_CALLZONE	PrimCallZone	continues	m_type == PP_CALLZONE	UpdateReferenceCallZone; continues
+0x4B	PP_SLASH1	PrimSlash1	continues	m_type == PP_SLASH1	UpdateSlash1Primitive; continues
+0x4C	PP_SAINTWING	PrimSaintWing	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeSaintWing)	UpdateSaintWingPrimitive; continues
+0x4D	PP_SPHEREWIND	PrimSphereWind	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeSphereWind)	UpdateSphereWindPrimitive; continues
+0x4E	PP_COLORPAPER	PrimColorPaper	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeColorPaper)	UpdateColorPaperPrimitive; continues
+0x4F	PP_WATERFALL	PrimWaterFall	continues	m_type == PP_WATERFALL	UpdateWaterfallPrimitive; continues
+0x50	PP_WATERFALLPARTICLE	PrimWaterFallParticle	continues	m_type == PP_WATERFALLPARTICLE	UpdateReferenceWaterfallParticle; continues
+0x51	PP_LIGHTSPHERE	PrimLightSphere	continues	m_type == PP_LIGHTSPHERE	UpdateReferenceLightSphere; continues
+0x52	PP_EFFECTTEXTURE	PrimEffectTexture	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeEffectTexture)	UpdateEffectTexturePrimitive; continues
+0x54	PP_GHOST	PrimGhost	continues	m_type == PP_GHOST	UpdateReferenceGhost; continues
+0x55	PP_SUPERANGEL	PrimSuperAngel	continues	m_type == PP_SUPERANGEL	UpdateSuperAngelPrimitive; continues
+0x56	PP_SOULBREAKER	PrimSoulBreaker	continues	m_type == PP_SOULBREAKER	UpdateReferenceSoulBreaker; continues
+0x57	PP_PRESSURE	PrimPressure	continues	m_type == PP_PRESSURE	UpdateReferencePressure; continues
+0x58	PP_GROUNDSHAKE	PrimGroundShake	continues	m_type == PP_GROUNDSHAKE	UpdateReferenceGroundShake; continues
+0x59	PP_BASH3D	PrimBash3D	continues	m_type == PP_BASH3D	UpdateReferenceBash3D; continues
+0x5A	PP_RECT_UP2	PrimRectUp2	continues	m_type == PP_RECT_UP2	UpdateReferenceRectUp2; continues
+0x5B	PP_SPHEREWIND2	PrimSphereWind2	continues	m_type == PP_SPHEREWIND2	UpdateReferenceSphereWind2; continues
+0x5C	PP_SOULBREAKER2	PrimSoulBreaker2	continues	m_type == PP_SOULBREAKER2	UpdateReferenceSoulBreaker2; continues
+0x5D	PP_RAINBOW	PrimRainbow	continues	m_type == PP_RAINBOW	UpdateReferenceRainbow; continues
+0x5E	PP_PEONG	PrimPeong	continues	m_type == PP_PEONG	UpdateReferencePeong; continues
+0x5F	PP_EFFECTTEXTURE2	PrimEffectTexture2	continues	m_type == PP_EFFECTTEXTURE2	UpdateReferenceEffectTexture2; continues
+0x60	PP_PEONGUP	PrimPeongUp	continues	m_type == PP_PEONGUP	UpdateReferencePeongUp; continues
+0x61	PP_TANJI2	PrimTanji2	continues	m_type == PP_TANJI2	UpdateReferenceTanji2; continues
+0x62	PP_AIRTEXTURE	PrimAirTexture	continues	m_type == PP_AIRTEXTURE	UpdateReferenceAirTexture; continues
+0x63	PP_DOUBLEGUMGANG	PrimGumGang	continues	m_type == PP_GUMGANG || m_type == PP_DOUBLEGUMGANG	UpdateReferenceGumGang; continues
+0x64	PP_HITLINE3	PrimHitLine3	continues	m_type == PP_HITLINE3	UpdateReferenceHitLine3; continues
+0x65	PP_ELECTRIC	PrimElectric	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeElectric)	UpdateElectricPrimitive; continues
+0x66	PP_ELECTRIC2	PrimElectric2	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeElectric2)	UpdateElectric2Primitive; continues
+0x67	PP_STORMKICK	PrimStormKick	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeStormKick)	UpdateStormKickPrimitive; continues
+0x68	PP_HALFSPHERE	PrimHalfSphere	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeHalfSphere)	UpdateHalfSpherePrimitive; continues
+0x69	PP_ATTACKENERGY	PrimAttackEnergy	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeAttackEnergy)	UpdateAttackEnergyPrimitive; continues
+0x6A	PP_ATTACKENERGY2	PrimAttackEnergy2	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeAttackEnergy2)	UpdateAttackEnergy2Primitive; continues
+0x6B	PP_3DCASTING_5	Prim3DCasting5	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeCasting5)	UpdateCasting5Primitive; continues
+0x6C	PP_FLOWERCAST	PrimFlowerCast	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeFlowerCast)	UpdateFlowerCastPrimitive; continues
+0x6D	PP_SOULLINK	PrimSoulLinkLight	continues	m_type == PP_SOULLINK	UpdateReferenceSoulLinkLight; continues
+0x6E	PP_HEAL_LOW	PrimHeal	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeHeal) || m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow)	UpdateHealPrimitive; continues
+0x6E	PP_HEAL_LOW	PrimHeal	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeHealLow) && m_master != nullptr	inline/shared; continues
+0x6F	PP_SOULPARTICLE	PrimSoulParticle	continues	m_type == PP_SOULPARTICLE	UpdateReferenceSoulParticle; continues
+0x70	PP_GROUNDSAMPLE	PrimGroundSample	continues	m_type == PP_GROUNDSAMPLE	UpdateGroundSample; continues
+0x71	PP_GI_EXPLOSION	PrimGiExplosion	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeGiExplosion)	UpdateGiExplosionPrimitive; continues
+0x72	PP_HERMODE	PrimHermode	continues	m_type == PP_HERMODE	UpdateReferenceHermode; continues
+0x73	PP_3DAURA_3	PrimParticleSpread	continues	m_type == PP_3DAURA_3	UpdateReferenceParticleSpread; continues
+0x74	PP_SHIELDBOOMERANG3	PrimShieldBoomerang3	continues	m_type == PP_SHIELDBOOMERANG3	UpdateReferenceShieldBoomerang3; continues
+0x75	PP_3DQUADHORN2	Prim3DQuadHorn2	continues	m_type == PP_3DQUADHORN2	UpdateReferenceQuadHorn2; continues
+0x76	PP_ACIDDEMON	PrimAcidDemon	continues	m_type == static_cast<EFFECTPRIMID>(kPrimTypeAcidDemon)	UpdateAcidDemonPrimitive; continues
+0x77	PP_STIN	PrimSTIN	continues	m_type == PP_STIN	UpdateReferenceStin; continues
+0x78	PP_SMA	PrimSMA	continues	m_type == PP_SMA	UpdateReferenceSma; continues
+0x79	PP_SMA2	PrimSMA2	continues	m_type == PP_SMA2	UpdateReferenceSma2; continues
+0x7A	PP_STIN2	PrimSTIN2	continues	m_type == PP_STIN2	UpdateReferenceStin2; continues
+0x7B	PP_TWILIGHT	PrimTwilight	continues	m_type == PP_TWILIGHT	UpdateReferenceTwilight; continues
+0x7C	PP_KOUENKA	PrimKouenka	continues	m_type == PP_KOUENKA	UpdateReferenceKouenka; continues
+0x7D	PP_STIN4	PrimSTIN4	continues	m_type == PP_STIN4	UpdateReferenceStin4; continues
+0x7E	PP_STIN5	PrimSTIN5	continues	m_type == PP_STIN5	UpdateReferenceStin5; continues
+0x7F	PP_BUBBLE_DROP	PrimBubbleDrop	continues	m_type == PP_BUBBLE_DROP	UpdateReferenceBubbleDrop; continues
+0x80	PP_EFFECTTEXTURE_ANI	PrimEffectTexture_Ani	continues	m_type == PP_EFFECTTEXTURE_ANI	UpdateReferenceEffectTextureAni; continues
+0x81	PP_DOWNTEXTURE	PrimDownTexture	continues	canonical default/error path	current invalid-id guard
+0x82	PP_TEIHIT1_REVERSE	PrimTeiHit1Reverse	continues	canonical default/error path	current invalid-id guard
+0x83	PP_MAPTEXTURE	PrimMapTexture	continues	canonical default/error path	current invalid-id guard
+0x84	PP_RIPPLE	PrimRipple	continues	canonical default/error path	current invalid-id guard
+default	default	ErrorMsg(buf)	logs then shared tick	range guard + ErrorMsg	return true into shared tick
