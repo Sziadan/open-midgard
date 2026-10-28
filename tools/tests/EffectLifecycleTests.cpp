@@ -586,6 +586,7 @@ struct CRagEffect : CGameObject {
     bool ProcessStormGust89();
     bool ProcessKyrie112();
     bool ProcessRepairWeapon101();
+    bool ProcessMaxPower104();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
@@ -5636,6 +5637,26 @@ int main()
         effect.m_duration=400;effect.m_stateCnt=400;
         check(!effect.ProcessAspersio86()&&effect.m_primList.size()==15,
             "Aspersio terminates at its duration boundary");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=104;effect.m_duration=300;effect.m_pos={15,10,35};
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        for(int state:{0,39,40,41,46,47,48,64,65,66}){effect.m_stateCnt=state;effect.ProcessMaxPower104();}
+        check(waveCalls.size()==4
+            &&waveCalls[0].name=="effect\\black_maximize_power_circle.wav"
+            &&waveCalls[1].name=="effect\\black_maximize_power_sword.wav"
+            &&waveCalls[2].name=="effect\\black_maximize_power_sword.wav"
+            &&waveCalls[3].name=="effect\\black_maximize_power_sword_bic.wav"
+            &&waveCalls[0].x==12&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[3].x==12&&waveCalls[3].y==0&&waveCalls[3].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&waveCalls[3].volume==250&&waveCalls[3].range==40&&waveCalls[3].frequency==1
+            &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==beforeRng,
+            "Max Power preserves its four exact cue frames and emits no particles or RNG");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
     }
     {

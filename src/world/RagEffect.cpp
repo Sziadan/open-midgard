@@ -26055,6 +26055,19 @@ bool CRagEffect::ProcessRepairWeapon101()
 
 // TEST_BODY_END repairweapon101_handler
 
+// Ref/RagEffect.cpp:918-967; canonical PE helper 0x606640 and OnProcess case104.
+bool CRagEffect::ProcessMaxPower104()
+{
+    const char* wave=nullptr;
+    if (m_stateCnt == 0) wave="effect\\black_maximize_power_circle.wav";
+    else if (m_stateCnt == 40 || m_stateCnt == 47) wave="effect\\black_maximize_power_sword.wav";
+    else if (m_stateCnt == 65) wave="effect\\black_maximize_power_sword_bic.wav";
+    if (wave != nullptr) TryPlaySingleEffectWave(m_pos,wave,0.0f,true);
+    return ProcessEZ2STR(0.0f,-80.0f,0.0f);
+}
+
+// TEST_BODY_END maxpower104_handler
+
 bool CRagEffect::ProcessEffect380()
 {
     CRenderObject* master = ResolveCurrentMaster();

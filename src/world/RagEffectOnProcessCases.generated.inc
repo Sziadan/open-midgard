@@ -142,7 +142,7 @@ case 100: return ProcessRemoveTrap100();
 case 101: return ProcessRepairWeapon101();
 case 102: return ProcessClipWaveStrEffect();
 case 103: return ProcessClipWaveStrEffect();
-case 104: return UnportedEffect();
+case 104: return ProcessMaxPower104();
 case 105: return UnportedEffect();
 case 161: return UnportedEffect();
 case 198: return true;

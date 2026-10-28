@@ -679,6 +679,7 @@ private:
     bool ProcessStormGust89();
     bool ProcessKyrie112();
     bool ProcessRepairWeapon101();
+    bool ProcessMaxPower104();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
