@@ -26044,6 +26044,17 @@ bool CRagEffect::ProcessKyrie112()
 
 // TEST_BODY_END kyrie112_handler
 
+// Ref/RagEffect.cpp:1279-1308; canonical PE helper 0x606480 and OnProcess case101.
+bool CRagEffect::ProcessRepairWeapon101()
+{
+    if (m_stateCnt == 20 || m_stateCnt == 55) {
+        TryPlaySingleEffectWave(m_pos, "effect\\black_weapon_repair_a.wav", 0.0f, true);
+    }
+    return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+}
+
+// TEST_BODY_END repairweapon101_handler
+
 bool CRagEffect::ProcessEffect380()
 {
     CRenderObject* master = ResolveCurrentMaster();

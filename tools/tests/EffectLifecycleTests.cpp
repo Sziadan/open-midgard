@@ -585,6 +585,7 @@ struct CRagEffect : CGameObject {
     bool ProcessAspersio86();
     bool ProcessStormGust89();
     bool ProcessKyrie112();
+    bool ProcessRepairWeapon101();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
@@ -5635,6 +5636,23 @@ int main()
         effect.m_duration=400;effect.m_stateCnt=400;
         check(!effect.ProcessAspersio86()&&effect.m_primList.size()==15,
             "Aspersio terminates at its duration boundary");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=101;effect.m_duration=300;effect.m_pos={15,10,35};
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        for(int state:{19,20,21,54,55,56}){effect.m_stateCnt=state;effect.ProcessRepairWeapon101();}
+        check(waveCalls.size()==2&&waveCalls[0].name=="effect\\black_weapon_repair_a.wav"
+            &&waveCalls[1].name=="effect\\black_weapon_repair_a.wav"
+            &&waveCalls[0].x==12&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[1].x==12&&waveCalls[1].y==0&&waveCalls[1].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&waveCalls[1].volume==250&&waveCalls[1].range==40&&waveCalls[1].frequency==1
+            &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==beforeRng,
+            "Repair Weapon plays only at states20 and55 with no particles or RNG");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
     }
     {

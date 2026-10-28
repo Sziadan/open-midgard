@@ -139,7 +139,7 @@ case 97: return ProcessClipWaveStrEffect();
 case 98: return ProcessEffectFrameLegacy();
 case 99: return ProcessFlasher99();
 case 100: return ProcessRemoveTrap100();
-case 101: return UnportedEffect();
+case 101: return ProcessRepairWeapon101();
 case 102: return ProcessClipWaveStrEffect();
 case 103: return ProcessClipWaveStrEffect();
 case 104: return UnportedEffect();
