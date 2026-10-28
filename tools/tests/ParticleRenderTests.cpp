@@ -642,10 +642,10 @@ int main() {
         ElectricPathPoint(rise,angle,heightFactor,distance,12.0f,30.0f,-4.0f,0.1f,-0.2f,0.3f,&point);
         const double radial=static_cast<double>(angle)*0.011111111*distance;
         const int angleIndex=static_cast<int>(angle);
-        check(near(point.x,static_cast<float>(radial*GetCos(rise*4)+0.1f+12.0f))
+        check(near(point.x,static_cast<float>(radial*GetCos(rise)+0.1f+12.0f))
             && near(point.y,static_cast<float>(static_cast<double>(-GetSin(angleIndex))*heightFactor*distance-0.2f-2.0f+30.0f))
-            && near(point.z,static_cast<float>(radial*GetSin(rise*4)+0.3f-4.0f)),
-            "electric path sample uses four-times-rise trig, independent jitter and source origin");
+            && near(point.z,static_cast<float>(radial*GetSin(rise)+0.3f-4.0f)),
+            "electric path sample uses the source one-degree rise table, independent jitter and origin");
     }
     for(int rise:{0,23,45,90}) {
         vector3d point{};const int sample=4;const float angle=135.0f,heightFactor=0.37f,distance=8.0f;

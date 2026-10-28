@@ -4448,7 +4448,7 @@ void ElectricPathPoint(int riseAngle, float angle, float heightFactor, float dis
     if (angleIndex < 0) {
         angleIndex += 360;
     }
-    const int facing = 4 * riseAngle;
+    const int facing = TableAngle(riseAngle);
     const double radial = angle > 0.0f ? static_cast<double>(angle) * 0.011111111 * distance : 0.0;
     point->x = static_cast<float>(radial * g_cosTable[facing]);
     point->y = static_cast<float>(-static_cast<double>(g_sinTable[angleIndex]) * heightFactor * distance);
