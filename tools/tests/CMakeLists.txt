@@ -786,6 +786,8 @@ add_test(NAME sma_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_sma_render.py")
 add_test(NAME stin_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_stin_render.py")
+add_test(NAME stin5_render_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_stin5_render.py")
 add_test(NAME hitline_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_hitline_caller.py")
 add_test(NAME hitline4_caller_source_check
@@ -1084,6 +1086,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_sma2_render.py
     check_sma_render.py
     check_stin_render.py
+    check_stin5_render.py
     check_hitline_caller.py
     check_hitline4_caller.py
     check_hitline5_caller.py
