@@ -25842,3 +25842,27 @@ bool CRagEffect::ProcessEffect380()
 }
 
 // TEST_BODY_END effect380_handler
+
+bool CRagEffect::ProcessEffect403()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return true;
+    if (m_stateCnt == 25) {
+        m_effectPos = master->m_pos;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\swordman_provoke.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+    }
+    if (m_stateCnt > 60) return true;
+
+    const int blue = rand() % 255;
+    const int green = rand() % 255;
+    const int red = rand() % 255;
+    master->SetArgb(-1, red, green, blue);
+    return true;
+}
+
+// TEST_BODY_END effect403_handler

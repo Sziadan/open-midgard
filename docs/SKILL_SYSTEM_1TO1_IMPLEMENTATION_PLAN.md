@@ -761,3 +761,7 @@ From `Ref/RagEffect2.cpp` (334 methods): enumerate with `rg -n "^// Original Sig
 6. Before starting another function, mechanically compare this function's reference and implementation. Extract and compare complete ordered case-ID lists for every switch, plus table or finite dispatch entries. For complex functions, create a branch-by-branch mapping of guards, operations, calls, mutations, constants, and exits. Resolve every mismatch or record why the function remains open. Save the comparison commands/script, output, and branch mapping with the parity evidence.
 7. Build and run the relevant focused checks. Trigger the behaviour (live or by packet replay) when available and safe; capture the debug log. Compare the result with the Ref walk-through. Build success alone does not pass the source comparison.
 8. Append the parity note with the comparison evidence. Only then mark the function complete and proceed to the next function.
+
+## WP10.3 effect403 checkpoint
+
+Completed effect403: skill 0x192 launches it, while canonical PE OnProcess case403 is inline and absent from the primary Ref caller. The implementation copies master position and plays the exact executable resource at state25, then tints via blue/green/red RNG draws through state60 inclusive. Added source parity and lifecycle checks. Release app/test builds pass, CTest is 161/161, coverage is 555 routed / 138 unported / 39 launched-but-unported, and deployed OldRO hash matches Release at 8926DBEC76C215C8E441530EF02B74D297EE006774BD3F27C288E5BFC0840770. Next: inline effect413.

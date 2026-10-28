@@ -331,7 +331,7 @@ case 399: return ProcessBash3DEffect();
 case 400: return ProcessBash3DEffect();
 case 401: return ProcessEffectFrameLegacy();
 case 402: ApplyPortalWind402(); return true;
-case 403: return UnportedEffect();
+case 403: return ProcessEffect403();
 case 404: return UnportedEffect();
 case 405: ApplyBottomMagnus("effect\\ring_white.tga", 2); return true;
 case 408: return ProcessSphereWind2Effect();

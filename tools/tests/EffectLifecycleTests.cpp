@@ -574,6 +574,7 @@ struct CRagEffect : CGameObject {
     void SpawnWaterBall2();
     bool ProcessRevive140();
     bool ProcessEffect380();
+    bool ProcessEffect403();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5609,6 +5610,32 @@ int main()
         rngValues={4,5,6};rngCursor=0;effect.m_stateCnt=61;effect.ProcessEffect380();
         check(rngDraws==beforeRng+9&&master.tintCalls==3&&gameMode.messages==beforeMessages+1,
             "Effect380 stops tint and RNG after state60");
+        g_world.m_player=oldPlayer;rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRenderObject master;master.m_pos={15,25,35};
+        CRagEffect effect;effect.m_type=403;effect.m_master=&master;effect.m_effectPos={1,2,3};
+        waveCalls.clear();rngValues.clear();rngCursor=0;const int beforeRng=rngDraws;
+        effect.m_stateCnt=24;rngValues={11,22,33};effect.ProcessEffect403();
+        check(rngDraws==beforeRng+3&&rngCursor==3&&waveCalls.empty()
+            &&master.tintCalls==1&&master.red==33&&master.green==22&&master.blue==11,
+            "Effect403 tints before its sound frame with blue/green/red RNG order");
+        rngValues={17,24,199};rngCursor=0;effect.m_stateCnt=25;effect.ProcessEffect403();
+        check(effect.m_effectPos.x==15&&effect.m_effectPos.y==25&&effect.m_effectPos.z==35
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\swordman_provoke.wav"
+            &&waveCalls[0].x==12&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&rngDraws==beforeRng+6&&master.tintCalls==2&&master.red==199
+            &&master.green==24&&master.blue==17,
+            "Effect403 state25 follows master, plays its source wave and still applies tint");
+        effect.m_stateCnt=60;effect.ProcessEffect403();
+        check(rngDraws==beforeRng+9&&master.tintCalls==3,
+            "Effect403 includes state60 in its tint and random window");
+        effect.m_stateCnt=61;effect.ProcessEffect403();
+        check(rngDraws==beforeRng+9&&master.tintCalls==3&&waveCalls.size()==1,
+            "Effect403 stops tint and RNG after state60");
         g_world.m_player=oldPlayer;rngValues.clear();rngCursor=0;
     }
     {
