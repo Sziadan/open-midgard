@@ -7,7 +7,7 @@ case 4: return ProcessEffectFrameLegacy();
 case 5: return ProcessEffectFrameLegacy();
 case 6: return ProcessEntry6();
 case 7: return ProcessExit7();
-case 8: return UnportedEffect();
+case 8: return ProcessWarp8();
 case 9: return UnportedEffect();
 case 10: return ProcessEffectFrameLegacy();
 case 11: return ProcessEndure11();

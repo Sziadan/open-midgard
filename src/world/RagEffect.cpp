@@ -20195,6 +20195,58 @@ bool CRagEffect::ProcessEntry6()
     return true;
 }
 
+// Ref/RagEffect.cpp:9025; canonical helper at HighPriest.exe.c:423879.
+void CRagEffect::SpawnWarp8()
+{
+    if ((m_stateCnt % 20) == 0) {
+        CEffectPrim* circle = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
+        if (circle == nullptr) return;
+        circle->m_duration = m_duration;
+        circle->m_renderFlag |= 0x200;
+        circle->m_radius = 2.0f;
+        circle->m_arcAngle = 22.5f;
+        circle->m_innerSize = 10.0f;
+        circle->m_latitude = 90.0f;
+        MatrixIdentity(circle->m_matrix);
+        const float xRotation = static_cast<float>(3.141592 * circle->m_latitude * 0.0055555557);
+        MatrixAppendXRotation(circle->m_matrix, xRotation);
+        circle->m_radiusSpeed = 1.25f;
+        circle->m_radiusAccel = circle->m_radiusSpeed / static_cast<double>(circle->m_duration) * -0.5;
+        circle->m_alpha = 200.0f;
+        circle->m_fadeOutCnt = circle->m_duration - circle->m_duration / 2;
+        InitReferenceSegments(circle);
+        circle->m_texture.push_back(g_texMgr.GetTexture("EFFECT\\RING_YELLOW.TGA", false));
+    }
+    if ((m_stateCnt % 2) == 0) {
+        CEffectPrim* orbit = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{});
+        if (orbit == nullptr) return;
+        const double randomRadius = rand() % 200 / 100;
+        orbit->m_radius = randomRadius * 0.69999999 + 1.0;
+        orbit->m_duration = 40;
+        orbit->m_longitude = static_cast<float>(rand() % 360);
+        orbit->m_longSpeed = randomRadius * 3.0 + 3.0;
+        orbit->m_gravSpeed = static_cast<double>(60 - rand() % 240) * 0.0099999998;
+        orbit->m_gravAccel = orbit->m_gravSpeed / static_cast<double>(orbit->m_duration) * -0.5;
+        MatrixIdentity(orbit->m_matrix);
+        MatrixAppendYRotation(orbit->m_matrix, GetRadian(static_cast<int>(orbit->m_longitude)));
+        orbit->m_deltaPos2.x = orbit->m_radius * orbit->m_matrix.m[2][0] + orbit->m_matrix.m[3][0];
+        orbit->m_deltaPos2.y = orbit->m_radius * orbit->m_matrix.m[2][1] + orbit->m_matrix.m[3][1];
+        orbit->m_deltaPos2.z = orbit->m_radius * orbit->m_matrix.m[2][2] + orbit->m_matrix.m[3][2];
+        orbit->m_size = 0.2f;
+        orbit->m_fadeOutCnt = orbit->m_duration - orbit->m_duration / 3;
+        orbit->SetParticleResources(
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act");
+        InitReferenceSegments(orbit);
+    }
+}
+
+bool CRagEffect::ProcessWarp8()
+{
+    SpawnWarp8();
+    return true;
+}
+
 void CRagEffect::SpawnNpcStop(int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();

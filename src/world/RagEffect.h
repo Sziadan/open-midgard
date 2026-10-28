@@ -557,6 +557,8 @@ private:
     void SpawnMaple333();
     bool ProcessEntry6();
     void SpawnEntry6();
+    bool ProcessWarp8();
+    void SpawnWarp8();
     bool ProcessNpcStopEffects();
     void SpawnNpcStop(int variant);
     bool ProcessGuardEffects();

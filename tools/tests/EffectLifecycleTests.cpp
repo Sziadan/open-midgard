@@ -642,6 +642,8 @@ struct CRagEffect : CGameObject {
     void SpawnMaple333();
     bool ProcessEntry6();
     void SpawnEntry6();
+    bool ProcessWarp8();
+    void SpawnWarp8();
     void SpawnPressure365();
     void SpawnGroundShake365();
     bool ProcessSoulBreaker361Effect();
@@ -3223,6 +3225,43 @@ int main()
                 &&g_resMgr.requests[1]==prim->m_spriteSprName,
                 "effect333 loads exact ACT then SPR resources");
         }
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor; actor.m_pos={400,500,600};
+        CRagEffect effect; effect.m_type=8; effect.m_master=&actor; effect.m_duration=60;
+        g_texMgr.requests.clear();g_resMgr.requests.clear();
+        rngValues={199,359,239};rngCursor=0;
+        const int drawBase=rngDraws;
+        effect.m_stateCnt=1;effect.ProcessWarp8();
+        check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&g_resMgr.requests.empty()
+            &&rngDraws==drawBase,"effect8 odd state does not spawn or consume RNG");
+        effect.m_stateCnt=0;effect.ProcessWarp8();
+        check(effect.m_primList.size()==2&&g_texMgr.requests==std::vector<std::string>({"EFFECT\\RING_YELLOW.TGA"})
+            &&rngDraws==drawBase+3&&rngCursor==3,
+            "effect8 state0 emits cadence circle then orbit with three ordered random draws");
+        if(effect.m_primList.size()==2) {
+            const CEffectPrim* circle=effect.m_primList.front();
+            const CEffectPrim* orbit=effect.m_primList.back();
+            check(circle->m_type==PP_3DCIRCLE&&circle->m_duration==60&&circle->m_renderFlag==0x201
+                &&circle->m_radius==2.0f&&circle->m_arcAngle==22.5f&&circle->m_innerSize==10.0f
+                &&circle->m_latitude==90.0f&&circle->m_radiusSpeed==1.25f
+                &&std::fabs(circle->m_radiusAccel-(1.25f/60.0f*-0.5f))<0.000001f
+                &&circle->m_alpha==200.0f&&circle->m_fadeOutCnt==30&&circle->m_texture.size()==1,
+                "effect8 20-frame circle preserves full ring profile and fade");
+            check(orbit->m_type==PP_3DPARTICLEORBIT&&std::fabs(orbit->m_radius-1.69999999)<0.000001
+                &&orbit->m_duration==40&&orbit->m_longitude==359&&orbit->m_longSpeed==6.0
+                &&std::fabs(orbit->m_gravSpeed+1.789999964)<0.00001
+                &&std::fabs(orbit->m_gravAccel-(orbit->m_gravSpeed/40.0*-0.5))<0.000001
+                &&orbit->m_size==0.2f&&orbit->m_fadeOutCnt==27&&orbit->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr"
+                &&orbit->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act"
+                &&g_resMgr.requests.size()==2&&g_resMgr.requests[0]==orbit->m_spriteSprName
+                &&g_resMgr.requests[1]==orbit->m_spriteActName,
+                "effect8 even-state orbit preserves RNG fields and exact SPR then ACT assets");
+        }
+        effect.m_stateCnt=2;effect.ProcessWarp8();
+        check(effect.m_primList.size()==3&&rngDraws==drawBase+6&&g_texMgr.requests.size()==1,
+            "effect8 state2 adds only the second orbit, not another circle");
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
     }
     {
