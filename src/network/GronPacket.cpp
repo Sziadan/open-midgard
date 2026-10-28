@@ -230,6 +230,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0194, 30);
     SetPacketSize(0x0195, 102);
     SetPacketSize(0x0196, 9);
+    SetPacketSize(0x0191, 86);              // ZC_TALKBOX_CHATCONTENTS
         SetPacketSize(0x0199, 4);               // ZC_NOTIFY_MAPPROPERTY
     SetPacketSize(0x0192, 24);
     SetPacketSize(0x019B, 10);

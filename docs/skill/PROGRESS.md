@@ -1706,3 +1706,7 @@ Added nine job-entry/process/removal scenarios for the remaining WP4 unit jobs: 
 ## WP10.8 — NPC ground-unit job mappings — 2026-10-28
 
 Added job195,196,197 entry/process/removal scenarios for the Ref unit-process branches commonly used by NPC skills. The production replay verifies 195→effect74, 196→effect74, and 197→effect138, followed by 0x0120 cleanup. The source branches are in `Ref/Skill.cpp:1654-1670`; the port maps them in `src/world/SkillUnit.cpp:392-396`. Focused tests pass3/3 and the freshly built Release replay suite passes78/78.
+
+## WP10.8 — Talkie Box and Venom Dust triggers — 2026-10-28
+
+Added Talkie Box job153 trigger replay: raw 0x0191 contents packet stores `TRAP TRIGGERED` on the unit, 0x01D7 changes it to used-trap job140, and 0x0120 removes it. This also fixed the missing 0x0191 fixed packet length (86 bytes) in `src/network/GronPacket.cpp`, matching `Ref/RunningServer/packet_db.txt:317`; the handler was registered but the production packet reader previously rejected this valid server packet. Added Venom Dust job146 trigger replay: 0x0119 sets target AID2 OPT2_POISON bit0x0001, unit remains job146 and launches Ref effect171 on its next process call, then 0x0120 removes it. Focused cases pass2/2; freshly built Release replay suite passes80/80.

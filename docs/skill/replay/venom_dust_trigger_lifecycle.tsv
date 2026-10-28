@@ -1,0 +1,7 @@
+# actor	source	1	0	16	16
+# actor	target	2	0	18	16
+# actor	actor	3	146	10	20
+# opcode	hexBytes	comment
+0x011F	1F0164000000010000000A0014009201	Venom Dust entry job146 owned by AID1
+0x0119	19010200000000000100000000	SC_POISON sets OPT2_POISON on target AID2; SI_BLANK suppresses 0x0196
+0x0120	200164000000	Remove Venom Dust unit AID100 after expiry

@@ -1309,6 +1309,105 @@ void ReplaySkidTrapTriggerLifecycle(const std::string& path)
         << ") activeJob=140 savedEffect=none removed=1\n";
 }
 
+void ReplayVenomDustTriggerLifecycle(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 3 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+        && packets[1].opcode == 0x0119 && packets[1].bytes.size() == 13
+        && packets[2].opcode == 0x0120 && packets[2].bytes.size() == 6,
+        "Venom Dust requires unit entry, target poison-state update, and eventual removal");
+    Require(packets[0].bytes[14] == 146 && ReadU32LE(packets[1].bytes.data() + 2) == 2
+        && ReadU16LE(packets[1].bytes.data() + 8) == 0x0001,
+        "Venom Dust must retain job146 and apply OPT2_POISON to target AID2");
+
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    for (std::size_t index = 0; index < packets.size(); ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected Venom Dust trigger packet");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Venom Dust packet");
+        CSkill* unit = fixture.world.GetSkillByAID(100);
+        if (index == 0) {
+            Require(unit != nullptr && unit->m_job == 146,
+                "Venom Dust entry did not create unit job146");
+        } else if (index == 1) {
+            const auto target = fixture.mode.m_runtimeActors.find(2);
+            Require(unit != nullptr && unit->m_job == 146 && target != fixture.mode.m_runtimeActors.end()
+                    && target->second != nullptr && target->second->m_healthState == 0x0001,
+                "0x0119 did not apply OPT2_POISON while retaining Venom Dust job146");
+            Require(unit->OnProcess() != 0,
+                "triggered Venom Dust should remain active and process its Ref unit effect");
+        } else {
+            Require(unit == nullptr, "0x0120 did not remove expired Venom Dust from CWorld skill list");
+            Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+                    [](CGameObject* object) {
+                        const CSkill* skill = dynamic_cast<const CSkill*>(object);
+                        return skill != nullptr && skill->m_aid == 100;
+                    }),
+                "0x0120 did not remove expired Venom Dust from CWorld object ownership list");
+        }
+    }
+
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for Venom Dust trigger");
+    bool sawEffect171 = false;
+    std::string logLine;
+    while (std::getline(runtimeLog, logLine)) {
+        sawEffect171 = sawEffect171 || logLine.find("[REPLAY] LaunchEffect id=171 actor=100") != std::string::npos;
+    }
+    Require(sawEffect171, "Venom Dust unit process did not launch Ref effect171");
+    std::cout << "VenomDust aid=100 job=146 target=2 poisonOpt2=1 active=1 effect=171 removed=1\n";
+}
+
+void ReplayTalkieBoxTriggerLifecycle(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 4 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+        && packets[1].opcode == 0x0191 && packets[1].bytes.size() == 86
+        && packets[2].opcode == 0x01D7 && packets[2].bytes.size() == 11
+        && packets[3].opcode == 0x0120 && packets[3].bytes.size() == 6,
+        "Talkie Box trigger requires entry, text contents, used-trap update, and removal packets");
+    Require(packets[0].bytes[14] == 153 && ReadU32LE(packets[1].bytes.data() + 2) == 100
+        && ReadU32LE(packets[2].bytes.data() + 2) == 100
+        && ReadU32LE(packets[2].bytes.data() + 7) == 140,
+        "Talkie Box must retain job153 through the contents packet before the job140 update");
+
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    for (std::size_t index = 0; index < packets.size(); ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected Talkie Box trigger packet");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Talkie Box packet");
+        CSkill* unit = fixture.world.GetSkillByAID(100);
+        if (index == 0) {
+            Require(unit != nullptr && unit->m_job == 153,
+                "Talkie Box entry did not create unit job153");
+        } else if (index == 1) {
+            Require(unit != nullptr && unit->m_job == 153
+                    && unit->GetChatBubbleText() == "TRAP TRIGGERED",
+                "0x0191 did not attach Talkie Box text to job153 before used-trap conversion");
+        } else if (index == 2) {
+            Require(unit != nullptr && unit->m_job == 140,
+                "0x01D7 did not convert triggered Talkie Box to used-trap job140");
+        } else {
+            Require(unit == nullptr, "0x0120 did not remove triggered Talkie Box from CWorld skill list");
+            Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+                    [](CGameObject* object) {
+                        const CSkill* skill = dynamic_cast<const CSkill*>(object);
+                        return skill != nullptr && skill->m_aid == 100;
+                    }),
+                "0x0120 did not remove triggered Talkie Box from CWorld object ownership list");
+        }
+    }
+    std::cout << "TalkieBox aid=100 job=153 text=TRAP TRIGGERED activeJob=140 removed=1\n";
+}
+
 void ReplayWarpUnitLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1448,6 +1547,22 @@ bool IsMultiUnitWorldUpdateScenario(const std::string& path)
         && ReadU32LE(packets[1].bytes.data() + 2) == 200;
 }
 
+bool IsVenomDustTriggerScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 3 && packets.front().opcode == 0x011F
+        && packets.front().bytes.size() == 16 && packets.front().bytes[14] == 146
+        && packets[1].opcode == 0x0119;
+}
+
+bool IsTalkieBoxTriggerScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 4 && packets.front().opcode == 0x011F
+        && packets.front().bytes.size() == 16 && packets.front().bytes[14] == 153
+        && packets[1].opcode == 0x0191;
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -1484,6 +1599,10 @@ int main(int argc, char** argv)
             ReplaySkidTrapTriggerLifecycle(argv[1]);
         } else if (IsMultiUnitWorldUpdateScenario(argv[1])) {
             ReplayMultiUnitWorldUpdate(argv[1]);
+        } else if (IsVenomDustTriggerScenario(argv[1])) {
+            ReplayVenomDustTriggerLifecycle(argv[1]);
+        } else if (IsTalkieBoxTriggerScenario(argv[1])) {
+            ReplayTalkieBoxTriggerLifecycle(argv[1]);
         } else if (IsWarpUnitLifecycleScenario(argv[1])) {
             ReplayWarpUnitLifecycle(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {
