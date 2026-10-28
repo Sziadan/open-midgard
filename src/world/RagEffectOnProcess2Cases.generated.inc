@@ -39,7 +39,7 @@ case 336: return ProcessGuardEffects();
 case 337: ApplyJobLvUp50(0); ApplyJobLvUp50(45); return true;
 case 338: ProcessSuperAngelEffect(); return true;
 case 339: ApplyMagnum2("effect\\ring_yellow.tga"); return true;
-case 340: return UnportedEffect();
+case 340: return ProcessCallZone340();
 case 341: ApplyPortal2(3); return true;
 case 342: ApplyCoupleCasting("effect\\ring_red.tga"); return true;
 case 343: return OnProcess2Legacy();

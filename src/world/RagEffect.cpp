@@ -19146,6 +19146,34 @@ bool CRagEffect::ProcessFoot326_327(const char* textureName)
 }
 // TEST_BODY_END foot326_327_family
 
+// PE HighPriest.exe.c:417352-417353/456912; Ref/RagEffect.cpp:10348-10349.
+// TEST_BODY_BEGIN callzone340_family
+bool CRagEffect::ProcessCallZone340()
+{
+    if (m_stateCnt != 100) return true;
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_CALLZONE, vector3d{});
+    if (prim == nullptr) return true;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_totalTexture = 1;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\white02.bmp", false));
+    m_effectPos.y -= 10.0f;
+    for (int index = 0; index < 4; ++index) {
+        prim->m_gi[index].life = 0;
+    }
+    prim->m_gi[0].life = 1;
+    prim->m_gi[0].process = 0;
+    prim->m_gi[0].distance = 8.0f;
+    prim->m_gi[0].alphaB = 0;
+    prim->m_gi[0].fullDisplayAngle = 360;
+    return true;
+}
+// TEST_BODY_END callzone340_family
+
 // PE HighPriest.exe.c:421837-421838/432574; Ref/dhxj/RagEffect2.cpp:547.
 // TEST_BODY_BEGIN beginasura1_467_family
 bool CRagEffect::ProcessBeginAsura1_467()

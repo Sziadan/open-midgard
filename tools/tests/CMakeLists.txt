@@ -406,6 +406,7 @@ extract_test_region(pokjuk297_handler "${effect_source}" pokjuk297_family)
 extract_test_region(foot447_handler "${effect_source}" foot447_family)
 extract_test_region(foot448_handler "${effect_source}" foot448_family)
 extract_test_region(foot326_327_handler "${effect_source}" foot326_327_family)
+extract_test_region(callzone340_handler "${effect_source}" callzone340_family)
 extract_test_region(beginasura1_467_handler "${effect_source}" beginasura1_467_family)
 extract_test_region(beginasura1_variants468_473_handler "${effect_source}" beginasura1_variants468_473_family)
 extract_test_region(bottom_vertical_handler "${effect_source}" bottom_vertical_family)
@@ -453,6 +454,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${pokjuk2
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot447_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot448_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot326_327_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${callzone340_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_467_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_variants468_473_handler}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
@@ -971,6 +973,8 @@ add_test(NAME effect448_foot_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect448_foot.py")
 add_test(NAME effect326_327_foot_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect326_327_foot.py")
+add_test(NAME effect340_callzone_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect340_callzone.py")
 add_test(NAME effect467_beginasura1_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect467_beginasura1.py")
 add_test(NAME effect468_473_beginasura1_source_check

@@ -455,7 +455,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 337	OnProcess2	JobLvUp50	routed	OnProcess2 -> ApplyJobLvUp50(0); ApplyJobLvUp50(45); return true;		13
 338	OnProcess2	SuperAngel	routed	OnProcess2 -> ProcessSuperAngelEffect(); return true;		200
 339	OnProcess2	Magnum2	routed	"OnProcess2 -> ApplyMagnum2(""effect\\ring_yellow.tga""); return true;"	src/world/SkillSpecialEffect.cpp	109
-340	OnProcess2	CALLZONE	unported	OnProcess2 -> UnportedEffect		-
+340	OnProcess2	CALLZONE	routed	OnProcess2 -> return ProcessCallZone340();		8
 341	OnProcess2	Portal2	routed	OnProcess2 -> ApplyPortal2(3); return true;		8
 342	OnProcess2	CoupleCasting	routed	"OnProcess2 -> ApplyCoupleCasting(""effect\\ring_red.tga""); return true;"	src/session/SkillActionInfo2.cpp	89
 343	OnProcess2	HeartCasting	routed	OnProcess2 -> return OnProcess2Legacy();	src/session/SkillActionInfo2.cpp	145

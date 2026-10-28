@@ -652,6 +652,7 @@ struct CRagEffect : CGameObject {
     bool ProcessFoot447();
     bool ProcessFoot448();
     bool ProcessFoot326_327(const char*);
+    bool ProcessCallZone340();
     bool ProcessBeginAsura1_467();
     bool ProcessBeginAsura1Variant(const char*);
     void ApplyBottomMusic(const char*, int);
@@ -4090,6 +4091,33 @@ int main()
         check(effect.m_primList.size()==1&&effect.m_effectPos.x==61&&effect.m_effectPos.y==72
             &&effect.m_effectPos.z==83&&g_texMgr.requests.size()==1&&waveCalls.empty()&&rngDraws==draws,
             "Foot F1=0 variant later states refresh master without repeat emission");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject master; master.m_pos={25,36,47};
+        CRagEffect effect; effect.m_type=340; effect.m_master=&master; effect.m_duration=84;
+        effect.m_stateCnt=99; effect.m_effectPos={1,2,3};
+        g_texMgr.requests.clear(); waveCalls.clear(); const int draws=rngDraws;
+        effect.ProcessCallZone340();
+        check(effect.m_effectPos.x==1&&effect.m_effectPos.y==2&&effect.m_effectPos.z==3
+            &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "CALLZONE effect340 ignores state99 without position update or emission");
+        effect.m_stateCnt=100; effect.ProcessCallZone340();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(prim&&prim->m_type==PP_CALLZONE&&prim->m_renderFlag==5&&prim->m_duration==84
+            &&prim->m_totalTexture==1&&prim->m_texture.size()==1
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\white02.bmp"
+            &&prim->m_pos.x==25&&prim->m_pos.y==36&&prim->m_pos.z==47
+            &&effect.m_effectPos.x==25&&effect.m_effectPos.y==26&&effect.m_effectPos.z==47
+            &&prim->m_gi[0].life==1&&prim->m_gi[0].process==0&&prim->m_gi[0].distance==8
+            &&prim->m_gi[0].alphaB==0&&prim->m_gi[0].fullDisplayAngle==360
+            &&prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0
+            &&waveCalls.empty()&&rngDraws==draws,
+            "CALLZONE effect340 state100 emits exact primitive before shifting effect Y");
+        master.m_pos={61,72,83}; effect.m_stateCnt=101; effect.ProcessCallZone340();
+        check(effect.m_primList.size()==1&&effect.m_effectPos.x==25&&effect.m_effectPos.y==26
+            &&effect.m_effectPos.z==47&&g_texMgr.requests.size()==1&&waveCalls.empty()&&rngDraws==draws,
+            "CALLZONE effect340 ignores state101 without refresh, repeat or RNG");
         effect.ClearPrims(); g_world.UpdateGameObjects();
     }
     {
