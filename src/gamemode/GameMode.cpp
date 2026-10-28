@@ -5517,6 +5517,29 @@ bool SendUseSkillToPosPacket(u16 skillId, u16 skillLevel, int cellX, int cellY)
     return sent;
 }
 
+bool SendUseSkillToPosInfoPacket(u16 skillId, u16 skillLevel, int cellX, int cellY, const std::string& contents)
+{
+    if (skillId == 0 || skillLevel == 0 || cellX < 0 || cellY < 0 || cellX > 0xFFFF || cellY > 0xFFFF) {
+        return false;
+    }
+
+    std::array<u8, sizeof(PACKET_CZ_USESKILLTOPOSINFO)> packetBuffer{};
+    int packetLength = 0;
+    if (!ro::net::BuildActiveUseSkillToPosInfoPacket(skillId, skillLevel,
+            static_cast<u16>(cellX), static_cast<u16>(cellY),
+            std::string_view(contents.data(), contents.size()),
+            packetBuffer.data(), static_cast<int>(packetBuffer.size()), &packetLength)) {
+        return false;
+    }
+
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(packetBuffer.data()), packetLength);
+    DbgLog("[GameMode] useskilltoposinfo skillId=%u level=%u cell=(%d,%d) textBytes=%u sent=%d\n",
+        static_cast<unsigned int>(skillId), static_cast<unsigned int>(skillLevel), cellX, cellY,
+        static_cast<unsigned int>(contents.size()), sent ? 1 : 0);
+    return sent;
+}
+
 bool SendUseSkillMapPacket(u16 skillId, const char* mapName)
 {
     if (skillId == 0 || !mapName || *mapName == '\0') {
@@ -9589,6 +9612,11 @@ bool ArmPendingSkillUseFromSkillList(int skillId)
         static_cast<unsigned int>(skillIdU),
         static_cast<unsigned int>(skillLevel));
     return true;
+}
+
+bool CGameMode::SendSkillToGroundWithText(u16 skillId, u16 skillLevel, int cellX, int cellY, const std::string& contents)
+{
+    return SendUseSkillToPosInfoPacket(skillId, skillLevel, cellX, cellY, contents);
 }
 
 CGameMode::CGameMode() 

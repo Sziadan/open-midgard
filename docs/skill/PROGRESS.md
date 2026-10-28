@@ -1722,3 +1722,6 @@ Added a raw 18-byte 0x0117 skill83 fixture through production packet framing/rou
 ## WP3.3 — 0x0190 text-bearing ground-skill packet builder — 2026-10-28
 
 Added `BuildActiveUseSkillToPosInfoPacket` for packetver23's 90-byte 0x0190 record and wired the opcode through the active send profile. The builder writes skill level/id, target cell, and up to 80 content bytes into the Ref field offsets; it rejects other send profiles, oversize content, and undersized output buffers. The focused protocol test and full Release suite pass93/93. This is packet-construction coverage; caller/UI wiring and live transmission remain open.
+## WP3.3 — 0x0190 text-skill game-mode send path — 2026-10-28
+
+Added `CGameMode::SendSkillToGroundWithText(skillId, skillLevel, cellX, cellY, contents)` and routed it through the packetver23-only `BuildActiveUseSkillToPosInfoPacket` builder and the existing connection send API. The method rejects invalid skill/level/cell inputs and builder failures, and logs the send result. It accepts caller-provided text without binding it to chat input or inventing a message. Release build and immediate CTest pass93/93. No UI caller or live transmission is claimed; inspect the distinct Warp Portal 0x011C/0x011B selection handshake next.

@@ -3,6 +3,7 @@
 #include "audio/Audio.h"
 #include <map>
 #include <list>
+#include <string>
 
 // Forward declarations
 class CView;
@@ -67,6 +68,8 @@ struct GroundItemState {
 //===========================================================================
 class CGameMode : public CMode {
 public:
+    bool SendSkillToGroundWithText(u16 skillId, u16 skillLevel, int cellX, int cellY, const std::string& contents);
+
     enum MapLoadingStage {
         MapLoading_None = 0,
         MapLoading_PresentScreen,
