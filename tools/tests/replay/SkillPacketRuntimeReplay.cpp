@@ -1523,26 +1523,57 @@ void ReplayTrapModelResource(const std::string& path)
 
     g_resMgr.RegisterType("rsm", "", new C3dModelRes());
     g_resMgr.RegisterType("bmp", "", new CBitmapRes());
-    const std::string modelPath = "data\\model\\"
-        "\xBF\xDC\xBA\xCE\xBC\xD2\xC7\xB0\\\xC6\xAE\xB7\xA6" "03_3.rsm";
-    Require(g_fileMgr.IsDataExist(modelPath.c_str()), "bundled job143 RSM is not staged at its Ref resource path");
-    C3dModelRes* model = g_resMgr.GetAs<C3dModelRes>(modelPath.c_str());
-    Require(model != nullptr && !model->m_objectList.empty() && !model->m_materialNames.empty(),
-        "job143 RSM failed to parse its node/material resources");
-
-    const std::string bitmapPath = "data\\texture\\" + model->m_materialNames.front();
-    CBitmapRes* bitmap = g_resMgr.GetAs<CBitmapRes>(bitmapPath.c_str());
-    Require(bitmap != nullptr && bitmap->m_data != nullptr && bitmap->m_width > 0 && bitmap->m_height > 0,
-        "job143 material BMP failed to load from the bundled texture fixture");
-
-    const std::string textureCacheKey = "@mk:" + model->m_materialNames.front();
-    const auto previousTexture = g_texMgr.m_texTable.find(textureCacheKey.c_str());
-    CTexture* previousTextureValue = previousTexture == g_texMgr.m_texTable.end() ? nullptr : previousTexture->second;
-    if (previousTexture == g_texMgr.m_texTable.end()) {
-        g_texMgr.m_texTable.emplace(textureCacheKey.c_str(), &CTexMgr::s_dummy_texture);
-    } else {
-        previousTexture->second = &CTexMgr::s_dummy_texture;
+    const std::string modelDirectory = "\xBF\xDC\xBA\xCE\xBC\xD2\xC7\xB0";
+    const std::string modelStem = "\xC6\xAE\xB7\xA6";
+    struct TrapModelPath { int job; const char* suffix; };
+    const TrapModelPath trapModelPaths[] = {
+        { 143, "03_3" }, { 144, "02" }, { 145, "01" }, { 147, "03" },
+        { 148, "03_6" }, { 149, "03_4" }, { 150, "03_5" }, { 151, "03_2" },
+        { 152, "04" }, { 153, "05" },
+    };
+    std::vector<std::pair<int, C3dModelRes*>> models;
+    std::set<std::string> materialNames;
+    for (const TrapModelPath& mapping : trapModelPaths) {
+        const std::string modelPath = "data\\model\\" + modelDirectory + "\\" + modelStem + mapping.suffix + ".rsm";
+        Require(g_fileMgr.IsDataExist(modelPath.c_str()), "bundled trap RSM is not staged: " + modelPath);
+        C3dModelRes* model = g_resMgr.GetAs<C3dModelRes>(modelPath.c_str());
+        Require(model != nullptr && !model->m_objectList.empty() && !model->m_materialNames.empty(),
+            "trap RSM failed to parse its node/material resources: " + modelPath);
+        for (const std::string& materialName : model->m_materialNames) {
+            materialNames.emplace(materialName);
+        }
+        models.emplace_back(mapping.job, model);
     }
+
+    for (const std::string& materialName : materialNames) {
+        const std::string bitmapPath = "data\\texture\\" + materialName;
+        CBitmapRes* bitmap = g_resMgr.GetAs<CBitmapRes>(bitmapPath.c_str());
+        Require(bitmap != nullptr && bitmap->m_data != nullptr && bitmap->m_width > 0 && bitmap->m_height > 0,
+            "trap material BMP failed to load from the bundled texture fixture: " + bitmapPath);
+    }
+
+    std::map<std::string, CTexture*> previousTextureValues;
+    for (const std::string& materialName : materialNames) {
+        const std::string textureCacheKey = "@mk:" + materialName;
+        const auto existing = g_texMgr.m_texTable.find(textureCacheKey.c_str());
+        const auto saved = previousTextureValues.emplace(textureCacheKey,
+            existing == g_texMgr.m_texTable.end() ? nullptr : existing->second).first;
+        if (existing == g_texMgr.m_texTable.end()) {
+            g_texMgr.m_texTable.emplace(saved->first.c_str(), &CTexMgr::s_dummy_texture);
+        } else {
+            existing->second = &CTexMgr::s_dummy_texture;
+        }
+    }
+
+    for (const auto& [job, model] : models) {
+        C3dActor actor;
+        Require(actor.AssignModel(*model), "C3dActor rejected a mapped trap model for job" + std::to_string(job));
+        actor.SetFrame(3);
+        Require(actor.m_node != nullptr && actor.m_curMotion == 3,
+            "trap model actor did not create its node and Ref frame for job" + std::to_string(job));
+    }
+    const auto job143Model = std::find_if(models.begin(), models.end(), [](const auto& entry) { return entry.first == 143; });
+    Require(job143Model != models.end(), "job143 trap model mapping missing from the runtime fixture");
 
     Fixture fixture(path);
     CGameModePacketRouter router;
@@ -1575,12 +1606,18 @@ void ReplayTrapModelResource(const std::string& path)
             }),
         "job143 removal did not destroy its resource-backed skill unit");
 
-    if (previousTexture == g_texMgr.m_texTable.end()) {
-        g_texMgr.m_texTable.erase(textureCacheKey.c_str());
-    } else {
-        previousTexture->second = previousTextureValue;
+    for (const auto& [textureCacheKey, previousTextureValue] : previousTextureValues) {
+        const auto texture = g_texMgr.m_texTable.find(textureCacheKey.c_str());
+        if (previousTextureValue == nullptr) {
+            if (texture != g_texMgr.m_texTable.end()) {
+                g_texMgr.m_texTable.erase(texture);
+            }
+        } else if (texture != g_texMgr.m_texTable.end()) {
+            texture->second = previousTextureValue;
+        }
     }
-    std::cout << "Trap job=143 model=Trap03_3.rsm bitmap=onetyel_copy.bmp attached=1 removed=1\n";
+    std::cout << "Trap models parsed_and_assigned=" << models.size()
+        << " materials_loaded=" << materialNames.size() << " job143_packet_attached=1 removed=1\n";
 }
 
 void ReplayLandMineTriggerLifecycle(const std::string& path)

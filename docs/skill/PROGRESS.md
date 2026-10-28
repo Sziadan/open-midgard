@@ -1768,3 +1768,7 @@ Added `check_skill_unit_model_assets.py` and the `skill_unit_model_asset_check` 
 
 Release build passes and CTest is 102/102 with the all-trap asset audit registered.
 
+## WP4 all trap model parse and assignment
+
+Expanded the resource-backed fixture to stage the trap model directory and its bitmap materials. The runtime replay now loads all ten mapped RSMs, loads each referenced BMP through `CBitmapRes`, and calls production `C3dActor::AssignModel` and `SetFrame(3)` for every model. The existing job143 packet path still verifies `CSkill::ShowModel` attachment parameters and removal. The full Release build passes and CTest is 102/102. The test substitutes cached dummy render textures to avoid graphics-device upload, so it covers parsing, bitmap loading, node assignment, and lifecycle rather than visual raster output.
+
