@@ -3192,3 +3192,7 @@ Between 0x011F Firewall entry and 0x0120 removal, the runner calls real `CSkill:
 ## WP10.8 runtime replay — cast cancel — 2026-10-28
 
 `cast_cancel01b9.tsv` contains the 6-byte `0x01B9` cast-cancel notification for player AID1. Ref `Zc_Dispel` resolves the actor and sends messages84,87,83 in sequence (`Ref/GameModePacket.cpp:10625`). The runtime harness seeds source begin-spell effect7 and magic-target effect49, dispatches through the production router, records exact actor message order, and verifies both pointers and attachment-list entries are cleared. Focused test passes1/1; replay suite passes14/14.
+
+## WP10.8 runtime replay — Sanctuary ground unit — 2026-10-28
+
+`sanctuary_unit_lifecycle.tsv` creates a unit with job131 (`UNT_SANCTUARY`) at cell(10,20), drives `CSkill::OnProcess` once after a nominal 24 ms wait, and removes it with 0x0120. Ref job131 calls `LaunchLoop(319)` (`Ref/Skill.cpp:1287-1698`); runtime trace confirms effect319 on actor AID100 and world-list cleanup. Measured first step was 25 ms. Focused test passes1/1; root replay CTest passes15/15.

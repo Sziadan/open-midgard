@@ -567,8 +567,8 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     Require(packets[1].opcode == 0x0120 && packets[1].bytes.size() == 6,
         "skill-unit removal must use the 6-byte 0x0120 packet");
     const int unitJob = packets[0].bytes[14];
-    Require(unitJob == 126 || unitJob == 127, "unsupported timed skill-unit job");
-    const int expectedLoopEffect = unitJob == 126 ? 315 : 25;
+    Require(unitJob == 126 || unitJob == 127 || unitJob == 131, "unsupported skill-unit replay job");
+    const int expectedLoopEffect = unitJob == 126 ? 315 : (unitJob == 127 ? 25 : 319);
 
     Fixture fixture(path);
     CGameActor* configuredActor = fixture.world.GetGameActorByAID(3);
@@ -621,7 +621,7 @@ void ReplaySkillUnitLifecycle(const std::string& path)
             } else {
                 std::this_thread::sleep_for(std::chrono::milliseconds(24));
                 lifetimeElapsedMs = timeGetTime() - unit->m_SkillStartTime;
-                Require(unit->OnProcess() != 0, "Safety Wall should remain active after the first 24 ms process step");
+                Require(unit->OnProcess() != 0, "persistent skill unit should remain active after its first 24 ms process step");
                 ++processSteps;
             }
         } else {

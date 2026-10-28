@@ -1598,3 +1598,7 @@ Added the WP4 Safety Wall unit job126 packet case. The production 0x011F route c
 ## WP10.8 — Cast-cancel packet replay — 2026-10-28
 
 Added the WP3.4 cast-cancel acceptance packet `0x01B9` for source AID1. The scenario seeds real begin-spell effect7 and magic-target effect49 attachments, dispatches raw bytes through the default router, and confirms the production message trace order84,87,83 and both pointers/list entries cleared. Focused test passes1/1; full packet replay CTest passes14/14.
+
+## WP10.8 — Sanctuary ground-unit loop replay — 2026-10-28
+
+Added the WP4 Sanctuary unit lifecycle for UNT_SANCTUARY job131 via raw 0x011F entry and 0x0120 removal packets. One measured 24 ms step through production CSkill::OnProcess launches Ref loop effect319; the unit is then removed from both world registries. Safety Wall remains green; the full packet replay CTest now passes15/15.
