@@ -304,7 +304,7 @@ case 296: return ProcessEffectFrameLegacy();
 case 297: return UnportedEffect();
 case 298: return ProcessThrowItemEffect();
 case 299: return ProcessThrowItemEffect();
-case 374: return UnportedEffect();
+case 374: return ProcessBasilica();
 case 375: ApplyActorLight(); return true;
 case 376: return ProcessHitLineEffect();
 case 377: return ProcessBash3DEffect();

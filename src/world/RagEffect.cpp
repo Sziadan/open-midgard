@@ -20110,6 +20110,54 @@ bool CRagEffect::ProcessTanji(bool tanji2)
 }
 // TEST_BODY_END tanji_effect_family
 
+// PE HighPriest.exe.c:421033-421035/455352; Ref/dhxj/RagEffect2.cpp:16928.
+// TEST_BODY_BEGIN basilica_effect_family
+bool CRagEffect::ProcessBasilica()
+{
+    CRenderObject* master = m_master;
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return true;
+
+    for (int variant = 0; variant < 2; ++variant) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_RECT_UP2, vector3d{});
+        if (prim == nullptr) continue;
+        prim->m_renderFlag = 1;
+        prim->m_renderFlag |= 5u;
+        prim->m_duration = m_duration;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false));
+        prim->m_size = 0.0f;
+
+        for (int lane = 0; lane < 4; ++lane) {
+            EffectGi& gi = prim->m_gi[lane];
+            gi.life = 1;
+            gi.process = 0;
+            const bool upperProfile = variant != 0;
+            if (lane < 2) {
+                gi.maxHeight = static_cast<float>(static_cast<double>(lane) + (upperProfile ? 20.0 : 30.0));
+                gi.alphaB = upperProfile ? 32 : 65;
+                gi.alphaT = upperProfile ? 2385 : 2415;
+                gi.height[0] = static_cast<float>(static_cast<double>(lane) * 0.40000001
+                    + (upperProfile ? 14.0 : 12.5));
+                gi.height[1] = gi.height[0];
+            } else {
+                gi.maxHeight = static_cast<float>(static_cast<double>(lane) + (upperProfile ? 20.0 : 30.0));
+                gi.distance = static_cast<float>(static_cast<double>(lane - 2) * 53.200001
+                    + (upperProfile ? 26.6 : 0.0));
+                gi.height[0] = upperProfile ? 14.8f : 13.3f;
+                gi.height[1] = gi.height[0];
+                gi.height[3] = 26.6f;
+                gi.alphaB = 15;
+                // PE's strided alphaT store is 2415 for both caller variants.
+                gi.alphaT = 2415;
+            }
+            gi.height[4] = static_cast<float>(variant);
+        }
+    }
+    return true;
+}
+// TEST_BODY_END basilica_effect_family
+
 bool CRagEffect::ProcessEffect599()
 {
     CRenderObject* master = ResolveCurrentMaster();

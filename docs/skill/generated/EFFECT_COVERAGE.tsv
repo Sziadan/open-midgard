@@ -304,7 +304,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 297	OnProcess	PokJuk	unported	OnProcess -> UnportedEffect		-
 298	OnProcess	ThrowItem	routed	OnProcess -> return ProcessThrowItemEffect();	src/world/SkillSpecialEffect.cpp	101
 299	OnProcess	ThrowItem	routed	OnProcess -> return ProcessThrowItemEffect();	src/gamemode/UseSkillEffect.generated.inc	15
-374	OnProcess	Basilica	unported	OnProcess -> UnportedEffect		-
+374	OnProcess	Basilica	routed	OnProcess -> return ProcessBasilica();		577
 375	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
 376	OnProcess	HitLine	routed	OnProcess -> return ProcessHitLineEffect();	src/world/GameActorMsgHandler.cpp	1185
 377	OnProcess	BASH3D	routed	OnProcess -> return ProcessBash3DEffect();	src/world/GameActorMsgHandler.cpp	690

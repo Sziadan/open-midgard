@@ -549,6 +549,7 @@ private:
     bool ProcessLandProtector(int variant);
     bool ProcessBottomVertical(int variant);
     bool ProcessTanji(bool tanji2);
+    bool ProcessBasilica();
     bool ProcessEffect365();
     void SpawnPressure365();
     void SpawnGroundShake365();

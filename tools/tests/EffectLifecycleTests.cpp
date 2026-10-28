@@ -644,6 +644,7 @@ struct CRagEffect : CGameObject {
     bool ProcessLandProtector(int);
     bool ProcessBottomVertical(int);
     bool ProcessTanji(bool);
+    bool ProcessBasilica();
     void ApplyBottomMusic(const char*, int);
     bool ProcessEffect365();
     bool ProcessDemonstration302();
@@ -3818,6 +3819,52 @@ int main()
             effect.ClearPrims(); g_world.UpdateGameObjects();
         }
         g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor; actor.m_pos={12,34,56};
+        CRagEffect effect; effect.m_type=374; effect.m_master=&actor; effect.m_duration=73;
+        effect.m_stateCnt=1; g_texMgr.requests.clear(); waveCalls.clear(); const int draws=rngDraws;
+        effect.ProcessBasilica();
+        check(effect.m_primList.empty()&&effect.m_effectPos.x==12&&effect.m_effectPos.y==34
+            &&effect.m_effectPos.z==56&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "Basilica refreshes master position without emitting before frame zero");
+        actor.m_pos={21,43,65}; effect.m_stateCnt=0; effect.ProcessBasilica();
+        auto primIt=effect.m_primList.begin();
+        CEffectPrim* lower=primIt!=effect.m_primList.end()?*primIt++:nullptr;
+        CEffectPrim* upper=primIt!=effect.m_primList.end()?*primIt:nullptr;
+        bool giOk=lower&&upper;
+        const float lowerHeights[]={12.5f,12.9f,13.3f,13.3f};
+        const float upperHeights[]={14.0f,14.4f,14.8f,14.8f};
+        for(int lane=0;lane<4&&lower&&upper;++lane){
+            const EffectGi& a=lower->m_gi[lane]; const EffectGi& b=upper->m_gi[lane];
+            giOk=giOk&&a.life==1&&b.life==1&&a.process==0&&b.process==0
+                &&a.maxHeight==static_cast<float>(lane+30)&&b.maxHeight==static_cast<float>(lane+20)
+                &&a.height[0]==lowerHeights[lane]&&a.height[1]==lowerHeights[lane]
+                &&b.height[0]==upperHeights[lane]&&b.height[1]==upperHeights[lane]
+                &&a.height[4]==0&&b.height[4]==1;
+            if(lane<2){
+                giOk=giOk&&a.alphaB==65&&a.alphaT==2415&&b.alphaB==32&&b.alphaT==2385;
+            }else{
+                const float lowerDistance=static_cast<float>(static_cast<double>(lane-2)*53.200001);
+                const float upperDistance=static_cast<float>(static_cast<double>(lane-2)*53.200001+26.6);
+                giOk=giOk&&a.distance==lowerDistance&&b.distance==upperDistance
+                    &&a.height[3]==26.6f&&b.height[3]==26.6f
+                    &&a.alphaB==15&&b.alphaB==15&&a.alphaT==2415&&b.alphaT==2415;
+            }
+        }
+        check(effect.m_primList.size()==2&&lower&&upper
+            &&lower->m_type==PP_RECT_UP2&&upper->m_type==PP_RECT_UP2
+            &&lower->m_renderFlag==5&&upper->m_renderFlag==5
+            &&lower->m_duration==73&&upper->m_duration==73&&lower->m_size==0&&upper->m_size==0
+            &&g_texMgr.requests.size()==2&&g_texMgr.requests[0]=="effect\\alpha_down.tga"
+            &&g_texMgr.requests[1]=="effect\\alpha_down.tga"&&waveCalls.empty()&&giOk&&rngDraws==draws
+            &&effect.m_effectPos.x==21&&effect.m_effectPos.y==43&&effect.m_effectPos.z==65,
+            "Basilica emits both ordered PP_RECT_UP2 profiles with exact texture and GI fields");
+        effect.m_stateCnt=1; actor.m_pos={31,53,75}; effect.ProcessBasilica();
+        check(effect.m_primList.size()==2&&effect.m_effectPos.x==31&&effect.m_effectPos.y==53
+            &&effect.m_effectPos.z==75&&g_texMgr.requests.size()==2&&waveCalls.empty()&&rngDraws==draws,
+            "Basilica later states refresh position without repeating either primitive");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
     }
     {
         const int ids[]={277,287,290,292,294};
