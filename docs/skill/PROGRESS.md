@@ -1716,3 +1716,6 @@ Added a handcrafted packetver23 0x0115 sequence with source skill unit AID100 an
 ## WP10.8 — Heal 28 amount thresholds — 2026-10-28
 
 Expanded the 0x011A Heal 28 replay to cover values 199, 200, 2000, and 4000. Production routing now verifies Ref effects7/312/313/325 at the four values and message88's exact amount/color/kind payload. This corrected the plan's earlier threshold wording to match Ref's nested `<200`, `<2000`, `<4000` tests. The four focused checks pass; freshly built Release replay suite passes91/91.
+## WP10.8 — Meteor Storm ground-skill replay — 2026-10-28
+
+Added a raw 18-byte 0x0117 skill83 fixture through production packet framing/router. The special `Am_Groundskill` branch sets action88 and places effect92 at the supplied cell with map terrain height, returning before the generic facing/state path. The fixture verifies client handling of the server-provided cell and does not model server-side random cell selection. Focused replay passes; freshly built Release suite passes92/92.

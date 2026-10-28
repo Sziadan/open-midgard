@@ -254,8 +254,9 @@ void ReplayScenario(const std::string& path)
     const std::vector<u8> bytes = LoadOnePacket(path, expectedOpcode);
     const u16 skillId = static_cast<u16>(bytes[2]) | (static_cast<u16>(bytes[3]) << 8);
     Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 34 || skillId == 46 || skillId == 70
+        || skillId == 83
         || skillId == 89 || skillId == 136 || skillId == 137 || skillId == 271,
-        "runtime replay only has Ref assertions for skills 5, 19, 28, 34, 46, 70, 89, 136, 137, and 271");
+        "runtime replay only has Ref assertions for skills 5, 19, 28, 34, 46, 70, 83, 89, 136, 137, and 271");
     Fixture fixture(path);
 
     CGameModePacketRouter router;
@@ -272,7 +273,7 @@ void ReplayScenario(const std::string& path)
     const u32 replayStartTick = timeGetTime();
 
     const std::size_t expectedTargetWbaCount = skillId == 46 ? 2u
-        : ((skillId == 28 || skillId == 34 || skillId == 70 || skillId == 89 || skillId == 271) ? 0u : (skillId == 136 ? 4u : 1u));
+        : ((skillId == 28 || skillId == 34 || skillId == 70 || skillId == 83 || skillId == 89 || skillId == 271) ? 0u : (skillId == 136 ? 4u : 1u));
     const std::size_t expectedSelfWbaCount = skillId == 136 ? 3u : 0u;
     const std::size_t expectedWbaCount = skillId == 271 ? 1u : expectedTargetWbaCount + expectedSelfWbaCount;
     Require(fixture.target.m_willBeAttackedList.size() == expectedTargetWbaCount,
@@ -514,10 +515,10 @@ void ReplayScenario(const std::string& path)
         }
         Require(foundBlessingEffect, "Blessing 34 success packet did not launch Ref effect42 on target");
         std::cout << "Buff skill=34 effect=42 target=2\n";
-    } else if (skillId == 70 || skillId == 89) {
+    } else if (skillId == 70 || skillId == 83 || skillId == 89) {
         runtimeLog.clear();
         runtimeLog.seekg(0);
-        const int expectedEffect = skillId == 70 ? 83 : 89;
+        const int expectedEffect = skillId == 70 ? 83 : (skillId == 83 ? 92 : 89);
         const std::string expectedPlace = "[REPLAY] PlaceEffect id=" + std::to_string(expectedEffect)
             + " lastTime=";
         bool foundGroundEffect = false;
@@ -532,6 +533,10 @@ void ReplayScenario(const std::string& path)
             }
         }
         Require(foundGroundEffect, "ground-skill packet did not place the Ref-mapped effect at the packet cell and attr height");
+        if (skillId == 83) {
+            Require(fixture.source.m_curAction == 88,
+                "Meteor Storm did not take the Ref action-88 special branch");
+        }
         std::cout << "GroundSkill skill=" << skillId << " effect=" << expectedEffect << " cell=(10,20) pos=(-27.500,7.500,22.500)\n";
     }
 }
