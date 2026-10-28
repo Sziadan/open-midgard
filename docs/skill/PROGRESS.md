@@ -1780,3 +1780,7 @@ The canonical PE cases 105/161/198/443/489/490 share an inline no-op branch that
 
 Ported effect116 from the matching primary Ref and canonical PE helper. State0 plays the PE-resolved water-ball wave relative to the player and launches one three-texture `PP_3DTEXTURE`; later states do no repeated setup and no RNG is consumed. Added the source comparator and production-body lifecycle assertions. Coverage audit: 611 routed / 82 explicit unported / 0 launched-but-unported. Release application build passes, replay CTest passes 102/102, and parity CTest passes 204/204. Next 5C candidate: effect118.
 
+## WP5C effect118 FireIvy — 2026-10-28
+
+Ported effect118 from its matching primary Ref and canonical PE helper. State0 plays the exact PE-resolved wave and launches one `PP_3DTEXTURE` with the source's pattern, duration, movement, render, and bitmap fields; later states do no repeated work and no RNG is consumed. Added a source comparator and production-body lifecycle assertions. Coverage audit: 612 routed / 81 explicit unported / 0 launched-but-unported. Release application build passes, replay CTest passes 102/102, and parity CTest passes 205/205. Next 5C candidate: effect138.
+

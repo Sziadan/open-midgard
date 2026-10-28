@@ -603,6 +603,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect501();
     bool ProcessEffect704();
     bool ProcessWaterBall116();
+    bool ProcessFireIvy118();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -3133,6 +3134,31 @@ int main()
         check(effect.ProcessWaterBall116()&&effect.m_primList.size()==1&&waveCalls.empty()
             &&g_texMgr.requests.empty()&&rngDraws==drawBase,
             "WaterBall later states do not repeat the frame-zero sound or primitive launch");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject listener; listener.m_pos={10,3,20};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=118; effect.m_duration=80; effect.m_effectPos={30,15,50};
+        waveCalls.clear(); g_texMgr.requests.clear(); const int drawBase=rngDraws;
+        check(effect.ProcessFireIvy118()&&effect.m_primList.size()==1,
+            "FireIvy state zero launches one source texture primitive");
+        const CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\wizard_fire_ivy.wav"
+            &&waveCalls[0].x==20&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&waveCalls[0].frameRng==drawBase,
+            "FireIvy plays its exact frame-zero wave relative to the player without RNG");
+        check(prim&&prim->m_duration==80&&prim->m_pattern==0x140&&(prim->m_renderFlag&2)!=0
+            &&prim->m_widthSize==3.5f&&prim->m_heightSize==3.5f
+            &&prim->m_speed3d.y==static_cast<float>(-25.0/80.0)&&prim->m_deltaPos2.y==-5.0f
+            &&prim->m_totalTexture==1&&prim->m_texture.size()==1
+            &&g_texMgr.requests==std::vector<std::string>({"effect\\fire_ivy.bmp"})&&rngDraws==drawBase,
+            "FireIvy preserves its one bitmap, dimensions, velocity and inherited duration");
+        effect.m_stateCnt=1; waveCalls.clear(); g_texMgr.requests.clear();
+        check(effect.ProcessFireIvy118()&&effect.m_primList.size()==1&&waveCalls.empty()
+            &&g_texMgr.requests.empty()&&rngDraws==drawBase,
+            "FireIvy later states do not repeat the frame-zero sound or primitive launch");
         effect.ClearPrims(); g_world.UpdateGameObjects(); g_world.m_player=oldPlayer;
     }
     {

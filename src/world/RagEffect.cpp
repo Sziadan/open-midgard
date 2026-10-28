@@ -27226,3 +27226,31 @@ bool CRagEffect::ProcessWaterBall116()
 }
 
 // TEST_BODY_END waterball116_handler
+
+// Ref/RagEffect.cpp:4190-4228; canonical PE helper 0x600BC0 and OnProcess case118.
+bool CRagEffect::ProcessFireIvy118()
+{
+    if (m_stateCnt != 0) return true;
+
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\wizard_fire_ivy.wav",
+            m_effectPos.x - listener.x, 0.0f, m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+    if (!prim) return true;
+    prim->m_duration = m_duration;
+    prim->m_pattern = 64;
+    prim->m_pattern |= 0x100;
+    prim->m_renderFlag |= 2;
+    prim->m_widthSize = 3.5f;
+    prim->m_heightSize = 3.5f;
+    prim->m_speed3d.y = static_cast<float>(-25.0 / static_cast<double>(prim->m_duration));
+    prim->m_deltaPos2.y = -5.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\fire_ivy.bmp", false));
+    return true;
+}
+
+// TEST_BODY_END fireivy118_handler
