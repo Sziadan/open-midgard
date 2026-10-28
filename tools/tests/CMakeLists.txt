@@ -426,6 +426,7 @@ extract_test_region(casting_update "${effect_source}" casting_update_family)
 extract_body(table_angle "${effect_source}" "int TableAngle(int angle)\n{" "void RotateCornerTowardScreen(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CastingUpdateBody.inc" "int TableAngle(int angle);\n${casting_update}\n${table_angle}")
 extract_body(saint_emitter "${effect_source}" "void CRagEffect::ApplySaintCasting(" "void CRagEffect::ApplyBottomOut(")
+extract_body(couple_casting "${effect_source}" "void CRagEffect::ApplyCoupleCasting(" "void CRagEffect::ApplyHeartCasting(")
 extract_test_region(begin_emitter "${effect_source}" begin_spell_family)
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CastingEmitterBodies.inc" "${saint_emitter}\n${begin_emitter}")
 extract_body(str_only_dispatch "${effect_source}" "std::optional<bool> CRagEffect::ProcessReferenceStrOnly()" "bool CRagEffect::ProcessEffectFrame()")
@@ -466,6 +467,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\nconstexpr
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_467_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_variants468_473_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${sma_emitter}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${couple_casting}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -994,6 +996,8 @@ add_test(NAME effect517_bottom_hermode_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect517_bottom_hermode.py")
 add_test(NAME effect551_sma_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect551_sma.py")
+add_test(NAME effects342_564_couple_casting_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects342_564_couple_casting.py")
 add_test(NAME effect467_beginasura1_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect467_beginasura1.py")
 add_test(NAME effect468_473_beginasura1_source_check
@@ -1032,6 +1036,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_chimto_callers.py
     check_stin_sma_callers.py
     check_effect551_sma.py
+    check_effects342_564_couple_casting.py
     check_shield_boomerang_callers.py
     check_rg_coin_callers.py
     check_grandcross_callers.py

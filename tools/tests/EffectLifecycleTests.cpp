@@ -548,6 +548,7 @@ struct CRagEffect : CGameObject {
     void ApplyBeginCasting(const char*,int,bool);
     void ApplyElementalChangeCasting();
     void ApplySaintCasting(short,const char*,int);
+    void ApplyCoupleCasting(const char*);
     void SpawnBeginSpell();
     void SpawnPoisonHit();
     void SpawnAqua();
@@ -10783,6 +10784,41 @@ int main()
             &&effect.m_effectPos.z==89&&rngDraws==draws+4&&rngCursor==4,
             "SMA later states follow master without repeat emission or RNG");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor,listener; actor.m_pos={32,54,76}; listener.m_pos={2,700,6};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        for(int id:{342,564}) {
+            CRagEffect effect;effect.m_type=id;effect.m_master=&actor;effect.m_duration=100;
+            effect.m_stateCnt=1;effect.m_effectPos={-1,-1,-1};waveCalls.clear();g_texMgr.requests.clear();
+            const int draws=rngDraws;effect.ApplyCoupleCasting("effect\\ring_red.tga");
+            check(effect.m_effectPos.x==32&&effect.m_effectPos.y==54&&effect.m_effectPos.z==76
+                &&effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==draws,
+                "CoupleCasting later state follows master without emission or repeat wave");
+            effect.m_stateCnt=0;effect.ApplyCoupleCasting("effect\\ring_red.tga");
+            check(effect.m_primList.size()==2&&g_texMgr.requests==std::vector<std::string>(2,"effect\\ring_red.tga")
+                &&waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_BeginSpell.wav"
+                &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==70
+                &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+                &&rngDraws==draws&&effect.m_effectPos.x==32&&effect.m_effectPos.y==54&&effect.m_effectPos.z==76,
+                "CoupleCasting state zero emits two red SaintCasting rings and exact relative wave without RNG");
+            if(effect.m_primList.size()==2) {
+                auto it=effect.m_primList.begin();const auto* first=*it++;const auto* second=*it;
+                check(first->m_type==PP_GI_1&&second->m_type==PP_GI_1&&first->m_size==10&&second->m_size==10
+                    &&first->m_duration==100&&second->m_duration==100&&first->m_renderFlag==5&&second->m_renderFlag==5
+                    &&first->m_pos.x==32&&first->m_pos.y==54&&first->m_pos.z==76
+                    &&second->m_pos.x==32&&second->m_pos.y==54&&second->m_pos.z==76
+                    &&first->m_gi[0].alphaB==180&&second->m_gi[0].alphaB==160
+                    &&first->m_gi[0].alphaT==3&&second->m_gi[0].alphaT==3,
+                    "CoupleCasting preserves 45 then 25 ring order, origin and variant-three profile");
+            }
+            actor.m_pos={40,60,80};effect.m_stateCnt=1;effect.ApplyCoupleCasting("effect\\ring_red.tga");
+            check(effect.m_effectPos.x==40&&effect.m_effectPos.y==60&&effect.m_effectPos.z==80
+                &&effect.m_primList.size()==2&&waveCalls.size()==1&&rngDraws==draws,
+                "CoupleCasting refreshes the master position later without repeating its state-zero effects");
+            effect.ClearPrims();g_world.UpdateGameObjects();actor.m_pos={32,54,76};
+        }
+        g_world.m_player=oldPlayer;
     }
     {
         CRenderObject actor, listener; actor.m_pos={30,40,50}; listener.m_pos={5,300,8};
