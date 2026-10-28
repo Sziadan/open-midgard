@@ -590,6 +590,7 @@ struct CRagEffect : CGameObject {
     bool ProcessIntimidate227();
     bool ProcessMagicRod244();
     bool ProcessShieldCharge246();
+    bool ProcessStripEquipment269To272();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
@@ -4802,6 +4803,32 @@ int main()
             &&waveCalls.empty()&&g_texMgr.requests.empty()&&rngDraws==beforeRng,
             "Shield Charge propagates STR completion and emits no sound, particles, textures or RNG");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRenderObject master;master.m_pos={15,20,35};
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        for(int id:{269,270,271,272}) {
+            CRagEffect effect;effect.m_type=id;effect.m_master=&master;effect.m_duration=100;
+            const size_t beforeWaves=waveCalls.size();
+            effect.m_stateCnt=5;
+            check(!effect.ProcessStripEquipment269To272()&&waveCalls.size()==beforeWaves,
+                "Strip equipment produces no cue before state6");
+            effect.m_stateCnt=6;
+            check(!effect.ProcessStripEquipment269To272()&&effect.m_pos.x==15&&effect.m_pos.y==20
+                &&effect.m_pos.z==35&&waveCalls.size()==beforeWaves+1
+                &&waveCalls.back().name=="effect\\"&&waveCalls.back().x==12
+                &&waveCalls.back().y==0&&waveCalls.back().z==30&&waveCalls.back().volume==250
+                &&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+                "Strip equipment copies master and plays its verified state6 wave prefix");
+            check(effect.m_primList.empty(),"Strip equipment does not emit particles");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        check(g_texMgr.requests.empty()&&rngDraws==beforeRng,
+            "Strip equipment has no texture or RNG output");
+        g_world.m_player=oldPlayer;
     }
     {
         CRagEffect effect;

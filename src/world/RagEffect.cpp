@@ -26147,6 +26147,22 @@ bool CRagEffect::ProcessShieldCharge246()
 
 // TEST_BODY_END shieldcharge246_handler
 
+// HighPriest.exe.c:420898-420909; Strip Weapon/Shield/Armor/Helm share this branch.
+bool CRagEffect::ProcessStripEquipment269To272()
+{
+    if (m_stateCnt == 6) {
+        CRenderObject* master=ResolveCurrentMaster();
+        if (master != nullptr) {
+            m_pos=master->m_pos;
+            m_effectPos=m_pos;
+            TryPlaySingleEffectWave(m_pos,"effect\\",0.0f,true);
+        }
+    }
+    return ProcessEZ2STR(0.0f,-80.0f,0.0f);
+}
+
+// TEST_BODY_END strip_equipment269_272_handler
+
 bool CRagEffect::ProcessEffect380()
 {
     CRenderObject* master = ResolveCurrentMaster();

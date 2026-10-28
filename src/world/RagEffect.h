@@ -684,6 +684,7 @@ private:
     bool ProcessShockwave145();
     bool ProcessMagicRod244();
     bool ProcessShieldCharge246();
+    bool ProcessStripEquipment269To272();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
