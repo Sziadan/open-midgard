@@ -22414,6 +22414,7 @@ bool CRagEffect::ProcessBottomVertical(int effectId)
 }
 // TEST_BODY_END bottom_vertical_family
 
+// TEST_BODY_BEGIN bottom_music_family
 void CRagEffect::ApplyBottomMusic(const char* textureName, int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -22425,7 +22426,10 @@ void CRagEffect::ApplyBottomMusic(const char* textureName, int variant)
             existing->m_pos = origin;
         }
     }
-    if (textureName == nullptr || m_stateCnt != 0) {
+    if (m_stateCnt != 0) {
+        return;
+    }
+    if (textureName == nullptr && variant != 2 && variant != 5 && variant != 8) {
         return;
     }
     CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeBottom), vector3d{});
@@ -22436,7 +22440,30 @@ void CRagEffect::ApplyBottomMusic(const char* textureName, int variant)
     prim->m_duration = m_duration;
     prim->m_size = 0.0f;
     prim->m_pos = origin;
-    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    const char* selectedTexture = textureName;
+    if (variant == 2) {
+        const int selector = rand() & 0x80000001;
+        const bool chooseMelodyA = selector == 0
+            || (selector < 0 && ((static_cast<u8>(selector) - 1) | 0xFFFFFFFE) == -1);
+        selectedTexture = chooseMelodyA ? "effect\\melody_a.bmp" : "effect\\melody_b.bmp";
+    } else if (variant == 5) {
+        const int selector = rand() % 3;
+        // PE symbols aEffect_29/_71/_110 all resolve to the same literal `effect\\`.
+        switch (selector) {
+        case 0: selectedTexture = "effect\\"; break;
+        case 1: selectedTexture = "effect\\"; break;
+        default: selectedTexture = "effect\\"; break;
+        }
+    } else if (variant == 8) {
+        static constexpr const char* spellTextures[] = {
+            "effect\\spell_01.bmp", "effect\\spell_02.bmp", "effect\\spell_03.bmp", "effect\\spell_04.bmp",
+            "effect\\spell_05.bmp", "effect\\spell_06.bmp", "effect\\spell_07.bmp", "effect\\spell_08.bmp",
+        };
+        selectedTexture = spellTextures[rand() % 8];
+    }
+    if (selectedTexture == nullptr) return;
+    prim->m_texture.push_back(g_texMgr.GetTexture(selectedTexture, false));
+    for (EffectGi& lane : prim->m_gi) lane.life = 0;
     EffectGi& gi = prim->m_gi[0];
     gi.life = 1;
     gi.process = 0;
@@ -22478,6 +22505,7 @@ void CRagEffect::ApplyBottomMusic(const char* textureName, int variant)
         gi.flag[3] = 6;
     }
 }
+// TEST_BODY_END bottom_music_family
 
 // Ref/RagEffect.cpp:1982-2108: BeginSpell2 through BeginSpell7.
 // TEST_BODY_BEGIN begin_spell_family

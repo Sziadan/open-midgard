@@ -199,6 +199,7 @@ bool TryPlayEffectWaveAt(const vector3d& soundPos, const char* name) {
     return PlayWave(name,soundPos.x-listener.x,soundPos.y-listener.y,soundPos.z-listener.z,250,40,1.0f);
 }
 #include "PrimitiveEnum.inc"
+constexpr int kPrimTypeBottom=PP_BOTTOM;
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
 void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
@@ -642,6 +643,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect440();
     bool ProcessLandProtector(int);
     bool ProcessBottomVertical(int);
+    void ApplyBottomMusic(const char*, int);
     bool ProcessEffect365();
     bool ProcessDemonstration302();
     void SpawnDemonstration302();
@@ -3829,6 +3831,61 @@ int main()
                 &&effect.m_effectPos.z==75&&rngDraws==draws+expectedDraws&&g_texMgr.requests.size()==1,
                 "Bottom_Vertical later frames refresh origin without repeating emitter, resource, or RNG");
             effect.ClearPrims(); g_world.UpdateGameObjects();
+        }
+    }
+    {
+        const char* spellTextures[]={"effect\\spell_01.bmp","effect\\spell_02.bmp","effect\\spell_03.bmp",
+            "effect\\spell_04.bmp","effect\\spell_05.bmp","effect\\spell_06.bmp","effect\\spell_07.bmp","effect\\spell_08.bmp"};
+        const int signedMaskValues[]={0,1,static_cast<int>(0x80000000u),static_cast<int>(0x80000001u)};
+        const int variants[]={2,5,8};
+        CRenderObject actor; actor.m_pos={12,34,56};
+        for (int variantIndex=0; variantIndex<3; ++variantIndex) {
+            const int variant=variants[variantIndex];
+            const int count=variant==2?4:(variant==5?3:8);
+            for (int choice=0; choice<count; ++choice) {
+                CRagEffect effect; effect.m_type=variant==2?281:(variant==5?284:288);
+                effect.m_master=&actor; effect.m_duration=71; effect.m_effectPos={1,2,3};
+                effect.m_stateCnt=1; rngCursor=0;
+                const int drawsBefore= rngDraws;
+                g_texMgr.requests.clear();
+                effect.ApplyBottomMusic(nullptr,variant);
+                check(effect.m_primList.empty()&&effect.m_effectPos.x==12&&effect.m_effectPos.y==34
+                    &&effect.m_effectPos.z==56&&rngDraws==drawsBefore,
+                    "Bottom_Music selected variants follow master before state zero without RNG or emission");
+                effect.m_stateCnt=0;
+                const int selected=variant==2?signedMaskValues[choice]:(variant==5?choice:choice);
+                rngValues={selected,123}; rngCursor=0;
+                const int draws=rngDraws;
+                effect.ApplyBottomMusic(nullptr,variant);
+                CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+                const char* expectedTexture=variant==2
+                    ? ((choice==0||choice==2)?"effect\\melody_a.bmp":"effect\\melody_b.bmp")
+                    : (variant==5?"effect\\":spellTextures[choice]);
+                bool payload=effect.m_primList.size()==1&&prim&&prim->m_type==PP_BOTTOM
+                    &&prim->m_renderFlag==5&&prim->m_duration==71&&prim->m_size==0
+                    &&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture
+                    &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]==expectedTexture
+                    &&prim->m_gi[0].life==1&&prim->m_gi[0].process==0
+                    &&prim->m_gi[0].distance==3&&prim->m_gi[0].height[7]==0
+                    &&prim->m_gi[0].height[8]==0&&prim->m_gi[0].alphaB==200
+                    &&prim->m_gi[0].sparkX==12&&prim->m_gi[0].sparkZ==56
+                    &&prim->m_gi[0].arcBaselineY==28&&prim->m_gi[0].rotStart==123
+                    &&prim->m_gi[0].fullDisplayAngle==45&&prim->m_gi[0].flag[0]==0
+                    &&prim->m_gi[0].flag[2]==(variant==5?4:2)&&rngDraws==draws+2;
+                for(int lane=1;lane<4;++lane) {
+                    const bool musicLane=variant==2;
+                    payload=payload&&prim->m_gi[lane].life==(musicLane?1:0)
+                        &&prim->m_gi[lane].alphaB==(musicLane?0:0);
+                }
+                check(payload,
+                    "Bottom_Music variant 2/5/8 resolves exact PE texture and common primitive payload with selector then angle draws");
+                actor.m_pos={22,44,66}; effect.m_stateCnt=1;
+                effect.ApplyBottomMusic(nullptr,variant);
+                check(effect.m_primList.size()==1&&effect.m_effectPos.x==22&&effect.m_effectPos.y==44
+                    &&effect.m_effectPos.z==66&&rngDraws==draws+2&&g_texMgr.requests.size()==1,
+                    "Bottom_Music later frame refreshes master without repeating selection, angle, or texture lookup");
+                effect.ClearPrims(); g_world.UpdateGameObjects(); actor.m_pos={12,34,56};
+            }
         }
     }
     {

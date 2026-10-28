@@ -1858,3 +1858,8 @@ Ported PE/secondary-Ref `Bottom_LandProtector` behavior for IDs242 and404 with e
 ## WP5C effects277/287/290/292/294 Bottom_Vertical — 2026-10-28
 
 Ported five PE `Bottom_Vertical` callers through one local handler with each exact bitmap and profile. Source comparator checks PE callers, executable strings, secondary Ref helper, and generated routes; lifecycle cases cover all four GI lanes and profile-specific random draws. Primary Ref omits the function; secondary Ref backs the decompilation. Coverage is now 624 routed /69 explicit unported /0 launched-but-unported. Focused lifecycle and source checks pass; Release parity CTest passes 222/222 and the OpenMidgard Release app builds and copies to the local OldRO folder.
+
+
+## WP5C effects281/284/288 Bottom_Music — 2026-10-28
+
+Ported the three randomized Bottom_Music variants through the existing shared emitter. Variant2 preserves the PE signed-bitmask selector; variant5 preserves the exact executable `effect\` prefix (its three symbols alias at VA `0x6F1FF0`) despite the secondary Ref's gem-texture names; variant8 resolves eight exact spell bitmaps. Lifecycle and source checks pass, including ordered selector/rotation draws and one-shot timing. Coverage is now 627 routed /66 explicit unported /0 launched-but-unported. Release parity CTest passes223/223, OpenMidgard Release build succeeds and copies to the local OldRO folder, and replay CTest passes102/102.
