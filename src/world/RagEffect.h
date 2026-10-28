@@ -412,6 +412,7 @@ public:
     const vector3d& TargetPosition() const { return m_deltaPos; }
     void SetGroundHitFlag() { m_flag = 1; }
     void AbsorbPrimDelta(const vector3d& delta) { m_deltaPos = delta; }
+    void SetAction(int action, int motion, int type) { m_effectAction = action; m_effectActionMotion = motion; m_effectActionType = type; }
 
     u8 OnProcess() override;
     void OnActorDeleted(const CGameActor* actor) override;
@@ -668,6 +669,7 @@ private:
     void SpawnSmoke();
     void SpawnDragonSmoke();
     void SpawnLockOn();
+    void SpawnSpearBmr();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -727,6 +729,9 @@ private:
     int m_duration;
     int m_cEndLayer;
     int m_iCurLayer;
+    int m_effectAction = 0;
+    int m_effectActionMotion = 0;
+    int m_effectActionType = 0;
     int m_worldType;
     bool m_loop;
     bool m_isWorldEffect;

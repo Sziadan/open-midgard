@@ -627,3 +627,7 @@ The PE invokes Detecting while the primary Ref caller omits it. Effect119 now ro
 # WP10.3 LockOn secondary Ref variant
 
 `Ref/RagEffect.cpp` and the canonical PE agree on effect60's two PP_3DTEXTURE primitives, shared `effect\\LockOn128.tga` texture and terrain-height-minus2 anchor. The secondary `Ref/dhxj/RagEffect.cpp` contains a divergent later LockOn implementation (three primitives and changed parameters/assets); it is not used as the parity oracle. The local route follows the canonical PE and primary Ref. Live runtime visual acceptance remains open.
+
+# WP10.3 SpearBmr caller and action model
+
+Canonical PE case80 invokes SpearBmr and matches the primary Ref helper, while the available primary Ref caller omits it; the secondary `Ref/dhxj` helper is a divergent variant and is excluded. The current `CRagEffect` port derives from `CGameObject` and has no `CRenderObject::SetAction` renderer interface, unlike the decompiled call site. The port records the same camera-relative action request in effect-local action fields; whether that state has the same visual consequence in the current runtime remains open for live acceptance.

@@ -477,6 +477,8 @@ struct CRagEffect : CGameObject {
     int frames = 0, worldFrames = 0, m_flag = 0;
     vector3d m_deltaPos3;
     float m_roty=0;
+    int setActionCalls=0,lastAction=0,lastActionMotion=0,lastActionType=0;
+    void SetAction(int action,int motion,int type) { ++setActionCalls;lastAction=action;lastActionMotion=motion;lastActionType=type; }
     void SpawnGrimTooth();
     void SpawnGrimToothAtk();
     void ApplySuperAngel(signed char,signed char);
@@ -567,6 +569,7 @@ struct CRagEffect : CGameObject {
     void SpawnSmoke();
     void SpawnDragonSmoke();
     void SpawnLockOn();
+    void SpawnSpearBmr();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5409,6 +5412,40 @@ int main()
             &&effect.m_effectPos.x==23&&effect.m_effectPos.y==10.5f&&effect.m_effectPos.z==51,
             "LockOn continues following its master and updating terrain height without re-emission");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_attr=oldAttr;
+    }
+    {
+        CRenderObject listener;listener.m_pos={2,99,4};CRenderObject master;master.m_roty=45.5f;
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=80;effect.m_master=&master;effect.m_effectPos={10,20,30};
+        effect.m_deltaPos={50,0,0};effect.m_duration=250;waveCalls.clear();g_resMgr.requests.clear();
+        effect.m_stateCnt=2;const int skippedRng=rngDraws;effect.SpawnSpearBmr();
+        check(effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==skippedRng&&effect.setActionCalls==0,
+            "SpearBmr skips non-pulse states without sound, primitive, action change or RNG");
+        auto checkPulse=[&](int state,float alpha){
+            effect.m_stateCnt=state;effect.SpawnSpearBmr();
+            check(effect.m_primList.size()==static_cast<size_t>(state/4+1),"SpearBmr emits exactly one primitive at each four-state pulse");
+            CEffectPrim* prim=effect.m_primList.back();
+            const float expectedAngle=static_cast<float>(std::atan2(40.0,30.0)/3.14159265*180.0);
+            check(prim->m_type==PP_3DPARTICLE&&prim->m_duration==15&&(prim->m_pattern&0x120)==0x120
+                &&prim->m_deltaPos2.x==0&&prim->m_deltaPos2.y==-15&&prim->m_deltaPos2.z==0
+                &&prim->m_alpha==alpha&&prim->m_size==1&&prim->m_animSpeed==1&&prim->m_numSegments==1,
+                "SpearBmr pulse preserves primitive pattern, offset, alpha, size and animation fields");
+            check(std::fabs(prim->m_roty-(180.0f-expectedAngle))<0.001f
+                &&std::fabs(prim->m_longitude+expectedAngle)<0.001f&&std::fabs(prim->m_speed+50.0f/15.0f)<0.001f,
+                "SpearBmr pulse preserves source direction and travel speed");
+            check(prim->UsesReferenceParticle(),"SpearBmr uses the reference particle update family");
+            check(prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC3\xA2.spr"
+                &&prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC3\xA2.act"
+                &&g_resMgr.requests.size()==static_cast<size_t>((state/4+1)*2),
+                "SpearBmr pulse loads the exact CP949 sprite and action resources");
+        };
+        checkPulse(0,0.0f);checkPulse(4,180.0f);checkPulse(8,130.0f);checkPulse(12,80.0f);
+        check(waveCalls.size()==4&&waveCalls[0].name=="effect\\EF_FireBall.wav"
+            &&waveCalls[0].x==8&&waveCalls[0].y==0&&waveCalls[0].z==26
+            &&effect.setActionCalls==4&&effect.lastAction==7&&effect.lastActionMotion==1&&effect.lastActionType==1,
+            "SpearBmr plays its frame pulses at effect-minus-listener X/Z and applies canonical facing action");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+        rngValues.clear();rngCursor=0;
     }
     {
         CRagEffect effect;effect.m_type=212;effect.m_duration=500;

@@ -12490,7 +12490,7 @@ bool CEffectPrim::UsesReferenceParticle() const
         || (m_type == PP_3DPARTICLEORBIT && m_master
             && (m_master->GetEffectType() == 7 || m_master->GetEffectType() == 14 || m_master->GetEffectType() == 71 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 100 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
-            && (m_master->GetEffectType() == 21 || m_master->GetEffectType() == 53 || m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
+            && (m_master->GetEffectType() == 21 || m_master->GetEffectType() == 53 || m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493 || m_master->GetEffectType() == 80
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 212 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622));
 }
 
@@ -25609,3 +25609,51 @@ void SpawnTanjiAirTexture(CGameMode* mode, const vector3d& position)
         spawned->SendMsg(nullptr, 14, reinterpret_cast<msgparam_t>(&position), 0, 0);
     }
 }
+
+void CRagEffect::SpawnSpearBmr()
+{
+    if (m_stateCnt != 0 && m_stateCnt != 4 && m_stateCnt != 8 && m_stateCnt != 12) return;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_FireBall.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+    prim->m_duration = 15;
+    prim->m_pattern |= 0x120;
+    prim->m_deltaPos2 = {0.0f, -15.0f, 0.0f};
+    const double dx = static_cast<double>(m_deltaPos.x) - prim->m_pos.x;
+    const double dz = static_cast<double>(m_deltaPos.z) - prim->m_pos.z;
+    double direction = std::atan2(dx, -dz) / 3.14159265 * 180.0;
+    if (direction < 0.0) direction += 360.0;
+    prim->m_roty = static_cast<float>(direction);
+    prim->m_longitude = -prim->m_roty;
+    prim->m_roty = static_cast<float>(180.0 - prim->m_roty);
+    if (prim->m_roty < 0.0f) prim->m_roty += 360.0f;
+    const double distance = std::sqrt(dx * dx + dz * dz);
+    prim->m_speed = static_cast<float>(-distance / prim->m_duration);
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+    prim->m_size = 1.0f;
+    prim->m_animSpeed = 1;
+    if (m_stateCnt == 4) prim->m_alpha = 180.0f;
+    else if (m_stateCnt == 8) prim->m_alpha = 130.0f;
+    else if (m_stateCnt == 12) prim->m_alpha = 80.0f;
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master && mode && mode->m_view) {
+        double viewDirection = -mode->m_view->GetCameraLongitude() - master->m_roty;
+        while (viewDirection < 0.0) viewDirection += 360.0;
+        while (viewDirection >= 360.0) viewDirection -= 360.0;
+        const int action = viewDirection < 22.5 || viewDirection > 337.5
+            ? 0 : static_cast<int>((viewDirection + 22.5) * 0.02222222222222222);
+        // The local CRagEffect is not a CRenderObject, so preserve this SetAction request as effect state.
+        SetAction(action, 1, 1);
+    }
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\\xC3\xA2.spr",
+        "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC3\xA2.act");
+    prim->m_numSegments = 1;
+    InitReferenceSegments(prim);
+}
+
+// TEST_BODY_END spear_bmr_handler
