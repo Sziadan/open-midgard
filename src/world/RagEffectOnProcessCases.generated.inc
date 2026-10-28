@@ -182,7 +182,7 @@ case 137: return ProcessBottom2Effect137();
 case 138: return UnportedEffect();
 case 140: return ProcessRevive140();
 case 142: return ProcessEffectFrameLegacy();
-case 145: return UnportedEffect();
+case 145: return ProcessShockwave145();
 case 153: return ProcessClipWaveStrEffect();
 case 154: return ProcessClipWaveStrEffect();
 case 155: return ProcessClipWaveStrEffect();

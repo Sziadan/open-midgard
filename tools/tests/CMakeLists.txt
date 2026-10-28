@@ -636,6 +636,8 @@ add_test(NAME maxpower104_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_maxpower104.py")
 add_test(NAME intimidate227_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_intimidate227.py")
+add_test(NAME shockwave145_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_shockwave145.py")
 add_test(NAME prim3dline_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dline.py")
 add_test(NAME prim3dtexturebillboard_source_check

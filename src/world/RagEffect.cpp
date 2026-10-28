@@ -26113,6 +26113,15 @@ bool CRagEffect::ProcessIntimidate227()
 
 // TEST_BODY_END intimidate227_handler
 
+// Ref/RagEffect.cpp:1352-1383; PE OnProcess case145 restarts a completed ShockWave STR.
+bool CRagEffect::ProcessShockwave145()
+{
+    if (!ProcessEZ2STR(0.0f,-80.0f,0.0f)) InitEZ2STRFrame();
+    return true;
+}
+
+// TEST_BODY_END shockwave145_handler
+
 bool CRagEffect::ProcessEffect380()
 {
     CRenderObject* master = ResolveCurrentMaster();
