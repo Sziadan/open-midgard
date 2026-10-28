@@ -3418,3 +3418,7 @@ Primary Ref and canonical PE `CRagEffect::Init` agree on seven adjacent mappings
 ## WP5C effects213/214 STR mappings
 
 Primary Ref and canonical PE `CRagEffect::Init` agree that effect213 maps to `Deffender.str` (`aDeffenderStr`, VA `0x71AAF4`) and effect214 maps to `Keeping.str` (`aKeepingStr`, VA `0x71AAE8`). The local catalog, STR-name table, and routes agree. Both cases use the shared canonical `ProcessEZ2STR(0,-80,0)` caller, and the generic STR lifecycle matrix includes both IDs. `check_effect213_214_str_mappings.py` validates these source mappings, resolved bytes, local tables/routes, caller group, and lifecycle coverage. Their clips are absent, so no media/visual acceptance is claimed.
+
+## WP5C effect199 Pong STR variants
+
+Primary Ref and canonical PE `CRagEffect::Init` both call `rand()` once and select `Pong%d.str` with `v12 % 3 + 1`. The local catalog expresses prefix `Pong`, first variant1, count3; `ResolveCatalogStrName` uses one `rand()%variantCount` draw and formats the same name. The dispatcher routes effect199 through shared STR processing. `check_effect199_pong_str_variants.py` verifies Ref/PE RNG and format, local variant metadata/resolver, and route. This is source/RNG parity only; no Pong clip files or visual acceptance are available.

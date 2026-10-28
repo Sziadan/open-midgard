@@ -1832,3 +1832,7 @@ Verified seven adjacent STR mappings across primary Ref and PE Init, executable 
 ## WP5C effects213/214 STR mappings — 2026-10-28
 
 Verified paired mappings for effect213 (`Deffender.str`, VA `0x71AAF4`) and effect214 (`Keeping.str`, VA `0x71AAE8`) across Ref, PE, executable bytes, local catalog/STR-name table, and routes. Both share the canonical STR caller and are included in generic STR lifecycle coverage. Added and registered `check_effect213_214_str_mappings.py`. Clips are absent, so this checkpoint records source/name and generic lifecycle parity, not visual acceptance. Full parity CTest passes 217/217. Next: continue 5C source-parity audit.
+
+## WP5C effect199 Pong STR variants — 2026-10-28
+
+Verified effect199's dynamic STR selection against primary Ref and PE: one `rand()` draw chooses `Pong1.str` through `Pong3.str`. The local catalog and resolver use the same one-draw variant range and filename format, and its route uses shared STR processing. Added and registered `check_effect199_pong_str_variants.py`. No matching clip files are present, so visual acceptance remains open. Full parity CTest passes 218/218. Next: continue 5C source-parity audit.
