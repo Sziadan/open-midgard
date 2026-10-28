@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from tools.ro_exe_resolve import ExeImage  # noqa: E402
 
+PE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
 RAG = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 DISPATCH = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
@@ -32,10 +33,27 @@ def body(source: str, signature: str) -> str:
     raise AssertionError(f"unterminated function {signature}")
 
 
+def last_body(source: str, signature: str) -> str:
+    matches = list(re.finditer(signature, source))
+    if not matches:
+        raise AssertionError(f"missing function {signature}")
+    opening = source.find("{", matches[-1].end())
+    depth = 0
+    for index in range(opening, len(source)):
+        if source[index] == "{":
+            depth += 1
+        elif source[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[opening + 1:index]
+    raise AssertionError(f"unterminated function {signature}")
+
+
 helper = body(RAG, "bool CRagEffect::ProcessEffectSprite(int spriteVariant)")
 ref_helper = body((ROOT / "Ref/RagEffect2.cpp").read_text(encoding="utf-8", errors="replace"),
                   "void __thiscall CRagEffect::Effect_SPR(CRagEffect *this, char F1)")
 ref_dispatch = body(REF, "unsigned __int8 __thiscall CRagEffect::OnProcess3(CRagEffect *this)")
+pe_dispatch = last_body(PE, r"__thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)")
 
 expected_routes = {
     570: 0, 571: 1, 576: 2, 577: 3, 578: 4, 579: 5, 580: 6, 583: 7,
@@ -51,6 +69,34 @@ for effect_id, variant in expected_routes.items():
     case_value = effect_id
     if not re.search(rf"case\s+0x{case_value:X}:.*?Effect_SPR\(this,\s*{variant}\)", ref_dispatch, re.S):
         raise AssertionError(f"Ref OnProcess3 does not call Effect_SPR({variant}) for {effect_id}")
+
+# Priority 5P source comparison: each fireworks effect reaches the shared
+# Effect_SPR case, whose canonical tail initializes the sprite before sound.
+pe_sprite = last_body(PE, r"void __thiscall CRagEffect::Effect_SPR\(CRagEffect \*this, char F1\)")
+for effect_id, variant in ((682, 32), (683, 33), (684, 34), (685, 35), (686, 36)):
+    case_value = effect_id
+    pe_case = re.search(rf"case\s+0x{case_value:X}:(.*?)(?=case\s+0x[0-9A-F]+:|$)", pe_dispatch, re.S)
+    ref_case = re.search(rf"case\s+0x{case_value:X}:(.*?)(?=case\s+0x[0-9A-F]+:|$)", ref_dispatch, re.S)
+    if pe_case is None or ref_case is None:
+        raise AssertionError(f"effect {effect_id} caller branch is missing from PE or Ref")
+    for label, branch in (("PE", pe_case.group(1)), ("Ref", ref_case.group(1))):
+        if not re.search(rf"Effect_SPR\(this,\s*{variant}\).*?return\s+1", branch, re.S):
+            raise AssertionError(f"{label} effect {effect_id} caller must call variant {variant}, then return")
+    variant_case = re.search(rf"case\s+{variant}:(.*?)(?=case\s+\d+:|LABEL_81:)", pe_sprite, re.S)
+    if variant_case is None:
+        raise AssertionError(f"PE Effect_SPR variant {variant} branch is missing")
+    branch = variant_case.group(1)
+    if ("m_animSpeed = 4" not in branch or "SetSprName" not in branch
+            or "SetActName" not in branch
+            or (variant != 36 and "goto LABEL_81" not in branch)):
+        raise AssertionError(f"PE Effect_SPR variant {variant} setup changed")
+shared_fireworks = re.search(r"LABEL_81:(.*?)(?=LABEL_82:)", pe_sprite, re.S)
+if shared_fireworks is None:
+    raise AssertionError("canonical Effect_SPR shared fireworks tail is missing")
+fireworks_ops = ["SetAction(g_prim, 0, 16, 1)", "PlayWave(aEffectItempokj, 0.0, 0.0, 0.0, 250, 40, 1.0)", "goto LABEL_82"]
+fireworks_positions = [shared_fireworks.group(1).find(token) for token in fireworks_ops]
+if any(position < 0 for position in fireworks_positions) or fireworks_positions != sorted(fireworks_positions):
+    raise AssertionError("PE fireworks action, sound, and segment-init order changed")
 if not re.search(r"case\s+612:\s+return ProcessEffectSpriteAndStr\(\);", DISPATCH):
     raise AssertionError("effect 612 must route through Effect_SPR(14) and its shared STR continuation")
 ref_612 = re.search(r"case\s+0x264:(.*?)(?=case\s+0x265:)", ref_dispatch, re.S)
@@ -90,6 +136,19 @@ for match in re.finditer(r'^\s*\{\s*(\d+)\s*,\s*("(?:\\.|[^"\\])*")\s*,\s*("(?:\
     assets[int(match.group(1))] = (ast.literal_eval(match.group(2)).encode("latin-1"),
                                    ast.literal_eval(match.group(3)).encode("latin-1"))
 image = ExeImage()
+fireworks_wave = image.read_cstring_at(0x7127E8)
+if fireworks_wave is None or fireworks_wave.raw != b"effect\\itempokjuk.wav":
+    raise AssertionError("Effect_SPR fireworks wave bytes at VA 0x7127E8 changed")
+for variant in range(32, 37):
+    row = re.search(rf"\{{\s*{variant}\s*,[^\n]*,\s*4,\s*false,\s*nullptr\s*\}}", helper)
+    if row is None:
+        raise AssertionError(f"local Effect_SPR({variant}) must use speed4, one-shot animation and shared sound")
+resources = helper.find("prim->SetParticleResources(asset.spr, asset.act)")
+sound_branch = helper.find("if (spriteVariant >= 32 && spriteVariant <= 36)")
+sound_call = helper.find('PlayWave("effect\\\\itempokjuk.wav"', sound_branch)
+segment_init = helper.find("InitReferenceSegments(prim)", sound_call)
+if not (0 <= resources < sound_branch < sound_call < segment_init):
+    raise AssertionError("local fireworks must bind resources, play the exact sound, then initialize segments")
 for variant, (spr_va, act_va) in asset_vas.items():
     if variant not in assets:
         raise AssertionError(f"Effect_SPR({variant}) has no local asset entry")
@@ -134,4 +193,4 @@ if effect584_wave != b"effect\\":
 if not re.search(r"case\s+584:\s+callerWave\s*=\s*\"effect\\\\\";\s*callerWaveFrame\s*=\s*5", helper):
     raise AssertionError("effect 584 unresolved aEffect_16 prefix/frame5 cue is missing")
 
-print(f"Effect_SPR source check passed: {len(expected_routes)} caller routes, {len(asset_vas)} PE-backed assets, {len(wave_vas)} PE-backed caller waves; effects 584 and 612 verified")
+print(f"Effect_SPR source check passed: {len(expected_routes)} caller routes, {len(asset_vas)} PE-backed assets, {len(wave_vas)} caller waves; effects 584/612 and 682-686 verified")

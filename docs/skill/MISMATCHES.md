@@ -669,3 +669,7 @@ The canonical PE `CRagEffect::Map_Aura` helper (`HighPriest.exe.c:442490-442574`
 ## WP5C effect651 Map_Particle render flag
 
 The canonical PE helper `CRagEffect::Map_Particle` (`HighPriest.exe.c:442896-442950`) assigns `m_renderFlag = 5`; secondary `Ref/dhxj/RagEffect2.cpp:8977-9046` uses `RF_EFFECT_OM`. Effect651's PE and primary Ref callers both invoke this helper with the same exact texture and parameters. The port follows the executable's render flag5; the secondary helper's alpha/alphaop-OM setting is not applied.
+
+## WP10.3 Effect_SPR fireworks assets 682-686
+
+Canonical PE `CRagEffect::Effect_SPR` variants32-36 load CP949 `이펙트\폭죽_러브`, `폭죽_화이트데이`, `폭죽_발렌타인`, `폭죽_생일`, and `폭죽_크리스마스` sprite/action pairs from VAs `0x71CD7C/0x71CD64` through `0x71CCA8/0x71CC8C`. Secondary `Ref/dhxj/RagEffect2.cpp:25906-25964` names analogous pairs under `misc\...`. The port follows exact PE bytes; the executable-resolved `effect\itempokjuk.wav` is shared by all five variants.

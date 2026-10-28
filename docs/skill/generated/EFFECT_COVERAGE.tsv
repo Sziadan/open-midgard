@@ -670,11 +670,11 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 679	OnProcess3	Level99	routed	OnProcess3 -> return ProcessLevel99Effect();		806
 680	OnProcess3	Level99_2	routed	OnProcess3 -> return ProcessLevel99_2Effect();		886
 681	OnProcess3	EffectTextureSet	unported	OnProcess3 -> UnportedEffect		-
-682	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(32);		661
-683	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(33);		2447
-684	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(34);		548
-685	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(35);		70
-686	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(36);		2296
+682	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(32);		3610
+683	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(33);		3610
+684	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(34);		3610
+685	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(35);		3610
+686	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(36);		3610
 687	OnProcess3	Map_MagicZone	unported	OnProcess3 -> UnportedEffect		-
 688	OnProcess3	Map_MagicZone	unported	OnProcess3 -> UnportedEffect		-
 689	OnProcess3	EffectTextureSet_Animation	routed	OnProcess3 -> return ProcessEffectTextureAnimation();		2451
