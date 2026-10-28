@@ -1646,3 +1646,7 @@ Added lifecycle packet replays for every Ref song unit job158–175. Each unit l
 ## WP10.8 — Gravitation and Ninja unit replays — 2026-10-28
 
 Added WP4 lifecycle replays for Gravitation job184, Suiton job187, and Tatamigaeshi job188. Each 0x011F entry is processed once through production `CSkill::OnProcess`, launching the Ref effects522, 620, and 631 respectively, then removed through 0x0120. The focused group passes3/3 and the full root packet replay CTest passes48/48.
+
+## WP10.8 — Kaen and Ground Drift periodic unit replay batch — 2026-10-28
+
+Added Kaen job189 and Ground Drift jobs190–194. The runner advances each unit through 17 nominal 24 ms production process calls, matching Ref's duration23 minus seven-count threshold, and verifies effects634,638–642 respectively before 0x0120 removal. Focused batch passes6/6; the full root packet replay CTest passes54/54.

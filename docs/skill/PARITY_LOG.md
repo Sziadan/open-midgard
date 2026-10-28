@@ -3240,3 +3240,7 @@ The 18 scenario TSVs send job158–175 entries and removal packets. Ref `CSkill:
 ## WP10.8 runtime replay — Gravitation and Ninja units — 2026-10-28
 
 `gravitation_unit_lifecycle.tsv`, `suiton_unit_lifecycle.tsv`, and `tatamigaeshi_unit_lifecycle.tsv` send unit jobs184, 187, and 188. Ref `CSkill::OnProcess` maps them to loop effects522, 620, and 631 (`Ref/Skill.cpp:1576-1600`); runtime confirms the effect after one nominal 24 ms process call and confirms cleanup from both world lists. Focused and full replay CTest pass48/48.
+
+## WP10.8 runtime replay — Kaen and Ground Drift units — 2026-10-28
+
+The six scenario fixtures send unit jobs189–194, then step real `CSkill::OnProcess` 17 times at nominal 24 ms intervals before 0x0120 removal. Ref maps Kaen189→634 and Ground Drift190–194→638–642, each with duration23 and a seven-count offset (`Ref/Skill.cpp:1600-1652`, duration table entries634 and638–642). Runtime confirms the matching effect for all six jobs. Focused batch passes6/6; full replay CTest passes54/54.

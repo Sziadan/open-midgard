@@ -570,7 +570,8 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     Require(unitJob == 126 || unitJob == 127 || unitJob == 131 || unitJob == 132
             || unitJob == 141 || unitJob == 142 || (unitJob >= 154 && unitJob <= 157)
             || (unitJob >= 158 && unitJob <= 175) || unitJob == 177 || unitJob == 179
-            || unitJob == 180 || unitJob == 183 || unitJob == 184 || unitJob == 187 || unitJob == 188,
+            || unitJob == 180 || unitJob == 183 || unitJob == 184 || unitJob == 187 || unitJob == 188
+            || (unitJob >= 189 && unitJob <= 194),
         "unsupported skill-unit replay job");
     int expectedLoopEffect = 0;
     switch (unitJob) {
@@ -609,6 +610,12 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     case 184: expectedLoopEffect = 522; break;
     case 187: expectedLoopEffect = 620; break;
     case 188: expectedLoopEffect = 631; break;
+    case 189: expectedLoopEffect = 634; break;
+    case 190: expectedLoopEffect = 638; break;
+    case 191: expectedLoopEffect = 639; break;
+    case 192: expectedLoopEffect = 640; break;
+    case 193: expectedLoopEffect = 641; break;
+    case 194: expectedLoopEffect = 642; break;
     default: Require(false, "unsupported skill-unit replay effect mapping");
     }
 
@@ -669,6 +676,13 @@ void ReplaySkillUnitLifecycle(const std::string& path)
                 }
                 Require(processSteps >= 131,
                     "Quagmire unit was not stepped through the Ref periodic effect threshold");
+            } else if (unitJob >= 189 && unitJob <= 194) {
+                for (; processSteps < 17; ++processSteps) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(24));
+                    lifetimeElapsedMs = timeGetTime() - unit->m_SkillStartTime;
+                    Require(unit->OnProcess() != 0,
+                        "Kaen/Ground Drift unit should remain active during periodic effect steps");
+                }
             } else {
                 std::this_thread::sleep_for(std::chrono::milliseconds(24));
                 lifetimeElapsedMs = timeGetTime() - unit->m_SkillStartTime;

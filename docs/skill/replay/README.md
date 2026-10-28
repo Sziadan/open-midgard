@@ -30,6 +30,8 @@ The song unit fixtures cover jobs158–175 (Lullaby through Service for You) and
 
 `gravitation_unit_lifecycle.tsv`, `suiton_unit_lifecycle.tsv`, and `tatamigaeshi_unit_lifecycle.tsv` replay jobs184,187,188 and verify Ref loop effects522,620,631 respectively after one nominal 24 ms process step, followed by `0x0120` removal.
 
+`kaen_unit_lifecycle.tsv` and the five `ground_drift_*_unit_lifecycle.tsv` fixtures replay jobs189–194 and verify periodic effects634,638–642 on the 17th nominal 24 ms process step before `0x0120` removal.
+
 `magnus_unit_lifecycle.tsv` replays unit job132 (`UNT_MAGNUS`), checks its loop effect318 after one nominal 24 ms process step, then removes it with `0x0120`.
 
 `sanctuary_unit_lifecycle.tsv` replays unit job131 (`UNT_SANCTUARY`), calls `CSkill::OnProcess` for one nominal 24 ms step, checks loop effect319, and removes the unit with `0x0120`.
