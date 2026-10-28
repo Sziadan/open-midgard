@@ -446,3 +446,8 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 # WP10.3 RG_COIN effect 274 caller omission (2026-10-28)
 
 - Canonical `HighPriest.exe.c:420921–420937` contains effect 274: state-zero `effect\rog_steal coin.wav`, then 30 `RG_COIN(effect\coin_a.bmp)` calls. The available `Ref/RagEffect.cpp` OnProcess switch has no effect-274/`RG_COIN` caller branch, although the helper itself is present and matches the canonical PE at `HighPriest.exe.c:456482`. The route follows canonical executable behavior; caller parity is established by the executable and the missing Ref branch is retained as a source omission note.
+
+
+# WP10.3 GrandCross caller omissions (2026-10-28)
+
+- Canonical `HighPriest.exe.c:420686–420689` and `:421710–421713` contain effect 226/450 calls to GRANDCROSS then GRANDCROSS2, with F1 0/1 respectively. The available `Ref/RagEffect.cpp` OnProcess switch contains no matching GRANDCROSS caller tokens, while both helper bodies in `Ref/RagEffect2.cpp` match canonical PE. Caller routing follows canonical executable evidence; the missing Ref caller branches are source omissions.

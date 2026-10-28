@@ -18408,6 +18408,90 @@ bool CRagEffect::ProcessRgCoinEffects()
     return true;
 }
 
+// Ref/RagEffect2.cpp:27064-27184; canonical launcher functions at 0x62D930/0x62DBC0.
+void CRagEffect::SpawnGrandCross(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return;
+
+    const bool black = variant != 0;
+    CEffectPrim* grandCross = LaunchEffectPrim(PP_GI_3, vector3d{});
+    if (grandCross == nullptr) return;
+    grandCross->m_renderFlag = 0;
+    grandCross->m_renderFlag |= 1u;
+    grandCross->m_renderFlag |= 5u;
+    grandCross->m_duration = m_duration;
+    grandCross->m_texture.push_back(g_texMgr.GetTexture(
+        black ? "effect\\ring_black.tga" : "effect\\ring_white.tga", false));
+    grandCross->m_size = black ? 12.0f : 1.0f;
+
+    for (size_t lane = 0; lane < grandCross->m_gi.size(); ++lane) {
+        EffectGi& gi = grandCross->m_gi[lane];
+        gi.flag[4] = static_cast<u8>(variant);
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = 90;
+        gi.distance = 120.0f;
+        gi.alphaB = 0;
+        gi.maxHeight = 19.9f;
+        gi.riseAngle = 90;
+    }
+    constexpr int rotation[4] = { 180, 90, 0, 270 };
+    constexpr int flagX[4] = { 23, 23, -23, -23 };
+    constexpr int flagY[4] = { 23, -23, -23, 23 };
+    for (size_t lane = 0; lane < grandCross->m_gi.size(); ++lane) {
+        EffectGi& gi = grandCross->m_gi[lane];
+        gi.rotStart = static_cast<short>(rotation[lane]);
+        gi.flag[0] = static_cast<u8>(flagX[lane]);
+        gi.flag[1] = static_cast<u8>(flagY[lane]);
+    }
+
+    CEffectPrim* grandCross2 = LaunchEffectPrim(PP_GRANDCROSS2, vector3d{});
+    if (grandCross2 == nullptr) return;
+    grandCross2->m_renderFlag = 0;
+    grandCross2->m_renderFlag |= 1u;
+    grandCross2->m_renderFlag |= 5u;
+    grandCross2->m_duration = m_duration;
+    grandCross2->m_texture.push_back(g_texMgr.GetTexture(
+        black ? "effect\\ring_black.tga" : "effect\\ring_yellow.tga", false));
+    grandCross2->m_size = 1.0f;
+    for (size_t lane = 0; lane < 2; ++lane) {
+        EffectGi& gi = grandCross2->m_gi[lane];
+        gi.life = 1;
+        gi.process = 0;
+        gi.distance = 60.0f;
+        gi.rotStart = static_cast<short>(90 * lane);
+        gi.alphaB = 0;
+        gi.maxHeight = 24.0f;
+        gi.height[1] = 3.2f;
+        gi.height[0] = 0.0f;
+        gi.height[2] = 0.0f;
+    }
+    grandCross2->m_gi[2].life = 0;
+    grandCross2->m_gi[3].life = 0;
+}
+
+bool CRagEffect::ProcessGrandCrossEffects()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt == 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\cru_grand cross.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+    }
+    SpawnGrandCross(m_type == 450 ? 1 : 0);
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {

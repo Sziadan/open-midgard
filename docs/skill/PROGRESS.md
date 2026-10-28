@@ -1141,3 +1141,6 @@ ShieldBoomerang verification: Release `open_midgard` build and dist copy succeed
 
 
 RG_COIN verification: Release `open_midgard` build and OldRO copy succeeded; all 112 CTests passed. Coverage audit reports 500 routed / 193 explicit unported / 85 launched-but-unported. The RG_COIN source comparator verifies both helpers against PE, canonical caller order, exact paths, field aliases and bounded post-increment stores. `git diff --check` passes. Next: audit GrandCross/GrandCross2 (226, 450).
+
+
+GrandCross verification: Release `open_midgard` build and OldRO copy succeeded; all 113 CTests passed. Coverage audit reports 502 routed / 191 explicit unported / 83 launched-but-unported. The comparator verifies both Ref/PE launcher bodies, canonical caller order/variants, PE assets and GI alias mapping; `git diff --check` passes. Next: audit LineLink/LineLink2/LineLink3 (232, 384, 395).

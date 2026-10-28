@@ -526,6 +526,8 @@ private:
     bool ProcessShieldBoomerangEffects();
     bool ProcessRgCoinEffects();
     void SpawnRgCoin(const char* textureName, float size, u8 colorMode);
+    bool ProcessGrandCrossEffects();
+    void SpawnGrandCross(int variant);
     void SpawnStin();
     void SpawnStin2(int variant);
     void SpawnSma(int variant);
