@@ -379,7 +379,7 @@ case 449: ApplyBodyLight449(); return true;
 case 450: return ProcessGrandCrossEffects();
 case 451: return UnportedEffect();
 case 452: return UnportedEffect();
-case 453: return UnportedEffect();
+case 453: return ProcessNpcStopEffects();
 case 454: ApplyPairedSaintCasting("effect\\ring_black.tga", 6, true, 0.0f); return true;
 case 455: return ProcessGumGangEffect();
 case 456: return UnportedEffect();

@@ -469,6 +469,10 @@ def write_playwave(image: ExeImage, symbols: SymbolTable, spans, blocked: list[s
 
 def write_effect_handler_index() -> int:
     rows = ["tier\tsource\tcase\thandler\tsourceLine"]
+    # Shared labels/gotos in Ref::OnProcess3 can make the nearest-label
+    # heuristic in dispatch_cases associate NpcStop with unrelated cases.
+    # The canonical executable has exactly these two direct callers.
+    npc_stop_cases = {453, 604}
     for tier, path, expression in (
         ("OnProcess", DECOMPILE_PATH, "v6"),
         ("OnProcess2", REF / "RagEffect.cpp", "this->m_type"),
@@ -477,7 +481,10 @@ def write_effect_handler_index() -> int:
         function = read_function(path, f"CRagEffect::{tier}")
         cases = dispatch_cases(function, expression)
         for case in cases:
-            handlers = ",".join(case.handlers) or "inline"
+            handler_names = [name for name in case.handlers if name != "NpcStop"]
+            if case.id in npc_stop_cases:
+                handler_names.append("NpcStop")
+            handlers = ",".join(dict.fromkeys(handler_names)) or "inline"
             rows.append(f"{tier}\t{path.relative_to(ROOT).as_posix()}\t{case.id}\t{handlers}\t{case.line}")
     (OUT_DOCS / "effect_handler_index.tsv").write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
     return len(rows) - 1

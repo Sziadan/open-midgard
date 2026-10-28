@@ -51,6 +51,7 @@ tools/tests/*
 !tools/tests/check_grandcross_callers.py
 !tools/tests/check_linelink_callers.py
 !tools/tests/check_tripleattack_callers.py
+!tools/tests/check_npcstop_callers.py
 !tools/tests/CMakeLists.txt
 !tools/tests/check_status_state.py
 !tools/tests/check_prim2dflash.py

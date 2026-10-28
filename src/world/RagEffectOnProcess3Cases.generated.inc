@@ -114,7 +114,7 @@ case 599: return UnportedEffect();
 case 600: return ProcessThrowItemEffect();
 case 601: SpawnSight2(); return true;
 case 602: return UnportedEffect();
-case 604: return UnportedEffect();
+case 604: return ProcessNpcStopEffects();
 case 605: return UnportedEffect();
 case 606: return ProcessChimtoEffect(2);
 case 607: return ProcessChimtoEffect(1);

@@ -18639,6 +18639,56 @@ bool CRagEffect::ProcessTripleAttackEffects()
     return true;
 }
 
+// Ref/RagEffect2.cpp:29764; canonical helper at HighPriest.exe.c:460753.
+void CRagEffect::SpawnNpcStop(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_BOTTOMSPR, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag |= 0x200;
+    prim->m_duration = m_duration;
+    prim->m_size = 1.0f;
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.maxHeight = 0.0f;
+    gi.vecBPreX = m_effectPos.x;
+    gi.arcBaselineY = m_effectPos.y - (variant == 2 ? 0.0f : 7.0f);
+    gi.vecBPreZ = m_effectPos.z;
+    gi.flag[4] = 1;
+
+    if (variant == 2) {
+        prim->m_alpha = 100.0f;
+        prim->SetParticleResources("\xBE\xC6\xC0\xCC\xC5\xDB\\cconfine.spr",
+            "\xBE\xC6\xC0\xCC\xC5\xDB\\cconfine.act"); // 0x71CC28 / 0x71CC14
+        prim->m_animSpeed = 12;
+        prim->m_repeatAnim = false;
+        prim->m_pattern = 2048;
+    } else {
+        prim->m_alpha = 200.0f;
+        prim->SetParticleResources("\xBE\xC6\xC0\xCC\xC5\xDB\\\xBD\xBA\xC5\xDC.spr",
+            "\xBE\xC6\xC0\xCC\xC5\xDB\\\xBD\xBA\xC5\xDC.act"); // 0x71CC04 / 0x71CBF4
+        prim->m_animSpeed = 4;
+        prim->m_spriteAction = 0;
+        prim->m_curMotion = 0;
+    }
+    InitReferenceSegments(prim);
+    for (size_t lane = 1; lane < prim->m_gi.size(); ++lane) {
+        prim->m_gi[lane].life = 0;
+    }
+}
+
+bool CRagEffect::ProcessNpcStopEffects()
+{
+    SpawnNpcStop(m_type == 604 ? 2 : 0);
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {
