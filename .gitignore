@@ -95,6 +95,7 @@ tools/tests/*
 !tools/tests/check_colorpaper_render.py
 !tools/tests/check_magnum2_render.py
 !tools/tests/check_aura_render.py
+!tools/tests/check_aura2_render.py
 !tools/tests/check_hitline_caller.py
 !tools/tests/check_hitline4_caller.py
 !tools/tests/check_hitline5_caller.py

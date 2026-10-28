@@ -224,6 +224,7 @@ constexpr float kSubmitNearPlane=80.0f,kNearPlane=10.0f;
 #include "ElectricPathBody.inc"
 #include "Electric2PathBody.inc"
 #include "WindSampleBody.inc"
+#include "Aura2RendererBody.inc"
 #include "AuraRendererBody.inc"
 #include "GrandCross2CornersBody.inc"
 #include "LineLinkGeometryBody.inc"
@@ -281,6 +282,56 @@ int main() {
         airTextureQuadCalls.clear(); Render3DAura(aura,identity);
         check(airTextureQuadCalls.size()==1&&airTextureQuadCalls[0].blend==D3DBLEND_INVSRCALPHA,
             "3DAura size 110 uses inverse-alpha blending");
+    }
+    {
+        CTexture texture; CEffectPrim aura; aura.m_texture={&texture}; aura.m_pos={10,20,30}; aura.m_renderFlag=9;
+        aura.m_gi[0].life=1; aura.m_gi[0].distance=10; aura.m_gi[0].alphaT=0; aura.m_gi[0].flag[12]=0;
+        aura.m_gi[1].alphaT=90; aura.m_gi[0].vecBPreX=1; aura.m_gi[0].arcBaselineY=-10; aura.m_gi[0].vecBPreZ=3;
+        aura.m_gi[0].sparkY=1; aura.m_gi[0].vecTPreY=1; aura.m_gi[0].vecTNowY=1;
+        matrix identity{}; MatrixIdentity(identity);
+        airTextureQuadCalls.clear();
+        Render3DAura2(aura,identity);
+        check(airTextureQuadCalls.size()==2,"Aura2 mode zero submits two white faces for the B-pre group");
+        if(airTextureQuadCalls.size()==2) {
+            const auto& call=airTextureQuadCalls[0];
+            check(near(call.a.x,11.0f)&&near(call.a.y,10.0f)
+                &&near(call.a.z,33.0f)&&call.color==0xFAFFFFFFu
+                &&call.blend==D3DBLEND_ONE&&call.texture==&texture&&call.flags==9,
+                "Aura2 follows canonical PE zero coefficient vertices and adds B-pre and world origins");
+            check(near(call.a.x,call.b.x)&&near(call.a.y,call.b.y)&&near(call.a.z,call.b.z)
+                &&near(call.a.x,call.c.x)&&near(call.a.y,call.c.y)&&near(call.a.z,call.c.z)
+                &&near(call.a.x,call.d.x)&&near(call.a.y,call.d.y)&&near(call.a.z,call.d.z),
+                "Aura2 preserves the canonical PE's collapsed source quad");
+            check(call.u0==0.0f&&call.u1==1.0f&&call.vBottom==1.0f&&call.vTop==0.0f,
+                "Aura2 maps source Ty1/Ty2 to the reversed local V interval");
+        }
+        aura.m_gi[0].flag[12]=1;
+        airTextureQuadCalls.clear(); Render3DAura2(aura,identity);
+        check(airTextureQuadCalls.size()==2&&airTextureQuadCalls[0].color==0xFA5050FFu,
+            "Aura2 mode one duplicates the blue B-pre face");
+        aura.m_gi[0].flag[12]=3;
+        aura.m_gi[0].arcBaselineY=aura.m_gi[0].sparkY=aura.m_gi[0].vecTPreY=aura.m_gi[0].vecTNowY=-1.0f;
+        aura.m_gi[0].vecBPreX=1; aura.m_gi[0].sparkX=2; aura.m_gi[0].vecTPreX=3; aura.m_gi[0].vecTNowX=4;
+        airTextureQuadCalls.clear(); Render3DAura2(aura,identity);
+        check(airTextureQuadCalls.size()==4&&airTextureQuadCalls[0].color==0x32FFFF37u
+            &&near(airTextureQuadCalls[0].a.x,11.0f)&&near(airTextureQuadCalls[1].a.x,12.0f)
+            &&near(airTextureQuadCalls[2].a.x,13.0f)&&near(airTextureQuadCalls[3].a.x,14.0f),
+            "Aura2 mode three emits four visible groups in B-pre/spark/T-pre/T-now order");
+        aura.m_gi[0].flag[12]=10;
+        airTextureQuadCalls.clear(); Render3DAura2(aura,identity);
+        check(airTextureQuadCalls.size()==4&&airTextureQuadCalls[0].color==0x32FFFFFFu
+            &&airTextureQuadCalls[1].color==0x32467864u,
+            "Aura2 mode ten uses the first-group white palette and remaining teal palettes");
+        aura.m_gi[0].flag[12]=11;
+        aura.m_gi[1].alphaT=0; aura.m_gi[0].arcBaselineY=-45.0f;
+        aura.m_gi[0].sparkY=aura.m_gi[0].vecTPreY=aura.m_gi[0].vecTNowY=-1.0f;
+        airTextureQuadCalls.clear(); Render3DAura2(aura,identity);
+        check(airTextureQuadCalls.size()==1&&airTextureQuadCalls[0].color==0x7D9B9B9Bu,
+            "Aura2 mode eleven uses its B-pre-specific -40 fade and gray palette");
+        aura.m_gi[0].flag[12]=0; aura.m_gi[0].arcBaselineY=aura.m_gi[0].sparkY
+            =aura.m_gi[0].vecTPreY=aura.m_gi[0].vecTNowY=1.0f;
+        airTextureQuadCalls.clear(); Render3DAura2(aura,identity);
+        check(airTextureQuadCalls.empty(),"Aura2 skips every group whose first transformed Y is positive");
     }
     {
         CAbleToMakeEffect player;CWorld world;world.m_player=&player;CGameMode mode;mode.m_world=&world;

@@ -6335,6 +6335,78 @@ void UpdateMagnum2Primitive(CEffectPrim* prim)
     }
 }
 
+void Render3DAura2(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    for (EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1) continue;
+
+        // PE p_z is &GI[0].vecBPre.z. The four center vectors, in source
+        // submission order, are vecBPre, spark, vecTPre, and vecTNow.
+        const vector3d centers[4] = {
+            {gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ},
+            {gi.sparkX, gi.sparkY, gi.sparkZ},
+            {gi.vecTPreX, gi.vecTPreY, gi.vecTPreZ},
+            {gi.vecTNowX, gi.vecTNowY, gi.vecTNowZ},
+        };
+        // The canonical PE reads eight `flt_72D4F8`/related coefficient
+        // globals here. The executable image resolves each to 0.0f (BSS or
+        // file-backed zero), and has no stores to them; it therefore collapses
+        // all four radius samples to the local origin. Secondary Ref's fixed
+        // Angle=45 square conflicts with those authoritative PE values.
+        const vector3d base[4] = {};
+
+        const int mode = gi.flag[12];
+        auto alphaFor = [mode](float y, bool firstGroup) {
+            float alpha = 0.0f;
+            if (firstGroup && mode == 11) {
+                alpha = y < -40.0f ? (y + 40.0f) * 25.0f + 250.0f : 250.0f;
+            } else if ((firstGroup && mode <= 1) || (!firstGroup && (mode <= 1 || mode == 11))) {
+                alpha = y < -20.0f ? (y + 20.0f) * 25.0f + 250.0f : 250.0f;
+            } else {
+                alpha = y < -4.0f ? (y + 4.0f) * 15.0f + 50.0f : 50.0f;
+                if (y > -0.5f) alpha = y * -100.0f;
+            }
+            if (alpha < 0.0f) alpha = 0.0f;
+            return static_cast<unsigned int>(static_cast<std::uint8_t>(alpha));
+        };
+        auto submit = [&](int group, unsigned int alpha, unsigned int red, unsigned int green, unsigned int blue) {
+            const unsigned int color = (alpha << 24) | (red << 16) | (green << 8) | blue;
+            vector3d corners[4];
+            for (int corner = 0; corner < 4; ++corner) {
+                corners[corner] = AddVec3(AddVec3(base[corner], centers[group]), prim.m_pos);
+            }
+            SubmitWorldTeiRect(corners[0], corners[1], corners[2], corners[3], viewMatrix,
+                texture, color, 0.0f, 1.0f, 1.0f, 0.0f,
+                D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+        };
+
+        for (int group = 0; group < 4; ++group) {
+            const float y = centers[group].y + base[0].y;
+            if (y > 0.0f) continue;
+            const unsigned int alpha = alphaFor(y, group == 0);
+            if (mode == 0) {
+                submit(group, alpha, 255, 255, 255);
+                submit(group, alpha, 255, 255, 255);
+            } else if (mode == 1) {
+                submit(group, alpha, 80, 80, 255);
+                submit(group, alpha, 80, 80, 255);
+            } else if (group == 0) {
+                switch (mode) {
+                case 3: submit(group, alpha, 255, 255, 55); break;
+                case 10: submit(group, alpha, 255, 255, 255); break;
+                case 11: submit(group, alpha, 155, 155, 155); break;
+                default: submit(group, alpha, 70, 120, 100); break;
+                }
+            } else if (mode == 3) {
+                submit(group, alpha, 255, 255, 55);
+            } else if (mode != 11) {
+                submit(group, alpha, 70, 120, 100);
+            }
+        }
+    }
+}
+
 void Render3DAura(CEffectPrim& prim, const matrix& viewMatrix)
 {
     CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
@@ -13511,6 +13583,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     if (m_type == PP_3DAURA || m_type == PP_MAPMAGICZONE || m_type == PP_GROUNDSHAKE
         || m_type == PP_LANDPROTECTOR || m_type == PP_FOOT) {
         Render3DAura(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_3DAURA_2 || m_type == PP_WATERFALLPARTICLE) {
+        Render3DAura2(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeSaintWing)) {

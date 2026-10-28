@@ -689,3 +689,7 @@ The canonical PE helper sets `m_totalTexture=2`, allocates two pointer slots, an
 ## WP5 effect381 caller evidence
 
 Canonical PE `OnProcess` contains direct effect381 case `HighPriest.exe.c:421106-421115`, with the same `EffectTextureSet(aEffectThunderC,0)` plus 80 `LightSphere(aEffectWhite02B)` calls as effect348. The available primary Ref caller switch has no direct case381. The route follows the canonical PE branch and reuses the verified effect348 local emitter; the Ref case348 branch and shared PE/Ref helper implementations corroborate its payload. `check_effect348.py` asserts the direct PE branch and this Ref omission explicitly. If a Ref build with direct case381 evidence becomes available, revisit the caller comparison.
+
+## WP5 PP_3DAURA_2 / PP_WATERFALLPARTICLE base-corner coefficients
+
+Canonical PE `Render3DAura_2` (`HighPriest.exe.c:444738`, `0x61D090`) multiplies the radius by eight globals at `0x72D4F8`, `0x72C9B0`, `0x72D660`, `0x72CB18`, `0x72D7C8`, `0x72CC80`, `0x72D930`, and `0x72CDE8`. The four file-backed globals contain `0.0f`; the other four lie in zero-filled BSS. Every direct executable xref is a float load, with no direct store or decompiled assignment. The local renderer therefore follows the canonical PE's collapsed four-corner geometry. Secondary `Ref/dhxj/RagEffect2.cpp:10431` instead constructs a square at fixed `Angle=45`, so its geometry disagrees with the primary executable. `check_aura2_render.py` pins the PE image values and asserts the Ref difference; revisit only if a runtime writer for these globals is found.

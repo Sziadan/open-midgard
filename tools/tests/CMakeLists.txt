@@ -373,6 +373,8 @@ extract_body(wind_sample "${effect_source}" "void WindRenderSample(" "void Rende
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WindSampleBody.inc" "${wind_sample}")
 extract_body(aura_renderer "${effect_source}" "void Render3DAura(" "void RenderMagnum2(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/AuraRendererBody.inc" "${aura_renderer}")
+extract_body(aura2_renderer "${effect_source}" "void Render3DAura2(" "void Render3DAura(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/Aura2RendererBody.inc" "${aura2_renderer}")
 extract_body(grand_cross2_corners "${effect_source}" "void GrandCross2Corners(" "void RenderGrandCross2(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/GrandCross2CornersBody.inc" "${grand_cross2_corners}")
 extract_test_region(line_link_geometry "${effect_source}" line_link_render_family)
@@ -798,6 +800,8 @@ add_test(NAME magnum2_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_magnum2_render.py")
 add_test(NAME aura_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_aura_render.py")
+add_test(NAME aura2_render_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_aura2_render.py")
 add_test(NAME hitline_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_hitline_caller.py")
 add_test(NAME hitline4_caller_source_check
@@ -1101,6 +1105,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_colorpaper_render.py
     check_magnum2_render.py
     check_aura_render.py
+    check_aura2_render.py
     check_hitline_caller.py
     check_hitline4_caller.py
     check_hitline5_caller.py
