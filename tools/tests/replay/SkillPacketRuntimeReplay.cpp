@@ -128,8 +128,8 @@ void ReplayScenario(const std::string& path)
     u16 expectedOpcode = 0;
     const std::vector<u8> bytes = LoadOnePacket(path, expectedOpcode);
     const u16 skillId = static_cast<u16>(bytes[2]) | (static_cast<u16>(bytes[3]) << 8);
-    Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 46 || skillId == 136,
-        "runtime replay only has Ref assertions for skills 5, 19, 28, 46, and 136");
+    Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 46 || skillId == 136 || skillId == 271,
+        "runtime replay only has Ref assertions for skills 5, 19, 28, 46, 136, and 271");
     Fixture fixture;
 
     CGameModePacketRouter router;
@@ -145,9 +145,10 @@ void ReplayScenario(const std::string& path)
     Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch skill packet");
     const u32 replayStartTick = timeGetTime();
 
-    const std::size_t expectedTargetWbaCount = skillId == 46 ? 2u : (skillId == 28 ? 0u : (skillId == 136 ? 4u : 1u));
+    const std::size_t expectedTargetWbaCount = skillId == 46 ? 2u
+        : ((skillId == 28 || skillId == 271) ? 0u : (skillId == 136 ? 4u : 1u));
     const std::size_t expectedSelfWbaCount = skillId == 136 ? 3u : 0u;
-    const std::size_t expectedWbaCount = expectedTargetWbaCount + expectedSelfWbaCount;
+    const std::size_t expectedWbaCount = skillId == 271 ? 1u : expectedTargetWbaCount + expectedSelfWbaCount;
     Require(fixture.target.m_willBeAttackedList.size() == expectedTargetWbaCount,
         "skill packet enqueued an unexpected number of target WBAs");
     Require(fixture.source.m_willBeAttackedList.size() == expectedSelfWbaCount,
@@ -190,6 +191,8 @@ void ReplayScenario(const std::string& path)
             && queuedHits[2].time - queuedHits[1].time == 200
             && queuedHits[3].time - queuedHits[2].time == 200,
             "Sonic Blow target hit intervals differ from executable doubleAttackTerm");
+    } else if (skillId == 271) {
+        Require(queuedHits.empty(), "Asura Strike must dispatch its hit immediately instead of enqueuing a WBA");
     }
 
     std::vector<u32> expectedDelays;
@@ -296,9 +299,10 @@ void ReplayScenario(const std::string& path)
     Require(wbaEvents.size() == expectedWbaCount, "runtime log has an unexpected number of WBA events");
     for (std::size_t index = 0; index < wbaEvents.size(); ++index) {
         const WbaLogEntry& event = wbaEvents[index];
+        const int expectedDamage = skillId == 271 ? 1000 : 100;
         const char* expectedWave = event.message == 108 ? "(none)"
             : (skillId == 5 ? "_enemy_hit_normal2.wav" : "player_clothes.wav");
-        Require(event.skill == skillId && event.damage == 100 && event.level == 5
+        Require(event.skill == skillId && event.damage == expectedDamage && event.level == 5
             && event.wave == expectedWave,
             "production WBA log skill/damage/level/wave differs from Ref walk-through");
         if (skillId == 5) {
@@ -315,6 +319,9 @@ void ReplayScenario(const std::string& path)
                 Require(event.message == 111 && event.effect2 == 122,
                     "Sonic Blow target WBA runtime trace differs from Ref");
             }
+        } else if (skillId == 271) {
+            Require(event.message == 39 && event.effect1 == 0 && event.effect2 == -1,
+                "Asura Strike immediate WBA differs from Ref action-4 path");
         } else if (index == 0) {
             Require(event.message == 111 && event.effect1 == 0 && event.effect2 == 1,
                 "Double Strafe first production WBA log differs from Ref walk-through");
@@ -323,7 +330,9 @@ void ReplayScenario(const std::string& path)
                 "Double Strafe second production WBA log differs from Ref walk-through");
         }
         u32 deliveredElapsedMs = 0;
-        if (event.message == 108) {
+        if (skillId == 271) {
+            Require(event.delivery != 0, "Asura Strike runtime WBA log has no scheduled motion timestamp");
+        } else if (event.message == 108) {
             const std::size_t selfIndex = static_cast<std::size_t>(std::count_if(wbaEvents.begin(),
                 wbaEvents.begin() + static_cast<std::ptrdiff_t>(index),
                 [](const WbaLogEntry& previous) { return previous.message == 108; }));

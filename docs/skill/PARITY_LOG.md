@@ -3141,3 +3141,12 @@ Effect74 now routes through `ProcessIceWall74`, matching the complete PE and Ref
 **Replay:** The fixture drains both source and target queues using nominal 24 ms world polls. WBA tracing records message108 dispatches before their animation-only `SendMsg` route, while target hits log their delivered wave. The harness verifies target/self queue counts, hit fields, fourth-hit effect change, 200 ms spacing, runtime timestamps, and polling-step delivery windows.
 
 **Evidence:** Runtime output records four target WBAs and three source WBAs. Target hits use `player_clothes.wav`; source animation-only entries have no wave. The focused Sonic Blow CTest passes1/1. No WP8 matrix row is verified. Next: Asura Strike271.
+
+
+## WP10.8 — Production-linked Asura Strike packet replay — 2026-10-28
+
+**Packet and Ref walk-through:** `docs/skill/replay/asura_strike271.tsv` encodes a 31-byte `0x0114` packet for skill271, damage1000, level5, division1 and action4. The Ref action4 route constructs a message39 WBA, immediately dispatches it through the target's message93 handler, and sets the attacker to state2. This presents the hit immediately while retaining the scheduled motion timestamp in the WBA.
+
+**Replay:** The fixture dispatches through the default router and expects no queued target WBA, one immediate WBA log event, the attacker state2 trace, and the target's default job wave.
+
+**Evidence:** Runtime output matches `msg=39 skill=271 effect=0/−1 wave=player_clothes.wav damage=1000 level=5`; the source transitions to state2. Focused Asura CTest passes1/1. No WP8 matrix row is verified. Next: Grimtooth137.
