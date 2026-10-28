@@ -63,9 +63,7 @@ for token in source_anchors:
 impl_body = body(IMPLEMENTATION, "void HandleDevotionList(")
 implementation_anchors = [
     "!g_session.m_isEffectOn",
-    "devoterAid == g_session.m_aid",
-    "mode.m_world ? mode.m_world->m_player : nullptr",
-    "mode.m_world->GetGameActorByAID(devoterAid)",
+    "ResolveSkillPacketActor(mode, devoterAid)",
     "if (devoter)",
     "for (int index = 0; index < 5; ++index)",
     "devoter->SendMsg(nullptr, 109, 232, 0, 0)",

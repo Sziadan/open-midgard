@@ -26,6 +26,7 @@ public:
 
 class CWorld {
 public:
+    CGameActor* m_player = nullptr;
     std::unordered_map<u32, CGameActor*> actors;
 
     CGameActor* GetGameActorByAID(u32 aid)
@@ -34,6 +35,9 @@ public:
         return found == actors.end() ? nullptr : found->second;
     }
 };
+
+struct CSession { u32 m_aid = 0; };
+CSession g_session;
 
 class CGameMode {
 public:

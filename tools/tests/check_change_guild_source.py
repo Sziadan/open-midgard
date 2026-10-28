@@ -42,7 +42,7 @@ assert "*(_DWORD *)(buf + 6)" in exe_handler
 assert "*((__int16 *)buf + 5)" in exe_handler
 current_handler = body_between(impl_packet, "void HandleChangeGuild(CGameMode& mode, const PacketView& packet)", "void DecodePosDir(")
 assert "packet.packetLength < 12" in current_handler
-assert "GetGameActorByAID(ReadLE32(packet.data + 2))" in current_handler
+assert "ResolveSkillPacketActor(mode, ReadLE32(packet.data + 2))" in current_handler
 assert "ReadLE32(packet.data + 6)" in current_handler
 assert "static_cast<s16>(ReadLE16(packet.data + 10))" in current_handler
 assert "router.Register(0x01B4, HandleChangeGuild);" in impl_packet

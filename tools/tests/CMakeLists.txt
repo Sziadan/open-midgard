@@ -44,6 +44,8 @@ add_test(NAME wave_math_checks COMMAND wave_math_checks)
 # Compile the production packet/update bodies against silent test doubles.
 # This exercises their actual control flow without creating a game or device.
 file(READ "../../src/gamemode/GameModePacket.cpp" packet_source)
+extract_body(skill_packet_actor_lookup "${packet_source}" "CGameActor* ResolveSkillPacketActor(CGameMode& mode, u32 aid)" "CSkill* ResolveSkillPacketUnit(CGameMode& mode, u32 aid)")
+extract_body(skill_packet_unit_lookup "${packet_source}" "CSkill* ResolveSkillPacketUnit(CGameMode& mode, u32 aid)" "void HandleNotifyEffect(")
 extract_test_region(sound_body "${packet_source}" server_sound_packet_family)
 file(READ "../../src/gamemode/GameMode.cpp" mode_source)
 extract_body(ambient_sound_body "${mode_source}" "struct AmbientSoundTrigger {" "float g_savedOutdoorCameraLatitude")
@@ -57,7 +59,7 @@ target_compile_features(actor_tint_checks PRIVATE cxx_std_17)
 target_include_directories(actor_tint_checks PRIVATE "../../src")
 add_test(NAME actor_tint_checks COMMAND actor_tint_checks)
 extract_body(update_body "${mode_source}" "void CGameMode::ProcessPlayWave()" "void CGameMode::PlaceEffect(")
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/SoundBodies.inc" "${sound_body}\n${update_body}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/SoundBodies.inc" "${skill_packet_actor_lookup}\n${sound_body}\n${update_body}")
 file(READ "../../src/session/Session.cpp" session_source)
 extract_body(combo_body "${session_source}" "u32 CSession::GetForceAnimEndTick(" "// Ref CSession::GetWeaponType")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ComboBodies.inc" "${combo_body}")
@@ -94,14 +96,14 @@ add_test(NAME skill_message_checks COMMAND skill_message_checks)
 file(READ "../../src/gamemode/GameModePacket.cpp" notify_effect3_source)
 extract_body(effect_status_rng "${notify_effect3_source}" "void AdvanceEffectStatusRandomState()" "void HandleNotifyEffect3(")
 extract_body(notify_effect3_handler "${notify_effect3_source}" "void HandleNotifyEffect3(CGameMode& mode, const PacketView& packet)" "void HandleSkillCastCancel(")
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/NotifyEffect3Body.inc" "${effect_status_rng}\n${notify_effect3_handler}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/NotifyEffect3Body.inc" "${skill_packet_actor_lookup}\n${effect_status_rng}\n${notify_effect3_handler}")
 add_executable(notify_effect3_checks NotifyEffect3Tests.cpp)
 target_compile_features(notify_effect3_checks PRIVATE cxx_std_17)
 target_include_directories(notify_effect3_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 add_test(NAME notify_effect3_checks COMMAND notify_effect3_checks)
 file(READ "../../src/gamemode/GameModePacket.cpp" talkbox_source)
 extract_body(talkbox_chat_contents "${talkbox_source}" "void HandleTalkboxChatContents(CGameMode& mode, const PacketView& packet)" "void HandleChangeGuild(")
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/TalkboxChatContentsBody.inc" "${talkbox_chat_contents}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/TalkboxChatContentsBody.inc" "${skill_packet_unit_lookup}\n${talkbox_chat_contents}")
 add_executable(talkbox_chat_contents_checks TalkboxChatContentsTests.cpp)
 target_compile_features(talkbox_chat_contents_checks PRIVATE cxx_std_17)
 target_include_directories(talkbox_chat_contents_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
@@ -119,7 +121,7 @@ extract_body(set_guild_info "${guild_actor_source}" "void CGameActor::SetGuildIn
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/SetGuildInfoBody.inc" "${set_guild_info}")
 file(READ "../../src/gamemode/GameModePacket.cpp" guild_packet_source)
 extract_body(change_guild_packet "${guild_packet_source}" "void HandleChangeGuild(CGameMode& mode, const PacketView& packet)" "namespace {\n\nconstexpr const char* kGuildSkillIdNames[16]")
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ChangeGuildPacketBody.inc" "${change_guild_packet}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ChangeGuildPacketBody.inc" "${skill_packet_actor_lookup}\n${change_guild_packet}")
 add_executable(change_guild_checks ChangeGuildTests.cpp)
 target_compile_features(change_guild_checks PRIVATE cxx_std_17)
 target_include_directories(change_guild_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
@@ -866,6 +868,8 @@ add_test(NAME skill_cast_cancel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_cancel_source.py")
 add_test(NAME status_state_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_status_state.py")
+add_test(NAME skill_packet_actor_lookup_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_packet_actor_lookup.py")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/gamemode/GameModePacket.cpp
     ../../HighPriest.exe
@@ -923,6 +927,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_soulbreaker2_caller.py
     check_peong_callers.py
     check_begin_asura_callers.py
+    check_skill_packet_actor_lookup.py
     check_energy_drain_callers.py
     check_portal_wind_caller.py
     check_blur_callers.py

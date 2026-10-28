@@ -81,7 +81,7 @@ def main() -> None:
     for branch in source_branches:
         assert branch in ref, f"Ref cast-ack branch missing: {branch}"
     current_branches = [
-        "actorId == g_session.m_aid", "if (sourceActor == nullptr)",
+        "if (sourceActor == nullptr)",
         "skillId == 62 || skillId == 57", "IsMonsterSkillActor(sourceActor)",
         "if (dstGid != 0)", "targetActor != sourceActor", "skillId == 490",
         "else if (mode.m_world != nullptr)", "skillId == 401", "skillId == 268",
@@ -92,8 +92,7 @@ def main() -> None:
 
     # Source does lookup only. Assert both current endpoint resolutions do too,
     # preventing this packet from creating or upcasting actors.
-    assert "findExistingActor(srcGid)" in current and "findExistingActor(dstGid)" in current
-    assert "mode.m_world->GetGameActorByAID(actorId)" in current
+    assert "ResolveSkillPacketActor(mode, srcGid)" in current and "ResolveSkillPacketActor(mode, dstGid)" in current
     assert "ResolveCombatActor" not in current and "EnsureRuntimeActor" not in current
     ordered(current, [
         "sourceActor->SetState(motionType)", "sourceActor->SendMsg(sourceActor, 85",

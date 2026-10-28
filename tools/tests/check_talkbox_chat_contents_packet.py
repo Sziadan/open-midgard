@@ -41,7 +41,7 @@ assert "case 401:" in ref and "CWorld::GetSkillByAID(this->m_world, *(unsigned i
 assert re.search(r"^0x0191,86\s*$", packet_db, re.M)
 
 assert "packet.packetLength < 86" in impl_body
-assert "mode.m_world->GetSkillByAID(ReadLE32(packet.data + 2))" in impl_body
+assert "ResolveSkillPacketUnit(mode, ReadLE32(packet.data + 2))" in impl_body
 assert "skill->SendMsg(skill, 7, reinterpret_cast<msgparam_t>(packet.data + 6), 0, 0)" in impl_body
 assert "router.Register(0x0191, HandleTalkboxChatContents);" in impl
 

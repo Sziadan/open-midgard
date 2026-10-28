@@ -101,7 +101,7 @@ def main() -> None:
     assert "RememberVisibleTrap(mode, unitAid, creatorAid, visible)" in current_basic
     assert "PlaceSkillUnit(mode, unitAid, creatorAid, job, cellX, cellY, visible)" in current_basic
     assert "job < 0x2D" in placement and "SendMsg(skill, 45" in placement
-    assert "GetSkillByAID(unitAid)" in placement and "mode.m_world->m_gameObjectList.push_back(skill)" in placement
+    assert "ResolveSkillPacketUnit(mode, unitAid)" in placement and "mode.m_world->m_gameObjectList.push_back(skill)" in placement
     assert "mode.m_world->m_skillList.push_back(skill)" in placement
     assert "creatorAid == g_session.m_aid || traps.empty()" in visibility
     assert "if (*it == unitAid)" in visibility and "traps.erase(it)" in visibility and "visible = 0" in visibility

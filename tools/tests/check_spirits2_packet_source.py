@@ -73,9 +73,7 @@ impl_body = body(IMPLEMENTATION, "void HandleSpirits2(")
 assert "const int job = actor->m_job;" in impl_body
 implementation_anchors = [
     "!g_session.m_isEffectOn",
-    "aid == g_session.m_aid",
-    "mode.m_world ? mode.m_world->m_player : nullptr",
-    "mode.m_world->GetGameActorByAID(aid)",
+    "ResolveSkillPacketActor(mode, aid)",
     "if (!actor)",
     "job == 4038 ? 504 : (job == 24 ? 629 : 228)",
     "if (hidden)",

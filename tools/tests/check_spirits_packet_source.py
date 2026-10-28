@@ -82,9 +82,7 @@ impl_body = body(IMPLEMENTATION, "void HandleSpirits(")
 assert "const int job = actor->m_job;" in impl_body
 implementation_checks = [
     ("Effect toggle gate", "!g_session.m_isEffectOn"),
-    ("Self AID resolves to local player; otherwise resolve actor by AID", "aid == g_session.m_aid"),
-    ("Self branch selects world player", "mode.m_world ? mode.m_world->m_player : nullptr"),
-    ("Non-self branch looks actor up by AID", "mode.m_world->GetGameActorByAID(aid)"),
+    ("Resolve actor through the shared Ref-shaped AID lookup", "ResolveSkillPacketActor(mode, aid)"),
     ("Null actor returns without effect work", "if (!actor)"),
     ("Job mapping 4038 -> 504, 24 -> 629, otherwise 228", "job == 4038 ? 504 : (job == 24 ? 629 : 228)"),
     ("Initial actor message 109 uses null sender", "actor->SendMsg(nullptr, 109, effectId, 0, 0)"),

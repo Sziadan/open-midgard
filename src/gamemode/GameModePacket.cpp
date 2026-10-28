@@ -596,21 +596,20 @@ void SyncSessionAppearanceToLocalPlayer(CGameMode& mode)
     }
 }
 
-CGameActor* ResolveNotifyEffectActor(CGameMode& mode, u32 actorId)
+CGameActor* ResolveSkillPacketActor(CGameMode& mode, u32 aid)
 {
-    if (mode.m_world && mode.m_world->m_player) {
-        CPlayer* player = mode.m_world->m_player;
-        if (actorId == g_session.m_aid || actorId == g_session.m_gid || actorId == player->m_gid) {
-            return player;
-        }
+    if (mode.m_world == nullptr) {
+        return nullptr;
     }
-
-    const auto it = mode.m_runtimeActors.find(actorId);
-    if (it != mode.m_runtimeActors.end()) {
-        return it->second;
+    if (aid == g_session.m_aid) {
+        return mode.m_world->m_player;
     }
+    return mode.m_world->GetGameActorByAID(aid);
+}
 
-    return nullptr;
+CSkill* ResolveSkillPacketUnit(CGameMode& mode, u32 aid)
+{
+    return mode.m_world ? mode.m_world->GetSkillByAID(aid) : nullptr;
 }
 
 void HandleNotifyEffect(CGameMode& mode, const PacketView& packet)
@@ -625,7 +624,7 @@ void HandleNotifyEffect(CGameMode& mode, const PacketView& packet)
 
     const u32 actorId = ReadLE32(packet.data + 2);
     const u32 effectType = ReadLE32(packet.data + 6);
-    CGameActor* actor = ResolveNotifyEffectActor(mode, actorId);
+    CGameActor* actor = ResolveSkillPacketActor(mode, actorId);
     if (!actor) {
         DbgLog("[GameMode] notify effect unresolved actor=%u type=%u\n",
             static_cast<unsigned int>(actorId),
@@ -690,7 +689,7 @@ void HandleNotifyEffect2(CGameMode& mode, const PacketView& packet)
 
     const u32 actorId = ReadLE32(packet.data + 2);
     const u32 effectId = ReadLE32(packet.data + 6);
-    CGameActor* actor = ResolveNotifyEffectActor(mode, actorId);
+    CGameActor* actor = ResolveSkillPacketActor(mode, actorId);
     if (!actor) {
         DbgLog("[GameMode] notify effect2 unresolved actor=%u effect=%u\n",
             static_cast<unsigned int>(actorId),
@@ -717,12 +716,7 @@ void HandleSpirits(CGameMode& mode, const PacketView& packet)
     }
 
     const u32 aid = ReadLE32(packet.data + 2);
-    CGameActor* actor = nullptr;
-    if (aid == g_session.m_aid) {
-        actor = mode.m_world ? mode.m_world->m_player : nullptr;
-    } else if (mode.m_world) {
-        actor = mode.m_world->GetGameActorByAID(aid);
-    }
+    CGameActor* actor = ResolveSkillPacketActor(mode, aid);
     if (!actor) {
         return;
     }
@@ -760,12 +754,7 @@ void HandleSpirits2(CGameMode& mode, const PacketView& packet)
     }
 
     const u32 aid = ReadLE32(packet.data + 2);
-    CGameActor* actor = nullptr;
-    if (aid == g_session.m_aid) {
-        actor = mode.m_world ? mode.m_world->m_player : nullptr;
-    } else if (mode.m_world) {
-        actor = mode.m_world->GetGameActorByAID(aid);
-    }
+    CGameActor* actor = ResolveSkillPacketActor(mode, aid);
     if (!actor) {
         return;
     }
@@ -799,12 +788,7 @@ void HandleDevotionList(CGameMode& mode, const PacketView& packet)
     }
 
     const u32 devoterAid = ReadLE32(packet.data + 2);
-    CGameActor* devoter = nullptr;
-    if (devoterAid == g_session.m_aid) {
-        devoter = mode.m_world ? mode.m_world->m_player : nullptr;
-    } else if (mode.m_world) {
-        devoter = mode.m_world->GetGameActorByAID(devoterAid);
-    }
+    CGameActor* devoter = ResolveSkillPacketActor(mode, devoterAid);
 
     if (devoter) {
         for (int index = 0; index < 5; ++index) {
@@ -874,9 +858,7 @@ void HandleNotifyEffect3(CGameMode& mode, const PacketView& packet)
     const u32 actorId = ReadLE32(packet.data + 2);
     const u32 effectId = ReadLE32(packet.data + 6);
     const u32 value = ReadLE32(packet.data + 10);
-    CGameActor* actor = actorId == g_session.m_aid
-        ? static_cast<CGameActor*>(mode.m_world->m_player)
-        : mode.m_world->GetGameActorByAID(actorId);
+    CGameActor* actor = ResolveSkillPacketActor(mode, actorId);
     if (!actor) {
         return;
     }
@@ -940,15 +922,7 @@ void HandleSkillCastCancel(CGameMode& mode, const PacketView& packet)
     }
 
     const u32 actorId = ReadLE32(packet.data + 2);
-    CGameActor* actor = actorId == g_session.m_aid
-        ? mode.m_world->m_player
-        : mode.m_world->GetGameActorByAID(actorId);
-    if (actor == nullptr) {
-        const auto runtimeActor = mode.m_runtimeActors.find(actorId);
-        if (runtimeActor != mode.m_runtimeActors.end()) {
-            actor = runtimeActor->second;
-        }
-    }
+    CGameActor* actor = ResolveSkillPacketActor(mode, actorId);
     if (actor == nullptr) {
         return;
     }
@@ -975,7 +949,7 @@ void HandleSound(CGameMode& mode, const PacketView& packet)
     const u8 action = packet.data[26];
     const u32 aid = ReadLE32(packet.data + 31);
     if (action == 0) {
-        CGameActor* actor = mode.m_world ? mode.m_world->GetGameActorByAID(aid) : nullptr;
+        CGameActor* actor = ResolveSkillPacketActor(mode, aid);
         if (actor && mode.m_world->m_player) {
             const vector3d& player = mode.m_world->m_player->m_pos;
             // The reference sound packet uses player - actor, with y = 0.
@@ -1009,8 +983,7 @@ void HandleComboDelay(CGameMode& mode, const PacketView& packet)
     const u32 aid = ReadLE32(packet.data + 2);
     const u32 tick = ReadLE32(packet.data + 6);
     g_session.SetForceAnimEndTick(aid, tick);
-    CGameActor* actor = mode.m_world ? (aid == g_session.m_aid
-        ? mode.m_world->m_player : mode.m_world->GetGameActorByAID(aid)) : nullptr;
+    CGameActor* actor = ResolveSkillPacketActor(mode, aid);
     if (actor) {
         actor->SetForceAnimEndTick(tick);
     }
@@ -1022,9 +995,7 @@ void HandleBladeStop(CGameMode& mode, const PacketView& packet)
     if (!packet.data || packet.packetLength < 14 || !mode.m_world) {
         return;
     }
-    auto actorByAid = [&](u32 aid) -> CGameActor* {
-        return aid == g_session.m_aid ? mode.m_world->m_player : mode.m_world->GetGameActorByAID(aid);
-    };
+    auto actorByAid = [&](u32 aid) -> CGameActor* { return ResolveSkillPacketActor(mode, aid); };
     CGameActor* source = actorByAid(ReadLE32(packet.data + 2));
     CGameActor* target = actorByAid(ReadLE32(packet.data + 6));
     if (ReadLE32(packet.data + 10)) {
@@ -1194,7 +1165,7 @@ int ResolvePotionEffectId(unsigned int itemId)
 
 void MakePotionEffect(CGameMode& mode, unsigned int itemId, u32 actorId)
 {
-    CGameActor* actor = ResolveNotifyEffectActor(mode, actorId);
+    CGameActor* actor = ResolveSkillPacketActor(mode, actorId);
     if (!actor) {
         return;
     }
@@ -3754,19 +3725,7 @@ void StopActorMovementForAction(CGameActor* actor)
     actor->m_moveEndTime = 0;
 }
 
-CGameActor* EnsureRuntimeActor(CGameMode& mode, u32 gid, bool preferPc);
 bool IsLikelyPlayerGid(u32 gid);
-
-CGameActor* ResolveCombatActor(CGameMode& mode, u32 actorId, bool preferPc)
-{
-    if (mode.m_world && mode.m_world->m_player) {
-        CPlayer* player = mode.m_world->m_player;
-        if (actorId == g_session.m_aid || actorId == g_session.m_gid || actorId == player->m_gid) {
-            return player;
-        }
-    }
-    return EnsureRuntimeActor(mode, actorId, preferPc);
-}
 
 void StartPickupAnimation(CGameMode& mode, CGameActor* actor, u32 objectAid)
 {
@@ -4258,15 +4217,6 @@ void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    const auto findExistingActor = [&mode](u32 actorId) -> CGameActor* {
-        if (mode.m_world == nullptr) {
-            return nullptr;
-        }
-        return actorId == g_session.m_aid
-            ? mode.m_world->m_player
-            : mode.m_world->GetGameActorByAID(actorId);
-    };
-
     const u32 srcGid = ReadLE32(packet.data + 2);
     const u32 dstGid = ReadLE32(packet.data + 6);
     const int cellX = static_cast<int>(static_cast<int16_t>(ReadLE16(packet.data + 10)));
@@ -4275,7 +4225,7 @@ void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
     const u32 property = ReadLE32(packet.data + 16);
     const int castTimeMs = static_cast<int>(ReadLE32(packet.data + 20));
 
-    CGameActor* sourceActor = findExistingActor(srcGid);
+    CGameActor* sourceActor = ResolveSkillPacketActor(mode, srcGid);
     if (sourceActor == nullptr) {
         DbgLog("[GameMode] skill cast ack unresolved src=%u dst=%u skill=%u\n",
             srcGid,
@@ -4311,7 +4261,7 @@ void HandleSkillCastAck(CGameMode& mode, const PacketView& packet)
     }
 
     if (dstGid != 0) {
-        CGameActor* targetActor = findExistingActor(dstGid);
+        CGameActor* targetActor = ResolveSkillPacketActor(mode, dstGid);
         if (targetActor != nullptr && targetActor != sourceActor) {
             const bool mercenaryOrHomun = targetActor->m_job > 6000 && targetActor->m_job < 6048;
             const bool pkOrSiege = mode.m_world != nullptr
@@ -4416,12 +4366,12 @@ void ApplyMonsterSkillMotion(CGameActor* source, int skillId)
 
 void DeliverSkillUse(CGameMode& mode, const SkillUseArgs& args, u32 sourceGid, bool skill2Extras)
 {
-    CGameActor* source = ResolveCombatActor(mode, sourceGid, true);
-    CGameActor* target = args.targetGid != 0 ? ResolveCombatActor(mode, args.targetGid, true) : nullptr;
+    CGameActor* source = ResolveSkillPacketActor(mode, sourceGid);
+    CGameActor* target = args.targetGid != 0 ? ResolveSkillPacketActor(mode, args.targetGid) : nullptr;
     if (source != nullptr) {
         source->SendMsg(source, 37, reinterpret_cast<msgparam_t>(&args), 0, 0);
     } else if (mode.m_world != nullptr) {
-        if (CSkill* skill = mode.m_world->GetSkillByAID(sourceGid)) {
+        if (CSkill* skill = ResolveSkillPacketUnit(mode, sourceGid)) {
             skill->SendMsg(skill, 37, reinterpret_cast<msgparam_t>(&args), 0, 0);
         }
     }
@@ -4582,7 +4532,7 @@ void HandleGroundSkillNotify(CGameMode& mode, const PacketView& packet)
     args.cellX = cellX;
     args.cellY = cellY;
 
-    CGameActor* sourceActor = ResolveCombatActor(mode, srcGid, true);
+    CGameActor* sourceActor = ResolveSkillPacketActor(mode, srcGid);
     if (sourceActor != nullptr) {
         sourceActor->SendMsg(sourceActor, 38, reinterpret_cast<msgparam_t>(&args), 0, 0);
     }
@@ -4672,7 +4622,7 @@ bool UseSkillFacesCell(int skillId)
 
 void DeliverUseSkill(CGameMode& mode, u32 sourceGid, u32 targetGid, int skillId, int rawLevel, bool success)
 {
-    CGameActor* source = sourceGid != 0 ? ResolveCombatActor(mode, sourceGid, true) : nullptr;
+    CGameActor* source = sourceGid != 0 ? ResolveSkillPacketActor(mode, sourceGid) : nullptr;
     bool monsterAction = false;
     if (source != nullptr) {
         if (skillId == 249 || skillId == 8220) {
@@ -4721,15 +4671,13 @@ void DeliverUseSkill(CGameMode& mode, u32 sourceGid, u32 targetGid, int skillId,
         }
     } else if (skillId == 124 || skillId == 131) {
         if (source != nullptr && mode.m_world != nullptr) {
-            if (CSkill* skill = mode.m_world->GetSkillByAID(targetGid)) {
+            if (CSkill* skill = ResolveSkillPacketUnit(mode, targetGid)) {
                 FaceActorTowardPosition(source, skill->m_pos);
             }
         }
     } else {
-        if (targetGid == g_session.m_aid && mode.m_world != nullptr) {
-            target = mode.m_world->m_player;
-        } else if (targetGid != 0) {
-            target = ResolveCombatActor(mode, targetGid, true);
+        if (targetGid != 0) {
+            target = ResolveSkillPacketActor(mode, targetGid);
         }
         if (source != nullptr && target != nullptr && source != target) {
             FaceActorTowardPosition(source, target->m_pos);
@@ -4790,7 +4738,7 @@ void PlaceSkillUnit(CGameMode& mode, u32 unitAid, u32 creatorAid, int job, int c
     if (mode.m_world == nullptr) {
         return;
     }
-    CSkill* skill = mode.m_world->GetSkillByAID(unitAid);
+    CSkill* skill = ResolveSkillPacketUnit(mode, unitAid);
     if (skill == nullptr) {
         if (job < 0x2D) {
             return;
@@ -4874,7 +4822,7 @@ void HandleSkillUpdate(CGameMode& mode, const PacketView& packet)
     if (!packet.data || packet.packetLength < 6 || mode.m_world == nullptr) {
         return;
     }
-    CSkill* skill = mode.m_world->GetSkillByAID(ReadLE32(packet.data + 2));
+    CSkill* skill = ResolveSkillPacketUnit(mode, ReadLE32(packet.data + 2));
     if (skill != nullptr && skill->m_job > 138 && skill->m_job <= 153) {
         skill->SendMsg(skill, 119, 0, 0, 0);
     }
@@ -4886,7 +4834,7 @@ void HandleTalkboxChatContents(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    CSkill* skill = mode.m_world->GetSkillByAID(ReadLE32(packet.data + 2));
+    CSkill* skill = ResolveSkillPacketUnit(mode, ReadLE32(packet.data + 2));
     if (skill != nullptr) {
         skill->SendMsg(skill, 7, reinterpret_cast<msgparam_t>(packet.data + 6), 0, 0);
     }
@@ -4898,7 +4846,7 @@ void HandleChangeGuild(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    CGameActor* actor = mode.m_world->GetGameActorByAID(ReadLE32(packet.data + 2));
+    CGameActor* actor = ResolveSkillPacketActor(mode, ReadLE32(packet.data + 2));
     if (actor != nullptr) {
         actor->SetGuildInfo(ReadLE32(packet.data + 6), static_cast<s16>(ReadLE16(packet.data + 10)));
     }
