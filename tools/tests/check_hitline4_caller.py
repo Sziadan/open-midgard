@@ -55,7 +55,7 @@ tokens = (
     "prim->m_renderFlag = 5", "prim->m_duration = m_duration",
     'GetTexture("effect\\\\white02.bmp", false)', "gi.process = -(rand() % 31)",
     "gi.maxHeight = 0.05f", "rand() % 121 + 125", "rand() % 360",
-    "rand() % 6", "gi.vecTNowX = static_cast<float>(rand() % 7)",
+    "rand() % 6", "gi.vecTNowX = static_cast<float>(static_cast<double>(rand() % 7) * 0.1 + 0.80000001)",
     "gi.sparkX = origin.x", "gi.sparkY = origin.y", "gi.sparkZ = origin.z",
     "gi.vecTNowY = 4.0f", "history <= 20", "gi.alphaT = 3",
 )

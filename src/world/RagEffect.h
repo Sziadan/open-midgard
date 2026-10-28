@@ -518,6 +518,7 @@ private:
     bool ProcessBash3DEffect();
     bool ProcessHitLineEffect();
     bool ProcessHitLine4Effect();
+    bool ProcessHitLine5Effect();
     bool ProcessTier3StrEffect();
     bool ProcessThrowItemEffect();
     bool ProcessHealBlue();

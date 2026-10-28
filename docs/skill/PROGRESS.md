@@ -1101,3 +1101,11 @@ Added the missing `PP_HITLINE` renderer and dispatch route in `CEffectPrim::Rend
 ## WP10.3 — effect 429 verification — 2026-10-28
 
 Completed verification: the Release `open_midgard` build and executable copy succeeded, all CTest tests passed (105/105), the coverage audit reports 482 routed / 211 explicit unported / 103 launched-unported, and `git diff --check` passes. The HitLine renderer, effect 376 caller, and effect 429 caller comparators all pass. Next: effects 430 and 431.
+
+## WP10.3 — effect 430 `HitLine5` — 2026-10-28
+
+Compared `HitLine5` Ref `RagEffect2.cpp:28443–28567` with canonical `HighPriest.exe.c:433202–433341`; bodies compare equal after whitespace compaction. Case 430 invokes `HitLine5(this,3)` and has no sound or actor-light branch. Added `ProcessHitLine5Effect`: refreshes effect position each dispatch and creates PP_HITLINE3 for states 0–2, setting renderFlag 5, inherited duration, one white02 texture, size 0, copied delta position, and primitive position. Four GIs are initialized with F1=3. Ordered per-GI RNG is process `-25-rand()%21`, alphaB `rand()%121+125`, rise-angle perturbation `rand()%121-60`, distance `rand()%7+6`, and vecTNowX `rand()%7*0.1+0.80000001`; twenty draws total. Deterministic base rise angle comes from `GetReferenceAngle(origin-delta)` and the random offset is normalized to [0,359]. Each GI gets maxHeight 0.059999999, vecTNowY 3, zeroed height/history, spark origin and alphaT 3. `check_hitline5_caller.py` checks exact helper body equality, call, texture VA, and ordered setup. Coverage is 483 routed / 210 explicit unported / 102 launched-unported. Focused check passes; build and full CTest pending. Next: effect 431.
+
+## WP10.3 — effect 430 verification — 2026-10-28
+
+Release `open_midgard` build and executable copy succeeded; all CTest tests passed (106/106). The effect coverage audit reports 483 routed / 210 explicit unported / 102 launched-unported, and `git diff --check` passes. Renderer, effect 376, effect 429, and effect 430 HitLine source comparators pass. Next: effect 431.

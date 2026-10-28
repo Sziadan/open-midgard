@@ -17808,11 +17808,57 @@ bool CRagEffect::ProcessHitLine4Effect()
                 gi.riseAngle = static_cast<short>(rand() % 360);
                 gi.distance = static_cast<float>(rand() % 6) + 6.0f;
                 gi.height[0] = 0.0f;
-                gi.vecTNowX = static_cast<float>(rand() % 7) * 0.1f + 0.80000001f;
+                gi.vecTNowX = static_cast<float>(static_cast<double>(rand() % 7) * 0.1 + 0.80000001);
                 gi.sparkX = origin.x;
                 gi.sparkY = origin.y;
                 gi.sparkZ = origin.z;
                 gi.vecTNowY = 4.0f;
+                for (size_t history = 1; history <= 20; ++history) {
+                    gi.height[history] = 0.0f;
+                    gi.flag[history] = 0;
+                }
+                gi.alphaT = 3;
+            }
+        }
+    }
+    return true;
+}
+
+// Ref/RagEffect2.cpp:28443-28567; canonical helper HighPriest.exe.c:433202-433341.
+bool CRagEffect::ProcessHitLine5Effect()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+
+    if (m_stateCnt <= 2) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_HITLINE3, vector3d{});
+        if (prim != nullptr) {
+            prim->m_renderFlag = 5;
+            prim->m_duration = m_duration;
+            prim->m_totalTexture = 1;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\white02.bmp", false));
+            prim->m_size = 0.0f;
+            prim->m_deltaPos = m_deltaPos;
+            prim->m_pos = origin;
+            for (EffectGi& gi : prim->m_gi) {
+                gi.life = 1;
+                gi.process = -25 - rand() % 21;
+                gi.maxHeight = 0.059999999f;
+                gi.alphaB = static_cast<short>(rand() % 121 + 125);
+                int riseAngle = GetReferenceAngle(origin.x - m_deltaPos.x, origin.z - m_deltaPos.z);
+                riseAngle += rand() % 121 - 60;
+                if (riseAngle >= 360) riseAngle -= 360;
+                if (riseAngle < 0) riseAngle += 360;
+                gi.riseAngle = static_cast<short>(riseAngle);
+                gi.distance = static_cast<float>(rand() % 7) + 6.0f;
+                gi.height[0] = 0.0f;
+                gi.vecTNowX = static_cast<float>(static_cast<double>(rand() % 7) * 0.1 + 0.80000001);
+                gi.sparkX = origin.x;
+                gi.sparkY = origin.y;
+                gi.sparkZ = origin.z;
+                gi.vecTNowY = 3.0f;
                 for (size_t history = 1; history <= 20; ++history) {
                     gi.height[history] = 0.0f;
                     gi.flag[history] = 0;
