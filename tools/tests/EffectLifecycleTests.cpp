@@ -662,6 +662,7 @@ struct CRagEffect : CGameObject {
     bool ProcessFoot326_327(const char*);
     bool ProcessCallZone340();
     bool ProcessSlimPotionEffects(int);
+    bool ProcessBottomHermode517();
     void SpawnBlueFall(int, int);
     bool ProcessBeginAsura1_467();
     bool ProcessBeginAsura1Variant(const char*);
@@ -10727,6 +10728,34 @@ int main()
             &&effect.m_primList.size()==1&&g_texMgr.requests.size()==1&&prim&&prim->m_gi[0].rotStart==19,
             "GroundSample later states follow the master without relaunching or resetting primitive state");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject master; master.m_pos={27,38,49};
+        CRagEffect effect; effect.m_type=517; effect.m_master=&master; effect.m_duration=92;
+        effect.m_stateCnt=1; effect.m_effectPos={1,2,3};
+        g_texMgr.requests.clear(); waveCalls.clear(); rngValues={17,211,30}; rngCursor=0; const int draws=rngDraws;
+        effect.ProcessBottomHermode517();
+        check(effect.m_effectPos.x==27&&effect.m_effectPos.y==38&&effect.m_effectPos.z==49
+            &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&waveCalls.empty()
+            &&rngDraws==draws&&rngCursor==0,
+            "Bottom_Hermode effect517 follows master without pre-state-zero output");
+        effect.m_stateCnt=0; effect.ProcessBottomHermode517();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(prim&&prim->m_type==PP_HERMODE&&prim->m_renderFlag==5&&prim->m_duration==92
+            &&prim->m_texture.size()==1&&g_texMgr.requests==std::vector<std::string>{"effect\\white02.bmp"}
+            &&prim->m_size==5&&prim->m_pos.x==27&&prim->m_pos.y==38&&prim->m_pos.z==49
+            &&prim->m_gi[0].life==1&&prim->m_gi[0].distance==1.6f&&prim->m_gi[0].riseAngle==17
+            &&prim->m_gi[0].rotStart==211&&prim->m_gi[0].alphaB==0&&prim->m_gi[0].height[0]==-12
+            &&prim->m_gi[0].flag[0]==30&&prim->m_gi[1].life==0&&prim->m_gi[2].life==0
+            &&prim->m_gi[3].life==0&&prim->m_argb==0xFFFFFFFFu
+            &&waveCalls.empty()&&rngDraws==draws+3&&rngCursor==3,
+            "Bottom_Hermode state zero emits exact profile with ordered three-draw RNG");
+        master.m_pos={67,78,89}; effect.m_stateCnt=1; effect.ProcessBottomHermode517();
+        check(effect.m_primList.size()==1&&effect.m_effectPos.x==67&&effect.m_effectPos.y==78
+            &&effect.m_effectPos.z==89&&g_texMgr.requests.size()==1&&waveCalls.empty()
+            &&rngDraws==draws+3&&rngCursor==3,
+            "Bottom_Hermode later states follow master without repeat emission or RNG");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
     }
     {
         CRenderObject actor, listener; actor.m_pos={30,40,50}; listener.m_pos={5,300,8};

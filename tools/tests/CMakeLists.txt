@@ -331,7 +331,7 @@ string(REPLACE "rand()" "SilentRand()" rg_coin3_emitter "${rg_coin3_emitter}")
 extract_body(bash3d5_caller "${effect_source}" "void CRagEffect::ApplyBash3D5()" "void CRagEffect::SpawnChookgi(")
 extract_body(chookgi_emitter "${effect_source}" "void CRagEffect::SpawnChookgi(" "void CRagEffect::ApplyBottomMagnus(")
 string(REPLACE "rand()" "SilentRand()" chookgi_emitter "${chookgi_emitter}")
-extract_body(ground_sample_emitter "${effect_source}" "void CRagEffect::ProcessGroundSample()" "void CRagEffect::SpawnBlueFall(")
+extract_body(ground_sample_emitter "${effect_source}" "void CRagEffect::ProcessGroundSample()" "bool CRagEffect::ProcessBottomHermode517()")
 extract_test_region(bluefall_emitter "${effect_source}" bluefall_emitter_family)
 extract_body(bluefall_band_setup "${effect_source}" "void ConfigureBlueFallBand(" "bool UpdateWeatherCloudPrimitive(")
 extract_body(prim_cloud_update "${effect_source}" "bool UpdateWeatherCloudPrimitive(CEffectPrim* prim)" "bool UpdateWaterfallPrimitive(")
@@ -410,6 +410,7 @@ extract_test_region(foot448_handler "${effect_source}" foot448_family)
 extract_test_region(foot326_327_handler "${effect_source}" foot326_327_family)
 extract_test_region(callzone340_handler "${effect_source}" callzone340_family)
 extract_test_region(slim_potion_effects497_499_handler "${effect_source}" slim_potion_effects497_499_family)
+extract_test_region(bottom_hermode517_handler "${effect_source}" bottom_hermode517_family)
 extract_test_region(beginasura1_467_handler "${effect_source}" beginasura1_467_family)
 extract_test_region(beginasura1_variants468_473_handler "${effect_source}" beginasura1_variants468_473_family)
 extract_test_region(bottom_vertical_handler "${effect_source}" bottom_vertical_family)
@@ -459,6 +460,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot448
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot326_327_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${callzone340_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${slim_potion_effects497_499_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${bottom_hermode517_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\nconstexpr float kWaterfallSegmentHeight = 40.0f;\n${bluefall_band_setup}\n${bluefall_emitter}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_467_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_variants468_473_handler}")
@@ -986,6 +988,8 @@ add_test(NAME effects497_499_slim_potion_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects497_499_slim_potion.py")
 add_test(NAME effect513_ground_sample_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect513_ground_sample.py")
+add_test(NAME effect517_bottom_hermode_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect517_bottom_hermode.py")
 add_test(NAME effect467_beginasura1_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect467_beginasura1.py")
 add_test(NAME effect468_473_beginasura1_source_check

@@ -28,7 +28,7 @@ case 513: ProcessGroundSample(); return true;
 case 514: ApplyGiExplosion("effect\\ring_blue.tga"); return true;
 case 515: SpawnWeatherCloud(); return true;
 case 516: SpawnWeatherCloud(); return true;
-case 517: return UnportedEffect();
+case 517: return ProcessBottomHermode517();
 case 518: return ProcessParticleSpreadEffects();
 case 519: return UnportedEffect();
 case 520: return ProcessShieldBoomerangEffects();

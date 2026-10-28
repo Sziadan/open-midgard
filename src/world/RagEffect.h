@@ -787,6 +787,7 @@ private:
     void SpawnBlueFall(int axisMode, int heightMode);
     void SpawnWeatherCloud();
     void ProcessGroundSample();
+    bool ProcessBottomHermode517();
 
     std::list<CEffectPrim*> m_primList;
     CRenderObject* m_master;

@@ -15299,6 +15299,36 @@ void CRagEffect::ProcessGroundSample()
     prim->m_gi[0].rotStart = 0;
 }
 
+// PE HighPriest.exe.c:418214-418215/456275; Ref/RagEffect.cpp:11575-11576.
+// TEST_BODY_BEGIN bottom_hermode517_family
+bool CRagEffect::ProcessBottomHermode517()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return true;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_HERMODE, vector3d{});
+    if (prim == nullptr) return true;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\white02.bmp", false));
+    prim->m_size = 5.0f;
+    prim->m_gi[0].life = 1;
+    prim->m_gi[1].life = 0;
+    prim->m_gi[2].life = 0;
+    prim->m_gi[3].life = 0;
+    prim->m_gi[0].distance = 1.6f;
+    prim->m_gi[0].riseAngle = static_cast<short>(rand() % 360);
+    prim->m_gi[0].rotStart = static_cast<short>(rand() % 360);
+    prim->m_gi[0].alphaB = 0;
+    prim->m_gi[0].height[0] = -12.0f;
+    prim->m_gi[0].flag[0] = static_cast<u8>(rand() % 31);
+    return true;
+}
+// TEST_BODY_END bottom_hermode517_family
+
 // TEST_BODY_BEGIN bluefall_emitter_family
 void CRagEffect::SpawnBlueFall(int axisMode, int heightMode)
 {
