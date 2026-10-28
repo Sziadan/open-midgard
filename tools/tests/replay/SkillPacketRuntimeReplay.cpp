@@ -975,6 +975,75 @@ void ReplaySavedEffectTrapTriggerLifecycle(const std::string& path, int trapJob,
         << effectId << " removed=1\n";
 }
 
+void ReplayFlasherTriggerLifecycle(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 6 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+        && packets[1].opcode == 0x011F && packets[1].bytes.size() == 16
+        && packets[2].opcode == 0x01AC && packets[2].bytes.size() == 6
+        && packets[3].opcode == 0x0119 && packets[3].bytes.size() == 13
+        && packets[4].opcode == 0x01D7 && packets[4].bytes.size() == 11
+        && packets[5].opcode == 0x0120 && packets[5].bytes.size() == 6,
+        "Flasher trigger requires entry, hide, reveal, blind state, used-trap update, and removal packets");
+    Require(packets[0].bytes[14] == 150 && packets[1].bytes[14] == 150
+        && ReadU32LE(packets[3].bytes.data() + 2) == 2
+        && ReadU16LE(packets[3].bytes.data() + 8) == 0x0010
+        && ReadU32LE(packets[4].bytes.data() + 7) == 140,
+        "Flasher must apply OPT2_BLIND to target AID2 and switch unit job150 to used-trap job140");
+
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    bool sawEffect99 = false;
+    for (std::size_t index = 0; index < packets.size(); ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected Flasher trigger packet");
+        Require(packet.packetId == packets[index].opcode && consumed == static_cast<int>(packets[index].bytes.size()),
+            "Flasher packet framing differs from scenario metadata");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Flasher trigger packet");
+
+        CSkill* unit = fixture.world.GetSkillByAID(100);
+        if (index == 0) {
+            Require(unit != nullptr && unit->m_job == 150 && unit->m_effectId == 99
+                    && unit->m_isVisibleBody == 1,
+                "Flasher entry did not initialize visible job150 with saved effect99");
+        } else if (index == 1) {
+            Require(unit != nullptr && unit->m_job == 150 && unit->m_isVisibleBody == 0,
+                "duplicate trap entry did not hide Flasher job150");
+        } else if (index == 2) {
+            Require(unit != nullptr && unit->m_isVisibleBody == 1,
+                "0x01AC did not reveal hidden Flasher job150");
+        } else if (index == 3) {
+            const auto target = fixture.mode.m_runtimeActors.find(2);
+            Require(unit != nullptr && unit->m_job == 150 && target != fixture.mode.m_runtimeActors.end()
+                    && target->second != nullptr && target->second->m_healthState == 0x0010,
+                "0x0119 did not apply Ref OPT2_BLIND to the target while preserving Flasher job150");
+        } else if (index == 4) {
+            Require(unit != nullptr && unit->m_job == 140,
+                "0x01D7 did not transition Flasher to used-trap job140");
+        } else {
+            Require(unit == nullptr, "0x0120 did not remove triggered Flasher from CWorld skill list");
+            Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+                    [](CGameObject* object) {
+                        const CSkill* skill = dynamic_cast<const CSkill*>(object);
+                        return skill != nullptr && skill->m_aid == 100;
+                    }),
+                "0x0120 did not remove triggered Flasher from CWorld object ownership list");
+        }
+    }
+
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for Flasher trigger");
+    std::string logLine;
+    while (std::getline(runtimeLog, logLine)) {
+        sawEffect99 = sawEffect99 || logLine.find("[REPLAY] LaunchEffect id=99 actor=100") != std::string::npos;
+    }
+    Require(sawEffect99, "used-trap job140 did not launch saved Ref Flasher effect99");
+    std::cout << "Flasher trigger aid=100 skill=120 target=2 blind=1 activeJob=140 effect=99 removed=1\n";
+}
+
 void ReplayWarpUnitLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1074,6 +1143,14 @@ bool IsSavedEffectTrapScenario(const std::string& path, int trapJob, int skillId
         && packets[3].opcode == 0x01DE && ReadU16LE(packets[3].bytes.data() + 2) == skillId;
 }
 
+bool IsFlasherTriggerScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 6 && packets.front().opcode == 0x011F
+        && packets.front().bytes.size() == 16 && packets.front().bytes[14] == 150
+        && packets[3].opcode == 0x0119;
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -1100,8 +1177,8 @@ int main(int argc, char** argv)
             ReplaySavedEffectTrapTriggerLifecycle(argv[1], 149, 119, 139, "Sandman");
         } else if (IsSavedEffectTrapScenario(argv[1], 151, 121)) {
             ReplaySavedEffectTrapTriggerLifecycle(argv[1], 151, 121, 108, "FreezingTrap");
-        } else if (IsSavedEffectTrapScenario(argv[1], 150, 120)) {
-            ReplaySavedEffectTrapTriggerLifecycle(argv[1], 150, 120, 99, "Flasher");
+        } else if (IsFlasherTriggerScenario(argv[1])) {
+            ReplayFlasherTriggerLifecycle(argv[1]);
         } else if (IsWarpUnitLifecycleScenario(argv[1])) {
             ReplayWarpUnitLifecycle(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {

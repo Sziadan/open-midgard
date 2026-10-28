@@ -1681,4 +1681,4 @@ Added a Freezing Trap sequence covering job151 entry, duplicate-entry hiding, 0x
 
 ## WP10.8 — Flasher trap trigger lifecycle replay — 2026-10-28
 
-Added a Flasher sequence covering job150 entry, duplicate-entry hiding, 0x01AC reveal, packetver23 0x01DE HT_FLASHER skill120 notify from trap-unit AID100 to target AID2, 0x01D7 transition to used-trap job140, and 0x0120 removal. The shared saved-effect path verifies effect99 is retained from message45 and launched by message47 on the job change. Focused replay passes; the complete root packet replay CTest passes62/62.
+The first Flasher fixture incorrectly modeled its trigger as a 0x01DE damage notification. Ref source review showed `skill_trap_splash` calls `skill_additional_effect` for HT_FLASHER, applying SC_BLIND; because the status has `SI_BLANK`, the visible state update is `0x0119` with health-state `OPT2_BLIND` (0x0010), not a 0x0196 status-icon packet. Replaced the fabricated damage notify with the 13-byte 0x0119 target state update, followed by 0x01D7 job150→140 and removal. The real handler updates target actor state, and job140 launches saved effect99. Focused replay passes; full suite passes62/62.
