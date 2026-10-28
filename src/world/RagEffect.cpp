@@ -12440,7 +12440,7 @@ bool CEffectPrim::UsesReferenceCylinder() const
     if (m_type != PP_3DCYLINDER || !m_master) return false;
     switch (m_master->GetEffectType()) {
     case 0: case 2: case 3: case 14: case 34: case 36: case 81: case 122: case 180: case 184: case 218: case 219: case 220: case 221: return true;
-    case 7: case 73: case 115: case 140: return true;
+    case 7: case 73: case 115: case 138: case 140: return true;
     default: return false;
     }
 }
@@ -27254,3 +27254,27 @@ bool CRagEffect::ProcessFireIvy118()
 }
 
 // TEST_BODY_END fireivy118_handler
+
+// Ref/RagEffect.cpp:4229-4256; canonical PE helper 0x602610 and OnProcess case138.
+bool CRagEffect::ProcessFirePillar138()
+{
+    if (m_stateCnt != 0) return true;
+
+    for (int i = 0; i < 3; ++i) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
+        if (!prim) continue;
+        const int step = i + 1;
+        const int descending = 3 - i;
+        prim->m_duration = m_duration;
+        prim->m_longSpeed = -3.0f;
+        prim->m_outerSize = static_cast<float>(step + 3);
+        prim->m_innerSize = static_cast<float>(step + 1.5);
+        prim->m_heightSize = static_cast<float>(2 * descending * (descending + 1) + 3.5);
+        prim->m_rollSpeed = -0.5f;
+        prim->m_alpha = 240.0f - 7.0f * static_cast<float>(m_stateCnt);
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\magic_red.tga", false));
+    }
+    return true;
+}
+
+// TEST_BODY_END firepillar138_handler

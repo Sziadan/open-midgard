@@ -604,6 +604,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect704();
     bool ProcessWaterBall116();
     bool ProcessFireIvy118();
+    bool ProcessFirePillar138();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -3160,6 +3161,31 @@ int main()
             &&g_texMgr.requests.empty()&&rngDraws==drawBase,
             "FireIvy later states do not repeat the frame-zero sound or primitive launch");
         effect.ClearPrims(); g_world.UpdateGameObjects(); g_world.m_player=oldPlayer;
+    }
+    {
+        CRagEffect effect; effect.m_type=138; effect.m_duration=77; effect.m_stateCnt=0;
+        g_texMgr.requests.clear(); const int drawBase=rngDraws;
+        check(effect.ProcessFirePillar138()&&effect.m_primList.size()==3,
+            "FirePillar state zero launches three cylinders");
+        const float outer[3]={4,5,6}, inner[3]={2.5f,3.5f,4.5f}, height[3]={27.5f,15.5f,7.5f};
+        bool payload=effect.m_primList.size()==3;
+        size_t i=0;
+        for(const CEffectPrim* prim:effect.m_primList){
+            payload=payload&&prim->m_type==PP_3DCYLINDER&&prim->m_duration==77
+                &&prim->m_longSpeed==-3.0f&&prim->m_outerSize==outer[i]
+                &&prim->m_innerSize==inner[i]&&prim->m_heightSize==height[i]
+                &&prim->m_rollSpeed==-0.5f&&prim->m_alpha==240.0f
+                &&prim->m_texture.size()==1;
+            ++i;
+        }
+        check(payload&&g_texMgr.requests==std::vector<std::string>(3,"effect\\magic_red.tga")
+            &&rngDraws==drawBase,
+            "FirePillar preserves cylinder order, sizes, alpha, inherited duration, texture and no RNG");
+        effect.m_stateCnt=1; g_texMgr.requests.clear();
+        check(effect.ProcessFirePillar138()&&effect.m_primList.size()==3
+            &&g_texMgr.requests.empty()&&rngDraws==drawBase,
+            "FirePillar later states do not relaunch cylinders or reload textures");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
     }
     {
         CRagEffect effect; effect.m_type=552; effect.m_duration=321; effect.m_deltaPos={1,2,3};

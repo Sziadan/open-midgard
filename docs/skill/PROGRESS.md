@@ -1784,3 +1784,7 @@ Ported effect116 from the matching primary Ref and canonical PE helper. State0 p
 
 Ported effect118 from its matching primary Ref and canonical PE helper. State0 plays the exact PE-resolved wave and launches one `PP_3DTEXTURE` with the source's pattern, duration, movement, render, and bitmap fields; later states do no repeated work and no RNG is consumed. Added a source comparator and production-body lifecycle assertions. Coverage audit: 612 routed / 81 explicit unported / 0 launched-but-unported. Release application build passes, replay CTest passes 102/102, and parity CTest passes 205/205. Next 5C candidate: effect138.
 
+## WP5C effect138 FirePillarOn — 2026-10-28
+
+Ported effect138 from matching primary Ref (`Ref/RagEffect.cpp:4229-4256`) and canonical PE (`HighPriest.exe.c:429421-429448`); PE `OnProcess` dispatches it at `HighPriest.exe.c:420405-420406`. At state0 it launches three zero-offset `PP_3DCYLINDER` primitives with inherited duration, long speed -3, outer sizes 4/5/6, inner sizes 2.5/3.5/4.5, heights 27.5/15.5/7.5, roll speed -0.5, alpha240 and the PE-resolved `effect\\magic_red.tga` (VA `0x71BBB8`). It uses the source cylinder state/render selector; later states do no setup; no sound or RNG. Added helper/caller/route/resource/selector comparator and lifecycle checks. Release app build passes; replay CTest 102/102 and parity CTest 206/206 pass. Coverage is 613 routed / 80 explicit unported / 0 launched-but-unported. Next 5C candidate: effect165.
+
