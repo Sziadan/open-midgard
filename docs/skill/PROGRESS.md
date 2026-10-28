@@ -1702,3 +1702,7 @@ Added `multi_ground_unit_world_update.tsv` with two job133 Pneuma entries (AIDs1
 ## WP10.8 — Remaining WP4 unit jobs — 2026-10-28
 
 Added nine job-entry/process/removal scenarios for the remaining WP4 unit jobs: 130→91, 136→97, 146→171, 178→341, 182→405, 185→517, 199→674, 200→671, and 201→672. Each raw 0x011F packet creates the unit at cell(10,20), real `CSkill::OnProcess` launches the mapped effect, and 0x0120 removes it from both world registries. Jobs146/182/185/199–201 launch loops on the first process call. Jobs130/136/178 use `LaunchPeriodic(effect,8)`; the executable-derived duration table gives effects91/97/341 duration9999, so the test advances the real counter for 9992 calls to cross the 9991 threshold without wall-clock sleeps. Focused batch passes9/9; freshly built Release replay suite passes75/75.
+
+## WP10.8 — NPC ground-unit job mappings — 2026-10-28
+
+Added job195,196,197 entry/process/removal scenarios for the Ref unit-process branches commonly used by NPC skills. The production replay verifies 195→effect74, 196→effect74, and 197→effect138, followed by 0x0120 cleanup. The source branches are in `Ref/Skill.cpp:1654-1670`; the port maps them in `src/world/SkillUnit.cpp:392-396`. Focused tests pass3/3 and the freshly built Release replay suite passes78/78.

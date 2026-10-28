@@ -1,0 +1,6 @@
+# actor	source	1	0	16	16
+# actor	target	2	0	18	16
+# actor	actor	3	196	10	20
+# opcode	hexBytes	comment
+0x011F	1F0164000000010000000A001400C401	NPC unit job196 AID100 at cell(10,20)
+0x0120	200164000000	Remove unit AID100 after loop effect launch

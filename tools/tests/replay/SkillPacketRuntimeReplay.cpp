@@ -581,7 +581,8 @@ void ReplaySkillUnitLifecycle(const std::string& path)
         "skill-unit removal must use the 6-byte 0x0120 packet");
     const int unitJob = packets[0].bytes[14];
     Require(unitJob == 126 || unitJob == 127 || unitJob == 130 || unitJob == 131 || unitJob == 132 || unitJob == 133
-            || unitJob == 136 || unitJob == 141 || unitJob == 142 || unitJob == 146 || (unitJob >= 154 && unitJob <= 157)
+            || unitJob == 136 || unitJob == 141 || unitJob == 142 || unitJob == 146
+            || unitJob == 195 || unitJob == 196 || unitJob == 197 || (unitJob >= 154 && unitJob <= 157)
             || (unitJob >= 158 && unitJob <= 175) || unitJob == 177 || unitJob == 178 || unitJob == 179
             || unitJob == 180 || unitJob == 182 || unitJob == 183 || unitJob == 184 || unitJob == 185
             || unitJob == 187 || unitJob == 188 || unitJob == 199 || unitJob == 200 || unitJob == 201
@@ -599,6 +600,9 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     case 141: expectedLoopEffect = 74; break;
     case 142: expectedLoopEffect = 95; break;
     case 146: expectedLoopEffect = 171; break;
+    case 195: expectedLoopEffect = 74; break;
+    case 196: expectedLoopEffect = 74; break;
+    case 197: expectedLoopEffect = 138; break;
     case 154: expectedLoopEffect = 239; break;
     case 155: expectedLoopEffect = 240; break;
     case 156: expectedLoopEffect = 241; break;

@@ -458,7 +458,7 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
             WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     endforeach()
     set(_skill_packet_replay_remaining_unit_scenarios
-        job130 job136 job146 job178 job182 job185 job199 job200 job201)
+        job130 job136 job146 job178 job182 job185 job195 job196 job197 job199 job200 job201)
     foreach(_scenario IN LISTS _skill_packet_replay_remaining_unit_scenarios)
         add_test(NAME "skill_packet_replay_${_scenario}_unit_lifecycle_checks"
             COMMAND skill_packet_replay_runtime_checks
