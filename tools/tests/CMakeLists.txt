@@ -804,6 +804,8 @@ add_test(NAME aura2_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_aura2_render.py")
 add_test(NAME cross_texture_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_cross_texture_render.py")
+add_test(NAME 3dtexture_render_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_3dtexture_render.py")
 add_test(NAME hitline_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_hitline_caller.py")
 add_test(NAME hitline4_caller_source_check
@@ -1093,6 +1095,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     UISpellListWndReceiverTests.cpp)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../HighPriest.exe
+    ../../HighPriest.exe.c
     ../../Ref/RagEffect.cpp
     ../../Ref/RagEffect2.cpp
     ../../src/world/RagEffect.cpp
@@ -1109,6 +1112,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_aura_render.py
     check_aura2_render.py
     check_cross_texture_render.py
+    check_3dtexture_render.py
     check_hitline_caller.py
     check_hitline4_caller.py
     check_hitline5_caller.py

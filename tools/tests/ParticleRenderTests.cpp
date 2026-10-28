@@ -1207,6 +1207,46 @@ int main() {
         cross.m_texture[0]=&g_texMgr.texture;cross.m_curMotion=1;renderCross();check(g_renderer.m_rpAlphaList.empty(),"cross invalid current texture motion emits no substitute");
     }
     {
+        CEffectPrim panel;panel.m_pos={10,20,100};panel.m_widthSize=3;panel.m_heightSize=2;
+        panel.m_argb=0x80ABCDEF;panel.m_texture={&g_texMgr.texture};panel.m_v1=0.2f;panel.m_v2=0.8f;panel.m_renderFlag=1;
+        MatrixIdentity(panel.m_rotMat);
+        auto renderPanel=[&](){g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaNoDepthList.clear();
+            g_renderer.m_rpAlphaDepthList.clear();g_renderer.m_rpEmissiveList.clear();g_renderer.m_rpEmissiveDepthList.clear();
+            g_renderer.m_rpEmissiveNoDepthList.clear();g_renderer.m_rpFaceList.clear();
+            RenderReferenceTexture(panel,view);};
+        auto matches=[&](const tlvertex3d& v,vector3d point){tlvertex3d expected;ProjectReferenceEffectVertex(point,view,expected);
+            return near(v.x,expected.x)&&near(v.y,expected.y)&&near(v.oow,expected.oow);};
+        renderPanel();check(g_renderer.m_rpAlphaList.size()==2,"3D texture emits two triangles for one projected quad");
+        auto* first=g_renderer.m_rpAlphaList[0].second;auto* second=g_renderer.m_rpAlphaList[1].second;
+        check(matches(first->m_verts[0],{10,18,103})&&matches(first->m_verts[1],{10,18,97})&&matches(first->m_verts[2],{10,22,103})
+            &&matches(second->m_verts[0],{10,22,97})&&matches(second->m_verts[1],{10,22,103})&&matches(second->m_verts[2],{10,18,97}),
+            "3D texture ordinary pattern preserves source quad corners and both triangle orders");
+        check(first->m_verts[0].tu==0&&first->m_verts[0].tv==0.2f&&first->m_verts[1].tu==1&&first->m_verts[1].tv==0.2f
+            &&first->m_verts[2].tu==0&&first->m_verts[2].tv==0.8f&&second->m_verts[0].tu==1&&second->m_verts[0].tv==0.8f
+            &&second->m_verts[1].tu==0&&second->m_verts[1].tv==0.8f&&second->m_verts[2].tu==1&&second->m_verts[2].tv==0.2f,
+            "3D texture preserves full source UV orientation and v1/v2 values");
+        check(first->tex==&g_texMgr.texture&&second->tex==&g_texMgr.texture&&first->m_verts[0].color==0x80ABCDEF
+            &&first->srcAlphaMode==5&&first->destAlphaMode==6&&g_renderer.m_rpAlphaOPList.empty(),
+            "3D texture selects current texture and stored color and forwards render flags");
+        panel.m_pattern=0x80;renderPanel();first=g_renderer.m_rpAlphaList[0].second;second=g_renderer.m_rpAlphaList[1].second;
+        check(matches(first->m_verts[0],{10,16,103})&&matches(first->m_verts[2],{10,20,103})
+            &&matches(second->m_verts[0],{10,20,97}),"3D texture pattern 0x80 extends lower edge to minus twice height and pins upper edge");
+        panel.m_pattern=0x8;renderPanel();first=g_renderer.m_rpAlphaList[0].second;
+        check(matches(first->m_verts[0],{10,18,103})&&matches(first->m_verts[2],{10,20,103}),
+            "3D texture pattern 0x8 collapses upper edge to the origin plane");
+        panel.m_pattern=0x88;renderPanel();first=g_renderer.m_rpAlphaList[0].second;
+        check(matches(first->m_verts[0],{10,16,103})&&matches(first->m_verts[2],{10,20,103}),
+            "3D texture combined pattern bits preserve lower extension and upper collapse");
+        panel.m_pattern=0;panel.m_rotMat.m[2][0]=1;panel.m_rotMat.m[2][2]=0;renderPanel();
+        first=g_renderer.m_rpAlphaList[0].second;
+        check(matches(first->m_verts[0],{13,18,100}),"3D texture applies retained render matrix before world translation and view projection");
+        panel.m_rotMat.m[2][0]=0;panel.m_rotMat.m[2][2]=1;
+        panel.m_renderFlag=3;renderPanel();first=g_renderer.m_rpEmissiveList[0].second;
+        check(g_renderer.m_rpEmissiveList.size()==2&&first->srcAlphaMode==D3DBLEND_ONE&&first->destAlphaMode==D3DBLEND_ONE,
+            "3D texture forwards source render flags to triangle blend and queue selection");
+        panel.m_texture[0]=&CTexMgr::s_dummy_texture;renderPanel();check(g_renderer.m_rpAlphaList.empty(),"3D texture missing texture emits no substitute geometry");
+    }
+    {
         CTexture secondTexture;CEffectPrim sand;sand.m_pos={100,200,900};sand.m_widthSize=30;sand.m_heightSize=30;sand.m_argb=0x80FFFFFF;
         sand.m_texture={&g_texMgr.texture,&secondTexture};sand.m_curMotion=1;sand.m_renderFlag=0x205;
         auto renderSand=[&](){g_renderer.m_rpAlphaList.clear();g_renderer.m_rpAlphaOPList.clear();g_renderer.m_rpAlphaNoDepthList.clear();

@@ -2233,7 +2233,10 @@ void RenderReferenceTexture(const CEffectPrim& prim, const matrix& view)
     CTexture* texture = prim.m_texture[static_cast<size_t>(prim.m_curMotion)];
     if (!texture || texture == &CTexMgr::s_dummy_texture) return;
     const float w = prim.m_widthSize, h = prim.m_heightSize;
-    const vector3d local[4] = {{0,-h,w},{0,-h,-w},{0,h,w},{0,h,-w}};
+    const float lowerY = (prim.m_pattern & 0x80) != 0 ? -2.0f * h : -h;
+    const float upperY = (prim.m_pattern & 0x8) != 0 ? 0.0f
+        : ((prim.m_pattern & 0x80) != 0 ? 0.0f : h);
+    const vector3d local[4] = {{0,lowerY,w},{0,lowerY,-w},{0,upperY,w},{0,upperY,-w}};
     vector3d points[4];
     for (int i = 0; i < 4; ++i) {
         float rotated[3];
@@ -12623,9 +12626,10 @@ bool CEffectPrim::UsesReferenceCircle() const
 bool CEffectPrim::UsesReferenceTexture() const
 {
     return m_type == PP_3DTEXTURE && m_master
-        && (m_master->GetEffectType() == 48 || m_master->GetEffectType() == 60 || m_master->GetEffectType() == 82 || m_master->GetEffectType() == 93
+        && (m_master->GetEffectType() == 13 || m_master->GetEffectType() == 48 || m_master->GetEffectType() == 60 || m_master->GetEffectType() == 82 || m_master->GetEffectType() == 93
             || m_master->GetEffectType() == 94 || m_master->GetEffectType() == 99
-            || m_master->GetEffectType() == 119 || m_master->GetEffectType() == 196 || m_master->GetEffectType() == 452 || m_master->GetEffectType() == 114
+            || m_master->GetEffectType() == 116 || m_master->GetEffectType() == 118 || m_master->GetEffectType() == 119 || m_master->GetEffectType() == 159
+            || m_master->GetEffectType() == 160 || m_master->GetEffectType() == 196 || m_master->GetEffectType() == 452 || m_master->GetEffectType() == 114
             || m_master->GetEffectType() == 137);
 }
 
