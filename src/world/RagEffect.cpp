@@ -20151,6 +20151,50 @@ bool CRagEffect::ProcessMaple333()
     return true;
 }
 
+// Ref/RagEffect.cpp:3785; canonical helper at HighPriest.exe.c:423137.
+void CRagEffect::SpawnEntry6()
+{
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* first = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
+    if (first == nullptr) return;
+    first->m_duration = 55;
+    MatrixIdentity(first->m_matrix);
+    MatrixAppendXRotation(first->m_matrix, GetRadian(static_cast<int>(first->m_latitude)));
+    MatrixAppendYRotation(first->m_matrix, GetRadian(static_cast<int>(first->m_longitude)));
+    first->m_accel = -0.000070000002f;
+    first->m_longSpeed = -10.0f;
+    first->m_outerSize = 6.0f;
+    first->m_outerSpeed = 0.079999998f;
+    first->m_innerSize = 5.0f;
+    first->m_heightSize = 6.5f;
+    first->m_heightSpeed = -0.1f;
+    first->m_alpha = 5.0f;
+    first->m_maxAlpha = 245.0f;
+    first->m_alphaSpeed = 10.0f;
+    first->m_fadeOutCnt = first->m_duration - first->m_duration / 5;
+    first->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+
+    CEffectPrim* second = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
+    if (second == nullptr) return;
+    second->m_duration = 55;
+    second->m_arcAngle = 45.0f;
+    second->m_longSpeed = 10.0f;
+    second->m_outerSize = 4.5f;
+    second->m_innerSize = 4.5f;
+    second->m_heightSpeed = 2.5f;
+    second->m_heightAccel = second->m_heightSpeed / static_cast<double>(second->m_duration) * -2.0;
+    second->m_alpha = 160.0f;
+    second->m_fadeOutCnt = second->m_duration - second->m_duration / 3;
+    second->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+}
+
+bool CRagEffect::ProcessEntry6()
+{
+    SpawnEntry6();
+    return true;
+}
+
 void CRagEffect::SpawnNpcStop(int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();

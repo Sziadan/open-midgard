@@ -640,6 +640,8 @@ struct CRagEffect : CGameObject {
     void SpawnDemonstration302();
     bool ProcessMaple333();
     void SpawnMaple333();
+    bool ProcessEntry6();
+    void SpawnEntry6();
     void SpawnPressure365();
     void SpawnGroundShake365();
     bool ProcessSoulBreaker361Effect();
@@ -3222,6 +3224,39 @@ int main()
                 "effect333 loads exact ACT then SPR resources");
         }
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor; actor.m_pos={400,500,600};
+        CRagEffect effect; effect.m_type=6; effect.m_master=&actor; effect.m_duration=80;
+        g_texMgr.requests.clear(); rngValues.clear(); rngCursor=0;
+        const int drawBase=rngDraws;
+        effect.m_stateCnt=1; effect.ProcessEntry6();
+        check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==drawBase,
+            "effect6 nonzero states do not spawn, load textures, or consume RNG");
+        effect.m_stateCnt=0; effect.ProcessEntry6();
+        check(effect.m_primList.size()==2&&g_texMgr.requests==std::vector<std::string>({"effect\\ring_blue.tga","effect\\ring_blue.tga"})
+            &&rngDraws==drawBase,
+            "effect6 state0 spawns both cylinders with exact texture and no RNG");
+        if(effect.m_primList.size()==2) {
+            const CEffectPrim* first=effect.m_primList.front();
+            const CEffectPrim* second=effect.m_primList.back();
+            check(first->m_type==PP_3DCYLINDER&&first->m_duration==55
+                &&first->m_accel==-0.000070000002f&&first->m_longSpeed==-10.0f
+                &&first->m_outerSize==6.0f&&first->m_outerSpeed==0.079999998f
+                &&first->m_innerSize==5.0f&&first->m_heightSize==6.5f&&first->m_heightSpeed==-0.1f
+                &&first->m_alpha==5.0f&&first->m_maxAlpha==245.0f&&first->m_alphaSpeed==10.0f
+                &&first->m_fadeOutCnt==44&&first->m_texture.size()==1
+                &&first->m_matrix.m[0][0]==1.0f&&first->m_matrix.m[1][1]==1.0f
+                &&first->m_matrix.m[2][2]==1.0f,
+                "effect6 first cylinder preserves ring profile, fade, and rotation matrix");
+            check(second->m_type==PP_3DCYLINDER&&second->m_duration==55&&second->m_arcAngle==45.0f
+                &&second->m_longSpeed==10.0f&&second->m_outerSize==4.5f&&second->m_innerSize==4.5f
+                &&second->m_heightSpeed==2.5f
+                &&std::fabs(second->m_heightAccel-(2.5f/55.0f*-2.0f))<0.000001f
+                &&second->m_alpha==160.0f&&second->m_fadeOutCnt==37&&second->m_texture.size()==1,
+                "effect6 second cylinder preserves ring profile and height acceleration");
+        }
+        effect.ClearPrims();g_world.UpdateGameObjects();
     }
     {
         CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};

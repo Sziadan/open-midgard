@@ -5,7 +5,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 3	OnProcess	Hit4	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	15
 4	OnProcess	Hit5	routed	OnProcess -> return ProcessEffectFrameLegacy();		15
 5	OnProcess	Hit6	routed	OnProcess -> return ProcessEffectFrameLegacy();		8
-6	OnProcess	Entry	unported	OnProcess -> UnportedEffect		-
+6	OnProcess	Entry	routed	OnProcess -> return ProcessEntry6();		13
 7	OnProcess	Exit	routed	OnProcess -> return ProcessExit7();	src/world/GameActor.cpp	15
 8	OnProcess	Warp	unported	OnProcess -> UnportedEffect		-
 9	OnProcess	Enhance	unported	OnProcess -> UnportedEffect		-

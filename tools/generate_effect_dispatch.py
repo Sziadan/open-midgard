@@ -25,6 +25,7 @@ FORCE_ROUTE.update(range(475, 485))
 FORCE_ROUTE.add(273)
 FORCE_ROUTE.add(302)
 FORCE_ROUTE.add(333)
+FORCE_ROUTE.add(6)
 FORCE_ROUTE.add(361)
 FORCE_ROUTE.add(365)
 FORCE_ROUTE.add(440)
@@ -55,6 +56,7 @@ DIRECT_CALLS = {
     273: "return ProcessEffect273();",
     302: "return ProcessDemonstration302();",
     333: "return ProcessMaple333();",
+    6: "return ProcessEntry6();",
     361: "return ProcessSoulBreaker361Effect();",
     365: "return ProcessEffect365();",
     440: "return ProcessEffect440();",

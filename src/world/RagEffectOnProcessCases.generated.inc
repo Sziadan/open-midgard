@@ -5,7 +5,7 @@ case 2: return ProcessEffectFrameLegacy();
 case 3: return ProcessEffectFrameLegacy();
 case 4: return ProcessEffectFrameLegacy();
 case 5: return ProcessEffectFrameLegacy();
-case 6: return UnportedEffect();
+case 6: return ProcessEntry6();
 case 7: return ProcessExit7();
 case 8: return UnportedEffect();
 case 9: return UnportedEffect();

@@ -555,6 +555,8 @@ private:
     void SpawnDemonstration302();
     bool ProcessMaple333();
     void SpawnMaple333();
+    bool ProcessEntry6();
+    void SpawnEntry6();
     bool ProcessNpcStopEffects();
     void SpawnNpcStop(int variant);
     bool ProcessGuardEffects();

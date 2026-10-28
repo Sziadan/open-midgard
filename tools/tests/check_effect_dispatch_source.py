@@ -99,6 +99,7 @@ required_routes = {
     ("OnProcess", 273): "ProcessEffect273",
     ("OnProcess2", 302): "ProcessDemonstration302",
     ("OnProcess2", 333): "ProcessMaple333",
+    ("OnProcess", 6): "ProcessEntry6",
     ("OnProcess2", 361): "ProcessSoulBreaker361Effect",
     ("OnProcess2", 365): "ProcessEffect365",
     ("OnProcess", 440): "ProcessEffect440",
