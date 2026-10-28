@@ -648,6 +648,7 @@ struct CRagEffect : CGameObject {
     bool ProcessLord90();
     bool ProcessIceWall74();
     bool ProcessGlassWall13();
+    bool ProcessMeteorStorm92();
     void SpawnEnhance9();
     void SpawnPressure365();
     void SpawnGroundShake365();
@@ -3356,6 +3357,33 @@ int main()
             &&g_texMgr.requests.size()==3,"IceWall74 later states do not repeat state0 setup");
         effect.ClearPrims(); g_world.UpdateGameObjects();
         g_world.m_player=oldPlayer; waveCalls.clear(); rngValues.clear(); rngCursor=0;
+    }
+    {
+        CRenderObject listener; listener.m_pos={10,20,30};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=92; effect.m_effectPos={30,40,50};
+        waveCalls.clear(); gameMode.messages=0; gameMode.messageIds.clear();
+        rngValues.clear(); rngCursor=0;
+        const int drawBase=rngDraws;
+        effect.m_stateCnt=0;
+        check(!effect.ProcessMeteorStorm92()&&waveCalls.size()==1
+            &&waveCalls[0].name=="effect\\wizard_meteor.wav"&&waveCalls[0].x==20
+            &&waveCalls[0].y==0&&waveCalls[0].z==20&&waveCalls[0].volume==250
+            &&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "MeteorStorm92 plays the exact frame-zero wave at listener-relative coordinates and propagates missing STR");
+        effect.m_stateCnt=39;
+        check(!effect.ProcessMeteorStorm92()&&gameMode.messages==0&&waveCalls.size()==1,
+            "MeteorStorm92 does not send the quake or replay audio before frame40");
+        effect.m_stateCnt=40;
+        check(!effect.ProcessMeteorStorm92()&&gameMode.messages==1
+            &&gameMode.messageIds==std::vector<int>({135})&&waveCalls.size()==1,
+            "MeteorStorm92 sends exactly message135 at frame40");
+        effect.m_stateCnt=41;
+        check(!effect.ProcessMeteorStorm92()&&gameMode.messages==1&&waveCalls.size()==1
+            &&rngDraws==drawBase,
+            "MeteorStorm92 later frames add no message, audio or RNG and propagate STR completion");
+        g_world.m_player=oldPlayer; gameMode.messages=0; gameMode.messageIds.clear();
+        waveCalls.clear(); rngValues.clear(); rngCursor=0;
     }
     {
         CRenderObject master; master.m_pos={30,40,50}; master.m_roty=45.0f;

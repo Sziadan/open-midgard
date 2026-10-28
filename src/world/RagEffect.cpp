@@ -20445,6 +20445,21 @@ bool CRagEffect::ProcessGlassWall13()
     return m_stateCnt != m_duration;
 }
 
+// HighPriest.exe.c:420170 / 0x606310; primary Ref helper at RagEffect.cpp:972.
+bool CRagEffect::ProcessMeteorStorm92()
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CRenderObject* listener = mode && mode->m_world ? mode->m_world->m_player : nullptr;
+    if (m_stateCnt == 0 && listener != nullptr) {
+        PlayWave("effect\\wizard_meteor.wav", m_effectPos.x - listener->m_pos.x, 0.0f,
+            m_effectPos.z - listener->m_pos.z, 250, 40, 1.0f);
+    }
+    if (m_stateCnt == 40 && mode != nullptr) {
+        mode->SendMsg(135, 0, 0, 0);
+    }
+    return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+}
+
 void CRagEffect::SpawnNpcStop(int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();

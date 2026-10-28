@@ -139,3 +139,4 @@ tools/tests/*
 !tools/generate_effect_dispatch.py
 !tools/tests/check_clif_skill_setunit_source.py
 !tools/tests/check_effect_dispatch_source.py
+!tools/tests/check_effect92.py

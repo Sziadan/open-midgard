@@ -130,7 +130,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 89	OnProcess	StormGust	routed	OnProcess -> return ProcessStormGust89();	src/session/SkillAttackEffectIdTable.generated.inc	91
 90	OnProcess	Lord	routed	OnProcess -> return ProcessLord90();		95
 91	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	15
-92	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect		-
+92	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessMeteorStorm92();		15
 93	OnProcess	Yufitel	routed	OnProcess -> return ProcessYufitel93();	src/session/SkillAttackEffectIdTable.generated.inc;src/world/SkillSpecialEffect.cpp	49
 94	OnProcess	YufitelHit	routed	OnProcess -> return ProcessYufitelHit(0);	src/session/SkillAttackEffectIdTable.generated.inc	49
 95	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		15

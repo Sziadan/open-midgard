@@ -130,7 +130,7 @@ case 88: return ProcessClipWaveStrEffect();
 case 89: return ProcessStormGust89();
 case 90: return ProcessLord90();
 case 91: return ProcessClipWaveStrEffect();
-case 92: return UnportedEffect();
+case 92: return ProcessMeteorStorm92();
 case 93: return ProcessYufitel93();
 case 94: return ProcessYufitelHit(0);
 case 95: return ProcessClipWaveStrEffect();

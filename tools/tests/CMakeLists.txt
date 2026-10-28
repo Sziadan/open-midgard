@@ -269,7 +269,8 @@ extract_body(enhance9_emitter "${effect_source}" "void CRagEffect::SpawnEnhance9
 extract_body(enhance9_handler "${effect_source}" "bool CRagEffect::ProcessEnhance9()" "bool CRagEffect::ProcessLord90()")
 extract_body(lord90_handler "${effect_source}" "bool CRagEffect::ProcessLord90()" "bool CRagEffect::ProcessIceWall74()")
 extract_body(icewall74_handler "${effect_source}" "bool CRagEffect::ProcessIceWall74()" "bool CRagEffect::ProcessGlassWall13()")
-extract_body(glasswall13_handler "${effect_source}" "bool CRagEffect::ProcessGlassWall13()" "void CRagEffect::SpawnNpcStop(int variant)")
+extract_body(glasswall13_handler "${effect_source}" "bool CRagEffect::ProcessGlassWall13()" "bool CRagEffect::ProcessMeteorStorm92()")
+extract_body(meteorstorm92_handler "${effect_source}" "bool CRagEffect::ProcessMeteorStorm92()" "void CRagEffect::SpawnNpcStop(int variant)")
 extract_body(particleupdater "${effect_source}" "void UpdateParticleUpPrimitive(CEffectPrim* prim)" "void RenderParticleUp(")
 extract_body(kyrie112_handler "${effect_source}" "bool CRagEffect::ProcessKyrie112()" "// TEST_BODY_END kyrie112_handler")
 extract_body(repairweapon101_handler "${effect_source}" "bool CRagEffect::ProcessRepairWeapon101()" "// TEST_BODY_END repairweapon101_handler")
@@ -400,7 +401,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc"
     "${resource_lock}\n${resource_unlock}\n${effect_gate}\n${primitive_lifetime}\n${primitive_init}\n${segment_shift}\nint TableAngle(int angle);\n${primitive_update_family}\n${effect_tick}\n${effect_dtor}\n${effect_launch}\n${effect_messages}\n${actor_detach}\n${world_update}\n${grim_tooth}\n${str_delta}\n${str_process}\n${str_termination}\n${entry2}\n${str_render}\n${chookgi_renderer}\n${effect_render}\n${spline_primitive}\n${slash_primitive}\n${angel_render}\n${job_emitters}\n${angel_emitters}\n${ruwach_emitter}\n${smoke_torch_emitters}\n${poison_emitters}\n${blessing_emitter}\n${sight_projection}\n${agility_emitters}\n${sight_emitters}\n${warp_band}\n${warp_helper}\n${warp_emitter}\n${ready_portal_emitter}\n${potion_emitters}\n${detoxication_handler}\n${ice_arrow_emitter}\n${fireball_emitter}\n${bash3d_emitter}\n${kouenka_emitter}\n${earth_spike_emitter}\n${chemical_rise_angle}\n${chemical3_emitter}\n${stin4_caller}\n${stin4_emitter}\n${stin5_emitter}\n${rg_coin3_emitter}\n${bash3d5_caller}\n${chookgi_emitter}\n${ground_sample_emitter}\n${prim_cloud_update}\n${cloud_texture}\n${weather_cloud_emitter}\n${spearbmr_handler}\n${turnundead_handler}\n${waterball2_handler}\n${revive140_handler}\n${aspersio86_handler}\n${stormgust89_handler}\n${magicrod244_handler}\n${shieldcharge246_handler}\n${strip_equipment269_272_handler}\n${kyrie112_handler}\n${repairweapon101_handler}\n${maxpower104_handler}\n${intimidate227_handler}\n${effect380_handler}\n${effect403_handler}\n${effect413_handler}\n${effect445_handler}\n${effect457_handler}\n${effect466_handler}\n${effect501_handler}\n${effect704_handler}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/render/Renderer.cpp ../../src/render/Prim.cpp ../../src/res/ActRes.h ../../src/world/RagEffect.cpp ../../src/world/RagEffect.h ../../src/world/World.cpp ../../src/res/EzEffectRes.h ../../src/res/Res.cpp)
-file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${airtexture416_handler}\n${hitline_effect_handler}\n${tripleattack_emitter}\n${tripleattack_handler}\n${soulparticle506_handler}\n${effect502_handler}\n${effect505_handler}\n${sma2_552_emitter}\n${sma2_552_handler}\n${particlepath556_emitter}\n${particlepath556_handler}\n${effect537_handler}\n${soulbreaker361_emitter}\n${soulbreaker361_handler}\n${effect273_handler}\n${pressure365_emitter}\n${groundshake365_emitter}\n${effect365_handler}\n${demonstration302_emitter}\n${demonstration302_handler}\n${maple333_emitter}\n${maple333_handler}\n${entry6_emitter}\n${entry6_handler}\n${warp8_emitter}\n${warp8_handler}\n${enhance9_emitter}\n${enhance9_handler}\n${lord90_handler}\n${icewall74_handler}\n${glasswall13_handler}\n${effect440_handler}\n${effect599_handler}\n${effect602_handler}\n${particleupdater}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${airtexture416_handler}\n${hitline_effect_handler}\n${tripleattack_emitter}\n${tripleattack_handler}\n${soulparticle506_handler}\n${effect502_handler}\n${effect505_handler}\n${sma2_552_emitter}\n${sma2_552_handler}\n${particlepath556_emitter}\n${particlepath556_handler}\n${effect537_handler}\n${soulbreaker361_emitter}\n${soulbreaker361_handler}\n${effect273_handler}\n${pressure365_emitter}\n${groundshake365_emitter}\n${effect365_handler}\n${demonstration302_emitter}\n${demonstration302_handler}\n${maple333_emitter}\n${maple333_handler}\n${entry6_emitter}\n${entry6_handler}\n${warp8_emitter}\n${warp8_handler}\n${enhance9_emitter}\n${enhance9_handler}\n${lord90_handler}\n${icewall74_handler}\n${glasswall13_handler}\n${meteorstorm92_handler}\n${effect440_handler}\n${effect599_handler}\n${effect602_handler}\n${particleupdater}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -753,6 +754,8 @@ add_test(NAME effect74_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect74.py")
 add_test(NAME effect13_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect13.py")
+add_test(NAME effect92_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect92.py")
 add_test(NAME soulbreaker361_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_soulbreaker361.py")
 add_test(NAME npcstop_caller_source_check
@@ -910,6 +913,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect90.py
     check_effect74.py
     check_effect13.py
+    check_effect92.py
     check_soulbreaker361.py
     check_npcstop_callers.py
     check_guard_callers.py
