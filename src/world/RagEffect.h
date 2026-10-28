@@ -515,6 +515,7 @@ private:
     bool ProcessLevel99_2Effect();
     bool ProcessLevel99_3Effect();
     bool ProcessGumGangEffect();
+    bool ProcessBash3DEffect();
     bool ProcessTier3StrEffect();
     bool ProcessThrowItemEffect();
     bool ProcessHealBlue();

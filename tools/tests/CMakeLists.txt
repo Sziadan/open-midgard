@@ -599,6 +599,8 @@ add_test(NAME effect_coverage_audit
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/audit_effect_coverage.py")
 add_test(NAME effect_dispatch_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect_dispatch_source.py")
+add_test(NAME bash3d_callers_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_bash3d_callers.py")
 add_test(NAME effect_sprite_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect_sprite.py")
 add_test(NAME prim3dline_source_check

@@ -17603,6 +17603,56 @@ bool CRagEffect::ProcessGumGangEffect()
     return true;
 }
 
+// Ref/RagEffect2.cpp BASH3D callers; canonical OnProcess3 cases 377/386/399/400.
+bool CRagEffect::ProcessBash3DEffect()
+{
+    const char* wave = nullptr;
+    int waveState = 0;
+    int giCount = 0;
+    char variant = 0;
+    switch (m_type) {
+    case 377:
+        wave = "effect\\mon_맹룡과강.wav"; waveState = 5; giCount = 8; variant = 2; break;
+    case 386:
+        wave = "effect\\hunter_detecting.wav"; giCount = 12; variant = 3; break;
+    case 399:
+        wave = "effect\\헤드 크러쉬.wav"; giCount = 6; variant = 4; break;
+    case 400:
+        wave = "effect\\비트 조인트.wav"; waveState = 22; giCount = 6; variant = 5; break;
+    default:
+        return false;
+    }
+
+    if (m_stateCnt == waveState) {
+        if (CRenderObject* master = ResolveCurrentMaster()) {
+            m_effectPos = master->m_pos;
+            TryPlaySingleEffectWave(m_effectPos, wave, 0.0f, true);
+        }
+    }
+    for (int index = 0; index < giCount; ++index) {
+        SpawnBash3D("effect\\alpha_center.tga", static_cast<char>(index), variant);
+    }
+
+    CRenderObject* master = ResolveCurrentMaster();
+    if (m_type == 377) {
+        if (m_stateCnt >= 5 && m_stateCnt <= 35 && master != nullptr &&
+            (master->m_BodyLight & 1) != 1) {
+            ++master->m_BodyLight;
+        }
+    } else if ((m_type == 399 || m_type == 400) &&
+               m_stateCnt >= 20 && m_stateCnt <= 50 && master != nullptr) {
+        if ((master->m_BodyLight & 8) != 8) {
+            master->m_BodyLight += 8;
+        }
+        if (m_type == 399) {
+            master->SetArgb(-1, 255, 255, 200);
+        } else {
+            master->SetArgb(-1, 255, 255, 255);
+        }
+    }
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {
