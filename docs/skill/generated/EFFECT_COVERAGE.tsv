@@ -180,7 +180,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 407	OnProcess	ProcessEZ2STR	routed	OnProcess -> ProcessEZ2STR(); return true;	src/gamemode/UseSkillEffect.generated.inc	15
 137	OnProcess	Bottom2	routed	OnProcess -> return ProcessBottom2Effect137();		1125
 138	OnProcess	FirePillarOn	unported	OnProcess -> UnportedEffect		-
-140	OnProcess	Revive	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	-
+140	OnProcess	Revive	routed	OnProcess -> return ProcessRevive140();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	15
 142	OnProcess	HeavensDrive	routed	OnProcess -> return ProcessEffectFrameLegacy();		149
 145	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/world/SkillUnit.cpp	-
 153	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	15

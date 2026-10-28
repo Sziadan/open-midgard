@@ -572,6 +572,7 @@ struct CRagEffect : CGameObject {
     void SpawnSpearBmr();
     void SpawnTurnUndead();
     void SpawnWaterBall2();
+    bool ProcessRevive140();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5544,6 +5545,36 @@ int main()
                 "WaterBall2 spline enters the shared reference per-frame integration path");
         }
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+    }
+    {
+        CRagEffect effect;effect.m_type=140;effect.m_duration=100;
+        waveCalls.clear();g_texMgr.requests.clear();
+        effect.m_stateCnt=1;
+        check(effect.ProcessRevive140()&&effect.m_primList.empty()&&g_texMgr.requests.empty(),
+            "Revive skips states between its 25-frame pulses");
+        effect.m_stateCnt=0;effect.ProcessRevive140();
+        CEffectPrim* initial=effect.m_primList.empty()?nullptr:effect.m_primList.back();
+        check(initial&&initial->m_type==PP_3DCYLINDER&&initial->UsesReferenceCylinder()
+            &&initial->m_duration==100&&initial->m_longSpeed==1.5f&&initial->m_longAccel==0.029999999f
+            &&initial->m_outerSize==11&&initial->m_innerSize==7.5f&&initial->m_heightSize==7.5f
+            &&initial->m_innerSpeed==0&&initial->m_innerAccel==0&&initial->m_outerSpeed==0&&initial->m_outerAccel==0
+            &&initial->m_alpha==240&&initial->m_fadeOutCnt==90&&initial->m_texture.size()==1
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\ring_yellow.tga",
+            "Revive initial cylinder preserves first-pulse overrides, fade, texture and reference family");
+        effect.m_stateCnt=25;effect.ProcessRevive140();
+        CEffectPrim* repeat=effect.m_primList.back();
+        check(effect.m_primList.size()==2&&repeat->m_duration==60&&repeat->m_longSpeed==1.5f
+            &&repeat->m_longAccel==0.029999999f&&repeat->m_outerSize==10.5f
+            &&repeat->m_innerSpeed==-0.12f&&repeat->m_innerAccel==0.003f
+            &&repeat->m_outerSpeed==-0.12f&&repeat->m_outerAccel==0.003f
+            &&repeat->m_innerSize==7.5f&&repeat->m_heightSize==7.5f&&repeat->m_alpha==240
+            &&repeat->m_fadeOutCnt==30&&repeat->m_texture.size()==1&&repeat->UsesReferenceCylinder(),
+            "Revive periodic cylinders restore the shared 60-frame payload and half-life fade");
+        effect.m_stateCnt=26;effect.ProcessRevive140();
+        effect.m_stateCnt=50;effect.ProcessRevive140();
+        check(effect.m_primList.size()==3&&g_texMgr.requests.size()==3&&waveCalls.empty(),
+            "Revive emits on each 25-state boundary without sound on intervening frames");
+        effect.ClearPrims();g_world.UpdateGameObjects();
     }
     {
         CRagEffect effect;effect.m_type=212;effect.m_duration=500;

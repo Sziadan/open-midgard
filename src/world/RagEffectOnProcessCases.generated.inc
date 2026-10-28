@@ -180,7 +180,7 @@ case 406: ProcessEZ2STR(); return true;
 case 407: ProcessEZ2STR(); return true;
 case 137: return ProcessBottom2Effect137();
 case 138: return UnportedEffect();
-case 140: return UnportedEffect();
+case 140: return ProcessRevive140();
 case 142: return ProcessEffectFrameLegacy();
 case 145: return UnportedEffect();
 case 153: return ProcessClipWaveStrEffect();

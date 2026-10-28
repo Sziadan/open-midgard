@@ -12439,7 +12439,7 @@ bool CEffectPrim::UsesReferenceCylinder() const
     if (m_type != PP_3DCYLINDER || !m_master) return false;
     switch (m_master->GetEffectType()) {
     case 0: case 2: case 3: case 14: case 34: case 36: case 81: case 122: case 180: case 184: case 218: case 219: case 220: case 221: return true;
-    case 7: case 73: case 115: return true;
+    case 7: case 73: case 115: case 140: return true;
     default: return false;
     }
 }
@@ -25780,3 +25780,38 @@ void CRagEffect::SpawnWaterBall2()
 }
 
 // TEST_BODY_END waterball2_handler
+
+bool CRagEffect::ProcessRevive140()
+{
+    if ((m_stateCnt % 25) == 0) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
+        if (!prim) return true;
+        prim->m_duration = 60;
+        prim->m_longSpeed = 1.5f;
+        prim->m_longAccel = 0.029999999f;
+        prim->m_outerSize = 10.5f;
+        prim->m_innerSpeed = -0.12f;
+        prim->m_innerAccel = 0.003f;
+        prim->m_outerSpeed = -0.12f;
+        prim->m_outerAccel = 0.003f;
+        prim->m_innerSize = 7.5f;
+        prim->m_heightSize = 7.5f;
+        prim->m_alpha = 240.0f;
+        prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 2;
+        if (m_stateCnt == 0) {
+            prim->m_duration = m_duration;
+            prim->m_innerSpeed = 0.0f;
+            prim->m_innerAccel = 0.0f;
+            prim->m_longSpeed = 1.5f;
+            prim->m_outerSize = 11.0f;
+            prim->m_innerSize = 7.5f;
+            prim->m_outerSpeed = 0.0f;
+            prim->m_outerAccel = 0.0f;
+            prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 10;
+        }
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_yellow.tga", false));
+    }
+    return true;
+}
+
+// TEST_BODY_END revive140_handler

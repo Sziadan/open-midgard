@@ -639,3 +639,6 @@ Canonical PE `CRagEffect::TurnUndead` and the primary Ref helper agree on state0
 # WP10.3 WaterBall2 caller and source variant
 
 Canonical PE case117 invokes WaterBall2, and its helper matches the primary `Ref/RagEffect.cpp` helper at line9224. The available primary Ref OnProcess caller omits WaterBall2. The secondary `Ref/dhxj/RagEffect.cpp` implementation is a materially different source variant using different resource names; it is not the parity oracle. Local effect117 follows PE/primary Ref and resolves the exact PE wave and CP949 sprite/action bytes. Runtime audio/particle visual acceptance remains open.
+# WP10.3 Revive caller evidence
+
+Canonical PE case140 invokes Revive, and its helper matches the primary `Ref/RagEffect.cpp` helper at line7160. The available primary Ref OnProcess switch omits the call. The local route follows the canonical PE/primary Ref helper and uses the executable-resolved `effect\\ring_yellow.tga` texture. Live visual acceptance remains open.
