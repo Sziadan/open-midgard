@@ -84,6 +84,16 @@ struct ScenarioPacket {
     std::vector<u8> bytes;
 };
 
+struct ReplayGameMode : CGameMode {
+    std::vector<int> sentMessageIds;
+
+    msgresult_t SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override
+    {
+        sentMessageIds.push_back(msg);
+        return CGameMode::SendMsg(msg, wparam, lparam, extra);
+    }
+};
+
 struct ScenarioActor {
     std::string role;
     u32 aid;
@@ -150,7 +160,7 @@ std::vector<ScenarioPacket> LoadPacketSequence(const std::string& path)
 }
 
 struct Fixture {
-    CGameMode mode;
+    ReplayGameMode mode;
     CPlayer source;
     CGameActor target;
     C3dAttr attr;
@@ -842,6 +852,52 @@ void ReplayGroundSkillWave(const std::string& path)
     }
     Require(wavePlayed, "ground-skill Ref branch did not play its exact wave at player origin");
     std::cout << "GroundSkillWave skill=" << skillId << " wave=" << expectedWave << " relative=(0,0,0)\n";
+}
+
+bool IsMonsterGroundSkillScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    if (packets.size() != 1 || packets[0].opcode != 0x0117 || packets[0].bytes.size() != 18
+        || ReadU16LE(packets[0].bytes.data() + 2) != 47) {
+        return false;
+    }
+    const u32 sourceAid = ReadU32LE(packets[0].bytes.data() + 4);
+    const std::vector<ScenarioActor> actors = LoadScenarioActors(path);
+    return std::any_of(actors.begin(), actors.end(), [sourceAid](const ScenarioActor& actor) {
+        return actor.role == "actor" && actor.aid == sourceAid && actor.job > 1000 && actor.job < 4000;
+    });
+}
+
+void ReplayMonsterGroundSkill(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 1 && packets[0].opcode == 0x0117 && packets[0].bytes.size() == 18
+        && ReadU16LE(packets[0].bytes.data() + 2) == 47,
+        "monster ground-skill replay requires one 18-byte skill-47 0x0117 packet");
+    const u32 sourceAid = ReadU32LE(packets[0].bytes.data() + 4);
+    Fixture fixture(path);
+    CGameActor* source = fixture.world.GetGameActorByAID(sourceAid);
+    Require(source != nullptr && source->m_job > 1000 && source->m_job < 4000,
+        "monster ground-skill fixture did not register its monster source actor");
+
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), packet, consumed),
+        "production packet reader rejected monster ground-skill packet");
+    Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch monster ground-skill packet");
+
+    Require(source->m_stateId != 0,
+        "monster source did not receive its production message38 ground-skill state update");
+    Require(std::find(fixture.mode.sentMessageIds.begin(), fixture.mode.sentMessageIds.end(), 99)
+            == fixture.mode.sentMessageIds.end(),
+        "monster ground-skill path incorrectly sent player-only mode message99");
+    Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+            [](CGameObject* object) { return dynamic_cast<CArrowEffect*>(object) != nullptr; }),
+        "monster Arrow Shower path incorrectly emitted player-only arrow fan-out effects");
+    std::cout << "MonsterGroundSkill skill=47 source=" << sourceAid
+        << " state=" << source->m_stateId << " modeMsg99=0 arrowFanout=0\n";
 }
 
 bool IsLordOfVermilionScenario(const std::string& path)
@@ -2061,6 +2117,8 @@ int main(int argc, char** argv)
         freshRuntimeLog.close();
         if (IsGroundSkillWaveScenario(argv[1])) {
             ReplayGroundSkillWave(argv[1]);
+        } else if (IsMonsterGroundSkillScenario(argv[1])) {
+            ReplayMonsterGroundSkill(argv[1]);
         } else if (IsLordOfVermilionScenario(argv[1])) {
             ReplayLordOfVermilion(argv[1]);
         } else if (IsSkillDamagePositionScenario(argv[1])) {

@@ -1,0 +1,4 @@
+# actor	source	1	0	16	16
+# actor	actor	1000	1001	12	20
+# opcode	hexBytes	comment
+0x0117	17012F00E803000005000A00140078563412	Monster source uses the 0x0117 monster branch; no player-only Arrow Shower fan-out
