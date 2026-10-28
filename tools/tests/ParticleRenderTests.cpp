@@ -103,7 +103,7 @@ struct CActRes {
     }
 };
 struct CEffectPrim {
-    int m_numSegments=1,m_spriteAction=0,m_curMotion=0,m_pattern=0;
+    int m_type=0,m_numSegments=1,m_spriteAction=0,m_curMotion=0,m_pattern=0;
     u32 m_renderFlag=5;
     float m_roll=0,m_size=1,m_arcAngle=36,m_longitude=0;
     matrix m_matrix;
@@ -117,6 +117,7 @@ struct CEffectPrim {
     std::vector<std::array<vector3d,4>> m_segmentQuadPositions = std::vector<std::array<vector3d,4>>(50);
     std::array<EffectGi,4> m_gi;
 };
+constexpr int PP_2DTEXTUREORBIT=1;
 using D3DBLEND=int;
 constexpr int PF_A8R8G8B8=4, D3DPT_TRIANGLESTRIP=5, D3DPT_TRIANGLELIST=4, D3DCULL_NONE=1;
 constexpr int D3DRENDERSTATE_ZENABLE=0,D3DRENDERSTATE_ZWRITEENABLE=1,D3DRENDERSTATE_SRCBLEND=2,D3DRENDERSTATE_DESTBLEND=3;
@@ -1332,6 +1333,18 @@ int main() {
             &&near(face->m_verts[2].y,219.5f),"Napalm centered square uses original unscaled screen half extents");
         napalm.m_curMotion=2;g_renderer.m_rpAlphaList.clear();RenderReferenceScreenTexture(napalm);
         check(g_renderer.m_rpAlphaList.empty(),"Napalm exhausted animation does not substitute a texture or glow");
+    }
+    {
+        CTexture firstTexture,secondTexture;CEffectPrim orbit;
+        orbit.m_type=PP_2DTEXTUREORBIT;orbit.m_pos={140,260,0};orbit.m_widthSize=18;orbit.m_heightSize=24;
+        orbit.m_argb=0xA0C0E0FF;orbit.m_texture={&firstTexture,&secondTexture};orbit.m_curMotion=1;orbit.m_roll=35.8f;
+        g_renderer.m_rpAlphaList.clear();RenderReferenceScreenTexture(orbit);
+        check(g_renderer.m_rpAlphaList.size()==2&&g_renderer.m_rpAlphaList[0].second->tex==&secondTexture
+            &&g_renderer.m_rpAlphaList[0].second->m_verts[0].color==0xA0C0E0FF,
+            "2D texture orbit uses shared screen renderer with current-motion texture and stored color");
+        check(g_renderer.m_rpAlphaList[0].second->m_verts[0].z==0.000001f
+            &&g_renderer.m_rpAlphaList[0].second->srcAlphaMode==D3DBLEND_SRCALPHA,
+            "2D texture orbit preserves fixed screen depth and shared flag-one material");
     }
     {
         CEffectPrim circle;circle.m_numSegments=2;circle.m_size=2;circle.m_arcAngle=90;circle.m_renderFlag=0x201;

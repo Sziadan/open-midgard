@@ -13464,6 +13464,11 @@ void CEffectPrim::Render(matrix* viewMatrix)
         RenderReferenceQuadHorn(*this,*viewMatrix);
         return;
     }
+    // PE/Ref Render dispatches PP_2DTEXTUREORBIT through Render2DTexture too.
+    if (m_type == PP_2DTEXTUREORBIT) {
+        RenderReferenceScreenTexture(*this);
+        return;
+    }
     if (m_type == PP_2DTEXTURE && (m_pattern & 4) != 0) {
         RenderReferenceScreenTexture(*this);
         return;

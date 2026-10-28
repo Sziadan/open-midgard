@@ -50,6 +50,11 @@ check("PE dispatch primitive ids 0x00 and 0x01 to Render2DTexture",
 check("primary Ref dispatch PP_2DTEXTURE and PP_2DTEXTUREORBIT to Render2DTexture",
       re.search(r"case\s+PP_2DTEXTURE:\s*case\s+PP_2DTEXTUREORBIT:\s*Render2DTexture\(\)", REF_DISPATCH) is not None)
 check("canonical local enum preserves PP_2DTEXTURE id zero", re.search(r"PP_2DTEXTURE\s*=\s*0x0", HEADER) is not None)
+check("local PP_2DTEXTUREORBIT route reaches the shared Render2DTexture implementation",
+      re.search(r"PP_2DTEXTUREORBIT\s*=\s*0x1", HEADER) is not None
+      and re.search(r"if\s*\(m_type\s*==\s*PP_2DTEXTUREORBIT\)\s*\{\s*RenderReferenceScreenTexture\(\*this\);\s*return;", LOCAL_RENDER) is not None)
+check("no direct local PP_2DTEXTUREORBIT construction site is currently known",
+      re.search(r"LaunchEffectPrim\s*\(\s*PP_2DTEXTUREORBIT\s*,", CURRENT) is None)
 
 expected_masters = {11, 38, 37, 43, 32, 4, 5, 1, 183, 46, 50, 51}
 actual_masters = {int(v) for v in re.findall(r"m_master->GetEffectType\(\)\s*==\s*(\d+)", LOCAL_PREDICATE)}
@@ -114,5 +119,7 @@ check("existing screen sprite fixtures pin pattern, integer roll, two faces, UV/
           "Hit2 screen renderer truncates roll before source trig-table rotation",
           "Hit5/6 centered rotated geometry retains source pivot rather than Hit2 bottom origin",
           "Napalm screen renderer selects advanced animation texture and packed rising alpha",
+          "2D texture orbit uses shared screen renderer with current-motion texture and stored color",
+          "2D texture orbit preserves fixed screen depth and shared flag-one material",
       )))
 print("PP_2DTEXTURE selected screen-render subset comparator passed; generic route is separate.")

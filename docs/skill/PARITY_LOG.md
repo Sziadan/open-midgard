@@ -14,6 +14,12 @@ Ports are listed as `Ref location -> src location`. A row is not a claim that th
 - `tools/tests/check_prim2dtexture_render.py` maps the pattern-1 bottom pivot and double-height top edge, integer-degree trig-table roll, source corner arithmetic/order, both texture[m_curMotion] assignments, packed color, fixed z/oow and hard-coded AddRP flag1. Existing `ParticleRenderTests.cpp` fixtures pin SandWind two-triangle geometry/UVs/texture/blend, Hit2 pattern/roll, Hit5/6 pivot and Napalm animation frame/color. No production mismatch was found; no runtime source change or app rebuild was needed.
 - The screen-helper route uses the reference triangle helper with renderFlag1, which resolves to ordinary source-alpha/inverse-source-alpha blending. Generic-master and live visual/backend acceptance remain open.
 
+## WP5 CEffectPrim PP_2DTEXTUREORBIT render route — 2026-10-29
+
+Canonical PE and primary Ref dispatch primitive ids0 and1 to `Render2DTexture`. The local `UpdateReference2DTextureOrbit` existed, but `CEffectPrim::Render` had no `PP_2DTEXTUREORBIT` route, leaving source-dispatched orbit primitives invisible. Added a type-wide route to `RenderReferenceScreenTexture`, which matches the shared Render2DTexture behavior. The comparator now pins the local route and records that no direct local construction site was found. A constructed primitive fixture verifies shared screen triangles, current-motion texture, stored color, fixed depth and flag1 material; no current caller or full emitter lifecycle is claimed.
+
+Focused particle/source CTests pass2/2; full parity CTest passes276/276. Release `open_midgard` build and OldRO deployment pass with matching SHA-256 `6DA1E04A589FBF6BB2FFCAC0B1C5742DDE35AB59EBA76372EDE2D1D0F7A088F2`. No live visual/backend acceptance is claimed.
+
 ## WP5 CEffectPrim Render3DParticle segment-sprite subset — 2026-10-29
 
 - Canonical PE `HighPriest.exe.c:469284` and primary Ref `Ref/RagEffectPrim.cpp:3939` Render3DParticle bodies normalize identically. PE and primary Ref dispatch both route PP_3DPARTICLE (`0x05`), PP_3DPARTICLEGRAVITY (`0x06`) and PP_3DPARTICLESPLINE (`0x08`) to the renderer. Local `UsesReferenceParticle()` routes an explicit master-effect subset for these types into `RenderReferenceParticlePrimitive`/`RenderParticleSprites`.
