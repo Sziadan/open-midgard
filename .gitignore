@@ -92,6 +92,7 @@ tools/tests/*
 !tools/tests/check_stin_render.py
 !tools/tests/check_stin5_render.py
 !tools/tests/check_wind_render.py
+!tools/tests/check_colorpaper_render.py
 !tools/tests/check_hitline_caller.py
 !tools/tests/check_hitline4_caller.py
 !tools/tests/check_hitline5_caller.py
