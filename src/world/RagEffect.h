@@ -536,6 +536,8 @@ private:
     void SpawnNpcStop(int variant);
     bool ProcessGuardEffects();
     void SpawnGuard(int variant);
+    bool ProcessTwilightEffects();
+    void SpawnTwilight(int variant);
     void SpawnStin();
     void SpawnStin2(int variant);
     void SpawnSma(int variant);

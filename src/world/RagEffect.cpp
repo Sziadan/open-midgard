@@ -18738,6 +18738,73 @@ bool CRagEffect::ProcessGuardEffects()
     return true;
 }
 
+// Ref/RagEffect2.cpp:33290; canonical helper at HighPriest.exe.c:434485.
+void CRagEffect::SpawnTwilight(int variant)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CWorld* world = mode != nullptr ? mode->m_world : nullptr;
+    CGameActor* player = world != nullptr ? world->m_player : nullptr;
+    if (player == nullptr || world->m_attr == nullptr) return;
+    m_effectPos = player->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_TWILIGHT, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    const char* texture = nullptr;
+    if (variant == 0) {
+        texture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC7\xCF\xBE\xE1\xC7\xE3\xBA\xEA.bmp"; // 0x71C200
+    } else if (variant == 1) {
+        texture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC8\xAD\xC0\xCC\xC6\xAE\xBD\xBD\xB8\xB2\xC6\xF7\xBC\xC7.bmp"; // 0x71C1D8
+    } else {
+        switch (rand() % 3) {
+        case 0:
+            texture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC8\xAD\xBF\xB0\xBA\xB4.bmp"; // 0x71992C
+            break;
+        case 1:
+            texture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBF\xB0\xBB\xEA\xBA\xB4.bmp"; // 0x71990C
+            break;
+        default:
+            texture = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBE\xCB\xC4\xDA\xBF\xC3.bmp"; // 0x71C1B8
+            break;
+        }
+    }
+    prim->m_texture.push_back(g_texMgr.GetTexture(texture, false));
+
+    for (size_t lane = 0; lane < prim->m_gi.size(); ++lane) {
+        EffectGi& gi = prim->m_gi[lane];
+        gi.life = 1;
+        gi.process = 0;
+        gi.height[7] = 3.0f;
+        gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+        gi.alphaB = 0;
+        gi.flag[0] = 0;
+        gi.rotStart = static_cast<short>(m_duration - 50);
+        const float offsetX = static_cast<float>(rand() % 160 - 80);
+        const float offsetZ = static_cast<float>(rand() % 160 - 80);
+        const int groundOffset = rand() % 66;
+        gi.sparkY = world->m_attr->GetHeight(m_effectPos.x + offsetX, m_effectPos.z + offsetZ)
+            - 5.0f - static_cast<float>(groundOffset);
+        gi.sparkX = m_effectPos.x + offsetX;
+        gi.sparkZ = m_effectPos.z + offsetZ;
+        for (int angle = 0; angle < 4; ++angle) {
+            gi.height[static_cast<size_t>(angle)] = static_cast<float>(rand() % 360);
+        }
+        gi.distance = static_cast<float>(rand() % 11) * 0.1f + 3.0f;
+        // The original post-incremented GI pointer writes these fields in lane i.
+        gi.height[9] = static_cast<float>(rand() % 360);
+        gi.flag[2] = 7;
+    }
+}
+
+bool CRagEffect::ProcessTwilightEffects()
+{
+    SpawnTwilight(m_type == 573 ? 0 : (m_type == 574 ? 1 : 2));
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {
