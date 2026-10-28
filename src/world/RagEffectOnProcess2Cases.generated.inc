@@ -35,7 +35,7 @@ case 332: ApplyHealTime(1); return true;
 case 333: return UnportedEffect();
 case 334: ApplyBlind(0); return true;
 case 335: ApplyPoison(0); return true;
-case 336: return UnportedEffect();
+case 336: return ProcessGuardEffects();
 case 337: ApplyJobLvUp50(0); ApplyJobLvUp50(45); return true;
 case 338: ProcessSuperAngelEffect(); return true;
 case 339: ApplyMagnum2("effect\\ring_yellow.tga"); return true;

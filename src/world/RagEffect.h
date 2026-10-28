@@ -534,6 +534,8 @@ private:
     void SpawnTripleAttack(int variant);
     bool ProcessNpcStopEffects();
     void SpawnNpcStop(int variant);
+    bool ProcessGuardEffects();
+    void SpawnGuard(int variant);
     void SpawnStin();
     void SpawnStin2(int variant);
     void SpawnSma(int variant);

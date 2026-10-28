@@ -18689,6 +18689,55 @@ bool CRagEffect::ProcessNpcStopEffects()
     return true;
 }
 
+// Ref/RagEffect2.cpp:27389/27433; canonical helpers at HighPriest.exe.c:458190/458230.
+void CRagEffect::SpawnGuard(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return;
+
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CWorld* world = mode != nullptr ? mode->m_world : nullptr;
+    CGameActor* player = world != nullptr ? world->m_player : nullptr;
+    if (player != nullptr) {
+        const char* wave = variant == 1
+            ? "effect\\black_maximize_power_sword_bic.wav"
+            : "effect\\kyrie_guard.wav";
+        PlayWave(wave, m_effectPos.x - player->m_pos.x, 0.0f,
+            m_effectPos.z - player->m_pos.z, 250, 40, 1.0f);
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_GUARD, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 11.0f;
+    const char* firstTexture = variant == 1 ? "effect\\a01.bmp" : "effect\\guardK.tga";
+    const char* secondTexture = variant == 1 ? "effect\\a01.bmp" : "effect\\guardK2.tga";
+    prim->m_texture.push_back(g_texMgr.GetTexture(firstTexture, false));
+    prim->m_texture.push_back(g_texMgr.GetTexture(secondTexture, false));
+
+    for (size_t lane = 1; lane < prim->m_gi.size(); ++lane) {
+        prim->m_gi[lane].life = 0;
+    }
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.maxHeight = variant == 1 ? 10.0f : 7.8000002f;
+    gi.alphaB = 0;
+    gi.distance = 1.0f;
+    gi.height[0] = 0.0f;
+    gi.flag[0] = static_cast<u8>(variant == 1 ? 1 : (variant == 2 ? 2 : 0));
+}
+
+bool CRagEffect::ProcessGuardEffects()
+{
+    SpawnGuard(m_type == 496 ? 1 : (m_type == 675 ? 2 : 0));
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {

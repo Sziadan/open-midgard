@@ -635,6 +635,8 @@ add_test(NAME tripleattack_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_tripleattack_callers.py")
 add_test(NAME npcstop_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_npcstop_callers.py")
+add_test(NAME guard_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_guard_callers.py")
 add_test(NAME skill_cast_cancel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_cancel_source.py")
 add_test(NAME status_state_source_check
@@ -668,4 +670,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_linelink_callers.py
     check_tripleattack_callers.py
     check_npcstop_callers.py
+    check_guard_callers.py
     check_effect_sprite.py)
