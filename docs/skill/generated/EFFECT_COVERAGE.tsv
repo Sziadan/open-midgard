@@ -255,7 +255,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 246	OnProcess	ShieldCharge	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
 247	OnProcess	MAPPILLAR	routed	"OnProcess -> ApplyMapPillar(""effect\\ring_blue.tga"", 4.0f, true); return true;"		136
 248	OnProcess	Providence,ProcessEZ2STR	routed	"OnProcess -> ApplyProvidence(""effect\\ring_yellow.tga""); ProcessEZ2STR(); return FinishEffectFrame();"	src/gamemode/UseSkillEffect.generated.inc	136
-249	OnProcess	ShieldBoomerang	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+249	OnProcess	ShieldBoomerang	routed	OnProcess -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	91
 251	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR(0.0f, -20.0f, 0.0f);	src/gamemode/UseSkillEffect.generated.inc	8
 252	OnProcess	DEFENDER	routed	"OnProcess -> ApplyDefender(""effect\\ring_yellow.tga""); return true;"	src/gamemode/UseSkillEffect.generated.inc	8
 253	OnProcess	Heal2	routed	OnProcess -> return ProcessHealBlue();	src/gamemode/UseSkillEffect.generated.inc	15
@@ -497,7 +497,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 670	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;	src/world/SkillSpecialEffect.cpp	15
 699	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;	src/gamemode/UseSkillEffect.generated.inc	15
 493	OnProcess3	EnchantPoison2,NpcStop	routed	OnProcess3 -> ProcessEnchantPoison2(); return true;	src/gamemode/UseSkillEffect.generated.inc	296
-494	OnProcess3	ShieldBoomerang	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+494	OnProcess3	ShieldBoomerang	routed	OnProcess3 -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	1085
 495	OnProcess3	RG_COIN2	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
 496	OnProcess3	Guard2,NpcStop	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
 497	OnProcess3	PRESSURE,GroundShake	unported	OnProcess3 -> UnportedEffect		-
@@ -520,7 +520,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 517	OnProcess3	Bottom_Hermode	unported	OnProcess3 -> UnportedEffect		-
 518	OnProcess3	ParticleSpread	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
 519	OnProcess3	Vallentine	unported	OnProcess3 -> UnportedEffect		-
-520	OnProcess3	ShieldBoomerang3	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+520	OnProcess3	ShieldBoomerang3	routed	OnProcess3 -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	954
 521	OnProcess3	NpcStop	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
 522	OnProcess3	Gravitation	unported	OnProcess3 -> UnportedEffect		-
 523	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot01.tga"", 1); return true;"		98

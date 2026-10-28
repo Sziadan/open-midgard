@@ -18266,6 +18266,74 @@ bool CRagEffect::ProcessStinSmaEffects()
     }
 }
 
+// Ref/RagEffect2.cpp:31938-32055; canonical launcher functions at 0x60F2A0/0x60F540.
+bool CRagEffect::ProcessShieldBoomerangEffects()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+
+    const bool shield3 = m_type == 520;
+    const bool spawn = shield3
+        ? (m_stateCnt == 0 || m_stateCnt == 3 || m_stateCnt == 6 || m_stateCnt == 9 || m_stateCnt == 12)
+        : m_stateCnt == 0;
+    if (!spawn) return true;
+
+    if (m_stateCnt == 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode != nullptr && mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\cru_shield boomerang.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(shield3 ? PP_SHIELDBOOMERANG3 : PP_SHIELDBOOMERANG, vector3d{});
+    if (prim == nullptr) return true;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(
+        m_type == 494 ? "effect\\" : "effect\\shield_boomerang.bmp", false));
+    prim->m_size = 0.0f;
+
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.sparkX = m_effectPos.x;
+    gi.sparkY = m_effectPos.y - 8.0f;
+    gi.sparkZ = m_effectPos.z;
+    gi.fullDisplayAngle = 0;
+    gi.flag[0] = 0;
+    gi.flag[1] = 0;
+    gi.flag[2] = 0;
+    if (!shield3) {
+        prim->m_deltaPos = m_deltaPos;
+        const float dx = m_deltaPos.x - m_effectPos.x;
+        const float dz = m_deltaPos.z - m_effectPos.z;
+        gi.maxHeight = std::sqrt(dx * dx + dz * dz);
+        gi.distance = 7.0f;
+        gi.height[8] = 0.0f;
+        gi.alphaB = 255;
+        gi.rotStart = 0;
+        gi.height[1] = 2.0f;
+        gi.height[2] = gi.height[1] / gi.maxHeight * (m_deltaPos.y - m_effectPos.y);
+    } else {
+        gi.distance = 5.0f;
+        gi.height[8] = 0.0f;
+        gi.alphaB = 25;
+        gi.rotStart = rand() % 360;
+        gi.height[1] = 2.5f;
+        gi.sparkX -= g_cosTable[gi.rotStart] * gi.height[1] * 15.0f;
+        gi.sparkZ -= g_sinTable[gi.rotStart] * gi.height[1] * 15.0f;
+    }
+    for (size_t index = 1; index < prim->m_gi.size(); ++index) {
+        prim->m_gi[index].life = 1;
+        prim->m_gi[index].alphaB = 0;
+    }
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {

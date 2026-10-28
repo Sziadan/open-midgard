@@ -523,6 +523,7 @@ private:
     bool ProcessTeiHitEffects();
     bool ProcessChimtoEffect(int variant);
     bool ProcessStinSmaEffects();
+    bool ProcessShieldBoomerangEffects();
     void SpawnStin();
     void SpawnStin2(int variant);
     void SpawnSma(int variant);

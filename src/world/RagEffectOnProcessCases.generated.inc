@@ -255,7 +255,7 @@ case 245: return ProcessClipWaveStrEffect();
 case 246: return UnportedEffect();
 case 247: ApplyMapPillar("effect\\ring_blue.tga", 4.0f, true); return true;
 case 248: ApplyProvidence("effect\\ring_yellow.tga"); ProcessEZ2STR(); return FinishEffectFrame();
-case 249: return UnportedEffect();
+case 249: return ProcessShieldBoomerangEffects();
 case 251: return ProcessEZ2STR(0.0f, -20.0f, 0.0f);
 case 252: ApplyDefender("effect\\ring_yellow.tga"); return true;
 case 253: return ProcessHealBlue();
