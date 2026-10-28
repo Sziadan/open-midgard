@@ -1909,3 +1909,8 @@ Ported effect467's state-zero BeginAsura1 primitive with exact `effect\\hanmoon1
 ## WP5C effects468-473 BeginAsura1 texture variants — 2026-10-28
 
 Completed the remaining callers of the shared BeginAsura1 helper with the exact hanmoon2/3/4/7/5/6 texture mapping from PE. Each preserves the same master-position cadence, state-zero PP_ASURACASTING payload and default GI fields established for effect467. The PE and secondary Ref helper agree. Source and lifecycle tests cover all six case-to-resource mappings, one-shot timing, full payload, and silence. Coverage is now 643 routed /50 explicit unported /0 launched-but-unported. Full Release parity CTest passes233/233, OpenMidgard Release builds and copies the executable, and replay CTest passes102/102. No media/visual acceptance is claimed.
+
+
+## WP5C effects326/327 Foot F1=0 — 2026-10-28
+
+Ported effects326/327 through the shared Foot F1=0 emitter. PE and primary Ref callers map 326 to `effect\\foot_l_b.tga` (VA `0x719428`) and 327 to `effect\\foot_r_b.tga` (VA `0x719414`); the secondary Ref helper at `Ref/dhxj/RagEffect2.cpp:17969` confirms the profile. Every call refreshes master position; state0 launches one PP_FOOT with renderFlag1, inherited duration, one exact texture, size0, and GI0 life1/process0/distance5/riseAngle0/RotStart from `m_deltaPos.x`/alphaB150/height0=−0.2, while GI1-3 are inactive. No RNG/audio. Source and lifecycle checks exercise both paths before state0, at emission, and later. Coverage is now 645 routed /48 explicit unported /0 launched-but-unported. Full Release parity CTest passes234/234, OpenMidgard Release builds and copies the executable, and replay CTest passes102/102. No media/visual acceptance is claimed.

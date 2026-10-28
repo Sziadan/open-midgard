@@ -651,6 +651,7 @@ struct CRagEffect : CGameObject {
     bool ProcessPokJuk297();
     bool ProcessFoot447();
     bool ProcessFoot448();
+    bool ProcessFoot326_327(const char*);
     bool ProcessBeginAsura1_467();
     bool ProcessBeginAsura1Variant(const char*);
     void ApplyBottomMusic(const char*, int);
@@ -4062,6 +4063,33 @@ int main()
         check(effect.m_primList.size()==1&&effect.m_effectPos.x==71&&effect.m_effectPos.y==83
             &&effect.m_effectPos.z==95&&g_texMgr.requests.size()==1&&waveCalls.empty()&&rngDraws==draws,
             "Foot effect448 later states follow master without repeating or drawing RNG");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    for (const auto& variant : {std::pair{326, "effect\\foot_l_b.tga"},
+                                std::pair{327, "effect\\foot_r_b.tga"}}) {
+        CRenderObject master; master.m_pos={31,42,53};
+        CRagEffect effect; effect.m_type=variant.first; effect.m_master=&master; effect.m_duration=83;
+        effect.m_deltaPos={19.7f,0,0}; effect.m_stateCnt=1; effect.m_effectPos={1,2,3};
+        g_texMgr.requests.clear(); waveCalls.clear(); const int draws=rngDraws;
+        effect.ProcessFoot326_327(variant.second);
+        check(effect.m_effectPos.x==31&&effect.m_effectPos.y==42&&effect.m_effectPos.z==53
+            &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "Foot F1=0 variant refreshes master position without state-zero emission");
+        effect.m_stateCnt=0; effect.ProcessFoot326_327(variant.second);
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(prim&&prim->m_type==PP_FOOT&&prim->m_renderFlag==1&&prim->m_duration==83
+            &&prim->m_totalTexture==1&&prim->m_size==0.0f&&prim->m_texture.size()==1
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]==variant.second
+            &&prim->m_gi[0].life==1&&prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0
+            &&prim->m_gi[0].process==0&&prim->m_gi[0].distance==5&&prim->m_gi[0].riseAngle==0
+            &&prim->m_gi[0].rotStart==19&&prim->m_gi[0].alphaB==150&&prim->m_gi[0].height[0]==-0.2f
+            &&effect.m_effectPos.x==31&&effect.m_effectPos.y==42&&effect.m_effectPos.z==53
+            &&waveCalls.empty()&&rngDraws==draws,
+            "Foot F1=0 variant state zero emits exact profile without RNG/audio");
+        master.m_pos={61,72,83}; effect.m_stateCnt=1; effect.ProcessFoot326_327(variant.second);
+        check(effect.m_primList.size()==1&&effect.m_effectPos.x==61&&effect.m_effectPos.y==72
+            &&effect.m_effectPos.z==83&&g_texMgr.requests.size()==1&&waveCalls.empty()&&rngDraws==draws,
+            "Foot F1=0 variant later states refresh master without repeat emission");
         effect.ClearPrims(); g_world.UpdateGameObjects();
     }
     {

@@ -527,6 +527,7 @@ private:
     bool ProcessHitLine3Basic434();
     bool ProcessFoot447();
     bool ProcessFoot448();
+    bool ProcessFoot326_327(const char* textureName);
     bool ProcessBeginAsura1_467();
     bool ProcessBeginAsura1Variant(const char* textureName);
     bool ProcessTeiHitEffects();
