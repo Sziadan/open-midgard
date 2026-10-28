@@ -10712,7 +10712,7 @@ int main()
         check(effect.m_effectPos.x==12.0f&&effect.m_effectPos.y==34.0f&&effect.m_effectPos.z==56.0f,
             "GroundSample emitter follows its master position on every invocation");
         check(prim&&prim->m_type==PP_GROUNDSAMPLE&&prim->m_deltaPos.x==0&&prim->m_deltaPos.y==0&&prim->m_deltaPos.z==0
-            &&prim->m_duration==47&&prim->m_renderFlag==5,
+            &&prim->m_duration==47&&prim->m_renderFlag==5&&prim->m_argb==0xFFFFFFFFu,
             "GroundSample launches one zero-delta primitive with source type, duration and render flags");
         check(prim&&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture
             &&g_texMgr.requests==std::vector<std::string>{"effect\\magic_target.tga"},

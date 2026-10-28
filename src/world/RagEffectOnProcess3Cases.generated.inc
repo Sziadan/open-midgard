@@ -24,7 +24,7 @@ case 506: return ProcessSoulParticle506();
 case 509: return UnportedEffect();
 case 510: return ProcessBeginAsuraEffect();
 case 512: return ProcessEffectFrameLegacy();
-case 513: return UnportedEffect();
+case 513: ProcessGroundSample(); return true;
 case 514: ApplyGiExplosion("effect\\ring_blue.tga"); return true;
 case 515: SpawnWeatherCloud(); return true;
 case 516: SpawnWeatherCloud(); return true;

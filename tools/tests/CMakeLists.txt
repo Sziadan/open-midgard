@@ -984,6 +984,8 @@ add_test(NAME effects557_560_bluefall_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects557_560_bluefall.py")
 add_test(NAME effects497_499_slim_potion_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects497_499_slim_potion.py")
+add_test(NAME effect513_ground_sample_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect513_ground_sample.py")
 add_test(NAME effect467_beginasura1_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect467_beginasura1.py")
 add_test(NAME effect468_473_beginasura1_source_check

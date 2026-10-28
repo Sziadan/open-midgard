@@ -513,7 +513,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 509	OnProcess3	Vallentine	unported	OnProcess3 -> UnportedEffect		-
 510	OnProcess3	BeginAsura	routed	OnProcess3 -> return ProcessBeginAsuraEffect();		462
 512	OnProcess3	CHEMICAL3	routed	OnProcess3 -> return ProcessEffectFrameLegacy();	src/world/GameActorMsgHandler.cpp	91
-513	OnProcess3	GROUNDSAMPLE	unported	OnProcess3 -> UnportedEffect		-
+513	OnProcess3	GROUNDSAMPLE	routed	OnProcess3 -> ProcessGroundSample(); return true;		886
 514	OnProcess3	GI_EXPLOSION	routed	"OnProcess3 -> ApplyGiExplosion(""effect\\ring_blue.tga""); return true;"		144
 515	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		15
 516	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		15
