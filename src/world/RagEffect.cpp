@@ -22336,6 +22336,84 @@ void CRagEffect::ApplyBottomLight(const char* textureName, int size)
     gi.sparkY = 0.0f;
 }
 
+// PE HighPriest.exe.c:420965-421016; secondary Ref/RagEffect2.cpp:17084.
+// TEST_BODY_BEGIN bottom_vertical_family
+bool CRagEffect::ProcessBottomVertical(int effectId)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return true;
+
+    const char* textureName = nullptr;
+    int profile = 0;
+    switch (effectId) {
+    case 277: textureName = "effect\\ring_blue.tga"; break;
+    case 287: textureName = "effect\\ring_red.tga"; profile = 1; break;
+    case 290: textureName = "effect\\ring_red.tga"; break;
+    case 292: textureName = "effect\\magic_green.tga"; profile = 2; break;
+    case 294: textureName = "effect\\safeline.bmp"; profile = 4; break;
+    default: return true;
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_BOTTOM2, vector3d{});
+    if (prim == nullptr) return true;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    prim->m_size = 0.0f;
+
+    for (int index = 0; index < 4; ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        if (profile == 0) {
+            gi.life = 1;
+            gi.process = 0;
+            gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+            gi.vecBPreX = static_cast<float>(rand() % 40 - 20);
+            gi.vecBPreZ = static_cast<float>(rand() % 40 - 20);
+            gi.vecTNowX = 0.0f;
+            gi.vecTNowZ = 0.0f;
+            gi.alphaB = 15;
+        } else if (profile == 1 || profile == 2) {
+            gi.life = 1;
+            gi.process = 0;
+            gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+            if (index < 2) {
+                gi.vecBPreX = static_cast<float>(rand() % 7) - 3.0f;
+                gi.vecBPreZ = -3.0f;
+                gi.vecTNowX = -gi.vecBPreX;
+                gi.vecTNowZ = 3.0f;
+            } else {
+                gi.vecBPreX = -3.0f;
+                gi.vecBPreZ = static_cast<float>(rand() % 7) - 3.0f;
+                gi.vecTNowX = 3.0f;
+                gi.vecTNowZ = -gi.vecBPreZ;
+            }
+            gi.alphaB = 50;
+            gi.height[0] = static_cast<float>(profile);
+        } else {
+            gi.life = index < 2 ? 1 : 0;
+            gi.process = 0;
+            gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+            if (index < 1) {
+                gi.vecBPreX = 6.0f;
+                gi.vecBPreZ = 0.0f;
+                gi.vecTNowX = -6.0f;
+                gi.vecTNowZ = 0.0f;
+            } else {
+                gi.vecBPreX = 0.0f;
+                gi.vecBPreZ = -6.0f;
+                gi.vecTNowX = 0.0f;
+                gi.vecTNowZ = 6.0f;
+            }
+            gi.alphaB = 100;
+            gi.height[0] = static_cast<float>(profile);
+        }
+    }
+    return true;
+}
+// TEST_BODY_END bottom_vertical_family
+
 void CRagEffect::ApplyBottomMusic(const char* textureName, int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();

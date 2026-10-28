@@ -641,6 +641,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect273();
     bool ProcessEffect440();
     bool ProcessLandProtector(int);
+    bool ProcessBottomVertical(int);
     bool ProcessEffect365();
     bool ProcessDemonstration302();
     void SpawnDemonstration302();
@@ -3764,6 +3765,69 @@ int main()
             check(effect.m_primList.size()==1&&effect.m_effectPos.x==31&&effect.m_effectPos.y==53
                 &&effect.m_effectPos.z==75&&rngDraws==draws+1&&g_texMgr.requests.size()==1,
                 "Land Protector later states refresh master position without repeating primitive, texture, or RNG");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+        }
+    }
+    {
+        const int ids[]={277,287,290,292,294};
+        const int profiles[]={0,1,0,2,4};
+        const char* textures[]={"effect\\ring_blue.tga","effect\\ring_red.tga","effect\\ring_red.tga",
+            "effect\\magic_green.tga","effect\\safeline.bmp"};
+        CRenderObject actor;
+        for (size_t which=0; which<5; ++which) {
+            actor.m_pos={12,34,56};
+            CRagEffect effect; effect.m_type=ids[which]; effect.m_master=&actor;
+            effect.m_duration=73; effect.m_effectPos={1,2,3}; effect.m_stateCnt=1;
+            rngValues={11,12,13,14,15,16,17,18,19,20,21,22}; rngCursor=0;
+            const int draws=rngDraws; g_texMgr.requests.clear();
+            effect.ProcessBottomVertical(ids[which]);
+            check(effect.m_primList.empty()&&effect.m_effectPos.x==12&&effect.m_effectPos.y==34
+                &&effect.m_effectPos.z==56&&rngDraws==draws,
+                "Bottom_Vertical callers follow the master before frame zero without launching or drawing RNG");
+            effect.m_stateCnt=0; actor.m_pos={21,43,65};
+            effect.ProcessBottomVertical(ids[which]);
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            const int profile=profiles[which];
+            const int expectedDraws=profile==0?12:(profile==1||profile==2?8:4);
+            bool payload=prim&&prim->m_type==PP_BOTTOM2&&prim->m_renderFlag==5
+                &&prim->m_duration==73&&prim->m_size==0&&prim->m_texture.size()==1
+                &&prim->m_texture[0]==&g_texMgr.texture&&g_texMgr.requests.size()==1
+                &&g_texMgr.requests[0]==textures[which];
+            if (prim) for (int index=0; index<4; ++index) {
+                const EffectGi& gi=prim->m_gi[index];
+                payload=payload&&gi.process==0;
+                if (profile==0) {
+                    const int base=index*3;
+                    payload=payload&&gi.life==1&&gi.fullDisplayAngle==rngValues[base]%360
+                        &&gi.vecBPreX==static_cast<float>(rngValues[base+1]%40-20)
+                        &&gi.vecBPreZ==static_cast<float>(rngValues[base+2]%40-20)
+                        &&gi.vecTNowX==0&&gi.vecTNowZ==0&&gi.alphaB==15;
+                } else if (profile==1||profile==2) {
+                    const int base=index*2;
+                    const float offset=static_cast<float>(rngValues[base+1]%7)-3.0f;
+                    payload=payload&&gi.life==1&&gi.fullDisplayAngle==rngValues[base]%360
+                        &&gi.alphaB==50&&gi.height[0]==profile;
+                    if(index<2) payload=payload&&gi.vecBPreX==offset&&gi.vecBPreZ==-3
+                        &&gi.vecTNowX==-offset&&gi.vecTNowZ==3;
+                    else payload=payload&&gi.vecBPreX==-3&&gi.vecBPreZ==offset
+                        &&gi.vecTNowX==3&&gi.vecTNowZ==-offset;
+                } else {
+                    payload=payload&&gi.life==(index<2?1:0)
+                        &&gi.fullDisplayAngle==rngValues[index]%360&&gi.alphaB==100&&gi.height[0]==4;
+                    if(index==0) payload=payload&&gi.vecBPreX==6&&gi.vecBPreZ==0
+                        &&gi.vecTNowX==-6&&gi.vecTNowZ==0;
+                    else payload=payload&&gi.vecBPreX==0&&gi.vecBPreZ==-6
+                        &&gi.vecTNowX==0&&gi.vecTNowZ==6;
+                }
+            }
+            check(effect.m_primList.size()==1&&payload&&rngDraws==draws+expectedDraws
+                &&effect.m_effectPos.x==21&&effect.m_effectPos.y==43&&effect.m_effectPos.z==65,
+                "Bottom_Vertical profile launches exact texture and all four GI records with source RNG count");
+            effect.m_stateCnt=1; actor.m_pos={31,53,75};
+            effect.ProcessBottomVertical(ids[which]);
+            check(effect.m_primList.size()==1&&effect.m_effectPos.x==31&&effect.m_effectPos.y==53
+                &&effect.m_effectPos.z==75&&rngDraws==draws+expectedDraws&&g_texMgr.requests.size()==1,
+                "Bottom_Vertical later frames refresh origin without repeating emitter, resource, or RNG");
             effect.ClearPrims(); g_world.UpdateGameObjects();
         }
     }

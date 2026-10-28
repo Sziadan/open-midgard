@@ -397,6 +397,7 @@ extract_body(str_delta "${effect_source}" "void AddXformDelta(" "std::string Res
 extract_test_region(str_process "${effect_source}" str_process_family)
 extract_test_region(clip_wave_str_helper "${effect_source}" clip_wave_str_helper)
 extract_test_region(land_protector_handler "${effect_source}" land_protector_family)
+extract_test_region(bottom_vertical_handler "${effect_source}" bottom_vertical_family)
 file(READ "../../src/world/World.cpp" world_source)
 extract_body(primitive_init "${effect_source}" "void CEffectPrim::Init(" "static_assert(offsetof(EffectGi, height)")
 extract_test_region(primitive_update_family "${effect_source}" primitive_update_family)
@@ -429,6 +430,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${firepil
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${banjjakii165_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${clip_wave_str_helper}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${land_protector_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${bottom_vertical_handler}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -927,6 +929,8 @@ add_test(NAME effect208_211_potion_str_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect208_211_potion_str.py")
 add_test(NAME effect242_404_land_protector_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect242_404_land_protector.py")
+add_test(NAME effect277_294_bottom_vertical_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect277_294_bottom_vertical.py")
 add_test(NAME skill_cast_cancel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_cancel_source.py")
 add_test(NAME status_state_source_check

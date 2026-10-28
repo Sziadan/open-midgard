@@ -281,7 +281,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 274	OnProcess	RG_COIN	routed	OnProcess -> return ProcessRgCoinEffects();	src/gamemode/UseSkillEffect.generated.inc	91
 275	OnProcess	TEIHIT2	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	1604
 276	OnProcess	TEIHIT3	routed	OnProcess -> return ProcessTeiHitEffects();	src/gamemode/UseSkillEffect.generated.inc	2513
-277	OnProcess	Bottom_Vertical	unported	OnProcess -> UnportedEffect		-
+277	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(277);		277
 278	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\zz.bmp"", 1); return true;"		115
 279	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\pocket.bmp"", 3); return true;"		115
 280	OnProcess	Bottom_Light	routed	"OnProcess -> ApplyBottomLight(""effect\\twirl.bmp"", 8); return true;"		116
@@ -291,14 +291,14 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 284	OnProcess	Bottom_Music	unported	OnProcess -> UnportedEffect		-
 285	OnProcess	Bottom_Light	routed	"OnProcess -> ApplyBottomLight(""effect\\twirl.bmp"", 4); return true;"		116
 286	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\melody_b.bmp"", 0); return true;"		115
-287	OnProcess	Bottom_Vertical	unported	OnProcess -> UnportedEffect		-
+287	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(287);		305
 288	OnProcess	Bottom_Music	unported	OnProcess -> UnportedEffect		-
 289	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\idun_apple.bmp"", 6); return true;"		115
-290	OnProcess	Bottom_Vertical	unported	OnProcess -> UnportedEffect		-
+290	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(290);		140
 291	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\melody_a.bmp"", 0); return true;"		115
-292	OnProcess	Bottom_Vertical	unported	OnProcess -> UnportedEffect		-
+292	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(292);		3439
 293	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\kiss.bmp"", 4); return true;"		115
-294	OnProcess	Bottom_Vertical	unported	OnProcess -> UnportedEffect		-
+294	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(294);		1406
 295	OnProcess	Talk_FrostJoke	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	124
 296	OnProcess	Talk_FrostJoke	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	97
 297	OnProcess	PokJuk	unported	OnProcess -> UnportedEffect		-

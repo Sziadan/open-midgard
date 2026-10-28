@@ -1853,3 +1853,8 @@ The OpenMidgard Win32 Release build was failing in `RenderDevice.cpp`: on this t
 ## WP5C effects242/404 Land Protector — 2026-10-28
 
 Ported PE/secondary-Ref `Bottom_LandProtector` behavior for IDs242 and404 with exact bitmap/texture, PW-specific distance, primitive payload, master position refresh, and one frame-zero random angle. Added two local routes and source/lifecycle checks. Primary Ref caller omission is explicitly documented; coverage is now 619 routed /74 explicit unported /0 launched-but-unported. Release parity CTest passes221/221, OpenMidgard Release build succeeds and copies the executable to the local OldRO folder, and replay CTest passes102/102.
+
+
+## WP5C effects277/287/290/292/294 Bottom_Vertical — 2026-10-28
+
+Ported five PE `Bottom_Vertical` callers through one local handler with each exact bitmap and profile. Source comparator checks PE callers, executable strings, secondary Ref helper, and generated routes; lifecycle cases cover all four GI lanes and profile-specific random draws. Primary Ref omits the function; secondary Ref backs the decompilation. Coverage is now 624 routed /69 explicit unported /0 launched-but-unported. Focused lifecycle and source checks pass; Release parity CTest passes 222/222 and the OpenMidgard Release app builds and copies to the local OldRO folder.
