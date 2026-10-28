@@ -136,9 +136,9 @@ void ReplayScenario(const std::string& path)
     u16 expectedOpcode = 0;
     const std::vector<u8> bytes = LoadOnePacket(path, expectedOpcode);
     const u16 skillId = static_cast<u16>(bytes[2]) | (static_cast<u16>(bytes[3]) << 8);
-    Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 46 || skillId == 70
+    Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 34 || skillId == 46 || skillId == 70
         || skillId == 89 || skillId == 136 || skillId == 137 || skillId == 271,
-        "runtime replay only has Ref assertions for skills 5, 19, 28, 46, 70, 89, 136, 137, and 271");
+        "runtime replay only has Ref assertions for skills 5, 19, 28, 34, 46, 70, 89, 136, 137, and 271");
     Fixture fixture;
 
     CGameModePacketRouter router;
@@ -155,7 +155,7 @@ void ReplayScenario(const std::string& path)
     const u32 replayStartTick = timeGetTime();
 
     const std::size_t expectedTargetWbaCount = skillId == 46 ? 2u
-        : ((skillId == 28 || skillId == 70 || skillId == 89 || skillId == 271) ? 0u : (skillId == 136 ? 4u : 1u));
+        : ((skillId == 28 || skillId == 34 || skillId == 70 || skillId == 89 || skillId == 271) ? 0u : (skillId == 136 ? 4u : 1u));
     const std::size_t expectedSelfWbaCount = skillId == 136 ? 3u : 0u;
     const std::size_t expectedWbaCount = skillId == 271 ? 1u : expectedTargetWbaCount + expectedSelfWbaCount;
     Require(fixture.target.m_willBeAttackedList.size() == expectedTargetWbaCount,
@@ -385,6 +385,15 @@ void ReplayScenario(const std::string& path)
         Require(foundHealEffect, "Heal 28 low-tier packet did not launch Ref effect7 on target");
         Require(foundHealNumber, "Heal 28 packet did not send Ref damage-number message88");
         std::cout << "Heal skill=28 value=199 effect=7 target=2 message=88 color=-16711936 kind=114\n";
+    } else if (skillId == 34) {
+        runtimeLog.clear();
+        runtimeLog.seekg(0);
+        bool foundBlessingEffect = false;
+        while (std::getline(runtimeLog, logLine)) {
+            foundBlessingEffect = foundBlessingEffect || logLine.find("[REPLAY] LaunchEffect id=42 actor=2") != std::string::npos;
+        }
+        Require(foundBlessingEffect, "Blessing 34 success packet did not launch Ref effect42 on target");
+        std::cout << "Buff skill=34 effect=42 target=2\n";
     } else if (skillId == 70 || skillId == 89) {
         runtimeLog.clear();
         runtimeLog.seekg(0);

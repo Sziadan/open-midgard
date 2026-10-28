@@ -1570,3 +1570,7 @@ Added `ResolveSkillPacketActor` with Ref order (own session AID to `m_player`, o
 ## WP10.8 — Production-linked Storm Gust and Sanctuary packet replay — 2026-10-28
 
 Added 18-byte 0x0117 ground-skill scenarios for Storm Gust89 and Sanctuary70. The production runtime fixture now provides a controlled 32×32 C3dAttr grid; both replays decode cell (10,20), map it to client position (-27.500,22.500), sample terrain height 7.500, and assert the Ref-mapped placed effect (89 and 83 respectively). The full initial WP2 acceptance set now passes the root replay CTest 9/9, including the previous seven WBA/heal scenarios. Matrix rows remain blocked until each complete Ref walk-through is compared; next WP10.8 work is per-scenario multi-actor/cell/job fixture support and WP3.4/WP4 acceptance scenarios.
+
+## WP10.8 — Production-linked Blessing packet replay — 2026-10-28
+
+Added a successful 15-byte 0x011A Blessing34 packet (level3, target AID2, source AID1) to cover the WP3.4 buff path. The real default packet router dispatches it through the production no-damage skill handler; the runtime trace confirms target effect42 and no WBA events. Focused Blessing CTest passes1/1 and the full replay group passes10/10. Next: multi-packet ground-unit lifecycle replay for WP3.4/WP4.
