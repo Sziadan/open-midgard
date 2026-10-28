@@ -1904,3 +1904,8 @@ Ported effect448's right Foot profile with exact PE resource `effect\\foot_r2.tg
 ## WP5C effect467 BeginAsura1 variant0 — 2026-10-28
 
 Ported effect467's state-zero BeginAsura1 primitive with exact `effect\\hanmoon1.tga` (VA `0x719C44`). It follows the master position every call, emits one PP_ASURACASTING with a single texture and the fixed GI0 payload, and leaves GI1-3 inactive. PE and secondary Ref agree; primary Ref omits the helper. Source/lifecycle checks cover asset bytes, lane defaults and histories, timing, and no audio/RNG. Coverage is now 637 routed /56 explicit unported /0 launched-but-unported. Full Release parity CTest passes232/232, OpenMidgard Release builds and copies the executable, and replay CTest passes102/102. No media/visual acceptance is claimed.
+
+
+## WP5C effects468-473 BeginAsura1 texture variants — 2026-10-28
+
+Completed the remaining callers of the shared BeginAsura1 helper with the exact hanmoon2/3/4/7/5/6 texture mapping from PE. Each preserves the same master-position cadence, state-zero PP_ASURACASTING payload and default GI fields established for effect467. The PE and secondary Ref helper agree. Source and lifecycle tests cover all six case-to-resource mappings, one-shot timing, full payload, and silence. Coverage is now 643 routed /50 explicit unported /0 launched-but-unported. Full Release parity CTest passes233/233, OpenMidgard Release builds and copies the executable, and replay CTest passes102/102. No media/visual acceptance is claimed.

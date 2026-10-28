@@ -19150,6 +19150,40 @@ bool CRagEffect::ProcessBeginAsura1_467()
 }
 // TEST_BODY_END beginasura1_467_family
 
+// PE HighPriest.exe.c:421841-421856/432574; Ref/dhxj/RagEffect2.cpp:547.
+// TEST_BODY_BEGIN beginasura1_variants468_473_family
+bool CRagEffect::ProcessBeginAsura1Variant(const char* textureName)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+    if (m_stateCnt != 0) return true;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_ASURACASTING, vector3d{});
+    if (prim == nullptr) return true;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_totalTexture = 1;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    prim->m_size = 0.0f;
+    prim->m_gi[0].life = 1;
+    prim->m_gi[0].process = 0;
+    prim->m_gi[0].distance = 18.0f;
+    prim->m_gi[0].alphaB = 0;
+    prim->m_gi[0].height[0] = 0.0f;
+    prim->m_gi[0].flag[0] = 0;
+    prim->m_gi[0].flag[4] = 1;
+    for (size_t history = 1; history <= 20; ++history) {
+        prim->m_gi[0].height[history] = 0.0f;
+    }
+    for (int lane = 1; lane < 4; ++lane) {
+        prim->m_gi[lane].life = 0;
+    }
+    return true;
+}
+// TEST_BODY_END beginasura1_variants468_473_family
+
 // Ref/RagEffect2.cpp:32653-32773; canonical helpers at 0x62E390/0x62FBE0/0x62F830.
 void CRagEffect::SpawnTeiHit1(const char* textureName, char variant)
 {

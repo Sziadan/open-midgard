@@ -528,6 +528,7 @@ private:
     bool ProcessFoot447();
     bool ProcessFoot448();
     bool ProcessBeginAsura1_467();
+    bool ProcessBeginAsura1Variant(const char* textureName);
     bool ProcessTeiHitEffects();
     bool ProcessChimtoEffect(int variant);
     bool ProcessStinSmaEffects();

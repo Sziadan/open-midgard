@@ -652,6 +652,7 @@ struct CRagEffect : CGameObject {
     bool ProcessFoot447();
     bool ProcessFoot448();
     bool ProcessBeginAsura1_467();
+    bool ProcessBeginAsura1Variant(const char*);
     void ApplyBottomMusic(const char*, int);
     bool ProcessEffect365();
     bool ProcessDemonstration302();
@@ -4091,6 +4092,38 @@ int main()
             &&effect.m_effectPos.z==90&&g_texMgr.requests.size()==1&&waveCalls.empty()&&rngDraws==draws,
             "BeginAsura1 effect467 later states refresh position without repeat emission");
         effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        const int ids[]={468,469,470,471,472,473};
+        const char* textures[]={"effect\\hanmoon2.tga","effect\\hanmoon3.tga","effect\\hanmoon4.tga",
+            "effect\\hanmoon7.tga","effect\\hanmoon5.tga","effect\\hanmoon6.tga"};
+        CRenderObject master; master.m_pos={16,32,48};
+        const int draws=rngDraws;
+        for(size_t which=0;which<6;++which) {
+            CRagEffect effect; effect.m_type=ids[which]; effect.m_master=&master; effect.m_duration=96;
+            effect.m_stateCnt=1; g_texMgr.requests.clear(); waveCalls.clear();
+            effect.ProcessBeginAsura1Variant(textures[which]);
+            const bool gated=effect.m_primList.empty()&&effect.m_effectPos.x==16
+                &&effect.m_effectPos.y==32&&effect.m_effectPos.z==48&&g_texMgr.requests.empty();
+            effect.m_stateCnt=0; effect.ProcessBeginAsura1Variant(textures[which]);
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            bool histories=prim!=nullptr;
+            if(prim) for(int i=1;i<=20;++i) histories=histories&&prim->m_gi[0].height[i]==0;
+            const bool emitted=prim&&prim->m_type==PP_ASURACASTING&&prim->m_renderFlag==5
+                &&prim->m_duration==96&&prim->m_totalTexture==1&&prim->m_size==0
+                &&prim->m_texture.size()==1&&g_texMgr.requests.size()==1
+                &&g_texMgr.requests[0]==textures[which]&&prim->m_gi[0].life==1
+                &&prim->m_gi[0].process==0&&prim->m_gi[0].distance==18&&prim->m_gi[0].alphaB==0
+                &&prim->m_gi[0].height[0]==0&&prim->m_gi[0].flag[0]==0&&prim->m_gi[0].flag[4]==1
+                &&histories&&prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0;
+            master.m_pos={64,80,96}; effect.m_stateCnt=2; effect.ProcessBeginAsura1Variant(textures[which]);
+            const bool later=effect.m_primList.size()==1&&effect.m_effectPos.x==64
+                &&effect.m_effectPos.y==80&&effect.m_effectPos.z==96&&g_texMgr.requests.size()==1;
+            check(gated&&emitted&&later&&waveCalls.empty()&&rngDraws==draws,
+                "BeginAsura1 effects468-473 use ordered exact textures and shared state-zero payload");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+            master.m_pos={16,32,48};
+        }
     }
     {
         const int ids[]={277,287,290,292,294};

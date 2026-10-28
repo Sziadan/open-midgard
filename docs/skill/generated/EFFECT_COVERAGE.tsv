@@ -393,12 +393,12 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 465	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		136
 466	OnProcess	inline	routed	OnProcess -> return ProcessEffect466();	src/world/SkillSpecialEffect.cpp	34
 467	OnProcess	BeginAsura1	routed	OnProcess -> return ProcessBeginAsura1_467();		2217
-468	OnProcess	BeginAsura1	unported	OnProcess -> UnportedEffect		-
-469	OnProcess	BeginAsura1	unported	OnProcess -> UnportedEffect		-
-470	OnProcess	BeginAsura1	unported	OnProcess -> UnportedEffect		-
-471	OnProcess	BeginAsura1	unported	OnProcess -> UnportedEffect		-
-472	OnProcess	BeginAsura1	unported	OnProcess -> UnportedEffect		-
-473	OnProcess	BeginAsura1	unported	OnProcess -> UnportedEffect		-
+468	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon2.tga"");"		293
+469	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon3.tga"");"		2202
+470	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon4.tga"");"		691
+471	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon7.tga"");"		3485
+472	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon5.tga"");"		1300
+473	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon6.tga"");"		2368
 474	OnProcess	inline	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	15
 475	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		15
 476	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		15
