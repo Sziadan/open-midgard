@@ -1,0 +1,5 @@
+# actor	source	1	0	16	16
+# actor	target	2	0	18	16
+# opcode	hexBytes	comment
+0x011F	1F0164000000010000000A0014008501	Create source unit AID100, job133, at cell(10,20)
+0x0115	15011200640000000200000078563412A0050000200100000C0017001E000200030008	Handcrafted packetver23 position-skill notify; target cell(12,23), damage30, level2, div3

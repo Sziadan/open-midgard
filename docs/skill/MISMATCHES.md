@@ -655,3 +655,6 @@ The canonical PE inline case380 passes the literal bytes `effect\\` (VA `0x6F1FF
 # WP4 Pneuma job133 default-path exception
 
 The WP4 acceptance summary originally described Pneuma as launching a unit loop effect. The primary Ref `CSkill::SendMsg` message45 switch has no job133 branch, and Ref `CSkill::OnProcess` has no job133 case; it reaches the default path, increments `m_launchCnt`, and remains active without launching an effect. The replay fixture confirms this runtime behavior. Treat job133 as a source default-path exception, not as a missing/invented loop effect. The plan acceptance text is corrected accordingly.
+### 0x0115 skill position notify is replay-only
+
+`ZC_NOTIFY_SKILL_POSITION` is decoded by Ref (`Ref/GameModePacket.cpp:21482`) and has a packetver23 length of 35 bytes, but the packetver23 eAthena `clif_skill_damage2` sender at `Ref/eAthena_src_2011/map/clif.c:4740` is commented out. Keep the client handler for parity; the 0x0115 fixture is handcrafted and proves receive-side routing only. It does not establish that RunningServer emits this opcode or count toward live acceptance.

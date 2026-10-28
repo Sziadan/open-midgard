@@ -409,6 +409,9 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_skill_damage2_141_levelFFFF_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/skill_damage2_141_levelFFFF.tsv")
+    add_test(NAME skill_packet_replay_skill_damage_position_0115_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/skill_damage_position_0115.tsv")
     add_test(NAME skill_packet_replay_ground_skill_wave362_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/ground_skill_wave362.tsv")

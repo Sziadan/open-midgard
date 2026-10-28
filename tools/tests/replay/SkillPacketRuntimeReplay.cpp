@@ -15,6 +15,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -648,6 +649,47 @@ bool IsSkillDamageExtendedExtraScenario(const std::string& path)
     }
     const u16 skillId = ReadU16LE(packets[0].bytes.data() + 2);
     return skillId == 141 || skillId == 662;
+}
+
+bool IsSkillDamagePositionScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 2 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+        && packets[1].opcode == 0x0115 && packets[1].bytes.size() == 35;
+}
+
+void ReplaySkillDamagePosition(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 2 && packets[0].opcode == 0x011F && packets[1].opcode == 0x0115
+        && packets[1].bytes.size() == 35, "position-skill replay requires unit entry and one 35-byte 0x0115 packet");
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    for (const ScenarioPacket& item : packets) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(item.bytes.data(), static_cast<int>(item.bytes.size()), packet, consumed),
+            "production packet reader rejected position-skill replay packet");
+        Require(packet.packetId == item.opcode && consumed == static_cast<int>(item.bytes.size()),
+            "position-skill packet framing differs from scenario metadata");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch position-skill packet");
+    }
+    CSkill* source = fixture.world.GetSkillByAID(100);
+    Require(source != nullptr && source->m_job == 133, "0x011F did not create source skill unit AID100/job133");
+    Require(fixture.target.m_willBeAttackedList.size() == 3, "0x0115 div=3 did not enqueue three unit hit updates");
+    int runningDamage = 10;
+    for (const WBA& hit : fixture.target.m_willBeAttackedList) {
+        Require(hit.targetGid == 100 && hit.tCellX == 12 && hit.tCellY == 23
+            && hit.effectId1 == 49 && hit.effectLevel == 2 && hit.damage == 10 && hit.message == 111,
+            "0x0115 position, source, damage, level or Ref unit-hit effect was not preserved");
+        int queuedRunningDamage = 0;
+        std::memcpy(&queuedRunningDamage, &hit.attackedSpeedFactor, sizeof(queuedRunningDamage));
+        Require(queuedRunningDamage == runningDamage,
+            "0x0115 hit queue did not preserve cumulative damage in the Ref WBA payload");
+        runningDamage += 10;
+    }
+    std::cout << "SkillDamagePosition opcode=0x0115 source=unit:100 skill=18 target=2 cell=(12,23) damage=30 div=3\n";
 }
 
 void ReplaySkillDamageExtendedExtra(const std::string& path)
@@ -1861,6 +1903,8 @@ int main(int argc, char** argv)
         freshRuntimeLog.close();
         if (IsGroundSkillWaveScenario(argv[1])) {
             ReplayGroundSkillWave(argv[1]);
+        } else if (IsSkillDamagePositionScenario(argv[1])) {
+            ReplaySkillDamagePosition(argv[1]);
         } else if (IsSkillDamageExtendedExtraScenario(argv[1])) {
             ReplaySkillDamageExtendedExtra(argv[1]);
         } else if (IsGroundArrowShowerScenario(argv[1])) {
