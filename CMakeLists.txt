@@ -21,6 +21,7 @@ option(RO_ENABLE_BINK_VIDEO "Enable Bink video runtime loading" ON)
 option(RO_ENABLE_GRANNY "Enable Granny runtime loading" ON)
 option(RO_ENABLE_IJL "Enable Intel JPEG Library runtime loading" OFF)
 option(RO_ENABLE_DEV_DEPLOY "Copy build output to the local OldRO folder" ON)
+option(RO_BUILD_SKILL_REPLAY_TESTS "Build production-linked skill packet replay tests" OFF)
 option(RO_ENABLE_QT6_UI "Enable the Qt 6 / QML GPU UI runtime" OFF)
 option(RO_ENABLE_QT6_UI_SPIKE "Deprecated alias for RO_ENABLE_QT6_UI" OFF)
 option(RO_QT_UI_DEFAULT_ENABLED "Enable the Qt UI runtime by default unless OPEN_MIDGARD_QT_UI overrides it" OFF)
@@ -249,4 +250,25 @@ if(RO_ENABLE_DEV_DEPLOY)
         COMMENT "Copying executable to local OldRO folder"
     )
     ro_add_qt_runtime_deploy(open_midgard "D:/Spel/OldRO")
+endif()
+
+if(RO_BUILD_SKILL_REPLAY_TESTS)
+    enable_testing()
+    add_executable(skill_packet_replay_runtime_checks
+        tools/tests/replay/SkillPacketRuntimeReplay.cpp)
+    target_compile_features(skill_packet_replay_runtime_checks PRIVATE cxx_std_17)
+    target_link_libraries(skill_packet_replay_runtime_checks PRIVATE
+        ro_main ro_gamemode ro_session ro_world ro_skill ro_item ro_pathfinder
+        ro_network ro_res ro_audio ro_render3d ro_render ro_ui ro_input
+        ro_cipher ro_core ro_security ro_lua)
+    if(WIN32)
+        target_link_libraries(skill_packet_replay_runtime_checks PRIVATE
+            winmm.lib dxguid.lib ole32.lib oleaut32.lib psapi.lib msimg32.lib)
+    endif()
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    add_test(NAME skill_packet_replay_runtime_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/bash5.tsv")
+    set_tests_properties(skill_packet_replay_runtime_checks PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
 endif()

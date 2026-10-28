@@ -88,6 +88,7 @@ public:
     void Quit();
 
 private:
+    friend struct SkillPacketReplayAccess;
     // Memory layout from HighPriest.exe.h:30965
     int m_loopCond;
     CMode* m_curMode;

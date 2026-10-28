@@ -58,7 +58,7 @@ add_executable(skill_packet_replay_checks replay/SkillPacketReplayTests.cpp)
 target_compile_features(skill_packet_replay_checks PRIVATE cxx_std_17)
 target_include_directories(skill_packet_replay_checks PRIVATE "../../src" "${CMAKE_CURRENT_BINARY_DIR}")
 add_test(NAME skill_packet_replay_checks COMMAND skill_packet_replay_checks
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../docs/skill/replay/bash5.tsv")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../docs/skill/replay/actor_action.tsv")
 extract_test_region(sound_body "${packet_source}" server_sound_packet_family)
 file(READ "../../src/gamemode/GameMode.cpp" mode_source)
 extract_body(ambient_sound_body "${mode_source}" "struct AmbientSoundTrigger {" "float g_savedOutdoorCameraLatitude")
@@ -942,6 +942,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_begin_asura_callers.py
     check_skill_packet_actor_lookup.py
     replay/SkillPacketReplayTests.cpp
+    replay/SkillPacketRuntimeReplay.cpp
     ../../src/gamemode/GameModePacket.cpp
     check_energy_drain_callers.py
     check_portal_wind_caller.py
