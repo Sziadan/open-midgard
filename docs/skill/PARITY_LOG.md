@@ -3172,3 +3172,7 @@ Effect74 now routes through `ProcessIceWall74`, matching the complete PE and Ref
 ## WP10.8 runtime replay — Fire Wall unit set/removal — 2026-10-28
 
 `firewall_unit_lifecycle.tsv` replays Ref/eAthena 0x011F (16-byte skill-unit entry) then 0x0120 (6-byte disappearance). The production default router creates a CSkill with AID100/job127 at cell(10,20), maps it through the controlled attr map to(-27.5,7.5,22.5), plays `effect\EF_FireWall.wav`, then removes it from both CWorld skill and game-object lists. Ref anchors are `Zc_Skill_Entry/Disappear` (`Ref/GameModePacket.cpp:25375/25365`), `CSkill::SendMsg` message45 and `ApplyStandEntry` (`Ref/Skill.cpp:2925-3543`), and `CWorld::RemoveSkill` (`Ref/GameWorld.cpp:665`). Focused test passes1/1; replay suite passes11/11. This is a set/removal lifecycle check; periodic unit effects and visible trap models are not asserted.
+
+## WP10.8 runtime replay — trap hide/reveal/removal — 2026-10-28
+
+`trap_reveal_lifecycle.tsv` sends two 0x011F entries for unit AID100/job143 from non-party creator2 at cell(10,20), followed by 0x01AC and 0x0120. Production handling transitions `m_isVisibleBody` 1→0→1, preserves the mapped terrain location, then removes the skill from the world. Ref anchors: `Zc_Skill_Entry/Disappear/Update` (`Ref/GameModePacket.cpp:25375/25365/25684`) and `CSkill::SendMsg` messages45/119 (`Ref/Skill.cpp:2925-3543`). Model rendering is not asserted because the replay fixture does not load trap model resources. Focused test passes1/1; packet replay suite passes12/12. No WP8 matrix row is marked verified.

@@ -506,10 +506,56 @@ void ReplayFirewallUnitLifecycle(const std::string& path)
     std::cout << "SkillUnit job=127 aid=100 cell=(10,20) pos=(-27.500,7.500,22.500) wave=effect\\EF_FireWall.wav removed=1\n";
 }
 
+void ReplayTrapRevealLifecycle(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 4, "trap lifecycle requires set, hide, reveal, and remove packets");
+    Require(packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+        && packets[1].opcode == 0x011F && packets[1].bytes.size() == 16,
+        "trap lifecycle must begin with two 16-byte skill-unit entries");
+    Require(packets[2].opcode == 0x01AC && packets[2].bytes.size() == 6,
+        "trap lifecycle reveal must use the 6-byte 0x01AC packet");
+    Require(packets[3].opcode == 0x0120 && packets[3].bytes.size() == 6,
+        "trap lifecycle removal must use the 6-byte 0x0120 packet");
+
+    Fixture fixture;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    const bool expectedVisibility[] = { true, false, true, false };
+    for (std::size_t index = 0; index < packets.size(); ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected trap lifecycle packet");
+        Require(packet.packetId == packets[index].opcode && consumed == static_cast<int>(packets[index].bytes.size()),
+            "trap lifecycle packet framing differs from scenario metadata");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch trap lifecycle packet");
+        CSkill* trap = fixture.world.GetSkillByAID(100);
+        if (index < 3) {
+            Require(trap != nullptr, "trap lifecycle packet unexpectedly lost unit AID100");
+            Require((trap->m_isVisibleBody != 0) == expectedVisibility[index],
+                "trap visibility does not match set-hidden-reveal packet sequence");
+            Require(trap->m_job == 143 && trap->m_pos.x == -27.5f && trap->m_pos.y == 7.5f && trap->m_pos.z == 22.5f,
+                "trap job or packet-cell terrain position differs from Ref");
+            Require(trap->m_3dactor == nullptr, "trap fixture unexpectedly loaded an external model resource");
+        } else {
+            Require(trap == nullptr, "trap removal did not erase unit AID100");
+        }
+    }
+    std::cout << "Trap job=143 aid=100 hidden=1 revealed=1 removed=1 model_resource=not-loaded\n";
+}
+
 bool IsFirewallUnitScenario(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
     return packets.front().opcode == 0x011F;
+}
+
+bool IsTrapRevealScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 4 && packets.front().opcode == 0x011F
+        && packets.front().bytes.size() == 16 && packets.front().bytes[14] == 143;
 }
 
 } // namespace
@@ -518,7 +564,9 @@ int main(int argc, char** argv)
 {
     try {
         Require(argc == 2, "expected one replay scenario path");
-        if (IsFirewallUnitScenario(argv[1])) {
+        if (IsTrapRevealScenario(argv[1])) {
+            ReplayTrapRevealLifecycle(argv[1]);
+        } else if (IsFirewallUnitScenario(argv[1])) {
             ReplayFirewallUnitLifecycle(argv[1]);
         } else {
             ReplayScenario(argv[1]);

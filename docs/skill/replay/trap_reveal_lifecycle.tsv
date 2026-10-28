@@ -1,0 +1,5 @@
+# opcode	hexBytes	comment
+0x011F	1F0164000000020000000A0014008F01	Trap unit AID100 creator AID2 job143 visible on first sighting
+0x011F	1F0164000000020000000A0014008F01	Duplicate trap entry marks non-party trap hidden
+0x01AC	AC0164000000	Reveal trap unit AID100
+0x0120	200164000000	Remove trap unit AID100

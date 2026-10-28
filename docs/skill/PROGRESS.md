@@ -1578,3 +1578,7 @@ Added a successful 15-byte 0x011A Blessing34 packet (level3, target AID2, source
 ## WP10.8 — Production-linked Fire Wall unit lifecycle replay — 2026-10-28
 
 Extended replay scenarios to dispatch multiple raw packets from one TSV. The Firewall case sends 0x011F unit AID100/job127 at cell(10,20), verifies the real CSkill entry in both CWorld registries, mapped position(-27.500,7.500,22.500), and effect\EF_FireWall.wav, then sends 0x0120 and verifies removal from both lists. Focused lifecycle CTest passes1/1; the full root replay group passes11/11. Configurable multi-actor/cell/job scenarios and 24 ms ground-unit lifecycle stepping remain next.
+
+## WP10.8 — Production-linked trap reveal lifecycle replay — 2026-10-28
+
+Added the WP4 trap visibility lifecycle: two 0x011F entries for unit AID100/job143 toggle the non-party trap from visible to hidden, 0x01AC reveals it, and 0x0120 removes it. The production CSkill instance retains cell/terrain placement while visibility changes and is removed from CWorld. The fixture has no external model assets, so this verifies visibility state and cleanup rather than rendering. Focused trap CTest passes1/1; the full packet replay group passes12/12. Next: configurable actor/cell/job fixtures and timed ground-unit effects.
