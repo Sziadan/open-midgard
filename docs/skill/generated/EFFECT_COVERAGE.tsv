@@ -210,8 +210,8 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 196	OnProcess	LaunchEffectPrim	routed	OnProcess -> ApplyCurseAttack(); return true;	src/session/SkillAttackEffectIdTable.generated.inc	169
 200	OnProcess	Level99	routed	OnProcess -> return ProcessLevel99Effect();	src/world/GameActor.cpp	91
 397	OnProcess	Level99	routed	OnProcess -> return ProcessLevel99Effect();	src/world/GameActor.cpp	2123
-201	OnProcess	Level99_2	unported	OnProcess -> UnportedEffect	src/world/GameActor.cpp	-
-398	OnProcess	Level99_2	unported	OnProcess -> UnportedEffect	src/world/GameActor.cpp	-
+201	OnProcess	Level99_2	routed	OnProcess -> return ProcessLevel99_2Effect();	src/world/GameActor.cpp	250
+398	OnProcess	Level99_2	routed	OnProcess -> return ProcessLevel99_2Effect();	src/world/GameActor.cpp	34
 202	OnProcess	Level99_3	unported	OnProcess -> UnportedEffect		-
 203	OnProcess	GumGang	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
 204	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		15
@@ -668,7 +668,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 677	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	15
 678	OnProcess3	Level99_3	unported	OnProcess3 -> UnportedEffect		-
 679	OnProcess3	Level99	routed	OnProcess3 -> return ProcessLevel99Effect();		802
-680	OnProcess3	Level99_2	unported	OnProcess3 -> UnportedEffect		-
+680	OnProcess3	Level99_2	routed	OnProcess3 -> return ProcessLevel99_2Effect();		882
 681	OnProcess3	EffectTextureSet	unported	OnProcess3 -> UnportedEffect		-
 682	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(32);		657
 683	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(33);		2443

@@ -17360,6 +17360,65 @@ bool CRagEffect::ProcessLevel99Effect()
     return true;
 }
 
+// Ref/RagEffect2.cpp:28935-28977; canonical helper HighPriest.exe.c:442819-442952.
+bool CRagEffect::ProcessLevel99_2Effect()
+{
+    const char* textureName = nullptr;
+    int variant = 0;
+    switch (m_type) {
+    case 201:
+    case 398:
+        textureName = "effect\\pikapika2.bmp";
+        break;
+    case 680:
+        textureName = "effect\\pikapika2.bmp";
+        variant = 1;
+        break;
+    default:
+        return false;
+    }
+
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr && existing->m_type == PP_3DAURA) {
+            existing->m_pos = origin;
+        }
+    }
+    if (m_stateCnt == 99999998) {
+        m_stateCnt = 0;
+        m_duration = 99999999;
+    }
+    if (m_stateCnt != 0) {
+        return true;
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DAURA, vector3d{});
+    if (prim == nullptr) {
+        return true;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    prim->m_size = variant == 1 ? 15.0f : 4.0f;
+    for (EffectGi& gi : prim->m_gi) {
+        gi.life = 0;
+    }
+    prim->m_gi[0].life = 1;
+    prim->m_gi[1].life = 1;
+    prim->m_gi[0].distance = 15.0f;
+    prim->m_gi[1].distance = 15.0f;
+    prim->m_gi[0].riseAngle = 0;
+    prim->m_gi[1].riseAngle = 180;
+    prim->m_gi[0].alphaB = 200;
+    prim->m_gi[1].alphaB = 200;
+    prim->m_gi[0].height[0] = -1.0f;
+    prim->m_gi[1].height[0] = -1.0f;
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {

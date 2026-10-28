@@ -512,6 +512,7 @@ private:
     bool ProcessEffectTextureAnimation();
     bool ProcessEffectTextureSet();
     bool ProcessLevel99Effect();
+    bool ProcessLevel99_2Effect();
     bool ProcessTier3StrEffect();
     bool ProcessThrowItemEffect();
     bool ProcessHealBlue();

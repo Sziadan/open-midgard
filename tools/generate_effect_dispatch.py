@@ -19,7 +19,7 @@ FORCE_ROUTE = {315, 366, 491, 492, 507, 508, 565, 566, 567, 568, 569,
                130, 250, 204, 205, 206, 207, 210, 234, 245, 255, 256, 257, 258, 390, 391,
                95, 102, 570, 571, 576, 577, 578, 579, 580, 583, 585, 586, 587, 588, 589,
                630, 631, 632, 633, 634, 637, 638, 639, 640, 641, 642, 643, 644, 645, 647, 648,
-               200, 397, 666, 679, 682, 683, 684, 685, 686, 689, 690, 691, 693, 694, 696, 701, 702, 703}
+               200, 201, 397, 398, 666, 679, 680, 682, 683, 684, 685, 686, 689, 690, 691, 693, 694, 696, 701, 702, 703}
 FORCE_ROUTE.update(range(475, 485))
 
 DIRECT_CALLS = {
@@ -126,6 +126,8 @@ DIRECT_CALLS = {
     600: "return ProcessThrowItemEffect();",
     200: "return ProcessLevel99Effect();",
     397: "return ProcessLevel99Effect();",
+    201: "return ProcessLevel99_2Effect();",
+    398: "return ProcessLevel99_2Effect();",
     610: "return ProcessTarotEffect();",
     611: "return ProcessTarotEffect();",
     613: "return ProcessThrowItemEffect();",
@@ -134,6 +136,7 @@ DIRECT_CALLS = {
     616: "return ProcessThrowItemEffect();",
     676: "return ProcessTarotEffect();",
     679: "return ProcessLevel99Effect();",
+    680: "return ProcessLevel99_2Effect();",
     689: "return ProcessEffectTextureAnimation();",
     690: "return ProcessEffectTextureAnimation();",
     691: "return ProcessEffectTextureAnimation();",
