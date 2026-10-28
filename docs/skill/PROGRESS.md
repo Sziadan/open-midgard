@@ -1836,3 +1836,7 @@ Verified paired mappings for effect213 (`Deffender.str`, VA `0x71AAF4`) and effe
 ## WP5C effect199 Pong STR variants — 2026-10-28
 
 Verified effect199's dynamic STR selection against primary Ref and PE: one `rand()` draw chooses `Pong1.str` through `Pong3.str`. The local catalog and resolver use the same one-draw variant range and filename format, and its route uses shared STR processing. Added and registered `check_effect199_pong_str_variants.py`. No matching clip files are present, so visual acceptance remains open. Full parity CTest passes 218/218. Next: continue 5C source-parity audit.
+
+## WP5C effects204-207/210 clip-wave STR family — 2026-10-28
+
+Verified Init mappings for effect IDs204-207 and210 across Ref, PE, and local names, including exact raw CP949 potion names and `fruit.str`. Canonical state0 callers copy master position, play `_heal_effect.wav` at Y−80, then enter shared STR processing; local routes and the `ProcessClipWaveStrEffect` branch agree. The wave resolves from PE at VA `0x712840`. Added and registered `check_effect204_210_clipwave_str.py`. Matching clips and direct per-ID lifecycle cases are absent, so media acceptance remains open. Full parity CTest passes 219/219. Next: continue 5C source-parity audit.

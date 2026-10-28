@@ -917,6 +917,8 @@ add_test(NAME effect213_214_str_mappings_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect213_214_str_mappings.py")
 add_test(NAME effect199_pong_str_variants_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect199_pong_str_variants.py")
+add_test(NAME effect204_210_clipwave_str_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect204_210_clipwave_str.py")
 add_test(NAME skill_cast_cancel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_cancel_source.py")
 add_test(NAME status_state_source_check
@@ -1027,4 +1029,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect189_195_str_mappings.py
     check_effect213_214_str_mappings.py
     check_effect199_pong_str_variants.py
+    check_effect204_210_clipwave_str.py
     check_effect695_map_fireworks.py)
