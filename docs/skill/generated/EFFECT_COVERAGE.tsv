@@ -518,7 +518,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 515	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		15
 516	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		15
 517	OnProcess3	Bottom_Hermode	unported	OnProcess3 -> UnportedEffect		-
-518	OnProcess3	ParticleSpread	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+518	OnProcess3	ParticleSpread	routed	OnProcess3 -> return ProcessParticleSpreadEffects();	src/world/SkillSpecialEffect.cpp	1240
 519	OnProcess3	Vallentine	unported	OnProcess3 -> UnportedEffect		-
 520	OnProcess3	ShieldBoomerang3	routed	OnProcess3 -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	954
 521	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
@@ -543,10 +543,10 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 540	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
 541	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();	src/gamemode/UseSkillEffect.generated.inc	97
 542	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
-543	OnProcess3	ParticleTime	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+543	OnProcess3	ParticleTime	routed	OnProcess3 -> return ProcessParticleTimeEffects();	src/gamemode/UseSkillEffect.generated.inc	909
 544	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
 545	OnProcess3	Vallentine	unported	OnProcess3 -> UnportedEffect		-
-546	OnProcess3	ParticleTime	unported	OnProcess3 -> UnportedEffect		-
+546	OnProcess3	ParticleTime	routed	OnProcess3 -> return ProcessParticleTimeEffects();		716
 547	OnProcess3	STIN	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	15
 548	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	34
 549	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
@@ -573,7 +573,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 603	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		13
 570	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(0);	src/gamemode/UseSkillEffect.generated.inc	388
 571	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(1);	src/gamemode/UseSkillEffect.generated.inc	995
-572	OnProcess3	ParticleTime	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+572	OnProcess3	ParticleTime	routed	OnProcess3 -> return ProcessParticleTimeEffects();	src/gamemode/UseSkillEffect.generated.inc	2586
 573	OnProcess3	Twilight	routed	OnProcess3 -> return ProcessTwilightEffects();	src/session/SkillActionInfo2.cpp	1436
 574	OnProcess3	Twilight	routed	OnProcess3 -> return ProcessTwilightEffects();	src/session/SkillActionInfo2.cpp	1002
 575	OnProcess3	Twilight	routed	OnProcess3 -> return ProcessTwilightEffects();	src/session/SkillActionInfo2.cpp	462

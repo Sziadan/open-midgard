@@ -438,7 +438,7 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 
 # WP10.3 Effect_SPR remaining branches (2026-10-28)
 
-- The shared `Effect_SPR` helper is routed for variants 0–7, 9–13, 15–21, 21–29, and 31–36. Canonical callsite string resolution verifies the caller audio for variants 15/17/18/20/26/27/30; the helper preserves the corresponding event frames and listener-relative or literal-origin coordinates. Variant 8 (effect 584) remains explicit unported because its frame-5 wave resolves only to `effect\\` and it also requires view-relative action selection. Effects 572–575 use `ParticleTime`/`Twilight` and remain unported. IDs 635/636 do not use `Effect_SPR`; their frame-zero audio names remain unresolved, while 646 is already routed through its STR-only helper.
+- The shared `Effect_SPR` helper is routed for variants 0–7, 9–13, 15–21, 21–29, and 31–36. Canonical callsite string resolution verifies the caller audio for variants 15/17/18/20/26/27/30; the helper preserves the corresponding event frames and listener-relative or literal-origin coordinates. Variant 8 (effect 584) remains explicit unported because its frame-5 wave resolves only to `effect\\` and it also requires view-relative action selection. Effects 572–575 now route through `ParticleTime`/`Twilight`; effect572's sound symbol resolves only to the exact prefix `effect\\T_`, which is preserved without guessing a suffix. IDs 635/636 do not use `Effect_SPR`; their frame-zero audio names remain unresolved, while 646 is already routed through its STR-only helper.
 
 # WP10.3 Bash3D caller source differences (2026-10-28)
 

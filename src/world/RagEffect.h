@@ -538,6 +538,10 @@ private:
     void SpawnGuard(int variant);
     bool ProcessTwilightEffects();
     void SpawnTwilight(int variant);
+    bool ProcessParticleTimeEffects();
+    void SpawnParticleTime(int variant);
+    bool ProcessParticleSpreadEffects();
+    void SpawnParticleSpread();
     void SpawnStin();
     void SpawnStin2(int variant);
     void SpawnSma(int variant);

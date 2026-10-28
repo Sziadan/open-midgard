@@ -18805,6 +18805,127 @@ bool CRagEffect::ProcessTwilightEffects()
     return true;
 }
 
+// Ref/RagEffect2.cpp:30105; canonical helper at HighPriest.exe.c:457729.
+void CRagEffect::SpawnParticleTime(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    const int firstState = variant == 2 ? 40 : 0;
+    const int lastState = variant == 2 ? 120 : 80;
+    if (m_stateCnt < firstState || m_stateCnt > lastState || (m_stateCnt % 4) != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_PARTICLE_UP, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\pok1.tga", false));
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\pok3.tga", false));
+    prim->m_size = 0.0f;
+    prim->m_pos = m_effectPos;
+
+    for (EffectGi& gi : prim->m_gi) {
+        gi.life = 1;
+        gi.process = 0;
+        gi.distance = static_cast<float>(rand() % 10) * 0.1f + 2.0f;
+        gi.height[8] = 0.0f;
+        gi.alphaB = 0;
+        gi.sparkX = static_cast<float>(rand() % 11) + m_effectPos.x - 5.0f;
+        gi.sparkZ = static_cast<float>(rand() % 11) + m_effectPos.z - 5.0f;
+        gi.sparkY = m_effectPos.y - 6.0f;
+        gi.rotStart = 0;
+        gi.height[1] = 0.0f;
+        gi.height[2] = static_cast<float>(rand() % 20) * 0.01f + 0.1f;
+        gi.fullDisplayAngle = 0;
+        gi.flag[0] = 0;
+        gi.flag[1] = 1;
+        gi.flag[2] = static_cast<u8>(variant == 0 ? 11 : (variant == 3 ? 13 : 1));
+        // The canonical post-increment store targets GI[i].height[7].
+        gi.height[7] = 0.0f;
+    }
+}
+
+bool CRagEffect::ProcessParticleTimeEffects()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+
+    if (m_type == 543 && m_stateCnt < 200 && (master->m_BodyLight & 0x4000) != 0x4000) {
+        master->m_BodyLight += 0x4000;
+        if (m_stateCnt <= 25) master->m_BodyTime2 = m_stateCnt;
+        if (m_stateCnt > 150 && m_stateCnt <= 175) master->m_BodyTime2 = -81 - m_stateCnt;
+    }
+    if (m_type == 572 && m_stateCnt == 10) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        CGameActor* player = mode != nullptr && mode->m_world != nullptr ? mode->m_world->m_player : nullptr;
+        if (player != nullptr) {
+            PlayWave("effect\\T_", m_effectPos.x - player->m_pos.x, 0.0f,
+                m_effectPos.z - player->m_pos.z, 250, 40, 1.0f);
+        }
+    }
+    SpawnParticleTime(m_type == 543 ? 1 : (m_type == 546 ? 2 : 3));
+    return true;
+}
+
+// Ref/RagEffect2.cpp:30054; canonical helper at HighPriest.exe.c:458463.
+void CRagEffect::SpawnParticleSpread()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 30) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DAURA_3, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\whitelight.tga", false));
+    prim->m_size = 0.0f;
+
+    for (EffectGi& gi : prim->m_gi) {
+        gi.life = 1;
+        gi.maxHeight = 1.0f;
+        gi.distance = static_cast<float>(rand() % 6) * 0.1f + 2.5f;
+        gi.process = 0;
+        gi.vecBPreX = 0.0f; gi.arcBaselineY = 0.0f; gi.vecBPreZ = 0.0f;
+        gi.height[0] = static_cast<float>(rand() % 360);
+        gi.height[2] = static_cast<float>(rand() % 180);
+        gi.height[12] = 230.0f;
+        gi.sparkX = 0.0f; gi.sparkY = 0.0f; gi.sparkZ = 0.0f;
+        gi.height[4] = static_cast<float>(rand() % 360);
+        gi.height[6] = static_cast<float>(rand() % 180);
+        gi.height[13] = 230.0f;
+        gi.vecTPreX = 0.0f; gi.vecTPreY = 0.0f; gi.vecTPreZ = 0.0f;
+        gi.height[8] = static_cast<float>(rand() % 360);
+        gi.height[10] = static_cast<float>(rand() % 180);
+        gi.height[14] = 230.0f;
+        // The source's post-incremented byte-offset store targets GI[i].height[15].
+        gi.height[15] = static_cast<float>(rand() % 3 + 1);
+    }
+}
+
+bool CRagEffect::ProcessParticleSpreadEffects()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt == 30) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        CGameActor* player = mode != nullptr && mode->m_world != nullptr ? mode->m_world->m_player : nullptr;
+        if (player != nullptr) {
+            PlayWave("effect\\wizard_fire_pillar_b.wav", m_effectPos.x - player->m_pos.x, 0.0f,
+                m_effectPos.z - player->m_pos.z, 250, 40, 1.0f);
+        }
+        for (int repeat = 0; repeat < 4; ++repeat) SpawnParticleSpread();
+    }
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {
