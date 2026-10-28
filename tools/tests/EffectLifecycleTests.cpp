@@ -643,6 +643,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect440();
     bool ProcessLandProtector(int);
     bool ProcessBottomVertical(int);
+    bool ProcessTanji(bool);
     void ApplyBottomMusic(const char*, int);
     bool ProcessEffect365();
     bool ProcessDemonstration302();
@@ -3769,6 +3770,54 @@ int main()
                 "Land Protector later states refresh master position without repeating primitive, texture, or RNG");
             effect.ClearPrims(); g_world.UpdateGameObjects();
         }
+    }
+    {
+        CRenderObject actor; actor.m_pos={3,10,4};
+        CRenderObject listener; listener.m_pos={1,2,1};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        for (int tanji2=0; tanji2<=1; ++tanji2) {
+            actor.m_pos={3,10,4};
+            CRagEffect effect; effect.m_type=tanji2?412:265; effect.m_master=&actor;
+            effect.m_duration=73; effect.m_count=5; effect.m_deltaPos={13,90,60};
+            effect.m_stateCnt=1; g_texMgr.requests.clear(); waveCalls.clear();
+            const int draws=rngDraws;
+            effect.ProcessTanji(tanji2!=0);
+            check(effect.m_primList.empty()&&effect.m_effectPos.x==3&&effect.m_effectPos.y==10
+                &&effect.m_effectPos.z==4&&waveCalls.empty()&&rngDraws==draws,
+                "TANJI variants follow master without spawning before frame zero or drawing RNG");
+            effect.m_stateCnt=0;
+            effect.ProcessTanji(tanji2!=0);
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            const float horizontal=std::sqrt(10.0f*10.0f+56.0f*56.0f);
+            const EffectGi* gi=prim?&prim->m_gi[0]:nullptr;
+            const bool waveOk=tanji2 ? waveCalls.empty() : waveCalls.size()==1
+                &&waveCalls[0].name=="effect\\mon_\\xC5\\xBA\\xC1\\xF6\\xBD\\xC5\\xC5\\xEB.wav"
+                &&waveCalls[0].x==2&&waveCalls[0].y==0&&waveCalls[0].z==3
+                &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1;
+            check(prim&&prim->m_type==(tanji2?PP_TANJI2:PP_SHIELDBOOMERANG)
+                &&prim->m_renderFlag==5&&prim->m_duration==73&&prim->m_size==0
+                &&prim->m_deltaPos.x==13&&prim->m_deltaPos.y==90&&prim->m_deltaPos.z==60
+                &&prim->m_texture.size()==1&&g_texMgr.requests.size()==1
+                &&g_texMgr.requests[0]=="effect\\blue_ivy.bmp"&&waveOk&&rngDraws==draws,
+                "TANJI variants emit exact primitive, resource, and caller audio");
+            check(gi&&gi->life==1&&gi->process==-15&&gi->maxHeight==horizontal
+                &&gi->distance==4.0f&&gi->height[8]==0&&gi->alphaB==5
+                &&gi->vecTNowX==3&&gi->vecTNowY==2&&gi->vecTNowZ==4&&gi->rotStart==0
+                &&gi->height[1]==2&&std::abs(gi->height[2]-(80.0f*2.0f/horizontal))<0.0001f
+                &&gi->fullDisplayAngle==0&&gi->flag[0]==0&&gi->flag[1]==0&&gi->flag[2]==1
+                &&gi->flag[3]==0&&gi->height[7]==0
+                &&prim->m_gi[1].life==1&&prim->m_gi[1].alphaB==0
+                &&prim->m_gi[2].life==1&&prim->m_gi[2].alphaB==0
+                &&prim->m_gi[3].life==1&&prim->m_gi[3].alphaB==0,
+                "TANJI shared GI target trajectory and auxiliary lanes match PE");
+            actor.m_pos={6,20,9}; effect.m_stateCnt=1;
+            effect.ProcessTanji(tanji2!=0);
+            check(effect.m_primList.size()==1&&effect.m_effectPos.x==6&&effect.m_effectPos.y==20
+                &&effect.m_effectPos.z==9&&waveCalls.size()==(tanji2?0:1)&&rngDraws==draws,
+                "TANJI variants refresh master position without replaying frame-zero effects");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+        }
+        g_world.m_player=oldPlayer;
     }
     {
         const int ids[]={277,287,290,292,294};

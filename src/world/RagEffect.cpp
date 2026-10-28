@@ -20058,6 +20058,58 @@ bool CRagEffect::ProcessLandProtector(int variant)
 }
 // TEST_BODY_END land_protector_family
 
+// PE HighPriest.exe.c:460223/460279; Ref/dhxj/RagEffect2.cpp:22033/22186.
+// TEST_BODY_BEGIN tanji_effect_family
+bool CRagEffect::ProcessTanji(bool tanji2)
+{
+    CRenderObject* master = m_master;
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return true;
+
+    if (!tanji2) {
+        TryPlaySingleEffectWave(m_effectPos,
+            "effect\\mon_\\xC5\\xBA\\xC1\\xF6\\xBD\\xC5\\xC5\\xEB.wav", 0.0f, true);
+    }
+    CEffectPrim* prim = LaunchEffectPrim(tanji2 ? PP_TANJI2 : PP_SHIELDBOOMERANG, vector3d{});
+    if (prim == nullptr) return true;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\blue_ivy.bmp", false));
+    prim->m_size = 0.0f;
+    prim->m_deltaPos = m_deltaPos;
+    prim->m_pos = m_effectPos;
+
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = -15;
+    const float dx = m_deltaPos.x - m_effectPos.x;
+    const float dz = m_deltaPos.z - m_effectPos.z;
+    const float horizontalDistance = std::sqrt(dx * dx + dz * dz);
+    gi.maxHeight = horizontalDistance;
+    gi.distance = static_cast<float>(static_cast<double>(m_count) * 0.40000001 + 2.0);
+    gi.height[8] = 0.0f;
+    gi.alphaB = 5;
+    gi.vecTNowX = m_effectPos.x;
+    gi.vecTNowY = m_effectPos.y - 8.0f;
+    gi.vecTNowZ = m_effectPos.z;
+    gi.rotStart = 0;
+    gi.height[1] = 2.0f;
+    gi.height[2] = (m_deltaPos.y - m_effectPos.y) * (gi.height[1] / horizontalDistance);
+    gi.fullDisplayAngle = 0;
+    gi.flag[0] = 0;
+    gi.flag[1] = 0;
+    gi.flag[2] = 1;
+    gi.flag[3] = 0;
+    gi.height[7] = 0.0f;
+    for (size_t index = 1; index < 4; ++index) {
+        prim->m_gi[index].life = 1;
+        prim->m_gi[index].alphaB = 0;
+    }
+    return true;
+}
+// TEST_BODY_END tanji_effect_family
+
 bool CRagEffect::ProcessEffect599()
 {
     CRenderObject* master = ResolveCurrentMaster();

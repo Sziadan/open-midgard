@@ -270,7 +270,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 262	OnProcess	TEIHIT1	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/GameActorMsgHandler.cpp	806
 263	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_yellow.tga"", 1, false); return true;"	src/world/GameActorMsgHandler.cpp	95
 264	OnProcess	TEIHIT2	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	53
-265	OnProcess	TANJI	unported	OnProcess -> UnportedEffect		-
+265	OnProcess	TANJI	routed	OnProcess -> return ProcessTanji(false);		1312
 266	OnProcess	TEIHIT1	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	810
 267	OnProcess	CHIMTO	routed	OnProcess -> return ProcessChimtoEffect(0);	src/world/SkillSpecialEffect.cpp	1121
 269	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStripEquipment269To272();	src/gamemode/UseSkillEffect.generated.inc	15
@@ -338,7 +338,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 409	OnProcess	SoulBreaker2	routed	OnProcess -> return ProcessSoulBreaker2Effect();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	457
 410	OnProcess	Rainbow	unported	OnProcess -> UnportedEffect		-
 411	OnProcess	PeongUp,Peong	routed	OnProcess -> return ProcessPeongEffects();	src/world/GameActor.cpp	1895
-412	OnProcess	TANJI2	unported	OnProcess -> UnportedEffect		-
+412	OnProcess	TANJI2	routed	OnProcess -> return ProcessTanji(true);		1312
 413	OnProcess	inline	routed	OnProcess -> return ProcessEffect413();	src/world/SkillSpecialEffect.cpp	34
 414	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		34
 415	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	34

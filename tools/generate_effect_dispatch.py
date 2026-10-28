@@ -35,7 +35,7 @@ FORCE_ROUTE.add(92)
 FORCE_ROUTE.add(361)
 FORCE_ROUTE.add(365)
 FORCE_ROUTE.add(440)
-FORCE_ROUTE.update({242, 404, 277, 287, 290, 292, 294, 281, 284, 288})
+FORCE_ROUTE.update({242, 404, 277, 287, 290, 292, 294, 281, 284, 288, 265, 412})
 
 DIRECT_CALLS = {
     # Main OnProcess cases whose index handler includes more than raw STR.
@@ -92,6 +92,8 @@ DIRECT_CALLS = {
     281: "ApplyBottomMusic(nullptr, 2); return true;",
     284: "ApplyBottomMusic(nullptr, 5); return true;",
     288: "ApplyBottomMusic(nullptr, 8); return true;",
+    265: "return ProcessTanji(false);",
+    412: "return ProcessTanji(true);",
     444: "return ProcessRunStop444();",
     456: "return ProcessCartBoost456();",
     7: "return ProcessExit7();",
