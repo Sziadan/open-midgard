@@ -567,16 +567,17 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     Require(packets[1].opcode == 0x0120 && packets[1].bytes.size() == 6,
         "skill-unit removal must use the 6-byte 0x0120 packet");
     const int unitJob = packets[0].bytes[14];
-    Require(unitJob == 126 || unitJob == 127 || unitJob == 131 || unitJob == 141,
+    Require(unitJob == 126 || unitJob == 127 || unitJob == 131 || unitJob == 132
+            || unitJob == 141,
         "unsupported skill-unit replay job");
     const int expectedLoopEffect = unitJob == 126 ? 315
-        : (unitJob == 127 ? 25 : (unitJob == 131 ? 319 : 74));
+        : (unitJob == 127 ? 25 : (unitJob == 131 ? 319 : (unitJob == 132 ? 318 : 74)));
 
     Fixture fixture(path);
     CGameActor* configuredActor = fixture.world.GetGameActorByAID(3);
     Require(configuredActor != nullptr && configuredActor->m_job == unitJob
         && configuredActor->m_pos.x == -27.5f && configuredActor->m_pos.y == 7.5f && configuredActor->m_pos.z == 22.5f,
-        "scenario actor setup did not create AID3/job127 at configured cell(10,20)");
+        "scenario actor setup did not create AID3 with the unit job at configured cell(10,20)");
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
     std::size_t processSteps = 0;
