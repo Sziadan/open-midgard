@@ -25746,6 +25746,9 @@ bool CRagEffect::ProcessEffectFrame()
 
 bool CRagEffect::UnportedEffect()
 {
+#if defined(RO_SKILL_REPLAY_TRACE)
+    DbgLog("[REPLAY] UnportedEffect id=%d\n", m_type);
+#endif
     const char* refHandler = [&]() -> const char* {
         switch (m_type) {
 #include "RagEffectHandlerNameCases.generated.inc"

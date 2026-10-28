@@ -113,7 +113,8 @@ std::vector<u8> LoadOnePacket(const std::string& path, u16& expectedOpcode)
         Require(parsedOpcode <= 0xFFFF, "scenario opcode out of range");
         expectedOpcode = static_cast<u16>(parsedOpcode);
         std::vector<u8> bytes = DecodeHex(hexBytes);
-        Require(bytes.size() == 31, "skill-damage scenario packet must be 31 bytes");
+        const std::size_t expectedLength = expectedOpcode == 0x011A ? 15u : 31u;
+        Require(bytes.size() == expectedLength, "scenario packet length does not match its active opcode layout");
         Require(input.peek() == std::char_traits<char>::eof(), "scenario must contain one packet");
         return bytes;
     }
@@ -125,8 +126,8 @@ void ReplayScenario(const std::string& path)
     u16 expectedOpcode = 0;
     const std::vector<u8> bytes = LoadOnePacket(path, expectedOpcode);
     const u16 skillId = static_cast<u16>(bytes[2]) | (static_cast<u16>(bytes[3]) << 8);
-    Require(skillId == 5 || skillId == 19 || skillId == 46,
-        "runtime replay only has Ref assertions for skills 5, 19, and 46");
+    Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 46,
+        "runtime replay only has Ref assertions for skills 5, 19, 28, and 46");
     Fixture fixture;
 
     CGameModePacketRouter router;
@@ -136,13 +137,13 @@ void ReplayScenario(const std::string& path)
     int consumed = 0;
     Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed),
         "production packet reader rejected Bash fixture");
-    Require(packet.packetId == expectedOpcode && packet.packetId == 0x0114,
-        "scenario opcode does not match active ZC_NOTIFY_SKILL route");
+    Require(packet.packetId == expectedOpcode && (packet.packetId == 0x0114 || packet.packetId == 0x011A),
+        "scenario opcode does not match an active skill packet route");
     Require(consumed == static_cast<int>(bytes.size()), "packet reader left trailing scenario bytes");
     Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch skill packet");
     const u32 replayStartTick = GetTickCount();
 
-    const std::size_t expectedWbaCount = skillId == 46 ? 2u : 1u;
+    const std::size_t expectedWbaCount = skillId == 46 ? 2u : (skillId == 28 ? 0u : 1u);
     Require(fixture.target.m_willBeAttackedList.size() == expectedWbaCount,
         "skill packet enqueued an unexpected number of target WBAs");
     std::vector<WBA> queuedHits(fixture.target.m_willBeAttackedList.begin(),
@@ -157,7 +158,7 @@ void ReplayScenario(const std::string& path)
     } else if (skillId == 19) {
         Require(queuedHits[0].message == 39 && queuedHits[0].effectId1 == 49 && queuedHits[0].effectId2 == -1,
             "Fire Bolt WBA message/effect fields differ from Ref action-4 target-skill path");
-    } else {
+    } else if (skillId == 46) {
         Require(queuedHits[0].message == 111 && queuedHits[0].effectId1 == 0 && queuedHits[0].effectId2 == 1,
             "Double Strafe first WBA differs from Ref action-9 path");
         Require(queuedHits[1].message == 111 && queuedHits[1].effectId1 == 0 && queuedHits[1].effectId2 == -1,
@@ -272,6 +273,20 @@ void ReplayScenario(const std::string& path)
             << " wave=" << event.wave
             << " deliveredElapsedMs=" << deliveredAtElapsedMs[index]
             << " (runtime=" << event.delivery << ")\n";
+    }
+
+    if (skillId == 28) {
+        runtimeLog.clear();
+        runtimeLog.seekg(0);
+        bool foundHealEffect = false;
+        bool foundHealNumber = false;
+        while (std::getline(runtimeLog, logLine)) {
+            foundHealEffect = foundHealEffect || logLine.find("[REPLAY] LaunchEffect id=7 actor=2") != std::string::npos;
+            foundHealNumber = foundHealNumber || logLine.find("[REPLAY] SendMsg88 actor=2 value=199 color=-16711936 kind=114") != std::string::npos;
+        }
+        Require(foundHealEffect, "Heal 28 low-tier packet did not launch Ref effect7 on target");
+        Require(foundHealNumber, "Heal 28 packet did not send Ref damage-number message88");
+        std::cout << "Heal skill=28 value=199 effect=7 target=2 message=88 color=-16711936 kind=114\n";
     }
 }
 

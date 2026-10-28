@@ -3123,3 +3123,12 @@ Effect74 now routes through `ProcessIceWall74`, matching the complete PE and Ref
 **Replay:** The production-linked runtime harness dispatches the scenario bytes through the default router and drains the real target WBA queue using nominal 24 ms polling. It verifies one skill19 WBA with message39, effects49/−1, damage100, level5, and checks the delivered runtime wave and queue timestamp against the queued WBA.
 
 **Evidence:** Runtime output matches the Ref WBA fields and uses `player_clothes.wav` for the fixture target's default job. Bash5, Double Strafe46, and Fire Bolt19 root replay CTests pass3/3. No WP8 matrix row is verified. Next: continue with Heal28.
+
+
+## WP10.8 — Production-linked Heal packet replay — 2026-10-28
+
+**Packet and Ref walk-through:** `docs/skill/replay/heal28.tsv` encodes the 15-byte `0x011A` no-damage skill packet with skill28, heal value199, destination AID2, source AID1, and success flag1. The packet passes through the default `skillNoDamageNotify` route; Ref's heal branch selects effect7 for values below200 and then sends message88 with value199, color−16711936, and kind114.
+
+**Replay and trace:** The runtime harness now accepts both `0x0114` skill-damage and `0x011A` no-damage packets. Replay-only instrumentation records effect launch/place calls, PlayWave, SetState, SendMsg88, and UnportedEffect calls. Heal assertions require target effect7, target message88 fields, and an empty WBA queue.
+
+**Evidence:** The production log contains `LaunchEffect id=7 actor=2` and `SendMsg88 actor=2 value=199 color=-16711936 kind=114`. The four current scenario tests pass4/4. No WP8 matrix row is verified. Next: Sonic Blow136.

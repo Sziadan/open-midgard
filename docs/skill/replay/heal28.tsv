@@ -1,0 +1,2 @@
+# 15-byte ZC_USE_SKILL no-damage notify; heal199 selects effect7 and message88.
+0x011A	1A011C00C700020000000100000001	Heal 28 (heal199, target AID 2, source AID 1, success)

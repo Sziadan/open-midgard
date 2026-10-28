@@ -253,6 +253,9 @@ if(RO_ENABLE_DEV_DEPLOY)
 endif()
 
 if(RO_BUILD_SKILL_REPLAY_TESTS)
+    target_compile_definitions(ro_world PRIVATE RO_SKILL_REPLAY_TRACE=1)
+    target_compile_definitions(ro_gamemode PRIVATE RO_SKILL_REPLAY_TRACE=1)
+    target_compile_definitions(ro_audio PRIVATE RO_SKILL_REPLAY_TRACE=1)
     enable_testing()
     add_executable(skill_packet_replay_runtime_checks
         tools/tests/replay/SkillPacketRuntimeReplay.cpp)
@@ -275,10 +278,15 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_fire_bolt_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/fire_bolt19.tsv")
+    add_test(NAME skill_packet_replay_heal_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/heal28.tsv")
     set_tests_properties(skill_packet_replay_runtime_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_double_strafe_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_fire_bolt_checks PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    set_tests_properties(skill_packet_replay_heal_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
 endif()

@@ -9,6 +9,9 @@ bool PlayWave(const char* name, float x, float y, float z,
     if (!g_soundMode || !g_isSoundOn || !name || !*name) {
         return false;
     }
+#if defined(RO_SKILL_REPLAY_TRACE)
+    DbgLog("[REPLAY] PlayWave name='%s' relative=(%.3f,%.3f,%.3f)\n", name, x, y, z);
+#endif
     DbgLog("[SkillWave] name='%s' relative=(%.3f,%.3f,%.3f) max=%d min=%d factor=%.3f mode=%d\n",
         name, x, y, z, volumeMaxDist, volumeMinDist, vFactor, g_soundMode);
     return CAudio::GetInstance()->PlayWaveRelative(name, x, y, z,

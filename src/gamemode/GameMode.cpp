@@ -10017,6 +10017,10 @@ void CGameMode::PlaceEffect(const vector3d& pos, int effectId, int lastTime, int
     auto* launcher = new CDummyEffectLauncher();
     launcher->Initialize(pos, effectId, lastTime, extra);
     m_world->m_gameObjectList.push_back(launcher);
+#if defined(RO_SKILL_REPLAY_TRACE)
+    DbgLog("[REPLAY] PlaceEffect id=%d lastTime=%d extra=%d pos=(%.3f,%.3f,%.3f)\n",
+        effectId, lastTime, extra, pos.x, pos.y, pos.z);
+#endif
 }
 
 void CGameMode::OnUpdate() {

@@ -4202,10 +4202,13 @@ CRagEffect* CAbleToMakeEffect::LaunchEffect(int effectId, vector3d deltaPos, flo
     if (!effect) {
         return nullptr;
     }
-
     effect->Init(this, effectId, rotatedDelta);
     gameMode->m_world->m_gameObjectList.push_back(effect);
     m_effectList.push_back(effect);
+#if defined(RO_SKILL_REPLAY_TRACE)
+    const auto* actor = dynamic_cast<const CGameActor*>(this);
+    DbgLog("[REPLAY] LaunchEffect id=%d actor=%u\n", effectId, actor ? actor->m_gid : 0u);
+#endif
     return effect;
 }
 
@@ -4998,6 +5001,12 @@ void ReleaseMsgSprite(CMsgEffect*& slot)
 
 void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3)
 {
+#if defined(RO_SKILL_REPLAY_TRACE)
+    if (msg == 88) {
+        DbgLog("[REPLAY] SendMsg88 actor=%u value=%lld color=%lld kind=%lld\n",
+            m_gid, static_cast<long long>(par1), static_cast<long long>(par2), static_cast<long long>(par3));
+    }
+#endif
     switch (msg) {
     case 11:
         Am_Action(reinterpret_cast<const int*>(par1));
@@ -6224,6 +6233,9 @@ void CGameActor::SetNpcState(int state)
 }
 
 void CGameActor::SetState(int state) {
+#if defined(RO_SKILL_REPLAY_TRACE)
+    DbgLog("[REPLAY] SetState state=%d actor=%u\n", state, m_gid);
+#endif
     if (m_isPc == 0 && dynamic_cast<CSkill*>(this) == nullptr) {
         SetNpcState(state);
         return;
