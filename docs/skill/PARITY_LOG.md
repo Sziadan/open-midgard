@@ -2,6 +2,18 @@
 
 Ports are listed as `Ref location -> src location`. A row is not a claim that the whole skill system is done.
 
+## WP5 CEffectPrim Render3DParticle segment-sprite subset — 2026-10-29
+
+- Canonical PE `HighPriest.exe.c:469284` and primary Ref `Ref/RagEffectPrim.cpp:3939` Render3DParticle bodies normalize identically. PE and primary Ref dispatch both route PP_3DPARTICLE (`0x05`), PP_3DPARTICLEGRAVITY (`0x06`) and PP_3DPARTICLESPLINE (`0x08`) to the renderer. Local `UsesReferenceParticle()` routes an explicit master-effect subset for these types into `RenderReferenceParticlePrimitive`/`RenderParticleSprites`.
+- `tools/tests/check_prim3dparticle_render.py` maps segment iteration and position, current action/motion and clip/sprite lookup, ProjectVertex/GetPixelRatio arithmetic, clip bounds and flip branch, segment vs clip ARGB, clip angle plus primitive roll, and palette texture/UV/blend/render-flag submission. The existing `ParticleRenderTests.cpp` sprite fixture now also checks that an absent clip sprite is skipped without substituting billboard geometry. Missing resource handling is defensive locally; canonical Ref retries `SetSprName`/`SetActName` when its resource pointer is absent.
+- Scope is deliberately partial: non-selected PP_3DPARTICLE / GRAVITY / SPLINE instances use the grouped `SubmitAnimatedSpriteParticle` baked single-anchor quad and generic billboard fallback, which do not preserve segment/clip projection and are not claimed equivalent. No production runtime changes. Focused CTest passes 2/2 after rebuilding `particle_render_checks` with elevated Windows SDK access; the application build was not needed or run. Live/backend acceptance remains open.
+
+## WP5 CEffectPrim Render3DSegment renderer — 2026-10-29
+
+- Canonical PE `HighPriest.exe.c:471017` (`0x6485A0`) and primary Ref `Ref/RagEffectPrim.cpp:4439` bodies normalize identically. Both dispatch primitive ids `0x0A/0x0B` (`PP_3DSPLINE`/`PP_3DSPIRAL`) to this renderer. The source reads each segment's four `m_segPos` corners, then submits face A-B-C followed by D-C-A, with the segment ARGB copied to every vertex and the current animated texture on both faces.
+- Local `m_segmentQuadPositions` is populated from `m_segPos` by both `InitReferenceSegments` and `ShiftReferenceSegments`. Added `RenderReferenceSegment` and the missing `Render()` route for both primitive types. It preserves the source face/UV order, slot-zero texture (`Render3DSegment` dereferences `m_texture` and does not read `m_curMotion`), packed per-segment color and raw render flag through the reference triangle submission path. Local null/dummy texture guards are defensive divergence: the source unconditionally dereferences the slot-zero pointer, and no Init/resource invariant excluding null/dummy pointers has yet been proven.
+- Added `tools/tests/check_prim3dsegment_render.py` and a focused production-body fixture in `ParticleRenderTests.cpp`. The focused source/fixture CTests pass 2/2; the fixture reports 727 checks passed. `git diff --check` passes. No live visual/backend acceptance is claimed.
+
 ## WP10.1 effect coverage audit — 2026-10-28
 
 - `tools/audit_effect_coverage.py` reads the 693 Ref rows from `generated/effect_handler_index.tsv`, classifies current routes from `CRagEffect::ProcessEffectFrame`, `OnProcess2`, `ProcessReferenceStrOnly`, `Init`, the generated STR table and `kProvenClipWaves`, scans launch sites, writes `generated/EFFECT_COVERAGE.tsv`, and updates `generated/PARITY_AUDIT.txt`. Registered as CTest `effect_coverage_audit`.

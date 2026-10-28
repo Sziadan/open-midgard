@@ -165,3 +165,5 @@ tools/tests/*
 !tools/tests/check_effects349_356_waterfall.py
 !tools/tests/check_effects363_364_509_519_545_vallentine.py
 !tools/tests/check_effects561_562_portal3.py
+!tools/tests/check_prim3dparticle_render.py
+!tools/tests/check_prim3dsegment_render.py

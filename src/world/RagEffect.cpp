@@ -2103,6 +2103,35 @@ void SubmitReferenceEffectTriangle(const vector3d (&points)[3], const matrix& vi
     g_renderer.AddReferenceEffectTriangle(face, renderFlag);
 }
 
+// Ref/RagEffectPrim.cpp:4439-4616 (0x6485A0). Each segment stores a
+// four-corner ribbon in m_segPos; the legacy renderer submits its two
+// opposing triangle faces in the original vertex/UV order.
+// TEST_BODY_BEGIN reference_segment_render_family
+void RenderReferenceSegment(CEffectPrim& prim, const matrix& view)
+{
+    if (prim.m_numSegments <= 0 || prim.m_texture.empty()) return;
+    // Render3DSegment dereferences m_texture directly; it does not consult
+    // m_curMotion (unlike several other primitive renderers).
+    CTexture* texture = prim.m_texture[0];
+    if (!texture || texture == &CTexMgr::s_dummy_texture) return;
+
+    const int segmentCount = (std::min)(prim.m_numSegments,
+        static_cast<int>(prim.m_segmentQuadPositions.size()));
+    constexpr float firstUvs[3][2] = {{0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}};
+    constexpr float secondUvs[3][2] = {{1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}};
+    for (int index = 0; index < segmentCount; ++index) {
+        const auto& corners = prim.m_segmentQuadPositions[static_cast<size_t>(index)];
+        const vector3d firstFace[3] = {corners[0], corners[1], corners[2]};
+        const vector3d secondFace[3] = {corners[3], corners[2], corners[0]};
+        const u32 color = prim.m_segments[static_cast<size_t>(index)].argb;
+        SubmitReferenceEffectTriangle(firstFace, view, texture, color, firstUvs,
+            static_cast<int>(prim.m_renderFlag));
+        SubmitReferenceEffectTriangle(secondFace, view, texture, color, secondUvs,
+            static_cast<int>(prim.m_renderFlag));
+    }
+}
+// TEST_BODY_END reference_segment_render_family
+
 // Ref/RagEffectPrim.cpp:2855-3187 (0x6476E0). The 2008 loop truncates
 // each next angle to an int. Use primitive matrix/width with segment radius,
 // position and stored ARGB; do not reconstruct state from current alpha.
@@ -13463,6 +13492,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (UsesReferenceParticle()) {
         RenderReferenceParticlePrimitive(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_3DSPLINE || m_type == PP_3DSPIRAL) {
+        RenderReferenceSegment(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_SLASH1) {

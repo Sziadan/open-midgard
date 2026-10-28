@@ -114,6 +114,7 @@ struct CEffectPrim {
     u32 m_argb=0xFFFFFFFF;
     std::vector<CTexture*> m_texture;
     std::array<EffectSegmentState,50> m_segments;
+    std::vector<std::array<vector3d,4>> m_segmentQuadPositions = std::vector<std::array<vector3d,4>>(50);
     std::array<EffectGi,4> m_gi;
 };
 using D3DBLEND=int;
@@ -943,6 +944,9 @@ int main() {
     check(g_renderer.submissions.empty(),"explicit empty motion does not reuse another frame");
     prim.m_curMotion=0;prim.m_spriteAction=1;render();
     check(g_renderer.submissions.empty(),"explicit empty action does not fall back to action zero");
+    prim.m_spriteAction=0;actions.actions[0].motions[0].sprClips[0].sprIndex=99;render();
+    check(g_renderer.submissions.empty(),"missing clip sprite is skipped without billboard substitution");
+    actions.actions[0].motions[0].sprClips[0].sprIndex=0;
     prim.m_spriteAction=0;prim.m_segments[0].pos.z=50;render();
     check(g_renderer.submissions.size()==1,"particle path has no invented eighty-unit near-plane cutoff");
     prim.m_segments[0].pos.z=100;active.y=-242;render();
@@ -1346,6 +1350,40 @@ int main() {
             g_renderer.m_rpEmissiveDepthList.clear();g_renderer.m_rpEmissiveList.clear();g_renderer.m_rpEmissiveNoDepthList.clear();
             silentDevice.draws.clear();
         };
+        {
+            CEffectPrim segment; CTexture firstTexture, animatedTexture;
+            segment.m_numSegments=2; segment.m_renderFlag=0x101; segment.m_curMotion=1;
+            segment.m_texture={&firstTexture,&animatedTexture};
+            segment.m_segments[0].argb=0xA1B2C3D4u; segment.m_segments[1].argb=0x55667788u;
+            segment.m_segmentQuadPositions[0]={vector3d{1,2,100},vector3d{3,4,100},vector3d{5,6,100},vector3d{7,8,100}};
+            segment.m_segmentQuadPositions[1]={vector3d{11,12,100},vector3d{13,14,100},vector3d{15,16,100},vector3d{17,18,100}};
+            clearQueues(); RenderReferenceSegment(segment,view);
+            check(g_renderer.m_rpAlphaDepthList.size()==4,
+                "3D spline/spiral emits two ordered texture triangles for every history segment");
+            if(g_renderer.m_rpAlphaDepthList.size()==4) {
+                const auto* first=g_renderer.m_rpAlphaDepthList[0].second;
+                const auto* second=g_renderer.m_rpAlphaDepthList[1].second;
+                const auto* third=g_renderer.m_rpAlphaDepthList[2].second;
+                check(first->tex==&firstTexture&&first->m_verts[0].color==0xA1B2C3D4u
+                    &&first->m_verts[0].x==321.0f&&first->m_verts[1].x==323.0f&&first->m_verts[2].x==325.0f
+                    &&first->m_verts[0].tu==0.0f&&first->m_verts[0].tv==1.0f
+                    &&first->m_verts[1].tu==1.0f&&first->m_verts[1].tv==1.0f
+                    &&first->m_verts[2].tu==0.0f&&first->m_verts[2].tv==0.0f,
+                    "first segment face preserves source corners, color, slot-zero texture and UV order");
+                check(second->m_verts[0].x==327.0f&&second->m_verts[1].x==325.0f&&second->m_verts[2].x==321.0f
+                    &&second->m_verts[0].y==248.0f&&second->m_verts[0].tu==1.0f&&second->m_verts[0].tv==0.0f
+                    &&second->m_verts[1].tu==0.0f&&second->m_verts[1].tv==0.0f
+                    &&second->m_verts[2].tu==1.0f&&second->m_verts[2].tv==1.0f,
+                    "opposing segment face preserves source reversed corners and UV order");
+                check(third->tex==&firstTexture&&third->m_verts[0].color==0x55667788u
+                    &&third->m_verts[0].x==331.0f&&third->m_verts[1].x==333.0f
+                    &&third->primType==D3DPT_TRIANGLELIST&&third->numVerts==3
+                    &&third->srcAlphaMode==D3DBLEND_SRCALPHA&&third->destAlphaMode==D3DBLEND_INVSRCALPHA,
+                    "each segment keeps its own packed color and legacy reference triangle material");
+            }
+            segment.m_texture[0]=&CTexMgr::s_dummy_texture; clearQueues(); RenderReferenceSegment(segment,view);
+            check(g_renderer.m_rpAlphaDepthList.empty(),"missing slot-zero segment texture emits no substitute geometry");
+        }
         clearQueues();RenderReferenceCircle(circle,view);
         check(g_renderer.m_rpAlphaNoDepthList.size()==16,"circle emits two independent triangles for each arc and every segment");
         auto* first=g_renderer.m_rpAlphaNoDepthList[0].second;
