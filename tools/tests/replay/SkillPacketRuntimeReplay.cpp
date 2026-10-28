@@ -692,6 +692,56 @@ void ReplayTrapRevealLifecycle(const std::string& path)
     std::cout << "Trap job=143 aid=100 hidden=1 revealed=1 removed=1 model_resource=not-loaded\n";
 }
 
+void ReplayWarpUnitLifecycle(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 3 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+        && packets[1].opcode == 0x01D7 && packets[1].bytes.size() == 11
+        && packets[2].opcode == 0x0120 && packets[2].bytes.size() == 6,
+        "Warp unit lifecycle requires entry, sprite job update, and removal packets");
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    for (std::size_t index = 0; index < packets.size(); ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected Warp unit lifecycle packet");
+        Require(packet.packetId == packets[index].opcode && consumed == static_cast<int>(packets[index].bytes.size()),
+            "Warp unit lifecycle packet framing differs from scenario metadata");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Warp unit packet");
+        CSkill* unit = fixture.world.GetSkillByAID(100);
+        if (index == 0) {
+            Require(unit != nullptr && unit->m_job == 128,
+                "Warp waiting entry did not create the expected unit job128");
+            std::this_thread::sleep_for(std::chrono::milliseconds(24));
+            Require(unit->OnProcess() != 0 && unit->m_job == 128,
+                "Warp waiting unit did not remain active through its first 24 ms step");
+        } else if (index == 1) {
+            Require(unit != nullptr && unit->m_job == 129,
+                "0x01D7 did not route the skill-unit base-look update to message47/job129");
+            std::this_thread::sleep_for(std::chrono::milliseconds(24));
+            Require(unit->OnProcess() != 0 && unit->m_job == 129,
+                "Warp active unit did not remain active through its first 24 ms step");
+        } else {
+            Require(unit == nullptr, "0x0120 did not remove the active Warp unit");
+        }
+    }
+
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for Warp lifecycle");
+    bool waitingLoop = false;
+    bool activeLoop = false;
+    std::string logLine;
+    while (std::getline(runtimeLog, logLine)) {
+        waitingLoop = waitingLoop || logLine.find("[REPLAY] LaunchEffect id=317 actor=100") != std::string::npos
+            || logLine.find("[REPLAY] LaunchEffect id=36 actor=100") != std::string::npos;
+        activeLoop = activeLoop || logLine.find("[REPLAY] LaunchEffect id=316 actor=100") != std::string::npos;
+    }
+    Require(waitingLoop && activeLoop, "Warp waiting/active states did not launch Ref loop effects317/316 (or effect-off36)");
+    std::cout << "WarpUnit aid=100 waitingJob=128 activeJob=129 loopEffects=317/316 removed=1\n";
+}
+
 bool IsFirewallUnitScenario(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -711,6 +761,13 @@ bool IsSkillCastCancelScenario(const std::string& path)
     return packets.front().opcode == 0x01B9;
 }
 
+bool IsWarpUnitLifecycleScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 3 && packets.front().opcode == 0x011F
+        && packets.front().bytes.size() == 16 && packets.front().bytes[14] == 128;
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -721,6 +778,8 @@ int main(int argc, char** argv)
             ReplaySkillCastCancel(argv[1]);
         } else if (IsTrapRevealScenario(argv[1])) {
             ReplayTrapRevealLifecycle(argv[1]);
+        } else if (IsWarpUnitLifecycleScenario(argv[1])) {
+            ReplayWarpUnitLifecycle(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {
             ReplaySkillUnitLifecycle(argv[1]);
         } else {

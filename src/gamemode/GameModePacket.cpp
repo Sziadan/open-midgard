@@ -7713,7 +7713,17 @@ void HandleActorSpriteChange(CGameMode& mode, const PacketView& packet)
 
     mode.m_aidList[gid] = GetTickCount();
 
-    CGameActor* actor = EnsureRuntimeActor(mode, gid, IsLikelyPlayerGid(gid));
+    CSkill* skillUnit = ResolveSkillPacketUnit(mode, gid);
+    CGameActor* actor = ResolveSkillPacketActor(mode, gid);
+    if (!actor && skillUnit) {
+        if (type == kLookBase) {
+            skillUnit->SendMsg(skillUnit, 47, value, 0, 0);
+        }
+        return;
+    }
+    if (!actor) {
+        actor = EnsureRuntimeActor(mode, gid, IsLikelyPlayerGid(gid));
+    }
     if (!actor) {
         return;
     }
@@ -7778,6 +7788,10 @@ void HandleActorSpriteChange(CGameMode& mode, const PacketView& packet)
         break;
     default:
         return;
+    }
+
+    if (skillUnit && type == kLookBase) {
+        skillUnit->SendMsg(skillUnit, 47, value, 0, 0);
     }
 
     if (billboardDirty) {

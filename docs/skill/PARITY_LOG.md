@@ -3196,3 +3196,7 @@ Between 0x011F Firewall entry and 0x0120 removal, the runner calls real `CSkill:
 ## WP10.8 runtime replay — Sanctuary ground unit — 2026-10-28
 
 `sanctuary_unit_lifecycle.tsv` creates a unit with job131 (`UNT_SANCTUARY`) at cell(10,20), drives `CSkill::OnProcess` once after a nominal 24 ms wait, and removes it with 0x0120. Ref job131 calls `LaunchLoop(319)` (`Ref/Skill.cpp:1287-1698`); runtime trace confirms effect319 on actor AID100 and world-list cleanup. Measured first step was 25 ms. Focused test passes1/1; root replay CTest passes15/15.
+
+## WP10.8 runtime replay — Warp waiting/active unit — 2026-10-28
+
+`warp_unit_lifecycle.tsv` sends a 0x011F Warp waiting job128 entry, then a 0x01D7 base-look update (type0, job129), then 0x0120 removal. Ref `Zc_Sprite_Change2` resolves a skill unit by AID when there is no actor and sends message47; this path was absent in the current handler and has now been restored before fallback actor creation. Runtime verifies job128 launches effect317 (or effect36 if effects are disabled), job129 launches effect316, and the unit is removed. Focused test passes1/1; replay suite passes16/16.
