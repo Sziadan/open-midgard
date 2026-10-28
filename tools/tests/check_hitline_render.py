@@ -75,9 +75,11 @@ def main() -> int:
         "const vector3d pointA{offsetA.x + gi.sparkX, offsetA.y + gi.sparkY, offsetA.z + gi.sparkZ};",
         "const vector3d pointB{offsetB.x + gi.sparkX, offsetB.y + gi.sparkY, offsetB.z + gi.sparkZ};",
         "const int alpha = static_cast<int>(gi.alphaB) - segment * 5;",
+        "if (alpha <= 0) continue;",
         "gi.alphaT == 2",
         "static_cast<unsigned char>(segment * 7 + 60)",
         "static_cast<unsigned char>(segment * 7 + 10)",
+        "const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(alpha)) << 24)",
         "for (int ring = 0; ring <= 3; ++ring)",
         "const int ringAngle = ring * 120;",
         "const float radial = gi.maxHeight * g_cosTable[ringAngle];",
@@ -96,7 +98,9 @@ def main() -> int:
     assert "gi.alphaT == 2\n                ? static_cast<unsigned char>(segment * 7 + 60) : 200;" in helper
     assert "F1=1 in RenderTeiRect means spark position" in current and "is already absolute" in current
     assert "prim.m_pos" not in helper, "absolute HitLine vertices were translated a second time"
-    print("RenderHitLine comparison passed: Ref/EXE body, PP_HITLINE dispatch, history/ring geometry, tint and rectangle submission")
+    render_call = re.search(r"RenderTeiRect\(\s*v60,\s*&rpCnt,\s*\*\(\(_WORD \*\)p_distance - 63\) - v58,\s*vec1,\s*v30,\s*v31,\s*vec3,\s*wtm,\s*0,\s*0,\s*1,\s*0xFFu,\s*v32,\s*v33,\s*0\.0,\s*1\.0,\s*0\.0,\s*1\.0", exe_render)
+    assert render_call, "canonical call's alpha, TN, absolute-position flag, tint and full UV arguments changed"
+    print("RenderHitLine comparison passed: Ref/EXE body, PP_HITLINE dispatch, history/ring geometry, segment alpha, tint and full UV submission")
     return 0
 
 
