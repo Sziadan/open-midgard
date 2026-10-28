@@ -167,3 +167,4 @@ tools/tests/*
 !tools/tests/check_effects561_562_portal3.py
 !tools/tests/check_prim3dparticle_render.py
 !tools/tests/check_prim3dsegment_render.py
+!tools/tests/check_prim3dcircle_render.py

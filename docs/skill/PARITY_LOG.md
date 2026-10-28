@@ -10,9 +10,15 @@ Ports are listed as `Ref location -> src location`. A row is not a claim that th
 
 ## WP5 CEffectPrim Render3DSegment renderer — 2026-10-29
 
-- Canonical PE `HighPriest.exe.c:471017` (`0x6485A0`) and primary Ref `Ref/RagEffectPrim.cpp:4439` bodies normalize identically. Both dispatch primitive ids `0x0A/0x0B` (`PP_3DSPLINE`/`PP_3DSPIRAL`) to this renderer. The source reads each segment's four `m_segPos` corners, then submits face A-B-C followed by D-C-A, with the segment ARGB copied to every vertex and the current animated texture on both faces.
+- Canonical PE `HighPriest.exe.c:471017` (`0x6485A0`) and primary Ref `Ref/RagEffectPrim.cpp:4439` bodies normalize identically. Both dispatch primitive ids `0x0A/0x0B` (`PP_3DSPLINE`/`PP_3DSPIRAL`) to this renderer. The source reads each segment's four `m_segPos` corners, then submits face A-B-C followed by D-C-A, with the segment ARGB copied to every vertex and texture slot zero on both faces (it does not read `m_curMotion`).
 - Local `m_segmentQuadPositions` is populated from `m_segPos` by both `InitReferenceSegments` and `ShiftReferenceSegments`. Added `RenderReferenceSegment` and the missing `Render()` route for both primitive types. It preserves the source face/UV order, slot-zero texture (`Render3DSegment` dereferences `m_texture` and does not read `m_curMotion`), packed per-segment color and raw render flag through the reference triangle submission path. Local null/dummy texture guards are defensive divergence: the source unconditionally dereferences the slot-zero pointer, and no Init/resource invariant excluding null/dummy pointers has yet been proven.
 - Added `tools/tests/check_prim3dsegment_render.py` and a focused production-body fixture in `ParticleRenderTests.cpp`. The focused source/fixture CTests pass 2/2; the fixture reports 727 checks passed. `git diff --check` passes. No live visual/backend acceptance is claimed.
+
+## WP5 CEffectPrim Render3DCircle explicit-master subset — 2026-10-29
+
+- Canonical PE `HighPriest.exe.c:470393` (`0x6476E0`) and primary Ref `Ref/RagEffectPrim.cpp:2855` normalize identically; primitive id `0x0C` dispatches to `Render3DCircle`. The local specialized path is selected only for master effects17,31,26,35,36,42,48,61,73,170,321; the remaining `PP_3DCIRCLE` local `RenderCircleLayer` path is separate and is not claimed equivalent.
+- Added `tools/tests/check_prim3dcircle_render.py` to map selected local angle truncation, unrounded stop, carried/wrapped U phase, inner/outer radii, matrix plus segment position, stored per-segment color, slot-zero texture and raw render flag. Existing `ParticleRenderTests.cpp` already covers triangle geometry/order, 50 history segments, fractional angle steps, UV wrap across wedges and segments, direct table endpoint360, and invalid/missing-resource guards; no production change was needed.
+- The source's positive sub-degree angle step truncates to the current integer angle and can stall its loop. The local guard returns to avoid a non-progressing loop; this behavioral safety difference is recorded in `docs/skill/MISMATCHES.md` and no fixture executes the hanging source case. Focused CTest passes4/4 and full parity CTest passes273/273; generic-master and live visual/backend acceptance remain open.
 
 ## WP10.1 effect coverage audit — 2026-10-28
 
