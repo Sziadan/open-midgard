@@ -236,6 +236,32 @@ extract_body(stormgust89_handler "${effect_source}" "bool CRagEffect::ProcessSto
 extract_body(magicrod244_handler "${effect_source}" "bool CRagEffect::ProcessMagicRod244()" "// TEST_BODY_END magicrod244_handler")
 extract_body(shieldcharge246_handler "${effect_source}" "bool CRagEffect::ProcessShieldCharge246()" "// TEST_BODY_END shieldcharge246_handler")
 extract_body(strip_equipment269_272_handler "${effect_source}" "bool CRagEffect::ProcessStripEquipment269To272()" "// TEST_BODY_END strip_equipment269_272_handler")
+extract_body(airtexture416_handler "${effect_source}" "bool CRagEffect::ProcessAirTexture416()" "// TEST_BODY_END airtexture416_handler")
+extract_body(hitline_effect_handler "${effect_source}" "bool CRagEffect::ProcessHitLineEffect(short f1, bool applyBodyLight)" "// TEST_BODY_END hitline_effect")
+extract_body(tripleattack_emitter "${effect_source}" "void CRagEffect::SpawnTripleAttack(int variant)" "bool CRagEffect::ProcessTripleAttackEffects()")
+extract_body(tripleattack_handler "${effect_source}" "bool CRagEffect::ProcessTripleAttackEffects()" "bool CRagEffect::ProcessSoulParticle506()")
+extract_body(soulparticle506_handler "${effect_source}" "bool CRagEffect::ProcessSoulParticle506()" "bool CRagEffect::ProcessEffect502()")
+extract_body(effect502_handler "${effect_source}" "bool CRagEffect::ProcessEffect502()" "bool CRagEffect::ProcessEffect505()")
+extract_body(effect505_handler "${effect_source}" "bool CRagEffect::ProcessEffect505()" "void CRagEffect::SpawnSma2()")
+extract_body(sma2_552_emitter "${effect_source}" "void CRagEffect::SpawnSma2()" "bool CRagEffect::ProcessSma2Effect552()")
+extract_body(sma2_552_handler "${effect_source}" "bool CRagEffect::ProcessSma2Effect552()" "void CRagEffect::SpawnParticlePath556()")
+extract_body(particlepath556_emitter "${effect_source}" "void CRagEffect::SpawnParticlePath556()" "bool CRagEffect::ProcessParticlePath556()")
+extract_body(particlepath556_handler "${effect_source}" "bool CRagEffect::ProcessParticlePath556()" "bool CRagEffect::ProcessEffect537()")
+extract_body(effect537_handler "${effect_source}" "bool CRagEffect::ProcessEffect537()" "bool CRagEffect::ProcessEffect273()")
+extract_body(effect599_handler "${effect_source}" "bool CRagEffect::ProcessEffect599()" "bool CRagEffect::ProcessEffect602()")
+extract_body(effect602_handler "${effect_source}" "bool CRagEffect::ProcessEffect602()" "void CRagEffect::SpawnDemonstration302()")
+extract_body(effect273_handler "${effect_source}" "bool CRagEffect::ProcessEffect273()" "void CRagEffect::SpawnPressure365()")
+extract_body(effect440_handler "${effect_source}" "bool CRagEffect::ProcessEffect440()" "bool CRagEffect::ProcessEffect599()")
+extract_body(soulbreaker361_emitter "${effect_source}" "void CRagEffect::SpawnSoulBreaker361()" "bool CRagEffect::ProcessSoulBreaker361Effect()")
+extract_body(soulbreaker361_handler "${effect_source}" "bool CRagEffect::ProcessSoulBreaker361Effect()" "bool CRagEffect::ProcessTarotEffect()")
+extract_body(pressure365_emitter "${effect_source}" "void CRagEffect::SpawnPressure365()" "void CRagEffect::SpawnGroundShake365()")
+extract_body(groundshake365_emitter "${effect_source}" "void CRagEffect::SpawnGroundShake365()" "bool CRagEffect::ProcessEffect365()")
+extract_body(effect365_handler "${effect_source}" "bool CRagEffect::ProcessEffect365()" "bool CRagEffect::ProcessEffect440()")
+extract_body(demonstration302_emitter "${effect_source}" "void CRagEffect::SpawnDemonstration302()" "bool CRagEffect::ProcessDemonstration302()")
+extract_body(demonstration302_handler "${effect_source}" "bool CRagEffect::ProcessDemonstration302()" "void CRagEffect::SpawnMaple333()")
+extract_body(maple333_emitter "${effect_source}" "void CRagEffect::SpawnMaple333()" "bool CRagEffect::ProcessMaple333()")
+extract_body(maple333_handler "${effect_source}" "bool CRagEffect::ProcessMaple333()" "void CRagEffect::SpawnNpcStop(int variant)")
+extract_body(particleupdater "${effect_source}" "void UpdateParticleUpPrimitive(CEffectPrim* prim)" "void RenderParticleUp(")
 extract_body(kyrie112_handler "${effect_source}" "bool CRagEffect::ProcessKyrie112()" "// TEST_BODY_END kyrie112_handler")
 extract_body(repairweapon101_handler "${effect_source}" "bool CRagEffect::ProcessRepairWeapon101()" "// TEST_BODY_END repairweapon101_handler")
 extract_body(maxpower104_handler "${effect_source}" "bool CRagEffect::ProcessMaxPower104()" "// TEST_BODY_END maxpower104_handler")
@@ -365,6 +391,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc"
     "${resource_lock}\n${resource_unlock}\n${effect_gate}\n${primitive_lifetime}\n${primitive_init}\n${segment_shift}\nint TableAngle(int angle);\n${primitive_update_family}\n${effect_tick}\n${effect_dtor}\n${effect_launch}\n${effect_messages}\n${actor_detach}\n${world_update}\n${grim_tooth}\n${str_delta}\n${str_process}\n${str_termination}\n${entry2}\n${str_render}\n${chookgi_renderer}\n${effect_render}\n${spline_primitive}\n${slash_primitive}\n${angel_render}\n${job_emitters}\n${angel_emitters}\n${ruwach_emitter}\n${smoke_torch_emitters}\n${poison_emitters}\n${blessing_emitter}\n${sight_projection}\n${agility_emitters}\n${sight_emitters}\n${warp_band}\n${warp_helper}\n${warp_emitter}\n${ready_portal_emitter}\n${potion_emitters}\n${detoxication_handler}\n${ice_arrow_emitter}\n${fireball_emitter}\n${bash3d_emitter}\n${kouenka_emitter}\n${earth_spike_emitter}\n${chemical_rise_angle}\n${chemical3_emitter}\n${stin4_caller}\n${stin4_emitter}\n${stin5_emitter}\n${rg_coin3_emitter}\n${bash3d5_caller}\n${chookgi_emitter}\n${ground_sample_emitter}\n${prim_cloud_update}\n${cloud_texture}\n${weather_cloud_emitter}\n${spearbmr_handler}\n${turnundead_handler}\n${waterball2_handler}\n${revive140_handler}\n${aspersio86_handler}\n${stormgust89_handler}\n${magicrod244_handler}\n${shieldcharge246_handler}\n${strip_equipment269_272_handler}\n${kyrie112_handler}\n${repairweapon101_handler}\n${maxpower104_handler}\n${intimidate227_handler}\n${effect380_handler}\n${effect403_handler}\n${effect413_handler}\n${effect445_handler}\n${effect457_handler}\n${effect466_handler}\n${effect501_handler}\n${effect704_handler}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/render/Renderer.cpp ../../src/render/Prim.cpp ../../src/res/ActRes.h ../../src/world/RagEffect.cpp ../../src/world/RagEffect.h ../../src/world/World.cpp ../../src/res/EzEffectRes.h ../../src/res/Res.cpp)
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${airtexture416_handler}\n${hitline_effect_handler}\n${tripleattack_emitter}\n${tripleattack_handler}\n${soulparticle506_handler}\n${effect502_handler}\n${effect505_handler}\n${sma2_552_emitter}\n${sma2_552_handler}\n${particlepath556_emitter}\n${particlepath556_handler}\n${effect537_handler}\n${soulbreaker361_emitter}\n${soulbreaker361_handler}\n${effect273_handler}\n${pressure365_emitter}\n${groundshake365_emitter}\n${effect365_handler}\n${demonstration302_emitter}\n${demonstration302_handler}\n${maple333_emitter}\n${maple333_handler}\n${effect440_handler}\n${effect599_handler}\n${effect602_handler}\n${particleupdater}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -647,6 +674,8 @@ add_test(NAME shieldcharge246_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_shieldcharge246.py")
 add_test(NAME strip_equipment269_272_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_strip_equipment269_272.py")
+add_test(NAME airtexture416_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_airtexture416.py")
 add_test(NAME prim3dline_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dline.py")
 add_test(NAME prim3dtexturebillboard_source_check
@@ -677,6 +706,34 @@ add_test(NAME linelink_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_linelink_callers.py")
 add_test(NAME tripleattack_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_tripleattack_callers.py")
+add_test(NAME soulparticle506_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_soulparticle506.py")
+add_test(NAME effect502_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect502.py")
+add_test(NAME effect505_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect505.py")
+add_test(NAME sma2_552_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_sma2_552.py")
+add_test(NAME particlepath556_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_particlepath556.py")
+add_test(NAME effect537_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect537.py")
+add_test(NAME effect599_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect599.py")
+add_test(NAME effect602_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect602.py")
+add_test(NAME effect273_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect273.py")
+add_test(NAME effect440_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect440.py")
+add_test(NAME effect365_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect365.py")
+add_test(NAME effect302_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect302.py")
+add_test(NAME effect333_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect333.py")
+add_test(NAME soulbreaker361_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_soulbreaker361.py")
 add_test(NAME npcstop_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_npcstop_callers.py")
 add_test(NAME guard_caller_source_check
@@ -813,6 +870,20 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_grandcross_callers.py
     check_linelink_callers.py
     check_tripleattack_callers.py
+    check_soulparticle506.py
+    check_effect502.py
+    check_effect505.py
+    check_sma2_552.py
+    check_particlepath556.py
+    check_effect537.py
+    check_effect599.py
+    check_effect602.py
+    check_effect273.py
+    check_effect440.py
+    check_effect365.py
+    check_effect302.py
+    check_effect333.py
+    check_soulbreaker361.py
     check_npcstop_callers.py
     check_guard_callers.py
     check_twilight_callers.py

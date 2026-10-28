@@ -443,6 +443,7 @@ struct CEffectPrim : CGameObject {
         return active;
     }
 };
+void UpdateParticleUpPrimitive(CEffectPrim* prim);
 int angelSpriteSubmissions=0,angelSubmittedMotion=-1;
 u32 angelSubmittedColor=0;
 D3DBLEND angelSubmittedBlend=0;
@@ -591,6 +592,8 @@ struct CRagEffect : CGameObject {
     bool ProcessMagicRod244();
     bool ProcessShieldCharge246();
     bool ProcessStripEquipment269To272();
+    bool ProcessAirTexture416();
+    bool ProcessHitLineEffect(short f1 = 2, bool applyBodyLight = true);
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
@@ -618,6 +621,29 @@ struct CRagEffect : CGameObject {
     void ProcessJobLvUp50_2();
     ~CRagEffect() override;
     CRenderObject* ResolveCurrentMaster() { return m_master; }
+    bool ProcessTripleAttackEffects();
+    void SpawnTripleAttack(int variant);
+    bool ProcessSoulParticle506();
+    bool ProcessEffect502();
+    bool ProcessEffect505();
+    bool ProcessSma2Effect552();
+    void SpawnSma2();
+    bool ProcessParticlePath556();
+    void SpawnParticlePath556();
+    bool ProcessEffect537();
+    bool ProcessEffect599();
+    bool ProcessEffect602();
+    bool ProcessEffect273();
+    bool ProcessEffect440();
+    bool ProcessEffect365();
+    bool ProcessDemonstration302();
+    void SpawnDemonstration302();
+    bool ProcessMaple333();
+    void SpawnMaple333();
+    void SpawnPressure365();
+    void SpawnGroundShake365();
+    bool ProcessSoulBreaker361Effect();
+    void SpawnSoulBreaker361();
     CAbleToMakeEffect* ResolveCurrentEffectOwner() { return dynamic_cast<CAbleToMakeEffect*>(m_master); }
     bool IsWorldEffect() const { return m_isWorldEffect; }
     int GetDuration() const { return m_duration; }
@@ -3073,6 +3099,445 @@ int main()
     };
     for (int angle=0; angle<=360; ++angle) { g_sinTable[angle]=GetSin(angle); g_cosTable[angle]=GetCos(angle); }
     {
+        CRagEffect effect; effect.m_type=552; effect.m_duration=321; effect.m_deltaPos={1,2,3};
+        effect.m_deltaPos2={4,0,6}; g_texMgr.requests.clear();
+        const int drawBase=rngDraws;
+        effect.m_stateCnt=0; effect.ProcessSma2Effect552();
+        const CEffectPrim* prim=effect.m_primList.back();
+        check(effect.m_primList.size()==1&&prim->m_type==PP_SMA2&&prim->m_renderFlag==5
+            &&prim->m_duration==321&&prim->m_size==4&&prim->m_texture.size()==1
+            &&g_texMgr.requests.back()=="effect\\ring_blue.tga"
+            &&prim->m_deltaPos.x==1&&prim->m_deltaPos.y==2&&prim->m_deltaPos.z==3
+            &&prim->m_deltaPos2.x==4&&prim->m_deltaPos2.y==0&&prim->m_deltaPos2.z==6,
+            "effect552 state0 emits one SMA2 ring primitive with source parent payload and exact texture");
+        const float distances[3]={3.4000001f,3.5999999f,3.8f};
+        const float heights[3]={13,11,9}; const short rotations[3]={0,90,180}; const short rises[3]={55,50,45};
+        bool payload=true;
+        for(int i=0;i<3;++i){const auto& gi=prim->m_gi[i];payload=payload&&gi.life==1&&gi.process==0
+            &&gi.fullDisplayAngle==315&&gi.maxHeight==heights[i]&&gi.rotStart==rotations[i]
+            &&gi.alphaB==0&&gi.distance==distances[i]&&gi.riseAngle==rises[i]&&gi.sparkY==0;}
+        payload=payload&&prim->m_gi[3].life==0;
+        for(const auto& gi:prim->m_gi)for(size_t i=0;i<21;++i)payload=payload&&gi.height[i]==0&&gi.flag[i]==0;
+        check(payload&&rngDraws==drawBase,"effect552 initializes three exact active lanes, clears all four lane histories, and consumes no RNG");
+        effect.m_stateCnt=1; effect.ProcessSma2Effect552();
+        check(effect.m_primList.size()==1&&g_texMgr.requests.size()==1&&rngDraws==drawBase,
+            "effect552 later states do not spawn another primitive or consume RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+
+        effect.m_deltaPos2.y=1.0f; effect.m_stateCnt=0; effect.ProcessSma2Effect552();
+        prim=effect.m_primList.back();
+        check(prim->m_gi[0].distance==2.4000001f&&prim->m_gi[1].distance==2.5999999f
+            &&prim->m_gi[2].distance==2.8f,"effect552 nonzero deltaPos2.y selects the alternate three-distance table");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRagEffect effect; effect.m_type=556; effect.m_duration=321; effect.m_effectPos={100,200,300};
+        effect.m_deltaPos={10,20,30}; effect.m_stateCnt=0;
+        rngValues={9,8,7,19, 5,6,4,10, 4,3,2,0, 8,5,1,13}; rngCursor=0;
+        g_texMgr.requests.clear(); const int drawBase=rngDraws;
+        check(effect.ProcessParticlePath556(),"effect556 wrapper returns true for a state0 launch");
+        CEffectPrim* prim=effect.m_primList.back();
+        check(effect.m_primList.size()==1&&prim->m_type==PP_PARTICLE_UP&&prim->m_renderFlag==5
+            &&prim->m_duration==321&&prim->m_totalTexture==2&&prim->m_texture.size()==2&&prim->m_size==0
+            &&g_texMgr.requests.size()==2&&g_texMgr.requests[0]=="effect\\thunder_ball_0002.bmp"
+            &&g_texMgr.requests[1]=="effect\\thunder_ball_0003.bmp"
+            &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300,
+            "effect556 state0 creates exact two-texture particle-up primitive at parent position");
+        const int distances[4]={9,5,4,8}, xs[4]={8,6,3,5}, zs[4]={7,4,2,1}, speeds[4]={19,10,0,13};
+        bool payload=true;
+        for(int i=0;i<4;++i){const auto& gi=prim->m_gi[i];
+            const float distance=static_cast<float>(distances[i])*0.079999998f+1.2f;
+            const float height2=static_cast<float>(speeds[i])*0.0099999998f+0.1f;
+            payload=payload&&gi.life==1&&gi.process==0&&gi.distance==distance&&gi.height[8]==0
+                &&gi.alphaB==0&&gi.sparkX==static_cast<float>(xs[i])+10-4
+                &&gi.sparkZ==static_cast<float>(zs[i])+30-4&&gi.sparkY==14&&gi.rotStart==0
+                &&gi.height[1]==0&&gi.height[2]==height2&&gi.fullDisplayAngle==0
+                &&gi.flag[0]==0&&gi.flag[1]==1&&gi.flag[2]==1&&gi.height[7]==0;
+        }
+        check(payload&&rngDraws==drawBase+16&&rngCursor==16,
+            "effect556 initializes four exact GI lanes in four RNG draws each, including source stride clear");
+        effect.m_stateCnt=1;
+        check(effect.ProcessParticlePath556()&&effect.m_primList.size()==1&&g_texMgr.requests.size()==2
+            &&rngDraws==drawBase+16,"effect556 later states do not respawn particles or consume RNG");
+        effect.m_effectPos={101,202,303}; UpdateParticleUpPrimitive(prim);
+        check(prim->m_pos.x==101&&prim->m_pos.y==202&&prim->m_pos.z==303,
+            "PP_PARTICLE_UP refreshes its master position before animating the GI lanes");
+        effect.ClearPrims();g_world.UpdateGameObjects(); rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor; actor.m_pos={400,500,600};
+        CRagEffect effect; effect.m_type=302; effect.m_master=&actor; effect.m_duration=90;
+        effect.m_deltaPos={5,6,7}; effect.m_stateCnt=1; g_resMgr.requests.clear();
+        const int drawBase=rngDraws;
+        check(effect.ProcessDemonstration302()&&effect.m_primList.empty()
+            &&effect.m_effectPos.x==0&&rngDraws==drawBase,
+            "effect302 nonzero state has no master copy, primitive, or RNG");
+        effect.m_stateCnt=0; effect.ProcessDemonstration302();
+        check(effect.m_primList.size()==1&&rngDraws==drawBase,
+            "effect302 state0 creates exactly one BottomSpr primitive without RNG");
+        const CEffectPrim* prim=effect.m_primList.back();
+        check(prim->m_type==PP_BOTTOMSPR&&prim->m_duration==90&&prim->m_size==1.2f
+            &&prim->m_alpha==200&&prim->m_animSpeed==4&&prim->m_spriteAction==0
+            &&prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB5\xA5\xB8\xF3\xBD\xBA\xC6\xAE\xB7\xB9\xC0\xCC\xBC\xC7.spr"
+            &&prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB5\xA5\xB8\xF3\xBD\xBA\xC6\xAE\xB7\xB9\xC0\xCC\xBC\xC7.act"
+            &&prim->m_gi[0].life==1&&prim->m_gi[0].process==0&&prim->m_gi[0].maxHeight==0
+            &&prim->m_gi[0].vecBPreX==400&&prim->m_gi[0].arcBaselineY==499
+            &&prim->m_gi[0].vecBPreZ==600&&prim->m_gi[0].flag[4]==0
+            &&prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0
+            &&prim->m_spriteMotionBase==16&&effect.m_effectPos.x==400&&effect.m_effectPos.y==500
+            &&effect.m_effectPos.z==600,
+            "effect302 state0 preserves exact BottomSpr payload, assets, action, and lane clears");
+        effect.m_stateCnt=1; effect.ProcessDemonstration302();
+        check(effect.m_primList.size()==1&&rngDraws==drawBase,
+            "effect302 later states do not respawn or consume RNG");
+    }
+    {
+        CRenderObject actor; actor.m_pos={400,500,600};
+        CRagEffect effect; effect.m_type=333; effect.m_master=&actor; effect.m_duration=120;
+        effect.m_stateCnt=99999998; g_resMgr.requests.clear();
+        rngValues={3,5,299,0,90,180,270,299}; rngCursor=0;
+        const int drawBase=rngDraws;
+        effect.ProcessMaple333();
+        check(effect.m_stateCnt==0&&effect.m_duration==99999999&&effect.m_effectPos.x==400
+            &&effect.m_effectPos.y==500&&effect.m_effectPos.z==600,
+            "effect333 reset state replaces duration and copies current master position");
+        check(effect.m_primList.size()==1&&rngDraws==drawBase+8&&rngCursor==8,
+            "effect333 reset frame emits once with eight ordered RNG draws");
+        if(!effect.m_primList.empty()) {
+            const CEffectPrim* prim=effect.m_primList.back();
+            check(prim->m_type==PP_SAKURA&&prim->m_duration==99999999&&prim->m_alpha==200
+                &&std::fabs(prim->m_size-0.4f)<0.00001f&&prim->m_spriteAction==0
+                &&prim->m_spriteMotionBase==36&&prim->m_gi[0].life==1
+                &&std::fabs(prim->m_gi[0].maxHeight-0.15f)<0.00001f
+                &&prim->m_gi[0].vecBPreX==549&&prim->m_gi[0].arcBaselineY==300
+                &&prim->m_gi[0].vecBPreZ==749&&prim->m_gi[0].height[0]==0
+                &&prim->m_gi[0].height[1]==90&&prim->m_gi[0].height[2]==180&&prim->m_gi[0].height[3]==270
+                &&prim->m_gi[0].flag[0]==1&&prim->m_gi[1].life==0
+                &&prim->m_gi[2].life==0&&prim->m_gi[3].life==0,
+                "effect333 preserves the PP_SAKURA payload, eight RNG outputs and lane clears");
+            check(prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xDC\xC7\xB3.act"
+                &&prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xDC\xC7\xB3.spr"
+                &&g_resMgr.requests.size()==2&&g_resMgr.requests[0]==prim->m_spriteActName
+                &&g_resMgr.requests[1]==prim->m_spriteSprName,
+                "effect333 loads exact ACT then SPR resources");
+        }
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};
+        auto* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=365; effect.m_master=&actor; effect.m_duration=90;
+        effect.m_stateCnt=2; waveCalls.clear(); g_texMgr.requests.clear(); const int drawBase=rngDraws;
+        effect.ProcessEffect365();
+        check(effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==drawBase,
+            "effect365 nonzero frame before cue does not emit output");
+        effect.m_stateCnt=0; effect.ProcessEffect365();
+        check(effect.m_primList.size()==2&&rngDraws==drawBase+1&&g_texMgr.requests.size()==2
+            &&g_texMgr.requests[0]=="effect\\cross_old.bmp"
+            &&g_texMgr.requests[1]=="effect\\explosive_1_128.bmp",
+            "effect365 state0 launches Pressure then GroundShake with exact textures and one random draw");
+        const CEffectPrim* pressure=effect.m_primList.front();
+        const CEffectPrim* shake=effect.m_primList.back();
+        bool pressureOk=pressure->m_type==PP_PRESSURE&&pressure->m_renderFlag==5
+            &&pressure->m_duration==90&&pressure->m_size==0&&pressure->m_gi[0].life==1
+            &&pressure->m_gi[0].process==0&&pressure->m_gi[0].distance==12
+            &&pressure->m_gi[0].alphaB==0&&pressure->m_gi[0].vecBPreX==0
+            &&pressure->m_gi[0].arcBaselineY==-115&&pressure->m_gi[0].vecBPreZ==0
+            &&pressure->m_gi[0].rotStart==0&&pressure->m_gi[0].height[1]==3
+            &&pressure->m_gi[0].fullDisplayAngle>=0&&pressure->m_gi[0].fullDisplayAngle<360
+            &&pressure->m_gi[0].flag[0]==0&&pressure->m_gi[0].flag[2]==7;
+        for (size_t lane=1;lane<4;++lane)
+            pressureOk=pressureOk&&pressure->m_gi[lane].life==1&&pressure->m_gi[lane].alphaB==0;
+        bool shakeOk=shake->m_type==PP_GROUNDSHAKE&&shake->m_renderFlag==5
+            &&shake->m_duration==90&&shake->m_size==4&&shake->m_gi[0].life==1
+            &&shake->m_gi[0].process==-28&&shake->m_gi[0].distance==15
+            &&shake->m_gi[0].riseAngle==0&&shake->m_gi[0].alphaB==0&&shake->m_gi[0].height[0]==-5;
+        for (size_t lane=1;lane<4;++lane) shakeOk=shakeOk&&shake->m_gi[lane].unused0==0;
+        check(pressureOk&&shakeOk,"effect365 exact Pressure and GroundShake primitive payloads");
+        effect.m_stateCnt=3; effect.ProcessEffect365();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\"&&waveCalls[0].x==390
+            &&waveCalls[0].y==0&&waveCalls[0].z==580&&waveCalls[0].volume==250
+            &&waveCalls[0].range==40&&waveCalls[0].frequency==1&&effect.m_effectPos.x==400
+            &&effect.m_primList.size()==2&&rngDraws==drawBase+1,
+            "effect365 state3 copies position and plays only the proven prefix without respawning");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};
+        auto* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=440; effect.m_master=&actor; effect.m_effectPos={40,50,60};
+        waveCalls.clear(); const int drawBase=rngDraws;
+        effect.m_stateCnt=1; effect.ProcessEffect440();
+        check(waveCalls.empty()&&effect.m_effectPos.x==40&&rngDraws==drawBase,
+            "effect440 nonzero state has no frame-zero sound or position copy");
+        effect.m_stateCnt=0; effect.ProcessEffect440();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\"&&waveCalls[0].x==390
+            &&waveCalls[0].y==0&&waveCalls[0].z==580&&waveCalls[0].volume==250
+            &&waveCalls[0].range==40&&waveCalls[0].frequency==1&&effect.m_effectPos.x==400
+            &&effect.m_effectPos.y==500&&effect.m_effectPos.z==600&&rngDraws==drawBase,
+            "effect440 state0 copies master position, preserves known sound prefix and runs shared STR");
+        effect.m_stateCnt=2; effect.ProcessEffect440();
+        check(waveCalls.size()==1&&rngDraws==drawBase,
+            "effect440 later states do not repeat the cue or consume RNG");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};
+        auto* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=273; effect.m_master=&actor; effect.m_effectPos={40,50,60};
+        waveCalls.clear(); const int oldRng=rngDraws;
+        effect.m_stateCnt=1; effect.ProcessEffect273();
+        check(waveCalls.empty()&&effect.m_effectPos.x==40&&effect.m_effectPos.y==50
+            &&effect.m_effectPos.z==60&&rngDraws==oldRng,
+            "effect273 nonzero state has no one-shot cue, position copy, or RNG");
+        effect.m_stateCnt=0; effect.ProcessEffect273();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\mon_\xBF\xAC\xC8\xAF.wav"
+            &&waveCalls[0].x==390&&waveCalls[0].y==0&&waveCalls[0].z==580
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&effect.m_effectPos.x==400&&effect.m_effectPos.y==500&&effect.m_effectPos.z==600
+            &&rngDraws==oldRng,
+            "effect273 state0 copies master position and plays exact wave before shared STR processing");
+        effect.m_stateCnt=2; effect.ProcessEffect273();
+        check(waveCalls.size()==1&&rngDraws==oldRng,
+            "effect273 later states neither replay audio nor consume RNG");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};
+        auto* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=361; effect.m_master=&actor; effect.m_duration=90;
+        effect.m_deltaPos={11,22,33}; effect.m_stateCnt=0;
+        waveCalls.clear(); g_texMgr.requests.clear(); rngValues={1,2,3,4}; rngCursor=0;
+        const int drawBase=rngDraws;
+        effect.ProcessSoulBreaker361Effect();
+        check(effect.m_primList.size()==1&&rngDraws==drawBase+4&&g_texMgr.requests.size()==1
+            &&g_texMgr.requests[0]=="effect\\purpleslash.tga",
+            "effect361 state0 launches one purple SoulBreaker primitive with four ordered random draws");
+        const CEffectPrim* prim=effect.m_primList.back();
+        bool lanes=prim->m_type==PP_SOULBREAKER&&prim->m_renderFlag==5&&prim->m_duration==90
+            &&prim->m_size==0&&prim->m_deltaPos.x==11&&prim->m_deltaPos.y==22&&prim->m_deltaPos.z==33
+            &&prim->m_pos.x==400&&prim->m_pos.y==500&&prim->m_pos.z==600;
+        for (size_t i=0;i<4;++i) {
+            const EffectGi& gi=prim->m_gi[i];
+            lanes=lanes&&gi.life==1&&gi.alphaB==0&&gi.process==static_cast<int>(i)-28
+                &&gi.distance==20&&gi.sparkX==400&&gi.sparkY==static_cast<float>(491+i)
+                &&gi.sparkZ==600&&gi.rotStart==0&&gi.height[1]==0.80000001f&&gi.flag[0]==0;
+        }
+        check(lanes,"effect361 emitter preserves four SoulBreaker GI payloads and seeded segment heights");
+        check(actor.m_BodyLight==1&&actor.red==255&&actor.green==0&&actor.blue==255,
+            "effect361 state0 sets BodyLight bit1 and magenta tint");
+        effect.m_stateCnt=1; effect.ProcessSoulBreaker361Effect();
+        check(effect.m_primList.size()==1&&rngDraws==drawBase+4&&waveCalls.empty(),
+            "effect361 state1 follows the master without another primitive or sound");
+        actor.m_pos={410,510,610}; effect.m_stateCnt=20; effect.ProcessSoulBreaker361Effect();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\"&&waveCalls[0].x==400
+            &&waveCalls[0].y==0&&waveCalls[0].z==590&&waveCalls[0].volume==250
+            &&waveCalls[0].range==40&&waveCalls[0].frequency==1&&effect.m_effectPos.x==410
+            &&effect.m_effectPos.y==510&&effect.m_effectPos.z==610&&rngDraws==drawBase+4,
+            "effect361 state20 copies master position and preserves only the proven audio prefix");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};
+        auto* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=537; effect.m_duration=321; effect.m_master=&actor;
+        effect.m_effectPos={40,50,60}; effect.m_stateCnt=0; waveCalls.clear();g_texMgr.requests.clear();
+        const int drawBase=rngDraws;
+        check(effect.ProcessEffect537(),"effect537 returns true after its state0 body");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_FireWall.wav"
+            &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==40
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&effect.m_effectPos.x==400&&effect.m_effectPos.y==500&&effect.m_effectPos.z==600,
+            "effect537 plays its cue from the original effect position before copying master position");
+        CEffectPrim* prim=effect.m_primList.back();
+        check(effect.m_primList.size()==1&&prim->m_type==PP_ACIDDEMON&&prim->m_renderFlag==5
+            &&prim->m_duration==321&&prim->m_size==13&&prim->m_texture.size()==1
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\ring_black.tga"
+            &&prim->m_pos.x==400&&prim->m_pos.y==500&&prim->m_pos.z==600,
+            "effect537 state0 emits exact acid-demon primitive, resource, and copied origin");
+        const short angles[4]={315,315,315,360}, rotations[4]={0,90,180,0}, rises[4]={70,57,45,90};
+        const float heights[4]={25,22,19,30}, distances[4]={2.4000001f,2.7f,3,2.2f};
+        bool payload=true;
+        for(int i=0;i<4;++i){const auto& gi=prim->m_gi[i];payload=payload&&gi.life==1&&gi.process==0
+            &&gi.fullDisplayAngle==angles[i]&&gi.maxHeight==heights[i]&&gi.rotStart==rotations[i]
+            &&gi.alphaB==0&&gi.distance==distances[i]&&gi.riseAngle==rises[i]&&gi.sparkY==0;
+            for(size_t j=0;j<21;++j)payload=payload&&gi.height[j]==0&&gi.flag[j]==0;
+        }
+        check(payload&&rngDraws==drawBase,"effect537 initializes four exact GI lanes and clears their histories without RNG");
+        const int messages=gameMode.messages; effect.m_stateCnt=5;
+        check(effect.ProcessEffect537()&&gameMode.messages==messages+1&&gameMode.lastMsg==135
+            &&effect.m_primList.size()==1&&waveCalls.size()==1,
+            "effect537 state5 sends one game-mode message135 without relaunching the primitive");
+        effect.m_stateCnt=6; effect.ProcessEffect537();
+        check(gameMode.messages==messages+1&&effect.m_primList.size()==1&&waveCalls.size()==1,
+            "effect537 state6 does not repeat the state5 message or state0 output");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};
+        auto* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=599; effect.m_master=&actor; effect.m_effectPos={40,50,60};
+        waveCalls.clear(); actor.m_BodyLight=0; actor.tintCalls=0;
+        effect.m_stateCnt=4; effect.ProcessEffect599();
+        check(waveCalls.empty()&&actor.tintCalls==0&&actor.m_BodyLight==0,
+            "effect599 state4 is before sound and flash windows");
+        effect.m_stateCnt=5; effect.ProcessEffect599();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_BeginSpell.wav"
+            &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==40
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&effect.m_effectPos.x==40,
+            "effect599 state5 plays exact positional cue from the stored origin");
+        check(actor.m_BodyLight==0&&actor.alpha==123&&actor.red==255&&actor.green==255&&actor.blue==255,
+            "effect599 odd state5 applies white tint without setting BodyLight");
+        effect.m_stateCnt=6; effect.ProcessEffect599();
+        check(waveCalls.size()==1&&actor.m_BodyLight==1,"effect599 even state6 does not replay sound and sets BodyLight bit1");
+        check(actor.red==250&&actor.green==250&&actor.blue==100,"effect599 even state6 applies yellow tint");
+        effect.m_stateCnt=24; effect.ProcessEffect599();
+        check(actor.m_BodyLight==1&&actor.red==250&&actor.green==250&&actor.blue==100,
+            "effect599 even state24 stays in flash window and preserves already-set BodyLight bit1");
+        effect.m_stateCnt=25; effect.ProcessEffect599();
+        check(actor.red==255&&actor.green==255&&actor.blue==255,"effect599 odd endpoint25 is white");
+        effect.m_stateCnt=26; actor.tintCalls=0; actor.red=13; effect.ProcessEffect599();
+        check(actor.tintCalls==0&&actor.red==13&&waveCalls.size()==1,
+            "effect599 state26 exits flash window and does not replay the one-shot sound");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};
+        auto* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=602; effect.m_master=&actor; effect.m_effectPos={40,50,60};
+        effect.m_stateCnt=19; waveCalls.clear(); actor.m_BodyLight=0x10; actor.m_BodyTime=77; actor.tintCalls=0;
+        effect.ProcessEffect602();
+        check(waveCalls.empty()&&effect.m_effectPos.x==40&&actor.m_BodyLight==0x10
+            &&actor.m_BodyTime==77&&actor.tintCalls==0,
+            "effect602 state19 has no cue, position copy, body update, or tint");
+        effect.m_stateCnt=20; effect.ProcessEffect602();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\ef_hit6.wav"
+            &&waveCalls[0].x==390&&waveCalls[0].y==0&&waveCalls[0].z==580
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&effect.m_effectPos.x==400&&effect.m_effectPos.y==500&&effect.m_effectPos.z==600
+            &&actor.m_BodyLight==0x10&&actor.m_BodyTime==77&&actor.tintCalls==0,
+            "effect602 state20 copies master position and plays exact cue before tint/body window");
+        actor.m_pos={410,510,610}; effect.m_stateCnt=21; effect.ProcessEffect602();
+        check(waveCalls.size()==1&&effect.m_effectPos.x==400&&effect.m_effectPos.y==500&&effect.m_effectPos.z==600
+            &&actor.m_BodyLight==0x2010&&actor.m_BodyTime==21&&actor.red==255&&actor.green==255&&actor.blue==255,
+            "effect602 odd state21 sets bit0x2000, BodyTime, and white tint without recopying position");
+        effect.m_stateCnt=22; effect.ProcessEffect602();
+        check(actor.m_BodyLight==0x2010&&actor.m_BodyTime==22&&actor.red==250&&actor.green==50&&actor.blue==50
+            &&waveCalls.size()==1,"effect602 even state22 sets current BodyTime and red tint without replaying cue");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};
+        auto* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=505; effect.m_master=&actor; effect.m_effectPos={40,50,60};
+        waveCalls.clear(); actor.m_BodyLight=0; actor.tintCalls=0;
+        effect.m_stateCnt=0; effect.ProcessEffect505();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\priest_suffragium.wav"
+            &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==40
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&effect.m_effectPos.x==40&&actor.m_BodyLight==0&&actor.tintCalls==0,
+            "effect505 state0 plays exact positional cue from stored origin without copying master or flashing");
+        effect.m_stateCnt=9; effect.ProcessEffect505();
+        check(actor.m_BodyLight==0&&actor.tintCalls==0,"effect505 state9 remains outside flash window");
+        effect.m_stateCnt=10; effect.ProcessEffect505();
+        check(actor.m_BodyLight==1&&actor.alpha==123&&actor.red==250&&actor.green==250&&actor.blue==100,
+            "effect505 even state10 adds BodyLight bit1 and applies yellow tint");
+        effect.m_stateCnt=11; effect.ProcessEffect505();
+        check(actor.m_BodyLight==1&&actor.red==255&&actor.green==255&&actor.blue==255,
+            "effect505 odd state11 applies white tint without changing BodyLight");
+        effect.m_stateCnt=35; effect.ProcessEffect505();
+        check(actor.red==255&&actor.green==255&&actor.blue==255,"effect505 state35 remains inclusive and odd-white");
+        effect.m_stateCnt=36; actor.tintCalls=0; effect.ProcessEffect505();
+        check(actor.tintCalls==0&&waveCalls.size()==1,"effect505 state36 exits flash window without replaying cue");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor, listener; actor.m_pos={40,50,60}; listener.m_pos={10,700,20};
+        auto* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=502; effect.m_master=&actor; effect.m_effectPos={-1,-1,-1};
+        waveCalls.clear(); actor.m_BodyLight=0; actor.tintCalls=0;
+        effect.m_stateCnt=0; effect.ProcessEffect502();
+        check(effect.m_effectPos.x==40&&waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_BeginSpell.wav"
+            &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==40
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&actor.m_BodyLight==9&&actor.tintCalls==1&&actor.alpha==123&&actor.red==250&&actor.green==250&&actor.blue==100,
+            "effect502 state0 plays the exact positional cue then applies even-frame yellow flash and body bits");
+        effect.m_stateCnt=1; effect.ProcessEffect502();
+        check(actor.m_BodyLight==9&&actor.alpha==123&&actor.red==255&&actor.green==255&&actor.blue==255&&waveCalls.size()==1,
+            "effect502 odd frame uses white tint without adding body-light bits or replaying cue");
+        effect.m_stateCnt=140; actor.m_BodyLight=0; effect.ProcessEffect502();
+        check(actor.m_BodyLight==9&&actor.red==250&&actor.green==250&&actor.blue==100&&waveCalls.size()==1,
+            "effect502 state140 remains inclusive and applies even flash");
+        effect.m_stateCnt=141; actor.m_BodyLight=0; actor.tintCalls=0; effect.ProcessEffect502();
+        check(actor.m_BodyLight==0&&actor.tintCalls==0&&waveCalls.size()==1,
+            "effect502 state141 exits before flash with no repeated cue");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor; actor.m_pos={201,202,203};
+        CRagEffect effect; effect.m_type=506; effect.m_master=&actor; effect.m_duration=77;
+        effect.m_deltaPos={7,8,9}; rngValues.resize(26); for (int i=0;i<26;++i) rngValues[static_cast<size_t>(i)]=i;
+        rngCursor=0; g_texMgr.requests.clear();
+        effect.m_stateCnt=0; const int drawBase=rngDraws;
+        effect.ProcessSoulParticle506();
+        const CEffectPrim* prim=effect.m_primList.back();
+        const auto& a=prim->m_gi[0]; const auto& b=prim->m_gi[1];
+        check(effect.m_primList.size()==1&&prim->m_type==PP_SOULPARTICLE&&prim->m_renderFlag==5
+            &&prim->m_duration==77&&prim->m_size==0&&prim->m_pos.x==201&&prim->m_pos.y==202&&prim->m_pos.z==203
+            &&g_texMgr.requests.back()=="effect\\whitelight.tga"&&rngDraws==drawBase+26,
+            "effect506 state0 launches one whitelight SoulParticle at master with 26 ordered draws");
+        check(a.life==1&&a.maxHeight==0.07f&&a.distance==1&&a.process==0
+            &&a.vecBPreX==7&&a.arcBaselineY==8&&a.vecBPreZ==9&&a.sparkX==7&&a.sparkY==8&&a.sparkZ==9
+            &&a.vecTPreX==7&&a.vecTPreY==8&&a.vecTPreZ==9
+            &&a.height[0]==1&&a.height[1]==2&&a.height[2]==3&&a.height[3]==4
+            &&a.height[4]==5&&a.height[5]==6&&a.height[6]==7&&a.height[7]==8
+            &&a.height[8]==9&&a.height[9]==10&&a.height[10]==11&&a.height[11]==12
+            &&a.height[12]==0&&a.height[13]==0&&a.height[14]==0&&a.height[15]==0
+            &&b.life==1&&std::fabs(b.distance-1.2f)<0.00001f&&b.height[0]==14&&b.height[11]==25,
+            "effect506 initializes exactly two GIs, their source ordered angles, offsets, and aliased stride fields");
+        for (const auto& gi : prim->m_gi) check(gi.alphaT==0,"effect506 clears each lane alphaT through source stride stores");
+        actor.m_pos={301,302,303}; effect.m_stateCnt=1; effect.ProcessSoulParticle506();
+        check(effect.m_effectPos.x==301&&effect.m_primList.size()==1&&rngDraws==drawBase+26,
+            "effect506 later states follow master without another child or RNG");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); rngValues.clear(); rngCursor=0;
+    }
+    {
+        CRenderObject actor, listener; actor.m_pos={101,102,103}; listener.m_pos={1,900,3};
+        auto* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=329; effect.m_master=&actor; effect.m_duration=123;
+        effect.m_deltaPos={111,102,103}; rngValues.assign(24,0); rngCursor=0;
+        g_texMgr.requests.clear(); waveCalls.clear();
+        effect.m_stateCnt=0; const int drawBase=rngDraws;
+        effect.ProcessTripleAttackEffects();
+        const CEffectPrim* first=effect.m_primList.back();
+        bool lanes=effect.m_primList.size()==1 && first->m_type==PP_TRIPLEATTACK
+            && first->m_renderFlag==5 && first->m_duration==123 && first->m_size==0
+            && first->m_pos.x==101 && first->m_pos.y==102 && first->m_pos.z==103
+            && first->m_deltaPos.x==111 && first->m_texture.size()==1
+            && g_texMgr.requests.back()=="effect\\cloud11.tga" && rngDraws==drawBase+24;
+        for (const auto& gi : first->m_gi) lanes=lanes&&gi.life==1&&gi.process==0&&gi.rotStart==0
+            &&gi.alphaB==0&&gi.sparkX==98&&gi.sparkY==102&&gi.sparkZ==100
+            &&gi.vecTNowX==98&&gi.vecTNowY==102&&gi.vecTNowZ==100
+            &&gi.maxHeight==0.25f&&gi.height[0]==8&&gi.height[1]==0&&gi.height[4]==0&&gi.distance==20;
+        check(lanes,"effect329 state0 emits cloud11 TripleAttack with four source-ordered GI payloads and 24 RNG draws");
+        effect.m_stateCnt=1; effect.ProcessTripleAttackEffects();
+        check(effect.m_primList.size()==2&&rngDraws==drawBase+48,
+            "effect329 repeats the emitter through state1, then stops spawning");
+        effect.m_stateCnt=2; effect.ProcessTripleAttackEffects();
+        check(effect.m_primList.size()==2,"effect329 state2 refreshes master position without another primitive");
+        effect.m_stateCnt=10; effect.ProcessTripleAttackEffects();
+        effect.m_stateCnt=20; effect.ProcessTripleAttackEffects();
+        effect.m_stateCnt=30; effect.ProcessTripleAttackEffects();
+        check(waveCalls.size()==3&&waveCalls[0].name=="effect\\EF_hit2.wav"
+            &&waveCalls[1].name=="effect\\EF_hit4.wav"&&waveCalls[2].name=="effect\\EF_hit2.wav"
+            &&waveCalls[0].x==100&&waveCalls[0].y==0&&waveCalls[0].z==100
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "effect329 plays exact hit2/hit4/hit2 waves at states10/20/30 relative to listener X/Z");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); rngValues.clear(); rngCursor=0;
+        g_world.m_player=oldPlayer;
+    }
+    {
         const int oldSkipFrame = g_isSkipFrame;
         g_isSkipFrame = 1;
         CRagEffect master; master.m_tlvertX = 100.0f; master.m_tlvertY = 200.0f; master.m_type = 999; master.m_duration = 1000;
@@ -3164,6 +3629,7 @@ int main()
     {
         CRenderObject actor,listener;actor.m_pos={30,40,50};listener.m_pos={5,300,8};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        g_resMgr.requests.clear();
         CRagEffect effect;effect.m_master=&actor;effect.m_duration=200;
         effect.ApplyThunderStorm2();
         check(effect.m_effectPos.x==30&&effect.m_effectPos.y==40&&effect.m_effectPos.z==50
@@ -4783,8 +5249,8 @@ int main()
         waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
         const int beforeRng=rngDraws;
         effect.m_stateCnt=0;
-        check(effect.ProcessMagicRod244()&&effect.m_pos.x==15&&effect.m_pos.y==20&&effect.m_pos.z==35
-            &&effect.m_effectPos.x==15&&waveCalls.size()==1
+        check(effect.ProcessMagicRod244()&&effect.m_effectPos.x==15&&effect.m_effectPos.y==20&&effect.m_effectPos.z==35
+            &&waveCalls.size()==1
             &&waveCalls[0].name=="effect\\sage_magic rod.wav"&&waveCalls[0].x==12
             &&waveCalls[0].y==0&&waveCalls[0].z==30&&waveCalls[0].volume==250
             &&waveCalls[0].range==40&&waveCalls[0].frequency==1,
@@ -4817,8 +5283,8 @@ int main()
             check(!effect.ProcessStripEquipment269To272()&&waveCalls.size()==beforeWaves,
                 "Strip equipment produces no cue before state6");
             effect.m_stateCnt=6;
-            check(!effect.ProcessStripEquipment269To272()&&effect.m_pos.x==15&&effect.m_pos.y==20
-                &&effect.m_pos.z==35&&waveCalls.size()==beforeWaves+1
+            check(!effect.ProcessStripEquipment269To272()&&effect.m_effectPos.x==15&&effect.m_effectPos.y==20
+                &&effect.m_effectPos.z==35&&waveCalls.size()==beforeWaves+1
                 &&waveCalls.back().name=="effect\\"&&waveCalls.back().x==12
                 &&waveCalls.back().y==0&&waveCalls.back().z==30&&waveCalls.back().volume==250
                 &&waveCalls.back().range==40&&waveCalls.back().frequency==1,
@@ -4829,6 +5295,60 @@ int main()
         check(g_texMgr.requests.empty()&&rngDraws==beforeRng,
             "Strip equipment has no texture or RNG output");
         g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject master;master.m_pos={15,20,35};
+        CRagEffect effect;effect.m_master=&master;effect.m_type=416;effect.m_duration=120;
+        effect.m_deltaPos={20,20,35};effect.m_stateCnt=0;
+        rngValues.assign(1,123);rngCursor=0;const int beforeRng=rngDraws;
+        g_texMgr.requests.clear();
+        check(effect.ProcessAirTexture416()&&effect.m_effectPos.x==15&&effect.m_effectPos.y==20&&effect.m_effectPos.z==35
+            &&effect.m_primList.size()==1,
+            "AirTexture follows its master and emits one state-zero primitive");
+        CEffectPrim* air=effect.m_primList.empty()?nullptr:effect.m_primList.back();
+        check(air&&air->m_type==PP_AIRTEXTURE&&air->m_renderFlag==5&&air->m_duration==120
+            &&air->m_texture.size()==1&&g_texMgr.requests.size()==1
+            &&g_texMgr.requests[0]=="effect\\emp shock.tga"&&air->m_size==0
+            &&air->m_gi[0].life==1&&air->m_gi[0].process==0&&air->m_gi[0].distance==5
+            &&air->m_gi[0].alphaB==0
+            &&air->m_gi[0].fullDisplayAngle==123&&air->m_gi[0].riseAngle==90
+            &&air->m_gi[0].sparkX==20&&air->m_gi[0].sparkY==20&&air->m_gi[0].sparkZ==35
+            &&air->m_gi[1].life==0&&air->m_gi[2].life==0&&air->m_gi[3].life==0
+            &&rngDraws==beforeRng+1,
+            "AirTexture preserves texture, GI payload, target direction and single RNG draw");
+        master.m_pos={16,22,36};effect.m_stateCnt=1;
+        check(effect.ProcessAirTexture416()&&effect.m_effectPos.x==16&&effect.m_effectPos.z==36
+            &&effect.m_primList.size()==1&&rngDraws==beforeRng+1,
+            "AirTexture follows the master without repeating its one-shot primitive");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject master;master.m_pos={30,40,50};
+        CRagEffect effect;effect.m_master=&master;effect.m_duration=200;effect.m_stateCnt=0;
+        rngValues.resize(16);for(int i=0;i<16;++i)rngValues[static_cast<size_t>(i)]=i;
+        rngCursor=0;const int beforeRng=rngDraws;g_texMgr.requests.clear();
+        check(effect.ProcessHitLineEffect(0,false)&&effect.m_effectPos.x==30
+            &&effect.m_effectPos.y==40&&effect.m_effectPos.z==50
+            &&effect.m_primList.size()==1&&rngDraws==beforeRng+16&&rngCursor==16
+            &&master.m_BodyLight==0&&master.tintCalls==0,
+            "HitLine effect330 follows master, emits on state zero, consumes sixteen draws and skips effect376 body tint");
+        CEffectPrim* line=effect.m_primList.empty()?nullptr:effect.m_primList.back();
+        check(line&&line->m_type==PP_HITLINE&&line->m_renderFlag==5&&line->m_duration==200
+            &&line->m_totalTexture==1&&g_texMgr.requests.size()==1
+            &&g_texMgr.requests[0]=="effect\\white02.bmp"&&line->m_size==0
+            &&line->m_gi[0].life==1&&line->m_gi[0].alphaT==0
+            &&line->m_gi[0].sparkX==30&&line->m_gi[0].sparkY==40&&line->m_gi[0].sparkZ==50
+            &&line->m_gi[0].process==0&&line->m_gi[0].alphaB==126
+            &&line->m_gi[0].riseAngle==2&&line->m_gi[0].distance==9,
+            "HitLine effect330 preserves F1=0, PE texture, origin and ordered GI payload");
+        effect.m_stateCnt=10;effect.ProcessHitLineEffect(0,false);
+        check(effect.m_primList.size()==1&&master.m_BodyLight==0&&master.tintCalls==0,
+            "HitLine effect330 does not run effect376's state10 body-light/tint branch");
+        CRagEffect effect376;effect376.m_master=&master;effect376.m_stateCnt=10;
+        effect376.ProcessHitLineEffect();
+        check(master.m_BodyLight==8&&master.tintCalls==1&&master.red==255&&master.green==120&&master.blue==50,
+            "HitLine effect376 retains its state10 body-light/tint behavior");
+        effect.ClearPrims();effect376.ClearPrims();g_world.UpdateGameObjects();
     }
     {
         CRagEffect effect;
@@ -5704,7 +6224,7 @@ int main()
         CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         CRenderObject master;master.m_pos={10,20,30};
         CRagEffect effect;effect.m_type=227;effect.m_master=&master;effect.m_duration=300;
-        effect.m_pos={1,2,3};effect.m_deltaPos={1,2,3};
+        effect.m_effectPos={1,2,3};effect.m_deltaPos={1,2,3};
         waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
         for(int i=0;i<400;++i)rngValues.push_back(i);
         const int beforeRng=rngDraws;
@@ -5713,8 +6233,8 @@ int main()
             &&waveCalls[0].x==7&&waveCalls[0].y==0&&waveCalls[0].z==25
             &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
             &&effect.m_primList.size()==20&&g_texMgr.requests.size()==20
-            &&rngDraws==beforeRng+400&&rngCursor==400&&effect.m_pos.x==10
-            &&effect.m_pos.y==11&&effect.m_pos.z==30,
+            &&rngDraws==beforeRng+400&&rngCursor==400&&effect.m_effectPos.x==10
+            &&effect.m_effectPos.y==11&&effect.m_effectPos.z==30,
             "Intimidate state0 plays its cue, launches twenty helpers, draws 400 RNG values, and resets parent position per helper");
         CEffectPrim* prim=effect.m_primList.front();
         check(prim&&prim->m_type==PP_INTIMIDATE&&prim->m_renderFlag==5&&prim->m_duration==300
@@ -5740,7 +6260,7 @@ int main()
     {
         CRenderObject listener;listener.m_pos={3,0,5};
         CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
-        CRagEffect effect;effect.m_type=104;effect.m_duration=300;effect.m_pos={15,10,35};
+        CRagEffect effect;effect.m_type=104;effect.m_duration=300;effect.m_effectPos={15,10,35};
         waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
         const int beforeRng=rngDraws;
         for(int state:{0,39,40,41,46,47,48,64,65,66}){effect.m_stateCnt=state;effect.ProcessMaxPower104();}
@@ -5760,7 +6280,7 @@ int main()
     {
         CRenderObject listener;listener.m_pos={3,0,5};
         CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
-        CRagEffect effect;effect.m_type=101;effect.m_duration=300;effect.m_pos={15,10,35};
+        CRagEffect effect;effect.m_type=101;effect.m_duration=300;effect.m_effectPos={15,10,35};
         waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
         const int beforeRng=rngDraws;
         for(int state:{19,20,21,54,55,56}){effect.m_stateCnt=state;effect.ProcessRepairWeapon101();}
@@ -5778,7 +6298,7 @@ int main()
         CRenderObject listener;listener.m_pos={3,0,5};
         CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         const bool oldMinEffect=g_session.m_isMinEffect;g_session.m_isMinEffect=false;
-        CRagEffect effect;effect.m_type=89;effect.m_duration=300;effect.m_pos={15,10,35};
+        CRagEffect effect;effect.m_type=89;effect.m_duration=300;effect.m_effectPos={15,10,35};
         waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
         for(int i=0;i<32;++i)rngValues.push_back(i%4==0?11:i%4==1?2:i%4==2?23:50);
         const int beforeRng=rngDraws;
@@ -5794,7 +6314,7 @@ int main()
             "Storm Gust emits two quad horns at each of four pulses with four ordered RNG draws each");
         CEffectPrim* first=effect.m_primList.front();
         check(first&&first->m_type==PP_3DQUADHORN&&first->UsesReferenceQuadHorn()
-            &&first->m_pos.x==0&&first->m_pos.y==0&&first->m_pos.z==0
+            &&first->m_pos.x==15&&first->m_pos.y==10&&first->m_pos.z==35
             &&first->m_duration==157&&(first->m_pattern&1)!=0&&first->m_deltaPos2.x==GetSin(23)*5
             &&first->m_deltaPos2.y==20&&first->m_size==4.5f&&first->m_heightSize==20
             &&first->m_longitude==11&&first->m_latitude==100&&first->m_speed==1.5f
@@ -5815,7 +6335,7 @@ int main()
     {
         CRenderObject listener;listener.m_pos={3,0,5};
         CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
-        CRagEffect effect;effect.m_type=112;effect.m_duration=300;effect.m_pos={15,10,35};
+        CRagEffect effect;effect.m_type=112;effect.m_duration=300;effect.m_effectPos={15,10,35};
         waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
         const int beforeRng=rngDraws;
         effect.m_stateCnt=0;effect.ProcessKyrie112();

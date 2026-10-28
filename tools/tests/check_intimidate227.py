@@ -36,7 +36,7 @@ if start < 0 or end < 0:
 body = rag[start:end]
 for token in (
     "m_stateCnt == 0", "m_stateCnt == 35", "EF_Bash.wav", "rog_intimidate.wav",
-    "call<20", "m_pos=master->m_pos", "PP_INTIMIDATE", "white01.bmp",
+    "call<20", "m_effectPos=master->m_pos", "PP_INTIMIDATE", "white01.bmp",
     "gi.process=-70-rand()%30", "gi.riseAngle=static_cast<short>(rand()%360)",
     "gi.fullDisplayAngle=static_cast<short>(rand()%360)",
     "gi.rotStart=static_cast<short>(rand()%360)", "gi.height[2]=static_cast<float>(rand()%360)",

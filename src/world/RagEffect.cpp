@@ -4888,6 +4888,7 @@ void UpdateParticleUpPrimitive(CEffectPrim* prim)
         pitch = static_cast<short>(pitch - 360);
     }
     prim->m_gi[1].alphaT = pitch;
+    prim->m_pos = prim->m_master->EffectPosition();
 
     int markA = 36;
     int markB = 35;
@@ -18770,7 +18771,7 @@ bool CRagEffect::ProcessBash3DEffect()
 }
 
 // Ref/RagEffect2.cpp:28147-28206; canonical helper HighPriest.exe.c:432759-432817.
-bool CRagEffect::ProcessHitLineEffect()
+bool CRagEffect::ProcessHitLineEffect(short f1, bool applyBodyLight)
 {
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
@@ -18804,12 +18805,12 @@ bool CRagEffect::ProcessHitLineEffect()
                     gi.height[history] = 0.0f;
                     gi.flag[history] = 0;
                 }
-                gi.alphaT = 2;
+                gi.alphaT = f1;
             }
         }
     }
 
-    if (m_stateCnt >= 10 && m_stateCnt <= 20 && master != nullptr) {
+    if (applyBodyLight && m_stateCnt >= 10 && m_stateCnt <= 20 && master != nullptr) {
         if ((master->m_BodyLight & 8) != 8) {
             master->m_BodyLight += 8;
         }
@@ -18817,6 +18818,8 @@ bool CRagEffect::ProcessHitLineEffect()
     }
     return true;
 }
+
+// TEST_BODY_END hitline_effect
 
 // Ref/RagEffect2.cpp:28378-28437; canonical helper HighPriest.exe.c:433141-433200.
 bool CRagEffect::ProcessHitLine4Effect()
@@ -19382,7 +19385,7 @@ void CRagEffect::SpawnRgCoin(const char* textureName, float size, u8 colorMode)
     prim->m_duration = m_duration;
     prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
     m_effectPos.y -= 12.0f;
-    for (size_t lane = 0; lane < prim->m_gi.size(); ++lane) {
+    for (size_t lane = 0; lane < 4; ++lane) {
         EffectGi& gi = prim->m_gi[lane];
         gi.life = 1;
         gi.vecBPreX = m_deltaPos.x;
@@ -19394,7 +19397,7 @@ void CRagEffect::SpawnRgCoin(const char* textureName, float size, u8 colorMode)
         gi.fullDisplayAngle = static_cast<short>(rand() % 360);
         gi.rotStart = static_cast<short>(rand() % 360);
         const float radius = static_cast<float>(rand() % 360);
-        if (lane + 1 < prim->m_gi.size()) {
+        if (lane + 1 < 4) {
             EffectGi& shifted = prim->m_gi[lane + 1];
             shifted.height[1] = radius;
             shifted.height[0] = size;
@@ -19599,14 +19602,14 @@ void CRagEffect::SpawnTripleAttack(int variant)
     if (master == nullptr) return;
     m_effectPos = master->m_pos;
     m_cachedPos = m_effectPos;
-    const int lastState = variant == 2 ? 3 : 8;
+    const int lastState = variant == 1 ? 1 : (variant == 2 ? 3 : 8);
     if (m_stateCnt > lastState) return;
 
     CEffectPrim* prim = LaunchEffectPrim(PP_TRIPLEATTACK, vector3d{});
     if (prim == nullptr) return;
     prim->m_renderFlag = 5;
     prim->m_duration = m_duration;
-    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_center.tga", false));
+    prim->m_texture.push_back(g_texMgr.GetTexture(variant == 1 ? "effect\\cloud11.tga" : "effect\\alpha_center.tga", false));
     prim->m_size = 0.0f;
     prim->m_deltaPos = m_deltaPos;
 
@@ -19623,14 +19626,22 @@ void CRagEffect::SpawnTripleAttack(int variant)
     const float normalizedZ = static_cast<float>(static_cast<double>(deltaZ) / planarDistance);
     const short rotStart = static_cast<short>(normalizedZ < 0.0f ? 360 - direction : direction);
 
-    for (size_t lane = 0; lane < prim->m_gi.size(); ++lane) {
+    for (size_t lane = 0; lane < 4; ++lane) {
         EffectGi& gi = prim->m_gi[lane];
         gi.life = 1;
+        if (variant == 1) {
+            gi.process = -(rand() % 20);
+        } else {
         gi.process = variant == 2 ? -45 - rand() % 20 : -30 - rand() % 110;
+        }
         gi.rotStart = rotStart;
         gi.alphaB = 0;
-        gi.sparkX = static_cast<float>(static_cast<double>(rand() % 100) * 0.079999998 - 4.0 + m_effectPos.x);
-        gi.sparkZ = static_cast<float>(static_cast<double>(rand() % 100) * 0.079999998 - 4.0 + m_effectPos.z);
+        gi.sparkX = variant == 1
+            ? static_cast<float>(static_cast<double>(rand() % 100) * 0.059999999 - 3.0 + m_effectPos.x)
+            : static_cast<float>(static_cast<double>(rand() % 100) * 0.079999998 - 4.0 + m_effectPos.x);
+        gi.sparkZ = variant == 1
+            ? static_cast<float>(static_cast<double>(rand() % 100) * 0.059999999 - 3.0 + m_effectPos.z)
+            : static_cast<float>(static_cast<double>(rand() % 100) * 0.079999998 - 4.0 + m_effectPos.z);
         gi.sparkY = m_effectPos.y;
         gi.height[1] = static_cast<float>(static_cast<double>(rand() % 100) * 0.15000001);
         gi.sparkX = static_cast<float>(static_cast<double>(gi.sparkX)
@@ -19640,18 +19651,28 @@ void CRagEffect::SpawnTripleAttack(int variant)
         gi.vecTNowX = gi.sparkX;
         gi.vecTNowZ = gi.sparkZ;
         gi.vecTNowY = m_effectPos.y;
-        if (variant == 3) {
+        if (variant == 1) {
+            gi.maxHeight = 0.25f;
+            gi.height[0] = static_cast<float>(static_cast<double>(rand() % 100) * 0.039999999 + 8.0);
+        } else if (variant == 3) {
             gi.maxHeight = static_cast<float>(static_cast<double>(rand() % 11) * 0.0080000004 + 0.02);
             gi.height[0] = static_cast<float>(static_cast<double>(rand() % 100) * 0.059999999 + 4.0);
         } else {
             gi.maxHeight = 0.050000001f;
             gi.height[0] = static_cast<float>(static_cast<double>(rand() % 100) * 0.039999999 + 8.0);
         }
-        const int radialRandom = rand() % 100;
-        gi.maxHeight = variant == 2
-            ? static_cast<float>(static_cast<double>(radialRandom) * 0.60000002 + planarDistance)
-            : static_cast<float>(static_cast<double>(radialRandom) * 0.30000001 + planarDistance);
-        gi.height[4] = static_cast<float>(variant);
+        if (variant == 1) {
+            // Ref's m_deltaPosAccel.z + lane*180 store aliases each GI lane's distance.
+            gi.distance = static_cast<float>(static_cast<double>(rand() % 100) * 0.2 + 20.0);
+            // m_widthSpeed + lane*180 aliases GI.height[4], initialized to zero.
+            gi.height[4] = 0.0f;
+        } else {
+            const int radialRandom = rand() % 100;
+            gi.maxHeight = variant == 2
+                ? static_cast<float>(static_cast<double>(radialRandom) * 0.60000002 + planarDistance)
+                : static_cast<float>(static_cast<double>(radialRandom) * 0.30000001 + planarDistance);
+            gi.height[4] = static_cast<float>(variant);
+        }
     }
 }
 
@@ -19661,6 +19682,18 @@ bool CRagEffect::ProcessTripleAttackEffects()
     if (master == nullptr) return true;
     m_effectPos = master->m_pos;
     m_cachedPos = m_effectPos;
+    if (m_type == 329) {
+        if (m_stateCnt == 10 || m_stateCnt == 20 || m_stateCnt == 30) {
+            CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+            if (mode && mode->m_world && mode->m_world->m_player) {
+                const vector3d& listener = mode->m_world->m_player->m_pos;
+                PlayWave(m_stateCnt == 20 ? "effect\\EF_hit4.wav" : "effect\\EF_hit2.wav",
+                    m_effectPos.x - listener.x, 0.0f, m_effectPos.z - listener.z, 250, 40, 1.0f);
+            }
+        }
+        SpawnTripleAttack(1);
+        return true;
+    }
     if (m_stateCnt == 30) {
         CGameMode* mode = g_modeMgr.GetCurrentGameMode();
         if (mode && mode->m_world && mode->m_world->m_player) {
@@ -19673,7 +19706,451 @@ bool CRagEffect::ProcessTripleAttackEffects()
     return true;
 }
 
+// Ref/RagEffect2.cpp:32193-32249; canonical PE helper 0x61A690 / OnProcess3 case0x1FA.
+bool CRagEffect::ProcessSoulParticle506()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return true;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_SOULPARTICLE, vector3d{});
+    if (prim == nullptr) return true;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\whitelight.tga", false));
+    prim->m_size = 0.0f;
+
+    for (EffectGi& gi : prim->m_gi) gi.alphaT = 0;
+    for (size_t lane = 0; lane < 2; ++lane) {
+        EffectGi& gi = prim->m_gi[lane];
+        gi.life = 1;
+        gi.maxHeight = 0.07f;
+        gi.distance = static_cast<float>(static_cast<double>(rand() % 11) * 0.1 + 1.0);
+        gi.process = 0;
+        gi.vecBPreX = m_deltaPos.x; gi.arcBaselineY = m_deltaPos.y; gi.vecBPreZ = m_deltaPos.z;
+        for (int index = 0; index < 4; ++index) gi.height[static_cast<size_t>(index)] = static_cast<float>(rand() % 360);
+        gi.height[12] = 0.0f;
+        gi.sparkX = m_deltaPos.x; gi.sparkY = m_deltaPos.y; gi.sparkZ = m_deltaPos.z;
+        for (int index = 4; index < 8; ++index) gi.height[static_cast<size_t>(index)] = static_cast<float>(rand() % 360);
+        gi.height[13] = 0.0f;
+        gi.vecTPreX = m_deltaPos.x; gi.vecTPreY = m_deltaPos.y; gi.vecTPreZ = m_deltaPos.z;
+        for (int index = 8; index < 11; ++index) gi.height[static_cast<size_t>(index)] = static_cast<float>(rand() % 360);
+        gi.height[11] = static_cast<float>(rand() % 360);
+        gi.height[14] = 0.0f;
+        gi.height[15] = 0.0f;
+    }
+    return true;
+}
+
+// Ref/RagEffect.cpp:11461-11483; canonical PE OnProcess3 case0x1F6.
+bool CRagEffect::ProcessEffect502()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (m_stateCnt == 0 && master != nullptr) {
+        m_effectPos = master->m_pos;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\EF_BeginSpell.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+    }
+    if (m_stateCnt > 140 || master == nullptr) return true;
+
+    if ((master->m_BodyLight & 8) != 8) master->m_BodyLight += 8;
+    if ((m_stateCnt % 2) == 0) {
+        if ((master->m_BodyLight & 1) != 1) ++master->m_BodyLight;
+        master->SetArgb(-1, 250, 250, 100);
+    } else {
+        master->SetArgb(-1, 255, 255, 255);
+    }
+    return true;
+}
+
+// Ref/RagEffect.cpp:11481-11509; canonical PE OnProcess3 case0x1F9.
+bool CRagEffect::ProcessEffect505()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+
+    if (m_stateCnt == 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\priest_suffragium.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+    }
+
+    if (m_stateCnt < 10 || m_stateCnt >= 36) return true;
+    if ((m_stateCnt & 1) == 0) {
+        if ((master->m_BodyLight & 1) != 1) ++master->m_BodyLight;
+        master->SetArgb(-1, 250, 250, 100);
+    } else {
+        master->SetArgb(-1, 255, 255, 255);
+    }
+    return true;
+}
+
+// Ref/RagEffect2.cpp:31535-31604; canonical PE helper 0x630AE0 and OnProcess3 case0x228.
+void CRagEffect::SpawnSma2()
+{
+    if (m_stateCnt != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_SMA2, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+    prim->m_size = 4.0f;
+    prim->m_deltaPos = m_deltaPos;
+    prim->m_deltaPos2 = m_deltaPos2;
+    for (EffectGi& gi : prim->m_gi) {
+        for (float& height : gi.height) height = 0.0f;
+        for (u8& flag : gi.flag) flag = 0;
+    }
+
+    const bool zeroDeltaY = m_deltaPos2.y == 0.0f;
+    const float distances[3] = {zeroDeltaY ? 3.4000001f : 2.4000001f,
+        zeroDeltaY ? 3.5999999f : 2.5999999f, zeroDeltaY ? 3.8f : 2.8f};
+    const float maxHeights[3] = {13.0f, 11.0f, 9.0f};
+    const short rotations[3] = {0, 90, 180};
+    const short riseAngles[3] = {55, 50, 45};
+    for (size_t index = 0; index < 3; ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = 315;
+        gi.maxHeight = maxHeights[index];
+        gi.rotStart = rotations[index];
+        gi.alphaB = 0;
+        gi.distance = distances[index];
+        gi.riseAngle = riseAngles[index];
+        gi.sparkY = 0.0f;
+    }
+    prim->m_gi[3].life = 0;
+}
+
+bool CRagEffect::ProcessSma2Effect552()
+{
+    SpawnSma2();
+    return true;
+}
+
+// Ref/RagEffect2.cpp:29977-30054; canonical PE helper at 0x6316B0.
+void CRagEffect::SpawnParticlePath556()
+{
+    if (m_stateCnt != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_PARTICLE_UP, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_totalTexture = 2;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\thunder_ball_0002.bmp", false));
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\thunder_ball_0003.bmp", false));
+    prim->m_size = 0.0f;
+    prim->m_pos = m_effectPos;
+    for (EffectGi& gi : prim->m_gi) {
+        gi.life = 1;
+        gi.process = 0;
+        gi.distance = static_cast<float>(rand() % 10) * 0.079999998f + 1.2f;
+        gi.height[8] = 0.0f;
+        gi.alphaB = 0;
+        gi.sparkX = static_cast<float>(rand() % 9) + m_deltaPos.x - 4.0f;
+        gi.sparkZ = static_cast<float>(rand() % 9) + m_deltaPos.z - 4.0f;
+        gi.sparkY = m_deltaPos.y - 6.0f;
+        gi.rotStart = 0;
+        gi.height[1] = 0.0f;
+        gi.height[2] = static_cast<float>(rand() % 20) * 0.0099999998f + 0.1f;
+        gi.fullDisplayAngle = 0;
+        gi.flag[0] = 0;
+        gi.flag[1] = 1;
+        gi.flag[2] = 1;
+        gi.height[7] = 0.0f;
+    }
+}
+
+bool CRagEffect::ProcessParticlePath556()
+{
+    SpawnParticlePath556();
+    return true;
+}
+
+// Ref/RagEffect2.cpp:23553-23620; canonical PE helper at 0x607D10.
+bool CRagEffect::ProcessEffect537()
+{
+    if (m_stateCnt == 5) {
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            mode->SendMsg(135, 0, 0, 0);
+        }
+    }
+    if (m_stateCnt == 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\EF_FireWall.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+        CRenderObject* master = ResolveCurrentMaster();
+        if (master != nullptr) {
+            m_effectPos = master->m_pos;
+            CEffectPrim* prim = LaunchEffectPrim(PP_ACIDDEMON, vector3d{});
+            if (prim != nullptr) {
+                prim->m_renderFlag = 5;
+                prim->m_duration = m_duration;
+                prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_black.tga", false));
+                prim->m_size = 13.0f;
+                const short fullAngles[4] = {315, 315, 315, 360};
+                const float maxHeights[4] = {25.0f, 22.0f, 19.0f, 30.0f};
+                const short rotations[4] = {0, 90, 180, 0};
+                const float distances[4] = {2.4000001f, 2.7f, 3.0f, 2.2f};
+                const short riseAngles[4] = {70, 57, 45, 90};
+                for (size_t index = 0; index < 4; ++index) {
+                    EffectGi& gi = prim->m_gi[index];
+                    gi.life = 1;
+                    gi.process = 0;
+                    gi.fullDisplayAngle = fullAngles[index];
+                    gi.maxHeight = maxHeights[index];
+                    gi.rotStart = rotations[index];
+                    gi.alphaB = 0;
+                    gi.distance = distances[index];
+                    gi.riseAngle = riseAngles[index];
+                    gi.sparkY = 0.0f;
+                    gi.height.fill(0.0f);
+                    gi.flag.fill(0);
+                }
+            }
+        }
+    }
+    return true;
+}
+
+// HighPriest.exe.c:420911-420921; Ref STR row Ref/RagEffect.cpp:13133-13134.
+bool CRagEffect::ProcessEffect273()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (m_stateCnt == 0 && master != nullptr) {
+        m_effectPos = master->m_pos;
+        TryPlaySingleEffectWave(m_effectPos, "effect\\mon_\xBF\xAC\xC8\xAF.wav", 0.0f, true);
+    }
+    return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+}
+
+// HighPriest.exe.c:421635-421647; Ref STR mapping at Ref/RagEffect.cpp:12969-12970.
+// Ref/RagEffect2.cpp:29915-29958; canonical PE helper at 0x60F7E0.
+void CRagEffect::SpawnPressure365()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_PRESSURE, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\cross_old.bmp", false));
+    prim->m_size = 0.0f;
+    EffectGi& first = prim->m_gi[0];
+    first.life = 1; first.process = 0; first.distance = 12.0f; first.alphaB = 0;
+    first.vecBPreX = 0.0f; first.arcBaselineY = -115.0f; first.vecBPreZ = 0.0f;
+    first.rotStart = 0; first.height[1] = 3.0f;
+    first.fullDisplayAngle = static_cast<short>(rand() % 360);
+    first.flag[0] = 0; first.flag[2] = 7; first.flag[4] = 0;
+    for (size_t lane = 1; lane < 4; ++lane) {
+        prim->m_gi[lane].life = 1;
+        prim->m_gi[lane].alphaB = 0;
+    }
+}
+
+// Ref/RagEffect2.cpp:27348-27380; canonical PE helper at 0x619BA0.
+void CRagEffect::SpawnGroundShake365()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_GROUNDSHAKE, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\explosive_1_128.bmp", false));
+    prim->m_size = 4.0f;
+    EffectGi& first = prim->m_gi[0];
+    first.life = 1; first.process = -28; first.distance = 15.0f;
+    first.riseAngle = 0; first.alphaB = 0; first.height[0] = -5.0f;
+    for (size_t lane = 1; lane < 4; ++lane) prim->m_gi[lane].unused0 = 0;
+}
+
+bool CRagEffect::ProcessEffect365()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    if (m_stateCnt == 3) {
+        m_effectPos = master->m_pos;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        CRenderObject* player = mode != nullptr && mode->m_world != nullptr ? mode->m_world->m_player : nullptr;
+        if (player != nullptr) {
+            PlayWave("effect\\", m_effectPos.x - player->m_pos.x, 0.0f,
+                m_effectPos.z - player->m_pos.z, 250, 40, 1.0f);
+        }
+    }
+    SpawnPressure365();
+    SpawnGroundShake365();
+    return true;
+}
+
+bool CRagEffect::ProcessEffect440()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (m_stateCnt == 0 && master != nullptr) {
+        m_effectPos = master->m_pos;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        CRenderObject* player = mode != nullptr && mode->m_world != nullptr ? mode->m_world->m_player : nullptr;
+        if (player != nullptr) {
+            PlayWave("effect\\", m_effectPos.x - player->m_pos.x, 0.0f,
+                m_effectPos.z - player->m_pos.z, 250, 40, 1.0f);
+        }
+    }
+    ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+    return true;
+}
+
+bool CRagEffect::ProcessEffect599()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (m_stateCnt == 5) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\EF_BeginSpell.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+    }
+    if (m_stateCnt < 5 || m_stateCnt >= 26 || master == nullptr) return true;
+    if ((m_stateCnt & 1) == 0) {
+        if ((master->m_BodyLight & 1) != 1) ++master->m_BodyLight;
+        master->SetArgb(-1, 250, 250, 100);
+    } else {
+        master->SetArgb(-1, 255, 255, 255);
+    }
+    return true;
+}
+
+bool CRagEffect::ProcessEffect602()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (m_stateCnt == 20 && master != nullptr) {
+        m_effectPos = master->m_pos;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\ef_hit6.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+    }
+    if (m_stateCnt <= 20 || master == nullptr) return true;
+    master->m_BodyLight |= 0x2000;
+    master->m_BodyTime = static_cast<u16>(m_stateCnt);
+    if ((m_stateCnt % 2) != 0) {
+        master->SetArgb(-1, 255, 255, 255);
+    } else {
+        master->SetArgb(-1, 250, 50, 50);
+    }
+    return true;
+}
+
 // Ref/RagEffect2.cpp:29764; canonical helper at HighPriest.exe.c:460753.
+// Ref/RagEffect2.cpp:25382-25408; canonical PE helper at HighPriest.exe.c:460723.
+void CRagEffect::SpawnDemonstration302()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr || m_stateCnt != 0) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_BOTTOMSPR, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_duration = m_duration;
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.maxHeight = 0.0f;
+    prim->m_size = 1.2f;
+    gi.vecBPreX = m_effectPos.x;
+    gi.arcBaselineY = m_effectPos.y - 1.0f;
+    gi.vecBPreZ = m_effectPos.z;
+    gi.flag[4] = 0;
+    prim->m_alpha = 200.0f;
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\\xB5\xA5\xB8\xF3\xBD\xBA\xC6\xAE\xB7\xB9\xC0\xCC\xBC\xC7.spr",
+        "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB5\xA5\xB8\xF3\xBD\xBA\xC6\xAE\xB7\xB9\xC0\xCC\xBC\xC7.act");
+    prim->m_animSpeed = 4;
+    // Ref: Demonstration calls CRenderObject::SetAction(prim, 0, 16, 0).
+    // The local particle renderer keeps the selected action and motion base on the primitive.
+    prim->m_spriteAction = 0;
+    prim->m_spriteMotionBase = 16;
+    InitReferenceSegments(prim);
+    for (size_t lane = 1; lane < 4; ++lane) prim->m_gi[lane].life = 0;
+}
+
+bool CRagEffect::ProcessDemonstration302()
+{
+    SpawnDemonstration302();
+    return true;
+}
+
+// Ref/RagEffect2.cpp:29715; canonical helper at HighPriest.exe.c:433427.
+void CRagEffect::SpawnMaple333()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt == 99999998) {
+        m_duration = 99999999;
+        m_stateCnt = 0;
+    }
+    if ((m_stateCnt % 2) != 0 || m_stateCnt >= 200) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_SAKURA, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_duration = m_duration;
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    const int maxHeightRoll = rand() % 4;
+    gi.maxHeight = static_cast<float>(static_cast<double>(maxHeightRoll + 2) * 0.029999999);
+    const int sizeRoll = rand() % 6;
+    prim->m_size = static_cast<float>(static_cast<double>(sizeRoll + 35) * 0.0099999998);
+    const int xRoll = rand() % 300;
+    gi.vecBPreX = static_cast<float>(static_cast<double>(xRoll) + m_effectPos.x - 150.0);
+    gi.height[0] = static_cast<float>(rand() % 360);
+    gi.height[1] = static_cast<float>(rand() % 360);
+    gi.height[2] = static_cast<float>(rand() % 360);
+    gi.height[3] = static_cast<float>(rand() % 360);
+    gi.arcBaselineY = m_effectPos.y - 200.0f;
+    const int zRoll = rand() % 300;
+    gi.vecBPreZ = static_cast<float>(static_cast<double>(zRoll) + m_effectPos.z - 150.0);
+    gi.flag[0] = 1;
+    prim->m_alpha = 200.0f;
+    // PE/Ref set the ACT resource before the SPR resource.
+    prim->SetParticleResources(
+        "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xDC\xC7\xB3.spr",
+        "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xDC\xC7\xB3.act", true);
+    prim->m_spriteAction = 0;
+    prim->m_spriteMotionBase = 36;
+    InitReferenceSegments(prim);
+    for (size_t lane = 1; lane < 4; ++lane) prim->m_gi[lane].life = 0;
+}
+
+bool CRagEffect::ProcessMaple333()
+{
+    SpawnMaple333();
+    return true;
+}
+
 void CRagEffect::SpawnNpcStop(int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -20435,6 +20912,59 @@ bool CRagEffect::ProcessSoulBreaker2Effect()
     for (short time = 0; time < 360; time = static_cast<short>(time + 45)) {
         SpawnSoulBreaker2(time);
     }
+    return true;
+}
+
+// Ref/RagEffect2.cpp:32055-32096; canonical PE helper at HighPriest.exe.c:457147.
+void CRagEffect::SpawnSoulBreaker361()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_SOULBREAKER, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\purpleslash.tga", false));
+    prim->m_size = 0.0f;
+    prim->m_deltaPos = m_deltaPos;
+    prim->m_pos = m_effectPos;
+    for (size_t lane = 0; lane < 4; ++lane) {
+        EffectGi& gi = prim->m_gi[lane];
+        gi.life = 1;
+        gi.alphaB = 0;
+        gi.process = static_cast<int>(lane) - 28;
+        gi.distance = 20.0f;
+        gi.sparkX = m_effectPos.x;
+        gi.sparkZ = m_effectPos.z;
+        gi.sparkY = m_effectPos.y - 10.0f + static_cast<float>(rand() % 5);
+        gi.rotStart = 0;
+        gi.height[1] = 0.80000001f;
+        gi.flag[0] = 0;
+    }
+}
+
+bool CRagEffect::ProcessSoulBreaker361Effect()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    if (m_stateCnt == 20) {
+        m_effectPos = master->m_pos;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        CRenderObject* player = mode != nullptr && mode->m_world != nullptr ? mode->m_world->m_player : nullptr;
+        if (player != nullptr) {
+            PlayWave("effect\\", m_effectPos.x - player->m_pos.x, 0.0f,
+                m_effectPos.z - player->m_pos.z, 250, 40, 1.0f);
+        }
+    }
+    if (m_stateCnt <= 10) {
+        if ((master->m_BodyLight & 1) != 1) ++master->m_BodyLight;
+        master->SetArgb(-1, 255, 0, 255);
+    }
+    SpawnSoulBreaker361();
     return true;
 }
 
@@ -25996,7 +26526,7 @@ bool CRagEffect::ProcessStormGust89()
     CGameMode* mode = g_modeMgr.GetCurrentGameMode();
     if (m_stateCnt == 0 && mode && mode->m_world && mode->m_world->m_player) {
         const vector3d& listener = mode->m_world->m_player->m_pos;
-        PlayWave("effect\\wizard_stormgust.wav",m_pos.x-listener.x,0.0f,m_pos.z-listener.z,250,40,1.0f);
+        PlayWave("effect\\wizard_stormgust.wav",m_effectPos.x-listener.x,0.0f,m_effectPos.z-listener.z,250,40,1.0f);
     }
     if (!g_session.m_isMinEffect && (m_stateCnt % 29) == 0 && m_stateCnt > 30 && m_stateCnt <= 150) {
         for (int i=0;i<2;++i) {
@@ -26035,9 +26565,9 @@ bool CRagEffect::ProcessStormGust89()
 bool CRagEffect::ProcessKyrie112()
 {
     if (m_stateCnt == 0) {
-        TryPlaySingleEffectWave(m_pos, "effect\\priest_kyrie_eleison_b.wav", 0.0f, true);
+        TryPlaySingleEffectWave(m_effectPos, "effect\\priest_kyrie_eleison_b.wav", 0.0f, true);
     } else if (m_stateCnt == 15) {
-        TryPlaySingleEffectWave(m_pos, "effect\\priest_kyrie_eleison_a.wav", 0.0f, true);
+        TryPlaySingleEffectWave(m_effectPos, "effect\\priest_kyrie_eleison_a.wav", 0.0f, true);
     }
     return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
 }
@@ -26048,7 +26578,7 @@ bool CRagEffect::ProcessKyrie112()
 bool CRagEffect::ProcessRepairWeapon101()
 {
     if (m_stateCnt == 20 || m_stateCnt == 55) {
-        TryPlaySingleEffectWave(m_pos, "effect\\black_weapon_repair_a.wav", 0.0f, true);
+        TryPlaySingleEffectWave(m_effectPos, "effect\\black_weapon_repair_a.wav", 0.0f, true);
     }
     return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
 }
@@ -26062,7 +26592,7 @@ bool CRagEffect::ProcessMaxPower104()
     if (m_stateCnt == 0) wave="effect\\black_maximize_power_circle.wav";
     else if (m_stateCnt == 40 || m_stateCnt == 47) wave="effect\\black_maximize_power_sword.wav";
     else if (m_stateCnt == 65) wave="effect\\black_maximize_power_sword_bic.wav";
-    if (wave != nullptr) TryPlaySingleEffectWave(m_pos,wave,0.0f,true);
+    if (wave != nullptr) TryPlaySingleEffectWave(m_effectPos,wave,0.0f,true);
     return ProcessEZ2STR(0.0f,-80.0f,0.0f);
 }
 
@@ -26073,22 +26603,19 @@ bool CRagEffect::ProcessIntimidate227()
 {
     CRenderObject* master=ResolveCurrentMaster();
     if (m_stateCnt == 0 && master != nullptr) {
-        m_pos=master->m_pos;
-        m_effectPos=m_pos;
-        TryPlaySingleEffectWave(m_pos,"effect\\EF_Bash.wav",0.0f,true);
+        m_effectPos=master->m_pos;
+        TryPlaySingleEffectWave(m_effectPos,"effect\\EF_Bash.wav",0.0f,true);
     }
-    if (m_stateCnt == 35) TryPlaySingleEffectWave(m_pos,"effect\\rog_intimidate.wav",0.0f,true);
+    if (m_stateCnt == 35) TryPlaySingleEffectWave(m_effectPos,"effect\\rog_intimidate.wav",0.0f,true);
     if (m_stateCnt == 0 && master != nullptr) {
         for (int call=0;call<20;++call) {
-            // INTIMIDATE resets m_pos from the master on each invocation.
-            m_pos=master->m_pos;
-            m_effectPos=m_pos;
+            // INTIMIDATE resets its position from the master on each invocation.
+            m_effectPos=master->m_pos;
             CEffectPrim* prim=LaunchEffectPrim(PP_INTIMIDATE,vector3d{});
             if (prim == nullptr) continue;
             prim->m_renderFlag=5;
             prim->m_duration=m_duration;
             prim->m_texture.push_back(g_texMgr.GetTexture("effect\\white01.bmp",false));
-            m_pos.y-=9.0f;
             m_effectPos.y-=9.0f;
             for (EffectGi& gi:prim->m_gi) {
                 gi.life=1;
@@ -26129,9 +26656,8 @@ bool CRagEffect::ProcessMagicRod244()
     if (m_stateCnt == 0) {
         CRenderObject* master=ResolveCurrentMaster();
         if (master != nullptr) {
-            m_pos=master->m_pos;
-            m_effectPos=m_pos;
-            TryPlaySingleEffectWave(m_pos,"effect\\sage_magic rod.wav",0.0f,true);
+            m_effectPos=master->m_pos;
+            TryPlaySingleEffectWave(m_effectPos,"effect\\sage_magic rod.wav",0.0f,true);
         }
     }
     return true;
@@ -26153,15 +26679,63 @@ bool CRagEffect::ProcessStripEquipment269To272()
     if (m_stateCnt == 6) {
         CRenderObject* master=ResolveCurrentMaster();
         if (master != nullptr) {
-            m_pos=master->m_pos;
-            m_effectPos=m_pos;
-            TryPlaySingleEffectWave(m_pos,"effect\\",0.0f,true);
+            m_effectPos=master->m_pos;
+            TryPlaySingleEffectWave(m_effectPos,"effect\\",0.0f,true);
         }
     }
     return ProcessEZ2STR(0.0f,-80.0f,0.0f);
 }
 
 // TEST_BODY_END strip_equipment269_272_handler
+
+// Ref/RagEffect2.cpp:22517-22568; canonical PE helper 0x60FE40 and OnProcess case416.
+bool CRagEffect::ProcessAirTexture416()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return true;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return true;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_AIRTEXTURE, vector3d{});
+    if (!prim) return true;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\emp shock.tga", false));
+    prim->m_size = 0.0f;
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.distance = 5.0f;
+    gi.alphaB = 0;
+    gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+
+    const float deltaZ = m_deltaPos.z - m_effectPos.z;
+    const float deltaX = m_deltaPos.x - m_effectPos.x;
+    const float length = std::sqrt(deltaX * deltaX + deltaZ * deltaZ);
+    const float normalizedZ = deltaZ / length;
+    const double normalizedX = static_cast<double>(deltaX) / length;
+    int angle = 0;
+    while (normalizedX < static_cast<double>(g_cosTable[angle])) {
+        if (++angle > 180) {
+            angle = 180;
+            break;
+        }
+    }
+    gi.riseAngle = static_cast<short>(normalizedZ < 0.0f ? 360 - angle : angle);
+    gi.riseAngle = static_cast<short>(gi.riseAngle + 90);
+    if (gi.riseAngle >= 360) gi.riseAngle = static_cast<short>(gi.riseAngle - 360);
+    gi.sparkX = m_deltaPos.x;
+    gi.sparkY = m_deltaPos.y;
+    gi.sparkZ = m_deltaPos.z;
+
+    for (size_t i = 1; i < 4; ++i) {
+        prim->m_gi[i].life = 0;
+        prim->m_gi[i].alphaB = 0;
+    }
+    return true;
+}
+
+// TEST_BODY_END airtexture416_handler
 
 bool CRagEffect::ProcessEffect380()
 {

@@ -64,11 +64,11 @@ for token in (
 
 spawn = function(src, "void CRagEffect::SpawnRgCoin(const char* textureName, float size, u8 colorMode)")
 for token in (
-    "PP_INTIMIDATE", "m_effectPos.y -= 12.0f", "lane < prim->m_gi.size()",
+    "PP_INTIMIDATE", "m_effectPos.y -= 12.0f", "lane < 4",
     "gi.process = -18 - rand() % 30", "gi.riseAngle = static_cast<short>(rand() % 360)",
     "gi.fullDisplayAngle = static_cast<short>(rand() % 360)",
     "gi.rotStart = static_cast<short>(rand() % 360)", "const float radius = static_cast<float>(rand() % 360)",
-    "lane + 1 < prim->m_gi.size()", "shifted.height[1] = radius", "shifted.height[0] = size",
+    "lane + 1 < 4", "shifted.height[1] = radius", "shifted.height[0] = size",
     "shifted.fullDisplayAngle = 0", "shifted.flag[0] = colorMode",
 ): require(token in spawn, f"emitter behavior anchor missing: {token}")
 

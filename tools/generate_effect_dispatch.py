@@ -19,9 +19,15 @@ FORCE_ROUTE = {315, 366, 376, 262, 264, 266, 275, 276, 267, 606, 607, 547, 553, 
                130, 250, 204, 205, 206, 207, 210, 234, 245, 255, 256, 257, 258, 390, 391,
                95, 102, 570, 571, 576, 577, 578, 579, 580, 583, 585, 586, 587, 588, 589,
                630, 631, 632, 633, 634, 637, 638, 639, 640, 641, 642, 643, 644, 645, 647, 648,
-               200, 201, 202, 203, 226, 232, 249, 254, 274, 336, 362, 377, 384, 386, 388, 393, 395, 397, 398, 399, 400, 408, 409, 418, 450, 453, 455, 485, 486, 494, 495, 496, 518, 520, 543, 546, 572, 573, 574, 575, 604, 666, 675, 678, 679, 680, 682, 683, 684, 685, 686, 689, 690, 691, 692, 693, 694, 696, 701, 702, 703}
-FORCE_ROUTE.update({7, 11, 15, 21, 60, 80, 82, 93, 94, 99, 100, 114, 115, 117, 119, 120, 137, 140, 166, 198, 328, 378, 380, 383, 389, 411, 444, 451, 452, 456, 503, 510, 617})
+               200, 201, 202, 203, 226, 232, 249, 254, 274, 336, 362, 377, 384, 386, 388, 393, 395, 397, 398, 399, 400, 408, 409, 418, 450, 453, 455, 485, 486, 494, 495, 496, 518, 520, 537, 543, 546, 572, 573, 574, 575, 599, 602, 604, 666, 675, 678, 679, 680, 682, 683, 684, 685, 686, 689, 690, 691, 692, 693, 694, 696, 701, 702, 703, 506, 502, 505, 552, 556}
+FORCE_ROUTE.update({7, 11, 15, 21, 60, 80, 82, 93, 94, 99, 100, 114, 115, 117, 119, 120, 137, 140, 166, 198, 328, 330, 378, 380, 383, 389, 411, 416, 444, 451, 452, 456, 503, 510, 617})
 FORCE_ROUTE.update(range(475, 485))
+FORCE_ROUTE.add(273)
+FORCE_ROUTE.add(302)
+FORCE_ROUTE.add(333)
+FORCE_ROUTE.add(361)
+FORCE_ROUTE.add(365)
+FORCE_ROUTE.add(440)
 
 DIRECT_CALLS = {
     # Main OnProcess cases whose index handler includes more than raw STR.
@@ -41,6 +47,17 @@ DIRECT_CALLS = {
     408: "return ProcessSphereWind2Effect();",
     409: "return ProcessSoulBreaker2Effect();",
     411: "return ProcessPeongEffects();",
+    416: "return ProcessAirTexture416();",
+    556: "return ProcessParticlePath556();",
+    537: "return ProcessEffect537();",
+    599: "return ProcessEffect599();",
+    602: "return ProcessEffect602();",
+    273: "return ProcessEffect273();",
+    302: "return ProcessDemonstration302();",
+    333: "return ProcessMaple333();",
+    361: "return ProcessSoulBreaker361Effect();",
+    365: "return ProcessEffect365();",
+    440: "return ProcessEffect440();",
     444: "return ProcessRunStop444();",
     456: "return ProcessCartBoost456();",
     7: "return ProcessExit7();",
@@ -66,6 +83,7 @@ DIRECT_CALLS = {
     452: "return ProcessYufitelHit(1);",
     451: "return ProcessSoulStrike15(1);",
     328: "return ProcessBeginAsuraEffect();",
+    330: "return ProcessHitLineEffect(0, false);",
     510: "return ProcessBeginAsuraEffect();",
     503: "return ProcessBeginAsura2Effect();",
     378: "return ProcessEnergyDrain2Effect();",
@@ -215,6 +233,7 @@ DIRECT_CALLS = {
     232: "return ProcessLineLinkEffects();",
     384: "return ProcessLineLinkEffects();",
     395: "return ProcessLineLinkEffects();",
+    329: "return ProcessTripleAttackEffects();",
     388: "return ProcessTripleAttackEffects();",
     393: "return ProcessTripleAttackEffects();",
     610: "return ProcessTarotEffect();",
@@ -278,6 +297,10 @@ DIRECT_CALLS = {
     373: "SpawnDragonSmoke(); return true;",
     # Existing OnProcess3 implementations with exact single-helper bodies.
     504: "SpawnChookgi(1); return true;",
+    506: "return ProcessSoulParticle506();",
+    502: "return ProcessEffect502();",
+    505: "return ProcessEffect505();",
+    552: "return ProcessSma2Effect552();",
     507: "ProcessEZ2STR(); return true;",
     508: "ProcessEZ2STR(); return true;",
     514: 'ApplyGiExplosion("effect\\\\ring_blue.tga"); return true;',

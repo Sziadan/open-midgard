@@ -46,6 +46,8 @@ tools/*
 !tools/check_gumgang_parity.py
 !tools/tests/
 tools/tests/*
+!tools/tests/check_effect302.py
+!tools/tests/check_effect333.py
 !tools/tests/check_shield_boomerang_callers.py
 !tools/tests/check_rg_coin_callers.py
 !tools/tests/check_grandcross_callers.py

@@ -33,7 +33,7 @@ if start < 0 or end < 0:
     raise AssertionError("local Strip equipment handler boundary is missing")
 body = rag[start:end]
 for token in (
-    "m_stateCnt == 6", "m_pos=master->m_pos", "effect\\\\", "ProcessEZ2STR(0.0f,-80.0f,0.0f)",
+    "m_stateCnt == 6", "m_effectPos=master->m_pos", "effect\\\\", "ProcessEZ2STR(0.0f,-80.0f,0.0f)",
 ):
     if token not in body:
         raise AssertionError(f"local Strip equipment handler is missing {token}")

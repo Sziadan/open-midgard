@@ -39,13 +39,16 @@ ref = (ROOT / "Ref/RagEffect2.cpp").read_text(encoding="utf-8", errors="replace"
 local = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 header = (ROOT / "src/world/RagEffect.h").read_text(encoding="utf-8", errors="replace")
 dispatch = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
+dispatch2 = (ROOT / "src/world/RagEffectOnProcess2Cases.generated.inc").read_text(encoding="utf-8")
 
 exe_helper = function(exe, "void __thiscall CRagEffect::HitLine(CRagEffect *this, char F1)")
 ref_helper = function(ref, "void __thiscall CRagEffect::HitLine(CRagEffect *this, char F1)")
 require(compact(exe_helper) == compact(ref_helper), "Ref and canonical HitLine helper differ")
-method = function(local, "bool CRagEffect::ProcessHitLineEffect()")
-require("ProcessHitLineEffect" in header, "HitLine helper declaration missing")
+method = function(local, "bool CRagEffect::ProcessHitLineEffect(short f1, bool applyBodyLight)")
+require("ProcessHitLineEffect(short f1 = 2, bool applyBodyLight = true)" in header, "HitLine helper declaration missing")
 require("case 376: return ProcessHitLineEffect();" in dispatch, "effect 376 dispatcher route missing")
+require("case 330: return ProcessHitLineEffect(0, false);" in dispatch2,
+        "effect 330 must call HitLine with F1=0 and suppress effect376 caller tint")
 resolved_texture = ExeImage().read_cstring_at(0x713CC8)
 require(resolved_texture is not None and resolved_texture.text == "effect\\white02.bmp",
         "canonical HitLine texture at VA 0x713CC8 did not resolve")
@@ -56,8 +59,8 @@ ordered = (
     'GetTexture("effect\\\\white02.bmp", false)', "for (EffectGi& gi : prim->m_gi)",
     "gi.process = -(rand() % 26)", "gi.maxHeight = 0.1f", "rand() % 51 + 125",
     "rand() % 360", "rand() % 8", "gi.sparkX = origin.x", "gi.sparkY = origin.y",
-    "gi.sparkZ = origin.z", "gi.alphaT = 2",
-    "m_stateCnt >= 10 && m_stateCnt <= 20", "master->m_BodyLight += 8",
+    "gi.sparkZ = origin.z", "gi.alphaT = f1",
+    "applyBodyLight && m_stateCnt >= 10 && m_stateCnt <= 20", "master->m_BodyLight += 8",
     "master->SetArgb(-1, 255, 120, 50)",
 )
 cursor = 0
@@ -77,4 +80,16 @@ require("SetArgb(*p_m_master, -1, 255, 120, 50)" in caller,
         "canonical HitLine tint changed")
 require("PlayWave" not in caller and "PlaySound" not in caller, "unexpected effect 376 audio")
 
-print("HitLine helper Ref/PE body comparison and effect 376 caller checks passed")
+onprocess2 = exe[exe.index("unsigned __int8 __thiscall CRagEffect::OnProcess2(CRagEffect *this)"):]
+effect330_start = onprocess2.index("case 0x14A:")
+effect330_end = onprocess2.index("case 0x14B:", effect330_start)
+effect330 = onprocess2[effect330_start:effect330_end]
+require("CRagEffect::HitLine(this, 0);" in effect330 and "return 1;" in effect330,
+        "canonical effect330 OnProcess2 caller changed")
+ref_onprocess = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
+ref_start = ref_onprocess.index("case 0x14A:")
+ref_end = ref_onprocess.index("case 0x14B:", ref_start)
+require("CRagEffect::HitLine(this, 0);" in ref_onprocess[ref_start:ref_end],
+        "primary Ref OnProcess2 effect330 caller changed")
+
+print("HitLine helper Ref/PE identity and effect330/effect376 caller checks passed")

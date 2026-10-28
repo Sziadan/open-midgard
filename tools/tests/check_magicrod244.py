@@ -28,6 +28,6 @@ if start < 0 or end < 0:
 body = rag[start:end]
 if "ProcessEZ2STR(0.0f,-80.0f,0.0f);" not in body or "return true" not in body:
     raise AssertionError("Magic Rod does not ignore STR completion and remain alive")
-if "m_stateCnt == 0" not in body or "sage_magic rod.wav" not in body or "m_pos=master->m_pos" not in body:
+if "m_stateCnt == 0" not in body or "sage_magic rod.wav" not in body or "m_effectPos=master->m_pos" not in body:
     raise AssertionError("Magic Rod master follow or state-zero cue is missing")
 print("effect244 source check passed: ignored STR completion, master-follow cue, PE wave bytes")
