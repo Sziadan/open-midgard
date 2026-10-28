@@ -1212,7 +1212,18 @@ void ReplayResourceBackedMultiUnitWorldUpdate(const std::string& path)
         "two job131 units were not registered before the resource-backed world update");
     const int oldSkipFrame = g_isSkipFrame;
     g_isSkipFrame = 1;
-    fixture.world.UpdateGameObjects();
+    fixture.world.UpdateActors();
+    g_isSkipFrame = oldSkipFrame;
+
+    const auto countRegisteredSkill = [&fixture](CSkill* skill) {
+        return std::count(fixture.world.m_skillList.begin(), fixture.world.m_skillList.end(), skill);
+    };
+    const auto countRegisteredObject = [&fixture](CGameObject* object) {
+        return std::count(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(), object);
+    };
+    Require(countRegisteredSkill(first) == 1 && countRegisteredSkill(second) == 1
+        && countRegisteredObject(first) == 1 && countRegisteredObject(second) == 1,
+        "full world frame did not retain each job131 unit exactly once in both registries");
 
     const auto isActiveLoopEffect = [&fixture](CSkill* skill) {
         return skill->m_LoopEffect != nullptr
@@ -1223,6 +1234,11 @@ void ReplayResourceBackedMultiUnitWorldUpdate(const std::string& path)
     };
     const bool firstEffectProcessed = isActiveLoopEffect(first);
     const bool secondEffectProcessed = isActiveLoopEffect(second);
+    CGameObject* const firstLoopEffect = first->m_LoopEffect;
+    CGameObject* const secondLoopEffect = second->m_LoopEffect;
+    Require(firstLoopEffect != nullptr && secondLoopEffect != nullptr
+        && countRegisteredObject(firstLoopEffect) == 1 && countRegisteredObject(secondLoopEffect) == 1,
+        "full world frame did not register each unit's loop effect exactly once");
     CBitmapRes* alphaDown = g_resMgr.GetAs<CBitmapRes>("data\\texture\\effect\\alpha_down.tga");
     const bool alphaDownLoaded = alphaDown != nullptr && alphaDown->m_data != nullptr
         && alphaDown->m_width > 0 && alphaDown->m_height > 0;
@@ -1235,14 +1251,15 @@ void ReplayResourceBackedMultiUnitWorldUpdate(const std::string& path)
         Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch resource-backed unit removal");
     }
     fixture.world.UpdateGameObjects();
-    g_isSkipFrame = oldSkipFrame;
     Require(firstEffectProcessed && secondEffectProcessed,
-        "world update did not process both appended effect319 objects in the live-object pass");
+        "full world frame did not process both appended effect319 objects in the live-object pass");
     Require(alphaDownLoaded,
         "effect319 did not load its source alpha_down.tga texture during the world update");
     Require(fixture.world.GetSkillByAID(100) == nullptr && fixture.world.GetSkillByAID(200) == nullptr,
         "0x0120 did not remove both resource-backed job131 units");
-    std::cout << "CWorld::UpdateGameObjects units=2 jobs=131,131 effects=319,319 texture=alpha_down.tga processed=2 removed=2\n";
+    Require(countRegisteredObject(firstLoopEffect) == 0 && countRegisteredObject(secondLoopEffect) == 0,
+        "full world frame fixture cleanup left detached effect319 objects registered");
+    std::cout << "CWorld::UpdateActors units=2 jobs=131,131 effects=319,319 texture=alpha_down.tga processed=2 removed=2\n";
 }
 
 void ReplayTrapRevealLifecycle(const std::string& path)
