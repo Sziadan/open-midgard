@@ -1756,3 +1756,7 @@ Added `check_ground_scope_source.py` to compare `CGroundScope` against Ref: all2
 
 Extended `check_ground_scope_source.py` to compare the Ref-backed render path: `magic_target.tga`, scope-origin calculation, nested tile traversal, rotation and normalization of all four UV coordinates, color expression, tile submission coordinates, and rotation advancement. The source comparator passes. Runtime rendering remains open because the production `C3dGround::RenderGroundTile` path submits through the renderer and the replay harness does not initialize a graphics device; unit-model resource acceptance is also still open.
 
+## WP4 CGroundScope headless render replay
+
+Added `skill_ground_scope_render_checks`, which calls production `CGroundScope::Render` against a synthetic 16×16 ground, 32×32 attribute grid, and cached test texture without creating a graphics device. The 11×11 scope submits 121 ground-tile faces per frame, the first frame starts with normalized UV origin (0,0), and a second frame changes UVs as the scope rotation advances. Release build passes and CTest is 100/100. The replay validates the production submission math and queue path; loading and uploading the real `magic_target.tga` and trap/unit models remain open for resource-backed acceptance.
+

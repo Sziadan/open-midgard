@@ -5,6 +5,7 @@
 #include "gamemode/Mode.h"
 #include "network/GronPacket.h"
 #include "res/Bitmap.h"
+#include "render/Renderer.h"
 #include "session/Session.h"
 #include "world/GameActor.h"
 #include "world/RagEffect.h"
@@ -94,6 +95,118 @@ struct ReplayGameMode : CGameMode {
         return CGameMode::SendMsg(msg, wparam, lparam, extra);
     }
 };
+
+void ReplayGroundScopeRender()
+{
+    CWorld& world = g_world;
+    ReplayGameMode mode;
+    C3dAttr attr;
+    C3dGround ground;
+    CMode* oldMode = SkillPacketReplayAccess::Current();
+    const int oldModeType = SkillPacketReplayAccess::CurrentType();
+    C3dGround* oldGround = world.m_ground;
+    C3dAttr* oldWorldAttr = world.m_attr;
+    IRenderDevice* oldRenderDevice = g_renderer.m_renderDevice;
+    const int oldXOffset = g_renderer.m_xoffset;
+    const int oldYOffset = g_renderer.m_yoffset;
+    const float oldHpc = g_renderer.m_hpc;
+    const float oldVpc = g_renderer.m_vpc;
+    const bool oldIsFoggy = g_renderer.m_isFoggy;
+    CTexture& texture = CTexMgr::s_dummy_texture;
+    const unsigned int oldTextureWidth = texture.m_w;
+    const unsigned int oldTextureHeight = texture.m_h;
+    const unsigned int oldUpdateWidth = texture.m_updateWidth;
+    const unsigned int oldUpdateHeight = texture.m_updateHeight;
+    const std::string cacheKey = "@ck:effect\\magic_target.tga";
+    const auto oldTextureEntry = g_texMgr.m_texTable.find(cacheKey.c_str());
+    CTexture* oldTextureEntryValue = oldTextureEntry == g_texMgr.m_texTable.end() ? nullptr : oldTextureEntry->second;
+    const size_t oldFaceCount = g_renderer.m_rpAlphaList.size();
+
+    attr.m_width = 32;
+    attr.m_height = 32;
+    attr.m_cells.resize(32u * 32u, CAttrCell{ 0.0f, 0.0f, 0.0f, 0.0f, 0 });
+    ground.m_attr = &attr;
+    ground.m_width = 16;
+    ground.m_height = 16;
+    ground.m_numSurfaces = 1;
+    ground.m_cells.resize(16u * 16u);
+    for (CGroundCell& cell : ground.m_cells) {
+        cell.topSurfaceId = 0;
+    }
+    ground.m_surfaces.resize(1);
+    CGroundSurface& surface = ground.m_surfaces.front();
+    surface.vertex[0].wvert = vector3d{ 0.0f, 0.0f, 0.0f };
+    surface.vertex[1].wvert = vector3d{ 1.0f, 0.0f, 0.0f };
+    surface.vertex[2].wvert = vector3d{ 0.0f, 0.0f, 1.0f };
+    surface.vertex[3].wvert = vector3d{ 1.0f, 0.0f, 1.0f };
+    world.m_ground = &ground;
+    world.m_attr = &attr;
+    mode.m_world = &world;
+    SkillPacketReplayAccess::SetCurrent(&mode);
+
+    texture.m_w = texture.m_h = 16;
+    texture.m_updateWidth = texture.m_updateHeight = 16;
+    if (oldTextureEntry == g_texMgr.m_texTable.end()) {
+        g_texMgr.m_texTable.emplace(cacheKey.c_str(), &texture);
+    } else {
+        oldTextureEntry->second = &texture;
+    }
+
+    g_renderer.Init();
+    g_renderer.m_xoffset = 320;
+    g_renderer.m_yoffset = 240;
+    g_renderer.m_hpc = 320.0f;
+    g_renderer.m_vpc = 240.0f;
+    g_renderer.m_isFoggy = false;
+    matrix view{};
+    view.m[0][0] = 1.0f;
+    view.m[1][1] = 1.0f;
+    view.m[3][2] = 100.0f;
+
+    CGroundScope scope;
+    scope.SendMsg(nullptr, 14, 10, 10, 0);
+    scope.SendMsg(nullptr, 117, 89, 0, 0);
+    scope.Render(&view);
+    Require(g_renderer.m_rpAlphaList.size() == oldFaceCount + 121,
+        "11x11 ground scope must submit all 121 valid ground tiles");
+    auto firstFace = g_renderer.m_rpAlphaList.begin();
+    std::advance(firstFace, static_cast<std::ptrdiff_t>(oldFaceCount));
+    Require(firstFace->second && firstFace->second->tex == &texture
+        && firstFace->second->numVerts == 4
+        && std::fabs(firstFace->second->verts[0].tu) < 1.0e-6f
+        && std::fabs(firstFace->second->verts[0].tv) < 1.0e-6f,
+        "first rendered scope tile must submit the cached target texture and normalized UV origin");
+
+    scope.Render(&view);
+    Require(g_renderer.m_rpAlphaList.size() == oldFaceCount + 242,
+        "second scope frame must submit another complete 121-tile grid");
+    auto secondFrameFirstFace = g_renderer.m_rpAlphaList.begin();
+    std::advance(secondFrameFirstFace, static_cast<std::ptrdiff_t>(oldFaceCount + 121));
+    Require(secondFrameFirstFace->second
+        && std::fabs(secondFrameFirstFace->second->verts[0].tu) > 1.0e-5f,
+        "scope rotation must advance UVs on the next render frame");
+
+    g_renderer.m_rpAlphaList.resize(oldFaceCount);
+    g_renderer.m_rpNullFaceListIter = g_renderer.m_rpNullFaceList.begin();
+    if (oldTextureEntry == g_texMgr.m_texTable.end()) {
+        g_texMgr.m_texTable.erase(cacheKey.c_str());
+    } else {
+        oldTextureEntry->second = oldTextureEntryValue;
+    }
+    texture.m_w = oldTextureWidth;
+    texture.m_h = oldTextureHeight;
+    texture.m_updateWidth = oldUpdateWidth;
+    texture.m_updateHeight = oldUpdateHeight;
+    world.m_ground = oldGround;
+    world.m_attr = oldWorldAttr;
+    SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+    g_renderer.m_renderDevice = oldRenderDevice;
+    g_renderer.m_xoffset = oldXOffset;
+    g_renderer.m_yoffset = oldYOffset;
+    g_renderer.m_hpc = oldHpc;
+    g_renderer.m_vpc = oldVpc;
+    g_renderer.m_isFoggy = oldIsFoggy;
+}
 
 struct ScenarioActor {
     std::string role;
@@ -2156,7 +2269,9 @@ int main(int argc, char** argv)
         std::ofstream freshRuntimeLog(runtimeLogPath, std::ios::trunc);
         Require(static_cast<bool>(freshRuntimeLog), "could not reset per-run production runtime log");
         freshRuntimeLog.close();
-        if (IsGroundSkillWaveScenario(argv[1])) {
+        if (std::string(argv[1]) == "--ground-scope-render") {
+            ReplayGroundScopeRender();
+        } else if (IsGroundSkillWaveScenario(argv[1])) {
             ReplayGroundSkillWave(argv[1]);
         } else if (IsMissingActorGroundSkillScenario(argv[1])) {
             ReplayMissingActorGroundSkill(argv[1]);

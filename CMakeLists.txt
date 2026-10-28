@@ -284,6 +284,8 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_runtime_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/bash5.tsv")
+    add_test(NAME skill_ground_scope_render_checks
+        COMMAND skill_packet_replay_runtime_checks --ground-scope-render)
     add_test(NAME skill_packet_replay_double_strafe_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/double_strafe46.tsv")
