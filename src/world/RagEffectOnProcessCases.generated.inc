@@ -356,7 +356,7 @@ case 426: ApplyActorLight(); return true;
 case 458: ApplyActorLight(); return true;
 case 427: ApplyActorLight(); return true;
 case 428: return UnportedEffect();
-case 429: return UnportedEffect();
+case 429: return ProcessHitLine4Effect();
 case 430: return UnportedEffect();
 case 431: return UnportedEffect();
 case 432: return ProcessEffectFrameLegacy();

@@ -17784,6 +17784,46 @@ bool CRagEffect::ProcessHitLineEffect()
     return true;
 }
 
+// Ref/RagEffect2.cpp:28378-28437; canonical helper HighPriest.exe.c:433141-433200.
+bool CRagEffect::ProcessHitLine4Effect()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+
+    if (m_stateCnt >= 6 && m_stateCnt < 10) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_HITLINE3, vector3d{});
+        if (prim != nullptr) {
+            prim->m_renderFlag = 5;
+            prim->m_duration = m_duration;
+            prim->m_totalTexture = 1;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\white02.bmp", false));
+            prim->m_size = 0.0f;
+            for (EffectGi& gi : prim->m_gi) {
+                gi.life = 1;
+                gi.process = -(rand() % 31);
+                gi.maxHeight = 0.05f;
+                gi.alphaB = static_cast<short>(rand() % 121 + 125);
+                gi.riseAngle = static_cast<short>(rand() % 360);
+                gi.distance = static_cast<float>(rand() % 6) + 6.0f;
+                gi.height[0] = 0.0f;
+                gi.vecTNowX = static_cast<float>(rand() % 7) * 0.1f + 0.80000001f;
+                gi.sparkX = origin.x;
+                gi.sparkY = origin.y;
+                gi.sparkZ = origin.z;
+                gi.vecTNowY = 4.0f;
+                for (size_t history = 1; history <= 20; ++history) {
+                    gi.height[history] = 0.0f;
+                    gi.flag[history] = 0;
+                }
+                gi.alphaT = 3;
+            }
+        }
+    }
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {

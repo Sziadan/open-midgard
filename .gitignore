@@ -64,6 +64,7 @@ tools/tests/*
 !tools/tests/check_skill_talkbox_receiver.py
 !tools/tests/check_hitline_render.py
 !tools/tests/check_hitline_caller.py
+!tools/tests/check_hitline4_caller.py
 !tools/tests/ChangeGuildTests.cpp
 !tools/tests/check_change_guild_source.py
 !tools/tests/check_player_premove_route.py
