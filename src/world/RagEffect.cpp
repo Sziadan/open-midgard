@@ -17419,6 +17419,109 @@ bool CRagEffect::ProcessLevel99_2Effect()
     return true;
 }
 
+// Ref/RagEffect2.cpp:28979-29160; canonical helper HighPriest.exe.c:442953-443327.
+bool CRagEffect::ProcessLevel99_3Effect()
+{
+    int variant = -1;
+    switch (m_type) {
+    case 202: variant = 0; break;
+    case 362: variant = 1; break;
+    case 678: variant = 2; break;
+    case 692: variant = 3; break;
+    default: return false;
+    }
+
+    const char* textureName = variant == 3
+        ? "effect\\ghost.bmp"
+        : variant == 0 ? "effect\\freezing_circle.bmp" : "effect\\whitelight.tga";
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr && existing->m_type == PP_3DAURA_2) {
+            existing->m_pos = origin;
+        }
+    }
+    if (m_stateCnt == 99999998) {
+        m_stateCnt = 0;
+        m_duration = 99999999;
+    }
+    if (m_stateCnt != 0) {
+        return true;
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DAURA_2, vector3d{});
+    if (prim == nullptr) {
+        return true;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    prim->m_size = variant == 2 ? 7.0f : 0.0f;
+
+    for (size_t index = 0; index < prim->m_gi.size(); ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        gi.life = static_cast<u8>(variant != 3 || index < 1);
+        gi.maxHeight = 0.15000001f;
+        if (variant == 1) {
+            gi.distance = 2.4000001f;
+        } else if (variant == 3) {
+            gi.distance = 3.2f;
+            gi.maxHeight = 0.60000002f;
+            gi.vecBPreX = static_cast<float>(rand() % 15 - 8);
+            gi.vecBPreZ = static_cast<float>(rand() % 15 - 8);
+        } else {
+            gi.distance = 0.80000001f;
+            gi.vecBPreX = 0.0f;
+            gi.vecBPreZ = 0.0f;
+        }
+        gi.arcBaselineY = static_cast<float>(rand() % 100);
+        gi.height[0] = static_cast<float>(rand() % 360);
+        gi.height[1] = static_cast<float>(rand() % 360);
+        gi.height[2] = static_cast<float>(rand() % 360);
+        gi.height[3] = static_cast<float>(rand() % 360);
+        if (variant == 3) {
+            gi.sparkX = static_cast<float>(rand() % 15 - 8);
+            gi.sparkZ = static_cast<float>(rand() % 15 - 8);
+        } else {
+            gi.sparkX = 0.0f;
+            gi.sparkZ = 0.0f;
+        }
+        gi.sparkY = static_cast<float>(rand() % 100);
+        gi.height[4] = static_cast<float>(rand() % 360);
+        gi.height[5] = static_cast<float>(rand() % 360);
+        gi.height[6] = static_cast<float>(rand() % 360);
+        gi.height[7] = static_cast<float>(rand() % 360);
+        if (variant == 3) {
+            gi.vecTPreX = static_cast<float>(rand() % 15 - 8);
+            gi.vecTPreZ = static_cast<float>(rand() % 15 - 8);
+        } else {
+            gi.vecTPreX = 0.0f;
+            gi.vecTPreZ = 0.0f;
+        }
+        gi.vecTPreY = static_cast<float>(rand() % 100);
+        gi.height[8] = static_cast<float>(rand() % 360);
+        gi.height[9] = static_cast<float>(rand() % 360);
+        gi.height[10] = static_cast<float>(rand() % 360);
+        gi.height[11] = static_cast<float>(rand() % 360);
+        if (variant == 3) {
+            gi.vecTNowX = static_cast<float>(rand() % 15 - 8);
+            gi.vecTNowZ = static_cast<float>(rand() % 15 - 8);
+        } else {
+            gi.vecTNowX = 0.0f;
+            gi.vecTNowZ = 0.0f;
+        }
+        gi.vecTNowY = static_cast<float>(rand() % 100);
+        gi.height[12] = static_cast<float>(rand() % 360);
+        gi.height[13] = static_cast<float>(rand() % 360);
+        gi.height[14] = static_cast<float>(rand() % 360);
+        gi.height[15] = static_cast<float>(rand() % 360);
+        gi.flag[0] = variant == 1 ? 1 : variant == 3 ? 11 : 0;
+    }
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {

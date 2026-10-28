@@ -60,7 +60,7 @@ case 358: return UnportedEffect();
 case 359: return UnportedEffect();
 case 360: return UnportedEffect();
 case 361: return UnportedEffect();
-case 362: return UnportedEffect();
+case 362: return ProcessLevel99_3Effect();
 case 363: return UnportedEffect();
 case 364: return UnportedEffect();
 case 365: return UnportedEffect();

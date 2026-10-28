@@ -212,7 +212,7 @@ case 200: return ProcessLevel99Effect();
 case 397: return ProcessLevel99Effect();
 case 201: return ProcessLevel99_2Effect();
 case 398: return ProcessLevel99_2Effect();
-case 202: return UnportedEffect();
+case 202: return ProcessLevel99_3Effect();
 case 203: return UnportedEffect();
 case 204: return ProcessClipWaveStrEffect();
 case 205: return ProcessClipWaveStrEffect();
