@@ -1109,3 +1109,11 @@ Compared `HitLine5` Ref `RagEffect2.cpp:28443–28567` with canonical `HighPries
 ## WP10.3 — effect 430 verification — 2026-10-28
 
 Release `open_midgard` build and executable copy succeeded; all CTest tests passed (106/106). The effect coverage audit reports 483 routed / 210 explicit unported / 102 launched-unported, and `git diff --check` passes. Renderer, effect 376, effect 429, and effect 430 HitLine source comparators pass. Next: effect 431.
+
+## WP10.3 — effect 431 `HitLine3` — 2026-10-28
+
+Compared the complete `HitLine3` body in Ref `RagEffect2.cpp:28211–28442` and canonical `HighPriest.exe.c:432819–433139`; bodies are whitespace-identical. Caller case 431 invokes `HitLine3(this,3)` without sound or body-light/tint changes. Added `ProcessHitLine3Effect` for the F1=3 branch: position refreshes every dispatch, and states 0–4 create PP_HITLINE3 with renderFlag 5, inherited duration, one white02 texture (VA 0x713CC8), size 0 and four live GIs. Each row consumes five ordered RNG draws: process `-30-rand()%41`, alphaB `rand()%121+125`, rise angle `rand()%360`, distance `rand()%6+6`, and vecTNowX `rand()%7*0.1+0.60000002`. It sets maxHeight 0.07, vecTNowY 4, height0 zero, clears history/flags 1–20, stores origin in sparkXYZ and sets alphaT 3. `check_hitline3_caller.py` checks the full helper equality, caller, route, resource and local operation order. Coverage is 484 routed / 209 explicit unported / 101 launched-unported. Focused source check passes; Release build and full CTest pending. Next: continue the next launched-but-unported family in WP10.3.
+
+## WP10.3 — effect 431 verification — 2026-10-28
+
+Release `open_midgard` build and executable copy succeeded; all CTest tests passed (107/107). The effect coverage audit reports 484 routed / 209 explicit unported / 101 launched-unported, and `git diff --check` passes. All five HitLine renderer/caller source comparators pass. Next: continue the next launched-but-unported WP10.3 effect family.
