@@ -355,7 +355,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 426	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		34
 458	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	34
 427	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
-428	OnProcess	HitLine3	unported	OnProcess -> UnportedEffect		-
+428	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Zero428();		1327
 429	OnProcess	HitLine4	routed	OnProcess -> return ProcessHitLine4Effect();	src/world/SkillSpecialEffect.cpp	2481
 430	OnProcess	HitLine5	routed	OnProcess -> return ProcessHitLine5Effect();	src/world/SkillSpecialEffect.cpp	1508
 431	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Effect();	src/world/SkillSpecialEffect.cpp	1327

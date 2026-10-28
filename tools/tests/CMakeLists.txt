@@ -400,6 +400,7 @@ extract_test_region(land_protector_handler "${effect_source}" land_protector_fam
 extract_test_region(tanji_effect_handler "${effect_source}" tanji_effect_family)
 extract_test_region(basilica_effect_handler "${effect_source}" basilica_effect_family)
 extract_test_region(rainbow410_effect_handler "${effect_source}" rainbow410_effect_family)
+extract_test_region(hitline3zero428_handler "${effect_source}" hitline3zero428_family)
 extract_test_region(bottom_vertical_handler "${effect_source}" bottom_vertical_family)
 extract_test_region(bottom_music_handler "${effect_source}" bottom_music_family)
 file(READ "../../src/world/World.cpp" world_source)
@@ -439,6 +440,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${bottom_
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${tanji_effect_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${basilica_effect_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${rainbow410_effect_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${hitline3zero428_handler}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -943,6 +945,8 @@ add_test(NAME effect374_basilica_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect374_basilica.py")
 add_test(NAME effect410_rainbow_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect410_rainbow.py")
+add_test(NAME effect428_hitline3zero_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect428_hitline3zero.py")
 add_test(NAME effect277_294_bottom_vertical_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect277_294_bottom_vertical.py")
 add_test(NAME effect281_288_bottom_music_source_check

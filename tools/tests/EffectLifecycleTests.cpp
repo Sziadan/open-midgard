@@ -646,6 +646,7 @@ struct CRagEffect : CGameObject {
     bool ProcessTanji(bool);
     bool ProcessBasilica();
     bool ProcessRainbow410();
+    bool ProcessHitLine3Zero428();
     void ApplyBottomMusic(const char*, int);
     bool ProcessEffect365();
     bool ProcessDemonstration302();
@@ -3898,6 +3899,20 @@ int main()
             "Rainbow later states retain frame-zero position without repeating emission");
         effect.ClearPrims(); g_world.UpdateGameObjects();
         gameMode.m_view=oldView; testView.longitude=oldLongitude;
+    }
+    {
+        CRenderObject actor; actor.m_pos={11,22,33};
+        CRagEffect effect; effect.m_type=428; effect.m_master=&actor;
+        effect.m_stateCnt=0; effect.m_effectPos={1,2,3};
+        g_texMgr.requests.clear(); waveCalls.clear(); const int draws=rngDraws;
+        effect.ProcessHitLine3Zero428();
+        check(effect.m_effectPos.x==11&&effect.m_effectPos.y==22&&effect.m_effectPos.z==33
+            &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "HitLine3 F1=0 refreshes position but its zero-width gate emits nothing at state zero");
+        actor.m_pos={41,52,63}; effect.m_stateCnt=8; effect.ProcessHitLine3Zero428();
+        check(effect.m_effectPos.x==41&&effect.m_effectPos.y==52&&effect.m_effectPos.z==63
+            &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "HitLine3 F1=0 keeps refreshing position at later states without assets, RNG, or audio");
     }
     {
         const int ids[]={277,287,290,292,294};

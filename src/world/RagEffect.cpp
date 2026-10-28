@@ -18956,6 +18956,15 @@ bool CRagEffect::ProcessHitLine3Effect()
     return true;
 }
 
+// PE HighPriest.exe.c:421559/432819: HitLine3(F1=0) sets start=uNum=0.
+// TEST_BODY_BEGIN hitline3zero428_family
+bool CRagEffect::ProcessHitLine3Zero428()
+{
+    if (m_master != nullptr) m_effectPos = m_master->m_pos;
+    return true;
+}
+// TEST_BODY_END hitline3zero428_family
+
 // Ref/RagEffect2.cpp:32653-32773; canonical helpers at 0x62E390/0x62FBE0/0x62F830.
 void CRagEffect::SpawnTeiHit1(const char* textureName, char variant)
 {
