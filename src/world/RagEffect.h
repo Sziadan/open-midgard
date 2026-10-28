@@ -682,6 +682,7 @@ private:
     bool ProcessMaxPower104();
     bool ProcessIntimidate227();
     bool ProcessShockwave145();
+    bool ProcessMagicRod244();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();

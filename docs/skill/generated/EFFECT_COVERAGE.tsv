@@ -250,7 +250,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 240	OnProcess	Bottom_Volcano	routed	"OnProcess -> ApplyBottomVolcano(""effect\\ring_blue.tga"", 0.0f); return true;"		134
 241	OnProcess	Bottom_Volcano	routed	"OnProcess -> ApplyBottomVolcano(""effect\\magic_green.tga"", 0.0f); return true;"		134
 242	OnProcess	Bottom_LandProtector	unported	OnProcess -> UnportedEffect		-
-244	OnProcess	ProcessEZ2STR,MagicRod	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+244	OnProcess	ProcessEZ2STR,MagicRod	routed	OnProcess -> return ProcessMagicRod244();	src/gamemode/UseSkillEffect.generated.inc	187
 245	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillSpecialEffect.cpp	15
 246	OnProcess	ShieldCharge	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
 247	OnProcess	MAPPILLAR	routed	"OnProcess -> ApplyMapPillar(""effect\\ring_blue.tga"", 4.0f, true); return true;"		136

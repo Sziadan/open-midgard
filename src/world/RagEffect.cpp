@@ -26122,6 +26122,23 @@ bool CRagEffect::ProcessShockwave145()
 
 // TEST_BODY_END shockwave145_handler
 
+// HighPriest.exe.c:420781-420784; ProcessEZ2STR result is ignored before MagicRod.
+bool CRagEffect::ProcessMagicRod244()
+{
+    ProcessEZ2STR(0.0f,-80.0f,0.0f);
+    if (m_stateCnt == 0) {
+        CRenderObject* master=ResolveCurrentMaster();
+        if (master != nullptr) {
+            m_pos=master->m_pos;
+            m_effectPos=m_pos;
+            TryPlaySingleEffectWave(m_pos,"effect\\sage_magic rod.wav",0.0f,true);
+        }
+    }
+    return true;
+}
+
+// TEST_BODY_END magicrod244_handler
+
 bool CRagEffect::ProcessEffect380()
 {
     CRenderObject* master = ResolveCurrentMaster();

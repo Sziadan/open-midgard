@@ -85,7 +85,7 @@ required_routes = {
     ("OnProcess", 217): "SpawnEnergyDrain",
     ("OnProcess", 218): "ProcessPotionConcentration",
     ("OnProcess", 219): "ProcessPotionConcentration",
-    ("OnProcess", 244): "UnportedEffect",
+    ("OnProcess", 244): "ProcessMagicRod244",
     ("OnProcess", 248): "ApplyProvidence",
     ("OnProcess2", 305): "OnProcess2Legacy",
     ("OnProcess2", 306): "OnProcess2Legacy",

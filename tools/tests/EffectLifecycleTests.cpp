@@ -588,6 +588,7 @@ struct CRagEffect : CGameObject {
     bool ProcessRepairWeapon101();
     bool ProcessMaxPower104();
     bool ProcessIntimidate227();
+    bool ProcessMagicRod244();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
@@ -4770,6 +4771,27 @@ int main()
         effect.m_type = 145; effect.m_stateCnt = 40; effect.m_iCurLayer = 1;
         check(effect.OnProcess() == 1 && effect.m_stateCnt == 1 && effect.m_iCurLayer == 0,
             "effect 145 restarts completed STR before the outer increment");
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRenderObject master;master.m_pos={15,20,35};
+        CRagEffect effect;effect.m_master=&master;effect.m_type=244;effect.m_duration=100;
+        effect.m_pos={1,2,3};effect.m_effectPos={1,2,3};
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=0;
+        check(effect.ProcessMagicRod244()&&effect.m_pos.x==15&&effect.m_pos.y==20&&effect.m_pos.z==35
+            &&effect.m_effectPos.x==15&&waveCalls.size()==1
+            &&waveCalls[0].name=="effect\\sage_magic rod.wav"&&waveCalls[0].x==12
+            &&waveCalls[0].y==0&&waveCalls[0].z==30&&waveCalls[0].volume==250
+            &&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "Magic Rod ignores missing STR completion, follows master, and plays its state-zero cue");
+        effect.m_stateCnt=1;
+        check(effect.ProcessMagicRod244()&&waveCalls.size()==1&&rngDraws==beforeRng
+            &&effect.m_primList.empty()&&g_texMgr.requests.empty(),
+            "Magic Rod remains alive after STR completion without repeating audio or emitting particles");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
     }
     {
         CRagEffect effect;
