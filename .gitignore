@@ -51,6 +51,7 @@ tools/tests/*
 !tools/tests/check_effect6.py
 !tools/tests/check_effect8.py
 !tools/tests/check_effect9.py
+!tools/tests/check_effect90.py
 !tools/tests/check_effect8.py
 !tools/tests/check_shield_boomerang_callers.py
 !tools/tests/check_rg_coin_callers.py

@@ -128,7 +128,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 87	OnProcess	LexDivina	routed	OnProcess -> return ProcessLexDivina();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	32
 88	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	15
 89	OnProcess	StormGust	routed	OnProcess -> return ProcessStormGust89();	src/session/SkillAttackEffectIdTable.generated.inc	91
-90	OnProcess	Lord	unported	OnProcess -> UnportedEffect		-
+90	OnProcess	Lord	routed	OnProcess -> return ProcessLord90();		95
 91	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	15
 92	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect		-
 93	OnProcess	Yufitel	routed	OnProcess -> return ProcessYufitel93();	src/session/SkillAttackEffectIdTable.generated.inc;src/world/SkillSpecialEffect.cpp	49

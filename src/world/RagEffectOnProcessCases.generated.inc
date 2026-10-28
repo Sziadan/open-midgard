@@ -128,7 +128,7 @@ case 86: return ProcessAspersio86();
 case 87: return ProcessLexDivina();
 case 88: return ProcessClipWaveStrEffect();
 case 89: return ProcessStormGust89();
-case 90: return UnportedEffect();
+case 90: return ProcessLord90();
 case 91: return ProcessClipWaveStrEffect();
 case 92: return UnportedEffect();
 case 93: return ProcessYufitel93();

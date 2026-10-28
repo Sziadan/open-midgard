@@ -20308,6 +20308,35 @@ bool CRagEffect::ProcessEnhance9()
     return true;
 }
 
+// Ref/RagEffect.cpp:811; canonical helper at HighPriest.exe.c:430872.
+bool CRagEffect::ProcessLord90()
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CRenderObject* listener = mode && mode->m_world ? mode->m_world->m_player : nullptr;
+    if (listener != nullptr) {
+        const float x = m_effectPos.x - listener->m_pos.x;
+        const float z = m_effectPos.z - listener->m_pos.z;
+        switch (m_stateCnt) {
+        case 0:
+            PlayWave("effect\\wizard_meteo.wav", x, 0.0f, z, 250, 40, 1.0f);
+            PlayWave("effect\\hunter_blastmine.wav", x, 0.0f, z, 250, 40, 1.0f);
+            break;
+        case 10:
+            PlayWave("effect\\hunter_blastmine.wav", x, 0.0f, z, 250, 40, 1.0f);
+            break;
+        case 20: case 50: case 80: case 100: case 130: case 140: case 180: case 200:
+            PlayWave("effect\\wizard_meteo.wav", x, 0.0f, z, 250, 40, 1.0f);
+            break;
+        default:
+            break;
+        }
+    }
+    if (m_stateCnt >= 50 && (m_stateCnt % 50) == 0 && m_stateCnt < 300 && mode != nullptr) {
+        mode->SendMsg(135, 0, 0, 0);
+    }
+    return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+}
+
 void CRagEffect::SpawnNpcStop(int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();

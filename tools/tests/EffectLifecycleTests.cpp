@@ -645,6 +645,7 @@ struct CRagEffect : CGameObject {
     bool ProcessWarp8();
     void SpawnWarp8();
     bool ProcessEnhance9();
+    bool ProcessLord90();
     void SpawnEnhance9();
     void SpawnPressure365();
     void SpawnGroundShake365();
@@ -3277,6 +3278,39 @@ int main()
             "effect9 minimum-effects mode emits cross texture at state15");
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
         g_session.m_isMinEffect=oldMinEffect;
+    }
+    {
+        CRenderObject master; master.m_pos={30,40,50};
+        CRenderObject listener; listener.m_pos={10,20,30};
+        CRenderObject* oldPlayer=g_world.m_player;
+        g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=90; effect.m_effectPos=master.m_pos; effect.m_duration=60;
+        const int oldMessages=gameMode.messages;
+        const std::vector<int> oldMessageIds=gameMode.messageIds;
+        gameMode.messages=0; gameMode.messageIds.clear(); waveCalls.clear();
+        g_texMgr.requests.clear(); g_resMgr.requests.clear();
+        rngValues.clear(); rngCursor=0;
+        const int drawBase=rngDraws;
+        const int states[]={0,10,20,49,50,80,100,130,140,150,180,200,250,299,300};
+        bool allFalse=true;
+        for(int state:states){effect.m_stateCnt=state;allFalse=!effect.ProcessLord90()&&allFalse;}
+        check(allFalse,"Lord90 propagates missing STR completion on each state");
+        check(waveCalls.size()==11,"Lord90 emits exact source cue count");
+        const char* expectedNames[]={"effect\\wizard_meteo.wav","effect\\hunter_blastmine.wav",
+            "effect\\hunter_blastmine.wav","effect\\wizard_meteo.wav","effect\\wizard_meteo.wav",
+            "effect\\wizard_meteo.wav","effect\\wizard_meteo.wav","effect\\wizard_meteo.wav",
+            "effect\\wizard_meteo.wav","effect\\wizard_meteo.wav","effect\\wizard_meteo.wav"};
+        bool exactWaves=waveCalls.size()==std::size(expectedNames);
+        for(size_t i=0;exactWaves&&i<waveCalls.size();++i)
+            exactWaves=waveCalls[i].name==expectedNames[i]&&waveCalls[i].x==20&&waveCalls[i].y==0
+                &&waveCalls[i].z==20&&waveCalls[i].volume==250&&waveCalls[i].range==40&&waveCalls[i].frequency==1;
+        check(exactWaves,"Lord90 preserves ordered exact waves and horizontal listener-relative parameters");
+        check(gameMode.messages==5&&gameMode.messageIds==std::vector<int>({135,135,135,135,135}),
+            "Lord90 sends message 135 at 50-frame cadence below state 300");
+        check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&g_resMgr.requests.empty()
+            &&rngDraws==drawBase,"Lord90 has no particle, texture, resource or RNG output");
+        g_world.m_player=oldPlayer; gameMode.messages=oldMessages; gameMode.messageIds=oldMessageIds;
+        waveCalls.clear(); rngValues.clear(); rngCursor=0;
     }
     {
         CRenderObject actor; actor.m_pos={400,500,600};

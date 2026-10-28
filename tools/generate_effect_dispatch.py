@@ -28,6 +28,7 @@ FORCE_ROUTE.add(333)
 FORCE_ROUTE.add(6)
 FORCE_ROUTE.add(8)
 FORCE_ROUTE.add(9)
+FORCE_ROUTE.add(90)
 FORCE_ROUTE.add(361)
 FORCE_ROUTE.add(365)
 FORCE_ROUTE.add(440)
@@ -61,6 +62,7 @@ DIRECT_CALLS = {
     6: "return ProcessEntry6();",
     8: "return ProcessWarp8();",
     9: "return ProcessEnhance9();",
+    90: "return ProcessLord90();",
     361: "return ProcessSoulBreaker361Effect();",
     365: "return ProcessEffect365();",
     440: "return ProcessEffect440();",
