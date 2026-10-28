@@ -568,12 +568,21 @@ void ReplaySkillUnitLifecycle(const std::string& path)
         "skill-unit removal must use the 6-byte 0x0120 packet");
     const int unitJob = packets[0].bytes[14];
     Require(unitJob == 126 || unitJob == 127 || unitJob == 131 || unitJob == 132
-            || unitJob == 141 || unitJob == 142 || unitJob == 177 || unitJob == 180,
+            || unitJob == 141 || unitJob == 142 || unitJob == 177 || unitJob == 179 || unitJob == 180,
         "unsupported skill-unit replay job");
-    const int expectedLoopEffect = unitJob == 126 ? 315
-        : (unitJob == 127 ? 25 : (unitJob == 131 ? 319
-            : (unitJob == 132 ? 318 : (unitJob == 141 ? 74
-                : (unitJob == 142 ? 95 : (unitJob == 177 ? 302 : 374))))));
+    int expectedLoopEffect = 0;
+    switch (unitJob) {
+    case 126: expectedLoopEffect = 315; break;
+    case 127: expectedLoopEffect = 25; break;
+    case 131: expectedLoopEffect = 319; break;
+    case 132: expectedLoopEffect = 318; break;
+    case 141: expectedLoopEffect = 74; break;
+    case 142: expectedLoopEffect = 95; break;
+    case 177: expectedLoopEffect = 302; break;
+    case 179: expectedLoopEffect = 370; break;
+    case 180: expectedLoopEffect = 374; break;
+    default: Require(false, "unsupported skill-unit replay effect mapping");
+    }
 
     Fixture fixture(path);
     CGameActor* configuredActor = fixture.world.GetGameActorByAID(3);

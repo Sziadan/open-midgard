@@ -1626,3 +1626,7 @@ Added the WP4 Quagmire unit job142 replay and stepped real `CSkill::OnProcess` a
 ## WP10.8 — Basilica unit effect replay — 2026-10-28
 
 Added the WP4 Basilica unit job180 replay. The 0x011F set packet creates the unit, one nominal 24 ms production `CSkill::OnProcess` step launches Ref loop effect374, and 0x0120 removes it. Focused replay passes; the complete root packet replay CTest passes21/21. This fixture verifies lifecycle and effect dispatch, not resource-dependent model rendering.
+
+## WP10.8 — Gospel unit effect replay — 2026-10-28
+
+Added the WP4 Gospel unit job179 replay. The 0x011F set packet creates the unit, one nominal 24 ms production `CSkill::OnProcess` step launches Ref loop effect370, and 0x0120 removes it. Focused replay passes; the complete root packet replay CTest passes22/22. The fixture verifies lifecycle and effect dispatch without requiring model resources.

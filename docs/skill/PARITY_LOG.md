@@ -3220,3 +3220,7 @@ Between 0x011F Firewall entry and 0x0120 removal, the runner calls real `CSkill:
 ## WP10.8 runtime replay — Basilica unit — 2026-10-28
 
 `basilica_unit_lifecycle.tsv` sends a 0x011F entry for job180 (`UNT_BASILICA`), invokes production `CSkill::OnProcess` once after a nominal 24 ms interval, and removes the unit with 0x0120. Ref maps job180 to `LaunchLoop(374)` (`Ref/Skill.cpp:1287-1698`); runtime confirms effect374 after 25 ms measured elapsed and verifies both world lists are cleaned up. Focused and full replay CTest pass21/21.
+
+## WP10.8 runtime replay — Gospel unit — 2026-10-28
+
+`gospel_unit_lifecycle.tsv` sends a 0x011F entry for job179 (`UNT_GOSPEL`), invokes production `CSkill::OnProcess` once after a nominal 24 ms interval, and removes the unit with 0x0120. Ref maps job179 to `LaunchLoop(370)` (`Ref/Skill.cpp:1287-1698`); runtime confirms effect370 after 25 ms measured elapsed and verifies cleanup from both world lists. Focused and full replay CTest pass22/22.
