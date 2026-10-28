@@ -3208,3 +3208,7 @@ Between 0x011F Firewall entry and 0x0120 removal, the runner calls real `CSkill:
 ## WP10.8 runtime replay — Magnus Exorcismus unit — 2026-10-28
 
 `magnus_unit_lifecycle.tsv` sends a 0x011F entry for job132 (`UNT_MAGNUS`), steps real `CSkill::OnProcess` once after a nominal 24 ms interval, and removes it with 0x0120. Ref maps job132 to `LaunchLoop(318)` (`Ref/Skill.cpp:1287-1698`); runtime confirms effect318 after 25 ms measured elapsed and verifies cleanup from both world lists. Focused and full replay CTest pass (18/18).
+
+## WP10.8 runtime replay — Demonstration unit — 2026-10-28
+
+`demonstration_unit_lifecycle.tsv` sends the 0x011F entry for job177 (`UNT_DEMONSTRATION`), invokes real `CSkill::OnProcess` once after a nominal 24 ms interval, and removes the unit with 0x0120. Ref maps job177 to `LaunchLoop(302)` (`Ref/Skill.cpp:1287-1698`); runtime confirms effect302 after 25 ms measured elapsed and verifies cleanup from both world lists. Focused and full replay CTest pass (19/19).

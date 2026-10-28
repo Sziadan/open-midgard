@@ -1614,3 +1614,7 @@ Added the WP4 Ice Wall unit job141 packet case. Raw 0x011F creates the unit, one
 ## WP10.8 — Magnus Exorcismus unit effect replay — 2026-10-28
 
 Added the WP4 Magnus Exorcismus unit job132 replay. Raw 0x011F creates the unit, one nominal 24 ms production `CSkill::OnProcess` step launches Ref loop effect318, and 0x0120 removes it. Focused replay passes; the full root packet replay CTest passes18/18. The case verifies unit lifecycle and loop effect, while model rendering remains outside this resource-free fixture.
+
+## WP10.8 — Demonstration unit effect replay — 2026-10-28
+
+Added the WP4 Demonstration unit job177 replay. The raw 0x011F packet creates the unit, one nominal 24 ms production `CSkill::OnProcess` step launches Ref loop effect302, and 0x0120 removes it. Focused replay passes; the complete root packet replay CTest passes19/19. Model rendering remains resource-dependent and is not asserted by this fixture.
