@@ -3114,3 +3114,12 @@ Effect74 now routes through `ProcessIceWall74`, matching the complete PE and Ref
 **Replay:** The production-linked harness dispatches the raw bytes through the default packet router, collects both real WBA queue entries, and steps the target through `ProcessWillBeAttacked`. It checks skill/damage/level/message/effect fields, the 200 ms spacing, runtime hit wave, log timestamps, and actual elapsed delivery within the measured polling-step window.
 
 **Evidence:** Both events match: `msg=111 skill=46 effect=0/1` then `msg=111 skill=46 effect=0/−1`, wave `player_clothes.wav`, damage100, level5. Bash5 and Double Strafe46 root replay CTests pass2/2. The test records measured real elapsed time because Windows sleep scheduling does not guarantee exact 24 ms wakeups. No WP8 matrix row is verified. Next: Fire Bolt19.
+
+
+## WP10.8 — Production-linked Fire Bolt packet replay — 2026-10-28
+
+**Packet and Ref walk-through:** `docs/skill/replay/fire_bolt19.tsv` encodes a 31-byte `0x0114` notify-skill packet for skill19, source AID1, target AID2, damage100, level5, division1, and action4. The Ref action-4 path queues message39; the skill attack-effect map selects target effect49, with the default second effect−1.
+
+**Replay:** The production-linked runtime harness dispatches the scenario bytes through the default router and drains the real target WBA queue using nominal 24 ms polling. It verifies one skill19 WBA with message39, effects49/−1, damage100, level5, and checks the delivered runtime wave and queue timestamp against the queued WBA.
+
+**Evidence:** Runtime output matches the Ref WBA fields and uses `player_clothes.wav` for the fixture target's default job. Bash5, Double Strafe46, and Fire Bolt19 root replay CTests pass3/3. No WP8 matrix row is verified. Next: continue with Heal28.

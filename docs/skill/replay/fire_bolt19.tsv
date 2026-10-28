@@ -1,0 +1,2 @@
+# 31-byte ZC_NOTIFY_SKILL layout; target skill action4 uses target hit effect49.
+0x0114	14011300010000000200000078563412000000000000000064000500010004	Fire Bolt 19 (skill19, source AID 1, target AID 2, damage100, level5, div1, action4)

@@ -125,7 +125,8 @@ void ReplayScenario(const std::string& path)
     u16 expectedOpcode = 0;
     const std::vector<u8> bytes = LoadOnePacket(path, expectedOpcode);
     const u16 skillId = static_cast<u16>(bytes[2]) | (static_cast<u16>(bytes[3]) << 8);
-    Require(skillId == 5 || skillId == 46, "runtime replay only has Ref assertions for skills 5 and 46");
+    Require(skillId == 5 || skillId == 19 || skillId == 46,
+        "runtime replay only has Ref assertions for skills 5, 19, and 46");
     Fixture fixture;
 
     CGameModePacketRouter router;
@@ -138,10 +139,10 @@ void ReplayScenario(const std::string& path)
     Require(packet.packetId == expectedOpcode && packet.packetId == 0x0114,
         "scenario opcode does not match active ZC_NOTIFY_SKILL route");
     Require(consumed == static_cast<int>(bytes.size()), "packet reader left trailing scenario bytes");
-    Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Bash packet");
+    Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch skill packet");
     const u32 replayStartTick = GetTickCount();
 
-    const std::size_t expectedWbaCount = skillId == 5 ? 1u : 2u;
+    const std::size_t expectedWbaCount = skillId == 46 ? 2u : 1u;
     Require(fixture.target.m_willBeAttackedList.size() == expectedWbaCount,
         "skill packet enqueued an unexpected number of target WBAs");
     std::vector<WBA> queuedHits(fixture.target.m_willBeAttackedList.begin(),
@@ -153,6 +154,9 @@ void ReplayScenario(const std::string& path)
     if (skillId == 5) {
         Require(queuedHits[0].message == 96 && queuedHits[0].effectId1 == -1 && queuedHits[0].effectId2 == -1,
             "Bash WBA message/effect fields differ from Ref skill action");
+    } else if (skillId == 19) {
+        Require(queuedHits[0].message == 39 && queuedHits[0].effectId1 == 49 && queuedHits[0].effectId2 == -1,
+            "Fire Bolt WBA message/effect fields differ from Ref action-4 target-skill path");
     } else {
         Require(queuedHits[0].message == 111 && queuedHits[0].effectId1 == 0 && queuedHits[0].effectId2 == 1,
             "Double Strafe first WBA differs from Ref action-9 path");
@@ -249,6 +253,9 @@ void ReplayScenario(const std::string& path)
         if (skillId == 5) {
             Require(event.message == 96 && event.effect1 == -1 && event.effect2 == -1,
                 "Bash production WBA log differs from Ref walk-through");
+        } else if (skillId == 19) {
+            Require(event.message == 39 && event.effect1 == 49 && event.effect2 == -1,
+                "Fire Bolt production WBA log differs from Ref action-4 path");
         } else if (index == 0) {
             Require(event.message == 111 && event.effect1 == 0 && event.effect2 == 1,
                 "Double Strafe first production WBA log differs from Ref walk-through");
