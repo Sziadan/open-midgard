@@ -580,21 +580,25 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     Require(packets[1].opcode == 0x0120 && packets[1].bytes.size() == 6,
         "skill-unit removal must use the 6-byte 0x0120 packet");
     const int unitJob = packets[0].bytes[14];
-    Require(unitJob == 126 || unitJob == 127 || unitJob == 131 || unitJob == 132 || unitJob == 133
-            || unitJob == 141 || unitJob == 142 || (unitJob >= 154 && unitJob <= 157)
-            || (unitJob >= 158 && unitJob <= 175) || unitJob == 177 || unitJob == 179
-            || unitJob == 180 || unitJob == 183 || unitJob == 184 || unitJob == 187 || unitJob == 188
+    Require(unitJob == 126 || unitJob == 127 || unitJob == 130 || unitJob == 131 || unitJob == 132 || unitJob == 133
+            || unitJob == 136 || unitJob == 141 || unitJob == 142 || unitJob == 146 || (unitJob >= 154 && unitJob <= 157)
+            || (unitJob >= 158 && unitJob <= 175) || unitJob == 177 || unitJob == 178 || unitJob == 179
+            || unitJob == 180 || unitJob == 182 || unitJob == 183 || unitJob == 184 || unitJob == 185
+            || unitJob == 187 || unitJob == 188 || unitJob == 199 || unitJob == 200 || unitJob == 201
             || (unitJob >= 189 && unitJob <= 194),
         "unsupported skill-unit replay job");
     int expectedLoopEffect = 0;
     switch (unitJob) {
     case 126: expectedLoopEffect = 315; break;
     case 127: expectedLoopEffect = 25; break;
+    case 130: expectedLoopEffect = 91; break;
     case 131: expectedLoopEffect = 319; break;
     case 132: expectedLoopEffect = 318; break;
     case 133: expectedLoopEffect = 0; break;
+    case 136: expectedLoopEffect = 97; break;
     case 141: expectedLoopEffect = 74; break;
     case 142: expectedLoopEffect = 95; break;
+    case 146: expectedLoopEffect = 171; break;
     case 154: expectedLoopEffect = 239; break;
     case 155: expectedLoopEffect = 240; break;
     case 156: expectedLoopEffect = 241; break;
@@ -618,10 +622,13 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     case 174: expectedLoopEffect = 293; break;
     case 175: expectedLoopEffect = 294; break;
     case 177: expectedLoopEffect = 302; break;
+    case 178: expectedLoopEffect = 341; break;
     case 179: expectedLoopEffect = 370; break;
     case 180: expectedLoopEffect = 374; break;
+    case 182: expectedLoopEffect = 405; break;
     case 183: expectedLoopEffect = 404; break;
     case 184: expectedLoopEffect = 522; break;
+    case 185: expectedLoopEffect = 517; break;
     case 187: expectedLoopEffect = 620; break;
     case 188: expectedLoopEffect = 631; break;
     case 189: expectedLoopEffect = 634; break;
@@ -630,6 +637,9 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     case 192: expectedLoopEffect = 640; break;
     case 193: expectedLoopEffect = 641; break;
     case 194: expectedLoopEffect = 642; break;
+    case 199: expectedLoopEffect = 674; break;
+    case 200: expectedLoopEffect = 671; break;
+    case 201: expectedLoopEffect = 672; break;
     default: Require(false, "unsupported skill-unit replay effect mapping");
     }
 
@@ -696,6 +706,11 @@ void ReplaySkillUnitLifecycle(const std::string& path)
                     lifetimeElapsedMs = timeGetTime() - unit->m_SkillStartTime;
                     Require(unit->OnProcess() != 0,
                         "Kaen/Ground Drift unit should remain active during periodic effect steps");
+                }
+            } else if (unitJob == 130 || unitJob == 136 || unitJob == 178) {
+                for (; processSteps < 9992; ++processSteps) {
+                    Require(unit->OnProcess() != 0,
+                        "periodic ground unit should remain active through its Ref effect threshold");
                 }
             } else {
                 std::this_thread::sleep_for(std::chrono::milliseconds(24));

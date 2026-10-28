@@ -457,6 +457,15 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
         set_tests_properties("skill_packet_replay_${_scenario}_unit_lifecycle_checks" PROPERTIES
             WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     endforeach()
+    set(_skill_packet_replay_remaining_unit_scenarios
+        job130 job136 job146 job178 job182 job185 job199 job200 job201)
+    foreach(_scenario IN LISTS _skill_packet_replay_remaining_unit_scenarios)
+        add_test(NAME "skill_packet_replay_${_scenario}_unit_lifecycle_checks"
+            COMMAND skill_packet_replay_runtime_checks
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/${_scenario}_unit_lifecycle.tsv")
+        set_tests_properties("skill_packet_replay_${_scenario}_unit_lifecycle_checks" PROPERTIES
+            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    endforeach()
     set_tests_properties(skill_packet_replay_sanctuary_unit_lifecycle_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_warp_unit_lifecycle_checks PROPERTIES
