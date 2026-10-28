@@ -1,12 +1,15 @@
 #include "Types.h"
 #include "core/Timer.h"
+#include "core/File.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/GameModePacket.h"
 #include "gamemode/Mode.h"
 #include "network/GronPacket.h"
 #include "res/Bitmap.h"
+#include "res/ModelRes.h"
 #include "render/Renderer.h"
 #include "session/Session.h"
+#include "world/3dActor.h"
 #include "world/GameActor.h"
 #include "world/RagEffect.h"
 #include "world/World.h"
@@ -1511,6 +1514,75 @@ void ReplayTrapRevealLifecycle(const std::string& path)
     std::cout << "Trap job=143 aid=100 hidden=1 revealed=1 removed=1 model_resource=not-loaded\n";
 }
 
+void ReplayTrapModelResource(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 4 && packets[0].opcode == 0x011F && packets[0].bytes[14] == 143
+        && packets[3].opcode == 0x0120,
+        "trap model resource replay requires job143 entry and final removal packets");
+
+    g_resMgr.RegisterType("rsm", "", new C3dModelRes());
+    g_resMgr.RegisterType("bmp", "", new CBitmapRes());
+    const std::string modelPath = "data\\model\\"
+        "\xBF\xDC\xBA\xCE\xBC\xD2\xC7\xB0\\\xC6\xAE\xB7\xA6" "03_3.rsm";
+    Require(g_fileMgr.IsDataExist(modelPath.c_str()), "bundled job143 RSM is not staged at its Ref resource path");
+    C3dModelRes* model = g_resMgr.GetAs<C3dModelRes>(modelPath.c_str());
+    Require(model != nullptr && !model->m_objectList.empty() && !model->m_materialNames.empty(),
+        "job143 RSM failed to parse its node/material resources");
+
+    const std::string bitmapPath = "data\\texture\\" + model->m_materialNames.front();
+    CBitmapRes* bitmap = g_resMgr.GetAs<CBitmapRes>(bitmapPath.c_str());
+    Require(bitmap != nullptr && bitmap->m_data != nullptr && bitmap->m_width > 0 && bitmap->m_height > 0,
+        "job143 material BMP failed to load from the bundled texture fixture");
+
+    const std::string textureCacheKey = "@mk:" + model->m_materialNames.front();
+    const auto previousTexture = g_texMgr.m_texTable.find(textureCacheKey.c_str());
+    CTexture* previousTextureValue = previousTexture == g_texMgr.m_texTable.end() ? nullptr : previousTexture->second;
+    if (previousTexture == g_texMgr.m_texTable.end()) {
+        g_texMgr.m_texTable.emplace(textureCacheKey.c_str(), &CTexMgr::s_dummy_texture);
+    } else {
+        previousTexture->second = &CTexMgr::s_dummy_texture;
+    }
+
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    PacketView entry{};
+    int consumed = 0;
+    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), entry, consumed)
+        && router.Dispatch(fixture.mode, entry), "production router rejected the resource-backed job143 entry");
+    CSkill* trap = fixture.world.GetSkillByAID(100);
+    Require(trap != nullptr && trap->m_3dactor != nullptr && trap->m_3dactor->m_node != nullptr,
+        "visible job143 trap did not attach a C3dActor built from the parsed RSM");
+    Require(std::fabs(trap->m_3dactor->m_animSpeed - 0.33333334f) < 1.0e-6f
+        && trap->m_3dactor->m_curMotion == 3
+        && trap->m_3dactor->m_blockType == 0
+        && trap->m_3dactor->m_isHideCheck == 0
+        && trap->m_3dactor->m_animType == 0
+        && trap->m_3dactor->m_pos.x == trap->m_pos.x
+        && trap->m_3dactor->m_pos.y == trap->m_pos.y
+        && trap->m_3dactor->m_pos.z == trap->m_pos.z,
+        "trap model actor fields differ from ShowModel's Ref parameters");
+    PacketView removal{};
+    consumed = 0;
+    Require(TryReadPacket(packets[3].bytes.data(), static_cast<int>(packets[3].bytes.size()), removal, consumed)
+        && router.Dispatch(fixture.mode, removal), "production router rejected the job143 removal");
+    Require(fixture.world.GetSkillByAID(100) == nullptr
+        && std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+            [](CGameObject* object) {
+                const CSkill* skill = dynamic_cast<const CSkill*>(object);
+                return skill != nullptr && skill->m_aid == 100;
+            }),
+        "job143 removal did not destroy its resource-backed skill unit");
+
+    if (previousTexture == g_texMgr.m_texTable.end()) {
+        g_texMgr.m_texTable.erase(textureCacheKey.c_str());
+    } else {
+        previousTexture->second = previousTextureValue;
+    }
+    std::cout << "Trap job=143 model=Trap03_3.rsm bitmap=onetyel_copy.bmp attached=1 removed=1\n";
+}
+
 void ReplayLandMineTriggerLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -2264,13 +2336,16 @@ bool IsTalkieBoxTriggerScenario(const std::string& path)
 int main(int argc, char** argv)
 {
     try {
-        Require(argc == 2, "expected one replay scenario path");
+        const bool trapModelResourceReplay = argc == 3 && std::string(argv[1]) == "--trap-model-resource";
+        Require(argc == 2 || trapModelResourceReplay, "expected one replay scenario path or a trap-model fixture command");
         const std::string runtimeLogPath = "debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log";
         std::ofstream freshRuntimeLog(runtimeLogPath, std::ios::trunc);
         Require(static_cast<bool>(freshRuntimeLog), "could not reset per-run production runtime log");
         freshRuntimeLog.close();
         if (std::string(argv[1]) == "--ground-scope-render") {
             ReplayGroundScopeRender();
+        } else if (trapModelResourceReplay) {
+            ReplayTrapModelResource(argv[2]);
         } else if (IsGroundSkillWaveScenario(argv[1])) {
             ReplayGroundSkillWave(argv[1]);
         } else if (IsMissingActorGroundSkillScenario(argv[1])) {

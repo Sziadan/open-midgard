@@ -281,11 +281,38 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
         "${CMAKE_CURRENT_SOURCE_DIR}/Ref/GRF-Content/data/texture/effect/alpha_down.tga"
         "${CMAKE_CURRENT_BINARY_DIR}/skill_replay/data/texture/effect/alpha_down.tga"
         COPYONLY)
+    file(GLOB_RECURSE _trap_job143_model CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/Ref/GRF-Content/data/model/*03_3.rsm")
+    list(LENGTH _trap_job143_model _trap_job143_model_count)
+    if(NOT _trap_job143_model_count EQUAL 1)
+        message(FATAL_ERROR "Expected one bundled job143 trap model ending in 03_3.rsm, found ${_trap_job143_model_count}")
+    endif()
+    list(GET _trap_job143_model 0 _trap_job143_model_path)
+    file(RELATIVE_PATH _trap_job143_model_relative "${CMAKE_CURRENT_SOURCE_DIR}/Ref/GRF-Content/data/model" "${_trap_job143_model_path}")
+    get_filename_component(_trap_job143_model_relative_dir "${_trap_job143_model_relative}" DIRECTORY)
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay/data/model/${_trap_job143_model_relative_dir}")
+    configure_file("${_trap_job143_model_path}"
+        "${CMAKE_CURRENT_BINARY_DIR}/skill_replay/data/model/${_trap_job143_model_relative}" COPYONLY)
+    file(GLOB_RECURSE _trap_job143_bitmap CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/Ref/GRF-Content/data/texture/*/onetyel copy.bmp")
+    list(LENGTH _trap_job143_bitmap _trap_job143_bitmap_count)
+    if(NOT _trap_job143_bitmap_count EQUAL 1)
+        message(FATAL_ERROR "Expected one bundled job143 material BMP, found ${_trap_job143_bitmap_count}")
+    endif()
+    list(GET _trap_job143_bitmap 0 _trap_job143_bitmap_path)
+    file(RELATIVE_PATH _trap_job143_bitmap_relative "${CMAKE_CURRENT_SOURCE_DIR}/Ref/GRF-Content/data/texture" "${_trap_job143_bitmap_path}")
+    get_filename_component(_trap_job143_bitmap_relative_dir "${_trap_job143_bitmap_relative}" DIRECTORY)
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay/data/texture/${_trap_job143_bitmap_relative_dir}")
+    configure_file("${_trap_job143_bitmap_path}"
+        "${CMAKE_CURRENT_BINARY_DIR}/skill_replay/data/texture/${_trap_job143_bitmap_relative}" COPYONLY)
     add_test(NAME skill_packet_replay_runtime_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/bash5.tsv")
     add_test(NAME skill_ground_scope_render_checks
         COMMAND skill_packet_replay_runtime_checks --ground-scope-render)
+    add_test(NAME skill_packet_replay_trap_model_resource_checks
+        COMMAND skill_packet_replay_runtime_checks --trap-model-resource
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/trap_reveal_lifecycle.tsv")
     add_test(NAME skill_packet_replay_double_strafe_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/double_strafe46.tsv")
@@ -455,6 +482,8 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/ground_skill_wave369.tsv")
     set_tests_properties(skill_packet_replay_runtime_checks PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    set_tests_properties(skill_ground_scope_render_checks skill_packet_replay_trap_model_resource_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_double_strafe_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")

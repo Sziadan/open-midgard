@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 
 #include <windows.h>
 
@@ -186,7 +187,8 @@ void CSkill::ShowModel(const char* modelName)
         HideModel();
     }
 
-    C3dModelRes* model = g_resMgr.GetAs<C3dModelRes>(modelName);
+    const std::string modelPath = std::string("data\\model\\") + modelName;
+    C3dModelRes* model = g_resMgr.GetAs<C3dModelRes>(modelPath.c_str());
     if (model == nullptr) {
         return;
     }

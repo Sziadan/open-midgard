@@ -1760,3 +1760,7 @@ Extended `check_ground_scope_source.py` to compare the Ref-backed render path: `
 
 Added `skill_ground_scope_render_checks`, which calls production `CGroundScope::Render` against a synthetic 16×16 ground, 32×32 attribute grid, and cached test texture without creating a graphics device. The 11×11 scope submits 121 ground-tile faces per frame, the first frame starts with normalized UV origin (0,0), and a second frame changes UVs as the scope rotation advances. Release build passes and CTest is 100/100. The replay validates the production submission math and queue path; loading and uploading the real `magic_target.tga` and trap/unit models remain open for resource-backed acceptance.
 
+## WP4 job143 trap model resource replay
+
+Added a resource-backed replay that stages the bundled `Trap03_3.rsm` and `onetyel copy.bmp`, parses the model and bitmap, routes a real job143 `0x011F` unit entry, and checks the attached `C3dActor` uses the Ref animation speed, frame, flags, and unit position before `0x0120` removes it. This exposed that `CSkill::TrapModelName()` returns a path relative to `data\model\` while the app registers RSM resources with an empty type prefix. `CSkill::ShowModel` now resolves that directory explicitly. The focused replay passes with the app's empty RSM registration. Texture upload remains excluded from this headless check; model parsing, bitmap loading, actor attachment, and cleanup are covered.
+
