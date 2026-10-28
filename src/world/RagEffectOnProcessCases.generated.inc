@@ -335,7 +335,7 @@ case 403: return UnportedEffect();
 case 404: return UnportedEffect();
 case 405: ApplyBottomMagnus("effect\\ring_white.tga", 2); return true;
 case 408: return ProcessSphereWind2Effect();
-case 409: return UnportedEffect();
+case 409: return ProcessSoulBreaker2Effect();
 case 410: return UnportedEffect();
 case 411: return UnportedEffect();
 case 412: return UnportedEffect();

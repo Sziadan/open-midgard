@@ -643,6 +643,8 @@ add_test(NAME particle_time_spread_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_particle_time_spread_callers.py")
 add_test(NAME spherewind2_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_spherewind2_caller.py")
+add_test(NAME soulbreaker2_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_soulbreaker2_caller.py")
 add_test(NAME skill_cast_cancel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_cancel_source.py")
 add_test(NAME status_state_source_check
@@ -680,4 +682,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_twilight_callers.py
     check_particle_time_spread_callers.py
     check_spherewind2_caller.py
+    check_soulbreaker2_caller.py
     check_effect_sprite.py)
