@@ -1752,3 +1752,7 @@ Added `missing_actor_arrow_shower47.tsv` for skill47 sourced from absent AID404.
 
 Added `check_ground_scope_source.py` to compare `CGroundScope` against Ref: all25 skill-to-radius mappings (3/5/7/9/11), constructor defaults, the `m_lastingTime >= timeGetTime()` lifetime boundary, and message14/22/115/117 field and scope-size behavior. Registered it as the root Release CTest `ground_scope_source_check`. The comparator passes, and the Release build plus all99 CTests pass. Rendering through a loaded `C3dGround` and `magic_target.tga` is still unverified.
 
+## WP4 CGroundScope Render source comparison
+
+Extended `check_ground_scope_source.py` to compare the Ref-backed render path: `magic_target.tga`, scope-origin calculation, nested tile traversal, rotation and normalization of all four UV coordinates, color expression, tile submission coordinates, and rotation advancement. The source comparator passes. Runtime rendering remains open because the production `C3dGround::RenderGroundTile` path submits through the renderer and the replay harness does not initialize a graphics device; unit-model resource acceptance is also still open.
+

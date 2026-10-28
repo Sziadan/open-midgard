@@ -95,4 +95,35 @@ for ref_fragment in (
 ):
     assert ref_fragment in ref_send, f"Ref SendMsg mapping missing: {ref_fragment}"
 
-print(f"CGroundScope source parity: {len(expected)} exact skill radii, ctor, lifetime, and messages14/22/115/117")
+local_render = body_after(LOCAL, "void CGroundScope::Render(matrix* viewMatrix)")
+ref_render = body_after(REF, "void __thiscall CGroundScope::Render(CGroundScope *this, matrix *vtm)")
+for local_fragment in (
+    "viewMatrix == nullptr || m_scopeSize <= 0",
+    "gameMode == nullptr || gameMode->m_world == nullptr || gameMode->m_world->m_ground == nullptr",
+    'g_texMgr.GetTexture("effect\\\\magic_target.tga", false)',
+    "for (int row = 0; row < m_scopeSize; ++row)",
+    "for (int column = 0; column < m_scopeSize; ++column)",
+    "u0 * cosR + v0 * sinR",
+    "-u0 * sinR + v0 * cosR",
+    "(coord.x + half) / span",
+    "(coord.y + half) / span",
+    "originX + column",
+    "originY + row",
+    "m_rot += m_rotSpeed",
+):
+    assert local_fragment in local_render, f"local Render behavior missing: {local_fragment}"
+for ref_fragment in (
+    "half_scope_size = (double)m_scope_size * 0.5",
+    "sin_r = v8",
+    "cos_r = _cos(v9)",
+    "color = -2130706433 - ((unsigned int)(__int64)(sin_r * -40.0) << 24)",
+    "Texture = CTexMgr::GetTexture(&g_texMgr, aEffectMagicTar, 0)",
+    "C3dGround::RenderGroundTile(ground, vtm, v16, v26, color, Texture, uv)",
+    "this->m_rot = this->m_rot_speed + this->m_rot",
+):
+    assert ref_fragment in ref_render, f"Ref Render behavior missing: {ref_fragment}"
+assert "const float originX =" not in local_render
+assert "const int originX = m_groundPosX - m_scopeSize / 2" in local_render
+assert "const int originY = m_groundPosY - m_scopeSize / 2" in local_render
+
+print(f"CGroundScope source parity: {len(expected)} exact skill radii, ctor, lifetime, messages14/22/115/117, and Render tile/UV behavior")
