@@ -5421,6 +5421,84 @@ void RenderHitLine3(const CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+// Ref/RagEffect2.cpp:16228-16490; canonical executable RenderHitLine at
+// HighPriest.exe.c:440741-441010. F1=1 in RenderTeiRect means spark position
+// is already absolute, so these points must not be translated by prim.m_pos.
+void RenderHitLine(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture[0];
+
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0 || gi.process <= 0) continue;
+
+        for (int segment = 0; segment < 20; ++segment) {
+            const auto makePoint = [&gi](int historyIndex) {
+                const int historyCount = gi.flag[static_cast<size_t>(historyIndex)];
+                double distance = 0.0;
+                double decay = 1.0;
+                for (int history = 0; history < historyCount; ++history) {
+                    distance += static_cast<double>(gi.distance) * 2.0 * decay;
+                    decay *= 0.69999999;
+                }
+
+                const float height = gi.height[static_cast<size_t>(historyIndex)];
+                if (height > 0.0f) {
+                    distance += static_cast<double>(height) * 0.011111111
+                        * static_cast<double>(gi.distance) * decay;
+                }
+                const int angle = static_cast<short>(static_cast<long long>(height));
+                const double vertical = static_cast<double>(g_sinTable[angle])
+                    * static_cast<double>(gi.distance) * -1.5 * decay;
+                return vector3d{
+                    static_cast<float>(distance * g_cosTable[gi.riseAngle]),
+                    static_cast<float>(vertical),
+                    static_cast<float>(distance * g_sinTable[gi.riseAngle]),
+                };
+            };
+
+            const vector3d offsetA = makePoint(segment);
+            const vector3d offsetB = makePoint(segment + 1);
+            int angle = GetReferenceAngle(offsetA.x - offsetB.x, offsetA.z - offsetB.z) + 90;
+            angle %= 360;
+            const vector3d pointA{offsetA.x + gi.sparkX, offsetA.y + gi.sparkY, offsetA.z + gi.sparkZ};
+            const vector3d pointB{offsetB.x + gi.sparkX, offsetB.y + gi.sparkY, offsetB.z + gi.sparkZ};
+            const int alpha = static_cast<int>(gi.alphaB) - segment * 5;
+            if (alpha <= 0) continue;
+
+            const unsigned char red = 255;
+            const unsigned char green = gi.alphaT == 2
+                ? static_cast<unsigned char>(segment * 7 + 60) : 200;
+            const unsigned char blue = gi.alphaT == 2
+                ? static_cast<unsigned char>(segment * 7 + 60)
+                : static_cast<unsigned char>(segment * 7 + 10);
+            const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned short>(alpha)) << 24)
+                | (static_cast<unsigned int>(red) << 16)
+                | (static_cast<unsigned int>(green) << 8)
+                | static_cast<unsigned int>(blue);
+
+            vector3d previousA{};
+            vector3d previousB{};
+            for (int ring = 0; ring <= 3; ++ring) {
+                const int ringAngle = ring * 120;
+                const float radial = gi.maxHeight * g_cosTable[ringAngle];
+                const float vertical = gi.maxHeight * g_sinTable[ringAngle];
+                const float offsetX = radial * g_cosTable[angle];
+                const float offsetZ = radial * g_sinTable[angle];
+                const vector3d currentA{pointA.x + offsetX, pointA.y + vertical, pointA.z + offsetZ};
+                const vector3d currentB{pointB.x + offsetX, pointB.y + vertical, pointB.z + offsetZ};
+                if (ring > 0) {
+                    // RenderTeiRect(TN=0, F1=1, colors, Ty1=0, Ty2=1, Tx=0, Tx2=1).
+                    SubmitWorldTeiRect(previousA, currentA, currentB, previousB, viewMatrix,
+                        texture, color, 0.0f, 1.0f, 1.0f, 0.0f, D3DBLEND_ONE, 0.0f,
+                        static_cast<int>(prim.m_renderFlag));
+                }
+                previousA = currentA;
+                previousB = currentB;
+            }
+        }
+    }
+}
+
 void RenderSoulLink(const CEffectPrim& prim, const matrix& viewMatrix)
 {
     CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
@@ -13250,6 +13328,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_AIRTEXTURE) {
         RenderAirTexture(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_HITLINE) {
+        RenderHitLine(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_HITLINE3) {

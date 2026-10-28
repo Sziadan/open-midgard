@@ -268,7 +268,7 @@ extract_test_region(angel_render "${effect_source}" reference_particle_render_fa
 extract_test_region(particle_render "${effect_source}" particle_render_helper_family)
 extract_body(air_texture_renderer "${effect_source}" "void RenderAirTexture(" "void RenderHitLine3(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/AirTextureRendererBody.inc" "${air_texture_renderer}")
-extract_body(hitline3_renderer "${effect_source}" "void RenderHitLine3(" "void RenderSoulLink(")
+extract_body(hitline3_renderer "${effect_source}" "void RenderHitLine3(" "void RenderHitLine(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/HitLine3RendererBody.inc" "${hitline3_renderer}")
 extract_body(soullink_renderer "${effect_source}" "void RenderSoulLink(" "void RenderSoulParticle(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/SoulLinkRendererBody.inc" "${soullink_renderer}")
@@ -607,6 +607,8 @@ add_test(NAME prim3dline_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dline.py")
 add_test(NAME prim3dtexturebillboard_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dtexturebillboard.py")
+add_test(NAME hitline_render_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_hitline_render.py")
 add_test(NAME skill_cast_cancel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_cancel_source.py")
 add_test(NAME status_state_source_check
@@ -626,4 +628,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../Ref/RagEffect2.cpp
     ../../src/world/RagEffect.cpp
     ../../src/world/RagEffectOnProcess3Cases.generated.inc
+    check_hitline_render.py
     check_effect_sprite.py)
