@@ -631,3 +631,7 @@ The PE invokes Detecting while the primary Ref caller omits it. Effect119 now ro
 # WP10.3 SpearBmr caller and action model
 
 Canonical PE case80 invokes SpearBmr and matches the primary Ref helper, while the available primary Ref caller omits it; the secondary `Ref/dhxj` helper is a divergent variant and is excluded. The current `CRagEffect` port derives from `CGameObject` and has no `CRenderObject::SetAction` renderer interface, unlike the decompiled call site. The port records the same camera-relative action request in effect-local action fields; whether that state has the same visual consequence in the current runtime remains open for live acceptance.
+
+# WP10.3 TurnUndead helper variant
+
+Canonical PE `CRagEffect::TurnUndead` and the primary Ref helper agree on state0 circle/flash emission, state37 wave, projected master position and state50 ring. The PE OnProcess switch calls it; the primary Ref caller omits it. The secondary `Ref/dhxj` implementation is a differing variant and is excluded as the parity oracle. Live visual/audio acceptance remains open.

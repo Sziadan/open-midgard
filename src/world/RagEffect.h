@@ -670,6 +670,7 @@ private:
     void SpawnDragonSmoke();
     void SpawnLockOn();
     void SpawnSpearBmr();
+    void SpawnTurnUndead();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();

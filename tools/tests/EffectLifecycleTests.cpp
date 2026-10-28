@@ -570,6 +570,7 @@ struct CRagEffect : CGameObject {
     void SpawnDragonSmoke();
     void SpawnLockOn();
     void SpawnSpearBmr();
+    void SpawnTurnUndead();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5444,6 +5445,61 @@ int main()
             &&waveCalls[0].x==8&&waveCalls[0].y==0&&waveCalls[0].z==26
             &&effect.setActionCalls==4&&effect.lastAction==7&&effect.lastActionMotion==1&&effect.lastActionType==1,
             "SpearBmr plays its frame pulses at effect-minus-listener X/Z and applies canonical facing action");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+        rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,4};CRenderObject master;master.m_pos={20,30,40};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=82;effect.m_master=&master;effect.m_effectPos={8,9,10};
+        effect.m_stateCnt=0;g_texMgr.requests.clear();waveCalls.clear();
+        rngValues={359,59,24,29,29, 10,0,0,0,0, 20,10,10,5,15, 30,20,5,12,12, 40,30,20,2,3};
+        rngCursor=0;const int beforeRng=rngDraws;effect.SpawnTurnUndead();
+        tlvertex3d projected{};ProjectReferenceEffectVertex(master.m_pos,testView.view,projected);
+        check(effect.m_primList.size()==6&&rngDraws-beforeRng==25&&rngCursor==25
+            &&effect.m_tlvertX==projected.x&&effect.m_tlvertY==projected.y
+            &&effect.m_effectPos.x==20&&effect.m_effectPos.y==30&&effect.m_effectPos.z==40,
+            "TurnUndead state zero projects and follows its master while emitting one circle and five flashes");
+        CEffectPrim* circle=effect.m_primList.front();
+        check(circle->m_type==PP_2DCIRCLE&&circle->UsesReferenceScreenCircle()&&circle->m_radius==370
+            &&circle->m_radiusSpeed==-(370.0f*0.050000001f)&&circle->m_duration==20&&(circle->m_pattern&1)==1
+            &&circle->m_deltaPos2.y==-40&&circle->m_alpha==0&&circle->m_maxAlpha==130
+            &&circle->m_alphaSpeed==circle->m_maxAlpha*0.16666667f&&circle->m_fadeOutCnt==10
+            &&circle->m_texture.size()==1&&g_texMgr.requests[0]=="effect\\alpha_down.tga",
+            "TurnUndead opening circle preserves source motion, fade, screen family and exact texture");
+        const int expectedRandom[5][5]={{359,59,24,29,29},{10,0,0,0,0},{20,10,10,5,15},{30,20,5,12,12},{40,30,20,2,3}};
+        auto flashIt=effect.m_primList.begin();++flashIt;
+        for(int index=0;index<5;++index,++flashIt){
+            CEffectPrim* flash=*flashIt;const int* values=expectedRandom[index];
+            check(flash->m_type==PP_2DFLASH&&flash->UsesReferenceFlash()&&flash->m_duration==20&&flash->m_count==-1
+                &&flash->m_speed3d.x==20&&flash->m_speed3d.y==40&&flash->m_deltaPos2.y==-40
+                &&flash->m_longitude==static_cast<float>(values[0])
+                &&std::fabs(flash->m_longSpeed-static_cast<float>(values[1]+10)*0.1f)<0.00001f
+                &&flash->m_arcAngle==static_cast<float>(values[2]+5)*0.1f
+                &&flash->m_heightSize==static_cast<float>(values[3]+350)
+                &&std::fabs(flash->m_heightSpeed-static_cast<float>(values[4]+150)*-0.1f)<0.00001f
+                &&std::fabs(flash->m_longAccel-static_cast<float>(static_cast<double>(flash->m_longSpeed)/20.0*-0.66666669))<0.000001f
+                &&flash->m_alpha==0&&flash->m_maxAlpha==150&&flash->m_alphaSpeed==15&&flash->m_fadeOutCnt==14
+                &&flash->m_texture.size()==1&&flash->m_texture[0]==&g_texMgr.texture
+                &&flash->m_spriteSprName.empty()&&g_texMgr.requests[static_cast<size_t>(index+1)]=="EFFECT\\alpha_center.tga",
+                "TurnUndead flash preserves five sequential RNG draws, source payload and exact texture casing");
+        }
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        effect.m_stateCnt=37;effect.SpawnTurnUndead();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_Bash.wav"&&waveCalls[0].x==17
+            &&waveCalls[0].y==0&&waveCalls[0].z==36&&effect.m_primList.empty()&&rngCursor==25,
+            "TurnUndead state 37 plays its canonical effect-minus-listener wave without emitting primitives");
+        master.m_pos={25,35,45};effect.m_stateCnt=50;effect.SpawnTurnUndead();
+        CEffectPrim* ring=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(ring&&effect.m_primList.size()==1&&ring->m_type==PP_3DTEXTURE&&ring->UsesReferenceTexture()
+            &&ring->m_duration==30&&ring->m_roll==90&&ring->m_widthSpeed==1.5f&&ring->m_heightSpeed==1.5f
+            &&ring->m_deltaPos2.y==-7&&ring->m_widthAccel==0.15f&&ring->m_heightAccel==0.15f&&ring->m_alpha==150
+            &&ring->m_fadeOutCnt==20&&ring->m_changePoint==15&&ring->m_changeWidthSpeed==0.5f
+            &&ring->m_changeHeightSpeed==0.5f&&ring->m_changeWidthAccel==-0.033333335f
+            &&ring->m_changeHeightAccel==-0.033333335f&&ring->m_numSegments==1
+            &&ring->m_texture.size()==1&&g_texMgr.requests.back()=="effect\\ring_liner.tga"
+            &&ring->m_pos.x==25&&ring->m_pos.y==35&&ring->m_pos.z==45,
+            "TurnUndead state 50 emits the canonical expanding ring at the followed master position");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
         rngValues.clear();rngCursor=0;
     }

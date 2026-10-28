@@ -120,7 +120,7 @@ case 78: return ProcessClipWaveStrEffect();
 case 79: return ProcessEffectFrameLegacy();
 case 80: SpawnSpearBmr(); return true;
 case 81: return ProcessEffectFrameLegacy();
-case 82: return UnportedEffect();
+case 82: SpawnTurnUndead(); return true;
 case 83: return ProcessClipWaveStrEffect();
 case 84: return ProcessClipWaveStrEffect();
 case 85: return ProcessClipWaveStrEffect();

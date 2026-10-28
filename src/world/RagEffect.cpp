@@ -12428,7 +12428,7 @@ bool CEffectPrim::UsesReferenceCircle() const
 bool CEffectPrim::UsesReferenceTexture() const
 {
     return m_type == PP_3DTEXTURE && m_master
-        && (m_master->GetEffectType() == 48 || m_master->GetEffectType() == 60 || m_master->GetEffectType() == 93
+        && (m_master->GetEffectType() == 48 || m_master->GetEffectType() == 60 || m_master->GetEffectType() == 82 || m_master->GetEffectType() == 93
             || m_master->GetEffectType() == 94 || m_master->GetEffectType() == 99
             || m_master->GetEffectType() == 119 || m_master->GetEffectType() == 196 || m_master->GetEffectType() == 452 || m_master->GetEffectType() == 114
             || m_master->GetEffectType() == 137);
@@ -12457,12 +12457,12 @@ bool CEffectPrim::UsesReferenceSphere() const
 
 bool CEffectPrim::UsesReferenceScreenCircle() const
 {
-    return m_type == PP_2DCIRCLE && m_master && (m_master->GetEffectType() == 16 || m_master->GetEffectType() == 40 || m_master->GetEffectType() == 121 || m_master->GetEffectType() == 128);
+    return m_type == PP_2DCIRCLE && m_master && (m_master->GetEffectType() == 16 || m_master->GetEffectType() == 40 || m_master->GetEffectType() == 82 || m_master->GetEffectType() == 121 || m_master->GetEffectType() == 128);
 }
 
 bool CEffectPrim::UsesReferenceFlash() const
 {
-    return m_type == PP_2DFLASH && m_master && (m_master->GetEffectType() == 16 || m_master->GetEffectType() == 40 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 99);
+    return m_type == PP_2DFLASH && m_master && (m_master->GetEffectType() == 16 || m_master->GetEffectType() == 40 || m_master->GetEffectType() == 82 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 99);
 }
 
 bool CEffectPrim::UsesReferenceQuadHorn() const
@@ -25657,3 +25657,77 @@ void CRagEffect::SpawnSpearBmr()
 }
 
 // TEST_BODY_END spear_bmr_handler
+
+void CRagEffect::SpawnTurnUndead()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (m_stateCnt == 37 && mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_Bash.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+    if (mode && mode->m_view) {
+        tlvertex3d projected{};
+        ProjectReferenceEffectVertex(master->m_pos, mode->m_view->GetViewMatrix(), projected);
+        m_tlvertX = projected.x;
+        m_tlvertY = projected.y;
+    }
+    if (m_stateCnt == 0) {
+        CEffectPrim* circle = LaunchEffectPrim(PP_2DCIRCLE, vector3d{});
+        circle->m_radius = 370.0f;
+        circle->m_radiusSpeed = -(circle->m_radius * 0.050000001f);
+        circle->m_duration = 20;
+        circle->m_pattern |= 1u;
+        circle->m_deltaPos2.y = -40.0f;
+        circle->m_alpha = 0.0f;
+        circle->m_maxAlpha = 130.0f;
+        circle->m_alphaSpeed = circle->m_maxAlpha * 0.16666667f;
+        circle->m_fadeOutCnt = circle->m_duration - 10;
+        circle->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false));
+
+        for (int index = 0; index < 5; ++index) {
+            CEffectPrim* flash = LaunchEffectPrim(PP_2DFLASH, vector3d{});
+            flash->m_duration = 20;
+            flash->m_count = -1;
+            flash->m_speed3d.x = master->m_pos.x;
+            flash->m_speed3d.y = master->m_pos.z;
+            flash->m_deltaPos2.y = -40.0f;
+            flash->m_longitude = static_cast<float>(rand() % 360);
+            flash->m_longSpeed = static_cast<float>(rand() % 60 + 10) * 0.1f;
+            flash->m_longAccel = flash->m_longSpeed / static_cast<double>(flash->m_duration) * -0.66666669;
+            flash->m_arcAngle = static_cast<float>(rand() % 25 + 5) * 0.1f;
+            flash->m_heightSize = static_cast<float>(rand() % 30 + 350);
+            flash->m_heightSpeed = static_cast<float>(rand() % 30 + 150) * -0.1f;
+            flash->m_alpha = 0.0f;
+            flash->m_maxAlpha = 150.0f;
+            flash->m_alphaSpeed = flash->m_maxAlpha * 0.1f;
+            flash->m_fadeOutCnt = flash->m_duration - flash->m_duration / 3;
+            flash->m_texture.push_back(g_texMgr.GetTexture("EFFECT\\alpha_center.tga", false));
+        }
+    }
+    m_effectPos = master->m_pos;
+    if (m_stateCnt == 50) {
+        CEffectPrim* ring = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+        ring->m_duration = 30;
+        ring->m_roll = 90.0f;
+        ring->m_widthSpeed = 1.5f;
+        ring->m_heightSpeed = 1.5f;
+        ring->m_deltaPos2.y = -7.0f;
+        ring->m_widthAccel = ring->m_widthSpeed * 0.1f;
+        ring->m_heightAccel = ring->m_heightSpeed * 0.1f;
+        ring->m_alpha = 150.0f;
+        ring->m_fadeOutCnt = ring->m_duration - 10;
+        ring->m_changePoint = 15;
+        ring->m_changeWidthSpeed = 0.5f;
+        ring->m_changeWidthAccel = -0.033333335f;
+        ring->m_changeHeightSpeed = 0.5f;
+        ring->m_changeHeightAccel = -0.033333335f;
+        ring->m_numSegments = 1;
+        InitReferenceSegments(ring);
+        ring->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_liner.tga", false));
+    }
+}
+
+// TEST_BODY_END turn_undead_handler

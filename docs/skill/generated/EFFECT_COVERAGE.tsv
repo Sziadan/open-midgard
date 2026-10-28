@@ -120,7 +120,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 79	OnProcess	EarthSpike	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	91
 80	OnProcess	SpearBmr	routed	OnProcess -> SpawnSpearBmr(); return true;	src/world/SkillSpecialEffect.cpp	68
 81	OnProcess	Pierce	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	79
-82	OnProcess	TurnUndead	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+82	OnProcess	TurnUndead	routed	OnProcess -> SpawnTurnUndead(); return true;	src/world/SkillSpecialEffect.cpp	79
 83	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		15
 84	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	15
 85	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	15
