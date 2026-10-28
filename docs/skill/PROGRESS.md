@@ -1772,3 +1772,7 @@ Release build passes and CTest is 102/102 with the all-trap asset audit register
 
 Expanded the resource-backed fixture to stage the trap model directory and its bitmap materials. The runtime replay now loads all ten mapped RSMs, loads each referenced BMP through `CBitmapRes`, and calls production `C3dActor::AssignModel` and `SetFrame(3)` for every model. The existing job143 packet path still verifies `CSkill::ShowModel` attachment parameters and removal. The full Release build passes and CTest is 102/102. The test substitutes cached dummy render textures to avoid graphics-device upload, so it covers parsing, bitmap loading, node assignment, and lifecycle rather than visual raster output.
 
+## WP10.3 effect105 inline no-op — 2026-10-28
+
+The canonical PE cases 105/161/198/443/489/490 share an inline no-op branch that only reaches the common `m_stateCnt` increment and duration check; the primary Ref has no separate helper. Routed the five still-unported cases to `return true`, preserving that lifecycle without invented visuals, audio, or RNG. Added `check_effect105_inline.py` and its CTest entry, checking the exact PE case group, all five routes, and the shared `OnProcess` tail. Corrected a stale 0x0117 comparator assertion so it accepts the source-matched UI-only `SendMsg(99)` call. Coverage audit: 610 routed / 83 explicit unported / 0 launched-but-unported. Release app build passes, replay CTest passes 102/102, and parity CTest passes 203/203. Next 5C candidate: effect116.
+

@@ -38,6 +38,11 @@ FORCE_ROUTE.add(440)
 
 DIRECT_CALLS = {
     # Main OnProcess cases whose index handler includes more than raw STR.
+    105: "return true;",
+    161: "return true;",
+    443: "return true;",
+    489: "return true;",
+    490: "return true;",
     41: "return ProcessAngelus();",
     336: "return ProcessGuardEffects();",
     496: "return ProcessGuardEffects();",
@@ -459,7 +464,6 @@ INIT_HANDLER_CALLS = {
     601: "SpawnSight2", 697: "SpawnWeatherCloud", 698: "SpawnWeatherCloud",
     493: "ProcessEnchantPoison2",
 }
-
 
 def load_rows() -> tuple[list[dict[str, str]], dict[int, dict[str, str]]]:
     with INDEX.open(encoding="utf-8", newline="") as stream:

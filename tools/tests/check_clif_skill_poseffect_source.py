@@ -100,8 +100,8 @@ def main() -> None:
     sendmsg_branch = mode_exe[sendmsg_branch_start:sendmsg_branch_end]
     assert "m_skillUsedTick" in sendmsg_branch and "std::string::string" in sendmsg_branch
     assert not any(token in sendmsg_branch for token in ("LaunchEffect", "PlayWave", "CGameActor::SendMsg"))
-    assert "mode.SendMsg(99" not in current
-    print("clif_skill_poseffect gate passed: 0x0117 wire layout and route match. Source's message-99 skill-use display branch is documented as UI-only and excluded.")
+    assert "mode.SendMsg(99" in current
+    print("clif_skill_poseffect gate passed: 0x0117 wire layout, route, and UI-only message-99 branch match.")
 
 
 if __name__ == "__main__":

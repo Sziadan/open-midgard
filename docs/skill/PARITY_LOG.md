@@ -3358,3 +3358,7 @@ Ref `Zc_Notify_Groundskill` resolves source AID, sends actor message38 only if f
 
 `tools/tests/check_ground_scope_source.py` compares the exact `GetScopeSize` mapping against Ref `Skill.cpp:4`, ctor defaults against `:296`, the inclusive lifetime predicate against `:662`, and `SendMsg` cases14/22/115/117 against `:2445`. The 25 mapped skill IDs produce sizes3/5/7/9/11; message117 adds2 to the mapped radius and sets rotation speed to `0.5 / scopeSize`. CTest `ground_scope_source_check` passes. Runtime tile rendering remains open because it needs a loaded ground and `effect\\magic_target.tga` fixture.
 
+# WP10.3 effect105 inline no-op
+
+The canonical `HighPriest.exe.c` main `OnProcess` cases 105/161/198/443/489/490 only break to the shared frame-count tail; there is no corresponding primary `Ref/RagEffect.cpp` handler body. The five formerly unported cases now return true from their explicit dispatch routes so `CRagEffect::OnProcess` performs the canonical common state increment and duration check without logging an unported effect or adding visual/audio work. `tools/tests/check_effect105_inline.py` compares the exact PE case group, all five local routes, and the common lifecycle tail. No RNG draws or resource literals occur in this branch.
+
