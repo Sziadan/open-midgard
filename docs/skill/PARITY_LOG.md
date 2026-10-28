@@ -3414,3 +3414,7 @@ Primary Ref and canonical PE `CRagEffect::Init` both map effect188 to `aYunta3St
 ## WP5C effects189-195 STR mappings
 
 Primary Ref and canonical PE `CRagEffect::Init` agree on seven adjacent mappings: 189 `yunta_4.str` (`0x71ABD0`), 190 `yunta_5.str` (`0x71ABC4`), 191 `homing.str` (`0x71ABB8`), 192 `poison.str` (`0x71ABAC`), 193 `silence.str` (`0x71ABA0`), 194 `stun.str` (`0x71AB94`), and 195 `StoneCurse.str` (`0x71ACC0`). The local catalog/name table and routes agree; canonical OnProcess uses the shared `ProcessEZ2STR(0,-80,0)` caller. `check_effect189_195_str_mappings.py` checks all mappings, executable bytes, local tables/routes, caller group, and inclusion in the generic STR lifecycle ID matrix. None of the seven media clips is in the workspace; no visual acceptance is claimed.
+
+## WP5C effects213/214 STR mappings
+
+Primary Ref and canonical PE `CRagEffect::Init` agree that effect213 maps to `Deffender.str` (`aDeffenderStr`, VA `0x71AAF4`) and effect214 maps to `Keeping.str` (`aKeepingStr`, VA `0x71AAE8`). The local catalog, STR-name table, and routes agree. Both cases use the shared canonical `ProcessEZ2STR(0,-80,0)` caller, and the generic STR lifecycle matrix includes both IDs. `check_effect213_214_str_mappings.py` validates these source mappings, resolved bytes, local tables/routes, caller group, and lifecycle coverage. Their clips are absent, so no media/visual acceptance is claimed.
