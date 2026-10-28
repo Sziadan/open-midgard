@@ -74,7 +74,7 @@ case 559: SpawnBlueFall(0, 1); return true;
 case 560: SpawnBlueFall(1, 1); return true;
 case 561: return UnportedEffect();
 case 562: return UnportedEffect();
-case 563: return UnportedEffect();
+case 563: return ProcessEffect563();
 case 564: ApplyCoupleCasting("effect\\ring_red.tga"); return true;
 case 565: return ProcessTier3StrEffect();
 case 566: return ProcessTier3StrEffect();

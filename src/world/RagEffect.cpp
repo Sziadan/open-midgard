@@ -21040,6 +21040,14 @@ bool CRagEffect::ProcessEffect605()
     return true;
 }
 
+bool CRagEffect::ProcessEffect563()
+{
+    if (m_stateCnt < 100 && m_stateCnt % 5 == 0) {
+        g_modeMgr.GetCurrentGameMode()->SendMsg(135, 0, 0, 0);
+    }
+    return true;
+}
+
 bool CRagEffect::ProcessNpcStopEffects()
 {
     SpawnNpcStop(m_type == 604 ? 2 : 0);

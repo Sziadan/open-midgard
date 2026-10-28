@@ -3549,3 +3549,8 @@ PE/primary Ref caller cases342 (`OnProcess2 0x156`) and564 (`OnProcess3 0x234`) 
 ## WP5C effect605 stop-message handler
 
 PE and primary Ref `OnProcess3` case `0x25D` at `HighPriest.exe.c:418704-418708` / `Ref/RagEffect.cpp:12065-12069` return immediately if `m_stateCnt != 0`; otherwise they call the master’s `CGameObject::SendMsg(master, nullptr, 109, 604, 0, 0)` and return. The local method forwards `SendMsg(nullptr, 109, 604, 0, 0)` through the master’s virtual API. Receiver `CAbleToMakeEffect::SendMsg` handles109 with `RemoveEffectById(static_cast<int>(par1))`. `check_effect605_stop_message.py` compares PE/Ref case branch, generated route, local send tuple and receiver. Lifecycle checks assert the state gate, exact message/argument, unchanged position, and no effect/audio/RNG side effects. Case list: 605. BLOCKED: none.
+
+
+## WP5C effect563 periodic game-mode message
+
+PE and primary Ref OnProcess3 case `0x233` (`effect563`) send CMode message135 only when stateCnt is below100 and divisible by5. The branch jumps to shared `LABEL_346` at `HighPriest.exe.c:419083-419084` / `Ref/RagEffect.cpp:12444+`; this shared destination sends `135,0,0,0` and returns. The local `ProcessEffect563` directly preserves the isolated case behavior and never executes neighboring Effect_SPR logic. `check_effect563_mode_message.py` checks both callers and the shared target. Lifecycle coverage walks states0-105, proving twenty message sends at 0,5,...,95 and no visual/audio/RNG or position side effects. Case list: 563. BLOCKED: none.

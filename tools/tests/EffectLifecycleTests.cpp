@@ -666,6 +666,7 @@ struct CRagEffect : CGameObject {
     bool ProcessSlimPotionEffects(int);
     bool ProcessBottomHermode517();
     bool ProcessEffect605();
+    bool ProcessEffect563();
     void SpawnBlueFall(int, int);
     bool ProcessBeginAsura1_467();
     bool ProcessBeginAsura1Variant(const char*);
@@ -10834,6 +10835,24 @@ int main()
             &&effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9
             &&effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==draws,
             "effect605 state zero sends message109 argument604 to master and spawns nothing");
+    }
+    {
+        gameMode.messages=0;gameMode.messageIds.clear();waveCalls.clear();
+        CRagEffect effect;effect.m_type=563;effect.m_effectPos={7,8,9};effect.m_pos={10,11,12};
+        const int draws=rngDraws;
+        for(int state=0;state<=105;++state) {
+            effect.m_stateCnt=static_cast<short>(state);
+            const int before=gameMode.messages;
+            check(effect.ProcessEffect563(),"effect563 always returns from its inline case");
+            const bool shouldSend=state<100&&state%5==0;
+            check(gameMode.messages==before+(shouldSend?1:0)
+                &&(!shouldSend||gameMode.messageIds.back()==135),
+                "effect563 sends message135 exactly at each five-state interval below100");
+        }
+        check(gameMode.messages==20&&effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9
+            &&effect.m_pos.x==10&&effect.m_pos.y==11&&effect.m_pos.z==12
+            &&effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "effect563 does not alter positions or emit visuals, audio or RNG");
     }
     {
         CRenderObject actor, listener; actor.m_pos={30,40,50}; listener.m_pos={5,300,8};
