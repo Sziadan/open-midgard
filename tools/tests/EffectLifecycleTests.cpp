@@ -589,6 +589,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect457();
     bool ProcessEffect466();
     bool ProcessEffect501();
+    bool ProcessEffect704();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5813,6 +5814,25 @@ int main()
         check(master.m_roty==418&&rngDraws==beforeRng&&effect.m_primList.empty(),
             "Effect501 preserves one-subtraction wrap without RNG or primitives");
         g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject master;master.m_roty=7;
+        CRagEffect effect;effect.m_type=704;effect.m_master=&master;
+        const int beforeRng=rngDraws;waveCalls.clear();
+        effect.m_stateCnt=9;effect.ProcessEffect704();
+        check(master.m_roty==7,"Effect704 leaves rotation unchanged before state10");
+        effect.m_stateCnt=10;effect.ProcessEffect704();
+        check(master.m_roty==37,"Effect704 begins its 30-degree rotation at state10");
+        master.m_roty=0;effect.m_stateCnt=33;effect.ProcessEffect704();
+        check(master.m_roty==30,"Effect704 includes state33 in its rotation window");
+        master.m_roty=7;effect.m_stateCnt=34;effect.ProcessEffect704();
+        check(master.m_roty==7,"Effect704 stops rotating at state34");
+        master.m_roty=345;effect.m_stateCnt=10;effect.ProcessEffect704();
+        check(master.m_roty==15,"Effect704 subtracts360 after crossing one turn");
+        master.m_roty=720;effect.ProcessEffect704();
+        check(master.m_roty==390&&rngDraws==beforeRng&&waveCalls.empty()
+            &&effect.m_primList.empty(),
+            "Effect704 wraps only once and emits no RNG, audio or primitives");
     }
     {
         CRagEffect effect;effect.m_type=212;effect.m_duration=500;

@@ -24356,6 +24356,18 @@ bool CRagEffect::ProcessEffect501()
 
 // TEST_BODY_END effect501_handler
 
+bool CRagEffect::ProcessEffect704()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return true;
+    if (m_stateCnt < 10 || m_stateCnt >= 34) return true;
+    master->m_roty += 30.0f;
+    if (master->m_roty > 360.0f) master->m_roty -= 360.0f;
+    return true;
+}
+
+// TEST_BODY_END effect704_handler
+
 bool CRagEffect::OnProcess2Legacy()
 {
     CRenderObject* master = ResolveCurrentMaster();

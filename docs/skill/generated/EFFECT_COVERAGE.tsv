@@ -691,4 +691,4 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 701	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		98
 702	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		98
 703	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		98
-704	OnProcess3	inline	unported	OnProcess3 -> UnportedEffect	src/world/GameActorMsgHandler.cpp	-
+704	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect704();	src/world/GameActorMsgHandler.cpp	34

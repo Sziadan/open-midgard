@@ -785,3 +785,7 @@ Completed effect466. The canonical inline case plays the exact decompiled audio 
 ## WP10.3 effect501 checkpoint
 
 Completed effect501 in the OnProcess3 tier. PE and primary Ref case0x1F5 bodies match exactly. Skills389 and555 set beginEffectId501. State0 follows the master and plays the verified EF_BeginSpell wave; if master stateId is zero, rotation advances by the state-dependent 12/18/24/48-degree tier and wraps with one subtraction at >360. Comparator and lifecycle tests added. Release builds pass, CTest166/166, coverage560/133/34, and OldRO hash matches Release at 27F78283AAC6F24F989899FBF7D567935F1901DCCE9966635B2EF1EEB00BB7C6. Next: inline effect704.
+
+## WP10.3 effect704 checkpoint
+
+Completed effect704 in OnProcess3. Case0x2C0 matches the primary Ref exactly; skill273 launches it on the target before the hit message. The effect adds30 degrees to master rotation only at states10-33 and subtracts360 once when above360. Comparator and lifecycle tests added. Release builds pass, CTest167/167, coverage561/132/33, and OldRO matches Release at SHA-256 529C03DE5A5F9F2BFA1273296D728C8099513A826F286172D136CFE21DA43B05. The inline priority group is complete; continue WP10.3 batch 5P with the Effect_SPR shared family (570-589,630-648,666,682-686).
