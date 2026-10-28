@@ -551,7 +551,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 548	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	34
 549	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
 550	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	34
-551	OnProcess3	SMA	unported	OnProcess3 -> UnportedEffect		-
+551	OnProcess3	SMA	routed	OnProcess3 -> SpawnSma(0); return true;		71
 552	OnProcess3	SMA2	routed	OnProcess3 -> return ProcessSma2Effect552();	src/world/RagEffect.cpp	879
 553	OnProcess3	STIN2	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	1385
 554	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\freeze_a.bmp"", 2); return true;"	src/world/SkillSpecialEffect.cpp	102

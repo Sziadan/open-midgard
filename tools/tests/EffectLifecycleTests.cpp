@@ -642,6 +642,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect505();
     bool ProcessSma2Effect552();
     void SpawnSma2();
+    void SpawnSma(int variant);
     bool ProcessParticlePath556();
     void SpawnParticlePath556();
     bool ProcessEffect537();
@@ -10756,6 +10757,32 @@ int main()
             &&rngDraws==draws+3&&rngCursor==3,
             "Bottom_Hermode later states follow master without repeat emission or RNG");
         effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject master; master.m_pos={37,48,59};
+        CRagEffect effect; effect.m_type=551; effect.m_master=&master; effect.m_duration=123;
+        effect.m_deltaPos={2,3,4}; effect.m_stateCnt=1;
+        rngValues={4,0,2,1}; rngCursor=0; waveCalls.clear(); const int draws=rngDraws;
+        effect.SpawnSma(0);
+        check(effect.m_effectPos.x==37&&effect.m_effectPos.y==48&&effect.m_effectPos.z==59
+            &&effect.m_primList.empty()&&rngDraws==draws&&rngCursor==0,
+            "SMA effect551 follows master without pre-state-zero output");
+        effect.m_stateCnt=0; effect.SpawnSma(0);
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        bool payload=prim&&prim->m_type==PP_SMA&&prim->m_duration==123&&prim->m_totalTexture==0
+            &&prim->m_size==0&&prim->m_pos.x==37&&prim->m_pos.y==48&&prim->m_pos.z==59
+            &&prim->m_deltaPos.x==2&&prim->m_deltaPos.y==3&&prim->m_deltaPos.z==4;
+        const float yOffsets[4]={-6,-10,-8,-9};
+        for(int i=0;i<4&&prim;++i){const auto& gi=prim->m_gi[i];payload=payload&&gi.life==1
+            &&gi.process==i-3&&gi.alphaB==0&&gi.sparkX==37&&gi.sparkY==48+yOffsets[i]
+            &&gi.sparkZ==59&&gi.rotStart==0&&gi.height[1]==0.80000001f&&gi.flag[0]==0;}
+        check(payload&&rngDraws==draws+4&&rngCursor==4&&waveCalls.empty(),
+            "SMA state zero emits four exact PP_SMA lanes using four ordered PE RNG draws");
+        master.m_pos={67,78,89}; effect.m_stateCnt=1; effect.SpawnSma(0);
+        check(effect.m_primList.size()==1&&effect.m_effectPos.x==67&&effect.m_effectPos.y==78
+            &&effect.m_effectPos.z==89&&rngDraws==draws+4&&rngCursor==4,
+            "SMA later states follow master without repeat emission or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
     }
     {
         CRenderObject actor, listener; actor.m_pos={30,40,50}; listener.m_pos={5,300,8};

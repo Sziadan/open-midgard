@@ -62,7 +62,7 @@ case 547: return ProcessStinSmaEffects();
 case 548: ApplyActorLight(); return true;
 case 549: ApplyActorLight(); return true;
 case 550: ApplyActorLight(); return true;
-case 551: return UnportedEffect();
+case 551: SpawnSma(0); return true;
 case 552: return ProcessSma2Effect552();
 case 553: return ProcessStinSmaEffects();
 case 554: ApplyEffectTexture("effect\\freeze_a.bmp", 2); return true;

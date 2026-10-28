@@ -262,6 +262,7 @@ extract_body(tripleattack_handler "${effect_source}" "bool CRagEffect::ProcessTr
 extract_body(soulparticle506_handler "${effect_source}" "bool CRagEffect::ProcessSoulParticle506()" "bool CRagEffect::ProcessEffect502()")
 extract_body(effect502_handler "${effect_source}" "bool CRagEffect::ProcessEffect502()" "bool CRagEffect::ProcessEffect505()")
 extract_body(effect505_handler "${effect_source}" "bool CRagEffect::ProcessEffect505()" "void CRagEffect::SpawnSma2()")
+extract_body(sma_emitter "${effect_source}" "void CRagEffect::SpawnSma(int variant)" "bool CRagEffect::ProcessStinSmaEffects()")
 extract_body(sma2_552_emitter "${effect_source}" "void CRagEffect::SpawnSma2()" "bool CRagEffect::ProcessSma2Effect552()")
 extract_body(sma2_552_handler "${effect_source}" "bool CRagEffect::ProcessSma2Effect552()" "void CRagEffect::SpawnParticlePath556()")
 extract_body(particlepath556_emitter "${effect_source}" "void CRagEffect::SpawnParticlePath556()" "bool CRagEffect::ProcessParticlePath556()")
@@ -464,6 +465,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${bottom_
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\nconstexpr float kWaterfallSegmentHeight = 40.0f;\n${bluefall_band_setup}\n${bluefall_emitter}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_467_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_variants468_473_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${sma_emitter}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -990,6 +992,8 @@ add_test(NAME effect513_ground_sample_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect513_ground_sample.py")
 add_test(NAME effect517_bottom_hermode_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect517_bottom_hermode.py")
+add_test(NAME effect551_sma_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect551_sma.py")
 add_test(NAME effect467_beginasura1_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect467_beginasura1.py")
 add_test(NAME effect468_473_beginasura1_source_check
@@ -1027,6 +1031,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_teihit_callers.py
     check_chimto_callers.py
     check_stin_sma_callers.py
+    check_effect551_sma.py
     check_shield_boomerang_callers.py
     check_rg_coin_callers.py
     check_grandcross_callers.py

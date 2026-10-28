@@ -3532,3 +3532,10 @@ Existing local `ProcessGroundSample` follows the master position on every call. 
 PE OnProcess3 case `0x205` at `HighPriest.exe.c:418214-418215` calls `Bottom_Hermode(aEffectWhite02B)`; primary Ref matches at `Ref/RagEffect.cpp:11575-11576`. PE helper `HighPriest.exe.c:456275-456299` and secondary Ref helper `Ref/dhxj/RagEffect2.cpp:17932+` agree. The resource is `effect\\white02.bmp` (VA `0x713CC8`).
 
 The local handler refreshes the master position every call, then at state0 launches one zero-delta PP_HERMODE with renderFlag5, inherited duration, the exact texture and size5. GI0 is life1/distance1.6/riseAngle=`rand()%360`/RotStart=`rand()%360`/alphaB0/height0=−12/flag0=`rand()%31`; GI1-3 are inactive. Random draws occur in that order. No audio. `check_effect517_bottom_hermode.py` verifies source/helper/resource and RNG order; lifecycle tests cover one-shot emission and master following. Case list: 517. BLOCKED: none. No visual acceptance is claimed.
+
+
+## WP5C effect551 SMA
+
+PE OnProcess3 case `0x227` at `HighPriest.exe.c:418413` and primary Ref `Ref/RagEffect.cpp:11774` call `SMA(this, 0)`. PE helper `HighPriest.exe.c:457502` and secondary Ref helper `Ref/dhxj/RagEffect2.cpp:19206` agree on a state-zero PP_SMA with four active GI lanes and no texture resources.
+
+Local `SpawnSma(0)` updates the master position each invocation and emits only at state0. It copies the effect delta/position, uses inherited duration and size0, and initializes each lane with life1/process=`index−3`/alphaB0/world position `(x,y−10+rand()%5,z)`/RotStart0/height1=0.8/flag0=0. Four ordered RNG draws; no audio. PE writes `vecB_now.x/y/z`; local `sparkX/Y/Z` alias offsets132/136/140 in the 180-byte GI record, now enforced with compile-time assertions. `check_effect551_sma.py` verifies PE/Ref caller mapping, local source profile, GI offsets and generated route. Lifecycle checks cover state gate, four lane payloads/draws and master following. Case list: 551. BLOCKED: none. No visual acceptance is claimed.

@@ -3161,6 +3161,8 @@ static_assert(offsetof(EffectGi, height) == 20, "GI height offset");
 static_assert(offsetof(EffectGi, flag) == 104, "GI flag offset");
 static_assert(offsetof(EffectGi, distance) == 128, "GI distance offset");
 static_assert(offsetof(EffectGi, sparkX) == 132, "GI spark position offset");
+static_assert(offsetof(EffectGi, sparkY) == 136, "GI spark Y/vecB_now.y offset");
+static_assert(offsetof(EffectGi, sparkZ) == 140, "GI spark Z/vecB_now.z offset");
 static_assert(offsetof(EffectGi, arcBaselineY) == 160, "GI arc baseline offset");
 static_assert(offsetof(EffectGi, vecTNowX) == 144, "GI vecT_now offset");
 static_assert(offsetof(EffectGi, vecTPreX) == 168, "GI vecT_pre offset");
@@ -19561,7 +19563,7 @@ void CRagEffect::SpawnSma(int variant)
     prim->m_size = 0.0f;
     prim->m_deltaPos = m_deltaPos;
     prim->m_pos = m_effectPos;
-    for (size_t index = 0; index < prim->m_gi.size(); ++index) {
+    for (int index = 0; index < 4; ++index) {
         EffectGi& gi = prim->m_gi[index];
         gi.life = 1;
         gi.process = static_cast<int>(index) - 3;
