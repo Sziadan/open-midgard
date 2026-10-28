@@ -602,6 +602,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect466();
     bool ProcessEffect501();
     bool ProcessEffect704();
+    bool ProcessWaterBall116();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -3108,6 +3109,32 @@ int main()
         if (!condition) { ++failures; std::fprintf(stderr, "FAIL: %s\n", name); }
     };
     for (int angle=0; angle<=360; ++angle) { g_sinTable[angle]=GetSin(angle); g_cosTable[angle]=GetCos(angle); }
+    {
+        CRenderObject listener; listener.m_pos={10,3,20};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=116; effect.m_duration=80; effect.m_effectPos={30,15,50};
+        waveCalls.clear(); g_texMgr.requests.clear(); const int drawBase=rngDraws;
+        check(effect.ProcessWaterBall116() && effect.m_primList.size()==1,
+            "WaterBall state zero launches one source texture primitive");
+        const CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\wizard_waterball_chulung.wav"
+            &&waveCalls[0].x==20&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&waveCalls[0].frameRng==drawBase,
+            "WaterBall plays its exact frame-zero wave relative to the player without RNG");
+        check(prim&&prim->m_duration==80&&prim->m_pattern==0x140&&(prim->m_renderFlag&2)!=0
+            &&prim->m_repeatAnim&&prim->m_widthSize==3.5f&&prim->m_heightSize==3.5f
+            &&prim->m_speed3d.y==static_cast<float>(-25.0/80.0)&&prim->m_deltaPos2.y==-5.0f
+            &&prim->m_animSpeed==5&&prim->m_totalTexture==3&&prim->m_texture.size()==3
+            &&g_texMgr.requests==std::vector<std::string>({"effect\\water_out_a.bmp","effect\\water_out_b.bmp","effect\\water_out_c.bmp"})
+            &&rngDraws==drawBase,
+            "WaterBall preserves its texture order, movement, animation and parent duration");
+        effect.m_stateCnt=1; waveCalls.clear(); g_texMgr.requests.clear();
+        check(effect.ProcessWaterBall116()&&effect.m_primList.size()==1&&waveCalls.empty()
+            &&g_texMgr.requests.empty()&&rngDraws==drawBase,
+            "WaterBall later states do not repeat the frame-zero sound or primitive launch");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); g_world.m_player=oldPlayer;
+    }
     {
         CRagEffect effect; effect.m_type=552; effect.m_duration=321; effect.m_deltaPos={1,2,3};
         effect.m_deltaPos2={4,0,6}; g_texMgr.requests.clear();

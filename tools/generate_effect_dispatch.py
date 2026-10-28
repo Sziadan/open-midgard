@@ -43,6 +43,7 @@ DIRECT_CALLS = {
     443: "return true;",
     489: "return true;",
     490: "return true;",
+    116: "return ProcessWaterBall116();",
     41: "return ProcessAngelus();",
     336: "return ProcessGuardEffects();",
     496: "return ProcessGuardEffects();",

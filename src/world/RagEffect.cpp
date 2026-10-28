@@ -27193,3 +27193,36 @@ bool CRagEffect::ProcessEffect466()
 }
 
 // TEST_BODY_END effect466_handler
+
+// Ref/RagEffect.cpp:9180-9218; canonical PE helper 0x600760 and OnProcess case116.
+bool CRagEffect::ProcessWaterBall116()
+{
+    if (m_stateCnt != 0) return true;
+
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\wizard_waterball_chulung.wav",
+            m_effectPos.x - listener.x, 0.0f, m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+    if (!prim) return true;
+    prim->m_duration = m_duration;
+    prim->m_pattern = 64;
+    prim->m_pattern |= 0x100;
+    prim->m_renderFlag |= 2;
+    prim->m_repeatAnim = true;
+    prim->m_widthSize = 3.5f;
+    prim->m_heightSize = 3.5f;
+    prim->m_speed3d.y = static_cast<float>(-25.0 / static_cast<double>(prim->m_duration));
+    prim->m_deltaPos2.y = -5.0f;
+    prim->m_animSpeed = 5;
+    prim->m_totalTexture = 3;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\water_out_a.bmp", false));
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\water_out_b.bmp", false));
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\water_out_c.bmp", false));
+    return true;
+}
+
+// TEST_BODY_END waterball116_handler
