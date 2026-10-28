@@ -3402,3 +3402,7 @@ Primary Ref and canonical PE `CRagEffect::Init` map effect181 to `aMentalbreakSt
 ## WP5C effects182/186 STR mappings
 
 Primary Ref and canonical PE `CRagEffect::Init` agree that effect182 maps to `magical.str` (`aMagicalStr`, VA `0x71AC38`) and effect186 maps to `yunta_1.str` (`aYunta1Str`, VA `0x71AC20`). Both local catalog and STR-name table entries and dispatcher routes match. Canonical OnProcess groups both IDs into the shared `LABEL_424` path calling `ProcessEZ2STR(0,-80,0)`. `check_effect182_186_str_mapping.py` validates mappings, executable bytes, local tables/routes, and shared caller. Media files are absent; this records source/name parity only, not visual acceptance.
+
+## WP5C effect187 Yunta2 STR
+
+Canonical PE Init has a dedicated `v6 == 187` mapping to `aYunta2Str`; executable bytes resolve this to `yunta_2.str` at `0x71AC08`. Secondary Ref `Ref/dhxj/RagEffect.cpp` maps `EF_COMBOATTACK2` to the same filename, while the current primary `Ref/RagEffect.cpp` Init omits effect187. Local catalog, STR-name table, and route agree with the PE, and canonical OnProcess uses the shared STR completion path. `check_effect187_yunta2_str.py` records both the corroborating secondary mapping and primary-source omission explicitly. The STR clip is absent, so this is mapping/source evidence only; no visual acceptance is claimed.
