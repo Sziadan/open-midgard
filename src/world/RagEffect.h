@@ -510,6 +510,7 @@ private:
     void ApplyElectric2();
     void ApplyAttackEnergy2(const char* textureName);
     void ApplyPotionPillar(float speed, int duration);
+    void ApplyGravitation();
     bool ProcessPotionConcentration();
     bool ProcessTarotEffect();
     bool ProcessEffectTextureAnimation();

@@ -10769,6 +10769,15 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         }
         return 0;
 
+    case 148:
+        if (m_view != nullptr) {
+            m_view->SetQuakeInfo(
+                *reinterpret_cast<const float*>(wparam),
+                *reinterpret_cast<const float*>(lparam),
+                *reinterpret_cast<const float*>(extra));
+        }
+        return 0;
+
     case 179:
         SendTalkScriptLine(static_cast<int>(wparam));
         return 0;

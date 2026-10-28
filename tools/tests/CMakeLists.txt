@@ -1020,6 +1020,8 @@ add_test(NAME effects363_364_509_519_545_vallentine_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects363_364_509_519_545_vallentine.py")
 add_test(NAME effects561_562_portal3_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects561_562_portal3.py")
+add_test(NAME effect522_gravitation_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect522_gravitation.py")
 add_test(NAME effects342_564_couple_casting_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects342_564_couple_casting.py")
 add_test(NAME effect605_stop_message_source_check

@@ -878,6 +878,13 @@ void CView::SetQuake(bool isQuake, int type, float sideQuake, float frontQuake, 
     }
 }
 
+void CView::SetQuakeInfo(float sideQuake, float frontQuake, float latitudeQuake)
+{
+    m_sideQuake = sideQuake;
+    m_frontQuake = frontQuake;
+    m_latitudeQuake = latitudeQuake;
+}
+
 void CView::ProcessQuake()
 {
     if (!m_isQuake) {

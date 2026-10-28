@@ -33,7 +33,7 @@ case 518: return ProcessParticleSpreadEffects();
 case 519: return ProcessVallentine(3);
 case 520: return ProcessShieldBoomerangEffects();
 case 521: ApplyActorLight(); return true;
-case 522: return UnportedEffect();
+case 522: ApplyGravitation(); return true;
 case 523: ApplyEffectTexture("effect\\Tarot01.tga", 1); return true;
 case 524: ApplyEffectTexture("effect\\Tarot02.tga", 1); return true;
 case 525: ApplyEffectTexture("effect\\Tarot03.tga", 1); return true;

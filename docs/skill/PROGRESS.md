@@ -1997,3 +1997,8 @@ Ported the five shared Vallentine caller variants through `ProcessVallentine(var
 ## WP5C effects561-562 Portal3 — 2026-10-28
 
 Added the two Portal3 caller modes with separate state-zero heal and state-two wind primitives. PE and primary Ref callers agree; the PE and secondary Ref helpers match. Lifecycle and source checks cover the exact texture resources, all GI lanes and samples, independent state gates, three ordered state-zero RNG calls, and the wind height value1.5 confirmed by the executable immediate. Case list: 561, 562. BLOCKED: none. Coverage audit: 681 routed /12 explicit unported /0 launched-but-unported. Release parity CTest passes249/249, replay CTest passes102/102, and the OpenMidgard Release build succeeds and copies the executable to its configured OldRO folder. No media/live visual acceptance is claimed.
+
+
+## WP5C effect522 Gravitation — 2026-10-28
+
+Ported effect522 with the PE state0 gate, quake message order, four PP_3DQUADHORN2 lanes, five ordered RNG draws per lane, exact primitive setup, and stone/ice texture split. Added the missing message148 receiver and `CView::SetQuakeInfo`; this also gives the existing EarthSpike message148 call its Ref behavior. The registered PE/Ref/local comparator records branch order, fields, resources and receiver handling. Coverage audit: 682 routed /11 explicit unported /0 launched-but-unported. Release app and parity-test builds succeed; parity CTest passes250/250 and replay CTest passes102/102. No media/live visual acceptance is claimed.

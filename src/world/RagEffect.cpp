@@ -23772,6 +23772,56 @@ void CRagEffect::ApplyBottomVolcano(const char* textureName, float size)
     gi.flag.fill(0);
 }
 
+void CRagEffect::ApplyGravitation()
+{
+    if (m_stateCnt != 0) {
+        return;
+    }
+
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode != nullptr) {
+        mode->SendMsg(135, 1, 0, 0);
+        float side = 1.0f;
+        float front = 0.23999999f;
+        float latitude = 0.2f;
+        mode->SendMsg(148,
+            reinterpret_cast<msgparam_t>(&side),
+            reinterpret_cast<msgparam_t>(&front),
+            reinterpret_cast<msgparam_t>(&latitude));
+    }
+
+    for (int index = 0; index < 4; ++index) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DQUADHORN2, vector3d{});
+        prim->m_duration = m_duration;
+        prim->m_pattern = 1;
+
+        const int direction = rand() % 360;
+        (void)rand();
+        (void)GetSin(direction);
+        (void)GetCos(direction);
+
+        prim->m_deltaPos2 = {0.0f, 10.0f, 0.0f};
+        prim->m_size = static_cast<float>(rand() % 50 + 300) * 0.0099999998f;
+        prim->m_heightSize = 18.0f;
+        prim->m_longitude = static_cast<float>(rand() % 360);
+        prim->m_latitude = static_cast<float>(rand() % 40 + 60);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_rotMat = prim->m_matrix;
+        prim->m_speed = 1.0f;
+        prim->m_accel = 0.0099999998f;
+        prim->m_alpha = 20.0f;
+        prim->m_count = 15;
+        prim->m_changePoint = 12;
+        prim->m_changeSpeed = -1.2f;
+        prim->m_changeAccel = 0.0f;
+        prim->m_fadeOutCnt = prim->m_duration - 10;
+        prim->m_texture.push_back(g_texMgr.GetTexture(
+            index < 2 ? "effect\\stone.bmp" : "effect\\ice.tga", false));
+    }
+}
+
 void CRagEffect::ApplyWind()
 {
     if (m_stateCnt != 0) {

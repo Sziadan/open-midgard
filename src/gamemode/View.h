@@ -38,6 +38,7 @@ public:
     void ResetToDefaultOrientation();
     // Ref/dhxj/View.cpp SetQuake. Type 0 lasts 650 ms, type 1 lasts 200 ms.
     void SetQuake(bool isQuake, int type, float sideQuake, float frontQuake, float latitudeQuake);
+    void SetQuakeInfo(float sideQuake, float frontQuake, float latitudeQuake);
     void UpdateHoverCellFromScreen(int screenX, int screenY);
     void ClearHoverCell();
     bool ScreenToHoveredAttrCell(int screenX, int screenY, int* outAttrX, int* outAttrY) const;
