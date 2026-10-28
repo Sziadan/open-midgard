@@ -1112,6 +1112,11 @@ int main() {
             &&face->m_verts[0].tu==0&&face->m_verts[1].tu==0&&face->m_verts[2].tu==0
             &&face->m_verts[0].tv==0&&face->m_verts[1].tv==0&&face->m_verts[2].tv==0,
             "3D line preserves fixed source colors, reciprocal-depth values and zero UVs");
+        check(face->m_verts[0].specular==0xFF000000u&&face->m_verts[1].specular==0xFF000000u
+            &&face->m_verts[2].specular==0xFF000000u&&face->srcAlphaMode==D3DBLEND_SRCALPHA
+            &&face->destAlphaMode==D3DBLEND_INVSRCALPHA&&face->cullMode==D3DCULL_NONE
+            &&face->primType==D3DPT_TRIANGLELIST&&face->numIndices==0&&face->indices==nullptr,
+            "3D line retains opaque specular, inverse-alpha blend and source triangle state");
     }
     {
         CEffectPrim billboard;billboard.m_pos={2,3,20};billboard.m_widthSize=5;billboard.m_heightSize=3;
