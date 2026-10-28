@@ -647,6 +647,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEnhance9();
     bool ProcessLord90();
     bool ProcessIceWall74();
+    bool ProcessGlassWall13();
     void SpawnEnhance9();
     void SpawnPressure365();
     void SpawnGroundShake365();
@@ -3353,6 +3354,116 @@ int main()
         effect.m_stateCnt=1; effect.ProcessIceWall74();
         check(effect.m_primList.size()==3&&waveCalls.size()==1&&rngDraws==drawBase+15
             &&g_texMgr.requests.size()==3,"IceWall74 later states do not repeat state0 setup");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer; waveCalls.clear(); rngValues.clear(); rngCursor=0;
+    }
+    {
+        CRenderObject master; master.m_pos={30,40,50}; master.m_roty=45.0f;
+        CRenderObject listener; listener.m_pos={10,20,30};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=13; effect.m_master=&master;
+        effect.m_effectPos={30,40,50}; effect.m_duration=80;
+        waveCalls.clear(); g_texMgr.requests.clear(); g_resMgr.requests.clear();
+        rngValues.clear(); rngCursor=0;
+        const int drawBase=rngDraws;
+        effect.m_stateCnt=0;
+        check(effect.ProcessGlassWall13()&&effect.m_primList.size()==4,
+            "GlassWall13 state0 creates four texture primitives and ignores the STR completion result");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_GlassWall.wav"
+            &&waveCalls[0].x==20&&waveCalls[0].y==0&&waveCalls[0].z==20
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&waveCalls[0].frameRng==drawBase,"GlassWall13 plays its exact wave before non-random primitive setup");
+        check(g_texMgr.requests==std::vector<std::string>({"effect\\ring_blue.tga","effect\\ring_blue.tga",
+                "effect\\ring_blue.tga","effect\\ring_blue.tga"})
+            &&g_resMgr.requests.empty()&&rngDraws==drawBase,"GlassWall13 requests four exact textures without RNG or sprite resources");
+        matrix expectedRotation; MatrixIdentity(expectedRotation);
+        MatrixAppendYRotation(expectedRotation,GetRadian(135));
+        bool payload=effect.m_primList.size()==4;
+        int index=0;
+        for(const CEffectPrim* prim:effect.m_primList){
+            const int lane=index<2?1:-1;
+            const bool first=(index%2)==0;
+            const double distance=static_cast<double>(lane)*(first?2.5999999:3.0);
+            const int axis=first?2:0;
+            const vector3d expected{
+                static_cast<float>(expectedRotation.m[axis][0]*distance+expectedRotation.m[3][0]),
+                static_cast<float>(expectedRotation.m[axis][1]*distance+expectedRotation.m[3][1]),
+                static_cast<float>(expectedRotation.m[axis][2]*distance+expectedRotation.m[3][2])};
+            payload=payload&&prim->m_type==PP_3DTEXTURE&&prim->m_duration==80
+                &&prim->m_pattern==40&&prim->m_any==50
+                &&std::fabs(prim->m_deltaPos2.x-expected.x)<0.0001f
+                &&std::fabs(prim->m_deltaPos2.y-expected.y)<0.0001f
+                &&std::fabs(prim->m_deltaPos2.z-expected.z)<0.0001f
+                &&prim->m_longitude==(first?225.0f:135.0f)
+                &&prim->m_widthSize==(first?3.0f:static_cast<float>(2.5999999))
+                &&prim->m_heightSize==40.0f&&prim->m_heightSpeed==0.25f
+                &&prim->m_alpha==0.0f&&prim->m_maxAlpha==180.0f
+                &&std::fabs(prim->m_alphaSpeed-static_cast<float>(180.0*0.16666667))<0.0001f
+                &&prim->m_fadeOutCnt==74&&prim->m_texture.size()==1;
+            ++index;
+        }
+        check(payload,"GlassWall13 preserves lane/axis ordering, angle-derived profile, and fade timing");
+        effect.m_stateCnt=1;
+        check(effect.ProcessGlassWall13()&&effect.m_primList.size()==4&&waveCalls.size()==1
+            &&g_texMgr.requests.size()==4&&rngDraws==drawBase,
+            "GlassWall13 later states do not repeat frame-zero sound or primitive setup");
+        effect.m_stateCnt=80;
+        check(!effect.ProcessGlassWall13(),"GlassWall13 returns stateCount != duration regardless of STR result");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer; waveCalls.clear(); rngValues.clear(); rngCursor=0;
+    }
+    {
+        CRenderObject master; master.m_pos={30,40,50}; master.m_roty=45.0f;
+        CRenderObject listener; listener.m_pos={10,20,30};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=13; effect.m_master=&master;
+        effect.m_effectPos={30,40,50}; effect.m_duration=80;
+        waveCalls.clear(); g_texMgr.requests.clear(); g_resMgr.requests.clear();
+        rngValues.clear(); rngCursor=0;
+        const int drawBase=rngDraws;
+        effect.m_stateCnt=0;
+        check(effect.ProcessGlassWall13()&&effect.m_primList.size()==4,
+            "GlassWall13 state0 creates four texture primitives and ignores the STR completion result");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_GlassWall.wav"
+            &&waveCalls[0].x==20&&waveCalls[0].y==0&&waveCalls[0].z==20
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&waveCalls[0].frameRng==drawBase,"GlassWall13 plays its exact wave before non-random primitive setup");
+        check(g_texMgr.requests==std::vector<std::string>({"effect\\ring_blue.tga","effect\\ring_blue.tga",
+                "effect\\ring_blue.tga","effect\\ring_blue.tga"})
+            &&g_resMgr.requests.empty()&&rngDraws==drawBase,"GlassWall13 requests four exact textures without RNG or sprite resources");
+        matrix expectedRotation; MatrixIdentity(expectedRotation);
+        MatrixAppendYRotation(expectedRotation,GetRadian(135));
+        bool payload=effect.m_primList.size()==4;
+        int index=0;
+        for(const CEffectPrim* prim:effect.m_primList){
+            const int lane=index<2?1:-1;
+            const bool first=(index%2)==0;
+            const double distance=static_cast<double>(lane)*(first?2.5999999:3.0);
+            const int axis=first?2:0;
+            const vector3d expected{
+                static_cast<float>(expectedRotation.m[axis][0]*distance+expectedRotation.m[3][0]),
+                static_cast<float>(expectedRotation.m[axis][1]*distance+expectedRotation.m[3][1]),
+                static_cast<float>(expectedRotation.m[axis][2]*distance+expectedRotation.m[3][2])};
+            payload=payload&&prim->m_type==PP_3DTEXTURE&&prim->m_duration==80
+                &&prim->m_pattern==40&&prim->m_any==50
+                &&std::fabs(prim->m_deltaPos2.x-expected.x)<0.0001f
+                &&std::fabs(prim->m_deltaPos2.y-expected.y)<0.0001f
+                &&std::fabs(prim->m_deltaPos2.z-expected.z)<0.0001f
+                &&prim->m_longitude==(first?225.0f:135.0f)
+                &&prim->m_widthSize==(first?3.0f:static_cast<float>(2.5999999))
+                &&prim->m_heightSize==40.0f&&prim->m_heightSpeed==0.25f
+                &&prim->m_alpha==0.0f&&prim->m_maxAlpha==180.0f
+                &&std::fabs(prim->m_alphaSpeed-static_cast<float>(180.0*0.16666667))<0.0001f
+                &&prim->m_fadeOutCnt==74&&prim->m_texture.size()==1;
+            ++index;
+        }
+        check(payload,"GlassWall13 preserves lane/axis ordering, angle-derived profile, and fade timing");
+        effect.m_stateCnt=1;
+        check(effect.ProcessGlassWall13()&&effect.m_primList.size()==4&&waveCalls.size()==1
+            &&g_texMgr.requests.size()==4&&rngDraws==drawBase,
+            "GlassWall13 later states do not repeat frame-zero sound or primitive setup");
+        effect.m_stateCnt=80;
+        check(!effect.ProcessGlassWall13(),"GlassWall13 returns stateCount != duration regardless of STR result");
         effect.ClearPrims(); g_world.UpdateGameObjects();
         g_world.m_player=oldPlayer; waveCalls.clear(); rngValues.clear(); rngCursor=0;
     }

@@ -104,6 +104,7 @@ required_routes = {
     ("OnProcess", 9): "ProcessEnhance9",
     ("OnProcess", 90): "ProcessLord90",
     ("OnProcess", 74): "ProcessIceWall74",
+    ("OnProcess", 13): "ProcessGlassWall13",
     ("OnProcess2", 361): "ProcessSoulBreaker361Effect",
     ("OnProcess2", 365): "ProcessEffect365",
     ("OnProcess", 440): "ProcessEffect440",

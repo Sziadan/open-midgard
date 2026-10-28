@@ -20378,6 +20378,73 @@ bool CRagEffect::ProcessIceWall74()
     return true;
 }
 
+// Ref/RagEffect.cpp:506; canonical helper at HighPriest.exe.c:424070.
+bool CRagEffect::ProcessGlassWall13()
+{
+    if (m_stateCnt == 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode != nullptr && mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\EF_GlassWall.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+        CRenderObject* master = ResolveCurrentMaster();
+        if (master != nullptr) {
+            const int64_t rawAngle = static_cast<int64_t>(180.0 - master->m_roty);
+            int angle = static_cast<int>(rawAngle);
+            if (angle < 0) angle += 360;
+            matrix rotation;
+            MatrixIdentity(rotation);
+            MatrixAppendYRotation(rotation, GetRadian(angle));
+            for (int lane = 1; lane >= -1; lane -= 2) {
+                const double firstDistance = static_cast<double>(lane) * 2.5999999;
+                CEffectPrim* first = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+                if (first == nullptr) break;
+                first->m_duration = m_duration;
+                first->m_pattern = 40;
+                first->m_any = 50;
+                first->m_deltaPos2 = {
+                    static_cast<float>(rotation.m[2][0] * firstDistance + rotation.m[3][0]),
+                    static_cast<float>(rotation.m[2][1] * firstDistance + rotation.m[3][1]),
+                    static_cast<float>(rotation.m[2][2] * firstDistance + rotation.m[3][2])
+                };
+                first->m_longitude = static_cast<float>(angle + 90);
+                first->m_widthSize = 3.0;
+                first->m_heightSize = 40.0f;
+                first->m_heightSpeed = 0.25f;
+                first->m_alpha = 0.0f;
+                first->m_maxAlpha = 180.0f;
+                first->m_alphaSpeed = static_cast<float>(first->m_maxAlpha * 0.16666667);
+                first->m_fadeOutCnt = first->m_duration - 6;
+                first->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+
+                const double secondDistance = static_cast<double>(lane) * 3.0;
+                CEffectPrim* second = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+                if (second == nullptr) break;
+                second->m_duration = m_duration;
+                second->m_pattern = 40;
+                second->m_any = 50;
+                second->m_deltaPos2 = {
+                    static_cast<float>(rotation.m[0][0] * secondDistance + rotation.m[3][0]),
+                    static_cast<float>(rotation.m[0][1] * secondDistance + rotation.m[3][1]),
+                    static_cast<float>(rotation.m[0][2] * secondDistance + rotation.m[3][2])
+                };
+                second->m_longitude = static_cast<float>(angle);
+                second->m_widthSize = static_cast<float>(2.5999999);
+                second->m_heightSize = 40.0f;
+                second->m_heightSpeed = 0.25f;
+                second->m_alpha = 0.0f;
+                second->m_maxAlpha = 180.0f;
+                second->m_alphaSpeed = static_cast<float>(second->m_maxAlpha * 0.16666667);
+                second->m_fadeOutCnt = second->m_duration - 6;
+                second->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+            }
+        }
+    }
+    (void)ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+    return m_stateCnt != m_duration;
+}
+
 void CRagEffect::SpawnNpcStop(int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();

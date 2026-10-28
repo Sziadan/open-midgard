@@ -12,7 +12,7 @@ case 9: return ProcessEnhance9();
 case 10: return ProcessEffectFrameLegacy();
 case 11: return ProcessEndure11();
 case 12: ApplyPairedSaintCasting("effect\\ring_yellow.tga", 1, true, 0.0f); return true;
-case 13: return UnportedEffect();
+case 13: return ProcessGlassWall13();
 case 14: return ProcessEffectFrameLegacy();
 case 15: return ProcessSoulStrike15(0);
 case 16: return ProcessEffectFrameLegacy();
