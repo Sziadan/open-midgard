@@ -14725,6 +14725,10 @@ CRenderObject* CRagEffect::ResolveCurrentMaster() const
         return IsLikelyLiveRenderObject(g_world.m_player) ? g_world.m_player : nullptr;
     }
 
+    if (CSkill* skill = g_world.GetSkillByAID(m_masterActorGid)) {
+        return IsLikelyLiveRenderObject(skill) ? skill : nullptr;
+    }
+
     if (const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
         const auto it = gameMode->m_runtimeActors.find(m_masterActorGid);
         if (it != gameMode->m_runtimeActors.end() && it->second) {

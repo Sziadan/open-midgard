@@ -269,6 +269,11 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
             winmm.lib dxguid.lib ole32.lib oleaut32.lib psapi.lib msimg32.lib)
     endif()
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay/data/texture/effect")
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/Ref/GRF-Content/data/texture/effect/alpha_down.tga"
+        "${CMAKE_CURRENT_BINARY_DIR}/skill_replay/data/texture/effect/alpha_down.tga"
+        COPYONLY)
     add_test(NAME skill_packet_replay_runtime_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/bash5.tsv")
@@ -383,6 +388,9 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_multi_ground_unit_world_update_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/multi_ground_unit_world_update.tsv")
+    add_test(NAME skill_packet_replay_multi_ground_unit_resource_world_update_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/multi_ground_unit_resource_world_update.tsv")
     add_test(NAME skill_packet_replay_venom_dust_trigger_lifecycle_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/venom_dust_trigger_lifecycle.tsv")
@@ -504,6 +512,8 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     set_tests_properties(skill_packet_replay_skid_trap_trigger_lifecycle_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_multi_ground_unit_world_update_checks PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    set_tests_properties(skill_packet_replay_multi_ground_unit_resource_world_update_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_venom_dust_trigger_lifecycle_checks
         skill_packet_replay_talkie_box_trigger_lifecycle_checks

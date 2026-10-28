@@ -1,10 +1,13 @@
 #include "Types.h"
+#include "core/Timer.h"
 #include "gamemode/GameMode.h"
 #include "gamemode/GameModePacket.h"
 #include "gamemode/Mode.h"
 #include "network/GronPacket.h"
+#include "res/Bitmap.h"
 #include "session/Session.h"
 #include "world/GameActor.h"
+#include "world/RagEffect.h"
 #include "world/World.h"
 
 #include <chrono>
@@ -868,6 +871,72 @@ void ReplayMultiUnitWorldUpdate(const std::string& path)
     std::cout << "CWorld::UpdateGameObjects units=2 jobs=133,133 retained=2 removed=2\n";
 }
 
+void ReplayResourceBackedMultiUnitWorldUpdate(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 4 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+        && packets[1].opcode == 0x011F && packets[1].bytes.size() == 16
+        && packets[2].opcode == 0x0120 && packets[2].bytes.size() == 6
+        && packets[3].opcode == 0x0120 && packets[3].bytes.size() == 6,
+        "resource-backed world update requires two unit entries followed by both removals");
+    Require(packets[0].bytes[14] == 131 && packets[1].bytes[14] == 131
+        && ReadU32LE(packets[0].bytes.data() + 2) == 100
+        && ReadU32LE(packets[1].bytes.data() + 2) == 200
+        && ReadU32LE(packets[2].bytes.data() + 2) == 100
+        && ReadU32LE(packets[3].bytes.data() + 2) == 200,
+        "resource-backed fixture must use two distinct job131 unit AIDs");
+
+    g_resMgr.RegisterType("tga", "", new CBitmapRes());
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    for (std::size_t index = 0; index < 2; ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected a resource-backed unit entry");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch resource-backed unit entry");
+    }
+
+    CSkill* first = fixture.world.GetSkillByAID(100);
+    CSkill* second = fixture.world.GetSkillByAID(200);
+    Require(first != nullptr && second != nullptr && first->m_job == 131 && second->m_job == 131,
+        "two job131 units were not registered before the resource-backed world update");
+    const int oldSkipFrame = g_isSkipFrame;
+    g_isSkipFrame = 1;
+    fixture.world.UpdateGameObjects();
+
+    const auto isActiveLoopEffect = [&fixture](CSkill* skill) {
+        return skill->m_LoopEffect != nullptr
+            && skill->m_LoopEffect->GetEffectType() == 319
+            && skill->m_LoopEffect->GetStateCount() > 0
+            && std::find(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(), skill->m_LoopEffect)
+                != fixture.world.m_gameObjectList.end();
+    };
+    const bool firstEffectProcessed = isActiveLoopEffect(first);
+    const bool secondEffectProcessed = isActiveLoopEffect(second);
+    CBitmapRes* alphaDown = g_resMgr.GetAs<CBitmapRes>("data\\texture\\effect\\alpha_down.tga");
+    const bool alphaDownLoaded = alphaDown != nullptr && alphaDown->m_data != nullptr
+        && alphaDown->m_width > 0 && alphaDown->m_height > 0;
+
+    for (std::size_t index = 2; index < packets.size(); ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected a resource-backed unit removal");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch resource-backed unit removal");
+    }
+    fixture.world.UpdateGameObjects();
+    g_isSkipFrame = oldSkipFrame;
+    Require(firstEffectProcessed && secondEffectProcessed,
+        "world update did not process both appended effect319 objects in the live-object pass");
+    Require(alphaDownLoaded,
+        "effect319 did not load its source alpha_down.tga texture during the world update");
+    Require(fixture.world.GetSkillByAID(100) == nullptr && fixture.world.GetSkillByAID(200) == nullptr,
+        "0x0120 did not remove both resource-backed job131 units");
+    std::cout << "CWorld::UpdateGameObjects units=2 jobs=131,131 effects=319,319 texture=alpha_down.tga processed=2 removed=2\n";
+}
+
 void ReplayTrapRevealLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1600,6 +1669,14 @@ bool IsMultiUnitWorldUpdateScenario(const std::string& path)
         && ReadU32LE(packets[1].bytes.data() + 2) == 200;
 }
 
+bool IsResourceBackedMultiUnitWorldUpdateScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 4 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+        && packets[0].bytes[14] == 131 && packets[1].opcode == 0x011F && packets[1].bytes.size() == 16
+        && packets[1].bytes[14] == 131 && packets[2].opcode == 0x0120 && packets[3].opcode == 0x0120;
+}
+
 bool IsVenomDustTriggerScenario(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1652,6 +1729,8 @@ int main(int argc, char** argv)
             ReplayShockwaveTrapTriggerLifecycle(argv[1]);
         } else if (IsSkidTrapTriggerScenario(argv[1])) {
             ReplaySkidTrapTriggerLifecycle(argv[1]);
+        } else if (IsResourceBackedMultiUnitWorldUpdateScenario(argv[1])) {
+            ReplayResourceBackedMultiUnitWorldUpdate(argv[1]);
         } else if (IsMultiUnitWorldUpdateScenario(argv[1])) {
             ReplayMultiUnitWorldUpdate(argv[1]);
         } else if (IsVenomDustTriggerScenario(argv[1])) {
