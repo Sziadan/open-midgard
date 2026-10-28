@@ -1146,10 +1146,22 @@ int main() {
             &&b.m_verts[0].x==right&&b.m_verts[0].y==y&&b.m_verts[1].x==x&&b.m_verts[1].y==bottom
             &&b.m_verts[2].x==right&&b.m_verts[2].y==bottom,
             "3D texture billboard projects source anchor and preserves the two-triangle top-left quad order");
-        check(a.m_verts[0].z==0.80000001f&&a.m_verts[0].oow==1&&a.m_verts[0].color==0xA1B2C3D4
-            &&a.m_verts[0].tu==0&&a.m_verts[0].tv==0&&a.m_verts[1].tu==1&&a.m_verts[2].tv==1
-            &&b.m_verts[2].tu==1&&b.m_verts[2].tv==1,
-            "3D texture billboard retains fixed source depth, reciprocal depth, color and complete quad UVs");
+        const float expectedU[2][3]={{0,1,0},{1,0,1}},expectedV[2][3]={{0,0,1},{0,1,1}};
+        bool billboardFieldsMatch=true;
+        for(int faceIndex=0;faceIndex<2;++faceIndex) {
+            const RPFace& face=g_renderer.submissions[static_cast<size_t>(faceIndex)];
+            billboardFieldsMatch=billboardFieldsMatch&&face.primType==D3DPT_TRIANGLELIST&&face.numVerts==3
+                &&face.numIndices==0&&face.tex==&secondTexture&&face.mtPreset==0&&face.cullMode==D3DCULL_NONE
+                &&face.srcAlphaMode==D3DBLEND_SRCALPHA&&face.destAlphaMode==D3DBLEND_INVSRCALPHA;
+            for(int vertex=0;vertex<3;++vertex) {
+                const tlvertex3d& value=face.m_verts[vertex];
+                billboardFieldsMatch=billboardFieldsMatch&&value.z==0.80000001f&&value.oow==1
+                    &&value.color==0xA1B2C3D4&&value.specular==0xFF000000u
+                    &&value.tu==expectedU[faceIndex][vertex]&&value.tv==expectedV[faceIndex][vertex];
+            }
+        }
+        check(billboardFieldsMatch,
+            "3D texture billboard retains fixed depth, reciprocal depth, ARGB/specular, complete UVs, texture, cull and alpha blend state");
     }
     {
         CEffectPrim ice;ice.m_pos={10,20,100};ice.m_size=2;ice.m_heightSize=15;ice.m_argb=0xC8FFFFFF;

@@ -25,6 +25,7 @@ def compact(source: str) -> str:
 
 def main() -> int:
     ref = (ROOT / "Ref/RagEffectPrim.cpp").read_text(encoding="utf-8")
+    ref_renderer = (ROOT / "Ref/Renderer.cpp").read_text(encoding="utf-8")
     exe = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8")
     current = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
     header = (ROOT / "src/world/RagEffect.h").read_text(encoding="utf-8")
@@ -34,6 +35,22 @@ def main() -> int:
     ref_render = function_body(ref, signature)
     exe_render = function_body(exe, signature)
     assert compact(ref_render) == compact(exe_render), "Ref billboard renderer differs from canonical executable"
+
+    project_signature = "void __thiscall CRenderer::ProjectVertex("
+    ref_project = function_body(ref_renderer, project_signature)
+    exe_project_call = "CRenderer::ProjectVertex(g_renderer,&this->m_pos,wtm,&x,(float*)&wtm,&oow);"
+    assert exe_project_call in compact(exe_render), "canonical billboard no longer calls the screen-space projection overload"
+    project_math = (
+        "1.0/(vtm->v33*src->z+vtm->v23*src->y+vtm->v13*src->x+vtm->v43)",
+        "*oow=v6;",
+        "*x=(vtm->v31*src->z+vtm->v21*src->y+src->x*vtm->v11+vtm->v41)*v6*this->m_hpc+(double)this->m_xoffset;",
+        "*y=(vtm->v32*src->z+vtm->v22*src->y+vtm->v12*src->x+vtm->v42)*this->m_vpc**oow+(double)this->m_yoffset;",
+    )
+    for token in project_math:
+        assert token in compact(ref_project), f"primary Ref screen-space projection omits {token}"
+    pixel_ratio = function_body(exe, "double __thiscall CRenderer::GetPixelRatio(CRenderer *this, float oow)")
+    assert compact(pixel_ratio).endswith("returnoow*this->m_hpc*0.14285715;}"), "canonical pixel ratio scaling changed"
+    assert "CRenderer::GetPixelRatio(g_renderer,oow)" in compact(exe_render), "canonical billboard no longer scales from ProjectVertex oow through GetPixelRatio"
     assert "PP_3DTEXTURE_NOMASTER = 0x16" in header
 
     public = function_body(exe, "void __thiscall CEffectPrim::Render(CEffectPrim *this, matrix *wtm)")
@@ -68,21 +85,27 @@ def main() -> int:
         "{{0,1,2},{1,2,3}}",
         "output.z = 0.80000001f; output.oow = 1.0f;",
         "output.color = prim.m_argb",
+        "output.specular = 0xFF000000u",
         "g_renderer.AddRP(face, static_cast<int>(prim.m_renderFlag))",
     )
     cursor = -1
     for token in ordered:
         cursor = helper.find(token, cursor + 1)
         assert cursor >= 0, f"current billboard helper omits or reorders source operation: {token}"
+    for token in (
+        "face->cullMode = D3DCULL_NONE",
+        "face->srcAlphaMode = D3DBLEND_SRCALPHA; face->destAlphaMode = D3DBLEND_INVSRCALPHA;",
+    ):
+        assert token in helper, f"current billboard helper omits render state: {token}"
 
     for token in (
         "3D texture billboard submits two ordered faces through legacy AddRP with raw render flag five",
         "3D texture billboard projects source anchor and preserves the two-triangle top-left quad order",
-        "3D texture billboard retains fixed source depth, reciprocal depth, color and complete quad UVs",
+        "3D texture billboard retains fixed depth, reciprocal depth, ARGB/specular, complete UVs, texture, cull and alpha blend state",
     ):
         assert token in tests, f"missing production-body billboard test: {token}"
 
-    print("Render3DTextureBillboard comparison passed: EXE/Ref body, type0x16 route, masterless dispatch, ordered two-face geometry, and production-body checks")
+    print("Render3DTextureBillboard comparison passed: EXE/Ref renderer and projection bodies, source pixel scaling, type0x16 route, masterless dispatch, ordered geometry/UV/state, and production-body checks")
     return 0
 
 
