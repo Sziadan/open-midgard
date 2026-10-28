@@ -20521,6 +20521,62 @@ bool CRagEffect::ProcessVallentine(int variant)
 }
 // TEST_BODY_END vallentine_effect_family
 
+// PE HighPriest.exe.c:459359-459651; Ref/dhxj/RagEffect2.cpp:21200+.
+// TEST_BODY_BEGIN portal3_effects561_562_family
+bool CRagEffect::ProcessPortal3(int variant)
+{
+    if (m_stateCnt == 0) {
+        CEffectPrim* heal = LaunchEffectPrim(PP_HEAL, vector3d{});
+        heal->m_renderFlag = 5;
+        heal->m_duration = m_duration;
+        const char* texture = variant == 3 ? "effect\\ring_red.tga" : "effect\\magic_violet.tga";
+        heal->m_texture.push_back(g_texMgr.GetTexture(texture, false));
+        heal->m_size = variant == 3 ? 10.0f : 4.0f;
+        for (size_t lane = 0; lane < 3; ++lane) {
+            EffectGi& gi = heal->m_gi[lane];
+            gi.life = 1;
+            gi.process = 0;
+            gi.fullDisplayAngle = 360;
+            gi.maxHeight = 80.0f;
+            gi.rotStart = static_cast<short>(rand() % 360);
+            gi.alphaB = 0;
+            gi.distance = lane == 0 ? 7.0f : lane == 1 ? 5.5f : 4.0f;
+            gi.riseAngle = 90;
+            gi.alphaT = variant == 1 ? -1 : 1400;
+            gi.sparkY = 0.0f;
+            gi.height.fill(0.0f);
+            gi.flag.fill(3);
+        }
+        heal->m_gi[3].life = 0;
+    }
+    if (m_stateCnt == 2) {
+        CEffectPrim* wind = LaunchEffectPrim(PP_WIND, vector3d{});
+        wind->m_renderFlag = 5;
+        wind->m_duration = m_duration;
+        wind->m_texture.push_back(g_texMgr.GetTexture("effect\\cloud11.tga", false));
+        wind->m_size = variant == 3 ? 10.0f : 4.0f;
+        static constexpr float maxHeights[4] = {2.5f, 5.0f, 7.5f, 10.0f};
+        static constexpr short rotations[4] = {0, 90, 180, 270};
+        static constexpr float distances[4] = {13.0f, 11.0f, 9.0f, 8.0f};
+        for (size_t lane = 0; lane < 4; ++lane) {
+            EffectGi& gi = wind->m_gi[lane];
+            gi.life = 1;
+            gi.process = 0;
+            gi.fullDisplayAngle = 30;
+            gi.maxHeight = maxHeights[lane];
+            gi.rotStart = rotations[lane];
+            gi.alphaB = 0;
+            gi.distance = distances[lane];
+            gi.riseAngle = 90;
+            gi.alphaT = 3;
+            gi.height.fill(1.5f);
+            gi.flag.fill(0);
+        }
+    }
+    return true;
+}
+// TEST_BODY_END portal3_effects561_562_family
+
 // PE HighPriest.exe.c:435065/435338; Ref/RagEffect.cpp:10415-10490.
 // TEST_BODY_BEGIN waterfall_effects349_356_family
 bool CRagEffect::ProcessWaterfallEffects(int axisMode, int compactMode, int textureSet)

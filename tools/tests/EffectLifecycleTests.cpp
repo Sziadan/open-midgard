@@ -657,6 +657,7 @@ struct CRagEffect : CGameObject {
     bool ProcessGhost(int);
     bool ProcessWaterfallEffects(int, int, int);
     bool ProcessVallentine(int);
+    bool ProcessPortal3(int);
     bool ProcessBottomVertical(int);
     bool ProcessTanji(bool);
     bool ProcessBasilica();
@@ -4080,6 +4081,79 @@ int main()
             effect.ClearPrims(); g_world.UpdateGameObjects();
         }
         g_world.m_player=oldPlayer;
+    }
+    {
+        struct Variant { int id, mode, alphaT; };
+        const Variant variants[]={{561,0,1400},{562,1,-1}};
+        const char* const highTexture="effect\\magic_violet.tga";
+        const char* const lowTexture="effect\\cloud11.tga";
+        for (const Variant& variant:variants) {
+            CRagEffect effect; effect.m_type=variant.id; effect.m_duration=81;
+            effect.m_stateCnt=1; effect.m_effectPos={7,8,9};
+            rngValues={359,1,180}; rngCursor=0;
+            g_texMgr.requests.clear(); waveCalls.clear();
+            const int draws=rngDraws;
+            effect.ProcessPortal3(variant.mode);
+            check(effect.m_primList.empty()&&effect.m_effectPos.x==7&&effect.m_effectPos.y==8
+                &&effect.m_effectPos.z==9&&g_texMgr.requests.empty()&&waveCalls.empty()
+                &&rngDraws==draws,
+                "Portal3 states other than zero and two do not emit or move the effect anchor");
+
+            effect.m_stateCnt=0; effect.ProcessPortal3(variant.mode);
+            CEffectPrim* heal=effect.m_primList.empty()?nullptr:effect.m_primList.back();
+            bool healLanes=heal&&heal->m_gi[3].life==0;
+            const float distances[3]={7.0f,5.5f,4.0f};
+            const short rotations[3]={359,1,180};
+            for (size_t lane=0;lane<3&&heal;++lane) {
+                const EffectGi& gi=heal->m_gi[lane];
+                healLanes=healLanes&&gi.life==1&&gi.process==0&&gi.fullDisplayAngle==360
+                    &&gi.maxHeight==80&&gi.rotStart==rotations[lane]&&gi.alphaB==0
+                    &&gi.alphaT==variant.alphaT&&gi.distance==distances[lane]&&gi.riseAngle==90
+                    &&gi.sparkY==0;
+                for (size_t sample=0;sample<21;++sample)
+                    healLanes=healLanes&&gi.height[sample]==0&&gi.flag[sample]==3;
+            }
+            check(heal&&heal->m_type==PP_HEAL&&heal->m_renderFlag==5&&heal->m_duration==81
+                &&heal->m_texture.size()==1&&heal->m_texture[0]==&g_texMgr.texture
+                &&g_texMgr.requests==std::vector<std::string>({highTexture})&&heal->m_size==4
+                &&healLanes&&rngCursor==3&&rngDraws==draws+3&&waveCalls.empty(),
+                "Portal3 state zero emits the exact heal payload and consumes three ordered RNG draws");
+
+            effect.m_stateCnt=2; effect.ProcessPortal3(variant.mode);
+            CEffectPrim* wind=effect.m_primList.empty()?nullptr:effect.m_primList.back();
+            static const float maxHeights[4]={2.5f,5.0f,7.5f,10.0f};
+            static const float windDistances[4]={13.0f,11.0f,9.0f,8.0f};
+            static const short windRotations[4]={0,90,180,270};
+            bool windLanes=wind!=nullptr;
+            for (size_t lane=0;lane<4&&wind;++lane) {
+                const EffectGi& gi=wind->m_gi[lane];
+                windLanes=windLanes&&gi.life==1&&gi.process==0&&gi.fullDisplayAngle==30
+                    &&gi.maxHeight==maxHeights[lane]&&gi.rotStart==windRotations[lane]
+                    &&gi.alphaB==0&&gi.alphaT==3&&gi.distance==windDistances[lane]
+                    &&gi.riseAngle==90;
+                for (size_t sample=0;sample<21;++sample)
+                    windLanes=windLanes&&gi.height[sample]==1.5f&&gi.flag[sample]==0;
+            }
+            check(effect.m_primList.size()==2&&wind&&wind->m_type==PP_WIND&&wind->m_renderFlag==5
+                &&wind->m_duration==81&&wind->m_texture.size()==1&&wind->m_texture[0]==&g_texMgr.texture
+                &&wind->m_size==4&&g_texMgr.requests==std::vector<std::string>({highTexture,lowTexture})
+                &&windLanes&&rngDraws==draws+3&&waveCalls.empty(),
+                "Portal3 state two emits the four-lane wind primitive with exact levels and no RNG");
+            const size_t count=effect.m_primList.size(); effect.m_stateCnt=3;
+            effect.ProcessPortal3(variant.mode);
+            check(effect.m_primList.size()==count&&rngDraws==draws+3&&waveCalls.empty(),
+                "Portal3 does not repeat either primitive after its two exact launch states");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+
+            CRagEffect stateTwoOnly; stateTwoOnly.m_type=variant.id; stateTwoOnly.m_duration=81;
+            stateTwoOnly.m_stateCnt=2; g_texMgr.requests.clear();
+            stateTwoOnly.ProcessPortal3(variant.mode);
+            check(stateTwoOnly.m_primList.size()==1&&stateTwoOnly.m_primList.front()->m_type==PP_WIND
+                &&g_texMgr.requests==std::vector<std::string>({lowTexture})&&rngDraws==draws+3,
+                "Portal3 state-two gate is independent of the state-zero gate");
+            stateTwoOnly.ClearPrims(); g_world.UpdateGameObjects();
+        }
+        rngValues.clear(); rngCursor=0;
     }
     {
         CRenderObject actor; actor.m_pos={3,10,4};

@@ -561,8 +561,8 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 558	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(1, 0); return true;		3513
 559	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(0, 1); return true;		3513
 560	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(1, 1); return true;		3513
-561	OnProcess3	Portal3	unported	OnProcess3 -> UnportedEffect		-
-562	OnProcess3	Portal3	unported	OnProcess3 -> UnportedEffect		-
+561	OnProcess3	Portal3	routed	OnProcess3 -> return ProcessPortal3(0);		3592
+562	OnProcess3	Portal3	routed	OnProcess3 -> return ProcessPortal3(1);		3592
 563	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect563();		3556
 564	OnProcess3	CoupleCasting	routed	"OnProcess3 -> ApplyCoupleCasting(""effect\\ring_red.tga""); return true;"	src/gamemode/UseSkillEffect.generated.inc	3546
 565	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	15
