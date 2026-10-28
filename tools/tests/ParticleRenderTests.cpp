@@ -651,10 +651,10 @@ int main() {
         vector3d point{};const int sample=4;const float angle=135.0f,heightFactor=0.37f,distance=8.0f;
         Electric2PathPoint(rise,sample,angle,heightFactor,distance,12.0f,30.0f,-4.0f,0.1f,-0.2f,0.3f,&point);
         const double radial=static_cast<double>(sample)*0.2*distance;
-        check(near(point.x,static_cast<float>(radial*GetCos(rise*4)+0.1f+12.0f))
+        check(near(point.x,static_cast<float>(radial*GetCos(rise)+0.1f+12.0f))
             && near(point.y,static_cast<float>(static_cast<double>(GetSin(static_cast<int>(angle)))*heightFactor*-15.0-0.2f-8.0+30.0f))
-            && near(point.z,static_cast<float>(radial*GetSin(rise*4)+0.3f-4.0f)),
-            "electric2 path sample uses four-times-rise trig and source vertical scale");
+            && near(point.z,static_cast<float>(radial*GetSin(rise)+0.3f-4.0f)),
+            "electric2 path sample uses the source one-degree rise table and vertical scale");
     }
     for(int rise:{0,23,45,90}) {
         vector3d base{},top{};const int angle=rise*2+30;const float height=6.25f,distance=8.0f,maxHeight=2.5f;

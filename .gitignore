@@ -86,6 +86,7 @@ tools/tests/*
 !tools/tests/check_hitline3_render.py
 !tools/tests/check_airtexture_render.py
 !tools/tests/check_electric_render.py
+!tools/tests/check_electric2_render.py
 !tools/tests/check_hitline_caller.py
 !tools/tests/check_hitline4_caller.py
 !tools/tests/check_hitline5_caller.py

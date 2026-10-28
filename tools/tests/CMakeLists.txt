@@ -778,6 +778,8 @@ add_test(NAME airtexture_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_airtexture_render.py")
 add_test(NAME electric_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_electric_render.py")
+add_test(NAME electric2_render_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_electric2_render.py")
 add_test(NAME hitline_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_hitline_caller.py")
 add_test(NAME hitline4_caller_source_check
