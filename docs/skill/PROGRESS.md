@@ -1618,3 +1618,7 @@ Added the WP4 Magnus Exorcismus unit job132 replay. Raw 0x011F creates the unit,
 ## WP10.8 — Demonstration unit effect replay — 2026-10-28
 
 Added the WP4 Demonstration unit job177 replay. The raw 0x011F packet creates the unit, one nominal 24 ms production `CSkill::OnProcess` step launches Ref loop effect302, and 0x0120 removes it. Focused replay passes; the complete root packet replay CTest passes19/19. Model rendering remains resource-dependent and is not asserted by this fixture.
+
+## WP10.8 — Quagmire periodic unit effect replay — 2026-10-28
+
+Added the WP4 Quagmire unit job142 replay and stepped real `CSkill::OnProcess` at nominal 24 ms intervals through the periodic threshold. Ref effect95 duration150 with a 20-count offset launches at the 131st process call; runtime logged effect95, retained the unit, and removed it with 0x0120. Focused replay passes; the complete root packet replay CTest passes20/20.

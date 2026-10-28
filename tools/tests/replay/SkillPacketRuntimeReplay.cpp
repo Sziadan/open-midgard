@@ -568,11 +568,12 @@ void ReplaySkillUnitLifecycle(const std::string& path)
         "skill-unit removal must use the 6-byte 0x0120 packet");
     const int unitJob = packets[0].bytes[14];
     Require(unitJob == 126 || unitJob == 127 || unitJob == 131 || unitJob == 132
-            || unitJob == 141 || unitJob == 177,
+            || unitJob == 141 || unitJob == 142 || unitJob == 177,
         "unsupported skill-unit replay job");
     const int expectedLoopEffect = unitJob == 126 ? 315
         : (unitJob == 127 ? 25 : (unitJob == 131 ? 319
-            : (unitJob == 132 ? 318 : (unitJob == 141 ? 74 : 302))));
+            : (unitJob == 132 ? 318 : (unitJob == 141 ? 74
+                : (unitJob == 142 ? 95 : 302)))));
 
     Fixture fixture(path);
     CGameActor* configuredActor = fixture.world.GetGameActorByAID(3);
@@ -622,6 +623,15 @@ void ReplaySkillUnitLifecycle(const std::string& path)
                 }
                 Require(!active && processSteps >= 100,
                     "Firewall unit did not expire after nominal 24 ms CSkill::OnProcess steps");
+            } else if (unitJob == 142) {
+                for (; processSteps < 140; ++processSteps) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(24));
+                    lifetimeElapsedMs = timeGetTime() - unit->m_SkillStartTime;
+                    Require(unit->OnProcess() != 0,
+                        "Quagmire unit should remain active during periodic effect steps");
+                }
+                Require(processSteps >= 131,
+                    "Quagmire unit was not stepped through the Ref periodic effect threshold");
             } else {
                 std::this_thread::sleep_for(std::chrono::milliseconds(24));
                 lifetimeElapsedMs = timeGetTime() - unit->m_SkillStartTime;
