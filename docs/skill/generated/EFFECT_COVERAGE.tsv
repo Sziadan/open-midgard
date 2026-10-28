@@ -100,7 +100,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 57	OnProcess	BeginCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp	79
 58	OnProcess	SAINTCASTING	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp;src/world/GameActorMsgHandler.cpp	60
 59	OnProcess	BeginCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp	60
-60	OnProcess	LockOn	unported	OnProcess -> UnportedEffect	src/session/SkillAttackEffectIdTable.generated.inc	-
+60	OnProcess	LockOn	routed	OnProcess -> SpawnLockOn(); return true;	src/session/SkillAttackEffectIdTable.generated.inc	95
 61	OnProcess	WarpZone	routed	OnProcess -> return ProcessEffectFrameLegacy();		15
 62	OnProcess	Sightrasher	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	60
 63	OnProcess	LaunchEffectPrim	routed	OnProcess -> return ProcessEffectFrameLegacy();		60

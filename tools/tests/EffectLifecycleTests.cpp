@@ -169,6 +169,9 @@ struct CWorld {
     CRenderObject* GetGameActorByAID(u32 aid) const { return aid == lookupAid ? lookupActor : nullptr; }
     void UpdateGameObjects();
 } g_world;
+float ResolveGroundHeight(const vector3d& position) {
+    return g_world.m_attr ? g_world.m_attr->GetHeight(position.x, position.z) : position.y;
+}
 struct CGameMode {
     CWorld* m_world = &g_world; CView* m_view = &testView;
     char m_rswName[40]{};
@@ -563,6 +566,7 @@ struct CRagEffect : CGameObject {
     void SpawnBlessing();
     void SpawnSmoke();
     void SpawnDragonSmoke();
+    void SpawnLockOn();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5376,6 +5380,35 @@ int main()
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
         check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,
             "DragonSmoke cleanup releases sprite and action resource locks");
+    }
+    {
+        CRenderObject actor;actor.m_pos={17,28,39};
+        SilentAttr terrain;terrain.height=12.5f;SilentAttr* oldAttr=g_world.m_attr;g_world.m_attr=&terrain;
+        CRagEffect effect;effect.m_type=60;effect.m_master=&actor;effect.m_duration=200;
+        g_texMgr.requests.clear();effect.SpawnLockOn();
+        check(effect.m_primList.size()==2&&terrain.calls==1&&terrain.lastX==17&&terrain.lastZ==39
+            &&effect.m_effectPos.x==17&&effect.m_effectPos.y==10.5f&&effect.m_effectPos.z==39,
+            "LockOn refreshes parent position, emits at state zero and anchors effect two units below terrain height");
+        CEffectPrim* first=effect.m_primList.front();CEffectPrim* second=effect.m_primList.back();
+        auto lockonPayload=[](const CEffectPrim* prim,float longitude){
+            return prim&&prim->m_type==PP_3DTEXTURE&&prim->UsesReferenceTexture()&&prim->m_duration==200
+                &&(prim->m_pattern&0x800)!=0&&prim->m_longitude==longitude&&prim->m_longSpeed==4.5f
+                &&prim->m_roll==90&&prim->m_widthSize==30&&prim->m_heightSize==30
+                &&prim->m_widthSpeed==-1&&prim->m_heightSpeed==-1&&prim->m_changePoint==20
+                &&prim->m_changeWidthSpeed==0&&prim->m_changeHeightSpeed==0
+                &&prim->m_changeWidthAccel==0&&prim->m_changeHeightAccel==0&&prim->m_rgbCycleDelay==20
+                &&prim->m_red==250&&prim->m_green==150&&prim->m_blue==150
+                &&prim->m_greenSpeed==-15&&prim->m_blueSpeed==-15
+                &&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture;
+        };
+        check(lockonPayload(first,0.0f)&&lockonPayload(second,45.0f)&&g_texMgr.requests.size()==2
+            &&g_texMgr.requests[0]=="effect\\LockOn128.tga"&&g_texMgr.requests[1]=="effect\\LockOn128.tga",
+            "LockOn preserves both rotating texture payloads and exact texture requests");
+        effect.m_stateCnt=1;actor.m_pos={23,40,51};effect.SpawnLockOn();
+        check(effect.m_primList.size()==2&&terrain.calls==2&&terrain.lastX==23&&terrain.lastZ==51
+            &&effect.m_effectPos.x==23&&effect.m_effectPos.y==10.5f&&effect.m_effectPos.z==51,
+            "LockOn continues following its master and updating terrain height without re-emission");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_attr=oldAttr;
     }
     {
         CRagEffect effect;effect.m_type=212;effect.m_duration=500;

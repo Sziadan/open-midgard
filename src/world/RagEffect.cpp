@@ -12428,7 +12428,7 @@ bool CEffectPrim::UsesReferenceCircle() const
 bool CEffectPrim::UsesReferenceTexture() const
 {
     return m_type == PP_3DTEXTURE && m_master
-        && (m_master->GetEffectType() == 48 || m_master->GetEffectType() == 93
+        && (m_master->GetEffectType() == 48 || m_master->GetEffectType() == 60 || m_master->GetEffectType() == 93
             || m_master->GetEffectType() == 94 || m_master->GetEffectType() == 99
             || m_master->GetEffectType() == 119 || m_master->GetEffectType() == 196 || m_master->GetEffectType() == 452 || m_master->GetEffectType() == 114
             || m_master->GetEffectType() == 137);
@@ -15752,6 +15752,40 @@ void CRagEffect::SpawnDragonSmoke()
         "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xBC\xB6\xD2\xBF\xAC\xB1\xE2.act");
     prim->m_numSegments = 1;
     InitReferenceSegments(prim);
+}
+
+void CRagEffect::SpawnLockOn()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt == 0) {
+        for (const float longitude : {0.0f, 45.0f}) {
+            CEffectPrim* prim = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+            prim->m_duration = m_duration;
+            prim->m_pattern |= 0x800;
+            prim->m_longitude = longitude;
+            prim->m_longSpeed = 4.5f;
+            prim->m_roll = 90.0f;
+            prim->m_changeWidthAccel = 0.0f;
+            prim->m_changeHeightAccel = 0.0f;
+            prim->m_widthSize = 30.0f;
+            prim->m_heightSize = 30.0f;
+            prim->m_widthSpeed = -1.0f;
+            prim->m_heightSpeed = -1.0f;
+            prim->m_changePoint = 20;
+            prim->m_changeWidthSpeed = 0.0f;
+            prim->m_changeHeightSpeed = 0.0f;
+            prim->m_rgbCycleDelay = 20;
+            prim->m_red = 250;
+            prim->m_green = 150;
+            prim->m_blue = 150;
+            prim->m_greenSpeed = -15.0f;
+            prim->m_blueSpeed = -15.0f;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\LockOn128.tga", false));
+        }
+    }
+    m_effectPos.y = ResolveGroundHeight(m_effectPos) - 2.0f;
 }
 
 // Ref/RagEffect.cpp:12423-12438; canonical HighPriest.exe.c:420630-420640.

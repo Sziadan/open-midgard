@@ -667,6 +667,7 @@ private:
     void SpawnBlessing();
     void SpawnSmoke();
     void SpawnDragonSmoke();
+    void SpawnLockOn();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();

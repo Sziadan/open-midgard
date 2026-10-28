@@ -1330,3 +1330,7 @@ Effect21 was already routed to `ProcessDetoxication21`; PE and primary-Ref helpe
 ## WP10.3 — DragonSmoke 373 verification — 2026-10-28
 
 DragonSmoke was already implemented and documented. Registered `check_dragon_smoke.py` with CTest, corrected its current-handler extraction boundary so the RNG count covers only `SpawnDragonSmoke`, and added direct PE string-byte checks for both CP949 assets at `0x71B440` and `0x71B42C`. The focused comparator passes and Release CTest passes 153/153. No production handler changes were needed. Next per the WP10.3 priority list: LockOn (60).
+
+## WP10.3 — LockOn 60 — 2026-10-28
+
+Effect60 was an explicit unported route. Added `SpawnLockOn` and the generated OnProcess route. It refreshes parent position every call, emits two PP_3DTEXTURE primitives only at state0 with longitude0/45, speed4.5, roll90, 30x30 size, -1 contraction, change point20, RGB cycle20 and source color speeds, then anchors effect Y at terrain height minus2. Both use the exact PE `effect\\LockOn128.tga` texture and the reference texture renderer family. `check_lockon_caller.py` verifies PE/primary-Ref source fields, local route/payload/family and exact executable string bytes; lifecycle checks cover both primitives and repeated terrain anchoring. Coverage is 548 routed / 145 explicit unported / 46 launched-unported. Release app and parity-test builds pass; CTest passes 154/154; deployed OldRO copy hash matches (`411EE92787A280BB554B557372B603E66ED7592FC7DDA8D11602AD6EBACD2242`). Runtime acceptance remains open. Next: SpearBmr (80).

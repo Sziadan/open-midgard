@@ -100,7 +100,7 @@ case 56: return ProcessEffectFrameLegacy();
 case 57: return ProcessEffectFrameLegacy();
 case 58: return ProcessEffectFrameLegacy();
 case 59: return ProcessEffectFrameLegacy();
-case 60: return UnportedEffect();
+case 60: SpawnLockOn(); return true;
 case 61: return ProcessEffectFrameLegacy();
 case 62: return ProcessEffectFrameLegacy();
 case 63: return ProcessEffectFrameLegacy();

@@ -623,3 +623,7 @@ The PE helper and primary Ref helper match; PE OnProcess case38 calls DecAgility
 # WP10.3 Detecting effect119 implementation
 
 The PE invokes Detecting while the primary Ref caller omits it. Effect119 now routes to a local handler matching the state-zero PE wave and PP_3DTEXTURE payload, including the overwrite from deltaY−7 to −5. Its texture primitive is bound to the reference texture family; focused source and lifecycle checks verify the behavior. Runtime audio/visual acceptance remains open.
+
+# WP10.3 LockOn secondary Ref variant
+
+`Ref/RagEffect.cpp` and the canonical PE agree on effect60's two PP_3DTEXTURE primitives, shared `effect\\LockOn128.tga` texture and terrain-height-minus2 anchor. The secondary `Ref/dhxj/RagEffect.cpp` contains a divergent later LockOn implementation (three primitives and changed parameters/assets); it is not used as the parity oracle. The local route follows the canonical PE and primary Ref. Live runtime visual acceptance remains open.
