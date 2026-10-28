@@ -1654,3 +1654,7 @@ Added Kaen job189 and Ground Drift jobs190–194. The runner advances each unit 
 ## WP10.8 — Pneuma job133 Ref default-path audit — 2026-10-28
 
 The plan listed Pneuma among units expected to launch a loop effect, but the primary Ref `CSkill::SendMsg(45)` and `CSkill::OnProcess` sources have no job133 effect branch. Added a raw 0x011F/0x0120 replay that verifies the unit remains active through its first process step without launching any unit effect. Corrected the WP4 acceptance wording and recorded the source exception in `MISMATCHES.md`. Focused replay passes; the full root packet replay CTest passes55/55.
+
+## WP10.8 — Land Mine trigger lifecycle replay — 2026-10-28
+
+Added a full Land Mine trigger path: job147 entry, packetver23 0x01DE HT_LANDMINE skill116 damage notify from owner AID1 to target AID2, 0x01D7 conversion to active Fire Pillar job135, one nominal 24 ms process step launching effect138, and 0x0120 removal. Focused replay passes; the complete root packet replay CTest passes56/56. The replay covers one triggerable trap path; remaining Hunter trap variants still need their own Ref evidence.

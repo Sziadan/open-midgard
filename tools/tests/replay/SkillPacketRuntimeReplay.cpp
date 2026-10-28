@@ -49,6 +49,19 @@ void Require(bool condition, const std::string& message)
     }
 }
 
+u16 ReadU16LE(const u8* bytes)
+{
+    return static_cast<u16>(bytes[0]) | (static_cast<u16>(bytes[1]) << 8);
+}
+
+u32 ReadU32LE(const u8* bytes)
+{
+    return static_cast<u32>(bytes[0])
+        | (static_cast<u32>(bytes[1]) << 8)
+        | (static_cast<u32>(bytes[2]) << 16)
+        | (static_cast<u32>(bytes[3]) << 24);
+}
+
 std::vector<u8> DecodeHex(const std::string& text)
 {
     Require(text.size() % 2 == 0, "packet hex field has odd length");
@@ -767,6 +780,80 @@ void ReplayTrapRevealLifecycle(const std::string& path)
     std::cout << "Trap job=143 aid=100 hidden=1 revealed=1 removed=1 model_resource=not-loaded\n";
 }
 
+void ReplayLandMineTriggerLifecycle(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 4, "Land Mine trigger requires entry, damage, active-look, and removal packets");
+    Require(packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+            && packets[0].bytes[14] == 147,
+        "Land Mine trigger must begin with a job147 0x011F unit entry");
+    Require(packets[1].opcode == 0x01DE && packets[1].bytes.size() == 33
+            && ReadU16LE(packets[1].bytes.data() + 2) == 116,
+        "Land Mine trigger must include a 33-byte HT_LANDMINE 0x01DE damage notification");
+    Require(packets[2].opcode == 0x01D7 && packets[2].bytes.size() == 11
+            && ReadU32LE(packets[2].bytes.data() + 2) == 100
+            && ReadU32LE(packets[2].bytes.data() + 7) == 135,
+        "Land Mine trigger must transform unit AID100 to active Fire Pillar job135");
+    Require(packets[3].opcode == 0x0120 && packets[3].bytes.size() == 6,
+        "Land Mine trigger must end with a 0x0120 removal packet");
+
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    bool dispatchedDamageNotify = false;
+    bool foundDamageNotify = false;
+    bool foundActiveEffect = false;
+    for (const ScenarioPacket& scenarioPacket : packets) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(scenarioPacket.bytes.data(), static_cast<int>(scenarioPacket.bytes.size()), packet, consumed),
+            "production packet reader rejected Land Mine trigger packet");
+        Require(packet.packetId == scenarioPacket.opcode && consumed == static_cast<int>(scenarioPacket.bytes.size()),
+            "Land Mine trigger packet framing differs from scenario metadata");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Land Mine trigger packet");
+        if (scenarioPacket.opcode == 0x011F) {
+            CSkill* unit = fixture.world.GetSkillByAID(100);
+            Require(unit != nullptr && unit->m_job == 147 && unit->m_isVisibleBody == 1,
+                "Land Mine entry did not create the visible job147 unit");
+        } else if (scenarioPacket.opcode == 0x01DE) {
+            dispatchedDamageNotify = true;
+            Require(ReadU32LE(scenarioPacket.bytes.data() + 4) == 1
+                    && ReadU32LE(scenarioPacket.bytes.data() + 8) == 2,
+                "HT_LANDMINE trigger packet must report owner AID1 attacking target AID2");
+        } else if (scenarioPacket.opcode == 0x01D7) {
+            CSkill* unit = fixture.world.GetSkillByAID(100);
+            Require(unit != nullptr && unit->m_job == 135,
+                "0x01D7 did not change Land Mine unit to active Fire Pillar job135");
+            std::this_thread::sleep_for(std::chrono::milliseconds(24));
+            Require(unit->OnProcess() != 0,
+                "active Fire Pillar unit should remain alive after its first nominal process step");
+        } else {
+            Require(fixture.world.GetSkillByAID(100) == nullptr,
+                "0x0120 did not remove triggered Land Mine from CWorld skill list");
+            Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+                    [](CGameObject* object) {
+                        const CSkill* skill = dynamic_cast<const CSkill*>(object);
+                        return skill != nullptr && skill->m_aid == 100;
+                    }),
+                "0x0120 did not remove triggered Land Mine from CWorld object ownership list");
+        }
+    }
+
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for Land Mine trigger");
+    std::string logLine;
+    while (std::getline(runtimeLog, logLine)) {
+        foundDamageNotify = foundDamageNotify
+            || logLine.find("[GameMode] skill damage opcode=0x01DE src=1 dst=2 skill=116") != std::string::npos;
+        foundActiveEffect = foundActiveEffect
+            || logLine.find("[REPLAY] LaunchEffect id=138 actor=100") != std::string::npos;
+    }
+    Require(dispatchedDamageNotify && foundDamageNotify,
+        "runtime trace did not record the HT_LANDMINE damage notification");
+    Require(foundActiveEffect, "active Fire Pillar did not launch Ref effect138");
+    std::cout << "LandMine trigger aid=100 skill=116 activeJob=135 effect=138 removed=1\n";
+}
+
 void ReplayWarpUnitLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -843,6 +930,14 @@ bool IsWarpUnitLifecycleScenario(const std::string& path)
         && packets.front().bytes.size() == 16 && packets.front().bytes[14] == 128;
 }
 
+bool IsLandMineTriggerScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 4 && packets.front().opcode == 0x011F
+        && packets.front().bytes.size() == 16 && packets.front().bytes[14] == 147
+        && packets[1].opcode == 0x01DE && packets[2].opcode == 0x01D7;
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -857,6 +952,8 @@ int main(int argc, char** argv)
             ReplaySkillCastCancel(argv[1]);
         } else if (IsTrapRevealScenario(argv[1])) {
             ReplayTrapRevealLifecycle(argv[1]);
+        } else if (IsLandMineTriggerScenario(argv[1])) {
+            ReplayLandMineTriggerLifecycle(argv[1]);
         } else if (IsWarpUnitLifecycleScenario(argv[1])) {
             ReplayWarpUnitLifecycle(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {

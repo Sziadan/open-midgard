@@ -3248,3 +3248,7 @@ The six scenario fixtures send unit jobs189–194, then step real `CSkill::OnPro
 ## WP10.8 runtime replay — Pneuma Ref default path — 2026-10-28
 
 `pneuma_default_unit.tsv` creates job133 (`UNT_PNEUMA`), advances production `CSkill::OnProcess` once, verifies no `LaunchEffect` for unit AID100, then removes the unit with 0x0120. Ref source inspection confirms no job133 branch in message45 or OnProcess; the OnProcess switch default keeps the object active without an effect (`Ref/Skill.cpp:1287-1698`, `2925-3543`). The acceptance plan and `MISMATCHES.md` now state this exception. Focused and full replay CTest pass55/55.
+
+## WP10.8 runtime replay — Land Mine trigger — 2026-10-28
+
+`land_mine_trigger_lifecycle.tsv` dispatches 0x011F job147, a 33-byte 0x01DE HT_LANDMINE skill116 notify (owner AID1 → target AID2), an 11-byte 0x01D7 base-look change to job135, then 0x0120 removal. The runtime trace confirms the damage packet; unit state confirms job147→135; one real CSkill process call confirms Ref effect138; both world registries confirm removal. Packet/source basis: `Ref/eAthena_src_2011/map/skill.c:7487-7538`, `clif.c:2932-2948,4651-4652`, and `Ref/Skill.cpp:1537`. Focused replay and full CTest pass56/56.
