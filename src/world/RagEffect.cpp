@@ -12642,7 +12642,9 @@ bool CEffectPrim::UsesReferenceCylinder() const
 bool CEffectPrim::UsesReferenceCrossTexture() const
 {
     return m_type == PP_3DCROSSTEXTURE && m_master
-        && (m_master->GetEffectType() == 38 || m_master->GetEffectType() == 37 || m_master->GetEffectType() == 43 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 220 || m_master->GetEffectType() == 115);
+        && (m_master->GetEffectType() == 456 || m_master->GetEffectType() == 220 || m_master->GetEffectType() == 115
+            || m_master->GetEffectType() == 43 || m_master->GetEffectType() == 38 || m_master->GetEffectType() == 37
+            || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 9);
 }
 
 bool CEffectPrim::UsesReferenceSphere() const
