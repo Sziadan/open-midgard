@@ -673,3 +673,7 @@ The canonical PE helper `CRagEffect::Map_Particle` (`HighPriest.exe.c:442896-442
 ## WP10.3 Effect_SPR fireworks assets 682-686
 
 Canonical PE `CRagEffect::Effect_SPR` variants32-36 load CP949 `이펙트\폭죽_러브`, `폭죽_화이트데이`, `폭죽_발렌타인`, `폭죽_생일`, and `폭죽_크리스마스` sprite/action pairs from VAs `0x71CD7C/0x71CD64` through `0x71CCA8/0x71CC8C`. Secondary `Ref/dhxj/RagEffect2.cpp:25906-25964` names analogous pairs under `misc\...`. The port follows exact PE bytes; the executable-resolved `effect\itempokjuk.wav` is shared by all five variants.
+
+## WP10.3 Effect_SPR Tatami asset 631
+
+Canonical PE `Effect_SPR(16)` loads its sprite/action at `0x71D058/0x71D044`, the CP949 `이펙트\다다미.spr/.act` pair. Secondary `Ref/dhxj/RagEffect2.cpp:25686-25704` instead spells the assets `misc\tatami.spr/.act`. The port follows the PE bytes; the remaining branch payload agrees.

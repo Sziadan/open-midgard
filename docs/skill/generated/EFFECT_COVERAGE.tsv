@@ -630,7 +630,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 628	OnProcess3	BASH3D	routed	OnProcess3 -> ApplyBash3D5(); return true;	src/world/SkillSpecialEffect.cpp	98
 629	OnProcess3	CHOOKGI	routed	OnProcess3 -> SpawnChookgi(3); return true;		1036
 630	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(15);	src/world/SkillSpecialEffect.cpp	1123
-631	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(16);		15
+631	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(16);		3614
 632	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(17);	src/world/SkillSpecialEffect.cpp	128
 633	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(18);	src/world/SkillSpecialEffect.cpp	2447
 634	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(19);		1139

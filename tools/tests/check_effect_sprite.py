@@ -97,6 +97,27 @@ fireworks_ops = ["SetAction(g_prim, 0, 16, 1)", "PlayWave(aEffectItempokj, 0.0, 
 fireworks_positions = [shared_fireworks.group(1).find(token) for token in fireworks_ops]
 if any(position < 0 for position in fireworks_positions) or fireworks_positions != sorted(fireworks_positions):
     raise AssertionError("PE fireworks action, sound, and segment-init order changed")
+
+# Priority 5P Tatami route: no caller cue or random branch, just variant16.
+for label, dispatch in (("PE", pe_dispatch), ("Ref", ref_dispatch)):
+    tatami_caller = re.search(r"case\s+0x277:(.*?)(?=case\s+0x[0-9A-F]+:|$)", dispatch, re.S)
+    if tatami_caller is None or not re.search(r"Effect_SPR\(this,\s*16\).*?return\s+1", tatami_caller.group(1), re.S):
+        raise AssertionError(f"{label} effect631 caller must invoke Effect_SPR(16) and return")
+tatami_variant = re.search(r"case\s+16:(.*?)(?=case\s+17:)", pe_sprite, re.S)
+if tatami_variant is None:
+    raise AssertionError("canonical Effect_SPR(16) branch is missing")
+tatami_ops = ["m_deltaPos2.y = -6.0", "m_renderFlag = 1", "m_animSpeed = 6",
+              "SetSprName(g_prim, &byte_71D058)", "SetActName(g_prim, &byte_71D044)",
+              "SetAction(g_prim, 0, 16, 1)"]
+tatami_positions = [tatami_variant.group(1).find(token) for token in tatami_ops]
+if any(position < 0 for position in tatami_positions) or tatami_positions != sorted(tatami_positions):
+    raise AssertionError("PE Effect_SPR(16) delta, render, speed, resource and action order changed")
+if ("spriteVariant == 16 || spriteVariant == 18" not in helper
+        or "if (spriteVariant == 16 || spriteVariant == 19" not in helper):
+    raise AssertionError("local Effect_SPR(16) offset/render branches are missing")
+tatami_asset = re.search(r"\{\s*16\s*,[^\n]*,\s*6,\s*false,\s*nullptr\s*\}", helper)
+if tatami_asset is None:
+    raise AssertionError("local Effect_SPR(16) must use speed6 one-shot animation with no sound")
 if not re.search(r"case\s+612:\s+return ProcessEffectSpriteAndStr\(\);", DISPATCH):
     raise AssertionError("effect 612 must route through Effect_SPR(14) and its shared STR continuation")
 ref_612 = re.search(r"case\s+0x264:(.*?)(?=case\s+0x265:)", ref_dispatch, re.S)
@@ -193,4 +214,4 @@ if effect584_wave != b"effect\\":
 if not re.search(r"case\s+584:\s+callerWave\s*=\s*\"effect\\\\\";\s*callerWaveFrame\s*=\s*5", helper):
     raise AssertionError("effect 584 unresolved aEffect_16 prefix/frame5 cue is missing")
 
-print(f"Effect_SPR source check passed: {len(expected_routes)} caller routes, {len(asset_vas)} PE-backed assets, {len(wave_vas)} caller waves; effects 584/612 and 682-686 verified")
+print(f"Effect_SPR source check passed: {len(expected_routes)} caller routes, {len(asset_vas)} PE-backed assets, {len(wave_vas)} caller waves; effects 584/612, 631 and 682-686 verified")
