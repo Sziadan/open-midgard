@@ -523,20 +523,20 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 520	OnProcess3	ShieldBoomerang3	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
 521	OnProcess3	NpcStop	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
 522	OnProcess3	Gravitation	unported	OnProcess3 -> UnportedEffect		-
-523	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot01.tga"", 1); return true;"		98
-524	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot02.tga"", 1); return true;"		98
-525	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot03.tga"", 1); return true;"		98
-526	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot04.tga"", 1); return true;"		98
-527	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot05.tga"", 1); return true;"		98
-528	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot06.tga"", 1); return true;"		98
-529	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot07.tga"", 1); return true;"		98
-530	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot08.tga"", 1); return true;"		98
-531	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot09.tga"", 1); return true;"		98
-532	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot10.tga"", 1); return true;"		98
-533	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot11.tga"", 1); return true;"		70
-534	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot12.tga"", 1); return true;"		98
-535	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot13.tga"", 1); return true;"		98
-536	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\Tarot14.tga"", 1); return true;"		98
+523	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot01.tga"", 1); return true;"		98
+524	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot02.tga"", 1); return true;"		98
+525	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot03.tga"", 1); return true;"		98
+526	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot04.tga"", 1); return true;"		98
+527	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot05.tga"", 1); return true;"		98
+528	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot06.tga"", 1); return true;"		98
+529	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot07.tga"", 1); return true;"		98
+530	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot08.tga"", 1); return true;"		98
+531	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot09.tga"", 1); return true;"		98
+532	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot10.tga"", 1); return true;"		98
+533	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot11.tga"", 1); return true;"		70
+534	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot12.tga"", 1); return true;"		98
+535	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot13.tga"", 1); return true;"		98
+536	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot14.tga"", 1); return true;"		98
 537	OnProcess3	BeginCasting2	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
 538	OnProcess3	NpcStop	routed	OnProcess3 -> ApplyActorLight(); return true;		52
 539	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessEffectFrameLegacy();	src/gamemode/GameModePacket.cpp	79
@@ -554,7 +554,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 551	OnProcess3	SMA	unported	OnProcess3 -> UnportedEffect		-
 552	OnProcess3	SMA2	unported	OnProcess3 -> UnportedEffect	src/world/RagEffect.cpp	-
 553	OnProcess3	STIN2	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
-554	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyTarot(""effect\\freeze_a.bmp"", 2); return true;"	src/world/SkillSpecialEffect.cpp	98
+554	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\freeze_a.bmp"", 2); return true;"	src/world/SkillSpecialEffect.cpp	98
 555	OnProcess3	SMA	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
 556	OnProcess3	ParticlePath	unported	OnProcess3 -> UnportedEffect	src/world/RagEffect.cpp	-
 557	OnProcess3	BlueFall	unported	OnProcess3 -> UnportedEffect		-
@@ -681,14 +681,14 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 690	OnProcess3	EffectTextureSet_Animation	routed	OnProcess3 -> return ProcessEffectTextureAnimation();		954
 691	OnProcess3	EffectTextureSet_Animation	routed	OnProcess3 -> return ProcessEffectTextureAnimation();		35
 692	OnProcess3	Level99_3	unported	OnProcess3 -> UnportedEffect		-
-693	OnProcess3	EffectTextureSet	unported	OnProcess3 -> UnportedEffect		-
-694	OnProcess3	EffectTextureSet	unported	OnProcess3 -> UnportedEffect		-
+693	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		7
+694	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		98
 695	OnProcess3	Map_MagicZone,Map_Particle	unported	OnProcess3 -> UnportedEffect		-
 696	OnProcess3	EffectTextureSet_Animation	routed	OnProcess3 -> return ProcessEffectTextureAnimation();		2447
 697	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		15
 698	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		15
 700	OnProcess3	EffectTextureSet	unported	OnProcess3 -> UnportedEffect		-
-701	OnProcess3	EffectTextureSet	unported	OnProcess3 -> UnportedEffect		-
-702	OnProcess3	EffectTextureSet	unported	OnProcess3 -> UnportedEffect		-
-703	OnProcess3	EffectTextureSet	unported	OnProcess3 -> UnportedEffect		-
+701	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		98
+702	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		98
+703	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		98
 704	OnProcess3	inline	unported	OnProcess3 -> UnportedEffect	src/world/GameActorMsgHandler.cpp	-

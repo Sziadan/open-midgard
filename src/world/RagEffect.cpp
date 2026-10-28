@@ -17201,7 +17201,7 @@ void CRagEffect::ApplyBodyLight446()
     }
 }
 
-void CRagEffect::ApplyTarot(const char* textureName, int variant)
+void CRagEffect::ApplyEffectTexture(const char* textureName, int variant)
 {
     if (textureName == nullptr) {
         return;
@@ -17222,6 +17222,9 @@ void CRagEffect::ApplyTarot(const char* textureName, int variant)
         return;
     }
     prim->m_renderFlag = 5;
+    if (variant == 100) {
+        prim->m_renderFlag = 257;
+    }
     prim->m_duration = m_duration;
     prim->m_size = 0.0f;
     prim->m_pos = origin;
@@ -17247,6 +17250,17 @@ void CRagEffect::ApplyTarot(const char* textureName, int variant)
         gi.flag[2] = 0;
         gi.height[10] = 0.0f;
         gi.fullDisplayAngle = 135;
+    } else if (variant == 14) {
+        gi.distance = m_param[0] > 0.0f ? m_param[0] : 30.0f;
+        gi.arcBaselineY = origin.y;
+        gi.flag[2] = 4;
+        gi.height[10] = 0.0f;
+        gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+    } else if (variant == 100) {
+        gi.distance = 50.0f;
+        gi.flag[2] = 100;
+        gi.height[10] = 0.0f;
+        gi.fullDisplayAngle = 45;
     } else {
         gi.distance = 8.0f;
         gi.arcBaselineY = origin.y - 30.0f;
@@ -17257,10 +17271,27 @@ void CRagEffect::ApplyTarot(const char* textureName, int variant)
     gi.height[8] = 0.0f;
     gi.alphaB = 0;
     gi.sparkX = origin.x;
-    gi.sparkZ = origin.z;
+    gi.sparkZ = origin.z + (variant == 100 ? 100.0f : 0.0f);
+    if (variant == 100) {
+        gi.arcBaselineY = origin.y + 100.0f;
+    }
     gi.rotStart = static_cast<short>(rand() % 360);
     gi.flag[0] = 0;
     gi.flag[4] = static_cast<u8>(variant == 4 ? 1 : variant);
+}
+
+// Ref/RagEffect.cpp:12574-12578,12613-12619; canonical OnProcess3
+// HighPriest.exe.c:419224-419258 and EffectTextureSet at :455846-456003.
+bool CRagEffect::ProcessEffectTextureSet()
+{
+    switch (m_type) {
+    case 693: ApplyEffectTexture("effect\\glow01.bmp", 14); return true;
+    case 694: ApplyEffectTexture("effect\\glow02.bmp", 14); return true;
+    case 701: ApplyEffectTexture("effect\\glow11.bmp", 14); return true;
+    case 702: ApplyEffectTexture("effect\\glow12.bmp", 14); return true;
+    case 703: ApplyEffectTexture("effect\\white02.bmp", 100); return true;
+    default: return false;
+    }
 }
 
 bool CRagEffect::ProcessTarotEffect()
@@ -17278,10 +17309,10 @@ bool CRagEffect::ProcessTarotEffect()
             }
             TryPlayEffectWaveAt(wavePos, m_type == 610 ? "_heal_effect.wav" : "caramel_die.wav");
         }
-        ApplyTarot(m_type == 610 ? "effect\\success.bmp" : "effect\\failed.bmp", 3);
+        ApplyEffectTexture(m_type == 610 ? "effect\\success.bmp" : "effect\\failed.bmp", 3);
         return true;
     case 676:
-        ApplyTarot("effect\\blast_mine##clock.bmp", 4);
+        ApplyEffectTexture("effect\\blast_mine##clock.bmp", 4);
         if (m_stateCnt == 10) {
             CRenderObject* master = ResolveCurrentMaster();
             vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
@@ -21998,9 +22029,9 @@ bool CRagEffect::ProcessEffectFrameLegacy()
             "effect\\Tarot09.tga", "effect\\Tarot10.tga", "effect\\Tarot11.tga", "effect\\Tarot12.tga",
             "effect\\Tarot13.tga", "effect\\Tarot14.tga"
         };
-        ApplyTarot(kTarotTextures[m_type - 523], 1);
+        ApplyEffectTexture(kTarotTextures[m_type - 523], 1);
     } else if (dispatchHandler && m_type == 554) {
-        ApplyTarot("effect\\freeze_a.bmp", 2);
+        ApplyEffectTexture("effect\\freeze_a.bmp", 2);
     } else if (dispatchHandler && (m_type == 610 || m_type == 611)) {
         if (m_stateCnt == 0) {
             CRenderObject* textureMaster = ResolveCurrentMaster();
@@ -22012,7 +22043,7 @@ bool CRagEffect::ProcessEffectFrameLegacy()
             }
             TryPlayEffectWaveAt(wavePos, m_type == 610 ? "_heal_effect.wav" : "caramel_die.wav");
         }
-        ApplyTarot(m_type == 610 ? "effect\\success.bmp" : "effect\\failed.bmp", 3);
+        ApplyEffectTexture(m_type == 610 ? "effect\\success.bmp" : "effect\\failed.bmp", 3);
     } else if (dispatchHandler && m_type == 669) {
         if (m_stateCnt == 1) {
             CRenderObject* poisonMaster = ResolveCurrentMaster();
@@ -22239,7 +22270,7 @@ bool CRagEffect::ProcessEffectFrameLegacy()
             master->SetArgb(-1, 255, 255, 150);
         }
     } else if (blastMine) {
-        ApplyTarot("effect\\blast_mine##clock.bmp", 4);
+        ApplyEffectTexture("effect\\blast_mine##clock.bmp", 4);
         if (m_stateCnt == 10) {
             CRenderObject* blastMaster = ResolveCurrentMaster();
             vector3d wavePos = blastMaster != nullptr ? blastMaster->m_pos : m_cachedPos;

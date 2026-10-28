@@ -510,6 +510,7 @@ private:
     bool ProcessPotionConcentration();
     bool ProcessTarotEffect();
     bool ProcessEffectTextureAnimation();
+    bool ProcessEffectTextureSet();
     bool ProcessTier3StrEffect();
     bool ProcessThrowItemEffect();
     bool ProcessHealBlue();
@@ -562,7 +563,7 @@ private:
     void ApplyBodyLight449();
     void ApplyBodyLight368();
     void ApplyActorLight();
-    void ApplyTarot(const char* textureName, int variant);
+    void ApplyEffectTexture(const char* textureName, int variant);
     void LaunchParticleUp(const vector3d& origin, float sizeBase, float speedBase, bool secondTexture, u8 switchTexture);
     void RenderAniClip(int layerIndex, const KAC_LAYER& layer, const KAC_XFORMDATA& xform, matrix* viewMatrix);
     CRenderObject* ResolveCurrentMaster() const;
