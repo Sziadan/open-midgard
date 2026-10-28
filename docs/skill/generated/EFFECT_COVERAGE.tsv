@@ -153,7 +153,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 107	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillUnit.cpp	15
 108	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillUnit.cpp	15
 111	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	15
-112	OnProcess	Kyrie	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+112	OnProcess	Kyrie	routed	OnProcess -> return ProcessKyrie112();	src/gamemode/UseSkillEffect.generated.inc	8
 113	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		15
 114	OnProcess	Bottom	routed	OnProcess -> return ProcessBottom114();		15
 115	OnProcess	BlitzBeat	routed	OnProcess -> return ProcessBlitzBeat115();	src/session/SkillAttackEffectIdTable.generated.inc	93

@@ -153,7 +153,7 @@ case 106: return ProcessClipWaveStrEffect();
 case 107: return ProcessClipWaveStrEffect();
 case 108: return ProcessClipWaveStrEffect();
 case 111: return ProcessClipWaveStrEffect();
-case 112: return UnportedEffect();
+case 112: return ProcessKyrie112();
 case 113: return ProcessClipWaveStrEffect();
 case 114: return ProcessBottom114();
 case 115: return ProcessBlitzBeat115();

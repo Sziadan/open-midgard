@@ -677,6 +677,7 @@ private:
     bool ProcessRevive140();
     bool ProcessAspersio86();
     bool ProcessStormGust89();
+    bool ProcessKyrie112();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();

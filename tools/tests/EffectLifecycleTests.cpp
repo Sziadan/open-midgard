@@ -584,6 +584,7 @@ struct CRagEffect : CGameObject {
     bool ProcessRevive140();
     bool ProcessAspersio86();
     bool ProcessStormGust89();
+    bool ProcessKyrie112();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
@@ -5673,6 +5674,26 @@ int main()
         check(effect.m_primList.empty()&&rngDraws==beforeRng+32,
             "Storm Gust minimum-effects mode suppresses particles and RNG");
         g_session.m_isMinEffect=oldMinEffect;g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=112;effect.m_duration=300;effect.m_pos={15,10,35};
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=0;effect.ProcessKyrie112();
+        effect.m_stateCnt=14;effect.ProcessKyrie112();
+        effect.m_stateCnt=15;effect.ProcessKyrie112();
+        effect.m_stateCnt=16;effect.ProcessKyrie112();
+        check(waveCalls.size()==2&&waveCalls[0].name=="effect\\priest_kyrie_eleison_b.wav"
+            &&waveCalls[1].name=="effect\\priest_kyrie_eleison_a.wav"
+            &&waveCalls[0].x==12&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[1].x==12&&waveCalls[1].y==0&&waveCalls[1].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&waveCalls[1].volume==250&&waveCalls[1].range==40&&waveCalls[1].frequency==1
+            &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==beforeRng,
+            "Kyrie plays only its state0 B and state15 A cues with no primitives or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
     }
     {
         CRenderObject listener;listener.m_pos={3,0,5};

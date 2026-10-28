@@ -26031,6 +26031,19 @@ bool CRagEffect::ProcessStormGust89()
 
 // TEST_BODY_END stormgust89_handler
 
+// Ref/RagEffect.cpp:688-714; canonical PE helper 0x6069D0 and OnProcess case112.
+bool CRagEffect::ProcessKyrie112()
+{
+    if (m_stateCnt == 0) {
+        TryPlaySingleEffectWave(m_pos, "effect\\priest_kyrie_eleison_b.wav", 0.0f, true);
+    } else if (m_stateCnt == 15) {
+        TryPlaySingleEffectWave(m_pos, "effect\\priest_kyrie_eleison_a.wav", 0.0f, true);
+    }
+    return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+}
+
+// TEST_BODY_END kyrie112_handler
+
 bool CRagEffect::ProcessEffect380()
 {
     CRenderObject* master = ResolveCurrentMaster();
