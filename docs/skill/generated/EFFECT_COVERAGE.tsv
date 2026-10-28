@@ -213,7 +213,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 201	OnProcess	Level99_2	routed	OnProcess -> return ProcessLevel99_2Effect();	src/world/GameActor.cpp	250
 398	OnProcess	Level99_2	routed	OnProcess -> return ProcessLevel99_2Effect();	src/world/GameActor.cpp	34
 202	OnProcess	Level99_3	routed	OnProcess -> return ProcessLevel99_3Effect();		2122
-203	OnProcess	GumGang	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+203	OnProcess	GumGang	routed	OnProcess -> return ProcessGumGangEffect();	src/gamemode/UseSkillEffect.generated.inc	820
 204	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		15
 205	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		15
 206	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		15
@@ -259,7 +259,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 251	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR(0.0f, -20.0f, 0.0f);	src/gamemode/UseSkillEffect.generated.inc	8
 252	OnProcess	DEFENDER	routed	"OnProcess -> ApplyDefender(""effect\\ring_yellow.tga""); return true;"	src/gamemode/UseSkillEffect.generated.inc	8
 253	OnProcess	Heal2	routed	OnProcess -> return ProcessHealBlue();	src/gamemode/UseSkillEffect.generated.inc	15
-254	OnProcess	GumGang	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+254	OnProcess	GumGang	routed	OnProcess -> return ProcessGumGangEffect();	src/gamemode/UseSkillEffect.generated.inc	279
 255	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	15
 257	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	15
 256	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	15
@@ -344,7 +344,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 415	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	34
 416	OnProcess	AirTexture	unported	OnProcess -> UnportedEffect	src/world/RagEffect.cpp	-
 417	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		34
-418	OnProcess	DoubleGumGang	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+418	OnProcess	DoubleGumGang	routed	OnProcess -> return ProcessGumGangEffect();	src/gamemode/UseSkillEffect.generated.inc	453
 419	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
 420	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
 421	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		34
@@ -381,7 +381,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 452	OnProcess	YufitelHit	unported	OnProcess -> UnportedEffect	src/session/SkillAttackEffectIdTable.generated.inc	-
 453	OnProcess	NpcStop	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
 454	OnProcess	DarkCasting	routed	"OnProcess -> ApplyPairedSaintCasting(""effect\\ring_black.tga"", 6, true, 0.0f); return true;"	src/session/SkillActionInfo.cpp;src/session/SkillAttackEffectIdTable.generated.inc	109
-455	OnProcess	GumGang	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+455	OnProcess	GumGang	routed	OnProcess -> return ProcessGumGangEffect();	src/gamemode/UseSkillEffect.generated.inc	340
 456	OnProcess	CartBoost	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
 457	OnProcess	inline	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
 459	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		132
@@ -410,8 +410,8 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 482	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		15
 483	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		15
 484	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		15
-485	OnProcess	DoubleGumGang	unported	OnProcess -> UnportedEffect		-
-486	OnProcess	DoubleGumGang	unported	OnProcess -> UnportedEffect		-
+485	OnProcess	DoubleGumGang	routed	OnProcess -> return ProcessGumGangEffect();		822
+486	OnProcess	DoubleGumGang	routed	OnProcess -> return ProcessGumGangEffect();		822
 487	OnProcess	BLACKDEVIL	routed	"OnProcess -> ApplyBlackDevil(""effect\\ring_black.tga""); return true;"		15
 488	OnProcess	FlowerCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	138
 709	OnProcess	Test	routed	OnProcess -> return ProcessEffectFrameLegacy();		7

@@ -19,7 +19,7 @@ FORCE_ROUTE = {315, 366, 491, 492, 507, 508, 565, 566, 567, 568, 569,
                130, 250, 204, 205, 206, 207, 210, 234, 245, 255, 256, 257, 258, 390, 391,
                95, 102, 570, 571, 576, 577, 578, 579, 580, 583, 585, 586, 587, 588, 589,
                630, 631, 632, 633, 634, 637, 638, 639, 640, 641, 642, 643, 644, 645, 647, 648,
-               200, 201, 202, 362, 397, 398, 666, 678, 679, 680, 682, 683, 684, 685, 686, 689, 690, 691, 692, 693, 694, 696, 701, 702, 703}
+               200, 201, 202, 203, 254, 362, 397, 398, 418, 455, 485, 486, 666, 678, 679, 680, 682, 683, 684, 685, 686, 689, 690, 691, 692, 693, 694, 696, 701, 702, 703}
 FORCE_ROUTE.update(range(475, 485))
 
 DIRECT_CALLS = {
@@ -132,6 +132,12 @@ DIRECT_CALLS = {
     362: "return ProcessLevel99_3Effect();",
     678: "return ProcessLevel99_3Effect();",
     692: "return ProcessLevel99_3Effect();",
+    203: "return ProcessGumGangEffect();",
+    254: "return ProcessGumGangEffect();",
+    418: "return ProcessGumGangEffect();",
+    455: "return ProcessGumGangEffect();",
+    485: "return ProcessGumGangEffect();",
+    486: "return ProcessGumGangEffect();",
     610: "return ProcessTarotEffect();",
     611: "return ProcessTarotEffect();",
     613: "return ProcessThrowItemEffect();",

@@ -432,6 +432,7 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 - Effect 30 has two Ref configurations: `_2ND_EFFECT` is audio-only at frame 0 (matching the canonical EXE), while the alternate body launches a thunder particle at frame 36. Keep unported until the selected Ref build configuration is confirmed.
 - Effects 95 and 102 require extra behavior beyond the basic clip-wave route. Their dedicated `ProcessClipWaveStrEffect` branches now preserve the state-zero `rand() % 12` gate for 95 and send quake message 135 at frame 35 for 102.
 - Ref wave symbols for 208/209/211, 269–273, and 440 resolve only to truncated directory prefixes in canonical `HighPriest.exe.c`; exact filenames are unknown. Keep these handlers explicitly unported until callsite string resolution identifies the asset names.
+- GumGang source/PE details differ: `Ref/dhxj/RagEffect.cpp:5034` says `effect\\mon_GumGang.wav`, while canonical PE callsite `HighPriest.exe.c:420825` passes `aEffectMon_4`, whose bytes resolve in `docs/skill/generated/playwave_callsites.tsv` to `effect\\mon_맹룡과강.wav` (string VA `0x711E1C`). The route follows the canonical PE bytes. The older `dhxj/RagEffect2.cpp:8603,8684` writes a random value into GI height[15], but canonical `HighPriest.exe.c:442577,442641` leaves that field untouched and instead consumes one `rand()%360` into its strided per-band `m_orgPos.z` field; local code preserves the PE draw order/count and stores that value in the matching band state.
 
 # WP10.3 Effect_SPR remaining branches (2026-10-28)
 

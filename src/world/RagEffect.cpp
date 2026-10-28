@@ -17522,6 +17522,87 @@ bool CRagEffect::ProcessLevel99_3Effect()
     return true;
 }
 
+// Ref/dhxj/RagEffect2.cpp:8603-8750; canonical PE helpers at 0x618DF0/0x6191D0.
+bool CRagEffect::ProcessGumGangEffect()
+{
+    int giCount = 0;
+    int colorVariant = 0;
+    bool doubleGumGang = false;
+    switch (m_type) {
+    case 203: giCount = 1; break;
+    case 254: giCount = 4; break;
+    case 455: giCount = 2; colorVariant = 1; break;
+    case 418: giCount = 2; colorVariant = 2; doubleGumGang = true; break;
+    case 485: giCount = 2; colorVariant = 1; doubleGumGang = true; break;
+    case 486: giCount = 2; colorVariant = 0; doubleGumGang = true; break;
+    default: return false;
+    }
+
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+    if (m_type == 254 && m_stateCnt == 0) {
+        TryPlaySingleEffectWave(m_effectPos, "effect\\mon_맹룡과강.wav", 0.0f, true);
+    }
+    const EFFECTPRIMID primitiveType = doubleGumGang ? PP_DOUBLEGUMGANG : PP_GUMGANG;
+    if (m_stateCnt != 0) {
+        return true;
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(primitiveType, vector3d{});
+    if (prim == nullptr) {
+        return true;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_totalTexture = 5;
+    constexpr const char* textures[5] = {
+        "effect\\super1.bmp", "effect\\super2.bmp", "effect\\super3.bmp",
+        "effect\\super4.bmp", "effect\\super5.bmp",
+    };
+    for (const char* texture : textures) {
+        prim->m_texture.push_back(g_texMgr.GetTexture(texture, false));
+    }
+    for (EffectGi& gi : prim->m_gi) {
+        gi.life = 0;
+    }
+    if (doubleGumGang) {
+        prim->m_size = 0.0f;
+    }
+
+    for (int index = 0; index < giCount; ++index) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(index)];
+        if (doubleGumGang) {
+            gi.process = 0;
+        }
+        gi.life = 1;
+        gi.distance = doubleGumGang ? 2.0f : 3.5f;
+        gi.arcBaselineY = -static_cast<float>(rand() % 10);
+        gi.height[0] = 10.0f;
+        gi.height[1] = doubleGumGang ? 40.0f : 70.0f;
+        gi.height[2] = static_cast<float>(rand() % 5);
+        gi.height[3] = static_cast<float>(rand() % 360);
+        gi.sparkY = -static_cast<float>(rand() % 10);
+        gi.height[4] = 10.0f;
+        gi.height[5] = doubleGumGang ? 80.0f : 130.0f;
+        gi.height[6] = static_cast<float>(rand() % 5);
+        gi.height[7] = static_cast<float>(rand() % 360);
+        gi.vecTPreY = -static_cast<float>(rand() % 10);
+        gi.height[8] = 10.0f;
+        gi.height[9] = doubleGumGang ? 120.0f : 190.0f;
+        gi.height[10] = static_cast<float>(rand() % 5);
+        gi.height[11] = static_cast<float>(rand() % 360);
+        gi.vecTNowY = -static_cast<float>(rand() % 10);
+        gi.height[12] = 10.0f;
+        gi.height[13] = doubleGumGang ? 160.0f : 250.0f;
+        gi.height[14] = static_cast<float>(rand() % 5);
+        prim->m_bands[static_cast<size_t>(index)].rotStart = static_cast<float>(rand() % 360);
+        gi.flag[4] = static_cast<u8>(colorVariant);
+    }
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {
