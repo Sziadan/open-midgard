@@ -12709,7 +12709,9 @@ bool CEffectPrim::UsesReferenceScreenTexture() const
 
 bool CEffectPrim::UsesReferenceScreenQuad() const
 {
-    return m_type == PP_2DQUAD && m_master && m_master->GetEffectType() == 51;
+    // HighPriest.exe::CEffectPrim::Render dispatches every PP_2DQUAD to
+    // Render2DQuad; effect 51 is only the current local construction site.
+    return m_type == PP_2DQUAD;
 }
 
 bool CEffectPrim::UsesReferenceParticle() const

@@ -10895,6 +10895,9 @@ int main()
             textures=textures&&g_texMgr.requests[i]=="effect\\ice.tga";
         }
         check(shards,"ColdHit three long and six short shards preserve source integer-division speed ranges alpha fade and raw unwrapped headings");
+        effect.m_type=999;
+        check(prims.front()->UsesReferenceScreenQuad(),"PP_2DQUAD renderer route is primitive-wide rather than gated to current effect51 caller");
+        effect.m_type=51;
         check(offsets,"ColdHit radial offsets use unjittered forty-degree angles with separate minus-twenty vertical offset");
         check(matrices,"ColdHit copies source X-then-Y launch matrix into retained render matrix for every shard");
         check(textures&&g_texMgr.requests[9]=="effect\\smoke.tga"&&g_resMgr.requests.empty()&&waveCalls.empty(),"ColdHit requests exact nine ice textures then smoke without sprite or audio resources");

@@ -2,6 +2,12 @@
 
 Ports are listed as `Ref location -> src location`. A row is not a claim that the whole skill system is done.
 
+## WP5 CEffectPrim Render2DQuad — 2026-10-29
+
+- Canonical PE `HighPriest.exe.c:468657` (`0x644B20`) and primary Ref `Ref/RagEffectPrim.cpp:2610` bodies normalize identically. PE and readable Ref dispatch primitive id `0x02` / PP_2DQUAD to Render2DQuad without a master-effect gate. Local `UsesReferenceScreenQuad` now follows the primitive type unconditionally; the current local construction search finds only ColdHit/effect51.
+- Added `tools/tests/check_prim2dquad_render.py` to map both source faces, half dimensions and five-sixths inset, integer-degree sine/cosine rotation, position, UVs, edge/white-center colors, current-motion texture, fixed z/oow and hard-coded AddRP flag1 to `RenderReferenceScreenQuad`. The existing ColdHit fixture pins the geometry, opposite-side winding, UV/color data, texture motion, screen depth, negative fractional roll truncation and missing texture behavior. A lifecycle assertion checks the route with master id999.
+- No other PP_2DQUAD caller is currently constructed locally, but the primitive renderer now matches the source's type-wide dispatch. Local null/dummy/invalid-motion rejection remains defensive behavior beyond the source's texture-pointer precondition and is recorded in `docs/skill/MISMATCHES.md`. Focused CTest/build results are recorded in progress; live visual/backend acceptance remains open.
+
 ## WP5 CEffectPrim Render2DTexture selected screen-sprite subset — 2026-10-29
 
 - Canonical PE `HighPriest.exe.c:468771` and primary Ref `Ref/RagEffectPrim.cpp:2719` bodies normalize identically; PE dispatch ids `0x00/0x01` and Ref dispatch PP_2DTEXTURE/PP_2DTEXTUREORBIT to Render2DTexture. Local `RenderReferenceScreenTexture` is selected for master effects11,38,37,43,32,4,5,1,183,46,50,51, plus PP_2DTEXTURE pattern bit `0x4`; other PP_2DTEXTURE cases use a separate projected screen-quad route.

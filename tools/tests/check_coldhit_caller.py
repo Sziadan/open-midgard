@@ -28,5 +28,5 @@ for t in ('m_stateCnt == 0','angle < 360.0f','angle += 40.0f','PP_2DQUAD','PP_2D
     if t not in handler:raise SystemExit(f'ColdHit payload missing {t}')
 quad=fn(local,'bool CEffectPrim::UsesReferenceScreenQuad() const')
 texture=fn(local,'bool CEffectPrim::UsesReferenceScreenTexture() const')
-if 'm_master->GetEffectType() == 51' not in quad or 'm_master->GetEffectType() == 51' not in texture:raise SystemExit('ColdHit primitive family selectors missing')
-print('ColdHit51 parity: PE/Ref helper, caller/ref omission, current route, nine-shard/smoke payload and screen primitive families passed')
+if 'return m_type == PP_2DQUAD;' not in quad or 'm_master->GetEffectType() == 51' not in texture:raise SystemExit('ColdHit primitive family selectors missing')
+print('ColdHit51 parity: PE/Ref helper, caller/ref omission, current route, nine-shard/smoke payload and type-wide quad/screen-texture routes passed')
