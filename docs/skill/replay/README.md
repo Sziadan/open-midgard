@@ -10,6 +10,8 @@ Each scenario is UTF-8 TSV with three columns: packet opcode (integer, `0x` pref
 
 `safety_wall_unit_lifecycle.tsv` replays unit job126 (`UNT_SAFETYWALL`) at the same controlled cell, calls `CSkill::OnProcess` for one nominal 24 ms step, checks loop effect315, and removes the unit with `0x0120`.
 
+`ice_wall_unit_lifecycle.tsv` replays unit job141 (`UNT_ICEWALL`), checks its loop effect74 after one nominal 24 ms process step, then removes it with `0x0120`.
+
 `sanctuary_unit_lifecycle.tsv` replays unit job131 (`UNT_SANCTUARY`), calls `CSkill::OnProcess` for one nominal 24 ms step, checks loop effect319, and removes the unit with `0x0120`.
 
 `warp_unit_lifecycle.tsv` replays a job128 waiting Warp unit, applies a `0x01D7` base-look/job update to job129, steps both states through `CSkill::OnProcess` (loop effects317/316), then removes the unit. Sprite-change routing checks the skill-unit registry before it creates a runtime actor.

@@ -1606,3 +1606,7 @@ Added the WP4 Sanctuary unit lifecycle for UNT_SANCTUARY job131 via raw 0x011F e
 ## WP10.8 — Warp unit waiting-to-active replay — 2026-10-28
 
 Added a Warp unit lifecycle: job128 entry, 0x01D7 base-look update to job129, one nominal 24 ms CSkill::OnProcess call in each state, and 0x0120 removal. The runtime confirms loop effects317/316. This revealed HandleActorSpriteChange was creating/resolving actors without forwarding base-look updates to CSkill; the handler now checks the Ref actor/unit lookup order and sends message47 to a matching unit instead of manufacturing an actor. Full replay CTest passes16/16.
+
+## WP10.8 — Ice Wall unit effect replay — 2026-10-28
+
+Added the WP4 Ice Wall unit job141 packet case. Raw 0x011F creates the unit, one nominal 24 ms step through production `CSkill::OnProcess` launches Ref loop effect74, and 0x0120 removes it. The focused case passes, and the full root packet replay CTest passes17/17. Next: continue WP3.4/WP4 acceptance and extend timed-unit coverage through full world updates.

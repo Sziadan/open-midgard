@@ -3200,3 +3200,7 @@ Between 0x011F Firewall entry and 0x0120 removal, the runner calls real `CSkill:
 ## WP10.8 runtime replay — Warp waiting/active unit — 2026-10-28
 
 `warp_unit_lifecycle.tsv` sends a 0x011F Warp waiting job128 entry, then a 0x01D7 base-look update (type0, job129), then 0x0120 removal. Ref `Zc_Sprite_Change2` resolves a skill unit by AID when there is no actor and sends message47; this path was absent in the current handler and has now been restored before fallback actor creation. Runtime verifies job128 launches effect317 (or effect36 if effects are disabled), job129 launches effect316, and the unit is removed. Focused test passes1/1; replay suite passes16/16.
+
+## WP10.8 runtime replay — Ice Wall unit — 2026-10-28
+
+`ice_wall_unit_lifecycle.tsv` sends the 0x011F unit-entry packet for job141 (`UNT_ICEWALL`), invokes real `CSkill::OnProcess` after one nominal 24 ms interval, and removes the unit with 0x0120. Ref `CSkill::OnProcess` maps job141 to `LaunchLoop(74)` (`Ref/Skill.cpp:1287-1698`); runtime confirms effect74 after 25 ms measured elapsed and verifies removal. Focused replay and full suite pass, with replay CTest at17/17.
