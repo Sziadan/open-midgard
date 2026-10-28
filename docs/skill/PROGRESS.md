@@ -1650,3 +1650,7 @@ Added WP4 lifecycle replays for Gravitation job184, Suiton job187, and Tatamigae
 ## WP10.8 — Kaen and Ground Drift periodic unit replay batch — 2026-10-28
 
 Added Kaen job189 and Ground Drift jobs190–194. The runner advances each unit through 17 nominal 24 ms production process calls, matching Ref's duration23 minus seven-count threshold, and verifies effects634,638–642 respectively before 0x0120 removal. Focused batch passes6/6; the full root packet replay CTest passes54/54.
+
+## WP10.8 — Pneuma job133 Ref default-path audit — 2026-10-28
+
+The plan listed Pneuma among units expected to launch a loop effect, but the primary Ref `CSkill::SendMsg(45)` and `CSkill::OnProcess` sources have no job133 effect branch. Added a raw 0x011F/0x0120 replay that verifies the unit remains active through its first process step without launching any unit effect. Corrected the WP4 acceptance wording and recorded the source exception in `MISMATCHES.md`. Focused replay passes; the full root packet replay CTest passes55/55.

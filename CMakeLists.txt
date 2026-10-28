@@ -410,6 +410,11 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
         set_tests_properties("skill_packet_replay_${_scenario}_unit_lifecycle_checks" PROPERTIES
             WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     endforeach()
+    add_test(NAME skill_packet_replay_pneuma_default_unit_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/pneuma_default_unit.tsv")
+    set_tests_properties(skill_packet_replay_pneuma_default_unit_checks PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set(_skill_packet_replay_periodic_ground_scenarios
         kaen ground_drift_wind ground_drift_dark ground_drift_poison ground_drift_water ground_drift_fire)
     foreach(_scenario IN LISTS _skill_packet_replay_periodic_ground_scenarios)

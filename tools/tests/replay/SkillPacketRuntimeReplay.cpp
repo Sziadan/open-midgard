@@ -567,7 +567,7 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     Require(packets[1].opcode == 0x0120 && packets[1].bytes.size() == 6,
         "skill-unit removal must use the 6-byte 0x0120 packet");
     const int unitJob = packets[0].bytes[14];
-    Require(unitJob == 126 || unitJob == 127 || unitJob == 131 || unitJob == 132
+    Require(unitJob == 126 || unitJob == 127 || unitJob == 131 || unitJob == 132 || unitJob == 133
             || unitJob == 141 || unitJob == 142 || (unitJob >= 154 && unitJob <= 157)
             || (unitJob >= 158 && unitJob <= 175) || unitJob == 177 || unitJob == 179
             || unitJob == 180 || unitJob == 183 || unitJob == 184 || unitJob == 187 || unitJob == 188
@@ -579,6 +579,7 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     case 127: expectedLoopEffect = 25; break;
     case 131: expectedLoopEffect = 319; break;
     case 132: expectedLoopEffect = 318; break;
+    case 133: expectedLoopEffect = 0; break;
     case 141: expectedLoopEffect = 74; break;
     case 142: expectedLoopEffect = 95; break;
     case 154: expectedLoopEffect = 239; break;
@@ -705,15 +706,24 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     Require(static_cast<bool>(runtimeLog), "production runtime log was not created for Firewall unit lifecycle");
     std::string logLine;
     bool foundExpectedWave = unitJob != 127;
-    bool foundExpectedLoop = false;
+    bool foundExpectedLoop = expectedLoopEffect == 0;
+    bool foundAnyUnitEffect = false;
     while (std::getline(runtimeLog, logLine)) {
         foundExpectedWave = foundExpectedWave
             || logLine.find("[REPLAY] PlayWave name='effect\\EF_FireWall.wav'") != std::string::npos;
         foundExpectedLoop = foundExpectedLoop
             || logLine.find("[REPLAY] LaunchEffect id=" + std::to_string(expectedLoopEffect) + " actor=100") != std::string::npos;
+        foundAnyUnitEffect = foundAnyUnitEffect
+            || (logLine.find("[REPLAY] LaunchEffect id=") != std::string::npos
+                && logLine.find("actor=100") != std::string::npos);
     }
     Require(foundExpectedWave, "skill-unit entry did not play the expected Ref wave");
-    Require(foundExpectedLoop, "skill-unit OnProcess did not launch its Ref loop effect");
+    if (expectedLoopEffect == 0) {
+        Require(!foundAnyUnitEffect,
+            "Pneuma job133 follows the Ref default path and must not launch a unit effect");
+    } else {
+        Require(foundExpectedLoop, "skill-unit OnProcess did not launch its Ref loop effect");
+    }
     std::cout << "SkillUnit job=" << unitJob << " aid=100 cell=(10,20) pos=(-27.500,7.500,22.500) loopEffect="
         << expectedLoopEffect << " steps=" << processSteps << " elapsedMs=" << lifetimeElapsedMs << " removed=1\n";
 }

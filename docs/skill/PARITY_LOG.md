@@ -3244,3 +3244,7 @@ The 18 scenario TSVs send job158–175 entries and removal packets. Ref `CSkill:
 ## WP10.8 runtime replay — Kaen and Ground Drift units — 2026-10-28
 
 The six scenario fixtures send unit jobs189–194, then step real `CSkill::OnProcess` 17 times at nominal 24 ms intervals before 0x0120 removal. Ref maps Kaen189→634 and Ground Drift190–194→638–642, each with duration23 and a seven-count offset (`Ref/Skill.cpp:1600-1652`, duration table entries634 and638–642). Runtime confirms the matching effect for all six jobs. Focused batch passes6/6; full replay CTest passes54/54.
+
+## WP10.8 runtime replay — Pneuma Ref default path — 2026-10-28
+
+`pneuma_default_unit.tsv` creates job133 (`UNT_PNEUMA`), advances production `CSkill::OnProcess` once, verifies no `LaunchEffect` for unit AID100, then removes the unit with 0x0120. Ref source inspection confirms no job133 branch in message45 or OnProcess; the OnProcess switch default keeps the object active without an effect (`Ref/Skill.cpp:1287-1698`, `2925-3543`). The acceptance plan and `MISMATCHES.md` now state this exception. Focused and full replay CTest pass55/55.

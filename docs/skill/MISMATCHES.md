@@ -651,3 +651,7 @@ The PE switch groups effect198 with four other empty cases that break to common 
 # WP10.3 effect380 unresolved PlayWave argument
 
 The canonical PE inline case380 passes the literal bytes `effect\\` (VA `0x6F1FF0`) to PlayWave at state25. The string has no sound filename, and the current executable call-site index does not resolve a longer path. The local port preserves the exact argument and its position/parameters without guessing a filename; live audio acceptance remains open. The PE also performs the state30 quake and state30–60 random tint path; primary Ref has no corresponding caller case.
+
+# WP4 Pneuma job133 default-path exception
+
+The WP4 acceptance summary originally described Pneuma as launching a unit loop effect. The primary Ref `CSkill::SendMsg` message45 switch has no job133 branch, and Ref `CSkill::OnProcess` has no job133 case; it reaches the default path, increments `m_launchCnt`, and remains active without launching an effect. The replay fixture confirms this runtime behavior. Treat job133 as a source default-path exception, not as a missing/invented loop effect. The plan acceptance text is corrected accordingly.
