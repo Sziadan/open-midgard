@@ -1,0 +1,10 @@
+# actor	source	1	0	16	16
+# actor	target	2	0	18	16
+# actor	actor	3	151	10	20
+# opcode	hexBytes	comment
+0x011F	1F0164000000020000000A0014009701	Freezing Trap entry job151 owned by AID2; hidden on first sighting
+0x011F	1F0164000000020000000A0014009701	Duplicate job151 entry hides distant Freezing Trap
+0x01AC	AC0164000000	Reveal Freezing Trap unit AID100
+0x01DE	DE0179006400000002000000000000000000000000000000640000000100010004	HT_FREEZINGTRAP hit from trap unit AID100 to target AID2 (skill121)
+0x01D7	D70164000000008C000000	Triggered Freezing Trap becomes used-trap job140
+0x0120	200164000000	Remove triggered Freezing Trap unit AID100

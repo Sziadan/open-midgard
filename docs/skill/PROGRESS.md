@@ -1674,3 +1674,7 @@ Added a Claymore Trap sequence covering job152 entry, duplicate-entry hiding, 0x
 ## WP10.8 — Sandman trap trigger lifecycle replay — 2026-10-28
 
 Added a Sandman sequence covering job149 entry, duplicate-entry hiding, 0x01AC reveal, packetver23 0x01DE HT_SANDMAN skill119 notify from trap-unit AID100 to target AID2, 0x01D7 transition to used-trap job140, and 0x0120 removal. The shared saved-effect trap replay verifies message45 stores effect139 and the job140 message47 launches it before cleanup. Focused replay passes; the complete root packet replay CTest passes60/60.
+
+## WP10.8 — Freezing Trap trigger lifecycle replay — 2026-10-28
+
+Added a Freezing Trap sequence covering job151 entry, duplicate-entry hiding, 0x01AC reveal, packetver23 0x01DE HT_FREEZINGTRAP skill121 notify from trap-unit AID100 to target AID2, 0x01D7 transition to used-trap job140, and 0x0120 removal. The production router verifies saved effect108 and the shared job140 message47 launch path. Focused replay passes; the complete root packet replay CTest passes61/61.
