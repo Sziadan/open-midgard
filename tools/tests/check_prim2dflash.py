@@ -151,11 +151,19 @@ def main() -> int:
         "vertex.color = prim.m_argb",
         "vertex.tu = uv[i][0]; vertex.tv = uv[i][1]",
         "face->tex = texture; face->mtPreset = 0; face->cullMode = D3DCULL_NONE",
+        "face->srcAlphaMode = D3DBLEND_SRCALPHA; face->destAlphaMode = D3DBLEND_INVSRCALPHA",
         "AddReferenceEffectTriangle(face,1)",
     ):
         assert token in render_helper, f"current flash renderer missing source field/submission: {token}"
 
-    print("Flash primitive comparison passed: EXE/Ref updater and both renderer bodies, EXE render cases, current routes, ordered geometry, and common tick")
+    renderer = (ROOT / "src/render/Renderer.cpp").read_text(encoding="utf-8")
+    reference_submit = function_body(renderer, "void CRenderer::AddReferenceEffectTriangle(RPFace* face, int renderFlag)")
+    alpha_route = reference_submit[reference_submit.index("if ((renderFlag & 1) != 0)") :]
+    assert "m_rpAlphaList.push_back({face->verts[0].oow, face})" in alpha_route
+    assert "m_rpAlphaNoDepthList.push_back({average, face})" in alpha_route
+    assert "m_rpAlphaDepthList.push_back({average, face})" in alpha_route
+
+    print("Flash primitive comparison passed: EXE/Ref updater and both renderer bodies, EXE render cases, current routes, ordered geometry, alpha blend state, submission flag routing, and common tick")
     return 0
 
 
