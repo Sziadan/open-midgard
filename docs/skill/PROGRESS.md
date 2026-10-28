@@ -1894,3 +1894,8 @@ Added the PE F1=1 profile as a separate effect434 handler, retaining effect431's
 ## WP5C effect447 Foot F1=1 — 2026-10-28
 
 Ported effect447's left Foot profile using the exact PE resource `effect\\foot_l2.tga` (VA `0x719ECC`). It copies master position every call and emits a single PP_FOOT at state0 with renderFlag1, inherited duration, size100, GI0 fixed payload, and inactive GI1-3. PE and secondary Ref agree; primary Ref omits the helper. Source and lifecycle checks cover the resource, full payload, timing, and no RNG/audio. Coverage is now 635 routed /58 explicit unported /0 launched-but-unported. Full Release parity CTest passes230/230, OpenMidgard Release builds and copies the executable, and replay CTest passes102/102. No media/visual acceptance is claimed.
+
+
+## WP5C effect448 Foot F1=1 — 2026-10-28
+
+Ported effect448's right Foot profile with exact PE resource `effect\\foot_r2.tga` (VA `0x719EB8`). The shared Foot helper matches effect447's profile: master-following position, one state-zero PP_FOOT, size100, fixed GI payload, and no RNG/audio. The secondary Ref confirms the helper. Source and lifecycle checks cover the right texture, payload, timing, and later-state behavior. Coverage is now 636 routed /57 explicit unported /0 launched-but-unported. Full Release parity CTest passes231/231, OpenMidgard Release builds and copies the executable, and replay CTest passes102/102. No media/visual acceptance is claimed.

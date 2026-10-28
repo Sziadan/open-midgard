@@ -526,6 +526,7 @@ private:
     bool ProcessHitLine3Effect();
     bool ProcessHitLine3Basic434();
     bool ProcessFoot447();
+    bool ProcessFoot448();
     bool ProcessTeiHitEffects();
     bool ProcessChimtoEffect(int variant);
     bool ProcessStinSmaEffects();

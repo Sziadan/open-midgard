@@ -650,6 +650,7 @@ struct CRagEffect : CGameObject {
     bool ProcessHitLine3Basic434();
     bool ProcessPokJuk297();
     bool ProcessFoot447();
+    bool ProcessFoot448();
     void ApplyBottomMusic(const char*, int);
     bool ProcessEffect365();
     bool ProcessDemonstration302();
@@ -4033,6 +4034,32 @@ int main()
         check(effect.m_primList.size()==1&&effect.m_effectPos.x==72&&effect.m_effectPos.y==84
             &&effect.m_effectPos.z==96&&g_texMgr.requests.size()==1&&waveCalls.empty()&&rngDraws==draws,
             "Foot effect447 later states follow master without repeating or drawing RNG");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject master; master.m_pos={21,43,65};
+        CRagEffect effect; effect.m_type=448; effect.m_master=&master; effect.m_duration=82;
+        effect.m_deltaPos={-24.8f,0,0}; effect.m_stateCnt=1; effect.m_effectPos={1,2,3};
+        g_texMgr.requests.clear(); waveCalls.clear(); const int draws=rngDraws;
+        effect.ProcessFoot448();
+        check(effect.m_effectPos.x==21&&effect.m_effectPos.y==43&&effect.m_effectPos.z==65
+            &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "Foot effect448 refreshes master position without state-zero emission");
+        effect.m_stateCnt=0; effect.ProcessFoot448();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(prim&&prim->m_type==PP_FOOT&&prim->m_renderFlag==1&&prim->m_duration==82
+            &&prim->m_totalTexture==1&&prim->m_size==100.0f&&prim->m_texture.size()==1
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\foot_r2.tga"
+            &&prim->m_gi[0].life==1&&prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0
+            &&prim->m_gi[0].process==0&&prim->m_gi[0].distance==6&&prim->m_gi[0].riseAngle==0
+            &&prim->m_gi[0].rotStart==-24&&prim->m_gi[0].alphaB==150&&prim->m_gi[0].height[0]==-0.2f
+            &&effect.m_effectPos.x==21&&effect.m_effectPos.y==43&&effect.m_effectPos.z==65
+            &&waveCalls.empty()&&rngDraws==draws,
+            "Foot effect448 state zero emits exact right texture and fixed GI payload without RNG/audio");
+        master.m_pos={71,83,95}; effect.m_stateCnt=1; effect.ProcessFoot448();
+        check(effect.m_primList.size()==1&&effect.m_effectPos.x==71&&effect.m_effectPos.y==83
+            &&effect.m_effectPos.z==95&&g_texMgr.requests.size()==1&&waveCalls.empty()&&rngDraws==draws,
+            "Foot effect448 later states follow master without repeating or drawing RNG");
         effect.ClearPrims(); g_world.UpdateGameObjects();
     }
     {
