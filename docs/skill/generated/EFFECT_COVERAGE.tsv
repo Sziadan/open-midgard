@@ -301,7 +301,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 294	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(294);		1406
 295	OnProcess	Talk_FrostJoke	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	124
 296	OnProcess	Talk_FrostJoke	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	97
-297	OnProcess	PokJuk	routed	OnProcess -> return ProcessPokJuk297();		15
+297	OnProcess	PokJuk	routed	OnProcess -> return ProcessPokJuk297();		3467
 298	OnProcess	ThrowItem	routed	OnProcess -> return ProcessThrowItemEffect();	src/world/SkillSpecialEffect.cpp	101
 299	OnProcess	ThrowItem	routed	OnProcess -> return ProcessThrowItemEffect();	src/gamemode/UseSkillEffect.generated.inc	15
 374	OnProcess	Basilica	routed	OnProcess -> return ProcessBasilica();		577
@@ -361,7 +361,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 431	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Effect();	src/world/SkillSpecialEffect.cpp	1327
 432	OnProcess	Electric	routed	OnProcess -> return ProcessEffectFrameLegacy();		129
 433	OnProcess	Electric2	routed	OnProcess -> ApplyElectric2(); ApplyElectric2(); return true;		130
-434	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Basic434();		1327
+434	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Basic434();		3472
 435	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillActionInfo.cpp;src/world/GameActorMsgHandler.cpp	136
 436	OnProcess	HalfSphere	routed	"OnProcess -> ApplyHalfSphere(""effect\\white02.bmp""); return true;"		69
 437	OnProcess	HalfSphere,AttackEnergy	routed	"OnProcess -> ApplyHalfSphere(""effect\\white02.bmp""); ApplyAttackEnergy(""effect\\ring_blue.tga""); return true;"		128
@@ -373,8 +373,8 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 444	OnProcess	RunStop	routed	OnProcess -> return ProcessRunStop444();	src/gamemode/UseSkillEffect.generated.inc	305
 445	OnProcess	inline	routed	OnProcess -> return ProcessEffect445();	src/world/GameActor.cpp	34
 446	OnProcess	inline	routed	OnProcess -> ApplyBodyLight446(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
-447	OnProcess	Foot	routed	OnProcess -> return ProcessFoot447();		778
-448	OnProcess	Foot	routed	OnProcess -> return ProcessFoot448();		1161
+447	OnProcess	Foot	routed	OnProcess -> return ProcessFoot447();		3477
+448	OnProcess	Foot	routed	OnProcess -> return ProcessFoot448();		3482
 449	OnProcess	inline	routed	OnProcess -> ApplyBodyLight449(); return true;	src/world/GameActor.cpp	34
 450	OnProcess	GRANDCROSS,GRANDCROSS2	routed	OnProcess -> return ProcessGrandCrossEffects();	src/world/SkillSpecialEffect.cpp	69
 451	OnProcess	SoulStrike	routed	OnProcess -> return ProcessSoulStrike15(1);	src/session/SkillAttackEffectIdTable.generated.inc	1774
@@ -392,13 +392,13 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 464	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		136
 465	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		136
 466	OnProcess	inline	routed	OnProcess -> return ProcessEffect466();	src/world/SkillSpecialEffect.cpp	34
-467	OnProcess	BeginAsura1	routed	OnProcess -> return ProcessBeginAsura1_467();		2217
-468	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon2.tga"");"		293
-469	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon3.tga"");"		2202
-470	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon4.tga"");"		691
-471	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon7.tga"");"		3485
-472	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon5.tga"");"		1300
-473	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon6.tga"");"		2368
+467	OnProcess	BeginAsura1	routed	OnProcess -> return ProcessBeginAsura1_467();		3487
+468	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon2.tga"");"		3492
+469	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon3.tga"");"		3492
+470	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon4.tga"");"		3492
+471	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon7.tga"");"		3492
+472	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon5.tga"");"		3492
+473	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon6.tga"");"		3492
 474	OnProcess	inline	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	15
 475	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		15
 476	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		15
@@ -441,8 +441,8 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 323	OnProcess2	ForestLight	routed	"OnProcess2 -> ApplyForestLight(""effect\\cloud11.tga"", 2); return true;"		107
 324	OnProcess2	ForestLight	routed	"OnProcess2 -> ApplyForestLight(""effect\\cloud11.tga"", 10); return true;"		107
 325	OnProcess2	Heal2	routed	"OnProcess2 -> ApplyHeal2(""effect\\ring_white.tga"", 1); return true;"	src/gamemode/UseSkillEffect.generated.inc	15
-326	OnProcess2	Foot	routed	"OnProcess2 -> return ProcessFoot326_327(""effect\\foot_l_b.tga"");"		34
-327	OnProcess2	Foot	routed	"OnProcess2 -> return ProcessFoot326_327(""effect\\foot_r_b.tga"");"		287
+326	OnProcess2	Foot	routed	"OnProcess2 -> return ProcessFoot326_327(""effect\\foot_l_b.tga"");"		3499
+327	OnProcess2	Foot	routed	"OnProcess2 -> return ProcessFoot326_327(""effect\\foot_r_b.tga"");"		3499
 328	OnProcess2	BeginAsura	routed	OnProcess2 -> return ProcessBeginAsuraEffect();		35
 329	OnProcess2	TRIPLEATTACK	routed	OnProcess2 -> return ProcessTripleAttackEffects();	src/world/SkillSpecialEffect.cpp	1177
 330	OnProcess2	HitLine	routed	OnProcess2 -> return ProcessHitLineEffect(0, false);	src/world/GameActorMsgHandler.cpp	104
@@ -455,9 +455,9 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 337	OnProcess2	JobLvUp50	routed	OnProcess2 -> ApplyJobLvUp50(0); ApplyJobLvUp50(45); return true;		13
 338	OnProcess2	SuperAngel	routed	OnProcess2 -> ProcessSuperAngelEffect(); return true;		200
 339	OnProcess2	Magnum2	routed	"OnProcess2 -> ApplyMagnum2(""effect\\ring_yellow.tga""); return true;"	src/world/SkillSpecialEffect.cpp	109
-340	OnProcess2	CALLZONE	routed	OnProcess2 -> return ProcessCallZone340();		8
+340	OnProcess2	CALLZONE	routed	OnProcess2 -> return ProcessCallZone340();		3506
 341	OnProcess2	Portal2	routed	OnProcess2 -> ApplyPortal2(3); return true;		8
-342	OnProcess2	CoupleCasting	routed	"OnProcess2 -> ApplyCoupleCasting(""effect\\ring_red.tga""); return true;"	src/session/SkillActionInfo2.cpp	89
+342	OnProcess2	CoupleCasting	routed	"OnProcess2 -> ApplyCoupleCasting(""effect\\ring_red.tga""); return true;"	src/session/SkillActionInfo2.cpp	3546
 343	OnProcess2	HeartCasting	routed	OnProcess2 -> return OnProcess2Legacy();	src/session/SkillActionInfo2.cpp	145
 344	OnProcess2	Entry2	routed	OnProcess2 -> ApplyEntry2(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/world/GameActor.cpp	15
 345	OnProcess2	SaintWing	routed	"OnProcess2 -> ApplySaintWing(""effect\\wing003.bmp""); return true;"		108
@@ -500,9 +500,9 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 494	OnProcess3	ShieldBoomerang	routed	OnProcess3 -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	1089
 495	OnProcess3	RG_COIN2	routed	OnProcess3 -> return ProcessRgCoinEffects();	src/gamemode/UseSkillEffect.generated.inc	1590
 496	OnProcess3	Guard2	routed	OnProcess3 -> return ProcessGuardEffects();	src/gamemode/UseSkillEffect.generated.inc	2571
-497	OnProcess3	PRESSURE,GroundShake	routed	OnProcess3 -> return ProcessSlimPotionEffects(1);		3516
-498	OnProcess3	PRESSURE,GroundShake	routed	OnProcess3 -> return ProcessSlimPotionEffects(2);		2536
-499	OnProcess3	PRESSURE,GroundShake	routed	OnProcess3 -> return ProcessSlimPotionEffects(3);		3516
+497	OnProcess3	PRESSURE,GroundShake	routed	OnProcess3 -> return ProcessSlimPotionEffects(1);		3520
+498	OnProcess3	PRESSURE,GroundShake	routed	OnProcess3 -> return ProcessSlimPotionEffects(2);		3520
+499	OnProcess3	PRESSURE,GroundShake	routed	OnProcess3 -> return ProcessSlimPotionEffects(3);		3520
 500	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
 501	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect501();	src/session/SkillActionInfo2.cpp	34
 502	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect502();	src/session/SkillActionInfo2.cpp	34
@@ -513,11 +513,11 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 509	OnProcess3	Vallentine	unported	OnProcess3 -> UnportedEffect		-
 510	OnProcess3	BeginAsura	routed	OnProcess3 -> return ProcessBeginAsuraEffect();		462
 512	OnProcess3	CHEMICAL3	routed	OnProcess3 -> return ProcessEffectFrameLegacy();	src/world/GameActorMsgHandler.cpp	91
-513	OnProcess3	GROUNDSAMPLE	routed	OnProcess3 -> ProcessGroundSample(); return true;		886
+513	OnProcess3	GROUNDSAMPLE	routed	OnProcess3 -> ProcessGroundSample(); return true;		3527
 514	OnProcess3	GI_EXPLOSION	routed	"OnProcess3 -> ApplyGiExplosion(""effect\\ring_blue.tga""); return true;"		144
 515	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		15
 516	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		15
-517	OnProcess3	Bottom_Hermode	routed	OnProcess3 -> return ProcessBottomHermode517();		3302
+517	OnProcess3	Bottom_Hermode	routed	OnProcess3 -> return ProcessBottomHermode517();		3534
 518	OnProcess3	ParticleSpread	routed	OnProcess3 -> return ProcessParticleSpreadEffects();	src/world/SkillSpecialEffect.cpp	1244
 519	OnProcess3	Vallentine	unported	OnProcess3 -> UnportedEffect		-
 520	OnProcess3	ShieldBoomerang3	routed	OnProcess3 -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	958
@@ -551,20 +551,20 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 548	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	34
 549	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
 550	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	34
-551	OnProcess3	SMA	routed	OnProcess3 -> SpawnSma(0); return true;		71
+551	OnProcess3	SMA	routed	OnProcess3 -> SpawnSma(0); return true;		3541
 552	OnProcess3	SMA2	routed	OnProcess3 -> return ProcessSma2Effect552();	src/world/RagEffect.cpp	879
 553	OnProcess3	STIN2	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	1385
 554	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\freeze_a.bmp"", 2); return true;"	src/world/SkillSpecialEffect.cpp	102
 555	OnProcess3	SMA	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	71
 556	OnProcess3	ParticlePath	routed	OnProcess3 -> return ProcessParticlePath556();	src/world/RagEffect.cpp	35
-557	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(0, 0); return true;		1092
-558	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(1, 0); return true;		282
-559	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(0, 1); return true;		972
-560	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(1, 1); return true;		2006
+557	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(0, 0); return true;		3513
+558	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(1, 0); return true;		3513
+559	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(0, 1); return true;		3513
+560	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(1, 1); return true;		3513
 561	OnProcess3	Portal3	unported	OnProcess3 -> UnportedEffect		-
 562	OnProcess3	Portal3	unported	OnProcess3 -> UnportedEffect		-
-563	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect563();		34
-564	OnProcess3	CoupleCasting	routed	"OnProcess3 -> ApplyCoupleCasting(""effect\\ring_red.tga""); return true;"	src/gamemode/UseSkillEffect.generated.inc	112
+563	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect563();		3556
+564	OnProcess3	CoupleCasting	routed	"OnProcess3 -> ApplyCoupleCasting(""effect\\ring_red.tga""); return true;"	src/gamemode/UseSkillEffect.generated.inc	3546
 565	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	15
 566	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	15
 567	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	15
@@ -604,7 +604,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 601	OnProcess3	Sight2	routed	OnProcess3 -> SpawnSight2(); return true;		78
 602	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect602();	src/gamemode/UseSkillEffect.generated.inc	34
 604	OnProcess3	NpcStop	routed	OnProcess3 -> return ProcessNpcStopEffects();		396
-605	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect605();		34
+605	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect605();		3551
 606	OnProcess3	CHIMTO	routed	OnProcess3 -> return ProcessChimtoEffect(2);	src/gamemode/UseSkillEffect.generated.inc	690
 607	OnProcess3	CHIMTO	routed	OnProcess3 -> return ProcessChimtoEffect(1);	src/gamemode/UseSkillEffect.generated.inc	1121
 608	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		15
@@ -649,9 +649,9 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 648	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(30);	src/world/SkillSpecialEffect.cpp	1832
 650	OnProcess3	Map_MagicZone,Map_Pika,Map_Aura	unported	OnProcess3 -> UnportedEffect		-
 651	OnProcess3	Map_MagicZone,Map_Particle	unported	OnProcess3 -> UnportedEffect		-
-652	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		34
-653	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		34
-654	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		34
+652	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		3566
+653	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		3561
+654	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		3561
 655	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
 656	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
 665	OnProcess3	Bubble_Drop	unported	OnProcess3 -> UnportedEffect		-
@@ -659,8 +659,8 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 667	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
 668	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	15
 669	OnProcess3	POISON,ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	103
-671	OnProcess3	Bottom_LandProtector	unported	OnProcess3 -> UnportedEffect		-
-672	OnProcess3	Bottom_LandProtector	unported	OnProcess3 -> UnportedEffect		-
+671	OnProcess3	Bottom_LandProtector	routed	OnProcess3 -> return ProcessLandProtector(3);		3570
+672	OnProcess3	Bottom_LandProtector	routed	OnProcess3 -> return ProcessLandProtector(4);		3570
 673	OnProcess3	POISON	routed	OnProcess3 -> ApplyPoison(2); return true;		15
 674	OnProcess3	Bottom_Music	routed	"OnProcess3 -> ApplyBottomMusic(""effect\\curse.bmp"", 6); return true;"		115
 675	OnProcess3	Guard	routed	OnProcess3 -> return ProcessGuardEffects();	src/world/SkillSpecialEffect.cpp	421

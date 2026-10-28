@@ -133,6 +133,16 @@ def parity_lines(rows: list[dict[str, str]], text: str) -> dict[int, str]:
         effect_id = int(row["case"])
         handler = row["handler"]
         needle = re.compile(rf"(?<!\d){effect_id}(?!\d)")
+        case_list_hits = []
+        for i, line in enumerate(lines, 1):
+            match = re.search(r"Case list:\s*([\d, -]+)", line)
+            if match:
+                listed_ids = {int(value) for value in re.findall(r"\d+", match.group(1))}
+                if effect_id in listed_ids:
+                    case_list_hits.append(str(i))
+        if case_list_hits:
+            result[effect_id] = case_list_hits[-1]
+            continue
         hits = [str(i) for i, line in enumerate(lines, 1) if handler in line or needle.search(line)]
         result[effect_id] = hits[0] if hits else ""
     return result

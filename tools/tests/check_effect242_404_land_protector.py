@@ -46,8 +46,8 @@ for name, body in (("PE", helper.group(1)), ("secondary Ref", ref_helper.group(1
 require("ProcessLandProtector(int variant)" in LOCAL
         and '"effect\\\\aaa copy.bmp"' in LOCAL and '"effect\\\\spiderweb.tga"' in LOCAL,
         "local handler/resource mapping missing")
-require("gi.distance = variant == 1 ? 7.0f : 12.0f" in LOCAL
-        and "gi.height[4] = static_cast<float>(variant)" in LOCAL
+require("gi.distance = profile == 1 ? 7.0f : profile == 2 ? 12.0f : 10.0f" in LOCAL
+        and "gi.height[4] = static_cast<float>(profile)" in LOCAL
         and "gi.riseAngle = static_cast<short>(rand() % 360)" in LOCAL,
         "local variant payload or one-draw random angle changed")
 require("Bottom_LandProtector(this, aEffectHanmoon1, 3)" in REF1

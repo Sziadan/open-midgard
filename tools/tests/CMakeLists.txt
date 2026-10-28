@@ -1002,6 +1002,8 @@ add_test(NAME effect517_bottom_hermode_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect517_bottom_hermode.py")
 add_test(NAME effect551_sma_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect551_sma.py")
+add_test(NAME effects671_672_land_protector_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects671_672_land_protector.py")
 add_test(NAME effects342_564_couple_casting_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects342_564_couple_casting.py")
 add_test(NAME effect605_stop_message_source_check
@@ -1048,6 +1050,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_chimto_callers.py
     check_stin_sma_callers.py
     check_effect551_sma.py
+    check_effects671_672_land_protector.py
     check_effects342_564_couple_casting.py
     check_effect605_stop_message.py
     check_effect563_mode_message.py

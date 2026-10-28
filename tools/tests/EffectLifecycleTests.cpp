@@ -3854,6 +3854,46 @@ int main()
         }
     }
     {
+        CRenderObject actor; actor.m_pos={12,34,56};
+        for (int variant=3; variant<=4; ++variant) {
+            actor.m_pos={12,34,56};
+            const char* expected=variant==3?"effect\\hanmoon1.tga":"effect\\hanmoon2.tga";
+            CRagEffect effect; effect.m_type=variant==3?671:672; effect.m_master=&actor;
+            effect.m_duration=73; effect.m_effectPos={1,2,3}; effect.m_stateCnt=1;
+            rngValues={47}; rngCursor=0; const int draws=rngDraws;
+            g_texMgr.requests.clear();
+            effect.ProcessLandProtector(variant);
+            check(effect.m_primList.empty(),
+                "Land Protector 671/672 does not emit before state zero");
+            check(effect.m_effectPos.x==12&&effect.m_effectPos.y==34&&effect.m_effectPos.z==56,
+                "Land Protector 671/672 copies master position before state zero");
+            check(rngDraws==draws,
+                "Land Protector 671/672 consumes no random angle before state zero");
+
+            effect.m_stateCnt=0; actor.m_pos={21,43,65};
+            effect.ProcessLandProtector(variant);
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_LANDPROTECTOR
+                &&prim->m_renderFlag==5&&prim->m_duration==73&&prim->m_size==111
+                &&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture
+                &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]==expected
+                &&prim->m_gi[0].life==1&&prim->m_gi[0].distance==10
+                &&prim->m_gi[0].rotStart==225&&prim->m_gi[0].alphaB==250
+                &&prim->m_gi[0].riseAngle==47&&prim->m_gi[0].height[0]==-2
+                &&prim->m_gi[0].height[4]==3
+                &&prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0
+                &&effect.m_effectPos.x==21&&effect.m_effectPos.y==43&&effect.m_effectPos.z==65
+                &&rngDraws==draws+1,
+                "Land Protector IDs 671/672 launch exact hanmoon texture and PW=3 payload with one random angle");
+            effect.m_stateCnt=1; actor.m_pos={31,53,75};
+            effect.ProcessLandProtector(variant);
+            check(effect.m_primList.size()==1&&effect.m_effectPos.x==31&&effect.m_effectPos.y==53
+                &&effect.m_effectPos.z==75&&rngDraws==draws+1&&g_texMgr.requests.size()==1,
+                "Land Protector 671/672 refresh master position without repeating primitive, texture, or RNG");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+        }
+    }
+    {
         CRenderObject actor; actor.m_pos={3,10,4};
         CRenderObject listener; listener.m_pos={1,2,1};
         CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;

@@ -20386,32 +20386,34 @@ bool CRagEffect::ProcessEffect440()
     return true;
 }
 
-// PE HighPriest.exe.c:420778/421365; Ref/RagEffect2.cpp Bottom_LandProtector.
-// Primary Ref/RagEffect.cpp omits these two callers (its other callers use PW=3).
+// PE HighPriest.exe.c:420778/421365/419122/419125; Ref/RagEffect2.cpp Bottom_LandProtector.
+// Ref/RagEffect.cpp:12482-12487 contains the PW=3 callers for effects 671/672.
 // TEST_BODY_BEGIN land_protector_family
 bool CRagEffect::ProcessLandProtector(int variant)
 {
-    CRenderObject* master = ResolveCurrentMaster();
-    if (master == nullptr) return true;
+    CRenderObject* master = m_master;
     m_effectPos = master->m_pos;
     if (m_stateCnt != 0) return true;
 
     CEffectPrim* prim = LaunchEffectPrim(PP_LANDPROTECTOR, vector3d{});
-    if (prim == nullptr) return true;
     prim->m_renderFlag = 5;
     prim->m_duration = m_duration;
-    prim->m_texture.push_back(g_texMgr.GetTexture(
-        variant == 1 ? "effect\\aaa copy.bmp" : "effect\\spiderweb.tga", false));
+    const char* textureName = variant == 1 ? "effect\\aaa copy.bmp"
+        : variant == 2 ? "effect\\spiderweb.tga"
+        : variant == 3 ? "effect\\hanmoon1.tga" : "effect\\hanmoon2.tga";
+    const int profile = variant <= 2 ? variant : 3;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
 
     EffectGi& gi = prim->m_gi[0];
     gi.life = 1;
-    gi.distance = variant == 1 ? 7.0f : 12.0f;
-    gi.rotStart = 0;
-    gi.alphaB = 100;
+    for (size_t lane = 1; lane < 4; ++lane) prim->m_gi[lane].life = 0;
+    gi.distance = profile == 1 ? 7.0f : profile == 2 ? 12.0f : 10.0f;
+    gi.rotStart = profile == 3 ? 225 : 0;
+    gi.alphaB = profile == 3 ? 250 : 100;
     gi.riseAngle = static_cast<short>(rand() % 360);
     gi.height[0] = -2.0f;
-    gi.height[4] = static_cast<float>(variant);
-    prim->m_size = 5.0f;
+    gi.height[4] = static_cast<float>(profile);
+    prim->m_size = profile == 3 ? 111.0f : 5.0f;
     return true;
 }
 // TEST_BODY_END land_protector_family
