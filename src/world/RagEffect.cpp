@@ -6335,6 +6335,87 @@ void UpdateMagnum2Primitive(CEffectPrim* prim)
     }
 }
 
+void Render3DAura(CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    u32 sizeBits = 0;
+    std::memcpy(&sizeBits, &prim.m_size, sizeof(sizeBits));
+    for (size_t lane = 0; lane < prim.m_gi.size(); ++lane) {
+        const EffectGi& gi = prim.m_gi[lane];
+        if (gi.life != 1) continue;
+
+        // PE 0x61C580 writes four 90-degree radius samples into the legacy
+        // GI scratch fields before submitting the source's two crossed faces.
+        int angle = (sizeBits == 1120403456u || prim.m_size >= 110.0f || prim.m_size == 0.0f)
+            ? gi.rotStart : static_cast<int>(lane) * 23;
+        const float radius = (gi.distance * 0.8f)
+            + ((g_sinTable[TableAngle(gi.riseAngle)] + 1.0f) * gi.distance * 0.1f);
+        const int a0 = TableAngle(angle);
+        const int a90 = TableAngle(angle + 90);
+        const int a180 = TableAngle(angle + 180);
+        const int a270 = TableAngle(angle + 270);
+        // PE's flt_72D2DC table is the cosine table at a 90-entry offset;
+        // preserve its mixed sine/cosine indices exactly.
+        // Sample aliases in PE order: +29 (spark), +32 (T-now), +35 (B-pre), +38 (T-pre).
+        vector3d samples[4] = {
+            { radius * g_cosTable[a180], gi.height[0], radius * g_sinTable[a90] },
+            { radius * g_cosTable[a270], gi.height[0], radius * g_sinTable[a180] },
+            { radius * g_cosTable[a90], gi.height[0], radius * g_sinTable[a0] },
+            { radius * g_cosTable[a270], gi.height[0], radius * g_sinTable[a270] },
+        };
+
+        // Keep the aliases observed in PE's p_RotStart scratch writes.
+        EffectGi& mutableGi = prim.m_gi[lane];
+        mutableGi.sparkX = samples[0].x;
+        mutableGi.sparkY = samples[0].y;
+        mutableGi.sparkZ = samples[0].z;
+        mutableGi.vecTNowX = samples[1].x;
+        mutableGi.vecTNowY = samples[1].y;
+        mutableGi.vecTNowZ = samples[1].z;
+        mutableGi.vecBPreX = samples[2].x;
+        mutableGi.arcBaselineY = samples[2].y;
+        mutableGi.vecBPreZ = samples[2].z;
+        mutableGi.vecTPreX = samples[3].x;
+        mutableGi.vecTPreY = samples[3].y;
+        mutableGi.vecTPreZ = samples[3].z;
+
+        // Render3DAura's four-vector call passes B-pre, spark, T-now, T-pre.
+        const vector3d corners[4] = { samples[2], samples[0], samples[1], samples[3] };
+
+        int red = 255, green = 255, blue = 255;
+        bool crossFaces = false;
+        if (sizeBits == 1120534528u) { // 101.0f
+            crossFaces = true;
+            red = 255; green = 0; blue = 0;
+        } else if (sizeBits != 1120403456u) { // 100.0f: two white crossed faces
+            switch (sizeBits) {
+            case 0x42CC0000u: red = 255; green = 255; blue = 0; break; // 102
+            case 0x42DE0000u: red = 55; green = 55; blue = 255; break; // 111
+            case 0x42E00000u: red = 105; green = 225; blue = 105; break; // 112
+            default:
+                if (prim.m_size == 15.0f) { red = 35; green = 255; blue = 35; }
+                break;
+            }
+        } else {
+            crossFaces = true;
+        }
+
+        const unsigned int alpha = static_cast<unsigned int>(static_cast<std::uint8_t>(gi.alphaB));
+        const unsigned int color = (alpha << 24) | (static_cast<unsigned int>(red) << 16)
+            | (static_cast<unsigned int>(green) << 8) | static_cast<unsigned int>(blue);
+        auto place = [&](const vector3d& point) { return AddVec3(point, prim.m_pos); };
+        const D3DBLEND blend = prim.m_size == 110.0f ? D3DBLEND_INVSRCALPHA : D3DBLEND_ONE;
+        if (crossFaces) {
+            SubmitWorldTeiRect(place(corners[0]), place(corners[1]), place(corners[2]), place(corners[3]),
+                viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f,
+                blend, 0.0f, static_cast<int>(prim.m_renderFlag));
+        }
+        SubmitWorldTeiRect(place(corners[0]), place(corners[1]), place(corners[2]), place(corners[3]),
+            viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f,
+            blend, 0.0f, static_cast<int>(prim.m_renderFlag));
+    }
+}
+
 void RenderMagnum2(const CEffectPrim& prim, const matrix& viewMatrix)
 {
     CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
@@ -6381,10 +6462,10 @@ void RenderMagnum2(const CEffectPrim& prim, const matrix& viewMatrix)
                     corner.z += prim.m_pos.z;
                     return corner;
                 };
-                SubmitWorldTeiRect(place(previousOuter),
+                SubmitWorldTeiRect(place(previousInner),
                     place(inner),
                     place(outer),
-                    place(previousInner),
+                    place(previousOuter),
                     viewMatrix,
                     texture,
                     color,
@@ -13425,6 +13506,11 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeMagnum2)) {
         RenderMagnum2(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_3DAURA || m_type == PP_MAPMAGICZONE || m_type == PP_GROUNDSHAKE
+        || m_type == PP_LANDPROTECTOR || m_type == PP_FOOT) {
+        Render3DAura(*this, *viewMatrix);
         return;
     }
     if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeSaintWing)) {

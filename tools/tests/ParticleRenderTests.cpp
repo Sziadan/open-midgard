@@ -2,6 +2,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <utility>
 #include <cstdio>
 #include <vector>
@@ -184,7 +185,7 @@ void IntimidateTowardScreen(vector3d corners[4],int rotationX,int rotationYZ);
 int TableAngle(int angle);
 int GetReferenceAngle(float moveX,float moveZ);
 void RotateCornerTowardScreen(vector3d* corner,int rot0,int rot1);
-struct AirTextureQuadCall { vector3d a,b,c,d; CTexture* texture=nullptr; u32 color=0; D3DBLEND blend=0; int flags=0; };
+struct AirTextureQuadCall { vector3d a,b,c,d; CTexture* texture=nullptr; u32 color=0; D3DBLEND blend=0; int flags=0; float u0=0,u1=0,vBottom=0,vTop=0; };
 std::vector<AirTextureQuadCall> airTextureQuadCalls;
 void SubmitWorldTeiRect(const vector3d&,const vector3d&,const vector3d&,const vector3d&,
     const matrix&,CTexture*,unsigned int,float,float,float,float,D3DBLEND,float,int);
@@ -206,8 +207,8 @@ void RotateCornerTowardScreen(vector3d* corner,int rot0,int rot1) {
     corner->z=oldX*g_sinTable[rot0]+rotatedZ*g_cosTable[rot0];
 }
 void SubmitWorldTeiRect(const vector3d& a,const vector3d& b,const vector3d& c,const vector3d& d,
-    const matrix&,CTexture* texture,unsigned int color,float,float,float,float,D3DBLEND blend,float,int flags) {
-    airTextureQuadCalls.push_back({a,b,c,d,texture,color,blend,flags});
+    const matrix&,CTexture* texture,unsigned int color,float u0,float u1,float vBottom,float vTop,D3DBLEND blend,float,int flags) {
+    airTextureQuadCalls.push_back({a,b,c,d,texture,color,blend,flags,u0,u1,vBottom,vTop});
 }
 #include "AirTextureRendererBody.inc"
 #include "HitLine3RendererBody.inc"
@@ -223,6 +224,7 @@ constexpr float kSubmitNearPlane=80.0f,kNearPlane=10.0f;
 #include "ElectricPathBody.inc"
 #include "Electric2PathBody.inc"
 #include "WindSampleBody.inc"
+#include "AuraRendererBody.inc"
 #include "GrandCross2CornersBody.inc"
 #include "LineLinkGeometryBody.inc"
 #include "IntimidateRenderGeometryBody.inc"
@@ -237,6 +239,49 @@ int main() {
     int checks=0,failures=0;
     auto check=[&](bool ok,const char* message){++checks;if(!ok){++failures;std::printf("FAIL: %s\n",message);}};
     auto near=[](float a,float b){return std::fabs(a-b)<0.0001f;};
+    {
+        CTexture texture; CEffectPrim aura; aura.m_texture={&texture}; aura.m_pos={10,20,30}; aura.m_size=0.0f;
+        aura.m_renderFlag=7; EffectGi& gi=aura.m_gi[0]; gi.life=1; gi.alphaB=180; gi.height[0]=2;
+        gi.distance=10; gi.riseAngle=0; gi.rotStart=0;
+        matrix identity{}; MatrixIdentity(identity);
+        airTextureQuadCalls.clear();
+        Render3DAura(aura,identity);
+        check(airTextureQuadCalls.size()==1,"3DAura submits one source quad for one live GI lane");
+        if(airTextureQuadCalls.size()==1) {
+            const auto& call=airTextureQuadCalls[0];
+            check(near(call.a.x,10.0f)&&near(call.a.y,22.0f)&&near(call.a.z,30.0f)
+                &&call.texture==&texture&&call.color==0xB4FFFFFFu&&call.blend==D3DBLEND_ONE
+                &&call.u0==0.0f&&call.u1==1.0f&&call.vBottom==1.0f&&call.vTop==0.0f,
+                "3DAura maps source position, texture slot, alpha/RGB, blend, and reversed UV arguments");
+            check(near(call.b.x,1.0f)&&near(call.b.y,22.0f)&&near(call.b.z,39.0f)
+                &&near(call.c.x,10.0f)&&near(call.c.y,22.0f)&&near(call.c.z,30.0f)
+                &&near(call.d.x,10.0f)&&near(call.d.y,22.0f)&&near(call.d.z,21.0f),
+                "3DAura submits PE vec1..vec4 as B-pre, spark, T-now, T-pre");
+            check(near(gi.sparkX,-9.0f)&&near(gi.sparkY,2.0f)&&near(gi.sparkZ,9.0f)
+                &&near(gi.vecTNowX,0.0f)&&near(gi.vecTNowZ,0.0f),
+                "3DAura preserves the source scratch writes for consecutive radius corners");
+        }
+        aura.m_size=100.0f;
+        airTextureQuadCalls.clear();
+        Render3DAura(aura,identity);
+        check(airTextureQuadCalls.size()==2,
+            "3DAura size 100 emits both crossed white faces in source order");
+        if(airTextureQuadCalls.size()==2) {
+            check(airTextureQuadCalls[0].color==0xB4FFFFFFu
+                &&airTextureQuadCalls[1].color==0xB4FFFFFFu
+                &&near(airTextureQuadCalls[0].a.x,airTextureQuadCalls[1].a.x),
+                "3DAura size 100 duplicates the same white source face");
+        }
+        aura.m_size=101.0f;
+        airTextureQuadCalls.clear(); Render3DAura(aura,identity);
+        check(airTextureQuadCalls.size()==2&&airTextureQuadCalls[0].color==0xB4FF0000u
+            &&airTextureQuadCalls[1].color==0xB4FF0000u,
+            "3DAura size 101 emits two red faces");
+        aura.m_size=110.0f;
+        airTextureQuadCalls.clear(); Render3DAura(aura,identity);
+        check(airTextureQuadCalls.size()==1&&airTextureQuadCalls[0].blend==D3DBLEND_INVSRCALPHA,
+            "3DAura size 110 uses inverse-alpha blending");
+    }
     {
         CAbleToMakeEffect player;CWorld world;world.m_player=&player;CGameMode mode;mode.m_world=&world;
         CGameMode* previousMode=g_modeMgr.current;g_modeMgr.current=&mode;g_modeMgr.lookups=0;
