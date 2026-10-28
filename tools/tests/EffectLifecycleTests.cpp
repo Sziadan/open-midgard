@@ -592,6 +592,7 @@ struct CRagEffect : CGameObject {
     bool ProcessMagicRod244();
     bool ProcessShieldCharge246();
     bool ProcessStripEquipment269To272();
+    bool ProcessClipWaveStrEffect();
     bool ProcessAirTexture416();
     bool ProcessHitLineEffect(short f1 = 2, bool applyBodyLight = true);
     bool ProcessEffect380();
@@ -5757,6 +5758,33 @@ int main()
         }
         check(g_texMgr.requests.empty()&&rngDraws==beforeRng,
             "Strip equipment has no texture or RNG output");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRenderObject master;master.m_pos={15,20,35};
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        for(int id:{208,209,211}) {
+            CRagEffect effect;effect.m_type=id;effect.m_master=&master;effect.m_cachedPos=master.m_pos;effect.m_duration=100;
+            effect.m_stateCnt=1;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+                "Potion STR group does not repeat its source wave after frame zero");
+            effect.m_stateCnt=0;
+            check(!effect.ProcessClipWaveStrEffect()&&effect.m_effectPos.x==15&&effect.m_effectPos.y==20
+                &&effect.m_effectPos.z==35&&waveCalls.size()==1&&waveCalls.back().name=="effect\\"
+                &&waveCalls.back().x==12&&waveCalls.back().y==-80&&waveCalls.back().z==30
+                &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+                "Potion STR group copies master and plays the exact PE effect-prefix cue at frame zero");
+            effect.m_stateCnt=1;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1,
+                "Potion STR group emits its source wave only once");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+            waveCalls.clear();
+        }
+        check(g_texMgr.requests.empty()&&rngDraws==beforeRng,
+            "Potion STR group emits no textures or RNG");
         g_world.m_player=oldPlayer;
     }
     {

@@ -30,6 +30,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <limits>
+#include <type_traits>
 #include <vector>
 
 #if RO_PLATFORM_LINUX
@@ -170,14 +171,14 @@ void* VulkanDispatchHandleToVoidPtr(VkQueue handle)
     return reinterpret_cast<void*>(handle);
 }
 
-void* VulkanNonDispatchHandleToVoidPtr(VkImage handle)
+template <typename Handle>
+void* VulkanNonDispatchHandleToVoidPtr(Handle handle)
 {
-    return reinterpret_cast<void*>(handle);
-}
-
-void* VulkanNonDispatchHandleToVoidPtr(VkImageView handle)
-{
-    return reinterpret_cast<void*>(handle);
+    if constexpr (std::is_pointer_v<Handle>) {
+        return reinterpret_cast<void*>(handle);
+    } else {
+        return reinterpret_cast<void*>(static_cast<uintptr_t>(handle));
+    }
 }
 #endif
 

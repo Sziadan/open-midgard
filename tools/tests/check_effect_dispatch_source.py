@@ -130,7 +130,7 @@ for (tier, effect_id), destination in required_routes.items():
         fail(f"{tier} effect {effect_id} must route to {destination}")
 clip_wave_routes = (30, 65, 66, 68, 69, 75, 76, 77, 78, 83, 84, 85, 88, 91, 96, 97, 103,
                     106, 107, 108, 111, 113, 124, 127, 129, 131, 153, 154, 155,
-                    130, 250, 204, 205, 206, 207, 210, 234, 245, 255, 256, 257, 258, 390, 391, 95, 102)
+                    130, 250, 204, 205, 206, 207, 208, 209, 210, 211, 234, 245, 255, 256, 257, 258, 390, 391, 95, 102)
 for effect_id in clip_wave_routes:
     if "ProcessClipWaveStrEffect" not in case_lines["OnProcess"][effect_id]:
         fail(f"OnProcess effect {effect_id} must use ProcessClipWaveStrEffect")
@@ -156,6 +156,9 @@ for effect_id, frame, wave in (
 ):
     if f"case {effect_id}:" not in clip_body or f"waveFrame = {frame};" not in clip_body or wave not in clip_body:
         fail(f"ProcessClipWaveStrEffect must preserve effect {effect_id}'s timed clip wave")
+if not all(token in clip_body[clip_body.index("case 208: case 209: case 211:"):clip_body.index("case 234:")]
+           for token in (r'wave = "effect\\";', "yOffset = -80.0f;", "copyMasterPosition = true;")):
+    fail("ProcessClipWaveStrEffect must preserve effects208/209/211 exact effect-prefix cue and offset")
 if "TryPlaySingleEffectWave(m_effectPos, wave, yOffset, true)" not in clip_body or "const bool active = ProcessEZ2STR(0.0f, -80.0f, 0.0f);" not in clip_body:
     fail("ProcessClipWaveStrEffect must preserve effect position, literal Y offset, and STR result")
 image = ExeImage()

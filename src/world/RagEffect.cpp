@@ -14312,6 +14312,7 @@ bool CRagEffect::ProcessEffectSpriteAndStr()
 
 // Ref/RagEffect.cpp timed audio cues and canonical OnProcess cases. These
 // cases have no extra primitive, RNG, or quake branch beyond the listed cue.
+// TEST_BODY_BEGIN clip_wave_str_helper
 bool CRagEffect::ProcessClipWaveStrEffect()
 {
     int waveFrame = 0;
@@ -14356,6 +14357,9 @@ bool CRagEffect::ProcessClipWaveStrEffect()
     case 155: waveFrame = 5; wave = "effect\\bs_refinefailed.wav"; break;
     case 204: case 205: case 206: case 207: case 210:
         wave = "_heal_effect.wav"; yOffset = -80.0f; copyMasterPosition = true; break;
+    case 208: case 209: case 211:
+        // PE case208/209/211 passes the literal "effect\\" resource name.
+        wave = "effect\\"; yOffset = -80.0f; copyMasterPosition = true; break;
     case 234: wave = "effect\\sage_spell breake.wav"; copyMasterPosition = true; break;
     case 245: wave = "effect\\cru_holy cross.wav"; playAtOrigin = true; break;
     case 255: case 256: case 257: case 258:
@@ -14381,6 +14385,7 @@ bool CRagEffect::ProcessClipWaveStrEffect()
     const bool active = ProcessEZ2STR(0.0f, -80.0f, 0.0f);
     return propagateStrResult ? active : true;
 }
+// TEST_BODY_END clip_wave_str_helper
 // Ref/RagEffect.cpp:9725-9862 (0x5F1420). Preserve Ref's independent
 // pixel-ratio projection, conditional corner/UV order and byte color conversion.
 // TEST_BODY_BEGIN str_render_family

@@ -1840,3 +1840,11 @@ Verified effect199's dynamic STR selection against primary Ref and PE: one `rand
 ## WP5C effects204-207/210 clip-wave STR family — 2026-10-28
 
 Verified Init mappings for effect IDs204-207 and210 across Ref, PE, and local names, including exact raw CP949 potion names and `fruit.str`. Canonical state0 callers copy master position, play `_heal_effect.wav` at Y−80, then enter shared STR processing; local routes and the `ProcessClipWaveStrEffect` branch agree. The wave resolves from PE at VA `0x712840`. Added and registered `check_effect204_210_clipwave_str.py`. Matching clips and direct per-ID lifecycle cases are absent, so media acceptance remains open. Full parity CTest passes 219/219. Next: continue 5C source-parity audit.
+
+## WP5C effects208/209/211 potion STR family — 2026-10-28
+
+Ported the remaining STR/wave caller for effects208, 209, and211 from canonical PE behavior. Their Init mappings resolve to the exact CP949 potion names `파란포션.str` and `초록포션.str` plus `fruit_.str`; PE state0 copies master position, plays the literal `effect\\` resource-name prefix at Y−80, and enters shared STR processing. Added these IDs to `ProcessClipWaveStrEffect` in both the dispatcher generator and generated route, preserving the raw sound prefix without inferring a basename. Lifecycle assertions cover state-zero cue, position, volume/range/offset, one-shot timing, no primitives, and zero RNG. Comparator, source maps, and routing audit added; coverage is 617 routed /76 explicit unported /0 launched-but-unported. OpenMidgard Release build passes after fixing the Win32 Vulkan handle overload collision. Replay CTest passes102/102 and parity CTest passes220/220. Matching STR clips are absent, so visual acceptance remains open.
+
+## Release build repair — 2026-10-28
+
+The OpenMidgard Win32 Release build was failing in `RenderDevice.cpp`: on this target `VkImage` and `VkImageView` alias the same non-dispatchable integer type, so two overload definitions collide and their call sites become ambiguous. Replaced them with one type-generic conversion helper that handles pointer and integer Vulkan handle representations. `cmake --build build --config Release --target open_midgard` now completes and copies `open-midgard.exe` to the local OldRO output directory.

@@ -395,6 +395,7 @@ extract_body(chookgi_renderer "${effect_source}" "void RenderChookGi(CEffectPrim
 extract_test_region(str_render "${effect_source}" str_render_family)
 extract_body(str_delta "${effect_source}" "void AddXformDelta(" "std::string ResolveStrName(")
 extract_test_region(str_process "${effect_source}" str_process_family)
+extract_test_region(clip_wave_str_helper "${effect_source}" clip_wave_str_helper)
 file(READ "../../src/world/World.cpp" world_source)
 extract_body(primitive_init "${effect_source}" "void CEffectPrim::Init(" "static_assert(offsetof(EffectGi, height)")
 extract_test_region(primitive_update_family "${effect_source}" primitive_update_family)
@@ -425,6 +426,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${waterba
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${fireivy118_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${firepillar138_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${banjjakii165_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${clip_wave_str_helper}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -919,6 +921,8 @@ add_test(NAME effect199_pong_str_variants_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect199_pong_str_variants.py")
 add_test(NAME effect204_210_clipwave_str_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect204_210_clipwave_str.py")
+add_test(NAME effect208_211_potion_str_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect208_211_potion_str.py")
 add_test(NAME skill_cast_cancel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_cancel_source.py")
 add_test(NAME status_state_source_check
@@ -1030,4 +1034,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect213_214_str_mappings.py
     check_effect199_pong_str_variants.py
     check_effect204_210_clipwave_str.py
+    check_effect208_211_potion_str.py
     check_effect695_map_fireworks.py)
