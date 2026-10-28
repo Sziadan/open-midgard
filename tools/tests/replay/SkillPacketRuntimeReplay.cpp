@@ -688,6 +688,48 @@ void ReplaySkillDamageExtendedExtra(const std::string& path)
     std::cout << "SkillDamageExtended opcode=0x01DE skill=" << skillId << " target=2 effect=" << expectedEffect << "\n";
 }
 
+bool IsGroundSkillWaveScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    if (packets.size() != 1 || packets[0].opcode != 0x0117 || packets[0].bytes.size() != 18) {
+        return false;
+    }
+    const u16 skillId = ReadU16LE(packets[0].bytes.data() + 2);
+    return skillId == 362 || skillId == 369;
+}
+
+void ReplayGroundSkillWave(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 1 && packets[0].opcode == 0x0117 && packets[0].bytes.size() == 18,
+        "ground-skill wave replay requires one 18-byte 0x0117 packet");
+    const u16 skillId = ReadU16LE(packets[0].bytes.data() + 2);
+    Require(skillId == 362 || skillId == 369, "ground-skill wave replay supports only skills362 and369");
+    const std::string expectedWave = skillId == 362
+        ? "effect\\\xB0\xA1\xBD\xBA\xC6\xE7.wav"
+        : "effect\\\xB9\xD9\xBD\xC7\xB8\xAE\xC4\xAB.wav";
+
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), packet, consumed),
+        "production packet reader rejected ground-skill wave packet");
+    Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch ground-skill wave packet");
+
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for ground-skill wave");
+    const std::string expectedTrace = "[REPLAY] PlayWave name='" + expectedWave + "' relative=(0.000,0.000,0.000)";
+    std::string logLine;
+    bool wavePlayed = false;
+    while (std::getline(runtimeLog, logLine)) {
+        wavePlayed = wavePlayed || logLine.find(expectedTrace) != std::string::npos;
+    }
+    Require(wavePlayed, "ground-skill Ref branch did not play its exact wave at player origin");
+    std::cout << "GroundSkillWave skill=" << skillId << " wave=" << expectedWave << " relative=(0,0,0)\n";
+}
+
 bool IsSkillCastAckScenario(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1817,7 +1859,9 @@ int main(int argc, char** argv)
         std::ofstream freshRuntimeLog(runtimeLogPath, std::ios::trunc);
         Require(static_cast<bool>(freshRuntimeLog), "could not reset per-run production runtime log");
         freshRuntimeLog.close();
-        if (IsSkillDamageExtendedExtraScenario(argv[1])) {
+        if (IsGroundSkillWaveScenario(argv[1])) {
+            ReplayGroundSkillWave(argv[1]);
+        } else if (IsSkillDamageExtendedExtraScenario(argv[1])) {
             ReplaySkillDamageExtendedExtra(argv[1]);
         } else if (IsGroundArrowShowerScenario(argv[1])) {
             ReplayGroundArrowShower(argv[1]);

@@ -409,6 +409,12 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_skill_damage2_141_levelFFFF_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/skill_damage2_141_levelFFFF.tsv")
+    add_test(NAME skill_packet_replay_ground_skill_wave362_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/ground_skill_wave362.tsv")
+    add_test(NAME skill_packet_replay_ground_skill_wave369_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/ground_skill_wave369.tsv")
     set_tests_properties(skill_packet_replay_runtime_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_double_strafe_checks PROPERTIES
@@ -529,6 +535,8 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
         skill_packet_replay_cast_ack013e_checks
         skill_packet_replay_arrow_shower47_checks
         skill_packet_replay_skill_damage2_662_checks
-        skill_packet_replay_skill_damage2_141_levelFFFF_checks PROPERTIES
+        skill_packet_replay_skill_damage2_141_levelFFFF_checks
+        skill_packet_replay_ground_skill_wave362_checks
+        skill_packet_replay_ground_skill_wave369_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
 endif()

@@ -3324,3 +3324,7 @@ Added `arrow_shower47.tsv` for a packetver23 0x0117 ground-skill notification. R
 ## WP3.4 replay — 0x01DE extended skill-damage extras — 2026-10-28
 
 Added raw 33-byte packet fixtures for both special branches in `DeliverSkillUse`: skill662 with distinct source/target actors launches effect372 on target AID2, while skill141 with level0xFFFF launches effect129. Ref counterpart: `Ref/GameModePacket.cpp:21358-21460`; packetver23 layout is `skill@2,src@4,dst@8,tick@12,attackMT@16,attackedMT@20,damage.L@24,level.W@28,div.W@30,action.B@32` (`src/network/GronPacket.cpp:274`, `src/gamemode/GameModePacket.cpp:4419-4444`). Tests exercise the actual 0x01DE reader/router, target effect ownership, and `[REPLAY] LaunchEffect` trace; they do not claim complete skill damage visual or actor-message acceptance. Focused CTest passes2/2; freshly built Release replay suite passes85/85.
+
+## WP3.4 replay — ground-skill waves362/369 — 2026-10-28
+
+Added packetver23 0x0117 fixtures for skills362 and369. `HandleGroundSkillNotify` dispatches the Ref-mapped wave for each branch at the player position; the audio replay log confirms each exact CP949 wave path and relative position `(0,0,0)`. Ref source is `Ref/GameModePacket.cpp:18135-18230`, implementation is `src/gamemode/GameModePacket.cpp:4512-4560`, and replay fixtures are `ground_skill_wave362.tsv` and `ground_skill_wave369.tsv`. Focused CTest passes2/2; freshly built Release suite passes87/87.
