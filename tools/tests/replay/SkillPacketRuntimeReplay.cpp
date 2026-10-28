@@ -8,6 +8,8 @@
 #include "world/World.h"
 
 #include <chrono>
+#include <algorithm>
+#include <cstddef>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -126,8 +128,8 @@ void ReplayScenario(const std::string& path)
     u16 expectedOpcode = 0;
     const std::vector<u8> bytes = LoadOnePacket(path, expectedOpcode);
     const u16 skillId = static_cast<u16>(bytes[2]) | (static_cast<u16>(bytes[3]) << 8);
-    Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 46,
-        "runtime replay only has Ref assertions for skills 5, 19, 28, and 46");
+    Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 46 || skillId == 136,
+        "runtime replay only has Ref assertions for skills 5, 19, 28, 46, and 136");
     Fixture fixture;
 
     CGameModePacketRouter router;
@@ -141,13 +143,19 @@ void ReplayScenario(const std::string& path)
         "scenario opcode does not match an active skill packet route");
     Require(consumed == static_cast<int>(bytes.size()), "packet reader left trailing scenario bytes");
     Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch skill packet");
-    const u32 replayStartTick = GetTickCount();
+    const u32 replayStartTick = timeGetTime();
 
-    const std::size_t expectedWbaCount = skillId == 46 ? 2u : (skillId == 28 ? 0u : 1u);
-    Require(fixture.target.m_willBeAttackedList.size() == expectedWbaCount,
+    const std::size_t expectedTargetWbaCount = skillId == 46 ? 2u : (skillId == 28 ? 0u : (skillId == 136 ? 4u : 1u));
+    const std::size_t expectedSelfWbaCount = skillId == 136 ? 3u : 0u;
+    const std::size_t expectedWbaCount = expectedTargetWbaCount + expectedSelfWbaCount;
+    Require(fixture.target.m_willBeAttackedList.size() == expectedTargetWbaCount,
         "skill packet enqueued an unexpected number of target WBAs");
+    Require(fixture.source.m_willBeAttackedList.size() == expectedSelfWbaCount,
+        "skill packet enqueued an unexpected number of source/self WBAs");
     std::vector<WBA> queuedHits(fixture.target.m_willBeAttackedList.begin(),
         fixture.target.m_willBeAttackedList.end());
+    std::vector<WBA> queuedSelfHits(fixture.source.m_willBeAttackedList.begin(),
+        fixture.source.m_willBeAttackedList.end());
     for (const WBA& hit : queuedHits) {
         Require(hit.sourceSkillId == skillId && hit.damage == 100 && hit.effectLevel == 5,
             "WBA skill, per-hit damage, or level differs from packet/Ref fields");
@@ -165,31 +173,65 @@ void ReplayScenario(const std::string& path)
             "Double Strafe follow-up WBA differs from Ref multi-hit path");
         Require(queuedHits[1].time - queuedHits[0].time == 200,
             "Double Strafe follow-up WBA delay differs from executable doubleAttackTerm");
+    } else if (skillId == 136) {
+        for (const WBA& hit : queuedHits) {
+            Require(hit.message == 111 && hit.effectId2 == 122 && hit.damage == 100 && hit.effectLevel == 5,
+                "Sonic Blow target WBA fields differ from Ref multi-hit path");
+        }
+        Require(queuedHits[0].effectId1 == 0 && queuedHits[1].effectId1 == 0
+            && queuedHits[2].effectId1 == 0 && queuedHits[3].effectId1 == 1,
+            "Sonic Blow target hit effect1 sequence differs from Ref fourth-hit branch");
+        for (const WBA& hit : queuedSelfHits) {
+            Require(hit.message == 108 && hit.effectId1 == 0 && hit.effectId2 == 122
+                && hit.damage == 100 && hit.effectLevel == 5,
+                "Sonic Blow self WBA fields differ from Ref attack-animation path");
+        }
+        Require(queuedHits[1].time - queuedHits[0].time == 200
+            && queuedHits[2].time - queuedHits[1].time == 200
+            && queuedHits[3].time - queuedHits[2].time == 200,
+            "Sonic Blow target hit intervals differ from executable doubleAttackTerm");
     }
 
     std::vector<u32> expectedDelays;
     for (const WBA& hit : queuedHits) {
         expectedDelays.push_back(hit.time - replayStartTick);
     }
+    std::vector<u32> expectedSelfDelays;
+    for (const WBA& hit : queuedSelfHits) {
+        expectedSelfDelays.push_back(hit.time - replayStartTick);
+    }
 
     std::vector<u32> deliveredAtElapsedMs;
     std::vector<u32> deliveryStepMs;
+    std::vector<u32> selfDeliveredAtElapsedMs;
+    std::vector<u32> selfDeliveryStepMs;
     std::size_t previousQueueSize = fixture.target.m_willBeAttackedList.size();
+    std::size_t previousSelfQueueSize = fixture.source.m_willBeAttackedList.size();
     u32 previousStepElapsedMs = 0;
-    for (unsigned int worldTick = 24; !fixture.target.m_willBeAttackedList.empty() && worldTick <= 2000; worldTick += 24) {
+    for (unsigned int worldTick = 24;
+        (!fixture.target.m_willBeAttackedList.empty() || !fixture.source.m_willBeAttackedList.empty()) && worldTick <= 3000;
+        worldTick += 24) {
         std::this_thread::sleep_for(std::chrono::milliseconds(24));
         fixture.target.ProcessWillBeAttacked();
-        const u32 elapsedMs = GetTickCount() - replayStartTick;
+        fixture.source.ProcessWillBeAttacked();
+        const u32 elapsedMs = timeGetTime() - replayStartTick;
         const u32 stepMs = elapsedMs - previousStepElapsedMs;
         const std::size_t currentQueueSize = fixture.target.m_willBeAttackedList.size();
+        const std::size_t currentSelfQueueSize = fixture.source.m_willBeAttackedList.size();
         while (previousQueueSize > currentQueueSize) {
             deliveredAtElapsedMs.push_back(elapsedMs);
             deliveryStepMs.push_back(stepMs);
             --previousQueueSize;
         }
+        while (previousSelfQueueSize > currentSelfQueueSize) {
+            selfDeliveredAtElapsedMs.push_back(elapsedMs);
+            selfDeliveryStepMs.push_back(stepMs);
+            --previousSelfQueueSize;
+        }
         previousStepElapsedMs = elapsedMs;
     }
-    Require(fixture.target.m_willBeAttackedList.empty(), "skill WBA queue was not fully delivered");
+    Require(fixture.target.m_willBeAttackedList.empty() && fixture.source.m_willBeAttackedList.empty(),
+        "skill source/target WBA queues were not fully delivered");
     Require(deliveredAtElapsedMs.size() == expectedDelays.size(),
         "WBA delivery count differs from expected real-time 24 ms polling steps");
     for (std::size_t index = 0; index < deliveredAtElapsedMs.size(); ++index) {
@@ -198,6 +240,13 @@ void ReplayScenario(const std::string& path)
             "WBA delivery elapsed time outside polling-step window: delay=" + std::to_string(expectedDelays[index])
                 + " step=" + std::to_string(deliveryStepMs[index])
                 + " actual=" + std::to_string(deliveredAtElapsedMs[index]));
+    }
+    Require(selfDeliveredAtElapsedMs.size() == expectedSelfDelays.size(),
+        "source/self WBA delivery count differs from expected 24 ms polling steps");
+    for (std::size_t index = 0; index < selfDeliveredAtElapsedMs.size(); ++index) {
+        Require(selfDeliveredAtElapsedMs[index] >= expectedSelfDelays[index]
+            && selfDeliveredAtElapsedMs[index] <= expectedSelfDelays[index] + selfDeliveryStepMs[index] + 24,
+            "source/self WBA delivery elapsed time outside polling-step window");
     }
 
     const std::string logPath = "debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log";
@@ -247,7 +296,8 @@ void ReplayScenario(const std::string& path)
     Require(wbaEvents.size() == expectedWbaCount, "runtime log has an unexpected number of WBA events");
     for (std::size_t index = 0; index < wbaEvents.size(); ++index) {
         const WbaLogEntry& event = wbaEvents[index];
-        const char* expectedWave = skillId == 5 ? "_enemy_hit_normal2.wav" : "player_clothes.wav";
+        const char* expectedWave = event.message == 108 ? "(none)"
+            : (skillId == 5 ? "_enemy_hit_normal2.wav" : "player_clothes.wav");
         Require(event.skill == skillId && event.damage == 100 && event.level == 5
             && event.wave == expectedWave,
             "production WBA log skill/damage/level/wave differs from Ref walk-through");
@@ -257,6 +307,14 @@ void ReplayScenario(const std::string& path)
         } else if (skillId == 19) {
             Require(event.message == 39 && event.effect1 == 49 && event.effect2 == -1,
                 "Fire Bolt production WBA log differs from Ref action-4 path");
+        } else if (skillId == 136) {
+            if (event.message == 108) {
+                Require(event.effect1 == 0 && event.effect2 == 122,
+                    "Sonic Blow self WBA runtime trace differs from Ref");
+            } else {
+                Require(event.message == 111 && event.effect2 == 122,
+                    "Sonic Blow target WBA runtime trace differs from Ref");
+            }
         } else if (index == 0) {
             Require(event.message == 111 && event.effect1 == 0 && event.effect2 == 1,
                 "Double Strafe first production WBA log differs from Ref walk-through");
@@ -264,14 +322,28 @@ void ReplayScenario(const std::string& path)
             Require(event.message == 111 && event.effect1 == 0 && event.effect2 == -1,
                 "Double Strafe second production WBA log differs from Ref walk-through");
         }
-        Require(event.delivery == queuedHits[index].time,
-            "runtime WBA log delivery timestamp differs from queued hit");
+        u32 deliveredElapsedMs = 0;
+        if (event.message == 108) {
+            const std::size_t selfIndex = static_cast<std::size_t>(std::count_if(wbaEvents.begin(),
+                wbaEvents.begin() + static_cast<std::ptrdiff_t>(index),
+                [](const WbaLogEntry& previous) { return previous.message == 108; }));
+            Require(event.delivery == queuedSelfHits[selfIndex].time,
+                "runtime self WBA log timestamp differs from queued hit");
+            deliveredElapsedMs = selfDeliveredAtElapsedMs[selfIndex];
+        } else {
+            const std::size_t targetIndex = static_cast<std::size_t>(std::count_if(wbaEvents.begin(),
+                wbaEvents.begin() + static_cast<std::ptrdiff_t>(index),
+                [](const WbaLogEntry& previous) { return previous.message != 108; }));
+            Require(event.delivery == queuedHits[targetIndex].time,
+                "runtime target WBA log timestamp differs from queued hit");
+            deliveredElapsedMs = deliveredAtElapsedMs[targetIndex];
+        }
         std::cout << "WBA msg=" << event.message
             << " skill=" << event.skill
             << " effectId1=" << event.effect1
             << " effectId2=" << event.effect2
             << " wave=" << event.wave
-            << " deliveredElapsedMs=" << deliveredAtElapsedMs[index]
+            << " deliveredElapsedMs=" << deliveredElapsedMs
             << " (runtime=" << event.delivery << ")\n";
     }
 

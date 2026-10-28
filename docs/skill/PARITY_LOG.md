@@ -3132,3 +3132,12 @@ Effect74 now routes through `ProcessIceWall74`, matching the complete PE and Ref
 **Replay and trace:** The runtime harness now accepts both `0x0114` skill-damage and `0x011A` no-damage packets. Replay-only instrumentation records effect launch/place calls, PlayWave, SetState, SendMsg88, and UnportedEffect calls. Heal assertions require target effect7, target message88 fields, and an empty WBA queue.
 
 **Evidence:** The production log contains `LaunchEffect id=7 actor=2` and `SendMsg88 actor=2 value=199 color=-16711936 kind=114`. The four current scenario tests pass4/4. No WP8 matrix row is verified. Next: Sonic Blow136.
+
+
+## WP10.8 — Production-linked Sonic Blow packet replay — 2026-10-28
+
+**Packet and Ref walk-through:** `docs/skill/replay/sonic_blow136.tsv` is a 31-byte `0x0114` packet for skill136, damage400, level5, division4 and action9. Ref queues four target hits at 100 damage with message111/effect2=122; each later hit advances by 200 ms. It also queues three source animation WBAs with message108/effects0/122. The fourth target hit sets effect1=1, and the source consumes one RNG draw on that branch when damage/10 is nonzero.
+
+**Replay:** The fixture drains both source and target queues using nominal 24 ms world polls. WBA tracing records message108 dispatches before their animation-only `SendMsg` route, while target hits log their delivered wave. The harness verifies target/self queue counts, hit fields, fourth-hit effect change, 200 ms spacing, runtime timestamps, and polling-step delivery windows.
+
+**Evidence:** Runtime output records four target WBAs and three source WBAs. Target hits use `player_clothes.wav`; source animation-only entries have no wave. The focused Sonic Blow CTest passes1/1. No WP8 matrix row is verified. Next: Asura Strike271.

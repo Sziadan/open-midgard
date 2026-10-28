@@ -6742,6 +6742,13 @@ void CGameActor::ProcessWillBeAttacked()
             continue;
         }
 
+#if defined(RO_SKILL_REPLAY_TRACE)
+        if (it->message == 108) {
+            DbgLog("[WBA] msg=%d skill=%d effect=%d/%d wave=(none) delivery=%u damage=%d level=%d\n",
+                it->message, it->sourceSkillId, it->effectId1, it->effectId2,
+                it->time, it->damage, it->effectLevel);
+        }
+#endif
         SendMsg(nullptr, it->message, reinterpret_cast<msgparam_t>(&*it), 0, 0);
         it = m_willBeAttackedList.erase(it);
     }
