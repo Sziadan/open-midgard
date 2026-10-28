@@ -3150,3 +3150,12 @@ Effect74 now routes through `ProcessIceWall74`, matching the complete PE and Ref
 **Replay:** The fixture dispatches through the default router and expects no queued target WBA, one immediate WBA log event, the attacker state2 trace, and the target's default job wave.
 
 **Evidence:** Runtime output matches `msg=39 skill=271 effect=0/−1 wave=player_clothes.wav damage=1000 level=5`; the source transitions to state2. Focused Asura CTest passes1/1. No WP8 matrix row is verified. Next: Grimtooth137.
+
+
+## WP10.8 — Production-linked Grimtooth packet replay — 2026-10-28
+
+**Packet and Ref walk-through:** `docs/skill/replay/grimtooth137.tsv` encodes a 31-byte `0x0114` packet for skill137, damage100, level5, division1 and action4. Ref's skill tables select target effect132; generic action4 keeps the WBA message39 and the default skill attack-effect value0.
+
+**Replay:** The production-linked runner dispatches the packet through the default router, verifies a single queued target WBA with message39/effects0/132, drains it through the real 24 ms polling path, and checks the target job's runtime hit wave and scheduled time.
+
+**Evidence:** Runtime matches `msg=39 skill=137 effect=0/132 wave=player_clothes.wav damage=100 level=5`; the WBA queue drains within the measured polling interval. Focused Grimtooth CTest passes1/1. No WP8 matrix row is verified. Next: Storm Gust89.

@@ -128,8 +128,9 @@ void ReplayScenario(const std::string& path)
     u16 expectedOpcode = 0;
     const std::vector<u8> bytes = LoadOnePacket(path, expectedOpcode);
     const u16 skillId = static_cast<u16>(bytes[2]) | (static_cast<u16>(bytes[3]) << 8);
-    Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 46 || skillId == 136 || skillId == 271,
-        "runtime replay only has Ref assertions for skills 5, 19, 28, 46, 136, and 271");
+    Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 46 || skillId == 136
+        || skillId == 137 || skillId == 271,
+        "runtime replay only has Ref assertions for skills 5, 19, 28, 46, 136, 137, and 271");
     Fixture fixture;
 
     CGameModePacketRouter router;
@@ -191,6 +192,11 @@ void ReplayScenario(const std::string& path)
             && queuedHits[2].time - queuedHits[1].time == 200
             && queuedHits[3].time - queuedHits[2].time == 200,
             "Sonic Blow target hit intervals differ from executable doubleAttackTerm");
+    } else if (skillId == 137) {
+        Require(queuedHits[0].message == 39 && queuedHits[0].effectId1 == 0 && queuedHits[0].effectId2 == 132,
+            "Grimtooth WBA message/effect fields differ from Ref action-4 path: msg="
+                + std::to_string(queuedHits[0].message) + " effects="
+                + std::to_string(queuedHits[0].effectId1) + "/" + std::to_string(queuedHits[0].effectId2));
     } else if (skillId == 271) {
         Require(queuedHits.empty(), "Asura Strike must dispatch its hit immediately instead of enqueuing a WBA");
     }
@@ -322,6 +328,9 @@ void ReplayScenario(const std::string& path)
         } else if (skillId == 271) {
             Require(event.message == 39 && event.effect1 == 0 && event.effect2 == -1,
                 "Asura Strike immediate WBA differs from Ref action-4 path");
+        } else if (skillId == 137) {
+            Require(event.message == 39 && event.effect1 == 0 && event.effect2 == 132,
+                "Grimtooth production WBA log differs from Ref action-4 path");
         } else if (index == 0) {
             Require(event.message == 111 && event.effect1 == 0 && event.effect2 == 1,
                 "Double Strafe first production WBA log differs from Ref walk-through");
