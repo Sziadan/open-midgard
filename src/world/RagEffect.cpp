@@ -12491,7 +12491,8 @@ bool CEffectPrim::UsesReferenceParticle() const
             && (m_master->GetEffectType() == 7 || m_master->GetEffectType() == 14 || m_master->GetEffectType() == 71 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 100 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
             && (m_master->GetEffectType() == 21 || m_master->GetEffectType() == 53 || m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493 || m_master->GetEffectType() == 80
-                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 212 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622));
+                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 212 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622))
+        || (m_type == PP_3DPARTICLESPLINE && m_master && m_master->GetEffectType() == 117);
 }
 
 // TEST_BODY_END reference_particle_render_family
@@ -25731,3 +25732,51 @@ void CRagEffect::SpawnTurnUndead()
 }
 
 // TEST_BODY_END turn_undead_handler
+
+void CRagEffect::SpawnWaterBall2()
+{
+    if (m_stateCnt != 0) return;
+
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\wizard_waterball_chulung.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLESPLINE, vector3d{});
+    if (!prim) return;
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\Waterball.spr",
+        "\xC0\xCC\xC6\xD1\xC6\xAE\\Waterball.act");
+    prim->m_duration = 40;
+    prim->m_deltaPos2 = {0.0f, -10.0f, 0.0f};
+
+    const double dx = static_cast<double>(m_deltaPos.x) - prim->m_pos.x;
+    const double dz = static_cast<double>(m_deltaPos.z) - prim->m_pos.z;
+    prim->m_radius = static_cast<float>(std::sqrt(dx * dx + dz * dz));
+    double direction = std::atan2(dx, -dz) / 3.14159265 * 180.0;
+    if (direction >= 360.0) direction -= 360.0;
+    if (direction < 0.0) direction += 360.0;
+    prim->m_roty = static_cast<float>(direction);
+    prim->m_longitude = -prim->m_roty;
+    prim->m_speed = prim->m_radius / static_cast<double>(prim->m_duration);
+    prim->m_gravSpeed = 3.5f;
+    prim->m_gravAccel = prim->m_gravSpeed / static_cast<double>(prim->m_duration) * -2.0;
+    prim->m_latiSpeed = -2.0f;
+    prim->m_latiAccel = prim->m_latiSpeed / static_cast<double>(prim->m_duration) * -2.0;
+    prim->m_roll = 0.0f;
+
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+    prim->m_deltaPos3 = {
+        prim->m_matrix.m[3][0] + prim->m_matrix.m[2][0],
+        prim->m_matrix.m[3][1] + prim->m_matrix.m[2][1],
+        prim->m_matrix.m[3][2] + prim->m_matrix.m[2][2]
+    };
+    prim->m_rotAxis = {prim->m_deltaPos3.x, prim->m_deltaPos3.y, prim->m_deltaPos3.z};
+    prim->m_size = 0.75f;
+    prim->m_numSegments = 12;
+    InitReferenceSegments(prim);
+}
+
+// TEST_BODY_END waterball2_handler

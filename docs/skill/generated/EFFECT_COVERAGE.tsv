@@ -158,7 +158,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 114	OnProcess	Bottom	routed	OnProcess -> return ProcessBottom114();		15
 115	OnProcess	BlitzBeat	routed	OnProcess -> return ProcessBlitzBeat115();	src/session/SkillAttackEffectIdTable.generated.inc	93
 116	OnProcess	WaterBall	unported	OnProcess -> UnportedEffect		-
-117	OnProcess	WaterBall2	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+117	OnProcess	WaterBall2	routed	OnProcess -> SpawnWaterBall2(); return true;	src/world/SkillSpecialEffect.cpp	87
 118	OnProcess	FireIvy	unported	OnProcess -> UnportedEffect		-
 119	OnProcess	Detecting	routed	OnProcess -> SpawnDetecting(); return true;		85
 120	OnProcess	inline	routed	OnProcess -> return ProcessCloaking120();		34

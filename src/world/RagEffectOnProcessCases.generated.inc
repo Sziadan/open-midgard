@@ -158,7 +158,7 @@ case 113: return ProcessClipWaveStrEffect();
 case 114: return ProcessBottom114();
 case 115: return ProcessBlitzBeat115();
 case 116: return UnportedEffect();
-case 117: return UnportedEffect();
+case 117: SpawnWaterBall2(); return true;
 case 118: return UnportedEffect();
 case 119: SpawnDetecting(); return true;
 case 120: return ProcessCloaking120();

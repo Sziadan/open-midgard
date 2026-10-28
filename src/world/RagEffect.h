@@ -671,6 +671,7 @@ private:
     void SpawnLockOn();
     void SpawnSpearBmr();
     void SpawnTurnUndead();
+    void SpawnWaterBall2();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();

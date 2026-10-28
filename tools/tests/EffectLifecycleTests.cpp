@@ -571,6 +571,7 @@ struct CRagEffect : CGameObject {
     void SpawnLockOn();
     void SpawnSpearBmr();
     void SpawnTurnUndead();
+    void SpawnWaterBall2();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5502,6 +5503,47 @@ int main()
             "TurnUndead state 50 emits the canonical expanding ring at the followed master position");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
         rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject listener;listener.m_pos={2,0,4};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=117;effect.m_effectPos={10,20,30};effect.m_deltaPos={50,0,0};
+        waveCalls.clear();g_resMgr.requests.clear();const int beforeRng=rngDraws;
+        effect.m_stateCnt=1;effect.SpawnWaterBall2();
+        check(effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==beforeRng,
+            "WaterBall2 skips nonzero states without sound, primitive or RNG");
+        effect.m_stateCnt=0;effect.SpawnWaterBall2();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(prim&&effect.m_primList.size()==1&&prim->m_type==PP_3DPARTICLESPLINE
+            &&prim->m_duration==40&&prim->m_deltaPos2.x==0&&prim->m_deltaPos2.y==-10&&prim->m_deltaPos2.z==0
+            &&prim->m_radius==50&&std::fabs(prim->m_roty-53.1301f)<0.001f
+            &&std::fabs(prim->m_longitude+53.1301f)<0.001f&&std::fabs(prim->m_speed-1.25f)<0.0001f
+            &&prim->m_gravSpeed==3.5f&&std::fabs(prim->m_gravAccel+0.175f)<0.0001f
+            &&prim->m_latiSpeed==-2&&std::fabs(prim->m_latiAccel-0.1f)<0.0001f&&prim->m_roll==0
+            &&prim->m_size==0.75f&&prim->m_numSegments==12&&prim->UsesReferenceParticle(),
+            "WaterBall2 preserves spline duration, trajectory, gravity, lateral motion, size and reference family");
+        check(prim&&prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\Waterball.spr"
+            &&prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\Waterball.act"
+            &&g_resMgr.requests.size()==2,
+            "WaterBall2 requests the exact CP949 Waterball sprite/action resources");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\wizard_waterball_chulung.wav"
+            &&waveCalls[0].x==8&&waveCalls[0].y==0&&waveCalls[0].z==26
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "WaterBall2 plays its canonical wave at effect-minus-listener X/Z");
+        if(prim){
+            check(std::fabs(prim->m_rotAxis[0]-prim->m_deltaPos3.x)<0.000001f
+                &&std::fabs(prim->m_rotAxis[1]-prim->m_deltaPos3.y)<0.000001f
+                &&std::fabs(prim->m_rotAxis[2]-prim->m_deltaPos3.z)<0.000001f,
+                "WaterBall2 initializes the spline rotation axis from its rotated forward basis");
+            check(prim->m_segments[0].pos.x==prim->m_pos.x&&prim->m_segments[0].pos.y==prim->m_pos.y
+                &&prim->m_segments[0].pos.z==prim->m_pos.z,
+                "WaterBall2 initializes the twelve reference spline segments at the emitter origin");
+            const vector3d oldPos=prim->m_pos;
+            prim->m_stateCnt=1;prim->ProcessPrimitiveFrame();
+            check(prim->m_pos.x!=oldPos.x||prim->m_pos.y!=oldPos.y||prim->m_pos.z!=oldPos.z,
+                "WaterBall2 spline enters the shared reference per-frame integration path");
+        }
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
     }
     {
         CRagEffect effect;effect.m_type=212;effect.m_duration=500;

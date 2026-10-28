@@ -635,3 +635,7 @@ Canonical PE case80 invokes SpearBmr and matches the primary Ref helper, while t
 # WP10.3 TurnUndead helper variant
 
 Canonical PE `CRagEffect::TurnUndead` and the primary Ref helper agree on state0 circle/flash emission, state37 wave, projected master position and state50 ring. The PE OnProcess switch calls it; the primary Ref caller omits it. The secondary `Ref/dhxj` implementation is a differing variant and is excluded as the parity oracle. Live visual/audio acceptance remains open.
+
+# WP10.3 WaterBall2 caller and source variant
+
+Canonical PE case117 invokes WaterBall2, and its helper matches the primary `Ref/RagEffect.cpp` helper at line9224. The available primary Ref OnProcess caller omits WaterBall2. The secondary `Ref/dhxj/RagEffect.cpp` implementation is a materially different source variant using different resource names; it is not the parity oracle. Local effect117 follows PE/primary Ref and resolves the exact PE wave and CP949 sprite/action bytes. Runtime audio/particle visual acceptance remains open.
