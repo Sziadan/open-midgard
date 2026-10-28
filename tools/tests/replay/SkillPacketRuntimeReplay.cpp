@@ -569,7 +569,7 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     const int unitJob = packets[0].bytes[14];
     Require(unitJob == 126 || unitJob == 127 || unitJob == 131 || unitJob == 132
             || unitJob == 141 || unitJob == 142 || (unitJob >= 154 && unitJob <= 157)
-            || unitJob == 177 || unitJob == 179 || unitJob == 180,
+            || unitJob == 177 || unitJob == 179 || unitJob == 180 || unitJob == 183,
         "unsupported skill-unit replay job");
     int expectedLoopEffect = 0;
     switch (unitJob) {
@@ -586,6 +586,7 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     case 177: expectedLoopEffect = 302; break;
     case 179: expectedLoopEffect = 370; break;
     case 180: expectedLoopEffect = 374; break;
+    case 183: expectedLoopEffect = 404; break;
     default: Require(false, "unsupported skill-unit replay effect mapping");
     }
 

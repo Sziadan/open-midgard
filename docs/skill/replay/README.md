@@ -24,6 +24,8 @@ Each scenario is UTF-8 TSV with three columns: packet opcode (integer, `0x` pref
 
 `volcano_unit_lifecycle.tsv`, `deluge_unit_lifecycle.tsv`, `violent_gale_unit_lifecycle.tsv`, and `land_protector_unit_lifecycle.tsv` replay unit jobs154–157 and verify loop effects239–242 respectively after one nominal 24 ms process step, followed by `0x0120` removal.
 
+`spider_web_unit_lifecycle.tsv` replays unit job183 (`UNT_SPIDERWEB`), checks loop effect404 after one nominal 24 ms process step, then removes it with `0x0120`.
+
 `magnus_unit_lifecycle.tsv` replays unit job132 (`UNT_MAGNUS`), checks its loop effect318 after one nominal 24 ms process step, then removes it with `0x0120`.
 
 `sanctuary_unit_lifecycle.tsv` replays unit job131 (`UNT_SANCTUARY`), calls `CSkill::OnProcess` for one nominal 24 ms step, checks loop effect319, and removes the unit with `0x0120`.

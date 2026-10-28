@@ -335,6 +335,9 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_land_protector_unit_lifecycle_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/land_protector_unit_lifecycle.tsv")
+    add_test(NAME skill_packet_replay_spider_web_unit_lifecycle_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/spider_web_unit_lifecycle.tsv")
     add_test(NAME skill_packet_replay_sanctuary_unit_lifecycle_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/sanctuary_unit_lifecycle.tsv")
@@ -385,6 +388,8 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
         skill_packet_replay_deluge_unit_lifecycle_checks
         skill_packet_replay_violent_gale_unit_lifecycle_checks
         skill_packet_replay_land_protector_unit_lifecycle_checks PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    set_tests_properties(skill_packet_replay_spider_web_unit_lifecycle_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_sanctuary_unit_lifecycle_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
