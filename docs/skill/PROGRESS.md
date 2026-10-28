@@ -1899,3 +1899,8 @@ Ported effect447's left Foot profile using the exact PE resource `effect\\foot_l
 ## WP5C effect448 Foot F1=1 — 2026-10-28
 
 Ported effect448's right Foot profile with exact PE resource `effect\\foot_r2.tga` (VA `0x719EB8`). The shared Foot helper matches effect447's profile: master-following position, one state-zero PP_FOOT, size100, fixed GI payload, and no RNG/audio. The secondary Ref confirms the helper. Source and lifecycle checks cover the right texture, payload, timing, and later-state behavior. Coverage is now 636 routed /57 explicit unported /0 launched-but-unported. Full Release parity CTest passes231/231, OpenMidgard Release builds and copies the executable, and replay CTest passes102/102. No media/visual acceptance is claimed.
+
+
+## WP5C effect467 BeginAsura1 variant0 — 2026-10-28
+
+Ported effect467's state-zero BeginAsura1 primitive with exact `effect\\hanmoon1.tga` (VA `0x719C44`). It follows the master position every call, emits one PP_ASURACASTING with a single texture and the fixed GI0 payload, and leaves GI1-3 inactive. PE and secondary Ref agree; primary Ref omits the helper. Source/lifecycle checks cover asset bytes, lane defaults and histories, timing, and no audio/RNG. Coverage is now 637 routed /56 explicit unported /0 launched-but-unported. Full Release parity CTest passes232/232, OpenMidgard Release builds and copies the executable, and replay CTest passes102/102. No media/visual acceptance is claimed.

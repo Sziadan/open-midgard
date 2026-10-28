@@ -405,6 +405,7 @@ extract_test_region(hitline3basic434_handler "${effect_source}" hitline3basic434
 extract_test_region(pokjuk297_handler "${effect_source}" pokjuk297_family)
 extract_test_region(foot447_handler "${effect_source}" foot447_family)
 extract_test_region(foot448_handler "${effect_source}" foot448_family)
+extract_test_region(beginasura1_467_handler "${effect_source}" beginasura1_467_family)
 extract_test_region(bottom_vertical_handler "${effect_source}" bottom_vertical_family)
 extract_test_region(bottom_music_handler "${effect_source}" bottom_music_family)
 file(READ "../../src/world/World.cpp" world_source)
@@ -449,6 +450,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${hitline
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${pokjuk297_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot447_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot448_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_467_handler}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -963,6 +965,8 @@ add_test(NAME effect447_foot_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect447_foot.py")
 add_test(NAME effect448_foot_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect448_foot.py")
+add_test(NAME effect467_beginasura1_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect467_beginasura1.py")
 add_test(NAME effect277_294_bottom_vertical_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect277_294_bottom_vertical.py")
 add_test(NAME effect281_288_bottom_music_source_check

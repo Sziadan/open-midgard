@@ -651,6 +651,7 @@ struct CRagEffect : CGameObject {
     bool ProcessPokJuk297();
     bool ProcessFoot447();
     bool ProcessFoot448();
+    bool ProcessBeginAsura1_467();
     void ApplyBottomMusic(const char*, int);
     bool ProcessEffect365();
     bool ProcessDemonstration302();
@@ -4060,6 +4061,35 @@ int main()
         check(effect.m_primList.size()==1&&effect.m_effectPos.x==71&&effect.m_effectPos.y==83
             &&effect.m_effectPos.z==95&&g_texMgr.requests.size()==1&&waveCalls.empty()&&rngDraws==draws,
             "Foot effect448 later states follow master without repeating or drawing RNG");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject master; master.m_pos={14,28,42};
+        CRagEffect effect; effect.m_type=467; effect.m_master=&master; effect.m_duration=95;
+        effect.m_stateCnt=1; effect.m_effectPos={1,2,3};
+        g_texMgr.requests.clear(); waveCalls.clear(); const int draws=rngDraws;
+        effect.ProcessBeginAsura1_467();
+        check(effect.m_effectPos.x==14&&effect.m_effectPos.y==28&&effect.m_effectPos.z==42
+            &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "BeginAsura1 effect467 follows master without emitting before state zero");
+        effect.m_stateCnt=0; effect.ProcessBeginAsura1_467();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        bool history=prim!=nullptr;
+        if(prim) for(int i=1;i<=20;++i) history=history&&prim->m_gi[0].height[i]==0;
+        check(prim&&prim->m_type==PP_ASURACASTING&&prim->m_renderFlag==5&&prim->m_duration==95
+            &&prim->m_totalTexture==1&&prim->m_size==0&&prim->m_texture.size()==1
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\hanmoon1.tga"
+            &&prim->m_gi[0].life==1&&prim->m_gi[0].process==0&&prim->m_gi[0].distance==18
+            &&prim->m_gi[0].alphaB==0&&prim->m_gi[0].height[0]==0
+            &&prim->m_gi[0].flag[0]==0&&prim->m_gi[0].flag[4]==1&&history
+            &&prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0
+            &&effect.m_effectPos.x==14&&effect.m_effectPos.y==28&&effect.m_effectPos.z==42
+            &&waveCalls.empty()&&rngDraws==draws,
+            "BeginAsura1 effect467 emits exact hanmoon1 profile with cleared history and no RNG/audio");
+        master.m_pos={70,80,90}; effect.m_stateCnt=1; effect.ProcessBeginAsura1_467();
+        check(effect.m_primList.size()==1&&effect.m_effectPos.x==70&&effect.m_effectPos.y==80
+            &&effect.m_effectPos.z==90&&g_texMgr.requests.size()==1&&waveCalls.empty()&&rngDraws==draws,
+            "BeginAsura1 effect467 later states refresh position without repeat emission");
         effect.ClearPrims(); g_world.UpdateGameObjects();
     }
     {

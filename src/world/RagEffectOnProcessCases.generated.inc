@@ -392,7 +392,7 @@ case 463: return UnportedEffect();
 case 464: return ProcessEffectFrameLegacy();
 case 465: return ProcessEffectFrameLegacy();
 case 466: return ProcessEffect466();
-case 467: return UnportedEffect();
+case 467: return ProcessBeginAsura1_467();
 case 468: return UnportedEffect();
 case 469: return UnportedEffect();
 case 470: return UnportedEffect();
