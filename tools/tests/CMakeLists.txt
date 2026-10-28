@@ -264,7 +264,8 @@ extract_body(effect502_handler "${effect_source}" "bool CRagEffect::ProcessEffec
 extract_body(effect505_handler "${effect_source}" "bool CRagEffect::ProcessEffect505()" "void CRagEffect::SpawnSma2()")
 extract_body(sma_emitter "${effect_source}" "void CRagEffect::SpawnSma(int variant)" "bool CRagEffect::ProcessStinSmaEffects()")
 extract_body(effect605_handler "${effect_source}" "bool CRagEffect::ProcessEffect605()" "bool CRagEffect::ProcessEffect563()")
-extract_body(effect563_handler "${effect_source}" "bool CRagEffect::ProcessEffect563()" "bool CRagEffect::ProcessNpcStopEffects()")
+extract_body(effect563_handler "${effect_source}" "bool CRagEffect::ProcessEffect563()" "bool CRagEffect::ProcessDamageNumberEffects()")
+extract_body(damage_number_effects_handler "${effect_source}" "bool CRagEffect::ProcessDamageNumberEffects()" "bool CRagEffect::ProcessNpcStopEffects()")
 extract_body(sma2_552_emitter "${effect_source}" "void CRagEffect::SpawnSma2()" "bool CRagEffect::ProcessSma2Effect552()")
 extract_body(sma2_552_handler "${effect_source}" "bool CRagEffect::ProcessSma2Effect552()" "void CRagEffect::SpawnParticlePath556()")
 extract_body(particlepath556_emitter "${effect_source}" "void CRagEffect::SpawnParticlePath556()" "bool CRagEffect::ProcessParticlePath556()")
@@ -472,6 +473,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${sma_emi
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${couple_casting}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect605_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect563_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${damage_number_effects_handler}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -1006,6 +1008,8 @@ add_test(NAME effect605_stop_message_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect605_stop_message.py")
 add_test(NAME effect563_mode_message_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect563_mode_message.py")
+add_test(NAME effects653_654_damage_number_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects653_654_damage_number.py")
 add_test(NAME effect467_beginasura1_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect467_beginasura1.py")
 add_test(NAME effect468_473_beginasura1_source_check
@@ -1047,6 +1051,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effects342_564_couple_casting.py
     check_effect605_stop_message.py
     check_effect563_mode_message.py
+    check_effects653_654_damage_number.py
     check_shield_boomerang_callers.py
     check_rg_coin_callers.py
     check_grandcross_callers.py

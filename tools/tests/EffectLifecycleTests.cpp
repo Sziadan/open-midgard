@@ -12,6 +12,7 @@
 #include <optional>
 #include <type_traits>
 #include <set>
+#include <utility>
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
@@ -132,10 +133,11 @@ struct CGameObject {
 };
 struct CRenderObject : CGameObject {
     vector3d m_pos;
-    int lastSentMsg=0,lastSentArg=0;
+    int lastSentMsg=0,lastSentArg=0,lastSentArg2=0,lastSentArg3=0;
     int m_stateId=0;
-    void SendMsg(CGameObject*, int msg, msgparam_t arg, msgparam_t, msgparam_t) override {
+    void SendMsg(CGameObject*, int msg, msgparam_t arg, msgparam_t arg2, msgparam_t arg3) override {
         lastSentMsg=msg; lastSentArg=static_cast<int>(arg);
+        lastSentArg2=static_cast<int>(arg2);lastSentArg3=static_cast<int>(arg3);
     }
     vector3d EffectPosition() const { return m_pos; }
     float m_roty = 0;
@@ -667,6 +669,7 @@ struct CRagEffect : CGameObject {
     bool ProcessBottomHermode517();
     bool ProcessEffect605();
     bool ProcessEffect563();
+    bool ProcessDamageNumberEffects();
     void SpawnBlueFall(int, int);
     bool ProcessBeginAsura1_467();
     bool ProcessBeginAsura1Variant(const char*);
@@ -10853,6 +10856,26 @@ int main()
             &&effect.m_pos.x==10&&effect.m_pos.y==11&&effect.m_pos.z==12
             &&effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==draws,
             "effect563 does not alter positions or emit visuals, audio or RNG");
+    }
+    {
+        CRenderObject master;waveCalls.clear();const int draws=rngDraws;
+        for(const auto [id,color]:{std::pair<int,int>{653,-65536},std::pair<int,int>{654,-65281}}) {
+            master.lastSentMsg=master.lastSentArg=master.lastSentArg2=master.lastSentArg3=-1;
+            CRagEffect effect;effect.m_type=id;effect.m_master=&master;effect.m_stateCnt=1;
+            effect.m_pos={4,5,6};effect.m_effectPos={7,8,9};
+            check(effect.ProcessDamageNumberEffects()&&master.lastSentMsg==-1,
+                "damage-number effects653/654 are silent before state zero");
+            effect.m_stateCnt=0;
+            check(effect.ProcessDamageNumberEffects()&&master.lastSentMsg==88&&master.lastSentArg==1
+                &&master.lastSentArg2==color&&master.lastSentArg3==114,
+                "damage-number effects653/654 send their exact message88 tuple at state zero");
+            check(effect.m_pos.x==4&&effect.m_pos.y==5&&effect.m_pos.z==6
+                &&effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9
+                &&effect.m_primList.empty(),
+                "damage-number effects653/654 leave positions and primitives unchanged");
+        }
+        check(waveCalls.empty()&&rngDraws==draws,
+            "damage-number effects653/654 have no sound or RNG side effects");
     }
     {
         CRenderObject actor, listener; actor.m_pos={30,40,50}; listener.m_pos={5,300,8};

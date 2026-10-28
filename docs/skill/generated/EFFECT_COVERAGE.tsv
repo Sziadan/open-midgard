@@ -650,8 +650,8 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 650	OnProcess3	Map_MagicZone,Map_Pika,Map_Aura	unported	OnProcess3 -> UnportedEffect		-
 651	OnProcess3	Map_MagicZone,Map_Particle	unported	OnProcess3 -> UnportedEffect		-
 652	OnProcess3	inline	unported	OnProcess3 -> UnportedEffect		-
-653	OnProcess3	inline	unported	OnProcess3 -> UnportedEffect		-
-654	OnProcess3	inline	unported	OnProcess3 -> UnportedEffect		-
+653	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		34
+654	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		34
 655	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
 656	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
 665	OnProcess3	Bubble_Drop	unported	OnProcess3 -> UnportedEffect		-

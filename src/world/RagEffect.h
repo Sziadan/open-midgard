@@ -583,6 +583,7 @@ private:
     bool ProcessNpcStopEffects();
     bool ProcessEffect605();
     bool ProcessEffect563();
+    bool ProcessDamageNumberEffects();
     void SpawnNpcStop(int variant);
     bool ProcessGuardEffects();
     void SpawnGuard(int variant);

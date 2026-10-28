@@ -3554,3 +3554,8 @@ PE and primary Ref `OnProcess3` case `0x25D` at `HighPriest.exe.c:418704-418708`
 ## WP5C effect563 periodic game-mode message
 
 PE and primary Ref OnProcess3 case `0x233` (`effect563`) send CMode message135 only when stateCnt is below100 and divisible by5. The branch jumps to shared `LABEL_346` at `HighPriest.exe.c:419083-419084` / `Ref/RagEffect.cpp:12444+`; this shared destination sends `135,0,0,0` and returns. The local `ProcessEffect563` directly preserves the isolated case behavior and never executes neighboring Effect_SPR logic. `check_effect563_mode_message.py` checks both callers and the shared target. Lifecycle coverage walks states0-105, proving twenty message sends at 0,5,...,95 and no visual/audio/RNG or position side effects. Case list: 563. BLOCKED: none.
+
+
+## WP5C effects653/654 damage-number messages
+
+PE/primary Ref OnProcess3 cases `0x28D`/`0x28E` send only at state0: master message88, amount1, colors−65536/−65281 respectively, type114. Local `ProcessDamageNumberEffects` passes that exact tuple to the master's virtual `SendMsg`. `CGameActor::SendMsg` maps message88 to `MakeDamageNumber(sourceActor, amount, color, type)`, corroborating argument order and meaning. No position, audio, primitive, resource or RNG operations. `check_effects653_654_damage_number.py` compares both reference branches, generated routes and receiver; lifecycle tests check both tuples and silence. Case list: 653, 654. BLOCKED: none.

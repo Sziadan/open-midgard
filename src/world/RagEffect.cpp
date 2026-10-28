@@ -21048,6 +21048,15 @@ bool CRagEffect::ProcessEffect563()
     return true;
 }
 
+bool CRagEffect::ProcessDamageNumberEffects()
+{
+    if (m_stateCnt == 0 && m_master != nullptr) {
+        const msgparam_t color = m_type == 653 ? -65536 : -65281;
+        m_master->SendMsg(nullptr, 88, 1, color, 114);
+    }
+    return true;
+}
+
 bool CRagEffect::ProcessNpcStopEffects()
 {
     SpawnNpcStop(m_type == 604 ? 2 : 0);
