@@ -191,7 +191,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 162	OnProcess	Snow	routed	OnProcess -> SpawnSnow(); return true;		206
 163	OnProcess	Sakura	routed	OnProcess -> SpawnSakura(); return true;		1082
 164	OnProcess	StatusState	routed	OnProcess -> SpawnStatusState(); return true;		401
-165	OnProcess	Banjjakii	unported	OnProcess -> UnportedEffect		-
+165	OnProcess	Banjjakii	routed	OnProcess -> return ProcessBanjjakii165();		2856
 166	OnProcess	MakeBlur	routed	OnProcess -> return ProcessMakeBlur();	src/world/GameActorMsgHandler.cpp	709
 170	OnProcess	CartRevolution	routed	OnProcess -> return ApplyCartRevolution();	src/session/SkillAttackEffectIdTable.generated.inc;src/world/SkillSpecialEffect.cpp	15
 171	OnProcess	VenomDust2	routed	OnProcess -> ApplyVenomDust2(); return true;		15

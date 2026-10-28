@@ -728,6 +728,7 @@ private:
     bool ProcessWaterBall116();
     bool ProcessFireIvy118();
     bool ProcessFirePillar138();
+    bool ProcessBanjjakii165();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();

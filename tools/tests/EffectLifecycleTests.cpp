@@ -605,6 +605,7 @@ struct CRagEffect : CGameObject {
     bool ProcessWaterBall116();
     bool ProcessFireIvy118();
     bool ProcessFirePillar138();
+    bool ProcessBanjjakii165();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -3186,6 +3187,47 @@ int main()
             &&g_texMgr.requests.empty()&&rngDraws==drawBase,
             "FirePillar later states do not relaunch cylinders or reload textures");
         effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        const int drawsToCheck[3]={1,5,7};
+        for(int selected:drawsToCheck){
+            CRenderObject actor;actor.m_pos={20,30,40};
+            CRagEffect effect;effect.m_type=165;effect.m_master=&actor;effect.m_pos={-1,-2,-3};
+            effect.m_effectPos={-4,-5,-6};effect.m_stateCnt=0;
+            effect.m_param[0]=selected==1?0.0f:2.5f;
+            effect.m_param[1]=selected==1?0.75f:3.9f;
+            rngValues={selected};rngCursor=0;g_resMgr.requests.clear();
+            const int drawBase=rngDraws;
+            check(effect.ProcessBanjjakii165()&&effect.m_primList.size()==1
+                &&effect.m_effectPos.x==20&&effect.m_effectPos.y==30&&effect.m_effectPos.z==40,
+                "Banjjakii refreshes master position and emits exactly one state-zero particle");
+            const CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            const float expectedSize=selected%3==1?0.01f:1.0f;
+            const int expectedSpeed=selected==1?1:3;
+            check(prim&&prim->m_type==PP_3DPARTICLE&&prim->m_pattern==0x200
+                &&prim->m_duration==125&&prim->m_deltaPos2.y==-10.0f
+                &&prim->m_animSpeed==expectedSpeed&&prim->m_size==expectedSize
+                &&prim->m_spriteAction==selected/2&&prim->m_curMotion==0
+                &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==20
+                &&prim->m_segments[0].pos.y==30&&prim->m_segments[0].pos.z==40
+                &&prim->UsesReferenceParticle(),
+                "Banjjakii sets reference particle duration, pattern, offset, clamped speed and initialized segment");
+            check(effect.m_param[0]==(selected==1?1.0f:2.5f)
+                &&effect.m_param[1]==(selected==1?1.0f:3.9f)
+                &&prim&&prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC5\xA9\xB8\xAE\xBD\xBA\xB8\xB6\xBD\xBA.spr"
+                &&prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC5\xA9\xB8\xAE\xBD\xBA\xB8\xB6\xBD\xBA.act"
+                &&g_resMgr.requests.size()==2
+                &&rngDraws==drawBase+1&&rngCursor==1,
+                "Banjjakii preserves PE assets, parameter repairs, one RNG draw and chosen action/size");
+            actor.m_pos={50,60,70};effect.m_stateCnt=1;
+            effect.ProcessBanjjakii165();
+            check(effect.m_effectPos.x==50&&effect.m_effectPos.y==60&&effect.m_effectPos.z==70
+                &&effect.m_primList.size()==1&&rngDraws==drawBase+1&&rngCursor==1
+                &&g_resMgr.requests.size()==2,
+                "Banjjakii updates position later without repeating particle, resource or RNG work");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        rngValues.clear();rngCursor=0;
     }
     {
         CRagEffect effect; effect.m_type=552; effect.m_duration=321; effect.m_deltaPos={1,2,3};

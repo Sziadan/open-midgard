@@ -248,6 +248,7 @@ extract_body(waterball2_handler "${effect_source}" "void CRagEffect::SpawnWaterB
 extract_body(waterball116_handler "${effect_source}" "bool CRagEffect::ProcessWaterBall116()" "// TEST_BODY_END waterball116_handler")
 extract_body(fireivy118_handler "${effect_source}" "bool CRagEffect::ProcessFireIvy118()" "// TEST_BODY_END fireivy118_handler")
 extract_body(firepillar138_handler "${effect_source}" "bool CRagEffect::ProcessFirePillar138()" "// TEST_BODY_END firepillar138_handler")
+extract_body(banjjakii165_handler "${effect_source}" "bool CRagEffect::ProcessBanjjakii165()" "// TEST_BODY_END banjjakii165_handler")
 extract_body(revive140_handler "${effect_source}" "bool CRagEffect::ProcessRevive140()" "// TEST_BODY_END revive140_handler")
 extract_body(aspersio86_handler "${effect_source}" "bool CRagEffect::ProcessAspersio86()" "// TEST_BODY_END aspersio86_handler")
 extract_body(stormgust89_handler "${effect_source}" "bool CRagEffect::ProcessStormGust89()" "// TEST_BODY_END stormgust89_handler")
@@ -423,6 +424,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${airtext
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${waterball116_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${fireivy118_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${firepillar138_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${banjjakii165_handler}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -891,6 +893,8 @@ add_test(NAME effect118_fireivy_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect118_fireivy.py")
 add_test(NAME effect138_firepillar_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect138_firepillar.py")
+add_test(NAME effect165_banjjakii_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect165_banjjakii.py")
 add_test(NAME skill_cast_cancel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_cancel_source.py")
 add_test(NAME status_state_source_check
@@ -989,4 +993,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_detecting_caller.py
     check_effect_sprite.py
     check_effect138_firepillar.py
+    check_effect165_banjjakii.py
     check_effect695_map_fireworks.py)

@@ -12492,7 +12492,7 @@ bool CEffectPrim::UsesReferenceParticle() const
             && (m_master->GetEffectType() == 7 || m_master->GetEffectType() == 14 || m_master->GetEffectType() == 71 || m_master->GetEffectType() == 86 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 100 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
             && (m_master->GetEffectType() == 21 || m_master->GetEffectType() == 53 || m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493 || m_master->GetEffectType() == 80
-                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 212 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622))
+                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 165 || m_master->GetEffectType() == 212 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622))
         || (m_type == PP_3DPARTICLESPLINE && m_master && m_master->GetEffectType() == 117);
 }
 
@@ -27278,3 +27278,30 @@ bool CRagEffect::ProcessFirePillar138()
 }
 
 // TEST_BODY_END firepillar138_handler
+
+// Ref/RagEffect.cpp:1802-1831; canonical PE helper 0x5F6F70 and OnProcess case165.
+bool CRagEffect::ProcessBanjjakii165()
+{
+    m_effectPos = m_master->m_pos;
+    if (m_stateCnt != 0) return true;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+    if (!prim) return true;
+    prim->m_pattern |= 0x200;
+    prim->m_duration = 125;
+    prim->m_deltaPos2.y = -10.0f;
+    if (m_param[0] <= 0.0f) m_param[0] = 1.0f;
+    if (m_param[1] < 1.0f) m_param[1] = 1.0f;
+    prim->m_animSpeed = static_cast<int>(m_param[1]);
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\\xC5\xA9\xB8\xAE\xBD\xBA\xB8\xB6\xBD\xBA.spr",
+        "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC5\xA9\xB8\xAE\xBD\xBA\xB8\xB6\xBD\xBA.act");
+    const int draw = rand() % 10;
+    prim->m_size = draw % 3 == 1 ? 0.01f : 1.0f;
+    prim->m_spriteAction = draw / 2;
+    prim->m_curMotion = 0;
+    prim->m_numSegments = 1;
+    InitReferenceSegments(prim);
+    return true;
+}
+
+// TEST_BODY_END banjjakii165_handler

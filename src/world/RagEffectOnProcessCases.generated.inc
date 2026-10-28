@@ -191,7 +191,7 @@ case 160: SpawnParty(); return true;
 case 162: SpawnSnow(); return true;
 case 163: SpawnSakura(); return true;
 case 164: SpawnStatusState(); return true;
-case 165: return UnportedEffect();
+case 165: return ProcessBanjjakii165();
 case 166: return ProcessMakeBlur();
 case 170: return ApplyCartRevolution();
 case 171: ApplyVenomDust2(); return true;
