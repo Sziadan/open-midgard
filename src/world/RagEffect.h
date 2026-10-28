@@ -581,6 +581,7 @@ private:
     bool ProcessGlassWall13();
     bool ProcessMeteorStorm92();
     bool ProcessNpcStopEffects();
+    bool ProcessEffect605();
     void SpawnNpcStop(int variant);
     bool ProcessGuardEffects();
     void SpawnGuard(int variant);

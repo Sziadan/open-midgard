@@ -604,7 +604,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 601	OnProcess3	Sight2	routed	OnProcess3 -> SpawnSight2(); return true;		78
 602	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect602();	src/gamemode/UseSkillEffect.generated.inc	34
 604	OnProcess3	NpcStop	routed	OnProcess3 -> return ProcessNpcStopEffects();		396
-605	OnProcess3	inline	unported	OnProcess3 -> UnportedEffect		-
+605	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect605();		34
 606	OnProcess3	CHIMTO	routed	OnProcess3 -> return ProcessChimtoEffect(2);	src/gamemode/UseSkillEffect.generated.inc	690
 607	OnProcess3	CHIMTO	routed	OnProcess3 -> return ProcessChimtoEffect(1);	src/gamemode/UseSkillEffect.generated.inc	1121
 608	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		15

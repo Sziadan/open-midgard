@@ -665,6 +665,7 @@ struct CRagEffect : CGameObject {
     bool ProcessCallZone340();
     bool ProcessSlimPotionEffects(int);
     bool ProcessBottomHermode517();
+    bool ProcessEffect605();
     void SpawnBlueFall(int, int);
     bool ProcessBeginAsura1_467();
     bool ProcessBeginAsura1Variant(const char*);
@@ -10819,6 +10820,20 @@ int main()
             effect.ClearPrims();g_world.UpdateGameObjects();actor.m_pos={32,54,76};
         }
         g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject master;master.lastSentMsg=-1;master.lastSentArg=-1;
+        CRagEffect effect;effect.m_type=605;effect.m_master=&master;effect.m_effectPos={7,8,9};
+        effect.m_stateCnt=1;waveCalls.clear();const int draws=rngDraws;
+        check(effect.ProcessEffect605()&&master.lastSentMsg==-1&&master.lastSentArg==-1
+            &&effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9
+            &&effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "effect605 nonzero states return without message, position changes or side effects");
+        effect.m_stateCnt=0;
+        check(effect.ProcessEffect605()&&master.lastSentMsg==109&&master.lastSentArg==604
+            &&effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9
+            &&effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "effect605 state zero sends message109 argument604 to master and spawns nothing");
     }
     {
         CRenderObject actor, listener; actor.m_pos={30,40,50}; listener.m_pos={5,300,8};

@@ -21032,6 +21032,14 @@ void CRagEffect::SpawnNpcStop(int variant)
     }
 }
 
+bool CRagEffect::ProcessEffect605()
+{
+    if (m_stateCnt == 0 && m_master != nullptr) {
+        m_master->SendMsg(nullptr, 109, 604, 0, 0);
+    }
+    return true;
+}
+
 bool CRagEffect::ProcessNpcStopEffects()
 {
     SpawnNpcStop(m_type == 604 ? 2 : 0);
