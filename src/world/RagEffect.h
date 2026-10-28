@@ -515,6 +515,8 @@ private:
     bool ProcessTarotEffect();
     bool ProcessEffectTextureAnimation();
     bool ProcessEffectTextureSet();
+    bool ProcessEffect348();
+    void ApplyLightSphere(const char* textureName);
     bool ProcessEffect695MapFireworks();
     bool ProcessEffect650();
     bool ProcessEffect651();

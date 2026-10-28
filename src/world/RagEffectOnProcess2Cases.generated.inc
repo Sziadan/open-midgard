@@ -47,7 +47,7 @@ case 344: ApplyEntry2(); return true;
 case 345: ApplySaintWing("effect\\wing003.bmp"); return true;
 case 346: for (short windTime = 0; windTime < 45; windTime = static_cast<short>(windTime + 9)) ApplySphereWind("effect\\blue_ivy.bmp", windTime, 0); return true;
 case 347: for (int paper = 0; paper < 50; ++paper) ApplyColorPaper("effect\\white02.bmp"); return true;
-case 348: return UnportedEffect();
+case 348: return ProcessEffect348();
 case 349: return ProcessWaterfallEffects(0, 0, 0);
 case 350: return ProcessWaterfallEffects(1, 0, 0);
 case 351: return ProcessWaterfallEffects(0, 1, 0);

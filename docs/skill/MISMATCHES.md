@@ -681,3 +681,7 @@ Canonical PE `Effect_SPR(16)` loads its sprite/action at `0x71D058/0x71D044`, th
 ## WP10.3 Effect_SPR resources and sounds 630/632-634
 
 PE `Effect_SPR` variants15/17/18/19 load byte-backed resource pairs at `0x71D084/0x71D06C`, `0x71D030/0x71D01C`, `0x71D00C/0x71CFFC`, and `0x71CFE8/0x71CFD4`. Secondary `Ref/dhxj/RagEffect2.cpp` names analogous files under `misc\\...`; the local implementation follows PE resource bytes. Caller sound identifiers in the PE decompilation are truncated to `effect\\`, but executable callsite bytes resolve the exact sounds at VAs `0x719BDC`, `0x719BF4`, and `0x719C08`; no suffixes are inferred from the truncated symbols.
+
+## WP5 effect348 LightSphere texture slots
+
+The canonical PE helper sets `m_totalTexture=2`, allocates two pointer slots, and initializes only slot0 to `effect\\white02.bmp`. The local vector keeps the two-slot count but initializes slot1 to null to avoid carrying uninitialized pointer data into the renderer. The primary Ref caller and canonical PE agree on the 80-call order and both texture resources resolve exactly.

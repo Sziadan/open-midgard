@@ -44,9 +44,9 @@ for tier, filename in files.items():
     found = set(case_lines[tier])
     if found != expected[tier]:
         fail(f"{tier} cases differ from effect index: missing={sorted(expected[tier] - found)} extra={sorted(found - expected[tier])}")
-    if "UnportedEffect()" not in text:
-        fail(f"{tier} has no explicit unported route")
     unported.update(int(value) for value in re.findall(r"^case\s+(\d+):\s*return UnportedEffect\(\);", text, re.M))
+if not unported:
+    fail("dispatcher has no explicit unported route")
 if tuple(map(len, (expected["OnProcess"], expected["OnProcess2"], expected["OnProcess3"]))) != (416, 73, 204):
     fail("dispatcher tier counts changed from 416 / 73 / 204")
 

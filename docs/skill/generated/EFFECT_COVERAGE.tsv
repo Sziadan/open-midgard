@@ -463,7 +463,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 345	OnProcess2	SaintWing	routed	"OnProcess2 -> ApplySaintWing(""effect\\wing003.bmp""); return true;"		108
 346	OnProcess2	SphereWind	routed	"OnProcess2 -> for (short windTime = 0; windTime < 45; windTime = static_cast<short>(windTime + 9)) ApplySphereWind(""effect\\blue_ivy.bmp"", windTime, 0); return true;"		110
 347	OnProcess2	ColorPaper	routed	"OnProcess2 -> for (int paper = 0; paper < 50; ++paper) ApplyColorPaper(""effect\\white02.bmp""); return true;"		111
-348	OnProcess2	EffectTextureSet,LightSphere	unported	OnProcess2 -> UnportedEffect		-
+348	OnProcess2	EffectTextureSet,LightSphere	routed	OnProcess2 -> return ProcessEffect348();		3622
 349	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 0, 0);		3584
 350	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 0, 0);		3584
 351	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 1, 0);		3584

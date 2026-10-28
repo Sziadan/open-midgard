@@ -35,6 +35,7 @@ FORCE_ROUTE.add(92)
 FORCE_ROUTE.add(361)
 FORCE_ROUTE.add(365)
 FORCE_ROUTE.add(440)
+FORCE_ROUTE.add(348)
 FORCE_ROUTE.update({242, 404, 671, 672, 349, 350, 351, 352, 353, 354, 355, 356, 358, 359, 360, 363, 364, 509, 519, 545, 561, 562, 277, 287, 290, 292, 294, 281, 284, 288, 265, 412, 374, 410, 428, 297, 434, 447, 448, 467, 468, 469, 470, 471, 472, 473, 326, 327, 340, 557, 558, 559, 560, 497, 498, 499, 513, 517, 551, 522, 650, 651})
 
 DIRECT_CALLS = {
@@ -70,6 +71,7 @@ DIRECT_CALLS = {
     599: "return ProcessEffect599();",
     602: "return ProcessEffect602();",
     273: "return ProcessEffect273();",
+    348: "return ProcessEffect348();",
     522: "ApplyGravitation(); return true;",
     650: "return ProcessEffect650();",
     651: "return ProcessEffect651();",

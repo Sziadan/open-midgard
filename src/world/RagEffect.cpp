@@ -18346,6 +18346,12 @@ void CRagEffect::ApplyEffectTexture(const char* textureName, int variant)
         gi.flag[2] = 4;
         gi.height[10] = 0.0f;
         gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+    } else if (variant == 0) {
+        gi.distance = 5.0f;
+        gi.arcBaselineY = origin.y - 10.0f;
+        gi.flag[2] = 2;
+        gi.height[10] = 0.0f;
+        gi.fullDisplayAngle = 135;
     } else if (variant == 100) {
         gi.distance = 50.0f;
         gi.flag[2] = 100;
@@ -18381,6 +18387,59 @@ bool CRagEffect::ProcessEffectTextureSet()
     case 702: ApplyEffectTexture("effect\\glow12.bmp", 14); return true;
     case 703: ApplyEffectTexture("effect\\white02.bmp", 100); return true;
     default: return false;
+    }
+}
+
+// Ref/RagEffect.cpp:10906-10914; canonical PE OnProcess2 case 0x15C.
+// LightSphere helper: HighPriest.exe.c:435283-435340 and Ref/RagEffect2.cpp:29113-29162.
+bool CRagEffect::ProcessEffect348()
+{
+    ApplyEffectTexture("effect\\thunder_center.bmp", 0);
+    for (int i = 0; i < 80; ++i) {
+        ApplyLightSphere("effect\\white02.bmp");
+    }
+    return true;
+}
+
+void CRagEffect::ApplyLightSphere(const char* textureName)
+{
+    if (textureName == nullptr) return;
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_LIGHTSPHERE, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_totalTexture = 2;
+    // PE allocates two slots but initializes only slot 0. Keep the unused slot
+    // null in the vector representation rather than exposing uninitialized data.
+    prim->m_texture.resize(2, nullptr);
+    prim->m_texture[0] = g_texMgr.GetTexture(textureName, false);
+    prim->m_pos = origin;
+    for (EffectGi& gi : prim->m_gi) {
+        gi.life = 1;
+        gi.process = 0;
+        gi.alphaB = 40;
+        gi.distance = 1.0f;
+        gi.height[3] = 10.0f;
+        gi.riseAngle = static_cast<short>(rand() % 360);
+        gi.rotStart = static_cast<short>(rand() % 360);
+        gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+        gi.maxHeight = static_cast<float>(rand() % 2 + 1);
+        const int colorSelector = rand() & 0x80000001;
+        if ((colorSelector & 1) == 0) {
+            gi.height[0] = 105.0f;
+            gi.height[1] = 105.0f;
+            gi.height[2] = 255.0f;
+        } else {
+            gi.height[0] = 55.0f;
+            gi.height[1] = 55.0f;
+            gi.height[2] = 225.0f;
+        }
     }
 }
 
