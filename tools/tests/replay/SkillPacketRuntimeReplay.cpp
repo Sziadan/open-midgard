@@ -640,6 +640,54 @@ void ReplayGroundArrowShower(const std::string& path)
     std::cout << "GroundSkill skill=47 arrows=9 cell=(10,20) offsets=8 hideTime=18 processedTargets=source-plus-neighbors\n";
 }
 
+bool IsSkillDamageExtendedExtraScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    if (packets.size() != 1 || packets[0].opcode != 0x01DE || packets[0].bytes.size() != 33) {
+        return false;
+    }
+    const u16 skillId = ReadU16LE(packets[0].bytes.data() + 2);
+    return skillId == 141 || skillId == 662;
+}
+
+void ReplaySkillDamageExtendedExtra(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 1 && packets[0].opcode == 0x01DE && packets[0].bytes.size() == 33,
+        "extended skill damage replay requires one 33-byte 0x01DE packet");
+    const u16 skillId = ReadU16LE(packets[0].bytes.data() + 2);
+    const int expectedEffect = skillId == 662 ? 372 : 129;
+    Require(skillId == 662 || (skillId == 141 && ReadU16LE(packets[0].bytes.data() + 28) == 0xFFFF),
+        "extended skill damage replay supports skill662 or skill141 with level0xFFFF");
+
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), packet, consumed),
+        "production packet reader rejected extended skill damage packet");
+    Require(packet.packetId == 0x01DE && consumed == static_cast<int>(packets[0].bytes.size()),
+        "extended skill damage packet framing differs from scenario metadata");
+    Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch extended skill damage packet");
+
+    const bool targetEffectAttached = std::any_of(fixture.target.m_effectList.begin(), fixture.target.m_effectList.end(),
+        [expectedEffect](const CRagEffect* effect) {
+            return effect != nullptr && effect->GetEffectType() == expectedEffect;
+        });
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for extended skill damage");
+    const std::string expectedLaunch = "[REPLAY] LaunchEffect id=" + std::to_string(expectedEffect) + " actor=2";
+    std::string logLine;
+    bool targetLaunchLogged = false;
+    while (std::getline(runtimeLog, logLine)) {
+        targetLaunchLogged = targetLaunchLogged || logLine.find(expectedLaunch) != std::string::npos;
+    }
+    Require(targetEffectAttached && targetLaunchLogged,
+        "0x01DE Ref special-skill branch did not attach its expected effect to target AID2");
+    std::cout << "SkillDamageExtended opcode=0x01DE skill=" << skillId << " target=2 effect=" << expectedEffect << "\n";
+}
+
 bool IsSkillCastAckScenario(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1769,7 +1817,9 @@ int main(int argc, char** argv)
         std::ofstream freshRuntimeLog(runtimeLogPath, std::ios::trunc);
         Require(static_cast<bool>(freshRuntimeLog), "could not reset per-run production runtime log");
         freshRuntimeLog.close();
-        if (IsGroundArrowShowerScenario(argv[1])) {
+        if (IsSkillDamageExtendedExtraScenario(argv[1])) {
+            ReplaySkillDamageExtendedExtra(argv[1]);
+        } else if (IsGroundArrowShowerScenario(argv[1])) {
             ReplayGroundArrowShower(argv[1]);
         } else if (IsSkillCastAckScenario(argv[1])) {
             ReplaySkillCastAck(argv[1]);

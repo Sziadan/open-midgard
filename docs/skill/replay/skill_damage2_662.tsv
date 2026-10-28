@@ -1,0 +1,4 @@
+# actor	source	1	0	16	16
+# actor	target	2	0	18	16
+# opcode	hexBytes	comment
+0x01DE	DE0196020100000002000000000000000000000000000000640000000100010004	skill662 extended damage notify applies target effect372
