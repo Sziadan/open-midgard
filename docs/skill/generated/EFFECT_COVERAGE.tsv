@@ -391,7 +391,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 463	OnProcess	PeongUp	unported	OnProcess -> UnportedEffect		-
 464	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		132
 465	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		132
-466	OnProcess	inline	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+466	OnProcess	inline	routed	OnProcess -> return ProcessEffect466();	src/world/SkillSpecialEffect.cpp	34
 467	OnProcess	BeginAsura1	unported	OnProcess -> UnportedEffect		-
 468	OnProcess	BeginAsura1	unported	OnProcess -> UnportedEffect		-
 469	OnProcess	BeginAsura1	unported	OnProcess -> UnportedEffect		-

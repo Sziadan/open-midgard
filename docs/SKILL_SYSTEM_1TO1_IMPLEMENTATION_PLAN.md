@@ -777,3 +777,7 @@ Completed effect445. Canonical inline PE case445 has state30 audio and a one-sho
 ## WP10.3 effect457 checkpoint
 
 Completed effect457 inline behavior: skill421's source/target effects retain their canonical launch order, state5 copies position and plays the proven PE audio literal, sets stateId27 and forces the exact animation tuple; state35 resets it to2 only when stateId remains27. No Ref helper exists. Full audio filename/VA remain unresolved. Comparator and lifecycle checks added. Release app/test builds pass, CTest164/164, coverage558/135/36, and OldRO hash matches Release at 3F5C678574D626AFA5E6FF37DCDB806F9F682589E7C867F54D1B9E31BA71070F. Next: inline effect466.
+
+## WP10.3 effect466 checkpoint
+
+Completed effect466. The canonical inline case plays the exact decompiled audio literal at state5 and sets BodyLight bit0x40 plus BodyTime=stateCnt-14 for states14-49 inclusive, once while the bit is absent. Skill417 and the level-adjusted 0x1A9 combo path launch this handler family. Full audio filename and VA remain unresolved. Comparator and lifecycle tests added; Release app/test builds pass, CTest165/165, coverage559/134/35, and OldRO hash matches Release at D1FDBC5709018640855D3004ED37971788DE1D95B36E5A72D54A14B0F684F91B. Next: inline effect501.

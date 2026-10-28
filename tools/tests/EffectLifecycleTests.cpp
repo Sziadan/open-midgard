@@ -587,6 +587,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect413();
     bool ProcessEffect445();
     bool ProcessEffect457();
+    bool ProcessEffect466();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5745,6 +5746,37 @@ int main()
         check(master.m_stateId==41&&master.forceAnimationCalls==1
             &&rngDraws==beforeRng&&effect.m_primList.empty(),
             "Effect457 leaves a different state untouched at state35 without RNG or primitives");
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRenderObject master;master.m_pos={15,25,35};
+        CRagEffect effect;effect.m_type=466;effect.m_master=&master;effect.m_effectPos={1,2,3};
+        const int beforeRng=rngDraws;waveCalls.clear();
+        effect.m_stateCnt=5;effect.ProcessEffect466();
+        check(effect.m_effectPos.x==15&&effect.m_effectPos.y==25&&effect.m_effectPos.z==35
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\T_"
+            &&waveCalls[0].x==12&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&master.m_BodyLight==0&&master.m_BodyTime==0,
+            "Effect466 state5 follows master and plays its exact PE wave argument");
+        effect.m_stateCnt=13;effect.ProcessEffect466();
+        check(master.m_BodyLight==0&&master.m_BodyTime==0,
+            "Effect466 does not set body light before state14");
+        effect.m_stateCnt=14;effect.ProcessEffect466();
+        check(master.m_BodyLight==0x40&&master.m_BodyTime==0,
+            "Effect466 includes state14 and initializes body time");
+        master.m_BodyTime=77;effect.m_stateCnt=15;effect.ProcessEffect466();
+        check(master.m_BodyLight==0x40&&master.m_BodyTime==77,
+            "Effect466 does not overwrite body time when bit0x40 is already set");
+        master.m_BodyLight=0;effect.m_stateCnt=49;effect.ProcessEffect466();
+        check(master.m_BodyLight==0x40&&master.m_BodyTime==35,
+            "Effect466 includes state49 in its body light window");
+        master.m_BodyLight=0;master.m_BodyTime=91;effect.m_stateCnt=50;effect.ProcessEffect466();
+        check(master.m_BodyLight==0&&master.m_BodyTime==91&&rngDraws==beforeRng
+            &&effect.m_primList.empty(),
+            "Effect466 stops after state49 without RNG or primitive emission");
         g_world.m_player=oldPlayer;waveCalls.clear();
     }
     {
