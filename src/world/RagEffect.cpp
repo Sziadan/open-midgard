@@ -20469,6 +20469,113 @@ bool CRagEffect::ProcessGhost(int variant)
 }
 // TEST_BODY_END ghost_effect_family
 
+// PE HighPriest.exe.c:435065/435338; Ref/RagEffect.cpp:10415-10490.
+// TEST_BODY_BEGIN waterfall_effects349_356_family
+bool CRagEffect::ProcessWaterfallEffects(int axisMode, int compactMode, int textureSet)
+{
+    if (m_stateCnt == 0) {
+        m_effectPos = m_master->m_pos;
+        CEffectPrim* waterfall = LaunchEffectPrim(PP_WATERFALL, vector3d{});
+        waterfall->m_renderFlag = 5;
+        waterfall->m_duration = m_duration;
+        waterfall->m_totalTexture = 3;
+        static const char* const waterfallTextures[2][3] = {
+            { "effect\\waterfall11.tga", "effect\\waterfall12.tga", "effect\\waterfall13.tga" },
+            { "effect\\waterfall31.tga", "effect\\waterfall32.tga", "effect\\waterfall33.tga" },
+        };
+        for (int texture = 0; texture < 3; ++texture) {
+            waterfall->m_texture.push_back(g_texMgr.GetTexture(waterfallTextures[textureSet][texture], false));
+        }
+        for (int bandIndex = 0; bandIndex < 4; ++bandIndex) {
+            EffectGi& gi = waterfall->m_gi[static_cast<size_t>(bandIndex)];
+            const float distance = static_cast<float>((compactMode ? 18 : 36) + bandIndex);
+            const float maxHeight = static_cast<float>(80 - bandIndex * 13);
+            const float radius = static_cast<float>(bandIndex - 1);
+            gi.life = 1;
+            gi.process = 0;
+            gi.alphaB = 80;
+            gi.flag[0] = static_cast<u8>(axisMode);
+            gi.distance = distance;
+            gi.sparkZ = radius;
+            gi.maxHeight = maxHeight;
+            gi.flag[1] = 0;
+            for (int height = 0; height < 20; ++height) {
+                gi.height[static_cast<size_t>(height)] = static_cast<float>(height * 40);
+            }
+            EffectBandState& band = waterfall->m_bands[static_cast<size_t>(bandIndex)];
+            band = {};
+            band.active = true;
+            band.alpha = 80.0f;
+            band.distance = distance;
+            band.radius = radius;
+            band.maxHeight = maxHeight;
+            band.modes[0] = static_cast<u8>(axisMode);
+            band.modes[1] = 0;
+            for (int height = 0; height < 20; ++height) {
+                band.heights[static_cast<size_t>(height)] = static_cast<float>(height * 40);
+            }
+        }
+
+        const int particleCount = compactMode == 0 ? 40 : 20;
+        const char* const particleTextures[] = { "effect\\waterp1.tga", "effect\\freeze_a_small.bmp" };
+        for (int particleIndex = 0; particleIndex < particleCount; ++particleIndex) {
+            m_effectPos = m_master->m_pos;
+            CEffectPrim* particle = LaunchEffectPrim(PP_WATERFALLPARTICLE, vector3d{});
+            particle->m_renderFlag = 5;
+            particle->m_duration = m_duration;
+            particle->m_totalTexture = 1;
+            const bool waterDrop = rand() % 10 <= 0;
+            particle->m_texture.push_back(g_texMgr.GetTexture(particleTextures[waterDrop ? 0 : 1], false));
+            particle->m_size = 4.0f;
+            const float distance = waterDrop ? 7.0f : 4.5f;
+            for (EffectGi& gi : particle->m_gi) {
+                gi.life = 1;
+                gi.maxHeight = 0.050000001f;
+                gi.flag[11] = static_cast<u8>(axisMode);
+                gi.flag[12] = static_cast<u8>(compactMode);
+                gi.distance = distance;
+                const auto randomPoint = [compactMode]() {
+                    const int x = compactMode ? rand() % 23 - 11 : rand() % 45 - 22;
+                    const int y = rand() % 30;
+                    const int z = rand() % 11 - 5;
+                    return vector3d{ static_cast<float>(x), static_cast<float>(y), static_cast<float>(z) };
+                };
+                const auto assignPoint = [](float& x, float& y, float& z, const vector3d& point) {
+                    x = point.x;
+                    y = point.y;
+                    z = point.z;
+                };
+                const auto swapPointAxes = [axisMode](float& x, float& z) {
+                    if (axisMode == 1) {
+                        const float temp = x;
+                        x = z;
+                        z = temp;
+                    }
+                };
+                vector3d point = randomPoint();
+                assignPoint(gi.vecBPreX, gi.arcBaselineY, gi.vecBPreZ, point);
+                for (int index = 0; index < 4; ++index) gi.height[static_cast<size_t>(index)] = static_cast<float>(rand() % 360);
+                swapPointAxes(gi.vecBPreX, gi.vecBPreZ);
+                point = randomPoint();
+                assignPoint(gi.sparkX, gi.sparkY, gi.sparkZ, point);
+                for (int index = 4; index < 8; ++index) gi.height[static_cast<size_t>(index)] = static_cast<float>(rand() % 360);
+                swapPointAxes(gi.sparkX, gi.sparkZ);
+                point = randomPoint();
+                assignPoint(gi.vecTPreX, gi.vecTPreY, gi.vecTPreZ, point);
+                for (int index = 8; index < 12; ++index) gi.height[static_cast<size_t>(index)] = static_cast<float>(rand() % 360);
+                swapPointAxes(gi.vecTPreX, gi.vecTPreZ);
+                point = randomPoint();
+                assignPoint(gi.vecTNowX, gi.vecTNowY, gi.vecTNowZ, point);
+                for (int index = 12; index < 16; ++index) gi.height[static_cast<size_t>(index)] = static_cast<float>(rand() % 360);
+                swapPointAxes(gi.vecTNowX, gi.vecTNowZ);
+                gi.flag[0] = 2;
+            }
+        }
+    }
+    return true;
+}
+// TEST_BODY_END waterfall_effects349_356_family
+
 // PE HighPriest.exe.c:460223/460279; Ref/dhxj/RagEffect2.cpp:22033/22186.
 // TEST_BODY_BEGIN tanji_effect_family
 bool CRagEffect::ProcessTanji(bool tanji2)

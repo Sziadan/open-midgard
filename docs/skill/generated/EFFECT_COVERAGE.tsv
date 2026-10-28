@@ -464,14 +464,14 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 346	OnProcess2	SphereWind	routed	"OnProcess2 -> for (short windTime = 0; windTime < 45; windTime = static_cast<short>(windTime + 9)) ApplySphereWind(""effect\\blue_ivy.bmp"", windTime, 0); return true;"		110
 347	OnProcess2	ColorPaper	routed	"OnProcess2 -> for (int paper = 0; paper < 50; ++paper) ApplyColorPaper(""effect\\white02.bmp""); return true;"		111
 348	OnProcess2	EffectTextureSet,LightSphere	unported	OnProcess2 -> UnportedEffect		-
-349	OnProcess2	WaterFall,WaterFallParticle	unported	OnProcess2 -> UnportedEffect		-
-350	OnProcess2	WaterFall,WaterFallParticle	unported	OnProcess2 -> UnportedEffect		-
-351	OnProcess2	WaterFall,WaterFallParticle	unported	OnProcess2 -> UnportedEffect		-
-352	OnProcess2	WaterFall,WaterFallParticle	unported	OnProcess2 -> UnportedEffect		-
-353	OnProcess2	WaterFall,WaterFallParticle	unported	OnProcess2 -> UnportedEffect		-
-354	OnProcess2	WaterFall,WaterFallParticle	unported	OnProcess2 -> UnportedEffect		-
-355	OnProcess2	WaterFall,WaterFallParticle	unported	OnProcess2 -> UnportedEffect		-
-356	OnProcess2	WaterFall,WaterFallParticle	unported	OnProcess2 -> UnportedEffect		-
+349	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 0, 0);		3584
+350	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 0, 0);		3584
+351	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 1, 0);		3584
+352	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 1, 0);		3584
+353	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 0, 1);		3584
+354	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 0, 1);		3584
+355	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 1, 1);		3584
+356	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 1, 1);		3584
 358	OnProcess2	Ghost	routed	OnProcess2 -> return ProcessGhost(0);		3574
 359	OnProcess2	Ghost	routed	OnProcess2 -> return ProcessGhost(1);		3574
 360	OnProcess2	Ghost	routed	OnProcess2 -> return ProcessGhost(2);		3574

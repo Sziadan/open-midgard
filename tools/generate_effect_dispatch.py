@@ -35,7 +35,7 @@ FORCE_ROUTE.add(92)
 FORCE_ROUTE.add(361)
 FORCE_ROUTE.add(365)
 FORCE_ROUTE.add(440)
-FORCE_ROUTE.update({242, 404, 671, 672, 358, 359, 360, 277, 287, 290, 292, 294, 281, 284, 288, 265, 412, 374, 410, 428, 297, 434, 447, 448, 467, 468, 469, 470, 471, 472, 473, 326, 327, 340, 557, 558, 559, 560, 497, 498, 499, 513, 517, 551})
+FORCE_ROUTE.update({242, 404, 671, 672, 349, 350, 351, 352, 353, 354, 355, 356, 358, 359, 360, 277, 287, 290, 292, 294, 281, 284, 288, 265, 412, 374, 410, 428, 297, 434, 447, 448, 467, 468, 469, 470, 471, 472, 473, 326, 327, 340, 557, 558, 559, 560, 497, 498, 499, 513, 517, 551})
 
 DIRECT_CALLS = {
     # Main OnProcess cases whose index handler includes more than raw STR.
@@ -89,6 +89,14 @@ DIRECT_CALLS = {
     358: "return ProcessGhost(0);",
     359: "return ProcessGhost(1);",
     360: "return ProcessGhost(2);",
+    349: "return ProcessWaterfallEffects(0, 0, 0);",
+    350: "return ProcessWaterfallEffects(1, 0, 0);",
+    351: "return ProcessWaterfallEffects(0, 1, 0);",
+    352: "return ProcessWaterfallEffects(1, 1, 0);",
+    353: "return ProcessWaterfallEffects(0, 0, 1);",
+    354: "return ProcessWaterfallEffects(1, 0, 1);",
+    355: "return ProcessWaterfallEffects(0, 1, 1);",
+    356: "return ProcessWaterfallEffects(1, 1, 1);",
     277: "return ProcessBottomVertical(277);",
     287: "return ProcessBottomVertical(287);",
     290: "return ProcessBottomVertical(290);",

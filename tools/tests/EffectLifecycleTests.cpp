@@ -655,6 +655,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect440();
     bool ProcessLandProtector(int);
     bool ProcessGhost(int);
+    bool ProcessWaterfallEffects(int, int, int);
     bool ProcessBottomVertical(int);
     bool ProcessTanji(bool);
     bool ProcessBasilica();
@@ -3942,6 +3943,96 @@ int main()
                 "Ghost effects copy master position at state 10 without launching or side effects");
             effect.ClearPrims(); g_world.UpdateGameObjects();
         }
+    }
+    {
+        struct Variant { int id, axis, compact, textureSet; };
+        const Variant variants[]={{349,0,0,0},{350,1,0,0},{351,0,1,0},{352,1,1,0},
+                                  {353,0,0,1},{354,1,0,1},{355,0,1,1},{356,1,1,1}};
+        const char* const textures[2][3]={{"effect\\waterfall11.tga","effect\\waterfall12.tga","effect\\waterfall13.tga"},
+                                          {"effect\\waterfall31.tga","effect\\waterfall32.tga","effect\\waterfall33.tga"}};
+        for(const Variant& variant:variants) {
+            CRenderObject actor; actor.m_pos={25,36,47};
+            CRagEffect effect; effect.m_type=variant.id; effect.m_master=&actor; effect.m_duration=84;
+            effect.m_stateCnt=1; effect.m_effectPos={1,2,3};
+            g_texMgr.requests.clear(); waveCalls.clear(); rngValues.clear(); rngCursor=0;
+            const int draws=rngDraws;
+            check(effect.ProcessWaterfallEffects(variant.axis,variant.compact,variant.textureSet)
+                &&effect.m_primList.empty()&&effect.m_effectPos.x==1&&effect.m_effectPos.y==2
+                &&effect.m_effectPos.z==3&&g_texMgr.requests.empty()&&rngDraws==draws&&waveCalls.empty(),
+                "WaterFall variants skip nonzero state without position, resources, RNG or audio effects");
+
+            effect.m_stateCnt=0;
+            const int particleCount=variant.compact?20:40;
+            rngValues.assign(static_cast<size_t>(particleCount*113),0);
+            rngValues[113]=1; // exercise the executable's freeze texture branch on the second primitive
+            rngCursor=0;
+            effect.ProcessWaterfallEffects(variant.axis,variant.compact,variant.textureSet);
+            CEffectPrim* waterfall=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            bool bandOk=waterfall!=nullptr;
+            for(int bandIndex=0;bandIndex<4&&waterfall;++bandIndex) {
+                const EffectGi& gi=waterfall->m_gi[static_cast<size_t>(bandIndex)];
+                const EffectBandState& band=waterfall->m_bands[static_cast<size_t>(bandIndex)];
+                const float distance=static_cast<float>((variant.compact?18:36)+bandIndex);
+                const float maxHeight=static_cast<float>(80-bandIndex*13);
+                const float radius=static_cast<float>(bandIndex-1);
+                bandOk=bandOk&&gi.life==1&&gi.process==0&&gi.alphaB==80&&gi.flag[0]==variant.axis
+                    &&gi.flag[1]==0&&gi.distance==distance&&gi.sparkZ==radius&&gi.maxHeight==maxHeight
+                    &&gi.height[0]==0&&gi.height[1]==40&&gi.height[19]==760&&gi.height[20]==0
+                    &&band.active&&band.process==0&&band.alpha==80&&band.distance==distance
+                    &&band.radius==radius&&band.maxHeight==maxHeight&&band.modes[0]==variant.axis
+                    &&band.modes[1]==0&&band.heights[0]==0&&band.heights[1]==40
+                    &&band.heights[19]==760&&band.heights[20]==0;
+            }
+            CEffectPrim* firstParticle=effect.m_primList.size()>1?*std::next(effect.m_primList.begin()):nullptr;
+            CEffectPrim* secondParticle=effect.m_primList.size()>2?*std::next(effect.m_primList.begin(),2):nullptr;
+            bool particleLanes=firstParticle&&secondParticle;
+            for(CEffectPrim* particle:{firstParticle,secondParticle}) if(particle) {
+                for(const EffectGi& gi:particle->m_gi) {
+                    const float x=variant.compact?-11.0f:-22.0f;
+                    const float z=-5.0f;
+                    particleLanes=particleLanes&&gi.life==1&&gi.maxHeight==0.050000001f
+                        &&gi.flag[0]==2&&gi.flag[11]==variant.axis&&gi.flag[12]==variant.compact
+                        &&gi.distance==(particle==firstParticle?7.0f:4.5f)
+                        &&gi.vecBPreX==(variant.axis?z:x)&&gi.arcBaselineY==0&&gi.vecBPreZ==(variant.axis?x:z)
+                        &&gi.sparkX==(variant.axis?z:x)&&gi.sparkY==0&&gi.sparkZ==(variant.axis?x:z)
+                        &&gi.vecTPreX==(variant.axis?z:x)&&gi.vecTPreY==0&&gi.vecTPreZ==(variant.axis?x:z)
+                        &&gi.vecTNowX==(variant.axis?z:x)&&gi.vecTNowY==0&&gi.vecTNowZ==(variant.axis?x:z);
+                    for(int angle=0;angle<16;++angle) particleLanes=particleLanes&&gi.height[static_cast<size_t>(angle)]==0;
+                }
+            }
+            bool particleOrder=waterfall&&firstParticle&&secondParticle
+                &&firstParticle->m_type==PP_WATERFALLPARTICLE&&secondParticle->m_type==PP_WATERFALLPARTICLE
+                &&firstParticle->m_texture.size()==1&&secondParticle->m_texture.size()==1
+                &&firstParticle->m_totalTexture==1&&secondParticle->m_totalTexture==1
+                &&firstParticle->m_texture[0]==&g_texMgr.texture&&secondParticle->m_texture[0]==&g_texMgr.texture
+                &&firstParticle->m_duration==84&&secondParticle->m_duration==84
+                &&firstParticle->m_renderFlag==5&&secondParticle->m_renderFlag==5
+                &&firstParticle->m_size==4&&secondParticle->m_size==4
+                &&firstParticle->m_pos.x==25&&firstParticle->m_pos.y==36&&firstParticle->m_pos.z==47
+                &&g_texMgr.requests.size()==static_cast<size_t>(3+particleCount)
+                &&g_texMgr.requests[0]==textures[variant.textureSet][0]
+                &&g_texMgr.requests[1]==textures[variant.textureSet][1]
+                &&g_texMgr.requests[2]==textures[variant.textureSet][2]
+                &&g_texMgr.requests[3]=="effect\\waterp1.tga"
+                &&g_texMgr.requests[4]=="effect\\freeze_a_small.bmp"
+                &&rngCursor==static_cast<size_t>(particleCount*113)&&rngDraws==draws+particleCount*113;
+            check(effect.m_primList.size()==static_cast<size_t>(particleCount+1)
+                &&waterfall&&waterfall->m_type==PP_WATERFALL&&waterfall->m_renderFlag==5
+                &&waterfall->m_duration==84&&waterfall->m_totalTexture==3&&waterfall->m_texture.size()==3
+                &&waterfall->m_pos.x==25&&waterfall->m_pos.y==36&&waterfall->m_pos.z==47
+                &&effect.m_effectPos.x==25&&effect.m_effectPos.y==36&&effect.m_effectPos.z==47
+                &&bandOk&&particleOrder&&particleLanes&&waveCalls.empty(),
+                "WaterFall effect variants emit exact textures, four bands, ordered particles, and 113 draws each");
+
+            actor.m_pos={61,72,83}; effect.m_stateCnt=1; g_texMgr.requests.clear();
+            const size_t count=effect.m_primList.size(); const int laterDraws=rngDraws;
+            effect.ProcessWaterfallEffects(variant.axis,variant.compact,variant.textureSet);
+            check(effect.m_primList.size()==count&&effect.m_effectPos.x==25&&effect.m_effectPos.y==36
+                &&effect.m_effectPos.z==47&&g_texMgr.requests.empty()&&rngDraws==laterDraws&&waveCalls.empty(),
+                "WaterFall later states do not refresh the anchor or repeat any particle emissions");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+        }
+        rngValues.clear(); rngCursor=0;
     }
     {
         CRenderObject actor; actor.m_pos={3,10,4};
