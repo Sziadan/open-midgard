@@ -1820,3 +1820,7 @@ Verified the paired Init maps for effect182 (`magical.str`, VA `0x71AC38`) and e
 ## WP5C effect187 Yunta2 STR — 2026-10-28
 
 Verified PE effect187 mapping to `yunta_2.str` (VA `0x71AC08`), its shared STR caller, and matching local table/route. Secondary Ref `Ref/dhxj/RagEffect.cpp` independently maps `EF_COMBOATTACK2` to that filename; the current primary Ref omits effect187, so the comparator records the source-version discrepancy rather than asserting primary-Ref parity. Added and registered `check_effect187_yunta2_str.py`. The clip is absent; no visual acceptance is claimed. Full parity CTest passes 214/214. Next: continue 5C source-parity audit.
+
+## WP5C effect188 Yunta3 STR — 2026-10-28
+
+Verified effect188's `yunta_3.str` mapping across primary Ref, PE, executable bytes (VA `0x71ABDC`), local catalog/STR-name table, and route. It uses the shared STR caller and has generic STR lifecycle coverage. Added and registered `check_effect188_yunta3_str.py`. The media clip is absent, so this records mapping/source parity only. Full parity CTest passes 215/215. Next: continue 5C source-parity audit.
