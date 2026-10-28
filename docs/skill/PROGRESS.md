@@ -1162,3 +1162,163 @@ ParticleTime/ParticleSpread verification: both full Ref/PE helpers match. Routed
 SphereWind2 verification: the complete helper matches PE; the canonical 408 caller is PE-only in the available source trees. It plays state-0 `effect\\EF_Blessing.wav` then emits five `effect\\fire_ivy.bmp` primitives at times 0/9/18/27/36. Each has four initialized lanes, 20 RNG draws, and the resolved `GI[i].height[1]` alias. Added PP_SPHEREWIND2 to the existing SphereWind renderer; its updater was already present. Release build/deployment succeeded; all 120 CTests pass. Coverage is 520 routed / 173 explicit unported / 67 launched-but-unported. Next: audit SoulBreaker2 caller (409).
 
 SoulBreaker2 verification: the full helper matches PE and effect409's caller is PE-only in the available sources. At state0 it plays unresolved prefix `effect\\`, then invokes eight helpers with times0..315 in steps of45. Through state10 it sets BodyLight bit1 and magenta actor color. Each emitter has four GI lanes; the shared shoot and per-lane Y-offset draws total 20 RNG calls per primitive and 160 across all eight. The helper's aliases map to `sparkY`, `rotStart`, `height[1]`, and `flag[0]`; existing primitive update/render support is reused. Release build/deployment succeeded; all 121 CTests pass. Coverage is 521 routed / 172 explicit unported / 66 launched-but-unported. Next: audit Peong/PeongUp callers (411).
+
+## WP10.3 — Peong/PeongUp caller 411 — 2026-10-28
+
+Effect411 now routes the source's 30 PeongUp calls followed by 16 Peong calls in the exact four-quadrant texture/time order. PeongUp matches Ref and canonical PE; the canonical Peong helper is PE-only and differs from Ref's PeongMiddle, as recorded in `MISMATCHES.md`. Added the two primitive emitters with source lane fields and RNG order, reusing existing PP_PEONG/PP_PEONGUP update/render support. `check_peong_callers.py` passes. Release test build and application build/deployment pass; all 122 CTests pass. Coverage is 522 routed / 171 explicit unported / 65 launched-unported; `git diff --check` passes. Next: audit BeginAsura/BeginAsura2 callers (510, 503).
+
+## WP10.3 — BeginAsura / BeginAsura2 callers 328/503/510 — 2026-10-28
+
+Implemented all three direct caller routes, including effect328's `BeginAsura(0)` path in addition to planned callers 503/510. All three full helper bodies match Ref/PE; effect503's two truncated sound names were resolved from exact PlayWave argument bytes at PE VAs 0x5E9B6F and 0x5E9BAC. The emitters preserve source state gates, texture variants, active GI counts/fields, and SoulLinkLight's four RNG draws. `check_begin_asura_callers.py` passes. Release test build and application deployment pass; all 123 CTests pass. Coverage is 525 routed / 168 explicit unported / 64 launched-unported; `git diff --check` passes. Next: audit EnergyDrain2/EnergyDrain3 callers (378, 383).
+
+## WP10.3 — EnergyDrain2/EnergyDrain3 callers 378/383 — 2026-10-28
+
+Added source-compared emitters for effects378/383 and reused PP_3DPARTICLESPLINE lifecycle handling. The Ref/PE helper pairs match; PE-only caller branches preserve their respective body-light/color state windows. Exact particle1 SPR/ACT bytes are checked, with 3 RNG draws per EnergyDrain2 primitive and 5 per EnergyDrain3 primitive. `check_energy_drain_callers.py` passes. Release parity and app builds plus OldRO deployment succeeded; all 124 CTests pass. Coverage is 527 routed / 166 explicit unported / 62 launched-unported; `git diff --check` passes. Next: audit PortalWind variant0 caller (389).
+
+## WP10.3 — PortalWind variant 0 — 2026-10-28
+
+Effect389 is routed through `ProcessPortalWind389`, with the Ref/PE-matched `PortalWind(0)` helper, the canonical body-light/color window, and the frame-zero wave recovered from the last-resort `dhxj` `EF_PORTAL4` branch (`effect\\windwalk.wav`). The canonical `aEffect_66` symbol itself resolves only to `effect\\`; this source limitation is recorded in `MISMATCHES.md`. The shared helper now refreshes position every tick and preserves variant-specific RNG use (variants2/3 skip distance draws). `check_portal_wind_caller.py` passes. Build and CTest still pending. Next: `MakeBlur`/`MakeBlur2` (166, 617).
+
+## WP10.3 — PortalWind verification checkpoint — 2026-10-28
+
+Release parity-test build exited successfully; CTest reports 125/125 passed, including `portal_wind_caller_source_check`. The production Release executable built and copied to `D:\Spel\OldRO`; build and deployed SHA-256 match (`59D95D37FD9B71EB545C762DD542080FA4C7CE7D5C22A0706528DF608F82B648`). The effect coverage audit now reports 528 routed, 165 explicit unported, 61 launched-unported. Next: audit MakeBlur/MakeBlur2 callers (166, 617).
+
+## WP10.3 — MakeBlur / MakeBlur2 — 2026-10-28
+
+Effects166/617 now create source-timed `CBlurPC` snapshots, preserve the effect color branches, duration/state cadence, packed fade and world registration. The snapshot actor copies current CPc appearance data and is submitted through the existing sorted billboard lane, with the legacy body-layer rendering limitation documented. Both helper bodies and all four CBlurPC methods compare Ref/PE exactly; effect166's missing Ref caller is documented as PE-only. `check_blur_callers.py` passes. Release build and CTest are pending. Next: RunStop (444).
+
+## WP10.3 — MakeBlur verification checkpoint — 2026-10-28
+
+Production Release build succeeds and copies to OldRO; the deployed executable matches the build. The rebuilt Release test project exits successfully, and CTest passes 126/126, including both new effect source checks; the existing CPc/CPlayer on-process checks pass after placing CBlurPC outside their scoped header regions. Static audits report 530 routed / 163 explicit unported / 60 launched-unported and 40/40 required packet opcodes registered (registration is not body parity). `git diff --check` passes. Next: audit RunStop caller (444).
+
+## WP10.3 — RunStop caller 444 — 2026-10-28
+
+Effect444 now plays the exact sound resolved from canonical callsite data, then invokes the RunStop emitter twice each tick at 0 and 45 degrees. The helper matches Ref/PE exactly; its PP_SLASH1 lanes and lifetime fields are source-matched. The Ref caller omission and the conflicting `dhxj` wave are documented; no asset guess was used. `check_runstop_caller.py` passes. Release build and CTest pending. Next: audit CartBoost caller (456).
+
+## WP10.3 — RunStop verification checkpoint — 2026-10-28
+
+The production Release build and OldRO copy pass. The parity-test Release build exits successfully and the immediate CTest run passes 127/127, including `runstop_caller_source_check`; all five recent effect source comparators pass. Effect coverage reports 531 routed / 162 explicit unported / 59 launched-unported; the static skill audit reports 693 labels, 416/73/204 dispatchers, and 40/40 required packet registrations. `git diff --check` passes. Next: audit CartBoost caller (456).
+
+## WP10.3 — CartBoost (456) — 2026-10-28
+
+Effect456 now routes to `ProcessCartBoost456`, matching the canonical helper's per-tick projected master anchor and position, state0 IncAgility wave, even-state PP_3DCROSSTEXTURE, six ordered RNG draws, fade fields and texture. The PE helper matches Ref/RagEffect2.cpp; the PE OnProcess caller exists while the available Ref caller branch is omitted. `check_cartboost_caller.py` and effect coverage pass (532 routed / 161 explicit unported / 58 launched-unported). Release build/CTest pending. Next: single-id handlers beginning with Exit (7).
+
+## WP10.3 — CartBoost verification checkpoint — 2026-10-28
+
+Production and parity-test Release builds exit 0; the immediately following CTest run passes 128/128, including `cartboost_caller_source_check`. The OldRO deployed executable matches the build SHA-256 (`AF96C47A83FA1EBE06CF7059F49CD6EA76E7FAB2090630244469427062C1DBAC`). The focused CartBoost comparator, coverage audit, static skill audit (693 labels, 416/73/204 switch labels, 40/40 required opcode registrations) and `git diff --check` pass. Runtime acceptance remains open. Next: single-id handlers beginning with Exit (7).
+
+## WP10.3 — Exit (7) — 2026-10-28
+
+Effect7 now routes to `ProcessExit7` with its matched Ref/PE helper payload: state0 cylinder and wave, followed by the minimum-effect-gated orbit particle every nine states, including source RNG consumption and CP949 sprite/action resources. Its primitive family selectors now bind the reference cylinder and sprite-particle paths. The Ref caller omission and current renderer/live-acceptance limit are recorded in `MISMATCHES.md`. `check_exit_caller.py` and effect coverage pass (533 routed / 160 explicit unported / 57 launched-unported). Release build/CTest pending. Next: Endure (11).
+
+## WP10.3 — Exit verification checkpoint — 2026-10-28
+
+Production and parity-test Release builds exit 0; immediate CTest passes 129/129, including `exit_caller_source_check`. The OldRO executable matches the build SHA-256 (`4C55BB75C0AF07571267C75BF74233E81DCD6E114ABBB1AF4D5D26B8DB8C4C52`). Effect coverage reports 533 routed / 160 explicit unported / 57 launched-unported. Static skill audit reports 693 labels, 416/73/204 dispatcher labels, 40/40 required packet registrations; runtime acceptance remains open. `git diff --check` passes. Next: Endure (11).
+
+## WP10.3 — Endure (11) — 2026-10-28
+
+Effect11 now routes to `ProcessEndure11` with the matching helper payload: a state0 screen texture and sound plus a second texture emitter on each of the first 50 states, preserving the four ordered random draws and exact assets. It uses the existing reference screen-texture family path. The missing Ref caller and renderer acceptance boundary are in `MISMATCHES.md`. `check_endure_caller.py` and coverage pass (534 routed / 159 explicit unported / 56 launched-unported). Release build/CTest pending. Next: SoulStrike (15/451).
+
+## WP10.3 — Endure verification checkpoint — 2026-10-28
+
+Production and parity-test Release builds exit 0; immediate CTest passes 130/130, including `endure_caller_source_check`. The OldRO deployed executable matches the build SHA-256 (`8FEB9E88535EFD09E9A773C9A98FB54A19F260C1FD5EB9AB643914A58A83BA94`). Effect coverage reports 534 routed / 159 explicit unported / 56 launched-unported; static skill audit reports 693 labels, 416/73/204 dispatcher labels, 40/40 required packet registrations. `git diff --check` passes. Runtime acceptance remains open. Next: SoulStrike (15/451).
+
+## WP10.3 — SoulStrike (15/451) — 2026-10-28
+
+Effects15/451 now route through a shared handler with distinct particle1/particle5 sprite-action assets. It follows the matching Ref/PE helper's count-based roll schedule, fixed wave cadence, spline payload and 12-segment snapshot, with zero random draws. The missing Ref caller branch is documented. `check_soulstrike_callers.py` and coverage pass (536 routed / 157 explicit unported / 54 launched-unported). Release build/CTest pending. Next: Detoxication (21).
+
+## WP10.3 — SoulStrike verification checkpoint — 2026-10-28
+
+Production and parity-test Release builds exit 0; immediate CTest passes 131/131, including `soulstrike_caller_source_check`. The OldRO executable matches the build SHA-256 (`342ED9507F91F85125D111A274DDBF8C6599FD456FFADF940E76B12A93DC2FEB`). Effect coverage reports 536 routed / 157 explicit unported / 54 launched-unported; static skill audit reports 693 labels, 416/73/204 dispatcher labels, 40/40 required packet registrations. `git diff --check` passes. Runtime acceptance remains open. Next: Detoxication (21).
+
+## WP10.3 — Detoxication (21) — 2026-10-28
+
+Effect21 now routes through `ProcessDetoxication21`, preserving the normal/minimum-effects cadence, frame-zero sound, four RNG draws and particle2 sprite/action resources. It uses the current reference sprite-particle path. Its missing Ref caller and backend acceptance boundary are documented in `MISMATCHES.md`. `check_detoxication_caller.py` and coverage pass (537 routed / 156 explicit unported / 53 launched-unported). Release build/CTest pending. Next: Yufitel/YufitelHit (93/94/452).
+
+## WP10.3 — Detoxication verification checkpoint — 2026-10-28
+
+Production and parity-test Release builds exit 0; immediate CTest passes 132/132, including `detoxication_caller_source_check`. The OldRO deployed executable matches the build SHA-256 (`3ADA440651BB089C7096DB6A0D305C61808A5569B2E9FF08AF496D7256EA3128`). Effect coverage reports 537 routed / 156 explicit unported / 53 launched-unported; static skill audit reports 693 labels, 416/73/204 dispatcher labels and 40/40 required packet registrations. `git diff --check` passes. Runtime acceptance remains open. Next: Yufitel/YufitelHit (93/94/452).
+
+## WP10.3 — Yufitel/YufitelHit (93/94/452) — 2026-10-28
+
+Effects93/94/452 now route through shared Yufitel/YufitelHit handlers with canonical texture animation sequences, state gates, wave, direction and primitive fields. The available Ref caller switch omits these calls though the helper bodies match PE; this is documented. The three IDs now use the existing reference PP_3DTEXTURE family path. `check_yufitel_callers.py` and coverage pass (540 routed / 153 explicit unported / 50 launched-unported). Release build/CTest pending. Next: Flasher (99).
+
+## WP10.3 — Yufitel verification checkpoint — 2026-10-28
+
+Production and parity-test Release builds exit 0; immediate CTest passes 133/133, including `yufitel_caller_source_check`. The OldRO executable matches the build SHA-256 (`A2F68F94D8D77D1D59031C57B78E5C94048856AD1B0357C77DA0CB742139EF05`). Effect coverage reports 540 routed / 153 explicit unported / 50 launched-unported; static skill audit reports 693 labels, 416/73/204 dispatcher labels and 40/40 required packet registrations. `git diff --check` passes. Runtime acceptance remains open. Next: Flasher (99).
+
+## WP10.3 — Flasher (99) — 2026-10-28
+
+Effect99 now emits its animated thunder texture and 20 randomized flash primitives on state0, preserving the five RNG draws per flash, exact assets and projected master anchor. It uses the current reference texture and flash paths. The Ref caller omission and live renderer acceptance boundary are recorded. `check_flasher_caller.py` and coverage pass (541 routed / 152 explicit unported / 49 launched-unported). Release build/CTest pending. Next: RemoveTrap (100).
+
+## WP10.3 — Flasher verification checkpoint — 2026-10-28
+
+Production and parity-test Release builds exit 0; immediate CTest passes 134/134, including `flasher_caller_source_check`. The OldRO executable matches the build SHA-256 (`454F9DC25CC821B5F5605A3C14B43E9F6554F66A8351EA90D2BC1277A1A33090`). Effect coverage reports 541 routed / 152 explicit unported / 49 launched-unported; static skill audit reports 693 labels, 416/73/204 dispatcher labels and 40/40 required packet registrations. `git diff --check` passes. Runtime acceptance remains open. Next: RemoveTrap (100).
+
+## WP10.3 — RemoveTrap (100) — 2026-10-28
+
+Effect100 now routes to `ProcessRemoveTrap100`, matching the PE/Ref helper payload. State0 plays `effect\\hunter_removetrap.wav`; state0 and state7 each emit 12 PP_3DPARTICLEORBIT particles, preserving three RNG draws per particle, source rotation/movement and particle1 SPR/ACT bytes. It is bound to the reference orbit-particle family. `check_removetrap_caller.py` verifies helper identity, PE caller/Ref omission, route, both burst gates, exact particle payload/RNG/assets and family membership. Production and parity-test Release builds pass; immediate CTest reports 135/135 passed. Production and OldRO executable SHA-256 match (`B79282CB909A179ADD30A41AC54283745109671C43FCED818B29CA1710097A9D`). Coverage is 542 routed / 151 explicit unported / 48 launched-unported; static skill audit remains 693 labels, 416/73/204 dispatcher labels and 40/40 required packet registrations. `git diff --check` passes. Runtime acceptance remains open. Next: BlitzBeat (115).
+
+## WP10.3 — BlitzBeat (115) — 2026-10-28
+
+Effect115 now routes to `ProcessBlitzBeat115`. The PE and Ref helper bodies match; the PE caller invokes BlitzBeat while the available Ref caller switch omits it. The port preserves wave calls at states5/30 before master projection, the state0 reset and 10 PP_3DCROSSTEXTURE launches (two RNG draws each), followed by the guarded PP_3DCYLINDER emitter (three RNG draws and shared counter). Both `ac_center2.tga` and `magic_green.tga` resources are verified against PE symbols. Effects115 is added to the reference cross-texture and cylinder families. `check_blitzbeat_caller.py` passes; Release builds pass and immediate CTest reports 136/136 passed. Production and OldRO SHA-256 match (`DCA1C41C0678C72167DEC8E26E08B1D78EDCB1C0AAABCF5BB18B956F62FE0190`). Coverage is 543 routed / 150 explicit unported / 47 launched-unported; static skill audit remains 693 labels, 416/73/204 dispatcher labels and 40/40 required packet registrations. Runtime acceptance remains open. Next: BloodDrain, continuing the Ref method queue.
+
+## WP10.3 — BloodDrain comparator correction — 2026-10-28
+
+The existing effect216 implementation was already routed, but its prior comparator relied on `Ref/dhxj/RagEffect.cpp` and did not mechanically compare the full helper against the primary Ref source. `check_blood_drain.py` now compares the complete `Ref/RagEffect.cpp` and PE `BloodDrain` bodies after whitespace normalization, verifies the canonical PE case216 call and the Ref caller omission, checks the local route and particle payload, confirms no RNG, and resolves the particle1 resource pointers against PE bytes. The comparator is registered with CTest and passes; the rebuilt Release parity suite passes 137/137. Effect coverage remains 543 routed / 150 explicit unported / 47 launched-unported. Next: Bottom.
+
+## WP10.3 — Bottom (114) — 2026-10-28
+
+Effect114 now routes to `ProcessBottom114`, and both primitive renderer selectors use the reference texture path. Complete PE/primary-Ref helper bodies match after whitespace normalization; the PE caller invokes effect114 while the available Ref caller switch omits it. The state0 handler sets parent duration9999 and launches four ordered PP_3DTEXTURE primitives in a two-side row3/row1 pattern, with commonPattern1, pattern40, any50, source angle and offsets, size/speed/alpha/fade fields, and `effect\\magic_violet.tga`. `m_commonPattern` was added to the local primitive state model because it is written by the canonical helper. `check_bottom_caller.py` passes. Production and parity-test Release builds pass; immediate CTest reports 138/138 passed. Production and OldRO executable SHA-256 match (`D8299B6A63806ADE2BECA42536727441145454EF0726F6D621B51FBFAC58085A`). Coverage is 544 routed / 149 explicit unported / 47 launched-unported; static skill audit remains 693 labels, 416/73/204 dispatcher labels and 40/40 required packet registrations. Runtime acceptance remains open. Next: Bottom2.
+
+## WP10.3 — Bottom2 (137) — 2026-10-28
+
+Effect137 now routes through `ProcessBottom2Effect137`, and uses the current reference texture family. Its PE/primary-Ref helper bodies match; the PE caller invokes effect137 while the Ref caller switch omits it. At state0 it sets parent duration9999 and launches four PP_3DTEXTURE primitives in the source row3/row1 order for each side, preserving commonPattern1, pattern40, any50, offset scale2.5, angle, size/speed, alpha180, fadeOut9964, and `effect\\magic_green.tga`. No RNG or sound is used. The focused comparator passes. Release builds pass and immediate CTest reports 139/139 passed. Production and OldRO executable SHA-256 match (`DA6B8CA1B9F41CC05483820F63B04E6574F0C55A77686E5C057DFC2D64D50EF5`). Coverage is 545 routed / 148 explicit unported / 47 launched-unported; static skill audit remains 693 labels, 416/73/204 dispatcher labels and 40/40 required packet registrations. Runtime acceptance remains open. Next: BowlingBash.
+
+## WP10.3 — BowlingBash (73) renderer correction — 2026-10-28
+
+`ApplyBowlingBash` already implemented the PE/primary-Ref matched handler and its state gates/payload were covered by lifecycle tests. The focused comparator now verifies complete PE/Ref helper identity, PE caller effect73, Ref caller omission, and primitive-family bindings. Effect73 was added to `UsesReferenceCircle()` and `UsesReferenceCylinder()` so its primitives use current reference updater/renderer paths. Release builds pass; immediate CTest reports 140/140. Production and OldRO SHA-256 match (`6FB14FACA3E9B2D7742BED4573DDF307025D22F7EF57F19617709CE394DE27CF`). Coverage remains 545 routed / 148 explicit unported / 47 launched-unported. Runtime acceptance remains open. Next: CartRevolution.
+
+## WP10.3 — CartRevolution (170) — 2026-10-28
+
+Effect170's existing handler now binds its circle and sphere primitives to the reference renderer families. The focused comparator verifies PE/primary-Ref helper equality, the PE caller and Ref caller omission, timing/payload, and that the ambiguous `aEffect_27` resolves from PE to exactly `effect\\` (the prior local `effect\\bigbang.tga` guess was corrected). The lifecycle test expectation was updated only for CartRevolution; its unrelated Barrier bigbang texture expectation remains intact. Production and parity-test Release builds pass, and immediate CTest reports 141/141 passed. Production and OldRO SHA-256 match (`396F13474CAB003CA62FDAAB325C5FD6327286BAFA821063ABB487FFA73725CD`). Coverage remains 545 routed / 148 explicit unported / 47 launched-unported; static skill audit is 693 labels, 416/73/204 switch labels, 40/40 required registrations. Runtime acceptance remains open. Next: ChangeCold.
+
+## WP10.3 — Cloaking (120) inline handler — 2026-10-28
+
+The Cloaking helper bodies match between PE and primary Ref but neither source caller invokes the helper. Canonical PE case120 is inline and is now routed through `ProcessCloaking120`: state0 plays exact `effect\\assasin_cloaking.wav` at effect-minus-listener X/Z, every tick calls master `SetArgb(50,-1,-1,-1)` and sets `m_shadowOn=false`. The effect's shadow state was added to `CRagEffect` with default false. `check_cloaking_inline.py` verifies helper identity, caller distinction, inline PE behavior, route and exact wave bytes. Coverage is 546 routed / 147 explicit unported / 47 launched-unported. Release builds pass and immediate CTest reports 142/142 passed. Production and OldRO SHA-256 match (`90E1AE2BF5E1B4C78EA4B23DB84070E927FBCBEEA42F2D8BE29F73606213E85E`). Static skill audit remains 693 labels, 416/73/204 switch labels and 40/40 required registrations. Runtime acceptance remains open. Next: Coin.
+
+## WP10.3 — Coin (10) caller-comparison checkpoint — 2026-10-28
+
+Coin's existing effect10 route, `ProcessCoin`, reference particle family membership and detailed lifecycle test already matched the implementation. `check_coin_caller.py` adds the missing mechanical evidence: complete PE/primary-Ref helper equality, PE case10 call versus Ref caller omission, existing route, minimum-effects/state20 gate, five ordered RNG draws per particle, exact PE resource bytes and renderer-family selection. Release test build passes; immediate CTest reports 143/143 passed. Coverage remains 546 routed / 147 explicit unported / 47 launched-unported. Runtime acceptance remains open. Next: ColdHit.
+
+## WP10.3 — ColdHit (51) comparator checkpoint — 2026-10-28
+
+Effect51 was already implemented through `SpawnColdHit`, routed through the legacy frame dispatcher, and included in the reference screen-texture and screen-quad families. Existing lifecycle tests cover the nine state-zero shards, their RNG order, smoke emissions at states0/7, textures and updates. `check_coldhit_caller.py` adds complete PE/primary-Ref helper equality and verifies the PE caller against the Ref caller omission, current route and both primitive families. Release parity-test build passes; immediate CTest reports 144/144 passed. Coverage remains 546 routed / 147 explicit unported / 47 launched-unported. Runtime acceptance remains open. Next: Concentration.
+
+## WP10.3 — Concentration 218/219 and Cone 71 — 2026-10-28
+
+Concentration helper bodies match between PE and primary Ref but neither source caller invokes the helper. PE cases218/219 contain the active inline behavior and the local handler already matches the master-position copy, distinct state gates, sound, pillar speeds/durations, STR processing and reference cylinder family. `check_concentration_caller.py` verifies that evidence plus exact executable wave bytes. Cone helper bodies also match; PE case71 invokes it and the Ref caller omits it. The local handler's orbit particle schedule, payload, transformed offset, resources and segment count match, but audit found effect71 absent from `UsesReferenceParticle()`. Added it to that family and extended lifecycle coverage to assert the binding. `check_cone_caller.py` verifies complete helper/caller/route/payload/family evidence. Release app and parity-test builds pass; immediate CTest reports 146/146 passed. Production and OldRO deployment hashes match (`B9CE50917B20F750BA1239439D1430A1001FBC8FEFC399782FB8B39D86784340`). Coverage remains 546 routed / 147 explicit unported / 47 launched-unported. Runtime acceptance remains open. Next: CrashEarth.
+
+## WP10.3 — CrashEarth orphan helper — 2026-10-28
+
+PE and primary Ref CrashEarth helper bodies match, but neither caller invokes it. The helper plays the WizardFi wave at state30, sends message135 at state35, then processes shared STR. No local route is added without a canonical caller. `check_crashearth_orphan.py` passes and confirms the exact wave bytes from the executable. Release parity-test build passes; immediate CTest reports 147/147. Next: Cure.
+
+## WP10.3 — Cure inline effect66 — 2026-10-28
+
+Cure helper bodies match between PE and primary Ref but neither caller invokes the helper. PE case66 plays `effect\\Acolyte_cure.wav` at state0 and proceeds through common STR. The existing local clip-wave/STR route already matches. `check_cure_inline.py` confirms helper/caller distinction, inline behavior, route and exact wave bytes. The Release parity-test build passes; immediate CTest reports 148/148. Next: CurseAttack.
+
+## WP10.3 — CurseAttack 196 — 2026-10-28
+
+CurseAttack helper bodies match between PE and primary Ref but neither source caller invokes them. PE case196 emits its PP_3DTEXTURE inline at state0; the existing local route already matched its timing, dimensions, drift and `effect\\curse.bmp` resource. Audit found effect196 omitted from the reference texture family, so that binding and its lifecycle assertion were added. `check_curseattack_inline.py` verifies helper/caller distinction, inline caller, local route, exact resource bytes and family selection. Release app build and serial parity-test build pass; immediate CTest reports 149/149. Production and OldRO hashes match (`F0FF4CCBE01DE0D7EA120E8F29FE4F60AADBA588FEDFE0F5573792377A3444C1`). Runtime acceptance remains open. Next: DarkBreath.
+
+## WP10.3 — DarkBreath inline effect212 — 2026-10-28
+
+DarkBreath helper bodies match between PE and primary Ref but neither caller invokes them. PE case212 handles particle creation inline; the current local `SpawnDarkBreath` route matches timing, payload, resource names and reference particle-family selection. `check_darkbreath_inline.py` confirms helper/caller distinction, inline behavior, local route and family. Release parity-test build passes; immediate CTest reports 150/150. Runtime acceptance remains open. Next: DecAgility.
+
+## WP10.3 — DecAgility 38 — 2026-10-28
+
+PE/primary-Ref helper bodies match; PE case38 calls DecAgility while the Ref caller switch omits it. The existing local route and detailed lifecycle coverage already verify its state-zero overlay and wave, even-frame trail, three-draw RNG order, actor projection/anchor updates, source particle fields and resource requests. Effect38 already binds both reference screen-texture and cross-texture families. `check_decagility_caller.py` adds helper/caller/route/family evidence and exact PE wave and texture bytes. Release parity-test build passes; immediate CTest reports 151/151. Runtime acceptance remains open. Next: Detecting.
+
+## WP10.3 — Detecting 119 — 2026-10-28
+
+PE case119 calls Detecting; the PE and primary-Ref helper bodies match while the Ref caller switch omits the invocation. Effect119 was explicitly unported locally. Added the state-zero sound and PP_3DTEXTURE payload with exact PE wave/texture resource bytes, routed it through the generated OnProcess table and bound effect119 to the reference texture family. Lifecycle coverage checks wave placement, payload, resource and one-shot state behavior; `check_detecting_caller.py` verifies PE/Ref helper/caller evidence and route/family. Release app build and serial parity-test build pass; immediate CTest reports 152/152. Coverage is 547/146/47. Production and OldRO hashes match (`C7D00866051801B7A07E1C4AA6DA5E2A997CE79280BCE495C6855906D711A782`). Runtime acceptance remains open. Next: Detoxication.

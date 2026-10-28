@@ -10,6 +10,7 @@
 #include "main/WinMain.h"
 #include "DebugLog.h"
 #include "core/Globals.h"
+#include "core/ClientInfoLocale.h"
 #include "core/Timer.h"
 #include "render/DC.h"
 #include "render3d/Device.h"
@@ -7567,6 +7568,105 @@ CPc::~CPc()
     }
 
     ReleaseActorBillboardTexture(*this);
+}
+
+CBlurPC::CBlurPC(CPc* source)
+{
+    if (source == nullptr) {
+        return;
+    }
+    m_isVisible = 1;
+    m_isVisibleBody = 1;
+    m_shadowOn = 0;
+    m_stateStartTick = timeGetTime();
+    m_pos = source->m_pos;
+    m_lastPixelRatio = source->m_lastPixelRatio;
+    m_sprShift = source->m_sprShift;
+    m_zoom = source->m_zoom;
+    m_baseAction = source->m_baseAction;
+    m_curAction = source->m_curAction;
+    m_curMotion = source->m_curMotion;
+    m_oldBaseAction = source->m_oldBaseAction;
+    m_oldMotion = source->m_oldMotion;
+    m_alwaysTopLayer = source->m_alwaysTopLayer;
+    m_offsetOow = source->m_offsetOow;
+    m_isLieOnGround = source->m_isLieOnGround;
+    m_isSingleColor = source->m_isSingleColor;
+    m_sprAngle = source->m_sprAngle;
+    m_bodyPalette = source->m_bodyPalette;
+    m_bodyPaletteName = source->m_bodyPaletteName;
+    m_headPalette = source->m_headPalette;
+    m_effectState = source->m_effectState;
+    m_headPaletteName = source->m_headPaletteName;
+    m_imfName = source->m_imfName;
+    m_gid = source->m_gid;
+    m_gdid = source->m_gdid;
+    m_sex = source->m_sex;
+    m_job = source->m_job;
+    m_isPc = source->m_isPc;
+    m_isMoving = source->m_isMoving;
+    m_isSitting = source->m_isSitting;
+    m_colorOfSingleColor = source->m_colorOfSingleColor;
+    m_singleColorStartTick = source->m_singleColorStartTick;
+    m_isSprArgbFixed = source->m_isSprArgbFixed;
+    m_headDir = source->m_headDir;
+    m_head = source->m_head;
+    m_weapon = source->m_weapon;
+    m_accessory = source->m_accessory;
+    m_accessory2 = source->m_accessory2;
+    m_accessory3 = source->m_accessory3;
+    m_shield = source->m_shield;
+    m_shoe = source->m_shoe;
+    m_sprResList = source->m_sprResList;
+    m_actResList = source->m_actResList;
+}
+
+u8 CBlurPC::OnProcess()
+{
+    if (m_u28.m_sprArgb < m_alphaDelta) {
+        return 0;
+    }
+    m_u28.m_sprArgb -= m_alphaDelta;
+    return 1;
+}
+
+void CBlurPC::Render(matrix*)
+{
+    m_renderEligible = false;
+    if ((m_effectState & (0x0004 | 0x0040 | 0x0002)) != 0) {
+        return;
+    }
+    rand();
+    rand();
+    rand();
+    rand();
+    if (!m_isVisible || (g_serviceType == ServiceTaiwan && IsGravityAid(m_gid) && m_gid != g_session.m_aid)) {
+        return;
+    }
+    m_renderEligible = m_isVisibleBody != 0;
+}
+
+void CBlurPC::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3)
+{
+    switch (msg) {
+    case 0:
+        SetArgb(180, static_cast<int>(par1), static_cast<int>(par2), static_cast<int>(par3));
+        m_alphaDelta = 0x08000000u;
+        break;
+    case 1:
+        m_u28.m_sprArgb &= (static_cast<u32>(par1) << 24) + 0x00FFFFFFu;
+        m_alphaDelta = static_cast<u32>(par2) << 24;
+        break;
+    case 2:
+        m_motionY = static_cast<float>(par1);
+        break;
+    case 3:
+        m_isMotionFreezed = 1;
+        break;
+    default:
+        CPc::SendMsg(src, msg, par1, par2, par3);
+        break;
+    }
 }
 
 void CPc::SetState(int state)

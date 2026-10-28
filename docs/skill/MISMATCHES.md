@@ -464,3 +464,162 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 # WP10.3 TripleAttack2/3 caller omissions and truncated audio paths (2026-10-28)
 
 - Canonical `HighPriest.exe.c:421184–421194` and `:421255–421265` route effects 388/393 to TRIPLEATTACK2/3, with a state-30 `PlayWave` call before the helper. Available `Ref/RagEffect.cpp` has no matching callers, while the Ref helper bodies match canonical PE. The caller routes follow canonical executable evidence. Both executable wave symbols (`aEffect_57`, `aEffect_51`) point to the literal `effect\` at VA 0x6F1FF0; no filename suffix is present. The implementation preserves the exact passed string and does not substitute a guessed sound.
+# WP10.3 Peong / PeongUp source differences (2026-10-28)
+
+- The canonical executable has effect411 call `PeongUp` 30 times with variant 0, then for quadrants 0–3 call `Peong` with texture order peong1, peong2, peong3, peong2 and time `90 * quadrant` (`HighPriest.exe.c:421404–421417`). The available `Ref/RagEffect.cpp` OnProcess switch has no effect411 branch.
+- `PeongUp` at `Ref/RagEffect2.cpp:30271` matches canonical `HighPriest.exe.c:456017` after whitespace compaction. Canonical `Peong` at `HighPriest.exe.c:456111` has no corresponding Ref `Peong` helper; Ref instead contains `PeongMiddle` at `Ref/RagEffect2.cpp:30195/30233`, whose payload differs. Effect411 follows the canonical PE `Peong` payload: four lanes, eight ordered RNG draws per lane, rise angle/time offset, 0.03 max height, and the source's `vecB_now.y = -4` placement.
+- The effect411 wave-free visual branch was implemented from PE caller/helper evidence. Other direct `PeongUp` callers 462/463 are not routed by this 411-specific task and remain in the unported inventory.
+
+# WP10.3 EnergyDrain2/3 caller omissions (2026-10-28)
+
+- Canonical `HighPriest.exe.c:421071–421081` and `:421121–421132` route effects 378/383 to `EnergyDrain2`/`EnergyDrain3`, then apply their actor-light/color windows. The available `Ref/RagEffect.cpp` OnProcess switch has no matching caller branches; the helper definitions in `Ref/RagEffect2.cpp` match the canonical executable. Caller ports follow PE evidence.
+
+# WP10.3 PortalWind 389 audio recovery (2026-10-28)
+
+- Canonical `HighPriest.exe.c:421195–421219` calls `PortalWind(this, 0)` and then `PlayWave(aEffect_66, ...)`; the executable bytes at the symbol resolve only to `effect\\`, so they do not establish a complete filename. The available `Ref/RagEffect.cpp` caller switch has no corresponding ID389 branch. As the plan permits only after these sources fail, `Ref/dhxj/RagEffect.cpp:4470–4480` was used as last-resort corroboration: its `EF_PORTAL4` branch calls `PortalWind()` with the same 5–25 tint window and explicitly plays `effect\\windwalk.wav`. The port uses that exact fallback string and records this source limitation; no filename was inferred from asset similarity.
+
+# WP10.3 MakeBlur snapshot renderer adaptation (2026-10-28)
+
+- The canonical/Ref `CBlurPC::Render` selects `RenderBody2`, `RenderBody`, or `RenderBodyLayer` and calls `UpdateTlvertex` for hidden bodies (`Ref/Npc.cpp:1002–1040`; canonical `HighPriest.exe.c:405730–405770`). The rebuilt client has no equivalent legacy render-body entry points. `CBlurPC` snapshots instead enter a dedicated `CWorld::RenderActors` lane that uses the current CPc billboard compositor and packed actor tint/fade; the four source render-time RNG calls and visibility/service gates are retained. Legacy layer-specific rendering and its exact hidden-body vertex update are not claimed as byte-for-byte backend parity.
+- Available `Ref/RagEffect.cpp` has no `MakeBlur` caller branch for canonical effect166 (`HighPriest.exe.c:420483–420484`), although the complete helper body at `Ref/RagEffect.cpp:6392` matches the executable helper at `HighPriest.exe.c:429737`. Effect617's caller is present in Ref at `Ref/RagEffect.cpp:12138–12139` and routes to `MakeBlur2`.
+
+# WP10.3 RunStop 444 caller and wave source (2026-10-28)
+
+- Canonical `HighPriest.exe.c:421657–421668` calls `RunStop(0)` and `RunStop(45)` every tick, after the state-zero PlayWave call. The call pushes string VA `0x719F40`; exact executable bytes are `effect\\T_\xC8\xBF\xB0\xFA\xC0\xBD1.wav` (`effect\\T_효과음1.wav`). `Ref/dhxj/RagEffect.cpp:5903–5910` maps `EF_STOPEFFECT` to `effect\\runstop.wav`; this conflicts with the canonical pushed bytes, so the executable governs. The readable Ref caller switch has no corresponding branch, but the complete RunStop helper is present and matches the canonical PE.
+
+# WP10.3 Exit 7 caller omission (2026-10-28)
+
+- Canonical `HighPriest.exe.c:419705–419706` dispatches effect7 to `Exit`; the complete helper at `:423819` matches `Ref/RagEffect.cpp:3838` after whitespace compaction, but the available Ref OnProcess caller switch omits ID7. The route follows the canonical caller.
+- `Exit` asks the legacy primitive renderer for a PP_3DCYLINDER and a PP_3DPARTICLEORBIT with sprite/action resources `\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr/.act`. The current client binds those primitives to its existing reference cylinder/sprite-particle update and render paths by adding effect7 to the family selectors. This backend renders through the current renderer and has not received live visual acceptance; no pixel-for-pixel legacy output claim is made.
+
+# WP10.3 Endure 11 caller omission (2026-10-28)
+
+- Canonical `HighPriest.exe.c:419717–419718` dispatches effect11 to `Endure`; the helper at `:425377` matches `Ref/RagEffect.cpp:3559` after whitespace compaction, but the available Ref caller switch has no `Endure` call. The route follows canonical PE evidence.
+- Effect11's two PP_2DTEXTURE primitives now bind to the existing reference screen-texture family path. Its current backend uses the rebuilt renderer; live visual acceptance remains open.
+
+# WP10.3 SoulStrike 15/451 caller omission (2026-10-28)
+
+- Canonical `HighPriest.exe.c:419738–419739` and `:421714–421715` call the matching `SoulStrike` helper with flags0/1. The helper at `:424468` matches `Ref/RagEffect.cpp:7947`, while the available Ref caller has no `SoulStrike` invocation. The paired routes follow the PE caller; exact particle asset bytes are documented in the parity comparator.
+
+# WP10.3 Detoxication 21 caller omission (2026-10-28)
+
+- Canonical `HighPriest.exe.c:419754–419755` calls `Detoxication`; helper `:424655` matches `Ref/RagEffect.cpp:3157`, but the available Ref caller switch has no Detoxication invocation. The port follows the canonical PE caller.
+- Effect21's PP_3DPARTICLE primitive now binds to the current reference sprite-particle renderer family. That route uses the rebuilt backend; live visual acceptance remains open.
+
+# WP10.3 Yufitel 93/94/452 caller omission (2026-10-28)
+
+- The PE dispatch calls `Yufitel(0)` for effect93 and `YufitelHit(0/1)` for effects94/452. Both helpers match their Ref bodies, but the available Ref caller switch omits all three invocations. The routes follow canonical PE caller evidence.
+- These PP_3DTEXTURE effects use the current reference texture-family updater/renderer after adding their IDs to `UsesReferenceTexture`; live visual acceptance remains open.
+
+# WP10.3 Flasher 99 caller omission (2026-10-28)
+
+- Canonical `HighPriest.exe.c:420217–420218` calls `Flasher`; the helper at `:428244` matches `Ref/RagEffect.cpp:4327`, but the available Ref caller switch has no Flasher invocation. Effect99 follows the PE caller and uses the current reference texture and flash renderer families; live visual acceptance remains open.
+
+\n
+
+# WP10.3 RemoveTrap 100 caller omission (2026-10-28)
+
+- Canonical `HighPriest.exe.c:420220–420221` dispatches effect100 to `RemoveTrap`; helper `:427899` matches `Ref/RagEffect.cpp:7101`, but the available Ref OnProcess caller switch omits the call. The port follows canonical PE evidence.
+- Its PP_3DPARTICLEORBIT records use the existing reference orbit update/render family after adding ID100 to `UsesReferenceParticle`. Current backend visuals remain subject to live acceptance.
+
+# WP10.3 BlitzBeat 115 caller omission and renderer binding (2026-10-28)
+
+- PE caller `HighPriest.exe.c:420311–420312` calls BlitzBeat; complete helper at `:428344` matches `Ref/RagEffect.cpp:2220`, but the available Ref OnProcess switch omits case115. The route follows PE caller evidence.
+- PP_3DCROSSTEXTURE and PP_3DCYLINDER primitives now bind effect115 to the current reference family update/render implementations. Runtime visual acceptance remains open.
+
+# WP10.3 BloodDrain 216 caller omission (2026-10-28)
+
+The full PE and primary Ref helper bodies match, but the available `Ref/RagEffect.cpp` caller switch omits effect216 while PE case216 invokes BloodDrain. The implementation follows canonical PE caller evidence. The particle spline is routed through the current reference animation renderer; live visual acceptance remains open.
+
+# WP10.3 Bottom 114 caller omission and primitive state (2026-10-28)
+
+- The full PE and primary Ref Bottom helpers match, but PE effect114 calls Bottom and the available Ref caller switch omits it. The port follows the PE caller.
+- Bottom writes the legacy `m_commonPattern=1` field, which did not exist in the current primitive state model. It is now represented on `CEffectPrim` with its canonical default 0 and set to 1 for these four PP_3DTEXTUREs. Those primitives use the current reference texture-family updater/renderer; live visual acceptance remains open.
+
+# WP10.3 Bottom2 137 caller omission (2026-10-28)
+
+PE effect137 invokes Bottom2 and the full helper matches primary Ref, but the available Ref OnProcess caller switch omits it; the route follows PE evidence. Its four PP_3DTEXTURE primitives use the current reference texture updater/renderer with `m_commonPattern=1`; live visual acceptance remains open.
+
+# WP10.3 BowlingBash 73 caller omission and renderer family (2026-10-28)
+
+The PE caller invokes BowlingBash and the helper matches primary Ref, while the available Ref caller switch omits it. Effect73 now binds PP_3DCYLINDER and PP_3DCIRCLE to the current reference family paths; live visual acceptance remains open.
+
+# WP10.3 CartRevolution 170 caller and asset correction (2026-10-28)
+
+The PE helper matches primary Ref, but the Ref caller switch omits effect170; the route follows PE. `aEffect_27` resolves in the executable to exactly `effect\\`, so the local guessed `effect\\bigbang.tga` path was removed. Effect170 circle and sphere primitives now use current reference renderer family paths; live acceptance remains open.
+
+# WP10.3 ChangeCold orphaned helper (no caller)
+
+The complete helper bodies at `HighPriest.exe.c:430073` and `Ref/RagEffect.cpp:2706` match, but neither the target PE OnProcess switch nor the primary Ref caller switch invokes `ChangeCold`. `Ref/dhxj/RagEffect.cpp` maps `EF_CHANGECOLD` to effect100, while canonical PE case100 invokes the already-ported RemoveTrap. Therefore no effect100 ChangeCold route is valid, and no new routed handler is added. The helper’s state-zero BeginCasting call is recorded as orphaned; revisit only if a canonical caller is found.
+
+# WP10.3 ChangeDark orphaned helper (no caller)
+
+The complete helper bodies at `HighPriest.exe.c:430080` and `Ref/RagEffect.cpp:2717` match, but neither canonical caller switch invokes `ChangeDark`. The helper only calls `BeginCasting(this, aEffectRingBlac, 3)` at state0, with no RNG/audio. `Ref/dhxj` maps `EF_CHANGEDARK` to effect100, conflicting with canonical PE effect100=RemoveTrap. No separate route is added; this is recorded as an unreachable helper and effect-ID conflict.
+
+# WP10.3 ChangeEarth orphaned helper (no caller)
+
+The complete helper bodies at `HighPriest.exe.c:430087` and primary `Ref/RagEffect.cpp` match, but neither caller switch invokes `ChangeEarth`. Its only behavior is the state-zero `BeginCasting(..., aEffectRingBrow, 3)` call. `Ref/dhxj` assigns `EF_CHANGEEARTH` to effect100, which conflicts with canonical PE effect100=RemoveTrap. No extra route is added; the helper is recorded as unreachable.
+
+# WP10.3 ChangeFire orphaned helper (no caller)
+
+The PE helper at `HighPriest.exe.c:430066` matches primary `Ref/RagEffect.cpp:2739`; neither source has a caller. Its only operation is state-zero `BeginCasting(..., aEffectRingRedT, 3)`. The old `Ref/dhxj` mapping assigns effect100, but PE effect100 is RemoveTrap. No dispatch route is added.
+
+# WP10.3 ChangeFlame orphaned helper (no caller)
+
+The PE helper at `HighPriest.exe.c:430094` matches primary `Ref/RagEffect.cpp:2750`; neither source has a caller. Its only operation is state-zero `BeginCasting(..., aEffectRingJadu, 3)`. The old `Ref/dhxj` mapping assigns effect100, but PE effect100 is RemoveTrap. No dispatch route is added.
+
+# WP10.3 ChangeHoly orphaned helper (no caller)
+
+The PE helper at `HighPriest.exe.c:430108` matches primary `Ref/RagEffect.cpp:2761`; it only calls `BeginCasting(..., aEffectRingWhit, 3)` at state0. Neither canonical caller switch invokes it. The misspelled `Ref/dhxj` symbol `EF_CHAINGEHOLY` maps to effect100, conflicting with PE's RemoveTrap. No route is added.
+
+# WP10.3 ChangePoison and ChangeWind orphaned helpers (no callers)
+
+ChangePoison at PE `HighPriest.exe.c:430115` matches primary Ref `Ref/RagEffect.cpp:2772`; both only call `BeginCasting(..., aEffectRingPurp, 3)` at state0. ChangeWind at PE `:430087` matches primary Ref `:2783`; both only call `BeginCasting(..., aEffectRingYell, 3)` at state0. Neither helper has a caller in PE or primary Ref. Their legacy `Ref/dhxj` mappings to effect100 conflict with canonical PE RemoveTrap. No dispatch routes are added.
+
+# WP10.3 Claymore helper versus inline effect107 caller
+
+The PE helper at `HighPriest.exe.c:431405` matches primary Ref `Ref/RagEffect.cpp:204`, but neither caller switch invokes `Claymore`. Canonical PE OnProcess handles effect107 inline at `HighPriest.exe.c:420269`: state0 plays the Claymore trap wave, then control continues through common STR processing. Existing effect107 `ProcessClipWaveStrEffect()` routing and the generated wave inventory cover that real caller behavior; no separate Claymore helper route is needed. The legacy `Ref/dhxj` effect107 mapping agrees with the inline PE case.
+
+# WP10.3 Cloaking helper and inline effect120 route (2026-10-28)
+
+The PE/primary-Ref Cloaking helper bodies match, but neither is called. PE case120 performs the behavior inline, so the implementation routes that exact caller branch: state0 wave, per-tick master alpha tint and shadow disable. `m_shadowOn` is a new CRagEffect state field initialized false. No primitive family is involved; visual/live acceptance remains open.
+
+# WP10.3 Coin 10 caller omission
+
+The full Coin helper matches primary Ref, but canonical PE case10 calls it while the available Ref caller switch omits it. The current implementation follows the PE route, with the existing source-oriented gravity particle family and lifecycle coverage.
+
+# WP10.3 ColdHit 51 caller omission
+
+The PE and primary Ref ColdHit helper bodies match, but PE case51 calls the helper while the available Ref caller switch omits it. Existing local routing follows PE. The screen quad and screen texture primitives use the current reference family implementations; live acceptance remains open.
+
+# WP10.3 Concentration helper is not the 218/219 caller
+
+The PE and primary Ref `Concentration` helper bodies match, but neither canonical caller invokes them. PE cases218/219 inline the potion-concentration wave and pillar behavior; the primary Ref OnProcess caller switch has no 218/219 implementation. The local route follows the PE cases and keeps the unused helper unrouted. Live audio/visual acceptance remains open.
+
+# WP10.3 Cone reference particle family correction
+
+PE effect71 launches `PP_3DPARTICLEORBIT`, but effect71 was absent from the local reference-particle family selector. The route and emitter payload were already present. Effect71 is now bound to the reference particle renderer, and lifecycle/source checks cover that family selection. Live visual acceptance remains open.
+
+# WP10.3 CrashEarth orphan helper
+
+The PE and primary Ref CrashEarth helper bodies match, but neither canonical caller switch invokes the helper. It plays a wave at state30 and sends message135 at state35 before shared STR processing. Because there is no canonical caller, the helper remains unrouted; this is an audited orphan rather than an implemented effect. Live behavior is not applicable unless a canonical caller is found.
+
+# WP10.3 Cure helper versus inline effect66
+
+The PE and primary Ref Cure helpers match, but neither caller invokes Cure. The canonical PE effect66 behavior is inline, and the local clip-wave/STR route covers that state-zero wave with exact executable bytes. The helper is not routed independently; runtime audio acceptance remains open.
+
+# WP10.3 CurseAttack helper and inline effect196 renderer family
+
+The PE/primary Ref CurseAttack helper bodies match, but neither is called; PE case196 performs the primitive setup inline. The existing local effect196 handler matched that inline payload, but its PP_3DTEXTURE primitive lacked reference-family selection. It is now bound to `UsesReferenceTexture()` and lifecycle coverage asserts the binding. Live visual acceptance remains open.
+
+# WP10.3 DarkBreath helper and inline effect212
+
+The PE and primary Ref DarkBreath helper bodies match but neither source caller invokes the helper. PE effect212 performs that particle setup inline; the local route and reference particle family already cover it. The orphan helper remains unrouted. Live visual acceptance remains open.
+
+# WP10.3 DecAgility effect38 caller omission
+
+The PE helper and primary Ref helper match; PE OnProcess case38 calls DecAgility while the available Ref caller switch omits it. The existing local effect38 route covers the helper, and both renderer families are bound. No production change was needed; the focused comparator verifies the source evidence and exact assets. Runtime visual/audio acceptance remains open.
+
+# WP10.3 Detecting effect119 implementation
+
+The PE invokes Detecting while the primary Ref caller omits it. Effect119 now routes to a local handler matching the state-zero PE wave and PP_3DTEXTURE payload, including the overwrite from deltaY−7 to −5. Its texture primitive is bound to the reference texture family; focused source and lifecycle checks verify the behavior. Runtime audio/visual acceptance remains open.

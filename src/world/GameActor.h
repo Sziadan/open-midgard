@@ -517,6 +517,18 @@ struct SkillStandEntry {
     u8 isVisible = 0;
 };
 
+class CBlurPC : public CPc {
+public:
+    explicit CBlurPC(CPc* source);
+    u8 OnProcess() override;
+    void Render(matrix* viewMatrix) override;
+    void SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override;
+
+    bool m_renderEligible = false;
+    u32 m_alphaDelta = 0x10000000u;
+    float m_motionY = 0.0f;
+};
+
 class CSkill : public CGameActor {
 public:
     CSkill();

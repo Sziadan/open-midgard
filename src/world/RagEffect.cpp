@@ -44,6 +44,7 @@ constexpr float kEffectSpriteDepthBias = 0.0002f;
 constexpr float kWaterfallSegmentHeight = 40.0f;
 constexpr int kWaterfallVisibleSegments = 5;
 constexpr int kWaterfallTextureCycle = 3;
+int g_blitzBeatEmissionCount = 0;
 
 struct RagEffectCatalogEntry {
     int effectId;
@@ -12421,12 +12422,16 @@ void CEffectPrim::SetParticleResources(const char* sprName, const char* actName,
 bool CEffectPrim::UsesReferenceCircle() const
 {
     return m_type == PP_3DCIRCLE && m_master
-        && (m_master->GetEffectType() == 17 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 48 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321);
+        && (m_master->GetEffectType() == 17 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 48 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 73 || m_master->GetEffectType() == 170 || m_master->GetEffectType() == 321);
 }
 
 bool CEffectPrim::UsesReferenceTexture() const
 {
-    return m_type == PP_3DTEXTURE && m_master && m_master->GetEffectType() == 48;
+    return m_type == PP_3DTEXTURE && m_master
+        && (m_master->GetEffectType() == 48 || m_master->GetEffectType() == 93
+            || m_master->GetEffectType() == 94 || m_master->GetEffectType() == 99
+            || m_master->GetEffectType() == 119 || m_master->GetEffectType() == 196 || m_master->GetEffectType() == 452 || m_master->GetEffectType() == 114
+            || m_master->GetEffectType() == 137);
 }
 
 bool CEffectPrim::UsesReferenceCylinder() const
@@ -12434,6 +12439,7 @@ bool CEffectPrim::UsesReferenceCylinder() const
     if (m_type != PP_3DCYLINDER || !m_master) return false;
     switch (m_master->GetEffectType()) {
     case 0: case 2: case 3: case 14: case 34: case 36: case 81: case 122: case 180: case 184: case 218: case 219: case 220: case 221: return true;
+    case 7: case 73: case 115: return true;
     default: return false;
     }
 }
@@ -12441,12 +12447,12 @@ bool CEffectPrim::UsesReferenceCylinder() const
 bool CEffectPrim::UsesReferenceCrossTexture() const
 {
     return m_type == PP_3DCROSSTEXTURE && m_master
-        && (m_master->GetEffectType() == 38 || m_master->GetEffectType() == 37 || m_master->GetEffectType() == 43 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 220);
+        && (m_master->GetEffectType() == 38 || m_master->GetEffectType() == 37 || m_master->GetEffectType() == 43 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 220 || m_master->GetEffectType() == 115);
 }
 
 bool CEffectPrim::UsesReferenceSphere() const
 {
-    return m_type == PP_3DSPHERE && m_master && m_master->GetEffectType() == 17;
+    return m_type == PP_3DSPHERE && m_master && (m_master->GetEffectType() == 17 || m_master->GetEffectType() == 170);
 }
 
 bool CEffectPrim::UsesReferenceScreenCircle() const
@@ -12456,7 +12462,7 @@ bool CEffectPrim::UsesReferenceScreenCircle() const
 
 bool CEffectPrim::UsesReferenceFlash() const
 {
-    return m_type == PP_2DFLASH && m_master && (m_master->GetEffectType() == 16 || m_master->GetEffectType() == 40 || m_master->GetEffectType() == 98);
+    return m_type == PP_2DFLASH && m_master && (m_master->GetEffectType() == 16 || m_master->GetEffectType() == 40 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 99);
 }
 
 bool CEffectPrim::UsesReferenceQuadHorn() const
@@ -12468,7 +12474,7 @@ bool CEffectPrim::UsesReferenceQuadHorn() const
 bool CEffectPrim::UsesReferenceScreenTexture() const
 {
     return m_type == PP_2DTEXTURE && m_master
-        && (m_master->GetEffectType() == 38 || m_master->GetEffectType() == 37 || m_master->GetEffectType() == 43 || m_master->GetEffectType() == 32 || m_master->GetEffectType() == 4 || m_master->GetEffectType() == 5 || m_master->GetEffectType() == 1 || m_master->GetEffectType() == 183 || m_master->GetEffectType() == 46 || m_master->GetEffectType() == 50 || m_master->GetEffectType() == 51);
+        && (m_master->GetEffectType() == 11 || m_master->GetEffectType() == 38 || m_master->GetEffectType() == 37 || m_master->GetEffectType() == 43 || m_master->GetEffectType() == 32 || m_master->GetEffectType() == 4 || m_master->GetEffectType() == 5 || m_master->GetEffectType() == 1 || m_master->GetEffectType() == 183 || m_master->GetEffectType() == 46 || m_master->GetEffectType() == 50 || m_master->GetEffectType() == 51);
 }
 
 bool CEffectPrim::UsesReferenceScreenQuad() const
@@ -12482,9 +12488,9 @@ bool CEffectPrim::UsesReferenceParticle() const
         || (m_type == PP_3DPARTICLEGRAVITY && m_master
             && (m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 10 || m_master->GetEffectType() == 18))
         || (m_type == PP_3DPARTICLEORBIT && m_master
-            && (m_master->GetEffectType() == 14 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
+            && (m_master->GetEffectType() == 7 || m_master->GetEffectType() == 14 || m_master->GetEffectType() == 71 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 100 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
-            && (m_master->GetEffectType() == 53 || m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
+            && (m_master->GetEffectType() == 21 || m_master->GetEffectType() == 53 || m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 212 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622));
 }
 
@@ -13840,6 +13846,7 @@ CRagEffect::CRagEffect()
     , m_count(0)
     , m_level(1)
     , m_stateCnt(0)
+    , m_shadowOn(false)
     , m_duration(0)
     , m_cEndLayer(0)
     , m_iCurLayer(0)
@@ -16415,7 +16422,7 @@ bool CRagEffect::ApplyCartRevolution()
         sphere->m_maxAlpha = 240.0f;
         sphere->m_alphaSpeed = sphere->m_maxAlpha / 7;
         sphere->m_fadeOutCnt = sphere->m_duration - 15;
-        sphere->m_texture.push_back(g_texMgr.GetTexture("effect\\bigbang.tga", false));
+        sphere->m_texture.push_back(g_texMgr.GetTexture("effect\\", false));
     }
 
     if (m_stateCnt >= 300) return false;
@@ -17198,11 +17205,12 @@ void LaunchWarpCasting(CRagEffect* effect, EFFECTPRIMID primType, const vector3d
 
 void CRagEffect::ApplyPortalWind(int variant)
 {
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     if (m_stateCnt != 0) {
         return;
     }
-    CRenderObject* master = ResolveCurrentMaster();
-    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
     CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeWind), vector3d{});
     if (prim == nullptr) {
         return;
@@ -17213,24 +17221,923 @@ void CRagEffect::ApplyPortalWind(int variant)
     prim->m_size = variant == 1 ? 8.0f : 5.0f;
     prim->m_texture.push_back(g_texMgr.GetTexture("effect\\cloud11.tga", false));
     for (int band = 0; band < 4; ++band) {
-        const float index = static_cast<float>(band);
-        float maxHeight = index + index + 5.0f;
-        float distance = static_cast<float>(rand() % 101) * 0.029999999f + 4.5f;
+        const double index = static_cast<double>(band);
+        double maxHeight = index + index + 5.0;
+        double distance = 0.0;
         if (variant == 1) {
-            maxHeight = index + index + 3.0f;
-            distance = static_cast<float>(rand() % 101) * 0.0099999998f + 2.5f;
+            maxHeight = index + index + 3.0;
+            distance = static_cast<double>(rand() % 101) * 0.0099999998 + 2.5;
         } else if (variant == 2) {
-            maxHeight = 48.0f - index * 5.0f;
-            distance = 14.0f - index * 2.0f;
+            maxHeight = 48.0 - index * 5.0;
+            distance = 14.0 - index * 2.0;
         } else if (variant == 3) {
-            maxHeight = 28.0f - index * 5.0f;
-            distance = 6.0f - index;
+            maxHeight = 28.0 - index * 5.0;
+            distance = 6.0 - index;
+        } else {
+            distance = static_cast<double>(rand() % 101) * 0.029999999 + 4.5;
         }
         EffectGi& gi = prim->m_gi[static_cast<size_t>(band)];
-        ConfigureHealBand(gi, maxHeight, static_cast<short>(90 * band), distance, static_cast<short>(rand() % 21 + 80), variant < 2 ? 1 : 2);
+        ConfigureHealBand(gi, static_cast<float>(maxHeight), static_cast<short>(90 * band),
+            static_cast<float>(distance), static_cast<short>(rand() % 21 + 80), variant < 2 ? 1 : 2);
         gi.fullDisplayAngle = 30;
         gi.height.fill(1.0f);
     }
+}
+
+bool CRagEffect::ProcessPortalWind389()
+{
+    ApplyPortalWind(0);
+    CRenderObject* master = ResolveCurrentMaster();
+    if (m_stateCnt == 0) {
+        // Ref/dhxj/RagEffect.cpp:4472-4480 (EF_PORTAL4); canonical PE symbol aEffect_66 is truncated.
+        TryPlayEffectWaveAt(m_effectPos, "effect\\windwalk.wav");
+    }
+    if (master != nullptr && m_stateCnt >= 5 && m_stateCnt <= 25) {
+        if ((master->m_BodyLight & 1) != 1) {
+            ++master->m_BodyLight;
+        }
+        master->SetArgb(-1, 220, 250, 220);
+    }
+    return true;
+}
+
+namespace {
+
+CBlurPC* AddBlurSnapshot(CRenderObject* source, CGameObject* sender, int red, int green, int blue,
+    const ACTOR_COLOR* overrideColor = nullptr)
+{
+    CPc* pc = dynamic_cast<CPc*>(source);
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (pc == nullptr || mode == nullptr || mode->m_world == nullptr) {
+        return nullptr;
+    }
+    CBlurPC* blur = new CBlurPC(pc);
+    blur->SendMsg(sender, 0, red, green, blue);
+    if (overrideColor != nullptr) {
+        blur->SetArgb(-1, overrideColor->r, overrideColor->g, overrideColor->b);
+    }
+    mode->m_world->m_gameObjectList.push_back(blur);
+    return blur;
+}
+
+int BlurColorChannel(u8 actorChannel, float effectChannel)
+{
+    const double sum = static_cast<double>(actorChannel) + static_cast<double>(effectChannel);
+    return static_cast<int>(static_cast<int64_t>(sum)) >> 1;
+}
+
+}
+
+bool CRagEffect::ProcessMakeBlur()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) {
+        return true;
+    }
+    const bool bodyPalette = master->m_bodyPalette != 0;
+    const bool oldColorAlpha = master->m_oldColor.a != 0;
+    if (bodyPalette && oldColorAlpha) {
+        master->SetArgb(-1,
+            BlurColorChannel(master->m_curColor.r, m_effectPos.x),
+            BlurColorChannel(master->m_curColor.g, m_effectPos.y),
+            BlurColorChannel(master->m_curColor.b, m_effectPos.z));
+        if (m_stateCnt == 9998) {
+            m_stateCnt = 0;
+        }
+        return true;
+    }
+
+    if (!bodyPalette && oldColorAlpha) {
+        master->SetArgb(-1,
+            BlurColorChannel(master->m_curColor.r, m_effectPos.x),
+            BlurColorChannel(master->m_curColor.g, m_effectPos.y),
+            BlurColorChannel(master->m_curColor.b, m_effectPos.z));
+        if (m_stateCnt == 9998) {
+            m_stateCnt = 0;
+        }
+        if ((m_stateCnt % 5) == 0) {
+            const int red = static_cast<int>(m_effectPos.x);
+            const int green = static_cast<int>(m_effectPos.y);
+            const int blue = static_cast<int>(m_effectPos.z);
+            ACTOR_COLOR color{ 0,
+                static_cast<u8>(BlurColorChannel(master->m_curColor.r, m_effectPos.x)),
+                static_cast<u8>(BlurColorChannel(master->m_curColor.g, m_effectPos.y)),
+                static_cast<u8>(BlurColorChannel(master->m_curColor.b, m_effectPos.z)) };
+            AddBlurSnapshot(master, this, red, green, blue, &color);
+        }
+        return true;
+    }
+
+    master->SetArgb(-1, static_cast<int>(m_effectPos.x), static_cast<int>(m_effectPos.y), static_cast<int>(m_effectPos.z));
+    if (m_stateCnt == 9998) {
+        m_stateCnt = 0;
+    }
+    if (m_effectPos.x == -1.0f) {
+        if (rand() % 14 > 0) {
+            master->SetArgb(-1, 250, 200, 200);
+        } else {
+            master->SetArgb(-1, 250, 250, 250);
+        }
+        return true;
+    }
+    if (m_effectPos.x == -2.0f) {
+        master->SetArgb(-1, 250, 250, 200);
+        return true;
+    }
+    if (m_duration != 30 && (bodyPalette || (m_stateCnt % 5) != 0)) {
+        return true;
+    }
+    AddBlurSnapshot(master, this,
+        static_cast<int>(m_effectPos.x), static_cast<int>(m_effectPos.y), static_cast<int>(m_effectPos.z));
+    return true;
+}
+
+bool CRagEffect::ProcessMakeBlur2()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) {
+        return true;
+    }
+    m_effectPos = vector3d{ 155.0f, 155.0f, 255.0f };
+    master->SetArgb(-1, 155, 155, 255);
+    if (m_stateCnt == 9998) {
+        m_stateCnt = 0;
+    }
+    if ((m_stateCnt % 20) == 0) {
+        AddBlurSnapshot(master, this, 155, 155, 255);
+    }
+    return true;
+}
+
+void CRagEffect::SpawnRunStop(short time)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) {
+        return;
+    }
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) {
+        return;
+    }
+    CEffectPrim* prim = LaunchEffectPrim(PP_SLASH1, vector3d{});
+    if (prim == nullptr) {
+        return;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\magic_blue.tga", false));
+    prim->m_size = 4.0f;
+    for (int lane = 0; lane < 4; ++lane) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(lane)];
+        gi.life = 1;
+        gi.process = 0;
+        gi.distance = 2.0f;
+        gi.height[0] = 1.0f;
+        gi.maxHeight = 0.0f;
+        gi.rotStart = static_cast<short>(time + 90 * lane);
+        gi.alphaB = 0;
+        gi.flag[0] = 1;
+    }
+}
+
+bool CRagEffect::ProcessRunStop444()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) {
+        return true;
+    }
+    m_effectPos = master->m_pos;
+    if (m_stateCnt == 0) {
+        TryPlayEffectWaveAt(m_effectPos, "effect\\T_\xC8\xBF\xB0\xFA\xC0\xBD" "1.wav");
+    }
+    SpawnRunStop(0);
+    SpawnRunStop(45);
+    return true;
+}
+
+bool CRagEffect::ProcessCartBoost456()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (master == nullptr || mode == nullptr || mode->m_view == nullptr) {
+        return true;
+    }
+
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos, mode->m_view->GetViewMatrix(), projected);
+    m_tlvertX = projected.x;
+    m_tlvertY = projected.y;
+    m_effectPos = master->m_pos;
+
+    if (m_stateCnt == 0 && mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_IncAgility.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+
+    if ((m_stateCnt % 2) != 0) {
+        return true;
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DCROSSTEXTURE, vector3d{});
+    if (prim == nullptr) {
+        return true;
+    }
+    prim->m_duration = 50;
+    const int angle = rand() % 360;
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(angle));
+    const double radius = rand() % 7 + 2;
+    prim->m_deltaPos2 = {
+        static_cast<float>(radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+    };
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix, GetRadian(90));
+    prim->m_speed = static_cast<float>((rand() % 50 + 20) * 0.0099999998);
+    prim->m_widthSize = static_cast<float>((rand() % 100 + 20) * 0.1);
+    prim->m_heightSize = static_cast<float>((rand() % 4) * 0.1 + 0.1);
+    prim->m_alpha = 0.0f;
+    prim->m_maxAlpha = 60.0f;
+    prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.050000001);
+    prim->m_fadeOutCnt = prim->m_duration - 20;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ac_center2.tga", false));
+    return true;
+}
+
+bool CRagEffect::ProcessExit7()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) {
+        return true;
+    }
+    m_effectPos = master->m_pos;
+    if (m_stateCnt == 0) {
+        CEffectPrim* cylinder = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
+        if (cylinder != nullptr) {
+            m_duration = 100;
+            cylinder->m_duration = 100;
+            cylinder->m_outerSize = 4.5f;
+            cylinder->m_innerSize = 4.5f;
+            cylinder->m_heightSize = 35.0f;
+            cylinder->m_alpha = 0.0f;
+            cylinder->m_maxAlpha = 90.0f;
+            cylinder->m_alphaSpeed = static_cast<float>(cylinder->m_maxAlpha * 0.033333335);
+            cylinder->m_fadeOutCnt = cylinder->m_duration - 20;
+            cylinder->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false));
+        }
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                const vector3d& listener = mode->m_world->m_player->m_pos;
+                PlayWave("_heal_effect.wav", m_effectPos.x - listener.x, 0.0f,
+                    m_effectPos.z - listener.z, 250, 40, 1.0f);
+            }
+        }
+    }
+
+    if (!g_session.m_isMinEffect && (m_stateCnt % 9) == 0) {
+        CEffectPrim* orbit = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{});
+        if (orbit == nullptr) {
+            return true;
+        }
+        (void)rand();
+        orbit->m_radius = 3.0f;
+        orbit->m_duration = 50;
+        orbit->m_longitude = static_cast<float>(rand() % 360);
+        orbit->m_gravSpeed = -1.2f;
+        orbit->m_gravAccel = static_cast<float>(orbit->m_gravSpeed
+            / static_cast<double>(orbit->m_duration) * -0.66666669);
+        MatrixIdentity(orbit->m_matrix);
+        MatrixAppendYRotation(orbit->m_matrix, GetRadian(static_cast<int>(orbit->m_longitude)));
+        orbit->m_deltaPos2 = {
+            static_cast<float>(orbit->m_radius * orbit->m_matrix.m[2][0] + orbit->m_matrix.m[3][0]),
+            static_cast<float>(orbit->m_radius * orbit->m_matrix.m[2][1] + orbit->m_matrix.m[3][1]),
+            static_cast<float>(orbit->m_radius * orbit->m_matrix.m[2][2] + orbit->m_matrix.m[3][2])
+        };
+        orbit->m_size = 0.55000001f;
+        orbit->m_fadeOutCnt = orbit->m_duration - orbit->m_duration / 3;
+        orbit->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act", false);
+        orbit->m_numSegments = 1;
+        InitReferenceSegments(orbit);
+    }
+    return true;
+}
+
+bool CRagEffect::ProcessEndure11()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (master == nullptr || mode == nullptr || mode->m_view == nullptr) {
+        return true;
+    }
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos, mode->m_view->GetViewMatrix(), projected);
+    m_tlvertX = projected.x;
+    m_tlvertY = projected.y;
+
+    if (m_stateCnt == 0) {
+        if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\EF_Endure.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+        CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE, vector3d{});
+        if (prim != nullptr) {
+            prim->m_duration = m_duration;
+            prim->m_pattern |= 2u;
+            prim->m_deltaPos2.y = -20.0f;
+            prim->m_widthSize = 150.0f;
+            prim->m_heightSize = 150.0f;
+            prim->m_widthSpeed = -5.0f;
+            prim->m_heightSpeed = -5.0f;
+            prim->m_count = prim->m_duration - 35;
+            prim->m_widthAccel = static_cast<float>(-(prim->m_widthSpeed / static_cast<double>(prim->m_count)));
+            prim->m_heightAccel = static_cast<float>(-(prim->m_heightSpeed / static_cast<double>(prim->m_count)));
+            prim->m_alpha = 0.0f;
+            prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.050000001);
+            prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\endure.tga", false));
+            prim->m_gi[0].life = 0;
+        }
+    }
+
+    if (m_stateCnt < 50) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_2DTEXTURE, vector3d{});
+        if (prim != nullptr) {
+            prim->m_duration = 40;
+            const int angle = rand() % 360;
+            prim->m_roll = static_cast<float>(angle);
+            prim->m_longitude = prim->m_roll;
+            prim->m_speed = -4.0f;
+            prim->m_accel = static_cast<float>(-(prim->m_speed / static_cast<double>(prim->m_duration)));
+            prim->m_widthSize = static_cast<float>((rand() % 100 + 60) * 0.0099999998);
+            prim->m_heightSize = static_cast<float>(rand() % 20 + 30);
+            prim->m_alpha = 0.0f;
+            prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.050000001);
+            prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 3;
+            const int length = rand() % 40 + 100;
+            prim->m_deltaPos2.x = GetSin(angle) * static_cast<float>(length);
+            prim->m_deltaPos2.y = -(GetCos(angle) * static_cast<float>(length)) - 20.0f;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false));
+            prim->m_gi[0].life = 0;
+        }
+    }
+    return true;
+}
+
+bool CRagEffect::ProcessSoulStrike15(int variant)
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CRenderObject* master = ResolveCurrentMaster();
+    if (mode == nullptr || mode->m_view == nullptr || master == nullptr) {
+        return true;
+    }
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos, mode->m_view->GetViewMatrix(), projected);
+    m_tlvertX = projected.x;
+    m_tlvertY = projected.y;
+
+    int start = variant;
+    int step = variant;
+    int end = 0;
+    switch (m_count) {
+    case 1: start = 0; step = 1; end = 1; break;
+    case 2: start = -90; step = 180; end = 2; break;
+    case 3: start = -90; step = 90; end = 3; break;
+    case 4: start = -90; step = 60; end = 4; break;
+    case 5: start = -90; step = 45; end = 5; break;
+    default: break;
+    }
+
+    const int tick = m_stateCnt + 5;
+    if ((tick % 11) != 0 || tick / 11 > end) {
+        return true;
+    }
+    const int roll = start + step * (tick / 11);
+    if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_SoulStrike.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLESPLINE, vector3d{});
+    if (prim == nullptr) {
+        return true;
+    }
+    prim->m_duration = 40;
+    prim->m_deltaPos2 = {0.0f, -10.0f, 0.0f};
+    const double dx = static_cast<double>(m_deltaPos.x) - prim->m_pos.x;
+    const double dz = static_cast<double>(m_deltaPos.z) - prim->m_pos.z;
+    prim->m_radius = static_cast<float>(std::sqrt(dx * dx + dz * dz));
+    double direction = std::atan2(dx, -dz) / 3.14159265 * 180.0;
+    if (direction >= 360.0) direction -= 360.0;
+    if (direction < 0.0) direction += 360.0;
+    prim->m_roty = static_cast<float>(direction);
+    prim->m_longitude = -prim->m_roty;
+    prim->m_speed = prim->m_radius / static_cast<float>(prim->m_duration);
+    prim->m_gravSpeed = 3.5f;
+    prim->m_gravAccel = static_cast<float>(prim->m_gravSpeed / static_cast<double>(prim->m_duration) * -2.0);
+    prim->m_latiSpeed = -2.0f;
+    prim->m_latiAccel = static_cast<float>(prim->m_latiSpeed / static_cast<double>(prim->m_duration) * -2.0);
+    prim->m_roll = static_cast<float>(roll);
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+    prim->m_deltaPos3 = {
+        prim->m_matrix.m[3][0] + prim->m_matrix.m[2][0],
+        prim->m_matrix.m[3][1] + prim->m_matrix.m[2][1],
+        prim->m_matrix.m[3][2] + prim->m_matrix.m[2][2]
+    };
+    prim->m_rotAxis = {prim->m_deltaPos3.x, prim->m_deltaPos3.y, prim->m_deltaPos3.z};
+    prim->m_size = 2.75f;
+    if (variant != 0) {
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle5.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\particle5.act", false);
+    } else {
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act", false);
+    }
+    prim->m_numSegments = 12;
+    InitReferenceSegments(prim);
+    return true;
+}
+
+bool CRagEffect::ProcessDetoxication21()
+{
+    const int interval = g_session.m_isMinEffect ? 15 : 5;
+    if ((m_stateCnt % interval) != 0) {
+        return true;
+    }
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (m_stateCnt == 0 && mode != nullptr && mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\EF_Detoxication.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+    if (prim == nullptr) {
+        return true;
+    }
+    prim->m_duration = 40;
+    prim->m_alpha = 0.0f;
+    const int angle = rand() % 360;
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(angle));
+    const double radial = rand() % 6 + 2;
+    prim->m_deltaPos2 = {
+        static_cast<float>(radial * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(radial * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(radial * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+    };
+    MatrixIdentity(prim->m_matrix);
+    MatrixAppendXRotation(prim->m_matrix, GetRadian(90));
+    prim->m_speed = static_cast<float>((rand() % 30 + 30) * 0.0099999998);
+    prim->m_accel = static_cast<float>(prim->m_speed / static_cast<double>(prim->m_duration) * -0.5);
+    prim->m_size = static_cast<float>((rand() % 50 + 40) * 0.0099999998);
+    prim->m_rollSpeed = 3.0f;
+    prim->m_alphaSpeed = static_cast<float>(prim->m_maxAlpha * 0.1);
+    prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 5;
+    prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.spr",
+        "\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.act", false);
+    prim->m_numSegments = 1;
+    InitReferenceSegments(prim);
+    return true;
+}
+
+bool CRagEffect::ProcessYufitel93()
+{
+    if (m_stateCnt != 0) {
+        return true;
+    }
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode != nullptr && mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\hunter_shockwavetrap.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+
+    const double dx = static_cast<double>(m_deltaPos.x) - m_effectPos.x;
+    const double dz = static_cast<double>(m_deltaPos.z) - m_effectPos.z;
+    const double distance = std::sqrt(dx * dx + dz * dz);
+    double direction = std::atan2(dx, -dz) / 3.14159265 * 180.0;
+    if (direction < 0.0) direction += 360.0;
+    const auto setupTravel = [&](CEffectPrim* prim, float size) {
+        prim->m_duration = 20;
+        prim->m_pattern |= 0x440u;
+        prim->m_renderFlag |= 2u;
+        prim->m_widthSize = size;
+        prim->m_heightSize = size;
+        prim->m_longitude = static_cast<float>(-direction);
+        prim->m_roty = static_cast<float>(180.0 - direction);
+        if (prim->m_roty < 0.0f) prim->m_roty += 360.0f;
+        prim->m_speed = static_cast<float>(-distance / static_cast<double>(prim->m_duration));
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_deltaPos2.y = -5.0f;
+    };
+
+    CEffectPrim* first = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+    if (first != nullptr) {
+        setupTravel(first, 3.5f);
+        first->m_alpha = 170.0f;
+        first->m_texture.push_back(g_texMgr.GetTexture(
+            "effect\\thunder_center.bmp", false));
+    }
+    CEffectPrim* animated = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+    if (animated != nullptr) {
+        setupTravel(animated, 4.5f);
+        animated->m_repeatAnim = true;
+        animated->m_animSpeed = 1;
+        animated->m_totalTexture = 6;
+        const char* const textures[6] = {
+            "effect\\thunder_ball_a.bmp", "effect\\thunder_ball_b.bmp", "effect\\thunder_ball_c.bmp",
+            "effect\\thunder_ball_d.bmp", "effect\\thunder_ball_e.bmp", "effect\\thunder_ball_f.bmp"
+        };
+        for (int index = 0; index < 6; ++index) {
+            animated->m_texture.push_back(g_texMgr.GetTexture(textures[index], false));
+        }
+    }
+    return true;
+}
+
+bool CRagEffect::ProcessYufitelHit(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) {
+        return true;
+    }
+    m_effectPos = master->m_pos;
+    if ((m_stateCnt % 20) == 0) {
+        CEffectPrim* pulse = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+        if (pulse != nullptr) {
+            pulse->m_duration = 10;
+            pulse->m_pattern |= 0x40u;
+            pulse->m_renderFlag |= 0x202u;
+            pulse->m_deltaPos2.y = -5.0f;
+            pulse->m_widthSpeed = 2.5f;
+            pulse->m_heightSpeed = 2.5f;
+            pulse->m_changePoint = 10;
+            pulse->m_changeWidthSpeed = 0.0f;
+            pulse->m_changeHeightSpeed = 0.0f;
+            pulse->m_changeWidthAccel = pulse->m_changeWidthSpeed * -0.02f;
+            pulse->m_changeHeightAccel = pulse->m_changeHeightSpeed * -0.02f;
+            pulse->m_fadeOutCnt = 1;
+            pulse->m_texture.push_back(g_texMgr.GetTexture(
+                variant ? "effect\\pokjuk_d.bmp" : "effect\\thunder_pang.bmp", false));
+        }
+    }
+    if (m_stateCnt == 10) {
+        CEffectPrim* persistent = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+        if (persistent != nullptr) {
+            persistent->m_duration = 300;
+            persistent->m_pattern |= 0x40u;
+            persistent->m_renderFlag |= 0x202u;
+            persistent->m_deltaPos2.y = -5.0f;
+            persistent->m_repeatAnim = true;
+            persistent->m_widthSize = 7.5f;
+            persistent->m_heightSize = 7.5f;
+            persistent->m_animSpeed = 1;
+            persistent->m_totalTexture = 5;
+            const char* const thunderSequence[5] = {
+                "effect\\thunder_plazma_blast_a.bmp", "effect\\thunder_plazma_blast_b.bmp",
+                "effect\\thunder_ball_d.bmp", "effect\\thunder_ball_e.bmp", "effect\\thunder_ball_f.bmp"
+            };
+            const char* const softSequence[5] = {
+                "effect\\twirl_soft.bmp", "effect\\thunder_ball_b.bmp", "effect\\twirl_soft.bmp",
+                "effect\\thunder_ball_c.bmp", "effect\\twirl_soft.bmp"
+            };
+            for (int index = 0; index < 5; ++index) {
+                persistent->m_texture.push_back(g_texMgr.GetTexture(
+                    variant ? softSequence[index] : thunderSequence[index], false));
+            }
+        }
+    }
+    return true;
+}
+
+bool CRagEffect::ProcessFlasher99()
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CRenderObject* master = ResolveCurrentMaster();
+    if (mode == nullptr || mode->m_view == nullptr || master == nullptr) {
+        return true;
+    }
+    if (m_stateCnt == 0 && mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\hunter_flasher.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+    tlvertex3d projected{};
+    ProjectReferenceEffectVertex(master->m_pos, mode->m_view->GetViewMatrix(), projected);
+    m_tlvertX = projected.x;
+    m_tlvertY = projected.y;
+    if (m_stateCnt != 0) {
+        return true;
+    }
+
+    CEffectPrim* texture = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+    if (texture != nullptr) {
+        texture->m_duration = 70;
+        texture->m_pattern = 65;
+        texture->m_renderFlag |= 2u;
+        texture->m_deltaPos2.y = -10.0f;
+        texture->m_widthSize = 20.0f;
+        texture->m_heightSize = 20.0f;
+        texture->m_alpha = 0.0f;
+        texture->m_maxAlpha = 200.0f;
+        texture->m_alphaSpeed = static_cast<float>(texture->m_maxAlpha * 0.16666667);
+        texture->m_AlphaShow = true;
+        texture->m_chPoint = {40.0f, 100.0f};
+        texture->m_chVal1 = {120.0f, 0.0f};
+        texture->m_chVal2 = {200.0f, 80.0f};
+        texture->m_fadeOutCnt = texture->m_duration - 10;
+        texture->m_texture.push_back(g_texMgr.GetTexture("effect\\thunder_center.bmp", false));
+    }
+
+    for (int index = 0; index < 20; ++index) {
+        CEffectPrim* flash = LaunchEffectPrim(PP_2DFLASH, vector3d{});
+        if (flash == nullptr) {
+            continue;
+        }
+        flash->m_duration = 70;
+        flash->m_deltaPos2.y = -40.0f;
+        flash->m_longitude = static_cast<float>(rand() % 360);
+        flash->m_longSpeed = static_cast<float>((rand() % 60 + 10) * 0.1);
+        flash->m_longAccel = static_cast<float>(flash->m_longSpeed / static_cast<double>(flash->m_duration) * -0.66666669);
+        flash->m_arcAngle = static_cast<float>((rand() % 25 + 5) * 0.1);
+        flash->m_heightSize = static_cast<float>(rand() % 40 + 20);
+        flash->m_heightSpeed = static_cast<float>((rand() % 30 + 50) * 0.1);
+        flash->m_alpha = 0.0f;
+        flash->m_maxAlpha = 200.0f;
+        flash->m_alphaSpeed = flash->m_maxAlpha * 0.1f;
+        flash->m_fadeOutCnt = flash->m_duration - flash->m_duration / 3;
+        flash->m_texture.push_back(g_texMgr.GetTexture("EFFECT\\alpha_center.tga", false));
+    }
+    return true;
+}
+
+bool CRagEffect::ProcessRemoveTrap100()
+{
+    if (m_stateCnt == 0) {
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                const vector3d& listener = mode->m_world->m_player->m_pos;
+                PlayWave("effect\\hunter_removetrap.wav", m_effectPos.x - listener.x, 0.0f,
+                    m_effectPos.z - listener.z, 250, 40, 1.0f);
+            }
+        }
+    }
+    if (m_stateCnt != 0 && m_stateCnt != 7) {
+        return true;
+    }
+    for (int index = 0; index < 12; ++index) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{});
+        if (prim == nullptr) {
+            continue;
+        }
+        prim->m_duration = 50;
+        prim->m_radiusSpeed = 0.2f;
+        (void)rand();
+        prim->m_gravSpeed = -2.0f;
+        prim->m_gravAccel = static_cast<float>((rand() % 10) * 0.001 + 0.079999998);
+        prim->m_longitude = static_cast<float>(rand() % 360);
+        prim->m_size = 0.80000001f;
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_deltaPos2 = {
+            static_cast<float>(prim->m_radius * prim->m_matrix.m[2][0] + prim->m_matrix.m[3][0]),
+            static_cast<float>(prim->m_radius * prim->m_matrix.m[2][1] + prim->m_matrix.m[3][1]),
+            static_cast<float>(prim->m_radius * prim->m_matrix.m[2][2] + prim->m_matrix.m[3][2])
+        };
+        prim->m_fadeOutCnt = 35;
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act", false);
+        prim->m_numSegments = 1;
+        InitReferenceSegments(prim);
+    }
+    return true;
+}
+
+bool CRagEffect::ProcessBlitzBeat115()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) {
+        return true;
+    }
+    if (m_stateCnt == 5 || m_stateCnt == 30) {
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                const vector3d& listener = mode->m_world->m_player->m_pos;
+                PlayWave(m_stateCnt == 5 ? "effect\\hunter_blitzbeat_1st.wav" : "effect\\hunter_blitzbeat.wav",
+                    m_effectPos.x - listener.x, 0.0f, m_effectPos.z - listener.z, 250, 40, 1.0f);
+            }
+        }
+    }
+    m_effectPos = master->m_pos;
+    if (m_stateCnt == 0) {
+        g_blitzBeatEmissionCount = 0;
+        for (int index = 0; index < 10; ++index) {
+            CEffectPrim* prim = LaunchEffectPrim(PP_3DCROSSTEXTURE, vector3d{});
+            if (prim == nullptr) continue;
+            prim->m_duration = 20;
+            prim->m_renderFlag |= 0x200u;
+            prim->m_longitude = master->m_roty;
+            const int angle = rand() % 360;
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+            prim->m_speed3d = {
+                prim->m_matrix.m[2][0] * 15.0f + prim->m_matrix.m[3][0],
+                prim->m_matrix.m[2][1] * 15.0f + prim->m_matrix.m[3][1],
+                prim->m_matrix.m[2][2] * 15.0f + prim->m_matrix.m[3][2]
+            };
+            prim->m_deltaPos.x += prim->m_speed3d.x;
+            prim->m_deltaPos.y += prim->m_speed3d.y;
+            prim->m_deltaPos.z += prim->m_speed3d.z;
+            prim->m_deltaPos2.x = GetSin(angle) * 3.5f;
+            prim->m_deltaPos2.y = -7.0f;
+            prim->m_deltaPos2.z = GetCos(angle) * -3.5f;
+            prim->m_speed = -1.2f;
+            prim->m_accel = -0.1f;
+            prim->m_widthSize = static_cast<float>(rand() % 40 + 20) * 0.1f;
+            prim->m_heightSize = 0.2f;
+            prim->m_widthSpeed = 0.1f;
+            prim->m_widthAccel = -0.01f;
+            prim->m_alpha = 0.0f;
+            prim->m_maxAlpha = 250.0f;
+            prim->m_chPoint = {10.0f, 0.0f};
+            prim->m_chVal1 = {-0.3f, 0.001f};
+            prim->m_alphaSpeed = prim->m_maxAlpha * 0.5f;
+            prim->m_fadeOutCnt = prim->m_duration - 2;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ac_center2.tga", false));
+            prim->m_gi[0].life = 0;
+        }
+    }
+    if (m_stateCnt > 35 && m_stateCnt % 3 == 0 && g_blitzBeatEmissionCount < m_count) {
+        const int longitude = static_cast<int>(master->m_roty);
+        const int randomX = rand() % 10;
+        const int randomY = rand() % 20;
+        (void)rand();
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
+        if (prim == nullptr) return true;
+        prim->m_duration = 12;
+        prim->m_longitude = static_cast<float>(longitude);
+        prim->m_latitude = -90.0f;
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(-90));
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(longitude));
+        prim->m_speed3d = {
+            prim->m_matrix.m[3][0] - 2.0f * prim->m_matrix.m[1][0] + prim->m_matrix.m[2][0],
+            prim->m_matrix.m[3][1] - 2.0f * prim->m_matrix.m[1][1] + prim->m_matrix.m[2][1],
+            prim->m_matrix.m[3][2] - 2.0f * prim->m_matrix.m[1][2] + prim->m_matrix.m[2][2]
+        };
+        prim->m_deltaPos.x += prim->m_speed3d.x;
+        prim->m_deltaPos.y += prim->m_speed3d.y;
+        prim->m_deltaPos.z += prim->m_speed3d.z;
+        prim->m_deltaPos2 = {static_cast<float>((randomX + 1) / 5), static_cast<float>((randomY + 1) / 2 - 12), 0.0f};
+        prim->m_speed = 0.4f;
+        prim->m_accel = prim->m_speed / prim->m_duration * -0.5f;
+        prim->m_outerSize = 1.5f;
+        prim->m_innerSize = 0.5f;
+        prim->m_heightSize = 3.5f;
+        prim->m_fadeOutCnt = prim->m_duration - prim->m_duration / 2;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\magic_green.tga", false));
+        ++g_blitzBeatEmissionCount;
+    }
+    return true;
+}
+
+bool CRagEffect::ProcessBottom114()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr || m_stateCnt != 0) return true;
+
+    this->m_duration = 9999;
+    int angle = static_cast<int>(180.0 - master->m_roty);
+    if (angle < 0) angle += 360;
+    matrix rotation{};
+    MatrixIdentity(rotation);
+    MatrixAppendYRotation(rotation, GetRadian(angle));
+
+    for (int side : {1, -1}) {
+        const float distance = static_cast<float>(side * 5);
+        CEffectPrim* cross = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+        if (cross != nullptr) {
+            cross->m_duration = 9999;
+            cross->m_commonPattern = 1;
+            cross->m_pattern = 40;
+            cross->m_any = 50;
+            cross->m_deltaPos2 = {
+                rotation.m[2][0] * distance + rotation.m[3][0],
+                rotation.m[2][1] * distance + rotation.m[3][1],
+                rotation.m[2][2] * distance + rotation.m[3][2]
+            };
+            cross->m_longitude = static_cast<float>(angle + 90);
+            cross->m_widthSize = 5.0f;
+            cross->m_heightSize = 15.0f;
+            cross->m_heightSpeed = 0.25f;
+            cross->m_alpha = 0.0f;
+            cross->m_maxAlpha = 180.0f;
+            cross->m_alphaSpeed = cross->m_maxAlpha * 0.16666667f;
+            cross->m_fadeOutCnt = cross->m_duration - 35;
+            cross->m_texture.push_back(g_texMgr.GetTexture("effect\\magic_violet.tga", false));
+        }
+
+        CEffectPrim* ray = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+        if (ray == nullptr) continue;
+        ray->m_duration = 9999;
+        ray->m_commonPattern = 1;
+        ray->m_pattern = 40;
+        ray->m_any = 50;
+        ray->m_deltaPos2 = {
+            rotation.m[0][0] * distance + rotation.m[3][0],
+            rotation.m[0][1] * distance + rotation.m[3][1],
+            rotation.m[0][2] * distance + rotation.m[3][2]
+        };
+        ray->m_longitude = static_cast<float>(angle);
+        ray->m_widthSize = 5.0f;
+        ray->m_heightSize = 15.0f;
+        ray->m_heightSpeed = 0.25f;
+        ray->m_alpha = 0.0f;
+        ray->m_maxAlpha = 180.0f;
+        ray->m_alphaSpeed = ray->m_maxAlpha * 0.16666667f;
+        ray->m_fadeOutCnt = ray->m_duration - 35;
+        ray->m_texture.push_back(g_texMgr.GetTexture("effect\\magic_violet.tga", false));
+    }
+    return true;
+}
+
+bool CRagEffect::ProcessBottom2Effect137()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr || m_stateCnt != 0) return true;
+
+    this->m_duration = 9999;
+    int angle = static_cast<int>(180.0 - master->m_roty);
+    if (angle < 0) angle += 360;
+    matrix rotation{};
+    MatrixIdentity(rotation);
+    MatrixAppendYRotation(rotation, GetRadian(angle));
+
+    for (int side : {1, -1}) {
+        const float distance = static_cast<float>(side * 2.5f);
+        CEffectPrim* cross = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+        if (cross != nullptr) {
+            cross->m_duration = 9999;
+            cross->m_commonPattern = 1;
+            cross->m_pattern = 40;
+            cross->m_any = 50;
+            cross->m_deltaPos2 = {
+                rotation.m[2][0] * distance + rotation.m[3][0],
+                rotation.m[2][1] * distance + rotation.m[3][1],
+                rotation.m[2][2] * distance + rotation.m[3][2]
+            };
+            cross->m_longitude = static_cast<float>(angle + 90);
+            cross->m_widthSize = 2.5f;
+            cross->m_heightSize = 15.0f;
+            cross->m_heightSpeed = 0.25f;
+            cross->m_alpha = 180.0f;
+            cross->m_fadeOutCnt = 9964;
+            cross->m_texture.push_back(g_texMgr.GetTexture("effect\\magic_green.tga", false));
+        }
+
+        CEffectPrim* ray = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+        if (ray == nullptr) continue;
+        ray->m_duration = 9999;
+        ray->m_commonPattern = 1;
+        ray->m_pattern = 40;
+        ray->m_any = 50;
+        ray->m_deltaPos2 = {
+            rotation.m[0][0] * distance + rotation.m[3][0],
+            rotation.m[0][1] * distance + rotation.m[3][1],
+            rotation.m[0][2] * distance + rotation.m[3][2]
+        };
+        ray->m_longitude = static_cast<float>(angle);
+        ray->m_widthSize = 2.5f;
+        ray->m_heightSize = 15.0f;
+        ray->m_heightSpeed = 0.25f;
+        ray->m_alpha = 180.0f;
+        ray->m_fadeOutCnt = 9964;
+        ray->m_texture.push_back(g_texMgr.GetTexture("effect\\magic_green.tga", false));
+    }
+    return true;
+}
+
+bool CRagEffect::ProcessCloaking120()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    if (m_stateCnt == 0) {
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                const vector3d& listener = mode->m_world->m_player->m_pos;
+                PlayWave("effect\\assasin_cloaking.wav", m_effectPos.x - listener.x, 0.0f,
+                    m_effectPos.z - listener.z, 250, 40, 1.0f);
+            }
+        }
+    }
+    master->SetArgb(50, -1, -1, -1);
+    m_shadowOn = false;
+    return true;
 }
 
 void CRagEffect::ApplyKyrieGuard()
@@ -19007,6 +19914,377 @@ void CRagEffect::SpawnSoulBreaker2(short time)
         gi.height[1] = 0.8f;
         gi.flag[0] = 0;
     }
+}
+
+// Canonical PE: HighPriest.exe.c:456017 (PeongUp) and :456111 (Peong).
+void CRagEffect::SpawnPeongUp(const char* textureName, short variant)
+{
+    short triggerState = variant == 0 ? 35 : (variant == 1 ? 0 : variant);
+    if (m_stateCnt != triggerState) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_PEONGUP, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    prim->m_size = 0.0f;
+    if (variant == 0) {
+        EffectGi& gi = prim->m_gi[0];
+        gi.life = 1;
+        gi.maxHeight = static_cast<float>(static_cast<double>(rand() % 16) * 0.0099999998 + 0.1);
+        gi.distance = static_cast<float>(static_cast<double>(rand() % 11) * 0.1 + 3.0);
+        gi.process = -(rand() % 26);
+        gi.alphaB = 0;
+        gi.arcBaselineY = static_cast<float>(-(rand() % 8));
+        const int angle = rand() % 360;
+        gi.vecBPreX = g_cosTable[angle] * 2.5f;
+        gi.vecBPreZ = g_sinTable[angle] * 2.5f;
+        gi.height[0] = static_cast<float>(rand() % 360);
+        gi.height[1] = static_cast<float>(rand() % 360);
+        gi.height[2] = static_cast<float>(rand() % 360);
+        gi.height[3] = static_cast<float>(rand() % 360);
+        gi.flag[0] = 1;
+        return;
+    }
+
+    if (variant == 1) {
+        for (EffectGi& gi : prim->m_gi) {
+            gi.life = 1;
+            gi.maxHeight = static_cast<float>(static_cast<double>(rand() % 11) * 0.0049999999 + 0.079999998);
+            gi.distance = static_cast<float>(static_cast<double>(rand() % 11) * 0.050000001 + 2.0);
+            gi.process = -(rand() % 26);
+            gi.alphaB = 0;
+            gi.arcBaselineY = static_cast<float>(-(rand() % 8));
+            const int angle = rand() % 360;
+            gi.vecBPreX = g_cosTable[angle] * 3.5f;
+            gi.vecBPreZ = g_sinTable[angle] * 3.5f;
+            gi.height[0] = static_cast<float>(rand() % 360);
+            gi.height[1] = static_cast<float>(rand() % 360);
+            gi.height[2] = static_cast<float>(rand() % 360);
+            gi.height[3] = static_cast<float>(rand() % 360);
+            gi.flag[0] = 2;
+        }
+    }
+}
+
+// Canonical PE: HighPriest.exe.c:456111. Ref's PeongMiddle has a different payload.
+void CRagEffect::SpawnPeong(const char* textureName, int time)
+{
+    if (m_stateCnt != 35) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_PEONG, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    prim->m_size = 0.0f;
+    for (EffectGi& gi : prim->m_gi) {
+        gi.life = 1;
+        gi.distance = static_cast<float>(static_cast<double>(rand() % 11) * 0.2 + 2.5);
+        gi.alphaB = 0;
+        const int randomAngle = rand() % 90;
+        int angle = time + randomAngle;
+        if (angle >= 360) angle -= 360;
+        gi.process = -(rand() % 11);
+        gi.riseAngle = static_cast<short>(angle);
+        gi.maxHeight = static_cast<float>(0.029999999);
+        gi.vecBPreX = g_cosTable[angle] * 4.0f;
+        gi.vecBPreZ = g_sinTable[angle] * 4.0f;
+        gi.arcBaselineY = 0.0f;
+        gi.sparkY = -4.0f;
+        gi.height[0] = static_cast<float>(rand() % 360);
+        gi.height[1] = static_cast<float>(rand() % 360);
+        gi.height[2] = static_cast<float>(rand() % 360);
+        gi.height[3] = static_cast<float>(rand() % 360);
+    }
+}
+
+bool CRagEffect::ProcessPeongEffects()
+{
+    for (int index = 0; index < 30; ++index) {
+        SpawnPeongUp("effect\\whitelight.tga", 0);
+    }
+    for (int quadrant = 0; quadrant < 4; ++quadrant) {
+        const int time = 90 * quadrant;
+        SpawnPeong("effect\\peong1.tga", time);
+        SpawnPeong("effect\\peong2.tga", time);
+        SpawnPeong("effect\\peong3.tga", time);
+        SpawnPeong("effect\\peong2.tga", time);
+    }
+    return true;
+}
+
+// Ref/RagEffect2.cpp:23096; canonical helper at HighPriest.exe.c:432395.
+void CRagEffect::SpawnBeginAsura(int variant, bool secondBurst)
+{
+    if (m_stateCnt != (secondBurst ? 21 : 1)) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_ASURACASTING, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 0;
+    prim->m_renderFlag |= 1u;
+    prim->m_renderFlag |= 5u;
+    prim->m_duration = m_duration;
+    static const char* const firstTextures[2][3] = {
+        {"effect\\asura3.tga", "effect\\asura2.tga", "effect\\asura1.tga"},
+        {"effect\\asura13.tga", "effect\\asura12.tga", "effect\\asura11.tga"},
+    };
+    static const char* const secondTextures[2][3] = {
+        {"effect\\asura4.tga", "effect\\asura5.tga", "effect\\asura6.tga"},
+        {"effect\\asura14.tga", "effect\\asura15.tga", "effect\\asura16.tga"},
+    };
+    for (int index = 0; index < 3; ++index) {
+        prim->m_texture.push_back(g_texMgr.GetTexture(
+            secondBurst ? secondTextures[variant][index] : firstTextures[variant][index], false));
+    }
+    prim->m_size = 0.0f;
+    for (int lane = 0; lane < 3; ++lane) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(lane)];
+        gi.life = 1;
+        gi.process = secondBurst ? -40 - 20 * lane : -40 + 20 * lane;
+        gi.alphaB = 0;
+        gi.flag[0] = static_cast<u8>(lane);
+        gi.distance = variant != 0 ? 24.0f : 18.0f;
+        gi.height[0] = secondBurst
+            ? static_cast<float>(variant != 0 ? 8 + 16 * lane : 6 + 12 * lane)
+            : static_cast<float>(variant != 0 ? -8 - 16 * lane : -6 - 12 * lane);
+        gi.flag[4] = variant != 0 ? 5 : 0;
+        // The source clears ten later GI words per active lane; these fields are zero-initialized.
+    }
+}
+
+// Ref/RagEffect2.cpp:32149; canonical helper at HighPriest.exe.c:443146.
+void CRagEffect::SpawnSoulLinkLight(const char* textureName)
+{
+    if (m_stateCnt != 0) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_SOULLINK, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 0;
+    prim->m_renderFlag |= 1u;
+    prim->m_renderFlag |= 5u;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    prim->m_size = 0.0f;
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.distance = 2.5f;
+    gi.height[10] = m_deltaPos.y;
+    gi.height[13] = 0.0f;
+    gi.height[14] = 0.0f;
+    gi.height[15] = 0.0f;
+    gi.height[0] = static_cast<float>(rand() % 360);
+    gi.height[1] = static_cast<float>(rand() % 360);
+    gi.height[2] = static_cast<float>(rand() % 360);
+    gi.height[3] = static_cast<float>(rand() % 360);
+    gi.vecTNowX = 0.0f;
+    gi.vecBPreX = -30.0f * 0.0f;
+    gi.arcBaselineY = -40.0f;
+    gi.vecBPreZ = 0.0f;
+}
+
+// Ref/RagEffect2.cpp:23323; canonical helper at HighPriest.exe.c:432614.
+void CRagEffect::SpawnBeginAsura2(bool secondBurst)
+{
+    const int triggerState = secondBurst ? 21 : 1;
+    if (m_stateCnt != triggerState) return;
+    CEffectPrim* prim = LaunchEffectPrim(PP_ASURACASTING, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    static const char* const firstTextures[4] = {
+        "effect\\soul_l.tga", "effect\\soul_u.tga", "effect\\soul_o.tga", "effect\\soul_s.tga",
+    };
+    static const char* const secondTextures[4] = {
+        "effect\\soul_k.tga", "effect\\soul_n.tga", "effect\\soul_i.tga", "effect\\soul_l.tga",
+    };
+    for (int index = 0; index < 4; ++index) {
+        const char* texture = secondBurst ? secondTextures[index] : firstTextures[index];
+        prim->m_texture.push_back(g_texMgr.GetTexture(texture, false));
+    }
+    prim->m_size = 0.0f;
+    const int laneCount = secondBurst ? 5 : 3;
+    for (int lane = 0; lane < laneCount; ++lane) {
+        EffectGi& gi = prim->m_gi[static_cast<size_t>(lane)];
+        gi.life = 1;
+        gi.process = secondBurst ? -120 + 20 * lane : -60 + 20 * lane;
+        gi.distance = 5.0f;
+        gi.alphaB = 0;
+        gi.height[0] = secondBurst ? static_cast<float>(22 - 6 * lane)
+                                   : static_cast<float>(-4 - 6 * lane);
+        gi.flag[0] = static_cast<u8>(lane);
+        gi.flag[4] = 2;
+    }
+}
+
+bool CRagEffect::ProcessBeginAsuraEffect()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    const int variant = m_type == 510 ? 1 : 0;
+    if (m_stateCnt == 0) {
+        if (m_duration < 350) m_duration = 350;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        CGameActor* player = mode != nullptr && mode->m_world != nullptr ? mode->m_world->m_player : nullptr;
+        if (player != nullptr) {
+            PlayWave("effect\\EF_BeginSpell.wav", m_effectPos.x - player->m_pos.x, 0.0f,
+                m_effectPos.z - player->m_pos.z, 250, 40, 1.0f);
+        }
+        ApplySaintCasting(45, "effect\\ring_white.tga", 2);
+        ApplySaintCasting(25, "effect\\ring_white.tga", 2);
+    }
+    SpawnBeginAsura(variant, false);
+    SpawnBeginAsura(variant, true);
+    return true;
+}
+
+bool CRagEffect::ProcessBeginAsura2Effect()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CGameActor* player = mode != nullptr && mode->m_world != nullptr ? mode->m_world->m_player : nullptr;
+    if (player != nullptr && (m_stateCnt == 0 || m_stateCnt == 145)) {
+        const float y = m_stateCnt == 145 ? -50.0f : 0.0f;
+        const char* wave = m_stateCnt == 145
+            ? "effect\\T_\xBF\xB5\xC8\xA5.wav"
+            : "effect\\T_\xC4\xB3\xBD\xBA\xC6\xC3.wav";
+        PlayWave(wave, m_effectPos.x - player->m_pos.x, y,
+            m_effectPos.z - player->m_pos.z, 250, 40, 1.0f);
+    }
+    SpawnSoulLinkLight("effect\\whitelight.tga");
+    SpawnBeginAsura2(false);
+    SpawnBeginAsura2(true);
+    return true;
+}
+
+// Ref/RagEffect2.cpp:26308; canonical helper at HighPriest.exe.c:433533.
+void CRagEffect::SpawnEnergyDrain2()
+{
+    if (m_stateCnt != 0) return;
+    for (int index = 0, roll = -90; roll < 180; ++index, roll += 90) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLESPLINE, vector3d{});
+        if (prim == nullptr) return;
+        prim->m_duration = 60;
+        prim->m_deltaPos2 = {
+            m_deltaPos.x - m_effectPos.x,
+            -10.0f,
+            m_deltaPos.z - m_effectPos.z,
+        };
+        const float midpointX = static_cast<float>(m_deltaPos.x - (m_deltaPos.x - m_effectPos.x) * 0.5);
+        const float midpointZ = static_cast<float>(m_deltaPos.z - (m_deltaPos.z - m_effectPos.z) * 0.5);
+        const double radiusX = static_cast<double>(midpointX) - prim->m_pos.x;
+        const double radiusZ = static_cast<double>(midpointZ) - prim->m_pos.z;
+        prim->m_radius = static_cast<float>(std::sqrt(radiusX * radiusX + radiusZ * radiusZ));
+        const float targetX = m_effectPos.x + m_effectPos.x - m_deltaPos.x;
+        const float targetZ = m_effectPos.z + m_effectPos.z - m_deltaPos.z;
+        double rotation = std::atan2(static_cast<double>(targetX - prim->m_pos.x),
+            -static_cast<double>(targetZ - prim->m_pos.z)) / 3.141592 * 180.0;
+        if (rotation >= 360.0) rotation -= 360.0;
+        if (rotation < 0.0) rotation += 360.0;
+        prim->m_roty = static_cast<float>(rotation);
+        prim->m_longitude = -prim->m_roty;
+        const double velocity = static_cast<double>(prim->m_radius) / prim->m_duration;
+        prim->m_speed = static_cast<float>(velocity + velocity);
+        prim->m_gravSpeed = 2.0f;
+        prim->m_gravAccel = static_cast<float>(static_cast<double>(prim->m_gravSpeed) / prim->m_duration * -2.0);
+        prim->m_latiSpeed = -2.0f;
+        prim->m_latiAccel = static_cast<float>(static_cast<double>(prim->m_latiSpeed) / prim->m_duration * -2.0);
+        prim->m_roll = static_cast<float>(roll);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_deltaPos3 = {
+            prim->m_matrix.m[3][0] + prim->m_matrix.m[2][0],
+            prim->m_matrix.m[3][1] + prim->m_matrix.m[2][1],
+            prim->m_matrix.m[3][2] + prim->m_matrix.m[2][2],
+        };
+        prim->m_rotAxis = {prim->m_deltaPos3.x, prim->m_deltaPos3.y, prim->m_deltaPos3.z};
+        prim->m_red = rand() % 81 + 160;
+        prim->m_green = rand() % 81 + 160;
+        prim->m_blue = 255;
+        prim->m_size = static_cast<float>(static_cast<double>(rand() % 6) * 0.1 + 1.5);
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act");
+        prim->m_numSegments = 7;
+        InitReferenceSegments(prim);
+    }
+}
+
+// Ref/RagEffect2.cpp:26377; canonical helper at HighPriest.exe.c:433598.
+void CRagEffect::SpawnEnergyDrain3()
+{
+    if (m_stateCnt > 4) return;
+    for (int roll = -90; roll < 180; roll += 90) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLESPLINE, vector3d{});
+        if (prim == nullptr) return;
+        prim->m_duration = 60;
+        prim->m_deltaPos2.x = 0.0f;
+        prim->m_pos.x = -10.0f;
+        prim->m_pos.y = 0.0f;
+        const double radiusX = static_cast<double>(m_effectPos.x) - prim->m_pos.x;
+        const double radiusZ = static_cast<double>(m_effectPos.z) - prim->m_pos.z;
+        prim->m_radius = static_cast<float>(std::sqrt(radiusX * radiusX + radiusZ * radiusZ));
+        const int offsetZ = rand() % 7;
+        const int offsetX = rand() % 7;
+        const float targetZ = static_cast<float>(static_cast<double>(offsetZ) + m_effectPos.z - 3.0);
+        const float targetX = static_cast<float>(static_cast<double>(offsetX) + m_effectPos.x - 3.0);
+        double rotation = std::atan2(static_cast<double>(targetX - prim->m_pos.x),
+            -static_cast<double>(targetZ - prim->m_pos.z)) / 3.141592 * 180.0;
+        if (rotation >= 360.0) rotation -= 360.0;
+        if (rotation < 0.0) rotation += 360.0;
+        prim->m_roty = static_cast<float>(rotation);
+        prim->m_longitude = -prim->m_roty;
+        const double velocity = static_cast<double>(prim->m_radius) / prim->m_duration;
+        prim->m_speed = static_cast<float>(velocity + velocity);
+        prim->m_gravSpeed = 2.0f;
+        prim->m_gravAccel = static_cast<float>(static_cast<double>(prim->m_gravSpeed) / prim->m_duration * -2.0);
+        prim->m_latiSpeed = -2.0f;
+        prim->m_latiAccel = static_cast<float>(static_cast<double>(prim->m_latiSpeed) / prim->m_duration * -2.0);
+        prim->m_roll = static_cast<float>(roll);
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_deltaPos3 = {
+            prim->m_matrix.m[3][0] + prim->m_matrix.m[2][0],
+            prim->m_matrix.m[3][1] + prim->m_matrix.m[2][1],
+            prim->m_matrix.m[3][2] + prim->m_matrix.m[2][2],
+        };
+        prim->m_rotAxis = {prim->m_deltaPos3.x, prim->m_deltaPos3.y, prim->m_deltaPos3.z};
+        prim->m_red = rand() % 81 + 160;
+        prim->m_green = 255;
+        prim->m_blue = rand() % 81 + 160;
+        prim->m_size = static_cast<float>(static_cast<double>(rand() % 6) * 0.1 + 1.0);
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act");
+        prim->m_numSegments = 7;
+        InitReferenceSegments(prim);
+    }
+}
+
+bool CRagEffect::ProcessEnergyDrain2Effect()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    SpawnEnergyDrain2();
+    if (m_stateCnt >= 55 && m_stateCnt <= 65) {
+        if ((master->m_BodyLight & 1) != 1) ++master->m_BodyLight;
+        master->SetArgb(-1, 100, 100, 255);
+    }
+    return true;
+}
+
+bool CRagEffect::ProcessEnergyDrain3Effect()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    SpawnEnergyDrain3();
+    if (m_stateCnt >= 50 && m_stateCnt <= 80) {
+        if ((master->m_BodyLight & 8) != 8) master->m_BodyLight += 8;
+        const int color = 2 * (125 - m_stateCnt);
+        master->SetArgb(-1, color, color, 250);
+    }
+    return true;
 }
 
 bool CRagEffect::ProcessSoulBreaker2Effect()
@@ -21614,6 +22892,34 @@ void CRagEffect::SpawnFireSplashHit()
 }
 
 // Ref/RagEffect.cpp:2816-2915 (0x5FB100), original effect 51.
+void CRagEffect::SpawnDetecting()
+{
+    if (m_stateCnt != 0) return;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\hunter_detecting.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DTEXTURE, vector3d{});
+    prim->m_duration = 57;
+    prim->m_widthSpeed = 1.5f;
+    prim->m_heightSpeed = 1.5f;
+    prim->m_widthAccel = prim->m_widthSpeed * 0.071428575f;
+    prim->m_heightAccel = prim->m_heightSpeed * 0.071428575f;
+    prim->m_deltaPos2.y = -7.0f;
+    prim->m_speed3d.y = -0.5f;
+    prim->m_roll = 90.0f;
+    prim->m_changePoint = 17;
+    prim->m_changeWidthSpeed = 0.1f;
+    prim->m_changeHeightSpeed = 0.1f;
+    prim->m_fadeOutCnt = 40;
+    prim->m_changeWidthAccel = prim->m_changeWidthSpeed * 0.033333335f;
+    prim->m_changeHeightAccel = prim->m_changeHeightSpeed * 0.033333335f;
+    prim->m_deltaPos2.y = -5.0f;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\fashasha.tga", false));
+}
+
 void CRagEffect::SpawnColdHit()
 {
     if (m_stateCnt == 0) {

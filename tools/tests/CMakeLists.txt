@@ -645,6 +645,68 @@ add_test(NAME spherewind2_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_spherewind2_caller.py")
 add_test(NAME soulbreaker2_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_soulbreaker2_caller.py")
+add_test(NAME peong_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_peong_callers.py")
+add_test(NAME begin_asura_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_begin_asura_callers.py")
+add_test(NAME energy_drain_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_energy_drain_callers.py")
+add_test(NAME portal_wind_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_portal_wind_caller.py")
+add_test(NAME blur_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_blur_callers.py")
+add_test(NAME runstop_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_runstop_caller.py")
+add_test(NAME cartboost_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_cartboost_caller.py")
+add_test(NAME exit_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_exit_caller.py")
+add_test(NAME endure_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_endure_caller.py")
+add_test(NAME soulstrike_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_soulstrike_callers.py")
+add_test(NAME detoxication_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_detoxication_caller.py")
+add_test(NAME yufitel_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_yufitel_callers.py")
+add_test(NAME flasher_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_flasher_caller.py")
+add_test(NAME removetrap_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_removetrap_caller.py")
+add_test(NAME blitzbeat_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_blitzbeat_caller.py")
+add_test(NAME blood_drain_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_blood_drain.py")
+add_test(NAME bottom_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_bottom_caller.py")
+add_test(NAME bottom2_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_bottom2_caller.py")
+add_test(NAME bowlingbash_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_bowlingbash_caller.py")
+add_test(NAME cartrevolution_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_cartrevolution_caller.py")
+add_test(NAME cloaking_inline_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_cloaking_inline.py")
+add_test(NAME coin_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_coin_caller.py")
+add_test(NAME coldhit_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_coldhit_caller.py")
+add_test(NAME concentration_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_concentration_caller.py")
+add_test(NAME cone_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_cone_caller.py")
+add_test(NAME crashearth_orphan_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_crashearth_orphan.py")
+add_test(NAME cure_inline_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_cure_inline.py")
+add_test(NAME curseattack_inline_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_curseattack_inline.py")
+add_test(NAME darkbreath_inline_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_darkbreath_inline.py")
+add_test(NAME decagility_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_decagility_caller.py")
+add_test(NAME detecting_caller_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_detecting_caller.py")
 add_test(NAME skill_cast_cancel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_cancel_source.py")
 add_test(NAME status_state_source_check
@@ -683,4 +745,35 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_particle_time_spread_callers.py
     check_spherewind2_caller.py
     check_soulbreaker2_caller.py
+    check_peong_callers.py
+    check_begin_asura_callers.py
+    check_energy_drain_callers.py
+    check_portal_wind_caller.py
+    check_blur_callers.py
+    check_runstop_caller.py
+    check_cartboost_caller.py
+    check_exit_caller.py
+    check_endure_caller.py
+    check_soulstrike_callers.py
+    check_detoxication_caller.py
+    check_yufitel_callers.py
+    check_flasher_caller.py
+    check_removetrap_caller.py
+    check_blitzbeat_caller.py
+    check_blood_drain.py
+    check_bottom_caller.py
+    check_bottom2_caller.py
+    check_bowlingbash_caller.py
+    check_cartrevolution_caller.py
+    check_cloaking_inline.py
+    check_coin_caller.py
+    check_coldhit_caller.py
+    check_concentration_caller.py
+    check_cone_caller.py
+    check_crashearth_orphan.py
+    check_cure_inline.py
+    check_curseattack_inline.py
+    check_darkbreath_inline.py
+    check_decagility_caller.py
+    check_detecting_caller.py
     check_effect_sprite.py)

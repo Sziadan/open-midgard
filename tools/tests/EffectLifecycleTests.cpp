@@ -515,6 +515,7 @@ struct CRagEffect : CGameObject {
     std::optional<bool> ProcessReferenceStrOnly();
     void SpawnFireSplashHit();
     void SpawnColdHit();
+    void SpawnDetecting();
     void SpawnWeatherCloud();
     void SpawnSprayPond();
     void SpawnIncAgility();
@@ -8226,6 +8227,31 @@ int main()
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
     }
     {
+        CRenderObject listener;listener.m_pos={10,3,20};CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=119;effect.m_stateCnt=0;effect.m_effectPos={30,7,50};
+        waveCalls.clear();g_texMgr.requests.clear();
+        effect.SpawnDetecting();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DTEXTURE&&prim->UsesReferenceTexture(),
+            "Detecting launches one source texture primitive through the reference texture family");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\hunter_detecting.wav"
+            &&waveCalls[0].x==20&&waveCalls[0].y==0&&waveCalls[0].z==30,
+            "Detecting state zero plays the exact wave at effect-minus-listener X/Z");
+        check(prim&&prim->m_duration==57&&prim->m_widthSpeed==1.5f&&prim->m_heightSpeed==1.5f
+            &&prim->m_widthAccel==1.5f*0.071428575f&&prim->m_heightAccel==1.5f*0.071428575f
+            &&prim->m_deltaPos2.y==-5&&prim->m_speed3d.y==-0.5f&&prim->m_roll==90
+            &&prim->m_changePoint==17&&prim->m_changeWidthSpeed==0.1f&&prim->m_changeHeightSpeed==0.1f
+            &&prim->m_fadeOutCnt==40&&prim->m_changeWidthAccel==0.1f*0.033333335f
+            &&prim->m_changeHeightAccel==0.1f*0.033333335f
+            &&g_texMgr.requests==std::vector<std::string>{"effect\\fashasha.tga"},
+            "Detecting keeps source dimensions, motion, change point, fade and exact texture");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_stateCnt=1;waveCalls.clear();g_texMgr.requests.clear();
+        effect.SpawnDetecting();
+        check(effect.m_primList.empty()&&waveCalls.empty()&&g_texMgr.requests.empty(),
+            "Detecting does not repeat its state-zero sound or primitive");
+        g_world.m_player=oldPlayer;
+    }
+    {
         const int ids[]={23,25,29,52,64,70,109,110,126,135,139,141,143,144,146,147,148,149,150,151,152,156,157,158,
             167,168,169,181,182,186,187,188,189,190,191,192,193,194,195,197,199,213,214,235,268};
         const int draws=rngDraws;waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();
@@ -8493,6 +8519,7 @@ int main()
             expected.m[3][1]-30*expected.m[1][1]+0.1f*expected.m[2][1],
             expected.m[3][2]-30*expected.m[1][2]+0.1f*expected.m[2][2]};
         check(effect.m_duration==200&&effect.m_primList.size()==1&&cone&&cone->m_type==PP_3DPARTICLEORBIT
+            &&cone->UsesReferenceParticle()
             &&cone->m_duration==300&&cone->m_radius==0.1f&&cone->m_radiusSpeed==0.2f
             &&cone->m_gravSpeed==0.1f&&cone->m_gravAccel==0.005f&&cone->m_longitude==2
             &&cone->m_longSpeed==15&&cone->m_longAccel==-0.01f&&cone->m_size==1.2f
@@ -8588,7 +8615,7 @@ int main()
             &&sphere->m_longSpeed==3&&sphere->m_alpha==0&&sphere->m_maxAlpha==240
             &&std::fabs(sphere->m_alphaSpeed-(240.0f/7.0f))<0.00001f&&sphere->m_fadeOutCnt==5
             &&g_texMgr.requests.size()==2&&g_texMgr.requests[0]=="effect\\ring_yellow.tga"
-            &&g_texMgr.requests[1]=="effect\\bigbang.tga"
+            &&g_texMgr.requests[1]=="effect\\"
             &&waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_MagnumBreak.wav"
             &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==60
             &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
@@ -8681,6 +8708,7 @@ int main()
         effect.ApplyCurseAttack();
         CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
         check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DTEXTURE
+            &&prim->UsesReferenceTexture()
             &&prim->m_duration==9999&&prim->m_longitude==0&&prim->m_longSpeed==4.5f
             &&prim->m_deltaPos2.x==0&&prim->m_deltaPos2.y==-30&&prim->m_deltaPos2.z==0
             &&prim->m_widthSize==4&&prim->m_heightSize==4&&effect.m_duration==150

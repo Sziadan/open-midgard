@@ -27,7 +27,7 @@ case 324: ApplyForestLight("effect\\cloud11.tga", 10); return true;
 case 325: ApplyHeal2("effect\\ring_white.tga", 1); return true;
 case 326: return UnportedEffect();
 case 327: return UnportedEffect();
-case 328: return UnportedEffect();
+case 328: return ProcessBeginAsuraEffect();
 case 329: return UnportedEffect();
 case 330: return UnportedEffect();
 case 331: ApplyHealTime(0); return true;

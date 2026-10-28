@@ -6238,7 +6238,7 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
     // visibly "stick then snap" NPC sprites. The shared coarse cache is still
     // kept for hover/label queries where tiny projection error is acceptable.
     std::vector<BillboardScreenEntry> renderEntries;
-    renderEntries.reserve(m_actorList.size() + (m_player ? 1u : 0u));
+    renderEntries.reserve(m_actorList.size() + m_gameObjectList.size() + (m_player ? 1u : 0u));
     const double billboardBuildStartMs = WorldNowMs();
 
     auto enqueueRenderActor = [&](CGameActor* actor) {
@@ -6247,7 +6247,9 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
         }
 
         CPc* pc = dynamic_cast<CPc*>(actor);
-        if (!pc || IsPortalActorJob(pc->m_job)) {
+        CBlurPC* blur = dynamic_cast<CBlurPC*>(actor);
+        if (!pc || (blur != nullptr && !blur->m_renderEligible)
+            || (blur == nullptr && IsPortalActorJob(pc->m_job))) {
             return;
         }
 
@@ -6265,6 +6267,12 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
             continue;
         }
         enqueueRenderActor(actor);
+    }
+    for (CGameObject* object : m_gameObjectList) {
+        CBlurPC* blur = dynamic_cast<CBlurPC*>(object);
+        if (blur != nullptr) {
+            enqueueRenderActor(blur);
+        }
     }
     m_lastRenderStats.billboardBuildMs = WorldNowMs() - billboardBuildStartMs;
 
