@@ -20284,6 +20284,60 @@ bool CRagEffect::ProcessEffect365()
     return true;
 }
 
+// PE HighPriest.exe.c:418014-418024; Ref/RagEffect.cpp:11375-11383.
+// TEST_BODY_BEGIN slim_potion_effects497_499_family
+bool CRagEffect::ProcessSlimPotionEffects(int variant)
+{
+    if (variant < 1 || variant > 3) return true;
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return true;
+
+    static const char* const pressureTextures[] = {
+        "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\\xB7\xB9\xB5\xE5\xBD\xBD\xB8\xB2\xC6\xF7\xBC\xC7.bmp",
+        "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\\xBF\xBB\xB7\xCE\xBF\xEC\xBD\xBD\xB8\xB2\xC6\xF7\xBC\xC7.bmp",
+        "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\\xC8\xAD\xC0\xCC\xC6\xAE\xBD\xBD\xB8\xB2\xC6\xF7\xBC\xC7.bmp",
+    };
+    CEffectPrim* pressure = LaunchEffectPrim(PP_PRESSURE, vector3d{});
+    if (pressure != nullptr) {
+        pressure->m_renderFlag = 5;
+        pressure->m_duration = m_duration;
+        pressure->m_texture.push_back(g_texMgr.GetTexture(pressureTextures[variant - 1], false));
+        pressure->m_size = 0.0f;
+        EffectGi& first = pressure->m_gi[0];
+        first.life = 1; first.process = 0; first.distance = 8.0f; first.alphaB = 0;
+        first.vecBPreX = 0.0f; first.arcBaselineY = -80.0f; first.vecBPreZ = 0.0f;
+        first.rotStart = 0; first.height[1] = 3.0f;
+        first.fullDisplayAngle = static_cast<short>(rand() % 360);
+        first.flag[0] = 0; first.flag[2] = 9;
+        first.flag[3] = static_cast<u8>(variant == 1 ? 1 : variant == 2 ? 3 : 4);
+        first.flag[4] = static_cast<u8>(variant);
+        for (size_t lane = 1; lane < 4; ++lane) {
+            pressure->m_gi[lane].life = 1;
+            pressure->m_gi[lane].alphaB = 0;
+        }
+    }
+
+    CEffectPrim* shake = LaunchEffectPrim(PP_GROUNDSHAKE, vector3d{});
+    if (shake != nullptr) {
+        shake->m_renderFlag = 5;
+        shake->m_duration = m_duration;
+        shake->m_texture.push_back(g_texMgr.GetTexture("effect\\bbbb.bmp", false));
+        shake->m_size = variant == 1 ? 101.0f : variant == 2 ? 102.0f : 4.0f;
+        shake->m_gi[0].life = 1;
+        shake->m_gi[0].process = -16;
+        shake->m_gi[0].distance = 15.0f;
+        shake->m_gi[0].riseAngle = 0;
+        shake->m_gi[0].alphaB = 0;
+        shake->m_gi[0].height[0] = -5.0f;
+        for (size_t lane = 1; lane < 4; ++lane) shake->m_gi[lane].life = 0;
+    }
+    return true;
+}
+// TEST_BODY_END slim_potion_effects497_499_family
+
 bool CRagEffect::ProcessEffect440()
 {
     CRenderObject* master = ResolveCurrentMaster();

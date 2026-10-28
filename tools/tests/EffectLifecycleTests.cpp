@@ -661,6 +661,7 @@ struct CRagEffect : CGameObject {
     bool ProcessFoot448();
     bool ProcessFoot326_327(const char*);
     bool ProcessCallZone340();
+    bool ProcessSlimPotionEffects(int);
     void SpawnBlueFall(int, int);
     bool ProcessBeginAsura1_467();
     bool ProcessBeginAsura1Variant(const char*);
@@ -3711,6 +3712,59 @@ int main()
                 "effect6 second cylinder preserves ring profile and height acceleration");
         }
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        struct Variant { int id; int index; int pressureFlag3; int shakeSize; const char* pressureTexture; };
+        const Variant variants[]={
+            {497,1,1,101,"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\\xB7\xB9\xB5\xE5\xBD\xBD\xB8\xB2\xC6\xF7\xBC\xC7.bmp"},
+            {498,2,3,102,"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\\xBF\xBB\xB7\xCE\xBF\xEC\xBD\xBD\xB8\xB2\xC6\xF7\xBC\xC7.bmp"},
+            {499,3,4,4,"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\\xC8\xAD\xC0\xCC\xC6\xAE\xBD\xBD\xB8\xB2\xC6\xF7\xBC\xC7.bmp"},
+        };
+        for(const Variant& variant:variants) {
+            CRenderObject master; master.m_pos={41,52,63};
+            CRagEffect effect; effect.m_type=variant.id; effect.m_master=&master; effect.m_duration=91;
+            effect.m_stateCnt=1; effect.m_effectPos={1,2,3};
+            g_texMgr.requests.clear(); waveCalls.clear(); rngValues={123}; rngCursor=0; const int draws=rngDraws;
+            effect.ProcessSlimPotionEffects(variant.index);
+            check(effect.m_effectPos.x==41&&effect.m_effectPos.y==52&&effect.m_effectPos.z==63
+                &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
+                "Slim potion effect follows master without pre-state-zero output");
+            effect.m_stateCnt=0; effect.ProcessSlimPotionEffects(variant.index);
+            auto primIt=effect.m_primList.begin();
+            CEffectPrim* pressure=primIt!=effect.m_primList.end()?*primIt++:nullptr;
+            CEffectPrim* shake=primIt!=effect.m_primList.end()?*primIt:nullptr;
+            bool pressureLanes=pressure!=nullptr;
+            if(pressure) for(int lane=1;lane<4;++lane)
+                pressureLanes=pressureLanes&&pressure->m_gi[lane].life==1&&pressure->m_gi[lane].alphaB==0;
+            bool shakeLanes=shake!=nullptr;
+            if(shake) for(int lane=1;lane<4;++lane)
+                shakeLanes=shakeLanes&&shake->m_gi[lane].life==0;
+            check(pressure&&pressure->m_type==PP_PRESSURE&&pressure->m_renderFlag==5&&pressure->m_duration==91
+                &&pressure->m_texture.size()==1&&g_texMgr.requests.size()==2
+                &&g_texMgr.requests[0]==variant.pressureTexture&&pressure->m_size==0
+                &&pressure->m_pos.x==41&&pressure->m_pos.y==52&&pressure->m_pos.z==63
+                &&pressure->m_gi[0].life==1&&pressure->m_gi[0].process==0&&pressure->m_gi[0].distance==8
+                &&pressure->m_gi[0].alphaB==0&&pressure->m_gi[0].vecBPreX==0
+                &&pressure->m_gi[0].arcBaselineY==-80&&pressure->m_gi[0].vecBPreZ==0
+                &&pressure->m_gi[0].rotStart==0&&pressure->m_gi[0].height[1]==3
+                &&pressure->m_gi[0].fullDisplayAngle==123&&pressure->m_gi[0].flag[0]==0
+                &&pressure->m_gi[0].flag[2]==9&&pressure->m_gi[0].flag[3]==variant.pressureFlag3
+                &&pressure->m_gi[0].flag[4]==variant.index&&pressureLanes,
+                "Slim potion Pressure primitive matches executable variant and exact CP949 texture bytes");
+            check(shake&&shake->m_type==PP_GROUNDSHAKE&&shake->m_renderFlag==5&&shake->m_duration==91
+                &&shake->m_texture.size()==1&&g_texMgr.requests[1]=="effect\\bbbb.bmp"
+                &&shake->m_size==variant.shakeSize&&shake->m_pos.x==41&&shake->m_pos.y==52&&shake->m_pos.z==63
+                &&shake->m_gi[0].life==1&&shake->m_gi[0].process==-16&&shake->m_gi[0].distance==15
+                &&shake->m_gi[0].riseAngle==0&&shake->m_gi[0].alphaB==0&&shake->m_gi[0].height[0]==-5
+                &&shakeLanes&&effect.m_primList.size()==2&&waveCalls.empty()&&rngDraws==draws+1&&rngCursor==1,
+                "Slim potion GroundShake variant follows Pressure and emits without audio or extra RNG");
+            master.m_pos={71,82,93}; effect.m_stateCnt=2; effect.ProcessSlimPotionEffects(variant.index);
+            check(effect.m_primList.size()==2&&effect.m_effectPos.x==71&&effect.m_effectPos.y==82
+                &&effect.m_effectPos.z==93&&g_texMgr.requests.size()==2&&waveCalls.empty()
+                &&rngDraws==draws+1&&rngCursor==1,
+                "Slim potion later states refresh the master without emission or RNG");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+        }
     }
     {
         CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};

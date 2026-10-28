@@ -561,6 +561,7 @@ private:
     bool ProcessHitLine3Zero428();
     bool ProcessPokJuk297();
     bool ProcessEffect365();
+    bool ProcessSlimPotionEffects(int variant);
     void SpawnPressure365();
     void SpawnGroundShake365();
     bool ProcessEffect599();

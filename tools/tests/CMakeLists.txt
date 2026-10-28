@@ -275,7 +275,7 @@ extract_body(soulbreaker361_emitter "${effect_source}" "void CRagEffect::SpawnSo
 extract_body(soulbreaker361_handler "${effect_source}" "bool CRagEffect::ProcessSoulBreaker361Effect()" "bool CRagEffect::ProcessTarotEffect()")
 extract_body(pressure365_emitter "${effect_source}" "void CRagEffect::SpawnPressure365()" "void CRagEffect::SpawnGroundShake365()")
 extract_body(groundshake365_emitter "${effect_source}" "void CRagEffect::SpawnGroundShake365()" "bool CRagEffect::ProcessEffect365()")
-extract_body(effect365_handler "${effect_source}" "bool CRagEffect::ProcessEffect365()" "bool CRagEffect::ProcessEffect440()")
+extract_body(effect365_handler "${effect_source}" "bool CRagEffect::ProcessEffect365()" "bool CRagEffect::ProcessSlimPotionEffects(")
 extract_body(demonstration302_emitter "${effect_source}" "void CRagEffect::SpawnDemonstration302()" "bool CRagEffect::ProcessDemonstration302()")
 extract_body(demonstration302_handler "${effect_source}" "bool CRagEffect::ProcessDemonstration302()" "void CRagEffect::SpawnMaple333()")
 extract_body(maple333_emitter "${effect_source}" "void CRagEffect::SpawnMaple333()" "bool CRagEffect::ProcessMaple333()")
@@ -409,6 +409,7 @@ extract_test_region(foot447_handler "${effect_source}" foot447_family)
 extract_test_region(foot448_handler "${effect_source}" foot448_family)
 extract_test_region(foot326_327_handler "${effect_source}" foot326_327_family)
 extract_test_region(callzone340_handler "${effect_source}" callzone340_family)
+extract_test_region(slim_potion_effects497_499_handler "${effect_source}" slim_potion_effects497_499_family)
 extract_test_region(beginasura1_467_handler "${effect_source}" beginasura1_467_family)
 extract_test_region(beginasura1_variants468_473_handler "${effect_source}" beginasura1_variants468_473_family)
 extract_test_region(bottom_vertical_handler "${effect_source}" bottom_vertical_family)
@@ -457,6 +458,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot447
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot448_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot326_327_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${callzone340_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${slim_potion_effects497_499_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\nconstexpr float kWaterfallSegmentHeight = 40.0f;\n${bluefall_band_setup}\n${bluefall_emitter}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_467_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_variants468_473_handler}")
@@ -980,6 +982,8 @@ add_test(NAME effect340_callzone_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect340_callzone.py")
 add_test(NAME effects557_560_bluefall_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects557_560_bluefall.py")
+add_test(NAME effects497_499_slim_potion_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects497_499_slim_potion.py")
 add_test(NAME effect467_beginasura1_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect467_beginasura1.py")
 add_test(NAME effect468_473_beginasura1_source_check
