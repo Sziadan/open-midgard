@@ -557,10 +557,10 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 554	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\freeze_a.bmp"", 2); return true;"	src/world/SkillSpecialEffect.cpp	102
 555	OnProcess3	SMA	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	71
 556	OnProcess3	ParticlePath	routed	OnProcess3 -> return ProcessParticlePath556();	src/world/RagEffect.cpp	35
-557	OnProcess3	BlueFall	unported	OnProcess3 -> UnportedEffect		-
-558	OnProcess3	BlueFall	unported	OnProcess3 -> UnportedEffect		-
-559	OnProcess3	BlueFall	unported	OnProcess3 -> UnportedEffect		-
-560	OnProcess3	BlueFall	unported	OnProcess3 -> UnportedEffect		-
+557	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(0, 0); return true;		1092
+558	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(1, 0); return true;		282
+559	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(0, 1); return true;		972
+560	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(1, 1); return true;		2006
 561	OnProcess3	Portal3	unported	OnProcess3 -> UnportedEffect		-
 562	OnProcess3	Portal3	unported	OnProcess3 -> UnportedEffect		-
 563	OnProcess3	inline	unported	OnProcess3 -> UnportedEffect		-

@@ -1158,7 +1158,7 @@ void ConfigureBlueFallBand(CEffectPrim* prim, int bandIndex, int axisMode, int h
     band.modes.fill(0);
     band.modes[0] = static_cast<u8>(axisMode != 0 ? 1 : 0);
     band.modes[1] = 1;
-    for (int segmentIndex = 0; segmentIndex <= 20; ++segmentIndex) {
+    for (int segmentIndex = 0; segmentIndex < 20; ++segmentIndex) {
         band.heights[static_cast<size_t>(segmentIndex)] = static_cast<float>(segmentIndex) * kWaterfallSegmentHeight;
     }
 }
@@ -15299,43 +15299,29 @@ void CRagEffect::ProcessGroundSample()
     prim->m_gi[0].rotStart = 0;
 }
 
-void CRagEffect::SpawnBlueFall()
+// TEST_BODY_BEGIN bluefall_emitter_family
+void CRagEffect::SpawnBlueFall(int axisMode, int heightMode)
 {
-    if (m_stateCnt != 0 || !m_master) {
+    if (m_stateCnt != 0) {
         return;
     }
-
-    const vector3d base = ResolveBasePosition();
-
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
     if (CEffectPrim* prim = LaunchEffectPrim(PP_WATERFALL, vector3d{})) {
         prim->m_renderFlag = 5u;
         prim->m_duration = m_duration;
-        prim->m_alpha = 255.0f;
-        prim->m_maxAlpha = 255.0f;
-        prim->m_tintColor = RGB(55, 55, 255);
-
-        const std::array<CTexture*, 3> textures = ResolveBlueFallTextures(static_cast<int>(m_param[2]));
-        for (CTexture* texture : textures) {
-            prim->m_texture.push_back(texture);
-        }
-
-        DbgLog("[RagEffect] BlueFall spawn effect=%d base=(%.2f,%.2f,%.2f) tex=%p/%p/%p axis=%d height=%d set=%d\n",
-            m_type,
-            base.x,
-            base.y,
-            base.z,
-            textures[0],
-            textures[1],
-            textures[2],
-            static_cast<int>(m_param[0]),
-            static_cast<int>(m_param[1]),
-            static_cast<int>(m_param[2]));
+        prim->m_totalTexture = 3;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\waterfall11.tga", false));
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\waterfall12.tga", false));
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\waterfall13.tga", false));
 
         for (int bandIndex = 0; bandIndex < 4; ++bandIndex) {
-            ConfigureBlueFallBand(prim, bandIndex, static_cast<int>(m_param[0]), static_cast<int>(m_param[1]));
+            ConfigureBlueFallBand(prim, bandIndex, axisMode, heightMode);
         }
     }
 }
+// TEST_BODY_END bluefall_emitter_family
 
 // HighPriest.exe.c:433666-433827 (0x60B580). Asset bytes are read from
 // the listed executable VAs; CResMgr supplies its registered sprite directory.

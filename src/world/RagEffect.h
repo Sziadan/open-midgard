@@ -783,7 +783,7 @@ private:
     void SpawnHit6();
     void SpawnCrossLensHit(bool compact);
     void SpawnRuwach();
-    void SpawnBlueFall();
+    void SpawnBlueFall(int axisMode, int heightMode);
     void SpawnWeatherCloud();
     void ProcessGroundSample();
 

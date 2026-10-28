@@ -33,6 +33,13 @@ constexpr int kPrimTypeHeal = 0x3C;
 constexpr int kPrimTypeChemical3 = 0x38;
 struct matrix { float m[4][4]{}; };
 #include "EffectSegmentTypes.inc"
+struct EffectBandState {
+    bool active = false;
+    int process = 0;
+    float maxHeight = 0, rotStart = 0, alpha = 0, distance = 0, riseAngle = 0, fadeThreshold = -1, radius = 0;
+    std::array<float, 21> heights{};
+    std::array<u8, 21> modes{};
+};
 void MatrixIdentity(matrix& m) { m = {}; for (int i = 0; i < 4; ++i) m.m[i][i] = 1; }
 #include "ParticleMatrixBodies.inc"
 float GetRadian(int degree) { return degree * 3.14159265f / 180.0f; }
@@ -320,6 +327,7 @@ struct CEffectPrim : CGameObject {
     float m_longSpeed=0,m_longAccel=0,m_radiusSpeed=0,m_radiusAccel=0,m_innerSpeed=0,m_innerAccel=0,m_innerSize=0;
     u32 m_tintColor=0xFFFFFF,m_argb=0xFFFFFFFF;
     std::array<EffectSegmentState,50> m_segments;
+    std::array<EffectBandState,4> m_bands{};
     std::vector<std::array<vector3d,4>> m_segmentQuadPositions = std::vector<std::array<vector3d,4>>(50);
 
     std::vector<CTexture*> m_texture;
@@ -653,6 +661,7 @@ struct CRagEffect : CGameObject {
     bool ProcessFoot448();
     bool ProcessFoot326_327(const char*);
     bool ProcessCallZone340();
+    void SpawnBlueFall(int, int);
     bool ProcessBeginAsura1_467();
     bool ProcessBeginAsura1Variant(const char*);
     void ApplyBottomMusic(const char*, int);
@@ -4092,6 +4101,47 @@ int main()
             &&effect.m_effectPos.z==83&&g_texMgr.requests.size()==1&&waveCalls.empty()&&rngDraws==draws,
             "Foot F1=0 variant later states refresh master without repeat emission");
         effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        struct Variant { int id; int axis; int heightMode; float max0; float max3; };
+        const Variant variants[]={{557,0,0,80,41},{558,1,0,80,41},
+                                  {559,0,1,30,12},{560,1,1,30,12}};
+        const char* const textures[]={"effect\\waterfall11.tga","effect\\waterfall12.tga","effect\\waterfall13.tga"};
+        for(const Variant& variant:variants) {
+            CRenderObject master; master.m_pos={25,36,47};
+            CRagEffect effect; effect.m_type=variant.id; effect.m_master=&master; effect.m_duration=84;
+            effect.m_deltaPos={100,200,300}; effect.m_stateCnt=1; effect.m_effectPos={1,2,3};
+            g_texMgr.requests.clear(); waveCalls.clear(); const int draws=rngDraws;
+            effect.SpawnBlueFall(variant.axis,variant.heightMode);
+            check(effect.m_effectPos.x==1&&effect.m_effectPos.y==2&&effect.m_effectPos.z==3
+                &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
+                "BlueFall F1/F2 variant skips nonzero state without anchoring or emission");
+            effect.m_stateCnt=0; effect.SpawnBlueFall(variant.axis,variant.heightMode);
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            bool bands=prim!=nullptr;
+            for(int i=0;i<4&&prim;++i) {
+                const EffectBandState& band=prim->m_bands[static_cast<size_t>(i)];
+                bands=bands&&band.active&&band.process==0&&band.alpha==120
+                    &&band.distance==36.0f+i&&band.radius==i*0.25f-1.0f
+                    &&band.maxHeight==(variant.heightMode?30.0f-6.0f*i:80.0f-13.0f*i)
+                    &&band.modes[0]==variant.axis&&band.modes[1]==1
+                    &&band.heights[0]==0&&band.heights[1]==40&&band.heights[19]==760&&band.heights[20]==0;
+            }
+            check(prim&&prim->m_type==PP_WATERFALL&&prim->m_renderFlag==5&&prim->m_duration==84
+                &&prim->m_totalTexture==3&&prim->m_texture.size()==3
+                &&g_texMgr.requests.size()==3&&g_texMgr.requests[0]==textures[0]
+                &&g_texMgr.requests[1]==textures[1]&&g_texMgr.requests[2]==textures[2]
+                &&prim->m_pos.x==25&&prim->m_pos.y==36&&prim->m_pos.z==47
+                &&effect.m_effectPos.x==25&&effect.m_effectPos.y==36&&effect.m_effectPos.z==47
+                &&prim->m_alpha==0&&prim->m_maxAlpha==254&&prim->m_tintColor==0xFFFFFF
+                &&prim->m_size==1&&bands&&waveCalls.empty()&&rngDraws==draws,
+                "BlueFall effect emits exact state-zero textures, default colors, and four band profiles");
+            master.m_pos={61,72,83}; effect.m_stateCnt=1; effect.SpawnBlueFall(variant.axis,variant.heightMode);
+            check(effect.m_primList.size()==1&&effect.m_effectPos.x==25&&effect.m_effectPos.y==36
+                &&effect.m_effectPos.z==47&&g_texMgr.requests.size()==3&&waveCalls.empty()&&rngDraws==draws,
+                "BlueFall later state neither repeats nor refreshes the anchor");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+        }
     }
     {
         CRenderObject master; master.m_pos={25,36,47};

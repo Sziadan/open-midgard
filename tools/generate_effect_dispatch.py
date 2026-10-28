@@ -35,7 +35,7 @@ FORCE_ROUTE.add(92)
 FORCE_ROUTE.add(361)
 FORCE_ROUTE.add(365)
 FORCE_ROUTE.add(440)
-FORCE_ROUTE.update({242, 404, 277, 287, 290, 292, 294, 281, 284, 288, 265, 412, 374, 410, 428, 297, 434, 447, 448, 467, 468, 469, 470, 471, 472, 473, 326, 327, 340})
+FORCE_ROUTE.update({242, 404, 277, 287, 290, 292, 294, 281, 284, 288, 265, 412, 374, 410, 428, 297, 434, 447, 448, 467, 468, 469, 470, 471, 472, 473, 326, 327, 340, 557, 558, 559, 560})
 
 DIRECT_CALLS = {
     # Main OnProcess cases whose index handler includes more than raw STR.
@@ -261,6 +261,10 @@ DIRECT_CALLS = {
     326: 'return ProcessFoot326_327("effect\\\\foot_l_b.tga");',
     327: 'return ProcessFoot326_327("effect\\\\foot_r_b.tga");',
     340: "return ProcessCallZone340();",
+    557: "SpawnBlueFall(0, 0); return true;",
+    558: "SpawnBlueFall(1, 0); return true;",
+    559: "SpawnBlueFall(0, 1); return true;",
+    560: "SpawnBlueFall(1, 1); return true;",
     467: "return ProcessBeginAsura1_467();",
     468: 'return ProcessBeginAsura1Variant("effect\\\\hanmoon2.tga");',
     469: 'return ProcessBeginAsura1Variant("effect\\\\hanmoon3.tga");',

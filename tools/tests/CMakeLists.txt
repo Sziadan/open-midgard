@@ -331,7 +331,9 @@ string(REPLACE "rand()" "SilentRand()" rg_coin3_emitter "${rg_coin3_emitter}")
 extract_body(bash3d5_caller "${effect_source}" "void CRagEffect::ApplyBash3D5()" "void CRagEffect::SpawnChookgi(")
 extract_body(chookgi_emitter "${effect_source}" "void CRagEffect::SpawnChookgi(" "void CRagEffect::ApplyBottomMagnus(")
 string(REPLACE "rand()" "SilentRand()" chookgi_emitter "${chookgi_emitter}")
-extract_body(ground_sample_emitter "${effect_source}" "void CRagEffect::ProcessGroundSample()" "void CRagEffect::SpawnBlueFall()")
+extract_body(ground_sample_emitter "${effect_source}" "void CRagEffect::ProcessGroundSample()" "void CRagEffect::SpawnBlueFall(")
+extract_test_region(bluefall_emitter "${effect_source}" bluefall_emitter_family)
+extract_body(bluefall_band_setup "${effect_source}" "void ConfigureBlueFallBand(" "bool UpdateWeatherCloudPrimitive(")
 extract_body(prim_cloud_update "${effect_source}" "bool UpdateWeatherCloudPrimitive(CEffectPrim* prim)" "bool UpdateWaterfallPrimitive(")
 extract_body(cloud_texture "${effect_source}" "CTexture* ResolveWeatherCloudTexture(int mapVariant)" "std::array<CTexture*, 3> ResolveBlueFallTextures(")
 extract_body(weather_cloud_emitter "${effect_source}" "void CRagEffect::SpawnWeatherCloud()" "void CRagEffect::ProcessGroundSample()")
@@ -455,6 +457,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot447
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot448_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot326_327_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${callzone340_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\nconstexpr float kWaterfallSegmentHeight = 40.0f;\n${bluefall_band_setup}\n${bluefall_emitter}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_467_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_variants468_473_handler}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
@@ -975,6 +978,8 @@ add_test(NAME effect326_327_foot_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect326_327_foot.py")
 add_test(NAME effect340_callzone_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect340_callzone.py")
+add_test(NAME effects557_560_bluefall_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects557_560_bluefall.py")
 add_test(NAME effect467_beginasura1_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect467_beginasura1.py")
 add_test(NAME effect468_473_beginasura1_source_check
