@@ -18965,6 +18965,48 @@ bool CRagEffect::ProcessHitLine3Zero428()
 }
 // TEST_BODY_END hitline3zero428_family
 
+// PE HighPriest.exe.c:421024/434569; Ref/dhxj/RagEffect2.cpp:2618.
+// TEST_BODY_BEGIN pokjuk297_family
+bool CRagEffect::ProcessPokJuk297()
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CWorld* world = mode != nullptr ? mode->m_world : nullptr;
+    CRenderObject* player = world != nullptr ? world->m_player : nullptr;
+    if (player == nullptr) return true;
+    m_effectPos = player->m_pos;
+    if (m_stateCnt != 0) return true;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_POKJUK, vector3d{});
+    if (prim == nullptr) return true;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_totalTexture = 3;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\pok1.tga", false));
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\pok3.tga", false));
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\pok2.tga", false));
+    m_effectPos.x -= 15.0f;
+
+    for (EffectGi& gi : prim->m_gi) {
+        gi.life = 1;
+        gi.process = -300 - rand() % 50;
+        gi.rotStart = static_cast<short>(rand() % 360);
+        gi.sparkX = gi.vecTPreX = gi.vecTNowX = gi.vecBPreX = m_effectPos.x;
+        gi.sparkY = gi.vecTPreY = gi.vecTNowY = gi.arcBaselineY = m_effectPos.y;
+        gi.sparkZ = gi.vecTPreZ = gi.vecTNowZ = gi.vecBPreZ = m_effectPos.z;
+        gi.alphaB = 0;
+        gi.maxHeight = 2.0f;
+        gi.flag[0] = static_cast<u8>(rand() % 5);
+        gi.flag[1] = 0;
+        gi.flag[3] = 0;
+        gi.flag[2] = static_cast<u8>(20 * (rand() % 4));
+        gi.distance = static_cast<float>(static_cast<double>(rand() % 100) * 0.0040000002 + 0.40000001);
+        gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+        gi.riseAngle = static_cast<short>(rand() % 360);
+    }
+    return true;
+}
+// TEST_BODY_END pokjuk297_family
+
 // Ref/RagEffect2.cpp:32653-32773; canonical helpers at 0x62E390/0x62FBE0/0x62F830.
 void CRagEffect::SpawnTeiHit1(const char* textureName, char variant)
 {

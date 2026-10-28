@@ -301,7 +301,7 @@ case 293: ApplyBottomMusic("effect\\kiss.bmp", 4); return true;
 case 294: return ProcessBottomVertical(294);
 case 295: return ProcessEffectFrameLegacy();
 case 296: return ProcessEffectFrameLegacy();
-case 297: return UnportedEffect();
+case 297: return ProcessPokJuk297();
 case 298: return ProcessThrowItemEffect();
 case 299: return ProcessThrowItemEffect();
 case 374: return ProcessBasilica();

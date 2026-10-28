@@ -647,6 +647,7 @@ struct CRagEffect : CGameObject {
     bool ProcessBasilica();
     bool ProcessRainbow410();
     bool ProcessHitLine3Zero428();
+    bool ProcessPokJuk297();
     void ApplyBottomMusic(const char*, int);
     bool ProcessEffect365();
     bool ProcessDemonstration302();
@@ -3913,6 +3914,55 @@ int main()
         check(effect.m_effectPos.x==41&&effect.m_effectPos.y==52&&effect.m_effectPos.z==63
             &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
             "HitLine3 F1=0 keeps refreshing position at later states without assets, RNG, or audio");
+    }
+    {
+        CRenderObject player; player.m_pos={40,50,60};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&player;
+        CRagEffect effect; effect.m_type=297; effect.m_master=&player; effect.m_duration=90;
+        effect.m_stateCnt=1; effect.m_effectPos={1,2,3};
+        g_texMgr.requests.clear(); waveCalls.clear(); rngValues.clear(); rngCursor=0;
+        const int drawBase=rngDraws;
+        effect.ProcessPokJuk297();
+        check(effect.m_effectPos.x==40&&effect.m_effectPos.y==50&&effect.m_effectPos.z==60
+            &&effect.m_primList.empty()&&g_texMgr.requests.empty()&&waveCalls.empty()
+            &&rngDraws==drawBase,
+            "PokJuk follows world player without spawning, audio, or RNG before state zero");
+
+        rngValues.clear(); for(int value=1;value<=28;++value) rngValues.push_back(value);
+        rngCursor=0; effect.m_stateCnt=0; player.m_pos={100,200,300};
+        effect.ProcessPokJuk297();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        bool payload=prim!=nullptr;
+        for(int lane=0;lane<4&&prim;++lane){
+            const int base=lane*7; const EffectGi& gi=prim->m_gi[lane];
+            const float x=85.0f, y=200.0f, z=300.0f;
+            const float distance=static_cast<float>(static_cast<double>(rngValues[base+4]%100)
+                *0.0040000002+0.40000001);
+            payload=payload&&gi.life==1&&gi.process==-300-rngValues[base]%50
+                &&gi.rotStart==rngValues[base+1]%360&&gi.alphaB==0&&gi.maxHeight==2
+                &&gi.flag[0]==rngValues[base+2]%5&&gi.flag[1]==0
+                &&gi.flag[2]==20*(rngValues[base+3]%4)&&gi.flag[3]==0
+                &&gi.distance==distance&&gi.fullDisplayAngle==rngValues[base+5]%360
+                &&gi.riseAngle==rngValues[base+6]%360
+                &&gi.sparkX==x&&gi.sparkY==y&&gi.sparkZ==z
+                &&gi.vecTPreX==x&&gi.vecTPreY==y&&gi.vecTPreZ==z
+                &&gi.vecTNowX==x&&gi.vecTNowY==y&&gi.vecTNowZ==z
+                &&gi.vecBPreX==x&&gi.arcBaselineY==y&&gi.vecBPreZ==z;
+        }
+        check(prim&&prim->m_type==PP_POKJUK&&prim->m_renderFlag==5&&prim->m_duration==90
+            &&prim->m_totalTexture==3&&prim->m_size==1&&prim->m_texture.size()==3
+            &&g_texMgr.requests.size()==3&&g_texMgr.requests[0]=="effect\\pok1.tga"
+            &&g_texMgr.requests[1]=="effect\\pok3.tga"&&g_texMgr.requests[2]=="effect\\pok2.tga"
+            &&effect.m_effectPos.x==85&&effect.m_effectPos.y==200&&effect.m_effectPos.z==300
+            &&waveCalls.empty()&&payload&&rngDraws==drawBase+28&&rngCursor==28,
+            "PokJuk emits three ordered textures and four exact seven-draw GI lanes");
+
+        player.m_pos={150,250,350}; effect.m_stateCnt=1; effect.ProcessPokJuk297();
+        check(effect.m_primList.size()==1&&effect.m_effectPos.x==150&&effect.m_effectPos.y==250
+            &&effect.m_effectPos.z==350&&g_texMgr.requests.size()==3&&waveCalls.empty()
+            &&rngDraws==drawBase+28,
+            "PokJuk later states follow player without offset, repeats, resources, or RNG");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); g_world.m_player=oldPlayer;
     }
     {
         const int ids[]={277,287,290,292,294};

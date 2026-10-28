@@ -552,6 +552,7 @@ private:
     bool ProcessBasilica();
     bool ProcessRainbow410();
     bool ProcessHitLine3Zero428();
+    bool ProcessPokJuk297();
     bool ProcessEffect365();
     void SpawnPressure365();
     void SpawnGroundShake365();

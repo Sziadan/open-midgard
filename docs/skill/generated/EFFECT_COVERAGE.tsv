@@ -301,7 +301,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 294	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(294);		1406
 295	OnProcess	Talk_FrostJoke	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	124
 296	OnProcess	Talk_FrostJoke	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	97
-297	OnProcess	PokJuk	unported	OnProcess -> UnportedEffect		-
+297	OnProcess	PokJuk	routed	OnProcess -> return ProcessPokJuk297();		15
 298	OnProcess	ThrowItem	routed	OnProcess -> return ProcessThrowItemEffect();	src/world/SkillSpecialEffect.cpp	101
 299	OnProcess	ThrowItem	routed	OnProcess -> return ProcessThrowItemEffect();	src/gamemode/UseSkillEffect.generated.inc	15
 374	OnProcess	Basilica	routed	OnProcess -> return ProcessBasilica();		577
