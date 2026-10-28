@@ -3256,3 +3256,7 @@ The six scenario fixtures send unit jobs189–194, then step real `CSkill::OnPro
 ## WP10.8 runtime replay — Graffiti packet lifecycle — 2026-10-28
 
 `graffiti_lifecycle.tsv` dispatches the fixed 97-byte 0x01C9 `Zc_Skill_Entry2` packet with graffiti flag set, AID200, creator AID1, cell(10,20), and a NUL-terminated 80-byte text field. Runtime verifies creation as `CGraffiSkill`, registration in both world lists, one active `OnProcess`, and removal through 0x0120 from both lists. Ref packet/model basis: plan packet layout (2.4), `Ref/Skill.cpp:274,652,2040,2162,2271`, and `Ref/GameWorld.cpp:665,721,825`. The resource-backed rendered texture is outside this fixture. Focused replay and full CTest pass57/57.
+
+## WP10.8 runtime replay — Blast Mine trigger — 2026-10-28
+
+`blast_mine_trigger_lifecycle.tsv` dispatches job143 entry, duplicate-entry hidden state, 0x01AC reveal, packetver23 0x01DE HT_BLASTMINE skill122 damage notify, 0x01D7 job140 used-trap update, and 0x0120 removal. Runtime confirms message45 saved effect106, hidden/revealed visibility, the damage packet trace, effect106 launch when message47 sets job140, and cleanup from both world lists. Ref source basis: `Ref/Skill.cpp` message45 and message47 paths around 3140–3543; packet IDs/layout aligned with existing Land Mine replay and receive profile. Focused replay and full CTest pass58/58.

@@ -1662,3 +1662,7 @@ Added a full Land Mine trigger path: job147 entry, packetver23 0x01DE HT_LANDMIN
 ## WP10.8 — Graffiti packet lifecycle replay — 2026-10-28
 
 Added `graffiti_lifecycle.tsv` for a raw 97-byte 0x01C9 Graffiti entry (unit AID200, creator AID1, cell10,20, 80-byte NUL-terminated text field) followed by 0x0120 removal. The production router creates a `CGraffiSkill`, adds it to both world registries, leaves it active through `OnProcess`, and removes it from both registries. The replay verifies packet framing and text-field termination; rendered texture output remains resource-dependent and is not asserted. Focused replay passes; the full root packet replay CTest passes57/57.
+
+## WP10.8 — Blast Mine trigger lifecycle replay — 2026-10-28
+
+Added a Blast Mine sequence covering job143 entry, duplicate entry hiding, 0x01AC reveal, 33-byte packetver23 0x01DE HT_BLASTMINE skill122 notify, 0x01D7 transition to used-trap job140, and 0x0120 removal. The runtime verifies initial saved effect106, hidden/revealed state, damage-notify trace, effect106 launch on job140, and cleanup from both world lists. Focused replay passes; the complete root packet replay CTest passes58/58.
