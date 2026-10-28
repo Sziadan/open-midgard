@@ -901,6 +901,8 @@ add_test(NAME effect167_169_str_mapping_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect167_169_str_mapping.py")
 add_test(NAME effect183_hit2blue_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect183_hit2blue.py")
+add_test(NAME effect185_suicide_str_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect185_suicide_str.py")
 add_test(NAME skill_cast_cancel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_cancel_source.py")
 add_test(NAME status_state_source_check
@@ -1003,4 +1005,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect171_venomdust2.py
     check_effect167_169_str_mapping.py
     check_effect183_hit2blue.py
+    check_effect185_suicide_str.py
     check_effect695_map_fireworks.py)

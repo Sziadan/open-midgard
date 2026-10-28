@@ -1804,3 +1804,7 @@ Audited effects167–169 as a shared `ProcessEZ2STR` group. Primary Ref `CRagEff
 ## WP5C effect183 Hit2Blue — 2026-10-28
 
 Verified routed effect183 against the matching primary Ref and PE `Hit2` helper. The canonical caller emits the blue variant at state0, sends mode message135/1 at states3/7/9, and then follows the shared STR completion path. Its sound and alternating lens textures resolve to executable resources at `0x719BC8`, `0x71A490`, and `0x71A3A4`. The local eight-particle emitter preserves six ordered random draws per particle and the source primitive selector; existing lifecycle cases cover payload, messages, and completion. Added `check_effect183_hit2blue.py` and registered its CTest. No runtime changes; coverage remains614 routed /79 explicit unported /0 launched-but-unported. Parity CTest passes 210/210. Next: continue the 5C source-parity audit.
+
+## WP5C effect185 Suicide STR — 2026-10-28
+
+Verified routed effect185's `suicide.str` mapping across Ref, PE, and local tables. The PE resolves the string at VA `0x71AC2C`. Compared the canonical caller's temporary actor-position swap and restoration on both active and completion paths with local `ProcessTargetPositionStr`; existing lifecycle tests cover restoration, completion, and missing resources. Added and registered `check_effect185_suicide_str.py`. The STR clip is absent, so this is source/name parity only. Full parity CTest passes 211/211. Next: continue 5C source-parity audit.
