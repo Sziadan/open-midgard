@@ -235,7 +235,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 224	OnProcess	WIND	routed	OnProcess -> ApplyWind(); return true;		15
 225	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_red.tga"", 0, false); return true;"		135
 226	OnProcess	GRANDCROSS,GRANDCROSS2	routed	OnProcess -> return ProcessGrandCrossEffects();	src/world/SkillSpecialEffect.cpp	2301
-227	OnProcess	INTIMIDATE	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+227	OnProcess	INTIMIDATE	routed	OnProcess -> return ProcessIntimidate227();	src/world/SkillSpecialEffect.cpp	799
 228	OnProcess	CHOOKGI	routed	OnProcess -> return ProcessEffectFrameLegacy();		1032
 229	OnProcess	Cloud	routed	OnProcess -> SpawnWeatherCloud(); return true;		15
 230	OnProcess	Cloud	routed	OnProcess -> SpawnWeatherCloud(); return true;		15

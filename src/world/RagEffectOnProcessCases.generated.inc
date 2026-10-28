@@ -235,7 +235,7 @@ case 223: ApplyVolcano("effect\\ring_white.tga", 2, false); return true;
 case 224: ApplyWind(); return true;
 case 225: ApplyVolcano("effect\\ring_red.tga", 0, false); return true;
 case 226: return ProcessGrandCrossEffects();
-case 227: return UnportedEffect();
+case 227: return ProcessIntimidate227();
 case 228: return ProcessEffectFrameLegacy();
 case 229: SpawnWeatherCloud(); return true;
 case 230: SpawnWeatherCloud(); return true;

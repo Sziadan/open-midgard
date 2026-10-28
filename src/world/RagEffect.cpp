@@ -26068,6 +26068,51 @@ bool CRagEffect::ProcessMaxPower104()
 
 // TEST_BODY_END maxpower104_handler
 
+// HighPriest.exe.c:420690-420709 / helper 0x62DD80; secondary Ref caller at dhxj/RagEffect.cpp:5074.
+bool CRagEffect::ProcessIntimidate227()
+{
+    CRenderObject* master=ResolveCurrentMaster();
+    if (m_stateCnt == 0 && master != nullptr) {
+        m_pos=master->m_pos;
+        m_effectPos=m_pos;
+        TryPlaySingleEffectWave(m_pos,"effect\\EF_Bash.wav",0.0f,true);
+    }
+    if (m_stateCnt == 35) TryPlaySingleEffectWave(m_pos,"effect\\rog_intimidate.wav",0.0f,true);
+    if (m_stateCnt == 0 && master != nullptr) {
+        for (int call=0;call<20;++call) {
+            // INTIMIDATE resets m_pos from the master on each invocation.
+            m_pos=master->m_pos;
+            m_effectPos=m_pos;
+            CEffectPrim* prim=LaunchEffectPrim(PP_INTIMIDATE,vector3d{});
+            if (prim == nullptr) continue;
+            prim->m_renderFlag=5;
+            prim->m_duration=m_duration;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\white01.bmp",false));
+            m_pos.y-=9.0f;
+            m_effectPos.y-=9.0f;
+            for (EffectGi& gi:prim->m_gi) {
+                gi.life=1;
+                gi.vecBPreX=m_deltaPos.x;
+                gi.arcBaselineY=m_deltaPos.y;
+                gi.vecBPreZ=m_deltaPos.z;
+                gi.process=-70-rand()%30;
+                gi.distance=12.0f;
+                gi.height[0]=1.5f;
+                gi.riseAngle=static_cast<short>(rand()%360);
+                gi.fullDisplayAngle=static_cast<short>(rand()%360);
+                gi.rotStart=static_cast<short>(rand()%360);
+                gi.height[2]=static_cast<float>(rand()%360);
+                gi.height[1]=3.5f;
+                gi.alphaB=0;
+                gi.flag[0]=0;
+            }
+        }
+    }
+    return true;
+}
+
+// TEST_BODY_END intimidate227_handler
+
 bool CRagEffect::ProcessEffect380()
 {
     CRenderObject* master = ResolveCurrentMaster();

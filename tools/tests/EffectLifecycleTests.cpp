@@ -587,6 +587,7 @@ struct CRagEffect : CGameObject {
     bool ProcessKyrie112();
     bool ProcessRepairWeapon101();
     bool ProcessMaxPower104();
+    bool ProcessIntimidate227();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
@@ -5637,6 +5638,44 @@ int main()
         effect.m_duration=400;effect.m_stateCnt=400;
         check(!effect.ProcessAspersio86()&&effect.m_primList.size()==15,
             "Aspersio terminates at its duration boundary");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRenderObject master;master.m_pos={10,20,30};
+        CRagEffect effect;effect.m_type=227;effect.m_master=&master;effect.m_duration=300;
+        effect.m_pos={1,2,3};effect.m_deltaPos={1,2,3};
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        for(int i=0;i<400;++i)rngValues.push_back(i);
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=0;effect.ProcessIntimidate227();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_Bash.wav"
+            &&waveCalls[0].x==7&&waveCalls[0].y==0&&waveCalls[0].z==25
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&effect.m_primList.size()==20&&g_texMgr.requests.size()==20
+            &&rngDraws==beforeRng+400&&rngCursor==400&&effect.m_pos.x==10
+            &&effect.m_pos.y==11&&effect.m_pos.z==30,
+            "Intimidate state0 plays its cue, launches twenty helpers, draws 400 RNG values, and resets parent position per helper");
+        CEffectPrim* prim=effect.m_primList.front();
+        check(prim&&prim->m_type==PP_INTIMIDATE&&prim->m_renderFlag==5&&prim->m_duration==300
+            &&prim->m_pos.x==10&&prim->m_pos.y==20&&prim->m_pos.z==30
+            &&prim->m_texture.size()==1&&g_texMgr.requests[0]=="effect\\white01.bmp",
+            "Intimidate captures each particle at master origin with white01 texture");
+        check(prim&&prim->m_gi[0].life==1&&prim->m_gi[0].process==-70&&prim->m_gi[0].distance==12
+            &&prim->m_gi[0].height[0]==1.5f&&prim->m_gi[0].riseAngle==1
+            &&prim->m_gi[0].fullDisplayAngle==2&&prim->m_gi[0].rotStart==3
+            &&prim->m_gi[0].height[2]==4&&prim->m_gi[0].height[1]==3.5f
+            &&prim->m_gi[0].alphaB==0&&prim->m_gi[0].flag[0]==0
+            &&prim->m_gi[0].vecBPreX==1&&prim->m_gi[0].arcBaselineY==2&&prim->m_gi[0].vecBPreZ==3,
+            "Intimidate preserves its first GI lane initial payload");
+        effect.m_stateCnt=34;effect.ProcessIntimidate227();
+        effect.m_stateCnt=35;effect.ProcessIntimidate227();
+        effect.m_stateCnt=36;effect.ProcessIntimidate227();
+        check(waveCalls.size()==2&&waveCalls[1].name=="effect\\rog_intimidate.wav"
+            &&waveCalls[1].x==7&&waveCalls[1].y==0&&waveCalls[1].z==25
+            &&effect.m_primList.size()==20&&rngDraws==beforeRng+400,
+            "Intimidate state35 plays its second cue without additional particles or RNG");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
     }
     {
