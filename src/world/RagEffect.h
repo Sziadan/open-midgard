@@ -511,6 +511,7 @@ private:
     bool ProcessTarotEffect();
     bool ProcessEffectTextureAnimation();
     bool ProcessEffectTextureSet();
+    bool ProcessLevel99Effect();
     bool ProcessTier3StrEffect();
     bool ProcessThrowItemEffect();
     bool ProcessHealBlue();

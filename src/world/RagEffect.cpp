@@ -17208,6 +17208,7 @@ void CRagEffect::ApplyEffectTexture(const char* textureName, int variant)
     }
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     m_cachedPos = origin;
     for (CEffectPrim* existing : m_primList) {
         if (existing != nullptr && existing->m_type == static_cast<EFFECTPRIMID>(kPrimTypeEffectTexture)) {
@@ -17292,6 +17293,71 @@ bool CRagEffect::ProcessEffectTextureSet()
     case 703: ApplyEffectTexture("effect\\white02.bmp", 100); return true;
     default: return false;
     }
+}
+
+// Ref/dhxj/RagEffect2.cpp:8393-8470; canonical helper HighPriest.exe.c:442398.
+bool CRagEffect::ProcessLevel99Effect()
+{
+    const char* textureName = nullptr;
+    int variant = 0;
+    switch (m_type) {
+    case 200:
+    case 397:
+        textureName = "effect\\ring_blue.tga";
+        break;
+    case 679:
+        textureName = "effect\\ring_white.tga";
+        variant = 1;
+        break;
+    default:
+        return false;
+    }
+
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr && existing->m_type == PP_3DCASTING) {
+            existing->m_pos = origin;
+        }
+    }
+    if (m_stateCnt == 99999998) {
+        m_stateCnt = 0;
+        m_duration = 99999999;
+    }
+    if (m_stateCnt != 0) {
+        return true;
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DCASTING, vector3d{});
+    if (prim == nullptr) {
+        return true;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    prim->m_size = variant == 1 ? 7.0f : 4.0f;
+    for (EffectGi& gi : prim->m_gi) {
+        gi.life = 0;
+    }
+    constexpr std::array<float, 3> maxHeights{15.0f, 13.0f, 11.0f};
+    constexpr std::array<float, 3> distances{3.9000001f, 4.0999999f, 4.3000002f};
+    constexpr std::array<int, 3> rotations{0, 90, 180};
+    constexpr std::array<int, 3> riseAngles{55, 50, 45};
+    for (size_t index = 0; index < 3; ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        gi.life = 1;
+        gi.process = 0;
+        gi.fullDisplayAngle = 315;
+        gi.maxHeight = maxHeights[index];
+        gi.rotStart = static_cast<short>(rotations[index]);
+        gi.alphaB = 120;
+        gi.distance = distances[index];
+        gi.riseAngle = static_cast<short>(riseAngles[index]);
+        gi.sparkY = 0.0f;
+    }
+    return true;
 }
 
 bool CRagEffect::ProcessTarotEffect()
