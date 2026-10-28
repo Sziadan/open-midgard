@@ -11,6 +11,7 @@ from tools.ro_exe_resolve import ExeImage, SymbolTable  # noqa: E402
 PE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
 REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 REF2 = (ROOT / "Ref/RagEffect2.cpp").read_text(encoding="utf-8", errors="replace")
+REF_PRIM = (ROOT / "Ref/dhxj/RagEffectPrim.cpp").read_text(encoding="utf-8", errors="replace")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 DISPATCH = (ROOT / "src/world/RagEffectOnProcess2Cases.generated.inc").read_text(encoding="utf-8")
 GENERATOR = (ROOT / "tools/generate_effect_dispatch.py").read_text(encoding="utf-8")
@@ -197,5 +198,82 @@ require("flag" not in local_spawn,
         "local LightSphere helper added unsupported GI flag writes")
 require("for (int i = 0; i < 80; ++i)" in local_handler,
         "effect 348 must issue 80 LightSphere spawn attempts (1600 RNG draws total)")
+
+# The primitive render pass is routed separately from its OnProcess update.
+# Canonical PE and Ref use the same four-lane, two-rectangle mesh; the older
+# Ref dispatcher spelling is retained in Ref/dhxj/RagEffectPrim.cpp.
+pe_render = function_body(PE,
+    "void __thiscall CEffectPrim::RenderLightSphere(CEffectPrim *this, matrix *wtm)")
+ref_render = function_body(REF2,
+    "void __thiscall CEffectPrim::RenderLightSphere(CEffectPrim *this, matrix *wtm)")
+for label, body in (("PE", pe_render), ("Ref", ref_render)):
+    require(body.count("RenderTeiRect(") == 2,
+            f"{label} LightSphere renderer must emit the two cross-plane RenderTeiRect calls")
+    require(re.search(r"if\s*\(\s*\*\(\(_BYTE\s*\*\)p_distance\s*-\s*128\)\s*==\s*1\s*&&\s*\*\(\(__int16\s*\*\)p_distance\s*-\s*63\)\s*>\s*0\s*\)", body),
+            f"{label} renderer must require live lane and positive alpha")
+    for token in ("p_distance = &this->m_GI[0].distance", "v13 = 4",
+                  "p_distance += 45", "g_sinTable[*((__int16 *)p_distance - 61)] * *p_distance + *p_distance",
+                  "v3 * g_cosTable[*((__int16 *)p_distance - 1)]",
+                  "vector3d.x = vec2 * g_cosTable[*((__int16 *)p_distance - 56)]",
+                  "vector3d.z = v4 * g_sinTable[*((__int16 *)p_distance - 56)]",
+                  "vector3d.y = v3 * g_sinTable[*((__int16 *)p_distance - 1)] - *(p_distance - 24)",
+                  "v5.x = 0.5", "v7.x = -0.5", "v8.x = 0.0", "v6.x = 0.0",
+                  "HIDWORD(vec1_4a) = 1056964608",
+                  "HIDWORD(vec4_4) = -1090519040"):
+        require(token in body, f"{label} LightSphere renderer lacks source geometry operation: {token}")
+    require(re.search(r"while\s*\(\s*v13\s*\)", body),
+            f"{label} renderer must visit all four GI lanes")
+    require(body.count("HIDWORD(vec1_4a) = 1056964608") == 1
+            and body.count("HIDWORD(vec4_4) = -1090519040") == 1,
+            f"{label} renderer cross-plane half-widths changed")
+    require("*((__int16 *)p_distance - 63)" in body
+            and "(__int64)*(p_distance - 27)" in body
+            and "(__int64)*(p_distance - 26)" in body
+            and "(__int64)*(p_distance - 25)" in body,
+            f"{label} renderer alpha/RGB channel sources changed")
+
+pe_render_dispatch = function_body(PE,
+    "void __thiscall CEffectPrim::Render(CEffectPrim *this, matrix *wtm)")
+require(re.search(r"case 0x51:\s*CEffectPrim::RenderLightSphere\(this,\s*wtm\);", pe_render_dispatch),
+        "PE CEffectPrim::Render 0x51 route changed")
+ref_render_dispatch = function_body(REF_PRIM, "CEffectPrim :: Render(matrix &wtm")
+require(re.search(r"case\s+PP_LIGHTSPHERE:\s*RenderLightSphere\(wtm\);", ref_render_dispatch),
+        "Ref CEffectPrim::Render PP_LIGHTSPHERE route changed")
+
+local_render = function_body(LOCAL, "void CEffectPrim::Render(matrix* viewMatrix)")
+local_sphere_route = re.search(
+    r"if\s*\(m_type\s*==\s*PP_LIGHTSPHERE\)\s*\{(.*?)\}", local_render, re.S)
+require(local_sphere_route is not None
+        and "RenderReferenceLightSphere(*this, *viewMatrix);" in local_sphere_route.group(1)
+        and "return;" in local_sphere_route.group(1),
+        "local CEffectPrim::Render must route PP_LIGHTSPHERE directly to its renderer")
+require(local_render.index("PP_LIGHTSPHERE") < local_render.index("default:"),
+        "local PP_LIGHTSPHERE render route must precede the generic default")
+
+local_render_body = function_body(LOCAL,
+    "void RenderReferenceLightSphere(const CEffectPrim& prim, const matrix& viewMatrix)")
+ordered(local_render_body,
+        ("prim.m_texture[0]", "gi.life != 1 || gi.alphaB <= 0",
+         "GetSin(gi.fullDisplayAngle) * gi.distance + gi.distance",
+         "radius * GetCos(gi.riseAngle)",
+         "radial * GetCos(gi.rotStart)",
+         "radius * GetSin(gi.riseAngle) - gi.height[3]",
+         "radial * GetSin(gi.rotStart)",
+         "static_cast<unsigned char>(gi.height[0])", "static_cast<unsigned char>(gi.height[1])",
+         "static_cast<unsigned char>(gi.height[2])", "SubmitWorldTeiRect(",
+         "vector3d{ 0.5f, bottomY, 0.0f }", "AddVec3(prim.m_pos, center)",
+         "AddVec3(prim.m_pos, center)", "vector3d{ -0.5f, bottomY, 0.0f }",
+         "D3DBLEND_ONE", "SubmitWorldTeiRect(", "vector3d{ 0.0f, bottomY, 0.5f }",
+         "AddVec3(prim.m_pos, center)", "AddVec3(prim.m_pos, center)",
+         "vector3d{ 0.0f, bottomY, -0.5f }", "D3DBLEND_ONE"),
+        "local LightSphere render geometry")
+require(local_render_body.count("SubmitWorldTeiRect(") == 2
+        and local_render_body.count("AddVec3(prim.m_pos, center)") == 4,
+        "local LightSphere must submit two prim-position-translated rectangles around each center")
+require(local_render_body.count("viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f,") == 2
+        and local_render_body.count("D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag)") == 2,
+        "local LightSphere UV order, additive blend, alpha sort key or render flag changed")
+require("&CTexMgr::s_dummy_texture" in local_render_body,
+        "local LightSphere must suppress a missing/dummy texture as the renderer does")
 
 print("effect348 source parity passed: PE/Ref 0x15C caller, exact texture bytes, 80 LightSphere spawns, four lanes and five RNG draws per lane")

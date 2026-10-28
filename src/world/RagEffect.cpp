@@ -2572,6 +2572,45 @@ void RenderReferenceSphere(const CEffectPrim& prim, const matrix& view)
     }
 }
 
+// HighPriest.exe.c:449781-449879; Ref/RagEffect2.cpp:17061-17138.
+void RenderReferenceLightSphere(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
+    if (texture == nullptr || texture == &CTexMgr::s_dummy_texture) return;
+
+    for (const EffectGi& gi : prim.m_gi) {
+        if (gi.life != 1 || gi.alphaB <= 0) continue;
+
+        const float radius = GetSin(gi.fullDisplayAngle) * gi.distance + gi.distance;
+        const float radial = radius * GetCos(gi.riseAngle);
+        const vector3d center{
+            radial * GetCos(gi.rotStart),
+            radius * GetSin(gi.riseAngle) - gi.height[3],
+            radial * GetSin(gi.rotStart)
+        };
+        const float bottomY = -gi.height[3];
+        const unsigned int color = (static_cast<unsigned int>(static_cast<unsigned char>(gi.alphaB)) << 24)
+            | (static_cast<unsigned int>(static_cast<unsigned char>(gi.height[0])) << 16)
+            | (static_cast<unsigned int>(static_cast<unsigned char>(gi.height[1])) << 8)
+            | static_cast<unsigned int>(static_cast<unsigned char>(gi.height[2]));
+
+        SubmitWorldTeiRect(
+            AddVec3(prim.m_pos, vector3d{ 0.5f, bottomY, 0.0f }),
+            AddVec3(prim.m_pos, center),
+            AddVec3(prim.m_pos, center),
+            AddVec3(prim.m_pos, vector3d{ -0.5f, bottomY, 0.0f }),
+            viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f,
+            D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+        SubmitWorldTeiRect(
+            AddVec3(prim.m_pos, vector3d{ 0.0f, bottomY, 0.5f }),
+            AddVec3(prim.m_pos, center),
+            AddVec3(prim.m_pos, center),
+            AddVec3(prim.m_pos, vector3d{ 0.0f, bottomY, -0.5f }),
+            viewMatrix, texture, color, 0.0f, 1.0f, 1.0f, 0.0f,
+            D3DBLEND_ONE, 0.0f, static_cast<int>(prim.m_renderFlag));
+    }
+}
+
 // TEST_BODY_END circle_render_helper_family
 void RenderCircleLayer(const CEffectPrim& prim,
     const EffectSegmentState& state,
@@ -13155,6 +13194,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     if ((!m_master && m_type != PP_3DTEXTURE_NOMASTER && m_type != PP_MAPPARTICLE
         && m_type != PP_PEONG && m_type != PP_PEONGUP
         && m_type != PP_SOULBREAKER && m_type != PP_SOULBREAKER2) || !viewMatrix) {
+        return;
+    }
+    if (m_type == PP_LIGHTSPHERE) {
+        RenderReferenceLightSphere(*this, *viewMatrix);
         return;
     }
     if (IsCloudRendererType(m_type)) {

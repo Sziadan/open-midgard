@@ -2027,3 +2027,7 @@ Completed caller and branch comparison for effects630,632,633,634. The first thr
 ## WP5 effect348 EffectTextureSet + LightSphere — 2026-10-28
 
 Implemented case348's exact texture/light fanout. PE and primary Ref callers match: variant0 EffectTextureSet followed by 80 LightSphere calls. Both textures resolve to exact executable bytes. Added the local LightSphere emitter with state-zero spawning, four GI lanes, inherited duration/render5 and five ordered RNG draws per lane (1600 total); corrected variant0's EffectTextureSet parameters. The registered `check_effect348.py` compares callers, helpers, assets, route and payload. Coverage after the source-parity log update: 685 routed /8 explicit unported /0 launched-unported. Release build/deployment succeeds; parity CTest passes253/253 and replay CTest102/102. PP_LIGHTSPHERE render parity and live/visual acceptance remain open.
+
+## WP5 CEffectPrim PP_LIGHTSPHERE renderer — 2026-10-28
+
+Compared PE and secondary Ref `RenderLightSphere` plus their primitive-render dispatch. Added a local `PP_LIGHTSPHERE` renderer that draws the two cross-plane quads per active GI lane with source-derived center, RGB/alpha, UVs and additive blend. Extended `check_effect348.py` for renderer body, route and local geometry. Live/visual acceptance remains open.
