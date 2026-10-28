@@ -571,6 +571,59 @@ void ReplaySkillCastCancel(const std::string& path)
     std::cout << "SkillCastCancel opcode=0x01B9 messages=84,87,83 attachedEffectsCleared=2\n";
 }
 
+bool IsSkillCastAckScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 1 && packets[0].opcode == 0x013E && packets[0].bytes.size() == 24;
+}
+
+void ReplaySkillCastAck(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 1 && packets[0].opcode == 0x013E && packets[0].bytes.size() == 24,
+        "skill cast acknowledgement requires one 24-byte 0x013E packet");
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), packet, consumed),
+        "production packet reader rejected skill cast acknowledgement");
+    Require(packet.packetId == 0x013E && consumed == static_cast<int>(packets[0].bytes.size()),
+        "skill cast acknowledgement framing differs from scenario metadata");
+    Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch skill cast acknowledgement");
+
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for skill cast acknowledgement");
+    bool sourceState = false;
+    bool sourceBeginEffect = false;
+    bool targetLockEffect = false;
+    std::string logLine;
+    while (std::getline(runtimeLog, logLine)) {
+        unsigned int actorAid = 0;
+        int effectId = 0;
+        if (std::sscanf(logLine.c_str(), "[pid:%*u t:%*u] [REPLAY] LaunchEffect id=%d actor=%u", &effectId, &actorAid) == 2) {
+            sourceBeginEffect = sourceBeginEffect || (actorAid == fixture.source.m_gid && effectId == 12);
+            targetLockEffect = targetLockEffect || (actorAid == fixture.target.m_gid && effectId == 60);
+        }
+        int state = 0;
+        if (std::sscanf(logLine.c_str(), "[pid:%*u t:%*u] [REPLAY] SetState state=%d actor=%u", &state, &actorAid) == 2
+            && actorAid == fixture.source.m_gid && state == 8) sourceState = true;
+    }
+    Require(sourceState, "skill 19 cast acknowledgement did not set source motion state 8");
+    Require(fixture.source.m_beginSpellEffect != nullptr && fixture.source.m_magicTargetEffect == nullptr,
+        "skill cast acknowledgement did not create the source begin-spell effect");
+    Require(sourceBeginEffect, "skill cast acknowledgement did not launch begin effect 12");
+    Require(fixture.source.m_targetGid == fixture.target.m_gid,
+        "skill cast acknowledgement did not set the source target AID");
+    Require(fixture.source.m_skillRechargeEndTick - fixture.source.m_skillRechargeStartTick == 1600,
+        "skill cast acknowledgement did not set the 1600ms recharge interval");
+    Require(fixture.target.m_magicTargetEffect != nullptr,
+        "skill cast acknowledgement did not create the target magic effect");
+    Require(targetLockEffect, "skill cast acknowledgement did not launch target lock effect 60");
+    std::cout << "SkillCastAck opcode=0x013E skill=19 state=8 sourceEffect=12 targetEffect=60 target=2 castMs=1600\n";
+}
+
 void ReplaySkillUnitLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1573,7 +1626,9 @@ int main(int argc, char** argv)
         std::ofstream freshRuntimeLog(runtimeLogPath, std::ios::trunc);
         Require(static_cast<bool>(freshRuntimeLog), "could not reset per-run production runtime log");
         freshRuntimeLog.close();
-        if (IsSkillCastCancelScenario(argv[1])) {
+        if (IsSkillCastAckScenario(argv[1])) {
+            ReplaySkillCastAck(argv[1]);
+        } else if (IsSkillCastCancelScenario(argv[1])) {
             ReplaySkillCastCancel(argv[1]);
         } else if (IsTrapRevealScenario(argv[1])) {
             ReplayTrapRevealLifecycle(argv[1]);

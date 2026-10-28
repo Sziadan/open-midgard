@@ -1,0 +1,5 @@
+# actor<TAB>role<TAB>aid job cellX cellY
+# actor	source	1 0 16 16
+# actor	target	2 0 18 16
+# opcode<TAB>packet_hex<TAB>source note
+0x013E	3E0101000000020000000A00140013000000000040060000	packetver23 Zc_useskill_ack skill=19 dst=2 cell=(10,20) property=0 castMs=1600

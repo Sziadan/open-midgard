@@ -489,6 +489,8 @@ Per `PACKET_VERSION_ALIGNMENT.md` and `packet_db.txt` ver 23: implement `0x0190 
 * Hex-dump based unit check (temporary, outside repo): feed captured byte buffers for each opcode into the handler and assert which actor messages / effect ids / wave names result; compare to a manual Ref walk-through.
 * Live check against RunningServer for: single-target melee skill, bolt skill, heal, buff, ground AoE with units (Sanctuary, Fire Wall, Storm Gust, Meteor Storm, Lord of Vermilion), trap set/reveal/remove, Warp Portal (incl. 0x0190), Graffiti, dispel/cast cancel.
 
+Replay progress (2026-10-28): a raw 24-byte 0x013E skill-19 cast acknowledgement now passes through production packet framing and dispatch; it verifies motion8, begin effect12, the 1600ms recharge interval, target AID2, and target lock effect60. This is incremental packet evidence only; the full live-server checklist above remains open.
+
 ---
 
 ## WP4 — Ground units
