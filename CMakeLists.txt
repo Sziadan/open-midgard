@@ -323,6 +323,9 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_monster_arrow_shower47_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/monster_arrow_shower47.tsv")
+    add_test(NAME skill_packet_replay_missing_actor_arrow_shower47_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/missing_actor_arrow_shower47.tsv")
     add_test(NAME skill_packet_replay_sanctuary_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/sanctuary70.tsv")

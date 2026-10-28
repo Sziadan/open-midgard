@@ -85,11 +85,12 @@ struct ScenarioPacket {
 };
 
 struct ReplayGameMode : CGameMode {
-    std::vector<int> sentMessageIds;
+    struct SentMessage { int id; msgparam_t wparam; msgparam_t lparam; msgparam_t extra; };
+    std::vector<SentMessage> sentMessages;
 
     msgresult_t SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra) override
     {
-        sentMessageIds.push_back(msg);
+        sentMessages.push_back(SentMessage{ msg, wparam, lparam, extra });
         return CGameMode::SendMsg(msg, wparam, lparam, extra);
     }
 };
@@ -868,6 +869,46 @@ bool IsMonsterGroundSkillScenario(const std::string& path)
     });
 }
 
+bool IsMissingActorGroundSkillScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 1 && packets[0].opcode == 0x0117 && packets[0].bytes.size() == 18
+        && ReadU16LE(packets[0].bytes.data() + 2) == 47
+        && ReadU32LE(packets[0].bytes.data() + 4) == 404;
+}
+
+void ReplayMissingActorGroundSkill(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 1 && packets[0].opcode == 0x0117 && packets[0].bytes.size() == 18
+        && ReadU16LE(packets[0].bytes.data() + 2) == 47
+        && ReadU32LE(packets[0].bytes.data() + 4) == 404,
+        "missing-actor ground-skill replay requires skill47 sourced from absent AID404");
+    Fixture fixture(path);
+    Require(fixture.world.GetGameActorByAID(404) == nullptr,
+        "missing-actor fixture unexpectedly registered source AID404");
+
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), packet, consumed),
+        "production packet reader rejected missing-actor ground-skill packet");
+    Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch missing-actor ground-skill packet");
+
+    const auto modeMessage = std::find_if(fixture.mode.sentMessages.begin(), fixture.mode.sentMessages.end(),
+        [](const ReplayGameMode::SentMessage& message) { return message.id == 99; });
+    Require(modeMessage != fixture.mode.sentMessages.end()
+        && modeMessage->wparam == 47 && modeMessage->lparam == 0 && modeMessage->extra == 5,
+        "missing-source nonmonster path did not send mode message99 with skill47, null source, and level5");
+    Require(fixture.world.GetGameActorByAID(404) == nullptr,
+        "ground-skill packet handling synthesized an actor for unknown source AID404");
+    Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+            [](CGameObject* object) { return dynamic_cast<CArrowEffect*>(object) != nullptr; }),
+        "Arrow Shower fan-out should return early when its source actor is missing");
+    std::cout << "MissingActorGroundSkill skill=47 source=404 modeMsg99=(skill47,null,level5) arrowFanout=0 actorCreated=0\n";
+}
+
 void ReplayMonsterGroundSkill(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -890,8 +931,8 @@ void ReplayMonsterGroundSkill(const std::string& path)
 
     Require(source->m_stateId != 0,
         "monster source did not receive its production message38 ground-skill state update");
-    Require(std::find(fixture.mode.sentMessageIds.begin(), fixture.mode.sentMessageIds.end(), 99)
-            == fixture.mode.sentMessageIds.end(),
+    Require(std::none_of(fixture.mode.sentMessages.begin(), fixture.mode.sentMessages.end(),
+            [](const ReplayGameMode::SentMessage& message) { return message.id == 99; }),
         "monster ground-skill path incorrectly sent player-only mode message99");
     Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
             [](CGameObject* object) { return dynamic_cast<CArrowEffect*>(object) != nullptr; }),
@@ -2117,6 +2158,8 @@ int main(int argc, char** argv)
         freshRuntimeLog.close();
         if (IsGroundSkillWaveScenario(argv[1])) {
             ReplayGroundSkillWave(argv[1]);
+        } else if (IsMissingActorGroundSkillScenario(argv[1])) {
+            ReplayMissingActorGroundSkill(argv[1]);
         } else if (IsMonsterGroundSkillScenario(argv[1])) {
             ReplayMonsterGroundSkill(argv[1]);
         } else if (IsLordOfVermilionScenario(argv[1])) {

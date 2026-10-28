@@ -3350,3 +3350,7 @@ Ref `CGameActor::Am_Groundskill` dispatches a packet skill85 to the case that ca
 
 Ref `Zc_Notify_Groundskill` (`Ref/GameModePacket.cpp:18135-18230`) sends message38 to the resolved source actor before checking `CSession::IsMonster`. The monster branch calls `GetMonsterSkillInfo`; only the nonmonster branch sends mode message99 and runs skill-specific branches, including skill47's eight-cell Arrow Shower fan-out. Added `monster_arrow_shower47.tsv` with monster job1001 and source AID1000. The production replay checks the actor state update from message38, no mode message99, and no `CArrowEffect` fan-out. This does not validate monster animation selection with populated `MonsterSkillInfo.xml`. Release build and CTest pass97/97.
 
+## WP3.4 — Missing-source 0x0117 ground-skill branch
+
+Ref `Zc_Notify_Groundskill` resolves source AID, sends actor message38 only if found, then enters the nonmonster path for a missing actor and sends mode message99 with a null actor pointer. Skill47 calls the Arrow Shower helper, which emits no arrows without a source. `missing_actor_arrow_shower47.tsv` supplies source AID404 with no matching player/actor. Replay checks the exact message99 arguments, confirms no actor was synthesized, and confirms no `CArrowEffect` was registered. Release build and CTest pass98/98.
+

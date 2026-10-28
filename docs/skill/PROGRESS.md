@@ -1744,3 +1744,7 @@ Expanded the two-job131 resource-backed replay from `CWorld::UpdateGameObjects()
 
 Added `monster_arrow_shower47.tsv` for a raw 18-byte 0x0117 packet whose source is a registered monster-job actor. Production routing invokes the actor's message38 ground-skill path, then takes the monster branch: it omits mode message99 and the player-only Arrow Shower arrow fan-out. The replay records message IDs at the mode boundary and checks actor state plus the absence of CArrowEffect objects. Ref `Zc_Notify_Groundskill` (`Ref/GameModePacket.cpp:18135-18230`) sends message38 before `IsMonster`; the player-only message99 and skill47 fan-out are in the alternate branch. Release build succeeded and all97 CTests pass. MonsterSkillInfo animation with populated XML and live-server acceptance remain unverified.
 
+## WP3.4 — Missing-source ground-skill packet — 2026-10-28
+
+Added `missing_actor_arrow_shower47.tsv` for skill47 sourced from absent AID404. The production router leaves that AID unresolved, sends the nonmonster mode message99 with skill47, null source and level5, then the Arrow Shower helper returns without creating arrows because its source is null. `ReplayGameMode` now records message parameters so the null-source contract is asserted directly. Ref `Zc_Notify_Groundskill` (`Ref/GameModePacket.cpp:18135-18230`) performs message99 after failed actor lookup and the skill47 fan-out only emits when its source exists. Release build succeeded and all98 CTests pass.
+
