@@ -1713,3 +1713,6 @@ Added Talkie Box job153 trigger replay: raw 0x0191 contents packet stores `TRAP 
 ## WP10.8 — 0x0115 skill position notify replay — 2026-10-28
 
 Added a handcrafted packetver23 0x0115 sequence with source skill unit AID100 and target AID2. The production packet reader/router dispatches the 35-byte packet; the unit's message37 path queues the three damage updates at server cell(12,23), preserving source AID100, Ref skill18 unit-hit effect49, level2, per-hit damage10 and cumulative damage10/20/30. Ref branch comparison and all packet fields are recorded in `PARITY_LOG.md`. The packet is replay-only because the eAthena sender is commented out. Focused 0x0115 and Firewall regression checks pass; freshly built Release replay suite passes88/88.
+## WP10.8 — Heal 28 amount thresholds — 2026-10-28
+
+Expanded the 0x011A Heal 28 replay to cover values 199, 200, 2000, and 4000. Production routing now verifies Ref effects7/312/313/325 at the four values and message88's exact amount/color/kind payload. This corrected the plan's earlier threshold wording to match Ref's nested `<200`, `<2000`, `<4000` tests. The four focused checks pass; freshly built Release replay suite passes91/91.

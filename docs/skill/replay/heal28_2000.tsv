@@ -1,0 +1,2 @@
+# 15-byte ZC_USE_SKILL boundary packet; heal 2000 selects effect313 and message88.
+0x011A	1A011C00D007020000000100000001	Heal 28 at lower effect313 boundary (2000)

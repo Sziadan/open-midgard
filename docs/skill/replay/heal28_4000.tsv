@@ -1,0 +1,2 @@
+# 15-byte ZC_USE_SKILL boundary packet; heal 4000 selects effect325 and message88.
+0x011A	1A011C00A00F020000000100000001	Heal 28 at effect325 boundary (4000)

@@ -491,17 +491,20 @@ void ReplayScenario(const std::string& path)
     }
 
     if (skillId == 28) {
+        const int healValue = static_cast<int>(ReadU16LE(bytes.data() + 4));
+        const int expectedHealEffect = healValue < 200 ? 7 : (healValue < 2000 ? 312 : (healValue < 4000 ? 313 : 325));
         runtimeLog.clear();
         runtimeLog.seekg(0);
         bool foundHealEffect = false;
         bool foundHealNumber = false;
         while (std::getline(runtimeLog, logLine)) {
-            foundHealEffect = foundHealEffect || logLine.find("[REPLAY] LaunchEffect id=7 actor=2") != std::string::npos;
-            foundHealNumber = foundHealNumber || logLine.find("[REPLAY] SendMsg88 actor=2 value=199 color=-16711936 kind=114") != std::string::npos;
+            foundHealEffect = foundHealEffect || logLine.find("[REPLAY] LaunchEffect id=" + std::to_string(expectedHealEffect) + " actor=2") != std::string::npos;
+            foundHealNumber = foundHealNumber || logLine.find("[REPLAY] SendMsg88 actor=2 value=" + std::to_string(healValue) + " color=-16711936 kind=114") != std::string::npos;
         }
-        Require(foundHealEffect, "Heal 28 low-tier packet did not launch Ref effect7 on target");
+        Require(foundHealEffect, "Heal 28 amount threshold did not launch its Ref effect on target");
         Require(foundHealNumber, "Heal 28 packet did not send Ref damage-number message88");
-        std::cout << "Heal skill=28 value=199 effect=7 target=2 message=88 color=-16711936 kind=114\n";
+        std::cout << "Heal skill=28 value=" << healValue << " effect=" << expectedHealEffect
+            << " target=2 message=88 color=-16711936 kind=114\n";
     } else if (skillId == 34) {
         runtimeLog.clear();
         runtimeLog.seekg(0);

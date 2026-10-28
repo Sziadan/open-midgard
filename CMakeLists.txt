@@ -286,6 +286,15 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_heal_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/heal28.tsv")
+    add_test(NAME skill_packet_replay_heal200_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/heal28_200.tsv")
+    add_test(NAME skill_packet_replay_heal2000_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/heal28_2000.tsv")
+    add_test(NAME skill_packet_replay_heal4000_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/heal28_4000.tsv")
     add_test(NAME skill_packet_replay_blessing_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/blessing34.tsv")
