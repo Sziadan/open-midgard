@@ -17298,6 +17298,80 @@ bool CRagEffect::ProcessTarotEffect()
     }
 }
 
+// Ref/RagEffect.cpp:12562-12587; Ref/dhxj/RagEffect2.cpp:17327-17461.
+// The canonical executable's EffectTextureSet_Animation handles F1 values
+// 0-3 with the same primitive setup and four exact animation resource lists.
+bool CRagEffect::ProcessEffectTextureAnimation()
+{
+    int variant = -1;
+    switch (m_type) {
+    case 689: variant = 0; break;
+    case 690: variant = 1; break;
+    case 691: variant = 2; break;
+    case 696: variant = 3; break;
+    default: return false;
+    }
+
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_cachedPos = origin;
+    for (CEffectPrim* existing : m_primList) {
+        if (existing != nullptr && existing->m_type == PP_EFFECTTEXTURE_ANI) {
+            existing->m_pos = origin;
+        }
+    }
+    if (m_stateCnt != 0) {
+        return true;
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_EFFECTTEXTURE_ANI, vector3d{});
+    if (prim == nullptr) {
+        return true;
+    }
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_size = 0.0f;
+
+    std::vector<std::string> textures;
+    if (variant == 0) {
+        for (int i = 1; i <= 9; ++i) {
+            textures.push_back("effect\\dust0" + std::to_string(i) + ".bmp");
+        }
+    } else {
+        const char* color = variant == 1 ? "red" : variant == 2 ? "green" : "violet";
+        for (int i = 1; i <= 13; ++i) {
+            char suffix[3]{};
+            std::snprintf(suffix, sizeof(suffix), "%02d", i);
+            textures.push_back(std::string("effect\\torch_") + color + suffix + ".bmp");
+        }
+    }
+    prim->m_totalTexture = static_cast<int>(textures.size());
+    prim->m_texture.reserve(textures.size());
+    for (const std::string& texture : textures) {
+        prim->m_texture.push_back(g_texMgr.GetTexture(texture.c_str(), false));
+    }
+
+    for (EffectGi& gi : prim->m_gi) {
+        gi.life = 0;
+    }
+    EffectGi& gi = prim->m_gi[0];
+    gi.process = 0;
+    gi.life = 1;
+    gi.distance = m_param[0] <= 0.0f ? 20.0f : m_param[0];
+    gi.arcBaselineY = origin.y - 10.0f;
+    gi.flag[2] = 4;
+    gi.height[10] = 0.0f;
+    gi.fullDisplayAngle = 135;
+    gi.height[8] = 0.0f;
+    gi.alphaB = variant == 0 ? 100 : 130;
+    gi.sparkX = origin.x;
+    gi.sparkZ = origin.z;
+    gi.rotStart = static_cast<short>(rand() % 360);
+    gi.flag[0] = 0;
+    gi.flag[4] = static_cast<u8>(variant);
+    return true;
+}
+
 // Ref/RagEffect.cpp:11842-11882, 11995-12000, 12076-12100, 12459-12521.
 // Preserve the event-frame m_pos write, listener-relative wave, and whether
 // the shared STR label propagates its completion result for each case.

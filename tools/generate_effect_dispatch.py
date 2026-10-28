@@ -19,7 +19,7 @@ FORCE_ROUTE = {315, 366, 491, 492, 507, 508, 565, 566, 567, 568, 569,
                130, 250, 204, 205, 206, 207, 210, 234, 245, 255, 256, 257, 258, 390, 391,
                95, 102, 570, 571, 576, 577, 578, 579, 580, 583, 585, 586, 587, 588, 589,
                630, 631, 632, 633, 634, 637, 638, 639, 640, 641, 642, 643, 644, 645, 647, 648,
-               666, 682, 683, 684, 685, 686}
+               666, 682, 683, 684, 685, 686, 689, 690, 691, 696}
 FORCE_ROUTE.update(range(475, 485))
 
 DIRECT_CALLS = {
@@ -131,6 +131,10 @@ DIRECT_CALLS = {
     615: "return ProcessThrowItemEffect();",
     616: "return ProcessThrowItemEffect();",
     676: "return ProcessTarotEffect();",
+    689: "return ProcessEffectTextureAnimation();",
+    690: "return ProcessEffectTextureAnimation();",
+    691: "return ProcessEffectTextureAnimation();",
+    696: "return ProcessEffectTextureAnimation();",
     674: 'ApplyBottomMusic("effect\\\\curse.bmp", 6); return true;',
     # Existing OnProcess2 implementations, routed straight to their helpers.
     304: 'ApplyTeleportation2("effect\\\\Magic_Violet.tga", 0); return true;',

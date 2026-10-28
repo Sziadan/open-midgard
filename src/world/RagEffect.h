@@ -509,6 +509,7 @@ private:
     void ApplyPotionPillar(float speed, int duration);
     bool ProcessPotionConcentration();
     bool ProcessTarotEffect();
+    bool ProcessEffectTextureAnimation();
     bool ProcessTier3StrEffect();
     bool ProcessThrowItemEffect();
     bool ProcessHealBlue();
