@@ -13366,7 +13366,7 @@ void CEffectPrim::Render(matrix* viewMatrix)
         RenderColorPaper(*this, *viewMatrix);
         return;
     }
-    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeSphereWind)) {
+    if (m_type == static_cast<EFFECTPRIMID>(kPrimTypeSphereWind) || m_type == PP_SPHEREWIND2) {
         RenderSphereWind(*this, *viewMatrix);
         return;
     }
@@ -18922,6 +18922,58 @@ bool CRagEffect::ProcessParticleSpreadEffects()
                 m_effectPos.z - player->m_pos.z, 250, 40, 1.0f);
         }
         for (int repeat = 0; repeat < 4; ++repeat) SpawnParticleSpread();
+    }
+    return true;
+}
+
+// Ref/RagEffect2.cpp:32304; canonical helper at HighPriest.exe.c:458510.
+void CRagEffect::SpawnSphereWind2(short time)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_SPHEREWIND2, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\fire_ivy.bmp", false));
+    prim->m_size = 10.0f;
+
+    for (size_t lane = 0; lane < prim->m_gi.size(); ++lane) {
+        EffectGi& gi = prim->m_gi[lane];
+        gi.life = 1;
+        gi.process = -(rand() % 20);
+        gi.maxHeight = static_cast<float>(rand() % 11) * 0.2f + 2.0f;
+        gi.distance = 5.0f;
+        gi.height[0] = -10.0f;
+        gi.rotStart = static_cast<short>(rand() % 360);
+        gi.riseAngle = static_cast<short>(time + 45 * static_cast<int>(lane));
+        gi.alphaB = 0;
+        gi.fullDisplayAngle = static_cast<short>(rand() % 91 + 180);
+        // The source post-increment alias writes the lane's height[1].
+        gi.height[1] = static_cast<float>(rand() % 4 + 3);
+    }
+}
+
+bool CRagEffect::ProcessSphereWind2Effect()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt == 0) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        CGameActor* player = mode != nullptr && mode->m_world != nullptr ? mode->m_world->m_player : nullptr;
+        if (player != nullptr) {
+            PlayWave("effect\\EF_Blessing.wav", m_effectPos.x - player->m_pos.x, 0.0f,
+                m_effectPos.z - player->m_pos.z, 250, 40, 1.0f);
+        }
+        for (short time = 0; time < 45; time = static_cast<short>(time + 9)) {
+            SpawnSphereWind2(time);
+        }
     }
     return true;
 }

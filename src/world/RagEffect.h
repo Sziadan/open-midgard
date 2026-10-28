@@ -542,6 +542,8 @@ private:
     void SpawnParticleTime(int variant);
     bool ProcessParticleSpreadEffects();
     void SpawnParticleSpread();
+    bool ProcessSphereWind2Effect();
+    void SpawnSphereWind2(short time);
     void SpawnStin();
     void SpawnStin2(int variant);
     void SpawnSma(int variant);

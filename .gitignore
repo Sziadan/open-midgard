@@ -55,6 +55,7 @@ tools/tests/*
 !tools/tests/check_guard_callers.py
 !tools/tests/check_twilight_callers.py
 !tools/tests/check_particle_time_spread_callers.py
+!tools/tests/check_spherewind2_caller.py
 !tools/tests/CMakeLists.txt
 !tools/tests/check_status_state.py
 !tools/tests/check_prim2dflash.py
