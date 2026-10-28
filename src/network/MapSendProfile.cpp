@@ -103,6 +103,7 @@ MapGameplaySendProfile MakePacketVer23Profile()
         PacketProfile::PacketVer23MapServerSend::kCartOff,
         PacketProfile::PacketVer23MapServerSend::kChangeCart,
         PacketProfile::PacketVer23MapServerSend::kUseSkillToPos,
+        PacketProfile::PacketVer23MapServerSend::kUseSkillToPosInfo,
         PacketProfile::PacketVer23MapServerSend::kUseSkillMap,
         PacketProfile::PacketVer23MapServerSend::kUseItem,
         PacketProfile::PacketVer23MapServerSend::kTakeItem,
@@ -133,6 +134,7 @@ MapGameplaySendProfile MakePacketVer22Profile()
         PacketProfile::PacketVer22MapServerSend::kCartOff,
         PacketProfile::PacketVer22MapServerSend::kChangeCart,
         PacketProfile::PacketVer22MapServerSend::kUseSkillToPos,
+        0,
         PacketProfile::PacketVer22MapServerSend::kUseSkillMap,
         PacketProfile::PacketVer22MapServerSend::kUseItem,
         PacketProfile::PacketVer22MapServerSend::kTakeItem,
@@ -163,6 +165,7 @@ MapGameplaySendProfile MakeLegacyGameplayProfile()
         PacketProfile::PacketVer23MapServerSend::kCartOff,
         PacketProfile::PacketVer23MapServerSend::kChangeCart,
         0x0116,
+        0,
         0x011B,
         0x00A7,
         0x009F,
@@ -931,6 +934,39 @@ bool BuildActiveUseSkillMapPacket(u16 skillId,
     packet.PacketType = profile.useSkillMap;
     packet.SkillId = skillId;
     std::strncpy(packet.MapName, mapName, sizeof(packet.MapName) - 1);
+    std::memcpy(outBuffer, &packet, sizeof(packet));
+    *outPacketLength = static_cast<int>(sizeof(packet));
+    return true;
+}
+
+bool BuildActiveUseSkillToPosInfoPacket(u16 skillId,
+    u16 skillLevel,
+    u16 cellX,
+    u16 cellY,
+    std::string_view contents,
+    void* outBuffer,
+    int outBufferSize,
+    int* outPacketLength)
+{
+    if (!outBuffer || !outPacketLength || contents.size() > sizeof(PACKET_CZ_USESKILLTOPOSINFO::Contents)
+        || outBufferSize < static_cast<int>(sizeof(PACKET_CZ_USESKILLTOPOSINFO))) {
+        return false;
+    }
+
+    const MapGameplaySendProfile& profile = GetActiveMapGameplaySendProfile();
+    if (profile.id != MapGameplaySendProfileId::PacketVer23) {
+        return false;
+    }
+
+    PACKET_CZ_USESKILLTOPOSINFO packet{};
+    packet.PacketType = profile.useSkillToPosInfo;
+    packet.SkillLevel = skillLevel;
+    packet.SkillId = skillId;
+    packet.X = cellX;
+    packet.Y = cellY;
+    if (!contents.empty()) {
+        std::memcpy(packet.Contents, contents.data(), contents.size());
+    }
     std::memcpy(outBuffer, &packet, sizeof(packet));
     *outPacketLength = static_cast<int>(sizeof(packet));
     return true;

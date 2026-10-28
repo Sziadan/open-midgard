@@ -1719,3 +1719,6 @@ Expanded the 0x011A Heal 28 replay to cover values 199, 200, 2000, and 4000. Pro
 ## WP10.8 — Meteor Storm ground-skill replay — 2026-10-28
 
 Added a raw 18-byte 0x0117 skill83 fixture through production packet framing/router. The special `Am_Groundskill` branch sets action88 and places effect92 at the supplied cell with map terrain height, returning before the generic facing/state path. The fixture verifies client handling of the server-provided cell and does not model server-side random cell selection. Focused replay passes; freshly built Release suite passes92/92.
+## WP3.3 — 0x0190 text-bearing ground-skill packet builder — 2026-10-28
+
+Added `BuildActiveUseSkillToPosInfoPacket` for packetver23's 90-byte 0x0190 record and wired the opcode through the active send profile. The builder writes skill level/id, target cell, and up to 80 content bytes into the Ref field offsets; it rejects other send profiles, oversize content, and undersized output buffers. The focused protocol test and full Release suite pass93/93. This is packet-construction coverage; caller/UI wiring and live transmission remain open.

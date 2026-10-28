@@ -2,6 +2,8 @@
 
 #include "Types.h"
 
+#include <string_view>
+
 namespace ro::net {
 
 enum class PacketVersionId : u8 {
@@ -59,6 +61,7 @@ struct MapGameplaySendProfile {
     u16 cartOff;
     u16 changeCart;
     u16 useSkillToPos;
+    u16 useSkillToPosInfo;
     u16 useSkillMap;
     u16 useItem;
     u16 takeItem;
@@ -244,6 +247,14 @@ bool BuildActiveChangeCartPacket(u16 type,
     int* outPacketLength);
 bool BuildActiveUseSkillMapPacket(u16 skillId,
     const char* mapName,
+    void* outBuffer,
+    int outBufferSize,
+    int* outPacketLength);
+bool BuildActiveUseSkillToPosInfoPacket(u16 skillId,
+    u16 skillLevel,
+    u16 cellX,
+    u16 cellY,
+    std::string_view contents,
     void* outBuffer,
     int outBufferSize,
     int* outPacketLength);
