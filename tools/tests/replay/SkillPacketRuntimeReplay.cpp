@@ -1044,6 +1044,60 @@ void ReplayFlasherTriggerLifecycle(const std::string& path)
     std::cout << "Flasher trigger aid=100 skill=120 target=2 blind=1 activeJob=140 effect=99 removed=1\n";
 }
 
+void ReplayAnkleSnareTriggerLifecycle(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 4 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+        && packets[1].opcode == 0x0088 && packets[1].bytes.size() == 10
+        && packets[2].opcode == 0x01AC && packets[2].bytes.size() == 6
+        && packets[3].opcode == 0x0120 && packets[3].bytes.size() == 6,
+        "Ankle Snare trigger requires entry, target fix-position, unit update, and removal packets");
+    Require(packets[0].bytes[14] == 145
+        && ReadU32LE(packets[1].bytes.data() + 2) == 2
+        && static_cast<s16>(ReadU16LE(packets[1].bytes.data() + 6)) == 10
+        && static_cast<s16>(ReadU16LE(packets[1].bytes.data() + 8)) == 20,
+        "Ankle Snare must retain unit job145 and snap target AID2 to trap cell(10,20)");
+
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    for (std::size_t index = 0; index < packets.size(); ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected Ankle Snare trigger packet");
+        Require(packet.packetId == packets[index].opcode && consumed == static_cast<int>(packets[index].bytes.size()),
+            "Ankle Snare packet framing differs from scenario metadata");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Ankle Snare trigger packet");
+
+        CSkill* unit = fixture.world.GetSkillByAID(100);
+        if (index == 0) {
+            Require(unit != nullptr && unit->m_job == 145 && unit->m_isVisibleBody == 1,
+                "Ankle Snare entry did not initialize visible unit job145");
+        } else if (index == 1) {
+            const auto cell = fixture.mode.m_actorPosList.find(2);
+            const auto actor = fixture.mode.m_runtimeActors.find(2);
+            Require(unit != nullptr && unit->m_job == 145 && cell != fixture.mode.m_actorPosList.end()
+                    && cell->second.x == 10 && cell->second.y == 20
+                    && actor != fixture.mode.m_runtimeActors.end() && actor->second != nullptr
+                    && actor->second->m_moveSrcX == 10 && actor->second->m_moveSrcY == 20,
+                "0x0088 did not snap Ankle Snare target AID2 to cell(10,20)");
+        } else if (index == 2) {
+            Require(unit != nullptr && unit->m_job == 145 && unit->m_isVisibleBody == 1,
+                "0x01AC did not update/reveal Ankle Snare while preserving trap job145");
+        } else {
+            Require(unit == nullptr, "0x0120 did not remove expired Ankle Snare from CWorld skill list");
+            Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+                    [](CGameObject* object) {
+                        const CSkill* skill = dynamic_cast<const CSkill*>(object);
+                        return skill != nullptr && skill->m_aid == 100;
+                    }),
+                "0x0120 did not remove expired Ankle Snare from CWorld object ownership list");
+        }
+    }
+    std::cout << "AnkleSnare aid=100 job=145 target=2 snapped=(10,20) updated=1 removed=1\n";
+}
+
 void ReplayWarpUnitLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1151,6 +1205,14 @@ bool IsFlasherTriggerScenario(const std::string& path)
         && packets[3].opcode == 0x0119;
 }
 
+bool IsAnkleSnareTriggerScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 4 && packets.front().opcode == 0x011F
+        && packets.front().bytes.size() == 16 && packets.front().bytes[14] == 145
+        && packets[1].opcode == 0x0088 && packets[2].opcode == 0x01AC;
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -1179,6 +1241,8 @@ int main(int argc, char** argv)
             ReplaySavedEffectTrapTriggerLifecycle(argv[1], 151, 121, 108, "FreezingTrap");
         } else if (IsFlasherTriggerScenario(argv[1])) {
             ReplayFlasherTriggerLifecycle(argv[1]);
+        } else if (IsAnkleSnareTriggerScenario(argv[1])) {
+            ReplayAnkleSnareTriggerLifecycle(argv[1]);
         } else if (IsWarpUnitLifecycleScenario(argv[1])) {
             ReplayWarpUnitLifecycle(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {

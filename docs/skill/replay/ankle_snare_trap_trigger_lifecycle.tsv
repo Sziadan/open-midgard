@@ -1,0 +1,8 @@
+# actor	source	1	0	16	16
+# actor	target	2	0	18	16
+# actor	actor	3	145	10	20
+# opcode	hexBytes	comment
+0x011F	1F0164000000020000000A0014009101	Ankle Snare entry job145 owned by AID2
+0x0088	8800020000000A001400	Fix-position target AID2 to trapped cell(10,20)
+0x01AC	AC0164000000	Ankle Snare trigger update for unit AID100
+0x0120	200164000000	Remove Ankle Snare after SC_ANKLE expires
