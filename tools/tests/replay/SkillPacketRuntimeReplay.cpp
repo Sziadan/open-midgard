@@ -9,16 +9,19 @@
 
 #include <chrono>
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 struct SkillPacketReplayAccess {
@@ -64,6 +67,42 @@ struct ScenarioPacket {
     std::vector<u8> bytes;
 };
 
+struct ScenarioActor {
+    std::string role;
+    u32 aid;
+    int job;
+    int cellX;
+    int cellY;
+};
+
+std::vector<ScenarioActor> LoadScenarioActors(const std::string& path)
+{
+    std::ifstream input(path);
+    Require(static_cast<bool>(input), "cannot open scenario actor setup: " + path);
+    std::vector<ScenarioActor> actors;
+    std::string line;
+    while (std::getline(input, line)) {
+        if (line.rfind("# actor\t", 0) != 0) {
+            continue;
+        }
+        std::istringstream fields(line);
+        std::string marker;
+        std::string role;
+        unsigned long aid = 0;
+        int job = 0;
+        int cellX = 0;
+        int cellY = 0;
+        Require(static_cast<bool>(std::getline(fields, marker, '\t'))
+            && static_cast<bool>(std::getline(fields, role, '\t'))
+            && static_cast<bool>(fields >> aid >> job >> cellX >> cellY),
+            "actor setup row must be '# actor<TAB>role<TAB>aid job cellX cellY'");
+        Require(aid <= 0xFFFFFFFFul, "scenario actor AID out of range");
+        Require(role == "source" || role == "target" || role == "actor", "unsupported scenario actor role");
+        actors.push_back(ScenarioActor{ role, static_cast<u32>(aid), job, cellX, cellY });
+    }
+    return actors;
+}
+
 std::vector<ScenarioPacket> LoadPacketSequence(const std::string& path)
 {
     std::ifstream input(path);
@@ -98,6 +137,7 @@ struct Fixture {
     CPlayer source;
     CGameActor target;
     C3dAttr attr;
+    std::vector<std::unique_ptr<CGameActor>> extraActors;
     CWorld& world;
     CPlayer* oldPlayer;
     C3dAttr* oldAttr;
@@ -105,7 +145,7 @@ struct Fixture {
     CMode* oldMode;
     const int oldModeType;
 
-    Fixture()
+    explicit Fixture(const std::string& scenarioPath)
         : target(), world(g_world), oldPlayer(g_world.m_player), oldAttr(g_world.m_attr), oldAid(g_session.m_aid),
           oldMode(SkillPacketReplayAccess::Current()), oldModeType(SkillPacketReplayAccess::CurrentType())
     {
@@ -124,11 +164,37 @@ struct Fixture {
         world.RegisterActor(&target);
         mode.m_world = &world;
         SkillPacketReplayAccess::SetCurrent(&mode);
+
+        for (const ScenarioActor& actor : LoadScenarioActors(scenarioPath)) {
+            CGameActor* configuredActor = nullptr;
+            if (actor.role == "source") {
+                configuredActor = &source;
+                source.m_gid = actor.aid;
+                g_session.m_aid = actor.aid;
+            } else if (actor.role == "target") {
+                configuredActor = &target;
+                world.UnregisterActor(&target);
+            } else {
+                auto extra = std::make_unique<CGameActor>();
+                configuredActor = extra.get();
+                extraActors.push_back(std::move(extra));
+            }
+            configuredActor->m_gid = actor.aid;
+            configuredActor->m_job = actor.job;
+            mode.GetClientCoor(actor.cellX, actor.cellY, configuredActor->m_pos.x, configuredActor->m_pos.z);
+            configuredActor->m_pos.y = attr.GetHeight(configuredActor->m_pos.x, configuredActor->m_pos.z);
+            if (actor.role == "target" || actor.role == "actor") {
+                world.RegisterActor(configuredActor);
+            }
+        }
     }
 
     ~Fixture()
     {
         SkillPacketReplayAccess::Restore(oldMode, oldModeType);
+        for (const std::unique_ptr<CGameActor>& actor : extraActors) {
+            world.UnregisterActor(actor.get());
+        }
         world.UnregisterActor(&target);
         world.m_player = oldPlayer;
         world.m_attr = oldAttr;
@@ -173,7 +239,7 @@ void ReplayScenario(const std::string& path)
     Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 34 || skillId == 46 || skillId == 70
         || skillId == 89 || skillId == 136 || skillId == 137 || skillId == 271,
         "runtime replay only has Ref assertions for skills 5, 19, 28, 34, 46, 70, 89, 136, 137, and 271");
-    Fixture fixture;
+    Fixture fixture(path);
 
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
@@ -459,7 +525,11 @@ void ReplayFirewallUnitLifecycle(const std::string& path)
     Require(packets[1].opcode == 0x0120 && packets[1].bytes.size() == 6,
         "Firewall unit removal must use the 6-byte 0x0120 packet");
 
-    Fixture fixture;
+    Fixture fixture(path);
+    CGameActor* configuredActor = fixture.world.GetGameActorByAID(3);
+    Require(configuredActor != nullptr && configuredActor->m_job == 127
+        && configuredActor->m_pos.x == -27.5f && configuredActor->m_pos.y == 7.5f && configuredActor->m_pos.z == 22.5f,
+        "scenario actor setup did not create AID3/job127 at configured cell(10,20)");
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
     for (const ScenarioPacket& scenarioPacket : packets) {
@@ -518,7 +588,7 @@ void ReplayTrapRevealLifecycle(const std::string& path)
     Require(packets[3].opcode == 0x0120 && packets[3].bytes.size() == 6,
         "trap lifecycle removal must use the 6-byte 0x0120 packet");
 
-    Fixture fixture;
+    Fixture fixture(path);
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
     const bool expectedVisibility[] = { true, false, true, false };

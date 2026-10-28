@@ -3176,3 +3176,7 @@ Effect74 now routes through `ProcessIceWall74`, matching the complete PE and Ref
 ## WP10.8 runtime replay — trap hide/reveal/removal — 2026-10-28
 
 `trap_reveal_lifecycle.tsv` sends two 0x011F entries for unit AID100/job143 from non-party creator2 at cell(10,20), followed by 0x01AC and 0x0120. Production handling transitions `m_isVisibleBody` 1→0→1, preserves the mapped terrain location, then removes the skill from the world. Ref anchors: `Zc_Skill_Entry/Disappear/Update` (`Ref/GameModePacket.cpp:25375/25365/25684`) and `CSkill::SendMsg` messages45/119 (`Ref/Skill.cpp:2925-3543`). Model rendering is not asserted because the replay fixture does not load trap model resources. Focused test passes1/1; packet replay suite passes12/12. No WP8 matrix row is marked verified.
+
+## WP10.8 replay fixture — scenario actor setup — 2026-10-28
+
+The replay TSV reader now accepts actor metadata comments `# actor<TAB>role<TAB>aid<TAB>job<TAB>cellX<TAB>cellY` for source/player, target, and additional world actors. Actor cells convert through the production `CGameMode::GetClientCoor` and `C3dAttr::GetHeight`; additional actors are registered/unregistered with the real CWorld. Firewall and trap scenarios verify a third job127 actor at cell(10,20). Existing packet scenarios retain their original default source/target fixture. Root replay CTest passes12/12. Ground-unit frame stepping remains open.

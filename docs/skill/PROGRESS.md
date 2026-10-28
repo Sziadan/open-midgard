@@ -1582,3 +1582,7 @@ Extended replay scenarios to dispatch multiple raw packets from one TSV. The Fir
 ## WP10.8 — Production-linked trap reveal lifecycle replay — 2026-10-28
 
 Added the WP4 trap visibility lifecycle: two 0x011F entries for unit AID100/job143 toggle the non-party trap from visible to hidden, 0x01AC reveals it, and 0x0120 removes it. The production CSkill instance retains cell/terrain placement while visibility changes and is removed from CWorld. The fixture has no external model assets, so this verifies visibility state and cleanup rather than rendering. Focused trap CTest passes1/1; the full packet replay group passes12/12. Next: configurable actor/cell/job fixtures and timed ground-unit effects.
+
+## WP10.8 — Scenario-configurable replay actors — 2026-10-28
+
+Added optional scenario actor rows (`# actor<TAB>role<TAB>aid<TAB>job<TAB>cellX<TAB>cellY`) to configure the player, primary target, and any number of additional registered CGameActor instances using the active controlled attribute grid. Firewall and trap lifecycle scenarios now provide source, target, and a third actor and assert the configured third actor AID/job/cell position. All 12 production replay CTests pass with both the old default fixtures and new configured actors. The next remaining harness requirement is nominal 24 ms stepping for ground-unit OnProcess lifecycles.

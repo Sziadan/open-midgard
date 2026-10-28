@@ -1,6 +1,6 @@
 # Skill packet replay fixtures
 
-Each scenario is UTF-8 TSV with three columns: packet opcode (integer, `0x` prefix accepted), raw packet bytes as hex, and a human-readable comment. Blank lines and lines beginning with `#` are ignored. The opcode is repeated in the row so the runner can check that the metadata matches the little-endian packet header.
+Each scenario is UTF-8 TSV with three columns: packet opcode (integer, `0x` prefix accepted), raw packet bytes as hex, and a human-readable comment. Blank lines are ignored. Packet rows whose first character is `#` are comments. Optional actor setup comments use `# actor<TAB>role<TAB>aid<TAB>job<TAB>cellX<TAB>cellY`; role is `source`, `target`, or `actor`. The source initializes the player AID, target configures the primary target, and each `actor` row adds another registered world actor. The opcode is repeated in each packet row so the runner can check that the metadata matches the little-endian packet header.
 
 `actor_action.tsv` is a 29-byte `0x008A` framing/router fixture used by the standalone smoke test to exercise production `TryReadPacket`, `CGameModePacketRouter`, and `HandleActorActionNotify` logic against lightweight doubles, including malformed and unknown packet rejection. `blessing34.tsv` is a 15-byte `0x011A` successful Blessing34 notify at level3; it checks Ref target effect42.
 
@@ -12,4 +12,4 @@ Each scenario is UTF-8 TSV with three columns: packet opcode (integer, `0x` pref
 
 All nine initial WP2 acceptance scenarios now run through the production packet router. Storm Gust89 and Sanctuary70 use the 18-byte `0x0117` ground-skill packet; the fixture supplies a 32×32 attribute map and checks effect placement at the decoded cell with terrain height. The first WP3.4 buff scenario, Blessing34, also passes and checks target effect42. Replay-only event traces capture `LaunchEffect`, `PlaceEffect`, `PlayWave`, `SetState`, `SendMsg88`, and `UnportedEffect` calls; WBA logging also covers message108 events that do not use `HandleAttacked`.
 
-The remaining WP10.8 work is to expand the scenario model to configurable multiple actors and per-scenario cells/jobs, add 24 ms stepping for ground-unit lifecycles, and continue the WP3.4 and WP4 acceptance scenarios. Do not change `SKILL_MATRIX.md` rows to `verified(replay ...)` until each row's complete Ref walk-through matches its replay log.
+The remaining WP10.8 work is to add 24 ms stepping for ground-unit lifecycles and continue the WP3.4 and WP4 acceptance scenarios. Do not change `SKILL_MATRIX.md` rows to `verified(replay ...)` until each row's complete Ref walk-through matches its replay log.
