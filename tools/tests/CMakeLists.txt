@@ -405,6 +405,7 @@ extract_test_region(clip_wave_str_helper "${effect_source}" clip_wave_str_helper
 extract_test_region(land_protector_handler "${effect_source}" land_protector_family)
 extract_test_region(ghost_effect_handler "${effect_source}" ghost_effect_family)
 extract_test_region(waterfall_effects_handler "${effect_source}" waterfall_effects349_356_family)
+extract_test_region(vallentine_effect_handler "${effect_source}" vallentine_effect_family)
 extract_test_region(tanji_effect_handler "${effect_source}" tanji_effect_family)
 extract_test_region(basilica_effect_handler "${effect_source}" basilica_effect_family)
 extract_test_region(rainbow410_effect_handler "${effect_source}" rainbow410_effect_family)
@@ -456,6 +457,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${clip_wa
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${land_protector_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${ghost_effect_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${waterfall_effects_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${vallentine_effect_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${bottom_vertical_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${bottom_music_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${tanji_effect_handler}")
@@ -1012,6 +1014,8 @@ add_test(NAME effects358_360_ghost_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects358_360_ghost.py")
 add_test(NAME effects349_356_waterfall_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects349_356_waterfall.py")
+add_test(NAME effects363_364_509_519_545_vallentine_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects363_364_509_519_545_vallentine.py")
 add_test(NAME effects342_564_couple_casting_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects342_564_couple_casting.py")
 add_test(NAME effect605_stop_message_source_check
@@ -1048,6 +1052,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../Ref/RagEffect.cpp
     ../../Ref/RagEffect2.cpp
     ../../src/world/RagEffect.cpp
+    ../../src/world/RagEffectOnProcess2Cases.generated.inc
     ../../src/world/RagEffectOnProcess3Cases.generated.inc
     check_hitline_render.py
     check_hitline_caller.py
@@ -1061,6 +1066,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effects671_672_land_protector.py
     check_effects358_360_ghost.py
     check_effects349_356_waterfall.py
+    check_effects363_364_509_519_545_vallentine.py
     check_effects342_564_couple_casting.py
     check_effect605_stop_message.py
     check_effect563_mode_message.py

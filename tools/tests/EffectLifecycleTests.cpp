@@ -656,6 +656,7 @@ struct CRagEffect : CGameObject {
     bool ProcessLandProtector(int);
     bool ProcessGhost(int);
     bool ProcessWaterfallEffects(int, int, int);
+    bool ProcessVallentine(int);
     bool ProcessBottomVertical(int);
     bool ProcessTanji(bool);
     bool ProcessBasilica();
@@ -4033,6 +4034,52 @@ int main()
             effect.ClearPrims(); g_world.UpdateGameObjects();
         }
         rngValues.clear(); rngCursor=0;
+    }
+    {
+        struct Variant { int id, mode; const char* spr; const char* act; int action; int speed; int render; };
+        const Variant variants[]={
+            {363,0,"\xC0\xCC\xC6\xD1\xC6\xAE\\vallentine.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\vallentine.act",0,2,1},
+            {364,1,"\xC0\xCC\xC6\xD1\xC6\xAE\\vallentine.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\vallentine.act",1,2,1},
+            {509,2,"\xC0\xCC\xC6\xD1\xC6\xAE\\05vallentine.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\05vallentine.act",0,2,1},
+            {519,3,"\xC0\xCC\xC6\xD1\xC6\xAE\\fast.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\fast.act",0,4,1},
+            {545,4,"\xC0\xCC\xC6\xD1\xC6\xAE\\ro2effect.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\ro2effect.act",0,4,0x201},
+        };
+        CRenderObject actor; actor.m_pos={12,34,56};
+        CRenderObject listener; listener.m_pos={1,2,1};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        const int draws=rngDraws;
+        for (const Variant& variant:variants) {
+            actor.m_pos={12,34,56};
+            CRagEffect effect; effect.m_type=variant.id; effect.m_master=&actor; effect.m_duration=73;
+            effect.m_stateCnt=1; effect.m_effectPos={3,4,5};
+            g_resMgr.requests.clear(); waveCalls.clear();
+            effect.ProcessVallentine(variant.mode);
+            check(effect.m_primList.empty()&&effect.m_effectPos.x==12&&effect.m_effectPos.y==34
+                &&effect.m_effectPos.z==56&&waveCalls.empty()&&g_resMgr.requests.empty(),
+                "Vallentine nonzero state only refreshes its effect position");
+
+            effect.m_stateCnt=0; effect.ProcessVallentine(variant.mode);
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.back();
+            check(prim&&prim->m_type==PP_3DPARTICLE&&prim->m_pattern==0x200
+                &&prim->m_duration==73&&prim->m_deltaPos2.y==0&&prim->m_animSpeed==variant.speed
+                &&!prim->m_repeatAnim&&!prim->m_spriteRepeat&&prim->m_renderFlag==static_cast<u32>(variant.render)
+                &&prim->m_spriteSprName==variant.spr&&prim->m_spriteActName==variant.act
+                &&prim->m_spriteAction==variant.action&&prim->m_spriteMotionBase==16
+                &&prim->m_curMotion==0&&prim->m_numSegments==1
+                &&g_resMgr.requests==std::vector<std::string>({variant.spr,variant.act})
+                &&waveCalls.size()==1&&waveCalls[0].name=="effect\\vallentine.wav"
+                &&waveCalls[0].x==11&&waveCalls[0].y==0&&waveCalls[0].z==55
+                &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+                &&rngDraws==draws,
+                "Vallentine effects emit the exact mode resource/action, particle, and listener-relative sound");
+            const size_t count=effect.m_primList.size(); effect.m_stateCnt=2;
+            actor.m_pos={21,43,65}; effect.ProcessVallentine(variant.mode);
+            check(effect.m_primList.size()==count&&effect.m_effectPos.x==21&&effect.m_effectPos.y==43
+                &&effect.m_effectPos.z==65&&waveCalls.size()==1&&rngDraws==draws,
+                "Vallentine later states refresh position without repeating sound or particle");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+        }
+        g_world.m_player=oldPlayer;
     }
     {
         CRenderObject actor; actor.m_pos={3,10,4};

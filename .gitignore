@@ -146,3 +146,4 @@ tools/tests/*
 !tools/tests/check_effects671_672_land_protector.py
 !tools/tests/check_effects358_360_ghost.py
 !tools/tests/check_effects349_356_waterfall.py
+!tools/tests/check_effects363_364_509_519_545_vallentine.py

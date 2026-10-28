@@ -20469,6 +20469,58 @@ bool CRagEffect::ProcessGhost(int variant)
 }
 // TEST_BODY_END ghost_effect_family
 
+// PE HighPriest.exe.c:465379-465420; Ref/RagEffect.cpp callers 10526/10529/11516/11596/11731.
+// TEST_BODY_BEGIN vallentine_effect_family
+bool CRagEffect::ProcessVallentine(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return true;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return true;
+
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\vallentine.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+    prim->m_pattern |= 0x200u;
+    prim->m_duration = m_duration;
+    prim->m_deltaPos2.y = 0.0f;
+    prim->m_animSpeed = 2;
+    prim->m_repeatAnim = false;
+    prim->m_spriteRepeat = false;
+    const char* spr = "\xC0\xCC\xC6\xD1\xC6\xAE\\vallentine.spr";
+    const char* act = "\xC0\xCC\xC6\xD1\xC6\xAE\\vallentine.act";
+    int action = variant;
+    if (variant == 2) {
+        spr = "\xC0\xCC\xC6\xD1\xC6\xAE\\05vallentine.spr";
+        act = "\xC0\xCC\xC6\xD1\xC6\xAE\\05vallentine.act";
+        action = 0;
+    } else if (variant == 3) {
+        spr = "\xC0\xCC\xC6\xD1\xC6\xAE\\fast.spr";
+        act = "\xC0\xCC\xC6\xD1\xC6\xAE\\fast.act";
+        action = 0;
+        prim->m_animSpeed = 4;
+    } else if (variant == 4) {
+        prim->m_renderFlag |= 0x200u;
+        spr = "\xC0\xCC\xC6\xD1\xC6\xAE\\ro2effect.spr";
+        act = "\xC0\xCC\xC6\xD1\xC6\xAE\\ro2effect.act";
+        action = 0;
+        prim->m_animSpeed = 4;
+    }
+    prim->SetParticleResources(spr, act);
+    prim->m_spriteAction = action;
+    prim->m_spriteMotionBase = 16;
+    prim->m_curMotion = 0;
+    prim->m_numSegments = 1;
+    InitReferenceSegments(prim);
+    return true;
+}
+// TEST_BODY_END vallentine_effect_family
+
 // PE HighPriest.exe.c:435065/435338; Ref/RagEffect.cpp:10415-10490.
 // TEST_BODY_BEGIN waterfall_effects349_356_family
 bool CRagEffect::ProcessWaterfallEffects(int axisMode, int compactMode, int textureSet)

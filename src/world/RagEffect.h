@@ -556,6 +556,7 @@ private:
     bool ProcessLandProtector(int variant);
     bool ProcessGhost(int variant);
     bool ProcessWaterfallEffects(int axisMode, int compactMode, int textureSet);
+    bool ProcessVallentine(int variant);
     bool ProcessBottomVertical(int variant);
     bool ProcessTanji(bool tanji2);
     bool ProcessBasilica();
