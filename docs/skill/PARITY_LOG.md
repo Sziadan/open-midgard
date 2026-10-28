@@ -3232,3 +3232,7 @@ The four new fixtures send 0x011F unit jobs154–157 and 0x0120 removal. Ref `CS
 ## WP10.8 runtime replay — Spider Web unit — 2026-10-28
 
 `spider_web_unit_lifecycle.tsv` sends a 0x011F entry for job183 (`UNT_SPIDERWEB`), invokes real `CSkill::OnProcess` after a nominal 24 ms interval, and removes the unit with 0x0120. Ref maps job183 to `LaunchLoop(404)` (`Ref/Skill.cpp:1287-1698`); runtime confirms effect404 after 25 ms measured elapsed and verifies removal from both world lists. Focused and full replay CTest pass27/27.
+
+## WP10.8 runtime replay — Bard/Dancer song units — 2026-10-28
+
+The 18 scenario TSVs send job158–175 entries and removal packets. Ref `CSkill::OnProcess` maps the sequence to effects278–294, except Dissonance job166→277 (`Ref/Skill.cpp:1445-1535`). The production runtime confirms every effect after the first nominal 24 ms process call and confirms world-list cleanup. Focused batch passes18/18; full packet replay CTest passes45/45.

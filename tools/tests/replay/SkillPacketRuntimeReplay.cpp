@@ -569,7 +569,8 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     const int unitJob = packets[0].bytes[14];
     Require(unitJob == 126 || unitJob == 127 || unitJob == 131 || unitJob == 132
             || unitJob == 141 || unitJob == 142 || (unitJob >= 154 && unitJob <= 157)
-            || unitJob == 177 || unitJob == 179 || unitJob == 180 || unitJob == 183,
+            || (unitJob >= 158 && unitJob <= 175) || unitJob == 177 || unitJob == 179
+            || unitJob == 180 || unitJob == 183,
         "unsupported skill-unit replay job");
     int expectedLoopEffect = 0;
     switch (unitJob) {
@@ -583,6 +584,24 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     case 155: expectedLoopEffect = 240; break;
     case 156: expectedLoopEffect = 241; break;
     case 157: expectedLoopEffect = 242; break;
+    case 158: expectedLoopEffect = 278; break;
+    case 159: expectedLoopEffect = 279; break;
+    case 160: expectedLoopEffect = 280; break;
+    case 161: expectedLoopEffect = 281; break;
+    case 162: expectedLoopEffect = 282; break;
+    case 163: expectedLoopEffect = 283; break;
+    case 164: expectedLoopEffect = 284; break;
+    case 165: expectedLoopEffect = 285; break;
+    case 166: expectedLoopEffect = 277; break;
+    case 167: expectedLoopEffect = 286; break;
+    case 168: expectedLoopEffect = 287; break;
+    case 169: expectedLoopEffect = 288; break;
+    case 170: expectedLoopEffect = 289; break;
+    case 171: expectedLoopEffect = 290; break;
+    case 172: expectedLoopEffect = 291; break;
+    case 173: expectedLoopEffect = 292; break;
+    case 174: expectedLoopEffect = 293; break;
+    case 175: expectedLoopEffect = 294; break;
     case 177: expectedLoopEffect = 302; break;
     case 179: expectedLoopEffect = 370; break;
     case 180: expectedLoopEffect = 374; break;

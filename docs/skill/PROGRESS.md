@@ -1638,3 +1638,7 @@ Added packet lifecycle replays for Volcano job154, Deluge job155, Violent Gale j
 ## WP10.8 — Spider Web ground-unit replay — 2026-10-28
 
 Added the WP4 Spider Web unit job183 replay. The raw 0x011F entry creates the unit, one nominal 24 ms production `CSkill::OnProcess` call launches Ref loop effect404, and 0x0120 removes it. Focused replay passes; the full root packet replay CTest passes27/27. The model remains resource-dependent and is not rendered by this fixture.
+
+## WP10.8 — Bard/Dancer song unit replay batch — 2026-10-28
+
+Added lifecycle packet replays for every Ref song unit job158–175. Each unit launches its mapped loop effect on the first nominal 24 ms production `CSkill::OnProcess` call, then is removed with 0x0120. Runtime confirms the full mapping, including the special Dissonance job166→effect277; focused tests pass18/18 and the complete root packet replay CTest passes45/45.

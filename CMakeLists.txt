@@ -391,6 +391,17 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_spider_web_unit_lifecycle_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    set(_skill_packet_replay_song_scenarios
+        lullaby richman_kim eternal_chaos drum_battle_field ring_nibelungen lokis_wail into_abyss siegfried
+        dissonance whistle assassin_cross poem_of_bragi apple_of_idun ugly_dance humming dont_forget_me
+        fortunes_kiss service_for_you)
+    foreach(_scenario IN LISTS _skill_packet_replay_song_scenarios)
+        add_test(NAME "skill_packet_replay_${_scenario}_unit_lifecycle_checks"
+            COMMAND skill_packet_replay_runtime_checks
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/${_scenario}_unit_lifecycle.tsv")
+        set_tests_properties("skill_packet_replay_${_scenario}_unit_lifecycle_checks" PROPERTIES
+            WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    endforeach()
     set_tests_properties(skill_packet_replay_sanctuary_unit_lifecycle_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_warp_unit_lifecycle_checks PROPERTIES

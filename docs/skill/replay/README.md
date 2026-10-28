@@ -26,6 +26,8 @@ Each scenario is UTF-8 TSV with three columns: packet opcode (integer, `0x` pref
 
 `spider_web_unit_lifecycle.tsv` replays unit job183 (`UNT_SPIDERWEB`), checks loop effect404 after one nominal 24 ms process step, then removes it with `0x0120`.
 
+The song unit fixtures cover jobs158–175 (Lullaby through Service for You) and verify the Ref loop effects278–294 after one nominal 24 ms process step; Dissonance job166 uses effect277. Each unit is removed with `0x0120`.
+
 `magnus_unit_lifecycle.tsv` replays unit job132 (`UNT_MAGNUS`), checks its loop effect318 after one nominal 24 ms process step, then removes it with `0x0120`.
 
 `sanctuary_unit_lifecycle.tsv` replays unit job131 (`UNT_SANCTUARY`), calls `CSkill::OnProcess` for one nominal 24 ms step, checks loop effect319, and removes the unit with `0x0120`.
