@@ -18504,6 +18504,102 @@ bool CRagEffect::ProcessLevel99Effect()
     return true;
 }
 
+// HighPriest.exe.c:419015-419020; Ref/RagEffect.cpp:12376-12381.
+// Helper bodies: HighPriest.exe.c:442490-442574, 442710-442816.
+bool CRagEffect::ProcessEffect650()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) {
+        return true;
+    }
+    const vector3d origin = master->m_pos;
+    const auto refreshPosition = [this, &origin]() {
+        m_effectPos = origin;
+        m_cachedPos = origin;
+    };
+
+    const auto spawnMagicZone = [this, &refreshPosition](const char* textureName, int variant) {
+        refreshPosition();
+        if (m_stateCnt != 0) {
+            return;
+        }
+        CEffectPrim* prim = LaunchEffectPrim(PP_MAPMAGICZONE, vector3d{});
+        prim->m_renderFlag = 5;
+        prim->m_duration = m_duration;
+        prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+        prim->m_size = 110.0f;
+        for (EffectGi& gi : prim->m_gi) {
+            gi.life = 0;
+        }
+        EffectGi& gi = prim->m_gi[0];
+        gi.life = 1;
+        gi.distance = 30.0f;
+        gi.rotStart = variant == 0 ? 0 : 358;
+        gi.alphaB = variant == 0 ? 200 : 50;
+        gi.height[0] = variant == 0 ? -0.5f : -0.40000001f;
+        gi.height[4] = static_cast<float>(variant);
+    };
+
+    spawnMagicZone("effect\\mjin2.tga", 0);
+    spawnMagicZone("effect\\mjin.tga", 1);
+
+    refreshPosition();
+    if (m_stateCnt == 0) {
+        CEffectPrim* pika = LaunchEffectPrim(PP_3DAURA, vector3d{});
+        pika->m_renderFlag = 0;
+        pika->m_renderFlag |= 1u;
+        pika->m_renderFlag |= 5u;
+        pika->m_duration = m_duration;
+        pika->m_texture.push_back(g_texMgr.GetTexture("effect\\pikapika2.bmp", false));
+        pika->m_size = 4.0f;
+        for (EffectGi& gi : pika->m_gi) {
+            gi.life = 0;
+        }
+        for (int lane = 0; lane < 2; ++lane) {
+            EffectGi& gi = pika->m_gi[static_cast<size_t>(lane)];
+            gi.life = 1;
+            gi.distance = 46.0f;
+            gi.riseAngle = static_cast<short>(lane * 180);
+            gi.alphaB = 25;
+            gi.height[0] = -1.0f;
+        }
+    }
+
+    refreshPosition();
+    if (m_stateCnt == 0) {
+        CEffectPrim* aura = LaunchEffectPrim(PP_3DCASTING, vector3d{});
+        aura->m_renderFlag = 0;
+        aura->m_renderFlag |= 1u;
+        aura->m_renderFlag |= 5u;
+        aura->m_duration = m_duration;
+        aura->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_blue.tga", false));
+        aura->m_size = 0.0f;
+        constexpr std::array<float, 3> maxHeights{15.0f, 13.0f, 11.0f};
+        constexpr std::array<float, 3> distances{12.9f, 13.1f, 13.3f};
+        constexpr std::array<int, 3> rotations{0, 90, 180};
+        constexpr std::array<int, 3> riseAngles{55, 50, 45};
+        for (EffectGi& gi : aura->m_gi) {
+            gi.life = 0;
+        }
+        for (size_t lane = 0; lane < 3; ++lane) {
+            EffectGi& gi = aura->m_gi[lane];
+            gi.life = 1;
+            gi.process = 0;
+            gi.fullDisplayAngle = 315;
+            gi.maxHeight = maxHeights[lane];
+            gi.rotStart = static_cast<short>(rotations[lane]);
+            gi.alphaB = 50;
+            gi.alphaT = 1;
+            gi.distance = distances[lane];
+            gi.riseAngle = static_cast<short>(riseAngles[lane]);
+            gi.sparkY = 0.0f;
+            gi.height.fill(0.0f);
+            gi.flag.fill(0);
+        }
+    }
+    return true;
+}
+
 // Ref/RagEffect2.cpp:28935-28977; canonical helper HighPriest.exe.c:442819-442952.
 bool CRagEffect::ProcessLevel99_2Effect()
 {

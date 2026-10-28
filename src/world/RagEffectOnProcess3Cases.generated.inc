@@ -158,7 +158,7 @@ case 644: return ProcessEffectSprite(27);
 case 645: return ProcessEffectSprite(28);
 case 647: return ProcessEffectSprite(29);
 case 648: return ProcessEffectSprite(30);
-case 650: return UnportedEffect();
+case 650: return ProcessEffect650();
 case 651: return UnportedEffect();
 case 652: return ProcessDamageNumberEffects();
 case 653: return ProcessDamageNumberEffects();

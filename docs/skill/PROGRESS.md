@@ -2002,3 +2002,8 @@ Added the two Portal3 caller modes with separate state-zero heal and state-two w
 ## WP5C effect522 Gravitation — 2026-10-28
 
 Ported effect522 with the PE state0 gate, quake message order, four PP_3DQUADHORN2 lanes, five ordered RNG draws per lane, exact primitive setup, and stone/ice texture split. Added the missing message148 receiver and `CView::SetQuakeInfo`; this also gives the existing EarthSpike message148 call its Ref behavior. The registered PE/Ref/local comparator records branch order, fields, resources and receiver handling. Coverage audit: 682 routed /11 explicit unported /0 launched-but-unported. Release app and parity-test builds succeed; parity CTest passes250/250 and replay CTest passes102/102. No media/live visual acceptance is claimed.
+
+
+## WP5C effect650 composite map magic zone — 2026-10-28
+
+Ported effect650's four helper calls in canonical order, including two MapMagicZone bands, the Pika aura, and the three-band casting aura. All four executable texture names and bytes are resolved. The PE/Ref caller sequence and local payload are checked by a registered source comparator; the secondary Map_Aura helper variant is recorded in `MISMATCHES.md`. The effect refreshes its master position through every call, emits only at state0, and consumes no RNG or audio. Coverage audit: 683 routed /10 explicit unported /0 launched-but-unported. Release app build succeeds; parity CTest passes251/251 and replay CTest passes102/102. No media/live visual acceptance is claimed.

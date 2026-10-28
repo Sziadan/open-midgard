@@ -35,7 +35,7 @@ FORCE_ROUTE.add(92)
 FORCE_ROUTE.add(361)
 FORCE_ROUTE.add(365)
 FORCE_ROUTE.add(440)
-FORCE_ROUTE.update({242, 404, 671, 672, 349, 350, 351, 352, 353, 354, 355, 356, 358, 359, 360, 363, 364, 509, 519, 545, 561, 562, 277, 287, 290, 292, 294, 281, 284, 288, 265, 412, 374, 410, 428, 297, 434, 447, 448, 467, 468, 469, 470, 471, 472, 473, 326, 327, 340, 557, 558, 559, 560, 497, 498, 499, 513, 517, 551, 522})
+FORCE_ROUTE.update({242, 404, 671, 672, 349, 350, 351, 352, 353, 354, 355, 356, 358, 359, 360, 363, 364, 509, 519, 545, 561, 562, 277, 287, 290, 292, 294, 281, 284, 288, 265, 412, 374, 410, 428, 297, 434, 447, 448, 467, 468, 469, 470, 471, 472, 473, 326, 327, 340, 557, 558, 559, 560, 497, 498, 499, 513, 517, 551, 522, 650})
 
 DIRECT_CALLS = {
     # Main OnProcess cases whose index handler includes more than raw STR.
@@ -71,6 +71,7 @@ DIRECT_CALLS = {
     602: "return ProcessEffect602();",
     273: "return ProcessEffect273();",
     522: "ApplyGravitation(); return true;",
+    650: "return ProcessEffect650();",
     302: "return ProcessDemonstration302();",
     333: "return ProcessMaple333();",
     6: "return ProcessEntry6();",

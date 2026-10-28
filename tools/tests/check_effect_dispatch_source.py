@@ -105,6 +105,7 @@ required_routes = {
     ("OnProcess2", 369): "OnProcess2Legacy",
     ("OnProcess3", 537): "ProcessEffect537",
     ("OnProcess3", 522): "ApplyGravitation",
+    ("OnProcess3", 650): "ProcessEffect650",
     ("OnProcess3", 599): "ProcessEffect599",
     ("OnProcess3", 602): "ProcessEffect602",
     ("OnProcess", 273): "ProcessEffect273",

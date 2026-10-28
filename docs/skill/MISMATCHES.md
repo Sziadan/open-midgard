@@ -660,3 +660,8 @@ The WP4 acceptance summary originally described Pneuma as launching a unit loop 
 ### 0x0115 skill position notify is replay-only
 
 `ZC_NOTIFY_SKILL_POSITION` is decoded by Ref (`Ref/GameModePacket.cpp:21482`) and has a packetver23 length of 35 bytes, but the packetver23 eAthena `clif_skill_damage2` sender at `Ref/eAthena_src_2011/map/clif.c:4740` is commented out. Keep the client handler for parity; the 0x0115 fixture is handcrafted and proves receive-side routing only. It does not establish that RunningServer emits this opcode or count toward live acceptance.
+
+
+## WP5C effect650 secondary Map_Aura variant
+
+The canonical PE `CRagEffect::Map_Aura` helper (`HighPriest.exe.c:442490-442574`) and primary Ref caller (`Ref/RagEffect.cpp:12376-12381`) establish the effect650 aura profile: three GI lanes with hardcoded distances12.9/13.1/13.3, max heights15/13/11, and rotations0/90/180. The secondary `Ref/dhxj/RagEffect2.cpp:8516+` helper instead has signature `Map_Aura(char *tName, float size)` and derives its lane sizes/distances from the extra parameter. The PE and primary Ref call pass only the texture name, so the port follows the PE values and does not use the secondary variant.
