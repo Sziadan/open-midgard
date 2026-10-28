@@ -4,6 +4,7 @@
 #include <map>
 #include <list>
 #include <string>
+#include <vector>
 
 // Forward declarations
 class CView;
@@ -69,6 +70,7 @@ struct GroundItemState {
 class CGameMode : public CMode {
 public:
     bool SendSkillToGroundWithText(u16 skillId, u16 skillLevel, int cellX, int cellY, const std::string& contents);
+    bool SendWarpMapSelection(const std::string& mapName);
 
     enum MapLoadingStage {
         MapLoading_None = 0,
@@ -196,6 +198,8 @@ public:
     std::map<u32, ColorCellPos2> m_compassPosList;
     
     std::vector<int> m_menuIdList;
+    u16 m_warpSkillId = 0;
+    std::vector<std::string> m_warpMapDestinations;
     std::list<u32> m_visibleTrapList;
     std::list<u32> m_emblemReqGdidQueue;
     u32 m_lastEmblemReqTick;

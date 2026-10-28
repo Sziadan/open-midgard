@@ -1786,6 +1786,30 @@ void ReplayWarpUnitLifecycle(const std::string& path)
     std::cout << "WarpUnit aid=100 waitingJob=128 activeJob=129 loopEffects=317/316 removed=1\n";
 }
 
+void ReplayWarpMapList(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 1 && packets[0].opcode == 0x011C && packets[0].bytes.size() == 68,
+        "Warp map-list replay requires one 68-byte 0x011C packet");
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), packet, consumed),
+        "production packet reader rejected the Warp map-list packet");
+    Require(packet.packetId == 0x011C && consumed == 68,
+        "Warp map-list framing differs from the packetver23 packet_db length");
+    Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch 0x011C");
+    Require(fixture.mode.m_warpSkillId == 27 && fixture.mode.m_warpMapDestinations.size() == 2
+        && fixture.mode.m_warpMapDestinations[0] == "prontera.gat"
+        && fixture.mode.m_warpMapDestinations[1] == "geffen.gat",
+        "Warp map-list handler did not preserve skill id and nonempty fixed-width map fields in source order");
+    Require(!fixture.mode.SendWarpMapSelection("payon.gat"),
+        "Warp map selection accepted a destination that was not offered by 0x011C");
+    std::cout << "WarpMapList opcode=0x011C skill=27 destinations=prontera.gat,geffen.gat\n";
+}
+
 bool IsFirewallUnitScenario(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1810,6 +1834,13 @@ bool IsWarpUnitLifecycleScenario(const std::string& path)
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
     return packets.size() == 3 && packets.front().opcode == 0x011F
         && packets.front().bytes.size() == 16 && packets.front().bytes[14] == 128;
+}
+
+bool IsWarpMapListScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 1 && packets.front().opcode == 0x011C
+        && packets.front().bytes.size() == 68;
 }
 
 bool IsLandMineTriggerScenario(const std::string& path)
@@ -1953,6 +1984,8 @@ int main(int argc, char** argv)
             ReplayTalkieBoxTriggerLifecycle(argv[1]);
         } else if (IsWarpUnitLifecycleScenario(argv[1])) {
             ReplayWarpUnitLifecycle(argv[1]);
+        } else if (IsWarpMapListScenario(argv[1])) {
+            ReplayWarpMapList(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {
             ReplaySkillUnitLifecycle(argv[1]);
         } else {

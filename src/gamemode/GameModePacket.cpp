@@ -4813,6 +4813,26 @@ void HandleSkillUnitSet2(CGameMode& mode, const PacketView& packet)
     PlaceSkillUnit(mode, unitAid, creatorAid, job, cellX, cellY, visible);
 }
 
+void HandleWarpMapList(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetId != 0x011C || packet.packetLength < 68) {
+        return;
+    }
+
+    mode.m_warpSkillId = ReadLE16(packet.data + 2);
+    mode.m_warpMapDestinations.clear();
+    for (int index = 0; index < 4; ++index) {
+        const char* field = reinterpret_cast<const char*>(packet.data + 4 + index * 16);
+        std::size_t length = 0;
+        while (length < 16 && field[length] != '\0') {
+            ++length;
+        }
+        if (length != 0) {
+            mode.m_warpMapDestinations.emplace_back(field, length);
+        }
+    }
+}
+
 void HandleSkillDisappear(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 6 || mode.m_world == nullptr) {
@@ -8052,6 +8072,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x010F, HandlePlayerSkillList);
     router.Register(0x0110, HandleSkillFailAck);
     router.Register(0x0111, HandlePlayerSkillAdd);
+    router.Register(0x011C, HandleWarpMapList);
     router.Register(0x0235, HandleHomunSkillList);
     router.Register(0x0239, HandleHomunSkillUpdate);
     router.Register(0x029D, HandleMercSkillList);

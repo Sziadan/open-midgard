@@ -9619,6 +9619,22 @@ bool CGameMode::SendSkillToGroundWithText(u16 skillId, u16 skillLevel, int cellX
     return SendUseSkillToPosInfoPacket(skillId, skillLevel, cellX, cellY, contents);
 }
 
+bool CGameMode::SendWarpMapSelection(const std::string& mapName)
+{
+    if (m_warpSkillId == 0 || mapName.empty() || mapName.size() >= sizeof(PACKET_CZ_USESKILLMAP::MapName)
+        || std::find(m_warpMapDestinations.begin(), m_warpMapDestinations.end(), mapName) == m_warpMapDestinations.end()) {
+        return false;
+    }
+
+    if (!SendUseSkillMapPacket(m_warpSkillId, mapName.c_str())) {
+        return false;
+    }
+
+    m_warpSkillId = 0;
+    m_warpMapDestinations.clear();
+    return true;
+}
+
 CGameMode::CGameMode() 
     : m_areaLeft(0), m_areaRight(0), m_areaTop(0), m_areaBottom(0),
       m_world(nullptr), m_view(nullptr), m_mousePointer(nullptr),

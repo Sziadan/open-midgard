@@ -48,7 +48,18 @@ int main()
         Require(!ro::net::BuildActiveUseSkillToPosInfoPacket(226, 5, 12, 34, contents,
             buffer.data(), static_cast<int>(buffer.size() - 1), &packetLength),
             "0x0190 builder accepted an undersized output buffer");
+
+        std::array<u8, sizeof(PACKET_CZ_USESKILLMAP)> mapBuffer{};
+        Require(ro::net::BuildActiveUseSkillMapPacket(27, "prontera.gat",
+            mapBuffer.data(), static_cast<int>(mapBuffer.size()), &packetLength),
+            "0x011B builder rejected a valid Warp destination");
+        Require(packetLength == 20 && mapBuffer[0] == 0x1B && mapBuffer[1] == 0x01
+            && ReadLE16(mapBuffer.data() + 2) == 27
+            && std::memcmp(mapBuffer.data() + 4, "prontera.gat", 12) == 0
+            && mapBuffer[16] == 0,
+            "0x011B opcode, length, skill id, or destination offset differs from Ref");
         std::cout << "UseSkillToPosInfo opcode=0x0190 size=90 skill=226 level=5 cell=(12,34) textBytes=8\n";
+        std::cout << "UseSkillMap opcode=0x011B size=20 skill=27 map=prontera.gat\n";
         return 0;
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';

@@ -186,6 +186,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0114, 31);
     SetPacketSize(0x0115, 35);
     SetPacketSize(0x0117, 18);
+    SetPacketSize(0x011C, 68);             // ZC_WARPLIST (skill id + four 16-byte map names)
     SetPacketSize(0x0119, 13);
     SetPacketSize(0x011A, 15);
     SetPacketSize(0x011F, 16);

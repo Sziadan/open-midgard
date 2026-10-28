@@ -482,7 +482,7 @@ Register every opcode in the dispatch table; nothing skill-related may remain on
 
 ### WP3.3 Client-send side
 
-Per `PACKET_VERSION_ALIGNMENT.md` and `packet_db.txt` ver 23: implement `0x0190 useskilltoposinfo` (90 bytes: skill lv.W@2, skill id.W@4, x.W@6, y.W@8, text 80B@10) used by Warp Portal name / Graffiti text; confirm `0x0438 useskilltoid`, `0x0116 useskilltopos`, `0x011B useskillmap`, `0x0112 skillup`. Use `CGameMode::DrawUseSkillLevelNumber` (Ref/GameMode.cpp:9839) for the level-number display on use.
+Per `PACKET_VERSION_ALIGNMENT.md` and packetver23 `packet_db.txt`: implement `0x0190 useskilltoposinfo` (90 bytes: skill lv.W@2, skill id.W@4, x.W@6, y.W@8, text 80B@10) for text-bearing ground skills such as Graffiti and Talkie Box; Warp Portal destination selection uses `0x011B useskillmap` (20 bytes: skill id.W@2, map name 16B@4), following the server's `0x011C` list. Confirm `0x0438 useskilltoid`, `0x0116 useskilltopos`, and `0x0112 skillup`. Use `CGameMode::DrawUseSkillLevelNumber` (Ref/GameMode.cpp:9839) for the level-number display on use.
 
 ### WP3.4 Acceptance
 
