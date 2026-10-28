@@ -5447,7 +5447,7 @@ void RenderHitLine3(const CEffectPrim& prim, const matrix& viewMatrix)
                 drawStrip(gi.maxHeight, alpha, rgb(255, 200, 150 - ((5 - segment) * 30)));
             } else if (gi.alphaT == 1) {
                 const int channel = 120 - ((5 - segment) * 22);
-                drawStrip(gi.maxHeight, alpha, rgb(channel, channel, 255));
+                drawStrip(gi.maxHeight, alpha, rgb(channel, channel, channel));
             } else if (gi.alphaT == 2) {
                 drawStrip(gi.maxHeight, alpha, rgb(255, 200, 150 - ((3 - segment) * 50)));
             } else if (gi.alphaT >= 3) {
