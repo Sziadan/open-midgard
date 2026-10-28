@@ -339,7 +339,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 410	OnProcess	Rainbow	unported	OnProcess -> UnportedEffect		-
 411	OnProcess	PeongUp,Peong	routed	OnProcess -> return ProcessPeongEffects();	src/world/GameActor.cpp	1891
 412	OnProcess	TANJI2	unported	OnProcess -> UnportedEffect		-
-413	OnProcess	inline	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+413	OnProcess	inline	routed	OnProcess -> return ProcessEffect413();	src/world/SkillSpecialEffect.cpp	34
 414	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		34
 415	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	34
 416	OnProcess	AirTexture	unported	OnProcess -> UnportedEffect	src/world/RagEffect.cpp	-

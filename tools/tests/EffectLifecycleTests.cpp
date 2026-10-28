@@ -14,6 +14,7 @@
 #include <set>
 
 using u8 = std::uint8_t;
+using u16 = std::uint16_t;
 using u32 = std::uint32_t;
 using msgparam_t = std::intptr_t;
 int g_isSkipFrame = 1;
@@ -131,6 +132,7 @@ struct CRenderObject : CGameObject {
     vector3d EffectPosition() const { return m_pos; }
     float m_roty = 0;
     int m_BodyLight = 0;
+    u16 m_BodyTime = 0;
     char m_BeZero = 0;
     struct Color { u8 a=0,r=0,g=0,b=0; } m_oldColor,m_curColor;
     struct SpriteColor { struct { Color s; } u; };
@@ -575,6 +577,7 @@ struct CRagEffect : CGameObject {
     bool ProcessRevive140();
     bool ProcessEffect380();
     bool ProcessEffect403();
+    bool ProcessEffect413();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5637,6 +5640,40 @@ int main()
         check(rngDraws==beforeRng+9&&master.tintCalls==3&&waveCalls.size()==1,
             "Effect403 stops tint and RNG after state60");
         g_world.m_player=oldPlayer;rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRenderObject master;master.m_pos={15,25,35};
+        CRagEffect effect;effect.m_type=413;effect.m_master=&master;effect.m_effectPos={1,2,3};
+        const int beforeRng=rngDraws;waveCalls.clear();
+        effect.m_stateCnt=4;effect.ProcessEffect413();
+        check(waveCalls.empty()&&master.m_BodyLight==0&&master.m_BodyTime==0,
+            "Effect413 has no sound or body light before its active windows");
+        effect.m_stateCnt=5;effect.ProcessEffect413();
+        check(effect.m_effectPos.x==15&&effect.m_effectPos.y==25&&effect.m_effectPos.z==35
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\T_"
+            &&waveCalls[0].x==12&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&master.m_BodyLight==0,
+            "Effect413 state5 follows master and plays its exact PE wave argument");
+        effect.m_stateCnt=16;effect.ProcessEffect413();
+        check(master.m_BodyLight==0&&master.m_BodyTime==0,
+            "Effect413 does not set body light before state17");
+        effect.m_stateCnt=17;effect.ProcessEffect413();
+        check(master.m_BodyLight==32&&master.m_BodyTime==0,
+            "Effect413 state17 sets bit0x20 and resets body time");
+        master.m_BodyTime=77;effect.m_stateCnt=18;effect.ProcessEffect413();
+        check(master.m_BodyLight==32&&master.m_BodyTime==77,
+            "Effect413 does not reset body time while bit0x20 is already set");
+        master.m_BodyLight=0;effect.m_stateCnt=50;effect.ProcessEffect413();
+        check(master.m_BodyLight==32&&master.m_BodyTime==33,
+            "Effect413 includes state50 and stores state minus17 as body time");
+        master.m_BodyLight=0;master.m_BodyTime=91;effect.m_stateCnt=51;effect.ProcessEffect413();
+        check(master.m_BodyLight==0&&master.m_BodyTime==91&&rngDraws==beforeRng
+            &&effect.m_primList.empty(),
+            "Effect413 stops the body light window after state50 without RNG or primitives");
+        g_world.m_player=oldPlayer;waveCalls.clear();
     }
     {
         CRagEffect effect;effect.m_type=212;effect.m_duration=500;

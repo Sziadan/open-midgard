@@ -339,7 +339,7 @@ case 409: return ProcessSoulBreaker2Effect();
 case 410: return UnportedEffect();
 case 411: return ProcessPeongEffects();
 case 412: return UnportedEffect();
-case 413: return UnportedEffect();
+case 413: return ProcessEffect413();
 case 414: ApplyActorLight(); return true;
 case 415: ApplyActorLight(); return true;
 case 416: return UnportedEffect();

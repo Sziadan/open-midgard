@@ -765,3 +765,7 @@ From `Ref/RagEffect2.cpp` (334 methods): enumerate with `rg -n "^// Original Sig
 ## WP10.3 effect403 checkpoint
 
 Completed effect403: skill 0x192 launches it, while canonical PE OnProcess case403 is inline and absent from the primary Ref caller. The implementation copies master position and plays the exact executable resource at state25, then tints via blue/green/red RNG draws through state60 inclusive. Added source parity and lifecycle checks. Release app/test builds pass, CTest is 161/161, coverage is 555 routed / 138 unported / 39 launched-but-unported, and deployed OldRO hash matches Release at 8926DBEC76C215C8E441530EF02B74D297EE006774BD3F27C288E5BFC0840770. Next: inline effect413.
+
+## WP10.3 effect413 checkpoint
+
+Completed effect413. The canonical inline PE case plays the proven truncated literal effect slash T underscore at state5 and sets master BodyLight bit0x20 plus BodyTime=stateCnt-17 when the bit is absent at states17-50 inclusive. Skill415 launches this target effect; the primary Ref caller omits it. The complete audio filename/VA remains unresolved, and the exact PE literal is preserved. Comparator and lifecycle coverage added. Release app/test builds pass, CTest 162/162, coverage 556 routed / 137 unported / 38 launched-but-unported, and deployed OldRO hash matches Release at 20168408F0773A4754BB7C86D12D52EF522B6203517D0B930A8AA4FA298FA8F7. Next: inline effect445.
