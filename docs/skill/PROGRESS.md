@@ -1812,3 +1812,7 @@ Verified routed effect185's `suicide.str` mapping across Ref, PE, and local tabl
 ## WP5C effect181 MentalBreak STR — 2026-10-28
 
 Verified effect181's `MentalBreak.str` name mapping across Ref, PE, executable bytes, local catalog, and STR-name table. The executable string resolves at `0x71AC44`; the PE caller uses the shared STR completion path and the local dispatcher agrees. Added and registered `check_effect181_mentalbreak_str.py`. The STR clip is not present and no dedicated lifecycle check was found, so this checkpoint records source/name parity only. Full parity CTest passes 212/212. Next: continue 5C source-parity audit.
+
+## WP5C effects182/186 STR mappings — 2026-10-28
+
+Verified the paired Init maps for effect182 (`magical.str`, VA `0x71AC38`) and effect186 (`yunta_1.str`, VA `0x71AC20`) across Ref, PE, resolved executable bytes, local catalog, STR-name table, and routes. Both enter the canonical shared STR completion group. Added and registered `check_effect182_186_str_mapping.py`. Matching clips are absent, so this records mapping/source parity only. Full parity CTest passes 213/213. Next: continue 5C source-parity audit.

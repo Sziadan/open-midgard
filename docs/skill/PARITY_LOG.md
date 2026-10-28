@@ -3398,3 +3398,7 @@ Primary Ref `CRagEffect::Init` (`Ref/RagEffect.cpp:13434`) and canonical PE `CRa
 ## WP5C effect181 MentalBreak STR
 
 Primary Ref and canonical PE `CRagEffect::Init` map effect181 to `aMentalbreakStr`; executable bytes resolve it to `MentalBreak.str` at `0x71AC44`. The local catalog, STR-name table, and dispatcher agree. Canonical PE groups effect181 into the shared `LABEL_424` caller for `ProcessEZ2STR(0,-80,0)`. `check_effect181_mentalbreak_str.py` validates the source mapping, resolved bytes, local tables/route, and shared caller. The clip is absent and no targeted lifecycle assertion was found; this is mapping/source parity only, with no visual or runtime acceptance claim.
+
+## WP5C effects182/186 STR mappings
+
+Primary Ref and canonical PE `CRagEffect::Init` agree that effect182 maps to `magical.str` (`aMagicalStr`, VA `0x71AC38`) and effect186 maps to `yunta_1.str` (`aYunta1Str`, VA `0x71AC20`). Both local catalog and STR-name table entries and dispatcher routes match. Canonical OnProcess groups both IDs into the shared `LABEL_424` path calling `ProcessEZ2STR(0,-80,0)`. `check_effect182_186_str_mapping.py` validates mappings, executable bytes, local tables/routes, and shared caller. Media files are absent; this records source/name parity only, not visual acceptance.
