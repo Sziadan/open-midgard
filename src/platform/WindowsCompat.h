@@ -3,7 +3,7 @@
 #ifndef RO_PLATFORM_WINDOWS_COMPAT_H
 #define RO_PLATFORM_WINDOWS_COMPAT_H
 
-#if RO_PLATFORM_WINDOWS
+#if defined(_WIN32) || RO_PLATFORM_WINDOWS
 
 #include <windows.h>
 

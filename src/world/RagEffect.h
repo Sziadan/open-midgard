@@ -432,18 +432,8 @@ private:
         MapPillar,
         MapMagicZone,
         MapParticle,
-        HideStart,
-        EnchantPoison,
-        EnchantPoison2,
-        Blessing,
         Smoke,
         Torch,
-        Sight,
-        Sight2,
-        FireBall,
-        Ruwach,
-        BlueFall,
-        WeatherCloud,
     };
 
     class CWorldAnchor : public CRenderObject {
@@ -455,15 +445,25 @@ private:
     void LoadEzEffect(const char* fName);
     void InitEZ2STRFrame();
     bool ProcessEZ2STR(float x = 0.0f, float y = -80.0f, float z = 0.0f);
+    bool ProcessProvoke();
+    bool ProcessLexDivina();
+    bool ProcessStrTerminalEffect();
+    bool ProcessClipWaveStrEffect();
+    bool ProcessEffectSprite(int spriteVariant);
     bool ProcessTargetPositionStr();
     bool OnProcess2();
+    bool OnProcess3();
+    bool OnProcess2Legacy();
     bool ProcessEffectFrame();
+    bool ProcessEffectFrameLegacy();
+    bool UnportedEffect();
+    bool ProcessWorldEffectFrame();
     bool FinishEffectFrame();
     u8 ProcessWorldEffect();
     void ApplyHeal(const char* textureName, int variant);
     void ApplyHeal2(const char* textureName, int variant);
     void ApplyExit2(const char* textureName);
-    void ApplyGlassWall2(const char* textureName);
+    bool ApplyGlassWall2(const char* textureName);
     void ApplyParticleUpBurst();
     void ApplyHealTime(int variant);
     void ApplyFirstAid();
@@ -508,6 +508,10 @@ private:
     void ApplyAttackEnergy2(const char* textureName);
     void ApplyPotionPillar(float speed, int duration);
     bool ProcessPotionConcentration();
+    bool ProcessTarotEffect();
+    bool ProcessTier3StrEffect();
+    bool ProcessThrowItemEffect();
+    bool ProcessHealBlue();
     bool ApplyPotionBerserk();
     void ApplyIceArrow();
     void ApplyFireArrow();
@@ -555,6 +559,7 @@ private:
     void ApplyBodyLight442();
     void ApplyBodyLight446();
     void ApplyBodyLight449();
+    void ApplyBodyLight368();
     void ApplyActorLight();
     void ApplyTarot(const char* textureName, int variant);
     void LaunchParticleUp(const vector3d& origin, float sizeBase, float speedBase, bool secondTexture, u8 switchTexture);

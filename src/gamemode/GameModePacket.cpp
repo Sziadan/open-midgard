@@ -935,12 +935,20 @@ void HandleNotifyEffect3(CGameMode& mode, const PacketView& packet)
 
 void HandleSkillCastCancel(CGameMode& mode, const PacketView& packet)
 {
-    if (!packet.data || packet.packetLength < 6) {
+    if (!packet.data || packet.packetLength < 6 || mode.m_world == nullptr) {
         return;
     }
 
     const u32 actorId = ReadLE32(packet.data + 2);
-    CGameActor* actor = ResolveNotifyEffectActor(mode, actorId);
+    CGameActor* actor = actorId == g_session.m_aid
+        ? mode.m_world->m_player
+        : mode.m_world->GetGameActorByAID(actorId);
+    if (actor == nullptr) {
+        const auto runtimeActor = mode.m_runtimeActors.find(actorId);
+        if (runtimeActor != mode.m_runtimeActors.end()) {
+            actor = runtimeActor->second;
+        }
+    }
     if (actor == nullptr) {
         return;
     }
@@ -952,6 +960,7 @@ void HandleSkillCastCancel(CGameMode& mode, const PacketView& packet)
 
 // Ref/GameModePacket.cpp:25976-26125 (0x5A85D0), clif.c:7976.
 // Ref runtime-wave: 0x5A8845 0x5A88C7 (name bytes from packet + 2).
+// TEST_BODY_BEGIN server_sound_packet_family
 void HandleSound(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 35) {
@@ -1041,6 +1050,7 @@ void HandleBladeStop(CGameMode& mode, const PacketView& packet)
     }
 }
 
+// TEST_BODY_END server_sound_packet_family
 void HandleIgnorePacket(CGameMode&, const PacketView&)
 {
 }

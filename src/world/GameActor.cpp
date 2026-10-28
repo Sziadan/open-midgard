@@ -4240,6 +4240,7 @@ void CDummyEffectLauncher::SendMsg(CGameObject* sender, int msg, msgparam_t par1
     CAbleToMakeEffect::SendMsg(sender, msg, par1, par2, par3);
 }
 
+// TEST_BODY_BEGIN actor_effect_detach_family
 void CAbleToMakeEffect::RemoveEffectById(int effectId)
 {
     for (auto it = m_effectList.begin(); it != m_effectList.end();) {
@@ -4358,7 +4359,8 @@ void CAbleToMakeEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, m
     }
 }
 
-CGameActor::CGameActor()
+// TEST_BODY_END actor_effect_detach_family
+ CGameActor::CGameActor()
     : m_moveDestX(0)
     , m_moveDestY(0)
     , m_moveSrcX(0)

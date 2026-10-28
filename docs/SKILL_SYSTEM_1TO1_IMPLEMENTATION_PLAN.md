@@ -1,6 +1,6 @@
 # Skill System 1:1 Implementation Plan
 
-Status: IN PROGRESS — partial implementation; see `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`. Full acceptance has not passed.
+Status: IN PROGRESS — partial implementation. Current measured state is in `docs/skill/STATUS.md` (one table); history is in `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`. Full acceptance has not passed. A review on 2026-10-27 added WP10 (corrective work); do WP10 before continuing WP5/WP8.
 Scope: gameplay-relevant skill and spell logic, state, effects, and animations from the original 2008 HighPriest client. Preserve these behaviours in `src/`; do not recreate the original UI windows, layout, input, or rendering 1:1.
 Audience: implementation agents of any capability level. Every work package below is written so it can be executed in isolation, with exact reference anchors, exact output locations, and a pass/fail checklist.
 
@@ -56,6 +56,16 @@ cmake --preset vs2022-x64 -DRO_ENABLE_DEV_DEPLOY=ON
 cmake --build --preset build-release-x64
 ```
 
+Focused tests (run the commands in order in one session; the Release build must exit 0 immediately before `ctest`, or the CTest result is invalid; see 0.9.2):
+
+```
+cmake -S tools/tests -B build64/skill-parity-tests -G "Visual Studio 17 2022" -A x64
+cmake --build build64/skill-parity-tests --config Release
+ctest --test-dir build64/skill-parity-tests -C Release --output-on-failure
+.venv/Scripts/python.exe tools/audit_skill_parity.py
+.venv/Scripts/python.exe tools/audit_effect_coverage.py
+```
+
 Any throwaway probe script lives outside the repository (e.g. `%TEMP%\ro_probe_*.py`, run with `.venv/Scripts/python.exe`). Do not commit probe scripts. Generators that produce committed `*.generated.inc` files live in `tools/` and are committed.
 
 ### 0.7 Deliverable per task
@@ -75,6 +85,13 @@ For every function, compare its complete control flow and behavior against its r
 Case-label equality is only a structural check. For complex functions, also produce a branch-level comparison: enumerate each conditional and switch branch, its guards, operation order, calls, state/resource mutations, return or termination behavior, and relevant constants; map each reference branch to its implementation branch and mark it matched or explain a source-supported discrepancy. Mechanically compare tables and other finite dispatch data as well. If the source cannot be parsed reliably, improve the extractor or document the bounded manual method and its evidence; do not treat compilation as a substitute.
 
 The function is not complete, and work on the next function must not start, while any case, branch, table entry, call-order rule, or behavior remains unaccounted for. Add the comparison evidence to the function's parity-log entry. If a mismatch cannot be resolved from the reference, record it in docs/skill/MISMATCHES.md or docs/skill/BLOCKED.md as appropriate and keep the function open.
+
+### 0.9 Status hygiene and evidence rules (added by the 2026-10-27 review)
+
+1. This plan is a specification. Do not write progress, checkpoints, "Completion update" paragraphs, build hashes, or dates into it. Factual corrections to anchors, layouts, or scope are allowed. Status goes to `docs/skill/STATUS.md` (one table, overwritten at every checkpoint) and `docs/skill/PROGRESS.md` (append-only, newest entry at the bottom, `## <WP> — <function or id> — <date>` headings; never `#` headings; no SHA-256 hashes, git has them).
+2. A test claim ("all CTests pass", "N/N tests") is valid only if `cmake --build build64/skill-parity-tests --config Release` exited 0 in the same session immediately before `ctest`. `ctest` happily runs stale executables for targets that failed to compile and reports them as passed. If the test build fails, no test claim may be made and the failing target must be fixed first (WP10.5).
+3. Every coverage number written anywhere (effects routed, packets registered, messages ported) must come from a committed generator or audit under `tools/` (`tools/audit_skill_parity.py`, `tools/audit_effect_coverage.py` from WP10.1), never from memory or from counting by hand.
+4. "Routed" is not "ported". An effect id, packet, or message counts as ported only when its parity-log entry contains the branch-level comparison required by 0.8.
 
 ---
 
@@ -396,59 +413,21 @@ Port every case. The skill-critical ones, with their Ref lines:
 
 ### WP2.3 `Am_Action` (Ref/GameActorMsgHandler.cpp:52–329)
 
-Progress (2026-10-27): implementation and branch-level Ref/EXE/current comparator are complete. The comparator covers the ordered action labels, target lookup including skill units, counter effect sender, action-to-WBA message map, delay bonuses, WBA fields, and multi-hit/residual-damage timing. See `docs/skill/PARITY_LOG.md`; no live packet-replay acceptance is claimed.
-
 Port verbatim: actions 0/4/8/9/10/11 attack path (when `m_isCounter`, launch effect 131 and attach it to the actor), `SetModifyFactorOfmotionSpeed`, `SetState(2)`, `CalcDir`, `WBA` with message 26/39/93/94 by action type, multi-hit spacing with `doubleAttackTerm`, `leftDamage`, action 1 → `SetState(5)`, 2 → `SetState(6)`, 3 → `SetState(0)`, job-specific delay additions (1016/1420 +192; 1285/1830 +912; 1286/1829/1287 +408).
 
 ### WP2.4 `Am_Skill` (Ref/GameActorMsgHandler.cpp:748–1321)
-
-Progress (2026-10-27): implementation and branch-level Ref/EXE/current comparison are complete for current routes. The comparator covers target lookup, action/message map, attack effect table defaults/exceptions, skills 5/62 message 131, WBA values, post-effects, and skill 136 RNG ordering. See `docs/skill/PARITY_LOG.md`; no live packet-replay acceptance is claimed.
 
 Port verbatim, including: action 5 → WBA message 96 to target unless skill ∈ {47, 11, 413, 273}; `GetSkillActionInfo` + `SetState(motionType)` unless skill ∈ {143, 263, 272, 273, 271, 371}; `IsSkillNotDelayed` → `LaunchEffect(beginEffectId)` + `SendMsg(44, count)`; `LaunchSkillSpecialEffect`; attack effect via `GetAttackEffectIdBySkillId` + `SendMsg(14, &tPos)`; attacked effect `186 → 187..190` by level; the `effectId1` table (7/17/19 → 49, 14/15 → 51, 20 → 52, 54 → 152 if damage, 90/91 → 147, 190 → 180, 467/468 → 549; default 0, with source-specific ranges/IDs → −1); message selection 39/97/93/96; skill 77 +500 ms; 5/62/413/419/421 → msg 131, 415/417 +300 ms msg 131; 379/271 → msg 93; 273 → effect 704; post-effects for 263/271/266/267/272/273/370/371/372/413; multi-hit loop (136 → msg 108 + effect 122; 272 → effect 122; 372/394 → msg 108; 413–421 → msg 134).
 
 ### WP2.5 `Am_Groundskill` (Ref/GameActorMsgHandler.cpp:336–606)
 
-Status: implemented; source comparison complete. The Ref and canonical EXE bodies match; `tools/tests/check_groundskill_source.py` checks the source routes, current route mapping, branch ordering, special effects, wave calls, the 478 thresholds, source-equivalent `IsThisPC` job predicate, coordinate setup, and `duration+10`. Skill 83 assigns `motionCount - 1` even when the count is zero; the port now does the same when an action resource exists. A null action resource remains a defensive guard. x64 Release builds; source comparator passes. Authorized OldRO deployment matches the build hash. No live packet/visual acceptance is claimed. See `docs/skill/PARITY_LOG.md` for evidence.
-
 Port the per-skill `PlaceEffect(pos, effectId, duration+10)` table verbatim (21→30, 25→141, 69/694→91, 70→83, 79→113, 83→92 + force action 88 last motion, 85→90, 87→74, 89→89, 91→142, 92→95, 110→102, 111/459→98, 115→69, 130→119 + bird msg 29, 140→124, 264 → `IsThisPC` → effect 166 + `SendMsg(19, x, y, 15)` + `SetAction(base+80, 6, 1)` freeze, 285→225, 286→236, 287→237, 288→238, 478→497/498/499 by level + `assulter_attack.wav`, 483→223 + `EF_FireWall.wav`, 484 → `wizard_earthspike.wav`, 491 → `LaunchEffect(58)`, 521/538 → waves) and everything else in that range.
 
 ### WP2.6 `ProcessWillBeAttacked` (Ref/GameActor.cpp:8039)
 
-Status: implemented and source-compared. `tools/tests/check_process_wba_source.py` checks full Ref/EXE body equality and branch order. The port samples time once, dispatches due entries in list order with a null sender and the exact list-node `WBA` address, then erases each entry; future entries remain queued. `ApplyQueuedHitReaction` is absent. See `docs/skill/PARITY_LOG.md`.
-
 Reference behavior: for each entry with `curTime >= time`, dispatch `CGameObject::SendMsg(sender=null, wba.message, &wba)` and then erase.
 
 ### WP2.7 `SetState` / `ProcessState` for all actor classes
-
-Progress (2026-10-27): read-only source audit found canonical Ref/EXE equality for the reviewed functions. Current parity is incomplete: base `CGameActor::SetState` has only states `[0,1,2,3,4,5,7,8,9,13]` versus source `[0,1,2,3,4,5,7,9,11,12,13,16–28,30–42]`, and several shared state semantics differ. `CGameActor::ProcessState` also lacks source states and has timer/movement differences. `CPc::ProcessState`, `CPlayer`, and `CNpc` overrides are absent; current `CPc::SetState` does not cover the source branch set. `ProcessEffectState`, `MakePartyEffect`, and `MakeSpecialAttackEffect` have no current definitions. Detailed findings are in `docs/skill/PARITY_LOG.md` and `docs/skill/MISMATCHES.md`. Work must proceed one complete function at a time with branch-level source/current gates.
-
-Update (2026-10-27): base `CGameActor::SetState` now matches the enumerated Ref/EXE state IDs and branch-level presets. `tools/tests/check_actor_setstate_source.py` checks the complete source bodies, exact state inventory and order, state 0–13 actions/guards/messages, states 16–42 force tuples/timers/effects/RNG, and common tail. All 37 source-check CTests and x64 Release build pass. See `PARITY_LOG.md`; the broader WP2.7 work remains open.
-
-Update (2026-10-27): `CGameActor::ProcessState` has now been source-audited before implementation. Ref and canonical EXE complete bodies match (12,532 normalized characters); mechanically extracted source state IDs are `[0,1,2,9,12,3,4,5,7,8,10,11,13,16–28,30–42]`. Current code covers only part of that inventory and differs in movement, hit reaction, death, casting, and the common tail. See `PARITY_LOG.md` and `MISMATCHES.md`; do not start another function before this one passes its branch-level source/current gate.
-
-Completion update (2026-10-27): base `CGameActor::ProcessState` now passes the full source inventory and in-scope branch comparison. Pet chat and the GID 3 stance/screen route are explicitly out of scope because they require pet UI/session data and legacy UI state. State 3 retains the actor's finished death frame in state 10 as the modern equivalent of the source's separate `CCorpse` object. See the latest gate in `docs/skill/PROGRESS.md` and `PARITY_LOG.md`.
-
-Completion update (2026-10-27): `CGameActor::ProcessEffectState` passes its ordered branch-level source comparison and is integrated before queued-hit dispatch in `ProcessState`. Subsequent completion updates cover `MakeSpecialAttackEffect` and `MakePartyEffect`; next function is `CPc::SetState`.
-
-Completion update (2026-10-27): `CGameActor::MakeSpecialAttackEffect` now passes its exact job-route/call-argument comparator; Mandra's standalone current world-effect route is implemented with source sprite mapping, timing, and animation checks. The legacy sprite renderer is represented by the current arrow billboard path, so live visual acceptance remains open. See the latest checkpoint in `docs/skill/PROGRESS.md`.
-
-Completion update (2026-10-27): `CGameActor::MakePartyEffect` passes the branch comparator for PK/event-PvP gating, party AID membership, type-160 deduplication, and conditional zero-offset launch. It is wired to message 123 for PC and Granny-PC actors; the unified current message handler uses a runtime-class guard to preserve source caller scope. See `docs/skill/PROGRESS.md` for test/build/deployment checkpoint.
-
-Completion update (2026-10-27): `CPc::SetState` passes the source/current branch gate for all seven states, including attack RNG and arrow timing plus skill/cast/sit animation branches. Only the case-0 camera-distance and item-ack side effects remain excluded as UI/input behavior. Next function: `CPc::ProcessState`; see the recorded checkpoint in `docs/skill/PROGRESS.md`.
-
-Completion update (2026-10-27): `CPc::ProcessState` passes Ref/EXE body equality and its current branch-level source comparison for states 2/3/6/7/8. The consolidated modern `CGameActor::ProcessState` now advances PC state 6 (sit) motion, uses the source cast-frame factor and `CalcDir` arithmetic for state 8, and preserves modern effect/hit processing. The state-3 final-death-frame architecture difference is documented. See `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md` for gates and build/deployment evidence.
-
-Completion update (2026-10-27): `CPlayer::SetState` now passes complete Ref/EXE and current branch comparisons. Its move/pre-engage state handling, message-91 movement-ack gate, state-3 effect 372, and delegation to `CPc::SetState` are represented. Anti-cheat and the legacy full-screen renderer toggle are outside scope; see `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`.
-
-Completion update (2026-10-27): `CNpc::SetState` passes the Ref/EXE body and ordered branch-level comparison. The unified `CGameActor` path covers NPC states 0/1/2/3/4/7/10, pet substates, job exceptions 45/104/111/139 and 6001–6046, including attack facing/effect, death/freeze, and registration side effects. Skill-unit actors are excluded from the NPC route. See the latest `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`; next WP2.7 function is `CNpc::SendMsg`.
-
-Completion update (2026-10-27): `CNpc::SendMsg` passes complete Ref/EXE body and ordered message-branch comparison. Its message-4 NPC visibility rule now runs in the consolidated actor route; guild metadata is handled by the existing message-4 path. Legacy gauge messages 34/35/125/138 are UI-only and excluded. See `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`; next WP2.7 function is `CGameActor::SetAttrState`.
-
-Completion update (2026-10-27): `CGameActor::SetAttrState` passes complete Ref/EXE body comparison and source-derived branch gates for sight/Ruwach, burrow/hiding transitions, attachment changes, body states, health states, cleanup, and reveal effects. Restored Delete99LevelEffects ordering, master-aid exceptions, message-126 re-launches, horizontal wave offsets, and RGB-only tint writes. Legacy emblem/word windows and the old self-hide/blur tail are documented scope/architecture differences. See `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`.
-
-Completion update (2026-10-27): `CPlayer::ProcessState` is verified as a direct thunk in Ref and by canonical EXE bytes (VA `0x5E5630` relative-jumps to `CPc::ProcessState` at `0x5D9EB0`). The current CPlayer inherits the consolidated CGameActor process handler through CPc; its PC state-6 behavior is covered by the existing process-state comparator. See `check_player_processstate_source.py` and the parity log.
-
-Acceptance update (2026-10-27): source walk-throughs for Bash (5), Double Strafe (46), Fire Bolt (19), Heal (28), Sonic Blow (136), Asura Strike (271), Grimtooth (137), Storm Gust (89), and Sanctuary (70) are recorded in `docs/skill/PARITY_LOG.md`. WBA debug tracing now includes message, skill, effect IDs, resolved wave, and delivery tick. Source checks/build pass, but live packet-replay comparison remains open.
 
 * `CGameActor::SetState` Ref/GameActor.cpp:5491, `ProcessState` 1631, `ProcessEffectState` 7978, `MakeSpecialAttackEffect` 7561, `MakePartyEffect` 7447.
 * `CPc::SetState` Ref/Pc.cpp:5678, `ProcessState` 2382.
@@ -538,7 +517,7 @@ Files: `src/world/RagEffect.h`, `src/world/RagEffect.cpp` (split into `RagEffect
 ### 5A — Core (must land first)
 
 1. `CRagEffect::Init(CRenderObject*, int effectId, vector3d delta)` — Ref/RagEffect.cpp:12839: all 164 `.str` cases from `RagEffectStrNameTable.generated.inc`, random variants with the same `rand()` modulus as Ref, `m_isMinEffect` variants, then `m_duration = kRagEffectDurationTable[m_type]`. Remove all hand-written durations from the current `Init`.
-2. `CRagEffect::OnProcess` dispatcher exactly as 2.3 (skip-frame gate list, tier routing, `Invalid Effect Id` error, `m_stateCnt` increment and return value). Until a handler batch is merged, its case must call the real handler — do **not** merge the dispatcher with missing cases pointing to a no-op. Practical rule: 5A lands together with at least 5B, and each later batch adds its cases to the switch in the same commit as the handlers.
+2. `CRagEffect::OnProcess` dispatcher exactly as 2.3 (skip-frame gate list, tier routing, `Invalid Effect Id` error, `m_stateCnt` increment and return value). The dispatcher must be three `switch` statements (`OnProcess` main, `OnProcess2`, `OnProcess3`) whose case lists are exactly the 416 / 73 / 204 ids in `docs/skill/generated/effect_handler_index.tsv`. An id whose handler is not ported yet must have its case anyway and must call `UnportedEffect()` (WP10.2), which logs `[RagEffect] UNPORTED effect <id>` and ends the effect. A silent no-op, a fall-through to a generic path, or a `Handler::None` default is not allowed for any id in the Ref case lists. Ids outside those lists hit the `Invalid Effect Id` default. The number of `UnportedEffect()` destinations is the WP5 backlog and is measured by `tools/audit_effect_coverage.py`; WP9.5 requires it to be zero.
 3. `CRagEffect::SendMsg` (Ref/RagEffect.cpp:12695): msgs 14 (target pos), 44 (count), 80 (duration), 50/53, and any others present.
 4. `CRagEffect::Render` (12656), `RenderAniClip` (9723), `InitEZ2STRFrame` (9663), `LoadEzEffect`, `ProcessEZ2STR`, `LaunchEffectPrim` (9937).
 5. `CEffectPrim` — Use `HighPriest.exe.h` as the canonical enum authority (129 values, `0x00`–`0x80`); `Ref/RagEffectPrim.h` has no `EFFECTPRIMID`, and older `Ref/dhxj/RagEffect.h` has four stale ids. The EXE `Init` body is at `HighPriest.exe.c:471542`; the Ref entry annotated as `Init` near `Ref/RagEffectPrim.cpp:6385` is actually `InitSegment`. Mechanically compare every primitive function before editing. Port all `Prim*` initialisers (`Prim2DCircle, Prim2DFlash, Prim2DTexture, Prim2DTextureOrbit, Prim3DCircle, Prim3DCylinder, Prim3DCylinderHalf, Prim3DFlash, Prim3DLine, Prim3DParticle, Prim3DParticleGravity, Prim3DParticleNoMaster, Prim3DParticleOrbit, Prim3DParticleSpline, Prim3DQuadHorn, Prim3DQuadHorn2, Prim3DQuadSquare, Prim3DSphere, Prim3DSpiral, Prim3DTexture, Prim3DTextureNoMaster`), `OnProcess`, `ProcessAlpha`, `AnimMotion`, `AnimTexture`, `InitSegment`, `ShiftSegment`, `SendMsg`, and all `Render*` (`Render2DCircle, Render2DFlash, Render2DQuad, Render2DTexture, Render3DCircle, Render3DCrossTexture, Render3DCylinder, Render3DFlash, Render3DLine, Render3DParticle, Render3DQuadHorn, Render3DQuadSquare, Render3DSegment, Render3DSphere, Render3DTexture, Render3DTextureBillboard`).
@@ -558,7 +537,9 @@ Each batch: port every handler method for the listed effect ids (method bodies f
 | 5G | 491–600 (`OnProcess3` part 1) | | 3rd-era 2008 effects: Assaulter, Stormy Kick, Dust, Flying Side Kick, Acid Demonstration, … |
 | 5H | 601–709 (`OnProcess3` part 2 + main-switch tail 506/523–536/590/603/629/678–680/700–709) | | status auras (601 Sight state), FlowerCasting, Test (709), long-duration loop effects 700–708 |
 
-Per-batch acceptance: every id in the batch range that appears in `effect_handler_index.tsv` has a `case` and a ported method; `rg -n "TODO|FIXME|not implemented" src/world/RagEffect*.cpp` is empty; the build passes; launching each id via the dev console (`/effect <id>` or equivalent existing debug hook) does not hit `Invalid Effect Id` and does not crash.
+Per-batch acceptance: every id in the batch range that appears in `effect_handler_index.tsv` is `ported` in `docs/skill/generated/EFFECT_COVERAGE.tsv` (WP10.1), i.e. none of them routes to `UnportedEffect()`, `str-default`, or `clip-wave` without the WP10.4 verification note; `rg -n "TODO|FIXME|not implemented" src/world/RagEffect*.cpp` is empty; the build passes; launching each id via the dev console (`/effect <id>` or equivalent existing debug hook) logs neither `[RagEffect] UNPORTED` nor `Invalid Effect Id` and does not crash.
+
+Batch order is changed by WP10.3: port the ids that WP1–WP4 code already launches first (priority batch 5P), then continue 5B–5H.
 
 ### 5I — Textures and resources
 
@@ -596,6 +577,7 @@ These are triggered by skill use but arrive through other packets; the plan is i
 
 Produce `docs/skill/SKILL_MATRIX.md` (generated from `skill_behaviour_index.tsv` + manual columns). One row per skill id in the union of: `src/skill/SkillEnumIdTable.inc`, eAthena `enum e_skill` (1–~1040 as present in the 2011 db), 8001–8046, 8201–8238, 10000–10014. Columns:
 
+
 | Column | Meaning |
 |---|---|
 | id, name | |
@@ -625,6 +607,95 @@ All of the following must be true:
 6. Packet coverage: every opcode in 2.4 is registered and handled by a 1:1 port; none remains on `HandleIgnorePacket`.
 7. Build passes with `cmake --preset vs2022-x64 -DRO_ENABLE_DEV_DEPLOY=ON` + `cmake --build --preset build-release-x64`, no new warnings in the touched files.
 8. Live session against RunningServer: run the WP3.4 and WP4 acceptance scenarios plus 20 skills chosen at random from the matrix; the debug log matches the matrix rows.
+
+---
+
+## WP10 — Corrective work from the 2026-10-27 review (do before continuing WP5 / WP8)
+
+How the review was done: the 693 ids in `docs/skill/generated/effect_handler_index.tsv` were compared mechanically against every route in `src/world/RagEffect.cpp` (`ProcessEffectFrame` `m_type` tests and ranges, `OnProcess2` cases, `ProcessReferenceStrOnly` cases, `Init` cases with a non-`None` handler, `kProvenClipWaves` rows); the full x64 Release build was run; the full `tools/tests` project was configured, built and run; `PARITY_LOG.md`, `PROGRESS.md`, `MISMATCHES.md`, `BLOCKED.md` and the generated audits were read.
+
+What is in good shape (no action needed beyond the normal rules): WP0 generated tables and validation (0 blocked, 0 errors); WP1 (`GetSkillActionInfo`/`2` differential oracles over all ids, generated tables, `LaunchSkillSpecialEffect`, `GetMonsterSkillInfo`, `IsSkillNotDelayed`, swing/hit wave tables); WP2 (Ref-shaped `WBA`, `Am_Action`/`Am_Skill`/`Am_Groundskill`, `ProcessWillBeAttacked`, 75 direct `CGameActor::SendMsg` cases with the UI-only set excluded, `SetState`/`ProcessState` for `CGameActor`/`CPc`/`CPlayer`/`CNpc`, `SetAttrState`, `ProcessEffectState`, `MakePartyEffect`, `MakeSpecialAttackEffect`) with recorded branch comparators; WP3 (40/40 opcodes registered to non-ignore handlers, the invented helper layer and the Lua override removed, `Zc_Use_Skill` effect tree generated 1:1 from the Ref body, per-handler source gates); WP4 (`CSkill` with the unit-job loop-effect table, `CGraffiSkill`, `CGroundScope`, `CWorld` skill list); WP6 (`PlayWave` with Ref volume math; zero `PlaySound`/candidate-path calls left in skill code; 19 runtime-name call sites tracked in `runtime_wave_callsites.tsv`). The `OnProcess` skip-frame gate matches `HighPriest.exe.c` labels `$L146718`/`$L146719`. The uncommitted `HandleSkillCastCancel` actor-lookup change matches `Ref/GameModePacket.cpp:10625`.
+
+Findings that need work:
+
+| # | Finding | Effect on the plan |
+|---|---|---|
+| F1 | Effect dispatcher coverage: of the 693 Ref case ids, 397 have some route in `src` (341 explicit + 56 `kProvenClipWaves`-only), **251 have no route at all** and silently do nothing (`Handler::None` → `FinishEffectFrame`), and 45 reach only the generic `.str` default. There is no `Invalid Effect Id` path and no `OnProcess3`. The dispatcher is an `if (m_type == N)` chain plus a `Handler` enum, not the Ref switches. The static audit (`PARITY_AUDIT.txt`) prints "incomplete" without a number, so this gap was invisible. | WP5 is ≈55 % routed, and routed ≠ ported. 5A.2 is rewritten; WP10.1–10.4 added. |
+| F2 | 102 of the 251 unrouted ids are already launched by ported WP1–WP4 code, so those skills currently show nothing: 7 Exit, 11 Endure, 15/451 SoulStrike, 21 Detoxication, 60 LockOn, 80 SpearBmr, 82 TurnUndead, 93/94/452 Yufitel, 99 Flasher, 100 RemoveTrap, 115 BlitzBeat, 117 WaterBall2, 140 Revive, 166/617 MakeBlur, 198, 200/201/202/362/397/398 Level99, 203/254/455 GumGang, 226/450 GrandCross, 232/384/395 LineLink, 249/494/520 ShieldBoomerang, 262/264/266/275/276 TeiHit, 267/606/607 Chimto, 274/495 RG_Coin, 376/429/430/431 HitLine, 377/386/399/400 Bash3D, 378/383 EnergyDrain, 380/403/413/445/457/466/501/704 inline, 388/393 TripleAttack, 389 PortalWind, 408 SphereWind2, 409 SoulBreaker2, 411 Peong, 418 DoubleGumGang, 444 RunStop, 453/496/502/505/599/602 NpcStop, 456 CartBoost, 503/510 BeginAsura, 518 ParticleSpread, 543/572 ParticleTime, 547/553 STIN, 555 SMA, 570/571/583/584/589/630/632/633/637/643/644/645/647/648/666 Effect_SPR, 573/574/575 Twilight, 675 Guard. | WP10.3 makes these the next WP5 batch. |
+| F3 | `tools/tests`: 4 of 94 targets do not compile (`change_guild_checks`, `show_image_checks`, `talkbox_chat_contents_checks`, `server_sound_checks`). `extract_body()` in `tools/tests/CMakeLists.txt` slices the source between two function signatures; later insertions in `GameModePacket.cpp` moved the end marker so the slice now contains other handlers (`g_session`, `PLAYER_SKILL_INFO`, `m_isReqUpgradeSkillLevel` undefined). `ctest` still reports 94/94 passed because it runs the stale `.exe` files from before the breakage. Recent "all CTests pass" statements are therefore not backed. | WP10.5; rule 0.9.2. |
+| F4 | Status is unreadable: `PROGRESS.md` is 270 KB with ≈20 `# Latest checkpoint` H1 paragraphs prepended at the top; this plan had ≈19 status paragraphs inserted into WP2.3–2.7 and 10.4 (moved to `PROGRESS.md` by the review). No single place said what is done. | WP10.6; rule 0.9.1; `STATUS.md` seeded. |
+| F5 | Skill packet handlers resolve actors through three helpers with different semantics: `ResolveNotifyEffectActor` (runtime map only, never the world list), `ResolveCombatActor` (creates actors via `EnsureRuntimeActor`), and the cast-cancel path (world list, then runtime map). Ref uses one rule everywhere: own AID → `m_player`, else `CWorld::GetGameActorByAID`, else `GetSkillByAID` only where the handler says so; it never creates. | WP10.7. |
+| F6 | `kProvenClipWaves` (56 ids) is a `src`-only table that generalises "PlayWave at frame N, optional quake, then `ProcessEZ2STR`". That is a valid representation only for ids whose Ref handler body contains nothing else, and that per-id check is not recorded. | WP10.4. |
+| F7 | WP8: all 1,045 matrix rows are `BLOCKED(no RunningServer/replay evidence)`. The plan allows replayed packet bytes as evidence, but no replay harness exists, so no agent can move a row without a human live session. | WP10.8. |
+| F8 | `CEffectPrim`: the dispatcher inventory audit covers all 129 ids, and many `Prim*`/`Render*` bodies have comparators, but the current `CEffectPrim` keeps `src`-specific shapes (`UsesReference*` predicates, `m_bands` vs `m_gi`, missing `m_isVisible`). Acceptable as long as every `Prim*`/`Render*` method has its branch comparison recorded; the remaining ones are listed by `tools/audit_prim_onprocess_inventory.py`. | Continue under WP5A; no new rule. |
+
+### WP10.1 Effect coverage audit (tooling; do first)
+
+Write `tools/audit_effect_coverage.py` (committed) and register it as CTest `effect_coverage_audit` in `tools/tests/CMakeLists.txt`. It must:
+
+1. Read the 693 ids, tiers and Ref handler names from `docs/skill/generated/effect_handler_index.tsv`.
+2. Parse `src/world/RagEffect.cpp` and classify every id as exactly one of `ported`, `str-default`, `clip-wave`, `unported`:
+   * A route is any of: `m_type == N` / `m_type >= A && m_type <= B` / `case N:` inside `ProcessEffectFrame`, `OnProcess2`, `OnProcess3`, `ProcessReferenceStrOnly`; an `Init` case that sets a handler other than `Handler::None`; a `kProvenClipWaves` row. The `tierHandled` range test (300..373) counts only for ids that have a `case` in `OnProcess2`. After WP10.2 the routes are simply the three switches, and a case that calls `UnportedEffect()` is `unported`.
+   * `ported` = routed to a handler function and that function has a parity-log entry (grep `PARITY_LOG.md` for the Ref handler name or the id).
+   * `str-default` = no route, but the id is in `RagEffectStrNameTable.generated.inc` (so `Init` loads a `.str` and `Handler::EzStr` runs `ProcessEZ2STR`).
+   * `clip-wave` = only a `kProvenClipWaves` row.
+   * `unported` = none of the above.
+3. Compute `launchedBy` for every id: the `src` files that contain `LaunchEffect(N`, `LaunchOn(<actor>, N`, `PlaceEffect(..., N,`, `effectId1 = N`, a value `N` in `src/session/SkillAttackEffectIdTable.generated.inc`, `beginEffectId = N` in `src/session/SkillActionInfo*.cpp`, or `m_effectId = N` / loop-effect assignments in `src/world/SkillUnit.cpp`.
+4. Write `docs/skill/generated/EFFECT_COVERAGE.tsv` with columns `id, tier, refHandler, status, srcRoute, launchedBy, parityLogLine`, sorted by id.
+5. Print the four counts plus "launched but not ported" and append them to `docs/skill/generated/PARITY_AUDIT.txt` (replace the line "Effect bodies/primitives: incomplete; see PROGRESS.md and PARITY_LOG.md.").
+6. Exit non-zero only if the counts regress relative to the committed `EFFECT_COVERAGE.tsv` (fewer `ported` or more `unported` than last time). This makes it a ratchet.
+
+Acceptance: the first run reproduces the review numbers within ±5 (explicit routes 341, clip-wave 56, str-default 45, unported 251, launched-but-unported 102); any difference is explained in the parity log entry for WP10.1.
+
+### WP10.2 Make the dispatcher Ref-shaped and make gaps loud
+
+1. Add `bool CRagEffect::UnportedEffect()`: `DbgLog("[RagEffect] UNPORTED effect %d (Ref %s)\n", m_type, <handler name from a generated table>)`, then `return false` so the effect ends. It is the only allowed destination for an unported id.
+2. Add `bool CRagEffect::OnProcess3()`. Rewrite `ProcessEffectFrame` so that, after the `ProcessReferenceStrOnly` fast path, dispatch is: `if (300 <= m_type && m_type <= 373) return OnProcess2(); if (m_type >= 491) return OnProcess3(); switch (m_type) { ... }`, exactly as `HighPriest.exe.c:419679`. Each of the three switches lists exactly the ids from the index for its tier (416 / 73 / 204; generate the skeleton from the TSV, do not type it). Every case calls an existing helper (`Spawn*`, `Apply*`, `Process*`, `ProcessEZ2STR` for ids whose Ref handler is `ProcessEZ2STR`) or `UnportedEffect()`. The main switch `default:` logs `Invalid Effect Id %d` and returns `false` (`HighPriest.exe.c:421995`).
+3. Keep the ported helper bodies; do not re-port them. Keep the `Handler` enum only for RSW/world effects (`InitWorld`, `kRagEffectPortal`/`ReadyPortal`/`WarpZone`). Delete the `Handler::EzStr` default for skill/packet effect ids once their case is explicit.
+4. The `kProvenClipWaves` table may stay as the body of a shared helper, but each id that uses it must have an explicit `case` that calls that helper, and WP10.4 must have verified the id.
+5. Acceptance: `audit_effect_coverage.py` after this step shows `str-default = 0` and `clip-wave = 0` (both are now explicit cases, either `ported` after WP10.4 or `unported`), `rg -n "Handler::" src/world/RagEffect.cpp` lists no skill/packet effect id, the x64 Release build passes, and launching an id that is in the index never falls through silently (verify with the dev console on five `unported` ids: each logs `UNPORTED`).
+
+### WP10.3 Priority batch 5P — port the launched-but-unported handlers
+
+Work through the `launchedBy ≠ ∅` rows of `EFFECT_COVERAGE.tsv` in this order (shared handlers first, because one port clears many ids), one handler at a time per 0.8 and 10.4:
+
+1. `Effect_SPR` (ids 570–589, 630–648, 666, 682–686): one shared method; transcribe the per-id sprite/action/argument table from the `OnProcess3` call sites in `HighPriest.exe.c` and resolve each name through `tools/ro_exe_resolve.py`.
+2. `EffectTextureSet` / `EffectTextureSet_Animation` remaining ids (681, 689–696, 700–703) — the method exists for 523–536/554/610/611/676; add the missing argument rows.
+3. `Level99`, `Level99_2`, `Level99_3` (200/397, 201/398, 202/362) — launched by `SendMsg` 126.
+4. `GumGang` / `DoubleGumGang` (203, 254, 455, 418), `Bash3D` callers (377, 386, 399, 400), `HitLine`/`HitLine3–5` (376, 429–431), `TeiHit1–3` (262, 264, 266, 275, 276), `Chimto` (267, 606, 607), `STIN`/`STIN2`/`SMA` (547, 553, 555), `ShieldBoomerang`/`3` (249, 494, 520), `RG_Coin`/`2` (274, 495), `GrandCross`/`2` (226, 450), `LineLink`/`2`/`3` (232, 384, 395), `TripleAttack2`/`3` (388, 393), `NpcStop` (453, 496, 502, 505, 599, 602), `Guard`/`Guard2` (675, 496), `Twilight` (573–575), `ParticleTime`/`ParticleSpread` (543, 572, 518), `SphereWind2` (408), `SoulBreaker2` (409), `Peong`/`PeongUp` (411), `BeginAsura`/`2` (510, 503), `EnergyDrain2`/`3` (378, 383), `PortalWind` variant 0 (389; wave `aEffect_66` is unresolved by symbol, resolve by call-site push per WP0.1 rule 5), `MakeBlur`/`2` (166, 617), `RunStop` (444), `CartBoost` (456).
+5. Single-id handlers: 7 Exit, 11 Endure, 15/451 SoulStrike, 21 Detoxication, 60 LockOn, 80 SpearBmr, 82 TurnUndead, 93/94/452 Yufitel/YufitelHit, 99 Flasher, 100 RemoveTrap, 115 BlitzBeat, 117 WaterBall2, 140 Revive, 198, and the inline cases 380, 403, 413, 445, 457, 466, 501, 704 (port the inline body from the exe switch; 413 and 445 need `aEffectT_25`/`aEffectT_8` resolved by call site, otherwise `BLOCKED.md`).
+6. Then the remaining `unported` ids by tier (OnProcess 115, OnProcess2 27 — note 302, 326–330, 333, 336, 340, 348–356, 358–366 — OnProcess3 109), continuing the 5B–5H batch plan.
+
+Each port: parity-log entry with the Ref body range, the exe address, the resource strings with their VAs, the RNG call count and order, and the comparator script name. Re-run `audit_effect_coverage.py` after every handler; the committed TSV is the progress record.
+
+### WP10.4 Verify the `str-default` and `clip-wave` ids
+
+For each of the 45 `str-default` ids (13, 67, 86, 87, 89, 90, 101, 104, 112, 133, 134, 136, 145, 244, 246, 251, 406, 407, 491, 492, 507, 508, 565–569, 593–598, 603, 608, 609, 612, 635, 636, 646, 649, 668, 670, 677, 699) and the 56 `clip-wave` ids (the `type` column of `kProvenClipWaves`): open the Ref handler named in the index (or the inline case body). If the body is exactly `ProcessEZ2STR(...)`, optionally preceded by one `PlayWave` at a fixed frame and/or one `SendMsg(135)` quake, record `id → verified str/clip (Ref file:line)` in the parity log and keep the route (as an explicit case after WP10.2). Otherwise mark it `unported` and port it in 5P. From the Ref handler names alone, at least these are real handlers and not `ProcessEZ2STR`: 13 SafetyWall, 67 Provoke, 86 Aspersio, 87 LexDivina, 89 StormGust, 90, 101 RepairWeapon, 104 MaxPower, 112 Kyrie, 133, 134, 244 MagicRod, 246 ShieldCharge, 491, 492, 507, 508, 593–598, 603 FireHit variant, 608, 609, 612, 646.
+
+### WP10.5 Repair the test project
+
+1. Make `extract_body()` in `tools/tests/CMakeLists.txt` fail at configure time when the extracted text contains a second top-level function definition (a line matching `^[A-Za-z_][\w:<>*&, ]*\s+[A-Za-z_]\w*\([^;{]*\)\s*\{\s*$` after the first) or when either marker is not found. Alternatively switch to explicit `// TEST_BODY_BEGIN <name>` / `// TEST_BODY_END <name>` comment markers in the source files; either is acceptable, but the failure must be loud.
+2. Fix the four broken targets. `cmake --build build64/skill-parity-tests --config Release` must exit 0; only then run `ctest`. Confirm the `.exe` timestamps in `build64/skill-parity-tests/Release/` are newer than the build start.
+3. Add `effect_coverage_audit` (WP10.1) and the existing Python comparators that are not yet in CTest.
+4. Add the build-then-test sequence to 0.6.
+
+### WP10.6 Status hygiene
+
+1. `docs/skill/STATUS.md` (seeded by the review): one table, columns `WP | state | measured number | where the number comes from | next function`. Overwrite it at every checkpoint. Nothing else goes in it.
+2. `docs/skill/PROGRESS.md`: append-only, newest at the bottom, `## ` headings only, one paragraph per checkpoint, no hashes. One-time cleanup: move the `# Latest …` paragraphs currently at the top into chronological order under `##` headings; do not delete content.
+3. This plan is never edited for status (0.9.1). The paragraphs that were inserted into WP2.3–2.7 and 10.4 have been moved to `PROGRESS.md` under "Status paragraphs moved from the plan".
+
+### WP10.7 One actor lookup for skill packets
+
+Implement `CGameActor* ResolveSkillPacketActor(CGameMode&, u32 aid)` = own AID (`g_session.m_aid`) → `m_world->m_player`, else `m_world->GetGameActorByAID(aid)`, else `nullptr`; never creates an actor (Ref `CWorld::GetGameActorByAID`, `Ref/GameWorld.cpp`). Implement `CSkill* ResolveSkillPacketUnit(CGameMode&, u32 aid)` = `m_world->GetSkillByAID(aid)`. Replace `ResolveNotifyEffectActor`, `ResolveCombatActor` and ad-hoc lookups in every WP3.2 handler. Where the Ref handler also consults the unit list (`Zc_Notify_Skill` source gid, `Zc_talkbox_chat_contents`, `Zc_Skill_*`), keep Ref's order. Record in `MISMATCHES.md` what `CGameMode::m_runtimeActors` is, which of the two actor registries is authoritative, and whether they can be merged; until they are merged, `GetGameActorByAID` must search the authoritative one. Add a CTest that greps the WP3.2 handlers for any remaining use of the old helpers.
+
+### WP10.8 Packet-replay harness (unblocks WP8)
+
+Add `tools/tests/replay/` as a CTest executable that compiles the real `src/gamemode`, `src/world`, `src/session`, `src/skill` sources against the existing silent audio/render/UI doubles from `tools/tests`. It must: build a `CWorld` with a player and N actors at given cells and jobs from a scenario file; feed raw packet byte buffers (`docs/skill/replay/<scenario>.tsv`: `opcode, hexBytes, comment`) through the same packet router the client uses; advance the world clock in 24 ms steps; and write a log with one line per `WBA` dispatch (`msg, skill, effectId1/2, wave, deliveryTick`), `LaunchEffect`/`PlaceEffect(id)`, `PlayWave(name)`, `SetState(n)`, and `UnportedEffect(id)`. Packet bytes are constructed from the `clif.c` layouts in 2.4 (or captured from RunningServer when available). A `SKILL_MATRIX.md` row may then be marked `verified(replay <date>)` when the scenario log equals the Ref walk-through recorded in the row; `verified(live …)` remains required only for WP9.8. First scenarios: the nine WP2 acceptance skills (Bash 5, Double Strafe 46, Fire Bolt 19, Heal 28, Sonic Blow 136, Asura Strike 271, Grimtooth 137, Storm Gust 89, Sanctuary 70), then the WP3.4 and WP4 lists.
+
+### WP10.9 Order of execution
+
+10.1 → 10.5 → 10.6 → 10.2 → 10.3 (interleaved with 10.4 as ids come up) → 10.7 → 10.8 → resume WP5 batches, WP7, WP8. Do not start a new WP5 handler before 10.1, 10.2 and 10.5 are done; without them the next hundred handlers will be just as invisible as the first hundred.
 
 ---
 
@@ -690,5 +761,3 @@ From `Ref/RagEffect2.cpp` (334 methods): enumerate with `rg -n "^// Original Sig
 6. Before starting another function, mechanically compare this function's reference and implementation. Extract and compare complete ordered case-ID lists for every switch, plus table or finite dispatch entries. For complex functions, create a branch-by-branch mapping of guards, operations, calls, mutations, constants, and exits. Resolve every mismatch or record why the function remains open. Save the comparison commands/script, output, and branch mapping with the parity evidence.
 7. Build and run the relevant focused checks. Trigger the behaviour (live or by packet replay) when available and safe; capture the debug log. Compare the result with the Ref walk-through. Build success alone does not pass the source comparison.
 8. Append the parity note with the comparison evidence. Only then mark the function complete and proceed to the next function.
-
-Completion update (2026-10-27): The `CPlayer::OnProcess` skills/effects-relevant routes now pass source/current comparison. The delayed half-average-ping pre-move path is wired to ordinary ground movement; `CPlayer::ProcessProceed` targeted, ground and touch skill routes are compared separately. Attack/pickup and legacy chat-balloon UI remain outside this skill/effect scope. See the latest `docs/skill/PROGRESS.md` and `docs/skill/PARITY_LOG.md`; live RTT/prediction replay remains unverified.

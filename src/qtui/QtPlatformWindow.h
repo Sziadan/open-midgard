@@ -4,7 +4,7 @@
 
 #include "render3d/RenderBackend.h"
 
-#if !RO_PLATFORM_WINDOWS
+#if !defined(_WIN32) && !RO_PLATFORM_WINDOWS
 struct RECT;
 struct POINT;
 #endif

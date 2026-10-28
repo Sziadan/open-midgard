@@ -879,6 +879,7 @@ void CRenderer::AddRP(RPFace* face, int renderFlag) {
 
 // Ref/Renderer.cpp:5813-5925 (0x412520), original RPTriFace overload.
 // Keep its sort keys and 0x100/0x200 depth modes separate from legacy AddRP.
+// TEST_BODY_BEGIN reference_triangle_queue
 void CRenderer::AddReferenceEffectTriangle(RPFace* face, int renderFlag)
 {
     if (!face || !face->verts || face->numVerts < 2) return;
@@ -959,6 +960,7 @@ void CRenderer::FlushEffectNoDepthLists()
     m_renderDevice->SetRenderState(D3DRENDERSTATE_ZENABLE, D3DZB_TRUE);
 }
 
+// TEST_BODY_END reference_triangle_queue
 void CRenderer::AddLmRP(RPLmFace* face, int renderFlag) {
     if (face) {
         ApplyFogToLightmapVertices(face->lmverts, face->numVerts, m_isFoggy, m_fogPara);

@@ -420,3 +420,19 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 
 - The packet encoder, six-byte length, Ref/EXE receiver, and current AID decode/dispatch match. Ref `CWorld::RemoveSkill` calls `CSkill::SetRenderInfo(Value, 1)` before unlinking the actor from the old global picking tree and skill/game-object lists; that operation is legacy actor picking, outside the current UI boundary.
 - Ref/EXE removal does not call `delete` on the detached skill, while modern world removal deletes it. Current destruction hides its model and ends its loop effect so the detached modern world object does not retain active visuals. Preserve this ownership cleanup as the modern world lifecycle equivalent; it is an intentional architecture delta, not an unverified packet mismatch.
+
+# 0x01B9 cast-cancel lookup (2026-10-28)
+
+- Ref `Zc_Dispel` resolves the packet AID through the player special case and `CWorld::GetGameActorByAID`, then sends messages 84, 87, and 83 in that order. `HandleSkillCastCancel` preserves that order and first uses the same lookup, but falls back to `CGameMode::m_runtimeActors` when the world lookup misses. This fallback is a current actor-registry compatibility path; WP10.7 must determine which registry is authoritative and remove or consolidate the fallback if appropriate. The handler never creates an actor.
+
+# WP10.4 effect-source differences and unresolved clip names (2026-10-28)
+
+- Effect 68 (`Mvp`) differs: readable Ref `RagEffect.cpp:12668–12670` returns true without STR or audio, while canonical EXE `HighPriest.exe.c:420035–420043` plays `effect\\st_mvp.wav` at frame 0 and processes STR. Kept explicit `UnportedEffect` pending resolution of which behavior the parity target requires.
+- Effect 92 (`MeteorStorm`) differs: readable Ref `RagEffect.cpp:13016–13030` has a commented-out frame-40 quake, while canonical EXE `HighPriest.exe.c:420170–420183` sends message 135 there. The exact wave is known, but do not route until the source mismatch is resolved and quake behavior is included.
+- Effect 30 has two Ref configurations: `_2ND_EFFECT` is audio-only at frame 0 (matching the canonical EXE), while the alternate body launches a thunder particle at frame 36. Keep unported until the selected Ref build configuration is confirmed.
+- Effects 95 and 102 require extra behavior beyond the basic clip-wave route. Their dedicated `ProcessClipWaveStrEffect` branches now preserve the state-zero `rand() % 12` gate for 95 and send quake message 135 at frame 35 for 102.
+- Ref wave symbols for 208/209/211, 269–273, and 440 resolve only to truncated directory prefixes in canonical `HighPriest.exe.c`; exact filenames are unknown. Keep these handlers explicitly unported until callsite string resolution identifies the asset names.
+
+# WP10.3 Effect_SPR remaining branches (2026-10-28)
+
+- The shared `Effect_SPR` resource setup is now ported for variants 0–7 and 9–13 (effects 570/571, 576–580, 583, and 585–589). Variant 8 has an unresolved sound plus view-relative action selection. Effect 584 remains explicitly unported until that wave symbol is resolved. Effects 572–575 use `ParticleTime`/`Twilight` instead and remain unported. Variants 15/17 use RNG action selection, 16/18/19 and 21–25 change vertical offset/render/repeat setup, and variant 28 selects action from view-relative heading. Keep those callers explicit until each branch is implemented and compared.

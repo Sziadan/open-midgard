@@ -1330,15 +1330,17 @@ bool UpdateMapPillarPrimitive(CEffectPrim* prim)
     return prim->m_stateCnt <= prim->m_duration || anyActive;
 }
 
-static bool TryPlaySingleEffectWave(const vector3d& soundPos, const std::string& relativePath)
+static bool TryPlaySingleEffectWave(const vector3d& soundPos, const std::string& relativePath,
+    float yOffset = 0.0f, bool literalY = false)
 {
     CGameMode* mode = g_modeMgr.GetCurrentGameMode();
     if (!mode || !mode->m_world || !mode->m_world->m_player) {
         return false;
     }
     const vector3d& listener = mode->m_world->m_player->m_pos;
-    return PlayWave(relativePath.c_str(), soundPos.x - listener.x, soundPos.y - listener.y,
-        soundPos.z - listener.z);
+    const float y = literalY ? yOffset : soundPos.y - listener.y + yOffset;
+    return PlayWave(relativePath.c_str(), soundPos.x - listener.x, y,
+        soundPos.z - listener.z, 250, 40, 1.0f);
 }
 
 struct ProvenClipWave {
@@ -2063,6 +2065,7 @@ void InitReferenceSegments(CEffectPrim* prim)
 // HighPriest.exe.c:55640-55652 (0x4131B0). Ref/Renderer.cpp repeats
 // the other overload's signature; this overload uses half-screen offsets and
 // device z, with no invented near-plane cutoff, clamp or pixel displacement.
+// TEST_BODY_BEGIN circle_render_helper_family
 void ProjectReferenceEffectVertex(const vector3d& point, const matrix& view, tlvertex3d& vertex)
 {
     const double reciprocal = 1.0 / (static_cast<double>(view.m[2][2]) * point.z
@@ -2568,6 +2571,7 @@ void RenderReferenceSphere(const CEffectPrim& prim, const matrix& view)
     }
 }
 
+// TEST_BODY_END circle_render_helper_family
 void RenderCircleLayer(const CEffectPrim& prim,
     const EffectSegmentState& state,
     matrix& viewMatrix,
@@ -3178,6 +3182,7 @@ u32 FloatBits(float value)
 int TableAngle(int angle);
 int GetReferenceAngle(float moveX, float moveZ);
 
+// TEST_BODY_BEGIN casting_update_family
 void UpdateCastingHeights(EffectGi& gi)
 {
     for (int sample = 0; sample < 21; ++sample) {
@@ -3306,6 +3311,7 @@ void Update3DCasting3Primitive(CEffectPrim* prim)
         }
     }
 }
+// TEST_BODY_END casting_update_family
 
 void UpdateGi5Primitive(CEffectPrim* prim)
 {
@@ -3501,6 +3507,7 @@ unsigned int CastingSizeRgb(float size)
     }
 }
 
+// TEST_BODY_BEGIN casting_low_render_family
 void CastingLowPolygonRise(int riseAngle, float height, double* radialExtended, float* radialStored, float* vertical)
 {
     const int tableIndex = riseAngle * 4;
@@ -3545,6 +3552,7 @@ D3DBLEND CastingSizeBlend(float size)
     }
 }
 
+// TEST_BODY_END casting_low_render_family
 void RenderHealLow(const CEffectPrim& prim, const matrix& viewMatrix)
 {
     CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
@@ -6475,7 +6483,7 @@ void UpdateBlindPrimitive(CEffectPrim* prim)
     }
     prim->m_gi[1].alphaT = static_cast<short>(TableAngle(latitudeComplement));
     if (prim->m_master != nullptr) {
-        prim->m_pos = prim->m_master->ResolveBasePosition();
+        prim->m_pos = prim->m_master->EffectPosition();
     }
     for (EffectGi& gi : prim->m_gi) {
         if (gi.life != 1) {
@@ -6992,6 +7000,7 @@ void RenderGrandCross2(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+// TEST_BODY_BEGIN line_link_render_family
 void LineLinkInterpolatedEnd(const vector3d& current, const vector3d& previous, int process, vector3d* endpoint)
 {
     if (process >= 15) {
@@ -7033,6 +7042,7 @@ void LineLinkRingPoint(const vector3d& center, float radius, int around, int sid
     point->z = center.z + zOffset;
 }
 
+// TEST_BODY_END line_link_render_family
 void RenderLineLink(const CEffectPrim& prim, const matrix& viewMatrix)
 {
     const EffectGi& gi = prim.m_gi[0];
@@ -7085,6 +7095,7 @@ void RenderLineLink(const CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+// TEST_BODY_BEGIN intimidate_render_family
 void IntimidateTowardScreen(vector3d corners[4], int rotationX, int rotationYZ)
 {
     for (int i = 0; i < 4; ++i) {
@@ -7138,6 +7149,7 @@ vector3d IntimidateCenter(const EffectGi& gi)
         static_cast<float>(static_cast<double>(g_sinTable[gi.riseAngle]) * fullX)};
 }
 
+// TEST_BODY_END intimidate_render_family
 void RenderIntimidate(const CEffectPrim& prim, const matrix& viewMatrix)
 {
     CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
@@ -7172,6 +7184,7 @@ void RenderIntimidate(const CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+// TEST_BODY_BEGIN gumgang_render_family
 struct GumGangBandOffset {
     float* x;
     float* y;
@@ -8135,6 +8148,7 @@ void UpdateGroundSample(CEffectPrim* prim)
     }
 }
 
+// TEST_BODY_END gumgang_render_family
 void TeiHit1Corners(const EffectGi& gi, vector3d corners[4])
 {
     const double height = gi.height[1];
@@ -8164,6 +8178,7 @@ void TeiHit1Corners(const EffectGi& gi, vector3d corners[4])
     }
 }
 
+// TEST_BODY_BEGIN cloud_render_family
 struct CloudRenderStyle {
     unsigned int rgb=0;
     int texturePart=0;
@@ -8234,6 +8249,7 @@ void CloudCorners(EffectGi& gi, vector3d corners[4])
     }
 }
 
+// TEST_BODY_END cloud_render_family
 bool IsCloudRendererType(EFFECTPRIMID type)
 {
     switch (type) {
@@ -8356,6 +8372,7 @@ void RenderSlash1Primitive(const CEffectPrim& prim, const matrix& view)
 
 // HighPriest.exe.c:434160-434328. Preserve the GI clock, signed byte
 // controls, alpha overshoot and fade order; the outer processor owns frame count.
+// TEST_BODY_BEGIN primitive_update_family
 void UpdateSuperAngelPrimitive(CEffectPrim* prim)
 {
     prim->m_pos = prim->m_master->EffectPosition();
@@ -11850,9 +11867,11 @@ bool UpdateReference2DTextureOrbit(CEffectPrim* prim)
     }
     return motion != prim->m_totalTexture;
 }
+// TEST_BODY_END primitive_update_family
 
 // Ref/GameActor.cpp:10748-10928. Each sprite retains its own texture and
 // palette; clip color/zoom/rotation are never baked into a motion canvas.
+// TEST_BODY_BEGIN particle_render_helper_family
 struct ParticleSprite {
     SprImg* image;
     float left, top, right, bottom;
@@ -12287,6 +12306,8 @@ void RenderReferencePeong(const CEffectPrim& prim, const matrix& view)
     }
 }
 
+// TEST_BODY_END particle_render_helper_family
+// TEST_BODY_BEGIN reference_particle_render_family
 void RenderReferenceParticlePrimitive(const CEffectPrim& prim, matrix& view)
 {
     if (!prim.m_particleSprRes || !prim.m_particleActRes) return;
@@ -12389,6 +12410,8 @@ bool CEffectPrim::UsesReferenceParticle() const
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 212 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622));
 }
 
+// TEST_BODY_END reference_particle_render_family
+// TEST_BODY_BEGIN primitive_lifecycle_family
 CEffectPrim::~CEffectPrim()
 {
     if (m_master) {
@@ -12440,6 +12463,7 @@ u8 CEffectPrim::OnProcess()
     ++m_stateCnt;
     return m_stateCnt <= m_duration;
 }
+// TEST_BODY_END primitive_lifecycle_family
 
 bool CEffectPrim::ProcessPrimitiveFrame()
 {
@@ -13816,6 +13840,7 @@ void CRagEffect::LoadEzEffect(const char* fName)
 // transform accumulators: Ref carries those values across a restart.
 // Ref/Renderer.cpp:7067-7084 (0x413130). The STR path projects without
 // the reconstructed billboard near-plane/depth clamping. z carries reciprocal depth.
+// TEST_BODY_BEGIN str_process_family
 vector3d ProjectStrPoint(const vector3d& point, const matrix& view, int screenX, int screenY)
 {
     const double reciprocal = 1.0 / (static_cast<double>(view.m[2][2]) * point.z
@@ -13995,8 +14020,158 @@ bool CRagEffect::ProcessTargetPositionStr()
     return active;
 }
 
+// TEST_BODY_END str_process_family
+// Ref/RagEffect.cpp:1164-1190 and HighPriest.exe.c:430760-430782, effect 67.
+bool CRagEffect::ProcessProvoke()
+{
+    if (m_stateCnt == 5 || m_stateCnt == 30) {
+        TryPlaySingleEffectWave(m_effectPos, "effect\\swordman_provoke.wav", 0.0f, true);
+    }
+    return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+}
+
+// Ref/RagEffect.cpp:740-782 and HighPriest.exe.c:431040-431099, effect 87.
+bool CRagEffect::ProcessLexDivina()
+{
+    if (m_stateCnt == 0 || m_stateCnt == 20 || m_stateCnt == 35 ||
+        m_stateCnt == 60 || m_stateCnt == 70) {
+        TryPlaySingleEffectWave(m_effectPos, "effect\\priest_lexdivina.wav", 0.0f, true);
+    }
+    return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+}
+
+// HighPriest.exe.c:420391-420392, effects 133/134 share this completion path.
+bool CRagEffect::ProcessStrTerminalEffect()
+{
+    if (ProcessEZ2STR(0.0f, -80.0f, 0.0f)) return true;
+    m_stateCnt = 9999;
+    return false;
+}
+
+// Ref/RagEffect2.cpp:25733-26091. Faithful subset of Effect_SPR whose
+// resource and setup behavior is fully resolved; special variants remain
+// explicit until their sound/action branches are ported.
+bool CRagEffect::ProcessEffectSprite(int spriteVariant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt == 99999998) m_stateCnt = 0;
+    if (m_stateCnt != 0) return true;
+
+    struct SpriteAsset { int variant; const char* spr; const char* act; int speed; bool repeat; const char* wave; };
+    static const SpriteAsset assets[] = {
+        { 0, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC4\xB3\xBD\xBD\xB8\xB5.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC4\xB3\xBD\xBD\xB8\xB5.act", 2, false, nullptr },
+        { 1, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBA\xED\xB7\xAF\xB5\xE5\xB7\xAF\xBD\xBA\xC6\xAE.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBA\xED\xB7\xAF\xB5\xE5\xB7\xAF\xBD\xBA\xC6\xAE.act", 2, false, "effect\\h_blood_lust.wav" },
+        { 2, "\xC0\xCC\xC6\xD1\xC6\xAE\\item_thunder.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\item_thunder.act", 2, false, nullptr },
+        { 3, "\xC0\xCC\xC6\xD1\xC6\xAE\\item_cloud.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\item_cloud.act", 2, false, nullptr },
+        { 4, "\xC0\xCC\xC6\xD1\xC6\xAE\\item_curse.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\item_curse.act", 2, false, nullptr },
+        { 5, "\xC0\xCC\xC6\xD1\xC6\xAE\\item_zzz.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\item_zzz.act", 2, false, nullptr },
+        { 6, "\xC0\xCC\xC6\xD1\xC6\xAE\\item_rain.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\item_rain.act", 2, false, nullptr },
+        { 7, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef01.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef01.act", 3, false, "effect\\ef_firehit.wav" },
+        { 9, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef03.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef03.act", 4, false, nullptr },
+        { 10, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef04.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef04.act", 4, true, nullptr },
+        { 11, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef05.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef05.act", 4, false, nullptr },
+        { 12, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef06.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef06.act", 4, false, nullptr },
+        { 13, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef07.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef07.act", 4, false, nullptr },
+    };
+    for (const SpriteAsset& asset : assets) {
+        if (asset.variant != spriteVariant) continue;
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLE, vector3d{});
+        if (prim == nullptr) return true;
+        prim->m_duration = m_duration;
+        prim->m_deltaPos2.y = 0.0f;
+        prim->m_renderFlag |= 0x200;
+        prim->m_pattern |= 0x200;
+        if (spriteVariant == 7) {
+            prim->m_pattern = 0;
+            prim->m_alpha = 220.0f;
+        }
+        prim->m_animSpeed = asset.speed;
+        prim->m_repeatAnim = asset.repeat;
+        prim->m_spriteAction = 0;
+        prim->m_curMotion = 0;
+        if (asset.wave != nullptr) TryPlaySingleEffectWave(m_effectPos, asset.wave, 0.0f, true);
+        prim->SetParticleResources(asset.spr, asset.act);
+        prim->m_numSegments = 1;
+        InitReferenceSegments(prim);
+        return true;
+    }
+    return false;
+}
+
+// Ref/RagEffect.cpp timed audio cues and canonical OnProcess cases. These
+// cases have no extra primitive, RNG, or quake branch beyond the listed cue.
+bool CRagEffect::ProcessClipWaveStrEffect()
+{
+    int waveFrame = 0;
+    float yOffset = 0.0f;
+    const char* wave = nullptr;
+    bool copyMasterPosition = false;
+    bool propagateStrResult = true;
+    bool extendDuration = false;
+    bool playAtOrigin = false;
+    bool randomWaveGate = false;
+    int quakeFrame = -1;
+    switch (m_type) {
+    case 130: case 250: wave = "effect\\knight_twohandquicken.wav"; propagateStrResult = false; extendDuration = true; break;
+    case 65: wave = "effect\\thief_invenom.wav"; break;
+    case 66: wave = "effect\\Acolyte_cure.wav"; break;
+    case 69: wave = "effect\\hunter_skidtrap.wav"; break;
+    case 75: wave = "effect\\priest_gloria.wav"; yOffset = 1.0f; break;
+    case 76: wave = "effect\\priest_magnificat.wav"; break;
+    case 77: wave = "effect\\priest_resurrection.wav"; break;
+    case 78: wave = "effect\\priest_recovery.wav"; break;
+    case 83: wave = "effect\\priest_sanctuary.wav"; break;
+    case 84: waveFrame = 60; wave = "effect\\priest_impositio.wav"; break;
+    case 85: waveFrame = 15; wave = "effect\\priest_lexaeterna.wav"; break;
+    case 88: wave = "effect\\priest_suffragium.wav"; break;
+    case 91: wave = "effect\\priest_benedictio.wav"; break;
+    case 96: waveFrame = 75; wave = "effect\\wizard_fire_pillar_a.wav"; break;
+    case 97: wave = "effect\\wizard_fire_pillar_b.wav"; break;
+    case 103: wave = "effect\\black_weapon_perfection.wav"; break;
+    case 106: waveFrame = 20; wave = "effect\\hunter_blastmine.wav"; break;
+    case 107: wave = "effect\\hunter_claymoretrap.wav"; break;
+    case 108: wave = "effect\\hunter_freezingtrap.wav"; break;
+    case 111: wave = "effect\\hunter_springtrap.wav"; break;
+    case 113: wave = "effect\\priest_magnus.wav"; yOffset = 1.0f; break;
+    case 124: wave = "effect\\assasin_poisonreact.wav"; break;
+    case 127: wave = "effect\\assasin_poisonreact.wav"; break;
+    case 129: waveFrame = 10; wave = "effect\\assasin_venomsplasher.wav"; break;
+    case 131: wave = "effect\\knight_autocounter.wav"; break;
+    case 153: wave = "effect\\ac_concentration.wav"; break;
+    case 154: waveFrame = 15; wave = "effect\\bs_refinesuccess.wav"; break;
+    case 155: waveFrame = 5; wave = "effect\\bs_refinefailed.wav"; break;
+    case 204: case 205: case 206: case 207: case 210:
+        wave = "_heal_effect.wav"; yOffset = -80.0f; copyMasterPosition = true; break;
+    case 234: wave = "effect\\sage_spell breake.wav"; copyMasterPosition = true; break;
+    case 245: wave = "effect\\cru_holy cross.wav"; playAtOrigin = true; break;
+    case 255: case 256: case 257: case 258:
+        waveFrame = 10; wave = "_enemy_hit_wind1.wav"; yOffset = -150.0f; copyMasterPosition = true; break;
+    case 390: wave = "effect\\black_overthrust.wav"; copyMasterPosition = true; propagateStrResult = false; break;
+    case 391: wave = "effect\\EF_IncAgility.wav"; copyMasterPosition = true; propagateStrResult = false; break;
+    case 95: wave = "effect\\wizard_quagmire.wav"; yOffset = -100.0f; randomWaveGate = true; break;
+    case 102: waveFrame = 30; wave = "effect\\wizard_fire_pillar_b.wav"; quakeFrame = 35; break;
+    default: return false;
+    }
+    if (m_stateCnt == waveFrame && (!randomWaveGate || rand() % 12 == 0)) {
+        if (copyMasterPosition) m_effectPos = m_cachedPos;
+        if (extendDuration) m_duration = 9999;
+        if (playAtOrigin) {
+            PlayWave(wave, 0.0f, 0.0f, 0.0f, 250, 40, 1.0f);
+        } else {
+            TryPlaySingleEffectWave(m_effectPos, wave, yOffset, true);
+        }
+    }
+    if (m_stateCnt == quakeFrame) {
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) mode->SendMsg(135, 0, 0, 0);
+    }
+    const bool active = ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+    return propagateStrResult ? active : true;
+}
 // Ref/RagEffect.cpp:9725-9862 (0x5F1420). Preserve Ref's independent
 // pixel-ratio projection, conditional corner/UV order and byte color conversion.
+// TEST_BODY_BEGIN str_render_family
 void CRagEffect::RenderAniClip(int, const KAC_LAYER& layer, const KAC_XFORMDATA& xform, matrix* viewMatrix)
 {
     if (!viewMatrix) return;
@@ -14064,6 +14239,7 @@ void CRagEffect::RenderAniClip(int, const KAC_LAYER& layer, const KAC_XFORMDATA&
     face->mtPreset = static_cast<int>(xform.mtpreset);
     g_renderer.AddRP(face, 5);
 }
+// TEST_BODY_END str_render_family
 
 void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& deltaPos)
 {
@@ -14103,7 +14279,6 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         m_handler = Handler::None;
         break;
     case 371: {
-        m_handler = Handler::EzStr;
         const std::string strName = ResolveStrName(effectId);
         LoadEzEffect(strName.c_str());
         InitEZ2STRFrame();
@@ -14139,78 +14314,59 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
         m_handler = Handler::None;
         break;
     case 22:
-        m_handler = Handler::Sight;
         break;
     case 24:
-        m_handler = Handler::FireBall;
         break;
     case 229:
-        m_handler = Handler::WeatherCloud;
         m_param[0] = 0.0f;
         m_param[1] = 40.0f;
         break;
     case 230:
-        m_handler = Handler::WeatherCloud;
         m_param[0] = 1.0f;
         m_param[1] = 60.0f;
         break;
     case 231:
-        m_handler = Handler::MapPillar;
         break;
     case 233:
-        m_handler = Handler::WeatherCloud;
         m_param[0] = 2.0f;
         m_param[1] = 40.0f;
         break;
     case 515:
-        m_handler = Handler::WeatherCloud;
         m_param[0] = 3.0f;
         m_param[1] = 80.0f;
         break;
     case 516:
-        m_handler = Handler::WeatherCloud;
         m_param[0] = 4.0f;
         m_param[1] = 80.0f;
         break;
     case 592:
-        m_handler = Handler::WeatherCloud;
         m_param[0] = 5.0f;
         m_param[1] = 80.0f;
         break;
     case 697:
-        m_handler = Handler::WeatherCloud;
         m_param[0] = 7.0f;
         m_param[1] = 80.0f;
         break;
     case 698:
-        m_handler = Handler::WeatherCloud;
         m_param[0] = 8.0f;
         m_param[1] = 80.0f;
         break;
     case 33:
-        m_handler = Handler::Ruwach;
         break;
     case 247:
-        m_handler = Handler::MapPillar;
         break;
     case 20:
     case 125:
-        m_handler = Handler::EnchantPoison;
         break;
     case 493:
-        m_handler = Handler::EnchantPoison2;
         break;
     case 42:
-        m_handler = Handler::Blessing;
         break;
     case 44:
-        m_handler = Handler::Smoke;
         break;
     case 47:
-        m_handler = Handler::Torch;
         break;
     case 601:
-        m_handler = Handler::Sight2;
         break;
     case kRagEffectPortal:
         m_handler = Handler::Portal;
@@ -14230,7 +14386,6 @@ void CRagEffect::Init(CRenderObject* master, int effectId, const vector3d& delta
     default: {
         const std::string strName = ResolveStrName(effectId);
         if (!strName.empty()) {
-            m_handler = Handler::EzStr;
             LoadEzEffect(strName.c_str());
             InitEZ2STRFrame();
         }
@@ -14306,6 +14461,7 @@ void CRagEffect::InitWorld(const C3dWorldRes::effectSrcInfo& source)
     }
 }
 
+// TEST_BODY_BEGIN effect_launch_family
 CEffectPrim* CRagEffect::LaunchEffectPrim(EFFECTPRIMID effectPrimId, const vector3d& deltaPos)
 {
     CEffectPrim* prim = new CEffectPrim();
@@ -14329,6 +14485,7 @@ void CRagEffect::DiscardPrimitive(CEffectPrim* prim)
     SendMsg(prim, 25, 0, 0, 0);
     prim->SendMsg(this, 24, 0, 0, 0);
 }
+// TEST_BODY_END effect_launch_family
 
 void CRagEffect::OnActorDeleted(const CGameActor* actor)
 {
@@ -14427,25 +14584,21 @@ bool CRagEffect::ResolveCullSphere(vector3d* outCenter, float* outRadius) const
     case Handler::MapParticle:
         radius = 128.0f;
         break;
-    case Handler::BlueFall:
-        radius = 220.0f;
-        center.y += 40.0f;
-        break;
     case Handler::Smoke:
     case Handler::Torch:
     case Handler::EzStr:
-    case Handler::HideStart:
-    case Handler::Sight:
-    case Handler::Sight2:
-    case Handler::FireBall:
-    case Handler::Ruwach:
         radius = 140.0f;
         break;
     case Handler::None:
     default:
-        // These ids use OnProcess2 directly; retain their existing cull extent.
-        radius = (m_type == 123 || m_type == 132 || m_type == 312 || m_type == 313 || m_type == 325 || m_type == 331 || m_type == 332)
-            ? 140.0f : 96.0f;
+        if (m_type == 231 || m_type == 247) {
+            radius = 180.0f;
+            center.y += 56.0f;
+        } else {
+            // These ids use OnProcess2 directly; retain their existing cull extent.
+            radius = (m_type == 123 || m_type == 132 || m_type == 312 || m_type == 313 || m_type == 325 || m_type == 331 || m_type == 332)
+                ? 140.0f : 96.0f;
+        }
         break;
     }
 
@@ -14690,6 +14843,7 @@ void CRagEffect::ApplyEntry2()
 
 // HighPriest.exe.c:434741-434782 (0x60D710). Only time zero processes STR;
 // the tier dispatcher deliberately ignores this helper's completion result.
+// TEST_BODY_BEGIN job_emitter_family
 bool CRagEffect::ApplyJobLvUp50(int time)
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -14740,6 +14894,7 @@ void CRagEffect::ProcessJobLvUp50_2()
     }
 }
 
+// TEST_BODY_END job_emitter_family
 void CRagEffect::SpawnMapMagicZone()
 {
     if (!m_primList.empty()) {
@@ -14963,6 +15118,7 @@ void CRagEffect::SpawnBlueFall()
 
 // HighPriest.exe.c:433666-433827 (0x60B580). Asset bytes are read from
 // the listed executable VAs; CResMgr supplies its registered sprite directory.
+// TEST_BODY_BEGIN angel_emitter_family
 void CRagEffect::ApplySuperAngel(signed char variant, signed char)
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -15034,6 +15190,7 @@ void CRagEffect::ProcessSuperAngelEffect()
     }
 }
 
+// TEST_BODY_END angel_emitter_family
 void CRagEffect::SpawnHideStart()
 {
     if (m_stateCnt != 0) {
@@ -15078,6 +15235,7 @@ void CRagEffect::SpawnHideStart()
 }
 
 // Ref/RagEffect.cpp:4613-4702 (0x601450). Keep both discarded RNG draws.
+// TEST_BODY_BEGIN grim_tooth_family
 void CRagEffect::SpawnGrimTooth()
 {
     const vector3d base = m_effectPos;
@@ -15152,6 +15310,8 @@ void CRagEffect::SpawnGrimToothAtk()
 }
 
 // Ref/RagEffect.cpp:6063-6153/6160-6250 (0x5F46F0/0x5FA640), ids43/37.
+// TEST_BODY_BEGIN agility_emitter_family
+// TEST_BODY_END grim_tooth_family
 void CRagEffect::SpawnIncAgility()
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -15297,6 +15457,7 @@ void CRagEffect::SpawnAqua()
 
 // Ref/RagEffect.cpp:2125-2219 (0x5F4260). Preserve all three emission
 // branches and the recurring particles' action-before-sprite resource order.
+// TEST_BODY_END agility_emitter_family
 void CRagEffect::SpawnBlessing()
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -15363,6 +15524,7 @@ void CRagEffect::SpawnBlessing()
 
 // Ref/RagEffect.cpp:7721-7761 (0x5F6250). Three RNG draws per smoke
 // follow the initial count draw, in X-angle / Y-angle / speed order.
+// TEST_BODY_BEGIN smoke_torch_emitter_family
 void CRagEffect::SpawnSmoke()
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -15736,8 +15898,10 @@ void CRagEffect::SpawnTorch()
     ShiftCircleSegments(prim);
 }
 
+// TEST_BODY_END smoke_torch_emitter_family
 // Ref/RagEffect.cpp:3442-3555 (0x601B10/0x601D70): the two emitters
 // share this profile setup, with four RNG draws in angle/radius/speed/size order.
+// TEST_BODY_BEGIN poison_emitter_family
 void ConfigureEnchantPoisonParticle(CEffectPrim* prim, int speedSpan, int sizeBase, int sizeSpan)
 {
     prim->m_duration = 40;
@@ -15818,8 +15982,10 @@ void CRagEffect::ProcessEnchantPoison2()
     }
 }
 
+// TEST_BODY_END poison_emitter_family
 // Ref/RagEffect.cpp:7327-7411 / 7418-7477 (0x5F7E70/0x5F8120).
 // Both use PP_3DPARTICLE; the stored acceleration is inactive without 0x400.
+// TEST_BODY_BEGIN sight_emitter_family
 void CRagEffect::ApplySight(float initialAlpha, bool includeShadow)
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -16144,6 +16310,8 @@ void CRagEffect::SpawnSight2()
 
 // Ref/RagEffect.cpp:4057-4125 (0x5F8310), original effect 24.
 // CalcDir/CalcDist use the primitive's stored world origin and absolute target.
+// TEST_BODY_END sight_emitter_family
+// TEST_BODY_BEGIN fireball_emitter_family
 void CRagEffect::SpawnFireBall()
 {
     if (m_stateCnt != 20 && m_stateCnt != 24 && m_stateCnt != 28 && m_stateCnt != 32) return;
@@ -16649,6 +16817,7 @@ void CRagEffect::SpawnHit6()
     SpawnCrossLensHit(true);
 }
 
+// TEST_BODY_END fireball_emitter_family
 // Ref/RagEffect.cpp:7202-7261 (0x5F9170). The angle truncates before
 // the trig-table calls. Particle2 and Shadow retain their original profiles.
 void CRagEffect::SpawnRuwach()
@@ -17010,6 +17179,97 @@ void CRagEffect::ApplyTarot(const char* textureName, int variant)
     gi.flag[4] = static_cast<u8>(variant == 4 ? 1 : variant);
 }
 
+bool CRagEffect::ProcessTarotEffect()
+{
+    switch (m_type) {
+    case 610:
+    case 611:
+        if (m_stateCnt == 0) {
+            CRenderObject* master = ResolveCurrentMaster();
+            vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, m_type == 610 ? "_heal_effect.wav" : "caramel_die.wav");
+        }
+        ApplyTarot(m_type == 610 ? "effect\\success.bmp" : "effect\\failed.bmp", 3);
+        return true;
+    case 676:
+        ApplyTarot("effect\\blast_mine##clock.bmp", 4);
+        if (m_stateCnt == 10) {
+            CRenderObject* master = ResolveCurrentMaster();
+            vector3d wavePos = master != nullptr ? master->m_pos : m_cachedPos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                }
+            }
+            TryPlayEffectWaveAt(wavePos, "effect\\EF_DecAgility.wav");
+        }
+        return true;
+    default:
+        return false;
+    }
+}
+
+// Ref/RagEffect.cpp:11842-11882, 11995-12000, 12076-12100, 12459-12521.
+// Preserve the event-frame m_pos write, listener-relative wave, and whether
+// the shared STR label propagates its completion result for each case.
+bool CRagEffect::ProcessTier3StrEffect()
+{
+    const int type = m_type;
+    const int state = m_stateCnt;
+    int waveFrame = -1;
+    const char* wave = nullptr;
+    bool propagateStrResult = true;
+
+    switch (type) {
+    case 565: waveFrame = 0; wave = "effect\\h_moonlight_1.wav"; break;
+    case 566: waveFrame = 0; wave = "effect\\h_moonlight_2.wav"; break;
+    case 567: waveFrame = 0; wave = "effect\\h_moonlight_3.wav"; break;
+    case 568: waveFrame = 0; wave = "levelup.wav"; break;
+    case 593: case 594: case 595: case 596: case 597: case 598:
+        waveFrame = 0; wave = "_heal_effect.wav"; break;
+    case 608: waveFrame = 45; wave = "_heal_effect.wav"; break;
+    case 609: waveFrame = 50; wave = "caramel_die.wav"; break;
+    case 668: waveFrame = 1; wave = "effect\\dragonfear.wav"; propagateStrResult = false; break;
+    case 669: waveFrame = 1; wave = "effect\\wideb.wav"; propagateStrResult = false; break;
+    case 677: waveFrame = 1; wave = "effect\\wideb.wav"; propagateStrResult = false; break;
+    case 569:
+    case 603:
+        break;
+    default:
+        return false;
+    }
+
+    if (wave != nullptr && state == waveFrame) {
+        if (CRenderObject* master = ResolveCurrentMaster()) {
+            m_effectPos = master->m_pos;
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                    vector3d wavePos = m_effectPos;
+                    wavePos.y = mode->m_world->m_player->m_pos.y;
+                    TryPlayEffectWaveAt(wavePos, wave);
+                }
+            }
+        }
+        if (type == 668) {
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                mode->SendMsg(135, 0, 0, 0);
+            }
+        }
+    }
+
+    if (type == 669) {
+        ApplyPoison(1);
+    }
+
+    const bool active = ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+    return propagateStrResult ? active : true;
+}
+
 void CRagEffect::ApplyActorLight()
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -17294,6 +17554,16 @@ void CRagEffect::ApplyBodyLight449()
     }
 }
 
+void CRagEffect::ApplyBodyLight368()
+{
+    if (CRenderObject* master = ResolveCurrentMaster()) {
+        if ((master->m_BodyLight & 1) != 1) {
+            ++master->m_BodyLight;
+        }
+        master->SetArgb(-1, 255, 100, 100);
+    }
+}
+
 void CRagEffect::ApplyPortalWind402()
 {
     ApplyPortalWind(1);
@@ -17330,6 +17600,7 @@ void CRagEffect::ApplyBlackDevil(const char* textureName)
 
 // Ref/RagEffect2.cpp:33659-33923 (0x635F90), effect 321. Preserve the
 // source's conditional parent copies, five orbit RNG draws and integer division.
+// TEST_BODY_BEGIN warp_emitter_family
 void CRagEffect::ApplyWarpZone2(const char* textureName)
 {
     if (m_stateCnt == 99999998) m_stateCnt = 0;
@@ -17449,6 +17720,7 @@ void CRagEffect::ApplyWarpZone()
     }
 }
 
+// TEST_BODY_END warp_emitter_family
 // Ref/RagEffect.cpp:7066-7098 (0x5FA100), effect 35. This is distinct
 // from retained synthetic RSW ReadyPortal scheduling. Parent origin is stored.
 void CRagEffect::ApplyReadyPortal()
@@ -17675,6 +17947,10 @@ void CRagEffect::ApplyPoison(int variant)
 
 void CRagEffect::ApplyBlind(int level)
 {
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d parentPosition = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = parentPosition;
+    m_cachedPos = parentPosition;
     if (m_stateCnt != 0) {
         return;
     }
@@ -17686,6 +17962,9 @@ void CRagEffect::ApplyBlind(int level)
     prim->m_duration = m_duration;
     prim->m_texture.push_back(g_texMgr.GetTexture("effect\\fullb.tga", false));
     prim->m_texture.push_back(g_texMgr.GetTexture("effect\\white02.bmp", false));
+    for (EffectGi& gi : prim->m_gi) {
+        gi.life = 0;
+    }
     EffectGi& gi = prim->m_gi[0];
     gi.life = 1;
     gi.process = 0;
@@ -17697,6 +17976,8 @@ void CRagEffect::ApplyBlind(int level)
         gi.distance = 50.0f;
         gi.flag[0] = 0;
     }
+    m_effectPos.y -= 9.0f;
+    m_cachedPos.y -= 9.0f;
 }
 
 // Ref/RagEffect2.cpp:31333-31494 (0x6298B0).
@@ -17908,6 +18189,7 @@ void CRagEffect::ApplyBottomMusic(const char* textureName, int variant)
 }
 
 // Ref/RagEffect.cpp:1982-2108: BeginSpell2 through BeginSpell7.
+// TEST_BODY_BEGIN begin_spell_family
 void CRagEffect::SpawnBeginSpell()
 {
     switch (m_type) {
@@ -18002,6 +18284,7 @@ void CRagEffect::ApplyElementalChangeCasting()
     }
 }
 
+// TEST_BODY_END begin_spell_family
 void CRagEffect::ApplyPairedSaintCasting(const char* textureName, int variant, bool playWave, float waveYOffset)
 {
     if (playWave && m_stateCnt == 0) {
@@ -18701,6 +18984,7 @@ bool CRagEffect::ApplyPotionBerserk()
     return false;
 }
 
+// TEST_BODY_BEGIN ice_arrow_family
 // HighPriest.exe.c:315246-315257 (0x5552D0), four-coordinate CalcDir.
 // Ref/GameActor.cpp labels the two-coordinate body with this overload's signature.
 double EffectHeading(float fromX, float fromZ, float toX, float toZ)
@@ -19457,6 +19741,7 @@ void CRagEffect::SpawnColdHit()
     }
 }
 
+// TEST_BODY_END ice_arrow_family
 void CRagEffect::ApplyAuraBladeCasting()
 {
     ApplySaintCasting(45, "effect\\ring_white.tga", 22);
@@ -19879,6 +20164,7 @@ void CRagEffect::ApplyStin4()
     }
 }
 
+// TEST_BODY_BEGIN stin4_emitter_family
 void CRagEffect::SpawnStin4(const char* textureName, char variant)
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -19940,6 +20226,8 @@ void CRagEffect::ApplyThunderStorm2()
     InitReferenceSegments(prim);
 }
 
+// TEST_BODY_END stin4_emitter_family
+// TEST_BODY_BEGIN stin5_emitter_family
 void CRagEffect::ApplyStin5()
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -20002,6 +20290,8 @@ void CRagEffect::SpawnStin5(const char* textureName)
     }
 }
 
+// TEST_BODY_END stin5_emitter_family
+// TEST_BODY_BEGIN rg_coin3_emitter_family
 void CRagEffect::ApplyRgCoin3()
 {
     if (m_stateCnt == 21) {
@@ -20054,6 +20344,7 @@ void CRagEffect::SpawnRgCoin2(const char* textureName, float size)
     }
 }
 
+// TEST_BODY_END rg_coin3_emitter_family
 void CRagEffect::ApplyBash3D5()
 {
     if (m_stateCnt == 0) {
@@ -20259,6 +20550,58 @@ void CRagEffect::ApplyThrowItem(const char* textureName, int variant)
     prim->m_gi[2].alphaB = 0;
     prim->m_gi[3].life = 1;
     prim->m_gi[3].alphaB = 0;
+}
+
+bool CRagEffect::ProcessThrowItemEffect()
+{
+    switch (m_type) {
+    case 600:
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xA3\xB3\xD1\xB3\xAA\xC0\xCC\xC7\xC1.bmp", 3);
+        return true;
+    case 613:
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBC\xF6\xB8\xAE\xB0\xCB.bmp", 3);
+        return true;
+    case 614:
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC4\xED\xB3\xAA\xC0\xCC_\xB5\xB6.bmp", 3);
+        return true;
+    case 615:
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC7\xB3\xB8\xB6_\xBF\xAD\xC8\xAD.bmp", 3);
+        return true;
+    case 616:
+        ApplyThrowItem("effect\\coin_a.bmp", 3);
+        return true;
+    case 298:
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xF3\xBA\xB4.bmp", 0);
+        return true;
+    case 299:
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xF3\xC6\xF7\xBC\xC7\xBA\xB4.bmp", 1);
+        return true;
+    case 541:
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xB9\xF6\xBC\xAD\xC5\xA9\xC6\xF7\xBC\xC7.bmp", 1);
+        return true;
+    case 539:
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC8\xAD\xBF\xB0\xBA\xB4.bmp", 10);
+        ApplyThrowItem("\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBF\xB0\xBB\xEA\xBA\xB4.bmp", 11);
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool CRagEffect::ProcessHealBlue()
+{
+    if (m_stateCnt == 0) {
+        CRenderObject* healMaster = ResolveCurrentMaster();
+        vector3d wavePos = healMaster != nullptr ? healMaster->m_pos : m_cachedPos;
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                wavePos.y = mode->m_world->m_player->m_pos.y - 80.0f;
+            }
+        }
+        TryPlayEffectWaveAt(wavePos, "effect\\\xC8\xED\xB1\xE2.wav");
+    }
+    ApplyHeal2("effect\\ring_blue.tga", 2);
+    return true;
 }
 
 void CRagEffect::ApplyTeleportation2(const char* textureName, short time)
@@ -20535,10 +20878,10 @@ void CRagEffect::ApplyHealTime(int variant)
     }
 }
 
-void CRagEffect::ApplyGlassWall2(const char* textureName)
+bool CRagEffect::ApplyGlassWall2(const char* textureName)
 {
     if (textureName == nullptr) {
-        return;
+        return false;
     }
     if (m_stateCnt == 0) {
         CRenderObject* master = ResolveCurrentMaster();
@@ -20557,7 +20900,7 @@ void CRagEffect::ApplyGlassWall2(const char* textureName)
             prim->m_gi[3].life = 0;
         }
     }
-    ProcessEZ2STR();
+    return ProcessEZ2STR();
 }
 
 void CRagEffect::ApplyExit2(const char* textureName)
@@ -20701,6 +21044,26 @@ void CRagEffect::ApplyHeal(const char* textureName, int variant)
 
 bool CRagEffect::OnProcess2()
 {
+    switch (m_type) {
+#include "RagEffectOnProcess2Cases.generated.inc"
+    default:
+        DbgLog("[RagEffect] Invalid Effect Id %d\n", m_type);
+        return false;
+    }
+}
+
+bool CRagEffect::OnProcess3()
+{
+    switch (m_type) {
+#include "RagEffectOnProcess3Cases.generated.inc"
+    default:
+        DbgLog("[RagEffect] Invalid Effect Id %d\n", m_type);
+        return false;
+    }
+}
+
+bool CRagEffect::OnProcess2Legacy()
+{
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d soundPos = master != nullptr ? master->m_pos : m_cachedPos;
     switch (m_type) {
@@ -20801,8 +21164,7 @@ bool CRagEffect::OnProcess2()
         ApplyForestLight("effect\\cloud11.tga", 10);
         return true;
     case 315:
-        ApplyGlassWall2("effect\\alpha_down.tga");
-        return true;
+        return ApplyGlassWall2("effect\\alpha_down.tga");
     case 318:
         ApplyBottomMagnus("effect\\ring_red.tga", 0);
         return true;
@@ -20958,6 +21320,7 @@ bool CRagEffect::OnProcess2()
 // HighPriest.exe.c CRagEffect::OnProcess: direct ProcessEZ2STR calls whose
 // result reaches LABEL_425 (plus case 185's explicit false return). Cases
 // 130/136/244/250/390/391/392/406/407/440 deliberately ignore that result.
+// TEST_BODY_BEGIN str_termination_family
 bool EffectChecksStrResult(int effectId)
 {
     switch (effectId) {
@@ -20993,6 +21356,7 @@ bool CRagEffect::FinishEffectFrame()
     }
     return true;
 }
+// TEST_BODY_END str_termination_family
 
 u8 CRagEffect::OnProcess()
 {
@@ -21045,9 +21409,7 @@ u8 CRagEffect::ProcessWorldEffect()
         || m_handler == Handler::WarpZone
         || m_handler == Handler::MapPillar
         || m_handler == Handler::MapMagicZone
-        || m_handler == Handler::MapParticle
-        || m_handler == Handler::BlueFall
-        || m_handler == Handler::WeatherCloud;
+        || m_handler == Handler::MapParticle;
     if (steps > 1 && burstSensitiveHandler) {
         steps = 1;
     }
@@ -21067,7 +21429,7 @@ u8 CRagEffect::ProcessWorldEffect()
     }
 
     for (int step = 0; step < steps && alive; ++step) {
-        if (!ProcessEffectFrame()) {
+        if (!ProcessWorldEffectFrame()) {
             return 0;
         }
         ++m_stateCnt;
@@ -21090,6 +21452,24 @@ u8 CRagEffect::ProcessWorldEffect()
     }
 
     return alive ? 1 : 0;
+}
+
+bool CRagEffect::ProcessWorldEffectFrame()
+{
+    switch (m_handler) {
+    case Handler::EzStr: return ProcessEZ2STR();
+    case Handler::Portal: SpawnPortal(); return true;
+    case Handler::ReadyPortal: SpawnReadyPortal(); return true;
+    case Handler::WarpZone: SpawnWarpZone(); return true;
+    case Handler::MapPillar: SpawnMapPillar(); return true;
+    case Handler::MapMagicZone: SpawnMapMagicZone(); return true;
+    case Handler::MapParticle: SpawnMapParticle(); return true;
+    case Handler::Smoke: SpawnSmoke(); return true;
+    case Handler::Torch: SpawnTorch(); return true;
+    default:
+        DbgLog("[RagEffect] UNPORTED world effect %d\n", m_type);
+        return false;
+    }
 }
 
 // HighPriest.exe.c:419760-419805: all 45 cases jump directly to LABEL_424
@@ -21115,6 +21495,32 @@ bool CRagEffect::ProcessEffectFrame()
 {
     m_strFrameActive = true;
     if (const std::optional<bool> result = ProcessReferenceStrOnly()) return *result;
+    if (m_type >= 300 && m_type <= 373) return OnProcess2();
+    if (m_type >= 491) return OnProcess3();
+    switch (m_type) {
+#include "RagEffectOnProcessCases.generated.inc"
+    default:
+        DbgLog("[RagEffect] Invalid Effect Id %d\n", m_type);
+        return false;
+    }
+}
+
+bool CRagEffect::UnportedEffect()
+{
+    const char* refHandler = [&]() -> const char* {
+        switch (m_type) {
+#include "RagEffectHandlerNameCases.generated.inc"
+        default:
+            return "unknown";
+        }
+    }();
+    DbgLog("[RagEffect] UNPORTED effect %d (Ref %s)\n", m_type, refHandler);
+    return false;
+}
+
+bool CRagEffect::ProcessEffectFrameLegacy()
+{
+    m_strFrameActive = true;
     if (m_type == 62) {
         ApplySightrasher();
         return true;
@@ -21742,119 +22148,15 @@ bool CRagEffect::ProcessEffectFrame()
     } else if (blindLevel) {
         ApplyBlind(m_type - 474);
     }
-    const bool tierHandled = dispatchHandler && m_type >= 300 && m_type <= 373 && OnProcess2();
-    const bool textureCard = tarot || m_type == 554 || m_type == 610 || m_type == 611 || m_type == 669 || m_type == 673
-        || m_type == 600 || m_type == 613 || m_type == 614 || m_type == 615 || m_type == 616
-        || m_type == 298 || m_type == 299 || m_type == 539 || m_type == 541 || m_type == 405 || m_type == 581 || m_type == 394 || m_type == 564
-        || m_type == 12 || m_type == 58 || m_type == 441 || m_type == 454;
     if (dispatchHandler && m_stateCnt == 0 && (m_type == 295 || m_type == 296)) {
         if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
             mode->SendMsg(179, m_type == 295 ? 1 : 0, 0, 0);
         }
     }
-    if (dispatchHandler) {
-        for (const ProvenClipWave& entry : kProvenClipWaves) {
-            if (entry.type != m_type) {
-                continue;
-            }
-            if (entry.quakeFrame == m_stateCnt) {
-                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                    mode->SendMsg(135, 0, 0, 0);
-                }
-            }
-            if (entry.frame == m_stateCnt && (entry.type == 130 || entry.type == 250)) {
-                m_duration = 9999;
-            }
-            if (entry.frame != m_stateCnt || (entry.chance != 0 && rand() % entry.chance != 0)) {
-                break;
-            }
-            CRenderObject* waveMaster = ResolveCurrentMaster();
-            vector3d wavePos = waveMaster != nullptr ? waveMaster->m_pos : m_cachedPos;
-            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                    if (entry.type == 245) {
-                        wavePos = mode->m_world->m_player->m_pos;
-                    }
-                    wavePos.y = mode->m_world->m_player->m_pos.y + entry.yOffset;
-                }
-            }
-            TryPlayEffectWaveAt(wavePos, entry.wave);
-            break;
-        }
-    }
     if (dispatchHandler && m_type == 248) {
         ApplyProvidence("effect\\ring_yellow.tga");
     }
-    if (dispatchHandler && !tierHandled && !textureCard && !kyrieGuard && !bodyLight442 && !bodyLight446 && !bodyLight449 && !actorLight && !portalWind402 && !blackDevil && !bodyLightBit && !blindLevel && !beginCast && !bottomLight && !bottomOut && !blastMine && !healBlue && !bottomMusic && !chemicalSlash && !giExplosion && !acidDemon && !flowerCast && !defender && !mapPillar && !volcano && !bottomVolcano && !wind && !stormKick && !halfSphere && !attackEnergy && !electric && !electric2 && !attackEnergy2) {
-        switch (m_handler) {
-        case Handler::EzStr:
-            if (m_type == 185) {
-                ProcessTargetPositionStr();
-            } else {
-                ProcessEZ2STR();
-            }
-            break;
-        case Handler::Portal:
-            SpawnPortal();
-            break;
-        case Handler::ReadyPortal:
-            SpawnReadyPortal();
-            break;
-        case Handler::WarpZone:
-            SpawnWarpZone();
-            break;
-        case Handler::MapPillar:
-            SpawnMapPillar();
-            break;
-        case Handler::MapMagicZone:
-            SpawnMapMagicZone();
-            break;
-        case Handler::MapParticle:
-            SpawnMapParticle();
-            break;
-        case Handler::HideStart:
-            SpawnHideStart();
-            break;
-        case Handler::EnchantPoison:
-            SpawnEnchantPoison();
-            break;
-        case Handler::EnchantPoison2:
-            ProcessEnchantPoison2();
-            break;
-        case Handler::Blessing:
-            SpawnBlessing();
-            break;
-        case Handler::Smoke:
-            SpawnSmoke();
-            break;
-        case Handler::Torch:
-            SpawnTorch();
-            break;
-        case Handler::Sight:
-            SpawnSight();
-            break;
-        case Handler::Sight2:
-            SpawnSight2();
-            break;
-        case Handler::FireBall:
-            SpawnFireBall();
-            break;
-        case Handler::Ruwach:
-            SpawnRuwach();
-            break;
-        case Handler::BlueFall:
-            SpawnBlueFall();
-            break;
-        case Handler::WeatherCloud:
-            SpawnWeatherCloud();
-            break;
-        case Handler::None:
-        default:
-            break;
-        }
-    }
-
-    return FinishEffectFrame();
+    return UnportedEffect();
 }
 
 void CRagEffect::SpawnStatusState()
