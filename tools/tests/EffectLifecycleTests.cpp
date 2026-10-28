@@ -647,6 +647,7 @@ struct CRagEffect : CGameObject {
     bool ProcessBasilica();
     bool ProcessRainbow410();
     bool ProcessHitLine3Zero428();
+    bool ProcessHitLine3Basic434();
     bool ProcessPokJuk297();
     void ApplyBottomMusic(const char*, int);
     bool ProcessEffect365();
@@ -3963,6 +3964,49 @@ int main()
             &&rngDraws==drawBase+28,
             "PokJuk later states follow player without offset, repeats, resources, or RNG");
         effect.ClearPrims(); g_world.UpdateGameObjects(); g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject master; master.m_pos={10,20,30};
+        CRagEffect effect; effect.m_type=434; effect.m_master=&master; effect.m_duration=73;
+        effect.m_stateCnt=0; effect.m_effectPos={1,2,3};
+        rngValues.clear(); for(int value=0;value<40;++value) rngValues.push_back(value+1);
+        rngCursor=0; g_texMgr.requests.clear(); waveCalls.clear();
+        const int draws=rngDraws;
+        effect.ProcessHitLine3Basic434();
+        CEffectPrim* first=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        auto laneMatches=[](const EffectGi& gi, int base, float x, float y, float z) {
+            return gi.life==1&&gi.process==-(rngValues[base]%11)&&gi.maxHeight==0.1f
+                &&gi.alphaB==rngValues[base+1]%51+125&&gi.riseAngle==rngValues[base+2]%360
+                &&gi.distance==static_cast<float>(rngValues[base+3]%5+5)&&gi.vecTNowY==3.0f
+                &&gi.vecTNowX==static_cast<float>(static_cast<double>(rngValues[base+4]%7)*0.1+0.60000002)
+                &&gi.sparkX==x&&gi.sparkY==y&&gi.sparkZ==z&&gi.alphaT==1
+                &&gi.height[0]==60&&gi.height[1]==60&&gi.height[2]==54&&gi.height[3]==48
+                &&gi.flag[0]==0&&gi.flag[1]==0&&gi.flag[2]==0&&gi.flag[3]==0;
+        };
+        bool firstLanes=first!=nullptr;
+        for(int lane=0;lane<4&&first;++lane) firstLanes=firstLanes&&laneMatches(first->m_gi[lane],lane*5,10,20,30);
+        check(first&&first->m_type==PP_HITLINE3&&first->m_renderFlag==5&&first->m_duration==73
+            &&first->m_totalTexture==1&&first->m_size==0&&first->m_texture.size()==1
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\white02.bmp"
+            &&effect.m_effectPos.x==10&&effect.m_effectPos.y==20&&effect.m_effectPos.z==30
+            &&firstLanes&&rngDraws==draws+20&&rngCursor==20&&waveCalls.empty(),
+            "HitLine3 F1=1 state zero emits exact 4-lane profile and ten-step history");
+
+        master.m_pos={40,50,60}; effect.m_stateCnt=1; effect.ProcessHitLine3Basic434();
+        CEffectPrim* second=effect.m_primList.size()>1?effect.m_primList.back():nullptr;
+        bool secondLanes=second!=nullptr;
+        for(int lane=0;lane<4&&second;++lane) secondLanes=secondLanes&&laneMatches(second->m_gi[lane],20+lane*5,40,50,60);
+        check(second&&effect.m_primList.size()==2&&effect.m_effectPos.x==40&&effect.m_effectPos.y==50
+            &&effect.m_effectPos.z==60&&g_texMgr.requests.size()==2&&g_texMgr.requests[1]=="effect\\white02.bmp"
+            &&secondLanes&&rngDraws==draws+40&&rngCursor==40&&waveCalls.empty(),
+            "HitLine3 F1=1 state one emits a second independent primitive with ordered RNG");
+
+        master.m_pos={70,80,90}; effect.m_stateCnt=2; effect.ProcessHitLine3Basic434();
+        check(effect.m_primList.size()==2&&effect.m_effectPos.x==70&&effect.m_effectPos.y==80
+            &&effect.m_effectPos.z==90&&g_texMgr.requests.size()==2&&rngDraws==draws+40
+            &&waveCalls.empty(),
+            "HitLine3 F1=1 later states refresh master position without emission or RNG");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
     }
     {
         const int ids[]={277,287,290,292,294};

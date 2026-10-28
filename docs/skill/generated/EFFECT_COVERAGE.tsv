@@ -361,7 +361,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 431	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Effect();	src/world/SkillSpecialEffect.cpp	1327
 432	OnProcess	Electric	routed	OnProcess -> return ProcessEffectFrameLegacy();		129
 433	OnProcess	Electric2	routed	OnProcess -> ApplyElectric2(); ApplyElectric2(); return true;		130
-434	OnProcess	HitLine3	unported	OnProcess -> UnportedEffect		-
+434	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Basic434();		1327
 435	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillActionInfo.cpp;src/world/GameActorMsgHandler.cpp	136
 436	OnProcess	HalfSphere	routed	"OnProcess -> ApplyHalfSphere(""effect\\white02.bmp""); return true;"		69
 437	OnProcess	HalfSphere,AttackEnergy	routed	"OnProcess -> ApplyHalfSphere(""effect\\white02.bmp""); ApplyAttackEnergy(""effect\\ring_blue.tga""); return true;"		128

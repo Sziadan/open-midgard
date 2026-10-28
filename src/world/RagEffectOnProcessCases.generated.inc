@@ -361,7 +361,7 @@ case 430: return ProcessHitLine5Effect();
 case 431: return ProcessHitLine3Effect();
 case 432: return ProcessEffectFrameLegacy();
 case 433: ApplyElectric2(); ApplyElectric2(); return true;
-case 434: return UnportedEffect();
+case 434: return ProcessHitLine3Basic434();
 case 435: return ProcessEffectFrameLegacy();
 case 436: ApplyHalfSphere("effect\\white02.bmp"); return true;
 case 437: ApplyHalfSphere("effect\\white02.bmp"); ApplyAttackEnergy("effect\\ring_blue.tga"); return true;

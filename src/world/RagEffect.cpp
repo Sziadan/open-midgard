@@ -18956,6 +18956,55 @@ bool CRagEffect::ProcessHitLine3Effect()
     return true;
 }
 
+// PE HighPriest.exe.c:421587/432819; Ref/dhxj/RagEffect2.cpp:823.
+// TEST_BODY_BEGIN hitline3basic434_family
+bool CRagEffect::ProcessHitLine3Basic434()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+
+    if (m_stateCnt >= 0 && m_stateCnt < 2) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_HITLINE3, vector3d{});
+        if (prim != nullptr) {
+            prim->m_renderFlag = 5;
+            prim->m_duration = m_duration;
+            prim->m_totalTexture = 1;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\white02.bmp", false));
+            prim->m_size = 0.0f;
+            for (EffectGi& gi : prim->m_gi) {
+                gi.life = 1;
+                gi.process = -(rand() % 11);
+                gi.maxHeight = 0.1f;
+                gi.alphaB = static_cast<short>(rand() % 51 + 125);
+                gi.riseAngle = static_cast<short>(rand() % 360);
+                gi.distance = static_cast<float>(rand() % 5) + 5.0f;
+                gi.vecTNowY = 3.0f;
+                gi.height[0] = 0.0f;
+                gi.vecTNowX = static_cast<float>(static_cast<double>(rand() % 7) * 0.1 + 0.60000002);
+                gi.sparkX = origin.x;
+                gi.sparkY = origin.y;
+                gi.sparkZ = origin.z;
+                for (size_t history = 1; history <= 20; ++history) {
+                    gi.height[history] = 0.0f;
+                    gi.flag[history] = 0;
+                }
+                gi.alphaT = 1;
+                for (int step = 0; step < 10; ++step) {
+                    gi.height[0] += 6.0f;
+                    if (gi.height[0] > 180.0f) gi.height[0] = 180.0f;
+                    for (int history = static_cast<int>(gi.vecTNowY); history >= 1; --history) {
+                        gi.height[history] = gi.height[history - 1];
+                    }
+                }
+            }
+        }
+    }
+    return true;
+}
+// TEST_BODY_END hitline3basic434_family
+
 // PE HighPriest.exe.c:421559/432819: HitLine3(F1=0) sets start=uNum=0.
 // TEST_BODY_BEGIN hitline3zero428_family
 bool CRagEffect::ProcessHitLine3Zero428()
