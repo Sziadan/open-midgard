@@ -18492,6 +18492,72 @@ bool CRagEffect::ProcessGrandCrossEffects()
     return true;
 }
 
+// Ref/RagEffect2.cpp:28680-28835; canonical launchers at 0x610450/0x610640/0x610830.
+void CRagEffect::SpawnLineLink(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_LINELINK, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(
+        variant == 0 ? "effect\\cloud11.tga" : "effect\\alpha_center.tga", false));
+
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.process = 0;
+    gi.alphaB = static_cast<short>(variant == 0 ? 45 : 0);
+    gi.distance = 0.0f;
+    gi.maxHeight = variant == 0 ? 0.40000001f : (variant == 1 ? 0.2f : 0.69999999f);
+    gi.height[4] = static_cast<float>(variant);
+    gi.vecTNowX = m_effectPos.x;
+    gi.vecTNowY = m_effectPos.y;
+    gi.vecTNowZ = m_effectPos.z;
+    gi.height[0] = m_deltaPos.y;
+
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CWorld* world = mode != nullptr ? mode->m_world : nullptr;
+    CRenderObject* target = nullptr;
+    if (world != nullptr && gi.height[0] > 0.0f) {
+        const u32 targetAid = static_cast<u32>(gi.height[0]);
+        target = static_cast<double>(g_session.m_aid) == static_cast<double>(gi.height[0])
+            ? world->m_player : world->GetGameActorByAID(targetAid);
+    }
+    if (target != nullptr) {
+        gi.vecTPreX = target->m_pos.x;
+        gi.vecTPreY = target->m_pos.y;
+        gi.vecTPreZ = target->m_pos.z;
+    } else {
+        gi.life = 0;
+    }
+    for (size_t lane = 1; lane < prim->m_gi.size(); ++lane) {
+        prim->m_gi[lane].life = 0;
+    }
+}
+
+bool CRagEffect::ProcessLineLinkEffects()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt == 0 && (m_type == 384 || m_type == 395)) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+    }
+    SpawnLineLink(m_type == 232 ? 0 : (m_type == 384 ? 1 : 2));
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {

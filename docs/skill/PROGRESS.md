@@ -1144,3 +1144,6 @@ RG_COIN verification: Release `open_midgard` build and OldRO copy succeeded; all
 
 
 GrandCross verification: Release `open_midgard` build and OldRO copy succeeded; all 113 CTests passed. Coverage audit reports 502 routed / 191 explicit unported / 83 launched-but-unported. The comparator verifies both Ref/PE launcher bodies, canonical caller order/variants, PE assets and GI alias mapping; `git diff --check` passes. Next: audit LineLink/LineLink2/LineLink3 (232, 384, 395).
+
+
+LineLink verification: Release `open_midgard` build and OldRO copy succeeded; all 114 CTests passed. Coverage audit reports 505 routed / 188 explicit unported / 80 launched-but-unported. All three helper bodies compare equal Ref-to-PE; caller order, sounds, exact texture bytes, target setup and generated routes pass. `git diff --check` passes. Next: audit TripleAttack2/TripleAttack3 (388, 393).

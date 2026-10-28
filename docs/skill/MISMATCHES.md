@@ -451,3 +451,8 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 # WP10.3 GrandCross caller omissions (2026-10-28)
 
 - Canonical `HighPriest.exe.c:420686–420689` and `:421710–421713` contain effect 226/450 calls to GRANDCROSS then GRANDCROSS2, with F1 0/1 respectively. The available `Ref/RagEffect.cpp` OnProcess switch contains no matching GRANDCROSS caller tokens, while both helper bodies in `Ref/RagEffect2.cpp` match canonical PE. Caller routing follows canonical executable evidence; the missing Ref caller branches are source omissions.
+
+
+# WP10.3 LineLink caller omissions (2026-10-28)
+
+- Canonical `HighPriest.exe.c:420738–420740`, `:421131–421142`, and `:421270–421281` route IDs 232/384/395 to LINELINK/LINELINK2/LINELINK3; the latter two also play the literal `effect\` at state0. Available `Ref/RagEffect.cpp` has no matching caller branches, while all three Ref helper bodies in `RagEffect2.cpp` match canonical PE. Routes follow canonical executable evidence; caller omissions in Ref are noted.
