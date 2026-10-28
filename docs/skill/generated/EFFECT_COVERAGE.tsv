@@ -267,11 +267,11 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 259	OnProcess	MAPPILLAR	routed	"OnProcess -> ApplyMapPillar(""effect\\magic_green.tga"", 7.0f, false); return true;"		136
 260	OnProcess	MAPPILLAR	routed	"OnProcess -> ApplyMapPillar(""effect\\ring_red.tga"", 6.0f, false); return true;"		136
 261	OnProcess	VOLCANO2	routed	"OnProcess -> ApplyVolcano(""effect\\ring_yellow.tga"", 0, true); return true;"	src/gamemode/UseSkillEffect.generated.inc	79
-262	OnProcess	TEIHIT1	unported	OnProcess -> UnportedEffect	src/world/GameActorMsgHandler.cpp	-
+262	OnProcess	TEIHIT1	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/GameActorMsgHandler.cpp	802
 263	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_yellow.tga"", 1, false); return true;"	src/world/GameActorMsgHandler.cpp	91
-264	OnProcess	TEIHIT2	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+264	OnProcess	TEIHIT2	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	53
 265	OnProcess	TANJI	unported	OnProcess -> UnportedEffect		-
-266	OnProcess	TEIHIT1	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+266	OnProcess	TEIHIT1	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	806
 267	OnProcess	CHIMTO	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
 269	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
 270	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	-
@@ -279,8 +279,8 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 272	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	-
 273	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/world/GameActorMsgHandler.cpp	-
 274	OnProcess	RG_COIN	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
-275	OnProcess	TEIHIT2	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
-276	OnProcess	TEIHIT3	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+275	OnProcess	TEIHIT2	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	1600
+276	OnProcess	TEIHIT3	routed	OnProcess -> return ProcessTeiHitEffects();	src/gamemode/UseSkillEffect.generated.inc	2509
 277	OnProcess	Bottom_Vertical	unported	OnProcess -> UnportedEffect		-
 278	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\zz.bmp"", 1); return true;"		111
 279	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\pocket.bmp"", 3); return true;"		111

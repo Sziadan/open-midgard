@@ -1117,3 +1117,9 @@ Compared the complete `HitLine3` body in Ref `RagEffect2.cpp:28211–28442` and 
 ## WP10.3 — effect 431 verification — 2026-10-28
 
 Release `open_midgard` build and executable copy succeeded; all CTest tests passed (107/107). The effect coverage audit reports 484 routed / 209 explicit unported / 101 launched-unported, and `git diff --check` passes. All five HitLine renderer/caller source comparators pass. Next: continue the next launched-but-unported WP10.3 effect family.
+
+## WP10.3 — TeiHit callers 262/264/266/275/276 — 2026-10-28
+
+Compared TEIHIT1/2/3 setup bodies from `Ref/RagEffect2.cpp:32656–32773` with canonical `HighPriest.exe.c:456566`, `457190`, and `457116`; all three are whitespace-identical. Added `ProcessTeiHitEffects` and routed IDs 262, 264, 266, 275, and 276. Their caller loops are 20 TEIHIT1(alpha_center,0), 5 TEIHIT2, 24 TEIHIT1(lens1,1), state-20 rog_back stap playback followed by 20 TEIHIT2, and 20 TEIHIT3(lens2,2). PE resource addresses were verified. The audit identified post-increment pointer stores that target the next GI: those secondary fields are now mapped to GI i+1, all source RNG calls are retained, and the final unrepresentable GI4 stores are safely omitted. `check_teihit_callers.py` checks helper parity, routes, caller counts/order, resources, and shifted-store structure. Static coverage is 488 routed / 205 explicit unported / 97 launched-but-unported. Build and full CTest pending.
+
+TeiHit verification: Release `open_midgard` build and dist copy succeeded; all 108 CTest tests passed. The effect audit reports 489 routed / 204 explicit unported / 96 launched-unported. The TeiHit source comparator and `git diff --check` pass. Next: audit and route Chimto 267/606/607.

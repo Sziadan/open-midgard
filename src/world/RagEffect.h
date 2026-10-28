@@ -520,6 +520,10 @@ private:
     bool ProcessHitLine4Effect();
     bool ProcessHitLine5Effect();
     bool ProcessHitLine3Effect();
+    bool ProcessTeiHitEffects();
+    void SpawnTeiHit1(const char* textureName, char variant);
+    void SpawnTeiHit2();
+    void SpawnTeiHit3(const char* textureName, char variant);
     bool ProcessTier3StrEffect();
     bool ProcessThrowItemEffect();
     bool ProcessHealBlue();

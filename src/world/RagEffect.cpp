@@ -17910,6 +17910,146 @@ bool CRagEffect::ProcessHitLine3Effect()
     return true;
 }
 
+// Ref/RagEffect2.cpp:32653-32773; canonical helpers at 0x62E390/0x62FBE0/0x62F830.
+void CRagEffect::SpawnTeiHit1(const char* textureName, char variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_TEIHIT1, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    for (size_t index = 0; index < prim->m_gi.size(); ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        gi.life = 1;
+        gi.process = -10 - rand() % 25;
+        gi.distance = -10.0f;
+        gi.height[0] = 3.0f;
+        gi.riseAngle = static_cast<short>(rand() % 360);
+        const short fullDisplayAngle = static_cast<short>(rand() % 360);
+        if (index + 1 < prim->m_gi.size()) {
+            EffectGi& next = prim->m_gi[index + 1];
+            next.fullDisplayAngle = fullDisplayAngle;
+            next.height[1] = 0.69999999f;
+            next.rotStart = 0;
+            next.flag[0] = static_cast<u8>(variant);
+            next.flag[1] = 24;
+        }
+    }
+    m_effectPos.y -= 9.0f;
+    m_cachedPos = m_effectPos;
+}
+
+void CRagEffect::SpawnTeiHit2()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_TEIHIT2, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\thunder_center.bmp", false));
+    prim->m_size = 0.0f;
+    prim->m_deltaPos = m_deltaPos;
+    prim->m_pos = origin;
+    for (size_t index = 0; index < prim->m_gi.size(); ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        gi.life = 1;
+        gi.process = rand() % 10 - 40;
+        gi.distance = static_cast<float>(rand() % 16) * 0.050000001f + 0.1f;
+        gi.height[8] = 0.0f;
+        gi.alphaB = 0;
+        gi.sparkX = m_deltaPos.x;
+        gi.sparkY = m_deltaPos.y - 8.0f;
+        gi.sparkZ = m_deltaPos.z;
+        gi.rotStart = 0;
+        gi.height[1] = static_cast<float>(static_cast<double>(rand() % 50) * 0.0099999998 + 0.75);
+        const float nextHeight = static_cast<float>(static_cast<double>(rand() % 200) * 0.0099999998 - 1.0);
+        if (index + 1 < prim->m_gi.size()) {
+            EffectGi& next = prim->m_gi[index + 1];
+            next.height[2] = nextHeight;
+            next.fullDisplayAngle = 0;
+            next.flag[0] = 0;
+            next.flag[1] = 0;
+            next.flag[2] = 2;
+        }
+    }
+}
+
+void CRagEffect::SpawnTeiHit3(const char* textureName, char variant)
+{
+    if (m_stateCnt != 0) return;
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_TEIHIT1, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    for (size_t index = 0; index < prim->m_gi.size(); ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        gi.life = 1;
+        gi.process = -20 - rand() % 10;
+        gi.distance = -10.0f;
+        gi.height[0] = 2.0f;
+        gi.riseAngle = static_cast<short>(rand() % 360);
+        const short fullDisplayAngle = static_cast<short>(rand() % 360);
+        if (index + 1 < prim->m_gi.size()) {
+            EffectGi& next = prim->m_gi[index + 1];
+            next.fullDisplayAngle = fullDisplayAngle;
+            next.height[1] = 1.0f;
+            next.rotStart = 0;
+            next.flag[0] = static_cast<u8>(variant);
+            next.flag[1] = 16;
+        }
+    }
+    m_effectPos.y -= 9.0f;
+    m_cachedPos = m_effectPos;
+}
+
+bool CRagEffect::ProcessTeiHitEffects()
+{
+    switch (m_type) {
+    case 262:
+        for (int call = 0; call < 20; ++call) SpawnTeiHit1("effect\\alpha_center.tga", 0);
+        break;
+    case 264:
+        for (int call = 0; call < 5; ++call) SpawnTeiHit2();
+        break;
+    case 266:
+        for (int call = 0; call < 24; ++call) SpawnTeiHit1("effect\\lens1.tga", 1);
+        break;
+    case 275:
+        if (m_stateCnt == 20) {
+            if (CRenderObject* master = ResolveCurrentMaster()) {
+                m_effectPos = master->m_pos;
+                m_cachedPos = m_effectPos;
+                TryPlaySingleEffectWave(m_effectPos, "effect\\rog_back stap.wav", 0.0f, true);
+            }
+        }
+        for (int call = 0; call < 20; ++call) SpawnTeiHit2();
+        break;
+    case 276:
+        for (int call = 0; call < 20; ++call) SpawnTeiHit3("effect\\lens2.tga", 2);
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {
