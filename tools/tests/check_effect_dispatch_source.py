@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import csv
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "src/world"
 INDEX = ROOT / "docs/skill/generated/effect_handler_index.tsv"
+sys.path.insert(0, str(ROOT))
+from tools.ro_exe_resolve import ExeImage  # noqa: E402
 
 
 def fail(message: str) -> None:
@@ -61,6 +64,8 @@ if "Invalid Effect Id %d\\n" not in body:
 if "UNPORTED effect %d (Ref %s)\\n" not in rag:
     fail("UnportedEffect diagnostic must include the Ref handler")
 required_routes = {
+    ("OnProcess", 30): "ProcessClipWaveStrEffect",
+    ("OnProcess", 68): "ProcessClipWaveStrEffect",
     ("OnProcess", 41): "ProcessAngelus",
     ("OnProcess", 49): "ProcessFireHit",
     ("OnProcess", 67): "ProcessProvoke",
@@ -100,15 +105,15 @@ required_routes = {
     ("OnProcess3", 668): "ProcessTier3StrEffect",
     ("OnProcess3", 669): "ProcessTier3StrEffect",
     ("OnProcess3", 677): "ProcessTier3StrEffect",
-    ("OnProcess3", 635): "UnportedEffect",
-    ("OnProcess3", 636): "UnportedEffect",
+    ("OnProcess3", 635): "ProcessTier3StrEffect",
+    ("OnProcess3", 636): "ProcessTier3StrEffect",
 }
 for effect_id in range(475, 485):
     required_routes[("OnProcess", effect_id)] = "ApplyBlind"
 for (tier, effect_id), destination in required_routes.items():
     if destination not in case_lines[tier][effect_id]:
         fail(f"{tier} effect {effect_id} must route to {destination}")
-clip_wave_routes = (65, 66, 69, 75, 76, 77, 78, 83, 84, 85, 88, 91, 96, 97, 103,
+clip_wave_routes = (30, 65, 66, 68, 69, 75, 76, 77, 78, 83, 84, 85, 88, 91, 96, 97, 103,
                     106, 107, 108, 111, 113, 124, 127, 129, 131, 153, 154, 155,
                     130, 250, 204, 205, 206, 207, 210, 234, 245, 255, 256, 257, 258, 390, 391, 95, 102)
 for effect_id in clip_wave_routes:
@@ -119,6 +124,7 @@ if not clip_wave:
     fail("ProcessClipWaveStrEffect implementation not found")
 clip_body = clip_wave.group(1)
 for effect_id, frame, wave in (
+    (30, 0, "magician_thunderstorm.wav"), (68, 0, "st_mvp.wav"),
     (65, 0, "thief_invenom.wav"), (66, 0, "Acolyte_cure.wav"),
     (69, 0, "hunter_skidtrap.wav"), (75, 0, "priest_gloria.wav"),
     (84, 60, "priest_impositio.wav"), (85, 15, "priest_lexaeterna.wav"),
@@ -137,6 +143,13 @@ for effect_id, frame, wave in (
         fail(f"ProcessClipWaveStrEffect must preserve effect {effect_id}'s timed clip wave")
 if "TryPlaySingleEffectWave(m_effectPos, wave, yOffset, true)" not in clip_body or "const bool active = ProcessEZ2STR(0.0f, -80.0f, 0.0f);" not in clip_body:
     fail("ProcessClipWaveStrEffect must preserve effect position, literal Y offset, and STR result")
+image = ExeImage()
+for va, expected in ((0x719F1C, b"effect\\magician_thunderstorm.wav"),
+                     (0x71A1D8, b"effect\\st_mvp.wav")):
+    resolved = image.read_cstring_at(va)
+    source_literal = expected.decode("ascii").replace("\\", "\\\\")
+    if resolved is None or resolved.raw != expected or source_literal not in clip_body:
+        fail(f"clip-wave resource bytes/call literal differ for PE VA {va:#x}")
 for required in ("m_effectPos = m_cachedPos;", "m_duration = 9999;", "PlayWave(wave, 0.0f, 0.0f, 0.0f, 250, 40, 1.0f)", "return propagateStrResult ? active : true;", "rand() % 12 == 0", "mode->SendMsg(135, 0, 0, 0)"):
     if required not in clip_body:
         fail(f"ProcessClipWaveStrEffect must preserve Ref side effect: {required}")
@@ -162,6 +175,9 @@ if not terminal_str or "m_stateCnt = 9999;" not in terminal_str.group(1) or "ret
     fail("effects 133/134 must set terminal state 9999 when STR processing completes")
 if "propagateStrResult = false" not in tier3_body or "return propagateStrResult ? active : true;" not in tier3_body:
     fail("ProcessTier3StrEffect must preserve both STR return contracts")
+for effect_id in (635, 636):
+    if not re.search(rf"case {effect_id}: waveFrame = 0; wave = \"effect\\\\\"; propagateStrResult = false; break;", tier3_body):
+        fail(f"effect {effect_id} must preserve its frame-zero unresolved effect\\ audio prefix and constant-true return")
 blind_update = re.search(r"void UpdateBlindPrimitive\(CEffectPrim\* prim\)\s*\{(.*?)\n\}", rag, re.S)
 blind_apply = re.search(r"void CRagEffect::ApplyBlind\(int level\)\s*\{(.*?)\n\}", rag, re.S)
 if not blind_update or "prim->m_master->EffectPosition()" not in blind_update.group(1):

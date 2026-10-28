@@ -14323,9 +14323,11 @@ bool CRagEffect::ProcessClipWaveStrEffect()
     bool randomWaveGate = false;
     int quakeFrame = -1;
     switch (m_type) {
+    case 30: wave = "effect\\magician_thunderstorm.wav"; break;
     case 130: case 250: wave = "effect\\knight_twohandquicken.wav"; propagateStrResult = false; extendDuration = true; break;
     case 65: wave = "effect\\thief_invenom.wav"; break;
     case 66: wave = "effect\\Acolyte_cure.wav"; break;
+    case 68: wave = "effect\\st_mvp.wav"; break;
     case 69: wave = "effect\\hunter_skidtrap.wav"; break;
     case 75: wave = "effect\\priest_gloria.wav"; yOffset = 1.0f; break;
     case 76: wave = "effect\\priest_magnificat.wav"; break;
@@ -20565,6 +20567,8 @@ bool CRagEffect::ProcessTier3StrEffect()
         waveFrame = 0; wave = "_heal_effect.wav"; break;
     case 608: waveFrame = 45; wave = "_heal_effect.wav"; break;
     case 609: waveFrame = 50; wave = "caramel_die.wav"; break;
+    case 635: waveFrame = 0; wave = "effect\\"; propagateStrResult = false; break;
+    case 636: waveFrame = 0; wave = "effect\\"; propagateStrResult = false; break;
     case 668: waveFrame = 1; wave = "effect\\dragonfear.wav"; propagateStrResult = false; break;
     case 669: waveFrame = 1; wave = "effect\\wideb.wav"; propagateStrResult = false; break;
     case 677: waveFrame = 1; wave = "effect\\wideb.wav"; propagateStrResult = false; break;

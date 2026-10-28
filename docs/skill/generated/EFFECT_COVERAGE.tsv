@@ -71,7 +71,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 26	OnProcess	IceArrow	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	49
 27	OnProcess	FrostDiver	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	47
 28	OnProcess	FrostDiver2	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	5
-30	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+30	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillSpecialEffect.cpp	15
 31	OnProcess	FireArrow	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	102
 32	OnProcess	NapalmBeat	routed	OnProcess -> return ProcessEffectFrameLegacy();		12
 33	OnProcess	Ruwach	routed	OnProcess -> SpawnRuwach(); return true;	src/world/GameActor.cpp	110
@@ -107,7 +107,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 65	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		15
 66	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	15
 67	OnProcess	Provoke	routed	OnProcess -> return ProcessProvoke();	src/gamemode/UseSkillEffect.generated.inc	60
-68	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/world/GameActor.cpp	-
+68	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/GameActor.cpp	15
 69	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		15
 71	OnProcess	Cone	routed	OnProcess -> return ProcessEffectFrameLegacy();		93
 72	OnProcess	Sphere	routed	OnProcess -> return ProcessEffectFrameLegacy();		106
@@ -634,8 +634,8 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 632	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(17);	src/world/SkillSpecialEffect.cpp	124
 633	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(18);	src/world/SkillSpecialEffect.cpp	2443
 634	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(19);		1135
-635	OnProcess3	ProcessEZ2STR	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
-636	OnProcess3	ProcessEZ2STR	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+635	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/gamemode/UseSkillEffect.generated.inc	15
+636	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/gamemode/UseSkillEffect.generated.inc	15
 637	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(20);	src/gamemode/UseSkillEffect.generated.inc	2443
 638	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(21);		2443
 639	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(22);		2443

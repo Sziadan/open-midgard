@@ -6,5 +6,5 @@ Registration does not establish a 1:1 handler body or receiver implementation.
 0x043D is excluded: absent from the target EXE dispatcher; later packet-db entry only.
 Open packet routes:
 SKILL_MATRIX.md: present (inspect runtime evidence)
-Effect coverage: ported=0, routed=564, clip-wave=0, str-default=0, unported=129, launched-but-unported=32; see EFFECT_COVERAGE.tsv.
+Effect coverage: ported=0, routed=568, clip-wave=0, str-default=0, unported=125, launched-but-unported=28; see EFFECT_COVERAGE.tsv.
 Live/replay per-skill acceptance: not established by this static audit.
