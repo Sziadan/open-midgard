@@ -1889,3 +1889,8 @@ Ported effect297's PE PokJuk emitter. It follows the world player every call; st
 ## WP5C effect434 HitLine3 F1=1 — 2026-10-28
 
 Added the PE F1=1 profile as a separate effect434 handler, retaining effect431's existing F1=3 path. Effects434 copies master position every call and emits on states0/1. Each primitive has exact `effect\\white02.bmp`, four active GI lanes, five ordered RNG draws per lane, and the ten-step startup history shift; later states refresh position without emission. The PE and secondary Ref helpers agree. Source and lifecycle checks cover both active frames, per-lane fields/history, 20 draws per primitive, and silence. Coverage is now 634 routed /59 explicit unported /0 launched-but-unported. Full Release parity CTest passes229/229, OpenMidgard Release builds and copies the executable, and replay CTest passes102/102. No media/visual acceptance is claimed.
+
+
+## WP5C effect447 Foot F1=1 — 2026-10-28
+
+Ported effect447's left Foot profile using the exact PE resource `effect\\foot_l2.tga` (VA `0x719ECC`). It copies master position every call and emits a single PP_FOOT at state0 with renderFlag1, inherited duration, size100, GI0 fixed payload, and inactive GI1-3. PE and secondary Ref agree; primary Ref omits the helper. Source and lifecycle checks cover the resource, full payload, timing, and no RNG/audio. Coverage is now 635 routed /58 explicit unported /0 launched-but-unported. Full Release parity CTest passes230/230, OpenMidgard Release builds and copies the executable, and replay CTest passes102/102. No media/visual acceptance is claimed.

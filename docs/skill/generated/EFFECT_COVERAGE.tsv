@@ -373,7 +373,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 444	OnProcess	RunStop	routed	OnProcess -> return ProcessRunStop444();	src/gamemode/UseSkillEffect.generated.inc	305
 445	OnProcess	inline	routed	OnProcess -> return ProcessEffect445();	src/world/GameActor.cpp	34
 446	OnProcess	inline	routed	OnProcess -> ApplyBodyLight446(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
-447	OnProcess	Foot	unported	OnProcess -> UnportedEffect		-
+447	OnProcess	Foot	routed	OnProcess -> return ProcessFoot447();		778
 448	OnProcess	Foot	unported	OnProcess -> UnportedEffect		-
 449	OnProcess	inline	routed	OnProcess -> ApplyBodyLight449(); return true;	src/world/GameActor.cpp	34
 450	OnProcess	GRANDCROSS,GRANDCROSS2	routed	OnProcess -> return ProcessGrandCrossEffects();	src/world/SkillSpecialEffect.cpp	69

@@ -373,7 +373,7 @@ case 442: ApplyBodyLight442(); return true;
 case 444: return ProcessRunStop444();
 case 445: return ProcessEffect445();
 case 446: ApplyBodyLight446(); return true;
-case 447: return UnportedEffect();
+case 447: return ProcessFoot447();
 case 448: return UnportedEffect();
 case 449: ApplyBodyLight449(); return true;
 case 450: return ProcessGrandCrossEffects();
