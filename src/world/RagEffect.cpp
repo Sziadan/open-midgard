@@ -20247,6 +20247,67 @@ bool CRagEffect::ProcessWarp8()
     return true;
 }
 
+// Ref/RagEffect.cpp:3713; canonical helper at HighPriest.exe.c:425203.
+void CRagEffect::SpawnEnhance9()
+{
+    if (m_stateCnt == 0) {
+        CEffectPrim* circle = LaunchEffectPrim(PP_3DCIRCLE, vector3d{});
+        if (circle == nullptr) return;
+        circle->m_duration = m_duration;
+        circle->m_arcAngle = 22.5f;
+        circle->m_size = 7.0f;
+        circle->m_latitude = 90.0f;
+        MatrixIdentity(circle->m_matrix);
+        MatrixAppendXRotation(circle->m_matrix, GetRadian(static_cast<int>(circle->m_latitude)));
+        circle->m_alpha = 128.0f;
+        circle->m_fadeOutCnt = circle->m_duration - circle->m_duration / 3;
+        InitReferenceSegments(circle);
+        circle->m_texture.push_back(g_texMgr.GetTexture("effect\\ring_yellow.tga", false));
+
+        CEffectPrim* cylinder = LaunchEffectPrim(PP_3DCYLINDER, vector3d{});
+        if (cylinder == nullptr) return;
+        cylinder->m_duration = m_duration;
+        cylinder->m_outerSize = 6.0f;
+        cylinder->m_innerSize = 6.0f;
+        cylinder->m_heightSpeed = 2.0f;
+        cylinder->m_heightAccel = cylinder->m_heightSpeed / static_cast<double>(cylinder->m_duration) * -0.66666669;
+        cylinder->m_maxHeightSize = 50.0f;
+        cylinder->m_alpha = 128.0f;
+        cylinder->m_fadeOutCnt = cylinder->m_duration - cylinder->m_duration / 3;
+        cylinder->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false));
+    }
+
+    if (g_session.m_isMinEffect) {
+        if ((m_stateCnt % 15) != 0) return;
+    } else if ((m_stateCnt % 5) != 0) {
+        return;
+    }
+
+    CEffectPrim* cross = LaunchEffectPrim(PP_3DCROSSTEXTURE, vector3d{});
+    if (cross == nullptr) return;
+    cross->m_duration = 50;
+    const int rotation = rand() % 360;
+    MatrixIdentity(cross->m_matrix);
+    MatrixAppendYRotation(cross->m_matrix, GetRadian(rotation));
+    const int radius = rand() % 5 + 2;
+    cross->m_deltaPos2.x = radius * cross->m_matrix.m[2][0] + cross->m_matrix.m[3][0];
+    cross->m_deltaPos2.y = radius * cross->m_matrix.m[2][1] + cross->m_matrix.m[3][1];
+    cross->m_deltaPos2.z = radius * cross->m_matrix.m[2][2] + cross->m_matrix.m[3][2];
+    MatrixIdentity(cross->m_matrix);
+    MatrixAppendXRotation(cross->m_matrix, GetRadian(90));
+    cross->m_speed = 2.0f;
+    cross->m_widthSize = 7.0f;
+    cross->m_heightSize = 0.25f;
+    cross->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_down.tga", false));
+    cross->m_gi[0].life = 0;
+}
+
+bool CRagEffect::ProcessEnhance9()
+{
+    SpawnEnhance9();
+    return true;
+}
+
 void CRagEffect::SpawnNpcStop(int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();

@@ -644,6 +644,8 @@ struct CRagEffect : CGameObject {
     void SpawnEntry6();
     bool ProcessWarp8();
     void SpawnWarp8();
+    bool ProcessEnhance9();
+    void SpawnEnhance9();
     void SpawnPressure365();
     void SpawnGroundShake365();
     bool ProcessSoulBreaker361Effect();
@@ -3226,6 +3228,55 @@ int main()
                 "effect333 loads exact ACT then SPR resources");
         }
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject actor; actor.m_pos={100,200,300};
+        CRagEffect effect; effect.m_type=9; effect.m_master=&actor; effect.m_duration=60;
+        const bool oldMinEffect=g_session.m_isMinEffect;
+        g_session.m_isMinEffect=false;g_texMgr.requests.clear();waveCalls.clear();
+        rngValues={359,4};rngCursor=0;
+        const int drawBase=rngDraws;
+        effect.m_stateCnt=1;effect.ProcessEnhance9();
+        check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==drawBase&&waveCalls.empty(),
+            "effect9 nonzero non-cadence state has no output or RNG");
+        effect.m_stateCnt=0;effect.ProcessEnhance9();
+        check(effect.m_primList.size()==3&&g_texMgr.requests==std::vector<std::string>({
+            "effect\\ring_yellow.tga","effect\\alpha_down.tga","effect\\alpha_down.tga"})
+            &&rngDraws==drawBase+2&&rngCursor==2&&waveCalls.empty(),
+            "effect9 state0 creates two setup primitives plus cadence cross texture with two RNG draws");
+        if(effect.m_primList.size()==3) {
+            auto primitive=effect.m_primList.begin();
+            const CEffectPrim* circle=*primitive++;
+            const CEffectPrim* cylinder=*primitive;
+            const CEffectPrim* cross=effect.m_primList.back();
+            check(circle->m_type==PP_3DCIRCLE&&circle->m_duration==60&&circle->m_arcAngle==22.5f
+                &&circle->m_size==7.0f&&circle->m_latitude==90.0f&&circle->m_alpha==128.0f
+                &&circle->m_fadeOutCnt==40&&circle->m_texture.size()==1,
+                "effect9 state0 circle preserves setup profile and resource");
+            check(cylinder->m_type==PP_3DCYLINDER&&cylinder->m_duration==60
+                &&cylinder->m_outerSize==6.0f&&cylinder->m_innerSize==6.0f&&cylinder->m_heightSpeed==2.0f
+                &&std::fabs(cylinder->m_heightAccel-(2.0/60.0*-0.66666669))<0.000001
+                &&cylinder->m_maxHeightSize==50.0f&&cylinder->m_alpha==128.0f
+                &&cylinder->m_fadeOutCnt==40&&cylinder->m_texture.size()==1,
+                "effect9 state0 cylinder preserves height and fade profile");
+            check(cross->m_type==PP_3DCROSSTEXTURE&&cross->m_duration==50&&cross->m_speed==2.0f
+                &&cross->m_widthSize==7.0f&&cross->m_heightSize==0.25f&&cross->m_deltaPos2.y==0.0f
+                &&std::fabs(std::sqrt(cross->m_deltaPos2.x*cross->m_deltaPos2.x
+                    +cross->m_deltaPos2.z*cross->m_deltaPos2.z)-6.0f)<0.0001f
+                &&cross->m_gi[0].life==0&&cross->m_texture.size()==1,
+                "effect9 state0 cross-texture uses ordered rotation/radius RNG and exact profile");
+        }
+        effect.m_stateCnt=5;effect.ProcessEnhance9();
+        check(effect.m_primList.size()==4&&rngDraws==drawBase+4&&g_texMgr.requests.size()==4,
+            "effect9 normal cadence emits only the additional state5 cross texture");
+        g_session.m_isMinEffect=true;effect.m_stateCnt=5;effect.ProcessEnhance9();
+        check(effect.m_primList.size()==4&&rngDraws==drawBase+4,
+            "effect9 minimum-effects mode skips state5 cross cadence");
+        effect.m_stateCnt=15;effect.ProcessEnhance9();
+        check(effect.m_primList.size()==5&&rngDraws==drawBase+6&&g_texMgr.requests.size()==5,
+            "effect9 minimum-effects mode emits cross texture at state15");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;
+        g_session.m_isMinEffect=oldMinEffect;
     }
     {
         CRenderObject actor; actor.m_pos={400,500,600};

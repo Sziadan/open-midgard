@@ -8,7 +8,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 6	OnProcess	Entry	routed	OnProcess -> return ProcessEntry6();		13
 7	OnProcess	Exit	routed	OnProcess -> return ProcessExit7();	src/world/GameActor.cpp	15
 8	OnProcess	Warp	routed	OnProcess -> return ProcessWarp8();		15
-9	OnProcess	Enhance	unported	OnProcess -> UnportedEffect		-
+9	OnProcess	Enhance	routed	OnProcess -> return ProcessEnhance9();		15
 10	OnProcess	Coin	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	5
 11	OnProcess	Endure	routed	OnProcess -> return ProcessEndure11();	src/gamemode/UseSkillEffect.generated.inc	15
 12	OnProcess	SAINTCASTING	routed	"OnProcess -> ApplyPairedSaintCasting(""effect\\ring_yellow.tga"", 1, true, 0.0f); return true;"	src/session/SkillActionInfo.cpp;src/session/SkillActionInfo2.cpp	15

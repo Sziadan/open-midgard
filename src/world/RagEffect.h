@@ -559,6 +559,8 @@ private:
     void SpawnEntry6();
     bool ProcessWarp8();
     void SpawnWarp8();
+    bool ProcessEnhance9();
+    void SpawnEnhance9();
     bool ProcessNpcStopEffects();
     void SpawnNpcStop(int variant);
     bool ProcessGuardEffects();
