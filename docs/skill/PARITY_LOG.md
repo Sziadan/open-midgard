@@ -3251,7 +3251,7 @@ The six scenario fixtures send unit jobs189–194, then step real `CSkill::OnPro
 
 ## WP10.8 runtime replay — Land Mine trigger — 2026-10-28
 
-`land_mine_trigger_lifecycle.tsv` dispatches 0x011F job147, a 33-byte 0x01DE HT_LANDMINE skill116 notify (owner AID1 → target AID2), an 11-byte 0x01D7 base-look change to job135, then 0x0120 removal. The runtime trace confirms the damage packet; unit state confirms job147→135; one real CSkill process call confirms Ref effect138; both world registries confirm removal. Packet/source basis: `Ref/eAthena_src_2011/map/skill.c:7487-7538`, `clif.c:2932-2948,4651-4652`, and `Ref/Skill.cpp:1537`. Focused replay and full CTest pass56/56.
+`land_mine_trigger_lifecycle.tsv` dispatches 0x011F job147, a 33-byte 0x01DE HT_LANDMINE skill116 notify (trap-unit AID100 → target AID2), an 11-byte 0x01D7 base-look change to job135, then 0x0120 removal. The runtime trace confirms the damage packet; unit state confirms job147→135; one real CSkill process call confirms Ref effect138; both world registries confirm removal. `skill_trap_splash` calls `skill_attack` with trap unit as `dsrc`; Ref's `skill_attack` passes `dsrc` to `clif_skill_damage`, making trap AID the packet source (`Ref/eAthena_src_2011/map/skill.c:1811,7487-7538`). The replay packet was corrected from owner AID1 to trap AID100. Focused replay and full CTest pass56/56.
 
 ## WP10.8 runtime replay — Graffiti packet lifecycle — 2026-10-28
 
@@ -3259,4 +3259,8 @@ The six scenario fixtures send unit jobs189–194, then step real `CSkill::OnPro
 
 ## WP10.8 runtime replay — Blast Mine trigger — 2026-10-28
 
-`blast_mine_trigger_lifecycle.tsv` dispatches job143 entry, duplicate-entry hidden state, 0x01AC reveal, packetver23 0x01DE HT_BLASTMINE skill122 damage notify, 0x01D7 job140 used-trap update, and 0x0120 removal. Runtime confirms message45 saved effect106, hidden/revealed visibility, the damage packet trace, effect106 launch when message47 sets job140, and cleanup from both world lists. Ref source basis: `Ref/Skill.cpp` message45 and message47 paths around 3140–3543; packet IDs/layout aligned with existing Land Mine replay and receive profile. Focused replay and full CTest pass58/58.
+`blast_mine_trigger_lifecycle.tsv` dispatches job143 entry, duplicate-entry hidden state, 0x01AC reveal, packetver23 0x01DE HT_BLASTMINE skill122 damage notify (trap-unit AID100 → target AID2), 0x01D7 job140 used-trap update, and 0x0120 removal. Runtime confirms message45 saved effect106, hidden/revealed visibility, the damage packet trace, effect106 launch when message47 sets job140, and cleanup from both world lists. Ref source basis: `Ref/Skill.cpp` message45 and message47 paths around 3140–3543; packet IDs/layout aligned with existing Land Mine replay and receive profile. Focused replay and full CTest pass58/58. The earlier owner-AID packet source was corrected after tracing `skill_trap_splash`→`skill_attack`→`clif_skill_damage`.
+
+## WP10.8 runtime replay — Claymore Trap trigger — 2026-10-28
+
+`claymore_trap_trigger_lifecycle.tsv` dispatches job152 entry, duplicate-entry hidden state, 0x01AC reveal, 33-byte packetver23 0x01DE HT_CLAYMORETRAP skill123 damage notify with trap-unit AID100 as source, 0x01D7 job140 used-trap update, and 0x0120 removal. Runtime verifies saved effect107, visibility transition, notification routing to the unit, effect107 launched by message47, and both world-list removals. Ref basis: `Ref/eAthena_src_2011/map/skill.c:1811,7487-7538`, `Ref/eAthena_src_2011/map/clif.c:4651-4652`, `Ref/Skill.cpp` message45/47 paths. Full replay CTest passes59/59.

@@ -817,9 +817,9 @@ void ReplayLandMineTriggerLifecycle(const std::string& path)
                 "Land Mine entry did not create the visible job147 unit");
         } else if (scenarioPacket.opcode == 0x01DE) {
             dispatchedDamageNotify = true;
-            Require(ReadU32LE(scenarioPacket.bytes.data() + 4) == 1
+            Require(ReadU32LE(scenarioPacket.bytes.data() + 4) == 100
                     && ReadU32LE(scenarioPacket.bytes.data() + 8) == 2,
-                "HT_LANDMINE trigger packet must report owner AID1 attacking target AID2");
+                "HT_LANDMINE trigger packet must report trap-unit AID100 attacking target AID2");
         } else if (scenarioPacket.opcode == 0x01D7) {
             CSkill* unit = fixture.world.GetSkillByAID(100);
             Require(unit != nullptr && unit->m_job == 135,
@@ -844,7 +844,7 @@ void ReplayLandMineTriggerLifecycle(const std::string& path)
     std::string logLine;
     while (std::getline(runtimeLog, logLine)) {
         foundDamageNotify = foundDamageNotify
-            || logLine.find("[GameMode] skill damage opcode=0x01DE src=1 dst=2 skill=116") != std::string::npos;
+            || logLine.find("[GameMode] skill damage opcode=0x01DE src=100 dst=2 skill=116") != std::string::npos;
         foundActiveEffect = foundActiveEffect
             || logLine.find("[REPLAY] LaunchEffect id=138 actor=100") != std::string::npos;
     }
@@ -901,7 +901,8 @@ void ReplayGraffitiLifecycle(const std::string& path)
     std::cout << "Graffiti aid=200 creator=1 cell=(10,20) text_field=80 active=1 removed=1\n";
 }
 
-void ReplayBlastMineTriggerLifecycle(const std::string& path)
+void ReplaySavedEffectTrapTriggerLifecycle(const std::string& path, int trapJob, int skillId, int effectId,
+    const std::string& trapName)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
     Require(packets.size() == 6 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
@@ -910,66 +911,68 @@ void ReplayBlastMineTriggerLifecycle(const std::string& path)
         && packets[3].opcode == 0x01DE && packets[3].bytes.size() == 33
         && packets[4].opcode == 0x01D7 && packets[4].bytes.size() == 11
         && packets[5].opcode == 0x0120 && packets[5].bytes.size() == 6,
-        "Blast Mine trigger requires set, hide, reveal, damage, used-trap update, and removal packets");
-    Require(packets[0].bytes[14] == 143 && packets[1].bytes[14] == 143
-        && ReadU16LE(packets[3].bytes.data() + 2) == 122
-        && ReadU32LE(packets[3].bytes.data() + 4) == 1 && ReadU32LE(packets[3].bytes.data() + 8) == 2
+        "saved-effect trap trigger requires set, hide, reveal, damage, used-trap update, and removal packets");
+    Require(packets[0].bytes[14] == trapJob && packets[1].bytes[14] == trapJob
+        && ReadU16LE(packets[3].bytes.data() + 2) == skillId
+        && ReadU32LE(packets[3].bytes.data() + 4) == 100 && ReadU32LE(packets[3].bytes.data() + 8) == 2
         && ReadU32LE(packets[4].bytes.data() + 2) == 100 && ReadU32LE(packets[4].bytes.data() + 7) == 140,
-        "Blast Mine trigger must follow job143, HT_BLASTMINE skill122, and job140 activation");
+        "trap trigger job, damage skill, actor ids, or used-trap activation differs from Ref");
 
     Fixture fixture(path);
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
     bool sawDamageNotify = false;
-    bool sawEffect106 = false;
+    bool sawExpectedEffect = false;
     for (std::size_t index = 0; index < packets.size(); ++index) {
         PacketView packet{};
         int consumed = 0;
         Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
             "production packet reader rejected Blast Mine trigger packet");
         Require(packet.packetId == packets[index].opcode && consumed == static_cast<int>(packets[index].bytes.size()),
-            "Blast Mine packet framing differs from scenario metadata");
-        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Blast Mine trigger packet");
+            "trap packet framing differs from scenario metadata");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch trap trigger packet");
 
         CSkill* unit = fixture.world.GetSkillByAID(100);
         if (index == 0) {
-            Require(unit != nullptr && unit->m_job == 143 && unit->m_effectId == 106
+            Require(unit != nullptr && unit->m_job == trapJob && unit->m_effectId == effectId
                     && unit->m_isVisibleBody == 1,
-                "Blast Mine entry did not initialize visible job143 with saved effect106");
+                trapName + " entry did not initialize its Ref saved-effect trap job");
         } else if (index == 1) {
-            Require(unit != nullptr && unit->m_job == 143 && unit->m_isVisibleBody == 0,
-                "duplicate trap entry did not hide Blast Mine job143");
+            Require(unit != nullptr && unit->m_job == trapJob && unit->m_isVisibleBody == 0,
+                "duplicate trap entry did not hide " + trapName);
         } else if (index == 2) {
             Require(unit != nullptr && unit->m_isVisibleBody == 1,
-                "0x01AC did not reveal hidden Blast Mine job143");
+                "0x01AC did not reveal hidden " + trapName);
         } else if (index == 3) {
-            Require(unit != nullptr && unit->m_job == 143,
-                "Blast Mine damage notification unexpectedly changed its unit job");
+            Require(unit != nullptr && unit->m_job == trapJob,
+                trapName + " damage notification unexpectedly changed its unit job");
         } else if (index == 4) {
             Require(unit != nullptr && unit->m_job == 140,
-                "0x01D7 did not activate Blast Mine as used-trap job140");
+                "0x01D7 did not activate " + trapName + " as used-trap job140");
         } else {
-            Require(unit == nullptr, "0x0120 did not remove triggered Blast Mine from CWorld skill list");
+            Require(unit == nullptr, "0x0120 did not remove triggered " + trapName + " from CWorld skill list");
             Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
                     [](CGameObject* object) {
                         const CSkill* skill = dynamic_cast<const CSkill*>(object);
                         return skill != nullptr && skill->m_aid == 100;
                     }),
-                "0x0120 did not remove triggered Blast Mine from CWorld object ownership list");
+                "0x0120 did not remove triggered " + trapName + " from CWorld object ownership list");
         }
     }
 
     std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
-    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for Blast Mine trigger");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for " + trapName + " trigger");
     std::string logLine;
     while (std::getline(runtimeLog, logLine)) {
         sawDamageNotify = sawDamageNotify
-            || logLine.find("[GameMode] skill damage opcode=0x01DE src=1 dst=2 skill=122") != std::string::npos;
-        sawEffect106 = sawEffect106 || logLine.find("[REPLAY] LaunchEffect id=106 actor=100") != std::string::npos;
+            || logLine.find("[GameMode] skill damage opcode=0x01DE src=100 dst=2 skill=" + std::to_string(skillId)) != std::string::npos;
+        sawExpectedEffect = sawExpectedEffect
+            || logLine.find("[REPLAY] LaunchEffect id=" + std::to_string(effectId) + " actor=100") != std::string::npos;
     }
-    Require(sawDamageNotify, "runtime trace did not record the HT_BLASTMINE damage notification");
-    Require(sawEffect106, "used-trap job140 did not launch saved Ref effect106");
-    std::cout << "BlastMine trigger aid=100 skill=122 hidden=1 revealed=1 activeJob=140 effect=106 removed=1\n";
+    Require(sawDamageNotify, "runtime trace did not record the trap damage notification");
+    Require(sawExpectedEffect, "used-trap job140 did not launch the saved Ref effect");
+    std::cout << trapName << " trigger aid=100 skill=" << skillId << " hidden=1 revealed=1 activeJob=140 effect="
+        << effectId << " removed=1\n";
 }
 
 void ReplayWarpUnitLifecycle(const std::string& path)
@@ -1063,12 +1066,12 @@ bool IsGraffitiLifecycleScenario(const std::string& path)
         && packets.front().bytes.size() == 97 && packets.back().opcode == 0x0120;
 }
 
-bool IsBlastMineTriggerScenario(const std::string& path)
+bool IsSavedEffectTrapScenario(const std::string& path, int trapJob, int skillId)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
     return packets.size() == 6 && packets.front().opcode == 0x011F
-        && packets.front().bytes.size() == 16 && packets.front().bytes[14] == 143
-        && packets[3].opcode == 0x01DE && ReadU16LE(packets[3].bytes.data() + 2) == 122;
+        && packets.front().bytes.size() == 16 && packets.front().bytes[14] == trapJob
+        && packets[3].opcode == 0x01DE && ReadU16LE(packets[3].bytes.data() + 2) == skillId;
 }
 
 } // namespace
@@ -1089,8 +1092,10 @@ int main(int argc, char** argv)
             ReplayLandMineTriggerLifecycle(argv[1]);
         } else if (IsGraffitiLifecycleScenario(argv[1])) {
             ReplayGraffitiLifecycle(argv[1]);
-        } else if (IsBlastMineTriggerScenario(argv[1])) {
-            ReplayBlastMineTriggerLifecycle(argv[1]);
+        } else if (IsSavedEffectTrapScenario(argv[1], 143, 122)) {
+            ReplaySavedEffectTrapTriggerLifecycle(argv[1], 143, 122, 106, "BlastMine");
+        } else if (IsSavedEffectTrapScenario(argv[1], 152, 123)) {
+            ReplaySavedEffectTrapTriggerLifecycle(argv[1], 152, 123, 107, "ClaymoreTrap");
         } else if (IsWarpUnitLifecycleScenario(argv[1])) {
             ReplayWarpUnitLifecycle(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {

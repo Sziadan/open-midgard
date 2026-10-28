@@ -1,10 +1,10 @@
 # actor	source	1	0	16	16
 # actor	target	2	0	18	16
-# actor	actor	3	147	10	20
+# actor	actor	3	143	10	20
 # opcode	hexBytes	comment
 0x011F	1F0164000000020000000A0014008F01	Blast Mine entry job143 owned by AID2; hidden on first sighting
 0x011F	1F0164000000020000000A0014008F01	Duplicate job143 entry hides the distant Blast Mine
 0x01AC	AC0164000000	Reveal Blast Mine unit AID100
-0x01DE	DE017A000100000002000000000000000000000000000000640000000100010004	HT_BLASTMINE hit from trap owner AID1 to target AID2 (skill122)
+0x01DE	DE017A006400000002000000000000000000000000000000640000000100010004	HT_BLASTMINE hit from trap unit AID100 to target AID2 (skill122)
 0x01D7	D70164000000008C000000	Triggered Blast Mine becomes used-trap job140
 0x0120	200164000000	Remove triggered Blast Mine unit AID100

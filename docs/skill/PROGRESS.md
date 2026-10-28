@@ -1657,7 +1657,7 @@ The plan listed Pneuma among units expected to launch a loop effect, but the pri
 
 ## WP10.8 — Land Mine trigger lifecycle replay — 2026-10-28
 
-Added a full Land Mine trigger path: job147 entry, packetver23 0x01DE HT_LANDMINE skill116 damage notify from owner AID1 to target AID2, 0x01D7 conversion to active Fire Pillar job135, one nominal 24 ms process step launching effect138, and 0x0120 removal. Focused replay passes; the complete root packet replay CTest passes56/56. The replay covers one triggerable trap path; remaining Hunter trap variants still need their own Ref evidence.
+Added a full Land Mine trigger path: job147 entry, packetver23 0x01DE HT_LANDMINE skill116 damage notify from trap-unit AID100 to target AID2, 0x01D7 conversion to active Fire Pillar job135, one nominal 24 ms process step launching effect138, and 0x0120 removal. Focused replay passes; the complete root packet replay CTest passes56/56. A follow-up Ref trace correction changed the notification source from owner AID1 to trap-unit AID100, as `skill_attack` sends the notification using its trap-unit `dsrc`.
 
 ## WP10.8 — Graffiti packet lifecycle replay — 2026-10-28
 
@@ -1665,4 +1665,8 @@ Added `graffiti_lifecycle.tsv` for a raw 97-byte 0x01C9 Graffiti entry (unit AID
 
 ## WP10.8 — Blast Mine trigger lifecycle replay — 2026-10-28
 
-Added a Blast Mine sequence covering job143 entry, duplicate entry hiding, 0x01AC reveal, 33-byte packetver23 0x01DE HT_BLASTMINE skill122 notify, 0x01D7 transition to used-trap job140, and 0x0120 removal. The runtime verifies initial saved effect106, hidden/revealed state, damage-notify trace, effect106 launch on job140, and cleanup from both world lists. Focused replay passes; the complete root packet replay CTest passes58/58.
+Added a Blast Mine sequence covering job143 entry, duplicate entry hiding, 0x01AC reveal, 33-byte packetver23 0x01DE HT_BLASTMINE skill122 notify from trap-unit AID100 to target AID2, 0x01D7 transition to used-trap job140, and 0x0120 removal. The runtime verifies initial saved effect106, hidden/revealed state, damage-notify trace, effect106 launch on job140, and cleanup from both world lists. Focused replay passes; the complete root packet replay CTest passes58/58. Ref `skill_trap_splash` passes the trap unit as `dsrc` to `skill_attack`, so the earlier owner-AID packet fixture was corrected.
+
+## WP10.8 — Claymore Trap trigger lifecycle replay — 2026-10-28
+
+Added a Claymore Trap sequence covering job152 entry, duplicate-entry hiding, 0x01AC reveal, packetver23 0x01DE HT_CLAYMORETRAP skill123 notify from trap-unit AID100 to target AID2, 0x01D7 transition to used-trap job140, and 0x0120 removal. The production router resolves the source AID to the `CSkill`; message45 stores effect107 and message47 on job140 launches it. Land Mine and Blast Mine fixtures were corrected to use the trap-unit AID as the damage notification source, matching Ref `skill_trap_splash` → `skill_attack` → `clif_skill_damage`. Focused tests and full replay suite pass59/59.
