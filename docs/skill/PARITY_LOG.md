@@ -3264,3 +3264,7 @@ The six scenario fixtures send unit jobs189–194, then step real `CSkill::OnPro
 ## WP10.8 runtime replay — Claymore Trap trigger — 2026-10-28
 
 `claymore_trap_trigger_lifecycle.tsv` dispatches job152 entry, duplicate-entry hidden state, 0x01AC reveal, 33-byte packetver23 0x01DE HT_CLAYMORETRAP skill123 damage notify with trap-unit AID100 as source, 0x01D7 job140 used-trap update, and 0x0120 removal. Runtime verifies saved effect107, visibility transition, notification routing to the unit, effect107 launched by message47, and both world-list removals. Ref basis: `Ref/eAthena_src_2011/map/skill.c:1811,7487-7538`, `Ref/eAthena_src_2011/map/clif.c:4651-4652`, `Ref/Skill.cpp` message45/47 paths. Full replay CTest passes59/59.
+
+## WP10.8 runtime replay — Sandman trap trigger — 2026-10-28
+
+`sandman_trap_trigger_lifecycle.tsv` sends job149 entry, duplicate-entry hidden state, 0x01AC reveal, packetver23 0x01DE HT_SANDMAN skill119 damage notify from trap-unit AID100 to target AID2, 0x01D7 job140 used-trap update, then 0x0120 removal. Runtime verifies saved effect139, notification routing to the unit, reveal/hide state, effect139 launched by message47, and cleanup from both world lists. Ref basis: `Ref/eAthena_src_2011/map/skill.c:1811,7487-7538`, `Ref/eAthena_src_2011/map/clif.c:4651-4652`, and `Ref/Skill.cpp` message45/47 paths. Focused replay and full CTest pass60/60.

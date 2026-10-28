@@ -1670,3 +1670,7 @@ Added a Blast Mine sequence covering job143 entry, duplicate entry hiding, 0x01A
 ## WP10.8 — Claymore Trap trigger lifecycle replay — 2026-10-28
 
 Added a Claymore Trap sequence covering job152 entry, duplicate-entry hiding, 0x01AC reveal, packetver23 0x01DE HT_CLAYMORETRAP skill123 notify from trap-unit AID100 to target AID2, 0x01D7 transition to used-trap job140, and 0x0120 removal. The production router resolves the source AID to the `CSkill`; message45 stores effect107 and message47 on job140 launches it. Land Mine and Blast Mine fixtures were corrected to use the trap-unit AID as the damage notification source, matching Ref `skill_trap_splash` → `skill_attack` → `clif_skill_damage`. Focused tests and full replay suite pass59/59.
+
+## WP10.8 — Sandman trap trigger lifecycle replay — 2026-10-28
+
+Added a Sandman sequence covering job149 entry, duplicate-entry hiding, 0x01AC reveal, packetver23 0x01DE HT_SANDMAN skill119 notify from trap-unit AID100 to target AID2, 0x01D7 transition to used-trap job140, and 0x0120 removal. The shared saved-effect trap replay verifies message45 stores effect139 and the job140 message47 launches it before cleanup. Focused replay passes; the complete root packet replay CTest passes60/60.
