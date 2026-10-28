@@ -616,6 +616,8 @@ add_test(NAME bash3d_callers_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_bash3d_callers.py")
 add_test(NAME effect_sprite_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect_sprite.py")
+add_test(NAME effect695_map_fireworks_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect695_map_fireworks.py")
 add_test(NAME prim3dline_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dline.py")
 add_test(NAME prim3dtexturebillboard_source_check
@@ -819,4 +821,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_darkbreath_inline.py
     check_decagility_caller.py
     check_detecting_caller.py
-    check_effect_sprite.py)
+    check_effect_sprite.py
+    check_effect695_map_fireworks.py)

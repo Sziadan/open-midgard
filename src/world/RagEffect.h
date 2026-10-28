@@ -452,6 +452,7 @@ private:
     bool ProcessStrTerminalEffect();
     bool ProcessClipWaveStrEffect();
     bool ProcessEffectSprite(int spriteVariant);
+    bool ProcessEffectSpriteAndStr();
     bool ProcessTargetPositionStr();
     bool OnProcess2();
     bool OnProcess3();
@@ -513,6 +514,7 @@ private:
     bool ProcessTarotEffect();
     bool ProcessEffectTextureAnimation();
     bool ProcessEffectTextureSet();
+    bool ProcessEffect695MapFireworks();
     bool ProcessLevel99Effect();
     bool ProcessLevel99_2Effect();
     bool ProcessLevel99_3Effect();

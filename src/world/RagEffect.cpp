@@ -14151,6 +14151,7 @@ bool CRagEffect::ProcessEffectSprite(int spriteVariant)
     int callerWaveFrame = -1;
     bool callerWaveAtOrigin = false;
     switch (m_type) {
+    case 584: callerWave = "effect\\"; callerWaveFrame = 5; break;
     case 630: callerWave = "effect\\\xB1\xD7\xB8\xB2\xC0\xDA\xBA\xA3\xB1\xE2.wav"; callerWaveFrame = 0; break;
     case 632: callerWave = "effect\\\xBE\xC8\xB0\xB3\xBA\xA3\xB1\xE2.wav"; callerWaveFrame = 0; break;
     case 633: callerWave = "effect\\\xC0\xCF\xBC\xB6.wav"; callerWaveFrame = 0; break;
@@ -14184,11 +14185,13 @@ bool CRagEffect::ProcessEffectSprite(int spriteVariant)
         { 5, "\xC0\xCC\xC6\xD1\xC6\xAE\\item_zzz.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\item_zzz.act", 2, false, nullptr },
         { 6, "\xC0\xCC\xC6\xD1\xC6\xAE\\item_rain.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\item_rain.act", 2, false, nullptr },
         { 7, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef01.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef01.act", 3, false, "effect\\ef_firehit.wav" },
+        { 8, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef02.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef02.act", 4, false, nullptr },
         { 9, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef03.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef03.act", 4, false, nullptr },
         { 10, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef04.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef04.act", 4, true, nullptr },
         { 11, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef05.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef05.act", 4, false, nullptr },
         { 12, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef06.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef06.act", 4, false, nullptr },
         { 13, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef07.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef07.act", 4, false, nullptr },
+        { 14, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xD5\xB0\xDD_.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xD5\xB0\xDD_.act", 2, false, nullptr },
         { 15, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xD7\xB8\xB2\xC0\xDA\xBA\xA3\xB1\xE2.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xD7\xB8\xB2\xC0\xDA\xBA\xA3\xB1\xE2.act", 4, false, nullptr },
         { 16, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xD9\xB4\xD9\xB9\xCC.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xD9\xB4\xD9\xB9\xCC.act", 6, false, nullptr },
         { 17, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xC8\xB0\xB3\xBA\xA3\xB1\xE2.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xC8\xB0\xB3\xBA\xA3\xB1\xE2.act", 4, false, nullptr },
@@ -14261,6 +14264,32 @@ bool CRagEffect::ProcessEffectSprite(int spriteVariant)
         }
         if (asset.wave != nullptr) TryPlaySingleEffectWave(m_effectPos, asset.wave, 0.0f, true);
         prim->SetParticleResources(asset.spr, asset.act);
+        if (spriteVariant == 8) {
+            CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+            if (mode != nullptr && mode->m_view != nullptr) {
+                const double dz = static_cast<double>(m_effectPos.z) - m_deltaPos.z;
+                const double dx = static_cast<double>(m_effectPos.x) - m_deltaPos.x;
+                const double length = std::sqrt(dx * dx + dz * dz);
+                const double normalizedZ = dz / length;
+                const double normalizedX = dx / length;
+                int direction = 0;
+                while (normalizedX < static_cast<double>(g_cosTable[direction])) {
+                    if (++direction > 180) { direction = 180; break; }
+                }
+                if (normalizedZ < 0.0) direction = 360 - direction;
+                short viewDirection = static_cast<short>((direction
+                    + static_cast<int>(mode->m_view->GetCameraLongitude())) % 360);
+                if (viewDirection < 0) viewDirection = static_cast<short>(viewDirection + 360);
+                int action = 1;
+                if (viewDirection >= 180 && viewDirection < 270) action = 2;
+                else if (viewDirection < 90) action = 0;
+                else if (viewDirection < 180) action = 3;
+                prim->m_spriteAction = action;
+                prim->m_numSegments = 1;
+                InitReferenceSegments(prim);
+                return true;
+            }
+        }
         if (spriteVariant >= 32 && spriteVariant <= 36) {
             PlayWave("effect\\itempokjuk.wav", 0.0f, 0.0f, 0.0f, 250, 40, 1.0f);
         }
@@ -14272,6 +14301,12 @@ bool CRagEffect::ProcessEffectSprite(int spriteVariant)
         return true;
     }
     return false;
+}
+
+bool CRagEffect::ProcessEffectSpriteAndStr()
+{
+    ProcessEffectSprite(14);
+    return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
 }
 
 // Ref/RagEffect.cpp timed audio cues and canonical OnProcess cases. These
@@ -18317,6 +18352,61 @@ bool CRagEffect::ProcessEffectTextureSet()
     case 703: ApplyEffectTexture("effect\\white02.bmp", 100); return true;
     default: return false;
     }
+}
+
+// Ref/RagEffect.cpp:12580-12583; canonical OnProcess3 0x2B7 and helpers
+// HighPriest.exe.c:419219-419223, 442710-442762, and 442896-442987.
+bool CRagEffect::ProcessEffect695MapFireworks()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return true;
+
+    if (CEffectPrim* zone = LaunchEffectPrim(PP_MAPMAGICZONE, vector3d{})) {
+        zone->m_renderFlag = 5;
+        zone->m_duration = m_duration;
+        zone->m_size = 112.0f;
+        zone->m_texture.push_back(ResolveEffectTextureOrFallback("effect\\glow04.bmp", false));
+        zone->m_gi[0].life = 1;
+        zone->m_gi[1].life = 0;
+        zone->m_gi[2].life = 0;
+        zone->m_gi[3].life = 0;
+        zone->m_gi[0].distance = 30.0f;
+        zone->m_gi[0].alphaB = 250;
+        zone->m_gi[0].rotStart = 0;
+        zone->m_gi[0].height[0] = -0.5f;
+        zone->m_gi[0].height[4] = 5.0f;
+    }
+
+    for (int particleIndex = 1; particleIndex <= 10; ++particleIndex) {
+        if (CEffectPrim* particle = LaunchEffectPrim(PP_MAPPARTICLE, vector3d{})) {
+            particle->m_renderFlag = 5;
+            particle->m_duration = m_duration;
+            particle->m_size = 0.0f;
+            particle->m_texture.push_back(ResolveEffectTextureOrFallback("effect\\mpa3.tga", false));
+            constexpr float offsetY = -4.0f;
+            for (EffectGi& gi : particle->m_gi) {
+                gi.life = 1;
+                gi.maxHeight = 0.15000001f;
+                gi.distance = 1.0f;
+                for (int index = 0; index < 4; ++index) {
+                    gi.height[static_cast<size_t>(index)] = static_cast<float>(rand() % 360);
+                }
+                gi.vecBPreX = 0.0f; gi.arcBaselineY = offsetY; gi.vecBPreZ = 0.0f;
+                gi.height[4] = static_cast<float>(rand() % 360);
+                gi.sparkX = 0.0f; gi.sparkY = offsetY; gi.sparkZ = 0.0f;
+                gi.height[5] = static_cast<float>(rand() % 360);
+                gi.vecTPreX = 0.0f; gi.vecTPreY = offsetY; gi.vecTPreZ = 0.0f;
+                gi.height[6] = static_cast<float>(rand() % 360);
+                gi.vecTNowX = 0.0f; gi.vecTNowY = offsetY; gi.vecTNowZ = 0.0f;
+                gi.height[7] = static_cast<float>(rand() % 360);
+                gi.flag[0] = 1;
+                gi.flag[1] = 2;
+            }
+        }
+    }
+    return true;
 }
 
 // Ref/dhxj/RagEffect2.cpp:8393-8470; canonical helper HighPriest.exe.c:442398.

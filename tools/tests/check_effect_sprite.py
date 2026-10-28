@@ -39,6 +39,7 @@ ref_dispatch = body(REF, "unsigned __int8 __thiscall CRagEffect::OnProcess3(CRag
 
 expected_routes = {
     570: 0, 571: 1, 576: 2, 577: 3, 578: 4, 579: 5, 580: 6, 583: 7,
+    584: 8,
     585: 9, 586: 10, 587: 11, 588: 12, 589: 13,
     630: 15, 631: 16, 632: 17, 633: 18, 634: 19, 637: 20,
     638: 21, 639: 22, 640: 23, 641: 24, 642: 25, 645: 28, 647: 29,
@@ -50,6 +51,17 @@ for effect_id, variant in expected_routes.items():
     case_value = effect_id
     if not re.search(rf"case\s+0x{case_value:X}:.*?Effect_SPR\(this,\s*{variant}\)", ref_dispatch, re.S):
         raise AssertionError(f"Ref OnProcess3 does not call Effect_SPR({variant}) for {effect_id}")
+if not re.search(r"case\s+612:\s+return ProcessEffectSpriteAndStr\(\);", DISPATCH):
+    raise AssertionError("effect 612 must route through Effect_SPR(14) and its shared STR continuation")
+ref_612 = re.search(r"case\s+0x264:(.*?)(?=case\s+0x265:)", ref_dispatch, re.S)
+if ref_612 is None or not re.search(r"Effect_SPR\(this,\s*14\).*?goto\s+\$L146219", ref_612.group(1), re.S):
+    raise AssertionError("Ref effect 612 no longer calls Effect_SPR(14) before the shared STR label")
+str_label = re.search(r"\$L146219:\s*CRagEffect::ProcessEZ2STR\(this,\s*0\.0,\s*-80\.0,\s*0\.0\)", REF)
+if str_label is None:
+    raise AssertionError("Ref effect 612 shared STR continuation changed")
+sprite_and_str = body(RAG, "bool CRagEffect::ProcessEffectSpriteAndStr()")
+if not re.search(r"ProcessEffectSprite\(14\);\s*return ProcessEZ2STR\(0\.0f,\s*-80\.0f,\s*0\.0f\);", sprite_and_str):
+    raise AssertionError("local effect 612 continuation does not match Ref sprite then STR ordering")
 
 asset_vas = {
     0: (0x71D338, 0x71D324), 1: (0x71D2F4, 0x71D2DC),
@@ -58,7 +70,9 @@ asset_vas = {
     6: (0x71D20C, 0x71D1F4), 7: (0x71D1C8, 0x71D1B4),
     9: (0x71D150, 0x71D13C), 10: (0x71D178, 0x71D164),
     11: (0x71D128, 0x71D114), 12: (0x71D100, 0x71D0EC),
-    13: (0x71D0D8, 0x71D0C4), 15: (0x71D084, 0x71D06C),
+    13: (0x71D0D8, 0x71D0C4), 14: (0x71D0B0, 0x71D09C),
+    15: (0x71D084, 0x71D06C),
+    8: (0x71D1A0, 0x71D18C),
     16: (0x71D058, 0x71D044), 17: (0x71D030, 0x71D01C),
     18: (0x71D00C, 0x71CFFC), 19: (0x71CFE8, 0x71CFD4),
     20: (0x71CFBC, 0x71CFA4), 21: (0x71CF88, 0x71CF6C),
@@ -102,5 +116,22 @@ if "case 15:" not in ref_helper or "case 17:" not in ref_helper or "case 28:" no
     raise AssertionError("Ref RNG/directional variants were not included in the comparison")
 if "rand() & 0x80000001" not in helper or "rand() % 5 + 3" not in helper:
     raise AssertionError("RNG action/speed branches are missing")
+asset_setup = helper.find("prim->SetParticleResources(asset.spr, asset.act)")
+variant8_action = helper.find("if (spriteVariant == 8)", asset_setup)
+if asset_setup < 0 or variant8_action < asset_setup:
+    raise AssertionError("Effect_SPR(8) must bind PE-backed resources before choosing its camera-relative action")
+for token in ("GetCameraLongitude()", "viewDirection >= 180 && viewDirection < 270", "action = 2",
+              "viewDirection < 90", "action = 0", "viewDirection < 180", "action = 3",
+              "prim->m_spriteAction = action"):
+    if token not in helper[variant8_action:]:
+        raise AssertionError(f"Effect_SPR(8) directional action mapping is incomplete: {token}")
+ref_584 = re.search(r"case\s+0x248:(.*?)(?=case\s+0x249:)", ref_dispatch, re.S)
+if ref_584 is None or not re.search(r"m_stateCnt\s*==\s*5.*?PlayWave\(aEffect_16", ref_584.group(1), re.S):
+    raise AssertionError("Ref effect 584 caller wave is no longer verified at its inline callsite")
+effect584_wave = image.read_cstring_at(0x6F1FF0).raw
+if effect584_wave != b"effect\\":
+    raise AssertionError("effect 584 aEffect_16 prefix bytes changed; full wave remains unresolved")
+if not re.search(r"case\s+584:\s+callerWave\s*=\s*\"effect\\\\\";\s*callerWaveFrame\s*=\s*5", helper):
+    raise AssertionError("effect 584 unresolved aEffect_16 prefix/frame5 cue is missing")
 
-print(f"Effect_SPR source check passed: {len(expected_routes)} caller routes, {len(asset_vas)} PE-backed assets, {len(wave_vas)} PE-backed caller waves")
+print(f"Effect_SPR source check passed: {len(expected_routes)} caller routes, {len(asset_vas)} PE-backed assets, {len(wave_vas)} PE-backed caller waves; effects 584 and 612 verified")
