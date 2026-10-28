@@ -796,3 +796,6 @@ Completed effect501 in the OnProcess3 tier. PE and primary Ref case0x1F5 bodies 
 ## WP10.3 effect704 checkpoint
 
 Completed effect704 in OnProcess3. Case0x2C0 matches the primary Ref exactly; skill273 launches it on the target before the hit message. The effect adds30 degrees to master rotation only at states10-33 and subtracts360 once when above360. Comparator and lifecycle tests added. Release builds pass, CTest167/167, coverage561/132/33, and OldRO matches Release at SHA-256 529C03DE5A5F9F2BFA1273296D728C8099513A826F286172D136CFE21DA43B05. The inline priority group is complete; continue WP10.3 batch 5P with the Effect_SPR shared family (570-589,630-648,666,682-686).
+## WP5 renderer checkpoint — Render3DSphere (2026-10-29)
+
+Source-compared `Render3DSphere` across `HighPriest.exe.c` and primary `Ref/RagEffectPrim.cpp` (normalized bodies identical). PE `Render` routes PP_3DSPHERE/0x0E to this function; the local specialized parent-effect route covers ids17 and170. `tools/tests/check_prim3dsphere.py` checks source equality, dispatch and local route, sphere grid/angle math, winding, UV progression, texture/color and render flags. `ParticleRenderTests.cpp` verifies projected mesh vertices and material/depth queue state. No implementation mismatch was found; continue the remaining `Prim*`/`Render*` source comparisons.

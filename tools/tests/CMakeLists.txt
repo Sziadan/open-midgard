@@ -772,6 +772,8 @@ add_test(NAME airtexture416_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_airtexture416.py")
 add_test(NAME prim3dline_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dline.py")
+add_test(NAME prim3dsphere_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dsphere.py")
 add_test(NAME prim3dtexturebillboard_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dtexturebillboard.py")
 add_test(NAME hitline_render_source_check

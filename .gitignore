@@ -47,6 +47,7 @@ tools/*
 !tools/tests/
 tools/tests/*
 !tools/tests/check_prim3dquadhorn.py
+!tools/tests/check_prim3dsphere.py
 !tools/tests/check_effect302.py
 !tools/tests/check_effect333.py
 !tools/tests/check_effect6.py

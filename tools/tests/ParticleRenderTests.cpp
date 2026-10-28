@@ -1032,6 +1032,10 @@ int main() {
             "MagnumBreak sphere maps full source UV grid and resets U for each latitude band");
         check(a->tex==&g_texMgr.texture&&a->m_verts[0].color==0x10FFFFFF&&g_renderer.m_rpAlphaNoDepthList.empty(),
             "MagnumBreak sphere uses texture zero stored packed color and hard-coded alpha flag one");
+        check(a->primType==D3DPT_TRIANGLELIST&&a->numVerts==3&&a->cullMode==D3DCULL_NONE
+            &&a->srcAlphaMode==D3DBLEND_SRCALPHA&&a->destAlphaMode==D3DBLEND_INVSRCALPHA
+            &&g_renderer.m_rpAlphaOPList.empty()&&g_renderer.m_rpAlphaNoDepthList.empty(),
+            "sphere triangles preserve cull-none source-alpha/inverse-alpha material in depth-tested alpha queue");
         sphere.m_arcAngle=36;renderSphere();check(g_renderer.m_rpAlphaList.size()==100,"MagnumBreak constructor arc yields original hundred-triangle sphere mesh");
         sphere.m_arcAngle=72.5f;renderSphere();check(g_renderer.m_rpAlphaList.size()==16,"MagnumBreak sphere preserves fractional arc loop bounds across both axes");
         sphere.m_texture.clear();renderSphere();check(g_renderer.m_rpAlphaList.empty(),"MagnumBreak missing sphere texture emits no billboard or glow substitute");
