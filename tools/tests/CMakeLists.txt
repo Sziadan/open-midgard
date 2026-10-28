@@ -1008,7 +1008,7 @@ add_test(NAME effect605_stop_message_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect605_stop_message.py")
 add_test(NAME effect563_mode_message_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect563_mode_message.py")
-add_test(NAME effects653_654_damage_number_source_check
+add_test(NAME effects652_654_damage_number_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects653_654_damage_number.py")
 add_test(NAME effect467_beginasura1_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect467_beginasura1.py")

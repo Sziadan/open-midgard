@@ -3559,3 +3559,8 @@ PE and primary Ref OnProcess3 case `0x233` (`effect563`) send CMode message135 o
 ## WP5C effects653/654 damage-number messages
 
 PE/primary Ref OnProcess3 cases `0x28D`/`0x28E` send only at state0: master message88, amount1, colors−65536/−65281 respectively, type114. Local `ProcessDamageNumberEffects` passes that exact tuple to the master's virtual `SendMsg`. `CGameActor::SendMsg` maps message88 to `MakeDamageNumber(sourceActor, amount, color, type)`, corroborating argument order and meaning. No position, audio, primitive, resource or RNG operations. `check_effects653_654_damage_number.py` compares both reference branches, generated routes and receiver; lifecycle tests check both tuples and silence. Case list: 653, 654. BLOCKED: none.
+
+
+## WP5C effect652 damage-number hit cue
+
+PE/primary Ref OnProcess3 case `0x28C` at `HighPriest.exe.c:419027-419035` / `Ref/RagEffect.cpp:12388-12397` acts only at state0: copy master position to `m_pos`, play `aEffectEfHit2Wa`, then send message88 `(1,-65536,114)` to master. Executable bytes resolve the exact wave `effect\\EF_hit2.wav` at VA `0x719BC8`. Local `ProcessDamageNumberEffects` maps source `m_pos` to `m_effectPos`/`m_cachedPos` and preserves the wave-before-message order, master-minus-player X/Z, literal Y0, and exact playback tuple. The same source checker confirms the distinct sibling colors for652-654, and lifecycle tests verify wave and message fields, state gate, position and silence/RNG. Case list: 652. BLOCKED: none.

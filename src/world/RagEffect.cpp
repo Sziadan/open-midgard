@@ -21050,10 +21050,20 @@ bool CRagEffect::ProcessEffect563()
 
 bool CRagEffect::ProcessDamageNumberEffects()
 {
-    if (m_stateCnt == 0 && m_master != nullptr) {
-        const msgparam_t color = m_type == 653 ? -65536 : -65281;
-        m_master->SendMsg(nullptr, 88, 1, color, 114);
+    if (m_stateCnt != 0 || m_master == nullptr) return true;
+    if (m_type == 652) {
+        m_effectPos = m_master->m_pos;
+        m_cachedPos = m_effectPos;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        CWorld* world = mode != nullptr ? mode->m_world : nullptr;
+        CRenderObject* player = world != nullptr ? world->m_player : nullptr;
+        if (player != nullptr) {
+            PlayWave("effect\\EF_hit2.wav", m_effectPos.x - player->m_pos.x, 0.0f,
+                m_effectPos.z - player->m_pos.z, 250, 40, 1.0f);
+        }
     }
+    const msgparam_t color = m_type == 654 ? -65281 : -65536;
+    m_master->SendMsg(nullptr, 88, 1, color, 114);
     return true;
 }
 

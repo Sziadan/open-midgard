@@ -10858,24 +10858,36 @@ int main()
             "effect563 does not alter positions or emit visuals, audio or RNG");
     }
     {
-        CRenderObject master;waveCalls.clear();const int draws=rngDraws;
-        for(const auto [id,color]:{std::pair<int,int>{653,-65536},std::pair<int,int>{654,-65281}}) {
+        CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        const int draws=rngDraws;
+        for(int id:{652,653,654}) {
+            const int color=id==654?-65281:-65536;
+            waveCalls.clear();
             master.lastSentMsg=master.lastSentArg=master.lastSentArg2=master.lastSentArg3=-1;
             CRagEffect effect;effect.m_type=id;effect.m_master=&master;effect.m_stateCnt=1;
             effect.m_pos={4,5,6};effect.m_effectPos={7,8,9};
             check(effect.ProcessDamageNumberEffects()&&master.lastSentMsg==-1,
-                "damage-number effects653/654 are silent before state zero");
+                "damage-number effects652-654 are silent before state zero");
             effect.m_stateCnt=0;
             check(effect.ProcessDamageNumberEffects()&&master.lastSentMsg==88&&master.lastSentArg==1
                 &&master.lastSentArg2==color&&master.lastSentArg3==114,
-                "damage-number effects653/654 send their exact message88 tuple at state zero");
-            check(effect.m_pos.x==4&&effect.m_pos.y==5&&effect.m_pos.z==6
-                &&effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9
-                &&effect.m_primList.empty(),
-                "damage-number effects653/654 leave positions and primitives unchanged");
+                "damage-number effects652-654 send their exact message88 tuple at state zero");
+            const bool positionMatches=effect.m_pos.x==4&&effect.m_pos.y==5&&effect.m_pos.z==6
+                &&(id==652
+                    ? effect.m_effectPos.x==31&&effect.m_effectPos.y==41&&effect.m_effectPos.z==51
+                    : effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9);
+            const bool waveMatches=id==652
+                ? waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_hit2.wav"
+                    &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==40
+                    &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+                : waveCalls.empty();
+            check(positionMatches&&waveMatches&&effect.m_primList.empty(),
+                "damage-number effects652-654 preserve state-specific position, exact wave and no primitive");
         }
-        check(waveCalls.empty()&&rngDraws==draws,
-            "damage-number effects653/654 have no sound or RNG side effects");
+        check(rngDraws==draws,
+            "damage-number effects652-654 have no RNG side effects");
+        g_world.m_player=oldPlayer;
     }
     {
         CRenderObject actor, listener; actor.m_pos={30,40,50}; listener.m_pos={5,300,8};

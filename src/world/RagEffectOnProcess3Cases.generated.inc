@@ -160,7 +160,7 @@ case 647: return ProcessEffectSprite(29);
 case 648: return ProcessEffectSprite(30);
 case 650: return UnportedEffect();
 case 651: return UnportedEffect();
-case 652: return UnportedEffect();
+case 652: return ProcessDamageNumberEffects();
 case 653: return ProcessDamageNumberEffects();
 case 654: return ProcessDamageNumberEffects();
 case 655: ApplyActorLight(); return true;
