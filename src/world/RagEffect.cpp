@@ -12488,7 +12488,7 @@ bool CEffectPrim::UsesReferenceParticle() const
         || (m_type == PP_3DPARTICLEGRAVITY && m_master
             && (m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 10 || m_master->GetEffectType() == 18))
         || (m_type == PP_3DPARTICLEORBIT && m_master
-            && (m_master->GetEffectType() == 7 || m_master->GetEffectType() == 14 || m_master->GetEffectType() == 71 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 100 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
+            && (m_master->GetEffectType() == 7 || m_master->GetEffectType() == 14 || m_master->GetEffectType() == 71 || m_master->GetEffectType() == 86 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 100 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
             && (m_master->GetEffectType() == 21 || m_master->GetEffectType() == 53 || m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493 || m_master->GetEffectType() == 80
                 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 212 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622))
@@ -25946,6 +25946,49 @@ bool CRagEffect::ProcessRevive140()
 }
 
 // TEST_BODY_END revive140_handler
+
+// Ref/RagEffect.cpp:28-79; canonical PE helper 0x606010 and OnProcess case86.
+// The orbit primitive uses the shared reference particle renderer path.
+bool CRagEffect::ProcessAspersio86()
+{
+    if (m_stateCnt == 70) {
+        TryPlaySingleEffectWave(m_effectPos, "effect\\priest_aspersio.wav", 0.0f, true);
+    }
+
+    if ((m_stateCnt % 5) == 0 && m_stateCnt > 60 && m_stateCnt < 140) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DPARTICLEORBIT, vector3d{});
+        if (prim != nullptr) {
+            m_duration = 400;
+            prim->m_duration = 40;
+            prim->m_radius = 1.5f;
+            prim->m_gravSpeed = 0.19f;
+            prim->m_gravAccel = 0.0099999998f;
+            prim->m_longitude = static_cast<float>(rand() % 360);
+            prim->m_size = 1.2f;
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+            prim->m_deltaPos2 = {
+                static_cast<float>(prim->m_radius * prim->m_matrix.m[2][0]
+                    - prim->m_matrix.m[1][0] * 30.0 + prim->m_matrix.m[3][0]),
+                static_cast<float>(prim->m_radius * prim->m_matrix.m[2][1]
+                    - prim->m_matrix.m[1][1] * 30.0 + prim->m_matrix.m[3][1]),
+                static_cast<float>(prim->m_radius * prim->m_matrix.m[2][2]
+                    - prim->m_matrix.m[1][2] * 30.0 + prim->m_matrix.m[3][2])
+            };
+            prim->m_fadeOutCnt = 30;
+            prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act");
+            prim->m_numSegments = 1;
+            InitReferenceSegments(prim);
+        }
+    }
+
+    if (m_stateCnt == m_duration) return false;
+    ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+    return true;
+}
+
+// TEST_BODY_END aspersio86_handler
 
 bool CRagEffect::ProcessEffect380()
 {

@@ -582,6 +582,7 @@ struct CRagEffect : CGameObject {
     void SpawnTurnUndead();
     void SpawnWaterBall2();
     bool ProcessRevive140();
+    bool ProcessAspersio86();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
@@ -659,6 +660,15 @@ void SpawnTanjiAirTexture(CGameMode* mode, const vector3d& position)
 float g_sinTable[361]{}, g_cosTable[361]{};
 #define rand SilentRand
 #include "AttrWaveBodies.inc"
+static bool TryPlaySingleEffectWave(const vector3d& soundPos, const std::string& relativePath,
+    float yOffset = 0.0f, bool literalY = false)
+{
+    CRenderObject* listener = g_world.m_player;
+    if (!listener) return false;
+    return PlayWave(relativePath.c_str(), soundPos.x-listener->m_pos.x,
+        literalY ? yOffset : soundPos.y-listener->m_pos.y+yOffset,
+        soundPos.z-listener->m_pos.z, 250, 40, 1.0f);
+}
 #include "EffectLifecycleBodies.inc"
 
 #include "WeatherMapBodies.inc"
@@ -5592,6 +5602,38 @@ int main()
         check(effect.m_primList.size()==3&&g_texMgr.requests.size()==3&&waveCalls.empty(),
             "Revive emits on each 25-state boundary without sound on intervening frames");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=86;effect.m_duration=500;effect.m_effectPos={15,8,35};
+        waveCalls.clear();rngValues.assign(15,90);rngCursor=0;const int beforeRng=rngDraws;
+        effect.m_stateCnt=64;effect.ProcessAspersio86();
+        check(effect.m_primList.empty()&&rngDraws==beforeRng&&waveCalls.empty(),
+            "Aspersio skips particles and RNG before its five-frame orbit cadence");
+        for(int state=65;state<=135;state+=5){effect.m_stateCnt=state;effect.ProcessAspersio86();}
+        check(effect.m_primList.size()==15&&rngDraws==beforeRng+15&&rngCursor==15,
+            "Aspersio emits fifteen orbit particles and consumes one ordered RNG draw per pulse");
+        CEffectPrim* orbit=effect.m_primList.front();
+        check(orbit&&orbit->m_type==PP_3DPARTICLEORBIT&&orbit->UsesReferenceParticle()
+            &&orbit->m_duration==40&&orbit->m_radius==1.5f&&orbit->m_gravSpeed==0.19f
+            &&orbit->m_gravAccel==0.0099999998f&&orbit->m_longitude==90&&orbit->m_size==1.2f
+            &&orbit->m_fadeOutCnt==30&&orbit->m_numSegments==1
+            &&orbit->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr"
+            &&orbit->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act",
+            "Aspersio orbit particle preserves PE payload, Korean particle resources and renderer family");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\priest_aspersio.wav"
+            &&waveCalls[0].x==12&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&effect.m_primList.size()==15&&rngDraws==beforeRng+15,
+            "Aspersio state70 plays its listener-relative cue and keeps the orbit pulse");
+        effect.m_stateCnt=140;effect.ProcessAspersio86();
+        check(effect.m_primList.size()==15&&rngDraws==beforeRng+15,
+            "Aspersio stops orbit emissions after state135");
+        effect.m_duration=400;effect.m_stateCnt=400;
+        check(!effect.ProcessAspersio86()&&effect.m_primList.size()==15,
+            "Aspersio terminates at its duration boundary");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
     }
     {
         CRenderObject listener;listener.m_pos={3,0,5};

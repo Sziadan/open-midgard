@@ -124,7 +124,7 @@ case 82: SpawnTurnUndead(); return true;
 case 83: return ProcessClipWaveStrEffect();
 case 84: return ProcessClipWaveStrEffect();
 case 85: return ProcessClipWaveStrEffect();
-case 86: return UnportedEffect();
+case 86: return ProcessAspersio86();
 case 87: return ProcessLexDivina();
 case 88: return ProcessClipWaveStrEffect();
 case 89: return UnportedEffect();

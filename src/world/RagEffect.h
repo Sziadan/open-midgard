@@ -675,6 +675,7 @@ private:
     void SpawnTurnUndead();
     void SpawnWaterBall2();
     bool ProcessRevive140();
+    bool ProcessAspersio86();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
