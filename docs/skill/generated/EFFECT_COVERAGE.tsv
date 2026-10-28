@@ -112,7 +112,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 71	OnProcess	Cone	routed	OnProcess -> return ProcessEffectFrameLegacy();		93
 72	OnProcess	Sphere	routed	OnProcess -> return ProcessEffectFrameLegacy();		106
 73	OnProcess	BowlingBash	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	157
-74	OnProcess	IceWall	unported	OnProcess -> UnportedEffect		-
+74	OnProcess	IceWall	routed	OnProcess -> return ProcessIceWall74();		134
 75	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	15
 76	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	15
 77	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	15

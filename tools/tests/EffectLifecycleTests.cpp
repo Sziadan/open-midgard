@@ -646,6 +646,7 @@ struct CRagEffect : CGameObject {
     void SpawnWarp8();
     bool ProcessEnhance9();
     bool ProcessLord90();
+    bool ProcessIceWall74();
     void SpawnEnhance9();
     void SpawnPressure365();
     void SpawnGroundShake365();
@@ -3311,6 +3312,49 @@ int main()
             &&rngDraws==drawBase,"Lord90 has no particle, texture, resource or RNG output");
         g_world.m_player=oldPlayer; gameMode.messages=oldMessages; gameMode.messageIds=oldMessageIds;
         waveCalls.clear(); rngValues.clear(); rngCursor=0;
+    }
+    {
+        CRenderObject listener; listener.m_pos={10,20,30};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=74; effect.m_effectPos={30,40,50}; effect.m_duration=75;
+        waveCalls.clear(); g_texMgr.requests.clear(); g_resMgr.requests.clear();
+        rngValues={0,39,99,359,5, 90,0,0,90,0, 180,19,50,180,2}; rngCursor=0;
+        const int drawBase=rngDraws;
+        effect.m_stateCnt=1;
+        check(effect.ProcessIceWall74()&&effect.m_primList.empty()&&waveCalls.empty()
+            &&g_texMgr.requests.empty()&&rngDraws==drawBase&&effect.m_duration==75,
+            "IceWall74 nonzero state has no output or RNG");
+        effect.m_stateCnt=0;
+        check(effect.ProcessIceWall74()&&effect.m_duration==9999&&effect.m_primList.size()==3
+            &&rngDraws==drawBase+15&&rngCursor==15,
+            "IceWall74 state0 emits three persistent quad-horn primitives with five ordered draws each");
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\wizard_icewall.wav"
+            &&waveCalls[0].x==20&&waveCalls[0].y==0&&waveCalls[0].z==20
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&waveCalls[0].frameRng==drawBase,
+            "IceWall74 plays its exact listener-relative wave before particle RNG");
+        check(g_texMgr.requests==std::vector<std::string>({"effect\\ice.tga","effect\\ice.tga","effect\\ice.tga"})
+            &&g_resMgr.requests.empty(),"IceWall74 requests the exact ice texture once per primitive");
+        const int offsets[]={-2,0,2}, angles[]={0,90,180}, heights[]={99,0,50}, longitudes[]={359,90,180}, latitudes[]={92,87,89};
+        bool payload=effect.m_primList.size()==3;
+        int i=0;
+        for(const CEffectPrim* prim:effect.m_primList){
+            payload=payload&&i<3&&prim->m_type==PP_3DQUADHORN&&prim->m_duration==9999
+                &&(prim->m_pattern&1u)!=0&&prim->m_deltaPos2.x==0&&prim->m_deltaPos2.y==30
+                &&std::fabs(prim->m_deltaPos2.z+offsets[i]*GetCos(angles[i]))<0.0001
+                &&prim->m_size==2.5f&&prim->m_heightSize==static_cast<float>(static_cast<double>(heights[i]+300)*0.1)
+                &&prim->m_longitude==static_cast<float>(longitudes[i])
+                &&prim->m_latitude==static_cast<float>(latitudes[i])&&prim->m_count==20
+                &&prim->m_alpha==200.0f&&prim->m_speed==3.0f&&std::fabs(prim->m_accel+0.15f)<0.00001f
+                &&prim->m_fadeOutCnt==9989&&prim->m_texture.size()==1;
+            ++i;
+        }
+        check(payload,"IceWall74 preserves ordered lane offsets, source integer size, dimensions and fade profile");
+        effect.m_stateCnt=1; effect.ProcessIceWall74();
+        check(effect.m_primList.size()==3&&waveCalls.size()==1&&rngDraws==drawBase+15
+            &&g_texMgr.requests.size()==3,"IceWall74 later states do not repeat state0 setup");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer; waveCalls.clear(); rngValues.clear(); rngCursor=0;
     }
     {
         CRenderObject actor; actor.m_pos={400,500,600};

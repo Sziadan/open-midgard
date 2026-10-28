@@ -112,7 +112,7 @@ case 69: return ProcessClipWaveStrEffect();
 case 71: return ProcessEffectFrameLegacy();
 case 72: return ProcessEffectFrameLegacy();
 case 73: return ProcessEffectFrameLegacy();
-case 74: return UnportedEffect();
+case 74: return ProcessIceWall74();
 case 75: return ProcessClipWaveStrEffect();
 case 76: return ProcessClipWaveStrEffect();
 case 77: return ProcessClipWaveStrEffect();

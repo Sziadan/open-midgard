@@ -20337,6 +20337,47 @@ bool CRagEffect::ProcessLord90()
     return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
 }
 
+// Ref/RagEffect.cpp:5999; canonical helper at HighPriest.exe.c:427352.
+bool CRagEffect::ProcessIceWall74()
+{
+    if (m_stateCnt != 0) return true;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (mode != nullptr && mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\wizard_icewall.wav", m_effectPos.x - listener.x, 0.0f,
+            m_effectPos.z - listener.z, 250, 40, 1.0f);
+    }
+    m_duration = 9999;
+    for (int offset = -2; offset < 4; offset += 2) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_3DQUADHORN, vector3d{});
+        if (prim == nullptr) break;
+        prim->m_duration = m_duration;
+        prim->m_pattern |= 1u;
+        const int angle = rand() % 360;
+        GetSin(angle);
+        const double cosine = GetCos(angle);
+        prim->m_deltaPos2.x = 0.0f;
+        prim->m_deltaPos2.y = 30.0f;
+        prim->m_deltaPos2.z = static_cast<float>(-static_cast<double>(offset) * cosine);
+        const int integerSize = rand() % 40 / 100;
+        prim->m_size = static_cast<float>(static_cast<double>(integerSize) + 2.5);
+        prim->m_heightSize = static_cast<float>(static_cast<double>(rand() % 100 + 300) * 0.1);
+        prim->m_longitude = static_cast<float>(rand() % 360);
+        prim->m_latitude = static_cast<float>(rand() % 6 + 87);
+        prim->m_count = 20;
+        prim->m_alpha = 200.0f;
+        MatrixIdentity(prim->m_matrix);
+        MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+        MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
+        prim->m_rotMat = prim->m_matrix;
+        prim->m_speed = 3.0f;
+        prim->m_accel = static_cast<float>(prim->m_speed * 0.025 * -2.0);
+        prim->m_fadeOutCnt = prim->m_duration - 10;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ice.tga", false));
+    }
+    return true;
+}
+
 void CRagEffect::SpawnNpcStop(int variant)
 {
     CRenderObject* master = ResolveCurrentMaster();
