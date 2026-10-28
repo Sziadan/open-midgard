@@ -336,7 +336,7 @@ case 404: return ProcessLandProtector(2);
 case 405: ApplyBottomMagnus("effect\\ring_white.tga", 2); return true;
 case 408: return ProcessSphereWind2Effect();
 case 409: return ProcessSoulBreaker2Effect();
-case 410: return UnportedEffect();
+case 410: return ProcessRainbow410();
 case 411: return ProcessPeongEffects();
 case 412: return ProcessTanji(true);
 case 413: return ProcessEffect413();

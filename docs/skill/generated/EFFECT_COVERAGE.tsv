@@ -336,7 +336,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 405	OnProcess	Bottom_Magnus	routed	"OnProcess -> ApplyBottomMagnus(""effect\\ring_white.tga"", 2); return true;"		15
 408	OnProcess	SphereWind2	routed	OnProcess -> return ProcessSphereWind2Effect();	src/gamemode/UseSkillEffect.generated.inc	1265
 409	OnProcess	SoulBreaker2	routed	OnProcess -> return ProcessSoulBreaker2Effect();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	457
-410	OnProcess	Rainbow	unported	OnProcess -> UnportedEffect		-
+410	OnProcess	Rainbow	routed	OnProcess -> return ProcessRainbow410();		857
 411	OnProcess	PeongUp,Peong	routed	OnProcess -> return ProcessPeongEffects();	src/world/GameActor.cpp	1895
 412	OnProcess	TANJI2	routed	OnProcess -> return ProcessTanji(true);		1312
 413	OnProcess	inline	routed	OnProcess -> return ProcessEffect413();	src/world/SkillSpecialEffect.cpp	34

@@ -20158,6 +20158,38 @@ bool CRagEffect::ProcessBasilica()
 }
 // TEST_BODY_END basilica_effect_family
 
+// PE HighPriest.exe.c:421401/435247; Ref/dhxj/RagEffect2.cpp:3171.
+// TEST_BODY_BEGIN rainbow410_effect_family
+bool CRagEffect::ProcessRainbow410()
+{
+    if (m_stateCnt != 0) return true;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    CView* view = mode != nullptr ? mode->m_view : nullptr;
+    CRenderObject* master = m_master;
+    if (view == nullptr || master == nullptr) return true;
+
+    m_effectPos = master->m_pos;
+    CEffectPrim* prim = LaunchEffectPrim(PP_RAINBOW, vector3d{});
+    if (prim == nullptr) return true;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_totalTexture = 1;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_center.tga", false));
+
+    for (int lane = 0; lane < 4; ++lane) prim->m_gi[lane].life = 0;
+    EffectGi& gi = prim->m_gi[0];
+    gi.alphaT = static_cast<short>(360 - static_cast<int>(view->GetCameraLongitude()));
+    gi.life = 1;
+    gi.process = 0;
+    gi.alphaB = 0;
+    gi.distance = 50.0f;
+    gi.fullDisplayAngle = 180;
+    gi.rotStart = 0;
+    gi.riseAngle = gi.alphaT;
+    return true;
+}
+// TEST_BODY_END rainbow410_effect_family
+
 bool CRagEffect::ProcessEffect599()
 {
     CRenderObject* master = ResolveCurrentMaster();

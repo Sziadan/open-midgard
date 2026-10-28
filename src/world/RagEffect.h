@@ -550,6 +550,7 @@ private:
     bool ProcessBottomVertical(int variant);
     bool ProcessTanji(bool tanji2);
     bool ProcessBasilica();
+    bool ProcessRainbow410();
     bool ProcessEffect365();
     void SpawnPressure365();
     void SpawnGroundShake365();

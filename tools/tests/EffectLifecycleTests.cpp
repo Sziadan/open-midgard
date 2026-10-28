@@ -645,6 +645,7 @@ struct CRagEffect : CGameObject {
     bool ProcessBottomVertical(int);
     bool ProcessTanji(bool);
     bool ProcessBasilica();
+    bool ProcessRainbow410();
     void ApplyBottomMusic(const char*, int);
     bool ProcessEffect365();
     bool ProcessDemonstration302();
@@ -3865,6 +3866,38 @@ int main()
             &&effect.m_effectPos.z==75&&g_texMgr.requests.size()==2&&waveCalls.empty()&&rngDraws==draws,
             "Basilica later states refresh position without repeating either primitive");
         effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor; actor.m_pos={1,2,3};
+        CRagEffect effect; effect.m_type=410; effect.m_master=&actor; effect.m_duration=73;
+        effect.m_effectPos={9,8,7}; effect.m_stateCnt=1;
+        CView* oldView=gameMode.m_view; const float oldLongitude=testView.longitude;
+        gameMode.m_view=&testView; testView.longitude=47.75f;
+        g_texMgr.requests.clear(); waveCalls.clear(); const int draws=rngDraws;
+        effect.ProcessRainbow410();
+        check(effect.m_primList.empty()&&effect.m_effectPos.x==9&&effect.m_effectPos.y==8
+            &&effect.m_effectPos.z==7&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
+            "Rainbow does not refresh position or emit outside state zero");
+        effect.m_stateCnt=0; actor.m_pos={7,8,9}; effect.ProcessRainbow410();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(prim&&effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9
+            &&prim->m_type==PP_RAINBOW&&prim->m_renderFlag==5&&prim->m_duration==73
+            &&prim->m_totalTexture==1&&prim->m_texture.size()==1
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\alpha_center.tga"
+            &&waveCalls.empty()&&rngDraws==draws,
+            "Rainbow state zero emits one exact PP_RAINBOW primitive without audio or RNG");
+        check(prim&&prim->m_gi[0].life==1&&prim->m_gi[0].process==0
+            &&prim->m_gi[0].alphaT==313&&prim->m_gi[0].riseAngle==313
+            &&prim->m_gi[0].alphaB==0&&prim->m_gi[0].distance==50
+            &&prim->m_gi[0].fullDisplayAngle==180&&prim->m_gi[0].rotStart==0
+            &&prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0,
+            "Rainbow camera-derived angle and GI lane lifetime match PE");
+        effect.m_stateCnt=1; actor.m_pos={11,12,13}; effect.ProcessRainbow410();
+        check(effect.m_primList.size()==1&&effect.m_effectPos.x==7&&effect.m_effectPos.y==8
+            &&effect.m_effectPos.z==9&&g_texMgr.requests.size()==1&&waveCalls.empty()&&rngDraws==draws,
+            "Rainbow later states retain frame-zero position without repeating emission");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
+        gameMode.m_view=oldView; testView.longitude=oldLongitude;
     }
     {
         const int ids[]={277,287,290,292,294};
