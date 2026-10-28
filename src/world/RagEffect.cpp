@@ -18129,6 +18129,143 @@ bool CRagEffect::ProcessChimtoEffect(int variant)
     return true;
 }
 
+// Ref/RagEffect2.cpp:31610-31704 and 31492-31557; canonical PE helpers at 0x630020/0x6304D0/0x630950.
+void CRagEffect::SpawnStin()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_STIN, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\270\xB9\xD9\xB6\xF7.tga", false));
+    prim->m_size = 0.0f;
+    prim->m_deltaPos = m_deltaPos;
+    prim->m_pos = m_effectPos;
+    for (size_t index = 0; index < prim->m_gi.size(); ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        gi.life = 1;
+        gi.process = static_cast<int>(index) - 3;
+        gi.distance = 20.0f;
+        gi.alphaB = 0;
+        gi.sparkX = m_effectPos.x;
+        gi.sparkZ = m_effectPos.z;
+        gi.sparkY = static_cast<float>(static_cast<double>(m_effectPos.y) - 10.0 + rand() % 5);
+        gi.rotStart = 0;
+        gi.riseAngle = static_cast<short>(index);
+        gi.height[1] = 0.80000001f;
+        gi.flag[0] = 0;
+        gi.flag[3] = 0;
+    }
+}
+
+void CRagEffect::SpawnStin2(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_STIN2, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\270\xB9\xD9\xB6\xF7.tga", false));
+    prim->m_size = 0.0f;
+    prim->m_deltaPos = m_deltaPos;
+    prim->m_pos = m_effectPos;
+    for (size_t index = 0; index < prim->m_gi.size(); ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        gi.life = 1;
+        gi.process = 0;
+        gi.distance = 25.0f;
+        gi.alphaB = 0;
+        gi.sparkX = m_effectPos.x;
+        gi.sparkY = m_effectPos.y - 10.0f;
+        gi.sparkZ = m_effectPos.z;
+        gi.rotStart = 0;
+        gi.riseAngle = static_cast<short>(index);
+        gi.height[1] = 2.0f;
+        gi.flag[0] = 0;
+        gi.flag[1] = 0;
+        gi.flag[2] = static_cast<u8>(variant == 0 ? 0 : 1);
+        gi.flag[3] = 0;
+    }
+}
+
+void CRagEffect::SpawnSma(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_SMA, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_duration = m_duration;
+    prim->m_totalTexture = 0;
+    prim->m_size = 0.0f;
+    prim->m_deltaPos = m_deltaPos;
+    prim->m_pos = m_effectPos;
+    for (size_t index = 0; index < prim->m_gi.size(); ++index) {
+        EffectGi& gi = prim->m_gi[index];
+        gi.life = 1;
+        gi.process = static_cast<int>(index) - 3;
+        gi.alphaB = 0;
+        gi.sparkX = m_effectPos.x;
+        gi.sparkZ = m_effectPos.z;
+        gi.sparkY = static_cast<float>(static_cast<double>(m_effectPos.y) - 10.0 + rand() % 5);
+        gi.rotStart = 0;
+        gi.height[1] = 0.80000001f;
+        gi.flag[0] = static_cast<u8>(variant);
+    }
+}
+
+bool CRagEffect::ProcessStinSmaEffects()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    switch (m_type) {
+    case 547:
+        if (m_stateCnt == 10) {
+            m_effectPos = master->m_pos;
+            m_cachedPos = m_effectPos;
+            TryPlaySingleEffectWave(m_effectPos,
+                "effect\\T_\xB9\xD9\xB6\xF7\xB8\xB6\xB9\xFD.wav", 0.0f, true);
+        }
+        SpawnStin();
+        return true;
+    case 553:
+        if (m_stateCnt == 5 || m_stateCnt == 20 || m_stateCnt == 35 || m_stateCnt == 50 || m_stateCnt == 65) {
+            m_effectPos = master->m_pos;
+            m_cachedPos = m_effectPos;
+            const float soundY = m_stateCnt > 50 ? -50.0f : static_cast<float>(5 - m_stateCnt);
+            PlayWave("effect\\T_\xB3\xAF\xB6\xF3\xC2\xF7\xB1\xE2.wav",
+                0.0f, soundY, 0.0f, 250, 40, 1.0f);
+        }
+        SpawnStin2(0);
+        SpawnStin2(1);
+        return true;
+    case 555:
+        if (m_stateCnt == 0) {
+            m_effectPos = master->m_pos;
+            m_cachedPos = m_effectPos;
+            TryPlaySingleEffectWave(m_effectPos,
+                "effect\\T_\xBF\xA1\xB3\xCA\xC1\xF6\xB9\xE6\xC3\xE2.wav", 0.0f, true);
+        }
+        SpawnSma(1);
+        return true;
+    default:
+        return false;
+    }
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {

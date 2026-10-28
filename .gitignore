@@ -69,6 +69,7 @@ tools/tests/*
 !tools/tests/check_hitline3_caller.py
 !tools/tests/check_teihit_callers.py
 !tools/tests/check_chimto_callers.py
+!tools/tests/check_stin_sma_callers.py
 !tools/tests/ChangeGuildTests.cpp
 !tools/tests/check_change_guild_source.py
 !tools/tests/check_player_premove_route.py

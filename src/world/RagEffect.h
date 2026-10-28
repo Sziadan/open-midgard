@@ -522,6 +522,10 @@ private:
     bool ProcessHitLine3Effect();
     bool ProcessTeiHitEffects();
     bool ProcessChimtoEffect(int variant);
+    bool ProcessStinSmaEffects();
+    void SpawnStin();
+    void SpawnStin2(int variant);
+    void SpawnSma(int variant);
     void SpawnTeiHit1(const char* textureName, char variant);
     void SpawnTeiHit2();
     void SpawnTeiHit3(const char* textureName, char variant);

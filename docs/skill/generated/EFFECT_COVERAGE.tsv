@@ -547,15 +547,15 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 544	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
 545	OnProcess3	Vallentine	unported	OnProcess3 -> UnportedEffect		-
 546	OnProcess3	ParticleTime	unported	OnProcess3 -> UnportedEffect		-
-547	OnProcess3	STIN	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+547	OnProcess3	STIN	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	15
 548	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	34
 549	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
 550	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	34
 551	OnProcess3	SMA	unported	OnProcess3 -> UnportedEffect		-
 552	OnProcess3	SMA2	unported	OnProcess3 -> UnportedEffect	src/world/RagEffect.cpp	-
-553	OnProcess3	STIN2	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+553	OnProcess3	STIN2	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	1381
 554	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\freeze_a.bmp"", 2); return true;"	src/world/SkillSpecialEffect.cpp	98
-555	OnProcess3	SMA	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+555	OnProcess3	SMA	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	69
 556	OnProcess3	ParticlePath	unported	OnProcess3 -> UnportedEffect	src/world/RagEffect.cpp	-
 557	OnProcess3	BlueFall	unported	OnProcess3 -> UnportedEffect		-
 558	OnProcess3	BlueFall	unported	OnProcess3 -> UnportedEffect		-
