@@ -310,7 +310,7 @@ case 376: return ProcessHitLineEffect();
 case 377: return ProcessBash3DEffect();
 case 378: return ProcessEnergyDrain2Effect();
 case 379: ApplyActorLight(); return true;
-case 380: return UnportedEffect();
+case 380: return ProcessEffect380();
 case 381: return UnportedEffect();
 case 382: ApplyActorLight(); return true;
 case 383: return ProcessEnergyDrain3Effect();

@@ -673,6 +673,7 @@ private:
     void SpawnTurnUndead();
     void SpawnWaterBall2();
     bool ProcessRevive140();
+    bool ProcessEffect380();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();

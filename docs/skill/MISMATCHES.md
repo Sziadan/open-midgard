@@ -645,3 +645,6 @@ Canonical PE case140 invokes Revive, and its helper matches the primary `Ref/Rag
 # WP10.3 effect198 inline case semantics
 
 The PE switch groups effect198 with four other empty cases that break to common processing; it does not call a helper or emit an effect. The prior local unported route returned false and ended the effect immediately. Effect198 now returns true through the explicit generated route so the normal frame/lifetime path runs. The primary Ref caller switch omits the inline group. Status-state effect198's existing icon/tint mapping is a separate behavior and does not imply an OnProcess emitter. Live acceptance remains open.
+# WP10.3 effect380 unresolved PlayWave argument
+
+The canonical PE inline case380 passes the literal bytes `effect\\` (VA `0x6F1FF0`) to PlayWave at state25. The string has no sound filename, and the current executable call-site index does not resolve a longer path. The local port preserves the exact argument and its position/parameters without guessing a filename; live audio acceptance remains open. The PE also performs the state30 quake and state30–60 random tint path; primary Ref has no corresponding caller case.

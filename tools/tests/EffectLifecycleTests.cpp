@@ -573,6 +573,7 @@ struct CRagEffect : CGameObject {
     void SpawnTurnUndead();
     void SpawnWaterBall2();
     bool ProcessRevive140();
+    bool ProcessEffect380();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5575,6 +5576,40 @@ int main()
         check(effect.m_primList.size()==3&&g_texMgr.requests.size()==3&&waveCalls.empty(),
             "Revive emits on each 25-state boundary without sound on intervening frames");
         effect.ClearPrims();g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRenderObject master;master.m_pos={15,25,35};
+        CRagEffect effect;effect.m_type=380;effect.m_master=&master;effect.m_effectPos={1,2,3};
+        waveCalls.clear();rngValues.clear();rngCursor=0;const int beforeRng=rngDraws;
+        const int beforeMessages=gameMode.messages;
+        effect.m_stateCnt=25;effect.ProcessEffect380();
+        check(effect.m_effectPos.x==15&&effect.m_effectPos.y==25&&effect.m_effectPos.z==35
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\"
+            &&waveCalls[0].x==12&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&rngDraws==beforeRng&&gameMode.messages==beforeMessages,
+            "Effect380 state25 follows master for its source wave without tint RNG");
+        effect.m_stateCnt=29;effect.ProcessEffect380();
+        check(rngDraws==beforeRng&&gameMode.messages==beforeMessages,
+            "Effect380 leaves the frame before its tint window unchanged");
+        rngValues={17,24,199};rngCursor=0;effect.m_stateCnt=30;effect.ProcessEffect380();
+        check(rngDraws==beforeRng+3&&rngCursor==3&&gameMode.messages==beforeMessages+1
+            &&gameMode.lastMsg==135&&master.m_BodyLight==1
+            &&master.tintCalls==1&&master.red==199&&master.green==24&&master.blue==17,
+            "Effect380 state30 sends quake and maps three ordered RNG draws to source RGB channels");
+        rngValues={10,20,30};rngCursor=0;effect.m_stateCnt=31;effect.ProcessEffect380();
+        check(rngDraws==beforeRng+6&&rngCursor==3&&master.m_BodyLight==1
+            &&master.tintCalls==2&&master.red==30&&master.green==20&&master.blue==10,
+            "Effect380 keeps drawing and tinting through its inclusive random-color window");
+        rngValues={1,2,3};rngCursor=0;effect.m_stateCnt=60;effect.ProcessEffect380();
+        check(rngDraws==beforeRng+9&&master.tintCalls==3,
+            "Effect380 includes state60 in its tint and random window");
+        rngValues={4,5,6};rngCursor=0;effect.m_stateCnt=61;effect.ProcessEffect380();
+        check(rngDraws==beforeRng+9&&master.tintCalls==3&&gameMode.messages==beforeMessages+1,
+            "Effect380 stops tint and RNG after state60");
+        g_world.m_player=oldPlayer;rngValues.clear();rngCursor=0;
     }
     {
         CRagEffect effect;effect.m_type=212;effect.m_duration=500;

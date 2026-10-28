@@ -25815,3 +25815,30 @@ bool CRagEffect::ProcessRevive140()
 }
 
 // TEST_BODY_END revive140_handler
+
+bool CRagEffect::ProcessEffect380()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return true;
+    if (m_stateCnt == 25) {
+        m_effectPos = master->m_pos;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\", m_effectPos.x - listener.x, 0.0f, m_effectPos.z - listener.z,
+                250, 40, 1.0f);
+        }
+    }
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (m_stateCnt == 30 && mode) mode->SendMsg(135, 0, 0, 0);
+    if (m_stateCnt < 30 || m_stateCnt > 60) return true;
+
+    if ((master->m_BodyLight & 1) != 1) ++master->m_BodyLight;
+    const int blue = rand() % 255;
+    const int green = rand() % 255;
+    const int red = rand() % 255;
+    master->SetArgb(-1, red, green, blue);
+    return true;
+}
+
+// TEST_BODY_END effect380_handler
