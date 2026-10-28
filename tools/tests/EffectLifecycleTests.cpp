@@ -126,6 +126,7 @@ struct CGameObject {
 struct CRenderObject : CGameObject {
     vector3d m_pos;
     int lastSentMsg=0,lastSentArg=0;
+    int m_stateId=0;
     void SendMsg(CGameObject*, int msg, msgparam_t arg, msgparam_t, msgparam_t) override {
         lastSentMsg=msg; lastSentArg=static_cast<int>(arg);
     }
@@ -133,6 +134,8 @@ struct CRenderObject : CGameObject {
     float m_roty = 0;
     int m_BodyLight = 0;
     u16 m_BodyTime = 0;
+    int forceAnimationCalls=0,forceAct=0,forceMot=0,forceMaxMot=0,forceFinishAct=0,forceFinishMot=0;
+    int forceIsAnim=0,forceIsLoop=0;u32 forceEndTick=0;
     char m_BeZero = 0;
     struct Color { u8 a=0,r=0,g=0,b=0; } m_oldColor,m_curColor;
     struct SpriteColor { struct { Color s; } u; };
@@ -141,6 +144,10 @@ struct CRenderObject : CGameObject {
     int tintCalls=0,alpha=123,red=1,green=2,blue=3;
     void SetArgb(int a,int r,int g,int b) {
         ++tintCalls;if(a!=-1)alpha=a;if(r!=-1)red=r;if(g!=-1)green=g;if(b!=-1)blue=b;
+    }
+    void SetForceAnimation(int act,int mot,int maxMot,int finishAct,int finishMot,int isAnim,u32 endTick,int isLoop) {
+        ++forceAnimationCalls;forceAct=act;forceMot=mot;forceMaxMot=maxMot;forceFinishAct=finishAct;
+        forceFinishMot=finishMot;forceIsAnim=isAnim;forceEndTick=endTick;forceIsLoop=isLoop;
     }
 };
 struct CRagEffect;
@@ -579,6 +586,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect403();
     bool ProcessEffect413();
     bool ProcessEffect445();
+    bool ProcessEffect457();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5705,6 +5713,38 @@ int main()
         check(master.m_BodyLight==0x10000&&master.m_BodyTime==35
             &&rngDraws==beforeRng&&effect.m_primList.empty(),
             "Effect445 can refresh a cleared bit without RNG or primitive emission");
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRenderObject master;master.m_pos={15,25,35};master.m_stateId=4;
+        CRagEffect effect;effect.m_type=457;effect.m_master=&master;effect.m_effectPos={1,2,3};
+        const int beforeRng=rngDraws;waveCalls.clear();
+        effect.m_stateCnt=4;effect.ProcessEffect457();
+        check(waveCalls.empty()&&master.m_stateId==4&&master.forceAnimationCalls==0,
+            "Effect457 waits until state5 for audio and forced motion");
+        effect.m_stateCnt=5;effect.ProcessEffect457();
+        check(effect.m_effectPos.x==15&&effect.m_effectPos.y==25&&effect.m_effectPos.z==35
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\T_"
+            &&waveCalls[0].x==12&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&master.m_stateId==27&&master.forceAnimationCalls==1
+            &&master.forceAct==0x60&&master.forceMot==5&&master.forceMaxMot==5
+            &&master.forceFinishAct==0x60&&master.forceFinishMot==5
+            &&master.forceIsAnim==1&&master.forceEndTick==25&&master.forceIsLoop==0,
+            "Effect457 state5 plays its PE wave and applies the exact forced-animation tuple");
+        effect.m_stateCnt=6;effect.ProcessEffect457();
+        check(master.forceAnimationCalls==1&&master.m_stateId==27,
+            "Effect457 applies state5 action only once");
+        effect.m_stateCnt=34;effect.ProcessEffect457();
+        check(master.m_stateId==27,"Effect457 retains state27 before state35");
+        effect.m_stateCnt=35;effect.ProcessEffect457();
+        check(master.m_stateId==2,"Effect457 resets state27 at state35");
+        master.m_stateId=41;effect.m_stateCnt=35;effect.ProcessEffect457();
+        check(master.m_stateId==41&&master.forceAnimationCalls==1
+            &&rngDraws==beforeRng&&effect.m_primList.empty(),
+            "Effect457 leaves a different state untouched at state35 without RNG or primitives");
         g_world.m_player=oldPlayer;waveCalls.clear();
     }
     {

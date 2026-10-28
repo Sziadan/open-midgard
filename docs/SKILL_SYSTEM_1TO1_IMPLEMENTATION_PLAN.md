@@ -773,3 +773,7 @@ Completed effect413. The canonical inline PE case plays the proven truncated lit
 ## WP10.3 effect445 checkpoint
 
 Completed effect445. Canonical inline PE case445 has state30 audio and a one-shot BodyLight 0x10000 and BodyTime update after state35. The PE action19 lifecycle removes prior 445 instances and launches a replacement, matching the local caller. Exact literal effect slash T underscore is preserved; its full audio resource/VA remain unresolved. Added source comparator and lifecycle coverage. Release app/test builds pass, CTest 163/163, coverage 557 routed / 136 unported / 37 launched-but-unported, and deployed OldRO hash matches Release at 436E5032EA243F7E42C13BAEBF09BBB1C60989DC6039572BB7F54B03C80518B1. Next: inline effect457.
+
+## WP10.3 effect457 checkpoint
+
+Completed effect457 inline behavior: skill421's source/target effects retain their canonical launch order, state5 copies position and plays the proven PE audio literal, sets stateId27 and forces the exact animation tuple; state35 resets it to2 only when stateId remains27. No Ref helper exists. Full audio filename/VA remain unresolved. Comparator and lifecycle checks added. Release app/test builds pass, CTest164/164, coverage558/135/36, and OldRO hash matches Release at 3F5C678574D626AFA5E6FF37DCDB806F9F682589E7C867F54D1B9E31BA71070F. Next: inline effect466.

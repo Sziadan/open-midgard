@@ -25911,3 +25911,25 @@ bool CRagEffect::ProcessEffect445()
 }
 
 // TEST_BODY_END effect445_handler
+
+bool CRagEffect::ProcessEffect457()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return true;
+    if (m_stateCnt == 5) {
+        m_effectPos = master->m_pos;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\T_", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+        master->m_stateId = 27;
+        master->SetForceAnimation(0x60, 5, 5, 0x60, 5, 1, 25, 0);
+    }
+    if (m_stateCnt == 35 && master->m_stateId == 27)
+        master->m_stateId = 2;
+    return true;
+}
+
+// TEST_BODY_END effect457_handler

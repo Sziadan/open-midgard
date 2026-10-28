@@ -383,7 +383,7 @@ case 453: return ProcessNpcStopEffects();
 case 454: ApplyPairedSaintCasting("effect\\ring_black.tga", 6, true, 0.0f); return true;
 case 455: return ProcessGumGangEffect();
 case 456: return ProcessCartBoost456();
-case 457: return UnportedEffect();
+case 457: return ProcessEffect457();
 case 459: return ProcessEffectFrameLegacy();
 case 460: return ProcessEffectFrameLegacy();
 case 461: return ProcessEffectFrameLegacy();
