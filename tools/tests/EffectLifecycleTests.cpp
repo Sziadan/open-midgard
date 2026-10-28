@@ -10364,6 +10364,8 @@ int main()
             &&prim->m_alphaSpeed==prim->m_maxAlpha/10.0f&&prim->m_fadeOutCnt==8
             &&prim->m_numSegments==1&&prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.spr"
             &&prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.act"
+            &&prim->UsesReferenceParticle()&&prim->m_segments[0].pos.x==prim->m_pos.x
+            &&prim->m_segments[0].pos.y==prim->m_pos.y&&prim->m_segments[0].pos.z==prim->m_pos.z
             &&std::fabs(prim->m_matrix.m[1][1])<0.00001f&&prim->m_matrix.m[1][2]>0.99999f
             &&rngDraws==draws+2&&rngCursor==2&&waveCalls.empty(),
             "VenomDust2 frame zero emits one particle with two ordered RNG draws, X-90 motion, source profile and particle3 resources");

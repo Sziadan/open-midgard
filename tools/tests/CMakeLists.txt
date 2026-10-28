@@ -895,6 +895,8 @@ add_test(NAME effect138_firepillar_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect138_firepillar.py")
 add_test(NAME effect165_banjjakii_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect165_banjjakii.py")
+add_test(NAME effect171_venomdust2_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect171_venomdust2.py")
 add_test(NAME skill_cast_cancel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_cancel_source.py")
 add_test(NAME status_state_source_check
@@ -994,4 +996,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect_sprite.py
     check_effect138_firepillar.py
     check_effect165_banjjakii.py
+    check_effect171_venomdust2.py
     check_effect695_map_fireworks.py)

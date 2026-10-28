@@ -12492,7 +12492,7 @@ bool CEffectPrim::UsesReferenceParticle() const
             && (m_master->GetEffectType() == 7 || m_master->GetEffectType() == 14 || m_master->GetEffectType() == 71 || m_master->GetEffectType() == 86 || m_master->GetEffectType() == 98 || m_master->GetEffectType() == 100 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 321))
         || (m_type == PP_3DPARTICLE && m_master
             && (m_master->GetEffectType() == 21 || m_master->GetEffectType() == 53 || m_master->GetEffectType() == 39 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 3 || m_master->GetEffectType() == 2 || m_master->GetEffectType() == 22 || m_master->GetEffectType() == 601 || m_master->GetEffectType() == 81 || m_master->GetEffectType() == 180 || m_master->GetEffectType() == 184 || m_master->GetEffectType() == 0 || m_master->GetEffectType() == 45 || m_master->GetEffectType() == 24 || m_master->GetEffectType() == 20 || m_master->GetEffectType() == 125 || m_master->GetEffectType() == 493 || m_master->GetEffectType() == 80
-                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 165 || m_master->GetEffectType() == 212 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622))
+                || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 33 || m_master->GetEffectType() == 44 || m_master->GetEffectType() == 47 || m_master->GetEffectType() == 165 || m_master->GetEffectType() == 171 || m_master->GetEffectType() == 212 || m_master->GetEffectType() == 373 || m_master->GetEffectType() == 622))
         || (m_type == PP_3DPARTICLESPLINE && m_master && m_master->GetEffectType() == 117);
 }
 
@@ -16531,7 +16531,7 @@ void CRagEffect::ApplyVenomDust2()
     prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.spr",
         "\xC0\xCC\xC6\xD1\xC6\xAE\\particle3.act"); // 0x71BC24 / 0x71BC0C
     prim->m_numSegments = 1;
-    ShiftCircleSegments(prim);
+    InitReferenceSegments(prim);
 }
 
 // Ref/dhxj/RagEffect.cpp:12379-12399; HighPriest.exe.c:430263-430279.
