@@ -1,0 +1,25 @@
+# actor	source	1	0	16	16
+# opcode	hexBytes	comment
+0x0110	10011C00000000000001	Cause 1 SP notice id 0xCA and motion unfreeze
+0x0110	10011C00000000000002	Cause 2 HP notice id 0xCB
+0x0110	10011C00000000000003	Cause 3 source-material notice id 0x328
+0x0110	10011C00000000000004	Cause 4 gated skill interval notice id 0xDB
+0x0110	10011C00000000000005	Cause 5 Zeny notice id 0xE9
+0x0110	10011C00000000000006	Cause 6 weapon notice id 0xEF
+0x0110	10011C00000000000007	Cause 7 red gemstone notice id 0xF6
+0x0110	10011C00000000000008	Cause 8 blue gemstone notice id 0xF7
+0x0110	10011C00000000000009	Cause 9 weight notice id 0x244
+0x0110	10011C0000000000000A	Cause 10 gated generic notice id 0x11D
+0x0110	10011C00000000000000	Cause 0 generic notice suppressed when skill fail disabled
+0x0110	10011C00000000000004	Cause 4 interval notice suppressed when skill fail disabled
+0x0110	10011C0000000000000A	Cause 10 generic notice suppressed when skill fail disabled
+0x0110	10011C00000000000101	Nonzero result clears motion freeze without showing a notice
+0x0110	10010100010000000000	Skill 1 cause 0 btype 1 clears pending emotion and uses message 0xA0
+0x0110	10011B00000000000000	Skill 27 cause 0 uses message 0xD6
+0x0110	10013200000000000000	Skill 50 cause 0 uses message 0xCD
+0x0110	10013400000000000000	Skill 52 cause 0 uses message 0xCF
+0x0110	10010100070000000000	Skill 1 btype 7 emits messages 0x17F then 0x518
+0x0110	10010100080000000000	Skill 1 btype 8 emits message 0x518
+0x0110	10011C0000000000000B	Unknown cause returns without a notice
+0x0110	10010100090000000000	Skill 1 unsupported btype returns without a notice
+0x0110	10016300000000000000	Other skill cause 0 uses generic skill-failed notice id 0xCC when enabled

@@ -3829,49 +3829,92 @@ void StartSitStandAnimation(CGameActor* actor, bool sitting)
     actor->m_stateId = 0;
 }
 
-const char* ResolveSkillFailMessage(u16 skillId, u32 btype, u8 cause)
+struct SkillFailNotice
 {
-    if (skillId == 1 && cause == 0) {
-        switch (btype) {
-        case 0:
-            return "Basic skill failed.";
-        case 1:
-            return "Cannot use emotions.";
-        case 2:
-            return "Cannot sit.";
-        case 3:
-            return "Cannot chat.";
-        case 4:
-            return "Cannot form a party.";
-        case 5:
-            return "Cannot shout.";
-        case 6:
-            return "Cannot PK.";
-        case 7:
-            return "Cannot align.";
-        default:
-            break;
-        }
-    }
+    int messageId = -1;
+    const char* message = nullptr;
+    int color = kSystemNoticeColor;
+};
 
+struct SkillFailNoticeSet
+{
+    std::array<SkillFailNotice, 2> notices{};
+    std::size_t count = 0;
+};
+
+SkillFailNoticeSet ResolveSkillFailNotices(u16 skillId, u32 btype, u8 cause, bool skillFailEnabled)
+{
+    SkillFailNoticeSet result;
     if (cause == 0) {
-        return "Action failed.";
+        if (skillId == 1) {
+            static constexpr int basicSkillMessageIds[] = { 0x9F, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5 };
+            static constexpr const char* basicSkillMessages[] = {
+                "You haven't learned enough Basic Skills to Trade.",
+                "You haven't learned enough Basic Skills to use Emotion icons.",
+                "You haven't learned enough Basic Skills to Sit.",
+                "You haven't learned enough Basic Skills to create a chat room.",
+                "You haven't learned enough Basic Skills to Party.",
+                "You haven't learned enough skills to Shout.",
+                "You haven't learned enough skills for Pking.",
+            };
+            if (btype < std::size(basicSkillMessageIds)) {
+                result.notices[result.count++] = { basicSkillMessageIds[btype], basicSkillMessages[btype] };
+            } else if (btype == 7) {
+                result.notices[result.count++] = { 0x17F, "You haven't learned enough skills for aligning.", 255 };
+                result.notices[result.count++] = { 0x518, "Insufficient Skill Level for joining a Party." };
+            } else if (btype == 8) {
+                result.notices[result.count++] = { 0x518, "Insufficient Skill Level for joining a Party." };
+            }
+        } else if (skillId == 27) {
+            result.notices[result.count++] = { 0xD6, "Skill Level is not high enough." };
+        } else if (skillId == 50) {
+            result.notices[result.count++] = { 0xCD, "Steal has failed." };
+        } else if (skillId == 52) {
+            result.notices[result.count++] = { 0xCF, "Envenom skill has failed." };
+        } else if (skillFailEnabled) {
+            result.notices[result.count++] = { 0xCC, "Skill has failed." };
+        }
+        return result;
     }
 
     switch (cause) {
     case 1:
-        return "Not enough SP.";
+        result.notices[0] = { 0xCA, "Not Enough SP" };
+        break;
     case 2:
-        return "Not enough HP.";
+        result.notices[0] = { 0xCB, "Not Enough HP" };
+        break;
+    case 3:
+        result.notices[0] = { 0x328, "You do not have enough ingredients." };
+        break;
     case 4:
-        return "Action is still on cooldown.";
+        if (!skillFailEnabled) return result;
+        result.notices[0] = { 0xDB, "There is a Delay after using a Skill." };
+        break;
     case 5:
-        return "Not enough Zeny.";
+        result.notices[0] = { 0xE9, "Skill has failed because you do not have enough zeny." };
+        break;
+    case 6:
+        result.notices[0] = { 0xEF, "The skill cannot be used with this weapon." };
+        break;
+    case 7:
+        result.notices[0] = { 0xF6, "Red Gemstone required." };
+        break;
+    case 8:
+        result.notices[0] = { 0xF7, "Blue Gemstone required." };
+        break;
     case 9:
-        return "Too much weight.";
+        result.notices[0] = { 0x244, "You can't use this Skill because you are over your Weight Limit." };
+        break;
+    case 10:
+        if (!skillFailEnabled) return result;
+        result.notices[0] = { 0x11D, "Skill has failed." };
+        break;
     default:
-        return "Action failed.";
+        return result;
     }
+    result.count = 1;
+    return result;
 }
 
 void HandleSkillFailAck(CGameMode& mode, const PacketView& packet)
@@ -3891,22 +3934,25 @@ void HandleSkillFailAck(CGameMode& mode, const PacketView& packet)
     if (result != 0) {
         return;
     }
-    if (skillId == 1 && cause == 0 && btype == 1) {
+    if (cause == 0 && skillId == 1 && btype == 1) {
         mode.m_isReqEmotion = 0;
     }
-    const char* message = ResolveSkillFailMessage(skillId, btype, cause);
+    const SkillFailNoticeSet notices = ResolveSkillFailNotices(skillId, btype, cause, g_session.m_isSkillFail == 1);
 
-    DbgLog("[GameMode] skill fail ack opcode=0x%04X skill=%u num=%u result=%u cause=%u msg='%s'\n",
+    DbgLog("[GameMode] skill fail ack opcode=0x%04X skill=%u num=%u result=%u cause=%u noticeCount=%u\n",
         packet.packetId,
         static_cast<unsigned int>(skillId),
         static_cast<unsigned int>(btype),
         static_cast<unsigned int>(result),
         static_cast<unsigned int>(cause),
-        message);
-
-    g_windowMgr.SendMsg(kUiChatEventMsg,
-        reinterpret_cast<msgparam_t>(message),
-        static_cast<int>(kSystemNoticeColor));
+        static_cast<unsigned int>(notices.count));
+    for (std::size_t index = 0; index < notices.count; ++index) {
+        const SkillFailNotice& notice = notices.notices[index];
+        DbgLog("[GameMode] skill fail notice msgId=%d msg='%s'\n", notice.messageId, notice.message);
+        g_windowMgr.SendMsg(kUiChatEventMsg,
+            reinterpret_cast<msgparam_t>(notice.message),
+            notice.color);
+    }
 }
 
 void HandleSkillMessage(CGameMode&, const PacketView& packet)

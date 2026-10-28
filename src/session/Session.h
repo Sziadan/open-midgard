@@ -113,6 +113,7 @@ public:
     u8   m_sex;
     bool m_isEffectOn;
     bool m_isMinEffect;
+    int m_isSkillFail = 1;
     int m_isAura = 1;
     bool m_fogOn;
     char m_charServerAddr[64];

@@ -583,6 +583,70 @@ void ReplaySkillCastCancel(const std::string& path)
     std::cout << "SkillCastCancel opcode=0x01B9 messages=84,87,83 attachedEffectsCleared=2\n";
 }
 
+bool IsSkillFailAckScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return !packets.empty() && packets.front().opcode == 0x0110;
+}
+
+void ReplaySkillFailAck(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 23 && std::all_of(packets.begin(), packets.end(), [](const ScenarioPacket& packet) {
+        return packet.opcode == 0x0110 && packet.bytes.size() == 10;
+    }), "skill-failure acknowledgement replay requires twenty-three fixed 10-byte 0x0110 packets");
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    g_session.m_isSkillFail = 1;
+    fixture.mode.m_isReqEmotion = 1;
+    for (std::size_t index = 0; index < packets.size(); ++index) {
+        if (index >= 10 && index <= 12) {
+            g_session.m_isSkillFail = 0;
+        } else {
+            g_session.m_isSkillFail = 1;
+        }
+        fixture.source.m_isMotionFreezed = 1;
+        if (index == 14) {
+            fixture.mode.m_isReqEmotion = 1;
+        }
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected skill-failure acknowledgement");
+        Require(packet.packetId == 0x0110 && consumed == 10,
+            "skill-failure acknowledgement framing differs from packetver23");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch 0x0110");
+        Require(fixture.source.m_isMotionFreezed == 0,
+            "0x0110 did not clear local-player motion freeze for every result value");
+        if (index == 14) {
+            Require(fixture.mode.m_isReqEmotion == 0,
+                "skill1 cause0 btype1 did not clear the pending emotion request");
+        }
+    }
+    g_session.m_isSkillFail = 1;
+
+    const std::vector<int> expectedNoticeIds = {
+        0xCA, 0xCB, 0x328, 0xDB, 0xE9, 0xEF, 0xF6, 0xF7, 0x244, 0x11D,
+        0xA0, 0xD6, 0xCD, 0xCF, 0x17F, 0x518, 0x518, 0xCC
+    };
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for 0x0110 replay");
+    std::vector<int> actualNoticeIds;
+    std::string logLine;
+    constexpr const char* noticePrefix = "[GameMode] skill fail notice msgId=";
+    while (std::getline(runtimeLog, logLine)) {
+        const std::size_t marker = logLine.find(noticePrefix);
+        if (marker != std::string::npos) {
+            actualNoticeIds.push_back(std::stoi(logLine.substr(marker + std::strlen(noticePrefix))));
+        }
+    }
+    Require(actualNoticeIds == expectedNoticeIds,
+        "0x0110 Ref message IDs or cause/skill-fail gates differ from the expected source order");
+    std::cout << "SkillFailAck opcode=0x0110 packets=23 notices=" << actualNoticeIds.size()
+        << " motionUnfreeze=23 emotionRequestCleared=1\n";
+}
+
 bool IsGroundArrowShowerScenario(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1992,6 +2056,8 @@ int main(int argc, char** argv)
             ReplaySkillCastAck(argv[1]);
         } else if (IsSkillCastCancelScenario(argv[1])) {
             ReplaySkillCastCancel(argv[1]);
+        } else if (IsSkillFailAckScenario(argv[1])) {
+            ReplaySkillFailAck(argv[1]);
         } else if (IsTrapRevealScenario(argv[1])) {
             ReplayTrapRevealLifecycle(argv[1]);
         } else if (IsLandMineTriggerScenario(argv[1])) {
