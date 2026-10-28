@@ -1764,3 +1764,7 @@ Added `skill_ground_scope_render_checks`, which calls production `CGroundScope::
 
 Added a resource-backed replay that stages the bundled `Trap03_3.rsm` and `onetyel copy.bmp`, parses the model and bitmap, routes a real job143 `0x011F` unit entry, and checks the attached `C3dActor` uses the Ref animation speed, frame, flags, and unit position before `0x0120` removes it. This exposed that `CSkill::TrapModelName()` returns a path relative to `data\model\` while the app registers RSM resources with an empty type prefix. `CSkill::ShowModel` now resolves that directory explicitly. The focused replay passes with the app's empty RSM registration. Texture upload remains excluded from this headless check; model parsing, bitmap loading, actor attachment, and cleanup are covered.
 
+Added `check_skill_unit_model_assets.py` and the `skill_unit_model_asset_check` CTest. It decodes all ten `TrapModelName()` byte-string mappings, verifies each exact RSM exists, and checks every referenced BMP in the matching texture folder. This check validates all asset paths; the resource-backed runtime load/assignment check currently exercises job143 as the representative model.
+
+Release build passes and CTest is 102/102 with the all-trap asset audit registered.
+

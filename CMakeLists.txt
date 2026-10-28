@@ -260,6 +260,8 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
     add_test(NAME ground_scope_source_check
         COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/tools/tests/check_ground_scope_source.py")
+    add_test(NAME skill_unit_model_asset_check
+        COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/tools/tests/check_skill_unit_model_assets.py")
     add_executable(use_skill_to_pos_info_packet_checks tools/tests/UseSkillToPosInfoPacketTests.cpp)
     target_compile_features(use_skill_to_pos_info_packet_checks PRIVATE cxx_std_17)
     target_link_libraries(use_skill_to_pos_info_packet_checks PRIVATE ro_network ro_core)
