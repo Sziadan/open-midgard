@@ -371,7 +371,7 @@ case 440: return UnportedEffect();
 case 441: ApplyPairedSaintCasting("effect\\ring_blue.tga", 5, true, -100.0f); return true;
 case 442: ApplyBodyLight442(); return true;
 case 444: return ProcessRunStop444();
-case 445: return UnportedEffect();
+case 445: return ProcessEffect445();
 case 446: ApplyBodyLight446(); return true;
 case 447: return UnportedEffect();
 case 448: return UnportedEffect();

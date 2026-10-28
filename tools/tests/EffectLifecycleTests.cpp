@@ -578,6 +578,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
+    bool ProcessEffect445();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5673,6 +5674,37 @@ int main()
         check(master.m_BodyLight==0&&master.m_BodyTime==91&&rngDraws==beforeRng
             &&effect.m_primList.empty(),
             "Effect413 stops the body light window after state50 without RNG or primitives");
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRenderObject master;master.m_pos={15,25,35};
+        CRagEffect effect;effect.m_type=445;effect.m_master=&master;effect.m_effectPos={1,2,3};
+        const int beforeRng=rngDraws;waveCalls.clear();
+        effect.m_stateCnt=29;effect.ProcessEffect445();
+        check(waveCalls.empty()&&master.m_BodyLight==0&&master.m_BodyTime==0,
+            "Effect445 is idle before its audio and body light windows");
+        effect.m_stateCnt=30;effect.ProcessEffect445();
+        check(effect.m_effectPos.x==15&&effect.m_effectPos.y==25&&effect.m_effectPos.z==35
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\T_"
+            &&waveCalls[0].x==12&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&master.m_BodyLight==0,
+            "Effect445 state30 follows master and plays its exact PE wave argument");
+        effect.m_stateCnt=35;effect.ProcessEffect445();
+        check(master.m_BodyLight==0&&master.m_BodyTime==0,
+            "Effect445 waits until after state35 to set body light");
+        effect.m_stateCnt=36;effect.ProcessEffect445();
+        check(master.m_BodyLight==0x10000&&master.m_BodyTime==1,
+            "Effect445 state36 sets bit0x10000 and stores state minus35");
+        master.m_BodyTime=77;effect.m_stateCnt=60;effect.ProcessEffect445();
+        check(master.m_BodyLight==0x10000&&master.m_BodyTime==77,
+            "Effect445 body light bit and time update are one-shot");
+        master.m_BodyLight=0;master.m_BodyTime=0;effect.m_stateCnt=70;effect.ProcessEffect445();
+        check(master.m_BodyLight==0x10000&&master.m_BodyTime==35
+            &&rngDraws==beforeRng&&effect.m_primList.empty(),
+            "Effect445 can refresh a cleared bit without RNG or primitive emission");
         g_world.m_player=oldPlayer;waveCalls.clear();
     }
     {

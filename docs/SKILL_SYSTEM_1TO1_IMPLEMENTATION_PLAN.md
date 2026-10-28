@@ -769,3 +769,7 @@ Completed effect403: skill 0x192 launches it, while canonical PE OnProcess case4
 ## WP10.3 effect413 checkpoint
 
 Completed effect413. The canonical inline PE case plays the proven truncated literal effect slash T underscore at state5 and sets master BodyLight bit0x20 plus BodyTime=stateCnt-17 when the bit is absent at states17-50 inclusive. Skill415 launches this target effect; the primary Ref caller omits it. The complete audio filename/VA remains unresolved, and the exact PE literal is preserved. Comparator and lifecycle coverage added. Release app/test builds pass, CTest 162/162, coverage 556 routed / 137 unported / 38 launched-but-unported, and deployed OldRO hash matches Release at 20168408F0773A4754BB7C86D12D52EF522B6203517D0B930A8AA4FA298FA8F7. Next: inline effect445.
+
+## WP10.3 effect445 checkpoint
+
+Completed effect445. Canonical inline PE case445 has state30 audio and a one-shot BodyLight 0x10000 and BodyTime update after state35. The PE action19 lifecycle removes prior 445 instances and launches a replacement, matching the local caller. Exact literal effect slash T underscore is preserved; its full audio resource/VA remain unresolved. Added source comparator and lifecycle coverage. Release app/test builds pass, CTest 163/163, coverage 557 routed / 136 unported / 37 launched-but-unported, and deployed OldRO hash matches Release at 436E5032EA243F7E42C13BAEBF09BBB1C60989DC6039572BB7F54B03C80518B1. Next: inline effect457.

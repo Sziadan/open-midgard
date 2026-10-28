@@ -371,7 +371,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 441	OnProcess	BlueCasting	routed	"OnProcess -> ApplyPairedSaintCasting(""effect\\ring_blue.tga"", 5, true, -100.0f); return true;"	src/session/SkillActionInfo2.cpp	109
 442	OnProcess	inline	routed	OnProcess -> ApplyBodyLight442(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
 444	OnProcess	RunStop	routed	OnProcess -> return ProcessRunStop444();	src/gamemode/UseSkillEffect.generated.inc	301
-445	OnProcess	inline	unported	OnProcess -> UnportedEffect	src/world/GameActor.cpp	-
+445	OnProcess	inline	routed	OnProcess -> return ProcessEffect445();	src/world/GameActor.cpp	34
 446	OnProcess	inline	routed	OnProcess -> ApplyBodyLight446(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
 447	OnProcess	Foot	unported	OnProcess -> UnportedEffect		-
 448	OnProcess	Foot	unported	OnProcess -> UnportedEffect		-
