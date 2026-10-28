@@ -25,6 +25,14 @@ struct SkillPacketReplayAccess {
         g_modeMgr.m_curMode = mode;
         g_modeMgr.m_curModeType = mode ? 1 : 0;
     }
+
+    static CMode* Current() { return g_modeMgr.m_curMode; }
+    static int CurrentType() { return g_modeMgr.m_curModeType; }
+    static void Restore(CMode* mode, int type)
+    {
+        g_modeMgr.m_curMode = mode;
+        g_modeMgr.m_curModeType = type;
+    }
 };
 
 namespace {
@@ -56,9 +64,12 @@ struct Fixture {
     CWorld& world;
     CPlayer* oldPlayer;
     const u32 oldAid;
+    CMode* oldMode;
+    const int oldModeType;
 
     Fixture()
-        : target(), world(g_world), oldPlayer(g_world.m_player), oldAid(g_session.m_aid)
+        : target(), world(g_world), oldPlayer(g_world.m_player), oldAid(g_session.m_aid),
+          oldMode(SkillPacketReplayAccess::Current()), oldModeType(SkillPacketReplayAccess::CurrentType())
     {
         source.m_gid = 1;
         source.m_attackMotion = 1.0f;
@@ -74,7 +85,7 @@ struct Fixture {
 
     ~Fixture()
     {
-        SkillPacketReplayAccess::SetCurrent(nullptr);
+        SkillPacketReplayAccess::Restore(oldMode, oldModeType);
         world.UnregisterActor(&target);
         world.m_player = oldPlayer;
         g_session.m_aid = oldAid;
@@ -102,17 +113,19 @@ std::vector<u8> LoadOnePacket(const std::string& path, u16& expectedOpcode)
         Require(parsedOpcode <= 0xFFFF, "scenario opcode out of range");
         expectedOpcode = static_cast<u16>(parsedOpcode);
         std::vector<u8> bytes = DecodeHex(hexBytes);
-        Require(bytes.size() == 31, "Bash 5 skill-damage fixture must be 31 bytes");
-        Require(input.peek() == std::char_traits<char>::eof(), "Bash scenario must contain one packet");
+        Require(bytes.size() == 31, "skill-damage scenario packet must be 31 bytes");
+        Require(input.peek() == std::char_traits<char>::eof(), "scenario must contain one packet");
         return bytes;
     }
     throw std::runtime_error("scenario contains no packets");
 }
 
-void ReplayBash(const std::string& path)
+void ReplayScenario(const std::string& path)
 {
     u16 expectedOpcode = 0;
     const std::vector<u8> bytes = LoadOnePacket(path, expectedOpcode);
+    const u16 skillId = static_cast<u16>(bytes[2]) | (static_cast<u16>(bytes[3]) << 8);
+    Require(skillId == 5 || skillId == 46, "runtime replay only has Ref assertions for skills 5 and 46");
     Fixture fixture;
 
     CGameModePacketRouter router;
@@ -123,38 +136,83 @@ void ReplayBash(const std::string& path)
     Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed),
         "production packet reader rejected Bash fixture");
     Require(packet.packetId == expectedOpcode && packet.packetId == 0x0114,
-        "Bash fixture opcode does not match active ZC_NOTIFY_SKILL route");
+        "scenario opcode does not match active ZC_NOTIFY_SKILL route");
     Require(consumed == static_cast<int>(bytes.size()), "packet reader left trailing scenario bytes");
     Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Bash packet");
+    const u32 replayStartTick = GetTickCount();
 
-    Require(fixture.target.m_willBeAttackedList.size() == 1,
-        "Bash packet did not enqueue exactly one target WBA");
-    const WBA hit = fixture.target.m_willBeAttackedList.front();
-    Require(hit.sourceSkillId == 5 && hit.damage == 100 && hit.effectLevel == 5,
-        "Bash WBA skill, damage, or level fields differ from packet bytes");
-    Require(hit.message == 96 && hit.effectId1 == -1 && hit.effectId2 == -1,
-        "Bash WBA message/effect fields differ from Ref skill action");
+    const std::size_t expectedWbaCount = skillId == 5 ? 1u : 2u;
+    Require(fixture.target.m_willBeAttackedList.size() == expectedWbaCount,
+        "skill packet enqueued an unexpected number of target WBAs");
+    std::vector<WBA> queuedHits(fixture.target.m_willBeAttackedList.begin(),
+        fixture.target.m_willBeAttackedList.end());
+    for (const WBA& hit : queuedHits) {
+        Require(hit.sourceSkillId == skillId && hit.damage == 100 && hit.effectLevel == 5,
+            "WBA skill, per-hit damage, or level differs from packet/Ref fields");
+    }
+    if (skillId == 5) {
+        Require(queuedHits[0].message == 96 && queuedHits[0].effectId1 == -1 && queuedHits[0].effectId2 == -1,
+            "Bash WBA message/effect fields differ from Ref skill action");
+    } else {
+        Require(queuedHits[0].message == 111 && queuedHits[0].effectId1 == 0 && queuedHits[0].effectId2 == 1,
+            "Double Strafe first WBA differs from Ref action-9 path");
+        Require(queuedHits[1].message == 111 && queuedHits[1].effectId1 == 0 && queuedHits[1].effectId2 == -1,
+            "Double Strafe follow-up WBA differs from Ref multi-hit path");
+        Require(queuedHits[1].time - queuedHits[0].time == 200,
+            "Double Strafe follow-up WBA delay differs from executable doubleAttackTerm");
+    }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(32));
-    fixture.target.ProcessWillBeAttacked();
-    Require(fixture.target.m_willBeAttackedList.empty(),
-        "Bash WBA was not delivered after its 24 ms delay");
+    std::vector<u32> expectedDelays;
+    for (const WBA& hit : queuedHits) {
+        expectedDelays.push_back(hit.time - replayStartTick);
+    }
+
+    std::vector<u32> deliveredAtElapsedMs;
+    std::vector<u32> deliveryStepMs;
+    std::size_t previousQueueSize = fixture.target.m_willBeAttackedList.size();
+    u32 previousStepElapsedMs = 0;
+    for (unsigned int worldTick = 24; !fixture.target.m_willBeAttackedList.empty() && worldTick <= 2000; worldTick += 24) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(24));
+        fixture.target.ProcessWillBeAttacked();
+        const u32 elapsedMs = GetTickCount() - replayStartTick;
+        const u32 stepMs = elapsedMs - previousStepElapsedMs;
+        const std::size_t currentQueueSize = fixture.target.m_willBeAttackedList.size();
+        while (previousQueueSize > currentQueueSize) {
+            deliveredAtElapsedMs.push_back(elapsedMs);
+            deliveryStepMs.push_back(stepMs);
+            --previousQueueSize;
+        }
+        previousStepElapsedMs = elapsedMs;
+    }
+    Require(fixture.target.m_willBeAttackedList.empty(), "skill WBA queue was not fully delivered");
+    Require(deliveredAtElapsedMs.size() == expectedDelays.size(),
+        "WBA delivery count differs from expected real-time 24 ms polling steps");
+    for (std::size_t index = 0; index < deliveredAtElapsedMs.size(); ++index) {
+        Require(deliveredAtElapsedMs[index] >= expectedDelays[index]
+            && deliveredAtElapsedMs[index] <= expectedDelays[index] + deliveryStepMs[index] + 24,
+            "WBA delivery elapsed time outside polling-step window: delay=" + std::to_string(expectedDelays[index])
+                + " step=" + std::to_string(deliveryStepMs[index])
+                + " actual=" + std::to_string(deliveredAtElapsedMs[index]));
+    }
 
     const std::string logPath = "debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log";
     std::ifstream runtimeLog(logPath);
     Require(static_cast<bool>(runtimeLog), "production runtime log was not created");
     std::string logLine;
-    int wbaCount = 0;
-    int logMessage = 0;
-    int logSkill = 0;
-    int logEffect1 = 0;
-    int logEffect2 = 0;
-    unsigned long logTick = 0;
-    int logDamage = 0;
-    int logLevel = 0;
-    char logWave[128]{};
+    struct WbaLogEntry {
+        int message;
+        int skill;
+        int effect1;
+        int effect2;
+        unsigned int delivery;
+        int damage;
+        int level;
+        std::string wave;
+    };
+    std::vector<WbaLogEntry> wbaEvents;
     while (std::getline(runtimeLog, logLine)) {
         unsigned long processId = 0;
+        unsigned long logTick = 0;
         int parsedMessage = 0;
         int parsedSkill = 0;
         int parsedEffect1 = 0;
@@ -176,29 +234,38 @@ void ReplayBash(const std::string& path)
                 &parsedDamage,
                 &parsedLevel) == 10
             && processId == GetCurrentProcessId()) {
-            ++wbaCount;
-            logMessage = parsedMessage;
-            logSkill = parsedSkill;
-            logEffect1 = parsedEffect1;
-            logEffect2 = parsedEffect2;
-            logDamage = parsedDamage;
-            logLevel = parsedLevel;
-            logTick = delivery;
-            std::snprintf(logWave, sizeof(logWave), "%s", parsedWave);
+            wbaEvents.push_back(WbaLogEntry{
+                parsedMessage, parsedSkill, parsedEffect1, parsedEffect2,
+                delivery, parsedDamage, parsedLevel, parsedWave });
         }
     }
-    Require(wbaCount == 1, "expected exactly one production WBA event in runtime log");
-    Require(logMessage == 96 && logSkill == 5 && logEffect1 == -1 && logEffect2 == -1,
-        "production WBA log message/skill/effects differ from the queued event");
-    Require(logDamage == 100 && logLevel == 5 && std::string(logWave) == "_enemy_hit_normal2.wav",
-        "production WBA log damage/level/wave differs from the Ref walk-through");
-
-    std::cout << "WBA msg=" << logMessage
-        << " skill=" << logSkill
-        << " effectId1=" << logEffect1
-        << " effectId2=" << logEffect2
-        << " wave=" << logWave
-        << " deliveryTick=24 (runtime=" << logTick << ")\n";
+    Require(wbaEvents.size() == expectedWbaCount, "runtime log has an unexpected number of WBA events");
+    for (std::size_t index = 0; index < wbaEvents.size(); ++index) {
+        const WbaLogEntry& event = wbaEvents[index];
+        const char* expectedWave = skillId == 5 ? "_enemy_hit_normal2.wav" : "player_clothes.wav";
+        Require(event.skill == skillId && event.damage == 100 && event.level == 5
+            && event.wave == expectedWave,
+            "production WBA log skill/damage/level/wave differs from Ref walk-through");
+        if (skillId == 5) {
+            Require(event.message == 96 && event.effect1 == -1 && event.effect2 == -1,
+                "Bash production WBA log differs from Ref walk-through");
+        } else if (index == 0) {
+            Require(event.message == 111 && event.effect1 == 0 && event.effect2 == 1,
+                "Double Strafe first production WBA log differs from Ref walk-through");
+        } else {
+            Require(event.message == 111 && event.effect1 == 0 && event.effect2 == -1,
+                "Double Strafe second production WBA log differs from Ref walk-through");
+        }
+        Require(event.delivery == queuedHits[index].time,
+            "runtime WBA log delivery timestamp differs from queued hit");
+        std::cout << "WBA msg=" << event.message
+            << " skill=" << event.skill
+            << " effectId1=" << event.effect1
+            << " effectId2=" << event.effect2
+            << " wave=" << event.wave
+            << " deliveredElapsedMs=" << deliveredAtElapsedMs[index]
+            << " (runtime=" << event.delivery << ")\n";
+    }
 }
 
 } // namespace
@@ -207,7 +274,7 @@ int main(int argc, char** argv)
 {
     try {
         Require(argc == 2, "expected one replay scenario path");
-        ReplayBash(argv[1]);
+        ReplayScenario(argv[1]);
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "production skill replay failed: " << error.what() << '\n';

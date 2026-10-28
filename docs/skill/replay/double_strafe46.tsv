@@ -1,0 +1,3 @@
+# opcode<TAB>hexBytes<TAB>comment
+# 31-byte ZC_NOTIFY_SKILL layout; zero target delay and div=2 make clif_calc_delay choose type9.
+0x0114	14012E000100000002000000785634120000000000000000C8000500020009	Double Strafe 46 (skill46, source AID 1, target AID 2, damage200, level5, div2, action9)

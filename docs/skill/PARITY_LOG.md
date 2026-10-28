@@ -3105,3 +3105,12 @@ Effect74 now routes through `ProcessIceWall74`, matching the complete PE and Ref
 **Replay:** With `RO_BUILD_SKILL_REPLAY_TESTS=ON`, the root CMake build links the actual gamemode/world/session/skill/audio/render/UI libraries. The test installs a real `CGameMode` into the mode manager, constructs the real global `CWorld`, a `CPlayer` source and registered `CGameActor` target, calls `RegisterDefaultGameModePacketHandlers`, decodes the raw scenario with production `TryReadPacket`, dispatches through `CGameModePacketRouter`, and advances the target through `ProcessWillBeAttacked` after the 24 ms delay.
 
 **Evidence:** The production runtime log matches `WBA msg=96 skill=5 effectId1=-1 effectId2=-1 wave=_enemy_hit_normal2.wav deliveryTick=24 damage=100 level=5`; the WBA queue drains after delivery. Root replay CTest passes1/1; the standalone parity suite passes202/202. This does not verify other WP2 skills or WP8 matrix rows. Next: add Double Strafe46 and Fire Bolt19 scenarios and continue the remaining acceptance skills.
+
+
+## WP10.8 — Production-linked Double Strafe packet replay — 2026-10-28
+
+**Packet and Ref walk-through:** `docs/skill/replay/double_strafe46.tsv` encodes a 31-byte `0x0114` notify-skill packet for skill46, source AID1, target AID2, tick `0x12345678`, zero target delay, damage200, level5, division2, and action9. Ref `GameActorMsgHandler.cpp` action9 divides damage into two 100-damage hits, maps the first to effects0/1 and follow-up to0/−1, and queues message111; the two hits are spaced 200 ms by the executable's `doubleAttackTerm`.
+
+**Replay:** The production-linked harness dispatches the raw bytes through the default packet router, collects both real WBA queue entries, and steps the target through `ProcessWillBeAttacked`. It checks skill/damage/level/message/effect fields, the 200 ms spacing, runtime hit wave, log timestamps, and actual elapsed delivery within the measured polling-step window.
+
+**Evidence:** Both events match: `msg=111 skill=46 effect=0/1` then `msg=111 skill=46 effect=0/−1`, wave `player_clothes.wav`, damage100, level5. Bash5 and Double Strafe46 root replay CTests pass2/2. The test records measured real elapsed time because Windows sleep scheduling does not guarantee exact 24 ms wakeups. No WP8 matrix row is verified. Next: Fire Bolt19.
