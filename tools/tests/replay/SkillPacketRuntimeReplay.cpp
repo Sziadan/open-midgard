@@ -532,6 +532,8 @@ void ReplayFirewallUnitLifecycle(const std::string& path)
         "scenario actor setup did not create AID3/job127 at configured cell(10,20)");
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
+    std::size_t processSteps = 0;
+    u32 lifetimeElapsedMs = 0;
     for (const ScenarioPacket& scenarioPacket : packets) {
         PacketView packet{};
         int consumed = 0;
@@ -552,6 +554,24 @@ void ReplayFirewallUnitLifecycle(const std::string& path)
             Require(std::find(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(), unit)
                     != fixture.world.m_gameObjectList.end(),
                 "Firewall unit is missing from CWorld game-object ownership list");
+            const u32 unitStartTick = unit->m_SkillStartTime;
+            u32 previousElapsedMs = 0;
+            bool active = true;
+            while (active && previousElapsedMs <= 3200) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(24));
+                lifetimeElapsedMs = timeGetTime() - unitStartTick;
+                active = unit->OnProcess() != 0;
+                ++processSteps;
+                if (!active) {
+                    const u32 measuredStepMs = lifetimeElapsedMs - previousElapsedMs;
+                    Require(lifetimeElapsedMs > 3000
+                        && lifetimeElapsedMs <= 3000 + measuredStepMs + 24,
+                        "Firewall unit expiry falls outside the measured 24 ms process-step window");
+                }
+                previousElapsedMs = lifetimeElapsedMs;
+            }
+            Require(!active && processSteps >= 100,
+                "Firewall unit did not expire after nominal 24 ms CSkill::OnProcess steps");
         } else {
             Require(fixture.world.GetSkillByAID(100) == nullptr,
                 "0x0120 did not remove Firewall unit AID100 from CWorld skill list");
@@ -568,12 +588,17 @@ void ReplayFirewallUnitLifecycle(const std::string& path)
     Require(static_cast<bool>(runtimeLog), "production runtime log was not created for Firewall unit lifecycle");
     std::string logLine;
     bool foundFirewallWave = false;
+    bool foundFirewallLoop = false;
     while (std::getline(runtimeLog, logLine)) {
         foundFirewallWave = foundFirewallWave
             || logLine.find("[REPLAY] PlayWave name='effect\\EF_FireWall.wav'") != std::string::npos;
+        foundFirewallLoop = foundFirewallLoop
+            || logLine.find("[REPLAY] LaunchEffect id=25 actor=100") != std::string::npos;
     }
     Require(foundFirewallWave, "Firewall unit entry did not play Ref unit wave effect\\EF_FireWall.wav");
-    std::cout << "SkillUnit job=127 aid=100 cell=(10,20) pos=(-27.500,7.500,22.500) wave=effect\\EF_FireWall.wav removed=1\n";
+    Require(foundFirewallLoop, "Firewall unit OnProcess did not launch Ref loop effect25");
+    std::cout << "SkillUnit job=127 aid=100 cell=(10,20) pos=(-27.500,7.500,22.500) wave=effect\\EF_FireWall.wav loopEffect=25 steps="
+        << processSteps << " expiryElapsedMs=" << lifetimeElapsedMs << " removed=1\n";
 }
 
 void ReplayTrapRevealLifecycle(const std::string& path)

@@ -1586,3 +1586,7 @@ Added the WP4 trap visibility lifecycle: two 0x011F entries for unit AID100/job1
 ## WP10.8 — Scenario-configurable replay actors — 2026-10-28
 
 Added optional scenario actor rows (`# actor<TAB>role<TAB>aid<TAB>job<TAB>cellX<TAB>cellY`) to configure the player, primary target, and any number of additional registered CGameActor instances using the active controlled attribute grid. Firewall and trap lifecycle scenarios now provide source, target, and a third actor and assert the configured third actor AID/job/cell position. All 12 production replay CTests pass with both the old default fixtures and new configured actors. The next remaining harness requirement is nominal 24 ms stepping for ground-unit OnProcess lifecycles.
+
+## WP10.8 — Timed Fire Wall unit processing — 2026-10-28
+
+The Firewall replay now invokes the production CSkill::OnProcess every nominal 24 ms after packet entry, until the unit reports expiration, then verifies the 0x0120 removal. The trace confirms loop effect25, 122 process calls, and expiry at 3023 ms, within the measured final polling-step window around the Ref 3000 ms lifetime. Root packet replay CTest passes12/12. Next: widen WP3.4/WP4 packet cases and exercise multiple timed units through the world update collection.

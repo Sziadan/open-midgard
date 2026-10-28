@@ -4,7 +4,7 @@ Each scenario is UTF-8 TSV with three columns: packet opcode (integer, `0x` pref
 
 `actor_action.tsv` is a 29-byte `0x008A` framing/router fixture used by the standalone smoke test to exercise production `TryReadPacket`, `CGameModePacketRouter`, and `HandleActorActionNotify` logic against lightweight doubles, including malformed and unknown packet rejection. `blessing34.tsv` is a 15-byte `0x011A` successful Blessing34 notify at level3; it checks Ref target effect42.
 
-`firewall_unit_lifecycle.tsv` contains a 16-byte `0x011F` Fire Wall unit entry (job127, unit AID100, cell10,20) followed by a 6-byte `0x0120` removal. It checks the production `CSkill` world lists, terrain-mapped unit position, Fire Wall wave, and removal.
+`firewall_unit_lifecycle.tsv` contains a 16-byte `0x011F` Fire Wall unit entry (job127, unit AID100, cell10,20) followed by a 6-byte `0x0120` removal. It checks the production `CSkill` world lists, terrain-mapped unit position, Fire Wall wave, and removal. Between entry and removal it calls the real `CSkill::OnProcess` at nominal 24 ms intervals until the Ref 3-second lifetime expires, checking loop effect25 and measured expiry timing.
 
 `trap_reveal_lifecycle.tsv` exercises trap job143 with two `0x011F` entries (visible then hidden for a non-party creator), `0x01AC` reveal, and `0x0120` removal. It checks the runtime visibility changes and unit cleanup; model rendering remains resource-dependent.
 
@@ -12,4 +12,4 @@ Each scenario is UTF-8 TSV with three columns: packet opcode (integer, `0x` pref
 
 All nine initial WP2 acceptance scenarios now run through the production packet router. Storm Gust89 and Sanctuary70 use the 18-byte `0x0117` ground-skill packet; the fixture supplies a 32×32 attribute map and checks effect placement at the decoded cell with terrain height. The first WP3.4 buff scenario, Blessing34, also passes and checks target effect42. Replay-only event traces capture `LaunchEffect`, `PlaceEffect`, `PlayWave`, `SetState`, `SendMsg88`, and `UnportedEffect` calls; WBA logging also covers message108 events that do not use `HandleAttacked`.
 
-The remaining WP10.8 work is to add 24 ms stepping for ground-unit lifecycles and continue the WP3.4 and WP4 acceptance scenarios. Do not change `SKILL_MATRIX.md` rows to `verified(replay ...)` until each row's complete Ref walk-through matches its replay log.
+The remaining WP10.8 work is to continue the WP3.4 and WP4 acceptance scenarios, then broaden runtime stepping to multiple ground units and the full world update path. Do not change `SKILL_MATRIX.md` rows to `verified(replay ...)` until each row's complete Ref walk-through matches its replay log.

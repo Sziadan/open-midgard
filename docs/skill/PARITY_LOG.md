@@ -3180,3 +3180,7 @@ Effect74 now routes through `ProcessIceWall74`, matching the complete PE and Ref
 ## WP10.8 replay fixture — scenario actor setup — 2026-10-28
 
 The replay TSV reader now accepts actor metadata comments `# actor<TAB>role<TAB>aid<TAB>job<TAB>cellX<TAB>cellY` for source/player, target, and additional world actors. Actor cells convert through the production `CGameMode::GetClientCoor` and `C3dAttr::GetHeight`; additional actors are registered/unregistered with the real CWorld. Firewall and trap scenarios verify a third job127 actor at cell(10,20). Existing packet scenarios retain their original default source/target fixture. Root replay CTest passes12/12. Ground-unit frame stepping remains open.
+
+## WP10.8 runtime replay — timed Fire Wall unit processing — 2026-10-28
+
+Between 0x011F Firewall entry and 0x0120 removal, the runner calls real `CSkill::OnProcess` after nominal 24 ms waits. The source method keeps job127 active until `m_SkillStartTime + 3000u < timeGetTime()`, periodically launches effect25, then returns zero. Runtime evidence: 122 calls, effect25 observed, expiry after 3023 ms, and subsequent removal from both world lists. The last-step window is measured to account for Windows scheduling; this validates the per-unit production method but does not yet drive multiple CSkill objects through the complete CWorld frame update. Replay CTest passes12/12.
