@@ -780,6 +780,44 @@ void ReplayGroundSkillWave(const std::string& path)
     std::cout << "GroundSkillWave skill=" << skillId << " wave=" << expectedWave << " relative=(0,0,0)\n";
 }
 
+bool IsLordOfVermilionScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 1 && packets[0].opcode == 0x0117 && packets[0].bytes.size() == 18
+        && ReadU16LE(packets[0].bytes.data() + 2) == 85;
+}
+
+void ReplayLordOfVermilion(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 1 && packets[0].opcode == 0x0117 && packets[0].bytes.size() == 18,
+        "Lord of Vermilion replay requires one 18-byte 0x0117 packet");
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), packet, consumed),
+        "production packet reader rejected Lord of Vermilion packet");
+    Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Lord of Vermilion packet");
+
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for Lord of Vermilion");
+    const float expectedX = (10.0f - 16.0f) * 5.0f + 2.5f;
+    const float expectedZ = (20.0f - 16.0f) * 5.0f + 2.5f;
+    std::ostringstream expectedPosition;
+    expectedPosition << std::fixed << std::setprecision(3)
+        << "extra=0 pos=(" << expectedX << ",7.500," << expectedZ << ")";
+    std::string logLine;
+    bool foundEffect = false;
+    while (std::getline(runtimeLog, logLine)) {
+        foundEffect = foundEffect || (logLine.find("[REPLAY] PlaceEffect id=90 lastTime=") != std::string::npos
+            && logLine.find(expectedPosition.str()) != std::string::npos);
+    }
+    Require(foundEffect, "Lord of Vermilion did not place Ref effect90 at the server cell and terrain height");
+    std::cout << "GroundSkill skill=85 effect=90 cell=(10,20) pos=(-27.500,7.500,22.500)\n";
+}
+
 bool IsSkillCastAckScenario(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1942,6 +1980,8 @@ int main(int argc, char** argv)
         freshRuntimeLog.close();
         if (IsGroundSkillWaveScenario(argv[1])) {
             ReplayGroundSkillWave(argv[1]);
+        } else if (IsLordOfVermilionScenario(argv[1])) {
+            ReplayLordOfVermilion(argv[1]);
         } else if (IsSkillDamagePositionScenario(argv[1])) {
             ReplaySkillDamagePosition(argv[1]);
         } else if (IsSkillDamageExtendedExtraScenario(argv[1])) {
