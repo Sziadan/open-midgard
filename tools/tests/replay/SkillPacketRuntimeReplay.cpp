@@ -63,14 +63,16 @@ struct Fixture {
     CGameMode mode;
     CPlayer source;
     CGameActor target;
+    C3dAttr attr;
     CWorld& world;
     CPlayer* oldPlayer;
+    C3dAttr* oldAttr;
     const u32 oldAid;
     CMode* oldMode;
     const int oldModeType;
 
     Fixture()
-        : target(), world(g_world), oldPlayer(g_world.m_player), oldAid(g_session.m_aid),
+        : target(), world(g_world), oldPlayer(g_world.m_player), oldAttr(g_world.m_attr), oldAid(g_session.m_aid),
           oldMode(SkillPacketReplayAccess::Current()), oldModeType(SkillPacketReplayAccess::CurrentType())
     {
         source.m_gid = 1;
@@ -78,8 +80,13 @@ struct Fixture {
         source.m_motionSpeed = 1.0f;
         target.m_gid = 2;
         target.m_pos = vector3d{ 1.0f, 0.0f, 0.0f };
+        attr.m_width = 32;
+        attr.m_height = 32;
+        attr.m_zoom = 5;
+        attr.m_cells.resize(32u * 32u, CAttrCell{ 7.5f, 7.5f, 7.5f, 7.5f, 0 });
         g_session.m_aid = source.m_gid;
         world.m_player = &source;
+        world.m_attr = &attr;
         world.RegisterActor(&target);
         mode.m_world = &world;
         SkillPacketReplayAccess::SetCurrent(&mode);
@@ -90,6 +97,7 @@ struct Fixture {
         SkillPacketReplayAccess::Restore(oldMode, oldModeType);
         world.UnregisterActor(&target);
         world.m_player = oldPlayer;
+        world.m_attr = oldAttr;
         g_session.m_aid = oldAid;
     }
 };
@@ -115,7 +123,7 @@ std::vector<u8> LoadOnePacket(const std::string& path, u16& expectedOpcode)
         Require(parsedOpcode <= 0xFFFF, "scenario opcode out of range");
         expectedOpcode = static_cast<u16>(parsedOpcode);
         std::vector<u8> bytes = DecodeHex(hexBytes);
-        const std::size_t expectedLength = expectedOpcode == 0x011A ? 15u : 31u;
+        const std::size_t expectedLength = expectedOpcode == 0x011A ? 15u : (expectedOpcode == 0x0117 ? 18u : 31u);
         Require(bytes.size() == expectedLength, "scenario packet length does not match its active opcode layout");
         Require(input.peek() == std::char_traits<char>::eof(), "scenario must contain one packet");
         return bytes;
@@ -128,9 +136,9 @@ void ReplayScenario(const std::string& path)
     u16 expectedOpcode = 0;
     const std::vector<u8> bytes = LoadOnePacket(path, expectedOpcode);
     const u16 skillId = static_cast<u16>(bytes[2]) | (static_cast<u16>(bytes[3]) << 8);
-    Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 46 || skillId == 136
-        || skillId == 137 || skillId == 271,
-        "runtime replay only has Ref assertions for skills 5, 19, 28, 46, 136, 137, and 271");
+    Require(skillId == 5 || skillId == 19 || skillId == 28 || skillId == 46 || skillId == 70
+        || skillId == 89 || skillId == 136 || skillId == 137 || skillId == 271,
+        "runtime replay only has Ref assertions for skills 5, 19, 28, 46, 70, 89, 136, 137, and 271");
     Fixture fixture;
 
     CGameModePacketRouter router;
@@ -140,14 +148,14 @@ void ReplayScenario(const std::string& path)
     int consumed = 0;
     Require(TryReadPacket(bytes.data(), static_cast<int>(bytes.size()), packet, consumed),
         "production packet reader rejected Bash fixture");
-    Require(packet.packetId == expectedOpcode && (packet.packetId == 0x0114 || packet.packetId == 0x011A),
+    Require(packet.packetId == expectedOpcode && (packet.packetId == 0x0114 || packet.packetId == 0x0117 || packet.packetId == 0x011A),
         "scenario opcode does not match an active skill packet route");
     Require(consumed == static_cast<int>(bytes.size()), "packet reader left trailing scenario bytes");
     Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch skill packet");
     const u32 replayStartTick = timeGetTime();
 
     const std::size_t expectedTargetWbaCount = skillId == 46 ? 2u
-        : ((skillId == 28 || skillId == 271) ? 0u : (skillId == 136 ? 4u : 1u));
+        : ((skillId == 28 || skillId == 70 || skillId == 89 || skillId == 271) ? 0u : (skillId == 136 ? 4u : 1u));
     const std::size_t expectedSelfWbaCount = skillId == 136 ? 3u : 0u;
     const std::size_t expectedWbaCount = skillId == 271 ? 1u : expectedTargetWbaCount + expectedSelfWbaCount;
     Require(fixture.target.m_willBeAttackedList.size() == expectedTargetWbaCount,
@@ -377,6 +385,25 @@ void ReplayScenario(const std::string& path)
         Require(foundHealEffect, "Heal 28 low-tier packet did not launch Ref effect7 on target");
         Require(foundHealNumber, "Heal 28 packet did not send Ref damage-number message88");
         std::cout << "Heal skill=28 value=199 effect=7 target=2 message=88 color=-16711936 kind=114\n";
+    } else if (skillId == 70 || skillId == 89) {
+        runtimeLog.clear();
+        runtimeLog.seekg(0);
+        const int expectedEffect = skillId == 70 ? 83 : 89;
+        const std::string expectedPlace = "[REPLAY] PlaceEffect id=" + std::to_string(expectedEffect)
+            + " lastTime=";
+        bool foundGroundEffect = false;
+        while (std::getline(runtimeLog, logLine)) {
+            if (logLine.find(expectedPlace) != std::string::npos) {
+                const float expectedX = (10.0f - 16.0f) * 5.0f + 2.5f;
+                const float expectedZ = (20.0f - 16.0f) * 5.0f + 2.5f;
+                std::ostringstream expectedPosition;
+                expectedPosition << std::fixed << std::setprecision(3)
+                    << "extra=0 pos=(" << expectedX << ",7.500," << expectedZ << ")";
+                foundGroundEffect = logLine.find(expectedPosition.str()) != std::string::npos;
+            }
+        }
+        Require(foundGroundEffect, "ground-skill packet did not place the Ref-mapped effect at the packet cell and attr height");
+        std::cout << "GroundSkill skill=" << skillId << " effect=" << expectedEffect << " cell=(10,20) pos=(-27.500,7.500,22.500)\n";
     }
 }
 

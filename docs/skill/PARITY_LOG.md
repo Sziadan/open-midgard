@@ -3159,3 +3159,8 @@ Effect74 now routes through `ProcessIceWall74`, matching the complete PE and Ref
 **Replay:** The production-linked runner dispatches the packet through the default router, verifies a single queued target WBA with message39/effects0/132, drains it through the real 24 ms polling path, and checks the target job's runtime hit wave and scheduled time.
 
 **Evidence:** Runtime matches `msg=39 skill=137 effect=0/132 wave=player_clothes.wav damage=100 level=5`; the WBA queue drains within the measured polling interval. Focused Grimtooth CTest passes1/1. No WP8 matrix row is verified. Next: Storm Gust89.
+
+
+## WP10.8 runtime replay — Storm Gust89 and Sanctuary70 — 2026-10-28
+
+`docs/skill/replay/storm_gust89.tsv` and `sanctuary70.tsv` encode the Ref/eAthena 18-byte `0x0117` ground-skill packet layout (`Ref/eAthena_src_2011/map/clif.c:4831-4844`; Ref receiver `GameModePacket.cpp:18135`). Production routing sends actor message38; `Am_Groundskill` converts packet cell coordinates and samples C3dAttr height (`GameActorMsgHandler.cpp:336-420`, current `src/world/GameActorMsgHandler.cpp:669-745`). Skill89 places effect89; skill70 places Sanctuary effect83. With a 32×32 zoom-5 attr grid at constant height7.5, the replay asserts effect placement at cell(10,20), mapped position(-27.5,7.5,22.5). Focused ground-skill tests pass2/2 and all initial WP2 replay tests pass9/9. This checks packet routing and placement; no WP8 matrix row is marked verified.

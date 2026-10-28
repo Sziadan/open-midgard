@@ -290,6 +290,12 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_grimtooth_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/grimtooth137.tsv")
+    add_test(NAME skill_packet_replay_storm_gust_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/storm_gust89.tsv")
+    add_test(NAME skill_packet_replay_sanctuary_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/sanctuary70.tsv")
     set_tests_properties(skill_packet_replay_runtime_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_double_strafe_checks PROPERTIES
@@ -303,5 +309,7 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     set_tests_properties(skill_packet_replay_asura_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_grimtooth_checks PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
+    set_tests_properties(skill_packet_replay_storm_gust_checks skill_packet_replay_sanctuary_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
 endif()
