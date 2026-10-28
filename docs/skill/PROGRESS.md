@@ -1748,3 +1748,7 @@ Added `monster_arrow_shower47.tsv` for a raw 18-byte 0x0117 packet whose source 
 
 Added `missing_actor_arrow_shower47.tsv` for skill47 sourced from absent AID404. The production router leaves that AID unresolved, sends the nonmonster mode message99 with skill47, null source and level5, then the Arrow Shower helper returns without creating arrows because its source is null. `ReplayGameMode` now records message parameters so the null-source contract is asserted directly. Ref `Zc_Notify_Groundskill` (`Ref/GameModePacket.cpp:18135-18230`) performs message99 after failed actor lookup and the skill47 fan-out only emits when its source exists. Release build succeeded and all98 CTests pass.
 
+## WP4.6 — Ground targeting scope source parity — 2026-10-28
+
+Added `check_ground_scope_source.py` to compare `CGroundScope` against Ref: all25 skill-to-radius mappings (3/5/7/9/11), constructor defaults, the `m_lastingTime >= timeGetTime()` lifetime boundary, and message14/22/115/117 field and scope-size behavior. Registered it as the root Release CTest `ground_scope_source_check`. The comparator passes, and the Release build plus all99 CTests pass. Rendering through a loaded `C3dGround` and `magic_target.tga` is still unverified.
+

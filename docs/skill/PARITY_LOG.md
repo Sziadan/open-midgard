@@ -3354,3 +3354,7 @@ Ref `Zc_Notify_Groundskill` (`Ref/GameModePacket.cpp:18135-18230`) sends message
 
 Ref `Zc_Notify_Groundskill` resolves source AID, sends actor message38 only if found, then enters the nonmonster path for a missing actor and sends mode message99 with a null actor pointer. Skill47 calls the Arrow Shower helper, which emits no arrows without a source. `missing_actor_arrow_shower47.tsv` supplies source AID404 with no matching player/actor. Replay checks the exact message99 arguments, confirms no actor was synthesized, and confirms no `CArrowEffect` was registered. Release build and CTest pass98/98.
 
+## WP4.6 — CGroundScope source comparator
+
+`tools/tests/check_ground_scope_source.py` compares the exact `GetScopeSize` mapping against Ref `Skill.cpp:4`, ctor defaults against `:296`, the inclusive lifetime predicate against `:662`, and `SendMsg` cases14/22/115/117 against `:2445`. The 25 mapped skill IDs produce sizes3/5/7/9/11; message117 adds2 to the mapped radius and sets rotation speed to `0.5 / scopeSize`. CTest `ground_scope_source_check` passes. Runtime tile rendering remains open because it needs a loaded ground and `effect\\magic_target.tga` fixture.
+
