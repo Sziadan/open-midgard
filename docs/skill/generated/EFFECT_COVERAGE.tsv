@@ -1,694 +1,694 @@
 id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 0	OnProcess	Hit1	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	7
-1	OnProcess	Hit2	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc;src/world/GameActorMsgHandler.cpp	23
+1	OnProcess	Hit2	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc;src/world/GameActorMsgHandler.cpp	26
 2	OnProcess	Hit3	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	9
 3	OnProcess	Hit4	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	5
-4	OnProcess	Hit5	routed	OnProcess -> return ProcessEffectFrameLegacy();		33
+4	OnProcess	Hit5	routed	OnProcess -> return ProcessEffectFrameLegacy();		21
 5	OnProcess	Hit6	routed	OnProcess -> return ProcessEffectFrameLegacy();		5
-6	OnProcess	Entry	routed	OnProcess -> return ProcessEntry6();		31
-7	OnProcess	Exit	routed	OnProcess -> return ProcessExit7();	src/world/GameActor.cpp	33
-8	OnProcess	Warp	routed	OnProcess -> return ProcessWarp8();		33
-9	OnProcess	Enhance	routed	OnProcess -> return ProcessEnhance9();		33
+6	OnProcess	Entry	routed	OnProcess -> return ProcessEntry6();		37
+7	OnProcess	Exit	routed	OnProcess -> return ProcessExit7();	src/world/GameActor.cpp	25
+8	OnProcess	Warp	routed	OnProcess -> return ProcessWarp8();		39
+9	OnProcess	Enhance	routed	OnProcess -> return ProcessEnhance9();		39
 10	OnProcess	Coin	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	5
-11	OnProcess	Endure	routed	OnProcess -> return ProcessEndure11();	src/gamemode/UseSkillEffect.generated.inc	33
-12	OnProcess	SAINTCASTING	routed	"OnProcess -> ApplyPairedSaintCasting(""effect\\ring_yellow.tga"", 1, true, 0.0f); return true;"	src/session/SkillActionInfo.cpp;src/session/SkillActionInfo2.cpp	33
-13	OnProcess	GlassWall	routed	OnProcess -> return ProcessGlassWall13();		31
-14	OnProcess	HealSP	routed	OnProcess -> return ProcessEffectFrameLegacy();		33
-15	OnProcess	SoulStrike	routed	OnProcess -> return ProcessSoulStrike15(0);	src/session/SkillAttackEffectIdTable.generated.inc	71
-16	OnProcess	Bash	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/GameModePacket.cpp;src/session/SkillActionInfo.cpp;src/session/SkillActionInfo2.cpp;src/session/SkillAttackEffectIdTable.generated.inc;src/world/GameActorMsgHandler.cpp	80
+11	OnProcess	Endure	routed	OnProcess -> return ProcessEndure11();	src/gamemode/UseSkillEffect.generated.inc	39
+12	OnProcess	SAINTCASTING	routed	"OnProcess -> ApplyPairedSaintCasting(""effect\\ring_yellow.tga"", 1, true, 0.0f); return true;"	src/session/SkillActionInfo.cpp;src/session/SkillActionInfo2.cpp	39
+13	OnProcess	GlassWall	routed	OnProcess -> return ProcessGlassWall13();		37
+14	OnProcess	HealSP	routed	OnProcess -> return ProcessEffectFrameLegacy();		25
+15	OnProcess	SoulStrike	routed	OnProcess -> return ProcessSoulStrike15(0);	src/session/SkillAttackEffectIdTable.generated.inc	77
+16	OnProcess	Bash	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/GameModePacket.cpp;src/session/SkillActionInfo.cpp;src/session/SkillActionInfo2.cpp;src/session/SkillAttackEffectIdTable.generated.inc;src/world/GameActorMsgHandler.cpp	86
 17	OnProcess	MagnumBreak	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	19
-18	OnProcess	Steal	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	52
-20	OnProcess	EnchantPoison	routed	OnProcess -> SpawnEnchantPoison(); return true;		33
-125	OnProcess	EnchantPoison	routed	OnProcess -> SpawnEnchantPoison(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	120
-21	OnProcess	Detoxication	routed	OnProcess -> return ProcessDetoxication21();	src/gamemode/UseSkillEffect.generated.inc	107
-22	OnProcess	Sight	routed	OnProcess -> SpawnSight(); return true;	src/world/GameActor.cpp;src/world/SkillSpecialEffect.cpp	85
-23	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	31
-25	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
+18	OnProcess	Steal	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	58
+20	OnProcess	EnchantPoison	routed	OnProcess -> SpawnEnchantPoison(); return true;		39
+125	OnProcess	EnchantPoison	routed	OnProcess -> SpawnEnchantPoison(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	126
+21	OnProcess	Detoxication	routed	OnProcess -> return ProcessDetoxication21();	src/gamemode/UseSkillEffect.generated.inc	113
+22	OnProcess	Sight	routed	OnProcess -> SpawnSight(); return true;	src/world/GameActor.cpp;src/world/SkillSpecialEffect.cpp	91
+23	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	37
+25	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
 29	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	5
-52	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	33
-64	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-70	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	33
-109	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-110	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-126	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc	33
-135	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-139	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillUnit.cpp	33
-141	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-143	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	33
-144	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillActionInfo.cpp;src/session/SkillActionInfo2.cpp	33
-146	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-147	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	33
-148	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	33
-149	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	33
-150	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	33
-151	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	33
-152	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	33
-156	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-157	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-158	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		31
-167	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		31
-168	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-169	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc	33
-181	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	33
-182	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	33
-186	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	33
-187	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		31
-188	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-189	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-190	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-191	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	33
-192	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	33
-193	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	33
-194	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	33
-195	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	31
-197	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	33
-199	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		33
-213	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc	33
-214	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	33
-235	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc	33
-268	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc	33
-24	OnProcess	FireBall	routed	OnProcess -> SpawnFireBall(); return true;	src/world/SkillSpecialEffect.cpp	51
+52	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	39
+64	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+70	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	39
+109	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+110	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+126	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc	39
+135	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+139	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillUnit.cpp	39
+141	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+143	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	39
+144	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillActionInfo.cpp;src/session/SkillActionInfo2.cpp	39
+146	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+147	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	39
+148	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	39
+149	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	39
+150	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	39
+151	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/world/SkillSpecialEffect.cpp	39
+152	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	39
+156	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+157	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+158	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		37
+167	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		37
+168	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+169	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc	39
+181	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	39
+182	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	39
+186	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	39
+187	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		37
+188	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+189	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+190	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+191	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	39
+192	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	39
+193	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	39
+194	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	39
+195	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	37
+197	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/session/SkillAttackEffectIdTable.generated.inc	39
+199	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();		39
+213	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc	39
+214	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	39
+235	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc	39
+268	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR();	src/gamemode/UseSkillEffect.generated.inc	39
+24	OnProcess	FireBall	routed	OnProcess -> SpawnFireBall(); return true;	src/world/SkillSpecialEffect.cpp	57
 26	OnProcess	IceArrow	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	19
-27	OnProcess	FrostDiver	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	65
-28	OnProcess	FrostDiver2	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	23
-30	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillSpecialEffect.cpp	33
+27	OnProcess	FrostDiver	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	71
+28	OnProcess	FrostDiver2	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	29
+30	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillSpecialEffect.cpp	39
 31	OnProcess	FireArrow	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	19
-32	OnProcess	NapalmBeat	routed	OnProcess -> return ProcessEffectFrameLegacy();		30
-33	OnProcess	Ruwach	routed	OnProcess -> SpawnRuwach(); return true;	src/world/GameActor.cpp	132
-34	OnProcess	Teleportation	routed	OnProcess -> return ProcessEffectFrameLegacy();		33
+32	OnProcess	NapalmBeat	routed	OnProcess -> return ProcessEffectFrameLegacy();		36
+33	OnProcess	Ruwach	routed	OnProcess -> SpawnRuwach(); return true;	src/world/GameActor.cpp	138
+34	OnProcess	Teleportation	routed	OnProcess -> return ProcessEffectFrameLegacy();		25
 35	OnProcess	ReadyPortal	routed	OnProcess -> return ProcessEffectFrameLegacy();		19
 36	OnProcess	Portal	routed	OnProcess -> return ProcessEffectFrameLegacy();		19
-37	OnProcess	IncAgility	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	69
-38	OnProcess	DecAgility	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	70
-39	OnProcess	Aqua	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	67
-40	OnProcess	Signum	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	33
-41	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessAngelus();	src/gamemode/UseSkillEffect.generated.inc	33
+37	OnProcess	IncAgility	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	75
+38	OnProcess	DecAgility	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	76
+39	OnProcess	Aqua	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	73
+40	OnProcess	Signum	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	39
+41	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessAngelus();	src/gamemode/UseSkillEffect.generated.inc	39
 42	OnProcess	Blessing	routed	OnProcess -> SpawnBlessing(); return true;	src/gamemode/UseSkillEffect.generated.inc	19
-43	OnProcess	IncAGIDEX	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo.cpp;src/session/SkillActionInfo2.cpp	77
-44	OnProcess	Smoke	routed	OnProcess -> SpawnSmoke(); return true;		49
-45	OnProcess	FireFly	routed	OnProcess -> return ProcessEffectFrameLegacy();		26
-46	OnProcess	SandWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		459
-47	OnProcess	Torch	routed	OnProcess -> SpawnTorch(); return true;		33
+43	OnProcess	IncAGIDEX	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo.cpp;src/session/SkillActionInfo2.cpp	83
+44	OnProcess	Smoke	routed	OnProcess -> SpawnSmoke(); return true;		55
+45	OnProcess	FireFly	routed	OnProcess -> return ProcessEffectFrameLegacy();		32
+46	OnProcess	SandWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		465
+47	OnProcess	Torch	routed	OnProcess -> SpawnTorch(); return true;		39
 48	OnProcess	SprayPond	routed	OnProcess -> return ProcessEffectFrameLegacy();		19
-49	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessFireHit();	src/session/SkillAttackEffectIdTable.generated.inc	31
+49	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessFireHit();	src/session/SkillAttackEffectIdTable.generated.inc	37
 50	OnProcess	FireSplashHit	routed	OnProcess -> return ProcessEffectFrameLegacy();		20
-51	OnProcess	ColdHit	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	107
-53	OnProcess	LaunchEffectPrim	routed	OnProcess -> return ProcessEffectFrameLegacy();		191
-54	OnProcess	BeginCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp	124
-55	OnProcess	BeginCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp	87
-56	OnProcess	BeginCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp	26
-57	OnProcess	BeginCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp	100
-58	OnProcess	SAINTCASTING	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp;src/world/GameActorMsgHandler.cpp	78
-59	OnProcess	BeginCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp	78
-60	OnProcess	LockOn	routed	OnProcess -> SpawnLockOn(); return true;	src/session/SkillAttackEffectIdTable.generated.inc	117
+51	OnProcess	ColdHit	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	113
+53	OnProcess	LaunchEffectPrim	routed	OnProcess -> return ProcessEffectFrameLegacy();		197
+54	OnProcess	BeginCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp	130
+55	OnProcess	BeginCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp	93
+56	OnProcess	BeginCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp	32
+57	OnProcess	BeginCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp	106
+58	OnProcess	SAINTCASTING	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp;src/world/GameActorMsgHandler.cpp	84
+59	OnProcess	BeginCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillActionInfo2.cpp	84
+60	OnProcess	LockOn	routed	OnProcess -> SpawnLockOn(); return true;	src/session/SkillAttackEffectIdTable.generated.inc	123
 61	OnProcess	WarpZone	routed	OnProcess -> return ProcessEffectFrameLegacy();		19
-62	OnProcess	Sightrasher	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	78
-63	OnProcess	LaunchEffectPrim	routed	OnProcess -> return ProcessEffectFrameLegacy();		78
-65	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-66	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-67	OnProcess	Provoke	routed	OnProcess -> return ProcessProvoke();	src/gamemode/UseSkillEffect.generated.inc	78
-68	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/GameActor.cpp	33
-69	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-71	OnProcess	Cone	routed	OnProcess -> return ProcessEffectFrameLegacy();		115
-72	OnProcess	Sphere	routed	OnProcess -> return ProcessEffectFrameLegacy();		128
+62	OnProcess	Sightrasher	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	84
+63	OnProcess	LaunchEffectPrim	routed	OnProcess -> return ProcessEffectFrameLegacy();		84
+65	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+66	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+67	OnProcess	Provoke	routed	OnProcess -> return ProcessProvoke();	src/gamemode/UseSkillEffect.generated.inc	84
+68	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/GameActor.cpp	39
+69	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+71	OnProcess	Cone	routed	OnProcess -> return ProcessEffectFrameLegacy();		121
+72	OnProcess	Sphere	routed	OnProcess -> return ProcessEffectFrameLegacy();		134
 73	OnProcess	BowlingBash	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	19
-74	OnProcess	IceWall	routed	OnProcess -> return ProcessIceWall74();		156
-75	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	33
-76	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	33
-77	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-78	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-79	OnProcess	EarthSpike	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	113
-80	OnProcess	SpearBmr	routed	OnProcess -> SpawnSpearBmr(); return true;	src/world/SkillSpecialEffect.cpp	85
-81	OnProcess	Pierce	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	100
-82	OnProcess	TurnUndead	routed	OnProcess -> SpawnTurnUndead(); return true;	src/world/SkillSpecialEffect.cpp	100
-83	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-84	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	33
-85	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	33
-86	OnProcess	Aspersio	routed	OnProcess -> return ProcessAspersio86();	src/gamemode/UseSkillEffect.generated.inc	88
-87	OnProcess	LexDivina	routed	OnProcess -> return ProcessLexDivina();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	50
-88	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	33
-89	OnProcess	StormGust	routed	OnProcess -> return ProcessStormGust89();	src/session/SkillAttackEffectIdTable.generated.inc	113
-90	OnProcess	Lord	routed	OnProcess -> return ProcessLord90();		85
-91	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-92	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessMeteorStorm92();		33
-93	OnProcess	Yufitel	routed	OnProcess -> return ProcessYufitel93();	src/session/SkillAttackEffectIdTable.generated.inc;src/world/SkillSpecialEffect.cpp	67
-94	OnProcess	YufitelHit	routed	OnProcess -> return ProcessYufitelHit(0);	src/session/SkillAttackEffectIdTable.generated.inc	67
-95	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-96	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/session/SkillAttackEffectIdTable.generated.inc	33
-97	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-98	OnProcess	HasteUp	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	195
-99	OnProcess	Flasher	routed	OnProcess -> return ProcessFlasher99();	src/world/SkillUnit.cpp	92
-100	OnProcess	RemoveTrap	routed	OnProcess -> return ProcessRemoveTrap100();	src/gamemode/UseSkillEffect.generated.inc	33
-101	OnProcess	RepairWeapon	routed	OnProcess -> return ProcessRepairWeapon101();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	48
-102	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-103	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	33
-104	OnProcess	MaxPower	routed	OnProcess -> return ProcessMaxPower104();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	224
-105	OnProcess	inline	routed	OnProcess -> return true;		52
-161	OnProcess	inline	routed	OnProcess -> return true;		52
-198	OnProcess	inline	routed	OnProcess -> return true;	src/session/SkillAttackEffectIdTable.generated.inc	52
-443	OnProcess	inline	routed	OnProcess -> return true;		52
-489	OnProcess	inline	routed	OnProcess -> return true;		52
-490	OnProcess	inline	routed	OnProcess -> return true;		52
-106	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillUnit.cpp	33
-107	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillUnit.cpp	33
-108	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillUnit.cpp	33
-111	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-112	OnProcess	Kyrie	routed	OnProcess -> return ProcessKyrie112();	src/gamemode/UseSkillEffect.generated.inc	26
-113	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-114	OnProcess	Bottom	routed	OnProcess -> return ProcessBottom114();		33
-115	OnProcess	BlitzBeat	routed	OnProcess -> return ProcessBlitzBeat115();	src/session/SkillAttackEffectIdTable.generated.inc	115
-116	OnProcess	WaterBall	routed	OnProcess -> return ProcessWaterBall116();		401
-117	OnProcess	WaterBall2	routed	OnProcess -> SpawnWaterBall2(); return true;	src/world/SkillSpecialEffect.cpp	109
-118	OnProcess	FireIvy	routed	OnProcess -> return ProcessFireIvy118();		232
-119	OnProcess	Detecting	routed	OnProcess -> SpawnDetecting(); return true;		107
-120	OnProcess	inline	routed	OnProcess -> return ProcessCloaking120();		52
-121	OnProcess	SonicBlow	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	639
-122	OnProcess	SonicBlowHit	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	639
-123	OnProcess	GrimTooth	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	51
-124	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/session/SkillAttackEffectIdTable.generated.inc	33
-127	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-128	OnProcess	OverThrust	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	120
-129	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/GameModePacket.cpp	33
-130	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	31
-250	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	31
-131	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/GameActorMsgHandler.cpp	33
-132	OnProcess	GrimToothAtk	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	33
-133	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStrTerminalEffect();		33
-134	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStrTerminalEffect();		33
-136	OnProcess	ProcessEZ2STR	routed	OnProcess -> ProcessEZ2STR(); return true;	src/gamemode/UseSkillEffect.generated.inc	33
-406	OnProcess	ProcessEZ2STR	routed	OnProcess -> ProcessEZ2STR(); return true;	src/gamemode/UseSkillEffect.generated.inc	33
-407	OnProcess	ProcessEZ2STR	routed	OnProcess -> ProcessEZ2STR(); return true;	src/gamemode/UseSkillEffect.generated.inc	33
-137	OnProcess	Bottom2	routed	OnProcess -> return ProcessBottom2Effect137();		1147
-138	OnProcess	FirePillarOn	routed	OnProcess -> return ProcessFirePillar138();		33
-140	OnProcess	Revive	routed	OnProcess -> return ProcessRevive140();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	33
-142	OnProcess	HeavensDrive	routed	OnProcess -> return ProcessEffectFrameLegacy();		171
-145	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessShockwave145();	src/world/SkillUnit.cpp	33
-153	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-154	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-155	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-159	OnProcess	TopRank	routed	OnProcess -> SpawnTopRank(); return true;		236
-160	OnProcess	Party	routed	OnProcess -> SpawnParty(); return true;	src/world/GameActor.cpp	33
-162	OnProcess	Snow	routed	OnProcess -> SpawnSnow(); return true;		224
-163	OnProcess	Sakura	routed	OnProcess -> SpawnSakura(); return true;		1100
-164	OnProcess	StatusState	routed	OnProcess -> SpawnStatusState(); return true;		419
-165	OnProcess	Banjjakii	routed	OnProcess -> return ProcessBanjjakii165();		2878
-166	OnProcess	MakeBlur	routed	OnProcess -> return ProcessMakeBlur();	src/world/GameActorMsgHandler.cpp	727
+74	OnProcess	IceWall	routed	OnProcess -> return ProcessIceWall74();		162
+75	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	39
+76	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	39
+77	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+78	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+79	OnProcess	EarthSpike	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	119
+80	OnProcess	SpearBmr	routed	OnProcess -> SpawnSpearBmr(); return true;	src/world/SkillSpecialEffect.cpp	91
+81	OnProcess	Pierce	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	25
+82	OnProcess	TurnUndead	routed	OnProcess -> SpawnTurnUndead(); return true;	src/world/SkillSpecialEffect.cpp	106
+83	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+84	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	39
+85	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	39
+86	OnProcess	Aspersio	routed	OnProcess -> return ProcessAspersio86();	src/gamemode/UseSkillEffect.generated.inc	94
+87	OnProcess	LexDivina	routed	OnProcess -> return ProcessLexDivina();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	56
+88	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	39
+89	OnProcess	StormGust	routed	OnProcess -> return ProcessStormGust89();	src/session/SkillAttackEffectIdTable.generated.inc	119
+90	OnProcess	Lord	routed	OnProcess -> return ProcessLord90();		91
+91	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+92	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessMeteorStorm92();		39
+93	OnProcess	Yufitel	routed	OnProcess -> return ProcessYufitel93();	src/session/SkillAttackEffectIdTable.generated.inc;src/world/SkillSpecialEffect.cpp	73
+94	OnProcess	YufitelHit	routed	OnProcess -> return ProcessYufitelHit(0);	src/session/SkillAttackEffectIdTable.generated.inc	73
+95	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+96	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/session/SkillAttackEffectIdTable.generated.inc	39
+97	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+98	OnProcess	HasteUp	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	201
+99	OnProcess	Flasher	routed	OnProcess -> return ProcessFlasher99();	src/world/SkillUnit.cpp	98
+100	OnProcess	RemoveTrap	routed	OnProcess -> return ProcessRemoveTrap100();	src/gamemode/UseSkillEffect.generated.inc	39
+101	OnProcess	RepairWeapon	routed	OnProcess -> return ProcessRepairWeapon101();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	54
+102	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+103	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	39
+104	OnProcess	MaxPower	routed	OnProcess -> return ProcessMaxPower104();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	230
+105	OnProcess	inline	routed	OnProcess -> return true;		58
+161	OnProcess	inline	routed	OnProcess -> return true;		58
+198	OnProcess	inline	routed	OnProcess -> return true;	src/session/SkillAttackEffectIdTable.generated.inc	58
+443	OnProcess	inline	routed	OnProcess -> return true;		58
+489	OnProcess	inline	routed	OnProcess -> return true;		58
+490	OnProcess	inline	routed	OnProcess -> return true;		58
+106	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillUnit.cpp	39
+107	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillUnit.cpp	39
+108	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillUnit.cpp	39
+111	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+112	OnProcess	Kyrie	routed	OnProcess -> return ProcessKyrie112();	src/gamemode/UseSkillEffect.generated.inc	32
+113	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+114	OnProcess	Bottom	routed	OnProcess -> return ProcessBottom114();		39
+115	OnProcess	BlitzBeat	routed	OnProcess -> return ProcessBlitzBeat115();	src/session/SkillAttackEffectIdTable.generated.inc	25
+116	OnProcess	WaterBall	routed	OnProcess -> return ProcessWaterBall116();		407
+117	OnProcess	WaterBall2	routed	OnProcess -> SpawnWaterBall2(); return true;	src/world/SkillSpecialEffect.cpp	115
+118	OnProcess	FireIvy	routed	OnProcess -> return ProcessFireIvy118();		238
+119	OnProcess	Detecting	routed	OnProcess -> SpawnDetecting(); return true;		113
+120	OnProcess	inline	routed	OnProcess -> return ProcessCloaking120();		58
+121	OnProcess	SonicBlow	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	645
+122	OnProcess	SonicBlowHit	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	25
+123	OnProcess	GrimTooth	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	57
+124	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/session/SkillAttackEffectIdTable.generated.inc	39
+127	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+128	OnProcess	OverThrust	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	126
+129	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/GameModePacket.cpp	39
+130	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	37
+250	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	37
+131	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/GameActorMsgHandler.cpp	39
+132	OnProcess	GrimToothAtk	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	39
+133	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStrTerminalEffect();		39
+134	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStrTerminalEffect();		39
+136	OnProcess	ProcessEZ2STR	routed	OnProcess -> ProcessEZ2STR(); return true;	src/gamemode/UseSkillEffect.generated.inc	39
+406	OnProcess	ProcessEZ2STR	routed	OnProcess -> ProcessEZ2STR(); return true;	src/gamemode/UseSkillEffect.generated.inc	39
+407	OnProcess	ProcessEZ2STR	routed	OnProcess -> ProcessEZ2STR(); return true;	src/gamemode/UseSkillEffect.generated.inc	39
+137	OnProcess	Bottom2	routed	OnProcess -> return ProcessBottom2Effect137();		1153
+138	OnProcess	FirePillarOn	routed	OnProcess -> return ProcessFirePillar138();		25
+140	OnProcess	Revive	routed	OnProcess -> return ProcessRevive140();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	25
+142	OnProcess	HeavensDrive	routed	OnProcess -> return ProcessEffectFrameLegacy();		177
+145	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessShockwave145();	src/world/SkillUnit.cpp	39
+153	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+154	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+155	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+159	OnProcess	TopRank	routed	OnProcess -> SpawnTopRank(); return true;		242
+160	OnProcess	Party	routed	OnProcess -> SpawnParty(); return true;	src/world/GameActor.cpp	39
+162	OnProcess	Snow	routed	OnProcess -> SpawnSnow(); return true;		230
+163	OnProcess	Sakura	routed	OnProcess -> SpawnSakura(); return true;		1106
+164	OnProcess	StatusState	routed	OnProcess -> SpawnStatusState(); return true;		425
+165	OnProcess	Banjjakii	routed	OnProcess -> return ProcessBanjjakii165();		2884
+166	OnProcess	MakeBlur	routed	OnProcess -> return ProcessMakeBlur();	src/world/GameActorMsgHandler.cpp	733
 170	OnProcess	CartRevolution	routed	OnProcess -> return ApplyCartRevolution();	src/session/SkillAttackEffectIdTable.generated.inc;src/world/SkillSpecialEffect.cpp	19
-171	OnProcess	VenomDust2	routed	OnProcess -> ApplyVenomDust2(); return true;		33
-172	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	132
-173	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	33
-174	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	33
-175	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	132
-176	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	132
-177	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	132
-178	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	132
-179	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	132
-180	OnProcess	HitDark	routed	OnProcess -> return ProcessEffectFrameLegacy();		87
-184	OnProcess	HitDark	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	495
-183	OnProcess	Hit2,ProcessEZ2STR	routed	OnProcess -> return ProcessHit2Blue();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	207
-185	OnProcess	ProcessEZ2STR	routed	OnProcess -> ProcessTargetPositionStr(); return FinishEffectFrame();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	33
-196	OnProcess	LaunchEffectPrim	routed	OnProcess -> ApplyCurseAttack(); return true;	src/session/SkillAttackEffectIdTable.generated.inc	191
-200	OnProcess	Level99	routed	OnProcess -> return ProcessLevel99Effect();	src/world/GameActor.cpp	101
-397	OnProcess	Level99	routed	OnProcess -> return ProcessLevel99Effect();	src/world/GameActor.cpp	2149
-201	OnProcess	Level99_2	routed	OnProcess -> return ProcessLevel99_2Effect();	src/world/GameActor.cpp	272
-398	OnProcess	Level99_2	routed	OnProcess -> return ProcessLevel99_2Effect();	src/world/GameActor.cpp	52
-202	OnProcess	Level99_3	routed	OnProcess -> return ProcessLevel99_3Effect();		2148
-203	OnProcess	GumGang	routed	OnProcess -> return ProcessGumGangEffect();	src/gamemode/UseSkillEffect.generated.inc	842
-204	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-205	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-206	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-207	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-210	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-208	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-209	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-211	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		33
-212	OnProcess	LaunchEffectPrim	routed	OnProcess -> SpawnDarkBreath(); return true;	src/session/SkillAttackEffectIdTable.generated.inc	191
-215	OnProcess	SummonSlave	routed	OnProcess -> SpawnSummonSlave(); return true;	src/gamemode/UseSkillEffect.generated.inc	410
-216	OnProcess	BloodDrain	routed	OnProcess -> SpawnBloodDrain(); return true;	src/session/SkillAttackEffectIdTable.generated.inc	53
-217	OnProcess	EnergyDrain	routed	OnProcess -> SpawnEnergyDrain(); return true;	src/session/SkillAttackEffectIdTable.generated.inc	393
-218	OnProcess	PotionPillar,ProcessEZ2STR	routed	OnProcess -> return ProcessPotionConcentration();		151
-219	OnProcess	PotionPillar,ProcessEZ2STR	routed	OnProcess -> return ProcessPotionConcentration();		151
-220	OnProcess	Potion_Berserk	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	120
-221	OnProcess	PotionPillar	routed	OnProcess -> return ProcessEffectFrameLegacy();		150
-222	OnProcess	DEFENDER	routed	"OnProcess -> ApplyDefender(""effect\\ring_black.tga""); return true;"	src/gamemode/UseSkillEffect.generated.inc	159
-223	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_white.tga"", 2, false); return true;"		157
-224	OnProcess	WIND	routed	OnProcess -> ApplyWind(); return true;		33
-225	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_red.tga"", 0, false); return true;"		157
-226	OnProcess	GRANDCROSS,GRANDCROSS2	routed	OnProcess -> return ProcessGrandCrossEffects();	src/world/SkillSpecialEffect.cpp	2327
-227	OnProcess	INTIMIDATE	routed	OnProcess -> return ProcessIntimidate227();	src/world/SkillSpecialEffect.cpp	821
-228	OnProcess	CHOOKGI	routed	OnProcess -> return ProcessEffectFrameLegacy();		1054
-229	OnProcess	Cloud	routed	OnProcess -> SpawnWeatherCloud(); return true;		33
-230	OnProcess	Cloud	routed	OnProcess -> SpawnWeatherCloud(); return true;		33
-231	OnProcess	MAPPILLAR	routed	"OnProcess -> ApplyMapPillar(""effect\\ring_blue.tga"", 4.0f, false); return true;"		158
-232	OnProcess	LINELINK	routed	OnProcess -> return ProcessLineLinkEffects();	src/gamemode/GameModePacket.cpp	328
-233	OnProcess	Cloud	routed	OnProcess -> SpawnWeatherCloud(); return true;		33
-234	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-236	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_blue.tga"", 0, false); return true;"		157
-237	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\magic_green.tga"", 0, false); return true;"		157
-238	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_white.tga"", 0, false); return true;"		157
-239	OnProcess	Bottom_Volcano	routed	"OnProcess -> ApplyBottomVolcano(""effect\\ring_red.tga"", 0.0f); return true;"		156
-240	OnProcess	Bottom_Volcano	routed	"OnProcess -> ApplyBottomVolcano(""effect\\ring_blue.tga"", 0.0f); return true;"		156
-241	OnProcess	Bottom_Volcano	routed	"OnProcess -> ApplyBottomVolcano(""effect\\magic_green.tga"", 0.0f); return true;"		156
-242	OnProcess	Bottom_LandProtector	routed	OnProcess -> return ProcessLandProtector(1);		2471
-244	OnProcess	ProcessEZ2STR,MagicRod	routed	OnProcess -> return ProcessMagicRod244();	src/gamemode/UseSkillEffect.generated.inc	209
-245	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillSpecialEffect.cpp	33
-246	OnProcess	ShieldCharge	routed	OnProcess -> return ProcessShieldCharge246();	src/world/SkillSpecialEffect.cpp	445
-247	OnProcess	MAPPILLAR	routed	"OnProcess -> ApplyMapPillar(""effect\\ring_blue.tga"", 4.0f, true); return true;"		158
-248	OnProcess	Providence,ProcessEZ2STR	routed	"OnProcess -> ApplyProvidence(""effect\\ring_yellow.tga""); ProcessEZ2STR(); return FinishEffectFrame();"	src/gamemode/UseSkillEffect.generated.inc	158
-249	OnProcess	ShieldBoomerang	routed	OnProcess -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	113
-251	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR(0.0f, -20.0f, 0.0f);	src/gamemode/UseSkillEffect.generated.inc	26
-252	OnProcess	DEFENDER	routed	"OnProcess -> ApplyDefender(""effect\\ring_yellow.tga""); return true;"	src/gamemode/UseSkillEffect.generated.inc	26
-253	OnProcess	Heal2	routed	OnProcess -> return ProcessHealBlue();	src/gamemode/UseSkillEffect.generated.inc	33
-254	OnProcess	GumGang	routed	OnProcess -> return ProcessGumGangEffect();	src/gamemode/UseSkillEffect.generated.inc	301
-255	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-257	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-256	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-258	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-259	OnProcess	MAPPILLAR	routed	"OnProcess -> ApplyMapPillar(""effect\\magic_green.tga"", 7.0f, false); return true;"		158
-260	OnProcess	MAPPILLAR	routed	"OnProcess -> ApplyMapPillar(""effect\\ring_red.tga"", 6.0f, false); return true;"		158
-261	OnProcess	VOLCANO2	routed	"OnProcess -> ApplyVolcano(""effect\\ring_yellow.tga"", 0, true); return true;"	src/gamemode/UseSkillEffect.generated.inc	100
-262	OnProcess	TEIHIT1	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/GameActorMsgHandler.cpp	824
-263	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_yellow.tga"", 1, false); return true;"	src/world/GameActorMsgHandler.cpp	113
-264	OnProcess	TEIHIT2	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	71
-265	OnProcess	TANJI	routed	OnProcess -> return ProcessTanji(false);		1330
-266	OnProcess	TEIHIT1	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	828
-267	OnProcess	CHIMTO	routed	OnProcess -> return ProcessChimtoEffect(0);	src/world/SkillSpecialEffect.cpp	1139
-269	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStripEquipment269To272();	src/gamemode/UseSkillEffect.generated.inc	33
-270	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStripEquipment269To272();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	33
-271	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStripEquipment269To272();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	33
-272	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStripEquipment269To272();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	33
-273	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEffect273();	src/world/GameActorMsgHandler.cpp	33
-274	OnProcess	RG_COIN	routed	OnProcess -> return ProcessRgCoinEffects();	src/gamemode/UseSkillEffect.generated.inc	109
-275	OnProcess	TEIHIT2	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	1622
-276	OnProcess	TEIHIT3	routed	OnProcess -> return ProcessTeiHitEffects();	src/gamemode/UseSkillEffect.generated.inc	2535
-277	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(277);		295
-278	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\zz.bmp"", 1); return true;"		133
-279	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\pocket.bmp"", 3); return true;"		133
-280	OnProcess	Bottom_Light	routed	"OnProcess -> ApplyBottomLight(""effect\\twirl.bmp"", 8); return true;"		134
-281	OnProcess	Bottom_Music	routed	OnProcess -> ApplyBottomMusic(nullptr, 2); return true;		133
-282	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\twirl.bmp"", 7); return true;"		133
-283	OnProcess	Bottom_Out	routed	"OnProcess -> ApplyBottomOut(""effect\\safeline.bmp"", 0); return true;"		135
-284	OnProcess	Bottom_Music	routed	OnProcess -> ApplyBottomMusic(nullptr, 5); return true;		133
-285	OnProcess	Bottom_Light	routed	"OnProcess -> ApplyBottomLight(""effect\\twirl.bmp"", 4); return true;"		134
-286	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\melody_b.bmp"", 0); return true;"		133
-287	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(287);		323
-288	OnProcess	Bottom_Music	routed	OnProcess -> ApplyBottomMusic(nullptr, 8); return true;		133
-289	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\idun_apple.bmp"", 6); return true;"		133
-290	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(290);		158
-291	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\melody_a.bmp"", 0); return true;"		133
-292	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(292);		3461
-293	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\kiss.bmp"", 4); return true;"		133
-294	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(294);		1424
-295	OnProcess	Talk_FrostJoke	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	142
-296	OnProcess	Talk_FrostJoke	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	115
-297	OnProcess	PokJuk	routed	OnProcess -> return ProcessPokJuk297();		3489
-298	OnProcess	ThrowItem	routed	OnProcess -> return ProcessThrowItemEffect();	src/world/SkillSpecialEffect.cpp	119
-299	OnProcess	ThrowItem	routed	OnProcess -> return ProcessThrowItemEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-374	OnProcess	Basilica	routed	OnProcess -> return ProcessBasilica();		595
-375	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-376	OnProcess	HitLine	routed	OnProcess -> return ProcessHitLineEffect();	src/world/GameActorMsgHandler.cpp	1203
-377	OnProcess	BASH3D	routed	OnProcess -> return ProcessBash3DEffect();	src/world/GameActorMsgHandler.cpp	708
-378	OnProcess	EnergyDrain2	routed	OnProcess -> return ProcessEnergyDrain2Effect();	src/gamemode/UseSkillEffect.generated.inc	518
-379	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	50
-380	OnProcess	inline	routed	OnProcess -> return ProcessEffect380();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	52
-381	OnProcess	EffectTextureSet,LightSphere	routed	OnProcess -> return ProcessEffect348();		3648
-382	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-383	OnProcess	EnergyDrain3	routed	OnProcess -> return ProcessEnergyDrain3Effect();	src/gamemode/UseSkillEffect.generated.inc	53
-384	OnProcess	LINELINK2	routed	OnProcess -> return ProcessLineLinkEffects();	src/gamemode/UseSkillEffect.generated.inc	109
-385	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-386	OnProcess	BASH3D	routed	OnProcess -> return ProcessBash3DEffect();	src/gamemode/UseSkillEffect.generated.inc	385
-387	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	52
-388	OnProcess	TRIPLEATTACK2	routed	OnProcess -> return ProcessTripleAttackEffects();	src/world/SkillSpecialEffect.cpp	1842
-389	OnProcess	PortalWind	routed	OnProcess -> return ProcessPortalWind389();	src/gamemode/UseSkillEffect.generated.inc	33
-390	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-391	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-392	OnProcess	ProcessEZ2STR	routed	OnProcess -> ApplyKyrieGuard(); return FinishEffectFrame();	src/gamemode/UseSkillEffect.generated.inc	33
-393	OnProcess	TRIPLEATTACK3	routed	OnProcess -> return ProcessTripleAttackEffects();	src/world/SkillSpecialEffect.cpp	410
-394	OnProcess	SphereWind	routed	"OnProcess -> for (short windTime = 0; windTime < 45; windTime = static_cast<short>(windTime + 9)) ApplySphereWind(""effect\\fire_ivy.bmp"", windTime, 1); return true;"	src/gamemode/UseSkillEffect.generated.inc	128
-395	OnProcess	LINELINK3	routed	OnProcess -> return ProcessLineLinkEffects();	src/gamemode/UseSkillEffect.generated.inc	2577
-396	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-399	OnProcess	BASH3D	routed	OnProcess -> return ProcessBash3DEffect();	src/world/SkillSpecialEffect.cpp	95
-400	OnProcess	BASH3D	routed	OnProcess -> return ProcessBash3DEffect();	src/world/SkillSpecialEffect.cpp	113
-401	OnProcess	Hit2	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	88
-402	OnProcess	PortalWind	routed	OnProcess -> ApplyPortalWind402(); return true;	src/gamemode/GameModePacket.cpp	33
-403	OnProcess	inline	routed	OnProcess -> return ProcessEffect403();	src/gamemode/UseSkillEffect.generated.inc	52
-404	OnProcess	Bottom_LandProtector	routed	OnProcess -> return ProcessLandProtector(2);		1017
-405	OnProcess	Bottom_Magnus	routed	"OnProcess -> ApplyBottomMagnus(""effect\\ring_white.tga"", 2); return true;"		33
-408	OnProcess	SphereWind2	routed	OnProcess -> return ProcessSphereWind2Effect();	src/gamemode/UseSkillEffect.generated.inc	1283
-409	OnProcess	SoulBreaker2	routed	OnProcess -> return ProcessSoulBreaker2Effect();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	475
-410	OnProcess	Rainbow	routed	OnProcess -> return ProcessRainbow410();		875
-411	OnProcess	PeongUp,Peong	routed	OnProcess -> return ProcessPeongEffects();	src/world/GameActor.cpp	1917
-412	OnProcess	TANJI2	routed	OnProcess -> return ProcessTanji(true);		1330
-413	OnProcess	inline	routed	OnProcess -> return ProcessEffect413();	src/world/SkillSpecialEffect.cpp	52
-414	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		52
-415	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	52
-416	OnProcess	AirTexture	routed	OnProcess -> return ProcessAirTexture416();	src/world/RagEffect.cpp	179
-417	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		52
-418	OnProcess	DoubleGumGang	routed	OnProcess -> return ProcessGumGangEffect();	src/gamemode/UseSkillEffect.generated.inc	475
-419	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-420	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-421	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		52
-422	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		52
-423	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		52
-424	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-425	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	52
-426	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		52
-458	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	52
-427	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-428	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Zero428();		1345
-429	OnProcess	HitLine4	routed	OnProcess -> return ProcessHitLine4Effect();	src/world/SkillSpecialEffect.cpp	2503
-430	OnProcess	HitLine5	routed	OnProcess -> return ProcessHitLine5Effect();	src/world/SkillSpecialEffect.cpp	1526
-431	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Effect();	src/world/SkillSpecialEffect.cpp	1345
-432	OnProcess	Electric	routed	OnProcess -> return ProcessEffectFrameLegacy();		147
-433	OnProcess	Electric2	routed	OnProcess -> ApplyElectric2(); ApplyElectric2(); return true;		148
-434	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Basic434();		3494
-435	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillActionInfo.cpp;src/world/GameActorMsgHandler.cpp	154
-436	OnProcess	HalfSphere	routed	"OnProcess -> ApplyHalfSphere(""effect\\white02.bmp""); return true;"		87
-437	OnProcess	HalfSphere,AttackEnergy	routed	"OnProcess -> ApplyHalfSphere(""effect\\white02.bmp""); ApplyAttackEnergy(""effect\\ring_blue.tga""); return true;"		146
-438	OnProcess	AttackEnergy2	routed	OnProcess -> return ProcessEffectFrameLegacy();		149
-439	OnProcess	CHEMICAL3	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	164
-440	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEffect440();	src/gamemode/UseSkillEffect.generated.inc	33
-441	OnProcess	BlueCasting	routed	"OnProcess -> ApplyPairedSaintCasting(""effect\\ring_blue.tga"", 5, true, -100.0f); return true;"	src/session/SkillActionInfo2.cpp	131
-442	OnProcess	inline	routed	OnProcess -> ApplyBodyLight442(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-444	OnProcess	RunStop	routed	OnProcess -> return ProcessRunStop444();	src/gamemode/UseSkillEffect.generated.inc	323
-445	OnProcess	inline	routed	OnProcess -> return ProcessEffect445();	src/world/GameActor.cpp	52
-446	OnProcess	inline	routed	OnProcess -> ApplyBodyLight446(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-447	OnProcess	Foot	routed	OnProcess -> return ProcessFoot447();		3499
-448	OnProcess	Foot	routed	OnProcess -> return ProcessFoot448();		3504
-449	OnProcess	inline	routed	OnProcess -> ApplyBodyLight449(); return true;	src/world/GameActor.cpp	52
-450	OnProcess	GRANDCROSS,GRANDCROSS2	routed	OnProcess -> return ProcessGrandCrossEffects();	src/world/SkillSpecialEffect.cpp	87
-451	OnProcess	SoulStrike	routed	OnProcess -> return ProcessSoulStrike15(1);	src/session/SkillAttackEffectIdTable.generated.inc	1792
-452	OnProcess	YufitelHit	routed	OnProcess -> return ProcessYufitelHit(1);	src/session/SkillAttackEffectIdTable.generated.inc	2699
-453	OnProcess	NpcStop	routed	OnProcess -> return ProcessNpcStopEffects();	src/gamemode/UseSkillEffect.generated.inc	1633
-454	OnProcess	DarkCasting	routed	"OnProcess -> ApplyPairedSaintCasting(""effect\\ring_black.tga"", 6, true, 0.0f); return true;"	src/session/SkillActionInfo.cpp;src/session/SkillAttackEffectIdTable.generated.inc	131
-455	OnProcess	GumGang	routed	OnProcess -> return ProcessGumGangEffect();	src/gamemode/UseSkillEffect.generated.inc	362
-456	OnProcess	CartBoost	routed	OnProcess -> return ProcessCartBoost456();	src/gamemode/UseSkillEffect.generated.inc	245
-457	OnProcess	inline	routed	OnProcess -> return ProcessEffect457();	src/world/SkillSpecialEffect.cpp	52
-459	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		154
-460	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		154
-461	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	154
+171	OnProcess	VenomDust2	routed	OnProcess -> ApplyVenomDust2(); return true;		39
+172	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	138
+173	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	39
+174	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	39
+175	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	138
+176	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	138
+177	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	138
+178	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	138
+179	OnProcess	BeginCasting	routed	OnProcess -> ApplyElementalChangeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	138
+180	OnProcess	HitDark	routed	OnProcess -> return ProcessEffectFrameLegacy();		25
+184	OnProcess	HitDark	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/session/SkillAttackEffectIdTable.generated.inc	25
+183	OnProcess	Hit2,ProcessEZ2STR	routed	OnProcess -> return ProcessHit2Blue();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	213
+185	OnProcess	ProcessEZ2STR	routed	OnProcess -> ProcessTargetPositionStr(); return FinishEffectFrame();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	39
+196	OnProcess	LaunchEffectPrim	routed	OnProcess -> ApplyCurseAttack(); return true;	src/session/SkillAttackEffectIdTable.generated.inc	197
+200	OnProcess	Level99	routed	OnProcess -> return ProcessLevel99Effect();	src/world/GameActor.cpp	107
+397	OnProcess	Level99	routed	OnProcess -> return ProcessLevel99Effect();	src/world/GameActor.cpp	2155
+201	OnProcess	Level99_2	routed	OnProcess -> return ProcessLevel99_2Effect();	src/world/GameActor.cpp	278
+398	OnProcess	Level99_2	routed	OnProcess -> return ProcessLevel99_2Effect();	src/world/GameActor.cpp	58
+202	OnProcess	Level99_3	routed	OnProcess -> return ProcessLevel99_3Effect();		2154
+203	OnProcess	GumGang	routed	OnProcess -> return ProcessGumGangEffect();	src/gamemode/UseSkillEffect.generated.inc	848
+204	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+205	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+206	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+207	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+210	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+208	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+209	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+211	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();		39
+212	OnProcess	LaunchEffectPrim	routed	OnProcess -> SpawnDarkBreath(); return true;	src/session/SkillAttackEffectIdTable.generated.inc	197
+215	OnProcess	SummonSlave	routed	OnProcess -> SpawnSummonSlave(); return true;	src/gamemode/UseSkillEffect.generated.inc	416
+216	OnProcess	BloodDrain	routed	OnProcess -> SpawnBloodDrain(); return true;	src/session/SkillAttackEffectIdTable.generated.inc	59
+217	OnProcess	EnergyDrain	routed	OnProcess -> SpawnEnergyDrain(); return true;	src/session/SkillAttackEffectIdTable.generated.inc	399
+218	OnProcess	PotionPillar,ProcessEZ2STR	routed	OnProcess -> return ProcessPotionConcentration();		25
+219	OnProcess	PotionPillar,ProcessEZ2STR	routed	OnProcess -> return ProcessPotionConcentration();		25
+220	OnProcess	Potion_Berserk	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	25
+221	OnProcess	PotionPillar	routed	OnProcess -> return ProcessEffectFrameLegacy();		25
+222	OnProcess	DEFENDER	routed	"OnProcess -> ApplyDefender(""effect\\ring_black.tga""); return true;"	src/gamemode/UseSkillEffect.generated.inc	165
+223	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_white.tga"", 2, false); return true;"		163
+224	OnProcess	WIND	routed	OnProcess -> ApplyWind(); return true;		39
+225	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_red.tga"", 0, false); return true;"		163
+226	OnProcess	GRANDCROSS,GRANDCROSS2	routed	OnProcess -> return ProcessGrandCrossEffects();	src/world/SkillSpecialEffect.cpp	2333
+227	OnProcess	INTIMIDATE	routed	OnProcess -> return ProcessIntimidate227();	src/world/SkillSpecialEffect.cpp	827
+228	OnProcess	CHOOKGI	routed	OnProcess -> return ProcessEffectFrameLegacy();		1060
+229	OnProcess	Cloud	routed	OnProcess -> SpawnWeatherCloud(); return true;		39
+230	OnProcess	Cloud	routed	OnProcess -> SpawnWeatherCloud(); return true;		39
+231	OnProcess	MAPPILLAR	routed	"OnProcess -> ApplyMapPillar(""effect\\ring_blue.tga"", 4.0f, false); return true;"		164
+232	OnProcess	LINELINK	routed	OnProcess -> return ProcessLineLinkEffects();	src/gamemode/GameModePacket.cpp	334
+233	OnProcess	Cloud	routed	OnProcess -> SpawnWeatherCloud(); return true;		39
+234	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+236	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_blue.tga"", 0, false); return true;"		163
+237	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\magic_green.tga"", 0, false); return true;"		163
+238	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_white.tga"", 0, false); return true;"		163
+239	OnProcess	Bottom_Volcano	routed	"OnProcess -> ApplyBottomVolcano(""effect\\ring_red.tga"", 0.0f); return true;"		162
+240	OnProcess	Bottom_Volcano	routed	"OnProcess -> ApplyBottomVolcano(""effect\\ring_blue.tga"", 0.0f); return true;"		162
+241	OnProcess	Bottom_Volcano	routed	"OnProcess -> ApplyBottomVolcano(""effect\\magic_green.tga"", 0.0f); return true;"		162
+242	OnProcess	Bottom_LandProtector	routed	OnProcess -> return ProcessLandProtector(1);		2477
+244	OnProcess	ProcessEZ2STR,MagicRod	routed	OnProcess -> return ProcessMagicRod244();	src/gamemode/UseSkillEffect.generated.inc	215
+245	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/world/SkillSpecialEffect.cpp	39
+246	OnProcess	ShieldCharge	routed	OnProcess -> return ProcessShieldCharge246();	src/world/SkillSpecialEffect.cpp	451
+247	OnProcess	MAPPILLAR	routed	"OnProcess -> ApplyMapPillar(""effect\\ring_blue.tga"", 4.0f, true); return true;"		164
+248	OnProcess	Providence,ProcessEZ2STR	routed	"OnProcess -> ApplyProvidence(""effect\\ring_yellow.tga""); ProcessEZ2STR(); return FinishEffectFrame();"	src/gamemode/UseSkillEffect.generated.inc	164
+249	OnProcess	ShieldBoomerang	routed	OnProcess -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	119
+251	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEZ2STR(0.0f, -20.0f, 0.0f);	src/gamemode/UseSkillEffect.generated.inc	32
+252	OnProcess	DEFENDER	routed	"OnProcess -> ApplyDefender(""effect\\ring_yellow.tga""); return true;"	src/gamemode/UseSkillEffect.generated.inc	32
+253	OnProcess	Heal2	routed	OnProcess -> return ProcessHealBlue();	src/gamemode/UseSkillEffect.generated.inc	39
+254	OnProcess	GumGang	routed	OnProcess -> return ProcessGumGangEffect();	src/gamemode/UseSkillEffect.generated.inc	307
+255	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+257	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+256	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+258	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+259	OnProcess	MAPPILLAR	routed	"OnProcess -> ApplyMapPillar(""effect\\magic_green.tga"", 7.0f, false); return true;"		164
+260	OnProcess	MAPPILLAR	routed	"OnProcess -> ApplyMapPillar(""effect\\ring_red.tga"", 6.0f, false); return true;"		164
+261	OnProcess	VOLCANO2	routed	"OnProcess -> ApplyVolcano(""effect\\ring_yellow.tga"", 0, true); return true;"	src/gamemode/UseSkillEffect.generated.inc	106
+262	OnProcess	TEIHIT1	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/GameActorMsgHandler.cpp	830
+263	OnProcess	VOLCANO	routed	"OnProcess -> ApplyVolcano(""effect\\ring_yellow.tga"", 1, false); return true;"	src/world/GameActorMsgHandler.cpp	119
+264	OnProcess	TEIHIT2	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	77
+265	OnProcess	TANJI	routed	OnProcess -> return ProcessTanji(false);		1336
+266	OnProcess	TEIHIT1	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	834
+267	OnProcess	CHIMTO	routed	OnProcess -> return ProcessChimtoEffect(0);	src/world/SkillSpecialEffect.cpp	1145
+269	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStripEquipment269To272();	src/gamemode/UseSkillEffect.generated.inc	39
+270	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStripEquipment269To272();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	39
+271	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStripEquipment269To272();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	39
+272	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessStripEquipment269To272();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	39
+273	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEffect273();	src/world/GameActorMsgHandler.cpp	21
+274	OnProcess	RG_COIN	routed	OnProcess -> return ProcessRgCoinEffects();	src/gamemode/UseSkillEffect.generated.inc	115
+275	OnProcess	TEIHIT2	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	1628
+276	OnProcess	TEIHIT3	routed	OnProcess -> return ProcessTeiHitEffects();	src/gamemode/UseSkillEffect.generated.inc	2541
+277	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(277);		301
+278	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\zz.bmp"", 1); return true;"		139
+279	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\pocket.bmp"", 3); return true;"		139
+280	OnProcess	Bottom_Light	routed	"OnProcess -> ApplyBottomLight(""effect\\twirl.bmp"", 8); return true;"		140
+281	OnProcess	Bottom_Music	routed	OnProcess -> ApplyBottomMusic(nullptr, 2); return true;		139
+282	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\twirl.bmp"", 7); return true;"		139
+283	OnProcess	Bottom_Out	routed	"OnProcess -> ApplyBottomOut(""effect\\safeline.bmp"", 0); return true;"		141
+284	OnProcess	Bottom_Music	routed	OnProcess -> ApplyBottomMusic(nullptr, 5); return true;		139
+285	OnProcess	Bottom_Light	routed	"OnProcess -> ApplyBottomLight(""effect\\twirl.bmp"", 4); return true;"		140
+286	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\melody_b.bmp"", 0); return true;"		139
+287	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(287);		329
+288	OnProcess	Bottom_Music	routed	OnProcess -> ApplyBottomMusic(nullptr, 8); return true;		139
+289	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\idun_apple.bmp"", 6); return true;"		139
+290	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(290);		164
+291	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\melody_a.bmp"", 0); return true;"		139
+292	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(292);		3467
+293	OnProcess	Bottom_Music	routed	"OnProcess -> ApplyBottomMusic(""effect\\kiss.bmp"", 4); return true;"		139
+294	OnProcess	Bottom_Vertical	routed	OnProcess -> return ProcessBottomVertical(294);		1430
+295	OnProcess	Talk_FrostJoke	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	148
+296	OnProcess	Talk_FrostJoke	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	121
+297	OnProcess	PokJuk	routed	OnProcess -> return ProcessPokJuk297();		3495
+298	OnProcess	ThrowItem	routed	OnProcess -> return ProcessThrowItemEffect();	src/world/SkillSpecialEffect.cpp	125
+299	OnProcess	ThrowItem	routed	OnProcess -> return ProcessThrowItemEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+374	OnProcess	Basilica	routed	OnProcess -> return ProcessBasilica();		601
+375	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+376	OnProcess	HitLine	routed	OnProcess -> return ProcessHitLineEffect();	src/world/GameActorMsgHandler.cpp	1209
+377	OnProcess	BASH3D	routed	OnProcess -> return ProcessBash3DEffect();	src/world/GameActorMsgHandler.cpp	714
+378	OnProcess	EnergyDrain2	routed	OnProcess -> return ProcessEnergyDrain2Effect();	src/gamemode/UseSkillEffect.generated.inc	524
+379	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	56
+380	OnProcess	inline	routed	OnProcess -> return ProcessEffect380();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	58
+381	OnProcess	EffectTextureSet,LightSphere	routed	OnProcess -> return ProcessEffect348();		3654
+382	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+383	OnProcess	EnergyDrain3	routed	OnProcess -> return ProcessEnergyDrain3Effect();	src/gamemode/UseSkillEffect.generated.inc	59
+384	OnProcess	LINELINK2	routed	OnProcess -> return ProcessLineLinkEffects();	src/gamemode/UseSkillEffect.generated.inc	115
+385	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+386	OnProcess	BASH3D	routed	OnProcess -> return ProcessBash3DEffect();	src/gamemode/UseSkillEffect.generated.inc	391
+387	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	58
+388	OnProcess	TRIPLEATTACK2	routed	OnProcess -> return ProcessTripleAttackEffects();	src/world/SkillSpecialEffect.cpp	1848
+389	OnProcess	PortalWind	routed	OnProcess -> return ProcessPortalWind389();	src/gamemode/UseSkillEffect.generated.inc	39
+390	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+391	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessClipWaveStrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+392	OnProcess	ProcessEZ2STR	routed	OnProcess -> ApplyKyrieGuard(); return FinishEffectFrame();	src/gamemode/UseSkillEffect.generated.inc	39
+393	OnProcess	TRIPLEATTACK3	routed	OnProcess -> return ProcessTripleAttackEffects();	src/world/SkillSpecialEffect.cpp	416
+394	OnProcess	SphereWind	routed	"OnProcess -> for (short windTime = 0; windTime < 45; windTime = static_cast<short>(windTime + 9)) ApplySphereWind(""effect\\fire_ivy.bmp"", windTime, 1); return true;"	src/gamemode/UseSkillEffect.generated.inc	134
+395	OnProcess	LINELINK3	routed	OnProcess -> return ProcessLineLinkEffects();	src/gamemode/UseSkillEffect.generated.inc	2583
+396	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+399	OnProcess	BASH3D	routed	OnProcess -> return ProcessBash3DEffect();	src/world/SkillSpecialEffect.cpp	101
+400	OnProcess	BASH3D	routed	OnProcess -> return ProcessBash3DEffect();	src/world/SkillSpecialEffect.cpp	119
+401	OnProcess	Hit2	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	94
+402	OnProcess	PortalWind	routed	OnProcess -> ApplyPortalWind402(); return true;	src/gamemode/GameModePacket.cpp	39
+403	OnProcess	inline	routed	OnProcess -> return ProcessEffect403();	src/gamemode/UseSkillEffect.generated.inc	58
+404	OnProcess	Bottom_LandProtector	routed	OnProcess -> return ProcessLandProtector(2);		1023
+405	OnProcess	Bottom_Magnus	routed	"OnProcess -> ApplyBottomMagnus(""effect\\ring_white.tga"", 2); return true;"		39
+408	OnProcess	SphereWind2	routed	OnProcess -> return ProcessSphereWind2Effect();	src/gamemode/UseSkillEffect.generated.inc	1289
+409	OnProcess	SoulBreaker2	routed	OnProcess -> return ProcessSoulBreaker2Effect();	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	481
+410	OnProcess	Rainbow	routed	OnProcess -> return ProcessRainbow410();		881
+411	OnProcess	PeongUp,Peong	routed	OnProcess -> return ProcessPeongEffects();	src/world/GameActor.cpp	1923
+412	OnProcess	TANJI2	routed	OnProcess -> return ProcessTanji(true);		1336
+413	OnProcess	inline	routed	OnProcess -> return ProcessEffect413();	src/world/SkillSpecialEffect.cpp	58
+414	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		58
+415	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	58
+416	OnProcess	AirTexture	routed	OnProcess -> return ProcessAirTexture416();	src/world/RagEffect.cpp	185
+417	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		58
+418	OnProcess	DoubleGumGang	routed	OnProcess -> return ProcessGumGangEffect();	src/gamemode/UseSkillEffect.generated.inc	481
+419	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+420	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+421	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		58
+422	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		58
+423	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		58
+424	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+425	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	58
+426	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;		58
+458	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	58
+427	OnProcess	inline	routed	OnProcess -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+428	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Zero428();		1351
+429	OnProcess	HitLine4	routed	OnProcess -> return ProcessHitLine4Effect();	src/world/SkillSpecialEffect.cpp	2509
+430	OnProcess	HitLine5	routed	OnProcess -> return ProcessHitLine5Effect();	src/world/SkillSpecialEffect.cpp	1532
+431	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Effect();	src/world/SkillSpecialEffect.cpp	1351
+432	OnProcess	Electric	routed	OnProcess -> return ProcessEffectFrameLegacy();		153
+433	OnProcess	Electric2	routed	OnProcess -> ApplyElectric2(); ApplyElectric2(); return true;		154
+434	OnProcess	HitLine3	routed	OnProcess -> return ProcessHitLine3Basic434();		3500
+435	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillActionInfo.cpp;src/world/GameActorMsgHandler.cpp	160
+436	OnProcess	HalfSphere	routed	"OnProcess -> ApplyHalfSphere(""effect\\white02.bmp""); return true;"		93
+437	OnProcess	HalfSphere,AttackEnergy	routed	"OnProcess -> ApplyHalfSphere(""effect\\white02.bmp""); ApplyAttackEnergy(""effect\\ring_blue.tga""); return true;"		152
+438	OnProcess	AttackEnergy2	routed	OnProcess -> return ProcessEffectFrameLegacy();		155
+439	OnProcess	CHEMICAL3	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	170
+440	OnProcess	ProcessEZ2STR	routed	OnProcess -> return ProcessEffect440();	src/gamemode/UseSkillEffect.generated.inc	39
+441	OnProcess	BlueCasting	routed	"OnProcess -> ApplyPairedSaintCasting(""effect\\ring_blue.tga"", 5, true, -100.0f); return true;"	src/session/SkillActionInfo2.cpp	137
+442	OnProcess	inline	routed	OnProcess -> ApplyBodyLight442(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+444	OnProcess	RunStop	routed	OnProcess -> return ProcessRunStop444();	src/gamemode/UseSkillEffect.generated.inc	329
+445	OnProcess	inline	routed	OnProcess -> return ProcessEffect445();	src/world/GameActor.cpp	58
+446	OnProcess	inline	routed	OnProcess -> ApplyBodyLight446(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+447	OnProcess	Foot	routed	OnProcess -> return ProcessFoot447();		3505
+448	OnProcess	Foot	routed	OnProcess -> return ProcessFoot448();		3510
+449	OnProcess	inline	routed	OnProcess -> ApplyBodyLight449(); return true;	src/world/GameActor.cpp	58
+450	OnProcess	GRANDCROSS,GRANDCROSS2	routed	OnProcess -> return ProcessGrandCrossEffects();	src/world/SkillSpecialEffect.cpp	93
+451	OnProcess	SoulStrike	routed	OnProcess -> return ProcessSoulStrike15(1);	src/session/SkillAttackEffectIdTable.generated.inc	1798
+452	OnProcess	YufitelHit	routed	OnProcess -> return ProcessYufitelHit(1);	src/session/SkillAttackEffectIdTable.generated.inc	2705
+453	OnProcess	NpcStop	routed	OnProcess -> return ProcessNpcStopEffects();	src/gamemode/UseSkillEffect.generated.inc	1639
+454	OnProcess	DarkCasting	routed	"OnProcess -> ApplyPairedSaintCasting(""effect\\ring_black.tga"", 6, true, 0.0f); return true;"	src/session/SkillActionInfo.cpp;src/session/SkillAttackEffectIdTable.generated.inc	137
+455	OnProcess	GumGang	routed	OnProcess -> return ProcessGumGangEffect();	src/gamemode/UseSkillEffect.generated.inc	368
+456	OnProcess	CartBoost	routed	OnProcess -> return ProcessCartBoost456();	src/gamemode/UseSkillEffect.generated.inc	251
+457	OnProcess	inline	routed	OnProcess -> return ProcessEffect457();	src/world/SkillSpecialEffect.cpp	58
+459	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		160
+460	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		160
+461	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	160
 462	OnProcess	PeongUp	unported	OnProcess -> UnportedEffect		-
 463	OnProcess	PeongUp	unported	OnProcess -> UnportedEffect		-
-464	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		154
-465	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		154
-466	OnProcess	inline	routed	OnProcess -> return ProcessEffect466();	src/world/SkillSpecialEffect.cpp	52
-467	OnProcess	BeginAsura1	routed	OnProcess -> return ProcessBeginAsura1_467();		3509
-468	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon2.tga"");"		3514
-469	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon3.tga"");"		3514
-470	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon4.tga"");"		3514
-471	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon7.tga"");"		3514
-472	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon5.tga"");"		3514
-473	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon6.tga"");"		3514
-474	OnProcess	inline	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	33
-475	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		33
-476	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		33
-477	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		33
-478	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		33
-479	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		33
-480	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		33
-481	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		33
-482	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		33
-483	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		33
-484	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		33
-485	OnProcess	DoubleGumGang	routed	OnProcess -> return ProcessGumGangEffect();		844
-486	OnProcess	DoubleGumGang	routed	OnProcess -> return ProcessGumGangEffect();		844
-487	OnProcess	BLACKDEVIL	routed	"OnProcess -> ApplyBlackDevil(""effect\\ring_black.tga""); return true;"		33
-488	OnProcess	FlowerCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	160
+464	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		160
+465	OnProcess	StormKick,PortalWind	routed	OnProcess -> return ProcessEffectFrameLegacy();		160
+466	OnProcess	inline	routed	OnProcess -> return ProcessEffect466();	src/world/SkillSpecialEffect.cpp	58
+467	OnProcess	BeginAsura1	routed	OnProcess -> return ProcessBeginAsura1_467();		3515
+468	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon2.tga"");"		3520
+469	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon3.tga"");"		3520
+470	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon4.tga"");"		3520
+471	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon7.tga"");"		3520
+472	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon5.tga"");"		3520
+473	OnProcess	BeginAsura1	routed	"OnProcess -> return ProcessBeginAsura1Variant(""effect\\hanmoon6.tga"");"		3520
+474	OnProcess	inline	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	39
+475	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		39
+476	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		39
+477	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		39
+478	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		39
+479	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		39
+480	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		39
+481	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		39
+482	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		39
+483	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		39
+484	OnProcess	BLIND	routed	OnProcess -> ApplyBlind(m_type - 474); return true;		39
+485	OnProcess	DoubleGumGang	routed	OnProcess -> return ProcessGumGangEffect();		850
+486	OnProcess	DoubleGumGang	routed	OnProcess -> return ProcessGumGangEffect();		850
+487	OnProcess	BLACKDEVIL	routed	"OnProcess -> ApplyBlackDevil(""effect\\ring_black.tga""); return true;"		39
+488	OnProcess	FlowerCasting	routed	OnProcess -> return ProcessEffectFrameLegacy();	src/gamemode/UseSkillEffect.generated.inc	166
 709	OnProcess	Test	routed	OnProcess -> return ProcessEffectFrameLegacy();		8
-300	OnProcess2	CHEMICALPROTECTION	routed	OnProcess2 -> return OnProcess2Legacy();	src/gamemode/UseSkillEffect.generated.inc	26
-301	OnProcess2	PokJuk_Sound	routed	OnProcess2 -> return OnProcess2Legacy();		33
-302	OnProcess2	Demonstration	routed	OnProcess2 -> return ProcessDemonstration302();		3055
-303	OnProcess2	CHEMICAL2	routed	OnProcess2 -> return OnProcess2Legacy();		166
-304	OnProcess2	TELEPORTATION2	routed	"OnProcess2 -> ApplyTeleportation2(""effect\\Magic_Violet.tga"", 0); return true;"		118
-305	OnProcess2	ProcessEZ2STR	routed	OnProcess2 -> return OnProcess2Legacy();		33
-306	OnProcess2	ProcessEZ2STR	routed	OnProcess2 -> return OnProcess2Legacy();		33
-307	OnProcess2	ForestLight	routed	"OnProcess2 -> ApplyForestLight(""effect\\cloud11.tga"", 0); return true;"		125
-308	OnProcess2	ThrowItem	routed	"OnProcess2 -> ApplyThrowItem(""\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xB5\xB9.bmp"", 2); return true;"	src/world/SkillSpecialEffect.cpp	119
-309	OnProcess2	FirstAid	routed	OnProcess2 -> ApplyFirstAid(); return true;	src/gamemode/UseSkillEffect.generated.inc	116
-310	OnProcess2	PARTICLE_UP	routed	OnProcess2 -> ApplyParticleUpBurst(); return true;	src/world/SkillSpecialEffect.cpp	33
-311	OnProcess2	ProcessEZ2STR	routed	OnProcess2 -> return OnProcess2Legacy();	src/gamemode/UseSkillEffect.generated.inc	33
-312	OnProcess2	Heal	routed	"OnProcess2 -> ApplyHeal(""effect\\alpha_down.tga"", 0); return true;"		33
-313	OnProcess2	Heal2	routed	"OnProcess2 -> ApplyHeal2(""effect\\ring_white.tga"", 0); return true;"	src/gamemode/UseSkillEffect.generated.inc	33
-314	OnProcess2	Exit2	routed	"OnProcess2 -> ApplyExit2(""effect\\ring_purple.tga""); return true;"		33
-315	OnProcess2	GlassWall2	routed	"OnProcess2 -> return ApplyGlassWall2(""effect\\alpha_down.tga"");"		31
-316	OnProcess2	ReadyPortal2	routed	OnProcess2 -> ApplyReadyPortal2(); return true;		33
-317	OnProcess2	Portal2	routed	OnProcess2 -> ApplyPortal2(0); return true;		33
-318	OnProcess2	Bottom_Magnus	routed	"OnProcess2 -> ApplyBottomMagnus(""effect\\ring_red.tga"", 0); return true;"		33
-319	OnProcess2	Bottom_Magnus	routed	"OnProcess2 -> ApplyBottomMagnus(""effect\\alpha_down.tga"", 1); return true;"		33
-320	OnProcess2	Heal	routed	"OnProcess2 -> ApplyHeal(""effect\\alpha_down.tga"", 1); return true;"	src/world/SkillSpecialEffect.cpp	33
+300	OnProcess2	CHEMICALPROTECTION	routed	OnProcess2 -> return OnProcess2Legacy();	src/gamemode/UseSkillEffect.generated.inc	32
+301	OnProcess2	PokJuk_Sound	routed	OnProcess2 -> return OnProcess2Legacy();		39
+302	OnProcess2	Demonstration	routed	OnProcess2 -> return ProcessDemonstration302();		3061
+303	OnProcess2	CHEMICAL2	routed	OnProcess2 -> return OnProcess2Legacy();		172
+304	OnProcess2	TELEPORTATION2	routed	"OnProcess2 -> ApplyTeleportation2(""effect\\Magic_Violet.tga"", 0); return true;"		124
+305	OnProcess2	ProcessEZ2STR	routed	OnProcess2 -> return OnProcess2Legacy();		39
+306	OnProcess2	ProcessEZ2STR	routed	OnProcess2 -> return OnProcess2Legacy();		39
+307	OnProcess2	ForestLight	routed	"OnProcess2 -> ApplyForestLight(""effect\\cloud11.tga"", 0); return true;"		131
+308	OnProcess2	ThrowItem	routed	"OnProcess2 -> ApplyThrowItem(""\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xB5\xB9.bmp"", 2); return true;"	src/world/SkillSpecialEffect.cpp	125
+309	OnProcess2	FirstAid	routed	OnProcess2 -> ApplyFirstAid(); return true;	src/gamemode/UseSkillEffect.generated.inc	122
+310	OnProcess2	PARTICLE_UP	routed	OnProcess2 -> ApplyParticleUpBurst(); return true;	src/world/SkillSpecialEffect.cpp	39
+311	OnProcess2	ProcessEZ2STR	routed	OnProcess2 -> return OnProcess2Legacy();	src/gamemode/UseSkillEffect.generated.inc	39
+312	OnProcess2	Heal	routed	"OnProcess2 -> ApplyHeal(""effect\\alpha_down.tga"", 0); return true;"		39
+313	OnProcess2	Heal2	routed	"OnProcess2 -> ApplyHeal2(""effect\\ring_white.tga"", 0); return true;"	src/gamemode/UseSkillEffect.generated.inc	39
+314	OnProcess2	Exit2	routed	"OnProcess2 -> ApplyExit2(""effect\\ring_purple.tga""); return true;"		39
+315	OnProcess2	GlassWall2	routed	"OnProcess2 -> return ApplyGlassWall2(""effect\\alpha_down.tga"");"		37
+316	OnProcess2	ReadyPortal2	routed	OnProcess2 -> ApplyReadyPortal2(); return true;		39
+317	OnProcess2	Portal2	routed	OnProcess2 -> ApplyPortal2(0); return true;		39
+318	OnProcess2	Bottom_Magnus	routed	"OnProcess2 -> ApplyBottomMagnus(""effect\\ring_red.tga"", 0); return true;"		39
+319	OnProcess2	Bottom_Magnus	routed	"OnProcess2 -> ApplyBottomMagnus(""effect\\alpha_down.tga"", 1); return true;"		39
+320	OnProcess2	Heal	routed	"OnProcess2 -> ApplyHeal(""effect\\alpha_down.tga"", 1); return true;"	src/world/SkillSpecialEffect.cpp	39
 321	OnProcess2	WarpZone2	routed	"OnProcess2 -> ApplyWarpZone2(""effect\\ring_blue.tga""); return true;"	src/world/GameActor.cpp	19
-322	OnProcess2	ForestLight	routed	"OnProcess2 -> ApplyForestLight(""effect\\cloud11.tga"", 1); return true;"		125
-323	OnProcess2	ForestLight	routed	"OnProcess2 -> ApplyForestLight(""effect\\cloud11.tga"", 2); return true;"		125
-324	OnProcess2	ForestLight	routed	"OnProcess2 -> ApplyForestLight(""effect\\cloud11.tga"", 10); return true;"		125
-325	OnProcess2	Heal2	routed	"OnProcess2 -> ApplyHeal2(""effect\\ring_white.tga"", 1); return true;"	src/gamemode/UseSkillEffect.generated.inc	33
-326	OnProcess2	Foot	routed	"OnProcess2 -> return ProcessFoot326_327(""effect\\foot_l_b.tga"");"		3521
-327	OnProcess2	Foot	routed	"OnProcess2 -> return ProcessFoot326_327(""effect\\foot_r_b.tga"");"		3521
-328	OnProcess2	BeginAsura	routed	OnProcess2 -> return ProcessBeginAsuraEffect();		53
-329	OnProcess2	TRIPLEATTACK	routed	OnProcess2 -> return ProcessTripleAttackEffects();	src/world/SkillSpecialEffect.cpp	1195
-330	OnProcess2	HitLine	routed	OnProcess2 -> return ProcessHitLineEffect(0, false);	src/world/GameActorMsgHandler.cpp	122
-331	OnProcess2	HealTime	routed	OnProcess2 -> ApplyHealTime(0); return true;		33
-332	OnProcess2	HealTime	routed	OnProcess2 -> ApplyHealTime(1); return true;		33
-333	OnProcess2	Maple	routed	OnProcess2 -> return ProcessMaple333();		2086
-334	OnProcess2	BLIND	routed	OnProcess2 -> ApplyBlind(0); return true;	src/world/GameActorMsgHandler.cpp	33
-335	OnProcess2	POISON	routed	OnProcess2 -> ApplyPoison(0); return true;	src/world/GameActorMsgHandler.cpp	33
-336	OnProcess2	Guard	routed	OnProcess2 -> return ProcessGuardEffects();	src/world/GameActor.cpp	70
-337	OnProcess2	JobLvUp50	routed	OnProcess2 -> ApplyJobLvUp50(0); ApplyJobLvUp50(45); return true;		31
-338	OnProcess2	SuperAngel	routed	OnProcess2 -> ProcessSuperAngelEffect(); return true;		218
-339	OnProcess2	Magnum2	routed	"OnProcess2 -> ApplyMagnum2(""effect\\ring_yellow.tga""); return true;"	src/world/SkillSpecialEffect.cpp	127
-340	OnProcess2	CALLZONE	routed	OnProcess2 -> return ProcessCallZone340();		3528
-341	OnProcess2	Portal2	routed	OnProcess2 -> ApplyPortal2(3); return true;		26
-342	OnProcess2	CoupleCasting	routed	"OnProcess2 -> ApplyCoupleCasting(""effect\\ring_red.tga""); return true;"	src/session/SkillActionInfo2.cpp	3568
-343	OnProcess2	HeartCasting	routed	OnProcess2 -> return OnProcess2Legacy();	src/session/SkillActionInfo2.cpp	163
-344	OnProcess2	Entry2	routed	OnProcess2 -> ApplyEntry2(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/world/GameActor.cpp	33
-345	OnProcess2	SaintWing	routed	"OnProcess2 -> ApplySaintWing(""effect\\wing003.bmp""); return true;"		126
-346	OnProcess2	SphereWind	routed	"OnProcess2 -> for (short windTime = 0; windTime < 45; windTime = static_cast<short>(windTime + 9)) ApplySphereWind(""effect\\blue_ivy.bmp"", windTime, 0); return true;"		128
-347	OnProcess2	ColorPaper	routed	"OnProcess2 -> for (int paper = 0; paper < 50; ++paper) ApplyColorPaper(""effect\\white02.bmp""); return true;"		129
-348	OnProcess2	EffectTextureSet,LightSphere	routed	OnProcess2 -> return ProcessEffect348();		3644
-349	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 0, 0);		3606
-350	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 0, 0);		3606
-351	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 1, 0);		3606
-352	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 1, 0);		3606
-353	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 0, 1);		3606
-354	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 0, 1);		3606
-355	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 1, 1);		3606
-356	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 1, 1);		3606
-358	OnProcess2	Ghost	routed	OnProcess2 -> return ProcessGhost(0);		3596
-359	OnProcess2	Ghost	routed	OnProcess2 -> return ProcessGhost(1);		3596
-360	OnProcess2	Ghost	routed	OnProcess2 -> return ProcessGhost(2);		3596
-361	OnProcess2	SoulBreaker	routed	OnProcess2 -> return ProcessSoulBreaker361Effect();	src/world/SkillSpecialEffect.cpp	53
-362	OnProcess2	Level99_3	routed	OnProcess2 -> return ProcessLevel99_3Effect();		53
-363	OnProcess2	Vallentine	routed	OnProcess2 -> return ProcessVallentine(0);		3610
-364	OnProcess2	Vallentine	routed	OnProcess2 -> return ProcessVallentine(1);		3610
-365	OnProcess2	PRESSURE,GroundShake	routed	OnProcess2 -> return ProcessEffect365();	src/world/SkillSpecialEffect.cpp	389
-366	OnProcess2	BASH3D	routed	"OnProcess2 -> for (int lane = 0; lane < 5; ++lane) SpawnBash3D(""effect\\alpha_center.tga"", static_cast<char>(lane), 0); return true;"	src/world/SkillSpecialEffect.cpp	1267
-367	OnProcess2	AuraBladeCasting	routed	OnProcess2 -> ApplyAuraBladeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc	53
-368	OnProcess2	inline	routed	OnProcess2 -> ApplyBodyLight368(); return true;	src/gamemode/UseSkillEffect.generated.inc	33
-369	OnProcess2	ProcessEZ2STR	routed	OnProcess2 -> return OnProcess2Legacy();	src/gamemode/UseSkillEffect.generated.inc	31
-370	OnProcess2	Bottom_Music	routed	"OnProcess2 -> ApplyBottomMusic(""effect\\cross_old.bmp"", 9); return true;"		70
-371	OnProcess2	ProcessEZ2STR	routed	OnProcess2 -> return ProcessEZ2STR();		33
-372	OnProcess2	ProcessEZ2STR	routed	OnProcess2 -> return ProcessEZ2STR();	src/gamemode/GameModePacket.cpp;src/world/GameActor.cpp	33
-373	OnProcess2	DragonSmoke	routed	OnProcess2 -> SpawnDragonSmoke(); return true;		26
-491	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;		33
-492	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;		33
-507	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;		33
-508	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;		31
-646	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;		33
-649	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;	src/world/SkillSpecialEffect.cpp	33
-670	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;	src/world/SkillSpecialEffect.cpp	33
-699	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;	src/gamemode/UseSkillEffect.generated.inc	33
-493	OnProcess3	EnchantPoison2	routed	OnProcess3 -> ProcessEnchantPoison2(); return true;	src/gamemode/UseSkillEffect.generated.inc	318
-494	OnProcess3	ShieldBoomerang	routed	OnProcess3 -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	1107
-495	OnProcess3	RG_COIN2	routed	OnProcess3 -> return ProcessRgCoinEffects();	src/gamemode/UseSkillEffect.generated.inc	1608
-496	OnProcess3	Guard2	routed	OnProcess3 -> return ProcessGuardEffects();	src/gamemode/UseSkillEffect.generated.inc	2593
-497	OnProcess3	PRESSURE,GroundShake	routed	OnProcess3 -> return ProcessSlimPotionEffects(1);		3542
-498	OnProcess3	PRESSURE,GroundShake	routed	OnProcess3 -> return ProcessSlimPotionEffects(2);		3542
-499	OnProcess3	PRESSURE,GroundShake	routed	OnProcess3 -> return ProcessSlimPotionEffects(3);		3542
-500	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-501	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect501();	src/session/SkillActionInfo2.cpp	52
-502	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect502();	src/session/SkillActionInfo2.cpp	52
-503	OnProcess3	SoulLinkLight,BeginAsura2	routed	OnProcess3 -> return ProcessBeginAsura2Effect();	src/gamemode/UseSkillEffect.generated.inc	711
-504	OnProcess3	CHOOKGI	routed	OnProcess3 -> SpawnChookgi(1); return true;		245
-505	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect505();	src/gamemode/UseSkillEffect.generated.inc	52
-506	OnProcess3	SoulParticle	routed	OnProcess3 -> return ProcessSoulParticle506();	src/world/RagEffect.cpp	947
-509	OnProcess3	Vallentine	routed	OnProcess3 -> return ProcessVallentine(2);		3610
-510	OnProcess3	BeginAsura	routed	OnProcess3 -> return ProcessBeginAsuraEffect();		480
-512	OnProcess3	CHEMICAL3	routed	OnProcess3 -> return ProcessEffectFrameLegacy();	src/world/GameActorMsgHandler.cpp	109
-513	OnProcess3	GROUNDSAMPLE	routed	OnProcess3 -> ProcessGroundSample(); return true;		3549
-514	OnProcess3	GI_EXPLOSION	routed	"OnProcess3 -> ApplyGiExplosion(""effect\\ring_blue.tga""); return true;"		162
-515	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		33
-516	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		33
-517	OnProcess3	Bottom_Hermode	routed	OnProcess3 -> return ProcessBottomHermode517();		3556
-518	OnProcess3	ParticleSpread	routed	OnProcess3 -> return ProcessParticleSpreadEffects();	src/world/SkillSpecialEffect.cpp	1262
-519	OnProcess3	Vallentine	routed	OnProcess3 -> return ProcessVallentine(3);		3610
-520	OnProcess3	ShieldBoomerang3	routed	OnProcess3 -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	976
-521	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-522	OnProcess3	Gravitation	routed	OnProcess3 -> ApplyGravitation(); return true;		3619
-523	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot01.tga"", 1); return true;"		120
-524	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot02.tga"", 1); return true;"		120
-525	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot03.tga"", 1); return true;"		120
-526	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot04.tga"", 1); return true;"		120
-527	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot05.tga"", 1); return true;"		120
-528	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot06.tga"", 1); return true;"		120
-529	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot07.tga"", 1); return true;"		120
-530	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot08.tga"", 1); return true;"		120
-531	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot09.tga"", 1); return true;"		120
-532	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot10.tga"", 1); return true;"		120
-533	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot11.tga"", 1); return true;"		90
-534	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot12.tga"", 1); return true;"		120
-535	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot13.tga"", 1); return true;"		120
-536	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot14.tga"", 1); return true;"		120
-537	OnProcess3	BeginCasting2	routed	OnProcess3 -> return ProcessEffect537();	src/world/SkillSpecialEffect.cpp	161
-538	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		52
-539	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessEffectFrameLegacy();	src/gamemode/GameModePacket.cpp	100
-540	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		52
-541	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();	src/gamemode/UseSkillEffect.generated.inc	119
-542	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-543	OnProcess3	ParticleTime	routed	OnProcess3 -> return ProcessParticleTimeEffects();	src/gamemode/UseSkillEffect.generated.inc	931
-544	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-545	OnProcess3	Vallentine	routed	OnProcess3 -> return ProcessVallentine(4);		3610
-546	OnProcess3	ParticleTime	routed	OnProcess3 -> return ProcessParticleTimeEffects();		738
-547	OnProcess3	STIN	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	33
-548	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	52
-549	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		52
-550	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	52
-551	OnProcess3	SMA	routed	OnProcess3 -> SpawnSma(0); return true;		3563
-552	OnProcess3	SMA2	routed	OnProcess3 -> return ProcessSma2Effect552();	src/world/RagEffect.cpp	897
-553	OnProcess3	STIN2	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	1403
-554	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\freeze_a.bmp"", 2); return true;"	src/world/SkillSpecialEffect.cpp	120
+322	OnProcess2	ForestLight	routed	"OnProcess2 -> ApplyForestLight(""effect\\cloud11.tga"", 1); return true;"		131
+323	OnProcess2	ForestLight	routed	"OnProcess2 -> ApplyForestLight(""effect\\cloud11.tga"", 2); return true;"		131
+324	OnProcess2	ForestLight	routed	"OnProcess2 -> ApplyForestLight(""effect\\cloud11.tga"", 10); return true;"		131
+325	OnProcess2	Heal2	routed	"OnProcess2 -> ApplyHeal2(""effect\\ring_white.tga"", 1); return true;"	src/gamemode/UseSkillEffect.generated.inc	39
+326	OnProcess2	Foot	routed	"OnProcess2 -> return ProcessFoot326_327(""effect\\foot_l_b.tga"");"		3527
+327	OnProcess2	Foot	routed	"OnProcess2 -> return ProcessFoot326_327(""effect\\foot_r_b.tga"");"		3527
+328	OnProcess2	BeginAsura	routed	OnProcess2 -> return ProcessBeginAsuraEffect();		59
+329	OnProcess2	TRIPLEATTACK	routed	OnProcess2 -> return ProcessTripleAttackEffects();	src/world/SkillSpecialEffect.cpp	1201
+330	OnProcess2	HitLine	routed	OnProcess2 -> return ProcessHitLineEffect(0, false);	src/world/GameActorMsgHandler.cpp	128
+331	OnProcess2	HealTime	routed	OnProcess2 -> ApplyHealTime(0); return true;		39
+332	OnProcess2	HealTime	routed	OnProcess2 -> ApplyHealTime(1); return true;		39
+333	OnProcess2	Maple	routed	OnProcess2 -> return ProcessMaple333();		2092
+334	OnProcess2	BLIND	routed	OnProcess2 -> ApplyBlind(0); return true;	src/world/GameActorMsgHandler.cpp	39
+335	OnProcess2	POISON	routed	OnProcess2 -> ApplyPoison(0); return true;	src/world/GameActorMsgHandler.cpp	39
+336	OnProcess2	Guard	routed	OnProcess2 -> return ProcessGuardEffects();	src/world/GameActor.cpp	76
+337	OnProcess2	JobLvUp50	routed	OnProcess2 -> ApplyJobLvUp50(0); ApplyJobLvUp50(45); return true;		37
+338	OnProcess2	SuperAngel	routed	OnProcess2 -> ProcessSuperAngelEffect(); return true;		224
+339	OnProcess2	Magnum2	routed	"OnProcess2 -> ApplyMagnum2(""effect\\ring_yellow.tga""); return true;"	src/world/SkillSpecialEffect.cpp	133
+340	OnProcess2	CALLZONE	routed	OnProcess2 -> return ProcessCallZone340();		3534
+341	OnProcess2	Portal2	routed	OnProcess2 -> ApplyPortal2(3); return true;		32
+342	OnProcess2	CoupleCasting	routed	"OnProcess2 -> ApplyCoupleCasting(""effect\\ring_red.tga""); return true;"	src/session/SkillActionInfo2.cpp	3574
+343	OnProcess2	HeartCasting	routed	OnProcess2 -> return OnProcess2Legacy();	src/session/SkillActionInfo2.cpp	169
+344	OnProcess2	Entry2	routed	OnProcess2 -> ApplyEntry2(); return true;	src/gamemode/UseSkillEffect.generated.inc;src/world/GameActor.cpp	39
+345	OnProcess2	SaintWing	routed	"OnProcess2 -> ApplySaintWing(""effect\\wing003.bmp""); return true;"		132
+346	OnProcess2	SphereWind	routed	"OnProcess2 -> for (short windTime = 0; windTime < 45; windTime = static_cast<short>(windTime + 9)) ApplySphereWind(""effect\\blue_ivy.bmp"", windTime, 0); return true;"		134
+347	OnProcess2	ColorPaper	routed	"OnProcess2 -> for (int paper = 0; paper < 50; ++paper) ApplyColorPaper(""effect\\white02.bmp""); return true;"		135
+348	OnProcess2	EffectTextureSet,LightSphere	routed	OnProcess2 -> return ProcessEffect348();		3650
+349	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 0, 0);		3612
+350	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 0, 0);		3612
+351	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 1, 0);		3612
+352	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 1, 0);		3612
+353	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 0, 1);		3612
+354	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 0, 1);		3612
+355	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(0, 1, 1);		3612
+356	OnProcess2	WaterFall,WaterFallParticle	routed	OnProcess2 -> return ProcessWaterfallEffects(1, 1, 1);		3612
+358	OnProcess2	Ghost	routed	OnProcess2 -> return ProcessGhost(0);		3602
+359	OnProcess2	Ghost	routed	OnProcess2 -> return ProcessGhost(1);		3602
+360	OnProcess2	Ghost	routed	OnProcess2 -> return ProcessGhost(2);		3602
+361	OnProcess2	SoulBreaker	routed	OnProcess2 -> return ProcessSoulBreaker361Effect();	src/world/SkillSpecialEffect.cpp	59
+362	OnProcess2	Level99_3	routed	OnProcess2 -> return ProcessLevel99_3Effect();		59
+363	OnProcess2	Vallentine	routed	OnProcess2 -> return ProcessVallentine(0);		3616
+364	OnProcess2	Vallentine	routed	OnProcess2 -> return ProcessVallentine(1);		3616
+365	OnProcess2	PRESSURE,GroundShake	routed	OnProcess2 -> return ProcessEffect365();	src/world/SkillSpecialEffect.cpp	395
+366	OnProcess2	BASH3D	routed	"OnProcess2 -> for (int lane = 0; lane < 5; ++lane) SpawnBash3D(""effect\\alpha_center.tga"", static_cast<char>(lane), 0); return true;"	src/world/SkillSpecialEffect.cpp	1273
+367	OnProcess2	AuraBladeCasting	routed	OnProcess2 -> ApplyAuraBladeCasting(); return true;	src/gamemode/UseSkillEffect.generated.inc	59
+368	OnProcess2	inline	routed	OnProcess2 -> ApplyBodyLight368(); return true;	src/gamemode/UseSkillEffect.generated.inc	39
+369	OnProcess2	ProcessEZ2STR	routed	OnProcess2 -> return OnProcess2Legacy();	src/gamemode/UseSkillEffect.generated.inc	37
+370	OnProcess2	Bottom_Music	routed	"OnProcess2 -> ApplyBottomMusic(""effect\\cross_old.bmp"", 9); return true;"		76
+371	OnProcess2	ProcessEZ2STR	routed	OnProcess2 -> return ProcessEZ2STR();		39
+372	OnProcess2	ProcessEZ2STR	routed	OnProcess2 -> return ProcessEZ2STR();	src/gamemode/GameModePacket.cpp;src/world/GameActor.cpp	39
+373	OnProcess2	DragonSmoke	routed	OnProcess2 -> SpawnDragonSmoke(); return true;		32
+491	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;		39
+492	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;		39
+507	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;		39
+508	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;		37
+646	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;		39
+649	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;	src/world/SkillSpecialEffect.cpp	39
+670	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;	src/world/SkillSpecialEffect.cpp	39
+699	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;	src/gamemode/UseSkillEffect.generated.inc	39
+493	OnProcess3	EnchantPoison2	routed	OnProcess3 -> ProcessEnchantPoison2(); return true;	src/gamemode/UseSkillEffect.generated.inc	324
+494	OnProcess3	ShieldBoomerang	routed	OnProcess3 -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	1113
+495	OnProcess3	RG_COIN2	routed	OnProcess3 -> return ProcessRgCoinEffects();	src/gamemode/UseSkillEffect.generated.inc	1614
+496	OnProcess3	Guard2	routed	OnProcess3 -> return ProcessGuardEffects();	src/gamemode/UseSkillEffect.generated.inc	2599
+497	OnProcess3	PRESSURE,GroundShake	routed	OnProcess3 -> return ProcessSlimPotionEffects(1);		3548
+498	OnProcess3	PRESSURE,GroundShake	routed	OnProcess3 -> return ProcessSlimPotionEffects(2);		3548
+499	OnProcess3	PRESSURE,GroundShake	routed	OnProcess3 -> return ProcessSlimPotionEffects(3);		3548
+500	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+501	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect501();	src/session/SkillActionInfo2.cpp	58
+502	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect502();	src/session/SkillActionInfo2.cpp	58
+503	OnProcess3	SoulLinkLight,BeginAsura2	routed	OnProcess3 -> return ProcessBeginAsura2Effect();	src/gamemode/UseSkillEffect.generated.inc	717
+504	OnProcess3	CHOOKGI	routed	OnProcess3 -> SpawnChookgi(1); return true;		251
+505	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect505();	src/gamemode/UseSkillEffect.generated.inc	58
+506	OnProcess3	SoulParticle	routed	OnProcess3 -> return ProcessSoulParticle506();	src/world/RagEffect.cpp	953
+509	OnProcess3	Vallentine	routed	OnProcess3 -> return ProcessVallentine(2);		3616
+510	OnProcess3	BeginAsura	routed	OnProcess3 -> return ProcessBeginAsuraEffect();		486
+512	OnProcess3	CHEMICAL3	routed	OnProcess3 -> return ProcessEffectFrameLegacy();	src/world/GameActorMsgHandler.cpp	115
+513	OnProcess3	GROUNDSAMPLE	routed	OnProcess3 -> ProcessGroundSample(); return true;		3555
+514	OnProcess3	GI_EXPLOSION	routed	"OnProcess3 -> ApplyGiExplosion(""effect\\ring_blue.tga""); return true;"		168
+515	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		39
+516	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		39
+517	OnProcess3	Bottom_Hermode	routed	OnProcess3 -> return ProcessBottomHermode517();		3562
+518	OnProcess3	ParticleSpread	routed	OnProcess3 -> return ProcessParticleSpreadEffects();	src/world/SkillSpecialEffect.cpp	1268
+519	OnProcess3	Vallentine	routed	OnProcess3 -> return ProcessVallentine(3);		3616
+520	OnProcess3	ShieldBoomerang3	routed	OnProcess3 -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	982
+521	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+522	OnProcess3	Gravitation	routed	OnProcess3 -> ApplyGravitation(); return true;		3625
+523	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot01.tga"", 1); return true;"		126
+524	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot02.tga"", 1); return true;"		126
+525	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot03.tga"", 1); return true;"		126
+526	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot04.tga"", 1); return true;"		126
+527	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot05.tga"", 1); return true;"		126
+528	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot06.tga"", 1); return true;"		126
+529	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot07.tga"", 1); return true;"		126
+530	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot08.tga"", 1); return true;"		126
+531	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot09.tga"", 1); return true;"		126
+532	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot10.tga"", 1); return true;"		126
+533	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot11.tga"", 1); return true;"		96
+534	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot12.tga"", 1); return true;"		126
+535	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot13.tga"", 1); return true;"		126
+536	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\Tarot14.tga"", 1); return true;"		126
+537	OnProcess3	BeginCasting2	routed	OnProcess3 -> return ProcessEffect537();	src/world/SkillSpecialEffect.cpp	167
+538	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		58
+539	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessEffectFrameLegacy();	src/gamemode/GameModePacket.cpp	106
+540	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		58
+541	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();	src/gamemode/UseSkillEffect.generated.inc	125
+542	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+543	OnProcess3	ParticleTime	routed	OnProcess3 -> return ProcessParticleTimeEffects();	src/gamemode/UseSkillEffect.generated.inc	937
+544	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+545	OnProcess3	Vallentine	routed	OnProcess3 -> return ProcessVallentine(4);		3616
+546	OnProcess3	ParticleTime	routed	OnProcess3 -> return ProcessParticleTimeEffects();		744
+547	OnProcess3	STIN	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	39
+548	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	58
+549	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		58
+550	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/world/SkillSpecialEffect.cpp	58
+551	OnProcess3	SMA	routed	OnProcess3 -> SpawnSma(0); return true;		3569
+552	OnProcess3	SMA2	routed	OnProcess3 -> return ProcessSma2Effect552();	src/world/RagEffect.cpp	903
+553	OnProcess3	STIN2	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	1409
+554	OnProcess3	EffectTextureSet	routed	"OnProcess3 -> ApplyEffectTexture(""effect\\freeze_a.bmp"", 2); return true;"	src/world/SkillSpecialEffect.cpp	126
 555	OnProcess3	SMA	routed	OnProcess3 -> return ProcessStinSmaEffects();	src/world/SkillSpecialEffect.cpp	21
-556	OnProcess3	ParticlePath	routed	OnProcess3 -> return ProcessParticlePath556();	src/world/RagEffect.cpp	53
-557	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(0, 0); return true;		3535
-558	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(1, 0); return true;		3535
-559	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(0, 1); return true;		3535
-560	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(1, 1); return true;		3535
-561	OnProcess3	Portal3	routed	OnProcess3 -> return ProcessPortal3(0);		3614
-562	OnProcess3	Portal3	routed	OnProcess3 -> return ProcessPortal3(1);		3614
-563	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect563();		3578
-564	OnProcess3	CoupleCasting	routed	"OnProcess3 -> ApplyCoupleCasting(""effect\\ring_red.tga""); return true;"	src/gamemode/UseSkillEffect.generated.inc	3568
-565	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	33
-566	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	33
-567	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	33
-568	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		33
-569	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-603	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		31
-570	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(0);	src/gamemode/UseSkillEffect.generated.inc	410
-571	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(1);	src/gamemode/UseSkillEffect.generated.inc	1017
-572	OnProcess3	ParticleTime	routed	OnProcess3 -> return ProcessParticleTimeEffects();	src/gamemode/UseSkillEffect.generated.inc	2612
-573	OnProcess3	Twilight	routed	OnProcess3 -> return ProcessTwilightEffects();	src/session/SkillActionInfo2.cpp	1458
-574	OnProcess3	Twilight	routed	OnProcess3 -> return ProcessTwilightEffects();	src/session/SkillActionInfo2.cpp	1024
-575	OnProcess3	Twilight	routed	OnProcess3 -> return ProcessTwilightEffects();	src/session/SkillActionInfo2.cpp	484
-576	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(2);		1033
-577	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(3);		653
-578	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(4);		349
-579	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(5);		457
-580	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(6);		272
-581	OnProcess3	ForestLight	routed	"OnProcess3 -> ApplyForestLight(""effect\\cloud11.tga"", 11); return true;"		125
-582	OnProcess3	SuperAngel	routed	OnProcess3 -> ProcessSuperAngelEffect(); return true;		218
-583	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(7);		107
-584	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(8);	src/world/SkillSpecialEffect.cpp	2469
-585	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(9);		687
-586	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(10);		2469
-587	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(11);		904
-588	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(12);		1057
-589	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(13);	src/gamemode/UseSkillEffect.generated.inc	419
-590	OnProcess3	JobLvUp50_2	routed	OnProcess3 -> ProcessJobLvUp50_2(); return true;	src/gamemode/UseSkillEffect.generated.inc	260
-592	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		33
-593	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		31
-594	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		33
-595	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		33
-596	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		33
-597	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		33
-598	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		33
-599	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect599();	src/gamemode/UseSkillEffect.generated.inc	52
-600	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();	src/world/SkillSpecialEffect.cpp	119
-601	OnProcess3	Sight2	routed	OnProcess3 -> SpawnSight2(); return true;		96
-602	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect602();	src/gamemode/UseSkillEffect.generated.inc	52
-604	OnProcess3	NpcStop	routed	OnProcess3 -> return ProcessNpcStopEffects();		414
-605	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect605();		3573
-606	OnProcess3	CHIMTO	routed	OnProcess3 -> return ProcessChimtoEffect(2);	src/gamemode/UseSkillEffect.generated.inc	708
-607	OnProcess3	CHIMTO	routed	OnProcess3 -> return ProcessChimtoEffect(1);	src/gamemode/UseSkillEffect.generated.inc	1139
-608	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		33
-609	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		33
-610	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessTarotEffect();		120
-611	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessTarotEffect();		120
-612	OnProcess3	Effect_SPR,ProcessEZ2STR	routed	OnProcess3 -> return ProcessEffectSpriteAndStr();		31
-613	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();		119
-614	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();		119
-615	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();		119
-616	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();		119
-617	OnProcess3	MakeBlur2	routed	OnProcess3 -> return ProcessMakeBlur2();		793
-618	OnProcess3	Kouenka,BASH3D	routed	OnProcess3 -> ApplyKouenka(); return true;	src/world/SkillSpecialEffect.cpp	1572
-619	OnProcess3	EarthSpike	routed	OnProcess3 -> ApplyEarthSpike(2); return true;	src/world/SkillSpecialEffect.cpp	734
-620	OnProcess3	Bottom_Volcano	routed	"OnProcess3 -> ApplyBottomVolcano(""effect\\ring_blue.tga"", 14.0f); return true;"		156
-621	OnProcess3	STIN4	routed	OnProcess3 -> ApplyStin4(); return true;		439
-622	OnProcess3	ThunderStorm2	routed	OnProcess3 -> ApplyThunderStorm2(); return true;	src/gamemode/UseSkillEffect.generated.inc	888
-623	OnProcess3	CHEMICAL3	routed	OnProcess3 -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	164
-624	OnProcess3	STIN5	routed	OnProcess3 -> ApplyStin5(); return true;	src/world/SkillSpecialEffect.cpp	1403
-625	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-626	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	52
-627	OnProcess3	RG_COIN2	routed	OnProcess3 -> ApplyRgCoin3(); return true;	src/gamemode/UseSkillEffect.generated.inc	1133
-628	OnProcess3	BASH3D	routed	OnProcess3 -> ApplyBash3D5(); return true;	src/world/SkillSpecialEffect.cpp	116
-629	OnProcess3	CHOOKGI	routed	OnProcess3 -> SpawnChookgi(3); return true;		1054
-630	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(15);	src/world/SkillSpecialEffect.cpp	3640
-631	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(16);		3636
-632	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(17);	src/world/SkillSpecialEffect.cpp	3640
-633	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(18);	src/world/SkillSpecialEffect.cpp	3640
-634	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(19);		3640
-635	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-636	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/gamemode/UseSkillEffect.generated.inc	33
-637	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(20);	src/gamemode/UseSkillEffect.generated.inc	2469
-638	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(21);		2469
-639	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(22);		2469
-640	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(23);		462
-641	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(24);		592
-642	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(25);		359
-643	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(26);	src/world/SkillSpecialEffect.cpp	1165
-644	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(27);	src/world/SkillSpecialEffect.cpp	89
-645	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(28);	src/world/SkillSpecialEffect.cpp	289
-647	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(29);	src/world/SkillSpecialEffect.cpp	397
-648	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(30);	src/world/SkillSpecialEffect.cpp	1850
-650	OnProcess3	Map_MagicZone,Map_Pika,Map_Aura	routed	OnProcess3 -> return ProcessEffect650();		3624
-651	OnProcess3	Map_MagicZone,Map_Particle	routed	OnProcess3 -> return ProcessEffect651();		3628
-652	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		3588
-653	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		3583
-654	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		3583
-655	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		52
-656	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		52
+556	OnProcess3	ParticlePath	routed	OnProcess3 -> return ProcessParticlePath556();	src/world/RagEffect.cpp	59
+557	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(0, 0); return true;		3541
+558	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(1, 0); return true;		3541
+559	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(0, 1); return true;		3541
+560	OnProcess3	BlueFall	routed	OnProcess3 -> SpawnBlueFall(1, 1); return true;		3541
+561	OnProcess3	Portal3	routed	OnProcess3 -> return ProcessPortal3(0);		3620
+562	OnProcess3	Portal3	routed	OnProcess3 -> return ProcessPortal3(1);		3620
+563	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect563();		3584
+564	OnProcess3	CoupleCasting	routed	"OnProcess3 -> ApplyCoupleCasting(""effect\\ring_red.tga""); return true;"	src/gamemode/UseSkillEffect.generated.inc	3574
+565	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	39
+566	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	39
+567	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	39
+568	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		39
+569	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+603	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		37
+570	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(0);	src/gamemode/UseSkillEffect.generated.inc	416
+571	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(1);	src/gamemode/UseSkillEffect.generated.inc	1023
+572	OnProcess3	ParticleTime	routed	OnProcess3 -> return ProcessParticleTimeEffects();	src/gamemode/UseSkillEffect.generated.inc	2618
+573	OnProcess3	Twilight	routed	OnProcess3 -> return ProcessTwilightEffects();	src/session/SkillActionInfo2.cpp	1464
+574	OnProcess3	Twilight	routed	OnProcess3 -> return ProcessTwilightEffects();	src/session/SkillActionInfo2.cpp	1030
+575	OnProcess3	Twilight	routed	OnProcess3 -> return ProcessTwilightEffects();	src/session/SkillActionInfo2.cpp	490
+576	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(2);		1039
+577	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(3);		659
+578	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(4);		355
+579	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(5);		463
+580	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(6);		278
+581	OnProcess3	ForestLight	routed	"OnProcess3 -> ApplyForestLight(""effect\\cloud11.tga"", 11); return true;"		131
+582	OnProcess3	SuperAngel	routed	OnProcess3 -> ProcessSuperAngelEffect(); return true;		224
+583	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(7);		113
+584	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(8);	src/world/SkillSpecialEffect.cpp	2475
+585	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(9);		693
+586	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(10);		2475
+587	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(11);		910
+588	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(12);		1063
+589	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(13);	src/gamemode/UseSkillEffect.generated.inc	425
+590	OnProcess3	JobLvUp50_2	routed	OnProcess3 -> ProcessJobLvUp50_2(); return true;	src/gamemode/UseSkillEffect.generated.inc	266
+592	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		39
+593	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		37
+594	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		39
+595	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		39
+596	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		39
+597	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		39
+598	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		39
+599	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect599();	src/gamemode/UseSkillEffect.generated.inc	58
+600	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();	src/world/SkillSpecialEffect.cpp	125
+601	OnProcess3	Sight2	routed	OnProcess3 -> SpawnSight2(); return true;		102
+602	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect602();	src/gamemode/UseSkillEffect.generated.inc	58
+604	OnProcess3	NpcStop	routed	OnProcess3 -> return ProcessNpcStopEffects();		420
+605	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect605();		3579
+606	OnProcess3	CHIMTO	routed	OnProcess3 -> return ProcessChimtoEffect(2);	src/gamemode/UseSkillEffect.generated.inc	714
+607	OnProcess3	CHIMTO	routed	OnProcess3 -> return ProcessChimtoEffect(1);	src/gamemode/UseSkillEffect.generated.inc	1145
+608	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		39
+609	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		39
+610	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessTarotEffect();		126
+611	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessTarotEffect();		126
+612	OnProcess3	Effect_SPR,ProcessEZ2STR	routed	OnProcess3 -> return ProcessEffectSpriteAndStr();		37
+613	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();		125
+614	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();		125
+615	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();		125
+616	OnProcess3	ThrowItem	routed	OnProcess3 -> return ProcessThrowItemEffect();		125
+617	OnProcess3	MakeBlur2	routed	OnProcess3 -> return ProcessMakeBlur2();		799
+618	OnProcess3	Kouenka,BASH3D	routed	OnProcess3 -> ApplyKouenka(); return true;	src/world/SkillSpecialEffect.cpp	1578
+619	OnProcess3	EarthSpike	routed	OnProcess3 -> ApplyEarthSpike(2); return true;	src/world/SkillSpecialEffect.cpp	740
+620	OnProcess3	Bottom_Volcano	routed	"OnProcess3 -> ApplyBottomVolcano(""effect\\ring_blue.tga"", 14.0f); return true;"		162
+621	OnProcess3	STIN4	routed	OnProcess3 -> ApplyStin4(); return true;		445
+622	OnProcess3	ThunderStorm2	routed	OnProcess3 -> ApplyThunderStorm2(); return true;	src/gamemode/UseSkillEffect.generated.inc	894
+623	OnProcess3	CHEMICAL3	routed	OnProcess3 -> return ProcessEffectFrameLegacy();	src/world/SkillSpecialEffect.cpp	170
+624	OnProcess3	STIN5	routed	OnProcess3 -> ApplyStin5(); return true;	src/world/SkillSpecialEffect.cpp	1409
+625	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+626	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	58
+627	OnProcess3	RG_COIN2	routed	OnProcess3 -> ApplyRgCoin3(); return true;	src/gamemode/UseSkillEffect.generated.inc	1139
+628	OnProcess3	BASH3D	routed	OnProcess3 -> ApplyBash3D5(); return true;	src/world/SkillSpecialEffect.cpp	122
+629	OnProcess3	CHOOKGI	routed	OnProcess3 -> SpawnChookgi(3); return true;		1060
+630	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(15);	src/world/SkillSpecialEffect.cpp	3646
+631	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(16);		3642
+632	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(17);	src/world/SkillSpecialEffect.cpp	3646
+633	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(18);	src/world/SkillSpecialEffect.cpp	3646
+634	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(19);		3646
+635	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+636	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/gamemode/UseSkillEffect.generated.inc	39
+637	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(20);	src/gamemode/UseSkillEffect.generated.inc	2475
+638	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(21);		2475
+639	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(22);		2475
+640	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(23);		468
+641	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(24);		598
+642	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(25);		365
+643	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(26);	src/world/SkillSpecialEffect.cpp	1171
+644	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(27);	src/world/SkillSpecialEffect.cpp	95
+645	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(28);	src/world/SkillSpecialEffect.cpp	295
+647	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(29);	src/world/SkillSpecialEffect.cpp	25
+648	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(30);	src/world/SkillSpecialEffect.cpp	1856
+650	OnProcess3	Map_MagicZone,Map_Pika,Map_Aura	routed	OnProcess3 -> return ProcessEffect650();		3630
+651	OnProcess3	Map_MagicZone,Map_Particle	routed	OnProcess3 -> return ProcessEffect651();		3634
+652	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		3594
+653	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		3589
+654	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		3589
+655	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		58
+656	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		58
 665	OnProcess3	Bubble_Drop	unported	OnProcess3 -> UnportedEffect		-
-666	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(31);	src/world/SkillSpecialEffect.cpp	1221
-667	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		52
-668	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	33
-669	OnProcess3	POISON,ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	121
-671	OnProcess3	Bottom_LandProtector	routed	OnProcess3 -> return ProcessLandProtector(3);		3592
-672	OnProcess3	Bottom_LandProtector	routed	OnProcess3 -> return ProcessLandProtector(4);		3592
-673	OnProcess3	POISON	routed	OnProcess3 -> ApplyPoison(2); return true;		33
-674	OnProcess3	Bottom_Music	routed	"OnProcess3 -> ApplyBottomMusic(""effect\\curse.bmp"", 6); return true;"		133
-675	OnProcess3	Guard	routed	OnProcess3 -> return ProcessGuardEffects();	src/world/SkillSpecialEffect.cpp	439
-676	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessTarotEffect();	src/world/SkillSpecialEffect.cpp	120
-677	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	33
-678	OnProcess3	Level99_3	routed	OnProcess3 -> return ProcessLevel99_3Effect();		951
-679	OnProcess3	Level99	routed	OnProcess3 -> return ProcessLevel99Effect();		824
-680	OnProcess3	Level99_2	routed	OnProcess3 -> return ProcessLevel99_2Effect();		904
+666	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(31);	src/world/SkillSpecialEffect.cpp	1227
+667	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		58
+668	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	39
+669	OnProcess3	POISON,ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	127
+671	OnProcess3	Bottom_LandProtector	routed	OnProcess3 -> return ProcessLandProtector(3);		3598
+672	OnProcess3	Bottom_LandProtector	routed	OnProcess3 -> return ProcessLandProtector(4);		3598
+673	OnProcess3	POISON	routed	OnProcess3 -> ApplyPoison(2); return true;		39
+674	OnProcess3	Bottom_Music	routed	"OnProcess3 -> ApplyBottomMusic(""effect\\curse.bmp"", 6); return true;"		139
+675	OnProcess3	Guard	routed	OnProcess3 -> return ProcessGuardEffects();	src/world/SkillSpecialEffect.cpp	445
+676	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessTarotEffect();	src/world/SkillSpecialEffect.cpp	126
+677	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	39
+678	OnProcess3	Level99_3	routed	OnProcess3 -> return ProcessLevel99_3Effect();		957
+679	OnProcess3	Level99	routed	OnProcess3 -> return ProcessLevel99Effect();		830
+680	OnProcess3	Level99_2	routed	OnProcess3 -> return ProcessLevel99_2Effect();		910
 681	OnProcess3	EffectTextureSet	unported	OnProcess3 -> UnportedEffect		-
-682	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(32);		3632
-683	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(33);		3632
-684	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(34);		3632
-685	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(35);		3632
-686	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(36);		3632
+682	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(32);		3638
+683	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(33);		3638
+684	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(34);		3638
+685	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(35);		3638
+686	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(36);		3638
 687	OnProcess3	Map_MagicZone	unported	OnProcess3 -> UnportedEffect		-
 688	OnProcess3	Map_MagicZone	unported	OnProcess3 -> UnportedEffect		-
-689	OnProcess3	EffectTextureSet_Animation	routed	OnProcess3 -> return ProcessEffectTextureAnimation();		2473
-690	OnProcess3	EffectTextureSet_Animation	routed	OnProcess3 -> return ProcessEffectTextureAnimation();		976
-691	OnProcess3	EffectTextureSet_Animation	routed	OnProcess3 -> return ProcessEffectTextureAnimation();		53
-692	OnProcess3	Level99_3	routed	OnProcess3 -> return ProcessLevel99_3Effect();		2151
-693	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		25
-694	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		120
-695	OnProcess3	Map_MagicZone,Map_Particle	routed	OnProcess3 -> return ProcessEffect695MapFireworks();		2888
-696	OnProcess3	EffectTextureSet_Animation	routed	OnProcess3 -> return ProcessEffectTextureAnimation();		2473
-697	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		33
-698	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		33
+689	OnProcess3	EffectTextureSet_Animation	routed	OnProcess3 -> return ProcessEffectTextureAnimation();		2479
+690	OnProcess3	EffectTextureSet_Animation	routed	OnProcess3 -> return ProcessEffectTextureAnimation();		982
+691	OnProcess3	EffectTextureSet_Animation	routed	OnProcess3 -> return ProcessEffectTextureAnimation();		59
+692	OnProcess3	Level99_3	routed	OnProcess3 -> return ProcessLevel99_3Effect();		2157
+693	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		31
+694	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		126
+695	OnProcess3	Map_MagicZone,Map_Particle	routed	OnProcess3 -> return ProcessEffect695MapFireworks();		2894
+696	OnProcess3	EffectTextureSet_Animation	routed	OnProcess3 -> return ProcessEffectTextureAnimation();		2479
+697	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		39
+698	OnProcess3	Cloud	routed	OnProcess3 -> SpawnWeatherCloud(); return true;		39
 700	OnProcess3	EffectTextureSet	unported	OnProcess3 -> UnportedEffect		-
-701	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		120
-702	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		120
-703	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		120
-704	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect704();	src/world/GameActorMsgHandler.cpp	52
+701	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		126
+702	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		126
+703	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessEffectTextureSet();		126
+704	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect704();	src/world/GameActorMsgHandler.cpp	58

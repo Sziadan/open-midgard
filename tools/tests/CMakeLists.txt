@@ -816,6 +816,8 @@ add_test(NAME prim3dsegment_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dsegment_render.py")
 add_test(NAME prim3dcircle_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dcircle_render.py")
+add_test(NAME prim3dcylinder_render_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dcylinder_render.py")
 add_test(NAME hitline_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_hitline_caller.py")
 add_test(NAME hitline4_caller_source_check
