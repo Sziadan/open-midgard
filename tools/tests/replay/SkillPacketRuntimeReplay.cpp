@@ -741,6 +741,61 @@ void ReplaySkillUnitLifecycle(const std::string& path)
         << expectedLoopEffect << " steps=" << processSteps << " elapsedMs=" << lifetimeElapsedMs << " removed=1\n";
 }
 
+void ReplayMultiUnitWorldUpdate(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 4 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+        && packets[1].opcode == 0x011F && packets[1].bytes.size() == 16
+        && packets[2].opcode == 0x0120 && packets[2].bytes.size() == 6
+        && packets[3].opcode == 0x0120 && packets[3].bytes.size() == 6,
+        "multi-unit world update requires two job133 entries followed by both removals");
+    Require(packets[0].bytes[14] == 133 && packets[1].bytes[14] == 133
+        && ReadU32LE(packets[0].bytes.data() + 2) == 100
+        && ReadU32LE(packets[1].bytes.data() + 2) == 200
+        && ReadU32LE(packets[2].bytes.data() + 2) == 100
+        && ReadU32LE(packets[3].bytes.data() + 2) == 200,
+        "multi-unit world update fixture must use distinct Pneuma AIDs100 and 200");
+
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    for (std::size_t index = 0; index < 2; ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected a multi-unit entry");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch a Pneuma unit entry");
+    }
+
+    CSkill* first = fixture.world.GetSkillByAID(100);
+    CSkill* second = fixture.world.GetSkillByAID(200);
+    Require(first != nullptr && second != nullptr && first->m_job == 133 && second->m_job == 133,
+        "two distinct Pneuma units were not registered before the world update");
+    fixture.world.UpdateGameObjects();
+    Require(fixture.world.GetSkillByAID(100) == first && fixture.world.GetSkillByAID(200) == second
+        && std::find(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(), first)
+            != fixture.world.m_gameObjectList.end()
+        && std::find(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(), second)
+            != fixture.world.m_gameObjectList.end(),
+        "CWorld::UpdateGameObjects did not process and retain both active job133 units");
+
+    for (std::size_t index = 2; index < packets.size(); ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected a multi-unit removal");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch a Pneuma unit removal");
+    }
+    Require(fixture.world.GetSkillByAID(100) == nullptr && fixture.world.GetSkillByAID(200) == nullptr
+        && std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+            [](CGameObject* object) {
+                const CSkill* skill = dynamic_cast<const CSkill*>(object);
+                return skill != nullptr && (skill->m_aid == 100 || skill->m_aid == 200);
+            }),
+        "0x0120 did not remove both updated units from CWorld registries");
+    std::cout << "CWorld::UpdateGameObjects units=2 jobs=133,133 retained=2 removed=2\n";
+}
+
 void ReplayTrapRevealLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1366,6 +1421,14 @@ bool IsSkidTrapTriggerScenario(const std::string& path)
         && packets[3].opcode == 0x01FF && packets[4].opcode == 0x01D7;
 }
 
+bool IsMultiUnitWorldUpdateScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 4 && packets[0].opcode == 0x011F && packets[1].opcode == 0x011F
+        && ReadU32LE(packets[0].bytes.data() + 2) == 100
+        && ReadU32LE(packets[1].bytes.data() + 2) == 200;
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -1400,6 +1463,8 @@ int main(int argc, char** argv)
             ReplayShockwaveTrapTriggerLifecycle(argv[1]);
         } else if (IsSkidTrapTriggerScenario(argv[1])) {
             ReplaySkidTrapTriggerLifecycle(argv[1]);
+        } else if (IsMultiUnitWorldUpdateScenario(argv[1])) {
+            ReplayMultiUnitWorldUpdate(argv[1]);
         } else if (IsWarpUnitLifecycleScenario(argv[1])) {
             ReplayWarpUnitLifecycle(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {

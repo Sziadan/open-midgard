@@ -1,0 +1,7 @@
+# actor	source	1	0	16	16
+# actor	target	2	0	18	16
+# opcode	hexBytes	comment
+0x011F	1F0164000000010000000A0014008501	Pneuma job133 unit AID100 at cell(10,20)
+0x011F	1F01C8000000010000000C0014008501	Pneuma job133 unit AID200 at cell(12,20)
+0x0120	200164000000	Remove Pneuma unit AID100 after world update
+0x0120	2001C8000000	Remove Pneuma unit AID200 after world update
