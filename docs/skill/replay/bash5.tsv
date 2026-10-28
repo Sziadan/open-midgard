@@ -1,0 +1,3 @@
+# opcode<TAB>hexBytes<TAB>comment
+# One 29-byte 0x008A actor-action packet; values provide a framing/router smoke fixture only.
+0x008A	8A000102030405060708090A0B0C0D0E0F101112131415161718191A1B	Bash 5 packet framing seed (actor-action notify; behavior assertions pending)

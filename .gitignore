@@ -140,4 +140,6 @@ tools/tests/*
 !tools/tests/check_clif_skill_setunit_source.py
 !tools/tests/check_effect_dispatch_source.py
 !tools/tests/check_skill_packet_actor_lookup.py
+!tools/tests/replay/
+!tools/tests/replay/SkillPacketReplayTests.cpp
 !tools/tests/check_effect92.py

@@ -46,6 +46,19 @@ add_test(NAME wave_math_checks COMMAND wave_math_checks)
 file(READ "../../src/gamemode/GameModePacket.cpp" packet_source)
 extract_body(skill_packet_actor_lookup "${packet_source}" "CGameActor* ResolveSkillPacketActor(CGameMode& mode, u32 aid)" "CSkill* ResolveSkillPacketUnit(CGameMode& mode, u32 aid)")
 extract_body(skill_packet_unit_lookup "${packet_source}" "CSkill* ResolveSkillPacketUnit(CGameMode& mode, u32 aid)" "void HandleNotifyEffect(")
+extract_body(replay_try_read_packet "${packet_source}" "bool TryReadPacket(const u8* stream, int availableBytes, PacketView& outPacket, int& consumedBytes)" "void DecodeSrcDst(")
+extract_body(replay_decode_src_dst "${packet_source}" "void DecodeSrcDst(const u8* src, int& srcX, int& srcY, int& dstX, int& dstY, int& srcDir, int& dstDir)" "void CGameModePacketRouter::Register(")
+extract_body(replay_router_register "${packet_source}" "void CGameModePacketRouter::Register(u16 packetId, Handler handler)" "bool CGameModePacketRouter::Dispatch(")
+extract_body(replay_router_dispatch "${packet_source}" "bool CGameModePacketRouter::Dispatch(CGameMode& gameMode, const PacketView& packet) const" "void CGameModePacketRouter::Clear(")
+extract_body(replay_router_clear "${packet_source}" "void CGameModePacketRouter::Clear()" "void RegisterDefaultGameModePacketHandlers(")
+extract_body(replay_actor_action_handler "${packet_source}" "void HandleActorActionNotify(CGameMode& mode, const PacketView& packet)" "void ApplyMapChangeSessionState(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ReplayPacketCore.inc"
+    "${replay_try_read_packet}\n${replay_decode_src_dst}\n${replay_router_register}\n${replay_router_dispatch}\n${replay_router_clear}\n${replay_actor_action_handler}\n")
+add_executable(skill_packet_replay_checks replay/SkillPacketReplayTests.cpp)
+target_compile_features(skill_packet_replay_checks PRIVATE cxx_std_17)
+target_include_directories(skill_packet_replay_checks PRIVATE "../../src" "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME skill_packet_replay_checks COMMAND skill_packet_replay_checks
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../docs/skill/replay/bash5.tsv")
 extract_test_region(sound_body "${packet_source}" server_sound_packet_family)
 file(READ "../../src/gamemode/GameMode.cpp" mode_source)
 extract_body(ambient_sound_body "${mode_source}" "struct AmbientSoundTrigger {" "float g_savedOutdoorCameraLatitude")
@@ -928,6 +941,8 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_peong_callers.py
     check_begin_asura_callers.py
     check_skill_packet_actor_lookup.py
+    replay/SkillPacketReplayTests.cpp
+    ../../src/gamemode/GameModePacket.cpp
     check_energy_drain_callers.py
     check_portal_wind_caller.py
     check_blur_callers.py
