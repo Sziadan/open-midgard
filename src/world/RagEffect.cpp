@@ -18334,6 +18334,80 @@ bool CRagEffect::ProcessShieldBoomerangEffects()
     return true;
 }
 
+// Ref/RagEffect2.cpp:31100-31194; canonical launcher functions at 0x62DF70/0x62E180.
+void CRagEffect::SpawnRgCoin(const char* textureName, float size, u8 colorMode)
+{
+    if (m_stateCnt != 0) return;
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    CEffectPrim* prim = LaunchEffectPrim(PP_INTIMIDATE, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+    m_effectPos.y -= 12.0f;
+    for (size_t lane = 0; lane < prim->m_gi.size(); ++lane) {
+        EffectGi& gi = prim->m_gi[lane];
+        gi.life = 1;
+        gi.vecBPreX = m_deltaPos.x;
+        gi.arcBaselineY = m_deltaPos.y;
+        gi.vecBPreZ = m_deltaPos.z;
+        gi.process = -18 - rand() % 30;
+        gi.distance = 12.0f;
+        gi.riseAngle = static_cast<short>(rand() % 360);
+        gi.fullDisplayAngle = static_cast<short>(rand() % 360);
+        gi.rotStart = static_cast<short>(rand() % 360);
+        const float radius = static_cast<float>(rand() % 360);
+        if (lane + 1 < prim->m_gi.size()) {
+            EffectGi& shifted = prim->m_gi[lane + 1];
+            shifted.height[1] = radius;
+            shifted.height[0] = size;
+            shifted.fullDisplayAngle = 0;
+            shifted.flag[0] = colorMode;
+        }
+    }
+}
+
+bool CRagEffect::ProcessRgCoinEffects()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    if (m_type == 274) {
+        if (m_stateCnt == 0) {
+            m_effectPos = master->m_pos;
+            m_cachedPos = m_effectPos;
+            CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+            if (mode && mode->m_world && mode->m_world->m_player) {
+                const vector3d& listener = mode->m_world->m_player->m_pos;
+                PlayWave("effect\\rog_steal coin.wav", m_effectPos.x - listener.x, 0.0f,
+                    m_effectPos.z - listener.z, 250, 40, 1.0f);
+            }
+        }
+        for (int call = 0; call < 30; ++call) {
+            SpawnRgCoin("effect\\coin_a.bmp", 3.5f, 1);
+        }
+        return true;
+    }
+
+    if (m_stateCnt == 1 || m_stateCnt == 11 || m_stateCnt == 21 || m_stateCnt == 31) {
+        m_effectPos = master->m_pos;
+        m_cachedPos = m_effectPos;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+    }
+    for (int repeat = 0; repeat < 4; ++repeat) {
+        SpawnRgCoin("effect\\shield.bmp", 5.0f, 2);
+        SpawnRgCoin("effect\\sword.bmp", 9.0f, 2);
+    }
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {

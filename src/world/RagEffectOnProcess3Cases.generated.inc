@@ -9,7 +9,7 @@ case 670: ProcessEZ2STR(); return true;
 case 699: ProcessEZ2STR(); return true;
 case 493: ProcessEnchantPoison2(); return true;
 case 494: return ProcessShieldBoomerangEffects();
-case 495: return UnportedEffect();
+case 495: return ProcessRgCoinEffects();
 case 496: return UnportedEffect();
 case 497: return UnportedEffect();
 case 498: return UnportedEffect();

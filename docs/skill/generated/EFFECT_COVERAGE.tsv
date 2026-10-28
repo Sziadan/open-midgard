@@ -278,7 +278,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 271	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	-
 272	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	-
 273	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/world/GameActorMsgHandler.cpp	-
-274	OnProcess	RG_COIN	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+274	OnProcess	RG_COIN	routed	OnProcess -> return ProcessRgCoinEffects();	src/gamemode/UseSkillEffect.generated.inc	87
 275	OnProcess	TEIHIT2	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	1600
 276	OnProcess	TEIHIT3	routed	OnProcess -> return ProcessTeiHitEffects();	src/gamemode/UseSkillEffect.generated.inc	2509
 277	OnProcess	Bottom_Vertical	unported	OnProcess -> UnportedEffect		-
@@ -498,7 +498,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 699	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> ProcessEZ2STR(); return true;	src/gamemode/UseSkillEffect.generated.inc	15
 493	OnProcess3	EnchantPoison2,NpcStop	routed	OnProcess3 -> ProcessEnchantPoison2(); return true;	src/gamemode/UseSkillEffect.generated.inc	296
 494	OnProcess3	ShieldBoomerang	routed	OnProcess3 -> return ProcessShieldBoomerangEffects();	src/world/SkillSpecialEffect.cpp	1085
-495	OnProcess3	RG_COIN2	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+495	OnProcess3	RG_COIN2	routed	OnProcess3 -> return ProcessRgCoinEffects();	src/gamemode/UseSkillEffect.generated.inc	1586
 496	OnProcess3	Guard2,NpcStop	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
 497	OnProcess3	PRESSURE,GroundShake	unported	OnProcess3 -> UnportedEffect		-
 498	OnProcess3	PRESSURE,GroundShake	unported	OnProcess3 -> UnportedEffect		-

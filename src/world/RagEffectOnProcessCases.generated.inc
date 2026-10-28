@@ -278,7 +278,7 @@ case 270: return UnportedEffect();
 case 271: return UnportedEffect();
 case 272: return UnportedEffect();
 case 273: return UnportedEffect();
-case 274: return UnportedEffect();
+case 274: return ProcessRgCoinEffects();
 case 275: return ProcessTeiHitEffects();
 case 276: return ProcessTeiHitEffects();
 case 277: return UnportedEffect();

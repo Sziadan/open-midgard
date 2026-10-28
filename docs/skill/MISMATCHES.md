@@ -441,3 +441,8 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 # WP10.3 Bash3D caller source differences (2026-10-28)
 
 - Effects 377/386/399/400 follow canonical `HighPriest.exe.c:421052–421075,421151–421166,421288–421301,421307–421320`. The older `Ref/dhxj/RagEffect.cpp` calls these `EF_BASH3D2`, `EF_TRUESIGHT`, `EF_BASH3D3`, and `EF_BASH3D4` and uses legacy wave aliases `mon_bash3d.wav`, `headcrush.wav`, and `bitjoint.wav`; canonical PE callsites resolve to `effect\\mon_맹룡과강.wav` (VA 0x711E1C), `effect\\hunter_detecting.wav` (0x71A428), `effect\\헤드 크러쉬.wav` (0x71A45C), and `effect\\비트 조인트.wav` (0x71A444). The route uses those byte-verified PE strings. PE effect 377 also omits the legacy white tint and uses body-light bit 1; the local port follows the PE branch.
+
+
+# WP10.3 RG_COIN effect 274 caller omission (2026-10-28)
+
+- Canonical `HighPriest.exe.c:420921–420937` contains effect 274: state-zero `effect\rog_steal coin.wav`, then 30 `RG_COIN(effect\coin_a.bmp)` calls. The available `Ref/RagEffect.cpp` OnProcess switch has no effect-274/`RG_COIN` caller branch, although the helper itself is present and matches the canonical PE at `HighPriest.exe.c:456482`. The route follows canonical executable behavior; caller parity is established by the executable and the missing Ref branch is retained as a source omission note.

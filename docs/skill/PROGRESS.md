@@ -1138,3 +1138,6 @@ STIN/SMA verification: Release `open_midgard` build and dist copy succeeded; all
 
 
 ShieldBoomerang verification: Release `open_midgard` build and dist copy succeeded; all 111 CTest tests passed. Coverage audit reports 498 routed / 195 explicit unported / 87 launched-but-unported. The ShieldBoomerang caller comparator, including the source's `effect\` texture argument for ID 494, passes; `git diff --check` passes. Next: source-audit RG_Coin/RG_Coin2 (274, 495).
+
+
+RG_COIN verification: Release `open_midgard` build and OldRO copy succeeded; all 112 CTests passed. Coverage audit reports 500 routed / 193 explicit unported / 85 launched-but-unported. The RG_COIN source comparator verifies both helpers against PE, canonical caller order, exact paths, field aliases and bounded post-increment stores. `git diff --check` passes. Next: audit GrandCross/GrandCross2 (226, 450).
