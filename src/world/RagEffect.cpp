@@ -14048,16 +14048,41 @@ bool CRagEffect::ProcessStrTerminalEffect()
     return false;
 }
 
-// Ref/RagEffect2.cpp:25733-26091. Faithful subset of Effect_SPR whose
-// resource and setup behavior is fully resolved; special variants remain
-// explicit until their sound/action branches are ported.
+// Ref/RagEffect2.cpp:25733-26091. Shared sprite primitive setup, including
+// per-variant resources, action selection, animation, and caller-only events.
 bool CRagEffect::ProcessEffectSprite(int spriteVariant)
 {
     CRenderObject* master = ResolveCurrentMaster();
     if (master == nullptr) return true;
     m_effectPos = master->m_pos;
     if (m_stateCnt == 99999998) m_stateCnt = 0;
-    if (m_stateCnt != 0) return true;
+    const int spawnState = spriteVariant == 30 ? 30 : 0;
+    const char* callerWave = nullptr;
+    int callerWaveFrame = -1;
+    bool callerWaveAtOrigin = false;
+    switch (m_type) {
+    case 630: callerWave = "effect\\\xB1\xD7\xB8\xB2\xC0\xDA\xBA\xA3\xB1\xE2.wav"; callerWaveFrame = 0; break;
+    case 632: callerWave = "effect\\\xBE\xC8\xB0\xB3\xBA\xA3\xB1\xE2.wav"; callerWaveFrame = 0; break;
+    case 633: callerWave = "effect\\\xC0\xCF\xBC\xB6.wav"; callerWaveFrame = 0; break;
+    case 637: callerWave = "effect\\\xB5\xA5\xBD\xBA\xC6\xE4\xB6\xF3\xB5\xB5.wav"; callerWaveFrame = 10; break;
+    case 643: callerWave = "effect\\\xB7\xA1\xC7\xC7\xB5\xE5\xBB\xFE\xBF\xF6.wav"; callerWaveFrame = 20; break;
+    case 644: callerWave = "effect\\\xB8\xC5\xC1\xF6\xC4\xC3\xBA\xED\xB8\xB4.wav"; callerWaveFrame = 0; break;
+    case 648: callerWave = "effect\\\xC6\xAE\xB8\xAE\xC7\xC3\xBE\xD7\xBC\xC7.wav"; callerWaveFrame = 25; callerWaveAtOrigin = true; break;
+    default: break;
+    }
+    if (callerWave != nullptr && m_stateCnt == callerWaveFrame) {
+        if (callerWaveAtOrigin) PlayWave(callerWave, 0.0f, 0.0f, 0.0f, 250, 40, 1.0f);
+        else TryPlaySingleEffectWave(m_effectPos, callerWave, 0.0f, true);
+    }
+    if (m_type == 666 && m_stateCnt == 0) {
+        TryPlaySingleEffectWave(m_effectPos, "effect\\earth_quake.wav", 0.0f, true);
+    }
+    if (m_stateCnt != spawnState) {
+        if (m_type == 666 && (m_stateCnt == 35 || m_stateCnt == 70)) {
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) mode->SendMsg(135, 0, 0, 0);
+        }
+        return true;
+    }
 
     struct SpriteAsset { int variant; const char* spr; const char* act; int speed; bool repeat; const char* wave; };
     static const SpriteAsset assets[] = {
@@ -14074,6 +14099,28 @@ bool CRagEffect::ProcessEffectSprite(int spriteVariant)
         { 11, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef05.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef05.act", 4, false, nullptr },
         { 12, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef06.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef06.act", 4, false, nullptr },
         { 13, "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef07.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef07.act", 4, false, nullptr },
+        { 15, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xD7\xB8\xB2\xC0\xDA\xBA\xA3\xB1\xE2.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xD7\xB8\xB2\xC0\xDA\xBA\xA3\xB1\xE2.act", 4, false, nullptr },
+        { 16, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xD9\xB4\xD9\xB9\xCC.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xD9\xB4\xD9\xB9\xCC.act", 6, false, nullptr },
+        { 17, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xC8\xB0\xB3\xBA\xA3\xB1\xE2.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xC8\xB0\xB3\xBA\xA3\xB1\xE2.act", 4, false, nullptr },
+        { 18, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC0\xCF\xBC\xB6.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC0\xCF\xBC\xB6.act", 2, false, nullptr },
+        { 19, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC8\xAD\xBF\xB0\xC1\xF8.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC8\xAD\xBF\xB0\xC1\xF8.act", 2, true, nullptr },
+        { 20, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB5\xA5\xBD\xBA\xC6\xE4\xB6\xF3\xB5\xB5.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB5\xA5\xBD\xBA\xC6\xE4\xB6\xF3\xB5\xB5.act", 4, false, nullptr },
+        { 21, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB6\xF3\xC0\xCC\xC6\xAE\xB4\xD7\xBD\xBA\xC7\xC7\xBE\xEE.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB6\xF3\xC0\xCC\xC6\xAE\xB4\xD7\xBD\xBA\xC7\xC7\xBE\xEE.act", 2, true, nullptr },
+        { 22, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBA\xED\xB6\xF3\xC0\xCE\xB5\xE5\xBD\xBA\xC7\xC7\xBE\xEE.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBA\xED\xB6\xF3\xC0\xCE\xB5\xE5\xBD\xBA\xC7\xC7\xBE\xEE.act", 2, true, nullptr },
+        { 23, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF7\xC0\xCC\xC1\xF0\xBD\xBA\xC7\xC7\xBE\xEE.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF7\xC0\xCC\xC1\xF0\xBD\xBA\xC7\xC7\xBE\xEE.act", 2, true, nullptr },
+        { 24, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xC1\xB8\xAE\xC2\xA1\xBD\xBA\xC7\xC7\xBE\xEE.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xC1\xB8\xAE\xC2\xA1\xBD\xBA\xC7\xC7\xBE\xEE.act", 2, true, nullptr },
+        { 25, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xC3\xB7\xB9\xBE\xEE\xBD\xBA\xC7\xC7\xBE\xEE.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xC3\xB7\xB9\xBE\xEE\xBD\xBA\xC7\xC7\xBE\xEE.act", 2, true, nullptr },
+        { 26, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB7\xA1\xC7\xC7\xB5\xE5\xBB\xFE\xBF\xF6.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB7\xA1\xC7\xC7\xB5\xE5\xBB\xFE\xBF\xF6.act", 4, false, nullptr },
+        { 27, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB8\xC5\xC1\xF6\xC4\xC3\xBA\xD2\xB8\xB4.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB8\xC5\xC1\xF6\xC4\xC3\xBA\xD2\xB8\xB4.act", 2, false, nullptr },
+        { 28, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBD\xBA\xC7\xC1\xB7\xB9\xB5\xE5.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBD\xBA\xC7\xC1\xB7\xB9\xB5\xE5.act", 4, false, nullptr },
+        { 29, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xAE\xB7\xA1\xC5\xB7.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xAE\xB7\xA1\xC5\xB7.act", 2, false, nullptr },
+        { 30, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xAE\xB8\xAE\xC7\xC3\xBE\xD7\xBC\xC7.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xAE\xB8\xAE\xC7\xC3\xBE\xD7\xBC\xC7.act", 2, false, nullptr },
+        { 31, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xEE\xBD\xBA\xC4\xF9\xC0\xCC\xC5\xA9.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xEE\xBD\xBA\xC4\xF9\xC0\xCC\xC5\xA9.act", 4, false, nullptr },
+        { 32, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xB7\xAF\xBA\xEA.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xB7\xAF\xBA\xEA.act", 4, false, nullptr },
+        { 33, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xC8\xAD\xC0\xCC\xC6\xAE\xB5\xA5\xC0\xCC.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xC8\xAD\xC0\xCC\xC6\xAE\xB5\xA5\xC0\xCC.act", 4, false, nullptr },
+        { 34, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xB9\xDF\xB7\xBB\xC5\xB8\xC0\xCE.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xB9\xDF\xB7\xBB\xC5\xB8\xC0\xCE.act", 4, false, nullptr },
+        { 35, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xBB\xFD\xC0\xCF.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xBB\xFD\xC0\xCF.act", 4, false, nullptr },
+        { 36, "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xC5\xA9\xB8\xAE\xBD\xBA\xB8\xB6\xBD\xBA.spr", "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xC5\xA9\xB8\xAE\xBD\xBA\xB8\xB6\xBD\xBA.act", 4, false, nullptr },
     };
     for (const SpriteAsset& asset : assets) {
         if (asset.variant != spriteVariant) continue;
@@ -14083,18 +14130,55 @@ bool CRagEffect::ProcessEffectSprite(int spriteVariant)
         prim->m_deltaPos2.y = 0.0f;
         prim->m_renderFlag |= 0x200;
         prim->m_pattern |= 0x200;
+        if (spriteVariant == 16 || spriteVariant == 18) prim->m_deltaPos2.y = -6.0f;
+        if (spriteVariant >= 21 && spriteVariant <= 25) prim->m_deltaPos2.y = -1.0f;
+        if (spriteVariant == 16 || spriteVariant == 19 || (spriteVariant >= 21 && spriteVariant <= 25)) prim->m_renderFlag = 1;
         if (spriteVariant == 7) {
             prim->m_pattern = 0;
             prim->m_alpha = 220.0f;
         }
         prim->m_animSpeed = asset.speed;
         prim->m_repeatAnim = asset.repeat;
+        if (spriteVariant == 19) prim->m_animSpeed = rand() % 5 + 3;
         prim->m_spriteAction = 0;
         prim->m_curMotion = 0;
+        if (spriteVariant == 15 || spriteVariant == 17) {
+            const int value = rand() & 0x80000001;
+            const bool alternate = value == 0 || (value < 0
+                && (((static_cast<int>(static_cast<unsigned char>(value)) - 1) | 0xFFFFFFFE) == -1));
+            if (alternate) prim->m_spriteAction = spriteVariant == 15 ? 4 : 2;
+        }
+        if (spriteVariant == 28) {
+            CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+            if (mode != nullptr && mode->m_view != nullptr) {
+                const double dx = static_cast<double>(m_effectPos.x) - m_deltaPos.x;
+                const double dz = static_cast<double>(m_effectPos.z) - m_deltaPos.z;
+                const double length = std::sqrt(dx * dx + dz * dz);
+                const double normalizedZ = dz / length;
+                const double normalizedX = dx / length;
+                int direction = 0;
+                while (normalizedX < static_cast<double>(g_cosTable[direction])) {
+                    if (++direction > 180) { direction = 180; break; }
+                }
+                if (normalizedZ < 0.0) direction = 360 - direction;
+                short viewDirection = static_cast<short>((direction
+                    + static_cast<int>(mode->m_view->GetCameraLongitude())) % 360);
+                if (viewDirection < 0) viewDirection = static_cast<short>(viewDirection + 360);
+                if (viewDirection >= 180 && viewDirection < 270) prim->m_spriteAction = 4;
+                else if (viewDirection >= 90 && viewDirection < 180) prim->m_spriteAction = 6;
+                else if (viewDirection >= 270) prim->m_spriteAction = 2;
+            }
+        }
         if (asset.wave != nullptr) TryPlaySingleEffectWave(m_effectPos, asset.wave, 0.0f, true);
         prim->SetParticleResources(asset.spr, asset.act);
+        if (spriteVariant >= 32 && spriteVariant <= 36) {
+            PlayWave("effect\\itempokjuk.wav", 0.0f, 0.0f, 0.0f, 250, 40, 1.0f);
+        }
         prim->m_numSegments = 1;
         InitReferenceSegments(prim);
+        if (m_type == 666 && m_stateCnt == 0) {
+            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) mode->SendMsg(135, 0, 0, 0);
+        }
         return true;
     }
     return false;

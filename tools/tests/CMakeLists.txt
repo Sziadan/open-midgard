@@ -599,6 +599,8 @@ add_test(NAME effect_coverage_audit
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/audit_effect_coverage.py")
 add_test(NAME effect_dispatch_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect_dispatch_source.py")
+add_test(NAME effect_sprite_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect_sprite.py")
 add_test(NAME prim3dline_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dline.py")
 add_test(NAME prim3dtexturebillboard_source_check
@@ -616,3 +618,10 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/ui/UISpellListWnd.cpp
     ../../src/ui/UISpellListWnd.h
     UISpellListWndReceiverTests.cpp)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    ../../HighPriest.exe
+    ../../Ref/RagEffect.cpp
+    ../../Ref/RagEffect2.cpp
+    ../../src/world/RagEffect.cpp
+    ../../src/world/RagEffectOnProcess3Cases.generated.inc
+    check_effect_sprite.py)

@@ -629,24 +629,24 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 627	OnProcess3	RG_COIN2	routed	OnProcess3 -> ApplyRgCoin3(); return true;	src/gamemode/UseSkillEffect.generated.inc	1111
 628	OnProcess3	BASH3D	routed	OnProcess3 -> ApplyBash3D5(); return true;	src/world/SkillSpecialEffect.cpp	94
 629	OnProcess3	CHOOKGI	routed	OnProcess3 -> SpawnChookgi(3); return true;		1032
-630	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
-631	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect		-
-632	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
-633	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
-634	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect		-
+630	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(15);	src/world/SkillSpecialEffect.cpp	1119
+631	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(16);		15
+632	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(17);	src/world/SkillSpecialEffect.cpp	124
+633	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(18);	src/world/SkillSpecialEffect.cpp	2443
+634	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(19);		1135
 635	OnProcess3	ProcessEZ2STR	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
 636	OnProcess3	ProcessEZ2STR	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
-637	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
-638	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect		-
-639	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect		-
-640	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect		-
-641	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect		-
-642	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect		-
-643	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
-644	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
-645	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
-647	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
-648	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+637	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(20);	src/gamemode/UseSkillEffect.generated.inc	2443
+638	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(21);		2443
+639	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(22);		2443
+640	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(23);		440
+641	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(24);		570
+642	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(25);		337
+643	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(26);	src/world/SkillSpecialEffect.cpp	1143
+644	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(27);	src/world/SkillSpecialEffect.cpp	69
+645	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(28);	src/world/SkillSpecialEffect.cpp	267
+647	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(29);	src/world/SkillSpecialEffect.cpp	375
+648	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(30);	src/world/SkillSpecialEffect.cpp	1828
 650	OnProcess3	Map_MagicZone,Map_Pika,Map_Aura	unported	OnProcess3 -> UnportedEffect		-
 651	OnProcess3	Map_MagicZone,Map_Particle	unported	OnProcess3 -> UnportedEffect		-
 652	OnProcess3	inline	unported	OnProcess3 -> UnportedEffect		-
@@ -655,7 +655,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 655	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
 656	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
 665	OnProcess3	Bubble_Drop	unported	OnProcess3 -> UnportedEffect		-
-666	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+666	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(31);	src/world/SkillSpecialEffect.cpp	1199
 667	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;		34
 668	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	15
 669	OnProcess3	POISON,ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();	src/world/SkillSpecialEffect.cpp	99
@@ -670,11 +670,11 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 679	OnProcess3	Level99	unported	OnProcess3 -> UnportedEffect		-
 680	OnProcess3	Level99_2	unported	OnProcess3 -> UnportedEffect		-
 681	OnProcess3	EffectTextureSet	unported	OnProcess3 -> UnportedEffect		-
-682	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect		-
-683	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect		-
-684	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect		-
-685	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect		-
-686	OnProcess3	Effect_SPR	unported	OnProcess3 -> UnportedEffect		-
+682	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(32);		657
+683	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(33);		2443
+684	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(34);		544
+685	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(35);		68
+686	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(36);		2292
 687	OnProcess3	Map_MagicZone	unported	OnProcess3 -> UnportedEffect		-
 688	OnProcess3	Map_MagicZone	unported	OnProcess3 -> UnportedEffect		-
 689	OnProcess3	EffectTextureSet_Animation	unported	OnProcess3 -> UnportedEffect		-
