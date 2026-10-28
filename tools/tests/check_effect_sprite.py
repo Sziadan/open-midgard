@@ -118,6 +118,83 @@ if ("spriteVariant == 16 || spriteVariant == 18" not in helper
 tatami_asset = re.search(r"\{\s*16\s*,[^\n]*,\s*6,\s*false,\s*nullptr\s*\}", helper)
 if tatami_asset is None:
     raise AssertionError("local Effect_SPR(16) must use speed6 one-shot animation with no sound")
+
+# Priority 5P effect-sprite callers 630/632/633/634 and their RNG variants.
+for effect_id, variant, wave_symbol in ((630, 15, "aEffect_155"),
+                                        (632, 17, "aEffect_142"),
+                                        (633, 18, "aEffect_6")):
+    case_value = effect_id
+    for label, dispatch in (("PE", pe_dispatch), ("Ref", ref_dispatch)):
+        caller = re.search(rf"case\s+0x{case_value:X}:(.*?)(?=case\s+0x[0-9A-F]+:|$)", dispatch, re.S)
+        if caller is None:
+            raise AssertionError(f"{label} effect{effect_id} branch is missing")
+        branch = caller.group(1)
+        ordered = ["if ( !this->m_stateCnt )", "this->m_pos = this->m_master->m_pos",
+                   f"PlayWave({wave_symbol}", f"Effect_SPR(this, {variant})", "return 1"]
+        offsets = [branch.find(token) for token in ordered]
+        if any(offset < 0 for offset in offsets) or offsets != sorted(offsets):
+            raise AssertionError(f"{label} effect{effect_id} position/wave/variant order changed")
+        if not re.search(r"PlayWave\([^,]+,\s*\w+,\s*0\.0,\s*\w+,\s*250,\s*40,\s*1\.0\)", branch):
+            raise AssertionError(f"{label} effect{effect_id} wave coordinates/parameters changed")
+for label, dispatch in (("PE", pe_dispatch), ("Ref", ref_dispatch)):
+    caller = re.search(r"case\s+0x27A:(.*?)(?=case\s+0x[0-9A-F]+:|$)", dispatch, re.S)
+    if caller is None or not re.search(r"Effect_SPR\(this,\s*19\).*?return\s+1", caller.group(1), re.S):
+        raise AssertionError(f"{label} effect634 must call variant19 and return")
+    if "PlayWave" in caller.group(1):
+        raise AssertionError(f"{label} effect634 has no caller wave")
+
+for variant, next_variant, action_label, action_value in ((15, 16, "LABEL_39", 4),
+                                                           (17, 18, "LABEL_44", 2)):
+    branch_match = re.search(rf"case\s+{variant}:(.*?)(?=case\s+{next_variant}:)", pe_sprite, re.S)
+    if branch_match is None:
+        raise AssertionError(f"PE Effect_SPR({variant}) branch is missing")
+    branch = branch_match.group(1)
+    for token in ("m_animSpeed = 4", "rand() & 0x80000001", "== 0",
+                  "< 0 )", "goto LABEL_74", f"goto {action_label}"):
+        if token not in branch:
+            raise AssertionError(f"PE Effect_SPR({variant}) RNG/action branch lacks {token}")
+    label_branch = re.search(rf"{action_label}:.*?SetAction\(g_prim,\s*{action_value},\s*16,\s*1\)", pe_sprite, re.S)
+    zero_branch = re.search(r"LABEL_74:.*?SetAction\(g_prim,\s*0,\s*16,\s*1\)", pe_sprite, re.S)
+    if label_branch is None or zero_branch is None:
+        raise AssertionError(f"PE Effect_SPR({variant}) action destinations changed")
+for variant, next_variant in ((18, 19), (19, 20)):
+    branch_match = re.search(rf"case\s+{variant}:(.*?)(?=case\s+{next_variant}:)", pe_sprite, re.S)
+    if branch_match is None:
+        raise AssertionError(f"PE Effect_SPR({variant}) branch is missing")
+    branch = branch_match.group(1)
+    if variant == 18:
+        for token in ("m_deltaPos2.y = -6.0", "m_animSpeed = 2", "byte_71D00C",
+                      "byte_71CFFC", "goto LABEL_69"):
+            if token not in branch:
+                raise AssertionError(f"PE Effect_SPR(18) lacks {token}")
+        if "rand()" in branch:
+            raise AssertionError("PE Effect_SPR(18) has no RNG")
+    else:
+        for token in ("m_deltaPos2.y = -1.0", "m_renderFlag = 1", "rand() % 5 + 3",
+                      "m_repeatAnim = 1", "byte_71CFE8", "byte_71CFD4",
+                      "SetAction(g_prim, 0, 16, 1)", "InitSegment(g_prim)"):
+            if token not in branch:
+                raise AssertionError(f"PE Effect_SPR(19) lacks {token}")
+
+for variant in (15, 17):
+    if "rand() & 0x80000001" not in helper or "alternate = value == 0" not in helper:
+        raise AssertionError(f"local Effect_SPR({variant}) RNG predicate changed")
+if "prim->m_spriteAction = spriteVariant == 15 ? 4 : 2" not in helper:
+    raise AssertionError("local Effect_SPR(15/17) random action mapping changed")
+if "if (spriteVariant == 19) prim->m_animSpeed = rand() % 5 + 3" not in helper:
+    raise AssertionError("local Effect_SPR(19) one-draw random animation speed changed")
+local_action_rng = re.search(r"if \(spriteVariant == 15 \|\| spriteVariant == 17\) \{(.*?)\n\s*\}", helper, re.S)
+if local_action_rng is None or local_action_rng.group(1).count("rand()") != 1:
+    raise AssertionError("local Effect_SPR(15/17) must consume one random action draw per emission")
+local_variant18 = re.search(r"\{\s*18\s*,[^\n]*,\s*2,\s*false,\s*nullptr\s*\}", helper)
+local_variant19 = re.search(r"\{\s*19\s*,[^\n]*,\s*2,\s*true,\s*nullptr\s*\}", helper)
+if local_variant18 is None or local_variant19 is None:
+    raise AssertionError("local Effect_SPR(18/19) speed/repeat/sound table changed")
+local_wave_gate = helper.find("if (callerWave != nullptr && m_stateCnt == callerWaveFrame)")
+local_state_gate = helper.find("if (m_stateCnt != spawnState)", local_wave_gate)
+local_prim_launch = helper.find("LaunchEffectPrim(PP_3DPARTICLE", local_state_gate)
+if not (0 <= local_wave_gate < local_state_gate < local_prim_launch):
+    raise AssertionError("local Effect_SPR caller wave must precede state gate and primitive launch")
 if not re.search(r"case\s+612:\s+return ProcessEffectSpriteAndStr\(\);", DISPATCH):
     raise AssertionError("effect 612 must route through Effect_SPR(14) and its shared STR continuation")
 ref_612 = re.search(r"case\s+0x264:(.*?)(?=case\s+0x265:)", ref_dispatch, re.S)
@@ -214,4 +291,4 @@ if effect584_wave != b"effect\\":
 if not re.search(r"case\s+584:\s+callerWave\s*=\s*\"effect\\\\\";\s*callerWaveFrame\s*=\s*5", helper):
     raise AssertionError("effect 584 unresolved aEffect_16 prefix/frame5 cue is missing")
 
-print(f"Effect_SPR source check passed: {len(expected_routes)} caller routes, {len(asset_vas)} PE-backed assets, {len(wave_vas)} caller waves; effects 584/612, 631 and 682-686 verified")
+print(f"Effect_SPR source check passed: {len(expected_routes)} caller routes, {len(asset_vas)} PE-backed assets, {len(wave_vas)} caller waves; effects 584/612, 630/632-634, 631 and 682-686 verified")
