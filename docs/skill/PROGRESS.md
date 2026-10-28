@@ -1808,3 +1808,7 @@ Verified routed effect183 against the matching primary Ref and PE `Hit2` helper.
 ## WP5C effect185 Suicide STR — 2026-10-28
 
 Verified routed effect185's `suicide.str` mapping across Ref, PE, and local tables. The PE resolves the string at VA `0x71AC2C`. Compared the canonical caller's temporary actor-position swap and restoration on both active and completion paths with local `ProcessTargetPositionStr`; existing lifecycle tests cover restoration, completion, and missing resources. Added and registered `check_effect185_suicide_str.py`. The STR clip is absent, so this is source/name parity only. Full parity CTest passes 211/211. Next: continue 5C source-parity audit.
+
+## WP5C effect181 MentalBreak STR — 2026-10-28
+
+Verified effect181's `MentalBreak.str` name mapping across Ref, PE, executable bytes, local catalog, and STR-name table. The executable string resolves at `0x71AC44`; the PE caller uses the shared STR completion path and the local dispatcher agrees. Added and registered `check_effect181_mentalbreak_str.py`. The STR clip is not present and no dedicated lifecycle check was found, so this checkpoint records source/name parity only. Full parity CTest passes 212/212. Next: continue 5C source-parity audit.

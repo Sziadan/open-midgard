@@ -3394,3 +3394,7 @@ Primary Ref `CRagEffect::Hit2` (`Ref/RagEffect.cpp:5230-5323`) and canonical PE 
 ## WP5C effect185 Suicide STR
 
 Primary Ref `CRagEffect::Init` (`Ref/RagEffect.cpp:13434`) and canonical PE `CRagEffect::Init` (`HighPriest.exe.c:422647`) map effect185 to `aSuicideStr`. PE resolution confirms `suicide.str` at `0x71AC2C`, and local catalog/STR table agree. PE `OnProcess` saves the actor position, temporarily sets it to the effect target, invokes `ProcessEZ2STR(0,-80,0)`, and restores the saved actor position on both active and completed paths. The local `ProcessTargetPositionStr` preserves that operation order, and the dispatcher uses the shared lifecycle tail. `check_effect185_suicide_str.py` validates these mappings and source paths. The clip file is absent, so this is source/name parity only; no visual acceptance is claimed.
+
+## WP5C effect181 MentalBreak STR
+
+Primary Ref and canonical PE `CRagEffect::Init` map effect181 to `aMentalbreakStr`; executable bytes resolve it to `MentalBreak.str` at `0x71AC44`. The local catalog, STR-name table, and dispatcher agree. Canonical PE groups effect181 into the shared `LABEL_424` caller for `ProcessEZ2STR(0,-80,0)`. `check_effect181_mentalbreak_str.py` validates the source mapping, resolved bytes, local tables/route, and shared caller. The clip is absent and no targeted lifecycle assertion was found; this is mapping/source parity only, with no visual or runtime acceptance claim.
