@@ -3410,3 +3410,7 @@ Canonical PE Init has a dedicated `v6 == 187` mapping to `aYunta2Str`; executabl
 ## WP5C effect188 Yunta3 STR
 
 Primary Ref and canonical PE `CRagEffect::Init` both map effect188 to `aYunta3Str`; resolving executable bytes establishes the exact filename `yunta_3.str` at `0x71ABDC`. Local catalog, STR-name table, and route agree. Canonical OnProcess groups effect188 into the shared `LABEL_424` path calling `ProcessEZ2STR(0,-80,0)`. `check_effect188_yunta3_str.py` validates the source mapping, resource bytes, local tables/route, and shared caller. Generic STR lifecycle coverage includes effect188; the clip is absent, so no media or visual acceptance is claimed.
+
+## WP5C effects189-195 STR mappings
+
+Primary Ref and canonical PE `CRagEffect::Init` agree on seven adjacent mappings: 189 `yunta_4.str` (`0x71ABD0`), 190 `yunta_5.str` (`0x71ABC4`), 191 `homing.str` (`0x71ABB8`), 192 `poison.str` (`0x71ABAC`), 193 `silence.str` (`0x71ABA0`), 194 `stun.str` (`0x71AB94`), and 195 `StoneCurse.str` (`0x71ACC0`). The local catalog/name table and routes agree; canonical OnProcess uses the shared `ProcessEZ2STR(0,-80,0)` caller. `check_effect189_195_str_mappings.py` checks all mappings, executable bytes, local tables/routes, caller group, and inclusion in the generic STR lifecycle ID matrix. None of the seven media clips is in the workspace; no visual acceptance is claimed.

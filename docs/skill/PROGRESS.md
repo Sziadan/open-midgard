@@ -1824,3 +1824,7 @@ Verified PE effect187 mapping to `yunta_2.str` (VA `0x71AC08`), its shared STR c
 ## WP5C effect188 Yunta3 STR — 2026-10-28
 
 Verified effect188's `yunta_3.str` mapping across primary Ref, PE, executable bytes (VA `0x71ABDC`), local catalog/STR-name table, and route. It uses the shared STR caller and has generic STR lifecycle coverage. Added and registered `check_effect188_yunta3_str.py`. The media clip is absent, so this records mapping/source parity only. Full parity CTest passes 215/215. Next: continue 5C source-parity audit.
+
+## WP5C effects189-195 STR mappings — 2026-10-28
+
+Verified seven adjacent STR mappings across primary Ref and PE Init, executable string bytes, local tables and routes, and the shared caller: IDs189-195 resolve respectively to `yunta_4.str`, `yunta_5.str`, `homing.str`, `poison.str`, `silence.str`, `stun.str`, and `StoneCurse.str`. The generic STR lifecycle matrix includes every ID. Added and registered `check_effect189_195_str_mappings.py`. The clips are absent, so this checkpoint establishes source/name and generic lifecycle parity, not visual acceptance. Full parity CTest passes 216/216. Next: continue 5C source-parity audit.
