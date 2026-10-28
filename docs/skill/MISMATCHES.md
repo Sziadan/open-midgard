@@ -685,3 +685,7 @@ PE `Effect_SPR` variants15/17/18/19 load byte-backed resource pairs at `0x71D084
 ## WP5 effect348 LightSphere texture slots
 
 The canonical PE helper sets `m_totalTexture=2`, allocates two pointer slots, and initializes only slot0 to `effect\\white02.bmp`. The local vector keeps the two-slot count but initializes slot1 to null to avoid carrying uninitialized pointer data into the renderer. The primary Ref caller and canonical PE agree on the 80-call order and both texture resources resolve exactly.
+
+## WP5 effect381 caller evidence
+
+Canonical PE `OnProcess` contains direct effect381 case `HighPriest.exe.c:421106-421115`, with the same `EffectTextureSet(aEffectThunderC,0)` plus 80 `LightSphere(aEffectWhite02B)` calls as effect348. The available primary Ref caller switch has no direct case381. The route follows the canonical PE branch and reuses the verified effect348 local emitter; the Ref case348 branch and shared PE/Ref helper implementations corroborate its payload. `check_effect348.py` asserts the direct PE branch and this Ref omission explicitly. If a Ref build with direct case381 evidence becomes available, revisit the caller comparison.

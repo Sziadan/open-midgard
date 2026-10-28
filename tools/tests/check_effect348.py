@@ -153,6 +153,24 @@ require("case 348: return ProcessEffect348();" in DISPATCH,
 require(re.search(r"(?:^|\n)\s*348:\s*\"return ProcessEffect348\(\);\"", GENERATOR),
         "effect 348 generator route missing")
 
+# PE effect 381 has the same emitter sequence in the main OnProcess switch.
+# The primary Ref source omits direct case 381; its effect348 caller plus the
+# shared Ref/PE helpers above corroborate the sequence, while PE is the direct
+# caller authority for routing effect381.
+pe_main = function_body(PE, "unsigned __int8 __thiscall CRagEffect::OnProcess(CRagEffect *this)")
+pe_381 = re.search(r"case 381:(.*?)(?=\n\s*case |\n\s*default:|\Z)", pe_main, re.S)
+require(pe_381 is not None, "PE OnProcess case 381 missing")
+ordered(pe_381.group(1), ("EffectTextureSet(this, aEffectThunderC, 0)", "= 80;",
+                           "LightSphere(this, aEffectWhite02B)", "while ( v106 )", "break;"),
+        "PE effect 381 caller")
+require("case 381:" not in REF and "case 0x17D:" not in REF,
+        "primary Ref caller now has a direct effect381 case; review evidence note")
+require("case 381: return ProcessEffect348();" in
+        (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8"),
+        "local OnProcess effect 381 must reuse the effect 348 emitter")
+require(re.search(r"(?:^|\n)\s*381:\s*\"return ProcessEffect348\(\);\"", GENERATOR),
+        "effect 381 generator route missing")
+
 local_texture = function_body(LOCAL, "void CRagEffect::ApplyEffectTexture(const char* textureName, int variant)")
 variant_zero = re.search(r"else if \(variant == 0\)\s*\{(.*?)\n\s*\}", local_texture, re.S)
 require(variant_zero is not None, "local EffectTextureSet variant0 branch missing")
