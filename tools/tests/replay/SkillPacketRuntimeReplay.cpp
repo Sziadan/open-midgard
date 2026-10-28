@@ -516,6 +516,48 @@ void ReplayScenario(const std::string& path)
     }
 }
 
+void ReplaySkillCastCancel(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 1 && packets[0].opcode == 0x01B9 && packets[0].bytes.size() == 6,
+        "skill cast cancel scenario requires one 6-byte 0x01B9 packet");
+    Fixture fixture(path);
+    fixture.source.SendMsg(&fixture.source, 85, 7, 1000, 0);
+    fixture.source.SendMsg(&fixture.source, 86, 49, 1000, 0);
+    Require(fixture.source.m_beginSpellEffect != nullptr && fixture.source.m_magicTargetEffect != nullptr
+        && fixture.source.m_effectList.size() == 2,
+        "cast-cancel fixture failed to seed begin-spell and magic-target effects");
+
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), packet, consumed),
+        "production packet reader rejected cast-cancel packet");
+    Require(packet.packetId == 0x01B9 && consumed == static_cast<int>(packets[0].bytes.size()),
+        "cast-cancel packet framing differs from scenario metadata");
+    Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch cast-cancel packet");
+    Require(fixture.source.m_beginSpellEffect == nullptr && fixture.source.m_magicTargetEffect == nullptr
+        && fixture.source.m_effectList.empty(),
+        "cast-cancel packet did not clear both attached skill effects");
+
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for cast cancel");
+    std::vector<int> actorMessages;
+    std::string logLine;
+    while (std::getline(runtimeLog, logLine)) {
+        unsigned int actorAid = 0;
+        int message = 0;
+        if (std::sscanf(logLine.c_str(), "[pid:%*u t:%*u] [REPLAY] ActorMsg actor=%u msg=%d", &actorAid, &message) == 2
+            && actorAid == fixture.source.m_gid) {
+            actorMessages.push_back(message);
+        }
+    }
+    Require(actorMessages == std::vector<int>({ 84, 87, 83 }),
+        "cast-cancel actor message order differs from Ref (expected84,87,83)");
+    std::cout << "SkillCastCancel opcode=0x01B9 messages=84,87,83 attachedEffectsCleared=2\n";
+}
+
 void ReplaySkillUnitLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -663,13 +705,21 @@ bool IsTrapRevealScenario(const std::string& path)
         && packets.front().bytes.size() == 16 && packets.front().bytes[14] == 143;
 }
 
+bool IsSkillCastCancelScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.front().opcode == 0x01B9;
+}
+
 } // namespace
 
 int main(int argc, char** argv)
 {
     try {
         Require(argc == 2, "expected one replay scenario path");
-        if (IsTrapRevealScenario(argv[1])) {
+        if (IsSkillCastCancelScenario(argv[1])) {
+            ReplaySkillCastCancel(argv[1]);
+        } else if (IsTrapRevealScenario(argv[1])) {
             ReplayTrapRevealLifecycle(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {
             ReplaySkillUnitLifecycle(argv[1]);

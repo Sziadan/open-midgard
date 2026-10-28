@@ -1594,3 +1594,7 @@ The Firewall replay now invokes the production CSkill::OnProcess every nominal 2
 ## WP10.8 — Safety Wall unit effect replay — 2026-10-28
 
 Added the WP4 Safety Wall unit job126 packet case. The production 0x011F route creates the unit at cell(10,20); a nominal 24 ms wait followed by real CSkill::OnProcess launches effect315, and 0x0120 removes the unit. The measured first process call was 25 ms after unit start. Full root replay CTest passes13/13. Next: continue WP3.4/WP4 packet cases and exercise multiple timed units through CWorld updates.
+
+## WP10.8 — Cast-cancel packet replay — 2026-10-28
+
+Added the WP3.4 cast-cancel acceptance packet `0x01B9` for source AID1. The scenario seeds real begin-spell effect7 and magic-target effect49 attachments, dispatches raw bytes through the default router, and confirms the production message trace order84,87,83 and both pointers/list entries cleared. Focused test passes1/1; full packet replay CTest passes14/14.

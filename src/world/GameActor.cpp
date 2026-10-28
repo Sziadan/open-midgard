@@ -5006,6 +5006,9 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         DbgLog("[REPLAY] SendMsg88 actor=%u value=%lld color=%lld kind=%lld\n",
             m_gid, static_cast<long long>(par1), static_cast<long long>(par2), static_cast<long long>(par3));
     }
+    if (msg == 83 || msg == 84 || msg == 87) {
+        DbgLog("[REPLAY] ActorMsg actor=%u msg=%d\n", m_gid, msg);
+    }
 #endif
     switch (msg) {
     case 11:

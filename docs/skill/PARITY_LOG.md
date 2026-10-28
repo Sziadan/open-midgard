@@ -3188,3 +3188,7 @@ Between 0x011F Firewall entry and 0x0120 removal, the runner calls real `CSkill:
 ## WP10.8 runtime replay — Safety Wall unit effect — 2026-10-28
 
 `safety_wall_unit_lifecycle.tsv` sends the 16-byte 0x011F entry for unit job126 (`UNT_SAFETYWALL`), then steps real `CSkill::OnProcess` once after a nominal 24 ms wait. Ref `CSkill::OnProcess` maps job126 to periodic effect315 (`Ref/Skill.cpp:1287-1698`); runtime output confirms effect315 on actor AID100, 25 ms measured elapsed, followed by the 0x0120 removal. Position maps to(-27.5,7.5,22.5) on the fixture attr grid. Focused test passes1/1; replay suite passes13/13.
+
+## WP10.8 runtime replay — cast cancel — 2026-10-28
+
+`cast_cancel01b9.tsv` contains the 6-byte `0x01B9` cast-cancel notification for player AID1. Ref `Zc_Dispel` resolves the actor and sends messages84,87,83 in sequence (`Ref/GameModePacket.cpp:10625`). The runtime harness seeds source begin-spell effect7 and magic-target effect49, dispatches through the production router, records exact actor message order, and verifies both pointers and attachment-list entries are cleared. Focused test passes1/1; replay suite passes14/14.
