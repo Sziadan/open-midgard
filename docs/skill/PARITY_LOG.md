@@ -3252,3 +3252,7 @@ The six scenario fixtures send unit jobs189–194, then step real `CSkill::OnPro
 ## WP10.8 runtime replay — Land Mine trigger — 2026-10-28
 
 `land_mine_trigger_lifecycle.tsv` dispatches 0x011F job147, a 33-byte 0x01DE HT_LANDMINE skill116 notify (owner AID1 → target AID2), an 11-byte 0x01D7 base-look change to job135, then 0x0120 removal. The runtime trace confirms the damage packet; unit state confirms job147→135; one real CSkill process call confirms Ref effect138; both world registries confirm removal. Packet/source basis: `Ref/eAthena_src_2011/map/skill.c:7487-7538`, `clif.c:2932-2948,4651-4652`, and `Ref/Skill.cpp:1537`. Focused replay and full CTest pass56/56.
+
+## WP10.8 runtime replay — Graffiti packet lifecycle — 2026-10-28
+
+`graffiti_lifecycle.tsv` dispatches the fixed 97-byte 0x01C9 `Zc_Skill_Entry2` packet with graffiti flag set, AID200, creator AID1, cell(10,20), and a NUL-terminated 80-byte text field. Runtime verifies creation as `CGraffiSkill`, registration in both world lists, one active `OnProcess`, and removal through 0x0120 from both lists. Ref packet/model basis: plan packet layout (2.4), `Ref/Skill.cpp:274,652,2040,2162,2271`, and `Ref/GameWorld.cpp:665,721,825`. The resource-backed rendered texture is outside this fixture. Focused replay and full CTest pass57/57.

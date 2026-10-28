@@ -506,6 +506,8 @@ Files: new `src/world/Skill.cpp`/`Skill.h` (world objects; do not confuse with `
 | 4.7 | `CWorld::MakeSkill`, `GetSkillByAID`, `RemoveSkill`, `RemoveSkillbyJT`, skill list ownership, pick info | Ref/GameWorld.cpp:848, 825, 665, 721 |
 | 4.8 | Unit-id coverage check: every `UNT_*` value in `Ref/eAthena_src_2011/map/skill.h:1428-1548` that is ≤ the highest unit id the Ref client handles (201) must map to the Ref behaviour; ids the Ref client does not know (e.g. 3rd-job units) go to the Ref default path, and the list of those ids is written to `MISMATCHES.md`. |
 
+WP4 replay progress (2026-10-28): packet-level lifecycle and process/effect checks currently pass for the scenarios enumerated in `docs/skill/STATUS.md`. The 0x01C9 Graffiti entry/removal lifecycle now also passes the production packet router replay; this verifies the fixed 97-byte packet, 80-byte text field handling, `CGraffiSkill` registration/retention, and 0x0120 cleanup. Rendering remains resource-dependent and is not covered by this fixture. These scenarios are incremental evidence, not full WP4 acceptance; trap variants, remaining unit jobs and full-world multi-unit updates remain open.
+
 Acceptance: Fire Wall, Safety Wall, Pneuma (job133 follows the Ref default path and launches no unit effect; see MISMATCHES.md), Sanctuary, Magnus Exorcismus, Warp Portal (waiting/active), Ice Wall, Quagmire, all Hunter traps (set hidden, reveal via `0x01AC`, trigger, remove), Bard/Dancer songs, Graffiti, Volcano/Deluge/Violent Gale/Land Protector, Basilica, Gospel, Demonstration, Spider Web, Gravitation, Ninja units (Suiton, Kaen, Tatamigaeshi), Ground Drift — verify each Ref loop effect where the Ref has one, plus model and sound, and removal on `0x0120`.
 
 ---

@@ -1658,3 +1658,7 @@ The plan listed Pneuma among units expected to launch a loop effect, but the pri
 ## WP10.8 — Land Mine trigger lifecycle replay — 2026-10-28
 
 Added a full Land Mine trigger path: job147 entry, packetver23 0x01DE HT_LANDMINE skill116 damage notify from owner AID1 to target AID2, 0x01D7 conversion to active Fire Pillar job135, one nominal 24 ms process step launching effect138, and 0x0120 removal. Focused replay passes; the complete root packet replay CTest passes56/56. The replay covers one triggerable trap path; remaining Hunter trap variants still need their own Ref evidence.
+
+## WP10.8 — Graffiti packet lifecycle replay — 2026-10-28
+
+Added `graffiti_lifecycle.tsv` for a raw 97-byte 0x01C9 Graffiti entry (unit AID200, creator AID1, cell10,20, 80-byte NUL-terminated text field) followed by 0x0120 removal. The production router creates a `CGraffiSkill`, adds it to both world registries, leaves it active through `OnProcess`, and removes it from both registries. The replay verifies packet framing and text-field termination; rendered texture output remains resource-dependent and is not asserted. Focused replay passes; the full root packet replay CTest passes57/57.

@@ -854,6 +854,53 @@ void ReplayLandMineTriggerLifecycle(const std::string& path)
     std::cout << "LandMine trigger aid=100 skill=116 activeJob=135 effect=138 removed=1\n";
 }
 
+void ReplayGraffitiLifecycle(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 2 && packets[0].opcode == 0x01C9 && packets[0].bytes.size() == 97
+        && packets[1].opcode == 0x0120 && packets[1].bytes.size() == 6,
+        "Graffiti lifecycle requires a 97-byte entry and 6-byte removal packet");
+    Require(packets[0].bytes[16] == 1 && ReadU32LE(packets[0].bytes.data() + 2) == 200
+        && ReadU32LE(packets[0].bytes.data() + 6) == 1
+        && ReadU16LE(packets[0].bytes.data() + 10) == 10
+        && ReadU16LE(packets[0].bytes.data() + 12) == 20,
+        "Graffiti entry must identify unit AID200, creator AID1, and cell(10,20)");
+    Require(std::find(packets[0].bytes.begin() + 17, packets[0].bytes.begin() + 97, 0) != packets[0].bytes.begin() + 97,
+        "Graffiti text must be NUL-terminated within its 80-byte field");
+
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    for (std::size_t index = 0; index < packets.size(); ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected Graffiti lifecycle packet");
+        Require(packet.packetId == packets[index].opcode && consumed == static_cast<int>(packets[index].bytes.size()),
+            "Graffiti packet framing differs from scenario metadata");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Graffiti lifecycle packet");
+
+        CSkill* skill = fixture.world.GetSkillByAID(200);
+        if (index == 0) {
+            auto* graffiti = dynamic_cast<CGraffiSkill*>(skill);
+            Require(graffiti != nullptr, "0x01C9 did not create a CGraffiSkill");
+            Require(std::find(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(), graffiti)
+                    != fixture.world.m_gameObjectList.end(),
+                "Graffiti was not registered in CWorld game object ownership");
+            Require(graffiti->OnProcess() != 0, "Graffiti did not remain active after entry");
+        } else {
+            Require(skill == nullptr, "0x0120 did not remove Graffiti from CWorld skill lookup");
+            Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+                    [](CGameObject* object) {
+                        const CSkill* candidate = dynamic_cast<const CSkill*>(object);
+                        return candidate != nullptr && candidate->m_aid == 200;
+                    }),
+                "0x0120 did not remove Graffiti from CWorld object ownership");
+        }
+    }
+    std::cout << "Graffiti aid=200 creator=1 cell=(10,20) text_field=80 active=1 removed=1\n";
+}
+
 void ReplayWarpUnitLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -938,6 +985,13 @@ bool IsLandMineTriggerScenario(const std::string& path)
         && packets[1].opcode == 0x01DE && packets[2].opcode == 0x01D7;
 }
 
+bool IsGraffitiLifecycleScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 2 && packets.front().opcode == 0x01C9
+        && packets.front().bytes.size() == 97 && packets.back().opcode == 0x0120;
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -954,6 +1008,8 @@ int main(int argc, char** argv)
             ReplayTrapRevealLifecycle(argv[1]);
         } else if (IsLandMineTriggerScenario(argv[1])) {
             ReplayLandMineTriggerLifecycle(argv[1]);
+        } else if (IsGraffitiLifecycleScenario(argv[1])) {
+            ReplayGraffitiLifecycle(argv[1]);
         } else if (IsWarpUnitLifecycleScenario(argv[1])) {
             ReplayWarpUnitLifecycle(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {
