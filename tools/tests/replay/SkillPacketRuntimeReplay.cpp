@@ -59,6 +59,40 @@ std::vector<u8> DecodeHex(const std::string& text)
     return bytes;
 }
 
+struct ScenarioPacket {
+    u16 opcode;
+    std::vector<u8> bytes;
+};
+
+std::vector<ScenarioPacket> LoadPacketSequence(const std::string& path)
+{
+    std::ifstream input(path);
+    Require(static_cast<bool>(input), "cannot open packet sequence: " + path);
+    std::vector<ScenarioPacket> packets;
+    std::string line;
+    while (std::getline(input, line)) {
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        std::istringstream fields(line);
+        std::string opcodeText;
+        std::string hexBytes;
+        std::string comment;
+        Require(static_cast<bool>(std::getline(fields, opcodeText, '\t'))
+            && static_cast<bool>(std::getline(fields, hexBytes, '\t'))
+            && static_cast<bool>(std::getline(fields, comment)),
+            "packet sequence row must contain opcode, hexBytes, comment");
+        const unsigned long parsedOpcode = std::stoul(opcodeText, nullptr, 0);
+        Require(parsedOpcode <= 0xFFFF, "packet sequence opcode out of range");
+        std::vector<u8> bytes = DecodeHex(hexBytes);
+        Require(bytes.size() >= 2 && bytes[0] == (parsedOpcode & 0xFF)
+            && bytes[1] == ((parsedOpcode >> 8) & 0xFF), "packet sequence opcode differs from packet header");
+        packets.push_back(ScenarioPacket{ static_cast<u16>(parsedOpcode), std::move(bytes) });
+    }
+    Require(!packets.empty(), "packet sequence contains no packets");
+    return packets;
+}
+
 struct Fixture {
     CGameMode mode;
     CPlayer source;
@@ -416,13 +450,79 @@ void ReplayScenario(const std::string& path)
     }
 }
 
+void ReplayFirewallUnitLifecycle(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 2, "Firewall unit lifecycle requires set and remove packets");
+    Require(packets[0].opcode == 0x011F && packets[0].bytes.size() == 16,
+        "Firewall unit entry must use the 16-byte 0x011F packet");
+    Require(packets[1].opcode == 0x0120 && packets[1].bytes.size() == 6,
+        "Firewall unit removal must use the 6-byte 0x0120 packet");
+
+    Fixture fixture;
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    for (const ScenarioPacket& scenarioPacket : packets) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(scenarioPacket.bytes.data(), static_cast<int>(scenarioPacket.bytes.size()), packet, consumed),
+            "production packet reader rejected Firewall unit lifecycle packet");
+        Require(packet.packetId == scenarioPacket.opcode && consumed == static_cast<int>(scenarioPacket.bytes.size()),
+            "Firewall unit lifecycle packet framing differs from scenario metadata");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Firewall unit packet");
+        if (scenarioPacket.opcode == 0x011F) {
+            CSkill* unit = fixture.world.GetSkillByAID(100);
+            Require(unit != nullptr, "Firewall unit entry did not add unit AID100 to CWorld");
+            Require(unit->m_job == 127 && unit->m_isVisibleBody == 1,
+                "Firewall unit job or visibility differs from Ref stand-entry handling");
+            Require(std::fabs(unit->m_pos.x + 27.5f) < 0.001f
+                && std::fabs(unit->m_pos.y - 7.5f) < 0.001f
+                && std::fabs(unit->m_pos.z - 22.5f) < 0.001f,
+                "Firewall unit position differs from decoded cell and terrain height");
+            Require(std::find(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(), unit)
+                    != fixture.world.m_gameObjectList.end(),
+                "Firewall unit is missing from CWorld game-object ownership list");
+        } else {
+            Require(fixture.world.GetSkillByAID(100) == nullptr,
+                "0x0120 did not remove Firewall unit AID100 from CWorld skill list");
+            Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+                    [](CGameObject* object) {
+                        const CSkill* skill = dynamic_cast<const CSkill*>(object);
+                        return skill != nullptr && skill->m_aid == 100;
+                    }),
+                "0x0120 did not remove Firewall unit AID100 from CWorld object ownership list");
+        }
+    }
+
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for Firewall unit lifecycle");
+    std::string logLine;
+    bool foundFirewallWave = false;
+    while (std::getline(runtimeLog, logLine)) {
+        foundFirewallWave = foundFirewallWave
+            || logLine.find("[REPLAY] PlayWave name='effect\\EF_FireWall.wav'") != std::string::npos;
+    }
+    Require(foundFirewallWave, "Firewall unit entry did not play Ref unit wave effect\\EF_FireWall.wav");
+    std::cout << "SkillUnit job=127 aid=100 cell=(10,20) pos=(-27.500,7.500,22.500) wave=effect\\EF_FireWall.wav removed=1\n";
+}
+
+bool IsFirewallUnitScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.front().opcode == 0x011F;
+}
+
 } // namespace
 
 int main(int argc, char** argv)
 {
     try {
         Require(argc == 2, "expected one replay scenario path");
-        ReplayScenario(argv[1]);
+        if (IsFirewallUnitScenario(argv[1])) {
+            ReplayFirewallUnitLifecycle(argv[1]);
+        } else {
+            ReplayScenario(argv[1]);
+        }
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "production skill replay failed: " << error.what() << '\n';

@@ -1,0 +1,3 @@
+# opcode	hexBytes	comment
+0x011F	1F0164000000010000000A0014007F01	Fire Wall unit entry (unit AID100, creator AID1, cell10,20, job127, visible)
+0x0120	200164000000	Remove unit AID100

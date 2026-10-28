@@ -1574,3 +1574,7 @@ Added 18-byte 0x0117 ground-skill scenarios for Storm Gust89 and Sanctuary70. Th
 ## WP10.8 — Production-linked Blessing packet replay — 2026-10-28
 
 Added a successful 15-byte 0x011A Blessing34 packet (level3, target AID2, source AID1) to cover the WP3.4 buff path. The real default packet router dispatches it through the production no-damage skill handler; the runtime trace confirms target effect42 and no WBA events. Focused Blessing CTest passes1/1 and the full replay group passes10/10. Next: multi-packet ground-unit lifecycle replay for WP3.4/WP4.
+
+## WP10.8 — Production-linked Fire Wall unit lifecycle replay — 2026-10-28
+
+Extended replay scenarios to dispatch multiple raw packets from one TSV. The Firewall case sends 0x011F unit AID100/job127 at cell(10,20), verifies the real CSkill entry in both CWorld registries, mapped position(-27.500,7.500,22.500), and effect\EF_FireWall.wav, then sends 0x0120 and verifies removal from both lists. Focused lifecycle CTest passes1/1; the full root replay group passes11/11. Configurable multi-actor/cell/job scenarios and 24 ms ground-unit lifecycle stepping remain next.

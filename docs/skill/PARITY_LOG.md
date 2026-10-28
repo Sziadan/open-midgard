@@ -3168,3 +3168,7 @@ Effect74 now routes through `ProcessIceWall74`, matching the complete PE and Ref
 ## WP10.8 runtime replay — Blessing34 — 2026-10-28
 
 `docs/skill/replay/blessing34.tsv` encodes the successful 15-byte `0x011A` no-damage notification from Ref/eAthena `clif_skill_nodamage` (`Ref/eAthena_src_2011/map/clif.c:4798-4813`). The production `HandleSkillNoDamageNotify` routes skill34/level3/target2/source1/success1 through `DeliverUseSkill`; the Ref Blessing branch launches effect42 on target2 (`Ref/GameModePacket.cpp:29431`; current generated effect helper). Replay observes `[REPLAY] LaunchEffect id=42 actor=2` and zero WBA events. Focused test passes1/1; all current packet replay tests pass10/10. No WP8 matrix row is marked verified.
+
+## WP10.8 runtime replay — Fire Wall unit set/removal — 2026-10-28
+
+`firewall_unit_lifecycle.tsv` replays Ref/eAthena 0x011F (16-byte skill-unit entry) then 0x0120 (6-byte disappearance). The production default router creates a CSkill with AID100/job127 at cell(10,20), maps it through the controlled attr map to(-27.5,7.5,22.5), plays `effect\EF_FireWall.wav`, then removes it from both CWorld skill and game-object lists. Ref anchors are `Zc_Skill_Entry/Disappear` (`Ref/GameModePacket.cpp:25375/25365`), `CSkill::SendMsg` message45 and `ApplyStandEntry` (`Ref/Skill.cpp:2925-3543`), and `CWorld::RemoveSkill` (`Ref/GameWorld.cpp:665`). Focused test passes1/1; replay suite passes11/11. This is a set/removal lifecycle check; periodic unit effects and visible trap models are not asserted.
