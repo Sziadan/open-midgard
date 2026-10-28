@@ -1024,6 +1024,8 @@ add_test(NAME effect522_gravitation_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect522_gravitation.py")
 add_test(NAME effect650_map_magic_zone_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect650_map_magic_zone.py")
+add_test(NAME effect651_map_particle_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect651_map_particle.py")
 add_test(NAME effects342_564_couple_casting_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects342_564_couple_casting.py")
 add_test(NAME effect605_stop_message_source_check

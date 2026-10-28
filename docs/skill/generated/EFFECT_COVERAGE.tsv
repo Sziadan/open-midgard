@@ -648,7 +648,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 647	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(29);	src/world/SkillSpecialEffect.cpp	379
 648	OnProcess3	Effect_SPR	routed	OnProcess3 -> return ProcessEffectSprite(30);	src/world/SkillSpecialEffect.cpp	1832
 650	OnProcess3	Map_MagicZone,Map_Pika,Map_Aura	routed	OnProcess3 -> return ProcessEffect650();		3602
-651	OnProcess3	Map_MagicZone,Map_Particle	unported	OnProcess3 -> UnportedEffect		-
+651	OnProcess3	Map_MagicZone,Map_Particle	routed	OnProcess3 -> return ProcessEffect651();		3606
 652	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		3566
 653	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		3561
 654	OnProcess3	inline	routed	OnProcess3 -> return ProcessDamageNumberEffects();		3561

@@ -517,6 +517,7 @@ private:
     bool ProcessEffectTextureSet();
     bool ProcessEffect695MapFireworks();
     bool ProcessEffect650();
+    bool ProcessEffect651();
     bool ProcessLevel99Effect();
     bool ProcessLevel99_2Effect();
     bool ProcessLevel99_3Effect();

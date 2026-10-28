@@ -665,3 +665,7 @@ The WP4 acceptance summary originally described Pneuma as launching a unit loop 
 ## WP5C effect650 secondary Map_Aura variant
 
 The canonical PE `CRagEffect::Map_Aura` helper (`HighPriest.exe.c:442490-442574`) and primary Ref caller (`Ref/RagEffect.cpp:12376-12381`) establish the effect650 aura profile: three GI lanes with hardcoded distances12.9/13.1/13.3, max heights15/13/11, and rotations0/90/180. The secondary `Ref/dhxj/RagEffect2.cpp:8516+` helper instead has signature `Map_Aura(char *tName, float size)` and derives its lane sizes/distances from the extra parameter. The PE and primary Ref call pass only the texture name, so the port follows the PE values and does not use the secondary variant.
+
+## WP5C effect651 Map_Particle render flag
+
+The canonical PE helper `CRagEffect::Map_Particle` (`HighPriest.exe.c:442896-442950`) assigns `m_renderFlag = 5`; secondary `Ref/dhxj/RagEffect2.cpp:8977-9046` uses `RF_EFFECT_OM`. Effect651's PE and primary Ref callers both invoke this helper with the same exact texture and parameters. The port follows the executable's render flag5; the secondary helper's alpha/alphaop-OM setting is not applied.

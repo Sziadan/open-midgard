@@ -18600,6 +18600,87 @@ bool CRagEffect::ProcessEffect650()
     return true;
 }
 
+// HighPriest.exe.c:419021-419026; Ref/RagEffect.cpp:12382-12387.
+// Canonical Map_Particle helper: HighPriest.exe.c:442896-442950.
+bool CRagEffect::ProcessEffect651()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) {
+        return true;
+    }
+    const vector3d origin = master->m_pos;
+    const auto refreshPosition = [this, &origin]() {
+        m_effectPos = origin;
+        m_cachedPos = origin;
+    };
+
+    const auto spawnMagicZone = [this, &refreshPosition](const char* textureName, int variant) {
+        refreshPosition();
+        if (m_stateCnt != 0) {
+            return;
+        }
+        CEffectPrim* prim = LaunchEffectPrim(PP_MAPMAGICZONE, vector3d{});
+        prim->m_renderFlag = 5;
+        prim->m_duration = m_duration;
+        prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false));
+        prim->m_size = 110.0f;
+        for (EffectGi& gi : prim->m_gi) {
+            gi.life = 0;
+        }
+        EffectGi& gi = prim->m_gi[0];
+        gi.life = 1;
+        gi.distance = 40.0f;
+        gi.rotStart = variant == 2 ? 0 : 358;
+        gi.alphaB = variant == 2 ? 200 : 50;
+        gi.height[0] = variant == 2 ? -0.5f : -0.40000001f;
+        gi.height[4] = static_cast<float>(variant);
+    };
+
+    spawnMagicZone("effect\\mjin2.tga", 2);
+    spawnMagicZone("effect\\mjin.tga", 3);
+
+    for (int variant = 2; variant < 21; variant += 2) {
+        refreshPosition();
+        if (m_stateCnt != 0) {
+            continue;
+        }
+        CEffectPrim* prim = LaunchEffectPrim(PP_MAPPARTICLE, vector3d{});
+        prim->m_renderFlag = 5;
+        prim->m_duration = m_duration;
+        prim->m_texture.push_back(g_texMgr.GetTexture("effect\\mpa3.tga", false));
+        const float baselineY = static_cast<float>(-(2 * variant));
+        prim->m_size = 0.0f;
+        for (EffectGi& gi : prim->m_gi) {
+            gi.life = 1;
+            gi.maxHeight = 0.15000001f;
+            gi.distance = 1.0f;
+            gi.height[0] = static_cast<float>(std::rand() % 360);
+            gi.height[1] = static_cast<float>(std::rand() % 360);
+            gi.height[2] = static_cast<float>(std::rand() % 360);
+            gi.height[3] = static_cast<float>(std::rand() % 360);
+            gi.vecBPreX = 0.0f;
+            gi.arcBaselineY = baselineY;
+            gi.vecBPreZ = 0.0f;
+            gi.height[4] = static_cast<float>(std::rand() % 360);
+            gi.sparkX = 0.0f;
+            gi.sparkY = baselineY;
+            gi.sparkZ = 0.0f;
+            gi.height[5] = static_cast<float>(std::rand() % 360);
+            gi.vecTPreX = 0.0f;
+            gi.vecTPreY = baselineY;
+            gi.vecTPreZ = 0.0f;
+            gi.height[6] = static_cast<float>(std::rand() % 360);
+            gi.vecTNowX = 0.0f;
+            gi.vecTNowY = baselineY;
+            gi.vecTNowZ = 0.0f;
+            gi.height[7] = static_cast<float>(std::rand() % 360);
+            gi.flag[0] = 1;
+            gi.flag[1] = 0;
+        }
+    }
+    return true;
+}
+
 // Ref/RagEffect2.cpp:28935-28977; canonical helper HighPriest.exe.c:442819-442952.
 bool CRagEffect::ProcessLevel99_2Effect()
 {
