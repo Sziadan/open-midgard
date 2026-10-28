@@ -1678,3 +1678,7 @@ Added a Sandman sequence covering job149 entry, duplicate-entry hiding, 0x01AC r
 ## WP10.8 — Freezing Trap trigger lifecycle replay — 2026-10-28
 
 Added a Freezing Trap sequence covering job151 entry, duplicate-entry hiding, 0x01AC reveal, packetver23 0x01DE HT_FREEZINGTRAP skill121 notify from trap-unit AID100 to target AID2, 0x01D7 transition to used-trap job140, and 0x0120 removal. The production router verifies saved effect108 and the shared job140 message47 launch path. Focused replay passes; the complete root packet replay CTest passes61/61.
+
+## WP10.8 — Flasher trap trigger lifecycle replay — 2026-10-28
+
+Added a Flasher sequence covering job150 entry, duplicate-entry hiding, 0x01AC reveal, packetver23 0x01DE HT_FLASHER skill120 notify from trap-unit AID100 to target AID2, 0x01D7 transition to used-trap job140, and 0x0120 removal. The shared saved-effect path verifies effect99 is retained from message45 and launched by message47 on the job change. Focused replay passes; the complete root packet replay CTest passes62/62.

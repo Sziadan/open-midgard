@@ -3272,3 +3272,7 @@ The six scenario fixtures send unit jobs189–194, then step real `CSkill::OnPro
 ## WP10.8 runtime replay — Freezing Trap trigger — 2026-10-28
 
 `freezing_trap_trigger_lifecycle.tsv` sends job151 entry, duplicate-entry hidden state, 0x01AC reveal, packetver23 0x01DE HT_FREEZINGTRAP skill121 damage notify from trap-unit AID100 to target AID2, 0x01D7 job140 used-trap update, then 0x0120 removal. Runtime verifies saved effect108, notification routing to the unit, reveal/hide state, effect108 launched by message47, and cleanup from both world lists. Ref basis: `Ref/eAthena_src_2011/map/skill.c:1811,7487-7538`, `Ref/eAthena_src_2011/map/clif.c:4651-4652`, and `Ref/Skill.cpp` message45/47 paths. Full replay CTest passes61/61.
+
+## WP10.8 runtime replay — Flasher trap trigger — 2026-10-28
+
+`flasher_trap_trigger_lifecycle.tsv` sends job150 entry, duplicate-entry hidden state, 0x01AC reveal, packetver23 0x01DE HT_FLASHER skill120 damage notify from trap-unit AID100 to target AID2, 0x01D7 job140 used-trap update, then 0x0120 removal. Runtime verifies saved effect99, notification routing to the unit, reveal/hide state, effect99 launched by message47, and cleanup from both world lists. Ref basis: `Ref/eAthena_src_2011/map/skill.c:1811,7487-7538`, `Ref/eAthena_src_2011/map/clif.c:4651-4652`, and `Ref/Skill.cpp` message45/47 paths. Full replay CTest passes62/62.

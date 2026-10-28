@@ -1100,6 +1100,8 @@ int main(int argc, char** argv)
             ReplaySavedEffectTrapTriggerLifecycle(argv[1], 149, 119, 139, "Sandman");
         } else if (IsSavedEffectTrapScenario(argv[1], 151, 121)) {
             ReplaySavedEffectTrapTriggerLifecycle(argv[1], 151, 121, 108, "FreezingTrap");
+        } else if (IsSavedEffectTrapScenario(argv[1], 150, 120)) {
+            ReplaySavedEffectTrapTriggerLifecycle(argv[1], 150, 120, 99, "Flasher");
         } else if (IsWarpUnitLifecycleScenario(argv[1])) {
             ReplayWarpUnitLifecycle(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {
