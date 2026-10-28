@@ -12468,7 +12468,7 @@ bool CEffectPrim::UsesReferenceFlash() const
 bool CEffectPrim::UsesReferenceQuadHorn() const
 {
     return m_type == PP_3DQUADHORN && m_master
-        && (m_master->GetEffectType() == 27 || m_master->GetEffectType() == 28 || m_master->GetEffectType() == 123 || m_master->GetEffectType() == 132 || m_master->GetEffectType() == 142);
+        && (m_master->GetEffectType() == 27 || m_master->GetEffectType() == 28 || m_master->GetEffectType() == 89 || m_master->GetEffectType() == 123 || m_master->GetEffectType() == 132 || m_master->GetEffectType() == 142);
 }
 
 bool CEffectPrim::UsesReferenceScreenTexture() const
@@ -25989,6 +25989,47 @@ bool CRagEffect::ProcessAspersio86()
 }
 
 // TEST_BODY_END aspersio86_handler
+
+// Ref/RagEffect.cpp:1555-1625; PE helper 0x605A40 and OnProcess case89.
+bool CRagEffect::ProcessStormGust89()
+{
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    if (m_stateCnt == 0 && mode && mode->m_world && mode->m_world->m_player) {
+        const vector3d& listener = mode->m_world->m_player->m_pos;
+        PlayWave("effect\\wizard_stormgust.wav",m_pos.x-listener.x,0.0f,m_pos.z-listener.z,250,40,1.0f);
+    }
+    if (!g_session.m_isMinEffect && (m_stateCnt % 29) == 0 && m_stateCnt > 30 && m_stateCnt <= 150) {
+        for (int i=0;i<2;++i) {
+            const int longitude=rand()%360;
+            const float radius=static_cast<float>(rand()%25+3);
+            const vector3d launchPos{static_cast<float>(m_stateCnt%29),0.0f,0.0f};
+            CEffectPrim* prim=LaunchEffectPrim(PP_3DQUADHORN,launchPos);
+            if (!prim) continue;
+            prim->m_duration=215-m_stateCnt;
+            prim->m_pattern|=1;
+            const int direction=rand()%360;
+            prim->m_deltaPos2={GetSin(direction)*radius,20.0f,
+                static_cast<float>(-(static_cast<double>(GetCos(direction))*radius))};
+            prim->m_size=static_cast<float>((rand()%100+400)*0.0099999998);
+            prim->m_heightSize=20.0f;
+            prim->m_longitude=static_cast<float>(longitude);
+            prim->m_latitude=100.0f;
+            MatrixIdentity(prim->m_matrix);
+            MatrixAppendXRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_latitude)));
+            MatrixAppendYRotation(prim->m_matrix,GetRadian(static_cast<int>(prim->m_longitude)));
+            prim->m_rotMat=prim->m_matrix;
+            prim->m_speed=1.5f;
+            prim->m_accel=0.0f;
+            prim->m_alpha=250.0f;
+            prim->m_count=3;
+            prim->m_fadeOutCnt=prim->m_duration-10;
+            prim->m_texture.push_back(g_texMgr.GetTexture("effect\\ice.tga",false));
+        }
+    }
+    return ProcessEZ2STR(0.0f,-80.0f,0.0f);
+}
+
+// TEST_BODY_END stormgust89_handler
 
 bool CRagEffect::ProcessEffect380()
 {

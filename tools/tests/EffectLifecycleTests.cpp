@@ -583,6 +583,7 @@ struct CRagEffect : CGameObject {
     void SpawnWaterBall2();
     bool ProcessRevive140();
     bool ProcessAspersio86();
+    bool ProcessStormGust89();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
@@ -5634,6 +5635,44 @@ int main()
         check(!effect.ProcessAspersio86()&&effect.m_primList.size()==15,
             "Aspersio terminates at its duration boundary");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        const bool oldMinEffect=g_session.m_isMinEffect;g_session.m_isMinEffect=false;
+        CRagEffect effect;effect.m_type=89;effect.m_duration=300;effect.m_pos={15,10,35};
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        for(int i=0;i<32;++i)rngValues.push_back(i%4==0?11:i%4==1?2:i%4==2?23:50);
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=0;effect.ProcessStormGust89();
+        check(effect.m_primList.empty()&&rngDraws==beforeRng&&waveCalls.size()==1
+            &&waveCalls[0].name=="effect\\wizard_stormgust.wav"&&waveCalls[0].x==12
+            &&waveCalls[0].y==0&&waveCalls[0].z==30&&waveCalls[0].volume==250
+            &&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "Storm Gust plays its state-zero listener-relative cue without particle RNG");
+        for(int state:{58,87,116,145}){effect.m_stateCnt=state;effect.ProcessStormGust89();}
+        check(effect.m_primList.size()==8&&rngDraws==beforeRng+32&&rngCursor==32
+            &&g_texMgr.requests.size()==8,
+            "Storm Gust emits two quad horns at each of four pulses with four ordered RNG draws each");
+        CEffectPrim* first=effect.m_primList.front();
+        check(first&&first->m_type==PP_3DQUADHORN&&first->UsesReferenceQuadHorn()
+            &&first->m_pos.x==0&&first->m_pos.y==0&&first->m_pos.z==0
+            &&first->m_duration==157&&(first->m_pattern&1)!=0&&first->m_deltaPos2.x==GetSin(23)*5
+            &&first->m_deltaPos2.y==20&&first->m_size==4.5f&&first->m_heightSize==20
+            &&first->m_longitude==11&&first->m_latitude==100&&first->m_speed==1.5f
+            &&first->m_accel==0&&first->m_alpha==250&&first->m_count==3
+            &&first->m_fadeOutCnt==147&&first->m_texture.size()==1
+            &&g_texMgr.requests[0]=="effect\\ice.tga",
+            "Storm Gust preserves the first PE quad-horn payload, rotation inputs, fade and ice texture");
+        effect.m_stateCnt=57;effect.ProcessStormGust89();
+        effect.m_stateCnt=151;effect.ProcessStormGust89();
+        check(effect.m_primList.size()==8&&rngDraws==beforeRng+32,
+            "Storm Gust emits no particles outside the four source cadence frames");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_session.m_isMinEffect=true;effect.m_stateCnt=58;effect.ProcessStormGust89();
+        check(effect.m_primList.empty()&&rngDraws==beforeRng+32,
+            "Storm Gust minimum-effects mode suppresses particles and RNG");
+        g_session.m_isMinEffect=oldMinEffect;g_world.m_player=oldPlayer;
     }
     {
         CRenderObject listener;listener.m_pos={3,0,5};
