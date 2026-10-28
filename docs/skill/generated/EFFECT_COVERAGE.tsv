@@ -504,7 +504,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 498	OnProcess3	PRESSURE,GroundShake	unported	OnProcess3 -> UnportedEffect		-
 499	OnProcess3	PRESSURE,GroundShake	unported	OnProcess3 -> UnportedEffect		-
 500	OnProcess3	inline	routed	OnProcess3 -> ApplyActorLight(); return true;	src/gamemode/UseSkillEffect.generated.inc	34
-501	OnProcess3	inline	unported	OnProcess3 -> UnportedEffect	src/session/SkillActionInfo2.cpp	-
+501	OnProcess3	inline	routed	OnProcess3 -> return ProcessEffect501();	src/session/SkillActionInfo2.cpp	34
 502	OnProcess3	inline	unported	OnProcess3 -> UnportedEffect	src/session/SkillActionInfo2.cpp	-
 503	OnProcess3	SoulLinkLight,BeginAsura2	routed	OnProcess3 -> return ProcessBeginAsura2Effect();	src/gamemode/UseSkillEffect.generated.inc	689
 504	OnProcess3	CHOOKGI	routed	OnProcess3 -> SpawnChookgi(1); return true;		223

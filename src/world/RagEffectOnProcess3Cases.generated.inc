@@ -15,7 +15,7 @@ case 497: return UnportedEffect();
 case 498: return UnportedEffect();
 case 499: return UnportedEffect();
 case 500: ApplyActorLight(); return true;
-case 501: return UnportedEffect();
+case 501: return ProcessEffect501();
 case 502: return UnportedEffect();
 case 503: return ProcessBeginAsura2Effect();
 case 504: SpawnChookgi(1); return true;

@@ -679,6 +679,7 @@ private:
     bool ProcessEffect445();
     bool ProcessEffect457();
     bool ProcessEffect466();
+    bool ProcessEffect501();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();

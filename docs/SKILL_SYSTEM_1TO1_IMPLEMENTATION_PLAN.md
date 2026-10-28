@@ -781,3 +781,7 @@ Completed effect457 inline behavior: skill421's source/target effects retain the
 ## WP10.3 effect466 checkpoint
 
 Completed effect466. The canonical inline case plays the exact decompiled audio literal at state5 and sets BodyLight bit0x40 plus BodyTime=stateCnt-14 for states14-49 inclusive, once while the bit is absent. Skill417 and the level-adjusted 0x1A9 combo path launch this handler family. Full audio filename and VA remain unresolved. Comparator and lifecycle tests added; Release app/test builds pass, CTest165/165, coverage559/134/35, and OldRO hash matches Release at D1FDBC5709018640855D3004ED37971788DE1D95B36E5A72D54A14B0F684F91B. Next: inline effect501.
+
+## WP10.3 effect501 checkpoint
+
+Completed effect501 in the OnProcess3 tier. PE and primary Ref case0x1F5 bodies match exactly. Skills389 and555 set beginEffectId501. State0 follows the master and plays the verified EF_BeginSpell wave; if master stateId is zero, rotation advances by the state-dependent 12/18/24/48-degree tier and wraps with one subtraction at >360. Comparator and lifecycle tests added. Release builds pass, CTest166/166, coverage560/133/34, and OldRO hash matches Release at 27F78283AAC6F24F989899FBF7D567935F1901DCCE9966635B2EF1EEB00BB7C6. Next: inline effect704.

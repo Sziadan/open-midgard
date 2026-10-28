@@ -588,6 +588,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect445();
     bool ProcessEffect457();
     bool ProcessEffect466();
+    bool ProcessEffect501();
     void SpawnDarkBreath();
     void SpawnSummonSlave();
     void SpawnBloodDrain();
@@ -5777,6 +5778,40 @@ int main()
         check(master.m_BodyLight==0&&master.m_BodyTime==91&&rngDraws==beforeRng
             &&effect.m_primList.empty(),
             "Effect466 stops after state49 without RNG or primitive emission");
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRenderObject master;master.m_pos={15,25,35};master.m_roty=10;
+        CRagEffect effect;effect.m_type=501;effect.m_master=&master;effect.m_effectPos={1,2,3};
+        const int beforeRng=rngDraws;waveCalls.clear();
+        effect.m_stateCnt=0;effect.ProcessEffect501();
+        check(effect.m_effectPos.x==15&&effect.m_effectPos.y==25&&effect.m_effectPos.z==35
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_BeginSpell.wav"
+            &&waveCalls[0].x==12&&waveCalls[0].y==0&&waveCalls[0].z==30
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&master.m_roty==22,
+            "Effect501 state0 follows master, plays its source wave and rotates by12");
+        master.m_stateId=27;effect.m_stateCnt=16;effect.ProcessEffect501();
+        check(master.m_roty==22,"Effect501 skips rotation while master stateId is nonzero");
+        master.m_stateId=0;effect.m_stateCnt=15;master.m_roty=0;effect.ProcessEffect501();
+        check(master.m_roty==12,"Effect501 states0-15 rotate by12");
+        effect.m_stateCnt=16;master.m_roty=0;effect.ProcessEffect501();
+        check(master.m_roty==18,"Effect501 states16-30 rotate by18");
+        effect.m_stateCnt=30;master.m_roty=0;effect.ProcessEffect501();
+        check(master.m_roty==18,"Effect501 includes state30 in the 18-degree tier");
+        effect.m_stateCnt=31;master.m_roty=0;effect.ProcessEffect501();
+        check(master.m_roty==24,"Effect501 states31-40 rotate by24");
+        effect.m_stateCnt=40;master.m_roty=0;effect.ProcessEffect501();
+        check(master.m_roty==24,"Effect501 includes state40 in the 24-degree tier");
+        effect.m_stateCnt=41;master.m_roty=0;effect.ProcessEffect501();
+        check(master.m_roty==48,"Effect501 states above40 rotate by48");
+        effect.m_stateCnt=15;master.m_roty=350;effect.ProcessEffect501();
+        check(master.m_roty==2,"Effect501 subtracts360 once after rotation crosses one turn");
+        effect.m_stateCnt=41;master.m_roty=730;effect.ProcessEffect501();
+        check(master.m_roty==418&&rngDraws==beforeRng&&effect.m_primList.empty(),
+            "Effect501 preserves one-subtraction wrap without RNG or primitives");
         g_world.m_player=oldPlayer;waveCalls.clear();
     }
     {

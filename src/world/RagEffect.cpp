@@ -24331,6 +24331,31 @@ bool CRagEffect::OnProcess3()
     }
 }
 
+bool CRagEffect::ProcessEffect501()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (!master) return true;
+    if (m_stateCnt == 0) {
+        m_effectPos = master->m_pos;
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\EF_BeginSpell.wav", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+    }
+    if (master->m_stateId != 0) return true;
+
+    if (m_stateCnt > 40) master->m_roty += 48.0f;
+    else if (m_stateCnt > 30) master->m_roty += 24.0f;
+    else if (m_stateCnt > 15) master->m_roty += 18.0f;
+    else master->m_roty += 12.0f;
+    if (master->m_roty > 360.0f) master->m_roty -= 360.0f;
+    return true;
+}
+
+// TEST_BODY_END effect501_handler
+
 bool CRagEffect::OnProcess2Legacy()
 {
     CRenderObject* master = ResolveCurrentMaster();
