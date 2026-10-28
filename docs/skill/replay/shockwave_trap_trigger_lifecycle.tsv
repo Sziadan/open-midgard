@@ -1,0 +1,9 @@
+# actor	source	1	0	16	16
+# actor	target	2	0	18	16
+# actor	actor	3	148	10	20
+# opcode	hexBytes	comment
+0x011F	1F0164000000020000000A0014009400	Shockwave Trap entry job148 owned by AID2
+0x011F	1F0164000000020000000A0014009400	Duplicate job148 entry hides Shockwave Trap
+0x01AC	AC0164000000	Reveal Shockwave Trap unit AID100
+0x01D7	D70164000000008C000000	Triggered Shockwave Trap becomes used-trap job140
+0x0120	200164000000	Remove triggered Shockwave Trap unit AID100

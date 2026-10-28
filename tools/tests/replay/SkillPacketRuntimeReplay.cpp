@@ -1098,6 +1098,77 @@ void ReplayAnkleSnareTriggerLifecycle(const std::string& path)
     std::cout << "AnkleSnare aid=100 job=145 target=2 snapped=(10,20) updated=1 removed=1\n";
 }
 
+void ReplayShockwaveTrapTriggerLifecycle(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 5 && packets[0].opcode == 0x011F && packets[0].bytes.size() == 16
+        && packets[1].opcode == 0x011F && packets[1].bytes.size() == 16
+        && packets[2].opcode == 0x01AC && packets[2].bytes.size() == 6
+        && packets[3].opcode == 0x01D7 && packets[3].bytes.size() == 11
+        && packets[4].opcode == 0x0120 && packets[4].bytes.size() == 6,
+        "Shockwave Trap trigger requires entry, hide, reveal, used-trap update, and removal packets");
+    Require(packets[0].bytes[14] == 148 && packets[1].bytes[14] == 148
+        && ReadU32LE(packets[3].bytes.data() + 2) == 100
+        && ReadU32LE(packets[3].bytes.data() + 7) == 140,
+        "Shockwave Trap must retain unit job148 until its job140 used-trap update");
+
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    for (std::size_t index = 0; index < packets.size(); ++index) {
+        PacketView packet{};
+        int consumed = 0;
+        Require(TryReadPacket(packets[index].bytes.data(), static_cast<int>(packets[index].bytes.size()), packet, consumed),
+            "production packet reader rejected Shockwave Trap trigger packet");
+        Require(packet.packetId == packets[index].opcode && consumed == static_cast<int>(packets[index].bytes.size()),
+            "Shockwave Trap packet framing differs from scenario metadata");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Shockwave Trap packet");
+
+        CSkill* unit = fixture.world.GetSkillByAID(100);
+        if (index == 0) {
+            Require(unit != nullptr && unit->m_job == 148 && unit->m_effectId == -1
+                    && unit->m_isVisibleBody == 1,
+                "Shockwave Trap entry did not initialize visible job148 with no saved effect");
+        } else if (index == 1) {
+            Require(unit != nullptr && unit->m_job == 148 && unit->m_isVisibleBody == 0,
+                "duplicate trap entry did not hide Shockwave Trap job148");
+        } else if (index == 2) {
+            Require(unit != nullptr && unit->m_job == 148 && unit->m_isVisibleBody == 1,
+                "0x01AC did not reveal Shockwave Trap while preserving job148");
+        } else if (index == 3) {
+            Require(unit != nullptr && unit->m_job == 140 && unit->m_effectId == -1,
+                "0x01D7 did not activate Shockwave Trap as job140 without a saved effect");
+        } else {
+            Require(unit == nullptr, "0x0120 did not remove triggered Shockwave Trap from CWorld skill list");
+            Require(std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+                    [](CGameObject* object) {
+                        const CSkill* skill = dynamic_cast<const CSkill*>(object);
+                        return skill != nullptr && skill->m_aid == 100;
+                    }),
+                "0x0120 did not remove triggered Shockwave Trap from CWorld object ownership list");
+        }
+    }
+
+    std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
+    Require(static_cast<bool>(runtimeLog), "production runtime log was not created for Shockwave Trap trigger");
+    std::string logLine;
+    int shockwaveEntryEffectCount = 0;
+    while (std::getline(runtimeLog, logLine)) {
+        if (logLine.find("[REPLAY] LaunchEffect id=") == std::string::npos
+            || logLine.find(" actor=100") == std::string::npos) {
+            continue;
+        }
+        if (logLine.find("[REPLAY] LaunchEffect id=145 actor=100") != std::string::npos) {
+            ++shockwaveEntryEffectCount;
+        } else {
+            throw std::runtime_error("Shockwave Trap launched an unexpected actor effect: " + logLine);
+        }
+    }
+    Require(shockwaveEntryEffectCount == 1,
+        "Shockwave Trap entry must launch its single Ref effect145 and job140 must launch no saved effect");
+    std::cout << "ShockwaveTrap aid=100 skill=118 hidden=1 revealed=1 activeJob=140 entryEffect=145 savedEffect=none removed=1\n";
+}
+
 void ReplayWarpUnitLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1213,6 +1284,14 @@ bool IsAnkleSnareTriggerScenario(const std::string& path)
         && packets[1].opcode == 0x0088 && packets[2].opcode == 0x01AC;
 }
 
+bool IsShockwaveTrapTriggerScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 5 && packets.front().opcode == 0x011F
+        && packets.front().bytes.size() == 16 && packets.front().bytes[14] == 148
+        && packets[3].opcode == 0x01D7;
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -1243,6 +1322,8 @@ int main(int argc, char** argv)
             ReplayFlasherTriggerLifecycle(argv[1]);
         } else if (IsAnkleSnareTriggerScenario(argv[1])) {
             ReplayAnkleSnareTriggerLifecycle(argv[1]);
+        } else if (IsShockwaveTrapTriggerScenario(argv[1])) {
+            ReplayShockwaveTrapTriggerLifecycle(argv[1]);
         } else if (IsWarpUnitLifecycleScenario(argv[1])) {
             ReplayWarpUnitLifecycle(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {
