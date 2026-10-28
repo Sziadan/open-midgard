@@ -1642,3 +1642,7 @@ Added the WP4 Spider Web unit job183 replay. The raw 0x011F entry creates the un
 ## WP10.8 — Bard/Dancer song unit replay batch — 2026-10-28
 
 Added lifecycle packet replays for every Ref song unit job158–175. Each unit launches its mapped loop effect on the first nominal 24 ms production `CSkill::OnProcess` call, then is removed with 0x0120. Runtime confirms the full mapping, including the special Dissonance job166→effect277; focused tests pass18/18 and the complete root packet replay CTest passes45/45.
+
+## WP10.8 — Gravitation and Ninja unit replays — 2026-10-28
+
+Added WP4 lifecycle replays for Gravitation job184, Suiton job187, and Tatamigaeshi job188. Each 0x011F entry is processed once through production `CSkill::OnProcess`, launching the Ref effects522, 620, and 631 respectively, then removed through 0x0120. The focused group passes3/3 and the full root packet replay CTest passes48/48.

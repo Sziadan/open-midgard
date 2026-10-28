@@ -28,6 +28,8 @@ Each scenario is UTF-8 TSV with three columns: packet opcode (integer, `0x` pref
 
 The song unit fixtures cover jobs158–175 (Lullaby through Service for You) and verify the Ref loop effects278–294 after one nominal 24 ms process step; Dissonance job166 uses effect277. Each unit is removed with `0x0120`.
 
+`gravitation_unit_lifecycle.tsv`, `suiton_unit_lifecycle.tsv`, and `tatamigaeshi_unit_lifecycle.tsv` replay jobs184,187,188 and verify Ref loop effects522,620,631 respectively after one nominal 24 ms process step, followed by `0x0120` removal.
+
 `magnus_unit_lifecycle.tsv` replays unit job132 (`UNT_MAGNUS`), checks its loop effect318 after one nominal 24 ms process step, then removes it with `0x0120`.
 
 `sanctuary_unit_lifecycle.tsv` replays unit job131 (`UNT_SANCTUARY`), calls `CSkill::OnProcess` for one nominal 24 ms step, checks loop effect319, and removes the unit with `0x0120`.

@@ -3236,3 +3236,7 @@ The four new fixtures send 0x011F unit jobs154–157 and 0x0120 removal. Ref `CS
 ## WP10.8 runtime replay — Bard/Dancer song units — 2026-10-28
 
 The 18 scenario TSVs send job158–175 entries and removal packets. Ref `CSkill::OnProcess` maps the sequence to effects278–294, except Dissonance job166→277 (`Ref/Skill.cpp:1445-1535`). The production runtime confirms every effect after the first nominal 24 ms process call and confirms world-list cleanup. Focused batch passes18/18; full packet replay CTest passes45/45.
+
+## WP10.8 runtime replay — Gravitation and Ninja units — 2026-10-28
+
+`gravitation_unit_lifecycle.tsv`, `suiton_unit_lifecycle.tsv`, and `tatamigaeshi_unit_lifecycle.tsv` send unit jobs184, 187, and 188. Ref `CSkill::OnProcess` maps them to loop effects522, 620, and 631 (`Ref/Skill.cpp:1576-1600`); runtime confirms the effect after one nominal 24 ms process call and confirms cleanup from both world lists. Focused and full replay CTest pass48/48.
