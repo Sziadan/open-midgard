@@ -1326,3 +1326,7 @@ PE case119 calls Detecting; the PE and primary-Ref helper bodies match while the
 ## WP10.3 — Detoxication 21 verification — 2026-10-28
 
 Effect21 was already routed to `ProcessDetoxication21`; PE and primary-Ref helper bodies match, while only the PE caller invokes Detoxication. `check_detoxication_caller.py` now checks the exact executable wave bytes. Lifecycle assertions cover state-zero effect-minus-listener sound position, particle payload, four ordered RNG draws, reduced-effects cadence (frames 0 and 15), normal cadence (frame 5), resource names and reference particle family. A too-strict test-only floating-point comparison was corrected; focused lifecycle and Detoxication comparator tests pass. Coverage remains 547 routed / 146 explicit unported / 47 launched-unported; production source did not change. Runtime acceptance remains open. Next: DragonSmoke.
+
+## WP10.3 — DragonSmoke 373 verification — 2026-10-28
+
+DragonSmoke was already implemented and documented. Registered `check_dragon_smoke.py` with CTest, corrected its current-handler extraction boundary so the RNG count covers only `SpawnDragonSmoke`, and added direct PE string-byte checks for both CP949 assets at `0x71B440` and `0x71B42C`. The focused comparator passes and Release CTest passes 153/153. No production handler changes were needed. Next per the WP10.3 priority list: LockOn (60).
