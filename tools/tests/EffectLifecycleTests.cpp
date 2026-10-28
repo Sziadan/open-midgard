@@ -512,6 +512,7 @@ struct CRagEffect : CGameObject {
     bool ProcessSignum();
     bool ProcessAngelus();
     bool ProcessFireHit();
+    bool ProcessDetoxication21();
     std::optional<bool> ProcessReferenceStrOnly();
     void SpawnFireSplashHit();
     void SpawnColdHit();
@@ -6310,6 +6311,39 @@ int main()
         effect.InitEZ2STRFrame();effect.m_stateCnt=1;
         check(effect.ProcessPotionConcentration() && effect.m_strScreenOffset.x==0 && effect.m_strScreenOffset.y==-80 && effect.m_strScreenOffset.z==0,
             "potion caller processes original STR offset and propagates its active result");
+    }
+    {
+        CRenderObject listener;listener.m_pos={10,4,20};CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        const bool oldMinEffects=g_session.m_isMinEffect;g_session.m_isMinEffect=true;
+        CRagEffect effect;effect.m_type=21;effect.m_effectPos={30,40,50};effect.m_stateCnt=0;
+        waveCalls.clear();g_resMgr.requests.clear();rngValues={359,5,29,49};rngCursor=0;const int draws=rngDraws;
+        check(effect.ProcessDetoxication21()&&effect.m_primList.size()==1&&rngDraws==draws+4&&rngCursor==4,
+            "Detoxication state zero emits one reduced-effects particle with four ordered random draws");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_Detoxication.wav"
+            &&waveCalls[0].x==20&&waveCalls[0].y==0&&waveCalls[0].z==30,
+            "Detoxication plays its canonical state-zero wave at effect-minus-listener X/Z");
+        matrix expected;MatrixIdentity(expected);MatrixAppendYRotation(expected,GetRadian(359));
+        check(prim&&prim->m_type==PP_3DPARTICLE&&prim->UsesReferenceParticle()&&prim->m_duration==40
+            &&prim->m_alpha==0&&prim->m_speed==0.59f&&std::fabs(prim->m_accel-static_cast<float>(static_cast<double>(0.59f)/40.0*-0.5))<0.000001f
+            &&prim->m_size==0.89f&&prim->m_rollSpeed==3.0f&&prim->m_alphaSpeed==25.4f&&prim->m_fadeOutCnt==32
+            &&std::fabs(prim->m_deltaPos2.x-(7.0f*expected.m[2][0]+expected.m[3][0]))<0.00001f
+            &&std::fabs(prim->m_deltaPos2.z-(7.0f*expected.m[2][2]+expected.m[3][2]))<0.00001f
+            &&prim->m_numSegments==1&&prim->m_spriteSprName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.spr"
+            &&prim->m_spriteActName=="\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.act",
+            "Detoxication particle preserves source orbit offset, motion, fade, resources and reference family");
+        effect.ClearPrims();g_world.UpdateGameObjects();effect.m_stateCnt=1;waveCalls.clear();const int idleDraws=rngDraws;
+        check(effect.ProcessDetoxication21()&&effect.m_primList.empty()&&waveCalls.empty()&&rngDraws==idleDraws,
+            "Detoxication reduced-effects cadence skips frame one without wave or random draws");
+        effect.m_stateCnt=15;rngValues={10,2,0,0};rngCursor=0;effect.ProcessDetoxication21();
+        check(effect.m_primList.size()==1&&waveCalls.empty()&&rngCursor==4,
+            "Detoxication reduced-effects cadence emits again at frame fifteen without repeating audio");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_session.m_isMinEffect=false;effect.m_stateCnt=5;
+        rngValues={90,0,10,10};rngCursor=0;effect.ProcessDetoxication21();
+        check(effect.m_primList.size()==1&&waveCalls.empty()&&rngCursor==4,
+            "Detoxication normal-effects cadence emits at frame five");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;g_session.m_isMinEffect=oldMinEffects;
+        rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject actor;actor.m_pos={90,80,70};actor.m_u28.m_sprColor.u.s={123,1,2,3};

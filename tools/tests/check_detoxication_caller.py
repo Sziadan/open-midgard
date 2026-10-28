@@ -63,4 +63,7 @@ image = resolver.ExeImage()
 assets = [image.read_cstring_at(address).raw for address in (0x71B334, 0x71B31C)]
 if assets != [b"\xc0\xcc\xc6\xd1\xc6\xae\\particle2.spr", b"\xc0\xcc\xc6\xd1\xc6\xae\\particle2.act"]:
     raise SystemExit(f"Detoxication particle2 resource bytes changed: {assets!r}")
+wave = resolver.SymbolTable(image).resolve_name("aEffectEfDetoxi")
+if wave is None or wave.raw != b"effect\\EF_Detoxication.wav":
+    raise SystemExit(f"Detoxication executable wave bytes changed: {wave!r}")
 print("Detoxication21 parity: Ref/PE helper, caller, route, intervals, wave, four-draw RNG, assets and renderer family passed")
