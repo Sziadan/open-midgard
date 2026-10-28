@@ -145,7 +145,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 104	OnProcess	MaxPower	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc;src/session/SkillAttackEffectIdTable.generated.inc	-
 105	OnProcess	inline	unported	OnProcess -> UnportedEffect		-
 161	OnProcess	inline	unported	OnProcess -> UnportedEffect		-
-198	OnProcess	inline	unported	OnProcess -> UnportedEffect	src/session/SkillAttackEffectIdTable.generated.inc	-
+198	OnProcess	inline	routed	OnProcess -> return true;	src/session/SkillAttackEffectIdTable.generated.inc	34
 443	OnProcess	inline	unported	OnProcess -> UnportedEffect		-
 489	OnProcess	inline	unported	OnProcess -> UnportedEffect		-
 490	OnProcess	inline	unported	OnProcess -> UnportedEffect		-

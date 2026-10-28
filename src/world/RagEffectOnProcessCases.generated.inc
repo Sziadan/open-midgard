@@ -145,7 +145,7 @@ case 103: return ProcessClipWaveStrEffect();
 case 104: return UnportedEffect();
 case 105: return UnportedEffect();
 case 161: return UnportedEffect();
-case 198: return UnportedEffect();
+case 198: return true;
 case 443: return UnportedEffect();
 case 489: return UnportedEffect();
 case 490: return UnportedEffect();

@@ -642,3 +642,6 @@ Canonical PE case117 invokes WaterBall2, and its helper matches the primary `Ref
 # WP10.3 Revive caller evidence
 
 Canonical PE case140 invokes Revive, and its helper matches the primary `Ref/RagEffect.cpp` helper at line7160. The available primary Ref OnProcess switch omits the call. The local route follows the canonical PE/primary Ref helper and uses the executable-resolved `effect\\ring_yellow.tga` texture. Live visual acceptance remains open.
+# WP10.3 effect198 inline case semantics
+
+The PE switch groups effect198 with four other empty cases that break to common processing; it does not call a helper or emit an effect. The prior local unported route returned false and ended the effect immediately. Effect198 now returns true through the explicit generated route so the normal frame/lifetime path runs. The primary Ref caller switch omits the inline group. Status-state effect198's existing icon/tint mapping is a separate behavior and does not imply an OnProcess emitter. Live acceptance remains open.
