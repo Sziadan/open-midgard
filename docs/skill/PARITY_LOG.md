@@ -3216,3 +3216,7 @@ Between 0x011F Firewall entry and 0x0120 removal, the runner calls real `CSkill:
 ## WP10.8 runtime replay — Quagmire periodic unit — 2026-10-28
 
 `quagmire_unit_lifecycle.tsv` creates unit job142 through 0x011F, processes it for 140 nominal 24 ms calls, and removes it with 0x0120. Ref case142 checks `m_launchCnt >= durationTable[95] - 20`; the verified duration is150, so the first effect95 launch occurs on call131 (`Ref/Skill.cpp:1287-1698`). Runtime logged effect95 and confirms the unit remains active before packet removal. Focused replay and the full replay suite pass20/20.
+
+## WP10.8 runtime replay — Basilica unit — 2026-10-28
+
+`basilica_unit_lifecycle.tsv` sends a 0x011F entry for job180 (`UNT_BASILICA`), invokes production `CSkill::OnProcess` once after a nominal 24 ms interval, and removes the unit with 0x0120. Ref maps job180 to `LaunchLoop(374)` (`Ref/Skill.cpp:1287-1698`); runtime confirms effect374 after 25 ms measured elapsed and verifies both world lists are cleaned up. Focused and full replay CTest pass21/21.
