@@ -1630,3 +1630,7 @@ Added the WP4 Basilica unit job180 replay. The 0x011F set packet creates the uni
 ## WP10.8 — Gospel unit effect replay — 2026-10-28
 
 Added the WP4 Gospel unit job179 replay. The 0x011F set packet creates the unit, one nominal 24 ms production `CSkill::OnProcess` step launches Ref loop effect370, and 0x0120 removes it. Focused replay passes; the complete root packet replay CTest passes22/22. The fixture verifies lifecycle and effect dispatch without requiring model resources.
+
+## WP10.8 — Elemental ground-unit replay batch — 2026-10-28
+
+Added packet lifecycle replays for Volcano job154, Deluge job155, Violent Gale job156, and Land Protector job157. Each raw 0x011F entry configures the same controlled cell, real `CSkill::OnProcess` launches the matching Ref loop effect239–242, and 0x0120 removes the unit. The replay runner now truncates its per-process debug log at startup because Windows may reuse a PID across sequential CTest processes; previously stale WBA lines could contaminate assertions. Focused four-case group and full root packet replay CTest pass26/26.

@@ -3224,3 +3224,7 @@ Between 0x011F Firewall entry and 0x0120 removal, the runner calls real `CSkill:
 ## WP10.8 runtime replay — Gospel unit — 2026-10-28
 
 `gospel_unit_lifecycle.tsv` sends a 0x011F entry for job179 (`UNT_GOSPEL`), invokes production `CSkill::OnProcess` once after a nominal 24 ms interval, and removes the unit with 0x0120. Ref maps job179 to `LaunchLoop(370)` (`Ref/Skill.cpp:1287-1698`); runtime confirms effect370 after 25 ms measured elapsed and verifies cleanup from both world lists. Focused and full replay CTest pass22/22.
+
+## WP10.8 runtime replay — elemental ground units — 2026-10-28
+
+The four new fixtures send 0x011F unit jobs154–157 and 0x0120 removal. Ref `CSkill::OnProcess` maps 154→239, 155→240, 156→241, and 157→242 (`Ref/Skill.cpp:1405-1431`); runtime confirms each expected effect after a nominal 24 ms step and verifies the unit is removed from both world lists. CTest exposed PID reuse contaminating `debug_hp_<pid>.log` because `DbgLog` appends; the runner now truncates its own log before replay. Focused cases pass4/4 and the full replay suite passes26/26.

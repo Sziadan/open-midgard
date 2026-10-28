@@ -568,7 +568,8 @@ void ReplaySkillUnitLifecycle(const std::string& path)
         "skill-unit removal must use the 6-byte 0x0120 packet");
     const int unitJob = packets[0].bytes[14];
     Require(unitJob == 126 || unitJob == 127 || unitJob == 131 || unitJob == 132
-            || unitJob == 141 || unitJob == 142 || unitJob == 177 || unitJob == 179 || unitJob == 180,
+            || unitJob == 141 || unitJob == 142 || (unitJob >= 154 && unitJob <= 157)
+            || unitJob == 177 || unitJob == 179 || unitJob == 180,
         "unsupported skill-unit replay job");
     int expectedLoopEffect = 0;
     switch (unitJob) {
@@ -578,6 +579,10 @@ void ReplaySkillUnitLifecycle(const std::string& path)
     case 132: expectedLoopEffect = 318; break;
     case 141: expectedLoopEffect = 74; break;
     case 142: expectedLoopEffect = 95; break;
+    case 154: expectedLoopEffect = 239; break;
+    case 155: expectedLoopEffect = 240; break;
+    case 156: expectedLoopEffect = 241; break;
+    case 157: expectedLoopEffect = 242; break;
     case 177: expectedLoopEffect = 302; break;
     case 179: expectedLoopEffect = 370; break;
     case 180: expectedLoopEffect = 374; break;
@@ -797,6 +802,10 @@ int main(int argc, char** argv)
 {
     try {
         Require(argc == 2, "expected one replay scenario path");
+        const std::string runtimeLogPath = "debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log";
+        std::ofstream freshRuntimeLog(runtimeLogPath, std::ios::trunc);
+        Require(static_cast<bool>(freshRuntimeLog), "could not reset per-run production runtime log");
+        freshRuntimeLog.close();
         if (IsSkillCastCancelScenario(argv[1])) {
             ReplaySkillCastCancel(argv[1]);
         } else if (IsTrapRevealScenario(argv[1])) {

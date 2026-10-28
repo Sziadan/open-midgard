@@ -1,0 +1,6 @@
+# actor	source	1	0	16	16
+# actor	target	2	0	18	16
+# actor	actor	3	156	10	20
+# opcode	hexBytes	comment
+0x011F	1F0164000000010000000A0014009C01	Violent Gale unit entry (job156, unit AID100, creator AID1, cell10,20)
+0x0120	200164000000	Remove Violent Gale unit AID100
