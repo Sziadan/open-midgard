@@ -11,7 +11,7 @@ COVERAGE = ROOT / "docs/skill/generated/EFFECT_COVERAGE.tsv"
 OUT = ROOT / "src/world"
 
 FORCE_UNPORTED = {244, 537, 612}
-FORCE_ROUTE = {315, 366, 376, 262, 264, 266, 275, 276, 429, 430, 431, 491, 492, 507, 508, 565, 566, 567, 568, 569,
+FORCE_ROUTE = {315, 366, 376, 262, 264, 266, 275, 276, 267, 606, 607, 429, 430, 431, 491, 492, 507, 508, 565, 566, 567, 568, 569,
                593, 594, 595, 596, 597, 598, 603, 608, 609, 646, 649,
                668, 669, 670, 677, 699, 67, 87, 133, 134, 136, 251, 406, 407,
                65, 66, 69, 75, 76, 77, 78, 83, 84, 85, 88, 91, 96, 97, 103,
@@ -151,6 +151,9 @@ DIRECT_CALLS = {
     266: "return ProcessTeiHitEffects();",
     275: "return ProcessTeiHitEffects();",
     276: "return ProcessTeiHitEffects();",
+    267: "return ProcessChimtoEffect(0);",
+    606: "return ProcessChimtoEffect(2);",
+    607: "return ProcessChimtoEffect(1);",
     610: "return ProcessTarotEffect();",
     611: "return ProcessTarotEffect();",
     613: "return ProcessThrowItemEffect();",

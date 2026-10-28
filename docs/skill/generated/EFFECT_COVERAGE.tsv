@@ -272,7 +272,7 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 264	OnProcess	TEIHIT2	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	53
 265	OnProcess	TANJI	unported	OnProcess -> UnportedEffect		-
 266	OnProcess	TEIHIT1	routed	OnProcess -> return ProcessTeiHitEffects();	src/world/SkillSpecialEffect.cpp	806
-267	OnProcess	CHIMTO	unported	OnProcess -> UnportedEffect	src/world/SkillSpecialEffect.cpp	-
+267	OnProcess	CHIMTO	routed	OnProcess -> return ProcessChimtoEffect(0);	src/world/SkillSpecialEffect.cpp	1117
 269	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
 270	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	-
 271	OnProcess	ProcessEZ2STR	unported	OnProcess -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc;src/world/SkillSpecialEffect.cpp	-
@@ -605,8 +605,8 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 602	OnProcess3	NpcStop	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
 604	OnProcess3	NpcStop	unported	OnProcess3 -> UnportedEffect		-
 605	OnProcess3	inline	unported	OnProcess3 -> UnportedEffect		-
-606	OnProcess3	CHIMTO	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
-607	OnProcess3	CHIMTO	unported	OnProcess3 -> UnportedEffect	src/gamemode/UseSkillEffect.generated.inc	-
+606	OnProcess3	CHIMTO	routed	OnProcess3 -> return ProcessChimtoEffect(2);	src/gamemode/UseSkillEffect.generated.inc	686
+607	OnProcess3	CHIMTO	routed	OnProcess3 -> return ProcessChimtoEffect(1);	src/gamemode/UseSkillEffect.generated.inc	1117
 608	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		15
 609	OnProcess3	ProcessEZ2STR	routed	OnProcess3 -> return ProcessTier3StrEffect();		15
 610	OnProcess3	EffectTextureSet	routed	OnProcess3 -> return ProcessTarotEffect();		98

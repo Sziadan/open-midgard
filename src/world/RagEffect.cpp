@@ -18050,6 +18050,85 @@ bool CRagEffect::ProcessTeiHitEffects()
     return true;
 }
 
+// Ref/RagEffect2.cpp:24723-24834; canonical helper at HighPriest.exe.c:460610.
+bool CRagEffect::ProcessChimtoEffect(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt != 0) return true;
+
+    if (variant == 0) {
+        TryPlaySingleEffectWave(m_effectPos, "effect\\mon_\xC4\xA7\xC5\xF5\xB0\xE6.wav", 0.0f, true);
+    }
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_CHIMTO, vector3d{});
+    if (prim == nullptr) return true;
+    prim->m_duration = m_duration;
+    prim->m_gi[0].life = 1;
+    prim->m_gi[0].maxHeight = 0.0f;
+    prim->m_gi[0].vecBPreX = m_deltaPos.x;
+    prim->m_gi[0].arcBaselineY = m_deltaPos.y;
+    prim->m_gi[0].vecBPreZ = m_deltaPos.z;
+
+    switch (variant) {
+    case 0:
+        prim->m_alpha = 200.0f;
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\\xC4\xA7\xC5\xF5\xB0\xE6_.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC4\xA7\xC5\xF5\xB0\xE6_.act");
+        prim->m_animSpeed = 2;
+        prim->m_size = 2.5f;
+        break;
+    case 1:
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\wink.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\wink.act");
+        prim->m_animSpeed = 6;
+        prim->m_size = 1.0f;
+        prim->m_repeatAnim = false;
+        prim->m_pattern |= 0x200;
+        break;
+    case 2:
+        prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\fvoice.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\fvoice.act");
+        prim->m_animSpeed = 6;
+        prim->m_size = 1.0f;
+        prim->m_repeatAnim = false;
+        prim->m_pattern |= 0x200;
+        break;
+    default:
+        return true;
+    }
+
+    const float deltaZ = m_effectPos.z - m_deltaPos.z;
+    const float deltaX = m_effectPos.x - m_deltaPos.x;
+    const float lengthSquared = deltaZ * deltaZ + deltaX * deltaX;
+    const double length = std::sqrt(static_cast<double>(lengthSquared));
+    const float normalizedZ = static_cast<float>(deltaZ / length);
+    const float normalizedX = static_cast<float>(deltaX / length);
+    int angle = 0;
+    while (normalizedX < g_cosTable[angle]) {
+        if (++angle > 180) { angle = 180; break; }
+    }
+    const int direction = normalizedZ < 0.0f ? 360 - angle : angle;
+    CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+    const short longitude = mode != nullptr && mode->m_view != nullptr
+        ? static_cast<short>(mode->m_view->GetCameraLongitude()) : 0;
+    const short signedFacing = static_cast<short>(direction + longitude) % 360;
+    const short facing = static_cast<short>(signedFacing + ((signedFacing & 0x8000u) != 0 ? 360 : 0));
+    prim->m_renderFlag |= 0x200;
+    if (facing < 180 || facing >= 270) {
+        if (facing < 90 || facing >= 180) prim->m_spriteAction = static_cast<unsigned short>(facing) > 0x59 ? 3 : 2;
+        else prim->m_spriteAction = 1;
+    } else {
+        prim->m_spriteAction = 0;
+    }
+    prim->m_curMotion = 0;
+    prim->m_numSegments = 1;
+    InitReferenceSegments(prim);
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {

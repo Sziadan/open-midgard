@@ -521,6 +521,7 @@ private:
     bool ProcessHitLine5Effect();
     bool ProcessHitLine3Effect();
     bool ProcessTeiHitEffects();
+    bool ProcessChimtoEffect(int variant);
     void SpawnTeiHit1(const char* textureName, char variant);
     void SpawnTeiHit2();
     void SpawnTeiHit3(const char* textureName, char variant);

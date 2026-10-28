@@ -272,7 +272,7 @@ case 263: ApplyVolcano("effect\\ring_yellow.tga", 1, false); return true;
 case 264: return ProcessTeiHitEffects();
 case 265: return UnportedEffect();
 case 266: return ProcessTeiHitEffects();
-case 267: return UnportedEffect();
+case 267: return ProcessChimtoEffect(0);
 case 269: return UnportedEffect();
 case 270: return UnportedEffect();
 case 271: return UnportedEffect();
