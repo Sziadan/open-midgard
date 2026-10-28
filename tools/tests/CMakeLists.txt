@@ -806,6 +806,8 @@ add_test(NAME cross_texture_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_cross_texture_render.py")
 add_test(NAME 3dtexture_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_3dtexture_render.py")
+add_test(NAME prim3dquadhorn_render_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dquadhorn.py")
 add_test(NAME hitline_caller_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_hitline_caller.py")
 add_test(NAME hitline4_caller_source_check
@@ -1113,6 +1115,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_aura2_render.py
     check_cross_texture_render.py
     check_3dtexture_render.py
+    check_prim3dquadhorn.py
     check_hitline_caller.py
     check_hitline4_caller.py
     check_hitline5_caller.py

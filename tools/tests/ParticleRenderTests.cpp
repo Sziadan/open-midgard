@@ -1191,6 +1191,11 @@ int main() {
         check(matches(g_renderer.m_rpAlphaList[0].second->m_verts[0],{11,22,105}),"FrostDiver geometry uses retained render matrix translation independently of movement matrix");
         ice.m_rotMat.m[0][0]=0;ice.m_rotMat.m[0][2]=1;ice.m_rotMat.m[2][0]=-1;ice.m_rotMat.m[2][2]=0;renderIce();
         check(matches(g_renderer.m_rpAlphaList[0].second->m_verts[1],{-2,24,105}),"FrostDiver apex follows retained rotation before adding primitive world origin");
+        ice.m_rotMat={};ice.m_rotMat.m[0][0]=1.25f;ice.m_rotMat.m[1][0]=2.5f;ice.m_rotMat.m[2][0]=3.75f;ice.m_rotMat.m[3][0]=4;
+        ice.m_rotMat.m[0][1]=5.25f;ice.m_rotMat.m[1][1]=6.5f;ice.m_rotMat.m[2][1]=7.75f;ice.m_rotMat.m[3][1]=8;
+        ice.m_rotMat.m[0][2]=9.25f;ice.m_rotMat.m[1][2]=10.5f;ice.m_rotMat.m[2][2]=11.75f;ice.m_rotMat.m[3][2]=12;renderIce();
+        check(matches(g_renderer.m_rpAlphaList[0].second->m_verts[2],{11.5f,25.5f,109.5f}),
+            "FrostDiver unusual third-corner transform uses each matrix basis term and translation");
         ice.m_argb=0;renderIce();check(g_renderer.m_rpAlphaList.size()==4&&g_renderer.m_rpAlphaList[0].second->m_verts[0].color==0,
             "FrostDiver retains source zero-alpha face submissions");
         ice.m_texture.clear();renderIce();check(g_renderer.m_rpAlphaList.empty(),"FrostDiver missing texture emits no replacement geometry");

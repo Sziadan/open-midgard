@@ -1,6 +1,6 @@
 ## Skill system implementation progress
 
-Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`
+Plan: `docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md`\n\nLatest checkpoint (2026-10-29): PP_3DQUADHORN / PP_3DQUADHORN2 renderer parity is now recorded by `check_prim3dquadhorn.py`. Canonical PE and primary Ref `Render3DQuadHorn` bodies normalize identically. The comparator pins the unusual third-corner Y/Z operation order, geometry, dispatch, texture slot 0, ARGB, +0.2 UV bands and flag 1; the existing local helper matches. Added a focused fixture for the third-corner matrix transform; the source check and particle renderer CTest pass. No production mismatch found. Next: continue remaining `Prim*`/`Render*` comparators in the inventory audit.
 Rule: 1:1 with `Ref` and `HighPriest.exe`. No guessed asset names, no stubs.
 
 Last updated: 2026-10-28
