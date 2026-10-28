@@ -654,6 +654,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect273();
     bool ProcessEffect440();
     bool ProcessLandProtector(int);
+    bool ProcessGhost(int);
     bool ProcessBottomVertical(int);
     bool ProcessTanji(bool);
     bool ProcessBasilica();
@@ -3890,6 +3891,55 @@ int main()
             check(effect.m_primList.size()==1&&effect.m_effectPos.x==31&&effect.m_effectPos.y==53
                 &&effect.m_effectPos.z==75&&rngDraws==draws+1&&g_texMgr.requests.size()==1,
                 "Land Protector 671/672 refresh master position without repeating primitive, texture, or RNG");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+        }
+    }
+    {
+        CRenderObject actor; actor.m_pos={12,34,56};
+        const int draws=rngDraws;
+        const size_t oldWaves=waveCalls.size();
+        for (int variant=0;variant<=2;++variant) {
+            CRagEffect effect; effect.m_type=358+variant; effect.m_master=&actor;
+            effect.m_duration=73; effect.m_effectPos={1,2,3};
+            const char* spr=variant==0
+                ? "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC0\xAF\xB7\xC9.spr"
+                : "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB9\xDA\xC1\xE3.spr";
+            const char* act=variant==0
+                ? "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC0\xAF\xB7\xC9.act"
+                : "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB9\xDA\xC1\xE3.act";
+            for (int state : {0,1,9}) {
+                effect.m_stateCnt=state;
+                actor.m_pos={static_cast<float>(state+20),static_cast<float>(state+40),static_cast<float>(state+60)};
+                g_resMgr.requests.clear();
+                effect.ProcessGhost(variant);
+                CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.back();
+                EffectGi* gi=prim?&prim->m_gi[0]:nullptr;
+                const float expectedHeight=variant==2&&state==0?250.0f:static_cast<float>(3*(10-state));
+                bool lanes=prim!=nullptr;
+                if (prim) for (size_t lane=1;lane<4;++lane) lanes=lanes&&prim->m_gi[lane].life==0;
+                check(effect.m_primList.size()==static_cast<size_t>(state==0?1:(state==1?2:3))
+                    &&prim&&prim->m_type==PP_GHOST&&prim->m_duration==73&&prim->m_size==1.5f
+                    &&prim->m_renderFlag==0x201&&prim->m_animSpeed==2&&prim->m_spriteAction==0
+                    &&prim->m_spriteMotionBase==16&&prim->m_curMotion==0&&!prim->m_repeatAnim
+                    &&!prim->m_spriteRepeat&&prim->m_numSegments==1&&prim->m_segments.size()>=1
+                    &&prim->m_spriteSprName==spr&&prim->m_spriteActName==act
+                    &&g_resMgr.requests==std::vector<std::string>({spr,act})
+                    &&gi&&gi->process==0&&gi->life==1&&gi->flag[0]==(variant==2?2:1)
+                    &&gi->flag[2]==variant&&gi->distance==16&&gi->maxHeight==4
+                    &&gi->height[1]==expectedHeight&&gi->rotStart==0&&gi->riseAngle==0
+                    &&gi->sparkX==actor.m_pos.x&&gi->sparkY==actor.m_pos.y&&gi->sparkZ==actor.m_pos.z
+                    &&prim->m_alpha==0&&lanes
+                    &&effect.m_effectPos.x==actor.m_pos.x&&effect.m_effectPos.y==actor.m_pos.y
+                    &&effect.m_effectPos.z==actor.m_pos.z&&rngDraws==draws&&waveCalls.size()==oldWaves,
+                    "Ghost effects 358-360 emit exact per-state GI payload and executable resources");
+            }
+            effect.m_stateCnt=10; actor.m_pos={91,92,93}; g_resMgr.requests.clear();
+            const size_t count=effect.m_primList.size();
+            effect.ProcessGhost(variant);
+            check(effect.m_primList.size()==count&&g_resMgr.requests.empty()
+                &&effect.m_effectPos.x==91&&effect.m_effectPos.y==92&&effect.m_effectPos.z==93
+                &&rngDraws==draws&&waveCalls.size()==oldWaves,
+                "Ghost effects copy master position at state 10 without launching or side effects");
             effect.ClearPrims(); g_world.UpdateGameObjects();
         }
     }

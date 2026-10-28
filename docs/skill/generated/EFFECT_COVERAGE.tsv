@@ -472,9 +472,9 @@ id	tier	refHandler	status	srcRoute	launchedBy	parityLogLine
 354	OnProcess2	WaterFall,WaterFallParticle	unported	OnProcess2 -> UnportedEffect		-
 355	OnProcess2	WaterFall,WaterFallParticle	unported	OnProcess2 -> UnportedEffect		-
 356	OnProcess2	WaterFall,WaterFallParticle	unported	OnProcess2 -> UnportedEffect		-
-358	OnProcess2	Ghost	unported	OnProcess2 -> UnportedEffect		-
-359	OnProcess2	Ghost	unported	OnProcess2 -> UnportedEffect		-
-360	OnProcess2	Ghost	unported	OnProcess2 -> UnportedEffect		-
+358	OnProcess2	Ghost	routed	OnProcess2 -> return ProcessGhost(0);		3574
+359	OnProcess2	Ghost	routed	OnProcess2 -> return ProcessGhost(1);		3574
+360	OnProcess2	Ghost	routed	OnProcess2 -> return ProcessGhost(2);		3574
 361	OnProcess2	SoulBreaker	routed	OnProcess2 -> return ProcessSoulBreaker361Effect();	src/world/SkillSpecialEffect.cpp	35
 362	OnProcess2	Level99_3	routed	OnProcess2 -> return ProcessLevel99_3Effect();		35
 363	OnProcess2	Vallentine	unported	OnProcess2 -> UnportedEffect		-

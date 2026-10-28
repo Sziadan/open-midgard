@@ -35,7 +35,7 @@ FORCE_ROUTE.add(92)
 FORCE_ROUTE.add(361)
 FORCE_ROUTE.add(365)
 FORCE_ROUTE.add(440)
-FORCE_ROUTE.update({242, 404, 671, 672, 277, 287, 290, 292, 294, 281, 284, 288, 265, 412, 374, 410, 428, 297, 434, 447, 448, 467, 468, 469, 470, 471, 472, 473, 326, 327, 340, 557, 558, 559, 560, 497, 498, 499, 513, 517, 551})
+FORCE_ROUTE.update({242, 404, 671, 672, 358, 359, 360, 277, 287, 290, 292, 294, 281, 284, 288, 265, 412, 374, 410, 428, 297, 434, 447, 448, 467, 468, 469, 470, 471, 472, 473, 326, 327, 340, 557, 558, 559, 560, 497, 498, 499, 513, 517, 551})
 
 DIRECT_CALLS = {
     # Main OnProcess cases whose index handler includes more than raw STR.
@@ -86,6 +86,9 @@ DIRECT_CALLS = {
     404: "return ProcessLandProtector(2);",
     671: "return ProcessLandProtector(3);",
     672: "return ProcessLandProtector(4);",
+    358: "return ProcessGhost(0);",
+    359: "return ProcessGhost(1);",
+    360: "return ProcessGhost(2);",
     277: "return ProcessBottomVertical(277);",
     287: "return ProcessBottomVertical(287);",
     290: "return ProcessBottomVertical(290);",

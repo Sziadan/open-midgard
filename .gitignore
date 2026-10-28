@@ -144,3 +144,4 @@ tools/tests/*
 !tools/tests/replay/SkillPacketReplayTests.cpp
 !tools/tests/check_effect92.py
 !tools/tests/check_effects671_672_land_protector.py
+!tools/tests/check_effects358_360_ghost.py

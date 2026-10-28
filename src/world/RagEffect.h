@@ -554,6 +554,7 @@ private:
     bool ProcessEffect273();
     bool ProcessEffect440();
     bool ProcessLandProtector(int variant);
+    bool ProcessGhost(int variant);
     bool ProcessBottomVertical(int variant);
     bool ProcessTanji(bool tanji2);
     bool ProcessBasilica();

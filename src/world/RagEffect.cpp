@@ -20418,6 +20418,57 @@ bool CRagEffect::ProcessLandProtector(int variant)
 }
 // TEST_BODY_END land_protector_family
 
+// PE HighPriest.exe.c:433469 (0x60AD70); Ref/RagEffect.cpp:10495-10502.
+// TEST_BODY_BEGIN ghost_effect_family
+bool CRagEffect::ProcessGhost(int variant)
+{
+    CRenderObject* master = m_master;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt < 10) {
+        CEffectPrim* prim = LaunchEffectPrim(PP_GHOST, vector3d{});
+        prim->m_duration = m_duration;
+        EffectGi& gi = prim->m_gi[0];
+        gi.process = 0;
+        gi.life = 1;
+        prim->m_size = 1.5f;
+        gi.sparkX = m_effectPos.x;
+        gi.sparkY = m_effectPos.y;
+        gi.sparkZ = m_effectPos.z;
+        gi.rotStart = 0;
+        gi.riseAngle = 0;
+        if (variant == 2) {
+            gi.flag[0] = 2;
+            gi.height[1] = m_stateCnt ? static_cast<float>(3 * (10 - m_stateCnt)) : 250.0f;
+        } else {
+            gi.flag[0] = 1;
+            gi.height[1] = static_cast<float>(3 * (10 - m_stateCnt));
+        }
+        gi.flag[2] = static_cast<u8>(variant);
+        gi.distance = 16.0f;
+        gi.maxHeight = 4.0f;
+        prim->m_alpha = 0.0f;
+        if (variant == 0) {
+            prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\\xC0\xAF\xB7\xC9.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\\xC0\xAF\xB7\xC9.act");
+        } else {
+            prim->SetParticleResources("\xC0\xCC\xC6\xD1\xC6\xAE\\\xB9\xDA\xC1\xE3.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\\xB9\xDA\xC1\xE3.act");
+        }
+        prim->m_animSpeed = 2;
+        prim->m_renderFlag |= 0x200;
+        prim->m_spriteAction = 0;
+        prim->m_spriteMotionBase = 16;
+        prim->m_curMotion = 0;
+        prim->m_repeatAnim = false;
+        prim->m_spriteRepeat = false;
+        prim->m_numSegments = 1;
+        InitReferenceSegments(prim);
+        for (size_t lane = 1; lane < 4; ++lane) prim->m_gi[lane].life = 0;
+    }
+    return true;
+}
+// TEST_BODY_END ghost_effect_family
+
 // PE HighPriest.exe.c:460223/460279; Ref/dhxj/RagEffect2.cpp:22033/22186.
 // TEST_BODY_BEGIN tanji_effect_family
 bool CRagEffect::ProcessTanji(bool tanji2)
