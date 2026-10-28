@@ -169,3 +169,4 @@ tools/tests/*
 !tools/tests/check_prim3dsegment_render.py
 !tools/tests/check_prim3dcircle_render.py
 !tools/tests/check_prim3dcylinder_render.py
+!tools/tests/check_prim2dtexture_render.py

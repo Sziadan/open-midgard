@@ -2,6 +2,12 @@
 
 Ports are listed as `Ref location -> src location`. A row is not a claim that the whole skill system is done.
 
+## WP5 CEffectPrim Render2DTexture selected screen-sprite subset — 2026-10-29
+
+- Canonical PE `HighPriest.exe.c:468771` and primary Ref `Ref/RagEffectPrim.cpp:2719` bodies normalize identically; PE dispatch ids `0x00/0x01` and Ref dispatch PP_2DTEXTURE/PP_2DTEXTUREORBIT to Render2DTexture. Local `RenderReferenceScreenTexture` is selected for master effects11,38,37,43,32,4,5,1,183,46,50,51, plus PP_2DTEXTURE pattern bit `0x4`; other PP_2DTEXTURE cases use a separate projected screen-quad route.
+- `tools/tests/check_prim2dtexture_render.py` maps the pattern-1 bottom pivot and double-height top edge, integer-degree trig-table roll, source corner arithmetic/order, both texture[m_curMotion] assignments, packed color, fixed z/oow and hard-coded AddRP flag1. Existing `ParticleRenderTests.cpp` fixtures pin SandWind two-triangle geometry/UVs/texture/blend, Hit2 pattern/roll, Hit5/6 pivot and Napalm animation frame/color. No production mismatch was found; no runtime source change or app rebuild was needed.
+- The screen-helper route uses the reference triangle helper with renderFlag1, which resolves to ordinary source-alpha/inverse-source-alpha blending. Generic-master and live visual/backend acceptance remain open.
+
 ## WP5 CEffectPrim Render3DParticle segment-sprite subset — 2026-10-29
 
 - Canonical PE `HighPriest.exe.c:469284` and primary Ref `Ref/RagEffectPrim.cpp:3939` Render3DParticle bodies normalize identically. PE and primary Ref dispatch both route PP_3DPARTICLE (`0x05`), PP_3DPARTICLEGRAVITY (`0x06`) and PP_3DPARTICLESPLINE (`0x08`) to the renderer. Local `UsesReferenceParticle()` routes an explicit master-effect subset for these types into `RenderReferenceParticlePrimitive`/`RenderParticleSprites`.
