@@ -270,7 +270,7 @@ extract_body(effect537_handler "${effect_source}" "bool CRagEffect::ProcessEffec
 extract_body(effect599_handler "${effect_source}" "bool CRagEffect::ProcessEffect599()" "bool CRagEffect::ProcessEffect602()")
 extract_body(effect602_handler "${effect_source}" "bool CRagEffect::ProcessEffect602()" "void CRagEffect::SpawnDemonstration302()")
 extract_body(effect273_handler "${effect_source}" "bool CRagEffect::ProcessEffect273()" "void CRagEffect::SpawnPressure365()")
-extract_body(effect440_handler "${effect_source}" "bool CRagEffect::ProcessEffect440()" "bool CRagEffect::ProcessEffect599()")
+extract_body(effect440_handler "${effect_source}" "bool CRagEffect::ProcessEffect440()" "// PE HighPriest.exe.c:420778/421365")
 extract_body(soulbreaker361_emitter "${effect_source}" "void CRagEffect::SpawnSoulBreaker361()" "bool CRagEffect::ProcessSoulBreaker361Effect()")
 extract_body(soulbreaker361_handler "${effect_source}" "bool CRagEffect::ProcessSoulBreaker361Effect()" "bool CRagEffect::ProcessTarotEffect()")
 extract_body(pressure365_emitter "${effect_source}" "void CRagEffect::SpawnPressure365()" "void CRagEffect::SpawnGroundShake365()")
@@ -396,6 +396,7 @@ extract_test_region(str_render "${effect_source}" str_render_family)
 extract_body(str_delta "${effect_source}" "void AddXformDelta(" "std::string ResolveStrName(")
 extract_test_region(str_process "${effect_source}" str_process_family)
 extract_test_region(clip_wave_str_helper "${effect_source}" clip_wave_str_helper)
+extract_test_region(land_protector_handler "${effect_source}" land_protector_family)
 file(READ "../../src/world/World.cpp" world_source)
 extract_body(primitive_init "${effect_source}" "void CEffectPrim::Init(" "static_assert(offsetof(EffectGi, height)")
 extract_test_region(primitive_update_family "${effect_source}" primitive_update_family)
@@ -427,6 +428,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${fireivy
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${firepillar138_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${banjjakii165_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${clip_wave_str_helper}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${land_protector_handler}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -923,6 +925,8 @@ add_test(NAME effect204_210_clipwave_str_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect204_210_clipwave_str.py")
 add_test(NAME effect208_211_potion_str_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect208_211_potion_str.py")
+add_test(NAME effect242_404_land_protector_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect242_404_land_protector.py")
 add_test(NAME skill_cast_cancel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_skill_cast_cancel_source.py")
 add_test(NAME status_state_source_check

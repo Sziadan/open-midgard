@@ -1848,3 +1848,8 @@ Ported the remaining STR/wave caller for effects208, 209, and211 from canonical 
 ## Release build repair — 2026-10-28
 
 The OpenMidgard Win32 Release build was failing in `RenderDevice.cpp`: on this target `VkImage` and `VkImageView` alias the same non-dispatchable integer type, so two overload definitions collide and their call sites become ambiguous. Replaced them with one type-generic conversion helper that handles pointer and integer Vulkan handle representations. `cmake --build build --config Release --target open_midgard` now completes and copies `open-midgard.exe` to the local OldRO output directory.
+
+
+## WP5C effects242/404 Land Protector — 2026-10-28
+
+Ported PE/secondary-Ref `Bottom_LandProtector` behavior for IDs242 and404 with exact bitmap/texture, PW-specific distance, primitive payload, master position refresh, and one frame-zero random angle. Added two local routes and source/lifecycle checks. Primary Ref caller omission is explicitly documented; coverage is now 619 routed /74 explicit unported /0 launched-but-unported. Release parity CTest passes221/221, OpenMidgard Release build succeeds and copies the executable to the local OldRO folder, and replay CTest passes102/102.

@@ -35,6 +35,7 @@ FORCE_ROUTE.add(92)
 FORCE_ROUTE.add(361)
 FORCE_ROUTE.add(365)
 FORCE_ROUTE.add(440)
+FORCE_ROUTE.update({242, 404})
 
 DIRECT_CALLS = {
     # Main OnProcess cases whose index handler includes more than raw STR.
@@ -81,6 +82,8 @@ DIRECT_CALLS = {
     361: "return ProcessSoulBreaker361Effect();",
     365: "return ProcessEffect365();",
     440: "return ProcessEffect440();",
+    242: "return ProcessLandProtector(1);",
+    404: "return ProcessLandProtector(2);",
     444: "return ProcessRunStop444();",
     456: "return ProcessCartBoost456();",
     7: "return ProcessExit7();",

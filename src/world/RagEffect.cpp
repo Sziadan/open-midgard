@@ -20028,6 +20028,36 @@ bool CRagEffect::ProcessEffect440()
     return true;
 }
 
+// PE HighPriest.exe.c:420778/421365; Ref/RagEffect2.cpp Bottom_LandProtector.
+// Primary Ref/RagEffect.cpp omits these two callers (its other callers use PW=3).
+// TEST_BODY_BEGIN land_protector_family
+bool CRagEffect::ProcessLandProtector(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    if (m_stateCnt != 0) return true;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_LANDPROTECTOR, vector3d{});
+    if (prim == nullptr) return true;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture(
+        variant == 1 ? "effect\\aaa copy.bmp" : "effect\\spiderweb.tga", false));
+
+    EffectGi& gi = prim->m_gi[0];
+    gi.life = 1;
+    gi.distance = variant == 1 ? 7.0f : 12.0f;
+    gi.rotStart = 0;
+    gi.alphaB = 100;
+    gi.riseAngle = static_cast<short>(rand() % 360);
+    gi.height[0] = -2.0f;
+    gi.height[4] = static_cast<float>(variant);
+    prim->m_size = 5.0f;
+    return true;
+}
+// TEST_BODY_END land_protector_family
+
 bool CRagEffect::ProcessEffect599()
 {
     CRenderObject* master = ResolveCurrentMaster();

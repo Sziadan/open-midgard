@@ -640,6 +640,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect602();
     bool ProcessEffect273();
     bool ProcessEffect440();
+    bool ProcessLandProtector(int);
     bool ProcessEffect365();
     bool ProcessDemonstration302();
     void SpawnDemonstration302();
@@ -3725,6 +3726,46 @@ int main()
             &&effect.m_primList.size()==2&&rngDraws==drawBase+1,
             "effect365 state3 copies position and plays only the proven prefix without respawning");
         g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor; actor.m_pos={12,34,56};
+        for (int variant=1; variant<=2; ++variant) {
+            actor.m_pos={12,34,56};
+            CRagEffect effect; effect.m_type=variant==1?242:404; effect.m_master=&actor;
+            effect.m_duration=73; effect.m_effectPos={1,2,3}; effect.m_stateCnt=1;
+            rngValues={47}; rngCursor=0; const int draws=rngDraws;
+            g_texMgr.requests.clear();
+            effect.ProcessLandProtector(variant);
+            check(effect.m_primList.empty()&&effect.m_effectPos.x==12&&effect.m_effectPos.y==34
+                &&effect.m_effectPos.z==56,
+                "Land Protector follows its master before state zero without launching");
+            check(rngDraws==draws,
+                "Land Protector before state zero consumes no RNG");
+
+            effect.m_stateCnt=0; actor.m_pos={21,43,65};
+            effect.ProcessLandProtector(variant);
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            const char* expected=variant==1?"effect\\aaa copy.bmp":"effect\\spiderweb.tga";
+            const float distance=variant==1?7.0f:12.0f;
+            check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_LANDPROTECTOR
+                &&prim->m_renderFlag==5&&prim->m_duration==73&&prim->m_size==5
+                &&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture
+                &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]==expected
+                &&prim->m_gi[0].life==1&&prim->m_gi[0].distance==distance
+                &&prim->m_gi[0].rotStart==0&&prim->m_gi[0].alphaB==100
+                &&prim->m_gi[0].riseAngle==47&&prim->m_gi[0].height[0]==-2
+                &&prim->m_gi[0].height[4]==variant
+                &&prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0
+                &&effect.m_effectPos.x==21&&effect.m_effectPos.y==43&&effect.m_effectPos.z==65
+                &&rngDraws==draws+1,
+                "Land Protector IDs 242/404 launch the exact texture and variant payload with one random angle");
+            effect.m_stateCnt=1; actor.m_pos={31,53,75};
+            effect.ProcessLandProtector(variant);
+            check(effect.m_primList.size()==1&&effect.m_effectPos.x==31&&effect.m_effectPos.y==53
+                &&effect.m_effectPos.z==75&&rngDraws==draws+1&&g_texMgr.requests.size()==1,
+                "Land Protector later states refresh master position without repeating primitive, texture, or RNG");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+        }
     }
     {
         CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};

@@ -546,6 +546,7 @@ private:
     bool ProcessEffect537();
     bool ProcessEffect273();
     bool ProcessEffect440();
+    bool ProcessLandProtector(int variant);
     bool ProcessEffect365();
     void SpawnPressure365();
     void SpawnGroundShake365();
