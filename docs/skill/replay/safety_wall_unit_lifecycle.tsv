@@ -1,0 +1,6 @@
+# actor	source	1	0	16	16
+# actor	target	2	0	18	16
+# actor	actor	3	126	10	20
+# opcode	hexBytes	comment
+0x011F	1F0164000000010000000A0014007E01	Safety Wall unit entry (unit AID100, creator AID1, cell10,20, job126, visible)
+0x0120	200164000000	Remove unit AID100

@@ -3184,3 +3184,7 @@ The replay TSV reader now accepts actor metadata comments `# actor<TAB>role<TAB>
 ## WP10.8 runtime replay — timed Fire Wall unit processing — 2026-10-28
 
 Between 0x011F Firewall entry and 0x0120 removal, the runner calls real `CSkill::OnProcess` after nominal 24 ms waits. The source method keeps job127 active until `m_SkillStartTime + 3000u < timeGetTime()`, periodically launches effect25, then returns zero. Runtime evidence: 122 calls, effect25 observed, expiry after 3023 ms, and subsequent removal from both world lists. The last-step window is measured to account for Windows scheduling; this validates the per-unit production method but does not yet drive multiple CSkill objects through the complete CWorld frame update. Replay CTest passes12/12.
+
+## WP10.8 runtime replay — Safety Wall unit effect — 2026-10-28
+
+`safety_wall_unit_lifecycle.tsv` sends the 16-byte 0x011F entry for unit job126 (`UNT_SAFETYWALL`), then steps real `CSkill::OnProcess` once after a nominal 24 ms wait. Ref `CSkill::OnProcess` maps job126 to periodic effect315 (`Ref/Skill.cpp:1287-1698`); runtime output confirms effect315 on actor AID100, 25 ms measured elapsed, followed by the 0x0120 removal. Position maps to(-27.5,7.5,22.5) on the fixture attr grid. Focused test passes1/1; replay suite passes13/13.

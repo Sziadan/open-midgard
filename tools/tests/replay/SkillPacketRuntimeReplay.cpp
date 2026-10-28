@@ -516,18 +516,21 @@ void ReplayScenario(const std::string& path)
     }
 }
 
-void ReplayFirewallUnitLifecycle(const std::string& path)
+void ReplaySkillUnitLifecycle(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
-    Require(packets.size() == 2, "Firewall unit lifecycle requires set and remove packets");
+    Require(packets.size() == 2, "skill-unit lifecycle requires set and remove packets");
     Require(packets[0].opcode == 0x011F && packets[0].bytes.size() == 16,
         "Firewall unit entry must use the 16-byte 0x011F packet");
     Require(packets[1].opcode == 0x0120 && packets[1].bytes.size() == 6,
-        "Firewall unit removal must use the 6-byte 0x0120 packet");
+        "skill-unit removal must use the 6-byte 0x0120 packet");
+    const int unitJob = packets[0].bytes[14];
+    Require(unitJob == 126 || unitJob == 127, "unsupported timed skill-unit job");
+    const int expectedLoopEffect = unitJob == 126 ? 315 : 25;
 
     Fixture fixture(path);
     CGameActor* configuredActor = fixture.world.GetGameActorByAID(3);
-    Require(configuredActor != nullptr && configuredActor->m_job == 127
+    Require(configuredActor != nullptr && configuredActor->m_job == unitJob
         && configuredActor->m_pos.x == -27.5f && configuredActor->m_pos.y == 7.5f && configuredActor->m_pos.z == 22.5f,
         "scenario actor setup did not create AID3/job127 at configured cell(10,20)");
     CGameModePacketRouter router;
@@ -538,40 +541,47 @@ void ReplayFirewallUnitLifecycle(const std::string& path)
         PacketView packet{};
         int consumed = 0;
         Require(TryReadPacket(scenarioPacket.bytes.data(), static_cast<int>(scenarioPacket.bytes.size()), packet, consumed),
-            "production packet reader rejected Firewall unit lifecycle packet");
+            "production packet reader rejected skill-unit lifecycle packet");
         Require(packet.packetId == scenarioPacket.opcode && consumed == static_cast<int>(scenarioPacket.bytes.size()),
-            "Firewall unit lifecycle packet framing differs from scenario metadata");
-        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Firewall unit packet");
+            "skill-unit lifecycle packet framing differs from scenario metadata");
+        Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch skill-unit packet");
         if (scenarioPacket.opcode == 0x011F) {
             CSkill* unit = fixture.world.GetSkillByAID(100);
-            Require(unit != nullptr, "Firewall unit entry did not add unit AID100 to CWorld");
-            Require(unit->m_job == 127 && unit->m_isVisibleBody == 1,
-                "Firewall unit job or visibility differs from Ref stand-entry handling");
+            Require(unit != nullptr, "skill-unit entry did not add unit AID100 to CWorld");
+            Require(unit->m_job == unitJob && unit->m_isVisibleBody == 1,
+                "skill-unit job or visibility differs from Ref stand-entry handling");
             Require(std::fabs(unit->m_pos.x + 27.5f) < 0.001f
                 && std::fabs(unit->m_pos.y - 7.5f) < 0.001f
                 && std::fabs(unit->m_pos.z - 22.5f) < 0.001f,
-                "Firewall unit position differs from decoded cell and terrain height");
+                "skill-unit position differs from decoded cell and terrain height");
             Require(std::find(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(), unit)
                     != fixture.world.m_gameObjectList.end(),
-                "Firewall unit is missing from CWorld game-object ownership list");
-            const u32 unitStartTick = unit->m_SkillStartTime;
-            u32 previousElapsedMs = 0;
-            bool active = true;
-            while (active && previousElapsedMs <= 3200) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(24));
-                lifetimeElapsedMs = timeGetTime() - unitStartTick;
-                active = unit->OnProcess() != 0;
-                ++processSteps;
-                if (!active) {
-                    const u32 measuredStepMs = lifetimeElapsedMs - previousElapsedMs;
-                    Require(lifetimeElapsedMs > 3000
-                        && lifetimeElapsedMs <= 3000 + measuredStepMs + 24,
-                        "Firewall unit expiry falls outside the measured 24 ms process-step window");
+                "skill-unit is missing from CWorld game-object ownership list");
+            if (unitJob == 127) {
+                const u32 unitStartTick = unit->m_SkillStartTime;
+                u32 previousElapsedMs = 0;
+                bool active = true;
+                while (active && previousElapsedMs <= 3200) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(24));
+                    lifetimeElapsedMs = timeGetTime() - unitStartTick;
+                    active = unit->OnProcess() != 0;
+                    ++processSteps;
+                    if (!active) {
+                        const u32 measuredStepMs = lifetimeElapsedMs - previousElapsedMs;
+                        Require(lifetimeElapsedMs > 3000
+                            && lifetimeElapsedMs <= 3000 + measuredStepMs + 24,
+                            "Firewall unit expiry falls outside the measured 24 ms process-step window");
+                    }
+                    previousElapsedMs = lifetimeElapsedMs;
                 }
-                previousElapsedMs = lifetimeElapsedMs;
+                Require(!active && processSteps >= 100,
+                    "Firewall unit did not expire after nominal 24 ms CSkill::OnProcess steps");
+            } else {
+                std::this_thread::sleep_for(std::chrono::milliseconds(24));
+                lifetimeElapsedMs = timeGetTime() - unit->m_SkillStartTime;
+                Require(unit->OnProcess() != 0, "Safety Wall should remain active after the first 24 ms process step");
+                ++processSteps;
             }
-            Require(!active && processSteps >= 100,
-                "Firewall unit did not expire after nominal 24 ms CSkill::OnProcess steps");
         } else {
             Require(fixture.world.GetSkillByAID(100) == nullptr,
                 "0x0120 did not remove Firewall unit AID100 from CWorld skill list");
@@ -587,18 +597,18 @@ void ReplayFirewallUnitLifecycle(const std::string& path)
     std::ifstream runtimeLog("debug_hp_" + std::to_string(GetCurrentProcessId()) + ".log");
     Require(static_cast<bool>(runtimeLog), "production runtime log was not created for Firewall unit lifecycle");
     std::string logLine;
-    bool foundFirewallWave = false;
-    bool foundFirewallLoop = false;
+    bool foundExpectedWave = unitJob != 127;
+    bool foundExpectedLoop = false;
     while (std::getline(runtimeLog, logLine)) {
-        foundFirewallWave = foundFirewallWave
+        foundExpectedWave = foundExpectedWave
             || logLine.find("[REPLAY] PlayWave name='effect\\EF_FireWall.wav'") != std::string::npos;
-        foundFirewallLoop = foundFirewallLoop
-            || logLine.find("[REPLAY] LaunchEffect id=25 actor=100") != std::string::npos;
+        foundExpectedLoop = foundExpectedLoop
+            || logLine.find("[REPLAY] LaunchEffect id=" + std::to_string(expectedLoopEffect) + " actor=100") != std::string::npos;
     }
-    Require(foundFirewallWave, "Firewall unit entry did not play Ref unit wave effect\\EF_FireWall.wav");
-    Require(foundFirewallLoop, "Firewall unit OnProcess did not launch Ref loop effect25");
-    std::cout << "SkillUnit job=127 aid=100 cell=(10,20) pos=(-27.500,7.500,22.500) wave=effect\\EF_FireWall.wav loopEffect=25 steps="
-        << processSteps << " expiryElapsedMs=" << lifetimeElapsedMs << " removed=1\n";
+    Require(foundExpectedWave, "skill-unit entry did not play the expected Ref wave");
+    Require(foundExpectedLoop, "skill-unit OnProcess did not launch its Ref loop effect");
+    std::cout << "SkillUnit job=" << unitJob << " aid=100 cell=(10,20) pos=(-27.500,7.500,22.500) loopEffect="
+        << expectedLoopEffect << " steps=" << processSteps << " elapsedMs=" << lifetimeElapsedMs << " removed=1\n";
 }
 
 void ReplayTrapRevealLifecycle(const std::string& path)
@@ -662,7 +672,7 @@ int main(int argc, char** argv)
         if (IsTrapRevealScenario(argv[1])) {
             ReplayTrapRevealLifecycle(argv[1]);
         } else if (IsFirewallUnitScenario(argv[1])) {
-            ReplayFirewallUnitLifecycle(argv[1]);
+            ReplaySkillUnitLifecycle(argv[1]);
         } else {
             ReplayScenario(argv[1]);
         }

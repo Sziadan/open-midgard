@@ -1590,3 +1590,7 @@ Added optional scenario actor rows (`# actor<TAB>role<TAB>aid<TAB>job<TAB>cellX<
 ## WP10.8 — Timed Fire Wall unit processing — 2026-10-28
 
 The Firewall replay now invokes the production CSkill::OnProcess every nominal 24 ms after packet entry, until the unit reports expiration, then verifies the 0x0120 removal. The trace confirms loop effect25, 122 process calls, and expiry at 3023 ms, within the measured final polling-step window around the Ref 3000 ms lifetime. Root packet replay CTest passes12/12. Next: widen WP3.4/WP4 packet cases and exercise multiple timed units through the world update collection.
+
+## WP10.8 — Safety Wall unit effect replay — 2026-10-28
+
+Added the WP4 Safety Wall unit job126 packet case. The production 0x011F route creates the unit at cell(10,20); a nominal 24 ms wait followed by real CSkill::OnProcess launches effect315, and 0x0120 removes the unit. The measured first process call was 25 ms after unit start. Full root replay CTest passes13/13. Next: continue WP3.4/WP4 packet cases and exercise multiple timed units through CWorld updates.
