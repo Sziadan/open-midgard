@@ -589,6 +589,7 @@ struct CRagEffect : CGameObject {
     bool ProcessMaxPower104();
     bool ProcessIntimidate227();
     bool ProcessMagicRod244();
+    bool ProcessShieldCharge246();
     bool ProcessEffect380();
     bool ProcessEffect403();
     bool ProcessEffect413();
@@ -4792,6 +4793,15 @@ int main()
             &&effect.m_primList.empty()&&g_texMgr.requests.empty(),
             "Magic Rod remains alive after STR completion without repeating audio or emitting particles");
         effect.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+    }
+    {
+        CRagEffect effect;effect.m_type=246;effect.m_duration=100;
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        check(!effect.ProcessShieldCharge246()&&effect.m_primList.empty()
+            &&waveCalls.empty()&&g_texMgr.requests.empty()&&rngDraws==beforeRng,
+            "Shield Charge propagates STR completion and emits no sound, particles, textures or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
     }
     {
         CRagEffect effect;

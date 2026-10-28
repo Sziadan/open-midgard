@@ -26139,6 +26139,14 @@ bool CRagEffect::ProcessMagicRod244()
 
 // TEST_BODY_END magicrod244_handler
 
+// Ref/RagEffect2.cpp:3592-3599; canonical PE helper 0x60D6F0, OnProcess case246.
+bool CRagEffect::ProcessShieldCharge246()
+{
+    return ProcessEZ2STR(0.0f,0.0f,0.0f);
+}
+
+// TEST_BODY_END shieldcharge246_handler
+
 bool CRagEffect::ProcessEffect380()
 {
     CRenderObject* master = ResolveCurrentMaster();

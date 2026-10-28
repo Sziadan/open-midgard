@@ -252,7 +252,7 @@ case 241: ApplyBottomVolcano("effect\\magic_green.tga", 0.0f); return true;
 case 242: return UnportedEffect();
 case 244: return ProcessMagicRod244();
 case 245: return ProcessClipWaveStrEffect();
-case 246: return UnportedEffect();
+case 246: return ProcessShieldCharge246();
 case 247: ApplyMapPillar("effect\\ring_blue.tga", 4.0f, true); return true;
 case 248: ApplyProvidence("effect\\ring_yellow.tga"); ProcessEZ2STR(); return FinishEffectFrame();
 case 249: return ProcessShieldBoomerangEffects();
