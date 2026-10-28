@@ -1,0 +1,10 @@
+# actor	source	1	0	16	16
+# actor	target	2	0	18	16
+# actor	actor	3	144	10	20
+# opcode	hexBytes	comment
+0x011F	1F0164000000020000000A0014009000	Skid Trap entry job144 owned by AID2
+0x011F	1F0164000000020000000A0014009000	Duplicate job144 entry hides Skid Trap
+0x01AC	AC0164000000	Reveal Skid Trap unit AID100
+0x01FF	FF010200000015001000	Server knockback result slides target AID2 to cell(21,16)
+0x01D7	D70164000000008C000000	Triggered Skid Trap becomes used-trap job140
+0x0120	200164000000	Remove triggered Skid Trap unit AID100
