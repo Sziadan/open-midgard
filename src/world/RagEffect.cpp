@@ -18558,6 +18558,87 @@ bool CRagEffect::ProcessLineLinkEffects()
     return true;
 }
 
+// Ref/RagEffect2.cpp:32973-33158; canonical launchers at 0x637DD0/0x638170.
+void CRagEffect::SpawnTripleAttack(int variant)
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    const int lastState = variant == 2 ? 3 : 8;
+    if (m_stateCnt > lastState) return;
+
+    CEffectPrim* prim = LaunchEffectPrim(PP_TRIPLEATTACK, vector3d{});
+    if (prim == nullptr) return;
+    prim->m_renderFlag = 5;
+    prim->m_duration = m_duration;
+    prim->m_texture.push_back(g_texMgr.GetTexture("effect\\alpha_center.tga", false));
+    prim->m_size = 0.0f;
+    prim->m_deltaPos = m_deltaPos;
+
+    const float deltaX = m_deltaPos.x - m_effectPos.x;
+    const float deltaZ = m_deltaPos.z - m_effectPos.z;
+    const float planarSquared = deltaX * deltaX + deltaZ * deltaZ;
+    const float planarDistance = static_cast<float>(std::sqrt(static_cast<double>(planarSquared)));
+    int direction = 0;
+    while (true) {
+        const float normalizedX = static_cast<float>(static_cast<double>(deltaX) / planarDistance);
+        if (normalizedX >= g_cosTable[direction]) break;
+        if (++direction > 180) { direction = 180; break; }
+    }
+    const float normalizedZ = static_cast<float>(static_cast<double>(deltaZ) / planarDistance);
+    const short rotStart = static_cast<short>(normalizedZ < 0.0f ? 360 - direction : direction);
+
+    for (size_t lane = 0; lane < prim->m_gi.size(); ++lane) {
+        EffectGi& gi = prim->m_gi[lane];
+        gi.life = 1;
+        gi.process = variant == 2 ? -45 - rand() % 20 : -30 - rand() % 110;
+        gi.rotStart = rotStart;
+        gi.alphaB = 0;
+        gi.sparkX = static_cast<float>(static_cast<double>(rand() % 100) * 0.079999998 - 4.0 + m_effectPos.x);
+        gi.sparkZ = static_cast<float>(static_cast<double>(rand() % 100) * 0.079999998 - 4.0 + m_effectPos.z);
+        gi.sparkY = m_effectPos.y;
+        gi.height[1] = static_cast<float>(static_cast<double>(rand() % 100) * 0.15000001);
+        gi.sparkX = static_cast<float>(static_cast<double>(gi.sparkX)
+            - g_cosTable[gi.rotStart] * gi.height[1]);
+        gi.sparkZ = static_cast<float>(static_cast<double>(gi.sparkZ)
+            - g_sinTable[gi.rotStart] * gi.height[1]);
+        gi.vecTNowX = gi.sparkX;
+        gi.vecTNowZ = gi.sparkZ;
+        gi.vecTNowY = m_effectPos.y;
+        if (variant == 3) {
+            gi.maxHeight = static_cast<float>(static_cast<double>(rand() % 11) * 0.0080000004 + 0.02);
+            gi.height[0] = static_cast<float>(static_cast<double>(rand() % 100) * 0.059999999 + 4.0);
+        } else {
+            gi.maxHeight = 0.050000001f;
+            gi.height[0] = static_cast<float>(static_cast<double>(rand() % 100) * 0.039999999 + 8.0);
+        }
+        const int radialRandom = rand() % 100;
+        gi.maxHeight = variant == 2
+            ? static_cast<float>(static_cast<double>(radialRandom) * 0.60000002 + planarDistance)
+            : static_cast<float>(static_cast<double>(radialRandom) * 0.30000001 + planarDistance);
+        gi.height[4] = static_cast<float>(variant);
+    }
+}
+
+bool CRagEffect::ProcessTripleAttackEffects()
+{
+    CRenderObject* master = ResolveCurrentMaster();
+    if (master == nullptr) return true;
+    m_effectPos = master->m_pos;
+    m_cachedPos = m_effectPos;
+    if (m_stateCnt == 30) {
+        CGameMode* mode = g_modeMgr.GetCurrentGameMode();
+        if (mode && mode->m_world && mode->m_world->m_player) {
+            const vector3d& listener = mode->m_world->m_player->m_pos;
+            PlayWave("effect\\", m_effectPos.x - listener.x, 0.0f,
+                m_effectPos.z - listener.z, 250, 40, 1.0f);
+        }
+    }
+    SpawnTripleAttack(m_type == 388 ? 2 : 3);
+    return true;
+}
+
 bool CRagEffect::ProcessTarotEffect()
 {
     switch (m_type) {

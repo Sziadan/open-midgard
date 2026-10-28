@@ -530,6 +530,8 @@ private:
     void SpawnGrandCross(int variant);
     bool ProcessLineLinkEffects();
     void SpawnLineLink(int variant);
+    bool ProcessTripleAttackEffects();
+    void SpawnTripleAttack(int variant);
     void SpawnStin();
     void SpawnStin2(int variant);
     void SpawnSma(int variant);

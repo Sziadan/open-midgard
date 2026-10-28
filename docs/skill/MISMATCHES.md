@@ -456,3 +456,8 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 # WP10.3 LineLink caller omissions (2026-10-28)
 
 - Canonical `HighPriest.exe.c:420738–420740`, `:421131–421142`, and `:421270–421281` route IDs 232/384/395 to LINELINK/LINELINK2/LINELINK3; the latter two also play the literal `effect\` at state0. Available `Ref/RagEffect.cpp` has no matching caller branches, while all three Ref helper bodies in `RagEffect2.cpp` match canonical PE. Routes follow canonical executable evidence; caller omissions in Ref are noted.
+
+
+# WP10.3 TripleAttack2/3 caller omissions and truncated audio paths (2026-10-28)
+
+- Canonical `HighPriest.exe.c:421184–421194` and `:421255–421265` route effects 388/393 to TRIPLEATTACK2/3, with a state-30 `PlayWave` call before the helper. Available `Ref/RagEffect.cpp` has no matching callers, while the Ref helper bodies match canonical PE. The caller routes follow canonical executable evidence. Both executable wave symbols (`aEffect_57`, `aEffect_51`) point to the literal `effect\` at VA 0x6F1FF0; no filename suffix is present. The implementation preserves the exact passed string and does not substitute a guessed sound.

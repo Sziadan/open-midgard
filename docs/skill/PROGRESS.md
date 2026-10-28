@@ -1147,3 +1147,6 @@ GrandCross verification: Release `open_midgard` build and OldRO copy succeeded; 
 
 
 LineLink verification: Release `open_midgard` build and OldRO copy succeeded; all 114 CTests passed. Coverage audit reports 505 routed / 188 explicit unported / 80 launched-but-unported. All three helper bodies compare equal Ref-to-PE; caller order, sounds, exact texture bytes, target setup and generated routes pass. `git diff --check` passes. Next: audit TripleAttack2/TripleAttack3 (388, 393).
+
+
+TripleAttack2/3 verification: Release `open_midgard` build and OldRO copy succeeded; all 115 CTests passed. Coverage audit reports 507 routed / 186 explicit unported / 78 launched-but-unported. Both complete helpers match Ref/PE, caller state and sound ordering pass, and the emitter preserves six/seven RNG calls per GI plus exact post-index radius/mode stores. The wave symbols contain only `effect\`; this exact prefix is preserved. `git diff --check` passes. Next: audit NpcStop callers (453, 496, 502, 505, 599, 602).
