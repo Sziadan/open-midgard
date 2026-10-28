@@ -4537,6 +4537,10 @@ void HandleGroundSkillNotify(CGameMode& mode, const PacketView& packet)
         sourceActor->SendMsg(sourceActor, 38, reinterpret_cast<msgparam_t>(&args), 0, 0);
     }
     if (!IsMonsterSkillActor(sourceActor)) {
+        mode.SendMsg(99,
+            static_cast<msgparam_t>(skillId),
+            reinterpret_cast<msgparam_t>(sourceActor),
+            static_cast<msgparam_t>(level));
         if (skillId == 47) {
             LaunchGroundArrowShower(mode, sourceActor, cellX, cellY);
         } else if (skillId == 362 || skillId == 369) {

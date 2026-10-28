@@ -588,6 +588,7 @@ public:
     u8 OnProcess() override;
     void Render(matrix* viewMatrix) override;
     void SendMsg(CGameObject* sender, int message, msgparam_t arg1, msgparam_t arg2, msgparam_t arg3) override;
+    const vector3d& TargetPosition() const { return m_tPos; }
 
     // The 2008 SendMsg has a fourth argument (monster job). This client's
     // message signature does not, so MakeArrowEffect stores the job here first.

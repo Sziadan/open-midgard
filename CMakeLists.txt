@@ -400,6 +400,9 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
     add_test(NAME skill_packet_replay_cast_ack013e_checks
         COMMAND skill_packet_replay_runtime_checks
             "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/cast_ack013e.tsv")
+    add_test(NAME skill_packet_replay_arrow_shower47_checks
+        COMMAND skill_packet_replay_runtime_checks
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/skill/replay/arrow_shower47.tsv")
     set_tests_properties(skill_packet_replay_runtime_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_double_strafe_checks PROPERTIES
@@ -517,6 +520,7 @@ if(RO_BUILD_SKILL_REPLAY_TESTS)
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
     set_tests_properties(skill_packet_replay_venom_dust_trigger_lifecycle_checks
         skill_packet_replay_talkie_box_trigger_lifecycle_checks
-        skill_packet_replay_cast_ack013e_checks PROPERTIES
+        skill_packet_replay_cast_ack013e_checks
+        skill_packet_replay_arrow_shower47_checks PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/skill_replay")
 endif()

@@ -574,6 +574,72 @@ void ReplaySkillCastCancel(const std::string& path)
     std::cout << "SkillCastCancel opcode=0x01B9 messages=84,87,83 attachedEffectsCleared=2\n";
 }
 
+bool IsGroundArrowShowerScenario(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    return packets.size() == 1 && packets[0].opcode == 0x0117 && packets[0].bytes.size() == 18
+        && ReadU16LE(packets[0].bytes.data() + 2) == 47;
+}
+
+void ReplayGroundArrowShower(const std::string& path)
+{
+    const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
+    Require(packets.size() == 1 && packets[0].opcode == 0x0117 && packets[0].bytes.size() == 18
+        && ReadU16LE(packets[0].bytes.data() + 2) == 47,
+        "Arrow Shower replay requires one 18-byte skill-47 0x0117 packet");
+    Fixture fixture(path);
+    CGameModePacketRouter router;
+    RegisterDefaultGameModePacketHandlers(router);
+    PacketView packet{};
+    int consumed = 0;
+    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), packet, consumed),
+        "production packet reader rejected Arrow Shower ground-skill packet");
+    Require(router.Dispatch(fixture.mode, packet), "default client router did not dispatch Arrow Shower ground-skill packet");
+
+    std::vector<vector3d> actualTargets;
+    for (CGameObject* object : fixture.world.m_gameObjectList) {
+        if (CArrowEffect* arrow = dynamic_cast<CArrowEffect*>(object)) {
+            actualTargets.push_back(arrow->TargetPosition());
+        }
+    }
+    for (auto it = fixture.world.m_gameObjectList.begin(); it != fixture.world.m_gameObjectList.end();) {
+        CGameObject* object = *it;
+        if (dynamic_cast<CArrowEffect*>(object) != nullptr) {
+            delete object;
+            it = fixture.world.m_gameObjectList.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    const std::vector<vector3d> expectedTargets = {
+        { 2.5f, -2.5f, 2.5f },
+        { -22.5f, -2.5f, 22.5f },
+        { -22.5f, -2.5f, 27.5f },
+        { -22.5f, -2.5f, 17.5f },
+        { -32.5f, -2.5f, 22.5f },
+        { -32.5f, -2.5f, 27.5f },
+        { -32.5f, -2.5f, 17.5f },
+        { -27.5f, -2.5f, 27.5f },
+        { -27.5f, -2.5f, 17.5f },
+    };
+    bool targetsMatch = actualTargets.size() == expectedTargets.size();
+    for (std::size_t index = 0; targetsMatch && index < expectedTargets.size(); ++index) {
+        targetsMatch = std::fabs(actualTargets[index].x - expectedTargets[index].x) < 0.001f
+            && std::fabs(actualTargets[index].y - expectedTargets[index].y) < 0.001f
+            && std::fabs(actualTargets[index].z - expectedTargets[index].z) < 0.001f;
+    }
+    if (!targetsMatch) {
+        std::ostringstream actual;
+        actual << "Arrow Shower targets expected=9 actual=" << actualTargets.size();
+        for (const vector3d& target : actualTargets) {
+            actual << " (" << target.x << ',' << target.y << ',' << target.z << ')';
+        }
+        Require(false, actual.str());
+    }
+    std::cout << "GroundSkill skill=47 arrows=9 cell=(10,20) offsets=8 hideTime=18 processedTargets=source-plus-neighbors\n";
+}
+
 bool IsSkillCastAckScenario(const std::string& path)
 {
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
@@ -1703,7 +1769,9 @@ int main(int argc, char** argv)
         std::ofstream freshRuntimeLog(runtimeLogPath, std::ios::trunc);
         Require(static_cast<bool>(freshRuntimeLog), "could not reset per-run production runtime log");
         freshRuntimeLog.close();
-        if (IsSkillCastAckScenario(argv[1])) {
+        if (IsGroundArrowShowerScenario(argv[1])) {
+            ReplayGroundArrowShower(argv[1]);
+        } else if (IsSkillCastAckScenario(argv[1])) {
             ReplaySkillCastAck(argv[1]);
         } else if (IsSkillCastCancelScenario(argv[1])) {
             ReplaySkillCastCancel(argv[1]);

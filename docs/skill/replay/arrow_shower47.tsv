@@ -1,0 +1,3 @@
+# actor	source	1	0	16	16
+# opcode	hexBytes	comment
+0x0117	17012F000100000005000A00140078563412	Arrow Shower skill47, source AID1, level5, cell(10,20), startTime=0x12345678
