@@ -12,6 +12,8 @@ PE = (ROOT / "HighPriest.exe.c").read_text(encoding="latin-1")
 REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 ROUTE = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
+LIFECYCLE = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
+TEST_CMAKE = (ROOT / "tools/tests/CMakeLists.txt").read_text(encoding="utf-8")
 
 
 def function_body(source, signature):
@@ -137,4 +139,17 @@ for token in (
     if token not in texture:
         raise AssertionError(f"local selector-14/100 EffectTextureSet profile missing {token}")
 
-print("effects554/676/693/694/701-703 parity passed: callers, local routes, exact resources and selector-2/4/14/100 emitter profiles")
+if 'extract_body(effect_texture_emitter "${effect_source}" "void CRagEffect::ApplyEffectTexture(" "bool CRagEffect::ProcessEffectTextureSet(")' not in TEST_CMAKE:
+    raise AssertionError("production ApplyEffectTexture helper is not extracted into the lifecycle harness")
+fixture = re.search(r"CRagEffect effect; effect\.m_type=554; effect\.m_master=&actor; effect\.m_duration=73;(.*?)(?=\n        })", LIFECYCLE, re.S)
+if fixture is None or 'effect.ApplyEffectTexture("effect\\\\freeze_a.bmp",2)' not in fixture.group(1):
+    raise AssertionError("effect554 selector2 production lifecycle fixture disappeared")
+for token in (
+    "PP_EFFECTTEXTURE", "m_renderFlag==5", "m_duration==73", "distance==10.0f",
+    "arcBaselineY==24.0f", "fullDisplayAngle==135", "rotStart==73", "flag[4]==2",
+    "rngDraws==draws+1", "follows master movement without relaunch",
+):
+    if token not in fixture.group(1):
+        raise AssertionError(f"effect554 selector2 lifecycle assertion missing {token}")
+
+print("effects554/676/693/694/701-703 parity passed: callers, local routes, exact resources and selector-2/4/14/100 profiles; effect554 runtime fixture bound")

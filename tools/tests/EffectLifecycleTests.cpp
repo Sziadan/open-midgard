@@ -4142,6 +4142,42 @@ int main()
                 "EffectTextureSet selector profile follows master movement without relaunching or RNG");
             effect.ClearPrims(); g_world.UpdateGameObjects(); actor.m_pos={12,34,56};
         }
+        {
+            CRagEffect effect; effect.m_type=554; effect.m_master=&actor; effect.m_duration=73;
+            effect.m_stateCnt=0; rngValues={73,222}; rngCursor=0; const int draws=rngDraws;
+            actor.m_pos={12,34,56}; g_texMgr.requests.clear();
+            effect.ApplyEffectTexture("effect\\freeze_a.bmp",2);
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            const bool payload=prim&&effect.m_primList.size()==1&&prim->m_type==PP_EFFECTTEXTURE
+                &&prim->m_renderFlag==5&&prim->m_duration==73&&prim->m_size==0.0f
+                &&prim->m_pos.x==12&&prim->m_pos.y==34&&prim->m_pos.z==56
+                &&effect.m_effectPos.x==12&&effect.m_effectPos.y==34&&effect.m_effectPos.z==56
+                &&effect.m_cachedPos.x==12&&effect.m_cachedPos.y==34&&effect.m_cachedPos.z==56
+                &&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture
+                &&g_texMgr.requests==std::vector<std::string>{"effect\\freeze_a.bmp"}
+                &&rngDraws==draws+1&&rngCursor==1
+                &&prim->m_gi[0].life==1&&prim->m_gi[0].process==0
+                &&prim->m_gi[0].distance==10.0f&&prim->m_gi[0].arcBaselineY==24.0f
+                &&prim->m_gi[0].flag[2]==2&&prim->m_gi[0].height[10]==0.0f
+                &&prim->m_gi[0].fullDisplayAngle==135&&prim->m_gi[0].height[8]==0.0f
+                &&prim->m_gi[0].alphaB==0&&prim->m_gi[0].sparkX==12
+                &&prim->m_gi[0].sparkZ==56&&prim->m_gi[0].rotStart==73
+                &&prim->m_gi[0].flag[0]==0&&prim->m_gi[0].flag[4]==2;
+            bool inactive=true;
+            for(int band=1;band<4;++band) inactive=inactive&&prim&&prim->m_gi[band].life==0;
+            check(payload&&inactive,"effect554 selector2 emits exact freeze texture profile and one rotation RNG draw");
+            actor.m_pos={22,44,66}; effect.m_stateCnt=1; effect.ApplyEffectTexture("effect\\freeze_a.bmp",2);
+            check(effect.m_primList.size()==1&&effect.m_effectPos.x==22&&effect.m_effectPos.y==44
+                &&effect.m_effectPos.z==66&&effect.m_cachedPos.x==22&&effect.m_cachedPos.y==44
+                &&effect.m_cachedPos.z==66&&prim&&prim->m_pos.x==22&&prim->m_pos.y==44
+                &&prim->m_pos.z==66&&g_texMgr.requests.size()==1&&rngDraws==draws+1&&rngCursor==1,
+                "effect554 selector2 follows master movement without relaunch, texture reload or RNG");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+            effect.m_stateCnt=0; g_texMgr.requests.clear();
+            effect.ApplyEffectTexture(nullptr,2);
+            check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==draws+1&&rngCursor==1,
+                "effect554 null texture gate emits no primitive or RNG");
+        }
     }
     {
         CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};
