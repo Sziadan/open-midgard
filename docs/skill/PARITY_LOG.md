@@ -3878,3 +3878,7 @@ Added `check_effect609_cook_fail.py`, registered as `effect609_cook_fail_source_
 ## WP10.4 effect646 CP949 STR
 
 Added `check_effect646_str_ignored_result.py`, registered as `effect646_str_ignored_result_source_check`. PE and primary Ref OnProcess3 group effect646 (`0x286`) with the `$L146219` tail, which calls `ProcessEZ2STR(0,-80,0)` and unconditionally returns true; the local generated case likewise discards the result. PE/Ref Init map 646 to `byte_71A89C`, whose exact bytes at VA `0x71A89C` decode to CP949 `C6 AE B7 A2 C5 B7 2E 73 74 72`, matching local catalog and STR rows. Lifecycle coverage confirms the exhausted STR step returns false for the caller to ignore. Release parity build and full CTest pass307/307; no production behavior change.
+
+## WP10.4 effect649 CP949 STR
+
+Added `check_effect649_str_ignored_result.py`, registered as `effect649_str_ignored_result_source_check`. PE and primary Ref OnProcess3 group effect649 (`0x289`) with `$L146219`, which calls `ProcessEZ2STR(0,-80,0)` and unconditionally returns true; the local generated case also ignores the result. PE and Ref Init map effect649 to `byte_71A88C`; bytes at VA `0x71A88C` are `BA D2 BD BA BE C6 C0 CC 2E 73 74 72`, matching local CP949 catalog/STR entries. Lifecycle coverage exercises false STR completion. Release parity build and full CTest pass308/308; no production behavior change.

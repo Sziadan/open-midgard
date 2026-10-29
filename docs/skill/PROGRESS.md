@@ -2238,3 +2238,7 @@ Compared PE case `0x261` (`HighPriest.exe.c:418729–418740`) and primary Ref (`
 ## WP10.4 effect646 CP949 STR — 2026-10-29
 
 Compared PE and primary Ref OnProcess3's grouped `0x286` case with the shared `$L146219` tail: effect646 calls `ProcessEZ2STR(0,-80,0)` and returns true even when the STR reports completion. The local case already follows this ignored-result contract. PE and Ref Init use the bytes at VA `0x71A89C`, which resolve to CP949 filename bytes `C6 AE B7 A2 C5 B7 2E 73 74 72`; local catalog and STR table match. Added `check_effect646_str_ignored_result.py` and a lifecycle check that the exhausted STR step returns false for the caller to ignore. No production behavior change. Release parity build and full CTest pass307/307.
+
+## WP10.4 effect649 CP949 STR — 2026-10-29
+
+Compared PE and primary Ref OnProcess3's grouped `0x289` case with the `$L146219` tail: effect649 calls `ProcessEZ2STR(0,-80,0)` and returns true regardless of STR completion. Local dispatch matches. PE and Ref Init map effect649 to `byte_71A88C`; exact PE bytes at VA `0x71A88C` are `BA D2 BD BA BE C6 C0 CC 2E 73 74 72`, matching the local catalog and STR table. Added `check_effect649_str_ignored_result.py` and lifecycle coverage confirming false STR completion is available for the caller to ignore. No production behavior change. Release parity build and full CTest pass308/308.
