@@ -1322,6 +1322,8 @@ add_test(NAME effect33_ruwach_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect33_ruwach.py")
 add_test(NAME effect17_magnum_break_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect17_magnum_break.py")
+add_test(NAME effect10_coin_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect10_coin.py")
 add_test(NAME effect18_steal_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect18_steal.py")
 add_test(NAME effect16_bash_source_check
@@ -1468,6 +1470,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect32_napalm_beat.py
     check_effect16_bash.py
     check_effect17_magnum_break.py
+    check_effect10_coin.py
     check_effect18_steal.py
     check_effect14_heal_sp.py
     check_effect21_detoxication.py

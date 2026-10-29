@@ -2866,3 +2866,8 @@ Added and registered `tools/tests/check_effect17_magnum_break.py`. Canonical PE 
 ## WP5 CRagEffect Steal effect18 source checkpoint - 2026-10-29
 
 Added and registered `tools/tests/check_effect18_steal.py`. Canonical PE `Steal` and primary Ref bodies normalize identically; PE case18 calls the helper, and local case18 enters `ProcessEffectFrameLegacy` and calls `SpawnSteal`. The comparator checks frame-zero wave before the ten-particle burst, six per-particle draws in source order, distinct initial tilt versus Y-only motion matrix, gravity/speed/size profile, particle7 sprite/action resources and segment setup. Existing lifecycle assertions cover exact wave coordinates, all 60 draws, primitive payload, gravity integration/bounce, parent origin, nonzero suppression and resource cleanup. Focused CTest and full Release parity CTest passed 410/410. No runtime behavior changed.
+
+
+## WP5 CRagEffect Coin effect10 source checkpoint - 2026-10-29
+
+Added and registered `tools/tests/check_effect10_coin.py`. Canonical PE `Coin` and primary Ref bodies normalize identically; PE case10 calls the helper and propagates its result to the shared tail, while local case10 enters `ProcessEffectFrameLegacy` and calls `ProcessCoin`. The comparator checks the reduced-effects/frame20 burst gate, five particles with five ordered draws each, gravity particle profile and two initialized segments, particle-triggered bounce audio, continued STR processing despite its ignored result, and the state100 lifetime bound. Existing lifecycle assertions cover the burst payload, bounce wave, reduced-effects cadence, termination and cleanup. Focused CTest and full Release parity CTest passed 411/411. No runtime behavior changed.
