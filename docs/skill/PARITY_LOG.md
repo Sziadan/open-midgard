@@ -4898,3 +4898,7 @@ Added a six-row local production-helper fixture for the plain speed2 one-shot pr
 ## WP5 Effect_SPR lifecycle — effects585,587–589 variants9,11–13 — 2026-10-29
 
 Added a four-row state0/state1 local production-helper fixture for the speed4 one-shot profiles. PE/primary-Ref callers map 585→9 and 587–589→11–13. Each row checks exact PE asset strings, common particle/segment payload and absence of wave/RNG, then moved-origin refresh without repeated launch. The registered comparator checks helper setup order and binds row strings to PE VAs `0x71D150/0x71D13C`, `0x71D128/0x71D114`, `0x71D100/0x71D0EC`, and `0x71D0D8/0x71D0C4`. No rendered output acceptance is claimed.
+
+## WP7 spirit packet to CHOOKGI integration — 2026-10-29
+
+Added a combined local harness using the extracted production `HandleSpirits` and `SpawnChookgi` bodies. For jobs4038/24/default it checks launch IDs504/629/228, message14 signed X in `m_deltaPos`, and mapped emitter variants1/3/0. The emitter fixture checks origin refresh, PP_CHOOKGI count (variant3 capped at five), render/duration/GI profile, all seven RNG-derived heights, per-primitive `effect\\thunder_center.bmp` request and seven RNG draws per emitted primitive. A source comparator binds handler extraction, the production job map/message14 handoff, and `ProcessEffectFrame`'s type-to-variant routing. It invokes the production emitter directly; generated OnProcess3 dispatch, rendering and live acceptance remain untested. Focused integration checks pass 2/2, and full VS17 x64 Release parity CTest passes 436/436.

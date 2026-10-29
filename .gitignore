@@ -50,6 +50,8 @@ tools/tests/*
 !tools/tests/check_prim3dsphere.py
 !tools/tests/check_effect302.py
 !tools/tests/check_effect333.py
+!tools/tests/SpiritChookgiIntegrationTests.cpp
+!tools/tests/check_spirit_chookgi_integration.py
 !tools/tests/check_effect6.py
 !tools/tests/check_effect8.py
 !tools/tests/check_effect9.py

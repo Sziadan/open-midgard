@@ -61,3 +61,5 @@ Latest WP5 Effect_SPR checkpoint: effect586 variant10 now has direct state0/stat
 Latest WP5 Effect_SPR checkpoint: effects570,576–580 now have table-driven state0/state1 coverage for variants0,2–6, including exact PE asset bindings and no-cue/no-RNG behavior. The local lifecycle suite does not claim rendered output acceptance.
 
 Latest WP5 Effect_SPR checkpoint: effects585,587–589 now have table-driven state0/state1 speed4 one-shot lifecycle coverage, PE-bound resources, and no-wave/no-RNG checks. See the 2026-10-29 PROGRESS entry; no rendered-output acceptance is claimed.
+
+Latest WP7 spirit checkpoint: packet job mapping and message14 position now feed the extracted production CHOOKGI emitter for effects504/629/228 (variants1/3/0). Runtime checks cover capped primitive count, payload, texture requests and seven RNG draws per primitive; source comparison binds the type→variant branch. Generated dispatcher execution, rendering and live acceptance are not claimed. Focused integration checks pass 2/2; full VS17 x64 Release parity CTest passes 436/436. See WP7 progress.

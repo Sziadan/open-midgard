@@ -3246,4 +3246,8 @@ Added a six-row table-driven direct-helper fixture for effects570 and576–580. 
 
 ## WP5 Effect_SPR lifecycle — effects585,587–589 variants9,11–13 — 2026-10-29
 
+
 Added a four-row direct-helper fixture for effects585,587,588,589. Each state0 case checks one `PP_3DPARTICLE`, master origin, duration76 fixture sentinel, deltaY0, renderFlag `0x201`, pattern `0x200`, speed4 one-shot animation, action/motion0, one segment, exact PE resource bytes, and no wave or RNG. State1 moves the master and verifies origin refresh without another particle, resource request, wave or RNG. `check_effect_sprite.py` now requires the effect→variant table, binds fixture strings to PE VAs `0x71D150/0x71D13C`, `0x71D128/0x71D114`, `0x71D100/0x71D0EC`, and `0x71D0D8/0x71D0C4`, and checks PE/primary-Ref helper speed/resource/segment/no-wave setup. This covers local lifecycle/payload only, not rendered output acceptance.
+## WP7 spirit packet to CHOOKGI integration — 2026-10-29
+
+Added a separate combined harness that compiles the production `HandleSpirits` body and production `SpawnChookgi` body. It runs jobs4038/24/default through packet mapping to effect IDs504/629/228, applies message14's signed X to `m_deltaPos`, and invokes mapped variants1/3/0. Assertions cover master-origin refresh, output count (including variant3's five-item cap), PP_CHOOKGI render/duration/GI fields, texture request per primitive, and exactly seven deterministic RNG draws per emitted primitive. A source comparator binds the production job map, message14 handoff, and `ProcessEffectFrame` type-to-variant route. This does not execute the generated OnProcess3 dispatcher, renderer, or live client acceptance.

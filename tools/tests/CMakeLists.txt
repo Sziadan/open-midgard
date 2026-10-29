@@ -670,6 +670,20 @@ add_executable(spirit_packet_lifecycle_checks SpiritPacketLifecycleTests.cpp)
 target_compile_features(spirit_packet_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(spirit_packet_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 add_test(NAME spirit_packet_lifecycle_checks COMMAND spirit_packet_lifecycle_checks)
+
+# Integrate the production spirit packet handlers with the production CHOOKGI
+# emitter against a silent primitive/resource/RNG harness.
+file(READ "../../src/world/RagEffect.cpp" spirit_chookgi_source)
+extract_body(spirit_chookgi_emitter "${spirit_chookgi_source}" "void CRagEffect::SpawnChookgi(" "void CRagEffect::ApplyBottomMagnus(")
+string(REPLACE "rand()" "SilentRand()" spirit_chookgi_emitter "${spirit_chookgi_emitter}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/SpiritChookgiBodies.inc"
+    "${skill_packet_actor_lookup}\n${spirit_has_effect_state_flag}\n${spirit_effect_exists}\n${spirit_handle_one}\n${spirit_chookgi_emitter}")
+add_executable(spirit_chookgi_integration_checks SpiritChookgiIntegrationTests.cpp)
+target_compile_features(spirit_chookgi_integration_checks PRIVATE cxx_std_17)
+target_include_directories(spirit_chookgi_integration_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
+add_test(NAME spirit_chookgi_integration_checks COMMAND spirit_chookgi_integration_checks)
+add_test(NAME spirit_chookgi_integration_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_spirit_chookgi_integration.py")
 add_executable(devotion_packet_lifecycle_checks DevotionPacketLifecycleTests.cpp)
 target_compile_features(devotion_packet_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(devotion_packet_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
