@@ -299,6 +299,27 @@ def main() -> None:
                 "WBA delivery wave lookup->src/world/GameActor.cpp:6841-6843",
             ])
             row[10] = "BLOCKED(RunningServer Fire Bolt19 capture required; replay covers client receive path only)"
+        elif skill_id == 28:
+            row[2] = "AL_HEAL -> skill_castend_nodamage_id -> clif_skill_nodamage; emits 0x011A (15 bytes); client receive replay: replay/heal28.tsv"
+            row[3] = "GetSkillActionInfo: begin effect-1/motion7; GetSkillActionInfo2: begin effect16/motion8"
+            row[4] = "No Heal-specific caster effect in the 0x011A receive path"
+            row[5] = "Zc_Use_Skill applies target effect by heal amount (<200:7, <2000:312, <4000:313, otherwise325); replay value199 launches effect7 and sends message88 (color-16711936, kind114)"
+            row[6] = "None for the targeted Heal notify path"
+            row[7] = "No wave in the Heal notify replay path"
+            row[8] = "; ".join([
+                "skill_castend_nodamage_id@Ref/eAthena_src_2011/map/skill.c:3093, 3175, 3203 (AL_HEAL calls clif_skill_nodamage)",
+                "clif_skill_nodamage@Ref/eAthena_src_2011/map/clif.c:4798",
+                "CGameMode::Zc_Use_Skill@Ref/GameModePacket.cpp:27959, 29390 (case 28)",
+                "CSession::GetSkillActionInfo@Ref/Session2.cpp:4149 (case 28)",
+                "CSession::GetSkillActionInfo2@Ref/Session2.cpp:4787 (case 28)",
+                "CSession::InitSkillEffectIdTable@Ref/Session2.cpp:6249, 6486 (case 28)",
+            ])
+            row[9] = "; ".join([
+                "AL_HEAL notify->src/gamemode/GameModePacket.cpp:HandleSkillNoDamageNotify/DeliverUseSkill",
+                "Zc_Use_Skill effects->src/gamemode/UseSkillEffect.generated.inc",
+                "skill action tables->src/session/SkillActionInfo.cpp, src/session/SkillActionInfo2.cpp, src/session/Session.cpp",
+            ])
+            row[10] = "BLOCKED(RunningServer Heal28 capture required; replay covers client receive path only)"
         output.append("| " + " | ".join(markdown_cell(value) for value in row) + " |")
 
     OUT_PATH.write_text("\n".join(output) + "\n", encoding="utf-8", newline="\n")
