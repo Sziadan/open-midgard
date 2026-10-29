@@ -2450,3 +2450,7 @@ Extended the registered actor-light checker to include effect379's PE tint windo
 ## WP5G effect454 DarkCasting source/resource parity — 2026-10-29
 
 Added and registered `check_effect454_dark_casting.py`. It compares complete PE/primary-Ref helper bodies, checks secondary-Ref sound and paired saint-casting order, verifies the local effect454 variant6 route/shared helper order, and pins `effect\\EF_BeginSpell.wav` and `effect\\ring_black.tga` bytes at `0x7193CC` and `0x7198D0`. Focused check, elevated Release parity build and full Release CTest passed 343/343. No production behavior change.
+
+## WP5F effect382 actor-light source parity — 2026-10-29
+
+Extended the registered actor-light comparator for effect382's PE/local bit-2 gate and generated route, including local null-master handling and the missing primary-Ref case provenance. Focused check and full Release CTest passed 343/343. No production behavior change.

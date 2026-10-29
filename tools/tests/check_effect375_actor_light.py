@@ -52,7 +52,24 @@ require("case 379: ApplyActorLight(); return true;" in DISPATCH,
         "local effect379 dispatcher route missing")
 require(actor_light_ids is not None and re.search(r"\b379\b", actor_light_ids.group(1)),
         "effect379 missing from generator actor-light group")
-require("case 375" not in REF and "case 379" not in REF,
+pe_382 = re.search(
+    r"case 382:\s*v58 = \*p_m_master;\s*"
+    r"if \( \(v58->m_BodyLight & 4\) != 4 \)\s*"
+    r"v58->m_BodyLight \+= 4;\s*break;",
+    PE,
+)
+require(pe_382 is not None, "canonical PE effect382 bit-2 gate changed")
+local_382 = re.search(
+    r"case 382:\s*if \(master != nullptr && \(master->m_BodyLight & 4\) != 4\)\s*\{\s*"
+    r"master->m_BodyLight \+= 4;\s*\}\s*break;",
+    helper.group(1),
+)
+require(local_382 is not None, "local effect382 bit gate or null-master guard changed")
+require("case 382: ApplyActorLight(); return true;" in DISPATCH,
+        "local effect382 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b382\b", actor_light_ids.group(1)),
+        "effect382 missing from generator actor-light group")
+require("case 375" not in REF and "case 379" not in REF and "case 382" not in REF,
         "primary Ref gained a standalone actor-light case; update recorded provenance")
 
-print("effects375/379 actor-light source parity passed; primary Ref has no standalone cases and local helpers guard null masters")
+print("effects375/379/382 actor-light source parity passed; primary Ref has no standalone cases and local helpers guard null masters")
