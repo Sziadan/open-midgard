@@ -13497,7 +13497,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
         RenderReferenceCylinder(*this, *viewMatrix);
         return;
     }
-    if (UsesReferenceParticle()) {
+    const bool hasCanonicalParticleResources =
+        (m_type == PP_3DPARTICLE || m_type == PP_3DPARTICLEGRAVITY || m_type == PP_3DPARTICLESPLINE)
+        && m_particleSprRes && m_particleActRes && m_numSegments > 0;
+    if (UsesReferenceParticle() || hasCanonicalParticleResources) {
         RenderReferenceParticlePrimitive(*this, *viewMatrix);
         return;
     }

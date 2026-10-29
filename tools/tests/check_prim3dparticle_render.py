@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source map for the legacy segment-sprite subset of PP_3DPARTICLE rendering."""
+"""Source map for the legacy segment-sprite renderer and generic particle routing."""
 from pathlib import Path
 import re
 
@@ -64,6 +64,15 @@ check("local particle render gates use the documented master-effect ID union and
       and "RenderReferenceParticlePrimitive(*this, *viewMatrix);" in LOCAL_DISPATCH
       and "case PP_3DPARTICLE:" in LOCAL_DISPATCH and "case PP_3DPARTICLEGRAVITY:" in LOCAL_DISPATCH
       and "case PP_3DPARTICLESPLINE:" in LOCAL_DISPATCH)
+canonical_route = re.search(
+    r"const bool hasCanonicalParticleResources\s*=\s*(.*?);\s*if\s*\(UsesReferenceParticle\(\)\s*\|\|\s*hasCanonicalParticleResources\)",
+    LOCAL_DISPATCH, re.S)
+check("all three generic particle types use canonical segments when both locked resources and segment state exist",
+      canonical_route is not None
+      and all(token in canonical_route.group(1) for token in (
+          "m_type == PP_3DPARTICLE", "m_type == PP_3DPARTICLEGRAVITY",
+          "m_type == PP_3DPARTICLESPLINE", "m_particleSprRes", "m_particleActRes", "m_numSegments > 0"))
+      and "RenderReferenceParticlePrimitive(*this, *viewMatrix);" in LOCAL_DISPATCH)
 check("legacy local renderer selects each segment position/size/color and current action/motion clips",
       all(token in LOCAL_RENDER for token in ("prim.m_segments[static_cast<size_t>(j)]", "segment.pos",
           "segment.size", "actions.GetMotion(prim.m_spriteAction, prim.m_curMotion)",
@@ -97,10 +106,10 @@ check("focused fixture covers per-segment sprite selection, clipping, color, UV,
           "padded texture UVs use update dimensions", "flag exactly five uses additive source-alpha blending",
           "missing clip sprite is skipped without billboard substitution")))
 
-# Do not imply parity for the unselected grouped approximation: its animation
-# is a baked single-anchor quad and it falls back to a generic billboard.
-check("generic grouped branch and billboard fallback remain explicitly outside this parity subset",
+# Missing resource/segment state retains the old approximation as a fallback;
+# it is not treated as canonical parity.
+check("grouped approximation remains only for generic particles without canonical resources or segment state",
       "GetBakedEffectSpriteFrame(" in LOCAL_GROUPED and "SubmitScreenQuadPivot(anchor" in LOCAL_GROUPED
       and "if (!SubmitAnimatedSpriteParticle(*this, base, viewMatrix, color, destBlend, renderFlags))" in LOCAL_DISPATCH
       and "SubmitBillboard(pos," in LOCAL_DISPATCH)
-print("PP_3DPARTICLE segment-sprite subset comparator passed; grouped fallback is not claimed equivalent.")
+print("PP_3DPARTICLE canonical route comparator passed; resource-less fallback is not claimed equivalent.")
