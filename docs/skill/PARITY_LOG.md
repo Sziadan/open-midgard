@@ -3950,3 +3950,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effects180/184 HitDark source comparison — 2026-10-29
 
 `check_hitdark_caller.py` compares full PE and primary-Ref `HitDark` helper bodies, pins grouped PE cases180/184 to the helper, checks each local dispatcher and `SpawnHitDark` route, and verifies the shared `SpawnHit(true)` ordering and dark profile. Both ids remain bound to the reference cylinder, linear-particle and gravity-particle paths. Executable bytes confirm `effect\ring_blue.tga` and CP949 `particle1.spr`/`.act` at VAs `0x71943C`, `0x71B200`, and `0x71B1E8`. Existing lifecycle assertions cover all five primitive emissions, 26 ordered draws, dark tint and segments, resource locks, and repeated-frame behavior. Release parity build succeeded; full CTest passed323/323. No production change.
+
+
+## WP5 effect159 TopRank resource bytes and CTest coverage — 2026-10-29
+
+`check_top_rank.py` now resolves `aEffectLockon12` from executable VA `0x71B804` and compares its raw bytes to `effect\LockOn128.tga`; the prior source-declaration check remains. Registered the comparator in CTest. Tightened local `SpawnTopRank` body extraction so the no-RNG assertion applies only to that function. The focused comparator passes; Release parity build succeeded; full CTest passed324/324. No production change.

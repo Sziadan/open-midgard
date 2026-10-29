@@ -1,7 +1,11 @@
 from pathlib import Path
 import re
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+from ro_exe_resolve import ExeImage  # noqa: E402
+
 REF = (ROOT / "Ref/dhxj/RagEffect.cpp").read_text(encoding="latin-1")
 HEADER = (ROOT / "Ref/dhxj/RagEffect.h").read_text(encoding="latin-1")
 EXE = (ROOT / "HighPriest.exe.c").read_text(encoding="latin-1")
@@ -12,6 +16,22 @@ DURATION = (ROOT / "src/world/RagEffectDurationTable.generated.inc").read_text(e
 def body(text, start, end):
     stop = text.index(end)
     return text[text.rindex(start, 0, stop):stop]
+
+
+def function(text, signature):
+    matches = list(re.finditer(signature, text))
+    if not matches:
+        raise SystemExit(f"FAIL: missing function {signature}")
+    opening = text.index("{", matches[-1].end())
+    depth = 0
+    for pos in range(opening, len(text)):
+        if text[pos] == "{":
+            depth += 1
+        elif text[pos] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[opening + 1:pos]
+    raise SystemExit(f"FAIL: unterminated function {signature}")
 
 
 def ordered(label, text, tokens):
@@ -53,7 +73,7 @@ if "if (m_type == 159) {\n        SpawnTopRank();\n        return true;\n    }" 
 
 ref_fn = body(REF, "void CRagEffect :: TopRank()", "void CRagEffect :: Party()")
 exe_fn = body(EXE, "void __thiscall CRagEffect::TopRank(CRagEffect *this)", "//----- (00602C90)")
-cur_fn = body(IMPL, "void CRagEffect::SpawnTopRank()", "// Ref/RagEffect.cpp:8826-8852")
+cur_fn = function(IMPL, r"void CRagEffect::SpawnTopRank\(\)")
 
 ordered("Ref", ref_fn, [
     "m_pos = m_master->m_pos", "if (m_stateCnt == 9998)", "m_stateCnt = 0",

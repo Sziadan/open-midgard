@@ -2312,3 +2312,8 @@ Added `check_effect128_overthrust.py` and registered it in CTest. The check comp
 ## WP5C effects180/184 HitDark source comparison — 2026-10-29
 
 Added `check_hitdark_caller.py` and registered its CTest. It compares the complete canonical PE/primary-Ref HitDark helper bodies, checks the grouped effects180/184 caller and local routes, verifies that both ids select the shared dark hit-emitter profile and reference cylinder/particle update families, and checks exact ring/particle SPR/ACT bytes at `0x71943C`, `0x71B200`, and `0x71B1E8`. Existing lifecycle assertions cover ordered emissions, 26 RNG draws, dark tint, segment initialization, reduced-effects behavior and no repeat. Release parity build succeeded; full CTest passed323/323. No production change.
+
+
+## WP5 effect159 TopRank resource-byte check — 2026-10-29
+
+Strengthened `check_top_rank.py` to resolve the executable bytes at VA `0x71B804` and require the exact `effect\LockOn128.tga` string. Registered the comparator in CTest and bounded the local function extraction to the actual `SpawnTopRank` body so its no-RNG assertion does not inspect following functions. The focused check, Release parity build, and full CTest passed (324/324). No production behavior change.
