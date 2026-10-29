@@ -4213,3 +4213,7 @@ Added and registered `check_effects689_691_696_texture_animation.py`. It compare
 ## WP5F effects500/625 actor-light parity — 2026-10-29
 
 Extended `check_effect375_actor_light.py` with PE/primary-Ref caller comparison and local guarded-route assertions for effects500 and 625. Effect500 covers its state31 cutoff, even-frame blue tint and shared odd-frame white flash; effect625 covers the four-frame cadence, BodyLight `0x4000` gate and BodyTime2=20. Focused check passed; full Release CTest passed 363/363. No production behavior change.
+
+## WP5F effects610/611 cue and texture parity — 2026-10-29
+
+Added and registered `check_effects610_611_texture_cues.py`. It checks each PE/primary-Ref state-zero caller's wave-before-texture order, local generated route and corresponding wave/bitmap selection, selector-3 EffectTextureSet profile in the PE and secondary Ref, and exact executable bytes for both waves and textures. Focused check passed; full Release CTest passed 364/364. No production behavior change.
