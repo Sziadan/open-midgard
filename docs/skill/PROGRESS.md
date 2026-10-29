@@ -2665,9 +2665,11 @@ PE and secondary Ref Exit2 refresh the effect position on every call before the 
 
 Extended the existing actor-light comparator across eleven additional PE inline cases that have no primary-Ref caller branches. It checks PE bit/timing profiles against the local ApplyActorLight helper, generated dispatcher routes and generator group membership. The focused registered CTest passed 1/1; full Release CTest remains at 376/376 from the effect314 checkpoint.
 
+## WP5F effect415 actor-light cues and origin refresh - 2026-10-29
 
+PE effect415 copies the master position into the effect at frames17 and25 before playing the resolved `effect\\EF_hit2.wav` and `effect\\EF_hit4.wav` cues. Local `ApplyActorLight` already matched the cue timing and listener-relative sound positions, but did not update `m_effectPos`/`m_cachedPos`; it now refreshes both before each cue. Lifecycle coverage verifies moved-master positions, exact wave coordinates, and the one-shot BodyLight bit/BodyTime boundary at frame30. The actor-light source comparator now binds the PE-only caller profile to the local route and exact assets. Full Release build succeeded; full CTest passed 376/376.
 
-## WP5F effect415 actor-light cues and origin refresh — 2026-10-29
+## WP5F unresolved resources for effects462/463/665/687/688 - 2026-10-29
 
-PE effect415 copies the master position into the effect at frames17 and25 before playing the resolved ffect\\EF_hit2.wav and ffect\\EF_hit4.wav cues. Local ApplyActorLight already matched the cue timing and listener-relative sound positions, but did not update m_effectPos/m_cachedPos; it now refreshes both before each cue. Lifecycle coverage verifies moved-master positions, exact wave coordinates, and the one-shot BodyLight bit/BodyTime boundary at frame30. The actor-light source comparator now binds the PE-only caller profile to the local route and exact assets. Full Release build succeeded; full CTest passed 376/376.
+The 5F audit found the remaining routed inline gaps in effects462/463 (PE wave symbol `aEffect_3`), 665 (`Bubble_Drop` bitmap `aEffect_139`), and 687/688 (`Map_MagicZone` bitmaps `aEffect_157`, `_129`, `_115`, `_92`, `_45`, `_60`). Each executable string contains only the `effect\\` prefix. Recorded the exact resource blockers in `BLOCKED.md`; the handlers remain explicitly unported until those names are recovered.
 
