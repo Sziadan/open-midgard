@@ -29,3 +29,5 @@ Effect630 Effect_SPR variant15 now has direct runtime coverage for both controll
 Effect637 Effect_SPR variant20 now has runtime coverage for its frame-zero particle and delayed frame10 wave, bound to PE asset/wave VAs `0x71CFBC/0x71CFA4/0x719B40`; state11 does not repeat output. PE/primary-Ref caller mapping agrees. No visual/rendering acceptance is claimed; see the effect637 progress entry.
 
 Effect638 Effect_SPR variant21 now has direct lifecycle coverage for its exact PE-backed particle profile and quiet later-state behavior. PE/primary-Ref caller mapping agrees. No visual/rendering acceptance is claimed; see its progress entry.
+
+Effect639 Effect_SPR variant22 now has direct lifecycle coverage for its exact PE-backed particle profile and quiet later-state behavior. The comparator binds resources to PE VAs `0x71CF50/0x71CF34`; PE/primary-Ref caller mapping agrees. No visual/rendering acceptance is claimed; see its progress entry.

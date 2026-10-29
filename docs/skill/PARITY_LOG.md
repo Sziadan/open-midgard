@@ -4834,3 +4834,7 @@ Effect637 state0 spawns variant20 once with exact PE-backed assets; state1 is si
 ## WP5 Effect_SPR lifecycle — effect638 variant21 — 2026-10-29
 
 Effect638 variant21 now has direct runtime coverage for its one-state-zero PP_3DPARTICLE setup, repeat animation profile, no-RNG/no-wave path, and state1 spawn gate. Fixture SPR/ACT bytes are compared with PE VAs `0x71CF88/0x71CF6C`; PE and primary Ref callers agree on variant21. PE asset names remain authoritative over secondary Ref `misc\\...` spellings. No rendered visual acceptance is claimed.
+
+## WP5 Effect_SPR lifecycle — effect639 variant22 — 2026-10-29
+
+Direct runtime fixture exercises the extracted production variant22 helper at state0 and state1. It asserts the particle profile, exact SPR/ACT bytes bound to PE VAs `0x71CF50/0x71CF34`, no wave/RNG, and no repeated spawn/resource request on the later state. The existing checker verifies PE and primary Ref caller mapping; PE asset bytes remain authoritative over secondary Ref `misc\...` names. This covers local lifecycle and payload only, not rendered output.
