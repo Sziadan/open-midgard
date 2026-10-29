@@ -4663,3 +4663,8 @@ Added direct lifecycle checks for Sage Spell Break (234) and Holy Cross (245). E
 ## WP5 effects65/66/69/75–85/91 scheduled clip-wave lifecycle — 2026-10-29
 
 Added table-driven lifecycle checks for eleven clip-wave cases. The fixture verifies each exact cue and source frame (including effects84 at frame60 and85 at frame15), pre-event and post-event silence, listener-relative X/Z, audio parameters, exhausted STR result propagation, and no RNG/texture work. Effect75's unique Y+1 offset is checked separately through the data row. The existing dispatcher comparator confirms local routes, source timing, PE literals and resource bytes. Focused lifecycle passes3132 checks; comparator passes; full Release parity CTest passes428/428.
+
+
+## WP7 effect164 StatusState lifecycle — 2026-10-29
+
+Connected and executed the actual `SpawnStatusState` body in the lifecycle harness using the generated production icon map. Coverage checks nonzero-state gating, state9998 reset, priority ordering, status42-to-12 duplicate suppression, special-job asset paths, exact 16px icon primitives and screen offsets across row-wrap thresholds, and `m_count` reset/message25 clearing of existing icons. The existing `check_status_state.py` verifies the complete 192-pair PE/Ref map and status renderer source. Focused lifecycle passes3135 checks; comparator passes; full Release parity CTest passes428/428.

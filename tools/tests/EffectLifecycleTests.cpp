@@ -105,6 +105,7 @@ struct RPFace {
 struct SilentRenderer {
     float m_hpc=7, m_vpc=7, m_screenYFactor=1;
     int m_xoffset=0,m_yoffset=0,m_halfWidth=0,m_halfHeight=0,submissions=0,lastFlags=0;
+    int m_width=800,m_height=600;
     RPFace face;
     RPFace* BorrowNullRP() { face = {}; return &face; }
     void AddRP(RPFace*, int flags) { ++submissions; lastFlags=flags; }
@@ -138,6 +139,7 @@ struct CGameObject {
 };
 struct CRenderObject : CGameObject {
     vector3d m_pos;
+    int m_job=0;
     int lastSentMsg=0,lastSentArg=0,lastSentArg2=0,lastSentArg3=0;
     int m_stateId=0;
     void SendMsg(CGameObject*, int msg, msgparam_t arg, msgparam_t arg2, msgparam_t arg3) override {
@@ -207,7 +209,18 @@ struct CGameMode {
         if(msg==148){quakeSide=*reinterpret_cast<float*>(arg);quakeFront=*reinterpret_cast<float*>(second);quakeLatitude=*reinterpret_cast<float*>(third);}
     }
 } gameMode;
-struct CSession {bool m_isMinEffect=false,m_isEffectOn=false;u32 m_aid=0;const char* GetAttrWaveName(int) const;} g_session;
+struct ACTIVE_STATUS_ICON { int statusType=0; bool hasTimer=false; u32 expireServerTime=0; };
+struct CSession {
+    bool m_isMinEffect=false,m_isEffectOn=false;u32 m_aid=0;
+    std::vector<ACTIVE_STATUS_ICON> activeStatusIcons;
+    const std::vector<ACTIVE_STATUS_ICON>& GetActiveStatusIcons() const { return activeStatusIcons; }
+    const char* GetAttrWaveName(int) const;
+} g_session;
+#include "StatusStateIconMap.h"
+const StatusStateIconEntry* FindStatusStateIcon(int priority,int status) {
+    for(const auto& entry:kStatusStateIconEntries) if(entry.priority==priority&&entry.status==status) return &entry;
+    return nullptr;
+}
 struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
 bool TryPlayEffectWaveAt(const vector3d& soundPos, const char* name) {
     const vector3d& listener=g_modeMgr.GetCurrentGameMode()->m_world->m_player->m_pos;
@@ -727,6 +740,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect651();
     bool ProcessEffect695MapFireworks();
     bool ProcessEffectTextureAnimation();
+    void SpawnStatusState();
     bool ProcessCloaking120();
     void ApplyWind();
     void SpawnWarp8();
@@ -13445,6 +13459,52 @@ int main()
         check(g_texMgr.requests.empty()&&rngDraws==beforeRng,
             "Scheduled clip-wave cue group emits no textures or RNG");
         g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        const int oldWidth=g_renderer.m_width,oldHeight=g_renderer.m_height;
+        CRenderObject* oldPlayer=g_world.m_player;
+        CRenderObject player;player.m_job=4046;g_world.m_player=&player;
+        g_renderer.m_width=800;g_renderer.m_height=260;
+        g_session.activeStatusIcons={{64,false,0},{8,false,0},{42,false,0},{90,false,0},{61,false,0},{12,false,0}};
+        g_texMgr.requests.clear();
+        CRagEffect status;status.m_type=164;status.m_stateCnt=1;
+        status.SpawnStatusState();
+        check(status.m_primList.empty()&&g_texMgr.requests.empty()&&status.m_stateCnt==1,
+            "StatusState effect164 later states do not spawn or request icons");
+        status.m_stateCnt=9998;status.SpawnStatusState();
+        const int orderedStatuses[5]={8,90,64,42,61};
+        const int expectedX[5]={768,768,733,733,698};
+        const int expectedY[5]={185,220,185,220,185};
+        std::vector<std::string> expectedPaths;
+        const int priorities[5]={0,0,3,3,3};
+        for(int i=0;i<5;++i) {
+            const StatusStateIconEntry* entry=FindStatusStateIcon(priorities[i],orderedStatuses[i]);
+            const char* path=(orderedStatuses[i]==90||orderedStatuses[i]==64)?entry->specialPath:entry->standardPath;
+            expectedPaths.emplace_back(path);
+        }
+        bool prims=status.m_primList.size()==5;
+        int index=0;
+        for(CEffectPrim* prim:status.m_primList) {
+            prims=prims&&prim&&prim->m_type==PP_2DTEXTURE&&prim->m_pattern==4
+                &&prim->m_duration==9999&&prim->m_widthSize==16.0f&&prim->m_heightSize==16.0f
+                &&prim->m_gi[0].life==0&&prim->m_texture.size()==1
+                &&prim->m_deltaPos2.x==expectedX[index]&&prim->m_deltaPos2.y==expectedY[index];
+            ++index;
+        }
+        check(status.m_stateCnt==0&&status.m_count==0&&prims&&g_texMgr.requests==expectedPaths,
+            "StatusState effect164 prioritizes icons, remaps status42 to duplicate12, selects special-job assets, and scrolls exact rows");
+        status.ClearPrims();g_world.UpdateGameObjects();
+
+        g_session.activeStatusIcons.clear();g_texMgr.requests.clear();
+        CRagEffect reset;reset.m_type=164;reset.m_stateCnt=7;reset.m_count=1;
+        CEffectPrim* oldPrim=reset.LaunchEffectPrim(PP_2DTEXTURE,vector3d{});
+        reset.SpawnStatusState();
+        check(reset.m_count==0&&reset.m_stateCnt==0&&reset.m_primList.empty()
+            &&oldPrim&&oldPrim->m_master==nullptr&&g_texMgr.requests.empty(),
+            "StatusState effect164 count reset sends message25 to clear prior icons before restart");
+        g_world.UpdateGameObjects();
+        g_session.activeStatusIcons.clear();g_world.m_player=oldPlayer;
+        g_renderer.m_width=oldWidth;g_renderer.m_height=oldHeight;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
