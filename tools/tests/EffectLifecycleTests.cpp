@@ -11587,6 +11587,26 @@ int main()
         g_world.m_player=oldPlayer;
     }
     {
+        CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        waveCalls.clear();CRagEffect effect;effect.m_type=677;effect.m_master=&master;effect.m_effectPos={7,8,9};
+        const int draws=rngDraws;
+        effect.m_stateCnt=0;
+        check(effect.ProcessTier3StrEffect()&&waveCalls.empty()&&effect.m_effectPos.x==7
+            &&effect.m_effectPos.y==8&&effect.m_effectPos.z==9,
+            "effect677 state0 has no position update or state1 cue and ignores STR completion");
+        effect.m_stateCnt=1;
+        check(effect.ProcessTier3StrEffect()&&effect.m_effectPos.x==31&&effect.m_effectPos.y==41&&effect.m_effectPos.z==51
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\wideb.wav"
+            &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==40
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "effect677 state1 copies effect position and plays exact listener-relative wideb cue");
+        effect.m_stateCnt=2;
+        check(effect.ProcessTier3StrEffect()&&waveCalls.size()==1&&rngDraws==draws,
+            "effect677 state2 does not repeat cue or consume RNG and remains active after STR completion");
+        g_world.m_player=oldPlayer;
+    }
+    {
         CRagEffect effect;effect.m_type=646;effect.m_iCurLayer=1;effect.m_cEndLayer=1;
         check(!effect.ProcessEZ2STR(0.0f,-80.0f,0.0f)&&!effect.m_strFrameActive,
             "effect646's exhausted shared STR step returns false for its caller to ignore");

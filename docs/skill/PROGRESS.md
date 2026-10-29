@@ -2258,3 +2258,7 @@ Compared PE case `0x29C` (`HighPriest.exe.c:419098–419110`) and primary Ref (`
 ## WP10.4 effect669 Wideb/Poison — 2026-10-29
 
 Compared PE case `0x29D` (`HighPriest.exe.c:419110–419121`) and primary Ref (`Ref/RagEffect.cpp:12471–12482`): at state1, the handler copies master position, plays `effect\\wideb.wav` at listener-relative X/Z and Y0 with 250/40/1.0, calls `POISON(1)` after the cue, then enters the shared STR tail which ignores completion. PE resource bytes at `0x719CA8` and `0x71A7EC` resolve to the exact wave and `wideb.str`; local mapping matches. Added comparator and lifecycle assertions for states0/1/2, audio/poison order, repeated poison, one-time cue, and no RNG use. No production change. Release parity build and full CTest pass312/312.
+
+## WP10.4 effect677 Cwound/Wideb — 2026-10-29
+
+Compared PE case `0x2A5` (`HighPriest.exe.c:419149–419159`) and primary Ref (`Ref/RagEffect.cpp:12510–12520`): state1 copies master position and plays `effect\\wideb.wav` at listener-relative X/Z and literal Y0 with 250/40/1.0, then falls through to the shared STR tail and returns true regardless of completion. Init selects `cwound.str`; PE bytes at `0x719CA8` and `0x71A7E0` confirm wave and STR resources, matching local tables. Added comparator and state0/1/2 lifecycle checks. No production behavior change. Release parity build and full CTest pass313/313.
