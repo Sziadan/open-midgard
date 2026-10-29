@@ -2357,3 +2357,8 @@ Added `check_effect143_144_146_152_str_init.py` and registered it in CTest. It c
 ## WP5C effect126 PoisonReact_1st STR Init parity — 2026-10-29
 
 Extended `check_effect124_127_poison_react.py` to include effect126's matching PE/primary-Ref Init mapping to `PoisonReact_1st.str`, local STR table and generic ProcessEZ2STR route, with exact executable bytes at VA `0x71AED8`. Existing 124/127 caller/helper/resource assertions remain. Focused comparator and full Release CTest passed327/327. No production change.
+
+
+## WP5C effects172–179 elemental casting texture bytes — 2026-10-29
+
+Strengthened and registered `check_elemental_change_casting.py`. It now verifies exact PE bytes for the three unique ring textures used by effects176/177/179: `effect\ring_jadu.tga` at `0x71A280`, `effect\ring_brown.tga` at `0x71A268`, and `effect\ring_purple.tga` at `0x719468`. The check also validates the local route through `ProcessEffectFrameLegacy` (correcting its prior stale function target). Release parity build succeeded; full CTest passed328/328. No production change.

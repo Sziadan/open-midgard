@@ -3995,3 +3995,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effect126 PoisonReact_1st Init and resource comparison — 2026-10-29
 
 `check_effect124_127_poison_react.py` now also compares PE/primary-Ref Init case126, checks local `PoisonReact_1st.str` catalog mapping and generic STR-only dispatch, and verifies exact bytes at PE VA `0x71AED8`. Existing effects124/127 checks remain. Focused comparator and full CTest passed327/327. No production change.
+
+
+## WP5C effects172–179 elemental casting executable textures — 2026-10-29
+
+`check_elemental_change_casting.py` now reads and verifies exact PE bytes for the previously unpinned unique assets: Jadu ring `0x71A280`, Brown ring `0x71A268`, and Purple ring `0x719468`. Its local dispatch assertion now inspects `ProcessEffectFrameLegacy`, where the elemental casting route resides. Registered in CTest; Release parity build and full CTest passed328/328. No production change.

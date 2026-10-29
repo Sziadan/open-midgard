@@ -1,7 +1,10 @@
 import re
 from pathlib import Path
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+from ro_exe_resolve import ExeImage  # noqa: E402
 ref_cpp = (ROOT / "Ref/dhxj/RagEffect.cpp").read_text(encoding="cp1252")
 ref_h = (ROOT / "Ref/dhxj/RagEffect.h").read_text(encoding="cp1252")
 exe = (ROOT / "HighPriest.exe.c").read_text(encoding="cp1252")
@@ -26,7 +29,7 @@ assert list(expected) == list(range(172, 180))
 
 
 def function(text, marker):
-    start = text.index(marker)
+    start = text.rindex(marker)
     brace = text.index("{", start)
     depth = 0
     for i in range(brace, len(text)):
@@ -72,11 +75,14 @@ for match in re.finditer(r'case (17[2-9]):\s*ApplyBeginCasting\("([^"]+)",\s*(\d
     impl_map[int(match.group(1))] = (match.group(2).replace("\\\\", "\\"), int(match.group(3)), match.group(4))
 assert impl_map == {effect_id: (texture, option, "false") for effect_id, (texture, option) in ref_map.items()}
 assert "if (m_stateCnt != 0) return;" in impl
-route = function(src, "bool CRagEffect::ProcessEffectFrame()")
+route = function(src, "bool CRagEffect::ProcessEffectFrameLegacy()")
 assert "const bool beginCast = dispatchHandler && (m_type >= 172 && m_type <= 179);" in route
 assert "} else if (beginCast) {\n        ApplyElementalChangeCasting();" in route
 assert "PlayWave" not in impl and "rand()" not in impl and "SendMsg" not in impl
-print("PASS: effect IDs 172-179 mechanically match Ref enum/wrappers, canonical guarded cases, and current zero-state texture/option routes")
-
-
-
+image = ExeImage(ROOT / "HighPriest.exe")
+for va, expected_bytes in ((0x71A280, b"effect\\ring_jadu.tga"),
+                           (0x71A268, b"effect\\ring_brown.tga"),
+                           (0x719468, b"effect\\ring_purple.tga")):
+    actual = image.read_cstring_at(va)
+    assert actual is not None and actual.raw == expected_bytes, f"PE resource bytes differ at 0x{va:X}"
+print("PASS: effects172-179 match Ref enum/wrappers, canonical callers, local routes, and unique Jadu/Brown/Purple PE texture bytes")

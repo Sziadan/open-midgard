@@ -786,6 +786,8 @@ add_test(NAME effects491_492_507_508_str_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect491_492_507_508_str.py")
 add_test(NAME effect695_map_fireworks_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect695_map_fireworks.py")
+add_test(NAME elemental_change_casting_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_elemental_change_casting.py")
 add_test(NAME aspersio86_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_aspersio86.py")
 add_test(NAME stormgust89_source_check
@@ -1377,4 +1379,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect128_overthrust.py
     check_hitdark_caller.py
     check_top_rank.py
-    check_effect121_122_sonic_blow.py)
+    check_effect121_122_sonic_blow.py
+    check_elemental_change_casting.py)
