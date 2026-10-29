@@ -3970,3 +3970,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effect101 RepairWeapon PE/Ref helper comparison — 2026-10-29
 
 `check_repairweapon101.py` now compares complete PE and primary-Ref `RepairWeapon` helper bodies and pins canonical PE case101 to the helper. It confirms the primary Ref source has no OnProcess body/call for this helper. Existing local state20/55 cue and shared STR checks remain; exact `effect\black_weapon_repair_a.wav` bytes are checked at `0x71BD2C`. Release parity build succeeded; full CTest passed325/325. No production change.
+
+
+## WP5C effect104 MaxPower helper comparison — 2026-10-29
+
+`check_maxpower104.py` now compares complete PE and primary-Ref `MaxPower` helper bodies and verifies canonical PE case104 calls it. It records that the primary Ref source omits the OnProcess caller. Existing local timing checks and the exact PE wave bytes at `0x71BDA4`, `0x71BD7C`, and `0x71BD50` remain. Release parity build succeeded; full CTest passed325/325. No production change.

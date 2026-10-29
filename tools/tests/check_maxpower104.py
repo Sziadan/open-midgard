@@ -2,14 +2,42 @@
 """Check Max Power effect104 route, cue timing, and PE resource strings."""
 from pathlib import Path
 import sys
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from tools.ro_exe_resolve import ExeImage  # noqa: E402
 
 rag = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
+pe = (ROOT / "HighPriest.exe.c").read_text(encoding="latin-1")
 ref = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 dispatch = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
+
+def function_body(source, signature):
+    matches = list(re.finditer(signature, source))
+    if not matches:
+        raise AssertionError(f"missing {signature}")
+    opening = source.find("{", matches[-1].end())
+    depth = 0
+    for offset in range(opening, len(source)):
+        if source[offset] == "{": depth += 1
+        elif source[offset] == "}":
+            depth -= 1
+            if depth == 0: return source[opening + 1:offset]
+    raise AssertionError(f"unterminated {signature}")
+
+def compact(text):
+    return re.sub(r"\s+", "", text)
+
+pe_helper = function_body(pe, r"bool __thiscall CRagEffect::MaxPower\(CRagEffect \*this\)")
+ref_helper = function_body(ref, r"bool __thiscall CRagEffect::MaxPower\(CRagEffect \*this\)")
+if compact(pe_helper) != compact(ref_helper):
+    raise AssertionError("canonical PE and primary Ref MaxPower helper bodies differ")
+pe_onprocess = function_body(pe, r"unsigned __int8 __thiscall CRagEffect::OnProcess\(CRagEffect \*this\)")
+if not re.search(r"case\s+104:\s*result\s*=\s*CRagEffect::MaxPower\(this\);\s*goto LABEL_425;", pe_onprocess):
+    raise AssertionError("canonical PE effect104 caller changed")
+if re.search(r"bool __thiscall CRagEffect::OnProcess\(CRagEffect \*this\)", ref) or "CRagEffect::MaxPower(this)" in ref:
+    raise AssertionError("primary Ref unexpectedly contains the omitted OnProcess caller")
 if "case 104: return ProcessMaxPower104();" not in dispatch:
     raise AssertionError("effect104 is not routed to Max Power")
 if "CRagEffect::MaxPower" not in ref or "0x606640" not in ref.lower():
@@ -34,4 +62,4 @@ for token in (
 ):
     if token not in body:
         raise AssertionError(f"Max Power handler is missing {token}")
-print("effect104 source check passed: four timed cues and PE-backed wave bytes")
+print("effect104 source check passed: PE/Ref helper, PE caller, Ref caller omission, local route and four timed cues/resources")

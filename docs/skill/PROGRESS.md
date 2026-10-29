@@ -2332,3 +2332,8 @@ Strengthened `check_kyrie112.py` to compare complete PE and primary-Ref `Kyrie` 
 ## WP5C effect101 RepairWeapon PE/Ref source comparison — 2026-10-29
 
 Strengthened `check_repairweapon101.py` to compare complete PE and primary-Ref `RepairWeapon` helper bodies, verify the canonical PE case101 call and record the primary Ref caller omission. Existing local route, state20/55 cues and exact wave bytes at `0x71BD2C` remain checked. Release parity build succeeded; full CTest passed325/325. No production change.
+
+
+## WP5C effect104 MaxPower PE/Ref source comparison — 2026-10-29
+
+Strengthened `check_maxpower104.py` to compare the complete PE and primary-Ref `MaxPower` helper bodies, verify canonical PE case104 and record primary Ref caller omission. Existing local timing checks and exact four-wave resource assertions remain. Release parity build succeeded; full CTest passed325/325. No production change.
