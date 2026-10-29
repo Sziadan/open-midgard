@@ -698,6 +698,7 @@ struct CRagEffect : CGameObject {
     void ApplyBodyLight442();
     void ApplyBodyLight446();
     void ApplyBodyLight449();
+    void ApplyPairedSaintCasting(const char*,int,bool,float);
     void SpawnEnergyDrain2();
     void SpawnEnergyDrain3();
     bool ProcessEnergyDrain2Effect();
@@ -13823,6 +13824,51 @@ int main()
             &&noMaster.m_primList.empty()&&rngDraws==missingMasterDraws&&g_resMgr.requests.empty(),
             "energy-drain handlers with no master remain active without output");
         waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject listener;listener.m_pos={10,900,20};
+        CRenderObject master;master.m_pos={100,200,300};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect dark;dark.m_type=454;dark.m_stateCnt=0;dark.m_duration=100;dark.m_master=&master;
+        const int oldRandomDraws=rngDraws;waveCalls.clear();g_texMgr.requests.clear();
+        dark.ApplyPairedSaintCasting("effect\\ring_black.tga",6,true,0.0f);
+        check(dark.m_primList.size()==2&&waveCalls.size()==1
+            &&waveCalls[0].name=="effect\\EF_BeginSpell.wav"&&waveCalls[0].x==90
+            &&waveCalls[0].y==0&&waveCalls[0].z==280&&waveCalls[0].volume==250
+            &&waveCalls[0].range==40&&waveCalls[0].frequency==1.0f
+            &&waveCalls[0].frameRng==oldRandomDraws&&rngDraws==oldRandomDraws
+            &&g_texMgr.requests==std::vector<std::string>({"effect\\ring_black.tga","effect\\ring_black.tga"})
+            &&dark.m_effectPos.x==100&&dark.m_cachedPos.y==200,
+            "effect454 state0 plays its exact cue and creates two paired black casting rings");
+        CEffectPrim* first=dark.m_primList.empty()?nullptr:dark.m_primList.front();
+        CEffectPrim* second=dark.m_primList.size()<2?nullptr:*std::next(dark.m_primList.begin());
+        const short spins[4]={180,270,0,90};
+        const short firstAlpha[4]={180,135,90,45};
+        const short secondAlpha[4]={160,115,70,25};
+        bool ringPayload=first&&second;
+        CEffectPrim* rings[2]={first,second};
+        const short* alphas[2]={firstAlpha,secondAlpha};
+        for(int ring=0;ring<2;++ring) if(rings[ring]) {
+            CEffectPrim* prim=rings[ring];
+            ringPayload=ringPayload&&prim->m_type==PP_GI_1&&prim->m_renderFlag==5
+                &&prim->m_duration==100&&prim->m_size==12.0f&&prim->m_pos.x==100
+                &&prim->m_pos.y==200&&prim->m_pos.z==300&&prim->m_texture.size()==1;
+            for(int band=0;band<4;++band) {
+                const EffectGi& gi=prim->m_gi[band];
+                ringPayload=ringPayload&&gi.life==1&&gi.process==0&&gi.fullDisplayAngle==360
+                    &&gi.maxHeight==20.0f-band&&gi.rotStart==spins[band]&&gi.alphaB==alphas[ring][band]
+                    &&std::fabs(gi.distance-4.0999999f)<0.000001f&&gi.riseAngle==80
+                    &&gi.alphaT==6&&gi.sparkY==0.0f;
+            }
+        }
+        check(ringPayload,"effect454 preserves paired ring order, variant6 size, origin and four exact band profiles");
+        master.m_pos={110,210,310};dark.m_stateCnt=1;
+        dark.ApplyPairedSaintCasting("effect\\ring_black.tga",6,true,0.0f);
+        check(dark.m_primList.size()==2&&waveCalls.size()==1&&g_texMgr.requests.size()==2
+            &&dark.m_effectPos.x==110&&dark.m_cachedPos.z==310&&rngDraws==oldRandomDraws,
+            "effect454 later states refresh origin without replaying cue or relaunching rings");
+        dark.ClearPrims();g_world.UpdateGameObjects();g_world.m_player=oldPlayer;
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     {
         const int oldRandomDraws=rngDraws;
