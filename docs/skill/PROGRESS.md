@@ -2542,3 +2542,7 @@ Added and registered `check_effect673_poison.py`. It compares the PE/primary-Ref
 ## WP5F effect590 JobLvUp50_2 caller parity — 2026-10-29
 
 Added and registered `check_effect590_job_lv_up2.py`. It compares the PE/primary-Ref frame-15 caller and complete helper body, then verifies the local route and ordered time-0/time-45 emitter profiles. Existing lifecycle coverage retains the frame-15 emission assertion. Focused check, elevated Release parity build and full Release CTest passed 360/360. No production behavior change.
+
+## WP5F effect544 actor-light parity — 2026-10-29
+
+Extended `check_effect375_actor_light.py` to compare effect544's PE/primary-Ref caller, BodyLight `0x40000` gate, `BodyTime2` cutoff at 200, and fractional `state * 0.125` conversion with the local guarded route. Focused check, elevated Release parity build and full Release CTest passed 360/360. No production behavior change.

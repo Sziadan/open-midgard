@@ -186,10 +186,29 @@ local_542 = re.search(
     helper.group(1),
 )
 require(local_542 is not None, "local effect542 bit gate, frame cutoff, body-time division or master guard changed")
+
+pe_544 = process3_case(PE, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 544, 545)
+ref_544 = process3_case(REF, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 544, 545)
+require(re.sub(r"\s+", "", pe_544) == re.sub(r"\s+", "", ref_544),
+        "primary Ref and PE effect544 caller branches differ")
+for token in ("m_BodyLight & 0x40000", "m_BodyLight += 0x40000", "m_stateCnt > 200",
+              "this->m_stateCnt * 0.125"):
+    require(token in pe_544, f"PE effect544 actor-light behavior missing {token}")
+require("case 544: ApplyActorLight(); return true;" in DISPATCH3,
+        "local effect544 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b544\b", actor_light_ids.group(1)),
+        "effect544 missing from generator actor-light group")
+local_544 = re.search(
+    r"case 544:\s*if \(master == nullptr \|\| \(master->m_BodyLight & 0x40000\) == 0x40000\)\s*\{\s*break;\s*\}\s*"
+    r"master->m_BodyLight \+= 0x40000;\s*master->m_BodyTime2 = m_stateCnt > 200\s*"
+    r"\? static_cast<u8>\(25\)\s*:\s*static_cast<u8>\(static_cast<double>\(m_stateCnt\) \* 0\.125\);\s*break;",
+    helper.group(1),
+)
+require(local_544 is not None, "local effect544 bit gate, 200/201 threshold, time conversion or master guard changed")
 require("case 375" not in REF and "case 379" not in REF and "case 382" not in REF and "case 385" not in REF,
         "primary Ref gained a standalone actor-light case; update recorded provenance")
 
 require("case 387" not in REF and "case 396" not in REF,
         "primary Ref gained an explicit actor-light case; update recorded provenance")
 
-print("effects375/379/382/385/387/396/538/542 actor-light source parity passed; new PE/Ref caller and local guards checked")
+print("effects375/379/382/385/387/396/538/542/544 actor-light source parity passed; new PE/Ref caller and local guards checked")
