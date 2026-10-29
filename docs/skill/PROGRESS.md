@@ -2888,3 +2888,7 @@ Added and registered `tools/tests/check_effect1_hit2.py`. Canonical PE and prima
 ## WP5 CRagEffect Hit3 effect2 source checkpoint - 2026-10-29
 
 Added and registered `tools/tests/check_effect2_hit3.py`. Canonical PE and primary Ref `Hit3` bodies normalize identically; PE case2 calls `Hit3`, and local case2 routes through `ProcessEffectFrameLegacy` to `SpawnHit3`. The comparator checks zero-frame gating, listener-relative wave, facing, two cylinders before eight linear sprites, cylinder setup and the shared particle profile parameters. Existing lifecycle assertions cover the 48 ordered draws, primitive/resource setup, update behavior, no-repeat behavior and asset cleanup. Focused and full Release parity CTest passed 415/415. No runtime behavior changed.
+
+## WP5 CRagEffect Hit4 effect3 source checkpoint - 2026-10-29
+
+Added and registered `tools/tests/check_effect3_hit4.py`. Canonical PE and primary Ref `Hit4` bodies normalize identically; PE case3 calls `Hit4`, and local case3 routes through `ProcessEffectFrameLegacy` to `SpawnHit4`. The comparator checks projection before the state gate, stored-origin wave, truncated/wrapped facing, the cylinder profile, five shrinking sprites and the shared particle draw profile. Existing lifecycle assertions cover exact 30 draws, reduced-effects behavior, motion/fade, texture/resources, nonzero-state behavior and cleanup. Focused and full Release parity CTest passed 416/416. No runtime behavior changed.
