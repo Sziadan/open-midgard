@@ -11579,6 +11579,11 @@ int main()
             "effect670's exhausted shared STR step returns false for its caller to ignore");
     }
     {
+        CRagEffect effect;effect.m_type=699;effect.m_iCurLayer=1;effect.m_cEndLayer=1;
+        check(!effect.ProcessEZ2STR(0.0f,-80.0f,0.0f)&&!effect.m_strFrameActive,
+            "effect699's exhausted shared STR step returns false for its caller to ignore");
+    }
+    {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         CRagEffect effect;effect.m_type=609;effect.m_master=&master;

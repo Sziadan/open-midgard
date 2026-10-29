@@ -2246,3 +2246,7 @@ Compared PE and primary Ref OnProcess3's grouped `0x289` case with the `$L146219
 ## WP10.4 effect670 Dfear STR — 2026-10-29
 
 Compared PE and primary Ref OnProcess3's grouped `0x29E` case with `$L146219`: effect670 calls `ProcessEZ2STR(0,-80,0)` and unconditionally returns true. The local explicit case matches. Init groups effects668/670 on `aDfearStr`; PE bytes at VA `0x71A7F8` resolve to `dfear.str`, matching the local catalog/STR row. Added a source comparator and lifecycle coverage confirming false STR completion can be ignored. No production behavior change. Release parity build and full CTest pass309/309.
+
+## WP10.4 effect699 Flower Leaf STR — 2026-10-29
+
+Compared PE and primary Ref OnProcess3 case `0x2BB` and the shared `$L146219` tail: effect699 calls `ProcessEZ2STR(0,-80,0)` and unconditionally returns true. Local dispatch matches. PE and Ref Init map 699 to `flower_leaf.str`, whose bytes at VA `0x71A7D0` match the local catalog/STR row. Added a comparator and lifecycle coverage confirming false STR completion can be ignored. No production behavior change. Release parity build and full CTest pass310/310.

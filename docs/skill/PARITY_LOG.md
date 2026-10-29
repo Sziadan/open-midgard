@@ -3886,3 +3886,7 @@ Added `check_effect649_str_ignored_result.py`, registered as `effect649_str_igno
 ## WP10.4 effect670 Dfear STR
 
 Added `check_effect670_str_ignored_result.py`, registered as `effect670_str_ignored_result_source_check`. PE and primary Ref group effect670 (`0x29E`) into `$L146219`, which calls `ProcessEZ2STR(0,-80,0)` and returns true without propagating completion; local dispatch matches. PE/Ref Init group 668/670 on `aDfearStr`; exact bytes at VA `0x71A7F8` equal `dfear.str`, and the local catalog/STR entries agree. Lifecycle coverage exercises false STR completion. Release parity build and full CTest pass309/309; no production behavior change.
+
+## WP10.4 effect699 Flower Leaf STR
+
+Added `check_effect699_str_ignored_result.py`, registered as `effect699_str_ignored_result_source_check`. PE and primary Ref group effect699 (`0x2BB`) into `$L146219`, which calls `ProcessEZ2STR(0,-80,0)` and unconditionally returns true; local dispatch matches. PE/Ref Init select `flower_leaf.str`; exact bytes at VA `0x71A7D0` agree with local catalog and STR rows. Lifecycle coverage exercises false STR completion. Release parity build and full CTest pass310/310; no production behavior change.
