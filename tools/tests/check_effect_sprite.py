@@ -577,6 +577,33 @@ for variant, (spr_va, act_va) in asset_vas.items():
     if assets[variant] != expected:
         raise AssertionError(f"Effect_SPR({variant}) assets differ from PE VAs {spr_va:#x}/{act_va:#x}")
 
+# Effects682-686 share the fireworks lifecycle but select five PE-backed assets.
+fireworks_fixture = re.search(
+    r"const FireworksProfile\s+profiles\[\]\s*=\s*\{(.*?)\n\s*\};",
+    LIFECYCLE, re.S)
+if fireworks_fixture is None:
+    raise AssertionError("EffectLifecycleTests is missing the effects682-686 fireworks profile table")
+fixture_rows = {}
+for match in re.finditer(
+        r'\{\s*(68[2-6])\s*,\s*(3[2-6])\s*,\s*("(?:\\.|[^"\\])*")\s*,\s*("(?:\\.|[^"\\])*")\s*\}',
+        fireworks_fixture.group(1)):
+    effect_id, variant = int(match.group(1)), int(match.group(2))
+    fixture_rows[effect_id] = (variant,
+        ast.literal_eval(match.group(3)).encode("latin-1"),
+        ast.literal_eval(match.group(4)).encode("latin-1"))
+for effect_id, variant in ((682, 32), (683, 33), (684, 34), (685, 35), (686, 36)):
+    if fixture_rows.get(effect_id) != (variant, *tuple(
+            image.read_cstring_at(va).raw for va in asset_vas[variant])):
+        raise AssertionError(f"fireworks lifecycle row for effect{effect_id}/variant{variant} differs from exact PE asset bytes")
+for token in ("effect.ProcessEffectSpriteProduction(profile.variant)",
+              "effect.m_stateCnt=1", "expectedWave=\"effect\\\\itempokjuk.wav\"",
+              "prim->m_animSpeed==4&&!prim->m_repeatAnim", "prim->m_numSegments==1",
+              "waveCalls.size()==1", "rngCursor==0"):
+    if token not in LIFECYCLE:
+        raise AssertionError(f"fireworks lifecycle fixture is missing required assertion/invocation: {token}")
+if "state1 refreshes origin without duplicate particle, resource, cue or RNG" not in LIFECYCLE:
+    raise AssertionError("fireworks lifecycle fixture must verify later-state origin refresh without repeated output")
+
 wave_vas = {630: 0x719BDC, 632: 0x719BF4, 633: 0x719C08, 637: 0x719B40,
             643: 0x719BB0, 644: 0x719B98, 648: 0x719B80}
 caller_wave_literals = {

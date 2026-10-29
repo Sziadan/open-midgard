@@ -4866,3 +4866,7 @@ The fixture covers quiet pre-cue states0/24, one literal-origin wave at state25,
 ## WP5 Effect_SPR lifecycle — effect666 variant31 — 2026-10-29
 
 Fixture exercises effect666 across state0/34/35/36/69/70/71. It checks the frame0 listener-relative earthquake wave and particle, then SendMsg135 exactly at states0/35/70 with no repeated particle/resources/wave/RNG at later states. SPR/ACT/wave literals bind to PE VAs `0x71CDAC/0x71CD94/0x719C18`; PE/primary Ref case0x29A orders state0 origin copy→wave→variant31, then sends mode message135 only at0/35/70. This matches the examined PE/Ref caller; it does not claim audible or rendered output.
+
+## WP5 Effect_SPR lifecycle — effects682–686 variants32–36 — 2026-10-29
+
+Extended the existing PE/primary-Ref source comparison with direct local lifecycle coverage for the five shared fireworks profiles. State0 asserts each variant’s PE-byte resource pair, common one-shot speed4 particle payload, exact origin wave `effect\\itempokjuk.wav`, one segment and zero RNG; state1 refreshes the moved master origin without another emission, resource, wave, or RNG. The comparator requires every fixture row and binds its literals to PE VAs `0x71CD7C/0x71CD64`, `0x71CD48/0x71CD2C`, `0x71CD10/0x71CCF4`, `0x71CCDC/0x71CCC4`, `0x71CCA8/0x71CC8C`, plus wave VA `0x7127E8`. Secondary Ref sprite paths differ from PE; PE bytes are authoritative. The harness verifies local lifecycle and audio-call dispatch only, not rendered or audible output.

@@ -12953,6 +12953,52 @@ int main()
         g_world.m_player=oldPlayer;
     }
     {
+        struct FireworksProfile { int effect; int variant; const char* spr; const char* act; };
+        const FireworksProfile profiles[]={
+            {682,32,"\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xB7\xAF\xBA\xEA.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xB7\xAF\xBA\xEA.act"},
+            {683,33,"\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xC8\xAD\xC0\xCC\xC6\xAE\xB5\xA5\xC0\xCC.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xC8\xAD\xC0\xCC\xC6\xAE\xB5\xA5\xC0\xCC.act"},
+            {684,34,"\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xB9\xDF\xB7\xBB\xC5\xB8\xC0\xCE.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xB9\xDF\xB7\xBB\xC5\xB8\xC0\xCE.act"},
+            {685,35,"\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xBB\xFD\xC0\xCF.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xBB\xFD\xC0\xCF.act"},
+            {686,36,"\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xC5\xA9\xB8\xAE\xBD\xBA\xB8\xB6\xBD\xBA.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF8\xC1\xD7_\xC5\xA9\xB8\xAE\xBD\xBA\xB8\xB6\xBD\xBA.act"},
+        };
+        CRenderObject master; master.m_pos={300,400,500};
+        const int draws=rngDraws;
+        for (const auto& profile:profiles) {
+            master.m_pos={300,400,500};
+            CRagEffect effect; effect.m_type=profile.effect; effect.m_stateCnt=0;
+            effect.m_duration=77; effect.m_master=&master;
+            const std::string expectedSpr=profile.spr, expectedAct=profile.act;
+            const std::string expectedWave="effect\\itempokjuk.wav";
+            rngValues={};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
+            check(effect.ProcessEffectSpriteProduction(profile.variant),"fireworks Effect_SPR production helper remains active");
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+                &&effect.m_effectPos.x==300&&effect.m_effectPos.y==400&&effect.m_effectPos.z==500
+                &&prim->m_pos.x==300&&prim->m_pos.y==400&&prim->m_pos.z==500
+                &&prim->m_duration==77&&prim->m_deltaPos2.y==0.0f&&prim->m_renderFlag==0x201
+                &&prim->m_pattern==0x200&&prim->m_animSpeed==4&&!prim->m_repeatAnim
+                &&prim->m_spriteAction==0&&prim->m_curMotion==0
+                &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+                &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+                &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==300
+                &&prim->m_segments[0].pos.y==400&&prim->m_segments[0].pos.z==500
+                &&waveCalls.size()==1&&waveCalls[0].name==expectedWave
+                &&waveCalls[0].x==0&&waveCalls[0].y==0&&waveCalls[0].z==0
+                &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+                &&rngDraws==draws&&rngCursor==0,
+                ("fireworks effect"+std::to_string(profile.effect)+" state0 emits exact one-shot particle, origin cue and one segment without RNG").c_str());
+            const size_t requests=g_resMgr.requests.size();
+            master.m_pos={310,410,510};effect.m_stateCnt=1;
+            check(effect.ProcessEffectSpriteProduction(profile.variant)&&effect.m_primList.size()==1
+                &&effect.m_effectPos.x==310&&effect.m_effectPos.y==410&&effect.m_effectPos.z==510
+                &&g_resMgr.requests.size()==requests&&waveCalls.size()==1
+                &&rngDraws==draws&&rngCursor==0,
+                ("fireworks effect"+std::to_string(profile.effect)+" state1 refreshes origin without duplicate particle, resource, cue or RNG").c_str());
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        master.m_pos={300,400,500};rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
+    }
+    {
         CRenderObject master,listener;master.m_pos={300,400,500};listener.m_pos={100,900,200};master.m_BodySin5=44;
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         gameMode.messages=0;gameMode.messageIds.clear();
