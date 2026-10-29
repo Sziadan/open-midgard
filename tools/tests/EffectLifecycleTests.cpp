@@ -5440,7 +5440,7 @@ int main()
     }
     {
         bool allModes=true;
-        for(int mapVariant:{2,3,5,7,8}){
+        for(int mapVariant:{2,3,4,5,7,8}){
             CRenderObject player;player.m_pos={10,50,20};g_world.m_player=&player;
             auto storage=std::make_unique<CRagEffect>();CRagEffect& effect=*storage;
             effect.m_master=&player;effect.m_duration=80;effect.m_param[0]=static_cast<float>(mapVariant);effect.m_param[1]=1;
@@ -5453,8 +5453,8 @@ int main()
             bool bands=prim&&prim->m_texture.size()==3&&prim->m_texture[0]==&g_texMgr.texture
                 &&g_texMgr.requests==std::vector<std::string>{expectedTexture};
             const float expectedY=mapVariant==2?0.0f:mapVariant==3?980.0f:mapVariant==5?20.0f:40.0f;
-            const float expectedX=mapVariant==7||mapVariant==8?-15.0f:-140.0f;
-            const float expectedZ=mapVariant==7||mapVariant==8?-5.0f:-130.0f;
+            const float expectedX=mapVariant==7||mapVariant==8||mapVariant==4?-15.0f:-140.0f;
+            const float expectedZ=mapVariant==7||mapVariant==8||mapVariant==4?-5.0f:-130.0f;
             const float expectedDistance=mapVariant==3?35.0f:30.0f;
             const int expectedFlag=mapVariant==3?12:mapVariant==5?14:mapVariant==7?16:mapVariant==8?17:0;
             if(prim)for(const EffectGi& gi:prim->m_gi)
@@ -5464,11 +5464,11 @@ int main()
                     &&gi.height[2]==0&&gi.height[3]==0&&gi.distance==expectedDistance&&gi.height[8]==0&&gi.flag[2]==expectedFlag;
             if(mapVariant==3) bands=bands&&attr.calls==4&&attr.lastX==-140&&attr.lastZ==-130;
             allModes=allModes&&effect.m_primList.size()==1&&bands
-                &&rngDraws-draws==(mapVariant==7||mapVariant==8?49:41);
+                &&rngDraws-draws==(mapVariant==4||mapVariant==7||mapVariant==8?49:41);
             effect.ClearPrims();g_world.UpdateGameObjects();
         }
         g_world.m_attr=nullptr;
-        check(allModes,"Cloud maps 2/3/5/default preserve four-band offsets terrain sample angles distances flags textures and RNG order");
+        check(allModes,"Cloud maps 2/3/4/5/default preserve four-band offsets terrain sample angles distances flags textures and RNG order");
     }
     {
         CRenderObject player;player.m_pos={1,2,3};g_world.m_player=&player;

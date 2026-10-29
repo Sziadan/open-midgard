@@ -4249,3 +4249,7 @@ Added and registered `check_effect617_make_blur2.py`. PE and secondary Ref helpe
 ## WP5F effect617 comparator audit correction — 2026-10-29
 
 The prior checkpoint duplicated existing `tools/tests/check_blur_callers.py`, which already compares the PE/Ref MakeBlur2 helper, effect617 caller and local cadence/snapshot path. Removed the redundant comparator and CTest registration. The canonical blur comparator remains registered; the full suite count returns to 369 tests. No production change.
+
+## WP5F effects515/516/592 Cloud caller mapping — 2026-10-29
+
+Added `check_effects515_516_592_weather_cloud.py` to compare PE/primary-Ref OnProcess3 loops (80 `Cloud` calls each, map variants 3/4/5), exact shared PE/secondary-Ref Cloud helper equality, local generated routes and configured `(mapVariant, cloudCount)` parameters. Extended the existing weather-cloud lifecycle fixture to include variant4, verifying its fallback texture, four GI bands, RNG count and player-relative offsets. No production behavior change. Full Release CTest passed 370/370.
