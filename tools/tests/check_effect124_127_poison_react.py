@@ -47,6 +47,7 @@ init_sig = "void __thiscall CRagEffect::Init(CRagEffect *this, CRenderObject *ma
 pe_init = body(PE, init_sig)
 ref_init = body(REF, init_sig)
 for effect_id, symbol, local_str in ((124, "aVenomdustStr", "VenomDust.str"),
+                                     (126, "aPoisonreact1st", "PoisonReact_1st.str"),
                                      (127, "aPoisonreactStr", "PoisonReact.str")):
     pe_case = init_case(pe_init, effect_id)
     ref_case = init_case(ref_init, effect_id)
@@ -89,10 +90,13 @@ check("primary Ref OnProcess2 omits cases124 and127 despite the shared helper",
 image = ExeImage(ROOT / "HighPriest.exe")
 for va, expected in ((0x719F98, b"effect\\assasin_poisonreact.wav"),
                      (0x71AEEC, b"VenomDust.str"),
-                     (0x71AEC8, b"PoisonReact.str")):
+                     (0x71AEC8, b"PoisonReact.str"),
+                     (0x71AED8, b"PoisonReact_1st.str")):
     resolved = image.read_cstring_at(va)
     check(f"PE resource bytes at {va:#x} are exact", resolved is not None and resolved.raw == expected)
 
+check("local effect126 dispatcher selects the generic STR-only handler",
+      "case 126: return ProcessEZ2STR();" in DISPATCH)
 for effect_id in (124, 127):
     check(f"local effect{effect_id} dispatcher selects clip-wave STR handler",
           f"case {effect_id}: return ProcessClipWaveStrEffect();" in DISPATCH)
@@ -106,4 +110,4 @@ check("local helper plays the wave and continues per-frame STR processing",
       "TryPlaySingleEffectWave(m_effectPos, wave, yOffset, true);" in local_clip
       and "ProcessEZ2STR(0.0f, -80.0f, 0.0f)" in local_clip)
 
-print("effects124/127 Poison React Init/caller/resource/local route comparison passed")
+print("effects124/126/127 Poison React Init/caller/resource/local route comparison passed")

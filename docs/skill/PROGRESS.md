@@ -2352,3 +2352,8 @@ Added `check_effect109_110_str_init.py` and registered it in CTest. It compares 
 ## WP5C effects143/144/146–152 STR Init comparison — 2026-10-29
 
 Added `check_effect143_144_146_152_str_init.py` and registered it in CTest. It compares PE and primary-Ref Init blocks for all nine ids, verifies each local STR catalog row and shared ProcessEZ2STR route, and pins the exact PE STR bytes at `0x71AE50`, `0x71AE30`, `0x71ADFC`, `0x71ADEC`, `0x71ADE0`, `0x71ADD4`, `0x71ADC4`, `0x71ADB0`, and `0x71ADA4`. Release parity build succeeded; full CTest passed327/327. No production change.
+
+
+## WP5C effect126 PoisonReact_1st STR Init parity — 2026-10-29
+
+Extended `check_effect124_127_poison_react.py` to include effect126's matching PE/primary-Ref Init mapping to `PoisonReact_1st.str`, local STR table and generic ProcessEZ2STR route, with exact executable bytes at VA `0x71AED8`. Existing 124/127 caller/helper/resource assertions remain. Focused comparator and full Release CTest passed327/327. No production change.
