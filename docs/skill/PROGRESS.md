@@ -2685,3 +2685,7 @@ Expanded the resource-backed replay from job143 to all ten mapped trap model job
 
 Added the registered source comparator `tools/tests/check_prim3dquadhorn2.py`. The canonical PE initializer at `HighPriest.exe.c:467543` and primary Ref body at `Ref/RagEffectPrim.cpp:1988` normalize identically; readable Ref confirms the same branch structure. The comparator ties PE/Ref primitive 0x75 dispatch to local `UpdateReferenceQuadHorn2` and the existing lifecycle fixture at states 2, 5, 549, 550 and 551, including translated matrix motion and alpha processing. No runtime code change was needed.
 
+## WP5 CEffectPrim Prim3DLine initializer - 2026-10-29
+
+Added the registered source comparator `tools/tests/check_prim3dline_initializer.py`. Canonical PE at `HighPriest.exe.c:468765` and primary Ref at `Ref/RagEffectPrim.cpp:1909` normalize identically. It checks PE/Ref `0x14` dispatch, local `ProcessPrimitiveFrame` and shared-tick behavior, and the existing fixture's unchanged X/Z, Y+5, and state increment assertion. No runtime code change was needed.
+

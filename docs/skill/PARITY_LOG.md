@@ -4298,4 +4298,12 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - PE `Prim3DQuadHorn2` at `HighPriest.exe.c:467543` and primary Ref at `Ref/RagEffectPrim.cpp:1988` normalize identically. Readable Ref preserves the state-550 boundary, mod-6 branches, matrix motion, accumulated displacement and alpha processing.
 - PE and Ref dispatch route 0x75 to the initializer. Local `ProcessPrimitiveFrame` dispatches to `UpdateReferenceQuadHorn2` and continues the shared tick. Existing lifecycle checks cover states 2, 5, 549, 550 and 551, including matrix translation and alpha/state progression.
 - No production code change was needed. Comparator execution and focused validation passed: lifecycle target built successfully and CTest passed 2/2 (`effect_lifecycle_checks`, `prim3dquadhorn2_source_check`).
+- The parity suite completed at 377/377 after this checkpoint (before the subsequent Prim3DLine test was registered).
+
+## WP5 CEffectPrim Prim3DLine initializer - 2026-10-29
+
+- Added `tools/tests/check_prim3dline_initializer.py` and registered `prim3dline_initializer_source_check` in the parity test project.
+- Canonical PE `Prim3DLine` at `HighPriest.exe.c:468765` and primary Ref at `Ref/RagEffectPrim.cpp:1909` normalize identically. Readable Ref helper uses the same five-unit Y increment; both PE/Ref OnProcess dispatchers route `0x14` through that increment and continue the shared tail.
+- Local `ProcessPrimitiveFrame` performs Y += 5 and returns to `OnProcess`, which increments the shared state. Existing lifecycle assertion confirms input `(2,3,4)` becomes `(2,8,4)` with X/Z unchanged and state incremented.
+- No runtime code change was needed. Direct comparator execution passed; focused CTest passed 3/3 (`effect_lifecycle_checks`, both initializer comparators), and full Release CTest passed 378/378.
 

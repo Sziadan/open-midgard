@@ -1,6 +1,6 @@
 # Skill system status
 
-Latest WP5 source checkpoint: `Prim3DQuadHorn2` PE/primary-Ref initializer parity and PE/Ref/local dispatch are recorded in `tools/tests/check_prim3dquadhorn2.py`; its existing state 2/5/549/550/551 lifecycle fixture is bound by the comparator. No runtime code change was needed.
+Latest WP5 source checkpoints: `Prim3DQuadHorn2` PE/primary-Ref initializer parity and PE/Ref/local dispatch are recorded in `tools/tests/check_prim3dquadhorn2.py`; its existing state 2/5/549/550/551 lifecycle fixture is bound by the comparator. `Prim3DLine` (`0x14`) has a matching source/dispatch comparator and binds to the existing Y-offset lifecycle assertion. Release CTest passed 378/378, including both comparators and the lifecycle fixture.
 
 | WP | State | Measured number | Where the number comes from | Next function / task |
 |---|---|---|---|---|
