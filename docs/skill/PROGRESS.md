@@ -2302,3 +2302,8 @@ Added `tools/tests/check_effect142_heavens_drive.py` and registered it in CMake.
 ## WP5C effects20/125 EnchantPoison — 2026-10-29
 
 Added `check_effect125_enchant_poison.py` and registered it in CTest. The comparator checks the full canonical PE and primary-Ref helper bodies, grouped PE case20/125 dispatch, local routes, state/frame cadence, particle payload/family selection, and exact wave/particle resource bytes at `0x71BC58`, `0x71BC3C`, `0x71BC24`, and `0x71BC0C`. Existing extracted lifecycle coverage already validates emission timing, primitive setup, and random behavior. The focused comparator and Release parity build pass; full CTest passed321/321. No production behavior change.
+
+
+## WP5C effect128 OverThrust — 2026-10-29
+
+Added `check_effect128_overthrust.py` and registered it in CTest. The check compares the complete PE and primary-Ref helper bodies, pins PE case128 to `OverThrust`, validates the local legacy frame route and ring payload, and verifies the exact wave and texture bytes at `0x71A598`, `0x71BB9C`, and `0x7192FC`. Existing lifecycle coverage checks repeated frames, projection, audio order, and circle behavior. Release parity build succeeded; full CTest passed322/322. No production change.

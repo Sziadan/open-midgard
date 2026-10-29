@@ -3940,3 +3940,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effects20/125 EnchantPoison source comparison — 2026-10-29
 
 `check_effect125_enchant_poison.py` compares the complete PE and primary-Ref `EnchantPoison` helper bodies, checks PE's grouped case20/125 caller and corresponding local `SpawnEnchantPoison` routes, and verifies the effect state gate, two frame-zero waves, five-frame primitive cadence, `PP_3DPARTICLE` payload and shared particle-profile selection. PE resource bytes pin the two exact wave names and CP949 particle SPR/ACT names at VAs `0x71BC58`, `0x71BC3C`, `0x71BC24`, and `0x71BC0C`. Existing lifecycle tests cover runtime emissions and RNG. Release parity build succeeded; full CTest passed321/321. No production change.
+
+
+## WP5C effect128 OverThrust source comparison — 2026-10-29
+
+`check_effect128_overthrust.py` compares complete PE and primary-Ref `OverThrust` helper bodies, verifies the PE effect128 caller and local `ProcessEffectFrameLegacy` route, checks the screen projection/ring setup and frame-zero wave ordering, and resolves `effect\black_overthrust.wav`, `effect\EF_StoneCurse.wav`, and `effect\alpha_center.tga` from executable VAs `0x71A598`, `0x71BB9C`, and `0x7192FC`. Existing lifecycle coverage checks first-frame ring emission and waves, subsequent projection without repeated burst, and duration behavior. Release parity build succeeded; full CTest passed322/322. No production change.
