@@ -2178,3 +2178,7 @@ Compared PE case131, PE/primary-Ref Init, primary Ref `AutoCounter` helper, exac
 ## WP5C effects133/134 Freeze and Freezed — 2026-10-29
 
 Compared the shared PE terminal STR caller, PE/primary-Ref Init mappings, exact executable string bytes and local route/terminal handling. Effect133 maps to `Freeze.str` (`0x71AE98`), and134 maps to `Freezed.str` (`0x71AE8C`). Both call `ProcessEZ2STR(0,-80,0)` each frame; when it completes, state becomes9999 and the handler returns false. Added grouped source comparison and lifecycle checks for active and terminal STR states. Release parity build and complete Release CTest pass292/292. No behavior change was required.
+
+## WP5C effect135 IceCrash — 2026-10-29
+
+Compared PE's generic STR-only caller group, PE/primary-Ref Init mappings, exact executable resource bytes and local route. Effect135 maps to `IceCrash.str` at VA `0x71AE7C`; its PE caller jumps directly to the shared `ProcessEZ2STR(0,-80,0)` tail and propagates completion. Local source-parity routing matches. Existing STR-only lifecycle coverage already exercises effect135 for missing, active, moving-master and exhausted clip states; added a dedicated source comparator. Release parity build and complete CTest pass293/293. No production behavior change.

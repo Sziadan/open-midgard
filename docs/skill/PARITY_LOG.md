@@ -3818,3 +3818,7 @@ Added `check_effect131_autocounter.py`, registered as `effect131_autocounter_sou
 ## WP5C effects133/134 Freeze and Freezed
 
 Added `check_effect133_134_terminal_str.py`, registered as `effects133_134_terminal_str_source_check`, and lifecycle checks using the extracted production terminal handler. PE cases133/134 call `ProcessEZ2STR(0,-80,0)` each frame; on completion they set `m_stateCnt=9999` and return false. PE and primary Ref Init map 133 to `Freeze.str` and 134 to `Freezed.str`; exact PE bytes verify VAs `0x71AE98` and `0x71AE8C`. Local dispatch and `ProcessStrTerminalEffect` match the caller. Release parity build and full Release CTest pass292/292. No production behavior change.
+
+## WP5C effect135 IceCrash
+
+Added `check_effect135_ice_crash.py`, registered as `effect135_ice_crash_source_check`. PE effect135 is in the generic STR-only OnProcess group, jumps to `LABEL_424`, calls `ProcessEZ2STR(0,-80,0)`, and propagates completion. PE and primary Ref Init map to `IceCrash.str`; executable bytes verify VA `0x71AE7C`. Local generated routes and `ProcessReferenceStrOnly` preserve effect135 and the same offsets. Existing STR-only lifecycle coverage already includes effect135 through missing, active, moved-master and exhausted clip paths. Release parity build and full CTest pass293/293. No production behavior change.
