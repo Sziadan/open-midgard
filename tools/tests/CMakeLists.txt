@@ -1320,6 +1320,8 @@ add_test(NAME effect34_teleportation_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect34_teleportation.py")
 add_test(NAME effect33_ruwach_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect33_ruwach.py")
+add_test(NAME effect31_fire_arrow_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect31_fire_arrow.py")
 add_test(NAME effect32_napalm_beat_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect32_napalm_beat.py")
 add_test(NAME effects35_36_portal_source_check
@@ -1448,6 +1450,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect34_teleportation.py
     check_effect33_ruwach.py
     check_effect32_napalm_beat.py
+    check_effect31_fire_arrow.py
     check_effects35_36_portal.py
     check_effects37_38_43_agility.py
     check_effect436_437_sphere_energy.py
