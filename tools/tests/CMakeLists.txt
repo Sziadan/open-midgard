@@ -759,6 +759,8 @@ add_test(NAME effect603_firehit_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect603_firehit.py")
 add_test(NAME effects635_636_str_prefix_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect635_636_str_prefix.py")
+add_test(NAME effects593_598_food_str_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect593_598_food_str.py")
 add_test(NAME effect695_map_fireworks_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect695_map_fireworks.py")
 add_test(NAME aspersio86_source_check
