@@ -3126,3 +3126,6 @@ Connected production ApplyPortalWind and ApplyPortalWind402 to the lifecycle har
 ## WP5 GumGang lifecycle — effect203 — 2026-10-29
 
 Connected production ProcessGumGangEffect to the lifecycle harness for the one-band effect203 caller. The fixture checks one PP_GUMGANG primitive, five ordered PE textures, duration/render/origin, exactly 12 controlled RNG draws, the full GI0 field profile with height15 untouched, inactive remaining bands, and later-state owner/cache refresh without relaunch, resource reload, or RNG. The existing comparator now requires the runtime fixture and retains the documented older-Ref extra height15 draw mismatch; local behavior follows canonical PE. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.
+## WP5 GumGang lifecycle — effect455 selector1 — 2026-10-29
+
+Extended the production GumGang fixture to effect455's two-band selector1 profile. It checks the five ordered textures, primitive and owner payload, 24 controlled RNG draws, both GI field sequences, `flag[4]=1`, inactive remaining bands, and later-state origin refresh without reemission or resource/RNG activity. The comparator now requires the effect455 fixture alongside its PE caller and shared helper coverage. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.
