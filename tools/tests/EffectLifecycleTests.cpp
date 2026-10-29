@@ -12516,6 +12516,43 @@ int main()
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
     }
     {
+        struct Effect632Case { int rngValue; int action; };
+        const Effect632Case cases[]={{0,2},{1,0}};
+        const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xC8\xB0\xB3\xBA\xA3\xB1\xE2.spr";
+        const std::string expectedAct="\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xC8\xB0\xB3\xBA\xA3\xB1\xE2.act";
+        const std::string expectedWave="effect\\\xBE\xC8\xB0\xB3\xBA\xA3\xB1\xE2.wav";
+        CRenderObject* oldPlayer=g_world.m_player;
+        for(const Effect632Case& item:cases) {
+            CRenderObject master,listener;master.m_pos={200,300,400};listener.m_pos={10,100,20};g_world.m_player=&listener;
+            CRagEffect effect;effect.m_type=632;effect.m_stateCnt=0;effect.m_duration=91;effect.m_master=&master;
+            rngValues={item.rngValue};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+            check(effect.ProcessEffectSpriteProduction(17),"effect632 production Effect_SPR variant17 helper remains active");
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+                &&prim->m_pos.x==200&&prim->m_pos.y==300&&prim->m_pos.z==400
+                &&prim->m_duration==91&&prim->m_deltaPos2.y==0&&prim->m_renderFlag==0x201
+                &&prim->m_pattern==0x200&&prim->m_animSpeed==4&&!prim->m_repeatAnim
+                &&prim->m_spriteAction==item.action&&prim->m_curMotion==0
+                &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+                &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+                &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==200
+                &&prim->m_segments[0].pos.y==300&&prim->m_segments[0].pos.z==400
+                &&rngDraws==draws+1&&rngCursor==1,
+                "effect632 variant17 initializes exact PE resources/particle fields and controlled action mapping");
+            check(waveCalls.size()==1&&waveCalls[0].name==expectedWave
+                &&waveCalls[0].x==190&&waveCalls[0].y==0&&waveCalls[0].z==380
+                &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+                "effect632 state0 plays exact PE-resolved CP949 wave once at listener-relative coordinates");
+            const size_t requests=g_resMgr.requests.size();master.m_pos={260,270,280};effect.m_stateCnt=1;
+            check(effect.ProcessEffectSpriteProduction(17)&&effect.m_primList.size()==1
+                &&effect.m_effectPos.x==260&&effect.m_effectPos.y==270&&effect.m_effectPos.z==280
+                &&g_resMgr.requests.size()==requests&&rngDraws==draws+1&&waveCalls.size()==1,
+                "effect632 later state refreshes helper origin without repeat particle, resource, wave or RNG");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();g_world.m_player=oldPlayer;
+    }
+    {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         gameMode.messages=0;gameMode.messageIds.clear();waveCalls.clear();

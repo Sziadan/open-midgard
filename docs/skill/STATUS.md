@@ -19,3 +19,5 @@ Effect631 Effect_SPR variant16 now has direct production-helper lifecycle covera
 
 Effect634 Effect_SPR variant19 now has direct production-helper lifecycle coverage, including its controlled repeat-speed RNG draw and no-wave behavior. PE/primary-Ref caller mapping agrees; PE-backed CP949 resources remain authoritative over secondary Ref `misc\...` names. No visual/rendering acceptance is claimed; see its 2026-10-29 progress entry.
 The effect634 lifecycle fixture exposed and corrected the local Effect_SPR variant19 Y-offset mismatch (`m_deltaPos2.y=-1.0f`); source comparator now enforces the correction against the PE helper.
+
+Effect632 Effect_SPR variant17 now has runtime coverage for both RNG action outcomes and its exact PE-resolved caller-wave bytes at VA `0x719BF4`; source comparator binds fixture literals to executable bytes. PE/primary-Ref caller mapping agrees. No visual/rendering acceptance is claimed; see the effect632 entry in `docs/skill/PROGRESS.md`.
