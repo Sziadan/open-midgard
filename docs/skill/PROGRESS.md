@@ -2966,3 +2966,8 @@ Extended the lifecycle harness to compile and execute the actual `ProcessEffect6
 ## WP5 CRagEffect effect120 Cloaking lifecycle checkpoint — 2026-10-29
 
 Added lifecycle execution of `ProcessCloaking120` alongside the existing `check_cloaking_inline.py` source and PE-resource comparison. The fixture verifies state0 plays `effect\assasin_cloaking.wav` from stored effect origin relative to the listener with `(x,0,z)` and source audio parameters, sets actor alpha to50 while preserving RGB, and disables the effect shadow. Later states reapply tint/shadow without repeating audio. A missing master exits before actor mutation or sound. Focused lifecycle harness passes3037 assertions; source comparator passes; full Release parity CTest passed 428/428. No production behavior changed.
+
+
+## WP5 CRagEffect effect651 Map_Particle lifecycle checkpoint — 2026-10-29
+
+Extended the lifecycle harness to execute the actual `ProcessEffect651` body. The existing `check_effect651_map_particle.py` provides the PE/primary Ref caller, helper, resource and secondary-Ref render-flag comparison. The fixture verifies the ordered two PP_MAPMAGICZONE primitives followed by ten PP_MAPPARTICLE primitives (variants2 through20 by2), exact textures, durations, render flags, size and all GI setup. A deterministic RNG sequence proves the eight draws per band occur in field order and total exactly320 draws; it checks each resulting angle, baseline vector field and flags. State1 refreshes both origin caches but emits nothing, loads no textures and consumes no RNG. Focused lifecycle harness passes3039 assertions; source comparator passes; full Release parity CTest passed428/428. No production behavior changed.

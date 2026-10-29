@@ -4618,3 +4618,8 @@ The existing `tools/tests/check_effect650_map_magic_zone.py` establishes PE/prim
 ## WP5 effect120 Cloaking lifecycle — 2026-10-29
 
 The existing `tools/tests/check_cloaking_inline.py` proves the canonical PE case120 inline behavior, primary Ref helper non-caller distinction, local route and exact wave bytes. The new lifecycle fixture compiles the local `ProcessCloaking120` body and verifies state0 wave path/relative coordinates/parameters, actor alpha50 with RGB preserved, and shadow disable; later state calls reapply tint and shadow without another wave. The local null-master short circuit leaves the actor/effect unchanged and plays no sound. Focused harness passes3037 checks, comparator passes, full Release parity CTest passes428/428. No production behavior changed.
+
+
+## WP5 effect651 Map_Particle lifecycle — 2026-10-29
+
+The registered `tools/tests/check_effect651_map_particle.py` confirms canonical caller order, both Map_MagicZone variants, Map_Particle loop k=2..20 step2, PE asset bytes, local route, source field order, 320-draw budget and the secondary-Ref render-flag discrepancy. Added direct `ProcessEffect651` execution: two map zones precede ten particle emitters, each with exact texture, duration77, renderFlag5 and size; zone profiles and all four particle bands are asserted. Seeded sequential RNG values confirm all eight ordered angle writes per band (320 total), source baseline/vector fields and flags. State1 updates cached origin without primitive/resource/RNG work. Focused lifecycle passes3039 checks, source comparator passes, full Release parity CTest passes428/428. No production behavior changed.

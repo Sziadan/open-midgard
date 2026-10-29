@@ -680,7 +680,7 @@ The canonical PE `CRagEffect::Map_Aura` helper (`HighPriest.exe.c:442490-442574`
 
 ## WP5C effect651 Map_Particle render flag
 
-The canonical PE helper `CRagEffect::Map_Particle` (`HighPriest.exe.c:442896-442950`) assigns `m_renderFlag = 5`; secondary `Ref/dhxj/RagEffect2.cpp:8977-9046` uses `RF_EFFECT_OM`. Effect651's PE and primary Ref callers both invoke this helper with the same exact texture and parameters. The port follows the executable's render flag5; the secondary helper's alpha/alphaop-OM setting is not applied.
+The canonical PE helper `CRagEffect::Map_Particle` (`HighPriest.exe.c:442896-442950`) assigns `m_renderFlag = 5`; secondary `Ref/dhxj/RagEffect2.cpp:8977-9046` uses `RF_EFFECT_OM`. Effect651's PE and primary Ref callers both invoke this helper with the same exact texture and parameters. The port follows the executable's render flag5; the secondary helper's alpha/alphaop-OM setting is not applied. The direct effect651 lifecycle fixture checks the executable render flag, ordered resources, all emitter bands and the complete 320-draw sequence.
 
 ## WP10.3 Effect_SPR fireworks assets 682-686
 

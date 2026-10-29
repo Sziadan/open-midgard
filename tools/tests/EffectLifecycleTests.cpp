@@ -721,6 +721,7 @@ struct CRagEffect : CGameObject {
     bool ProcessBottom2Effect137();
     bool ProcessSoulStrike15(int);
     bool ProcessEffect650();
+    bool ProcessEffect651();
     bool ProcessCloaking120();
     void ApplyWind();
     void SpawnWarp8();
@@ -13077,6 +13078,74 @@ int main()
             &&waveCalls.size()==1&&rngDraws==draws,
             "Cloaking effect120 missing master exits before actor mutation or sound");
         g_world.m_player=oldPlayer; waveCalls.clear();
+    }
+    {
+        CRenderObject master; master.m_pos={12,24,36};
+        CRagEffect mapParticle; mapParticle.m_master=&master; mapParticle.m_type=651;
+        mapParticle.m_duration=77; mapParticle.m_effectPos={1,2,3}; mapParticle.m_cachedPos={4,5,6};
+        rngValues.resize(320); for(size_t draw=0;draw<rngValues.size();++draw) rngValues[draw]=static_cast<int>(draw%360);
+        rngCursor=0; g_resMgr.requests.clear(); g_texMgr.requests.clear(); waveCalls.clear();
+        const int draws=rngDraws;
+        const bool active=mapParticle.ProcessEffect651();
+        const char* textures[]={"effect\\mjin2.tga","effect\\mjin.tga","effect\\mpa3.tga","effect\\mpa3.tga",
+            "effect\\mpa3.tga","effect\\mpa3.tga","effect\\mpa3.tga","effect\\mpa3.tga",
+            "effect\\mpa3.tga","effect\\mpa3.tga","effect\\mpa3.tga","effect\\mpa3.tga"};
+        bool ordered=mapParticle.m_primList.size()==12;
+        auto primIt=mapParticle.m_primList.begin(); CEffectPrim* emitted[12]{};
+        for(int index=0;index<12;++index) {
+            if(primIt==mapParticle.m_primList.end()) { ordered=false; break; }
+            emitted[index]=*primIt++;
+            const EFFECTPRIMID expectedType=index<2?PP_MAPMAGICZONE:PP_MAPPARTICLE;
+            ordered=ordered&&emitted[index]->m_type==expectedType&&emitted[index]->m_duration==77
+                &&emitted[index]->m_renderFlag==5&&emitted[index]->m_texture.size()==1
+                &&g_texMgr.requests.size()>static_cast<size_t>(index)
+                &&g_texMgr.requests[static_cast<size_t>(index)]==textures[index];
+        }
+        bool zones=emitted[0]&&emitted[1];
+        const int zoneRotations[]={0,358},zoneAlphas[]={200,50},zoneVariants[]={2,3};
+        const float zoneHeights[]={-0.5f,-0.40000001f};
+        for(int zone=0;zone<2&&emitted[zone];++zone) {
+            const auto& prim=*emitted[zone]; zones=zones&&prim.m_size==110.0f
+                &&prim.m_gi[0].life==1&&prim.m_gi[0].distance==40.0f
+                &&prim.m_gi[0].rotStart==zoneRotations[zone]&&prim.m_gi[0].alphaB==zoneAlphas[zone]
+                &&prim.m_gi[0].height[0]==zoneHeights[zone]
+                &&prim.m_gi[0].height[4]==static_cast<float>(zoneVariants[zone]);
+            for(int lane=1;lane<4;++lane) zones=zones&&prim.m_gi[lane].life==0;
+        }
+        bool particles=true;
+        for(int particle=0;particle<10&&emitted[particle+2];++particle) {
+            const int variant=2+particle*2; const float baselineY=static_cast<float>(-2*variant);
+            const auto& prim=*emitted[particle+2]; particles=particles&&prim.m_size==0.0f;
+            for(int lane=0;lane<4;++lane) {
+                const int first=particle*32+lane*8; const auto& gi=prim.m_gi[lane];
+                particles=particles&&gi.life==1&&gi.maxHeight==0.15000001f&&gi.distance==1.0f
+                    &&gi.height[0]==static_cast<float>((first+0)%360)&&gi.height[1]==static_cast<float>((first+1)%360)
+                    &&gi.height[2]==static_cast<float>((first+2)%360)&&gi.height[3]==static_cast<float>((first+3)%360)
+                    &&gi.vecBPreX==0.0f&&gi.arcBaselineY==baselineY&&gi.vecBPreZ==0.0f
+                    &&gi.height[4]==static_cast<float>((first+4)%360)
+                    &&gi.sparkX==0.0f&&gi.sparkY==baselineY&&gi.sparkZ==0.0f
+                    &&gi.height[5]==static_cast<float>((first+5)%360)
+                    &&gi.vecTPreX==0.0f&&gi.vecTPreY==baselineY&&gi.vecTPreZ==0.0f
+                    &&gi.height[6]==static_cast<float>((first+6)%360)
+                    &&gi.vecTNowX==0.0f&&gi.vecTNowY==baselineY&&gi.vecTNowZ==0.0f
+                    &&gi.height[7]==static_cast<float>((first+7)%360)&&gi.flag[0]==1&&gi.flag[1]==0;
+            }
+        }
+        std::vector<std::string> expectedResources(textures,textures+12);
+        check(active&&ordered&&zones&&particles&&mapParticle.m_effectPos.x==12&&mapParticle.m_effectPos.y==24
+            &&mapParticle.m_effectPos.z==36&&mapParticle.m_cachedPos.x==12&&mapParticle.m_cachedPos.y==24
+            &&mapParticle.m_cachedPos.z==36&&g_texMgr.requests==expectedResources
+            &&rngDraws==draws+320&&rngCursor==320&&waveCalls.empty(),
+            "MapParticle effect651 emits two ordered zones and ten particles with exact 320-draw GI field mapping");
+        mapParticle.ClearPrims(); g_world.UpdateGameObjects(); g_texMgr.requests.clear(); g_resMgr.requests.clear();
+        mapParticle.m_stateCnt=1; mapParticle.m_effectPos={1,2,3}; mapParticle.m_cachedPos={4,5,6}; master.m_pos={40,50,60};
+        const int laterDraws=rngDraws; const size_t laterWaves=waveCalls.size();
+        check(mapParticle.ProcessEffect651()&&mapParticle.m_primList.empty()&&g_texMgr.requests.empty()
+            &&mapParticle.m_effectPos.x==40&&mapParticle.m_effectPos.y==50&&mapParticle.m_effectPos.z==60
+            &&mapParticle.m_cachedPos.x==40&&mapParticle.m_cachedPos.y==50&&mapParticle.m_cachedPos.z==60
+            &&rngDraws==laterDraws&&rngCursor==320&&waveCalls.size()==laterWaves,
+            "MapParticle effect651 later state refreshes cached origin without additional particles, resources, or RNG");
+        rngValues.clear(); rngCursor=0; g_texMgr.requests.clear(); g_resMgr.requests.clear(); waveCalls.clear();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
