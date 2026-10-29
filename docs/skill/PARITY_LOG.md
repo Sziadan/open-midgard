@@ -4257,3 +4257,7 @@ Added `check_effects515_516_592_weather_cloud.py` to compare PE/primary-Ref OnPr
 ## WP5F effects693/694/701–703 EffectTextureSet selectors14/100 — 2026-10-29
 
 Extended `check_effect554_texture_set.py` to compare the five PE/primary-Ref callers, their exact executable bitmap bytes and local `ProcessEffectTextureSet` mappings. Added lifecycle coverage for all five assets, selector14 and selector100 render flags and GI profiles, distinct RNG draw order, and parent movement after spawn. Full Release CTest passed 370/370.
+
+## WP5F effects229/230/233 Cloud callers — 2026-10-29
+
+Extended the weather-cloud comparator to cover PE effects229/230/233 (variants0/1/2, counts40/60/40), matching secondary-Ref `EF_CLOUD` callers, absent primary-Ref caller provenance, and local parameter/OnProcess routes. Added map1 to the existing cloud lifecycle matrix; it verifies the fallback texture, four-band payload, randomized offsets and draw count. Full Release CTest passed 370/370.

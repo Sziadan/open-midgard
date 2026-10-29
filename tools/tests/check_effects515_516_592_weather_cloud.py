@@ -7,8 +7,10 @@ ROOT = Path(__file__).resolve().parents[2]
 PE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
 REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 REF2 = (ROOT / "Ref/RagEffect2.cpp").read_text(encoding="utf-8", errors="replace")
+REF_DHXJ = (ROOT / "Ref/dhxj/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 DISPATCH = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
+DISPATCH2 = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
 GENERATOR = (ROOT / "tools/generate_effect_dispatch.py").read_text(encoding="utf-8")
 TESTS = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
 
@@ -59,6 +61,31 @@ for effect_id, case_label, map_variant, effect_route in (
     config_case = re.search(rf"case {effect_id}:\s*m_param\[0\]\s*=\s*{map_variant}\.0f;\s*m_param\[1\]\s*=\s*80\.0f;", LOCAL)
     require(config_case is not None, f"effect{effect_id} local map/count configuration changed")
 
+pe_onprocess = helper(PE, "unsigned __int8 __thiscall CRagEffect::OnProcess(CRagEffect *this)")
+for effect_id, case_label, map_variant, cloud_count, enum_name in (
+    (229, "229", 0, 40, "EF_CLOUD"),
+    (230, "230", 1, 60, "EF_CLOUD2"),
+    (233, "233", 2, 40, "EF_CLOUD3"),
+):
+    pe_body_match = re.search(rf"case {case_label}:(.*?)(?=\n\s*case |\n\s*default:|\Z)", pe_onprocess, re.S)
+    require(pe_body_match is not None
+            and re.search(rf"=\s*{cloud_count}\s*;", pe_body_match.group(1))
+            and f"CRagEffect::Cloud(this, {map_variant})" in pe_body_match.group(1),
+            f"PE effect{effect_id} Cloud variant/count changed")
+    ref_case = re.search(rf"case\s+{enum_name}\s*:(.*?)(?=\n\s*case\s+|\Z)", REF_DHXJ, re.S)
+    require(ref_case is not None
+            and re.search(rf"i\s*<\s*{cloud_count}", ref_case.group(1))
+            and re.search(rf"Cloud\(\s*{map_variant}\s*\)", ref_case.group(1)),
+            f"secondary Ref {enum_name} Cloud variant/count changed")
+    require(f"Cloud(this, {map_variant})" not in REF,
+            f"primary Ref unexpectedly gained the absent low-variant effect{effect_id} caller")
+    local_route = f"case {effect_id}: SpawnWeatherCloud(); return true;"
+    require(local_route in DISPATCH2, f"effect{effect_id} local OnProcess route changed")
+    local_config = re.search(
+        rf"case {effect_id}:\s*m_param\[0\]\s*=\s*{map_variant}\.0f;\s*m_param\[1\]\s*=\s*{cloud_count}\.0f;",
+        LOCAL)
+    require(local_config is not None, f"effect{effect_id} local Cloud variant/count setup changed")
+
 pe_cloud = helper(PE, "void __thiscall CRagEffect::Cloud(CRagEffect *this, char map)")
 ref_cloud = helper(REF2, "void __thiscall CRagEffect::Cloud(CRagEffect *this, char map)")
 require(re.sub(r"\s+", "", pe_cloud) == re.sub(r"\s+", "", ref_cloud),
@@ -76,7 +103,7 @@ for token in ("m_param[0]", "m_param[1]", "cloudIndex < cloudCount", "LaunchEffe
               "mapVariant == 5"):
     require(token in body, f"local weather-cloud emitter lacks {token}")
 require("mapVariant==3?" in TESTS and "mapVariant==5?" in TESTS
-        and "for(int mapVariant:{2,3,4,5,7,8})" in TESTS
-        and "Cloud maps 2/3/4/5/default" in TESTS,
-        "weather-cloud lifecycle fixtures no longer cover mapped variants 3/4/5")
-print("effects515/516/592 Cloud parity passed: PE/Ref 80-call variants, local mappings and generic lifecycle payloads")
+        and "for(int mapVariant:{1,2,3,4,5,7,8})" in TESTS
+        and "Cloud maps 1/2/3/4/5/default" in TESTS,
+        "weather-cloud lifecycle fixtures no longer cover mapped variants 0-5")
+print("effects229/230/233/515/516/592 Cloud parity passed: PE/Ref callers, local mappings and generic lifecycle payloads")
