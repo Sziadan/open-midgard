@@ -4160,3 +4160,7 @@ Added and registered `check_effect512_chemical3.py`. It compares the complete PE
 ## WP5F effects539/541 ThrowItem caller parity — 2026-10-29
 
 Added and registered `check_effect539_throw_items.py`. It compares PE and primary-Ref callers for effect539's ordered bottle variants 10/11 and effect541's variant1, checks the local route/resource pairings and launch frames, and validates all three exact executable texture strings. Focused check, elevated Release parity build and full Release CTest passed 356/356. No production behavior change.
+
+## WP5F effect581 ForestLight variant11 parity — 2026-10-29
+
+Added and registered `check_effect581_forest_light.py`. It compares the PE/primary-Ref caller and full helper body, verifies the local variant11 four-band setup and PP_FOREST renderer, and checks the executable texture bytes. Updated the stale mismatch note: OnProcess3 is a separate local dispatch and ForestLight/PP_FOREST now have local processing; Portal2 remains open. Focused check, elevated Release parity build and full Release CTest passed 357/357. No production behavior change.
