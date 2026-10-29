@@ -14856,6 +14856,49 @@ int main()
             "effect418 later state refreshes origin without re-emission, texture or RNG");
         effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
+    {
+        struct GumGangCase { int type; int colorVariant; };
+        const GumGangCase cases[]={{485,1},{486,0}};
+        const std::vector<std::string> expectedTextures={"effect\\super1.bmp","effect\\super2.bmp",
+            "effect\\super3.bmp","effect\\super4.bmp","effect\\super5.bmp"};
+        for(const GumGangCase& item:cases) {
+            CRenderObject master;master.m_pos={100,200,300};
+            CRagEffect effect;effect.m_type=item.type;effect.m_stateCnt=0;effect.m_duration=73;effect.m_master=&master;
+            rngValues={0,1,2,3,4,5,6,2,7,8,3,9, 1,2,3,4,1,6,7,3,8,9,2,10};rngCursor=0;
+            g_texMgr.requests.clear();waveCalls.clear();const int draws=rngDraws;
+            check(effect.ProcessGumGangEffect(),"effects485/486 production GumGang handler accepts mapped double selector");
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_DOUBLEGUMGANG&&prim->m_renderFlag==5
+                &&prim->m_duration==73&&prim->m_totalTexture==5&&prim->m_size==0.0f
+                &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+                &&g_texMgr.requests==expectedTextures&&rngDraws==draws+24&&rngCursor==24&&waveCalls.empty(),
+                ("effect"+std::to_string(item.type)+" emits size-zero DoubleGumGang with five ordered textures and 24 draws").c_str());
+            if(prim) {
+                bool payload=true;
+                for(int band=0;band<2;++band) {
+                    const EffectGi& gi=prim->m_gi[static_cast<size_t>(band)];
+                    payload=payload&&gi.life==1&&gi.process==0&&gi.distance==2.0f
+                        &&gi.height[0]==10.0f&&gi.height[1]==40.0f&&gi.height[4]==10.0f&&gi.height[5]==80.0f
+                        &&gi.height[8]==10.0f&&gi.height[9]==120.0f&&gi.height[12]==10.0f&&gi.height[13]==160.0f
+                        &&gi.flag[4]==item.colorVariant;
+                }
+                check(payload,"effects485/486 preserve two active double-GumGang profiles and table selector");
+                check(prim->m_gi[2].life==0&&prim->m_gi[3].life==0,
+                    "effects485/486 leave the remaining double-GumGang bands inactive");
+            } else {
+                check(false,"effects485/486 preserve two active double-GumGang profiles and table selector");
+                check(false,"effects485/486 leave the remaining double-GumGang bands inactive");
+            }
+            const size_t requests=g_texMgr.requests.size();master.m_pos={410,520,630};effect.m_stateCnt=1;
+            check(effect.ProcessGumGangEffect()&&effect.m_primList.size()==1&&prim
+                &&effect.m_effectPos.x==410&&effect.m_effectPos.y==520&&effect.m_effectPos.z==630
+                &&effect.m_cachedPos.x==410&&effect.m_cachedPos.y==520&&effect.m_cachedPos.z==630
+                &&g_texMgr.requests.size()==requests&&rngDraws==draws+24&&waveCalls.empty(),
+                "effects485/486 later state refreshes origin without re-emission, texture or RNG");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
 }

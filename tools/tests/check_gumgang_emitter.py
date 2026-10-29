@@ -153,4 +153,20 @@ for token in (
     if token not in effect418_fixture.group(0):
         raise AssertionError(f"effect418 lifecycle assertion missing: {token}")
 
+double_cases = re.search(r"const GumGangCase cases\[\]=\{([\s\S]*?)\};", LIFECYCLE)
+if (double_cases is None or "for(const GumGangCase& item:cases)" not in LIFECYCLE
+        or "effect.ProcessGumGangEffect()" not in LIFECYCLE):
+    raise AssertionError("effects485/486 table-driven runtime fixture does not invoke the production GumGang handler")
+for effect_id, selector in ((485, 1), (486, 0)):
+    if f"{{{effect_id},{selector}}}" not in double_cases.group(1):
+        raise AssertionError(f"effect{effect_id} selector{selector} runtime case missing")
+for token in (
+    "emits size-zero DoubleGumGang with five ordered textures and 24 draws",
+    "effects485/486 preserve two active double-GumGang profiles and table selector",
+    "effects485/486 leave the remaining double-GumGang bands inactive",
+    "effects485/486 later state refreshes origin without re-emission, texture or RNG",
+):
+    if token not in LIFECYCLE:
+        raise AssertionError(f"effects485/486 lifecycle assertion missing: {token}")
+
 print("GumGang emitter parity passed: PE/Ref setup, six PE/local callers, RNG profile, height15 mismatch and five PE assets")

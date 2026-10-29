@@ -4784,3 +4784,6 @@ Extended the production GumGang fixture to effect455's two-band selector1 profil
 ## WP5 DoubleGumGang lifecycle — effect418 selector2 — 2026-10-29
 
 Extended the production GumGang fixture to effect418's two-band DoubleGumGang profile. It verifies PP_DOUBLEGUMGANG, zero size, duration/render/origin, five ordered assets, 24 controlled RNG draws, both GI motion profiles and selector2, inactive remaining bands, and later-state origin refresh without reemission, resource loads, or RNG. The existing comparator now requires the effect418 fixture with its PE/Ref caller and helper checks. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.
+## WP5 DoubleGumGang lifecycle — effects485/486 selectors1/0 — 2026-10-29
+
+Added a table-driven runtime fixture for the remaining two-band DoubleGumGang color selectors. For each effect it checks PP_DOUBLEGUMGANG, zero size, five ordered resources, 24 controlled draws, two active double profiles with the expected `flag[4]` selector (1 or 0), inactive GI2/3, and state1 origin refresh without another emission/resource/RNG. The existing comparator requires both table entries alongside the PE/Ref and local caller checks. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.
