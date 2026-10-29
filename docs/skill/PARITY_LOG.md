@@ -4144,3 +4144,7 @@ Added and registered `check_effect402_portal_wind.py`. It checks the PE's varian
 ## WP5F effects523–536 Tarot route and payload parity — 2026-10-29
 
 Added and registered `check_effects523_536_tarot.py`. It compares all 14 PE and primary-Ref effect-to-texture selector mappings with local generated routes, then checks the selector-1 effect-texture payload and state-zero spawn gate. Focused check, elevated Release parity build and full Release CTest passed 353/353. No production behavior change.
+
+## WP5F effect493 EnchantPoison2 parity — 2026-10-29
+
+Added and registered `check_effect493_enchant_poison2.py`. It compares the PE and primary-Ref helper and OnProcess3 caller, checks local sound/particle cadence, frame-81 tint handling and route, and validates the exact wave, SPR and ACT strings. Focused check, elevated Release parity build and full Release CTest passed 354/354. No production behavior change.
