@@ -2293,3 +2293,7 @@ Extended `check_blitzbeat_caller.py` to resolve and assert the exact executable 
 ## WP5C effects123/132 GrimTooth source comparator — 2026-10-29
 
 Added `tools/tests/check_grim_tooth123_132.py` and registered it in CMake. It compares the complete canonical PE and primary Ref `GrimTooth`/`GrimToothAtk` helper bodies; pins PE OnProcess ids123/132 to those helpers; confirms the primary Ref caller omission; verifies the local legacy dispatcher selects the corresponding emitters and both ids use the reference quad-horn family; and checks exact `effect\\stone.bmp` executable bytes at VA `0x71B858`. Existing lifecycle checks cover ordered RNG, cues, cursor movement, primitive payload, stopping, and no-repeat behavior. Release parity build passed and full CTest passed319/319. No production behavior change.
+
+## WP5C effect142 HeavensDrive source comparator — 2026-10-29
+
+Added `tools/tests/check_effect142_heavens_drive.py` and registered it in CMake. The comparator confirms the complete PE and primary Ref `HeavensDrive` helper bodies match, PE OnProcess effect142 calls that helper, the local legacy route selects `ApplyHeavensDrive`, and effect142 uses the reference quad-horn family. Exact executable bytes verify `effect\\wizard_earthspike.wav` at VA `0x711E58` and `effect\\stone.bmp` at `0x71B858`. Existing lifecycle coverage exercises the 25-spike grid, ordered RNG, audio/message order, duration and primitive motion boundaries. Release parity build passed; full CTest passed320/320. No production behavior change.

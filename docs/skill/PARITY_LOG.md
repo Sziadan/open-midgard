@@ -3931,3 +3931,7 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effects123/132 GrimTooth source comparison
 
 `check_grim_tooth123_132.py` now compares the complete PE and primary Ref helper bodies, verifies PE caller cases123/132, records that the primary Ref dispatcher omits those calls, and checks the local legacy route to the matching emitter. Both ids are required in `UsesReferenceQuadHorn`; PE bytes at VA `0x71B858` confirm `effect\\stone.bmp`. The existing extracted lifecycle cases cover sound-before-RNG, discarded and ordered draws, cursor cadence/distance termination, both single and triple primitive payloads, and stopped motion. Release parity build and full CTest pass319/319. No production change.
+
+## WP5C effect142 HeavensDrive source comparison
+
+`check_effect142_heavens_drive.py` compares the complete PE/primary-Ref helper bodies, confirms PE caller case142 and local route selection, pins effect142 to `UsesReferenceQuadHorn`, and verifies the exact wave and `stone.bmp` bytes at `0x711E58` and `0x71B858`. Existing extracted lifecycle assertions cover state gating, the 25-primitive grid, 175 ordered RNG draws, audio before message and emission, payload/resource fields, and movement boundaries. Release parity build and full CTest pass320/320. No production change.

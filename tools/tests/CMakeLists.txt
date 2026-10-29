@@ -760,6 +760,8 @@ add_test(NAME effect603_firehit_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect603_firehit.py")
 add_test(NAME effects123_132_grim_tooth_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_grim_tooth123_132.py")
+add_test(NAME effect142_heavens_drive_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect142_heavens_drive.py")
 add_test(NAME effects635_636_str_prefix_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect635_636_str_prefix.py")
 add_test(NAME effects593_598_food_str_source_check
@@ -1355,4 +1357,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect204_210_clipwave_str.py
     check_effect208_211_potion_str.py
     check_effect695_map_fireworks.py
-    check_grim_tooth123_132.py)
+    check_grim_tooth123_132.py
+    check_effect142_heavens_drive.py)
