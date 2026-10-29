@@ -2976,3 +2976,8 @@ Extended the lifecycle harness to execute the actual `ProcessEffect651` body. Th
 ## WP5 CRagEffect effect695 Map Fireworks lifecycle checkpoint — 2026-10-29
 
 Connected the actual ProcessEffect695MapFireworks body to the lifecycle harness. The existing source comparator pins the canonical caller order and PE resource bytes. The fixture checks a glow04 map zone followed by ten mpa3 particles, exact GI payloads, 320 ordered frame-zero RNG draws, and origin refresh with no repeat work on later states. Focused lifecycle passes3041 checks; source comparator passes; full Release parity CTest passes428/428. No production behavior changed.
+
+
+## WP5 effects30/68 Thunderstorm and MVP lifecycle checkpoint — 2026-10-29
+
+Extended direct ProcessClipWaveStrEffect lifecycle coverage for effects30/68. The fixture checks each exact PE-backed frame-zero cue at listener-relative X/Z and zero Y, source audio parameters, exhausted STR completion propagation, and no repeated cue, RNG, or texture requests on later state. The existing dispatcher source comparator verifies routes, literals and executable resource bytes. Focused lifecycle passes3046 checks; source comparator passes; full Release parity CTest passed428/428.

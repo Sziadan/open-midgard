@@ -4628,3 +4628,8 @@ The registered `tools/tests/check_effect651_map_particle.py` confirms canonical 
 ## WP5 CRagEffect effect695 Map Fireworks lifecycle — 2026-10-29
 
 Connected the effect695 `ProcessEffect695MapFireworks` body to the lifecycle harness. The registered `check_effect695_map_fireworks.py` confirms the PE-backed resource bytes and canonical Ref order. The fixture verifies one `glow04.bmp` PP_MAPMAGICZONE followed by ten `mpa3.tga` PP_MAPPARTICLE children, exact duration/render/size and zone payload, all four GI lanes per particle, the eight RNG field writes per lane (320 draws total), and the later-state origin refresh without repeated resources, emissions or RNG. No source mismatch was found and production behavior did not change. Focused lifecycle passes3041 checks; comparator passes; full Release parity CTest passes428/428.
+
+
+## WP5 effects30/68 Thunderstorm and MVP lifecycle — 2026-10-29
+
+Extended direct `ProcessClipWaveStrEffect` lifecycle coverage for effects30/68. With the shared STR fixture exhausted, each case verifies its exact PE-backed frame-zero cue (`magician_thunderstorm.wav` / `st_mvp.wav`) at listener-relative X/Z and Y zero, wave parameters250/40/1, and propagation of the false STR completion result. Later states do not repeat audio; neither handler consumes RNG or requests textures. The registered dispatcher comparator already checks the PE routes, wave literals and executable bytes. Focused lifecycle passes3046 checks; source comparator passes; full Release parity CTest passes428/428.

@@ -12166,6 +12166,29 @@ int main()
             "effect699's exhausted shared STR step returns false for its caller to ignore");
     }
     {
+        CRenderObject listener;listener.m_pos={3,900,5};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        const int draws=rngDraws;g_texMgr.requests.clear();
+        for(int id : {30,68}) {
+            const char* wave=id==30?"effect\\magician_thunderstorm.wav":"effect\\st_mvp.wav";
+            CRagEffect effect;effect.m_type=id;effect.m_effectPos={15,20,35};
+            effect.m_iCurLayer=1;effect.m_cEndLayer=1;waveCalls.clear();
+            effect.m_stateCnt=0;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+                &&waveCalls.back().name==wave&&waveCalls.back().x==12&&waveCalls.back().y==0
+                &&waveCalls.back().z==30&&waveCalls.back().volume==250&&waveCalls.back().range==40
+                &&waveCalls.back().frequency==1&&!effect.m_strFrameActive,
+                "Thunderstorm and MVP play their exact state-zero cue and propagate exhausted STR completion");
+            effect.m_stateCnt=1;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==draws,
+                "Thunderstorm and MVP do not repeat their cue or consume RNG on later states");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        check(rngDraws==draws&&g_texMgr.requests.empty(),
+            "Thunderstorm and MVP lifecycle emits no RNG or texture requests");
+        waveCalls.clear();g_world.m_player=oldPlayer;
+    }
+    {
         CRagEffect effect;effect.m_type=612;effect.m_iCurLayer=1;effect.m_cEndLayer=1;
         check(effect.ProcessEffectSpriteAndStr()&&effect.spriteCalls==1&&effect.lastSpriteVariant==14
             &&!effect.m_strFrameActive,
