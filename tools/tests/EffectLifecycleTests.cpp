@@ -51,6 +51,7 @@ int rngDraws = 0, waves = 0;
 std::vector<int> rngValues;
 size_t rngCursor=0;
 int SilentRand() { ++rngDraws; return rngCursor < rngValues.size() ? rngValues[rngCursor++] : 0; }
+float BitsToFloat(u32 bits) { float value=0.0f; std::memcpy(&value,&bits,sizeof(value)); return value; }
 float waveY = 99;
 std::string waveName;
 struct SilentWaveCall { std::string name; float x,y,z; int frameRng,volume,range;float frequency; };
@@ -711,6 +712,10 @@ struct CRagEffect : CGameObject {
     void ApplyVolcano(const char*, short, bool);
     void ApplyMapPillar(const char*, float, bool);
     void ApplyProvidence(const char*);
+    int particleUpCalls = 0;
+    void LaunchParticleUp(const vector3d&, float, float, bool, u8) { ++particleUpCalls; }
+    void ApplyHeal2(const char*, int);
+    bool ProcessHealBlue();
     void ApplyWind();
     void SpawnWarp8();
     bool ProcessEnhance9();
@@ -12787,6 +12792,45 @@ int main()
             "Providence exhausted STR completion is propagated after frame-zero emission");
         providence.ClearPrims(); g_world.UpdateGameObjects();
         g_texMgr.requests.clear(); waveCalls.clear();
+    }
+    {
+        CRenderObject master, listener; master.m_pos={31,51,71}; listener.m_pos={11,900,21};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect healBlue; healBlue.m_type=253; healBlue.m_master=&master; healBlue.m_duration=77;
+        healBlue.m_stateCnt=0; g_texMgr.requests.clear(); waveCalls.clear();
+        rngValues={11,22}; rngCursor=0; const int draws=rngDraws;
+        const bool active=healBlue.ProcessHealBlue();
+        CEffectPrim* prim=healBlue.m_primList.empty()?nullptr:healBlue.m_primList.front();
+        bool bands=prim!=nullptr;
+        const float heights[]={60.0f,60.0f,18.0f,18.0f};
+        const short rotations[]={0,180,11,22}, rises[]={90,90,50,48};
+        const float distances[]={4.5999999f,5.0f,5.0f,5.1999998f};
+        for (int band=0;band<4&&prim;++band) {
+            const EffectGi& gi=prim->m_gi[band];
+            bands=bands&&gi.life==1&&gi.process==0&&gi.fullDisplayAngle==360
+                &&gi.maxHeight==heights[band]&&gi.rotStart==rotations[band]
+                &&gi.alphaB==0&&gi.distance==distances[band]&&gi.riseAngle==rises[band]
+                &&gi.alphaT==40&&gi.sparkY==0.0f;
+            for (int sample=0;sample<21;++sample) bands=bands&&gi.height[sample]==0.0f&&gi.flag[sample]==0;
+        }
+        check(active&&healBlue.m_primList.size()==1&&prim&&prim->m_type==PP_HEAL
+            &&prim->m_renderFlag==5&&prim->m_duration==77&&prim->m_size==4.0f
+            &&prim->m_pos.x==31&&prim->m_pos.y==51&&prim->m_pos.z==71
+            &&healBlue.m_effectPos.x==31&&healBlue.m_effectPos.y==51&&healBlue.m_effectPos.z==71
+            &&g_texMgr.requests==std::vector<std::string>{"effect\\ring_blue.tga"}
+            &&bands&&rngDraws==draws+2&&rngCursor==2&&healBlue.particleUpCalls==0
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\"
+            &&waveCalls[0].x==20&&waveCalls[0].y==-80&&waveCalls[0].z==50
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "HealBlue effect253 plays its exact executable wave and emits the source variant-two blue heal ring");
+        healBlue.ClearPrims(); g_world.UpdateGameObjects();
+        healBlue.m_stateCnt=6; master.m_pos={41,61,81}; g_texMgr.requests.clear(); waveCalls.clear();
+        const int laterDraws=rngDraws;
+        check(healBlue.ProcessHealBlue()&&healBlue.m_primList.empty()&&g_texMgr.requests.empty()
+            &&waveCalls.empty()&&rngDraws==laterDraws&&healBlue.particleUpCalls==0
+            &&healBlue.m_effectPos.x==41&&healBlue.m_effectPos.y==61&&healBlue.m_effectPos.z==81,
+            "HealBlue nonzero divisible-by-six frame advances variant two without repeating wave, ring, or particle");
+        g_world.m_player=oldPlayer; rngValues.clear(); rngCursor=0; g_texMgr.requests.clear(); waveCalls.clear();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

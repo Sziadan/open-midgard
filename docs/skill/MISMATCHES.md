@@ -724,3 +724,8 @@ Canonical PE `CRagEffect::OnProcess` cases52, 64, and70 join the `ProcessEZ2STR(
 ## Effect248 Providence process caller omission in primary Ref
 
 Canonical PE `CRagEffect::OnProcess` handles case248 by calling `Providence(this, aEffectRingYell, 0)` and joining the shared `ProcessEZ2STR(0,-80,0)` return-propagation tail (`HighPriest.exe.c:420795-420848`). Primary Ref `CRagEffect::OnProcess2` has no case248; its only case248 is Init's `providence.str` mapping (`Ref/RagEffect.cpp:13098-13100`). Primary Ref does contain the matching Providence helper body in `Ref/RagEffect2.cpp:31044-31094`. Local dispatch follows PE because it is canonical authority. `tools/tests/check_effect248_providence.py` asserts this caller omission and the helper/clip mapping.
+
+
+## Effect253 HealBlue caller differs in primary Ref
+
+Canonical PE `CRagEffect::OnProcess` case253 calls `Heal2(this,aEffectRingBlue,2)` each frame and, on frame zero, plays the executable-resolved `effect\` wave at listener-relative `(x,-80,z)` (`HighPriest.exe.c:420807-420816`). Primary Ref `OnProcess3` groups cases `0x251-0x256` into its generic heal-wave/STR path and does not call Heal2 for case253. Both PE and primary Ref contain matching `Heal2` helper bodies, but their dispatcher behavior differs. Local case253 follows PE. `tools/tests/check_effect253_heal_blue.py` asserts the direct PE call, matching helper, and primary Ref omission; no primary-Ref dispatcher parity is claimed.

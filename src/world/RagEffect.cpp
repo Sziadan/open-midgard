@@ -26303,7 +26303,7 @@ bool CRagEffect::ProcessHealBlue()
                 wavePos.y = mode->m_world->m_player->m_pos.y - 80.0f;
             }
         }
-        TryPlayEffectWaveAt(wavePos, "effect\\\xC8\xED\xB1\xE2.wav");
+        TryPlayEffectWaveAt(wavePos, "effect\\");
     }
     ApplyHeal2("effect\\ring_blue.tga", 2);
     return true;
