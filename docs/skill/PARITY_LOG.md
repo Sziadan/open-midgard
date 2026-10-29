@@ -4648,3 +4648,8 @@ Extended the lifecycle harness for `ProcessClipWaveStrEffect` effects390/391. Th
 ## WP5 effects204–207/210 heal-wave lifecycle — 2026-10-29
 
 Added direct lifecycle coverage for the shared heal-wave branch of `ProcessClipWaveStrEffect`. For each effect204–207 and210, the fixture verifies no frame-zero action early, cached-origin copy and `_heal_effect.wav` at listener-relative X/Z with Y−80 and source audio parameters on frame0, plus propagation of exhausted STR completion. Later states do not repeat audio or consume RNG; no texture work occurs. The existing comparator confirms PE caller, Ref STR mappings, local route, and exact CP949/ASCII resource bytes. Focused lifecycle passes3080 checks; comparator passes; full Release parity CTest passes428/428.
+
+
+## WP5 effects255–258 enemy-hit wind lifecycle — 2026-10-29
+
+Added direct lifecycle coverage for effects255–258 on the shared clip-wave path. The fixture verifies state9 has no cue or origin copy; at state10, cached origin is copied and `_enemy_hit_wind1.wav` plays with listener-relative X/Z, Y−150 and source audio parameters. Exhausted STR completion propagates false, while later state11 does not repeat audio or consume RNG/request textures. `check_effect_dispatch_source.py` confirms the PE routes, timing, wave and executable resources. Focused lifecycle passes3092 checks; comparator passes; full Release parity CTest passes428/428.

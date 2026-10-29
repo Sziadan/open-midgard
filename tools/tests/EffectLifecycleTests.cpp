@@ -7164,6 +7164,32 @@ int main()
         g_world.m_player=oldPlayer;waveCalls.clear();
     }
     {
+        CRenderObject listener;listener.m_pos={3,900,5};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        for(int id:{255,256,257,258}) {
+            CRagEffect effect;effect.m_type=id;effect.m_cachedPos={15,20,35};effect.m_effectPos={1,2,3};
+            effect.m_iCurLayer=1;effect.m_cEndLayer=1;
+            effect.m_stateCnt=9;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty()&&effect.m_effectPos.x==1,
+                "Enemy-hit wind effects255-258 do not copy position or play before state10");
+            effect.m_stateCnt=10;
+            check(!effect.ProcessClipWaveStrEffect()&&effect.m_effectPos.x==15&&effect.m_effectPos.y==20
+                &&effect.m_effectPos.z==35&&waveCalls.size()==1
+                &&waveCalls.back().name=="_enemy_hit_wind1.wav"&&waveCalls.back().x==12
+                &&waveCalls.back().y==-150&&waveCalls.back().z==30&&waveCalls.back().volume==250
+                &&waveCalls.back().range==40&&waveCalls.back().frequency==1&&!effect.m_strFrameActive,
+                "Enemy-hit wind effects255-258 copy cached origin and propagate exhausted STR at frame10");
+            effect.m_stateCnt=11;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng
+                &&g_texMgr.requests.empty(),
+                "Enemy-hit wind effects255-258 do not repeat cue, RNG, or texture work after frame10");
+            effect.ClearPrims();g_world.UpdateGameObjects();waveCalls.clear();
+        }
+        g_world.m_player=oldPlayer;
+    }
+    {
         CRenderObject listener;listener.m_pos={3,0,5};
         CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         CRenderObject master;master.m_pos={15,20,35};

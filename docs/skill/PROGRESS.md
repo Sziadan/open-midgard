@@ -2996,3 +2996,8 @@ Added direct lifecycle checks for effects390/391 through ProcessClipWaveStrEffec
 ## WP5 effects204–207/210 heal-wave lifecycle checkpoint — 2026-10-29
 
 Added direct lifecycle coverage for effects204–207 and210. The fixture verifies state0 timing, cached-origin copy, exact _heal_effect.wav at listener-relative X/Z and Y−80 with source parameters, exhausted STR result propagation, and no repeated cue/RNG/texture activity. The existing comparator confirms caller routing, Ref STR names and PE resource bytes. Focused lifecycle passes3080 checks; comparator passes; full Release parity CTest passes428/428.
+
+
+## WP5 effects255–258 enemy-hit wind lifecycle checkpoint — 2026-10-29
+
+Added direct lifecycle coverage for effects255–258. Tests verify state9 has no cue or origin copy; state10 copies cached origin and plays _enemy_hit_wind1.wav at listener-relative X/Z and Y−150, propagating exhausted STR completion; later state11 does not repeat audio or consume RNG/request textures. The existing dispatcher comparator confirms PE routes, timing and exact resource bytes. Focused lifecycle passes3092 checks; comparator passes; full Release parity CTest passes428/428.
