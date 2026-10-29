@@ -248,6 +248,31 @@ def main() -> None:
                 "WBA delivery wave lookup->src/world/GameActor.cpp:6837-6839",
             ])
             row[10] = "BLOCKED(RunningServer Bash5 capture required; replay covers client receive path only)"
+        elif skill_id == 46:
+            row[2] = "AC_DOUBLE -> skill_castend_damage_id -> skill_attack -> clif_skill_damage; PACKETVER<3 emits 0x0114 (31 bytes); client receive replay: replay/double_strafe46.tsv"
+            row[3] = "GetSkillActionInfo: begin effect16/motion2; GetSkillActionInfo2: motion2"
+            row[4] = "Generic action9 Am_Skill path calls LaunchSkillSpecialEffect; no skill46-specific LaunchSkillSpecialEffect case"
+            row[5] = "Replay action9 emits target WBA msg39 effects0/1 then0/-1; attack/target tables are -1/1"
+            row[6] = "None for the targeted Double Strafe damage path"
+            row[7] = "Target-job hit wave; replay player target resolves player_clothes.wav"
+            row[8] = "; ".join([
+                "skill_castend_damage_id@Ref/eAthena_src_2011/map/skill.c:2432, 2478 (AC_DOUBLE case)",
+                "skill_attack damage emission@Ref/eAthena_src_2011/map/skill.c:1811",
+                "clif_skill_damage@Ref/eAthena_src_2011/map/clif.c:4653",
+                "CSession::GetSkillActionInfo@Ref/Session2.cpp:4089 (case 46)",
+                "CSession::GetSkillActionInfo2@Ref/Session2.cpp:4765 (case 46)",
+                "CSession::InitSkillEffectIdTable@Ref/Session2.cpp:6269, 6506 (case 46)",
+                "CGameActor::Am_Skill@Ref/GameActorMsgHandler.cpp (action 9)",
+                "HandleSkillDamageNotify@Ref/GameModePacket.cpp:21262",
+                "WBA hit-wave lookup@Ref/GameActor.cpp:0x55EA45",
+            ])
+            row[9] = "; ".join([
+                "skill action tables->src/session/SkillActionInfo.cpp, src/session/SkillActionInfo2.cpp, src/session/Session.cpp",
+                "CGameActor::Am_Skill->src/world/GameActorMsgHandler.cpp",
+                "HandleSkillDamageNotify->src/gamemode/GameModePacket.cpp",
+                "WBA delivery wave lookup->src/world/GameActor.cpp:6841-6843",
+            ])
+            row[10] = "BLOCKED(RunningServer Double Strafe46 capture required; replay covers client receive path only)"
         output.append("| " + " | ".join(markdown_cell(value) for value in row) + " |")
 
     OUT_PATH.write_text("\n".join(output) + "\n", encoding="utf-8", newline="\n")
