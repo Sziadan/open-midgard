@@ -24,6 +24,7 @@ pe = (ROOT / "HighPriest.exe.c").read_text(encoding="latin-1")
 ref = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
 local = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 dispatch = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
+LIFECYCLE = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
 
 pe_onprocess = function(pe, "unsigned __int8 __thiscall CRagEffect::OnProcess(CRagEffect *this)")
 pe_branch = pe_onprocess[pe_onprocess.index("case 402:"):pe_onprocess.index("case 403:")]
@@ -52,4 +53,18 @@ for token in expected_order:
 if "ResolveCurrentMaster()" not in local_process:
     raise AssertionError("local effect402 master guard missing")
 
-print("effect402 PortalWind parity passed: PE variant/timing/tint, Ref omission, local route and guarded behavior")
+fixture = re.search(r"CRagEffect effect;effect\.m_type=402;[\s\S]*?effect\.ClearPrims\(\);g_world\.UpdateGameObjects\(\);", LIFECYCLE)
+if fixture is None or "effect.ApplyPortalWind402();" not in fixture.group(0):
+    raise AssertionError("effect402 lifecycle fixture does not invoke the production caller and emitter")
+for token in (
+    "effect402 state0 emits one eight-size Cloud11 wind",
+    "effect402 variant1 preserves all four randomized wind-band payloads",
+    "effect402 state4 refreshes master origin without relaunch",
+    "effect402 state5 sets odd BodyLight bit and applies the inclusive-window tint",
+    "effect402 state65 retains odd BodyLight bit and tints at the inclusive window end",
+    "effect402 state66 exits the tint window without launch",
+):
+    if token not in fixture.group(0):
+        raise AssertionError(f"effect402 lifecycle assertion missing: {token}")
+
+print("effect402 PortalWind parity passed: PE variant/timing/tint, explicit primary-Ref caller omission, local route and runtime lifecycle")

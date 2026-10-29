@@ -235,6 +235,7 @@ constexpr int kPrimTypeBottom=PP_BOTTOM;
 constexpr int kPrimTypePoison=PP_POISON;
 constexpr int kPrimTypeThrowItem=PP_THROWITEM;
 constexpr int kPrimTypeRectUp=PP_RECT_UP;
+constexpr int kPrimTypeWind=PP_WIND;
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
 void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
@@ -744,6 +745,8 @@ struct CRagEffect : CGameObject {
     void ApplyThrowItem(const char*,int);
     bool ProcessThrowItemEffect();
     void ApplyBottomMagnus(const char*,int);
+    void ApplyPortalWind(int);
+    void ApplyPortalWind402();
     bool ProcessDamageNumberEffects();
     void SpawnBlueFall(int, int);
     bool ProcessBeginAsura1_467();
@@ -14671,6 +14674,53 @@ int main()
         check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==gateDraws&&waveCalls.empty(),
             "effect405 null-texture and nonzero-state gates suppress launch, resource and RNG");
         rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject master;master.m_pos={100,200,300};master.m_BodyLight=2;
+        CRagEffect effect;effect.m_type=402;effect.m_stateCnt=0;effect.m_duration=73;effect.m_master=&master;
+        rngValues={10,0,20,1,30,2,40,3};rngCursor=0;g_texMgr.requests.clear();waveCalls.clear();
+        const int draws=rngDraws;
+        effect.ApplyPortalWind402();
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_WIND&&prim->m_renderFlag==5
+            &&prim->m_duration==73&&prim->m_size==8.0f&&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+            &&prim->m_texture.size()==1&&g_texMgr.requests==std::vector<std::string>({"effect\\cloud11.tga"})
+            &&effect.m_effectPos.x==100&&effect.m_effectPos.y==200&&effect.m_effectPos.z==300
+            &&rngDraws==draws+8&&rngCursor==8&&master.m_BodyLight==2&&master.tintCalls==0&&waveCalls.empty(),
+            "effect402 state0 emits one eight-size Cloud11 wind with eight ordered band draws and no tint");
+        if(prim) {
+            bool payload=true;
+            for(int band=0;band<4;++band) {
+                const EffectGi& gi=prim->m_gi[static_cast<size_t>(band)];
+                const float expectedDistance=static_cast<float>(static_cast<double>((band+1)*10)
+                    *0.0099999998+2.5);
+                payload=payload&&gi.life==1&&gi.process==0&&gi.maxHeight==static_cast<float>(2*band+3)
+                    &&gi.rotStart==90*band&&std::fabs(gi.distance-expectedDistance)<0.00001f
+                    &&gi.riseAngle==80+band&&gi.alphaB==0&&gi.alphaT==1&&gi.fullDisplayAngle==30&&gi.sparkY==0.0f;
+                for(float height:gi.height) payload=payload&&height==1.0f;
+                for(u8 flag:gi.flag) payload=payload&&flag==0;
+            }
+            check(payload,"effect402 variant1 preserves all four randomized wind-band payloads");
+        } else {
+            check(false,"effect402 variant1 preserves all four randomized wind-band payloads");
+        }
+        const size_t requests=g_texMgr.requests.size();
+        master.m_pos={110,210,310};effect.m_stateCnt=4;effect.ApplyPortalWind402();
+        check(effect.m_primList.size()==1&&effect.m_effectPos.x==110&&effect.m_effectPos.y==210&&effect.m_effectPos.z==310
+            &&g_texMgr.requests.size()==requests&&rngDraws==draws+8&&master.m_BodyLight==2&&master.tintCalls==0,
+            "effect402 state4 refreshes master origin without relaunch, RNG or tint");
+        master.m_BodyLight=2;effect.m_stateCnt=5;effect.ApplyPortalWind402();
+        check(effect.m_primList.size()==1&&g_texMgr.requests.size()==requests&&rngDraws==draws+8
+            &&master.m_BodyLight==3&&master.tintCalls==1&&master.red==250&&master.green==250&&master.blue==200,
+            "effect402 state5 sets odd BodyLight bit and applies the inclusive-window tint");
+        master.m_BodyLight=3;effect.m_stateCnt=65;effect.ApplyPortalWind402();
+        check(master.m_BodyLight==3&&master.tintCalls==2&&master.red==250&&master.green==250&&master.blue==200,
+            "effect402 state65 retains odd BodyLight bit and tints at the inclusive window end");
+        effect.m_stateCnt=66;effect.ApplyPortalWind402();
+        check(effect.m_primList.size()==1&&g_texMgr.requests.size()==requests&&rngDraws==draws+8
+            &&master.m_BodyLight==3&&master.tintCalls==2,
+            "effect402 state66 exits the tint window without launch, RNG or tint");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
