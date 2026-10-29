@@ -2214,3 +2214,7 @@ Compared PE and primary-Ref Init's decimal158 shared-label route to `JobLvUP.str
 ## WP5C effect156 JobChange — 2026-10-29
 
 Compared PE and primary-Ref Init case156 direct mapping to `JobChange.str`, exact executable bytes at `0x71AD54`, local catalog/STR rows, and generic OnProcess STR routing. Existing generic STR lifecycle checks already cover effect156's missing, active, moved-anchor and exhausted states. Release parity build and full CTest pass301/301. No production behavior change.
+
+## WP5C effect157 LevelUP — 2026-10-29
+
+Compared PE and primary-Ref Init case157 direct mapping to `LevelUP.str`, exact executable bytes at `0x71AD48`, local catalog/STR rows, and generic OnProcess STR routing. Existing generic STR lifecycle checks already cover effect157's missing, active, moved-anchor and exhausted states. Release parity build and full CTest pass302/302. No production behavior change.
