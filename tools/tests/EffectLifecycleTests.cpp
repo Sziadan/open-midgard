@@ -4180,6 +4180,53 @@ int main()
             check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==draws+1&&rngCursor==1,
                 "effect554 null texture gate emits no primitive or RNG");
         }
+        {
+            struct TarotTextureCase { int id; const char* texture; };
+            const TarotTextureCase tarotCases[]={
+                {523,"effect\\Tarot01.tga"},{524,"effect\\Tarot02.tga"},
+                {525,"effect\\Tarot03.tga"},{526,"effect\\Tarot04.tga"},
+                {527,"effect\\Tarot05.tga"},{528,"effect\\Tarot06.tga"},
+                {529,"effect\\Tarot07.tga"},{530,"effect\\Tarot08.tga"},
+                {531,"effect\\Tarot09.tga"},{532,"effect\\Tarot10.tga"},
+                {533,"effect\\Tarot11.tga"},{534,"effect\\Tarot12.tga"},
+                {535,"effect\\Tarot13.tga"},{536,"effect\\Tarot14.tga"},
+            };
+            CRenderObject master;master.m_pos={12,34,56};
+            for(const TarotTextureCase& item:tarotCases) {
+                CRagEffect effect;effect.m_type=item.id;effect.m_master=&master;effect.m_duration=73;
+                effect.m_stateCnt=0;rngValues={item.id+50};rngCursor=0;
+                const int draws=rngDraws;g_texMgr.requests.clear();waveCalls.clear();
+                effect.ApplyEffectTexture(item.texture,1);
+                CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+                bool payload=prim&&effect.m_primList.size()==1&&prim->m_type==PP_EFFECTTEXTURE
+                    &&prim->m_renderFlag==5&&prim->m_duration==73&&prim->m_size==0.0f
+                    &&prim->m_pos.x==12&&prim->m_pos.y==34&&prim->m_pos.z==56
+                    &&effect.m_effectPos.x==12&&effect.m_effectPos.y==34&&effect.m_effectPos.z==56
+                    &&effect.m_cachedPos.x==12&&effect.m_cachedPos.y==34&&effect.m_cachedPos.z==56
+                    &&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture
+                    &&g_texMgr.requests==std::vector<std::string>{item.texture}
+                    &&rngDraws==draws+1&&rngCursor==1
+                    &&prim->m_gi[0].life==1&&prim->m_gi[0].process==0
+                    &&prim->m_gi[0].distance==8.0f&&prim->m_gi[0].arcBaselineY==4.0f
+                    &&prim->m_gi[0].height[10]==1.0f&&prim->m_gi[0].fullDisplayAngle==120
+                    &&prim->m_gi[0].height[8]==0.0f&&prim->m_gi[0].alphaB==0
+                    &&prim->m_gi[0].sparkX==12&&prim->m_gi[0].sparkZ==56
+                    &&prim->m_gi[0].rotStart==(item.id+50)%360
+                    &&prim->m_gi[0].flag[0]==0&&prim->m_gi[0].flag[4]==1;
+                for(int band=1;band<4;++band) payload=payload&&prim&&prim->m_gi[band].life==0;
+                check(payload,"Tarot selector1 emits the exact texture, one-lane payload and one rotation draw");
+
+                master.m_pos={22,44,66};effect.m_stateCnt=1;
+                effect.ApplyEffectTexture(item.texture,1);
+                check(effect.m_primList.size()==1&&effect.m_effectPos.x==22&&effect.m_effectPos.y==44
+                    &&effect.m_effectPos.z==66&&effect.m_cachedPos.x==22&&effect.m_cachedPos.y==44
+                    &&effect.m_cachedPos.z==66&&prim&&prim->m_pos.x==22&&prim->m_pos.y==44
+                    &&prim->m_pos.z==66&&g_texMgr.requests.size()==1&&rngDraws==draws+1&&rngCursor==1,
+                    "Tarot selector1 later state follows master without relaunch, texture reload or RNG");
+                effect.ClearPrims();g_world.UpdateGameObjects();master.m_pos={12,34,56};
+            }
+            g_texMgr.requests.clear();waveCalls.clear();rngValues.clear();rngCursor=0;
+        }
     }
     {
         CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};

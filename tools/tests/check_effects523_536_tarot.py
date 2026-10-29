@@ -8,6 +8,8 @@ PE = (ROOT / "HighPriest.exe.c").read_text(encoding="latin-1")
 REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 ROUTES = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
+LIFECYCLE = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
+TEST_CMAKE = (ROOT / "tools/tests/CMakeLists.txt").read_text(encoding="utf-8")
 
 
 def function(source: str, signature: str) -> str:
@@ -64,4 +66,21 @@ for token in (
     if token not in local_helper:
         raise AssertionError(f"local selector-1 texture payload missing {token}")
 
-print("effects523-536 Tarot parity passed: PE/Ref/local 14-way routes, selector-1 payload and spawn gate")
+if 'extract_body(effect_texture_emitter "${effect_source}" "void CRagEffect::ApplyEffectTexture(" "bool CRagEffect::ProcessEffectTextureSet(")' not in TEST_CMAKE:
+    raise AssertionError("production ApplyEffectTexture helper is not extracted into the lifecycle harness")
+tarot_fixture = re.search(r"const TarotTextureCase tarotCases\[\]=\{(.*?)\n            \};[\s\S]*?(?=\n        })", LIFECYCLE, re.S)
+if tarot_fixture is None:
+    raise AssertionError("Tarot selector1 runtime fixture disappeared")
+for effect_id in range(523, 537):
+    if f'{{{effect_id},"effect\\\\Tarot{effect_id-522:02d}.tga"}}' not in tarot_fixture.group(1):
+        raise AssertionError(f"effect{effect_id} Tarot selector1 runtime table entry missing")
+if "effect.ApplyEffectTexture(item.texture,1)" not in LIFECYCLE:
+    raise AssertionError("Tarot selector1 fixture does not invoke production ApplyEffectTexture")
+for token in (
+    "PP_EFFECTTEXTURE", "distance==8.0f", "arcBaselineY==4.0f", "height[10]==1.0f",
+    "fullDisplayAngle==120", "flag[4]==1", "rngDraws==draws+1", "later state follows master",
+):
+    if token not in LIFECYCLE:
+        raise AssertionError(f"Tarot selector1 runtime assertion missing {token}")
+
+print("effects523-536 Tarot parity passed: PE/Ref/local 14-way routes and selector-1 payload; production lifecycle fixture bound (no rendered-output claim)")
