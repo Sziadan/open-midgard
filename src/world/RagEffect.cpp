@@ -14570,7 +14570,8 @@ bool CRagEffect::ProcessEffectSprite(int spriteVariant)
 bool CRagEffect::ProcessEffectSpriteAndStr()
 {
     ProcessEffectSprite(14);
-    return ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+    ProcessEZ2STR(0.0f, -80.0f, 0.0f);
+    return true;
 }
 
 // Ref/RagEffect.cpp timed audio cues and canonical OnProcess cases. These

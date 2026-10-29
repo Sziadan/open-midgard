@@ -15,6 +15,9 @@ PE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
 RAG = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 DISPATCH = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
+CATALOG = (ROOT / "src/world/RagEffectCatalog.generated.inc").read_text(encoding="utf-8")
+STR_TABLE = (ROOT / "src/world/RagEffectStrNameTable.generated.inc").read_text(encoding="utf-8")
+image = ExeImage()
 
 
 def body(source: str, signature: str) -> str:
@@ -200,12 +203,39 @@ if not re.search(r"case\s+612:\s+return ProcessEffectSpriteAndStr\(\);", DISPATC
 ref_612 = re.search(r"case\s+0x264:(.*?)(?=case\s+0x265:)", ref_dispatch, re.S)
 if ref_612 is None or not re.search(r"Effect_SPR\(this,\s*14\).*?goto\s+\$L146219", ref_612.group(1), re.S):
     raise AssertionError("Ref effect 612 no longer calls Effect_SPR(14) before the shared STR label")
+pe_612 = re.search(r"case\s+0x264:(.*?)(?=case\s+0x265:)", pe_dispatch, re.S)
+if pe_612 is None or not re.search(r"Effect_SPR\(this,\s*14\).*?goto\s+\$L146219", pe_612.group(1), re.S):
+    raise AssertionError("PE effect 612 caller ordering or shared-tail target changed")
+pe_variant14 = re.search(r"case\s+14:(.*?)(?=case\s+15:)", pe_sprite, re.S)
+if pe_variant14 is None or not all(token in pe_variant14.group(1) for token in
+        ("SetSprName(g_prim, &byte_71D0B0)", "SetActName(g_prim, &byte_71D09C)", "InitSegment(g_prim)")):
+    raise AssertionError("PE Effect_SPR variant14 resource/action setup changed")
+if "PlayWave" in pe_variant14.group(1):
+    raise AssertionError("PE Effect_SPR variant14 has no wave cue")
+if not re.search(r"\{\s*14\s*,[^\n]*,\s*2,\s*false,\s*nullptr\s*\}", helper):
+    raise AssertionError("local Effect_SPR(14) must use speed2, one-shot animation and no wave")
 str_label = re.search(r"\$L146219:\s*CRagEffect::ProcessEZ2STR\(this,\s*0\.0,\s*-80\.0,\s*0\.0\)", REF)
 if str_label is None:
     raise AssertionError("Ref effect 612 shared STR continuation changed")
+if not re.search(r"\$L146219:\s*CRagEffect::ProcessEZ2STR\(this,\s*0\.0,\s*-80\.0,\s*0\.0\);\s*return 1", REF):
+    raise AssertionError("Ref effect 612 must ignore STR completion and return true")
+if not re.search(r"ProcessEZ2STR\(this,\s*0\.0,\s*-80\.0,\s*0\.0\);\s*return 1", pe_dispatch):
+    raise AssertionError("PE effect 612 shared STR continuation must ignore completion and return true")
+pe_init = last_body(PE, r"__thiscall CRagEffect::Init\(CRagEffect \*this, CRenderObject \*master, int effectId, vector3d fDeltaPos\)")
+ref_init = body(REF, "void __thiscall CRagEffect::Init(CRagEffect *this, CRenderObject *master, int effectId, vector3d fDeltaPos)")
+for label, init in (("PE", pe_init), ("Ref", ref_init)):
+    if not re.search(r"case\s+612:\s*\$L147927_0:\s*sprintf\(StrName,\s*aItempokjukStr\)", init):
+        raise AssertionError(f"{label} Init effect 612 no longer selects itempokjuk.str")
+image_name = image.read_cstring_at(0x71A804)
+if image_name is None or image_name.raw != b"itempokjuk.str":
+    raise AssertionError("PE STR bytes at VA 0x71A804 no longer resolve to itempokjuk.str")
+if not re.search(r'\{\s*612,\s*"itempokjuk\.str"', CATALOG):
+    raise AssertionError("local effect catalog lost effect612 itempokjuk.str mapping")
+if not re.search(r'\{\s*612,\s*"itempokjuk\.str"', STR_TABLE):
+    raise AssertionError("local STR name table lost effect612 itempokjuk.str mapping")
 sprite_and_str = body(RAG, "bool CRagEffect::ProcessEffectSpriteAndStr()")
-if not re.search(r"ProcessEffectSprite\(14\);\s*return ProcessEZ2STR\(0\.0f,\s*-80\.0f,\s*0\.0f\);", sprite_and_str):
-    raise AssertionError("local effect 612 continuation does not match Ref sprite then STR ordering")
+if not re.search(r"ProcessEffectSprite\(14\);\s*ProcessEZ2STR\(0\.0f,\s*-80\.0f,\s*0\.0f\);\s*return true;", sprite_and_str):
+    raise AssertionError("local effect 612 must emit variant14, ignore STR completion, and return true")
 
 asset_vas = {
     0: (0x71D338, 0x71D324), 1: (0x71D2F4, 0x71D2DC),
@@ -233,7 +263,6 @@ assets = {}
 for match in re.finditer(r'^\s*\{\s*(\d+)\s*,\s*("(?:\\.|[^"\\])*")\s*,\s*("(?:\\.|[^"\\])*")', helper, re.M):
     assets[int(match.group(1))] = (ast.literal_eval(match.group(2)).encode("latin-1"),
                                    ast.literal_eval(match.group(3)).encode("latin-1"))
-image = ExeImage()
 fireworks_wave = image.read_cstring_at(0x7127E8)
 if fireworks_wave is None or fireworks_wave.raw != b"effect\\itempokjuk.wav":
     raise AssertionError("Effect_SPR fireworks wave bytes at VA 0x7127E8 changed")

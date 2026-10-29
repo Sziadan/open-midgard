@@ -501,6 +501,9 @@ struct CRagEffect : CGameObject {
     float m_roty=0;
     int setActionCalls=0,lastAction=0,lastActionMotion=0,lastActionType=0;
     void SetAction(int action,int motion,int type) { ++setActionCalls;lastAction=action;lastActionMotion=motion;lastActionType=type; }
+    int spriteCalls=0,lastSpriteVariant=-1;
+    bool ProcessEffectSprite(int variant) { ++spriteCalls;lastSpriteVariant=variant;return true; }
+    bool ProcessEffectSpriteAndStr();
     void SpawnGrimTooth();
     void SpawnGrimToothAtk();
     void ApplySuperAngel(signed char,signed char);
@@ -11625,6 +11628,12 @@ int main()
         CRagEffect effect;effect.m_type=699;effect.m_iCurLayer=1;effect.m_cEndLayer=1;
         check(!effect.ProcessEZ2STR(0.0f,-80.0f,0.0f)&&!effect.m_strFrameActive,
             "effect699's exhausted shared STR step returns false for its caller to ignore");
+    }
+    {
+        CRagEffect effect;effect.m_type=612;effect.m_iCurLayer=1;effect.m_cEndLayer=1;
+        check(effect.ProcessEffectSpriteAndStr()&&effect.spriteCalls==1&&effect.lastSpriteVariant==14
+            &&!effect.m_strFrameActive,
+            "effect612 emits sprite variant14, advances exhausted STR, and remains active as the source does");
     }
     {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
