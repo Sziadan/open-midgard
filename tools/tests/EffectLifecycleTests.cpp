@@ -628,6 +628,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect466();
     bool ProcessEffect501();
     bool ProcessEffect704();
+    bool ProcessExit7();
     bool ProcessWaterBall116();
     bool ProcessFireIvy118();
     bool ProcessFirePillar138();
@@ -3178,6 +3179,48 @@ int main()
         CEffectPrim primitive;primitive.m_master=&unlistedMaster;primitive.m_type=PP_2DTEXTURE;
         check(primitive.UsesReferenceScreenTexture(),
             "unlisted master PP_2DTEXTURE selects source renderer by primitive type");
+    }
+    {
+        CRenderObject actor,listener;actor.m_pos={10,20,30};listener.m_pos={2,3,4};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=7;effect.m_master=&actor;effect.m_stateCnt=0;effect.m_duration=60;
+        effect.m_effectPos={99,88,77};waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();
+        rngValues={77,123,41,270};rngCursor=0;g_session.m_isMinEffect=false;const int draws=rngDraws;
+        check(effect.ProcessExit7()&&effect.m_effectPos.x==10&&effect.m_effectPos.y==20&&effect.m_effectPos.z==30,
+            "Exit7 refreshes the stored effect origin from its master and remains active");
+        auto it=effect.m_primList.begin();auto* cylinder=it==effect.m_primList.end()?nullptr:*it++;
+        auto* orbit=it==effect.m_primList.end()?nullptr:*it;
+        check(effect.m_primList.size()==2&&cylinder&&cylinder->m_type==PP_3DCYLINDER&&orbit&&orbit->m_type==PP_3DPARTICLEORBIT,
+            "Exit7 frame zero launches its cylinder before the cadence orbit");
+        check(cylinder&&cylinder->m_duration==100&&effect.m_duration==100&&cylinder->m_outerSize==4.5f
+            &&cylinder->m_innerSize==4.5f&&cylinder->m_heightSize==35&&cylinder->m_alpha==0
+            &&cylinder->m_maxAlpha==90&&cylinder->m_alphaSpeed==static_cast<float>(90.0*0.033333335)
+            &&cylinder->m_fadeOutCnt==80&&g_texMgr.requests==std::vector<std::string>{"effect\\alpha_down.tga"},
+            "Exit7 initializes the exact source cylinder profile and alpha-down texture");
+        check(waveCalls.size()==1&&waveCalls[0].name=="_heal_effect.wav"&&waveCalls[0].x==8&&waveCalls[0].y==0
+            &&waveCalls[0].z==26&&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&waveCalls[0].frameRng==draws,"Exit7 plays its frame-zero listener-relative wave before orbit RNG");
+        check(orbit&&orbit->m_radius==3&&orbit->m_duration==50&&orbit->m_longitude==123&&orbit->m_gravSpeed==-1.2f
+            &&orbit->m_gravAccel==static_cast<float>(-1.2f/50.0*-0.66666669)&&orbit->m_size==0.55000001f
+            &&rngDraws==draws+2&&rngCursor==2,"Exit7 discards the first orbit draw then preserves angle and gravity profile");
+        check(orbit&&orbit->m_numSegments==1&&g_resMgr.requests==std::vector<std::string>({"\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act"}),
+            "Exit7 orbit loads the exact particle sprite/action pair and initializes one trail segment");
+        check(orbit&&orbit->m_segments[0].alpha==orbit->m_alpha,"Exit7 initializes its orbit trail from the primitive's current alpha");
+        actor.m_pos={20,30,40};effect.m_stateCnt=1;effect.ProcessExit7();
+        check(effect.m_effectPos.x==20&&effect.m_effectPos.y==30&&effect.m_effectPos.z==40&&effect.m_primList.size()==2
+            &&waveCalls.size()==1&&rngDraws==draws+2,"Exit7 refreshes its parent each frame without repeating frame-zero output");
+        actor.m_pos={30,40,50};effect.m_stateCnt=9;rngCursor=2;effect.ProcessExit7();
+        orbit=effect.m_primList.back();
+        check(effect.m_effectPos.x==30&&effect.m_primList.size()==3&&orbit->m_type==PP_3DPARTICLEORBIT
+            &&orbit->m_longitude==270&&rngDraws==draws+4&&rngCursor==4,
+            "Exit7 emits another orbit every ninth frame with the source two-draw sequence");
+        actor.m_pos={40,50,60};effect.m_stateCnt=18;g_session.m_isMinEffect=true;effect.ProcessExit7();
+        check(effect.m_effectPos.x==40&&effect.m_primList.size()==3&&rngDraws==draws+4,
+            "Exit7 reduced-effects mode suppresses cadence orbits while still refreshing origin");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        check(g_resMgr.spr.m_lockCnt==0&&g_resMgr.act.m_lockCnt==0,"Exit7 cleanup releases orbit sprite/action resources");
+        g_world.m_player=oldPlayer;g_session.m_isMinEffect=false;rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject listener; listener.m_pos={10,3,20};
