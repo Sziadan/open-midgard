@@ -3985,3 +3985,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effects109/110 Init and STR resource comparison — 2026-10-29
 
 `check_effect109_110_str_init.py` compares complete PE/primary-Ref Init case blocks for effects109/110. It checks effect109's `rand()%4` plus `Bubble%d.str` formatting (variants1–4), effect110's `aGaspushStr`, local STR table rows and shared STR-only dispatch, and exact `GasPush.str` bytes at VA `0x71AF24`. Existing lifecycle coverage includes both ids. Release parity build succeeded; full CTest passed326/326. No production change.
+
+
+## WP5C effects143/144/146–152 Init and STR resource comparison — 2026-10-29
+
+`check_effect143_144_146_152_str_init.py` compares PE/primary-Ref Init branches for SonicBlow, Brandish2, ShockWaveHit, EarthHit, Pierce, Bowling, SpearStab, SpearBoomerang and HolyHit STRs. It checks local table rows and generic STR routing and resolves exact filenames from executable VAs `0x71AE50`, `0x71AE30`, `0x71ADFC`, `0x71ADEC`, `0x71ADE0`, `0x71ADD4`, `0x71ADC4`, `0x71ADB0`, and `0x71ADA4`. Release parity build succeeded; full CTest passed327/327. No production change.

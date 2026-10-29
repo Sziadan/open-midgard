@@ -2347,3 +2347,8 @@ Extended `check_removetrap_caller.py` to resolve the exact `effect\hunter_remove
 ## WP5C effects109/110 STR initialization parity — 2026-10-29
 
 Added `check_effect109_110_str_init.py` and registered it in CTest. It compares PE and primary-Ref Init blocks for both effects, verifies effect109's single `%4` draw selects `Bubble1.str`–`Bubble4.str`, effect110's `GasPush.str` mapping and exact PE bytes at `0x71AF24`, local generated STR rows/routes, and existing lifecycle-matrix coverage. Release parity build succeeded; full CTest passed326/326. No production change.
+
+
+## WP5C effects143/144/146–152 STR Init comparison — 2026-10-29
+
+Added `check_effect143_144_146_152_str_init.py` and registered it in CTest. It compares PE and primary-Ref Init blocks for all nine ids, verifies each local STR catalog row and shared ProcessEZ2STR route, and pins the exact PE STR bytes at `0x71AE50`, `0x71AE30`, `0x71ADFC`, `0x71ADEC`, `0x71ADE0`, `0x71ADD4`, `0x71ADC4`, `0x71ADB0`, and `0x71ADA4`. Release parity build succeeded; full CTest passed327/327. No production change.
