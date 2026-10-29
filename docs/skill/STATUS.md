@@ -49,3 +49,5 @@ Effect666 Effect_SPR variant31 now has direct state0/34/35/36/69/70/71 lifecycle
 Latest WP5 lifecycle checkpoint: effects682–686 now have table-driven Effect_SPR variant32–36 runtime coverage. PE and primary-Ref routes agree; PE-backed resource bytes and origin wave are bound in the registered comparator. Secondary Ref asset path spellings differ, so PE is the asset authority. Local lifecycle/audio-call coverage does not imply rendered or audible acceptance; see the 2026-10-29 entry in `docs/skill/PROGRESS.md`.
 
 Latest WP5 Effect_SPR checkpoint: effect584 variant8 now has four-direction action and state4/5/6 caller-cue lifecycle coverage. The frame5 PE cue remains only the unresolved `effect\\` prefix at VA `0x6F1FF0`; no suffix or audible result is inferred. See the 2026-10-29 entry in `docs/skill/PROGRESS.md`.
+
+Latest Effect_SPR checkpoint: effect612 variant14 now has direct production-helper lifecycle coverage alongside its existing wrapper/STR continuation test. PE asset bytes at `0x71D0B0/0x71D09C` are bound in the comparator; helper payload and wrapper continuation are checked separately. No integrated rendering acceptance is claimed.

@@ -577,6 +577,23 @@ for variant, (spr_va, act_va) in asset_vas.items():
     if assets[variant] != expected:
         raise AssertionError(f"Effect_SPR({variant}) assets differ from PE VAs {spr_va:#x}/{act_va:#x}")
 
+effect612_fixture = re.search(
+    r"CRenderObject master;master\.m_pos=\{31,41,51\};\s*CRagEffect effect;effect\.m_type=612;effect\.m_stateCnt=0;(.*?)(?=\n    })",
+    LIFECYCLE, re.S)
+if effect612_fixture is None or "ProcessEffectSpriteProduction(14)" not in effect612_fixture.group(1):
+    raise AssertionError("effect612 direct production variant14 lifecycle fixture disappeared")
+for resource, va in (("expectedSpr", 0x71D0B0), ("expectedAct", 0x71D09C)):
+    literal = re.search(rf"const std::string {resource}=(\"(?:\\.|[^\"\\])*\")", effect612_fixture.group(1))
+    if literal is None or ast.literal_eval(literal.group(1)).encode("latin-1") != image.read_cstring_at(va).raw:
+        raise AssertionError(f"effect612 fixture {resource} differs from exact PE bytes at {va:#x}")
+for token in ("prim->m_animSpeed==2&&!prim->m_repeatAnim", "prim->m_renderFlag==0x201",
+              "prim->m_pattern==0x200", "prim->m_numSegments==1", "waveCalls.empty()",
+              "effect612 variant14 state1 refreshes origin without duplicate particle, resources, wave or RNG"):
+    if token not in effect612_fixture.group(1):
+        raise AssertionError(f"effect612 direct lifecycle fixture is missing required assertion: {token}")
+if "effect.ProcessEffectSpriteAndStr()&&effect.spriteCalls==1&&effect.lastSpriteVariant==14" not in LIFECYCLE:
+    raise AssertionError("effect612 wrapper/STR continuation fixture was lost")
+
 # Effects682-686 share the fireworks lifecycle but select five PE-backed assets.
 fireworks_fixture = re.search(
     r"const FireworksProfile\s+profiles\[\]\s*=\s*\{(.*?)\n\s*\};",
