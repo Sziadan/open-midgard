@@ -4850,3 +4850,7 @@ Direct runtime coverage exercises the extracted production helper for effect647 
 ## WP5 Effect_SPR lifecycle — effect644 variant27 — 2026-10-29
 
 State0 runtime coverage checks effect644's variant27 particle, exact resource requests, and single listener-relative caller wave; state1 does not repeat them and refreshes the helper origin. SPR/ACT/wave strings are bound to executable VAs `0x71CE5C/0x71CE44/0x719B98`; the wave bytes at the latter address are preserved exactly without decoding a guessed suffix. PE and primary Ref caller order agree. This is local lifecycle/audio-call/payload coverage only; it focused checks pass2/2; full VS17 Release parity CTest passes434/434. This does not establish audible or rendered parity.
+
+## WP5 Effect_SPR lifecycle — effect643 variant26 — 2026-10-29
+
+The direct fixture checks effect643's variant26 particle on state0, no early wave, one delayed state20 listener-relative caller wave, and no duplicate output on state21. Fixture SPR/ACT/wave literals bind to PE VAs `0x71CE8C/0x71CE74/0x719BB0`; wave bytes are preserved exactly, without inferred suffix. PE and primary Ref agree on the state20 origin-copy/wave/helper ordering. This is local lifecycle/audio-call/payload coverage only; focused checks pass2/2; full VS17 Release parity CTest passes434/434. Audible or rendered output is not claimed.

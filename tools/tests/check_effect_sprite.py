@@ -263,6 +263,35 @@ for token in ("item.effect", "m_deltaPos2.y==-1.0f", "m_renderFlag==1", "m_patte
               "waveCalls.empty()", "effect.m_stateCnt=1", "without repeated output"):
     if token not in effect640_642_fixture.group(2):
         raise AssertionError(f"effects640-642 lifecycle assertion missing {token}")
+effect643_fixture = re.search(r"CRenderObject master,listener;master\.m_pos=\{300,400,500\};listener\.m_pos=\{100,900,200\};(.*?)(?=\n    })", LIFECYCLE, re.S)
+if effect643_fixture is None or "effect.m_type=643" not in effect643_fixture.group(1) or "ProcessEffectSpriteProduction(26)" not in effect643_fixture.group(1):
+    raise AssertionError("effect643 direct production variant26 lifecycle fixture disappeared")
+for name, expected, required_va in (("expectedSpr", image.read_cstring_at(0x71CE8C).raw, 0x71CE8C),
+                                   ("expectedAct", image.read_cstring_at(0x71CE74).raw, 0x71CE74),
+                                   ("expectedWave", image.read_cstring_at(0x719BB0).raw, 0x719BB0)):
+    literal = re.search(rf"const std::string {name}=(\"(?:\\.|[^\"\\])*\")", effect643_fixture.group(1))
+    if literal is None or ast.literal_eval(literal.group(1)).encode("latin-1") != expected:
+        raise AssertionError(f"effect643 fixture {name} differs from PE bytes at {required_va:#x}")
+for token in ("PP_3DPARTICLE", "m_duration==75", "m_deltaPos2.y==0.0f", "m_renderFlag==0x201",
+              "m_pattern==0x200", "m_animSpeed==4", "!prim->m_repeatAnim", "m_numSegments==1",
+              "effect.m_stateCnt=0", "effect.m_stateCnt=1", "effect.m_stateCnt=20", "effect.m_stateCnt=21",
+              "waveCalls.empty()", "waveCalls.size()==1", "waveCalls[0].x==200", "waveCalls[0].y==0",
+              "waveCalls[0].z==300", "waveCalls[0].volume==250", "waveCalls[0].range==40",
+              "waveCalls[0].frequency==1", "rngDraws==draws", "without spawning"):
+    if token not in effect643_fixture.group(1):
+        raise AssertionError(f"effect643 lifecycle assertion missing {token}")
+for label, dispatch in (("PE", pe_dispatch), ("Ref", ref_dispatch)):
+    caller = re.search(r"case\s+0x283:(.*?)(?=case\s+0x[0-9A-F]+:|$)", dispatch, re.S)
+    if caller is None:
+        raise AssertionError(f"{label} effect643 caller branch is missing")
+    branch = caller.group(1)
+    ordered = ["this->m_stateCnt == 20", "this->m_pos = this->m_master->m_pos",
+               "PlayWave(aEffect_146", "Effect_SPR(this, 26)", "return 1"]
+    offsets = [branch.find(token) for token in ordered]
+    if any(offset < 0 for offset in offsets) or offsets != sorted(offsets):
+        raise AssertionError(f"{label} effect643 delayed state20 position/wave/variant order changed")
+    if not re.search(r"PlayWave\([^,]+,\s*\w+,\s*0\.0,\s*\w+,\s*250,\s*40,\s*1\.0\)", branch):
+        raise AssertionError(f"{label} effect643 wave coordinates/parameters changed")
 effect647_fixture = re.search(r"CRenderObject master;master\.m_pos=\{74,85,96\};\s*CRagEffect effect;effect\.m_type=647;(.*?)(?=\n    })", LIFECYCLE, re.S)
 if effect647_fixture is None or "ProcessEffectSpriteProduction(29)" not in effect647_fixture.group(1):
     raise AssertionError("effect647 direct production variant29 lifecycle fixture disappeared")
@@ -277,8 +306,8 @@ for token in ("PP_3DPARTICLE", "m_duration==73", "m_deltaPos2.y==0.0f", "m_rende
               "without duplicate particle, resources, sound or RNG"):
     if token not in effect647_fixture.group(1):
         raise AssertionError(f"effect647 lifecycle assertion missing {token}")
-effect644_fixture = re.search(r"CRenderObject master,listener;master\.m_pos=\{300,400,500\};listener\.m_pos=\{100,900,200\};(.*?)(?=\n    })", LIFECYCLE, re.S)
-if effect644_fixture is None or "effect.m_type=644" not in effect644_fixture.group(1) or "ProcessEffectSpriteProduction(27)" not in effect644_fixture.group(1):
+effect644_fixture = re.search(r"CRagEffect effect;effect\.m_type=644;(.*?)(?=\n    })", LIFECYCLE, re.S)
+if effect644_fixture is None or "ProcessEffectSpriteProduction(27)" not in effect644_fixture.group(1):
     raise AssertionError("effect644 direct production variant27 lifecycle fixture disappeared")
 for name, expected, required_va in (("expectedSpr", image.read_cstring_at(0x71CE5C).raw, 0x71CE5C),
                                    ("expectedAct", image.read_cstring_at(0x71CE44).raw, 0x71CE44),

@@ -12751,6 +12751,47 @@ int main()
         rngValues.clear();rngCursor=0;waveCalls.clear();
     }
     {
+        CRenderObject master,listener;master.m_pos={300,400,500};listener.m_pos={100,900,200};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=643;effect.m_stateCnt=0;effect.m_duration=75;effect.m_master=&master;
+        rngValues={};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB7\xA1\xC7\xC7\xB5\xE5\xBB\xFE\xBF\xF6.spr";
+        const std::string expectedAct="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB7\xA1\xC7\xC7\xB5\xE5\xBB\xFE\xBF\xF6.act";
+        const std::string expectedWave="effect\\\xB7\xA1\xC7\xC7\xB5\xE5\xBB\xFE\xBF\xF6.wav";
+        effect.m_stateCnt=0;
+        check(effect.ProcessEffectSpriteProduction(26),"effect643 production Effect_SPR variant26 helper remains active");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+            &&prim->m_pos.x==300&&prim->m_pos.y==400&&prim->m_pos.z==500
+            &&prim->m_duration==75&&prim->m_deltaPos2.y==0.0f&&prim->m_renderFlag==0x201
+            &&prim->m_pattern==0x200&&prim->m_animSpeed==4&&!prim->m_repeatAnim
+            &&prim->m_spriteAction==0&&prim->m_curMotion==0
+            &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+            &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+            &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==300
+            &&prim->m_segments[0].pos.y==400&&prim->m_segments[0].pos.z==500
+            &&waveCalls.empty()&&rngDraws==draws&&rngCursor==0,
+            "effect643 state0 emits exact PE variant26 particle/resources without early wave or RNG");
+        const size_t requests=g_resMgr.requests.size();master.m_pos={310,410,510};effect.m_stateCnt=1;
+        check(effect.ProcessEffectSpriteProduction(26)&&effect.m_primList.size()==1
+            &&effect.m_effectPos.x==310&&effect.m_effectPos.y==410&&effect.m_effectPos.z==510
+            &&g_resMgr.requests.size()==requests&&waveCalls.empty()&&rngDraws==draws&&rngCursor==0,
+            "effect643 state1 refreshes origin without repeated particle, resources, wave or RNG");
+        master.m_pos={300,400,500};effect.m_stateCnt=20;
+        check(effect.ProcessEffectSpriteProduction(26)&&effect.m_primList.size()==1
+            &&g_resMgr.requests.size()==requests&&waveCalls.size()==1&&waveCalls[0].name==expectedWave
+            &&waveCalls[0].x==200&&waveCalls[0].y==0&&waveCalls[0].z==300
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&rngDraws==draws&&rngCursor==0,
+            "effect643 state20 plays exact PE-bound delayed wave at listener-relative coordinates without spawning");
+        effect.m_stateCnt=21;
+        check(effect.ProcessEffectSpriteProduction(26)&&effect.m_primList.size()==1
+            &&g_resMgr.requests.size()==requests&&waveCalls.size()==1&&rngDraws==draws&&rngCursor==0,
+            "effect643 state21 does not repeat its delayed wave or create additional output");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;waveCalls.clear();
+        g_resMgr.requests.clear();g_world.m_player=oldPlayer;
+    }
+    {
         CRenderObject master;master.m_pos={74,85,96};
         CRagEffect effect;effect.m_type=647;effect.m_stateCnt=0;effect.m_duration=73;effect.m_master=&master;
         rngValues={};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
