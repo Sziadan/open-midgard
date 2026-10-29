@@ -2627,3 +2627,7 @@ Extended the weather-cloud comparator to cover PE effects229/230/233 (variants0/
 ## WP5F effect22 Sight caller and lifecycle binding — 2026-10-29
 
 Extended `check_effect601_sight2.py` to compare the complete PE/primary-Ref Sight helper, PE effect22 OnProcess caller, secondary-Ref `EF_SIGHT` caller, and local `22 -> SpawnSight -> ApplySight(150,true)` route. It pins Sight and Shadow SPR/ACT bytes and binds the existing effect22 lifecycle fixture. The primary Ref caller remains absent, as documented. Focused CTest passed; the latest full Release CTest remains 370/370.
+
+## WP5F effect627 RG_COIN3 caller parity — 2026-10-29
+
+Extended the existing RG_COIN caller comparator to cover PE/primary-Ref effect627 caller branch equality, its state21 parent refresh and cue, all four ordered RG_COIN2 asset calls, local OnProcess3/ApplyRgCoin3 routing, and exact executable bitmap bytes. Bound the existing ApplyRgCoin3 lifecycle fixture to the source check. Focused Release CTest passed; no production behavior change.
