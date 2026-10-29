@@ -479,6 +479,7 @@ struct CRagEffect : CGameObject {
     bool m_ownsMaster = false, m_masterIsActor = false, m_isWorldEffect = false;
     u32 m_masterActorGid = 0;
     int m_type = 0, m_stateCnt = 0, m_duration = 3, m_count = 0, m_level = 1;
+    bool m_shadowOn = true;
     float m_latitude=0;
     float m_longitude = 0, m_param[4]{}, m_tlvertX=0, m_tlvertY=0, m_tlvertZ=0;
     vector3d m_strScreenOffset, m_strAnchorPosition, m_effectPos, m_cachedPos, m_deltaPos, m_deltaPos2, m_targetPos;
@@ -720,6 +721,7 @@ struct CRagEffect : CGameObject {
     bool ProcessBottom2Effect137();
     bool ProcessSoulStrike15(int);
     bool ProcessEffect650();
+    bool ProcessCloaking120();
     void ApplyWind();
     void SpawnWarp8();
     bool ProcessEnhance9();
@@ -13051,6 +13053,30 @@ int main()
             &&waveCalls.size()==laterWaves&&rngDraws==laterDraws,
             "MapMagicZone effect650 refreshes both cached origins at nonzero state without repeating emission");
         g_texMgr.requests.clear(); waveCalls.clear();
+    }
+    {
+        CRenderObject actor,listener; actor.alpha=123; actor.red=7; actor.green=8; actor.blue=9;
+        listener.m_pos={5,700,9}; CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect cloaking; cloaking.m_master=&actor; cloaking.m_type=120;
+        cloaking.m_effectPos={15,25,35}; cloaking.m_stateCnt=0; cloaking.m_shadowOn=true;
+        waveCalls.clear(); const int draws=rngDraws;
+        check(cloaking.ProcessCloaking120()&&actor.tintCalls==1&&actor.alpha==50
+            &&actor.red==7&&actor.green==8&&actor.blue==9&&!cloaking.m_shadowOn
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\assasin_cloaking.wav"
+            &&waveCalls[0].x==10&&waveCalls[0].y==0&&waveCalls[0].z==26
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&rngDraws==draws,
+            "Cloaking effect120 state zero plays its stored-origin cue and applies source actor alpha/shadow changes");
+        cloaking.m_stateCnt=1; actor.alpha=80; cloaking.m_shadowOn=true;
+        check(cloaking.ProcessCloaking120()&&actor.tintCalls==2&&actor.alpha==50
+            &&actor.red==7&&actor.green==8&&actor.blue==9&&!cloaking.m_shadowOn
+            &&waveCalls.size()==1&&rngDraws==draws,
+            "Cloaking effect120 later states reapply tint and shadow changes without replaying the cue");
+        cloaking.m_master=nullptr; cloaking.m_stateCnt=0; cloaking.m_shadowOn=true;
+        check(cloaking.ProcessCloaking120()&&actor.tintCalls==2&&cloaking.m_shadowOn
+            &&waveCalls.size()==1&&rngDraws==draws,
+            "Cloaking effect120 missing master exits before actor mutation or sound");
+        g_world.m_player=oldPlayer; waveCalls.clear();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

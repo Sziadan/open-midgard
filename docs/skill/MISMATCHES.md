@@ -599,7 +599,7 @@ The PE helper at `HighPriest.exe.c:431405` matches primary Ref `Ref/RagEffect.cp
 
 # WP10.3 Cloaking helper and inline effect120 route (2026-10-28)
 
-The PE/primary-Ref Cloaking helper bodies match, but neither is called. PE case120 performs the behavior inline, so the implementation routes that exact caller branch: state0 wave, per-tick master alpha tint and shadow disable. `m_shadowOn` is a new CRagEffect state field initialized false. No primitive family is involved; visual/live acceptance remains open.
+The PE/primary-Ref Cloaking helper bodies match, but neither is called. PE case120 performs the behavior inline, so the implementation routes that exact caller branch: state0 wave, per-tick master alpha tint and shadow disable. `m_shadowOn` is a new CRagEffect state field initialized false. No primitive family is involved. The effect120 lifecycle fixture now checks the state-zero cue, repeated tint/shadow updates and null-master guard; visual/live acceptance remains open.
 
 # WP10.3 Coin 10 caller omission
 

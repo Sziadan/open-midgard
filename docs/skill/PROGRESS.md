@@ -2961,3 +2961,8 @@ Added direct lifecycle execution for `ProcessSoulStrike15` while retaining the e
 ## WP5 CRagEffect effect650 MapMagicZone lifecycle checkpoint — 2026-10-29
 
 Extended the lifecycle harness to compile and execute the actual `ProcessEffect650` body. The existing `check_effect650_map_magic_zone.py` remains the PE/primary Ref/source/resource comparison. The fixture verifies the ordered `PP_MAPMAGICZONE` pair, `PP_3DAURA`, and `PP_3DCASTING` with exact textures, inherited duration and render flags; both MapMagicZone lane profiles; the two active `pikapika2.bmp` bands; and the three exact Map_Aura GI profiles, including cleared arrays. It checks both effect-position caches refresh from the master at state0 and state1, with no RNG/audio and no repeated primitives on later states. Focused lifecycle executable passes 3034 assertions; source comparator passes; full Release parity CTest passed 428/428. No production behavior changed.
+
+
+## WP5 CRagEffect effect120 Cloaking lifecycle checkpoint — 2026-10-29
+
+Added lifecycle execution of `ProcessCloaking120` alongside the existing `check_cloaking_inline.py` source and PE-resource comparison. The fixture verifies state0 plays `effect\assasin_cloaking.wav` from stored effect origin relative to the listener with `(x,0,z)` and source audio parameters, sets actor alpha to50 while preserving RGB, and disables the effect shadow. Later states reapply tint/shadow without repeating audio. A missing master exits before actor mutation or sound. Focused lifecycle harness passes3037 assertions; source comparator passes; full Release parity CTest passed 428/428. No production behavior changed.
