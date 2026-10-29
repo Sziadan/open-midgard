@@ -1519,7 +1519,7 @@ void ReplayTrapModelResource(const std::string& path)
     const std::vector<ScenarioPacket> packets = LoadPacketSequence(path);
     Require(packets.size() == 4 && packets[0].opcode == 0x011F && packets[0].bytes[14] == 143
         && packets[3].opcode == 0x0120,
-        "trap model resource replay requires job143 entry and final removal packets");
+        "trap model resource replay requires job143 entry template and final removal packet");
 
     g_resMgr.RegisterType("rsm", "", new C3dModelRes());
     g_resMgr.RegisterType("bmp", "", new CBitmapRes());
@@ -1532,6 +1532,7 @@ void ReplayTrapModelResource(const std::string& path)
         { 152, "04" }, { 153, "05" },
     };
     std::vector<std::pair<int, C3dModelRes*>> models;
+    std::map<int, std::string> modelNames;
     std::set<std::string> materialNames;
     for (const TrapModelPath& mapping : trapModelPaths) {
         const std::string modelPath = "data\\model\\" + modelDirectory + "\\" + modelStem + mapping.suffix + ".rsm";
@@ -1543,6 +1544,7 @@ void ReplayTrapModelResource(const std::string& path)
             materialNames.emplace(materialName);
         }
         models.emplace_back(mapping.job, model);
+        modelNames.emplace(mapping.job, modelDirectory + "\\" + modelStem + mapping.suffix + ".rsm");
     }
 
     for (const std::string& materialName : materialNames) {
@@ -1572,39 +1574,57 @@ void ReplayTrapModelResource(const std::string& path)
         Require(actor.m_node != nullptr && actor.m_curMotion == 3,
             "trap model actor did not create its node and Ref frame for job" + std::to_string(job));
     }
-    const auto job143Model = std::find_if(models.begin(), models.end(), [](const auto& entry) { return entry.first == 143; });
-    Require(job143Model != models.end(), "job143 trap model mapping missing from the runtime fixture");
-
     Fixture fixture(path);
     CGameModePacketRouter router;
     RegisterDefaultGameModePacketHandlers(router);
-    PacketView entry{};
-    int consumed = 0;
-    Require(TryReadPacket(packets[0].bytes.data(), static_cast<int>(packets[0].bytes.size()), entry, consumed)
-        && router.Dispatch(fixture.mode, entry), "production router rejected the resource-backed job143 entry");
-    CSkill* trap = fixture.world.GetSkillByAID(100);
-    Require(trap != nullptr && trap->m_3dactor != nullptr && trap->m_3dactor->m_node != nullptr,
-        "visible job143 trap did not attach a C3dActor built from the parsed RSM");
-    Require(std::fabs(trap->m_3dactor->m_animSpeed - 0.33333334f) < 1.0e-6f
-        && trap->m_3dactor->m_curMotion == 3
-        && trap->m_3dactor->m_blockType == 0
-        && trap->m_3dactor->m_isHideCheck == 0
-        && trap->m_3dactor->m_animType == 0
-        && trap->m_3dactor->m_pos.x == trap->m_pos.x
-        && trap->m_3dactor->m_pos.y == trap->m_pos.y
-        && trap->m_3dactor->m_pos.z == trap->m_pos.z,
-        "trap model actor fields differ from ShowModel's Ref parameters");
-    PacketView removal{};
-    consumed = 0;
-    Require(TryReadPacket(packets[3].bytes.data(), static_cast<int>(packets[3].bytes.size()), removal, consumed)
-        && router.Dispatch(fixture.mode, removal), "production router rejected the job143 removal");
-    Require(fixture.world.GetSkillByAID(100) == nullptr
-        && std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
-            [](CGameObject* object) {
-                const CSkill* skill = dynamic_cast<const CSkill*>(object);
-                return skill != nullptr && skill->m_aid == 100;
-            }),
-        "job143 removal did not destroy its resource-backed skill unit");
+    auto writeU32LE = [](std::vector<u8>& bytes, std::size_t offset, u32 value) {
+        Require(offset + 4 <= bytes.size(), "trap model packet AID field is out of bounds");
+        for (int byte = 0; byte < 4; ++byte) {
+            bytes[offset + byte] = static_cast<u8>((value >> (byte * 8)) & 0xFF);
+        }
+    };
+    for (std::size_t index = 0; index < models.size(); ++index) {
+        const int job = models[index].first;
+        const u32 aid = static_cast<u32>(100 + index);
+        std::vector<u8> entryBytes = packets[0].bytes;
+        entryBytes[14] = static_cast<u8>(job);
+        entryBytes[15] = 0;
+        writeU32LE(entryBytes, 2, aid);
+        PacketView entry{};
+        int consumed = 0;
+        Require(TryReadPacket(entryBytes.data(), static_cast<int>(entryBytes.size()), entry, consumed)
+            && consumed == static_cast<int>(entryBytes.size()) && router.Dispatch(fixture.mode, entry),
+            "production router rejected resource-backed trap job" + std::to_string(job) + " entry");
+        CSkill* trap = fixture.world.GetSkillByAID(aid);
+        Require(trap != nullptr && trap->m_job == job && trap->m_isVisibleBody != 0
+            && trap->m_3dactor != nullptr && trap->m_3dactor->m_node != nullptr,
+            "visible trap job" + std::to_string(job) + " did not attach its parsed RSM actor");
+        Require(std::string(trap->m_3dactor->m_name) == modelNames.at(job)
+            && std::fabs(trap->m_3dactor->m_animSpeed - 0.33333334f) < 1.0e-6f
+            && trap->m_3dactor->m_curMotion == 3
+            && trap->m_3dactor->m_blockType == 0
+            && trap->m_3dactor->m_isHideCheck == 0
+            && trap->m_3dactor->m_animType == 0
+            && trap->m_3dactor->m_pos.x == trap->m_pos.x
+            && trap->m_3dactor->m_pos.y == trap->m_pos.y
+            && trap->m_3dactor->m_pos.z == trap->m_pos.z,
+            "trap model actor fields differ from ShowModel Ref parameters for job" + std::to_string(job));
+
+        std::vector<u8> removalBytes = packets[3].bytes;
+        writeU32LE(removalBytes, 2, aid);
+        PacketView removal{};
+        consumed = 0;
+        Require(TryReadPacket(removalBytes.data(), static_cast<int>(removalBytes.size()), removal, consumed)
+            && consumed == static_cast<int>(removalBytes.size()) && router.Dispatch(fixture.mode, removal),
+            "production router rejected resource-backed job" + std::to_string(job) + " removal");
+        Require(fixture.world.GetSkillByAID(aid) == nullptr
+            && std::none_of(fixture.world.m_gameObjectList.begin(), fixture.world.m_gameObjectList.end(),
+                [aid](CGameObject* object) {
+                    const CSkill* skill = dynamic_cast<const CSkill*>(object);
+                    return skill != nullptr && skill->m_aid == aid;
+                }),
+            "job" + std::to_string(job) + " removal did not destroy its resource-backed skill unit");
+    }
 
     for (const auto& [textureCacheKey, previousTextureValue] : previousTextureValues) {
         const auto texture = g_texMgr.m_texTable.find(textureCacheKey.c_str());
@@ -1616,8 +1636,8 @@ void ReplayTrapModelResource(const std::string& path)
             texture->second = previousTextureValue;
         }
     }
-    std::cout << "Trap models parsed_and_assigned=" << models.size()
-        << " materials_loaded=" << materialNames.size() << " job143_packet_attached=1 removed=1\n";
+    std::cout << "Trap models packet_attached_removed=" << models.size()
+        << " materials_loaded=" << materialNames.size() << "\n";
 }
 
 void ReplayLandMineTriggerLifecycle(const std::string& path)

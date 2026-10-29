@@ -2677,3 +2677,7 @@ The 5F audit found the remaining routed inline gaps in effects462/463 (PE wave s
 
 Compared the `UNT_*` range in `Ref/eAthena_src_2011/map/skill.h` with the Ref/local CSkill unit behavior. The 43 eAthena-only IDs 202-244 are outside the 2008 client's handled range and take the Ref default path; the source/local loop-effect cases agree for known IDs 126-201. Added the complete ID/name list and default-path explanation to `MISMATCHES.md`. A mechanical enum slice check confirmed 43 entries from `UNT_EPICLESIS` through `UNT_EARTH_INSIGNIA`.
 
+## WP4.4 packet-driven trap model lifecycle - 2026-10-29
+
+Expanded the resource-backed replay from job143 to all ten mapped trap model jobs (143-145, 147-153). Each production `0x011F` entry packet attaches its parsed RSM to a `C3dActor`, and the replay verifies model name, frame3, animation speed, block/hide/animation flags, and packet-mapped position. A matching production `0x0120` removes each actor and skill unit. Existing fixture parsing loads all referenced BMP materials. The focused asset/replay CTests pass 2/2; full replay CTest passes 102/102.
+

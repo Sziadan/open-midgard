@@ -4290,3 +4290,5 @@ WP5F audit: effects462/463, 665, and 687/688 remain explicit unported routes bec
 
 WP4.8 unit IDs: enumerated all 43 eAthena third-job units 202-244 (`UNT_EPICLESIS` through `UNT_EARTH_INSIGNIA`) and recorded them as Ref default-path IDs in `MISMATCHES.md`. Ref and local CSkill loop-effect cases match for the client-known 126-201 range; no modern behavior was invented.
 
+WP4.4 trap models: packet replay now covers all ten model-backed jobs, including production 0x011F attach and 0x0120 cleanup. It checks ShowModel name, frame3, speed, render flags and position. Focused checks passed 2/2; replay CTest passed 102/102.
+

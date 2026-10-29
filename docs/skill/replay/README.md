@@ -40,7 +40,7 @@ The song unit fixtures cover jobs158–175 (Lullaby through Service for You) and
 
 `warp_unit_lifecycle.tsv` replays a job128 waiting Warp unit, applies a `0x01D7` base-look/job update to job129, steps both states through `CSkill::OnProcess` (loop effects317/316), then removes the unit. Sprite-change routing checks the skill-unit registry before it creates a runtime actor.
 
-`trap_reveal_lifecycle.tsv` exercises trap job143 with two `0x011F` entries (visible then hidden for a non-party creator), `0x01AC` reveal, and `0x0120` removal. It checks the runtime visibility changes and unit cleanup; model rendering remains resource-dependent.
+`trap_reveal_lifecycle.tsv` exercises trap job143 with two `0x011F` entries (visible then hidden for a non-party creator), `0x01AC` reveal, and `0x0120` removal. The resource-backed replay also uses the job143 entry as a template to exercise all ten model-backed trap jobs (143-145, 147-153), checking each `C3dActor` setup from parsed RSM/BMP assets and packet-driven cleanup.
 
 `land_mine_trigger_lifecycle.tsv` creates job147, dispatches the packetver23 `0x01DE` HT_LANDMINE damage notification (skill116), applies `0x01D7` to switch the unit to active job135, checks loop effect138, then removes it with `0x0120`.
 
