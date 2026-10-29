@@ -2186,3 +2186,7 @@ Compared PE's generic STR-only caller group, PE/primary-Ref Init mappings, exact
 ## WP5C effect136 SlowP — 2026-10-29
 
 Compared PE’s case136 shared `LABEL_99` caller, PE/primary-Ref Init mappings, exact executable string bytes and local route. It maps to `slowp.str` at VA `0x71AC14`; PE calls `ProcessEZ2STR(0,-80,0)` and discards its result. The local case likewise ignores completion and returns true. Existing lifecycle coverage checks the effect continues after missing STR. Added a registered source comparator; Release parity build and complete Release CTest pass294/294.
+
+## WP5C effect139 Sandman — 2026-10-29
+
+Compared PE's generic STR-only caller group, PE/primary-Ref Init mappings, exact executable bytes and local routing. Effect139 maps to `SandMan.str` at VA `0x71AE70`; PE calls shared `ProcessEZ2STR(0,-80,0)` and propagates completion. Local generic routing matches. Existing STR lifecycle coverage exercises missing, active, moving-master and exhausted states; added a registered source comparator. Release parity build and complete Release CTest pass295/295.

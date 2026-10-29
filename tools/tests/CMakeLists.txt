@@ -908,6 +908,8 @@ add_test(NAME effect135_ice_crash_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect135_ice_crash.py")
 add_test(NAME effect136_slowp_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect136_slowp.py")
+add_test(NAME effect139_sandman_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect139_sandman.py")
 add_test(NAME effect102_crash_earth_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect102_crash_earth.py")
 add_test(NAME effect103_weapon_perfection_source_check
@@ -1220,6 +1222,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect133_134_terminal_str.py
     check_effect135_ice_crash.py
     check_effect136_slowp.py
+    check_effect139_sandman.py
     check_effect102_crash_earth.py
     check_effect103_weapon_perfection.py
     check_effect106_blastmine.py

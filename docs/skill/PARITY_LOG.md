@@ -3826,3 +3826,7 @@ Added `check_effect135_ice_crash.py`, registered as `effect135_ice_crash_source_
 ## WP5C effect136 SlowP
 
 Added `check_effect136_slowp.py`, registered as `effect136_slowp_source_check`. PE case136 shares the `LABEL_99` continuation with 406/407; the label calls `ProcessEZ2STR(0,-80,0)` and discards its result. PE and primary Ref Init map to `slowp.str`; exact PE bytes verify VA `0x71AC14`. Local dispatch similarly ignores STR completion and returns true. The existing ignored-STR lifecycle group already tests effect136's outer frame advancement when STR is absent. Release parity build and full CTest pass294/294. No production behavior change.
+
+## WP5C effect139 Sandman
+
+Added `check_effect139_sandman.py`, registered as `effect139_sandman_source_check`. PE effect139 is in the generic STR-only group, jumps to `LABEL_424`, and propagates the result from `ProcessEZ2STR(0,-80,0)`. PE and primary Ref Init map to `SandMan.str`; exact PE bytes verify VA `0x71AE70`. Local dispatch and the `ProcessReferenceStrOnly` group match the helper offsets and result propagation. Existing lifecycle coverage exercises missing, active, moving-master and exhausted clip states. Release parity build and full CTest pass295/295. No production behavior change.
