@@ -4382,3 +4382,9 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - Bound each launch helper to `OnProcess` master IDs and texture setup. `HitDark` is shared by effects 180/184; `PotionPillar` serves effects 218/219/221 and is also called by effect 220 through `Potion_Berserk`. These mappings explain why direct launch count and unique master count differ.
 - The resulting 21 master IDs exactly equal `UsesReferenceCylinder`. No canonical PE cylinder caller is missing from the specialized route; the comparator also checks expected duplicate counts and texture initialization. Direct and focused CTest passed; no runtime route change was needed.
 
+## WP5 CEffectPrim Render2DCircle caller coverage audit - 2026-10-29
+
+- Expanded `tools/tests/check_prim2dcircle_render.py` to bind each of the five PE/Ref/local `PP_2DCIRCLE` callers to its master ID: Bash 16, Signum 40, TurnUndead 82, SonicBlow 121, and OverThrust 128.
+- Each PE caller initializes the cylinder texture; each local caller uses the source-selected screen-circle route and assigns its texture. The exact mapped caller set equals the complete `UsesReferenceScreenCircle` predicate.
+- Direct comparator and focused CTest passed. No runtime code change was needed.
+

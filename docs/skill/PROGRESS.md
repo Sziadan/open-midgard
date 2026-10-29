@@ -2737,3 +2737,7 @@ Expanded `check_prim3dparticle_render.py` to cover all 48 canonical PE particle 
 
 Expanded the cylinder renderer comparator to enumerate all 22 direct PE `PP_3DCYLINDER` launch sites across 17 helpers, with expected per-helper launch counts, texture setup, and `OnProcess` caller mapping. Shared routes account for the complete 21-ID `UsesReferenceCylinder` set: `HitDark` serves 180/184, and `PotionPillar` serves 218/219/221 plus 220 through `Potion_Berserk`. Direct and focused CTest pass; no runtime code change was needed.
 
+## WP5 CEffectPrim Render2DCircle caller audit - 2026-10-29
+
+Expanded the 2D circle comparator to map all five canonical PE/Ref/local callers to masters 16, 40, 82, 121, and 128. Caller texture setup and exact equality with `UsesReferenceScreenCircle` are source-checked. Focused check passes; no runtime code change was needed.
+

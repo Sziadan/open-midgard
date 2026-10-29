@@ -56,6 +56,35 @@ expected_masters = {16, 40, 82, 121, 128}
 actual_masters = {int(value) for value in re.findall(r"GetEffectType\(\)\s*==\s*(\d+)", LOCAL_PREDICATE)}
 check("local source-selected circle subset uses exactly the five current master-effect IDs",
       actual_masters == expected_masters and "m_type == PP_2DCIRCLE" in LOCAL_PREDICATE)
+
+pe_onprocess_sig = "unsigned __int8 __thiscall CRagEffect::OnProcess(CRagEffect *this)"
+pe_onprocess = body(PE_CALLERS, pe_onprocess_sig, PE_CALLERS.rindex(pe_onprocess_sig))
+pe_screen_circle_callers = (
+    (16, "Bash", "void", "void CRagEffect::ApplyBash()"),
+    (40, "Signum", "bool", "bool CRagEffect::ProcessSignum()"),
+    (82, "TurnUndead", "void", "void CRagEffect::SpawnTurnUndead()"),
+    (121, "SonicBlow", "void", "void CRagEffect::ApplySonicBlow()"),
+    (128, "OverThrust", "void", "void CRagEffect::ApplyOverThrust()"),
+)
+pe_screen_circle_ids = set()
+pe_screen_circle_count = 0
+for effect_id, method, return_type, local_signature in pe_screen_circle_callers:
+    signature = f"{return_type} __thiscall CRagEffect::{method}(CRagEffect *this)"
+    caller_body = body(PE_CALLERS, signature, PE_CALLERS.rindex(signature))
+    local_body = body(CURRENT, local_signature)
+    launch_count = len(re.findall(r"LaunchEffectPrim\(this,\s*PP_2DCIRCLE\b", caller_body))
+    check(f"canonical effect {effect_id} {method} maps to local caller with circle texture setup",
+          launch_count == 1
+          and f"case {effect_id}:" in pe_onprocess
+          and f"CRagEffect::{method}(this)" in pe_onprocess
+          and "GetTexture(" in caller_body
+          and "LaunchEffectPrim(PP_2DCIRCLE," in local_body
+          and "m_texture.push_back(" in local_body)
+    pe_screen_circle_ids.add(effect_id)
+    pe_screen_circle_count += launch_count
+check("all five canonical PE/Ref/local 2D-circle launchers map exactly to UsesReferenceScreenCircle",
+      pe_screen_circle_ids == expected_masters == actual_masters
+      and pe_screen_circle_count == 5)
 check("selected PP_2DCIRCLE instances use RenderReferenceScreenCircle and other masters keep the generic quad route",
       "if (UsesReferenceScreenCircle())" in LOCAL_RENDER
       and "RenderReferenceScreenCircle(*this);" in LOCAL_RENDER

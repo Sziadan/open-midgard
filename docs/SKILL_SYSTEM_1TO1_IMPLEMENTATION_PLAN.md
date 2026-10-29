@@ -836,3 +836,7 @@ Audited all 48 canonical PE launches of `PP_3DPARTICLE`, `PP_3DPARTICLEGRAVITY`,
 ## WP5 CEffectPrim checkpoint — Render3DCylinder caller audit (2026-10-29)
 
 Mapped all 22 direct PE `PP_3DCYLINDER` launches across 17 helper methods to their `OnProcess` master IDs and texture setup. Shared callers explain the full specialized predicate: effects 180/184 call `HitDark`; effects 218/219/221 call `PotionPillar`; effect 220 calls `PotionPillar` through `Potion_Berserk`. The complete 21-ID master set matches `UsesReferenceCylinder`. `tools/tests/check_prim3dcylinder_render.py` now enforces this mapping and per-helper launch counts. Direct and focused checks pass; no runtime route change was required.
+
+## WP5 CEffectPrim checkpoint — Render2DCircle caller audit (2026-10-29)
+
+Mapped the five canonical `PP_2DCIRCLE` PE/Ref/local launchers to effects Bash 16, Signum 40, TurnUndead 82, SonicBlow 121, and OverThrust 128. Each caller has source texture setup and the master ID set exactly matches `UsesReferenceScreenCircle`. Expanded `tools/tests/check_prim2dcircle_render.py` to enforce the caller-to-master map. Focused checks pass; no runtime code change was needed.
