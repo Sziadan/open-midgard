@@ -2317,3 +2317,8 @@ Added `check_hitdark_caller.py` and registered its CTest. It compares the comple
 ## WP5 effect159 TopRank resource-byte check — 2026-10-29
 
 Strengthened `check_top_rank.py` to resolve the executable bytes at VA `0x71B804` and require the exact `effect\LockOn128.tga` string. Registered the comparator in CTest and bounded the local function extraction to the actual `SpawnTopRank` body so its no-RNG assertion does not inspect following functions. The focused check, Release parity build, and full CTest passed (324/324). No production behavior change.
+
+
+## WP5C effects121/122 SonicBlow source comparison — 2026-10-29
+
+Added `check_effect121_122_sonic_blow.py` and registered it in CTest. It compares both complete PE and primary-Ref helper bodies, verifies separate effect121/122 callers and local legacy routes, and pins the exact StoneCurse/alpha-center and assassin-SonicBlow/magic-red resource bytes at `0x71BB9C`, `0x7192FC`, `0x71BBD0`, and `0x71BBB8`. Existing lifecycle assertions cover projection, audio, ring/cylinder payloads, RNG order, motion and frame behavior. Release parity build succeeded; full CTest passed325/325. No production change.

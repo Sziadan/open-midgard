@@ -3955,3 +3955,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5 effect159 TopRank resource bytes and CTest coverage — 2026-10-29
 
 `check_top_rank.py` now resolves `aEffectLockon12` from executable VA `0x71B804` and compares its raw bytes to `effect\LockOn128.tga`; the prior source-declaration check remains. Registered the comparator in CTest. Tightened local `SpawnTopRank` body extraction so the no-RNG assertion applies only to that function. The focused comparator passes; Release parity build succeeded; full CTest passed324/324. No production change.
+
+
+## WP5C effects121/122 SonicBlow source comparison — 2026-10-29
+
+`check_effect121_122_sonic_blow.py` compares complete PE/primary-Ref `SonicBlow` and `SonicBlowHit` helper bodies; checks canonical cases121/122 and local caller, dispatch, and declarations; and validates exact executable bytes for `effect\EF_StoneCurse.wav`, `effect\alpha_center.tga`, `effect\assasin_sonicblow.wav`, and `effect\magic_red.tga` at VAs `0x71BB9C`, `0x7192FC`, `0x71BBD0`, and `0x71BBB8`. Existing lifecycle checks cover screen projection and circle output, hit cylinder and seeded motion, audio ordering, three RNG draws, and nonrepetition. Release parity build succeeded; full CTest passed325/325. No production change.
