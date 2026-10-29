@@ -2234,3 +2234,7 @@ Compared PE `OnProcess3` case `0x260` (`HighPriest.exe.c:418712–418728`) and p
 ## WP10.4 effect609 Cook Fail — 2026-10-29
 
 Compared PE case `0x261` (`HighPriest.exe.c:418729–418740`) and primary Ref (`Ref/RagEffect.cpp:12090–12101`): state50 copies the master position, plays `caramel_die.wav` at listener-relative X/Z and literal Y0 with 250/40/1.0, then shares the state608 STR continuation and propagates completion. PE and Ref Init map effect609 to `cook_fail.str`; executable bytes at `0x71998C` and `0x71A814` confirm the cue and STR names. Local catalog, STR table, tier-3 helper and dispatcher match; the source `m_pos` position write maps to local `CRagEffect::m_effectPos`, so production code was unchanged. Added a registered comparator and state49/50/51 lifecycle assertions. Release parity build passed; full CTest passed306/306.
+
+## WP10.4 effect646 CP949 STR — 2026-10-29
+
+Compared PE and primary Ref OnProcess3's grouped `0x286` case with the shared `$L146219` tail: effect646 calls `ProcessEZ2STR(0,-80,0)` and returns true even when the STR reports completion. The local case already follows this ignored-result contract. PE and Ref Init use the bytes at VA `0x71A89C`, which resolve to CP949 filename bytes `C6 AE B7 A2 C5 B7 2E 73 74 72`; local catalog and STR table match. Added `check_effect646_str_ignored_result.py` and a lifecycle check that the exhausted STR step returns false for the caller to ignore. No production behavior change. Release parity build and full CTest pass307/307.
