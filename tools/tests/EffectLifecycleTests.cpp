@@ -150,7 +150,7 @@ struct CRenderObject : CGameObject {
     float m_roty = 0;
     int m_BodyLight = 0;
     u16 m_BodyTime = 0;
-    u8 m_BodyTime2 = 0, m_BodySin3 = 0, m_BodySin4 = 0, m_BodySin5 = 0;
+    u8 m_BodyTime2 = 0, m_BodyTime3 = 0, m_BodySin3 = 0, m_BodySin4 = 0, m_BodySin5 = 0;
     int forceAnimationCalls=0,forceAct=0,forceMot=0,forceMaxMot=0,forceFinishAct=0,forceFinishMot=0;
     int forceIsAnim=0,forceIsLoop=0;u32 forceEndTick=0;
     char m_BeZero = 0;
@@ -695,6 +695,9 @@ struct CRagEffect : CGameObject {
     void SpawnPeong(const char*,int);
     bool ProcessBeginAsuraEffect();
     void SpawnBeginAsura(int,bool);
+    void ApplyBodyLight442();
+    void ApplyBodyLight446();
+    void ApplyBodyLight449();
     void ApplyEffectTexture(const char*, int);
     bool ProcessEffect273();
     bool ProcessEffect440();
@@ -13690,6 +13693,53 @@ int main()
             "effect411 post-trigger state does not repeat emission, resources, RNG or audio");
         peong.ClearPrims();g_world.UpdateGameObjects();
         waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        const int oldRandomDraws=rngDraws;
+        waveCalls.clear();g_texMgr.requests.clear();
+        CRenderObject master;
+        CRagEffect light442;light442.m_type=442;light442.m_master=&master;light442.m_stateCnt=258;
+        light442.ApplyBodyLight442();
+        check(master.m_BodyLight==0x8000&&master.m_BodyTime3==2,
+            "effect442 sets its one-shot body-light bit and narrows its state timestamp");
+        master.m_BodyTime3=77;light442.m_stateCnt=300;light442.ApplyBodyLight442();
+        check(master.m_BodyLight==0x8000&&master.m_BodyTime3==77,
+            "effect442 preserves an existing body-light bit and timestamp");
+
+        master.m_BodyLight=0;master.m_BodyTime=9;master.m_BodyTime2=7;light442.m_stateCnt=24;
+        CRagEffect light446;light446.m_type=446;light446.m_master=&master;light446.m_stateCnt=24;
+        light446.ApplyBodyLight446();
+        check(master.m_BodyLight==0x20040&&master.m_BodyTime2==24&&master.m_BodyTime==35,
+            "effect446 state24 independently sets both light bits and their distinct timestamps");
+        master.m_BodyTime=91;master.m_BodyTime2=92;light446.ApplyBodyLight446();
+        check(master.m_BodyLight==0x20040&&master.m_BodyTime2==92&&master.m_BodyTime==91,
+            "effect446 preserves timestamps when both bits are already set");
+        master.m_BodyLight=0x40;master.m_BodyTime=55;master.m_BodyTime2=56;light446.m_stateCnt=25;
+        light446.ApplyBodyLight446();
+        check(master.m_BodyLight==0x20040&&master.m_BodyTime2==25&&master.m_BodyTime==55,
+            "effect446 state25 sets its long bit while its short-bit gate remains closed");
+
+        master.m_BodyLight=0;master.m_BodyTime2=61;
+        CRagEffect light449;light449.m_type=449;light449.m_master=&master;light449.m_stateCnt=50;
+        light449.ApplyBodyLight449();
+        check(master.m_BodyLight==0x4000&&master.m_BodyTime2==50,
+            "effect449 state50 sets its light bit and timestamp");
+        master.m_BodyLight=0;master.m_BodyTime2=62;light449.m_stateCnt=51;
+        light449.ApplyBodyLight449();
+        check(master.m_BodyLight==0x4000&&master.m_BodyTime2==62,
+            "effect449 state51 sets its bit without updating the expired timestamp");
+        master.m_BodyLight=0x4000;master.m_BodyTime2=63;light449.m_stateCnt=50;
+        light449.ApplyBodyLight449();
+        check(master.m_BodyLight==0x4000&&master.m_BodyTime2==63,
+            "effect449 preserves an existing bit and timestamp");
+
+        CRagEffect missing;missing.m_type=449;missing.m_master=nullptr;missing.m_stateCnt=1;
+        const int noMasterDraws=rngDraws;
+        missing.ApplyBodyLight442();missing.ApplyBodyLight446();missing.ApplyBodyLight449();
+        check(rngDraws==noMasterDraws&&waveCalls.empty()&&g_texMgr.requests.empty()
+            &&missing.m_primList.empty(),"body-light helpers with no master emit no audio, resource, primitive or RNG work");
+        check(rngDraws==oldRandomDraws,"body-light helper lifecycle consumes no RNG");
+        waveCalls.clear();g_texMgr.requests.clear();
     }
     {
         const int oldRandomDraws=rngDraws;
