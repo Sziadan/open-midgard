@@ -18,6 +18,12 @@ def body(source: str, signature: str, end: str) -> str:
 
 current = body(actor, "bool CGameActor::ProcessStatusMsgEffectMessage(int msg)", "void CGameActor::SendMsg(")
 reference = body(ref_actor, "case 58:", "case 101:")
+sendmsg_start = actor.find("void CGameActor::SendMsg(")
+if sendmsg_start < 0:
+    raise AssertionError("missing CGameActor::SendMsg production receiver")
+sendmsg = actor[sendmsg_start:]
+local_resurrection = body(sendmsg, "    case 98:", "    case 88: {")
+ref_resurrection = body(ref_actor, "    case 98:", "    case 99:")
 expected_cases = [58,59,62,63,67,68,69,70,71,72,73,74,75,76]
 for case in expected_cases:
     if not re.search(rf"\bcase\s+{case}\s*:", current):
@@ -38,6 +44,20 @@ if "SetState(10)" not in current or "SetState(m_oldstateId)" not in current:
 if "case 107:" not in current or "case 107:" not in reference:
     raise AssertionError("ice release alias 107 is missing")
 
+for token in ("m_willBeDead = 0", "m_vanishTime = 0", "m_isLieOnGround = 0",
+              "m_isMotionFinished = 0", "m_isMotionFreezed = 0", "m_attackMotion = -1.0f",
+              "m_shouldAddPickInfo = 1", "SetState(0)", "InvalidateBillboard()"):
+    if token not in local_resurrection:
+        raise AssertionError(f"local resurrection receiver case98 missing {token}")
+for token in ("Trace(aAmResurrection)", "m_stateId = 0", "m_isLieOnGround = 0",
+              "m_shouldAddPickInfo = 1", "m_waitingUseItemAck = 0", "SetState(this, 0)"):
+    if token not in ref_resurrection:
+        raise AssertionError(f"Ref resurrection receiver case98 missing {token}")
+if "m_waitingUseItemAck" in local_resurrection:
+    raise AssertionError("local packet layer, not actor message case98, owns waiting-item-ack reset")
+if "m_willBeDead = 0" not in local_resurrection or "m_attackMotion = -1.0f" not in local_resurrection:
+    raise AssertionError("local resurrection case98 extension resets are undocumented")
+
 # The older executable reconstruction models these sprites as CBlowEffect and
 # CNumEffect rather than the newer CMsgEffect. Their existence provides a
 # lifecycle provenance check only; it does not establish rendered parity.
@@ -45,4 +65,4 @@ for signature in ("CBlowEffect::SendMsg", "CNumEffect::SendMsg"):
     if signature not in ref_npc:
         raise AssertionError(f"Ref/Npc.cpp lacks legacy effect handler {signature}")
 
-print("Status lifecycle source comparison passed (object lifecycle only; rendered visual parity not established).")
+print("Status and resurrection message98 receiver comparison passed (actor lifecycle only; rendered visual parity not established).")

@@ -23,14 +23,24 @@ struct CGameActor : CGameObject {
     u32 m_gid = 0;
     vector3d m_pos;
     int m_oldstateId = 0, m_stateId = 0;
+    int m_willBeDead = 0, m_vanishTime = 0;
+    u8 m_isLieOnGround = 0, m_isMotionFinished = 0, m_isMotionFreezed = 0, m_shouldAddPickInfo = 0;
+    float m_attackMotion = 0;
     CMsgEffect *m_iceEffect = nullptr, *m_curseEffect = nullptr, *m_sleepEffect = nullptr;
     CMsgEffect *m_stunEffect = nullptr, *m_silenceEffect = nullptr, *m_angelusEffect = nullptr;
     std::list<CMsgEffect*> m_msgEffectList;
-    int stateChanges = 0;
+    int stateChanges = 0, billboardInvalidations = 0;
     void SetState(int state) { m_stateId = state; ++stateChanges; }
+    void InvalidateBillboard() { ++billboardInvalidations; }
+    void ApplyResurrectionReceiverCase();
+    void SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override {
+        if (msg == 98) { ApplyResurrectionReceiverCase(); return; }
+        CGameObject::SendMsg(sender, msg, par1, par2, par3);
+    }
     CMsgEffect* SpawnMsgSprite(int processType, const char* spritePath, const char* actPath, int action, float zoom);
     bool ProcessStatusMsgEffectMessage(int msg);
 };
+struct CPc : CGameActor {};
 struct CMsgEffect : CGameObject {
     int m_msgEffectType = 0, m_digit = 0, m_numberValue = 0, m_sprShift = 0;
     int m_spriteActionIndex = 0, m_spriteMotionIndex = 0;
@@ -130,6 +140,33 @@ int main() {
     actor.ProcessStatusMsgEffectMessage(70);
     Check(actor.stateChanges == oldStateChanges, "sleep release without active effect does not change state");
     Check(actor.ProcessStatusMsgEffectMessage(999) == false, "unhandled message falls through");
+
+    CGameActor remote;
+    remote.m_willBeDead = 1;
+    remote.m_vanishTime = 77;
+    remote.m_isLieOnGround = 1;
+    remote.m_isMotionFinished = 1;
+    remote.m_isMotionFreezed = 1;
+    remote.m_attackMotion = 4.5f;
+    remote.m_shouldAddPickInfo = 0;
+    remote.m_stateId = 9;
+    remote.SendMsg(&remote, 98, 0, 0, 0);
+    Check(remote.m_willBeDead == 0 && remote.m_vanishTime == 0 && remote.m_isLieOnGround == 0,
+        "remote resurrection clears death, vanish, and lie-on-ground state");
+    Check(remote.m_isMotionFinished == 0 && remote.m_isMotionFreezed == 0 && remote.m_attackMotion == -1.0f,
+        "remote resurrection clears motion flags and attack motion");
+    Check(remote.m_shouldAddPickInfo == 1 && remote.m_stateId == 0 && remote.stateChanges == 1,
+        "remote resurrection enables pick info and enters actor state zero");
+    Check(remote.billboardInvalidations == 0, "remote non-PC resurrection does not invalidate a PC billboard");
+
+    CPc local;
+    local.m_willBeDead = 1;
+    local.m_vanishTime = 123;
+    local.m_stateId = 5;
+    local.SendMsg(&local, 98, 0, 0, 0);
+    Check(local.m_willBeDead == 0 && local.m_vanishTime == 0 && local.m_stateId == 0
+        && local.stateChanges == 1 && local.billboardInvalidations == 1,
+        "local PC resurrection applies receiver reset and invalidates billboard once");
     for (auto* effect : actor.m_msgEffectList) delete effect;
     if (failures) return 1;
     std::puts("Message effect status lifecycle checks passed");

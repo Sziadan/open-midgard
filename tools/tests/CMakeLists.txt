@@ -1830,8 +1830,20 @@ extract_body(msg_owner_dispatch "${msg_effect_source}"
     "bool CMsgEffect::ProcessOwnerMessage(" "void CMsgEffect::SendMsg(")
 extract_body(msg_effect_send "${msg_effect_source}"
     "void CMsgEffect::SendMsg(" "void CMsgEffect::Render(")
+string(FIND "${msg_effect_actor_source}" "void CGameActor::SendMsg(" resurrection_sendmsg_start)
+string(LENGTH "${msg_effect_actor_source}" msg_effect_actor_source_length)
+math(EXPR resurrection_sendmsg_length "${msg_effect_actor_source_length} - ${resurrection_sendmsg_start}")
+string(SUBSTRING "${msg_effect_actor_source}" ${resurrection_sendmsg_start} ${resurrection_sendmsg_length} resurrection_sendmsg_source)
+string(FIND "${resurrection_sendmsg_source}" "    case 98:" resurrection_receiver_start)
+string(FIND "${resurrection_sendmsg_source}" "    case 88: {" resurrection_receiver_end)
+if(resurrection_receiver_start LESS 0 OR resurrection_receiver_end LESS resurrection_receiver_start)
+    message(FATAL_ERROR "Could not isolate CGameActor::SendMsg resurrection case 98")
+endif()
+math(EXPR resurrection_receiver_length "${resurrection_receiver_end} - ${resurrection_receiver_start}")
+string(SUBSTRING "${resurrection_sendmsg_source}" ${resurrection_receiver_start} ${resurrection_receiver_length} resurrection_receiver_case)
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/MsgEffectStateLifecycleBodies.inc"
-    "${msg_status_spawn}\n${msg_status_release}\n${msg_status_dispatch}\n${msg_owner_dispatch}\n${msg_effect_send}")
+    "${msg_status_spawn}\n${msg_status_release}\n${msg_status_dispatch}\n${msg_owner_dispatch}\n${msg_effect_send}\n"
+    "void CGameActor::ApplyResurrectionReceiverCase() { switch (98) {\n${resurrection_receiver_case}\ndefault: break; } }\n")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/world/GameActor.cpp ../../src/world/MsgEffect.cpp)
 add_executable(msg_effect_state_lifecycle_checks MsgEffectStateLifecycleTests.cpp)
