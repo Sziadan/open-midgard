@@ -941,6 +941,8 @@ add_test(NAME effect646_str_ignored_result_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect646_str_ignored_result.py")
 add_test(NAME effect649_str_ignored_result_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect649_str_ignored_result.py")
+add_test(NAME effect670_str_ignored_result_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect670_str_ignored_result.py")
 add_test(NAME effect102_crash_earth_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect102_crash_earth.py")
 add_test(NAME effect103_weapon_perfection_source_check

@@ -3882,3 +3882,7 @@ Added `check_effect646_str_ignored_result.py`, registered as `effect646_str_igno
 ## WP10.4 effect649 CP949 STR
 
 Added `check_effect649_str_ignored_result.py`, registered as `effect649_str_ignored_result_source_check`. PE and primary Ref OnProcess3 group effect649 (`0x289`) with `$L146219`, which calls `ProcessEZ2STR(0,-80,0)` and unconditionally returns true; the local generated case also ignores the result. PE and Ref Init map effect649 to `byte_71A88C`; bytes at VA `0x71A88C` are `BA D2 BD BA BE C6 C0 CC 2E 73 74 72`, matching local CP949 catalog/STR entries. Lifecycle coverage exercises false STR completion. Release parity build and full CTest pass308/308; no production behavior change.
+
+## WP10.4 effect670 Dfear STR
+
+Added `check_effect670_str_ignored_result.py`, registered as `effect670_str_ignored_result_source_check`. PE and primary Ref group effect670 (`0x29E`) into `$L146219`, which calls `ProcessEZ2STR(0,-80,0)` and returns true without propagating completion; local dispatch matches. PE/Ref Init group 668/670 on `aDfearStr`; exact bytes at VA `0x71A7F8` equal `dfear.str`, and the local catalog/STR entries agree. Lifecycle coverage exercises false STR completion. Release parity build and full CTest pass309/309; no production behavior change.

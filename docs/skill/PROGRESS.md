@@ -2242,3 +2242,7 @@ Compared PE and primary Ref OnProcess3's grouped `0x286` case with the shared `$
 ## WP10.4 effect649 CP949 STR — 2026-10-29
 
 Compared PE and primary Ref OnProcess3's grouped `0x289` case with the `$L146219` tail: effect649 calls `ProcessEZ2STR(0,-80,0)` and returns true regardless of STR completion. Local dispatch matches. PE and Ref Init map effect649 to `byte_71A88C`; exact PE bytes at VA `0x71A88C` are `BA D2 BD BA BE C6 C0 CC 2E 73 74 72`, matching the local catalog and STR table. Added `check_effect649_str_ignored_result.py` and lifecycle coverage confirming false STR completion is available for the caller to ignore. No production behavior change. Release parity build and full CTest pass308/308.
+
+## WP10.4 effect670 Dfear STR — 2026-10-29
+
+Compared PE and primary Ref OnProcess3's grouped `0x29E` case with `$L146219`: effect670 calls `ProcessEZ2STR(0,-80,0)` and unconditionally returns true. The local explicit case matches. Init groups effects668/670 on `aDfearStr`; PE bytes at VA `0x71A7F8` resolve to `dfear.str`, matching the local catalog/STR row. Added a source comparator and lifecycle coverage confirming false STR completion can be ignored. No production behavior change. Release parity build and full CTest pass309/309.
