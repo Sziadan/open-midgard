@@ -685,6 +685,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect599();
     bool ProcessEffect602();
     bool ProcessEffectTextureSet();
+    bool ProcessTarotEffect();
     void ApplyEffectTexture(const char*, int);
     bool ProcessEffect273();
     bool ProcessEffect440();
@@ -13581,6 +13582,55 @@ int main()
             refreshed=refreshed&&prim->m_pos.x==40&&prim->m_pos.y==50&&prim->m_pos.z==60;
         check(refreshed,"effect394 later frames refresh cached/master origin without relaunching or consuming RNG");
         sphere.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject listener;listener.m_pos={10,40,20};
+        CRenderObject master;master.m_pos={100,200,300};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        const int oldRandomDraws=rngDraws;
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.assign(8,0);rngCursor=0;
+        CRagEffect success;success.m_type=610;success.m_duration=600;success.m_master=&master;
+        check(success.ProcessTarotEffect(),"effect610 tarot handler is recognized");
+        bool successPrim=success.m_primList.size()==1;
+        CEffectPrim* successTexture=success.m_primList.empty()?nullptr:success.m_primList.front();
+        successPrim=successPrim&&successTexture->m_type==PP_EFFECTTEXTURE&&successTexture->m_duration==600
+            &&successTexture->m_renderFlag==5&&successTexture->m_pos.x==100&&successTexture->m_pos.y==200
+            &&successTexture->m_pos.z==300&&successTexture->m_texture.size()==1
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\success.bmp"
+            &&successTexture->m_gi[0].distance==8&&successTexture->m_gi[0].arcBaselineY==170
+            &&successTexture->m_gi[0].flag[2]==3&&successTexture->m_gi[0].height[10]==2
+            &&successTexture->m_gi[0].fullDisplayAngle==155&&successTexture->m_gi[0].flag[4]==3;
+        const bool successWave=waveCalls.size()==1&&waveCalls[0].name=="_heal_effect.wav"
+            &&waveCalls[0].x==90&&waveCalls[0].y==0&&waveCalls[0].z==280
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1.0f;
+        check(successPrim&&successWave&&rngDraws==oldRandomDraws+1,
+            "effect610 plays source heal cue at listener-relative position before applying selector3 success texture");
+        success.ClearPrims();g_world.UpdateGameObjects();
+
+        waveCalls.clear();g_texMgr.requests.clear();
+        CRagEffect failed;failed.m_type=611;failed.m_duration=600;failed.m_cachedPos={4,50,8};
+        check(failed.ProcessTarotEffect(),"effect611 tarot handler is recognized");
+        const bool failedWave=waveCalls.size()==1&&waveCalls[0].name=="caramel_die.wav"
+            &&waveCalls[0].x==-6&&waveCalls[0].y==0&&waveCalls[0].z==-12;
+        bool failedPrim=failed.m_primList.size()==1;
+        CEffectPrim* failedTexture=failed.m_primList.empty()?nullptr:failed.m_primList.front();
+        failedPrim=failedPrim&&failedTexture->m_pos.x==4&&failedTexture->m_pos.y==50&&failedTexture->m_pos.z==8
+            &&failedTexture->m_gi[0].arcBaselineY==20&&failedTexture->m_gi[0].flag[4]==3
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\failed.bmp";
+        check(failedWave&&failedPrim,"effect611 uses cached origin without master and applies selector3 failed texture");
+
+        master.m_pos={110,210,310};failed.m_master=&master;failed.m_stateCnt=1;
+        const int callsAtLater=static_cast<int>(waveCalls.size());
+        const int randomAtLater=rngDraws;
+        const size_t texturesAtLater=g_texMgr.requests.size();
+        failed.ProcessTarotEffect();
+        check(waveCalls.size()==static_cast<size_t>(callsAtLater)&&rngDraws==randomAtLater
+            &&g_texMgr.requests.size()==texturesAtLater&&failed.m_primList.size()==1
+            &&failed.m_effectPos.x==110&&failed.m_effectPos.y==210&&failed.m_effectPos.z==310
+            &&failedTexture->m_pos.x==110&&failedTexture->m_pos.y==210&&failedTexture->m_pos.z==310,
+            "effects610/611 later frames update texture origin without replaying audio, reloading texture, or drawing RNG");
+        failed.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
