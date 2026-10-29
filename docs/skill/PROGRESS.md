@@ -2861,3 +2861,8 @@ Added and registered `tools/tests/check_effect16_bash.py`. Canonical PE `Bash` a
 ## WP5 CRagEffect MagnumBreak effect17 source checkpoint - 2026-10-29
 
 Added and registered `tools/tests/check_effect17_magnum_break.py`. Canonical PE `MagnumBreak` and primary Ref bodies normalize identically; PE case17 calls the helper, and local case17 enters `ProcessEffectFrameLegacy` and calls `ApplyMagnumBreak`. The comparator verifies the state-zero gate, wave-before-emission order, ring/sphere/ring primitive sequence, separate parent and fixed durations, exact yellow-ring texture spelling, recovered CP949 sphere texture sequence, and no RNG calls. Existing lifecycle assertions cover source paths, stored-origin audio, primitive profiles, texture order, nonzero suppression and update lifetimes. Focused CTest and full Release parity CTest passed 409/409. No runtime behavior changed.
+
+
+## WP5 CRagEffect Steal effect18 source checkpoint - 2026-10-29
+
+Added and registered `tools/tests/check_effect18_steal.py`. Canonical PE `Steal` and primary Ref bodies normalize identically; PE case18 calls the helper, and local case18 enters `ProcessEffectFrameLegacy` and calls `SpawnSteal`. The comparator checks frame-zero wave before the ten-particle burst, six per-particle draws in source order, distinct initial tilt versus Y-only motion matrix, gravity/speed/size profile, particle7 sprite/action resources and segment setup. Existing lifecycle assertions cover exact wave coordinates, all 60 draws, primitive payload, gravity integration/bounce, parent origin, nonzero suppression and resource cleanup. Focused CTest and full Release parity CTest passed 410/410. No runtime behavior changed.
