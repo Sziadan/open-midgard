@@ -167,4 +167,18 @@ for token in (
     if token not in LIFECYCLE:
         raise AssertionError(f"effects613-615 lifecycle assertion missing: {token}")
 
+effect539_fixture = re.search(r"CRagEffect effect;effect\.m_type=539;[\s\S]*?effect\.ClearPrims\(\);g_world\.UpdateGameObjects\(\);", LIFECYCLE)
+if effect539_fixture is None or "effect.ProcessThrowItemEffect()" not in effect539_fixture.group(0):
+    raise AssertionError("effect539 delayed-pair lifecycle fixture does not invoke the production dispatcher")
+for state in ("m_stateCnt=0", "m_stateCnt=5", "m_stateCnt=10", "m_stateCnt=11"):
+    if state not in effect539_fixture.group(0):
+        raise AssertionError(f"effect539 lifecycle fixture is missing checkpoint {state}")
+for token in (
+    "effect539 state5 launches only the first PE texture",
+    "effect539 state10 appends the second PE texture in order",
+    "effect539 state11 repositions both items without duplicate launches",
+):
+    if token not in effect539_fixture.group(0):
+        raise AssertionError(f"effect539 lifecycle assertion missing: {token}")
+
 print("effects539/541/600/613/614/615/616 ThrowItem parity passed: PE/Ref callers, local variants and launch frames, exact textures")

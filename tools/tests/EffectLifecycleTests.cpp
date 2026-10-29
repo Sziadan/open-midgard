@@ -14552,6 +14552,62 @@ int main()
         }
         g_texMgr.requests.clear();
     }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        CRagEffect effect;effect.m_type=539;effect.m_duration=73;effect.m_master=&master;
+        effect.m_deltaPos={106,230,308};
+        const std::string firstTexture="\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC8\xAD\xBF\xB0\xBA\xB4.bmp";
+        const std::string secondTexture="\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBF\xB0\xBB\xEA\xBA\xB4.bmp";
+        g_texMgr.requests.clear();waveCalls.clear();const int draws=rngDraws;
+        effect.m_stateCnt=0;check(effect.ProcessThrowItemEffect(),"effect539 production dispatcher accepts paired ThrowItem type");
+        check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&effect.m_effectPos.x==100
+            &&effect.m_effectPos.y==200&&effect.m_effectPos.z==300&&rngDraws==draws&&waveCalls.empty(),
+            "effect539 state0 refreshes origin without launching either delayed item");
+        effect.m_stateCnt=5;effect.ProcessThrowItemEffect();
+        CEffectPrim* first=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&first&&first->m_type==static_cast<EFFECTPRIMID>(kPrimTypeThrowItem)
+            &&first->m_renderFlag==5&&first->m_duration==73&&first->m_texture.size()==1
+            &&g_texMgr.requests==std::vector<std::string>({firstTexture})
+            &&first->m_pos.x==100&&first->m_pos.y==200&&first->m_pos.z==300
+            &&first->m_gi[0].flag[2]==9&&first->m_gi[0].flag[3]==4
+            &&rngDraws==draws&&waveCalls.empty(),
+            "effect539 state5 launches only the first PE texture with variant10 selector flags");
+        if(first) {
+            const EffectGi& gi=first->m_gi[0];
+            check(gi.life==1&&gi.process==0&&gi.maxHeight==10.0f&&gi.distance==3.0f
+                &&std::fabs(gi.height[1]-0.4f)<0.00001f&&std::fabs(gi.height[2]-1.2f)<0.00001f
+                &&gi.alphaB==255&&gi.arcBaselineY==192.0f&&gi.fullDisplayAngle==0&&gi.flag[1]==26,
+                "effect539 variant10 preserves its exact delayed arc trajectory");
+        } else {
+            check(false,"effect539 variant10 preserves its exact delayed arc trajectory");
+        }
+        effect.m_stateCnt=10;effect.ProcessThrowItemEffect();
+        CEffectPrim* second=effect.m_primList.size()>1?*std::next(effect.m_primList.begin()):nullptr;
+        check(effect.m_primList.size()==2&&first&&second&&first->m_texture.size()==1&&second->m_texture.size()==1
+            &&g_texMgr.requests==std::vector<std::string>({firstTexture,secondTexture})
+            &&first->m_pos.x==100&&first->m_pos.y==200&&first->m_pos.z==300
+            &&second->m_pos.x==100&&second->m_pos.y==200&&second->m_pos.z==300
+            &&second->m_gi[0].flag[2]==9&&second->m_gi[0].flag[3]==4
+            &&rngDraws==draws&&waveCalls.empty(),
+            "effect539 state10 appends the second PE texture in order with variant11 selector flags");
+        if(second) {
+            const EffectGi& gi=second->m_gi[0];
+            check(gi.life==1&&gi.process==0&&gi.maxHeight==10.0f&&gi.distance==3.0f
+                &&std::fabs(gi.height[1]-0.4f)<0.00001f&&std::fabs(gi.height[2]-1.2f)<0.00001f
+                &&gi.alphaB==255&&gi.arcBaselineY==192.0f&&gi.fullDisplayAngle==0&&gi.flag[1]==26,
+                "effect539 variant11 preserves its exact delayed arc trajectory");
+        } else {
+            check(false,"effect539 variant11 preserves its exact delayed arc trajectory");
+        }
+        master.m_pos={410,520,630};effect.m_deltaPos={416,550,638};effect.m_stateCnt=11;
+        const size_t requests=g_texMgr.requests.size();effect.ProcessThrowItemEffect();
+        check(effect.m_primList.size()==2&&first&&second
+            &&first->m_pos.x==410&&first->m_pos.y==520&&first->m_pos.z==630
+            &&second->m_pos.x==410&&second->m_pos.y==520&&second->m_pos.z==630
+            &&g_texMgr.requests.size()==requests&&rngDraws==draws&&waveCalls.empty(),
+            "effect539 state11 repositions both items without duplicate launches or texture requests");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();
+    }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
 }
