@@ -2607,3 +2607,7 @@ PE and primary Ref OnProcess case `0x136` call `PARTICLE_UP` exactly 20 times. E
 ## WP5F effect617 MakeBlur2 source comparison — 2026-10-29
 
 Added and registered `check_effect617_make_blur2.py`. PE and secondary Ref helper bodies match after whitespace normalization; the comparator pins the OnProcess3 caller and local route, fixed effect/master tint `(155,155,255)`, state9998 reset and every-20-state CBlurPC snapshot insertion. The existing local `AddBlurSnapshot` path is checked for copied actor, color message and world-list insertion. No lifecycle fixture was added for CBlurPC construction. Full Release CTest passed 370/370.
+
+## WP5F effect617 comparator audit correction — 2026-10-29
+
+The prior checkpoint duplicated existing `tools/tests/check_blur_callers.py`, which already compares the PE/Ref MakeBlur2 helper, effect617 caller and local cadence/snapshot path. Removed the redundant comparator and CTest registration. The canonical blur comparator remains registered; the suite count is 369 tests. No production change.
