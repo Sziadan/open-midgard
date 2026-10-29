@@ -3082,3 +3082,7 @@ Added a standalone harness compiling production ResolveSkillPacketActor and Hand
 ## WP5 PokJuk_Sound lifecycle — effect301 — 2026-10-29
 
 Extracted the inline OnProcess2 effect301 behavior into ProcessPokJukSound301 without changing its dispatch order. The lifecycle fixture covers states299/300/301/2300/2301, exact PE CP949 wave bytes and player-relative playback, missing mode/world/player guards, and no RNG. The source comparator now verifies the handler delegates to the tested helper, while preserving the PE/primary-Ref helper comparison and exact resource bytes at VA 0x71C254. Focused lifecycle passes3225 checks; Release app build succeeds; full CTest passes430/430 and both static audits pass.
+
+## WP7 Recovery and Resurrection packet lifecycles — opcodes 0x013D/0x0148 — 2026-10-29
+
+Added a standalone harness for the production HandleRecovery and HandleActorResurrection bodies plus their status/effect/actor lookup helpers. Recovery covers HP/SP clamping, selected-character fallback, number/color/range, effects331/332, malformed/zero inputs, and failed effect launches. Resurrection covers remote/self actor lookup, message98, local quest/death/item-ack flags, zero/missing AIDs, and malformed input. The comparator confirms PE/Ref method bodies match and records local divergences: zero-amount and unknown-status behavior, selected-character fallback, extra resurrection guards/item-ack reset, and local actor resolution. Focused checks pass2/2; full Release parity CTest passes432/432 and both static audits pass.

@@ -53,6 +53,15 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/SpiritPacketBodies.inc"
     "${skill_packet_actor_lookup}\n${spirit_has_effect_state_flag}\n${spirit_effect_exists}\n${spirit_handle_one}\n${spirit_handle_two}")
 extract_body(devotion_packet_handler "${packet_source}" "void HandleDevotionList(CGameMode& mode, const PacketView& packet)" "void InvalidateWindowTree(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/DevotionPacketBody.inc" "${skill_packet_actor_lookup}\n${devotion_packet_handler}")
+extract_body(recovery_resolve_effect "${packet_source}" "int ResolveRecoveryEffectId(" "u32 ResolveRecoveryNumberColor(")
+extract_body(recovery_resolve_color "${packet_source}" "u32 ResolveRecoveryNumberColor(" "void EmitRecoveryNumber(")
+extract_body(recovery_emit_number "${packet_source}" "void EmitRecoveryNumber(" "std::string ToLowerAsciiStatus(")
+extract_body(resurrection_local_actor "${packet_source}" "bool IsLocalPlayerActor(const CGameMode& mode, u32 gid)" "CGameActor* FindRuntimeActorForVanish(")
+extract_body(resurrection_find_actor "${packet_source}" "CGameActor* FindRuntimeActorForVanish(CGameMode& mode, u32 gid)" "void BeginActorDeath(")
+extract_body(recovery_handler "${packet_source}" "void HandleRecovery(CGameMode& mode, const PacketView& packet)" "void HandleAttackRange(")
+extract_body(resurrection_handler "${packet_source}" "void HandleActorResurrection(CGameMode& mode, const PacketView& packet)" "void LogActorPacketSample(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/RecoveryResurrectionPacketBodies.inc"
+    "${recovery_resolve_effect}\n${recovery_resolve_color}\n${recovery_emit_number}\n${resurrection_local_actor}\n${resurrection_find_actor}\n${recovery_handler}\n${resurrection_handler}")
 extract_body(skill_packet_unit_lookup "${packet_source}" "CSkill* ResolveSkillPacketUnit(CGameMode& mode, u32 aid)" "void HandleNotifyEffect(")
 extract_body(replay_try_read_packet "${packet_source}" "bool TryReadPacket(const u8* stream, int availableBytes, PacketView& outPacket, int& consumedBytes)" "void DecodeSrcDst(")
 extract_body(replay_decode_src_dst "${packet_source}" "void DecodeSrcDst(const u8* src, int& srcX, int& srcY, int& dstX, int& dstY, int& srcDir, int& dstDir)" "void CGameModePacketRouter::Register(")
@@ -646,6 +655,12 @@ target_include_directories(devotion_packet_lifecycle_checks PRIVATE "${CMAKE_CUR
 add_test(NAME devotion_packet_lifecycle_checks COMMAND devotion_packet_lifecycle_checks)
 add_test(NAME devotion_packet_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_devotion_packet_source.py")
+add_executable(recovery_resurrection_packet_checks RecoveryResurrectionPacketTests.cpp)
+target_compile_features(recovery_resurrection_packet_checks PRIVATE cxx_std_17)
+target_include_directories(recovery_resurrection_packet_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME recovery_resurrection_packet_checks COMMAND recovery_resurrection_packet_checks)
+add_test(NAME recovery_resurrection_packet_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_recovery_resurrection_packet.py")
 add_test(NAME prim2dflash_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim2dflash.py")
 add_test(NAME prim_onprocess_inventory_source_check
