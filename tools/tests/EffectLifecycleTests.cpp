@@ -12586,6 +12586,43 @@ int main()
         g_resMgr.requests.clear();g_world.m_player=oldPlayer;
     }
     {
+        struct Effect630Case { int rngValue; int action; };
+        const Effect630Case cases[]={{0,4},{1,0}};
+        const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xD7\xB8\xB2\xC0\xDA\xBA\xA3\xB1\xE2.spr";
+        const std::string expectedAct="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB1\xD7\xB8\xB2\xC0\xDA\xBA\xA3\xB1\xE2.act";
+        const std::string expectedWave="effect\\\xB1\xD7\xB8\xB2\xC0\xDA\xBA\xA3\xB1\xE2.wav";
+        CRenderObject* oldPlayer=g_world.m_player;
+        for(const Effect630Case& item:cases) {
+            CRenderObject master,listener;master.m_pos={111,222,333};listener.m_pos={11,22,33};g_world.m_player=&listener;
+            CRagEffect effect;effect.m_type=630;effect.m_stateCnt=0;effect.m_duration=83;effect.m_master=&master;
+            rngValues={item.rngValue};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+            check(effect.ProcessEffectSpriteProduction(15),"effect630 production Effect_SPR variant15 helper remains active");
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+                &&prim->m_pos.x==111&&prim->m_pos.y==222&&prim->m_pos.z==333
+                &&prim->m_duration==83&&prim->m_deltaPos2.y==0&&prim->m_renderFlag==0x201
+                &&prim->m_pattern==0x200&&prim->m_animSpeed==4&&!prim->m_repeatAnim
+                &&prim->m_spriteAction==item.action&&prim->m_curMotion==0
+                &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+                &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+                &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==111
+                &&prim->m_segments[0].pos.y==222&&prim->m_segments[0].pos.z==333
+                &&rngDraws==draws+1&&rngCursor==1,
+                "effect630 variant15 initializes exact PE particle/resources and both controlled action mappings");
+            check(waveCalls.size()==1&&waveCalls[0].name==expectedWave
+                &&waveCalls[0].x==100&&waveCalls[0].y==0&&waveCalls[0].z==300
+                &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+                "effect630 state0 plays exact PE-resolved caller wave at listener-relative coordinates");
+            const size_t requests=g_resMgr.requests.size();master.m_pos={411,522,633};effect.m_stateCnt=1;
+            check(effect.ProcessEffectSpriteProduction(15)&&effect.m_primList.size()==1
+                &&effect.m_effectPos.x==411&&effect.m_effectPos.y==522&&effect.m_effectPos.z==633
+                &&g_resMgr.requests.size()==requests&&rngDraws==draws+1&&rngCursor==1&&waveCalls.size()==1,
+                "effect630 later state refreshes helper origin without duplicate particle, resource, wave or RNG");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();g_world.m_player=oldPlayer;
+    }
+    {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         gameMode.messages=0;gameMode.messageIds.clear();waveCalls.clear();

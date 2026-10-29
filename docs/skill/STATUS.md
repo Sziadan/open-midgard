@@ -23,3 +23,5 @@ The effect634 lifecycle fixture exposed and corrected the local Effect_SPR varia
 Effect632 Effect_SPR variant17 now has runtime coverage for both RNG action outcomes and its exact PE-resolved caller-wave bytes at VA `0x719BF4`; source comparator binds fixture literals to executable bytes. PE/primary-Ref caller mapping agrees. No visual/rendering acceptance is claimed; see the effect632 entry in `docs/skill/PROGRESS.md`.
 
 Effect633 Effect_SPR variant18 now has direct runtime coverage for the PE-resolved caller wave and sprite payload; the fixture comparator binds each asset/wave literal to its PE VA. Caller mapping agrees in PE and primary Ref. No rendered visual acceptance is claimed; see the effect633 entry in `docs/skill/PROGRESS.md`.
+
+Effect630 Effect_SPR variant15 now has direct runtime coverage for both controlled action results and the PE-resolved caller-wave bytes at VA `0x719BDC`; the checker also binds SPR/ACT bytes at `0x71D084/0x71D06C`. PE/primary-Ref caller mapping agrees. No rendered visual acceptance is claimed; see its progress entry.

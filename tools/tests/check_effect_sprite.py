@@ -178,6 +178,23 @@ for token in ("PP_3DPARTICLE", "m_duration==87", "m_deltaPos2.y==-6.0f", "m_rend
               "without duplicate particle, resource, wave or RNG"):
     if token not in effect633_fixture.group(1):
         raise AssertionError(f"effect633 lifecycle assertion missing {token}")
+effect630_fixture = re.search(r"struct Effect630Case \{ int rngValue; int action; \};(.*?)(?=\n    })", LIFECYCLE, re.S)
+if effect630_fixture is None or "ProcessEffectSpriteProduction(15)" not in effect630_fixture.group(1):
+    raise AssertionError("effect630 direct production variant15 lifecycle fixture disappeared")
+for name, expected, required_va in (("expectedSpr", image.read_cstring_at(0x71D084).raw, 0x71D084),
+                                   ("expectedAct", image.read_cstring_at(0x71D06C).raw, 0x71D06C),
+                                   ("expectedWave", image.read_cstring_at(0x719BDC).raw, 0x719BDC)):
+    literal = re.search(rf"const std::string {name}=(\"(?:\\.|[^\"\\])*\")", effect630_fixture.group(1))
+    if literal is None or ast.literal_eval(literal.group(1)).encode("latin-1") != expected:
+        raise AssertionError(f"effect630 fixture {name} differs from PE bytes at {required_va:#x}")
+for token in ("const Effect630Case cases[]={{0,4},{1,0}}", "PP_3DPARTICLE",
+              "m_duration==83", "m_deltaPos2.y==0", "m_renderFlag==0x201", "m_animSpeed==4",
+              "m_repeatAnim", "m_spriteAction==item.action", "m_numSegments==1", "rngDraws==draws+1",
+              "waveCalls.size()==1", "waveCalls[0].name==expectedWave", "waveCalls[0].x==100",
+              "waveCalls[0].y==0", "waveCalls[0].z==300",
+              "without duplicate particle, resource, wave or RNG"):
+    if token not in effect630_fixture.group(1):
+        raise AssertionError(f"effect630 lifecycle assertion missing {token}")
 
 # Priority 5P effect-sprite callers 630/632/633/634 and their RNG variants.
 for effect_id, variant, wave_symbol in ((630, 15, "aEffect_155"),
