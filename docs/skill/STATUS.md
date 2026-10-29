@@ -39,3 +39,5 @@ Effect647 Effect_SPR variant29 now has direct lifecycle coverage for its PE-back
 Effect644 Effect_SPR variant27 now has direct state0/state1 lifecycle and listener-relative wave coverage. The comparator binds its resources and wave to PE VAs `0x71CE5C/0x71CE44/0x719B98` and verifies PE/primary-Ref caller ordering. No audible or visual output acceptance is claimed; see its progress entry.
 
 Effect643 Effect_SPR variant26 now has direct state0/state1/state20/state21 lifecycle coverage for its particle and delayed listener-relative wave. Fixture resources/wave are bound to PE VAs `0x71CE8C/0x71CE74/0x719BB0`; PE/primary-Ref state20 caller order agrees. No audible or visual output acceptance is claimed; see its progress entry.
+
+Effect645 Effect_SPR variant28 now has four-direction action-selection and state0/state1 lifecycle coverage at camera longitude0. Resources are bound to PE VAs `0x71CE30/0x71CE1C`; PE/primary-Ref caller mapping agrees. This does not claim camera presentation or rendered visual acceptance; see its progress entry.

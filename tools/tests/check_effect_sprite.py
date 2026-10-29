@@ -332,6 +332,30 @@ for label, dispatch in (("PE", pe_dispatch), ("Ref", ref_dispatch)):
     offsets = [branch.find(token) for token in ordered]
     if any(offset < 0 for offset in offsets) or offsets != sorted(offsets):
         raise AssertionError(f"{label} effect644 state0 position/wave/variant order changed")
+effect645_fixture = re.search(r"const DirectionCase directions\[\]=\{(.*?)\};(.*?)(?=\n    })", LIFECYCLE, re.S)
+if effect645_fixture is None or "effect.m_type=645" not in effect645_fixture.group(2) or "ProcessEffectSpriteProduction(28)" not in effect645_fixture.group(2):
+    raise AssertionError("effect645 direct production variant28 lifecycle fixture disappeared")
+direction_rows = [(float(dx[:-1]), float(dz[:-1]), int(action))
+                  for dx, dz, action in re.findall(r"\{\s*(-?\d+\.\d+f)\s*,\s*(-?\d+\.\d+f)\s*,\s*(\d+)\s*\}", effect645_fixture.group(1))]
+if direction_rows != [(1.0, 0.0, 0), (0.0, 1.0, 6), (-1.0, 0.0, 4), (0.0, -1.0, 2)]:
+    raise AssertionError("effect645 direction fixture must cover +X/+Z/-X/-Z action mapping at camera longitude0")
+for name, expected, required_va in (("expectedSpr", image.read_cstring_at(0x71CE30).raw, 0x71CE30),
+                                   ("expectedAct", image.read_cstring_at(0x71CE1C).raw, 0x71CE1C)):
+    literal = re.search(rf"const std::string {name}=(\"(?:\\.|[^\"\\])*\")", effect645_fixture.group(2))
+    if literal is None or ast.literal_eval(literal.group(1)).encode("latin-1") != expected:
+        raise AssertionError(f"effect645 fixture {name} differs from PE bytes at {required_va:#x}")
+for token in ("testView.longitude=0.0f", "prim->m_spriteAction==direction.action", "PP_3DPARTICLE",
+              "m_duration==76", "m_deltaPos2.y==0.0f", "m_renderFlag==0x201", "m_pattern==0x200",
+              "m_animSpeed==4", "!prim->m_repeatAnim", "m_numSegments==1", "rngDraws==draws",
+              "waveCalls.empty()", "effect.m_stateCnt=1", "without duplicate particle, resources, wave or RNG"):
+    if token not in effect645_fixture.group(2):
+        raise AssertionError(f"effect645 lifecycle assertion missing {token}")
+for label, dispatch in (("PE", pe_dispatch), ("Ref", ref_dispatch)):
+    caller = re.search(r"case\s+0x285:(.*?)(?=case\s+0x[0-9A-F]+:|$)", dispatch, re.S)
+    if caller is None or not re.search(r"Effect_SPR\(this,\s*28\).*?return\s+1", caller.group(1), re.S):
+        raise AssertionError(f"{label} effect645 must call variant28 and return")
+    if "PlayWave" in caller.group(1):
+        raise AssertionError(f"{label} effect645 has no caller wave")
 
 # Priority 5P effect-sprite callers 630/632/633/634 and their RNG variants.
 for effect_id, variant, wave_symbol in ((630, 15, "aEffect_155"),

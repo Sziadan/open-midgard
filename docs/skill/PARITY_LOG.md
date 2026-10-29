@@ -4854,3 +4854,7 @@ State0 runtime coverage checks effect644's variant27 particle, exact resource re
 ## WP5 Effect_SPR lifecycle — effect643 variant26 — 2026-10-29
 
 The direct fixture checks effect643's variant26 particle on state0, no early wave, one delayed state20 listener-relative caller wave, and no duplicate output on state21. Fixture SPR/ACT/wave literals bind to PE VAs `0x71CE8C/0x71CE74/0x719BB0`; wave bytes are preserved exactly, without inferred suffix. PE and primary Ref agree on the state20 origin-copy/wave/helper ordering. This is local lifecycle/audio-call/payload coverage only; focused checks pass2/2; full VS17 Release parity CTest passes434/434. Audible or rendered output is not claimed.
+
+## WP5 Effect_SPR lifecycle — effect645 variant28 — 2026-10-29
+
+The direct fixture exercises +X/+Z/−X/−Z camera-relative action mapping at camera longitude0 and state0/state1 particle behavior, using exact resources bound to PE VAs `0x71CE30/0x71CE1C`. It checks no wave/RNG and no later duplicate output. PE and primary Ref callers both route effect645 directly to variant28; no caller wave exists. This establishes local payload/action selection and lifecycle only, not camera presentation or rendered parity.
