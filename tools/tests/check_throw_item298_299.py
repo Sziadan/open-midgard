@@ -12,6 +12,7 @@ pe = (ROOT / "HighPriest.exe.c").read_text(encoding="latin-1")
 ref = (ROOT / "Ref/RagEffect2.cpp").read_text(encoding="latin-1")
 local = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 dispatch = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
+LIFECYCLE = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
 
 
 def function_body(source, signature):
@@ -75,5 +76,15 @@ for effect_id, expected_texture, variant in (
     match = re.search(rf"case {effect_id}:[\s\S]*?return true;", local_dispatch)
     if match is None or f"ApplyThrowItem(\"{expected_texture}\", {variant})" not in match.group(0):
         raise AssertionError(f"local effect{effect_id} ThrowItem texture/variant mapping changed")
+
+if "for(int type:{298,299})" not in LIFECYCLE or "effect.ProcessThrowItemEffect()" not in LIFECYCLE:
+    raise AssertionError("effects298/299 lifecycle fixture must exercise both production dispatcher mappings")
+for token in (
+    "launches exact ThrowItem primitive and PE texture at master origin",
+    "applies exact ThrowItem variant selector and trajectory",
+    "later state follows master without relaunch or texture reload",
+):
+    if token not in LIFECYCLE:
+        raise AssertionError(f"effects298/299 lifecycle assertion missing: {token}")
 
 print("effects298/299 ThrowItem parity passed: PE/Ref helper, callers, local route/payload and exact executable textures")

@@ -233,6 +233,7 @@ bool TryPlayEffectWaveAt(const vector3d& soundPos, const char* name) {
 #include "PrimitiveEnum.inc"
 constexpr int kPrimTypeBottom=PP_BOTTOM;
 constexpr int kPrimTypePoison=PP_POISON;
+constexpr int kPrimTypeThrowItem=PP_THROWITEM;
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
 void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
@@ -739,6 +740,8 @@ struct CRagEffect : CGameObject {
     bool ProcessTier3StrEffect();
     bool ProcessBlitzBeat115();
     void ApplyPoison(int variant);
+    void ApplyThrowItem(const char*,int);
+    bool ProcessThrowItemEffect();
     bool ProcessDamageNumberEffects();
     void SpawnBlueFall(int, int);
     bool ProcessBeginAsura1_467();
@@ -14385,6 +14388,56 @@ int main()
             &&g_texMgr.requests.size()==requests&&rngDraws==startDraws&&waveCalls.empty(),
             "effect673 later state follows the master without relaunching or reloading the poison primitive");
         poison.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();
+    }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        const vector3d target={106,230,308};
+        for(int type:{298,299}) {
+            master.m_pos={100,200,300};
+            CRagEffect effect;effect.m_type=type;effect.m_stateCnt=0;effect.m_duration=73;effect.m_count=7;
+            effect.m_master=&master;effect.m_deltaPos=target;
+            const std::string expectedTexture=type==298
+                ?"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xF3\xBA\xB4.bmp"
+                :"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xF3\xC6\xF7\xBC\xC7\xBA\xB4.bmp";
+            g_texMgr.requests.clear();waveCalls.clear();const int draws=rngDraws;
+            check(effect.ProcessThrowItemEffect(),"effects298/299 production dispatcher accepts the selected type");
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            check(effect.m_primList.size()==1&&prim&&prim->m_type==static_cast<EFFECTPRIMID>(kPrimTypeThrowItem)
+                &&prim->m_renderFlag==5&&prim->m_duration==73&&prim->m_size==0.0f
+                &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+                &&prim->m_deltaPos.x==target.x&&prim->m_deltaPos.y==target.y&&prim->m_deltaPos.z==target.z
+                &&effect.m_effectPos.x==100&&effect.m_effectPos.y==200&&effect.m_effectPos.z==300
+                &&effect.m_cachedPos.x==100&&effect.m_cachedPos.y==200&&effect.m_cachedPos.z==300
+                &&g_texMgr.requests==std::vector<std::string>({expectedTexture})
+                &&rngDraws==draws&&waveCalls.empty(),
+                ("effect"+std::to_string(type)+" launches exact ThrowItem primitive and PE texture at master origin").c_str());
+            if(prim) {
+                const EffectGi& gi=prim->m_gi[0];
+                check(gi.life==1&&gi.process==0&&gi.maxHeight==10.0f&&gi.distance==3.0f
+                    &&std::fabs(gi.height[1]-0.4f)<0.00001f&&std::fabs(gi.height[2]-1.2f)<0.00001f&&gi.height[8]==0.0f
+                    &&gi.alphaB==255&&gi.sparkX==100&&gi.sparkY==0.0f&&gi.sparkZ==300
+                    &&gi.arcBaselineY==192.0f&&gi.rotStart==0&&gi.fullDisplayAngle==0
+                    &&gi.flag[0]==0&&gi.flag[1]==26&&gi.flag[2]==(type==298?8:9)
+                    &&gi.flag[3]==(type==298?0:7),
+                    ("effect"+std::to_string(type)+" applies exact ThrowItem variant selector and trajectory").c_str());
+                check(prim->m_gi[1].life==1&&prim->m_gi[1].alphaB==0
+                    &&prim->m_gi[2].life==1&&prim->m_gi[2].alphaB==0
+                    &&prim->m_gi[3].life==1&&prim->m_gi[3].alphaB==0,
+                    ("effect"+std::to_string(type)+" initializes the three inactive ThrowItem bands").c_str());
+            } else {
+                check(false,"effects298/299 initializes exact ThrowItem trajectory");
+                check(false,"effects298/299 initializes the three inactive ThrowItem bands");
+            }
+            master.m_pos={410,520,630};effect.m_stateCnt=1;const size_t requests=g_texMgr.requests.size();
+            effect.ProcessThrowItemEffect();
+            check(effect.m_primList.size()==1&&prim&&prim->m_pos.x==410&&prim->m_pos.y==520&&prim->m_pos.z==630
+                &&effect.m_effectPos.x==410&&effect.m_effectPos.y==520&&effect.m_effectPos.z==630
+                &&effect.m_cachedPos.x==410&&effect.m_cachedPos.y==520&&effect.m_cachedPos.z==630
+                &&g_texMgr.requests.size()==requests&&rngDraws==draws&&waveCalls.empty(),
+                ("effect"+std::to_string(type)+" later state follows master without relaunch or texture reload").c_str());
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        g_texMgr.requests.clear();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
