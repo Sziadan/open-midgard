@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare effect601 Sight2's original helper and local source/lifecycle route."""
+"""Compare Sight effects22/601 original helpers and local source/lifecycle routes."""
 from pathlib import Path
 import re
 import sys
@@ -10,7 +10,9 @@ from tools.ro_exe_resolve import ExeImage  # noqa: E402
 
 PE = (ROOT / "HighPriest.exe.c").read_text(encoding="latin-1")
 REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
+REF_DHXJ = (ROOT / "Ref/dhxj/RagEffect.cpp").read_text(encoding="latin-1")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
+ROUTE2 = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
 ROUTE = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
 LIFECYCLE = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
 
@@ -55,6 +57,32 @@ for token in (
 if "Shadow" in pe_helper or "rand(" in pe_helper or "PlayWave(" in pe_helper:
     raise AssertionError("Sight2 unexpectedly gained shadow, RNG, or sound behavior")
 
+sight_signature = "void __thiscall CRagEffect::Sight(CRagEffect *this)"
+pe_sight = function_body(PE, sight_signature)
+ref_sight = function_body(REF, sight_signature)
+if compact(pe_sight) != compact(ref_sight):
+    raise AssertionError("PE and primary-Ref Sight helper bodies differ")
+for token in (
+    "this->m_pos = this->m_master->m_pos", "ProjectVertex(g_renderer", "this->m_tlvertX",
+    "this->m_tlvertY", "this->m_stateCnt", "PP_3DPARTICLE", "aShadowSpr_0", "aShadowAct_0",
+    "m_duration = 20", "m_alpha = 150.0", "m_alphaSpeed = -3.0", "m_alpha = 120.0",
+):
+    if token not in pe_sight:
+        raise AssertionError(f"PE Sight helper missing {token}")
+
+pe_onprocess = function_body(PE, "unsigned __int8 __thiscall CRagEffect::OnProcess(CRagEffect *this)")
+if not re.search(r"case 22:\s*CRagEffect::Sight\(this\);\s*break;", pe_onprocess):
+    raise AssertionError("canonical PE effect22 Sight caller changed")
+if "CRagEffect::Sight(this)" in REF:
+    raise AssertionError("primary Ref effect22 caller omission should remain documented")
+if not re.search(r"case\s+EF_SIGHT\s*:.*?Sight\(\)\s*;\s*break\s*;", REF_DHXJ, re.S):
+    raise AssertionError("secondary Ref EF_SIGHT caller changed")
+if "case 22: SpawnSight(); return true;" not in ROUTE2:
+    raise AssertionError("local generated effect22 route changed")
+spawn_sight = function_body(LOCAL, "void CRagEffect::SpawnSight()")
+if "ApplySight(150.0f, true);" not in spawn_sight:
+    raise AssertionError("local effect22 must use the Sight profile with Shadow")
+
 for source_name, source in (("PE", PE), ("primary Ref", REF)):
     body = function_body(source, "unsigned __int8 __thiscall CRagEffect::OnProcess3(CRagEffect *this)")
     if not re.search(r"case 0x259:\s*CRagEffect::Sight2\(this\);\s*return 1;", body):
@@ -84,6 +112,8 @@ image = ExeImage(ROOT / "HighPriest.exe")
 for va, expected, label in (
     (0x71B578, b"\xC0\xCC\xC6\xD1\xC6\xAE\\Sight.spr", "Sight SPR"),
     (0x71B564, b"\xC0\xCC\xC6\xD1\xC6\xAE\\Sight.act", "Sight ACT"),
+    (0x71B558, b"Shadow.spr", "Shadow SPR"),
+    (0x71B54C, b"Shadow.act", "Shadow ACT"),
 ):
     resource = image.read_cstring_at(va)
     if resource is None or resource.raw != expected:
@@ -100,4 +130,15 @@ for token in (
     if token not in fixture.group(1):
         raise AssertionError(f"effect601 lifecycle coverage missing {token}")
 
-print("effect601 Sight2 parity passed: complete PE/Ref helper, caller, local shared emitter, exact resources and lifecycle binding")
+sight_fixture = re.search(r"CRagEffect effect;effect\.m_master=&actor;effect\.m_type=22;(.*?)(?=\n    \})", LIFECYCLE, re.S)
+if sight_fixture is None:
+    raise AssertionError("effect22 Sight lifecycle fixture disappeared")
+for token in (
+    "SpawnSight()", "effect.m_stateCnt=1", "effect.m_stateCnt=2", "effect.m_primList.size()==2",
+    "Shadow.spr", "Shadow.act", "m_alpha==150", "m_alpha==120", "m_alphaSpeed==-1",
+    "effect.m_stateCnt=3", "m_pos.y==70",
+):
+    if token not in sight_fixture.group(1):
+        raise AssertionError(f"effect22 Sight lifecycle coverage missing {token}")
+
+print("effects22/601 Sight/Sight2 parity passed: PE/Ref helpers, callers, local routes, exact resources and lifecycle bindings")

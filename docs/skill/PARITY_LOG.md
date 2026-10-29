@@ -4261,3 +4261,7 @@ Extended `check_effect554_texture_set.py` to compare the five PE/primary-Ref cal
 ## WP5F effects229/230/233 Cloud callers — 2026-10-29
 
 Extended the weather-cloud comparator to cover PE effects229/230/233 (variants0/1/2, counts40/60/40), matching secondary-Ref `EF_CLOUD` callers, absent primary-Ref caller provenance, and local parameter/OnProcess routes. Added map1 to the existing cloud lifecycle matrix; it verifies the fallback texture, four-band payload, randomized offsets and draw count. Full Release CTest passed 370/370.
+
+## WP5F effect22 Sight caller and lifecycle binding — 2026-10-29
+
+Extended `check_effect601_sight2.py` to compare the complete PE/primary-Ref Sight helper, PE effect22 OnProcess caller, secondary-Ref `EF_SIGHT` caller, and local `22 -> SpawnSight -> ApplySight(150,true)` route. It pins Sight and Shadow SPR/ACT bytes and binds the existing effect22 lifecycle fixture. The primary Ref caller remains absent, as documented. Focused CTest passed; the latest full Release CTest remains 370/370.
