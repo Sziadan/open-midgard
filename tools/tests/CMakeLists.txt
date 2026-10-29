@@ -51,6 +51,8 @@ extract_body(spirit_handle_one "${packet_source}" "void HandleSpirits(CGameMode&
 extract_body(spirit_handle_two "${packet_source}" "void HandleSpirits2(CGameMode& mode, const PacketView& packet)" "void HandleDevotionList(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/SpiritPacketBodies.inc"
     "${skill_packet_actor_lookup}\n${spirit_has_effect_state_flag}\n${spirit_effect_exists}\n${spirit_handle_one}\n${spirit_handle_two}")
+extract_body(devotion_packet_handler "${packet_source}" "void HandleDevotionList(CGameMode& mode, const PacketView& packet)" "void InvalidateWindowTree(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/DevotionPacketBody.inc" "${skill_packet_actor_lookup}\n${devotion_packet_handler}")
 extract_body(skill_packet_unit_lookup "${packet_source}" "CSkill* ResolveSkillPacketUnit(CGameMode& mode, u32 aid)" "void HandleNotifyEffect(")
 extract_body(replay_try_read_packet "${packet_source}" "bool TryReadPacket(const u8* stream, int availableBytes, PacketView& outPacket, int& consumedBytes)" "void DecodeSrcDst(")
 extract_body(replay_decode_src_dst "${packet_source}" "void DecodeSrcDst(const u8* src, int& srcX, int& srcY, int& dstX, int& dstY, int& srcDir, int& dstDir)" "void CGameModePacketRouter::Register(")
@@ -637,6 +639,10 @@ add_executable(spirit_packet_lifecycle_checks SpiritPacketLifecycleTests.cpp)
 target_compile_features(spirit_packet_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(spirit_packet_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 add_test(NAME spirit_packet_lifecycle_checks COMMAND spirit_packet_lifecycle_checks)
+add_executable(devotion_packet_lifecycle_checks DevotionPacketLifecycleTests.cpp)
+target_compile_features(devotion_packet_lifecycle_checks PRIVATE cxx_std_17)
+target_include_directories(devotion_packet_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME devotion_packet_lifecycle_checks COMMAND devotion_packet_lifecycle_checks)
 add_test(NAME devotion_packet_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_devotion_packet_source.py")
 add_test(NAME prim2dflash_source_check

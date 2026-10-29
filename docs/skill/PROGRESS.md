@@ -3074,3 +3074,7 @@ Connected production ApplyFlowerCasting to the lifecycle harness. The fixture ve
 ## WP7 Spirits packet lifecycle — opcodes 0x01D0/0x01E1 — 2026-10-29
 
 Added a standalone harness compiling the production actor resolver, effect-state predicate, effect-existence helper, and HandleSpirits/HandleSpirits2 bodies. It checks effects-off and malformed packet guards; self/other actor resolution; jobs 4038/24/default mapping; burrow/hiding paths; signed X offsets sent through message14; Spirits2 duplicate suppression and AID-zero behavior. The source comparators remain in place. This covers packet handling and effect launch decisions only; it does not establish rendered spirit-sphere parity. Focused tests pass 3/3; full Release parity CTest passes429/429 and both static audits pass.
+
+## WP7 Devotion packet lifecycle — opcode 0x01CF — 2026-10-29
+
+Added a standalone harness compiling production ResolveSkillPacketActor and HandleDevotionList. It checks effects-off, malformed packets, missing devoter, own/other actor lookup, all five refresh messages, zero/duplicate/unresolved devotee slots, exact effect232 launches with message14 position data, ignored max-distance bytes, and failed effect launches. This covers packet-side link decisions only; rendered Devotion-link parity remains open. Focused tests pass2/2; full Release parity CTest passes430/430 and both static audits pass.
