@@ -4271,3 +4271,5 @@ WP5F effect627 RG_COIN3: PE and primary Ref case `0x273` match; state21 refresh/
 WP5F effect24 FireBall: PE and primary-Ref helper bodies match. The comparator checks scheduled emissions, exact wave and sprite/action resources, local route and existing lifecycle coverage. Full Release CTest passed 371/371.
 
 WP5F effects436/437: PE and Ref helper bodies match, and PE callers invoke HalfSphere for 436 and HalfSphere then AttackEnergy for 437. Fixed local origin refresh before state gates and added payload/movement lifecycle assertions. Full Release CTest passed 372/372.
+
+WP5F effect119 Detecting: PE and primary Ref helper bodies match; only the PE has the effect119 caller. Comparator covers the local route, wave/texture bytes, and existing lifecycle assertions. Full Release CTest passed 373/373.

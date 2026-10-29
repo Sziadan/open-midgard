@@ -2639,3 +2639,7 @@ Added `check_effect24_fireball.py` and registered it in CTest. The checker compa
 ## WP5F effects436/437 HalfSphere and AttackEnergy origin refresh — 2026-10-29
 
 PE and primary Ref helpers refresh `m_pos` from the master before the state-zero spawn gate; local `ApplyHalfSphere` and `ApplyAttackEnergy` previously returned before updating effect/cached positions on later frames. Moved origin resolution and refresh before each gate. Added `check_effect436_437_sphere_energy.py` for helper equality, PE caller composition, exact resource bytes, local routes and refresh order; added lifecycle assertions for emitted profiles and master movement after spawn. Release parity build passed; full Release CTest passed 372/372.
+
+## WP5F effect119 Detecting source comparison — 2026-10-29
+
+Added and registered `check_effect119_detecting.py`. It compares normalized PE/primary-Ref helper bodies, verifies the PE-only effect119 caller (the primary Ref has no caller case), local dispatch route, exact PE wave and texture bytes, and the existing lifecycle fixture. No production change. Release parity build passed; full Release CTest passed 373/373.

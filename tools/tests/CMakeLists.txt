@@ -1270,6 +1270,8 @@ add_test(NAME effect24_fireball_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect24_fireball.py")
 add_test(NAME effects436_437_sphere_energy_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect436_437_sphere_energy.py")
+add_test(NAME effect119_detecting_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect119_detecting.py")
 add_test(NAME effects689_691_696_texture_animation_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects689_691_696_texture_animation.py")
 add_test(NAME effects610_611_texture_cues_source_check
@@ -1360,6 +1362,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect601_sight2.py
     check_effect24_fireball.py
     check_effect436_437_sphere_energy.py
+    check_effect119_detecting.py
     check_effects689_691_696_texture_animation.py
     check_effects610_611_texture_cues.py
     check_effects358_360_ghost.py
