@@ -4440,3 +4440,7 @@ Added `tools/tests/check_effect41_angelus.py` and registered it in the focused C
 ## WP5 CRagEffect Signum effect40 source checkpoint - 2026-10-29
 
 Added `tools/tests/check_effect40_signum.py` and registered it in the focused CTest suite. PE and primary Ref `Signum` bodies normalize identically; the comparator maps effect40 dispatch to local `ProcessSignum`, verifies projection and shared STR completion, and binds the state30 sound, circle, twenty-ray and ordered RNG profile to existing lifecycle assertions. Focused CTest passed; no runtime change was needed.
+
+## WP5 CRagEffect Aqua effect39 source checkpoint - 2026-10-29
+
+Added `tools/tests/check_effect39_aqua.py` and registered it in the focused CTest suite. PE and primary Ref `Aqua` bodies normalize identically; the comparator maps effect39 to local `SpawnAqua` and binds parent refresh, state-zero wave/particle launch, particle fields, CP949 resource names and segment setup to existing lifecycle assertions. Focused CTest passed; no runtime change was needed.
