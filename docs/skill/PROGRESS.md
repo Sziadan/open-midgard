@@ -2392,3 +2392,8 @@ Strengthened the registered `check_bottom_caller.py` to verify exact `effect\\ma
 ## WP5C effects162/163 Snow and Sakura CTest coverage — 2026-10-29
 
 Registered the existing `check_snow_effect.py` and `check_sakura_effect.py` parity checkers in CTest. Fixed Snow's local function boundary so its RNG audit excludes the following Sakura handler. Both focused checks, the Release parity build, and full Release CTest passed; CTest reports332/332. No production behavior change.
+
+
+## WP5D effects298/299 ThrowItem source and resource parity — 2026-10-29
+
+Added and registered `check_throw_item298_299.py`. It compares the complete PE and primary-Ref `ThrowItem` helper bodies, verifies both canonical caller argument mappings, local 298/299 dispatch and emitted GI payload, and pins the exact item texture bytes at PE VAs `0x71A2BC` and `0x71A298`. Focused check, Release parity build and full CTest passed333/333. No production behavior change.

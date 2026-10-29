@@ -4030,3 +4030,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effects162/163 Snow and Sakura checker registration — 2026-10-29
 
 Added CTest entries for the existing Snow and Sakura comparators, which verify PE/Ref/local routes, emitter payloads and resolved PE assets. Corrected `check_snow_effect.py` to bound extraction to `SpawnSnow` only; previously it also counted Sakura's RNG calls. Both focused tests, the Release parity build, and full Release CTest passed332/332. No production behavior change.
+
+
+## WP5D effects298/299 ThrowItem source/resource comparator — 2026-10-29
+
+`check_throw_item298_299.py` compares complete canonical PE and primary-Ref helper bodies, checks PE caller variants and local effect routing/payload, and verifies the executable bytes of the two exact item textures at `0x71A2BC` and `0x71A298`. Registered in CTest. Focused comparator, Release parity build and full Release CTest passed333/333. No production behavior change.
