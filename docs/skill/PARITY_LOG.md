@@ -3980,3 +3980,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP10.3 effect100 RemoveTrap wave-byte verification — 2026-10-29
 
 `check_removetrap_caller.py` now verifies the canonical PE string bytes `effect\hunter_removetrap.wav` at VA `0x71B8A4`, in addition to its existing PE/Ref helper comparison, PE caller/local route, particle1 SPR/ACT bytes, launch cadence, RNG payload and renderer binding. Focused comparator and full Release CTest pass325/325. No production change.
+
+
+## WP5C effects109/110 Init and STR resource comparison — 2026-10-29
+
+`check_effect109_110_str_init.py` compares complete PE/primary-Ref Init case blocks for effects109/110. It checks effect109's `rand()%4` plus `Bubble%d.str` formatting (variants1–4), effect110's `aGaspushStr`, local STR table rows and shared STR-only dispatch, and exact `GasPush.str` bytes at VA `0x71AF24`. Existing lifecycle coverage includes both ids. Release parity build succeeded; full CTest passed326/326. No production change.

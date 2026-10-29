@@ -2342,3 +2342,8 @@ Strengthened `check_maxpower104.py` to compare the complete PE and primary-Ref `
 ## WP10.3 effect100 RemoveTrap wave bytes — 2026-10-29
 
 Extended `check_removetrap_caller.py` to resolve the exact `effect\hunter_removetrap.wav` bytes at PE VA `0x71B8A4`. Existing full helper/caller parity, particle SPR/ACT bytes, payload, and renderer checks remain. The focused comparator and full Release CTest passed (325/325). No production change.
+
+
+## WP5C effects109/110 STR initialization parity — 2026-10-29
+
+Added `check_effect109_110_str_init.py` and registered it in CTest. It compares PE and primary-Ref Init blocks for both effects, verifies effect109's single `%4` draw selects `Bubble1.str`–`Bubble4.str`, effect110's `GasPush.str` mapping and exact PE bytes at `0x71AF24`, local generated STR rows/routes, and existing lifecycle-matrix coverage. Release parity build succeeded; full CTest passed326/326. No production change.

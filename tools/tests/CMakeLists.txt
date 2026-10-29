@@ -764,6 +764,8 @@ add_test(NAME effect142_heavens_drive_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect142_heavens_drive.py")
 add_test(NAME effects20_125_enchant_poison_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect125_enchant_poison.py")
+add_test(NAME effects109_110_str_init_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect109_110_str_init.py")
 add_test(NAME effect128_overthrust_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect128_overthrust.py")
 add_test(NAME hitdark_effects180_184_source_check
