@@ -3055,3 +3055,7 @@ Connected the production ProcessBeginAsuraEffect and SpawnBeginAsura bodies (src
 ## WP5 body-light lifecycle — effects442/446/449 — 2026-10-29
 
 Connected the production ApplyBodyLight442/446/449 helpers to the lifecycle harness. Assertions cover each one-shot bit/timestamp, repeated calls with pre-set bits, effect446's independent state24/state25 gates, effect449's state50/state51 boundary, and missing-master no-op. Existing check_effect442_body_light.py and check_effect446_449_body_light.py provide the PE/local source comparisons. Focused lifecycle passes3190 checks; full Release parity CTest passes428/428 and both documented static audits pass.
+
+## WP5 EnergyDrain lifecycle — effects378/383 — 2026-10-29
+
+Connected the production SpawnEnergyDrain2/3 and ProcessEnergyDrain2/3Effect bodies to the lifecycle harness. Effect378 checks its three state-zero PP_3DPARTICLESPLINE launches, exact CP949 sprite/action resources, roll and delta fields, nine ordered RNG draws, no later relaunch, and tint boundaries 54/55/65/66. Effect383 checks three launches on each state0–4, exact resource/profile fields, 75 ordered draws total, closed state5 emission gate, and tint boundaries 49/50/80/81. Both handlers verify missing-master no-output behavior and no audio. check_energy_drain_callers.py verifies canonical callers, routes, exact resource bytes and helper payloads. Focused lifecycle passes3206 checks; full Release parity CTest passes428/428 and both documented static audits pass.

@@ -698,6 +698,10 @@ struct CRagEffect : CGameObject {
     void ApplyBodyLight442();
     void ApplyBodyLight446();
     void ApplyBodyLight449();
+    void SpawnEnergyDrain2();
+    void SpawnEnergyDrain3();
+    bool ProcessEnergyDrain2Effect();
+    bool ProcessEnergyDrain3Effect();
     void ApplyEffectTexture(const char*, int);
     bool ProcessEffect273();
     bool ProcessEffect440();
@@ -13740,6 +13744,85 @@ int main()
             &&missing.m_primList.empty(),"body-light helpers with no master emit no audio, resource, primitive or RNG work");
         check(rngDraws==oldRandomDraws,"body-light helper lifecycle consumes no RNG");
         waveCalls.clear();g_texMgr.requests.clear();
+    }
+    {
+        const char* sprite="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr";
+        const char* action="\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act";
+        CRenderObject master;CRagEffect drain2;drain2.m_type=378;drain2.m_master=&master;
+        drain2.m_effectPos={100,20,200};drain2.m_deltaPos={140,30,260};drain2.m_stateCnt=0;
+        rngValues={0,1,2,0,1,2,0,1,2};rngCursor=0;waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();
+        const int oldRandomDraws=rngDraws;
+        check(drain2.ProcessEnergyDrain2Effect()&&drain2.m_primList.size()==3
+            &&rngDraws==oldRandomDraws+9&&rngCursor==9&&g_resMgr.requests.size()==6&&waveCalls.empty(),
+            "effect378 state0 emits three particle splines with nine ordered RNG draws and no audio");
+        const float rolls2[3]={-90,0,90};int index=0;bool drain2Payload=true;
+        for(CEffectPrim* prim:drain2.m_primList) {
+            drain2Payload=drain2Payload&&prim&&prim->m_type==PP_3DPARTICLESPLINE&&prim->m_duration==60
+                &&prim->m_roll==rolls2[index]&&prim->m_deltaPos2.x==40&&prim->m_deltaPos2.y==-10
+                &&prim->m_deltaPos2.z==60&&prim->m_numSegments==7&&prim->m_red==160
+                &&prim->m_green==161&&prim->m_blue==255&&std::fabs(prim->m_size-1.7f)<0.00001f
+                &&g_resMgr.requests[index*2]==sprite&&g_resMgr.requests[index*2+1]==action;
+            ++index;
+        }
+        check(drain2Payload,"effect378 preserves exact spline rolls, delta, color, size, segments and CP949 resources");
+        drain2.m_stateCnt=1;drain2.ProcessEnergyDrain2Effect();
+        check(drain2.m_primList.size()==3&&rngDraws==oldRandomDraws+9&&g_resMgr.requests.size()==6,
+            "effect378 later states do not respawn or reload its one-shot emitter");
+        drain2.m_stateCnt=54;drain2.ProcessEnergyDrain2Effect();
+        check(master.m_BodyLight==0&&master.tintCalls==0,"effect378 state54 is before its tint window");
+        drain2.m_stateCnt=55;drain2.ProcessEnergyDrain2Effect();
+        check(master.m_BodyLight==1&&master.red==100&&master.green==100&&master.blue==255,
+            "effect378 state55 begins its blue tint and low body-light bit");
+        drain2.m_stateCnt=65;drain2.ProcessEnergyDrain2Effect();
+        check(master.m_BodyLight==1&&master.tintCalls==2,"effect378 tint window includes state65 without repeating the bit");
+        drain2.m_stateCnt=66;drain2.ProcessEnergyDrain2Effect();
+        check(master.tintCalls==2&&rngDraws==oldRandomDraws+9,"effect378 state66 ends tint and remains emission/RNG quiet");
+        drain2.ClearPrims();g_world.UpdateGameObjects();
+
+        master=CRenderObject{};CRagEffect drain3;drain3.m_type=383;drain3.m_master=&master;
+        drain3.m_effectPos={100,20,200};drain3.m_stateCnt=0;
+        rngValues.clear();for(int particle=0;particle<15;++particle)rngValues.insert(rngValues.end(),{3,4,5,6,1});rngCursor=0;
+        g_resMgr.requests.clear();const int drain3Start=rngDraws;
+        check(drain3.ProcessEnergyDrain3Effect()&&drain3.m_primList.size()==3
+            &&rngDraws==drain3Start+15&&rngCursor==15&&g_resMgr.requests.size()==6,
+            "effect383 state0 emits three splines with five ordered RNG draws each");
+        bool drain3First=true;index=0;
+        for(CEffectPrim* prim:drain3.m_primList) {
+            drain3First=drain3First&&prim&&prim->m_type==PP_3DPARTICLESPLINE&&prim->m_duration==60
+                &&prim->m_roll==rolls2[index]&&prim->m_numSegments==7&&prim->m_red==165
+                &&prim->m_green==255&&prim->m_blue==166&&std::fabs(prim->m_size-1.1f)<0.00001f
+                &&g_resMgr.requests[index*2]==sprite&&g_resMgr.requests[index*2+1]==action;
+            ++index;
+        }
+        check(drain3First,"effect383 state0 preserves spline schedule, color, size, segments and CP949 resources");
+        for(int state=1;state<=4;++state) {
+            drain3.m_stateCnt=state;drain3.ProcessEnergyDrain3Effect();
+        }
+        check(drain3.m_primList.size()==15&&rngDraws==drain3Start+75&&rngCursor==75
+            &&g_resMgr.requests.size()==30,
+            "effect383 emits three splines at every state0 through state4");
+        drain3.m_stateCnt=5;drain3.ProcessEnergyDrain3Effect();
+        check(drain3.m_primList.size()==15&&rngDraws==drain3Start+75,
+            "effect383 state5 closes the emission gate");
+        drain3.m_stateCnt=49;drain3.ProcessEnergyDrain3Effect();
+        check(master.m_BodyLight==0&&master.tintCalls==0,"effect383 state49 precedes its actor-light window");
+        drain3.m_stateCnt=50;drain3.ProcessEnergyDrain3Effect();
+        check(master.m_BodyLight==8&&master.red==150&&master.green==150&&master.blue==250,
+            "effect383 state50 begins actor tint and sets body-light bit3");
+        drain3.m_stateCnt=80;drain3.ProcessEnergyDrain3Effect();
+        check(master.m_BodyLight==8&&master.red==90&&master.green==90&&master.blue==250,
+            "effect383 state80 remains inside its tint window");
+        drain3.m_stateCnt=81;drain3.ProcessEnergyDrain3Effect();
+        check(master.tintCalls==2&&rngDraws==drain3Start+75&&g_resMgr.requests.size()==30,
+            "effect383 state81 closes tint without new emission or RNG");
+        drain3.ClearPrims();g_world.UpdateGameObjects();
+
+        CRagEffect noMaster;noMaster.m_type=378;noMaster.m_stateCnt=0;
+        const int missingMasterDraws=rngDraws;g_resMgr.requests.clear();
+        check(noMaster.ProcessEnergyDrain2Effect()&&noMaster.ProcessEnergyDrain3Effect()
+            &&noMaster.m_primList.empty()&&rngDraws==missingMasterDraws&&g_resMgr.requests.empty(),
+            "energy-drain handlers with no master remain active without output");
+        waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     {
         const int oldRandomDraws=rngDraws;
