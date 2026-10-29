@@ -2836,3 +2836,8 @@ Added and registered `tools/tests/check_effect27_frost_diver.py`. Canonical PE `
 ## WP5 CRagEffect FrostDiver2 effect28 source checkpoint - 2026-10-29
 
 Added and registered `tools/tests/check_effect28_frost_diver2.py`. Canonical PE `FrostDiver2` and primary Ref bodies normalize identically; PE case28 routes to the handler, and local case28 enters the shared legacy branch and calls `ApplyFrostDiver2`. The comparator verifies frame-zero-only execution, stored-origin horizontal wave before the eight-spike burst, six per-spike ordered random draws, distinct radial/size/height/latitude ranges, retained launch rotation, alpha200 and exact ice texture. Existing lifecycle assertions cover all 48 burst draws, wave coordinates/order, no repeated emission/audio, stored origin, and shared spike update behavior. Focused CTest and full Release parity CTest passed 404/404. No runtime behavior changed.
+
+
+## WP5 CRagEffect IceArrow effect26 source checkpoint - 2026-10-29
+
+Added and registered `tools/tests/check_effect26_ice_arrow.py`. Canonical PE `IceArrow` and primary Ref bodies normalize identically; PE case26 routes to the handler, and local case26 enters `ProcessEffectFrameLegacy` and calls `ApplyIceArrow`. The comparator checks frame12 randomized wave/count order, strict projectile cadence and count gate, ordered spawn/aim draws, source ice-arrow profile/texture, and one-shot blue impact ring. Existing lifecycle assertions cover wave coordinates, collision threshold and reset, parent displacement, impact consumption and later projectile boundaries. Focused CTest and full Release parity CTest passed 405/405. No runtime behavior changed.
