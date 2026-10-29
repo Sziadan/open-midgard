@@ -4830,3 +4830,7 @@ Effect630 variant15 now has direct runtime coverage for both RNG action paths (d
 ## WP5 Effect_SPR lifecycle — effect637 variant20 — 2026-10-29
 
 Effect637 state0 spawns variant20 once with exact PE-backed assets; state1 is silent; state10 emits its delayed wave once without another particle, resource request, or RNG; state11 remains quiet. The fixture checker compares SPR/ACT/wave strings against PE addresses `0x71CFBC/0x71CFA4/0x719B40`. Raw wave bytes at `0x719B40`: `65 66 66 65 63 74 5C B5 A5 BD BA C6 E4 B6 F3 B5 B5 2E 77 61 76`. PE and primary Ref mapping agree; PE asset bytes supersede the secondary Ref path names. Focused checks pass2/2; full VS17 Release parity CTest passes434/434. No rendered visual parity is claimed.
+
+## WP5 Effect_SPR lifecycle — effect638 variant21 — 2026-10-29
+
+Effect638 variant21 now has direct runtime coverage for its one-state-zero PP_3DPARTICLE setup, repeat animation profile, no-RNG/no-wave path, and state1 spawn gate. Fixture SPR/ACT bytes are compared with PE VAs `0x71CF88/0x71CF6C`; PE and primary Ref callers agree on variant21. PE asset names remain authoritative over secondary Ref `misc\\...` spellings. No rendered visual acceptance is claimed.
