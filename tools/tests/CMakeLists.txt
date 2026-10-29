@@ -155,6 +155,26 @@ add_executable(forced_motion_checks ForcedMotionTests.cpp)
 target_compile_features(forced_motion_checks PRIVATE cxx_std_17)
 target_include_directories(forced_motion_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 add_test(NAME forced_motion_checks COMMAND forced_motion_checks)
+extract_body(blade_stop_packet_handler "${packet_source}"
+    "void HandleBladeStop(CGameMode& mode, const PacketView& packet)" "void HandleIgnorePacket(")
+extract_body(blade_stop_force_animation "${actor_source}"
+    "void CRenderObject::SetForceAnimation(" "void CRenderObject::SetForceAnimation2(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/BladeStopIntegrationBodies.inc"
+    "${skill_packet_actor_lookup}\n${blade_stop_packet_handler}\n${blade_stop_force_animation}\n${motion_body}")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    ../../src/gamemode/GameModePacket.cpp ../../src/world/GameActor.cpp)
+add_executable(blade_stop_integration_checks BladeStopIntegrationTests.cpp)
+target_compile_features(blade_stop_integration_checks PRIVATE cxx_std_17)
+target_include_directories(blade_stop_integration_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME blade_stop_integration_checks COMMAND blade_stop_integration_checks)
+add_test(NAME blade_stop_integration_source_check
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_blade_stop_integration.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../src/gamemode/GameModePacket.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/GameModePacket.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../src/world/GameActor.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/GameActor.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../HighPriest.exe.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/BladeStopIntegrationTests.cpp")
 
 file(READ "../../src/gamemode/GameModePacket.cpp" skill_message_source)
 extract_body(skill_message_handler "${skill_message_source}" "void HandleSkillMessage(CGameMode&, const PacketView& packet)" "bool SessionIsAttack(")

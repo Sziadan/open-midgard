@@ -71,3 +71,5 @@ Latest WP7 resurrection checkpoint: production `CGameActor::SendMsg` case98 is i
 Latest WP7 recovery-number checkpoint: recovery message88 now flows through the exact production actor receiver and `MakeDamageNumber` body into a capture sink. HP/SP values, green/blue colors, kind114, argument roles and clamp bounds are checked; digit/font rendering is not covered.
 
 Latest WP7 combo-delay checkpoint: deterministic 0x01D2 AID42 duration123 now flows through the production packet handler/session store into the exact skill272 branch and production force-animation deadline body. At tick1000, the deadline is1123 and effects262/263/273 launch in source order. Pose rendering and input acceptance remain unverified.
+
+Latest WP7 Blade Stop checkpoint: 0x01D1 now flows through the production handler and forced-motion state machine under a deterministic clock, checking self pose frames/deadline, target freeze/tint, and release for both actors. Rendered pose and visual acceptance remain unverified.
