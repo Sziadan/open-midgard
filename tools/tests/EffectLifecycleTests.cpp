@@ -234,6 +234,7 @@ bool TryPlayEffectWaveAt(const vector3d& soundPos, const char* name) {
 constexpr int kPrimTypeBottom=PP_BOTTOM;
 constexpr int kPrimTypePoison=PP_POISON;
 constexpr int kPrimTypeThrowItem=PP_THROWITEM;
+constexpr int kPrimTypeRectUp=PP_RECT_UP;
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
 void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
@@ -742,6 +743,7 @@ struct CRagEffect : CGameObject {
     void ApplyPoison(int variant);
     void ApplyThrowItem(const char*,int);
     bool ProcessThrowItemEffect();
+    void ApplyBottomMagnus(const char*,int);
     bool ProcessDamageNumberEffects();
     void SpawnBlueFall(int, int);
     bool ProcessBeginAsura1_467();
@@ -14640,6 +14642,35 @@ int main()
             &&g_texMgr.requests.size()==requests&&rngDraws==draws&&waveCalls.empty(),
             "effect541 later state repositions existing item without duplicate launch or resource request");
         effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();
+    }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        CRagEffect effect;effect.m_type=405;effect.m_stateCnt=0;effect.m_duration=73;effect.m_master=&master;
+        rngValues={123};rngCursor=0;g_texMgr.requests.clear();waveCalls.clear();const int draws=rngDraws;
+        effect.ApplyBottomMagnus("effect\\ring_white.tga",2);
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_RECT_UP&&prim->m_renderFlag==5
+            &&prim->m_duration==73&&prim->m_size==1.0f
+            &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+            &&prim->m_texture.size()==1&&g_texMgr.requests==std::vector<std::string>({"effect\\ring_white.tga"})
+            &&rngDraws==draws+1&&rngCursor==1&&waveCalls.empty(),
+            "effect405 variant2 emits one ring-white RectUp at master origin with one ordered angle draw");
+        if(prim) {
+            const EffectGi& gi=prim->m_gi[0];
+            check(gi.life==1&&gi.process==0&&gi.fullDisplayAngle==123&&gi.rotStart==0
+                &&gi.maxHeight==32.0f&&gi.alphaB==30&&gi.alphaT==29999
+                &&gi.height[0]==2.5f&&gi.height[1]==2.5f&&gi.height[2]==0.0f&&gi.height[3]==2.0f
+                &&prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0,
+                "effect405 variant2 preserves the PE RectUp GI profile and disabled bands");
+        } else {
+            check(false,"effect405 variant2 preserves the PE RectUp GI profile and disabled bands");
+        }
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();
+        const int gateDraws=rngDraws;effect.ApplyBottomMagnus(nullptr,2);
+        effect.m_stateCnt=1;effect.ApplyBottomMagnus("effect\\ring_white.tga",2);
+        check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==gateDraws&&waveCalls.empty(),
+            "effect405 null-texture and nonzero-state gates suppress launch, resource and RNG");
+        rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

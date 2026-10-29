@@ -13,6 +13,7 @@ REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
 REF2 = (ROOT / "Ref/RagEffect2.cpp").read_text(encoding="latin-1")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 ROUTE = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
+LIFECYCLE = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
 
 
 def function_body(source, signature):
@@ -75,5 +76,15 @@ image = ExeImage(ROOT / "HighPriest.exe")
 resource = image.read_cstring_at(0x719480)
 if resource is None or resource.raw != b"effect\\ring_white.tga":
     raise AssertionError("PE effect405 ring-white resource bytes changed")
+
+if 'effect.ApplyBottomMagnus("effect\\\\ring_white.tga",2)' not in LIFECYCLE:
+    raise AssertionError("effect405 variant2 lifecycle fixture does not invoke the production helper")
+for token in (
+    "effect405 variant2 emits one ring-white RectUp at master origin",
+    "effect405 variant2 preserves the PE RectUp GI profile and disabled bands",
+    "effect405 null-texture and nonzero-state gates suppress launch",
+):
+    if token not in LIFECYCLE:
+        raise AssertionError(f"effect405 lifecycle assertion missing: {token}")
 
 print("effect405 parity passed: PE-only caller provenance, PE/Ref helper, local variant2 route/profile and exact resource")
