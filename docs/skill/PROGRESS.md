@@ -2182,3 +2182,7 @@ Compared the shared PE terminal STR caller, PE/primary-Ref Init mappings, exact 
 ## WP5C effect135 IceCrash — 2026-10-29
 
 Compared PE's generic STR-only caller group, PE/primary-Ref Init mappings, exact executable resource bytes and local route. Effect135 maps to `IceCrash.str` at VA `0x71AE7C`; its PE caller jumps directly to the shared `ProcessEZ2STR(0,-80,0)` tail and propagates completion. Local source-parity routing matches. Existing STR-only lifecycle coverage already exercises effect135 for missing, active, moving-master and exhausted clip states; added a dedicated source comparator. Release parity build and complete CTest pass293/293. No production behavior change.
+
+## WP5C effect136 SlowP — 2026-10-29
+
+Compared PE’s case136 shared `LABEL_99` caller, PE/primary-Ref Init mappings, exact executable string bytes and local route. It maps to `slowp.str` at VA `0x71AC14`; PE calls `ProcessEZ2STR(0,-80,0)` and discards its result. The local case likewise ignores completion and returns true. Existing lifecycle coverage checks the effect continues after missing STR. Added a registered source comparator; Release parity build and complete Release CTest pass294/294.
