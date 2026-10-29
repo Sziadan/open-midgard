@@ -3858,3 +3858,7 @@ Added `check_effect156_job_change.py`, registered as `effect156_job_change_sourc
 ## WP5C effect157 LevelUP
 
 Added `check_effect157_level_up.py`, registered as `effect157_level_up_source_check`. PE and primary Ref Init case157 directly select `LevelUP.str`; local catalog/STR rows agree, and exact PE bytes verify VA `0x71AD48`. PE's generic STR-only case group and local `ProcessEZ2STR` route match. Existing lifecycle coverage includes effect157. Decimal157 remains separate from Entry2 effect0x158 (decimal344). Release parity build and full CTest pass302/302. No production behavior change.
+
+## WP5C effect197 Sleep
+
+Added `check_effect197_sleep.py`, registered as `effect197_sleep_source_check`. PE and primary Ref Init case197 directly select `sleep.str`; local catalog/STR rows agree, and exact PE bytes verify VA `0x71AB88`. PE's generic STR-only case group and local `ProcessEZ2STR` route match. The generated attacked-effect table contains effect197 and `GameActorMsgHandler` reads that table before resolving the target effect. Existing lifecycle coverage includes effect197. Release parity build and full CTest pass303/303. No production behavior change.
