@@ -11548,6 +11548,17 @@ int main()
     {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=603;effect.m_master=&master;effect.m_effectPos={7,8,9};
+        effect.m_iCurLayer=1;effect.m_cEndLayer=1;waveCalls.clear();
+        const int draws=rngDraws;
+        check(!effect.ProcessTier3StrEffect()&&waveCalls.empty()&&rngDraws==draws
+            &&effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9,
+            "effect603 has no per-frame cue or position copy and propagates exhausted STR completion");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         CRagEffect effect;effect.m_type=608;effect.m_master=&master;
         effect.m_effectPos={7,8,9};waveCalls.clear();
         const int draws=rngDraws;
