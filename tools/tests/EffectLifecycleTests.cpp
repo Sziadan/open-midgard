@@ -12953,6 +12953,49 @@ int main()
         g_world.m_player=oldPlayer;
     }
     {
+        CRenderObject master,listener;master.m_pos={300,400,500};listener.m_pos={100,900,200};master.m_BodySin5=44;
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        gameMode.messages=0;gameMode.messageIds.clear();
+        CRagEffect effect;effect.m_type=666;effect.m_stateCnt=0;effect.m_duration=79;effect.m_master=&master;
+        const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xEE\xBD\xBA\xC4\xF9\xC0\xCC\xC5\xA9.spr";
+        const std::string expectedAct="\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xEE\xBD\xBA\xC4\xF9\xC0\xCC\xC5\xA9.act";
+        const std::string expectedWave="effect\\earth_quake.wav";
+        rngValues={};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        check(effect.ProcessEffectSpriteProduction(31),"effect666 production Effect_SPR variant31 helper remains active");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_effectPos.x==300&&effect.m_effectPos.y==400&&effect.m_effectPos.z==500
+            &&effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+            &&prim->m_pos.x==300&&prim->m_pos.y==400&&prim->m_pos.z==500&&prim->m_duration==79
+            &&prim->m_deltaPos2.y==0.0f&&prim->m_renderFlag==0x201&&prim->m_pattern==0x200
+            &&prim->m_animSpeed==4&&!prim->m_repeatAnim&&prim->m_spriteAction==0&&prim->m_curMotion==0
+            &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+            &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+            &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==300
+            &&prim->m_segments[0].pos.y==400&&prim->m_segments[0].pos.z==500
+            &&waveCalls.size()==1&&waveCalls[0].name==expectedWave
+            &&waveCalls[0].x==200&&waveCalls[0].y==0&&waveCalls[0].z==300
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&master.m_BodySin5==44&&gameMode.messages==1&&gameMode.messageIds==std::vector<int>{135}
+            &&rngDraws==draws&&rngCursor==0,
+            "effect666 state0 emits variant31 and exact listener-relative quake wave then sends message135 without RNG");
+        const int states[]={34,35,36,69,70,71};
+        const int expectedMessages[]={1,2,2,2,3,3};
+        const size_t requests=g_resMgr.requests.size();
+        for(size_t i=0;i<6;++i){
+            effect.m_stateCnt=states[i];
+            check(effect.ProcessEffectSpriteProduction(31)&&effect.m_primList.size()==1
+                &&g_resMgr.requests.size()==requests&&waveCalls.size()==1
+                &&master.m_BodySin5==44
+                &&gameMode.messages==expectedMessages[i]
+                &&gameMode.messageIds.size()==static_cast<size_t>(expectedMessages[i])
+                &&std::all_of(gameMode.messageIds.begin(),gameMode.messageIds.end(),[](int message){return message==135;})
+                &&rngDraws==draws&&rngCursor==0,
+                "effect666 sends message135 only at states35/70 and does not repeat particle/wave/resource/RNG");
+        }
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;waveCalls.clear();
+        g_resMgr.requests.clear();g_world.m_player=oldPlayer;
+    }
+    {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         CRagEffect effect;effect.m_type=609;effect.m_master=&master;

@@ -4862,3 +4862,7 @@ The direct fixture exercises +X/+Z/−X/−Z camera-relative action mapping at c
 ## WP5 Effect_SPR lifecycle — effect648 variant30 — 2026-10-29
 
 The fixture covers quiet pre-cue states0/24, one literal-origin wave at state25, no repeat at26, the particle launch at state30, and no duplicate output at31. SPR/ACT/wave literals bind to PE VAs `0x71CDDC/0x71CDC4/0x719B80`; the comparator checks PE/primary-Ref caller state25 copy/wave/helper order and exact origin playback params. This is local lifecycle/audio-call/payload coverage only, not audible or rendered output acceptance.
+
+## WP5 Effect_SPR lifecycle — effect666 variant31 — 2026-10-29
+
+Fixture exercises effect666 across state0/34/35/36/69/70/71. It checks the frame0 listener-relative earthquake wave and particle, then SendMsg135 exactly at states0/35/70 with no repeated particle/resources/wave/RNG at later states. SPR/ACT/wave literals bind to PE VAs `0x71CDAC/0x71CD94/0x719C18`; PE/primary Ref case0x29A orders state0 origin copy→wave→variant31, then sends mode message135 only at0/35/70. This matches the examined PE/Ref caller; it does not claim audible or rendered output.

@@ -384,6 +384,35 @@ for label, dispatch in (("PE", pe_dispatch), ("Ref", ref_dispatch)):
         raise AssertionError(f"{label} effect648 state25 position/wave/variant order changed")
     if not re.search(r"PlayWave\(aEffect_58,\s*0\.0,\s*0\.0,\s*0\.0,\s*250,\s*40,\s*1\.0\)", branch):
         raise AssertionError(f"{label} effect648 origin wave parameters changed")
+effect666_fixture = re.search(r"CRenderObject master,listener;master\.m_pos=\{300,400,500\};listener\.m_pos=\{100,900,200\};master\.m_BodySin5=44;(.*?)(?=\n    })", LIFECYCLE, re.S)
+if effect666_fixture is None or "effect.m_type=666" not in effect666_fixture.group(1) or "ProcessEffectSpriteProduction(31)" not in effect666_fixture.group(1):
+    raise AssertionError("effect666 direct production variant31 lifecycle fixture disappeared")
+for name, expected, required_va in (("expectedSpr", image.read_cstring_at(0x71CDAC).raw, 0x71CDAC),
+                                   ("expectedAct", image.read_cstring_at(0x71CD94).raw, 0x71CD94),
+                                   ("expectedWave", image.read_cstring_at(0x719C18).raw, 0x719C18)):
+    literal = re.search(rf"const std::string {name}=(\"(?:\\.|[^\"\\])*\")", effect666_fixture.group(1))
+    if literal is None or ast.literal_eval(literal.group(1)).encode("latin-1") != expected:
+        raise AssertionError(f"effect666 fixture {name} differs from PE bytes at {required_va:#x}")
+for token in ("m_duration==79", "m_deltaPos2.y==0.0f", "m_renderFlag==0x201", "m_pattern==0x200",
+              "m_animSpeed==4", "!prim->m_repeatAnim", "m_numSegments==1", "waveCalls[0].x==200",
+              "waveCalls[0].y==0", "waveCalls[0].z==300", "gameMode.messageIds==std::vector<int>{135}",
+              "const int states[]={34,35,36,69,70,71}", "const int expectedMessages[]={1,2,2,2,3,3}",
+              "master.m_BodySin5==44", "ProcessEffectSpriteProduction(31)"):
+    if token not in effect666_fixture.group(1):
+        raise AssertionError(f"effect666 lifecycle assertion missing {token}")
+for label, dispatch in (("PE", pe_dispatch), ("Ref", ref_dispatch)):
+    caller = re.search(r"case\s+0x29A:(.*?)(?=case\s+0x[0-9A-F]+:|$)", dispatch, re.S)
+    if caller is None:
+        raise AssertionError(f"{label} effect666 caller branch is missing")
+    branch = caller.group(1)
+    ordered = ["if ( !this->m_stateCnt )", "this->m_pos = this->m_master->m_pos",
+               "PlayWave(aEffectEarthQua", "Effect_SPR(this, 31)", "v15 = this->m_stateCnt",
+               "v15 && v15 != 35 && v15 != 70", "SendMsg(v98, 135, 0, 0, 0)"]
+    offsets = [branch.find(token) for token in ordered]
+    if any(offset < 0 for offset in offsets) or offsets != sorted(offsets):
+        raise AssertionError(f"{label} effect666 origin/wave/sprite/message gate order changed")
+    if not re.search(r"PlayWave\(aEffectEarthQua,\s*xb,\s*0\.0,\s*zb,\s*250,\s*40,\s*1\.0\)", branch):
+        raise AssertionError(f"{label} effect666 quake wave coordinates/parameters changed")
 
 # Priority 5P effect-sprite callers 630/632/633/634 and their RNG variants.
 for effect_id, variant, wave_symbol in ((630, 15, "aEffect_155"),

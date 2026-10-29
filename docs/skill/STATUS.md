@@ -43,3 +43,5 @@ Effect643 Effect_SPR variant26 now has direct state0/state1/state20/state21 life
 Effect645 Effect_SPR variant28 now has four-direction action-selection and state0/state1 lifecycle coverage at camera longitude0. Resources are bound to PE VAs `0x71CE30/0x71CE1C`; PE/primary-Ref caller mapping agrees. This does not claim camera presentation or rendered visual acceptance; see its progress entry.
 
 Effect648 Effect_SPR variant30 now has state0/24/25/26/30/31 lifecycle coverage for its state25 origin wave and delayed frame30 particle. Resources/wave are bound to PE VAs `0x71CDDC/0x71CDC4/0x719B80`; PE/primary-Ref caller ordering agrees. No audible or visual output acceptance is claimed; see its progress entry.
+
+Effect666 Effect_SPR variant31 now has direct state0/34/35/36/69/70/71 lifecycle coverage for its sprite, quake wave and SendMsg135 gates. Resources/wave are bound to PE VAs `0x71CDAC/0x71CD94/0x719C18`; PE/primary-Ref caller ordering agrees. BodySin5 remains unchanged in this route. No audible/visual output acceptance is claimed; see its progress entry.
