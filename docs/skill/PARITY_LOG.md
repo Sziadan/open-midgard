@@ -4281,3 +4281,6 @@ WP5F effects222/252 Defender: source mapping confirms black/yellow PE and second
 WP5F effects312/313/320/325: PE and primary-Ref caller mappings match across Heal/Heal2 variants0/1. Added semantic helper checks against secondary Ref and local routes/schedules. Exact known assets are pinned; no dedicated lifecycle fixture was added. Full Release CTest passed 375/375.
 
 WP5F effect314 Exit2: PE and primary Ref caller branches and PE/secondary-Ref helper bodies match. Fixed per-frame origin refresh and zero vertical wave offset; lifecycle checks cover wave position, four GI bands and later master movement. Full Release CTest passed 376/376.
+
+WP5F actor-light effects417/419–427/458: compared PE inline bit gates and timing profiles with local ApplyActorLight routes; confirmed generated routes and generator membership, with no primary-Ref caller branches. Focused CTest passed 1/1; full Release CTest passed 376/376 on the preceding effect314 checkpoint.
+

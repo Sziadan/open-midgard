@@ -345,4 +345,34 @@ require("case 375" not in REF and "case 379" not in REF and "case 382" not in RE
 require("case 387" not in REF and "case 396" not in REF,
         "primary Ref gained an explicit actor-light case; update recorded provenance")
 
-print("effects375/379/382/385/387/396/414/500/521/538/542/544/548/549/550/625/626/655/656/667 actor-light source parity passed; PE/Ref callers and local guards checked")
+# These later PE cases have no primary-Ref caller branches; compare their inline
+# profiles to the local consolidated helper and generated dispatch table.
+late_profiles = {
+    417: ("m_BodyLight & 0x100", "m_BodyLight += 256", "m_stateCnt < 15", "m_BodyTime = this->m_stateCnt"),
+    419: ("m_BodyLight & 0x200", "m_BodyLight += 512"),
+    420: ("m_BodyLight & 0x10", "m_BodyLight += 16", "m_stateCnt <= 45", "m_BodySin3 = this->m_stateCnt"),
+    421: ("m_BodyLight & 0x10", "m_BodyLight += 16", "m_BodySin3 = 45"),
+    422: ("m_BodyLight & 0x400", "m_BodyLight += 1024", "m_stateCnt <= 45", "m_BodySin4 = this->m_stateCnt"),
+    423: ("m_BodyLight & 0x400", "m_BodyLight += 1024", "m_BodySin4 = 45"),
+    424: ("m_BodyLight & 0x800", "m_BodyLight += 2048", "m_stateCnt >= 200", "m_BodySin5 = -56"),
+    425: ("m_stateCnt >= 30", "m_BodyTime = LOWORD(this->m_stateCnt) - 30"),
+    426: ("m_BodyLight & 0x2000", "m_BodyLight += 0x2000", "m_BodyTime = this->m_stateCnt"),
+    427: ("m_BodyLight & 0x800", "m_BodyLight += 2048", "m_stateCnt < 150", "m_BodyTime = v96 + 50"),
+    458: ("m_BodyLight & 0x2000", "m_BodyLight += 0x2000", "m_BodyTime = this->m_stateCnt"),
+}
+for effect_id, profile in late_profiles.items():
+    require(f"case {effect_id}:" not in REF,
+            f"primary Ref gained effect{effect_id}; update its source provenance")
+    require(all(token in PE for token in profile),
+            f"PE effect{effect_id} actor-light profile changed")
+    require(f"case {effect_id}: ApplyActorLight(); return true;" in DISPATCH,
+            f"local effect{effect_id} dispatcher route missing")
+    require(actor_light_ids is not None and re.search(rf"\b{effect_id}\b", actor_light_ids.group(1)),
+            f"effect{effect_id} missing from generator actor-light group")
+    require(re.search(rf"case {effect_id}:", helper.group(1)),
+            f"local ApplyActorLight effect{effect_id} profile missing")
+
+require("case 426:\n    case 458:" in helper.group(1),
+        "local effect426/458 shared profile changed")
+
+print("actor-light source parity passed for effects375/379/382/385/387/396/414/417/419-427/458/500/521/538/542/544/548/549/550/625/626/655/656/667")

@@ -2659,3 +2659,9 @@ Added and registered `check_effects312_313_320_325_heal.py`. It compares PE and 
 ## WP5F effect314 Exit2 origin and wave parity — 2026-10-29
 
 PE and secondary Ref Exit2 refresh the effect position on every call before the state-zero gate. Local `ApplyExit2` previously returned before refreshing effect/cached positions on later frames; moved origin refresh before the gate. Lifecycle coverage exposed a second mismatch: PE passes zero vertical wave offset, while `TryPlayEffectWaveAt(origin, ...)` used listener-relative Y. The implementation now matches the source by aligning wave Y to the listener before dispatch, preserving X/Z offsets. Added `check_effect314_exit2.py` for PE/Ref helper equality, caller, exact resource bytes, local routing and refresh/wave behavior. Release build passed; full Release CTest passed 376/376.
+
+
+## WP5F actor-light effects417/419–427/458 — 2026-10-29
+
+Extended the existing actor-light comparator across eleven additional PE inline cases that have no primary-Ref caller branches. It checks PE bit/timing profiles against the local ApplyActorLight helper, generated dispatcher routes and generator group membership. The focused registered CTest passed 1/1; full Release CTest remains at 376/376 from the effect314 checkpoint.
+
