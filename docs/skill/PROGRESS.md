@@ -2725,3 +2725,7 @@ Added and registered `tools/tests/check_prim3dcylinderhalf_initializer.py`. PE a
 
 Resolved the primary Ref duplicate-label defect against canonical PE case `0x0D` and older full Ref at `Ref/dhxj/RagEffectPrim.cpp:1675`. Local `PP_3DCYLINDER` now uses the full update path, including accelerated angular speeds, pre-matrix angular integration, trailing longitude advance, movement, dimensions, alpha and animation behavior. `PP_3DCYLINDERHALF` remains on its separate updater. Expanded lifecycle assertions and the source comparator cover the route and ordering. Direct comparator passed; focused CTest passed 2/2; full Release CTest passed 386/386. The app target compiled `ro_world` but remains blocked later by `WinMain.cpp` including unavailable `arpa/inet.h`; investigation shows the include belongs to the non-Windows branch in `Connection.h`, so this failure needs separate target/configuration diagnosis.
 
+## WP5 CEffectPrim Render3DCircle caller audit - 2026-10-29
+
+Expanded the source comparator across all 16 canonical PE `PP_3DCIRCLE` launches in 14 master effects. MagnumBreak (17) and WarpZone (61) each launch two circles; each launch has segment initialization. The exact caller master set equals `UsesReferenceCircle`, so there is no missing canonical PE master to add to the specialized renderer. Direct and focused CTest passed; no runtime changes were needed. Generic circle rendering differences remain for local/noncanonical aliases and are still open.
+

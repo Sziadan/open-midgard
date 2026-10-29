@@ -4364,3 +4364,9 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - Routed local `PP_3DCYLINDER` through the full updater while keeping `PP_3DCYLINDERHALF` on its half-cylinder updater. Lifecycle coverage now checks angular order, motion, size/height integration, fade, alpha, animation behavior and shared tick. Updated Portal, Teleportation and HealSP expectations to canonical full-cylinder results.
 - Direct comparator passed; focused CTest passed 2/2; full Release CTest passed 386/386. The Release application build compiled `ro_world` but failed later in `WinMain.cpp` because `arpa/inet.h` was unavailable; `Connection.h` correctly guards that Unix include behind `#else`, so this checkpoint did not alter platform headers.
 
+## WP5 CEffectPrim Render3DCircle caller coverage audit - 2026-10-29
+
+- Expanded `tools/tests/check_prim3dcircle_render.py` to inventory the complete canonical PE caller set: 16 `PP_3DCIRCLE` launches across 14 effects, with two launches each in MagnumBreak (17) and WarpZone (61). Every launch has corresponding `CEffectPrim::InitSegment` setup.
+- Confirmed all canonical master IDs exactly match `UsesReferenceCircle`; no additional PE caller is falling through the generic circle renderer. Existing generic-route differences therefore concern local/noncanonical aliases and other remaining scope, not an omitted canonical PE master.
+- No runtime route change was needed. Direct comparator and focused CTest passed. The full CTest suite remains at 386 tests; the complete suite had passed immediately before this comparator-only expansion.
+

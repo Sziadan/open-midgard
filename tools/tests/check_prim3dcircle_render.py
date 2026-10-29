@@ -4,7 +4,8 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[2]
-PE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
+PE_SOURCE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
+PE = PE_SOURCE
 REF = (ROOT / "Ref/RagEffectPrim.cpp").read_text(encoding="cp1252", errors="replace")
 REF_DISPATCH = (ROOT / "Ref/dhxj/RagEffectPrim.cpp").read_text(encoding="cp1252", errors="replace")
 CURRENT = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
@@ -53,6 +54,44 @@ actual_masters = {int(value) for value in re.findall(r"GetEffectType\(\)\s*==\s*
 check("local source-selected subset uses the exact explicit master-effect ID set",
       actual_masters == expected_masters and "m_type == PP_3DCIRCLE" in LOCAL_PREDICATE
       and "m_master" in LOCAL_PREDICATE)
+
+# Every canonical PE circle launch is associated with one of these effect
+# handlers. Keep this complete so a new caller cannot silently fall through to
+# the generic circle renderer.
+pe_circle_callers = (
+    (8, "Warp", "void", 1),
+    (9, "Enhance", "void", 1),
+    (17, "MagnumBreak", "void", 2),
+    (26, "IceArrow", "void", 1),
+    (31, "FireArrow", "void", 1),
+    (35, "ReadyPortal", "void", 1),
+    (36, "Portal", "void", 1),
+    (42, "Blessing", "void", 1),
+    (48, "SprayPond", "void", 1),
+    (61, "WarpZone", "void", 2),
+    (62, "Sightrasher", "void", 1),
+    (73, "BowlingBash", "void", 1),
+    (170, "CartRevolution", "unsigned __int8", 1),
+    (321, "WarpZone2", "void", 1),
+)
+caller_circle_count = 0
+caller_segment_count = 0
+caller_effect_ids = set()
+for effect_id, name, return_type, expected_circle_calls in pe_circle_callers:
+    signature = f"{return_type} __thiscall CRagEffect::{name}(CRagEffect *this"
+    signature_at = PE_SOURCE.rindex(signature)
+    caller_body = body(PE_SOURCE, signature, signature_at)
+    circle_calls = len(re.findall(r"LaunchEffectPrim\(this,\s*PP_3DCIRCLE\b", caller_body))
+    segment_calls = len(re.findall(r"CEffectPrim::InitSegment\(", caller_body))
+    check(f"canonical effect {effect_id} {name} creates {expected_circle_calls} circles with initialized segment state",
+          circle_calls == expected_circle_calls and segment_calls >= circle_calls)
+    caller_circle_count += circle_calls
+    caller_segment_count += segment_calls
+    caller_effect_ids.add(effect_id)
+check("complete canonical PE circle caller set matches the specialized master set",
+      caller_effect_ids == expected_masters
+      and caller_circle_count == 16 and caller_segment_count >= caller_circle_count)
+
 ref_effects = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 for master, pe_signature, local_signature, segment_token in (
     (8, "void __thiscall CRagEffect::Warp(CRagEffect *this)", "void CRagEffect::SpawnWarp8()", "InitReferenceSegments"),

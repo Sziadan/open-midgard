@@ -824,3 +824,7 @@ Source-compared `Render3DSphere` across `HighPriest.exe.c` and primary `Ref/RagE
 ## WP5 CEffectPrim checkpoint — Prim3DCylinder update (2026-10-29)
 
 Completed full update parity for primitive type `PP_3DCYLINDER` (`0x0D`). Canonical PE and older full Ref show angular speed acceleration, angle integration before matrix creation, a second longitude increment after movement, dimension updates, alpha processing and animation behavior. The primary Ref label at `Ref/RagEffectPrim.cpp:285` is a duplicate half-cylinder body; this source defect is documented in `docs/skill/MISMATCHES.md`. The local full cylinder and half-cylinder routes are now separate. Lifecycle/source checks pass and the full Release CTest suite passes 386/386. The app target compiled its `ro_world` library, then failed in `WinMain.cpp` on unavailable `arpa/inet.h`; resolve this independently as a build configuration issue while continuing the WP5 source audit.
+
+## WP5 CEffectPrim checkpoint — Render3DCircle caller audit (2026-10-29)
+
+Audited all canonical PE callers of `PP_3DCIRCLE`: 16 launches across 14 master effects, with every launch initializing segment state. The exact effect ID set matches the existing `UsesReferenceCircle` specialized route; no canonical circle caller is omitted. Expanded `tools/tests/check_prim3dcircle_render.py` to enforce this map and the duplicate launch counts for effects 17 and 61. Direct and focused source checks pass. No runtime code change was needed; generic circle rendering for local/noncanonical aliases remains separately open.
