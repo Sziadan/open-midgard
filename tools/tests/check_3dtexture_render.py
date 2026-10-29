@@ -73,12 +73,35 @@ for effect_id, method in direct_callers.items():
         routed = re.search(rf"case\s+{effect_id}\s*:\s*(?:result\s*=\s*)?CRagEffect::{method}\(this(?:,\s*\d+)*\)", pe_process) is not None
     check(f"PE OnProcess effect {effect_id} launches through {method}", routed)
 
+# Pin every canonical PE launch site, including shared helpers and defined
+# helpers which have no OnProcess caller. This prevents the route predicate
+# from silently omitting a newly discovered source caller.
+pe_launch_counts = {
+    "OnProcess": 1, "GlassWall": 2, "SprayPond": 2, "LockOn": 2,
+    "TurnUndead": 1, "Yufitel": 2, "YufitelHit": 2, "Flasher": 1,
+    "Bottom": 2, "Bottom2": 2, "WaterBall": 1, "FireIvy": 1,
+    "Detecting": 1, "TopRank": 1, "Party": 1, "TetraVoltex": 1,
+    "CurseAttack": 1,
+}
+check("canonical PE PP_3DTEXTURE launch total is 24",
+      len(re.findall(r"LaunchEffectPrim\(this,\s*PP_3DTEXTURE,", PE)) == 24)
+for method, expected_count in pe_launch_counts.items():
+    definition = re.search(
+        rf"(?m)^(?:[\w]+\s+)+__thiscall CRagEffect::{method}\(CRagEffect \*this[^\n]*\)\n\{{", PE)
+    check(f"PE {method} definition exists for the caller inventory", definition is not None)
+    method_body = body(PE, definition.group(0).splitlines()[0], definition.start())
+    actual_count = len(re.findall(r"LaunchEffectPrim\(this,\s*PP_3DTEXTURE,", method_body))
+    check(f"PE {method} has exactly {expected_count} PP_3DTEXTURE launch site(s)",
+          actual_count == expected_count)
+
 local_effects = {int(value) for value in re.findall(r"m_master->GetEffectType\(\)\s*==\s*(\d+)", PREDICATE)}
 check("local texture route covers exactly all 16 dispatched PE launch effects",
       local_effects == set(direct_callers))
 for orphan in ("TetraVoltex", "CurseAttack"):
     calls = re.findall(rf"CRagEffect::{orphan}\(this\)", PE)
     check(f"PE {orphan} has no invocation callsite and remains outside the route gate", not calls)
+check("live texture route master set equals the 16 canonical dispatched effects",
+      local_effects == set(direct_callers))
 
 check("source ordinary and pattern 0x80/0x8 branches map to local lower/upper corner coordinates",
       "if ( (m_pattern & 0x80u) == 0 )" in PE_RENDER

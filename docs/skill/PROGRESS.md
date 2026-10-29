@@ -2745,3 +2745,7 @@ Expanded the 2D circle comparator to map all five canonical PE/Ref/local callers
 ## WP5 CEffectPrim Render2DQuad ColdHit caller audit - 2026-10-29
 
 Expanded `tools/tests/check_prim2dquad_render.py` to bind the one canonical PE and primary-Ref `PP_2DQUAD` construction in `ColdHit` to the local effect51 route. PE `OnProcess` case51 calls `ColdHit`; local generated dispatch case51 enters `ProcessEffectFrameLegacy`, whose case51 invokes `SpawnColdHit`. The primary Ref contains the `ColdHit` handler body but no dispatcher call, so dispatcher parity is not claimed. Focused source check passes; no runtime route change was needed.
+
+## WP5 CEffectPrim Render3DTexture caller coverage audit - 2026-10-29
+
+Expanded `tools/tests/check_3dtexture_render.py` to pin all 24 canonical PE `PP_3DTEXTURE` launch sites by enclosing method, including the inline effect196 route and 1–2 launch counts across the named effect helpers. The 16 dispatched effects remain exactly the local `UsesReferenceTexture` route set. `TetraVoltex` and `CurseAttack` each contain one launch but have no PE invocation callsite, so they remain outside the live route. Focused CTest passed; no runtime routing change was required.
