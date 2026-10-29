@@ -4100,3 +4100,7 @@ Added and registered `check_effect487_black_devil.py`. It compares complete PE/p
 ## WP5G effect488 FlowerCast source/resource parity — 2026-10-29
 
 Added and registered `check_effect488_flower_cast.py`. It checks the PE frame-5 cue, body-light bit/timing rule and ordered FlowerCasting variants, the secondary-Ref sequence, local legacy route and shared helper calls, and exact `effect\\ring_blue.tga` bytes at `0x71943C`. The PE wave symbol exposes only the `effect\\T_` prefix and its suffix remains unresolved. Focused check, elevated Release parity build and full Release CTest passed 345/345. No production behavior change.
+
+## WP5F effect385 actor-light tint parity — 2026-10-29
+
+Extended the grouped actor-light checker for effect385's inclusive state window 40–70, conditional bit-0 addition, ordered tint, generated route and primary-Ref omission. Focused check and full Release CTest passed 345/345. No production behavior change.

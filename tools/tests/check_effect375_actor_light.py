@@ -69,7 +69,27 @@ require("case 382: ApplyActorLight(); return true;" in DISPATCH,
         "local effect382 dispatcher route missing")
 require(actor_light_ids is not None and re.search(r"\b382\b", actor_light_ids.group(1)),
         "effect382 missing from generator actor-light group")
-require("case 375" not in REF and "case 379" not in REF and "case 382" not in REF,
+pe_385 = re.search(
+    r"case 385:\s*v92 = this->m_stateCnt;\s*"
+    r"if \( v92 >= 40 && v92 <= 70 \)\s*\{\s*"
+    r"if \( \(\(\*p_m_master\)->m_BodyLight & 1\) != 1 \)\s*"
+    r"\+\+\(\*p_m_master\)->m_BodyLight;\s*"
+    r"CRenderObject::SetArgb\(\*p_m_master, -1, 200, 150, 50\);\s*\}\s*break;",
+    PE,
+)
+require(pe_385 is not None, "canonical PE effect385 frame window or tint order changed")
+local_385 = re.search(
+    r"case 385:\s*if \(master != nullptr && m_stateCnt >= 40 && m_stateCnt <= 70\)\s*\{\s*"
+    r"if \(\(master->m_BodyLight & 1\) != 1\)\s*\{\s*\+\+master->m_BodyLight;\s*\}\s*"
+    r"master->SetArgb\(-1, 200, 150, 50\);\s*\}\s*break;",
+    helper.group(1),
+)
+require(local_385 is not None, "local effect385 frame window, bit gate, tint, or null-master handling changed")
+require("case 385: ApplyActorLight(); return true;" in DISPATCH,
+        "local effect385 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b385\b", actor_light_ids.group(1)),
+        "effect385 missing from generator actor-light group")
+require("case 375" not in REF and "case 379" not in REF and "case 382" not in REF and "case 385" not in REF,
         "primary Ref gained a standalone actor-light case; update recorded provenance")
 
-print("effects375/379/382 actor-light source parity passed; primary Ref has no standalone cases and local helpers guard null masters")
+print("effects375/379/382/385 actor-light source parity passed; primary Ref has no standalone cases and local helpers guard null masters")
