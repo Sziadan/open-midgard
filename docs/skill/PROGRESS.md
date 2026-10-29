@@ -2681,3 +2681,7 @@ Compared the `UNT_*` range in `Ref/eAthena_src_2011/map/skill.h` with the Ref/lo
 
 Expanded the resource-backed replay from job143 to all ten mapped trap model jobs (143-145, 147-153). Each production `0x011F` entry packet attaches its parsed RSM to a `C3dActor`, and the replay verifies model name, frame3, animation speed, block/hide/animation flags, and packet-mapped position. A matching production `0x0120` removes each actor and skill unit. Existing fixture parsing loads all referenced BMP materials. The focused asset/replay CTests pass 2/2; full replay CTest passes 102/102.
 
+## WP5 CEffectPrim Prim3DQuadHorn2 initializer - 2026-10-29
+
+Added the registered source comparator `tools/tests/check_prim3dquadhorn2.py`. The canonical PE initializer at `HighPriest.exe.c:467543` and primary Ref body at `Ref/RagEffectPrim.cpp:1988` normalize identically; readable Ref confirms the same branch structure. The comparator ties PE/Ref primitive 0x75 dispatch to local `UpdateReferenceQuadHorn2` and the existing lifecycle fixture at states 2, 5, 549, 550 and 551, including translated matrix motion and alpha processing. No runtime code change was needed.
+

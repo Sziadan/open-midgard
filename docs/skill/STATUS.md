@@ -1,5 +1,7 @@
 # Skill system status
 
+Latest WP5 source checkpoint: `Prim3DQuadHorn2` PE/primary-Ref initializer parity and PE/Ref/local dispatch are recorded in `tools/tests/check_prim3dquadhorn2.py`; its existing state 2/5/549/550/551 lifecycle fixture is bound by the comparator. No runtime code change was needed.
+
 | WP | State | Measured number | Where the number comes from | Next function / task |
 |---|---|---|---|---|
 | WP0 tooling + generated tables | done | 710 duration entries, 167 str cases, 391 PlayWave sites (19 runtime names), 693 effect dispatch rows, 0 blocked, 0 validation errors | `docs/skill/generated/WP0_VALIDATION.txt` | none |

@@ -4292,3 +4292,10 @@ WP4.8 unit IDs: enumerated all 43 eAthena third-job units 202-244 (`UNT_EPICLESI
 
 WP4.4 trap models: packet replay now covers all ten model-backed jobs, including production 0x011F attach and 0x0120 cleanup. It checks ShowModel name, frame3, speed, render flags and position. Focused checks passed 2/2; replay CTest passed 102/102.
 
+## WP5 CEffectPrim Prim3DQuadHorn2 initializer - 2026-10-29
+
+- Added `tools/tests/check_prim3dquadhorn2.py` and registered `prim3dquadhorn2_source_check` in the parity test project.
+- PE `Prim3DQuadHorn2` at `HighPriest.exe.c:467543` and primary Ref at `Ref/RagEffectPrim.cpp:1988` normalize identically. Readable Ref preserves the state-550 boundary, mod-6 branches, matrix motion, accumulated displacement and alpha processing.
+- PE and Ref dispatch route 0x75 to the initializer. Local `ProcessPrimitiveFrame` dispatches to `UpdateReferenceQuadHorn2` and continues the shared tick. Existing lifecycle checks cover states 2, 5, 549, 550 and 551, including matrix translation and alpha/state progression.
+- No production code change was needed. Comparator execution and focused validation passed: lifecycle target built successfully and CTest passed 2/2 (`effect_lifecycle_checks`, `prim3dquadhorn2_source_check`).
+
