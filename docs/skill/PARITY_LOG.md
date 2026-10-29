@@ -4653,3 +4653,8 @@ Added direct lifecycle coverage for the shared heal-wave branch of `ProcessClipW
 ## WP5 effects255–258 enemy-hit wind lifecycle — 2026-10-29
 
 Added direct lifecycle coverage for effects255–258 on the shared clip-wave path. The fixture verifies state9 has no cue or origin copy; at state10, cached origin is copied and `_enemy_hit_wind1.wav` plays with listener-relative X/Z, Y−150 and source audio parameters. Exhausted STR completion propagates false, while later state11 does not repeat audio or consume RNG/request textures. `check_effect_dispatch_source.py` confirms the PE routes, timing, wave and executable resources. Focused lifecycle passes3092 checks; comparator passes; full Release parity CTest passes428/428.
+
+
+## WP5 effects234/245 clip-wave lifecycle — 2026-10-29
+
+Added direct lifecycle checks for Sage Spell Break (234) and Holy Cross (245). Effect234 copies cached origin on state0 and plays `effect\\sage_spell breake.wav` relative to the listener; effect245 preserves its effect position and plays `effect\\cru_holy cross.wav` at literal audio origin. Both verify source parameters and propagate exhausted STR completion; later states do not repeat cues. The existing dispatcher comparator covers routes and PE resource bytes. Focused lifecycle passes3098 checks; comparator passes; full Release parity CTest passes428/428.

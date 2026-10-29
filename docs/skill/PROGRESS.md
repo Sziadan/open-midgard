@@ -3001,3 +3001,8 @@ Added direct lifecycle coverage for effects204–207 and210. The fixture verifie
 ## WP5 effects255–258 enemy-hit wind lifecycle checkpoint — 2026-10-29
 
 Added direct lifecycle coverage for effects255–258. Tests verify state9 has no cue or origin copy; state10 copies cached origin and plays _enemy_hit_wind1.wav at listener-relative X/Z and Y−150, propagating exhausted STR completion; later state11 does not repeat audio or consume RNG/request textures. The existing dispatcher comparator confirms PE routes, timing and exact resource bytes. Focused lifecycle passes3092 checks; comparator passes; full Release parity CTest passes428/428.
+
+
+## WP5 effects234/245 clip-wave lifecycle checkpoint — 2026-10-29
+
+Added direct lifecycle checks for Sage Spell Break effect234 and Holy Cross effect245. Effect234 copies cached origin and plays its exact wave relative to the listener; effect245 preserves its effect position and plays its source cue at literal origin. Both propagate exhausted STR completion, use source audio parameters, and do not replay cues on later states. The existing dispatcher comparator confirms PE routing and resource bytes. Focused lifecycle passes3098 checks; comparator passes; full Release parity CTest passes428/428.

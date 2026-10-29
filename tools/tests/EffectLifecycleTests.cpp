@@ -7190,6 +7190,44 @@ int main()
         g_world.m_player=oldPlayer;
     }
     {
+        CRenderObject listener;listener.m_pos={3,900,5};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        CRagEffect sage;sage.m_type=234;sage.m_cachedPos={15,20,35};sage.m_effectPos={1,2,3};
+        sage.m_iCurLayer=1;sage.m_cEndLayer=1;sage.m_stateCnt=1;
+        check(!sage.ProcessClipWaveStrEffect()&&waveCalls.empty()&&sage.m_effectPos.x==1,
+            "Sage Spell Break does not copy position or play its cue before state zero");
+        sage.m_stateCnt=0;
+        check(!sage.ProcessClipWaveStrEffect()&&sage.m_effectPos.x==15&&sage.m_effectPos.y==20
+            &&sage.m_effectPos.z==35&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\sage_spell breake.wav"&&waveCalls.back().x==12
+            &&waveCalls.back().y==0&&waveCalls.back().z==30&&waveCalls.back().volume==250
+            &&waveCalls.back().range==40&&waveCalls.back().frequency==1&&!sage.m_strFrameActive,
+            "Sage Spell Break copies cached origin and propagates exhausted STR after its exact state-zero cue");
+        sage.m_stateCnt=1;
+        check(!sage.ProcessClipWaveStrEffect()&&waveCalls.size()==1,
+            "Sage Spell Break does not repeat audio after state zero");
+        sage.ClearPrims();g_world.UpdateGameObjects();waveCalls.clear();
+
+        CRagEffect cross;cross.m_type=245;cross.m_effectPos={15,20,35};cross.m_cachedPos={80,90,100};
+        cross.m_iCurLayer=1;cross.m_cEndLayer=1;cross.m_stateCnt=1;
+        check(!cross.ProcessClipWaveStrEffect()&&waveCalls.empty()&&cross.m_effectPos.x==15,
+            "Holy Cross does not play its origin cue before state zero or copy cached position");
+        cross.m_stateCnt=0;
+        check(!cross.ProcessClipWaveStrEffect()&&cross.m_effectPos.x==15&&cross.m_effectPos.y==20
+            &&cross.m_effectPos.z==35&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\cru_holy cross.wav"&&waveCalls.back().x==0
+            &&waveCalls.back().y==0&&waveCalls.back().z==0&&waveCalls.back().volume==250
+            &&waveCalls.back().range==40&&waveCalls.back().frequency==1&&!cross.m_strFrameActive,
+            "Holy Cross plays its exact state-zero cue at the audio origin and propagates exhausted STR");
+        cross.m_stateCnt=1;
+        check(!cross.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&rngDraws==beforeRng&&g_texMgr.requests.empty(),
+            "Holy Cross and Sage Spell Break do not repeat cues or consume RNG/request textures");
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
         CRenderObject listener;listener.m_pos={3,0,5};
         CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         CRenderObject master;master.m_pos={15,20,35};
