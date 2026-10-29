@@ -2765,3 +2765,7 @@ Added `tools/tests/check_effect50_firesplashhit.py` and registered it in the foc
 ## WP5 CRagEffect SprayPond effect48 source checkpoint - 2026-10-29
 
 Added `tools/tests/check_effect48_spray_pond.py` and registered it in the focused CTest suite. PE and primary Ref `SprayPond` bodies normalize identically; the comparator maps PE effect48 and local dispatch to the handler and pins the state-zero, ten-frame, and twenty-frame cadence gates, panel counts/types, textures and ring setup against existing lifecycle assertions. Focused CTest passed; no runtime change was needed.
+
+## WP5 CRagEffect Torch effect47 source checkpoint - 2026-10-29
+
+Added `tools/tests/check_effect47_torch.py` and registered it in the focused CTest suite. PE and primary Ref `Torch` bodies normalize identically; the comparator binds PE effect47 and local `SpawnTorch` dispatch, parent-position refresh ordering, particle setup and resource names to the existing lifecycle assertions for size/divisor clamps, motion, repeat calls and missing assets. Focused CTest passed; no runtime change was needed.
