@@ -45,6 +45,12 @@ add_test(NAME wave_math_checks COMMAND wave_math_checks)
 # This exercises their actual control flow without creating a game or device.
 file(READ "../../src/gamemode/GameModePacket.cpp" packet_source)
 extract_body(skill_packet_actor_lookup "${packet_source}" "CGameActor* ResolveSkillPacketActor(CGameMode& mode, u32 aid)" "CSkill* ResolveSkillPacketUnit(CGameMode& mode, u32 aid)")
+extract_body(spirit_has_effect_state_flag "${packet_source}" "bool HasEffectStateFlag(int effectState, int mask)" "bool IsEffectStatePushCart(")
+extract_body(spirit_effect_exists "${packet_source}" "bool EffectExists(CAbleToMakeEffect* actor, int effectId)\n{" "CRagEffect* LaunchOn(")
+extract_body(spirit_handle_one "${packet_source}" "void HandleSpirits(CGameMode& mode, const PacketView& packet)" "void HandleSpirits2(")
+extract_body(spirit_handle_two "${packet_source}" "void HandleSpirits2(CGameMode& mode, const PacketView& packet)" "void HandleDevotionList(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/SpiritPacketBodies.inc"
+    "${skill_packet_actor_lookup}\n${spirit_has_effect_state_flag}\n${spirit_effect_exists}\n${spirit_handle_one}\n${spirit_handle_two}")
 extract_body(skill_packet_unit_lookup "${packet_source}" "CSkill* ResolveSkillPacketUnit(CGameMode& mode, u32 aid)" "void HandleNotifyEffect(")
 extract_body(replay_try_read_packet "${packet_source}" "bool TryReadPacket(const u8* stream, int availableBytes, PacketView& outPacket, int& consumedBytes)" "void DecodeSrcDst(")
 extract_body(replay_decode_src_dst "${packet_source}" "void DecodeSrcDst(const u8* src, int& srcX, int& srcY, int& dstX, int& dstY, int& srcDir, int& dstDir)" "void CGameModePacketRouter::Register(")
@@ -627,6 +633,10 @@ add_test(NAME spirits_packet_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_spirits_packet_source.py")
 add_test(NAME spirits2_packet_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_spirits2_packet_source.py")
+add_executable(spirit_packet_lifecycle_checks SpiritPacketLifecycleTests.cpp)
+target_compile_features(spirit_packet_lifecycle_checks PRIVATE cxx_std_17)
+target_include_directories(spirit_packet_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME spirit_packet_lifecycle_checks COMMAND spirit_packet_lifecycle_checks)
 add_test(NAME devotion_packet_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_devotion_packet_source.py")
 add_test(NAME prim2dflash_source_check

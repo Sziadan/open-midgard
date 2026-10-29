@@ -3070,3 +3070,7 @@ Connected production ApplyBlackDevil to the lifecycle harness. The fixture verif
 ## WP5 FlowerCast lifecycle — effect488 — 2026-10-29
 
 Connected production ApplyFlowerCasting to the lifecycle harness. The fixture verifies variant0, variant1 and fallback-to-variant0 profiles across all four GI bands, caller size, master and cached origins, no RNG/audio, and nonzero-state/null-texture gates. The existing check_effect488_flower_cast.py comparator covers the PE and secondary-Ref order plus the local state5 cue/body-light/dual-cast branch and exact ring-blue resource; the PE cue resolves only to the prefix effect\T_, so its full wave suffix remains unresolved. Focused lifecycle passes3220 checks; full Release parity CTest passes428/428 and both documented static audits pass.
+
+## WP7 Spirits packet lifecycle — opcodes 0x01D0/0x01E1 — 2026-10-29
+
+Added a standalone harness compiling the production actor resolver, effect-state predicate, effect-existence helper, and HandleSpirits/HandleSpirits2 bodies. It checks effects-off and malformed packet guards; self/other actor resolution; jobs 4038/24/default mapping; burrow/hiding paths; signed X offsets sent through message14; Spirits2 duplicate suppression and AID-zero behavior. The source comparators remain in place. This covers packet handling and effect launch decisions only; it does not establish rendered spirit-sphere parity. Focused tests pass 3/3; full Release parity CTest passes429/429 and both static audits pass.
