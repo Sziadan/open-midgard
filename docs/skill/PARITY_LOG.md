@@ -4136,3 +4136,7 @@ Added and registered `check_effect401_napalm_hit.py`. It checks the PE's exact 2
 ## WP5F effect514 GI_EXPLOSION source/resource parity — 2026-10-29
 
 Added and registered `check_effect514_gi_explosion.py`. It compares the PE and primary-Ref dispatcher caller and complete helper body, checks the local generated route and four-band GI payload, and validates `effect\\ring_blue.tga` bytes at `0x71943C`. Focused check, elevated Release parity build and full Release CTest passed 351/351. No production behavior change.
+
+## WP5F effect402 PortalWind variant1 parity — 2026-10-29
+
+Added and registered `check_effect402_portal_wind.py`. It checks the PE's variant1 call and inclusive frame 5–65 body-light/tint window, primary-Ref omission, and local route, helper order and master guard. Focused check, elevated Release parity build and full Release CTest passed 352/352. No production behavior change.

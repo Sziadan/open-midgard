@@ -1186,6 +1186,8 @@ add_test(NAME effects397_398_level99_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect397_398_level99.py")
 add_test(NAME effect401_napalm_hit_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect401_napalm_hit.py")
+add_test(NAME effect402_portal_wind_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect402_portal_wind.py")
 add_test(NAME effect514_gi_explosion_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect514_gi_explosion.py")
 add_test(NAME effect337_job_lv_up_source_check
@@ -1375,6 +1377,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/gamemode/GameModePacket.cpp
     check_energy_drain_callers.py
     check_portal_wind_caller.py
+    check_effect402_portal_wind.py
     check_blur_callers.py
     check_runstop_caller.py
     check_cartboost_caller.py
