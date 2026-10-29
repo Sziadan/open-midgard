@@ -2377,3 +2377,8 @@ Extended and registered `check_cart_revolution.py` to verify `effect\EF_MagnumBr
 ## WP5C Bubble/Pong STR format bytes — 2026-10-29
 
 Extended the existing effects109/110 and effect199 comparators to verify their PE format strings directly: `Bubble%d.str` at VA `0x71AF30` and `Pong%d.str` at `0x71AB7C`. Existing PE/Ref Init branch, variant range, catalog and route assertions remain. Focused comparators and full Release CTest passed330/330. No production change.
+
+
+## WP5C effect145 ShockWave STR Init parity — 2026-10-29
+
+Extended the registered `check_shockwave145.py` to compare PE and primary-Ref Init case145, verify the local `ShockWave.str` catalog row, and pin the exact executable bytes at VA `0x71AE10`. Existing route, STR-loop reset and lifecycle assertions remain. Focused check and full Release CTest passed330/330. No production change.

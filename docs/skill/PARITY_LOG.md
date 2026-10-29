@@ -4015,3 +4015,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C Bubble/Pong dynamic STR template bytes — 2026-10-29
 
 `check_effect109_110_str_init.py` now checks executable `Bubble%d.str` bytes at `0x71AF30`; `check_effect199_pong_str_variants.py` checks `Pong%d.str` at `0x71AB7C`. Their existing random variant count, PE/Ref Init and local catalog/route assertions remain. Full Release CTest passed330/330. No production change.
+
+
+## WP5C effect145 ShockWave STR Init and resource comparison — 2026-10-29
+
+`check_shockwave145.py` now compares PE/primary-Ref Init case145, validates the local `ShockWave.str` catalog mapping, and verifies exact executable bytes at VA `0x71AE10`. Existing PE/local looping STR reset checks remain. Focused comparator and full Release CTest passed330/330. No production change.
