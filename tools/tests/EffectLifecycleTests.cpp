@@ -69,6 +69,9 @@ struct TexMgr {
     std::vector<std::string> requests;
     CTexture* GetTexture(const char* path, bool) { lastPath = path; requests.emplace_back(path); return &texture; }
 } g_texMgr;
+CTexture* ResolveEffectTextureOrFallback(const std::string& path, bool) {
+    return g_texMgr.GetTexture(path.c_str(), false);
+}
 u32 resourceTick = 123;
 u32 timeGetTime() { return resourceTick; }
 struct CRes { int m_lockCnt=0; u32 m_timeStamp=0; int Lock(); int Unlock(); };
@@ -722,6 +725,7 @@ struct CRagEffect : CGameObject {
     bool ProcessSoulStrike15(int);
     bool ProcessEffect650();
     bool ProcessEffect651();
+    bool ProcessEffect695MapFireworks();
     bool ProcessCloaking120();
     void ApplyWind();
     void SpawnWarp8();
@@ -13146,6 +13150,63 @@ int main()
             &&rngDraws==laterDraws&&rngCursor==320&&waveCalls.size()==laterWaves,
             "MapParticle effect651 later state refreshes cached origin without additional particles, resources, or RNG");
         rngValues.clear(); rngCursor=0; g_texMgr.requests.clear(); g_resMgr.requests.clear(); waveCalls.clear();
+    }
+    {
+        CRenderObject master; master.m_pos={12,24,36};
+        CRagEffect fireworks; fireworks.m_master=&master; fireworks.m_type=695; fireworks.m_duration=77;
+        fireworks.m_effectPos={1,2,3}; fireworks.m_cachedPos={4,5,6};
+        rngValues.resize(320); for(size_t draw=0;draw<rngValues.size();++draw) rngValues[draw]=static_cast<int>(draw%360);
+        rngCursor=0; g_texMgr.requests.clear(); waveCalls.clear(); const int draws=rngDraws;
+        const bool active=fireworks.ProcessEffect695MapFireworks();
+        bool ordered=fireworks.m_primList.size()==11;
+        auto primIt=fireworks.m_primList.begin(); CEffectPrim* emitted[11]{};
+        for(int index=0;index<11;++index) {
+            if(primIt==fireworks.m_primList.end()) { ordered=false; break; }
+            emitted[index]=*primIt++;
+            const EFFECTPRIMID expectedType=index==0?PP_MAPMAGICZONE:PP_MAPPARTICLE;
+            const char* expectedTexture=index==0?"effect\\glow04.bmp":"effect\\mpa3.tga";
+            ordered=ordered&&emitted[index]->m_type==expectedType&&emitted[index]->m_duration==77
+                &&emitted[index]->m_renderFlag==5&&emitted[index]->m_texture.size()==1
+                &&g_texMgr.requests.size()>static_cast<size_t>(index)
+                &&g_texMgr.requests[static_cast<size_t>(index)]==expectedTexture;
+        }
+        bool zone=emitted[0]&&emitted[0]->m_size==112.0f&&emitted[0]->m_gi[0].life==1
+            &&emitted[0]->m_gi[0].distance==30.0f&&emitted[0]->m_gi[0].alphaB==250
+            &&emitted[0]->m_gi[0].rotStart==0&&emitted[0]->m_gi[0].height[0]==-0.5f
+            &&emitted[0]->m_gi[0].height[4]==5.0f;
+        for(int lane=1;lane<4&&emitted[0];++lane) zone=zone&&emitted[0]->m_gi[lane].life==0;
+        bool particles=true;
+        for(int particle=0;particle<10&&emitted[particle+1];++particle) {
+            const float baselineY=-4.0f; const auto& prim=*emitted[particle+1]; particles=particles&&prim.m_size==0.0f;
+            for(int lane=0;lane<4;++lane) {
+                const int first=particle*32+lane*8; const auto& gi=prim.m_gi[lane];
+                particles=particles&&gi.life==1&&gi.maxHeight==0.15000001f&&gi.distance==1.0f
+                    &&gi.height[0]==static_cast<float>((first+0)%360)&&gi.height[1]==static_cast<float>((first+1)%360)
+                    &&gi.height[2]==static_cast<float>((first+2)%360)&&gi.height[3]==static_cast<float>((first+3)%360)
+                    &&gi.vecBPreX==0.0f&&gi.arcBaselineY==baselineY&&gi.vecBPreZ==0.0f
+                    &&gi.height[4]==static_cast<float>((first+4)%360)
+                    &&gi.sparkX==0.0f&&gi.sparkY==baselineY&&gi.sparkZ==0.0f
+                    &&gi.height[5]==static_cast<float>((first+5)%360)
+                    &&gi.vecTPreX==0.0f&&gi.vecTPreY==baselineY&&gi.vecTPreZ==0.0f
+                    &&gi.height[6]==static_cast<float>((first+6)%360)
+                    &&gi.vecTNowX==0.0f&&gi.vecTNowY==baselineY&&gi.vecTNowZ==0.0f
+                    &&gi.height[7]==static_cast<float>((first+7)%360)&&gi.flag[0]==1&&gi.flag[1]==2;
+            }
+        }
+        check(active&&ordered&&zone&&particles&&fireworks.m_effectPos.x==12&&fireworks.m_effectPos.y==24
+            &&fireworks.m_effectPos.z==36&&fireworks.m_cachedPos.x==4&&fireworks.m_cachedPos.y==5
+            &&fireworks.m_cachedPos.z==6&&g_texMgr.requests.size()==11
+            &&rngDraws==draws+320&&rngCursor==320&&waveCalls.empty(),
+            "Map Fireworks effect695 emits one glow zone then ten mpa3 particles with exact 320-draw field sequence");
+        fireworks.ClearPrims(); g_world.UpdateGameObjects(); g_texMgr.requests.clear();
+        fireworks.m_stateCnt=1; fireworks.m_effectPos={1,2,3}; fireworks.m_cachedPos={4,5,6}; master.m_pos={40,50,60};
+        const int laterDraws=rngDraws; const size_t laterWaves=waveCalls.size();
+        check(fireworks.ProcessEffect695MapFireworks()&&fireworks.m_primList.empty()&&g_texMgr.requests.empty()
+            &&fireworks.m_effectPos.x==40&&fireworks.m_effectPos.y==50&&fireworks.m_effectPos.z==60
+            &&fireworks.m_cachedPos.x==4&&fireworks.m_cachedPos.y==5&&fireworks.m_cachedPos.z==6
+            &&rngDraws==laterDraws&&rngCursor==320&&waveCalls.size()==laterWaves,
+            "Map Fireworks effect695 later state refreshes effect origin without new assets, particles, or RNG");
+        rngValues.clear(); rngCursor=0; g_texMgr.requests.clear(); waveCalls.clear();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

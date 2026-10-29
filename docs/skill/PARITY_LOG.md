@@ -4623,3 +4623,8 @@ The existing `tools/tests/check_cloaking_inline.py` proves the canonical PE case
 ## WP5 effect651 Map_Particle lifecycle — 2026-10-29
 
 The registered `tools/tests/check_effect651_map_particle.py` confirms canonical caller order, both Map_MagicZone variants, Map_Particle loop k=2..20 step2, PE asset bytes, local route, source field order, 320-draw budget and the secondary-Ref render-flag discrepancy. Added direct `ProcessEffect651` execution: two map zones precede ten particle emitters, each with exact texture, duration77, renderFlag5 and size; zone profiles and all four particle bands are asserted. Seeded sequential RNG values confirm all eight ordered angle writes per band (320 total), source baseline/vector fields and flags. State1 updates cached origin without primitive/resource/RNG work. Focused lifecycle passes3039 checks, source comparator passes, full Release parity CTest passes428/428. No production behavior changed.
+
+
+## WP5 CRagEffect effect695 Map Fireworks lifecycle — 2026-10-29
+
+Connected the effect695 `ProcessEffect695MapFireworks` body to the lifecycle harness. The registered `check_effect695_map_fireworks.py` confirms the PE-backed resource bytes and canonical Ref order. The fixture verifies one `glow04.bmp` PP_MAPMAGICZONE followed by ten `mpa3.tga` PP_MAPPARTICLE children, exact duration/render/size and zone payload, all four GI lanes per particle, the eight RNG field writes per lane (320 draws total), and the later-state origin refresh without repeated resources, emissions or RNG. No source mismatch was found and production behavior did not change. Focused lifecycle passes3041 checks; comparator passes; full Release parity CTest passes428/428.

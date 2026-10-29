@@ -317,6 +317,7 @@ extract_body(soulstrike15_handler "${effect_source}" "bool CRagEffect::ProcessSo
 extract_body(effect650_handler "${effect_source}" "bool CRagEffect::ProcessEffect650()" "bool CRagEffect::ProcessEffect651()")
 extract_body(effect651_handler "${effect_source}" "bool CRagEffect::ProcessEffect651()" "bool CRagEffect::ProcessLevel99_2Effect()")
 string(REPLACE "std::rand()" "SilentRand()" effect651_handler "${effect651_handler}")
+extract_body(effect695_handler "${effect_source}" "bool CRagEffect::ProcessEffect695MapFireworks()" "bool CRagEffect::ProcessLevel99Effect()")
 extract_body(cloaking120_handler "${effect_source}" "bool CRagEffect::ProcessCloaking120()" "void CRagEffect::ApplyKyrieGuard()")
 extract_test_region(effect133_134_terminal_handler "${effect_source}" effect133_134_terminal_handler)
 extract_test_region(warp_emitter "${effect_source}" warp_emitter_family)
@@ -499,6 +500,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${bottom1
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${soulstrike15_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect650_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect651_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect695_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${cloaking120_handler}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/render/Renderer.cpp ../../src/render/Prim.cpp ../../src/res/ActRes.h ../../src/world/RagEffect.cpp ../../src/world/RagEffect.h ../../src/world/World.cpp ../../src/res/EzEffectRes.h ../../src/res/Res.cpp)

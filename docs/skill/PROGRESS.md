@@ -2971,3 +2971,8 @@ Added lifecycle execution of `ProcessCloaking120` alongside the existing `check_
 ## WP5 CRagEffect effect651 Map_Particle lifecycle checkpoint — 2026-10-29
 
 Extended the lifecycle harness to execute the actual `ProcessEffect651` body. The existing `check_effect651_map_particle.py` provides the PE/primary Ref caller, helper, resource and secondary-Ref render-flag comparison. The fixture verifies the ordered two PP_MAPMAGICZONE primitives followed by ten PP_MAPPARTICLE primitives (variants2 through20 by2), exact textures, durations, render flags, size and all GI setup. A deterministic RNG sequence proves the eight draws per band occur in field order and total exactly320 draws; it checks each resulting angle, baseline vector field and flags. State1 refreshes both origin caches but emits nothing, loads no textures and consumes no RNG. Focused lifecycle harness passes3039 assertions; source comparator passes; full Release parity CTest passed428/428. No production behavior changed.
+
+
+## WP5 CRagEffect effect695 Map Fireworks lifecycle checkpoint — 2026-10-29
+
+Connected the actual ProcessEffect695MapFireworks body to the lifecycle harness. The existing source comparator pins the canonical caller order and PE resource bytes. The fixture checks a glow04 map zone followed by ten mpa3 particles, exact GI payloads, 320 ordered frame-zero RNG draws, and origin refresh with no repeat work on later states. Focused lifecycle passes3041 checks; source comparator passes; full Release parity CTest passes428/428. No production behavior changed.
