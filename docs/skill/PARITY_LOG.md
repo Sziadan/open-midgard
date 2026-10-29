@@ -4424,3 +4424,7 @@ Added `tools/tests/check_effect46_sandwind.py` and registered it in the focused 
 ## WP5 CRagEffect FireFly effect45 source checkpoint - 2026-10-29
 
 Added `tools/tests/check_effect45_firefly.py` and registered it in the focused CTest suite. PE and primary Ref `FireFly` bodies normalize identically; the comparator maps effect45 through the generated dispatcher and legacy handler to local `SpawnFireFly`, preserving the state-zero launch and ordered six-draw RNG profile. Existing lifecycle coverage is tied to particle resources, rotated launch offset, keyed alpha and later steering/update cadence. Focused CTest passed; no runtime change was needed.
+
+## WP5 CRagEffect Smoke effect44 source checkpoint - 2026-10-29
+
+Added `tools/tests/check_effect44_smoke.py` and registered it in the focused CTest suite. PE and primary Ref `Smoke` bodies normalize identically; the comparator traces effect44 dispatch to `SpawnSmoke` and pins parent refresh, state-zero emission, count/RNG order, particle fields and recovered sprite/action names to existing lifecycle coverage. Focused CTest passed; no runtime change was needed.
