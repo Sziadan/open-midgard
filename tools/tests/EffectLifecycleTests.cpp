@@ -708,6 +708,7 @@ struct CRagEffect : CGameObject {
     void SpawnEntry6();
     bool ProcessWarp8();
     void ApplyBottomVolcano(const char*, float);
+    void ApplyVolcano(const char*, short, bool);
     void SpawnWarp8();
     bool ProcessEnhance9();
     bool ProcessLord90();
@@ -3910,6 +3911,47 @@ int main()
             &&effect.m_effectPos.z==66&&rngDraws==beforeFrames+2&&g_texMgr.requests.size()==1,
             "Bottom_Volcano follows master movement after frame zero without repeating spawn work");
         effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor; actor.m_pos={12,34,56};
+        struct VolcanoCase { int id; const char* texture; short variant; float height; short rise; short alphaT; bool fastSpin; float accel; };
+        const VolcanoCase cases[]={{223,"effect\\ring_white.tga",2,15.0f,70,2,false,0.0f},
+            {225,"effect\\ring_red.tga",0,25.0f,80,0,false,0.0f},
+            {236,"effect\\ring_blue.tga",0,25.0f,80,0,false,0.0f},
+            {237,"effect\\magic_green.tga",0,25.0f,80,0,false,0.0f},
+            {238,"effect\\ring_white.tga",0,25.0f,80,0,false,0.0f},
+            {261,"effect\\ring_yellow.tga",0,25.0f,80,0,true,99.0f},
+            {263,"effect\\ring_yellow.tga",1,25.0f,80,1,false,0.0f}};
+        for (const VolcanoCase& item : cases) {
+            CRagEffect effect; effect.m_type=item.id; effect.m_master=&actor; effect.m_duration=71;
+            effect.m_effectPos={1,2,3}; effect.m_cachedPos={4,5,6}; effect.m_stateCnt=0;
+            g_texMgr.requests.clear(); waveCalls.clear(); rngValues={7,8,9}; rngCursor=0;
+            const int draws=rngDraws;
+            effect.ApplyVolcano(item.texture,item.variant,item.fastSpin);
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            bool payload=prim&&effect.m_primList.size()==1&&prim->m_type==PP_GI_2
+                &&prim->m_renderFlag==5&&prim->m_duration==71&&prim->m_size==0&&prim->m_accel==item.accel
+                &&prim->m_pos.x==12&&prim->m_pos.y==34&&prim->m_pos.z==56
+                &&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture
+                &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]==item.texture;
+            for (int band=0;band<4&&payload;++band) {
+                const EffectGi& gi=prim->m_gi[static_cast<size_t>(band)];
+                payload=gi.life==1&&gi.process==0&&gi.fullDisplayAngle==360
+                    &&gi.maxHeight==item.height&&gi.riseAngle==item.rise
+                    &&gi.rotStart==90*band&&gi.alphaB==0&&gi.distance==static_cast<float>(band+1)
+                    &&gi.alphaT==item.alphaT&&gi.sparkY==0.0f
+                    &&std::all_of(gi.height.begin(),gi.height.end(),[](float value){return value==0.0f;})
+                    &&std::all_of(gi.flag.begin(),gi.flag.end(),[](u8 value){return value==0;});
+            }
+            check(payload&&rngDraws==draws&&rngCursor==0&&waveCalls.empty(),
+                "VOLCANO source profile preserves F1 variant bands texture position and silent RNG behavior");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+            effect.m_stateCnt=1; g_texMgr.requests.clear();
+            effect.ApplyVolcano(item.texture,item.variant,item.fastSpin);
+            check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==draws&&waveCalls.empty(),
+                "VOLCANO emits only at state zero with no later texture RNG or audio work");
+        }
+        rngValues.clear(); rngCursor=0;
     }
     {
         CRenderObject actor; actor.m_pos={12,34,56};
