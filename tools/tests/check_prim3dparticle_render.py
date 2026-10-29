@@ -52,6 +52,43 @@ ref_ids = set(re.findall(r"case\s+(PP_[A-Z0-9_]+)\s*:", ref_route.group(1))) if 
 check("primary Ref dispatch maps PP_3DPARTICLE, GRAVITY and SPLINE into Render3DParticle",
       {"PP_3DPARTICLE", "PP_3DPARTICLEGRAVITY", "PP_3DPARTICLESPLINE"}.issubset(ref_ids))
 
+# Inventory each canonical launch inside its enclosing decompiled method. The
+# PE has no missing-resource rendering fallback: these callers assign both
+# resources and initialize segment state before the particle is rendered.
+particle_call = re.compile(r"LaunchEffectPrim\([^;\n]*?\b(PP_3DPARTICLE(?:GRAVITY|SPLINE)?)\b")
+definition = re.compile(r"(?m)^.*__thiscall\s+((?:CEffectPrim|CRagEffect)::\w+)\([^\n]*\)\s*$")
+definitions = []
+for match in definition.finditer(PE):
+    brace = match.end()
+    while brace < len(PE) and PE[brace].isspace():
+        brace += 1
+    if brace >= len(PE) or PE[brace] != "{":
+        continue
+    contents = body(PE, match.group(0), match.start())
+    definitions.append((match.start(), match.start() + len(contents), match.group(1), contents))
+
+pe_launch_counts = {"PP_3DPARTICLE": 0, "PP_3DPARTICLEGRAVITY": 0, "PP_3DPARTICLESPLINE": 0}
+pe_particle_callers = set()
+for launch in particle_call.finditer(PE):
+    pe_launch_counts[launch.group(1)] += 1
+    enclosing = [item for item in definitions if item[0] < launch.start() < item[1]]
+    check(f"canonical {launch.group(1)} launch belongs to a source function", bool(enclosing))
+    if not enclosing:
+        continue
+    _, _, name, caller_body = max(enclosing, key=lambda item: item[0])
+    pe_particle_callers.add(name)
+    check(f"canonical {name} assigns both particle resources and segment state",
+          "SetSprName(" in caller_body and "SetActName(" in caller_body and "InitSegment(" in caller_body)
+check("canonical PE particle inventory is complete: 37 standard, 5 gravity, 6 spline launches in 39 functions",
+      pe_launch_counts == {"PP_3DPARTICLE": 37, "PP_3DPARTICLEGRAVITY": 5, "PP_3DPARTICLESPLINE": 6}
+      and len(pe_particle_callers) == 39)
+check("PE particle renderer has resource lookup and segment-count gate, with no local approximation fallback",
+      "CRenderObject::GetSprRes(this)" in PE_RENDER
+      and "CRenderObject::GetActRes(v2)" in PE_RENDER
+      and "if ( m_numSegment > 0 )" in PE_RENDER
+      and "SubmitAnimatedSpriteParticle" not in PE_RENDER
+      and "SubmitBillboard" not in PE_RENDER)
+
 # The PE renderer takes its current action/motion once for every segment and
 # draws each clip from that motion. Local UsesReferenceParticle is the existing
 # source-selected subset; the general grouped helper is a different pipeline.
@@ -108,8 +145,9 @@ check("focused fixture covers per-segment sprite selection, clipping, color, UV,
 
 # Missing resource/segment state retains the old approximation as a fallback;
 # it is not treated as canonical parity.
-check("grouped approximation remains only for generic particles without canonical resources or segment state",
+check("local grouped approximation runs only when canonical retained resources or segment state are missing",
       "GetBakedEffectSpriteFrame(" in LOCAL_GROUPED and "SubmitScreenQuadPivot(anchor" in LOCAL_GROUPED
       and "if (!SubmitAnimatedSpriteParticle(*this, base, viewMatrix, color, destBlend, renderFlags))" in LOCAL_DISPATCH
-      and "SubmitBillboard(pos," in LOCAL_DISPATCH)
-print("PP_3DPARTICLE canonical route comparator passed; resource-less fallback is not claimed equivalent.")
+      and "SubmitBillboard(pos," in LOCAL_DISPATCH
+      and "m_particleSprRes && m_particleActRes && m_numSegments > 0" in LOCAL_DISPATCH)
+print("PP_3DPARTICLE canonical callers provide resources and segments; missing-resource local degradation remains outside PE parity.")

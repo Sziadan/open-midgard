@@ -2723,9 +2723,13 @@ Added and registered `tools/tests/check_prim3dcylinderhalf_initializer.py`. PE a
 
 ## WP5 CEffectPrim Prim3DCylinder full update parity - 2026-10-29
 
-Resolved the primary Ref duplicate-label defect against canonical PE case `0x0D` and older full Ref at `Ref/dhxj/RagEffectPrim.cpp:1675`. Local `PP_3DCYLINDER` now uses the full update path, including accelerated angular speeds, pre-matrix angular integration, trailing longitude advance, movement, dimensions, alpha and animation behavior. `PP_3DCYLINDERHALF` remains on its separate updater. Expanded lifecycle assertions and the source comparator cover the route and ordering. Direct comparator passed; focused CTest passed 2/2; full Release CTest passed 386/386. The app target compiled `ro_world` but remains blocked later by `WinMain.cpp` including unavailable `arpa/inet.h`; investigation shows the include belongs to the non-Windows branch in `Connection.h`, so this failure needs separate target/configuration diagnosis.
+Resolved the primary Ref duplicate-label defect against canonical PE case `0x0D` and older full Ref at `Ref/dhxj/RagEffectPrim.cpp:1675`. Local `PP_3DCYLINDER` now uses the full update path, including accelerated angular speeds, pre-matrix angular integration, trailing longitude advance, movement, dimensions, alpha and animation behavior. `PP_3DCYLINDERHALF` remains on its separate updater. Expanded lifecycle assertions and the source comparator cover the route and ordering. Direct comparator passed; focused CTest passed 2/2; full Release CTest passed 386/386. The configured Release app target `open_midgard` now builds and copies `open-midgard.exe` to its configured OldRO folder.
 
 ## WP5 CEffectPrim Render3DCircle caller audit - 2026-10-29
 
 Expanded the source comparator across all 16 canonical PE `PP_3DCIRCLE` launches in 14 master effects. MagnumBreak (17) and WarpZone (61) each launch two circles; each launch has segment initialization. The exact caller master set equals `UsesReferenceCircle`, so there is no missing canonical PE master to add to the specialized renderer. Direct and focused CTest passed; no runtime changes were needed. Generic circle rendering differences remain for local/noncanonical aliases and are still open.
+
+## WP5 CEffectPrim Render3DParticle fallback audit - 2026-10-29
+
+Expanded `check_prim3dparticle_render.py` to cover all 48 canonical PE particle launch sites across 39 functions: 37 standard, 5 gravity, 6 spline. Each enclosing caller assigns both sprite/action resources and initializes segment state. PE rendering obtains those resources and only processes positive segment counts; there is no grouped/billboard fallback. Local fallback is thus bounded to failed resource loads or missing local setup and remains a defensive difference for unavailable state, not canonical parity. Direct and focused CTest passed. The Release `open_midgard` app target built successfully and copied to its configured OldRO folder.
 
