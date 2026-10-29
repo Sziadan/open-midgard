@@ -2631,3 +2631,7 @@ Extended `check_effect601_sight2.py` to compare the complete PE/primary-Ref Sigh
 ## WP5F effect627 RG_COIN3 caller parity — 2026-10-29
 
 Extended the existing RG_COIN caller comparator to cover PE/primary-Ref effect627 caller branch equality, its state21 parent refresh and cue, all four ordered RG_COIN2 asset calls, local OnProcess3/ApplyRgCoin3 routing, and exact executable bitmap bytes. Bound the existing ApplyRgCoin3 lifecycle fixture to the source check. Focused Release CTest passed; no production behavior change.
+
+## WP5F effect24 FireBall source comparison — 2026-10-29
+
+Added `check_effect24_fireball.py` and registered it in CTest. The checker compares normalized PE and primary-Ref FireBall helper bodies, verifies the frame20/24/28/32 emission schedule, exact PE wave and SPR/ACT bytes, the local route and the existing lifecycle assertions. No production behavior change. Release parity build passed and the full Release CTest suite passed 371/371.
