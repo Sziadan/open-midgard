@@ -720,3 +720,7 @@ The 2008 Ref client handles unit IDs through 201. The eAthena 2011 `skill.h` enu
 ## Effects52/64/70 process dispatch omission in primary Ref
 
 Canonical PE `CRagEffect::OnProcess` cases52, 64, and70 join the `ProcessEZ2STR(0,-80,0)` tail at `HighPriest.exe.c:419760-419805`; primary Ref Init maps the same ids to `WindHit%d.str`, `ArrowShot.str`, and `Brandish.str`, respectively. However, primary `Ref/RagEffect.cpp` original `OnProcess` switch has none of these ids and returns true in its default case. Local dispatch follows PE and advances STR as verified by the existing lifecycle fixture. Do not describe these three process routes as PE/Ref parity unless the primary Ref omission is resolved. The source comparator `tools/tests/check_effects52_64_70_str_only.py` asserts this boundary.
+
+## Effect248 Providence process caller omission in primary Ref
+
+Canonical PE `CRagEffect::OnProcess` handles case248 by calling `Providence(this, aEffectRingYell, 0)` and joining the shared `ProcessEZ2STR(0,-80,0)` return-propagation tail (`HighPriest.exe.c:420795-420848`). Primary Ref `CRagEffect::OnProcess2` has no case248; its only case248 is Init's `providence.str` mapping (`Ref/RagEffect.cpp:13098-13100`). Primary Ref does contain the matching Providence helper body in `Ref/RagEffect2.cpp:31044-31094`. Local dispatch follows PE because it is canonical authority. `tools/tests/check_effect248_providence.py` asserts this caller omission and the helper/clip mapping.

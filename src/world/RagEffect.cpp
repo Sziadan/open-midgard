@@ -24181,11 +24181,12 @@ void CRagEffect::ApplyMapPillar(const char* textureName, float size, bool wide)
 
 void CRagEffect::ApplyProvidence(const char* textureName)
 {
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
     if (textureName == nullptr || m_stateCnt != 0) {
         return;
     }
-    CRenderObject* master = ResolveCurrentMaster();
-    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
     CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeMapPillar), vector3d{});
     if (prim == nullptr) {
         return;

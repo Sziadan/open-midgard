@@ -710,6 +710,7 @@ struct CRagEffect : CGameObject {
     void ApplyBottomVolcano(const char*, float);
     void ApplyVolcano(const char*, short, bool);
     void ApplyMapPillar(const char*, float, bool);
+    void ApplyProvidence(const char*);
     void ApplyWind();
     void SpawnWarp8();
     bool ProcessEnhance9();
@@ -12745,6 +12746,47 @@ int main()
             "BlitzBeat stops cylinder emissions after the configured count is reached");
         effect.ClearPrims(); g_world.UpdateGameObjects(); rngValues.clear(); rngCursor=0;
         g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject providenceMaster; providenceMaster.m_pos={31,41,51};
+        CRagEffect providence; providence.m_type=248; providence.m_master=&providenceMaster;
+        providence.m_duration=73; providence.m_stateCnt=0; providence.m_cachedPos={-1,-2,-3};
+        g_texMgr.requests.clear(); waveCalls.clear();
+        const int draws=rngDraws;
+        providence.ApplyProvidence("effect\\ring_yellow.tga");
+        CEffectPrim* prim=providence.m_primList.empty()?nullptr:providence.m_primList.front();
+        bool bands=prim!=nullptr;
+        const float distances[]={6.0f,6.5f,7.0f,7.5f};
+        const short rises[]={83,82,81,80};
+        if (prim) for (int band=0;band<4;++band) {
+            const auto& gi=prim->m_gi[band];
+            bands=bands&&gi.life==1&&gi.process==200&&gi.fullDisplayAngle==360
+                &&gi.maxHeight==120.0f&&gi.rotStart==90*band&&gi.alphaB==40
+                &&gi.distance==distances[band]&&gi.riseAngle==rises[band]&&gi.alphaT==1
+                &&gi.sparkY==0.0f;
+            for (int sample=0;sample<21;++sample) bands=bands&&gi.height[sample]==0.0f&&gi.flag[sample]==0;
+        }
+        check(providence.m_primList.size()==1&&prim&&prim->m_type==PP_MAPPILLAR
+            &&prim->m_renderFlag==5&&prim->m_duration==73&&prim->m_size==5.0f
+            &&prim->m_pos.x==31&&prim->m_pos.y==41&&prim->m_pos.z==51
+            &&providence.m_effectPos.x==31&&providence.m_effectPos.y==41&&providence.m_effectPos.z==51
+            &&g_texMgr.requests==std::vector<std::string>{"effect\\ring_yellow.tga"}
+            &&bands&&rngDraws==draws&&waveCalls.empty(),
+            "Providence effect248 emits exact four-band MAPPILLAR profile");
+        providence.ClearPrims(); g_world.UpdateGameObjects();
+        providence.m_stateCnt=1; providence.m_effectPos={7,8,9}; providence.m_cachedPos={4,5,6};
+        providenceMaster.m_pos={61,62,63}; g_texMgr.requests.clear();
+        providence.ApplyProvidence("effect\\ring_yellow.tga");
+        check(providence.m_primList.empty()&&g_texMgr.requests.empty()
+            &&providence.m_effectPos.x==61&&providence.m_effectPos.y==62&&providence.m_effectPos.z==63
+            &&providence.m_cachedPos.x==4&&rngDraws==draws,
+            "Providence state1 follows moved master without repeating emission");
+        providence.m_iCurLayer=providence.m_cEndLayer=1;
+        providence.m_strFrameActive=true; providence.m_type=248;
+        check(!providence.ProcessEZ2STR()&&!providence.FinishEffectFrame(),
+            "Providence exhausted STR completion is propagated after frame-zero emission");
+        providence.ClearPrims(); g_world.UpdateGameObjects();
+        g_texMgr.requests.clear(); waveCalls.clear();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
