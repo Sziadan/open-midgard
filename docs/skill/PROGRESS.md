@@ -2991,3 +2991,8 @@ Connected the actual ProcessEffectTextureAnimation handler to the lifecycle harn
 ## WP5 effects390/391 clip-wave lifecycle checkpoint — 2026-10-29
 
 Added direct lifecycle checks for effects390/391 through ProcessClipWaveStrEffect. Both variants are checked for state0-only origin copy and exact PE-backed frame-zero cue, listener-relative coordinates, source audio parameters, ignored exhausted STR result, and no repeated audio/RNG/texture work later. Existing comparator confirms PE/Ref caller provenance and exact resource bytes. Focused lifecycle passes3064 checks; comparator passes; full Release parity CTest passes428/428.
+
+
+## WP5 effects204–207/210 heal-wave lifecycle checkpoint — 2026-10-29
+
+Added direct lifecycle coverage for effects204–207 and210. The fixture verifies state0 timing, cached-origin copy, exact _heal_effect.wav at listener-relative X/Z and Y−80 with source parameters, exhausted STR result propagation, and no repeated cue/RNG/texture activity. The existing comparator confirms caller routing, Ref STR names and PE resource bytes. Focused lifecycle passes3080 checks; comparator passes; full Release parity CTest passes428/428.

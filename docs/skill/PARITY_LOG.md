@@ -4643,3 +4643,8 @@ Connected the actual `ProcessEffectTextureAnimation` handler to the lifecycle ha
 ## WP5 effects390/391 clip-wave lifecycle — 2026-10-29
 
 Extended the lifecycle harness for `ProcessClipWaveStrEffect` effects390/391. The tests verify no event before state0, copying cached origin at frame0, the exact `black_overthrust.wav` / `EF_IncAgility.wav` cue at listener-relative X/Z and Y zero, audio parameters, and the source policy of returning active despite exhausted STR. Later states do not repeat the cue, RNG, or texture work. The existing caller comparator confirms PE/Ref provenance, exact resource bytes and local routes. Focused lifecycle passes3064 checks; comparator passes; full Release parity CTest passes428/428.
+
+
+## WP5 effects204–207/210 heal-wave lifecycle — 2026-10-29
+
+Added direct lifecycle coverage for the shared heal-wave branch of `ProcessClipWaveStrEffect`. For each effect204–207 and210, the fixture verifies no frame-zero action early, cached-origin copy and `_heal_effect.wav` at listener-relative X/Z with Y−80 and source audio parameters on frame0, plus propagation of exhausted STR completion. Later states do not repeat audio or consume RNG; no texture work occurs. The existing comparator confirms PE caller, Ref STR mappings, local route, and exact CP949/ASCII resource bytes. Focused lifecycle passes3080 checks; comparator passes; full Release parity CTest passes428/428.

@@ -7136,6 +7136,34 @@ int main()
         waveCalls.clear();g_world.m_player=oldPlayer;
     }
     {
+        CRenderObject listener;listener.m_pos={3,900,5};
+        CRenderObject master;master.m_pos={15,20,35};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        for(int id:{204,205,206,207,210}) {
+            CRagEffect effect;effect.m_type=id;effect.m_master=&master;effect.m_cachedPos=master.m_pos;
+            effect.m_effectPos={1,2,3};effect.m_iCurLayer=1;effect.m_cEndLayer=1;
+            waveCalls.clear();effect.m_stateCnt=1;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty()&&effect.m_effectPos.x==1,
+                "Heal STR effects204-207/210 do not copy position or play the wave before state zero");
+            effect.m_stateCnt=0;
+            check(!effect.ProcessClipWaveStrEffect()&&effect.m_effectPos.x==15&&effect.m_effectPos.y==20
+                &&effect.m_effectPos.z==35&&waveCalls.size()==1&&waveCalls.back().name=="_heal_effect.wav"
+                &&waveCalls.back().x==12&&waveCalls.back().y==-80&&waveCalls.back().z==30
+                &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1
+                &&!effect.m_strFrameActive,
+                "Heal STR effects204-207/210 copy master, play exact state-zero cue, and propagate exhausted STR result");
+            effect.m_stateCnt=2;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+                "Heal STR effects204-207/210 do not repeat audio or consume RNG on later states");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        check(g_texMgr.requests.empty()&&rngDraws==beforeRng,
+            "Heal STR effects204-207/210 request no textures or RNG");
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
         CRenderObject listener;listener.m_pos={3,0,5};
         CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         CRenderObject master;master.m_pos={15,20,35};
