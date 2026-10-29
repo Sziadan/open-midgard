@@ -644,6 +644,36 @@ for token in ("ProcessEffectSpriteProduction(8)", "effect584 state4 refreshes ca
     if token not in effect584_block:
         raise AssertionError(f"effect584 lifecycle fixture is missing required state/payload check: {token}")
 
+effect583_fixture = next((match for match in re.finditer(
+    r"CRenderObject master,listener;master\.m_pos=\{300,400,500\};listener\.m_pos=\{100,900,200\};(.*?)(?=\n    })",
+    LIFECYCLE, re.S) if "effect.m_type=583" in match.group(1)), None)
+if effect583_fixture is None or "ProcessEffectSpriteProduction(7)" not in effect583_fixture.group(1):
+    raise AssertionError("effect583 direct production variant7 lifecycle fixture disappeared")
+effect583_block = effect583_fixture.group(1)
+for resource, va in (("expectedSpr", 0x71D1C8), ("expectedAct", 0x71D1B4)):
+    literal = re.search(rf"const std::string {resource}=(\"(?:\\.|[^\"\\])*\")", effect583_block)
+    if literal is None or ast.literal_eval(literal.group(1)).encode("latin-1") != image.read_cstring_at(va).raw:
+        raise AssertionError(f"effect583 fixture {resource} differs from PE bytes at {va:#x}")
+effect583_wave = image.read_cstring_at(0x71D1DC)
+if effect583_wave is None or effect583_wave.raw != b"effect\\ef_firehit.wav":
+    raise AssertionError("effect583 firehit cue bytes at PE VA 0x71D1DC changed")
+for label, helper_body in (("PE", pe_sprite), ("Ref", ref_helper)):
+    variant7 = re.search(r"case 7:(.*?)(?=case 8:)", helper_body, re.S)
+    if variant7 is None:
+        raise AssertionError(f"{label} Effect_SPR variant7 source branch is missing")
+    branch = variant7.group(1)
+    for token in ("PlayWave(aEffectEfFirehi", "m_animSpeed = 3", "m_pattern = 0",
+                  "m_alpha = 220.0", "InitSegment"):
+        if token not in branch:
+            raise AssertionError(f"{label} Effect_SPR variant7 missing source payload/cue token {token}")
+if not re.search(r'\{\s*7\s*,[^\n]*,\s*3,\s*false,\s*"effect\\\\ef_firehit\.wav"\s*\}', helper):
+    raise AssertionError("local Effect_SPR variant7 must preserve speed3, one-shot and exact firehit cue")
+for token in ("prim->m_pattern==0", "prim->m_alpha==220.0f", "prim->m_animSpeed==3&&!prim->m_repeatAnim",
+              "waveCalls[0].name==expectedWave", "waveCalls[0].x==200&&waveCalls[0].y==0&&waveCalls[0].z==300",
+              "effect583 state1 refreshes origin without duplicate particle, resources, cue or RNG"):
+    if token not in effect583_block:
+        raise AssertionError(f"effect583 lifecycle fixture is missing required payload/cue check: {token}")
+
 wave_vas = {630: 0x719BDC, 632: 0x719BF4, 633: 0x719C08, 637: 0x719B40,
             643: 0x719BB0, 644: 0x719B98, 648: 0x719B80}
 caller_wave_literals = {

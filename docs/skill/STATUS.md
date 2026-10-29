@@ -51,3 +51,5 @@ Latest WP5 lifecycle checkpoint: effects682–686 now have table-driven Effect_S
 Latest WP5 Effect_SPR checkpoint: effect584 variant8 now has four-direction action and state4/5/6 caller-cue lifecycle coverage. The frame5 PE cue remains only the unresolved `effect\\` prefix at VA `0x6F1FF0`; no suffix or audible result is inferred. See the 2026-10-29 entry in `docs/skill/PROGRESS.md`.
 
 Latest Effect_SPR checkpoint: effect612 variant14 now has direct production-helper lifecycle coverage alongside its existing wrapper/STR continuation test. PE asset bytes at `0x71D0B0/0x71D09C` are bound in the comparator; helper payload and wrapper continuation are checked separately. No integrated rendering acceptance is claimed.
+
+Latest WP5 Effect_SPR checkpoint: effect583 variant7 now has direct state0/state1 coverage for its listener-relative firehit cue and exceptional speed3/pattern0/alpha220 particle profile. The comparator binds the exact PE sprite/action and wave bytes; see the 2026-10-29 PROGRESS entry. This does not establish audible or rendered output.

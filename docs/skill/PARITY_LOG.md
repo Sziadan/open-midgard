@@ -4878,3 +4878,7 @@ Connected effect584 to a direct local production-helper fixture. At camera longi
 ## WP5 Effect_SPR lifecycle — effect612 variant14 — 2026-10-29
 
 Added direct state0/state1 coverage through the production sprite helper for the effect612 variant14 payload: one PP_3DPARTICLE, duration sentinel78, default Y offset, renderFlag0x201, pattern0x200, speed2 one-shot animation, action0 and one segment, with PE resource literals at `0x71D0B0/0x71D09C` and no audio/RNG. The later state refreshes origin without duplicate output. The registered checker binds these literals to PE bytes, requires direct helper coverage, and preserves the pre-existing wrapper/STR-completion fixture plus PE/primary-Ref continuation comparison. This verifies helper lifecycle and wrapper behavior as separate pieces; no integrated STR/rendered visual acceptance is claimed.
+
+## WP5 Effect_SPR lifecycle — effect583 variant7 — 2026-10-29
+
+Added direct state0/state1 lifecycle coverage for effect583. PE and primary Ref case0x247 select variant7; the helper’s exceptional profile plays `effect\\ef_firehit.wav` listener-relative, sets speed3/pattern0/alpha220, uses sprite/action resources at `0x71D1C8/0x71D1B4`, then initializes one segment. The fixture checks exact resources/payload/cue and zero RNG at state0, then confirms a moved master only refreshes origin at state1. The comparator binds cue bytes to PE VA `0x71D1DC`, verifies the PE/Ref helper fields and caller route, and requires the fixture. Local lifecycle/audio-call coverage is not audible or rendered-output acceptance.
