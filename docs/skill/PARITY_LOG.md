@@ -4846,3 +4846,7 @@ The table-driven fixture covers caller-to-variant mappings 640→23, 641→24, a
 ## WP5 Effect_SPR lifecycle — effect647 variant29 — 2026-10-29
 
 Direct runtime coverage exercises the extracted production helper for effect647 state0/state1. It checks the one-shot particle payload (renderFlag0x201), exact resources bound to PE VAs `0x71CE08/0x71CDF4`, no wave/RNG, and quiet later-state behavior. The comparator verifies PE and primary Ref routing; focused checks pass2/2; full VS17 Release parity CTest passes434/434. No rendered-output acceptance is claimed.
+
+## WP5 Effect_SPR lifecycle — effect644 variant27 — 2026-10-29
+
+State0 runtime coverage checks effect644's variant27 particle, exact resource requests, and single listener-relative caller wave; state1 does not repeat them and refreshes the helper origin. SPR/ACT/wave strings are bound to executable VAs `0x71CE5C/0x71CE44/0x719B98`; the wave bytes at the latter address are preserved exactly without decoding a guessed suffix. PE and primary Ref caller order agree. This is local lifecycle/audio-call/payload coverage only; it focused checks pass2/2; full VS17 Release parity CTest passes434/434. This does not establish audible or rendered parity.
