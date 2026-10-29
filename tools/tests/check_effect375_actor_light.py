@@ -118,9 +118,31 @@ require("case 387: ApplyActorLight(); return true;" in DISPATCH,
         "local effect387 dispatcher route missing")
 require(actor_light_ids is not None and re.search(r"\b387\b", actor_light_ids.group(1)),
         "effect387 missing from generator actor-light group")
+pe_396 = re.search(
+    r"case 396:\s*if \( \(\(\*p_m_master\)->m_BodyLight & 1\) != 1 \)\s*"
+    r"\+\+\(\*p_m_master\)->m_BodyLight;\s*"
+    r"if \( \(\(\*p_m_master\)->m_BodyLight & 8\) != 8 \)\s*"
+    r"\(\*p_m_master\)->m_BodyLight \+= 8;\s*"
+    r"CRenderObject::SetArgb\(\*p_m_master, -1, 255, 89, 182\);\s*break;",
+    PE,
+)
+require(pe_396 is not None, "canonical PE effect396 bit-setting and tint order changed")
+local_396 = re.search(
+    r"case 396:\s*if \(master != nullptr\)\s*\{\s*"
+    r"if \(\(master->m_BodyLight & 1\) != 1\)\s*\{\s*\+\+master->m_BodyLight;\s*\}\s*"
+    r"if \(\(master->m_BodyLight & 8\) != 8\)\s*\{\s*master->m_BodyLight \+= 8;\s*\}\s*"
+    r"master->SetArgb\(-1, 255, 89, 182\);\s*\}\s*break;",
+    helper.group(1),
+)
+require(local_396 is not None, "local effect396 bit gate/tint order or null-master guard changed")
+require("case 396: ApplyActorLight(); return true;" in DISPATCH,
+        "local effect396 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b396\b", actor_light_ids.group(1)),
+        "effect396 missing from generator actor-light group")
 require("case 375" not in REF and "case 379" not in REF and "case 382" not in REF and "case 385" not in REF,
         "primary Ref gained a standalone actor-light case; update recorded provenance")
 
-require("case 387" not in REF, "primary Ref gained effect387; update recorded provenance")
+require("case 387" not in REF and "case 396" not in REF,
+        "primary Ref gained an explicit actor-light case; update recorded provenance")
 
-print("effects375/379/382/385/387 actor-light source parity passed; primary Ref has no standalone cases and local helpers guard null masters")
+print("effects375/379/382/385/387/396 actor-light source parity passed; primary Ref has no standalone cases and local helpers guard null masters")

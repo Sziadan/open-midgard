@@ -2482,3 +2482,7 @@ Added and registered `check_effect390_391_clipwave_callers.py`. It checks both P
 ## WP5F effect394 SphereWind caller parity — 2026-10-29
 
 Added and registered `check_effect394_sphere_wind.py`. It checks the PE loop's five times (0, 9, 18, 27, 36), fire-ivy texture and variant1, the local generated route and SphereWind band profile, exact `effect\\fire_ivy.bmp` bytes at `0x71A7AC`, and primary-Ref caller provenance. Focused check, elevated Release parity build and full Release CTest passed 348/348. No production behavior change.
+
+## WP5F effect396 actor-light tint parity — 2026-10-29
+
+Extended the grouped actor-light checker for effect396's ordered bit-0/bit-3 gates and `(255, 89, 182)` tint, generated route, local null-master guard, and primary-Ref omission. Focused check and full Release CTest passed 348/348. No production behavior change.
