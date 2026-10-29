@@ -4608,3 +4608,8 @@ The existing `tools/tests/check_bottom_caller.py` proves full PE/primary Ref hel
 ## WP5 SoulStrike effects15/451 lifecycle — 2026-10-29
 
 Existing `tools/tests/check_soulstrike_callers.py` establishes matching PE/primary Ref `SoulStrike` helpers, PE caller variants0/1, primary Ref caller omission, both local routes, exact executable-resolved particle1/particle5 resources, and no RNG. The lifecycle fixture now executes the local handler across both variants and all count values1–5, covering each eligible quotient q (states6,17,28,39,50 as permitted by the count end), plus non-cadence, over-end and invalid count cases. Each of the 30 eligible events checks projected master position, exact `effect\EF_SoulStrike.wav` listener-relative position and audio parameters, ordered sprite/action requests, spline payload/physics/orientation, and all 12 segment initializations. No production behavior changed. Focused harness passes3032 checks, comparator passes, full Release parity CTest passes428/428.
+
+
+## WP5 effect650 MapMagicZone lifecycle — 2026-10-29
+
+The existing `tools/tests/check_effect650_map_magic_zone.py` establishes PE/primary Ref caller parity, exact helper assets/branches and the primary-versus-secondary Map_Aura boundary. Added lifecycle execution of `ProcessEffect650`: state0 refreshes parent position/cache and emits, in order, MapMagicZone variants0/1 (`mjin2.tga`, `mjin.tga`), a two-lane PP_3DAURA (`pikapika2.bmp`), then a three-lane PP_3DCASTING (`ring_blue.tga`). The fixture checks all bands, durations, flags, sizes, textures, cleared aura samples, no RNG/audio, and state1 cache refresh without re-emission. Focused harness passes3034 checks, comparator passes, full Release parity CTest passes428/428. No production behavior changed.

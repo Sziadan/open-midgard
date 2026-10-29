@@ -719,6 +719,7 @@ struct CRagEffect : CGameObject {
     bool ProcessBottom114();
     bool ProcessBottom2Effect137();
     bool ProcessSoulStrike15(int);
+    bool ProcessEffect650();
     void ApplyWind();
     void SpawnWarp8();
     bool ProcessEnhance9();
@@ -12988,6 +12989,68 @@ int main()
             &&waveCalls.size()==invalidWaves&&rngDraws==invalidDraws,
             "SoulStrike count outside one-through-five has no cadence emissions");
         g_world.m_player=oldPlayer; g_resMgr.requests.clear(); waveCalls.clear();
+    }
+    {
+        CRenderObject master; master.m_pos={10,20,30};
+        CRagEffect mapMagic; mapMagic.m_master=&master; mapMagic.m_type=650; mapMagic.m_duration=77;
+        mapMagic.m_effectPos={1,2,3}; mapMagic.m_cachedPos={4,5,6};
+        g_texMgr.requests.clear(); waveCalls.clear(); const int draws=rngDraws;
+        const bool active=mapMagic.ProcessEffect650();
+        const char* textures[]={"effect\\mjin2.tga","effect\\mjin.tga","effect\\pikapika2.bmp","effect\\ring_blue.tga"};
+        const EFFECTPRIMID types[]={PP_MAPMAGICZONE,PP_MAPMAGICZONE,PP_3DAURA,PP_3DCASTING};
+        bool ordered=mapMagic.m_primList.size()==4;
+        auto primIt=mapMagic.m_primList.begin();
+        CEffectPrim* emitted[4]{};
+        for(int i=0;i<4;++i) {
+            if(primIt==mapMagic.m_primList.end()) { ordered=false; break; }
+            emitted[i]=*primIt++;
+            ordered=ordered&&emitted[i]->m_type==types[i]&&emitted[i]->m_duration==77
+                &&emitted[i]->m_renderFlag==5&&emitted[i]->m_texture.size()==1
+                &&g_texMgr.requests.size()>static_cast<size_t>(i)&&g_texMgr.requests[static_cast<size_t>(i)]==textures[i];
+        }
+        bool magicBands=emitted[0]&&emitted[1];
+        const float magicHeights[]={-0.5f,-0.40000001f}; const int magicRotations[]={0,358},magicAlphas[]={200,50};
+        for(int index=0;index<2&&emitted[index];++index) {
+            const auto& prim=*emitted[index]; magicBands=magicBands&&prim.m_size==110.0f
+                &&prim.m_gi[0].life==1&&prim.m_gi[0].distance==30.0f
+                &&prim.m_gi[0].rotStart==magicRotations[index]&&prim.m_gi[0].alphaB==magicAlphas[index]
+                &&prim.m_gi[0].height[0]==magicHeights[index]&&prim.m_gi[0].height[4]==static_cast<float>(index);
+            for(int lane=1;lane<4;++lane) magicBands=magicBands&&prim.m_gi[lane].life==0;
+        }
+        bool pikaBands=emitted[2]&&emitted[2]->m_size==4.0f;
+        if(emitted[2]) for(int lane=0;lane<4;++lane) {
+            const auto& gi=emitted[2]->m_gi[lane];
+            pikaBands=pikaBands&&gi.life==(lane<2?1:0);
+            if(lane<2) pikaBands=pikaBands&&gi.distance==46.0f&&gi.riseAngle==lane*180
+                &&gi.alphaB==25&&gi.height[0]==-1.0f;
+        }
+        bool auraBands=emitted[3]&&emitted[3]->m_size==0.0f;
+        const float maxHeights[]={15.0f,13.0f,11.0f},distances[]={12.9f,13.1f,13.3f};
+        const int rotations[]={0,90,180},rises[]={55,50,45};
+        if(emitted[3]) for(int lane=0;lane<4;++lane) {
+            const auto& gi=emitted[3]->m_gi[lane]; auraBands=auraBands&&gi.life==(lane<3?1:0);
+            if(lane<3) {
+                auraBands=auraBands&&gi.process==0&&gi.fullDisplayAngle==315&&gi.maxHeight==maxHeights[lane]
+                    &&gi.rotStart==rotations[lane]&&gi.alphaB==50&&gi.alphaT==1
+                    &&gi.distance==distances[lane]&&gi.riseAngle==rises[lane]&&gi.sparkY==0.0f;
+                for(int sample=0;sample<21;++sample) auraBands=auraBands&&gi.height[sample]==0.0f&&gi.flag[sample]==0;
+            }
+        }
+        check(active&&ordered&&magicBands&&pikaBands&&auraBands
+            &&mapMagic.m_effectPos.x==10&&mapMagic.m_effectPos.y==20&&mapMagic.m_effectPos.z==30
+            &&mapMagic.m_cachedPos.x==10&&mapMagic.m_cachedPos.y==20&&mapMagic.m_cachedPos.z==30
+            &&g_texMgr.requests==std::vector<std::string>(textures,textures+4)
+            &&waveCalls.empty()&&rngDraws==draws,
+            "MapMagicZone effect650 emits its ordered two magic zones, aura and casting ring with exact bands and resources");
+        mapMagic.ClearPrims(); g_world.UpdateGameObjects(); g_texMgr.requests.clear();
+        mapMagic.m_stateCnt=1; mapMagic.m_effectPos={1,2,3}; mapMagic.m_cachedPos={4,5,6}; master.m_pos={40,50,60};
+        const int laterDraws=rngDraws; const size_t laterWaves=waveCalls.size();
+        check(mapMagic.ProcessEffect650()&&mapMagic.m_primList.empty()&&g_texMgr.requests.empty()
+            &&mapMagic.m_effectPos.x==40&&mapMagic.m_effectPos.y==50&&mapMagic.m_effectPos.z==60
+            &&mapMagic.m_cachedPos.x==40&&mapMagic.m_cachedPos.y==50&&mapMagic.m_cachedPos.z==60
+            &&waveCalls.size()==laterWaves&&rngDraws==laterDraws,
+            "MapMagicZone effect650 refreshes both cached origins at nonzero state without repeating emission");
+        g_texMgr.requests.clear(); waveCalls.clear();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
