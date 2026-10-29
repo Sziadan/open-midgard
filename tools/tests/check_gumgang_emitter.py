@@ -88,6 +88,8 @@ for token in (
     "case 486: giCount = 2; colorVariant = 0; doubleGumGang = true",
     "if (m_stateCnt != 0)", "prim->m_renderFlag = 5", "prim->m_duration = m_duration",
     "prim->m_totalTexture = 5", "doubleGumGang ? PP_DOUBLEGUMGANG : PP_GUMGANG",
+    'if (m_type == 254 && m_stateCnt == 0)',
+    'TryPlaySingleEffectWave(m_effectPos, "effect\\\\mon_맹룡과강.wav", 0.0f, true)',
     "gi.distance = doubleGumGang ? 2.0f : 3.5f", "gi.flag[4] = static_cast<u8>(colorVariant)",
 ):
     if token not in local_helper:
@@ -168,5 +170,17 @@ for token in (
 ):
     if token not in LIFECYCLE:
         raise AssertionError(f"effects485/486 lifecycle assertion missing: {token}")
+
+effect254_fixture = re.search(r"CRagEffect effect;effect\.m_type=254;[\s\S]*?effect\.ClearPrims\(\);g_world\.UpdateGameObjects\(\);", LIFECYCLE)
+if effect254_fixture is None or "effect.ProcessGumGangEffect()" not in effect254_fixture.group(0):
+    raise AssertionError("effect254 four-band runtime fixture does not invoke the production GumGang handler")
+for token in (
+    "effect254 emits one four-band GumGang with ordered assets and 48 controlled draws",
+    "effect254 state0 plays its one listener-relative GumGang sound",
+    "effect254 preserves all four active standard GumGang GI profiles",
+    "effect254 later state refreshes origin without re-emission, resource, RNG or repeated sound",
+):
+    if token not in effect254_fixture.group(0):
+        raise AssertionError(f"effect254 lifecycle assertion missing: {token}")
 
 print("GumGang emitter parity passed: PE/Ref setup, six PE/local callers, RNG profile, height15 mismatch and five PE assets")

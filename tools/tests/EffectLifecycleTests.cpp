@@ -14899,6 +14899,58 @@ int main()
         }
         g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
+    {
+        CRenderObject master,listener;master.m_pos={100,200,300};listener.m_pos={10,20,30};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=254;effect.m_stateCnt=0;effect.m_duration=73;effect.m_master=&master;
+        const int drawsByBand[4][12]={{1,2,3,4,0,5,6,1,7,8,4,9},{2,3,4,5,1,6,7,2,8,9,5,10},
+            {3,4,5,6,2,7,8,3,9,10,6,11},{4,0,6,7,3,8,9,4,10,11,7,12}};
+        rngValues.clear();for(const auto& band:drawsByBand) for(int value:band) rngValues.push_back(value);
+        rngCursor=0;g_texMgr.requests.clear();waveCalls.clear();const int draws=rngDraws;
+        check(effect.ProcessGumGangEffect(),"effect254 production GumGang handler recognizes the four-band caller");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        const std::vector<std::string> expectedTextures={"effect\\super1.bmp","effect\\super2.bmp",
+            "effect\\super3.bmp","effect\\super4.bmp","effect\\super5.bmp"};
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_GUMGANG&&prim->m_renderFlag==5
+            &&prim->m_duration==73&&prim->m_totalTexture==5
+            &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+            &&g_texMgr.requests==expectedTextures&&rngDraws==draws+48&&rngCursor==48,
+            "effect254 emits one four-band GumGang with ordered assets and 48 controlled draws");
+        check(waveCalls.size()==1&&waveCalls[0].name.find("effect\\mon_")==0
+            &&waveCalls[0].name.size()>=4&&waveCalls[0].name.substr(waveCalls[0].name.size()-4)==".wav"
+            &&waveCalls[0].x==90&&waveCalls[0].y==0&&waveCalls[0].z==270
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "effect254 state0 plays its one listener-relative GumGang sound");
+        if(prim) {
+            bool payload=true;
+            for(int band=0;band<4;++band) {
+                const EffectGi& gi=prim->m_gi[static_cast<size_t>(band)];
+                const int* values=drawsByBand[band];
+                payload=payload&&gi.life==1&&gi.distance==3.5f
+                    &&gi.arcBaselineY==-static_cast<float>(values[0]%10)
+                    &&gi.height[0]==10.0f&&gi.height[1]==70.0f&&gi.height[2]==static_cast<float>(values[1]%5)
+                    &&gi.height[3]==static_cast<float>(values[2]%360)&&gi.sparkY==-static_cast<float>(values[3]%10)
+                    &&gi.height[4]==10.0f&&gi.height[5]==130.0f&&gi.height[6]==static_cast<float>(values[4]%5)
+                    &&gi.height[7]==static_cast<float>(values[5]%360)&&gi.vecTPreY==-static_cast<float>(values[6]%10)
+                    &&gi.height[8]==10.0f&&gi.height[9]==190.0f&&gi.height[10]==static_cast<float>(values[7]%5)
+                    &&gi.height[11]==static_cast<float>(values[8]%360)&&gi.vecTNowY==-static_cast<float>(values[9]%10)
+                    &&gi.height[12]==10.0f&&gi.height[13]==250.0f&&gi.height[14]==static_cast<float>(values[10]%5)
+                    &&gi.flag[4]==0&&prim->m_bands[static_cast<size_t>(band)].rotStart==static_cast<float>(values[11]%360);
+            }
+            check(payload,"effect254 preserves all four active standard GumGang GI profiles");
+        } else {
+            check(false,"effect254 preserves all four active standard GumGang GI profiles");
+        }
+        const size_t requests=g_texMgr.requests.size();master.m_pos={410,520,630};effect.m_stateCnt=1;
+        check(effect.ProcessGumGangEffect()&&effect.m_primList.size()==1&&prim
+            &&effect.m_effectPos.x==410&&effect.m_effectPos.y==520&&effect.m_effectPos.z==630
+            &&effect.m_cachedPos.x==410&&effect.m_cachedPos.y==520&&effect.m_cachedPos.z==630
+            &&g_texMgr.requests.size()==requests&&rngDraws==draws+48&&waveCalls.size()==1
+            &&waveCalls[0].x==90&&waveCalls[0].z==270,
+            "effect254 later state refreshes origin without re-emission, resource, RNG or repeated sound");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();waveCalls.clear();
+        rngValues.clear();rngCursor=0;g_world.m_player=oldPlayer;
+    }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
 }

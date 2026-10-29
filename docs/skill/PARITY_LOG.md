@@ -4787,3 +4787,7 @@ Extended the production GumGang fixture to effect418's two-band DoubleGumGang pr
 ## WP5 DoubleGumGang lifecycle — effects485/486 selectors1/0 — 2026-10-29
 
 Added a table-driven runtime fixture for the remaining two-band DoubleGumGang color selectors. For each effect it checks PP_DOUBLEGUMGANG, zero size, five ordered resources, 24 controlled draws, two active double profiles with the expected `flag[4]` selector (1 or 0), inactive GI2/3, and state1 origin refresh without another emission/resource/RNG. The existing comparator requires both table entries alongside the PE/Ref and local caller checks. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.
+
+## WP5 GumGang lifecycle — effect254 four-band/audio — 2026-10-29
+
+Connected the production ProcessGumGangEffect branch for effect254 to the lifecycle harness. The fixture checks one four-band PP_GUMGANG emission, five ordered textures, exactly 48 controlled RNG draws, all four active GI profiles, the state0 listener-relative `effect\\mon_맹룡과강.wav` wave at the origin, and later-state origin refresh without re-emission, resource reload, RNG, or repeated sound. The source comparator now requires the effect254 production branch and runtime fixture. The PE caller and primary Ref helper are source-compared; the existing older-Ref height15 extra-draw mismatch remains documented, and local behavior follows canonical PE. Focused checks pass2/2; full VS17 Release build succeeds and CTest passes434/434.
