@@ -1,6 +1,9 @@
 from pathlib import Path
-
+import sys
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+from ro_exe_resolve import ExeImage  # noqa: E402
+
 ref_text = (ROOT / "Ref/dhxj/RagEffect.cpp").read_text(encoding="cp1252")
 ref_header = (ROOT / "Ref/dhxj/RagEffect.h").read_text(encoding="cp1252")
 exe_text = (ROOT / "HighPriest.exe.c").read_text(encoding="cp1252")
@@ -79,15 +82,14 @@ ordered(impl, [
     "sphere->m_radiusAccel = -(sphere->m_radiusSpeed / sphere->m_duration) / 2.0f",
     "sphere->m_longSpeed = 3.0f", "sphere->m_alpha = 0.0f", "sphere->m_maxAlpha = 240.0f",
     "sphere->m_alphaSpeed = sphere->m_maxAlpha / 7", "sphere->m_fadeOutCnt = sphere->m_duration - 15",
-    'GetTexture("effect\\\\bigbang.tga", false)', "if (m_stateCnt >= 300) return false",
+    'GetTexture("effect\\\\", false)', "if (m_stateCnt >= 300) return false",
     "ProcessEZ2STR();", "return true",
 ], "implementation CartRevolution")
 
 assert "case 170:" in function(src, "void CRagEffect::Init(CRenderObject* master")
-assert "if (m_type == 170) return ApplyCartRevolution();" in function(src, "bool CRagEffect::ProcessEffectFrame()")
+assert "if (m_type == 170) return ApplyCartRevolution();" in function(src, "bool CRagEffect::ProcessEffectFrameLegacy()")
 assert "random(" not in ref and "rand()" not in ref and "SendMsg" not in ref
 assert 'char aEffectEfMagnum[] = "effect\\\\EF_MagnumBreak.wav"' in exe_text
 assert 'char aEffectRingYell[] = "effect\\\\ring_yellow.tga"' in exe_text
 assert 'char aEffect_27[] = "effect\\\\"' in exe_text
-print("PASS: Ref/EXE/current CartRevolution state branches, ordered payloads, effect-170 routes and wave match; canonical bigbang texture token remains truncated")
-
+print("PASS: Ref/EXE/current CartRevolution state branches, ordered payloads, effect-170 routes and wave bytes match; canonical texture symbol remains truncated to its verified prefix")

@@ -577,6 +577,8 @@ add_test(NAME make_party_effect_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_make_party_effect_source.py")
 add_test(NAME party_effect_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_party_effect.py")
+add_test(NAME cart_revolution_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_cart_revolution.py")
 add_test(NAME pc_setstate_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_pc_setstate_source.py")
 add_test(NAME pc_processstate_source_check
@@ -1383,4 +1385,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_top_rank.py
     check_effect121_122_sonic_blow.py
     check_elemental_change_casting.py
-    check_party_effect.py)
+    check_party_effect.py
+    check_cart_revolution.py)

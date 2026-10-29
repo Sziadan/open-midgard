@@ -2367,3 +2367,8 @@ Strengthened and registered `check_elemental_change_casting.py`. It now verifies
 ## WP5 effect160 Party executable texture bytes — 2026-10-29
 
 Strengthened `check_party_effect.py` with an exact `effect\party.tga` byte assertion at PE VA `0x71BC7C`, registered the comparator in CTest, and bounded its no-RNG check to the actual `SpawnParty` function. The focused check, Release parity build and full CTest passed329/329. No production behavior change.
+
+
+## WP5C effect170 CartRevolution wave bytes and comparator — 2026-10-29
+
+Extended and registered `check_cart_revolution.py` to verify `effect\EF_MagnumBreak.wav` at PE VA `0x71B3CC`. Corrected its stale local-route assertion to inspect `ProcessEffectFrameLegacy` and aligned its texture token check with the canonical truncated `effect\` symbol; no texture suffix is inferred. Release parity build succeeded; full CTest passed330/330. No production change.

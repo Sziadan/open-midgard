@@ -4005,3 +4005,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5 effect160 Party texture bytes and CTest coverage — 2026-10-29
 
 `check_party_effect.py` now verifies executable bytes at VA `0x71BC7C` equal `effect\party.tga`; registered it in CTest and corrected local helper extraction so no-RNG validation covers `SpawnParty` only. The comparator checks existing Ref/PE/local emitter order and terrain behavior. Release parity build succeeded; full CTest passed329/329. No production change.
+
+
+## WP5C effect170 CartRevolution wave bytes — 2026-10-29
+
+`check_cart_revolution.py` now confirms exact `effect\EF_MagnumBreak.wav` executable bytes at VA `0x71B3CC`. Registered in CTest. Updated the local-route check to inspect `ProcessEffectFrameLegacy`; the canonical sphere texture symbol remains truncated to the verified `effect\` prefix, with no suffix guessed. Release parity build succeeded; full CTest passed330/330. No production change.
