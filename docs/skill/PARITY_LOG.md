@@ -4112,3 +4112,7 @@ Extended the grouped actor-light comparator for effect387's frame-30 message, 30
 ## WP5F effect392 Kyrie guard tint parity — 2026-10-29
 
 Added and registered `check_effect392_kyrie_guard.py`. It checks the PE frame-zero cue and <=29 light/tint window with modulo-six color order, the local helper and `FinishEffectFrame` route, exact `effect\\kyrie_guard.wav` bytes at `0x71A748`, and confirms primary Ref's 392 occurrence remains its Init STR mapping. Focused check, elevated Release parity build and full Release CTest passed 346/346. No production behavior change.
+
+## WP5F effects390/391 clip-wave caller parity — 2026-10-29
+
+Added and registered `check_effect390_391_clipwave_callers.py`. It checks both PE frame-zero positioned wave callers and common STR continuation, local clip-wave frame/policy routing and ignored STR result, exact `black_overthrust.wav` and `EF_IncAgility.wav` bytes at `0x71A598` and `0x71A760`, and records primary Ref's Init mappings. Focused check, elevated Release parity build and full Release CTest passed 347/347. No production behavior change.
