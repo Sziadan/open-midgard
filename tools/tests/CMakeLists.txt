@@ -1180,6 +1180,8 @@ add_test(NAME effect392_kyrie_guard_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect392_kyrie_guard.py")
 add_test(NAME effects390_391_clipwave_callers_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect390_391_clipwave_callers.py")
+add_test(NAME effect394_sphere_wind_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect394_sphere_wind.py")
 add_test(NAME effect337_job_lv_up_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect337_job_lv_up.py")
 add_test(NAME effect410_rainbow_source_check

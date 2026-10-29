@@ -4116,3 +4116,7 @@ Added and registered `check_effect392_kyrie_guard.py`. It checks the PE frame-ze
 ## WP5F effects390/391 clip-wave caller parity — 2026-10-29
 
 Added and registered `check_effect390_391_clipwave_callers.py`. It checks both PE frame-zero positioned wave callers and common STR continuation, local clip-wave frame/policy routing and ignored STR result, exact `black_overthrust.wav` and `EF_IncAgility.wav` bytes at `0x71A598` and `0x71A760`, and records primary Ref's Init mappings. Focused check, elevated Release parity build and full Release CTest passed 347/347. No production behavior change.
+
+## WP5F effect394 SphereWind caller parity — 2026-10-29
+
+Added and registered `check_effect394_sphere_wind.py`. It checks the PE loop's five times (0, 9, 18, 27, 36), fire-ivy texture and variant1, the local generated route and SphereWind band profile, exact `effect\\fire_ivy.bmp` bytes at `0x71A7AC`, and primary-Ref caller provenance. Focused check, elevated Release parity build and full Release CTest passed 348/348. No production behavior change.
