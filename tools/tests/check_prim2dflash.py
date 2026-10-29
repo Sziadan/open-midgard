@@ -28,6 +28,7 @@ def main() -> int:
     exe = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8")
     current = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
     dispatcher = (ROOT / "docs/skill/generated/primitive_onprocess_dispatch.tsv").read_text(encoding="utf-8")
+    header = (ROOT / "HighPriest.exe.h").read_text(encoding="utf-8")
 
     signature = "void __thiscall CEffectPrim::Prim2DFlash(CEffectPrim *this)"
     ref_body = function_body(ref, signature)
@@ -41,6 +42,18 @@ def main() -> int:
         assert "Prim2DFlash(this)" in case, f"{label} OnProcess case 3 is not routed to Prim2DFlash"
         assert "goto $L145961" in case, f"{label} case 3 does not continue to the common tick"
     assert "0x03\tPP_2DFLASH\tPrim2DFlash\tcontinues" in dispatcher
+
+    # PP_3DFLASH has an updater and renderer, but the canonical PE effect
+    # constructors do not launch it. Local lifecycle tests may still build
+    # the primitive directly to verify its source behavior.
+    launch_calls = re.findall(r"CRagEffect::LaunchEffectPrim\(this,\s*([^,]+),", exe)
+    assert "PP_3DFLASH" not in launch_calls, "canonical PE unexpectedly constructs PP_3DFLASH"
+    assert not any(re.fullmatch(r"(?:19|0x13)", argument.strip()) for argument in launch_calls), \
+        "canonical PE unexpectedly constructs primitive id 0x13 numerically"
+    assert re.search(r"PP_3DFLASH\s*=\s*0x13", header), "canonical primitive enum no longer maps PP_3DFLASH to 0x13"
+    launch_factory = function_body(exe, "CEffectPrim *__thiscall CRagEffect::LaunchEffectPrim(")
+    assert "CEffectPrim::Init(v5, this, effectPrimId, fDeltaPos)" in launch_factory, \
+        "LaunchEffectPrim no longer initializes the primitive from its requested type"
 
     updater = function_body(current, "void UpdateReferenceFlash(CEffectPrim* prim)")
     anchor3_start = updater.index("if (is3dFlash)")

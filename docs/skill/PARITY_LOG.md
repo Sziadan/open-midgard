@@ -4396,3 +4396,7 @@ Expanded `tools/tests/check_prim2dquad_render.py` to bind the one canonical PE a
 ## WP5 CEffectPrim Render3DTexture caller coverage audit - 2026-10-29
 
 Expanded `tools/tests/check_3dtexture_render.py` to pin all 24 canonical PE `PP_3DTEXTURE` launch sites by enclosing method, including the inline effect196 route and 1–2 launch counts across the named effect helpers. The 16 dispatched effects remain exactly the local `UsesReferenceTexture` route set. `TetraVoltex` and `CurseAttack` each contain one launch but have no PE invocation callsite, so they remain outside the live route. Focused CTest passed; no runtime routing change was required.
+
+## WP5 CEffectPrim PP_3DFLASH reachability audit - 2026-10-29
+
+Extended `tools/tests/check_prim2dflash.py` to confirm canonical PE has no `LaunchEffectPrim` call for `PP_3DFLASH` or numeric primitive id `0x13`, while `LaunchEffectPrim` passes its requested ID unchanged to `CEffectPrim::Init`. The updater/render methods remain source-compared and locally fixture-tested, but no canonical effect caller route is claimed; direct local lifecycle construction is test-only coverage. Focused CTest passed; no runtime change was needed.
