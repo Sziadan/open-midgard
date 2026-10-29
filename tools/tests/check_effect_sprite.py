@@ -195,6 +195,22 @@ for token in ("const Effect630Case cases[]={{0,4},{1,0}}", "PP_3DPARTICLE",
               "without duplicate particle, resource, wave or RNG"):
     if token not in effect630_fixture.group(1):
         raise AssertionError(f"effect630 lifecycle assertion missing {token}")
+effect637_fixture = re.search(r"CRenderObject master,listener;master\.m_pos=\{100,200,300\};listener\.m_pos=\{10,70,20\};\s*CRenderObject\* oldPlayer=g_world\.m_player;g_world\.m_player=&listener;\s*CRagEffect effect;effect\.m_type=637;(.*?)(?=\n    })", LIFECYCLE, re.S)
+if effect637_fixture is None or "ProcessEffectSpriteProduction(20)" not in effect637_fixture.group(1):
+    raise AssertionError("effect637 direct production variant20 lifecycle fixture disappeared")
+for name, expected, required_va in (("expectedSpr", image.read_cstring_at(0x71CFBC).raw, 0x71CFBC),
+                                   ("expectedAct", image.read_cstring_at(0x71CFA4).raw, 0x71CFA4),
+                                   ("expectedWave", image.read_cstring_at(0x719B40).raw, 0x719B40)):
+    literal = re.search(rf"const std::string {name}=(\"(?:\\.|[^\"\\])*\")", effect637_fixture.group(1))
+    if literal is None or ast.literal_eval(literal.group(1)).encode("latin-1") != expected:
+        raise AssertionError(f"effect637 fixture {name} differs from PE bytes at {required_va:#x}")
+for token in ("PP_3DPARTICLE", "m_duration==95", "m_renderFlag==0x201", "m_pattern==0x200",
+              "m_animSpeed==4", "m_numSegments==1", "rngDraws==draws", "waveCalls.empty()",
+              "effect.m_stateCnt=1", "effect.m_stateCnt=10", "effect.m_stateCnt=11",
+              "waveCalls[0].name==expectedWave", "waveCalls[0].x==90", "waveCalls[0].y==0",
+              "waveCalls[0].z==280", "without spawning"):
+    if token not in effect637_fixture.group(1):
+        raise AssertionError(f"effect637 lifecycle assertion missing {token}")
 
 # Priority 5P effect-sprite callers 630/632/633/634 and their RNG variants.
 for effect_id, variant, wave_symbol in ((630, 15, "aEffect_155"),

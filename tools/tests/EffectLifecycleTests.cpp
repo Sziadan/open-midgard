@@ -12623,6 +12623,45 @@ int main()
         rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();g_world.m_player=oldPlayer;
     }
     {
+        CRenderObject master,listener;master.m_pos={100,200,300};listener.m_pos={10,70,20};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=637;effect.m_stateCnt=0;effect.m_duration=95;effect.m_master=&master;
+        rngValues={};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB5\xA5\xBD\xBA\xC6\xE4\xB6\xF3\xB5\xB5.spr";
+        const std::string expectedAct="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB5\xA5\xBD\xBA\xC6\xE4\xB6\xF3\xB5\xB5.act";
+        const std::string expectedWave="effect\\\xB5\xA5\xBD\xBA\xC6\xE4\xB6\xF3\xB5\xB5.wav";
+        check(effect.ProcessEffectSpriteProduction(20),"effect637 production Effect_SPR variant20 helper remains active");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+            &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+            &&prim->m_duration==95&&prim->m_deltaPos2.y==0&&prim->m_renderFlag==0x201
+            &&prim->m_pattern==0x200&&prim->m_animSpeed==4&&!prim->m_repeatAnim
+            &&prim->m_spriteAction==0&&prim->m_curMotion==0
+            &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+            &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+            &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==100
+            &&prim->m_segments[0].pos.y==200&&prim->m_segments[0].pos.z==300
+            &&rngDraws==draws&&rngCursor==0&&waveCalls.empty(),
+            "effect637 state0 emits exact variant20 particle and resources without its delayed cue or RNG");
+        effect.m_stateCnt=1;
+        check(effect.ProcessEffectSpriteProduction(20)&&effect.m_primList.size()==1
+            &&g_resMgr.requests.size()==2&&rngDraws==draws&&waveCalls.empty(),
+            "effect637 state1 does not repeat the initial particle, resources, wave or RNG");
+        effect.m_stateCnt=10;
+        check(effect.ProcessEffectSpriteProduction(20)&&effect.m_primList.size()==1
+            &&g_resMgr.requests.size()==2&&rngDraws==draws
+            &&waveCalls.size()==1&&waveCalls[0].name==expectedWave
+            &&waveCalls[0].x==90&&waveCalls[0].y==0&&waveCalls[0].z==280
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "effect637 state10 plays exact delayed PE wave at listener-relative coordinates without spawning");
+        effect.m_stateCnt=11;
+        check(effect.ProcessEffectSpriteProduction(20)&&effect.m_primList.size()==1
+            &&g_resMgr.requests.size()==2&&rngDraws==draws&&waveCalls.size()==1,
+            "effect637 state11 does not repeat its delayed cue or create additional output");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;waveCalls.clear();
+        g_resMgr.requests.clear();g_world.m_player=oldPlayer;
+    }
+    {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         gameMode.messages=0;gameMode.messageIds.clear();waveCalls.clear();

@@ -4826,3 +4826,7 @@ Effect633 state0/state1 runtime coverage verifies variant18 particle setup, exac
 ## WP5 Effect_SPR lifecycle — effect630 variant15 — 2026-10-29
 
 Effect630 variant15 now has direct runtime coverage for both RNG action paths (draw0→action4; draw1→action0), its one-shot particle setup and the frame0 listener-relative caller wave at `(100,0,300)`. The fixture compares its SPR/ACT/wave literals to PE bytes at `0x71D084/0x71D06C/0x719BDC`; the wave bytes at `0x719BDC` are `65 66 66 65 63 74 5C B1 D7 B8 B2 C0 DA BA A3 B1 E2 2E 77 61 76`. PE and primary Ref caller mapping agrees; PE resources are authoritative over secondary Ref `misc\\...` names. Later state has no re-emission or cue. Focused checks pass2/2; full VS17 Release parity CTest passes434/434. No rendering acceptance is claimed.
+
+## WP5 Effect_SPR lifecycle — effect637 variant20 — 2026-10-29
+
+Effect637 state0 spawns variant20 once with exact PE-backed assets; state1 is silent; state10 emits its delayed wave once without another particle, resource request, or RNG; state11 remains quiet. The fixture checker compares SPR/ACT/wave strings against PE addresses `0x71CFBC/0x71CFA4/0x719B40`. Raw wave bytes at `0x719B40`: `65 66 66 65 63 74 5C B5 A5 BD BA C6 E4 B6 F3 B5 B5 2E 77 61 76`. PE and primary Ref mapping agree; PE asset bytes supersede the secondary Ref path names. Focused checks pass2/2; full VS17 Release parity CTest passes434/434. No rendered visual parity is claimed.
