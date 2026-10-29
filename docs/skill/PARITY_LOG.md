@@ -4503,3 +4503,8 @@ Added and registered `tools/tests/check_effect14_heal_sp.py`. Canonical PE `Heal
 ## WP5 CRagEffect Bash effect16 source checkpoint - 2026-10-29
 
 Added and registered `tools/tests/check_effect16_bash.py`. Canonical PE `Bash` and primary Ref handler bodies normalize identically; PE case16 calls the helper, and local case16 enters `ProcessEffectFrameLegacy` and calls `ApplyBash`. The comparator verifies whole-helper reduced-effects suppression, projection before the state-zero gate, the exact wave and disc ordering, 20 normal-mode rays with five draws each, and the lowercase/uppercase texture spelling. Existing lifecycle assertions cover reduced-effects suppression, projected anchor, disc/ray profiles, exact texture request order and update behavior. Focused CTest and full Release parity CTest passed 408/408. No runtime behavior changed.
+
+
+## WP5 CRagEffect MagnumBreak effect17 source checkpoint - 2026-10-29
+
+Added and registered `tools/tests/check_effect17_magnum_break.py`. Canonical PE `MagnumBreak` and primary Ref bodies normalize identically; PE case17 calls the helper, and local case17 enters `ProcessEffectFrameLegacy` and calls `ApplyMagnumBreak`. The comparator verifies the state-zero gate, wave-before-emission order, ring/sphere/ring primitive sequence, separate parent and fixed durations, exact yellow-ring texture spelling, recovered CP949 sphere texture sequence, and no RNG calls. Existing lifecycle assertions cover source paths, stored-origin audio, primitive profiles, texture order, nonzero suppression and update lifetimes. Focused CTest and full Release parity CTest passed 409/409. No runtime behavior changed.
