@@ -241,10 +241,39 @@ require(actor_light_ids is not None and re.search(r"\b550\b", actor_light_ids.gr
 require(re.search(r"case 550:\s*if \(master != nullptr && m_stateCnt > 30 && m_stateCnt <= 50\)\s*\{\s*"
                   r"master->m_BodyLight \|= 0x2000;\s*master->m_BodyTime = frame;\s*\}", helper.group(1)),
         "local effect550 mask/frame/body-time behavior or master guard changed")
+
+pe_500 = process3_case(PE, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 500, 501)
+ref_500 = process3_case(REF, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 500, 501)
+require(re.sub(r"\s+", "", pe_500) == re.sub(r"\s+", "", ref_500),
+        "primary Ref and PE effect500 caller branches differ")
+for token in ("m_stateCnt >= 31", "m_BodyLight & 8", "m_stateCnt % 2",
+              "m_BodyLight & 1", "SetArgb(this->m_master, -1, 0, 0, 255)"):
+    require(token in pe_500, f"PE effect500 blue/white flash behavior missing {token}")
+require("case 500: ApplyActorLight(); return true;" in DISPATCH3,
+        "local effect500 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b500\b", actor_light_ids.group(1)),
+        "effect500 missing from generator actor-light group")
+require(re.search(r"case 500:\s*if \(m_stateCnt < 31\)\s*\{\s*flashBody\(0, 0, 255\);\s*\}", helper.group(1)),
+        "local effect500 cutoff/blue flash mapping changed")
+
+pe_625 = process3_case(PE, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 625, 626)
+ref_625 = process3_case(REF, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 625, 626)
+require(re.sub(r"\s+", "", pe_625) == re.sub(r"\s+", "", ref_625),
+        "primary Ref and PE effect625 caller branches differ")
+for token in ("m_stateCnt % 4", "m_BodyLight & 0x4000", "m_BodyLight + 0x4000", "goto LABEL_182"):
+    require(token in pe_625, f"PE effect625 cadence/body-light behavior missing {token}")
+require("case 625: ApplyActorLight(); return true;" in DISPATCH3,
+        "local effect625 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b625\b", actor_light_ids.group(1)),
+        "effect625 missing from generator actor-light group")
+require(re.search(r"case 625:\s*if \(master != nullptr && \(m_stateCnt % 4\) == 0 && "
+                  r"\(master->m_BodyLight & 0x4000\) != 0x4000\)\s*\{\s*"
+                  r"master->m_BodyLight \+= 0x4000;\s*master->m_BodyTime2 = 20;\s*\}", helper.group(1)),
+        "local effect625 cadence, bit gate, BodyTime2 or master guard changed")
 require("case 375" not in REF and "case 379" not in REF and "case 382" not in REF and "case 385" not in REF,
         "primary Ref gained a standalone actor-light case; update recorded provenance")
 
 require("case 387" not in REF and "case 396" not in REF,
         "primary Ref gained an explicit actor-light case; update recorded provenance")
 
-print("effects375/379/382/385/387/396/538/542/544/548/549/550 actor-light source parity passed; PE/Ref callers and local guards checked")
+print("effects375/379/382/385/387/396/500/538/542/544/548/549/550/625 actor-light source parity passed; PE/Ref callers and local guards checked")

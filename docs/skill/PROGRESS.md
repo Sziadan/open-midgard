@@ -2571,3 +2571,7 @@ Added and registered `check_effect601_sight2.py`. It compares the complete PE/pr
 ## WP5F effects689/690/691/696 animated texture parity — 2026-10-29
 
 Added and registered `check_effects689_691_696_texture_animation.py`. It compares the complete PE/primary-Ref animation helper and variant callers, verifies generated local routes and the shared primitive/GI profile, and confirms all 48 exact dust/red/green/violet animation frame resources exist in the executable. Focused check passed; full Release parity build and CTest passed 363/363. No production behavior change.
+
+## WP5F effects500/625 actor-light parity — 2026-10-29
+
+Extended `check_effect375_actor_light.py` with PE/primary-Ref caller comparison and local guarded-route assertions for effects500 and 625. Effect500 covers its state31 cutoff, even-frame blue tint and shared odd-frame white flash; effect625 covers the four-frame cadence, BodyLight `0x4000` gate and BodyTime2=20. Focused check passed; full Release CTest passed 363/363. No production behavior change.
