@@ -1332,6 +1332,8 @@ add_test(NAME effect2_hit3_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect2_hit3.py")
 add_test(NAME effect3_hit4_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect3_hit4.py")
+add_test(NAME effects4_5_hit5_hit6_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects4_5_hit5_hit6.py")
 add_test(NAME effect10_coin_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect10_coin.py")
 add_test(NAME effect18_steal_source_check
@@ -1485,6 +1487,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect1_hit2.py
     check_effect2_hit3.py
     check_effect3_hit4.py
+    check_effects4_5_hit5_hit6.py
     check_effect10_coin.py
     check_effect18_steal.py
     check_effect14_heal_sp.py
