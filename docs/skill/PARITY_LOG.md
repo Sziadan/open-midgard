@@ -3838,3 +3838,7 @@ Added `check_effect141_pneuma.py`, registered as `effect141_pneuma_source_check`
 ## WP5C effect153 Concentration
 
 Added `check_effect153_concentration.py`, registered as `effect153_concentration_source_check`, and state0/1 lifecycle checks. PE OnProcess case153 plays `effect\\ac_concentration.wav` once at state0 using effect-position minus player X/Z, literal Y0, args250/40/1.0, then propagates shared `ProcessEZ2STR(0,-80,0)` completion. PE and primary Ref Init map to `Concentration.str`; exact executable bytes verify wave VA `0x712CC8` and STR VA `0x71AD90`. Local route uses the same state-zero cue and propagates STR completion. Release parity build and full CTest pass297/297. No production behavior change.
+
+## WP5C effect154 Refine Success
+
+Added `check_effect154_refine_success.py`, registered as `effect154_refine_success_source_check`, and lifecycle assertions around states14/15/16. PE case154 plays `effect\\bs_refinesuccess.wav` once at state15 using listener-relative X/Z, literal Y0 and arguments250/40/1.0, then propagates shared `ProcessEZ2STR(0,-80,0)` completion. PE and primary Ref Init map to `bs_RefineSuccess.str`; executable bytes verify wave VA `0x719F58` and STR VA `0x71AD78`. Local clip-wave route has the matching frame, resource and completion result. Release parity build succeeds; focused checks pass2/2 and full Release CTest passes298/298. No production behavior change.

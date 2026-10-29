@@ -2198,3 +2198,7 @@ Compared PE and primary-Ref Init variant selection, exact executable format-stri
 ## WP5C effect153 Concentration — 2026-10-29
 
 Compared PE caller153, PE/primary-Ref Init mappings, exact audio and STR bytes, and the local route. At state0 it plays `effect\\ac_concentration.wav` at player-relative X/Z, Y0, with 250/40/1.0, then propagates `ProcessEZ2STR(0,-80,0)` completion. `Concentration.str` is at VA `0x71AD90`; the cue at `0x712CC8`. Added a source comparator and state0/1 lifecycle assertions for cue timing, coordinates, one-time playback and STR result propagation. Release parity build and complete Release CTest pass297/297.
+
+## WP5C effect154 Refine Success — 2026-10-29
+
+Compared PE case154 and PE/primary-Ref Init mappings, exact executable wave/STR bytes, and local route. The frame15 cue is `effect\\bs_refinesuccess.wav`, listener-relative X/Z at literal Y0 with 250/40/1.0; shared `ProcessEZ2STR(0,-80,0)` completion is propagated each frame. Wave and STR bytes resolve at `0x719F58` and `0x71AD78`. Added a registered source comparator and lifecycle checks for frame timing, coordinates, no repeat and unchanged RNG. Release parity build and full CTest pass298/298. No production behavior change.

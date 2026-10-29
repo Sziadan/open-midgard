@@ -11336,6 +11336,27 @@ int main()
         g_world.m_player=oldPlayer;waveCalls.clear();
     }
     {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        waveCalls.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        CRagEffect effect;effect.m_type=154;effect.m_effectPos={15,20,35};
+        effect.m_stateCnt=14;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+            "Refine Success waits until frame fifteen and propagates STR completion");
+        effect.m_stateCnt=15;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\bs_refinesuccess.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+            "Refine Success plays its verified frame-fifteen cue at listener-relative X/Z");
+        effect.m_stateCnt=16;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+            "Refine Success does not repeat its cue and continues propagating STR completion");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
         const int ids[]={23,25,29,52,64,70,109,110,126,135,139,141,143,144,146,147,148,149,150,151,152,156,157,158,
             167,168,169,181,182,186,187,188,189,190,191,192,193,194,195,197,199,213,214,235,268};
         const int draws=rngDraws;waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();
