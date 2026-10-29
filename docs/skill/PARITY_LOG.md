@@ -4376,3 +4376,9 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - Canonical callers therefore use the retained-resource/segment renderer under normal successful resource loading. The PE renderer has no grouped sprite/billboard fallback. Local grouped fallback remains a defensive approximation only when resources or segment state are unavailable; the mismatch is bounded and is not claimed as source parity.
 - No runtime code change was needed. Direct comparator and focused CTest passed. Release app build/deployment also completed through the configured `open_midgard` target.
 
+## WP5 CEffectPrim Render3DCylinder caller coverage audit - 2026-10-29
+
+- Expanded `tools/tests/check_prim3dcylinder_render.py` from two representative callers to the complete PE caller map: 22 direct `PP_3DCYLINDER` launches across 17 helper methods.
+- Bound each launch helper to `OnProcess` master IDs and texture setup. `HitDark` is shared by effects 180/184; `PotionPillar` serves effects 218/219/221 and is also called by effect 220 through `Potion_Berserk`. These mappings explain why direct launch count and unique master count differ.
+- The resulting 21 master IDs exactly equal `UsesReferenceCylinder`. No canonical PE cylinder caller is missing from the specialized route; the comparator also checks expected duplicate counts and texture initialization. Direct and focused CTest passed; no runtime route change was needed.
+

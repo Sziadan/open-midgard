@@ -4,7 +4,8 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[2]
-PE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
+PE_SOURCE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
+PE = PE_SOURCE
 REF = (ROOT / "Ref/RagEffectPrim.cpp").read_text(encoding="cp1252", errors="replace")
 REF_DISPATCH = (ROOT / "Ref/dhxj/RagEffectPrim.cpp").read_text(encoding="cp1252", errors="replace")
 CURRENT = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
@@ -59,6 +60,46 @@ expected_masters = {0, 2, 3, 6, 7, 9, 14, 34, 36, 73, 81, 115, 122, 138, 140, 18
 actual_masters = {int(v) for v in re.findall(r"case\s+(\d+)\s*:", LOCAL_PREDICATE)}
 check("local source-selected cylinder route matches the documented master-effect ID union",
       actual_masters == expected_masters and "m_type != PP_3DCYLINDER" in LOCAL_PREDICATE)
+
+# The canonical PE launchers identify which master effects actually create a
+# cylinder. Keep those callers separate from additional local aliases in the
+# predicate, which have no direct PP_3DCYLINDER launch in the PE inventory.
+pe_cylinder_callers = (
+    ({0}, "Hit1", 1), ({2}, "Hit3", 2), ({3}, "Hit4", 1), ({6}, "Entry", 2),
+    ({7}, "Exit", 1), ({9}, "Enhance", 1), ({14}, "HealSP", 3), ({34}, "Teleportation", 1),
+    ({36}, "Portal", 2), ({73}, "BowlingBash", 1), ({81}, "Pierce", 1), ({115}, "BlitzBeat", 1),
+    ({122}, "SonicBlowHit", 1), ({138}, "FirePillarOn", 1), ({140}, "Revive", 1),
+    ({180, 184}, "HitDark", 1), ({218, 219, 221}, "PotionPillar", 1),
+)
+PE_ONPROCESS_SIG = "unsigned __int8 __thiscall CRagEffect::OnProcess(CRagEffect *this)"
+PE_ONPROCESS = body(PE_SOURCE, PE_ONPROCESS_SIG, PE_SOURCE.rindex(PE_ONPROCESS_SIG))
+pe_cylinder_effect_ids = set()
+pe_cylinder_launch_count = 0
+for effect_ids, name, expected_count in pe_cylinder_callers:
+    signature = f"void __thiscall CRagEffect::{name}(CRagEffect *this"
+    if name == "PotionPillar":
+        signature = "void __thiscall CRagEffect::PotionPillar(CRagEffect *this, float speed, int duration)"
+    caller_start = PE_SOURCE.rindex(signature)
+    caller_body = body(PE_SOURCE, signature, caller_start)
+    launch_count = len(re.findall(r"LaunchEffectPrim\(this,\s*PP_3DCYLINDER\b", caller_body))
+    texture_count = len(re.findall(r"GetTexture\([^\n]*", caller_body))
+    dispatches = all(re.search(rf"case\s+{effect_id}\s*:[\s\S]{{0,1000}}CRagEffect::{name}\(this(?:,|\))", PE_ONPROCESS)
+                     for effect_id in effect_ids)
+    check(f"canonical effect(s) {sorted(effect_ids)} dispatch to {name}, creating {expected_count} cylinder launch(es) with texture setup",
+          launch_count == expected_count and texture_count >= expected_count and dispatches)
+    pe_cylinder_effect_ids.update(effect_ids)
+    pe_cylinder_launch_count += launch_count
+POTION_BERSERK_SIG = "unsigned __int8 __thiscall CRagEffect::Potion_Berserk(CRagEffect *this)"
+POTION_BERSERK = body(PE_SOURCE, POTION_BERSERK_SIG, PE_SOURCE.rindex(POTION_BERSERK_SIG))
+check("canonical effect 220 delegates to Potion_Berserk, which launches its cylinder through PotionPillar",
+      re.search(r"case\s+220\s*:\s*result\s*=\s*CRagEffect::Potion_Berserk\(this\)", PE_ONPROCESS) is not None
+      and "CRagEffect::PotionPillar(this, 1.0, 50)" in POTION_BERSERK)
+pe_cylinder_effect_ids.add(220)
+check("complete PE cylinder caller set matches the specialized master route",
+      pe_cylinder_effect_ids == ({effect_id for effect_ids, _, _ in pe_cylinder_callers for effect_id in effect_ids} | {220})
+      and pe_cylinder_launch_count == 22
+      and pe_cylinder_effect_ids == actual_masters)
+
 ref_effects = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 for master, pe_signature, local_signature, texture in (
     (6, "void __thiscall CRagEffect::Entry(CRagEffect *this)", "void CRagEffect::SpawnEntry6()", "ring_blue.tga"),

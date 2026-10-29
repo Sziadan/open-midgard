@@ -832,3 +832,7 @@ Audited all canonical PE callers of `PP_3DCIRCLE`: 16 launches across 14 master 
 ## WP5 CEffectPrim checkpoint — Render3DParticle fallback reachability (2026-10-29)
 
 Audited all 48 canonical PE launches of `PP_3DPARTICLE`, `PP_3DPARTICLEGRAVITY`, and `PP_3DPARTICLESPLINE` across 39 functions. Every enclosing caller assigns sprite/action resource names and initializes segment state. The PE renderer obtains both resources and processes positive segment counts; it has no grouped/billboard fallback. Expanded `tools/tests/check_prim3dparticle_render.py` to enforce the exact launch totals and caller setup. The local approximation remains only for unavailable resources or missing local setup, a defensive malformed-state deviation outside normal canonical parity; no runtime change was warranted. Direct/focused checks pass. The configured Release app target is `open_midgard`; its build and deployment copy succeeded.
+
+## WP5 CEffectPrim checkpoint — Render3DCylinder caller audit (2026-10-29)
+
+Mapped all 22 direct PE `PP_3DCYLINDER` launches across 17 helper methods to their `OnProcess` master IDs and texture setup. Shared callers explain the full specialized predicate: effects 180/184 call `HitDark`; effects 218/219/221 call `PotionPillar`; effect 220 calls `PotionPillar` through `Potion_Berserk`. The complete 21-ID master set matches `UsesReferenceCylinder`. `tools/tests/check_prim3dcylinder_render.py` now enforces this mapping and per-helper launch counts. Direct and focused checks pass; no runtime route change was required.

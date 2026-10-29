@@ -2733,3 +2733,7 @@ Expanded the source comparator across all 16 canonical PE `PP_3DCIRCLE` launches
 
 Expanded `check_prim3dparticle_render.py` to cover all 48 canonical PE particle launch sites across 39 functions: 37 standard, 5 gravity, 6 spline. Each enclosing caller assigns both sprite/action resources and initializes segment state. PE rendering obtains those resources and only processes positive segment counts; there is no grouped/billboard fallback. Local fallback is thus bounded to failed resource loads or missing local setup and remains a defensive difference for unavailable state, not canonical parity. Direct and focused CTest passed. The Release `open_midgard` app target built successfully and copied to its configured OldRO folder.
 
+## WP5 CEffectPrim Render3DCylinder caller audit - 2026-10-29
+
+Expanded the cylinder renderer comparator to enumerate all 22 direct PE `PP_3DCYLINDER` launch sites across 17 helpers, with expected per-helper launch counts, texture setup, and `OnProcess` caller mapping. Shared routes account for the complete 21-ID `UsesReferenceCylinder` set: `HitDark` serves 180/184, and `PotionPillar` serves 218/219/221 plus 220 through `Potion_Berserk`. Direct and focused CTest pass; no runtime code change was needed.
+
