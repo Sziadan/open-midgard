@@ -4842,3 +4842,7 @@ Direct runtime fixture exercises the extracted production variant22 helper at st
 ## WP5 Effect_SPR lifecycle — effects640–642 variants23–25 — 2026-10-29
 
 The table-driven fixture covers caller-to-variant mappings 640→23, 641→24, and 642→25 using the extracted production helper. It verifies the common repeat-particle profile, state1 refresh without repeat output, and no wave/RNG. The comparator binds each row's SPR/ACT literals to PE VAs `0x71CF1C/0x71CF04`, `0x71CEEC/0x71CED4`, and `0x71CEBC/0x71CEA4`; PE and primary Ref routes agree. Local lifecycle/payload coverage only; focused checks pass2/2; full VS17 Release parity CTest passes434/434. No rendered-output acceptance is claimed.
+
+## WP5 Effect_SPR lifecycle — effect647 variant29 — 2026-10-29
+
+Direct runtime coverage exercises the extracted production helper for effect647 state0/state1. It checks the one-shot particle payload (renderFlag0x201), exact resources bound to PE VAs `0x71CE08/0x71CDF4`, no wave/RNG, and quiet later-state behavior. The comparator verifies PE and primary Ref routing; focused checks pass2/2; full VS17 Release parity CTest passes434/434. No rendered-output acceptance is claimed.

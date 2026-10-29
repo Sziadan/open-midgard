@@ -33,3 +33,5 @@ Effect638 Effect_SPR variant21 now has direct lifecycle coverage for its exact P
 Effect639 Effect_SPR variant22 now has direct lifecycle coverage for its exact PE-backed particle profile and quiet later-state behavior. The comparator binds resources to PE VAs `0x71CF50/0x71CF34`; PE/primary-Ref caller mapping agrees. No visual/rendering acceptance is claimed; see its progress entry.
 
 Effects640–642 Effect_SPR variants23–25 now have table-driven state0/state1 lifecycle coverage. Their resources are bound to PE VAs `0x71CF1C/0x71CF04`, `0x71CEEC/0x71CED4`, and `0x71CEBC/0x71CEA4`; PE/primary-Ref caller mappings agree. The fixtures establish local payload and lifecycle only; no rendered output claim is made.
+
+Effect647 Effect_SPR variant29 now has direct lifecycle coverage for its PE-backed one-shot particle profile (renderFlag0x201) and quiet later-state behavior. The comparator binds resources to PE VAs `0x71CE08/0x71CDF4`; PE/primary-Ref caller mapping agrees. No visual/rendering acceptance is claimed; see its progress entry.
