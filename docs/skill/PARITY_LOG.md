@@ -4498,3 +4498,8 @@ Added and registered `tools/tests/check_effect21_detoxication.py`. Canonical PE 
 ## WP5 CRagEffect HealSP effect14 source checkpoint - 2026-10-29
 
 Added and registered `tools/tests/check_effect14_heal_sp.py`. Canonical PE `HealSP` and primary Ref handler bodies normalize identically; PE case14 calls the helper, and local case14 routes through `ProcessEffectFrameLegacy` to `ApplyHealSP`. The comparator checks actor-position refresh, the three state-zero cylinders and their distinct radius/height/alpha profiles, root-level `_heal_effect.wav` before orbit RNG, even-state orbit cadence, the discarded RNG draw and longitude draw, particle2 sprite/action resources, and segment initialization. Existing lifecycle assertions cover reduced-effects emission, exact wave offset, subsequent parent-origin refresh, orbit updates and cleanup. Focused CTest and full Release parity CTest passed 407/407. No runtime behavior changed.
+
+
+## WP5 CRagEffect Bash effect16 source checkpoint - 2026-10-29
+
+Added and registered `tools/tests/check_effect16_bash.py`. Canonical PE `Bash` and primary Ref handler bodies normalize identically; PE case16 calls the helper, and local case16 enters `ProcessEffectFrameLegacy` and calls `ApplyBash`. The comparator verifies whole-helper reduced-effects suppression, projection before the state-zero gate, the exact wave and disc ordering, 20 normal-mode rays with five draws each, and the lowercase/uppercase texture spelling. Existing lifecycle assertions cover reduced-effects suppression, projected anchor, disc/ray profiles, exact texture request order and update behavior. Focused CTest and full Release parity CTest passed 408/408. No runtime behavior changed.

@@ -1320,6 +1320,8 @@ add_test(NAME effect34_teleportation_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect34_teleportation.py")
 add_test(NAME effect33_ruwach_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect33_ruwach.py")
+add_test(NAME effect16_bash_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect16_bash.py")
 add_test(NAME effect14_heal_sp_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect14_heal_sp.py")
 add_test(NAME effect21_detoxication_source_check
@@ -1460,6 +1462,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect34_teleportation.py
     check_effect33_ruwach.py
     check_effect32_napalm_beat.py
+    check_effect16_bash.py
     check_effect14_heal_sp.py
     check_effect21_detoxication.py
     check_effect26_ice_arrow.py
