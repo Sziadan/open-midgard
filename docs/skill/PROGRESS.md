@@ -2502,3 +2502,7 @@ Added and registered `check_effect514_gi_explosion.py`. It compares the PE and p
 ## WP5F effect402 PortalWind variant1 parity — 2026-10-29
 
 Added and registered `check_effect402_portal_wind.py`. It checks the PE's variant1 call and inclusive frame 5–65 body-light/tint window, primary-Ref omission, and local route, helper order and master guard. Focused check, elevated Release parity build and full Release CTest passed 352/352. No production behavior change.
+
+## WP5F effects523–536 Tarot route and payload parity — 2026-10-29
+
+Added and registered `check_effects523_536_tarot.py`. It compares all 14 PE and primary-Ref effect-to-texture selector mappings with local generated routes, then checks the selector-1 effect-texture payload and state-zero spawn gate. Focused check, elevated Release parity build and full Release CTest passed 353/353. No production behavior change.

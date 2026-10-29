@@ -1190,6 +1190,8 @@ add_test(NAME effect402_portal_wind_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect402_portal_wind.py")
 add_test(NAME effect514_gi_explosion_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect514_gi_explosion.py")
+add_test(NAME effects523_536_tarot_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects523_536_tarot.py")
 add_test(NAME effect337_job_lv_up_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect337_job_lv_up.py")
 add_test(NAME effect410_rainbow_source_check
@@ -1378,6 +1380,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_energy_drain_callers.py
     check_portal_wind_caller.py
     check_effect402_portal_wind.py
+    check_effects523_536_tarot.py
     check_blur_callers.py
     check_runstop_caller.py
     check_cartboost_caller.py
