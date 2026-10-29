@@ -2297,3 +2297,8 @@ Added `tools/tests/check_grim_tooth123_132.py` and registered it in CMake. It co
 ## WP5C effect142 HeavensDrive source comparator — 2026-10-29
 
 Added `tools/tests/check_effect142_heavens_drive.py` and registered it in CMake. The comparator confirms the complete PE and primary Ref `HeavensDrive` helper bodies match, PE OnProcess effect142 calls that helper, the local legacy route selects `ApplyHeavensDrive`, and effect142 uses the reference quad-horn family. Exact executable bytes verify `effect\\wizard_earthspike.wav` at VA `0x711E58` and `effect\\stone.bmp` at `0x71B858`. Existing lifecycle coverage exercises the 25-spike grid, ordered RNG, audio/message order, duration and primitive motion boundaries. Release parity build passed; full CTest passed320/320. No production behavior change.
+
+
+## WP5C effects20/125 EnchantPoison — 2026-10-29
+
+Added `check_effect125_enchant_poison.py` and registered it in CTest. The comparator checks the full canonical PE and primary-Ref helper bodies, grouped PE case20/125 dispatch, local routes, state/frame cadence, particle payload/family selection, and exact wave/particle resource bytes at `0x71BC58`, `0x71BC3C`, `0x71BC24`, and `0x71BC0C`. Existing extracted lifecycle coverage already validates emission timing, primitive setup, and random behavior. The focused comparator and Release parity build pass; full CTest passed321/321. No production behavior change.

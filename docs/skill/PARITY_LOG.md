@@ -3935,3 +3935,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effect142 HeavensDrive source comparison
 
 `check_effect142_heavens_drive.py` compares the complete PE/primary-Ref helper bodies, confirms PE caller case142 and local route selection, pins effect142 to `UsesReferenceQuadHorn`, and verifies the exact wave and `stone.bmp` bytes at `0x711E58` and `0x71B858`. Existing extracted lifecycle assertions cover state gating, the 25-primitive grid, 175 ordered RNG draws, audio before message and emission, payload/resource fields, and movement boundaries. Release parity build and full CTest pass320/320. No production change.
+
+
+## WP5C effects20/125 EnchantPoison source comparison — 2026-10-29
+
+`check_effect125_enchant_poison.py` compares the complete PE and primary-Ref `EnchantPoison` helper bodies, checks PE's grouped case20/125 caller and corresponding local `SpawnEnchantPoison` routes, and verifies the effect state gate, two frame-zero waves, five-frame primitive cadence, `PP_3DPARTICLE` payload and shared particle-profile selection. PE resource bytes pin the two exact wave names and CP949 particle SPR/ACT names at VAs `0x71BC58`, `0x71BC3C`, `0x71BC24`, and `0x71BC0C`. Existing lifecycle tests cover runtime emissions and RNG. Release parity build succeeded; full CTest passed321/321. No production change.
