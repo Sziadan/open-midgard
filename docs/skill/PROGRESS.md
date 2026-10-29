@@ -2327,3 +2327,8 @@ Added `check_effect121_122_sonic_blow.py` and registered it in CTest. It compare
 ## WP5C effect112 Kyrie PE/Ref source comparison — 2026-10-29
 
 Strengthened `check_kyrie112.py` to compare complete PE and primary-Ref `Kyrie` helper bodies, validate the canonical PE case112 call, and record that the primary Ref source omits its OnProcess caller. Existing local route and exact two-wave resource checks remain. Release parity build succeeded and full CTest passed325/325. No production change.
+
+
+## WP5C effect101 RepairWeapon PE/Ref source comparison — 2026-10-29
+
+Strengthened `check_repairweapon101.py` to compare complete PE and primary-Ref `RepairWeapon` helper bodies, verify the canonical PE case101 call and record the primary Ref caller omission. Existing local route, state20/55 cues and exact wave bytes at `0x71BD2C` remain checked. Release parity build succeeded; full CTest passed325/325. No production change.

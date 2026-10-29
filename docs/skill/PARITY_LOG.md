@@ -3965,3 +3965,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effect112 Kyrie helper comparison — 2026-10-29
 
 `check_kyrie112.py` now compares complete PE and primary-Ref `Kyrie` helper bodies and asserts that canonical PE case112 calls the helper. It records the primary Ref caller omission (the Ref source has no OnProcess body/call to Kyrie), while retaining local ProcessKyrie112 route/cadence checks and exact wave bytes at `0x71BDF0` and `0x71BDCC`. Release parity build succeeded; full CTest passed325/325. No production change.
+
+
+## WP5C effect101 RepairWeapon PE/Ref helper comparison — 2026-10-29
+
+`check_repairweapon101.py` now compares complete PE and primary-Ref `RepairWeapon` helper bodies and pins canonical PE case101 to the helper. It confirms the primary Ref source has no OnProcess body/call for this helper. Existing local state20/55 cue and shared STR checks remain; exact `effect\black_weapon_repair_a.wav` bytes are checked at `0x71BD2C`. Release parity build succeeded; full CTest passed325/325. No production change.
