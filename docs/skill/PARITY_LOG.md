@@ -4060,3 +4060,7 @@ Added CTest entries for the existing Snow and Sakura comparators, which verify P
 ## WP5E effect339 Magnum2 emitter comparator — 2026-10-29
 
 `check_effect339_magnum2_emitter.py` covers the CRagEffect emitter (while `check_magnum2_render.py` remains the primitive renderer check): full PE/primary-Ref helper and caller parity, local effect339 route and timing/profile, and executable bytes for both waves and ring-yellow texture. Registered in CTest; focused check, Release parity build and full Release CTest passed338/338. No production behavior change.
+
+## WP5E effect303 CHEMICAL2 source/resource parity — 2026-10-29
+
+Added and registered `check_effect303_chemical2.py`. It compares complete PE/primary-Ref CHEMICAL2 helper bodies and OnProcess2 branches, checks the local two-call route, frame-40 slash emitter, frame-44 cue, and frames-20–120 light/tint behavior, and verifies exact `effect\\slash01.tga` bytes at `0x71C9E4`. The executable exposes only the `effect\\` prefix for the wave symbol, so its suffix remains unresolved and is not guessed. Focused check, elevated Release parity build, and full Release CTest passed 339/339. No production behavior change.
