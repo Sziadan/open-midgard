@@ -3108,3 +3108,6 @@ Extended the production dispatcher/emitter fixture to effect600's variant3 resou
 ## WP5 ThrowItem lifecycle — effect616 coin — 2026-10-29
 
 Added a production dispatcher fixture for effect616's variant3 coin projectile. It verifies the exact ASCII `effect\coin_a.bmp` resource, PP_THROWITEM common and variant3 trajectory fields, inactive auxiliary bands, and later master repositioning without another launch or texture request. The existing comparator verifies PE/Ref caller mapping and exact resource bytes; it now also requires the runtime fixture. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.
+## WP5 ThrowItem lifecycle — effects613/614/615 — 2026-10-29
+
+Added a table-driven runtime fixture for the three variant3 item resources. It exercises the production dispatcher and helper, checks each exact CP949 texture request, shared PP_THROWITEM trajectory/selector payload, and follows the master on a later state without relaunch or texture reload. The existing PE/Ref comparator now requires the runtime table entries and assertions. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.

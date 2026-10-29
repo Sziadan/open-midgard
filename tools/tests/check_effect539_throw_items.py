@@ -151,4 +151,20 @@ for token in (
     if token not in LIFECYCLE:
         raise AssertionError(f"effect616 lifecycle assertion missing: {token}")
 
+throw_cases = re.search(r"const ThrowItemCase items\[\]=\{([\s\S]*?)\};", LIFECYCLE)
+if (throw_cases is None or "for(const ThrowItemCase& item:items)" not in LIFECYCLE
+        or "effect.ProcessThrowItemEffect()" not in LIFECYCLE
+        or "g_texMgr.requests==std::vector<std::string>({item.texture})" not in LIFECYCLE):
+    raise AssertionError("effects613-615 lifecycle fixture does not invoke the production dispatcher loop")
+for effect_id in (613, 614, 615):
+    if not re.search(rf"\{{{effect_id},", throw_cases.group(1)):
+        raise AssertionError(f"effect{effect_id} runtime texture case missing from ThrowItem fixture")
+for token in (
+    "effects613-615 launch variant3 with each exact CP949 texture",
+    "effects613-615 share the exact variant3 trajectory and selector fields",
+    "effects613-615 follow master without duplicate launch or resource request",
+):
+    if token not in LIFECYCLE:
+        raise AssertionError(f"effects613-615 lifecycle assertion missing: {token}")
+
 print("effects539/541/600/613/614/615/616 ThrowItem parity passed: PE/Ref callers, local variants and launch frames, exact textures")
