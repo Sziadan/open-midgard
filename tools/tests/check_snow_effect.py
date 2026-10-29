@@ -54,7 +54,7 @@ if "if (m_type == 162) {\n        SpawnSnow();\n        return true;\n    }" not
 
 ref_fn = body(REF, "void\tCRagEffect :: Snow()", "void\tCRagEffect :: Coin()")
 exe_fn = body(EXE, "void __thiscall CRagEffect::Snow(CRagEffect *this)", "//----- (005F7770)")
-cur_fn = body(IMPL, "void CRagEffect::SpawnSnow()", "// Ref/RagEffect.cpp:8826-8852")
+cur_fn = body(IMPL, "void CRagEffect::SpawnSnow()", "// Ref/dhxj/RagEffect2.cpp:1194-1245")
 
 ordered("Ref", ref_fn, [
     "CWorld* world = g_modeMgr.GetGameMode()->GetWorld()",

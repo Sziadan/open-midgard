@@ -2387,3 +2387,8 @@ Extended the registered `check_shockwave145.py` to compare PE and primary-Ref In
 ## WP5C effect114 Bottom texture bytes — 2026-10-29
 
 Strengthened the registered `check_bottom_caller.py` to verify exact `effect\\magic_violet.tga` bytes at PE VA `0x71BAB8`. Existing PE/primary-Ref helper, caller route, four texture emissions, payload, no-RNG and renderer-family checks remain. Focused comparator and full Release CTest passed330/330. No production change.
+
+
+## WP5C effects162/163 Snow and Sakura CTest coverage — 2026-10-29
+
+Registered the existing `check_snow_effect.py` and `check_sakura_effect.py` parity checkers in CTest. Fixed Snow's local function boundary so its RNG audit excludes the following Sakura handler. Both focused checks, the Release parity build, and full Release CTest passed; CTest reports332/332. No production behavior change.

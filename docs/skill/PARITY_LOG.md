@@ -4025,3 +4025,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effect114 Bottom executable texture bytes — 2026-10-29
 
 `check_bottom_caller.py` now resolves the exact executable bytes for `effect\\magic_violet.tga` at VA `0x71BAB8`, in addition to its existing PE/primary-Ref helper parity, PE caller route, four ordered PP_3DTEXTURE emissions, payload and local texture-family assertions. Focused check and full Release CTest passed330/330. No production change.
+
+
+## WP5C effects162/163 Snow and Sakura checker registration — 2026-10-29
+
+Added CTest entries for the existing Snow and Sakura comparators, which verify PE/Ref/local routes, emitter payloads and resolved PE assets. Corrected `check_snow_effect.py` to bound extraction to `SpawnSnow` only; previously it also counted Sakura's RNG calls. Both focused tests, the Release parity build, and full Release CTest passed332/332. No production behavior change.

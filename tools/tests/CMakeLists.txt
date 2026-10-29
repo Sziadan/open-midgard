@@ -778,6 +778,10 @@ add_test(NAME hitdark_effects180_184_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_hitdark_caller.py")
 add_test(NAME effect159_top_rank_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_top_rank.py")
+add_test(NAME effect162_snow_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_snow_effect.py")
+add_test(NAME effect163_sakura_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_sakura_effect.py")
 add_test(NAME effects121_122_sonic_blow_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect121_122_sonic_blow.py")
 add_test(NAME effects635_636_str_prefix_source_check
