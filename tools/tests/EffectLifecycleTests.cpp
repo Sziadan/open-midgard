@@ -11548,6 +11548,32 @@ int main()
     {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        const std::array<std::pair<int,const char*>,4> moonlightEffects{{
+            {565,"effect\\h_moonlight_1.wav"},{566,"effect\\h_moonlight_2.wav"},
+            {567,"effect\\h_moonlight_3.wav"},{568,"levelup.wav"}}};
+        const int draws=rngDraws;
+        for (const auto& variant : moonlightEffects) {
+            CRagEffect effect;effect.m_type=variant.first;effect.m_master=&master;effect.m_effectPos={7,8,9};
+            effect.m_iCurLayer=1;effect.m_cEndLayer=1;waveCalls.clear();effect.m_stateCnt=0;
+            check(!effect.ProcessTier3StrEffect()&&effect.m_effectPos.x==31&&effect.m_effectPos.y==41
+                &&effect.m_effectPos.z==51&&waveCalls.size()==1&&waveCalls[0].name==variant.second
+                &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==40
+                &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+                "effects565-568 copy position and play their exact frame-zero listener-relative cue before STR");
+            effect.m_stateCnt=1;
+            check(!effect.ProcessTier3StrEffect()&&waveCalls.size()==1&&rngDraws==draws,
+                "effects565-568 skip position/audio updates after frame zero and propagate STR exhaustion");
+        }
+        CRagEffect silent;silent.m_type=569;silent.m_master=&master;silent.m_effectPos={7,8,9};
+        silent.m_iCurLayer=1;silent.m_cEndLayer=1;waveCalls.clear();
+        check(!silent.ProcessTier3StrEffect()&&waveCalls.empty()&&silent.m_effectPos.x==7
+            &&silent.m_effectPos.y==8&&silent.m_effectPos.z==9&&rngDraws==draws,
+            "effect569 enters the shared STR tail silently without changing position or RNG state");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         const std::array<int,6> foodEffects{{593,594,595,596,597,598}};
         for (int effectId : foodEffects) {
             CRagEffect effect;effect.m_type=effectId;effect.m_master=&master;effect.m_effectPos={7,8,9};
