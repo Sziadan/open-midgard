@@ -7111,6 +7111,31 @@ int main()
             "effect 145 restarts completed STR before the outer increment");
     }
     {
+        CRenderObject listener;listener.m_pos={3,900,5};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        const int draws=rngDraws;g_texMgr.requests.clear();
+        for(int id : {390,391}) {
+            const char* wave=id==390?"effect\\black_overthrust.wav":"effect\\EF_IncAgility.wav";
+            CRagEffect effect;effect.m_type=id;effect.m_cachedPos={15,20,35};effect.m_effectPos={1,2,3};
+            effect.m_iCurLayer=1;effect.m_cEndLayer=1;waveCalls.clear();
+            effect.m_stateCnt=1;
+            check(effect.ProcessClipWaveStrEffect()&&waveCalls.empty()&&effect.m_effectPos.x==1,
+                "Overthrust and IncAgility do not copy position or play their cue before state zero");
+            effect.m_stateCnt=0;
+            check(effect.ProcessClipWaveStrEffect()&&effect.m_effectPos.x==15&&effect.m_effectPos.y==20
+                &&effect.m_effectPos.z==35&&waveCalls.size()==1&&waveCalls.back().name==wave
+                &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+                &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1
+                &&!effect.m_strFrameActive,
+                "Overthrust and IncAgility copy cached origin, play exact state-zero cue, and ignore exhausted STR result");
+            effect.m_stateCnt=2;
+            check(effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&effect.m_effectPos.x==15
+                &&rngDraws==draws&&g_texMgr.requests.empty(),
+                "Overthrust and IncAgility keep running without repeating cue, RNG, or texture work");
+        }
+        waveCalls.clear();g_world.m_player=oldPlayer;
+    }
+    {
         CRenderObject listener;listener.m_pos={3,0,5};
         CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         CRenderObject master;master.m_pos={15,20,35};

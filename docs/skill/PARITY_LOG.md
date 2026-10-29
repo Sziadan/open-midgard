@@ -4638,3 +4638,8 @@ Extended direct `ProcessClipWaveStrEffect` lifecycle coverage for effects30/68. 
 ## WP5 effects689/690/691/696 EffectTextureSet animation lifecycle — 2026-10-29
 
 Connected the actual `ProcessEffectTextureAnimation` handler to the lifecycle harness. For all four variants the fixture checks the 9 dust or 13 color-torch frames in order, `PP_EFFECTTEXTURE_ANI` duration/render/size, all active/inactive GI lane state, fallback/explicit distance, per-variant alpha and flags, origin-relative vectors, and exactly one seeded rotation draw. It also verifies state1 emits no primitive/resources/RNG and later calls refresh the cached origin and existing primitive position without repeating work. The existing `check_effects689_691_696_texture_animation.py` confirms PE/primary-Ref helper parity and all 48 exact frame resources. Focused lifecycle passes3058 checks; comparator passes; full Release parity CTest passes428/428. Production behavior did not change.
+
+
+## WP5 effects390/391 clip-wave lifecycle — 2026-10-29
+
+Extended the lifecycle harness for `ProcessClipWaveStrEffect` effects390/391. The tests verify no event before state0, copying cached origin at frame0, the exact `black_overthrust.wav` / `EF_IncAgility.wav` cue at listener-relative X/Z and Y zero, audio parameters, and the source policy of returning active despite exhausted STR. Later states do not repeat the cue, RNG, or texture work. The existing caller comparator confirms PE/Ref provenance, exact resource bytes and local routes. Focused lifecycle passes3064 checks; comparator passes; full Release parity CTest passes428/428.

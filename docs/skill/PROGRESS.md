@@ -2986,3 +2986,8 @@ Extended direct ProcessClipWaveStrEffect lifecycle coverage for effects30/68. Th
 ## WP5 effects689/690/691/696 EffectTextureSet animation lifecycle checkpoint — 2026-10-29
 
 Connected the actual ProcessEffectTextureAnimation handler to the lifecycle harness. All four variants are checked for exact frame order (9 dust or 13 color-torch assets), primitive profile, active and inactive GI lanes, seeded rotation draw, and state-gated resource/RNG behavior. Later calls refresh cached and existing child positions without repeating asset requests. The existing source comparator confirms PE/primary-Ref helper parity and all 48 exact frame resources. Focused lifecycle passes3058 checks; comparator passes; full Release parity CTest passes428/428. Production behavior did not change.
+
+
+## WP5 effects390/391 clip-wave lifecycle checkpoint — 2026-10-29
+
+Added direct lifecycle checks for effects390/391 through ProcessClipWaveStrEffect. Both variants are checked for state0-only origin copy and exact PE-backed frame-zero cue, listener-relative coordinates, source audio parameters, ignored exhausted STR result, and no repeated audio/RNG/texture work later. Existing comparator confirms PE/Ref caller provenance and exact resource bytes. Focused lifecycle passes3064 checks; comparator passes; full Release parity CTest passes428/428.
