@@ -675,7 +675,8 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect605();
     bool ProcessEffect563();
     bool ProcessTier3StrEffect();
-    void ApplyPoison(int) {}
+    int poisonCalls = 0, poisonLevel = -1;
+    void ApplyPoison(int level) { ++poisonCalls; poisonLevel = level; }
     bool ProcessDamageNumberEffects();
     void SpawnBlueFall(int, int);
     bool ProcessBeginAsura1_467();
@@ -11561,6 +11562,28 @@ int main()
         check(!effect.ProcessTier3StrEffect()&&waveCalls.size()==1&&effect.m_effectPos.x==31&&effect.m_effectPos.y==41&&effect.m_effectPos.z==51
             &&rngDraws==draws,
             "effect608 state46 does not repeat its cue, preserves copied position, and propagates STR completion");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        waveCalls.clear();CRagEffect effect;effect.m_type=669;effect.m_master=&master;effect.m_effectPos={7,8,9};
+        const int draws=rngDraws;
+        effect.m_stateCnt=0;
+        check(effect.ProcessTier3StrEffect()&&waveCalls.empty()&&effect.poisonCalls==1&&effect.poisonLevel==1
+            &&effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9,
+            "effect669 state0 applies poison but does not update position or play the state1 cue");
+        effect.m_stateCnt=1;
+        check(effect.ProcessTier3StrEffect()&&effect.m_effectPos.x==31&&effect.m_effectPos.y==41&&effect.m_effectPos.z==51
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\wideb.wav"
+            &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==40
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&effect.poisonCalls==2&&effect.poisonLevel==1,
+            "effect669 state1 plays wideb before applying poison and ignores STR completion");
+        effect.m_stateCnt=2;
+        check(effect.ProcessTier3StrEffect()&&waveCalls.size()==1&&effect.poisonCalls==3
+            &&rngDraws==draws,
+            "effect669 state2 keeps applying poison without repeating its cue or consuming RNG");
         g_world.m_player=oldPlayer;
     }
     {

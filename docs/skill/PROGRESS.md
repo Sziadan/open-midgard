@@ -2254,3 +2254,7 @@ Compared PE and primary Ref OnProcess3 case `0x2BB` and the shared `$L146219` ta
 ## WP10.4 effect668 Dragonfear — 2026-10-29
 
 Compared PE case `0x29C` (`HighPriest.exe.c:419098–419110`) and primary Ref (`Ref/RagEffect.cpp:12459–12472`): at state1, the handler copies master position, plays `effect\\dragonfear.wav` at listener-relative X/Z and Y0 with 250/40/1.0, sends message135 after the cue, then uses the shared STR tail and returns true regardless of completion. Local helper and dispatch match, including `m_effectPos` mapping and cue-before-message order. PE resource bytes at `0x719538` and `0x71A7F8` resolve to the exact wave and `dfear.str`; local Init/catalog/STR mapping agrees. Added a comparator and state0/1/2 lifecycle checks. No production change. Release parity build and full CTest pass311/311.
+
+## WP10.4 effect669 Wideb/Poison — 2026-10-29
+
+Compared PE case `0x29D` (`HighPriest.exe.c:419110–419121`) and primary Ref (`Ref/RagEffect.cpp:12471–12482`): at state1, the handler copies master position, plays `effect\\wideb.wav` at listener-relative X/Z and Y0 with 250/40/1.0, calls `POISON(1)` after the cue, then enters the shared STR tail which ignores completion. PE resource bytes at `0x719CA8` and `0x71A7EC` resolve to the exact wave and `wideb.str`; local mapping matches. Added comparator and lifecycle assertions for states0/1/2, audio/poison order, repeated poison, one-time cue, and no RNG use. No production change. Release parity build and full CTest pass312/312.
