@@ -24400,11 +24400,13 @@ void CRagEffect::ApplyStormKick(int variant)
 
 void CRagEffect::ApplyHalfSphere(const char* textureName)
 {
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
     if (textureName == nullptr || m_stateCnt != 0) {
         return;
     }
-    CRenderObject* master = ResolveCurrentMaster();
-    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
     CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHalfSphere), vector3d{});
     if (prim == nullptr) {
         return;
@@ -24425,11 +24427,13 @@ void CRagEffect::ApplyHalfSphere(const char* textureName)
 
 void CRagEffect::ApplyAttackEnergy(const char* textureName)
 {
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
     if (textureName == nullptr || m_stateCnt != 0) {
         return;
     }
-    CRenderObject* master = ResolveCurrentMaster();
-    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
     CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeAttackEnergy), vector3d{});
     if (prim == nullptr) {
         return;

@@ -4269,3 +4269,5 @@ Extended `check_effect601_sight2.py` to compare the complete PE/primary-Ref Sigh
 WP5F effect627 RG_COIN3: PE and primary Ref case `0x273` match; state21 refresh/cue, four ordered RG_COIN2 calls, local route and exact bitmap bytes are checked by `check_rg_coin_callers.py`; existing lifecycle fixture is bound. Focused CTest passed.
 
 WP5F effect24 FireBall: PE and primary-Ref helper bodies match. The comparator checks scheduled emissions, exact wave and sprite/action resources, local route and existing lifecycle coverage. Full Release CTest passed 371/371.
+
+WP5F effects436/437: PE and Ref helper bodies match, and PE callers invoke HalfSphere for 436 and HalfSphere then AttackEnergy for 437. Fixed local origin refresh before state gates and added payload/movement lifecycle assertions. Full Release CTest passed 372/372.

@@ -318,6 +318,10 @@ extract_test_region(poison_emitters "${effect_source}" poison_emitter_family)
 extract_test_region(sight_emitters "${effect_source}" sight_emitter_family)
 string(REPLACE "rand()" "SilentRand()" sight_emitters "${sight_emitters}")
 extract_test_region(fireball_emitter "${effect_source}" fireball_emitter_family)
+extract_body(half_sphere_emitter "${effect_source}" "void CRagEffect::ApplyHalfSphere(const char* textureName)" "void CRagEffect::ApplyAttackEnergy(const char* textureName)")
+extract_body(attack_energy_emitter "${effect_source}" "void CRagEffect::ApplyAttackEnergy(const char* textureName)" "void CRagEffect::ApplyElectric(short baseRise)")
+string(REPLACE "kPrimTypeHalfSphere" "PP_HALFSPHERE" half_sphere_emitter "${half_sphere_emitter}")
+string(REPLACE "kPrimTypeAttackEnergy" "PP_ATTACKENERGY" attack_energy_emitter "${attack_energy_emitter}")
 extract_body(bash3d_emitter "${effect_source}" "void CRagEffect::SpawnBash3D(" "void CRagEffect::ApplyColorPaper(")
 string(REPLACE "rand()" "SilentRand()" bash3d_emitter "${bash3d_emitter}")
 extract_body(kouenka_emitter "${effect_source}" "void CRagEffect::ApplyKouenka()" "void CRagEffect::ApplySphereWind(")
@@ -460,7 +464,7 @@ extract_body(effect_messages "${effect_source}" "void CRagEffect::SendMsg(" "voi
 extract_test_region(actor_detach "${actor_source}" actor_effect_detach_family)
 extract_body(world_update "${world_source}" "void CWorld::UpdateGameObjects()" "CGameActor* CWorld::GetGameActorByAID(")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc"
-    "${resource_lock}\n${resource_unlock}\n${effect_gate}\n${primitive_lifetime}\n${primitive_init}\n${segment_shift}\nint TableAngle(int angle);\n${primitive_update_family}\n${effect_tick}\n${effect_dtor}\n${effect_launch}\n${effect_messages}\n${actor_detach}\n${world_update}\n${grim_tooth}\n${str_delta}\n${str_process}\n${str_termination}\n${entry2}\n${str_render}\n${chookgi_renderer}\n${effect_render}\n${spline_primitive}\n${slash_primitive}\n${angel_render}\n${job_emitters}\n${angel_emitters}\n${ruwach_emitter}\n${smoke_torch_emitters}\n${poison_emitters}\n${blessing_emitter}\n${sight_projection}\n${agility_emitters}\n${sight_emitters}\n${warp_band}\n${warp_helper}\n${warp_emitter}\n${ready_portal_emitter}\n${potion_emitters}\n${detoxication_handler}\n${ice_arrow_emitter}\n${fireball_emitter}\n${bash3d_emitter}\n${kouenka_emitter}\n${earth_spike_emitter}\n${chemical_rise_angle}\n${chemical3_emitter}\n${stin4_caller}\n${stin4_emitter}\n${stin5_emitter}\n${rg_coin3_emitter}\n${bash3d5_caller}\n${chookgi_emitter}\n${ground_sample_emitter}\n${prim_cloud_update}\n${cloud_texture}\n${weather_cloud_emitter}\n${spearbmr_handler}\n${turnundead_handler}\n${waterball2_handler}\n${revive140_handler}\n${aspersio86_handler}\n${stormgust89_handler}\n${magicrod244_handler}\n${shieldcharge246_handler}\n${strip_equipment269_272_handler}\n${kyrie112_handler}\n${repairweapon101_handler}\n${maxpower104_handler}\n${intimidate227_handler}\n${effect380_handler}\n${effect403_handler}\n${effect413_handler}\n${effect445_handler}\n${effect457_handler}\n${effect466_handler}\n${effect501_handler}\n${effect704_handler}")
+    "${resource_lock}\n${resource_unlock}\n${effect_gate}\n${primitive_lifetime}\n${primitive_init}\n${segment_shift}\nint TableAngle(int angle);\n${primitive_update_family}\n${effect_tick}\n${effect_dtor}\n${effect_launch}\n${effect_messages}\n${actor_detach}\n${world_update}\n${grim_tooth}\n${str_delta}\n${str_process}\n${str_termination}\n${entry2}\n${str_render}\n${chookgi_renderer}\n${effect_render}\n${spline_primitive}\n${slash_primitive}\n${angel_render}\n${job_emitters}\n${angel_emitters}\n${ruwach_emitter}\n${smoke_torch_emitters}\n${poison_emitters}\n${blessing_emitter}\n${sight_projection}\n${agility_emitters}\n${sight_emitters}\n${warp_band}\n${warp_helper}\n${warp_emitter}\n${ready_portal_emitter}\n${potion_emitters}\n${detoxication_handler}\n${ice_arrow_emitter}\n${fireball_emitter}\n${half_sphere_emitter}\n${attack_energy_emitter}\n${bash3d_emitter}\n${kouenka_emitter}\n${earth_spike_emitter}\n${chemical_rise_angle}\n${chemical3_emitter}\n${stin4_caller}\n${stin4_emitter}\n${stin5_emitter}\n${rg_coin3_emitter}\n${bash3d5_caller}\n${chookgi_emitter}\n${ground_sample_emitter}\n${prim_cloud_update}\n${cloud_texture}\n${weather_cloud_emitter}\n${spearbmr_handler}\n${turnundead_handler}\n${waterball2_handler}\n${revive140_handler}\n${aspersio86_handler}\n${stormgust89_handler}\n${magicrod244_handler}\n${shieldcharge246_handler}\n${strip_equipment269_272_handler}\n${kyrie112_handler}\n${repairweapon101_handler}\n${maxpower104_handler}\n${intimidate227_handler}\n${effect380_handler}\n${effect403_handler}\n${effect413_handler}\n${effect445_handler}\n${effect457_handler}\n${effect466_handler}\n${effect501_handler}\n${effect704_handler}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/render/Renderer.cpp ../../src/render/Prim.cpp ../../src/res/ActRes.h ../../src/world/RagEffect.cpp ../../src/world/RagEffect.h ../../src/world/World.cpp ../../src/res/EzEffectRes.h ../../src/res/Res.cpp)
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${airtexture416_handler}\n${hitline_effect_handler}\n${tripleattack_emitter}\n${tripleattack_handler}\n${soulparticle506_handler}\n${effect502_handler}\n${effect505_handler}\n${sma2_552_emitter}\n${sma2_552_handler}\n${particlepath556_emitter}\n${particlepath556_handler}\n${effect537_handler}\n${soulbreaker361_emitter}\n${soulbreaker361_handler}\n${effect273_handler}\n${pressure365_emitter}\n${groundshake365_emitter}\n${effect365_handler}\n${demonstration302_emitter}\n${demonstration302_handler}\n${maple333_emitter}\n${maple333_handler}\n${entry6_emitter}\n${entry6_handler}\n${warp8_emitter}\n${warp8_handler}\n${enhance9_emitter}\n${enhance9_handler}\n${lord90_handler}\n${icewall74_handler}\n${glasswall13_handler}\n${meteorstorm92_handler}\n${effect440_handler}\n${effect599_handler}\n${effect602_handler}\n${particleupdater}")
@@ -1264,6 +1268,8 @@ add_test(NAME effect601_sight2_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect601_sight2.py")
 add_test(NAME effect24_fireball_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect24_fireball.py")
+add_test(NAME effects436_437_sphere_energy_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect436_437_sphere_energy.py")
 add_test(NAME effects689_691_696_texture_animation_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects689_691_696_texture_animation.py")
 add_test(NAME effects610_611_texture_cues_source_check
@@ -1353,6 +1359,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect554_texture_set.py
     check_effect601_sight2.py
     check_effect24_fireball.py
+    check_effect436_437_sphere_energy.py
     check_effects689_691_696_texture_animation.py
     check_effects610_611_texture_cues.py
     check_effects358_360_ghost.py

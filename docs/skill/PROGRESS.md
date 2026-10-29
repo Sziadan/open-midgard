@@ -2635,3 +2635,7 @@ Extended the existing RG_COIN caller comparator to cover PE/primary-Ref effect62
 ## WP5F effect24 FireBall source comparison — 2026-10-29
 
 Added `check_effect24_fireball.py` and registered it in CTest. The checker compares normalized PE and primary-Ref FireBall helper bodies, verifies the frame20/24/28/32 emission schedule, exact PE wave and SPR/ACT bytes, the local route and the existing lifecycle assertions. No production behavior change. Release parity build passed and the full Release CTest suite passed 371/371.
+
+## WP5F effects436/437 HalfSphere and AttackEnergy origin refresh — 2026-10-29
+
+PE and primary Ref helpers refresh `m_pos` from the master before the state-zero spawn gate; local `ApplyHalfSphere` and `ApplyAttackEnergy` previously returned before updating effect/cached positions on later frames. Moved origin resolution and refresh before each gate. Added `check_effect436_437_sphere_energy.py` for helper equality, PE caller composition, exact resource bytes, local routes and refresh order; added lifecycle assertions for emitted profiles and master movement after spawn. Release parity build passed; full Release CTest passed 372/372.

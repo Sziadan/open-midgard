@@ -524,6 +524,8 @@ struct CRagEffect : CGameObject {
     void ApplyStin5();
     void SpawnStin5(const char*);
     void ApplyRgCoin3();
+    void ApplyHalfSphere(const char* textureName);
+    void ApplyAttackEnergy(const char* textureName);
     void SpawnRgCoin2(const char*,float);
     void ApplyBash3D5();
     void SpawnChookgi(char);
@@ -10464,6 +10466,36 @@ int main()
         check(prim->UsesReferenceParticle() && prim->m_particleSprRes==nullptr && prim->m_texture.empty(),"missing FireBall resources retain reference routing with no texture substitute");
         effect.ClearPrims();g_world.UpdateGameObjects();check(g_resMgr.spr.m_lockCnt==0 && g_resMgr.act.m_lockCnt==0,"FireBall cleanup releases sprite/action locks");
         g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor; actor.m_pos={12,34,56};
+        CRagEffect half; half.m_type=436; half.m_master=&actor; half.m_stateCnt=0; half.m_duration=90;
+        half.m_effectPos={1,2,3}; half.m_cachedPos={4,5,6}; half.ApplyHalfSphere("effect\\white02.bmp");
+        auto* halfPrim=half.m_primList.front();
+        check(half.m_effectPos.x==12 && half.m_cachedPos.y==34 && halfPrim->m_pos.z==56
+            && halfPrim->m_type==PP_HALFSPHERE && halfPrim->m_renderFlag==513 && halfPrim->m_duration==90
+            && halfPrim->m_gi[0].life==1 && halfPrim->m_gi[0].process==0 && halfPrim->m_gi[0].maxHeight==8
+            && halfPrim->m_gi[0].fullDisplayAngle==180 && std::string(g_texMgr.lastPath)=="effect\\white02.bmp",
+            "effect436 HalfSphere refreshes origin and emits source GI/resource profile");
+        actor.m_pos={22,44,66}; half.m_stateCnt=1; half.ApplyHalfSphere("effect\\white02.bmp");
+        check(half.m_primList.size()==1 && half.m_effectPos.x==22 && half.m_effectPos.y==44 && half.m_effectPos.z==66
+            && half.m_cachedPos.x==22 && half.m_cachedPos.y==44 && half.m_cachedPos.z==66,
+            "effect436 HalfSphere refreshes moved master after spawn gate without duplicate primitive");
+        half.ClearPrims(); g_world.UpdateGameObjects();
+
+        CRagEffect attack; attack.m_type=437; attack.m_master=&actor; attack.m_stateCnt=0; attack.m_duration=80;
+        attack.m_effectPos={0,0,0}; attack.m_cachedPos={0,0,0}; attack.ApplyAttackEnergy("effect\\ring_blue.tga");
+        auto* attackPrim=attack.m_primList.front();
+        check(attack.m_effectPos.x==22 && attackPrim->m_pos.z==66 && attackPrim->m_type==PP_ATTACKENERGY
+            && attackPrim->m_renderFlag==513 && attackPrim->m_duration==80 && attackPrim->m_size==100
+            && attackPrim->m_gi[0].life==1 && attackPrim->m_gi[3].riseAngle==135
+            && attackPrim->m_gi[3].height[0]==20 && std::string(g_texMgr.lastPath)=="effect\\ring_blue.tga",
+            "effect437 AttackEnergy refreshes origin and emits all four source GI bands");
+        actor.m_pos={32,54,76}; attack.m_stateCnt=1; attack.ApplyAttackEnergy("effect\\ring_blue.tga");
+        check(attack.m_primList.size()==1 && attack.m_effectPos.x==32 && attack.m_effectPos.y==54 && attack.m_effectPos.z==76
+            && attack.m_cachedPos.x==32 && attack.m_cachedPos.y==54 && attack.m_cachedPos.z==76,
+            "effect437 AttackEnergy refreshes moved master after spawn gate without duplicate primitive");
+        attack.ClearPrims(); g_world.UpdateGameObjects();
     }
     {
         CRenderObject actor;actor.m_pos={900,800,700};CRagEffect effect;effect.m_type=45;effect.m_master=&actor;effect.m_effectPos={10,50,30};
