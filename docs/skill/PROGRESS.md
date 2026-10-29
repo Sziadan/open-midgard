@@ -2486,3 +2486,7 @@ Added and registered `check_effect394_sphere_wind.py`. It checks the PE loop's f
 ## WP5F effect396 actor-light tint parity — 2026-10-29
 
 Extended the grouped actor-light checker for effect396's ordered bit-0/bit-3 gates and `(255, 89, 182)` tint, generated route, local null-master guard, and primary-Ref omission. Focused check and full Release CTest passed 348/348. No production behavior change.
+
+## WP5F effects397/398 Level99 source/resource parity — 2026-10-29
+
+Added and registered `check_effect397_398_level99.py`. It compares complete PE and primary-Ref Level99/Level99_2 helper bodies, checks caller and sibling routing for 200/201, local effect397/398 routes and emitter profiles, and exact `ring_blue.tga` / `pikapika2.bmp` bytes at `0x71943C` / `0x719DD8`. Also corrected the stale mismatch entry claiming these handlers were absent. Focused check, elevated Release parity build and full Release CTest passed 349/349. No production behavior change.
