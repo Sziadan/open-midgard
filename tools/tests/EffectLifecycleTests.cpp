@@ -686,6 +686,8 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect602();
     bool ProcessEffectTextureSet();
     bool ProcessTarotEffect();
+    bool ProcessSphereWind2Effect();
+    void SpawnSphereWind2(short);
     void ApplyEffectTexture(const char*, int);
     bool ProcessEffect273();
     bool ProcessEffect440();
@@ -13671,6 +13673,61 @@ int main()
             &&g_texMgr.requests.size()==1&&rngDraws==textureRng,
             "effect676 state11 refreshes texture position without replaying the cue or RNG");
         clock.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject listener;listener.m_pos={10,900,20};
+        CRenderObject master;master.m_pos={100,200,300};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        std::vector<int> sphereRng;
+        for(int primitive=0;primitive<5;++primitive)
+            for(int lane=0;lane<4;++lane)
+                sphereRng.insert(sphereRng.end(),{1,2,3,4,1});
+        rngValues=sphereRng;rngCursor=0;
+        const int oldRandomDraws=rngDraws;
+        waveCalls.clear();g_texMgr.requests.clear();
+        CRagEffect sphere;sphere.m_type=408;sphere.m_duration=777;sphere.m_master=&master;
+        check(sphere.ProcessSphereWind2Effect(),"effect408 SphereWind2 handler is active");
+        bool payload=sphere.m_primList.size()==5&&waveCalls.size()==1
+            &&waveCalls[0].name=="effect\\EF_Blessing.wav"&&waveCalls[0].x==90
+            &&waveCalls[0].y==0&&waveCalls[0].z==280&&waveCalls[0].volume==250
+            &&waveCalls[0].range==40&&waveCalls[0].frequency==1.0f
+            &&waveCalls[0].frameRng==oldRandomDraws&&rngDraws==oldRandomDraws+100
+            &&rngCursor==100&&g_texMgr.requests.size()==5;
+        const short times[5]={0,9,18,27,36};
+        int index=0;
+        for(CEffectPrim* prim:sphere.m_primList) {
+            payload=payload&&prim&&prim->m_type==PP_SPHEREWIND2&&prim->m_renderFlag==5
+                &&prim->m_duration==777&&prim->m_size==10.0f&&prim->m_pos.x==100
+                &&prim->m_pos.y==200&&prim->m_pos.z==300&&prim->m_texture.size()==1
+                &&g_texMgr.requests[index]=="effect\\fire_ivy.bmp";
+            for(int lane=0;lane<4;++lane) {
+                const EffectGi& gi=prim->m_gi[lane];
+                payload=payload&&gi.life==1&&gi.process==-1&&std::fabs(gi.maxHeight-2.4f)<0.00001f
+                    &&gi.distance==5.0f&&gi.height[0]==-10.0f&&gi.rotStart==3
+                    &&gi.riseAngle==times[index]+45*lane&&gi.alphaB==0&&gi.fullDisplayAngle==184
+                    &&gi.height[1]==4.0f;
+            }
+            ++index;
+        }
+        check(payload,"effect408 plays before five exact SphereWind2 launches with reference time, texture, four lanes, and ordered RNG");
+
+        master.m_pos={110,210,310};sphere.m_stateCnt=1;
+        const int laterDraws=rngDraws;
+        const size_t laterTextures=g_texMgr.requests.size();
+        sphere.ProcessSphereWind2Effect();
+        check(sphere.m_effectPos.x==110&&sphere.m_effectPos.y==210&&sphere.m_effectPos.z==310
+            &&sphere.m_cachedPos.x==110&&sphere.m_primList.size()==5&&waveCalls.size()==1
+            &&rngDraws==laterDraws&&g_texMgr.requests.size()==laterTextures,
+            "effect408 later states refresh parent/cache without repeating wave, primitive launches, resources, or RNG");
+        sphere.m_stateCnt=0;sphere.m_master=nullptr;
+        const vector3d oldEffectPos=sphere.m_effectPos;
+        sphere.ProcessSphereWind2Effect();
+        check(sphere.m_effectPos.x==oldEffectPos.x&&sphere.m_effectPos.y==oldEffectPos.y
+            &&sphere.m_effectPos.z==oldEffectPos.z&&sphere.m_primList.size()==5&&waveCalls.size()==1
+            &&rngDraws==laterDraws&&g_texMgr.requests.size()==laterTextures,
+            "effect408 missing master returns active without changing origin or emitting outputs");
+        sphere.ClearPrims();g_world.UpdateGameObjects();
         g_world.m_player=oldPlayer;waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);

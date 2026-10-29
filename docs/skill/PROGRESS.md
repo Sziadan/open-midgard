@@ -3032,3 +3032,7 @@ Connected the production `ProcessTarotEffect` body (`src/world/RagEffect.cpp:226
 ### ProcessTarotEffect completion — effect676
 
 Closed the remaining case in `ProcessTarotEffect` (`src/world/RagEffect.cpp:22628`). Runtime coverage now exercises state0 selector4 clock texture creation, a nonzero pre-cue frame with moving master, the exact state10 `_EF_DecAgility.wav` cue, and state11 refresh without another wave, bitmap request, or RNG draw. `check_effect554_texture_set.py` verifies PE/primary-Ref caller order and exact PE resource bytes for effect676. Focused lifecycle passes3152 checks; full Release parity CTest passes428/428; both documented static audits pass.
+
+## WP5 CRagEffect::ProcessSphereWind2Effect — effect408 — 2026-10-29
+
+Connected the production `ProcessSphereWind2Effect` and `SpawnSphereWind2` bodies (`src/world/RagEffect.cpp:22112` and `:22081`) to the lifecycle harness. The fixture verifies the PE-only state-zero `_EF_Blessing.wav` call before five launches at times0/9/18/27/36, exact `effect\\fire_ivy.bmp`, all four GI lanes and 100 ordered RNG draws, then later-state parent/cache refresh with no additional output and the missing-master no-op. `check_spherewind2_caller.py` verifies the canonical PE caller and exact assets; primary Ref has no numeric effect408 caller. Focused lifecycle passes3156 checks; full Release parity CTest passes428/428 and both documented static audits pass.
