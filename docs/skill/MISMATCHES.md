@@ -555,7 +555,7 @@ The full PE and primary Ref helper bodies match, but the available `Ref/RagEffec
 
 # WP10.3 Bottom2 137 caller omission (2026-10-28)
 
-PE effect137 invokes Bottom2 and the full helper matches primary Ref, but the available Ref OnProcess caller switch omits it; the route follows PE evidence. Its four PP_3DTEXTURE primitives use the current reference texture updater/renderer with `m_commonPattern=1`; live visual acceptance remains open.
+PE effect137 invokes Bottom2 and the full helper matches primary Ref, but the available Ref OnProcess caller switch omits it; the route follows PE evidence. Its four PP_3DTEXTURE primitives use the current reference texture updater/renderer with `m_commonPattern=1`; the source comparator and direct emitter lifecycle fixture cover payload, order, one-shot state gate, wrapped angle and texture requests. Live visual acceptance remains open.
 
 # WP10.3 BowlingBash 73 caller omission and renderer family (2026-10-28)
 
