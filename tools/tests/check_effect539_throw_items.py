@@ -181,4 +181,15 @@ for token in (
     if token not in effect539_fixture.group(0):
         raise AssertionError(f"effect539 lifecycle assertion missing: {token}")
 
+effect541_fixture = re.search(r"CRagEffect effect;effect\.m_type=541;[\s\S]*?effect\.ClearPrims\(\);g_world\.UpdateGameObjects\(\);", LIFECYCLE)
+if effect541_fixture is None or "effect.ProcessThrowItemEffect()" not in effect541_fixture.group(0):
+    raise AssertionError("effect541 selector1 lifecycle fixture does not invoke the production dispatcher")
+for token in (
+    "effect541 launches selector1 with exact CP949 texture, delta and master origin",
+    "effect541 selector1 preserves trajectory and source count flags",
+    "effect541 later state repositions existing item without duplicate launch or resource request",
+):
+    if token not in effect541_fixture.group(0):
+        raise AssertionError(f"effect541 lifecycle assertion missing: {token}")
+
 print("effects539/541/600/613/614/615/616 ThrowItem parity passed: PE/Ref callers, local variants and launch frames, exact textures")

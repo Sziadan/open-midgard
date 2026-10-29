@@ -4766,3 +4766,6 @@ Added a table-driven runtime fixture for the three variant3 item resources. It e
 ## WP5 ThrowItem lifecycle — effect539 delayed pair — 2026-10-29
 
 Added runtime coverage for effect539's ordered variant10/11 pair using the production dispatcher and ApplyThrowItem helper. The fixture checks state0 no-launch behavior, state5 launches only the first PE-mapped texture, state10 appends the second texture in order, selector flags and both trajectory payloads, then state11 repositions both existing primitives without relaunch or texture reload. The comparator now requires the four-state runtime fixture alongside its existing PE/Ref and local caller/resource checks. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.
+## WP5 ThrowItem lifecycle — effect541 selector1 — 2026-10-29
+
+Added runtime coverage for effect541's distinct selector1 resource using the production dispatcher and ApplyThrowItem helper. The fixture checks its exact CP949 texture, count and target-delta fields, shared selector1 trajectory, PP_THROWITEM state, and changed-master repositioning without a second launch or texture request. The existing comparator already verifies the PE/Ref caller mapping and resource bytes; it now also requires this runtime fixture. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.

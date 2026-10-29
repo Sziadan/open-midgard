@@ -14608,6 +14608,39 @@ int main()
             "effect539 state11 repositions both items without duplicate launches or texture requests");
         effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();
     }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        CRagEffect effect;effect.m_type=541;effect.m_stateCnt=0;effect.m_duration=73;effect.m_count=7;
+        effect.m_master=&master;effect.m_deltaPos={106,230,308};
+        const std::string expectedTexture="\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xB9\xF6\xBC\xAD\xC5\xA9\xC6\xF7\xBC\xC7.bmp";
+        g_texMgr.requests.clear();waveCalls.clear();const int draws=rngDraws;
+        check(effect.ProcessThrowItemEffect(),"effect541 production dispatcher accepts the selector1 ThrowItem type");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==static_cast<EFFECTPRIMID>(kPrimTypeThrowItem)
+            &&prim->m_renderFlag==5&&prim->m_duration==73&&prim->m_size==0.0f
+            &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+            &&prim->m_deltaPos.x==106&&prim->m_deltaPos.y==230&&prim->m_deltaPos.z==308
+            &&prim->m_texture.size()==1&&g_texMgr.requests==std::vector<std::string>({expectedTexture})
+            &&rngDraws==draws&&waveCalls.empty(),
+            "effect541 launches selector1 with exact CP949 texture, delta and master origin");
+        if(prim) {
+            const EffectGi& gi=prim->m_gi[0];
+            check(gi.life==1&&gi.process==0&&gi.maxHeight==10.0f&&gi.distance==3.0f
+                &&std::fabs(gi.height[1]-0.4f)<0.00001f&&std::fabs(gi.height[2]-1.2f)<0.00001f
+                &&gi.alphaB==255&&gi.arcBaselineY==192.0f&&gi.fullDisplayAngle==0
+                &&gi.flag[1]==26&&gi.flag[2]==9&&gi.flag[3]==7,
+                "effect541 selector1 preserves trajectory and source count flags");
+        } else {
+            check(false,"effect541 selector1 preserves trajectory and source count flags");
+        }
+        master.m_pos={410,520,630};effect.m_deltaPos={416,550,638};effect.m_stateCnt=1;
+        const size_t requests=g_texMgr.requests.size();effect.ProcessThrowItemEffect();
+        check(effect.m_primList.size()==1&&prim&&prim->m_pos.x==410&&prim->m_pos.y==520&&prim->m_pos.z==630
+            &&effect.m_effectPos.x==410&&effect.m_effectPos.y==520&&effect.m_effectPos.z==630
+            &&g_texMgr.requests.size()==requests&&rngDraws==draws&&waveCalls.empty(),
+            "effect541 later state repositions existing item without duplicate launch or resource request");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();
+    }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
 }
