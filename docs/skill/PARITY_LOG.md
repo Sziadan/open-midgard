@@ -4473,3 +4473,8 @@ Added and registered `tools/tests/check_effect32_napalm_beat.py`. Canonical PE `
 ## WP5 CRagEffect FireArrow effect31 source checkpoint - 2026-10-29
 
 Added and registered `tools/tests/check_effect31_fire_arrow.py`. Canonical PE `FireArrow` and primary Ref helper bodies normalize identically; PE case31 routes to the helper, and local case31 routes through `ProcessEffectFrameLegacy` to `ApplyFireArrow`. The comparator verifies the source branch order for frame12 audio/count scaling, the strict ten-frame projectile count gate, ordered spawn/aim draws, six recovered flame textures, independent fourth-frame particle4 trail, one-shot yellow impact ring, and wave-format bytes at `0x71B714`. Existing lifecycle assertions cover zero/out-of-cadence emission, exact combined RNG/audio order, flight/count boundary, parent feedback, ground collision and reset, trail resources, and impact consumption. Focused CTest passed; full Release parity CTest passed 402/402. No runtime behavior changed.
+
+
+## WP5 CRagEffect FrostDiver effect27 source checkpoint - 2026-10-29
+
+Added and registered `tools/tests/check_effect27_frost_diver.py`. Canonical PE `FrostDiver` and primary Ref bodies normalize identically; PE case27 routes to the handler, and local case27 enters the shared legacy branch and calls `ApplyFrostDiver`. The comparator checks reduced-effects suppression, zero-frame cursor initialization, arrival-distance test before final spike emission, six ordered random draws, retained launch rotation, source spike profile and exact ice texture. Existing lifecycle assertions cover the exact arrival boundary, final emission and subsequent flag stop. Focused CTest and full Release parity CTest passed 403/403. No runtime behavior changed.
