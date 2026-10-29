@@ -12553,6 +12553,39 @@ int main()
         rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();g_world.m_player=oldPlayer;
     }
     {
+        CRenderObject master,listener;master.m_pos={310,420,530};listener.m_pos={10,80,30};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=633;effect.m_stateCnt=0;effect.m_duration=87;effect.m_master=&master;
+        rngValues={23};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        check(effect.ProcessEffectSpriteProduction(18),"effect633 production Effect_SPR variant18 helper remains active");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC0\xCF\xBC\xB6.spr";
+        const std::string expectedAct="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC0\xCF\xBC\xB6.act";
+        const std::string expectedWave="effect\\\xC0\xCF\xBC\xB6.wav";
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+            &&prim->m_pos.x==310&&prim->m_pos.y==420&&prim->m_pos.z==530
+            &&prim->m_duration==87&&prim->m_deltaPos2.y==-6.0f&&prim->m_renderFlag==0x201
+            &&prim->m_pattern==0x200&&prim->m_animSpeed==2&&!prim->m_repeatAnim
+            &&prim->m_spriteAction==0&&prim->m_curMotion==0
+            &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+            &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+            &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==310
+            &&prim->m_segments[0].pos.y==420&&prim->m_segments[0].pos.z==530
+            &&rngDraws==draws&&rngCursor==0,
+            "effect633 variant18 initializes exact PE assets and one-shot particle payload without RNG");
+        check(waveCalls.size()==1&&waveCalls[0].name==expectedWave
+            &&waveCalls[0].x==300&&waveCalls[0].y==0&&waveCalls[0].z==500
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "effect633 state0 plays exact PE-resolved caller wave at listener-relative coordinates");
+        const size_t requests=g_resMgr.requests.size();master.m_pos={610,720,830};effect.m_stateCnt=1;
+        check(effect.ProcessEffectSpriteProduction(18)&&effect.m_primList.size()==1
+            &&effect.m_effectPos.x==610&&effect.m_effectPos.y==720&&effect.m_effectPos.z==830
+            &&g_resMgr.requests.size()==requests&&rngDraws==draws&&rngCursor==0&&waveCalls.size()==1,
+            "effect633 later state refreshes helper origin without duplicate particle, resource, wave or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;waveCalls.clear();
+        g_resMgr.requests.clear();g_world.m_player=oldPlayer;
+    }
+    {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         gameMode.messages=0;gameMode.messageIds.clear();waveCalls.clear();

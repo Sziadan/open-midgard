@@ -162,6 +162,22 @@ for token in ("const Effect632Case cases[]={{0,2},{1,0}}", "PP_3DPARTICLE",
               "waveCalls[0].z==380", "without repeat particle, resource, wave or RNG"):
     if token not in effect632_fixture.group(1):
         raise AssertionError(f"effect632 lifecycle assertion missing {token}")
+effect633_fixture = re.search(r"CRenderObject master,listener;master\.m_pos=\{310,420,530\};listener\.m_pos=\{10,80,30\};\s*CRenderObject\* oldPlayer=g_world\.m_player;g_world\.m_player=&listener;\s*CRagEffect effect;effect\.m_type=633;(.*?)(?=\n    })", LIFECYCLE, re.S)
+if effect633_fixture is None or "ProcessEffectSpriteProduction(18)" not in effect633_fixture.group(1):
+    raise AssertionError("effect633 direct production variant18 lifecycle fixture disappeared")
+for name, expected, required_va in (("expectedSpr", image.read_cstring_at(0x71D00C).raw, 0x71D00C),
+                                   ("expectedAct", image.read_cstring_at(0x71CFFC).raw, 0x71CFFC),
+                                   ("expectedWave", image.read_cstring_at(0x719C08).raw, 0x719C08)):
+    literal = re.search(rf"const std::string {name}=(\"(?:\\.|[^\"\\])*\")", effect633_fixture.group(1))
+    if literal is None or ast.literal_eval(literal.group(1)).encode("latin-1") != expected:
+        raise AssertionError(f"effect633 fixture {name} differs from PE bytes at {required_va:#x}")
+for token in ("PP_3DPARTICLE", "m_duration==87", "m_deltaPos2.y==-6.0f", "m_renderFlag==0x201",
+              "m_pattern==0x200", "m_animSpeed==2", "m_spriteAction==0", "m_numSegments==1",
+              "rngDraws==draws&&rngCursor==0", "waveCalls.size()==1", "waveCalls[0].name==expectedWave",
+              "waveCalls[0].x==300", "waveCalls[0].y==0", "waveCalls[0].z==500",
+              "without duplicate particle, resource, wave or RNG"):
+    if token not in effect633_fixture.group(1):
+        raise AssertionError(f"effect633 lifecycle assertion missing {token}")
 
 # Priority 5P effect-sprite callers 630/632/633/634 and their RNG variants.
 for effect_id, variant, wave_symbol in ((630, 15, "aEffect_155"),
