@@ -2289,3 +2289,7 @@ Added a focused extracted-production-handler lifecycle fixture alongside the exi
 ## WP5C effect115 PE resource byte verification — 2026-10-29
 
 Extended `check_blitzbeat_caller.py` to resolve and assert the exact executable bytes for both BlitzBeat wave cues and both primitive textures: `effect\\hunter_blitzbeat_1st.wav` at `0x71BA98`, `effect\\hunter_blitzbeat.wav` at `0x71BA7C`, `effect\\ac_center2.tga` at `0x71B2D4`, and `effect\\magic_green.tga` at `0x71A730`. The focused comparator and CTest both pass. No production behavior changed.
+
+## WP5C effects123/132 GrimTooth source comparator — 2026-10-29
+
+Added `tools/tests/check_grim_tooth123_132.py` and registered it in CMake. It compares the complete canonical PE and primary Ref `GrimTooth`/`GrimToothAtk` helper bodies; pins PE OnProcess ids123/132 to those helpers; confirms the primary Ref caller omission; verifies the local legacy dispatcher selects the corresponding emitters and both ids use the reference quad-horn family; and checks exact `effect\\stone.bmp` executable bytes at VA `0x71B858`. Existing lifecycle checks cover ordered RNG, cues, cursor movement, primitive payload, stopping, and no-repeat behavior. Release parity build passed and full CTest passed319/319. No production behavior change.
