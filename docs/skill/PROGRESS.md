@@ -2713,3 +2713,7 @@ Added and registered `tools/tests/check_prim3dtexture_initializer.py`. PE and pr
 
 Added and registered `tools/tests/check_prim2dflash_initializer.py`. Canonical PE and primary Ref bodies at `HighPriest.exe.c:466941` and `Ref/RagEffectPrim.cpp:1729` normalize identically, and both dispatch case 3 to the method. The comparator binds local shared-tick routing and the 2D-specific integration order to existing lifecycle assertions for change-point, clamping, alpha and negative-height reflection. No production change was needed. Direct comparator and focused CTest passed; full Release CTest passed 383/383.
 
+## WP5 CEffectPrim Prim3DFlash update parity - 2026-10-29
+
+Added and registered `tools/tests/check_prim3dflash_initializer.py`. PE and primary Ref bodies at `HighPriest.exe.c:466871` and `Ref/RagEffectPrim.cpp:1858` normalize identically; both route primitive case `0x13` to the method. The comparator binds the local 3D branch to existing lifecycle checks for Y/X anchoring, clamp/trace, change/reflection, 3D integration order, alpha and tick. No production change was needed. Direct comparator and focused CTest passed; full Release CTest passed 384/384.
+
