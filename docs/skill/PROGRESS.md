@@ -2206,3 +2206,7 @@ Compared PE case154 and PE/primary-Ref Init mappings, exact executable wave/STR 
 ## WP5C effect155 Refine Failed — 2026-10-29
 
 Compared PE case155 and PE/primary-Ref Init mappings, exact executable wave/STR bytes, and local route. The frame5 cue is `effect\\bs_refinefailed.wav`, listener-relative X/Z at literal Y0 with 250/40/1.0; shared `ProcessEZ2STR(0,-80,0)` completion is propagated each frame. Wave and STR bytes resolve at `0x717300` and `0x71AD64`. Added a registered source comparator and lifecycle checks for states4/5/6, cue coordinates, no repeat and unchanged RNG. Release parity build and full CTest pass299/299. No production behavior change.
+
+## WP5C effect158 JobLvUP — 2026-10-29
+
+Compared PE and primary-Ref Init's decimal158 shared-label route to `JobLvUP.str`, exact executable bytes at `0x71AD3C`, local catalog/STR table rows, and generic OnProcess STR routing. The existing generic STR lifecycle group already covers effect158's missing, active, moved-anchor and exhausted states. The comparator also guards the distinction from Entry2 effect0x158 (decimal344). No production behavior change.

@@ -921,6 +921,8 @@ add_test(NAME effect154_refine_success_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect154_refine_success.py")
 add_test(NAME effect155_refine_failed_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect155_refine_failed.py")
+add_test(NAME effect158_job_level_up_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect158_job_level_up.py")
 add_test(NAME effect102_crash_earth_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect102_crash_earth.py")
 add_test(NAME effect103_weapon_perfection_source_check
@@ -1238,6 +1240,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect153_concentration.py
     check_effect154_refine_success.py
     check_effect155_refine_failed.py
+    check_effect158_job_level_up.py
     check_effect102_crash_earth.py
     check_effect103_weapon_perfection.py
     check_effect106_blastmine.py

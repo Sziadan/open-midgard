@@ -3846,3 +3846,7 @@ Added `check_effect154_refine_success.py`, registered as `effect154_refine_succe
 ## WP5C effect155 Refine Failed
 
 Added `check_effect155_refine_failed.py`, registered as `effect155_refine_failed_source_check`, and lifecycle assertions around states4/5/6. PE case155 plays `effect\\bs_refinefailed.wav` once at state5 using listener-relative X/Z, literal Y0 and arguments250/40/1.0, then propagates shared `ProcessEZ2STR(0,-80,0)` completion. PE and primary Ref Init map to `bs_RefineFailed.str`; executable bytes verify wave VA `0x717300` and STR VA `0x71AD64`. Local clip-wave route has the matching frame, resource and completion result. Release parity build succeeds; focused checks pass2/2 and full Release CTest passes299/299. No production behavior change.
+
+## WP5C effect158 JobLvUP
+
+Added `check_effect158_job_level_up.py`, registered as `effect158_job_level_up_source_check`. PE and primary Ref Init case158 jump to the shared `JobLvUP.str` formatter; local generated catalog and STR table agree, exact PE bytes verify VA `0x71AD3C`, and PE/local OnProcess route through generic STR continuation. Existing generic STR lifecycle coverage already includes effect158. The comparator explicitly distinguishes decimal158 from Entry2 effect0x158 (decimal344). Release parity build and full CTest pass300/300. No production behavior change.
