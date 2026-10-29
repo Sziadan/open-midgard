@@ -3862,3 +3862,7 @@ Added `check_effect157_level_up.py`, registered as `effect157_level_up_source_ch
 ## WP5C effect197 Sleep
 
 Added `check_effect197_sleep.py`, registered as `effect197_sleep_source_check`. PE and primary Ref Init case197 directly select `sleep.str`; local catalog/STR rows agree, and exact PE bytes verify VA `0x71AB88`. PE's generic STR-only case group and local `ProcessEZ2STR` route match. The generated attacked-effect table contains effect197 and `GameActorMsgHandler` reads that table before resolving the target effect. Existing lifecycle coverage includes effect197. Release parity build and full CTest pass303/303. No production behavior change.
+
+## WP5C effect235 CP949 STR
+
+Added `check_effect235_cp949_str.py`, registered as `effect235_cp949_str_source_check`. The skill effect table launches effect235 on the target. PE and primary Ref Init case235 use `byte_71AAAC`, whose exact PE bytes at VA `0x71AAAC` are `B5 F0 BD BA C6 E7 2E 73 74 72` (CP949 filename bytes); local catalog and STR rows contain the matching escaped bytes. PE and local OnProcess both use the generic STR-only continuation. Existing lifecycle coverage includes effect235. Release parity build and full CTest pass304/304. No production behavior change.

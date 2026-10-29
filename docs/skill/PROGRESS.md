@@ -2222,3 +2222,7 @@ Compared PE and primary-Ref Init case157 direct mapping to `LevelUP.str`, exact 
 ## WP5C effect197 Sleep — 2026-10-29
 
 Compared PE and primary-Ref Init case197 direct mapping to `sleep.str`, exact executable bytes at `0x71AB88`, local catalog/STR rows, and generic OnProcess STR routing. The generated attacked-effect table and actor combat lookup confirm its use; existing generic STR lifecycle checks already cover its missing, active, moved-anchor and exhausted states. Release parity build and full CTest pass303/303. No production behavior change.
+
+## WP5C effect235 CP949 STR — 2026-10-29
+
+Compared the `LaunchOn(target,235)` skill route, PE and primary-Ref Init symbol, exact CP949 STR bytes at `0x71AAAC`, local escaped catalog/STR rows, and PE/local generic STR-only OnProcess routes. Existing generic STR lifecycle checks include effect235. Release parity build and full CTest pass304/304. No production behavior change.
