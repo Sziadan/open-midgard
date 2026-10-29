@@ -4563,3 +4563,7 @@ Added and registered `tools/tests/check_effect49_fire_hit.py`. Canonical PE effe
 ## WP5 effects52/64/70 STR-only PE/local checkpoint — 2026-10-29
 
 `tools/tests/check_effects52_64_70_str_only.py` binds PE OnProcess cases52/64/70 to `LABEL_424` and verifies the shared `ProcessEZ2STR(0,-80,0)` result. PE and primary Ref Init both map52 to one `rand()%3+1` choice of `WindHit%d.str`, 64 to `ArrowShot.str`, and70 to `Brandish.str`; both local generated name tables match. The primary Ref OnProcess method has no cases for these ids and its default returns true, unlike PE. Existing lifecycle coverage exercises the local STR processing path, including no extra processing-time RNG/audio/primitive work. This documents a reference discrepancy; source parity with Ref remains open. Focused and full Release CTest passed 422/422.
+
+## WP5 effect61 WarpZone source checkpoint — 2026-10-29
+
+Added `tools/tests/check_effect61_warp_zone.py`. The canonical PE and primary Ref `WarpZone` helper bodies normalize identically; the check binds PE OnProcess effect61 and local generated dispatch to their corresponding helpers. The local emitter keeps the exact disk, ring and orbit order, equality reset at state145, ring cadence and bounds, all four ordered RNG draws (including the discarded draw), textures, resource names and primitive values. Existing lifecycle assertions cover these branches, including states0, 28, 112, 140, 145 and 146. Focused and full Release CTest passed 423/423; no runtime code changed.
