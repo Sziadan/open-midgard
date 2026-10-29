@@ -2397,3 +2397,8 @@ Registered the existing `check_snow_effect.py` and `check_sakura_effect.py` pari
 ## WP5D effects298/299 ThrowItem source and resource parity — 2026-10-29
 
 Added and registered `check_throw_item298_299.py`. It compares the complete PE and primary-Ref `ThrowItem` helper bodies, verifies both canonical caller argument mappings, local 298/299 dispatch and emitted GI payload, and pins the exact item texture bytes at PE VAs `0x71A2BC` and `0x71A298`. Focused check, Release parity build and full CTest passed333/333. No production behavior change.
+
+
+## WP5D GumGang/DoubleGumGang emitter source comparison — 2026-10-29
+
+Added and registered `check_gumgang_emitter.py` for effects203/254/418/455/485/486. It checks PE caller arguments, canonical and older Ref helper profiles, the local grouped route, 12 canonical RNG draws per GI, the documented Ref-only height[15] draw mismatch, and exact bytes for all five super textures. Focused comparator, Release parity build and full Release CTest passed334/334. No production behavior change.

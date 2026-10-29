@@ -4035,3 +4035,8 @@ Added CTest entries for the existing Snow and Sakura comparators, which verify P
 ## WP5D effects298/299 ThrowItem source/resource comparator — 2026-10-29
 
 `check_throw_item298_299.py` compares complete canonical PE and primary-Ref helper bodies, checks PE caller variants and local effect routing/payload, and verifies the executable bytes of the two exact item textures at `0x71A2BC` and `0x71A298`. Registered in CTest. Focused comparator, Release parity build and full Release CTest passed333/333. No production behavior change.
+
+
+## WP5D GumGang emitter caller/resource comparator — 2026-10-29
+
+`check_gumgang_emitter.py` now covers grouped GumGang/DoubleGumGang setup for effects203, 254, 418, 455, 485 and 486. It verifies canonical PE call arguments, local routes and profile values, source RNG counts, exact five-texture executable bytes, and records the older `dhxj` helper's extra height[15] random draw relative to canonical PE/local behavior. Registered in CTest; focused check, Release parity build and full CTest passed334/334. No production behavior change.

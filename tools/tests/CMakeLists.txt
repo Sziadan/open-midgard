@@ -1166,6 +1166,8 @@ add_test(NAME effect297_pokjuk_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect297_pokjuk.py")
 add_test(NAME effects298_299_throw_item_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_throw_item298_299.py")
+add_test(NAME gumgang_emitter_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_gumgang_emitter.py")
 add_test(NAME effect447_foot_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect447_foot.py")
 add_test(NAME effect448_foot_source_check
