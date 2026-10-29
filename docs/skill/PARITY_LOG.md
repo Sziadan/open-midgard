@@ -4357,3 +4357,10 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - Expanded the lifecycle fixture to verify master-relative origin and movement, outer/inner size integration, height cap, pattern-driven outer fade, alpha update, ignored animation-completion result and shared state tick.
 - Direct comparator passed. Rebuilt `effect_lifecycle_checks`; focused CTest passed 2/2. Full Release CTest passed 385/385.
 
+## WP5 CEffectPrim Prim3DCylinder source-map audit - 2026-10-29
+
+- Added and registered `tools/tests/check_prim3dcylinder_initializer.py` for canonical case `0x0D`, primary/secondary Ref mapping, local routes and the unresolved update gap.
+- Canonical PE at `HighPriest.exe.c:468484` and older full Ref at `Ref/dhxj/RagEffectPrim.cpp:1675` advance longitude and latitude speeds before matrix movement, then advance longitude a second time. The primary Ref annotation at `Ref/RagEffectPrim.cpp:285` instead names a `Prim3DCylinderHalf` duplicate and omits those updates.
+- Existing selected-master lifecycle checks encode that primary-Ref-derived half-cylinder behavior. A broad reroute caused 12 lifecycle failures and was backed out; local runtime behavior is unchanged. The mismatch is recorded in `MISMATCHES.md` for fixture/source-map resolution.
+- Direct comparator passed; focused CTest passed 2/2 after reverting the experimental reroute. Full Release CTest passed 386/386.
+

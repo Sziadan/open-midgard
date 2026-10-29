@@ -2721,3 +2721,7 @@ Added and registered `tools/tests/check_prim3dflash_initializer.py`. PE and prim
 
 Added and registered `tools/tests/check_prim3dcylinderhalf_initializer.py`. PE and primary Ref bodies at `HighPriest.exe.c:468404` and `Ref/RagEffectPrim.cpp:372` normalize identically and dispatch case `0x12`. Expanded lifecycle coverage now verifies source position/movement, integrated radii, height cap, fade-out, alpha and common tick despite animation completion. The lifecycle target rebuilt successfully; direct comparator and focused CTest passed 2/2. Full Release CTest passed 385/385.
 
+## WP5 CEffectPrim Prim3DCylinder source-map audit - 2026-10-29
+
+Added and registered `tools/tests/check_prim3dcylinder_initializer.py`. Canonical PE case `0x0D` and `Ref/dhxj/RagEffectPrim.cpp:1675` expose angular integration omitted from the primary Ref function mislabeled `Prim3DCylinder` at `Ref/RagEffectPrim.cpp:285`; that primary body duplicates `Prim3DCylinderHalf`. Current selected-master lifecycle checks encode the latter semantics. An experimental all-cylinder reroute failed 12 existing lifecycle assertions and was reverted; the comparator and `MISMATCHES.md` now preserve the unresolved mapping explicitly. Direct comparator and focused CTest passed 2/2; full Release CTest passed 386/386.
+
