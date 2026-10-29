@@ -24108,11 +24108,13 @@ void CRagEffect::ApplyFlowerCasting(const char* textureName, float size, int var
 
 void CRagEffect::ApplyDefender(const char* textureName)
 {
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
     if (textureName == nullptr || m_stateCnt != 0) {
         return;
     }
-    CRenderObject* master = ResolveCurrentMaster();
-    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
     CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeCasting2), vector3d{});
     if (prim == nullptr) {
         return;

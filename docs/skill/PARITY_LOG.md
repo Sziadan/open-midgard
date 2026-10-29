@@ -4275,3 +4275,5 @@ WP5F effects436/437: PE and Ref helper bodies match, and PE callers invoke HalfS
 WP5F effect119 Detecting: PE and primary Ref helper bodies match; only the PE has the effect119 caller. Comparator covers the local route, wave/texture bytes, and existing lifecycle assertions. Full Release CTest passed 373/373.
 
 WP5F effect521: PE and primary Ref OnProcess3 branches match. Added checks for the active interval, ordered body-light gates, red flash and local actor-light route. Focused Release CTest passed.
+
+WP5F effects222/252 Defender: source mapping confirms black/yellow PE and secondary-Ref routes. Fixed shared per-frame origin refresh and added four-band/resource lifecycle checks for both variants. Full Release CTest passed 374/374.

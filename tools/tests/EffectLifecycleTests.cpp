@@ -526,6 +526,7 @@ struct CRagEffect : CGameObject {
     void ApplyRgCoin3();
     void ApplyHalfSphere(const char* textureName);
     void ApplyAttackEnergy(const char* textureName);
+    void ApplyDefender(const char* textureName);
     void SpawnRgCoin2(const char*,float);
     void ApplyBash3D5();
     void SpawnChookgi(char);
@@ -10496,6 +10497,31 @@ int main()
             && attack.m_cachedPos.x==32 && attack.m_cachedPos.y==54 && attack.m_cachedPos.z==76,
             "effect437 AttackEnergy refreshes moved master after spawn gate without duplicate primitive");
         attack.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor; actor.m_pos={10,20,30};
+        for (const auto& variant : {std::pair<int,const char*>{222,"effect\\ring_black.tga"},
+                                    std::pair<int,const char*>{252,"effect\\ring_yellow.tga"}}) {
+            CRagEffect effect; effect.m_type=variant.first; effect.m_master=&actor; effect.m_stateCnt=0;
+            effect.m_duration=75; effect.m_effectPos={1,2,3}; effect.m_cachedPos={4,5,6};
+            effect.ApplyDefender(variant.second); auto* prim=effect.m_primList.front();
+            check(effect.m_effectPos.x==10 && effect.m_cachedPos.y==20 && prim->m_pos.z==30
+                && prim->m_type==PP_3DCASTING_2 && prim->m_renderFlag==5 && prim->m_duration==75
+                && prim->m_size==0 && prim->m_gi[0].life==1 && prim->m_gi[0].process==0
+                && prim->m_gi[0].maxHeight==40 && prim->m_gi[0].rotStart==180
+                && prim->m_gi[0].distance==8 && prim->m_gi[0].riseAngle==90
+                && std::string(g_texMgr.lastPath)==variant.second,
+                "Defender variant emits source casting and first GI profile at master origin");
+            check(prim->m_gi[1].maxHeight==39 && prim->m_gi[1].rotStart==270 && prim->m_gi[1].distance==7.9000001f
+                && prim->m_gi[2].maxHeight==38 && prim->m_gi[2].rotStart==0 && prim->m_gi[2].distance==7.8000002f
+                && prim->m_gi[3].maxHeight==37 && prim->m_gi[3].rotStart==90 && prim->m_gi[3].distance==7.6999998f,
+                "Defender retains all four source GI band height, spin and distance values");
+            actor.m_pos={40,50,60}; effect.m_stateCnt=1; effect.ApplyDefender(variant.second);
+            check(effect.m_primList.size()==1 && effect.m_effectPos.x==40 && effect.m_effectPos.y==50 && effect.m_effectPos.z==60
+                && effect.m_cachedPos.x==40 && effect.m_cachedPos.y==50 && effect.m_cachedPos.z==60,
+                "Defender refreshes moved master after spawn gate without duplicate primitive");
+            effect.ClearPrims(); g_world.UpdateGameObjects(); actor.m_pos={10,20,30};
+        }
     }
     {
         CRenderObject actor;actor.m_pos={900,800,700};CRagEffect effect;effect.m_type=45;effect.m_master=&actor;effect.m_effectPos={10,50,30};

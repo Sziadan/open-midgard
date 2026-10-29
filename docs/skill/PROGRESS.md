@@ -2647,3 +2647,7 @@ Added and registered `check_effect119_detecting.py`. It compares normalized PE/p
 ## WP5F effect521 actor-light caller — 2026-10-29
 
 Extended `check_effect375_actor_light.py` to compare PE and primary-Ref case `0x209`, its 10–50 interval, bit8/bit1 gates and even-frame red tint; verified the local OnProcess3 and generator routes plus `ApplyActorLight` mapping. The existing actor-light CTest passed. No production change.
+
+## WP5F effects222/252 Defender origin refresh — 2026-10-29
+
+PE and secondary Ref DEFENDER helpers refresh master position before their state-zero gate. Local `ApplyDefender` previously returned on nonzero states without updating effect/cached position; moved the refresh before the gate. Added `check_effect222_252_defender.py` for PE/secondary-Ref profiles, PE and Ref variant routes, exact bitmap bytes and local mapping. Added lifecycle coverage for both texture variants, four GI bands and movement after spawn. Release build passed; full Release CTest passed 374/374.
