@@ -1302,6 +1302,8 @@ add_test(NAME effect48_spray_pond_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect48_spray_pond.py")
 add_test(NAME effect47_torch_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect47_torch.py")
+add_test(NAME effect46_sandwind_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect46_sandwind.py")
 add_test(NAME effects436_437_sphere_energy_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect436_437_sphere_energy.py")
 add_test(NAME effect119_detecting_source_check
@@ -1414,6 +1416,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect50_firesplashhit.py
     check_effect48_spray_pond.py
     check_effect47_torch.py
+    check_effect46_sandwind.py
     check_effect436_437_sphere_energy.py
     check_effect119_detecting.py
     check_effect222_252_defender.py

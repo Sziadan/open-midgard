@@ -4416,3 +4416,7 @@ Added `tools/tests/check_effect48_spray_pond.py` and registered it in the focuse
 ## WP5 CRagEffect Torch effect47 source checkpoint - 2026-10-29
 
 Added `tools/tests/check_effect47_torch.py` and registered it in the focused CTest suite. PE and primary Ref `Torch` bodies normalize identically; the comparator binds PE effect47 and local `SpawnTorch` dispatch, parent-position refresh ordering, particle setup and resource names to the existing lifecycle assertions for size/divisor clamps, motion, repeat calls and missing assets. Focused CTest passed; no runtime change was needed.
+
+## WP5 CRagEffect SandWind effect46 source checkpoint - 2026-10-29
+
+Added `tools/tests/check_effect46_sandwind.py` and registered it in the focused CTest suite. PE and primary Ref `SandWind` bodies normalize identically; the comparator maps effect46 to the local emitter and binds the valid-state projection/emission gate order, six RNG draws, PP_2DTEXTURE fields and sand texture to existing lifecycle assertions for frame58/60, refreshed projection and negative random lifetime. Local missing-master/view guards are defensive behavior outside the source's valid-state path. Focused CTest passed; no runtime change was needed.
