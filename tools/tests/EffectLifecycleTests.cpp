@@ -762,6 +762,7 @@ struct CRagEffect : CGameObject {
     void SpawnEntry6();
     bool ProcessWarp8();
     void ApplyBottomVolcano(const char*, float);
+    void ApplyGravitation();
     void ApplyVolcano(const char*, short, bool);
     void ApplyMapPillar(const char*, float, bool);
     void ApplyProvidence(const char*);
@@ -14950,6 +14951,54 @@ int main()
             "effect254 later state refreshes origin without re-emission, resource, RNG or repeated sound");
         effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();waveCalls.clear();
         rngValues.clear();rngCursor=0;g_world.m_player=oldPlayer;
+    }
+    {
+        CRagEffect effect;effect.m_type=522;effect.m_stateCnt=0;effect.m_duration=80;
+        const int laneDraws[4][5]={{10,99,20,30,5},{45,98,24,60,12},{90,97,30,120,20},{180,96,38,240,35}};
+        rngValues.clear();for(const auto& lane:laneDraws) for(int value:lane) rngValues.push_back(value);
+        rngCursor=0;g_texMgr.requests.clear();gameMode.messages=0;gameMode.messageIds.clear();
+        gameMode.quakeSide=gameMode.quakeFront=gameMode.quakeLatitude=0;
+        const int draws=rngDraws;
+        effect.ApplyGravitation();
+        check(effect.m_primList.size()==4&&rngDraws==draws+20&&rngCursor==20,
+            "effect522 production Gravitation emits four lanes with five controlled draws each");
+        check(gameMode.messageIds==std::vector<int>({135,148})&&gameMode.messages==2
+            &&gameMode.lastMsg==148&&gameMode.quakeSide==1.0f
+            &&gameMode.quakeFront==0.23999999f&&gameMode.quakeLatitude==0.2f,
+            "effect522 sends quake messages in order with exact message148 pointer payloads");
+        const std::vector<std::string> expectedTextures={"effect\\stone.bmp","effect\\stone.bmp",
+            "effect\\ice.tga","effect\\ice.tga"};
+        check(g_texMgr.requests==expectedTextures,
+            "effect522 assigns two ordered stone textures followed by two ice textures");
+        int laneIndex=0;
+        bool payload=effect.m_primList.size()==4;
+        for(CEffectPrim* prim:effect.m_primList) {
+            if(!prim||laneIndex>=4) { payload=false; break; }
+            const int* values=laneDraws[laneIndex];
+            matrix expected;MatrixIdentity(expected);
+            MatrixAppendXRotation(expected,GetRadian(values[4]%40+60));
+            MatrixAppendYRotation(expected,GetRadian(values[3]%360));
+            payload=payload&&prim->m_type==PP_3DQUADHORN2&&prim->m_duration==80
+                &&prim->m_pattern==1&&prim->m_deltaPos2.x==0&&prim->m_deltaPos2.y==10
+                &&prim->m_deltaPos2.z==0&&prim->m_size==static_cast<float>(values[2]%50+300)*0.0099999998f
+                &&prim->m_heightSize==18.0f&&prim->m_longitude==static_cast<float>(values[3]%360)
+                &&prim->m_latitude==static_cast<float>(values[4]%40+60)
+                &&prim->m_speed==1.0f&&prim->m_accel==0.0099999998f&&prim->m_alpha==20.0f
+                &&prim->m_count==15&&prim->m_changePoint==12&&prim->m_changeSpeed==-1.2f
+                &&prim->m_changeAccel==0.0f&&prim->m_fadeOutCnt==70;
+            for(int row=0;row<4;++row) for(int col=0;col<4;++col)
+                payload=payload&&std::fabs(prim->m_matrix.m[row][col]-expected.m[row][col])<0.00001f
+                    &&std::fabs(prim->m_rotMat.m[row][col]-expected.m[row][col])<0.00001f;
+            ++laneIndex;
+        }
+        check(payload&&laneIndex==4,
+            "effect522 preserves ordered PP_3DQUADHORN2 payloads and angle-derived matrices");
+        const size_t requests=g_texMgr.requests.size();effect.m_stateCnt=1;
+        effect.ApplyGravitation();
+        check(effect.m_primList.size()==4&&rngDraws==draws+20&&g_texMgr.requests.size()==requests
+            &&gameMode.messageIds==std::vector<int>({135,148}),
+            "effect522 nonzero state returns without duplicate primitives, RNG, textures or quake messages");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

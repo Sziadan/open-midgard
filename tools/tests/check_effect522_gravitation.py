@@ -14,6 +14,7 @@ REF2 = (ROOT / "Ref/dhxj/RagEffect2.cpp").read_text(encoding="utf-8", errors="re
 MODE_REF = (ROOT / "Ref/GameMode2.cpp").read_text(encoding="utf-8", errors="replace")
 VIEW_REF = (ROOT / "Ref/View.cpp").read_text(encoding="utf-8", errors="replace")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
+LIFECYCLE = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8", errors="replace")
 MODE_LOCAL = (ROOT / "src/gamemode/GameMode.cpp").read_text(encoding="utf-8", errors="replace")
 VIEW_LOCAL = (ROOT / "src/gamemode/View.cpp").read_text(encoding="utf-8", errors="replace")
 VIEW_HEADER = (ROOT / "src/gamemode/View.h").read_text(encoding="utf-8", errors="replace")
@@ -47,6 +48,11 @@ require("case 0x20A:\n      CRagEffect::Gravitation(this);" in PE
         "effect 522 PE/primary Ref caller must dispatch to Gravitation")
 require("case 522: ApplyGravitation(); return true;" in DISPATCH,
         "effect 522 dispatch route changed")
+for token in ("effect.ApplyGravitation();", "effect522 production Gravitation emits four lanes",
+              "effect522 sends quake messages in order", "effect522 assigns two ordered stone textures",
+              "effect522 preserves ordered PP_3DQUADHORN2 payloads",
+              "effect522 nonzero state returns without duplicate primitives"):
+    require(token in LIFECYCLE, f"effect522 Gravitation lifecycle fixture missing {token}")
 
 pe = function_body(PE, r"void __thiscall CRagEffect::Gravitation\(CRagEffect \*this\)")
 ref = function_body(REF2, r"void\s+CRagEffect\s*::\s*Gravitation\(\)")
