@@ -2454,3 +2454,7 @@ Added and registered `check_effect454_dark_casting.py`. It compares complete PE/
 ## WP5F effect382 actor-light source parity — 2026-10-29
 
 Extended the registered actor-light comparator for effect382's PE/local bit-2 gate and generated route, including local null-master handling and the missing primary-Ref case provenance. Focused check and full Release CTest passed 343/343. No production behavior change.
+
+## WP5G effect487 BLACKDEVIL source/resource parity — 2026-10-29
+
+Added and registered `check_effect487_black_devil.py`. It compares complete PE/primary-Ref helper bodies, checks the secondary-Ref profile, local effect487 route and both casting levels' dimensions/spins/rise angles, and verifies exact `effect\\ring_black.tga` bytes at `0x7198D0`. Focused check, elevated Release parity build and full Release CTest passed 344/344. No production behavior change.
