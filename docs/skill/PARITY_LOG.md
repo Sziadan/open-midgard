@@ -4068,3 +4068,7 @@ Added and registered `check_effect303_chemical2.py`. It compares complete PE/pri
 ## WP5E effect370 Bottom_Music variant9 source/resource parity — 2026-10-29
 
 Extended the registered Bottom_Music checker to cover effect370's PE and primary-Ref caller, local OnProcess2 route, variant9 selection, and exact `effect\\cross_old.bmp` executable bytes at `0x719348`. Focused check and the complete Release CTest passed 339/339. No production behavior change.
+
+## WP5F effect375 actor-light source parity — 2026-10-29
+
+Added and registered `check_effect375_actor_light.py`. It verifies the PE inline bit-3 body-light gate and the local generated route/helper, while recording that primary Ref has no standalone case; the local helper safely guards a null master. Focused check, elevated Release parity build and full Release CTest passed 340/340. No production behavior change.
