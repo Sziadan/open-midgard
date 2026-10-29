@@ -5667,6 +5667,23 @@ int main()
     {
         CRagEffect effect;
         effect.m_master = &actor;
+        effect.m_type = 105;
+        effect.m_duration = 2;
+        effect.m_effectPos = {7, 8, 9};
+        const int oldSkipFrame = g_isSkipFrame;
+        const int rngStart = rngDraws;
+        waveCalls.clear();
+        g_isSkipFrame = 1;
+        check(effect.OnProcess() == 1 && effect.m_stateCnt == 1 && effect.frames == 1
+            && effect.m_primList.empty() && waveCalls.empty() && rngDraws == rngStart,
+            "effect105 explicit no-op still advances one common lifecycle frame without visuals, audio or RNG");
+        check(effect.OnProcess() == 0 && effect.m_stateCnt == 2 && effect.frames == 2,
+            "effect105 common duration tail expires only after its second dispatched frame");
+        g_isSkipFrame = oldSkipFrame;
+    }
+    {
+        CRagEffect effect;
+        effect.m_master = &actor;
         effect.m_duration = 0;
         check(effect.OnProcess() == 0 && effect.frames == 1 && effect.m_stateCnt == 1,
             "zero-duration effect dispatches before expiry check");

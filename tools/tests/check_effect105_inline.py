@@ -7,6 +7,7 @@ pe = (ROOT / "HighPriest.exe.c").read_text(encoding="latin-1")
 ref = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
 dispatch = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
 source = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
+fixture = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
 
 function = pe.rindex("unsigned __int8 __thiscall CRagEffect::OnProcess(CRagEffect *this)")
 start = pe.index("          case 105:", function)
@@ -32,4 +33,10 @@ if not on_process or "if (!ProcessEffectFrame())" not in on_process.group(1):
     raise SystemExit("effect105 must retain the shared OnProcess lifecycle")
 if "++m_stateCnt;" not in on_process.group(1) or "return m_stateCnt < m_duration;" not in on_process.group(1):
     raise SystemExit("effect105 must advance and expire through the common duration tail")
+for phrase in (
+    "effect105 explicit no-op still advances one common lifecycle frame without visuals, audio or RNG",
+    "effect105 common duration tail expires only after its second dispatched frame",
+):
+    if phrase not in fixture:
+        raise SystemExit(f"effect105 lifecycle fixture missing {phrase!r}")
 print("effect105 parity: canonical no-op branch and common frame-count tail passed")
