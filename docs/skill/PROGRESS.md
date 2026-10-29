@@ -2563,3 +2563,11 @@ Extended `check_effect539_throw_items.py` with effect600's PE/primary-Ref caller
 
 Added and registered `check_effect554_texture_set.py`. It compares the PE and primary-Ref effect554 caller, local generated route and `freeze_a.bmp` mapping, PE-backed resource bytes, and the shared selector-2 profile (state-zero spawn, PP_EFFECTTEXTURE, inherited duration, distance 10, actor Y−10 baseline, flag2=2, height10=0, display angle 135, alpha zero and randomized rotation). Focused check passed; full Release parity build and CTest passed 361/361. Also extended the existing Level99 comparator through OnProcess3 variants 678/679/680/692, full Level99_3 helper comparison, local variant profiles, and three exact PE resources.
 No production behavior change.
+
+## WP5F effect601 Sight2 source and lifecycle parity — 2026-10-29
+
+Added and registered `check_effect601_sight2.py`. It compares the complete PE/primary-Ref Sight2 helper and OnProcess3 caller, checks the local effect601 route through `SpawnSight2()` and `ApplySight(50,false)`, verifies screen projection before the even-frame gate and the single PP_3DPARTICLE profile, and pins the exact CP949 Sight SPR/ACT bytes. It also binds the existing lifecycle fixture's spawn, odd/even frame and cleanup assertions to the source route. Focused check passed; full Release parity build and CTest passed 363/363. No production behavior change.
+
+## WP5F effects689/690/691/696 animated texture parity — 2026-10-29
+
+Added and registered `check_effects689_691_696_texture_animation.py`. It compares the complete PE/primary-Ref animation helper and variant callers, verifies generated local routes and the shared primitive/GI profile, and confirms all 48 exact dust/red/green/violet animation frame resources exist in the executable. Focused check passed; full Release parity build and CTest passed 363/363. No production behavior change.

@@ -1244,6 +1244,10 @@ add_test(NAME effect348_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect348.py")
 add_test(NAME effect554_texture_set_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect554_texture_set.py")
+add_test(NAME effect601_sight2_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect601_sight2.py")
+add_test(NAME effects689_691_696_texture_animation_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects689_691_696_texture_animation.py")
 add_test(NAME effects358_360_ghost_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects358_360_ghost.py")
 add_test(NAME effects349_356_waterfall_source_check
@@ -1321,6 +1325,8 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effects671_672_land_protector.py
     check_effect348.py
     check_effect554_texture_set.py
+    check_effect601_sight2.py
+    check_effects689_691_696_texture_animation.py
     check_effects358_360_ghost.py
     check_effects349_356_waterfall.py
     check_effects363_364_509_519_545_vallentine.py
