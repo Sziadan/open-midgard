@@ -1250,6 +1250,8 @@ add_test(NAME effect620_bottom_volcano_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect620_bottom_volcano.py")
 add_test(NAME effect310_particle_up_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect310_particle_up.py")
+add_test(NAME effect617_make_blur2_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect617_make_blur2.py")
 add_test(NAME effect622_thunder_storm2_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_thunder_storm2_caller.py")
 add_test(NAME effect624_stin5_source_check
@@ -1341,6 +1343,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect405_bottom_magnus.py
     check_effect620_bottom_volcano.py
     check_effect310_particle_up.py
+    check_effect617_make_blur2.py
     check_thunder_storm2_caller.py
     check_stin5_caller.py
     check_effect554_texture_set.py

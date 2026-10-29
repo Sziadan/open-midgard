@@ -4241,3 +4241,7 @@ Extended `check_effect375_actor_light.py` with effect414's PE-only caller proven
 ## WP5F effect310 PARTICLE_UP parent refresh — 2026-10-29
 
 PE and primary Ref OnProcess case `0x136` call `PARTICLE_UP` exactly 20 times. Each helper invocation copies the master position before checking state; only state zero launches a PP_PARTICLE_UP with `effect\\thunder_center.bmp`, four GI lanes and six ordered random draws per lane. Local `ApplyParticleUpBurst` had returned on nonzero state before refreshing its effect/cached position. Moved position resolution and refresh before the state gate, added `check_effect310_particle_up.py`, and added lifecycle assertions for the 20 primitive payloads, 480 RNG draws and later master movement. Full Release CTest passed 369/369.
+
+## WP5F effect617 MakeBlur2 source comparison — 2026-10-29
+
+Added and registered `check_effect617_make_blur2.py`. PE and secondary Ref helper bodies match after whitespace normalization; the comparator pins the OnProcess3 caller and local route, fixed effect/master tint `(155,155,255)`, state9998 reset and every-20-state CBlurPC snapshot insertion. The existing local `AddBlurSnapshot` path is checked for copied actor, color message and world-list insertion. No lifecycle fixture was added for CBlurPC construction. Full Release CTest passed 370/370.
