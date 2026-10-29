@@ -4104,3 +4104,7 @@ Added and registered `check_effect488_flower_cast.py`. It checks the PE frame-5 
 ## WP5F effect385 actor-light tint parity — 2026-10-29
 
 Extended the grouped actor-light checker for effect385's inclusive state window 40–70, conditional bit-0 addition, ordered tint, generated route and primary-Ref omission. Focused check and full Release CTest passed 345/345. No production behavior change.
+
+## WP5F effect387 actor-light motion parity — 2026-10-29
+
+Extended the grouped actor-light comparator for effect387's frame-30 message, 30–54 yaw increments with single-step wrap, and 30–50 body-light gate on five-frame slices. It also checks generated routing and records primary-Ref omission. Focused check and full Release CTest passed 345/345. No production behavior change.

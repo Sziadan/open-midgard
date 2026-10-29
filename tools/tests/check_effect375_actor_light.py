@@ -89,7 +89,38 @@ require("case 385: ApplyActorLight(); return true;" in DISPATCH,
         "local effect385 dispatcher route missing")
 require(actor_light_ids is not None and re.search(r"\b385\b", actor_light_ids.group(1)),
         "effect385 missing from generator actor-light group")
+pe_387 = re.search(
+    r"case 387:\s*if \( this->m_stateCnt == 30 \)\s*\{\s*"
+    r"v49 = CModeMgr::GetGameMode\(&g_modeMgr\);\s*"
+    r"v49->CMode::SendMsg\(v49, 135, 0, 0, 0\);\s*\}\s*"
+    r"v50 = this->m_stateCnt;\s*if \( v50 >= 30 && v50 <= 54 \)\s*\{\s*"
+    r"\(\*p_m_master\)->m_roty = \(\*p_m_master\)->m_roty \+ 30\.0;\s*"
+    r"if \( \(\*p_m_master\)->m_roty > 360\.0 \)\s*"
+    r"\(\*p_m_master\)->m_roty = \(\*p_m_master\)->m_roty - 360\.0;\s*\}\s*"
+    r"v51 = this->m_stateCnt;\s*if \( v51 >= 30 && v51 <= 50 && v51 % 10 < 5 \)\s*\{\s*"
+    r"v52 = \*p_m_master;\s*if \( \(v52->m_BodyLight & 1\) != 1 \)\s*"
+    r"\+\+v52->m_BodyLight;\s*\}\s*break;",
+    PE,
+)
+require(pe_387 is not None, "canonical PE effect387 message/yaw/body-light order or bounds changed")
+local_387 = re.search(
+    r"case 387:\s*if \(m_stateCnt == 30\)\s*\{\s*"
+    r"if \(CGameMode\* mode = g_modeMgr.GetCurrentGameMode\(\)\)\s*\{\s*mode->SendMsg\(135, 0, 0, 0\);\s*\}\s*\}\s*"
+    r"if \(master != nullptr && m_stateCnt >= 30 && m_stateCnt <= 54\)\s*\{\s*"
+    r"master->m_roty \+= 30\.0f;\s*if \(master->m_roty > 360\.0f\)\s*\{\s*"
+    r"master->m_roty -= 360\.0f;\s*\}\s*\}\s*"
+    r"if \(master != nullptr && m_stateCnt >= 30 && m_stateCnt <= 50 && \(m_stateCnt % 10\) < 5\s*"
+    r"&& \(master->m_BodyLight & 1\) != 1\)\s*\{\s*\+\+master->m_BodyLight;\s*\}\s*break;",
+    helper.group(1),
+)
+require(local_387 is not None, "local effect387 timing, wrap, bit gate, or master guard changed")
+require("case 387: ApplyActorLight(); return true;" in DISPATCH,
+        "local effect387 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b387\b", actor_light_ids.group(1)),
+        "effect387 missing from generator actor-light group")
 require("case 375" not in REF and "case 379" not in REF and "case 382" not in REF and "case 385" not in REF,
         "primary Ref gained a standalone actor-light case; update recorded provenance")
 
-print("effects375/379/382/385 actor-light source parity passed; primary Ref has no standalone cases and local helpers guard null masters")
+require("case 387" not in REF, "primary Ref gained effect387; update recorded provenance")
+
+print("effects375/379/382/385/387 actor-light source parity passed; primary Ref has no standalone cases and local helpers guard null masters")
