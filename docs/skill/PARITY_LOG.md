@@ -4894,3 +4894,7 @@ Added direct state0/state1 lifecycle coverage for effect586 variant10. PE and pr
 ## WP5 Effect_SPR lifecycle — effects570,576–580 variants0,2–6 — 2026-10-29
 
 Added a six-row local production-helper fixture for the plain speed2 one-shot profiles. The PE/primary-Ref caller routes map 570→0 and 576–580→2–6. Every row checks exact PE resource strings, one frame-zero particle/segment, expected common payload, zero wave/RNG, and state1 origin refresh without repeated output. The checker verifies each source helper's resource/segment/no-wave branch and binds fixture resources to PE VAs `0x71D338/0x71D324`, `0x71D2C4/0x71D2AC`, `0x71D294/0x71D27C`, `0x71D264/0x71D24C`, `0x71D238/0x71D224`, and `0x71D20C/0x71D1F4`. This validates local lifecycle/payload only; no rendered acceptance is claimed.
+
+## WP5 Effect_SPR lifecycle — effects585,587–589 variants9,11–13 — 2026-10-29
+
+Added a four-row state0/state1 local production-helper fixture for the speed4 one-shot profiles. PE/primary-Ref callers map 585→9 and 587–589→11–13. Each row checks exact PE asset strings, common particle/segment payload and absence of wave/RNG, then moved-origin refresh without repeated launch. The registered comparator checks helper setup order and binds row strings to PE VAs `0x71D150/0x71D13C`, `0x71D128/0x71D114`, `0x71D100/0x71D0EC`, and `0x71D0D8/0x71D0C4`. No rendered output acceptance is claimed.

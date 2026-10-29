@@ -13102,6 +13102,42 @@ int main()
         rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
     }
     {
+        struct FastSpriteProfile { int effect; int variant; const char* spr; const char* act; };
+        const FastSpriteProfile profiles[]={
+            {585,9,"\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef03.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef03.act"},
+            {587,11,"\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef05.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef05.act"},
+            {588,12,"\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef06.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef06.act"},
+            {589,13,"\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef07.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef07.act"},
+        };
+        CRenderObject master;master.m_pos={70,80,90};const int draws=rngDraws;
+        for(const auto& profile:profiles){
+            master.m_pos={70,80,90};
+            CRagEffect effect;effect.m_type=profile.effect;effect.m_stateCnt=0;effect.m_duration=76;effect.m_master=&master;
+            const std::string expectedSpr=profile.spr,expectedAct=profile.act;
+            rngValues={};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
+            check(effect.ProcessEffectSpriteProduction(profile.variant),"speed4 Effect_SPR profile production helper remains active");
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+                &&effect.m_effectPos.x==70&&effect.m_effectPos.y==80&&effect.m_effectPos.z==90
+                &&prim->m_pos.x==70&&prim->m_pos.y==80&&prim->m_pos.z==90&&prim->m_duration==76
+                &&prim->m_deltaPos2.y==0.0f&&prim->m_renderFlag==0x201&&prim->m_pattern==0x200
+                &&prim->m_animSpeed==4&&!prim->m_repeatAnim&&prim->m_spriteAction==0&&prim->m_curMotion==0
+                &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+                &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+                &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==70
+                &&prim->m_segments[0].pos.y==80&&prim->m_segments[0].pos.z==90
+                &&waveCalls.empty()&&rngDraws==draws&&rngCursor==0,
+                ("effect"+std::to_string(profile.effect)+" state0 emits speed4 one-shot sprite without cue/RNG").c_str());
+            const size_t requests=g_resMgr.requests.size();master.m_pos={71,81,91};effect.m_stateCnt=1;
+            check(effect.ProcessEffectSpriteProduction(profile.variant)&&effect.m_primList.size()==1
+                &&effect.m_effectPos.x==71&&effect.m_effectPos.y==81&&effect.m_effectPos.z==91
+                &&g_resMgr.requests.size()==requests&&waveCalls.empty()&&rngDraws==draws&&rngCursor==0,
+                ("effect"+std::to_string(profile.effect)+" state1 refreshes origin without duplicate sprite/resources/cue/RNG").c_str());
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
+    }
+    {
         CRenderObject master;master.m_pos={20,30,40};
         CRagEffect effect;effect.m_type=648;effect.m_stateCnt=0;effect.m_duration=78;effect.m_master=&master;
         const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xAE\xB8\xAE\xC7\xC3\xBE\xD7\xBC\xC7.spr";
