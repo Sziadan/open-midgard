@@ -1,5 +1,8 @@
 from pathlib import Path
 import re
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+from ro_exe_resolve import ExeImage  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 REF = (ROOT / "Ref/dhxj/RagEffect.cpp").read_text(encoding="latin-1")
@@ -12,6 +15,20 @@ DURATION = (ROOT / "src/world/RagEffectDurationTable.generated.inc").read_text(e
 def body(text, start, end):
     stop = text.index(end)
     return text[text.rindex(start, 0, stop):stop]
+
+
+def function(text, signature):
+    matches = list(re.finditer(signature, text))
+    if not matches:
+        raise SystemExit(f"FAIL: missing {signature}")
+    opening = text.index("{", matches[-1].end())
+    depth = 0
+    for pos in range(opening, len(text)):
+        if text[pos] == "{": depth += 1
+        elif text[pos] == "}":
+            depth -= 1
+            if depth == 0: return text[opening + 1:pos]
+    raise SystemExit(f"FAIL: unterminated {signature}")
 
 
 def ordered(label, text, tokens):
@@ -52,7 +69,7 @@ if "if (m_type == 160) {\n        SpawnParty();\n        return true;\n    }" no
 
 ref_fn = body(REF, "void CRagEffect :: Party()", "void\tCRagEffect :: StatusState()")
 exe_fn = body(EXE, "void __thiscall CRagEffect::Party(CRagEffect *this)", "//----- (00602E00)")
-cur_fn = body(IMPL, "void CRagEffect::SpawnParty()", "// Ref/RagEffect.cpp:8826-8852")
+cur_fn = function(IMPL, r"void CRagEffect::SpawnParty\(\)")
 
 for label, fn in (("Ref", ref_fn), ("canonical EXE", exe_fn), ("current", cur_fn)):
     if re.search(r"\b(?:rand|random)\s*\(", fn):

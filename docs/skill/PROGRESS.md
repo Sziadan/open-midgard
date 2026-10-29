@@ -2362,3 +2362,8 @@ Extended `check_effect124_127_poison_react.py` to include effect126's matching P
 ## WP5C effects172–179 elemental casting texture bytes — 2026-10-29
 
 Strengthened and registered `check_elemental_change_casting.py`. It now verifies exact PE bytes for the three unique ring textures used by effects176/177/179: `effect\ring_jadu.tga` at `0x71A280`, `effect\ring_brown.tga` at `0x71A268`, and `effect\ring_purple.tga` at `0x719468`. The check also validates the local route through `ProcessEffectFrameLegacy` (correcting its prior stale function target). Release parity build succeeded; full CTest passed328/328. No production change.
+
+
+## WP5 effect160 Party executable texture bytes — 2026-10-29
+
+Strengthened `check_party_effect.py` with an exact `effect\party.tga` byte assertion at PE VA `0x71BC7C`, registered the comparator in CTest, and bounded its no-RNG check to the actual `SpawnParty` function. The focused check, Release parity build and full CTest passed329/329. No production behavior change.
