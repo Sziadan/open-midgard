@@ -2693,3 +2693,7 @@ Added the registered source comparator `tools/tests/check_prim3dline_initializer
 
 Added the registered source comparator `tools/tests/check_prim3dsphere_initializer.py`. Canonical PE and primary Ref initializer bodies normalize identically; their inlined `0x0E` OnProcess branches also match. The comparator checks the local `UpdateReferenceSphere` route and binds it to the existing fixture for master-relative origin, radius integration, longitude, alpha path and shared lifetime tick. No runtime code change was needed.
 
+## WP10.5 parity target rebuild - 2026-10-29
+
+After adding the three initializer comparators, the complete `build64/skill-parity-tests` Release target built successfully. Full Release CTest passed 379/379, including lifecycle, source, runtime parity and coverage audit checks.
+

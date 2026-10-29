@@ -1,6 +1,6 @@
 # Skill system status
 
-Latest WP5 source checkpoints: `Prim3DQuadHorn2`, `Prim3DLine` (`0x14`), and `Prim3DSphere` (`0x0E`) now have dedicated initializer/dispatch comparators bound to their existing lifecycle checks. Full Release CTest passed 378/378 after the Line checkpoint; focused sphere validation passed 2/2.
+Latest WP5 source checkpoints: `Prim3DQuadHorn2`, `Prim3DLine` (`0x14`), and `Prim3DSphere` (`0x0E`) now have dedicated initializer/dispatch comparators bound to their existing lifecycle checks. The full Release parity-test build succeeded; full CTest passed 379/379, including all three comparators and the lifecycle fixture.
 
 | WP | State | Measured number | Where the number comes from | Next function / task |
 |---|---|---|---|---|

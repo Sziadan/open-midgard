@@ -4312,5 +4312,10 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - Added `tools/tests/check_prim3dsphere_initializer.py` and registered `prim3dsphere_initializer_source_check` in the parity test project.
 - Canonical PE `Prim3DSphere` at `HighPriest.exe.c:468633` and primary Ref at `Ref/RagEffectPrim.cpp:2097` normalize identically. Their inlined `0x0E` `OnProcess` dispatch branches also normalize identically and retain source position, radius-speed, radius, longitude and alpha operations.
 - The local `UpdateReferenceSphere` route retains origin+offset, radius integration, longitude and particle alpha before the shared lifetime tick. Existing lifecycle checks assert master-relative origin, radius speed/radius, longitude and state increment.
-- No runtime code change was needed. Direct comparator execution and focused CTest passed 2/2 (`effect_lifecycle_checks`, `prim3dsphere_initializer_source_check`). The most recent full Release CTest, before this comparator was registered, passed 378/378.
+- No runtime code change was needed. Direct comparator execution and focused CTest passed 2/2 (`effect_lifecycle_checks`, `prim3dsphere_initializer_source_check`). The full parity-test Release build then succeeded, followed by full Release CTest 379/379.
+
+## WP10.5 full parity-test Release build - 2026-10-29
+
+- `cmake --build build64/skill-parity-tests --config Release` completed successfully across all parity-test targets.
+- `ctest --test-dir build64/skill-parity-tests -C Release --output-on-failure` passed 379/379. This run includes the newly registered `Prim3DQuadHorn2`, `Prim3DLine`, and `Prim3DSphere` source comparators.
 
