@@ -4693,3 +4693,8 @@ The actual handler and emitter at `src/world/RagEffect.cpp:22112` / `:22081` now
 ## WP5 CRagEffect::ProcessSoulBreaker2Effect — effect409 — 2026-10-29
 
 The production handler/emitter at src/world/RagEffect.cpp:22534 / :22133 now execute in the lifecycle harness. Assertions cover parent/cache refresh; the source literal wave prefix ffect\\ before eight ordered PP_SOULBREAKER2 launches; listener-relative X/Z and wave parameters; exact texture, four lane profiles and 40 RNG draws; magenta tint/body light through state10 and no tint mutation at state11; missing-player behavior (cue suppressed, launches retained); and missing-master early return. check_soulbreaker2_caller.py compares the PE-only effect409 caller, helper fields and generated route. The source does not identify the audio suffix, so the test preserves the literal prefix. Focused lifecycle passes3163 checks; full Release parity CTest passes428/428 and both documented static audits pass.
+
+
+## WP5 CRagEffect::ProcessPeongEffects — effect411 — 2026-10-29
+
+Connected the production ProcessPeongEffects, SpawnPeongUp, and SpawnPeong bodies (src/world/RagEffect.cpp:22245, :22164, :22215) to the lifecycle harness. The fixture checks the state35 gate; 30 PP_PEONGUP followed by 16 quadrant-ordered PP_PEONG launches; exact texture order; all active GI fields; 718 ordered RNG draws; and no pre/post-trigger emission, audio, or repeated work. check_peong_callers.py checks the PE caller order, helper mapping, route and asset/profile anchors. The primary Ref does not implement this PE-only caller, and its Peong helper payload differs; no Ref parity is claimed for effect411. Focused lifecycle passes3167 checks; full Release parity CTest passes428/428 and both documented static audits pass.

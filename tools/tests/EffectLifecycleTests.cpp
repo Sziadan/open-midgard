@@ -690,6 +690,9 @@ struct CRagEffect : CGameObject {
     void SpawnSphereWind2(short);
     bool ProcessSoulBreaker2Effect();
     void SpawnSoulBreaker2(short);
+    bool ProcessPeongEffects();
+    void SpawnPeongUp(const char*,short);
+    void SpawnPeong(const char*,int);
     void ApplyEffectTexture(const char*, int);
     bool ProcessEffect273();
     bool ProcessEffect440();
@@ -13635,6 +13638,56 @@ int main()
             "effects610/611 later frames update texture origin without replaying audio, reloading texture, or drawing RNG");
         failed.ClearPrims();g_world.UpdateGameObjects();
         g_world.m_player=oldPlayer;waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        rngValues.assign(718,0);rngCursor=0;
+        const int oldRandomDraws=rngDraws;
+        waveCalls.clear();g_texMgr.requests.clear();
+        CRagEffect peong;peong.m_type=411;peong.m_duration=888;peong.m_stateCnt=34;
+        check(peong.ProcessPeongEffects()&&peong.m_primList.empty()
+            &&rngDraws==oldRandomDraws&&g_texMgr.requests.empty()&&waveCalls.empty(),
+            "effect411 pre-trigger state emits no primitive, resource, RNG or audio");
+        peong.m_stateCnt=35;
+        check(peong.ProcessPeongEffects(),"effect411 trigger state remains active");
+        bool payload=peong.m_primList.size()==46&&g_texMgr.requests.size()==46
+            &&rngDraws==oldRandomDraws+718&&rngCursor==718&&waveCalls.empty();
+        int index=0;
+        for(CEffectPrim* prim:peong.m_primList) {
+            if(index<30) {
+                payload=payload&&prim&&prim->m_type==PP_PEONGUP&&prim->m_renderFlag==5
+                    &&prim->m_duration==888&&prim->m_texture.size()==1
+                    &&g_texMgr.requests[index]=="effect\\whitelight.tga"
+                    &&prim->m_gi[0].life==1&&std::fabs(prim->m_gi[0].maxHeight-0.1f)<0.000001f
+                    &&prim->m_gi[0].distance==3.0f&&prim->m_gi[0].process==0
+                    &&prim->m_gi[0].arcBaselineY==0.0f&&prim->m_gi[0].flag[0]==1;
+            } else {
+                const int scheduled=(index-30)/4;
+                const int textureSlot=(index-30)%4;
+                const char* expectedTextures[4]={"effect\\peong1.tga","effect\\peong2.tga",
+                    "effect\\peong3.tga","effect\\peong2.tga"};
+                const int time=scheduled*90;
+                payload=payload&&prim&&prim->m_type==PP_PEONG&&prim->m_renderFlag==5
+                    &&prim->m_duration==888&&prim->m_texture.size()==1
+                    &&g_texMgr.requests[index]==expectedTextures[textureSlot];
+                for(int lane=0;lane<4;++lane) {
+                    const EffectGi& gi=prim->m_gi[lane];
+                    payload=payload&&gi.life==1&&gi.distance==2.5f&&gi.alphaB==0
+                        &&gi.process==0&&gi.riseAngle==time&&std::fabs(gi.maxHeight-0.03f)<0.000001f
+                        &&gi.arcBaselineY==0.0f&&gi.sparkY==-4.0f
+                        &&gi.height[0]==0.0f&&gi.height[1]==0.0f&&gi.height[2]==0.0f&&gi.height[3]==0.0f;
+                }
+            }
+            ++index;
+        }
+        check(payload,"effect411 emits 30 PeongUp then 16 quadrant-ordered Peong primitives with exact assets, lanes and RNG");
+        peong.m_stateCnt=36;
+        const int afterTriggerDraws=rngDraws;const size_t afterTriggerPrims=peong.m_primList.size();
+        const size_t afterTriggerTextures=g_texMgr.requests.size();
+        check(peong.ProcessPeongEffects()&&peong.m_primList.size()==afterTriggerPrims
+            &&g_texMgr.requests.size()==afterTriggerTextures&&rngDraws==afterTriggerDraws&&waveCalls.empty(),
+            "effect411 post-trigger state does not repeat emission, resources, RNG or audio");
+        peong.ClearPrims();g_world.UpdateGameObjects();
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     {
         CRenderObject listener;listener.m_pos={10,40,20};
