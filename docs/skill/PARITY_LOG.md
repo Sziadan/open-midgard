@@ -4886,3 +4886,7 @@ Added direct state0/state1 lifecycle coverage for effect583. PE and primary Ref 
 ## WP5 Effect_SPR lifecycle — effect571 variant1 — 2026-10-29
 
 Added direct state0/state1 coverage for effect571 variant1. PE and primary Ref both play the resolved `effect\\h_blood_lust.wav` listener-relative (VA `0x71D30C`), bind SPR/ACT at `0x71D2F4/0x71D2DC`, and initialize one segment. The fixture checks the speed2 one-shot particle, origin, cue position/parameters, exact resources, and zero RNG; state1 refreshes origin without repeated output. The comparator checks PE/Ref helper order and binds fixture literals to executable bytes. This is local lifecycle/audio-call coverage, not audible or rendered acceptance.
+
+## WP5 Effect_SPR lifecycle — effect586 variant10 — 2026-10-29
+
+Added direct state0/state1 lifecycle coverage for effect586 variant10. PE and primary Ref case0x24A select variant10; both helper branches set speed4, bind SPR/ACT at `0x71D178/0x71D164`, enable repeat animation and initialize one segment, without wave/RNG. The fixture checks the one-shot launch cadence separately from the particle's repeat animation, then verifies state1 origin refresh with the same primitive and no new requests. The comparator binds fixture literals to PE bytes and checks PE/Ref branch order. No rendered visual result is claimed.

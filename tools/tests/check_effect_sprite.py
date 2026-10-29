@@ -706,6 +706,33 @@ for token in ("prim->m_animSpeed==2&&!prim->m_repeatAnim", "prim->m_pattern==0x2
     if token not in effect571_block:
         raise AssertionError(f"effect571 lifecycle fixture is missing required payload/cue check: {token}")
 
+effect586_fixture = re.search(
+    r"CRenderObject master;master\.m_pos=\{120,230,340\};\s*CRagEffect effect;effect\.m_type=586;(.*?)(?=\n    })",
+    LIFECYCLE, re.S)
+if effect586_fixture is None or "ProcessEffectSpriteProduction(10)" not in effect586_fixture.group(1):
+    raise AssertionError("effect586 direct production variant10 lifecycle fixture disappeared")
+effect586_block = effect586_fixture.group(1)
+for resource, va in (("expectedSpr", 0x71D178), ("expectedAct", 0x71D164)):
+    literal = re.search(rf"const std::string {resource}=(\"(?:\\.|[^\"\\])*\")", effect586_block)
+    if literal is None or ast.literal_eval(literal.group(1)).encode("latin-1") != image.read_cstring_at(va).raw:
+        raise AssertionError(f"effect586 fixture {resource} differs from PE bytes at {va:#x}")
+for label, helper_body in (("PE", pe_sprite), ("Ref", ref_helper)):
+    variant10 = re.search(r"case 10:(.*?)(?=case 11:)", helper_body, re.S)
+    if variant10 is None:
+        raise AssertionError(f"{label} Effect_SPR variant10 source branch is missing")
+    branch = variant10.group(1)
+    ordered = [branch.find(token) for token in ("m_animSpeed = 4",
+        "SetSprName(g_prim, &byte_71D178)", "SetActName(g_prim, &byte_71D164)",
+        "m_repeatAnim = 1", "InitSegment(g_prim)")]
+    if any(position < 0 for position in ordered) or ordered != sorted(ordered) or "PlayWave" in branch:
+        raise AssertionError(f"{label} Effect_SPR variant10 repeat/resources/no-wave order changed")
+if not re.search(r"\{\s*10\s*,[^\n]*,\s*4,\s*true,\s*nullptr\s*\}", helper):
+    raise AssertionError("local Effect_SPR variant10 must preserve speed4 repeat animation and no-wave profile")
+for token in ("prim->m_animSpeed==4&&prim->m_repeatAnim", "prim->m_pattern==0x200",
+              "waveCalls.empty()", "effect586 state1 refreshes origin while preserving the same repeat particle without re-emission"):
+    if token not in effect586_block:
+        raise AssertionError(f"effect586 lifecycle fixture is missing required payload/repeat check: {token}")
+
 wave_vas = {630: 0x719BDC, 632: 0x719BF4, 633: 0x719C08, 637: 0x719B40,
             643: 0x719BB0, 644: 0x719B98, 648: 0x719B80}
 caller_wave_literals = {

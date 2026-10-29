@@ -13036,6 +13036,33 @@ int main()
         g_resMgr.requests.clear();g_world.m_player=oldPlayer;
     }
     {
+        CRenderObject master;master.m_pos={120,230,340};
+        CRagEffect effect;effect.m_type=586;effect.m_stateCnt=0;effect.m_duration=80;effect.m_master=&master;
+        const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef04.spr";
+        const std::string expectedAct="\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef04.act";
+        rngValues={};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        check(effect.ProcessEffectSpriteProduction(10),"effect586 production Effect_SPR variant10 helper remains active");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+            &&effect.m_effectPos.x==120&&effect.m_effectPos.y==230&&effect.m_effectPos.z==340
+            &&prim->m_pos.x==120&&prim->m_pos.y==230&&prim->m_pos.z==340&&prim->m_duration==80
+            &&prim->m_deltaPos2.y==0.0f&&prim->m_renderFlag==0x201&&prim->m_pattern==0x200
+            &&prim->m_animSpeed==4&&prim->m_repeatAnim&&prim->m_spriteAction==0&&prim->m_curMotion==0
+            &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+            &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+            &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==120
+            &&prim->m_segments[0].pos.y==230&&prim->m_segments[0].pos.z==340
+            &&waveCalls.empty()&&rngDraws==draws&&rngCursor==0,
+            "effect586 variant10 state0 initializes exact repeat-animation PE particle without wave or RNG");
+        const size_t requests=g_resMgr.requests.size();master.m_pos={220,330,440};effect.m_stateCnt=1;
+        check(effect.ProcessEffectSpriteProduction(10)&&effect.m_primList.size()==1
+            &&effect.m_effectPos.x==220&&effect.m_effectPos.y==330&&effect.m_effectPos.z==440
+            &&prim&&prim->m_repeatAnim&&prim->m_animSpeed==4&&g_resMgr.requests.size()==requests
+            &&waveCalls.empty()&&rngDraws==draws&&rngCursor==0,
+            "effect586 state1 refreshes origin while preserving the same repeat particle without re-emission");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
+    }
+    {
         CRenderObject master;master.m_pos={20,30,40};
         CRagEffect effect;effect.m_type=648;effect.m_stateCnt=0;effect.m_duration=78;effect.m_master=&master;
         const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xAE\xB8\xAE\xC7\xC3\xBE\xD7\xBC\xC7.spr";
