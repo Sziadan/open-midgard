@@ -2281,3 +2281,7 @@ Compared PE and primary Ref OnProcess3 (`HighPriest.exe.c:418481–418528`; `Ref
 ## WP10.4 effects491/492/507/508 STR-only completion — 2026-10-29
 
 PE and primary Ref OnProcess3 cases `0x1EB`, `0x1EC`, `0x1FB`, and `0x1FC` share `$L146219` with effect646 and related IDs; the tail calls `ProcessEZ2STR(0,-80,0)` and returns true regardless of clip completion (`HighPriest.exe.c:419158–419160`; `Ref/RagEffect.cpp:12519–12521`). Local dispatch preserves the ignored completion result. Init selects `byte_71A930`, `aRamadanStr`, `aMapaeStr`, and the shared `$L147927_0`/`aItempokjukStr` label; executable bytes at `0x71A930`, `0x71A8F0`, `0x71A8E4`, and `0x71A804` match local catalog and STR table entries. Added `check_effect491_492_507_508_str.py` and extended lifecycle coverage so each route continues outer processing after STR exhaustion. Updated the effect136 source check to accept the expanded lifecycle group by membership. No production behavior change. Release parity build passed and full CTest passed318/318.
+
+## WP5C effect115 BlitzBeat lifecycle — 2026-10-29
+
+Added a focused extracted-production-handler lifecycle fixture alongside the existing full PE/primary-Ref comparator. It checks the state0 position copy and ten cross-texture emissions (two ordered RNG draws each), cue playback at states5 and30 using the prior stored position before each master-position refresh, and the state36/39 cylinder emissions (three RNG draws each) with the configured emission cap. No production code changed. Release parity build passed; full CTest passed318/318.

@@ -20,6 +20,7 @@ using u32 = std::uint32_t;
 using msgparam_t = std::intptr_t;
 int g_isSkipFrame = 1;
 int primitiveDeaths = 0, effectDeaths = 0;
+int g_blitzBeatEmissionCount = 0;
 std::vector<std::string> traceCalls;
 void Trace(const char* format, ...) {
     char buffer[256]{};
@@ -678,6 +679,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect605();
     bool ProcessEffect563();
     bool ProcessTier3StrEffect();
+    bool ProcessBlitzBeat115();
     int poisonCalls = 0, poisonLevel = -1;
     void ApplyPoison(int level) { ++poisonCalls; poisonLevel = level; }
     bool ProcessDamageNumberEffects();
@@ -12214,6 +12216,60 @@ int main()
         effect.ApplyCurseAttack();
         check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==draws,
             "CurseAttack does not repeat its primitive or resource request after frame zero");
+    }
+    {
+        CRenderObject master, listener;
+        master.m_pos={10,20,30}; master.m_roty=30; listener.m_pos={2,900,4};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=115; effect.m_master=&master; effect.m_count=2;
+        effect.m_effectPos={7,8,9}; effect.m_stateCnt=0;
+        rngValues.resize(32); for(size_t i=0;i<rngValues.size();++i) rngValues[i]=static_cast<int>(i);
+        rngCursor=0; waveCalls.clear(); g_texMgr.requests.clear(); g_blitzBeatEmissionCount=99;
+        const int draws=rngDraws;
+        check(effect.ProcessBlitzBeat115()&&effect.m_effectPos.x==10&&effect.m_effectPos.y==20
+            &&effect.m_effectPos.z==30&&effect.m_primList.size()==10&&rngDraws==draws+20
+            &&g_blitzBeatEmissionCount==0&&waveCalls.empty()&&g_texMgr.requests.size()==10,
+            "BlitzBeat state0 copies master position and emits ten cross-textures with two RNG draws each");
+        bool crosses=effect.m_primList.size()==10;
+        for(const CEffectPrim* prim:effect.m_primList) {
+            crosses=crosses&&prim->m_type==PP_3DCROSSTEXTURE&&prim->m_duration==20
+                &&(prim->m_renderFlag&0x200u)!=0&&prim->m_longitude==30
+                &&prim->m_widthSize>=2.0f&&prim->m_widthSize<=5.9f&&prim->m_heightSize==0.2f
+                &&prim->m_speed==-1.2f&&prim->m_accel==-0.1f&&prim->m_texture.size()==1;
+        }
+        check(crosses,"BlitzBeat state0 cross-textures retain source type, lifetime, orientation, size, motion and texture payload");
+        master.m_pos={21,22,23}; effect.m_stateCnt=5;
+        check(effect.ProcessBlitzBeat115()&&effect.m_effectPos.x==21&&effect.m_effectPos.y==22
+            &&effect.m_effectPos.z==23&&waveCalls.size()==1
+            &&waveCalls[0].name=="effect\\hunter_blitzbeat_1st.wav"&&waveCalls[0].x==8
+            &&waveCalls[0].y==0&&waveCalls[0].z==26&&waveCalls[0].frameRng==draws+20
+            &&rngDraws==draws+20,
+            "BlitzBeat state5 plays the first cue from stored position before refreshing it and consumes no RNG");
+        master.m_pos={31,32,33}; effect.m_stateCnt=30;
+        check(effect.ProcessBlitzBeat115()&&waveCalls.size()==2
+            &&waveCalls[1].name=="effect\\hunter_blitzbeat.wav"&&waveCalls[1].x==19
+            &&waveCalls[1].y==0&&waveCalls[1].z==19&&effect.m_effectPos.x==31
+            &&rngDraws==draws+20,
+            "BlitzBeat state30 plays its second cue from prior position without repeating random emissions");
+        effect.m_count=2; effect.m_stateCnt=36;
+        check(effect.ProcessBlitzBeat115()&&effect.m_primList.size()==11
+            &&g_blitzBeatEmissionCount==1&&rngDraws==draws+23
+            &&effect.m_primList.back()->m_type==PP_3DCYLINDER
+            &&effect.m_primList.back()->m_duration==12
+            &&effect.m_primList.back()->m_texture.size()==1,
+            "BlitzBeat first eligible cylinder at state36 uses three RNG draws and source cylinder payload");
+        effect.m_stateCnt=37;
+        check(effect.ProcessBlitzBeat115()&&effect.m_primList.size()==11&&rngDraws==draws+23,
+            "BlitzBeat nonmultiple state37 does not emit a cylinder or consume RNG");
+        effect.m_stateCnt=39;
+        check(effect.ProcessBlitzBeat115()&&effect.m_primList.size()==12
+            &&g_blitzBeatEmissionCount==2&&rngDraws==draws+26,
+            "BlitzBeat second eligible cylinder at state39 reaches the source emission cap");
+        effect.m_stateCnt=42;
+        check(effect.ProcessBlitzBeat115()&&effect.m_primList.size()==12&&rngDraws==draws+26,
+            "BlitzBeat stops cylinder emissions after the configured count is reached");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); rngValues.clear(); rngCursor=0;
+        g_world.m_player=oldPlayer;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
