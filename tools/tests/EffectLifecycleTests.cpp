@@ -747,6 +747,7 @@ struct CRagEffect : CGameObject {
     void ApplyBottomMagnus(const char*,int);
     void ApplyPortalWind(int);
     void ApplyPortalWind402();
+    bool ProcessGumGangEffect();
     bool ProcessDamageNumberEffects();
     void SpawnBlueFall(int, int);
     bool ProcessBeginAsura1_467();
@@ -14720,6 +14721,47 @@ int main()
         check(effect.m_primList.size()==1&&g_texMgr.requests.size()==requests&&rngDraws==draws+8
             &&master.m_BodyLight==3&&master.tintCalls==2,
             "effect402 state66 exits the tint window without launch, RNG or tint");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        CRagEffect effect;effect.m_type=203;effect.m_stateCnt=0;effect.m_duration=73;effect.m_master=&master;
+        rngValues={1,2,3,4,0,5,6,1,7,8,4,9};rngCursor=0;
+        g_texMgr.requests.clear();waveCalls.clear();const int draws=rngDraws;
+        check(effect.ProcessGumGangEffect(),"effect203 production GumGang handler recognizes the PE caller");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        const std::vector<std::string> expectedTextures={"effect\\super1.bmp","effect\\super2.bmp",
+            "effect\\super3.bmp","effect\\super4.bmp","effect\\super5.bmp"};
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_GUMGANG&&prim->m_renderFlag==5
+            &&prim->m_duration==73&&prim->m_totalTexture==5
+            &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+            &&effect.m_effectPos.x==100&&effect.m_effectPos.y==200&&effect.m_effectPos.z==300
+            &&effect.m_cachedPos.x==100&&effect.m_cachedPos.y==200&&effect.m_cachedPos.z==300
+            &&g_texMgr.requests==expectedTextures&&rngDraws==draws+12&&rngCursor==12&&waveCalls.empty(),
+            "effect203 emits one ordered five-texture GumGang primitive at master origin with twelve draws");
+        if(prim) {
+            const EffectGi& gi=prim->m_gi[0];
+            check(gi.life==1&&gi.distance==3.5f&&gi.arcBaselineY==-1.0f
+                &&gi.height[0]==10.0f&&gi.height[1]==70.0f&&gi.height[2]==2.0f&&gi.height[3]==3.0f
+                &&gi.sparkY==-4.0f&&gi.height[4]==10.0f&&gi.height[5]==130.0f&&gi.height[6]==0.0f
+                &&gi.height[7]==5.0f&&gi.vecTPreY==-6.0f&&gi.height[8]==10.0f&&gi.height[9]==190.0f
+                &&gi.height[10]==1.0f&&gi.height[11]==7.0f&&gi.vecTNowY==-8.0f
+                &&gi.height[12]==10.0f&&gi.height[13]==250.0f&&gi.height[14]==4.0f&&gi.flag[4]==0
+                &&prim->m_bands[0].rotStart==9.0f,
+                "effect203 GI0 preserves the exact PE GumGang profile and leaves height15 untouched");
+            check(prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0,
+                "effect203 activates only its single PE GumGang band");
+        } else {
+            check(false,"effect203 GI0 preserves the exact PE GumGang profile and leaves height15 untouched");
+            check(false,"effect203 activates only its single PE GumGang band");
+        }
+        const size_t requests=g_texMgr.requests.size();master.m_pos={410,520,630};effect.m_stateCnt=1;
+        check(effect.ProcessGumGangEffect()&&effect.m_primList.size()==1&&prim
+            &&effect.m_effectPos.x==410&&effect.m_effectPos.y==520&&effect.m_effectPos.z==630
+            &&effect.m_cachedPos.x==410&&effect.m_cachedPos.y==520&&effect.m_cachedPos.z==630
+            &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+            &&g_texMgr.requests.size()==requests&&rngDraws==draws+12&&waveCalls.empty(),
+            "effect203 later state refreshes owner origin without relaunch, texture or RNG");
         effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);

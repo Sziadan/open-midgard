@@ -12,6 +12,7 @@ pe = (ROOT / "HighPriest.exe.c").read_text(encoding="latin-1")
 ref = (ROOT / "Ref/dhxj/RagEffect2.cpp").read_text(encoding="latin-1")
 local = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 dispatch = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
+LIFECYCLE = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
 
 
 def function_body(source, signature):
@@ -115,5 +116,17 @@ for va, expected in (
     resource = image.read_cstring_at(va)
     if resource is None or resource.raw != expected:
         raise AssertionError(f"GumGang texture bytes differ at PE VA 0x{va:06X}")
+
+fixture = re.search(r"CRagEffect effect;effect\.m_type=203;[\s\S]*?effect\.ClearPrims\(\);g_world\.UpdateGameObjects\(\);", LIFECYCLE)
+if fixture is None or "effect.ProcessGumGangEffect()" not in fixture.group(0):
+    raise AssertionError("effect203 runtime fixture does not invoke the production GumGang handler")
+for token in (
+    "effect203 emits one ordered five-texture GumGang primitive",
+    "effect203 GI0 preserves the exact PE GumGang profile",
+    "effect203 activates only its single PE GumGang band",
+    "effect203 later state refreshes owner origin without relaunch",
+):
+    if token not in fixture.group(0):
+        raise AssertionError(f"effect203 lifecycle assertion missing: {token}")
 
 print("GumGang emitter parity passed: PE/Ref setup, six PE/local callers, RNG profile, height15 mismatch and five PE assets")
