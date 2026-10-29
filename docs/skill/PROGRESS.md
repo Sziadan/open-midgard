@@ -2841,3 +2841,8 @@ Added and registered `tools/tests/check_effect28_frost_diver2.py`. Canonical PE 
 ## WP5 CRagEffect IceArrow effect26 source checkpoint - 2026-10-29
 
 Added and registered `tools/tests/check_effect26_ice_arrow.py`. Canonical PE `IceArrow` and primary Ref bodies normalize identically; PE case26 routes to the handler, and local case26 enters `ProcessEffectFrameLegacy` and calls `ApplyIceArrow`. The comparator checks frame12 randomized wave/count order, strict projectile cadence and count gate, ordered spawn/aim draws, source ice-arrow profile/texture, and one-shot blue impact ring. Existing lifecycle assertions cover wave coordinates, collision threshold and reset, parent displacement, impact consumption and later projectile boundaries. Focused CTest and full Release parity CTest passed 405/405. No runtime behavior changed.
+
+
+## WP5 CRagEffect Detoxication effect21 source checkpoint - 2026-10-29
+
+Added and registered `tools/tests/check_effect21_detoxication.py`. Canonical PE `Detoxication` and primary Ref handler bodies normalize identically; PE case21 invokes the handler, and local generated case21 routes to `ProcessDetoxication21`. The comparator checks interval selection (5 frames normally, 15 with reduced effects), skipped-frame early return, state-zero wave before primitive emission, four ordered random draws, orbit offset, particle2 resources, one-segment reference initialization, and the source particle profile. Existing lifecycle assertions cover exact wave coordinates, zero-state emission, reduced-effects cadence at frames1/15, and normal cadence at frame5. Focused CTest and full Release parity CTest passed 406/406. No runtime behavior changed.
