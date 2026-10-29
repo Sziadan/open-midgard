@@ -12490,6 +12490,32 @@ int main()
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
     }
     {
+        CRenderObject master;master.m_pos={61,71,81};
+        CRagEffect effect;effect.m_type=634;effect.m_stateCnt=0;effect.m_duration=91;effect.m_master=&master;
+        rngValues={4,99};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        check(effect.ProcessEffectSpriteProduction(19),"effect634 production Effect_SPR variant19 helper remains active");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC8\xAD\xBF\xB0\xC1\xF8.spr";
+        const std::string expectedAct="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC8\xAD\xBF\xB0\xC1\xF8.act";
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+            &&prim->m_pos.x==61&&prim->m_pos.y==71&&prim->m_pos.z==81
+            &&prim->m_duration==91&&prim->m_deltaPos2.y==-1.0f&&prim->m_renderFlag==1
+            &&prim->m_pattern==0x200&&prim->m_animSpeed==7&&prim->m_repeatAnim
+            &&prim->m_spriteAction==0&&prim->m_curMotion==0
+            &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+            &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+            &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==61
+            &&prim->m_segments[0].pos.y==71&&prim->m_segments[0].pos.z==81
+            &&rngDraws==draws+1&&rngCursor==1&&waveCalls.empty(),
+            "effect634 variant19 initializes exact PE sprite resources and repeat profile with one controlled speed draw");
+        const size_t requests=g_resMgr.requests.size();master.m_pos={160,170,180};effect.m_stateCnt=1;
+        check(effect.ProcessEffectSpriteProduction(19)&&effect.m_primList.size()==1
+            &&effect.m_effectPos.x==160&&effect.m_effectPos.y==170&&effect.m_effectPos.z==180
+            &&g_resMgr.requests.size()==requests&&rngDraws==draws+1&&rngCursor==1&&waveCalls.empty(),
+            "effect634 later state refreshes helper origin without duplicate particle, resource, wave or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
+    }
+    {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         gameMode.messages=0;gameMode.messageIds.clear();waveCalls.clear();

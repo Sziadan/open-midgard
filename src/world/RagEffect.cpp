@@ -14487,6 +14487,7 @@ bool CRagEffect::ProcessEffectSprite(int spriteVariant)
         prim->m_renderFlag |= 0x200;
         prim->m_pattern |= 0x200;
         if (spriteVariant == 16 || spriteVariant == 18) prim->m_deltaPos2.y = -6.0f;
+        if (spriteVariant == 19) prim->m_deltaPos2.y = -1.0f;
         if (spriteVariant >= 21 && spriteVariant <= 25) prim->m_deltaPos2.y = -1.0f;
         if (spriteVariant == 16 || spriteVariant == 19 || (spriteVariant >= 21 && spriteVariant <= 25)) prim->m_renderFlag = 1;
         if (spriteVariant == 7) {

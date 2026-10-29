@@ -16,3 +16,6 @@
 Latest WP5 lifecycle checkpoint: effect348 now has direct production-helper runtime coverage for its selector0 texture and 80 LightSphere fanout. The source/provenance caveat for effect381 remains: direct caller evidence is PE-only because the primary Ref case is omitted. See the 2026-10-29 effect348 entry in docs/skill/PROGRESS.md; lifecycle payload coverage does not constitute rendering acceptance.
 
 Effect631 Effect_SPR variant16 now has direct production-helper lifecycle coverage. PE/primary-Ref caller mapping agrees; PE-backed CP949 asset bytes are authoritative over the secondary Ref `misc\\tatami` names. No visual/rendering acceptance is claimed; see its 2026-10-29 entry in `docs/skill/PROGRESS.md`.
+
+Effect634 Effect_SPR variant19 now has direct production-helper lifecycle coverage, including its controlled repeat-speed RNG draw and no-wave behavior. PE/primary-Ref caller mapping agrees; PE-backed CP949 resources remain authoritative over secondary Ref `misc\...` names. No visual/rendering acceptance is claimed; see its 2026-10-29 progress entry.
+The effect634 lifecycle fixture exposed and corrected the local Effect_SPR variant19 Y-offset mismatch (`m_deltaPos2.y=-1.0f`); source comparator now enforces the correction against the PE helper.

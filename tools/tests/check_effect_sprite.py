@@ -136,6 +136,16 @@ for token in (r"\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xD9\xB4\xD9\xB9\xCC.spr",
               "without a second particle, resource request, cue or RNG draw"):
     if token not in tatami_fixture.group(1):
         raise AssertionError(f"effect631 lifecycle assertion missing {token}")
+variant19_fixture = re.search(r"CRenderObject master;master\.m_pos=\{61,71,81\};\s*CRagEffect effect;effect\.m_type=634;(.*?)(?=\n    })", LIFECYCLE, re.S)
+if variant19_fixture is None or "ProcessEffectSpriteProduction(19)" not in variant19_fixture.group(1):
+    raise AssertionError("effect634 direct production variant19 lifecycle fixture disappeared")
+for token in (r"\xC0\xCC\xC6\xD1\xC6\xAE\\\xC8\xAD\xBF\xB0\xC1\xF8.spr",
+              r"\xC0\xCC\xC6\xD1\xC6\xAE\\\xC8\xAD\xBF\xB0\xC1\xF8.act",
+              "PP_3DPARTICLE", "m_deltaPos2.y==-1.0f", "m_renderFlag==1", "m_animSpeed==7",
+              "m_repeatAnim", "rngDraws==draws+1", "waveCalls.empty()",
+              "without duplicate particle, resource, wave or RNG"):
+    if token not in variant19_fixture.group(1):
+        raise AssertionError(f"effect634 lifecycle assertion missing {token}")
 
 # Priority 5P effect-sprite callers 630/632/633/634 and their RNG variants.
 for effect_id, variant, wave_symbol in ((630, 15, "aEffect_155"),
@@ -201,6 +211,8 @@ if "prim->m_spriteAction = spriteVariant == 15 ? 4 : 2" not in helper:
     raise AssertionError("local Effect_SPR(15/17) random action mapping changed")
 if "if (spriteVariant == 19) prim->m_animSpeed = rand() % 5 + 3" not in helper:
     raise AssertionError("local Effect_SPR(19) one-draw random animation speed changed")
+if "if (spriteVariant == 19) prim->m_deltaPos2.y = -1.0f" not in helper:
+    raise AssertionError("local Effect_SPR(19) canonical Y offset changed")
 local_action_rng = re.search(r"if \(spriteVariant == 15 \|\| spriteVariant == 17\) \{(.*?)\n\s*\}", helper, re.S)
 if local_action_rng is None or local_action_rng.group(1).count("rand()") != 1:
     raise AssertionError("local Effect_SPR(15/17) must consume one random action draw per emission")
