@@ -4307,3 +4307,10 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - Local `ProcessPrimitiveFrame` performs Y += 5 and returns to `OnProcess`, which increments the shared state. Existing lifecycle assertion confirms input `(2,3,4)` becomes `(2,8,4)` with X/Z unchanged and state incremented.
 - No runtime code change was needed. Direct comparator execution passed; focused CTest passed 3/3 (`effect_lifecycle_checks`, both initializer comparators), and full Release CTest passed 378/378.
 
+## WP5 CEffectPrim Prim3DSphere initializer - 2026-10-29
+
+- Added `tools/tests/check_prim3dsphere_initializer.py` and registered `prim3dsphere_initializer_source_check` in the parity test project.
+- Canonical PE `Prim3DSphere` at `HighPriest.exe.c:468633` and primary Ref at `Ref/RagEffectPrim.cpp:2097` normalize identically. Their inlined `0x0E` `OnProcess` dispatch branches also normalize identically and retain source position, radius-speed, radius, longitude and alpha operations.
+- The local `UpdateReferenceSphere` route retains origin+offset, radius integration, longitude and particle alpha before the shared lifetime tick. Existing lifecycle checks assert master-relative origin, radius speed/radius, longitude and state increment.
+- No runtime code change was needed. Direct comparator execution and focused CTest passed 2/2 (`effect_lifecycle_checks`, `prim3dsphere_initializer_source_check`). The most recent full Release CTest, before this comparator was registered, passed 378/378.
+

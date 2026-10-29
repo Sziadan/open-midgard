@@ -2689,3 +2689,7 @@ Added the registered source comparator `tools/tests/check_prim3dquadhorn2.py`. T
 
 Added the registered source comparator `tools/tests/check_prim3dline_initializer.py`. Canonical PE at `HighPriest.exe.c:468765` and primary Ref at `Ref/RagEffectPrim.cpp:1909` normalize identically. It checks PE/Ref `0x14` dispatch, local `ProcessPrimitiveFrame` and shared-tick behavior, and the existing fixture's unchanged X/Z, Y+5, and state increment assertion. No runtime code change was needed.
 
+## WP5 CEffectPrim Prim3DSphere initializer - 2026-10-29
+
+Added the registered source comparator `tools/tests/check_prim3dsphere_initializer.py`. Canonical PE and primary Ref initializer bodies normalize identically; their inlined `0x0E` OnProcess branches also match. The comparator checks the local `UpdateReferenceSphere` route and binds it to the existing fixture for master-relative origin, radius integration, longitude, alpha path and shared lifetime tick. No runtime code change was needed.
+
