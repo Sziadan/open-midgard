@@ -273,6 +273,32 @@ def main() -> None:
                 "WBA delivery wave lookup->src/world/GameActor.cpp:6841-6843",
             ])
             row[10] = "BLOCKED(RunningServer Double Strafe46 capture required; replay covers client receive path only)"
+        elif skill_id == 19:
+            row[2] = "MG_FIREBOLT -> skill_castend_damage_id -> skill_attack -> clif_skill_damage; PACKETVER<3 emits 0x0114 (31 bytes); client receive replay: replay/fire_bolt19.tsv"
+            row[3] = "GetSkillActionInfo: begin effect16/motion2; GetSkillActionInfo2: motion2"
+            row[4] = "Generic action4 Am_Skill path; no Fire Bolt-specific caster effect"
+            row[5] = "LaunchSkillSpecialEffect launches target effect31 with message44(level); replay action4 WBA msg39 effects49/-1"
+            row[6] = "None for the targeted Fire Bolt damage path"
+            row[7] = "Target-job hit wave; replay player target resolves player_clothes.wav"
+            row[8] = "; ".join([
+                "skill_castend_damage_id@Ref/eAthena_src_2011/map/skill.c:2432, 2896 (MG_FIREBOLT case)",
+                "skill_attack damage emission@Ref/eAthena_src_2011/map/skill.c:1811",
+                "clif_skill_damage@Ref/eAthena_src_2011/map/clif.c:4653",
+                "CSession::GetSkillActionInfo@Ref/Session2.cpp:4102 (case 19)",
+                "CSession::GetSkillActionInfo2@Ref/Session2.cpp:4778 (case 19)",
+                "CSession::InitSkillEffectIdTable@Ref/Session2.cpp:6240, 6477 (case 19)",
+                "CSession::LaunchSkillSpecialEffect@Ref/Session2.cpp:7613 (case 19)",
+                "CGameActor::Am_Skill@Ref/GameActorMsgHandler.cpp:974 (case 19)",
+                "HandleSkillDamageNotify@Ref/GameModePacket.cpp:21262",
+                "WBA hit-wave lookup@Ref/GameActor.cpp:0x55EA45",
+            ])
+            row[9] = "; ".join([
+                "skill action tables->src/session/SkillActionInfo.cpp, src/session/SkillActionInfo2.cpp, src/session/Session.cpp",
+                "CGameActor::Am_Skill->src/world/GameActorMsgHandler.cpp",
+                "HandleSkillDamageNotify->src/gamemode/GameModePacket.cpp",
+                "WBA delivery wave lookup->src/world/GameActor.cpp:6841-6843",
+            ])
+            row[10] = "BLOCKED(RunningServer Fire Bolt19 capture required; replay covers client receive path only)"
         output.append("| " + " | ".join(markdown_cell(value) for value in row) + " |")
 
     OUT_PATH.write_text("\n".join(output) + "\n", encoding="utf-8", newline="\n")
