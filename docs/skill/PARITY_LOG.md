@@ -4388,3 +4388,7 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - Each PE caller initializes the cylinder texture; each local caller uses the source-selected screen-circle route and assigns its texture. The exact mapped caller set equals the complete `UsesReferenceScreenCircle` predicate.
 - Direct comparator and focused CTest passed. No runtime code change was needed.
 
+
+## WP5 CEffectPrim Render2DQuad ColdHit caller audit - 2026-10-29
+
+Expanded `tools/tests/check_prim2dquad_render.py` to bind the one canonical PE and primary-Ref `PP_2DQUAD` construction in `ColdHit` to the local effect51 route. PE `OnProcess` case51 calls `ColdHit`; local generated dispatch case51 enters `ProcessEffectFrameLegacy`, whose case51 invokes `SpawnColdHit`. The primary Ref contains the `ColdHit` handler body but no dispatcher call, so dispatcher parity is not claimed. Focused source check passes; no runtime route change was needed.

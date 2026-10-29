@@ -2741,3 +2741,7 @@ Expanded the cylinder renderer comparator to enumerate all 22 direct PE `PP_3DCY
 
 Expanded the 2D circle comparator to map all five canonical PE/Ref/local callers to masters 16, 40, 82, 121, and 128. Caller texture setup and exact equality with `UsesReferenceScreenCircle` are source-checked. Focused check passes; no runtime code change was needed.
 
+
+## WP5 CEffectPrim Render2DQuad ColdHit caller audit - 2026-10-29
+
+Expanded `tools/tests/check_prim2dquad_render.py` to bind the one canonical PE and primary-Ref `PP_2DQUAD` construction in `ColdHit` to the local effect51 route. PE `OnProcess` case51 calls `ColdHit`; local generated dispatch case51 enters `ProcessEffectFrameLegacy`, whose case51 invokes `SpawnColdHit`. The primary Ref contains the `ColdHit` handler body but no dispatcher call, so dispatcher parity is not claimed. Focused source check passes; no runtime route change was needed.

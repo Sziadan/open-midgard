@@ -5,7 +5,9 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 PE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
+PE_CALLERS = PE
 REF = (ROOT / "Ref/RagEffectPrim.cpp").read_text(encoding="cp1252", errors="replace")
+REF_EFFECTS = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="cp1252", errors="replace")
 REF_DISPATCH = (ROOT / "Ref/dhxj/RagEffectPrim.cpp").read_text(encoding="cp1252", errors="replace")
 CURRENT = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 HEADER = (ROOT / "src/world/RagEffect.h").read_text(encoding="utf-8")
@@ -42,6 +44,14 @@ LOCAL_RENDER = body(CURRENT, "void CEffectPrim::Render(matrix* viewMatrix)")
 LOCAL_QUAD = body(CURRENT, "void RenderReferenceScreenQuad(")
 LOCAL_PREDICATE = body(CURRENT, "bool CEffectPrim::UsesReferenceScreenQuad() const")
 LOCAL_CALLER = body(CURRENT, "void CRagEffect::SpawnColdHit()")
+PE_COLD_HIT_SIG = "void __thiscall CRagEffect::ColdHit(CRagEffect *this)"
+PE_COLD_HIT = body(PE_CALLERS, PE_COLD_HIT_SIG,
+                   PE_CALLERS.index(PE_COLD_HIT_SIG + "; // idb") + 1)
+REF_COLD_HIT = body(REF_EFFECTS, "void __thiscall CRagEffect::ColdHit(CRagEffect *this)")
+PE_PROCESS_SIG = "unsigned __int8 __thiscall CRagEffect::OnProcess(CRagEffect *this)"
+PE_PROCESS = body(PE_CALLERS, PE_PROCESS_SIG,
+                  PE_CALLERS.index(PE_PROCESS_SIG + "; // idb") + 1)
+LOCAL_PROCESS = body(CURRENT, "bool CRagEffect::ProcessEffectFrameLegacy()")
 
 check("canonical PE and primary Ref Render2DQuad bodies normalize identically",
       re.sub(r"\s+", " ", PE_RENDER).strip() == re.sub(r"\s+", " ", REF_RENDER).strip())
@@ -57,6 +67,16 @@ check("local enum retains canonical PP_2DQUAD id 0x02",
 quad_launches = re.findall(r"LaunchEffectPrim\(\s*PP_2DQUAD\s*,", CURRENT)
 check("current local PP_2DQUAD construction is limited to the ColdHit caller",
       len(quad_launches) == 1 and "LaunchEffectPrim(PP_2DQUAD,vector3d{})" in LOCAL_CALLER)
+check("canonical PE ColdHit handler launches PP_2DQUAD once",
+      len(re.findall(r"LaunchEffectPrim\(this,\s*PP_2DQUAD,", PE_COLD_HIT)) == 1)
+check("primary Ref ColdHit handler launches PP_2DQUAD once",
+      len(re.findall(r"LaunchEffectPrim\(this,\s*PP_2DQUAD,", REF_COLD_HIT)) == 1)
+check("PE effect 51 dispatches to ColdHit",
+      re.search(r"case\s+51\s*:\s*CRagEffect::ColdHit\(this\)", PE_PROCESS) is not None)
+check("local effect 51 dispatches through legacy frame processing",
+      re.search(r"case\s+51\s*:\s*return\s+ProcessEffectFrameLegacy\(\)",
+                (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")) is not None
+      and re.search(r"if\s*\(m_type\s*==\s*51\)\s*\{\s*SpawnColdHit\(\);\s*return\s+true;\s*\}", LOCAL_PROCESS) is not None)
 check("local PP_2DQUAD predicate follows primitive type regardless of master effect",
       "return m_type == PP_2DQUAD;" in LOCAL_PREDICATE
       and "if (UsesReferenceScreenQuad())" in LOCAL_RENDER
