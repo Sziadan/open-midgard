@@ -8,6 +8,7 @@ PE = (ROOT / "HighPriest.exe.c").read_text(encoding="latin-1")
 REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 DISPATCH = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
+DISPATCH3 = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
 GENERATOR = (ROOT / "tools/generate_effect_dispatch.py").read_text(encoding="utf-8")
 
 
@@ -139,10 +140,38 @@ require("case 396: ApplyActorLight(); return true;" in DISPATCH,
         "local effect396 dispatcher route missing")
 require(actor_light_ids is not None and re.search(r"\b396\b", actor_light_ids.group(1)),
         "effect396 missing from generator actor-light group")
+
+def process3_case(source, signature, case_id, next_case):
+    body = re.search(signature + r"\s*\{([\s\S]*?)\n\}", source)
+    require(body is not None, f"missing function for effect{case_id}")
+    branch = re.search(rf"case 0x{case_id:X}:[\s\S]*?(?=case 0x{next_case:X}:)", body.group(1))
+    require(branch is not None, f"effect{case_id} caller case missing")
+    return branch.group(0)
+
+pe_538 = process3_case(PE, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 538, 539)
+ref_538 = process3_case(REF, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 538, 539)
+require(re.sub(r"\s+", "", pe_538) == re.sub(r"\s+", "", ref_538),
+        "primary Ref and PE effect538 caller branches differ")
+for token in ("m_stateCnt >= 31", "m_BodyLight & 8", "m_stateCnt % 2",
+              "m_BodyLight & 1", "SetArgb(this->m_master, -1, 0, 255, 0)", "goto LABEL_206"):
+    require(token in pe_538, f"PE effect538 actor-light behavior missing {token}")
+require("case 538: ApplyActorLight(); return true;" in DISPATCH3,
+        "local effect538 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b538\b", actor_light_ids.group(1)),
+        "effect538 missing from generator actor-light group")
+local_538 = re.search(
+    r"case 538:\s*if \(master == nullptr \|\| m_stateCnt >= 31\)\s*\{\s*break;\s*\}\s*"
+    r"if \(\(master->m_BodyLight & 8\) != 8\)\s*\{\s*master->m_BodyLight \+= 8;\s*\}\s*"
+    r"if \(\(m_stateCnt % 2\) != 0\)\s*\{\s*master->SetArgb\(-1, 255, 255, 255\);\s*break;\s*\}\s*"
+    r"if \(\(master->m_BodyLight & 1\) != 1\)\s*\{\s*\+\+master->m_BodyLight;\s*\}\s*"
+    r"master->SetArgb\(-1, 0, 255, 0\);\s*break;",
+    helper.group(1),
+)
+require(local_538 is not None, "local effect538 cutoff, bit/tint order, or null-master guard changed")
 require("case 375" not in REF and "case 379" not in REF and "case 382" not in REF and "case 385" not in REF,
         "primary Ref gained a standalone actor-light case; update recorded provenance")
 
 require("case 387" not in REF and "case 396" not in REF,
         "primary Ref gained an explicit actor-light case; update recorded provenance")
 
-print("effects375/379/382/385/387/396 actor-light source parity passed; primary Ref has no standalone cases and local helpers guard null masters")
+print("effects375/379/382/385/387/396/538 actor-light source parity passed; effect538 PE/Ref caller and local null-master guard checked")

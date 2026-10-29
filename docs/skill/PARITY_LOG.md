@@ -4148,3 +4148,7 @@ Added and registered `check_effects523_536_tarot.py`. It compares all 14 PE and 
 ## WP5F effect493 EnchantPoison2 parity — 2026-10-29
 
 Added and registered `check_effect493_enchant_poison2.py`. It compares the PE and primary-Ref helper and OnProcess3 caller, checks local sound/particle cadence, frame-81 tint handling and route, and validates the exact wave, SPR and ACT strings. Focused check, elevated Release parity build and full Release CTest passed 354/354. No production behavior change.
+
+## WP5F effect538 actor-light parity — 2026-10-29
+
+Extended `check_effect375_actor_light.py` to compare the PE and primary-Ref effect538 caller branch, frame-31 cutoff, BodyLight bit ordering, green even-frame tint and shared white odd-frame tint. It also checks the local OnProcess3 route, actor-light grouping and null-master guard. Focused check, elevated Release parity build and full Release CTest passed 354/354. No production behavior change.
