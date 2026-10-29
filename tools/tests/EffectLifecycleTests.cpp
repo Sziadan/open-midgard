@@ -11548,6 +11548,24 @@ int main()
     {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        const int draws=rngDraws;
+        for (const auto& variant : std::array<std::pair<int,const char*>,2>{{{635,"effect\\"},{636,"effect\\"}}}) {
+            CRagEffect effect;effect.m_type=variant.first;effect.m_master=&master;effect.m_effectPos={7,8,9};
+            effect.m_iCurLayer=1;effect.m_cEndLayer=1;waveCalls.clear();effect.m_stateCnt=0;
+            check(effect.ProcessTier3StrEffect()&&effect.m_effectPos.x==31&&effect.m_effectPos.y==41
+                &&effect.m_effectPos.z==51&&waveCalls.size()==1&&waveCalls[0].name==variant.second
+                &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==40
+                &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+                "effects635/636 copy position, emit the available frame-zero effect prefix, and ignore STR completion");
+            effect.m_stateCnt=1;
+            check(effect.ProcessTier3StrEffect()&&waveCalls.size()==1&&rngDraws==draws,
+                "effects635/636 do not repeat their cue and remain active after STR completion");
+        }
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         CRagEffect effect;effect.m_type=603;effect.m_master=&master;effect.m_effectPos={7,8,9};
         effect.m_iCurLayer=1;effect.m_cEndLayer=1;waveCalls.clear();
         const int draws=rngDraws;
