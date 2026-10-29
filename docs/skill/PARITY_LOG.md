@@ -4050,3 +4050,8 @@ Added CTest entries for the existing Snow and Sakura comparators, which verify P
 ## WP5E effect337 JobLvUp50 PE/Ref/local comparator — 2026-10-29
 
 `check_effect337_job_lv_up.py` compares the full canonical PE and primary-Ref helper bodies, checks the OnProcess2 call order (time0 then45), local PP_SLASH1 setup/STR return behavior, and executable `effect\\magic_green.tga` bytes at `0x71A730`. Registered in CTest; focused check, Release parity build and full Release CTest passed336/336. No production behavior change.
+
+
+## WP5E effect300 Chemical Protection comparator — 2026-10-29
+
+`check_effect300_chemical_protection.py` compares PE/primary-Ref helper and OnProcess2 branches, validates local state-zero sound and two ordered `ApplyChemicalProtection` calls plus the cached Y adjustment, and verifies exact wave/texture bytes at `0x7192C0` and `0x71C9CC`. Registered in CTest; focused comparator, Release parity build and full CTest passed337/337. No production behavior change.

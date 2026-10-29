@@ -2412,3 +2412,8 @@ Added and registered `check_pokjuk_sound301.py`. It compares the complete PE and
 ## WP5E effect337 JobLvUp50 source comparison — 2026-10-29
 
 Added and registered `check_effect337_job_lv_up.py`. It compares complete PE/primary-Ref `JobLvUp50` bodies, verifies effect337's ordered time0/time45 calls and local slash primitive profile, and checks exact `effect\\magic_green.tga` bytes at VA `0x71A730`. Focused check, Release parity build and full Release CTest passed336/336. No production behavior change.
+
+
+## WP5E effect300 Chemical Protection source/resource parity — 2026-10-29
+
+Added and registered `check_effect300_chemical_protection.py`. It compares the PE/primary-Ref `CHEMICALPROTECTION` helper and OnProcess2 caller, checks local wave/two-time emitter ordering and cached-position adjustment, and verifies `apocalips_attack.wav` and `effect\\shockwave_c.bmp` bytes at `0x7192C0` and `0x71C9CC`. Focused check, Release parity build and full Release CTest passed337/337. No production behavior change.

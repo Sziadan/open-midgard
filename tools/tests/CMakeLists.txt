@@ -920,6 +920,8 @@ add_test(NAME effect365_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect365.py")
 add_test(NAME effect302_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect302.py")
+add_test(NAME effect300_chemical_protection_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect300_chemical_protection.py")
 add_test(NAME effect301_pokjuk_sound_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_pokjuk_sound301.py")
 add_test(NAME effect333_source_check
