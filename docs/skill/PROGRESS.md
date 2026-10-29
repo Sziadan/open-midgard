@@ -2194,3 +2194,7 @@ Compared PE's generic STR-only caller group, PE/primary-Ref Init mappings, exact
 ## WP5C effect141 Pneuma — 2026-10-29
 
 Compared PE and primary-Ref Init variant selection, exact executable format-string bytes, local catalog resolver and generic STR dispatch. Init consumes one RNG draw and selects `Pneuma1.str` through `Pneuma3.str` with modulo three; the format string is at VA `0x71AE60`. Added a source comparator and deterministic lifecycle checks for each selected variant and exactly one RNG draw; existing lifecycle coverage exercises effect141 STR playback. Release parity build and complete Release CTest pass296/296.
+
+## WP5C effect153 Concentration — 2026-10-29
+
+Compared PE caller153, PE/primary-Ref Init mappings, exact audio and STR bytes, and the local route. At state0 it plays `effect\\ac_concentration.wav` at player-relative X/Z, Y0, with 250/40/1.0, then propagates `ProcessEZ2STR(0,-80,0)` completion. `Concentration.str` is at VA `0x71AD90`; the cue at `0x712CC8`. Added a source comparator and state0/1 lifecycle assertions for cue timing, coordinates, one-time playback and STR result propagation. Release parity build and complete Release CTest pass297/297.

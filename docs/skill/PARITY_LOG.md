@@ -3834,3 +3834,7 @@ Added `check_effect139_sandman.py`, registered as `effect139_sandman_source_chec
 ## WP5C effect141 Pneuma
 
 Added `check_effect141_pneuma.py`, registered as `effect141_pneuma_source_check`. PE and primary Ref Init each consume one RNG value and select Pneuma1/2/3 STR variants using modulo three; the PE format string bytes at VA `0x71AE60` are verified. The local catalog uses prefix Pneuma, first=1, count=3, and the catalog resolver uses one `rand()%variantCount` draw. PE/local OnProcess both propagate generic STR completion at offsets (0,-80,0). Added deterministic lifecycle checks for all three outcomes and exact RNG count; existing lifecycle coverage includes effect141's STR playback. Release parity build and full CTest pass296/296. No production behavior change.
+
+## WP5C effect153 Concentration
+
+Added `check_effect153_concentration.py`, registered as `effect153_concentration_source_check`, and state0/1 lifecycle checks. PE OnProcess case153 plays `effect\\ac_concentration.wav` once at state0 using effect-position minus player X/Z, literal Y0, args250/40/1.0, then propagates shared `ProcessEZ2STR(0,-80,0)` completion. PE and primary Ref Init map to `Concentration.str`; exact executable bytes verify wave VA `0x712CC8` and STR VA `0x71AD90`. Local route uses the same state-zero cue and propagates STR completion. Release parity build and full CTest pass297/297. No production behavior change.

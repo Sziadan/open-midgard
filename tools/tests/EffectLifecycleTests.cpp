@@ -11315,6 +11315,27 @@ int main()
         rngValues.clear();rngCursor=0;g_session.m_isMinEffect=oldMinEffect;
     }
     {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        waveCalls.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        CRagEffect effect;effect.m_type=153;effect.m_effectPos={15,20,35};
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+            "Concentration does not play its cue after state zero and propagates missing STR completion");
+        effect.m_stateCnt=0;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\ac_concentration.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+            "Concentration plays its verified state-zero cue at listener-relative X/Z and propagates STR completion");
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+            "Concentration continues STR processing without repeating the cue or consuming RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
         const int ids[]={23,25,29,52,64,70,109,110,126,135,139,141,143,144,146,147,148,149,150,151,152,156,157,158,
             167,168,169,181,182,186,187,188,189,190,191,192,193,194,195,197,199,213,214,235,268};
         const int draws=rngDraws;waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();
