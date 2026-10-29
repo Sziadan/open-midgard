@@ -2538,3 +2538,7 @@ Added and registered `check_effect582_super_angel.py`. It compares the PE/primar
 ## WP5F effect673 POISON variant2 parity — 2026-10-29
 
 Added and registered `check_effect673_poison.py`. It compares the PE/primary-Ref caller and complete helper body, then checks the local variant2 route, sentinel and state-zero gates, poison primitive, white02 resource selection, vertical offset and GI flags. Focused check, elevated Release parity build and full Release CTest passed 359/359. No production behavior change.
+
+## WP5F effect590 JobLvUp50_2 caller parity — 2026-10-29
+
+Added and registered `check_effect590_job_lv_up2.py`. It compares the PE/primary-Ref frame-15 caller and complete helper body, then verifies the local route and ordered time-0/time-45 emitter profiles. Existing lifecycle coverage retains the frame-15 emission assertion. Focused check, elevated Release parity build and full Release CTest passed 360/360. No production behavior change.
