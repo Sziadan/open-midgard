@@ -162,7 +162,7 @@ def main() -> None:
         "# Per-skill verification matrix",
         "",
         "Generated from `generated/skill_behaviour_index.tsv`, the canonical EXE skill-name tables, and the WP8 ID ranges. This is an evidence tracker, not a parity pass.",
-        "Effect columns list source functions with Ref anchors where available; they are not a completed list of effect IDs. Packet and per-skill sound fields remain explicitly untraced until source traversal is complete.",
+        "Effect, packet, and sound columns are source-traced only where row-specific evidence is recorded; unfilled rows remain explicitly untraced.",
         "",
         f"Rows: **{len(union)}** required skill IDs. Static behavior-index rows: **{sum(map(len, evidence.values()))}**. Rows are blocked until packet/effect/audio columns are traced and the plan-required RunningServer or replay log is attached.",
         "",
@@ -221,6 +221,33 @@ def main() -> None:
             "; ".join(sorted(set(src_functions))) or "Current implementation route not mapped",
             "BLOCKED(no RunningServer/replay evidence captured)",
         ]
+        if skill_id == 5:
+            # First row with a complete source/replay receive-path trace. Keep
+            # it blocked until a server capture demonstrates the producer.
+            row[2] = "SM_BASH -> skill_castend_damage_id -> skill_attack -> clif_skill_damage; PACKETVER<3 emits 0x0114 (31 bytes); client receive replay: replay/bash5.tsv"
+            row[3] = "GetSkillActionInfo: begin effect16/motion2; GetSkillActionInfo2: motion2"
+            row[4] = "Action5 with a target returns through WBA message96 before caster effects; no Bash-specific caster effect on this replay path"
+            row[5] = "Action5 WBA effectId1/effectId2=-1/-1; attack/target tables are -1/1, but the action5 fast path bypasses those table values"
+            row[6] = "None for the targeted Bash damage path"
+            row[7] = "_enemy_hit_normal2.wav in replay; generic message96 hit-wave lookup uses target weapon type -1, not a Bash-specific wave"
+            row[8] = "; ".join([
+                "skill_castend_damage_id@Ref/eAthena_src_2011/map/skill.c:2432 (function), 2474 (SM_BASH case)",
+                "skill_attack damage emission@Ref/eAthena_src_2011/map/skill.c:1811",
+                "clif_skill_damage@Ref/eAthena_src_2011/map/clif.c:4653",
+                "CSession::GetSkillActionInfo@Ref/Session2.cpp:4086 (case 5)",
+                "CSession::GetSkillActionInfo2@Ref/Session2.cpp:4762 (case 5)",
+                "CSession::InitSkillEffectIdTable@Ref/Session2.cpp:6226, 6463 (case 5)",
+                "CGameActor::Am_Skill@Ref/GameActorMsgHandler.cpp:883 (action 5)",
+                "HandleSkillDamageNotify@Ref/GameModePacket.cpp:21262",
+                "WBA hit-wave lookup@Ref/GameActor.cpp:0x55EA45",
+            ])
+            row[9] = "; ".join([
+                "skill action tables->src/session/SkillActionInfo.cpp, src/session/SkillActionInfo2.cpp, src/session/Session.cpp",
+                "CGameActor::Am_Skill->src/world/GameActorMsgHandler.cpp",
+                "HandleSkillDamageNotify->src/gamemode/GameModePacket.cpp",
+                "WBA delivery wave lookup->src/world/GameActor.cpp:6837-6839",
+            ])
+            row[10] = "BLOCKED(RunningServer Bash5 capture required; replay covers client receive path only)"
         output.append("| " + " | ".join(markdown_cell(value) for value in row) + " |")
 
     OUT_PATH.write_text("\n".join(output) + "\n", encoding="utf-8", newline="\n")
