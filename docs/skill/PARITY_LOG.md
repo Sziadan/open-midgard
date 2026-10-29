@@ -3890,3 +3890,7 @@ Added `check_effect670_str_ignored_result.py`, registered as `effect670_str_igno
 ## WP10.4 effect699 Flower Leaf STR
 
 Added `check_effect699_str_ignored_result.py`, registered as `effect699_str_ignored_result_source_check`. PE and primary Ref group effect699 (`0x2BB`) into `$L146219`, which calls `ProcessEZ2STR(0,-80,0)` and unconditionally returns true; local dispatch matches. PE/Ref Init select `flower_leaf.str`; exact bytes at VA `0x71A7D0` agree with local catalog and STR rows. Lifecycle coverage exercises false STR completion. Release parity build and full CTest pass310/310; no production behavior change.
+
+## WP10.4 effect668 Dragonfear
+
+Added `check_effect668_dragonfear.py`, registered as `effect668_dragonfear_source_check`. PE case `0x29C` (`HighPriest.exe.c:419098–419110`) and primary Ref (`Ref/RagEffect.cpp:12459–12472`) match: state1 copies master position, plays `effect\\dragonfear.wav` at listener-relative X/Z and Y0 with 250/40/1.0, sends message135 after the wave, then continues through `$L146219`, whose STR completion is ignored. Local helper/case preserves position-to-`m_effectPos`, wave/message order, and the ignored result. Exact PE bytes at `0x719538` and `0x71A7F8` confirm wave and `dfear.str`; local mapping agrees. Lifecycle tests cover states0/1/2, exact audio, cue ordering, single message, no repeat and no RNG. Release parity build and full CTest pass311/311; no production behavior change.

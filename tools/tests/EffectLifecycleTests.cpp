@@ -11586,6 +11586,29 @@ int main()
     {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        gameMode.messages=0;gameMode.messageIds.clear();waveCalls.clear();
+        CRagEffect effect;effect.m_type=668;effect.m_master=&master;effect.m_effectPos={7,8,9};
+        const int draws=rngDraws;
+        effect.m_stateCnt=0;
+        check(effect.ProcessTier3StrEffect()&&waveCalls.empty()&&gameMode.messages==0
+            &&effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9,
+            "effect668 state0 is active without position change, cue or message despite missing STR");
+        effect.m_stateCnt=1;
+        check(effect.ProcessTier3StrEffect()&&effect.m_effectPos.x==31&&effect.m_effectPos.y==41&&effect.m_effectPos.z==51
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\dragonfear.wav"
+            &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==40
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&gameMode.messages==1&&gameMode.messageIds==std::vector<int>{135},
+            "effect668 state1 copies effect position, plays exact listener-relative wave, then sends message135 and ignores STR completion");
+        effect.m_stateCnt=2;
+        check(effect.ProcessTier3StrEffect()&&waveCalls.size()==1&&gameMode.messages==1
+            &&rngDraws==draws,
+            "effect668 state2 does not repeat cue or message and remains active after STR completion");
+        g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         CRagEffect effect;effect.m_type=609;effect.m_master=&master;
         effect.m_effectPos={7,8,9};waveCalls.clear();
         const int draws=rngDraws;

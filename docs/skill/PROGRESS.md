@@ -2250,3 +2250,7 @@ Compared PE and primary Ref OnProcess3's grouped `0x29E` case with `$L146219`: e
 ## WP10.4 effect699 Flower Leaf STR — 2026-10-29
 
 Compared PE and primary Ref OnProcess3 case `0x2BB` and the shared `$L146219` tail: effect699 calls `ProcessEZ2STR(0,-80,0)` and unconditionally returns true. Local dispatch matches. PE and Ref Init map 699 to `flower_leaf.str`, whose bytes at VA `0x71A7D0` match the local catalog/STR row. Added a comparator and lifecycle coverage confirming false STR completion can be ignored. No production behavior change. Release parity build and full CTest pass310/310.
+
+## WP10.4 effect668 Dragonfear — 2026-10-29
+
+Compared PE case `0x29C` (`HighPriest.exe.c:419098–419110`) and primary Ref (`Ref/RagEffect.cpp:12459–12472`): at state1, the handler copies master position, plays `effect\\dragonfear.wav` at listener-relative X/Z and Y0 with 250/40/1.0, sends message135 after the cue, then uses the shared STR tail and returns true regardless of completion. Local helper and dispatch match, including `m_effectPos` mapping and cue-before-message order. PE resource bytes at `0x719538` and `0x71A7F8` resolve to the exact wave and `dfear.str`; local Init/catalog/STR mapping agrees. Added a comparator and state0/1/2 lifecycle checks. No production change. Release parity build and full CTest pass311/311.
