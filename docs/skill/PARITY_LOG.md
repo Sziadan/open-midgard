@@ -4055,3 +4055,8 @@ Added CTest entries for the existing Snow and Sakura comparators, which verify P
 ## WP5E effect300 Chemical Protection comparator — 2026-10-29
 
 `check_effect300_chemical_protection.py` compares PE/primary-Ref helper and OnProcess2 branches, validates local state-zero sound and two ordered `ApplyChemicalProtection` calls plus the cached Y adjustment, and verifies exact wave/texture bytes at `0x7192C0` and `0x71C9CC`. Registered in CTest; focused comparator, Release parity build and full CTest passed337/337. No production behavior change.
+
+
+## WP5E effect339 Magnum2 emitter comparator — 2026-10-29
+
+`check_effect339_magnum2_emitter.py` covers the CRagEffect emitter (while `check_magnum2_render.py` remains the primitive renderer check): full PE/primary-Ref helper and caller parity, local effect339 route and timing/profile, and executable bytes for both waves and ring-yellow texture. Registered in CTest; focused check, Release parity build and full Release CTest passed338/338. No production behavior change.

@@ -2417,3 +2417,8 @@ Added and registered `check_effect337_job_lv_up.py`. It compares complete PE/pri
 ## WP5E effect300 Chemical Protection source/resource parity — 2026-10-29
 
 Added and registered `check_effect300_chemical_protection.py`. It compares the PE/primary-Ref `CHEMICALPROTECTION` helper and OnProcess2 caller, checks local wave/two-time emitter ordering and cached-position adjustment, and verifies `apocalips_attack.wav` and `effect\\shockwave_c.bmp` bytes at `0x7192C0` and `0x71C9CC`. Focused check, Release parity build and full Release CTest passed337/337. No production behavior change.
+
+
+## WP5E effect339 Magnum2 emitter source/resource parity — 2026-10-29
+
+Added and registered `check_effect339_magnum2_emitter.py`, separate from the existing primitive renderer checker. It compares the PE/primary-Ref helper and caller, checks local state gates/emission cap/profile, and verifies exact `permeter_attack.wav`, `effect\\EF_MagnumBreak.wav`, and `effect\\ring_yellow.tga` bytes at `0x71CC78`, `0x71B3CC`, and `0x7193E8`. Focused check, Release parity build and full Release CTest passed338/338. No production behavior change.

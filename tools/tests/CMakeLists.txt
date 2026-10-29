@@ -848,6 +848,8 @@ add_test(NAME colorpaper_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_colorpaper_render.py")
 add_test(NAME magnum2_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_magnum2_render.py")
+add_test(NAME effect339_magnum2_emitter_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect339_magnum2_emitter.py")
 add_test(NAME aura_render_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_aura_render.py")
 add_test(NAME aura2_render_source_check
