@@ -718,6 +718,7 @@ struct CRagEffect : CGameObject {
     bool ProcessHealBlue();
     bool ProcessBottom114();
     bool ProcessBottom2Effect137();
+    bool ProcessSoulStrike15(int);
     void ApplyWind();
     void SpawnWarp8();
     bool ProcessEnhance9();
@@ -12913,6 +12914,80 @@ int main()
             &&g_texMgr.requests.empty()&&rngDraws==laterDraws&&waveCalls.size()==laterWaves,
             "Bottom effect114 nonzero state does not repeat its one-shot emission");
         g_texMgr.requests.clear(); waveCalls.clear();
+    }
+    {
+        CRenderObject actor,listener; actor.m_pos={13,27,41}; listener.m_pos={3,700,5};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        const char* const spriteNames[]={"\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\particle5.spr"};
+        const char* const actionNames[]={"\xC0\xCC\xC6\xD1\xC6\xAE\\particle1.act","\xC0\xCC\xC6\xD1\xC6\xAE\\particle5.act"};
+        waveCalls.clear(); g_resMgr.requests.clear();
+        for(int variant=0;variant<=1;++variant) for(int count=1;count<=5;++count) {
+            CRagEffect soul; soul.m_master=&actor; soul.m_type=variant==0?15:451; soul.m_count=count;
+            soul.m_effectPos={35.0f+count,47.0f,63.0f-count}; soul.m_deltaPos={90.0f-count,0.0f,110.0f+count}; soul.m_duration=88;
+            int start=0,step=1;
+            if(count==2) { start=-90; step=180; }
+            else if(count==3) { start=-90; step=90; }
+            else if(count==4) { start=-90; step=60; }
+            else if(count==5) { start=-90; step=45; }
+            for(int event=1;event<=count;++event) {
+                soul.m_stateCnt=event*11-5; g_resMgr.requests.clear();
+                tlvertex3d expectedProjection{}; ProjectReferenceEffectVertex(actor.m_pos,testView.GetViewMatrix(),expectedProjection);
+                const int beforeDraws=rngDraws; const size_t beforeWaves=waveCalls.size();
+                const bool active=soul.ProcessSoulStrike15(variant);
+                CEffectPrim* prim=soul.m_primList.empty()?nullptr:soul.m_primList.front();
+                const int expectedRoll=start+step*event;
+                const double dx=static_cast<double>(soul.m_deltaPos.x)-soul.m_effectPos.x;
+                const double dz=static_cast<double>(soul.m_deltaPos.z)-soul.m_effectPos.z;
+                const float radius=static_cast<float>(std::sqrt(dx*dx+dz*dz));
+                double direction=std::atan2(dx,-dz)/3.14159265*180.0;
+                if(direction>=360.0) direction-=360.0; if(direction<0.0) direction+=360.0;
+                const int matrixAngle=static_cast<int>(-direction);
+                matrix expectedMatrix{}; MatrixIdentity(expectedMatrix); MatrixAppendYRotation(expectedMatrix,matrixAngle*(3.14159265f/180.0f));
+                const vector3d expectedDelta{expectedMatrix.m[3][0]+expectedMatrix.m[2][0],
+                    expectedMatrix.m[3][1]+expectedMatrix.m[2][1],expectedMatrix.m[3][2]+expectedMatrix.m[2][2]};
+                check(active&&soul.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLESPLINE
+                    &&prim->m_duration==40&&prim->m_deltaPos2.x==0&&prim->m_deltaPos2.y==-10&&prim->m_deltaPos2.z==0
+                    &&prim->m_pos.x==soul.m_effectPos.x&&prim->m_pos.y==soul.m_effectPos.y&&prim->m_pos.z==soul.m_effectPos.z
+                    &&std::fabs(prim->m_radius-radius)<0.0001f&&std::fabs(prim->m_roty-static_cast<float>(direction))<0.0001f
+                    &&std::fabs(prim->m_longitude+static_cast<float>(direction))<0.0001f
+                    &&std::fabs(prim->m_speed-radius/40.0f)<0.0001f&&prim->m_gravSpeed==3.5f
+                    &&prim->m_gravAccel==static_cast<float>(3.5/40.0*-2.0)&&prim->m_latiSpeed==-2.0f
+                    &&prim->m_latiAccel==static_cast<float>(-2.0/40.0*-2.0)&&prim->m_roll==static_cast<float>(expectedRoll)
+                    &&prim->m_size==2.75f&&prim->m_numSegments==12
+                    &&std::fabs(prim->m_deltaPos3.x-expectedDelta.x)<0.0001f
+                    &&std::fabs(prim->m_deltaPos3.y-expectedDelta.y)<0.0001f
+                    &&std::fabs(prim->m_deltaPos3.z-expectedDelta.z)<0.0001f
+                    &&prim->m_rotAxis[0]==prim->m_deltaPos3.x&&prim->m_rotAxis[1]==prim->m_deltaPos3.y&&prim->m_rotAxis[2]==prim->m_deltaPos3.z
+                    &&prim->m_spriteSprName==spriteNames[variant]&&prim->m_spriteActName==actionNames[variant]
+                    &&prim->m_particleSprRes==&g_resMgr.spr&&prim->m_particleActRes==&g_resMgr.act
+                    &&g_resMgr.requests==std::vector<std::string>({spriteNames[variant],actionNames[variant]})
+                    &&prim->m_segments[0].pos.x==soul.m_effectPos.x&&prim->m_segments[0].pos.y==soul.m_effectPos.y
+                    &&prim->m_segments[0].pos.z==soul.m_effectPos.z&&prim->m_segments[11].radius==radius
+                    &&soul.m_tlvertX==expectedProjection.x&&soul.m_tlvertY==expectedProjection.y
+                    &&waveCalls.size()==beforeWaves+1&&waveCalls.back().name=="effect\\EF_SoulStrike.wav"
+                    &&waveCalls.back().x==soul.m_effectPos.x-listener.m_pos.x&&waveCalls.back().y==0
+                    &&waveCalls.back().z==soul.m_effectPos.z-listener.m_pos.z
+                    &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1
+                    &&rngDraws==beforeDraws&&soul.m_duration==88,
+                    "SoulStrike count cadence emits its canonical projected spline, ordered assets, roll and stored-origin wave");
+                soul.ClearPrims(); g_world.UpdateGameObjects();
+            }
+            soul.m_stateCnt=(count+1)*11-5; g_resMgr.requests.clear();
+            const size_t beforeWaves=waveCalls.size(); const int beforeDraws=rngDraws;
+            check(soul.ProcessSoulStrike15(variant)&&soul.m_primList.empty()&&g_resMgr.requests.empty()
+                &&waveCalls.size()==beforeWaves&&rngDraws==beforeDraws,
+                "SoulStrike does not emit after the configured count's final cadence");
+            soul.m_stateCnt=7; g_resMgr.requests.clear();
+            check(soul.ProcessSoulStrike15(variant)&&soul.m_primList.empty()&&g_resMgr.requests.empty()
+                &&waveCalls.size()==beforeWaves&&rngDraws==beforeDraws,
+                "SoulStrike suppresses non-cadence ticks without sound, resources, or RNG");
+        }
+        CRagEffect invalid; invalid.m_master=&actor; invalid.m_count=0; invalid.m_stateCnt=6;
+        g_resMgr.requests.clear(); const size_t invalidWaves=waveCalls.size(); const int invalidDraws=rngDraws;
+        check(invalid.ProcessSoulStrike15(0)&&invalid.m_primList.empty()&&g_resMgr.requests.empty()
+            &&waveCalls.size()==invalidWaves&&rngDraws==invalidDraws,
+            "SoulStrike count outside one-through-five has no cadence emissions");
+        g_world.m_player=oldPlayer; g_resMgr.requests.clear(); waveCalls.clear();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

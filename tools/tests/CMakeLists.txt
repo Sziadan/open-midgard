@@ -313,6 +313,7 @@ extract_body(effect501_handler "${effect_source}" "bool CRagEffect::ProcessEffec
 extract_body(effect704_handler "${effect_source}" "bool CRagEffect::ProcessEffect704()" "// TEST_BODY_END effect704_handler")
 extract_body(bottom2_effect137_handler "${effect_source}" "bool CRagEffect::ProcessBottom2Effect137()" "bool CRagEffect::ProcessCloaking120()")
 extract_body(bottom114_handler "${effect_source}" "bool CRagEffect::ProcessBottom114()" "bool CRagEffect::ProcessBottom2Effect137()")
+extract_body(soulstrike15_handler "${effect_source}" "bool CRagEffect::ProcessSoulStrike15(int variant)" "bool CRagEffect::ProcessDetoxication21()")
 extract_test_region(effect133_134_terminal_handler "${effect_source}" effect133_134_terminal_handler)
 extract_test_region(warp_emitter "${effect_source}" warp_emitter_family)
 extract_test_region(agility_emitters "${effect_source}" agility_emitter_family)
@@ -491,6 +492,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${map_pil
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${heal2_emitter}\n${heal_blue_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${bottom2_effect137_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${bottom114_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${soulstrike15_handler}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/render/Renderer.cpp ../../src/render/Prim.cpp ../../src/res/ActRes.h ../../src/world/RagEffect.cpp ../../src/world/RagEffect.h ../../src/world/World.cpp ../../src/res/EzEffectRes.h ../../src/res/Res.cpp)
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${airtexture416_handler}\n${hitline_effect_handler}\n${tripleattack_emitter}\n${tripleattack_handler}\n${soulparticle506_handler}\n${effect502_handler}\n${effect505_handler}\n${sma2_552_emitter}\n${sma2_552_handler}\n${particlepath556_emitter}\n${particlepath556_handler}\n${effect537_handler}\n${soulbreaker361_emitter}\n${soulbreaker361_handler}\n${effect273_handler}\n${pressure365_emitter}\n${groundshake365_emitter}\n${effect365_handler}\n${demonstration302_emitter}\n${demonstration302_handler}\n${maple333_emitter}\n${maple333_handler}\n${entry6_emitter}\n${entry6_handler}\n${warp8_emitter}\n${warp8_handler}\n${enhance9_emitter}\n${enhance9_handler}\n${exit7_handler}\n${lord90_handler}\n${icewall74_handler}\n${glasswall13_handler}\n${meteorstorm92_handler}\n${effect440_handler}\n${effect599_handler}\n${effect602_handler}\n${particleupdater}")

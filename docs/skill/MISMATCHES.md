@@ -516,7 +516,7 @@ Pre-filled list, with the resolution already chosen, is section 9 of `docs/SKILL
 
 # WP10.3 SoulStrike 15/451 caller omission (2026-10-28)
 
-- Canonical `HighPriest.exe.c:419738–419739` and `:421714–421715` call the matching `SoulStrike` helper with flags0/1. The helper at `:424468` matches `Ref/RagEffect.cpp:7947`, while the available Ref caller has no `SoulStrike` invocation. The paired routes follow the PE caller; exact particle asset bytes are documented in the parity comparator.
+- Canonical `HighPriest.exe.c:419738–419739` and `:421714–421715` call the matching `SoulStrike` helper with flags0/1. The helper at `:424468` matches `Ref/RagEffect.cpp:7947`, while the available Ref caller has no `SoulStrike` invocation. The paired routes follow the PE caller; exact particle asset bytes are documented in the parity comparator. `EffectLifecycleTests.cpp` now covers both variants, all five count schedules, eligible and rejected cadence states, wave coordinates, spline physics, resource order, 12-segment initialization, and no-RNG behavior. Live visual acceptance remains open.
 
 # WP10.3 Detoxication 21 caller omission (2026-10-28)
 
