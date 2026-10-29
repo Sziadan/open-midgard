@@ -3925,3 +3925,5 @@ PE and primary Ref OnProcess3 group effects491/492/507/508 (`0x1EB`, `0x1EC`, `0
 ## WP5C effect115 BlitzBeat lifecycle
 
 The existing `check_blitzbeat_caller.py` compares PE and primary Ref `BlitzBeat` helper bodies, the PE-only dispatcher caller, local routing and source payload/resource/family behavior. Added extracted-production lifecycle assertions: frame0 position copy and ten `PP_3DCROSSTEXTURE` emissions with two RNG draws each; exact state5/state30 wave cue selection from the prior stored effect position before master refresh; and state36/state39 `PP_3DCYLINDER` emissions with three RNG draws each and the source count cap. Release parity build and full CTest pass318/318. No production code change.
+
+The effect115 resource assertions are pinned to the executable bytes: both state-gated wave cues and both emitter textures are verified at VAs `0x71BA98`, `0x71BA7C`, `0x71B2D4`, and `0x71A730`. `check_blitzbeat_caller.py` and its focused CTest pass. No production change.

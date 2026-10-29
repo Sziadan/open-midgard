@@ -2285,3 +2285,7 @@ PE and primary Ref OnProcess3 cases `0x1EB`, `0x1EC`, `0x1FB`, and `0x1FC` share
 ## WP5C effect115 BlitzBeat lifecycle — 2026-10-29
 
 Added a focused extracted-production-handler lifecycle fixture alongside the existing full PE/primary-Ref comparator. It checks the state0 position copy and ten cross-texture emissions (two ordered RNG draws each), cue playback at states5 and30 using the prior stored position before each master-position refresh, and the state36/39 cylinder emissions (three RNG draws each) with the configured emission cap. No production code changed. Release parity build passed; full CTest passed318/318.
+
+## WP5C effect115 PE resource byte verification — 2026-10-29
+
+Extended `check_blitzbeat_caller.py` to resolve and assert the exact executable bytes for both BlitzBeat wave cues and both primitive textures: `effect\\hunter_blitzbeat_1st.wav` at `0x71BA98`, `effect\\hunter_blitzbeat.wav` at `0x71BA7C`, `effect\\ac_center2.tga` at `0x71B2D4`, and `effect\\magic_green.tga` at `0x71A730`. The focused comparator and CTest both pass. No production behavior changed.

@@ -47,4 +47,12 @@ for symbol, value in (("aEffectHunterBl_0", "effect\\\\hunter_blitzbeat_1st.wav"
                       ("aEffectAcCenter", "effect\\\\ac_center2.tga"),
                       ("aEffectMagicGre", "effect\\\\magic_green.tga")):
     if f'{symbol}[] = "{value}"' not in pe: raise SystemExit(f"canonical PE resource {symbol} changed")
-print("BlitzBeat115 parity: Ref/PE helper, PE caller, route, wave/resource names, RNG/cadence, and two render families passed")
+image = resolver.ExeImage(ROOT / "HighPriest.exe")
+for va, expected in ((0x71BA98, b"effect\\hunter_blitzbeat_1st.wav"),
+                     (0x71BA7C, b"effect\\hunter_blitzbeat.wav"),
+                     (0x71B2D4, b"effect\\ac_center2.tga"),
+                     (0x71A730, b"effect\\magic_green.tga")):
+    actual = image.read_cstring_at(va)
+    if actual is None or actual.raw != expected:
+        raise SystemExit(f"canonical BlitzBeat resource bytes differ at VA 0x{va:X}")
+print("BlitzBeat115 parity: Ref/PE helper, PE caller, route, executable resource bytes, RNG/cadence, and two render families passed")
