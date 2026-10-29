@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare effect554's selector-2 EffectTextureSet route and emitter profile."""
+"""Compare selector-2 effect554 and selector-4 effect676 texture profiles."""
 from pathlib import Path
 import re
 import sys
@@ -35,15 +35,45 @@ for label, source in (("PE", PE), ("primary Ref", REF)):
             r"EffectTextureSet\(this,\s*aEffectFreezeAB,\s*2\);\s*return 1;", match.group(1)):
         raise AssertionError(f"{label} effect554 caller changed")
 
+    match = re.search(r"case 0x2A4:(.*?)(?=\n\s*case |\n\s*default:|\Z)", body, re.S)
+    if match is None or not re.search(
+            r"EffectTextureSet\(this,\s*aEffectBlastMin,\s*4\);\s*"
+            r"if\s*\(\s*this->m_stateCnt\s*!=\s*10\s*\).*?"
+            r"this->m_pos\.x\s*=\s*v\d+->x;.*?this->m_pos\.z\s*=\s*v\d+->z;.*?"
+            r"PlayWave\(aEffectEfDecagi,.*?250,\s*40,\s*1\.0\);\s*return 1;", match.group(1), re.S):
+        raise AssertionError(f"{label} effect676 selector4/state10 cue caller changed")
+
 if 'case 554: ApplyEffectTexture("effect\\\\freeze_a.bmp", 2); return true;' not in ROUTE:
     raise AssertionError("local effect554 generated route changed")
 if 'm_type == 554) {\n        ApplyEffectTexture("effect\\\\freeze_a.bmp", 2);' not in LOCAL:
     raise AssertionError("local effect554 selector-2 mapping changed")
+if "case 676: return ProcessTarotEffect();" not in ROUTE:
+    raise AssertionError("local effect676 generated route changed")
+
+process_tarot = function_body(LOCAL, "bool CRagEffect::ProcessTarotEffect()")
+effect676 = re.search(r"case 676:(.*?)(?=\n\s*case |\Z)", process_tarot, re.S)
+if effect676 is None:
+    raise AssertionError("local effect676 ProcessTarotEffect branch missing")
+for token in (
+    'ApplyEffectTexture("effect\\\\blast_mine##clock.bmp", 4)', "if (m_stateCnt == 10)",
+    'TryPlayEffectWaveAt(wavePos, "effect\\\\EF_DecAgility.wav")',
+    "wavePos.y = mode->m_world->m_player->m_pos.y",
+):
+    if token not in effect676.group(1):
+        raise AssertionError(f"local effect676 texture/sound behavior missing {token}")
+if effect676.group(1).find("ApplyEffectTexture") > effect676.group(1).find("TryPlayEffectWaveAt"):
+    raise AssertionError("effect676 texture setup must precede its state-10 sound")
 
 symbols = SymbolTable(ExeImage())
 resource = symbols.resolve_name("aEffectFreezeAB")
 if resource is None or resource.raw != b"effect\\freeze_a.bmp":
     raise AssertionError("PE freeze_a resource bytes changed")
+symbols_by_name = (("aEffectBlastMin", b"effect\\blast_mine##clock.bmp"),
+                   ("aEffectEfDecagi", b"effect\\EF_DecAgility.wav"))
+for name, expected in symbols_by_name:
+    resolved = symbols.resolve_name(name)
+    if resolved is None or resolved.raw != expected:
+        raise AssertionError(f"PE effect676 resource bytes for {name} changed")
 
 texture = function_body(LOCAL, "void CRagEffect::ApplyEffectTexture(const char* textureName, int variant)")
 for token in (
@@ -56,5 +86,11 @@ for token in (
 ):
     if token not in texture:
         raise AssertionError(f"local selector-2 EffectTextureSet profile missing {token}")
+for token in (
+    "} else if (variant == 4)", "gi.distance = 6.0f", "gi.arcBaselineY = origin.y - 30.0f",
+    "gi.flag[2] = 0", "gi.height[10] = 0.0f", "gi.fullDisplayAngle = 135",
+):
+    if token not in texture:
+        raise AssertionError(f"local selector-4 EffectTextureSet profile missing {token}")
 
-print("effect554 parity passed: PE/Ref caller, local route, freeze_a bytes and selector-2 emitter profile")
+print("effects554/676 parity passed: PE/Ref callers, local routes, exact resources and selector-2/4 emitter profiles")

@@ -695,6 +695,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEntry6();
     void SpawnEntry6();
     bool ProcessWarp8();
+    void ApplyBottomVolcano(const char*, float);
     void SpawnWarp8();
     bool ProcessEnhance9();
     bool ProcessLord90();
@@ -765,11 +766,11 @@ static bool TryPlaySingleEffectWave(const vector3d& soundPos, const std::string&
         literalY ? yOffset : soundPos.y-listener->m_pos.y+yOffset,
         soundPos.z-listener->m_pos.z, 250, 40, 1.0f);
 }
+constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeGi4=PP_GI_4, kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
 #include "EffectLifecycleBodies.inc"
 
 #include "WeatherMapBodies.inc"
 #include "StrOnlyDispatchBody.inc"
-constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
 #include "CastingEmitterBodies.inc"
 #include "CastingUpdateBody.inc"
 #undef rand
@@ -3792,6 +3793,36 @@ int main()
                 "Slim potion later states refresh the master without emission or RNG");
             effect.ClearPrims(); g_world.UpdateGameObjects();
         }
+    }
+    {
+        CRenderObject actor; actor.m_pos={12,34,56};
+        CRagEffect effect; effect.m_type=620; effect.m_master=&actor; effect.m_duration=71;
+        effect.m_effectPos={1,2,3}; effect.m_stateCnt=1; rngValues={123,45}; rngCursor=0;
+        const int beforeFrames=rngDraws; g_texMgr.requests.clear();
+        effect.ApplyBottomVolcano("effect\\ring_blue.tga",14.0f);
+        check(effect.m_primList.empty()&&effect.m_effectPos.x==12&&effect.m_effectPos.y==34
+            &&effect.m_effectPos.z==56&&rngDraws==beforeFrames&&g_texMgr.requests.empty(),
+            "Bottom_Volcano refreshes its parent position before the state-zero spawn gate");
+        effect.m_stateCnt=0; effect.ApplyBottomVolcano("effect\\ring_blue.tga",14.0f);
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        bool payload=prim&&effect.m_primList.size()==1&&prim->m_type==PP_GI_4
+            &&prim->m_renderFlag==5&&prim->m_duration==71&&prim->m_size==14.0f
+            &&prim->m_pos.x==12&&prim->m_pos.y==34&&prim->m_pos.z==56
+            &&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture
+            &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\ring_blue.tga"
+            &&prim->m_gi[0].life==1&&prim->m_gi[0].process==0
+            &&prim->m_gi[0].fullDisplayAngle==360&&prim->m_gi[0].maxHeight==15.0f
+            &&prim->m_gi[0].rotStart==123&&prim->m_gi[0].alphaB==45
+            &&prim->m_gi[0].distance==2.5999999f&&prim->m_gi[0].riseAngle==80
+            &&prim->m_gi[0].sparkY==0.0f&&prim->m_gi[1].life==0
+            &&prim->m_gi[2].life==0&&prim->m_gi[3].life==0&&rngDraws==beforeFrames+2;
+        check(payload,"Bottom_Volcano emits its PE PP_GI_4 profile with the ordered rotation/alpha draws");
+        actor.m_pos={22,44,66}; effect.m_stateCnt=1;
+        effect.ApplyBottomVolcano("effect\\ring_blue.tga",14.0f);
+        check(effect.m_primList.size()==1&&effect.m_effectPos.x==22&&effect.m_effectPos.y==44
+            &&effect.m_effectPos.z==66&&rngDraws==beforeFrames+2&&g_texMgr.requests.size()==1,
+            "Bottom_Volcano follows master movement after frame zero without repeating spawn work");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
     }
     {
         CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};

@@ -24242,11 +24242,16 @@ void CRagEffect::ApplyVolcano(const char* textureName, short variant, bool fastS
 
 void CRagEffect::ApplyBottomVolcano(const char* textureName, float size)
 {
-    if (textureName == nullptr || m_stateCnt != 0) {
+    if (textureName == nullptr) {
         return;
     }
     CRenderObject* master = ResolveCurrentMaster();
     const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
+    if (m_stateCnt != 0) {
+        return;
+    }
     CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeGi4), vector3d{});
     if (prim == nullptr) {
         return;

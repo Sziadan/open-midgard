@@ -2595,3 +2595,7 @@ Extended `check_effect539_throw_items.py` to compare all four PE/primary-Ref cal
 ## WP5F effects622/624 checker registration and source-slice fixes — 2026-10-29
 
 Registered the existing ThunderStorm2 and STIN5 comparators as CTests. Tightened their local emitter source slices to stop at each named TEST_BODY_END marker; both had accidentally included neighboring emitter bodies, causing their RNG assertions to fail. Both focused checks pass. Full Release parity build and CTest passed 367/367. No production behavior change.
+
+## WP5F effects414/620/676 body-light and Bottom_Volcano parity — 2026-10-29
+
+Extended `check_effect375_actor_light.py` with effect414's PE-only caller provenance, 0x40 body-light gate, state18 cutoff and low-word doubled BodyTime mapping. Extended `check_effect554_texture_set.py` through effect676's selector4 clock texture and frame10 listener-relative cue. Added and registered `check_effect620_bottom_volcano.py`; its lifecycle coverage exposed that `ApplyBottomVolcano` skipped the source's per-call parent-position refresh after state zero. Moved origin refresh before the spawn gate and added state0 profile, RNG/resource and subsequent master-movement assertions. Focused checks and the full Release parity build/CTest passed 368/368.

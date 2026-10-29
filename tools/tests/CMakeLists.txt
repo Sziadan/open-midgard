@@ -429,6 +429,7 @@ extract_test_region(foot326_327_handler "${effect_source}" foot326_327_family)
 extract_test_region(callzone340_handler "${effect_source}" callzone340_family)
 extract_test_region(slim_potion_effects497_499_handler "${effect_source}" slim_potion_effects497_499_family)
 extract_test_region(bottom_hermode517_handler "${effect_source}" bottom_hermode517_family)
+extract_body(bottom_volcano_emitter "${effect_source}" "void CRagEffect::ApplyBottomVolcano(" "void CRagEffect::ApplyGravitation(")
 extract_test_region(beginasura1_467_handler "${effect_source}" beginasura1_467_family)
 extract_test_region(beginasura1_variants468_473_handler "${effect_source}" beginasura1_variants468_473_family)
 extract_test_region(bottom_vertical_handler "${effect_source}" bottom_vertical_family)
@@ -484,7 +485,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot448
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${foot326_327_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${callzone340_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${slim_potion_effects497_499_handler}")
-file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${bottom_hermode517_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${bottom_hermode517_handler}\n${bottom_volcano_emitter}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\nconstexpr float kWaterfallSegmentHeight = 40.0f;\n${bluefall_band_setup}\n${bluefall_emitter}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_467_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${beginasura1_variants468_473_handler}")
@@ -1244,6 +1245,8 @@ add_test(NAME effect348_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect348.py")
 add_test(NAME effect405_bottom_magnus_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect405_bottom_magnus.py")
+add_test(NAME effect620_bottom_volcano_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect620_bottom_volcano.py")
 add_test(NAME effect622_thunder_storm2_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_thunder_storm2_caller.py")
 add_test(NAME effect624_stin5_source_check
@@ -1333,6 +1336,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effects671_672_land_protector.py
     check_effect348.py
     check_effect405_bottom_magnus.py
+    check_effect620_bottom_volcano.py
     check_thunder_storm2_caller.py
     check_stin5_caller.py
     check_effect554_texture_set.py

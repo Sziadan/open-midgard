@@ -309,10 +309,25 @@ for effect_id, next_id, hex_case, mask, local_time, source_time_tokens in (
                       rf"master->m_BodySin5 = {re.escape(local_time)};\s*\}}",
                       helper.group(1)),
             f"local effect{effect_id} bit/timing profile or master guard changed")
+
+pe_414 = re.search(r"case 414:\s*if \(\s*\(\(\*p_m_master\)->m_BodyLight & 0x40\) != 0x40 && "
+                   r"this->m_stateCnt < 18\s*\)\s*\{\s*"
+                   r"\(\*p_m_master\)->m_BodyLight \+= 64;\s*"
+                   r"\(\*p_m_master\)->m_BodyTime = 2 \* LOWORD\(this->m_stateCnt\);\s*\}", PE)
+require(pe_414 is not None, "PE effect414 body-light bit/state/time branch changed")
+require("case 414" not in REF, "primary Ref added effect414; update its source provenance")
+require("case 414: ApplyActorLight(); return true;" in DISPATCH,
+        "local effect414 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b414\b", actor_light_ids.group(1)),
+        "effect414 missing from generator actor-light group")
+require(re.search(r"case 414:\s*if \(master != nullptr && \(master->m_BodyLight & 0x40\) != 0x40 && "
+                  r"m_stateCnt < 18\)\s*\{\s*master->m_BodyLight \+= 64;\s*"
+                  r"master->m_BodyTime = static_cast<u16>\(2 \* frame\);\s*\}", helper.group(1)),
+        "local effect414 master guard, bit gate, state cutoff or body-time conversion changed")
 require("case 375" not in REF and "case 379" not in REF and "case 382" not in REF and "case 385" not in REF,
         "primary Ref gained a standalone actor-light case; update recorded provenance")
 
 require("case 387" not in REF and "case 396" not in REF,
         "primary Ref gained an explicit actor-light case; update recorded provenance")
 
-print("effects375/379/382/385/387/396/500/538/542/544/548/549/550/625/626/655/656/667 actor-light source parity passed; PE/Ref callers and local guards checked")
+print("effects375/379/382/385/387/396/414/500/538/542/544/548/549/550/625/626/655/656/667 actor-light source parity passed; PE/Ref callers and local guards checked")
