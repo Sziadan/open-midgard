@@ -69,7 +69,7 @@ for token in ordered:
     cursor = found + len(token)
 if local.count("rand()") != 6:
     raise SystemExit("Hit2 must preserve six ordered random draws per particle")
-if "m_master->GetEffectType() == 183" not in body(SOURCE, "bool CEffectPrim::UsesReferenceScreenTexture() const"):
+if "return m_type == PP_2DTEXTURE;" not in body(SOURCE, "bool CEffectPrim::UsesReferenceScreenTexture() const"):
     raise SystemExit("effect183 is missing its source screen-texture selector")
 processor = body(SOURCE, "bool CRagEffect::ProcessHit2Blue()")
 if "if (m_stateCnt == 0) SpawnHit2(1);" not in processor or "ProcessEZ2STR(0.0f,-80.0f,0.0f)" not in processor:

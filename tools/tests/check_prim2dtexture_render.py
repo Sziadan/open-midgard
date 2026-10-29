@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source map for the selected PP_2DTEXTURE screen-sprite renderer."""
+"""Source map for the type-wide PP_2DTEXTURE screen-sprite renderer."""
 from pathlib import Path
 import re
 
@@ -56,18 +56,14 @@ check("local PP_2DTEXTUREORBIT route reaches the shared Render2DTexture implemen
 check("no direct local PP_2DTEXTUREORBIT construction site is currently known",
       re.search(r"LaunchEffectPrim\s*\(\s*PP_2DTEXTUREORBIT\s*,", CURRENT) is None)
 
-expected_masters = {11, 38, 37, 43, 32, 4, 5, 1, 183, 46, 50, 51}
-actual_masters = {int(v) for v in re.findall(r"m_master->GetEffectType\(\)\s*==\s*(\d+)", LOCAL_PREDICATE)}
-check("local selected PP_2DTEXTURE master set is exact",
-      expected_masters == actual_masters and "m_type == PP_2DTEXTURE" in LOCAL_PREDICATE)
-check("local PP_2DTEXTURE pattern bit 0x4 enters the screen-texture renderer independently",
-      "m_type == PP_2DTEXTURE && (m_pattern & 4) != 0" in LOCAL_RENDER
-      and "RenderReferenceScreenTexture(*this);" in LOCAL_RENDER
-      and LOCAL_RENDER.index("m_type == PP_2DTEXTURE && (m_pattern & 4) != 0")
-      < LOCAL_RENDER.index("UsesReferenceScreenTexture()"))
-check("nonselected PP_2DTEXTURE remains a separate generic screen-quad route",
-      "case PP_2DTEXTURE:" in LOCAL_RENDER and "case PP_2DFLASH:" in LOCAL_RENDER
-      and "SubmitScreenQuad(anchor," in LOCAL_RENDER)
+check("local screen-texture predicate routes every PP_2DTEXTURE regardless of master",
+      re.search(r"return\s+m_type\s*==\s*PP_2DTEXTURE\s*;", LOCAL_PREDICATE) is not None
+      and "m_master" not in LOCAL_PREDICATE and "GetEffectType" not in LOCAL_PREDICATE)
+check("type-wide PP_2DTEXTURE route reaches source geometry before generic projected quad",
+      re.search(r"if\s*\(UsesReferenceScreenTexture\(\)\)\s*\{\s*RenderReferenceScreenTexture\(\*this\);\s*return;", LOCAL_RENDER) is not None
+      and LOCAL_RENDER.index("UsesReferenceScreenTexture()") < LOCAL_RENDER.index("case PP_2DTEXTURE:")
+      and "SubmitScreenQuad(anchor," in LOCAL_RENDER
+      and "LaunchEffectPrim(PP_2DTEXTURE," in CURRENT)
 
 source_steps = [
     "GetSin((__int64)this->m_roll)", "GetCos((__int64)this->m_roll)",
@@ -110,7 +106,7 @@ check("reference triangle helper preserves hard-coded flag-one alpha blend and q
       "(renderFlag & 2) != 0 ? D3DBLEND_ONE : D3DBLEND_SRCALPHA" in SUBMIT
       and "(renderFlag & 6) != 0 ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA" in SUBMIT
       and "g_renderer.AddReferenceEffectTriangle(face, renderFlag)" in SUBMIT)
-check("existing screen sprite fixtures pin pattern, integer roll, two faces, UV/color, texture motion and flag one",
+check("screen sprite fixtures pin type-wide geometry, pattern, integer roll, faces, UV/color, texture motion and flag one",
       all(token in FIXTURE for token in (
           "SandWind submits exactly two screen triangles", "SandWind preserves source screen UV order",
           "SandWind preserves fixed depth reciprocal stored color and current texture",
@@ -121,5 +117,6 @@ check("existing screen sprite fixtures pin pattern, integer roll, two faces, UV/
           "Napalm screen renderer selects advanced animation texture and packed rising alpha",
           "2D texture orbit uses shared screen renderer with current-motion texture and stored color",
           "2D texture orbit preserves fixed screen depth and shared flag-one material",
+          "nonselected master PP_2DTEXTURE uses source screen geometry",
       )))
-print("PP_2DTEXTURE selected screen-render subset comparator passed; generic route is separate.")
+print("PP_2DTEXTURE type-wide source screen-render comparator passed.")

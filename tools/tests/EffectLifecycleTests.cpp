@@ -3152,6 +3152,12 @@ int main()
     };
     for (int angle=0; angle<=360; ++angle) { g_sinTable[angle]=GetSin(angle); g_cosTable[angle]=GetCos(angle); }
     {
+        CRagEffect unlistedMaster;unlistedMaster.m_type=999;
+        CEffectPrim primitive;primitive.m_master=&unlistedMaster;primitive.m_type=PP_2DTEXTURE;
+        check(primitive.UsesReferenceScreenTexture(),
+            "unlisted master PP_2DTEXTURE selects source renderer by primitive type");
+    }
+    {
         CRenderObject listener; listener.m_pos={10,3,20};
         CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
         CRagEffect effect; effect.m_type=116; effect.m_duration=80; effect.m_effectPos={30,15,50};

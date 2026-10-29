@@ -117,6 +117,7 @@ struct CEffectPrim {
     std::vector<std::array<vector3d,4>> m_segmentQuadPositions = std::vector<std::array<vector3d,4>>(50);
     std::array<EffectGi,4> m_gi;
 };
+constexpr int PP_2DTEXTURE=0;
 constexpr int PP_2DTEXTUREORBIT=1;
 using D3DBLEND=int;
 constexpr int PF_A8R8G8B8=4, D3DPT_TRIANGLESTRIP=5, D3DPT_TRIANGLELIST=4, D3DCULL_NONE=1;
@@ -1345,6 +1346,19 @@ int main() {
         check(g_renderer.m_rpAlphaList[0].second->m_verts[0].z==0.000001f
             &&g_renderer.m_rpAlphaList[0].second->srcAlphaMode==D3DBLEND_SRCALPHA,
             "2D texture orbit preserves fixed screen depth and shared flag-one material");
+    }
+    {
+        CTexture texture;CEffectPrim nonselected;
+        nonselected.m_type=PP_2DTEXTURE;nonselected.m_pos={140,260,0};
+        nonselected.m_widthSize=18;nonselected.m_heightSize=24;nonselected.m_argb=0xA0C0E0FF;
+        nonselected.m_texture={&texture};nonselected.m_pattern=0;nonselected.m_roll=0;
+        g_renderer.m_rpAlphaList.clear();RenderReferenceScreenTexture(nonselected);
+        auto* face=g_renderer.m_rpAlphaList.empty()?nullptr:g_renderer.m_rpAlphaList[0].second;
+        check(g_renderer.m_rpAlphaList.size()==2&&face&&face->tex==&texture
+            &&near(face->m_verts[0].z,0.000001f)&&near(face->m_verts[0].oow,0.99999899f)
+            &&face->m_verts[0].color==0xA0C0E0FF
+            &&near(face->m_verts[0].x,nonselected.m_pos.x-18.5f),
+            "nonselected master PP_2DTEXTURE uses source screen geometry");
     }
     {
         CEffectPrim circle;circle.m_numSegments=2;circle.m_size=2;circle.m_arcAngle=90;circle.m_renderFlag=0x201;

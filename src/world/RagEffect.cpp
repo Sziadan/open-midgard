@@ -12703,8 +12703,9 @@ bool CEffectPrim::UsesReferenceQuadHorn() const
 
 bool CEffectPrim::UsesReferenceScreenTexture() const
 {
-    return m_type == PP_2DTEXTURE && m_master
-        && (m_master->GetEffectType() == 11 || m_master->GetEffectType() == 38 || m_master->GetEffectType() == 37 || m_master->GetEffectType() == 43 || m_master->GetEffectType() == 32 || m_master->GetEffectType() == 4 || m_master->GetEffectType() == 5 || m_master->GetEffectType() == 1 || m_master->GetEffectType() == 183 || m_master->GetEffectType() == 46 || m_master->GetEffectType() == 50 || m_master->GetEffectType() == 51);
+    // PE/Ref dispatches the primitive id itself; the screen-space body consumes
+    // primitive geometry, texture, color, pattern and roll without master state.
+    return m_type == PP_2DTEXTURE;
 }
 
 bool CEffectPrim::UsesReferenceScreenQuad() const

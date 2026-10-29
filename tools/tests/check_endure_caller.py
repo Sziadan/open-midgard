@@ -50,6 +50,6 @@ for token in ("ProjectReferenceEffectVertex", "m_tlvertX =", "m_tlvertY =", "m_s
 if handler.count("rand()") != 4:
     raise SystemExit("Endure must preserve four ordered random draws on states below 50")
 family = function(local, "bool CEffectPrim::UsesReferenceScreenTexture() const")
-if "m_master->GetEffectType() == 11" not in family:
+if "return m_type == PP_2DTEXTURE;" not in family:
     raise SystemExit("effect11 reference screen-texture family route missing")
 print("Endure11 parity: Ref/PE helper, caller, route, projection, two emitters, four-draw RNG, assets and screen-texture family passed")

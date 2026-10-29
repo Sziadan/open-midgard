@@ -53,7 +53,7 @@ for token in ("m_stateCnt == 0", '"effect\\\\EF_DecAgility.wav"',
         raise SystemExit(f"DecAgility payload missing {token}")
 cross = fn(local, "bool CEffectPrim::UsesReferenceCrossTexture() const")
 screen = fn(local, "bool CEffectPrim::UsesReferenceScreenTexture() const")
-if "m_master->GetEffectType() == 38" not in cross or "m_master->GetEffectType() == 38" not in screen:
+if "m_master->GetEffectType() == 38" not in cross or "return m_type == PP_2DTEXTURE;" not in screen:
     raise SystemExit("effect38 reference primitive family binding missing")
 table = SymbolTable(ExeImage())
 for symbol, expected in (("aEffectEfDecagi", b"effect\\EF_DecAgility.wav"),
