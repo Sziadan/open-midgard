@@ -35,7 +35,24 @@ require(helper is not None, "local ApplyActorLight body missing")
 local_case = re.search(r"case 375:\s*if \(master != nullptr && \(master->m_BodyLight & 8\) != 8\)\s*\{\s*"
                        r"master->m_BodyLight \+= 8;\s*\}\s*break;", helper.group(1))
 require(local_case is not None, "local effect375 bit gate or null-master behavior changed")
-require("case 375" not in REF,
-        "primary Ref gained an explicit effect375 case; update the recorded provenance")
+pe_379 = re.search(
+    r"case 379:\s*v110 = this->m_stateCnt;\s*"
+    r"if \( v110 <= 0xC8 \)\s*"
+    r"CRenderObject::SetArgb\(\*p_m_master, -1, 205 - v110, 205 - v110, 255\);\s*break;",
+    PE,
+)
+require(pe_379 is not None, "canonical PE effect379 tint interval or RGB arithmetic changed")
+local_379 = re.search(
+    r"case 379:\s*if \(master != nullptr && m_stateCnt <= 200\)\s*\{\s*"
+    r"master->SetArgb\(-1, 205 - m_stateCnt, 205 - m_stateCnt, 255\);\s*\}\s*break;",
+    helper.group(1),
+)
+require(local_379 is not None, "local effect379 tint or null-master guard changed")
+require("case 379: ApplyActorLight(); return true;" in DISPATCH,
+        "local effect379 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b379\b", actor_light_ids.group(1)),
+        "effect379 missing from generator actor-light group")
+require("case 375" not in REF and "case 379" not in REF,
+        "primary Ref gained a standalone actor-light case; update recorded provenance")
 
-print("effect375 actor-light source parity passed; primary Ref has no standalone case and the local helper guards a null master")
+print("effects375/379 actor-light source parity passed; primary Ref has no standalone cases and local helpers guard null masters")

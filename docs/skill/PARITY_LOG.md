@@ -4080,3 +4080,7 @@ Added and registered `check_effect442_body_light.py`. It compares the PE inline 
 ## WP5G effects446/449 body-light source parity — 2026-10-29
 
 Added and registered `check_effect446_449_body_light.py`. It compares both inline PE bit gates and timing updates with their local helper bodies and generated routes, and records that primary Ref has no standalone cases. Focused check, elevated Release parity build and full Release CTest passed 342/342. No production behavior change.
+
+## WP5F effect379 actor-light tint parity — 2026-10-29
+
+Extended the registered actor-light checker to include effect379's PE tint window (state count through 200), RGB arithmetic, local grouped route/helper, and recorded absence from primary Ref. Focused check and full Release CTest passed 342/342. No production behavior change.
