@@ -4217,3 +4217,7 @@ Extended `check_effect375_actor_light.py` with PE/primary-Ref caller comparison 
 ## WP5F effects610/611 cue and texture parity — 2026-10-29
 
 Added and registered `check_effects610_611_texture_cues.py`. It checks each PE/primary-Ref state-zero caller's wave-before-texture order, local generated route and corresponding wave/bitmap selection, selector-3 EffectTextureSet profile in the PE and secondary Ref, and exact executable bytes for both waves and textures. Focused check passed; full Release CTest passed 364/364. No production behavior change.
+
+## WP5F effects626/655/656/667 actor-light parity — 2026-10-29
+
+Extended `check_effect375_actor_light.py` with PE/primary-Ref branch comparison, generator membership, and local helper profiles for effects626, 655, 656, and 667. This covers the modulo-four BodyTime2 refresh for 626, one-shot BodyLight gates and `BodySin5` saturation for 655/667, and the state40 cutoff plus low-byte multiplier for 656. Focused check passed; full Release CTest passed 364/364. No production behavior change.

@@ -270,10 +270,49 @@ require(re.search(r"case 625:\s*if \(master != nullptr && \(m_stateCnt % 4\) == 
                   r"\(master->m_BodyLight & 0x4000\) != 0x4000\)\s*\{\s*"
                   r"master->m_BodyLight \+= 0x4000;\s*master->m_BodyTime2 = 20;\s*\}", helper.group(1)),
         "local effect625 cadence, bit gate, BodyTime2 or master guard changed")
+
+pe_626 = process3_case(PE, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 626, 627)
+ref_626 = process3_case(REF, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 626, 627)
+require(re.sub(r"\s+", "", pe_626) == re.sub(r"\s+", "", ref_626),
+        "primary Ref and PE effect626 caller branches differ")
+for token in ("m_stateCnt & 0x80000003", "m_BodyLight & 0x40000", "m_BodyLight + 0x40000", "m_BodyTime2 = 20"):
+    require(token in pe_626, f"PE effect626 cadence/body-light behavior missing {token}")
+require("case 626: ApplyActorLight(); return true;" in DISPATCH3,
+        "local effect626 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b626\b", actor_light_ids.group(1)),
+        "effect626 missing from generator actor-light group")
+require(re.search(r"case 626:\s*if \(master != nullptr && \(m_stateCnt % 4\) == 0 && "
+                  r"\(master->m_BodyLight & 0x40000\) != 0x40000\)\s*\{\s*"
+                  r"master->m_BodyLight \+= 0x40000;\s*master->m_BodyTime2 = 20;\s*\}", helper.group(1)),
+        "local effect626 cadence, bit gate, BodyTime2 or master guard changed")
+
+for effect_id, next_id, hex_case, mask, local_time, source_time_tokens in (
+    (655, 656, 0x28F, "0x80000", "m_stateCnt >= 200 ? static_cast<u8>(-56) : static_cast<u8>(m_stateCnt)",
+     ("m_BodyLight & 0x80000", "m_BodyLight += 0x80000", "m_BodySin5 = v17", "v17 >= 200", "-56")),
+    (656, 665, 0x290, "0x80000", "static_cast<u8>(-56 - 5 * (m_stateCnt & 0xFF))",
+     ("m_stateCnt >= 40", "m_BodyLight & 0x80000", "-56 - 5 * LOBYTE(this->m_stateCnt)")),
+    (667, 668, 0x29B, "2", "m_stateCnt >= 25 ? static_cast<u8>(-56) : static_cast<u8>(8 * m_stateCnt)",
+     ("m_BodyLight & 2", "m_BodyLight += 2", "v13 >= 25", "8 * v13", "-56")),
+):
+    pe_case = process3_case(PE, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", effect_id, next_id)
+    ref_case = process3_case(REF, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", effect_id, next_id)
+    require(re.sub(r"\s+", "", pe_case) == re.sub(r"\s+", "", ref_case),
+            f"primary Ref and PE effect{effect_id} caller branches differ")
+    require(all(token in pe_case for token in source_time_tokens),
+            f"PE effect{effect_id} body-light/sine timing changed")
+    require(f"case {effect_id}: ApplyActorLight(); return true;" in DISPATCH3,
+            f"local effect{effect_id} dispatcher route missing")
+    require(actor_light_ids is not None and re.search(rf"\b{effect_id}\b", actor_light_ids.group(1)),
+            f"effect{effect_id} missing from generator actor-light group")
+    require(re.search(rf"case {effect_id}:\s*if \(master != nullptr(?: && .*?)?\)\s*\{{\s*"
+                      rf"master->m_BodyLight (?:\|=|\+=) {mask};\s*"
+                      rf"master->m_BodySin5 = {re.escape(local_time)};\s*\}}",
+                      helper.group(1)),
+            f"local effect{effect_id} bit/timing profile or master guard changed")
 require("case 375" not in REF and "case 379" not in REF and "case 382" not in REF and "case 385" not in REF,
         "primary Ref gained a standalone actor-light case; update recorded provenance")
 
 require("case 387" not in REF and "case 396" not in REF,
         "primary Ref gained an explicit actor-light case; update recorded provenance")
 
-print("effects375/379/382/385/387/396/500/538/542/544/548/549/550/625 actor-light source parity passed; PE/Ref callers and local guards checked")
+print("effects375/379/382/385/387/396/500/538/542/544/548/549/550/625/626/655/656/667 actor-light source parity passed; PE/Ref callers and local guards checked")
