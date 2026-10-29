@@ -2753,3 +2753,7 @@ Expanded `tools/tests/check_3dtexture_render.py` to pin all 24 canonical PE `PP_
 ## WP5 CEffectPrim PP_3DFLASH reachability audit - 2026-10-29
 
 Extended `tools/tests/check_prim2dflash.py` to confirm canonical PE has no `LaunchEffectPrim` call for `PP_3DFLASH` or numeric primitive id `0x13`, while `LaunchEffectPrim` passes its requested ID unchanged to `CEffectPrim::Init`. The updater/render methods remain source-compared and locally fixture-tested, but no canonical effect caller route is claimed; direct local lifecycle construction is test-only coverage. Focused CTest passed; no runtime change was needed.
+
+## WP5 CRagEffect ColdHit handler source comparison - 2026-10-29
+
+Extended `tools/tests/check_prim2dquad_render.py` to compare the canonical PE `ColdHit` body at `HighPriest.exe.c:426695` with primary Ref `Ref/RagEffect.cpp:2816`; they normalize identically. The check also binds local `SpawnColdHit` to both source primitive types and their state0/state7 spawn gates, alongside existing lifecycle fixtures for shard/smoke state. Focused CTest passed; no runtime change was needed.

@@ -71,6 +71,13 @@ check("canonical PE ColdHit handler launches PP_2DQUAD once",
       len(re.findall(r"LaunchEffectPrim\(this,\s*PP_2DQUAD,", PE_COLD_HIT)) == 1)
 check("primary Ref ColdHit handler launches PP_2DQUAD once",
       len(re.findall(r"LaunchEffectPrim\(this,\s*PP_2DQUAD,", REF_COLD_HIT)) == 1)
+check("canonical PE and primary Ref ColdHit handler bodies normalize identically",
+      re.sub(r"\s+", " ", PE_COLD_HIT).strip() == re.sub(r"\s+", " ", REF_COLD_HIT).strip())
+check("local ColdHit preserves source shard and smoke primitive launch routes",
+      "LaunchEffectPrim(PP_2DQUAD,vector3d{})" in LOCAL_CALLER
+      and "LaunchEffectPrim(PP_2DTEXTURE,vector3d{})" in LOCAL_CALLER
+      and "if (m_stateCnt == 0)" in LOCAL_CALLER
+      and "if (m_stateCnt == 0 || m_stateCnt == 7)" in LOCAL_CALLER)
 check("PE effect 51 dispatches to ColdHit",
       re.search(r"case\s+51\s*:\s*CRagEffect::ColdHit\(this\)", PE_PROCESS) is not None)
 check("local effect 51 dispatches through legacy frame processing",
