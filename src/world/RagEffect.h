@@ -457,6 +457,7 @@ private:
     bool OnProcess2();
     bool OnProcess3();
     bool OnProcess2Legacy();
+    void ProcessPokJukSound301();
     bool ProcessEffectFrame();
     bool ProcessEffectFrameLegacy();
     bool UnportedEffect();

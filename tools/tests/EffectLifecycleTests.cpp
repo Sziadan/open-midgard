@@ -223,7 +223,7 @@ const StatusStateIconEntry* FindStatusStateIcon(int priority,int status) {
     for(const auto& entry:kStatusStateIconEntries) if(entry.priority==priority&&entry.status==status) return &entry;
     return nullptr;
 }
-struct ModeManager { CGameMode* GetCurrentGameMode() { return &gameMode; } } g_modeMgr;
+struct ModeManager { CGameMode* current = &gameMode; CGameMode* GetCurrentGameMode() { return current; } } g_modeMgr;
 bool TryPlayEffectWaveAt(const vector3d& soundPos, const char* name) {
     const vector3d& listener=g_modeMgr.GetCurrentGameMode()->m_world->m_player->m_pos;
     return PlayWave(name,soundPos.x-listener.x,soundPos.y-listener.y,soundPos.z-listener.z,250,40,1.0f);
@@ -538,6 +538,7 @@ struct CRagEffect : CGameObject {
     void ApplyWarpZone2(const char*);
     void ApplyBlackDevil(const char*);
     void ApplyFlowerCasting(const char*,float,int);
+    void ProcessPokJukSound301();
     void ApplyWarpZone();
     void ApplyIceArrow();
     void ApplyFireArrow();
@@ -14217,6 +14218,39 @@ int main()
         flower.m_stateCnt=0;flower.ApplyFlowerCasting(nullptr,4.0f,0);
         check(flower.m_primList.empty()&&g_texMgr.requests.size()==4&&rngDraws==startDraws
             &&waveCalls.empty(),"effect488 nonzero state and null texture are closed no-output gates");
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject player;player.m_pos={50,60,70};
+        CGameMode* oldMode=g_modeMgr.current;CWorld* oldWorld=gameMode.m_world;
+        CRenderObject* oldPlayer=g_world.m_player;
+        g_modeMgr.current=&gameMode;gameMode.m_world=&g_world;g_world.m_player=&player;
+        CRagEffect pokjuk;pokjuk.m_type=301;pokjuk.m_stateCnt=299;
+        const int startDraws=rngDraws;waveCalls.clear();
+        pokjuk.ProcessPokJukSound301();
+        check(pokjuk.m_stateCnt==299&&waveCalls.empty()&&rngDraws==startDraws,
+            "effect301 state299 precedes its one-shot cue without RNG");
+        pokjuk.m_stateCnt=300;pokjuk.ProcessPokJukSound301();
+        check(waveCalls.size()==1&&waveCalls[0].name==std::string("effect\\\xC6\xF8\xC1\xD7.wav")
+            &&waveCalls[0].x==0&&waveCalls[0].y==0&&waveCalls[0].z==0
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1.0f
+            &&waveCalls[0].frameRng==startDraws&&rngDraws==startDraws&&pokjuk.m_stateCnt==300,
+            "effect301 state300 plays the exact CP949 cue at the player without RNG");
+        pokjuk.m_stateCnt=301;pokjuk.ProcessPokJukSound301();
+        pokjuk.m_stateCnt=2300;pokjuk.ProcessPokJukSound301();
+        check(waveCalls.size()==1&&pokjuk.m_stateCnt==2300&&rngDraws==startDraws,
+            "effect301 states301 and2300 do not replay the cue or clamp");
+        pokjuk.m_stateCnt=2301;pokjuk.ProcessPokJukSound301();
+        check(pokjuk.m_stateCnt==299&&waveCalls.size()==1&&rngDraws==startDraws,
+            "effect301 state2301 resets to299 without a cue or RNG");
+
+        const size_t waveCount=waveCalls.size();
+        g_modeMgr.current=nullptr;pokjuk.m_stateCnt=300;pokjuk.ProcessPokJukSound301();
+        g_modeMgr.current=&gameMode;gameMode.m_world=nullptr;pokjuk.m_stateCnt=300;pokjuk.ProcessPokJukSound301();
+        gameMode.m_world=&g_world;g_world.m_player=nullptr;pokjuk.m_stateCnt=300;pokjuk.ProcessPokJukSound301();
+        check(waveCalls.size()==waveCount&&pokjuk.m_stateCnt==300&&rngDraws==startDraws,
+            "effect301 missing mode, world or player suppresses only the cue");
+        g_modeMgr.current=oldMode;gameMode.m_world=oldWorld;g_world.m_player=oldPlayer;
         waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);

@@ -52,10 +52,16 @@ match = re.search(r"case 301:[\s\S]*?return true;", local_switch)
 if match is None:
     raise AssertionError("local effect301 branch missing")
 local_case = match.group(0)
-for token in ("m_stateCnt == 300", "m_stateCnt > 2300", "m_stateCnt = 299", "return true"):
+if "ProcessPokJukSound301();" not in local_case:
+    raise AssertionError("local effect301 branch no longer delegates to the tested helper")
+for token in ("ProcessPokJukSound301();", "return true"):
     if token not in local_case:
         raise AssertionError(f"local effect301 branch missing {token}")
-if "TryPlayEffectWaveAt(mode->m_world->m_player->m_pos" not in local_case or r"effect\\\xC6\xF8\xC1\xD7.wav" not in local_case:
+local_helper = function_body(local, "void CRagEffect::ProcessPokJukSound301()")
+for token in ("m_stateCnt == 300", "m_stateCnt > 2300", "m_stateCnt = 299"):
+    if token not in local_helper:
+        raise AssertionError(f"local effect301 helper missing {token}")
+if "TryPlayEffectWaveAt(mode->m_world->m_player->m_pos" not in local_helper or r"effect\\\xC6\xF8\xC1\xD7.wav" not in local_helper:
     raise AssertionError("local frame-300 effect wave or origin mapping changed")
 
 resource = ExeImage(ROOT / "HighPriest.exe").read_cstring_at(0x71C254)

@@ -26812,6 +26812,20 @@ bool CRagEffect::ProcessEffect704()
 
 // TEST_BODY_END effect704_handler
 
+void CRagEffect::ProcessPokJukSound301()
+{
+    if (m_stateCnt == 300) {
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+                TryPlayEffectWaveAt(mode->m_world->m_player->m_pos, "effect\\\xC6\xF8\xC1\xD7.wav");
+            }
+        }
+    }
+    if (m_stateCnt > 2300) {
+        m_stateCnt = 299;
+    }
+}
+
 bool CRagEffect::OnProcess2Legacy()
 {
     CRenderObject* master = ResolveCurrentMaster();
@@ -26828,16 +26842,7 @@ bool CRagEffect::OnProcess2Legacy()
         ApplyJobLvUp50(45);
         return true;
     case 301:
-        if (m_stateCnt == 300) {
-            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
-                    TryPlayEffectWaveAt(mode->m_world->m_player->m_pos, "effect\\\xC6\xF8\xC1\xD7.wav");
-                }
-            }
-        }
-        if (m_stateCnt > 2300) {
-            m_stateCnt = 299;
-        }
+        ProcessPokJukSound301();
         return true;
     case 312:
         ApplyHeal("effect\\alpha_down.tga", 0);

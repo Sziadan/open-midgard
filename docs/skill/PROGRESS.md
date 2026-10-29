@@ -3078,3 +3078,7 @@ Added a standalone harness compiling the production actor resolver, effect-state
 ## WP7 Devotion packet lifecycle — opcode 0x01CF — 2026-10-29
 
 Added a standalone harness compiling production ResolveSkillPacketActor and HandleDevotionList. It checks effects-off, malformed packets, missing devoter, own/other actor lookup, all five refresh messages, zero/duplicate/unresolved devotee slots, exact effect232 launches with message14 position data, ignored max-distance bytes, and failed effect launches. This covers packet-side link decisions only; rendered Devotion-link parity remains open. Focused tests pass2/2; full Release parity CTest passes430/430 and both static audits pass.
+
+## WP5 PokJuk_Sound lifecycle — effect301 — 2026-10-29
+
+Extracted the inline OnProcess2 effect301 behavior into ProcessPokJukSound301 without changing its dispatch order. The lifecycle fixture covers states299/300/301/2300/2301, exact PE CP949 wave bytes and player-relative playback, missing mode/world/player guards, and no RNG. The source comparator now verifies the handler delegates to the tested helper, while preserving the PE/primary-Ref helper comparison and exact resource bytes at VA 0x71C254. Focused lifecycle passes3225 checks; Release app build succeeds; full CTest passes430/430 and both static audits pass.
