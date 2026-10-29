@@ -2470,3 +2470,7 @@ Extended the grouped actor-light checker for effect385's inclusive state window 
 ## WP5F effect387 actor-light motion parity — 2026-10-29
 
 Extended the grouped actor-light comparator for effect387's frame-30 message, 30–54 yaw increments with single-step wrap, and 30–50 body-light gate on five-frame slices. It also checks generated routing and records primary-Ref omission. Focused check and full Release CTest passed 345/345. No production behavior change.
+
+## WP5F effect392 Kyrie guard tint parity — 2026-10-29
+
+Added and registered `check_effect392_kyrie_guard.py`. It checks the PE frame-zero cue and <=29 light/tint window with modulo-six color order, the local helper and `FinishEffectFrame` route, exact `effect\\kyrie_guard.wav` bytes at `0x71A748`, and confirms primary Ref's 392 occurrence remains its Init STR mapping. Focused check, elevated Release parity build and full Release CTest passed 346/346. No production behavior change.

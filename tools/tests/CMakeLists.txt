@@ -1176,6 +1176,8 @@ add_test(NAME effect487_black_devil_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect487_black_devil.py")
 add_test(NAME effect488_flower_cast_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect488_flower_cast.py")
+add_test(NAME effect392_kyrie_guard_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect392_kyrie_guard.py")
 add_test(NAME effect337_job_lv_up_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect337_job_lv_up.py")
 add_test(NAME effect410_rainbow_source_check
