@@ -2761,3 +2761,7 @@ Extended `tools/tests/check_prim2dquad_render.py` to compare the canonical PE `C
 ## WP5 CRagEffect FireSplashHit effect50 source checkpoint - 2026-10-29
 
 Added `tools/tests/check_effect50_firesplashhit.py` and registered it in the focused CTest suite. The comparator confirms PE and primary Ref `FireSplashHit` bodies normalize identically, effect50 dispatches to the handler in both PE and local code, and local `SpawnFireSplashHit` retains the source projection/RNG/state gate order, PP_2DTEXTURE setup, FireRing texture and GI0 life. It binds to existing lifecycle coverage for repeat calls, animation/fade, parent movement and exact resource name. The local missing-master/view guard is a defensive case outside PE's valid-state path. Focused CTest passed; no runtime change was needed.
+
+## WP5 CRagEffect SprayPond effect48 source checkpoint - 2026-10-29
+
+Added `tools/tests/check_effect48_spray_pond.py` and registered it in the focused CTest suite. PE and primary Ref `SprayPond` bodies normalize identically; the comparator maps PE effect48 and local dispatch to the handler and pins the state-zero, ten-frame, and twenty-frame cadence gates, panel counts/types, textures and ring setup against existing lifecycle assertions. Focused CTest passed; no runtime change was needed.
