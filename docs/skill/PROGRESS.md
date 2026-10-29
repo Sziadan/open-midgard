@@ -2709,3 +2709,7 @@ Added `tools/tests/check_prim3dcircle_initializer.py`. PE and primary Ref initia
 
 Added and registered `tools/tests/check_prim3dtexture_initializer.py`. PE and primary Ref methods at `HighPriest.exe.c:467644` and `Ref/RagEffectPrim.cpp:966` normalize identically. The comparator verifies dispatch IDs 0x0F/0x10, local shared-tick routing, change-point sentinel handling, motion and size ordering, pattern branches, RGB, and animation. Existing lifecycle coverage exercises the representative update branches. No production change was needed. Direct and focused checks passed; full Release CTest passed 382/382.
 
+## WP5 CEffectPrim Prim2DFlash update parity - 2026-10-29
+
+Added and registered `tools/tests/check_prim2dflash_initializer.py`. Canonical PE and primary Ref bodies at `HighPriest.exe.c:466941` and `Ref/RagEffectPrim.cpp:1729` normalize identically, and both dispatch case 3 to the method. The comparator binds local shared-tick routing and the 2D-specific integration order to existing lifecycle assertions for change-point, clamping, alpha and negative-height reflection. No production change was needed. Direct comparator and focused CTest passed; full Release CTest passed 383/383.
+

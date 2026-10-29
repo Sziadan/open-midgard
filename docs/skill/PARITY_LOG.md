@@ -4339,3 +4339,9 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - The comparator verifies local routing and shared ticking, change-point sentinels, movement/size/alpha order, source pattern controls and animation behavior. Existing lifecycle coverage exercises change controls, 0x100 velocity, 0x400 collision, pattern branches, RGB cycle and clamps.
 - No runtime code change was needed. Direct comparator and focused CTest passed; full Release CTest passed 382/382.
 
+## WP5 CEffectPrim Prim2DFlash update parity - 2026-10-29
+
+- Added and registered `tools/tests/check_prim2dflash_initializer.py`. The canonical PE body at `HighPriest.exe.c:466941` and primary Ref body at `Ref/RagEffectPrim.cpp:1729` normalize identically; PE and Ref dispatch primitive case 3 to the method.
+- The comparator binds the local shared updater and tick to existing lifecycle cases for source anchoring, pattern clamp, change-point values, negative-height reflection, 2D integration order, alpha, and unchanged generic size/roll state.
+- No runtime code change was needed. Direct comparator and focused CTest passed; full Release CTest passed 383/383.
+
