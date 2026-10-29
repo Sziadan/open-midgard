@@ -232,6 +232,7 @@ bool TryPlayEffectWaveAt(const vector3d& soundPos, const char* name) {
 }
 #include "PrimitiveEnum.inc"
 constexpr int kPrimTypeBottom=PP_BOTTOM;
+constexpr int kPrimTypePoison=PP_POISON;
 constexpr EFFECTPRIMID Other = PP_BUBBLE_DROP;
 void UpdateSlash1Primitive(CEffectPrim*);
 void UpdateSuperAngelPrimitive(CEffectPrim*);
@@ -737,8 +738,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect563();
     bool ProcessTier3StrEffect();
     bool ProcessBlitzBeat115();
-    int poisonCalls = 0, poisonLevel = -1;
-    void ApplyPoison(int level) { ++poisonCalls; poisonLevel = level; }
+    void ApplyPoison(int variant);
     bool ProcessDamageNumberEffects();
     void SpawnBlueFall(int, int);
     bool ProcessBeginAsura1_467();
@@ -12273,23 +12273,29 @@ int main()
     {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
-        waveCalls.clear();CRagEffect effect;effect.m_type=669;effect.m_master=&master;effect.m_effectPos={7,8,9};
+        waveCalls.clear();g_texMgr.requests.clear();CRagEffect effect;effect.m_type=669;effect.m_master=&master;effect.m_effectPos={7,8,9};
         const int draws=rngDraws;
         effect.m_stateCnt=0;
-        check(effect.ProcessTier3StrEffect()&&waveCalls.empty()&&effect.poisonCalls==1&&effect.poisonLevel==1
-            &&effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9,
-            "effect669 state0 applies poison but does not update position or play the state1 cue");
+        check(effect.ProcessTier3StrEffect()&&waveCalls.empty()&&effect.m_primList.size()==1
+            &&effect.m_effectPos.x==31&&effect.m_effectPos.y==41&&effect.m_effectPos.z==51,
+            "effect669 state0 launches poison at the master and does not play the state1 cue");
+        CEffectPrim* poison=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(poison&&poison->m_type==static_cast<EFFECTPRIMID>(kPrimTypePoison)
+            &&poison->m_texture.size()==1&&g_texMgr.requests.back()=="effect\\white02.bmp"
+            &&poison->m_pos.x==31&&poison->m_pos.y==32&&poison->m_pos.z==51,
+            "effect669 state0 applies the production variant1 poison payload");
         effect.m_stateCnt=1;
         check(effect.ProcessTier3StrEffect()&&effect.m_effectPos.x==31&&effect.m_effectPos.y==41&&effect.m_effectPos.z==51
             &&waveCalls.size()==1&&waveCalls[0].name=="effect\\wideb.wav"
             &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==40
             &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
-            &&effect.poisonCalls==2&&effect.poisonLevel==1,
-            "effect669 state1 plays wideb before applying poison and ignores STR completion");
+            &&effect.m_primList.size()==1&&poison&&poison->m_pos.x==31&&poison->m_pos.y==41&&poison->m_pos.z==51,
+            "effect669 state1 plays wideb and updates the production poison origin");
         effect.m_stateCnt=2;
-        check(effect.ProcessTier3StrEffect()&&waveCalls.size()==1&&effect.poisonCalls==3
+        check(effect.ProcessTier3StrEffect()&&waveCalls.size()==1&&effect.m_primList.size()==1&&poison
             &&rngDraws==draws,
-            "effect669 state2 keeps applying poison without repeating its cue or consuming RNG");
+            "effect669 state2 updates the existing poison without repeating its cue or consuming RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();
         g_world.m_player=oldPlayer;
     }
     {
@@ -14345,6 +14351,40 @@ int main()
         forest.ApplyForestLight(nullptr,11);
         check(forest.m_primList.empty()&&g_texMgr.requests.empty(),"effect581 null texture gate emits no primitive");
         waveCalls.clear();g_texMgr.requests.clear();
+    }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        CRagEffect poison;poison.m_type=673;poison.m_stateCnt=99999998;poison.m_duration=66;poison.m_master=&master;
+        g_texMgr.requests.clear();waveCalls.clear();const int startDraws=rngDraws;
+        poison.ApplyPoison(2);
+        CEffectPrim* prim=poison.m_primList.empty()?nullptr:poison.m_primList.front();
+        const vector3d origin={100,191,300};
+        check(poison.m_stateCnt==0&&poison.m_duration==99999999&&poison.m_effectPos.x==100
+            &&poison.m_effectPos.y==200&&poison.m_effectPos.z==300
+            &&poison.m_cachedPos.x==100&&poison.m_cachedPos.y==191&&poison.m_cachedPos.z==300,
+            "effect673 sentinel state resets duration and caches the master origin nine units lower");
+        check(poison.m_primList.size()==1&&prim&&prim->m_type==static_cast<EFFECTPRIMID>(kPrimTypePoison)
+            &&prim->m_renderFlag==0x201u&&prim->m_duration==99999999
+            &&prim->m_pos.x==origin.x&&prim->m_pos.y==origin.y&&prim->m_pos.z==origin.z
+            &&prim->m_texture.size()==1&&g_texMgr.requests==std::vector<std::string>({"effect\\white02.bmp"})
+            &&rngDraws==startDraws&&waveCalls.empty(),
+            "effect673 variant2 launches one white poison primitive with exact PE resource and no RNG/audio");
+        if(prim) {
+            const EffectGi& gi=prim->m_gi[0];
+            check(gi.life==1&&gi.process==0&&gi.distance==30.0f&&gi.maxHeight==0.0f
+                &&gi.alphaB==0&&gi.flag[10]==2,
+                "effect673 variant2 initializes exact poison GI payload");
+        } else {
+            check(false,"effect673 variant2 initializes exact poison GI payload");
+        }
+        master.m_pos={410,520,630};poison.m_stateCnt=1;const size_t requests=g_texMgr.requests.size();
+        poison.ApplyPoison(2);
+        check(poison.m_primList.size()==1&&prim&&prim->m_pos.x==410&&prim->m_pos.y==520&&prim->m_pos.z==630
+            &&poison.m_effectPos.x==410&&poison.m_effectPos.y==520&&poison.m_effectPos.z==630
+            &&poison.m_cachedPos.x==410&&poison.m_cachedPos.y==520&&poison.m_cachedPos.z==630
+            &&g_texMgr.requests.size()==requests&&rngDraws==startDraws&&waveCalls.empty(),
+            "effect673 later state follows the master without relaunching or reloading the poison primitive");
+        poison.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

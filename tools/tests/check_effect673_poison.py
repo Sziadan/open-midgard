@@ -13,6 +13,7 @@ REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
 REF_HELPER = (ROOT / "Ref/RagEffect2.cpp").read_text(encoding="latin-1")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 ROUTES = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
+LIFECYCLE = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
 
 
 def function(source: str, signature: str) -> str:
@@ -66,4 +67,15 @@ image = ExeImage(ROOT / "HighPriest.exe")
 if not any(item.raw == b"effect\\white02.bmp" for item in image.iter_cstrings()):
     raise AssertionError("PE effect673 selector resource bytes missing")
 
-print("effect673 POISON parity passed: PE/Ref caller/helper, local variant2 state/resource/payload")
+if not re.search(r"CRagEffect poison;[\s\S]*?poison\.ApplyPoison\(2\);", LIFECYCLE):
+    raise AssertionError("effect673 variant2 lifecycle fixture does not invoke the production helper")
+for token in (
+    "effect673 sentinel state resets duration",
+    "effect673 variant2 launches one white poison primitive",
+    "effect673 variant2 initializes exact poison GI payload",
+    "effect673 later state follows the master without relaunching",
+):
+    if token not in LIFECYCLE:
+        raise AssertionError(f"effect673 lifecycle assertion missing: {token}")
+
+print("effect673 POISON parity passed: PE/Ref caller/helper, local variant2 state/resource/payload, runtime lifecycle fixture")
