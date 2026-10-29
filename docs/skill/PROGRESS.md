@@ -2120,3 +2120,61 @@ Added source-backed circle masters8,9,62 to `UsesReferenceCircle`, after compari
 ## WP5 — CEffectPrim PP_3DCYLINDER callers 6, 9 — 2026-10-29
 
 Added source-backed cylinder masters6 and9 to `UsesReferenceCylinder`; existing PE/Ref caller comparisons establish their geometry payloads and exact slot-zero textures (`ring_blue.tga` and `alpha_down.tga`). The comparator now checks both added masters and local setup, while lifecycle assertions verify that the children select the source updater/renderer. Release parity build succeeded; CTest passed277/277. Release app build/deployment succeeded with matching Release and OldRO SHA-256 `CDEFA3C7ADA00BD6018E75DC98A9C362885FEFC6F9D000A4B38889273DDB2B26`; `git diff --check` passes. Local-only portal alias50001 remains outside canonical parity. No live visual/backend acceptance is claimed. Next: continue auditing the remaining CEffectPrim generic routes and noncanonical fallback semantics.
+## WP5C effect103 WeaponPerfection — 2026-10-29
+
+Verified PE Init/OnProcess and primary Ref Init parity for effect103. The PE selects the full/minimum `WeaponPerfection` STR and plays `effect\\black_weapon_perfection.wav` only at state0 with player-relative X/Z and literal Y0; shared processing continues at Y−80 every frame. Exact PE resource bytes are checked at VAs `0x71A070`, `0x71AFA4`, and `0x71AFBC`. Primary Ref contains the matching Init but no effect103 OnProcess caller. Added a source comparator and lifecycle assertions for the source cue cadence and payload; production route was already correct. Release parity build succeeds; CTest passes278/278, including focused effect103 source test. No app build/deployment or visual acceptance claimed because production sources were unchanged.
+## WP5C effects102-103 CrashEarth and WeaponPerfection — 2026-10-29
+
+Added source comparators and lifecycle coverage for effects102 and103. Effect102 verifies CrashEarth STR Init mapping, frame30 `wizard_fire_pillar_b` audio payload, frame35 mode message135, and shared per-frame STR processing; effect103 verifies full/minimum WeaponPerfection STR mapping and its state-zero player-relative wave. Executable bytes are checked at VAs `0x719798`, `0x71AFD8`, `0x71A070`, `0x71AFA4`, and `0x71AFBC`. The primary Ref supplies both Init mappings but has no OnProcess caller for these inline cases. Existing local routes matched; no production code changed. Release parity build succeeds and full CTest passes280/280. No app build/deployment or visual acceptance is claimed.
+
+## WP5C effect106 BlastMine — 2026-10-29
+
+Verified PE Init/OnProcess and primary Ref Init for effect106. PE plays `effect\\hunter_blastmine.wav` only at state20 with player-relative X/Z, literal Y0, volume250, range40, frequency1, then processes shared STR at Y−80 each frame. Exact PE bytes are checked at VAs `0x71A054` and `0x71AF6C`; both PE and primary Ref select `BlastMine.str`, while primary Ref has no OnProcess case106. Added a comparator plus lifecycle assertions for states19/20/21 and RNG-free continuation. Existing local clip-wave route matched; production code was unchanged. Release parity build and full CTest pass280/280. No app build/deployment or visual acceptance claimed.
+
+## WP5C effect95 Quagmire — 2026-10-29
+
+Compared PE case95, primary Ref Quagmire helper and Init, executable resource bytes, and local route. The ordered behavior is one RNG draw only at frame0; modulo12 nonzero skips audio, zero plays `effect\\wizard_quagmire.wav` relative to player X/Z at Y−100 with 250/40/1.0, then every call continues `ProcessEZ2STR(0,-80,0)`. Init maps to `Quagmire.str` at VA `0x71B020`; wave bytes resolve at `0x71A0B4`. Primary Ref OnProcess2 lacks case95 while the helper exists. Added a registered source comparator and reused lifecycle assertions for reject/pass/no-repeat RNG paths. No production changes. Release parity build and full CTest pass281/281.
+
+## WP5C effect96 Fire Pillar — 2026-10-29
+
+Compared effect96 PE OnProcess and PE/primary-Ref Init against local routing. Its only cue is the state75 `effect\\wizard_fire_pillar_a.wav` at listener-relative X/Z and Y0 with args250/40/1.0, then shared STR processing at Y−80 every frame. `FirePillar.str` resource bytes resolve at VA `0x71B010`; wave bytes at `0x71A094`. Primary Ref OnProcess2 has no case96; FirePillarOn is a different effect138 helper. Added a registered source comparator and frame74/75/76 lifecycle assertions. No production code changed. Release parity build and full CTest pass282/282.
+
+## WP5C effect97 Fire Pillar Bomb — 2026-10-29
+
+Compared PE case97, primary Ref helper/Init, executable bytes and local route. Effect97 plays `effect\\wizard_fire_pillar_b.wav` at state0 only, player-relative X/Z, Y0, 250/40/1.0; shared STR processing continues at Y−80 each frame. Init maps to `FirePillarBomb.str` at VA `0x71AFFC`; the wave is at `0x719798`. Ref helper matches but primary Ref OnProcess2 has no case97. Added source comparator and state0/1 lifecycle coverage; no production code changed. Release parity build and full CTest pass283/283.
+
+## WP5C effect108 Freezing — 2026-10-29
+
+Compared PE case108, primary Ref Freezing helper/Init, exact executable resources, and local dispatch/helper behavior. It plays `effect\\hunter_freezingtrap.wav` at state0 with player-relative X/Z, Y0, 250/40/1.0; shared STR processing uses Y−80 every frame. `Freezing.str` bytes resolve at VA `0x71AF4C`, wave at `0x71A014`. Primary Ref has the matching helper and Init but no OnProcess2 case108. Added a registered comparator and state0/1 lifecycle assertions; no production code changed. Release parity build and full CTest pass284/284.
+
+## WP5C effect107 Claymore — 2026-10-29
+
+Compared effect107 PE inline caller, PE/primary-Ref Init, Ref Claymore helper, executable resources and local route. It plays `effect\\hunter_claymoretrap.wav` at state0, player-relative X/Z, Y0, 250/40/1.0, then continues shared STR at Y−80. `Claymore.str` resolves at `0x71AF5C`, wave at `0x71A034`. Ref helper matches but primary Ref OnProcess2 omits case107. Added registered comparator and state0/1 lifecycle assertions; production code unchanged. Release parity build and full CTest pass285/285.
+
+## WP5C effect111 Spring Trap — 2026-10-29
+
+Compared PE case111, primary Ref helper/Init, exact resources and local route. It plays `effect\\hunter_springtrap.wav` at state0, player-relative X/Z, Y0, 250/40/1.0, then processes STR at Y−80 each frame. `Spring.str` bytes resolve at `0x71AF40`, wave at `0x719FF4`. Ref `SpringTrap` helper matches but primary Ref OnProcess2 lacks case111. Added registered comparator and state0/1 lifecycle assertions; production code unchanged. Release parity build and full CTest pass286/286.
+
+## WP5C effect113 Magnus — 2026-10-29
+
+Compared PE case113, PE/primary-Ref Init, Ref Magnus helper, resource bytes and local route. The state-zero cue is player-relative X/Z at literal Y+1 with args250/40/1.0; shared STR processing runs at Y−80 each frame. `Magnus.str` resolves at VA `0x71AEFC`; the wave at `0x719FD8`. Primary Ref OnProcess2 omits case113 despite the matching helper. Added a registered source comparator and state0/1 lifecycle coverage; no production code changed. Release parity build and full CTest pass287/287.
+
+## WP5C effects124/127 Poison React — 2026-10-29
+
+Compared the shared PE OnProcess branch, PE/primary-Ref Init mappings, primary Ref PoisonReact2 helper, executable bytes and local routes. Both effects play the same state-zero poison-react wave at player-relative X/Z and Y0 with 250/40/1.0, then process STR each frame at Y−80. Init maps 124 to `VenomDust.str` (`0x71AEEC`) and127 to `PoisonReact.str` (`0x71AEC8`); shared wave bytes are at `0x719F98`. Ref helper matches, but primary Ref OnProcess2 omits cases124/127. Added grouped source comparator and controlled lifecycle checks. Release parity build and full CTest pass288/288; no production code changed.
+
+## WP5C effect129 Venom Splasher — 2026-10-29
+
+Compared effect129 PE caller, PE/primary-Ref Init, primary Ref Splasher helper, executable bytes and local route. It plays `effect\\assasin_venomsplasher.wav` at state10 with player-relative X/Z and Y0 (250/40/1.0), then continues STR at Y−80 every frame. Init maps to `VenomSplasher.str` at `0x71AEA4`; wave bytes at `0x719F74`. Ref helper matches but primary Ref OnProcess2 lacks case129. Added registered source comparator and lifecycle checks at states9/10/11. Release parity build and full CTest pass289/289; no production change.
+
+## WP5C effects130/250 TwoHand Quicken — 2026-10-29
+
+Compared the shared PE caller, PE/primary-Ref Init routes, Ref `TwoHandQuicken` helper, executable resource bytes and local dispatch/helper behavior. Both IDs map to `TwoHand.str` (`0x71AD30`); the wave is `effect\\knight_twohandquicken.wav` (`0x7192D8`). At state0 PE extends duration to9999 and plays the cue at player-relative X/Z, Y0 with 250/40/1.0, then falls through `LABEL_99` to `ProcessEZ2STR(0,-80,0)` while discarding its result. Ref helper matches but primary Ref OnProcess2 omits case130. Added grouped source comparator and state0/1 lifecycle coverage for both IDs; Release parity build and complete Release CTest pass290/290. No production change.
+
+## WP5C effect131 AutoCounter — 2026-10-29
+
+Compared PE case131, PE/primary-Ref Init, primary Ref `AutoCounter` helper, exact resource bytes and local route. At state0 it plays `effect\\knight_autocounter.wav` at player-relative X/Z, literal Y0, 250/40/1.0, then continues shared STR processing at Y−80. `AutoCounter.str` resolves at VA `0x71AEB8`; the wave at `0x719FB8`. The primary Ref helper matches. Added a registered source comparator and state0/1 lifecycle assertions, including no repeated cue and no RNG consumption; Release parity build and complete Release CTest pass291/291. No production code changed.
+
+## WP5C effects133/134 Freeze and Freezed — 2026-10-29
+
+Compared the shared PE terminal STR caller, PE/primary-Ref Init mappings, exact executable string bytes and local route/terminal handling. Effect133 maps to `Freeze.str` (`0x71AE98`), and134 maps to `Freezed.str` (`0x71AE8C`). Both call `ProcessEZ2STR(0,-80,0)` each frame; when it completes, state becomes9999 and the handler returns false. Added grouped source comparison and lifecycle checks for active and terminal STR states. Release parity build and complete Release CTest pass292/292. No behavior change was required.

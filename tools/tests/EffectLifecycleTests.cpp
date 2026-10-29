@@ -490,6 +490,7 @@ struct CRagEffect : CGameObject {
     bool FinishEffectFrame();
     void InitEZ2STRFrame();
     bool ProcessEZ2STR(float x = 0.0f, float y = -80.0f, float z = 0.0f);
+    bool ProcessStrTerminalEffect();
     bool ProcessTargetPositionStr();
     void RenderAniClip(int,const KAC_LAYER&,const KAC_XFORMDATA&,matrix*);
     void Render(matrix*);
@@ -6779,6 +6780,317 @@ int main()
         check(g_texMgr.requests.empty()&&rngDraws==beforeRng,
             "Potion STR group emits no textures or RNG");
         g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=95;effect.m_effectPos={15,20,35};
+        waveCalls.clear();rngValues={1,12};rngCursor=0;
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=0;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty()
+            &&rngDraws==beforeRng+1&&rngCursor==1,
+            "Quagmire consumes one frame-zero RNG draw and rejects nonzero modulo-12 results");
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty()
+            &&rngDraws==beforeRng+1&&rngCursor==1,
+            "Quagmire makes no additional RNG draws or sound attempts after frame zero");
+        effect.m_stateCnt=0;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\wizard_quagmire.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==-100&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1
+            &&rngDraws==beforeRng+2&&rngCursor==2,
+            "Quagmire plays the exact player-relative frame-zero wave at Y minus 100 when the modulo-12 gate passes");
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&rngDraws==beforeRng+2&&rngCursor==2,
+            "Quagmire does not repeat its wave or consume RNG on later frames");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=103;effect.m_effectPos={15,20,35};
+        waveCalls.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+            "WeaponPerfection does not play its source cue after frame zero");
+        effect.m_stateCnt=0;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\black_weapon_perfection.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+            "WeaponPerfection plays the verified state-zero wave at effect-minus-listener X/Z and literal Y zero");
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+            "WeaponPerfection continues STR processing without repeating the wave or consuming RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        for(int id:{133,134}) {
+            CRagEffect effect;effect.m_type=id;effect.m_stateCnt=17;
+            check(!effect.ProcessStrTerminalEffect()&&effect.m_stateCnt==9999,
+                "Freeze and Freezed mark state 9999 and return completion when STR ends");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        waveCalls.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        CRagEffect effect;effect.m_type=131;effect.m_effectPos={15,20,35};
+        effect.m_stateCnt=0;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\knight_autocounter.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+            "AutoCounter plays its verified state-zero cue at listener-relative X/Z and preserves STR completion");
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+            "AutoCounter continues STR processing without repeating its cue or consuming RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        const int beforeRng=rngDraws;
+        for(int id:{130,250}) {
+            CRagEffect effect;effect.m_type=id;effect.m_effectPos={15,20,35};
+            effect.m_stateCnt=1;effect.m_duration=100;
+            waveCalls.clear();
+            check(effect.ProcessClipWaveStrEffect()&&waveCalls.empty()&&effect.m_duration==100,
+                "TwoHand Quicken waits for state zero without changing duration or playing its cue");
+            effect.m_stateCnt=0;
+            check(effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+                &&waveCalls.back().name=="effect\\knight_twohandquicken.wav"
+                &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+                &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1
+                &&effect.m_duration==9999,
+                "TwoHand Quicken extends duration and plays its verified state-zero cue at listener-relative X/Z");
+            effect.m_stateCnt=1;
+            check(effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+                "TwoHand Quicken continues STR processing without repeating its cue or consuming RNG");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=96;effect.m_effectPos={15,20,35};
+        waveCalls.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=74;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+            "Fire Pillar does not play its source cue before frame seventy-five");
+        effect.m_stateCnt=75;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\wizard_fire_pillar_a.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+            "Fire Pillar plays its verified frame-seventy-five wave at effect-minus-listener X/Z and literal Y zero");
+        effect.m_stateCnt=76;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+            "Fire Pillar continues STR processing without repeating the wave or consuming RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        waveCalls.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        CRagEffect splasher;splasher.m_type=129;splasher.m_effectPos={15,20,35};
+        const int beforeSplasherRng=rngDraws;
+        splasher.m_stateCnt=9;
+        check(!splasher.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+            "Venom Splasher does not play its cue before frame ten");
+        splasher.m_stateCnt=10;
+        check(!splasher.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\assasin_venomsplasher.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+            "Venom Splasher plays its verified frame-ten cue at listener-relative X/Z");
+        splasher.m_stateCnt=11;
+        check(!splasher.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeSplasherRng,
+            "Venom Splasher continues STR processing without cue repetition or RNG");
+        splasher.ClearPrims();g_world.UpdateGameObjects();waveCalls.clear();
+        for(int id:{124,127}) {
+            CRagEffect effect;effect.m_type=id;effect.m_effectPos={15,20,35};
+            effect.m_stateCnt=1;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+                "Poison React effects do not play their shared source cue after frame zero");
+            effect.m_stateCnt=0;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+                &&waveCalls.back().name=="effect\\assasin_poisonreact.wav"
+                &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+                &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+                "Poison React effects play the shared verified state-zero cue at listener-relative X/Z");
+            effect.m_stateCnt=1;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+                "Poison React effects continue STR processing without cue repetition or RNG");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+            waveCalls.clear();
+        }
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=113;effect.m_effectPos={15,20,35};
+        waveCalls.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+            "Magnus does not play its source cue after frame zero");
+        effect.m_stateCnt=0;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\priest_magnus.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==1&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+            "Magnus plays its verified state-zero wave at effect-minus-listener X/Z and literal Y plus one");
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+            "Magnus continues STR processing without repeating the wave or consuming RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=111;effect.m_effectPos={15,20,35};
+        waveCalls.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+            "Spring Trap does not play its source cue after frame zero");
+        effect.m_stateCnt=0;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\hunter_springtrap.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+            "Spring Trap plays its verified state-zero wave at effect-minus-listener X/Z and literal Y zero");
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+            "Spring Trap continues STR processing without repeating the wave or consuming RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=107;effect.m_effectPos={15,20,35};
+        waveCalls.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+            "Claymore does not play its source cue after frame zero");
+        effect.m_stateCnt=0;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\hunter_claymoretrap.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+            "Claymore plays its verified state-zero wave at effect-minus-listener X/Z and literal Y zero");
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+            "Claymore continues STR processing without repeating the wave or consuming RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=108;effect.m_effectPos={15,20,35};
+        waveCalls.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+            "Freezing trap does not play its source cue after frame zero");
+        effect.m_stateCnt=0;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\hunter_freezingtrap.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+            "Freezing trap plays its verified state-zero wave at effect-minus-listener X/Z and literal Y zero");
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+            "Freezing trap continues STR processing without repeating the wave or consuming RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=97;effect.m_effectPos={15,20,35};
+        waveCalls.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+            "Fire Pillar Bomb does not play its source cue after frame zero");
+        effect.m_stateCnt=0;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\wizard_fire_pillar_b.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+            "Fire Pillar Bomb plays its verified state-zero wave at effect-minus-listener X/Z and literal Y zero");
+        effect.m_stateCnt=1;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+            "Fire Pillar Bomb continues STR processing without repeating the wave or consuming RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=106;effect.m_effectPos={15,20,35};
+        waveCalls.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=19;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+            "BlastMine does not play its source cue before frame twenty");
+        effect.m_stateCnt=20;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\hunter_blastmine.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1,
+            "BlastMine plays its verified frame-twenty wave at effect-minus-listener X/Z and literal Y zero");
+        effect.m_stateCnt=21;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+            "BlastMine continues STR processing without repeating the wave or consuming RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
+    {
+        CRenderObject listener;listener.m_pos={3,0,5};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=102;effect.m_effectPos={15,20,35};
+        waveCalls.clear();gameMode.messages=0;gameMode.messageIds.clear();
+        const int beforeRng=rngDraws;
+        effect.m_stateCnt=29;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty()&&gameMode.messages==0,
+            "CrashEarth has no source wave or quake message before its scheduled frames");
+        effect.m_stateCnt=30;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&waveCalls.back().name=="effect\\wizard_fire_pillar_b.wav"
+            &&waveCalls.back().x==12&&waveCalls.back().y==0&&waveCalls.back().z==30
+            &&waveCalls.back().volume==250&&waveCalls.back().range==40&&waveCalls.back().frequency==1
+            &&gameMode.messages==0,
+            "CrashEarth plays its exact frame-30 source wave relative to the player");
+        effect.m_stateCnt=34;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&gameMode.messages==0,
+            "CrashEarth does not repeat its cue or send quake before frame 35");
+        effect.m_stateCnt=35;
+        check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+            &&gameMode.messages==1&&gameMode.lastMsg==135&&gameMode.lastArg==0,
+            "CrashEarth sends game-mode message 135 at frame 35 without replaying audio");
+        check(rngDraws==beforeRng,"CrashEarth frame gates consume no RNG");
+        g_world.m_player=oldPlayer;waveCalls.clear();gameMode.messages=0;gameMode.messageIds.clear();
     }
     {
         CRenderObject master;master.m_pos={15,20,35};

@@ -307,6 +307,7 @@ extract_body(effect457_handler "${effect_source}" "bool CRagEffect::ProcessEffec
 extract_body(effect466_handler "${effect_source}" "bool CRagEffect::ProcessEffect466()" "// TEST_BODY_END effect466_handler")
 extract_body(effect501_handler "${effect_source}" "bool CRagEffect::ProcessEffect501()" "// TEST_BODY_END effect501_handler")
 extract_body(effect704_handler "${effect_source}" "bool CRagEffect::ProcessEffect704()" "// TEST_BODY_END effect704_handler")
+extract_test_region(effect133_134_terminal_handler "${effect_source}" effect133_134_terminal_handler)
 extract_test_region(warp_emitter "${effect_source}" warp_emitter_family)
 extract_test_region(agility_emitters "${effect_source}" agility_emitter_family)
 extract_body(blessing_emitter "${effect_source}" "void CRagEffect::SpawnBlessing()" "// Ref/RagEffect.cpp:7721-7761")
@@ -486,6 +487,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${couple_
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect605_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect563_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${damage_number_effects_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect133_134_terminal_handler}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -880,6 +882,36 @@ add_test(NAME effect8_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect8.py")
 add_test(NAME effect9_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect9.py")
+add_test(NAME effect95_quagmire_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect95_quagmire.py")
+add_test(NAME effect96_fire_pillar_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect96_fire_pillar.py")
+add_test(NAME effect97_fire_pillar_bomb_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect97_fire_pillar_bomb.py")
+add_test(NAME effect108_freezing_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect108_freezing.py")
+add_test(NAME effect111_spring_trap_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect111_spring_trap.py")
+add_test(NAME effect113_magnus_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect113_magnus.py")
+add_test(NAME effects124_127_poison_react_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect124_127_poison_react.py")
+add_test(NAME effect129_venom_splasher_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect129_venom_splasher.py")
+add_test(NAME effects130_250_twohand_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect130_250_twohand.py")
+add_test(NAME effect131_autocounter_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect131_autocounter.py")
+add_test(NAME effects133_134_terminal_str_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect133_134_terminal_str.py")
+add_test(NAME effect102_crash_earth_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect102_crash_earth.py")
+add_test(NAME effect103_weapon_perfection_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect103_weapon_perfection.py")
+add_test(NAME effect106_blastmine_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect106_blastmine.py")
+add_test(NAME effect107_claymore_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect107_claymore.py")
 add_test(NAME effect90_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect90.py")
 add_test(NAME effect74_source_check
@@ -1171,6 +1203,21 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect6.py
     check_effect8.py
     check_effect9.py
+    check_effect95_quagmire.py
+    check_effect96_fire_pillar.py
+    check_effect97_fire_pillar_bomb.py
+    check_effect108_freezing.py
+    check_effect111_spring_trap.py
+    check_effect113_magnus.py
+    check_effect124_127_poison_react.py
+    check_effect129_venom_splasher.py
+    check_effect130_250_twohand.py
+    check_effect131_autocounter.py
+    check_effect133_134_terminal_str.py
+    check_effect102_crash_earth.py
+    check_effect103_weapon_perfection.py
+    check_effect106_blastmine.py
+    check_effect107_claymore.py
     check_effect90.py
     check_effect74.py
     check_effect13.py

@@ -14393,12 +14393,14 @@ bool CRagEffect::ProcessLexDivina()
 }
 
 // HighPriest.exe.c:420391-420392, effects 133/134 share this completion path.
+// TEST_BODY_BEGIN effect133_134_terminal_handler
 bool CRagEffect::ProcessStrTerminalEffect()
 {
     if (ProcessEZ2STR(0.0f, -80.0f, 0.0f)) return true;
     m_stateCnt = 9999;
     return false;
 }
+// TEST_BODY_END effect133_134_terminal_handler
 
 // Ref/RagEffect2.cpp:25733-26091. Shared sprite primitive setup, including
 // per-variant resources, action selection, animation, and caller-only events.
