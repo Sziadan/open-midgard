@@ -13,6 +13,8 @@ from tools.ro_exe_resolve import ExeImage  # noqa: E402
 
 PE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
 RAG = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
+LIFECYCLE = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8", errors="replace")
+TEST_CMAKE = (ROOT / "tools/tests/CMakeLists.txt").read_text(encoding="utf-8", errors="replace")
 REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 DISPATCH = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
 CATALOG = (ROOT / "src/world/RagEffectCatalog.generated.inc").read_text(encoding="utf-8")
@@ -121,6 +123,19 @@ if ("spriteVariant == 16 || spriteVariant == 18" not in helper
 tatami_asset = re.search(r"\{\s*16\s*,[^\n]*,\s*6,\s*false,\s*nullptr\s*\}", helper)
 if tatami_asset is None:
     raise AssertionError("local Effect_SPR(16) must use speed6 one-shot animation with no sound")
+if ('extract_body(effect_sprite_handler "${effect_source}" "bool CRagEffect::ProcessEffectSprite(int spriteVariant)" "bool CRagEffect::ProcessEffectSpriteAndStr()")' not in TEST_CMAKE
+        or 'ProcessEffectSprite(int spriteVariant)" "bool CRagEffect::ProcessEffectSpriteProduction(int spriteVariant)' not in TEST_CMAKE):
+    raise AssertionError("production Effect_SPR helper is not extracted for the lifecycle fixture")
+tatami_fixture = re.search(r"CRenderObject master;master\.m_pos=\{31,41,51\};\s*CRagEffect effect;effect\.m_type=631;(.*?)(?=\n    })", LIFECYCLE, re.S)
+if tatami_fixture is None or "ProcessEffectSpriteProduction(16)" not in tatami_fixture.group(1):
+    raise AssertionError("effect631 direct production variant16 lifecycle fixture disappeared")
+for token in (r"\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xD9\xB4\xD9\xB9\xCC.spr",
+              r"\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xD9\xB4\xD9\xB9\xCC.act",
+              "PP_3DPARTICLE", "m_deltaPos2.y==-6.0f", "m_renderFlag==1", "m_animSpeed==6",
+              "m_numSegments==1", "rngDraws==draws", "waveCalls.empty()",
+              "without a second particle, resource request, cue or RNG draw"):
+    if token not in tatami_fixture.group(1):
+        raise AssertionError(f"effect631 lifecycle assertion missing {token}")
 
 # Priority 5P effect-sprite callers 630/632/633/634 and their RNG variants.
 for effect_id, variant, wave_symbol in ((630, 15, "aEffect_155"),

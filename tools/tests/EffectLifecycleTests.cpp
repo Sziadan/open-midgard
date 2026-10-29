@@ -533,6 +533,7 @@ struct CRagEffect : CGameObject {
     void SetAction(int action,int motion,int type) { ++setActionCalls;lastAction=action;lastActionMotion=motion;lastActionType=type; }
     int spriteCalls=0,lastSpriteVariant=-1;
     bool ProcessEffectSprite(int variant) { ++spriteCalls;lastSpriteVariant=variant;return true; }
+    bool ProcessEffectSpriteProduction(int variant);
     bool ProcessEffectSpriteAndStr();
     void SpawnGrimTooth();
     void SpawnGrimToothAtk();
@@ -12461,6 +12462,32 @@ int main()
         check(effect.ProcessEffectSpriteAndStr()&&effect.spriteCalls==1&&effect.lastSpriteVariant==14
             &&!effect.m_strFrameActive,
             "effect612 emits sprite variant14, advances exhausted STR, and remains active as the source does");
+    }
+    {
+        CRenderObject master;master.m_pos={31,41,51};
+        CRagEffect effect;effect.m_type=631;effect.m_stateCnt=0;effect.m_duration=73;effect.m_master=&master;
+        rngValues={17};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        check(effect.ProcessEffectSpriteProduction(16),"effect631 production Effect_SPR variant16 helper remains active");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xD9\xB4\xD9\xB9\xCC.spr";
+        const std::string expectedAct="\xC0\xCC\xC6\xD1\xC6\xAE\\\xB4\xD9\xB4\xD9\xB9\xCC.act";
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+            &&prim->m_pos.x==31&&prim->m_pos.y==41&&prim->m_pos.z==51
+            &&prim->m_duration==73&&prim->m_deltaPos2.y==-6.0f&&prim->m_renderFlag==1
+            &&prim->m_pattern==0x200&&prim->m_animSpeed==6&&!prim->m_repeatAnim
+            &&prim->m_spriteAction==0&&prim->m_curMotion==0
+            &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+            &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+            &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==31
+            &&prim->m_segments[0].pos.y==41&&prim->m_segments[0].pos.z==51
+            &&rngDraws==draws&&rngCursor==0&&waveCalls.empty(),
+            "effect631 variant16 initializes one PE-backed Tatami particle with exact pose, resources and segment, without cue or RNG");
+        const size_t requests=g_resMgr.requests.size();master.m_pos={70,80,90};effect.m_stateCnt=1;
+        check(effect.ProcessEffectSpriteProduction(16)&&effect.m_primList.size()==1
+            &&effect.m_effectPos.x==70&&effect.m_effectPos.y==80&&effect.m_effectPos.z==90
+            &&g_resMgr.requests.size()==requests&&rngDraws==draws&&waveCalls.empty(),
+            "effect631 later state refreshes helper origin without a second particle, resource request, cue or RNG draw");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
     }
     {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
