@@ -54,11 +54,24 @@ check("local enum retains canonical PP_3DCYLINDER id and selects the specialized
       and "RenderReferenceCylinder(*this, *viewMatrix);" in LOCAL_RENDER
       and "case PP_3DCYLINDER:" in LOCAL_RENDER and "RenderCircleLayer(*this" in LOCAL_RENDER)
 
-expected_masters = {0, 2, 3, 7, 14, 34, 36, 73, 81, 115, 122, 138, 140, 180, 184,
+expected_masters = {0, 2, 3, 6, 7, 9, 14, 34, 36, 73, 81, 115, 122, 138, 140, 180, 184,
                     218, 219, 220, 221}
 actual_masters = {int(v) for v in re.findall(r"case\s+(\d+)\s*:", LOCAL_PREDICATE)}
 check("local source-selected cylinder route matches the documented master-effect ID union",
       actual_masters == expected_masters and "m_type != PP_3DCYLINDER" in LOCAL_PREDICATE)
+ref_effects = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
+for master, pe_signature, local_signature, texture in (
+    (6, "void __thiscall CRagEffect::Entry(CRagEffect *this)", "void CRagEffect::SpawnEntry6()", "ring_blue.tga"),
+    (9, "void __thiscall CRagEffect::Enhance(CRagEffect *this)", "void CRagEffect::SpawnEnhance9()", "alpha_down.tga"),
+):
+    pe_caller = body(PE, pe_signature)
+    ref_caller = body(ref_effects, pe_signature)
+    local_caller = body(CURRENT, local_signature)
+    check(f"effect {master} PE/Ref callers create PP_3DCYLINDER and local caller sets its texture",
+          "PP_3DCYLINDER" in pe_caller and "PP_3DCYLINDER" in ref_caller
+          and texture in local_caller)
+    check(f"effect {master} local caller is included in source renderer master set",
+          f"case {master}:" in LOCAL_PREDICATE)
 
 # The PE accumulates a floating angle but truncates each direct trig-table
 # index, writes top cosine products to float before the matrix, and submits

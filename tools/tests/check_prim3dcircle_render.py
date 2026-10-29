@@ -48,11 +48,25 @@ check("PE and primary Ref dispatch primitive id 0x0C to Render3DCircle",
       re.search(r"case\s+0xC\s*:\s*CEffectPrim::Render3DCircle\(this, wtm\)", PE_DISPATCH) is not None
       and re.search(r"case\s+PP_3DCIRCLE\s*:\s*Render3DCircle\(wtm\)", REF_DISPATCH) is not None)
 
-expected_masters = {17, 31, 26, 35, 36, 42, 48, 61, 73, 170, 321}
+expected_masters = {8, 9, 17, 31, 26, 35, 36, 42, 48, 61, 62, 73, 170, 321}
 actual_masters = {int(value) for value in re.findall(r"GetEffectType\(\)\s*==\s*(\d+)", LOCAL_PREDICATE)}
 check("local source-selected subset uses the exact explicit master-effect ID set",
       actual_masters == expected_masters and "m_type == PP_3DCIRCLE" in LOCAL_PREDICATE
       and "m_master" in LOCAL_PREDICATE)
+ref_effects = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
+for master, pe_signature, local_signature, segment_token in (
+    (8, "void __thiscall CRagEffect::Warp(CRagEffect *this)", "void CRagEffect::SpawnWarp8()", "InitReferenceSegments"),
+    (9, "void __thiscall CRagEffect::Enhance(CRagEffect *this)", "void CRagEffect::SpawnEnhance9()", "InitReferenceSegments"),
+    (62, "void __thiscall CRagEffect::Sightrasher(CRagEffect *this)", "void CRagEffect::ApplySightrasher()", "m_numSegments = 1"),
+):
+    pe_caller = body(PE, pe_signature)
+    ref_caller = body(ref_effects, pe_signature)
+    local_caller = body(CURRENT, local_signature)
+    check(f"effect {master} PE/Ref callers create a PP_3DCIRCLE with segment state",
+          "PP_3DCIRCLE" in pe_caller and "PP_3DCIRCLE" in ref_caller
+          and segment_token in local_caller)
+    check(f"effect {master} local caller is included in source renderer master set",
+          f"GetEffectType() == {master}" in LOCAL_PREDICATE)
 check("selected route uses RenderReferenceCircle; remaining PP_3DCIRCLE uses generic circle layers",
       "if (UsesReferenceCircle())" in LOCAL_RENDER
       and "RenderReferenceCircle(*this, *viewMatrix);" in LOCAL_RENDER

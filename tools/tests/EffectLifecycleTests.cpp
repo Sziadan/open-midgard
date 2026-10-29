@@ -3419,11 +3419,11 @@ int main()
             const CEffectPrim* circle=*primitive++;
             const CEffectPrim* cylinder=*primitive;
             const CEffectPrim* cross=effect.m_primList.back();
-            check(circle->m_type==PP_3DCIRCLE&&circle->m_duration==60&&circle->m_arcAngle==22.5f
+            check(circle->m_type==PP_3DCIRCLE&&circle->UsesReferenceCircle()&&circle->m_duration==60&&circle->m_arcAngle==22.5f
                 &&circle->m_size==7.0f&&circle->m_latitude==90.0f&&circle->m_alpha==128.0f
                 &&circle->m_fadeOutCnt==40&&circle->m_texture.size()==1,
                 "effect9 state0 circle preserves setup profile and resource");
-            check(cylinder->m_type==PP_3DCYLINDER&&cylinder->m_duration==60
+            check(cylinder->m_type==PP_3DCYLINDER&&cylinder->UsesReferenceCylinder()&&cylinder->m_duration==60
                 &&cylinder->m_outerSize==6.0f&&cylinder->m_innerSize==6.0f&&cylinder->m_heightSpeed==2.0f
                 &&std::fabs(cylinder->m_heightAccel-(2.0/60.0*-0.66666669))<0.000001
                 &&cylinder->m_maxHeightSize==50.0f&&cylinder->m_alpha==128.0f
@@ -3677,7 +3677,7 @@ int main()
         if(effect.m_primList.size()==2) {
             const CEffectPrim* circle=effect.m_primList.front();
             const CEffectPrim* orbit=effect.m_primList.back();
-            check(circle->m_type==PP_3DCIRCLE&&circle->m_duration==60&&circle->m_renderFlag==0x201
+            check(circle->m_type==PP_3DCIRCLE&&circle->UsesReferenceCircle()&&circle->m_duration==60&&circle->m_renderFlag==0x201
                 &&circle->m_radius==2.0f&&circle->m_arcAngle==22.5f&&circle->m_innerSize==10.0f
                 &&circle->m_latitude==90.0f&&circle->m_radiusSpeed==1.25f
                 &&std::fabs(circle->m_radiusAccel-(1.25f/60.0f*-0.5f))<0.000001f
@@ -3713,7 +3713,7 @@ int main()
         if(effect.m_primList.size()==2) {
             const CEffectPrim* first=effect.m_primList.front();
             const CEffectPrim* second=effect.m_primList.back();
-            check(first->m_type==PP_3DCYLINDER&&first->m_duration==55
+            check(first->m_type==PP_3DCYLINDER&&first->UsesReferenceCylinder()&&first->m_duration==55
                 &&first->m_accel==-0.000070000002f&&first->m_longSpeed==-10.0f
                 &&first->m_outerSize==6.0f&&first->m_outerSpeed==0.079999998f
                 &&first->m_innerSize==5.0f&&first->m_heightSize==6.5f&&first->m_heightSpeed==-0.1f
@@ -11369,7 +11369,7 @@ int main()
         const int circleDrawStart=rngDraws;
         effect.ApplySightrasher();
         CEffectPrim* circle=effect.m_primList.empty()?nullptr:effect.m_primList.back();
-        check(effect.m_primList.size()==17&&circle&&circle->m_type==PP_3DCIRCLE
+        check(effect.m_primList.size()==17&&circle&&circle->m_type==PP_3DCIRCLE&&circle->UsesReferenceCircle()
             &&circle->m_duration==30&&circle->m_latitude==90&&circle->m_radiusSpeed==2.5f
             &&circle->m_innerSize==-10&&circle->m_fadeOutCnt==20
             &&g_texMgr.lastPath&&std::string(g_texMgr.lastPath)=="effect\\ring_yellow.tga"

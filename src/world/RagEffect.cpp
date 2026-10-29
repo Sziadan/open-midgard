@@ -12649,7 +12649,11 @@ void CEffectPrim::SetParticleResources(const char* sprName, const char* actName,
 bool CEffectPrim::UsesReferenceCircle() const
 {
     return m_type == PP_3DCIRCLE && m_master
-        && (m_master->GetEffectType() == 17 || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 35 || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 48 || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 73 || m_master->GetEffectType() == 170 || m_master->GetEffectType() == 321);
+        && (m_master->GetEffectType() == 8 || m_master->GetEffectType() == 9 || m_master->GetEffectType() == 17
+            || m_master->GetEffectType() == 31 || m_master->GetEffectType() == 26 || m_master->GetEffectType() == 35
+            || m_master->GetEffectType() == 36 || m_master->GetEffectType() == 42 || m_master->GetEffectType() == 48
+            || m_master->GetEffectType() == 61 || m_master->GetEffectType() == 62 || m_master->GetEffectType() == 73
+            || m_master->GetEffectType() == 170 || m_master->GetEffectType() == 321);
 }
 
 bool CEffectPrim::UsesReferenceTexture() const
@@ -12666,7 +12670,7 @@ bool CEffectPrim::UsesReferenceCylinder() const
 {
     if (m_type != PP_3DCYLINDER || !m_master) return false;
     switch (m_master->GetEffectType()) {
-    case 0: case 2: case 3: case 14: case 34: case 36: case 81: case 122: case 180: case 184: case 218: case 219: case 220: case 221: return true;
+    case 0: case 2: case 3: case 6: case 9: case 14: case 34: case 36: case 81: case 122: case 180: case 184: case 218: case 219: case 220: case 221: return true;
     case 7: case 73: case 115: case 138: case 140: return true;
     default: return false;
     }
