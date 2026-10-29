@@ -60,6 +60,15 @@ for effect_id, expected in (
     if route not in ROUTES:
         raise AssertionError(f"local effect{effect_id} generated route changed")
 
+pe_600 = branch(pe_process, 0x258, 0x259)
+ref_600 = branch(ref_process, 0x258, 0x259)
+if compact(pe_600) != compact(ref_600):
+    raise AssertionError("PE and primary-Ref effect600 ThrowItem callers differ")
+if "ThrowItem(this, &byte_719A18, 3)" not in pe_600:
+    raise AssertionError("effect600 ThrowItem variant3 or resource symbol changed")
+if "case 600: return ProcessThrowItemEffect();" not in ROUTES:
+    raise AssertionError("local effect600 generated route changed")
+
 pe_helper = function(PE, "void __thiscall CRagEffect::ThrowItem(CRagEffect *this, char *tName, char F1)")
 ref_helper = function(REF_HELPER, "void __thiscall CRagEffect::ThrowItem(CRagEffect *this, char *tName, char F1)")
 if compact(pe_helper) != compact(ref_helper):
@@ -74,10 +83,16 @@ if not re.search(r"ApplyThrowItem\([^\n]*\\xC8\\xAD\\xBF\\xB0\\xBA\\xB4\.bmp\", 
     raise AssertionError("local effect539 ordered resource/variant pairing changed")
 if not re.search(r"m_type == 299\s*\?[^:]*\\xBA\\xF3\\xC6\\xF7\\xBC\\xC7\\xBA\\xB4\.bmp[^:]*:\s*\"[^\"]*\\xB9\\xF6\\xBC\\xAD\\xC5\\xA9\\xC6\\xF7\\xBC\\xC7\.bmp\",\s*1\);", local541.group(1)):
     raise AssertionError("local effect541 resource or selector1 mapping changed")
+local_process = function(LOCAL, "bool CRagEffect::ProcessThrowItemEffect()")
+if not re.search(r'case 600:\s*ApplyThrowItem\("[^\"]*\\xBA\\xA3\\xB3\\xD1\\xB3\\xAA\\xC0\\xCC\\xC7\\xC1\.bmp", 3\);\s*return true;', local_process):
+    raise AssertionError("local effect600 variant3 resource mapping changed")
 
 local_helper = function(LOCAL, "void CRagEffect::ApplyThrowItem(const char* textureName, int variant)")
 for token in ("variant == 10", "launchFrame = 5", "variant == 11", "launchFrame = 10",
               "m_stateCnt != launchFrame", "kPrimTypeThrowItem", "variant == 1",
+              "variant == 3", "gi.distance = variant == 2 ? 2.0f : variant == 3 ? 4.0f : 3.0f",
+              "gi.height[1] = variant == 2 ? 2.0f : variant == 3 ? 3.0f",
+              "gi.fullDisplayAngle = variant == 3 ? 330 : 0", "gi.flag[2] = 15",
               "gi.flag[2] = 9", "gi.flag[3] = 4"):
     if token not in local_helper:
         raise AssertionError(f"local ThrowItem lifecycle/payload missing {token}")
@@ -87,10 +102,11 @@ expected_resources = {
     0x71992C: b"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC8\xAD\xBF\xB0\xBA\xB4.bmp",
     0x71990C: b"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBF\xB0\xBB\xEA\xBA\xB4.bmp",
     0x7198E8: b"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xB9\xF6\xBC\xAD\xC5\xA9\xC6\xF7\xBC\xC7.bmp",
+    0x719A18: b"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xA3\xB3\xD1\xB3\xAA\xC0\xCC\xC7\xC1.bmp",
 }
 for va, expected in expected_resources.items():
     actual = image.read_cstring_at(va)
     if actual is None or actual.raw != expected:
         raise AssertionError(f"ThrowItem resource differs at PE VA 0x{va:X}")
 
-print("effects539/541 ThrowItem parity passed: PE/Ref caller order, local variants and launch frames, exact textures")
+print("effects539/541/600 ThrowItem parity passed: PE/Ref callers, local variants and launch frames, exact textures")

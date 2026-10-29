@@ -2554,3 +2554,7 @@ Extended `check_effect281_288_bottom_music.py` to compare effect674's PE/primary
 ## WP5F effects548–550 actor-light parity — 2026-10-29
 
 Extended `check_effect375_actor_light.py` with matching PE/primary-Ref caller checks and local guarded routes for effects548–550. It covers the frame16 limits, bit masks `0x40000`, `0x4000`, and `0x2000`, low-byte BodyTime2 calculation for 548/549, and BodyTime cutoff for 550. Focused check, elevated Release parity build and full Release CTest passed 360/360. No production behavior change.
+
+## WP5F effect600 ThrowItem variant3 parity — 2026-10-29
+
+Extended `check_effect539_throw_items.py` with effect600's PE/primary-Ref caller, local generated route and variant3 CP949 resource mapping, plus the shared variant3 launch profile and exact executable texture bytes. Focused check, elevated Release parity build and full Release CTest passed 360/360. No production behavior change.
