@@ -3129,3 +3129,6 @@ Connected production ProcessGumGangEffect to the lifecycle harness for the one-b
 ## WP5 GumGang lifecycle — effect455 selector1 — 2026-10-29
 
 Extended the production GumGang fixture to effect455's two-band selector1 profile. It checks the five ordered textures, primitive and owner payload, 24 controlled RNG draws, both GI field sequences, `flag[4]=1`, inactive remaining bands, and later-state origin refresh without reemission or resource/RNG activity. The comparator now requires the effect455 fixture alongside its PE caller and shared helper coverage. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.
+## WP5 DoubleGumGang lifecycle — effect418 selector2 — 2026-10-29
+
+Extended the production GumGang fixture to effect418's two-band DoubleGumGang profile. It verifies PP_DOUBLEGUMGANG, zero size, duration/render/origin, five ordered assets, 24 controlled RNG draws, both GI motion profiles and selector2, inactive remaining bands, and later-state origin refresh without reemission, resource loads, or RNG. The existing comparator now requires the effect418 fixture with its PE/Ref caller and helper checks. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.

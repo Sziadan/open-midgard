@@ -14810,6 +14810,52 @@ int main()
             "effect455 later state refreshes origin without reemission, texture or RNG");
         effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        CRagEffect effect;effect.m_type=418;effect.m_stateCnt=0;effect.m_duration=73;effect.m_master=&master;
+        rngValues={0,1,2,3,4,5,6,2,7,8,3,9, 1,2,3,4,1,6,7,3,8,9,2,10};rngCursor=0;
+        g_texMgr.requests.clear();waveCalls.clear();const int draws=rngDraws;
+        check(effect.ProcessGumGangEffect(),"effect418 production GumGang handler recognizes the DoubleGumGang caller");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        const std::vector<std::string> expectedTextures={"effect\\super1.bmp","effect\\super2.bmp",
+            "effect\\super3.bmp","effect\\super4.bmp","effect\\super5.bmp"};
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_DOUBLEGUMGANG&&prim->m_renderFlag==5
+            &&prim->m_duration==73&&prim->m_totalTexture==5&&prim->m_size==0.0f
+            &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+            &&g_texMgr.requests==expectedTextures&&rngDraws==draws+24&&rngCursor==24&&waveCalls.empty(),
+            "effect418 emits one size-zero DoubleGumGang with ordered assets and 24 controlled draws");
+        if(prim) {
+            const int drawsByBand[2][12]={{0,1,2,3,4,5,6,2,7,8,3,9},{1,2,3,4,1,6,7,3,8,9,2,10}};
+            bool payload=true;
+            for(int band=0;band<2;++band) {
+                const EffectGi& gi=prim->m_gi[static_cast<size_t>(band)];
+                const int* values=drawsByBand[band];
+                payload=payload&&gi.life==1&&gi.process==0&&gi.distance==2.0f
+                    &&gi.arcBaselineY==-static_cast<float>(values[0]%10)
+                    &&gi.height[0]==10.0f&&gi.height[1]==40.0f&&gi.height[2]==static_cast<float>(values[1]%5)
+                    &&gi.height[3]==static_cast<float>(values[2]%360)&&gi.sparkY==-static_cast<float>(values[3]%10)
+                    &&gi.height[4]==10.0f&&gi.height[5]==80.0f&&gi.height[6]==static_cast<float>(values[4]%5)
+                    &&gi.height[7]==static_cast<float>(values[5]%360)&&gi.vecTPreY==-static_cast<float>(values[6]%10)
+                    &&gi.height[8]==10.0f&&gi.height[9]==120.0f&&gi.height[10]==static_cast<float>(values[7]%5)
+                    &&gi.height[11]==static_cast<float>(values[8]%360)&&gi.vecTNowY==-static_cast<float>(values[9]%10)
+                    &&gi.height[12]==10.0f&&gi.height[13]==160.0f&&gi.height[14]==static_cast<float>(values[10]%5)
+                    &&gi.flag[4]==2&&prim->m_bands[static_cast<size_t>(band)].rotStart==static_cast<float>(values[11]%360);
+            }
+            check(payload,"effect418 preserves both DoubleGumGang GI profiles and selector flag4=2");
+            check(prim->m_gi[2].life==0&&prim->m_gi[3].life==0,
+                "effect418 leaves the remaining two DoubleGumGang bands inactive");
+        } else {
+            check(false,"effect418 preserves both DoubleGumGang GI profiles and selector flag4=2");
+            check(false,"effect418 leaves the remaining two DoubleGumGang bands inactive");
+        }
+        const size_t requests=g_texMgr.requests.size();master.m_pos={410,520,630};effect.m_stateCnt=1;
+        check(effect.ProcessGumGangEffect()&&effect.m_primList.size()==1&&prim
+            &&effect.m_effectPos.x==410&&effect.m_effectPos.y==520&&effect.m_effectPos.z==630
+            &&effect.m_cachedPos.x==410&&effect.m_cachedPos.y==520&&effect.m_cachedPos.z==630
+            &&g_texMgr.requests.size()==requests&&rngDraws==draws+24&&waveCalls.empty(),
+            "effect418 later state refreshes origin without re-emission, texture or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
 }

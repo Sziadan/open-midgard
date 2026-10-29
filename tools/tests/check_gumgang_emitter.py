@@ -141,4 +141,16 @@ for token in (
     if token not in effect455_fixture.group(0):
         raise AssertionError(f"effect455 lifecycle assertion missing: {token}")
 
+effect418_fixture = re.search(r"CRagEffect effect;effect\.m_type=418;[\s\S]*?effect\.ClearPrims\(\);g_world\.UpdateGameObjects\(\);", LIFECYCLE)
+if effect418_fixture is None or "effect.ProcessGumGangEffect()" not in effect418_fixture.group(0):
+    raise AssertionError("effect418 double-band runtime fixture does not invoke the production GumGang handler")
+for token in (
+    "effect418 emits one size-zero DoubleGumGang with ordered assets",
+    "effect418 preserves both DoubleGumGang GI profiles and selector flag4=2",
+    "effect418 leaves the remaining two DoubleGumGang bands inactive",
+    "effect418 later state refreshes origin without re-emission, texture or RNG",
+):
+    if token not in effect418_fixture.group(0):
+        raise AssertionError(f"effect418 lifecycle assertion missing: {token}")
+
 print("GumGang emitter parity passed: PE/Ref setup, six PE/local callers, RNG profile, height15 mismatch and five PE assets")
