@@ -4064,3 +4064,7 @@ Added CTest entries for the existing Snow and Sakura comparators, which verify P
 ## WP5E effect303 CHEMICAL2 source/resource parity — 2026-10-29
 
 Added and registered `check_effect303_chemical2.py`. It compares complete PE/primary-Ref CHEMICAL2 helper bodies and OnProcess2 branches, checks the local two-call route, frame-40 slash emitter, frame-44 cue, and frames-20–120 light/tint behavior, and verifies exact `effect\\slash01.tga` bytes at `0x71C9E4`. The executable exposes only the `effect\\` prefix for the wave symbol, so its suffix remains unresolved and is not guessed. Focused check, elevated Release parity build, and full Release CTest passed 339/339. No production behavior change.
+
+## WP5E effect370 Bottom_Music variant9 source/resource parity — 2026-10-29
+
+Extended the registered Bottom_Music checker to cover effect370's PE and primary-Ref caller, local OnProcess2 route, variant9 selection, and exact `effect\\cross_old.bmp` executable bytes at `0x719348`. Focused check and the complete Release CTest passed 339/339. No production behavior change.

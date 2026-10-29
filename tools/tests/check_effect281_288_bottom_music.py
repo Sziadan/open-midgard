@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare Bottom_Music caller texture selectors for effects 281/284/288."""
+"""Compare Bottom_Music caller texture selectors for effects 281/284/288/370."""
 from pathlib import Path
 import re
 import sys
@@ -12,6 +12,7 @@ PE = (ROOT / "HighPriest.exe.c").read_text(encoding="utf-8", errors="replace")
 REF = (ROOT / "Ref/dhxj/RagEffect2.cpp").read_text(encoding="utf-8", errors="replace")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 DISPATCH = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
+DISPATCH2 = (ROOT / "src/world/RagEffectOnProcess2Cases.generated.inc").read_text(encoding="utf-8")
 GENERATOR = (ROOT / "tools/generate_effect_dispatch.py").read_text(encoding="utf-8")
 symbols = SymbolTable(ExeImage())
 
@@ -31,6 +32,16 @@ for effect_id, (texture_arg, variant) in expected_callers.items():
             f"local dispatch missing effect {effect_id}")
     require(re.search(rf"{effect_id}:\s*\"ApplyBottomMusic\(nullptr, {variant}\); return true;\"", GENERATOR),
             f"generator route missing effect {effect_id}")
+
+for source_name, source in (("PE", PE), ("primary Ref", (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace"))):
+    match = re.search(r"case 0x172:\s*CRagEffect::Bottom_Music\(this, aEffectCrossOld, 9\);\s*return 1;", source)
+    require(match is not None, f"{source_name} effect370 Bottom_Music variant9 caller missing")
+require('case 370: ApplyBottomMusic("effect\\\\cross_old.bmp", 9); return true;' in DISPATCH2,
+        "local OnProcess2 effect370 route or texture changed")
+require(symbols.resolve_name("aEffectCrossOld") is not None
+        and (symbols.resolve_name("aEffectCrossOld").va, symbols.resolve_name("aEffectCrossOld").raw)
+        == (0x719348, b"effect\\cross_old.bmp"),
+        "effect370 cross_old.bmp executable resource mismatch")
 
 resource_sets = {
     "aEffectMelodyAB": (0x71A4E8, b"effect\\melody_a.bmp"),
@@ -67,4 +78,4 @@ require('"effect\\\\redgemstone.bmp"' in ref_helper.group(1)
         and '"effect\\\\bluegemstone.bmp"' in ref_helper.group(1)
         and '"effect\\\\yellowgemstone.bmp"' in ref_helper.group(1),
         "recorded secondary Ref/PE variant5 resource discrepancy changed")
-print("effects281/284/288 Bottom_Music source parity passed; variant5 follows PE's unresolved prefix")
+print("effects281/284/288/370 Bottom_Music source parity passed; effect370 uses exact cross_old.bmp bytes")
