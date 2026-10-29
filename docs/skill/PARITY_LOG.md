@@ -4838,3 +4838,7 @@ Effect638 variant21 now has direct runtime coverage for its one-state-zero PP_3D
 ## WP5 Effect_SPR lifecycle — effect639 variant22 — 2026-10-29
 
 Direct runtime fixture exercises the extracted production variant22 helper at state0 and state1. It asserts the particle profile, exact SPR/ACT bytes bound to PE VAs `0x71CF50/0x71CF34`, no wave/RNG, and no repeated spawn/resource request on the later state. The existing checker verifies PE and primary Ref caller mapping; PE asset bytes remain authoritative over secondary Ref `misc\...` names. This covers local lifecycle and payload only, not rendered output.
+
+## WP5 Effect_SPR lifecycle — effects640–642 variants23–25 — 2026-10-29
+
+The table-driven fixture covers caller-to-variant mappings 640→23, 641→24, and 642→25 using the extracted production helper. It verifies the common repeat-particle profile, state1 refresh without repeat output, and no wave/RNG. The comparator binds each row's SPR/ACT literals to PE VAs `0x71CF1C/0x71CF04`, `0x71CEEC/0x71CED4`, and `0x71CEBC/0x71CEA4`; PE and primary Ref routes agree. Local lifecycle/payload coverage only; focused checks pass2/2; full VS17 Release parity CTest passes434/434. No rendered-output acceptance is claimed.

@@ -239,6 +239,30 @@ for token in ("PP_3DPARTICLE", "m_duration==64", "m_deltaPos2.y==-1.0f", "m_rend
               "effect.m_stateCnt=1", "without duplicate particle, resources, sound or RNG"):
     if token not in effect639_fixture.group(1):
         raise AssertionError(f"effect639 lifecycle assertion missing {token}")
+effect640_642_fixture = re.search(r"EffectSpriteCase cases\[\]=\{(.*?)\n        };(.*?)(?=\n    })", LIFECYCLE, re.S)
+if effect640_642_fixture is None or "ProcessEffectSpriteProduction(item.variant)" not in effect640_642_fixture.group(2):
+    raise AssertionError("effects640-642 table-driven production Effect_SPR lifecycle fixture disappeared")
+asset_vas_by_effect = {
+    640: (0x71CF1C, 0x71CF04),
+    641: (0x71CEEC, 0x71CED4),
+    642: (0x71CEBC, 0x71CEA4),
+}
+fixture_rows = {}
+for match in re.finditer(r'\{\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*("(?:\\.|[^"\\])*")\s*,\s*("(?:\\.|[^"\\])*")\s*\}', effect640_642_fixture.group(1)):
+    effect_id, variant = int(match.group(1)), int(match.group(2))
+    fixture_rows[effect_id] = (variant, ast.literal_eval(match.group(4)).encode("latin-1"),
+                               ast.literal_eval(match.group(5)).encode("latin-1"))
+if set(fixture_rows) != set(asset_vas_by_effect) or {e: fixture_rows[e][0] for e in fixture_rows} != {640: 23, 641: 24, 642: 25}:
+    raise AssertionError("effects640-642 lifecycle table must cover routes 640→23, 641→24, and 642→25")
+for effect_id, (spr_va, act_va) in asset_vas_by_effect.items():
+    _, spr, act = fixture_rows[effect_id]
+    if (spr, act) != (image.read_cstring_at(spr_va).raw, image.read_cstring_at(act_va).raw):
+        raise AssertionError(f"effect{effect_id} fixture resources differ from PE bytes at {spr_va:#x}/{act_va:#x}")
+for token in ("item.effect", "m_deltaPos2.y==-1.0f", "m_renderFlag==1", "m_pattern==0x200",
+              "m_animSpeed==2", "m_repeatAnim", "m_numSegments==1", "rngDraws==draws",
+              "waveCalls.empty()", "effect.m_stateCnt=1", "without repeated output"):
+    if token not in effect640_642_fixture.group(2):
+        raise AssertionError(f"effects640-642 lifecycle assertion missing {token}")
 
 # Priority 5P effect-sprite callers 630/632/633/634 and their RNG variants.
 for effect_id, variant, wave_symbol in ((630, 15, "aEffect_155"),

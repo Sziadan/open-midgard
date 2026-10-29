@@ -12716,6 +12716,41 @@ int main()
         g_resMgr.requests.clear();
     }
     {
+        struct EffectSpriteCase { int effect;int variant;int duration;const char* spr;const char* act; };
+        const EffectSpriteCase cases[]={
+            {640,23,70,"\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF7\xC0\xCC\xC1\xF0\xBD\xBA\xC7\xC7\xBE\xEE.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xF7\xC0\xCC\xC1\xF0\xBD\xBA\xC7\xC7\xBE\xEE.act"},
+            {641,24,71,"\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xC1\xB8\xAE\xC2\xA1\xBD\xBA\xC7\xC7\xBE\xEE.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xC1\xB8\xAE\xC2\xA1\xBD\xBA\xC7\xC7\xBE\xEE.act"},
+            {642,25,72,"\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xC3\xB7\xB9\xBE\xEE\xBD\xBA\xC7\xC7\xBE\xEE.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\\xC7\xC3\xB7\xB9\xBE\xEE\xBD\xBA\xC7\xC7\xBE\xEE.act"},
+        };
+        rngValues={};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        for(const EffectSpriteCase& item:cases){
+            CRenderObject master;master.m_pos={static_cast<float>(item.effect),static_cast<float>(item.effect+10),static_cast<float>(item.effect+20)};
+            CRagEffect effect;effect.m_type=item.effect;effect.m_stateCnt=0;effect.m_duration=item.duration;effect.m_master=&master;
+            const std::string expectedSpr=item.spr,expectedAct=item.act;
+            check(effect.ProcessEffectSpriteProduction(item.variant),"Effect_SPR table caller production helper remains active");
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+                &&prim->m_pos.x==item.effect&&prim->m_pos.y==item.effect+10&&prim->m_pos.z==item.effect+20
+                &&prim->m_duration==item.duration&&prim->m_deltaPos2.y==-1.0f&&prim->m_renderFlag==1
+                &&prim->m_pattern==0x200&&prim->m_animSpeed==2&&prim->m_repeatAnim
+                &&prim->m_spriteAction==0&&prim->m_curMotion==0
+                &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+                &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+                &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==item.effect
+                &&prim->m_segments[0].pos.y==item.effect+10&&prim->m_segments[0].pos.z==item.effect+20
+                &&rngDraws==draws&&rngCursor==0&&waveCalls.empty(),
+                "Effect_SPR effects640-642 variants23-25 share exact repeat particle payload without sound/RNG");
+            const size_t requests=g_resMgr.requests.size();master.m_pos={static_cast<float>(item.effect+100),static_cast<float>(item.effect+110),static_cast<float>(item.effect+120)};
+            effect.m_stateCnt=1;
+            check(effect.ProcessEffectSpriteProduction(item.variant)&&effect.m_primList.size()==1
+                &&effect.m_effectPos.x==item.effect+100&&effect.m_effectPos.y==item.effect+110&&effect.m_effectPos.z==item.effect+120
+                &&g_resMgr.requests.size()==requests&&rngDraws==draws&&rngCursor==0&&waveCalls.empty(),
+                "Effect_SPR effects640-642 later states refresh origin without repeated output");
+            effect.ClearPrims();g_world.UpdateGameObjects();g_resMgr.requests.clear();
+        }
+        rngValues.clear();rngCursor=0;waveCalls.clear();
+    }
+    {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         gameMode.messages=0;gameMode.messageIds.clear();waveCalls.clear();
