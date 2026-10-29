@@ -2904,3 +2904,7 @@ Added and registered `tools/tests/check_effect7_exit.py` plus direct `ProcessExi
 ## WP5 CRagEffect effects23/25 STR-only checkpoint - 2026-10-29
 
 Added and registered `tools/tests/check_effects23_25_str_only.py`. PE cases23/25 share the canonical `ProcessEZ2STR(0,-80,0)` tail; generated local dispatch and `ProcessReferenceStrOnly` both bind the pair to that same path. PE and primary Ref Init map effect23 to `StoneCurse.str` and effect25 to randomized `Firewall1/2.str`; local catalog and STR-name tables preserve those mappings. Existing lifecycle coverage tests missing, active and exhausted clips for both ids, moving-master projection, the minus-80 offset, preserved parent origin/duration, no primitives, and no processing audio/RNG/resources. Focused and full Release parity CTest passed 419/419. No runtime behavior changed.
+
+## WP5 CRagEffect effect29 Lightning STR-only checkpoint - 2026-10-29
+
+Added and registered `tools/tests/check_effect29_str_only.py`. PE case29 enters the shared `ProcessEZ2STR(0,-80,0)` tail; local generated dispatch and `ProcessReferenceStrOnly` preserve the same mapping. PE and primary Ref Init both select `Lightning.str`, and local catalog/STR-name tables match the exact executable string bytes at VA `0x71ACD0`. The existing generic STR lifecycle fixture includes effect29 and verifies missing/active/exhausted clip handling, actor follow, offset, unchanged parent origin/duration, and no primitive/audio/RNG/resource work. Focused and full Release parity CTest passed 420/420. No runtime behavior changed.
