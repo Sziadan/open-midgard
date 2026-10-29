@@ -5907,6 +5907,16 @@ int main()
             && circle.m_radiusSpeed == 3 && circle.m_radius == 7 && circle.m_size == 6
             && circle.m_stateCnt == 1,
             "OnProcess case 0x04 always executes source circle anchor, radius, clamp and shared lifetime branches");
+        circle.m_stateCnt = 0; circle.m_pattern = 1; circle.m_radius = 7;
+        circle.m_radiusSpeed = 0; circle.m_radiusAccel = 0;
+        circle.OnProcess();
+        check(circle.m_size == 7,
+            "OnProcess case 0x04 fill pattern keeps full radius even above inner size");
+        circle.m_stateCnt = 0; circle.m_pattern = 0; circle.m_radius = 4;
+        circle.m_innerSize = 6; circle.m_radiusSpeed = 0; circle.m_radiusAccel = 0;
+        circle.OnProcess();
+        check(circle.m_size == 4,
+            "OnProcess case 0x04 radius below inner size stays at radius instead of inner clamp");
         circle.m_master = nullptr;
         auto sphereMasterStorage = std::make_unique<CRagEffect>();
         CRagEffect& sphereMaster = *sphereMasterStorage;

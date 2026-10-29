@@ -4319,3 +4319,10 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - `cmake --build build64/skill-parity-tests --config Release` completed successfully across all parity-test targets.
 - `ctest --test-dir build64/skill-parity-tests -C Release --output-on-failure` passed 379/379. This run includes the newly registered `Prim3DQuadHorn2`, `Prim3DLine`, and `Prim3DSphere` source comparators.
 
+## WP5 CEffectPrim Prim2DCircle initializer - 2026-10-29
+
+- Added `tools/tests/check_prim2dcircle_initializer.py` and registered `prim2dcircle_initializer_source_check`.
+- Canonical PE (`HighPriest.exe.c:466918`) and primary Ref (`Ref/RagEffectPrim.cpp:1702`) initializer bodies normalize identically. Their inlined `OnProcess` case 4 branches also match; readable Ref expresses the same fill-pattern bypass and radius/inner-size clamp.
+- The local helper uses the master's screen coordinates, matches radius integration and fill/clamp behavior, and processes alpha before the shared tick. Expanded lifecycle assertions cover the existing clamp case, fill pattern above the inner size, and radius below the inner size.
+- No production code change was made. Direct comparator passed; the updated lifecycle target rebuilt successfully, and full Release CTest passed 380/380.
+
