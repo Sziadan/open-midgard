@@ -4518,3 +4518,8 @@ Added and registered `tools/tests/check_effect18_steal.py`. Canonical PE `Steal`
 ## WP5 CRagEffect Coin effect10 source checkpoint - 2026-10-29
 
 Added and registered `tools/tests/check_effect10_coin.py`. Canonical PE `Coin` and primary Ref bodies normalize identically; PE case10 calls the helper and propagates its result to the shared tail, while local case10 enters `ProcessEffectFrameLegacy` and calls `ProcessCoin`. The comparator checks the reduced-effects/frame20 burst gate, five particles with five ordered draws each, gravity particle profile and two initialized segments, particle-triggered bounce audio, continued STR processing despite its ignored result, and the state100 lifetime bound. Existing lifecycle assertions cover the burst payload, bounce wave, reduced-effects cadence, termination and cleanup. Focused CTest and full Release parity CTest passed 411/411. No runtime behavior changed.
+
+
+## WP5 CRagEffect SaintCasting effect12 inline source checkpoint - 2026-10-29
+
+Added and registered `tools/tests/check_effect12_saint_casting.py`. The canonical PE OnProcess case12 is inline (there is no separate PE helper): it refreshes the parent position, gates its wave/rings on state zero, plays `EF_BeginSpell`, then calls SaintCasting for durations45 and25 with the yellow ring and variant1. The comparator checks that full order against the generated local effect12 route and `ApplyPairedSaintCasting`. Existing lifecycle coverage exercises the paired 45/25 SaintCasting payload and shared variant size/height/alpha/texture branches; it is shared-helper coverage rather than a direct type12 dispatch replay. Focused CTest and full Release parity CTest passed 412/412. No runtime behavior changed.
