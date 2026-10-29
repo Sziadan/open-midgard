@@ -4168,3 +4168,7 @@ Added and registered `check_effect581_forest_light.py`. It compares the PE/prima
 ## WP5F effect542 actor-light parity — 2026-10-29
 
 Extended `check_effect375_actor_light.py` with effect542's matching PE/primary-Ref caller, BodyLight `0x4000` gate, frame-150 bound, integer `BodyTime2` division and local guarded route. Focused check, elevated Release parity build and full Release CTest passed 357/357. No production behavior change.
+
+## WP5F effect582 SuperAngel caller parity — 2026-10-29
+
+Added and registered `check_effect582_super_angel.py`. It compares the PE/primary-Ref caller and complete helper body, checks the local effect route and variant11-before-10 ordering, and verifies the four exact sprite/action strings. Existing `EffectLifecycleTests` already cover variant emission and boundaries. Focused check, elevated Release parity build and full Release CTest passed 358/358. No production behavior change.
