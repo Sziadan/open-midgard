@@ -35,6 +35,7 @@ constexpr int kPrimTypeHeal = 0x3C;
 constexpr int kPrimTypeChemical3 = 0x38;
 constexpr int kPrimTypeCasting5 = 0x6B;
 constexpr int kPrimTypeFlowerCast = 0x6C;
+constexpr int kPrimTypeGiExplosion = 0x71;
 struct matrix { float m[4][4]{}; };
 #include "EffectSegmentTypes.inc"
 struct EffectBandState {
@@ -538,6 +539,7 @@ struct CRagEffect : CGameObject {
     void ApplyWarpZone2(const char*);
     void ApplyBlackDevil(const char*);
     void ApplyFlowerCasting(const char*,float,int);
+    void ApplyGiExplosion(const char*);
     void ProcessPokJukSound301();
     void ApplyWarpZone();
     void ApplyIceArrow();
@@ -14251,6 +14253,51 @@ int main()
         check(waveCalls.size()==waveCount&&pokjuk.m_stateCnt==300&&rngDraws==startDraws,
             "effect301 missing mode, world or player suppresses only the cue");
         g_modeMgr.current=oldMode;gameMode.m_world=oldWorld;g_world.m_player=oldPlayer;
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        CRagEffect explosion;explosion.m_type=514;explosion.m_stateCnt=0;explosion.m_duration=66;explosion.m_master=&master;
+        rngValues={17,89,359,0};rngCursor=0;const int startDraws=rngDraws;
+        waveCalls.clear();g_texMgr.requests.clear();
+        explosion.ApplyGiExplosion("effect\\ring_blue.tga");
+        CEffectPrim* prim=explosion.m_primList.empty()?nullptr:explosion.m_primList.front();
+        const short rotations[4]={17,89,359,0};
+        bool payload=explosion.m_primList.size()==1&&prim&&prim->m_type==PP_GI_EXPLOSION
+            &&prim->m_renderFlag==5&&prim->m_duration==66&&prim->m_size==4.0f
+            &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+            &&prim->m_texture.size()==1&&explosion.m_effectPos.x==100&&explosion.m_cachedPos.z==300
+            &&g_texMgr.requests==std::vector<std::string>({"effect\\ring_blue.tga"})
+            &&rngDraws==startDraws+4&&rngCursor==4&&waveCalls.empty();
+        for(int band=0;band<4;++band) if(prim) {
+            const EffectGi& gi=prim->m_gi[band];
+            payload=payload&&gi.life==1&&gi.process==0&&gi.fullDisplayAngle==315
+                &&gi.maxHeight==15.0f&&gi.rotStart==rotations[band]&&gi.alphaB==0
+                &&gi.distance==20.0f-static_cast<float>(band)*0.5f&&gi.riseAngle==50
+                &&gi.sparkY==0.0f;
+            for(float value:gi.height) payload=payload&&value==0.0f;
+            for(u8 flag:gi.flag) payload=payload&&flag==0;
+        }
+        check(payload,"effect514 state0 emits the exact four-band explosion and four ordered rotation draws");
+        explosion.ClearPrims();g_world.UpdateGameObjects();
+
+        master.m_pos={110,210,310};explosion.m_stateCnt=1;g_texMgr.requests.clear();
+        const int gatedDraws=rngDraws;explosion.ApplyGiExplosion("effect\\ring_blue.tga");
+        check(explosion.m_primList.empty()&&explosion.m_effectPos.x==110&&explosion.m_cachedPos.z==310
+            &&g_texMgr.requests.empty()&&rngDraws==gatedDraws&&waveCalls.empty(),
+            "effect514 state1 refreshes origin while suppressing launches and RNG");
+        explosion.m_stateCnt=0;explosion.m_master=nullptr;explosion.m_cachedPos={7,8,9};
+        rngValues={3,4,5,6};rngCursor=0;const int cachedDraws=rngDraws;
+        explosion.ApplyGiExplosion("effect\\ring_blue.tga");
+        prim=explosion.m_primList.empty()?nullptr:explosion.m_primList.front();
+        check(prim&&prim->m_pos.x==7&&prim->m_pos.y==8&&prim->m_pos.z==9
+            &&explosion.m_effectPos.x==7&&explosion.m_cachedPos.y==8
+            &&rngDraws==cachedDraws+4&&rngCursor==4,
+            "effect514 state0 uses cached origin when the master is missing");
+        explosion.ClearPrims();g_world.UpdateGameObjects();
+        const int nullDraws=rngDraws;explosion.ApplyGiExplosion(nullptr);
+        check(explosion.m_primList.empty()&&rngDraws==nullDraws&&g_texMgr.requests.size()==1,
+            "effect514 null texture is a closed no-output gate");
         waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);

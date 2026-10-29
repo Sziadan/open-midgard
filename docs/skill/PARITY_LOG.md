@@ -4738,3 +4738,7 @@ Extracted the inline OnProcess2 effect301 behavior into ProcessPokJukSound301 wi
 ## WP7 Recovery and Resurrection packet lifecycles — opcodes 0x013D/0x0148 — 2026-10-29
 
 Added a standalone harness for the production HandleRecovery and HandleActorResurrection bodies plus their status/effect/actor lookup helpers. Recovery covers HP/SP clamping, selected-character fallback, number/color/range, effects331/332, malformed/zero inputs, and failed effect launches. Resurrection covers remote/self actor lookup, message98, local quest/death/item-ack flags, zero/missing AIDs, and malformed input. The comparator confirms PE/Ref method bodies match and records local divergences: zero-amount and unknown-status behavior, selected-character fallback, extra resurrection guards/item-ack reset, and local actor resolution. Focused checks pass2/2; full Release parity CTest passes432/432 and both static audits pass.
+
+## WP5 GI_EXPLOSION lifecycle — effect514 — 2026-10-29
+
+Connected production ApplyGiExplosion to the lifecycle harness. The fixture checks the state0 PP_GI_EXPLOSION primitive, render flag/duration/size/texture, origin and cached position, all four band payloads, ordered rotations from four exact RNG draws, later-state origin refresh without output, cached-origin launch, and null-texture gate. Existing check_effect514_gi_explosion.py supplies PE/primary-Ref, local-route and exact texture comparison. Focused lifecycle passes3229 checks; full Release parity CTest passes432/432 and both static audits pass.
