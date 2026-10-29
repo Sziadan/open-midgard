@@ -3960,3 +3960,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effects121/122 SonicBlow source comparison — 2026-10-29
 
 `check_effect121_122_sonic_blow.py` compares complete PE/primary-Ref `SonicBlow` and `SonicBlowHit` helper bodies; checks canonical cases121/122 and local caller, dispatch, and declarations; and validates exact executable bytes for `effect\EF_StoneCurse.wav`, `effect\alpha_center.tga`, `effect\assasin_sonicblow.wav`, and `effect\magic_red.tga` at VAs `0x71BB9C`, `0x7192FC`, `0x71BBD0`, and `0x71BBB8`. Existing lifecycle checks cover screen projection and circle output, hit cylinder and seeded motion, audio ordering, three RNG draws, and nonrepetition. Release parity build succeeded; full CTest passed325/325. No production change.
+
+
+## WP5C effect112 Kyrie helper comparison — 2026-10-29
+
+`check_kyrie112.py` now compares complete PE and primary-Ref `Kyrie` helper bodies and asserts that canonical PE case112 calls the helper. It records the primary Ref caller omission (the Ref source has no OnProcess body/call to Kyrie), while retaining local ProcessKyrie112 route/cadence checks and exact wave bytes at `0x71BDF0` and `0x71BDCC`. Release parity build succeeded; full CTest passed325/325. No production change.

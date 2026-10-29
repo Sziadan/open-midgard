@@ -2322,3 +2322,8 @@ Strengthened `check_top_rank.py` to resolve the executable bytes at VA `0x71B804
 ## WP5C effects121/122 SonicBlow source comparison — 2026-10-29
 
 Added `check_effect121_122_sonic_blow.py` and registered it in CTest. It compares both complete PE and primary-Ref helper bodies, verifies separate effect121/122 callers and local legacy routes, and pins the exact StoneCurse/alpha-center and assassin-SonicBlow/magic-red resource bytes at `0x71BB9C`, `0x7192FC`, `0x71BBD0`, and `0x71BBB8`. Existing lifecycle assertions cover projection, audio, ring/cylinder payloads, RNG order, motion and frame behavior. Release parity build succeeded; full CTest passed325/325. No production change.
+
+
+## WP5C effect112 Kyrie PE/Ref source comparison — 2026-10-29
+
+Strengthened `check_kyrie112.py` to compare complete PE and primary-Ref `Kyrie` helper bodies, validate the canonical PE case112 call, and record that the primary Ref source omits its OnProcess caller. Existing local route and exact two-wave resource checks remain. Release parity build succeeded and full CTest passed325/325. No production change.
