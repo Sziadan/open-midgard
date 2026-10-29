@@ -657,6 +657,8 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect537();
     bool ProcessEffect599();
     bool ProcessEffect602();
+    bool ProcessEffectTextureSet();
+    void ApplyEffectTexture(const char*, int);
     bool ProcessEffect273();
     bool ProcessEffect440();
     bool ProcessLandProtector(int);
@@ -768,7 +770,7 @@ static bool TryPlaySingleEffectWave(const vector3d& soundPos, const std::string&
         soundPos.z-listener->m_pos.z, 250, 40, 1.0f);
 }
 constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeGi4=PP_GI_4, kPrimTypeParticleUp=PP_PARTICLE_UP,
-    kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
+    kPrimTypeEffectTexture=PP_EFFECTTEXTURE, kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
 #include "EffectLifecycleBodies.inc"
 
 #include "WeatherMapBodies.inc"
@@ -3825,6 +3827,45 @@ int main()
             &&effect.m_effectPos.z==66&&rngDraws==beforeFrames+2&&g_texMgr.requests.size()==1,
             "Bottom_Volcano follows master movement after frame zero without repeating spawn work");
         effect.ClearPrims(); g_world.UpdateGameObjects();
+    }
+    {
+        CRenderObject actor; actor.m_pos={12,34,56};
+        struct TextureSetCase { int id; const char* texture; int variant; int renderFlag; };
+        const TextureSetCase cases[]={{693,"effect\\glow01.bmp",14,5},{694,"effect\\glow02.bmp",14,5},
+            {701,"effect\\glow11.bmp",14,5},{702,"effect\\glow12.bmp",14,5},
+            {703,"effect\\white02.bmp",100,257}};
+        for (const TextureSetCase& item : cases) {
+            CRagEffect effect; effect.m_type=item.id; effect.m_master=&actor; effect.m_duration=73;
+            effect.m_stateCnt=0; rngValues={37,73}; rngCursor=0; const int draws=rngDraws;
+            g_texMgr.requests.clear();
+            check(effect.ProcessEffectTextureSet(),"EffectTextureSet selectors 14/100 recognize their five effect IDs");
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            const int expectedDraws=item.variant==14?2:1;
+            const bool variant14=item.variant==14;
+            const bool payload=prim&&effect.m_primList.size()==1&&prim->m_type==PP_EFFECTTEXTURE
+                &&prim->m_renderFlag==item.renderFlag&&prim->m_duration==73&&prim->m_size==0.0f
+                &&prim->m_pos.x==12&&prim->m_pos.y==34&&prim->m_pos.z==56
+                &&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture
+                &&g_texMgr.requests==std::vector<std::string>{item.texture}
+                &&prim->m_gi[0].life==1&&prim->m_gi[0].process==0
+                &&prim->m_gi[0].distance==(variant14?30.0f:50.0f)
+                &&prim->m_gi[0].arcBaselineY==(variant14?34.0f:134.0f)
+                &&prim->m_gi[0].flag[2]==(variant14?4:100)
+                &&prim->m_gi[0].height[10]==0.0f
+                &&prim->m_gi[0].fullDisplayAngle==(variant14?37:45)
+                &&prim->m_gi[0].height[8]==0.0f&&prim->m_gi[0].alphaB==0
+                &&prim->m_gi[0].sparkX==12&&prim->m_gi[0].sparkZ==(variant14?56.0f:156.0f)
+                &&prim->m_gi[0].rotStart==(variant14?73:37)&&prim->m_gi[0].flag[0]==0
+                &&prim->m_gi[0].flag[4]==item.variant&&prim->m_gi[1].life==0
+                &&rngDraws==draws+expectedDraws;
+            check(payload,"EffectTextureSet selector profile preserves exact asset, fields, flags and random order");
+            actor.m_pos={22,44,66}; effect.m_stateCnt=1; effect.ProcessEffectTextureSet();
+            check(effect.m_primList.size()==1&&effect.m_effectPos.x==22&&effect.m_effectPos.y==44
+                &&effect.m_effectPos.z==66&&prim->m_pos.x==22&&prim->m_pos.y==44&&prim->m_pos.z==66
+                &&rngDraws==draws+expectedDraws&&g_texMgr.requests.size()==1,
+                "EffectTextureSet selector profile follows master movement without relaunching or RNG");
+            effect.ClearPrims(); g_world.UpdateGameObjects(); actor.m_pos={12,34,56};
+        }
     }
     {
         CRenderObject actor, listener; actor.m_pos={400,500,600}; listener.m_pos={10,900,20};

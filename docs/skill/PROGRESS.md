@@ -2615,3 +2615,7 @@ The prior checkpoint duplicated existing `tools/tests/check_blur_callers.py`, wh
 ## WP5F effects515/516/592 Cloud caller mapping — 2026-10-29
 
 Added `check_effects515_516_592_weather_cloud.py` to compare PE/primary-Ref OnProcess3 loops (80 `Cloud` calls each, map variants 3/4/5), exact shared PE/secondary-Ref Cloud helper equality, local generated routes and configured `(mapVariant, cloudCount)` parameters. Extended the existing weather-cloud lifecycle fixture to include variant4, verifying its fallback texture, four GI bands, RNG count and player-relative offsets. No production behavior change. Full Release CTest passed 370/370.
+
+## WP5F effects693/694/701–703 EffectTextureSet selectors14/100 — 2026-10-29
+
+Extended `check_effect554_texture_set.py` to compare the five PE/primary-Ref callers, their exact executable bitmap bytes and local `ProcessEffectTextureSet` mappings. Added lifecycle coverage for all five assets, selector14 and selector100 render flags and GI profiles, distinct RNG draw order, and parent movement after spawn. Full Release CTest passed 370/370.

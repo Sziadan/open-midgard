@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare selector-2 effect554 and selector-4 effect676 texture profiles."""
+"""Compare EffectTextureSet selectors 2/4/14/100 and their callers."""
 from pathlib import Path
 import re
 import sys
@@ -42,6 +42,17 @@ for label, source in (("PE", PE), ("primary Ref", REF)):
             r"this->m_pos\.x\s*=\s*v\d+->x;.*?this->m_pos\.z\s*=\s*v\d+->z;.*?"
             r"PlayWave\(aEffectEfDecagi,.*?250,\s*40,\s*1\.0\);\s*return 1;", match.group(1), re.S):
         raise AssertionError(f"{label} effect676 selector4/state10 cue caller changed")
+    for effect_id, case_id, resource, selector in (
+        (693, "0x2B5", "aEffectGlow01Bm", 14),
+        (694, "0x2B6", "aEffectGlow02Bm", 14),
+        (701, "0x2BD", "aEffectGlow11Bm", 14),
+        (702, "0x2BE", "aEffectGlow12Bm", 14),
+        (703, "0x2BF", "aEffectWhite02B", 100),
+    ):
+        match = re.search(rf"case {case_id}:(.*?)(?=\n\s*case |\n\s*default:|\Z)", body, re.S)
+        if match is None or not re.search(
+                rf"EffectTextureSet\(this,\s*{resource},\s*{selector}\);\s*return 1;", match.group(1)):
+            raise AssertionError(f"{label} effect{effect_id} selector/resource caller changed")
 
 if 'case 554: ApplyEffectTexture("effect\\\\freeze_a.bmp", 2); return true;' not in ROUTE:
     raise AssertionError("local effect554 generated route changed")
@@ -49,6 +60,19 @@ if 'm_type == 554) {\n        ApplyEffectTexture("effect\\\\freeze_a.bmp", 2);' 
     raise AssertionError("local effect554 selector-2 mapping changed")
 if "case 676: return ProcessTarotEffect();" not in ROUTE:
     raise AssertionError("local effect676 generated route changed")
+effect_texture_set = function_body(LOCAL, "bool CRagEffect::ProcessEffectTextureSet()")
+selector_cases = (
+    (693, 'ApplyEffectTexture("effect\\\\glow01.bmp", 14); return true;'),
+    (694, 'ApplyEffectTexture("effect\\\\glow02.bmp", 14); return true;'),
+    (701, 'ApplyEffectTexture("effect\\\\glow11.bmp", 14); return true;'),
+    (702, 'ApplyEffectTexture("effect\\\\glow12.bmp", 14); return true;'),
+    (703, 'ApplyEffectTexture("effect\\\\white02.bmp", 100); return true;'),
+)
+for effect_id, body in selector_cases:
+    if f"case {effect_id}: {body}" not in effect_texture_set:
+        raise AssertionError(f"local effect{effect_id} EffectTextureSet mapping changed")
+    if f"case {effect_id}: return ProcessEffectTextureSet();" not in ROUTE:
+        raise AssertionError(f"local effect{effect_id} generated route changed")
 
 process_tarot = function_body(LOCAL, "bool CRagEffect::ProcessTarotEffect()")
 effect676 = re.search(r"case 676:(.*?)(?=\n\s*case |\Z)", process_tarot, re.S)
@@ -74,6 +98,16 @@ for name, expected in symbols_by_name:
     resolved = symbols.resolve_name(name)
     if resolved is None or resolved.raw != expected:
         raise AssertionError(f"PE effect676 resource bytes for {name} changed")
+for name, expected in (
+    ("aEffectGlow01Bm", b"effect\\glow01.bmp"),
+    ("aEffectGlow02Bm", b"effect\\glow02.bmp"),
+    ("aEffectGlow11Bm", b"effect\\glow11.bmp"),
+    ("aEffectGlow12Bm", b"effect\\glow12.bmp"),
+    ("aEffectWhite02B", b"effect\\white02.bmp"),
+):
+    resolved = symbols.resolve_name(name)
+    if resolved is None or resolved.raw != expected:
+        raise AssertionError(f"PE texture-set resource bytes for {name} changed")
 
 texture = function_body(LOCAL, "void CRagEffect::ApplyEffectTexture(const char* textureName, int variant)")
 for token in (
@@ -93,4 +127,14 @@ for token in (
     if token not in texture:
         raise AssertionError(f"local selector-4 EffectTextureSet profile missing {token}")
 
-print("effects554/676 parity passed: PE/Ref callers, local routes, exact resources and selector-2/4 emitter profiles")
+for token in (
+    "} else if (variant == 14)", "gi.distance = m_param[0] > 0.0f ? m_param[0] : 30.0f",
+    "gi.flag[2] = 4", "gi.fullDisplayAngle = static_cast<short>(rand() % 360)",
+    "} else if (variant == 100)", "prim->m_renderFlag = 257", "gi.distance = 50.0f",
+    "gi.flag[2] = 100", "gi.fullDisplayAngle = 45", "origin.z + (variant == 100 ? 100.0f : 0.0f)",
+    "origin.y + 100.0f",
+):
+    if token not in texture:
+        raise AssertionError(f"local selector-14/100 EffectTextureSet profile missing {token}")
+
+print("effects554/676/693/694/701-703 parity passed: callers, local routes, exact resources and selector-2/4/14/100 emitter profiles")
