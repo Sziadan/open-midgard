@@ -2518,3 +2518,7 @@ Extended `check_effect375_actor_light.py` to compare the PE and primary-Ref effe
 ## WP5F effect512 CHEMICAL3 caller parity — 2026-10-29
 
 Added and registered `check_effect512_chemical3.py`. It compares the complete PE/primary-Ref caller branch and CHEMICAL3 emitter helper, checks the local four repeats of ordered variants 10/11, frame-44 message/position/wave sequence, and inclusive frames 20–100 tint window. Focused check, elevated Release parity build and full Release CTest passed 355/355. No production behavior change.
+
+## WP5F effects539/541 ThrowItem caller parity — 2026-10-29
+
+Added and registered `check_effect539_throw_items.py`. It compares PE and primary-Ref callers for effect539's ordered bottle variants 10/11 and effect541's variant1, checks the local route/resource pairings and launch frames, and validates all three exact executable texture strings. Focused check, elevated Release parity build and full Release CTest passed 356/356. No production behavior change.
