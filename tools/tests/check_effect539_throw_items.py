@@ -141,4 +141,14 @@ for token in (
     if token not in LIFECYCLE:
         raise AssertionError(f"effect600 lifecycle assertion missing: {token}")
 
+if not re.search(r"CRagEffect effect;effect\.m_type=616;[\s\S]*?effect\.ProcessThrowItemEffect\(\);", LIFECYCLE):
+    raise AssertionError("effect616 coin lifecycle fixture does not invoke the production dispatcher")
+for token in (
+    "effect616 selects exact ASCII effect\\\\coin_a.bmp",
+    "effect616 applies the exact variant3 trajectory and selector fields",
+    "effect616 later state repositions the coin without relaunch or resource reload",
+):
+    if token not in LIFECYCLE:
+        raise AssertionError(f"effect616 lifecycle assertion missing: {token}")
+
 print("effects539/541/600/613/614/615/616 ThrowItem parity passed: PE/Ref callers, local variants and launch frames, exact textures")

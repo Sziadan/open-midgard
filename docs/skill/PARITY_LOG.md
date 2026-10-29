@@ -4757,3 +4757,6 @@ Connected production ApplyThrowItem and ProcessThrowItemEffect to the lifecycle 
 ## WP5 ThrowItem lifecycle — effect600 variant3 — 2026-10-29
 
 Extended the production dispatcher/emitter fixture to effect600's variant3 resource and trajectory. It checks the exact PE-backed texture, PP_THROWITEM primitive and target fields, distance4/height3/slope9/full-angle330/selector15/four trajectory steps, inactive auxiliary bands, no duplicate launch or resource load after the master moves, and no RNG/audio. The existing comparator already verifies PE/primary-Ref caller order, local mapping, and texture bytes; it now also requires the runtime fixture. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.
+## WP5 ThrowItem lifecycle — effect616 coin — 2026-10-29
+
+Added a production dispatcher fixture for effect616's variant3 coin projectile. It verifies the exact ASCII `effect\coin_a.bmp` resource, PP_THROWITEM common and variant3 trajectory fields, inactive auxiliary bands, and later master repositioning without another launch or texture request. The existing comparator verifies PE/Ref caller mapping and exact resource bytes; it now also requires the runtime fixture. Focused lifecycle/source checks pass2/2; full VS17 Release parity CTest passes434/434.

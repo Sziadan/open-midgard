@@ -14479,6 +14479,37 @@ int main()
             "effect600 later state repositions existing ThrowItem without duplicate launch or texture reload");
         effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();
     }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        CRagEffect effect;effect.m_type=616;effect.m_stateCnt=0;effect.m_duration=73;effect.m_master=&master;
+        effect.m_deltaPos={106,230,308};
+        g_texMgr.requests.clear();waveCalls.clear();const int draws=rngDraws;
+        check(effect.ProcessThrowItemEffect(),"effect616 production dispatcher accepts the coin ThrowItem type");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==static_cast<EFFECTPRIMID>(kPrimTypeThrowItem)
+            &&prim->m_renderFlag==5&&prim->m_duration==73&&prim->m_size==0.0f
+            &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+            &&prim->m_texture.size()==1&&g_texMgr.requests==std::vector<std::string>({"effect\\coin_a.bmp"})
+            &&rngDraws==draws&&waveCalls.empty(),
+            "effect616 selects exact ASCII effect\\coin_a.bmp at the master origin");
+        if(prim) {
+            const EffectGi& gi=prim->m_gi[0];
+            check(gi.life==1&&gi.process==0&&gi.maxHeight==10.0f&&gi.distance==4.0f
+                &&gi.height[1]==3.0f&&gi.height[2]==9.0f&&gi.alphaB==255
+                &&gi.arcBaselineY==192.0f&&gi.fullDisplayAngle==330
+                &&gi.flag[1]==4&&gi.flag[2]==15,
+                "effect616 applies the exact variant3 trajectory and selector fields");
+        } else {
+            check(false,"effect616 applies the exact variant3 trajectory and selector fields");
+        }
+        master.m_pos={410,520,630};effect.m_stateCnt=1;const size_t requests=g_texMgr.requests.size();
+        effect.ProcessThrowItemEffect();
+        check(effect.m_primList.size()==1&&prim&&prim->m_pos.x==410&&prim->m_pos.y==520&&prim->m_pos.z==630
+            &&effect.m_effectPos.x==410&&effect.m_effectPos.y==520&&effect.m_effectPos.z==630
+            &&g_texMgr.requests.size()==requests&&rngDraws==draws&&waveCalls.empty(),
+            "effect616 later state repositions the coin without relaunch or resource reload");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();
+    }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
 }
