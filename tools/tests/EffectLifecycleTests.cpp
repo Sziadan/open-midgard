@@ -709,6 +709,7 @@ struct CRagEffect : CGameObject {
     bool ProcessWarp8();
     void ApplyBottomVolcano(const char*, float);
     void ApplyVolcano(const char*, short, bool);
+    void ApplyMapPillar(const char*, float, bool);
     void SpawnWarp8();
     bool ProcessEnhance9();
     bool ProcessLord90();
@@ -3955,6 +3956,42 @@ int main()
     }
     {
         CRenderObject actor; actor.m_pos={12,34,56};
+        struct MapPillarCase { int id; const char* texture; float size; bool wide; };
+        const MapPillarCase mapPillarCases[]={{231,"effect\\ring_blue.tga",4.0f,false},
+            {247,"effect\\ring_blue.tga",4.0f,true},{259,"effect\\magic_green.tga",7.0f,false},
+            {260,"effect\\ring_red.tga",6.0f,false}};
+        for (const MapPillarCase& item : mapPillarCases) {
+            actor.m_pos={12,34,56};
+            CRagEffect effect; effect.m_type=item.id; effect.m_master=&actor; effect.m_duration=71;
+            effect.m_effectPos={1,2,3}; effect.m_cachedPos={4,5,6}; effect.m_stateCnt=0;
+            g_texMgr.requests.clear(); waveCalls.clear(); rngValues={7,8,9}; rngCursor=0;
+            const int draws=rngDraws;
+            effect.ApplyMapPillar(item.texture,item.size,item.wide);
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            bool payload=prim&&effect.m_primList.size()==1&&prim->m_type==PP_MAPPILLAR
+                &&prim->m_renderFlag==5&&prim->m_duration==71&&prim->m_size==item.size
+                &&prim->m_pos.x==12&&prim->m_pos.y==34&&prim->m_pos.z==56
+                &&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture
+                &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]==item.texture;
+            for (int band=0;band<4&&payload;++band) {
+                const EffectGi& gi=prim->m_gi[static_cast<size_t>(band)];
+                payload=gi.life==1&&gi.process==band*30&&gi.fullDisplayAngle==360&&gi.maxHeight==120
+                    &&gi.rotStart==90*band&&gi.alphaB==(item.wide?70:50)
+                    &&gi.distance==static_cast<float>(band)*0.5f+(item.wide?11.0f:2.0f)
+                    &&gi.alphaT==0&&gi.riseAngle==89&&gi.sparkY==0.0f
+                    &&std::all_of(gi.height.begin(),gi.height.end(),[](float value){return value==0.0f;})
+                    &&std::all_of(gi.flag.begin(),gi.flag.end(),[](u8 value){return value==0;});
+            }
+            check(payload&&rngDraws==draws&&rngCursor==0&&waveCalls.empty(),
+                "MAPPILLAR source profile preserves route size texture position and four GI bands");
+            effect.ClearPrims(); g_world.UpdateGameObjects();
+            effect.m_stateCnt=1; actor.m_pos={22,44,66}; g_texMgr.requests.clear();
+            effect.ApplyMapPillar(item.texture,item.size,item.wide);
+            check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==draws&&waveCalls.empty(),
+                "MAPPILLAR emits only at state zero without repeat resource RNG or audio work");
+        }
+        actor.m_pos={12,34,56};
+        rngValues.clear(); rngCursor=0;
         struct TextureSetCase { int id; const char* texture; int variant; int renderFlag; };
         const TextureSetCase cases[]={{693,"effect\\glow01.bmp",14,5},{694,"effect\\glow02.bmp",14,5},
             {701,"effect\\glow11.bmp",14,5},{702,"effect\\glow12.bmp",14,5},
