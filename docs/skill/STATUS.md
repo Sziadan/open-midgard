@@ -69,3 +69,5 @@ Latest WP7 Devotion-link checkpoint: effect232 now has direct production `Proces
 Latest WP7 resurrection checkpoint: production `CGameActor::SendMsg` case98 is isolated into the message-effect lifecycle harness and exercised for remote actors and local PCs. It checks actor death/motion/state resets and PC billboard invalidation; the source comparator records the Ref/local differences. This is actor lifecycle coverage only, not resurrection rendering or visual acceptance.
 
 Latest WP7 recovery-number checkpoint: recovery message88 now flows through the exact production actor receiver and `MakeDamageNumber` body into a capture sink. HP/SP values, green/blue colors, kind114, argument roles and clamp bounds are checked; digit/font rendering is not covered.
+
+Latest WP7 combo-delay checkpoint: deterministic 0x01D2 AID42 duration123 now flows through the production packet handler/session store into the exact skill272 branch and production force-animation deadline body. At tick1000, the deadline is1123 and effects262/263/273 launch in source order. Pose rendering and input acceptance remain unverified.

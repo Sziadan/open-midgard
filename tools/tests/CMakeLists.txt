@@ -99,6 +99,46 @@ add_executable(server_sound_checks ServerSoundTests.cpp)
 target_compile_features(server_sound_checks PRIVATE cxx_std_17)
 target_include_directories(server_sound_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 add_test(NAME server_sound_checks COMMAND server_sound_checks)
+file(READ "../../src/world/GameActorMsgHandler.cpp" combo_actor_source)
+file(READ "../../src/world/GameActor.cpp" combo_actor_impl_source)
+extract_body(combo_delay_packet_handler "${packet_source}"
+    "void HandleComboDelay(CGameMode& mode, const PacketView& packet)" "void HandleBladeStop(")
+extract_body(combo_force_animation "${combo_actor_impl_source}"
+    "void CRenderObject::SetForceAnimation(" "void CRenderObject::SetForceAnimation2(")
+extract_body(combo_force_end_tick "${combo_actor_impl_source}"
+    "void CRenderObject::SetForceAnimEndTick(" "void CGameActor::SetNpcState(")
+string(FIND "${combo_actor_source}" "void CGameActor::Am_Skill(const int* arg1)" combo_am_skill_start)
+if(combo_am_skill_start LESS 0)
+    message(FATAL_ERROR "Could not locate production CGameActor::Am_Skill for combo-delay fixture")
+endif()
+string(SUBSTRING "${combo_actor_source}" ${combo_am_skill_start} -1 combo_am_skill_source)
+string(FIND "${combo_am_skill_source}" "    case 272:" combo_skill272_start)
+string(FIND "${combo_am_skill_source}" "    case 273:" combo_skill272_end)
+if(combo_skill272_start LESS 0 OR combo_skill272_end LESS combo_skill272_start)
+    message(FATAL_ERROR "Could not isolate production skill272 handler fragment")
+endif()
+math(EXPR combo_skill272_length "${combo_skill272_end} - ${combo_skill272_start}")
+string(SUBSTRING "${combo_am_skill_source}" ${combo_skill272_start} ${combo_skill272_length} combo_skill272_case)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ComboDelayIntegrationBodies.inc"
+    "${skill_packet_actor_lookup}\n${combo_body}\n${combo_delay_packet_handler}\n"
+    "${combo_force_animation}\n${combo_force_end_tick}\n"
+    "void CGameActor::ApplyComboSkill272(CGameActor* target) { switch (272) {\n${combo_skill272_case}\ndefault: break; } }\n")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    ../../src/gamemode/GameModePacket.cpp ../../src/session/Session.cpp
+    ../../src/world/GameActor.cpp ../../src/world/GameActorMsgHandler.cpp)
+add_executable(combo_delay_skill272_integration_checks ComboDelayIntegrationTests.cpp)
+target_compile_features(combo_delay_skill272_integration_checks PRIVATE cxx_std_17)
+target_include_directories(combo_delay_skill272_integration_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME combo_delay_skill272_integration_checks COMMAND combo_delay_skill272_integration_checks)
+add_test(NAME combo_delay_skill272_integration_source_check
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_combo_delay_skill272_integration.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../src/gamemode/GameModePacket.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/GameModePacket.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../src/world/GameActorMsgHandler.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/GameActorMsgHandler.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../src/world/GameActor.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/GameActor.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../HighPriest.exe.c")
 file(READ "../../src/audio/Wave.cpp" wave_source)
 extract_body(wave_body "${wave_source}" "bool CAudio::PlayWaveRelative(" "\n}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WaveBody.inc" "${wave_body}\n}")

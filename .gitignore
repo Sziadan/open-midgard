@@ -140,6 +140,8 @@ tools/tests/*
 !tools/tests/AutoSpellPacketTests.cpp
 !tools/tests/check_autospell_packet.py
 !tools/tests/check_recovery_number_receiver.py
+!tools/tests/ComboDelayIntegrationTests.cpp
+!tools/tests/check_combo_delay_skill272_integration.py
 !tools/tests/UISpellListWndReceiverTests.cpp
 
 !tools/check_double_gumgang_parity.py
