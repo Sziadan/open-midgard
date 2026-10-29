@@ -726,6 +726,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect650();
     bool ProcessEffect651();
     bool ProcessEffect695MapFireworks();
+    bool ProcessEffectTextureAnimation();
     bool ProcessCloaking120();
     void ApplyWind();
     void SpawnWarp8();
@@ -13230,6 +13231,62 @@ int main()
             &&rngDraws==laterDraws&&rngCursor==320&&waveCalls.size()==laterWaves,
             "Map Fireworks effect695 later state refreshes effect origin without new assets, particles, or RNG");
         rngValues.clear(); rngCursor=0; g_texMgr.requests.clear(); waveCalls.clear();
+    }
+    {
+        const int ids[4]={689,690,691,696};
+        const char* colors[4]={nullptr,"red","green","violet"};
+        for(int variant=0;variant<4;++variant) {
+            CRenderObject master; master.m_pos={12.0f+variant,24.0f+variant,36.0f+variant};
+            CRagEffect animation; animation.m_master=&master; animation.m_type=ids[variant];
+            animation.m_duration=55; animation.m_param[0]=variant==0?0.0f:42.0f;
+            animation.m_cachedPos={1,2,3}; animation.m_effectPos={4,5,6};
+            rngValues={217}; rngCursor=0; g_texMgr.requests.clear();
+            const int draws=rngDraws;
+            animation.m_stateCnt=1;
+            check(animation.ProcessEffectTextureAnimation()&&animation.m_primList.empty()
+                &&animation.m_cachedPos.x==master.m_pos.x&&animation.m_cachedPos.y==master.m_pos.y
+                &&animation.m_cachedPos.z==master.m_pos.z&&rngDraws==draws&&rngCursor==0
+                &&g_texMgr.requests.empty(),
+                "EffectTextureSet animation later state refreshes cached origin without spawning or loading assets");
+            master.m_pos={20.0f+variant,30.0f+variant,40.0f+variant};
+            animation.m_stateCnt=0;
+            const bool active=animation.ProcessEffectTextureAnimation();
+            const int frameCount=variant==0?9:13;
+            std::vector<std::string> expected;
+            for(int frame=1;frame<=frameCount;++frame) {
+                if(variant==0) expected.push_back("effect\\dust0"+std::to_string(frame)+".bmp");
+                else {
+                    char suffix[3]{}; std::snprintf(suffix,sizeof(suffix),"%02d",frame);
+                    expected.push_back(std::string("effect\\torch_")+colors[variant]+suffix+".bmp");
+                }
+            }
+            CEffectPrim* prim=animation.m_primList.size()==1?animation.m_primList.front():nullptr;
+            bool lanes=prim!=nullptr;
+            if(prim) for(int lane=1;lane<4;++lane) lanes=lanes&&prim->m_gi[lane].life==0;
+            EffectGi emptyGi{}; const auto& gi=prim?prim->m_gi[0]:emptyGi;
+            const float expectedDistance=animation.m_param[0]<=0.0f?20.0f:animation.m_param[0];
+            check(active&&prim&&prim->m_type==PP_EFFECTTEXTURE_ANI&&prim->m_renderFlag==5
+                &&prim->m_duration==55&&prim->m_size==0.0f&&prim->m_totalTexture==frameCount
+                &&prim->m_texture.size()==static_cast<size_t>(frameCount)&&g_texMgr.requests==expected
+                &&animation.m_cachedPos.x==master.m_pos.x&&animation.m_cachedPos.y==master.m_pos.y
+                &&animation.m_cachedPos.z==master.m_pos.z&&lanes&&gi.process==0&&gi.life==1
+                &&gi.distance==expectedDistance&&gi.arcBaselineY==master.m_pos.y-10.0f
+                &&gi.flag[2]==4&&gi.height[10]==0.0f&&gi.fullDisplayAngle==135&&gi.height[8]==0.0f
+                &&gi.alphaB==(variant==0?100:130)&&gi.sparkX==master.m_pos.x&&gi.sparkZ==master.m_pos.z
+                &&gi.rotStart==217&&gi.flag[0]==0&&gi.flag[4]==variant
+                &&rngDraws==draws+1&&rngCursor==1,
+                "EffectTextureSet animation variant emits exact ordered frames and GI profile with one rotation draw");
+            g_texMgr.requests.clear(); master.m_pos={50.0f+variant,60.0f+variant,70.0f+variant};
+            animation.m_stateCnt=2; const int laterDraws=rngDraws;
+            check(animation.ProcessEffectTextureAnimation()&&prim&&prim->m_pos.x==master.m_pos.x
+                &&prim->m_pos.y==master.m_pos.y&&prim->m_pos.z==master.m_pos.z
+                &&animation.m_cachedPos.x==master.m_pos.x&&animation.m_cachedPos.y==master.m_pos.y
+                &&animation.m_cachedPos.z==master.m_pos.z&&g_texMgr.requests.empty()
+                &&rngDraws==laterDraws&&rngCursor==1,
+                "EffectTextureSet animation updates cached and child positions without repeating assets or RNG");
+            animation.ClearPrims(); g_world.UpdateGameObjects();
+        }
+        rngValues.clear(); rngCursor=0; g_texMgr.requests.clear();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

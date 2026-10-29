@@ -2981,3 +2981,8 @@ Connected the actual ProcessEffect695MapFireworks body to the lifecycle harness.
 ## WP5 effects30/68 Thunderstorm and MVP lifecycle checkpoint — 2026-10-29
 
 Extended direct ProcessClipWaveStrEffect lifecycle coverage for effects30/68. The fixture checks each exact PE-backed frame-zero cue at listener-relative X/Z and zero Y, source audio parameters, exhausted STR completion propagation, and no repeated cue, RNG, or texture requests on later state. The existing dispatcher source comparator verifies routes, literals and executable resource bytes. Focused lifecycle passes3046 checks; source comparator passes; full Release parity CTest passed428/428.
+
+
+## WP5 effects689/690/691/696 EffectTextureSet animation lifecycle checkpoint — 2026-10-29
+
+Connected the actual ProcessEffectTextureAnimation handler to the lifecycle harness. All four variants are checked for exact frame order (9 dust or 13 color-torch assets), primitive profile, active and inactive GI lanes, seeded rotation draw, and state-gated resource/RNG behavior. Later calls refresh cached and existing child positions without repeating asset requests. The existing source comparator confirms PE/primary-Ref helper parity and all 48 exact frame resources. Focused lifecycle passes3058 checks; comparator passes; full Release parity CTest passes428/428. Production behavior did not change.
