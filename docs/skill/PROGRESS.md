@@ -2801,3 +2801,7 @@ Added `tools/tests/check_effect39_aqua.py` and registered it in the focused CTes
 ## WP5 CRagEffect agility effects37/38/43 source checkpoint - 2026-10-29
 
 Added `tools/tests/check_effects37_38_43_agility.py` and registered it in the focused CTest suite. PE and primary Ref `IncAgility`, `DecAgility` and `IncAGIDEX` bodies normalize identically. The comparator maps effects37/38/43 to their canonical methods and the shared local agility route, preserving effect43's dex overlay/audio and effect37's life99 particle behavior. Existing lifecycle assertions cover sound/RNG order, projection, screen overlay/cross fields, emission cadence, and update/fade behavior. Focused CTest passed; no runtime change was needed.
+
+## WP5 CRagEffect ReadyPortal/Portal effects35/36 source checkpoint - 2026-10-29
+
+Added `tools/tests/check_effects35_36_portal.py` and registered it with CTest. PE and primary Ref `ReadyPortal` and `Portal` method bodies normalize identically. The check binds PE `OnProcess` effects35/36 and local generated dispatch through `ProcessEffectFrameLegacy` to `ApplyReadyPortal`/`ApplyPortal`, verifies cadence and primitive anchors, and maps each to existing lifecycle assertions for the frame-14 sound/circle recurrence, initial two-cylinder Portal launch, fields/resources, and source fade. The focused check passed. Release parity build succeeded with elevated SDK registry access after ordinary MSBuild was denied; full Release CTest passed 398/398. No runtime behavior changed.
