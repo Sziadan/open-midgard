@@ -13004,6 +13004,38 @@ int main()
         g_resMgr.requests.clear();g_world.m_player=oldPlayer;
     }
     {
+        CRenderObject master,listener;master.m_pos={300,400,500};listener.m_pos={100,900,200};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=571;effect.m_stateCnt=0;effect.m_duration=81;effect.m_master=&master;
+        const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xBA\xED\xB7\xAF\xB5\xE5\xB7\xAF\xBD\xBA\xC6\xAE.spr";
+        const std::string expectedAct="\xC0\xCC\xC6\xD1\xC6\xAE\\\xBA\xED\xB7\xAF\xB5\xE5\xB7\xAF\xBD\xBA\xC6\xAE.act";
+        const std::string expectedWave="effect\\h_blood_lust.wav";
+        rngValues={};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        check(effect.ProcessEffectSpriteProduction(1),"effect571 production Effect_SPR variant1 helper remains active");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+            &&effect.m_effectPos.x==300&&effect.m_effectPos.y==400&&effect.m_effectPos.z==500
+            &&prim->m_pos.x==300&&prim->m_pos.y==400&&prim->m_pos.z==500&&prim->m_duration==81
+            &&prim->m_deltaPos2.y==0.0f&&prim->m_renderFlag==0x201&&prim->m_pattern==0x200
+            &&prim->m_animSpeed==2&&!prim->m_repeatAnim&&prim->m_spriteAction==0&&prim->m_curMotion==0
+            &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+            &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+            &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==300
+            &&prim->m_segments[0].pos.y==400&&prim->m_segments[0].pos.z==500
+            &&waveCalls.size()==1&&waveCalls[0].name==expectedWave
+            &&waveCalls[0].x==200&&waveCalls[0].y==0&&waveCalls[0].z==300
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&waveCalls[0].frameRng==draws&&rngDraws==draws&&rngCursor==0,
+            "effect571 variant1 state0 emits exact one-shot particle and listener-relative PE cue without RNG");
+        const size_t requests=g_resMgr.requests.size();master.m_pos={310,410,510};effect.m_stateCnt=1;
+        check(effect.ProcessEffectSpriteProduction(1)&&effect.m_primList.size()==1
+            &&effect.m_effectPos.x==310&&effect.m_effectPos.y==410&&effect.m_effectPos.z==510
+            &&g_resMgr.requests.size()==requests&&waveCalls.size()==1&&rngDraws==draws&&rngCursor==0,
+            "effect571 state1 refreshes origin without duplicate particle, resources, cue or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;waveCalls.clear();
+        g_resMgr.requests.clear();g_world.m_player=oldPlayer;
+    }
+    {
         CRenderObject master;master.m_pos={20,30,40};
         CRagEffect effect;effect.m_type=648;effect.m_stateCnt=0;effect.m_duration=78;effect.m_master=&master;
         const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xAE\xB8\xAE\xC7\xC3\xBE\xD7\xBC\xC7.spr";

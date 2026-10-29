@@ -4882,3 +4882,7 @@ Added direct state0/state1 coverage through the production sprite helper for the
 ## WP5 Effect_SPR lifecycle — effect583 variant7 — 2026-10-29
 
 Added direct state0/state1 lifecycle coverage for effect583. PE and primary Ref case0x247 select variant7; the helper’s exceptional profile plays `effect\\ef_firehit.wav` listener-relative, sets speed3/pattern0/alpha220, uses sprite/action resources at `0x71D1C8/0x71D1B4`, then initializes one segment. The fixture checks exact resources/payload/cue and zero RNG at state0, then confirms a moved master only refreshes origin at state1. The comparator binds cue bytes to PE VA `0x71D1DC`, verifies the PE/Ref helper fields and caller route, and requires the fixture. Local lifecycle/audio-call coverage is not audible or rendered-output acceptance.
+
+## WP5 Effect_SPR lifecycle — effect571 variant1 — 2026-10-29
+
+Added direct state0/state1 coverage for effect571 variant1. PE and primary Ref both play the resolved `effect\\h_blood_lust.wav` listener-relative (VA `0x71D30C`), bind SPR/ACT at `0x71D2F4/0x71D2DC`, and initialize one segment. The fixture checks the speed2 one-shot particle, origin, cue position/parameters, exact resources, and zero RNG; state1 refreshes origin without repeated output. The comparator checks PE/Ref helper order and binds fixture literals to executable bytes. This is local lifecycle/audio-call coverage, not audible or rendered acceptance.

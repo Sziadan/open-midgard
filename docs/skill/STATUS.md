@@ -53,3 +53,5 @@ Latest WP5 Effect_SPR checkpoint: effect584 variant8 now has four-direction acti
 Latest Effect_SPR checkpoint: effect612 variant14 now has direct production-helper lifecycle coverage alongside its existing wrapper/STR continuation test. PE asset bytes at `0x71D0B0/0x71D09C` are bound in the comparator; helper payload and wrapper continuation are checked separately. No integrated rendering acceptance is claimed.
 
 Latest WP5 Effect_SPR checkpoint: effect583 variant7 now has direct state0/state1 coverage for its listener-relative firehit cue and exceptional speed3/pattern0/alpha220 particle profile. The comparator binds the exact PE sprite/action and wave bytes; see the 2026-10-29 PROGRESS entry. This does not establish audible or rendered output.
+
+Latest WP5 Effect_SPR checkpoint: effect571 variant1 now has direct state0/state1 coverage for its exact PE-bound listener-relative blood-lust cue and speed2 one-shot particle profile. The source comparator binds resources and wave bytes to PE addresses. No audible or rendered result is claimed.
