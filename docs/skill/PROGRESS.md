@@ -2372,3 +2372,8 @@ Strengthened `check_party_effect.py` with an exact `effect\party.tga` byte asser
 ## WP5C effect170 CartRevolution wave bytes and comparator — 2026-10-29
 
 Extended and registered `check_cart_revolution.py` to verify `effect\EF_MagnumBreak.wav` at PE VA `0x71B3CC`. Corrected its stale local-route assertion to inspect `ProcessEffectFrameLegacy` and aligned its texture token check with the canonical truncated `effect\` symbol; no texture suffix is inferred. Release parity build succeeded; full CTest passed330/330. No production change.
+
+
+## WP5C Bubble/Pong STR format bytes — 2026-10-29
+
+Extended the existing effects109/110 and effect199 comparators to verify their PE format strings directly: `Bubble%d.str` at VA `0x71AF30` and `Pong%d.str` at `0x71AB7C`. Existing PE/Ref Init branch, variant range, catalog and route assertions remain. Focused comparators and full Release CTest passed330/330. No production change.

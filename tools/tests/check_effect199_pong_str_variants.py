@@ -4,7 +4,8 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tools"))
+from ro_exe_resolve import ExeImage  # noqa: E402
 
 PE = (ROOT / "HighPriest.exe.c").read_text(encoding="latin-1")
 REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
@@ -49,4 +50,7 @@ if "ResolveCatalogStrName(*entry)" not in resolved:
 if "case 199: return ProcessEZ2STR();" not in DISPATCH:
     raise SystemExit("local effect199 route is missing")
 
-print("effect199 parity: Ref/PE one-draw Pong mapping, local 1-3 variants, resolver and route passed")
+pong = ExeImage(ROOT / "HighPriest.exe").read_cstring_at(0x71AB7C)
+if pong is None or pong.raw != b"Pong%d.str":
+    raise SystemExit("canonical Pong STR format bytes differ at VA 0x71AB7C")
+print("effect199 parity: Ref/PE one-draw Pong mapping, local variants, resolver, route and exact format bytes passed")

@@ -4010,3 +4010,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effect170 CartRevolution wave bytes — 2026-10-29
 
 `check_cart_revolution.py` now confirms exact `effect\EF_MagnumBreak.wav` executable bytes at VA `0x71B3CC`. Registered in CTest. Updated the local-route check to inspect `ProcessEffectFrameLegacy`; the canonical sphere texture symbol remains truncated to the verified `effect\` prefix, with no suffix guessed. Release parity build succeeded; full CTest passed330/330. No production change.
+
+
+## WP5C Bubble/Pong dynamic STR template bytes — 2026-10-29
+
+`check_effect109_110_str_init.py` now checks executable `Bubble%d.str` bytes at `0x71AF30`; `check_effect199_pong_str_variants.py` checks `Pong%d.str` at `0x71AB7C`. Their existing random variant count, PE/Ref Init and local catalog/route assertions remain. Full Release CTest passed330/330. No production change.
