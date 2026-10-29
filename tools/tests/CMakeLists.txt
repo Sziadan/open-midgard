@@ -411,6 +411,7 @@ extract_body(effect_catalog_name_resolver "${effect_source}" "std::string Resolv
 extract_test_region(str_process "${effect_source}" str_process_family)
 extract_test_region(clip_wave_str_helper "${effect_source}" clip_wave_str_helper)
 extract_body(blitzbeat115_handler "${effect_source}" "bool CRagEffect::ProcessBlitzBeat115()" "bool CRagEffect::ProcessBottom114()")
+extract_body(particle_up_burst_emitter "${effect_source}" "void CRagEffect::ApplyParticleUpBurst()" "void LaunchWarpCasting(")
 extract_body(effect_sprite_str_helper "${effect_source}" "bool CRagEffect::ProcessEffectSpriteAndStr()" "bool CRagEffect::ProcessClipWaveStrEffect()")
 extract_test_region(land_protector_handler "${effect_source}" land_protector_family)
 extract_test_region(ghost_effect_handler "${effect_source}" ghost_effect_family)
@@ -465,7 +466,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${waterba
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${fireivy118_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${firepillar138_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${banjjakii165_handler}")
-file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${clip_wave_str_helper}\n${blitzbeat115_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${clip_wave_str_helper}\n${blitzbeat115_handler}\n${particle_up_burst_emitter}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect_sprite_str_helper}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${land_protector_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${ghost_effect_handler}")
@@ -1247,6 +1248,8 @@ add_test(NAME effect405_bottom_magnus_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect405_bottom_magnus.py")
 add_test(NAME effect620_bottom_volcano_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect620_bottom_volcano.py")
+add_test(NAME effect310_particle_up_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect310_particle_up.py")
 add_test(NAME effect622_thunder_storm2_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_thunder_storm2_caller.py")
 add_test(NAME effect624_stin5_source_check
@@ -1337,6 +1340,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect348.py
     check_effect405_bottom_magnus.py
     check_effect620_bottom_volcano.py
+    check_effect310_particle_up.py
     check_thunder_storm2_caller.py
     check_stin5_caller.py
     check_effect554_texture_set.py

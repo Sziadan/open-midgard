@@ -2599,3 +2599,7 @@ Registered the existing ThunderStorm2 and STIN5 comparators as CTests. Tightened
 ## WP5F effects414/620/676 body-light and Bottom_Volcano parity — 2026-10-29
 
 Extended `check_effect375_actor_light.py` with effect414's PE-only caller provenance, 0x40 body-light gate, state18 cutoff and low-word doubled BodyTime mapping. Extended `check_effect554_texture_set.py` through effect676's selector4 clock texture and frame10 listener-relative cue. Added and registered `check_effect620_bottom_volcano.py`; its lifecycle coverage exposed that `ApplyBottomVolcano` skipped the source's per-call parent-position refresh after state zero. Moved origin refresh before the spawn gate and added state0 profile, RNG/resource and subsequent master-movement assertions. Focused checks and the full Release parity build/CTest passed 368/368.
+
+## WP5F effect310 PARTICLE_UP parent refresh — 2026-10-29
+
+PE and primary Ref OnProcess case `0x136` call `PARTICLE_UP` exactly 20 times. Each helper invocation copies the master position before checking state; only state zero launches a PP_PARTICLE_UP with `effect\\thunder_center.bmp`, four GI lanes and six ordered random draws per lane. Local `ApplyParticleUpBurst` had returned on nonzero state before refreshing its effect/cached position. Moved position resolution and refresh before the state gate, added `check_effect310_particle_up.py`, and added lifecycle assertions for the 20 primitive payloads, 480 RNG draws and later master movement. Full Release CTest passed 369/369.

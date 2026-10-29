@@ -652,6 +652,7 @@ struct CRagEffect : CGameObject {
     void SpawnSma2();
     void SpawnSma(int variant);
     bool ProcessParticlePath556();
+    void ApplyParticleUpBurst();
     void SpawnParticlePath556();
     bool ProcessEffect537();
     bool ProcessEffect599();
@@ -766,7 +767,8 @@ static bool TryPlaySingleEffectWave(const vector3d& soundPos, const std::string&
         literalY ? yOffset : soundPos.y-listener->m_pos.y+yOffset,
         soundPos.z-listener->m_pos.z, 250, 40, 1.0f);
 }
-constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeGi4=PP_GI_4, kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
+constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeGi4=PP_GI_4, kPrimTypeParticleUp=PP_PARTICLE_UP,
+    kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
 #include "EffectLifecycleBodies.inc"
 
 #include "WeatherMapBodies.inc"
@@ -3862,6 +3864,43 @@ int main()
             &&effect.m_primList.size()==2&&rngDraws==drawBase+1,
             "effect365 state3 copies position and plays only the proven prefix without respawning");
         g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject actor; actor.m_pos={12,34,56};
+        CRagEffect effect; effect.m_type=310; effect.m_master=&actor; effect.m_duration=61;
+        effect.m_stateCnt=1; effect.m_effectPos={1,2,3}; effect.m_cachedPos={4,5,6};
+        rngValues.clear(); rngCursor=0; const int draws=rngDraws; g_texMgr.requests.clear();
+        effect.ApplyParticleUpBurst();
+        check(effect.m_primList.empty()&&effect.m_effectPos.x==12&&effect.m_effectPos.y==34
+            &&effect.m_effectPos.z==56&&effect.m_cachedPos.x==12&&effect.m_cachedPos.y==34
+            &&effect.m_cachedPos.z==56&&rngDraws==draws&&g_texMgr.requests.empty(),
+            "PARTICLE_UP refreshes its parent position before the frame-zero spawn gate");
+        effect.m_stateCnt=0; effect.ApplyParticleUpBurst();
+        bool profile=effect.m_primList.size()==20&&g_texMgr.requests.size()==20
+            &&rngDraws==draws+480;
+        for (const CEffectPrim* prim : effect.m_primList) {
+            profile=profile&&prim->m_type==PP_PARTICLE_UP&&prim->m_renderFlag==5
+                &&prim->m_duration==61&&prim->m_size==0.0f&&prim->m_pos.x==12
+                &&prim->m_pos.y==34&&prim->m_pos.z==56&&prim->m_texture.size()==1
+                &&prim->m_texture[0]==&g_texMgr.texture
+                &&prim->m_gi[0].life==1&&prim->m_gi[0].process==-10
+                &&prim->m_gi[0].distance==0.1f&&prim->m_gi[0].height[1]==0.0f
+                &&prim->m_gi[0].height[2]==0.2f&&prim->m_gi[0].sparkX==8.0f
+                &&prim->m_gi[0].sparkY==34.0f&&prim->m_gi[0].sparkZ==52.0f
+                &&prim->m_gi[0].rotStart==0&&prim->m_gi[0].fullDisplayAngle==0
+                &&prim->m_gi[0].flag[0]==0&&prim->m_gi[0].flag[1]==0
+                &&prim->m_gi[0].flag[2]==10&&prim->m_gi[1].life==1
+                &&prim->m_gi[2].life==1&&prim->m_gi[3].life==1;
+        }
+        for (const std::string& name : g_texMgr.requests)
+            profile=profile&&name=="effect\\thunder_center.bmp";
+        check(profile,"effect310 emits twenty PP_PARTICLE_UP primitives with the PE four-lane payload");
+        actor.m_pos={22,44,66}; effect.m_stateCnt=1; effect.ApplyParticleUpBurst();
+        check(effect.m_primList.size()==20&&effect.m_effectPos.x==22&&effect.m_effectPos.y==44
+            &&effect.m_effectPos.z==66&&effect.m_cachedPos.x==22&&effect.m_cachedPos.y==44
+            &&effect.m_cachedPos.z==66&&rngDraws==draws+480&&g_texMgr.requests.size()==20,
+            "PARTICLE_UP follows master movement after frame zero without repeating spawn work");
+        effect.ClearPrims(); g_world.UpdateGameObjects();
     }
     {
         CRenderObject actor; actor.m_pos={12,34,56};

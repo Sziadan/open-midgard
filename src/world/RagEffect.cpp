@@ -17512,11 +17512,13 @@ void CRagEffect::LaunchParticleUp(const vector3d& origin, float sizeBase, float 
 
 void CRagEffect::ApplyParticleUpBurst()
 {
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
     if (m_stateCnt != 0) {
         return;
     }
-    CRenderObject* master = ResolveCurrentMaster();
-    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
     for (int burst = 0; burst < 20; ++burst) {
         CEffectPrim* spark = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeParticleUp), vector3d{});
         if (spark == nullptr) {
