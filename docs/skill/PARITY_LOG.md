@@ -4351,3 +4351,9 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - The comparator binds the shared local updater and tick to existing case `0x13` lifecycle coverage for Y/X anchoring, early height clamp/trace, change-point and reflection, 3D arc-before-longitude/height ordering, alpha and common tick.
 - No runtime code change was needed. Direct comparator and focused CTest passed; full Release CTest passed 384/384.
 
+## WP5 CEffectPrim Prim3DCylinderHalf update parity - 2026-10-29
+
+- Added and registered `tools/tests/check_prim3dcylinderhalf_initializer.py`. Canonical PE at `HighPriest.exe.c:468404` and primary Ref at `Ref/RagEffectPrim.cpp:372` normalize identically; both dispatch case `0x12` to the method.
+- Expanded the lifecycle fixture to verify master-relative origin and movement, outer/inner size integration, height cap, pattern-driven outer fade, alpha update, ignored animation-completion result and shared state tick.
+- Direct comparator passed. Rebuilt `effect_lifecycle_checks`; focused CTest passed 2/2. Full Release CTest passed 385/385.
+

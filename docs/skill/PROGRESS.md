@@ -2717,3 +2717,7 @@ Added and registered `tools/tests/check_prim2dflash_initializer.py`. Canonical P
 
 Added and registered `tools/tests/check_prim3dflash_initializer.py`. PE and primary Ref bodies at `HighPriest.exe.c:466871` and `Ref/RagEffectPrim.cpp:1858` normalize identically; both route primitive case `0x13` to the method. The comparator binds the local 3D branch to existing lifecycle checks for Y/X anchoring, clamp/trace, change/reflection, 3D integration order, alpha and tick. No production change was needed. Direct comparator and focused CTest passed; full Release CTest passed 384/384.
 
+## WP5 CEffectPrim Prim3DCylinderHalf update parity - 2026-10-29
+
+Added and registered `tools/tests/check_prim3dcylinderhalf_initializer.py`. PE and primary Ref bodies at `HighPriest.exe.c:468404` and `Ref/RagEffectPrim.cpp:372` normalize identically and dispatch case `0x12`. Expanded lifecycle coverage now verifies source position/movement, integrated radii, height cap, fade-out, alpha and common tick despite animation completion. The lifecycle target rebuilt successfully; direct comparator and focused CTest passed 2/2. Full Release CTest passed 385/385.
+

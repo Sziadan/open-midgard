@@ -6421,16 +6421,29 @@ int main()
             && texturePrim.m_green == 0 && texturePrim.m_blue == 255,
             "Prim3DTexture regular RGB branch preserves its three asymmetric clamps");
         texturePrim.m_type = PP_3DCYLINDERHALF; texturePrim.m_stateCnt = 0; texturePrim.m_duration = 30;
-        texturePrim.m_pattern = 0; texturePrim.m_deltaPos2 = {}; texturePrim.m_deltaPos = {};
-        texturePrim.m_speed = texturePrim.m_accel = 0; texturePrim.m_outerSpeed = texturePrim.m_outerAccel = 0;
-        texturePrim.m_innerSpeed = texturePrim.m_innerAccel = 0; texturePrim.m_heightSpeed = texturePrim.m_heightAccel = 0;
-        texturePrim.m_heightSize = 1; texturePrim.m_maxHeightSize = 100; texturePrim.m_outerSize = 2;
-        texturePrim.m_innerSize = 3; texturePrim.m_longitude = texturePrim.m_latitude = 0;
-        texturePrim.m_longSpeed = 0; texturePrim.m_alpha = 20; texturePrim.m_alphaSpeed = 0;
-        texturePrim.m_fadeOutCnt = -1; texturePrim.m_animSpeed = 1; texturePrim.m_curMotion = 0;
+        texturePrim.m_master->m_effectPos = {10,20,30};
+        texturePrim.m_pattern = 1; texturePrim.m_deltaPos2 = {1,2,3}; texturePrim.m_deltaPos = {1,2,3};
+        texturePrim.m_speed = 2; texturePrim.m_accel = 1;
+        texturePrim.m_outerSpeed = 1; texturePrim.m_outerAccel = 0.5f; texturePrim.m_outerSize = 2;
+        texturePrim.m_innerSpeed = 2; texturePrim.m_innerAccel = 0.25f; texturePrim.m_innerSize = 3;
+        texturePrim.m_heightSpeed = 5; texturePrim.m_heightAccel = 1;
+        texturePrim.m_heightSize = 98; texturePrim.m_maxHeightSize = 100;
+        texturePrim.m_longitude = texturePrim.m_latitude = 0; texturePrim.m_longSpeed = 5;
+        texturePrim.m_alpha = 20; texturePrim.m_alphaSpeed = 1;
+        texturePrim.m_fadeOutCnt = 0; texturePrim.m_animSpeed = 1; texturePrim.m_curMotion = 0;
         texturePrim.m_totalTexture = 1; texturePrim.m_repeatAnim = false;
-        check(texturePrim.OnProcess() == 1 && texturePrim.m_curMotion == 1 && texturePrim.m_stateCnt == 1,
-            "OnProcess case 0x12 ignores CylinderHalf animation completion and still takes the common tick");
+        MatrixIdentity(texturePrim.m_matrix);
+        const u8 cylinderHalfResult = texturePrim.OnProcess();
+        check(cylinderHalfResult == 1 && texturePrim.m_orgPos.x == 11 && texturePrim.m_orgPos.y == 22
+            && texturePrim.m_orgPos.z == 33 && texturePrim.m_speed == 3
+            && texturePrim.m_pos.x == 12 && texturePrim.m_pos.y == 21 && texturePrim.m_pos.z == 36,
+            "OnProcess case 0x12 preserves anchored movement and negative speed translation");
+        check(texturePrim.m_outerSize == 3.5f && texturePrim.m_innerSize == 5.25f
+            && texturePrim.m_heightSize == 100 && texturePrim.m_longitude == 5,
+            "OnProcess case 0x12 integrates cylinder sizes and clamps height");
+        check(texturePrim.m_outerSpeed < 0 && texturePrim.m_alpha < 20
+            && texturePrim.m_curMotion == 1 && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x12 applies outer fade and alpha, ignores animation completion, then ticks");
         texturePrim.m_type = PP_3DFLASH; texturePrim.m_stateCnt = 0; texturePrim.m_pattern = 1;
         textureMaster.m_tlvertX = 50; textureMaster.m_tlvertY = 60;
         texturePrim.m_deltaPos2 = {5,6,0}; texturePrim.m_heightSize = -2;
