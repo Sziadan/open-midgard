@@ -196,6 +196,7 @@ QtUiImageRequestKind CategorizeQtUiImageRequest(const QString& baseId)
     if (baseId == QStringLiteral("makecharpanel")
         || baseId == QStringLiteral("charselectpanel")
         || baseId == QStringLiteral("charselectslotselected")
+        || baseId.startsWith(QStringLiteral("charselectpage/"))
         || baseId == QStringLiteral("loginpanel")
         || baseId.startsWith(QStringLiteral("makecharbutton/"))) {
         return QtUiImageRequestKind::Panel;
@@ -809,6 +810,23 @@ public:
                 int width = 0;
                 int height = 0;
                 if (g_windowMgr.m_selectCharWnd->GetQtSelectedSlotBitmap(&pixels, &width, &height)
+                    && pixels && width > 0 && height > 0) {
+                    const QImage source(
+                        reinterpret_cast<const uchar*>(pixels),
+                        width,
+                        height,
+                        width * static_cast<int>(sizeof(unsigned int)),
+                        QImage::Format_ARGB32);
+                    image = source.copy();
+                }
+            }
+        } else if (baseId.startsWith(QStringLiteral("charselectpage/"))) {
+            if (g_windowMgr.m_selectCharWnd && g_windowMgr.m_selectCharWnd->m_show != 0) {
+                const int pageIndex = baseId.endsWith(QStringLiteral("next")) ? 1 : 0;
+                const unsigned int* pixels = nullptr;
+                int width = 0;
+                int height = 0;
+                if (g_windowMgr.m_selectCharWnd->GetQtPageButtonBitmap(pageIndex, &pixels, &width, &height)
                     && pixels && width > 0 && height > 0) {
                     const QImage source(
                         reinterpret_cast<const uchar*>(pixels),

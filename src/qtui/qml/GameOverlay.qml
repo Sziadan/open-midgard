@@ -5170,8 +5170,20 @@ Item {
                 color: "transparent"
                 border.width: 0
 
+                Image {
+                    anchors.fill: parent
+                    fillMode: Image.Pad
+                    smooth: false
+                    cache: false
+                    visible: (modelData.label || "") === ""
+                    source: visible
+                        ? ("image://openmidgard/charselectpage/" + ((modelData.id || 0) < 0 ? "prev" : "next"))
+                        : ""
+                }
+
                 Text {
                     anchors.centerIn: parent
+                    visible: (modelData.label || "") !== ""
                     text: modelData.label || ""
                     color: "#5a5448"
                     font.pixelSize: 18

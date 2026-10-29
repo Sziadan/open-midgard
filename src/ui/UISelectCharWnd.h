@@ -109,6 +109,7 @@ public:
     bool GetQtActionButtonDisplayForQt(int index, QtButtonDisplay* out) const;
     int GetQtPageButtonCount() const;
     bool GetQtPageButtonDisplayForQt(int index, QtButtonDisplay* out) const;
+    bool GetQtPageButtonBitmap(int index, const unsigned int** pixels, int* width, int* height) const;
     int GetQtSelectedDetailFieldCount() const;
     bool GetQtSelectedDetailFieldDisplayForQt(int index, QtDetailFieldDisplay* out) const;
 
@@ -147,6 +148,8 @@ private:
     std::string m_backgroundPath;
     shopui::BitmapPixels m_slotBmp;
     shopui::BitmapPixels m_slotSelectedBmp;
+    shopui::BitmapPixels m_pagePrevBmp;
+    shopui::BitmapPixels m_pageNextBmp;
     ArgbDibSurface m_composeSurface;
     UIBitmapButton* m_okButton;
     UIBitmapButton* m_cancelButton;

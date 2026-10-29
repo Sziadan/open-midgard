@@ -1,5 +1,6 @@
 #include "world/GameActor.h"
 #include "audio/Audio.h"
+#include "core/Timer.h"
 
 #include "RagEffectDurationTable.generated.inc"
 
@@ -356,6 +357,18 @@ u8 CSkill::OnProcess()
     ProcessWillBeAttacked();
     if (m_3dactor != nullptr && m_3dactor->m_animType != 0) {
         m_3dactor->AdvanceFrame();
+    }
+
+    // Ref/Skill.cpp CSkill::OnProcess (0x684210) runs from ProcessActors and
+    // compares m_launchCnt to the effect duration. Those durations only
+    // advance while g_isSkipFrame is set. Counting rendered frames starts
+    // another Warp Portal (effect 317) while the previous one is still
+    // alive, so the opening burst repeats and the portal comes back.
+    if (g_isSkipFrame <= 0) {
+        if (m_job == 127 && m_SkillStartTime + 3000u < timeGetTime()) {
+            return 0;
+        }
+        return 1;
     }
 
     switch (m_job) {

@@ -59,8 +59,9 @@ constexpr int kPreviewBaseY = 157;
 constexpr int kPageButtonXPrev = 44;
 constexpr int kPageButtonXNext = 520;
 constexpr int kPageButtonY = 110;
-constexpr int kPageButtonWidth = 12;
-constexpr int kPageButtonHeight = 48;
+constexpr int kPageButtonWidth = 13;
+constexpr int kPageButtonHeight = 13;
+constexpr int kExtendedSlotCount = 9;
 constexpr int kSelectCharButtonY = 318;
 constexpr int kSelectCharButtonHeight = 24;
 constexpr int kSelectCharCancelX = 484;
@@ -191,6 +192,16 @@ void DrawSelectCharText(HDC hdc, const RECT& rect, const char* text, COLORREF co
     AlphaBlendArgbToHdc(hdc, rect.left, rect.top, width, height, pixels.data(), width, height);
 }
 #endif
+
+int PageButtonWidthFor(const shopui::BitmapPixels& bmp)
+{
+    return bmp.IsValid() ? bmp.width : kPageButtonWidth;
+}
+
+int PageButtonHeightFor(const shopui::BitmapPixels& bmp)
+{
+    return bmp.IsValid() ? bmp.height : kPageButtonHeight;
+}
 
 RECT MakeBitmapRectAtSlotOrigin(const shopui::BitmapPixels& bmp, const RECT& outerRect)
 {
@@ -885,13 +896,32 @@ bool UISelectCharWnd::GetQtPageButtonDisplayForQt(int index, QtButtonDisplay* ou
         return false;
     }
 
-    out->id = index == 0 ? -1 : 1;
-    out->x = m_x + (index == 0 ? kPageButtonXPrev : kPageButtonXNext);
+    const bool next = index != 0;
+    const shopui::BitmapPixels& bmp = next ? m_pageNextBmp : m_pagePrevBmp;
+    out->id = next ? 1 : -1;
+    out->x = m_x + (next ? kPageButtonXNext : kPageButtonXPrev);
     out->y = m_y + kPageButtonY;
-    out->width = kPageButtonWidth;
-    out->height = kPageButtonHeight;
-    out->label = index == 0 ? "<" : ">";
+    out->width = PageButtonWidthFor(bmp);
+    out->height = PageButtonHeightFor(bmp);
+    out->label = bmp.IsValid() ? "" : (next ? ">" : "<");
     out->visible = GetPageCount() > 1;
+    return true;
+}
+
+bool UISelectCharWnd::GetQtPageButtonBitmap(int index, const unsigned int** pixels, int* width, int* height) const
+{
+    if (!pixels || !width || !height || index < 0 || index >= GetQtPageButtonCount()) {
+        return false;
+    }
+
+    const shopui::BitmapPixels& bmp = index == 0 ? m_pagePrevBmp : m_pageNextBmp;
+    if (!bmp.IsValid() || bmp.pixels.empty()) {
+        return false;
+    }
+
+    *pixels = bmp.pixels.data();
+    *width = bmp.width;
+    *height = bmp.height;
     return true;
 }
 
@@ -1020,6 +1050,10 @@ bool UISelectCharWnd::HandleQtDoubleClick(int x, int y)
         return false;
     }
 
+    if (HitPrevPageButton(x, y) || HitNextPageButton(x, y)) {
+        return true;
+    }
+
     const int slot = HitSlot(x, y);
     if (slot < 0) {
         return false;
@@ -1073,6 +1107,8 @@ void UISelectCharWnd::ClearAssets()
     m_backgroundPath.clear();
     m_slotBmp.Clear();
     m_slotSelectedBmp.Clear();
+    m_pagePrevBmp.Clear();
+    m_pageNextBmp.Clear();
 }
 
 void UISelectCharWnd::ReleaseComposeSurface()
@@ -1122,6 +1158,12 @@ void UISelectCharWnd::EnsureResourceCache()
             selSlotBmpNames[i],
             m_slotSelectedBmp.IsValid() ? 1 : 0);
     }
+
+    m_pagePrevBmp = LoadFirstBitmapPixelsFromCandidates(BuildUiAssetCandidates("scroll1left.bmp"), nullptr);
+    m_pageNextBmp = LoadFirstBitmapPixelsFromCandidates(BuildUiAssetCandidates("scroll1right.bmp"), nullptr);
+    LOG_SELECT_CHAR("[SelectChar] EnsureResourceCache page arrows prev=%d next=%d\n",
+        m_pagePrevBmp.IsValid() ? 1 : 0,
+        m_pageNextBmp.IsValid() ? 1 : 0);
 
     LOG_SELECT_CHAR("[SelectChar] EnsureResourceCache finished backgroundValid=%d selectedSlotValid=%d\n",
         m_backgroundBmp.IsValid() ? 1 : 0,
@@ -1213,6 +1255,7 @@ void UISelectCharWnd::OnCreate(int cx, int cy)
     const int logicalCx = GetMenuLayoutClientExtent(cx);
     const int logicalCy = GetMenuLayoutClientExtent(cy);
     Move((logicalCx - 640) / 2 + 33, (logicalCy - 480) / 2 + 65);
+    EnsureResourceCache();
     ClampSelection();
     UpdateActionButtons();
     RebuildVisiblePreviews();
@@ -1237,9 +1280,12 @@ CHARACTER_INFO* UISelectCharWnd::GetCharacters() const
 
 int UISelectCharWnd::GetPageCount() const
 {
+    // Ref/UIFrameWnd.cpp UISelectCharWnd ctor: g_extended_slot (Korea client)
+    // keeps 3 pages of 3 slots, and the first 9 slots are available. A
+    // character already stored past that still gets a page, up to 12 slots.
     const int count = GetCharacterCount();
     CHARACTER_INFO* chars = GetCharacters();
-    int maxSlot = kVisibleSlotsPerPage - 1;
+    int maxSlot = kExtendedSlotCount - 1;
     if (chars) {
         for (int index = 0; index < count; ++index) {
             maxSlot = std::max(maxSlot, static_cast<int>(chars[index].CharNum));
@@ -1580,31 +1626,42 @@ int UISelectCharWnd::HitSlot(int x, int y) const
 
 bool UISelectCharWnd::HitPrevPageButton(int x, int y) const
 {
-    const RECT rc = MakeRect(m_x + kPageButtonXPrev, m_y + kPageButtonY, kPageButtonWidth, kPageButtonHeight);
+    const RECT rc = MakeRect(
+        m_x + kPageButtonXPrev,
+        m_y + kPageButtonY,
+        PageButtonWidthFor(m_pagePrevBmp),
+        PageButtonHeightFor(m_pagePrevBmp));
     return PointInRectXY(rc, x, y);
 }
 
 bool UISelectCharWnd::HitNextPageButton(int x, int y) const
 {
-    const RECT rc = MakeRect(m_x + kPageButtonXNext, m_y + kPageButtonY, kPageButtonWidth, kPageButtonHeight);
+    const RECT rc = MakeRect(
+        m_x + kPageButtonXNext,
+        m_y + kPageButtonY,
+        PageButtonWidthFor(m_pageNextBmp),
+        PageButtonHeightFor(m_pageNextBmp));
     return PointInRectXY(rc, x, y);
 }
 
 void UISelectCharWnd::OnLBtnUp(int x, int y)
 {
-    const int slot = HitSlot(x, y);
-    if (slot >= 0) {
-        SetSelectedSlot(slot);
-        return;
-    }
-
-    if (HitPrevPageButton(x, y)) {
+    // The right arrow sits on the third slot. Ref gives the child button the
+    // click, so the page control is tested before the slot.
+    if (GetPageCount() > 1 && HitPrevPageButton(x, y)) {
+        PlayUiButtonSound();
         ChangePage(-1);
         return;
     }
-
-    if (HitNextPageButton(x, y)) {
+    if (GetPageCount() > 1 && HitNextPageButton(x, y)) {
+        PlayUiButtonSound();
         ChangePage(1);
+        return;
+    }
+
+    const int slot = HitSlot(x, y);
+    if (slot >= 0) {
+        SetSelectedSlot(slot);
     }
 }
 
@@ -1735,17 +1792,22 @@ void UISelectCharWnd::OnDraw()
     SetTextColor(hdc, RGB(94, 56, 38));
 
     if (GetPageCount() > 1) {
-        RECT prevRc = MakeRect(m_x + kPageButtonXPrev, m_y + kPageButtonY, kPageButtonWidth, kPageButtonHeight);
-        RECT nextRc = MakeRect(m_x + kPageButtonXNext, m_y + kPageButtonY, kPageButtonWidth, kPageButtonHeight);
-        DrawRectFrame(hdc, prevRc, RGB(120, 96, 68));
-        DrawRectFrame(hdc, nextRc, RGB(120, 96, 68));
-#if RO_ENABLE_QT6_UI
-        DrawSelectCharText(hdc, prevRc, "<", RGB(94, 56, 38), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-        DrawSelectCharText(hdc, nextRc, ">", RGB(94, 56, 38), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-#else
-        DrawTextA(hdc, "<", -1, &prevRc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-        DrawTextA(hdc, ">", -1, &nextRc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-#endif
+        const RECT prevRc = MakeRect(
+            m_x + kPageButtonXPrev,
+            m_y + kPageButtonY,
+            PageButtonWidthFor(m_pagePrevBmp),
+            PageButtonHeightFor(m_pagePrevBmp));
+        const RECT nextRc = MakeRect(
+            m_x + kPageButtonXNext,
+            m_y + kPageButtonY,
+            PageButtonWidthFor(m_pageNextBmp),
+            PageButtonHeightFor(m_pageNextBmp));
+        if (m_pagePrevBmp.IsValid()) {
+            DrawBitmapPixelsOverlay(hdc, m_pagePrevBmp, prevRc);
+        }
+        if (m_pageNextBmp.IsValid()) {
+            DrawBitmapPixelsOverlay(hdc, m_pageNextBmp, nextRc);
+        }
     }
 
     CHARACTER_INFO* chars = GetCharacters();
