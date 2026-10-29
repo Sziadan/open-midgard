@@ -741,6 +741,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect695MapFireworks();
     bool ProcessEffectTextureAnimation();
     void SpawnStatusState();
+    void ApplySphereWind(const char*, short, int);
     bool ProcessCloaking120();
     void ApplyWind();
     void SpawnWarp8();
@@ -815,6 +816,7 @@ static bool TryPlaySingleEffectWave(const vector3d& soundPos, const std::string&
 }
 constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeGi4=PP_GI_4, kPrimTypeParticleUp=PP_PARTICLE_UP,
     kPrimTypeEffectTexture=PP_EFFECTTEXTURE, kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
+constexpr int kPrimTypeSphereWind=PP_SPHEREWIND;
 constexpr int kEffectStateSightMask=0x1, kEffectStateRuwachMask=0x2000;
 constexpr int kSightRelaunchTicks=270, kRuwachRelaunchTicks=200;
 struct CGameActor : CAbleToMakeEffect {
@@ -13546,6 +13548,39 @@ int main()
         }
         actor.m_effectList.clear();
         g_isSkipFrame=oldSkipFrame;
+    }
+    {
+        const int oldRandomDraws=rngDraws;
+        rngValues.assign(80,0);rngCursor=0;
+        CRenderObject master;master.m_pos={10,20,30};
+        CRagEffect sphere;sphere.m_type=394;sphere.m_duration=321;sphere.m_master=&master;
+        g_texMgr.requests.clear();
+        const short schedule[5]={0,9,18,27,36};
+        for(short time:schedule) sphere.ApplySphereWind("effect\\fire_ivy.bmp",time,1);
+        bool prims=sphere.m_primList.size()==5&&rngDraws==oldRandomDraws+80&&g_texMgr.requests.size()==5;
+        int index=0;
+        for(CEffectPrim* prim:sphere.m_primList) {
+            prims=prims&&prim&&prim->m_type==kPrimTypeSphereWind&&prim->m_renderFlag==5
+                &&prim->m_duration==321&&prim->m_size==10.0f&&prim->m_pos.x==10&&prim->m_pos.y==20&&prim->m_pos.z==30
+                &&prim->m_texture.size()==1&&g_texMgr.requests[index]=="effect\\fire_ivy.bmp";
+            for(int band=0;band<4;++band) {
+                const EffectGi& gi=prim->m_gi[band];
+                prims=prims&&gi.life==1&&gi.process==0&&gi.maxHeight==4.0f&&gi.distance==14.0f
+                    &&gi.height[0]==-14.0f&&gi.height[1]==3.0f&&gi.rotStart==0
+                    &&gi.riseAngle==schedule[index]+45*band&&gi.alphaB==100&&gi.fullDisplayAngle==180;
+            }
+            ++index;
+        }
+        check(prims,"effect394 SphereWind schedule emits five exact variant1 primitives with PE texture, four-band payloads, and ordered RNG");
+        master.m_pos={40,50,60};sphere.m_stateCnt=1;
+        const int laterDraws=rngDraws;
+        sphere.ApplySphereWind("effect\\fire_ivy.bmp",45,1);
+        bool refreshed=sphere.m_primList.size()==5&&rngDraws==laterDraws&&sphere.m_effectPos.x==40
+            &&sphere.m_effectPos.y==50&&sphere.m_effectPos.z==60&&sphere.m_cachedPos.x==40;
+        for(CEffectPrim* prim:sphere.m_primList)
+            refreshed=refreshed&&prim->m_pos.x==40&&prim->m_pos.y==50&&prim->m_pos.z==60;
+        check(refreshed,"effect394 later frames refresh cached/master origin without relaunching or consuming RNG");
+        sphere.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

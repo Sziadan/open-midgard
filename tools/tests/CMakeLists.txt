@@ -322,6 +322,7 @@ extract_body(effect_texture_animation_handler "${effect_source}" "bool CRagEffec
 extract_body(status_state_emitter "${effect_source}" "void CRagEffect::SpawnStatusState()" "void CRagEffect::SendMsg(")
 file(READ "../../src/world/GameActor.cpp" actor_effect_state_source)
 extract_body(actor_effect_state_body "${actor_effect_state_source}" "void CGameActor::ProcessEffectState()" "CMsgEffect* CGameActor::SpawnMsgSprite(")
+extract_body(sphere_wind_helper "${effect_source}" "void CRagEffect::ApplySphereWind(const char* textureName, short time, int variant)" "// Ref/dhxj/RagEffect.cpp:10587+; canonical CRagEffect::EarthSpike")
 extract_body(cloaking120_handler "${effect_source}" "bool CRagEffect::ProcessCloaking120()" "void CRagEffect::ApplyKyrieGuard()")
 extract_test_region(effect133_134_terminal_handler "${effect_source}" effect133_134_terminal_handler)
 extract_test_region(warp_emitter "${effect_source}" warp_emitter_family)
@@ -508,6 +509,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect6
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect_texture_animation_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${status_state_emitter}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${actor_effect_state_body}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${sphere_wind_helper}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${cloaking120_handler}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/render/Renderer.cpp ../../src/render/Prim.cpp ../../src/res/ActRes.h ../../src/world/RagEffect.cpp ../../src/world/RagEffect.h ../../src/world/GameActor.cpp ../../src/world/World.cpp ../../src/res/EzEffectRes.h ../../src/res/Res.cpp)
