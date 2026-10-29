@@ -13,6 +13,8 @@ REF_CALLER = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
 REF_HELPER = (ROOT / "Ref/RagEffect2.cpp").read_text(encoding="latin-1")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 ROUTES = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
+HARNESS = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
+TEST_CMAKE = (ROOT / "tools/tests/CMakeLists.txt").read_text(encoding="utf-8")
 
 
 def function(source: str, signature: str) -> str:
@@ -52,6 +54,10 @@ if compact(pe_helper) != compact(ref_helper):
 
 if 'case 581: ApplyForestLight("effect\\\\cloud11.tga", 11); return true;' not in ROUTES:
     raise AssertionError("local effect581 variant11 generated route changed")
+if 'extract_body(forest_light_emitter "${effect_source}" "void CRagEffect::ApplyForestLight(const char* textureName, int variant)" "void CRagEffect::ApplyStin4()")' not in TEST_CMAKE:
+    raise AssertionError("production ForestLight helper is not extracted into the lifecycle harness")
+if "forest.ApplyForestLight(\"effect\\\\cloud11.tga\",11)" not in HARNESS:
+    raise AssertionError("effect lifecycle harness does not invoke production variant11 ForestLight helper")
 local_helper = function(LOCAL, "void CRagEffect::ApplyForestLight(const char* textureName, int variant)")
 for token in ("m_stateCnt != 0", "kPrimTypeForest", "prim->m_renderFlag = 5",
               "prim->m_duration = m_duration", "prim->m_texture.push_back(g_texMgr.GetTexture(textureName, false))",

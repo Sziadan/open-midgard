@@ -32,6 +32,7 @@ struct vector3d { float x = 0, y = 0, z = 0; };
 vector3d AddVec3(vector3d a, vector3d b) { return {a.x+b.x, a.y+b.y, a.z+b.z}; }
 #include "EffectGiTypes.inc"
 constexpr int kPrimTypeHeal = 0x3C;
+constexpr int kPrimTypeForest = 0x42;
 constexpr int kPrimTypeChemical3 = 0x38;
 constexpr int kPrimTypeCasting5 = 0x6B;
 constexpr int kPrimTypeFlowerCast = 0x6C;
@@ -540,6 +541,7 @@ struct CRagEffect : CGameObject {
     void ApplyBlackDevil(const char*);
     void ApplyFlowerCasting(const char*,float,int);
     void ApplyGiExplosion(const char*);
+    void ApplyForestLight(const char*,int);
     void ProcessPokJukSound301();
     void ApplyWarpZone();
     void ApplyIceArrow();
@@ -14299,6 +14301,50 @@ int main()
         check(explosion.m_primList.empty()&&rngDraws==nullDraws&&g_texMgr.requests.size()==1,
             "effect514 null texture is a closed no-output gate");
         waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        CRagEffect forest;forest.m_type=581;forest.m_stateCnt=0;forest.m_duration=66;forest.m_master=&master;
+        g_texMgr.requests.clear();waveCalls.clear();const int startDraws=rngDraws;
+        forest.ApplyForestLight("effect\\cloud11.tga",11);
+        CEffectPrim* prim=forest.m_primList.empty()?nullptr:forest.m_primList.front();
+        const float heights[4]={4.0f,6.0f,8.0f,4.0f};
+        bool payload=forest.m_primList.size()==1&&prim&&prim->m_type==static_cast<EFFECTPRIMID>(kPrimTypeForest)
+            &&prim->m_renderFlag==5&&prim->m_duration==66
+            &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+            &&forest.m_effectPos.x==100&&forest.m_effectPos.y==200&&forest.m_effectPos.z==300
+            &&forest.m_cachedPos.x==100&&forest.m_cachedPos.y==200&&forest.m_cachedPos.z==300
+            &&g_texMgr.requests==std::vector<std::string>({"effect\\cloud11.tga"})
+            &&rngDraws==startDraws&&waveCalls.empty();
+        for(int band=0;band<4;++band) if(prim) {
+            const EffectGi& gi=prim->m_gi[band];
+            payload=payload&&gi.life==1&&gi.process==(band==3?180:0)&&gi.alphaB==0
+                &&gi.distance==0.0f&&gi.maxHeight==heights[band]&&gi.height[0]==heights[band]
+                &&gi.rotStart==25*band&&gi.flag[0]==11
+                &&gi.vecTNowX==100&&gi.vecTNowY==200&&gi.vecTNowZ==300
+                &&gi.vecTPreX==30&&gi.vecTPreY==-100&&gi.vecTPreZ==230;
+        }
+        check(payload,"effect581 variant11 emits the exact four-band ForestLight payload at master origin without RNG/audio");
+        forest.ClearPrims();g_world.UpdateGameObjects();
+
+        forest.m_master=nullptr;forest.m_cachedPos={7,8,9};g_texMgr.requests.clear();
+        forest.ApplyForestLight("effect\\cloud11.tga",11);
+        prim=forest.m_primList.empty()?nullptr:forest.m_primList.front();
+        check(prim&&prim->m_pos.x==7&&prim->m_pos.y==8&&prim->m_pos.z==9
+            &&forest.m_effectPos.x==7&&forest.m_effectPos.y==8&&forest.m_effectPos.z==9
+            &&forest.m_cachedPos.x==7&&forest.m_cachedPos.y==8&&forest.m_cachedPos.z==9,
+            "effect581 variant11 uses and caches the fallback origin when master is missing");
+        forest.ClearPrims();g_world.UpdateGameObjects();
+
+        forest.m_master=&master;forest.m_stateCnt=1;forest.m_effectPos={1,2,3};forest.m_cachedPos={4,5,6};
+        g_texMgr.requests.clear();const size_t gatedLaunches=forest.m_primList.size();
+        forest.ApplyForestLight("effect\\cloud11.tga",11);
+        check(forest.m_primList.size()==gatedLaunches&&forest.m_effectPos.x==1&&forest.m_cachedPos.x==4
+            &&g_texMgr.requests.empty(),"effect581 nonzero-state gate suppresses position and primitive mutation");
+        forest.m_stateCnt=0;g_texMgr.requests.clear();
+        forest.ApplyForestLight(nullptr,11);
+        check(forest.m_primList.empty()&&g_texMgr.requests.empty(),"effect581 null texture gate emits no primitive");
+        waveCalls.clear();g_texMgr.requests.clear();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
