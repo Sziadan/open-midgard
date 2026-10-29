@@ -13632,6 +13632,47 @@ int main()
         failed.ClearPrims();g_world.UpdateGameObjects();
         g_world.m_player=oldPlayer;waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
+    {
+        CRenderObject listener;listener.m_pos={10,40,20};
+        CRenderObject master;master.m_pos={100,200,300};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        const int oldRandomDraws=rngDraws;
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.assign(8,0);rngCursor=0;
+        CRagEffect clock;clock.m_type=676;clock.m_duration=400;clock.m_master=&master;
+        check(clock.ProcessTarotEffect()&&waveCalls.empty()&&clock.m_primList.size()==1
+            &&rngDraws==oldRandomDraws+1&&g_texMgr.requests.size()==1
+            &&g_texMgr.requests[0]=="effect\\blast_mine##clock.bmp",
+            "effect676 state0 creates selector4 clock texture without playing its delayed cue");
+        CEffectPrim* texture=clock.m_primList.empty()?nullptr:clock.m_primList.front();
+        bool selector4=texture&&texture->m_type==PP_EFFECTTEXTURE&&texture->m_duration==400
+            &&texture->m_renderFlag==5&&texture->m_size==0.0f&&texture->m_pos.x==100
+            &&texture->m_pos.y==200&&texture->m_pos.z==300&&texture->m_gi[0].distance==6.0f
+            &&texture->m_gi[0].arcBaselineY==170&&texture->m_gi[0].flag[2]==0
+            &&texture->m_gi[0].height[10]==0.0f&&texture->m_gi[0].fullDisplayAngle==135
+            &&texture->m_gi[0].flag[4]==1;
+        check(selector4,"effect676 selector4 initializes the exact clock primitive profile");
+
+        master.m_pos={101,201,301};clock.m_stateCnt=1;
+        const int textureRng=rngDraws;
+        clock.ProcessTarotEffect();
+        check(waveCalls.empty()&&rngDraws==textureRng&&g_texMgr.requests.size()==1
+            &&texture->m_pos.x==101&&texture->m_pos.y==201&&texture->m_pos.z==301,
+            "effect676 pre-cue frames refresh the existing clock texture only");
+        master.m_pos={110,210,310};clock.m_stateCnt=10;
+        clock.ProcessTarotEffect();
+        check(waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_DecAgility.wav"
+            &&waveCalls[0].x==100&&waveCalls[0].y==0&&waveCalls[0].z==290
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1.0f
+            &&waveCalls[0].frameRng==textureRng&&rngDraws==textureRng,
+            "effect676 plays the exact frame10 cue at current master X/Z and listener Y");
+        master.m_pos={111,211,311};clock.m_stateCnt=11;
+        clock.ProcessTarotEffect();
+        check(waveCalls.size()==1&&texture->m_pos.x==111&&texture->m_pos.y==211&&texture->m_pos.z==311
+            &&g_texMgr.requests.size()==1&&rngDraws==textureRng,
+            "effect676 state11 refreshes texture position without replaying the cue or RNG");
+        clock.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
 }

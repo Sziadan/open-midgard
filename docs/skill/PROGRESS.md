@@ -3028,3 +3028,7 @@ Connected the production `ApplySphereWind` helper (`src/world/RagEffect.cpp:2557
 ## WP5 CRagEffect::ProcessTarotEffect — 2026-10-29
 
 Connected the production `ProcessTarotEffect` body (`src/world/RagEffect.cpp:22611`) to the lifecycle harness for effects610/611. Tests verify state-zero `_heal_effect.wav`/`caramel_die.wav` before the PE-backed `effect\\success.bmp`/`effect\\failed.bmp` selector3 primitive, listener-relative wave X/Z and listener-height substitution, master and cached-position origins, selector payload, and later-state position refresh without another wave, texture request, or RNG draw. `check_effects610_611_texture_cues.py` checks canonical PE/primary-Ref call order and exact resource bytes. Focused lifecycle passes3147 checks; full Release parity CTest passes428/428; both documented static audits pass.
+
+### ProcessTarotEffect completion — effect676
+
+Closed the remaining case in `ProcessTarotEffect` (`src/world/RagEffect.cpp:22628`). Runtime coverage now exercises state0 selector4 clock texture creation, a nonzero pre-cue frame with moving master, the exact state10 `_EF_DecAgility.wav` cue, and state11 refresh without another wave, bitmap request, or RNG draw. `check_effect554_texture_set.py` verifies PE/primary-Ref caller order and exact PE resource bytes for effect676. Focused lifecycle passes3152 checks; full Release parity CTest passes428/428; both documented static audits pass.
