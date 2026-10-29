@@ -43,6 +43,10 @@ ref_process = function(REF_CALLER, "unsigned __int8 __thiscall CRagEffect::OnPro
 for effect_id, expected in (
     (539, (("byte_71992C", 10), ("byte_71990C", 11))),
     (541, (("byte_7198E8", 1),)),
+    (613, (("byte_7199F8", 3),)),
+    (614, (("byte_7199D4", 3),)),
+    (615, (("byte_7199B0", 3),)),
+    (616, (("aEffectCoinABmp", 3),)),
 ):
     case_num = effect_id
     pe_branch = branch(pe_process, case_num, case_num + 1)
@@ -51,12 +55,13 @@ for effect_id, expected in (
         raise AssertionError(f"PE/primary-Ref effect{effect_id} caller differs")
     offset = 0
     for symbol, variant in expected:
-        token = f"ThrowItem(this, &{symbol}, {variant})"
+        address = "" if symbol == "aEffectCoinABmp" else "&"
+        token = f"ThrowItem(this, {address}{symbol}, {variant})"
         found = pe_branch.find(token, offset)
         if found < 0:
             raise AssertionError(f"effect{effect_id} ordered caller missing {token}")
         offset = found + len(token)
-    route = "case 539: return ProcessEffectFrameLegacy();" if effect_id == 539 else "case 541: return ProcessThrowItemEffect();"
+    route = "case 539: return ProcessEffectFrameLegacy();" if effect_id == 539 else f"case {effect_id}: return ProcessThrowItemEffect();"
     if route not in ROUTES:
         raise AssertionError(f"local effect{effect_id} generated route changed")
 
@@ -68,6 +73,9 @@ if "ThrowItem(this, &byte_719A18, 3)" not in pe_600:
     raise AssertionError("effect600 ThrowItem variant3 or resource symbol changed")
 if "case 600: return ProcessThrowItemEffect();" not in ROUTES:
     raise AssertionError("local effect600 generated route changed")
+for effect_id in (613, 614, 615, 616):
+    if f"case {effect_id}: return ProcessThrowItemEffect();" not in ROUTES:
+        raise AssertionError(f"local effect{effect_id} generated route changed")
 
 pe_helper = function(PE, "void __thiscall CRagEffect::ThrowItem(CRagEffect *this, char *tName, char F1)")
 ref_helper = function(REF_HELPER, "void __thiscall CRagEffect::ThrowItem(CRagEffect *this, char *tName, char F1)")
@@ -86,6 +94,15 @@ if not re.search(r"m_type == 299\s*\?[^:]*\\xBA\\xF3\\xC6\\xF7\\xBC\\xC7\\xBA\\x
 local_process = function(LOCAL, "bool CRagEffect::ProcessThrowItemEffect()")
 if not re.search(r'case 600:\s*ApplyThrowItem\("[^\"]*\\xBA\\xA3\\xB3\\xD1\\xB3\\xAA\\xC0\\xCC\\xC7\\xC1\.bmp", 3\);\s*return true;', local_process):
     raise AssertionError("local effect600 variant3 resource mapping changed")
+for effect_id, escaped in (
+    (613, r"\\xBC\\xF6\\xB8\\xAE\\xB0\\xCB\.bmp"),
+    (614, r"\\xC4\\xED\\xB3\\xAA\\xC0\\xCC_\\xB5\\xB6\.bmp"),
+    (615, r"\\xC7\\xB3\\xB8\\xB6_\\xBF\\xAD\\xC8\\xAD\.bmp"),
+):
+    if not re.search(rf'case {effect_id}:\s*ApplyThrowItem\("[^"\n]*{escaped}", 3\);\s*return true;', local_process):
+        raise AssertionError(f"local effect{effect_id} variant3 resource mapping changed")
+if 'case 616:\n        ApplyThrowItem("effect\\\\coin_a.bmp", 3);\n        return true;' not in local_process:
+    raise AssertionError("local effect616 variant3 coin resource mapping changed")
 
 local_helper = function(LOCAL, "void CRagEffect::ApplyThrowItem(const char* textureName, int variant)")
 for token in ("variant == 10", "launchFrame = 5", "variant == 11", "launchFrame = 10",
@@ -103,10 +120,14 @@ expected_resources = {
     0x71990C: b"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBF\xB0\xBB\xEA\xBA\xB4.bmp",
     0x7198E8: b"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xB9\xF6\xBC\xAD\xC5\xA9\xC6\xF7\xBC\xC7.bmp",
     0x719A18: b"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xA3\xB3\xD1\xB3\xAA\xC0\xCC\xC7\xC1.bmp",
+    0x7199F8: b"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBC\xF6\xB8\xAE\xB0\xCB.bmp",
+    0x7199D4: b"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC4\xED\xB3\xAA\xC0\xCC_\xB5\xB6.bmp",
+    0x7199B0: b"\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xC7\xB3\xB8\xB6_\xBF\xAD\xC8\xAD.bmp",
+    0x71999C: b"effect\\coin_a.bmp",
 }
 for va, expected in expected_resources.items():
     actual = image.read_cstring_at(va)
     if actual is None or actual.raw != expected:
         raise AssertionError(f"ThrowItem resource differs at PE VA 0x{va:X}")
 
-print("effects539/541/600 ThrowItem parity passed: PE/Ref callers, local variants and launch frames, exact textures")
+print("effects539/541/600/613/614/615/616 ThrowItem parity passed: PE/Ref callers, local variants and launch frames, exact textures")

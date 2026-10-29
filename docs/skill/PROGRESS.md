@@ -2583,3 +2583,11 @@ Added and registered `check_effects610_611_texture_cues.py`. It checks each PE/p
 ## WP5F effects626/655/656/667 actor-light parity — 2026-10-29
 
 Extended `check_effect375_actor_light.py` with PE/primary-Ref branch comparison, generator membership, and local helper profiles for effects626, 655, 656, and 667. This covers the modulo-four BodyTime2 refresh for 626, one-shot BodyLight gates and `BodySin5` saturation for 655/667, and the state40 cutoff plus low-byte multiplier for 656. Focused check passed; full Release CTest passed 364/364. No production behavior change.
+
+## WP5F effect405 Bottom_Magnus selector-2 parity — 2026-10-29
+
+Added and registered `check_effect405_bottom_magnus.py`. It verifies the PE caller and documents that primary Ref has no numeric case405, compares the PE helper with secondary Ref, checks the local generated route and selector-2 PP_RECT_UP/GI profile, and pins `ring_white.tga` bytes. Focused check passed; full Release parity build and CTest passed 365/365. No production behavior change.
+
+## WP5F effects613–616 ThrowItem variant-3 callers — 2026-10-29
+
+Extended `check_effect539_throw_items.py` to compare all four PE/primary-Ref caller branches and generated routes, assert each local variant-3 texture mapping, and verify exact executable bytes for the three CP949 item paths plus `coin_a.bmp`. The shared ThrowItem helper and variant-3 launch frame remain checked by the existing comparator. Focused check passed; full Release parity build and CTest passed 365/365. No production behavior change.
