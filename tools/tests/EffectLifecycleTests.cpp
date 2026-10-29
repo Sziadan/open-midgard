@@ -688,6 +688,8 @@ struct CRagEffect : CGameObject {
     bool ProcessTarotEffect();
     bool ProcessSphereWind2Effect();
     void SpawnSphereWind2(short);
+    bool ProcessSoulBreaker2Effect();
+    void SpawnSoulBreaker2(short);
     void ApplyEffectTexture(const char*, int);
     bool ProcessEffect273();
     bool ProcessEffect440();
@@ -13728,6 +13730,75 @@ int main()
             &&rngDraws==laterDraws&&g_texMgr.requests.size()==laterTextures,
             "effect408 missing master returns active without changing origin or emitting outputs");
         sphere.ClearPrims();g_world.UpdateGameObjects();
+        g_world.m_player=oldPlayer;waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject listener;listener.m_pos={10,900,20};
+        CRenderObject master;master.m_pos={100,200,300};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        std::vector<int> soulRng;
+        for(int primitive=0;primitive<8;++primitive)
+            soulRng.insert(soulRng.end(),{2,1,2,3,4});
+        rngValues=soulRng;rngCursor=0;
+        const int oldRandomDraws=rngDraws;
+        waveCalls.clear();g_texMgr.requests.clear();
+        CRagEffect soul;soul.m_type=409;soul.m_duration=777;soul.m_master=&master;
+        soul.m_stateCnt=0;
+        check(soul.ProcessSoulBreaker2Effect(),"effect409 SoulBreaker2 handler is active");
+        bool payload=soul.m_primList.size()==8&&waveCalls.size()==1
+            &&waveCalls[0].name=="effect\\"&&waveCalls[0].x==90
+            &&waveCalls[0].y==0&&waveCalls[0].z==280&&waveCalls[0].volume==250
+            &&waveCalls[0].range==40&&waveCalls[0].frequency==1.0f
+            &&waveCalls[0].frameRng==oldRandomDraws&&rngDraws==oldRandomDraws+40
+            &&rngCursor==40&&g_texMgr.requests.size()==8
+            &&master.m_BodyLight==1&&master.tintCalls==1&&master.alpha==123
+            &&master.red==255&&master.green==0&&master.blue==255
+            &&soul.m_effectPos.x==100&&soul.m_effectPos.y==200&&soul.m_effectPos.z==300
+            &&soul.m_cachedPos.x==100&&soul.m_cachedPos.y==200&&soul.m_cachedPos.z==300;
+        const short times[8]={0,45,90,135,180,225,270,315};
+        int index=0;
+        for(CEffectPrim* prim:soul.m_primList) {
+            payload=payload&&prim&&prim->m_type==PP_SOULBREAKER2&&prim->m_renderFlag==5
+                &&prim->m_duration==777&&prim->m_size==0.0f&&prim->m_texture.size()==1
+                &&g_texMgr.requests[index]=="effect\\purpleslash.tga";
+            for(int lane=0;lane<4;++lane) {
+                const EffectGi& gi=prim->m_gi[lane];
+                payload=payload&&gi.life==1&&gi.process==lane-30&&gi.distance==20.0f
+                    &&gi.alphaB==0&&gi.sparkX==100&&gi.sparkZ==300&&gi.sparkY==191.0f+lane
+                    &&gi.rotStart==times[index]&&gi.height[1]==0.8f&&gi.flag[0]==0;
+            }
+            ++index;
+        }
+        check(payload,"effect409 plays its literal prefix before eight ordered primitives with exact lanes, tint and RNG");
+
+        master.m_pos={110,210,310};soul.m_stateCnt=1;
+        const int laterDraws=rngDraws;const size_t laterTextures=g_texMgr.requests.size();
+        soul.ProcessSoulBreaker2Effect();
+        check(soul.m_effectPos.x==110&&soul.m_cachedPos.x==110&&soul.m_primList.size()==8
+            &&waveCalls.size()==1&&rngDraws==laterDraws&&g_texMgr.requests.size()==laterTextures
+            &&master.m_BodyLight==1&&master.tintCalls==2&&master.red==255&&master.green==0&&master.blue==255,
+            "effect409 moving-master frames refresh origin and tint without replaying audio, launching, or drawing RNG");
+        soul.m_stateCnt=10;soul.ProcessSoulBreaker2Effect();
+        check(master.tintCalls==3&&master.m_BodyLight==1&&waveCalls.size()==1&&rngDraws==laterDraws,
+            "effect409 retains magenta body light through state10");
+        soul.m_stateCnt=11;soul.ProcessSoulBreaker2Effect();
+        check(master.tintCalls==3&&master.m_BodyLight==1&&waveCalls.size()==1&&rngDraws==laterDraws,
+            "effect409 stops changing actor tint after state10");
+
+        CRagEffect missingPlayer;missingPlayer.m_type=409;missingPlayer.m_stateCnt=0;
+        missingPlayer.m_duration=77;missingPlayer.m_master=&master;g_world.m_player=nullptr;
+        const size_t wavesBefore=waveCalls.size();const int noPlayerDraws=rngDraws;
+        missingPlayer.ProcessSoulBreaker2Effect();
+        check(waveCalls.size()==wavesBefore&&missingPlayer.m_primList.size()==8
+            &&rngDraws==noPlayerDraws+40&&master.m_BodyLight==1,
+            "effect409 missing listener suppresses only the cue while preserving its launches and actor light");
+        missingPlayer.ClearPrims();g_world.UpdateGameObjects();
+        soul.ClearPrims();g_world.UpdateGameObjects();
+        CRagEffect missingMaster;missingMaster.m_type=409;missingMaster.m_stateCnt=0;
+        const int noMasterDraws=rngDraws;const size_t noMasterWaves=waveCalls.size();
+        check(missingMaster.ProcessSoulBreaker2Effect()&&missingMaster.m_primList.empty()
+            &&rngDraws==noMasterDraws&&waveCalls.size()==noMasterWaves,
+            "effect409 missing master stays active without cues, primitives or RNG");
         g_world.m_player=oldPlayer;waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);

@@ -3036,3 +3036,8 @@ Closed the remaining case in `ProcessTarotEffect` (`src/world/RagEffect.cpp:2262
 ## WP5 CRagEffect::ProcessSphereWind2Effect — effect408 — 2026-10-29
 
 Connected the production `ProcessSphereWind2Effect` and `SpawnSphereWind2` bodies (`src/world/RagEffect.cpp:22112` and `:22081`) to the lifecycle harness. The fixture verifies the PE-only state-zero `_EF_Blessing.wav` call before five launches at times0/9/18/27/36, exact `effect\\fire_ivy.bmp`, all four GI lanes and 100 ordered RNG draws, then later-state parent/cache refresh with no additional output and the missing-master no-op. `check_spherewind2_caller.py` verifies the canonical PE caller and exact assets; primary Ref has no numeric effect408 caller. Focused lifecycle passes3156 checks; full Release parity CTest passes428/428 and both documented static audits pass.
+
+
+## WP5 CRagEffect::ProcessSoulBreaker2Effect — effect409 — 2026-10-29
+
+Connected the production ProcessSoulBreaker2Effect and SpawnSoulBreaker2 bodies (src/world/RagEffect.cpp:22534 and :22133) to the lifecycle harness. The fixture checks the literal unresolved PE wave prefix ffect\\ before eight launches at times0..315 in steps of45, exact ffect\\purpleslash.tga, four GI lanes per primitive and 40 ordered RNG draws, magenta actor tint/body-light window, missing-listener cue suppression, and missing-master no-op. check_soulbreaker2_caller.py verifies the PE-only caller and helper profile; no WAV suffix is inferred. Focused lifecycle passes3163 checks; full Release parity CTest passes428/428 and both documented static audits pass.
