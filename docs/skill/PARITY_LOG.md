@@ -3842,3 +3842,7 @@ Added `check_effect153_concentration.py`, registered as `effect153_concentration
 ## WP5C effect154 Refine Success
 
 Added `check_effect154_refine_success.py`, registered as `effect154_refine_success_source_check`, and lifecycle assertions around states14/15/16. PE case154 plays `effect\\bs_refinesuccess.wav` once at state15 using listener-relative X/Z, literal Y0 and arguments250/40/1.0, then propagates shared `ProcessEZ2STR(0,-80,0)` completion. PE and primary Ref Init map to `bs_RefineSuccess.str`; executable bytes verify wave VA `0x719F58` and STR VA `0x71AD78`. Local clip-wave route has the matching frame, resource and completion result. Release parity build succeeds; focused checks pass2/2 and full Release CTest passes298/298. No production behavior change.
+
+## WP5C effect155 Refine Failed
+
+Added `check_effect155_refine_failed.py`, registered as `effect155_refine_failed_source_check`, and lifecycle assertions around states4/5/6. PE case155 plays `effect\\bs_refinefailed.wav` once at state5 using listener-relative X/Z, literal Y0 and arguments250/40/1.0, then propagates shared `ProcessEZ2STR(0,-80,0)` completion. PE and primary Ref Init map to `bs_RefineFailed.str`; executable bytes verify wave VA `0x717300` and STR VA `0x71AD64`. Local clip-wave route has the matching frame, resource and completion result. Release parity build succeeds; focused checks pass2/2 and full Release CTest passes299/299. No production behavior change.
