@@ -3975,3 +3975,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effect104 MaxPower helper comparison — 2026-10-29
 
 `check_maxpower104.py` now compares complete PE and primary-Ref `MaxPower` helper bodies and verifies canonical PE case104 calls it. It records that the primary Ref source omits the OnProcess caller. Existing local timing checks and the exact PE wave bytes at `0x71BDA4`, `0x71BD7C`, and `0x71BD50` remain. Release parity build succeeded; full CTest passed325/325. No production change.
+
+
+## WP10.3 effect100 RemoveTrap wave-byte verification — 2026-10-29
+
+`check_removetrap_caller.py` now verifies the canonical PE string bytes `effect\hunter_removetrap.wav` at VA `0x71B8A4`, in addition to its existing PE/Ref helper comparison, PE caller/local route, particle1 SPR/ACT bytes, launch cadence, RNG payload and renderer binding. Focused comparator and full Release CTest pass325/325. No production change.

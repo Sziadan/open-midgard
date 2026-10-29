@@ -56,6 +56,9 @@ family = function(local, "bool CEffectPrim::UsesReferenceParticle() const")
 if "m_master->GetEffectType() == 100" not in family:
     raise SystemExit("effect100 reference orbit-particle render family missing")
 image = resolver.ExeImage()
+wave = image.read_cstring_at(0x71B8A4)
+if wave is None or wave.raw != b"effect\\hunter_removetrap.wav":
+    raise SystemExit("RemoveTrap wave bytes changed at VA 0x71B8A4")
 assets = [image.read_cstring_at(address).raw for address in (0x71B200, 0x71B1E8)]
 if assets != [b"\xc0\xcc\xc6\xd1\xc6\xae\\particle1.spr", b"\xc0\xcc\xc6\xd1\xc6\xae\\particle1.act"]:
     raise SystemExit(f"RemoveTrap particle1 resource bytes changed: {assets!r}")

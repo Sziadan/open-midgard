@@ -2337,3 +2337,8 @@ Strengthened `check_repairweapon101.py` to compare complete PE and primary-Ref `
 ## WP5C effect104 MaxPower PE/Ref source comparison — 2026-10-29
 
 Strengthened `check_maxpower104.py` to compare the complete PE and primary-Ref `MaxPower` helper bodies, verify canonical PE case104 and record primary Ref caller omission. Existing local timing checks and exact four-wave resource assertions remain. Release parity build succeeded; full CTest passed325/325. No production change.
+
+
+## WP10.3 effect100 RemoveTrap wave bytes — 2026-10-29
+
+Extended `check_removetrap_caller.py` to resolve the exact `effect\hunter_removetrap.wav` bytes at PE VA `0x71B8A4`. Existing full helper/caller parity, particle SPR/ACT bytes, payload, and renderer checks remain. The focused comparator and full Release CTest passed (325/325). No production change.
