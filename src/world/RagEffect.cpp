@@ -2944,24 +2944,27 @@ bool UpdateCylinderPrimitive(CEffectPrim* prim)
         return false;
     }
 
-    prim->m_orgPos = prim->m_master->ResolveBasePosition();
-    prim->m_orgPos.x += prim->m_deltaPos2.x;
-    prim->m_orgPos.z += prim->m_deltaPos2.z;
-    prim->m_orgPos.y = ResolveGroundHeight(prim->m_orgPos) + prim->m_deltaPos2.y;
+    // HighPriest.exe.c:468484 Prim3DCylinder; primary Ref's annotation at
+    // Ref/RagEffectPrim.cpp:285 points to a duplicated CylinderHalf body.
+    prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
     prim->m_speed += prim->m_accel;
+    prim->m_heightSpeed += prim->m_heightAccel;
     prim->m_outerSpeed += prim->m_outerAccel;
     prim->m_innerSpeed += prim->m_innerAccel;
-    prim->m_heightSpeed += prim->m_heightAccel;
+    prim->m_longSpeed += prim->m_longAccel;
+    prim->m_latiSpeed += prim->m_latiAccel;
+    prim->m_longitude += prim->m_longSpeed;
+    prim->m_latitude += prim->m_latiSpeed;
 
     MatrixIdentity(prim->m_matrix);
-    MatrixAppendXRotation(prim->m_matrix, prim->m_latitude * (kPi / 180.0f));
-    MatrixAppendYRotation(prim->m_matrix, prim->m_longitude * (kPi / 180.0f));
+    MatrixAppendXRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_latitude)));
+    MatrixAppendYRotation(prim->m_matrix, GetRadian(static_cast<int>(prim->m_longitude)));
 
-    const float move = -prim->m_speed;
+    const double move = -static_cast<double>(prim->m_speed);
     prim->m_speed3d = {
-        move * prim->m_matrix.m[1][0] + prim->m_matrix.m[3][0],
-        move * prim->m_matrix.m[1][1] + prim->m_matrix.m[3][1],
-        move * prim->m_matrix.m[1][2] + prim->m_matrix.m[3][2]
+        static_cast<float>(move * prim->m_matrix.m[1][0] + prim->m_matrix.m[3][0]),
+        static_cast<float>(move * prim->m_matrix.m[1][1] + prim->m_matrix.m[3][1]),
+        static_cast<float>(move * prim->m_matrix.m[1][2] + prim->m_matrix.m[3][2])
     };
     prim->m_deltaPos = AddVec3(prim->m_deltaPos, prim->m_speed3d);
     prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos);
@@ -2970,29 +2973,21 @@ bool UpdateCylinderPrimitive(CEffectPrim* prim)
     prim->m_innerSize += prim->m_innerSpeed;
     prim->m_heightSize += prim->m_heightSpeed;
 
-    if (prim->m_master->GetEffectType() == kRagEffectPortal && prim->m_stateCnt <= 3) {
-        DbgLog("[RagEffect] cylinder update effect=%d step=%d org=(%.2f,%.2f,%.2f) pos=(%.2f,%.2f,%.2f) inner=%.2f outer=%.2f height=%.2f long=%.2f alpha=%.2f tex=%p\n",
-            prim->m_master->GetEffectType(),
-            prim->m_stateCnt,
-            prim->m_orgPos.x,
-            prim->m_orgPos.y,
-            prim->m_orgPos.z,
-            prim->m_pos.x,
-            prim->m_pos.y,
-            prim->m_pos.z,
-            prim->m_innerSize,
-            prim->m_outerSize,
-            prim->m_heightSize,
-            prim->m_longitude,
-            prim->m_alpha,
-            prim->m_texture.empty() ? nullptr : prim->m_texture[0]);
+    if (prim->m_heightSize > prim->m_maxHeightSize) {
+        prim->m_heightSize = prim->m_maxHeightSize;
     }
-
-    UpdateAlphaFade(prim);
-    if (!AdvanceTextureMotion(prim)) {
-        return false;
+    if ((prim->m_pattern & 1) != 0 && prim->m_stateCnt == prim->m_fadeOutCnt) {
+        prim->m_outerSpeed = static_cast<float>(-(prim->m_outerSize
+            / static_cast<double>(prim->m_duration - prim->m_stateCnt + 1)));
     }
-    return prim->m_stateCnt <= prim->m_duration || prim->m_alpha > 0.0f;
+    ProcessReferenceParticleAlpha(prim);
+    if (prim->m_stateCnt % prim->m_animSpeed != 0) return true;
+    const int motion = ++prim->m_curMotion;
+    if (prim->m_repeatAnim) {
+        prim->m_curMotion = motion % prim->m_totalTexture;
+        return true;
+    }
+    return motion != prim->m_totalTexture;
 }
 
 bool UpdateParticleOrbitPrimitive(CEffectPrim* prim)
@@ -13263,10 +13258,6 @@ bool CEffectPrim::ProcessPrimitiveFrame()
     }
     if (m_type == PP_3DCIRCLE) {
         UpdateCirclePrimitive(this);
-        return true;
-    }
-    if (UsesReferenceCylinder()) {
-        UpdateReferenceCylinderState(this);
         return true;
     }
     if (m_type == PP_3DCYLINDER) {

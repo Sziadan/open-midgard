@@ -230,6 +230,7 @@ void UpdateReferenceFlash(CEffectPrim*);
 void UpdateReferenceScreenCircle(CEffectPrim*);
 void UpdateReferenceSphere(CEffectPrim*);
 bool UpdateReferenceCylinderState(CEffectPrim*);
+bool UpdateCylinderPrimitive(CEffectPrim*);
 bool UpdateReferenceMapMagicZone(CEffectPrim*);
 bool UpdateReferenceMapParticle(CEffectPrim*);
 bool UpdateReference3DAura(CEffectPrim*);
@@ -449,7 +450,8 @@ struct CEffectPrim : CGameObject {
         if ((m_type == PP_2DTEXTURE || m_type == PP_2DQUAD) && !UpdateReferenceScreenTexture(this)) return false;
         if (UsesReferenceCrossTexture() && !UpdateReferenceCrossTexture(this)) return false;
         if (UsesReferenceTexture()) UpdateReferenceCrossTexture(this);
-        if (UsesReferenceCylinder() && !UpdateReferenceCylinderState(this)) return false;
+        if (m_type == PP_3DCYLINDER) UpdateCylinderPrimitive(this);
+        if (m_type == PP_3DCYLINDERHALF && !UpdateReferenceCylinderState(this)) return false;
         if (m_type == PP_3DPARTICLEORBIT && !UpdateReferenceOrbitParticle(this)) return false;
         if (m_type == PP_3DPARTICLE && !UpdateLinearReferenceParticle(this)) return false;
         if (resetFrame >= 0) m_stateCnt = resetFrame;
@@ -6444,6 +6446,31 @@ int main()
         check(texturePrim.m_outerSpeed < 0 && texturePrim.m_alpha < 20
             && texturePrim.m_curMotion == 1 && texturePrim.m_stateCnt == 1,
             "OnProcess case 0x12 applies outer fade and alpha, ignores animation completion, then ticks");
+        texturePrim.m_type = PP_3DCYLINDER; texturePrim.m_stateCnt = 0; texturePrim.m_duration = 50;
+        texturePrim.m_master->m_pos = texturePrim.m_master->m_effectPos = {10,20,30};
+        texturePrim.m_pattern = 1; texturePrim.m_deltaPos2 = {1,2,3}; texturePrim.m_deltaPos = {};
+        texturePrim.m_speed = 2; texturePrim.m_accel = 1;
+        texturePrim.m_outerSpeed = 1; texturePrim.m_outerAccel = 0.5f; texturePrim.m_outerSize = 2;
+        texturePrim.m_innerSpeed = 2; texturePrim.m_innerAccel = 0.25f; texturePrim.m_innerSize = 3;
+        texturePrim.m_heightSpeed = 5; texturePrim.m_heightAccel = 1;
+        texturePrim.m_heightSize = 98; texturePrim.m_maxHeightSize = 100;
+        texturePrim.m_longitude = 10; texturePrim.m_longSpeed = 4; texturePrim.m_longAccel = 1;
+        texturePrim.m_latitude = 0; texturePrim.m_latiSpeed = 2; texturePrim.m_latiAccel = 1;
+        texturePrim.m_alpha = 20; texturePrim.m_alphaSpeed = 1; texturePrim.m_alphaDelta = 1;
+        texturePrim.m_fadeOutCnt = 0; texturePrim.m_animSpeed = 1; texturePrim.m_curMotion = 0;
+        texturePrim.m_totalTexture = 1; texturePrim.m_repeatAnim = false;
+        const u8 cylinderResult = texturePrim.OnProcess();
+        check(cylinderResult == 1 && texturePrim.m_orgPos.x == 11 && texturePrim.m_orgPos.y == 22
+            && texturePrim.m_orgPos.z == 33 && texturePrim.m_speed == 3
+            && texturePrim.m_longitude == 20 && texturePrim.m_latitude == 3
+            && texturePrim.m_pos.x == texturePrim.m_orgPos.x + texturePrim.m_deltaPos.x
+            && texturePrim.m_pos.y == texturePrim.m_orgPos.y + texturePrim.m_deltaPos.y
+            && texturePrim.m_pos.z == texturePrim.m_orgPos.z + texturePrim.m_deltaPos.z,
+            "OnProcess case 0x0D integrates angular acceleration before matrix motion and longitude again after movement");
+        check(texturePrim.m_outerSize == 3.5f && texturePrim.m_innerSize == 5.25f
+            && texturePrim.m_heightSize == 100 && texturePrim.m_outerSpeed < 0
+            && texturePrim.m_alpha < 20 && texturePrim.m_curMotion == 1 && texturePrim.m_stateCnt == 1,
+            "OnProcess case 0x0D preserves size integration, height cap, fade-out, alpha and ignored completion");
         texturePrim.m_type = PP_3DFLASH; texturePrim.m_stateCnt = 0; texturePrim.m_pattern = 1;
         textureMaster.m_tlvertX = 50; textureMaster.m_tlvertY = 60;
         texturePrim.m_deltaPos2 = {5,6,0}; texturePrim.m_heightSize = -2;
@@ -9396,26 +9423,29 @@ int main()
         auto* prim=effect.m_primList.front();prim->m_animSpeed=4;prim->m_repeatAnim=true;prim->m_alphaDelta=1;
         check(prim->UsesReferenceCylinder() && prim->m_maxHeightSize==100,"original Portal cylinder binds reference state and source maximum height");
         prim->OnProcess();
-        check(prim->m_pos.x==10 && prim->m_pos.y==50 && prim->m_pos.z==30 && prim->m_longitude==4,
-            "reference cylinder uses stored parent height and increments longitude after matrix");
-        check(std::fabs(prim->m_matrix.m[0][0]-1)<0.000001f && prim->m_curMotion==0 && prim->m_stateCnt==1,
-            "reference cylinder first frame uses old longitude then wraps one-texture animation");
-        check(prim->m_alpha==static_cast<float>(128*0.16666667),"reference cylinder applies original alpha rise on zero");
+        check(prim->m_pos.x==10 && prim->m_pos.y==50 && prim->m_pos.z==30 && prim->m_longitude==8,
+            "full cylinder preserves stored parent position and advances longitude on both sides of matrix movement");
+        check(std::fabs(prim->m_matrix.m[0][0]-GetCos(4))<0.000001f && prim->m_curMotion==0 && prim->m_stateCnt==1,
+            "full cylinder builds matrix from once-advanced longitude and wraps one-texture animation");
+        check(prim->m_alpha==static_cast<float>(128*0.16666667),"full cylinder applies original alpha rise on zero");
         for(int i=0;i<6;++i)prim->OnProcess();
-        check(prim->m_alpha==128,"reference cylinder clamps alpha rise to original maximum");
+        check(prim->m_alpha==128,"full cylinder clamps alpha rise to original maximum");
         check(prim->m_argb==0x80FFFFFF,"reference alpha update stores packed cylinder color for rendering");
         effect.m_effectPos={20,70,40};prim->OnProcess();
         check(prim->m_pos.x==20 && prim->m_pos.y==70 && prim->m_pos.z==40,"reference cylinder follows persistent effect origin without terrain substitution");
         prim->m_stateCnt=114;prim->OnProcess();
-        check(std::fabs(prim->m_alphaSpeed+128.0f/6)<0.00001f && prim->m_alpha<128,"reference cylinder fade uses current alpha at original fade frame");
+        check(std::fabs(prim->m_alphaSpeed+128.0f/6)<0.00001f && prim->m_alpha<128,"full-cylinder fade uses current alpha at original fade frame");
         prim->m_stateCnt=8;prim->m_latitude=90.9f;prim->m_longitude=0.9f;prim->m_speed=1;prim->m_accel=1;
         prim->m_deltaPos={};prim->m_deltaPos2={1,2,3};prim->m_heightSize=99;prim->m_heightSpeed=2;prim->m_heightAccel=1;
         prim->m_outerSize=4;prim->m_outerSpeed=1;prim->m_outerAccel=2;prim->m_innerSize=4;prim->m_innerSpeed=-2;prim->m_innerAccel=-1;
         prim->OnProcess();
-        check(prim->m_speed==2 && std::fabs(prim->m_deltaPos.z+2)<0.000001f && std::fabs(prim->m_deltaPos.y)<0.000001f,
-            "reference cylinder integrates acceleration before negative local-Y motion with integer-degree rotation");
+        check(prim->m_speed==2 && std::fabs(prim->m_longitude-8.9f)<0.00001f
+            && std::fabs(prim->m_deltaPos.x+2*prim->m_matrix.m[1][0])<0.000001f
+            && std::fabs(prim->m_deltaPos.y+2*prim->m_matrix.m[1][1])<0.000001f
+            && std::fabs(prim->m_deltaPos.z+2*prim->m_matrix.m[1][2])<0.000001f,
+            "full cylinder integrates angular acceleration then translates along negative local-Y at integer degrees");
         check(prim->m_orgPos.x==21 && prim->m_orgPos.y==72 && prim->m_orgPos.z==43 && prim->m_heightSize==100
-            && prim->m_heightSpeed==3 && prim->m_outerSize==7 && prim->m_innerSize==1,"reference cylinder advances sizes and upper-clamps height only");
+            && prim->m_heightSpeed==3 && prim->m_outerSize==7 && prim->m_innerSize==1,"full cylinder advances sizes and upper-clamps height");
         prim->m_pattern=1;prim->m_stateCnt=10;prim->m_duration=20;prim->m_fadeOutCnt=10;prim->m_outerSpeed=0;prim->m_outerAccel=0;prim->m_outerSize=22;
         prim->OnProcess();check(prim->m_outerSpeed==-2,"reference cylinder shrink starts after size update with remaining-plus-one divisor");
         prim->m_repeatAnim=false;prim->m_totalTexture=3;prim->m_animSpeed=4;prim->m_curMotion=1;prim->m_stateCnt=1;
@@ -9969,14 +9999,14 @@ int main()
             &&g_texMgr.requests==std::vector<std::string>({"effect\\ring_blue.tga"})&&g_resMgr.requests.empty(),
             "Teleportation keeps original immediate fade animation defaults and exact ring-blue texture");
         cylinder->m_alphaDelta=1;cylinder->OnProcess();
-        check(cylinder->m_heightSpeed==5.25f&&cylinder->m_heightSize==5.25f&&cylinder->m_longitude==2&&cylinder->m_outerSize==4
+        check(cylinder->m_heightSpeed==5.25f&&cylinder->m_heightSize==5.25f&&cylinder->m_longitude==4&&cylinder->m_outerSize==4
             &&cylinder->m_outerSpeed==static_cast<float>(-4.0/61)&&cylinder->m_innerSize==4,
-            "Teleportation first update grows source height before setting duration-plus-one outer shrink speed");
+            "Teleportation full-cylinder update grows source height, double-advances longitude, and sets outer shrink speed");
         check(cylinder->m_alphaSpeed==static_cast<float>(-254.0/60)&&cylinder->m_alpha<254&&(cylinder->m_argb>>24)==249
             &&cylinder->m_pos.x==30&&cylinder->m_pos.y==50&&cylinder->m_pos.z==40&&cylinder->m_curMotion==0,
             "Teleportation first update fades at stored world anchor and wraps single texture");
         cylinder->OnProcess();check(cylinder->m_heightSize==10.75f&&cylinder->m_outerSize==4+static_cast<float>(-4.0/61)
-            &&cylinder->m_innerSize==4&&cylinder->m_longitude==4,"Teleportation later update shrinks only outer radius while accelerating height");
+            &&cylinder->m_innerSize==4&&cylinder->m_longitude==8,"Teleportation later update retains double longitude advance as outer radius shrinks and height accelerates");
         for(int frame=2;frame<15;++frame)cylinder->OnProcess();check(cylinder->m_heightSize==100&&cylinder->m_heightSpeed==8.75f,
             "Teleportation source height reaches constructor cap while growth speed continues accelerating");
         const float outer=cylinder->m_outerSize;cylinder->OnProcess();check(cylinder->m_heightSize==100&&cylinder->m_outerSize<outer&&cylinder->m_heightSpeed==9,
@@ -10120,12 +10150,12 @@ int main()
         check(g_resMgr.requests==std::vector<std::string>({"\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\particle2.act"})
             &&orbit->m_animSpeed==4&&orbit->m_repeatAnim,"HealSP uses exact particle2 sprite then action and constructor animation profile");
         cylinder->m_alphaDelta=1;cylinder->OnProcess();
-        check(cylinder->m_longitude==5&&cylinder->m_alpha==static_cast<float>(16.0*0.033333335)
+        check(cylinder->m_longitude==10&&cylinder->m_alpha==static_cast<float>(16.0*0.033333335)
             &&(cylinder->m_argb&0xFFFFFF)==0x20B0E8&&cylinder->m_heightSize==15&&cylinder->m_pos.y==50,
-            "HealSP reference cylinder rotates and raises original packed blue alpha without height or origin substitution");
+            "HealSP full-cylinder rotation doubles longitude accumulation and updates packed blue alpha");
         for(int frame=1;frame<80;++frame)cylinder->OnProcess();
-        check(cylinder->m_alpha==16&&cylinder->m_argb==0x1020B0E8&&cylinder->m_longitude==400,
-            "HealSP cylinder source alpha clamps at sixteen while raw longitude continues accumulating");
+        check(cylinder->m_alpha==16&&cylinder->m_argb==0x1020B0E8&&cylinder->m_longitude==800,
+            "HealSP full-cylinder source alpha clamps at sixteen while raw longitude advances twice per frame");
         cylinder->OnProcess();check(cylinder->m_alphaSpeed==-0.8f&&cylinder->m_alpha==15.2f,
             "HealSP cylinder begins original twenty-frame fade at primitive frame eighty");
         orbit->m_alphaDelta=1;orbit->OnProcess();

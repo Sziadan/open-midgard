@@ -49,22 +49,29 @@ check("canonical PE and secondary Ref Prim3DCylinder bodies preserve accelerated
       and "m_longitude += m_longSpeed" in legacy[legacy.index("m_pos = m_orgPos + m_deltaPos;"):]
       and "Prim3DCylinder" in PE[PE.index(signature):PE.index(signature) + 80]
       and "m_latiSpeed" in pe and "m_longAccel" in pe)
-check("primary Ref labels Prim3DCylinder but supplies the duplicate Prim3DCylinderHalf body",
+check("primary Ref mislabels the duplicated half-cylinder body, with PE and secondary Ref resolving the full method",
       "Original Signature: private: bool __thiscall CEffectPrim::Prim3DCylinder(void)" in REF
       and "Prim3DCylinderHalf" in REF[REF.index("Original Signature: private: bool __thiscall CEffectPrim::Prim3DCylinder"):]
       and "m_latiSpeed" not in primary_mislabeled)
 check("PE and primary Ref OnProcess dispatch case 0x0D to Prim3DCylinder",
       re.search(r"case\s+0xD\s*:[\s\S]{0,120}Prim3DCylinder\(this\)", pe_process) is not None
       and re.search(r"case\s+0xD\s*:[\s\S]{0,120}Prim3DCylinder\(this\)", ref_process) is not None)
-check("local type 0x0D route selects the source-derived cylinder path",
-      "if (UsesReferenceCylinder())" in local_process
-      and "UpdateReferenceCylinderState(this)" in local_process
-      and "if (m_type == PP_3DCYLINDER)" in local_process
-      and "UpdateCylinderPrimitive(this)" in local_process)
-check("comparator records the unresolved PE/local angular-motion gap instead of treating the generic fallback as source parity",
-      "m_longSpeed += m_longAccel" in legacy and "m_latiSpeed += m_latiAccel" in legacy
-      and "prim->m_longSpeed += prim->m_longAccel" not in local
-      and "prim->m_latiSpeed += prim->m_latiAccel" not in local
-      and "prim->m_latitude += prim->m_latiSpeed" not in local
-      and "reference cylinder uses stored parent height and increments longitude after matrix" in FIXTURE)
+check("all local PP_3DCYLINDER primitives route through the full updater and 0x12 remains on half updater",
+      "if (m_type == PP_3DCYLINDER)" in local_process
+      and "UpdateCylinderPrimitive(this)" in local_process
+      and "if (m_type == PP_3DCYLINDERHALF)" in local_process
+      and "UpdateReferenceCylinderState(this)" in local_process)
+check("local full updater matches angular integration, integer-degree matrix motion, trailing longitude and lifecycle controls",
+      "prim->m_longSpeed += prim->m_longAccel" in local
+      and "prim->m_latiSpeed += prim->m_latiAccel" in local
+      and compact(local).index("prim->m_longitude += prim->m_longSpeed")
+      < compact(local).index("prim->m_latitude += prim->m_latiSpeed")
+      < compact(local).index("MatrixAppendXRotation")
+      < compact(local).index("prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos)")
+      and "prim->m_longitude += prim->m_longSpeed" in compact(local)[compact(local).index("prim->m_pos = AddVec3(prim->m_orgPos, prim->m_deltaPos)"):]
+      and "prim->m_heightSize > prim->m_maxHeightSize" in local
+      and "prim->m_stateCnt == prim->m_fadeOutCnt" in local
+      and "ProcessReferenceParticleAlpha(prim)" in local
+      and "OnProcess case 0x0D integrates angular acceleration before matrix motion and longitude again after movement" in FIXTURE
+      and "HealSP full-cylinder rotation doubles longitude accumulation and updates packed blue alpha" in FIXTURE)
 print("Prim3DCylinder update comparator passed.")
