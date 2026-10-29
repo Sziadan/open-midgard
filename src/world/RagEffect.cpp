@@ -2885,6 +2885,10 @@ bool UpdateCirclePrimitive(CEffectPrim* prim)
     prim->m_orgPos.x += prim->m_deltaPos2.x;
     prim->m_orgPos.z += prim->m_deltaPos2.z;
     prim->m_orgPos.y = ResolveGroundHeight(prim->m_orgPos) + prim->m_deltaPos2.y;
+    if (prim->m_stateCnt == prim->m_changePoint) {
+        prim->m_radiusSpeed = prim->m_changeSpeed;
+        prim->m_radiusAccel = prim->m_changeAccel;
+    }
     prim->m_speed += prim->m_accel;
     prim->m_longSpeed += prim->m_longAccel;
     prim->m_radiusSpeed += prim->m_radiusAccel;
@@ -11784,6 +11788,10 @@ bool UpdateReferenceCylinderState(CEffectPrim* prim)
 bool UpdateReferenceCircleState(CEffectPrim* prim)
 {
     prim->m_orgPos = AddVec3(prim->m_master->EffectPosition(), prim->m_deltaPos2);
+    if (prim->m_stateCnt == prim->m_changePoint) {
+        prim->m_radiusSpeed = prim->m_changeSpeed;
+        prim->m_radiusAccel = prim->m_changeAccel;
+    }
     prim->m_speed += prim->m_accel;
     prim->m_longSpeed += prim->m_longAccel;
     prim->m_radiusSpeed += prim->m_radiusAccel;

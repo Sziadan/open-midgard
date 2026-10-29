@@ -4326,3 +4326,10 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - The local helper uses the master's screen coordinates, matches radius integration and fill/clamp behavior, and processes alpha before the shared tick. Expanded lifecycle assertions cover the existing clamp case, fill pattern above the inner size, and radius below the inner size.
 - No production code change was made. Direct comparator passed; the updated lifecycle target rebuilt successfully, and full Release CTest passed 380/380.
 
+## WP5 CEffectPrim Prim3DCircle change-point parity - 2026-10-29
+
+- Added and registered `tools/tests/check_prim3dcircle_initializer.py`; PE and primary Ref initializer bodies normalize identically, as do their inlined `OnProcess` case `0x0C` dispatch branches.
+- The Ref initializer replaces `m_radiusSpeed` and `m_radiusAccel` with change values exactly when state count equals `m_ChangePoint`, before radius integration. Implemented this in both local `UpdateReferenceCircleState` and generic `UpdateCirclePrimitive`; other source-based and local-only routing behavior remains intact.
+- The lifecycle fixture sets an effect-8 master, change point 2, previous radius speed/acceleration, and replacement values. It checks the resulting radius, speed, acceleration and shared tick.
+- Focused CTest passed 2/2. Full Release parity target built successfully; full Release CTest passed 381/381.
+

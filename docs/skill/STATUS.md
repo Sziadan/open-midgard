@@ -1,6 +1,6 @@
 # Skill system status
 
-Latest WP5 source checkpoints: `Prim3DQuadHorn2`, `Prim3DLine` (`0x14`), `Prim3DSphere` (`0x0E`), and `Prim2DCircle` (`0x04`) have dedicated initializer/dispatch comparators bound to lifecycle coverage. The updated lifecycle target built successfully; full Release CTest passed 380/380 including the expanded circle branch fixture.
+Latest WP5 source checkpoints: `Prim3DQuadHorn2`, `Prim3DLine` (`0x14`), `Prim3DSphere` (`0x0E`), `Prim2DCircle` (`0x04`), and `Prim3DCircle` (`0x0C`) have dedicated initializer/dispatch comparators bound to lifecycle coverage. Prim3DCircle change-point speed/acceleration handling is now ported in both local update paths. Full Release parity build succeeded; full Release CTest passed 381/381.
 
 | WP | State | Measured number | Where the number comes from | Next function / task |
 |---|---|---|---|---|

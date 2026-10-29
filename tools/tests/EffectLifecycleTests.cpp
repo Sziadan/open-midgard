@@ -5917,6 +5917,17 @@ int main()
         circle.OnProcess();
         check(circle.m_size == 4,
             "OnProcess case 0x04 radius below inner size stays at radius instead of inner clamp");
+        circleMaster.m_type = 8; circleMaster.m_duration = 100; circleMaster.m_effectPos = {};
+        circle.m_type = PP_3DCIRCLE; circle.m_stateCnt = 2; circle.m_duration = 20;
+        circle.m_changePoint = 2; circle.m_changeSpeed = 0.08f; circle.m_changeAccel = 0.0f;
+        circle.m_radius = 4.0f; circle.m_radiusSpeed = 0.25f; circle.m_radiusAccel = -0.1f;
+        circle.m_longitude = 0.0f; circle.m_longSpeed = 0.0f; circle.m_longAccel = 0.0f;
+        circle.m_innerSize = 1.0f; circle.m_innerSpeed = 0.0f; circle.m_innerAccel = 0.0f;
+        circle.m_alpha = 100.0f; circle.m_alphaSpeed = 0.0f; circle.m_fadeOutCnt = 100;
+        circle.OnProcess();
+        check(circle.m_radiusSpeed == 0.08f && circle.m_radiusAccel == 0.0f
+            && std::fabs(circle.m_radius - 4.08f) < 0.00001f && circle.m_stateCnt == 3,
+            "OnProcess case 0x0C applies change-point radius speed and acceleration before integration");
         circle.m_master = nullptr;
         auto sphereMasterStorage = std::make_unique<CRagEffect>();
         CRagEffect& sphereMaster = *sphereMasterStorage;

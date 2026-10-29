@@ -2701,3 +2701,7 @@ After adding the three initializer comparators, the complete `build64/skill-pari
 
 Added `tools/tests/check_prim2dcircle_initializer.py` and registered it with CTest. PE/primary-Ref initializer bodies and inline case-4 dispatcher branches match. The checker ties the local screen-circle updater to the existing anchor/radius/clamp assertion; the lifecycle fixture now additionally checks fill-pattern behavior above the inner size and radius below the inner size. The lifecycle target rebuilt successfully, and full Release CTest passed 380/380.
 
+## WP5 CEffectPrim Prim3DCircle change-point parity - 2026-10-29
+
+Added `tools/tests/check_prim3dcircle_initializer.py`. PE and primary Ref initializer bodies and inline case `0x0C` match, including the exact `m_stateCnt == m_ChangePoint` radius-speed/acceleration replacement. Ported that source branch into both `UpdateReferenceCircleState` and `UpdateCirclePrimitive`. Lifecycle coverage confirms the configured speed/acceleration replace prior values before radius integration on the change frame. Full Release parity build succeeded; full Release CTest passed 381/381.
+

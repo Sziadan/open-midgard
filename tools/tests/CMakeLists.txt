@@ -880,6 +880,8 @@ add_test(NAME prim3dline_initializer_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dline_initializer.py")
 add_test(NAME prim3dsphere_initializer_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dsphere_initializer.py")
+add_test(NAME prim3dcircle_initializer_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim3dcircle_initializer.py")
 add_test(NAME prim2dcircle_initializer_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_prim2dcircle_initializer.py")
 add_test(NAME prim3dparticle_render_source_check
@@ -1365,6 +1367,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_prim3dquadhorn2.py
     check_prim3dline_initializer.py
     check_prim3dsphere_initializer.py
+    check_prim3dcircle_initializer.py
     check_prim2dcircle_initializer.py
     check_hitline_caller.py
     check_hitline4_caller.py
