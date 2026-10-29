@@ -33,6 +33,7 @@ vector3d AddVec3(vector3d a, vector3d b) { return {a.x+b.x, a.y+b.y, a.z+b.z}; }
 #include "EffectGiTypes.inc"
 constexpr int kPrimTypeHeal = 0x3C;
 constexpr int kPrimTypeChemical3 = 0x38;
+constexpr int kPrimTypeCasting5 = 0x6B;
 struct matrix { float m[4][4]{}; };
 #include "EffectSegmentTypes.inc"
 struct EffectBandState {
@@ -534,6 +535,7 @@ struct CRagEffect : CGameObject {
     void ApplyReadyPortal();
     void ApplyPortal();
     void ApplyWarpZone2(const char*);
+    void ApplyBlackDevil(const char*);
     void ApplyWarpZone();
     void ApplyIceArrow();
     void ApplyFireArrow();
@@ -14111,6 +14113,65 @@ int main()
             &&rngDraws==noMasterDraws&&waveCalls.size()==noMasterWaves,
             "effect409 missing master stays active without cues, primitives or RNG");
         g_world.m_player=oldPlayer;waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        CRagEffect devil;devil.m_type=487;devil.m_stateCnt=1;devil.m_duration=77;devil.m_master=&master;
+        const int startDraws=rngDraws;waveCalls.clear();g_texMgr.requests.clear();
+        devil.ApplyBlackDevil("effect\\ring_black.tga");
+        check(devil.m_primList.size()==1&&rngDraws==startDraws&&waveCalls.empty()
+            &&g_texMgr.requests==std::vector<std::string>({"effect\\ring_black.tga"}),
+            "effect487 state1 emits one black casting ring without audio or RNG");
+        CEffectPrim* ring=devil.m_primList.empty()?nullptr:devil.m_primList.front();
+        const float d1[4]={2.5f,5.0f,7.5f,10.0f};
+        const short s1[4]={270,0,90,180},r1[4]={53,60,55,50};
+        bool firstPayload=ring&&ring->m_type==PP_3DCASTING_5&&ring->m_renderFlag==5
+            &&ring->m_duration==77&&ring->m_size==12.0f&&ring->m_pos.x==100
+            &&ring->m_pos.y==200&&ring->m_pos.z==300&&ring->m_texture.size()==1;
+        for(int band=0;band<4;++band) if(ring) {
+            const EffectGi& gi=ring->m_gi[band];
+            firstPayload=firstPayload&&gi.life==1&&gi.process==0&&gi.fullDisplayAngle==360
+                &&gi.maxHeight==d1[band]&&gi.rotStart==s1[band]&&gi.alphaB==0
+                &&gi.distance==d1[band]&&gi.riseAngle==r1[band]&&gi.alphaT==0
+                &&gi.sparkY==0.0f;
+        }
+        check(firstPayload,"effect487 state1 preserves master origin and all four casting bands");
+        devil.ClearPrims();g_world.UpdateGameObjects();
+
+        devil.m_stateCnt=2;master.m_pos={110,210,310};g_texMgr.requests.clear();
+        devil.ApplyBlackDevil("effect\\ring_black.tga");
+        ring=devil.m_primList.empty()?nullptr:devil.m_primList.front();
+        const float d2[4]={2.7f,5.1999998f,7.6999998f,10.2f};
+        const short s2[4]={271,1,91,181},r2[4]={52,59,54,49};
+        bool secondPayload=devil.m_primList.size()==1&&ring&&ring->m_type==PP_3DCASTING_5
+            &&ring->m_renderFlag==5&&ring->m_duration==77&&ring->m_size==12.0f
+            &&ring->m_pos.x==110&&ring->m_pos.y==210&&ring->m_pos.z==310
+            &&ring->m_texture.size()==1&&rngDraws==startDraws&&waveCalls.empty()
+            &&g_texMgr.requests==std::vector<std::string>({"effect\\ring_black.tga"});
+        for(int band=0;band<4;++band) if(ring) {
+            const EffectGi& gi=ring->m_gi[band];
+            secondPayload=secondPayload&&gi.life==1&&gi.process==0&&gi.fullDisplayAngle==360
+                &&gi.maxHeight==d2[band]&&gi.rotStart==s2[band]&&gi.alphaB==0
+                &&gi.distance==d2[band]&&gi.riseAngle==r2[band]&&gi.alphaT==0
+                &&gi.sparkY==0.0f;
+        }
+        check(secondPayload,"effect487 state2 refreshes master origin and preserves all four alternate bands");
+        devil.ClearPrims();g_world.UpdateGameObjects();
+
+        devil.m_master=nullptr;devil.m_cachedPos={7,8,9};devil.m_stateCnt=1;
+        devil.ApplyBlackDevil("effect\\ring_black.tga");
+        ring=devil.m_primList.empty()?nullptr:devil.m_primList.front();
+        check(ring&&ring->m_pos.x==7&&ring->m_pos.y==8&&ring->m_pos.z==9,
+            "effect487 uses cached origin when the master is unavailable");
+        devil.ClearPrims();g_world.UpdateGameObjects();
+        for(int state:{0,3}) {
+            devil.m_stateCnt=state;devil.ApplyBlackDevil("effect\\ring_black.tga");
+        }
+        devil.m_stateCnt=1;devil.ApplyBlackDevil(nullptr);
+        check(devil.m_primList.empty()&&rngDraws==startDraws&&waveCalls.empty()
+            &&g_texMgr.requests.size()==2,
+            "effect487 states0/3 and null texture are closed no-output gates");
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
