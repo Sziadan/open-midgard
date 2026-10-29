@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare the paired Level99 PE callers/helpers and local effects397/398 routes."""
+"""Compare Level99 PE callers/helpers and local routes across OnProcess families."""
 from pathlib import Path
 import re
 import sys
@@ -13,6 +13,7 @@ REF2 = (ROOT / "Ref/RagEffect2.cpp").read_text(encoding="latin-1")
 REF_PRIMARY = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 ROUTE = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
+ROUTE3 = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
 
 
 def function_body(source, signature):
@@ -42,11 +43,21 @@ if not re.search(r"case 201:\s*case 398:\s*CRagEffect::Level99_2\(this, aEffectP
 for name, signature in (
     ("Level99", "void __thiscall CRagEffect::Level99(CRagEffect *this, char *tName, char F1)"),
     ("Level99_2", "void __thiscall CRagEffect::Level99_2(CRagEffect *this, char *tName, char F1)"),
+    ("Level99_3", "void __thiscall CRagEffect::Level99_3(CRagEffect *this, char F1)"),
 ):
     pe_body = function_body(PE, signature)
     ref_body = function_body(REF2, signature)
     if compact(pe_body) != compact(ref_body):
         raise AssertionError(f"PE and primary-Ref {name} helper bodies differ")
+
+for source_name, source in (("PE", PE), ("primary Ref", REF_PRIMARY)):
+    process3 = function_body(source, "unsigned __int8 __thiscall CRagEffect::OnProcess3(CRagEffect *this)")
+    for effect_id, variant in ((678, 2), (679, 1), (680, 1), (692, 3)):
+        expected = (rf"case 0x{effect_id:X}:\s*CRagEffect::Level99_3\(this, {variant}\);\s*return 1;"
+                    if effect_id in (678, 692) else
+                    rf"case 0x{effect_id:X}:\s*CRagEffect::Level99(?:_2)?\(this, [^;]*, {variant}\);\s*return 1;")
+        if not re.search(expected, process3):
+            raise AssertionError(f"{source_name} OnProcess3 effect{effect_id} caller changed")
 
 for effect_id, route_call in (
     (200, "ProcessLevel99Effect"), (397, "ProcessLevel99Effect"),
@@ -79,9 +90,26 @@ image = ExeImage(ROOT / "HighPriest.exe")
 for va, expected, label in (
     (0x71943C, b"effect\\ring_blue.tga", "Level99 ring-blue"),
     (0x719DD8, b"effect\\pikapika2.bmp", "Level99_2 pikapika2"),
+    (0x71C3C0, b"effect\\freezing_circle.bmp", "Level99_3 freezing circle"),
+    (0x719780, b"effect\\whitelight.tga", "Level99_3 white light"),
+    (0x71C3DC, b"effect\\ghost.bmp", "Level99_3 ghost"),
 ):
     resource = image.read_cstring_at(va)
     if resource is None or resource.raw != expected:
         raise AssertionError(f"{label} bytes differ at PE VA 0x{va:06X}")
 
-print("effects397/398 Level99 parity passed with sibling routing for 200/201, full PE/Ref helpers, local profiles and exact resources")
+for effect_id, route_call in ((678, "ProcessLevel99_3Effect"), (692, "ProcessLevel99_3Effect"),
+                              (679, "ProcessLevel99Effect"), (680, "ProcessLevel99_2Effect")):
+    if f"case {effect_id}: return {route_call}();" not in ROUTE3:
+        raise AssertionError(f"local effect{effect_id} OnProcess3 route changed")
+level99_3 = function_body(LOCAL, "bool CRagEffect::ProcessLevel99_3Effect()")
+for token in (
+    "case 678: variant = 2;", "case 692: variant = 3;", '"effect\\\\ghost.bmp"',
+    '"effect\\\\freezing_circle.bmp"', '"effect\\\\whitelight.tga"',
+    "variant == 2 ? 7.0f : 0.0f", "variant != 3 || index < 1",
+    "variant == 1 ? 1 : variant == 3 ? 11 : 0", "rand() % 15 - 8", "rand() % 360",
+):
+    if token not in level99_3:
+        raise AssertionError(f"local Level99_3 profile missing {token}")
+
+print("Level99 parity passed: effects397/398, OnProcess3 variants678/679/680/692, full PE/Ref helpers, local profiles and exact resources")

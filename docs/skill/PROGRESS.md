@@ -2558,3 +2558,8 @@ Extended `check_effect375_actor_light.py` with matching PE/primary-Ref caller ch
 ## WP5F effect600 ThrowItem variant3 parity — 2026-10-29
 
 Extended `check_effect539_throw_items.py` with effect600's PE/primary-Ref caller, local generated route and variant3 CP949 resource mapping, plus the shared variant3 launch profile and exact executable texture bytes. Focused check, elevated Release parity build and full Release CTest passed 360/360. No production behavior change.
+
+## WP5F effect554 EffectTextureSet selector-2 parity — 2026-10-29
+
+Added and registered `check_effect554_texture_set.py`. It compares the PE and primary-Ref effect554 caller, local generated route and `freeze_a.bmp` mapping, PE-backed resource bytes, and the shared selector-2 profile (state-zero spawn, PP_EFFECTTEXTURE, inherited duration, distance 10, actor Y−10 baseline, flag2=2, height10=0, display angle 135, alpha zero and randomized rotation). Focused check passed; full Release parity build and CTest passed 361/361. Also extended the existing Level99 comparator through OnProcess3 variants 678/679/680/692, full Level99_3 helper comparison, local variant profiles, and three exact PE resources.
+No production behavior change.
