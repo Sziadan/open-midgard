@@ -935,6 +935,8 @@ add_test(NAME effect235_cp949_str_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect235_cp949_str.py")
 add_test(NAME effect608_cook_success_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect608_cook_success.py")
+add_test(NAME effect609_cook_fail_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect609_cook_fail.py")
 add_test(NAME effect102_crash_earth_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect102_crash_earth.py")
 add_test(NAME effect103_weapon_perfection_source_check

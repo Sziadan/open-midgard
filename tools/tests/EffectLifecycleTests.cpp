@@ -11564,6 +11564,28 @@ int main()
         g_world.m_player=oldPlayer;
     }
     {
+        CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect effect;effect.m_type=609;effect.m_master=&master;
+        effect.m_effectPos={7,8,9};waveCalls.clear();
+        const int draws=rngDraws;
+        effect.m_stateCnt=49;
+        check(!effect.ProcessTier3StrEffect()&&effect.m_effectPos.x==7&&effect.m_effectPos.y==8&&effect.m_effectPos.z==9
+            &&waveCalls.empty(),
+            "effect609 state49 does not update effect position or play the state50 cue");
+        effect.m_stateCnt=50;
+        check(!effect.ProcessTier3StrEffect()&&effect.m_effectPos.x==31&&effect.m_effectPos.y==41&&effect.m_effectPos.z==51
+            &&waveCalls.size()==1&&waveCalls[0].name=="caramel_die.wav"
+            &&waveCalls[0].x==30&&waveCalls[0].y==0&&waveCalls[0].z==40
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1,
+            "effect609 state50 maps the source position copy to m_effectPos, plays exact listener-relative cue, and propagates STR completion");
+        effect.m_stateCnt=51;
+        check(!effect.ProcessTier3StrEffect()&&waveCalls.size()==1&&effect.m_effectPos.x==31&&effect.m_effectPos.y==41&&effect.m_effectPos.z==51
+            &&rngDraws==draws,
+            "effect609 state51 does not repeat its cue, preserves copied position, and propagates STR completion");
+        g_world.m_player=oldPlayer;
+    }
+    {
         gameMode.messages=0;gameMode.messageIds.clear();waveCalls.clear();
         CRagEffect effect;effect.m_type=563;effect.m_effectPos={7,8,9};effect.m_pos={10,11,12};
         const int draws=rngDraws;
