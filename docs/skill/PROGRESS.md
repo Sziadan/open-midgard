@@ -2307,3 +2307,8 @@ Added `check_effect125_enchant_poison.py` and registered it in CTest. The compar
 ## WP5C effect128 OverThrust — 2026-10-29
 
 Added `check_effect128_overthrust.py` and registered it in CTest. The check compares the complete PE and primary-Ref helper bodies, pins PE case128 to `OverThrust`, validates the local legacy frame route and ring payload, and verifies the exact wave and texture bytes at `0x71A598`, `0x71BB9C`, and `0x7192FC`. Existing lifecycle coverage checks repeated frames, projection, audio order, and circle behavior. Release parity build succeeded; full CTest passed322/322. No production change.
+
+
+## WP5C effects180/184 HitDark source comparison — 2026-10-29
+
+Added `check_hitdark_caller.py` and registered its CTest. It compares the complete canonical PE/primary-Ref HitDark helper bodies, checks the grouped effects180/184 caller and local routes, verifies that both ids select the shared dark hit-emitter profile and reference cylinder/particle update families, and checks exact ring/particle SPR/ACT bytes at `0x71943C`, `0x71B200`, and `0x71B1E8`. Existing lifecycle assertions cover ordered emissions, 26 RNG draws, dark tint, segment initialization, reduced-effects behavior and no repeat. Release parity build succeeded; full CTest passed323/323. No production change.

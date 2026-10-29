@@ -766,6 +766,8 @@ add_test(NAME effects20_125_enchant_poison_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect125_enchant_poison.py")
 add_test(NAME effect128_overthrust_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect128_overthrust.py")
+add_test(NAME hitdark_effects180_184_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_hitdark_caller.py")
 add_test(NAME effects635_636_str_prefix_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect635_636_str_prefix.py")
 add_test(NAME effects593_598_food_str_source_check
@@ -1364,4 +1366,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_grim_tooth123_132.py
     check_effect142_heavens_drive.py
     check_effect125_enchant_poison.py
-    check_effect128_overthrust.py)
+    check_effect128_overthrust.py
+    check_hitdark_caller.py)
