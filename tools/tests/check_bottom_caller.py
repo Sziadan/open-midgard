@@ -2,6 +2,9 @@
 from __future__ import annotations
 import re
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ro_exe_resolve import ExeImage  # noqa: E402
 root=Path(__file__).resolve().parents[2]
 pe=(root/'HighPriest.exe.c').read_text(encoding='latin-1')
 ref=(root/'Ref/RagEffect.cpp').read_text(encoding='latin-1')
@@ -32,4 +35,6 @@ if re.search(r'\b(?:rand|random)\s*\(',handler):raise SystemExit('unexpected Bot
 family=fn(local,'bool CEffectPrim::UsesReferenceTexture() const')
 if 'm_master->GetEffectType() == 114' not in family:raise SystemExit('effect114 texture family route missing')
 if 'char aEffectMagicVio[] = "effect\\\\magic_violet.tga";' not in pe:raise SystemExit('canonical texture symbol changed')
-print('Bottom114 parity: PE/Ref helper, caller/ref omission, route, four ordered textures, payload, no RNG and texture family passed')
+resource=ExeImage(root/'HighPriest.exe').read_cstring_at(0x71BAB8)
+if resource is None or resource.raw != b'effect\\magic_violet.tga':raise SystemExit('effect\\magic_violet.tga PE bytes differ at VA 0x71BAB8')
+print('Bottom114 parity: PE/Ref helper, caller/ref omission, route, four ordered textures, payload, no RNG, texture family and exact PE resource bytes passed')

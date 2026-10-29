@@ -4020,3 +4020,8 @@ The effect115 resource assertions are pinned to the executable bytes: both state
 ## WP5C effect145 ShockWave STR Init and resource comparison — 2026-10-29
 
 `check_shockwave145.py` now compares PE/primary-Ref Init case145, validates the local `ShockWave.str` catalog mapping, and verifies exact executable bytes at VA `0x71AE10`. Existing PE/local looping STR reset checks remain. Focused comparator and full Release CTest passed330/330. No production change.
+
+
+## WP5C effect114 Bottom executable texture bytes — 2026-10-29
+
+`check_bottom_caller.py` now resolves the exact executable bytes for `effect\\magic_violet.tga` at VA `0x71BAB8`, in addition to its existing PE/primary-Ref helper parity, PE caller route, four ordered PP_3DTEXTURE emissions, payload and local texture-family assertions. Focused check and full Release CTest passed330/330. No production change.

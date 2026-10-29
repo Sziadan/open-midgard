@@ -2382,3 +2382,8 @@ Extended the existing effects109/110 and effect199 comparators to verify their P
 ## WP5C effect145 ShockWave STR Init parity — 2026-10-29
 
 Extended the registered `check_shockwave145.py` to compare PE and primary-Ref Init case145, verify the local `ShockWave.str` catalog row, and pin the exact executable bytes at VA `0x71AE10`. Existing route, STR-loop reset and lifecycle assertions remain. Focused check and full Release CTest passed330/330. No production change.
+
+
+## WP5C effect114 Bottom texture bytes — 2026-10-29
+
+Strengthened the registered `check_bottom_caller.py` to verify exact `effect\\magic_violet.tga` bytes at PE VA `0x71BAB8`. Existing PE/primary-Ref helper, caller route, four texture emissions, payload, no-RNG and renderer-family checks remain. Focused comparator and full Release CTest passed330/330. No production change.
