@@ -4718,3 +4718,7 @@ Connected the production ApplyPairedSaintCasting helper and its existing ApplySa
 ## WP5 BLACKDEVIL lifecycle — effect487 — 2026-10-29
 
 Connected production ApplyBlackDevil to the lifecycle harness. The fixture verifies state1 and state2 PP_3DCASTING_5 output, duration/size/texture, master and cached origins, all four exact GI bands per state, and no output for states0/3 or null texture. Existing check_effect487_black_devil.py continues to compare PE/Ref helpers, local route/profile and exact texture bytes. Focused lifecycle passes3214 checks; Release app build succeeds; full parity CTest passes428/428 and both documented static audits pass.
+
+## WP5 FlowerCast lifecycle — effect488 — 2026-10-29
+
+Connected production ApplyFlowerCasting to the lifecycle harness. The fixture verifies variant0, variant1 and fallback-to-variant0 profiles across all four GI bands, caller size, master and cached origins, no RNG/audio, and nonzero-state/null-texture gates. The existing check_effect488_flower_cast.py comparator covers the PE and secondary-Ref order plus the local state5 cue/body-light/dual-cast branch and exact ring-blue resource; the PE cue resolves only to the prefix effect\T_, so its full wave suffix remains unresolved. Focused lifecycle passes3220 checks; full Release parity CTest passes428/428 and both documented static audits pass.

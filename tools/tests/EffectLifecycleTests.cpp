@@ -34,6 +34,7 @@ vector3d AddVec3(vector3d a, vector3d b) { return {a.x+b.x, a.y+b.y, a.z+b.z}; }
 constexpr int kPrimTypeHeal = 0x3C;
 constexpr int kPrimTypeChemical3 = 0x38;
 constexpr int kPrimTypeCasting5 = 0x6B;
+constexpr int kPrimTypeFlowerCast = 0x6C;
 struct matrix { float m[4][4]{}; };
 #include "EffectSegmentTypes.inc"
 struct EffectBandState {
@@ -536,6 +537,7 @@ struct CRagEffect : CGameObject {
     void ApplyPortal();
     void ApplyWarpZone2(const char*);
     void ApplyBlackDevil(const char*);
+    void ApplyFlowerCasting(const char*,float,int);
     void ApplyWarpZone();
     void ApplyIceArrow();
     void ApplyFireArrow();
@@ -14171,6 +14173,50 @@ int main()
         check(devil.m_primList.empty()&&rngDraws==startDraws&&waveCalls.empty()
             &&g_texMgr.requests.size()==2,
             "effect487 states0/3 and null texture are closed no-output gates");
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject master;master.m_pos={10,20,30};
+        CRagEffect flower;flower.m_type=488;flower.m_stateCnt=0;flower.m_duration=91;flower.m_master=&master;
+        const float distances[2][4]={{4.5f,5.0f,5.5f,5.0f},{5.5f,6.0f,6.5f,6.0f}};
+        const short rises[2][4]={{85,80,70,75},{50,55,65,60}};
+        const float heights[2][4]={{27,28,29,30},{30,29,28,27}};
+        const short spins[2][4]={{0,90,180,270},{90,180,270,0}};
+        const int startDraws=rngDraws;waveCalls.clear();g_texMgr.requests.clear();
+        for(int variant:{0,1,2}) {
+            if(variant==1) master.m_pos={11,21,31};
+            const int kind=variant==1?1:0;
+            flower.ApplyFlowerCasting("effect\\ring_blue.tga",4.0f,variant);
+            CEffectPrim* prim=flower.m_primList.empty()?nullptr:flower.m_primList.back();
+            bool payload=prim&&prim->m_type==PP_FLOWERCAST&&prim->m_renderFlag==5
+                &&prim->m_duration==91&&prim->m_size==4.0f&&prim->m_texture.size()==1
+                &&prim->m_pos.x==master.m_pos.x&&prim->m_pos.y==master.m_pos.y&&prim->m_pos.z==master.m_pos.z
+                &&g_texMgr.requests.size()==static_cast<size_t>(variant+1)
+                &&g_texMgr.requests.back()=="effect\\ring_blue.tga";
+            for(int band=0;band<4;++band) if(prim) {
+                const EffectGi& gi=prim->m_gi[band];
+                payload=payload&&gi.life==1&&gi.process==0&&gi.fullDisplayAngle==315
+                    &&gi.alphaB==0&&gi.sparkY==0.0f&&gi.distance==distances[kind][band]
+                    &&gi.riseAngle==rises[kind][band]&&gi.maxHeight==heights[kind][band]
+                    &&gi.rotStart==spins[kind][band]&&gi.vecTNowX==static_cast<float>(rises[kind][band])
+                    &&gi.vecTNowY==heights[kind][band];
+                for(float value:gi.height) payload=payload&&value==0.0f;
+                for(u8 flag:gi.flag) payload=payload&&flag==0;
+            }
+            check(payload,("effect488 variant"+std::to_string(variant)+" preserves exact flower-casting profile and origin").c_str());
+            flower.ClearPrims();g_world.UpdateGameObjects();
+        }
+        check(rngDraws==startDraws&&waveCalls.empty(),"effect488 FlowerCasting helper emits no audio or RNG");
+        flower.m_master=nullptr;flower.m_cachedPos={7,8,9};
+        flower.ApplyFlowerCasting("effect\\ring_blue.tga",3.0f,1);
+        CEffectPrim* cached=flower.m_primList.empty()?nullptr:flower.m_primList.front();
+        check(cached&&cached->m_pos.x==7&&cached->m_pos.y==8&&cached->m_pos.z==9
+            &&cached->m_size==3.0f,"effect488 uses cached origin and caller size without a master");
+        flower.ClearPrims();g_world.UpdateGameObjects();
+        flower.m_stateCnt=1;flower.ApplyFlowerCasting("effect\\ring_blue.tga",4.0f,0);
+        flower.m_stateCnt=0;flower.ApplyFlowerCasting(nullptr,4.0f,0);
+        check(flower.m_primList.empty()&&g_texMgr.requests.size()==4&&rngDraws==startDraws
+            &&waveCalls.empty(),"effect488 nonzero state and null texture are closed no-output gates");
         waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
