@@ -2526,3 +2526,7 @@ Added and registered `check_effect539_throw_items.py`. It compares PE and primar
 ## WP5F effect581 ForestLight variant11 parity — 2026-10-29
 
 Added and registered `check_effect581_forest_light.py`. It compares the PE/primary-Ref caller and full helper body, verifies the local variant11 four-band setup and PP_FOREST renderer, and checks the executable texture bytes. Updated the stale mismatch note: OnProcess3 is a separate local dispatch and ForestLight/PP_FOREST now have local processing; Portal2 remains open. Focused check, elevated Release parity build and full Release CTest passed 357/357. No production behavior change.
+
+## WP5F effect542 actor-light parity — 2026-10-29
+
+Extended `check_effect375_actor_light.py` with effect542's matching PE/primary-Ref caller, BodyLight `0x4000` gate, frame-150 bound, integer `BodyTime2` division and local guarded route. Focused check, elevated Release parity build and full Release CTest passed 357/357. No production behavior change.

@@ -168,10 +168,28 @@ local_538 = re.search(
     helper.group(1),
 )
 require(local_538 is not None, "local effect538 cutoff, bit/tint order, or null-master guard changed")
+
+pe_542 = process3_case(PE, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 542, 543)
+ref_542 = process3_case(REF, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 542, 543)
+require(re.sub(r"\s+", "", pe_542) == re.sub(r"\s+", "", ref_542),
+        "primary Ref and PE effect542 caller branches differ")
+for token in ("m_BodyLight & 0x4000", "m_stateCnt > 150", "m_BodyLight += 0x4000",
+              "m_stateCnt / 3"):
+    require(token in pe_542, f"PE effect542 actor-light behavior missing {token}")
+require("case 542: ApplyActorLight(); return true;" in DISPATCH3,
+        "local effect542 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b542\b", actor_light_ids.group(1)),
+        "effect542 missing from generator actor-light group")
+local_542 = re.search(
+    r"case 542:\s*if \(master == nullptr \|\| \(master->m_BodyLight & 0x4000\) == 0x4000 \|\| m_stateCnt > 150\)\s*\{\s*break;\s*\}\s*"
+    r"master->m_BodyLight \+= 0x4000;\s*master->m_BodyTime2 = static_cast<u8>\(m_stateCnt / 3\);\s*break;",
+    helper.group(1),
+)
+require(local_542 is not None, "local effect542 bit gate, frame cutoff, body-time division or master guard changed")
 require("case 375" not in REF and "case 379" not in REF and "case 382" not in REF and "case 385" not in REF,
         "primary Ref gained a standalone actor-light case; update recorded provenance")
 
 require("case 387" not in REF and "case 396" not in REF,
         "primary Ref gained an explicit actor-light case; update recorded provenance")
 
-print("effects375/379/382/385/387/396/538 actor-light source parity passed; effect538 PE/Ref caller and local null-master guard checked")
+print("effects375/379/382/385/387/396/538/542 actor-light source parity passed; new PE/Ref caller and local guards checked")
