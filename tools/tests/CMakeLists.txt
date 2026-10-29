@@ -1186,6 +1186,8 @@ add_test(NAME effects397_398_level99_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect397_398_level99.py")
 add_test(NAME effect401_napalm_hit_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect401_napalm_hit.py")
+add_test(NAME effect514_gi_explosion_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect514_gi_explosion.py")
 add_test(NAME effect337_job_lv_up_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect337_job_lv_up.py")
 add_test(NAME effect410_rainbow_source_check

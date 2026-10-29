@@ -4132,3 +4132,7 @@ Added and registered `check_effect397_398_level99.py`. It compares complete PE a
 ## WP5F effect401 NapalmHit caller parity — 2026-10-29
 
 Added and registered `check_effect401_napalm_hit.py`. It checks the PE's exact 20/30/40/50/60 gates, position copy, relative Napalm Beat wave before `Hit2(0)`, the local legacy route/handler order, exact `effect\\EF_NapalmBeat.wav` bytes at `0x71A790`, and primary-Ref caller provenance. Focused check, elevated Release parity build and full Release CTest passed 350/350. No production behavior change.
+
+## WP5F effect514 GI_EXPLOSION source/resource parity — 2026-10-29
+
+Added and registered `check_effect514_gi_explosion.py`. It compares the PE and primary-Ref dispatcher caller and complete helper body, checks the local generated route and four-band GI payload, and validates `effect\\ring_blue.tga` bytes at `0x71943C`. Focused check, elevated Release parity build and full Release CTest passed 351/351. No production behavior change.
