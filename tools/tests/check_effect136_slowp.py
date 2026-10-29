@@ -65,8 +65,10 @@ check("local effect136 route ignores the STR completion result",
 check("local ProcessEZ2STR default offset is (0,-80,0)",
       "bool ProcessEZ2STR(float x = 0.0f, float y = -80.0f, float z = 0.0f);"
       in (ROOT / "src/world/RagEffect.h").read_text(encoding="utf-8"))
-check("existing lifecycle group checks effect136 continues after missing STR",
-      "const int ignored[] = {130,136,244,250,390,391,392,406,407,440};" in
-      (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8"))
+lifecycle = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
+ignored = re.search(r"const int ignored\[\]\s*=\s*\{([^}]+)\};", lifecycle)
+ignored_ids = set(map(int, re.findall(r"\d+", ignored.group(1)))) if ignored else set()
+check("lifecycle group checks effect136 and effects491/492/507/508 continue after missing STR",
+      {136, 491, 492, 507, 508} <= ignored_ids)
 
 print("effect136 SlowP shared STR caller/resource/local route comparison passed")

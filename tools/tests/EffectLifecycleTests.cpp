@@ -6689,7 +6689,7 @@ int main()
         effect.m_strFrameActive = false;
         check(effect.OnProcess() == 0 && effect.m_stateCnt == 0,
             "checked STR result terminates before outer frame increment");
-        const int ignored[] = {130,136,244,250,390,391,392,406,407,440};
+        const int ignored[] = {130,136,244,250,390,391,392,406,407,440,491,492,507,508};
         for (int id : ignored) {
             effect.m_type = id; effect.m_stateCnt = 0;
             check(effect.OnProcess() == 1 && effect.m_stateCnt == 1,
