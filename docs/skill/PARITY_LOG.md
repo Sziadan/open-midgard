@@ -4172,3 +4172,7 @@ Extended `check_effect375_actor_light.py` with effect542's matching PE/primary-R
 ## WP5F effect582 SuperAngel caller parity — 2026-10-29
 
 Added and registered `check_effect582_super_angel.py`. It compares the PE/primary-Ref caller and complete helper body, checks the local effect route and variant11-before-10 ordering, and verifies the four exact sprite/action strings. Existing `EffectLifecycleTests` already cover variant emission and boundaries. Focused check, elevated Release parity build and full Release CTest passed 358/358. No production behavior change.
+
+## WP5F effect673 POISON variant2 parity — 2026-10-29
+
+Added and registered `check_effect673_poison.py`. It compares the PE/primary-Ref caller and complete helper body, then checks the local variant2 route, sentinel and state-zero gates, poison primitive, white02 resource selection, vertical offset and GI flags. Focused check, elevated Release parity build and full Release CTest passed 359/359. No production behavior change.

@@ -1202,6 +1202,8 @@ add_test(NAME effect581_forest_light_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect581_forest_light.py")
 add_test(NAME effect582_super_angel_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect582_super_angel.py")
+add_test(NAME effect673_poison_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect673_poison.py")
 add_test(NAME effect337_job_lv_up_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect337_job_lv_up.py")
 add_test(NAME effect410_rainbow_source_check
@@ -1396,6 +1398,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect539_throw_items.py
     check_effect581_forest_light.py
     check_effect582_super_angel.py
+    check_effect673_poison.py
     check_blur_callers.py
     check_runstop_caller.py
     check_cartboost_caller.py
