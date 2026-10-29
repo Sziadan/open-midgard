@@ -1316,6 +1316,8 @@ add_test(NAME effect40_signum_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect40_signum.py")
 add_test(NAME effect39_aqua_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect39_aqua.py")
+add_test(NAME effects37_38_43_agility_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects37_38_43_agility.py")
 add_test(NAME effects436_437_sphere_energy_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect436_437_sphere_energy.py")
 add_test(NAME effect119_detecting_source_check
@@ -1435,6 +1437,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect41_angelus.py
     check_effect40_signum.py
     check_effect39_aqua.py
+    check_effects37_38_43_agility.py
     check_effect436_437_sphere_energy.py
     check_effect119_detecting.py
     check_effect222_252_defender.py

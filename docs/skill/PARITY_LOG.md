@@ -4444,3 +4444,7 @@ Added `tools/tests/check_effect40_signum.py` and registered it in the focused CT
 ## WP5 CRagEffect Aqua effect39 source checkpoint - 2026-10-29
 
 Added `tools/tests/check_effect39_aqua.py` and registered it in the focused CTest suite. PE and primary Ref `Aqua` bodies normalize identically; the comparator maps effect39 to local `SpawnAqua` and binds parent refresh, state-zero wave/particle launch, particle fields, CP949 resource names and segment setup to existing lifecycle assertions. Focused CTest passed; no runtime change was needed.
+
+## WP5 CRagEffect agility effects37/38/43 source checkpoint - 2026-10-29
+
+Added `tools/tests/check_effects37_38_43_agility.py` and registered it in the focused CTest suite. PE and primary Ref `IncAgility`, `DecAgility` and `IncAGIDEX` bodies normalize identically. The comparator maps effects37/38/43 to their canonical methods and the shared local agility route, preserving effect43's dex overlay/audio and effect37's life99 particle behavior. Existing lifecycle assertions cover sound/RNG order, projection, screen overlay/cross fields, emission cadence, and update/fade behavior. Focused CTest passed; no runtime change was needed.
