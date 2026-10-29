@@ -314,6 +314,7 @@ public:
     void ProcessEffectState();
     void MakeSpecialAttackEffect(unsigned int targetGid, float hideTime);
     virtual void SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override;
+    bool ProcessStatusMsgEffectMessage(int msg);
     virtual int  Get8Dir(float rot) override;
     virtual void SetState(int state);
     void SetNpcState(int state);
@@ -350,6 +351,7 @@ public:
     u8 OnProcess() override;
     void OnActorDeleted(const CGameActor* actor) override;
     void SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override;
+    bool ProcessOwnerMessage(CGameObject* sender, int msg);
     void Render(matrix* viewMatrix) override;
 
     int m_msgEffectType;

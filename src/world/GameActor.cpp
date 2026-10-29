@@ -4999,6 +4999,105 @@ void ReleaseMsgSprite(CMsgEffect*& slot)
     slot = nullptr;
 }
 
+bool CGameActor::ProcessStatusMsgEffectMessage(int msg)
+{
+    switch (msg) {
+    case 58:
+        if (!m_iceEffect) {
+            m_iceEffect = SpawnMsgSprite(5,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.act",
+                0,
+                1.0f);
+        }
+        return true;
+    case 59:
+    case 107:
+        ReleaseMsgSprite(m_iceEffect);
+        return true;
+    case 62:
+        SpawnMsgSprite(6,
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.act",
+            1,
+            1.0f);
+        return true;
+    case 63:
+        SpawnMsgSprite(6,
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\smoke.spr",
+            "\xC0\xCC\xC6\xD1\xC6\xAE\\smoke.act",
+            0,
+            1.0f);
+        return true;
+    case 67:
+        if (!m_curseEffect) {
+            m_curseEffect = SpawnMsgSprite(7,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-curse.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-curse.act",
+                0,
+                1.0f);
+        }
+        return true;
+    case 68:
+        ReleaseMsgSprite(m_curseEffect);
+        return true;
+    case 69:
+        if (!m_sleepEffect) {
+            m_sleepEffect = SpawnMsgSprite(8,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-sleep.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-sleep.act",
+                0,
+                1.0f);
+            SetState(10);
+        }
+        return true;
+    case 70:
+        if (m_sleepEffect) {
+            ReleaseMsgSprite(m_sleepEffect);
+            SetState(m_oldstateId);
+        }
+        return true;
+    case 71:
+        if (!m_stunEffect) {
+            m_stunEffect = SpawnMsgSprite(9,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-stun.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-stun.act",
+                0,
+                1.0f);
+        }
+        return true;
+    case 72:
+        ReleaseMsgSprite(m_stunEffect);
+        return true;
+    case 73:
+        if (!m_silenceEffect) {
+            m_silenceEffect = SpawnMsgSprite(10,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.act",
+                10,
+                1.0f);
+        }
+        return true;
+    case 74:
+        ReleaseMsgSprite(m_silenceEffect);
+        return true;
+    case 75:
+        if (!m_angelusEffect) {
+            m_angelusEffect = SpawnMsgSprite(11,
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\msg.spr",
+                "\xC0\xCC\xC6\xD1\xC6\xAE\\msg.act",
+                1,
+                1.0f);
+        }
+        return true;
+    case 76:
+        ReleaseMsgSprite(m_angelusEffect);
+        return true;
+    default:
+        return false;
+    }
+}
+
 void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3)
 {
 #if defined(RO_SKILL_REPLAY_TRACE)
@@ -5010,6 +5109,9 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         DbgLog("[REPLAY] ActorMsg actor=%u msg=%d\n", m_gid, msg);
     }
 #endif
+    if (ProcessStatusMsgEffectMessage(msg)) {
+        return;
+    }
     switch (msg) {
     case 11:
         Am_Action(reinterpret_cast<const int*>(par1));
@@ -5855,97 +5957,6 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         return;
     case 134:
         EnqueueWillBeAttacked(reinterpret_cast<WBA*>(par1), static_cast<int>(par2), 133);
-        return;
-    case 58:
-        if (!m_iceEffect) {
-            m_iceEffect = SpawnMsgSprite(5,
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.spr",
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.act",
-                0,
-                1.0f);
-        }
-        return;
-    case 59:
-    case 107:
-        ReleaseMsgSprite(m_iceEffect);
-        return;
-    case 62:
-        SpawnMsgSprite(6,
-            "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.spr",
-            "\xC0\xCC\xC6\xD1\xC6\xAE\\\xBE\xF3\xC0\xBD\xB6\xAF.act",
-            1,
-            1.0f);
-        return;
-    case 63:
-        SpawnMsgSprite(6,
-            "\xC0\xCC\xC6\xD1\xC6\xAE\\smoke.spr",
-            "\xC0\xCC\xC6\xD1\xC6\xAE\\smoke.act",
-            0,
-            1.0f);
-        return;
-    case 67:
-        if (!m_curseEffect) {
-            m_curseEffect = SpawnMsgSprite(7,
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-curse.spr",
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-curse.act",
-                0,
-                1.0f);
-        }
-        return;
-    case 68:
-        ReleaseMsgSprite(m_curseEffect);
-        return;
-    case 69:
-        if (!m_sleepEffect) {
-            m_sleepEffect = SpawnMsgSprite(8,
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-sleep.spr",
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-sleep.act",
-                0,
-                1.0f);
-            SetState(10);
-        }
-        return;
-    case 70:
-        if (m_sleepEffect) {
-            ReleaseMsgSprite(m_sleepEffect);
-            SetState(m_oldstateId);
-        }
-        return;
-    case 71:
-        if (!m_stunEffect) {
-            m_stunEffect = SpawnMsgSprite(9,
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-stun.spr",
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\Status-stun.act",
-                0,
-                1.0f);
-        }
-        return;
-    case 72:
-        ReleaseMsgSprite(m_stunEffect);
-        return;
-    case 73:
-        if (!m_silenceEffect) {
-            m_silenceEffect = SpawnMsgSprite(10,
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.spr",
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\emotion.act",
-                10,
-                1.0f);
-        }
-        return;
-    case 74:
-        ReleaseMsgSprite(m_silenceEffect);
-        return;
-    case 75:
-        if (!m_angelusEffect) {
-            m_angelusEffect = SpawnMsgSprite(11,
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\msg.spr",
-                "\xC0\xCC\xC6\xD1\xC6\xAE\\msg.act",
-                1,
-                1.0f);
-        }
-        return;
-    case 76:
-        ReleaseMsgSprite(m_angelusEffect);
         return;
     case 101:
         if (!m_birdEffect) {

@@ -2077,17 +2077,9 @@ u8 CMsgEffect::OnProcess()
     return m_isDisappear ? 0 : 1;
 }
 
-void CMsgEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3)
+bool CMsgEffect::ProcessOwnerMessage(CGameObject* sender, int msg)
 {
-    switch (msg) {
-    case 22:
-        m_masterGid = static_cast<u32>(par1);
-        m_msgEffectType = static_cast<int>(par2);
-        return;
-    case 49:
-        m_masterActor = nullptr;
-        return;
-    case 50:
+    if (msg == 50) {
         m_masterActor = dynamic_cast<CGameActor*>(sender);
         m_followInitialized = 0;
         m_followRenderInitialized = 0;
@@ -2115,9 +2107,27 @@ void CMsgEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam
             m_lastProcessedSpriteMotionIndex = m_spriteMotionIndex;
             TryPlayMsgSpriteMotionEvent(*this, m_spriteMotionIndex);
         }
-        return;
-    case 53:
+        return true;
+    }
+    if (msg == 53) {
         m_isDisappear = 1;
+        return true;
+    }
+    return false;
+}
+
+void CMsgEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3)
+{
+    if (ProcessOwnerMessage(sender, msg)) {
+        return;
+    }
+    switch (msg) {
+    case 22:
+        m_masterGid = static_cast<u32>(par1);
+        m_msgEffectType = static_cast<int>(par2);
+        return;
+    case 49:
+        m_masterActor = nullptr;
         return;
     case 139: {
         m_masterActor = static_cast<CGameActor*>(sender);

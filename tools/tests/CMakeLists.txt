@@ -1777,3 +1777,31 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_elemental_change_casting.py
     check_party_effect.py
     check_cart_revolution.py)
+
+# Compile the exact actor status dispatch, sprite creation/release, and owner
+# message code against a silent in-memory world/actor fixture.
+file(READ "../../src/world/GameActor.cpp" msg_effect_actor_source)
+file(READ "../../src/world/MsgEffect.cpp" msg_effect_source)
+extract_body(msg_status_spawn "${msg_effect_actor_source}"
+    "CMsgEffect* CGameActor::SpawnMsgSprite(" "void ReleaseMsgSprite(")
+extract_body(msg_status_release "${msg_effect_actor_source}"
+    "void ReleaseMsgSprite(" "bool CGameActor::ProcessStatusMsgEffectMessage(")
+extract_body(msg_status_dispatch "${msg_effect_actor_source}"
+    "bool CGameActor::ProcessStatusMsgEffectMessage(" "void CGameActor::SendMsg(")
+extract_body(msg_owner_dispatch "${msg_effect_source}"
+    "bool CMsgEffect::ProcessOwnerMessage(" "void CMsgEffect::SendMsg(")
+extract_body(msg_effect_send "${msg_effect_source}"
+    "void CMsgEffect::SendMsg(" "void CMsgEffect::Render(")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/MsgEffectStateLifecycleBodies.inc"
+    "${msg_status_spawn}\n${msg_status_release}\n${msg_status_dispatch}\n${msg_owner_dispatch}\n${msg_effect_send}")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    ../../src/world/GameActor.cpp ../../src/world/MsgEffect.cpp)
+add_executable(msg_effect_state_lifecycle_checks MsgEffectStateLifecycleTests.cpp)
+target_compile_features(msg_effect_state_lifecycle_checks PRIVATE cxx_std_17)
+target_include_directories(msg_effect_state_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME msg_effect_state_lifecycle_checks COMMAND msg_effect_state_lifecycle_checks)
+add_test(NAME msg_effect_state_lifecycle_source_check
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_msg_effect_state_lifecycle.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../src/world/GameActor.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/GameActor.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/Npc.cpp")

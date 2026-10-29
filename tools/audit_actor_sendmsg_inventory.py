@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Print the top-level message case inventory for CGameActor::SendMsg."""
+"""Print the top-level message case inventory for CGameActor::SendMsg and its status delegate."""
 from pathlib import Path
 import re
 
@@ -67,12 +67,13 @@ def top_level_case_bodies(function: str) -> dict[int, str]:
 ref = body(REF, "void __thiscall CGameActor::SendMsg(CGameActor *this, int sender, int message, int arg1, float arg2, int arg3)\n{")
 exe = body(EXE, "void __thiscall CGameActor::SendMsg(CGameActor *this, int sender, int message, int arg1, float arg2, int arg3)\n{")
 actor = body(ACTOR, "void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3)\n{")
+status_dispatch = body(ACTOR, "bool CGameActor::ProcessStatusMsgEffectMessage(int msg)\n{")
 able = body(ACTOR, "void CAbleToMakeEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t)\n{")
 
 ref_cases = top_level_cases(ref)
 exe_cases = top_level_cases(exe)
 ref_bodies = top_level_case_bodies(ref)
-actor_cases = top_level_cases(actor)
+actor_cases = top_level_cases(actor) | top_level_cases(status_dispatch)
 able_cases = top_level_cases(able)
 assert ref_cases == exe_cases, f"Ref/EXE case mismatch: Ref-only={sorted(ref_cases - exe_cases)}, EXE-only={sorted(exe_cases - ref_cases)}"
 
@@ -98,7 +99,7 @@ assert len(actor_cases) == 75, f"expected 75 current actor message IDs, found {l
 unmapped = ref_cases - actor_cases - able_cases - actor_lifecycle_inherited - out_of_scope_ui
 assert len(unmapped) == 0, f"expected no in-scope actor IDs still unmapped, found {len(unmapped)}"
 print(f"Ref and canonical EXE top-level message IDs: {len(ref_cases)}")
-print(f"Current CGameActor::SendMsg direct IDs: {len(actor_cases)}")
+print(f"Current CGameActor::SendMsg and status-delegate IDs: {len(actor_cases)}")
 print(f"Current-only actor UI extension IDs: {sorted(current_only)}")
 print(f"IDs delegated to the current CAbleToMakeEffect::SendMsg: {sorted(able_inherited)}")
 print(f"Actor lifecycle callbacks represented outside SendMsg: {sorted(actor_lifecycle_inherited - actor_cases)}")
