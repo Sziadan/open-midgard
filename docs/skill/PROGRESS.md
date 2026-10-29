@@ -2550,3 +2550,7 @@ Extended `check_effect375_actor_light.py` to compare effect544's PE/primary-Ref 
 ## WP5F effect674 Bottom_Music variant6 parity — 2026-10-29
 
 Extended `check_effect281_288_bottom_music.py` to compare effect674's PE/primary-Ref caller, local OnProcess3 route and generator mapping, exact `curse.bmp` executable bytes, and variant6's distance/flag profile. Focused check, elevated Release parity build and full Release CTest passed 360/360. No production behavior change.
+
+## WP5F effects548–550 actor-light parity — 2026-10-29
+
+Extended `check_effect375_actor_light.py` with matching PE/primary-Ref caller checks and local guarded routes for effects548–550. It covers the frame16 limits, bit masks `0x40000`, `0x4000`, and `0x2000`, low-byte BodyTime2 calculation for 548/549, and BodyTime cutoff for 550. Focused check, elevated Release parity build and full Release CTest passed 360/360. No production behavior change.
