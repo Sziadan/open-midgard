@@ -4527,3 +4527,7 @@ Added and registered `tools/tests/check_effect12_saint_casting.py`. The canonica
 ## WP5 CRagEffect Hit1 effect0 source checkpoint - 2026-10-29
 
 Added and registered `tools/tests/check_effect0_hit1.py`. Canonical PE and primary Ref `Hit1` bodies normalize identically, and PE effect0 routes to `Hit1`. The generated local case0 route enters `ProcessEffectFrameLegacy`, dispatches to `SpawnHit1`, then selects the normal `SpawnHit(false)` variant. The comparator checks cylinder-before-particles ordering, reduced-effects suppression, linear/gravity particle draw order and resource/segment setup. Existing lifecycle assertions cover 26 ordered draws, facing truncation, all three trail slots and reduced-effects behavior. Focused and full Release parity CTest passed 413/413. No runtime behavior changed.
+
+## WP5 CRagEffect Hit2 effect1 source checkpoint - 2026-10-29
+
+Added and registered `tools/tests/check_effect1_hit2.py`. Canonical PE and primary Ref `Hit2` helper bodies normalize identically; PE case1 jumps to the shared label that calls `Hit2(this, 0)`, and local case1 dispatches through `ProcessEffectFrameLegacy` to `SpawnHit2(0)`. The comparator checks parent projection, state gate, listener-relative wave, eight screen streaks, six RNG draws in order and alternating lens resources. Existing lifecycle assertions cover streak payload, motion/fade, exact resources and nonzero-state behavior. Focused and full Release parity CTest passed 414/414. No runtime behavior changed.
