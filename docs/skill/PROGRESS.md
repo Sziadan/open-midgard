@@ -2226,3 +2226,7 @@ Compared PE and primary-Ref Init case197 direct mapping to `sleep.str`, exact ex
 ## WP5C effect235 CP949 STR — 2026-10-29
 
 Compared the `LaunchOn(target,235)` skill route, PE and primary-Ref Init symbol, exact CP949 STR bytes at `0x71AAAC`, local escaped catalog/STR rows, and PE/local generic STR-only OnProcess routes. Existing generic STR lifecycle checks include effect235. Release parity build and full CTest pass304/304. No production behavior change.
+
+## WP10.4 effect608 Cook Success — 2026-10-29
+
+Compared PE `OnProcess3` case `0x260` (`HighPriest.exe.c:418712–418728`) and primary Ref (`Ref/RagEffect.cpp:12076–12090`): state45 copies the master position, plays `_heal_effect.wav` at listener-relative X/Z and literal Y0 with 250/40/1.0, then propagates `ProcessEZ2STR(0,-80,0)` completion every call. PE and Ref Init select `cook_suc.str`; local catalog and STR table agree. In local `CRagEffect`, the source `m_pos` corresponds to `m_effectPos`; the existing helper already matched, so no production behavior change was needed. Added a source comparator and state44/45/46 lifecycle assertions. Release parity and app builds passed; full CTest passed305/305. Built and deployed executable SHA-256 matches at `8CCEC463FC080933B0B70D06C56A82D174AA65F876F2151AEC81A04157C3D274`.
