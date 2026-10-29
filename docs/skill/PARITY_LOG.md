@@ -3850,3 +3850,7 @@ Added `check_effect155_refine_failed.py`, registered as `effect155_refine_failed
 ## WP5C effect158 JobLvUP
 
 Added `check_effect158_job_level_up.py`, registered as `effect158_job_level_up_source_check`. PE and primary Ref Init case158 jump to the shared `JobLvUP.str` formatter; local generated catalog and STR table agree, exact PE bytes verify VA `0x71AD3C`, and PE/local OnProcess route through generic STR continuation. Existing generic STR lifecycle coverage already includes effect158. The comparator explicitly distinguishes decimal158 from Entry2 effect0x158 (decimal344). Release parity build and full CTest pass300/300. No production behavior change.
+
+## WP5C effect156 JobChange
+
+Added `check_effect156_job_change.py`, registered as `effect156_job_change_source_check`. PE and primary Ref Init case156 directly select `JobChange.str`; local catalog/STR rows agree, and exact PE bytes verify VA `0x71AD54`. PE's generic STR-only case group and local `ProcessEZ2STR` route match. Existing lifecycle coverage includes effect156. The comparator also distinguishes decimal156/158 from Entry2 effect0x158 (decimal344). Release parity build and full CTest pass301/301. No production behavior change.
