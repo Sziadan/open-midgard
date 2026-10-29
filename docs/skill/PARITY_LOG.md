@@ -4284,3 +4284,6 @@ WP5F effect314 Exit2: PE and primary Ref caller branches and PE/secondary-Ref he
 
 WP5F actor-light effects417/419–427/458: compared PE inline bit gates and timing profiles with local ApplyActorLight routes; confirmed generated routes and generator membership, with no primary-Ref caller branches. Focused CTest passed 1/1; full Release CTest passed 376/376 on the preceding effect314 checkpoint.
 
+
+WP5F effect415: PE frame17/frame25 master-position stores and EF_hit2/EF_hit4 wave calls are now compared with local ApplyActorLight. Local m_effectPos and m_cachedPos refresh at both cue frames; lifecycle checks cover listener-relative coordinates and BodyLight bit0x80/BodyTime behavior at frame30. Full Release CTest passed 376/376.
+

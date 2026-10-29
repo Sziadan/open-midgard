@@ -144,6 +144,7 @@ struct CRenderObject : CGameObject {
     float m_roty = 0;
     int m_BodyLight = 0;
     u16 m_BodyTime = 0;
+    u8 m_BodyTime2 = 0, m_BodySin3 = 0, m_BodySin4 = 0, m_BodySin5 = 0;
     int forceAnimationCalls=0,forceAct=0,forceMot=0,forceMaxMot=0,forceFinishAct=0,forceFinishMot=0;
     int forceIsAnim=0,forceIsLoop=0;u32 forceEndTick=0;
     char m_BeZero = 0;
@@ -594,6 +595,7 @@ struct CRagEffect : CGameObject {
     bool ApplyCartRevolution();
     void ApplyVenomDust2();
     void ApplyCurseAttack();
+    void ApplyActorLight();
     void SpawnSight();
     void SpawnSight2();
     void SpawnBlessing();
@@ -646,7 +648,7 @@ struct CRagEffect : CGameObject {
     bool ApplyJobLvUp50_2(short);
     void ProcessJobLvUp50_2();
     ~CRagEffect() override;
-    CRenderObject* ResolveCurrentMaster() { return m_master; }
+    CRenderObject* ResolveCurrentMaster() const { return m_master; }
     bool ProcessTripleAttackEffects();
     void SpawnTripleAttack(int variant);
     bool ProcessSoulParticle506();
@@ -12418,6 +12420,37 @@ int main()
         effect.ApplyCurseAttack();
         check(effect.m_primList.empty()&&g_texMgr.requests.empty()&&rngDraws==draws,
             "CurseAttack does not repeat its primitive or resource request after frame zero");
+    }
+    {
+        CRenderObject master, listener;
+        master.m_pos={10,20,30}; listener.m_pos={1,900,3};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=415; effect.m_master=&master;
+        effect.m_effectPos={-1,-2,-3}; effect.m_cachedPos={-4,-5,-6};
+        effect.m_stateCnt=17; waveCalls.clear();
+        effect.ApplyActorLight();
+        check(effect.m_effectPos.x==10&&effect.m_effectPos.y==20&&effect.m_effectPos.z==30
+            &&effect.m_cachedPos.x==10&&effect.m_cachedPos.y==20&&effect.m_cachedPos.z==30
+            &&waveCalls.size()==1&&waveCalls[0].name=="effect\\EF_hit2.wav"
+            &&waveCalls[0].x==9&&waveCalls[0].y==0&&waveCalls[0].z==27,
+            "effect415 frame17 refreshes effect origin and plays exact hit2 wave relative to listener");
+        master.m_pos={41,42,43}; effect.m_stateCnt=25; effect.ApplyActorLight();
+        check(effect.m_effectPos.x==41&&effect.m_effectPos.y==42&&effect.m_effectPos.z==43
+            &&effect.m_cachedPos.x==41&&effect.m_cachedPos.y==42&&effect.m_cachedPos.z==43
+            &&waveCalls.size()==2&&waveCalls[1].name=="effect\\EF_hit4.wav"
+            &&waveCalls[1].x==40&&waveCalls[1].y==0&&waveCalls[1].z==40,
+            "effect415 frame25 refreshes moved origin and plays exact hit4 wave relative to listener");
+        effect.m_stateCnt=29; effect.ApplyActorLight();
+        check(master.m_BodyLight==0&&master.m_BodyTime==0,
+            "effect415 does not set body light before frame30");
+        effect.m_stateCnt=30; effect.ApplyActorLight();
+        check(master.m_BodyLight==0x80&&master.m_BodyTime==0,
+            "effect415 sets body-light bit and zero-based body time at frame30");
+        master.m_BodyTime=77;
+        effect.m_stateCnt=31; effect.ApplyActorLight();
+        check(master.m_BodyLight==0x80&&master.m_BodyTime==77,
+            "effect415 one-shot body-light gate prevents later time writes");
+        g_world.m_player=oldPlayer; waveCalls.clear();
     }
     {
         CRenderObject master, listener;

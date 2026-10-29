@@ -375,4 +375,35 @@ for effect_id, profile in late_profiles.items():
 require("case 426:\n    case 458:" in helper.group(1),
         "local effect426/458 shared profile changed")
 
-print("actor-light source parity passed for effects375/379/382/385/387/396/414/417/419-427/458/500/521/538/542/544/548/549/550/625/626/655/656/667")
+pe_415 = re.search(
+    r"case 415:\s*if \( this->m_stateCnt == 17 \)\s*\{\s*"
+    r"this->m_pos = \(\*p_m_master\)->m_pos;[\s\S]*?"
+    r"PlayWave\(aEffectEfHit2Wa, [^;]*\);\s*\}\s*"
+    r"if \( this->m_stateCnt == 25 \)\s*\{[\s\S]*?"
+    r"PlayWave\(aEffectEfHit4Wa, [^;]*\);\s*\}\s*"
+    r"if \( \(\(\*p_m_master\)->m_BodyLight & 0x80\) != 0x80 && this->m_stateCnt >= 30 \)\s*\{\s*"
+    r"\(\*p_m_master\)->m_BodyLight \+= 128;\s*"
+    r"\(\*p_m_master\)->m_BodyTime = LOWORD\(this->m_stateCnt\) - 30;",
+    PE,
+)
+require(pe_415 is not None, "PE effect415 cue positions, wave order, or body-light threshold changed")
+require("case 415" not in REF, "primary Ref gained effect415; update its source provenance")
+require("case 415: ApplyActorLight(); return true;" in DISPATCH,
+        "local effect415 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b415\b", actor_light_ids.group(1)),
+        "effect415 missing from generator actor-light group")
+local_415 = re.search(
+    r"case 415:\s*if \(m_stateCnt == 17\)\s*\{\s*"
+    r"m_effectPos = origin;\s*m_cachedPos = origin;\s*"
+    r"playAtListener\(\"effect\\\\EF_hit2\.wav\"\);\s*\}\s*"
+    r"if \(m_stateCnt == 25\)\s*\{\s*"
+    r"m_effectPos = origin;\s*m_cachedPos = origin;\s*"
+    r"playAtListener\(\"effect\\\\EF_hit4\.wav\"\);\s*\}\s*"
+    r"if \(master != nullptr && \(master->m_BodyLight & 0x80\) != 0x80 && m_stateCnt >= 30\)\s*\{\s*"
+    r"master->m_BodyLight \+= 128;\s*master->m_BodyTime = static_cast<u16>\(frame - 30\);",
+    helper.group(1),
+)
+require(local_415 is not None,
+        "local effect415 must refresh both origin caches before exact waves and preserve one-shot frame30 timing")
+
+print("actor-light source parity passed for effects375/379/382/385/387/396/414/415/417/419-427/458/500/521/538/542/544/548/549/550/625/626/655/656/667")

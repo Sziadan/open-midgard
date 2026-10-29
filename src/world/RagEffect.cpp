@@ -22815,9 +22815,13 @@ void CRagEffect::ApplyActorLight()
         break;
     case 415:
         if (m_stateCnt == 17) {
+            m_effectPos = origin;
+            m_cachedPos = origin;
             playAtListener("effect\\EF_hit2.wav");
         }
         if (m_stateCnt == 25) {
+            m_effectPos = origin;
+            m_cachedPos = origin;
             playAtListener("effect\\EF_hit4.wav");
         }
         if (master != nullptr && (master->m_BodyLight & 0x80) != 0x80 && m_stateCnt >= 30) {
