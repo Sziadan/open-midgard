@@ -2789,3 +2789,7 @@ Added `tools/tests/check_effect42_blessing.py` and registered it in the focused 
 ## WP5 CRagEffect Angelus effect41 source checkpoint - 2026-10-29
 
 Added `tools/tests/check_effect41_angelus.py` and registered it in the focused CTest suite. Canonical PE and primary Ref `Angelus` helper bodies normalize identically. The comparator also checks PE OnProcess's inlined case41 zero-state sound and shared ProcessEZ2STR completion path against local effect41 dispatch to `ProcessAngelus`, then binds exact audio/STR behavior to existing lifecycle assertions. Focused CTest passed; no runtime change was needed.
+
+## WP5 CRagEffect Signum effect40 source checkpoint - 2026-10-29
+
+Added `tools/tests/check_effect40_signum.py` and registered it in the focused CTest suite. PE and primary Ref `Signum` bodies normalize identically; the comparator maps effect40 dispatch to local `ProcessSignum`, verifies projection and shared STR completion, and binds the state30 sound, circle, twenty-ray and ordered RNG profile to existing lifecycle assertions. Focused CTest passed; no runtime change was needed.
