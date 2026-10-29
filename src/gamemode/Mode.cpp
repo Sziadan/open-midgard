@@ -3,6 +3,7 @@
 #include "GameMode.h"
 #include "DebugLog.h"
 #include "core/ClientInfoLocale.h"
+#include "core/MainLoopWatchdog.h"
 #include "qtui/QtUiRuntime.h"
 #include "render/Renderer.h"
 #include "render3d/RenderDevice.h"
@@ -230,15 +231,19 @@ void CModeMgr::Run(int startMode, const char* worldName)
         m_nextModeName[39] = '\0';
     }
 
+    MainLoopWatchdogStart();
+
     MSG msg{};
     while (m_loopCond)
     {
+        MainLoopWatchdogSetStage("PeekMessage");
         if (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
         {
             if (msg.message == WM_QUIT) {
                 m_loopCond = 0;
                 break;
             }
+            MainLoopWatchdogSetStage("DispatchMessage");
             TranslateMessage(&msg);
             DispatchMessageA(&msg);
         }
@@ -247,6 +252,7 @@ void CModeMgr::Run(int startMode, const char* worldName)
                 && m_curModeType == m_nextModeType
                 && std::strncmp(m_curModeName, m_nextModeName, sizeof(m_curModeName)) != 0;
             if (!m_curMode || m_curModeType != m_nextModeType || reloadCurrentMode) {
+                MainLoopWatchdogSetStage("ModeSwitch");
                 if (m_curMode) {
                     DrawLoadingScreenFrame("Loading new map...", 0.01f);
                 }
@@ -262,19 +268,27 @@ void CModeMgr::Run(int startMode, const char* worldName)
 
                 m_curMode = CreateModeInstance(m_curModeType);
                 if (m_curMode) {
+                    MainLoopWatchdogSetStage("Mode::OnInit");
                     m_curMode->OnInit(m_curModeName);
                 }
             }
 
             if (m_curMode) {
+                MainLoopWatchdogSetStage("ProcessQtUiRuntimeEvents");
                 ProcessQtUiRuntimeEvents();
+                MainLoopWatchdogSetStage("Mode::OnRun");
                 m_curMode->OnRun();
+                MainLoopWatchdogSetStage("RecordMainWindowFrame");
                 RecordMainWindowFrame();
+                MainLoopWatchdogMarkFrame(m_curModeType);
             } else {
                 Sleep(1);
             }
         }
     }
+
+    MainLoopWatchdogSetStage("Shutdown");
+    MainLoopWatchdogStop();
 
     if (m_curMode) {
         DbgLog("[Mode] Final mode exit starting type=%d name='%s' ptr=%p\n",

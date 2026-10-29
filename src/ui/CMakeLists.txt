@@ -53,6 +53,8 @@ add_library(ro_ui STATIC
     UIItemCompositionWnd.cpp
     UIItemIdentifyWnd.h
     UIItemIdentifyWnd.cpp
+    UISkillSelectWnd.h
+    UISkillSelectWnd.cpp
     UIShortCutWnd.h
     UIShortCutWnd.cpp
     UIItemShopWnd.h

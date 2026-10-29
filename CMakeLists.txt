@@ -20,7 +20,10 @@ option(RO_ENABLE_MILES_AUDIO "Enable Miles Sound System runtime loading" ON)
 option(RO_ENABLE_BINK_VIDEO "Enable Bink video runtime loading" ON)
 option(RO_ENABLE_GRANNY "Enable Granny runtime loading" ON)
 option(RO_ENABLE_IJL "Enable Intel JPEG Library runtime loading" OFF)
-option(RO_ENABLE_DEV_DEPLOY "Copy build output to the local OldRO folder" ON)
+# Off by default: only the documented preset flow (`-DRO_ENABLE_DEV_DEPLOY=ON`)
+# may overwrite the playable exe in OldRO. Ad-hoc build directories (Win32,
+# replay, test probes) must never deploy implicitly.
+option(RO_ENABLE_DEV_DEPLOY "Copy build output to the local OldRO folder" OFF)
 option(RO_BUILD_SKILL_REPLAY_TESTS "Build production-linked skill packet replay tests" OFF)
 option(RO_ENABLE_QT6_UI "Enable the Qt 6 / QML GPU UI runtime" OFF)
 option(RO_ENABLE_QT6_UI_SPIKE "Deprecated alias for RO_ENABLE_QT6_UI" OFF)
@@ -110,6 +113,15 @@ if(RO_ENABLE_QT6_UI)
     else()
         find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
     endif()
+    # UI headers include Qt types. Those headers are reachable from libraries
+    # that do not themselves link Qt, so the kit include paths are global.
+    include_directories(
+        "${RO_QT_ROOT}/include"
+        "${RO_QT_ROOT}/include/QtCore"
+        "${RO_QT_ROOT}/include/QtGui"
+        "${RO_QT_ROOT}/include/QtQml"
+        "${RO_QT_ROOT}/include/QtQuick"
+    )
 endif()
 
 # ─── Compiler options ─────────────────────────────────────────────────────

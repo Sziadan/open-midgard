@@ -17,6 +17,7 @@
 #include "UIItemCollectionWnd.h"
 #include "UIItemCompositionWnd.h"
 #include "UIItemIdentifyWnd.h"
+#include "UISkillSelectWnd.h"
 #include "UIItemInfoWnd.h"
 #include "UIItemWnd.h"
 #include "UIStorageWnd.h"
@@ -362,11 +363,12 @@ bool QueueMenuCursorOverlayQuadForCurrentMode()
     face->indices = nullptr;
     face->numIndices = 0;
     face->tex = s_cursorTexture;
-    face->mtPreset = 3;
+    face->mtPreset = 0;
     face->cullMode = D3DCULL_NONE;
     face->srcAlphaMode = D3DBLEND_SRCALPHA;
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
-    face->alphaSortKey = 2.0f;
+    // Keep the cursor above the full-screen Qt menu quad (sort key 2).
+    face->alphaSortKey = 3.0f;
     face->m_verts[0] = { quadLeft, quadTop, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
     face->m_verts[1] = { quadRight, quadTop, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
     face->m_verts[2] = { quadLeft, quadBottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
@@ -594,7 +596,7 @@ UIWindowMgr::UIWindowMgr()
       m_isDragAll(0), m_conversionMode(0), m_isInvalidatedByForce(false),
     m_captureWindow(nullptr), m_editWindow(nullptr), m_modalWindow(nullptr), m_lastHitWindow(nullptr),
         m_loadingWnd(nullptr), m_roMapWnd(nullptr), m_minimapZoomWnd(nullptr), m_statusWnd(nullptr), m_sayDialogWnd(nullptr), m_npcMenuWnd(nullptr), m_playerContextMenuWnd(nullptr), m_joinPartyAcceptWnd(nullptr), m_messengerGroupWnd(nullptr), m_partyOptionWnd(nullptr), m_npcInputWnd(nullptr), m_chooseSellBuyWnd(nullptr), m_itemShopWnd(nullptr), m_itemPurchaseWnd(nullptr), m_itemSellWnd(nullptr), m_storageWnd(nullptr), m_shortCutWnd(nullptr), m_chatWnd(nullptr),
-            m_loginWnd(nullptr), m_selectServerWnd(nullptr), m_selectCharWnd(nullptr), m_makeCharWnd(nullptr), m_waitWnd(nullptr), m_chooseWnd(nullptr), m_selectCartWnd(nullptr), m_optionWnd(nullptr), m_itemWnd(nullptr), m_itemInfoWnd(nullptr), m_itemCollectionWnd(nullptr), m_itemCompositionWnd(nullptr), m_itemIdentifyWnd(nullptr), m_questWnd(nullptr), m_basicInfoWnd(nullptr), m_notifyLevelUpWnd(nullptr), m_notifyJobLevelUpWnd(nullptr), m_equipWnd(nullptr), m_skillDescribeWnd(nullptr), m_skillListWnd(nullptr),
+            m_loginWnd(nullptr), m_selectServerWnd(nullptr), m_selectCharWnd(nullptr), m_makeCharWnd(nullptr), m_waitWnd(nullptr), m_chooseWnd(nullptr), m_selectCartWnd(nullptr), m_optionWnd(nullptr), m_itemWnd(nullptr), m_itemInfoWnd(nullptr), m_itemCollectionWnd(nullptr), m_itemCompositionWnd(nullptr), m_itemIdentifyWnd(nullptr), m_skillSelectWnd(nullptr), m_questWnd(nullptr), m_basicInfoWnd(nullptr), m_notifyLevelUpWnd(nullptr), m_notifyJobLevelUpWnd(nullptr), m_equipWnd(nullptr), m_skillDescribeWnd(nullptr), m_skillListWnd(nullptr),
                         m_wallpaperSurface(nullptr), m_uiComposeSurface(), m_chatActiveInputField(0), m_chatScrollLineOffset(0)
 {
     m_loginStatus = "Login: idle";
@@ -1000,6 +1002,16 @@ UIWindow* UIWindowMgr::MakeWindow(int windowId)
         m_itemIdentifyWnd->SetShow(1);
         return m_itemIdentifyWnd;
 
+    case WID_SKILLSELECTWND:
+        if (!m_skillSelectWnd) {
+            m_skillSelectWnd = new UISkillSelectWnd();
+            m_children.push_back(m_skillSelectWnd);
+        }
+        m_children.remove(m_skillSelectWnd);
+        m_children.push_back(m_skillSelectWnd);
+        m_skillSelectWnd->SetShow(1);
+        return m_skillSelectWnd;
+
     case WID_ITEMCOMPOSITIONWND:
         if (!m_itemCompositionWnd) {
             m_itemCompositionWnd = new UIItemCompositionWnd();
@@ -1341,6 +1353,9 @@ void UIWindowMgr::DeleteWindow(UIWindow* window)
     if (window == m_itemIdentifyWnd) {
         m_itemIdentifyWnd = nullptr;
     }
+    if (window == m_skillSelectWnd) {
+        m_skillSelectWnd = nullptr;
+    }
     if (window == m_equipWnd) {
         m_equipWnd = nullptr;
     }
@@ -1416,6 +1431,7 @@ void UIWindowMgr::RemoveAllWindows()
     m_itemCollectionWnd = nullptr;
     m_itemCompositionWnd = nullptr;
     m_itemIdentifyWnd = nullptr;
+    m_skillSelectWnd = nullptr;
     m_questWnd = nullptr;
     m_basicInfoWnd = nullptr;
     m_equipWnd = nullptr;
@@ -2342,7 +2358,8 @@ bool UIWindowMgr::HasBlockingUiForGameplayHotkeys() const
         || (m_storageWnd && m_storageWnd->m_show != 0)
         || (m_chooseSellBuyWnd && m_chooseSellBuyWnd->m_show != 0)
         || (m_chooseWnd && m_chooseWnd->m_show != 0)
-        || (m_optionWnd && m_optionWnd->m_show != 0);
+        || (m_optionWnd && m_optionWnd->m_show != 0)
+        || (m_skillSelectWnd && m_skillSelectWnd->m_show != 0);
 }
 
 bool UIWindowMgr::OnQtKeyDown(int virtualKey, bool isAltDown, bool isCtrlDown, bool isShiftDown)
@@ -2402,6 +2419,11 @@ void UIWindowMgr::OnKeyDown(int virtualKey)
 
     if (m_npcMenuWnd && m_npcMenuWnd->m_show != 0) {
         m_npcMenuWnd->HandleKeyDown(virtualKey);
+        return;
+    }
+
+    if (m_skillSelectWnd && m_skillSelectWnd->m_show != 0) {
+        m_skillSelectWnd->HandleKeyDown(virtualKey);
         return;
     }
 

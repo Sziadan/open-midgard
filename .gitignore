@@ -19,6 +19,8 @@ build-mingw-qt/
 build-mingw-qt-ninja/
 build-wsl-perm-test/
 build-wsl-smoke/
+build-*/
+debug_hp_*.log
 
 compile_commands.json
 
@@ -46,6 +48,16 @@ tools/*
 !tools/check_gumgang_parity.py
 !tools/tests/
 tools/tests/*
+# Every comparator, fixture, scenario and test source under tools/tests is
+# part of the parity evidence and must be tracked (14 CTest-referenced
+# comparators were silently ignored before this rule).
+!tools/tests/check_*.py
+!tools/tests/*.cpp
+!tools/tests/*.h
+!tools/tests/*.inc
+!tools/tests/*.tsv
+!tools/tests/replay/
+tools/tests/__pycache__/
 !tools/tests/check_prim3dquadhorn.py
 !tools/tests/check_prim3dsphere.py
 !tools/tests/check_effect302.py

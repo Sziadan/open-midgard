@@ -762,13 +762,17 @@ static bool InitClientSystems()
     g_resMgr.RegisterType("jpeg", "", new CBitmapRes());
     g_resMgr.RegisterType("tga", "", new CBitmapRes());
     g_resMgr.RegisterType("rsm", "", new C3dModelRes());
-    g_resMgr.RegisterType("spr", "", new CSprRes());
-    g_resMgr.RegisterType("act", "", new CActRes());
+    // Relative effect sprite names resolve under data\sprite. Paths that
+    // already start with that directory are left unchanged.
+    g_resMgr.RegisterType("spr", "data\\sprite\\", new CSprRes());
+    g_resMgr.RegisterType("act", "data\\sprite\\", new CActRes());
     g_resMgr.RegisterType("str", "data\\texture\\effect\\", new CEZeffectRes());
     g_resMgr.RegisterType("pal", "", new CPaletteRes());
     g_resMgr.RegisterType("imf", "", new CImfRes());
     g_resMgr.RegisterType("rsw", "", new C3dWorldRes());
-    g_resMgr.RegisterType("wav", "", new CWave());
+    // GRF entries live under data\wav\ (data\wav\effect\ for skill waves).
+    // Callers pass a bare name or an effect\ relative path.
+    g_resMgr.RegisterType("wav", "data\\wav\\", new CWave());
 
     InitMSS();
     ApplySavedAudioSettings();

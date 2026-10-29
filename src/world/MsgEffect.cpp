@@ -494,8 +494,8 @@ bool ResolveDigitClipBox(int digit, RECT* outClipBox)
             continue;
         }
 
-        const int drawX = clip.x - image->width / 2;
-        const int drawY = clip.y - image->height / 2;
+        const int drawX = clip.x;
+        const int drawY = clip.y;
         RECT current = { drawX, drawY, drawX + image->width, drawY + image->height };
         if (!hasClip) {
             clipBox = current;
@@ -743,8 +743,8 @@ bool QueueDigitSpriteQuad(const QueuedMsgEffectDraw& draw)
             continue;
         }
 
-        const float drawLeft = originX + static_cast<float>(clip.x - image->width / 2 - clipBox.left) * scale;
-        const float drawTop = originY + static_cast<float>(clip.y - image->height / 2 - clipBox.top) * scale;
+        const float drawLeft = originX + static_cast<float>(clip.x - clipBox.left) * scale;
+        const float drawTop = originY + static_cast<float>(clip.y - clipBox.top) * scale;
         const float drawRight = drawLeft + static_cast<float>(image->width) * scale;
         const float drawBottom = drawTop + static_cast<float>(image->height) * scale;
 
@@ -846,8 +846,8 @@ bool ResolveMsgSpriteClipBox(CSprRes* sprite, CActRes* act, int actionIndex, int
             continue;
         }
 
-        const int drawX = clip.x - image->width / 2;
-        const int drawY = clip.y - image->height / 2;
+        const int drawX = clip.x;
+        const int drawY = clip.y;
         RECT current = { drawX, drawY, drawX + image->width, drawY + image->height };
         if (!hasClip) {
             clipBox = current;
@@ -966,8 +966,8 @@ bool QueueMsgSpriteQuad(const QueuedMsgSpriteEffectDraw& draw)
             continue;
         }
 
-        const float drawLeft = originX + static_cast<float>(clip.x - image->width / 2 - clipBox.left) * scale;
-        const float drawTop = originY + static_cast<float>(clip.y - image->height / 2 - clipBox.top) * scale;
+        const float drawLeft = originX + static_cast<float>(clip.x - clipBox.left) * scale;
+        const float drawTop = originY + static_cast<float>(clip.y - clipBox.top) * scale;
         const float drawRight = drawLeft + static_cast<float>(image->width) * scale;
         const float drawBottom = drawTop + static_cast<float>(image->height) * scale;
 
@@ -1558,8 +1558,8 @@ bool RenderAttachedActorSpriteWorldBillboard(const CMsgEffect& effect,
             continue;
         }
 
-        const float localLeft = static_cast<float>(clip.x - image->width / 2);
-        const float localTop = static_cast<float>(clip.y - image->height / 2);
+        const float localLeft = static_cast<float>(clip.x);
+        const float localTop = static_cast<float>(clip.y);
         const float localRight = localLeft + static_cast<float>(image->width);
         const float localBottom = localTop + static_cast<float>(image->height);
 

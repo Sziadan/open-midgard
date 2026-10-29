@@ -31,6 +31,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cctype>
+#include <iterator>
 #include <map>
 #include <string>
 #include <vector>
@@ -2685,12 +2686,12 @@ bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
     constexpr float kBillboardDepthBias = 0.0005f;
 
     CPc* actor = entry.actor;
-    if (!actor || !actor->m_isVisible || !actor->m_billboardTexture) {
+    const u32 now = timeGetTime();
+    if (!actor || !actor->ShouldDrawSprite(now) || !actor->m_billboardTexture) {
         return false;
     }
 
     u32 alpha = 255u;
-    const u32 now = timeGetTime();
     if (actor->IsHideFadeActive(now)) {
         alpha = (std::min)(alpha, actor->GetHideFadeAlpha(now));
     }
@@ -2763,7 +2764,7 @@ bool BuildBillboardRenderEntry(CPc* actor,
         return false;
     }
 
-    if (!actor->m_isVisible) {
+    if (!actor->ShouldDrawSprite(timeGetTime())) {
         return false;
     }
     if (!actor->EnsureBillboardTexture(cameraLongitude) || !actor->m_billboardTexture) {
@@ -5234,6 +5235,8 @@ CWorld::CWorld()
     , m_billboardFrameCacheValid(false), m_billboardFrameCacheDirty(true)
     , m_lastRenderStats{}
     , m_Calculated(nullptr)
+    , m_actorUpdateCursor(m_actorList.end())
+    , m_actorUpdateActive(false)
 {
 }
 
@@ -5582,6 +5585,15 @@ void CWorld::UnregisterActor(CGameActor* actor)
     }
 
     m_rootNode.RemoveActor(actor);
+    if (m_actorUpdateActive) {
+        // UpdateActors() is walking m_actorList. If the cursor points at the
+        // node we are about to erase (the actor after the one whose
+        // ProcessState() triggered this), step past it so the loop resumes on
+        // a live node.
+        while (m_actorUpdateCursor != m_actorList.end() && *m_actorUpdateCursor == actor) {
+            ++m_actorUpdateCursor;
+        }
+    }
     m_actorList.remove(actor);
     InvalidateBillboardFrameCache();
 }
@@ -6024,6 +6036,7 @@ void CWorld::UpdateActors()
 {
     UpdateNightLighting();
     UpdateGameObjects();
+    BeginEffectStateLogicStep();
 
     for (CItem* item : m_itemList) {
         if (!item) {
@@ -6036,12 +6049,20 @@ void CWorld::UpdateActors()
         m_player->ProcessState();
     }
 
-    for (CGameActor* actor : m_actorList) {
-        if (!actor) {
-            continue;
+    // UnRegisterPos() only drops the cell map entry. Actual deletion still
+    // calls UnregisterActor(), which removes this list node. Keep the next
+    // node in a member cursor so that removal cannot walk a freed node.
+    m_actorUpdateActive = true;
+    for (auto it = m_actorList.begin(); it != m_actorList.end(); ) {
+        CGameActor* actor = *it;
+        m_actorUpdateCursor = std::next(it);
+        if (actor) {
+            actor->ProcessState();
         }
-        actor->ProcessState();
+        it = m_actorUpdateCursor;
     }
+    m_actorUpdateActive = false;
+    m_actorUpdateCursor = m_actorList.end();
 
     UpdateBillboardActorFingerprint();
 }
@@ -6242,7 +6263,7 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
     const double billboardBuildStartMs = WorldNowMs();
 
     auto enqueueRenderActor = [&](CGameActor* actor) {
-        if (!actor || !actor->m_isVisible) {
+        if (!actor || !actor->ShouldDrawSprite(timeGetTime())) {
             return;
         }
 

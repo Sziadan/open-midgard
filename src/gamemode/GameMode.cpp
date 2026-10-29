@@ -7289,6 +7289,7 @@ void ClearRuntimeActors(CGameMode& mode)
         }
         if (world) {
             world->NotifyActorDeleted(actor);
+            world->UnregisterActor(actor);
         }
         actor->UnRegisterPos();
         delete actor;
@@ -9633,6 +9634,39 @@ bool CGameMode::SendWarpMapSelection(const std::string& mapName)
     m_warpSkillId = 0;
     m_warpMapDestinations.clear();
     return true;
+}
+
+bool CGameMode::CancelWarpMapSelection()
+{
+    if (m_warpSkillId == 0) {
+        return false;
+    }
+    if (!SendUseSkillMapPacket(m_warpSkillId, "cancel")) {
+        return false;
+    }
+    m_warpSkillId = 0;
+    m_warpMapDestinations.clear();
+    return true;
+}
+
+bool CGameMode::SendMakingArrowSelection(u16 itemId)
+{
+    struct MakingArrowPacket {
+        u16 packetType;
+        u16 itemId;
+    };
+    static_assert(sizeof(MakingArrowPacket) == 4, "CZ_REQ_MAKINGARROW is 4 bytes at packet_ver 23");
+
+    MakingArrowPacket packet{};
+    packet.packetType = 0x01AE;
+    packet.itemId = itemId;
+    const bool sent = CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&packet),
+        static_cast<int>(sizeof(packet)));
+    DbgLog("[GameMode] makingarrow itemId=%u sent=%d\n",
+        static_cast<unsigned int>(itemId),
+        sent ? 1 : 0);
+    return sent;
 }
 
 CGameMode::CGameMode() 

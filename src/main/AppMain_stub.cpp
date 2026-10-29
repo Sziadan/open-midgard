@@ -256,13 +256,13 @@ bool InitClientSystems()
     g_resMgr.RegisterType("jpeg", "", new CBitmapRes());
     g_resMgr.RegisterType("tga", "", new CBitmapRes());
     g_resMgr.RegisterType("rsm", "", new C3dModelRes());
-    g_resMgr.RegisterType("spr", "", new CSprRes());
-    g_resMgr.RegisterType("act", "", new CActRes());
+    g_resMgr.RegisterType("spr", "data\\sprite\\", new CSprRes());
+    g_resMgr.RegisterType("act", "data\\sprite\\", new CActRes());
     g_resMgr.RegisterType("str", "data\\texture\\effect\\", new CEZeffectRes());
     g_resMgr.RegisterType("pal", "", new CPaletteRes());
     g_resMgr.RegisterType("imf", "", new CImfRes());
     g_resMgr.RegisterType("rsw", "", new C3dWorldRes());
-    g_resMgr.RegisterType("wav", "", new CWave());
+    g_resMgr.RegisterType("wav", "data\\wav\\", new CWave());
 
     if (!CAudio::GetInstance()->Init()) {
         return false;

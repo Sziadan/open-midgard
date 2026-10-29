@@ -247,6 +247,12 @@ class QtUiState : public QObject {
     Q_PROPERTY(int itemIdentifyWidth READ itemIdentifyWidth NOTIFY itemIdentifyGeometryChanged)
     Q_PROPERTY(int itemIdentifyHeight READ itemIdentifyHeight NOTIFY itemIdentifyGeometryChanged)
     Q_PROPERTY(QVariantMap itemIdentifyData READ itemIdentifyData NOTIFY itemIdentifyDataChanged)
+    Q_PROPERTY(bool skillSelectVisible READ skillSelectVisible NOTIFY skillSelectVisibleChanged)
+    Q_PROPERTY(int skillSelectX READ skillSelectX NOTIFY skillSelectGeometryChanged)
+    Q_PROPERTY(int skillSelectY READ skillSelectY NOTIFY skillSelectGeometryChanged)
+    Q_PROPERTY(int skillSelectWidth READ skillSelectWidth NOTIFY skillSelectGeometryChanged)
+    Q_PROPERTY(int skillSelectHeight READ skillSelectHeight NOTIFY skillSelectGeometryChanged)
+    Q_PROPERTY(QVariantMap skillSelectData READ skillSelectData NOTIFY skillSelectDataChanged)
     Q_PROPERTY(bool itemCompositionVisible READ itemCompositionVisible NOTIFY itemCompositionVisibleChanged)
     Q_PROPERTY(int itemCompositionX READ itemCompositionX NOTIFY itemCompositionGeometryChanged)
     Q_PROPERTY(int itemCompositionY READ itemCompositionY NOTIFY itemCompositionGeometryChanged)
@@ -522,6 +528,12 @@ public:
     int itemIdentifyWidth() const { return m_itemIdentifyWidth; }
     int itemIdentifyHeight() const { return m_itemIdentifyHeight; }
     const QVariantMap& itemIdentifyData() const { return m_itemIdentifyData; }
+    bool skillSelectVisible() const { return m_skillSelectVisible; }
+    int skillSelectX() const { return m_skillSelectX; }
+    int skillSelectY() const { return m_skillSelectY; }
+    int skillSelectWidth() const { return m_skillSelectWidth; }
+    int skillSelectHeight() const { return m_skillSelectHeight; }
+    const QVariantMap& skillSelectData() const { return m_skillSelectData; }
     bool itemCompositionVisible() const { return m_itemCompositionVisible; }
     int itemCompositionX() const { return m_itemCompositionX; }
     int itemCompositionY() const { return m_itemCompositionY; }
@@ -1793,6 +1805,34 @@ public:
         emit itemIdentifyDataChanged();
     }
 
+    void setSkillSelectVisible(bool value) {
+        if (m_skillSelectVisible == value) {
+            return;
+        }
+        m_skillSelectVisible = value;
+        emit skillSelectVisibleChanged();
+    }
+
+    void setSkillSelectGeometry(int x, int y, int width, int height) {
+        if (m_skillSelectX == x && m_skillSelectY == y
+            && m_skillSelectWidth == width && m_skillSelectHeight == height) {
+            return;
+        }
+        m_skillSelectX = x;
+        m_skillSelectY = y;
+        m_skillSelectWidth = width;
+        m_skillSelectHeight = height;
+        emit skillSelectGeometryChanged();
+    }
+
+    void setSkillSelectData(const QVariantMap& value) {
+        if (m_skillSelectData == value) {
+            return;
+        }
+        m_skillSelectData = value;
+        emit skillSelectDataChanged();
+    }
+
     void setItemCompositionVisible(bool value) {
         if (m_itemCompositionVisible == value) {
             return;
@@ -2059,6 +2099,9 @@ signals:
     void itemIdentifyVisibleChanged();
     void itemIdentifyGeometryChanged();
     void itemIdentifyDataChanged();
+    void skillSelectVisibleChanged();
+    void skillSelectGeometryChanged();
+    void skillSelectDataChanged();
     void itemCompositionVisibleChanged();
     void itemCompositionGeometryChanged();
     void itemCompositionDataChanged();
@@ -2316,6 +2359,12 @@ private:
     int m_itemIdentifyWidth = 0;
     int m_itemIdentifyHeight = 0;
     QVariantMap m_itemIdentifyData;
+    bool m_skillSelectVisible = false;
+    int m_skillSelectX = 0;
+    int m_skillSelectY = 0;
+    int m_skillSelectWidth = 0;
+    int m_skillSelectHeight = 0;
+    QVariantMap m_skillSelectData;
     bool m_itemCompositionVisible = false;
     int m_itemCompositionX = 0;
     int m_itemCompositionY = 0;

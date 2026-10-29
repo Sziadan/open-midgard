@@ -1668,8 +1668,10 @@ void BlitScaledEffectMotionToArgb(unsigned int* dest,
             continue;
         }
 
-        const float left = static_cast<float>(clip.x) - static_cast<float>(logicalWidth) * clipZoomX * 0.5f;
-        const float top = static_cast<float>(clip.y) - static_cast<float>(logicalHeight) * clipZoomY * 0.5f;
+        // Clip x/y are the top-left produced by CActRes::Load. Scale matches the
+        // original sprite placement, which multiplies that origin by zoom.
+        const float left = static_cast<float>(clip.x) * clipZoomX;
+        const float top = static_cast<float>(clip.y) * clipZoomY;
         const int drawLeft = static_cast<int>(std::floor(left));
         const int drawTop = static_cast<int>(std::floor(top));
         const int drawRight = static_cast<int>(std::ceil(left + static_cast<float>(logicalWidth) * clipZoomX));
@@ -14974,14 +14976,19 @@ void CRagEffect::OnActorDeleted(const CGameActor* actor)
         return;
     }
 
-    if (m_masterIsActor && actor->m_gid == m_masterActorGid) {
-        SendMsg(nullptr, 24, 0, 0, 0);
+    const bool matches = (m_masterIsActor && actor->m_gid == m_masterActorGid)
+        || static_cast<const CRenderObject*>(actor) == m_master;
+    if (!matches) {
         return;
     }
 
-    if (static_cast<const CRenderObject*>(actor) == m_master) {
-        SendMsg(nullptr, 24, 0, 0, 0);
-    }
+    // Message 24 only clears this effect's master pointer. The actor is about
+    // to be removed from every lookup (m_runtimeActors, m_actorList), and the
+    // world may delete this effect before ~CGameActor runs. Unlink from the
+    // actor's m_effectList now, while the actor is still alive, so DetachEffects
+    // does not call SendMsg on a freed effect.
+    const_cast<CGameActor*>(actor)->CAbleToMakeEffect::SendMsg(this, 23, 0, 0, 0);
+    SendMsg(nullptr, 24, 0, 0, 0);
 }
 
 CRenderObject* CRagEffect::ResolveCurrentMaster() const

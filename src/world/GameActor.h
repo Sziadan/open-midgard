@@ -10,6 +10,10 @@
 // Forward declarations
 class CGameObject;
 class CGameActor;
+
+// One id per logic step. ProcessEffectState consumes it so the Sight/Ruwach
+// relaunch counter stays on the same clock as effect 22/33.
+void BeginEffectStateLogicStep();
 class CRagEffect;
 class CMsgEffect;
 class UIBalloonText;
@@ -284,6 +288,7 @@ public:
     int m_isSitting;
     float m_damageDestX, m_damageDestZ;
     u32 m_effectLaunchCnt, m_vanishTime;
+    u32 m_effectLaunchStep;
     u32 m_hideFadeStartTick, m_hideFadeEndTick;
     int m_actorType, m_bIsMemberAndVisible, m_gdid, m_emblemVersion;
     void* m_homunAI; // CMercenaryAI
@@ -328,6 +333,8 @@ public:
     void CancelHideFade();
     bool IsHideFadeActive(u32 now) const;
     u32 GetHideFadeAlpha(u32 now) const;
+    bool ShouldDrawSprite(u32 now) const;
+    void ReapplyConcealmentVisibility();
     void QueueWillBeAttacked(const WBA& hitInfo);
     void EnqueueWillBeAttacked(WBA* hit, int runningDamage, int forcedMessage);
     void HandleAttacked(const WBA& hit);

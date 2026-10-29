@@ -2463,8 +2463,12 @@ private:
         desc.RenderTarget[0].SrcBlend = ConvertBlendFactor(m_pipelineState.srcBlend);
         desc.RenderTarget[0].DestBlend = ConvertBlendFactor(m_pipelineState.destBlend);
         desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-        desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-        desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+        // D3D7 and D3D9 apply one blend equation to color and alpha. A separate
+        // ONE/ZERO alpha replace stores the sprite alpha in the target, and the
+        // next D3DBLEND_DESTALPHA layer (STR spells such as Storm Gust) then
+        // replaces the scene under its transparent texels with black.
+        desc.RenderTarget[0].SrcBlendAlpha = desc.RenderTarget[0].SrcBlend;
+        desc.RenderTarget[0].DestBlendAlpha = desc.RenderTarget[0].DestBlend;
         desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
         desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
@@ -4509,8 +4513,9 @@ private:
         desc.RenderTarget[0].SrcBlend = ConvertBlendFactor12(m_pipelineState.srcBlend);
         desc.RenderTarget[0].DestBlend = ConvertBlendFactor12(m_pipelineState.destBlend);
         desc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-        desc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-        desc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+        // Same blend equation for alpha as color. See the D3D11 blend state.
+        desc.RenderTarget[0].SrcBlendAlpha = desc.RenderTarget[0].SrcBlend;
+        desc.RenderTarget[0].DestBlendAlpha = desc.RenderTarget[0].DestBlend;
         desc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
         desc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
         return desc;
@@ -6405,8 +6410,9 @@ private:
         colorBlendAttachment.srcColorBlendFactor = srcBlend;
         colorBlendAttachment.dstColorBlendFactor = dstBlend;
         colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-        colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        // Same blend equation for alpha as color. See the D3D11 blend state.
+        colorBlendAttachment.srcAlphaBlendFactor = srcBlend;
+        colorBlendAttachment.dstAlphaBlendFactor = dstBlend;
         colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
         colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
             | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;

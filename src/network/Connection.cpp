@@ -171,6 +171,35 @@ int GetLastSocketErrorCode()
 #endif
 }
 
+std::string DescribeSocketError(int errorCode)
+{
+    if (errorCode == 0) {
+        return "timeout";
+    }
+    char text[160] = {};
+#if RO_PLATFORM_WINDOWS
+    char systemText[128] = {};
+    const DWORD length = FormatMessageA(
+        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        nullptr, static_cast<DWORD>(errorCode), MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+        systemText, sizeof(systemText) - 1, nullptr);
+    if (length > 0) {
+        // Strip the trailing CR/LF/period FormatMessage appends.
+        size_t end = length;
+        while (end > 0 && (systemText[end - 1] == '\r' || systemText[end - 1] == '\n'
+            || systemText[end - 1] == ' ' || systemText[end - 1] == '.')) {
+            systemText[--end] = '\0';
+        }
+        std::snprintf(text, sizeof(text), "%s, error %d", systemText, errorCode);
+    } else {
+        std::snprintf(text, sizeof(text), "error %d", errorCode);
+    }
+#else
+    std::snprintf(text, sizeof(text), "%s, error %d", std::strerror(errorCode), errorCode);
+#endif
+    return text;
+}
+
 bool IsSocketWouldBlockError(int errorCode)
 {
 #if RO_PLATFORM_WINDOWS
@@ -258,9 +287,21 @@ bool CConnection::Connect(const char* ip, int port)
 {
     Disconnect();
     ResetConnectionRecvTrace(ip, port);
+    m_lastConnectError[0] = '\0';
+
+    const char* hostText = ip ? ip : "";
+    auto fail = [&](const char* phase, int errorCode) {
+        std::snprintf(m_lastConnectError, sizeof(m_lastConnectError),
+            "%s:%d - %s (%s)", hostText, port, phase, DescribeSocketError(errorCode).c_str());
+        DbgLog("[Net] connect failed %s\n", m_lastConnectError);
+        Disconnect();
+        return false;
+    };
 
     m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (m_socket == INVALID_SOCKET) return false;
+    if (m_socket == INVALID_SOCKET) {
+        return fail("socket() failed", GetLastSocketErrorCode());
+    }
 
     m_addr.sin_family = AF_INET;
     m_addr.sin_port = htons((u16)port);
@@ -273,9 +314,9 @@ bool CConnection::Connect(const char* ip, int port)
     addrinfo* result = nullptr;
     char portText[16] = {};
     std::snprintf(portText, sizeof(portText), "%d", port);
-    if (getaddrinfo(ip, portText, &hints, &result) != 0 || !result) {
-        Disconnect();
-        return false;
+    const int resolveRet = getaddrinfo(ip, portText, &hints, &result);
+    if (resolveRet != 0 || !result) {
+        return fail("host name could not be resolved", resolveRet != 0 ? resolveRet : GetLastSocketErrorCode());
     }
 
     const sockaddr_in* resolved = reinterpret_cast<const sockaddr_in*>(result->ai_addr);
@@ -283,8 +324,7 @@ bool CConnection::Connect(const char* ip, int port)
     freeaddrinfo(result);
 
     if (!SetSocketNonBlockingMode(m_socket)) {
-        Disconnect();
-        return false;
+        return fail("could not set non-blocking mode", GetLastSocketErrorCode());
     }
 
     const int connectRet = connect(m_socket, reinterpret_cast<sockaddr*>(&m_addr), sizeof(m_addr));
@@ -295,8 +335,7 @@ bool CConnection::Connect(const char* ip, int port)
 
     const int lastError = GetLastSocketErrorCode();
     if (!IsSocketWouldBlockError(lastError)) {
-        Disconnect();
-        return false;
+        return fail("connection refused or unreachable", lastError);
     }
 
     fd_set writeSet;
@@ -311,9 +350,11 @@ bool CConnection::Connect(const char* ip, int port)
     tv.tv_usec = 0;
 
     const int selectRet = SelectForSocket(m_socket, nullptr, &writeSet, &errorSet, &tv);
-    if (selectRet <= 0 || FD_ISSET(m_socket, &errorSet)) {
-        Disconnect();
-        return false;
+    if (selectRet == 0) {
+        return fail("no answer within 3 seconds", 0);
+    }
+    if (selectRet < 0) {
+        return fail("select() failed", GetLastSocketErrorCode());
     }
 
     int soError = 0;
@@ -322,9 +363,11 @@ bool CConnection::Connect(const char* ip, int port)
 #else
     socklen_t soLen = static_cast<socklen_t>(sizeof(soError));
 #endif
-    if (getsockopt(m_socket, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&soError), &soLen) != 0 || soError != 0) {
-        Disconnect();
-        return false;
+    if (getsockopt(m_socket, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&soError), &soLen) != 0) {
+        return fail("getsockopt(SO_ERROR) failed", GetLastSocketErrorCode());
+    }
+    if (soError != 0 || FD_ISSET(m_socket, &errorSet)) {
+        return fail("connection refused or unreachable", soError);
     }
 
     m_dwTime = GetTickCount();

@@ -71,6 +71,8 @@ class CGameMode : public CMode {
 public:
     bool SendSkillToGroundWithText(u16 skillId, u16 skillLevel, int cellX, int cellY, const std::string& contents);
     bool SendWarpMapSelection(const std::string& mapName);
+    bool CancelWarpMapSelection();
+    bool SendMakingArrowSelection(u16 itemId);
 
     enum MapLoadingStage {
         MapLoading_None = 0,

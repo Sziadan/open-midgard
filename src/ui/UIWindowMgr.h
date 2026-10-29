@@ -20,6 +20,7 @@ class UIItemInfoWnd;
 class UIItemCollectionWnd;
 class UIItemCompositionWnd;
 class UIItemIdentifyWnd;
+class UISkillSelectWnd;
 class UIQuestWnd;
 class UIBasicInfoWnd;
 class UINotifyLevelUpWnd;
@@ -99,6 +100,7 @@ public:
         WID_ITEMSELLWND       = 22,
         WID_SHORTCUTWND       = 23,
         WID_SELECTCARTWND     = 0x5F,
+        WID_SKILLSELECTWND    = 0x60,
         WID_STORAGEWND        = 50,
         WID_CHOOSEWND         = 17,
         WID_ROMAPWND          = 0x93,
@@ -224,6 +226,7 @@ public:
     UIItemCollectionWnd* m_itemCollectionWnd;
     UIItemCompositionWnd* m_itemCompositionWnd;
     UIItemIdentifyWnd* m_itemIdentifyWnd;
+    UISkillSelectWnd* m_skillSelectWnd;
     UIQuestWnd* m_questWnd;
     UIBasicInfoWnd* m_basicInfoWnd;
     UINotifyLevelUpWnd* m_notifyLevelUpWnd;

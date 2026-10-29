@@ -13,6 +13,7 @@
 #include "core/ClientInfoLocale.h"
 #include "core/File.h"
 #include "core/Globals.h"
+#include "core/MainLoopWatchdog.h"
 #include "core/SettingsIni.h"
 #include "cipher/Md5.h"
 #include "main/WinMain.h"
@@ -368,6 +369,26 @@ void ShowLoginErrorDialog(const char* message)
     }
 
     ErrorMsg(message);
+}
+
+// Ref/LoginMode.cpp:996, 1139, 1629: every failed Connect() shows
+// MsgStr(MSI_SERVER_CONNECTION_FAILED) before returning to the login screen.
+// The rebuilt client adds the address and the socket reason so a wrong
+// char_ip/map_ip in the server config is visible without reading the log.
+void ShowConnectionFailedDialog(const char* serverKind)
+{
+    const char* reason = CRagConnection::instance()->GetLastConnectError();
+    char message[512] = {};
+    if (reason && *reason) {
+        std::snprintf(message, sizeof(message),
+            "Failed to connect to the %s.\n\n%s\n\n"
+            "The address comes from the server you are logging in to "
+            "(rAthena: char_ip in conf/char_athena.conf, map_ip in conf/map_athena.conf).",
+            serverKind, reason);
+    } else {
+        std::snprintf(message, sizeof(message), "Failed to connect to the %s.", serverKind);
+    }
+    ShowLoginErrorDialog(message);
 }
 
 u8 GetAccountType()
@@ -1208,11 +1229,14 @@ bool QueueMenuCursorOverlayQuad(int cursorActNum, u32 mouseAnimStartTick)
     face->indices = nullptr;
     face->numIndices = 0;
     face->tex = s_cursorTexture;
-    face->mtPreset = 3;
+    face->mtPreset = 0;
     face->cullMode = D3DCULL_NONE;
     face->srcAlphaMode = D3DBLEND_SRCALPHA;
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
-    face->alphaSortKey = 2.0f;
+    // The Qt menu image is a full-screen quad at sort key 2. Equal keys are
+    // ordered by face pointer, so the menu was covering this cursor. The
+    // in-game HUD sits at 1 and leaves 2 for the cursor.
+    face->alphaSortKey = 3.0f;
     face->m_verts[0] = { quadLeft, quadTop, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
     face->m_verts[1] = { quadRight, quadTop, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
     face->m_verts[2] = { quadLeft, quadBottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
@@ -1303,9 +1327,11 @@ int CLoginMode::OnRun() {
 }
 
 void CLoginMode::OnUpdate() {
+    MainLoopWatchdogSetStage("Login:SyncRendererToWindowSize");
     SyncRendererToWindowSize();
 
     if (m_isConnected) {
+        MainLoopWatchdogSetStage("Login:PollNetwork");
         PollNetwork();
         if (m_isConnected && !CRagConnection::instance()->IsOpen()) {
             const char* message = (m_subMode == LoginSubMode_ConnectAccount)
@@ -1334,29 +1360,40 @@ void CLoginMode::OnUpdate() {
         }
     }
 
+    MainLoopWatchdogSetStage("Login:UIWindowMgr::OnProcess");
     g_windowMgr.OnProcess();
     const bool hasLegacyDevice = GetRenderDevice().GetLegacyDevice() != nullptr;
     if (!hasLegacyDevice) {
+        MainLoopWatchdogSetStage("Login:Clear");
         g_renderer.ClearBackground();
         g_renderer.Clear(0);
+        MainLoopWatchdogSetStage("Login:QueueLoginUiQuad");
         const bool queuedUi = QueueLoginUiQuad();
         if (queuedUi) {
+            MainLoopWatchdogSetStage("Login:QueueMenuCursorOverlayQuad");
             QueueMenuCursorOverlayQuad(m_cursorActNum, m_mouseAnimStartTick);
+            MainLoopWatchdogSetStage("Login:DrawScene");
             g_renderer.DrawScene();
+            MainLoopWatchdogSetStage("Login:Flip");
             g_renderer.Flip(false);
         } else {
+            MainLoopWatchdogSetStage("Login:UIWindowMgr::OnDraw");
             g_windowMgr.OnDraw();
             if (!IsQtUiRuntimeEnabled()) {
+                MainLoopWatchdogSetStage("Login:DrawModeCursor");
                 DrawModeCursor(m_cursorActNum, m_mouseAnimStartTick);
             }
         }
     } else {
+        MainLoopWatchdogSetStage("Login:UIWindowMgr::OnDraw(legacy)");
         g_windowMgr.OnDraw();
     }
     if (hasLegacyDevice) {
+        MainLoopWatchdogSetStage("Login:DrawModeCursor(legacy)");
         DrawModeCursor(m_cursorActNum, m_mouseAnimStartTick);
     }
 
+    MainLoopWatchdogSetStage("Login:Sleep");
     Sleep(1);
 }
 
@@ -1575,6 +1612,7 @@ void CLoginMode::OnChangeState(int newState) {
         if (!m_isConnected) {
             CRagConnection::instance()->Disconnect();
             SetLoginStatus("Login: account server connection failed.");
+            ShowConnectionFailedDialog("account server");
             m_nextSubMode = LoginSubMode_Login;
             break;
         }
@@ -1633,6 +1671,7 @@ void CLoginMode::OnChangeState(int newState) {
         if (!m_isConnected) {
             CRagConnection::instance()->Disconnect();
             SetLoginStatus("Login: char server connection failed.");
+            ShowConnectionFailedDialog("char server");
             m_nextSubMode = LoginSubMode_Login;
             break;
         }
@@ -1758,6 +1797,7 @@ void CLoginMode::OnChangeState(int newState) {
         if (!m_isConnected) {
             CRagConnection::instance()->Disconnect();
             SetLoginStatus("Login: zone server connection failed.");
+            ShowConnectionFailedDialog("zone server");
             m_nextSubMode = LoginSubMode_Login;
             break;
         }

@@ -29,6 +29,10 @@ private:
     int m_height;
 };
 
+// True when the bitmap belongs to a live ArgbDibSurface (always top-down).
+// GetObject cannot be trusted for row orientation on current Windows builds.
+bool IsArgbDibSurfaceBitmap(HGDIOBJ bitmap);
+
 void BlitMotionToArgb(unsigned int* dest, int destW, int destH, int baseX, int baseY, class CSprRes* sprRes, const struct CMotion* motion, unsigned int* palette);
 bool ComputeMotionClipBounds(class CSprRes* sprRes, const struct CMotion* motion, RECT* outBounds);
 bool StretchArgbToHdc(HDC hdc,

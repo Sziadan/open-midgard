@@ -448,6 +448,13 @@ void CGameActor::Am_Skill(const int* arg1)
     if (action < 8 || action > 9) {
         count = 1;
     }
+    // Ref/GameActorMsgHandler.cpp Am_Skill only continues Sonic Blow
+    // (message 108, one step per extra hit) when count > 1. A miss from
+    // this era's server is still 8 hits; rAthena reports div 1 unless
+    // PACKETVER is below 20131223.
+    if (skillId == 136 && totalDamage == 0 && count == 1 && (action == 8 || action == 9)) {
+        count = 8;
+    }
 
     if (action == 5 && target && skillId != 47 && skillId != 11 && skillId != 413 && skillId != 273) {
         WBA hit{};

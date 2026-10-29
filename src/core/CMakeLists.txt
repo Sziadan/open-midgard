@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 add_library(ro_core STATIC
     Timer.h     Timer.cpp
+    MainLoopWatchdog.h MainLoopWatchdog.cpp
     Hash.h      Hash.cpp
     SettingsIni.h SettingsIni.cpp
     GPak.h      GPak.cpp

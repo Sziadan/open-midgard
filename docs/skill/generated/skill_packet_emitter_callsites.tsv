@@ -1,0 +1,204 @@
+source	line	function	emitter	skill_argument	literal_skill_symbol
+Ref/eAthena_src_2011/map/skill.c	595	skill_additional_effect	clif_skill_nodamage	TF_STEAL	TF_STEAL
+Ref/eAthena_src_2011/map/skill.c	921	skill_additional_effect	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	1241	skill_counter_additional_effect	clif_skill_nodamage	HW_SOULDRAIN	HW_SOULDRAIN
+Ref/eAthena_src_2011/map/skill.c	1668	skill_attack	clif_skill_nodamage	SA_MAGICROD	SA_MAGICROD
+Ref/eAthena_src_2011/map/skill.c	1785	skill_attack	clif_skill_damage	CR_HOLYCROSS	CR_HOLYCROSS
+Ref/eAthena_src_2011/map/skill.c	1803	skill_attack	clif_skill_damage	skillid	
+Ref/eAthena_src_2011/map/skill.c	1805	skill_attack	clif_skill_damage	skillid	
+Ref/eAthena_src_2011/map/skill.c	1811	skill_attack	clif_skill_damage	skillid	
+Ref/eAthena_src_2011/map/skill.c	1988	skill_area_sub	clif_skill_damage	skill_id	
+Ref/eAthena_src_2011/map/skill.c	2353	skill_timerskill	clif_skill_poseffect	skl->skill_id	
+Ref/eAthena_src_2011/map/skill.c	2422	skill_reveal_trap	clif_skill_setunit	<unit-derived>	
+Ref/eAthena_src_2011/map/skill.c	2459	skill_castend_damage_id	clif_skill_damage	skillid	
+Ref/eAthena_src_2011/map/skill.c	2589	skill_castend_damage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	2770	skill_castend_damage_id	clif_skill_nodamage	AL_HEAL	AL_HEAL
+Ref/eAthena_src_2011/map/skill.c	2777	skill_castend_damage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3008	skill_castend_damage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3013	skill_castend_damage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3027	skill_castend_damage_id	clif_skill_nodamage	AL_HEAL	AL_HEAL
+Ref/eAthena_src_2011/map/skill.c	3070	skill_castend_damage_id	clif_skill_damage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3203	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3271	skill_castend_nodamage_id	clif_skill_nodamage	ALL_RESURRECTION	ALL_RESURRECTION
+Ref/eAthena_src_2011/map/skill.c	3293	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3303	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3313	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3327	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3368	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3372	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3383	skill_castend_nodamage_id	clif_skill_nodamage	AL_HEAL	AL_HEAL
+Ref/eAthena_src_2011/map/skill.c	3392	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3396	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3400	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3405	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3418	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3436	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3440	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3444	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3448	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3464	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3485	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3507	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3528	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3533	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3543	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3546	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3551	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3566	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3575	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3584	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3647	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3651	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3659	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3669	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3675	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3676	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3679	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3693	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3698	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3714	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3719	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3724	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3730	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3750	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3756	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3773	skill_castend_nodamage_id	clif_skill_nodamage	skillid == SM_SELFPROVOKE ? SM_PROVOKE : skillid	
+Ref/eAthena_src_2011/map/skill.c	3845	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3853	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3860	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3892	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3898	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3905	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3912	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3917	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3922	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3933	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3953	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3963	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3976	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	3994	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4001	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4005	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4014	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4040	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4044	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4063	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4072	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4078	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4082	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4087	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4091	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4100	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4108	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4115	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4122	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4135	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4140	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4147	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4150	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4159	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4171	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4196	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4210	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4216	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4222	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4226	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4233	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4250	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4259	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4263	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4267	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4272	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4277	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4282	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4308	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4361	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4371	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4378	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4389	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4405	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4458	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4564	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4566	skill_castend_nodamage_id	clif_skill_nodamage	AL_HEAL	AL_HEAL
+Ref/eAthena_src_2011/map/skill.c	4568	skill_castend_nodamage_id	clif_skill_nodamage	MG_SRECOVERY	MG_SRECOVERY
+Ref/eAthena_src_2011/map/skill.c	4579	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4585	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4593	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4609	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4618	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4681	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4700	skill_castend_nodamage_id	clif_skill_nodamage	TK_HIGHJUMP	TK_HIGHJUMP
+Ref/eAthena_src_2011/map/skill.c	4709	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4726	skill_castend_nodamage_id	clif_skill_nodamage	SA_MAGICROD	SA_MAGICROD
+Ref/eAthena_src_2011/map/skill.c	4745	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4768	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4806	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4829	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4837	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4843	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4852	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4869	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4875	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4880	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4907	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4970	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4976	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4982	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4988	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	4995	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5002	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5032	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5040	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5089	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5118	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5129	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5150	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5183	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5190	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5215	skill_castend_nodamage_id	clif_skill_nodamage	AL_HEAL	AL_HEAL
+Ref/eAthena_src_2011/map/skill.c	5217	skill_castend_nodamage_id	clif_skill_nodamage	MG_SRECOVERY	MG_SRECOVERY
+Ref/eAthena_src_2011/map/skill.c	5227	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5234	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5239	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5247	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5341	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5372	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5381	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5398	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5409	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5423	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5435	skill_castend_nodamage_id	clif_skill_nodamage	AL_HEAL	AL_HEAL
+Ref/eAthena_src_2011/map/skill.c	5437	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5456	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5484	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5492	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5505	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5521	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5537	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5541	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5571	skill_castend_nodamage_id	clif_skill_nodamage	AL_HEAL	AL_HEAL
+Ref/eAthena_src_2011/map/skill.c	5572	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5581	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5615	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5627	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5636	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5641	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5646	skill_castend_nodamage_id	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	5769	skill_castend_id	clif_skill_nodamage	ud->skillid	
+Ref/eAthena_src_2011/map/skill.c	5939	skill_castend_id	clif_skill_damage	ud->skillid	
+Ref/eAthena_src_2011/map/skill.c	6140	skill_castend_pos2	clif_skill_nodamage	skillid	
+Ref/eAthena_src_2011/map/skill.c	6142	skill_castend_pos2	clif_skill_poseffect	skillid	
+Ref/eAthena_src_2011/map/skill.c	6308	skill_castend_pos2	clif_skill_poseffect	skillid	
+Ref/eAthena_src_2011/map/skill.c	6334	skill_castend_pos2	clif_skill_poseffect	skillid	
+Ref/eAthena_src_2011/map/skill.c	6427	skill_castend_pos2	clif_skill_poseffect	skillid	
+Ref/eAthena_src_2011/map/skill.c	6451	skill_castend_pos2	clif_skill_poseffect	skillid	
+Ref/eAthena_src_2011/map/skill.c	6490	skill_castend_pos2	clif_skill_poseffect	skillid	
+Ref/eAthena_src_2011/map/skill.c	6676	skill_dance_overlap_sub	clif_skill_setunit	<unit-derived>	
+Ref/eAthena_src_2011/map/skill.c	7403	skill_unit_onplace_timer	clif_skill_nodamage	AL_HEAL	AL_HEAL
+Ref/eAthena_src_2011/map/skill.c	7424	skill_unit_onplace_timer	clif_skill_nodamage	AL_HEAL	AL_HEAL
+Ref/eAthena_src_2011/map/skill.c	7571	skill_unit_onplace_timer	clif_skill_nodamage	AL_HEAL	AL_HEAL
+Ref/eAthena_src_2011/map/skill.c	7593	skill_unit_onplace_timer	clif_skill_nodamage	AL_HEAL	AL_HEAL
+Ref/eAthena_src_2011/map/skill.c	8047	skill_check_pc_partner	clif_skill_nodamage	skill_id	
+Ref/eAthena_src_2011/map/skill.c	9308	skill_repairweapon	clif_skill_nodamage	sd->menuskill_id	
+Ref/eAthena_src_2011/map/skill.c	10001	skill_check_cloaking	clif_skill_setunit	<unit-derived>	
+Ref/eAthena_src_2011/map/skill.c	10717	skill_unit_move_unit_group	clif_skill_setunit	<unit-derived>	

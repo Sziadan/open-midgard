@@ -1935,3 +1935,7 @@ add_test(NAME recovery_number_receiver_source_check
         "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/GameActorMsgHandler.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../HighPriest.exe.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/RecoveryResurrectionPacketTests.cpp")
+
+# Plan rule 0.9: the plan and STATUS.md carry no narrative status (WP10.6/10.10).
+add_test(NAME doc_hygiene_check
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_doc_hygiene.py")

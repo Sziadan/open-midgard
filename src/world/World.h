@@ -247,6 +247,12 @@ public:
     mutable bool m_billboardFrameCacheValid;
     mutable bool m_billboardFrameCacheDirty;
     mutable RenderDebugStats m_lastRenderStats;
+    // Cursor into m_actorList while UpdateActors() is calling ProcessState().
+    // Actor state changes (SetState death/walk → UnRegisterPos) remove entries
+    // from m_actorList mid-iteration; UnregisterActor() advances this cursor
+    // past the node being erased so the loop never dereferences a freed node.
+    std::list<CGameActor*>::iterator m_actorUpdateCursor;
+    bool m_actorUpdateActive = false;
 
     void ClearGround();
     void ClearBackgroundObjects();

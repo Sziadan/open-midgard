@@ -3,11 +3,38 @@
 #include "res/ActRes.h"
 #include <cstring>
 #include <algorithm>
+#include <mutex>
+#include <unordered_set>
 #include <vector>
 
 #if RO_PLATFORM_WINDOWS
 #pragma comment(lib, "msimg32.lib")
 #endif
+
+namespace {
+
+std::mutex& ArgbDibRegistryMutex()
+{
+    static std::mutex s_mutex;
+    return s_mutex;
+}
+
+std::unordered_set<HGDIOBJ>& ArgbDibRegistry()
+{
+    static std::unordered_set<HGDIOBJ> s_registry;
+    return s_registry;
+}
+
+} // namespace
+
+bool IsArgbDibSurfaceBitmap(HGDIOBJ bitmap)
+{
+    if (!bitmap) {
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(ArgbDibRegistryMutex());
+    return ArgbDibRegistry().count(bitmap) != 0;
+}
 
 ArgbDibSurface::ArgbDibSurface()
     : m_dc(nullptr), m_bitmap(nullptr), m_oldBitmap(nullptr), m_bits(nullptr), m_width(0), m_height(0)
@@ -52,6 +79,10 @@ bool ArgbDibSurface::EnsureSize(int width, int height)
     m_oldBitmap = SelectObject(m_dc, m_bitmap);
     m_width = width;
     m_height = height;
+    {
+        std::lock_guard<std::mutex> lock(ArgbDibRegistryMutex());
+        ArgbDibRegistry().insert(m_bitmap);
+    }
     return true;
 }
 
@@ -63,6 +94,10 @@ void ArgbDibSurface::Release()
     m_oldBitmap = nullptr;
 
     if (m_bitmap) {
+        {
+            std::lock_guard<std::mutex> lock(ArgbDibRegistryMutex());
+            ArgbDibRegistry().erase(m_bitmap);
+        }
         DeleteObject(m_bitmap);
         m_bitmap = nullptr;
     }
@@ -198,7 +233,14 @@ bool TryAlphaBlendArgbToDibSection(HDC hdc,
         return false;
     }
 
-    const bool topDown = dibSection.dsBmih.biHeight < 0;
+    // Row orientation cannot be read back from GetObject: on current Windows
+    // builds (observed on 10.0.26300) dsBmih.biHeight comes back positive even
+    // for DIB sections created with a negative height, which made every UI
+    // window surface render upside down. The only DIB sections this client
+    // draws into are ArgbDibSurface instances, which are always created
+    // top-down, so treat the target as top-down and only switch to bottom-up
+    // when the fast-path target is not one of ours.
+    const bool topDown = IsArgbDibSurfaceBitmap(bitmapObject) || dibSection.dsBmih.biHeight < 0;
     const int stridePixels = dibSection.dsBm.bmWidthBytes / static_cast<int>(sizeof(unsigned int));
     if (stridePixels < targetWidth) {
         return false;
@@ -234,8 +276,9 @@ void BlitMotionToArgb(unsigned int* dest, int destW, int destH, int baseX, int b
         }
 
         const bool flipX = (clip.flags & 1) != 0;
-        const int imgOffX = clip.x - image->width / 2;
-        const int imgOffY = clip.y - image->height / 2;
+        // CActRes::Load already converted the file center into a top-left.
+        const int imgOffX = clip.x;
+        const int imgOffY = clip.y;
         for (int sy = 0; sy < image->height; ++sy) {
             const int dy = baseY + imgOffY + sy;
             if (dy < 0 || dy >= destH) {
@@ -285,8 +328,8 @@ bool ComputeMotionClipBounds(CSprRes* sprRes, const CMotion* motion, RECT* outBo
             continue;
         }
 
-        const int drawX = clip.x - image->width / 2;
-        const int drawY = clip.y - image->height / 2;
+        const int drawX = clip.x;
+        const int drawY = clip.y;
         RECT current = { drawX, drawY, drawX + image->width, drawY + image->height };
         if (!hasClip) {
             clipBox = current;

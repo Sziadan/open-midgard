@@ -37,6 +37,19 @@
 
 namespace {
 
+// Effects are owned by the world object list. A pointer that is no longer in
+// that list has already been deleted; its storage is frequently reused by the
+// GL driver, so a virtual call through it jumps into the driver and faults.
+bool IsLiveWorldEffect(const CRagEffect* effect)
+{
+    if (!effect) {
+        return false;
+    }
+    const CGameObject* object = effect;
+    const auto& objects = g_world.m_gameObjectList;
+    return std::find(objects.begin(), objects.end(), object) != objects.end();
+}
+
 void SetTextureDebugName(CTexture* texture, const char* name)
 {
     if (!texture || !name || name[0] == '\0') {
@@ -3535,6 +3548,37 @@ struct ActAttachPoint {
     int attr;
 };
 
+// Ref/Action.cpp CActRes::Load / ReCalcClipXY. ACT versions >= 0x200 store the
+// sprite center. The original converts that to a top-left before any renderer
+// reads the clip. Width/height are doubled when the sprite is a half image.
+void ReCalcClipXY(CSprClip& clip, int cx, int cy, int isHalfW, int isHalfH)
+{
+    if (clip.zoomX == 0.0f || clip.zoomY == 0.0f) {
+        return;
+    }
+
+    const int width = isHalfW ? cx * 2 : cx;
+    const int height = isHalfH ? cy * 2 : cy;
+    const int halfW = width / 2 + width % 2;
+    const int halfH = height / 2 + height % 2;
+    clip.x = static_cast<int>((static_cast<double>(clip.x) - static_cast<double>(halfW) * clip.zoomX) / clip.zoomX);
+    clip.y = static_cast<int>((static_cast<double>(clip.y) - static_cast<double>(halfH) * clip.zoomY) / clip.zoomY);
+}
+
+void ReCalcClipFromSprite(CSprClip& clip, const CSprRes* sprites)
+{
+    if (!sprites || clip.sprIndex < 0) {
+        return;
+    }
+
+    const SprImg* image = sprites->GetSprite(clip.clipType, clip.sprIndex);
+    if (!image) {
+        return;
+    }
+
+    ReCalcClipXY(clip, image->width, image->height, image->isHalfW, image->isHalfH);
+}
+
 } // namespace
 
 CActRes::CActRes() : numMaxClipPerMotion(0) {}
@@ -3543,7 +3587,6 @@ CActRes::~CActRes() { Reset(); }
 bool CActRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int size)
 {
     LOG_ACT_LOAD("[ActLoad] LoadFromBuffer: '%s' size=%d\n", fName ? fName : "(null)", size);
-    (void)fName;
 
     LOG_ACT_LOAD("[ActLoad] Calling Reset...\n");
     Reset();
@@ -3565,6 +3608,18 @@ bool CActRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int
     if (header.id != 17217 || header.ver > 0x205u) {
         LOG_ACT_LOAD("[ActLoad] FAIL: bad id or ver\n");
         return false;
+    }
+
+    // Versions below 0x205 take the size from the sibling SPR. Version 0x205
+    // stores that logical size beside each clip and does not consult the SPR.
+    CSprRes* siblingSprites = nullptr;
+    if (fName && header.ver >= 0x200u && header.ver < 0x205u) {
+        std::string sprName(fName);
+        const std::string::size_type dot = sprName.find_last_of('.');
+        if (dot != std::string::npos) {
+            sprName.replace(dot, std::string::npos, ".spr");
+            siblingSprites = g_resMgr.GetAs<CSprRes>(sprName.c_str());
+        }
     }
 
     LOG_ACT_LOAD("[ActLoad] actions.resize(%u)...\n", header.count);
@@ -3642,6 +3697,11 @@ bool CActRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int
                             Reset();
                             return false;
                         }
+                        if (clip.sprIndex != -1) {
+                            ReCalcClipXY(clip, extra.width, extra.height, 0, 0);
+                        }
+                    } else if (clip.sprIndex != -1) {
+                        ReCalcClipFromSprite(clip, siblingSprites);
                     }
                 } else if (header.ver >= 0x200u) {
                     ActClipV2 src{};
@@ -3662,6 +3722,9 @@ bool CActRes::LoadFromBuffer(const char* fName, const unsigned char* buffer, int
                     clip.zoomY = src.zoom;
                     clip.angle = src.angle;
                     clip.clipType = src.clipType;
+                    if (clip.sprIndex != -1) {
+                        ReCalcClipFromSprite(clip, siblingSprites);
+                    }
                 } else {
                     ActClipV1 src{};
                     if (!ReadValue(cursor, end, src)) {
@@ -4269,7 +4332,7 @@ void CAbleToMakeEffect::RemoveEffectById(int effectId)
 void CAbleToMakeEffect::DetachEffects()
 {
     for (CRagEffect* effect : m_effectList) {
-        if (effect) {
+        if (IsLiveWorldEffect(effect)) {
             effect->SendMsg(this, 24, 0, 0, 0);
         }
     }
@@ -4434,6 +4497,7 @@ void CAbleToMakeEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, m
     , m_damageDestX(0.0f)
     , m_damageDestZ(0.0f)
     , m_effectLaunchCnt(3600)
+    , m_effectLaunchStep(0)
     , m_vanishTime(0)
     , m_hideFadeStartTick(0)
     , m_hideFadeEndTick(0)
@@ -4596,6 +4660,45 @@ u32 CGameActor::GetHideFadeAlpha(u32 now) const
     const u32 total = m_hideFadeEndTick - m_hideFadeStartTick;
     const u32 remaining = m_hideFadeEndTick - now;
     return (std::min)(255u, (remaining * 255u) / total);
+}
+
+bool CGameActor::ShouldDrawSprite(u32 now) const
+{
+    // The fade is the only window where a concealed body is still drawn.
+    if (IsHideFadeActive(now)) {
+        return m_isVisible != 0;
+    }
+
+    // Ref/dhxj/packet.h: BURROW 0x02 is Hide, HIDING 0x04 is Cloak,
+    // SPECIALHIDING 0x40 is the invisible option. Ref/Pc.cpp CPc::Render
+    // skips the body while those flags are set. A later move packet must
+    // not put the sprite back.
+    if ((m_effectState & (0x0002 | 0x0004 | 0x0040)) != 0) {
+        return false;
+    }
+    return m_isVisible != 0 && m_isVisibleBody != 0;
+}
+
+void CGameActor::ReapplyConcealmentVisibility()
+{
+    if (IsHideFadeActive(timeGetTime())) {
+        return;
+    }
+
+    const bool burrow = (m_effectState & 0x0002) != 0;
+    const bool hiding = (m_effectState & 0x0004) != 0;
+    const bool specialHiding = (m_effectState & 0x0040) != 0;
+    if (!burrow && !hiding && !specialHiding) {
+        return;
+    }
+
+    // Ref/GameActor.cpp SetAttrState. Hide clears the body only.
+    // Cloak and special hiding clear the actor as well.
+    m_isVisibleBody = 0;
+    m_shadowOn = 0;
+    if (hiding || specialHiding) {
+        m_isVisible = 0;
+    }
 }
 
 u8 CGameActor::ProcessState() {
@@ -4805,16 +4908,11 @@ u8 CGameActor::ProcessState() {
         m_isCounter = 0;
         ProcessMotion();
         if (m_isMotionFinished && m_willBeAttackedList.empty()) {
-            if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
-                mode->SendMsg(13, m_gid, 0, 0);
-            }
-            const bool guardedJob = (m_job <= 28 || m_job >= 4000) && m_objectType != 9;
-            const bool isMercenaryOrHomunculus = m_job > 6000 && m_job < 6048;
-            if (!guardedJob || isMercenaryOrHomunculus) {
-                // The modern actor remains in the world list; state 10 holds its final death frame as the corpse visual.
-                m_stateId = 10;
-                return 0;
-            }
+            // Ref/GameActor.cpp:1863 sends mode message 13, which only drops
+            // the actor from the cell map. The death pose stays until the
+            // vanish fade. Leaving state 3 here keeps that last frame; state
+            // 10 would drop the death billboard and the effects riding on it.
+            UnRegisterPos();
         }
         break;
     case 4: {
@@ -4934,11 +5032,35 @@ u8 CGameActor::ProcessState() {
     return 1;
 }
 
+namespace {
+u32 g_effectLogicStep = 0;
+}
+
+void BeginEffectStateLogicStep()
+{
+    // Ref/GameMode.cpp OnUpdate only advances effect state while
+    // g_isSkipFrame is set. Render-only actor updates must not count.
+    if (g_isSkipFrame > 0) {
+        ++g_effectLogicStep;
+    }
+}
+
 void CGameActor::ProcessEffectState() {
     if (g_isSkipFrame > 0 && m_BeZero == 1) {
         m_BodyLight = 0;
         m_BeZero = 0;
     }
+
+    // Ref/GameActor.cpp:7978 relaunches Sight (effect 22, 270) and Ruwach
+    // (effect 33, 200) from this counter. Those intervals are the effect
+    // durations, so the counter has to advance once per logic step, on the
+    // same g_isSkipFrame gate as CRagEffect::OnProcess. ProcessState also
+    // runs on render-only frames and more than once per step for the local
+    // player; counting those starts a new orbit before the previous one ends.
+    if (g_isSkipFrame <= 0 || m_effectLaunchStep == g_effectLogicStep) {
+        return;
+    }
+    m_effectLaunchStep = g_effectLogicStep;
 
     if (m_effectState == 0) {
         m_effectLaunchCnt = 36000;
@@ -6816,6 +6938,31 @@ void CGameActor::HandleAttacked(const WBA& hit)
     };
 
     if (shownDamage == 0) {
+        // Ref/GameActor.cpp:3975 jumps straight to the dead-check and never
+        // launches the hit effects. A missed skill still has to play the
+        // projectile/impact that Am_Skill already chose (firebolt's bolts are
+        // effect 49 on the target, and the attack-effect table entry is -1).
+        // Basic attacks leave sourceSkillId unset and keep the Miss-only path.
+        if (hit.sourceSkillId > 0) {
+            if (hit.effectId1 >= 0) {
+                if (CRagEffect* first = LaunchEffect(hit.effectId1, vector3d{}, 0.0f)) {
+                    first->SendMsg(first, 44, 1, 0, 0);
+                }
+            }
+            if (hit.effectId2 == 122) {
+                // Same turn as a connecting Sonic Blow hit. Ref only does
+                // this when damage is non-zero; a missed combo still has
+                // to walk through those facing steps.
+                m_roty += 90.0f;
+                if (m_roty >= 360.0f) {
+                    m_roty -= 360.0f;
+                }
+            } else if (hit.effectId2 >= 0) {
+                if (CRagEffect* second = LaunchEffect(hit.effectId2, vector3d{}, 0.0f)) {
+                    second->SendMsg(second, 44, 1, 0, 0);
+                }
+            }
+        }
         if (hit.message == 94) {
             SendMsg(this, 95, 0, 0, 0);
         } else if (attacker) {
@@ -7015,11 +7162,30 @@ int CGameActor::GetAttackMotion()
 }
 
 void CGameActor::RegisterPos() {
+    // Ref/GameActor.cpp:2596. Message 12 stores the cell. The actor also has
+    // to stay in the world list; that part is not in Ref because the original
+    // inserts actors when they are created.
     g_world.RegisterActor(this);
+    if (m_gid == 0) {
+        return;
+    }
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        int serverX = 0;
+        int serverY = 0;
+        mode->GetServerCoor(m_pos.x, m_pos.z, serverX, serverY);
+        mode->m_actorPosList[m_gid] = CellPos{ serverX, serverY };
+    }
 }
 
 void CGameActor::UnRegisterPos() {
-    g_world.UnregisterActor(this);
+    // Ref/GameActor.cpp:6039. Message 13 erases the cell only. It does not
+    // remove the actor from the world, so a death or walk pose keeps drawing.
+    if (m_gid == 0) {
+        return;
+    }
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        mode->m_actorPosList.erase(m_gid);
+    }
 }
 
 void CGameActor::DeleteMatchingEffect(CMsgEffect* effect)
@@ -7722,6 +7888,7 @@ void CPc::SetState(int state)
 
     switch (state) {
     case 0:
+        m_isSitting = 0;
         CGameActor::SetState(0);
         m_curMotion = m_headDir;
         if (previousState == kHitReactionStateId
@@ -7732,6 +7899,7 @@ void CPc::SetState(int state)
         }
         break;
     case kMoveStateId:
+        m_isSitting = 0;
         m_isCounter = 0;
         if (m_bodyState != 1 && m_bodyState != 2) {
             m_isMotionFreezed = 0;
@@ -7776,6 +7944,10 @@ void CPc::SetState(int state)
         break;
     }
     case 6:
+        // Ref/Pc.cpp:5790. Action 16 motions 0..2 are the seated head poses,
+        // held because the motion is marked finished. m_isSitting keeps the
+        // billboard on that band after the one-shot timer expires.
+        m_isSitting = 1;
         RegisterPos();
         SetAction(16, 4, 1);
         m_isMotionFinished = 1;
@@ -7980,7 +8152,8 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
     const int displayJob = ResolveDisplayJob(*this);
     const int sex = m_sex != 0 ? 1 : 0;
     const SharedPlayerBillboardKey sharedPlayerKey = BuildSharedPlayerBillboardKey(*this, displayJob, sex);
-    const int baseBodyAction = m_isSitting ? 16 : (m_isMoving ? 8 : 0);
+    const bool seated = m_isSitting != 0 || m_stateId == 6;
+    const int baseBodyAction = seated ? 16 : (m_isMoving ? 8 : 0);
     int previousDir = -1;
     if (m_cachedBillboardBodyAction >= baseBodyAction && m_cachedBillboardBodyAction < baseBodyAction + 8) {
         previousDir = m_cachedBillboardBodyAction - baseBodyAction;

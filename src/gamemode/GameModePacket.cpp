@@ -29,6 +29,7 @@
 #include "ui/UIEquipWnd.h"
 #include "ui/UIItemCompositionWnd.h"
 #include "ui/UIItemIdentifyWnd.h"
+#include "ui/UISkillSelectWnd.h"
 #include "ui/UIItemInfoWnd.h"
 #include "ui/UIItemWnd.h"
 #include "ui/UIItemPurchaseWnd.h"
@@ -187,9 +188,6 @@ constexpr int kEffectStateHidingMask = 0x0004;
 constexpr int kEffectStateSpecialHidingMask = 0x0040;
 constexpr int kEffectStateBurrowMask = 0x0002;
 constexpr int kEffectStatePushCartMask = 0x0008 | 0x0080 | 0x0100 | 0x0200 | 0x0400;
-constexpr int kSightStateEffectId = 601;
-constexpr int kHideStartEffectId = 159;
-constexpr u32 kHideFadeDurationMs = 180;
 constexpr u16 kSkillIdHiding = 51;
 constexpr u16 kSkillIdCloaking = 135;
 constexpr u32 kPendingLocalHideSkillWindowMs = 1200;
@@ -206,9 +204,11 @@ int ResolveHideSkillEffectStateMask(u16 skillId)
 {
     switch (skillId) {
     case kSkillIdHiding:
-        return kEffectStateHidingMask;
+        // rAthena OPTION_HIDE is 0x02, which this client calls burrow.
+        return kEffectStateBurrowMask;
     case kSkillIdCloaking:
-        return kEffectStateSpecialHidingMask;
+        // rAthena OPTION_CLOAK is 0x04, which this client calls hiding.
+        return kEffectStateHidingMask;
     default:
         return 0;
     }
@@ -366,20 +366,6 @@ void RecordLocalHideSkillRequest(u16 skillId, u32 targetGid)
     g_pendingLocalHideSkillRequest.requestTick = timeGetTime();
 }
 
-bool ActorHasAttachedEffect(const CGameActor* actor, int effectId)
-{
-    if (!actor) {
-        return false;
-    }
-
-    for (const CRagEffect* effect : actor->m_effectList) {
-        if (effect && effect->GetEffectType() == effectId) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void RefreshActorEffectStatePresentation(CGameActor* actor, int oldEffectState)
 {
     if (!actor) {
@@ -387,8 +373,6 @@ void RefreshActorEffectStatePresentation(CGameActor* actor, int oldEffectState)
     }
 
     const int effectState = actor->m_effectState;
-    const bool oldHiding = HasEffectStateFlag(oldEffectState, kEffectStateHidingMask);
-    const bool oldSpecialHiding = HasEffectStateFlag(oldEffectState, kEffectStateSpecialHidingMask);
     const bool hiding = HasEffectStateFlag(effectState, kEffectStateHidingMask);
     const bool specialHiding = HasEffectStateFlag(effectState, kEffectStateSpecialHidingMask);
     const bool burrow = HasEffectStateFlag(effectState, kEffectStateBurrowMask);
@@ -397,28 +381,14 @@ void RefreshActorEffectStatePresentation(CGameActor* actor, int oldEffectState)
     const bool bodyVisible = !(hiding || specialHiding || burrow);
     const bool fullyVisible = !(hiding || specialHiding);
     const bool suppressPushCart = hiding || specialHiding || burrow;
-    const bool enteredHidden = (!oldHiding && hiding) || (!oldSpecialHiding && specialHiding);
-    const bool exitedHidden = (oldHiding && !hiding) || (oldSpecialHiding && !specialHiding);
-
-    if (enteredHidden) {
-        actor->SendMsg(actor, 109, kHideStartEffectId, 0, 0);
-        actor->LaunchEffect(kHideStartEffectId, vector3d{}, 0.0f);
-        actor->StartHideFade(kHideFadeDurationMs);
-    } else if (exitedHidden) {
-        actor->CancelHideFade();
-        actor->SendMsg(actor, 109, kHideStartEffectId, 0, 0);
-    }
-
     if (!actor->IsHideFadeActive(timeGetTime())) {
         actor->m_isVisibleBody = bodyVisible ? 1 : 0;
         actor->m_isVisible = fullyVisible ? 1 : 0;
         actor->m_shadowOn = bodyVisible ? 1 : 0;
     }
 
-    if (HasEffectStateFlag(effectState, kEffectStateSightMask) && !ActorHasAttachedEffect(actor, kSightStateEffectId)) {
-        actor->LaunchEffect(kSightStateEffectId, vector3d{}, 0.0f);
-    }
-
+    // Ref SetAttrState only plays the sight wave. The orbit is effect 22,
+    // relaunched by ProcessEffectState. Effect 601 is a separate skill visual.
     if ((pushCartChanged || suppressPushCart || !hasPushCart) && actor->m_cartEffect) {
         actor->SendMsg(actor, 52, 0, 0, 0);
     }
@@ -3607,6 +3577,7 @@ void PrepareSameMapWarpReuse(CGameMode& mode)
 
         if (mode.m_world) {
             mode.m_world->NotifyActorDeleted(actor);
+            mode.m_world->UnregisterActor(actor);
         }
         actor->UnRegisterPos();
         delete actor;
@@ -4697,7 +4668,10 @@ void DeliverUseSkill(CGameMode& mode, u32 sourceGid, u32 targetGid, int skillId,
             }
         }
     }
-    if (!monsterAction && skillId != 263 && skillId != 272 && skillId != 273 && skillId != 371 && source != nullptr) {
+    // Skill 135 is Cloaking. Ref still returns motion 7, the same cast pose
+    // Hide uses, and state 7 blocks walking until that pose finishes. Cloak
+    // only changes the option bit; it does not play that pose or its wave.
+    if (!monsterAction && skillId != 135 && skillId != 263 && skillId != 272 && skillId != 273 && skillId != 371 && source != nullptr) {
         int beginEffectId = 16;
         int motion = 7;
         GetSkillActionInfo(skillId, beginEffectId, motion);
@@ -4859,6 +4833,48 @@ void HandleSkillUnitSet2(CGameMode& mode, const PacketView& packet)
     PlaceSkillUnit(mode, unitAid, creatorAid, job, cellX, cellY, visible);
 }
 
+void CloseSkillSelectWindow()
+{
+    if (g_windowMgr.m_skillSelectWnd) {
+        g_windowMgr.DeleteWindow(g_windowMgr.m_skillSelectWnd);
+    }
+}
+
+bool IsRandomOnlyTeleport(u16 skillId, const std::vector<std::string>& destinations)
+{
+    if (skillId != 26 || destinations.size() != 1) {
+        return false;
+    }
+    const std::string& name = destinations.front();
+    return name.size() == 6
+        && (name[0] == 'R' || name[0] == 'r')
+        && (name[1] == 'A' || name[1] == 'a')
+        && (name[2] == 'N' || name[2] == 'n')
+        && (name[3] == 'D' || name[3] == 'd')
+        && (name[4] == 'O' || name[4] == 'o')
+        && (name[5] == 'M' || name[5] == 'm');
+}
+
+void ShowWarpDestinationWindow(CGameMode& mode)
+{
+    if (IsRandomOnlyTeleport(mode.m_warpSkillId, mode.m_warpMapDestinations)) {
+        const std::string randomName = mode.m_warpMapDestinations.front();
+        CloseSkillSelectWindow();
+        mode.SendWarpMapSelection(randomName);
+        DbgLog("[GameMode] teleport level 1 random warp sent map='%s'\n", randomName.c_str());
+        return;
+    }
+
+    UISkillSelectWnd* const window = dynamic_cast<UISkillSelectWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
+    if (!window) {
+        return;
+    }
+    window->SetWarpDestinations(mode.m_warpSkillId, mode.m_warpMapDestinations);
+    DbgLog("[GameMode] warp list window skill=%u destinations=%u\n",
+        static_cast<unsigned int>(mode.m_warpSkillId),
+        static_cast<unsigned int>(mode.m_warpMapDestinations.size()));
+}
+
 void HandleWarpMapList(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetId != 0x011C || packet.packetLength < 68) {
@@ -4877,6 +4893,41 @@ void HandleWarpMapList(CGameMode& mode, const PacketView& packet)
             mode.m_warpMapDestinations.emplace_back(field, length);
         }
     }
+
+    if (mode.m_warpMapDestinations.empty()) {
+        mode.m_warpSkillId = 0;
+        CloseSkillSelectWindow();
+        return;
+    }
+    ShowWarpDestinationWindow(mode);
+}
+
+void HandleMakingArrowList(CGameMode& mode, const PacketView& packet)
+{
+    if (!packet.data || packet.packetId != 0x01AD || packet.packetLength < 4 || ((packet.packetLength - 4) % 2) != 0) {
+        return;
+    }
+
+    if (mode.m_warpSkillId != 0) {
+        mode.CancelWarpMapSelection();
+    }
+
+    std::vector<unsigned int> itemIds;
+    const int count = (packet.packetLength - 4) / 2;
+    itemIds.reserve(static_cast<size_t>(count));
+    for (int index = 0; index < count; ++index) {
+        const unsigned int itemId = static_cast<unsigned int>(ReadLE16(packet.data + 4 + index * 2));
+        if (itemId != 0) {
+            itemIds.push_back(itemId);
+        }
+    }
+
+    UISkillSelectWnd* const window = dynamic_cast<UISkillSelectWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SKILLSELECTWND));
+    if (!window) {
+        return;
+    }
+    window->SetMakingArrowItems(itemIds);
+    DbgLog("[GameMode] making arrow list count=%d\n", static_cast<int>(itemIds.size()));
 }
 
 void HandleSkillDisappear(CGameMode& mode, const PacketView& packet)
@@ -6245,9 +6296,6 @@ void HandleActorStateChange(CGameMode& mode, const PacketView& packet)
     if (localPlayer) {
         UpdateKnownLocalCartState(IsEffectStatePushCart(effectState), effectState);
     }
-    if (HasEffectStateFlag(effectState, kEffectStateSightMask) && !ActorHasAttachedEffect(actor, kSightStateEffectId)) {
-        actor->LaunchEffect(kSightStateEffectId, vector3d{}, 0.0f);
-    }
     if (localPlayer && IsEffectStatePushCartChanged(actor->m_effectState, oldEffectState)) {
         InvalidateCartUi();
     }
@@ -6307,6 +6355,9 @@ CGameActor* EnsureRuntimeActor(CGameMode& mode, u32 gid, bool preferPc)
             existing->m_cartEffect = nullptr;
             existing->m_lastDamageNumberEffect = nullptr;
             existing->m_msgEffectList.clear();
+            if (mode.m_world) {
+                mode.m_world->UnregisterActor(existing);
+            }
             existing->UnRegisterPos();
             delete existing;
 
@@ -6459,6 +6510,7 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
         trace.lastClientTick = clientTickNow;
         trace.lastServerTick = serverTickNow;
     }
+    actor->ReapplyConcealmentVisibility();
 }
 
 void ApplyRuntimeActorFixPosition(CGameMode& mode, u32 gid, int tileX, int tileY)
@@ -6491,6 +6543,7 @@ void ApplyRuntimeActorFixPosition(CGameMode& mode, u32 gid, int tileX, int tileY
     actor->m_pos = actor->m_moveEndPos;
     actor->SetState(0);
     actor->RegisterPos();
+    actor->ReapplyConcealmentVisibility();
 }
 
 bool FindPathCellIndex(const CPathInfo& path, int tileX, int tileY, size_t* outIndex)
@@ -6579,6 +6632,7 @@ void RemoveRuntimeActor(CGameMode& mode, u32 gid)
         CGameActor* actor = it->second;
         if (mode.m_world) {
             mode.m_world->NotifyActorDeleted(actor);
+            mode.m_world->UnregisterActor(actor);
         }
         actor->UnRegisterPos();
         mode.m_deferredActorDeletes.push_back(actor);
@@ -7742,6 +7796,21 @@ void CleanupPendingActorDespawns(CGameMode& mode)
             continue;
         }
 
+        // Firebolt and other hit effects are launched on the target. Removing
+        // the actor here deletes those effects with it. Keep the faded actor
+        // until its effect list drains so the remaining bolts finish.
+        bool effectStillRunning = false;
+        for (CRagEffect* effect : actor->m_effectList) {
+            if (effect) {
+                effectStillRunning = true;
+                break;
+            }
+        }
+        if (effectStillRunning) {
+            actor->m_isVisible = 0;
+            continue;
+        }
+
         expiredActors.push_back(gid);
     }
 
@@ -8119,6 +8188,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x0110, HandleSkillFailAck);
     router.Register(0x0111, HandlePlayerSkillAdd);
     router.Register(0x011C, HandleWarpMapList);
+    router.Register(0x01AD, HandleMakingArrowList);
     router.Register(0x0235, HandleHomunSkillList);
     router.Register(0x0239, HandleHomunSkillUpdate);
     router.Register(0x029D, HandleMercSkillList);

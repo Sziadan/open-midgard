@@ -4342,6 +4342,193 @@ Item {
     }
 
     Rectangle {
+        x: uiState.skillSelectX
+        y: uiState.skillSelectY
+        width: uiState.skillSelectWidth
+        height: uiState.skillSelectHeight
+        radius: 4
+        color: "#ede9df"
+        border.width: 1
+        border.color: "#6b675f"
+        visible: uiState.skillSelectVisible
+        z: 44
+
+        Rectangle {
+            x: 1
+            y: 1
+            width: parent.width - 2
+            height: 16
+            radius: 3
+            color: "#6e8194"
+            border.width: 1
+            border.color: "#4e5d6c"
+        }
+
+        Text {
+            x: 8
+            y: 3
+            text: uiState.skillSelectData.title || "Select"
+            color: "#ffffff"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Rectangle {
+            x: (uiState.skillSelectData.closeButton.x || 0) - uiState.skillSelectX
+            y: (uiState.skillSelectData.closeButton.y || 0) - uiState.skillSelectY
+            width: uiState.skillSelectData.closeButton.width || 0
+            height: uiState.skillSelectData.closeButton.height || 0
+            radius: 2
+            color: (uiState.skillSelectData.closeButton.pressed || false) ? "#b9c7de" : ((uiState.skillSelectData.closeButton.hovered || false) ? "#d7dff0" : "#e7e2d6")
+            border.width: 1
+            border.color: "#7f7a70"
+
+            Text {
+                anchors.centerIn: parent
+                text: uiState.skillSelectData.closeButton.label || "X"
+                color: "#000000"
+                font.pixelSize: 8
+                font.bold: true
+            }
+        }
+
+        Rectangle {
+            id: skillSelectList
+            x: 8
+            y: 27
+            width: Math.max(0, parent.width - 30)
+            height: 128
+            color: "#ffffff"
+            border.width: 1
+            border.color: "#c4c0b5"
+            clip: true
+
+            Text {
+                anchors.centerIn: parent
+                visible: (uiState.skillSelectData.rows || []).length === 0
+                text: uiState.skillSelectData.emptyText || "Nothing to select."
+                color: "#505050"
+                font.pixelSize: 10
+            }
+
+            Repeater {
+                model: uiState.skillSelectData.rows || []
+
+                delegate: Rectangle {
+                    required property var modelData
+                    x: (modelData.x || 0) - uiState.skillSelectX - skillSelectList.x
+                    y: (modelData.y || 0) - uiState.skillSelectY - skillSelectList.y
+                    width: modelData.width || 0
+                    height: modelData.height || 0
+                    color: (modelData.selected || false) ? "#d7dff0" : ((modelData.hovered || false) ? "#ece8de" : "#f9f7f3")
+                    border.width: 1
+                    border.color: (modelData.selected || false) ? "#7e95bf" : "#bcb4a7"
+
+                    Rectangle {
+                        x: 4
+                        y: 4
+                        width: 24
+                        height: 24
+                        visible: modelData.showIcon || false
+                        color: "#f5f2ea"
+                        border.width: 1
+                        border.color: "#a69f91"
+
+                        Image {
+                            anchors.fill: parent
+                            anchors.margins: 1
+                            fillMode: Image.PreserveAspectFit
+                            smooth: false
+                            cache: false
+                            source: root.itemIconSource(modelData.itemId || 0, modelData.identified)
+                        }
+                    }
+
+                    Text {
+                        x: (modelData.showIcon || false) ? 34 : 8
+                        y: 5
+                        width: parent.width - ((modelData.showIcon || false) ? 70 : 44)
+                        text: modelData.label || ""
+                        color: "#000000"
+                        font.pixelSize: 11
+                        font.bold: modelData.selected || false
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        anchors.right: parent.right
+                        anchors.rightMargin: 8
+                        y: 5
+                        visible: (modelData.count || 0) > 1
+                        text: modelData.count || 0
+                        color: "#5a4020"
+                        font.pixelSize: 10
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            x: (uiState.skillSelectData.scrollBar.trackX || 0) - uiState.skillSelectX
+            y: (uiState.skillSelectData.scrollBar.trackY || 0) - uiState.skillSelectY
+            width: uiState.skillSelectData.scrollBar.trackWidth || 0
+            height: uiState.skillSelectData.scrollBar.trackHeight || 0
+            visible: uiState.skillSelectData.scrollBar.visible || false
+            color: "#e3e7ee"
+            border.width: 1
+            border.color: "#a4adbd"
+
+            Rectangle {
+                x: (uiState.skillSelectData.scrollBar.thumbX || 0) - (uiState.skillSelectData.scrollBar.trackX || 0)
+                y: (uiState.skillSelectData.scrollBar.thumbY || 0) - (uiState.skillSelectData.scrollBar.trackY || 0)
+                width: uiState.skillSelectData.scrollBar.thumbWidth || 0
+                height: uiState.skillSelectData.scrollBar.thumbHeight || 0
+                color: "#b4bccd"
+                border.width: 1
+                border.color: "#788296"
+            }
+        }
+
+        Rectangle {
+            x: (uiState.skillSelectData.okButton.x || 0) - uiState.skillSelectX
+            y: (uiState.skillSelectData.okButton.y || 0) - uiState.skillSelectY
+            width: uiState.skillSelectData.okButton.width || 0
+            height: uiState.skillSelectData.okButton.height || 0
+            radius: 3
+            color: !(uiState.skillSelectData.okButton.enabled || false)
+                ? "#d0d0d0"
+                : ((uiState.skillSelectData.okButton.pressed || false) ? "#b9c7de" : ((uiState.skillSelectData.okButton.hovered || false) ? "#d7dff0" : "#e9e4d8"))
+            border.width: 1
+            border.color: "#8c8578"
+
+            Text {
+                anchors.centerIn: parent
+                text: uiState.skillSelectData.okButton.label || "OK"
+                color: "#000000"
+                font.pixelSize: 10
+            }
+        }
+
+        Rectangle {
+            x: (uiState.skillSelectData.cancelButton.x || 0) - uiState.skillSelectX
+            y: (uiState.skillSelectData.cancelButton.y || 0) - uiState.skillSelectY
+            width: uiState.skillSelectData.cancelButton.width || 0
+            height: uiState.skillSelectData.cancelButton.height || 0
+            radius: 3
+            color: (uiState.skillSelectData.cancelButton.pressed || false) ? "#b9c7de" : ((uiState.skillSelectData.cancelButton.hovered || false) ? "#d7dff0" : "#e9e4d8")
+            border.width: 1
+            border.color: "#8c8578"
+
+            Text {
+                anchors.centerIn: parent
+                text: uiState.skillSelectData.cancelButton.label || "Cancel"
+                color: "#000000"
+                font.pixelSize: 10
+            }
+        }
+    }
+
+    Rectangle {
         x: uiState.itemCompositionX
         y: uiState.itemCompositionY
         width: uiState.itemCompositionWidth

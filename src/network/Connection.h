@@ -44,6 +44,8 @@ public:
     bool Connect(const char* ip, int port);
     void Disconnect();
     bool IsOpen() const { return m_socket != INVALID_SOCKET; }
+    // Human-readable reason for the last Connect() failure (empty after success).
+    const char* GetLastConnectError() const { return m_lastConnectError; }
     
     int  Send(const char* buf, int len);
     int  Recv(char* buf, int len, bool peek = false);
@@ -58,6 +60,7 @@ protected:
     sockaddr_in  m_addr;
     u8           m_bBlock;
     u32          m_dwTime;
+    char         m_lastConnectError[192] = {};
     CPacketQueue m_sendQueue;
     CPacketQueue m_recvQueue;
     CPacketQueue m_blockQueue;
