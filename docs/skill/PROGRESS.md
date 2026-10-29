@@ -2514,3 +2514,7 @@ Added and registered `check_effect493_enchant_poison2.py`. It compares the PE an
 ## WP5F effect538 actor-light parity — 2026-10-29
 
 Extended `check_effect375_actor_light.py` to compare the PE and primary-Ref effect538 caller branch, frame-31 cutoff, BodyLight bit ordering, green even-frame tint and shared white odd-frame tint. It also checks the local OnProcess3 route, actor-light grouping and null-master guard. Focused check, elevated Release parity build and full Release CTest passed 354/354. No production behavior change.
+
+## WP5F effect512 CHEMICAL3 caller parity — 2026-10-29
+
+Added and registered `check_effect512_chemical3.py`. It compares the complete PE/primary-Ref caller branch and CHEMICAL3 emitter helper, checks the local four repeats of ordered variants 10/11, frame-44 message/position/wave sequence, and inclusive frames 20–100 tint window. Focused check, elevated Release parity build and full Release CTest passed 355/355. No production behavior change.
