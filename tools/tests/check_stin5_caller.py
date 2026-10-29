@@ -42,7 +42,7 @@ canonical_emitter = body(canonical_text,
 current = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 current_route = body(current, "if (m_type == 624) {", "if (m_type == 618) {")
 current_caller = body(current, "void CRagEffect::ApplyStin5()", "void CRagEffect::SpawnStin5(")
-current_emitter = body(current, "void CRagEffect::SpawnStin5(", "void CRagEffect::ApplyBottomMagnus(")
+current_emitter = body(current, "void CRagEffect::SpawnStin5(", "// TEST_BODY_END stin5_emitter_family")
 
 assert effect_id == 624, f"readable enum resolves EF_STIN5={effect_id}, expected 624"
 assert "if (m_stateCnt == 1)" in readable_dispatch

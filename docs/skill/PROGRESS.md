@@ -2591,3 +2591,7 @@ Added and registered `check_effect405_bottom_magnus.py`. It verifies the PE call
 ## WP5F effects613–616 ThrowItem variant-3 callers — 2026-10-29
 
 Extended `check_effect539_throw_items.py` to compare all four PE/primary-Ref caller branches and generated routes, assert each local variant-3 texture mapping, and verify exact executable bytes for the three CP949 item paths plus `coin_a.bmp`. The shared ThrowItem helper and variant-3 launch frame remain checked by the existing comparator. Focused check passed; full Release parity build and CTest passed 365/365. No production behavior change.
+
+## WP5F effects622/624 checker registration and source-slice fixes — 2026-10-29
+
+Registered the existing ThunderStorm2 and STIN5 comparators as CTests. Tightened their local emitter source slices to stop at each named TEST_BODY_END marker; both had accidentally included neighboring emitter bodies, causing their RNG assertions to fail. Both focused checks pass. Full Release parity build and CTest passed 367/367. No production behavior change.

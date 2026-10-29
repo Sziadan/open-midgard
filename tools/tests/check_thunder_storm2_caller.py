@@ -41,7 +41,7 @@ canonical_emitter = body(canonical_text,
                          "void __thiscall CRagEffect::FireArrow(CRagEffect *this)\n{")
 current = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 current_dispatch = body(current, "if (m_type == 622) {", "if (m_type == 618) {")
-current_emitter = body(current, "void CRagEffect::ApplyThunderStorm2()", "void CRagEffect::ApplyBottomMagnus(")
+current_emitter = body(current, "void CRagEffect::ApplyThunderStorm2()", "// TEST_BODY_END stin4_emitter_family")
 particle_routes = body(current, "bool CEffectPrim::UsesReferenceParticle() const", "CEffectPrim::~CEffectPrim()")
 source_render_dispatch = body((ROOT / "Ref/dhxj/RagEffectPrim.cpp").read_text(encoding="latin1"),
                               "PP_3DPARTICLE_NOMASTER:", "PP_3DQUADHORN:")
