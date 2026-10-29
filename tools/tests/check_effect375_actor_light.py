@@ -256,6 +256,21 @@ require(actor_light_ids is not None and re.search(r"\b500\b", actor_light_ids.gr
 require(re.search(r"case 500:\s*if \(m_stateCnt < 31\)\s*\{\s*flashBody\(0, 0, 255\);\s*\}", helper.group(1)),
         "local effect500 cutoff/blue flash mapping changed")
 
+pe_521 = process3_case(PE, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 521, 522)
+ref_521 = process3_case(REF, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 521, 522)
+require(re.sub(r"\s+", "", pe_521) == re.sub(r"\s+", "", ref_521),
+        "primary Ref and PE effect521 caller branches differ")
+for token in ("v58 < 10", "v58 >= 51", "m_BodyLight & 8", "m_stateCnt % 2",
+              "m_BodyLight & 1", "SetArgb(this->m_master, -1, 255, 0, 0)"):
+    require(token in pe_521, f"PE effect521 red-flash interval/order missing {token}")
+require("case 521: ApplyActorLight(); return true;" in DISPATCH3,
+        "local effect521 dispatcher route missing")
+require(actor_light_ids is not None and re.search(r"\b521\b", actor_light_ids.group(1)),
+        "effect521 missing from generator actor-light group")
+require(re.search(r"case 521:\s*if \(m_stateCnt >= 10 && m_stateCnt < 51\)\s*\{\s*"
+                  r"flashBody\(255, 0, 0\);\s*\}", helper.group(1)),
+        "local effect521 red-flash interval changed")
+
 pe_625 = process3_case(PE, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 625, 626)
 ref_625 = process3_case(REF, r"unsigned __int8 __thiscall CRagEffect::OnProcess3\(CRagEffect \*this\)", 625, 626)
 require(re.sub(r"\s+", "", pe_625) == re.sub(r"\s+", "", ref_625),
@@ -330,4 +345,4 @@ require("case 375" not in REF and "case 379" not in REF and "case 382" not in RE
 require("case 387" not in REF and "case 396" not in REF,
         "primary Ref gained an explicit actor-light case; update recorded provenance")
 
-print("effects375/379/382/385/387/396/414/500/538/542/544/548/549/550/625/626/655/656/667 actor-light source parity passed; PE/Ref callers and local guards checked")
+print("effects375/379/382/385/387/396/414/500/521/538/542/544/548/549/550/625/626/655/656/667 actor-light source parity passed; PE/Ref callers and local guards checked")

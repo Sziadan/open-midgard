@@ -2643,3 +2643,7 @@ PE and primary Ref helpers refresh `m_pos` from the master before the state-zero
 ## WP5F effect119 Detecting source comparison — 2026-10-29
 
 Added and registered `check_effect119_detecting.py`. It compares normalized PE/primary-Ref helper bodies, verifies the PE-only effect119 caller (the primary Ref has no caller case), local dispatch route, exact PE wave and texture bytes, and the existing lifecycle fixture. No production change. Release parity build passed; full Release CTest passed 373/373.
+
+## WP5F effect521 actor-light caller — 2026-10-29
+
+Extended `check_effect375_actor_light.py` to compare PE and primary-Ref case `0x209`, its 10–50 interval, bit8/bit1 gates and even-frame red tint; verified the local OnProcess3 and generator routes plus `ApplyActorLight` mapping. The existing actor-light CTest passed. No production change.
