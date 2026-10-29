@@ -405,6 +405,8 @@ extract_body(effect_render "${effect_source}" "void CRagEffect::Render(matrix*" 
 extract_body(chookgi_renderer "${effect_source}" "void RenderChookGi(CEffectPrim& prim" "void CEffectPrim::Render(matrix*")
 extract_test_region(str_render "${effect_source}" str_render_family)
 extract_body(str_delta "${effect_source}" "void AddXformDelta(" "std::string ResolveStrName(")
+extract_body(effect_catalog_type "${effect_source}" "struct RagEffectCatalogEntry {" "#include \"RagEffectCatalog.generated.inc\"")
+extract_body(effect_catalog_name_resolver "${effect_source}" "std::string ResolveCatalogStrName(" "int ResolveEffectRenderFlags(")
 extract_test_region(str_process "${effect_source}" str_process_family)
 extract_test_region(clip_wave_str_helper "${effect_source}" clip_wave_str_helper)
 extract_test_region(land_protector_handler "${effect_source}" land_protector_family)
@@ -488,6 +490,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect6
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect563_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${damage_number_effects_handler}")
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect133_134_terminal_handler}")
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/EffectLifecycleBodies.inc" "\n${effect_catalog_type}\n${effect_catalog_name_resolver}")
 add_executable(effect_lifecycle_checks EffectLifecycleTests.cpp)
 target_compile_features(effect_lifecycle_checks PRIVATE cxx_std_17)
 target_include_directories(effect_lifecycle_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" ../../src/world)
@@ -910,6 +913,8 @@ add_test(NAME effect136_slowp_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect136_slowp.py")
 add_test(NAME effect139_sandman_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect139_sandman.py")
+add_test(NAME effect141_pneuma_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect141_pneuma.py")
 add_test(NAME effect102_crash_earth_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect102_crash_earth.py")
 add_test(NAME effect103_weapon_perfection_source_check
@@ -1223,6 +1228,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect135_ice_crash.py
     check_effect136_slowp.py
     check_effect139_sandman.py
+    check_effect141_pneuma.py
     check_effect102_crash_earth.py
     check_effect103_weapon_perfection.py
     check_effect106_blastmine.py

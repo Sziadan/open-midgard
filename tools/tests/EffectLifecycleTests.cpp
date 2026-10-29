@@ -11301,6 +11301,20 @@ int main()
         g_world.m_player=oldPlayer;
     }
     {
+        const bool oldMinEffect=g_session.m_isMinEffect;
+        g_session.m_isMinEffect=false;
+        const RagEffectCatalogEntry pneuma{141,nullptr,nullptr,"Pneuma",1,3};
+        const char* expectedNames[]={"Pneuma1.str","Pneuma2.str","Pneuma3.str"};
+        for(int offset=0;offset<3;++offset) {
+            rngValues={offset};rngCursor=0;
+            const int beforeDraws=rngDraws;
+            const std::string selected=ResolveCatalogStrName(pneuma);
+            check(selected==expectedNames[offset]&&rngDraws==beforeDraws+1&&rngCursor==1,
+                "Pneuma Init catalog selects each source STR variant with exactly one RNG draw");
+        }
+        rngValues.clear();rngCursor=0;g_session.m_isMinEffect=oldMinEffect;
+    }
+    {
         const int ids[]={23,25,29,52,64,70,109,110,126,135,139,141,143,144,146,147,148,149,150,151,152,156,157,158,
             167,168,169,181,182,186,187,188,189,190,191,192,193,194,195,197,199,213,214,235,268};
         const int draws=rngDraws;waveCalls.clear();g_texMgr.requests.clear();g_resMgr.requests.clear();

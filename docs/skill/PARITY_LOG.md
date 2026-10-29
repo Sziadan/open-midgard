@@ -3830,3 +3830,7 @@ Added `check_effect136_slowp.py`, registered as `effect136_slowp_source_check`. 
 ## WP5C effect139 Sandman
 
 Added `check_effect139_sandman.py`, registered as `effect139_sandman_source_check`. PE effect139 is in the generic STR-only group, jumps to `LABEL_424`, and propagates the result from `ProcessEZ2STR(0,-80,0)`. PE and primary Ref Init map to `SandMan.str`; exact PE bytes verify VA `0x71AE70`. Local dispatch and the `ProcessReferenceStrOnly` group match the helper offsets and result propagation. Existing lifecycle coverage exercises missing, active, moving-master and exhausted clip states. Release parity build and full CTest pass295/295. No production behavior change.
+
+## WP5C effect141 Pneuma
+
+Added `check_effect141_pneuma.py`, registered as `effect141_pneuma_source_check`. PE and primary Ref Init each consume one RNG value and select Pneuma1/2/3 STR variants using modulo three; the PE format string bytes at VA `0x71AE60` are verified. The local catalog uses prefix Pneuma, first=1, count=3, and the catalog resolver uses one `rand()%variantCount` draw. PE/local OnProcess both propagate generic STR completion at offsets (0,-80,0). Added deterministic lifecycle checks for all three outcomes and exact RNG count; existing lifecycle coverage includes effect141's STR playback. Release parity build and full CTest pass296/296. No production behavior change.

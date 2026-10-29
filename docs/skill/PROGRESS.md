@@ -2190,3 +2190,7 @@ Compared PE’s case136 shared `LABEL_99` caller, PE/primary-Ref Init mappings, 
 ## WP5C effect139 Sandman — 2026-10-29
 
 Compared PE's generic STR-only caller group, PE/primary-Ref Init mappings, exact executable bytes and local routing. Effect139 maps to `SandMan.str` at VA `0x71AE70`; PE calls shared `ProcessEZ2STR(0,-80,0)` and propagates completion. Local generic routing matches. Existing STR lifecycle coverage exercises missing, active, moving-master and exhausted states; added a registered source comparator. Release parity build and complete Release CTest pass295/295.
+
+## WP5C effect141 Pneuma — 2026-10-29
+
+Compared PE and primary-Ref Init variant selection, exact executable format-string bytes, local catalog resolver and generic STR dispatch. Init consumes one RNG draw and selects `Pneuma1.str` through `Pneuma3.str` with modulo three; the format string is at VA `0x71AE60`. Added a source comparator and deterministic lifecycle checks for each selected variant and exactly one RNG draw; existing lifecycle coverage exercises effect141 STR playback. Release parity build and complete Release CTest pass296/296.
