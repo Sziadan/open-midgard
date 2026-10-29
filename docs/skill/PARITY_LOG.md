@@ -4668,3 +4668,7 @@ Added table-driven lifecycle checks for eleven clip-wave cases. The fixture veri
 ## WP7 effect164 StatusState lifecycle — 2026-10-29
 
 Connected and executed the actual `SpawnStatusState` body in the lifecycle harness using the generated production icon map. Coverage checks nonzero-state gating, state9998 reset, priority ordering, status42-to-12 duplicate suppression, special-job asset paths, exact 16px icon primitives and screen offsets across row-wrap thresholds, and `m_count` reset/message25 clearing of existing icons. The existing `check_status_state.py` verifies the complete 192-pair PE/Ref map and status renderer source. Focused lifecycle passes3135 checks; comparator passes; full Release parity CTest passes428/428.
+
+## WP7 CGameActor::ProcessEffectState runtime — 2026-10-29
+
+The actual method body (`Ref/GameActor.cpp:7978` → `src/world/GameActor.cpp:4937`) now runs in the lifecycle harness. The fixture covers both frame-gate mutations, empty-state counter reset, Sight and Ruwach threshold boundaries and effect IDs, their independent branch counter behavior, and message44's `(timeGetTime() >> 4) % 10 + 1` marker through the production `CRagEffect::SendMsg`. The pre-existing `check_process_effect_state_source.py` compares the full Ref/EXE body and ordered implementation branch map: frame-skip reset → zero-state reset or Sight → independent Ruwach → one increment. Focused lifecycle passes3140 checks; full Release parity CTest passes428/428 and both documented static audits pass. Live visual acceptance remains open.

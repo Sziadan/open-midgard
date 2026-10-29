@@ -815,6 +815,12 @@ static bool TryPlaySingleEffectWave(const vector3d& soundPos, const std::string&
 }
 constexpr int kPrimTypeGi1=PP_GI_1, kPrimTypeGi4=PP_GI_4, kPrimTypeParticleUp=PP_PARTICLE_UP,
     kPrimTypeEffectTexture=PP_EFFECTTEXTURE, kPrimTypeCasting=PP_3DCASTING, kPrimTypeCasting3=PP_3DCASTING_3;
+constexpr int kEffectStateSightMask=0x1, kEffectStateRuwachMask=0x2000;
+constexpr int kSightRelaunchTicks=270, kRuwachRelaunchTicks=200;
+struct CGameActor : CAbleToMakeEffect {
+    int m_effectState=0, m_effectLaunchCnt=0;
+    void ProcessEffectState();
+};
 #include "EffectLifecycleBodies.inc"
 
 #include "WeatherMapBodies.inc"
@@ -13505,6 +13511,41 @@ int main()
         g_world.UpdateGameObjects();
         g_session.activeStatusIcons.clear();g_world.m_player=oldPlayer;
         g_renderer.m_width=oldWidth;g_renderer.m_height=oldHeight;
+    }
+    {
+        CGameActor actor;
+        const int oldSkipFrame=g_isSkipFrame;
+        g_isSkipFrame=1;
+        actor.m_BeZero=1;actor.m_BodyLight=77;actor.m_effectState=0;actor.m_effectLaunchCnt=9;
+        actor.ProcessEffectState();
+        check(actor.m_BodyLight==0&&actor.m_BeZero==0&&actor.m_effectLaunchCnt==36000
+            &&actor.m_effectList.empty(),"ProcessEffectState resets body light on skipped frame and sets empty-state counter to 36000");
+
+        actor.m_BeZero=1;actor.m_BodyLight=55;g_isSkipFrame=0;
+        actor.m_effectState=kEffectStateSightMask;actor.m_effectLaunchCnt=269;
+        actor.ProcessEffectState();
+        check(actor.m_BodyLight==55&&actor.m_BeZero==1&&actor.m_effectList.empty()
+            &&actor.m_effectLaunchCnt==270,"ProcessEffectState waits one tick below the Sight relaunch threshold");
+        actor.ProcessEffectState();
+        CRagEffect* sight=actor.m_effectList.empty()?nullptr:actor.m_effectList.back();
+        const int expectedMarker=(timeGetTime()>>4)%10+1;
+        check(sight&&sight->m_type==22&&sight->m_count==expectedMarker
+            &&actor.m_effectLaunchCnt==1,"ProcessEffectState launches Sight at 270, sends time marker, then increments once");
+
+        actor.m_effectState=kEffectStateRuwachMask;actor.m_effectLaunchCnt=199;
+        actor.ProcessEffectState();
+        check(actor.m_effectLaunchCnt==200,"ProcessEffectState waits one tick below the Ruwach relaunch threshold");
+        actor.ProcessEffectState();
+        CRagEffect* ruwach=actor.m_effectList.empty()?nullptr:actor.m_effectList.back();
+        check(ruwach&&ruwach->m_type==33&&ruwach->m_count==expectedMarker
+            &&actor.m_effectLaunchCnt==1,"ProcessEffectState launches Ruwach at 200 and sends the same marker");
+
+        for(CRagEffect* effect:actor.m_effectList) {
+            g_world.m_gameObjectList.remove(effect);
+            delete effect;
+        }
+        actor.m_effectList.clear();
+        g_isSkipFrame=oldSkipFrame;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

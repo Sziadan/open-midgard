@@ -3016,3 +3016,7 @@ Added table-driven lifecycle coverage for eleven shared clip-wave cases. The fix
 ## WP7 effect164 StatusState lifecycle checkpoint — 2026-10-29
 
 Connected and executed the real SpawnStatusState body in the lifecycle harness with the generated production icon table. Assertions cover state gates and 9998 reset, priority ordering, status42/12 duplicate handling, special-job assets, exact primitive sizes and row-wrap coordinates, plus message25/count reset clearing existing icons. The registered check_status_state.py verifies the full 192-entry PE/Ref map and renderer source. Focused lifecycle passes3135 checks; comparator passes; full Release parity CTest passes428/428.
+
+## WP7 CGameActor::ProcessEffectState runtime checkpoint — 2026-10-29
+
+Connected the actual `CGameActor::ProcessEffectState` body (`Ref/GameActor.cpp:7978` → `src/world/GameActor.cpp:4937`) to the lifecycle harness. Runtime assertions cover skipped-frame body-light reset, zero-state counter reset to 36000, just-below and exact thresholds for independent Sight bit `0x1`/effect22 at 270 ticks and Ruwach bit `0x2000`/effect33 at 200 ticks, source time-derived message44 marker, and the single post-branch counter increment. Existing `check_process_effect_state_source.py` continues to compare complete Ref/EXE bodies and ordered branch operations. Focused lifecycle passes3140 checks; full Release parity CTest passes428/428; both documented audits complete. No live sight/Ruwach visual acceptance is claimed.
