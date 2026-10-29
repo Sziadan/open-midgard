@@ -710,6 +710,7 @@ struct CRagEffect : CGameObject {
     void ApplyBottomVolcano(const char*, float);
     void ApplyVolcano(const char*, short, bool);
     void ApplyMapPillar(const char*, float, bool);
+    void ApplyWind();
     void SpawnWarp8();
     bool ProcessEnhance9();
     bool ProcessLord90();
@@ -3991,6 +3992,42 @@ int main()
                 "MAPPILLAR emits only at state zero without repeat resource RNG or audio work");
         }
         actor.m_pos={12,34,56};
+        rngValues.clear(); rngCursor=0;
+        {
+            CRenderObject windActor, listener; windActor.m_pos={10,20,30}; listener.m_pos={2,500,4};
+            CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+            CRagEffect wind; wind.m_type=224; wind.m_master=&windActor; wind.m_duration=73; wind.m_stateCnt=0;
+            g_texMgr.requests.clear(); waveCalls.clear(); rngValues={7,8,9}; rngCursor=0;
+            const int draws=rngDraws;
+            wind.ApplyWind();
+            CEffectPrim* prim=wind.m_primList.empty()?nullptr:wind.m_primList.front();
+            bool payload=prim&&wind.m_primList.size()==1&&prim->m_type==PP_WIND
+                &&prim->m_renderFlag==5&&prim->m_duration==73&&prim->m_size==4
+                &&prim->m_pos.x==10&&prim->m_pos.y==20&&prim->m_pos.z==30
+                &&prim->m_texture.size()==1&&prim->m_texture[0]==&g_texMgr.texture
+                &&g_texMgr.requests.size()==1&&g_texMgr.requests[0]=="effect\\cloud11.tga";
+            const short angles[]={90,70,50,30}, spins[]={0,10,20,30};
+            const float distances[]={3.0f,3.2f,3.4000001f,3.5999999f};
+            const float heights[]={3.0f,2.5f,2.0f,1.5f};
+            for (int band=0;band<4&&payload;++band) {
+                const EffectGi& gi=prim->m_gi[static_cast<size_t>(band)];
+                payload=gi.life==1&&gi.process==0&&gi.fullDisplayAngle==angles[band]&&gi.maxHeight==8
+                    &&gi.rotStart==spins[band]&&gi.alphaB==0&&gi.alphaT==0&&gi.distance==distances[band]
+                    &&gi.riseAngle==90&&std::all_of(gi.height.begin(),gi.height.end(),[&](float value){return value==heights[band];})
+                    &&std::all_of(gi.flag.begin(),gi.flag.end(),[](u8 value){return value==0;});
+            }
+            check(payload&&waveCalls.size()==1&&waveCalls[0].name=="_heal_effect.wav"
+                &&waveCalls[0].x==8&&waveCalls[0].y==0&&waveCalls[0].z==26
+                &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+                &&rngDraws==draws&&rngCursor==0,
+                "WIND effect224 emits four exact bands and frame-zero listener-relative wave without RNG");
+            wind.ClearPrims(); g_world.UpdateGameObjects();
+            wind.m_stateCnt=1; windActor.m_pos={40,50,60}; g_texMgr.requests.clear(); waveCalls.clear();
+            wind.ApplyWind();
+            check(wind.m_primList.empty()&&g_texMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws,
+                "WIND effect224 emits and plays audio only at state zero");
+            g_world.m_player=oldPlayer;
+        }
         rngValues.clear(); rngCursor=0;
         struct TextureSetCase { int id; const char* texture; int variant; int renderFlag; };
         const TextureSetCase cases[]={{693,"effect\\glow01.bmp",14,5},{694,"effect\\glow02.bmp",14,5},
