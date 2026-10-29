@@ -2402,3 +2402,8 @@ Added and registered `check_throw_item298_299.py`. It compares the complete PE a
 ## WP5D GumGang/DoubleGumGang emitter source comparison — 2026-10-29
 
 Added and registered `check_gumgang_emitter.py` for effects203/254/418/455/485/486. It checks PE caller arguments, canonical and older Ref helper profiles, the local grouped route, 12 canonical RNG draws per GI, the documented Ref-only height[15] draw mismatch, and exact bytes for all five super textures. Focused comparator, Release parity build and full Release CTest passed334/334. No production behavior change.
+
+
+## WP5E effect301 PokJuk_Sound source and wave comparison — 2026-10-29
+
+Added and registered `check_pokjuk_sound301.py`. It compares the complete PE and primary-Ref helper bodies, confirms the local OnProcess2 frame-300 wave and >2300 reset, and verifies exact `effect\\폭죽.wav` bytes at PE VA `0x71C254`. Focused check, Release parity build and full Release CTest passed335/335. No production behavior change.

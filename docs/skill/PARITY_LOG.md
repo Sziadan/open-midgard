@@ -4040,3 +4040,8 @@ Added CTest entries for the existing Snow and Sakura comparators, which verify P
 ## WP5D GumGang emitter caller/resource comparator — 2026-10-29
 
 `check_gumgang_emitter.py` now covers grouped GumGang/DoubleGumGang setup for effects203, 254, 418, 455, 485 and 486. It verifies canonical PE call arguments, local routes and profile values, source RNG counts, exact five-texture executable bytes, and records the older `dhxj` helper's extra height[15] random draw relative to canonical PE/local behavior. Registered in CTest; focused check, Release parity build and full CTest passed334/334. No production behavior change.
+
+
+## WP5E effect301 PokJuk_Sound source/wave comparator — 2026-10-29
+
+`check_pokjuk_sound301.py` compares PE/primary-Ref PokJuk_Sound helper bodies, checks the local OnProcess2 route plus frame-300 cue/reset after2300, and verifies exact executable wave bytes at `0x71C254`. Registered in CTest. Focused checker, Release parity build and full CTest passed335/335. No production behavior change.
