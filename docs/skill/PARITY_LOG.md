@@ -4279,3 +4279,5 @@ WP5F effect521: PE and primary Ref OnProcess3 branches match. Added checks for t
 WP5F effects222/252 Defender: source mapping confirms black/yellow PE and secondary-Ref routes. Fixed shared per-frame origin refresh and added four-band/resource lifecycle checks for both variants. Full Release CTest passed 374/374.
 
 WP5F effects312/313/320/325: PE and primary-Ref caller mappings match across Heal/Heal2 variants0/1. Added semantic helper checks against secondary Ref and local routes/schedules. Exact known assets are pinned; no dedicated lifecycle fixture was added. Full Release CTest passed 375/375.
+
+WP5F effect314 Exit2: PE and primary Ref caller branches and PE/secondary-Ref helper bodies match. Fixed per-frame origin refresh and zero vertical wave offset; lifecycle checks cover wave position, four GI bands and later master movement. Full Release CTest passed 376/376.

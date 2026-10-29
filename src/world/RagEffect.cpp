@@ -26606,12 +26606,20 @@ bool CRagEffect::ApplyGlassWall2(const char* textureName)
 
 void CRagEffect::ApplyExit2(const char* textureName)
 {
+    CRenderObject* master = ResolveCurrentMaster();
+    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
+    m_effectPos = origin;
+    m_cachedPos = origin;
     if (textureName == nullptr || m_stateCnt != 0) {
         return;
     }
-    CRenderObject* master = ResolveCurrentMaster();
-    const vector3d origin = master != nullptr ? master->m_pos : m_cachedPos;
-    TryPlayEffectWaveAt(origin, "effect\\EF_Teleportation.wav");
+    vector3d wavePos = origin;
+    if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+        if (mode->m_world != nullptr && mode->m_world->m_player != nullptr) {
+            wavePos.y = mode->m_world->m_player->m_pos.y;
+        }
+    }
+    TryPlayEffectWaveAt(wavePos, "effect\\EF_Teleportation.wav");
     CEffectPrim* prim = LaunchEffectPrim(static_cast<EFFECTPRIMID>(kPrimTypeHeal), vector3d{});
     if (prim == nullptr) {
         return;

@@ -527,6 +527,7 @@ struct CRagEffect : CGameObject {
     void ApplyHalfSphere(const char* textureName);
     void ApplyAttackEnergy(const char* textureName);
     void ApplyDefender(const char* textureName);
+    void ApplyExit2(const char* textureName);
     void SpawnRgCoin2(const char*,float);
     void ApplyBash3D5();
     void SpawnChookgi(char);
@@ -3800,6 +3801,38 @@ int main()
                 "Slim potion later states refresh the master without emission or RNG");
             effect.ClearPrims(); g_world.UpdateGameObjects();
         }
+    }
+    {
+        CRenderObject actor,listener; actor.m_pos={10,20,30}; listener.m_pos={2,500,4};
+        CRenderObject* oldPlayer=g_world.m_player; g_world.m_player=&listener;
+        CRagEffect effect; effect.m_type=314; effect.m_master=&actor; effect.m_duration=100;
+        effect.m_stateCnt=0; effect.m_effectPos={1,2,3}; effect.m_cachedPos={4,5,6};
+        waveCalls.clear(); g_texMgr.requests.clear(); effect.ApplyExit2("effect\\ring_purple.tga");
+        CEffectPrim* prim=effect.m_primList.front();
+        check(effect.m_effectPos.x==10 && effect.m_cachedPos.y==20 && prim->m_pos.z==30
+            && prim->m_type==PP_HEAL && prim->m_renderFlag==5 && prim->m_duration==100 && prim->m_size==4,
+            "effect314 Exit2 emits source heal primitive at refreshed master origin");
+        check(waveCalls.size()==1, "effect314 Exit2 plays one state-zero teleportation wave");
+        check(waveCalls[0].name=="effect\\EF_Teleportation.wav", "effect314 Exit2 wave resource name matches");
+        check(waveCalls[0].x==8 && waveCalls[0].y==0 && waveCalls[0].z==26,
+            "effect314 Exit2 positions its wave at effect-minus-listener offset");
+        check(std::string(g_texMgr.lastPath)=="effect\\ring_purple.tga",
+            "effect314 Exit2 uses exact ring-purple texture");
+        check(prim->m_gi[3].life==1 && prim->m_gi[3].maxHeight==20 && prim->m_gi[3].rotStart==0
+            && prim->m_gi[3].distance==2.4000001f && prim->m_gi[3].riseAngle==84 && prim->m_gi[3].alphaT==60
+            && prim->m_gi[2].life==1 && prim->m_gi[2].maxHeight==45 && prim->m_gi[2].rotStart==90
+            && prim->m_gi[2].distance==2.2f && prim->m_gi[2].riseAngle==86
+            && prim->m_gi[1].life==1 && prim->m_gi[1].maxHeight==70 && prim->m_gi[1].rotStart==180
+            && prim->m_gi[1].distance==2 && prim->m_gi[1].riseAngle==88
+            && prim->m_gi[0].life==1 && prim->m_gi[0].maxHeight==180 && prim->m_gi[0].rotStart==270
+            && prim->m_gi[0].distance==1.8f && prim->m_gi[0].riseAngle==90 && prim->m_gi[0].alphaT==58,
+            "effect314 Exit2 preserves the four source GI band payloads");
+        actor.m_pos={40,50,60}; effect.m_stateCnt=1; effect.ApplyExit2("effect\\ring_purple.tga");
+        check(effect.m_primList.size()==1 && waveCalls.size()==1 && effect.m_effectPos.x==40
+            && effect.m_effectPos.y==50 && effect.m_effectPos.z==60 && effect.m_cachedPos.x==40
+            && effect.m_cachedPos.y==50 && effect.m_cachedPos.z==60,
+            "effect314 Exit2 refreshes moved master after spawn gate without duplicate wave or primitive");
+        effect.ClearPrims(); g_world.UpdateGameObjects(); g_world.m_player=oldPlayer;
     }
     {
         CRenderObject actor; actor.m_pos={12,34,56};

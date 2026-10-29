@@ -2655,3 +2655,7 @@ PE and secondary Ref DEFENDER helpers refresh master position before their state
 ## WP5F effects312/313/320/325 Heal/Heal2 source comparison — 2026-10-29
 
 Added and registered `check_effects312_313_320_325_heal.py`. It compares PE and primary-Ref caller mappings for all four IDs, checks PE/secondary-Ref helper semantics, exact known texture and wave bytes (the executable wave literal is only `_heal_effect.wav`), and local variant routing and follow-up schedules. Helper decompilations differ structurally, so the checker pins key source behavior instead of textual equality. No production change. Release parity build passed; full Release CTest passed 375/375. Dedicated lifecycle coverage remains open.
+
+## WP5F effect314 Exit2 origin and wave parity — 2026-10-29
+
+PE and secondary Ref Exit2 refresh the effect position on every call before the state-zero gate. Local `ApplyExit2` previously returned before refreshing effect/cached positions on later frames; moved origin refresh before the gate. Lifecycle coverage exposed a second mismatch: PE passes zero vertical wave offset, while `TryPlayEffectWaveAt(origin, ...)` used listener-relative Y. The implementation now matches the source by aligning wave Y to the listener before dispatch, preserving X/Z offsets. Added `check_effect314_exit2.py` for PE/Ref helper equality, caller, exact resource bytes, local routing and refresh/wave behavior. Release build passed; full Release CTest passed 376/376.
