@@ -4333,3 +4333,9 @@ WP4.4 trap models: packet replay now covers all ten model-backed jobs, including
 - The lifecycle fixture sets an effect-8 master, change point 2, previous radius speed/acceleration, and replacement values. It checks the resulting radius, speed, acceleration and shared tick.
 - Focused CTest passed 2/2. Full Release parity target built successfully; full Release CTest passed 381/381.
 
+## WP5 CEffectPrim Prim3DTexture update parity - 2026-10-29
+
+- Added and registered `tools/tests/check_prim3dtexture_initializer.py`. The canonical PE method at `HighPriest.exe.c:467644` and primary Ref method at `Ref/RagEffectPrim.cpp:966` normalize identically; both dispatchers route `0x0F`/`0x10` through the shared handler.
+- The comparator verifies local routing and shared ticking, change-point sentinels, movement/size/alpha order, source pattern controls and animation behavior. Existing lifecycle coverage exercises change controls, 0x100 velocity, 0x400 collision, pattern branches, RGB cycle and clamps.
+- No runtime code change was needed. Direct comparator and focused CTest passed; full Release CTest passed 382/382.
+

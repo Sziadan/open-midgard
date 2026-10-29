@@ -1,6 +1,6 @@
 # Skill system status
 
-Latest WP5 source checkpoints: `Prim3DQuadHorn2`, `Prim3DLine` (`0x14`), `Prim3DSphere` (`0x0E`), `Prim2DCircle` (`0x04`), and `Prim3DCircle` (`0x0C`) have dedicated initializer/dispatch comparators bound to lifecycle coverage. Prim3DCircle change-point speed/acceleration handling is now ported in both local update paths. Full Release parity build succeeded; full Release CTest passed 381/381.
+Latest WP5 source checkpoints: `Prim3DQuadHorn2`, `Prim3DLine` (`0x14`), `Prim3DSphere` (`0x0E`), `Prim2DCircle` (`0x04`), `Prim3DCircle` (`0x0C`), and the `Prim3DTexture` (`0x0F`/`0x10`) update path have dedicated source comparators bound to lifecycle coverage. Prim3DCircle change-point speed/acceleration handling is now ported in both local update paths. Prim3DTexture's existing change-point, movement, pattern, RGB and animation behavior matches the canonical PE/primary Ref method; no runtime change was needed. Full Release CTest passed 382/382.
 
 | WP | State | Measured number | Where the number comes from | Next function / task |
 |---|---|---|---|---|
