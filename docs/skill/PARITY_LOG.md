@@ -4858,3 +4858,7 @@ The direct fixture checks effect643's variant26 particle on state0, no early wav
 ## WP5 Effect_SPR lifecycle — effect645 variant28 — 2026-10-29
 
 The direct fixture exercises +X/+Z/−X/−Z camera-relative action mapping at camera longitude0 and state0/state1 particle behavior, using exact resources bound to PE VAs `0x71CE30/0x71CE1C`. It checks no wave/RNG and no later duplicate output. PE and primary Ref callers both route effect645 directly to variant28; no caller wave exists. This establishes local payload/action selection and lifecycle only, not camera presentation or rendered parity.
+
+## WP5 Effect_SPR lifecycle — effect648 variant30 — 2026-10-29
+
+The fixture covers quiet pre-cue states0/24, one literal-origin wave at state25, no repeat at26, the particle launch at state30, and no duplicate output at31. SPR/ACT/wave literals bind to PE VAs `0x71CDDC/0x71CDC4/0x719B80`; the comparator checks PE/primary-Ref caller state25 copy/wave/helper order and exact origin playback params. This is local lifecycle/audio-call/payload coverage only, not audible or rendered output acceptance.

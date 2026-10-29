@@ -12884,6 +12884,52 @@ int main()
         rngValues.clear();rngCursor=0;waveCalls.clear();gameMode.m_view=oldView;testView.longitude=oldLongitude;
     }
     {
+        CRenderObject master;master.m_pos={20,30,40};
+        CRagEffect effect;effect.m_type=648;effect.m_stateCnt=0;effect.m_duration=78;effect.m_master=&master;
+        const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xAE\xB8\xAE\xC7\xC3\xBE\xD7\xBC\xC7.spr";
+        const std::string expectedAct="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xAE\xB8\xAE\xC7\xC3\xBE\xD7\xBC\xC7.act";
+        const std::string expectedWave="effect\\\xC6\xAE\xB8\xAE\xC7\xC3\xBE\xD7\xBC\xC7.wav";
+        rngValues={};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        for(const int state:{0,24}){
+            effect.m_stateCnt=state;
+            check(effect.ProcessEffectSpriteProduction(30)&&effect.m_primList.empty()
+                &&g_resMgr.requests.empty()&&waveCalls.empty()&&rngDraws==draws&&rngCursor==0,
+                "effect648 states0/24 remain quiet before the delayed wave and frame30 particle");
+        }
+        effect.m_stateCnt=25;
+        check(effect.ProcessEffectSpriteProduction(30)&&effect.m_primList.empty()
+            &&g_resMgr.requests.empty()&&waveCalls.size()==1&&waveCalls[0].name==expectedWave
+            &&waveCalls[0].x==0&&waveCalls[0].y==0&&waveCalls[0].z==0
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&rngDraws==draws&&rngCursor==0,
+            "effect648 state25 plays exact PE-bound wave at literal origin without spawning or RNG");
+        master.m_pos={25,35,45};effect.m_stateCnt=26;
+        check(effect.ProcessEffectSpriteProduction(30)&&effect.m_primList.empty()
+            &&g_resMgr.requests.empty()&&waveCalls.size()==1&&rngDraws==draws&&rngCursor==0,
+            "effect648 state26 does not repeat its origin wave or spawn early");
+        master.m_pos={30,40,50};effect.m_stateCnt=30;
+        check(effect.ProcessEffectSpriteProduction(30)&&effect.m_primList.size()==1
+            &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+            &&waveCalls.size()==1&&rngDraws==draws&&rngCursor==0,
+            "effect648 state30 creates the delayed particle without repeating wave or consuming RNG");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(prim&&prim->m_type==PP_3DPARTICLE&&prim->m_pos.x==30&&prim->m_pos.y==40&&prim->m_pos.z==50
+            &&prim->m_duration==78&&prim->m_deltaPos2.y==0.0f&&prim->m_renderFlag==0x201
+            &&prim->m_pattern==0x200&&prim->m_animSpeed==2&&!prim->m_repeatAnim
+            &&prim->m_spriteAction==0&&prim->m_curMotion==0
+            &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+            &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==30
+            &&prim->m_segments[0].pos.y==40&&prim->m_segments[0].pos.z==50,
+            "effect648 variant30 initializes exact one-shot PE particle payload and segment at frame30");
+        const size_t requests=g_resMgr.requests.size();master.m_pos={31,41,51};effect.m_stateCnt=31;
+        check(effect.ProcessEffectSpriteProduction(30)&&effect.m_primList.size()==1
+            &&effect.m_effectPos.x==31&&effect.m_effectPos.y==41&&effect.m_effectPos.z==51
+            &&g_resMgr.requests.size()==requests&&waveCalls.size()==1&&rngDraws==draws&&rngCursor==0,
+            "effect648 state31 refreshes origin without repeated particle, resources, wave or RNG");
+        effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;waveCalls.clear();
+        g_resMgr.requests.clear();
+    }
+    {
         CRenderObject master,listener;master.m_pos={31,41,51};listener.m_pos={1,900,11};
         auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
         gameMode.messages=0;gameMode.messageIds.clear();waveCalls.clear();

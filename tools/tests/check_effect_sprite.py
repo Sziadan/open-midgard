@@ -356,6 +356,34 @@ for label, dispatch in (("PE", pe_dispatch), ("Ref", ref_dispatch)):
         raise AssertionError(f"{label} effect645 must call variant28 and return")
     if "PlayWave" in caller.group(1):
         raise AssertionError(f"{label} effect645 has no caller wave")
+effect648_fixture = re.search(r"CRagEffect effect;effect\.m_type=648;(.*?)(?=\n    })", LIFECYCLE, re.S)
+if effect648_fixture is None or "ProcessEffectSpriteProduction(30)" not in effect648_fixture.group(1):
+    raise AssertionError("effect648 direct production variant30 lifecycle fixture disappeared")
+for name, expected, required_va in (("expectedSpr", image.read_cstring_at(0x71CDDC).raw, 0x71CDDC),
+                                   ("expectedAct", image.read_cstring_at(0x71CDC4).raw, 0x71CDC4),
+                                   ("expectedWave", image.read_cstring_at(0x719B80).raw, 0x719B80)):
+    literal = re.search(rf"const std::string {name}=(\"(?:\\.|[^\"\\])*\")", effect648_fixture.group(1))
+    if literal is None or ast.literal_eval(literal.group(1)).encode("latin-1") != expected:
+        raise AssertionError(f"effect648 fixture {name} differs from PE bytes at {required_va:#x}")
+for token in ("effect.m_stateCnt=state", "{0,24}", "effect.m_stateCnt=25", "effect.m_stateCnt=26",
+              "effect.m_stateCnt=30", "effect.m_stateCnt=31", "m_primList.empty()", "waveCalls.size()==1",
+              "waveCalls[0].x==0", "waveCalls[0].y==0", "waveCalls[0].z==0", "m_duration==78",
+              "m_renderFlag==0x201", "m_pattern==0x200", "m_animSpeed==2", "!prim->m_repeatAnim",
+              "rngDraws==draws", "m_numSegments==1", "without repeated particle, resources, wave or RNG"):
+    if token not in effect648_fixture.group(1):
+        raise AssertionError(f"effect648 lifecycle assertion missing {token}")
+for label, dispatch in (("PE", pe_dispatch), ("Ref", ref_dispatch)):
+    caller = re.search(r"case\s+0x288:(.*?)(?=case\s+0x[0-9A-F]+:|$)", dispatch, re.S)
+    if caller is None:
+        raise AssertionError(f"{label} effect648 caller branch is missing")
+    branch = caller.group(1)
+    ordered = ["this->m_stateCnt == 25", "this->m_pos = this->m_master->m_pos",
+               "PlayWave(aEffect_58", "Effect_SPR(this, 30)", "return 1"]
+    offsets = [branch.find(token) for token in ordered]
+    if any(offset < 0 for offset in offsets) or offsets != sorted(offsets):
+        raise AssertionError(f"{label} effect648 state25 position/wave/variant order changed")
+    if not re.search(r"PlayWave\(aEffect_58,\s*0\.0,\s*0\.0,\s*0\.0,\s*250,\s*40,\s*1\.0\)", branch):
+        raise AssertionError(f"{label} effect648 origin wave parameters changed")
 
 # Priority 5P effect-sprite callers 630/632/633/634 and their RNG variants.
 for effect_id, variant, wave_symbol in ((630, 15, "aEffect_155"),
