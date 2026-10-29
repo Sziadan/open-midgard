@@ -2434,3 +2434,7 @@ Extended the registered Bottom_Music checker to cover effect370's PE and primary
 ## WP5F effect375 actor-light source parity — 2026-10-29
 
 Added and registered `check_effect375_actor_light.py`. It verifies the PE inline bit-3 body-light gate and the local generated route/helper, while recording that primary Ref has no standalone case; the local helper safely guards a null master. Focused check, elevated Release parity build and full Release CTest passed 340/340. No production behavior change.
+
+## WP5G effect442 body-light source parity — 2026-10-29
+
+Added and registered `check_effect442_body_light.py`. It compares the PE inline bit-15 update and BodyTime3 assignment with the local routed helper, and records the absent standalone primary-Ref case. Focused check, elevated Release parity build and full Release CTest passed 341/341. No production behavior change.
