@@ -551,7 +551,7 @@ The full PE and primary Ref helper bodies match, but the available `Ref/RagEffec
 # WP10.3 Bottom 114 caller omission and primitive state (2026-10-28)
 
 - The full PE and primary Ref Bottom helpers match, but PE effect114 calls Bottom and the available Ref caller switch omits it. The port follows the PE caller.
-- Bottom writes the legacy `m_commonPattern=1` field, which did not exist in the current primitive state model. It is now represented on `CEffectPrim` with its canonical default 0 and set to 1 for these four PP_3DTEXTUREs. Those primitives use the current reference texture-family updater/renderer; live visual acceptance remains open.
+- Bottom writes the legacy `m_commonPattern=1` field, which did not exist in the current primitive state model. It is now represented on `CEffectPrim` with its canonical default 0 and set to 1 for these four PP_3DTEXTUREs. The source comparator and direct emitter lifecycle fixture cover the payload, order, one-shot state gate, wrapped angle and exact texture requests; live visual acceptance remains open.
 
 # WP10.3 Bottom2 137 caller omission (2026-10-28)
 

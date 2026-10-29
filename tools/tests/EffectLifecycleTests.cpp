@@ -716,6 +716,7 @@ struct CRagEffect : CGameObject {
     void LaunchParticleUp(const vector3d&, float, float, bool, u8) { ++particleUpCalls; }
     void ApplyHeal2(const char*, int);
     bool ProcessHealBlue();
+    bool ProcessBottom114();
     bool ProcessBottom2Effect137();
     void ApplyWind();
     void SpawnWarp8();
@@ -12871,6 +12872,47 @@ int main()
             &&g_texMgr.requests.empty()&&rngDraws==laterDraws,
             "Bottom2 effect137 nonzero state does not repeat the one-shot effect");
         g_texMgr.requests.clear();
+    }
+    {
+        CRenderObject master; master.m_roty=210.75f;
+        CRagEffect bottom; bottom.m_master=&master; bottom.m_type=114; bottom.m_stateCnt=0;
+        bottom.m_duration=80; g_texMgr.requests.clear();
+        const int draws=rngDraws; const size_t waves=waveCalls.size();
+        const bool active=bottom.ProcessBottom114();
+        int angle=static_cast<int>(180.0-master.m_roty);
+        if(angle<0) angle+=360;
+        const float radians=angle*(3.14159265f/180.0f), sine=std::sin(radians), cosine=std::cos(radians);
+        bool payload=bottom.m_primList.size()==4;
+        auto primIt=bottom.m_primList.begin();
+        for(int side : {1,-1}) {
+            const float distance=static_cast<float>(side)*5.0f;
+            for(int row : {3,1}) {
+                if(primIt==bottom.m_primList.end()) { payload=false; continue; }
+                CEffectPrim* prim=*primIt++;
+                const float expectedX=(row==3?sine:cosine)*distance;
+                const float expectedZ=(row==3?cosine:-sine)*distance;
+                payload=payload&&prim->m_type==PP_3DTEXTURE&&prim->m_duration==9999
+                    &&prim->m_commonPattern==1&&prim->m_pattern==40&&prim->m_any==50
+                    &&prim->m_deltaPos2.y==0.0f&&std::fabs(prim->m_deltaPos2.x-expectedX)<0.0001f
+                    &&std::fabs(prim->m_deltaPos2.z-expectedZ)<0.0001f
+                    &&prim->m_longitude==static_cast<float>(angle+(row==3?90:0))
+                    &&prim->m_widthSize==5.0f&&prim->m_heightSize==15.0f
+                    &&prim->m_heightSpeed==0.25f&&prim->m_alpha==0.0f
+                    &&prim->m_maxAlpha==180.0f&&prim->m_alphaSpeed==180.0f*0.16666667f
+                    &&prim->m_fadeOutCnt==9964&&prim->m_texture.size()==1;
+            }
+        }
+        check(active&&bottom.m_duration==9999&&payload
+            &&g_texMgr.requests==std::vector<std::string>(4,"effect\\magic_violet.tga")
+            &&rngDraws==draws&&waveCalls.size()==waves,
+            "Bottom effect114 emits four source-ordered violet texture primitives with rotated offsets and no RNG/audio");
+        bottom.ClearPrims(); g_world.UpdateGameObjects(); g_texMgr.requests.clear();
+        bottom.m_duration=80; bottom.m_stateCnt=1; master.m_roty=90;
+        const int laterDraws=rngDraws; const size_t laterWaves=waveCalls.size();
+        check(bottom.ProcessBottom114()&&bottom.m_duration==80&&bottom.m_primList.empty()
+            &&g_texMgr.requests.empty()&&rngDraws==laterDraws&&waveCalls.size()==laterWaves,
+            "Bottom effect114 nonzero state does not repeat its one-shot emission");
+        g_texMgr.requests.clear(); waveCalls.clear();
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
