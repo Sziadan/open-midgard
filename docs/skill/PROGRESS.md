@@ -2458,3 +2458,7 @@ Extended the registered actor-light comparator for effect382's PE/local bit-2 ga
 ## WP5G effect487 BLACKDEVIL source/resource parity — 2026-10-29
 
 Added and registered `check_effect487_black_devil.py`. It compares complete PE/primary-Ref helper bodies, checks the secondary-Ref profile, local effect487 route and both casting levels' dimensions/spins/rise angles, and verifies exact `effect\\ring_black.tga` bytes at `0x7198D0`. Focused check, elevated Release parity build and full Release CTest passed 344/344. No production behavior change.
+
+## WP5G effect488 FlowerCast source/resource parity — 2026-10-29
+
+Added and registered `check_effect488_flower_cast.py`. It checks the PE frame-5 cue, body-light bit/timing rule and ordered FlowerCasting variants, the secondary-Ref sequence, local legacy route and shared helper calls, and exact `effect\\ring_blue.tga` bytes at `0x71943C`. The PE wave symbol exposes only the `effect\\T_` prefix and its suffix remains unresolved. Focused check, elevated Release parity build and full Release CTest passed 345/345. No production behavior change.
