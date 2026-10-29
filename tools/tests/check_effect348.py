@@ -13,6 +13,8 @@ REF = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
 REF2 = (ROOT / "Ref/RagEffect2.cpp").read_text(encoding="utf-8", errors="replace")
 REF_PRIM = (ROOT / "Ref/dhxj/RagEffectPrim.cpp").read_text(encoding="utf-8", errors="replace")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8", errors="replace")
+LIFECYCLE = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8", errors="replace")
+TEST_CMAKE = (ROOT / "tools/tests/CMakeLists.txt").read_text(encoding="utf-8", errors="replace")
 DISPATCH = (ROOT / "src/world/RagEffectOnProcess2Cases.generated.inc").read_text(encoding="utf-8")
 GENERATOR = (ROOT / "tools/generate_effect_dispatch.py").read_text(encoding="utf-8")
 symbols = SymbolTable(ExeImage())
@@ -170,6 +172,20 @@ require("case 381: return ProcessEffect348();" in
         "local OnProcess effect 381 must reuse the effect 348 emitter")
 require(re.search(r"(?:^|\n)\s*381:\s*\"return ProcessEffect348\(\);\"", GENERATOR),
         "effect 381 generator route missing")
+
+require('extract_body(effect348_handler "${effect_source}" "bool CRagEffect::ProcessEffect348()" "void CRagEffect::ApplyLightSphere(")'
+        in TEST_CMAKE and 'extract_body(lightsphere_emitter "${effect_source}" "void CRagEffect::ApplyLightSphere(" "bool CRagEffect::ProcessEffect695MapFireworks()")'
+        in TEST_CMAKE, "production effect348/LightSphere bodies are not extracted into the lifecycle harness")
+fixture = re.search(r"CRenderObject master;master\.m_pos=\{100,200,300\};\s*CRagEffect effect;effect\.m_type=348;(.*?)(?=\n    })", LIFECYCLE, re.S)
+require(fixture is not None and "effect.ProcessEffect348()" in fixture.group(1),
+        "effect348 direct production lifecycle fixture disappeared")
+for token in (
+    "effect.m_primList.size()==81", "rngDraws==draws+1601", '"effect\\\\thunder_center.bmp"',
+    '"effect\\\\white02.bmp"', "PP_EFFECTTEXTURE", "PP_LIGHTSPHERE", "sphereCount==80",
+    "all 80 LightSphere children preserve four controlled GI profiles", "effect.m_stateCnt=1",
+    "effect348 nonzero state repositions the existing EffectTextureSet primitive",
+):
+    require(token in fixture.group(1), f"effect348 lifecycle assertion missing {token}")
 
 local_texture = function_body(LOCAL, "void CRagEffect::ApplyEffectTexture(const char* textureName, int variant)")
 variant_zero = re.search(r"else if \(variant == 0\)\s*\{(.*?)\n\s*\}", local_texture, re.S)

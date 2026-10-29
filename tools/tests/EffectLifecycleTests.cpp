@@ -698,6 +698,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEffect599();
     bool ProcessEffect602();
     bool ProcessEffectTextureSet();
+    bool ProcessEffect348();
     bool ProcessTarotEffect();
     bool ProcessSphereWind2Effect();
     void SpawnSphereWind2(short);
@@ -717,6 +718,7 @@ struct CRagEffect : CGameObject {
     bool ProcessEnergyDrain2Effect();
     bool ProcessEnergyDrain3Effect();
     void ApplyEffectTexture(const char*, int);
+    void ApplyLightSphere(const char*);
     bool ProcessEffect273();
     bool ProcessEffect440();
     bool ProcessLandProtector(int);
@@ -14987,6 +14989,58 @@ int main()
             "effect254 later state refreshes origin without re-emission, resource, RNG or repeated sound");
         effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();waveCalls.clear();
         rngValues.clear();rngCursor=0;g_world.m_player=oldPlayer;
+    }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        CRagEffect effect;effect.m_type=348;effect.m_stateCnt=0;effect.m_duration=73;effect.m_master=&master;
+        rngValues.clear();rngValues.push_back(73);
+        for(int lane=0;lane<80*4;++lane) {
+            rngValues.push_back(13);rngValues.push_back(27);rngValues.push_back(41);
+            rngValues.push_back(0);rngValues.push_back(0);
+        }
+        rngCursor=0;g_texMgr.requests.clear();waveCalls.clear();const int draws=rngDraws;
+        check(effect.ProcessEffect348(),"effect348 production fanout handler is active");
+        check(effect.m_primList.size()==81&&rngDraws==draws+1601&&rngCursor==1601
+            &&g_texMgr.requests.size()==81&&g_texMgr.requests.front()=="effect\\thunder_center.bmp"
+            &&std::count(g_texMgr.requests.begin()+1,g_texMgr.requests.end(),"effect\\white02.bmp")==80
+            &&waveCalls.empty(),
+            "effect348 emits one texture primitive plus 80 LightSphere children with 1601 controlled draws");
+        auto primIt=effect.m_primList.begin();
+        CEffectPrim* texture=primIt==effect.m_primList.end()?nullptr:*primIt++;
+        bool texturePayload=texture&&texture->m_type==PP_EFFECTTEXTURE&&texture->m_renderFlag==5
+            &&texture->m_duration==73&&texture->m_pos.x==100&&texture->m_pos.y==200&&texture->m_pos.z==300
+            &&texture->m_texture.size()==1&&texture->m_texture[0]==&g_texMgr.texture
+            &&texture->m_gi[0].life==1&&texture->m_gi[0].process==0&&texture->m_gi[0].distance==5.0f
+            &&texture->m_gi[0].arcBaselineY==190&&texture->m_gi[0].flag[2]==2
+            &&texture->m_gi[0].height[10]==0&&texture->m_gi[0].fullDisplayAngle==135
+            &&texture->m_gi[0].rotStart==73&&texture->m_gi[0].flag[4]==0;
+        for(size_t gi=1;gi<4&&texture;++gi) texturePayload=texturePayload&&texture->m_gi[gi].life==0;
+        check(texturePayload,"effect348 first emits the exact selector0 thunder-center texture primitive");
+        bool spheres=true;size_t sphereCount=0;
+        for(;primIt!=effect.m_primList.end();++primIt) {
+            CEffectPrim* sphere=*primIt;++sphereCount;
+            spheres=spheres&&sphere&&sphere->m_type==PP_LIGHTSPHERE&&sphere->m_renderFlag==5
+                &&sphere->m_duration==73&&sphere->m_totalTexture==2&&sphere->m_texture.size()==2
+                &&sphere->m_texture[0]==&g_texMgr.texture&&sphere->m_texture[1]==nullptr
+                &&sphere->m_pos.x==100&&sphere->m_pos.y==200&&sphere->m_pos.z==300;
+            if(!sphere) continue;
+            for(const EffectGi& gi:sphere->m_gi) {
+                spheres=spheres&&gi.life==1&&gi.process==0&&gi.alphaB==40&&gi.distance==1.0f
+                    &&gi.height[3]==10.0f&&gi.riseAngle==13&&gi.rotStart==27
+                    &&gi.fullDisplayAngle==41&&gi.maxHeight==1.0f
+                    &&gi.height[0]==105.0f&&gi.height[1]==105.0f&&gi.height[2]==255.0f;
+            }
+        }
+        check(spheres&&sphereCount==80,
+            "effect348 all 80 LightSphere children preserve four controlled GI profiles and only texture slot0");
+        const size_t requests=g_texMgr.requests.size();master.m_pos={410,520,630};effect.m_stateCnt=1;
+        check(effect.ProcessEffect348()&&effect.m_primList.size()==81&&rngDraws==draws+1601
+            &&g_texMgr.requests.size()==requests&&waveCalls.empty()
+            &&effect.m_effectPos.x==410&&effect.m_effectPos.y==520&&effect.m_effectPos.z==630,
+            "effect348 nonzero state refreshes origin without relaunch, resource requests or RNG");
+        check(texture&&texture->m_pos.x==410&&texture->m_pos.y==520&&texture->m_pos.z==630,
+            "effect348 nonzero state repositions the existing EffectTextureSet primitive");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();waveCalls.clear();rngValues.clear();rngCursor=0;
     }
     {
         CRagEffect effect;effect.m_type=522;effect.m_stateCnt=0;effect.m_duration=80;
