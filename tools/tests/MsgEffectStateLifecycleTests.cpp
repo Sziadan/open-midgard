@@ -30,11 +30,15 @@ struct CGameActor : CGameObject {
     CMsgEffect *m_stunEffect = nullptr, *m_silenceEffect = nullptr, *m_angelusEffect = nullptr;
     std::list<CMsgEffect*> m_msgEffectList;
     int stateChanges = 0, billboardInvalidations = 0;
+    int totalNumberDeletes = 0;
     void SetState(int state) { m_stateId = state; ++stateChanges; }
     void InvalidateBillboard() { ++billboardInvalidations; }
+    void DeleteTotalNumber(int) { ++totalNumberDeletes; }
     void ApplyResurrectionReceiverCase();
+    void ApplyDamageNumberReceiverCase(CGameObject*, msgparam_t, msgparam_t, msgparam_t);
     void SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override {
         if (msg == 98) { ApplyResurrectionReceiverCase(); return; }
+        if (msg == 88) { ApplyDamageNumberReceiverCase(sender, par1, par2, par3); return; }
         CGameObject::SendMsg(sender, msg, par1, par2, par3);
     }
     CMsgEffect* SpawnMsgSprite(int processType, const char* spritePath, const char* actPath, int action, float zoom);
@@ -55,6 +59,18 @@ struct CMsgEffect : CGameObject {
     bool ProcessOwnerMessage(CGameObject* sender, int msg);
     void SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam_t par2, msgparam_t par3) override;
 };
+struct DamageNumberSpawnCall {
+    CGameActor* actor = nullptr;
+    CGameActor* sourceActor = nullptr;
+    int value = 0;
+    u32 color = 0;
+    int kind = 0;
+};
+std::vector<DamageNumberSpawnCall> damageNumberSpawnCalls;
+CMsgEffect* SpawnDamageNumberEffect(CGameActor& actor, CGameActor* sourceActor, int value, u32 color, int kind) {
+    damageNumberSpawnCalls.push_back({&actor, sourceActor, value, color, kind});
+    return nullptr;
+}
 constexpr int kAttachedActorSpriteMsgEffectType = 3000;
 void InitializeAttachedActorTrailPosition(CMsgEffect&) {}
 void ProcessAttachedActorSpriteState(CMsgEffect&) {}
@@ -167,6 +183,32 @@ int main() {
     Check(local.m_willBeDead == 0 && local.m_vanishTime == 0 && local.m_stateId == 0
         && local.stateChanges == 1 && local.billboardInvalidations == 1,
         "local PC resurrection applies receiver reset and invalidates billboard once");
+
+    CGameActor damageSource, damageTarget;
+    damageSource.m_gid = 0x4567;
+    damageTarget.m_gid = 0x89AB;
+    damageNumberSpawnCalls.clear();
+    damageTarget.SendMsg(&damageSource, 88, 12, static_cast<msgparam_t>(0xFF00FF00u), 114);
+    Check(damageNumberSpawnCalls.size() == 1, "message88 recovery value reaches one damage-number consumer call");
+    if (!damageNumberSpawnCalls.empty()) {
+        const auto& call = damageNumberSpawnCalls.back();
+        Check(call.actor == &damageTarget && call.sourceActor == &damageSource,
+            "message88 preserves receiver and source actor roles");
+        Check(call.value == 12 && call.color == 0xFF00FF00u && call.kind == 114,
+            "message88 forwards HP recovery value, color, and kind in source order");
+    }
+    damageTarget.SendMsg(&damageSource, 88, 9, static_cast<msgparam_t>(0xFF0000FFu), 114);
+    Check(damageNumberSpawnCalls.size() == 2 && damageNumberSpawnCalls.back().value == 9
+        && damageNumberSpawnCalls.back().color == 0xFF0000FFu && damageNumberSpawnCalls.back().kind == 114,
+        "message88 forwards SP recovery value, color, and kind in source order");
+    damageTarget.SendMsg(&damageSource, 88, 1000001, static_cast<msgparam_t>(0xFF00FF00u), 114);
+    Check(damageNumberSpawnCalls.size() == 3 && damageNumberSpawnCalls.back().value == 999999,
+        "damage-number consumer clamps oversized recovery amount to 999999");
+    damageTarget.SendMsg(&damageSource, 88, -7, static_cast<msgparam_t>(0xFF00FF00u), 114);
+    Check(damageNumberSpawnCalls.size() == 4 && damageNumberSpawnCalls.back().value == 0,
+        "damage-number consumer clamps negative recovery amount to zero");
+    Check(damageTarget.totalNumberDeletes == 0,
+        "recovery kind114 does not clear accumulated total-number effects");
     for (auto* effect : actor.m_msgEffectList) delete effect;
     if (failures) return 1;
     std::puts("Message effect status lifecycle checks passed");

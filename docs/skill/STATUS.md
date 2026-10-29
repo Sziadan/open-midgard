@@ -67,3 +67,5 @@ Latest WP7 spirit checkpoint: packet job mapping and message14 position now feed
 Latest WP7 Devotion-link checkpoint: effect232 now has direct production `ProcessLineLinkEffects`/`SpawnLineLink(0)` runtime coverage. It verifies PE-bound textures, current master and previous devotee endpoints, state cadence and subsequent primitive tracking of both actors. This does not claim rendered link presentation or live acceptance.
 
 Latest WP7 resurrection checkpoint: production `CGameActor::SendMsg` case98 is isolated into the message-effect lifecycle harness and exercised for remote actors and local PCs. It checks actor death/motion/state resets and PC billboard invalidation; the source comparator records the Ref/local differences. This is actor lifecycle coverage only, not resurrection rendering or visual acceptance.
+
+Latest WP7 recovery-number checkpoint: recovery message88 now flows through the exact production actor receiver and `MakeDamageNumber` body into a capture sink. HP/SP values, green/blue colors, kind114, argument roles and clamp bounds are checked; digit/font rendering is not covered.

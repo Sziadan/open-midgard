@@ -139,6 +139,7 @@ tools/tests/*
 !tools/tests/check_player_onprocess_source.py
 !tools/tests/AutoSpellPacketTests.cpp
 !tools/tests/check_autospell_packet.py
+!tools/tests/check_recovery_number_receiver.py
 !tools/tests/UISpellListWndReceiverTests.cpp
 
 !tools/check_double_gumgang_parity.py

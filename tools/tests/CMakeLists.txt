@@ -1830,6 +1830,10 @@ extract_body(msg_owner_dispatch "${msg_effect_source}"
     "bool CMsgEffect::ProcessOwnerMessage(" "void CMsgEffect::SendMsg(")
 extract_body(msg_effect_send "${msg_effect_source}"
     "void CMsgEffect::SendMsg(" "void CMsgEffect::Render(")
+extract_body(damage_number_clamp "${msg_effect_actor_source}"
+    "int ClampDamageNumber(int value)" "int CountDamageDigits(")
+extract_body(make_damage_number "${msg_effect_actor_source}"
+    "void MakeDamageNumber(CGameActor& actor" "bool FindActivePathSegment(")
 string(FIND "${msg_effect_actor_source}" "void CGameActor::SendMsg(" resurrection_sendmsg_start)
 string(LENGTH "${msg_effect_actor_source}" msg_effect_actor_source_length)
 math(EXPR resurrection_sendmsg_length "${msg_effect_actor_source_length} - ${resurrection_sendmsg_start}")
@@ -1841,9 +1845,18 @@ if(resurrection_receiver_start LESS 0 OR resurrection_receiver_end LESS resurrec
 endif()
 math(EXPR resurrection_receiver_length "${resurrection_receiver_end} - ${resurrection_receiver_start}")
 string(SUBSTRING "${resurrection_sendmsg_source}" ${resurrection_receiver_start} ${resurrection_receiver_length} resurrection_receiver_case)
+string(FIND "${resurrection_sendmsg_source}" "    case 88: {" damage_number_receiver_start)
+string(FIND "${resurrection_sendmsg_source}" "    case 89:" damage_number_receiver_end)
+if(damage_number_receiver_start LESS 0 OR damage_number_receiver_end LESS damage_number_receiver_start)
+    message(FATAL_ERROR "Could not isolate CGameActor::SendMsg damage-number case 88")
+endif()
+math(EXPR damage_number_receiver_length "${damage_number_receiver_end} - ${damage_number_receiver_start}")
+string(SUBSTRING "${resurrection_sendmsg_source}" ${damage_number_receiver_start} ${damage_number_receiver_length} damage_number_receiver_case)
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/MsgEffectStateLifecycleBodies.inc"
     "${msg_status_spawn}\n${msg_status_release}\n${msg_status_dispatch}\n${msg_owner_dispatch}\n${msg_effect_send}\n"
-    "void CGameActor::ApplyResurrectionReceiverCase() { switch (98) {\n${resurrection_receiver_case}\ndefault: break; } }\n")
+    "${damage_number_clamp}\n${make_damage_number}\n"
+    "void CGameActor::ApplyResurrectionReceiverCase() { switch (98) {\n${resurrection_receiver_case}\ndefault: break; } }\n"
+    "void CGameActor::ApplyDamageNumberReceiverCase(CGameObject* src, msgparam_t par1, msgparam_t par2, msgparam_t par3) { switch (88) {\n${damage_number_receiver_case}\ndefault: break; } }\n")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ../../src/world/GameActor.cpp ../../src/world/MsgEffect.cpp)
 add_executable(msg_effect_state_lifecycle_checks MsgEffectStateLifecycleTests.cpp)
@@ -1855,3 +1868,10 @@ add_test(NAME msg_effect_state_lifecycle_source_check
         "${CMAKE_CURRENT_SOURCE_DIR}/../../src/world/GameActor.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/GameActor.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/Npc.cpp")
+add_test(NAME recovery_number_receiver_source_check
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_recovery_number_receiver.py"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../src/world/GameActor.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/GameActor.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/GameActorMsgHandler.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../HighPriest.exe.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/RecoveryResurrectionPacketTests.cpp")
