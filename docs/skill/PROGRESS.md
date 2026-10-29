@@ -3046,3 +3046,8 @@ Connected the production ProcessSoulBreaker2Effect and SpawnSoulBreaker2 bodies 
 ## WP5 CRagEffect::ProcessPeongEffects — effect411 — 2026-10-29
 
 Connected the production ProcessPeongEffects, SpawnPeongUp, and SpawnPeong bodies (src/world/RagEffect.cpp:22245, :22164, :22215) to the lifecycle harness. The fixture checks the state35 gate; 30 PP_PEONGUP followed by 16 quadrant-ordered PP_PEONG launches; exact texture order; all active GI fields; 718 ordered RNG draws; and no pre/post-trigger emission, audio, or repeated work. check_peong_callers.py checks the PE caller order, helper mapping, route and asset/profile anchors. The primary Ref does not implement this PE-only caller, and its Peong helper payload differs; no Ref parity is claimed for effect411. Focused lifecycle passes3167 checks; full Release parity CTest passes428/428 and both documented static audits pass.
+
+
+## WP5 CRagEffect::ProcessBeginAsuraEffect — effects328/510 — 2026-10-29
+
+Connected the production ProcessBeginAsuraEffect and SpawnBeginAsura bodies (src/world/RagEffect.cpp:22362 and :22261) to the lifecycle harness, with the existing ApplySaintCasting body. Both variants now exercise state0 origin/cache refresh, the duration350 floor, exact listener-relative ffect\\EF_BeginSpell.wav, and two ffect\\ring_white.tga casting rings; state1 first burst, state20 gap, state21 second burst, and state22 no-repeat behavior are checked. Assertions cover variant-specific texture order, lane fields, moving-master refresh, and no RNG. check_begin_asura_callers.py verifies the PE/primary-Ref caller mappings, exact assets, and local route. Focused lifecycle passes3180 checks; full Release parity CTest passes428/428 and both documented static audits pass.

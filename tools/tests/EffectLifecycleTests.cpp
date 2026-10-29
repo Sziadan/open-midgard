@@ -693,6 +693,8 @@ struct CRagEffect : CGameObject {
     bool ProcessPeongEffects();
     void SpawnPeongUp(const char*,short);
     void SpawnPeong(const char*,int);
+    bool ProcessBeginAsuraEffect();
+    void SpawnBeginAsura(int,bool);
     void ApplyEffectTexture(const char*, int);
     bool ProcessEffect273();
     bool ProcessEffect440();
@@ -13687,6 +13689,83 @@ int main()
             &&g_texMgr.requests.size()==afterTriggerTextures&&rngDraws==afterTriggerDraws&&waveCalls.empty(),
             "effect411 post-trigger state does not repeat emission, resources, RNG or audio");
         peong.ClearPrims();g_world.UpdateGameObjects();
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        const int oldRandomDraws=rngDraws;
+        waveCalls.clear();g_texMgr.requests.clear();
+        const char* firstTextures[2][3]={{"effect\\asura3.tga","effect\\asura2.tga","effect\\asura1.tga"},
+            {"effect\\asura13.tga","effect\\asura12.tga","effect\\asura11.tga"}};
+        const char* secondTextures[2][3]={{"effect\\asura4.tga","effect\\asura5.tga","effect\\asura6.tga"},
+            {"effect\\asura14.tga","effect\\asura15.tga","effect\\asura16.tga"}};
+        for(int type:{328,510}) {
+            waveCalls.clear();g_texMgr.requests.clear();
+            const int variant=type==510?1:0;
+            CRenderObject listener;listener.m_pos={10,900,20};
+            CRenderObject master;master.m_pos={100,200,300};
+            CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+            CRagEffect asura;asura.m_type=type;asura.m_duration=100;asura.m_master=&master;
+            check(asura.ProcessBeginAsuraEffect()&&asura.m_duration==350&&asura.m_primList.size()==2
+                &&asura.m_effectPos.x==100&&asura.m_cachedPos.z==300&&waveCalls.size()==1
+                &&waveCalls.back().name=="effect\\EF_BeginSpell.wav"&&waveCalls.back().x==90
+                &&waveCalls.back().y==0&&waveCalls.back().z==280&&waveCalls.back().volume==250
+                &&waveCalls.back().range==40&&waveCalls.back().frequency==1.0f
+                &&waveCalls.back().frameRng==oldRandomDraws,
+                ("effect"+std::to_string(type)+" state0 refreshes origin, raises duration and cues before two casting rings").c_str());
+            bool rings=asura.m_primList.size()==2&&g_texMgr.requests.size()==2;
+            int ringIndex=0;
+            for(CEffectPrim* ring:asura.m_primList) {
+                rings=rings&&ring&&ring->m_type==PP_GI_1&&ring->m_duration==350
+                    &&ring->m_renderFlag==5&&ring->m_size==5.0f
+                    &&g_texMgr.requests[ringIndex]=="effect\\ring_white.tga";
+                ++ringIndex;
+            }
+            check(rings&&rngDraws==oldRandomDraws,
+                ("effect"+std::to_string(type)+" state0 emits the two exact casting rings without RNG").c_str());
+
+            asura.m_stateCnt=1;asura.ProcessBeginAsuraEffect();
+            CEffectPrim* first=asura.m_primList.size()>=3?*std::next(asura.m_primList.begin(),2):nullptr;
+            bool firstPayload=first&&first->m_type==PP_ASURACASTING&&first->m_renderFlag==5
+                &&first->m_duration==350&&first->m_size==0.0f&&first->m_texture.size()==3
+                &&g_texMgr.requests.size()==5&&rngDraws==oldRandomDraws;
+            for(int i=0;i<3;++i) firstPayload=firstPayload&&g_texMgr.requests[2+i]==firstTextures[variant][i];
+            for(int lane=0;first&&lane<3;++lane) {
+                const EffectGi& gi=first->m_gi[lane];
+                const float height=variant?static_cast<float>(-8-16*lane):static_cast<float>(-6-12*lane);
+                firstPayload=firstPayload&&gi.life==1&&gi.process==-40+20*lane&&gi.alphaB==0
+                    &&gi.flag[0]==lane&&gi.distance==(variant?24.0f:18.0f)
+                    &&gi.height[0]==height&&gi.flag[4]==(variant?5:0);
+            }
+            check(firstPayload,("effect"+std::to_string(type)+" state1 emits the exact first variant burst").c_str());
+            asura.m_stateCnt=20;asura.ProcessBeginAsuraEffect();
+            check(asura.m_primList.size()==3&&g_texMgr.requests.size()==5&&rngDraws==oldRandomDraws,
+                ("effect"+std::to_string(type)+" state20 is between its burst gates").c_str());
+            asura.m_stateCnt=21;master.m_pos={110,210,310};asura.ProcessBeginAsuraEffect();
+            CEffectPrim* second=asura.m_primList.size()>=4?*std::next(asura.m_primList.begin(),3):nullptr;
+            bool secondPayload=second&&second->m_type==PP_ASURACASTING&&second->m_renderFlag==5
+                &&second->m_duration==350&&second->m_size==0.0f&&second->m_texture.size()==3
+                &&g_texMgr.requests.size()==8&&asura.m_effectPos.x==110&&asura.m_cachedPos.z==310
+                &&rngDraws==oldRandomDraws;
+            for(int i=0;i<3;++i) secondPayload=secondPayload&&g_texMgr.requests[5+i]==secondTextures[variant][i];
+            for(int lane=0;second&&lane<3;++lane) {
+                const EffectGi& gi=second->m_gi[lane];
+                const float height=variant?static_cast<float>(8+16*lane):static_cast<float>(6+12*lane);
+                secondPayload=secondPayload&&gi.life==1&&gi.process==-40-20*lane&&gi.alphaB==0
+                    &&gi.flag[0]==lane&&gi.distance==(variant?24.0f:18.0f)
+                    &&gi.height[0]==height&&gi.flag[4]==(variant?5:0);
+            }
+            check(secondPayload,("effect"+std::to_string(type)+" state21 refreshes origin and emits the exact second variant burst").c_str());
+            asura.m_stateCnt=22;asura.ProcessBeginAsuraEffect();
+            check(asura.m_primList.size()==4&&g_texMgr.requests.size()==8&&waveCalls.size()==1
+                &&rngDraws==oldRandomDraws,("effect"+std::to_string(type)+" state22 does not repeat either burst or cue").c_str());
+            asura.ClearPrims();g_world.UpdateGameObjects();
+            g_world.m_player=oldPlayer;
+        }
+        CRagEffect noMaster;noMaster.m_type=328;noMaster.m_master=nullptr;noMaster.m_stateCnt=0;
+        const size_t oldWaves=waveCalls.size();const size_t oldTextures=g_texMgr.requests.size();
+        check(noMaster.ProcessBeginAsuraEffect()&&noMaster.m_primList.empty()
+            &&waveCalls.size()==oldWaves&&g_texMgr.requests.size()==oldTextures&&rngDraws==oldRandomDraws,
+            "effect328 missing master stays active without cue or visuals");
         waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
     }
     {
