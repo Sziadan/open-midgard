@@ -13405,6 +13405,47 @@ int main()
         }
         rngValues.clear(); rngCursor=0; g_texMgr.requests.clear();
     }
+    {
+        struct ClipCue { int id; int frame; const char* wave; float yOffset; };
+        const ClipCue cues[]={
+            {65,0,"effect\\thief_invenom.wav",0.0f},
+            {66,0,"effect\\Acolyte_cure.wav",0.0f},
+            {69,0,"effect\\hunter_skidtrap.wav",0.0f},
+            {75,0,"effect\\priest_gloria.wav",1.0f},
+            {76,0,"effect\\priest_magnificat.wav",0.0f},
+            {77,0,"effect\\priest_resurrection.wav",0.0f},
+            {78,0,"effect\\priest_recovery.wav",0.0f},
+            {83,0,"effect\\priest_sanctuary.wav",0.0f},
+            {84,60,"effect\\priest_impositio.wav",0.0f},
+            {85,15,"effect\\priest_lexaeterna.wav",0.0f},
+            {91,0,"effect\\priest_benedictio.wav",0.0f},
+        };
+        CRenderObject listener;listener.m_pos={3,900,5};
+        auto* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        waveCalls.clear();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+        const int beforeRng=rngDraws;
+        for(const ClipCue& cue:cues) {
+            CRagEffect effect;effect.m_type=cue.id;effect.m_effectPos={15,20,35};
+            effect.m_iCurLayer=1;effect.m_cEndLayer=1;waveCalls.clear();
+            effect.m_stateCnt=cue.frame==0?1:cue.frame-1;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.empty(),
+                "Scheduled clip-wave effect does not play before its source frame");
+            effect.m_stateCnt=cue.frame;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1
+                &&waveCalls.back().name==cue.wave&&waveCalls.back().x==12
+                &&waveCalls.back().y==cue.yOffset&&waveCalls.back().z==30
+                &&waveCalls.back().volume==250&&waveCalls.back().range==40
+                &&waveCalls.back().frequency==1&&!effect.m_strFrameActive,
+                "Scheduled clip-wave effect plays its exact cue and propagates exhausted STR completion");
+            effect.m_stateCnt=cue.frame+1;
+            check(!effect.ProcessClipWaveStrEffect()&&waveCalls.size()==1&&rngDraws==beforeRng,
+                "Scheduled clip-wave effect does not repeat audio or consume RNG after its source frame");
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        check(g_texMgr.requests.empty()&&rngDraws==beforeRng,
+            "Scheduled clip-wave cue group emits no textures or RNG");
+        g_world.m_player=oldPlayer;waveCalls.clear();
+    }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
 }
