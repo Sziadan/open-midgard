@@ -1158,6 +1158,8 @@ add_test(NAME effect265_412_tanji_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect265_412_tanji.py")
 add_test(NAME effect374_basilica_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect374_basilica.py")
+add_test(NAME effect337_job_lv_up_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect337_job_lv_up.py")
 add_test(NAME effect410_rainbow_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect410_rainbow.py")
 add_test(NAME effect428_hitline3zero_source_check

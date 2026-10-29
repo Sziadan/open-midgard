@@ -2407,3 +2407,8 @@ Added and registered `check_gumgang_emitter.py` for effects203/254/418/455/485/4
 ## WP5E effect301 PokJuk_Sound source and wave comparison — 2026-10-29
 
 Added and registered `check_pokjuk_sound301.py`. It compares the complete PE and primary-Ref helper bodies, confirms the local OnProcess2 frame-300 wave and >2300 reset, and verifies exact `effect\\폭죽.wav` bytes at PE VA `0x71C254`. Focused check, Release parity build and full Release CTest passed335/335. No production behavior change.
+
+
+## WP5E effect337 JobLvUp50 source comparison — 2026-10-29
+
+Added and registered `check_effect337_job_lv_up.py`. It compares complete PE/primary-Ref `JobLvUp50` bodies, verifies effect337's ordered time0/time45 calls and local slash primitive profile, and checks exact `effect\\magic_green.tga` bytes at VA `0x71A730`. Focused check, Release parity build and full Release CTest passed336/336. No production behavior change.

@@ -4045,3 +4045,8 @@ Added CTest entries for the existing Snow and Sakura comparators, which verify P
 ## WP5E effect301 PokJuk_Sound source/wave comparator — 2026-10-29
 
 `check_pokjuk_sound301.py` compares PE/primary-Ref PokJuk_Sound helper bodies, checks the local OnProcess2 route plus frame-300 cue/reset after2300, and verifies exact executable wave bytes at `0x71C254`. Registered in CTest. Focused checker, Release parity build and full CTest passed335/335. No production behavior change.
+
+
+## WP5E effect337 JobLvUp50 PE/Ref/local comparator — 2026-10-29
+
+`check_effect337_job_lv_up.py` compares the full canonical PE and primary-Ref helper bodies, checks the OnProcess2 call order (time0 then45), local PP_SLASH1 setup/STR return behavior, and executable `effect\\magic_green.tga` bytes at `0x71A730`. Registered in CTest; focused check, Release parity build and full Release CTest passed336/336. No production behavior change.
