@@ -2673,3 +2673,7 @@ PE effect415 copies the master position into the effect at frames17 and25 before
 
 The 5F audit found the remaining routed inline gaps in effects462/463 (PE wave symbol `aEffect_3`), 665 (`Bubble_Drop` bitmap `aEffect_139`), and 687/688 (`Map_MagicZone` bitmaps `aEffect_157`, `_129`, `_115`, `_92`, `_45`, `_60`). Each executable string contains only the `effect\\` prefix. Recorded the exact resource blockers in `BLOCKED.md`; the handlers remain explicitly unported until those names are recovered.
 
+## WP4.8 eAthena third-job unit IDs - 2026-10-29
+
+Compared the `UNT_*` range in `Ref/eAthena_src_2011/map/skill.h` with the Ref/local CSkill unit behavior. The 43 eAthena-only IDs 202-244 are outside the 2008 client's handled range and take the Ref default path; the source/local loop-effect cases agree for known IDs 126-201. Added the complete ID/name list and default-path explanation to `MISMATCHES.md`. A mechanical enum slice check confirmed 43 entries from `UNT_EPICLESIS` through `UNT_EARTH_INSIGNIA`.
+

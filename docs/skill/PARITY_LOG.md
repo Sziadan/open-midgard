@@ -4288,3 +4288,5 @@ WP5F effect415: PE frame17/frame25 master-position stores and EF_hit2/EF_hit4 wa
 
 WP5F audit: effects462/463, 665, and 687/688 remain explicit unported routes because their PE resources resolve only to `effect\\`. Exact symbols and source locations are recorded in BLOCKED.md; no resource names were guessed.
 
+WP4.8 unit IDs: enumerated all 43 eAthena third-job units 202-244 (`UNT_EPICLESIS` through `UNT_EARTH_INSIGNIA`) and recorded them as Ref default-path IDs in `MISMATCHES.md`. Ref and local CSkill loop-effect cases match for the client-known 126-201 range; no modern behavior was invented.
+
