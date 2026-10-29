@@ -2651,3 +2651,7 @@ Extended `check_effect375_actor_light.py` to compare PE and primary-Ref case `0x
 ## WP5F effects222/252 Defender origin refresh — 2026-10-29
 
 PE and secondary Ref DEFENDER helpers refresh master position before their state-zero gate. Local `ApplyDefender` previously returned on nonzero states without updating effect/cached position; moved the refresh before the gate. Added `check_effect222_252_defender.py` for PE/secondary-Ref profiles, PE and Ref variant routes, exact bitmap bytes and local mapping. Added lifecycle coverage for both texture variants, four GI bands and movement after spawn. Release build passed; full Release CTest passed 374/374.
+
+## WP5F effects312/313/320/325 Heal/Heal2 source comparison — 2026-10-29
+
+Added and registered `check_effects312_313_320_325_heal.py`. It compares PE and primary-Ref caller mappings for all four IDs, checks PE/secondary-Ref helper semantics, exact known texture and wave bytes (the executable wave literal is only `_heal_effect.wav`), and local variant routing and follow-up schedules. Helper decompilations differ structurally, so the checker pins key source behavior instead of textual equality. No production change. Release parity build passed; full Release CTest passed 375/375. Dedicated lifecycle coverage remains open.

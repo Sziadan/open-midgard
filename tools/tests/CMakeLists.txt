@@ -1276,6 +1276,8 @@ add_test(NAME effect119_detecting_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect119_detecting.py")
 add_test(NAME effects222_252_defender_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effect222_252_defender.py")
+add_test(NAME effects312_313_320_325_heal_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects312_313_320_325_heal.py")
 add_test(NAME effects689_691_696_texture_animation_source_check
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_effects689_691_696_texture_animation.py")
 add_test(NAME effects610_611_texture_cues_source_check
@@ -1368,6 +1370,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     check_effect436_437_sphere_energy.py
     check_effect119_detecting.py
     check_effect222_252_defender.py
+    check_effects312_313_320_325_heal.py
     check_effects689_691_696_texture_animation.py
     check_effects610_611_texture_cues.py
     check_effects358_360_ghost.py
