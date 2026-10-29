@@ -733,6 +733,38 @@ for token in ("prim->m_animSpeed==4&&prim->m_repeatAnim", "prim->m_pattern==0x20
     if token not in effect586_block:
         raise AssertionError(f"effect586 lifecycle fixture is missing required payload/repeat check: {token}")
 
+simple_sprite_fixture = re.search(
+    r"const SimpleSpriteProfile profiles\[\]\s*=\s*\{(.*?)\n\s*\};",
+    LIFECYCLE, re.S)
+if simple_sprite_fixture is None:
+    raise AssertionError("EffectLifecycleTests is missing the simple Effect_SPR profile table")
+simple_sprite_rows = {}
+for match in re.finditer(
+        r'\{\s*(\d+)\s*,\s*(\d+)\s*,\s*("(?:\\.|[^"\\])*")\s*,\s*("(?:\\.|[^"\\])*")\s*\}',
+        simple_sprite_fixture.group(1)):
+    effect_id, variant = int(match.group(1)), int(match.group(2))
+    simple_sprite_rows[effect_id] = (variant,
+        ast.literal_eval(match.group(3)).encode("latin-1"),
+        ast.literal_eval(match.group(4)).encode("latin-1"))
+for effect_id, variant in ((570, 0), (576, 2), (577, 3), (578, 4), (579, 5), (580, 6)):
+    expected = (variant, *tuple(image.read_cstring_at(va).raw for va in asset_vas[variant]))
+    if simple_sprite_rows.get(effect_id) != expected:
+        raise AssertionError(f"simple Effect_SPR fixture effect{effect_id}/variant{variant} row differs from PE assets")
+    # expected_routes above ties each id to both PE and primary-Ref caller.
+    for label, helper_body in (("PE", pe_sprite), ("Ref", ref_helper)):
+        next_variant = variant + 1
+        branch_match = re.search(rf"case {variant}:(.*?)(?=case {next_variant}:)", helper_body, re.S)
+        if branch_match is None:
+            raise AssertionError(f"{label} Effect_SPR variant{variant} branch is missing")
+        branch = branch_match.group(1)
+        if not all(token in branch for token in ("SetSprName", "SetActName", "InitSegment")) or "PlayWave" in branch:
+            raise AssertionError(f"{label} Effect_SPR variant{variant} resource/segment/no-wave profile changed")
+for token in ("effect.ProcessEffectSpriteProduction(profile.variant)",
+              "prim->m_animSpeed==2&&!prim->m_repeatAnim", "prim->m_numSegments==1",
+              "waveCalls.empty()", "rngCursor==0", "state1 refreshes origin without duplicate sprite/resources/cue/RNG"):
+    if token not in LIFECYCLE:
+        raise AssertionError(f"simple Effect_SPR fixture is missing required invocation/assertion: {token}")
+
 wave_vas = {630: 0x719BDC, 632: 0x719BF4, 633: 0x719C08, 637: 0x719B40,
             643: 0x719BB0, 644: 0x719B98, 648: 0x719B80}
 caller_wave_literals = {

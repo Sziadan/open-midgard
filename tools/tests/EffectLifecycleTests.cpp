@@ -13063,6 +13063,45 @@ int main()
         effect.ClearPrims();g_world.UpdateGameObjects();rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
     }
     {
+        struct SimpleSpriteProfile { int effect; int variant; const char* spr; const char* act; };
+        const SimpleSpriteProfile profiles[]={
+            {570,0,"\xC0\xCC\xC6\xD1\xC6\xAE\\\xC4\xB3\xBD\xBD\xB8\xB5.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\\xC4\xB3\xBD\xBD\xB8\xB5.act"},
+            {576,2,"\xC0\xCC\xC6\xD1\xC6\xAE\\item_thunder.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\item_thunder.act"},
+            {577,3,"\xC0\xCC\xC6\xD1\xC6\xAE\\item_cloud.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\item_cloud.act"},
+            {578,4,"\xC0\xCC\xC6\xD1\xC6\xAE\\item_curse.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\item_curse.act"},
+            {579,5,"\xC0\xCC\xC6\xD1\xC6\xAE\\item_zzz.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\item_zzz.act"},
+            {580,6,"\xC0\xCC\xC6\xD1\xC6\xAE\\item_rain.spr","\xC0\xCC\xC6\xD1\xC6\xAE\\item_rain.act"},
+        };
+        CRenderObject master;master.m_pos={40,50,60};
+        const int draws=rngDraws;
+        for(const auto& profile:profiles){
+            master.m_pos={40,50,60};
+            CRagEffect effect;effect.m_type=profile.effect;effect.m_stateCnt=0;effect.m_duration=79;effect.m_master=&master;
+            const std::string expectedSpr=profile.spr,expectedAct=profile.act;
+            rngValues={};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
+            check(effect.ProcessEffectSpriteProduction(profile.variant),"simple Effect_SPR profile production helper remains active");
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+                &&effect.m_effectPos.x==40&&effect.m_effectPos.y==50&&effect.m_effectPos.z==60
+                &&prim->m_pos.x==40&&prim->m_pos.y==50&&prim->m_pos.z==60&&prim->m_duration==79
+                &&prim->m_deltaPos2.y==0.0f&&prim->m_renderFlag==0x201&&prim->m_pattern==0x200
+                &&prim->m_animSpeed==2&&!prim->m_repeatAnim&&prim->m_spriteAction==0&&prim->m_curMotion==0
+                &&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+                &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+                &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==40
+                &&prim->m_segments[0].pos.y==50&&prim->m_segments[0].pos.z==60
+                &&waveCalls.empty()&&rngDraws==draws&&rngCursor==0,
+                ("effect"+std::to_string(profile.effect)+" state0 emits mapped speed2 one-shot sprite without cue/RNG").c_str());
+            const size_t requests=g_resMgr.requests.size();master.m_pos={41,51,61};effect.m_stateCnt=1;
+            check(effect.ProcessEffectSpriteProduction(profile.variant)&&effect.m_primList.size()==1
+                &&effect.m_effectPos.x==41&&effect.m_effectPos.y==51&&effect.m_effectPos.z==61
+                &&g_resMgr.requests.size()==requests&&waveCalls.empty()&&rngDraws==draws&&rngCursor==0,
+                ("effect"+std::to_string(profile.effect)+" state1 refreshes origin without duplicate sprite/resources/cue/RNG").c_str());
+            effect.ClearPrims();g_world.UpdateGameObjects();
+        }
+        rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
+    }
+    {
         CRenderObject master;master.m_pos={20,30,40};
         CRagEffect effect;effect.m_type=648;effect.m_stateCnt=0;effect.m_duration=78;effect.m_master=&master;
         const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xAE\xB8\xAE\xC7\xC3\xBE\xD7\xBC\xC7.spr";

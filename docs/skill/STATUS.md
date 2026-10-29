@@ -57,3 +57,5 @@ Latest WP5 Effect_SPR checkpoint: effect583 variant7 now has direct state0/state
 Latest WP5 Effect_SPR checkpoint: effect571 variant1 now has direct state0/state1 coverage for its exact PE-bound listener-relative blood-lust cue and speed2 one-shot particle profile. The source comparator binds resources and wave bytes to PE addresses. No audible or rendered result is claimed.
 
 Latest WP5 Effect_SPR checkpoint: effect586 variant10 now has direct state0/state1 coverage of its speed4 repeat-animation profile, exact PE assets, and no-wave/no-RNG behavior. See the 2026-10-29 PROGRESS entry; no rendered-output acceptance is claimed.
+
+Latest WP5 Effect_SPR checkpoint: effects570,576–580 now have table-driven state0/state1 coverage for variants0,2–6, including exact PE asset bindings and no-cue/no-RNG behavior. The local lifecycle suite does not claim rendered output acceptance.
