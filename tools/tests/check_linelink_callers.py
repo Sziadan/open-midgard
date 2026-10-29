@@ -85,4 +85,18 @@ for address, expected in assets.items():
     require(value is not None and value.raw == expected, f"PE asset mismatch at {address:#x}")
 require('aEffect_10[] = "effect\\\\";' in pe, "canonical effect\\ audio literal mismatch")
 
-print("LineLink caller parity: 3 Ref/PE helpers, 232/384/395 routes, exact paths, targets, GI setup and no-RNG passed")
+lifecycle = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8", errors="replace")
+devotion_fixture = re.search(r"CRenderObject master,target,oldPlayer;(.*?)(?=\n    })", lifecycle, re.S)
+require(devotion_fixture is not None and "effect.m_type=232" in devotion_fixture.group(1)
+        and "effect.ProcessLineLinkEffects()" in devotion_fixture.group(1),
+        "direct effect232/Devotion LineLink production lifecycle fixture is missing")
+for token in (
+    'g_texMgr.requests==std::vector<std::string>{"effect\\\\cloud11.tga"}',
+    "prim->m_type==PP_LINELINK", "prim->m_renderFlag==5", "prim->m_duration==91",
+    "gi.maxHeight==0.40000001f", "gi.height[4]==0", "gi.height[0]==42",
+    "gi.vecTNowX==300", "gi.vecTPreX==100", "prim->ProcessPrimitiveFrame()",
+    "prim->m_gi[0].vecTNowY==412", "prim->m_gi[0].vecTPreY==212", "waveCalls.empty()", "rngDraws==draws",
+):
+    require(token in devotion_fixture.group(1), f"Devotion LineLink runtime fixture missing: {token}")
+
+print("LineLink parity: PE/Ref helpers, 232/384/395 routes, exact paths/targets/GI setup and effect232 production lifecycle passed")

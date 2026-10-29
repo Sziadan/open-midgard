@@ -566,6 +566,8 @@ struct CRagEffect : CGameObject {
     void SpawnRgCoin2(const char*,float);
     void ApplyBash3D5();
     void SpawnChookgi(char);
+    void SpawnLineLink(int);
+    bool ProcessLineLinkEffects();
     void ApplyChemical3(short);
     void SpawnBash3D(const char*,char,char);
     void ApplyFrostDiver();
@@ -15946,6 +15948,50 @@ int main()
             &&gameMode.messageIds==std::vector<int>({135,148}),
             "effect522 nonzero state returns without duplicate primitives, RNG, textures or quake messages");
         effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();rngValues.clear();rngCursor=0;
+    }
+    {
+        CRenderObject master,target,oldPlayer;
+        master.m_pos={300,400,500};target.m_pos={100,200,300};oldPlayer.m_pos={10,20,30};
+        CRenderObject* previousPlayer=g_world.m_player;
+        CRenderObject* previousLookup=g_world.lookupActor;const u32 previousLookupAid=g_world.lookupAid;
+        const u32 previousSessionAid=g_session.m_aid;
+        g_world.m_player=&oldPlayer;g_world.lookupActor=&target;g_world.lookupAid=42;g_session.m_aid=100;
+        CRagEffect effect;effect.m_type=232;effect.m_stateCnt=0;effect.m_duration=91;
+        effect.m_master=&master;effect.m_deltaPos.y=42.0f;
+        g_texMgr.requests.clear();waveCalls.clear();const int draws=rngDraws;
+        check(effect.ProcessLineLinkEffects(),"Devotion effect232 production line-link handler remains active");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_effectPos.x==300&&effect.m_effectPos.y==400&&effect.m_effectPos.z==500
+            &&effect.m_cachedPos.x==300&&effect.m_cachedPos.y==400&&effect.m_cachedPos.z==500
+            &&effect.m_primList.size()==1&&prim&&prim->m_type==PP_LINELINK&&prim->m_master==&effect
+            &&prim->m_renderFlag==5&&prim->m_duration==91&&prim->m_texture.size()==1
+            &&prim->m_texture[0]==&g_texMgr.texture
+            &&g_texMgr.requests==std::vector<std::string>{"effect\\cloud11.tga"}
+            &&waveCalls.empty()&&rngDraws==draws,
+            "Devotion LINELINK variant0 emits one exact cloud11 ribbon with no wave or RNG");
+        if(prim){
+            const EffectGi& gi=prim->m_gi[0];
+            check(gi.life==1&&gi.process==0&&gi.alphaB==45&&gi.distance==0.0f
+                &&gi.maxHeight==0.40000001f&&gi.height[4]==0&&gi.height[0]==42
+                &&gi.vecTNowX==300&&gi.vecTNowY==400&&gi.vecTNowZ==500
+                &&gi.vecTPreX==100&&gi.vecTPreY==200&&gi.vecTPreZ==300
+                &&prim->m_gi[1].life==0&&prim->m_gi[2].life==0&&prim->m_gi[3].life==0,
+                "Devotion LINELINK stores current master and previous devotee endpoints plus the source GI profile");
+            const size_t requests=g_texMgr.requests.size();effect.m_stateCnt=1;
+            master.m_pos={310,420,530};target.m_pos={110,220,330};
+            check(effect.ProcessLineLinkEffects()&&effect.m_primList.size()==1
+                &&effect.m_effectPos.x==310&&effect.m_effectPos.y==420&&effect.m_effectPos.z==530
+                &&effect.m_cachedPos.x==310&&effect.m_cachedPos.y==420&&effect.m_cachedPos.z==530
+                &&g_texMgr.requests.size()==requests&&waveCalls.empty()&&rngDraws==draws,
+                "Devotion LINELINK later effect state refreshes origins without relaunch or resource/audio/RNG work");
+            check(prim->ProcessPrimitiveFrame()&&prim->m_gi[0].process==1
+                &&prim->m_gi[0].vecTNowX==310&&prim->m_gi[0].vecTNowY==412&&prim->m_gi[0].vecTNowZ==530
+                &&prim->m_gi[0].vecTPreX==110&&prim->m_gi[0].vecTPreY==212&&prim->m_gi[0].vecTPreZ==330
+                &&rngDraws==draws,
+                "Devotion LINELINK primitive tick follows both actors with the source eight-unit ribbon offsets");
+        }
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();waveCalls.clear();
+        g_world.m_player=previousPlayer;g_world.lookupActor=previousLookup;g_world.lookupAid=previousLookupAid;g_session.m_aid=previousSessionAid;
     }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;

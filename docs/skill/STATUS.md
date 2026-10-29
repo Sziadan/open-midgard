@@ -63,3 +63,5 @@ Latest WP5 Effect_SPR checkpoint: effects570,576–580 now have table-driven sta
 Latest WP5 Effect_SPR checkpoint: effects585,587–589 now have table-driven state0/state1 speed4 one-shot lifecycle coverage, PE-bound resources, and no-wave/no-RNG checks. See the 2026-10-29 PROGRESS entry; no rendered-output acceptance is claimed.
 
 Latest WP7 spirit checkpoint: packet job mapping and message14 position now feed the extracted production CHOOKGI emitter for effects504/629/228 (variants1/3/0). Runtime checks cover capped primitive count, payload, texture requests and seven RNG draws per primitive; source comparison binds the type→variant branch. Generated dispatcher execution, rendering and live acceptance are not claimed. Focused integration checks pass 2/2; full VS17 x64 Release parity CTest passes 436/436. See WP7 progress.
+
+Latest WP7 Devotion-link checkpoint: effect232 now has direct production `ProcessLineLinkEffects`/`SpawnLineLink(0)` runtime coverage. It verifies PE-bound textures, current master and previous devotee endpoints, state cadence and subsequent primitive tracking of both actors. This does not claim rendered link presentation or live acceptance.
