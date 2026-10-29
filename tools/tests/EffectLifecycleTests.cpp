@@ -14439,6 +14439,46 @@ int main()
         }
         g_texMgr.requests.clear();
     }
+    {
+        CRenderObject master;master.m_pos={100,200,300};
+        CRagEffect effect;effect.m_type=600;effect.m_stateCnt=0;effect.m_duration=73;effect.m_master=&master;
+        effect.m_deltaPos={106,230,308};
+        const std::string expectedTexture="\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\item\\\xBA\xA3\xB3\xD1\xB3\xAA\xC0\xCC\xC7\xC1.bmp";
+        g_texMgr.requests.clear();waveCalls.clear();const int draws=rngDraws;
+        check(effect.ProcessThrowItemEffect(),"effect600 production dispatcher accepts the mapped ThrowItem type");
+        CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+        check(effect.m_primList.size()==1&&prim&&prim->m_type==static_cast<EFFECTPRIMID>(kPrimTypeThrowItem)
+            &&prim->m_renderFlag==5&&prim->m_duration==73&&prim->m_size==0.0f
+            &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300
+            &&prim->m_deltaPos.x==106&&prim->m_deltaPos.y==230&&prim->m_deltaPos.z==308
+            &&effect.m_effectPos.x==100&&effect.m_effectPos.y==200&&effect.m_effectPos.z==300
+            &&g_texMgr.requests==std::vector<std::string>({expectedTexture})
+            &&rngDraws==draws&&waveCalls.empty(),
+            "effect600 launches one variant3 ThrowItem with the exact PE texture and master origin");
+        if(prim) {
+            const EffectGi& gi=prim->m_gi[0];
+            check(gi.life==1&&gi.process==0&&gi.maxHeight==10.0f&&gi.distance==4.0f
+                &&gi.height[1]==3.0f&&gi.height[2]==9.0f&&gi.height[8]==0.0f
+                &&gi.alphaB==255&&gi.sparkX==100&&gi.sparkY==0.0f&&gi.sparkZ==300
+                &&gi.arcBaselineY==192.0f&&gi.rotStart==0&&gi.fullDisplayAngle==330
+                &&gi.flag[0]==0&&gi.flag[1]==4&&gi.flag[2]==15,
+                "effect600 variant3 preserves exact trajectory, angle and selector flags");
+            check(prim->m_gi[1].life==1&&prim->m_gi[1].alphaB==0
+                &&prim->m_gi[2].life==1&&prim->m_gi[2].alphaB==0
+                &&prim->m_gi[3].life==1&&prim->m_gi[3].alphaB==0,
+                "effect600 variant3 initializes the three inactive ThrowItem bands");
+        } else {
+            check(false,"effect600 variant3 preserves exact trajectory, angle and selector flags");
+            check(false,"effect600 variant3 initializes the three inactive ThrowItem bands");
+        }
+        master.m_pos={410,520,630};effect.m_stateCnt=1;const size_t requests=g_texMgr.requests.size();
+        effect.ProcessThrowItemEffect();
+        check(effect.m_primList.size()==1&&prim&&prim->m_pos.x==410&&prim->m_pos.y==520&&prim->m_pos.z==630
+            &&effect.m_effectPos.x==410&&effect.m_effectPos.y==520&&effect.m_effectPos.z==630
+            &&g_texMgr.requests.size()==requests&&rngDraws==draws&&waveCalls.empty(),
+            "effect600 later state repositions existing ThrowItem without duplicate launch or texture reload");
+        effect.ClearPrims();g_world.UpdateGameObjects();g_texMgr.requests.clear();
+    }
     if (!failures) std::printf("%d effect lifecycle checks passed; no media loaded or rendered.\n", checks);
     return failures ? 1 : 0;
 }

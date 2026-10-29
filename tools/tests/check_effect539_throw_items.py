@@ -13,6 +13,7 @@ REF_CALLER = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
 REF_HELPER = (ROOT / "Ref/RagEffect2.cpp").read_text(encoding="latin-1")
 LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 ROUTES = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
+LIFECYCLE = (ROOT / "tools/tests/EffectLifecycleTests.cpp").read_text(encoding="utf-8")
 
 
 def function(source: str, signature: str) -> str:
@@ -129,5 +130,15 @@ for va, expected in expected_resources.items():
     actual = image.read_cstring_at(va)
     if actual is None or actual.raw != expected:
         raise AssertionError(f"ThrowItem resource differs at PE VA 0x{va:X}")
+
+if not re.search(r"CRagEffect effect;effect\.m_type=600;[\s\S]*?effect\.ProcessThrowItemEffect\(\);", LIFECYCLE):
+    raise AssertionError("effect600 variant3 lifecycle fixture does not invoke the production dispatcher")
+for token in (
+    "effect600 launches one variant3 ThrowItem with the exact PE texture",
+    "effect600 variant3 preserves exact trajectory, angle and selector flags",
+    "effect600 later state repositions existing ThrowItem without duplicate launch",
+):
+    if token not in LIFECYCLE:
+        raise AssertionError(f"effect600 lifecycle assertion missing: {token}")
 
 print("effects539/541/600/613/614/615/616 ThrowItem parity passed: PE/Ref callers, local variants and launch frames, exact textures")
