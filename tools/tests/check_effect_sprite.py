@@ -604,6 +604,29 @@ for token in ("effect.ProcessEffectSpriteProduction(profile.variant)",
 if "state1 refreshes origin without duplicate particle, resource, cue or RNG" not in LIFECYCLE:
     raise AssertionError("fireworks lifecycle fixture must verify later-state origin refresh without repeated output")
 
+# Effect584 variant8 couples a view-relative action profile with an unresolved
+# frame5 wave prefix. Preserve the bytes without inventing the suffix.
+effect584_fixture = re.search(
+    r"const DirectionCase directions\[\]\s*=\s*\{\{1\.0f,0\.0f,0\},\{0\.0f,1\.0f,3\},\{-1\.0f,0\.0f,2\},\{0\.0f,-1\.0f,1\}\};(.*?)(?=g_world\.m_player=oldPlayer;gameMode\.m_view=oldView;)",
+    LIFECYCLE, re.S)
+if effect584_fixture is None:
+    raise AssertionError("EffectLifecycleTests is missing effect584 four-direction variant8 coverage")
+effect584_block = effect584_fixture.group(1)
+for resource, va in (("expectedSpr", 0x71D1A0), ("expectedAct", 0x71D18C)):
+    literal = re.search(rf"const std::string {resource}=((?:\"(?:\\.|[^\"\\])*\"))", effect584_block)
+    if literal is None or ast.literal_eval(literal.group(1)).encode("latin-1") != image.read_cstring_at(va).raw:
+        raise AssertionError(f"effect584 fixture {resource} differs from exact PE resource bytes at {va:#x}")
+effect584_prefix = image.read_cstring_at(0x6F1FF0)
+if effect584_prefix is None or effect584_prefix.raw != b"effect\\":
+    raise AssertionError("effect584 frame5 cue must remain bound to exact unresolved PE prefix bytes at 0x6F1FF0")
+for token in ("ProcessEffectSpriteProduction(8)", "effect584 state4 refreshes caller origin",
+              "effect584 state5 dispatches only the exact unresolved PE prefix",
+              "effect584 state6 does not repeat prefix cue", "waveCalls[0].name==unresolvedPrefix",
+              "waveCalls[0].x==100&&waveCalls[0].y==0&&waveCalls[0].z==290",
+              "m_animSpeed==4&&!prim->m_repeatAnim", "prim->m_numSegments==1"):
+    if token not in effect584_block:
+        raise AssertionError(f"effect584 lifecycle fixture is missing required state/payload check: {token}")
+
 wave_vas = {630: 0x719BDC, 632: 0x719BF4, 633: 0x719C08, 637: 0x719B40,
             643: 0x719BB0, 644: 0x719B98, 648: 0x719B80}
 caller_wave_literals = {

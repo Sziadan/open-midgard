@@ -12884,6 +12884,67 @@ int main()
         rngValues.clear();rngCursor=0;waveCalls.clear();gameMode.m_view=oldView;testView.longitude=oldLongitude;
     }
     {
+        struct DirectionCase { float dx,dz;int action; };
+        const DirectionCase directions[]={{1.0f,0.0f,0},{0.0f,1.0f,3},{-1.0f,0.0f,2},{0.0f,-1.0f,1}};
+        CRenderObject master;master.m_pos={100,200,300};
+        CView* oldView=gameMode.m_view;const float oldLongitude=testView.longitude;
+        gameMode.m_view=&testView;testView.longitude=0.0f;
+        const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef02.spr";
+        const std::string expectedAct="\xC0\xCC\xC6\xD1\xC6\xAE\\m_ef02.act";
+        rngValues={};rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();const int draws=rngDraws;
+        for(const DirectionCase& direction:directions){
+            master.m_pos={100,200,300};
+            CRagEffect effect;effect.m_type=584;effect.m_stateCnt=0;effect.m_duration=83;effect.m_master=&master;
+            effect.m_deltaPos={master.m_pos.x-direction.dx,0.0f,master.m_pos.z-direction.dz};
+            check(effect.ProcessEffectSpriteProduction(8),"effect584 production Effect_SPR variant8 helper remains active");
+            CEffectPrim* prim=effect.m_primList.empty()?nullptr:effect.m_primList.front();
+            check(effect.m_primList.size()==1&&prim&&prim->m_type==PP_3DPARTICLE
+                &&prim->m_pos.x==100&&prim->m_pos.y==200&&prim->m_pos.z==300&&prim->m_duration==83
+                &&prim->m_deltaPos2.y==0.0f&&prim->m_renderFlag==0x201&&prim->m_pattern==0x200
+                &&prim->m_animSpeed==4&&!prim->m_repeatAnim&&prim->m_spriteAction==direction.action
+                &&prim->m_curMotion==0&&prim->m_spriteSprName==expectedSpr&&prim->m_spriteActName==expectedAct
+                &&g_resMgr.requests==std::vector<std::string>({expectedSpr,expectedAct})
+                &&prim->m_numSegments==1&&prim->m_segments[0].pos.x==100
+                &&prim->m_segments[0].pos.y==200&&prim->m_segments[0].pos.z==300
+                &&rngDraws==draws&&rngCursor==0&&waveCalls.empty(),
+                "effect584 variant8 state0 initializes exact PE particle and camera-facing action without cue or RNG");
+            const size_t requests=g_resMgr.requests.size();master.m_pos={110,210,310};effect.m_stateCnt=1;
+            check(effect.ProcessEffectSpriteProduction(8)&&effect.m_primList.size()==1
+                &&effect.m_effectPos.x==110&&effect.m_effectPos.y==210&&effect.m_effectPos.z==310
+                &&g_resMgr.requests.size()==requests&&rngDraws==draws&&rngCursor==0&&waveCalls.empty(),
+                "effect584 state1 refreshes origin without duplicate particle, resources, cue or RNG");
+            effect.ClearPrims();g_world.UpdateGameObjects();g_resMgr.requests.clear();
+        }
+        CRenderObject listener;listener.m_pos={10,900,20};
+        CRenderObject* oldPlayer=g_world.m_player;g_world.m_player=&listener;
+        CRagEffect cue;cue.m_type=584;cue.m_duration=83;cue.m_master=&master;cue.m_effectPos={1,2,3};
+        const std::string unresolvedPrefix="effect\\";
+        master.m_pos={100,200,300};cue.m_stateCnt=4;
+        check(cue.ProcessEffectSpriteProduction(8)&&cue.m_primList.empty()
+            &&g_resMgr.requests.empty()&&waveCalls.empty()&&cue.m_effectPos.x==100
+            &&cue.m_effectPos.y==200&&cue.m_effectPos.z==300&&rngDraws==draws&&rngCursor==0,
+            "effect584 state4 refreshes caller origin without cue, particle, resources or RNG");
+        master.m_pos={110,210,310};cue.m_stateCnt=5;
+        check(cue.ProcessEffectSpriteProduction(8)&&cue.m_primList.empty()
+            &&g_resMgr.requests.empty()&&waveCalls.size()==1&&waveCalls[0].name==unresolvedPrefix
+            &&waveCalls[0].x==100&&waveCalls[0].y==0&&waveCalls[0].z==290
+            &&waveCalls[0].volume==250&&waveCalls[0].range==40&&waveCalls[0].frequency==1
+            &&cue.m_effectPos.x==110&&cue.m_effectPos.y==210&&cue.m_effectPos.z==310
+            &&rngDraws==draws&&rngCursor==0,
+            "effect584 state5 dispatches only the exact unresolved PE prefix at listener-relative coordinates");
+        master.m_pos={120,220,320};cue.m_stateCnt=6;
+        check(cue.ProcessEffectSpriteProduction(8)&&cue.m_primList.empty()
+            &&g_resMgr.requests.empty()&&waveCalls.size()==1&&rngDraws==draws&&rngCursor==0,
+            "effect584 state6 does not repeat prefix cue or spawn variant8");
+        master.m_pos={130,230,330};cue.m_stateCnt=1;
+        check(cue.ProcessEffectSpriteProduction(8)&&cue.m_effectPos.x==130&&cue.m_effectPos.y==230
+            &&cue.m_effectPos.z==330&&cue.m_primList.empty()&&g_resMgr.requests.empty()
+            &&waveCalls.size()==1&&rngDraws==draws&&rngCursor==0,
+            "effect584 later state refreshes origin without repeated cue, particle, resources or RNG");
+        rngValues.clear();rngCursor=0;waveCalls.clear();g_resMgr.requests.clear();
+        g_world.m_player=oldPlayer;gameMode.m_view=oldView;testView.longitude=oldLongitude;
+    }
+    {
         CRenderObject master;master.m_pos={20,30,40};
         CRagEffect effect;effect.m_type=648;effect.m_stateCnt=0;effect.m_duration=78;effect.m_master=&master;
         const std::string expectedSpr="\xC0\xCC\xC6\xD1\xC6\xAE\\\xC6\xAE\xB8\xAE\xC7\xC3\xBE\xD7\xBC\xC7.spr";
