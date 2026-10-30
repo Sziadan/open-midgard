@@ -126,7 +126,7 @@ int MeasureWrappedTextHeight(HDC hdc, int width, const std::string& text)
     }
 
 #if RO_ENABLE_QT6_UI
-    QFont font(QStringLiteral("MS Sans Serif"));
+    QFont font(QStringLiteral("Segoe UI"));
     font.setPixelSize(11);
     font.setStyleStrategy(QFont::NoAntialias);
     const QRect bounds = QFontMetrics(font).boundingRect(

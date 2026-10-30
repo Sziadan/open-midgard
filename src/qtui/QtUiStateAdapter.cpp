@@ -1861,6 +1861,8 @@ void PopulateChatWindowState(QtUiState* state)
     chatUi.insert(QStringLiteral("tabs"), tabs);
     chatUi.insert(QStringLiteral("fontPixelSize"), chatWnd->GetFontPixelSize());
     chatUi.insert(QStringLiteral("windowOpacityPercent"), chatWnd->GetWindowOpacityPercent());
+    chatUi.insert(QStringLiteral("idleOpacityPercent"), chatWnd->GetIdleOpacityPercent());
+    chatUi.insert(QStringLiteral("focused"), chatWnd->IsWindowFocused());
     chatUi.insert(QStringLiteral("configVisible"), chatWnd->IsConfigVisible());
 
     int configX = 0;

@@ -2,6 +2,7 @@ import QtQuick 2.15
 
 Item {
     id: root
+    RoTheme { id: theme }
     width: parent ? parent.width : 1280
     height: parent ? parent.height : 720
     property bool loginCaretVisible: true
@@ -12,7 +13,11 @@ Item {
     }
 
     function chatChromeOpacity(chatUi) {
-        return Math.max(0.2, Math.min(1.0, ((chatUi && chatUi.windowOpacityPercent) || 84) / 100.0))
+        const focused = !!(chatUi && chatUi.focused)
+        const percent = focused
+            ? ((chatUi && chatUi.windowOpacityPercent) || 84)
+            : ((chatUi && chatUi.idleOpacityPercent) || 45)
+        return Math.max(0.2, Math.min(1.0, percent / 100.0))
     }
 
     function clampValue(value, minValue, maxValue) {
@@ -76,8 +81,8 @@ Item {
             return ""
         }
 
-        let out = "<span style=\"color:#111111\">"
-        let currentColor = "111111"
+        let out = "<span style=\"color:#1c1914\">"
+        let currentColor = "2a261f"
         for (let index = 0; index < text.length; ++index) {
             const ch = text[index]
             if (ch === "^" && index + 6 < text.length) {
@@ -265,6 +270,7 @@ Item {
                 text: modelData.text
                 visible: !parent.isPartyHpBar
                 color: modelData.foreground
+                font.family: theme.fontFamily
                 font.pixelSize: modelData.fontPixelSize || 14
                 font.bold: modelData.bold !== false
                 wrapMode: parent.wrapText ? Text.Wrap : Text.NoWrap
@@ -273,16 +279,13 @@ Item {
         }
     }
 
-    Rectangle {
+    RoFrame {
+        showTitle: false
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 42
         width: Math.min(540, parent.width - 80)
         height: 92
-        radius: 8
-        color: "#e6191f26"
-        border.width: 1
-        border.color: "#c2b067"
         visible: uiState.loadingVisible
 
         Column {
@@ -296,7 +299,8 @@ Item {
                 Text {
                     id: loadingTitle
                     text: uiState.loadingProgress > 0 ? "Entering World" : uiState.modeName
-                    color: "#f5efdd"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 22
                     font.bold: true
                 }
@@ -309,7 +313,8 @@ Item {
                 Text {
                     id: loadingPercent
                     text: Math.round(uiState.loadingProgress * 100) + "%"
-                    color: "#f5efdd"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 22
                     font.bold: true
                     visible: uiState.loadingProgress > 0
@@ -319,7 +324,8 @@ Item {
             Text {
                 width: parent.width
                 text: uiState.loadingMessage
-                color: "#f5efdd"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 16
                 elide: Text.ElideRight
             }
@@ -327,10 +333,10 @@ Item {
             Rectangle {
                 width: parent.width
                 height: 20
-                radius: 4
-                color: "#323a44"
+                radius: theme.buttonRadius
+                color: theme.scrollTrack
                 border.width: 1
-                border.color: "#c2b067"
+                border.color: theme.gold
                 visible: uiState.loadingProgress > 0
 
                 Rectangle {
@@ -340,7 +346,7 @@ Item {
                     width: Math.max(0, (parent.width - 4) * uiState.loadingProgress)
                     height: parent.height - 4
                     radius: 3
-                    color: "#e6c658"
+                    color: theme.gold
                 }
             }
         }
@@ -358,49 +364,38 @@ Item {
     Repeater {
         model: uiState.notifications
 
-        delegate: Rectangle {
+        delegate: RoFrame {
             required property var modelData
+            showTitle: false
             x: modelData.x
             y: modelData.y
             width: modelData.width
             height: modelData.height
-            radius: 6
-            color: "#de1f2328"
-            border.width: 1
-            border.color: modelData.accent
 
             Rectangle {
-                x: 2
-                y: 2
-                width: parent.width - 4
-                height: parent.height - 4
-                radius: 5
-                color: "#ee2b3138"
-                border.width: 1
-                border.color: "#70ffffff"
+                width: 3
+                height: parent.height
+                color: modelData.accent
             }
 
             Text {
                 anchors.centerIn: parent
                 text: modelData.title
-                color: "#f7f2df"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 18
                 font.bold: true
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
+        showTitle: false
         x: uiState.npcMenuX
         y: uiState.npcMenuY
         width: uiState.npcMenuWidth
         height: uiState.npcMenuHeight
-        radius: 10
-        color: "#f8f8f8"
-        border.width: 1
-        border.color: "#828282"
         visible: uiState.npcMenuVisible
-
         Column {
             x: 10
             y: 10
@@ -416,10 +411,16 @@ Item {
                     width: parent.width
                     height: 18
                     color: index === uiState.npcMenuSelectedIndex
-                        ? "#d1e0f4"
-                        : (index === uiState.npcMenuHoverIndex ? "#e8eff8" : "transparent")
+                        ? theme.rowSelected
+                        : (index === uiState.npcMenuHoverIndex ? theme.rowHover : "transparent")
                     border.width: (index === uiState.npcMenuSelectedIndex || index === uiState.npcMenuHoverIndex) ? 1 : 0
-                    border.color: "#a0b4cd"
+                    border.color: theme.gold
+
+                    Rectangle {
+                        width: index === uiState.npcMenuSelectedIndex ? 3 : 0
+                        height: parent.height
+                        color: theme.gold
+                    }
 
                     Text {
                         anchors.left: parent.left
@@ -428,6 +429,7 @@ Item {
                         width: parent.width - 8
                         text: modelData
                         textFormat: Text.RichText
+                        font.family: theme.fontFamily
                         font.pixelSize: 12
                         clip: true
                     }
@@ -438,37 +440,25 @@ Item {
         Repeater {
             model: uiState.npcMenuButtons
 
-            delegate: Rectangle {
+            delegate: RoTextButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.npcMenuX
                 y: (modelData.y || 0) - uiState.npcMenuY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                color: modelData.pressed ? "#c4c4c4" : "#f0f0f0"
-                border.width: 1
-                border.color: "#6e6e6e"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#000000"
-                    font.pixelSize: 12
-                }
+                pressed: modelData.pressed || false
+                label: modelData.label || ""
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
+        showTitle: false
         x: uiState.sayDialogX
         y: uiState.sayDialogY
         width: uiState.sayDialogWidth
         height: uiState.sayDialogHeight
-        radius: 10
-        color: "#f8f8f8"
-        border.width: 1
-        border.color: "#828282"
         visible: uiState.sayDialogVisible
-
         Text {
             x: 10
             y: 10
@@ -476,58 +466,47 @@ Item {
             height: uiState.sayDialogHasAction ? (parent.height - 10 - 10 - 22 - 8) : (parent.height - 20)
             text: uiState.sayDialogText
             textFormat: Text.RichText
+            font.family: theme.fontFamily
             font.pixelSize: 12
             wrapMode: Text.WordWrap
             verticalAlignment: Text.AlignTop
         }
 
-        Rectangle {
+        RoTextButton {
             x: (uiState.sayDialogActionButton.x || 0) - uiState.sayDialogX
             y: (uiState.sayDialogActionButton.y || 0) - uiState.sayDialogY
             width: uiState.sayDialogActionButton.width || 0
             height: uiState.sayDialogActionButton.height || 0
             visible: uiState.sayDialogActionButton.visible || false
-            color: (uiState.sayDialogActionButton.pressed || false) ? "#c4c4c4" : ((uiState.sayDialogActionButton.hovered || false) ? "#e4e4e4" : "#f0f0f0")
-            border.width: 1
-            border.color: "#6e6e6e"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.sayDialogActionButton.label || ""
-                color: "#000000"
-                font.pixelSize: 12
-            }
+            pressed: uiState.sayDialogActionButton.pressed || false
+            hovered: uiState.sayDialogActionButton.hovered || false
+            label: uiState.sayDialogActionButton.label || ""
         }
     }
 
-    Rectangle {
+    RoFrame {
+        showTitle: false
         x: uiState.npcInputX
         y: uiState.npcInputY
         width: uiState.npcInputWidth
         height: uiState.npcInputHeight
-        radius: 10
-        color: "#f8f8f8"
-        border.width: 1
-        border.color: "#828282"
         visible: uiState.npcInputVisible
-
         Text {
             x: 10
             y: 9
             width: parent.width - 20
             text: uiState.npcInputLabel
-            color: "#000000"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 12
         }
 
-        Rectangle {
+        RoField {
             x: 10
             y: 26
             width: parent.width - 20
             height: 22
-            color: "#fff7c8"
-            border.width: 1
-            border.color: "#000000"
+            editing: true
 
             Text {
                 anchors.left: parent.left
@@ -535,7 +514,8 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 12
                 text: uiState.npcInputText
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 12
                 elide: Text.ElideRight
             }
@@ -544,37 +524,25 @@ Item {
         Repeater {
             model: uiState.npcInputButtons
 
-            delegate: Rectangle {
+            delegate: RoTextButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.npcInputX
                 y: (modelData.y || 0) - uiState.npcInputY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                color: modelData.pressed ? "#c4c4c4" : "#f0f0f0"
-                border.width: 1
-                border.color: "#6e6e6e"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#000000"
-                    font.pixelSize: 12
-                }
+                pressed: modelData.pressed || false
+                label: modelData.label || ""
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
+        showTitle: false
         x: uiState.chooseMenuX
         y: uiState.chooseMenuY
         width: uiState.chooseMenuWidth
         height: uiState.chooseMenuHeight
-        radius: 8
-        color: "#ffffff"
-        border.width: 1
-        border.color: "#b8b8b8"
         visible: uiState.chooseMenuVisible
-
         Repeater {
             model: uiState.chooseMenuOptions
 
@@ -585,46 +553,37 @@ Item {
                 y: 12 + index * 23
                 width: 221
                 height: 20
+                radius: theme.buttonRadius
                 color: index === uiState.chooseMenuPressedIndex
-                    ? "#b7c8de"
-                    : (index === uiState.chooseMenuSelectedIndex ? "#cad8ea" : "#f1f1f1")
+                    ? theme.buttonPressed
+                    : (index === uiState.chooseMenuSelectedIndex ? theme.rowSelected : theme.button)
                 border.width: 1
-                border.color: "#8f8f8f"
+                border.color: index === uiState.chooseMenuSelectedIndex ? theme.gold : theme.buttonBorder
 
                 Text {
                     anchors.centerIn: parent
                     text: modelData
-                    color: "#1a1a1a"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 12
                 }
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.itemShopX
         y: uiState.itemShopY
         width: uiState.itemShopWidth
         height: uiState.itemShopHeight
-        color: "#ececec"
-        border.width: 1
-        border.color: "#484848"
         visible: uiState.itemShopVisible
-
-        Rectangle {
-            x: 0
-            y: 0
-            width: parent.width
-            height: 17
-            color: "#52657b"
-        }
-
         Text {
             x: 6
             y: 1
             text: uiState.itemShopData.title || uiState.itemShopTitle
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
@@ -633,9 +592,9 @@ Item {
             y: 22
             width: parent.width - 16
             height: parent.height - 34
-            color: "#f8f8f8"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#787878"
+            border.color: theme.buttonBorder
 
             Column {
                 x: 1
@@ -646,14 +605,15 @@ Item {
                 Rectangle {
                     width: parent.width
                     height: 17
-                    color: "#dee5ed"
+                    color: theme.rowAlt
 
                     Text {
                         x: 26
                         y: 2
                         width: (uiState.itemShopData.showQuantity || false) ? 160 : (parent.width - 110)
                         text: uiState.itemShopData.nameLabel || ""
-                        color: "#1e1e1e"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 11
                     }
 
@@ -663,7 +623,8 @@ Item {
                         width: 38
                         visible: uiState.itemShopData.showQuantity || false
                         text: uiState.itemShopData.quantityLabel || ""
-                        color: "#1e1e1e"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -673,7 +634,8 @@ Item {
                         y: 2
                         width: 54
                         text: uiState.itemShopData.priceLabel || ""
-                        color: "#1e1e1e"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignRight
                     }
@@ -686,14 +648,21 @@ Item {
                         required property var modelData
                         width: parent.width
                         height: 18
-                        color: modelData.selected ? "#bccce2" : (modelData.hover ? "#e2eaf4" : "transparent")
+                        color: modelData.selected ? theme.rowSelected : (modelData.hover ? theme.rowHover : "transparent")
+
+                        Rectangle {
+                            width: modelData.selected ? 3 : 0
+                            height: parent.height
+                            color: theme.gold
+                        }
 
                         Text {
                             x: 24
                             y: 2
                             width: (uiState.itemShopData.showQuantity || false) ? 160 : (parent.width - 110)
                             text: modelData.name
-                            color: "#1a1a1a"
+                            color: theme.ink
+                            font.family: theme.fontFamily
                             font.pixelSize: 11
                             elide: Text.ElideRight
                         }
@@ -704,7 +673,8 @@ Item {
                             width: 38
                             visible: uiState.itemShopData.showQuantity || false
                             text: modelData.quantity
-                            color: "#303030"
+                            color: theme.ink
+                            font.family: theme.fontFamily
                             font.pixelSize: 11
                             horizontalAlignment: Text.AlignHCenter
                         }
@@ -714,7 +684,8 @@ Item {
                             y: 2
                             width: 70
                             text: modelData.price
-                            color: "#1c3c62"
+                            color: theme.titleBottom
+                            font.family: theme.fontFamily
                             font.pixelSize: 11
                             horizontalAlignment: Text.AlignRight
                         }
@@ -724,30 +695,19 @@ Item {
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.itemPurchaseX
         y: uiState.itemPurchaseY
         width: uiState.itemPurchaseWidth
         height: uiState.itemPurchaseHeight
-        color: "#ececec"
-        border.width: 1
-        border.color: "#484848"
         visible: uiState.itemPurchaseVisible
-
-        Rectangle {
-            x: 0
-            y: 0
-            width: parent.width
-            height: 17
-            color: "#52657b"
-        }
-
         Text {
             x: 6
             y: 1
             text: uiState.itemPurchaseData.title || ""
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
@@ -756,9 +716,9 @@ Item {
             y: 22
             width: parent.width - 16
             height: parent.height - 80
-            color: "#f8f8f8"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#787878"
+            border.color: theme.buttonBorder
 
             Column {
                 x: 1
@@ -769,13 +729,14 @@ Item {
                 Rectangle {
                     width: parent.width
                     height: 17
-                    color: "#dee5ed"
+                    color: theme.rowAlt
 
                     Text {
                         x: 4
                         y: 2
                         text: uiState.itemPurchaseData.nameLabel || ""
-                        color: "#1e1e1e"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 11
                     }
 
@@ -784,7 +745,8 @@ Item {
                         y: 2
                         width: 34
                         text: uiState.itemPurchaseData.quantityLabel || ""
-                        color: "#1e1e1e"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -794,7 +756,8 @@ Item {
                         y: 2
                         width: 56
                         text: uiState.itemPurchaseData.amountLabel || ""
-                        color: "#1e1e1e"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignRight
                     }
@@ -807,14 +770,21 @@ Item {
                         required property var modelData
                         width: parent.width
                         height: 18
-                        color: modelData.selected ? "#bccce2" : (modelData.hover ? "#e2eaf4" : "transparent")
+                        color: modelData.selected ? theme.rowSelected : (modelData.hover ? theme.rowHover : "transparent")
+
+                        Rectangle {
+                            width: modelData.selected ? 3 : 0
+                            height: parent.height
+                            color: theme.gold
+                        }
 
                         Text {
                             x: 4
                             y: 2
                             width: 126
                             text: modelData.name
-                            color: "#1a1a1a"
+                            color: theme.ink
+                            font.family: theme.fontFamily
                             font.pixelSize: 11
                             elide: Text.ElideRight
                         }
@@ -824,7 +794,8 @@ Item {
                             y: 2
                             width: 34
                             text: modelData.quantity
-                            color: "#303030"
+                            color: theme.ink
+                            font.family: theme.fontFamily
                             font.pixelSize: 11
                             horizontalAlignment: Text.AlignHCenter
                         }
@@ -834,7 +805,8 @@ Item {
                             y: 2
                             width: 56
                             text: modelData.cost
-                            color: "#1c3c62"
+                            color: theme.titleBottom
+                            font.family: theme.fontFamily
                             font.pixelSize: 11
                             horizontalAlignment: Text.AlignRight
                         }
@@ -847,7 +819,8 @@ Item {
             x: 10
             y: height - 75
             text: uiState.itemPurchaseData.totalLabel || ""
-            color: "#242424"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 11
         }
 
@@ -856,7 +829,8 @@ Item {
             y: height - 75
             width: 138
             text: uiState.itemPurchaseTotal
-            color: "#1c3c62"
+            color: theme.titleBottom
+            font.family: theme.fontFamily
             font.pixelSize: 11
             horizontalAlignment: Text.AlignRight
         }
@@ -864,50 +838,34 @@ Item {
         Repeater {
             model: uiState.itemPurchaseButtons
 
-            delegate: Rectangle {
+            delegate: RoTextButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.itemPurchaseX
                 y: (modelData.y || 0) - uiState.itemPurchaseY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                color: modelData.pressed ? "#aab9cd" : (modelData.hot ? "#c4d2e4" : "#dcdcdc")
-                border.width: 1
-                border.color: "#585858"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#181818"
-                    font.pixelSize: 12
-                }
+                pressed: modelData.pressed || false
+                hovered: modelData.hot || false
+                label: modelData.label || ""
+                labelSize: 12
+                labelBold: false
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.itemSellX
         y: uiState.itemSellY
         width: uiState.itemSellWidth
         height: uiState.itemSellHeight
-        color: "#ececec"
-        border.width: 1
-        border.color: "#484848"
         visible: uiState.itemSellVisible
-
-        Rectangle {
-            x: 0
-            y: 0
-            width: parent.width
-            height: 17
-            color: "#52657b"
-        }
-
         Text {
             x: 6
             y: 1
             text: uiState.itemSellData.title || ""
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
@@ -916,9 +874,9 @@ Item {
             y: 22
             width: parent.width - 16
             height: parent.height - 80
-            color: "#f8f8f8"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#787878"
+            border.color: theme.buttonBorder
 
             Column {
                 x: 1
@@ -929,13 +887,14 @@ Item {
                 Rectangle {
                     width: parent.width
                     height: 17
-                    color: "#dee5ed"
+                    color: theme.rowAlt
 
                     Text {
                         x: 4
                         y: 2
                         text: uiState.itemSellData.nameLabel || ""
-                        color: "#1e1e1e"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 11
                     }
 
@@ -944,7 +903,8 @@ Item {
                         y: 2
                         width: 34
                         text: uiState.itemSellData.quantityLabel || ""
-                        color: "#1e1e1e"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -954,7 +914,8 @@ Item {
                         y: 2
                         width: 56
                         text: uiState.itemSellData.amountLabel || ""
-                        color: "#1e1e1e"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignRight
                     }
@@ -967,14 +928,21 @@ Item {
                         required property var modelData
                         width: parent.width
                         height: 18
-                        color: modelData.selected ? "#bccce2" : (modelData.hover ? "#e2eaf4" : "transparent")
+                        color: modelData.selected ? theme.rowSelected : (modelData.hover ? theme.rowHover : "transparent")
+
+                        Rectangle {
+                            width: modelData.selected ? 3 : 0
+                            height: parent.height
+                            color: theme.gold
+                        }
 
                         Text {
                             x: 4
                             y: 2
                             width: 126
                             text: modelData.name
-                            color: "#1a1a1a"
+                            color: theme.ink
+                            font.family: theme.fontFamily
                             font.pixelSize: 11
                             elide: Text.ElideRight
                         }
@@ -984,7 +952,8 @@ Item {
                             y: 2
                             width: 34
                             text: modelData.quantity
-                            color: "#303030"
+                            color: theme.ink
+                            font.family: theme.fontFamily
                             font.pixelSize: 11
                             horizontalAlignment: Text.AlignHCenter
                         }
@@ -994,7 +963,8 @@ Item {
                             y: 2
                             width: 56
                             text: modelData.gain
-                            color: "#1c3c62"
+                            color: theme.titleBottom
+                            font.family: theme.fontFamily
                             font.pixelSize: 11
                             horizontalAlignment: Text.AlignRight
                         }
@@ -1007,7 +977,8 @@ Item {
             x: 10
             y: height - 75
             text: uiState.itemSellData.totalLabel || ""
-            color: "#242424"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 11
         }
 
@@ -1016,7 +987,8 @@ Item {
             y: height - 75
             width: 138
             text: uiState.itemSellTotal
-            color: "#1c3c62"
+            color: theme.titleBottom
+            font.family: theme.fontFamily
             font.pixelSize: 11
             horizontalAlignment: Text.AlignRight
         }
@@ -1024,37 +996,28 @@ Item {
         Repeater {
             model: uiState.itemSellButtons
 
-            delegate: Rectangle {
+            delegate: RoTextButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.itemSellX
                 y: (modelData.y || 0) - uiState.itemSellY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                color: modelData.pressed ? "#aab9cd" : (modelData.hot ? "#c4d2e4" : "#dcdcdc")
-                border.width: 1
-                border.color: "#585858"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#181818"
-                    font.pixelSize: 12
-                }
+                pressed: modelData.pressed || false
+                hovered: modelData.hot || false
+                label: modelData.label || ""
+                labelSize: 12
+                labelBold: false
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
+        showTitle: false
         x: uiState.shortCutX
         y: uiState.shortCutY
         width: uiState.shortCutWidth
         height: uiState.shortCutHeight
-        radius: 4
-        color: "#d0d0d0"
-        border.width: 1
-        border.color: "#606060"
         visible: uiState.shortCutVisible
-
         Repeater {
             model: uiState.shortCutSlots
 
@@ -1065,9 +1028,10 @@ Item {
                 y: 4
                 width: 24
                 height: 24
-                color: modelData.hover ? "#d0d8e8" : "#f0f0f0"
+                color: modelData.hover ? theme.rowHover : theme.fieldFill
                 border.width: 1
-                border.color: modelData.isSkill ? "#6a4fb0" : "#6a6a6a"
+                border.color: modelData.hover ? theme.gold : (modelData.isSkill ? theme.titleBottom : theme.buttonBorder)
+                radius: theme.buttonRadius
 
                 Image {
                     id: shortCutIcon
@@ -1086,7 +1050,8 @@ Item {
                     width: parent.width - 4
                     text: modelData.occupied ? (modelData.isSkill ? "S" : "I") : ""
                     visible: !shortCutIcon.visible
-                    color: "#202020"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                     font.bold: true
                 }
@@ -1097,6 +1062,7 @@ Item {
                     anchors.bottom: parent.bottom
                     text: modelData.count > 0 ? modelData.count : ""
                     color: "#ffffff"
+                    font.family: theme.fontFamily
                     font.pixelSize: 9
                     font.bold: true
                     style: Text.Outline
@@ -1111,6 +1077,7 @@ Item {
             width: 12
             text: uiState.shortCutPage
             color: "#ffffff"
+            font.family: theme.fontFamily
             font.pixelSize: 11
             font.bold: true
             style: Text.Outline
@@ -1119,59 +1086,33 @@ Item {
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.basicInfoX
         y: uiState.basicInfoY
         width: uiState.basicInfoWidth
         height: uiState.basicInfoHeight
-        radius: 4
-        color: uiState.basicInfoMini ? "#ece7d8" : "#ede9df"
-        border.width: 1
-        border.color: "#6b675f"
         visible: uiState.basicInfoVisible
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#6e8194"
-            border.width: 1
-            border.color: "#4e5d6c"
-        }
-
         Text {
             x: uiState.basicInfoMini ? 9 : 17
             y: 3
             text: uiState.basicInfoMini ? (uiState.basicInfoData.name || "") : "Basic Info"
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
         Repeater {
             model: uiState.basicInfoData.systemButtons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.basicInfoX
                 y: (modelData.y || 0) - uiState.basicInfoY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 2
-                color: "#d7d2c5"
-                border.width: 1
-                border.color: "#7f7a70"
                 visible: modelData.visible || false
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#000000"
-                    font.pixelSize: 8
-                    font.bold: true
-                }
+                label: modelData.label || ""
             }
         }
 
@@ -1180,7 +1121,8 @@ Item {
             y: 18
             visible: uiState.basicInfoMini
             text: uiState.basicInfoData.miniHeaderText || ""
-            color: "#000000"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 11
         }
 
@@ -1189,82 +1131,142 @@ Item {
             y: 33
             visible: uiState.basicInfoMini
             text: uiState.basicInfoData.miniStatusText || ""
-            color: "#000000"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 11
         }
 
         Text {
-            x: 9
-            y: 24
+            x: 8
+            y: 22
+            width: 76
             visible: !uiState.basicInfoMini
             text: uiState.basicInfoData.name || ""
-            color: "#000000"
-            font.pixelSize: 12
+            color: theme.ink
+            font.family: theme.fontFamily
+            font.pixelSize: 13
+            font.bold: true
+            elide: Text.ElideRight
         }
 
         Text {
-            x: 9
-            y: 38
+            x: 8
+            y: 37
+            width: 76
             visible: !uiState.basicInfoMini
             text: uiState.basicInfoData.jobName || ""
-            color: "#000000"
-            font.pixelSize: 12
+            color: theme.ink
+            font.family: theme.fontFamily
+            font.pixelSize: 11
+            elide: Text.ElideRight
         }
 
         Rectangle {
-            x: 110
-            y: 22
-            width: 85
-            height: 9
+            x: 86
+            y: 20
+            width: 117
+            height: 16
             visible: !uiState.basicInfoMini
-            color: "#403c3c"
+            radius: 3
+            clip: true
+            color: "#2e2924"
             border.width: 1
-            border.color: "#202020"
+            border.color: "#6d6154"
 
             Rectangle {
-                x: 1
-                y: 1
-                width: Math.max(0, (parent.width - 2) * ((uiState.basicInfoData.maxHp || 0) > 0 ? (uiState.basicInfoData.hp || 0) / uiState.basicInfoData.maxHp : 0))
-                height: parent.height - 2
-                color: ((uiState.basicInfoData.maxHp || 0) > 0 && (uiState.basicInfoData.hp || 0) * 100 < uiState.basicInfoData.maxHp * 25) ? "#d04848" : "#d06060"
+                width: Math.max(0, parent.width * ((uiState.basicInfoData.maxHp || 0) > 0 ? (uiState.basicInfoData.hp || 0) / uiState.basicInfoData.maxHp : 0))
+                height: parent.height
+                color: ((uiState.basicInfoData.maxHp || 0) > 0 && (uiState.basicInfoData.hp || 0) * 100 < uiState.basicInfoData.maxHp * 25) ? "#c43434" : "#e15b55"
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 5
+                color: "#18ffffff"
+            }
+
+            Text {
+                x: 6
+                anchors.verticalCenter: parent.verticalCenter
+                text: "HP"
+                color: "#fff6ec"
+                font.family: theme.fontFamily
+                font.pixelSize: 10
+                font.bold: true
+                style: Text.Outline
+                styleColor: "#1a120e"
+            }
+
+            Text {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.leftMargin: 26
+                anchors.rightMargin: 6
+                anchors.verticalCenter: parent.verticalCenter
+                text: (uiState.basicInfoData.hp || 0) + " / " + (uiState.basicInfoData.maxHp || 0)
+                color: "#fff8f2"
+                font.family: theme.fontFamily
+                font.pixelSize: 11
+                font.bold: true
+                horizontalAlignment: Text.AlignRight
+                elide: Text.ElideLeft
+                style: Text.Outline
+                styleColor: "#1a120e"
             }
         }
 
         Rectangle {
-            x: 110
-            y: 43
-            width: 85
-            height: 9
+            x: 86
+            y: 44
+            width: 117
+            height: 16
             visible: !uiState.basicInfoMini
-            color: "#403c3c"
+            radius: 3
+            clip: true
+            color: "#2e2924"
             border.width: 1
-            border.color: "#202020"
+            border.color: "#6d6154"
 
             Rectangle {
-                x: 1
-                y: 1
-                width: Math.max(0, (parent.width - 2) * ((uiState.basicInfoData.maxSp || 0) > 0 ? (uiState.basicInfoData.sp || 0) / uiState.basicInfoData.maxSp : 0))
-                height: parent.height - 2
-                color: "#4a78d8"
+                width: Math.max(0, parent.width * ((uiState.basicInfoData.maxSp || 0) > 0 ? (uiState.basicInfoData.sp || 0) / uiState.basicInfoData.maxSp : 0))
+                height: parent.height
+                color: "#4d86e0"
             }
-        }
 
-        Text {
-            x: 95
-            y: 31
-            visible: !uiState.basicInfoMini
-            text: uiState.basicInfoData.hpText || ""
-            color: "#000000"
-            font.pixelSize: 10
-        }
+            Rectangle {
+                width: parent.width
+                height: 5
+                color: "#18ffffff"
+            }
 
-        Text {
-            x: 95
-            y: 52
-            visible: !uiState.basicInfoMini
-            text: uiState.basicInfoData.spText || ""
-            color: "#000000"
-            font.pixelSize: 10
+            Text {
+                x: 6
+                anchors.verticalCenter: parent.verticalCenter
+                text: "SP"
+                color: "#f4f8ff"
+                font.family: theme.fontFamily
+                font.pixelSize: 10
+                font.bold: true
+                style: Text.Outline
+                styleColor: "#101820"
+            }
+
+            Text {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.leftMargin: 26
+                anchors.rightMargin: 6
+                anchors.verticalCenter: parent.verticalCenter
+                text: (uiState.basicInfoData.sp || 0) + " / " + (uiState.basicInfoData.maxSp || 0)
+                color: "#f7fbff"
+                font.family: theme.fontFamily
+                font.pixelSize: 11
+                font.bold: true
+                horizontalAlignment: Text.AlignRight
+                elide: Text.ElideLeft
+                style: Text.Outline
+                styleColor: "#101820"
+            }
         }
 
         Text {
@@ -1272,7 +1274,8 @@ Item {
             y: 72
             visible: !uiState.basicInfoMini
             text: uiState.basicInfoData.baseLevelText || ""
-            color: "#000000"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 11
         }
 
@@ -1282,9 +1285,9 @@ Item {
             width: 102
             height: 6
             visible: !uiState.basicInfoMini
-            color: "#ffffff"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#808080"
+            border.color: theme.buttonBorder
 
             Rectangle {
                 x: 1
@@ -1300,7 +1303,8 @@ Item {
             y: 84
             visible: !uiState.basicInfoMini
             text: uiState.basicInfoData.jobLevelText || ""
-            color: "#000000"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 11
         }
 
@@ -1310,9 +1314,9 @@ Item {
             width: 102
             height: 6
             visible: !uiState.basicInfoMini
-            color: "#ffffff"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#808080"
+            border.color: theme.buttonBorder
 
             Rectangle {
                 x: 1
@@ -1328,7 +1332,8 @@ Item {
             y: 103
             visible: !uiState.basicInfoMini
             text: uiState.basicInfoData.weightText || ""
-            color: ((uiState.basicInfoData.maxWeight || 0) > 0 && (uiState.basicInfoData.weight || 0) * 100 >= uiState.basicInfoData.maxWeight * 50) ? "#ff0000" : "#000000"
+            color: ((uiState.basicInfoData.maxWeight || 0) > 0 && (uiState.basicInfoData.weight || 0) * 100 >= uiState.basicInfoData.maxWeight * 50) ? "#c44848" : theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 11
         }
 
@@ -1337,89 +1342,53 @@ Item {
             y: 103
             visible: !uiState.basicInfoMini
             text: uiState.basicInfoData.moneyText || ""
-            color: "#000000"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 11
         }
 
         Repeater {
             model: uiState.basicInfoData.menuButtons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.basicInfoX
                 y: (modelData.y || 0) - uiState.basicInfoY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 3
-                color: "#d7d2c5"
-                border.width: 1
-                border.color: "#7f7a70"
                 visible: modelData.visible || false
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#000000"
-                    font.pixelSize: 8
-                    font.bold: true
-                }
+                label: modelData.label || ""
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.statusX
         y: uiState.statusY
         width: uiState.statusWidth
         height: uiState.statusHeight
-        radius: 4
-        color: uiState.statusMini ? "#ece7d8" : "#ede9df"
-        border.width: 1
-        border.color: "#6b675f"
         visible: uiState.statusVisible
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: uiState.statusMini ? "#d5d0c2" : "#6e8194"
-            border.width: 1
-            border.color: uiState.statusMini ? "#8b877b" : "#4e5d6c"
-        }
-
         Text {
             x: 17
             y: 3
             text: uiState.statusData.title || ""
-            color: uiState.statusMini ? "#000000" : "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
         Repeater {
             model: uiState.statusData.systemButtons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.statusX
                 y: (modelData.y || 0) - uiState.statusY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 2
-                color: "#d7d2c5"
-                border.width: 1
-                border.color: "#7f7a70"
                 visible: modelData.visible || false
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#000000"
-                    font.pixelSize: 8
-                    font.bold: true
-                }
+                label: modelData.label || ""
             }
         }
 
@@ -1428,7 +1397,8 @@ Item {
             y: 3
             visible: uiState.statusMini
             text: uiState.statusData.miniPointsText || ""
-            color: "#000000"
+            color: theme.titleText
+            font.family: theme.fontFamily
             font.pixelSize: 11
         }
 
@@ -1437,7 +1407,7 @@ Item {
             y: 17
             width: parent.width
             height: parent.height - 17
-            color: "#e7e2d6"
+            color: "transparent"
             border.width: 0
             visible: !uiState.statusMini
 
@@ -1446,7 +1416,7 @@ Item {
                 y: 0
                 width: 20
                 height: parent.height
-                color: "#d3cdbf"
+                color: theme.rowAlt
             }
 
             Repeater {
@@ -1458,15 +1428,16 @@ Item {
                     y: (modelData.y || 0) - uiState.statusY - 17
                     width: modelData.width || 0
                     height: modelData.height || 0
-                    color: modelData.active ? "#ebe7db" : "#c9c2b2"
+                    color: modelData.active ? theme.button : theme.rowAlt
                     border.width: 1
-                    border.color: "#8c8578"
+                    border.color: modelData.active ? theme.gold : theme.buttonBorder
                     visible: modelData.visible || false
 
                     Text {
                         anchors.centerIn: parent
                         text: modelData.label || ""
-                        color: "#000000"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 10
                         font.bold: modelData.active || false
                     }
@@ -1491,7 +1462,8 @@ Item {
                             x: 0
                             y: 0
                             text: modelData.label
-                            color: "#000000"
+                            color: theme.ink
+                            font.family: theme.fontFamily
                             font.pixelSize: 11
                             font.bold: true
                         }
@@ -1501,28 +1473,20 @@ Item {
                             y: 0
                             width: 34
                             text: modelData.value
-                            color: "#000000"
+                            color: theme.ink
+                            font.family: theme.fontFamily
                             font.pixelSize: 11
                         }
 
-                        Rectangle {
+                        RoChromeButton {
                             x: 64
                             y: 1
                             width: modelData.increaseWidth || 0
                             height: modelData.increaseHeight || 0
-                            radius: 2
                             visible: modelData.canIncrease
-                            color: "#d8d8d8"
-                            border.width: 1
-                            border.color: "#7f7a70"
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: modelData.increaseLabel || ""
-                                color: "#000000"
-                                font.pixelSize: 8
-                                font.bold: true
-                            }
+                            label: modelData.increaseLabel || ""
+                            labelSize: 8
+                            labelBold: true
                         }
 
                         Text {
@@ -1530,7 +1494,8 @@ Item {
                             y: 0
                             width: 10
                             text: modelData.cost > 0 ? modelData.cost : ""
-                            color: "#4a4a4a"
+                            color: theme.muted
+                            font.family: theme.fontFamily
                             font.pixelSize: 10
                             horizontalAlignment: Text.AlignRight
                         }
@@ -1543,7 +1508,8 @@ Item {
                 y: 10
                 visible: uiState.statusPage === 0
                 text: "Atk"
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
             }
 
@@ -1553,7 +1519,8 @@ Item {
                 width: 40
                 visible: uiState.statusPage === 0
                 text: uiState.statusData.attackText || ""
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
                 horizontalAlignment: Text.AlignRight
             }
@@ -1563,7 +1530,8 @@ Item {
                 y: 26
                 visible: uiState.statusPage === 0
                 text: "Matk"
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
             }
 
@@ -1573,7 +1541,8 @@ Item {
                 width: 40
                 visible: uiState.statusPage === 0
                 text: uiState.statusData.matkText || ""
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
                 horizontalAlignment: Text.AlignRight
             }
@@ -1583,7 +1552,8 @@ Item {
                 y: 42
                 visible: uiState.statusPage === 0
                 text: "Hit"
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
             }
 
@@ -1593,7 +1563,8 @@ Item {
                 width: 40
                 visible: uiState.statusPage === 0
                 text: (uiState.statusData.hit || 0).toString()
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
                 horizontalAlignment: Text.AlignRight
             }
@@ -1603,7 +1574,8 @@ Item {
                 y: 58
                 visible: uiState.statusPage === 0
                 text: "Crit"
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
             }
 
@@ -1613,7 +1585,8 @@ Item {
                 width: 40
                 visible: uiState.statusPage === 0
                 text: (uiState.statusData.critical || 0).toString()
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
                 horizontalAlignment: Text.AlignRight
             }
@@ -1623,7 +1596,8 @@ Item {
                 y: 74
                 visible: uiState.statusPage === 0
                 text: "Pts"
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
                 font.bold: true
             }
@@ -1634,7 +1608,8 @@ Item {
                 width: 30
                 visible: uiState.statusPage === 0
                 text: (uiState.statusData.statusPoint || 0).toString()
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
                 font.bold: true
                 horizontalAlignment: Text.AlignRight
@@ -1645,7 +1620,8 @@ Item {
                 y: 10
                 visible: uiState.statusPage === 0
                 text: "Def"
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
             }
 
@@ -1655,7 +1631,8 @@ Item {
                 width: 40
                 visible: uiState.statusPage === 0
                 text: uiState.statusData.itemDefText || ""
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
                 horizontalAlignment: Text.AlignRight
             }
@@ -1665,7 +1642,8 @@ Item {
                 y: 26
                 visible: uiState.statusPage === 0
                 text: "Mdef"
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
             }
 
@@ -1675,7 +1653,8 @@ Item {
                 width: 40
                 visible: uiState.statusPage === 0
                 text: uiState.statusData.itemMdefText || ""
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
                 horizontalAlignment: Text.AlignRight
             }
@@ -1685,7 +1664,8 @@ Item {
                 y: 42
                 visible: uiState.statusPage === 0
                 text: "Flee"
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
             }
 
@@ -1695,7 +1675,8 @@ Item {
                 width: 40
                 visible: uiState.statusPage === 0
                 text: uiState.statusData.fleeText || ""
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
                 horizontalAlignment: Text.AlignRight
             }
@@ -1705,7 +1686,8 @@ Item {
                 y: 58
                 visible: uiState.statusPage === 0
                 text: "Aspd"
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
             }
 
@@ -1715,58 +1697,59 @@ Item {
                 width: 40
                 visible: uiState.statusPage === 0
                 text: uiState.statusData.aspdText || ""
-                color: "#000000"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
                 horizontalAlignment: Text.AlignRight
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
+        showTitle: false
+        showShadow: false
         id: chatWindowChrome
         x: uiState.chatWindowX
         y: uiState.chatWindowY
         width: uiState.chatWindowWidth
         height: uiState.chatWindowHeight
-        radius: 14
-        border.width: 1
-        border.color: "#7088a0b8"
         visible: uiState.chatWindowVisible
-
         readonly property var chatUi: uiState.chatWindowUi || ({})
         readonly property var scrollBar: uiState.chatWindowScrollBar || ({})
         readonly property bool scrollBarVisible: scrollBar.visible || false
         readonly property int scrollBarWidth: scrollBarVisible ? 8 : 0
         readonly property int scrollBarGap: scrollBarVisible ? 4 : 0
         readonly property int chatFontSize: chatUi.fontPixelSize || 13
-        readonly property real chromeOpacity: root.chatChromeOpacity(chatUi)
-        color: root.rgbaColor(26, 31, 39, 0.78 * chromeOpacity)
-
-        Rectangle {
-            anchors.fill: parent
-            radius: parent.radius
-            color: "transparent"
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: root.rgbaColor(40, 49, 61, 0.88 * chatWindowChrome.chromeOpacity) }
-                GradientStop { position: 1.0; color: root.rgbaColor(18, 23, 29, 0.82 * chatWindowChrome.chromeOpacity) }
+        opacity: root.chatChromeOpacity(chatUi)
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 160
+                easing.type: Easing.InOutQuad
             }
+        }
+        Rectangle {
+            x: 1
+            y: 6
+            width: parent.width - 2
+            height: 32
+            radius: 7
+            color: theme.titleTop
+            border.width: 0
         }
 
         Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 52
-            radius: 13
-            color: root.rgbaColor(54, 67, 82, 0.64 * chatWindowChrome.chromeOpacity)
-            border.width: 0
+            x: 8
+            y: 40
+            width: parent.width - 16
+            height: 1
+            color: theme.gold
         }
 
         Row {
             x: 10
-            y: 10
-            height: 34
-            width: parent.width - 54
+            y: 12
+            height: 22
+            width: parent.width - 44
             spacing: 6
 
             Repeater {
@@ -1775,65 +1758,48 @@ Item {
                 delegate: Rectangle {
                     required property var modelData
                     width: Math.max(68, Math.floor((parent.width - ((parent.spacing || 0) * Math.max(0, ((parent.parent.chatUi.tabs || []).length || 1) - 1))) / Math.max(1, ((parent.parent.chatUi.tabs || []).length || 1))))
-                    height: 34
-                    radius: 10
-                    color: modelData.active ? root.rgbaColor(244, 247, 251, 0.96) : root.rgbaColor(68, 86, 105, 0.46 * chatWindowChrome.chromeOpacity)
+                    height: 22
+                    radius: theme.buttonRadius
+                    color: modelData.active ? theme.button : theme.titleBottom
                     border.width: 1
-                    border.color: modelData.active ? root.rgbaColor(200, 211, 223, 0.96) : root.rgbaColor(117, 141, 164, 0.68 * chatWindowChrome.chromeOpacity)
+                    border.color: modelData.active ? theme.gold : theme.buttonBorder
 
                     Text {
                         anchors.centerIn: parent
                         text: modelData.label
-                        color: modelData.active ? "#16212b" : "#ebf1f7"
-                        font.family: "Segoe UI"
-                        font.pixelSize: 13
+                        color: modelData.active ? theme.ink : theme.titleText
+                        font.family: theme.fontFamily
+                        font.pixelSize: 12
                         font.bold: true
                     }
                 }
             }
         }
 
-        Rectangle {
-            x: parent.width - 34
-            y: 15
-            width: 24
-            height: 24
-            radius: 8
-            color: parent.chatUi.configVisible ? root.rgbaColor(240, 244, 248, 0.98) : root.rgbaColor(66, 85, 103, 0.52 * parent.chromeOpacity)
-            border.width: 1
-            border.color: parent.chatUi.configVisible ? root.rgbaColor(200, 210, 220, 0.98) : root.rgbaColor(100, 120, 143, 0.8 * parent.chromeOpacity)
-
-            Text {
-                anchors.centerIn: parent
-                text: "\u2699"
-                color: parent.parent.chatUi.configVisible ? "#1b2832" : "#edf3f8"
-                font.family: "Segoe UI Symbol"
-                font.pixelSize: 15
-            }
+        RoChromeButton {
+            x: parent.width - 28
+            y: 14
+            width: 18
+            height: 18
+            pressed: parent.chatUi.configVisible || false
+            label: "\u2699"
+            labelSize: 12
+            labelBold: false
+            labelFont: "Segoe UI Symbol"
         }
 
         Rectangle {
             x: 10
-            y: 54
+            y: 46
             width: parent.width - 20
-            height: parent.height - 92
-            radius: 12
-            color: root.rgbaColor(12, 16, 21, 0.68 * parent.chromeOpacity)
+            height: parent.height - 96
+            radius: theme.buttonRadius
+            color: "#14110e"
             border.width: 1
-            border.color: root.rgbaColor(124, 141, 157, 0.32 * parent.chromeOpacity + 0.14)
+            border.color: theme.gold
             clip: true
 
             readonly property int chatTextWidth: width - 10 - parent.scrollBarWidth - parent.scrollBarGap
-
-            Rectangle {
-                anchors.fill: parent
-                radius: 12
-                color: "transparent"
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: root.rgbaColor(47, 60, 74, 0.18 + 0.14 * chatWindowChrome.chromeOpacity) }
-                    GradientStop { position: 1.0; color: root.rgbaColor(17, 22, 25, 0.12 + 0.08 * chatWindowChrome.chromeOpacity) }
-                }
-            }
 
             Column {
                 id: chatLinesColumn
@@ -1858,47 +1824,30 @@ Item {
                 }
             }
 
-            Rectangle {
+            RoScrollBar {
+                readonly property int totalLines: Math.max(1, parent.parent.scrollBar.totalLines || 0)
+                readonly property int visibleLineCount: Math.max(1, parent.parent.scrollBar.visibleLineCount || 0)
+                readonly property int firstVisibleLine: Math.max(0, parent.parent.scrollBar.firstVisibleLine || 0)
+                readonly property int scrollDenominator: Math.max(1, totalLines - visibleLineCount)
                 x: parent.width - 5 - width
                 y: 5
-                width: parent.scrollBarWidth
+                width: chatWindowChrome.scrollBarWidth
                 height: parent.height - 10
-                visible: parent.scrollBarVisible
-                radius: 4
-                color: root.rgbaColor(72, 87, 102, 0.22 + 0.18 * chatWindowChrome.chromeOpacity)
-                border.width: 1
-                border.color: root.rgbaColor(144, 160, 173, 0.30 + 0.18 * chatWindowChrome.chromeOpacity)
-
-                Rectangle {
-                    readonly property int totalLines: Math.max(1, parent.parent.scrollBar.totalLines || 0)
-                    readonly property int visibleLineCount: Math.max(1, parent.parent.scrollBar.visibleLineCount || 0)
-                    readonly property int firstVisibleLine: Math.max(0, parent.parent.scrollBar.firstVisibleLine || 0)
-                    readonly property int thumbHeight: Math.max(18, Math.round(parent.height * visibleLineCount / totalLines))
-                    readonly property int maxTravel: Math.max(0, parent.height - thumbHeight)
-                    readonly property int scrollDenominator: Math.max(1, totalLines - visibleLineCount)
-                    x: 1
-                    y: Math.round(maxTravel * firstVisibleLine / scrollDenominator)
-                    width: parent.width - 2
-                    height: thumbHeight
-                    radius: 3
-                    color: root.rgbaColor(238, 245, 249, 0.86)
-                }
+                visible: chatWindowChrome.scrollBarVisible
+                thumbWidth: Math.max(4, width - 2)
+                thumbHeight: Math.max(18, Math.round(height * visibleLineCount / totalLines))
+                thumbX: 1
+                thumbY: Math.round(Math.max(0, height - thumbHeight) * firstVisibleLine / scrollDenominator)
             }
         }
 
-        Rectangle {
+        RoField {
             x: 10
             y: parent.height - 38
             width: 126
             height: 28
-            radius: 9
-            color: uiState.chatWindowWhisperInputActive
-                ? root.rgbaColor(247, 251, 255, 0.30 + 0.56 * parent.chromeOpacity)
-                : root.rgbaColor(214, 220, 228, 0.24 + 0.48 * parent.chromeOpacity)
-            border.width: 1
-            border.color: uiState.chatWindowWhisperInputActive
-                ? root.rgbaColor(196, 210, 222, 0.86)
-                : root.rgbaColor(151, 164, 179, 0.80)
+            emphasize: true
+            editing: uiState.chatWindowWhisperInputActive
 
             Text {
                 x: 8
@@ -1910,33 +1859,27 @@ Item {
                         : "To"
                     return baseText + (uiState.chatWindowWhisperInputActive ? "_" : "")
                 }
-                color: uiState.chatWindowWhisperTargetText.length > 0 || uiState.chatWindowWhisperInputActive ? "#18222c" : "#657282"
+                color: uiState.chatWindowWhisperInputActive ? theme.ink : theme.muted
                 font.family: "Segoe UI"
                 font.pixelSize: 13
                 elide: Text.ElideLeft
             }
         }
 
-        Rectangle {
+        RoField {
             x: 144
             y: parent.height - 38
             width: parent.width - 154
             height: 28
-            radius: 9
-            color: uiState.chatWindowMessageInputActive
-                ? root.rgbaColor(247, 251, 255, 0.30 + 0.56 * parent.chromeOpacity)
-                : root.rgbaColor(214, 220, 228, 0.24 + 0.48 * parent.chromeOpacity)
-            border.width: 1
-            border.color: uiState.chatWindowMessageInputActive
-                ? root.rgbaColor(196, 210, 222, 0.86)
-                : root.rgbaColor(151, 164, 179, 0.80)
+            emphasize: true
+            editing: uiState.chatWindowMessageInputActive
 
             Text {
                 x: 8
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 16
                 text: uiState.chatWindowInputText + (uiState.chatWindowMessageInputActive ? "_" : "")
-                color: "#18222c"
+                color: uiState.chatWindowMessageInputActive ? theme.ink : theme.muted
                 font.family: "Segoe UI"
                 font.pixelSize: 13
                 elide: Text.ElideLeft
@@ -1944,32 +1887,36 @@ Item {
         }
     }
 
-    Rectangle {
+    RoFrame {
+        showTitle: false
         visible: uiState.chatWindowVisible && (uiState.chatWindowUi.configVisible || false)
         x: uiState.chatWindowUi.configX || 0
         y: uiState.chatWindowUi.configY || 0
         width: uiState.chatWindowUi.configWidth || 0
         height: uiState.chatWindowUi.configHeight || 0
-        radius: 14
-        color: "#eeedf2f7"
-        border.width: 1
-        border.color: "#8797a8"
-
         Rectangle {
             x: 1
             y: 1
             width: parent.width - 2
             height: 42
-            radius: 13
-            color: "#364453"
+            radius: 7
+            color: theme.titleBottom
+        }
+
+        Rectangle {
+            x: 8
+            y: 42
+            width: parent.width - 16
+            height: 1
+            color: theme.gold
         }
 
         Text {
             x: 14
             y: 12
             text: "Chat Settings"
-            color: "#f4f7fb"
-            font.family: "Segoe UI"
+            color: theme.titleText
+            font.family: theme.fontFamily
             font.pixelSize: 17
             font.bold: true
         }
@@ -1978,7 +1925,7 @@ Item {
             x: 14
             y: 50
             text: "Tabs"
-            color: "#24313b"
+            color: theme.ink
             font.family: "Segoe UI"
             font.pixelSize: 12
             font.bold: true
@@ -1997,15 +1944,15 @@ Item {
                     required property var modelData
                     width: parent.width
                     height: 28
-                    radius: 8
-                    color: modelData.active ? "#cfd8e3" : "#f6f8fb"
+                    radius: theme.buttonRadius
+                    color: modelData.active ? theme.rowSelected : theme.button
                     border.width: 1
-                    border.color: modelData.active ? "#8d9fb3" : "#c8d0d9"
+                    border.color: theme.buttonBorder
 
                     Text {
                         anchors.centerIn: parent
                         text: modelData.label
-                        color: "#1a2630"
+                        color: theme.ink
                         font.family: "Segoe UI"
                         font.pixelSize: 12
                         font.bold: modelData.active
@@ -2018,7 +1965,7 @@ Item {
             x: 120
             y: 50
             text: "Font"
-            color: "#24313b"
+            color: theme.ink
             font.family: "Segoe UI"
             font.pixelSize: 12
             font.bold: true
@@ -2030,66 +1977,46 @@ Item {
             width: parent.width - 132
             height: 28
             radius: 8
-            color: "#ffffff"
+            color: theme.button
             border.width: 1
-            border.color: "#c8d0d9"
+            border.color: theme.buttonBorder
         }
 
         Text {
             x: 132
             y: 79
             text: "Size " + (uiState.chatWindowUi.fontPixelSize || 13)
-            color: "#1a2630"
+            color: theme.ink
             font.family: "Segoe UI"
             font.pixelSize: 12
             font.bold: true
         }
 
-        Rectangle {
+        RoTextButton {
             x: parent.width - 76
             y: 72
             width: 28
             height: 28
-            radius: 8
-            color: "#e6edf4"
-            border.width: 1
-            border.color: "#b8c5d2"
-
-            Text {
-                anchors.centerIn: parent
-                text: "-"
-                color: "#24313b"
-                font.family: "Segoe UI"
-                font.pixelSize: 16
-                font.bold: true
-            }
+            label: "-"
+            labelSize: 16
+            labelBold: true
         }
 
-        Rectangle {
+        RoTextButton {
             x: parent.width - 40
             y: 72
             width: 28
             height: 28
-            radius: 8
-            color: "#e6edf4"
-            border.width: 1
-            border.color: "#b8c5d2"
-
-            Text {
-                anchors.centerIn: parent
-                text: "+"
-                color: "#24313b"
-                font.family: "Segoe UI"
-                font.pixelSize: 16
-                font.bold: true
-            }
+            label: "+"
+            labelSize: 16
+            labelBold: true
         }
 
         Text {
             x: 120
             y: 112
-            text: "Transparency"
-            color: "#24313b"
+            text: "In focus"
+            color: theme.ink
             font.family: "Segoe UI"
             font.pixelSize: 12
             font.bold: true
@@ -2101,16 +2028,16 @@ Item {
             width: parent.width - 132
             height: 28
             radius: 8
-            color: "#ffffff"
+            color: theme.button
             border.width: 1
-            border.color: "#c8d0d9"
+            border.color: theme.buttonBorder
         }
 
         Text {
             x: 132
             y: 135
             text: (uiState.chatWindowUi.windowOpacityPercent || 84) + "%"
-            color: "#1a2630"
+            color: theme.ink
             font.family: "Segoe UI"
             font.pixelSize: 12
             font.bold: true
@@ -2122,14 +2049,14 @@ Item {
             width: parent.width - 152
             height: 8
             radius: 4
-            color: "#cfd7df"
+            color: theme.scrollTrack
             border.width: 0
 
             Rectangle {
                 width: Math.max(8, parent.width * (((uiState.chatWindowUi.windowOpacityPercent || 84) - 20) / 80))
                 height: parent.height
                 radius: 4
-                color: "#6485a6"
+                color: theme.gold
             }
 
             Rectangle {
@@ -2138,17 +2065,76 @@ Item {
                 width: 14
                 height: 18
                 radius: 7
-                color: "#f7fbff"
+                color: theme.button
                 border.width: 1
-                border.color: "#8ba0b6"
+                border.color: theme.gold
             }
         }
 
         Text {
             x: 120
-            y: 192
+            y: 196
+            text: "Not in focus"
+            color: theme.ink
+            font.family: "Segoe UI"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Rectangle {
+            x: 120
+            y: 212
+            width: parent.width - 132
+            height: 28
+            radius: 8
+            color: theme.button
+            border.width: 1
+            border.color: theme.buttonBorder
+        }
+
+        Text {
+            x: 132
+            y: 219
+            text: (uiState.chatWindowUi.idleOpacityPercent || 45) + "%"
+            color: theme.ink
+            font.family: "Segoe UI"
+            font.pixelSize: 12
+            font.bold: true
+        }
+
+        Rectangle {
+            x: 130
+            y: 252
+            width: parent.width - 152
+            height: 8
+            radius: 4
+            color: theme.scrollTrack
+            border.width: 0
+
+            Rectangle {
+                width: Math.max(8, parent.width * (((uiState.chatWindowUi.idleOpacityPercent || 45) - 20) / 80))
+                height: parent.height
+                radius: 4
+                color: theme.gold
+            }
+
+            Rectangle {
+                x: Math.max(0, Math.min(parent.width - 14, parent.width * (((uiState.chatWindowUi.idleOpacityPercent || 45) - 20) / 80) - 7))
+                y: -5
+                width: 14
+                height: 18
+                radius: 7
+                color: theme.button
+                border.width: 1
+                border.color: theme.gold
+            }
+        }
+
+        Text {
+            x: 120
+            y: 276
             text: "Message Types"
-            color: "#24313b"
+            color: theme.ink
             font.family: "Segoe UI"
             font.pixelSize: 12
             font.bold: true
@@ -2156,73 +2142,53 @@ Item {
 
         Grid {
             x: 120
-            y: 216
+            y: 300
             width: parent.width - 132
             columns: 2
-            rowSpacing: 6
+            rowSpacing: 8
             columnSpacing: 8
 
             Repeater {
                 model: uiState.chatWindowUi.filters || []
 
-                delegate: Rectangle {
+                delegate: RoTextButton {
                     required property var modelData
                     width: Math.floor((parent.width - 8) / 2)
                     height: 28
-                    radius: 8
-                    color: modelData.enabled ? "#d6e8db" : "#f7f9fb"
-                    border.width: 1
-                    border.color: modelData.enabled ? "#7ca28a" : "#c8d0d9"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: modelData.label
-                        color: modelData.enabled ? "#1f4930" : "#2a3640"
-                        font.family: "Segoe UI"
-                        font.pixelSize: 12
-                        font.bold: modelData.enabled
-                    }
+                    enabled: modelData.enabled || false
+                    label: modelData.label
+                    labelSize: 12
+                    labelBold: true
                 }
             }
         }
 
-        Rectangle {
+        RoTextButton {
             x: parent.width - 116
             y: parent.height - 40
             width: 104
             height: 28
-            radius: 8
-            color: "#e9eef4"
-            border.width: 1
-            border.color: "#b8c5d2"
-
-            Text {
-                anchors.centerIn: parent
-                text: "Reset Tab"
-                color: "#24313b"
-                font.family: "Segoe UI"
-                font.pixelSize: 12
-                font.bold: true
-            }
+            label: "Reset Tab"
+            labelSize: 12
+            labelBold: true
         }
     }
 
-    Rectangle {
+    RoFrame {
+        showTitle: false
+        showShadow: false
         x: uiState.rechargeGaugeX
         y: uiState.rechargeGaugeY
         width: uiState.rechargeGaugeWidth
         height: uiState.rechargeGaugeHeight
-        color: "#523f2d"
-        border.width: 1
-        border.color: "#523f2d"
         visible: uiState.rechargeGaugeVisible
-
         Rectangle {
             x: 1
             y: 1
             width: parent.width - 2
             height: parent.height - 2
-            color: "#f4efe4"
+            radius: 2
+            color: theme.fieldFill
         }
 
         Rectangle {
@@ -2231,30 +2197,17 @@ Item {
             width: Math.max(0, (parent.width - 2) * ((uiState.rechargeGaugeTotal || 0) > 0
                 ? (uiState.rechargeGaugeAmount || 0) / uiState.rechargeGaugeTotal : 0))
             height: parent.height - 2
-            color: "#307830"
+            radius: 2
+            color: theme.gold
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.minimapX
         y: uiState.minimapY
         width: uiState.minimapWidth
         height: uiState.minimapHeight
-        radius: 9
-        color: "#d1d8e4"
-        border.width: 1
-        border.color: "#394256"
         visible: uiState.minimapVisible
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 8
-            color: "#62729e"
-        }
-
         Rectangle {
             id: minimapMapFrame
             x: (uiState.minimapData.mapX || 0) - parent.x
@@ -2286,7 +2239,7 @@ Item {
                     radius: width / 2
                     color: modelData.color
                     border.width: 1
-                    border.color: "#181818"
+                    border.color: theme.ink
                 }
             }
 
@@ -2329,8 +2282,9 @@ Item {
             y: 2
             width: Math.max(0, parent.width - 40)
             text: uiState.minimapData.title || ""
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
             elide: Text.ElideRight
         }
@@ -2341,28 +2295,20 @@ Item {
             width: Math.max(0, uiState.minimapData.coordsWidth || 0)
             horizontalAlignment: Text.AlignRight
             text: uiState.minimapData.coordsText || ""
-            color: "#101010"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 11
             elide: Text.ElideRight
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.minimapData.closeX || 0) - parent.x
             y: (uiState.minimapData.closeY || 0) - parent.y
             width: Math.max(10, uiState.minimapData.closeWidth || 0)
             height: Math.max(10, uiState.minimapData.closeHeight || 0)
-            radius: 2
-            color: uiState.minimapData.closePressed ? "#b8c7da" : "#dde4ef"
-            border.width: 1
-            border.color: "#4d5662"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.minimapData.closeLabel || ""
-                color: "#18202a"
-                font.pixelSize: 10
-                font.bold: true
-            }
+            pressed: uiState.minimapData.closePressed || false
+            label: uiState.minimapData.closeLabel || ""
+            labelSize: 10
         }
     }
 
@@ -2416,6 +2362,7 @@ Item {
                             visible: !statusIconImage.visible
                             text: modelData.shortName || "?"
                             color: "#f6f1e0"
+                            font.family: theme.fontFamily
                             font.pixelSize: 18
                             font.bold: true
                         }
@@ -2435,59 +2382,33 @@ Item {
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.inventoryX
         y: uiState.inventoryY
         width: uiState.inventoryWidth
         height: uiState.inventoryHeight
-        radius: 4
-        color: "#ede9df"
-        border.width: 1
-        border.color: "#6b675f"
         visible: uiState.inventoryVisible
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#6e8194"
-            border.width: 1
-            border.color: "#4e5d6c"
-        }
-
         Text {
             x: 17
             y: 3
             text: uiState.inventoryData.title || "Inventory"
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
         Repeater {
             model: uiState.inventoryData.systemButtons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.inventoryX
                 y: (modelData.y || 0) - uiState.inventoryY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 2
-                color: "#d7d2c5"
-                border.width: 1
-                border.color: "#7f7a70"
                 visible: modelData.visible || false
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#000000"
-                    font.pixelSize: 8
-                    font.bold: true
-                }
+                label: modelData.label || ""
             }
         }
 
@@ -2496,7 +2417,7 @@ Item {
             y: 17
             width: parent.width
             height: parent.height - 17
-            color: "#e7e2d6"
+            color: "transparent"
             visible: !uiState.inventoryMini
 
             Repeater {
@@ -2508,15 +2429,16 @@ Item {
                     y: (modelData.y || 0) - uiState.inventoryY - 17
                     width: modelData.width || 0
                     height: modelData.height || 0
-                    color: modelData.active ? "#ebe7db" : "#c9c2b2"
+                    color: modelData.active ? theme.button : theme.rowAlt
                     border.width: 1
-                    border.color: "#8c8578"
+                    border.color: modelData.active ? theme.gold : theme.buttonBorder
                     visible: modelData.visible || false
 
                     Text {
                         anchors.centerIn: parent
                         text: modelData.label || ""
-                        color: "#000000"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 9
                         font.bold: modelData.active || false
                     }
@@ -2532,9 +2454,9 @@ Item {
                     y: modelData.y - uiState.inventoryY - 17
                     width: modelData.width
                     height: modelData.height
-                    color: modelData.hovered ? "#d7dff0" : "#f5f2ea"
+                    color: modelData.hovered ? theme.rowHover : theme.fieldFill
                     border.width: 1
-                    border.color: modelData.hovered ? "#7e95bf" : "#a69f91"
+                    border.color: modelData.hovered ? theme.gold : theme.buttonBorder
 
                     Image {
                         id: inventoryIcon
@@ -2552,7 +2474,8 @@ Item {
                         anchors.centerIn: parent
                         width: parent.width - 4
                         text: modelData.occupied ? modelData.label : ""
-                        color: "#000000"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 9
                         horizontalAlignment: Text.AlignHCenter
                         elide: Text.ElideRight
@@ -2565,32 +2488,24 @@ Item {
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: 2
                         text: (modelData.count || 0) > 1 ? modelData.count : ""
-                        color: "#222e50"
+                        color: theme.titleBottom
+                        font.family: theme.fontFamily
                         font.pixelSize: 9
                         font.bold: true
                     }
                 }
             }
 
-            Rectangle {
+            RoScrollBar {
                 x: (uiState.inventoryData.scrollTrackX || 0) - uiState.inventoryX
                 y: (uiState.inventoryData.scrollTrackY || 0) - uiState.inventoryY - 17
                 width: uiState.inventoryData.scrollTrackWidth || 0
                 height: uiState.inventoryData.scrollTrackHeight || 0
                 visible: uiState.inventoryData.scrollBarVisible || false
-                color: "#e3e7ee"
-                border.width: 1
-                border.color: "#a4adbd"
-
-                Rectangle {
-                    x: (uiState.inventoryData.scrollThumbX || 0) - (uiState.inventoryData.scrollTrackX || 0)
-                    y: (uiState.inventoryData.scrollThumbY || 0) - (uiState.inventoryData.scrollTrackY || 0)
-                    width: uiState.inventoryData.scrollThumbWidth || 0
-                    height: uiState.inventoryData.scrollThumbHeight || 0
-                    color: "#8192c7"
-                    border.width: 1
-                    border.color: "#3f5684"
-                }
+                thumbX: (uiState.inventoryData.scrollThumbX || 0) - (uiState.inventoryData.scrollTrackX || 0)
+                thumbY: (uiState.inventoryData.scrollThumbY || 0) - (uiState.inventoryData.scrollTrackY || 0)
+                thumbWidth: uiState.inventoryData.scrollThumbWidth || 0
+                thumbHeight: uiState.inventoryData.scrollThumbHeight || 0
             }
 
             Rectangle {
@@ -2598,75 +2513,52 @@ Item {
                 y: parent.height - height
                 width: parent.width
                 height: 21
-                color: "#ddd7ca"
+                color: theme.rowAlt
                 border.width: 1
-                border.color: "#bcb4a7"
+                border.color: theme.buttonBorder
 
                 Text {
                     anchors.right: parent.right
                     anchors.rightMargin: 8
                     anchors.verticalCenter: parent.verticalCenter
                     text: (uiState.inventoryData.currentItemCount || 0) + " / " + (uiState.inventoryData.maxItemCount || 0)
-                    color: "#4a4a4a"
+                    color: theme.muted
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                 }
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.storageX
         y: uiState.storageY
         width: uiState.storageWidth
         height: uiState.storageHeight
-        radius: 4
-        color: "#ede7dc"
-        border.width: 1
-        border.color: "#7a6d57"
         visible: uiState.storageVisible
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#8c7551"
-            border.width: 1
-            border.color: "#655238"
-        }
-
         Text {
             x: 17
             y: 3
             text: uiState.storageData.title || "Kafra Storage"
-            color: "#fff8ee"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
         Repeater {
             model: uiState.storageData.systemButtons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.storageX
                 y: (modelData.y || 0) - uiState.storageY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 2
-                color: "#ddd0b8"
-                border.width: 1
-                border.color: "#8a775a"
                 visible: modelData.visible || false
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#000000"
-                    font.pixelSize: 8
-                    font.bold: true
-                }
+                label: modelData.label || ""
+                labelSize: 8
+                labelBold: true
             }
         }
 
@@ -2675,7 +2567,7 @@ Item {
             y: 17
             width: parent.width
             height: parent.height - 17
-            color: "#e8decc"
+            color: "transparent"
             visible: !uiState.storageMini
 
             Repeater {
@@ -2687,15 +2579,16 @@ Item {
                     y: (modelData.y || 0) - uiState.storageY - 17
                     width: modelData.width || 0
                     height: modelData.height || 0
-                    color: modelData.active ? "#efe6d5" : "#cfbea1"
+                    color: modelData.active ? theme.button : theme.rowAlt
                     border.width: 1
-                    border.color: "#8d7b62"
+                    border.color: modelData.active ? theme.gold : theme.buttonBorder
                     visible: modelData.visible || false
 
                     Text {
                         anchors.centerIn: parent
                         text: modelData.label || ""
-                        color: "#000000"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 9
                         font.bold: modelData.active || false
                     }
@@ -2707,15 +2600,16 @@ Item {
                 y: 0
                 width: parent.width - 56
                 height: 18
-                color: "#dfd6c6"
+                color: theme.rowAlt
                 border.width: 1
-                border.color: "#b6a891"
+                border.color: theme.buttonBorder
 
                 Text {
                     x: 8
                     anchors.verticalCenter: parent.verticalCenter
                     text: "Item"
-                    color: "#4a3a24"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                     font.bold: true
                 }
@@ -2725,7 +2619,8 @@ Item {
                     anchors.rightMargin: 8
                     anchors.verticalCenter: parent.verticalCenter
                     text: "Qty"
-                    color: "#4a3a24"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                     font.bold: true
                 }
@@ -2740,9 +2635,9 @@ Item {
                     y: modelData.y - uiState.storageY - 17
                     width: modelData.width
                     height: modelData.height
-                    color: modelData.hovered ? "#e5ddce" : "#f5eee3"
+                    color: modelData.hovered ? theme.rowHover : theme.fieldFill
                     border.width: 1
-                    border.color: modelData.hovered ? "#9b7f56" : "#ab9c86"
+                    border.color: modelData.hovered ? theme.gold : theme.buttonBorder
 
                     Image {
                         id: storageIcon
@@ -2762,9 +2657,9 @@ Item {
                         y: 3
                         width: 22
                         height: 20
-                        color: "#ebe4d6"
+                        color: theme.fieldFill
                         border.width: 1
-                        border.color: "#a59882"
+                        border.color: theme.buttonBorder
                         visible: modelData.occupied && !storageIcon.visible
                     }
 
@@ -2773,7 +2668,8 @@ Item {
                         width: parent.width - 88
                         anchors.verticalCenter: parent.verticalCenter
                         text: modelData.occupied ? modelData.label : ""
-                        color: "#000000"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 9
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
@@ -2786,7 +2682,8 @@ Item {
                         width: parent.width - 88
                         anchors.verticalCenter: parent.verticalCenter
                         text: modelData.occupied ? modelData.label : ""
-                        color: "#201c16"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 10
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
@@ -2799,32 +2696,24 @@ Item {
                         anchors.rightMargin: 6
                         anchors.verticalCenter: parent.verticalCenter
                         text: modelData.occupied ? Math.max(1, modelData.count || 0) : ""
-                        color: "#5a4020"
+                        color: theme.muted
+                        font.family: theme.fontFamily
                         font.pixelSize: 10
                         font.bold: true
                     }
                 }
             }
 
-            Rectangle {
+            RoScrollBar {
                 x: (uiState.storageData.scrollTrackX || 0) - uiState.storageX
                 y: (uiState.storageData.scrollTrackY || 0) - uiState.storageY - 17
                 width: uiState.storageData.scrollTrackWidth || 0
                 height: uiState.storageData.scrollTrackHeight || 0
                 visible: uiState.storageData.scrollBarVisible || false
-                color: "#e8dfd3"
-                border.width: 1
-                border.color: "#aea08b"
-
-                Rectangle {
-                    x: (uiState.storageData.scrollThumbX || 0) - (uiState.storageData.scrollTrackX || 0)
-                    y: (uiState.storageData.scrollThumbY || 0) - (uiState.storageData.scrollTrackY || 0)
-                    width: uiState.storageData.scrollThumbWidth || 0
-                    height: uiState.storageData.scrollThumbHeight || 0
-                    color: "#b99f74"
-                    border.width: 1
-                    border.color: "#755a33"
-                }
+                thumbX: (uiState.storageData.scrollThumbX || 0) - (uiState.storageData.scrollTrackX || 0)
+                thumbY: (uiState.storageData.scrollThumbY || 0) - (uiState.storageData.scrollTrackY || 0)
+                thumbWidth: uiState.storageData.scrollThumbWidth || 0
+                thumbHeight: uiState.storageData.scrollThumbHeight || 0
             }
 
             Rectangle {
@@ -2832,75 +2721,50 @@ Item {
                 y: parent.height - height
                 width: parent.width
                 height: 21
-                color: "#ddd3c4"
+                color: theme.rowAlt
                 border.width: 1
-                border.color: "#bcaf9b"
+                border.color: theme.buttonBorder
 
                 Text {
                     anchors.right: parent.right
                     anchors.rightMargin: 8
                     anchors.verticalCenter: parent.verticalCenter
                     text: (uiState.storageData.currentItemCount || 0) + " / " + (uiState.storageData.maxItemCount || 0)
-                    color: "#5a5144"
+                    color: theme.muted
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                 }
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.equipX
         y: uiState.equipY
         width: uiState.equipWidth
         height: uiState.equipHeight
-        radius: 4
-        color: "#ede9df"
-        border.width: 1
-        border.color: "#6b675f"
         visible: uiState.equipVisible
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#6e8194"
-            border.width: 1
-            border.color: "#4e5d6c"
-        }
-
         Text {
             x: 17
             y: 3
             text: uiState.equipData.title || ""
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
         Repeater {
             model: uiState.equipData.systemButtons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.equipX
                 y: (modelData.y || 0) - uiState.equipY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 2
-                color: "#d7d2c5"
-                border.width: 1
-                border.color: "#7f7a70"
                 visible: modelData.visible || false
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#000000"
-                    font.pixelSize: 8
-                    font.bold: true
-                }
+                label: modelData.label || ""
             }
         }
 
@@ -2909,7 +2773,7 @@ Item {
             y: 17
             width: parent.width
             height: parent.height - 17
-            color: "#e7e2d6"
+            color: "transparent"
             visible: !uiState.equipMini
 
             Rectangle {
@@ -2917,9 +2781,9 @@ Item {
                 y: 15
                 width: Math.max(1, 182 - 98)
                 height: Math.max(1, parent.height - y - 12)
-                color: "#d8d0c2"
+                color: theme.rowAlt
                 border.width: 1
-                border.color: "#9d9488"
+                border.color: theme.buttonBorder
 
                 Image {
                     id: equipPreviewImage
@@ -2953,9 +2817,9 @@ Item {
                         y: 0
                         width: modelData.width
                         height: modelData.height
-                        color: modelData.hovered ? "#d7dff0" : (modelData.occupied ? "#d7dff0" : "#f5f2ea")
+                        color: modelData.hovered ? theme.rowHover : (modelData.occupied ? theme.rowSelected : theme.fieldFill)
                         border.width: 1
-                        border.color: modelData.hovered ? "#7e95bf" : (modelData.occupied ? "#7e95bf" : "#a69f91")
+                        border.color: (modelData.hovered || modelData.occupied) ? theme.gold : theme.buttonBorder
 
                         Image {
                             id: equipIcon
@@ -2976,7 +2840,8 @@ Item {
                         width: width - modelData.width - 4
                         height: parent.height
                         text: modelData.occupied ? modelData.label : ""
-                        color: "#000000"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 10
                         font.bold: modelData.hovered
                         horizontalAlignment: modelData.leftColumn ? Text.AlignLeft : Text.AlignRight
@@ -2989,59 +2854,35 @@ Item {
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.friendPartyX
         y: uiState.friendPartyY
         width: uiState.friendPartyWidth
         height: uiState.friendPartyHeight
-        radius: 4
-        color: "#e9e1d2"
-        border.width: 1
-        border.color: "#5c5243"
         visible: uiState.friendPartyVisible
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#5c6f60"
-            border.width: 1
-            border.color: "#3c4a3e"
-        }
-
         Text {
             x: 10
             y: 2
             text: uiState.friendPartyData.title || "Friend / Party"
-            color: "#f8f8f0"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
         Repeater {
             model: uiState.friendPartyData.systemButtons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.friendPartyX
                 y: (modelData.y || 0) - uiState.friendPartyY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 2
-                color: "#d2c6b4"
-                border.width: 1
-                border.color: "#6e604a"
                 visible: modelData.visible || false
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#222222"
-                    font.pixelSize: 9
-                    font.bold: true
-                }
+                label: modelData.label || ""
+                labelSize: 9
+                labelBold: true
             }
         }
 
@@ -3050,7 +2891,7 @@ Item {
             y: 17
             width: parent.width
             height: parent.height - 17
-            color: "#f5f0e5"
+            color: theme.fieldFill
 
             Repeater {
                 model: uiState.friendPartyData.tabs || []
@@ -3062,14 +2903,15 @@ Item {
                     width: modelData.width || 0
                     height: modelData.height || 0
                     radius: 3
-                    color: modelData.active ? "#fff7e9" : "#d6ccb8"
+                    color: modelData.active ? theme.button : theme.rowAlt
                     border.width: 1
-                    border.color: modelData.active ? "#7a623e" : "#978972"
+                    border.color: modelData.active ? theme.gold : theme.buttonBorder
 
                     Text {
                         anchors.centerIn: parent
                         text: modelData.label || ""
-                        color: "#2a2a2a"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 10
                         font.bold: true
                     }
@@ -3081,15 +2923,16 @@ Item {
                 y: 23
                 width: parent.width - 26
                 height: 18
-                color: "#e0d8c6"
+                color: theme.rowAlt
                 border.width: 1
-                border.color: "#ab9e88"
+                border.color: theme.buttonBorder
 
                 Text {
                     x: 6
                     anchors.verticalCenter: parent.verticalCenter
                     text: "Name"
-                    color: "#4c3d25"
+                    color: theme.muted
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                     font.bold: true
                 }
@@ -3098,7 +2941,8 @@ Item {
                     x: 110
                     anchors.verticalCenter: parent.verticalCenter
                     text: (uiState.friendPartyData.currentTab || 0) === 0 ? "State" : "Role"
-                    color: "#4c3d25"
+                    color: theme.muted
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                     font.bold: true
                 }
@@ -3107,7 +2951,8 @@ Item {
                     x: 171
                     anchors.verticalCenter: parent.verticalCenter
                     text: (uiState.friendPartyData.currentTab || 0) === 0 ? "Memo" : "Map"
-                    color: "#4c3d25"
+                    color: theme.muted
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                     font.bold: true
                 }
@@ -3118,9 +2963,9 @@ Item {
                 y: 41
                 width: parent.width - 26
                 height: parent.height - 125
-                color: "#fcf9f2"
+                color: theme.fieldFill
                 border.width: 1
-                border.color: "#9e937c"
+                border.color: theme.buttonBorder
 
                 Repeater {
                     model: uiState.friendPartyData.rows || []
@@ -3131,7 +2976,7 @@ Item {
                         y: (modelData.y || 0) - uiState.friendPartyY - 58
                         width: modelData.width || 0
                         height: modelData.height || 0
-                        color: modelData.selected ? "#ebe2cd" : "#faf7ef"
+                        color: modelData.selected ? theme.rowSelected : theme.fieldFill
 
                         Rectangle {
                             x: 3
@@ -3149,7 +2994,8 @@ Item {
                             width: 88
                             anchors.verticalCenter: parent.verticalCenter
                             text: modelData.name || ""
-                            color: "#1a1a1a"
+                            color: theme.ink
+                            font.family: theme.fontFamily
                             font.pixelSize: 10
                             elide: Text.ElideRight
                         }
@@ -3159,7 +3005,8 @@ Item {
                             width: 50
                             anchors.verticalCenter: parent.verticalCenter
                             text: modelData.status || ""
-                            color: "#424242"
+                            color: theme.muted
+                            font.family: theme.fontFamily
                             font.pixelSize: 10
                             elide: Text.ElideRight
                         }
@@ -3169,57 +3016,40 @@ Item {
                             width: parent.width - 175
                             anchors.verticalCenter: parent.verticalCenter
                             text: modelData.detail || ""
-                            color: "#5c5040"
+                            color: theme.muted
+                            font.family: theme.fontFamily
                             font.pixelSize: 10
                             elide: Text.ElideRight
                         }
                     }
                 }
 
-                Rectangle {
+                RoScrollBar {
                     x: width - 12
                     y: 1
                     width: 11
                     height: parent.height - 2
-                    color: "#e6dfd0"
-                    border.width: 1
-                    border.color: "#a8997e"
                     visible: uiState.friendPartyData.scrollBarVisible || false
-
-                    Rectangle {
-                        x: 1
-                        y: (uiState.friendPartyData.scrollThumbY || 0) - (uiState.friendPartyData.scrollTrackY || 0)
-                        width: parent.width - 2
-                        height: uiState.friendPartyData.scrollThumbHeight || 0
-                        color: "#97835e"
-                        border.width: 1
-                        border.color: "#68563a"
-                    }
+                    thumbX: 1
+                    thumbY: (uiState.friendPartyData.scrollThumbY || 0) - (uiState.friendPartyData.scrollTrackY || 0)
+                    thumbWidth: width - 2
+                    thumbHeight: uiState.friendPartyData.scrollThumbHeight || 0
                 }
             }
 
             Repeater {
                 model: uiState.friendPartyData.actionButtons || []
 
-                delegate: Rectangle {
+                delegate: RoChromeButton {
                     required property var modelData
                     x: (modelData.x || 0) - uiState.friendPartyX
                     y: (modelData.y || 0) - uiState.friendPartyY - 17
                     width: modelData.width || 0
                     height: modelData.height || 0
-                    radius: 3
-                    color: (modelData.active || false) ? "#d4e2ef" : "#ebe5d6"
-                    border.width: 1
-                    border.color: "#796a4f"
                     visible: modelData.visible || false
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: modelData.label || ""
-                        color: "#1c1c1c"
-                        font.pixelSize: 10
-                        font.bold: true
-                    }
+                    label: modelData.label || ""
+                    labelSize: 10
+                    labelBold: true
                 }
             }
 
@@ -3228,15 +3058,16 @@ Item {
                 y: parent.height - 43
                 width: parent.width - 20
                 height: 34
-                color: "#e8e2d5"
+                color: theme.rowAlt
                 border.width: 1
-                border.color: "#b1a590"
+                border.color: theme.buttonBorder
 
                 Text {
                     x: 6
                     y: 4
                     text: uiState.friendPartyData.summaryTitle || ""
-                    color: "#443a2c"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                     font.bold: true
                 }
@@ -3246,7 +3077,8 @@ Item {
                     width: parent.width - 92
                     y: 4
                     text: uiState.friendPartyData.summaryValue || ""
-                    color: "#303030"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                     elide: Text.ElideRight
                 }
@@ -3256,7 +3088,8 @@ Item {
                     y: 18
                     width: parent.width - 12
                     text: uiState.friendPartyData.summarySecondaryValue || ""
-                    color: "#303030"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                     elide: Text.ElideRight
                 }
@@ -3264,34 +3097,19 @@ Item {
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.partySetupX
         y: uiState.partySetupY
         width: uiState.partySetupWidth
         height: uiState.partySetupHeight
-        radius: 4
-        color: "#e9e1d2"
-        border.width: 1
-        border.color: "#5c5243"
         visible: uiState.partySetupVisible
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#5c6f60"
-            border.width: 1
-            border.color: "#3c4a3e"
-        }
-
         Text {
             x: 10
             y: 2
             text: uiState.partySetupData.title || "Party Setup"
-            color: "#f8f8f0"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
@@ -3305,7 +3123,8 @@ Item {
                 width: modelData.width || 0
                 height: modelData.height || 0
                 text: modelData.text || ""
-                color: (modelData.header || false) ? "#4a3c26" : "#2e2e2e"
+                color: (modelData.header || false) ? theme.muted : theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 10
                 font.bold: modelData.header || false
                 verticalAlignment: Text.AlignVCenter
@@ -3316,24 +3135,16 @@ Item {
         Repeater {
             model: uiState.partySetupData.helpIcons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.partySetupX
                 y: (modelData.y || 0) - uiState.partySetupY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: width / 2
-                color: (modelData.hovered || false) ? "#d4e2ef" : "#ebe5d6"
-                border.width: 1
-                border.color: "#796a4f"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "?"
-                    color: "#1c1c1c"
-                    font.pixelSize: 10
-                    font.bold: true
-                }
+                hovered: modelData.hovered || false
+                label: "?"
+                labelSize: 10
+                labelBold: true
             }
         }
 
@@ -3342,18 +3153,17 @@ Item {
             y: (uiState.partySetupData.nameFieldY || 0) - uiState.partySetupY
             width: uiState.partySetupData.nameFieldWidth || 0
             height: uiState.partySetupData.nameFieldHeight || 0
-            color: (uiState.partySetupData.showNameEdit || false)
-                ? ((uiState.partySetupData.nameFocused || false) ? "#ffffc8" : "#f2f2f2")
-                : "transparent"
+            color: (uiState.partySetupData.showNameEdit || false) ? theme.fieldFill : "transparent"
             border.width: (uiState.partySetupData.showNameEdit || false) ? 1 : 0
-            border.color: "#000000"
+            border.color: (uiState.partySetupData.nameFocused || false) ? theme.gold : theme.fieldBorder
 
             Text {
                 x: (uiState.partySetupData.showNameEdit || false) ? 6 : 0
                 width: parent.width - ((uiState.partySetupData.showNameEdit || false) ? 12 : 0)
                 anchors.verticalCenter: parent.verticalCenter
                 text: uiState.partySetupData.nameValue || ""
-                color: "#202020"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
                 elide: Text.ElideRight
             }
@@ -3374,16 +3184,16 @@ Item {
                     y: 2
                     width: 14
                     height: 14
-                    color: "#f7f3e9"
+                    color: theme.fieldFill
                     border.width: 1
-                    border.color: "#7e6f55"
+                    border.color: theme.buttonBorder
 
                     Rectangle {
                         x: 3
                         y: 3
                         width: 8
                         height: 8
-                        color: "#576f8a"
+                        color: theme.titleBottom
                         visible: modelData.selected || false
                     }
                 }
@@ -3393,7 +3203,8 @@ Item {
                     width: parent.width - 20
                     anchors.verticalCenter: parent.verticalCenter
                     text: modelData.label || ""
-                    color: "#2c2c2c"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                     elide: Text.ElideRight
                 }
@@ -3403,25 +3214,16 @@ Item {
         Repeater {
             model: uiState.partySetupData.buttons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.partySetupX
                 y: (modelData.y || 0) - uiState.partySetupY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 3
-                color: (modelData.active || false) ? "#d4e2ef" : "#ebe5d6"
-                border.width: 1
-                border.color: "#796a4f"
                 visible: modelData.visible || false
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#1c1c1c"
-                    font.pixelSize: 10
-                    font.bold: true
-                }
+                label: modelData.label || ""
+                labelSize: 10
+                labelBold: true
             }
         }
 
@@ -3431,9 +3233,9 @@ Item {
             y: Math.max(4, Math.min(parent.height - height - 4, ((uiState.partySetupData.tooltipY || 0) - uiState.partySetupY) - height - 14))
             width: 248
             height: tooltipText.paintedHeight + 12
-            color: "#303030"
+            color: theme.ink
             border.width: 1
-            border.color: "#606060"
+            border.color: theme.buttonBorder
             z: 10
 
             Text {
@@ -3443,51 +3245,37 @@ Item {
                 width: parent.width - 16
                 text: uiState.partySetupData.tooltipText || ""
                 color: "#ffffff"
+                font.family: theme.fontFamily
                 font.pixelSize: 10
                 wrapMode: Text.WordWrap
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.partyInviteX
         y: uiState.partyInviteY
         width: uiState.partyInviteWidth
         height: uiState.partyInviteHeight
-        radius: 4
-        color: "#e9e1d2"
-        border.width: 1
-        border.color: "#5c5243"
         visible: uiState.partyInviteVisible
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#5c6f60"
-            border.width: 1
-            border.color: "#3c4a3e"
-        }
-
         Rectangle {
             x: 14
             y: 28
             width: parent.width - 28
             height: 52
             radius: 2
-            color: "#efe8db"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#a5967d"
+            border.color: theme.buttonBorder
         }
 
         Text {
             x: 10
             y: 2
             text: uiState.partyInviteData.title || "Party Invitation"
-            color: "#f8f8f0"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
@@ -3500,107 +3288,66 @@ Item {
             verticalAlignment: Text.AlignVCenter
             wrapMode: Text.WordWrap
             text: uiState.partyInviteData.bodyText || ((uiState.partyInviteData.messageLines || []).join("\n"))
-            color: "#383838"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 11
         }
 
         Repeater {
             model: uiState.partyInviteData.buttons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.partyInviteX
                 y: (modelData.y || 0) - uiState.partyInviteY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 3
-                color: (modelData.active || false) ? "#d4e2ef" : "#ebe5d6"
-                border.width: 1
-                border.color: "#796a4f"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#1c1c1c"
-                    font.pixelSize: 10
-                    font.bold: true
-                }
+                label: modelData.label || ""
+                labelSize: 10
+                labelBold: true
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.skillListX
         y: uiState.skillListY
         width: uiState.skillListWidth
         height: uiState.skillListHeight
-        radius: 4
-        color: "#ede9df"
-        border.width: 1
-        border.color: "#6b675f"
         visible: uiState.skillListVisible
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#6e8194"
-            border.width: 1
-            border.color: "#4e5d6c"
-        }
-
         Text {
             x: 17
             y: 3
             text: uiState.skillListData.title || ""
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
         Repeater {
             model: uiState.skillListData.systemButtons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.skillListX
                 y: (modelData.y || 0) - uiState.skillListY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 2
-                color: "#d7d2c5"
-                border.width: 1
-                border.color: "#7f7a70"
                 visible: modelData.visible || false
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#000000"
-                    font.pixelSize: 8
-                    font.bold: true
-                }
+                label: modelData.label || ""
             }
         }
 
         Rectangle {
-            x: 41
-            y: 17
-            width: parent.width - 41
-            height: parent.height - 67
-            color: "#ffffff"
+            x: 8
+            y: 20
+            width: parent.width - 16
+            height: parent.height - 74
+            radius: theme.buttonRadius
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#c4c0b5"
-        }
-
-        Rectangle {
-            x: 0
-            y: 17
-            width: 41
-            height: parent.height - 67
-            color: "#ddd7ca"
+            border.color: theme.buttonBorder
         }
 
         Repeater {
@@ -3615,9 +3362,15 @@ Item {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: modelData.selected ? "#d7dff0" : (modelData.hovered ? "#ece8de" : "transparent")
+                    color: modelData.selected ? theme.rowSelected : (modelData.hovered ? theme.rowHover : "transparent")
                     border.width: 1
-                    border.color: modelData.selected ? "#7e95bf" : (modelData.hovered ? "#b8b1a3" : "transparent")
+                    border.color: modelData.selected ? theme.gold : (modelData.hovered ? theme.buttonBorder : "transparent")
+                }
+
+                Rectangle {
+                    width: modelData.selected ? 3 : 0
+                    height: parent.height
+                    color: theme.gold
                 }
 
                 Rectangle {
@@ -3625,9 +3378,9 @@ Item {
                     y: 1
                     width: 32
                     height: 32
-                    color: "#f5f2ea"
+                    color: theme.fieldFill
                     border.width: 1
-                    border.color: "#a69f91"
+                    border.color: theme.buttonBorder
 
                     Image {
                         anchors.fill: parent
@@ -3644,7 +3397,8 @@ Item {
                     y: 3
                     width: parent.width - 88
                     text: modelData.name
-                    color: "#000000"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 11
                     elide: Text.ElideRight
                 }
@@ -3654,7 +3408,8 @@ Item {
                     y: 18
                     width: 80
                     text: modelData.levelText
-                    color: "#000000"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                 }
 
@@ -3663,68 +3418,54 @@ Item {
                     y: 18
                     width: parent.width - 198
                     text: modelData.rightText
-                    color: "#000000"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                     elide: Text.ElideRight
                 }
 
-                Rectangle {
+                RoTextButton {
                     x: modelData.upgradeX - modelData.x
                     y: modelData.upgradeY - modelData.y
                     width: modelData.upgradeWidth
                     height: modelData.upgradeHeight
                     visible: modelData.upgradeVisible
-                    color: modelData.upgradePressed ? "#b9c7de" : "#d7dff0"
-                    border.width: 1
-                    border.color: "#7e95bf"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: uiState.skillListData.upgradeLabel || ""
-                        color: "#000000"
-                        font.pixelSize: 12
-                        font.bold: true
-                    }
+                    label: uiState.skillListData.upgradeLabel || ""
+                    labelSize: 12
+                    labelBold: true
                 }
             }
         }
 
-        Rectangle {
+        RoScrollBar {
             x: (uiState.skillListData.scrollTrackX || 0) - uiState.skillListX
             y: (uiState.skillListData.scrollTrackY || 0) - uiState.skillListY
             width: uiState.skillListData.scrollTrackWidth || 0
             height: uiState.skillListData.scrollTrackHeight || 0
             visible: uiState.skillListData.scrollBarVisible || false
-            color: "#e3e7ee"
-            border.width: 1
-            border.color: "#a4adbd"
-
-            Rectangle {
-                x: (uiState.skillListData.scrollThumbX || 0) - (uiState.skillListData.scrollTrackX || 0)
-                y: (uiState.skillListData.scrollThumbY || 0) - (uiState.skillListData.scrollTrackY || 0)
-                width: uiState.skillListData.scrollThumbWidth || 0
-                height: uiState.skillListData.scrollThumbHeight || 0
-                color: "#b4bccd"
-                border.width: 1
-                border.color: "#788296"
-            }
+            thumbX: (uiState.skillListData.scrollThumbX || 0) - (uiState.skillListData.scrollTrackX || 0)
+            thumbY: (uiState.skillListData.scrollThumbY || 0) - (uiState.skillListData.scrollTrackY || 0)
+            thumbWidth: uiState.skillListData.scrollThumbWidth || 0
+            thumbHeight: uiState.skillListData.scrollThumbHeight || 0
         }
 
         Rectangle {
-            x: 0
-            y: parent.height - 50
-            width: parent.width
-            height: 50
-            color: "#ddd7ca"
+            x: 8
+            y: parent.height - 46
+            width: parent.width - 16
+            height: 38
+            radius: theme.buttonRadius
+            color: theme.rowAlt
             border.width: 1
-            border.color: "#bcb4a7"
+            border.color: theme.buttonBorder
         }
 
         Text {
             x: 13
             y: parent.height - 18
             text: uiState.skillListData.skillPointText || ""
-            color: "#b09130"
+            color: theme.gold
+            font.family: theme.fontFamily
             font.pixelSize: 11
             font.bold: true
         }
@@ -3732,76 +3473,45 @@ Item {
         Repeater {
             model: uiState.skillListData.bottomButtons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: modelData.x - uiState.skillListX
                 y: modelData.y - uiState.skillListY
                 width: modelData.width
                 height: modelData.height
-                radius: 3
-                color: modelData.pressed ? "#b9c7de" : (modelData.hovered ? "#d7dff0" : "#e9e4d8")
-                border.width: 1
-                border.color: "#8c8578"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label
-                    color: "#000000"
-                    font.pixelSize: 10
-                }
+                pressed: modelData.pressed || false
+                hovered: modelData.hovered || false
+                label: modelData.label
+                labelSize: 10
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.itemInfoX
         y: uiState.itemInfoY
         width: uiState.itemInfoWidth
         height: uiState.itemInfoHeight
-        radius: 4
-        color: "#ede9df"
-        border.width: 1
-        border.color: "#6b675f"
         visible: uiState.itemInfoVisible
         z: 40
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#6e8194"
-            border.width: 1
-            border.color: "#4e5d6c"
-        }
-
         Text {
             x: 8
             y: 3
             text: uiState.itemInfoData.title || "Item Information"
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.itemInfoData.closeButton.x || 0) - uiState.itemInfoX
             y: (uiState.itemInfoData.closeButton.y || 0) - uiState.itemInfoY
             width: uiState.itemInfoData.closeButton.width || 0
             height: uiState.itemInfoData.closeButton.height || 0
-            radius: 2
-            color: (uiState.itemInfoData.closeButton.pressed || false) ? "#b9c7de" : ((uiState.itemInfoData.closeButton.hovered || false) ? "#d7dff0" : "#e7e2d6")
-            border.width: 1
-            border.color: "#7f7a70"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.itemInfoData.closeButton.label || "X"
-                color: "#000000"
-                font.pixelSize: 8
-                font.bold: true
-            }
+            pressed: uiState.itemInfoData.closeButton.pressed || false
+            hovered: uiState.itemInfoData.closeButton.hovered || false
+            label: uiState.itemInfoData.closeButton.label || "X"
         }
 
         Rectangle {
@@ -3809,9 +3519,9 @@ Item {
             y: 25
             width: 96
             height: 96
-            color: "#f5f2ea"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#a69f91"
+            border.color: theme.buttonBorder
 
             Image {
                 anchors.fill: parent
@@ -3824,23 +3534,16 @@ Item {
                     : root.itemIconSource(uiState.itemInfoData.itemId || 0, uiState.itemInfoData.identified)
             }
 
-            Rectangle {
+            RoChromeButton {
                 x: 4
                 y: 4
                 width: (uiState.itemInfoData.graphicsButton.width || 0)
                 height: (uiState.itemInfoData.graphicsButton.height || 0)
-                radius: 2
                 visible: uiState.itemInfoData.graphicsButton.visible || false
-                color: (uiState.itemInfoData.graphicsButton.pressed || false) ? "#b9c7de" : ((uiState.itemInfoData.graphicsButton.hovered || false) ? "#d7dff0" : "#e9e4d8")
-                border.width: 1
-                border.color: "#8c8578"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: uiState.itemInfoData.graphicsButton.label || "View"
-                    color: "#000000"
-                    font.pixelSize: 9
-                }
+                pressed: uiState.itemInfoData.graphicsButton.pressed || false
+                hovered: uiState.itemInfoData.graphicsButton.hovered || false
+                label: uiState.itemInfoData.graphicsButton.label || "View"
+                labelSize: 9
             }
         }
 
@@ -3849,8 +3552,9 @@ Item {
             y: 25
             width: parent.width - 120
             text: uiState.itemInfoData.name || ""
-            color: "#000000"
-            font.pixelSize: 11
+            color: theme.ink
+            font.family: theme.fontFamily
+            font.pixelSize: 13
             font.bold: true
             elide: Text.ElideRight
         }
@@ -3869,8 +3573,9 @@ Item {
                     required property var modelData
                     width: parent.width
                     text: modelData
-                    color: "#444444"
-                    font.pixelSize: 10
+                    color: theme.ink
+                    font.family: theme.fontFamily
+                    font.pixelSize: 11
                     elide: Text.ElideRight
                 }
             }
@@ -3883,8 +3588,9 @@ Item {
             height: parent.height - y - (((uiState.itemInfoData.slots || []).length > 0) ? 56 : 20)
             text: root.roColorTextToRichText(uiState.itemInfoData.description || "")
             textFormat: Text.RichText
-            color: "#111111"
-            font.pixelSize: 11
+            color: theme.ink
+            font.family: theme.fontFamily
+            font.pixelSize: 12
             wrapMode: Text.WordWrap
             verticalAlignment: Text.AlignTop
         }
@@ -3899,10 +3605,10 @@ Item {
                 width: modelData.width || 0
                 height: modelData.height || 0
                 color: !(modelData.available || false)
-                    ? "#a6a6a6"
-                    : ((modelData.occupied || false) ? "#f5f2ea" : "#dfdfdf")
+                    ? theme.rowAlt
+                    : ((modelData.occupied || false) ? theme.rowSelected : theme.fieldFill)
                 border.width: 1
-                border.color: (modelData.occupied || false) ? "#868176" : "#7e7e7e"
+                border.color: (modelData.occupied || false) ? theme.gold : theme.buttonBorder
 
                 Image {
                     anchors.fill: parent
@@ -3915,76 +3621,56 @@ Item {
                 }
 
                 Rectangle {
+                    id: cardTooltip
                     visible: (modelData.hovered || false) && (modelData.occupied || false) && !!modelData.tooltip
+                    z: 5
+                    width: cardTooltipLabel.implicitWidth + 14
+                    height: cardTooltipLabel.implicitHeight + 8
                     x: (parent.width - width) / 2
-                    y: -24
-                    width: tooltipText.implicitWidth + 12
-                    height: tooltipText.implicitHeight + 8
-                    color: "#303030"
+                    y: -height - 4
+                    radius: theme.buttonRadius
+                    color: theme.ink
                     border.width: 1
-                    border.color: "#606060"
+                    border.color: theme.gold
 
                     Text {
-                        id: tooltipText
+                        id: cardTooltipLabel
                         anchors.centerIn: parent
                         text: modelData.tooltip || ""
-                        color: "#ffffff"
-                        font.pixelSize: 10
+                        color: theme.titleText
+                        font.family: theme.fontFamily
+                        font.pixelSize: 11
                     }
                 }
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.skillDescribeX
         y: uiState.skillDescribeY
         width: uiState.skillDescribeWidth
         height: uiState.skillDescribeHeight
-        radius: 4
-        color: "#ede9df"
-        border.width: 1
-        border.color: "#6b675f"
         visible: uiState.skillDescribeVisible
         z: 41
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#6e8194"
-            border.width: 1
-            border.color: "#4e5d6c"
-        }
-
         Text {
             x: 8
             y: 3
             text: uiState.skillDescribeData.title || "Skill Information"
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.skillDescribeData.closeButton.x || 0) - uiState.skillDescribeX
             y: (uiState.skillDescribeData.closeButton.y || 0) - uiState.skillDescribeY
             width: uiState.skillDescribeData.closeButton.width || 0
             height: uiState.skillDescribeData.closeButton.height || 0
-            radius: 2
-            color: (uiState.skillDescribeData.closeButton.pressed || false) ? "#b9c7de" : ((uiState.skillDescribeData.closeButton.hovered || false) ? "#d7dff0" : "#e7e2d6")
-            border.width: 1
-            border.color: "#7f7a70"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.skillDescribeData.closeButton.label || "X"
-                color: "#000000"
-                font.pixelSize: 8
-                font.bold: true
-            }
+            pressed: uiState.skillDescribeData.closeButton.pressed || false
+            hovered: uiState.skillDescribeData.closeButton.hovered || false
+            label: uiState.skillDescribeData.closeButton.label || "X"
         }
 
         Rectangle {
@@ -3992,9 +3678,9 @@ Item {
             y: 25
             width: 52
             height: 52
-            color: "#f5f2ea"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#a69f91"
+            border.color: theme.buttonBorder
 
             Image {
                 anchors.fill: parent
@@ -4011,8 +3697,9 @@ Item {
             y: 25
             width: parent.width - 76
             text: uiState.skillDescribeData.name || ""
-            color: "#000000"
-            font.pixelSize: 11
+            color: theme.ink
+            font.family: theme.fontFamily
+            font.pixelSize: 13
             font.bold: true
             elide: Text.ElideRight
         }
@@ -4029,9 +3716,12 @@ Item {
                 delegate: Text {
                     required property var modelData
                     width: parent.width
+                    height: (modelData || "").length > 0 ? 14 : 0
+                    visible: (modelData || "").length > 0
                     text: modelData
-                    color: "#444444"
-                    font.pixelSize: 10
+                    color: theme.ink
+                    font.family: theme.fontFamily
+                    font.pixelSize: 11
                     elide: Text.ElideRight
                 }
             }
@@ -4047,88 +3737,56 @@ Item {
 
             Text {
                 x: 0
-                y: -(uiState.skillDescribeData.descriptionScrollOffset || 0)
+                y: 8 - (uiState.skillDescribeData.descriptionScrollOffset || 0)
                 width: parent.width
                 height: Math.max(implicitHeight, uiState.skillDescribeData.descriptionContentHeight || 0)
                 text: uiState.skillDescribeData.description || ""
-                color: "#111111"
-                font.pixelSize: 10
+                color: theme.ink
+                font.family: theme.fontFamily
+                font.pixelSize: 11
                 wrapMode: Text.WordWrap
                 verticalAlignment: Text.AlignTop
             }
         }
 
-        Rectangle {
+        RoScrollBar {
             x: (uiState.skillDescribeData.descriptionScrollBar.trackX || 0) - uiState.skillDescribeX
             y: (uiState.skillDescribeData.descriptionScrollBar.trackY || 0) - uiState.skillDescribeY
             width: uiState.skillDescribeData.descriptionScrollBar.trackWidth || 0
             height: uiState.skillDescribeData.descriptionScrollBar.trackHeight || 0
             visible: uiState.skillDescribeData.descriptionScrollBar.visible || false
-            color: "#e3e7ee"
-            border.width: 1
-            border.color: "#a4adbd"
-
-            Rectangle {
-                x: (uiState.skillDescribeData.descriptionScrollBar.thumbX || 0) - (uiState.skillDescribeData.descriptionScrollBar.trackX || 0)
-                y: (uiState.skillDescribeData.descriptionScrollBar.thumbY || 0) - (uiState.skillDescribeData.descriptionScrollBar.trackY || 0)
-                width: uiState.skillDescribeData.descriptionScrollBar.thumbWidth || 0
-                height: uiState.skillDescribeData.descriptionScrollBar.thumbHeight || 0
-                color: "#b4bccd"
-                border.width: 1
-                border.color: "#788296"
-            }
+            thumbX: (uiState.skillDescribeData.descriptionScrollBar.thumbX || 0) - (uiState.skillDescribeData.descriptionScrollBar.trackX || 0)
+            thumbY: (uiState.skillDescribeData.descriptionScrollBar.thumbY || 0) - (uiState.skillDescribeData.descriptionScrollBar.trackY || 0)
+            thumbWidth: uiState.skillDescribeData.descriptionScrollBar.thumbWidth || 0
+            thumbHeight: uiState.skillDescribeData.descriptionScrollBar.thumbHeight || 0
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.itemCollectionX
         y: uiState.itemCollectionY
         width: uiState.itemCollectionWidth
         height: uiState.itemCollectionHeight
-        radius: 4
-        color: "#ede9df"
-        border.width: 1
-        border.color: "#6b675f"
         visible: uiState.itemCollectionVisible
         z: 42
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#6e8194"
-            border.width: 1
-            border.color: "#4e5d6c"
-        }
-
         Text {
             x: 8
             y: 3
             text: uiState.itemCollectionData.title || "Card illustration"
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.itemCollectionData.closeButton.x || 0) - uiState.itemCollectionX
             y: (uiState.itemCollectionData.closeButton.y || 0) - uiState.itemCollectionY
             width: uiState.itemCollectionData.closeButton.width || 0
             height: uiState.itemCollectionData.closeButton.height || 0
-            radius: 2
-            color: (uiState.itemCollectionData.closeButton.pressed || false) ? "#b9c7de" : ((uiState.itemCollectionData.closeButton.hovered || false) ? "#d7dff0" : "#e7e2d6")
-            border.width: 1
-            border.color: "#7f7a70"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.itemCollectionData.closeButton.label || "X"
-                color: "#000000"
-                font.pixelSize: 8
-                font.bold: true
-            }
+            pressed: uiState.itemCollectionData.closeButton.pressed || false
+            hovered: uiState.itemCollectionData.closeButton.hovered || false
+            label: uiState.itemCollectionData.closeButton.label || "X"
         }
 
         Rectangle {
@@ -4136,9 +3794,9 @@ Item {
             y: 25
             width: parent.width - 16
             height: parent.height - 33
-            color: "#f5f2ea"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#a69f91"
+            border.color: theme.buttonBorder
 
             Image {
                 anchors.fill: parent
@@ -4155,55 +3813,31 @@ Item {
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.itemIdentifyX
         y: uiState.itemIdentifyY
         width: uiState.itemIdentifyWidth
         height: uiState.itemIdentifyHeight
-        radius: 4
-        color: "#ede9df"
-        border.width: 1
-        border.color: "#6b675f"
         visible: uiState.itemIdentifyVisible
         z: 43
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#6e8194"
-            border.width: 1
-            border.color: "#4e5d6c"
-        }
-
         Text {
             x: 8
             y: 3
             text: uiState.itemIdentifyData.title || "Identify Item"
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.itemIdentifyData.closeButton.x || 0) - uiState.itemIdentifyX
             y: (uiState.itemIdentifyData.closeButton.y || 0) - uiState.itemIdentifyY
             width: uiState.itemIdentifyData.closeButton.width || 0
             height: uiState.itemIdentifyData.closeButton.height || 0
-            radius: 2
-            color: (uiState.itemIdentifyData.closeButton.pressed || false) ? "#b9c7de" : ((uiState.itemIdentifyData.closeButton.hovered || false) ? "#d7dff0" : "#e7e2d6")
-            border.width: 1
-            border.color: "#7f7a70"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.itemIdentifyData.closeButton.label || "X"
-                color: "#000000"
-                font.pixelSize: 8
-                font.bold: true
-            }
+            pressed: uiState.itemIdentifyData.closeButton.pressed || false
+            hovered: uiState.itemIdentifyData.closeButton.hovered || false
+            label: uiState.itemIdentifyData.closeButton.label || "X"
         }
 
         Rectangle {
@@ -4212,16 +3846,17 @@ Item {
             y: 27
             width: Math.max(0, parent.width - 30)
             height: 128
-            color: "#ffffff"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#c4c0b5"
+            border.color: theme.buttonBorder
             clip: true
 
             Text {
                 anchors.centerIn: parent
                 visible: (uiState.itemIdentifyData.rows || []).length === 0
                 text: uiState.itemIdentifyData.emptyText || "No unidentified items available."
-                color: "#505050"
+                color: theme.muted
+                font.family: theme.fontFamily
                 font.pixelSize: 10
             }
 
@@ -4234,18 +3869,18 @@ Item {
                     y: (modelData.y || 0) - uiState.itemIdentifyY - itemIdentifyList.y
                     width: modelData.width || 0
                     height: modelData.height || 0
-                    color: (modelData.selected || false) ? "#d7dff0" : ((modelData.hovered || false) ? "#ece8de" : "#f9f7f3")
+                    color: (modelData.selected || false) ? theme.rowSelected : ((modelData.hovered || false) ? theme.rowHover : theme.fieldFill)
                     border.width: 1
-                    border.color: (modelData.selected || false) ? "#7e95bf" : "#bcb4a7"
+                    border.color: (modelData.selected || false) ? theme.gold : theme.buttonBorder
 
                     Rectangle {
                         x: 4
                         y: 4
                         width: 24
                         height: 24
-                        color: "#f5f2ea"
+                        color: theme.fieldFill
                         border.width: 1
-                        border.color: "#a69f91"
+                        border.color: theme.buttonBorder
 
                         Image {
                             anchors.fill: parent
@@ -4262,7 +3897,8 @@ Item {
                         y: 5
                         width: parent.width - 70
                         text: modelData.label || ""
-                        color: "#000000"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 11
                         font.bold: modelData.selected || false
                         elide: Text.ElideRight
@@ -4274,122 +3910,75 @@ Item {
                         y: 5
                         visible: (modelData.count || 0) > 1
                         text: modelData.count || 0
-                        color: "#5a4020"
+                        color: theme.muted
+                        font.family: theme.fontFamily
                         font.pixelSize: 10
                     }
                 }
             }
         }
 
-        Rectangle {
+        RoScrollBar {
             x: (uiState.itemIdentifyData.scrollBar.trackX || 0) - uiState.itemIdentifyX
             y: (uiState.itemIdentifyData.scrollBar.trackY || 0) - uiState.itemIdentifyY
             width: uiState.itemIdentifyData.scrollBar.trackWidth || 0
             height: uiState.itemIdentifyData.scrollBar.trackHeight || 0
             visible: uiState.itemIdentifyData.scrollBar.visible || false
-            color: "#e3e7ee"
-            border.width: 1
-            border.color: "#a4adbd"
-
-            Rectangle {
-                x: (uiState.itemIdentifyData.scrollBar.thumbX || 0) - (uiState.itemIdentifyData.scrollBar.trackX || 0)
-                y: (uiState.itemIdentifyData.scrollBar.thumbY || 0) - (uiState.itemIdentifyData.scrollBar.trackY || 0)
-                width: uiState.itemIdentifyData.scrollBar.thumbWidth || 0
-                height: uiState.itemIdentifyData.scrollBar.thumbHeight || 0
-                color: "#b4bccd"
-                border.width: 1
-                border.color: "#788296"
-            }
+            thumbX: (uiState.itemIdentifyData.scrollBar.thumbX || 0) - (uiState.itemIdentifyData.scrollBar.trackX || 0)
+            thumbY: (uiState.itemIdentifyData.scrollBar.thumbY || 0) - (uiState.itemIdentifyData.scrollBar.trackY || 0)
+            thumbWidth: uiState.itemIdentifyData.scrollBar.thumbWidth || 0
+            thumbHeight: uiState.itemIdentifyData.scrollBar.thumbHeight || 0
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.itemIdentifyData.okButton.x || 0) - uiState.itemIdentifyX
             y: (uiState.itemIdentifyData.okButton.y || 0) - uiState.itemIdentifyY
             width: uiState.itemIdentifyData.okButton.width || 0
             height: uiState.itemIdentifyData.okButton.height || 0
-            radius: 3
-            color: !(uiState.itemIdentifyData.okButton.enabled || false)
-                ? "#d0d0d0"
-                : ((uiState.itemIdentifyData.okButton.pressed || false) ? "#b9c7de" : ((uiState.itemIdentifyData.okButton.hovered || false) ? "#d7dff0" : "#e9e4d8"))
-            border.width: 1
-            border.color: "#8c8578"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.itemIdentifyData.okButton.label || "OK"
-                color: "#000000"
-                font.pixelSize: 10
-            }
+            enabled: uiState.itemIdentifyData.okButton.enabled || false
+            pressed: uiState.itemIdentifyData.okButton.pressed || false
+            hovered: uiState.itemIdentifyData.okButton.hovered || false
+            label: uiState.itemIdentifyData.okButton.label || "OK"
+            labelSize: 10
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.itemIdentifyData.cancelButton.x || 0) - uiState.itemIdentifyX
             y: (uiState.itemIdentifyData.cancelButton.y || 0) - uiState.itemIdentifyY
             width: uiState.itemIdentifyData.cancelButton.width || 0
             height: uiState.itemIdentifyData.cancelButton.height || 0
-            radius: 3
-            color: (uiState.itemIdentifyData.cancelButton.pressed || false) ? "#b9c7de" : ((uiState.itemIdentifyData.cancelButton.hovered || false) ? "#d7dff0" : "#e9e4d8")
-            border.width: 1
-            border.color: "#8c8578"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.itemIdentifyData.cancelButton.label || "Cancel"
-                color: "#000000"
-                font.pixelSize: 10
-            }
+            pressed: uiState.itemIdentifyData.cancelButton.pressed || false
+            hovered: uiState.itemIdentifyData.cancelButton.hovered || false
+            label: uiState.itemIdentifyData.cancelButton.label || "Cancel"
+            labelSize: 10
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.skillSelectX
         y: uiState.skillSelectY
         width: uiState.skillSelectWidth
         height: uiState.skillSelectHeight
-        radius: 4
-        color: "#ede9df"
-        border.width: 1
-        border.color: "#6b675f"
         visible: uiState.skillSelectVisible
         z: 44
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#6e8194"
-            border.width: 1
-            border.color: "#4e5d6c"
-        }
-
         Text {
             x: 8
             y: 3
             text: uiState.skillSelectData.title || "Select"
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.skillSelectData.closeButton.x || 0) - uiState.skillSelectX
             y: (uiState.skillSelectData.closeButton.y || 0) - uiState.skillSelectY
             width: uiState.skillSelectData.closeButton.width || 0
             height: uiState.skillSelectData.closeButton.height || 0
-            radius: 2
-            color: (uiState.skillSelectData.closeButton.pressed || false) ? "#b9c7de" : ((uiState.skillSelectData.closeButton.hovered || false) ? "#d7dff0" : "#e7e2d6")
-            border.width: 1
-            border.color: "#7f7a70"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.skillSelectData.closeButton.label || "X"
-                color: "#000000"
-                font.pixelSize: 8
-                font.bold: true
-            }
+            pressed: uiState.skillSelectData.closeButton.pressed || false
+            hovered: uiState.skillSelectData.closeButton.hovered || false
+            label: uiState.skillSelectData.closeButton.label || "X"
         }
 
         Rectangle {
@@ -4398,16 +3987,17 @@ Item {
             y: 27
             width: Math.max(0, parent.width - 30)
             height: 128
-            color: "#ffffff"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#c4c0b5"
+            border.color: theme.buttonBorder
             clip: true
 
             Text {
                 anchors.centerIn: parent
                 visible: (uiState.skillSelectData.rows || []).length === 0
                 text: uiState.skillSelectData.emptyText || "Nothing to select."
-                color: "#505050"
+                color: theme.muted
+                font.family: theme.fontFamily
                 font.pixelSize: 10
             }
 
@@ -4420,9 +4010,9 @@ Item {
                     y: (modelData.y || 0) - uiState.skillSelectY - skillSelectList.y
                     width: modelData.width || 0
                     height: modelData.height || 0
-                    color: (modelData.selected || false) ? "#d7dff0" : ((modelData.hovered || false) ? "#ece8de" : "#f9f7f3")
+                    color: (modelData.selected || false) ? theme.rowSelected : ((modelData.hovered || false) ? theme.rowHover : theme.fieldFill)
                     border.width: 1
-                    border.color: (modelData.selected || false) ? "#7e95bf" : "#bcb4a7"
+                    border.color: (modelData.selected || false) ? theme.gold : theme.buttonBorder
 
                     Rectangle {
                         x: 4
@@ -4430,9 +4020,9 @@ Item {
                         width: 24
                         height: 24
                         visible: modelData.showIcon || false
-                        color: "#f5f2ea"
+                        color: theme.fieldFill
                         border.width: 1
-                        border.color: "#a69f91"
+                        border.color: theme.buttonBorder
 
                         Image {
                             anchors.fill: parent
@@ -4449,7 +4039,8 @@ Item {
                         y: 5
                         width: parent.width - ((modelData.showIcon || false) ? 70 : 44)
                         text: modelData.label || ""
-                        color: "#000000"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 11
                         font.bold: modelData.selected || false
                         elide: Text.ElideRight
@@ -4461,122 +4052,75 @@ Item {
                         y: 5
                         visible: (modelData.count || 0) > 1
                         text: modelData.count || 0
-                        color: "#5a4020"
+                        color: theme.muted
+                        font.family: theme.fontFamily
                         font.pixelSize: 10
                     }
                 }
             }
         }
 
-        Rectangle {
+        RoScrollBar {
             x: (uiState.skillSelectData.scrollBar.trackX || 0) - uiState.skillSelectX
             y: (uiState.skillSelectData.scrollBar.trackY || 0) - uiState.skillSelectY
             width: uiState.skillSelectData.scrollBar.trackWidth || 0
             height: uiState.skillSelectData.scrollBar.trackHeight || 0
             visible: uiState.skillSelectData.scrollBar.visible || false
-            color: "#e3e7ee"
-            border.width: 1
-            border.color: "#a4adbd"
-
-            Rectangle {
-                x: (uiState.skillSelectData.scrollBar.thumbX || 0) - (uiState.skillSelectData.scrollBar.trackX || 0)
-                y: (uiState.skillSelectData.scrollBar.thumbY || 0) - (uiState.skillSelectData.scrollBar.trackY || 0)
-                width: uiState.skillSelectData.scrollBar.thumbWidth || 0
-                height: uiState.skillSelectData.scrollBar.thumbHeight || 0
-                color: "#b4bccd"
-                border.width: 1
-                border.color: "#788296"
-            }
+            thumbX: (uiState.skillSelectData.scrollBar.thumbX || 0) - (uiState.skillSelectData.scrollBar.trackX || 0)
+            thumbY: (uiState.skillSelectData.scrollBar.thumbY || 0) - (uiState.skillSelectData.scrollBar.trackY || 0)
+            thumbWidth: uiState.skillSelectData.scrollBar.thumbWidth || 0
+            thumbHeight: uiState.skillSelectData.scrollBar.thumbHeight || 0
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.skillSelectData.okButton.x || 0) - uiState.skillSelectX
             y: (uiState.skillSelectData.okButton.y || 0) - uiState.skillSelectY
             width: uiState.skillSelectData.okButton.width || 0
             height: uiState.skillSelectData.okButton.height || 0
-            radius: 3
-            color: !(uiState.skillSelectData.okButton.enabled || false)
-                ? "#d0d0d0"
-                : ((uiState.skillSelectData.okButton.pressed || false) ? "#b9c7de" : ((uiState.skillSelectData.okButton.hovered || false) ? "#d7dff0" : "#e9e4d8"))
-            border.width: 1
-            border.color: "#8c8578"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.skillSelectData.okButton.label || "OK"
-                color: "#000000"
-                font.pixelSize: 10
-            }
+            enabled: uiState.skillSelectData.okButton.enabled || false
+            pressed: uiState.skillSelectData.okButton.pressed || false
+            hovered: uiState.skillSelectData.okButton.hovered || false
+            label: uiState.skillSelectData.okButton.label || "OK"
+            labelSize: 10
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.skillSelectData.cancelButton.x || 0) - uiState.skillSelectX
             y: (uiState.skillSelectData.cancelButton.y || 0) - uiState.skillSelectY
             width: uiState.skillSelectData.cancelButton.width || 0
             height: uiState.skillSelectData.cancelButton.height || 0
-            radius: 3
-            color: (uiState.skillSelectData.cancelButton.pressed || false) ? "#b9c7de" : ((uiState.skillSelectData.cancelButton.hovered || false) ? "#d7dff0" : "#e9e4d8")
-            border.width: 1
-            border.color: "#8c8578"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.skillSelectData.cancelButton.label || "Cancel"
-                color: "#000000"
-                font.pixelSize: 10
-            }
+            pressed: uiState.skillSelectData.cancelButton.pressed || false
+            hovered: uiState.skillSelectData.cancelButton.hovered || false
+            label: uiState.skillSelectData.cancelButton.label || "Cancel"
+            labelSize: 10
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.itemCompositionX
         y: uiState.itemCompositionY
         width: uiState.itemCompositionWidth
         height: uiState.itemCompositionHeight
-        radius: 4
-        color: "#ede9df"
-        border.width: 1
-        border.color: "#6b675f"
         visible: uiState.itemCompositionVisible
         z: 43
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: 16
-            radius: 3
-            color: "#6e8194"
-            border.width: 1
-            border.color: "#4e5d6c"
-        }
-
         Text {
             x: 8
             y: 3
             text: uiState.itemCompositionData.title || "Compound Item"
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.itemCompositionData.closeButton.x || 0) - uiState.itemCompositionX
             y: (uiState.itemCompositionData.closeButton.y || 0) - uiState.itemCompositionY
             width: uiState.itemCompositionData.closeButton.width || 0
             height: uiState.itemCompositionData.closeButton.height || 0
-            radius: 2
-            color: (uiState.itemCompositionData.closeButton.pressed || false) ? "#b9c7de" : ((uiState.itemCompositionData.closeButton.hovered || false) ? "#d7dff0" : "#e7e2d6")
-            border.width: 1
-            border.color: "#7f7a70"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.itemCompositionData.closeButton.label || "X"
-                color: "#000000"
-                font.pixelSize: 8
-                font.bold: true
-            }
+            pressed: uiState.itemCompositionData.closeButton.pressed || false
+            hovered: uiState.itemCompositionData.closeButton.hovered || false
+            label: uiState.itemCompositionData.closeButton.label || "X"
         }
 
         Rectangle {
@@ -4585,16 +4129,17 @@ Item {
             y: 27
             width: Math.max(0, parent.width - 30)
             height: 128
-            color: "#ffffff"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#c4c0b5"
+            border.color: theme.buttonBorder
             clip: true
 
             Text {
                 anchors.centerIn: parent
                 visible: (uiState.itemCompositionData.rows || []).length === 0
                 text: uiState.itemCompositionData.emptyText || "No equipment can accept this card."
-                color: "#505050"
+                color: theme.muted
+                font.family: theme.fontFamily
                 font.pixelSize: 10
             }
 
@@ -4607,18 +4152,18 @@ Item {
                     y: (modelData.y || 0) - uiState.itemCompositionY - itemCompositionList.y
                     width: modelData.width || 0
                     height: modelData.height || 0
-                    color: (modelData.selected || false) ? "#d7dff0" : ((modelData.hovered || false) ? "#ece8de" : "#f9f7f3")
+                    color: (modelData.selected || false) ? theme.rowSelected : ((modelData.hovered || false) ? theme.rowHover : theme.fieldFill)
                     border.width: 1
-                    border.color: (modelData.selected || false) ? "#7e95bf" : "#bcb4a7"
+                    border.color: (modelData.selected || false) ? theme.gold : theme.buttonBorder
 
                     Rectangle {
                         x: 4
                         y: 4
                         width: 24
                         height: 24
-                        color: "#f5f2ea"
+                        color: theme.fieldFill
                         border.width: 1
-                        border.color: "#a69f91"
+                        border.color: theme.buttonBorder
 
                         Image {
                             anchors.fill: parent
@@ -4635,7 +4180,8 @@ Item {
                         y: 5
                         width: parent.width - 70
                         text: modelData.label || ""
-                        color: "#000000"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 11
                         font.bold: modelData.selected || false
                         elide: Text.ElideRight
@@ -4647,133 +4193,78 @@ Item {
                         y: 5
                         visible: (modelData.count || 0) > 1
                         text: modelData.count || 0
-                        color: "#5a4020"
+                        color: theme.muted
+                        font.family: theme.fontFamily
                         font.pixelSize: 10
                     }
                 }
             }
         }
 
-        Rectangle {
+        RoScrollBar {
             x: (uiState.itemCompositionData.scrollBar.trackX || 0) - uiState.itemCompositionX
             y: (uiState.itemCompositionData.scrollBar.trackY || 0) - uiState.itemCompositionY
             width: uiState.itemCompositionData.scrollBar.trackWidth || 0
             height: uiState.itemCompositionData.scrollBar.trackHeight || 0
             visible: uiState.itemCompositionData.scrollBar.visible || false
-            color: "#e3e7ee"
-            border.width: 1
-            border.color: "#a4adbd"
-
-            Rectangle {
-                x: (uiState.itemCompositionData.scrollBar.thumbX || 0) - (uiState.itemCompositionData.scrollBar.trackX || 0)
-                y: (uiState.itemCompositionData.scrollBar.thumbY || 0) - (uiState.itemCompositionData.scrollBar.trackY || 0)
-                width: uiState.itemCompositionData.scrollBar.thumbWidth || 0
-                height: uiState.itemCompositionData.scrollBar.thumbHeight || 0
-                color: "#b4bccd"
-                border.width: 1
-                border.color: "#788296"
-            }
+            thumbX: (uiState.itemCompositionData.scrollBar.thumbX || 0) - (uiState.itemCompositionData.scrollBar.trackX || 0)
+            thumbY: (uiState.itemCompositionData.scrollBar.thumbY || 0) - (uiState.itemCompositionData.scrollBar.trackY || 0)
+            thumbWidth: uiState.itemCompositionData.scrollBar.thumbWidth || 0
+            thumbHeight: uiState.itemCompositionData.scrollBar.thumbHeight || 0
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.itemCompositionData.okButton.x || 0) - uiState.itemCompositionX
             y: (uiState.itemCompositionData.okButton.y || 0) - uiState.itemCompositionY
             width: uiState.itemCompositionData.okButton.width || 0
             height: uiState.itemCompositionData.okButton.height || 0
-            radius: 3
-            color: !(uiState.itemCompositionData.okButton.enabled || false)
-                ? "#d0d0d0"
-                : ((uiState.itemCompositionData.okButton.pressed || false) ? "#b9c7de" : ((uiState.itemCompositionData.okButton.hovered || false) ? "#d7dff0" : "#e9e4d8"))
-            border.width: 1
-            border.color: "#8c8578"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.itemCompositionData.okButton.label || "OK"
-                color: "#000000"
-                font.pixelSize: 10
-            }
+            enabled: uiState.itemCompositionData.okButton.enabled || false
+            pressed: uiState.itemCompositionData.okButton.pressed || false
+            hovered: uiState.itemCompositionData.okButton.hovered || false
+            label: uiState.itemCompositionData.okButton.label || "OK"
+            labelSize: 10
         }
 
-        Rectangle {
+        RoChromeButton {
             x: (uiState.itemCompositionData.cancelButton.x || 0) - uiState.itemCompositionX
             y: (uiState.itemCompositionData.cancelButton.y || 0) - uiState.itemCompositionY
             width: uiState.itemCompositionData.cancelButton.width || 0
             height: uiState.itemCompositionData.cancelButton.height || 0
-            radius: 3
-            color: (uiState.itemCompositionData.cancelButton.pressed || false) ? "#b9c7de" : ((uiState.itemCompositionData.cancelButton.hovered || false) ? "#d7dff0" : "#e9e4d8")
-            border.width: 1
-            border.color: "#8c8578"
-
-            Text {
-                anchors.centerIn: parent
-                text: uiState.itemCompositionData.cancelButton.label || "Cancel"
-                color: "#000000"
-                font.pixelSize: 10
-            }
+            pressed: uiState.itemCompositionData.cancelButton.pressed || false
+            hovered: uiState.itemCompositionData.cancelButton.hovered || false
+            label: uiState.itemCompositionData.cancelButton.label || "Cancel"
+            labelSize: 10
         }
     }
 
-    Rectangle {
+    RoFrame {
         x: uiState.optionX
         y: uiState.optionY
         width: uiState.optionWidth
         height: uiState.optionHeight
-        radius: 8
-        color: "#f4f7fc"
-        border.width: 1
-        border.color: "#394256"
         visible: uiState.optionVisible
-
-        Rectangle {
-            x: 0
-            y: 0
-            width: parent.width
-            height: 17
-            radius: 8
-            color: "#62729e"
-            border.width: 0
-        }
-
-        Rectangle {
-            x: 0
-            y: 8
-            width: parent.width
-            height: 9
-            color: "#62729e"
-        }
-
         Text {
             x: 17
             y: 2
             text: uiState.optionData.title || ""
-            color: "#ffffff"
-            font.pixelSize: 12
+            color: theme.titleText
+            font.family: theme.fontFamily
+            font.pixelSize: theme.titleSize
             font.bold: true
         }
 
         Repeater {
             model: uiState.optionData.systemButtons || []
 
-            delegate: Rectangle {
+            delegate: RoChromeButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.optionX
                 y: (modelData.y || 0) - uiState.optionY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 4
-                color: "#f8faff"
-                border.width: 1
-                border.color: "#607096"
                 visible: modelData.visible || false
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#28375c"
-                    font.pixelSize: 9
-                    font.bold: true
-                }
+                label: modelData.label || ""
+                labelSize: 8
             }
         }
 
@@ -4782,9 +4273,9 @@ Item {
             y: (uiState.optionData.contentY || 0) - uiState.optionY
             width: uiState.optionData.contentWidth || 0
             height: uiState.optionData.contentHeight || 0
-            color: "#ffffff"
+            color: theme.fieldFill
             border.width: 1
-            border.color: "#a0abc2"
+            border.color: theme.buttonBorder
             visible: !(uiState.optionData.collapsed || false)
         }
 
@@ -4797,16 +4288,17 @@ Item {
                 y: modelData.y - uiState.optionY
                 width: modelData.width
                 height: modelData.height
-                radius: 6
+                radius: theme.buttonRadius
                 visible: !(uiState.optionData.collapsed || false)
-                color: modelData.active ? "#ffffff" : "#dce4f1"
+                color: modelData.active ? theme.button : theme.rowAlt
                 border.width: 1
-                border.color: modelData.active ? "#5f7096" : "#7a88a7"
+                border.color: modelData.active ? theme.gold : theme.buttonBorder
 
                 Text {
                     anchors.centerIn: parent
                     text: modelData.label
-                    color: "#000000"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 11
                 }
             }
@@ -4829,9 +4321,9 @@ Item {
                     y: 0
                     width: modelData.width
                     height: modelData.height
-                    color: modelData.checked ? "#cfdaf0" : "#ffffff"
+                    color: modelData.checked ? theme.rowSelected : theme.fieldFill
                     border.width: 1
-                    border.color: "#7a88a7"
+                    border.color: theme.buttonBorder
                 }
 
                 Text {
@@ -4839,14 +4331,16 @@ Item {
                     anchors.leftMargin: modelData.width + 8
                     anchors.verticalCenter: parent.verticalCenter
                     text: modelData.label
-                    color: "#000000"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 11
                 }
 
                 Text {
                     anchors.centerIn: optionToggleBox
                     text: modelData.checked ? "X" : ""
-                    color: "#28375c"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 10
                     font.bold: true
                 }
@@ -4872,7 +4366,8 @@ Item {
                     y: -1
                     width: 56
                     text: modelData.label
-                    color: "#000000"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 11
                     horizontalAlignment: Text.AlignRight
                 }
@@ -4882,9 +4377,9 @@ Item {
                     y: 4
                     width: parent.width
                     height: Math.max(1, parent.height - 8)
-                    color: "#b6c2db"
+                    color: theme.scrollTrack
                     border.width: 1
-                    border.color: "#6f7da0"
+                    border.color: theme.buttonBorder
                 }
 
                 Rectangle {
@@ -4893,9 +4388,9 @@ Item {
                     width: 8
                     height: parent.height + 4
                     radius: 4
-                    color: "#ffffff"
+                    color: theme.button
                     border.width: 1
-                    border.color: "#576588"
+                    border.color: theme.gold
                 }
 
                 Text {
@@ -4903,7 +4398,8 @@ Item {
                     y: -1
                     width: 42
                     text: modelData.valueText || ""
-                    color: "#000000"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 11
                 }
             }
@@ -4918,17 +4414,18 @@ Item {
                 y: modelData.y - uiState.optionY
                 width: modelData.width
                 height: modelData.height
-                radius: 6
+                radius: theme.buttonRadius
                 visible: !(uiState.optionData.collapsed || false)
-                color: "#f7faff"
+                color: theme.fieldFill
                 border.width: 1
-                border.color: "#b0bad0"
+                border.color: theme.buttonBorder
 
                 Text {
                     x: 8
                     y: 4
                     text: modelData.label
-                    color: "#000000"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 11
                 }
 
@@ -4937,110 +4434,72 @@ Item {
                     y: 4
                     width: Math.max(0, parent.width - 170)
                     text: modelData.value
-                    color: "#000000"
+                    color: theme.ink
+                    font.family: theme.fontFamily
                     font.pixelSize: 11
                     elide: Text.ElideRight
                 }
 
-                Rectangle {
+                RoChromeButton {
                     x: modelData.prevX - modelData.x
                     y: modelData.prevY - modelData.y
                     width: modelData.prevWidth
                     height: modelData.prevHeight
-                    radius: 4
-                    color: "#f8faff"
-                    border.width: 1
-                    border.color: "#607096"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: modelData.prevLabel || ""
-                        color: "#28375c"
-                        font.pixelSize: 10
-                        font.bold: true
-                    }
+                    label: modelData.prevLabel || ""
+                    labelSize: 10
+                    labelBold: true
                 }
 
-                Rectangle {
+                RoChromeButton {
                     x: modelData.nextX - modelData.x
                     y: modelData.nextY - modelData.y
                     width: modelData.nextWidth
                     height: modelData.nextHeight
-                    radius: 4
-                    color: "#f8faff"
-                    border.width: 1
-                    border.color: "#607096"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: modelData.nextLabel || ""
-                        color: "#28375c"
-                        font.pixelSize: 10
-                        font.bold: true
-                    }
+                    label: modelData.nextLabel || ""
+                    labelSize: 10
+                    labelBold: true
                 }
             }
         }
 
-        Rectangle {
+        RoChromeButton {
             id: optionRestartButton
             readonly property var restartButtonData: uiState.optionData.restartButton || ({})
             x: (restartButtonData.x || 0) - uiState.optionX
             y: (restartButtonData.y || 0) - uiState.optionY
             width: restartButtonData.width || 0
             height: restartButtonData.height || 0
-            radius: 4
             visible: restartButtonData.visible || false
-            color: "#f8faff"
-            border.width: 1
-            border.color: "#607096"
-
-            Text {
-                anchors.centerIn: parent
-                text: optionRestartButton.restartButtonData.label || ""
-                color: "#28375c"
-                font.pixelSize: 10
-            }
+            label: optionRestartButton.restartButtonData.label || ""
+            labelSize: 10
         }
 
-        Rectangle {
+        RoChromeButton {
             id: optionApplyButton
             readonly property var applyButtonData: uiState.optionData.applyButton || ({})
             x: (applyButtonData.x || 0) - uiState.optionX
             y: (applyButtonData.y || 0) - uiState.optionY
             width: applyButtonData.width || 0
             height: applyButtonData.height || 0
-            radius: 4
             visible: applyButtonData.visible || false
-            color: "#f8faff"
-            border.width: 1
-            border.color: "#607096"
-
-            Text {
-                anchors.centerIn: parent
-                text: optionApplyButton.applyButtonData.label || ""
-                color: "#28375c"
-                font.pixelSize: 10
-            }
+            label: optionApplyButton.applyButtonData.label || ""
+            labelSize: 10
         }
     }
 
-    Rectangle {
+    RoFrame {
+        showTitle: false
         x: uiState.shopChoiceX
         y: uiState.shopChoiceY
         width: uiState.shopChoiceWidth
         height: uiState.shopChoiceHeight
-        radius: 8
-        color: "#f4f1ea"
-        border.width: 1
-        border.color: "#7f7a70"
         visible: uiState.shopChoiceVisible
-
         Text {
             x: 12
             y: 10
             text: uiState.shopChoiceTitle
-            color: "#2a2a2a"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 15
             font.bold: true
         }
@@ -5050,7 +4509,8 @@ Item {
             y: 28
             width: parent.width - 28
             text: uiState.shopChoicePrompt
-            color: "#343434"
+            color: theme.muted
+            font.family: theme.fontFamily
             font.pixelSize: 12
             horizontalAlignment: Text.AlignHCenter
         }
@@ -5058,38 +4518,28 @@ Item {
         Repeater {
             model: uiState.shopChoiceButtons
 
-            delegate: Rectangle {
+            delegate: RoTextButton {
                 required property var modelData
                 x: modelData.x - uiState.shopChoiceX
                 y: modelData.y - uiState.shopChoiceY
                 width: modelData.width
                 height: modelData.height
-                radius: 4
-                color: modelData.pressed ? "#aab9cd" : (modelData.hot ? "#c4d2e4" : "#dcdcdc")
-                border.width: 1
-                border.color: "#585858"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label
-                    color: "#181818"
-                    font.pixelSize: 12
-                }
+                pressed: modelData.pressed || false
+                hovered: modelData.hot || false
+                label: modelData.label
+                labelSize: 12
+                labelBold: false
             }
         }
     }
 
-    Rectangle {
+    RoFrame {
+        showTitle: false
         x: uiState.serverPanelX
         y: uiState.serverPanelY
         width: uiState.serverPanelWidth
         height: uiState.serverPanelHeight
-        radius: 8
-        color: "#f3f0e7"
-        border.width: 1
-        border.color: "#787060"
         visible: uiState.serverSelectVisible
-
         Column {
             anchors.fill: parent
             anchors.margins: 10
@@ -5097,7 +4547,8 @@ Item {
 
             Text {
                 text: uiState.serverPanelData.title || ""
-                color: "#303030"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 14
                 font.bold: true
             }
@@ -5132,18 +4583,18 @@ Item {
                     height: 24
                     radius: 2
                     color: isSelected
-                        ? "#d6e7b8"
-                        : (isHovered ? "#ecefe5" : "#faf8f2")
-                    border.width: isSelected ? 2 : 1
-                    border.color: isSelected ? "#5e7f2b" : "#a0a0a0"
+                        ? theme.rowSelected
+                        : (isHovered ? theme.rowHover : theme.fieldFill)
+                    border.width: 1
+                    border.color: isSelected ? theme.gold : theme.buttonBorder
                     clip: true
 
                     Rectangle {
                         anchors.left: parent.left
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
-                        width: isSelected ? 8 : 0
-                        color: "#6f9630"
+                        width: isSelected ? 3 : 0
+                        color: theme.gold
                         visible: isSelected
                     }
 
@@ -5153,7 +4604,8 @@ Item {
                         width: Math.max(1, parent.width - labelLeft - statusWidth - 12)
                         anchors.verticalCenter: parent.verticalCenter
                         text: labelText
-                        color: "#181818"
+                        color: theme.ink
+                        font.family: theme.fontFamily
                         font.pixelSize: 12
                         font.bold: isSelected
                         elide: Text.ElideRight
@@ -5167,7 +4619,8 @@ Item {
                         width: statusWidth
                         anchors.verticalCenter: parent.verticalCenter
                         text: detailText
-                        color: isSelected ? "#3f6111" : "#606060"
+                        color: isSelected ? theme.ink : theme.muted
+                        font.family: theme.fontFamily
                         font.pixelSize: 12
                         font.bold: isSelected
                         textFormat: Text.PlainText
@@ -5197,14 +4650,12 @@ Item {
             source: parent.visible ? "image://openmidgard/loginpanel" : ""
         }
 
-        Rectangle {
+        RoField {
             x: 92
             y: 29
             width: 125
             height: 18
-            color: "#f2f2f2"
-            border.width: 1
-            border.color: uiState.loginPasswordFocused ? "#b0b0b0" : "#707070"
+            editing: !uiState.loginPasswordFocused
         }
 
         Text {
@@ -5212,19 +4663,18 @@ Item {
             y: 31
             width: 112
             text: uiState.loginUserId + (!uiState.loginPasswordFocused && root.loginCaretVisible ? "|" : "")
-            color: "#202020"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 12
             elide: Text.ElideRight
         }
 
-        Rectangle {
+        RoField {
             x: 92
             y: 61
             width: 125
             height: 18
-            color: "#f2f2f2"
-            border.width: 1
-            border.color: uiState.loginPasswordFocused ? "#707070" : "#b0b0b0"
+            editing: uiState.loginPasswordFocused
         }
 
         Text {
@@ -5232,24 +4682,24 @@ Item {
             y: 63
             width: 112
             text: uiState.loginPasswordMask + (uiState.loginPasswordFocused && root.loginCaretVisible ? "|" : "")
-            color: "#202020"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 12
             elide: Text.ElideRight
         }
 
-        Rectangle {
+        RoField {
             x: 232
             y: 33
             width: 16
             height: 16
-            color: "#ffffff"
-            border.width: 1
-            border.color: "#404040"
+            editing: uiState.loginSaveAccountChecked
 
             Text {
                 anchors.centerIn: parent
                 text: uiState.loginSaveAccountChecked ? "X" : ""
-                color: "#202020"
+                color: theme.ink
+                font.family: theme.fontFamily
                 font.pixelSize: 11
                 font.bold: true
             }
@@ -5259,31 +4709,23 @@ Item {
             x: 250
             y: 31
             text: uiState.loginPanelLabels.saveLabel || ""
-            color: "#303030"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 11
         }
 
         Repeater {
             model: uiState.loginButtons
 
-            delegate: Rectangle {
+            delegate: RoTextButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.loginPanelX
                 y: (modelData.y || 0) - uiState.loginPanelY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 3
-                color: "#d8d0c4"
-                border.width: 1
-                border.color: "#6f6558"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#202020"
-                    font.pixelSize: 11
-                    font.bold: true
-                }
+                label: modelData.label || ""
+                labelSize: 11
+                labelBold: true
             }
         }
     }
@@ -5340,6 +4782,7 @@ Item {
                 height: modelData.height || 0
                 text: modelData.text || ""
                 color: "#4b4b4b"
+                font.family: theme.fontFamily
                 font.pixelSize: 11
             }
         }
@@ -5373,6 +4816,7 @@ Item {
                     visible: (modelData.label || "") !== ""
                     text: modelData.label || ""
                     color: "#5a5448"
+                    font.family: theme.fontFamily
                     font.pixelSize: 18
                     font.bold: true
                 }
@@ -5382,25 +4826,16 @@ Item {
         Repeater {
             model: uiState.charSelectActionButtons
 
-            delegate: Rectangle {
+            delegate: RoTextButton {
                 required property var modelData
                 x: (modelData.x || 0) - uiState.charSelectPanelX
                 y: (modelData.y || 0) - uiState.charSelectPanelY
                 width: modelData.width || 0
                 height: modelData.height || 0
-                radius: 3
-                color: "#d8d0c4"
-                border.width: 1
-                border.color: "#6f6558"
                 visible: modelData.visible || false
-
-                Text {
-                    anchors.centerIn: parent
-                    text: modelData.label || ""
-                    color: "#202020"
-                    font.pixelSize: 11
-                    font.bold: true
-                }
+                label: modelData.label || ""
+                labelSize: 11
+                labelBold: true
             }
         }
     }
@@ -5426,14 +4861,12 @@ Item {
                 : ""
         }
 
-        Rectangle {
+        RoField {
             x: 62
             y: 244
             width: 100
             height: 18
-            color: "#f2f2f2"
-            border.width: 1
-            border.color: uiState.makeCharNameFocused ? "#6a4c34" : "#909090"
+            editing: uiState.makeCharNameFocused
         }
 
         Text {
@@ -5441,7 +4874,8 @@ Item {
             y: 246
             width: 88
             text: uiState.makeCharName + (uiState.makeCharNameFocused && root.loginCaretVisible ? "|" : "")
-            color: "#202020"
+            color: theme.ink
+            font.family: theme.fontFamily
             font.pixelSize: 12
             elide: Text.ElideRight
         }
@@ -5456,6 +4890,7 @@ Item {
                 width: 30
                 text: modelData.value !== undefined ? modelData.value : ""
                 color: "#3c2414"
+                font.family: theme.fontFamily
                 font.pixelSize: 12
                 horizontalAlignment: Text.AlignHCenter
             }

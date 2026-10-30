@@ -796,7 +796,9 @@ void DrawHoveredGroundItemName(CGameMode& mode, HDC hdc);
 
 bool IsWorldHoverBlockedByUi(int screenX, int screenY)
 {
-    return g_windowMgr.HasActiveNpcDialog() || g_windowMgr.HasWindowAtPoint(screenX, screenY);
+    const int uiX = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(screenX) : screenX;
+    const int uiY = IsQtUiRuntimeEnabled() ? UiScaleRawToLogicalCoordinate(screenY) : screenY;
+    return g_windowMgr.HasActiveNpcDialog() || g_windowMgr.HasWindowAtPoint(uiX, uiY);
 }
 
 std::uint64_t ComputeGameplayOverlayStateToken(

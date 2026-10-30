@@ -69,6 +69,9 @@ public:
     ChatScrollBarState GetScrollBarState() const;
     int GetFontPixelSize() const;
     int GetWindowOpacityPercent() const;
+    int GetIdleOpacityPercent() const;
+    bool IsWindowFocused() const;
+    void SetWindowFocused(bool focused);
     bool IsConfigVisible() const;
     bool GetConfigRectForQt(int* x, int* y, int* width, int* height) const;
     int GetTabCount() const;
@@ -97,13 +100,14 @@ private:
     void SetActiveTab(int index);
     void SetConfigVisible(bool visible);
     void SetWindowOpacityPercent(int value);
+    void SetIdleOpacityPercent(int value);
     void SetActiveInputField(ActiveInputField field);
     std::string* GetActiveInputBuffer();
     bool SubmitInput();
     void AddInputHistory(const std::string& text);
     void AdjustScroll(int lineDelta);
     void ClampScrollOffset();
-    void UpdateWindowOpacityFromPointer(int x, const RECT& trackRect);
+    void UpdateWindowOpacityFromPointer(int x, const RECT& trackRect, bool idle);
     bool HandlePointerDown(int x, int y);
     bool HandlePointerMove(int x, int y);
     bool HandlePointerUp(int x, int y);
@@ -123,6 +127,8 @@ private:
     int m_activeTab;
     int m_fontPixelSize;
     int m_windowOpacityPercent;
+    int m_idleOpacityPercent;
+    int m_windowFocused;
     int m_configVisible;
     int m_dragStartGlobalX;
     int m_dragStartGlobalY;

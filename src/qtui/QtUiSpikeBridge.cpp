@@ -1210,6 +1210,9 @@ public:
                 && g_windowMgr.m_chatWnd->m_show != 0) {
                 const int logicalX = GetUiLogicalX(lParam);
                 const int logicalY = GetUiLogicalY(lParam);
+                if (!g_windowMgr.m_chatWnd->IsQtInteractionPoint(logicalX, logicalY)) {
+                    g_windowMgr.m_chatWnd->SetWindowFocused(false);
+                }
                 if (g_windowMgr.m_chatWnd->IsInputActive()
                     && !g_windowMgr.m_chatWnd->IsQtMainPanelPoint(logicalX, logicalY)) {
                     g_windowMgr.m_chatWnd->ClearInputFocus();

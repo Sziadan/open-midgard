@@ -33,6 +33,7 @@ namespace {
 constexpr char kChatWndSection[] = "ChatWnd";
 constexpr char kChatFontSizeValue[] = "FontPixelSize";
 constexpr char kChatWindowOpacityValue[] = "OpacityPercent";
+constexpr char kChatWindowIdleOpacityValue[] = "OpacityPercentIdle";
 constexpr char kChatWindowWidthValue[] = "WindowWidth";
 constexpr char kChatWindowHeightValue[] = "WindowHeight";
 constexpr char kChatActiveTabValue[] = "ActiveTab";
@@ -41,7 +42,7 @@ constexpr char kChatTabMaskPrefix[] = "TabMask";
 constexpr size_t kMaxChatLines = 50;
 constexpr int kChatWindowMargin = 12;
 constexpr int kChatDefaultWindowWidth = 486;
-constexpr int kChatTabBarHeight = 34;
+constexpr int kChatTabBarHeight = 26;
 constexpr int kChatLineHeight = 19;
 constexpr int kChatInputHeight = 28;
 constexpr int kChatWhisperInputWidth = 126;
@@ -61,9 +62,9 @@ constexpr int kChatResizeBorder = 6;
 constexpr int kChatScrollbarWidth = 8;
 constexpr int kChatScrollbarGap = 4;
 constexpr int kChatTabGap = 6;
-constexpr int kChatGearButtonSize = 24;
+constexpr int kChatGearButtonSize = 18;
 constexpr int kChatConfigPanelWidth = 336;
-constexpr int kChatConfigPanelHeight = 392;
+constexpr int kChatConfigPanelHeight = 492;
 constexpr int kChatConfigListWidth = 92;
 constexpr int kChatConfigButtonHeight = 28;
 constexpr int kChatConfigButtonGap = 8;
@@ -75,6 +76,7 @@ constexpr int kChatFontSizeDefault = 13;
 constexpr int kChatWindowOpacityMin = 20;
 constexpr int kChatWindowOpacityMax = 100;
 constexpr int kChatWindowOpacityDefault = 84;
+constexpr int kChatWindowIdleOpacityDefault = 45;
 constexpr size_t kMaxWhisperTargetChars = 24;
 constexpr size_t kMaxInputChars = 180;
 constexpr size_t kMaxInputHistory = 5;
@@ -177,6 +179,9 @@ struct ChatLayoutRects {
     RECT transparencyValue;
     RECT transparencyTrack;
     RECT transparencyThumb;
+    RECT transparencyIdleValue;
+    RECT transparencyIdleTrack;
+    RECT transparencyIdleThumb;
     std::array<RECT, kChatFilterCount> filterButtons;
     RECT resetButton;
 };
@@ -586,9 +591,27 @@ ChatLayoutRects BuildChatLayoutRects(int x, int y, int w, int h)
         rects.transparencyTrack.left + kChatSliderThumbWidth,
         rects.transparencyTrack.bottom + 5
     };
+    rects.transparencyIdleValue = {
+        editorLeft,
+        rects.configPanel.top + 212,
+        rects.configPanel.right - 12,
+        rects.configPanel.top + 212 + kChatConfigButtonHeight
+    };
+    rects.transparencyIdleTrack = {
+        rects.configPanel.left + 130,
+        rects.configPanel.top + 252,
+        rects.configPanel.right - 22,
+        rects.configPanel.top + 252 + kChatSliderTrackHeight
+    };
+    rects.transparencyIdleThumb = {
+        rects.transparencyIdleTrack.left,
+        rects.transparencyIdleTrack.top - 5,
+        rects.transparencyIdleTrack.left + kChatSliderThumbWidth,
+        rects.transparencyIdleTrack.bottom + 5
+    };
 
     const int filterWidth = ((rects.configPanel.right - 12) - editorLeft - kChatConfigButtonGap) / 2;
-    const int filtersTop = rects.configPanel.top + 216;
+    const int filtersTop = rects.configPanel.top + 300;
     for (int index = 0; index < kChatFilterCount; ++index) {
         const int column = index % 2;
         const int row = index / 2;
@@ -621,6 +644,8 @@ UINewChatWnd::UINewChatWnd()
     m_activeTab(0),
     m_fontPixelSize(kChatFontSizeDefault),
     m_windowOpacityPercent(kChatWindowOpacityDefault),
+    m_idleOpacityPercent(kChatWindowIdleOpacityDefault),
+    m_windowFocused(0),
     m_configVisible(0),
       m_dragStartGlobalX(0),
       m_dragStartGlobalY(0),
@@ -669,6 +694,9 @@ void UINewChatWnd::LoadSettings(int* outWindowWidth, int* outWindowHeight)
     if (TryLoadSettingsIniInt(kChatWndSection, kChatWindowOpacityValue, &storedValue)) {
         m_windowOpacityPercent = ClampChatWindowOpacityPercent(storedValue);
     }
+    if (TryLoadSettingsIniInt(kChatWndSection, kChatWindowIdleOpacityValue, &storedValue)) {
+        m_idleOpacityPercent = ClampChatWindowOpacityPercent(storedValue);
+    }
     if (TryLoadSettingsIniInt(kChatWndSection, kChatActiveTabValue, &storedValue)) {
         m_activeTab = std::clamp(storedValue, 0, kChatTabCount - 1);
     }
@@ -712,6 +740,7 @@ void UINewChatWnd::SaveSettings() const
 {
     SaveSettingsIniInt(kChatWndSection, kChatFontSizeValue, m_fontPixelSize);
     SaveSettingsIniInt(kChatWndSection, kChatWindowOpacityValue, m_windowOpacityPercent);
+    SaveSettingsIniInt(kChatWndSection, kChatWindowIdleOpacityValue, m_idleOpacityPercent);
     SaveSettingsIniInt(kChatWndSection, kChatWindowWidthValue, m_w);
     SaveSettingsIniInt(kChatWndSection, kChatWindowHeightValue, m_h);
     SaveSettingsIniInt(kChatWndSection, kChatActiveTabValue, m_activeTab);
@@ -850,6 +879,27 @@ int UINewChatWnd::GetFontPixelSize() const
 int UINewChatWnd::GetWindowOpacityPercent() const
 {
     return m_windowOpacityPercent;
+}
+
+int UINewChatWnd::GetIdleOpacityPercent() const
+{
+    return m_idleOpacityPercent;
+}
+
+bool UINewChatWnd::IsWindowFocused() const
+{
+    return m_windowFocused != 0;
+}
+
+void UINewChatWnd::SetWindowFocused(bool focused)
+{
+    const int nextFocused = focused ? 1 : 0;
+    if (m_windowFocused == nextFocused) {
+        return;
+    }
+
+    m_windowFocused = nextFocused;
+    Invalidate();
 }
 
 bool UINewChatWnd::IsConfigVisible() const
@@ -1175,6 +1225,9 @@ void UINewChatWnd::ClearLines()
 bool UINewChatWnd::HandlePointerDown(int x, int y)
 {
     const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
+    if (IsQtInteractionPoint(x, y)) {
+        SetWindowFocused(true);
+    }
 
     if (m_configVisible != 0 && RectIsValid(layout.configPanel) && PointInRectXY(layout.configPanel, x, y)) {
         for (int index = 0; index < kChatTabCount; ++index) {
@@ -1199,7 +1252,12 @@ bool UINewChatWnd::HandlePointerDown(int x, int y)
         }
         if (PointInRectXY(layout.transparencyValue, x, y) || PointInRectXY(layout.transparencyTrack, x, y)) {
             m_transparencyDragActive = 1;
-            UpdateWindowOpacityFromPointer(x, layout.transparencyTrack);
+            UpdateWindowOpacityFromPointer(x, layout.transparencyTrack, false);
+            return true;
+        }
+        if (PointInRectXY(layout.transparencyIdleValue, x, y) || PointInRectXY(layout.transparencyIdleTrack, x, y)) {
+            m_transparencyDragActive = 2;
+            UpdateWindowOpacityFromPointer(x, layout.transparencyIdleTrack, true);
             return true;
         }
         for (int index = 0; index < kChatFilterCount; ++index) {
@@ -1305,7 +1363,8 @@ bool UINewChatWnd::HandlePointerMove(int x, int y)
 {
     if (m_transparencyDragActive != 0) {
         const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
-        UpdateWindowOpacityFromPointer(x, layout.transparencyTrack);
+        const bool idle = m_transparencyDragActive == 2;
+        UpdateWindowOpacityFromPointer(x, idle ? layout.transparencyIdleTrack : layout.transparencyTrack, idle);
         return true;
     }
 
@@ -1394,7 +1453,8 @@ bool UINewChatWnd::HandlePointerUp(int x, int y)
     const bool hadCapture = m_dragArmed != 0 || m_isDragging != 0 || m_transparencyDragActive != 0;
     if (m_transparencyDragActive != 0) {
         const ChatLayoutRects layout = BuildChatLayoutRects(m_x, m_y, m_w, m_h);
-        UpdateWindowOpacityFromPointer(x, layout.transparencyTrack);
+        const bool idle = m_transparencyDragActive == 2;
+        UpdateWindowOpacityFromPointer(x, idle ? layout.transparencyIdleTrack : layout.transparencyTrack, idle);
     }
     if (m_isDragging != 0) {
         StoreInfo();
@@ -1692,7 +1752,19 @@ void UINewChatWnd::SetWindowOpacityPercent(int value)
     Invalidate();
 }
 
-void UINewChatWnd::UpdateWindowOpacityFromPointer(int x, const RECT& trackRect)
+void UINewChatWnd::SetIdleOpacityPercent(int value)
+{
+    const int clampedValue = ClampChatWindowOpacityPercent(value);
+    if (m_idleOpacityPercent == clampedValue) {
+        return;
+    }
+
+    m_idleOpacityPercent = clampedValue;
+    SaveSettings();
+    Invalidate();
+}
+
+void UINewChatWnd::UpdateWindowOpacityFromPointer(int x, const RECT& trackRect, bool idle)
 {
     const int trackWidth = trackRect.right - trackRect.left;
     if (trackWidth <= 0) {
@@ -1702,7 +1774,11 @@ void UINewChatWnd::UpdateWindowOpacityFromPointer(int x, const RECT& trackRect)
     const int clampedX = std::clamp(x, static_cast<int>(trackRect.left), static_cast<int>(trackRect.right));
     const double t = static_cast<double>(clampedX - trackRect.left) / static_cast<double>(trackWidth);
     const int value = static_cast<int>(std::lround(kChatWindowOpacityMin + t * (kChatWindowOpacityMax - kChatWindowOpacityMin)));
-    SetWindowOpacityPercent(value);
+    if (idle) {
+        SetIdleOpacityPercent(value);
+    } else {
+        SetWindowOpacityPercent(value);
+    }
 }
 
 void UINewChatWnd::SetActiveInputField(ActiveInputField field)
