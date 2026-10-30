@@ -490,6 +490,7 @@ void ApplyEnemyCursorMagnet(CGameMode& mode, POINT* cursorPos);
 bool IsMonsterLikeHoverActor(const CGameActor* actor);
 bool IsWalkableAttrCell(const CGameMode& mode, int tileX, int tileY);
 bool IsAttackTargetWithinRange(CGameMode& mode, const CGameActor& target, int attackRange);
+bool IsServerCellWithinSkillRangeOfActor(const CGameMode& mode, const CGameActor& target, int skillRange);
 bool SendUseSkillToIdPacket(u16 skillId, u16 skillLevel, u32 targetGid);
 void ClearAttackChaseHint(CGameMode& mode);
 void ClearSkillChase(CGameMode& mode);
@@ -3042,7 +3043,8 @@ bool TryUseSelectedPcTargetSkill(CGameMode& mode, u16 skillId, u16 skillLevel)
     mode.m_lastMonGid = 0;
     mode.m_lastLockOnMonGid = 0;
 
-    if (IsAttackTargetWithinRange(mode, *targetActor, skillRange)) {
+    if (IsAttackTargetWithinRange(mode, *targetActor, skillRange)
+        && IsServerCellWithinSkillRangeOfActor(mode, *targetActor, skillRange)) {
         if (SendUseSkillToIdPacket(skillId, skillLevel, targetGid)) {
             ClearSkillChase(mode);
             return true;
@@ -4789,6 +4791,27 @@ bool IsTargetWithinAttackRange(int sourceTileX, int sourceTileY, int targetTileX
 {
     const int clampedRange = (std::max)(1, attackRange);
     return (std::max)(std::abs(sourceTileX - targetTileX), std::abs(sourceTileY - targetTileY)) <= clampedRange;
+}
+
+// The visible body can be ahead of the cell the server last confirmed.
+// Sending a skill from that predicted cell is what produces a swing with no
+// hit and no SP cost: the server drops the request and never echoes it.
+bool IsServerCellWithinSkillRange(int targetTileX, int targetTileY, int skillRange)
+{
+    if (g_session.m_playerPosX < 0 || g_session.m_playerPosY < 0) {
+        return false;
+    }
+    return IsTargetWithinAttackRange(g_session.m_playerPosX, g_session.m_playerPosY, targetTileX, targetTileY, skillRange);
+}
+
+bool IsServerCellWithinSkillRangeOfActor(const CGameMode& mode, const CGameActor& target, int skillRange)
+{
+    int targetTileX = -1;
+    int targetTileY = -1;
+    if (!WorldToAttrCell(mode.m_world, target.m_pos.x, target.m_pos.z, &targetTileX, &targetTileY)) {
+        return true;
+    }
+    return IsServerCellWithinSkillRange(targetTileX, targetTileY, skillRange);
 }
 
 int ApproachSign(int delta)
@@ -6782,7 +6805,9 @@ void PumpSkillChaseRequest(CGameMode& mode)
         const double distance = std::sqrt(static_cast<double>(distanceSquared));
         const bool destinationIsPlayerCell = player->m_destCellX == sourceTileX
             && player->m_destCellZ == sourceTileY;
-        if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) {
+        const bool serverInRange = IsServerCellWithinSkillRange(
+            mode.m_groundSkillCellX, mode.m_groundSkillCellY, skillRange);
+        if ((distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) && serverInRange) {
             // Ref message 66 reaches mode message 77; keep the current packet
             // API and complete the intent after the packet attempt.
             const bool sent = SendUseSkillToPosPacket(
@@ -6902,7 +6927,8 @@ void PumpSkillChaseRequest(CGameMode& mode)
         const double distance = std::sqrt(static_cast<double>(distanceSquared));
         const bool destinationIsPlayerCell = player->m_destCellX == sourceTileX
             && player->m_destCellZ == sourceTileY;
-        if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) {
+        const bool serverInRange = IsServerCellWithinSkillRange(skillTileX, skillTileY, skillRange);
+        if ((distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) && serverInRange) {
             const bool specialSkillUnitJob = target->m_job == 141 || target->m_job == 143 || target->m_job == 152;
             if (specialSkillUnitJob && skillId == 0) {
                 // Ref message 29 issues base CMode message 150 and returns
@@ -7043,7 +7069,11 @@ void PumpSkillChaseRequest(CGameMode& mode)
 
     const bool destinationIsPlayerCell = player->m_destCellX == sourceTileX
         && player->m_destCellZ == sourceTileY;
-    if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) {
+    int targetTileX = -1;
+    int targetTileY = -1;
+    const bool serverInRange = !WorldToAttrCell(mode.m_world, target->m_pos.x, target->m_pos.z, &targetTileX, &targetTileY)
+        || IsServerCellWithinSkillRange(targetTileX, targetTileY, skillRange);
+    if ((distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) && serverInRange) {
         // Ref message 42 dispatches mode message 76, then message 13 clears
         // the proceed state even when the packet send cannot be completed.
         const bool sent = SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid);

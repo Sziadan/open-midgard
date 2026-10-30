@@ -2134,7 +2134,15 @@ void HandleNormalInventoryList(CGameMode&, const PacketView& packet)
     const size_t entrySize = static_cast<size_t>(entrySizeValue);
 
     const size_t payloadSize = static_cast<size_t>(packet.packetLength - 4);
-    if (entrySize == 0 || payloadSize < entrySize) {
+    if (entrySize == 0) {
+        return;
+    }
+    // A character with no stackables is a 4-byte list. Leaving the previous
+    // character's items in place is what shows them on the next login.
+    if (payloadSize < entrySize) {
+        if (payloadSize == 0) {
+            g_session.ClearInventoryItems();
+        }
         return;
     }
 
@@ -2345,6 +2353,26 @@ void HandleStoragePasswordResult(CGameMode&, const PacketView& packet)
         static_cast<unsigned int>(errorCount));
 }
 
+void AnnouncePickedUpItem(const ITEM_INFO& itemInfo)
+{
+    // Ref Zc_Item_Pickup_Ack sprintf(MsgStr(MSI_GET_ITEM), name, count).
+    // msgstringtable.txt index 153: "You got %s (%d).#"
+    // The color argument is COLORREF 16776960 (0x00FFFF00), which is RGB(0, 255, 255).
+    // Chat stores that as R in the high byte. Type 5 is the get-item chat class;
+    // the Info tab is the channel that still shows it.
+    std::string itemName = itemInfo.GetEquipDisplayName();
+    if (itemName.empty()) {
+        itemName = itemInfo.GetDisplayName();
+    }
+    if (itemName.empty()) {
+        itemName = std::to_string(itemInfo.GetItemId());
+    }
+
+    char pickMsg[256] = {};
+    std::snprintf(pickMsg, sizeof(pickMsg), "You got %s (%d).", itemName.c_str(), itemInfo.m_num);
+    g_windowMgr.PushChatEvent(pickMsg, 0x0000FFFFu, 6);
+}
+
 void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 23) {
@@ -2403,6 +2431,7 @@ void HandleItemPickupAck(CGameMode& mode, const PacketView& packet)
         StartLocalPickupAnimation(mode, pickedObjectAid);
     }
 
+    AnnouncePickedUpItem(itemInfo);
     g_session.AddInventoryItem(itemInfo);
     mode.m_pickupReqItemNaidList.clear();
     mode.m_lastPickupRequestTick = 0;
@@ -3894,16 +3923,23 @@ void HandleSkillFailAck(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    if (mode.m_world != nullptr && mode.m_world->m_player != nullptr) {
-        mode.m_world->m_player->m_isMotionFreezed = 0;
-    }
-
     const u16 skillId = ReadLE16(packet.data + 2);
     const u32 btype = ReadLE32(packet.data + 4);
     const u8 result = packet.data[8];
     const u8 cause = packet.data[9];
     if (result != 0) {
         return;
+    }
+
+    if (mode.m_world != nullptr && mode.m_world->m_player != nullptr) {
+        CPlayer* player = mode.m_world->m_player;
+        player->m_isMotionFreezed = 0;
+        // A rejected skill must not leave the swing or cast pose running.
+        // The server did not spend SP and will not send a hit.
+        const int state = player->m_stateId;
+        if (state == 2 || state == 5 || state == 7 || state == 8 || state == 9 || state == 12) {
+            player->SetState(0);
+        }
     }
     if (cause == 0 && skillId == 1 && btype == 1) {
         mode.m_isReqEmotion = 0;
@@ -5213,6 +5249,12 @@ struct RuntimeActorState {
     int charfont = 0;
     int tileX = 0;
     int tileY = 0;
+    int srcX = -1;
+    int srcY = -1;
+    int subCellX = 0;
+    int subCellY = 0;
+    u32 moveStartTime = 0;
+    bool hasMovePath = false;
     int dir = 0;
     u8 objectType = 0;
     bool hasPosition = false;
@@ -5271,7 +5313,7 @@ int ScoreLegacyActorState(const RuntimeActorState& state, bool hasObjectType)
     return score;
 }
 
-void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, int srcX = -1, int srcY = -1);
+void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, int srcX = -1, int srcY = -1, u32 moveStartTime = 0, int subCellX = 0, int subCellY = 0);
 void ApplyRuntimeActorFixPosition(CGameMode& mode, u32 gid, int tileX, int tileY);
 
     bool FindActivePathSegmentForPacketView(const CPathInfo& path, u32 now, size_t* outStartIndex)
@@ -5598,11 +5640,25 @@ void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
     actor->m_roty = PacketDirToRotationDegrees(state.dir);
 
     if (state.hasPosition) {
-        mode.m_actorPosList[state.gid] = CellPos{state.tileX, state.tileY};
+        // A walking entry's current cell is the path start. The destination is where it is going.
+        const int recordedX = state.hasMovePath ? state.srcX : state.tileX;
+        const int recordedY = state.hasMovePath ? state.srcY : state.tileY;
+        mode.m_actorPosList[state.gid] = CellPos{recordedX, recordedY};
         if (state.positionIsFixed) {
             ApplyRuntimeActorFixPosition(mode, state.gid, state.tileX, state.tileY);
         } else {
-            UpdateRuntimeActorPosition(mode, state.gid, state.tileX, state.tileY);
+            if (state.moveStartTime != 0) {
+                g_session.UpdateServerTime(state.moveStartTime);
+            }
+            UpdateRuntimeActorPosition(mode,
+                state.gid,
+                state.tileX,
+                state.tileY,
+                state.hasMovePath ? state.srcX : -1,
+                state.hasMovePath ? state.srcY : -1,
+                state.moveStartTime,
+                state.subCellX,
+                state.subCellY);
         }
     }
 
@@ -6016,6 +6072,14 @@ bool DecodeActorWalkingPacket(const PacketView& packet, RuntimeActorState& outSt
             DecodeSrcDst(packet.data + 50 + shift, srcX, srcY, dstX, dstY, srcDir, dstDir);
             state.tileX = dstX;
             state.tileY = dstY;
+            state.srcX = srcX;
+            state.srcY = srcY;
+            state.subCellX = srcDir;
+            state.subCellY = dstDir;
+            // Ref Zc_Notify_Moveentry: the walk tick is the dword at offset 22.
+            // A shifted object-type byte moves that field with the rest of the packet.
+            state.moveStartTime = ReadLE32(packet.data + 22 + shift);
+            state.hasMovePath = true;
             state.dir = dstDir;
             state.hasPosition = true;
         };
@@ -6103,6 +6167,13 @@ bool DecodeActorWalkingPacket(const PacketView& packet, RuntimeActorState& outSt
         DecodeSrcDst(packet.data + moveOffset, srcX, srcY, dstX, dstY, srcDir, dstDir);
         outState.tileX = dstX;
         outState.tileY = dstY;
+        outState.srcX = srcX;
+        outState.srcY = srcY;
+        outState.subCellX = srcDir;
+        outState.subCellY = dstDir;
+        // The 2009+ walking entry keeps the same tick gap as 0x022C, shifted by the length header.
+        outState.moveStartTime = ReadLE32(packet.data + 29);
+        outState.hasMovePath = true;
         outState.dir = dstDir;
         outState.hasPosition = true;
         return true;
@@ -6162,6 +6233,14 @@ bool DecodeActorWalkingPacket(const PacketView& packet, RuntimeActorState& outSt
     DecodeSrcDst(packet.data + 55, srcX, srcY, dstX, dstY, srcDir, dstDir);
     outState.tileX = dstX;
     outState.tileY = dstY;
+    outState.srcX = srcX;
+    outState.srcY = srcY;
+    outState.subCellX = srcDir;
+    outState.subCellY = dstDir;
+    // eAthena clif_set_unit_walking for 0x022C / 0x02EC: gettick() sits between
+    // head bottom and head top. POS2 at +55 is the current cell, then the destination.
+    outState.moveStartTime = ReadLE32(packet.data + 27);
+    outState.hasMovePath = true;
     outState.dir = dstDir;
     outState.hasPosition = true;
     return true;
@@ -6384,7 +6463,7 @@ CGameActor* EnsureRuntimeActor(CGameMode& mode, u32 gid, bool preferPc)
     return actor;
 }
 
-void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, int srcX, int srcY)
+void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, int srcX, int srcY, u32 moveStartTime, int subCellX, int subCellY)
 {
     CGameActor* actor = EnsureRuntimeActor(mode, gid);
     if (!actor) {
@@ -6404,14 +6483,16 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
     const u32 prevMoveEnd = actor->m_moveEndTime;
     const int prevIsMoving = actor->m_isMoving;
     const vector3d prevPos = actor->m_pos;
-
-    if (actor->m_isMoving) {
-        actor->ProcessState();
-    }
+    // Ref Zc_Notify_Move only replaces the path. It does not sample the new
+    // path onto m_pos, and it does not run ProcessState on the old path after
+    // the clock jump. Both of those land as a visible pop on the next packet.
+    const bool alreadyPlaced = prevIsMoving != 0
+        || actor->m_stateId != 0
+        || actor->m_pos.x != 0.0f
+        || actor->m_pos.y != 0.0f
+        || actor->m_pos.z != 0.0f;
 
     actor->UnRegisterPos();
-    const bool isLocalPlayer = IsLocalPlayerActor(mode, gid);
-    const bool keepInterpolatedMoveStart = isLocalPlayer && actor->m_isMoving;
     actor->m_moveSrcX = srcX >= 0 ? srcX : actor->m_moveDestX;
     actor->m_moveSrcY = srcY >= 0 ? srcY : actor->m_moveDestY;
     actor->m_moveDestX = tileX;
@@ -6420,14 +6501,11 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
     actor->m_lastTlvertY = tileY;
     actor->m_path.Reset();
 
-    actor->m_moveStartPos = actor->m_pos;
-    if (!keepInterpolatedMoveStart && isLocalPlayer && srcX >= 0 && srcY >= 0 && mode.m_world) {
-        const float srcWorldX = TileToWorldCoordX(mode.m_world, actor->m_moveSrcX);
-        const float srcWorldZ = TileToWorldCoordZ(mode.m_world, actor->m_moveSrcY);
-        actor->m_moveStartPos.x = srcWorldX;
-        actor->m_moveStartPos.z = srcWorldZ;
-        actor->m_moveStartPos.y = ResolveActorHeight(mode.m_world, srcWorldX, srcWorldZ);
-    }
+    const float srcWorldX = TileToWorldCoordX(mode.m_world, actor->m_moveSrcX);
+    const float srcWorldZ = TileToWorldCoordZ(mode.m_world, actor->m_moveSrcY);
+    actor->m_moveStartPos.x = srcWorldX;
+    actor->m_moveStartPos.z = srcWorldZ;
+    actor->m_moveStartPos.y = ResolveActorHeight(mode.m_world, srcWorldX, srcWorldZ);
     const float worldX = TileToWorldCoordX(mode.m_world, tileX);
     const float worldZ = TileToWorldCoordZ(mode.m_world, tileY);
     actor->m_moveEndPos.x = worldX;
@@ -6436,46 +6514,85 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
     if (actor->m_moveStartPos.x == 0.0f && actor->m_moveStartPos.y == 0.0f && actor->m_moveStartPos.z == 0.0f) {
         actor->m_moveStartPos = actor->m_moveEndPos;
     }
-    actor->m_moveStartTime = g_session.GetServerTime();
+    // Ref Zc_Notify_Move uses the packet tick as the path start. Falling back
+    // to "now" makes a late packet replay the whole walk from the first cell.
+    actor->m_moveStartTime = moveStartTime != 0 ? moveStartTime : g_session.GetServerTime();
     actor->m_moveEndTime = actor->m_moveStartTime;
 
-    if (mode.m_world && mode.m_world->m_attr) {
+    if (mode.m_world && mode.m_world->m_attr && actor->m_moveSrcX >= 0 && actor->m_moveSrcY >= 0) {
         g_pathFinder.SetMap(mode.m_world->m_attr);
         const int speed = static_cast<int>(actor->m_speed != 0 ? actor->m_speed : 150u);
-        if (g_pathFinder.FindPath(actor->m_moveStartTime,
+        auto buildPath = [&](u32 startTime, int speedFactor) {
+            return g_pathFinder.FindPath(startTime,
                 actor->m_moveSrcX,
                 actor->m_moveSrcY,
+                subCellX,
+                subCellY,
                 tileX,
                 tileY,
-                0,
-                0,
-                speed,
+                speedFactor,
                 &actor->m_path)
-            && actor->m_path.m_cells.size() >= 2) {
+                && actor->m_path.m_cells.size() >= 2;
+        };
+        if (buildPath(actor->m_moveStartTime, speed)) {
             actor->m_moveEndTime = actor->m_path.m_cells.back().arrivalTime;
+            // Ref CGameActor::FindPath: a path whose last cell is already due
+            // is rebuilt from now at 10/13 of the step time, so the actor
+            // still walks it instead of being dropped on the destination.
+            if (actor->m_moveEndTime <= g_session.GetServerTime()) {
+                actor->m_moveStartTime = g_session.GetServerTime();
+                const int catchupSpeed = 10 * speed / 13;
+                if (buildPath(actor->m_moveStartTime, catchupSpeed > 0 ? catchupSpeed : speed)) {
+                    actor->m_moveEndTime = actor->m_path.m_cells.back().arrivalTime;
+                }
+            }
         }
     }
 
-    actor->m_isMoving = actor->m_moveEndTime > actor->m_moveStartTime;
+    actor->m_isMoving = actor->m_moveEndTime > actor->m_moveStartTime && actor->m_path.m_cells.size() >= 2;
+    if (!alreadyPlaced) {
+        // Ref move-entry (SendMsg 6) places a brand new actor on the start
+        // sub-cell, which the server filled with the cell it is on right now.
+        // Placing it on the destination is the enter-screen snap.
+        int placeX = actor->m_moveSrcX;
+        int placeY = actor->m_moveSrcY;
+        int placeSubX = subCellX;
+        int placeSubY = subCellY;
+        if (srcX < 0 || srcY < 0) {
+            placeX = tileX;
+            placeY = tileY;
+            placeSubX = 8;
+            placeSubY = 8;
+        }
+        float placedX = TileToWorldCoordX(mode.m_world, placeX);
+        float placedZ = TileToWorldCoordZ(mode.m_world, placeY);
+        if (mode.m_world && mode.m_world->m_attr && mode.m_world->m_attr->m_zoom > 0) {
+            const float zoom = static_cast<float>(mode.m_world->m_attr->m_zoom);
+            placedX += zoom * 0.0625f * static_cast<float>(placeSubX - 8);
+            placedZ += zoom * 0.0625f * static_cast<float>(placeSubY - 8);
+        }
+        actor->m_pos.x = placedX;
+        actor->m_pos.z = placedZ;
+        actor->m_pos.y = ResolveActorHeight(mode.m_world, placedX, placedZ);
+    }
     if (actor->m_isMoving) {
         actor->m_isSitting = 0;
-        actor->SetState(1);
-        if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {
-            pcActor->m_headDir = 0;
-            pcActor->m_curMotion = 0;
-            pcActor->m_oldMotion = 0;
-            pcActor->InvalidateBillboard();
-        }
-    }
-    if (!actor->m_isMoving) {
-        actor->m_pos = actor->m_moveEndPos;
-        actor->SetState(0);
-    } else if (isLocalPlayer && actor->m_path.m_cells.size() >= 2) {
-        if (!InterpolateRuntimeActorPathPosition(mode.m_world, *actor, g_session.GetServerTime(), &actor->m_pos)) {
-            actor->m_pos = actor->m_moveStartPos;
+        actor->m_pathStartCell = 0;
+        // The integration baseline is this server time. Folding a clock jump
+        // into the first step is what makes a new or replaced path sprint.
+        actor->m_lastServerTime = g_session.GetServerTime();
+        if (actor->m_stateId != 1) {
+            actor->SetState(1);
         }
     } else {
-        actor->m_pos = actor->m_moveStartPos;
+        // A failed or same-cell path must not pull the actor to the destination.
+        // The server sends a stop when the walk is cancelled; snapping here is
+        // the loot-sprint / rubber-band.
+        actor->m_path.Reset();
+        actor->m_moveEndTime = actor->m_moveStartTime;
+        if (actor->m_stateId == 1) {
+            actor->SetState(0);
+        }
     }
     actor->RegisterPos();
 
@@ -7322,6 +7439,8 @@ void HandleBroadcast(CGameMode& mode, const PacketView& packet)
 
 void ReturnToLoginMode()
 {
+    g_session.ClearInventoryItems();
+    g_windowMgr.ClearChatEvents();
     CRagConnection::instance()->Disconnect();
     g_modeMgr.Switch(0, "");
 }
@@ -7588,6 +7707,13 @@ void HandleActorMoveUpdate(CGameMode& mode, const PacketView& packet)
     const u32 gid = ReadLE32(packet.data + 2);
     int sx = 0, sy = 0, dx = 0, dy = 0, cellX = 0, cellY = 0;
     DecodePos2MoveData(packet.data + 6, sx, sy, dx, dy, cellX, cellY);
+    // Ref Zc_Notify_Move: the walk tick is the dword after the 6-byte pos.
+    const u32 moveStartTime = packet.packetLength >= 16
+        ? ReadLE32(packet.data + 12)
+        : g_session.GetServerTime();
+    if (moveStartTime != 0) {
+        g_session.UpdateServerTime(moveStartTime);
+    }
 
     // eAthena uses 0x0086 for any visible walking object. Keep a billboard-capable
     // shell for move-only actors, but only seed player appearance when the id falls
@@ -7627,7 +7753,7 @@ void HandleActorMoveUpdate(CGameMode& mode, const PacketView& packet)
         mode.m_attackChaseSourceCellX = dx;
         mode.m_attackChaseSourceCellY = dy;
     }
-    UpdateRuntimeActorPosition(mode, gid, dx, dy, sx, sy);
+    UpdateRuntimeActorPosition(mode, gid, dx, dy, sx, sy, moveStartTime, cellX, cellY);
 }
 
 void HandleSelfMoveAck(CGameMode& mode, const PacketView& packet)
@@ -7637,7 +7763,8 @@ void HandleSelfMoveAck(CGameMode& mode, const PacketView& packet)
         return;
     }
 
-    g_session.SetServerTime(ReadLE32(packet.data + 2));
+    const u32 moveStartTime = ReadLE32(packet.data + 2);
+    g_session.SetServerTime(moveStartTime);
 
     int sx = 0, sy = 0, dx = 0, dy = 0, cellX = 0, cellY = 0;
     DecodePos2MoveData(packet.data + 6, sx, sy, dx, dy, cellX, cellY);
@@ -7651,7 +7778,7 @@ void HandleSelfMoveAck(CGameMode& mode, const PacketView& packet)
     if (mode.m_world && mode.m_world->m_player) {
         mode.m_world->m_player->m_isWaitingMoveAck = 0;
     }
-    UpdateRuntimeActorPosition(mode, g_session.m_gid, dx, dy, sx, sy);
+    UpdateRuntimeActorPosition(mode, g_session.m_gid, dx, dy, sx, sy, moveStartTime, cellX, cellY);
 }
 
 void HandleActorSetPosition(CGameMode& mode, const PacketView& packet)

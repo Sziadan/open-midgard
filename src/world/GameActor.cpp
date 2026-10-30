@@ -1712,6 +1712,27 @@ bool IsTransientActionActive(const CGameActor& actor, CActRes* actRes, int actio
     return static_cast<float>(elapsedMs) <= totalDurationMs + 50.0f;
 }
 
+CActRes* ResolveRuntimeActorActRes(CRenderObject* object);
+
+// Instant skills keep the actor in the attack/skill state until the motion
+// clip ends. The billboard drops that clip on its own timer; staying in the
+// state after that is the extra movement lock.
+bool SkillPoseOutlastedVisibleMotion(CGameActor& actor)
+{
+    if (actor.m_stateStartTick == 0) {
+        return false;
+    }
+    const u32 elapsed = timeGetTime() - actor.m_stateStartTick;
+    if (elapsed < 50u) {
+        return false;
+    }
+    CActRes* actRes = ResolveRuntimeActorActRes(&actor);
+    if (!actRes) {
+        return elapsed > 200u;
+    }
+    return !IsTransientActionActive(actor, actRes, actor.m_curAction);
+}
+
 int ResolveSpriteMotionIndex(const CGameActor& actor, CActRes* actRes, int action)
 {
     if (!actRes) {
@@ -4025,8 +4046,12 @@ void CRenderObject::ProcessMotion() {
     }
 
     const CGameActor* actorForMotionWaveTracking = dynamic_cast<CGameActor*>(this);
+    // Ref CNpc::OnProcess calls ProcessSound for every monster, including the
+    // death clip. Poring's die wave sits on motion 1 of action 32. The idle
+    // billboard scan never runs while that clip is the active pose.
     const bool trackMotionWaveEventsInProcessMotion = actorForMotionWaveTracking
-        && actorForMotionWaveTracking->m_isPc != 0;
+        && (actorForMotionWaveTracking->m_isPc != 0
+            || IsTransientActionActive(*actorForMotionWaveTracking, actRes, m_curAction));
 
     if (trackMotionWaveEventsInProcessMotion && m_oldBaseAction != m_baseAction) {
         m_oldMotion = 0;
@@ -4898,7 +4923,7 @@ u8 CGameActor::ProcessState() {
     case 9:
     case 12:
         ProcessMotion();
-        if (m_isMotionFinished) SetState(0);
+        if (m_isMotionFinished || ((m_gid != 0 && (m_gid == g_session.m_gid || m_gid == g_session.m_aid)) && SkillPoseOutlastedVisibleMotion(*this))) SetState(0);
         break;
     case 3:
         m_isForceState = 0;
@@ -4942,7 +4967,7 @@ u8 CGameActor::ProcessState() {
     case 5:
         m_isCounter = 0;
         ProcessMotion();
-        if (m_isMotionFinished) SetState(0);
+        if (m_isMotionFinished || ((m_gid != 0 && (m_gid == g_session.m_gid || m_gid == g_session.m_aid)) && SkillPoseOutlastedVisibleMotion(*this))) SetState(0);
         break;
     case 6:
         // Ref's CPc::ProcessState advances the sit animation in state 6.
@@ -4952,7 +4977,7 @@ u8 CGameActor::ProcessState() {
     case 7:
         m_isCounter = 0;
         ProcessMotion();
-        if (m_isMotionFinished) SetState(0);
+        if (m_isMotionFinished || ((m_gid != 0 && (m_gid == g_session.m_gid || m_gid == g_session.m_aid)) && SkillPoseOutlastedVisibleMotion(*this))) SetState(0);
         break;
     case 8:
         m_isCounter = 0;
@@ -5863,9 +5888,12 @@ void CGameActor::SendMsg(CGameObject* src, int msg, msgparam_t par1, msgparam_t 
         }
         return;
     case 28:
+        // Ref/GameActor.cpp:3306. A queued hit still has to land first.
+        // An in-progress flinch with an empty queue does not hold the death
+        // pose; holding it there is what pushes the death cry past the fall.
         if (m_stateId != kDeathStateId
             && m_isPc == 0
-            && (m_stateId == kHitReactionStateId || !m_willBeAttackedList.empty())) {
+            && !m_willBeAttackedList.empty()) {
             m_willBeDead = 1;
             return;
         }
@@ -7104,7 +7132,7 @@ void CGameActor::StartMoveToCell(int cellX, int cellY, int pathFlag)
 
     g_pathFinder.SetMap(gameMode->m_world->m_attr);
     const int speed = static_cast<int>(m_speed != 0 ? m_speed : 150u);
-    if (g_pathFinder.FindPath(m_moveStartTime, srcX, srcY, cellX, cellY, 0, 0, speed, &m_path)
+    if (g_pathFinder.FindPath(m_moveStartTime, srcX, srcY, 0, 0, cellX, cellY, speed, &m_path)
         && m_path.m_cells.size() >= 2) {
         m_moveEndTime = m_path.m_cells.back().arrivalTime;
         m_isMoving = m_moveEndTime > m_moveStartTime;
@@ -8208,6 +8236,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
                 bodyAction = m_curAction;
                 headMotion = m_curMotion;
                 LogDeathBillboardSelectionOnce(*this, actRes, bodyAction, headMotion);
+                ProcessRenderMotionWaveEvents(this, actRes, bodyAction, headMotion);
             } else {
                 const int directionalAction = m_baseAction + Get8Dir(m_roty);
                 const int resolvedDirectionalAction = ResolveAvailableActionIndex(actRes, directionalAction);

@@ -57,9 +57,58 @@ int Sign(int value)
 	return 0;
 	}
 
-int StepCost(int fromX, int fromY, int toX, int toY)
+int StepMilliseconds(int speedFactor, bool diagonal)
 {
-	return (fromX != toX && fromY != toY) ? 14 : 10;
+	const int speed = speedFactor > 0 ? speedFactor : 150;
+	if (!diagonal) {
+		return speed;
+	}
+	// Ref CPathFinder::BuildResultPath: diagonal steps add (int)(speed * 1.414).
+	return static_cast<int>(static_cast<double>(speed) * 1.414);
+}
+
+// Ref FindPath stores the 0..15 sub-cell as the path start, then the first
+// step lasts speed * distance from that point to the next cell. Later steps
+// are one speed unit, or speed*1.414 on a diagonal.
+void StampPathTimes(CPathInfo* pathInfo,
+	unsigned int startTime,
+	int sx,
+	int sy,
+	int subCellX,
+	int subCellY,
+	int speedFactor,
+	const std::vector<std::pair<int, int>>& steps)
+{
+	pathInfo->m_cells.clear();
+	pathInfo->m_cells.push_back(PathCell{ sx, sy, startTime });
+	if (steps.empty()) {
+		return;
+	}
+
+	double startPointX = static_cast<double>(subCellX) * 0.0625;
+	double startPointY = static_cast<double>(subCellY) * 0.0625;
+	if (sx > 0) {
+		startPointX = static_cast<double>(static_cast<int>(startPointX + static_cast<double>(sx) - 0.5));
+	}
+	if (sy > 0) {
+		startPointY = static_cast<double>(static_cast<int>(startPointY + static_cast<double>(sy) - 0.5));
+	}
+
+	const double speed = static_cast<double>(speedFactor > 0 ? speedFactor : 150);
+	const double deltaX = static_cast<double>(steps.front().first) - startPointX;
+	const double deltaY = static_cast<double>(steps.front().second) - startPointY;
+	unsigned int currentTime = startTime + static_cast<unsigned int>(speed * std::sqrt(deltaX * deltaX + deltaY * deltaY));
+	pathInfo->m_cells.push_back(PathCell{ steps.front().first, steps.front().second, currentTime });
+
+	int prevX = steps.front().first;
+	int prevY = steps.front().second;
+	for (size_t index = 1; index < steps.size(); ++index) {
+		const bool diagonal = steps[index].first != prevX && steps[index].second != prevY;
+		currentTime += static_cast<unsigned int>(StepMilliseconds(speedFactor, diagonal));
+		pathInfo->m_cells.push_back(PathCell{ steps[index].first, steps[index].second, currentTime });
+		prevX = steps[index].first;
+		prevY = steps[index].second;
+	}
 }
 
 } // namespace
@@ -121,37 +170,32 @@ bool CPathFinder::FindPath(unsigned int startTime,
 	int speedFactor,
 	CPathInfo* pathInfo)
 {
-	(void)dx;
-	(void)dy;
-
 	if (!pathInfo) {
 		return false;
 	}
 	pathInfo->Reset();
 
-	if (!m_map || !IsWalkable(sx, sy) || !IsWalkable(cellX, cellY)) {
+	// Ref: sx/sy is the start cell, cellX/cellY is the 0..15 sub-cell inside
+	// it, and dx/dy is the destination cell. A same-cell move is not a path.
+	if (!m_map || !IsWalkable(sx, sy) || !IsWalkable(dx, dy) || (sx == dx && sy == dy)) {
 		return false;
-	}
-	if (sx == cellX && sy == cellY) {
-		pathInfo->m_cells.push_back(PathCell{ sx, sy, startTime });
-		return true;
 	}
 
 	std::vector<std::pair<int, int>> directPath;
 	{
-		int stepX = Sign(cellX - sx);
-		int stepY = Sign(cellY - sy);
+		int stepX = Sign(dx - sx);
+		int stepY = Sign(dy - sy);
 		int walkX = sx;
 		int walkY = sy;
 		bool directPathValid = true;
 
-		while (walkX != cellX || walkY != cellY) {
+		while (walkX != dx || walkY != dy) {
 			walkX += stepX;
 			walkY += stepY;
-			if (walkX == cellX) {
+			if (walkX == dx) {
 				stepX = 0;
 			}
-			if (walkY == cellY) {
+			if (walkY == dy) {
 				stepY = 0;
 			}
 			if (!IsWalkable(walkX, walkY)) {
@@ -163,15 +207,8 @@ bool CPathFinder::FindPath(unsigned int startTime,
 		}
 
 		if (directPathValid) {
-		pathInfo->m_cells.push_back(PathCell{ sx, sy, startTime });
-		unsigned int currentTime = startTime;
-		for (const auto& step : directPath) {
-			currentTime += static_cast<unsigned int>((StepCost(sx, sy, step.first, step.second) * speedFactor) / 10);
-			pathInfo->m_cells.push_back(PathCell{ step.first, step.second, currentTime });
-			sx = step.first;
-			sy = step.second;
-		}
-		return true;
+			StampPathTimes(pathInfo, startTime, sx, sy, cellX, cellY, speedFactor, directPath);
+			return true;
 		}
 	}
 
@@ -198,7 +235,7 @@ bool CPathFinder::FindPath(unsigned int startTime,
 		open.push(OpenNode{ x, y, cost, nextSerial++ });
 	};
 
-	enqueueOrRelax(sx, sy, 0, 10 * ((std::abs)(cellX - sx) + (std::abs)(cellY - sy)), sx, sy);
+	enqueueOrRelax(sx, sy, 0, 10 * ((std::abs)(dx - sx) + (std::abs)(dy - sy)), sx, sy);
 
 	SearchNode* goalNode = nullptr;
 	while (!open.empty()) {
@@ -215,7 +252,7 @@ bool CPathFinder::FindPath(unsigned int startTime,
 			continue;
 		}
 
-		if (current.x == cellX && current.y == cellY) {
+		if (current.x == dx && current.y == dy) {
 			goalNode = &current;
 			break;
 		}
@@ -227,22 +264,22 @@ bool CPathFinder::FindPath(unsigned int startTime,
 
 		if (current.y + 1 < m_map->m_height && IsWalkable(current.x, current.y + 1)) {
 			freeMask |= 1;
-			dc[0] = (current.y >= cellY) ? 20 : 0;
+			dc[0] = (current.y >= dy) ? 20 : 0;
 			enqueueOrRelax(current.x, current.y + 1, dist, cost + dc[0], current.x, current.y);
 		}
 		if (current.x - 1 >= 0 && IsWalkable(current.x - 1, current.y)) {
 			freeMask |= 2;
-			dc[1] = (current.x <= cellX) ? 20 : 0;
+			dc[1] = (current.x <= dx) ? 20 : 0;
 			enqueueOrRelax(current.x - 1, current.y, dist, cost + dc[1], current.x, current.y);
 		}
 		if (current.y - 1 >= 0 && IsWalkable(current.x, current.y - 1)) {
 			freeMask |= 4;
-			dc[2] = (current.y <= cellY) ? 20 : 0;
+			dc[2] = (current.y <= dy) ? 20 : 0;
 			enqueueOrRelax(current.x, current.y - 1, dist, cost + dc[2], current.x, current.y);
 		}
 		if (current.x + 1 < m_map->m_width && IsWalkable(current.x + 1, current.y)) {
 			freeMask |= 8;
-			dc[3] = (current.x >= cellX) ? 20 : 0;
+			dc[3] = (current.x >= dx) ? 20 : 0;
 			enqueueOrRelax(current.x + 1, current.y, dist, cost + dc[3], current.x, current.y);
 		}
 
@@ -267,8 +304,8 @@ bool CPathFinder::FindPath(unsigned int startTime,
 	}
 
 	std::vector<std::pair<int, int>> reversed;
-	int walkX = cellX;
-	int walkY = cellY;
+	int walkX = dx;
+	int walkY = dy;
 	while (!(walkX == sx && walkY == sy)) {
 		const auto it = nodes.find(NodeKey(walkX, walkY));
 		if (it == nodes.end() || !it->second.hasPrev) {
@@ -281,16 +318,6 @@ bool CPathFinder::FindPath(unsigned int startTime,
 	}
 
 	std::reverse(reversed.begin(), reversed.end());
-	pathInfo->m_cells.push_back(PathCell{ sx, sy, startTime });
-	unsigned int currentTime = startTime;
-	int prevX = sx;
-	int prevY = sy;
-	for (const auto& step : reversed) {
-		const unsigned int stepTime = static_cast<unsigned int>((StepCost(prevX, prevY, step.first, step.second) * speedFactor) / 10);
-		currentTime += stepTime;
-		pathInfo->m_cells.push_back(PathCell{ step.first, step.second, currentTime });
-		prevX = step.first;
-		prevY = step.second;
-	}
-	return true;
+	StampPathTimes(pathInfo, startTime, sx, sy, cellX, cellY, speedFactor, reversed);
+	return !pathInfo->m_cells.empty();
 }

@@ -1284,6 +1284,8 @@ void CLoginMode::OnInit(const char* worldName) {
     }
 
     m_wallPaperBmpName = ChooseLoginWallpaperName();
+    g_session.ClearInventoryItems();
+    g_windowMgr.ClearChatEvents();
     g_windowMgr.RemoveAllWindows();
     g_windowMgr.SetLoginWallpaper(m_wallPaperBmpName);
 
