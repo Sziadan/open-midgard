@@ -1098,5 +1098,15 @@ void UILoginWnd::OnKeyDown(int virtualKey)
                 g_windowMgr.m_editWindow = m_login;
             }
         }
+    } else {
+        // Route other keys to the edit control if they aren't special
+        if (m_login && m_login->m_hasFocus)
+        {
+            m_login->OnKeyDown(virtualKey);
+        }
+        else if (m_password && m_password->m_hasFocus)
+        {
+            m_password->OnKeyDown(virtualKey);
+        }
     }
 }
