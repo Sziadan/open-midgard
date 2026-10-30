@@ -1,5 +1,6 @@
 #include "UIItemShopWnd.h"
 
+#include "UINpcInputWnd.h"
 #include "UIShopCommon.h"
 #include "UIWindowMgr.h"
 #include "gamemode/GameMode.h"
@@ -22,6 +23,8 @@ constexpr int kListTop = 22;
 constexpr int kListBottomMargin = 12;
 constexpr int kListSideMargin = 8;
 constexpr int kRowHeight = 18;
+constexpr int kShopDragThresholdSq = 16;
+constexpr int kShopUnlimitedStack = 30000;
 
 std::string FormatPrice(int value)
 {
@@ -30,11 +33,143 @@ std::string FormatPrice(int value)
     return std::string(buffer);
 }
 
+bool ShopItemUsesCountPrompt(int itemType, int count)
+{
+    if (count <= 1) {
+        return false;
+    }
+
+    switch (itemType) {
+    case 4:
+    case 5:
+    case 8:
+    case 9:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+        return false;
+    default:
+        return true;
+    }
+}
+
+int DealQuantityForSourceRow(size_t sourceRowIndex)
+{
+    if (sourceRowIndex >= g_session.m_shopRows.size()) {
+        return 0;
+    }
+
+    const NPC_SHOP_ROW& row = g_session.m_shopRows[sourceRowIndex];
+    for (const NPC_SHOP_DEAL_ROW& dealRow : g_session.m_shopDealRows) {
+        if (dealRow.sourceItemIndex == row.sourceItemIndex
+            && dealRow.itemInfo.GetItemId() == row.itemInfo.GetItemId()) {
+            return dealRow.quantity;
+        }
+    }
+    return 0;
+}
+
+int TransferLimitForSourceRow(size_t sourceRowIndex, bool removeFromCart)
+{
+    if (sourceRowIndex >= g_session.m_shopRows.size()) {
+        return 0;
+    }
+
+    const NPC_SHOP_ROW& row = g_session.m_shopRows[sourceRowIndex];
+    const int alreadyInCart = DealQuantityForSourceRow(sourceRowIndex);
+    if (removeFromCart) {
+        return (std::max)(0, alreadyInCart);
+    }
+
+    int stock = row.availableCount;
+    if (stock <= 0) {
+        if (!ShopItemUsesCountPrompt(row.itemInfo.m_itemType, 2)) {
+            stock = 1;
+        } else if (row.itemInfo.m_itemType == 0 || row.itemInfo.m_itemType == 10) {
+            stock = 1000;
+        } else {
+            stock = 100;
+        }
+    } else {
+        stock = (std::min)(stock, kShopUnlimitedStack);
+    }
+
+    return (std::max)(0, stock - alreadyInCart);
+}
+
 } // namespace
+
+void BeginNpcShopItemDrag(int dragSource, int sourceRow, unsigned int itemId, int itemType, int count)
+{
+    CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
+    if (!gameMode || sourceRow < 0 || count <= 0) {
+        return;
+    }
+
+    gameMode->m_dragType = static_cast<int>(DragType::ShopItem);
+    gameMode->m_dragInfo = DRAG_INFO{};
+    gameMode->m_dragInfo.type = static_cast<int>(DragType::ShopItem);
+    gameMode->m_dragInfo.source = dragSource;
+    gameMode->m_dragInfo.itemId = itemId;
+    gameMode->m_dragInfo.itemIndex = static_cast<unsigned int>(sourceRow);
+    gameMode->m_dragInfo.itemCount = count;
+    gameMode->m_dragInfo.itemEquipLocation = itemType;
+}
+
+int FindNpcShopSourceRow(unsigned int sourceItemIndex, unsigned int itemId)
+{
+    for (size_t index = 0; index < g_session.m_shopRows.size(); ++index) {
+        const NPC_SHOP_ROW& row = g_session.m_shopRows[index];
+        if (row.sourceItemIndex == sourceItemIndex && row.itemInfo.GetItemId() == itemId) {
+            return static_cast<int>(index);
+        }
+    }
+    return -1;
+}
+
+void RequestNpcShopQuantityTransfer(int sourceRow, bool removeFromCart)
+{
+    if (sourceRow < 0 || sourceRow >= static_cast<int>(g_session.m_shopRows.size())) {
+        return;
+    }
+
+    const NPC_SHOP_ROW& row = g_session.m_shopRows[static_cast<size_t>(sourceRow)];
+    const int limit = TransferLimitForSourceRow(static_cast<size_t>(sourceRow), removeFromCart);
+    if (limit <= 0) {
+        return;
+    }
+
+    if (!ShopItemUsesCountPrompt(row.itemInfo.m_itemType, limit)) {
+        g_session.AdjustNpcShopDealBySourceRow(static_cast<size_t>(sourceRow), removeFromCart ? -limit : limit);
+        return;
+    }
+
+    auto* inputWnd = static_cast<UINpcInputWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_NPCINPUTWND));
+    if (!inputWnd) {
+        return;
+    }
+
+    const std::string itemName = shopui::GetItemDisplayName(row.itemInfo);
+    const unsigned int packed = (static_cast<unsigned int>(sourceRow) & 0xFFFFu)
+        | (removeFromCart ? 0x10000u : 0u);
+    inputWnd->OpenGameNumberPrompt(
+        itemName.empty() ? "How many?" : itemName.c_str(),
+        CGameMode::GameMsg_RequestShopAdjustDeal,
+        static_cast<msgparam_t>(packed),
+        0,
+        static_cast<u32>(limit),
+        "amount");
+}
 
 UIItemShopWnd::UIItemShopWnd()
     : m_viewOffset(0),
       m_hoverRow(-1),
+      m_dragArmed(false),
+      m_dragStartX(0),
+      m_dragStartY(0),
+      m_dragRow(-1),
       m_lastDrawStateToken(0ull),
       m_hasDrawStateToken(false)
 {
@@ -216,28 +351,89 @@ void UIItemShopWnd::OnDraw()
     ReleaseDrawTarget(hdc);
 }
 
+void UIItemShopWnd::ArmRowDrag(int rowIndex, int x, int y)
+{
+    m_dragArmed = true;
+    m_dragStartX = x;
+    m_dragStartY = y;
+    m_dragRow = rowIndex;
+}
+
+void UIItemShopWnd::UpdateRowDrag(int x, int y)
+{
+    if (!m_dragArmed || m_dragRow < 0 || m_dragRow >= static_cast<int>(g_session.m_shopRows.size())) {
+        return;
+    }
+
+    const int dx = x - m_dragStartX;
+    const int dy = y - m_dragStartY;
+    if ((dx * dx) + (dy * dy) < kShopDragThresholdSq) {
+        return;
+    }
+
+    const NPC_SHOP_ROW& row = g_session.m_shopRows[static_cast<size_t>(m_dragRow)];
+    const int limit = TransferLimitForSourceRow(static_cast<size_t>(m_dragRow), false);
+    BeginNpcShopItemDrag(static_cast<int>(DragSource::ShopList),
+        m_dragRow,
+        row.itemInfo.GetItemId(),
+        row.itemInfo.m_itemType,
+        limit > 0 ? limit : 1);
+    m_dragArmed = false;
+}
+
 void UIItemShopWnd::OnLBtnDown(int x, int y)
 {
     const int rowIndex = HitTestSourceRow(x, y);
     if (rowIndex >= 0) {
         g_session.m_shopSelectedSourceRow = rowIndex;
+        ArmRowDrag(rowIndex, x, y);
         return;
     }
+    m_dragArmed = false;
     UIFrameWnd::OnLBtnDown(x, y);
 }
 
 void UIItemShopWnd::OnLBtnDblClk(int x, int y)
 {
+    m_dragArmed = false;
     const int rowIndex = HitTestSourceRow(x, y);
     if (rowIndex >= 0) {
-        g_session.AdjustNpcShopDealBySourceRow(static_cast<size_t>(rowIndex), 1);
+        RequestNpcShopQuantityTransfer(rowIndex, false);
     }
+}
+
+void UIItemShopWnd::OnLBtnUp(int x, int y)
+{
+    (void)x;
+    (void)y;
+    m_dragArmed = false;
+    UIFrameWnd::OnLBtnUp(x, y);
 }
 
 void UIItemShopWnd::OnMouseMove(int x, int y)
 {
+    UpdateRowDrag(x, y);
     m_hoverRow = HitTestSourceRow(x, y);
     UIFrameWnd::OnMouseMove(x, y);
+}
+
+void UIItemShopWnd::DragAndDrop(int x, int y, const DRAG_INFO* const info)
+{
+    (void)x;
+    (void)y;
+    if (!info || info->type != static_cast<int>(DragType::ShopItem)) {
+        return;
+    }
+
+    const bool fromPurchase = g_session.m_shopMode == NpcShopMode::Buy
+        && info->source == static_cast<int>(DragSource::PurchaseCart);
+    const bool fromSell = g_session.m_shopMode == NpcShopMode::Sell
+        && info->source == static_cast<int>(DragSource::SellCart);
+    if (!fromPurchase && !fromSell) {
+        return;
+    }
+
+    RequestNpcShopQuantityTransfer(static_cast<int>(info->itemIndex), true);
 }
 
 void UIItemShopWnd::OnWheel(int delta)
@@ -265,7 +461,7 @@ void UIItemShopWnd::HandleKeyDown(int virtualKey)
         selectedRow = (std::min)(static_cast<int>(g_session.m_shopRows.size()) - 1, selectedRow + 1);
         break;
     case VK_RETURN:
-        g_session.AdjustNpcShopDealBySourceRow(static_cast<size_t>(selectedRow), 1);
+        RequestNpcShopQuantityTransfer(selectedRow, false);
         return;
     default:
         return;

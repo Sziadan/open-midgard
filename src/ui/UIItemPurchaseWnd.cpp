@@ -33,11 +33,6 @@ std::string FormatNumber(int value)
     return std::string(buffer);
 }
 
-void ClosePurchaseWindows()
-{
-    g_windowMgr.CloseNpcShopWindows();
-}
-
 void DrawButton(HDC hdc, const RECT& rect, const char* label, bool hot, bool pressed)
 {
     COLORREF fill = RGB(220, 220, 220);
@@ -57,6 +52,10 @@ void DrawButton(HDC hdc, const RECT& rect, const char* label, bool hot, bool pre
 UIItemPurchaseWnd::UIItemPurchaseWnd()
     : m_viewOffset(0),
       m_hoverRow(-1),
+      m_dragArmed(false),
+      m_dragStartX(0),
+      m_dragStartY(0),
+      m_dragRow(-1),
       m_hoverButton(ButtonNone),
       m_pressedButton(ButtonNone),
       m_lastDrawStateToken(0ull),
@@ -182,8 +181,7 @@ void UIItemPurchaseWnd::ActivateButton(ButtonId buttonId)
         g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShopBuyList, 0, 0, 0);
         break;
     case ButtonCancel:
-        g_session.ClearNpcShopState();
-        ClosePurchaseWindows();
+        g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShopCancel, 0, 0, 0);
         return;
     default:
         break;
@@ -264,33 +262,71 @@ void UIItemPurchaseWnd::OnDraw()
     ReleaseDrawTarget(hdc);
 }
 
+void UIItemPurchaseWnd::ArmRowDrag(int rowIndex, int x, int y)
+{
+    m_dragArmed = true;
+    m_dragStartX = x;
+    m_dragStartY = y;
+    m_dragRow = rowIndex;
+}
+
+void UIItemPurchaseWnd::UpdateRowDrag(int x, int y)
+{
+    if (!m_dragArmed || m_dragRow < 0 || m_dragRow >= static_cast<int>(g_session.m_shopDealRows.size())) {
+        return;
+    }
+
+    const int dx = x - m_dragStartX;
+    const int dy = y - m_dragStartY;
+    if ((dx * dx) + (dy * dy) < 16) {
+        return;
+    }
+
+    const NPC_SHOP_DEAL_ROW& row = g_session.m_shopDealRows[static_cast<size_t>(m_dragRow)];
+    const int sourceRow = FindNpcShopSourceRow(row.sourceItemIndex, row.itemInfo.GetItemId());
+    BeginNpcShopItemDrag(static_cast<int>(DragSource::PurchaseCart),
+        sourceRow,
+        row.itemInfo.GetItemId(),
+        row.itemInfo.m_itemType,
+        row.quantity);
+    m_dragArmed = false;
+}
+
 void UIItemPurchaseWnd::OnLBtnDown(int x, int y)
 {
     m_pressedButton = HitTestButton(x, y);
     if (m_pressedButton != ButtonNone) {
+        m_dragArmed = false;
         return;
     }
 
     const int rowIndex = HitTestDealRow(x, y);
     if (rowIndex >= 0) {
         g_session.m_shopSelectedDealRow = rowIndex;
+        ArmRowDrag(rowIndex, x, y);
         return;
     }
 
+    m_dragArmed = false;
     UIFrameWnd::OnLBtnDown(x, y);
 }
 
 void UIItemPurchaseWnd::OnLBtnDblClk(int x, int y)
 {
+    m_dragArmed = false;
     const int rowIndex = HitTestDealRow(x, y);
-    if (rowIndex >= 0) {
-        g_session.m_shopSelectedDealRow = rowIndex;
-        g_session.AdjustNpcShopDealByDealRow(static_cast<size_t>(rowIndex), -1);
+    if (rowIndex < 0) {
+        return;
     }
+
+    g_session.m_shopSelectedDealRow = rowIndex;
+    const NPC_SHOP_DEAL_ROW& row = g_session.m_shopDealRows[static_cast<size_t>(rowIndex)];
+    RequestNpcShopQuantityTransfer(FindNpcShopSourceRow(row.sourceItemIndex, row.itemInfo.GetItemId()), true);
 }
 
 void UIItemPurchaseWnd::OnLBtnUp(int x, int y)
 {
+    m_dragArmed = false;
     const ButtonId releasedButton = HitTestButton(x, y);
     const ButtonId pressedButton = m_pressedButton;
     m_pressedButton = ButtonNone;
@@ -302,9 +338,24 @@ void UIItemPurchaseWnd::OnLBtnUp(int x, int y)
 
 void UIItemPurchaseWnd::OnMouseMove(int x, int y)
 {
+    UpdateRowDrag(x, y);
     m_hoverButton = HitTestButton(x, y);
     m_hoverRow = HitTestDealRow(x, y);
     UIFrameWnd::OnMouseMove(x, y);
+}
+
+void UIItemPurchaseWnd::DragAndDrop(int x, int y, const DRAG_INFO* const info)
+{
+    (void)x;
+    (void)y;
+    if (!info
+        || info->type != static_cast<int>(DragType::ShopItem)
+        || info->source != static_cast<int>(DragSource::ShopList)
+        || g_session.m_shopMode != NpcShopMode::Buy) {
+        return;
+    }
+
+    RequestNpcShopQuantityTransfer(static_cast<int>(info->itemIndex), false);
 }
 
 void UIItemPurchaseWnd::OnWheel(int delta)

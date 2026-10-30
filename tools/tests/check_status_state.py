@@ -118,6 +118,30 @@ def main() -> int:
     generated = GENERATED.read_text(encoding="utf-8")
     assert generated == expected_include(rows), "generated C++ map differs from PE-address crosswalk"
 
+    catalog = (ROOT / "src/qtui/QtUiStatusIconCatalog.h").read_text(encoding="utf-8")
+    catalog_status = [int(match) for match in re.findall(r"\{(\d+),\s*\d+,\s*\"", catalog)]
+    assert catalog_status == sorted(catalog_status), "status icon catalog is not ordered by status id"
+    assert len(catalog_status) == len(set(catalog_status)) == 192
+    assert set(catalog_status) == {status for _priority, status in pairs}, "HUD catalog does not cover every canonical status"
+    assert re.search(r"\{10,\s*34,\s*\"Blessing\"\}", catalog)
+    assert re.search(r"\{12,\s*29,\s*\"Increase Agi\"\}", catalog)
+    enum_ids = {
+        int(skill_id)
+        for skill_id in re.findall(r"\{(\d+),\s*\"[A-Z0-9_]+\"\}", (ROOT / "src/skill/SkillEnumIdTable.inc").read_text(encoding="utf-8"))
+    }
+    for skill_id in re.findall(r"\{\d+,\s*(\d+),\s*\"", catalog):
+        skill_id_value = int(skill_id)
+        assert skill_id_value == 0 or skill_id_value in enum_ids, f"unknown skill id {skill_id_value}"
+    qt_source = (ROOT / "src/qtui/QtUiSpikeBridge.cpp").read_text(encoding="utf-8")
+    adapter = (ROOT / "src/qtui/QtUiStateAdapter.cpp").read_text(encoding="utf-8")
+    overlay = (ROOT / "src/qtui/qml/GameOverlay.qml").read_text(encoding="utf-8")
+    assert "FindStatusStateIconByStatus" in qt_source
+    assert "StatusStateIconFilePath" in qt_source
+    assert "statusType < 0" in qt_source
+    assert "for (int priority = 0; priority < 4; ++priority)" in adapter
+    assert "icon.statusType == 42 ? 12 : icon.statusType" in adapter
+    assert "statusType < 0" in overlay
+
     source = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
     header = (ROOT / "src/world/RagEffect.h").read_text(encoding="utf-8")
     decomp = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="utf-8")

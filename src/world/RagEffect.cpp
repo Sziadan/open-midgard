@@ -3128,16 +3128,6 @@ bool UpdateReferenceParticleSpline(CEffectPrim* prim)
 
 #include "StatusStateIconMap.h"
 
-const StatusStateIconEntry* FindStatusStateIcon(int priority, int status)
-{
-    for (const StatusStateIconEntry& entry : kStatusStateIconEntries) {
-        if (entry.priority == priority && entry.status == status) {
-            return &entry;
-        }
-    }
-    return nullptr;
-}
-
 } // namespace
 
 CEffectPrim::CEffectPrim()
@@ -3146,13 +3136,13 @@ CEffectPrim::CEffectPrim()
     , m_renderFlag(1u)
     , m_stateCnt(0)
     , m_duration(1)
-    , m_fadeOutCnt(0)
+    , m_fadeOutCnt(-1)
     , m_pattern(0)
     , m_totalTexture(1)
     , m_spawnCount(12)
-    , m_alpha(0.0f)
+    , m_alpha(254.0f)
     , m_alphaSpeed(0.0f)
-    , m_maxAlpha(255.0f)
+    , m_maxAlpha(254.0f)
     , m_alphaDelta(1.0f)
     , m_minAlpha(0.0f)
     , m_widthSize(0.0f)
@@ -8594,6 +8584,127 @@ void RenderReferenceCloud(CEffectPrim& prim, const matrix& viewMatrix)
     }
 }
 
+// HighPriest.exe.c:440471 (0x615FC0) / Ref/dhxj/RagEffect2.cpp:7349.
+// The charge orbs are PP_ASURACASTING. The updater already runs; this is the draw.
+void SubmitAsuraRect(const vector3d param[4], const vector3d& origin, const matrix& viewMatrix,
+    CTexture* texture, unsigned int color, int destBlend, int renderFlags)
+{
+    if (!texture || texture == &CTexMgr::s_dummy_texture) {
+        return;
+    }
+    const vector3d placed[4] = {
+        AddVec3(param[0], origin),
+        AddVec3(param[1], origin),
+        AddVec3(param[2], origin),
+        AddVec3(param[3], origin),
+    };
+    const int cornerIndex[2][3] = {
+        { 0, 1, 2 },
+        { 3, 2, 0 },
+    };
+    const float uvs[2][3][2] = {
+        { { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } },
+        { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 1.0f } },
+    };
+    for (int triangle = 0; triangle < 2; ++triangle) {
+        RPFace* face = g_renderer.BorrowNullRP();
+        if (!face) {
+            return;
+        }
+        face->primType = D3DPT_TRIANGLELIST;
+        face->verts = face->m_verts;
+        face->numVerts = 3;
+        face->indices = nullptr;
+        face->numIndices = 0;
+        face->tex = texture;
+        face->mtPreset = 0;
+        face->cullMode = D3DCULL_NONE;
+        face->srcAlphaMode = D3DBLEND_SRCALPHA;
+        face->destAlphaMode = static_cast<D3DBLEND>(destBlend);
+        face->alphaSortKey = 0.0f;
+        for (int vertex = 0; vertex < 3; ++vertex) {
+            if (!ProjectPoint(placed[cornerIndex[triangle][vertex]], viewMatrix, &face->m_verts[vertex])) {
+                return;
+            }
+            face->m_verts[vertex].color = color;
+            face->m_verts[vertex].specular = 0xFF000000u;
+            face->m_verts[vertex].tu = uvs[triangle][vertex][0];
+            face->m_verts[vertex].tv = uvs[triangle][vertex][1];
+        }
+        g_renderer.AddRP(face, renderFlags);
+    }
+}
+
+void RenderAsuraCasting(const CEffectPrim& prim, const matrix& viewMatrix)
+{
+    auto packColor = [](int alpha, int red, int green, int blue) {
+        if (alpha < 0) alpha = 0;
+        if (alpha > 255) alpha = 255;
+        return (static_cast<unsigned int>(alpha) << 24)
+            | (static_cast<unsigned int>(red) << 16)
+            | (static_cast<unsigned int>(green) << 8)
+            | static_cast<unsigned int>(blue);
+    };
+
+    for (int lane = 0; lane < 4; ++lane) {
+        const EffectGi& gi = prim.m_gi[static_cast<size_t>(lane)];
+        if (gi.life != 1) {
+            continue;
+        }
+        const int textureIndex = gi.flag[0];
+        if (textureIndex < 0 || textureIndex >= static_cast<int>(prim.m_texture.size())) {
+            continue;
+        }
+        CTexture* texture = prim.m_texture[static_cast<size_t>(textureIndex)];
+        const int kind = gi.flag[4];
+        for (int ring = 10; ring >= 1; --ring) {
+            const float span = static_cast<float>(10 - ring);
+            const float radius = gi.distance + (kind == 2 ? span : span * 3.0f);
+            vector3d square[4]{};
+            int angle = 45;
+            for (int corner = 0; corner < 4; ++corner) {
+                square[corner].x = static_cast<float>(static_cast<double>(g_cosTable[angle]) * radius) + gi.height[0];
+                square[corner].y = 0.0f;
+                square[corner].z = static_cast<float>(static_cast<double>(g_sinTable[angle]) * radius);
+                angle += 90;
+                if (angle >= 360) {
+                    angle -= 360;
+                }
+            }
+            IntimidateTowardScreen(square, TableAngle(prim.m_gi[0].alphaT), TableAngle(prim.m_gi[1].alphaT));
+            const float drop = kind == 2 ? 40.0f : 30.0f;
+            for (vector3d& corner : square) {
+                corner.y -= drop;
+            }
+            const int alpha = static_cast<int>(gi.height[static_cast<size_t>(ring)]);
+            if (alpha <= 0) {
+                continue;
+            }
+            // RenderTeiRect is called as (vec2, vec1, vec4, vec3): now, pre, pre-top, now-top.
+            const vector3d ordered[4] = { square[1], square[0], square[3], square[2] };
+            auto draw = [&](int drawAlpha, int red, int green, int blue, int destBlend) {
+                SubmitAsuraRect(ordered, prim.m_pos, viewMatrix, texture,
+                    packColor(drawAlpha, red, green, blue), destBlend, static_cast<int>(prim.m_renderFlag));
+            };
+            if (kind == 0) {
+                draw(alpha, 0, 0, 0, D3DBLEND_INVSRCALPHA);
+            } else if (kind == 3) {
+                if (ring == 10) {
+                    draw(alpha / 2, 10, 10, 10, D3DBLEND_INVSRCALPHA);
+                }
+                draw(alpha, 10, 10, 10, D3DBLEND_INVSRCALPHA);
+            } else if (kind == 5) {
+                if (ring == 10) {
+                    draw(alpha / 2, 0x7D, 0x7D, 0xFF, D3DBLEND_ONE);
+                }
+                draw(alpha, 0x7D, 0x7D, 0xFF, D3DBLEND_ONE);
+            } else {
+                draw(alpha, 255, 255, 255, D3DBLEND_INVSRCALPHA);
+            }
+        }
+    }
+}
+
 void RenderTeiHit1(const CEffectPrim& prim, const matrix& viewMatrix)
 {
     CTexture* texture = prim.m_texture.empty() ? nullptr : prim.m_texture[0];
@@ -13541,6 +13652,10 @@ void CEffectPrim::Render(matrix* viewMatrix)
     }
     if (m_type == PP_TEIHIT1) {
         RenderTeiHit1(*this, *viewMatrix);
+        return;
+    }
+    if (m_type == PP_ASURACASTING) {
+        RenderAsuraCasting(*this, *viewMatrix);
         return;
     }
     if (m_type == PP_GUMGANG) {
@@ -26613,7 +26728,10 @@ bool CRagEffect::ApplyGlassWall2(const char* textureName)
             prim->m_gi[3].life = 0;
         }
     }
-    return ProcessEZ2STR();
+    // Ref GlassWall2 plays the STR clip but keeps the dome until m_duration.
+    // Returning the STR result removes Safety Wall as soon as that clip ends.
+    ProcessEZ2STR();
+    return m_stateCnt != m_duration;
 }
 
 void CRagEffect::ApplyExit2(const char* textureName)

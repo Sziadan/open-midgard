@@ -2706,13 +2706,23 @@ bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
         alpha = (std::min)(alpha, clampedAlpha);
     }
 
-    const u32 billboardColor = ro::actor::ResolveBillboardColor(alpha,
-        actor->m_u28.m_sprColor.u.s.a,
-        actor->m_u28.m_sprColor.u.s.r,
-        actor->m_u28.m_sprColor.u.s.g,
-        actor->m_u28.m_sprColor.u.s.b,
-        actor->m_isSingleColor != 0,
-        actor->m_colorOfSingleColor);
+    float lightRed = 1.0f;
+    float lightGreen = 1.0f;
+    float lightBlue = 1.0f;
+    if (g_world.m_ground) {
+        g_world.m_ground->GetActorLightIntensity(actor->m_pos.x, actor->m_pos.z, lightRed, lightGreen, lightBlue);
+    }
+    const u32 billboardColor = ro::actor::ApplyLightIntensity(
+        ro::actor::ResolveBillboardColor(alpha,
+            actor->m_u28.m_sprColor.u.s.a,
+            actor->m_u28.m_sprColor.u.s.r,
+            actor->m_u28.m_sprColor.u.s.g,
+            actor->m_u28.m_sprColor.u.s.b,
+            actor->m_isSingleColor != 0,
+            actor->m_colorOfSingleColor),
+        lightRed,
+        lightGreen,
+        lightBlue);
 
     RPFace* face = g_renderer.BorrowNullRP();
     if (!face) {
@@ -3901,6 +3911,28 @@ u32 MakeGroundVertexColor(u32 surfaceColor, const vector3d& envDiff)
         static_cast<u8>(ClampUnitFloat(baseColor.z * envDiff.z) * 255.0f + 0.5f));
 }
 
+u32 ShadeGroundCornerColor(u32 surfaceColor, const vector3d& envDiff)
+{
+    return PackColor(
+        255,
+        static_cast<u8>(ClampUnitFloat(((surfaceColor >> 16) & 0xFFu) / 255.0f * envDiff.x) * 255.0f + 0.5f),
+        static_cast<u8>(ClampUnitFloat(((surfaceColor >> 8) & 0xFFu) / 255.0f * envDiff.y) * 255.0f + 0.5f),
+        static_cast<u8>(ClampUnitFloat((surfaceColor & 0xFFu) / 255.0f * envDiff.z) * 255.0f + 0.5f));
+}
+
+u32 TopSurfaceColorAt(const C3dGround& ground, int x, int y)
+{
+    const CGroundCell* cell = ground.GetCell(x, y);
+    if (!cell) {
+        return 0;
+    }
+    const CGroundSurface* surface = ground.GetSurface(cell->topSurfaceId);
+    if (!surface) {
+        return 0;
+    }
+    return surface->color;
+}
+
 u32 SampleLmIntensity(const CLMInfo& lminfo, int y, int x)
 {
     return PackColor(
@@ -4346,6 +4378,7 @@ bool C3dGround::AssignGnd(const CGndRes& gnd, const vector3d& lightDir, const ve
     m_textureNames = gnd.m_texNameTable;
     m_surfaces.clear();
     m_cells.clear();
+    m_actorLmRgb.clear();
     m_lightmapMgr.Reset();
 
     if (m_width <= 0 || m_height <= 0) {
@@ -4422,6 +4455,24 @@ bool C3dGround::AssignGnd(const CGndRes& gnd, const vector3d& lightDir, const ve
         surface.lmtex = lightmap->surface;
         for (int vertexIndex = 0; vertexIndex < 4; ++vertexIndex) {
             surface.lmuv[vertexIndex] = lightmap->coor[vertexIndex];
+        }
+    }
+
+    for (CGroundCell& cell : m_cells) {
+        cell.cellColor[0] = 0;
+        cell.cellColor[1] = 0;
+        cell.cellColor[2] = 0;
+        if (cell.topSurfaceId < 0 || cell.topSurfaceId >= m_numSurfaces) {
+            continue;
+        }
+        const CLightmapMgr::CLightmap* lightmap = m_lightmapMgr.GetLightmap(
+            m_surfaces[static_cast<size_t>(cell.topSurfaceId)].lightmapId);
+        if (!lightmap) {
+            continue;
+        }
+        for (int channel = 0; channel < 3; ++channel) {
+            const int doubled = static_cast<int>(lightmap->brightObj[channel]) * 2;
+            cell.cellColor[channel] = static_cast<u8>(doubled > 255 ? 255 : doubled);
         }
     }
 
@@ -4559,7 +4610,59 @@ bool C3dGround::AssignGnd(const CGndRes& gnd, const vector3d& lightDir, const ve
         }
     }
 
+    BuildGroundCornerColors();
     return true;
+}
+
+void C3dGround::BuildGroundCornerColors()
+{
+    const vector3d envDiff = ComputeGroundEnvDiff(m_ambientCol, m_diffuseCol);
+    for (CGroundSurface& surface : m_surfaces) {
+        const u32 shaded = ShadeGroundCornerColor(surface.color, envDiff);
+        for (int corner = 0; corner < 4; ++corner) {
+            surface.cornerColor[corner] = shaded;
+        }
+    }
+
+    for (int y = 0; y < m_height; ++y) {
+        for (int x = 0; x < m_width; ++x) {
+            const CGroundCell* cell = GetCell(x, y);
+            if (!cell) {
+                continue;
+            }
+
+            if (cell->topSurfaceId >= 0 && cell->topSurfaceId < m_numSurfaces) {
+                CGroundSurface& surface = m_surfaces[static_cast<size_t>(cell->topSurfaceId)];
+                const int sourceX[4] = { x, x + 1, x, x + 1 };
+                const int sourceY[4] = { y, y, y + 1, y + 1 };
+                for (int corner = 0; corner < 4; ++corner) {
+                    surface.cornerColor[corner] = ShadeGroundCornerColor(
+                        TopSurfaceColorAt(*this, sourceX[corner], sourceY[corner]),
+                        envDiff);
+                }
+            }
+
+            if (cell->frontSurfaceId >= 0 && cell->frontSurfaceId < m_numSurfaces && y < m_height - 1) {
+                CGroundSurface& surface = m_surfaces[static_cast<size_t>(cell->frontSurfaceId)];
+                const u32 south = ShadeGroundCornerColor(TopSurfaceColorAt(*this, x, y + 1), envDiff);
+                const u32 southEast = ShadeGroundCornerColor(TopSurfaceColorAt(*this, x + 1, y + 1), envDiff);
+                surface.cornerColor[0] = south;
+                surface.cornerColor[1] = southEast;
+                surface.cornerColor[2] = south;
+                surface.cornerColor[3] = southEast;
+            }
+
+            if (cell->rightSurfaceId >= 0 && cell->rightSurfaceId < m_numSurfaces && x < m_width - 1) {
+                CGroundSurface& surface = m_surfaces[static_cast<size_t>(cell->rightSurfaceId)];
+                const u32 east = ShadeGroundCornerColor(TopSurfaceColorAt(*this, x + 1, y), envDiff);
+                const u32 southEast = ShadeGroundCornerColor(TopSurfaceColorAt(*this, x + 1, y + 1), envDiff);
+                surface.cornerColor[0] = southEast;
+                surface.cornerColor[1] = east;
+                surface.cornerColor[2] = southEast;
+                surface.cornerColor[3] = east;
+            }
+        }
+    }
 }
 
 void C3dGround::SetWaterInfo(float waterLevel, int waterType, int waterAnimSpeed, int wavePitch, int waveSpeed, float waveHeight)
@@ -4593,6 +4696,180 @@ const CGroundSurface* C3dGround::GetSurface(int index) const
         return nullptr;
     }
     return &m_surfaces[static_cast<size_t>(index)];
+}
+
+namespace {
+
+void SampleGatLightmap(const C3dGround& ground, int gatX, int gatY, int& shadow, int& red, int& green, int& blue)
+{
+    shadow = 255;
+    red = 255;
+    green = 255;
+    blue = 255;
+    if (gatX < 0 || gatY < 0 || ground.m_width <= 0 || ground.m_height <= 0
+        || gatX / 2 >= ground.m_width || gatY / 2 >= ground.m_height) {
+        return;
+    }
+
+    const CGroundCell* cell = ground.GetCell(gatX / 2, gatY / 2);
+    if (!cell) {
+        return;
+    }
+    const CGroundSurface* surface = ground.GetSurface(cell->topSurfaceId);
+    if (!surface) {
+        return;
+    }
+    const CLightmapMgr::CLightmap* lightmap = ground.m_lightmapMgr.GetLightmap(surface->lightmapId);
+    if (!lightmap) {
+        return;
+    }
+
+    int corner = 3;
+    const bool oddX = (gatX & 1) != 0;
+    const bool oddY = (gatY & 1) != 0;
+    if (!oddX && !oddY) {
+        corner = 0;
+    } else if (oddX && !oddY) {
+        corner = 1;
+    } else if (!oddX && oddY) {
+        corner = 2;
+    }
+
+    const u32 packed = lightmap->intensity[corner];
+    shadow = static_cast<int>((packed >> 24) & 0xFFu);
+    red = static_cast<int>((packed >> 16) & 0xFFu);
+    green = static_cast<int>((packed >> 8) & 0xFFu);
+    blue = static_cast<int>(packed & 0xFFu);
+}
+
+float GatCellAverageHeight(const C3dAttr& attr, int gatX, int gatY)
+{
+    if (gatX < 0 || gatY < 0 || gatX >= attr.m_width || gatY >= attr.m_height) {
+        return 0.0f;
+    }
+    const CAttrCell& cell = attr.m_cells[static_cast<size_t>(gatY) * static_cast<size_t>(attr.m_width) + static_cast<size_t>(gatX)];
+    return (cell.h1 + cell.h2 + cell.h3 + cell.h4) * 0.25f;
+}
+
+float GroundCellTopHeight(const C3dGround& ground, int cellX, int cellY)
+{
+    const CGroundCell* cell = ground.GetCell(cellX, cellY);
+    if (!cell) {
+        return 0.0f;
+    }
+    return (std::max)(cell->h[0], (std::max)(cell->h[1], (std::max)(cell->h[2], cell->h[3])));
+}
+
+} // namespace
+
+void C3dGround::BuildActorLightIntensities()
+{
+    m_actorLmRgb.clear();
+    if (m_isNewVer == 0 || !m_attr || m_attr->m_width <= 0 || m_attr->m_height <= 0 || m_lightmapMgr.m_numLightmaps <= 0) {
+        return;
+    }
+
+    const int gatWidth = m_attr->m_width;
+    const int gatHeight = m_attr->m_height;
+    m_actorLmRgb.assign(static_cast<size_t>(gatWidth) * static_cast<size_t>(gatHeight) * 3u, 1.0f);
+
+    constexpr int kNeighbor[5][2] = {
+        { 0, 0 },
+        { 0, -1 },
+        { 0, 1 },
+        { 1, 0 },
+        { -1, 0 },
+    };
+    constexpr float kShadowScale = 0.00078431371f;
+    constexpr float kColorScale = 0.0015625f;
+
+    for (int gatY = 0; gatY < gatHeight; ++gatY) {
+        for (int gatX = 0; gatX < gatWidth; ++gatX) {
+            const float gatHeightValue = GatCellAverageHeight(*m_attr, gatX, gatY);
+            const float topHeight = GroundCellTopHeight(*this, gatX / 2, gatY / 2);
+            float red = 1.0f;
+            float green = 1.0f;
+            float blue = 1.0f;
+            if (gatHeightValue >= topHeight - 2.5f) {
+                int shadowSum = 0;
+                int redSum = 0;
+                int greenSum = 0;
+                int blueSum = 0;
+                for (const auto& offset : kNeighbor) {
+                    int shadow = 255;
+                    int sampleRed = 255;
+                    int sampleGreen = 255;
+                    int sampleBlue = 255;
+                    SampleGatLightmap(*this, gatX + offset[0], gatY + offset[1], shadow, sampleRed, sampleGreen, sampleBlue);
+                    shadowSum += shadow;
+                    redSum += sampleRed;
+                    greenSum += sampleGreen;
+                    blueSum += sampleBlue;
+                }
+
+                const float shadow = static_cast<float>(shadowSum) * kShadowScale;
+                red = static_cast<float>(redSum) * kColorScale + shadow;
+                green = static_cast<float>(greenSum) * kColorScale + shadow;
+                blue = static_cast<float>(blueSum) * kColorScale + shadow;
+                const float maxChannel = (std::max)(red, (std::max)(green, blue));
+                if (maxChannel > 1.0f) {
+                    red /= maxChannel;
+                    green /= maxChannel;
+                    blue /= maxChannel;
+                }
+            }
+
+            const size_t index = (static_cast<size_t>(gatY) * static_cast<size_t>(gatWidth) + static_cast<size_t>(gatX)) * 3u;
+            m_actorLmRgb[index] = red;
+            m_actorLmRgb[index + 1] = green;
+            m_actorLmRgb[index + 2] = blue;
+        }
+    }
+}
+
+void C3dGround::GetActorLightIntensity(float worldX, float worldZ, float& red, float& green, float& blue) const
+{
+    red = 1.0f;
+    green = 1.0f;
+    blue = 1.0f;
+    if (m_actorLmRgb.empty() || !m_attr || m_attr->m_zoom <= 0 || m_attr->m_width <= 0 || m_attr->m_height <= 0) {
+        return;
+    }
+
+    const float zoom = static_cast<float>(m_attr->m_zoom);
+    const int gatX = static_cast<int>(std::floor(static_cast<double>(m_attr->m_width) * 0.5 + static_cast<double>(worldX / zoom)));
+    const int gatY = static_cast<int>(std::floor(static_cast<double>(m_attr->m_height) * 0.5 + static_cast<double>(worldZ / zoom)));
+    if (gatX < 0 || gatY < 0 || gatX >= m_attr->m_width || gatY >= m_attr->m_height) {
+        return;
+    }
+
+    const size_t index = (static_cast<size_t>(gatY) * static_cast<size_t>(m_attr->m_width) + static_cast<size_t>(gatX)) * 3u;
+    if (index + 2 >= m_actorLmRgb.size()) {
+        return;
+    }
+    red = m_actorLmRgb[index];
+    green = m_actorLmRgb[index + 1];
+    blue = m_actorLmRgb[index + 2];
+}
+
+void C3dGround::GetBrightObjColor(float worldX, float worldZ, int& red, int& green, int& blue) const
+{
+    red = 0;
+    green = 0;
+    blue = 0;
+    if (m_isNewVer == 0 || m_width <= 0 || m_height <= 0 || m_zoom <= 0.0f) {
+        return;
+    }
+
+    const int cellX = GroundTileFromWorldX(worldX, m_width, m_zoom);
+    const int cellY = GroundTileFromWorldZ(worldZ, m_height, m_zoom);
+    const CGroundCell* cell = GetCell(cellX, cellY);
+    if (!cell) {
+        return;
+    }
+    red = cell->cellColor[0];
+    green = cell->cellColor[1];
+    blue = cell->cellColor[2];
 }
 
 void C3dGround::RenderAttrTile(const matrix& viewMatrix, int attrX, int attrY, u32 color) const
@@ -4853,7 +5130,6 @@ void C3dGround::FlushGround(const matrix& viewMatrix)
     tlvertex3d sampleVerts[4]{};
     const CGroundSurface* sampleSurfaceInfo = nullptr;
     static bool loggedSubmittedGroundTexture = false;
-    const vector3d groundEnvDiff = ComputeGroundEnvDiff(m_ambientCol, m_diffuseCol);
 
     auto submitSurface = [&](const CGroundSurface* surface, const vector3d (&worldVerts)[4], int* submittedCounter) {
         if (!surface) {
@@ -4882,7 +5158,6 @@ void C3dGround::FlushGround(const matrix& viewMatrix)
             SubtractVec3(worldVerts[1], worldVerts[0]),
             SubtractVec3(worldVerts[2], worldVerts[0])));
         (void)surfaceNormal;
-        const u32 litColor = MakeGroundVertexColor(surface->color, groundEnvDiff);
         for (int i = 0; i < 4; ++i) {
             tlvertex3d projected{};
             if (!ProjectPoint(g_renderer, viewMatrix, worldVerts[i], &projected)) {
@@ -4896,7 +5171,7 @@ void C3dGround::FlushGround(const matrix& viewMatrix)
             if (kDebugGroundFlatColors) {
                 dstVert->color = DebugGroundColor(surface->textureId);
             } else {
-                dstVert->color = litColor;
+                dstVert->color = surface->cornerColor[i];
             }
             if (kDebugGroundCanonicalUvs || kDebugGroundTestTexture) {
                 static const float kCanonicalU[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
@@ -5642,6 +5917,7 @@ bool CWorld::BuildGroundFromGnd(const CGndRes& gnd,
     }
 
     ground->m_attr = m_attr;
+    ground->BuildActorLightIntensities();
     ground->SetWaterInfo(waterLevel, waterType, waterAnimSpeed, wavePitch, waveSpeed, waveHeight);
     m_ground = ground;
     DbgLog("[World] applied map lighting dir=(%.3f,%.3f,%.3f) diffuse=(%.3f,%.3f,%.3f) ambient=(%.3f,%.3f,%.3f) waterLevel=%.2f waterType=%d\n",
@@ -6134,7 +6410,7 @@ void CWorld::ProcessActorSkillRechargeGages(const matrix& viewMatrix, float came
         }
 
         if (actor->m_skillRechargeGage) {
-            actor->ProcessSkillRechargeGageOverlay(centerX, topY, clientHeight);
+            actor->ProcessSkillRechargeGageOverlay(centerX, topY);
         }
 
         if (CPc* pcActor = dynamic_cast<CPc*>(actor)) {

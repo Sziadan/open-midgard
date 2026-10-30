@@ -246,7 +246,8 @@ bool ResolveDragPreviewCacheKey(const DRAG_INFO& dragInfo, unsigned long long* o
         return false;
     }
 
-    if (dragInfo.type == static_cast<int>(DragType::ShortcutItem) && dragInfo.itemId != 0) {
+    if ((dragInfo.type == static_cast<int>(DragType::ShortcutItem) || dragInfo.type == static_cast<int>(DragType::ShopItem))
+        && dragInfo.itemId != 0) {
         *outKey = (1ull << 32) | static_cast<unsigned long long>(dragInfo.itemId);
         return true;
     }
@@ -280,7 +281,8 @@ bool LoadDragPreviewPixels(const DRAG_INFO& dragInfo, DragPreviewPixels* outPrev
 
     DragPreviewPixels preview{};
     std::string bitmapPath;
-    if (dragInfo.type == static_cast<int>(DragType::ShortcutItem) && dragInfo.itemId != 0) {
+    if ((dragInfo.type == static_cast<int>(DragType::ShortcutItem) || dragInfo.type == static_cast<int>(DragType::ShopItem))
+        && dragInfo.itemId != 0) {
         ITEM_INFO item{};
         item.SetItemId(dragInfo.itemId);
         item.m_isIdentified = 1;
@@ -534,7 +536,8 @@ u32 GetDragPreviewVisualToken()
     }
 
     u32 token = static_cast<u32>(gameMode->m_dragType & 0xFF);
-    if (gameMode->m_dragType == static_cast<int>(DragType::ShortcutItem)) {
+    if (gameMode->m_dragType == static_cast<int>(DragType::ShortcutItem)
+        || gameMode->m_dragType == static_cast<int>(DragType::ShopItem)) {
         token = (token * 16777619u) ^ static_cast<u32>(gameMode->m_dragInfo.itemId);
     } else if (gameMode->m_dragType == static_cast<int>(DragType::ShortcutSkill)) {
         token = (token * 16777619u) ^ static_cast<u32>(gameMode->m_dragInfo.skillId);

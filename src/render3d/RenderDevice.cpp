@@ -835,9 +835,10 @@ D3D11_BLEND ConvertBlendFactor(D3DBLEND blend)
     case D3DBLEND_INVSRCALPHA:
         return D3D11_BLEND_INV_SRC_ALPHA;
     case D3DBLEND_DESTALPHA:
-        return D3D11_BLEND_DEST_ALPHA;
+        // 16-bit backbuffer: destination alpha is implicitly 1.
+        return D3D11_BLEND_ONE;
     case D3DBLEND_INVDESTALPHA:
-        return D3D11_BLEND_INV_DEST_ALPHA;
+        return D3D11_BLEND_ZERO;
     case D3DBLEND_DESTCOLOR:
         return D3D11_BLEND_DEST_COLOR;
     case D3DBLEND_INVDESTCOLOR:
@@ -863,9 +864,10 @@ D3D12_BLEND ConvertBlendFactor12(D3DBLEND blend)
     case D3DBLEND_INVSRCALPHA:
         return D3D12_BLEND_INV_SRC_ALPHA;
     case D3DBLEND_DESTALPHA:
-        return D3D12_BLEND_DEST_ALPHA;
+        // 16-bit backbuffer: destination alpha is implicitly 1.
+        return D3D12_BLEND_ONE;
     case D3DBLEND_INVDESTALPHA:
-        return D3D12_BLEND_INV_DEST_ALPHA;
+        return D3D12_BLEND_ZERO;
     case D3DBLEND_DESTCOLOR:
         return D3D12_BLEND_DEST_COLOR;
     case D3DBLEND_INVDESTCOLOR:
@@ -2463,10 +2465,9 @@ private:
         desc.RenderTarget[0].SrcBlend = ConvertBlendFactor(m_pipelineState.srcBlend);
         desc.RenderTarget[0].DestBlend = ConvertBlendFactor(m_pipelineState.destBlend);
         desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-        // D3D7 and D3D9 apply one blend equation to color and alpha. A separate
-        // ONE/ZERO alpha replace stores the sprite alpha in the target, and the
-        // next D3DBLEND_DESTALPHA layer (STR spells such as Storm Gust) then
-        // replaces the scene under its transparent texels with black.
+        // D3D7 applies one blend equation to color and alpha. DESTALPHA is
+        // mapped to ONE because the 2008 backbuffer has no alpha channel.
+        // Using the stored alpha makes Storm Gust replace the scene with black.
         desc.RenderTarget[0].SrcBlendAlpha = desc.RenderTarget[0].SrcBlend;
         desc.RenderTarget[0].DestBlendAlpha = desc.RenderTarget[0].DestBlend;
         desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
@@ -9363,9 +9364,11 @@ VkBlendFactor ConvertBlendFactorVk(D3DBLEND blend)
     case D3DBLEND_INVSRCALPHA:
         return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     case D3DBLEND_DESTALPHA:
-        return VK_BLEND_FACTOR_DST_ALPHA;
+        // 16-bit backbuffer: destination alpha is implicitly 1. STR lights
+        // such as Storm Gust add color instead of punching black holes.
+        return VK_BLEND_FACTOR_ONE;
     case D3DBLEND_INVDESTALPHA:
-        return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+        return VK_BLEND_FACTOR_ZERO;
     case D3DBLEND_DESTCOLOR:
         return VK_BLEND_FACTOR_DST_COLOR;
     case D3DBLEND_INVDESTCOLOR:

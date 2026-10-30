@@ -1406,7 +1406,8 @@ void ApplyUseSkillEffects(CGameMode& mode, CGameActor* source, CGameActor* targe
                         if (source != nullptr)
                         {
                             mode.SendMsg(135, 0, 0, 0);
-                            PlayUseSkillWave("effect\\T_\xB8\xB6\xB9\xFD\xB9\xDD\xBB\xE7.wav", 0.0, 0.0, 0.0);
+                            // PE Zc_Use_Skill 0x58E155: the push before SendMsg(109, 203) is effect\mon_폭기.wav.
+                            PlayUseSkillWave("effect\\mon_\xC6\xF8\xB1\xE2.wav", 0.0, 0.0, 0.0);
                             if (source != nullptr) {
                                 source->SendMsg(source, 109, 203, 0, 0);
                             }

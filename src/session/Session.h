@@ -124,6 +124,8 @@ public:
     int m_playerPosX;
     int m_playerPosY;
     int m_playerDir;
+    // Walk delay in ms per cell. Zc_Par_Change type 0 (SP_SPEED). Lower is faster.
+    u32 m_speed = 150;
     int m_playerJob;
     int m_playerHead;
     int m_playerBodyPalette;
@@ -162,6 +164,7 @@ public:
     int m_plusAspd = 0;
     u32 m_shopNpcId = 0;
     NpcShopMode m_shopMode = NpcShopMode::None;
+    bool m_suppressNextShopResult = false;
     int m_shopSelectedSourceRow = -1;
     int m_shopSelectedDealRow = -1;
     int m_shopDealTotal = 0;

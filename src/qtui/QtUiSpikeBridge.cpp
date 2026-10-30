@@ -3,6 +3,7 @@
 #include "QtUiStateAdapter.h"
 
 #include "QtUiStatusIconCatalog.h"
+#include "world/StatusStateIconMap.h"
 
 #include "DebugLog.h"
 #include "gamemode/GameMode.h"
@@ -583,18 +584,39 @@ void AddUniqueStatusPathCandidate(std::vector<std::string>* out, const std::stri
     out->push_back(normalized);
 }
 
+int CurrentStatusIconJob()
+{
+    return (g_world.m_player != nullptr) ? g_world.m_player->m_job : 0;
+}
+
+int StatusIconImageCacheKey(int statusType, int job)
+{
+    return statusType | (StatusStateIconUsesSpecialJob(job) ? 0x10000 : 0);
+}
+
 std::string ResolveQtStatusIconPath(int statusType)
 {
-    const qtui::StatusIconCatalogEntry* const entry = qtui::FindStatusIconCatalogEntry(statusType);
-    if (!entry || !entry->legacyIconFileName || !entry->legacyIconFileName[0]) {
-        LOG_QTUI_STATUS_ICON("[QtUiStatusIcon] no legacy filename mapped for statusType=%d label='%s'\n",
+    const StatusStateIconEntry* const entry = FindStatusStateIconByStatus(statusType);
+    const char* const canonicalPath = StatusStateIconFilePath(entry, CurrentStatusIconJob());
+    if (!canonicalPath || !canonicalPath[0]) {
+        LOG_QTUI_STATUS_ICON("[QtUiStatusIcon] no canonical filename for statusType=%d label='%s'\n",
             statusType,
             GetStatusIconDebugLabel(statusType));
         return std::string();
     }
 
-    const std::string fileName(entry->legacyIconFileName);
+    const std::string fullPath(canonicalPath);
+    std::string fileName = shopui::NormalizeSlash(fullPath);
+    const size_t slashPos = fileName.find_last_of('\\');
+    if (slashPos != std::string::npos && slashPos + 1 < fileName.size()) {
+        fileName = fileName.substr(slashPos + 1);
+    }
+
     std::vector<std::string> candidates;
+    AddUniqueStatusPathCandidate(&candidates, fullPath);
+    AddUniqueStatusPathCandidate(&candidates, std::string("data\\texture\\") + fullPath);
+    AddUniqueStatusPathCandidate(&candidates, std::string("texture\\") + fullPath);
+    AddUniqueStatusPathCandidate(&candidates, std::string("data\\") + fullPath);
     AddUniqueStatusPathCandidate(&candidates, fileName);
     AddUniqueStatusPathCandidate(&candidates, std::string("effect\\") + fileName);
     AddUniqueStatusPathCandidate(&candidates, std::string("texture\\effect\\") + fileName);
@@ -610,31 +632,32 @@ std::string ResolveQtStatusIconPath(int statusType)
     LOG_QTUI_STATUS_ICON("[QtUiStatusIcon] missing statusType=%d label='%s' filename='%s'\n",
         statusType,
         GetStatusIconDebugLabel(statusType),
-        entry->legacyIconFileName);
+        canonicalPath);
 
     return std::string();
 }
 
 bool TryBuildStatusIconImage(int statusType, QImage* outImage)
 {
-    if (!outImage || statusType == 0) {
+    if (!outImage || statusType < 0) {
         return false;
     }
 
     static std::unordered_map<int, QImage> s_statusIconCache;
     static std::unordered_set<int> s_statusIconFailures;
-    const auto cached = s_statusIconCache.find(statusType);
+    const int cacheKey = StatusIconImageCacheKey(statusType, CurrentStatusIconJob());
+    const auto cached = s_statusIconCache.find(cacheKey);
     if (cached != s_statusIconCache.end()) {
         *outImage = cached->second;
         return !outImage->isNull();
     }
-    if (s_statusIconFailures.find(statusType) != s_statusIconFailures.end()) {
+    if (s_statusIconFailures.find(cacheKey) != s_statusIconFailures.end()) {
         return false;
     }
 
     const std::string path = ResolveQtStatusIconPath(statusType);
     if (path.empty()) {
-        s_statusIconFailures.insert(statusType);
+        s_statusIconFailures.insert(cacheKey);
         return false;
     }
 
@@ -644,7 +667,7 @@ bool TryBuildStatusIconImage(int statusType, QImage* outImage)
             statusType,
             GetStatusIconDebugLabel(statusType),
             path.c_str());
-        s_statusIconFailures.insert(statusType);
+        s_statusIconFailures.insert(cacheKey);
         return false;
     }
 
@@ -654,11 +677,11 @@ bool TryBuildStatusIconImage(int statusType, QImage* outImage)
             statusType,
             GetStatusIconDebugLabel(statusType),
             path.c_str());
-        s_statusIconFailures.insert(statusType);
+        s_statusIconFailures.insert(cacheKey);
         return false;
     }
 
-    s_statusIconCache[statusType] = *outImage;
+    s_statusIconCache[cacheKey] = *outImage;
     return true;
 }
 

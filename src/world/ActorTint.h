@@ -43,4 +43,17 @@ inline std::uint32_t ResolveBillboardColor(std::uint32_t visibilityAlpha,
     return (alpha << 24) | rgb;
 }
 
+inline std::uint32_t ApplyLightIntensity(std::uint32_t color, float red, float green, float blue)
+{
+    const auto scaleChannel = [](std::uint32_t channel, float scale) {
+        const int scaled = static_cast<int>(static_cast<float>(channel) * scale + 0.5f);
+        return static_cast<std::uint32_t>((std::max)(0, (std::min)(255, scaled)));
+    };
+    const std::uint32_t alpha = (color >> 24) & 0xFFu;
+    const std::uint32_t outRed = scaleChannel((color >> 16) & 0xFFu, red);
+    const std::uint32_t outGreen = scaleChannel((color >> 8) & 0xFFu, green);
+    const std::uint32_t outBlue = scaleChannel(color & 0xFFu, blue);
+    return (alpha << 24) | (outRed << 16) | (outGreen << 8) | outBlue;
+}
+
 } // namespace ro::actor

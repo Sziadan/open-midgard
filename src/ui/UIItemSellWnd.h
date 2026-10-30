@@ -15,6 +15,7 @@ public:
     void OnLBtnDblClk(int x, int y) override;
     void OnLBtnUp(int x, int y) override;
     void OnMouseMove(int x, int y) override;
+    void DragAndDrop(int x, int y, const DRAG_INFO* const info) override;
     void OnWheel(int delta) override;
     void HandleKeyDown(int virtualKey);
     int GetViewOffset() const;
@@ -42,8 +43,15 @@ private:
     void ActivateButton(ButtonId buttonId);
     unsigned long long BuildDisplayStateToken() const;
 
+    void ArmRowDrag(int rowIndex, int x, int y);
+    void UpdateRowDrag(int x, int y);
+
     int m_viewOffset;
     int m_hoverRow;
+    bool m_dragArmed;
+    int m_dragStartX;
+    int m_dragStartY;
+    int m_dragRow;
     ButtonId m_hoverButton;
     ButtonId m_pressedButton;
     unsigned long long m_lastDrawStateToken;

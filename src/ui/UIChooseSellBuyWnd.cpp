@@ -135,8 +135,7 @@ void UIChooseSellBuyWnd::ActivateButton(ButtonId buttonId)
         g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShopDealType, 1, 0, 0);
         break;
     case ButtonCancel:
-        g_session.ClearNpcShopState();
-        g_windowMgr.CloseNpcShopWindows();
+        g_modeMgr.SendMsg(CGameMode::GameMsg_RequestShopCancel, 0, 0, 0);
         return;
     default:
         break;

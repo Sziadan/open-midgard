@@ -120,6 +120,8 @@ public:
                 GameMsg_RequestPlayerContextAction = 20033,
                 GameMsg_RequestCartOff = 20039,
                 GameMsg_RequestChangeCart = 20040,
+                GameMsg_RequestShopAdjustDeal = 20041,
+                GameMsg_RequestShopCancel = 20042,
             GameMsg_RequestPartyCreate = 20034,
             GameMsg_RequestPartyChangeOptions = 20035,
             GameMsg_RequestPartyDisband = 20036,

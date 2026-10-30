@@ -123,6 +123,8 @@ constexpr const char* kLegacyMonsterSpriteRoot = "data\\sprite\\\xB8\xF3\xBD\xBA
 constexpr float kDefaultMotionDelay = 4.0f;
 constexpr float kDefaultMotionSpeedFactor = 1.0f;
 constexpr float kAttackMotionFactor = 0.0023148148f;
+// Ref AVG_ATTACK_SPEED is 432. MAX_ATTACKMT is twice that.
+constexpr int kMaxAttackMotionTime = 432 * 2;
 constexpr int kMoveStateId = 1;
 constexpr int kAttackStateId = kGameActorAttackStateId;
 constexpr int kDeathStateId = kGameActorDeathStateId;
@@ -1677,11 +1679,11 @@ bool IsTransientActionActive(const CGameActor& actor, CActRes* actRes, int actio
         return false;
     }
 
-    const bool allowWhileMoving = actor.m_stateId == kAttackStateId
-        || actor.m_stateId == kSecondAttackStateId
-        || actor.m_stateId == kGameActorPickupStateId
-        || actor.m_stateId == kDeathStateId;
-    if (actor.m_isMoving && !allowWhileMoving) {
+    // The walk clip owns the sprite only while the actor is still in the move
+    // state. A skill pose that starts before that flag is cleared must still
+    // play; treating it as inactive freezes the last walk frame and then
+    // cancels the pose.
+    if (actor.m_stateId == kMoveStateId && actor.m_isMoving) {
         return false;
     }
 
@@ -6797,7 +6799,7 @@ void CGameActor::DestroySkillRechargeGage()
     m_skillRechargeEndTick = 0;
 }
 
-void CGameActor::ProcessSkillRechargeGageOverlay(int screenCenterX, int screenTopY, int clientHeight)
+void CGameActor::ProcessSkillRechargeGageOverlay(int screenCenterX, int screenTopY)
 {
     if (!m_skillRechargeGage || m_skillRechargeEndTick == 0 || m_skillRechargeStartTick == 0) {
         return;
@@ -6810,10 +6812,14 @@ void CGameActor::ProcessSkillRechargeGageOverlay(int screenCenterX, int screenTo
     }
 
     if (now <= m_skillRechargeEndTick) {
-        const float scale = (m_lastPixelRatio > 0.0f) ? m_lastPixelRatio : 1.0f;
-        const int yOff = static_cast<int>((81.0f * static_cast<float>(clientHeight) / 480.0f) * scale);
-        const int barX = screenCenterX - 30;
-        const int barY = screenTopY - yOff;
+        // screenTopY is already the top of the sprite. The bar is drawn in raw
+        // screen pixels, outside the scaled UI layer, so a resolution or UI-scale
+        // multiplier here would lift it off the head.
+        constexpr int kGapAboveHeadPx = 2;
+        const int barWidth = m_skillRechargeGage->m_w > 0 ? m_skillRechargeGage->m_w : 60;
+        const int barHeight = m_skillRechargeGage->m_h > 0 ? m_skillRechargeGage->m_h : 6;
+        const int barX = screenCenterX - barWidth / 2;
+        const int barY = screenTopY - barHeight - kGapAboveHeadPx;
         m_skillRechargeGage->Move(barX, barY);
         int elapsed = static_cast<int>(now - m_skillRechargeStartTick);
         if (elapsed < 0) {
@@ -7131,22 +7137,51 @@ void CGameActor::StartMoveToCell(int cellX, int cellY, int pathFlag)
     m_moveEndTime = m_moveStartTime;
 
     g_pathFinder.SetMap(gameMode->m_world->m_attr);
-    const int speed = static_cast<int>(m_speed != 0 ? m_speed : 150u);
+    // Message 19's third argument is the path delay in ms per cell.
+    // Snap (MO_BODYRELOCATION) passes 15, so the caster dashes to the cell
+    // the ground-skill packet already committed on the server. A zero delay
+    // keeps the normal walk speed.
+    const bool forcedSlide = pathFlag > 0;
+    int speed = pathFlag;
+    if (!forcedSlide) {
+        if (g_session.m_gid != 0 && m_gid == g_session.m_gid && g_session.m_speed != 0) {
+            m_speed = g_session.m_speed;
+        }
+        speed = static_cast<int>(m_speed != 0 ? m_speed : 150u);
+    }
+    CPlayer* const localPlayer = gameMode->m_world->m_player;
+    const bool isLocalPlayer = localPlayer == this;
     if (g_pathFinder.FindPath(m_moveStartTime, srcX, srcY, 0, 0, cellX, cellY, speed, &m_path)
         && m_path.m_cells.size() >= 2) {
         m_moveEndTime = m_path.m_cells.back().arrivalTime;
         m_isMoving = m_moveEndTime > m_moveStartTime;
         m_pathStartCell = 0;
         SetState(1);
-        if (pathFlag) {
+        if (forcedSlide) {
             m_isNeverAnimation = 0;
             m_isMotionFreezed = 1;
         } else {
             m_isNeverAnimation = 1;
         }
+        if (isLocalPlayer) {
+            localPlayer->m_preMoveOn = 0;
+            localPlayer->m_isWaitingMoveAck = 0;
+            g_session.SetPlayerPosDir(cellX, cellY, g_session.m_playerDir);
+        }
         return;
     }
 
+    // The server already moved this unit before the poseffect. If the local
+    // pathfinder cannot trace that cell, still place the caster there.
+    if (forcedSlide && isLocalPlayer) {
+        m_pos = m_moveEndPos;
+        m_isMoving = 0;
+        m_path.Reset();
+        m_pathStartCell = -1;
+        localPlayer->m_preMoveOn = 0;
+        localPlayer->m_isWaitingMoveAck = 0;
+        g_session.SetPlayerPosDir(cellX, cellY, g_session.m_playerDir);
+    }
     SetState(0);
 }
 
@@ -7159,6 +7194,9 @@ void CGameActor::SetModifyFactorOfmotionSpeed(int attackMT)
 {
     if (attackMT <= 0) {
         attackMT = 1440;
+    }
+    if (attackMT > kMaxAttackMotionTime) {
+        attackMT = kMaxAttackMotionTime;
     }
 
     const float factor = static_cast<float>(attackMT) * kAttackMotionFactor;
@@ -7695,10 +7733,17 @@ void CItem::Render(matrix* viewMatrix)
     face->m_verts[3].x = right;
     face->m_verts[3].y = bottom;
 
+    float lightRed = 1.0f;
+    float lightGreen = 1.0f;
+    float lightBlue = 1.0f;
+    if (g_world.m_ground) {
+        g_world.m_ground->GetActorLightIntensity(m_pos.x, m_pos.z, lightRed, lightGreen, lightBlue);
+    }
+    const u32 itemColor = ro::actor::ApplyLightIntensity(0xFFFFFFFFu, lightRed, lightGreen, lightBlue);
     for (int index = 0; index < 4; ++index) {
         face->m_verts[index].z = (std::max)(0.0f, projectedBase.z - kItemBillboardDepthBias);
         face->m_verts[index].oow = projectedBase.oow;
-        face->m_verts[index].color = 0xFFFFFFFFu;
+        face->m_verts[index].color = itemColor;
         face->m_verts[index].specular = 0xFF000000u;
     }
 
@@ -7807,12 +7852,14 @@ CBlurPC::CBlurPC(CPc* source)
     m_shadowOn = 0;
     m_stateStartTick = timeGetTime();
     m_pos = source->m_pos;
+    m_roty = source->m_roty;
     m_lastPixelRatio = source->m_lastPixelRatio;
     m_sprShift = source->m_sprShift;
     m_zoom = source->m_zoom;
     m_baseAction = source->m_baseAction;
     m_curAction = source->m_curAction;
     m_curMotion = source->m_curMotion;
+    m_isMotionFreezed = source->m_isMotionFreezed;
     m_oldBaseAction = source->m_oldBaseAction;
     m_oldMotion = source->m_oldMotion;
     m_alwaysTopLayer = source->m_alwaysTopLayer;
@@ -7912,6 +7959,23 @@ void CPc::SetState(int state)
     if (previousState == kHitReactionStateId) {
         m_pos.x = m_damageDestX;
         m_pos.z = m_damageDestZ;
+    }
+
+    // Casting while the walk clip is still running used to leave m_isMoving
+    // set. The billboard then kept the walk frame, and the skill pose was
+    // dropped a moment later. Leave the move state and a pending click-move
+    // before any attack or skill pose starts.
+    if (state != 0 && state != kMoveStateId && !(state == 7 && previousState == 6)) {
+        m_isMoving = 0;
+        m_path.Reset();
+        m_pathStartCell = -1;
+        m_isNeverAnimation = 0;
+        if (m_bodyState != 1 && m_bodyState != 2) {
+            m_isMotionFreezed = 0;
+        }
+        if (CPlayer* player = dynamic_cast<CPlayer*>(this)) {
+            player->m_preMoveOn = 0;
+        }
     }
 
     switch (state) {
@@ -8062,6 +8126,15 @@ void CPc::SetModifyFactorOfmotionSpeed(int attackMT)
 
     if (attackMT <= 0) {
         attackMT = 1440;
+    }
+
+    int weapon = m_weapon;
+    if (weapon > 31) {
+        weapon = g_session.GetWeaponTypeByItemId(weapon);
+    }
+    // Bows keep the server attack motion. Every other weapon is capped.
+    if (weapon != 11 && attackMT > kMaxAttackMotionTime) {
+        attackMT = kMaxAttackMotionTime;
     }
 
     m_modifyFactorOfmotionSpeed = static_cast<float>(attackMT) * kAttackMotionFactor;
@@ -8667,6 +8740,10 @@ void CPlayer::ProcessPreMove()
     const u32 moveStartTime = g_session.GetServerTime();
     const int requestedDestX = m_destCellX;
     const int requestedDestY = m_destCellZ;
+    if (g_session.m_speed != 0) {
+        m_speed = g_session.m_speed;
+    }
+    const int speed = static_cast<int>(m_speed != 0 ? m_speed : 150u);
 
     // Source CPlayer::SendMsg(0) consumes MOVESTRUCT, clears the pending
     // resend/ack state, and attempts the path from its precise 1/16-cell start.
@@ -8680,7 +8757,7 @@ void CPlayer::ProcessPreMove()
         startCellY,
         requestedDestX,
         requestedDestY,
-        static_cast<int>(m_speed),
+        speed,
         &m_path)) {
         m_moveDestX = requestedDestX;
         m_moveDestY = requestedDestY;
@@ -8700,7 +8777,7 @@ void CPlayer::ProcessPreMove()
         startCellY,
         requestedDestX,
         requestedDestY,
-        static_cast<int>(m_speed),
+        speed,
         &m_path)) {
         m_moveDestX = requestedDestX;
         m_moveDestY = requestedDestY;

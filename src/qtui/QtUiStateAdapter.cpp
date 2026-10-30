@@ -3,6 +3,7 @@
 #include "QtUiState.h"
 
 #include "QtUiStatusIconCatalog.h"
+#include "world/StatusStateIconMap.h"
 
 #include "network/Connection.h"
 #include "network/MapSendProfile.h"
@@ -1280,7 +1281,8 @@ void PopulateNpcInputState(QtUiState* state)
     state->setNpcInputGeometry(inputWnd->m_x, inputWnd->m_y, inputWnd->m_w, inputWnd->m_h);
     state->setNpcInputText(
         ToQString(inputWnd->GetDialogLabel()),
-        ToQString(inputWnd->GetInputText()));
+        ToQString(inputWnd->GetInputText()),
+        ToQString(inputWnd->GetInputPlaceholder()));
     state->setNpcInputButtons(inputWnd->IsOkPressed(), inputWnd->IsCancelPressed());
 
     QVariantList buttons;
@@ -1380,6 +1382,8 @@ void PopulateItemShopState(QtUiState* state)
         const NPC_SHOP_ROW& row = g_session.m_shopRows[static_cast<size_t>(rowIndex)];
         QVariantMap entry;
         entry.insert(QStringLiteral("name"), ToQString(shopui::GetItemDisplayName(row.itemInfo)));
+        entry.insert(QStringLiteral("itemId"), row.itemInfo.GetItemId());
+        entry.insert(QStringLiteral("identified"), row.itemInfo.m_isIdentified != 0);
         entry.insert(QStringLiteral("quantity"), row.availableCount);
         entry.insert(QStringLiteral("price"), g_session.GetNpcShopUnitPrice(row));
         entry.insert(QStringLiteral("selected"), g_session.m_shopSelectedSourceRow == rowIndex);
@@ -3207,9 +3211,39 @@ void PopulateStatusIconsState(QtUiState* state, int mouseX, int mouseY)
 
     QVariantList icons;
     const std::vector<ACTIVE_STATUS_ICON>& activeIcons = g_session.GetActiveStatusIcons();
-    icons.reserve(static_cast<qsizetype>(activeIcons.size()));
+    std::vector<const ACTIVE_STATUS_ICON*> orderedIcons;
+    orderedIcons.reserve(activeIcons.size());
+    std::vector<int> drawnIds;
+    drawnIds.reserve(activeIcons.size());
+    // Same priority walk and status-42 dedup as CRagEffect::SpawnStatusState.
+    for (int priority = 0; priority < 4; ++priority) {
+        for (const ACTIVE_STATUS_ICON& icon : activeIcons) {
+            if (!FindStatusStateIcon(priority, icon.statusType)) {
+                continue;
+            }
+            const int drawId = icon.statusType == 42 ? 12 : icon.statusType;
+            bool alreadyDrawn = false;
+            for (int drawnId : drawnIds) {
+                if (drawnId == drawId) {
+                    alreadyDrawn = true;
+                    break;
+                }
+            }
+            if (alreadyDrawn) {
+                continue;
+            }
+            orderedIcons.push_back(&icon);
+            drawnIds.push_back(drawId);
+        }
+    }
+    // Ref StatusState draws a tile only when GetStateFileName returns a path.
+    // Status 46 (SI_ACTIONDELAY, the aftercast delay) is in the state list but
+    // has no HighPriest icon, so it must not get a fallback tile.
+
+    icons.reserve(static_cast<qsizetype>(orderedIcons.size()));
     const int hoveredIndex = FindHoveredStatusIconIndex(state, mouseX, mouseY);
-    for (const ACTIVE_STATUS_ICON& entry : activeIcons) {
+    for (const ACTIVE_STATUS_ICON* iconPtr : orderedIcons) {
+        const ACTIVE_STATUS_ICON& entry = *iconPtr;
         const qtui::StatusIconCatalogEntry* const catalogEntry = qtui::FindStatusIconCatalogEntry(entry.statusType);
         const int skillId = catalogEntry ? catalogEntry->skillId : 0;
         const u32 remainingMs = (entry.hasTimer && entry.expireServerTime > now)

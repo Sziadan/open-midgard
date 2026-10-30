@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "network/Connection.h"
 #include "network/Packet.h"
 #include "network/GronPacket.h"
@@ -24,9 +26,12 @@
 #include "res/Sprite.h"
 #include "res/WorldRes.h"
 #include "session/Session.h"
+#include "skill/Skill.h"
 #include "ui/UIMinimapWnd.h"
 #include "ui/UiScale.h"
+#include "ui/UINpcMenuWnd.h"
 #include "ui/UIPlayerContextMenuWnd.h"
+#include "ui/UISayDialogWnd.h"
 #include "ui/UIWindow.h"
 #include "ui/UIWindowMgr.h"
 #include "render/DrawUtil.h"
@@ -4030,10 +4035,37 @@ void UpdateMapLoadingUi(CGameMode& mode, const char* message, float progress)
     g_windowMgr.UpdateLoadingScreen(message ? message : "Loading...", progress);
 }
 
+void ReplayPersistedStatusVisuals(CGameMode& mode)
+{
+    // Map load deletes every world effect, including auras already restarted
+    // on the new player. Status icons stay in the session and the server does
+    // not send them again, so they have to be launched once the map is ready.
+    CGameActor* actor = mode.m_world ? static_cast<CGameActor*>(mode.m_world->m_player) : nullptr;
+    if (!actor && g_session.m_gid != 0) {
+        const auto it = mode.m_runtimeActors.find(g_session.m_gid);
+        if (it != mode.m_runtimeActors.end()) {
+            actor = it->second;
+        }
+    }
+    if (!actor) {
+        return;
+    }
+
+    g_session.PruneExpiredStatusIcons(g_session.GetServerTime());
+    const std::vector<ACTIVE_STATUS_ICON>& icons = g_session.GetActiveStatusIcons();
+    DbgLog("[GameMode] replay status visuals gid=%u count=%zu\n",
+        actor->m_gid,
+        icons.size());
+    for (const ACTIVE_STATUS_ICON& icon : icons) {
+        actor->SendMsg(actor, 110, icon.statusType, 1, 0);
+    }
+}
+
 void FinishMapLoading(CGameMode& mode)
 {
     SyncBootstrapRuntimeActorWorldPos(mode);
     LaunchMapWeatherEffect(mode);
+    ReplayPersistedStatusVisuals(mode);
     g_windowMgr.HideLoadingScreen();
     g_windowMgr.EnsureChatWindowVisible();
     g_windowMgr.MakeWindow(UIWindowMgr::WID_BASICINFOWND);
@@ -6198,6 +6230,10 @@ bool RequestNpcInputString(u32 npcId, const char* text)
 
 bool RequestNpcCloseDialog(u32 npcId)
 {
+    if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+        gameMode->m_isOnQuest = 0;
+        gameMode->m_lastNaid = 0;
+    }
     if (npcId == 0) {
         return false;
     }
@@ -6308,6 +6344,40 @@ bool RequestNpcShopSellList()
         static_cast<unsigned int>(rowCount),
         sent ? 1 : 0);
     return sent;
+}
+
+bool RequestNpcShopCancel()
+{
+    u32 conversationId = 0;
+    if (g_windowMgr.m_sayDialogWnd && g_windowMgr.m_sayDialogWnd->GetNpcId() != 0) {
+        conversationId = g_windowMgr.m_sayDialogWnd->GetNpcId();
+    } else if (g_windowMgr.m_npcMenuWnd && g_windowMgr.m_npcMenuWnd->GetNpcId() != 0) {
+        conversationId = g_windowMgr.m_npcMenuWnd->GetNpcId();
+    } else if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+        conversationId = gameMode->m_lastNaid;
+    }
+
+    const NpcShopMode shopMode = g_session.m_shopMode;
+    const u32 shopId = g_session.m_shopNpcId;
+    g_session.m_suppressNextShopResult = true;
+
+    PACKET_CZ_PC_PURCHASE_ITEMLIST emptyDeal{};
+    emptyDeal.PacketLength = static_cast<u16>(sizeof(emptyDeal));
+    if (shopMode == NpcShopMode::Sell) {
+        emptyDeal.PacketType = PacketProfile::LegacyNpcShopSend::kSellItemList;
+    } else {
+        emptyDeal.PacketType = PacketProfile::LegacyNpcShopSend::kPurchaseItemList;
+    }
+    CRagConnection::instance()->SendPacket(
+        reinterpret_cast<const char*>(&emptyDeal),
+        static_cast<int>(sizeof(emptyDeal)));
+
+    g_windowMgr.CloseNpcDialogWindows();
+    g_windowMgr.CloseNpcShopWindows();
+    g_session.ClearNpcShopState();
+
+    const u32 closeId = conversationId != 0 ? conversationId : shopId;
+    return RequestNpcCloseDialog(closeId);
 }
 
 bool RequestMoveInventoryItemToStorage(u16 itemIndex, u32 amount)
@@ -10404,6 +10474,82 @@ void SendTalkScriptLine(int variant)
     SendGlobalChatMessage(g_session.GetPlayerName(), text);
 }
 
+std::string SkillHeadBubbleName(int skillId)
+{
+    g_skillMgr.EnsureLoaded();
+    const SkillMetadata* metadata = g_skillMgr.GetSkillMetadata(skillId);
+    if (metadata == nullptr) {
+        return {};
+    }
+    if (!metadata->displayName.empty()) {
+        return metadata->displayName;
+    }
+
+    std::string fallback = metadata->skillIdName;
+    std::replace(fallback.begin(), fallback.end(), '_', ' ');
+    return fallback;
+}
+
+std::string CachedActorCharacterName(const CGameMode& mode, u32 actorId)
+{
+    const auto byGid = mode.m_actorNameListByGID.find(actorId);
+    if (byGid != mode.m_actorNameListByGID.end() && !byGid->second.name.empty()) {
+        return byGid->second.name;
+    }
+    const auto byAid = mode.m_actorNameList.find(actorId);
+    if (byAid != mode.m_actorNameList.end() && !byAid->second.name.empty()) {
+        return byAid->second.name;
+    }
+    if (actorId == g_session.m_aid || actorId == g_session.m_gid) {
+        const char* playerName = g_session.GetPlayerName();
+        if (playerName != nullptr && playerName[0] != '\0') {
+            return playerName;
+        }
+    }
+    return {};
+}
+
+// Ref/GameMode2.cpp case 0x63 (mode message 99). The overhead balloon is actor
+// message 7, which stays up for 5 seconds. The written text is the skillnametable
+// name plus " !!". Wedding skills use the partner line from msgstringtable.
+void ShowSkillHeadBubble(CGameMode& mode, int skillId, CGameActor* actor, int extra)
+{
+    mode.m_skillUsedTick = GetTickCount();
+    if (actor == nullptr || skillId < 0 || extra < 0 || skillId == 389) {
+        return;
+    }
+    if (skillId == 326 || skillId == 318 || skillId == 492) {
+        return;
+    }
+
+    std::string text;
+    if (skillId == 334 || skillId == 335) {
+        text = CachedActorCharacterName(mode, static_cast<u32>(extra));
+        if (!text.empty()) {
+            text += " !!  ";
+        }
+        text += "I love you.";
+    } else if (skillId == 336) {
+        text = mode.m_CoupleName;
+        const std::string skillName = SkillHeadBubbleName(skillId);
+        if (!text.empty()) {
+            text += " !!  ";
+        }
+        text += skillName;
+    } else {
+        text = SkillHeadBubbleName(skillId);
+        if (text.empty()) {
+            return;
+        }
+        text += " !!";
+    }
+
+    if (text.empty()) {
+        return;
+    }
+    actor->SetChatBubbleText(text, GetTickCount() + 5000);
+}
+
 void UpdateShowImageInfo(CGameMode& mode, const char* imageName, int type)
 {
     if (imageName == nullptr) {
@@ -10419,16 +10565,20 @@ void UpdateShowImageInfo(CGameMode& mode, const char* imageName, int type)
 
 msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, msgparam_t extra)
 {
-    (void)extra;
-
     switch (msg) {
+    case 99:
+        ShowSkillHeadBubble(*this,
+            static_cast<int>(wparam),
+            reinterpret_cast<CGameActor*>(lparam),
+            static_cast<int>(extra));
+        return 0;
     case 113:
         UpdateShowImageInfo(*this, reinterpret_cast<const char*>(wparam), static_cast<int>(lparam));
         return 0;
     case GameMsg_LButtonDown: {
         const int mouseX = static_cast<int>(wparam);
         const int mouseY = static_cast<int>(lparam);
-        if (g_windowMgr.HasActiveNpcDialog()) {
+        if (m_isOnQuest || g_windowMgr.HasActiveNpcDialog()) {
             m_isLeftButtonHeld = 0;
             m_hasHeldMoveTarget = 0;
             m_lastMoveRequestCellX = -1;
@@ -10711,6 +10861,20 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
 
     case GameMsg_RequestShopSellList:
         return RequestNpcShopSellList() ? 1 : 0;
+
+    case GameMsg_RequestShopCancel:
+        return RequestNpcShopCancel() ? 1 : 0;
+
+    case GameMsg_RequestShopAdjustDeal: {
+        const unsigned int packed = static_cast<unsigned int>(wparam);
+        const int sourceRow = static_cast<int>(packed & 0xFFFFu);
+        const int quantity = static_cast<int>(lparam);
+        if (sourceRow < 0 || quantity <= 0) {
+            return 0;
+        }
+        const int delta = (packed & 0x10000u) != 0u ? -quantity : quantity;
+        return g_session.AdjustNpcShopDealBySourceRow(static_cast<size_t>(sourceRow), delta) ? 1 : 0;
+    }
 
     case GameMsg_RequestStorageStoreItem:
         return RequestMoveInventoryItemToStorage(static_cast<u16>(wparam), static_cast<u32>(lparam)) ? 1 : 0;

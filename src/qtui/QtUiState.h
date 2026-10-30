@@ -96,6 +96,7 @@ class QtUiState : public QObject {
     Q_PROPERTY(int npcInputHeight READ npcInputHeight NOTIFY npcInputGeometryChanged)
     Q_PROPERTY(QString npcInputLabel READ npcInputLabel NOTIFY npcInputTextChanged)
     Q_PROPERTY(QString npcInputText READ npcInputText NOTIFY npcInputTextChanged)
+    Q_PROPERTY(QString npcInputPlaceholder READ npcInputPlaceholder NOTIFY npcInputTextChanged)
     Q_PROPERTY(bool npcInputOkPressed READ npcInputOkPressed NOTIFY npcInputButtonsChanged)
     Q_PROPERTY(bool npcInputCancelPressed READ npcInputCancelPressed NOTIFY npcInputButtonsChanged)
     Q_PROPERTY(QVariantList npcInputButtons READ npcInputButtons NOTIFY npcInputButtonsChanged)
@@ -377,6 +378,7 @@ public:
     int npcInputHeight() const { return m_npcInputHeight; }
     const QString& npcInputLabel() const { return m_npcInputLabel; }
     const QString& npcInputText() const { return m_npcInputText; }
+    const QString& npcInputPlaceholder() const { return m_npcInputPlaceholder; }
     bool npcInputOkPressed() const { return m_npcInputOkPressed; }
     bool npcInputCancelPressed() const { return m_npcInputCancelPressed; }
     const QVariantList& npcInputButtons() const { return m_npcInputButtons; }
@@ -1032,12 +1034,13 @@ public:
         emit npcInputGeometryChanged();
     }
 
-    void setNpcInputText(const QString& label, const QString& text) {
-        if (m_npcInputLabel == label && m_npcInputText == text) {
+    void setNpcInputText(const QString& label, const QString& text, const QString& placeholder = QString()) {
+        if (m_npcInputLabel == label && m_npcInputText == text && m_npcInputPlaceholder == placeholder) {
             return;
         }
         m_npcInputLabel = label;
         m_npcInputText = text;
+        m_npcInputPlaceholder = placeholder;
         emit npcInputTextChanged();
     }
 
@@ -2208,6 +2211,7 @@ private:
     int m_npcInputHeight = 0;
     QString m_npcInputLabel;
     QString m_npcInputText;
+    QString m_npcInputPlaceholder;
     bool m_npcInputOkPressed = false;
     bool m_npcInputCancelPressed = false;
     QVariantList m_npcInputButtons;

@@ -208,6 +208,11 @@ const char* UINpcInputWnd::GetDialogLabel() const
     return m_dialogLabel.empty() ? "" : m_dialogLabel.c_str();
 }
 
+const char* UINpcInputWnd::GetInputPlaceholder() const
+{
+    return m_inputPlaceholder.empty() ? "" : m_inputPlaceholder.c_str();
+}
+
 bool UINpcInputWnd::IsOkPressed() const
 {
     return m_pressedTarget == ClickTarget::Ok;
@@ -347,6 +352,7 @@ void UINpcInputWnd::OpenForMode(u32 npcId, InputMode mode, SubmitAction action, 
     m_submitWparam = 0;
     m_maxNumberValue = 0;
     m_dialogLabel = label ? label : ((mode == InputMode::Number) ? "Enter a number" : "Enter text");
+    m_inputPlaceholder.clear();
     m_editCtrl->SetText("");
     m_editCtrl->m_type = (mode == InputMode::Number) ? 1 : 0;
     m_editCtrl->m_maxchar = (mode == InputMode::Number) ? 10 : 0;
@@ -367,12 +373,18 @@ void UINpcInputWnd::OpenString(u32 npcId)
     OpenForMode(npcId, InputMode::String, SubmitAction::NpcString, "Enter text");
 }
 
-void UINpcInputWnd::OpenGameNumberPrompt(const char* label, int gameMessage, msgparam_t wparam, u32 initialValue, u32 maxValue)
+void UINpcInputWnd::OpenGameNumberPrompt(const char* label, int gameMessage, msgparam_t wparam, u32 initialValue, u32 maxValue, const char* placeholder)
 {
     OpenForMode(0, InputMode::Number, SubmitAction::GameMessage, label && *label ? label : "Enter amount");
     m_submitGameMessage = gameMessage;
     m_submitWparam = wparam;
     m_maxNumberValue = maxValue;
+    m_inputPlaceholder = placeholder ? placeholder : "";
+
+    if (!m_inputPlaceholder.empty()) {
+        m_editCtrl->SetText("");
+        return;
+    }
 
     char valueText[32]{};
     const u32 clampedInitialValue = maxValue > 0 ? (std::max)(1u, (std::min)(initialValue, maxValue)) : initialValue;
@@ -388,6 +400,7 @@ void UINpcInputWnd::HideInput()
     m_submitWparam = 0;
     m_maxNumberValue = 0;
     m_dialogLabel = "Enter text";
+    m_inputPlaceholder.clear();
     m_editCtrl->SetText("");
     m_editCtrl->m_hasFocus = false;
     if (g_windowMgr.m_editWindow == m_editCtrl) {

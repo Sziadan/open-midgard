@@ -2,6 +2,7 @@
 
 #include "render/Prim.h"
 #include "render/Renderer.h"
+#include "world/World.h"
 
 #include <algorithm>
 #include <cmath>
@@ -393,6 +394,18 @@ u32 MultiplyColor(u32 color, const vector3d& light, float alpha)
     return (dstA << 24) | (dstR << 16) | (dstG << 8) | dstB;
 }
 
+u32 AddBrightObjColor(u32 color, int addRed, int addGreen, int addBlue)
+{
+    const unsigned int alpha = (color >> 24) & 0xFFu;
+    const int red = (std::min)(255, static_cast<int>((color >> 16) & 0xFFu) + addRed);
+    const int green = (std::min)(255, static_cast<int>((color >> 8) & 0xFFu) + addGreen);
+    const int blue = (std::min)(255, static_cast<int>(color & 0xFFu) + addBlue);
+    return (alpha << 24)
+        | (static_cast<unsigned int>((std::max)(0, red)) << 16)
+        | (static_cast<unsigned int>((std::max)(0, green)) << 8)
+        | static_cast<unsigned int>((std::max)(0, blue));
+}
+
 u32 MakeLitColor(const vector3d& light, float alpha, bool dimmed)
 {
     const float scale = dimmed ? 128.0f : 255.0f;
@@ -568,33 +581,42 @@ void C3dNode::UpdateVertexColor(const matrix& parentWorld,
 
             FaceColor& colorInfo = m_colorInfo[faceIndex];
             for (int corner = 0; corner < 3; ++corner) {
+                const vector3d worldVertex = TransformPoint(nodeWorld, m_mesh->m_vert[face.vertindex[corner]]);
                 const size_t tvertIndex = face.tvertindex[corner];
                 const bool dimmed = tvertIndex < m_mesh->m_tvert.size() && m_mesh->m_tvert[tvertIndex].color != 0;
+                u32 litColor = 0;
                 if (m_shadeType == 0) {
-                    colorInfo.color[corner] = MakeLitColor(vector3d{ 1.0f, 1.0f, 1.0f }, m_opacity, false);
-                    continue;
-                }
-
-                vector3d normal{};
-                const size_t normalIndex = faceIndex * 3u + static_cast<size_t>(corner);
-                if (m_shadeType == 2 && normalIndex < m_mesh->m_vertNormal.size()) {
-                    const vector3d& vertexNormal = m_mesh->m_vertNormal[normalIndex];
-                    normal = NormalizeVec3(vector3d{
-                        vertexNormal.x * nodeWorld.m[0][0] + vertexNormal.y * nodeWorld.m[1][0] + vertexNormal.z * nodeWorld.m[2][0],
-                        vertexNormal.x * nodeWorld.m[0][1] + vertexNormal.y * nodeWorld.m[1][1] + vertexNormal.z * nodeWorld.m[2][1],
-                        vertexNormal.x * nodeWorld.m[0][2] + vertexNormal.y * nodeWorld.m[1][2] + vertexNormal.z * nodeWorld.m[2][2]
-                    });
+                    litColor = MakeLitColor(vector3d{ 1.0f, 1.0f, 1.0f }, m_opacity, false);
                 } else {
-                    const vector3d worldA = TransformPoint(nodeWorld, m_mesh->m_vert[face.vertindex[0]]);
-                    const vector3d worldB = TransformPoint(nodeWorld, m_mesh->m_vert[face.vertindex[1]]);
-                    const vector3d worldC = TransformPoint(nodeWorld, m_mesh->m_vert[face.vertindex[2]]);
-                    normal = NormalizeVec3(CrossVec3(SubtractVec3(worldB, worldA), SubtractVec3(worldC, worldA)));
+                    vector3d normal{};
+                    const size_t normalIndex = faceIndex * 3u + static_cast<size_t>(corner);
+                    if (m_shadeType == 2 && normalIndex < m_mesh->m_vertNormal.size()) {
+                        const vector3d& vertexNormal = m_mesh->m_vertNormal[normalIndex];
+                        normal = NormalizeVec3(vector3d{
+                            vertexNormal.x * nodeWorld.m[0][0] + vertexNormal.y * nodeWorld.m[1][0] + vertexNormal.z * nodeWorld.m[2][0],
+                            vertexNormal.x * nodeWorld.m[0][1] + vertexNormal.y * nodeWorld.m[1][1] + vertexNormal.z * nodeWorld.m[2][1],
+                            vertexNormal.x * nodeWorld.m[0][2] + vertexNormal.y * nodeWorld.m[1][2] + vertexNormal.z * nodeWorld.m[2][2]
+                        });
+                    } else {
+                        const vector3d worldA = TransformPoint(nodeWorld, m_mesh->m_vert[face.vertindex[0]]);
+                        const vector3d worldB = TransformPoint(nodeWorld, m_mesh->m_vert[face.vertindex[1]]);
+                        const vector3d worldC = TransformPoint(nodeWorld, m_mesh->m_vert[face.vertindex[2]]);
+                        normal = NormalizeVec3(CrossVec3(SubtractVec3(worldB, worldA), SubtractVec3(worldC, worldA)));
+                    }
+
+                    litColor = MakeLitColor(
+                        ComputeLightColor(normal, lightDir, diffuseCol, ambientCol),
+                        m_opacity,
+                        dimmed);
                 }
 
-                colorInfo.color[corner] = MakeLitColor(
-                    ComputeLightColor(normal, lightDir, diffuseCol, ambientCol),
-                    m_opacity,
-                    dimmed);
+                int brightRed = 0;
+                int brightGreen = 0;
+                int brightBlue = 0;
+                if (g_world.m_ground) {
+                    g_world.m_ground->GetBrightObjColor(worldVertex.x, worldVertex.z, brightRed, brightGreen, brightBlue);
+                }
+                colorInfo.color[corner] = AddBrightObjColor(litColor, brightRed, brightGreen, brightBlue);
             }
         }
     }

@@ -115,6 +115,8 @@ struct CGroundSurface {
     CTexture* lmtex;
     vector2d lmuv[4];
     CGroundVertex vertex[4];
+    // Per-corner diffuse. Shared corners take the neighboring tile's surface color.
+    u32 cornerColor[4] = { 0xFFFFFFFFu, 0xFFFFFFFFu, 0xFFFFFFFFu, 0xFFFFFFFFu };
 };
 
 struct CGroundCell {
@@ -123,6 +125,8 @@ struct CGroundCell {
     int topSurfaceId;
     int frontSurfaceId;
     int rightSurfaceId;
+    // Ref cellColor: min(255, 2 * lightmap center RGB). Added onto 3D vertices.
+    u8 cellColor[3] = {};
 };
 
 class C3dGround {
@@ -132,6 +136,12 @@ public:
     void SetWaterInfo(float waterLevel, int waterType, int waterAnimSpeed, int wavePitch, int waveSpeed, float waveHeight);
     const CGroundCell* GetCell(int x, int y) const;
     const CGroundSurface* GetSurface(int index) const;
+    // Ref C3dGround15::CalcLmIntensityFloatRGBAll / GetLmIntensityFloatRGBByGatCoor.
+    void BuildGroundCornerColors();
+    void BuildActorLightIntensities();
+    void GetActorLightIntensity(float worldX, float worldZ, float& red, float& green, float& blue) const;
+    // Ref C3dGround15::GetBrightObjVal. Missing cells contribute no extra light.
+    void GetBrightObjColor(float worldX, float worldZ, int& red, int& green, int& blue) const;
     void RenderAttrTile(const matrix& viewMatrix, int attrX, int attrY, u32 color) const;
     void RenderGroundTile(const matrix& viewMatrix, int attrX, int attrY, u32 color, CTexture* texture, const vector2d uv[4]) const;
     void FlushGround(const matrix& viewMatrix);
@@ -163,6 +173,8 @@ public:
     std::vector<std::string> m_textureNames;
     std::vector<CGroundSurface> m_surfaces;
     std::vector<CGroundCell> m_cells;
+    // Three floats (r, g, b) per gat cell. Empty until BuildActorLightIntensities.
+    std::vector<float> m_actorLmRgb;
 };
 
 //===========================================================================

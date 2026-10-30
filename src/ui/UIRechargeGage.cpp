@@ -25,6 +25,11 @@ int UIRechargeGage::GetTotalAmount() const
     return m_totalAmount;
 }
 
+bool UIRechargeGage::ShouldDoHitTest()
+{
+    return false;
+}
+
 void UIRechargeGage::OnDraw()
 {
     if (IsQtUiRuntimeEnabled()) {

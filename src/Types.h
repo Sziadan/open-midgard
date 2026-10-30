@@ -125,6 +125,7 @@ enum class DragType : int {
     None = 0,
     ShortcutItem = 1,
     ShortcutSkill = 2,
+    ShopItem = 3,
 };
 
 enum class DragSource : int {
@@ -134,6 +135,9 @@ enum class DragSource : int {
     SkillListWindow = 3,
     ShortcutWindow = 4,
     StorageWindow = 5,
+    ShopList = 6,
+    PurchaseCart = 7,
+    SellCart = 8,
 };
 
 struct DRAG_INFO {

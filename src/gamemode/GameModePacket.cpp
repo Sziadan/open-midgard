@@ -996,8 +996,32 @@ void HandleIgnorePacket(CGameMode&, const PacketView&)
 {
 }
 
-void ApplySelfStatusIconPacket(int statusType, u32 actorId, bool active, u32 remainingMs)
+void ApplyActorStatusVisual(CGameMode& mode, int statusType, u32 actorId, int flag)
 {
+    if (!mode.m_world || actorId == 0) {
+        return;
+    }
+
+    // Ref Zc_Msg_State_Change sends actor message 110 for every other actor.
+    // That message is what starts Energy Coat's blue blur (effect 166). The
+    // 2008 handler skipped the local aid, so the caster never saw the aura.
+    CGameActor* actor = nullptr;
+    if (actorId == g_session.m_aid || actorId == g_session.m_gid) {
+        actor = mode.m_world->m_player;
+    } else {
+        actor = mode.m_world->GetGameActorByAID(actorId);
+    }
+    if (!actor) {
+        return;
+    }
+
+    actor->SendMsg(actor, 110, statusType, flag, 0);
+}
+
+void ApplySelfStatusIconPacket(CGameMode& mode, int statusType, u32 actorId, bool active, u32 remainingMs, int flag)
+{
+    ApplyActorStatusVisual(mode, statusType, actorId, flag);
+
     const bool matchesLocalPlayer = actorId != 0
         && (actorId == g_session.m_gid || actorId == g_session.m_aid);
     if (!matchesLocalPlayer) {
@@ -1007,7 +1031,7 @@ void ApplySelfStatusIconPacket(int statusType, u32 actorId, bool active, u32 rem
     g_session.SetActiveStatusIcon(statusType, active, remainingMs);
 }
 
-void HandlePacket0196(CGameMode&, const PacketView& packet)
+void HandlePacket0196(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 9) {
         return;
@@ -1015,11 +1039,11 @@ void HandlePacket0196(CGameMode&, const PacketView& packet)
 
     const int statusType = static_cast<int>(ReadLE16(packet.data + 2));
     const u32 actorId = ReadLE32(packet.data + 4);
-    const bool active = packet.data[8] != 0;
-    ApplySelfStatusIconPacket(statusType, actorId, active, 0);
+    const int flag = static_cast<int>(packet.data[8]);
+    ApplySelfStatusIconPacket(mode, statusType, actorId, flag != 0, 0, flag);
 }
 
-void HandlePacket043F(CGameMode&, const PacketView& packet)
+void HandlePacket043F(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 25) {
         return;
@@ -1027,9 +1051,9 @@ void HandlePacket043F(CGameMode&, const PacketView& packet)
 
     const int statusType = static_cast<int>(ReadLE16(packet.data + 2));
     const u32 actorId = ReadLE32(packet.data + 4);
-    const bool active = packet.data[8] != 0;
+    const int flag = static_cast<int>(packet.data[8]);
     const u32 remainingMs = ReadLE32(packet.data + 9);
-    ApplySelfStatusIconPacket(statusType, actorId, active, remainingMs);
+    ApplySelfStatusIconPacket(mode, statusType, actorId, flag != 0, remainingMs, flag);
 }
 
 int ResolvePotionEffectId(unsigned int itemId)
@@ -2631,8 +2655,40 @@ void HandleUnequipItemAck(CGameMode& mode, const PacketView& packet)
         result);
 }
 
+void RetimeMovePath(CGameActor& actor, u32 oldSpeed, u32 newSpeed)
+{
+    if (!actor.m_isMoving || oldSpeed == 0 || newSpeed == 0 || oldSpeed == newSpeed
+        || actor.m_path.m_cells.size() < 2) {
+        return;
+    }
+
+    const u32 now = g_session.GetServerTime();
+    for (PathCell& cell : actor.m_path.m_cells) {
+        if (cell.arrivalTime <= now) {
+            continue;
+        }
+        const u32 remain = cell.arrivalTime - now;
+        cell.arrivalTime = now + static_cast<u32>((static_cast<u64>(remain) * newSpeed) / oldSpeed);
+    }
+    actor.m_moveEndTime = actor.m_path.m_cells.back().arrivalTime;
+}
+
 bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value)
 {
+    if (statusType == kStatusSpeed) {
+        // Ref Zc_Par_Change case 0 stores this on the session. CPlayer pathfinding
+        // reads that value, not the speed copied off a spawn packet.
+        g_session.m_speed = value;
+        if (mode.m_world && mode.m_world->m_player) {
+            CPlayer* player = mode.m_world->m_player;
+            const u32 baked = player->m_speed != 0 ? player->m_speed : 150u;
+            const u32 next = value != 0 ? value : 150u;
+            RetimeMovePath(*player, baked, next);
+            player->m_speed = value;
+        }
+        return true;
+    }
+
     const bool updatedSession = ApplySelfStatusUpdateToSession(statusType, value);
     if (statusType == kStatusCartInfo) {
         UpdateKnownLocalCartState(true);
@@ -2646,9 +2702,6 @@ bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value)
 
     CPlayer* player = mode.m_world->m_player;
     switch (statusType) {
-    case kStatusSpeed:
-        player->m_speed = value;
-        return true;
     case kStatusHp:
         player->m_Hp = ClampToU16(value);
         return true;
@@ -3202,13 +3255,28 @@ void PushShopResultMessage(const char* text, u32 color)
     g_windowMgr.PushChatEvent(text, color, 6);
 }
 
-void HandleNpcDialogText(CGameMode&, const PacketView& packet)
+void RememberNpcConversation(CGameMode& mode, u32 npcId)
+{
+    if (npcId == 0) {
+        return;
+    }
+    mode.m_lastNaid = npcId;
+    mode.m_isOnQuest = 1;
+}
+
+void ReleaseNpcConversationLock(CGameMode& mode)
+{
+    mode.m_isOnQuest = 0;
+}
+
+void HandleNpcDialogText(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 8) {
         return;
     }
 
     const u32 npcId = ReadLE32(packet.data + 4);
+    RememberNpcConversation(mode, npcId);
     auto* sayWnd = static_cast<UISayDialogWnd*>(g_windowMgr.MakeWindow(UIWindowMgr::WID_SAYDIALOGWND));
     if (!sayWnd) {
         return;
@@ -3216,13 +3284,14 @@ void HandleNpcDialogText(CGameMode&, const PacketView& packet)
     sayWnd->AppendText(npcId, ExtractPacketString(packet, 8));
 }
 
-void HandleNpcDialogNext(CGameMode&, const PacketView& packet)
+void HandleNpcDialogNext(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 6) {
         return;
     }
 
     const u32 npcId = ReadLE32(packet.data + 2);
+    RememberNpcConversation(mode, npcId);
     if (g_windowMgr.m_npcMenuWnd) {
         g_windowMgr.m_npcMenuWnd->HideMenu();
     }
@@ -3236,13 +3305,14 @@ void HandleNpcDialogNext(CGameMode&, const PacketView& packet)
     }
 }
 
-void HandleNpcDialogClose(CGameMode&, const PacketView& packet)
+void HandleNpcDialogClose(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 6) {
         return;
     }
 
     const u32 npcId = ReadLE32(packet.data + 2);
+    RememberNpcConversation(mode, npcId);
     if (g_windowMgr.m_npcMenuWnd) {
         g_windowMgr.m_npcMenuWnd->HideMenu();
     }
@@ -3255,16 +3325,18 @@ void HandleNpcDialogClose(CGameMode&, const PacketView& packet)
         return;
     }
 
+    ReleaseNpcConversationLock(mode);
     g_windowMgr.CloseNpcDialogWindows();
 }
 
-void HandleNpcDialogMenu(CGameMode&, const PacketView& packet)
+void HandleNpcDialogMenu(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 8) {
         return;
     }
 
     const u32 npcId = ReadLE32(packet.data + 4);
+    RememberNpcConversation(mode, npcId);
     const std::string menuText = ExtractPacketString(packet, 8);
     const std::vector<NpcMenuOption> parsedOptions = SplitNpcMenuOptions(menuText);
     std::vector<std::string> options;
@@ -3293,13 +3365,14 @@ void HandleNpcDialogMenu(CGameMode&, const PacketView& packet)
     }
 }
 
-void HandleNpcDialogNumberInput(CGameMode&, const PacketView& packet)
+void HandleNpcDialogNumberInput(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 6) {
         return;
     }
 
     const u32 npcId = ReadLE32(packet.data + 2);
+    RememberNpcConversation(mode, npcId);
     if (g_windowMgr.m_sayDialogWnd) {
         g_windowMgr.m_sayDialogWnd->ClearAction();
     }
@@ -3313,13 +3386,14 @@ void HandleNpcDialogNumberInput(CGameMode&, const PacketView& packet)
     }
 }
 
-void HandleNpcDialogStringInput(CGameMode&, const PacketView& packet)
+void HandleNpcDialogStringInput(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 6) {
         return;
     }
 
     const u32 npcId = ReadLE32(packet.data + 2);
+    RememberNpcConversation(mode, npcId);
     if (g_windowMgr.m_sayDialogWnd) {
         g_windowMgr.m_sayDialogWnd->ClearAction();
     }
@@ -3333,23 +3407,26 @@ void HandleNpcDialogStringInput(CGameMode&, const PacketView& packet)
     }
 }
 
-void HandleNpcShopDealType(CGameMode&, const PacketView& packet)
+void HandleNpcShopDealType(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 6) {
         return;
     }
 
     const u32 npcId = ReadLE32(packet.data + 2);
+    mode.m_isOnQuest = 1;
     g_session.SetNpcShopChoice(npcId);
     CloseNpcShopWindows();
     g_windowMgr.MakeWindow(UIWindowMgr::WID_CHOOSESELLBUYWND);
 }
 
-void HandleNpcShopBuyList(CGameMode&, const PacketView& packet)
+void HandleNpcShopBuyList(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 4) {
         return;
     }
+
+    mode.m_isOnQuest = 1;
 
     std::vector<NPC_SHOP_ROW> rows;
     const size_t payloadLength = static_cast<size_t>(packet.packetLength - 4);
@@ -3372,11 +3449,13 @@ void HandleNpcShopBuyList(CGameMode&, const PacketView& packet)
     g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMPURCHASEWND);
 }
 
-void HandleNpcShopSellList(CGameMode&, const PacketView& packet)
+void HandleNpcShopSellList(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 4) {
         return;
     }
+
+    mode.m_isOnQuest = 1;
 
     std::vector<NPC_SHOP_ROW> rows;
     const size_t payloadLength = static_cast<size_t>(packet.packetLength - 4);
@@ -3405,11 +3484,21 @@ void HandleNpcShopSellList(CGameMode&, const PacketView& packet)
     g_windowMgr.MakeWindow(UIWindowMgr::WID_ITEMSELLWND);
 }
 
-void HandleNpcShopBuyResult(CGameMode&, const PacketView& packet)
+void HandleNpcShopBuyResult(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 3) {
         return;
     }
+
+    if (g_session.m_suppressNextShopResult) {
+        g_session.m_suppressNextShopResult = false;
+        ReleaseNpcConversationLock(mode);
+        CloseNpcShopWindows();
+        g_session.ClearNpcShopState();
+        return;
+    }
+
+    ReleaseNpcConversationLock(mode);
 
     switch (packet.data[2]) {
     case 0:
@@ -3432,11 +3521,21 @@ void HandleNpcShopBuyResult(CGameMode&, const PacketView& packet)
     g_session.ClearNpcShopState();
 }
 
-void HandleNpcShopSellResult(CGameMode&, const PacketView& packet)
+void HandleNpcShopSellResult(CGameMode& mode, const PacketView& packet)
 {
     if (!packet.data || packet.packetLength < 3) {
         return;
     }
+
+    if (g_session.m_suppressNextShopResult) {
+        g_session.m_suppressNextShopResult = false;
+        ReleaseNpcConversationLock(mode);
+        CloseNpcShopWindows();
+        g_session.ClearNpcShopState();
+        return;
+    }
+
+    ReleaseNpcConversationLock(mode);
 
     if (packet.data[2] == 0) {
         PushShopResultMessage("The deal has successfully completed.", 0x00FFFF00u);
@@ -6521,6 +6620,10 @@ void UpdateRuntimeActorPosition(CGameMode& mode, u32 gid, int tileX, int tileY, 
 
     if (mode.m_world && mode.m_world->m_attr && actor->m_moveSrcX >= 0 && actor->m_moveSrcY >= 0) {
         g_pathFinder.SetMap(mode.m_world->m_attr);
+        const bool localPlayer = IsLocalPlayerActor(mode, gid);
+        if (localPlayer && g_session.m_speed != 0) {
+            actor->m_speed = g_session.m_speed;
+        }
         const int speed = static_cast<int>(actor->m_speed != 0 ? actor->m_speed : 150u);
         auto buildPath = [&](u32 startTime, int speedFactor) {
             return g_pathFinder.FindPath(startTime,

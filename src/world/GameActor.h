@@ -346,7 +346,7 @@ public:
     CMsgEffect* SpawnMsgSprite(int processType, const char* spritePath, const char* actPath, int action, float zoom);
     void DeleteMatchingEffect(CMsgEffect* effect);
     void DeleteTotalNumber(int kind);
-    void ProcessSkillRechargeGageOverlay(int screenCenterX, int screenTopY, int clientHeight);
+    void ProcessSkillRechargeGageOverlay(int screenCenterX, int screenTopY);
     void DestroySkillRechargeGage();
 };
 

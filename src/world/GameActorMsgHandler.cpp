@@ -711,7 +711,13 @@ void CGameActor::Am_Groundskill(const int* arg1)
     }
 
     FaceToward(*this, destX, destZ);
-    SetState(skillMotionType);
+    // Ref calls CGameActor::SetState. Snap then adds 80 to that base, which is
+    // action 160. The PC override leaves action 32 or 96, so +80 plays another clip.
+    if (skillId == 264) {
+        CGameActor::SetState(skillMotionType);
+    } else {
+        SetState(skillMotionType);
+    }
 
     if (skillId == 484) {
         PlaySkillWaveAtPlayer("effect\\wizard_earthspike.wav");

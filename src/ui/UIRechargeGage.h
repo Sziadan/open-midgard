@@ -8,6 +8,7 @@ public:
     UIRechargeGage();
 
     void SetAmount(int amount, int totalAmount);
+    bool ShouldDoHitTest() override;
     void OnDraw() override;
     int GetAmount() const;
     int GetTotalAmount() const;

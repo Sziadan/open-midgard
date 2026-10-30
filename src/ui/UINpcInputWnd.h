@@ -26,7 +26,7 @@ public:
 
     void OpenNumber(u32 npcId);
     void OpenString(u32 npcId);
-    void OpenGameNumberPrompt(const char* label, int gameMessage, msgparam_t wparam, u32 initialValue, u32 maxValue);
+    void OpenGameNumberPrompt(const char* label, int gameMessage, msgparam_t wparam, u32 initialValue, u32 maxValue, const char* placeholder = nullptr);
     void HideInput();
     bool HandleKeyDown(int virtualKey);
     UIEditCtrl* GetEditCtrl() const;
@@ -34,6 +34,7 @@ public:
     InputMode GetInputMode() const;
     const char* GetInputText() const;
     const char* GetDialogLabel() const;
+    const char* GetInputPlaceholder() const;
     bool IsOkPressed() const;
     bool IsCancelPressed() const;
     bool GetOkRectForQt(RECT* outRect) const;
@@ -73,4 +74,5 @@ private:
     msgparam_t m_submitWparam;
     u32 m_maxNumberValue;
     std::string m_dialogLabel;
+    std::string m_inputPlaceholder;
 };

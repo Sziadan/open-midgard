@@ -121,7 +121,10 @@ Item {
     }
 
     function statusIconSource(statusType) {
-        return statusType > 0 ? "image://openmidgard/status/" + statusType : ""
+        if (statusType === undefined || statusType === null || statusType < 0) {
+            return ""
+        }
+        return "image://openmidgard/status/" + statusType
     }
 
     function formatStatusDuration(remainingMs) {
@@ -276,6 +279,35 @@ Item {
                 wrapMode: parent.wrapText ? Text.Wrap : Text.NoWrap
                 horizontalAlignment: Text.AlignHCenter
             }
+        }
+    }
+
+    RoFrame {
+        showTitle: false
+        showShadow: false
+        z: 1500
+        x: uiState.rechargeGaugeX
+        y: uiState.rechargeGaugeY
+        width: uiState.rechargeGaugeWidth
+        height: uiState.rechargeGaugeHeight
+        visible: uiState.rechargeGaugeVisible
+        Rectangle {
+            x: 1
+            y: 1
+            width: parent.width - 2
+            height: parent.height - 2
+            radius: 2
+            color: theme.fieldFill
+        }
+
+        Rectangle {
+            x: 1
+            y: 1
+            width: Math.max(0, (parent.width - 2) * ((uiState.rechargeGaugeTotal || 0) > 0
+                ? (uiState.rechargeGaugeAmount || 0) / uiState.rechargeGaugeTotal : 0))
+            height: parent.height - 2
+            radius: 2
+            color: theme.gold
         }
     }
 
@@ -485,6 +517,7 @@ Item {
     }
 
     RoFrame {
+        z: 5000
         showTitle: false
         x: uiState.npcInputX
         y: uiState.npcInputY
@@ -513,8 +546,10 @@ Item {
                 anchors.leftMargin: 6
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 12
-                text: uiState.npcInputText
-                color: theme.ink
+                text: (uiState.npcInputText || "").length > 0
+                    ? uiState.npcInputText
+                    : (uiState.npcInputPlaceholder || "")
+                color: (uiState.npcInputText || "").length > 0 ? theme.ink : theme.muted
                 font.family: theme.fontFamily
                 font.pixelSize: 12
                 elide: Text.ElideRight
@@ -654,6 +689,20 @@ Item {
                             width: modelData.selected ? 3 : 0
                             height: parent.height
                             color: theme.gold
+                        }
+
+                        Image {
+                            x: 4
+                            y: 1
+                            width: 16
+                            height: 16
+                            fillMode: Image.PreserveAspectFit
+                            smooth: false
+                            cache: false
+                            source: (modelData.itemId || 0) > 0
+                                ? root.itemIconSource(modelData.itemId || 0, modelData.identified)
+                                : ""
+                            visible: source !== ""
                         }
 
                         Text {
@@ -817,7 +866,7 @@ Item {
 
         Text {
             x: 10
-            y: height - 75
+            y: parent.height - 75
             text: uiState.itemPurchaseData.totalLabel || ""
             color: theme.ink
             font.family: theme.fontFamily
@@ -826,7 +875,7 @@ Item {
 
         Text {
             x: 90
-            y: height - 75
+            y: parent.height - 75
             width: 138
             text: uiState.itemPurchaseTotal
             color: theme.titleBottom
@@ -975,7 +1024,7 @@ Item {
 
         Text {
             x: 10
-            y: height - 75
+            y: parent.height - 75
             text: uiState.itemSellData.totalLabel || ""
             color: theme.ink
             font.family: theme.fontFamily
@@ -984,7 +1033,7 @@ Item {
 
         Text {
             x: 90
-            y: height - 75
+            y: parent.height - 75
             width: 138
             text: uiState.itemSellTotal
             color: theme.titleBottom
@@ -2175,34 +2224,6 @@ Item {
     }
 
     RoFrame {
-        showTitle: false
-        showShadow: false
-        x: uiState.rechargeGaugeX
-        y: uiState.rechargeGaugeY
-        width: uiState.rechargeGaugeWidth
-        height: uiState.rechargeGaugeHeight
-        visible: uiState.rechargeGaugeVisible
-        Rectangle {
-            x: 1
-            y: 1
-            width: parent.width - 2
-            height: parent.height - 2
-            radius: 2
-            color: theme.fieldFill
-        }
-
-        Rectangle {
-            x: 1
-            y: 1
-            width: Math.max(0, (parent.width - 2) * ((uiState.rechargeGaugeTotal || 0) > 0
-                ? (uiState.rechargeGaugeAmount || 0) / uiState.rechargeGaugeTotal : 0))
-            height: parent.height - 2
-            radius: 2
-            color: theme.gold
-        }
-    }
-
-    RoFrame {
         x: uiState.minimapX
         y: uiState.minimapY
         width: uiState.minimapWidth
@@ -2344,7 +2365,7 @@ Item {
                         Image {
                             id: statusIconImage
                             anchors.fill: parent
-                            source: statusIconSource(modelData.statusType || 0)
+                            source: statusIconSource(modelData.statusType)
                             visible: source !== "" && status === Image.Ready
                             smooth: false
                             cache: false
