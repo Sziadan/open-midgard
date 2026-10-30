@@ -1535,6 +1535,7 @@ bool UINewChatWnd::HandleKeyDown(int virtualKey)
     }
 
     if (virtualKey == VK_RETURN) {
+        SetWindowFocused(true);
         if (m_activeInputField == InputField_None) {
             SetActiveInputField(InputField_Message);
             return true;
