@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "render3d/GraphicsSettings.h"
 #include "render3d/RenderDevice.h"
 #include "render3d/Device.h"
 #include "render3d/D3dutil.h"
@@ -835,11 +836,52 @@ bool CRenderer::DrawScene() {
     return true;
 }
 
+void WaitForFrameLimit(int frameLimit)
+{
+    if (frameLimit <= 0) {
+        return;
+    }
+
+    static LARGE_INTEGER frequency{};
+    static LARGE_INTEGER lastTimestamp{};
+    static bool initialized = false;
+    if (!initialized) {
+        QueryPerformanceFrequency(&frequency);
+        QueryPerformanceCounter(&lastTimestamp);
+        initialized = frequency.QuadPart > 0;
+        return;
+    }
+    if (frequency.QuadPart <= 0) {
+        return;
+    }
+
+    const LONGLONG targetTicks = frequency.QuadPart / static_cast<LONGLONG>(frameLimit);
+    LARGE_INTEGER now{};
+    QueryPerformanceCounter(&now);
+    const LONGLONG elapsed = now.QuadPart - lastTimestamp.QuadPart;
+    if (elapsed < targetTicks) {
+        const LONGLONG remainingTicks = targetTicks - elapsed;
+        const DWORD sleepMs = static_cast<DWORD>((remainingTicks * 1000) / frequency.QuadPart);
+        if (sleepMs > 1) {
+            Sleep(sleepMs - 1);
+        }
+        do {
+            QueryPerformanceCounter(&now);
+        } while ((now.QuadPart - lastTimestamp.QuadPart) < targetTicks);
+    }
+    lastTimestamp = now;
+}
+
 void CRenderer::Flip(bool vertSync) {
     m_curFrame++;
     m_fpsFrameCount++;
-    
-    GetRenderDevice().Present(vertSync);
+
+    const GraphicsSettings& settings = GetCachedGraphicsSettings();
+    const bool useVerticalSync = vertSync || settings.verticalSync;
+    GetRenderDevice().Present(useVerticalSync);
+    if (!useVerticalSync) {
+        WaitForFrameLimit(settings.frameLimit);
+    }
 }
 
 void CRenderer::AddRP(RPFace* face, int renderFlag) {
@@ -855,13 +897,28 @@ void CRenderer::AddRP(RPFace* face, int renderFlag) {
             }
         }
 
+        // Ref/Renderer.cpp AddRP (0x412520). RF_DEPTHWRITE (0x100) is drawn
+        // before AlphaOP with the depth buffer updated, so a later RF_EFFECT
+        // ring can fail the depth test where it passes behind a sprite.
+        const float depthKey = (face->verts && face->numVerts >= 2)
+            ? static_cast<float>((static_cast<double>(face->verts[0].oow) - face->verts[1].oow) * 0.5
+                + face->verts[1].oow)
+            : sortKey;
         if ((renderFlag & 8) && (renderFlag & 4)) {
             m_rpAlphaOPNoDepthList.push_back({sortKey, face});
         } else if (renderFlag & 4) {
             m_rpAlphaOPList.push_back(face);
         } else if (renderFlag & 2) { // Emissive
-            m_rpEmissiveList.push_back({sortKey, face});
-        } else if (renderFlag & 8) {
+            if ((renderFlag & 0x100) != 0) {
+                m_rpEmissiveDepthList.push_back({depthKey, face});
+            } else if ((renderFlag & 0x200) != 0) {
+                m_rpEmissiveNoDepthList.push_back({depthKey, face});
+            } else {
+                m_rpEmissiveList.push_back({sortKey, face});
+            }
+        } else if ((renderFlag & 0x100) != 0) {
+            m_rpAlphaDepthList.push_back({depthKey, face});
+        } else if ((renderFlag & 0x200) != 0 || (renderFlag & 8) != 0) {
             m_rpAlphaNoDepthList.push_back({sortKey, face});
         } else {
             m_rpAlphaList.push_back({sortKey, face});
@@ -912,23 +969,47 @@ void CRenderer::AddReferenceEffectTriangle(RPFace* face, int renderFlag)
 // Ref/Renderer.cpp:6978-6993: depth-writing alpha then emissive passes.
 void CRenderer::FlushEffectDepthLists()
 {
+    // Ref flush sets ALPHAREF to 1 while the depth-writing alpha pass runs,
+    // so transparent sprite pixels do not fill a rectangle in the depth buffer.
     m_renderDevice->SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, TRUE);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ALPHATESTENABLE, TRUE);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ALPHAREF, 1);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
     std::sort(m_rpAlphaDepthList.begin(), m_rpAlphaDepthList.end());
+    int activeMtPreset = 0;
     for (const auto& entry : m_rpAlphaDepthList) {
+        RPFace* face = entry.second;
+        if (face && face->mtPreset != activeMtPreset) {
+            SetMultiTextureMode(face->mtPreset);
+            activeMtPreset = face->mtPreset;
+        }
         SetTexture(entry.second->tex);
         RPFace::DrawPri(entry.second, *m_renderDevice);
+    }
+    if (activeMtPreset != 0) {
+        SetMultiTextureMode(0);
+        activeMtPreset = 0;
     }
     m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_ONE);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);
     std::sort(m_rpEmissiveDepthList.begin(), m_rpEmissiveDepthList.end());
     for (const auto& entry : m_rpEmissiveDepthList) {
+        RPFace* face = entry.second;
+        if (face && face->mtPreset != activeMtPreset) {
+            SetMultiTextureMode(face->mtPreset);
+            activeMtPreset = face->mtPreset;
+        }
         SetTexture(entry.second->tex);
         RPFace::DrawPri(entry.second, *m_renderDevice);
     }
+    if (activeMtPreset != 0) {
+        SetMultiTextureMode(0);
+    }
     m_rpAlphaDepthList.clear();
     m_rpEmissiveDepthList.clear();
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ALPHATESTENABLE, FALSE);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ALPHAREF, 207);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
 }
@@ -942,16 +1023,34 @@ void CRenderer::FlushEffectNoDepthLists()
     m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
     std::sort(m_rpAlphaNoDepthList.begin(), m_rpAlphaNoDepthList.end());
+    int activeMtPreset = 0;
     for (const auto& entry : m_rpAlphaNoDepthList) {
+        RPFace* face = entry.second;
+        if (face && face->mtPreset != activeMtPreset) {
+            SetMultiTextureMode(face->mtPreset);
+            activeMtPreset = face->mtPreset;
+        }
         SetTexture(entry.second->tex);
         RPFace::DrawPri(entry.second, *m_renderDevice);
+    }
+    if (activeMtPreset != 0) {
+        SetMultiTextureMode(0);
+        activeMtPreset = 0;
     }
     m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_ONE);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);
     std::sort(m_rpEmissiveNoDepthList.begin(), m_rpEmissiveNoDepthList.end());
     for (const auto& entry : m_rpEmissiveNoDepthList) {
+        RPFace* face = entry.second;
+        if (face && face->mtPreset != activeMtPreset) {
+            SetMultiTextureMode(face->mtPreset);
+            activeMtPreset = face->mtPreset;
+        }
         SetTexture(entry.second->tex);
         RPFace::DrawPri(entry.second, *m_renderDevice);
+    }
+    if (activeMtPreset != 0) {
+        SetMultiTextureMode(0);
     }
     m_rpAlphaNoDepthList.clear();
     m_rpEmissiveNoDepthList.clear();
@@ -1062,6 +1161,24 @@ void CRenderer::SetMultiTextureMode(int nMode) {
         m_renderDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
         m_renderDevice->BindTexture(1, nullptr);
         break;
+    case kSpriteTextureMode: {
+        const bool sharpSprites = GetCachedGraphicsSettings().spriteFilter == SpriteFilterMode::Sharp;
+        const DWORD minFilter = sharpSprites ? D3DTFN_POINT : D3DTFN_LINEAR;
+        const DWORD magFilter = sharpSprites ? D3DTFG_POINT : D3DTFG_LINEAR;
+        m_renderDevice->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_MINFILTER, minFilter);
+        m_renderDevice->SetTextureStageState(0, D3DTSS_MAGFILTER, magFilter);
+        m_renderDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+        m_renderDevice->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+        m_renderDevice->BindTexture(1, nullptr);
+        break;
+    }
     case 3:
         m_renderDevice->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
         m_renderDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
@@ -1251,7 +1368,12 @@ void CRenderer::FlushRenderList() {
 
     D3DBLEND activeSrcBlend = D3DBLEND_SRCALPHA;
     D3DBLEND activeDestBlend = D3DBLEND_INVSRCALPHA;
+    int activeBlendedMtPreset = 0;
     for (const BlendedFaceEntry& entry : blendedFaces) {
+        if (entry.face && entry.face->mtPreset != activeBlendedMtPreset) {
+            SetMultiTextureMode(entry.face->mtPreset);
+            activeBlendedMtPreset = entry.face->mtPreset;
+        }
         if (entry.srcBlend != activeSrcBlend) {
             m_renderDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, entry.srcBlend);
             activeSrcBlend = entry.srcBlend;
@@ -1262,6 +1384,9 @@ void CRenderer::FlushRenderList() {
         }
         SetTexture(entry.face->tex);
         RPFace::DrawPri(entry.face, *m_renderDevice);
+    }
+    if (activeBlendedMtPreset != 0) {
+        SetMultiTextureMode(0);
     }
 
     if (activeSrcBlend != D3DBLEND_SRCALPHA) {
@@ -1285,6 +1410,11 @@ void CRenderer::FlushRenderList() {
         }
         return sortKey;
     };
+
+    // Ref flush disables fog before the emissive and AlphaOP passes. Additive
+    // layers treat black texels as transparent; leaving fog on replaces those
+    // texels with the fog color and the blend adds them onto the scene.
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_FOGENABLE, FALSE);
 
     // STR AlphaOP layers still need colorkeying here, but alpha test can
     // reject the whole layer for textures that do not carry usable alpha.
@@ -1332,6 +1462,9 @@ void CRenderer::FlushRenderList() {
     });
 
     if (!m_rpAlphaNoDepthList.empty() && !m_renderDevice->PrepareOverlayPass()) {
+        if (m_isFoggy) {
+            m_renderDevice->SetRenderState(D3DRENDERSTATE_FOGENABLE, TRUE);
+        }
         m_rpFaceList.clear();
         m_rpLMGroundList.clear();
         m_rpLMLightList.clear();
@@ -1401,6 +1534,9 @@ void CRenderer::FlushRenderList() {
     m_renderDevice->SetRenderState(D3DRENDERSTATE_ALPHATESTENABLE, TRUE);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_COLORKEYENABLE, TRUE);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, TRUE);
+    if (m_isFoggy) {
+        m_renderDevice->SetRenderState(D3DRENDERSTATE_FOGENABLE, TRUE);
+    }
     
     // 6. Clear lists for next frame
     m_rpFaceList.clear();

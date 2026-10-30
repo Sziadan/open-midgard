@@ -80,3 +80,14 @@ public:
 };
 
 IRenderDevice& GetRenderDevice();
+
+// Direct3D 7 samples at integer pixel corners, so its UI quads sit half a pixel
+// up and left. The modern shaders sample pixel centers, and that same shift
+// lands on the boundary between texels.
+inline float OverlayScreenEdge(int pixel)
+{
+    if (GetRenderDevice().GetBackendType() == RenderBackendType::LegacyDirect3D7) {
+        return static_cast<float>(pixel) - 0.5f;
+    }
+    return static_cast<float>(pixel);
+}

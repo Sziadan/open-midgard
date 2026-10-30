@@ -15,6 +15,8 @@ namespace {
 
 constexpr bool kLogTexture = false;
 
+constexpr unsigned int kMaxUpscaledEdge = 512u;
+
 unsigned int GetTextureUpscaleFactor(bool allowUpscale, unsigned int minUpscaleFactor)
 {
     if (!allowUpscale) {
@@ -23,6 +25,25 @@ unsigned int GetTextureUpscaleFactor(bool allowUpscale, unsigned int minUpscaleF
 
     const unsigned int configuredFactor = static_cast<unsigned int>((std::max)(1, GetCachedGraphicsSettings().textureUpscaleFactor));
     return (std::max)(configuredFactor, (std::max)(1u, minUpscaleFactor));
+}
+
+unsigned int ClampTextureUpscaleFactor(unsigned int width, unsigned int height, unsigned int scale)
+{
+    if (scale <= 1u || width == 0u || height == 0u) {
+        return 1u;
+    }
+
+    // Keep the enlarged texture inside a size the frame can still sample.
+    // Smaller sprites can still reach 4x; a 256 source stops at 2x.
+    while (scale > 1u && (width > kMaxUpscaledEdge / scale || height > kMaxUpscaledEdge / scale)) {
+        --scale;
+    }
+    return scale;
+}
+
+bool IsLightmapAtlasName(const char* name)
+{
+    return name != nullptr && std::strncmp(name, "__lightmap_atlas_", 17) == 0;
 }
 
 unsigned int CountTrailingZeros(unsigned int mask)
@@ -92,163 +113,383 @@ unsigned int GetSurfaceColorKey(const DDPIXELFORMAT& pf)
     return pf.dwRBitMask | pf.dwBBitMask;
 }
 
-float ClampUnitFloat(float value)
+enum class TextureUpscaleKind {
+    Nearest,
+    Bilinear,
+    PixelArt,
+    Smooth,
+};
+
+unsigned int LoadPackedPixel(const unsigned int* data, int width, int height, int pitch, int x, int y)
+{
+    x = (std::max)(0, (std::min)(width - 1, x));
+    y = (std::max)(0, (std::min)(height - 1, y));
+    const unsigned char* row = reinterpret_cast<const unsigned char*>(data) + static_cast<size_t>(y) * static_cast<size_t>(pitch);
+    return reinterpret_cast<const unsigned int*>(row)[x];
+}
+
+bool IsColorKeyPixel(unsigned int pixel)
+{
+    return (pixel & 0x00FFFFFFu) == 0x00FF00FFu;
+}
+
+unsigned int PixelForUpscale(unsigned int pixel, bool convertColorKey)
+{
+    if (convertColorKey && IsColorKeyPixel(pixel)) {
+        return 0u;
+    }
+    return pixel;
+}
+
+void StoreChannel(float* pixel, int channel, float value)
+{
+    pixel[channel] = value;
+}
+
+float ClampByteFloat(float value)
 {
     if (value < 0.0f) {
         return 0.0f;
     }
-    if (value > 1.0f) {
-        return 1.0f;
+    if (value > 255.0f) {
+        return 255.0f;
     }
     return value;
 }
 
-unsigned char FloatToByte(float value)
+unsigned int PackFilteredPixel(float alpha, float red, float green, float blue, bool restoreColorKey)
 {
-    const float clamped = ClampUnitFloat(value);
-    return static_cast<unsigned char>(clamped * 255.0f + 0.5f);
-}
-
-unsigned int LoadArgbPixel(const unsigned int* data, int srcWidth, int srcHeight, int srcPitch, int x, int y)
-{
-    if (!data || srcWidth <= 0 || srcHeight <= 0) {
-        return 0u;
+    alpha = ClampByteFloat(alpha);
+    if (restoreColorKey && alpha < 8.0f) {
+        return 0x00FF00FFu;
     }
 
-    x = (std::max)(0, (std::min)(srcWidth - 1, x));
-    y = (std::max)(0, (std::min)(srcHeight - 1, y));
-    const unsigned char* base = reinterpret_cast<const unsigned char*>(data) + static_cast<size_t>(y) * static_cast<size_t>(srcPitch);
-    const unsigned int* row = reinterpret_cast<const unsigned int*>(base);
-    return row[x];
+    const auto channel = [](float value) {
+        return static_cast<unsigned int>(ClampByteFloat(value) + 0.5f);
+    };
+    const unsigned int packedAlpha = channel(alpha);
+    if (packedAlpha == 0u) {
+        return restoreColorKey ? 0x00FF00FFu : 0u;
+    }
+
+    const float invAlpha = 255.0f / static_cast<float>(packedAlpha);
+    return (packedAlpha << 24)
+        | (channel(red * invAlpha) << 16)
+        | (channel(green * invAlpha) << 8)
+        | channel(blue * invAlpha);
 }
 
-void DecodeArgb(unsigned int argb, float* alpha, float* red, float* green, float* blue)
+TextureUpscaleKind ChooseTextureUpscaleKind(const char* textureName, const unsigned int* pixels, int width, int height, bool convertColorKey)
 {
-    if (alpha) {
-        *alpha = static_cast<float>((argb >> 24) & 0xFFu) / 255.0f;
+    if (IsLightmapAtlasName(textureName)) {
+        return TextureUpscaleKind::Bilinear;
     }
-    if (red) {
-        *red = static_cast<float>((argb >> 16) & 0xFFu) / 255.0f;
+    if (!pixels || width <= 0 || height <= 0) {
+        return TextureUpscaleKind::Nearest;
     }
-    if (green) {
-        *green = static_cast<float>((argb >> 8) & 0xFFu) / 255.0f;
+
+    const int pixelCount = width * height;
+    const int stride = (std::max)(1, pixelCount / 4096);
+    int samples = 0;
+    int emptySamples = 0;
+    int partialSamples = 0;
+    for (int index = 0; index < pixelCount; index += stride) {
+        const unsigned int pixel = PixelForUpscale(pixels[index], convertColorKey);
+        const unsigned int alpha = (pixel >> 24) & 0xFFu;
+        ++samples;
+        if (alpha == 0u) {
+            ++emptySamples;
+        } else if (alpha < 250u) {
+            ++partialSamples;
+        }
     }
-    if (blue) {
-        *blue = static_cast<float>(argb & 0xFFu) / 255.0f;
+    if (samples <= 0) {
+        return TextureUpscaleKind::Nearest;
+    }
+
+    // Soft images (ground, gradients, glows) reconstruct better with a cubic filter.
+    // Hard-edged sprites and effects keep a pixel-art scaler so outlines stay crisp.
+    if (partialSamples * 8 > samples) {
+        return TextureUpscaleKind::Smooth;
+    }
+    if (emptySamples * 25 > samples) {
+        return TextureUpscaleKind::PixelArt;
+    }
+    return TextureUpscaleKind::Smooth;
+}
+
+void BuildNearestUpscale(const unsigned int* src, int srcWidth, int srcHeight, int scale, bool convertColorKey, bool restoreColorKey, std::vector<unsigned int>* dst)
+{
+    const int dstWidth = srcWidth * scale;
+    const int dstHeight = srcHeight * scale;
+    dst->resize(static_cast<size_t>(dstWidth) * static_cast<size_t>(dstHeight));
+    for (int y = 0; y < dstHeight; ++y) {
+        const unsigned int* srcRow = src + static_cast<size_t>(y / scale) * static_cast<size_t>(srcWidth);
+        unsigned int* dstRow = dst->data() + static_cast<size_t>(y) * static_cast<size_t>(dstWidth);
+        for (int x = 0; x < dstWidth; ++x) {
+            unsigned int pixel = PixelForUpscale(srcRow[x / scale], convertColorKey);
+            if (restoreColorKey && ((pixel >> 24) & 0xFFu) == 0u) {
+                pixel = 0x00FF00FFu;
+            }
+            dstRow[x] = pixel;
+        }
     }
 }
 
-unsigned int EncodeArgb(float alpha, float red, float green, float blue)
+unsigned int LerpByte(unsigned int a, unsigned int b, unsigned int weight)
 {
-    return (static_cast<unsigned int>(FloatToByte(alpha)) << 24)
-        | (static_cast<unsigned int>(FloatToByte(red)) << 16)
-        | (static_cast<unsigned int>(FloatToByte(green)) << 8)
-        | static_cast<unsigned int>(FloatToByte(blue));
+    const int delta = static_cast<int>(b) - static_cast<int>(a);
+    return static_cast<unsigned int>(static_cast<int>(a) + (delta * static_cast<int>(weight)) / 255);
 }
 
-unsigned int SampleBilinearArgb(const unsigned int* data, int srcWidth, int srcHeight, int srcPitch, float sampleX, float sampleY)
+unsigned int LerpPixel(unsigned int p0, unsigned int p1, unsigned int weight)
 {
-    const float clampedX = (std::max)(0.0f, (std::min)(static_cast<float>(srcWidth - 1), sampleX));
-    const float clampedY = (std::max)(0.0f, (std::min)(static_cast<float>(srcHeight - 1), sampleY));
-    const int x0 = static_cast<int>(std::floor(clampedX));
-    const int y0 = static_cast<int>(std::floor(clampedY));
-    const int x1 = (std::min)(srcWidth - 1, x0 + 1);
-    const int y1 = (std::min)(srcHeight - 1, y0 + 1);
-    const float tx = clampedX - static_cast<float>(x0);
-    const float ty = clampedY - static_cast<float>(y0);
-
-    const unsigned int p00 = LoadArgbPixel(data, srcWidth, srcHeight, srcPitch, x0, y0);
-    const unsigned int p10 = LoadArgbPixel(data, srcWidth, srcHeight, srcPitch, x1, y0);
-    const unsigned int p01 = LoadArgbPixel(data, srcWidth, srcHeight, srcPitch, x0, y1);
-    const unsigned int p11 = LoadArgbPixel(data, srcWidth, srcHeight, srcPitch, x1, y1);
-
-    float a00 = 0.0f;
-    float r00 = 0.0f;
-    float g00 = 0.0f;
-    float b00 = 0.0f;
-    float a10 = 0.0f;
-    float r10 = 0.0f;
-    float g10 = 0.0f;
-    float b10 = 0.0f;
-    float a01 = 0.0f;
-    float r01 = 0.0f;
-    float g01 = 0.0f;
-    float b01 = 0.0f;
-    float a11 = 0.0f;
-    float r11 = 0.0f;
-    float g11 = 0.0f;
-    float b11 = 0.0f;
-    DecodeArgb(p00, &a00, &r00, &g00, &b00);
-    DecodeArgb(p10, &a10, &r10, &g10, &b10);
-    DecodeArgb(p01, &a01, &r01, &g01, &b01);
-    DecodeArgb(p11, &a11, &r11, &g11, &b11);
-
-    const float w00 = (1.0f - tx) * (1.0f - ty);
-    const float w10 = tx * (1.0f - ty);
-    const float w01 = (1.0f - tx) * ty;
-    const float w11 = tx * ty;
-    const float alpha = (a00 * w00) + (a10 * w10) + (a01 * w01) + (a11 * w11);
-    const float red = (r00 * w00) + (r10 * w10) + (r01 * w01) + (r11 * w11);
-    const float green = (g00 * w00) + (g10 * w10) + (g01 * w01) + (g11 * w11);
-    const float blue = (b00 * w00) + (b10 * w10) + (b01 * w01) + (b11 * w11);
-    return EncodeArgb(alpha, red, green, blue);
+    return (LerpByte((p0 >> 24) & 0xFFu, (p1 >> 24) & 0xFFu, weight) << 24)
+        | (LerpByte((p0 >> 16) & 0xFFu, (p1 >> 16) & 0xFFu, weight) << 16)
+        | (LerpByte((p0 >> 8) & 0xFFu, (p1 >> 8) & 0xFFu, weight) << 8)
+        | LerpByte(p0 & 0xFFu, p1 & 0xFFu, weight);
 }
 
-void BuildSupersampledUpscale(const unsigned int* srcData, int srcWidth, int srcHeight, int srcPitch,
-    int scale, std::vector<unsigned int>* dstPixels)
+void BuildBilinearUpscale(const unsigned int* src, int srcWidth, int srcHeight, int scale, bool convertColorKey, bool restoreColorKey, std::vector<unsigned int>* dst)
 {
-    if (!srcData || srcWidth <= 0 || srcHeight <= 0 || scale <= 1 || !dstPixels) {
+    const int dstWidth = srcWidth * scale;
+    const int dstHeight = srcHeight * scale;
+    dst->resize(static_cast<size_t>(dstWidth) * static_cast<size_t>(dstHeight));
+    for (int y = 0; y < dstHeight; ++y) {
+        const int sampleY = y * 256 + 128;
+        const int srcYFixed = sampleY / scale - 128;
+        const int y0 = srcYFixed < 0 ? 0 : (std::min)(srcHeight - 1, srcYFixed / 256);
+        const int y1 = (std::min)(srcHeight - 1, y0 + 1);
+        const unsigned int fy = static_cast<unsigned int>(srcYFixed < 0 ? 0 : srcYFixed & 255);
+        const unsigned int* row0 = src + static_cast<size_t>(y0) * static_cast<size_t>(srcWidth);
+        const unsigned int* row1 = src + static_cast<size_t>(y1) * static_cast<size_t>(srcWidth);
+        unsigned int* dstRow = dst->data() + static_cast<size_t>(y) * static_cast<size_t>(dstWidth);
+        for (int x = 0; x < dstWidth; ++x) {
+            const int sampleX = x * 256 + 128;
+            const int srcXFixed = sampleX / scale - 128;
+            const int x0 = srcXFixed < 0 ? 0 : (std::min)(srcWidth - 1, srcXFixed / 256);
+            const int x1 = (std::min)(srcWidth - 1, x0 + 1);
+            const unsigned int fx = static_cast<unsigned int>(srcXFixed < 0 ? 0 : srcXFixed & 255);
+            unsigned int pixel = LerpPixel(
+                LerpPixel(PixelForUpscale(row0[x0], convertColorKey), PixelForUpscale(row0[x1], convertColorKey), fx),
+                LerpPixel(PixelForUpscale(row1[x0], convertColorKey), PixelForUpscale(row1[x1], convertColorKey), fx),
+                fy);
+            if (restoreColorKey && ((pixel >> 24) & 0xFFu) == 0u) {
+                pixel = 0x00FF00FFu;
+            }
+            dstRow[x] = pixel;
+        }
+    }
+}
+
+void Scale2xImage(const unsigned int* src, int srcWidth, int srcHeight, std::vector<unsigned int>* dst)
+{
+    const int dstWidth = srcWidth * 2;
+    const int dstHeight = srcHeight * 2;
+    dst->resize(static_cast<size_t>(dstWidth) * static_cast<size_t>(dstHeight));
+    for (int y = 0; y < srcHeight; ++y) {
+        unsigned int* dstRow0 = dst->data() + static_cast<size_t>(y * 2) * static_cast<size_t>(dstWidth);
+        unsigned int* dstRow1 = dstRow0 + dstWidth;
+        for (int x = 0; x < srcWidth; ++x) {
+            const unsigned int b = LoadPackedPixel(src, srcWidth, srcHeight, srcWidth * static_cast<int>(sizeof(unsigned int)), x, y - 1);
+            const unsigned int d = LoadPackedPixel(src, srcWidth, srcHeight, srcWidth * static_cast<int>(sizeof(unsigned int)), x - 1, y);
+            const unsigned int e = src[static_cast<size_t>(y) * static_cast<size_t>(srcWidth) + static_cast<size_t>(x)];
+            const unsigned int f = LoadPackedPixel(src, srcWidth, srcHeight, srcWidth * static_cast<int>(sizeof(unsigned int)), x + 1, y);
+            const unsigned int h = LoadPackedPixel(src, srcWidth, srcHeight, srcWidth * static_cast<int>(sizeof(unsigned int)), x, y + 1);
+            dstRow0[x * 2] = (d == b && b != f && d != h) ? d : e;
+            dstRow0[x * 2 + 1] = (b == f && b != d && f != h) ? f : e;
+            dstRow1[x * 2] = (d == h && d != b && h != f) ? d : e;
+            dstRow1[x * 2 + 1] = (h == f && d != h && b != f) ? f : e;
+        }
+    }
+}
+
+void Scale3xImage(const unsigned int* src, int srcWidth, int srcHeight, std::vector<unsigned int>* dst)
+{
+    const int dstWidth = srcWidth * 3;
+    const int dstHeight = srcHeight * 3;
+    dst->resize(static_cast<size_t>(dstWidth) * static_cast<size_t>(dstHeight));
+    const int srcPitch = srcWidth * static_cast<int>(sizeof(unsigned int));
+    for (int y = 0; y < srcHeight; ++y) {
+        unsigned int* row0 = dst->data() + static_cast<size_t>(y * 3) * static_cast<size_t>(dstWidth);
+        unsigned int* row1 = row0 + dstWidth;
+        unsigned int* row2 = row1 + dstWidth;
+        for (int x = 0; x < srcWidth; ++x) {
+            const unsigned int a = LoadPackedPixel(src, srcWidth, srcHeight, srcPitch, x - 1, y - 1);
+            const unsigned int b = LoadPackedPixel(src, srcWidth, srcHeight, srcPitch, x, y - 1);
+            const unsigned int c = LoadPackedPixel(src, srcWidth, srcHeight, srcPitch, x + 1, y - 1);
+            const unsigned int d = LoadPackedPixel(src, srcWidth, srcHeight, srcPitch, x - 1, y);
+            const unsigned int e = src[static_cast<size_t>(y) * static_cast<size_t>(srcWidth) + static_cast<size_t>(x)];
+            const unsigned int f = LoadPackedPixel(src, srcWidth, srcHeight, srcPitch, x + 1, y);
+            const unsigned int g = LoadPackedPixel(src, srcWidth, srcHeight, srcPitch, x - 1, y + 1);
+            const unsigned int h = LoadPackedPixel(src, srcWidth, srcHeight, srcPitch, x, y + 1);
+            const unsigned int i = LoadPackedPixel(src, srcWidth, srcHeight, srcPitch, x + 1, y + 1);
+            const int dx = x * 3;
+            row0[dx] = (d == b && d != h && b != f) ? d : e;
+            row0[dx + 1] = ((d == b && d != h && b != f && e != c) || (b == f && b != d && f != h && e != a)) ? b : e;
+            row0[dx + 2] = (b == f && b != d && f != h) ? f : e;
+            row1[dx] = ((d == b && d != h && b != f && e != g) || (d == h && d != b && h != f && e != a)) ? d : e;
+            row1[dx + 1] = e;
+            row1[dx + 2] = ((b == f && b != d && f != h && e != i) || (h == f && d != h && b != f && e != c)) ? f : e;
+            row2[dx] = (d == h && d != b && h != f) ? d : e;
+            row2[dx + 1] = ((d == h && d != b && h != f && e != i) || (h == f && d != h && b != f && e != g)) ? h : e;
+            row2[dx + 2] = (h == f && d != h && b != f) ? f : e;
+        }
+    }
+}
+
+void BuildPixelArtUpscale(const unsigned int* src, int srcWidth, int srcHeight, int scale, bool convertColorKey, std::vector<unsigned int>* dst)
+{
+    std::vector<unsigned int> packed(static_cast<size_t>(srcWidth) * static_cast<size_t>(srcHeight));
+    for (int index = 0; index < srcWidth * srcHeight; ++index) {
+        packed[static_cast<size_t>(index)] = PixelForUpscale(src[index], convertColorKey);
+    }
+
+    if (scale == 3) {
+        Scale3xImage(packed.data(), srcWidth, srcHeight, dst);
         return;
     }
 
+    std::vector<unsigned int> current = std::move(packed);
+    int currentWidth = srcWidth;
+    int currentHeight = srcHeight;
+    int steps = 0;
+    int produced = 1;
+    while (produced < scale && steps < 2) {
+        std::vector<unsigned int> next;
+        Scale2xImage(current.data(), currentWidth, currentHeight, &next);
+        currentWidth *= 2;
+        currentHeight *= 2;
+        produced *= 2;
+        current.swap(next);
+        ++steps;
+    }
+    dst->swap(current);
+}
+
+void BuildSmoothUpscale(const unsigned int* src, int srcWidth, int srcHeight, int scale, bool convertColorKey, bool restoreColorKey, std::vector<unsigned int>* dst)
+{
     const int dstWidth = srcWidth * scale;
     const int dstHeight = srcHeight * scale;
-    dstPixels->resize(static_cast<size_t>(dstWidth) * static_cast<size_t>(dstHeight));
+    std::vector<float> source(static_cast<size_t>(srcWidth) * static_cast<size_t>(srcHeight) * 4u);
+    for (int index = 0; index < srcWidth * srcHeight; ++index) {
+        const unsigned int pixel = PixelForUpscale(src[index], convertColorKey);
+        const float alpha = static_cast<float>((pixel >> 24) & 0xFFu);
+        const float scaleAlpha = alpha / 255.0f;
+        float* out = source.data() + static_cast<size_t>(index) * 4u;
+        out[0] = alpha;
+        out[1] = static_cast<float>((pixel >> 16) & 0xFFu) * scaleAlpha;
+        out[2] = static_cast<float>((pixel >> 8) & 0xFFu) * scaleAlpha;
+        out[3] = static_cast<float>(pixel & 0xFFu) * scaleAlpha;
+    }
 
-    const float invScale = 1.0f / static_cast<float>(scale);
-    static constexpr float kSubsampleOffsets[4][2] = {
-        { -0.25f, -0.25f },
-        {  0.25f, -0.25f },
-        { -0.25f,  0.25f },
-        {  0.25f,  0.25f },
-    };
-
-    for (int dstY = 0; dstY < dstHeight; ++dstY) {
-        unsigned int* dstRow = dstPixels->data() + static_cast<size_t>(dstY) * static_cast<size_t>(dstWidth);
-        const float baseY = ((static_cast<float>(dstY) + 0.5f) * invScale) - 0.5f;
-        for (int dstX = 0; dstX < dstWidth; ++dstX) {
-            const float baseX = ((static_cast<float>(dstX) + 0.5f) * invScale) - 0.5f;
-
-            float accumAlpha = 0.0f;
-            float accumRed = 0.0f;
-            float accumGreen = 0.0f;
-            float accumBlue = 0.0f;
-            for (const float (&offset)[2] : kSubsampleOffsets) {
-                const unsigned int sample = SampleBilinearArgb(
-                    srcData,
-                    srcWidth,
-                    srcHeight,
-                    srcPitch,
-                    baseX + (offset[0] * invScale),
-                    baseY + (offset[1] * invScale));
-                float alpha = 0.0f;
-                float red = 0.0f;
-                float green = 0.0f;
-                float blue = 0.0f;
-                DecodeArgb(sample, &alpha, &red, &green, &blue);
-                accumAlpha += alpha;
-                accumRed += red;
-                accumGreen += green;
-                accumBlue += blue;
+    std::vector<float> horizontal(static_cast<size_t>(dstWidth) * static_cast<size_t>(srcHeight) * 4u);
+    for (int y = 0; y < srcHeight; ++y) {
+        const float* srcRow = source.data() + static_cast<size_t>(y) * static_cast<size_t>(srcWidth) * 4u;
+        float* dstRow = horizontal.data() + static_cast<size_t>(y) * static_cast<size_t>(dstWidth) * 4u;
+        for (int x = 0; x < dstWidth; ++x) {
+            const float srcX = (static_cast<float>(x) + 0.5f) / static_cast<float>(scale) - 0.5f;
+            const int x1 = static_cast<int>(std::floor(srcX));
+            const float t = srcX - static_cast<float>(x1);
+            const float t2 = t * t;
+            const float t3 = t2 * t;
+            const float w0 = 0.5f * ((-t3) + (2.0f * t2) - t);
+            const float w1 = 0.5f * ((3.0f * t3) - (5.0f * t2) + 2.0f);
+            const float w2 = 0.5f * ((-3.0f * t3) + (4.0f * t2) + t);
+            const float w3 = 0.5f * (t3 - t2);
+            const int xs[4] = {
+                (std::max)(0, (std::min)(srcWidth - 1, x1 - 1)),
+                (std::max)(0, (std::min)(srcWidth - 1, x1)),
+                (std::max)(0, (std::min)(srcWidth - 1, x1 + 1)),
+                (std::max)(0, (std::min)(srcWidth - 1, x1 + 2)),
+            };
+            const float weights[4] = { w0, w1, w2, w3 };
+            float* out = dstRow + static_cast<size_t>(x) * 4u;
+            out[0] = out[1] = out[2] = out[3] = 0.0f;
+            for (int tap = 0; tap < 4; ++tap) {
+                const float* sample = srcRow + static_cast<size_t>(xs[tap]) * 4u;
+                for (int channel = 0; channel < 4; ++channel) {
+                    StoreChannel(out, channel, out[channel] + sample[channel] * weights[tap]);
+                }
             }
-
-            dstRow[dstX] = EncodeArgb(
-                accumAlpha * 0.25f,
-                accumRed * 0.25f,
-                accumGreen * 0.25f,
-                accumBlue * 0.25f);
         }
     }
+
+    dst->resize(static_cast<size_t>(dstWidth) * static_cast<size_t>(dstHeight));
+    for (int y = 0; y < dstHeight; ++y) {
+        const float srcY = (static_cast<float>(y) + 0.5f) / static_cast<float>(scale) - 0.5f;
+        const int y1 = static_cast<int>(std::floor(srcY));
+        const float t = srcY - static_cast<float>(y1);
+        const float t2 = t * t;
+        const float t3 = t2 * t;
+        const float w0 = 0.5f * ((-t3) + (2.0f * t2) - t);
+        const float w1 = 0.5f * ((3.0f * t3) - (5.0f * t2) + 2.0f);
+        const float w2 = 0.5f * ((-3.0f * t3) + (4.0f * t2) + t);
+        const float w3 = 0.5f * (t3 - t2);
+        const int ys[4] = {
+            (std::max)(0, (std::min)(srcHeight - 1, y1 - 1)),
+            (std::max)(0, (std::min)(srcHeight - 1, y1)),
+            (std::max)(0, (std::min)(srcHeight - 1, y1 + 1)),
+            (std::max)(0, (std::min)(srcHeight - 1, y1 + 2)),
+        };
+        const float weights[4] = { w0, w1, w2, w3 };
+        unsigned int* dstRow = dst->data() + static_cast<size_t>(y) * static_cast<size_t>(dstWidth);
+        for (int x = 0; x < dstWidth; ++x) {
+            float filtered[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+            for (int tap = 0; tap < 4; ++tap) {
+                const float* sample = horizontal.data()
+                    + (static_cast<size_t>(ys[tap]) * static_cast<size_t>(dstWidth) + static_cast<size_t>(x)) * 4u;
+                for (int channel = 0; channel < 4; ++channel) {
+                    filtered[channel] += sample[channel] * weights[tap];
+                }
+            }
+            dstRow[x] = PackFilteredPixel(filtered[0], filtered[1], filtered[2], filtered[3], restoreColorKey);
+        }
+    }
+}
+
+bool BuildTextureUpscale(const unsigned int* src, int srcWidth, int srcHeight, int srcPitch, int scale, const char* textureName,
+    bool convertColorKey, std::vector<unsigned int>* dst)
+{
+    if (!src || !dst || srcWidth <= 0 || srcHeight <= 0 || scale <= 1) {
+        return false;
+    }
+
+    const int packedPitch = srcWidth * static_cast<int>(sizeof(unsigned int));
+    std::vector<unsigned int> packed;
+    const unsigned int* packedSrc = src;
+    if (srcPitch != packedPitch) {
+        packed.resize(static_cast<size_t>(srcWidth) * static_cast<size_t>(srcHeight));
+        for (int y = 0; y < srcHeight; ++y) {
+            const unsigned char* srcRow = reinterpret_cast<const unsigned char*>(src) + static_cast<size_t>(y) * static_cast<size_t>(srcPitch);
+            std::memcpy(packed.data() + static_cast<size_t>(y) * static_cast<size_t>(srcWidth), srcRow, static_cast<size_t>(packedPitch));
+        }
+        packedSrc = packed.data();
+    }
+
+    const TextureUpscaleKind kind = ChooseTextureUpscaleKind(textureName, packedSrc, srcWidth, srcHeight, convertColorKey);
+    if (kind == TextureUpscaleKind::Nearest) {
+        BuildNearestUpscale(packedSrc, srcWidth, srcHeight, scale, convertColorKey, convertColorKey, dst);
+        return true;
+    }
+    if (kind == TextureUpscaleKind::Bilinear) {
+        BuildBilinearUpscale(packedSrc, srcWidth, srcHeight, scale, convertColorKey, convertColorKey, dst);
+        return true;
+    }
+    if (kind == TextureUpscaleKind::PixelArt) {
+        BuildPixelArtUpscale(packedSrc, srcWidth, srcHeight, scale, convertColorKey, dst);
+        if (convertColorKey) {
+            for (unsigned int& pixel : *dst) {
+                if (((pixel >> 24) & 0xFFu) == 0u) {
+                    pixel = 0x00FF00FFu;
+                }
+            }
+        }
+        return true;
+    }
+
+    BuildSmoothUpscale(packedSrc, srcWidth, srcHeight, scale, convertColorKey, convertColorKey, dst);
+    return true;
 }
 
 void WritePackedPixel(unsigned char* dst, unsigned int bytesPerPixel, unsigned int value)
@@ -398,6 +639,13 @@ bool CTexture::Create(unsigned int w, unsigned int h, PixelFormat format, bool a
     GetRenderDevice().ReleaseTextureResource(this);
 
     m_upscaleFactor = GetTextureUpscaleFactor(allowUpscale, minUpscaleFactor);
+    if (IsLightmapAtlasName(m_texName)) {
+        // Lightmap atlases are large and already filtered on the GPU. Keep them
+        // at a small integer enlarge so neighboring cells do not get expensive
+        // reconstruction, and so 4x does not turn every atlas into a 1K texture.
+        m_upscaleFactor = (std::min)(m_upscaleFactor, 2u);
+    }
+    m_upscaleFactor = ClampTextureUpscaleFactor(w, h, m_upscaleFactor);
 
     const unsigned int scaledWidth = (std::max)(1u, w * m_upscaleFactor);
     const unsigned int scaledHeight = (std::max)(1u, h * m_upscaleFactor);
@@ -414,9 +662,15 @@ bool CTexture::Create(unsigned int w, unsigned int h, PixelFormat format, bool a
     m_w = textureW;
     m_h = textureH;
     m_pf = format;
-    SetUVAdjust(w, h);
-    m_surfaceUpdateWidth = (std::min)(textureW, scaledWidth);
-    m_surfaceUpdateHeight = (std::min)(textureH, scaledHeight);
+    const unsigned int contentWidth = (std::min)(textureW, scaledWidth);
+    const unsigned int contentHeight = (std::min)(textureH, scaledHeight);
+    // Both extents cover the uploaded texels. UV code divides either field by
+    // the GPU texture size, so leaving the logical size here would crop the
+    // enlarged image down to its top-left corner.
+    m_updateWidth = contentWidth;
+    m_updateHeight = contentHeight;
+    m_surfaceUpdateWidth = contentWidth;
+    m_surfaceUpdateHeight = contentHeight;
     return true;
 }
 bool CTexture::CreateBump(unsigned int w, unsigned int h, bool allowUpscale, unsigned int minUpscaleFactor) { return Create(w, h, PF_BUMP, allowUpscale, minUpscaleFactor); }
@@ -459,7 +713,9 @@ void CTexture::Update(int x, int y, int w, int h, unsigned int* data, bool b, in
     std::vector<unsigned int> scaledPixels;
     if (scale > 1 && data && w > 0 && h > 0) {
         const int srcPitch = p > 0 ? p : w * static_cast<int>(sizeof(unsigned int));
-        BuildSupersampledUpscale(data, w, h, srcPitch, scale, &scaledPixels);
+        if (!BuildTextureUpscale(data, w, h, srcPitch, scale, m_texName, !b, &scaledPixels)) {
+            return;
+        }
         uploadData = scaledPixels.data();
         uploadPitch = scaledW * static_cast<int>(sizeof(unsigned int));
     }
@@ -467,10 +723,12 @@ void CTexture::Update(int x, int y, int w, int h, unsigned int* data, bool b, in
     if (!GetRenderDevice().UpdateTextureResource(this, scaledX, scaledY, scaledW, scaledH, uploadData, b, uploadPitch)) {
         return;
     }
-    m_updateWidth = (std::max)(m_updateWidth, static_cast<unsigned int>(x + w));
-    m_updateHeight = (std::max)(m_updateHeight, static_cast<unsigned int>(y + h));
-    m_surfaceUpdateWidth = (std::max)(m_surfaceUpdateWidth, static_cast<unsigned int>(scaledX + scaledW));
-    m_surfaceUpdateHeight = (std::max)(m_surfaceUpdateHeight, static_cast<unsigned int>(scaledY + scaledH));
+    const unsigned int contentRight = static_cast<unsigned int>((std::max)(0, scaledX + scaledW));
+    const unsigned int contentBottom = static_cast<unsigned int>((std::max)(0, scaledY + scaledH));
+    m_updateWidth = (std::max)(m_updateWidth, contentRight);
+    m_updateHeight = (std::max)(m_updateHeight, contentBottom);
+    m_surfaceUpdateWidth = m_updateWidth;
+    m_surfaceUpdateHeight = m_updateHeight;
 }
 
 void CTexture::UpdateSprite(int a, int b, int c, int d, SprImg& img, unsigned int* pal) { (void)a; (void)b; (void)c; (void)d; (void)img; (void)pal; }

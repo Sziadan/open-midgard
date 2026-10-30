@@ -209,8 +209,10 @@ bool QueueFullScreenOverlayQuad(CTexture* texture, int width, int height, float 
         return false;
     }
 
-    const float right = static_cast<float>(width) - 0.5f;
-    const float bottom = static_cast<float>(height) - 0.5f;
+    const float left = OverlayScreenEdge(0);
+    const float top = OverlayScreenEdge(0);
+    const float right = OverlayScreenEdge(width);
+    const float bottom = OverlayScreenEdge(height);
     const unsigned int overlayContentWidth = texture->m_surfaceUpdateWidth > 0 ? texture->m_surfaceUpdateWidth : static_cast<unsigned int>(width);
     const unsigned int overlayContentHeight = texture->m_surfaceUpdateHeight > 0 ? texture->m_surfaceUpdateHeight : static_cast<unsigned int>(height);
     const float maxU = texture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(texture->m_w) : 1.0f;
@@ -228,9 +230,9 @@ bool QueueFullScreenOverlayQuad(CTexture* texture, int width, int height, float 
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
     face->alphaSortKey = sortKey;
 
-    face->m_verts[0] = { -0.5f, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
-    face->m_verts[1] = { right, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
-    face->m_verts[2] = { -0.5f, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
+    face->m_verts[0] = { left, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+    face->m_verts[1] = { right, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
+    face->m_verts[2] = { left, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
     face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
     g_renderer.AddRP(face, 1 | 8);
     return true;

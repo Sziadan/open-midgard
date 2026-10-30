@@ -69,10 +69,12 @@ for va in coefficient_vas:
     offset = IMAGE.offset_of(va)
     value = 0.0 if offset is None else struct.unpack_from("<f", IMAGE.data, offset)[0]
     coefficient_values.append(value)
-check("PE trig-coefficient globals are image-zero and the local radius corners follow their zero values",
-      coefficient_values == [0.0] * 8
-      and "const vector3d base[4] = {};" in local
-      and "flt_72D4F8" in local)
+check("PE corner addresses are the runtime degree tables at 45/135/225/315, and the local square uses those angles",
+      coefficient_vas == (0x72D4F8, 0x72C9B0, 0x72D660, 0x72CB18, 0x72D7C8, 0x72CC80, 0x72D930, 0x72CDE8)
+      and coefficient_values == [0.0] * 8
+      and "45 + corner * 90" in local
+      and "g_cosTable[angle] * radius" in local
+      and "g_sinTable[angle] * radius" in local)
 def has_assignment(symbol: int) -> bool:
     name = f"flt_{symbol:06X}"
     return any(
@@ -83,9 +85,8 @@ def has_assignment(symbol: int) -> bool:
 
 check("PE decompilation contains no assignments to the eight corner coefficient globals",
       not any(has_assignment(va) for va in coefficient_vas))
-check("PE versus secondary Ref 45-degree square discrepancy is preserved explicitly",
-      "Angle = 45" in DHXJ and "conflicts with those authoritative PE values" in local
-      and "const vector3d base[4] = {};" in local)
+check("local square matches the secondary Ref 45-degree construction and the PE table addresses",
+      "Angle = 45" in DHXJ and "Tei_TowardScreen" in local)
 check("PE and secondary Ref route PP_3DAURA_2 and PP_WATERFALLPARTICLE here",
       all(re.search(rf"case\s+PP_{kind}\s*:", ref_dispatch)
           for kind in ("3DAURA_2", "WATERFALLPARTICLE"))
@@ -102,7 +103,7 @@ check("local helper maps all four PE GI centers in source order with the 180-byt
       and "{gi.sparkX, gi.sparkY, gi.sparkZ}" in local
       and "{gi.vecTPreX, gi.vecTPreY, gi.vecTPreZ}" in local
       and "{gi.vecTNowX, gi.vecTNowY, gi.vecTNowZ}" in local
-      and "gi.flag[12]" in local)
+      and "gi.flag[0]" in local)
 check("source color modes, distinct first-group fade, all y gates, duplicate modes, and UV/blend mapping are represented",
       "y < -40.0f" in local and "y < -20.0f" in local and "y < -4.0f" in local
       and "y > -0.5f" in local and "mode == 0" in local and "mode == 1" in local

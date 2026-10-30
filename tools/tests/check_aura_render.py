@@ -66,7 +66,10 @@ check("local renderer routes all five source kinds to the dedicated aura helper"
       and "Render3DAura(*this, *viewMatrix);" in render_dispatch)
 check("local geometry preserves four radius samples, scratch fields, selector colors and crossed-face order",
       "g_sinTable[TableAngle(gi.riseAngle)]" in local
-      and "g_cosTable[a180]" in local and "g_sinTable[a90]" in local
+      and "g_cosTable[a0]" in local and "g_sinTable[a0]" in local
+      and "g_cosTable[a90]" in local and "g_sinTable[a90]" in local
+      and "g_cosTable[a180]" in local and "g_sinTable[a180]" in local
+      and "g_cosTable[a270]" in local and "g_sinTable[a270]" in local
       and "mutableGi.vecTNowX = samples[1].x" in local
       and "mutableGi.vecBPreX = samples[2].x" in local
       and "mutableGi.vecTPreX = samples[3].x" in local

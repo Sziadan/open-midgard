@@ -12,6 +12,10 @@
 namespace {
 
 constexpr float kNearPlane = 80.0f;
+constexpr float kNodeDepthBiasStep = 0.000005f;
+constexpr float kFaceAxisDepthBias = 0.000020f;
+constexpr float kFaceBandDepthBias = 0.000005f;
+constexpr float kFaceTieDepthBias = 0.000002f;
 
 float DotVec3(const vector3d& a, const vector3d& b)
 {
@@ -329,6 +333,45 @@ bool ProjectPoint(const CRenderer& renderer, const matrix& viewMatrix, const vec
     return true;
 }
 
+float MapFaceDepthBias(const C3dMesh& mesh, const face3d& face, size_t faceIndex, const matrix& nodeWorld)
+{
+    const vector3d origin = TransformPoint(nodeWorld, mesh.m_vert[face.vertindex[0]]);
+    const vector3d edgeU = SubtractVec3(TransformPoint(nodeWorld, mesh.m_vert[face.vertindex[1]]), origin);
+    const vector3d edgeV = SubtractVec3(TransformPoint(nodeWorld, mesh.m_vert[face.vertindex[2]]), origin);
+    const vector3d normal = NormalizeVec3(CrossVec3(edgeU, edgeV));
+    const float absX = std::fabs(normal.x);
+    const float absY = std::fabs(normal.y);
+    const float absZ = std::fabs(normal.z);
+    unsigned int axis = 0;
+    if (absY > absX && absY >= absZ) {
+        axis = 1;
+    } else if (absZ > absX && absZ > absY) {
+        axis = 2;
+    }
+
+    const float planeD = normal.x * origin.x + normal.y * origin.y + normal.z * origin.z;
+    const int planeBand = static_cast<int>(std::floor(planeD / 3.0f));
+    const unsigned int bandHash = (static_cast<unsigned int>(planeBand) * 131u
+        ^ static_cast<unsigned int>(face.smoothGroup) * 17u
+        ^ static_cast<unsigned int>(face.meshMtlId) * 3u
+        ^ static_cast<unsigned int>(std::lround(normal.x * 2.0f)) * 73856093u
+        ^ static_cast<unsigned int>(std::lround(normal.y * 2.0f)) * 19349663u
+        ^ static_cast<unsigned int>(std::lround(normal.z * 2.0f)) * 83492791u);
+    const unsigned int tieHash = static_cast<unsigned int>(face.vertindex[0]) * 73856093u
+        ^ static_cast<unsigned int>(face.vertindex[1]) * 19349663u
+        ^ static_cast<unsigned int>(face.vertindex[2]) * 83492791u
+        ^ static_cast<unsigned int>(faceIndex) * 97u;
+    const unsigned int tieSlot = (static_cast<unsigned int>(faceIndex) + (tieHash & 7u)) & 3u;
+    return static_cast<float>(axis) * kFaceAxisDepthBias
+        + static_cast<float>(bandHash & 1u) * kFaceBandDepthBias
+        + static_cast<float>(tieSlot) * kFaceTieDepthBias;
+}
+
+void ApplyMapDepthBias(tlvertex3d& vertex, float depthBias)
+{
+    vertex.z = (std::max)(0.0f, vertex.z - depthBias);
+}
+
 bool ShouldRenderFace(const tlvertex3d projected[3], bool flipNormal, bool twoSided)
 {
     if (twoSided) {
@@ -626,7 +669,7 @@ void C3dNode::UpdateVertexColor(const matrix& parentWorld,
     }
 }
 
-void C3dNode::Render(const matrix& parentWorld, const matrix& viewMatrix, bool forceDoubleSided) const
+void C3dNode::Render(const matrix& parentWorld, const matrix& viewMatrix, bool forceDoubleSided, float depthBias) const
 {
     matrix nodeWorld{};
     MatrixMult(nodeWorld, m_ltm, parentWorld);
@@ -695,6 +738,13 @@ void C3dNode::Render(const matrix& parentWorld, const matrix& viewMatrix, bool f
                 continue;
             }
 
+            if (depthBias > 0.0f) {
+                const float faceDepthBias = depthBias + MapFaceDepthBias(*m_mesh, face, faceIndex, nodeWorld);
+                for (int corner = 0; corner < 3; ++corner) {
+                    ApplyMapDepthBias(projected[corner], faceDepthBias);
+                }
+            }
+
             RPFace* renderFace = g_renderer.BorrowNullRP();
             if (!renderFace) {
                 continue;
@@ -728,8 +778,16 @@ void C3dNode::Render(const matrix& parentWorld, const matrix& viewMatrix, bool f
         }
     }
 
-    for (const C3dNode* child : m_children) {
-        child->Render(nodeWorld, viewMatrix, forceDoubleSided);
+    for (size_t childIndex = 0; childIndex < m_children.size(); ++childIndex) {
+        const C3dNode* child = m_children[childIndex];
+        if (!child) {
+            continue;
+        }
+        float childBias = depthBias;
+        if (depthBias > 0.0f) {
+            childBias = depthBias + static_cast<float>((childIndex % 3u) + 1u) * kNodeDepthBiasStep;
+        }
+        child->Render(nodeWorld, viewMatrix, forceDoubleSided, childBias);
     }
 }
 
@@ -890,10 +948,10 @@ void C3dActor::UpdateVertexColor(const vector3d& lightDir,
     m_node->UpdateVertexColor(m_wtm, lightDir, diffuseCol, ambientCol);
 }
 
-void C3dActor::Render(const matrix& viewMatrix) const
+void C3dActor::Render(const matrix& viewMatrix, float depthBias) const
 {
     if (!m_node) {
         return;
     }
-    m_node->Render(m_wtm, viewMatrix, m_forceDoubleSided);
+    m_node->Render(m_wtm, viewMatrix, m_forceDoubleSided, depthBias);
 }

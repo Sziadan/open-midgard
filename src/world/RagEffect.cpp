@@ -6372,14 +6372,33 @@ void Render3DAura2(CEffectPrim& prim, const matrix& viewMatrix)
             {gi.vecTPreX, gi.vecTPreY, gi.vecTPreZ},
             {gi.vecTNowX, gi.vecTNowY, gi.vecTNowZ},
         };
-        // The canonical PE reads eight `flt_72D4F8`/related coefficient
-        // globals here. The executable image resolves each to 0.0f (BSS or
-        // file-backed zero), and has no stores to them; it therefore collapses
-        // all four radius samples to the local origin. Secondary Ref's fixed
-        // Angle=45 square conflicts with those authoritative PE values.
-        const vector3d base[4] = {};
+        // HighPriest.exe.c:444867 reads flt_72D4F8/72C9B0 and the three
+        // 90-degree pairs after them. Those addresses are g_cosTable and
+        // g_sinTable at 45, 135, 225, and 315; the file image is zero because
+        // the degree tables are filled at startup. Ref/dhxj Render3DAura_2
+        // builds the same square, then Tei_TowardScreen faces it to the camera.
+        const float radius = gi.distance;
+        vector3d square[4];
+        for (int corner = 0; corner < 4; ++corner) {
+            const int angle = 45 + corner * 90;
+            square[corner] = {g_cosTable[angle] * radius, 0.0f, g_sinTable[angle] * radius};
+        }
+        const int rot0 = TableAngle(prim.m_gi[0].alphaT);
+        const int rot1 = TableAngle(prim.m_gi[1].alphaT);
+        for (vector3d& corner : square) {
+            const float z = corner.z;
+            const float y = corner.y;
+            corner.z = z * g_cosTable[rot1] - y * g_sinTable[rot1];
+            corner.y = z * g_sinTable[rot1] + y * g_cosTable[rot1];
+        }
+        for (vector3d& corner : square) {
+            const float x = corner.x;
+            const float z = corner.z;
+            corner.x = x * g_cosTable[rot0] - z * g_sinTable[rot0];
+            corner.z = x * g_sinTable[rot0] + z * g_cosTable[rot0];
+        }
 
-        const int mode = gi.flag[12];
+        const int mode = gi.flag[0];
         auto alphaFor = [mode](float y, bool firstGroup) {
             float alpha = 0.0f;
             if (firstGroup && mode == 11) {
@@ -6397,7 +6416,7 @@ void Render3DAura2(CEffectPrim& prim, const matrix& viewMatrix)
             const unsigned int color = (alpha << 24) | (red << 16) | (green << 8) | blue;
             vector3d corners[4];
             for (int corner = 0; corner < 4; ++corner) {
-                corners[corner] = AddVec3(AddVec3(base[corner], centers[group]), prim.m_pos);
+                corners[corner] = AddVec3(AddVec3(square[corner], centers[group]), prim.m_pos);
             }
             SubmitWorldTeiRect(corners[0], corners[1], corners[2], corners[3], viewMatrix,
                 texture, color, 0.0f, 1.0f, 1.0f, 0.0f,
@@ -6405,7 +6424,7 @@ void Render3DAura2(CEffectPrim& prim, const matrix& viewMatrix)
         };
 
         for (int group = 0; group < 4; ++group) {
-            const float y = centers[group].y + base[0].y;
+            const float y = centers[group].y + square[0].y;
             if (y > 0.0f) continue;
             const unsigned int alpha = alphaFor(y, group == 0);
             if (mode == 0) {
@@ -6449,13 +6468,14 @@ void Render3DAura(CEffectPrim& prim, const matrix& viewMatrix)
         const int a90 = TableAngle(angle + 90);
         const int a180 = TableAngle(angle + 180);
         const int a270 = TableAngle(angle + 270);
-        // PE's flt_72D2DC table is the cosine table at a 90-entry offset;
-        // preserve its mixed sine/cosine indices exactly.
-        // Sample aliases in PE order: +29 (spark), +32 (T-now), +35 (B-pre), +38 (T-pre).
+        // flt_72D2DC[angle + 90] is g_cosTable[angle]: the table symbol starts
+        // 90 floats before g_cosTable. Each corner is one matched cos/sin pair.
+        // Sample aliases in PE order: +29 (spark / B-now), +32 (T-now),
+        // +35 (B-pre), +38 (T-pre).
         vector3d samples[4] = {
-            { radius * g_cosTable[a180], gi.height[0], radius * g_sinTable[a90] },
-            { radius * g_cosTable[a270], gi.height[0], radius * g_sinTable[a180] },
-            { radius * g_cosTable[a90], gi.height[0], radius * g_sinTable[a0] },
+            { radius * g_cosTable[a90], gi.height[0], radius * g_sinTable[a90] },
+            { radius * g_cosTable[a180], gi.height[0], radius * g_sinTable[a180] },
+            { radius * g_cosTable[a0], gi.height[0], radius * g_sinTable[a0] },
             { radius * g_cosTable[a270], gi.height[0], radius * g_sinTable[a270] },
         };
 

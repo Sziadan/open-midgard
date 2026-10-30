@@ -8,6 +8,7 @@
 #include "main/WinMain.h"
 #include "render/Renderer.h"
 #include "render3d/Device.h"
+#include "render3d/RenderDevice.h"
 #include "res/ActRes.h"
 #include "res/Sprite.h"
 #include "res/Res.h"
@@ -613,7 +614,7 @@ CTexture* GetOrCreateDigitClipTexture(CSprRes* sprite, const SprImg* image)
     }
 
     CTexture* texture = new CTexture();
-    if (!texture || !texture->Create(static_cast<unsigned int>(image->width), static_cast<unsigned int>(image->height), PF_A8R8G8B8, false)) {
+    if (!texture || !texture->Create(static_cast<unsigned int>(image->width), static_cast<unsigned int>(image->height), PF_A8R8G8B8)) {
         delete texture;
         return nullptr;
     }
@@ -668,7 +669,7 @@ CTexture* GetOrCreateSpriteClipTexture(CSprRes* sprite, const SprImg* image)
     }
 
     CTexture* texture = new CTexture();
-    if (!texture || !texture->Create(static_cast<unsigned int>(image->width), static_cast<unsigned int>(image->height), PF_A8R8G8B8, false)) {
+    if (!texture || !texture->Create(static_cast<unsigned int>(image->width), static_cast<unsigned int>(image->height), PF_A8R8G8B8)) {
         delete texture;
         return nullptr;
     }
@@ -727,8 +728,8 @@ bool QueueDigitSpriteQuad(const QueuedMsgEffectDraw& draw)
     const int nativeHeight = (std::max)(1, static_cast<int>(clipBox.bottom - clipBox.top));
     const int outWidth = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeWidth) * scale)));
     const int outHeight = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeHeight) * scale)));
-    const float originX = static_cast<float>(draw.screenX + ResolveDigitShiftPixels(draw) - outWidth / 2) - 0.5f;
-    const float originY = static_cast<float>(draw.screenY - outHeight / 2) - 0.5f;
+    const float originX = OverlayScreenEdge(draw.screenX + ResolveDigitShiftPixels(draw) - outWidth / 2);
+    const float originY = OverlayScreenEdge(draw.screenY - outHeight / 2);
 
     bool queuedAny = false;
     float clipSortOffset = 0.0f;
@@ -774,7 +775,7 @@ bool QueueDigitSpriteQuad(const QueuedMsgEffectDraw& draw)
         face->indices = nullptr;
         face->numIndices = 0;
         face->tex = texture;
-        face->mtPreset = 0;
+        face->mtPreset = kSpriteTextureMode;
         face->cullMode = D3DCULL_NONE;
         face->srcAlphaMode = D3DBLEND_SRCALPHA;
         face->destAlphaMode = D3DBLEND_INVSRCALPHA;
@@ -950,8 +951,8 @@ bool QueueMsgSpriteQuad(const QueuedMsgSpriteEffectDraw& draw)
     const float scale = ResolveQueuedMsgSpriteScale(draw, referenceWidth);
     const int outWidth = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeWidth) * scale)));
     const int outHeight = (std::max)(1, static_cast<int>(std::lround(static_cast<float>(nativeHeight) * scale)));
-    const float originX = static_cast<float>(draw.screenX - outWidth / 2) - 0.5f;
-    const float originY = static_cast<float>(draw.screenY - outHeight / 2) - 0.5f;
+    const float originX = OverlayScreenEdge(draw.screenX - outWidth / 2);
+    const float originY = OverlayScreenEdge(draw.screenY - outHeight / 2);
 
     bool queuedAny = false;
     float clipSortOffset = 0.0f;
@@ -997,7 +998,7 @@ bool QueueMsgSpriteQuad(const QueuedMsgSpriteEffectDraw& draw)
         face->indices = nullptr;
         face->numIndices = 0;
         face->tex = texture;
-        face->mtPreset = 0;
+        face->mtPreset = kSpriteTextureMode;
         face->cullMode = D3DCULL_NONE;
         face->srcAlphaMode = D3DBLEND_SRCALPHA;
         face->destAlphaMode = D3DBLEND_INVSRCALPHA;
@@ -1602,7 +1603,7 @@ bool RenderAttachedActorSpriteWorldBillboard(const CMsgEffect& effect,
         face->indices = nullptr;
         face->numIndices = 0;
         face->tex = texture;
-        face->mtPreset = 0;
+        face->mtPreset = kSpriteTextureMode;
         face->cullMode = D3DCULL_NONE;
         face->srcAlphaMode = D3DBLEND_SRCALPHA;
         face->destAlphaMode = D3DBLEND_INVSRCALPHA;

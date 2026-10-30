@@ -33,6 +33,7 @@
 #include "ui/UIPlayerContextMenuWnd.h"
 #include "ui/UISayDialogWnd.h"
 #include "ui/UIWindow.h"
+#include "ui/UIOptionWnd.h"
 #include "ui/UIWindowMgr.h"
 #include "render/DrawUtil.h"
 #include "render/Prim.h"
@@ -356,7 +357,7 @@ int ResolveRefMapClearColor(const char* rswName)
 
 void ApplyRefFogForMap(const char* rswName, int fogOn)
 {
-    if (!fogOn) {
+    if (!fogOn || !IsOptionFogEnabled()) {
         g_renderer.FogSwitch(0);
         return;
     }
@@ -1103,8 +1104,10 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         return false;
     }
 
-    const float right = static_cast<float>(clientWidth) - 0.5f;
-    const float bottom = static_cast<float>(clientHeight) - 0.5f;
+    const float left = OverlayScreenEdge(0);
+    const float top = OverlayScreenEdge(0);
+    const float right = OverlayScreenEdge(clientWidth);
+    const float bottom = OverlayScreenEdge(clientHeight);
     if (s_overlayTextureValid) {
         RPFace* face = g_renderer.BorrowNullRP();
         if (!face) {
@@ -1128,9 +1131,9 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         face->destAlphaMode = D3DBLEND_INVSRCALPHA;
         face->alphaSortKey = 1.0f;
 
-        face->m_verts[0] = { -0.5f, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
-        face->m_verts[1] = { right, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
-        face->m_verts[2] = { -0.5f, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
+        face->m_verts[0] = { left, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+        face->m_verts[1] = { right, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, 0.0f };
+        face->m_verts[2] = { left, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, maxV };
         face->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, maxU, maxV };
         g_renderer.AddRP(face, 1 | 8);
     }
@@ -1157,9 +1160,9 @@ bool QueueModernOverlayQuad(CGameMode& mode, int cursorActNum, u32 mouseAnimStar
         qtFace->srcAlphaMode = D3DBLEND_SRCALPHA;
         qtFace->destAlphaMode = D3DBLEND_INVSRCALPHA;
         qtFace->alphaSortKey = 1.0f;
-        qtFace->m_verts[0] = { -0.5f, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
-        qtFace->m_verts[1] = { right, -0.5f, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, qtMaxU, 0.0f };
-        qtFace->m_verts[2] = { -0.5f, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, qtMaxV };
+        qtFace->m_verts[0] = { left, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, 0.0f };
+        qtFace->m_verts[1] = { right, top, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, qtMaxU, 0.0f };
+        qtFace->m_verts[2] = { left, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, 0.0f, qtMaxV };
         qtFace->m_verts[3] = { right, bottom, 0.0f, 1.0f, 0xFFFFFFFFu, 0xFF000000u, qtMaxU, qtMaxV };
         g_renderer.AddRP(qtFace, 1 | 8);
     }
@@ -1261,10 +1264,10 @@ bool QueueRoMapOverlayQuad()
         return false;
     }
 
-    const float left = static_cast<float>(mapRect.left) - 0.5f;
-    const float top = static_cast<float>(mapRect.top) - 0.5f;
-    const float right = static_cast<float>(mapRect.right) - 0.5f;
-    const float bottom = static_cast<float>(mapRect.bottom) - 0.5f;
+    const float left = OverlayScreenEdge(mapRect.left);
+    const float top = OverlayScreenEdge(mapRect.top);
+    const float right = OverlayScreenEdge(mapRect.right);
+    const float bottom = OverlayScreenEdge(mapRect.bottom);
     const unsigned int overlayContentWidth = s_roMapTexture->m_surfaceUpdateWidth > 0 ? s_roMapTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(width);
     const unsigned int overlayContentHeight = s_roMapTexture->m_surfaceUpdateHeight > 0 ? s_roMapTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(height);
     const float maxU = s_roMapTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_roMapTexture->m_w) : 1.0f;
@@ -1549,7 +1552,7 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
         face->indices = nullptr;
         face->numIndices = 0;
         face->tex = texture;
-        face->mtPreset = 0;
+        face->mtPreset = 3;
         face->cullMode = D3DCULL_NONE;
         face->srcAlphaMode = D3DBLEND_SRCALPHA;
         face->destAlphaMode = D3DBLEND_INVSRCALPHA;
@@ -1630,19 +1633,19 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
 
                 queuedAny = queueOverlayTextureQuad(
                     s_targetLabelTexture,
-                    static_cast<float>(textRect.left) - 0.5f,
-                    static_cast<float>(textRect.top) - 0.5f,
-                    static_cast<float>(textRect.right) - 0.5f,
-                    static_cast<float>(textRect.bottom) - 0.5f) || queuedAny;
+                    OverlayScreenEdge(textRect.left),
+                    OverlayScreenEdge(textRect.top),
+                    OverlayScreenEdge(textRect.right),
+                    OverlayScreenEdge(textRect.bottom)) || queuedAny;
             }
         }
 
         queuedAny = queueOverlayTextureQuad(
             s_targetArrowTexture,
-            static_cast<float>(arrowDrawX) - 0.5f,
-            static_cast<float>(arrowDrawY) - 0.5f,
-            static_cast<float>(arrowDrawX + arrowScaledWidth) - 0.5f,
-            static_cast<float>(arrowDrawY + arrowScaledHeight) - 0.5f) || queuedAny;
+            OverlayScreenEdge(arrowDrawX),
+            OverlayScreenEdge(arrowDrawY),
+            OverlayScreenEdge(arrowDrawX + arrowScaledWidth),
+            OverlayScreenEdge(arrowDrawY + arrowScaledHeight)) || queuedAny;
 
         if (queuedAny) {
             return true;
@@ -1792,10 +1795,10 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
         return false;
     }
 
-    const float left = static_cast<float>(clippedRect.left) - 0.5f;
-    const float top = static_cast<float>(clippedRect.top) - 0.5f;
-    const float right = static_cast<float>(clippedRect.right) - 0.5f;
-    const float bottom = static_cast<float>(clippedRect.bottom) - 0.5f;
+    const float left = OverlayScreenEdge(clippedRect.left);
+    const float top = OverlayScreenEdge(clippedRect.top);
+    const float right = OverlayScreenEdge(clippedRect.right);
+    const float bottom = OverlayScreenEdge(clippedRect.bottom);
     const unsigned int overlayContentWidth = s_targetTexture->m_surfaceUpdateWidth > 0 ? s_targetTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(width);
     const unsigned int overlayContentHeight = s_targetTexture->m_surfaceUpdateHeight > 0 ? s_targetTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(height);
     const float maxU = s_targetTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_targetTexture->m_w) : 1.0f;
@@ -1807,7 +1810,7 @@ bool QueueLockedTargetOverlayQuad(CGameMode& mode)
     face->indices = nullptr;
     face->numIndices = 0;
     face->tex = s_targetTexture;
-    face->mtPreset = 0;
+    face->mtPreset = 3;
     face->cullMode = D3DCULL_NONE;
     face->srcAlphaMode = D3DBLEND_SRCALPHA;
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
@@ -1955,10 +1958,10 @@ bool QueueHoverLabelsOverlayQuad(CGameMode& mode)
         return false;
     }
 
-    const float left = static_cast<float>(clippedRect.left) - 0.5f;
-    const float top = static_cast<float>(clippedRect.top) - 0.5f;
-    const float right = static_cast<float>(clippedRect.right) - 0.5f;
-    const float bottom = static_cast<float>(clippedRect.bottom) - 0.5f;
+    const float left = OverlayScreenEdge(clippedRect.left);
+    const float top = OverlayScreenEdge(clippedRect.top);
+    const float right = OverlayScreenEdge(clippedRect.right);
+    const float bottom = OverlayScreenEdge(clippedRect.bottom);
     const unsigned int overlayContentWidth = s_hoverTextTexture->m_surfaceUpdateWidth > 0 ? s_hoverTextTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(width);
     const unsigned int overlayContentHeight = s_hoverTextTexture->m_surfaceUpdateHeight > 0 ? s_hoverTextTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(height);
     const float maxU = s_hoverTextTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_hoverTextTexture->m_w) : 1.0f;
@@ -1970,7 +1973,7 @@ bool QueueHoverLabelsOverlayQuad(CGameMode& mode)
     face->indices = nullptr;
     face->numIndices = 0;
     face->tex = s_hoverTextTexture;
-    face->mtPreset = 0;
+    face->mtPreset = 3;
     face->cullMode = D3DCULL_NONE;
     face->srcAlphaMode = D3DBLEND_SRCALPHA;
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
@@ -2134,10 +2137,10 @@ bool QueuePlayerVitalsOverlayQuad(CGameMode& mode)
         return false;
     }
 
-    const float left = static_cast<float>(clippedRect.left) - 0.5f;
-    const float top = static_cast<float>(clippedRect.top) - 0.5f;
-    const float right = static_cast<float>(clippedRect.right) - 0.5f;
-    const float bottom = static_cast<float>(clippedRect.bottom) - 0.5f;
+    const float left = OverlayScreenEdge(clippedRect.left);
+    const float top = OverlayScreenEdge(clippedRect.top);
+    const float right = OverlayScreenEdge(clippedRect.right);
+    const float bottom = OverlayScreenEdge(clippedRect.bottom);
     const unsigned int overlayContentWidth = s_vitalsTexture->m_surfaceUpdateWidth > 0 ? s_vitalsTexture->m_surfaceUpdateWidth : static_cast<unsigned int>(width);
     const unsigned int overlayContentHeight = s_vitalsTexture->m_surfaceUpdateHeight > 0 ? s_vitalsTexture->m_surfaceUpdateHeight : static_cast<unsigned int>(height);
     const float maxU = s_vitalsTexture->m_w != 0 ? static_cast<float>(overlayContentWidth) / static_cast<float>(s_vitalsTexture->m_w) : 1.0f;
@@ -2149,7 +2152,7 @@ bool QueuePlayerVitalsOverlayQuad(CGameMode& mode)
     face->indices = nullptr;
     face->numIndices = 0;
     face->tex = s_vitalsTexture;
-    face->mtPreset = 0;
+    face->mtPreset = 3;
     face->cullMode = D3DCULL_NONE;
     face->srcAlphaMode = D3DBLEND_SRCALPHA;
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
@@ -4058,6 +4061,23 @@ void ReplayPersistedStatusVisuals(CGameMode& mode)
         icons.size());
     for (const ACTIVE_STATUS_ICON& icon : icons) {
         actor->SendMsg(actor, 110, icon.statusType, 1, 0);
+    }
+
+    // The same cleanup deletes the level 99 rag effects. Message 126 refuses
+    // to launch again while m_99 is already 99, so clear that and start over.
+    // Ref CPlayer::ReLaunchBlurEffects does this when the session level is 99.
+    auto restartLevel99Aura = [](CGameActor* candidate) {
+        if (!candidate || candidate->m_clevel != 99) {
+            return;
+        }
+        candidate->m_99 = 0;
+        candidate->SendMsg(candidate, 126, 0, 0, 0);
+    };
+    restartLevel99Aura(actor);
+    for (const auto& entry : mode.m_runtimeActors) {
+        if (entry.second != actor) {
+            restartLevel99Aura(entry.second);
+        }
     }
 }
 

@@ -55,6 +55,8 @@ constexpr int kSceneGraphMaxLevel = 2;
 constexpr float kNearPlane = 10.0f;
 constexpr float kGroundSubmitNearPlane = 80.0f;
 constexpr float kAttrTileDepthBias = 0.0010f;
+constexpr float kMapObjectDepthBiasStep = 0.000010f;
+constexpr unsigned int kMapObjectDepthBiasSlots = 8u;
 constexpr float kPlayerBillboardWorldHeightScale = 2.0f;
 constexpr float kNonPcBillboardScaleAnchorY = 110.0f;
 constexpr float kPlayerBillboardDepthWorldBiasScale = 0.35f;
@@ -905,6 +907,12 @@ void SubmitScreenSpacePerspectiveSprite(float left,
         face->m_verts[3].y = ycs + x2sn + centerY + 0.5f;
     }
 
+    const float maxU = (texture != nullptr && texture->m_w > 0 && texture->m_surfaceUpdateWidth > 0)
+        ? static_cast<float>(texture->m_surfaceUpdateWidth) / static_cast<float>(texture->m_w)
+        : 1.0f;
+    const float maxV = (texture != nullptr && texture->m_h > 0 && texture->m_surfaceUpdateHeight > 0)
+        ? static_cast<float>(texture->m_surfaceUpdateHeight) / static_cast<float>(texture->m_h)
+        : 1.0f;
     face->m_verts[0].z = DepthFromOow(oowTop);
     face->m_verts[0].oow = oowTop;
     face->m_verts[0].tu = 0.0f;
@@ -914,7 +922,7 @@ void SubmitScreenSpacePerspectiveSprite(float left,
 
     face->m_verts[1].z = DepthFromOow(oowTop);
     face->m_verts[1].oow = oowTop;
-    face->m_verts[1].tu = 1.0f;
+    face->m_verts[1].tu = maxU;
     face->m_verts[1].tv = 0.0f;
     face->m_verts[1].color = color;
     face->m_verts[1].specular = 0xFF000000u;
@@ -922,14 +930,14 @@ void SubmitScreenSpacePerspectiveSprite(float left,
     face->m_verts[2].z = DepthFromOow(oowBottom);
     face->m_verts[2].oow = oowBottom;
     face->m_verts[2].tu = 0.0f;
-    face->m_verts[2].tv = 1.0f;
+    face->m_verts[2].tv = maxV;
     face->m_verts[2].color = color;
     face->m_verts[2].specular = 0xFF000000u;
 
     face->m_verts[3].z = DepthFromOow(oowBottom);
     face->m_verts[3].oow = oowBottom;
-    face->m_verts[3].tu = 1.0f;
-    face->m_verts[3].tv = 1.0f;
+    face->m_verts[3].tu = maxU;
+    face->m_verts[3].tv = maxV;
     face->m_verts[3].color = color;
     face->m_verts[3].specular = 0xFF000000u;
 
@@ -2735,7 +2743,7 @@ bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
     face->indices = nullptr;
     face->numIndices = 0;
     face->tex = actor->m_billboardTexture;
-    face->mtPreset = 0;
+    face->mtPreset = kSpriteTextureMode;
     face->cullMode = D3DCULL_NONE;
     face->srcAlphaMode = D3DBLEND_SRCALPHA;
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
@@ -2760,7 +2768,10 @@ bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
 
     face->alphaSortKey = entry.depthKey;
 
-    g_renderer.AddRP(face, 1);
+    // RF_SPRITE (RF_ALPHA | RF_DEPTHWRITE). The body is drawn into the depth
+    // buffer before RF_EFFECT primitives, so the far side of an aura ring
+    // fails the depth test where it passes behind the character.
+    g_renderer.AddRP(face, 1 | 0x100);
     return true;
 }
 
@@ -2902,10 +2913,16 @@ bool BuildBillboardRenderEntry(CPc* actor,
         }
     }
 
-    const float u0 = leftPixels / textureWidth;
-    const float v0 = topPixels / textureHeight;
-    const float u1 = rightPixels / textureWidth;
-    const float v1 = bottomPixels / textureHeight;
+    const float textureUScale = (actor->m_billboardTexture->m_w > 0 && actor->m_billboardTexture->m_surfaceUpdateWidth > 0)
+        ? static_cast<float>(actor->m_billboardTexture->m_surfaceUpdateWidth) / static_cast<float>(actor->m_billboardTexture->m_w)
+        : 1.0f;
+    const float textureVScale = (actor->m_billboardTexture->m_h > 0 && actor->m_billboardTexture->m_surfaceUpdateHeight > 0)
+        ? static_cast<float>(actor->m_billboardTexture->m_surfaceUpdateHeight) / static_cast<float>(actor->m_billboardTexture->m_h)
+        : 1.0f;
+    const float u0 = (leftPixels / textureWidth) * textureUScale;
+    const float v0 = (topPixels / textureHeight) * textureVScale;
+    const float u1 = (rightPixels / textureWidth) * textureUScale;
+    const float v1 = (bottomPixels / textureHeight) * textureVScale;
 
     const float minRenderOow = (std::min)(projectedDepthTop.oow, projectedDepthBottom.oow);
     for (int index = 0; index < 4; ++index) {
@@ -4749,6 +4766,18 @@ float GatCellAverageHeight(const C3dAttr& attr, int gatX, int gatY)
     }
     const CAttrCell& cell = attr.m_cells[static_cast<size_t>(gatY) * static_cast<size_t>(attr.m_width) + static_cast<size_t>(gatX)];
     return (cell.h1 + cell.h2 + cell.h3 + cell.h4) * 0.25f;
+}
+
+float MapObjectDepthBias(const C3dActor& actor, size_t actorIndex)
+{
+    const unsigned int qx = static_cast<unsigned int>(static_cast<int>(std::floor(actor.m_pos.x)));
+    const unsigned int qy = static_cast<unsigned int>(static_cast<int>(std::floor(actor.m_pos.y)));
+    const unsigned int qz = static_cast<unsigned int>(static_cast<int>(std::floor(actor.m_pos.z)));
+    const unsigned int hash = qx * 73856093u
+        ^ qy * 19349663u
+        ^ qz * 83492791u
+        ^ static_cast<unsigned int>(actorIndex) * 2654435761u;
+    return kMapObjectDepthBiasStep * static_cast<float>((hash % kMapObjectDepthBiasSlots) + 1u);
 }
 
 float GroundCellTopHeight(const C3dGround& ground, int cellX, int cellY)
@@ -7116,7 +7145,8 @@ void CWorld::RenderBackgroundObjects(const matrix& viewMatrix) const
     u32 renderedBackgroundObjects = 0;
     u32 skippedTinyBackgroundObjects = 0;
     const double renderStartMs = WorldNowMs();
-    for (const C3dActor* actor : m_bgObjList) {
+    for (size_t actorIndex = 0; actorIndex < m_bgObjList.size(); ++actorIndex) {
+        const C3dActor* actor = m_bgObjList[actorIndex];
         if (!actor) {
             continue;
         }
@@ -7161,7 +7191,7 @@ void CWorld::RenderBackgroundObjects(const matrix& viewMatrix) const
         }
 
         renderedBackgroundObjects += 1;
-        actor->Render(viewMatrix);
+        actor->Render(viewMatrix, MapObjectDepthBias(*actor, actorIndex));
     }
     m_lastRenderStats.renderedBackgroundObjects = renderedBackgroundObjects;
     m_lastRenderStats.skippedTinyBackgroundObjects = skippedTinyBackgroundObjects;

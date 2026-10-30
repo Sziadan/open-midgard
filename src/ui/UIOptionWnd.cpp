@@ -10,6 +10,8 @@
 #include "res/Bitmap.h"
 #include "ui/UiScale.h"
 #include "ui/UIWindowMgr.h"
+#include "gamemode/GameMode.h"
+#include "session/Session.h"
 
 #include <windows.h>
 
@@ -48,11 +50,12 @@ constexpr char kOptionWndNoCtrlValue[] = "NoCtrl";
 constexpr char kOptionWndAttackSnapValue[] = "AttackSnap";
 constexpr char kOptionWndSkillSnapValue[] = "SkillSnap";
 constexpr char kOptionWndItemSnapValue[] = "ItemSnap";
+constexpr char kOptionWndFogOnValue[] = "FogOn";
 constexpr char kOptionWndCollapsedValue[] = "Collapsed";
 constexpr char kOptionWndTabValue[] = "Tab";
 
 constexpr int kDefaultWidth = 308;
-constexpr int kDefaultHeight = 238;
+constexpr int kDefaultHeight = 374;
 constexpr int kCollapsedHeight = 17;
 constexpr int kTitleBarHeight = 17;
 constexpr int kDefaultX = 185;
@@ -89,6 +92,7 @@ constexpr int kCheckIdNoCtrl = 403;
 constexpr int kCheckIdAttack = 404;
 constexpr int kCheckIdSkill = 405;
 constexpr int kCheckIdItem = 406;
+constexpr int kCheckIdFog = 407;
 
 constexpr std::array<RenderBackendType, 4> kRendererEntries = {
     RenderBackendType::LegacyDirect3D7,
@@ -468,6 +472,49 @@ std::string FormatPercentText(int value)
     return std::string(buffer);
 }
 
+const char* GetVerticalSyncName(bool enabled)
+{
+    return enabled ? "On" : "Off";
+}
+
+const char* GetSpriteFilterName(SpriteFilterMode mode)
+{
+    return mode == SpriteFilterMode::Sharp ? "Sharp" : "Smooth";
+}
+
+std::string FormatFrameLimitText(int frameLimit)
+{
+    if (frameLimit <= 0) {
+        return "Unlimited";
+    }
+
+    char buffer[16] = {};
+    std::snprintf(buffer, sizeof(buffer), "%d", frameLimit);
+    return std::string(buffer);
+}
+
+template <typename T>
+T CycleListedValue(const std::vector<T>& values, T current, int direction)
+{
+    if (values.empty()) {
+        return current;
+    }
+
+    for (size_t index = 0; index < values.size(); ++index) {
+        if (values[index] == current) {
+            int nextIndex = static_cast<int>(index) + (direction > 0 ? 1 : -1);
+            if (nextIndex < 0) {
+                nextIndex = static_cast<int>(values.size()) - 1;
+            } else if (nextIndex >= static_cast<int>(values.size())) {
+                nextIndex = 0;
+            }
+            return values[static_cast<size_t>(nextIndex)];
+        }
+    }
+
+    return values.front();
+}
+
 void LoadSavedAudioSettingsFromIni(int* bgmVolume, int* soundVolume, int* bgmEnabled, int* soundEnabled)
 {
     if (!bgmVolume || !soundVolume || !bgmEnabled || !soundEnabled) {
@@ -486,6 +533,11 @@ void LoadSavedAudioSettingsFromIni(int* bgmVolume, int* soundVolume, int* bgmEna
 }
 
 } // namespace
+
+bool IsOptionFogEnabled()
+{
+    return LoadSettingsIniInt(kOptionWndSection, kOptionWndFogOnValue, 1) != 0;
+}
 
 void ApplySavedAudioSettings()
 {
@@ -518,6 +570,7 @@ UIOptionWnd::UIOptionWnd()
       m_attackSnapCheckBox(nullptr),
       m_skillSnapCheckBox(nullptr),
       m_itemSnapCheckBox(nullptr),
+      m_fogCheckBox(nullptr),
       m_orgHeight(kDefaultHeight),
       m_bgmVolume(100),
       m_soundVolume(100),
@@ -527,6 +580,7 @@ UIOptionWnd::UIOptionWnd()
       m_attackSnap(0),
       m_skillSnap(0),
       m_itemSnap(0),
+      m_fogEnabled(1),
             m_guiScalePercent(GetConfiguredUiScalePercent()),
             m_appliedGuiScalePercent(GetConfiguredUiScalePercent()),
       m_collapsed(0),
@@ -681,6 +735,12 @@ std::vector<UIOptionWnd::GraphicsRowId> UIOptionWnd::GetVisibleGraphicsRows() co
     if (!GetSupportedAnisotropicLevels().empty()) {
         rows.push_back(GraphicsRow_AnisotropicFiltering);
     }
+    rows.push_back(GraphicsRow_VerticalSync);
+    rows.push_back(GraphicsRow_FrameLimit);
+    if (DoesBackendSupportRenderScale(backend)) {
+        rows.push_back(GraphicsRow_RenderScale);
+    }
+    rows.push_back(GraphicsRow_SpriteFiltering);
     return rows;
 }
 
@@ -744,6 +804,7 @@ void UIOptionWnd::LoadSettings()
     m_attackSnap = LoadSettingsIniInt(kOptionWndSection, kOptionWndAttackSnapValue, m_attackSnap);
     m_skillSnap = LoadSettingsIniInt(kOptionWndSection, kOptionWndSkillSnapValue, m_skillSnap);
     m_itemSnap = LoadSettingsIniInt(kOptionWndSection, kOptionWndItemSnapValue, m_itemSnap);
+    m_fogEnabled = LoadSettingsIniInt(kOptionWndSection, kOptionWndFogOnValue, m_fogEnabled);
     m_collapsed = LoadSettingsIniInt(kOptionWndSection, kOptionWndCollapsedValue, m_collapsed);
     m_activeTab = LoadSettingsIniInt(kOptionWndSection, kOptionWndTabValue, m_activeTab);
     m_guiScalePercent = GetConfiguredUiScalePercent();
@@ -785,6 +846,7 @@ void UIOptionWnd::LoadSettings()
     m_attackSnap = (m_attackSnap != 0) ? 1 : 0;
     m_skillSnap = (m_skillSnap != 0) ? 1 : 0;
     m_itemSnap = (m_itemSnap != 0) ? 1 : 0;
+    m_fogEnabled = (m_fogEnabled != 0) ? 1 : 0;
     m_guiScalePercent = ClampUiScalePercent(m_guiScalePercent);
     m_appliedGuiScalePercent = ClampUiScalePercent(m_appliedGuiScalePercent);
     m_guiScalePercent = m_appliedGuiScalePercent;
@@ -822,6 +884,7 @@ void UIOptionWnd::SaveSettings() const
     SaveSettingsIniInt(kOptionWndSection, kOptionWndAttackSnapValue, m_attackSnap != 0 ? 1 : 0);
     SaveSettingsIniInt(kOptionWndSection, kOptionWndSkillSnapValue, m_skillSnap != 0 ? 1 : 0);
     SaveSettingsIniInt(kOptionWndSection, kOptionWndItemSnapValue, m_itemSnap != 0 ? 1 : 0);
+    SaveSettingsIniInt(kOptionWndSection, kOptionWndFogOnValue, m_fogEnabled != 0 ? 1 : 0);
     SaveSettingsIniInt(kOptionWndSection, kOptionWndCollapsedValue, m_collapsed != 0 ? 1 : 0);
     SaveSettingsIniInt(kOptionWndSection, kOptionWndTabValue, m_activeTab);
     SaveConfiguredUiScalePercent(m_appliedGuiScalePercent);
@@ -873,10 +936,18 @@ void UIOptionWnd::ApplyAudioSettings() const
     audio->SetBgmPaused(m_bgmEnabled == 0);
 }
 
+void UIOptionWnd::ApplyFogSetting() const
+{
+    if (CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
+        gameMode->MakeFog(g_session.m_fogOn ? 1 : 0);
+    }
+}
+
 void UIOptionWnd::LayoutControls()
 {
     const bool showAudio = !m_collapsed && m_activeTab == TabId_Audio;
     const bool showGame = !m_collapsed && m_activeTab == TabId_Game;
+    const bool showGraphics = !m_collapsed && m_activeTab == TabId_Graphics;
 
     if (m_bgmOnCheckBox) {
         const RECT toggleRect = GetAudioToggleRect(0);
@@ -913,6 +984,12 @@ void UIOptionWnd::LayoutControls()
         m_itemSnapCheckBox->Move(toggleRect.left, toggleRect.top);
         m_itemSnapCheckBox->SetShow(showGame ? 1 : 0);
         m_itemSnapCheckBox->SetCheck(m_itemSnap);
+    }
+    if (m_fogCheckBox) {
+        const RECT toggleRect = GetFogToggleRect();
+        m_fogCheckBox->Move(toggleRect.left, toggleRect.top);
+        m_fogCheckBox->SetShow(showGraphics ? 1 : 0);
+        m_fogCheckBox->SetCheck(m_fogEnabled);
     }
 }
 
@@ -1122,6 +1199,14 @@ RECT UIOptionWnd::GetGameToggleRect(int toggleIndex) const
     const RECT contentRect = GetContentRect();
     const int top = contentRect.top + 16 + toggleIndex * 26;
     RECT rc = { contentRect.left + 16, top, contentRect.left + 16 + kToggleSize, top + kToggleSize };
+    return rc;
+}
+
+RECT UIOptionWnd::GetFogToggleRect() const
+{
+    const RECT slot = GetRowRect(static_cast<int>(GetVisibleGraphicsRows().size()));
+    const int top = slot.top + 4;
+    RECT rc = { slot.left + 12, top, slot.left + 12 + kToggleSize, top + kToggleSize };
     return rc;
 }
 
@@ -1347,6 +1432,17 @@ void UIOptionWnd::CycleGraphicsSetting(GraphicsRowId rowId, int direction)
                 break;
             }
         }
+    } else if (rowId == GraphicsRow_VerticalSync) {
+        m_graphicsSettings.verticalSync = !m_graphicsSettings.verticalSync;
+    } else if (rowId == GraphicsRow_FrameLimit) {
+        const std::vector<int> limits = { 0, 60, 120 };
+        m_graphicsSettings.frameLimit = CycleListedValue(limits, m_graphicsSettings.frameLimit, direction);
+    } else if (rowId == GraphicsRow_RenderScale) {
+        const std::vector<int> scales = { 75, 100, 125, 150 };
+        m_graphicsSettings.renderScalePercent = CycleListedValue(scales, m_graphicsSettings.renderScalePercent, direction);
+    } else if (rowId == GraphicsRow_SpriteFiltering) {
+        const std::vector<SpriteFilterMode> filters = { SpriteFilterMode::Smooth, SpriteFilterMode::Sharp };
+        m_graphicsSettings.spriteFilter = CycleListedValue(filters, m_graphicsSettings.spriteFilter, direction);
     }
 
     Invalidate();
@@ -1368,6 +1464,14 @@ std::string UIOptionWnd::GetGraphicsRowValue(GraphicsRowId rowId) const
         return FormatMultiplierText(m_graphicsSettings.textureUpscaleFactor);
     case GraphicsRow_AnisotropicFiltering:
         return FormatAnisotropicText(m_graphicsSettings.anisotropicLevel);
+    case GraphicsRow_VerticalSync:
+        return std::string(GetVerticalSyncName(m_graphicsSettings.verticalSync));
+    case GraphicsRow_FrameLimit:
+        return FormatFrameLimitText(m_graphicsSettings.frameLimit);
+    case GraphicsRow_RenderScale:
+        return FormatPercentText(m_graphicsSettings.renderScalePercent);
+    case GraphicsRow_SpriteFiltering:
+        return std::string(GetSpriteFilterName(m_graphicsSettings.spriteFilter));
     default:
         return std::string();
     }
@@ -1403,6 +1507,7 @@ void UIOptionWnd::OnCreate(int cx, int cy)
         m_attackSnapCheckBox = makeCheckBox(kCheckIdAttack, m_attackSnap);
         m_skillSnapCheckBox = makeCheckBox(kCheckIdSkill, m_skillSnap);
         m_itemSnapCheckBox = makeCheckBox(kCheckIdItem, m_itemSnap);
+        m_fogCheckBox = makeCheckBox(kCheckIdFog, m_fogEnabled);
     }
 
     LayoutControls();
@@ -1562,8 +1667,27 @@ void UIOptionWnd::OnDraw()
                 case GraphicsRow_AnisotropicFiltering:
                     label = "Anisotropic";
                     break;
+                case GraphicsRow_VerticalSync:
+                    label = "VSync";
+                    break;
+                case GraphicsRow_FrameLimit:
+                    label = "Frame limit";
+                    break;
+                case GraphicsRow_RenderScale:
+                    label = "Render scale";
+                    break;
+                case GraphicsRow_SpriteFiltering:
+                    label = "Sprite filtering";
+                    break;
                 }
                 DrawSettingRow(hdc, static_cast<int>(index), label, GetGraphicsRowValue(rows[index]));
+            }
+            if (m_fogCheckBox) {
+#if RO_ENABLE_QT6_UI
+                DrawUiOptionText(hdc, m_fogCheckBox->m_x + 18, m_fogCheckBox->m_y - 1, "Fog", RGB(0, 0, 0));
+#else
+                TextOutA(hdc, m_fogCheckBox->m_x + 18, m_fogCheckBox->m_y - 1, "Fog", 3);
+#endif
             }
         }
 
@@ -1750,6 +1874,20 @@ void UIOptionWnd::OnLBtnUp(int x, int y)
 
 bool UIOptionWnd::HandleQtToggleClick(int x, int y)
 {
+    if (m_activeTab == TabId_Graphics) {
+        RECT hit = GetFogToggleRect();
+        hit.right += 72;
+        if (PointInRectXY(hit, x, y)) {
+            m_fogEnabled = (m_fogEnabled != 0) ? 0 : 1;
+            LayoutControls();
+            Invalidate();
+            SaveSettings();
+            ApplyFogSetting();
+            return true;
+        }
+        return false;
+    }
+
     if (m_activeTab == TabId_Audio) {
         if (PointInRectXY(GetAudioToggleRect(0), x, y)) {
             m_bgmEnabled = (m_bgmEnabled != 0) ? 0 : 1;
@@ -1829,6 +1967,8 @@ msgresult_t UIOptionWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, m
         m_skillSnap = (lparam != 0) ? 1 : 0;
     } else if (sender == m_itemSnapCheckBox) {
         m_itemSnap = (lparam != 0) ? 1 : 0;
+    } else if (sender == m_fogCheckBox) {
+        m_fogEnabled = (lparam != 0) ? 1 : 0;
     } else {
         return 0;
     }
@@ -1838,6 +1978,9 @@ msgresult_t UIOptionWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, m
         ApplyAudioSettings();
     } else {
         Invalidate();
+        if (sender == m_fogCheckBox) {
+            ApplyFogSetting();
+        }
     }
     SaveSettings();
     return 1;
@@ -2051,12 +2194,34 @@ bool UIOptionWnd::GetDisplayDataForQt(DisplayData* outData) const
                 case GraphicsRow_AnisotropicFiltering:
                     row.label = "Anisotropic";
                     break;
+                case GraphicsRow_VerticalSync:
+                    row.label = "VSync";
+                    break;
+                case GraphicsRow_FrameLimit:
+                    row.label = "Frame limit";
+                    break;
+                case GraphicsRow_RenderScale:
+                    row.label = "Render scale";
+                    break;
+                case GraphicsRow_SpriteFiltering:
+                    row.label = "Sprite filtering";
+                    break;
                 default:
                     break;
                 }
                 row.value = GetGraphicsRowValue(rows[index]);
                 data.graphicsRows.push_back(std::move(row));
             }
+
+            const RECT fogRect = GetFogToggleRect();
+            DisplayToggle fogToggle{};
+            fogToggle.x = fogRect.left;
+            fogToggle.y = fogRect.top;
+            fogToggle.width = fogRect.right - fogRect.left;
+            fogToggle.height = fogRect.bottom - fogRect.top;
+            fogToggle.checked = m_fogEnabled != 0;
+            fogToggle.label = "Fog";
+            data.toggles.push_back(std::move(fogToggle));
         }
     }
 

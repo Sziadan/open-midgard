@@ -2722,6 +2722,11 @@ bool ApplySelfStatusUpdate(CGameMode& mode, u32 statusType, u32 value)
         return true;
     case kStatusBaseLevel:
         player->m_clevel = ClampToU16(value);
+        // Ref GameModeShowEFST starts the aura when it learns clevel is 99.
+        // The local client learns that from this status update.
+        if (value == 99) {
+            player->SendMsg(player, 126, 0, 0, 0);
+        }
         return true;
     case kStatusJobLevel:
         return updatedSession;
@@ -5768,6 +5773,11 @@ void ApplyRuntimeActorState(CGameMode& mode, const RuntimeActorState& state)
     }
 
     RefreshActorEffectStatePresentation(actor, oldEffectState);
+    // Ref/GameModePacket.cpp GameModeShowEFST: clevel 99 starts message 126
+    // unless the actor is in cloak. Hiding and burrow are handled inside 126.
+    if (state.clevel == 99 && !HasEffectStateFlag(state.effectState, kEffectStateSpecialHidingMask)) {
+        actor->SendMsg(actor, 126, 0, 0, 0);
+    }
     if (localPlayer && IsEffectStatePushCartChanged(actor->m_effectState, oldEffectState)) {
         InvalidateCartUi();
     }

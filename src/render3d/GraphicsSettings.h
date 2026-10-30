@@ -20,6 +20,11 @@ enum class SmaaPreset {
     High = 0,
 };
 
+enum class SpriteFilterMode {
+    Smooth = 0,
+    Sharp,
+};
+
 struct GraphicsSettings {
     int width;
     int height;
@@ -27,6 +32,10 @@ struct GraphicsSettings {
     int textureUpscaleFactor;
     int anisotropicLevel;
     AntiAliasingMode antiAliasing;
+    bool verticalSync;
+    SpriteFilterMode spriteFilter;
+    int frameLimit;
+    int renderScalePercent;
 };
 
 GraphicsSettings LoadGraphicsSettings();
@@ -41,6 +50,9 @@ bool DoesBackendSupportResolutionSelection(RenderBackendType backend);
 bool DoesBackendSupportTextureUpscaling(RenderBackendType backend);
 bool DoesBackendSupportAnisotropicFiltering(RenderBackendType backend);
 bool DoesBackendSupportAntiAliasing(RenderBackendType backend);
+bool DoesBackendSupportRenderScale(RenderBackendType backend);
+void GetSceneRenderSize(int windowWidth, int windowHeight, int* outWidth, int* outHeight);
+bool GraphicsSettingsUseOffscreenScene(RenderBackendType backend);
 std::vector<AntiAliasingMode> GetSupportedAntiAliasingModesForBackend(RenderBackendType backend);
 bool DoesBackendSupportAntiAliasingMode(RenderBackendType backend, AntiAliasingMode mode);
 AntiAliasingMode GetEffectiveAntiAliasingModeForBackend(RenderBackendType backend, AntiAliasingMode requestedMode);

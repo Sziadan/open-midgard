@@ -332,6 +332,7 @@ PFN_vkCmdDraw vkCmdDraw = nullptr;
 PFN_vkCmdDrawIndexed vkCmdDrawIndexed = nullptr;
 PFN_vkCmdPipelineBarrier vkCmdPipelineBarrier = nullptr;
 PFN_vkCmdCopyImage vkCmdCopyImage = nullptr;
+PFN_vkCmdBlitImage vkCmdBlitImage = nullptr;
 PFN_vkCmdCopyBufferToImage vkCmdCopyBufferToImage = nullptr;
 PFN_vkDestroySurfaceKHR vkDestroySurfaceKHR = nullptr;
 PFN_vkGetPhysicalDeviceSurfaceSupportKHR vkGetPhysicalDeviceSurfaceSupportKHR = nullptr;
@@ -528,6 +529,7 @@ bool LoadVulkanDeviceFunctions(VkDevice device)
     vkCmdDrawIndexed = reinterpret_cast<PFN_vkCmdDrawIndexed>(vkGetDeviceProcAddr(device, "vkCmdDrawIndexed"));
     vkCmdPipelineBarrier = reinterpret_cast<PFN_vkCmdPipelineBarrier>(vkGetDeviceProcAddr(device, "vkCmdPipelineBarrier"));
     vkCmdCopyImage = reinterpret_cast<PFN_vkCmdCopyImage>(vkGetDeviceProcAddr(device, "vkCmdCopyImage"));
+    vkCmdBlitImage = reinterpret_cast<PFN_vkCmdBlitImage>(vkGetDeviceProcAddr(device, "vkCmdBlitImage"));
     vkCmdCopyBufferToImage = reinterpret_cast<PFN_vkCmdCopyBufferToImage>(vkGetDeviceProcAddr(device, "vkCmdCopyBufferToImage"));
     vkCreateSwapchainKHR = reinterpret_cast<PFN_vkCreateSwapchainKHR>(vkGetDeviceProcAddr(device, "vkCreateSwapchainKHR"));
     vkDestroySwapchainKHR = reinterpret_cast<PFN_vkDestroySwapchainKHR>(vkGetDeviceProcAddr(device, "vkDestroySwapchainKHR"));
@@ -598,6 +600,7 @@ bool LoadVulkanDeviceFunctions(VkDevice device)
         && vkCmdDrawIndexed
         && vkCmdPipelineBarrier
         && vkCmdCopyImage
+        && vkCmdBlitImage
         && vkCmdCopyBufferToImage
         && vkCreateSwapchainKHR
         && vkDestroySwapchainKHR
@@ -1168,29 +1171,30 @@ float ComputeSmaaColorDelta(float3 a, float3 b)
 
 float4 PSMainFXAA(VSOutputPost input) : SV_Target
 {
-    float2 invResolution = float2(
+    const float2 texel = float2(
         1.0f / max(g_screenWidth, 1.0f),
         1.0f / max(g_screenHeight, 1.0f));
 
-    float4 centerSample = g_texture0.Sample(g_sampler0, input.uv);
-    float3 rgbM = centerSample.rgb;
-    float lumaM = ComputeFxaaLuma(rgbM);
+    // Distant silhouettes are low contrast, so the edge test is looser than a
+    // close-up preset. The subpixel blend then pulls a fractional edge toward
+    // its neighbors, which is what stops it crawling while the camera moves.
+    const float edgeThreshold = 1.0f / 16.0f;
+    const float edgeThresholdMin = 1.0f / 48.0f;
+    const float subpixTrim = 0.70f;
 
-    float3 rgbNW = g_texture0.Sample(g_sampler0, input.uv + float2(-1.0f, -1.0f) * invResolution).rgb;
-    float3 rgbNE = g_texture0.Sample(g_sampler0, input.uv + float2(1.0f, -1.0f) * invResolution).rgb;
-    float3 rgbSW = g_texture0.Sample(g_sampler0, input.uv + float2(-1.0f, 1.0f) * invResolution).rgb;
-    float3 rgbSE = g_texture0.Sample(g_sampler0, input.uv + float2(1.0f, 1.0f) * invResolution).rgb;
+    const float4 centerSample = g_texture0.Sample(g_sampler0, input.uv);
+    const float3 rgbM = centerSample.rgb;
+    const float lumaM = ComputeFxaaLuma(rgbM);
 
-    float lumaNW = ComputeFxaaLuma(rgbNW);
-    float lumaNE = ComputeFxaaLuma(rgbNE);
-    float lumaSW = ComputeFxaaLuma(rgbSW);
-    float lumaSE = ComputeFxaaLuma(rgbSE);
+    const float lumaNW = ComputeFxaaLuma(g_texture0.Sample(g_sampler0, input.uv + float2(-1.0f, -1.0f) * texel).rgb);
+    const float lumaNE = ComputeFxaaLuma(g_texture0.Sample(g_sampler0, input.uv + float2(1.0f, -1.0f) * texel).rgb);
+    const float lumaSW = ComputeFxaaLuma(g_texture0.Sample(g_sampler0, input.uv + float2(-1.0f, 1.0f) * texel).rgb);
+    const float lumaSE = ComputeFxaaLuma(g_texture0.Sample(g_sampler0, input.uv + float2(1.0f, 1.0f) * texel).rgb);
 
-    float lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
-    float lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
-    float lumaRange = lumaMax - lumaMin;
-    float threshold = max(0.03125f, lumaMax * 0.125f);
-    if (lumaRange < threshold) {
+    const float lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
+    const float lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
+    const float lumaRange = lumaMax - lumaMin;
+    if (lumaRange < max(edgeThresholdMin, lumaMax * edgeThreshold)) {
         return centerSample;
     }
 
@@ -1198,21 +1202,30 @@ float4 PSMainFXAA(VSOutputPost input) : SV_Target
     dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));
     dir.y = (lumaNW + lumaSW) - (lumaNE + lumaSE);
 
-    float dirReduce = max(
+    const float dirReduce = max(
         (lumaNW + lumaNE + lumaSW + lumaSE) * (0.25f / 8.0f),
         1.0f / 128.0f);
-    float rcpDirMin = 1.0f / (min(abs(dir.x), abs(dir.y)) + dirReduce);
-    dir = clamp(dir * rcpDirMin, float2(-8.0f, -8.0f), float2(8.0f, 8.0f)) * invResolution;
+    const float rcpDirMin = 1.0f / (min(abs(dir.x), abs(dir.y)) + dirReduce);
+    dir = clamp(dir * rcpDirMin, float2(-8.0f, -8.0f), float2(8.0f, 8.0f)) * texel;
 
-    float3 rgbA = 0.5f * (
+    const float3 rgbA = 0.5f * (
         g_texture0.Sample(g_sampler0, input.uv + dir * (1.0f / 3.0f - 0.5f)).rgb +
         g_texture0.Sample(g_sampler0, input.uv + dir * (2.0f / 3.0f - 0.5f)).rgb);
-    float3 rgbB = rgbA * 0.5f + 0.25f * (
+    const float3 rgbB = rgbA * 0.5f + 0.25f * (
         g_texture0.Sample(g_sampler0, input.uv + dir * -0.5f).rgb +
         g_texture0.Sample(g_sampler0, input.uv + dir * 0.5f).rgb);
-    float lumaB = ComputeFxaaLuma(rgbB);
+    const float lumaB = ComputeFxaaLuma(rgbB);
+    const float3 rgbEdge = (lumaB < lumaMin || lumaB > lumaMax) ? rgbA : rgbB;
 
-    return float4((lumaB < lumaMin || lumaB > lumaMax) ? rgbA : rgbB, centerSample.a);
+    const float3 rgbBlur = (rgbM
+        + g_texture0.Sample(g_sampler0, input.uv + float2(0.0f, -1.0f) * texel).rgb
+        + g_texture0.Sample(g_sampler0, input.uv + float2(0.0f, 1.0f) * texel).rgb
+        + g_texture0.Sample(g_sampler0, input.uv + float2(-1.0f, 0.0f) * texel).rgb
+        + g_texture0.Sample(g_sampler0, input.uv + float2(1.0f, 0.0f) * texel).rgb) * 0.2f;
+    const float subpix = saturate(abs(ComputeFxaaLuma(rgbBlur) - lumaM) / lumaRange);
+    const float subpixBlend = subpix * subpix * subpixTrim;
+
+    return float4(lerp(rgbEdge, rgbBlur, subpixBlend), centerSample.a);
 }
 
 float4 PSMainSMAAEdge(VSOutputPost input) : SV_Target
@@ -1228,21 +1241,20 @@ float4 PSMainSMAAEdge(VSOutputPost input) : SV_Target
     const float3 bottomSample = g_texture0.Sample(g_sampler0, input.uv + float2(0.0f, 1.0f) * invResolution).rgb;
 
     const float lumaCenter = ComputeFxaaLuma(centerSample.rgb);
-    const float lumaLeft = ComputeFxaaLuma(leftSample);
-    const float lumaTop = ComputeFxaaLuma(topSample);
-    const float lumaRight = ComputeFxaaLuma(rightSample);
-    const float lumaBottom = ComputeFxaaLuma(bottomSample);
+    const float topDelta = max(abs(lumaCenter - ComputeFxaaLuma(topSample)), ComputeSmaaColorDelta(centerSample.rgb, topSample));
+    const float bottomDelta = max(abs(lumaCenter - ComputeFxaaLuma(bottomSample)), ComputeSmaaColorDelta(centerSample.rgb, bottomSample));
+    const float leftDelta = max(abs(lumaCenter - ComputeFxaaLuma(leftSample)), ComputeSmaaColorDelta(centerSample.rgb, leftSample));
+    const float rightDelta = max(abs(lumaCenter - ComputeFxaaLuma(rightSample)), ComputeSmaaColorDelta(centerSample.rgb, rightSample));
 
-    const float lumaHorizontal = max(abs(lumaCenter - lumaTop), abs(lumaCenter - lumaBottom));
-    const float lumaVertical = max(abs(lumaCenter - lumaLeft), abs(lumaCenter - lumaRight));
-    const float colorHorizontal = max(ComputeSmaaColorDelta(centerSample.rgb, topSample), ComputeSmaaColorDelta(centerSample.rgb, bottomSample));
-    const float colorVertical = max(ComputeSmaaColorDelta(centerSample.rgb, leftSample), ComputeSmaaColorDelta(centerSample.rgb, rightSample));
+    // Soft ramp so a distant edge fades in instead of popping on and off.
+    const float edgeFloor = 0.012f;
+    const float edgeCeil = 0.045f;
+    const float horizontalEdge = smoothstep(edgeFloor, edgeCeil, max(topDelta, bottomDelta));
+    const float verticalEdge = smoothstep(edgeFloor, edgeCeil, max(leftDelta, rightDelta));
+    const float towardTop = step(bottomDelta, topDelta);
+    const float towardLeft = step(rightDelta, leftDelta);
 
-    const float threshold = 0.050f;
-    const float horizontalEdge = step(threshold, max(lumaHorizontal, colorHorizontal));
-    const float verticalEdge = step(threshold, max(lumaVertical, colorVertical));
-
-    return float4(horizontalEdge, verticalEdge, 0.0f, centerSample.a);
+    return float4(horizontalEdge, verticalEdge, towardTop, towardLeft);
 }
 
 float4 PSMainSMAABlendWeight(VSOutputPost input) : SV_Target
@@ -1252,15 +1264,41 @@ float4 PSMainSMAABlendWeight(VSOutputPost input) : SV_Target
         1.0f / max(g_screenHeight, 1.0f));
 
     const float4 edgeCenter = g_texture0.Sample(g_sampler0, input.uv);
-    const float4 edgeLeft = g_texture0.Sample(g_sampler0, input.uv + float2(-1.0f, 0.0f) * invResolution);
-    const float4 edgeTop = g_texture0.Sample(g_sampler0, input.uv + float2(0.0f, -1.0f) * invResolution);
-    const float4 edgeRight = g_texture0.Sample(g_sampler0, input.uv + float2(1.0f, 0.0f) * invResolution);
-    const float4 edgeBottom = g_texture0.Sample(g_sampler0, input.uv + float2(0.0f, 1.0f) * invResolution);
+    const float horizontalEdge = edgeCenter.r;
+    const float verticalEdge = edgeCenter.g;
+    const float edgeStrength = max(horizontalEdge, verticalEdge);
+    if (edgeStrength < 0.02f) {
+        return float4(0.5f, 0.5f, 0.0f, 0.0f);
+    }
 
-    const float horizontalWeight = saturate(edgeCenter.r + max(edgeTop.r, edgeBottom.r) * 0.5f + max(edgeLeft.r, edgeRight.r) * 0.25f);
-    const float verticalWeight = saturate(edgeCenter.g + max(edgeLeft.g, edgeRight.g) * 0.5f + max(edgeTop.g, edgeBottom.g) * 0.25f);
+    // One blend direction for the whole edge. Mixing both axes is what turned
+    // a straight line into a row of triangles.
+    float2 offset = float2(0.0f, 0.0f);
+    float continued = 0.0f;
+    const bool diagonal = horizontalEdge > 0.08f && verticalEdge > 0.08f
+        && horizontalEdge < verticalEdge * 1.45f
+        && verticalEdge < horizontalEdge * 1.45f;
+    if (diagonal) {
+        offset = float2(edgeCenter.a > 0.5f ? -0.5f : 0.5f, edgeCenter.b > 0.5f ? -0.5f : 0.5f);
+        const float4 edgeBack = g_texture0.Sample(g_sampler0, input.uv - offset * invResolution);
+        const float4 edgeForward = g_texture0.Sample(g_sampler0, input.uv + offset * invResolution);
+        continued = max(max(edgeBack.r, edgeBack.g), max(edgeForward.r, edgeForward.g));
+    } else if (horizontalEdge >= verticalEdge) {
+        offset = float2(0.0f, edgeCenter.b > 0.5f ? -0.5f : 0.5f);
+        const float left = g_texture0.Sample(g_sampler0, input.uv + float2(-1.0f, 0.0f) * invResolution).r;
+        const float right = g_texture0.Sample(g_sampler0, input.uv + float2(1.0f, 0.0f) * invResolution).r;
+        continued = max(left, right);
+    } else {
+        offset = float2(edgeCenter.a > 0.5f ? -0.5f : 0.5f, 0.0f);
+        const float above = g_texture0.Sample(g_sampler0, input.uv + float2(0.0f, -1.0f) * invResolution).g;
+        const float below = g_texture0.Sample(g_sampler0, input.uv + float2(0.0f, 1.0f) * invResolution).g;
+        continued = max(above, below);
+    }
 
-    return float4(horizontalWeight, verticalWeight, 0.0f, 1.0f);
+    const float amount = edgeStrength * lerp(0.55f, 0.90f, saturate(continued));
+    // The weight target is 8-bit unsigned, so pack the signed half-texel offset into 0..1.
+    const float2 encodedOffset = offset * 0.5f + 0.5f;
+    return float4(encodedOffset, 0.0f, amount);
 }
 
 float4 PSMainSMAANeighborhood(VSOutputPost input) : SV_Target
@@ -1271,14 +1309,18 @@ float4 PSMainSMAANeighborhood(VSOutputPost input) : SV_Target
 
     const float4 centerSample = g_texture0.Sample(g_sampler0, input.uv);
     const float4 weights = g_texture1.Sample(g_sampler0, input.uv);
-    const float4 leftSample = g_texture0.Sample(g_sampler0, input.uv + float2(-1.0f, 0.0f) * invResolution);
-    const float4 topSample = g_texture0.Sample(g_sampler0, input.uv + float2(0.0f, -1.0f) * invResolution);
+    if (weights.a < 0.02f) {
+        return centerSample;
+    }
 
-    float3 blended = centerSample.rgb;
-    blended = lerp(blended, 0.5f * (centerSample.rgb + topSample.rgb), saturate(weights.r));
-    blended = lerp(blended, 0.5f * (centerSample.rgb + leftSample.rgb), saturate(weights.g));
+    const float2 offset = weights.xy * 2.0f - 1.0f;
+    const float3 otherSample = g_texture0.Sample(g_sampler0, input.uv + offset * invResolution).rgb;
+    return float4(lerp(centerSample.rgb, otherSample, saturate(weights.a)), centerSample.a);
+}
 
-    return float4(blended, centerSample.a);
+float4 PSMainCopy(VSOutputPost input) : SV_Target
+{
+    return g_texture0.Sample(g_sampler0, input.uv);
 }
 )";
 }
@@ -1870,6 +1912,7 @@ public:
         SafeRelease(m_smaaNeighborhoodPixelShader);
         SafeRelease(m_smaaBlendWeightPixelShader);
         SafeRelease(m_smaaEdgePixelShader);
+        SafeRelease(m_copyPixelShader);
         SafeRelease(m_fxaaPixelShader);
         SafeRelease(m_postVertexShader);
         SafeRelease(m_pixelShader);
@@ -1929,7 +1972,7 @@ public:
         };
         m_context->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
         m_context->ClearRenderTargetView(m_renderTargetView, clearColor);
-        m_scenePresentDirty = IsScenePostProcessEnabled();
+        m_scenePresentDirty = UsesOffscreenSceneTarget();
         return 0;
     }
 
@@ -1937,7 +1980,7 @@ public:
     {
         if (m_context && m_depthStencilView) {
             m_context->ClearDepthStencilView(m_depthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-            if (IsScenePostProcessEnabled()) {
+            if (UsesOffscreenSceneTarget()) {
                 m_scenePresentDirty = true;
             }
         }
@@ -1992,9 +2035,15 @@ public:
 
     bool BeginScene() override
     {
+        if (!SceneTargetsAreCurrent() && !RefreshRenderTarget()) {
+            return false;
+        }
         if (m_context && m_renderTargetView) {
             m_context->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
             ApplyViewport();
+        }
+        if (UsesOffscreenSceneTarget()) {
+            m_scenePresentDirty = true;
         }
         return m_context != nullptr;
     }
@@ -2057,6 +2106,7 @@ public:
         unsigned int surfaceHeight = requestedHeight;
         AdjustTextureSize(&surfaceWidth, &surfaceHeight);
 
+        const bool buildMipChain = texture->m_upscaleFactor > 1u;
         D3D11_TEXTURE2D_DESC desc{};
         desc.Width = (std::max)(1u, surfaceWidth);
         desc.Height = (std::max)(1u, surfaceHeight);
@@ -2066,6 +2116,14 @@ public:
         desc.SampleDesc.Count = 1;
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+        if (buildMipChain) {
+            unsigned int mipEdge = (std::max)(desc.Width, desc.Height);
+            while (mipEdge > 1u) {
+                mipEdge >>= 1u;
+                ++desc.MipLevels;
+            }
+            desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+        }
 
         ID3D11Texture2D* textureObject = nullptr;
         HRESULT hr = m_device->CreateTexture2D(&desc, nullptr, &textureObject);
@@ -2074,8 +2132,12 @@ public:
             return false;
         }
 
+        D3D11_RENDER_TARGET_VIEW_DESC mipRenderTargetDesc{};
+        mipRenderTargetDesc.Format = desc.Format;
+        mipRenderTargetDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+        mipRenderTargetDesc.Texture2D.MipSlice = 0;
         ID3D11RenderTargetView* renderTargetView = nullptr;
-        hr = m_device->CreateRenderTargetView(textureObject, nullptr, &renderTargetView);
+        hr = m_device->CreateRenderTargetView(textureObject, buildMipChain ? &mipRenderTargetDesc : nullptr, &renderTargetView);
         if (FAILED(hr) || !renderTargetView) {
             SafeRelease(renderTargetView);
             SafeRelease(textureObject);
@@ -2133,6 +2195,9 @@ public:
         updateBox.bottom = static_cast<UINT>(y + h);
         updateBox.back = 1;
         m_context->UpdateSubresource(textureObject, 0, &updateBox, uploadBuffer.data(), static_cast<UINT>(w * sizeof(unsigned int)), 0);
+        if (texture->m_upscaleFactor > 1u && texture->m_backendTextureView != nullptr) {
+            m_context->GenerateMips(static_cast<ID3D11ShaderResourceView*>(texture->m_backendTextureView));
+        }
         return true;
     }
 
@@ -2158,9 +2223,14 @@ private:
             targetWidth = (std::max)(1, static_cast<int>(clientRect.right - clientRect.left));
             targetHeight = (std::max)(1, static_cast<int>(clientRect.bottom - clientRect.top));
         }
+        if (UsesOffscreenSceneTarget()) {
+            GetSceneRenderSize(targetWidth, targetHeight, &targetWidth, &targetHeight);
+        }
         if (targetWidth <= 0 || targetHeight <= 0) {
             return false;
         }
+        m_depthWidth = targetWidth;
+        m_depthHeight = targetHeight;
 
         D3D11_TEXTURE2D_DESC depthDesc{};
         depthDesc.Width = static_cast<UINT>(targetWidth);
@@ -2320,6 +2390,32 @@ private:
             return false;
         }
 
+        ID3DBlob* copyPixelShaderBlob = nullptr;
+        if (!CompileShaderBlob(shaderSource, "PSMainCopy", "ps_4_0", &copyPixelShaderBlob)) {
+            SafeRelease(vertexShaderTlBlob);
+            SafeRelease(vertexShaderLmBlob);
+            SafeRelease(pixelShaderBlob);
+            SafeRelease(postVertexShaderBlob);
+            SafeRelease(fxaaPixelShaderBlob);
+            SafeRelease(smaaEdgePixelShaderBlob);
+            SafeRelease(smaaBlendWeightPixelShaderBlob);
+            SafeRelease(smaaNeighborhoodPixelShaderBlob);
+            return false;
+        }
+        hr = m_device->CreatePixelShader(copyPixelShaderBlob->GetBufferPointer(), copyPixelShaderBlob->GetBufferSize(), nullptr, &m_copyPixelShader);
+        SafeRelease(copyPixelShaderBlob);
+        if (FAILED(hr) || !m_copyPixelShader) {
+            SafeRelease(vertexShaderTlBlob);
+            SafeRelease(vertexShaderLmBlob);
+            SafeRelease(pixelShaderBlob);
+            SafeRelease(postVertexShaderBlob);
+            SafeRelease(fxaaPixelShaderBlob);
+            SafeRelease(smaaEdgePixelShaderBlob);
+            SafeRelease(smaaBlendWeightPixelShaderBlob);
+            SafeRelease(smaaNeighborhoodPixelShaderBlob);
+            return false;
+        }
+
         const D3D11_INPUT_ELEMENT_DESC tlLayoutDesc[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, static_cast<UINT>(offsetof(tlvertex3d, x)), D3D11_INPUT_PER_VERTEX_DATA, 0 },
             { "COLOR", 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0, static_cast<UINT>(offsetof(tlvertex3d, color)), D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -2445,17 +2541,28 @@ private:
         m_samplerStates.clear();
     }
 
-    void ApplyViewport()
+    void ApplyViewport(int width, int height)
     {
-        if (!m_context || m_renderWidth <= 0 || m_renderHeight <= 0) {
+        if (!m_context || width <= 0 || height <= 0) {
             return;
         }
         D3D11_VIEWPORT viewport{};
-        viewport.Width = static_cast<float>(m_renderWidth);
-        viewport.Height = static_cast<float>(m_renderHeight);
+        viewport.Width = static_cast<float>(width);
+        viewport.Height = static_cast<float>(height);
         viewport.MinDepth = 0.0f;
         viewport.MaxDepth = 1.0f;
         m_context->RSSetViewports(1, &viewport);
+    }
+
+    void ApplyViewport()
+    {
+        int width = m_renderWidth;
+        int height = m_renderHeight;
+        if (UsesOffscreenSceneTarget() && m_sceneWidth > 0 && m_sceneHeight > 0) {
+            width = m_sceneWidth;
+            height = m_sceneHeight;
+        }
+        ApplyViewport(width, height);
     }
 
     ID3D11BlendState* GetBlendState()
@@ -2708,7 +2815,7 @@ private:
             m_context->Draw(vertexCount, 0);
         }
 
-        if (IsScenePostProcessEnabled()) {
+        if (UsesOffscreenSceneTarget()) {
             m_scenePresentDirty = true;
         }
     }
@@ -2738,12 +2845,14 @@ private:
         if (FAILED(hr) || !m_swapChainRenderTargetView) {
             return false;
         }
-        if (IsScenePostProcessEnabled()) {
+        if (UsesOffscreenSceneTarget()) {
             if (!CreateSceneRenderTargetResources()) {
                 return false;
             }
             m_renderTargetView = m_sceneRenderTargetView;
         } else {
+            m_sceneWidth = m_renderWidth;
+            m_sceneHeight = m_renderHeight;
             m_renderTargetView = m_swapChainRenderTargetView;
         }
         if (m_renderTargetView) {
@@ -2796,8 +2905,28 @@ private:
         return mode == AntiAliasingMode::FXAA || mode == AntiAliasingMode::SMAA;
     }
 
+    bool UsesOffscreenSceneTarget() const
+    {
+        return GraphicsSettingsUseOffscreenScene(RenderBackendType::Direct3D11);
+    }
+
+    bool SceneTargetsAreCurrent() const
+    {
+        int desiredWidth = m_renderWidth;
+        int desiredHeight = m_renderHeight;
+        const bool offscreen = UsesOffscreenSceneTarget();
+        if (offscreen) {
+            GetSceneRenderSize(m_renderWidth, m_renderHeight, &desiredWidth, &desiredHeight);
+        }
+        const bool haveScene = m_sceneTexture != nullptr;
+        return offscreen == haveScene
+            && m_depthWidth == desiredWidth
+            && m_depthHeight == desiredHeight
+            && (!offscreen || (m_sceneWidth == desiredWidth && m_sceneHeight == desiredHeight));
+    }
+
     bool DrawPostProcessPass(ID3D11RenderTargetView* targetView, ID3D11ShaderResourceView* sourceView0,
-        ID3D11ShaderResourceView* sourceView1, ID3D11PixelShader* pixelShader)
+        ID3D11ShaderResourceView* sourceView1, ID3D11PixelShader* pixelShader, int viewportWidth, int viewportHeight)
     {
         if (!m_context || !targetView || !sourceView0 || !m_postVertexShader || !pixelShader
             || !m_constantBuffer || !m_postSamplerState || !m_postBlendState
@@ -2812,7 +2941,7 @@ private:
         m_context->OMSetBlendState(m_postBlendState, blendFactor, 0xFFFFFFFFu);
         m_context->OMSetDepthStencilState(m_postDepthStencilState, 0);
         m_context->RSSetState(m_postRasterizerState);
-        ApplyViewport();
+        ApplyViewport(viewportWidth, viewportHeight);
 
         m_context->IASetInputLayout(nullptr);
         m_context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
@@ -2858,9 +2987,12 @@ private:
             targetWidth = (std::max)(1, static_cast<int>(clientRect.right - clientRect.left));
             targetHeight = (std::max)(1, static_cast<int>(clientRect.bottom - clientRect.top));
         }
+        GetSceneRenderSize(targetWidth, targetHeight, &targetWidth, &targetHeight);
         if (targetWidth <= 0 || targetHeight <= 0) {
             return false;
         }
+        m_sceneWidth = targetWidth;
+        m_sceneHeight = targetHeight;
 
         D3D11_TEXTURE2D_DESC sceneDesc{};
         sceneDesc.Width = static_cast<UINT>(targetWidth);
@@ -2933,16 +3065,18 @@ private:
 
     bool EnsureScenePresentedToBackBuffer()
     {
-        if (!IsScenePostProcessEnabled() || !m_scenePresentDirty) {
+        if (!UsesOffscreenSceneTarget() || !m_scenePresentDirty) {
             return true;
         }
         if (!m_context || !m_sceneShaderResourceView || !m_constantBuffer) {
             return false;
         }
 
+        const int sceneWidth = (std::max)(1, m_sceneWidth);
+        const int sceneHeight = (std::max)(1, m_sceneHeight);
         ModernDrawConstants constants{};
-        constants.screenWidth = static_cast<float>((std::max)(1, m_renderWidth));
-        constants.screenHeight = static_cast<float>((std::max)(1, m_renderHeight));
+        constants.screenWidth = static_cast<float>(sceneWidth);
+        constants.screenHeight = static_cast<float>(sceneHeight);
         if (!UploadBuffer(m_constantBuffer, &constants, sizeof(constants))) {
             return false;
         }
@@ -2953,20 +3087,21 @@ private:
                 || !m_smaaEdgePixelShader || !m_smaaBlendWeightPixelShader || !m_smaaNeighborhoodPixelShader) {
                 return false;
             }
-            if (!DrawPostProcessPass(m_smaaEdgeRenderTargetView, m_sceneShaderResourceView, nullptr, m_smaaEdgePixelShader)) {
+            if (!DrawPostProcessPass(m_smaaEdgeRenderTargetView, m_sceneShaderResourceView, nullptr, m_smaaEdgePixelShader, sceneWidth, sceneHeight)) {
                 return false;
             }
-            if (!DrawPostProcessPass(m_smaaBlendWeightRenderTargetView, m_smaaEdgeShaderResourceView, nullptr, m_smaaBlendWeightPixelShader)) {
+            if (!DrawPostProcessPass(m_smaaBlendWeightRenderTargetView, m_smaaEdgeShaderResourceView, nullptr, m_smaaBlendWeightPixelShader, sceneWidth, sceneHeight)) {
                 return false;
             }
-            if (!DrawPostProcessPass(m_swapChainRenderTargetView, m_sceneShaderResourceView, m_smaaBlendWeightShaderResourceView, m_smaaNeighborhoodPixelShader)) {
+            if (!DrawPostProcessPass(m_swapChainRenderTargetView, m_sceneShaderResourceView, m_smaaBlendWeightShaderResourceView, m_smaaNeighborhoodPixelShader, m_renderWidth, m_renderHeight)) {
                 return false;
             }
         } else {
-            if (!m_swapChainRenderTargetView || !m_fxaaPixelShader) {
+            ID3D11PixelShader* presentShader = IsFxaaEnabled() ? m_fxaaPixelShader : m_copyPixelShader;
+            if (!m_swapChainRenderTargetView || !presentShader) {
                 return false;
             }
-            if (!DrawPostProcessPass(m_swapChainRenderTargetView, m_sceneShaderResourceView, nullptr, m_fxaaPixelShader)) {
+            if (!DrawPostProcessPass(m_swapChainRenderTargetView, m_sceneShaderResourceView, nullptr, presentShader, m_renderWidth, m_renderHeight)) {
                 return false;
             }
         }
@@ -3001,6 +3136,7 @@ private:
     ID3D11PixelShader* m_pixelShader;
     ID3D11VertexShader* m_postVertexShader;
     ID3D11PixelShader* m_fxaaPixelShader;
+    ID3D11PixelShader* m_copyPixelShader = nullptr;
     ID3D11PixelShader* m_smaaEdgePixelShader;
     ID3D11PixelShader* m_smaaBlendWeightPixelShader;
     ID3D11PixelShader* m_smaaNeighborhoodPixelShader;
@@ -3023,6 +3159,10 @@ private:
     std::vector<RasterizerStateEntry> m_rasterizerStates;
     std::vector<SamplerStateEntry> m_samplerStates;
     bool m_scenePresentDirty;
+    int m_sceneWidth = 0;
+    int m_sceneHeight = 0;
+    int m_depthWidth = 0;
+    int m_depthHeight = 0;
 };
 #else
 class D3D11RenderDevice final : public UnsupportedModernRenderDevice {
@@ -3079,7 +3219,7 @@ public:
                 outInfo->adapterLuidHigh = luid.HighPart;
             }
             outInfo->minimumFeatureLevel = static_cast<uint32_t>(D3D_FEATURE_LEVEL_11_0);
-            ID3D12Resource* colorTarget = IsScenePostProcessEnabled() && m_frameIndex < kFrameCount
+            ID3D12Resource* colorTarget = UsesOffscreenSceneTarget() && m_frameIndex < kFrameCount
                 ? m_sceneRenderTargets[m_frameIndex]
                 : GetCurrentBackBuffer();
             outInfo->colorTarget = colorTarget;
@@ -3366,7 +3506,9 @@ public:
         SafeRelease(m_smaaNeighborhoodPipelineState);
         SafeRelease(m_smaaBlendWeightPipelineState);
         SafeRelease(m_smaaEdgePipelineState);
+        SafeRelease(m_copyPipelineState);
         SafeRelease(m_postPipelineState);
+        SafeRelease(m_copyPixelShaderBlob);
         SafeRelease(m_smaaNeighborhoodPixelShaderBlob);
         SafeRelease(m_smaaBlendWeightPixelShaderBlob);
         SafeRelease(m_smaaEdgePixelShaderBlob);
@@ -3439,9 +3581,9 @@ public:
             static_cast<float>(color & 0xFFu) / 255.0f,
             static_cast<float>((color >> 24) & 0xFFu) / 255.0f,
         };
-        const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = IsScenePostProcessEnabled() ? GetCurrentSceneRtvHandle() : GetCurrentRtvHandle();
+        const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = UsesOffscreenSceneTarget() ? GetCurrentSceneRtvHandle() : GetCurrentRtvHandle();
         m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-        m_scenePresentDirty = IsScenePostProcessEnabled();
+        m_scenePresentDirty = UsesOffscreenSceneTarget();
         return 0;
     }
     int ClearDepth() override
@@ -3451,7 +3593,7 @@ public:
         }
 
         m_commandList->ClearDepthStencilView(GetDsvHandle(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-        if (IsScenePostProcessEnabled()) {
+        if (UsesOffscreenSceneTarget()) {
             m_scenePresentDirty = true;
         }
         return 0;
@@ -3866,10 +4008,13 @@ private:
             handle.ptr += static_cast<SIZE_T>(m_rtvDescriptorSize);
         }
 
-        if (IsScenePostProcessEnabled()) {
+        if (UsesOffscreenSceneTarget()) {
             if (!CreateSceneRenderTargets()) {
                 return false;
             }
+        } else {
+            m_sceneWidth = m_renderWidth;
+            m_sceneHeight = m_renderHeight;
         }
 
         m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
@@ -3891,7 +4036,8 @@ private:
             || !CompilePostProcessShaderBlob(shaderSource, kCompiledPostProcessAntiAliasingMode, "ps_5_0", &m_fxaaPixelShaderBlob)
             || !CompilePostProcessShaderBlob(shaderSource, AntiAliasingMode::SMAA, "ps_5_0", &m_smaaEdgePixelShaderBlob)
             || !CompileShaderBlob(shaderSource, "PSMainSMAABlendWeight", "ps_5_0", &m_smaaBlendWeightPixelShaderBlob)
-            || !CompileShaderBlob(shaderSource, "PSMainSMAANeighborhood", "ps_5_0", &m_smaaNeighborhoodPixelShaderBlob)) {
+            || !CompileShaderBlob(shaderSource, "PSMainSMAANeighborhood", "ps_5_0", &m_smaaNeighborhoodPixelShaderBlob)
+            || !CompileShaderBlob(shaderSource, "PSMainCopy", "ps_5_0", &m_copyPixelShaderBlob)) {
             return false;
         }
 
@@ -4000,11 +4146,32 @@ private:
         SafeRelease(m_smaaNeighborhoodPipelineState);
         SafeRelease(m_smaaBlendWeightPipelineState);
         SafeRelease(m_smaaEdgePipelineState);
+        SafeRelease(m_copyPipelineState);
         SafeRelease(m_postPipelineState);
         return CreateSinglePostPipelineState(m_fxaaPixelShaderBlob, &m_postPipelineState)
             && CreateSinglePostPipelineState(m_smaaEdgePixelShaderBlob, &m_smaaEdgePipelineState)
             && CreateSinglePostPipelineState(m_smaaBlendWeightPixelShaderBlob, &m_smaaBlendWeightPipelineState)
-            && CreateSinglePostPipelineState(m_smaaNeighborhoodPixelShaderBlob, &m_smaaNeighborhoodPipelineState);
+            && CreateSinglePostPipelineState(m_smaaNeighborhoodPixelShaderBlob, &m_smaaNeighborhoodPipelineState)
+            && CreateSinglePostPipelineState(m_copyPixelShaderBlob, &m_copyPipelineState);
+    }
+
+    bool UsesOffscreenSceneTarget() const
+    {
+        return GraphicsSettingsUseOffscreenScene(RenderBackendType::Direct3D12);
+    }
+
+    bool SceneTargetsMatch() const
+    {
+        int desiredWidth = m_renderWidth;
+        int desiredHeight = m_renderHeight;
+        const bool offscreen = UsesOffscreenSceneTarget();
+        if (offscreen) {
+            GetSceneRenderSize(m_renderWidth, m_renderHeight, &desiredWidth, &desiredHeight);
+        }
+        const bool haveScene = m_sceneRenderTargets[0] != nullptr;
+        return offscreen == haveScene
+            && m_sceneWidth == desiredWidth
+            && m_sceneHeight == desiredHeight;
     }
 
     bool IsFxaaEnabled() const
@@ -4055,8 +4222,13 @@ private:
 
         D3D12_RESOURCE_DESC sceneDesc{};
         sceneDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        sceneDesc.Width = static_cast<UINT64>(m_renderWidth);
-        sceneDesc.Height = static_cast<UINT>(m_renderHeight);
+        int sceneWidth = m_renderWidth;
+        int sceneHeight = m_renderHeight;
+        GetSceneRenderSize(m_renderWidth, m_renderHeight, &sceneWidth, &sceneHeight);
+        m_sceneWidth = sceneWidth;
+        m_sceneHeight = sceneHeight;
+        sceneDesc.Width = static_cast<UINT64>(sceneWidth);
+        sceneDesc.Height = static_cast<UINT>(sceneHeight);
         sceneDesc.DepthOrArraySize = 1;
         sceneDesc.MipLevels = 1;
         sceneDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -4154,7 +4326,7 @@ private:
     bool DrawPostProcessPass(ID3D12PipelineState* pipelineState, ID3D12Resource* texture0, ID3D12Resource* texture1,
         D3D12_RESOURCE_BARRIER* barriersBefore, UINT barrierCountBefore,
         D3D12_RESOURCE_BARRIER* barriersAfter, UINT barrierCountAfter,
-        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, UINT64 constantGpuAddress)
+        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, UINT64 constantGpuAddress, int viewportWidth, int viewportHeight)
     {
         if (!m_commandList || !pipelineState || !texture0 || !m_srvHeap || !m_rootSignature) {
             return false;
@@ -4179,7 +4351,7 @@ private:
         m_commandList->IASetVertexBuffers(0, 0, nullptr);
         m_commandList->IASetIndexBuffer(nullptr);
         m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-        ApplyViewportAndScissor();
+        ApplyViewportAndScissor(viewportWidth, viewportHeight);
         m_commandList->DrawInstanced(3, 1, 0, 0);
 
         if (barrierCountAfter > 0) {
@@ -4191,16 +4363,18 @@ private:
 
     bool EnsureScenePresentedToBackBuffer()
     {
-        if (!IsScenePostProcessEnabled() || !m_scenePresentDirty) {
+        if (!UsesOffscreenSceneTarget() || !m_scenePresentDirty) {
             return true;
         }
         if (!EnsureFrameCommandsStarted() || !m_sceneRenderTargets[m_frameIndex]) {
             return false;
         }
 
+        const int sceneWidth = (std::max)(1, m_sceneWidth);
+        const int sceneHeight = (std::max)(1, m_sceneHeight);
         ModernDrawConstants constants{};
-        constants.screenWidth = static_cast<float>((std::max)(1, m_renderWidth));
-        constants.screenHeight = static_cast<float>((std::max)(1, m_renderHeight));
+        constants.screenWidth = static_cast<float>(sceneWidth);
+        constants.screenHeight = static_cast<float>(sceneHeight);
         void* constantUpload = nullptr;
         UINT64 constantGpuAddress = 0;
         const size_t constantBytes = AlignTo(static_cast<UINT>(sizeof(ModernDrawConstants)), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
@@ -4223,7 +4397,7 @@ private:
                 TransitionBarrier(m_smaaEdgeRenderTargets[m_frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
             };
             if (!DrawPostProcessPass(m_smaaEdgePipelineState, m_sceneRenderTargets[m_frameIndex], nullptr,
-                edgeBarriersBefore, 1, edgeBarriersAfter, 1, GetCurrentSmaaEdgeRtvHandle(), constantGpuAddress)) {
+                edgeBarriersBefore, 1, edgeBarriersAfter, 1, GetCurrentSmaaEdgeRtvHandle(), constantGpuAddress, sceneWidth, sceneHeight)) {
                 return false;
             }
 
@@ -4231,7 +4405,7 @@ private:
                 TransitionBarrier(m_smaaBlendWeightRenderTargets[m_frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
             };
             if (!DrawPostProcessPass(m_smaaBlendWeightPipelineState, m_smaaEdgeRenderTargets[m_frameIndex], nullptr,
-                nullptr, 0, blendBarriersAfter, 1, GetCurrentSmaaBlendWeightRtvHandle(), constantGpuAddress)) {
+                nullptr, 0, blendBarriersAfter, 1, GetCurrentSmaaBlendWeightRtvHandle(), constantGpuAddress, sceneWidth, sceneHeight)) {
                 return false;
             }
 
@@ -4241,7 +4415,7 @@ private:
                 TransitionBarrier(m_sceneRenderTargets[m_frameIndex], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET)
             };
             if (!DrawPostProcessPass(m_smaaNeighborhoodPipelineState, m_sceneRenderTargets[m_frameIndex], m_smaaBlendWeightRenderTargets[m_frameIndex],
-                nullptr, 0, neighborhoodBarriersAfter, 3, GetCurrentRtvHandle(), constantGpuAddress)) {
+                nullptr, 0, neighborhoodBarriersAfter, 3, GetCurrentRtvHandle(), constantGpuAddress, m_renderWidth, m_renderHeight)) {
                 return false;
             }
         } else {
@@ -4251,8 +4425,9 @@ private:
             D3D12_RESOURCE_BARRIER barriersAfter[1] = {
                 TransitionBarrier(m_sceneRenderTargets[m_frameIndex], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET)
             };
-            if (!DrawPostProcessPass(m_postPipelineState, m_sceneRenderTargets[m_frameIndex], nullptr,
-                barriersBefore, 1, barriersAfter, 1, GetCurrentRtvHandle(), constantGpuAddress)) {
+            ID3D12PipelineState* presentPipeline = IsFxaaEnabled() ? m_postPipelineState : m_copyPipelineState;
+            if (!DrawPostProcessPass(presentPipeline, m_sceneRenderTargets[m_frameIndex], nullptr,
+                barriersBefore, 1, barriersAfter, 1, GetCurrentRtvHandle(), constantGpuAddress, m_renderWidth, m_renderHeight)) {
                 return false;
             }
         }
@@ -4723,7 +4898,7 @@ private:
             m_commandList->DrawInstanced(vertexCount, 1, 0, 0);
         }
 
-        if (IsScenePostProcessEnabled()) {
+        if (UsesOffscreenSceneTarget()) {
             m_scenePresentDirty = true;
         }
     }
@@ -4738,10 +4913,16 @@ private:
         D3D12_HEAP_PROPERTIES heapProps{};
         heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
 
+        int depthWidth = m_renderWidth;
+        int depthHeight = m_renderHeight;
+        if (UsesOffscreenSceneTarget()) {
+            GetSceneRenderSize(m_renderWidth, m_renderHeight, &depthWidth, &depthHeight);
+        }
+
         D3D12_RESOURCE_DESC depthDesc{};
         depthDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        depthDesc.Width = static_cast<UINT64>(m_renderWidth);
-        depthDesc.Height = static_cast<UINT>(m_renderHeight);
+        depthDesc.Width = static_cast<UINT64>(depthWidth);
+        depthDesc.Height = static_cast<UINT>(depthHeight);
         depthDesc.DepthOrArraySize = 1;
         depthDesc.MipLevels = 1;
         depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -4798,25 +4979,42 @@ private:
         ReleasePendingUploadBuffers();
     }
 
-    void ApplyViewportAndScissor()
+    void ApplyViewportAndScissor(int width, int height)
     {
-        if (!m_commandList || m_renderWidth <= 0 || m_renderHeight <= 0) {
+        if (!m_commandList || width <= 0 || height <= 0) {
             return;
         }
 
         D3D12_VIEWPORT viewport{};
-        viewport.Width = static_cast<float>(m_renderWidth);
-        viewport.Height = static_cast<float>(m_renderHeight);
+        viewport.Width = static_cast<float>(width);
+        viewport.Height = static_cast<float>(height);
         viewport.MaxDepth = 1.0f;
-        D3D12_RECT scissor{ 0, 0, m_renderWidth, m_renderHeight };
+        D3D12_RECT scissor{ 0, 0, width, height };
         m_commandList->RSSetViewports(1, &viewport);
         m_commandList->RSSetScissorRects(1, &scissor);
+    }
+
+    void ApplyViewportAndScissor()
+    {
+        int width = m_renderWidth;
+        int height = m_renderHeight;
+        if (UsesOffscreenSceneTarget() && m_sceneWidth > 0 && m_sceneHeight > 0) {
+            width = m_sceneWidth;
+            height = m_sceneHeight;
+        }
+        ApplyViewportAndScissor(width, height);
     }
 
     bool EnsureFrameCommandsStarted()
     {
         if (m_frameCommandsOpen) {
             return true;
+        }
+        if (m_swapChain && !SceneTargetsMatch()) {
+            WaitForGpu();
+            if (!RefreshRenderTargets() || !CreateDepthStencilResources()) {
+                return false;
+            }
         }
         if (!m_commandAllocator || !m_commandList || !GetCurrentBackBuffer()) {
             return false;
@@ -4836,7 +5034,7 @@ private:
             D3D12_RESOURCE_STATE_PRESENT,
             D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_commandList->ResourceBarrier(1, &barrier);
-        const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = IsScenePostProcessEnabled() ? GetCurrentSceneRtvHandle() : GetCurrentRtvHandle();
+        const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = UsesOffscreenSceneTarget() ? GetCurrentSceneRtvHandle() : GetCurrentRtvHandle();
         const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = GetDsvHandle();
         m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, m_depthStencil ? &dsvHandle : nullptr);
         ApplyViewportAndScissor();
@@ -4889,6 +5087,7 @@ private:
     ID3D12Resource* m_smaaBlendWeightRenderTargets[kFrameCount];
     ID3D12Resource* m_depthStencil;
     ID3D12PipelineState* m_postPipelineState;
+    ID3D12PipelineState* m_copyPipelineState = nullptr;
     ID3D12PipelineState* m_smaaEdgePipelineState;
     ID3D12PipelineState* m_smaaBlendWeightPipelineState;
     ID3D12PipelineState* m_smaaNeighborhoodPipelineState;
@@ -4907,6 +5106,7 @@ private:
     ID3DBlob* m_pixelShaderBlob;
     ID3DBlob* m_postVertexShaderBlob;
     ID3DBlob* m_fxaaPixelShaderBlob;
+    ID3DBlob* m_copyPixelShaderBlob = nullptr;
     ID3DBlob* m_smaaEdgePixelShaderBlob;
     ID3DBlob* m_smaaBlendWeightPixelShaderBlob;
     ID3DBlob* m_smaaNeighborhoodPixelShaderBlob;
@@ -4920,6 +5120,8 @@ private:
     bool m_frameCommandsOpen;
     bool m_loggedSrvHeapExhausted;
     bool m_scenePresentDirty;
+    int m_sceneWidth = 0;
+    int m_sceneHeight = 0;
 };
 #else
 class D3D12RenderDevice final : public UnsupportedModernRenderDevice {
@@ -5299,7 +5501,7 @@ public:
             m_verticalSyncEnabled = vertSync;
         }
 
-        if (IsFxaaEnabled() && !m_overlayPassPrepared) {
+        if (m_sceneImage != VK_NULL_HANDLE && !m_overlayPassPrepared) {
             if (!PrepareOverlayPass()) {
                 m_frameBegun = false;
                 return -1;
@@ -5476,7 +5678,7 @@ public:
     bool BeginScene() override { return EnsureFrameStarted(); }
     bool PrepareOverlayPass() override
     {
-        if (!IsScenePostProcessEnabled()) {
+        if (m_sceneImage == VK_NULL_HANDLE) {
             return true;
         }
         if (!m_frameBegun || m_overlayPassPrepared) {
@@ -5495,6 +5697,53 @@ public:
         vkCmdEndRenderPass(commandBuffer);
         m_renderPassActive = false;
 
+        if (!IsFxaaEnabled() && !IsSmaaEnabled()) {
+            if (vkCmdBlitImage == nullptr
+                || !TransitionImage(
+                    m_sceneImage,
+                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                    VK_ACCESS_TRANSFER_READ_BIT,
+                    VK_PIPELINE_STAGE_TRANSFER_BIT)
+                || !TransitionCurrentSwapChainImage(
+                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                    VK_ACCESS_TRANSFER_WRITE_BIT,
+                    VK_PIPELINE_STAGE_TRANSFER_BIT)) {
+                return false;
+            }
+
+            VkImageBlit blitRegion{};
+            blitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            blitRegion.srcSubresource.layerCount = 1;
+            blitRegion.srcOffsets[1].x = static_cast<int32_t>(m_sceneExtent.width);
+            blitRegion.srcOffsets[1].y = static_cast<int32_t>(m_sceneExtent.height);
+            blitRegion.srcOffsets[1].z = 1;
+            blitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            blitRegion.dstSubresource.layerCount = 1;
+            blitRegion.dstOffsets[1].x = static_cast<int32_t>(m_swapChainExtent.width);
+            blitRegion.dstOffsets[1].y = static_cast<int32_t>(m_swapChainExtent.height);
+            blitRegion.dstOffsets[1].z = 1;
+            vkCmdBlitImage(
+                commandBuffer,
+                m_sceneImage,
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                m_swapChainImages[m_currentImageIndex],
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                1,
+                &blitRegion,
+                VK_FILTER_LINEAR);
+            if (!TransitionCurrentSwapChainImage(
+                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                || !BeginFullscreenPostRenderPass(m_overlayRenderPass, m_framebuffers[m_currentImageIndex], m_swapChainExtent)) {
+                return false;
+            }
+            m_renderPassActive = true;
+            m_overlayPassPrepared = true;
+            return true;
+        }
+
         if (!TransitionImage(
                 m_sceneImage,
                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -5511,9 +5760,10 @@ public:
             return false;
         }
 
+        const VkExtent2D sourceExtent = m_sceneExtent.width > 0 ? m_sceneExtent : m_swapChainExtent;
         ModernDrawConstants constants{};
-        constants.screenWidth = static_cast<float>((std::max)(1, m_renderWidth));
-        constants.screenHeight = static_cast<float>((std::max)(1, m_renderHeight));
+        constants.screenWidth = static_cast<float>((std::max)(1u, sourceExtent.width));
+        constants.screenHeight = static_cast<float>((std::max)(1u, sourceExtent.height));
 
         if (IsSmaaEnabled()) {
             if (m_smaaEdgeImage == VK_NULL_HANDLE || m_smaaEdgeImageView == VK_NULL_HANDLE || m_smaaEdgeFramebuffer == VK_NULL_HANDLE
@@ -5523,7 +5773,7 @@ public:
             }
 
             VkDescriptorSet edgeDescriptorSet = AllocatePostDescriptorSet(m_sceneImageView, VK_NULL_HANDLE);
-            if (edgeDescriptorSet == VK_NULL_HANDLE || !BeginFullscreenPostRenderPass(m_renderPass, m_smaaEdgeFramebuffer)) {
+            if (edgeDescriptorSet == VK_NULL_HANDLE || !BeginFullscreenPostRenderPass(m_renderPass, m_smaaEdgeFramebuffer, m_sceneExtent)) {
                 return false;
             }
             DrawFullscreenPostPass(m_postSmaaEdgePipeline, edgeDescriptorSet, constants);
@@ -5539,7 +5789,7 @@ public:
             }
 
             VkDescriptorSet blendDescriptorSet = AllocatePostDescriptorSet(m_smaaEdgeImageView, VK_NULL_HANDLE);
-            if (blendDescriptorSet == VK_NULL_HANDLE || !BeginFullscreenPostRenderPass(m_renderPass, m_smaaBlendWeightFramebuffer)) {
+            if (blendDescriptorSet == VK_NULL_HANDLE || !BeginFullscreenPostRenderPass(m_renderPass, m_smaaBlendWeightFramebuffer, m_sceneExtent)) {
                 return false;
             }
             DrawFullscreenPostPass(m_postSmaaBlendWeightPipeline, blendDescriptorSet, constants);
@@ -5555,13 +5805,13 @@ public:
             }
 
             VkDescriptorSet neighborhoodDescriptorSet = AllocatePostDescriptorSet(m_sceneImageView, m_smaaBlendWeightImageView);
-            if (neighborhoodDescriptorSet == VK_NULL_HANDLE || !BeginFullscreenPostRenderPass(m_overlayRenderPass, m_framebuffers[m_currentImageIndex])) {
+            if (neighborhoodDescriptorSet == VK_NULL_HANDLE || !BeginFullscreenPostRenderPass(m_overlayRenderPass, m_framebuffers[m_currentImageIndex], m_swapChainExtent)) {
                 return false;
             }
             DrawFullscreenPostPass(m_postSmaaNeighborhoodPipeline, neighborhoodDescriptorSet, constants);
         } else {
             VkDescriptorSet postDescriptorSet = AllocatePostDescriptorSet(m_sceneImageView, VK_NULL_HANDLE);
-            if (postDescriptorSet == VK_NULL_HANDLE || m_postPipeline == VK_NULL_HANDLE || !BeginFullscreenPostRenderPass(m_overlayRenderPass, m_framebuffers[m_currentImageIndex])) {
+            if (postDescriptorSet == VK_NULL_HANDLE || m_postPipeline == VK_NULL_HANDLE || !BeginFullscreenPostRenderPass(m_overlayRenderPass, m_framebuffers[m_currentImageIndex], m_swapChainExtent)) {
                 return false;
             }
             DrawFullscreenPostPass(m_postPipeline, postDescriptorSet, constants);
@@ -5821,7 +6071,7 @@ private:
         return true;
     }
 
-    bool BeginFullscreenPostRenderPass(VkRenderPass renderPass, VkFramebuffer framebuffer)
+    bool BeginFullscreenPostRenderPass(VkRenderPass renderPass, VkFramebuffer framebuffer, const VkExtent2D& extent)
     {
         VkCommandBuffer commandBuffer = GetCurrentCommandBuffer();
         if (commandBuffer == VK_NULL_HANDLE || renderPass == VK_NULL_HANDLE || framebuffer == VK_NULL_HANDLE) {
@@ -5837,7 +6087,7 @@ private:
         renderPassInfo.renderPass = renderPass;
         renderPassInfo.framebuffer = framebuffer;
         renderPassInfo.renderArea.offset = { 0, 0 };
-        renderPassInfo.renderArea.extent = m_swapChainExtent;
+        renderPassInfo.renderArea.extent = extent;
         renderPassInfo.clearValueCount = static_cast<uint32_t>(std::size(clearValues));
         renderPassInfo.pClearValues = clearValues;
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -5845,15 +6095,15 @@ private:
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-        viewport.width = static_cast<float>(m_swapChainExtent.width);
-        viewport.height = static_cast<float>(m_swapChainExtent.height);
+        viewport.width = static_cast<float>(extent.width);
+        viewport.height = static_cast<float>(extent.height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
         VkRect2D scissor{};
         scissor.offset = { 0, 0 };
-        scissor.extent = m_swapChainExtent;
+        scissor.extent = extent;
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
         return true;
     }
@@ -8034,6 +8284,17 @@ private:
         const VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(support.formats);
         const VkPresentModeKHR presentMode = ChooseSwapPresentMode(support.presentModes);
         const VkExtent2D extent = ChooseSwapExtent(support.capabilities);
+        const bool offscreenScene = GraphicsSettingsUseOffscreenScene(RenderBackendType::Vulkan);
+        int scenePixelWidth = static_cast<int>(extent.width);
+        int scenePixelHeight = static_cast<int>(extent.height);
+        if (offscreenScene) {
+            GetSceneRenderSize(scenePixelWidth, scenePixelHeight, &scenePixelWidth, &scenePixelHeight);
+        }
+        const VkExtent2D sceneExtent{
+            static_cast<uint32_t>((std::max)(1, scenePixelWidth)),
+            static_cast<uint32_t>((std::max)(1, scenePixelHeight))
+        };
+        const VkExtent2D depthExtent = offscreenScene ? sceneExtent : extent;
         uint32_t imageCount = support.capabilities.minImageCount + 1;
         if (support.capabilities.maxImageCount > 0 && imageCount > support.capabilities.maxImageCount) {
             imageCount = support.capabilities.maxImageCount;
@@ -8090,7 +8351,7 @@ private:
         VkImage newDepthImage = VK_NULL_HANDLE;
         VkDeviceMemory newDepthMemory = VK_NULL_HANDLE;
         VkImageView newDepthImageView = VK_NULL_HANDLE;
-        if (!CreateDepthResources(extent, &newDepthImage, &newDepthMemory, &newDepthImageView)) {
+        if (!CreateDepthResources(depthExtent, &newDepthImage, &newDepthMemory, &newDepthImageView)) {
             vkDestroySwapchainKHR(m_device, newSwapChain, nullptr);
             return false;
         }
@@ -8114,14 +8375,17 @@ private:
         VkPipeline newPostSmaaBlendWeightPipeline = VK_NULL_HANDLE;
         VkPipeline newPostSmaaNeighborhoodPipeline = VK_NULL_HANDLE;
 
-        if (IsScenePostProcessEnabled()) {
+        if (offscreenScene) {
+            const VkAttachmentLoadOp overlayLoadOp = IsScenePostProcessEnabled()
+                ? VK_ATTACHMENT_LOAD_OP_DONT_CARE
+                : VK_ATTACHMENT_LOAD_OP_LOAD;
             if (!CreateRenderPass(surfaceFormat.format,
                     VK_ATTACHMENT_LOAD_OP_CLEAR,
                     VK_IMAGE_LAYOUT_UNDEFINED,
                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                     &newRenderPass)
                 || !CreateRenderPass(surfaceFormat.format,
-                    VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                    overlayLoadOp,
                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                     &newOverlayRenderPass)) {
@@ -8147,9 +8411,10 @@ private:
                     vkDestroySwapchainKHR(m_device, newSwapChain, nullptr);
                     return false;
                 }
-            } else if (!CreatePostPipeline(newRenderPass, m_postSmaaEdgeFragmentShaderModule, "PSMainSMAAEdge", &newPostSmaaEdgePipeline)
+            } else if (IsSmaaEnabled()
+                && (!CreatePostPipeline(newRenderPass, m_postSmaaEdgeFragmentShaderModule, "PSMainSMAAEdge", &newPostSmaaEdgePipeline)
                 || !CreatePostPipeline(newRenderPass, m_postSmaaBlendWeightFragmentShaderModule, "PSMainSMAABlendWeight", &newPostSmaaBlendWeightPipeline)
-                || !CreatePostPipeline(newOverlayRenderPass, m_postSmaaNeighborhoodFragmentShaderModule, "PSMainSMAANeighborhood", &newPostSmaaNeighborhoodPipeline)) {
+                || !CreatePostPipeline(newOverlayRenderPass, m_postSmaaNeighborhoodFragmentShaderModule, "PSMainSMAANeighborhood", &newPostSmaaNeighborhoodPipeline))) {
                 if (newPostSmaaNeighborhoodPipeline != VK_NULL_HANDLE) {
                     vkDestroyPipeline(m_device, newPostSmaaNeighborhoodPipeline, nullptr);
                 }
@@ -8195,9 +8460,58 @@ private:
             return false;
         }
 
+        VkImage newOverlayDepthImage = VK_NULL_HANDLE;
+        VkDeviceMemory newOverlayDepthMemory = VK_NULL_HANDLE;
+        VkImageView newOverlayDepthImageView = VK_NULL_HANDLE;
+        struct OverlayDepthGuard {
+            VkDevice device = VK_NULL_HANDLE;
+            VkImage* image = nullptr;
+            VkDeviceMemory* memory = nullptr;
+            VkImageView* view = nullptr;
+            bool active = true;
+            OverlayDepthGuard(VkDevice deviceIn, VkImage* imageIn, VkDeviceMemory* memoryIn, VkImageView* viewIn)
+                : device(deviceIn), image(imageIn), memory(memoryIn), view(viewIn), active(true)
+            {
+            }
+            ~OverlayDepthGuard()
+            {
+                if (!active || device == VK_NULL_HANDLE) {
+                    return;
+                }
+                if (view && *view != VK_NULL_HANDLE) {
+                    vkDestroyImageView(device, *view, nullptr);
+                }
+                if (memory && *memory != VK_NULL_HANDLE) {
+                    vkFreeMemory(device, *memory, nullptr);
+                }
+                if (image && *image != VK_NULL_HANDLE) {
+                    vkDestroyImage(device, *image, nullptr);
+                }
+            }
+        } overlayDepthGuard(m_device, &newOverlayDepthImage, &newOverlayDepthMemory, &newOverlayDepthImageView);
+        VkImageView framebufferDepthView = newDepthImageView;
+        if (offscreenScene && (sceneExtent.width != extent.width || sceneExtent.height != extent.height)) {
+            if (!CreateDepthResources(extent, &newOverlayDepthImage, &newOverlayDepthMemory, &newOverlayDepthImageView)) {
+                DestroyImageViews(newImageViews);
+                if (newPostPipeline != VK_NULL_HANDLE) {
+                    vkDestroyPipeline(m_device, newPostPipeline, nullptr);
+                }
+                if (newOverlayRenderPass != VK_NULL_HANDLE) {
+                    vkDestroyRenderPass(m_device, newOverlayRenderPass, nullptr);
+                }
+                vkDestroyRenderPass(m_device, newRenderPass, nullptr);
+                vkDestroyImageView(m_device, newDepthImageView, nullptr);
+                vkFreeMemory(m_device, newDepthMemory, nullptr);
+                vkDestroyImage(m_device, newDepthImage, nullptr);
+                vkDestroySwapchainKHR(m_device, newSwapChain, nullptr);
+                return false;
+            }
+            framebufferDepthView = newOverlayDepthImageView;
+        }
+
         std::vector<VkFramebuffer> newFramebuffers;
         const VkRenderPass framebufferRenderPass = newOverlayRenderPass != VK_NULL_HANDLE ? newOverlayRenderPass : newRenderPass;
-        if (!CreateFramebuffers(framebufferRenderPass, newImageViews, newDepthImageView, extent, &newFramebuffers)) {
+        if (!CreateFramebuffers(framebufferRenderPass, newImageViews, framebufferDepthView, extent, &newFramebuffers)) {
             DestroyImageViews(newImageViews);
             if (newPostPipeline != VK_NULL_HANDLE) {
                 vkDestroyPipeline(m_device, newPostPipeline, nullptr);
@@ -8213,9 +8527,9 @@ private:
             return false;
         }
 
-        if (IsScenePostProcessEnabled()) {
-            if (!CreateSceneColorResources(extent, &newSceneImage, &newSceneMemory, &newSceneImageView)
-                || !CreateSceneFramebuffer(newRenderPass, newSceneImageView, newDepthImageView, extent, &newSceneFramebuffer)) {
+        if (offscreenScene) {
+            if (!CreateSceneColorResources(sceneExtent, &newSceneImage, &newSceneMemory, &newSceneImageView)
+                || !CreateSceneFramebuffer(newRenderPass, newSceneImageView, newDepthImageView, sceneExtent, &newSceneFramebuffer)) {
                 if (newSceneFramebuffer != VK_NULL_HANDLE) {
                     vkDestroyFramebuffer(m_device, newSceneFramebuffer, nullptr);
                 }
@@ -8243,10 +8557,10 @@ private:
             }
 
             if (IsSmaaEnabled()) {
-                if (!CreateSceneColorResources(extent, &newSmaaEdgeImage, &newSmaaEdgeMemory, &newSmaaEdgeImageView)
-                    || !CreateSceneFramebuffer(newRenderPass, newSmaaEdgeImageView, newDepthImageView, extent, &newSmaaEdgeFramebuffer)
-                    || !CreateSceneColorResources(extent, &newSmaaBlendWeightImage, &newSmaaBlendWeightMemory, &newSmaaBlendWeightImageView)
-                    || !CreateSceneFramebuffer(newRenderPass, newSmaaBlendWeightImageView, newDepthImageView, extent, &newSmaaBlendWeightFramebuffer)) {
+                if (!CreateSceneColorResources(sceneExtent, &newSmaaEdgeImage, &newSmaaEdgeMemory, &newSmaaEdgeImageView)
+                    || !CreateSceneFramebuffer(newRenderPass, newSmaaEdgeImageView, newDepthImageView, sceneExtent, &newSmaaEdgeFramebuffer)
+                    || !CreateSceneColorResources(sceneExtent, &newSmaaBlendWeightImage, &newSmaaBlendWeightMemory, &newSmaaBlendWeightImageView)
+                    || !CreateSceneFramebuffer(newRenderPass, newSmaaBlendWeightImageView, newDepthImageView, sceneExtent, &newSmaaBlendWeightFramebuffer)) {
                     if (newSmaaBlendWeightFramebuffer != VK_NULL_HANDLE) {
                         vkDestroyFramebuffer(m_device, newSmaaBlendWeightFramebuffer, nullptr);
                     }
@@ -8338,6 +8652,7 @@ private:
             return false;
         }
 
+        overlayDepthGuard.active = false;
         DestroySwapChainResources();
         m_swapChain = newSwapChain;
         m_swapChainImages = std::move(newImages);
@@ -8345,6 +8660,7 @@ private:
         m_swapChainImageViews = std::move(newImageViews);
         m_swapChainFormat = surfaceFormat.format;
         m_swapChainExtent = extent;
+        m_sceneExtent = offscreenScene ? sceneExtent : extent;
         m_renderPass = newRenderPass;
         m_overlayRenderPass = newOverlayRenderPass;
         m_postPipeline = newPostPipeline;
@@ -8366,6 +8682,9 @@ private:
         m_depthImage = newDepthImage;
         m_depthMemory = newDepthMemory;
         m_depthImageView = newDepthImageView;
+        m_overlayDepthImage = newOverlayDepthImage;
+        m_overlayDepthMemory = newOverlayDepthMemory;
+        m_overlayDepthImageView = newOverlayDepthImageView;
         m_framebuffers = std::move(newFramebuffers);
         m_commandBuffers = std::move(newCommandBuffers);
         m_currentImageIndex = 0;
@@ -8662,6 +8981,18 @@ private:
             vkDestroyImage(m_device, m_sceneImage, nullptr);
             m_sceneImage = VK_NULL_HANDLE;
         }
+        if (m_overlayDepthImageView != VK_NULL_HANDLE) {
+            vkDestroyImageView(m_device, m_overlayDepthImageView, nullptr);
+            m_overlayDepthImageView = VK_NULL_HANDLE;
+        }
+        if (m_overlayDepthMemory != VK_NULL_HANDLE) {
+            vkFreeMemory(m_device, m_overlayDepthMemory, nullptr);
+            m_overlayDepthMemory = VK_NULL_HANDLE;
+        }
+        if (m_overlayDepthImage != VK_NULL_HANDLE) {
+            vkDestroyImage(m_device, m_overlayDepthImage, nullptr);
+            m_overlayDepthImage = VK_NULL_HANDLE;
+        }
         if (m_depthImageView != VK_NULL_HANDLE) {
             vkDestroyImageView(m_device, m_depthImageView, nullptr);
             m_depthImageView = VK_NULL_HANDLE;
@@ -8691,6 +9022,40 @@ private:
         m_overlayPassPrepared = false;
     }
 
+    void RecreateVulkanSceneIfNeeded()
+    {
+        if (m_swapChain == VK_NULL_HANDLE || m_frameBegun || VulkanSceneResourcesMatch()) {
+            return;
+        }
+
+        const GraphicsSettings& graphicsSettings = GetCachedGraphicsSettings();
+        const int recreateKey = m_renderWidth * 100000 + m_renderHeight * 10 + graphicsSettings.renderScalePercent
+            + (graphicsSettings.antiAliasing == AntiAliasingMode::FXAA ? 1 : 0)
+            + (graphicsSettings.antiAliasing == AntiAliasingMode::SMAA ? 2 : 0);
+        if (recreateKey == m_failedSceneRecreateKey) {
+            return;
+        }
+
+        ResizeSwapChain();
+        m_failedSceneRecreateKey = VulkanSceneResourcesMatch() ? -1 : recreateKey;
+    }
+
+    bool VulkanSceneResourcesMatch() const
+    {
+        const int windowWidth = m_swapChainExtent.width > 0 ? static_cast<int>(m_swapChainExtent.width) : m_renderWidth;
+        const int windowHeight = m_swapChainExtent.height > 0 ? static_cast<int>(m_swapChainExtent.height) : m_renderHeight;
+        int desiredWidth = windowWidth;
+        int desiredHeight = windowHeight;
+        const bool wantOffscreen = GraphicsSettingsUseOffscreenScene(RenderBackendType::Vulkan);
+        if (wantOffscreen) {
+            GetSceneRenderSize(windowWidth, windowHeight, &desiredWidth, &desiredHeight);
+        }
+        const bool haveOffscreen = m_sceneImage != VK_NULL_HANDLE;
+        return wantOffscreen == haveOffscreen
+            && static_cast<int>(m_sceneExtent.width) == desiredWidth
+            && static_cast<int>(m_sceneExtent.height) == desiredHeight;
+    }
+
     bool EnsureFrameStarted()
     {
         if (m_frameBegun) {
@@ -8703,7 +9068,7 @@ private:
                 return false;
             }
 
-            if (!IsScenePostProcessEnabled()) {
+            if (m_sceneImage == VK_NULL_HANDLE) {
                 if (!TransitionCurrentSwapChainImage(
                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -8719,9 +9084,9 @@ private:
             VkRenderPassBeginInfo renderPassInfo{};
             renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
             renderPassInfo.renderPass = m_renderPass;
-            renderPassInfo.framebuffer = IsScenePostProcessEnabled() ? m_sceneFramebuffer : m_framebuffers[m_currentImageIndex];
+            renderPassInfo.framebuffer = (m_sceneImage != VK_NULL_HANDLE ? m_sceneFramebuffer : m_framebuffers[m_currentImageIndex]);
             renderPassInfo.renderArea.offset = { 0, 0 };
-            renderPassInfo.renderArea.extent = m_swapChainExtent;
+            renderPassInfo.renderArea.extent = (m_sceneImage != VK_NULL_HANDLE && m_sceneExtent.width > 0) ? m_sceneExtent : m_swapChainExtent;
             renderPassInfo.clearValueCount = static_cast<uint32_t>(std::size(clearValues));
             renderPassInfo.pClearValues = clearValues;
             vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -8729,20 +9094,21 @@ private:
             VkViewport viewport{};
             viewport.x = 0.0f;
             viewport.y = 0.0f;
-            viewport.width = static_cast<float>(m_swapChainExtent.width);
-            viewport.height = static_cast<float>(m_swapChainExtent.height);
+            viewport.width = static_cast<float>((m_sceneImage != VK_NULL_HANDLE && m_sceneExtent.width > 0) ? m_sceneExtent.width : m_swapChainExtent.width);
+            viewport.height = static_cast<float>((m_sceneImage != VK_NULL_HANDLE && m_sceneExtent.height > 0) ? m_sceneExtent.height : m_swapChainExtent.height);
             viewport.minDepth = 0.0f;
             viewport.maxDepth = 1.0f;
             vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
             VkRect2D scissor{};
             scissor.offset = { 0, 0 };
-            scissor.extent = m_swapChainExtent;
+            scissor.extent = (m_sceneImage != VK_NULL_HANDLE && m_sceneExtent.width > 0) ? m_sceneExtent : m_swapChainExtent;
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
             m_renderPassActive = true;
             return true;
         }
+        RecreateVulkanSceneIfNeeded();
         if (m_device == VK_NULL_HANDLE || m_swapChain == VK_NULL_HANDLE || m_commandBuffers.empty()) {
             return false;
         }
@@ -8754,7 +9120,7 @@ private:
 
         VkCommandBuffer commandBuffer = GetCurrentCommandBuffer();
 
-        if (!IsScenePostProcessEnabled()) {
+        if (m_sceneImage == VK_NULL_HANDLE) {
             if (!TransitionCurrentSwapChainImage(
                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -8770,9 +9136,9 @@ private:
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassInfo.renderPass = m_renderPass;
-        renderPassInfo.framebuffer = IsScenePostProcessEnabled() ? m_sceneFramebuffer : m_framebuffers[m_currentImageIndex];
+        renderPassInfo.framebuffer = (m_sceneImage != VK_NULL_HANDLE ? m_sceneFramebuffer : m_framebuffers[m_currentImageIndex]);
         renderPassInfo.renderArea.offset = { 0, 0 };
-        renderPassInfo.renderArea.extent = m_swapChainExtent;
+        renderPassInfo.renderArea.extent = (m_sceneImage != VK_NULL_HANDLE && m_sceneExtent.width > 0) ? m_sceneExtent : m_swapChainExtent;
         renderPassInfo.clearValueCount = static_cast<uint32_t>(std::size(clearValues));
         renderPassInfo.pClearValues = clearValues;
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -8780,15 +9146,15 @@ private:
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-        viewport.width = static_cast<float>(m_swapChainExtent.width);
-        viewport.height = static_cast<float>(m_swapChainExtent.height);
+        viewport.width = static_cast<float>((m_sceneImage != VK_NULL_HANDLE && m_sceneExtent.width > 0) ? m_sceneExtent.width : m_swapChainExtent.width);
+        viewport.height = static_cast<float>((m_sceneImage != VK_NULL_HANDLE && m_sceneExtent.height > 0) ? m_sceneExtent.height : m_swapChainExtent.height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
         VkRect2D scissor{};
         scissor.offset = { 0, 0 };
-        scissor.extent = m_swapChainExtent;
+        scissor.extent = (m_sceneImage != VK_NULL_HANDLE && m_sceneExtent.width > 0) ? m_sceneExtent : m_swapChainExtent;
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
         m_frameBegun = true;
@@ -8802,6 +9168,8 @@ private:
         if (m_frameBegun) {
             return !m_renderPassActive;
         }
+
+        RecreateVulkanSceneIfNeeded();
 
         const VkResult result = BeginFrame();
         if (result != VK_SUCCESS) {
@@ -9012,6 +9380,8 @@ private:
     VkSwapchainKHR m_swapChain;
     VkFormat m_swapChainFormat;
     VkExtent2D m_swapChainExtent;
+    VkExtent2D m_sceneExtent{};
+    int m_failedSceneRecreateKey = -1;
     VkRenderPass m_renderPass;
     VkRenderPass m_overlayRenderPass;
     VkFormat m_depthFormat;
@@ -9030,6 +9400,9 @@ private:
     VkImage m_depthImage;
     VkDeviceMemory m_depthMemory;
     VkImageView m_depthImageView;
+    VkImage m_overlayDepthImage = VK_NULL_HANDLE;
+    VkDeviceMemory m_overlayDepthMemory = VK_NULL_HANDLE;
+    VkImageView m_overlayDepthImageView = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_descriptorSetLayout;
     VkDescriptorSetLayout m_postDescriptorSetLayout;
     VkDescriptorPool m_descriptorPool;

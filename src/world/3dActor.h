@@ -26,7 +26,7 @@ public:
         const vector3d& lightDir,
         const vector3d& diffuseCol,
         const vector3d& ambientCol);
-    void Render(const matrix& parentWorld, const matrix& viewMatrix, bool forceDoubleSided) const;
+    void Render(const matrix& parentWorld, const matrix& viewMatrix, bool forceDoubleSided, float depthBias = 0.0f) const;
 
     std::string m_name;
     C3dMesh* m_mesh;
@@ -59,7 +59,7 @@ public:
     void UpdateVertexColor(const vector3d& lightDir,
         const vector3d& diffuseCol,
         const vector3d& ambientCol);
-    void Render(const matrix& viewMatrix) const;
+    void Render(const matrix& viewMatrix, float depthBias = 0.0f) const;
 
     char m_name[128];
     C3dNode* m_node;

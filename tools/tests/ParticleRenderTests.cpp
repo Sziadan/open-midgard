@@ -253,16 +253,16 @@ int main() {
         check(airTextureQuadCalls.size()==1,"3DAura submits one source quad for one live GI lane");
         if(airTextureQuadCalls.size()==1) {
             const auto& call=airTextureQuadCalls[0];
-            check(near(call.a.x,10.0f)&&near(call.a.y,22.0f)&&near(call.a.z,30.0f)
+            check(near(call.a.x,19.0f)&&near(call.a.y,22.0f)&&near(call.a.z,30.0f)
                 &&call.texture==&texture&&call.color==0xB4FFFFFFu&&call.blend==D3DBLEND_ONE
                 &&call.u0==0.0f&&call.u1==1.0f&&call.vBottom==1.0f&&call.vTop==0.0f,
                 "3DAura maps source position, texture slot, alpha/RGB, blend, and reversed UV arguments");
-            check(near(call.b.x,1.0f)&&near(call.b.y,22.0f)&&near(call.b.z,39.0f)
-                &&near(call.c.x,10.0f)&&near(call.c.y,22.0f)&&near(call.c.z,30.0f)
+            check(near(call.b.x,10.0f)&&near(call.b.y,22.0f)&&near(call.b.z,39.0f)
+                &&near(call.c.x,1.0f)&&near(call.c.y,22.0f)&&near(call.c.z,30.0f)
                 &&near(call.d.x,10.0f)&&near(call.d.y,22.0f)&&near(call.d.z,21.0f),
                 "3DAura submits PE vec1..vec4 as B-pre, spark, T-now, T-pre");
-            check(near(gi.sparkX,-9.0f)&&near(gi.sparkY,2.0f)&&near(gi.sparkZ,9.0f)
-                &&near(gi.vecTNowX,0.0f)&&near(gi.vecTNowZ,0.0f),
+            check(near(gi.sparkX,0.0f)&&near(gi.sparkY,2.0f)&&near(gi.sparkZ,9.0f)
+                &&near(gi.vecTNowX,-9.0f)&&near(gi.vecTNowZ,0.0f),
                 "3DAura preserves the source scratch writes for consecutive radius corners");
         }
         aura.m_size=100.0f;
@@ -288,7 +288,7 @@ int main() {
     }
     {
         CTexture texture; CEffectPrim aura; aura.m_texture={&texture}; aura.m_pos={10,20,30}; aura.m_renderFlag=9;
-        aura.m_gi[0].life=1; aura.m_gi[0].distance=10; aura.m_gi[0].alphaT=0; aura.m_gi[0].flag[12]=0;
+        aura.m_gi[0].life=1; aura.m_gi[0].distance=10; aura.m_gi[0].alphaT=0; aura.m_gi[0].flag[0]=0;
         aura.m_gi[1].alphaT=90; aura.m_gi[0].vecBPreX=1; aura.m_gi[0].arcBaselineY=-10; aura.m_gi[0].vecBPreZ=3;
         aura.m_gi[0].sparkY=1; aura.m_gi[0].vecTPreY=1; aura.m_gi[0].vecTNowY=1;
         matrix identity{}; MatrixIdentity(identity);
@@ -297,41 +297,45 @@ int main() {
         check(airTextureQuadCalls.size()==2,"Aura2 mode zero submits two white faces for the B-pre group");
         if(airTextureQuadCalls.size()==2) {
             const auto& call=airTextureQuadCalls[0];
-            check(near(call.a.x,11.0f)&&near(call.a.y,10.0f)
+            const float edge = 10.0f * GetCos(45);
+            check(near(call.a.x,10.0f+1.0f+edge)&&near(call.a.y,20.0f-10.0f+edge)
                 &&near(call.a.z,33.0f)&&call.color==0xFAFFFFFFu
                 &&call.blend==D3DBLEND_ONE&&call.texture==&texture&&call.flags==9,
-                "Aura2 follows canonical PE zero coefficient vertices and adds B-pre and world origins");
-            check(near(call.a.x,call.b.x)&&near(call.a.y,call.b.y)&&near(call.a.z,call.b.z)
-                &&near(call.a.x,call.c.x)&&near(call.a.y,call.c.y)&&near(call.a.z,call.c.z)
-                &&near(call.a.x,call.d.x)&&near(call.a.y,call.d.y)&&near(call.a.z,call.d.z),
-                "Aura2 preserves the canonical PE's collapsed source quad");
+                "Aura2 billboards the 45-degree radius square and adds the B-pre and world origins");
+            check(near(call.b.x,10.0f+1.0f-edge)&&near(call.c.x,10.0f+1.0f-edge)
+                &&near(call.d.x,10.0f+1.0f+edge)&&near(call.a.y-call.d.y,edge*2.0f),
+                "Aura2 keeps the camera-facing square at the source radius");
             check(call.u0==0.0f&&call.u1==1.0f&&call.vBottom==1.0f&&call.vTop==0.0f,
                 "Aura2 maps source Ty1/Ty2 to the reversed local V interval");
         }
-        aura.m_gi[0].flag[12]=1;
+        aura.m_gi[0].flag[0]=1;
         airTextureQuadCalls.clear(); Render3DAura2(aura,identity);
         check(airTextureQuadCalls.size()==2&&airTextureQuadCalls[0].color==0xFA5050FFu,
             "Aura2 mode one duplicates the blue B-pre face");
-        aura.m_gi[0].flag[12]=3;
+        aura.m_gi[0].flag[0]=3;
+        aura.m_gi[0].alphaT=0; aura.m_gi[1].alphaT=0;
         aura.m_gi[0].arcBaselineY=aura.m_gi[0].sparkY=aura.m_gi[0].vecTPreY=aura.m_gi[0].vecTNowY=-1.0f;
         aura.m_gi[0].vecBPreX=1; aura.m_gi[0].sparkX=2; aura.m_gi[0].vecTPreX=3; aura.m_gi[0].vecTNowX=4;
         airTextureQuadCalls.clear(); Render3DAura2(aura,identity);
+        const float modeEdge = 10.0f * GetCos(45);
         check(airTextureQuadCalls.size()==4&&airTextureQuadCalls[0].color==0x32FFFF37u
-            &&near(airTextureQuadCalls[0].a.x,11.0f)&&near(airTextureQuadCalls[1].a.x,12.0f)
-            &&near(airTextureQuadCalls[2].a.x,13.0f)&&near(airTextureQuadCalls[3].a.x,14.0f),
+            &&near(airTextureQuadCalls[0].a.x,10.0f+1.0f+modeEdge)
+            &&near(airTextureQuadCalls[1].a.x,10.0f+2.0f+modeEdge)
+            &&near(airTextureQuadCalls[2].a.x,10.0f+3.0f+modeEdge)
+            &&near(airTextureQuadCalls[3].a.x,10.0f+4.0f+modeEdge),
             "Aura2 mode three emits four visible groups in B-pre/spark/T-pre/T-now order");
-        aura.m_gi[0].flag[12]=10;
+        aura.m_gi[0].flag[0]=10;
         airTextureQuadCalls.clear(); Render3DAura2(aura,identity);
         check(airTextureQuadCalls.size()==4&&airTextureQuadCalls[0].color==0x32FFFFFFu
             &&airTextureQuadCalls[1].color==0x32467864u,
             "Aura2 mode ten uses the first-group white palette and remaining teal palettes");
-        aura.m_gi[0].flag[12]=11;
+        aura.m_gi[0].flag[0]=11;
         aura.m_gi[1].alphaT=0; aura.m_gi[0].arcBaselineY=-45.0f;
         aura.m_gi[0].sparkY=aura.m_gi[0].vecTPreY=aura.m_gi[0].vecTNowY=-1.0f;
         airTextureQuadCalls.clear(); Render3DAura2(aura,identity);
         check(airTextureQuadCalls.size()==1&&airTextureQuadCalls[0].color==0x7D9B9B9Bu,
             "Aura2 mode eleven uses its B-pre-specific -40 fade and gray palette");
-        aura.m_gi[0].flag[12]=0; aura.m_gi[0].arcBaselineY=aura.m_gi[0].sparkY
+        aura.m_gi[0].flag[0]=0; aura.m_gi[0].arcBaselineY=aura.m_gi[0].sparkY
             =aura.m_gi[0].vecTPreY=aura.m_gi[0].vecTNowY=1.0f;
         airTextureQuadCalls.clear(); Render3DAura2(aura,identity);
         check(airTextureQuadCalls.empty(),"Aura2 skips every group whose first transformed Y is positive");

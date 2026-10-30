@@ -274,7 +274,7 @@ bool CArrowEffect::EnsureBillboard()
     if (m_billboardTexture == nullptr) {
         m_billboardTexture = new CTexture();
         if (m_billboardTexture == nullptr
-            || !m_billboardTexture->Create(kArrowBillboardSize, kArrowBillboardSize, PF_A8R8G8B8, false)) {
+            || !m_billboardTexture->Create(kArrowBillboardSize, kArrowBillboardSize, PF_A8R8G8B8)) {
             delete m_billboardTexture;
             m_billboardTexture = nullptr;
             return false;
@@ -376,7 +376,7 @@ void CArrowEffect::Render(matrix* viewMatrix)
     face->indices = nullptr;
     face->numIndices = 0;
     face->tex = m_billboardTexture;
-    face->mtPreset = 0;
+    face->mtPreset = kSpriteTextureMode;
     face->cullMode = D3DCULL_NONE;
     face->srcAlphaMode = D3DBLEND_SRCALPHA;
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
@@ -405,14 +405,20 @@ void CArrowEffect::Render(matrix* viewMatrix)
         face->m_verts[index].color = 0xFFFFFFFFu;
         face->m_verts[index].specular = 0xFF000000u;
     }
+    const float maxU = (m_billboardTexture->m_w > 0 && m_billboardTexture->m_surfaceUpdateWidth > 0)
+        ? static_cast<float>(m_billboardTexture->m_surfaceUpdateWidth) / static_cast<float>(m_billboardTexture->m_w)
+        : 1.0f;
+    const float maxV = (m_billboardTexture->m_h > 0 && m_billboardTexture->m_surfaceUpdateHeight > 0)
+        ? static_cast<float>(m_billboardTexture->m_surfaceUpdateHeight) / static_cast<float>(m_billboardTexture->m_h)
+        : 1.0f;
     face->m_verts[0].tu = 0.0f;
     face->m_verts[0].tv = 0.0f;
-    face->m_verts[1].tu = 1.0f;
+    face->m_verts[1].tu = maxU;
     face->m_verts[1].tv = 0.0f;
     face->m_verts[2].tu = 0.0f;
-    face->m_verts[2].tv = 1.0f;
-    face->m_verts[3].tu = 1.0f;
-    face->m_verts[3].tv = 1.0f;
+    face->m_verts[2].tv = maxV;
+    face->m_verts[3].tu = maxU;
+    face->m_verts[3].tv = maxV;
     g_renderer.AddRP(face, 1);
 }
 

@@ -13,6 +13,7 @@
 #include "core/ClientInfoLocale.h"
 #include "core/Timer.h"
 #include "render/DC.h"
+#include "render/Renderer.h"
 #include "render3d/Device.h"
 #include "render3d/RenderDevice.h"
 #include "res/ImfRes.h"
@@ -1440,7 +1441,7 @@ bool PopulateSharedPlayerBillboardFrame(CPc& actor,
     if (!stripTexture) {
         return false;
     }
-    if (!stripTexture->Create(kPlayerBillboardComposeWidth, kPlayerBillboardComposeHeight, PF_A8R8G8B8, false)) {
+    if (!stripTexture->Create(kPlayerBillboardComposeWidth, kPlayerBillboardComposeHeight, PF_A8R8G8B8)) {
         delete stripTexture;
         return false;
     }
@@ -3384,7 +3385,7 @@ bool PopulateSharedNonPcBillboardFrame(CPc& actor, int displayJob, int bodyActio
     if (!texture) {
         return false;
     }
-    if (!texture->Create(composeConfig.width, composeConfig.height, PF_A8R8G8B8, false)) {
+    if (!texture->Create(composeConfig.width, composeConfig.height, PF_A8R8G8B8)) {
         delete texture;
         return false;
     }
@@ -7567,7 +7568,7 @@ bool EnsureItemBillboardTexture(CItem& item)
         if (!item.m_billboardTexture) {
             return false;
         }
-        if (!item.m_billboardTexture->Create(kItemBillboardComposeWidth, kItemBillboardComposeHeight, PF_A8R8G8B8, false)) {
+        if (!item.m_billboardTexture->Create(kItemBillboardComposeWidth, kItemBillboardComposeHeight, PF_A8R8G8B8)) {
             ReleaseItemBillboardTexture(item);
             return false;
         }
@@ -7709,7 +7710,7 @@ void CItem::Render(matrix* viewMatrix)
     face->indices = nullptr;
     face->numIndices = 0;
     face->tex = m_billboardTexture;
-    face->mtPreset = 0;
+    face->mtPreset = kSpriteTextureMode;
     face->cullMode = D3DCULL_NONE;
     face->srcAlphaMode = D3DBLEND_SRCALPHA;
     face->destAlphaMode = D3DBLEND_INVSRCALPHA;
@@ -7747,14 +7748,20 @@ void CItem::Render(matrix* viewMatrix)
         face->m_verts[index].specular = 0xFF000000u;
     }
 
+    const float maxU = (m_billboardTexture->m_w > 0 && m_billboardTexture->m_surfaceUpdateWidth > 0)
+        ? static_cast<float>(m_billboardTexture->m_surfaceUpdateWidth) / static_cast<float>(m_billboardTexture->m_w)
+        : 1.0f;
+    const float maxV = (m_billboardTexture->m_h > 0 && m_billboardTexture->m_surfaceUpdateHeight > 0)
+        ? static_cast<float>(m_billboardTexture->m_surfaceUpdateHeight) / static_cast<float>(m_billboardTexture->m_h)
+        : 1.0f;
     face->m_verts[0].tu = 0.0f;
     face->m_verts[0].tv = 0.0f;
-    face->m_verts[1].tu = 1.0f;
+    face->m_verts[1].tu = maxU;
     face->m_verts[1].tv = 0.0f;
     face->m_verts[2].tu = 0.0f;
-    face->m_verts[2].tv = 1.0f;
-    face->m_verts[3].tu = 1.0f;
-    face->m_verts[3].tv = 1.0f;
+    face->m_verts[2].tv = maxV;
+    face->m_verts[3].tu = maxU;
+    face->m_verts[3].tv = maxV;
     g_renderer.AddRP(face, 1);
 }
 
@@ -8537,7 +8544,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
         if (!m_billboardTexture) {
             return false;
         }
-        if (!m_billboardTexture->Create(composeWidth, composeHeight, PF_A8R8G8B8, false)) {
+        if (!m_billboardTexture->Create(composeWidth, composeHeight, PF_A8R8G8B8)) {
             ReleaseActorBillboardTexture(*this);
             return false;
         }

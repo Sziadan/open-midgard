@@ -12,6 +12,7 @@
 class UICheckBox;
 
 void ApplySavedAudioSettings();
+bool IsOptionFogEnabled();
 
 class UIOptionWnd : public UIFrameWnd {
 public:
@@ -126,6 +127,10 @@ private:
         GraphicsRow_AntiAliasing,
         GraphicsRow_TextureUpscale,
         GraphicsRow_AnisotropicFiltering,
+        GraphicsRow_VerticalSync,
+        GraphicsRow_FrameLimit,
+        GraphicsRow_RenderScale,
+        GraphicsRow_SpriteFiltering,
     };
 
     struct ResolutionEntry {
@@ -159,6 +164,7 @@ private:
     RECT GetGuiScaleSliderRect() const;
     RECT GetAudioToggleRect(int toggleIndex) const;
     RECT GetGameToggleRect(int toggleIndex) const;
+    RECT GetFogToggleRect() const;
     RECT GetSliderKnobRect(const RECT& sliderRect, int value, int minValue, int maxValue) const;
     void DrawSlider(HDC hdc,
         const RECT& sliderRect,
@@ -183,6 +189,7 @@ private:
     void CycleGraphicsSetting(GraphicsRowId rowId, int direction);
     std::string GetGraphicsRowValue(GraphicsRowId rowId) const;
     void SaveGraphicsPreferences() const;
+    void ApplyFogSetting() const;
     bool HasPendingUiScaleApply() const;
     void ApplyPendingUiScale();
     void DiscardPendingUiScale();
@@ -200,6 +207,7 @@ private:
     UICheckBox* m_attackSnapCheckBox;
     UICheckBox* m_skillSnapCheckBox;
     UICheckBox* m_itemSnapCheckBox;
+    UICheckBox* m_fogCheckBox;
     int m_orgHeight;
     int m_bgmVolume;
     int m_soundVolume;
@@ -209,6 +217,7 @@ private:
     int m_attackSnap;
     int m_skillSnap;
     int m_itemSnap;
+    int m_fogEnabled;
     int m_guiScalePercent;
     int m_appliedGuiScalePercent;
     int m_collapsed;
