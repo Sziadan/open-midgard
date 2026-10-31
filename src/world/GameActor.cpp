@@ -33,6 +33,7 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
 
@@ -991,6 +992,8 @@ void SpawnCartEffect(CGameActor& actor, int effectType)
     effect->m_orgPos = actor.m_pos;
     effect->m_zoom = 1.0f;
     effect->m_orgZoom = 1.0f;
+    // Ref cart effects use SetAction(..., 4, 1), so distance-based
+    // motion advances at one quarter of the raw cadence.
     effect->m_colorArgb = 0xFFFFFFFFu;
     effect->m_spriteActionIndex = 0;
     effect->m_spriteMotionIndex = 0;
@@ -1306,7 +1309,8 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
     int* outHead,
     int* outSex,
     int* outBodyPalette,
-    int* outHeadPalette);
+    int* outHeadPalette,
+    std::array<BillboardComposeSurface*, 5>* auraLayers = nullptr);
 
 struct SharedPlayerBillboardStripKey {
     int job = 0;
@@ -1554,6 +1558,13 @@ void ReleaseActorBillboardTexture(CPc& actor)
     }
     actor.m_billboardTexture = nullptr;
     actor.m_billboardTextureOwned = 0;
+    for (CTexture*& texture : actor.m_assumptioAuraTextures) {
+        delete texture;
+        texture = nullptr;
+    }
+    std::fill(std::begin(actor.m_assumptioAuraBounds), std::end(actor.m_assumptioAuraBounds), tagRECT{});
+    actor.m_assumptioAuraWidth = 0;
+    actor.m_assumptioAuraHeight = 0;
 }
 
 } // namespace
@@ -2915,7 +2926,8 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
     int* outHead,
     int* outSex,
     int* outBodyPalette,
-    int* outHeadPalette)
+    int* outHeadPalette,
+    std::array<BillboardComposeSurface*, 5>* auraLayers)
 {
     char bodyAct[260] = {};
     char bodySpr[260] = {};
@@ -3123,25 +3135,62 @@ bool DrawPcBillboard(BillboardComposeSurface& bitmap,
     for (int layer : layerOrder) {
         switch (layer) {
         case 0:
-            bodyOk |= DrawPlayerLayer(bitmap, drawX, drawY, 0, curAction, curMotion, bodyActName, bodySprName, imfPath, bodyActName, headActName, curMotion, headMotion, bodyPaletteName);
+            {
+                const bool drawn = DrawPlayerLayer(bitmap, drawX, drawY, 0, curAction, curMotion,
+                    bodyActName, bodySprName, imfPath, bodyActName, headActName, curMotion, headMotion, bodyPaletteName);
+                if (drawn && auraLayers && (*auraLayers)[0]) {
+                    DrawPlayerLayer(*(*auraLayers)[0], drawX, drawY, 0, curAction, curMotion,
+                        bodyActName, bodySprName, imfPath, bodyActName, headActName, curMotion, headMotion, bodyPaletteName);
+                }
+                bodyOk |= drawn;
+            }
             break;
         case 1:
-            headOk |= DrawPlayerLayer(bitmap, drawX, drawY, 1, curAction, headMotion, headActName, headSprName, imfPath, bodyActName, headActName, curMotion, headMotion, headPaletteName);
+            {
+                const bool drawn = DrawPlayerLayer(bitmap, drawX, drawY, 1, curAction, headMotion,
+                    headActName, headSprName, imfPath, bodyActName, headActName, curMotion, headMotion, headPaletteName);
+                if (drawn && auraLayers && (*auraLayers)[1]) {
+                    DrawPlayerLayer(*(*auraLayers)[1], drawX, drawY, 1, curAction, headMotion,
+                        headActName, headSprName, imfPath, bodyActName, headActName, curMotion, headMotion, headPaletteName);
+                }
+                headOk |= drawn;
+            }
             break;
         case 2:
-            accessoryBottomOk |= !accessoryBottomActName.empty() && !accessoryBottomSprName.empty()
+            {
+                const bool drawn = !accessoryBottomActName.empty() && !accessoryBottomSprName.empty()
                 ? DrawAttachedAccessoryMotion(bitmap, drawX, drawY, curAction, curMotion, headMotion, bodyActName, headActName, accessoryBottomActName, accessoryBottomSprName)
                 : false;
+                if (drawn && auraLayers && (*auraLayers)[2]) {
+                    DrawAttachedAccessoryMotion(*(*auraLayers)[2], drawX, drawY, curAction, curMotion, headMotion,
+                        bodyActName, headActName, accessoryBottomActName, accessoryBottomSprName);
+                }
+                accessoryBottomOk |= drawn;
+            }
             break;
         case 3:
-            accessoryMidOk |= !accessoryMidActName.empty() && !accessoryMidSprName.empty()
+            {
+                const bool drawn = !accessoryMidActName.empty() && !accessoryMidSprName.empty()
                 ? DrawAttachedAccessoryMotion(bitmap, drawX, drawY, curAction, curMotion, headMotion, bodyActName, headActName, accessoryMidActName, accessoryMidSprName)
                 : false;
+                if (drawn && auraLayers && (*auraLayers)[3]) {
+                    DrawAttachedAccessoryMotion(*(*auraLayers)[3], drawX, drawY, curAction, curMotion, headMotion,
+                        bodyActName, headActName, accessoryMidActName, accessoryMidSprName);
+                }
+                accessoryMidOk |= drawn;
+            }
             break;
         case 4:
-            accessoryTopOk |= !accessoryTopActName.empty() && !accessoryTopSprName.empty()
+            {
+                const bool drawn = !accessoryTopActName.empty() && !accessoryTopSprName.empty()
                 ? DrawAttachedAccessoryMotion(bitmap, drawX, drawY, curAction, curMotion, headMotion, bodyActName, headActName, accessoryTopActName, accessoryTopSprName)
                 : false;
+                if (drawn && auraLayers && (*auraLayers)[4]) {
+                    DrawAttachedAccessoryMotion(*(*auraLayers)[4], drawX, drawY, curAction, curMotion, headMotion,
+                        bodyActName, headActName, accessoryTopActName, accessoryTopSprName);
+                }
+                accessoryTopOk |= drawn;
+            }
             break;
         case 5:
             weaponOk |= DrawPlayerOverlayMotion(bitmap, drawX, drawY, 5, curAction, curMotion, bodyActName, weaponActNameResolved, weaponSprNameResolved, imfPath);
@@ -8150,6 +8199,15 @@ void CPc::SetModifyFactorOfmotionSpeed(int attackMT)
 
 void CPc::InvalidateBillboard()
 {
+    for (CTexture*& texture : m_assumptioAuraTextures) {
+        delete texture;
+        texture = nullptr;
+    }
+    std::fill(std::begin(m_assumptioAuraBounds), std::end(m_assumptioAuraBounds), tagRECT{});
+    m_assumptioAuraWidth = 0;
+    m_assumptioAuraHeight = 0;
+    m_assumptioAuraBodyAction = -1;
+    m_assumptioAuraHeadMotion = -1;
     m_cachedBillboardBodyAction = -1;
     m_cachedBillboardHeadMotion = -1;
     m_cachedBillboardJob = -1;
@@ -8251,6 +8309,9 @@ CActRes* ResolveRuntimeActorActRes(CRenderObject* object)
 bool CPc::EnsureBillboardTexture(float cameraLongitude)
 {
     const bool isVulkanBackend = GetRenderDevice().GetBackendType() == RenderBackendType::Vulkan;
+    const bool wantsAssumptioAura = (m_BodyLight & 8) == 8
+        && (m_BodyLight & 0x10000) != 0x10000
+        && (m_BodyLight & 0x20000) != 0x20000;
 
     const float actorRotationDegrees = std::isfinite(m_roty)
         ? NormalizeAngle360(m_roty)
@@ -8340,7 +8401,12 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
         && m_cachedBillboardBodyPalette == (usePlayerStyleBillboard ? m_bodyPalette : 0)
         && m_cachedBillboardHeadPalette == (usePlayerStyleBillboard ? m_headPalette : 0)
         && m_cachedBillboardWeapon == (usePlayerStyleBillboard ? m_weapon : 0)
-        && m_cachedBillboardShield == (usePlayerStyleBillboard ? m_shield : 0)) {
+        && m_cachedBillboardShield == (usePlayerStyleBillboard ? m_shield : 0)
+        && (!wantsAssumptioAura || (m_assumptioAuraBodyAction == bodyAction
+            && m_assumptioAuraHeadMotion == headMotion
+            && m_assumptioAuraWidth == m_billboardTextureWidth
+            && m_assumptioAuraHeight == m_billboardTextureHeight
+            && m_assumptioAuraTextures[0] != nullptr))) {
         if (isLocalPlayer) {
             static std::map<u32, u32> loggedBillboardCacheHits;
             const u32 cacheKey = (static_cast<u32>(displayJob & 0xFFFF) << 16)
@@ -8367,7 +8433,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
 
     const bool isTransientBillboard = bodyAction < baseBodyAction || bodyAction >= baseBodyAction + 8;
 
-    if (isVulkanBackend && !usePlayerStyleBillboard) {
+    if (isVulkanBackend && !wantsAssumptioAura && !usePlayerStyleBillboard) {
         PrimeNonPcBillboardStrip(*this, displayJob, bodyAction);
 
         const SharedNonPcBillboardKey sharedKey{ displayJob, bodyAction, headMotion };
@@ -8397,7 +8463,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
         }
     }
 
-    if (isVulkanBackend && usePlayerStyleBillboard) {
+    if (isVulkanBackend && !wantsAssumptioAura && usePlayerStyleBillboard) {
         PrimePlayerBillboardStrip(*this, sharedPlayerKey, displayJob, sex, bodyAction);
 
         SharedPlayerBillboardKey sharedKey = sharedPlayerKey;
@@ -8451,6 +8517,16 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
     int resolvedSex = -1;
     int resolvedBodyPalette = -1;
     int resolvedHeadPalette = -1;
+    std::array<std::unique_ptr<BillboardComposeSurface>, 5> auraSurfaces{};
+    std::array<BillboardComposeSurface*, 5> auraSurfacePointers{};
+    if (wantsAssumptioAura && usePlayerStyleBillboard) {
+        for (size_t layer = 0; layer < auraSurfaces.size(); ++layer) {
+            auraSurfaces[layer] = std::make_unique<BillboardComposeSurface>(composeWidth, composeHeight);
+            auraSurfaces[layer]->Clear(0x00000000u);
+            auraSurfacePointers[layer] = auraSurfaces[layer].get();
+        }
+    }
+
     const bool drawOk = usePlayerStyleBillboard
         ? DrawPcBillboard(composeSurface,
             *this,
@@ -8462,7 +8538,8 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
             &resolvedHead,
             &resolvedSex,
             &resolvedBodyPalette,
-            &resolvedHeadPalette)
+            &resolvedHeadPalette,
+            wantsAssumptioAura && usePlayerStyleBillboard ? &auraSurfacePointers : nullptr)
         : DrawNonPcBillboard(composeSurface,
             *this,
             composeAnchorX,
@@ -8475,6 +8552,42 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
             LogNonPcBillboardFailureOnce(displayJob, g_session.GetJobName(displayJob), bodyAction, headMotion);
         }
         return false;
+    }
+
+    if (wantsAssumptioAura && usePlayerStyleBillboard) {
+        for (size_t layer = 0; layer < auraSurfaces.size(); ++layer) {
+            tagRECT bounds{};
+            const bool hasLayer = auraSurfaces[layer]
+                && FindOpaqueBounds(auraSurfaces[layer]->GetImageData(), composeWidth, composeHeight, &bounds);
+            if (!hasLayer) {
+                delete m_assumptioAuraTextures[layer];
+                m_assumptioAuraTextures[layer] = nullptr;
+                m_assumptioAuraBounds[layer] = tagRECT{};
+                continue;
+            }
+            if (!m_assumptioAuraTextures[layer]
+                || m_assumptioAuraWidth != composeWidth
+                || m_assumptioAuraHeight != composeHeight) {
+                delete m_assumptioAuraTextures[layer];
+                m_assumptioAuraTextures[layer] = new CTexture();
+                if (!m_assumptioAuraTextures[layer]
+                    || !m_assumptioAuraTextures[layer]->Create(composeWidth, composeHeight, PF_A8R8G8B8)) {
+                    delete m_assumptioAuraTextures[layer];
+                    m_assumptioAuraTextures[layer] = nullptr;
+                    continue;
+                }
+            }
+            std::vector<unsigned int> auraPixels(auraSurfaces[layer]->GetImageData(),
+                auraSurfaces[layer]->GetImageData() + static_cast<size_t>(composeWidth) * static_cast<size_t>(composeHeight));
+            UnpremultiplyPixels(auraPixels);
+            m_assumptioAuraTextures[layer]->Update(0, 0, composeWidth, composeHeight,
+                auraPixels.data(), true, composeWidth * static_cast<int>(sizeof(unsigned int)));
+            m_assumptioAuraBounds[layer] = bounds;
+        }
+        m_assumptioAuraWidth = composeWidth;
+        m_assumptioAuraHeight = composeHeight;
+        m_assumptioAuraBodyAction = bodyAction;
+        m_assumptioAuraHeadMotion = headMotion;
     }
 
     if (isLocalPlayer) {
@@ -8594,7 +8707,7 @@ bool CPc::EnsureBillboardTexture(float cameraLongitude)
         m_billboardTextureOwned = 0;
     }
 
-    if (isVulkanBackend && usePlayerStyleBillboard && m_billboardTexture) {
+    if (isVulkanBackend && !wantsAssumptioAura && usePlayerStyleBillboard && m_billboardTexture) {
         SharedPlayerBillboardValue value{};
         value.texture = m_billboardTexture;
         value.opaqueBounds = opaqueBounds;

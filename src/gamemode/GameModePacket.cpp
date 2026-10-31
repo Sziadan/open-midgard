@@ -187,6 +187,8 @@ constexpr int kEffectStateRuwachMask = 0x2000;
 constexpr int kEffectStateHidingMask = 0x0004;
 constexpr int kEffectStateSpecialHidingMask = 0x0040;
 constexpr int kEffectStateBurrowMask = 0x0002;
+constexpr int kEffectStateFalconMask = 0x0010;
+constexpr int kShowEfstAssumptioMask = 0x00000800;
 constexpr int kEffectStatePushCartMask = 0x0008 | 0x0080 | 0x0100 | 0x0200 | 0x0400;
 constexpr u16 kSkillIdHiding = 51;
 constexpr u16 kSkillIdCloaking = 135;
@@ -381,6 +383,7 @@ void RefreshActorEffectStatePresentation(CGameActor* actor, int oldEffectState)
     const bool bodyVisible = !(hiding || specialHiding || burrow);
     const bool fullyVisible = !(hiding || specialHiding);
     const bool suppressPushCart = hiding || specialHiding || burrow;
+    const bool suppressFalcon = hiding || specialHiding || burrow;
     if (!actor->IsHideFadeActive(timeGetTime())) {
         actor->m_isVisibleBody = bodyVisible ? 1 : 0;
         actor->m_isVisible = fullyVisible ? 1 : 0;
@@ -398,6 +401,28 @@ void RefreshActorEffectStatePresentation(CGameActor* actor, int oldEffectState)
         if (cartEffectType != 0) {
             actor->SendMsg(actor, 51, cartEffectType, 0, 0);
         }
+    }
+
+    // Ref CGameActor::SetAttrState sends messages101/102 when the Falcon
+    // option changes. Runtime actor bootstrap applies state directly, so also
+    // reconcile the attached Falcon when that path first creates the actor.
+    const bool hasFalcon = HasEffectStateFlag(effectState, kEffectStateFalconMask);
+    if ((!hasFalcon || suppressFalcon) && actor->m_birdEffect) {
+        actor->SendMsg(actor, 102, 0, 0, 0);
+    }
+    if (hasFalcon && !suppressFalcon && !actor->m_birdEffect) {
+        actor->SendMsg(actor, 101, 0, 0, 0);
+    }
+
+    // Ref GameModeShowEFST starts effect 375 for a PC when showEFST has
+    // OPT3_ASSUMPTIO (0x800). Actor bootstrap/state packets fold opt3 into
+    // m_effectState in this client, so reconcile that status here as well.
+    if (actor->m_isPc
+        && HasEffectStateFlag(effectState, kShowEfstAssumptioMask)
+        && !hiding
+        && !burrow
+        && !EffectExists(actor, 375)) {
+        actor->LaunchEffect(375, vector3d{}, 0.0f);
     }
 
     const bool hadRuwach = HasEffectStateFlag(oldEffectState, kEffectStateRuwachMask);
@@ -571,10 +596,46 @@ CGameActor* ResolveSkillPacketActor(CGameMode& mode, u32 aid)
     if (mode.m_world == nullptr) {
         return nullptr;
     }
-    if (aid == g_session.m_aid) {
-        return mode.m_world->m_player;
+    CGameActor* player = mode.m_world->m_player;
+    if (aid == g_session.m_aid || aid == g_session.m_gid
+        || (player != nullptr && aid == player->m_gid)) {
+        return player;
     }
     return mode.m_world->GetGameActorByAID(aid);
+}
+
+void HandleNpcShowEfstUpdate(CGameMode& mode, const PacketView& packet)
+{
+    // Ref ZC_NPC_SHOWEFST_UPDATE (0x028A): id.L@2, effectState.L@6,
+    // level.L@10, showEFST.L@14. GameModeShowEFST's PC Assumptio branch
+    // launches effect 375 only when OPT3_ASSUMPTIO (0x800) is set and the
+    // actor is not hiding/burrowed.
+    if (!packet.data || packet.packetLength < 18) {
+        return;
+    }
+
+    const u32 actorId = ReadLE32(packet.data + 2);
+    const int effectState = static_cast<int>(ReadLE32(packet.data + 6));
+    const int level = static_cast<int>(ReadLE32(packet.data + 10));
+    const int showEfst = static_cast<int>(ReadLE32(packet.data + 14));
+    CGameActor* actor = ResolveSkillPacketActor(mode, actorId);
+    if (!actor) {
+        return;
+    }
+
+    if (level == 99 && !HasEffectStateFlag(effectState, kEffectStateSpecialHidingMask)) {
+        actor->SendMsg(actor, 126, 0, 0, 0);
+    }
+
+    const int actorEffectState = actor->m_effectState;
+    const bool hiding = HasEffectStateFlag(actorEffectState, kEffectStateHidingMask)
+        || HasEffectStateFlag(actorEffectState, kEffectStateBurrowMask);
+    if (actor->m_isPc
+        && !hiding
+        && HasEffectStateFlag(showEfst, kShowEfstAssumptioMask)
+        && !EffectExists(actor, 375)) {
+        actor->LaunchEffect(375, vector3d{}, 0.0f);
+    }
 }
 
 CSkill* ResolveSkillPacketUnit(CGameMode& mode, u32 aid)
@@ -5927,7 +5988,7 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
             state.speed = ReadLE16(packet.data + 6 + shift);
             state.bodyState = ReadLE16(packet.data + 8 + shift);
             state.healthState = ReadLE16(packet.data + 10 + shift);
-            state.effectState = static_cast<int>(option != 0 ? option : opt3);
+            state.effectState = static_cast<int>(option | opt3);
             state.job = ReadLE16(packet.data + 14 + shift);
             state.hairStyle = ReadLE16(packet.data + 16 + shift);
             state.weapon = ReadLE16(packet.data + 18 + shift);
@@ -6014,7 +6075,7 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
         outState.speed = ReadLE16(packet.data + 9);
         outState.bodyState = ReadLE16(packet.data + 11);
         outState.healthState = ReadLE16(packet.data + 13);
-        outState.effectState = static_cast<int>(option != 0 ? option : opt3);
+        outState.effectState = static_cast<int>(option | opt3);
         outState.job = ReadLE16(packet.data + 19);
         outState.hairStyle = ReadLE16(packet.data + 21);
         outState.weapon = ReadLE16(packet.data + 23);
@@ -6097,7 +6158,7 @@ bool DecodeActorIdleOrSpawnPacket(const PacketView& packet, RuntimeActorState& o
     outState.speed = ReadLE16(packet.data + speedOffset);
     outState.bodyState = ReadLE16(packet.data + opt1Offset);
     outState.healthState = ReadLE16(packet.data + opt2Offset);
-    outState.effectState = static_cast<int>(option != 0 ? option : opt3);
+    outState.effectState = static_cast<int>(option | opt3);
     outState.pkState = packet.data[karmaOffset];
     outState.job = ReadLE16(packet.data + jobOffset);
     outState.hairStyle = ReadLE16(packet.data + hairStyleOffset);
@@ -6245,7 +6306,7 @@ bool DecodeActorWalkingPacket(const PacketView& packet, RuntimeActorState& outSt
         outState.speed = ReadLE16(packet.data + 9);
         outState.bodyState = ReadLE16(packet.data + 11);
         outState.healthState = ReadLE16(packet.data + 13);
-        outState.effectState = static_cast<int>(option != 0 ? option : opt3);
+        outState.effectState = static_cast<int>(option | opt3);
         outState.job = ReadLE16(packet.data + 19);
         outState.hairStyle = ReadLE16(packet.data + 21);
         outState.weapon = ReadLE16(packet.data + 23);
@@ -6310,7 +6371,7 @@ bool DecodeActorWalkingPacket(const PacketView& packet, RuntimeActorState& outSt
     outState.healthState = ReadLE16(packet.data + 11);
     const u32 option = ReadLE32(packet.data + 13);
     const u32 opt3 = ReadLE32(packet.data + 49);
-    outState.effectState = static_cast<int>(option != 0 ? option : opt3);
+        outState.effectState = static_cast<int>(option | opt3);
     outState.job = ReadLE16(packet.data + 17);
     outState.hairStyle = ReadLE16(packet.data + 19);
     outState.weapon = ReadLE16(packet.data + 21);
@@ -8585,6 +8646,7 @@ void RegisterDefaultGameModePacketHandlers(CGameModePacketRouter& router)
     router.Register(0x02E9, HandleIgnorePacket);
     router.Register(0x0196, HandlePacket0196);
     router.Register(0x043F, HandlePacket043F);
+    router.Register(0x028A, HandleNpcShowEfstUpdate);
     router.Register(0x0814, HandleIgnorePacket);
     router.Register(0x0816, HandleIgnorePacket);
 

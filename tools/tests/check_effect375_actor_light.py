@@ -10,6 +10,10 @@ LOCAL = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 DISPATCH = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
 DISPATCH3 = (ROOT / "src/world/RagEffectOnProcess3Cases.generated.inc").read_text(encoding="utf-8")
 GENERATOR = (ROOT / "tools/generate_effect_dispatch.py").read_text(encoding="utf-8")
+WORLD = (ROOT / "src/world/World.cpp").read_text(encoding="utf-8")
+ACTOR = (ROOT / "src/world/GameActor.cpp").read_text(encoding="utf-8")
+GAME_MODE = (ROOT / "src/gamemode/GameMode.cpp").read_text(encoding="utf-8")
+RENDERER = (ROOT / "src/render/Renderer.cpp").read_text(encoding="utf-8")
 
 
 def require(ok, message):
@@ -36,6 +40,45 @@ require(helper is not None, "local ApplyActorLight body missing")
 local_case = re.search(r"case 375:\s*if \(master != nullptr && \(master->m_BodyLight & 8\) != 8\)\s*\{\s*"
                        r"master->m_BodyLight \+= 8;\s*\}\s*break;", helper.group(1))
 require(local_case is not None, "local effect375 bit gate or null-master behavior changed")
+require("Ref/Pc.cpp:7376-7408" in WORLD
+        and "(actor->m_BodyLight & 8) == 8" in WORLD
+        and "(actor->m_BodyLight & 0x10000) != 0x10000" in WORLD
+        and "(actor->m_BodyLight & 0x20000) != 0x20000" in WORLD,
+        "Assumptio actor-light bit is not connected to billboard rendering")
+require("actor->m_BodySin = static_cast<u8>(actor->m_BodySin + 1)" in WORLD
+        and "const float pulse = g_sinTable[actor->m_BodySin]" in WORLD
+        and "400.0f / cameraDistance * (pulse * 1.5f + 5.0f)" in WORLD
+        and "interpolate(entry.renderOow[0], entry.renderOow[1], entry.renderOow[2], entry.renderOow[3], layerX, depthY)" in WORLD
+        and "interpolate(entry.renderZ[0], entry.renderZ[1], entry.renderZ[2], entry.renderZ[3], layerX, depthY)" in WORLD
+        and "g_renderer.AddRP(aura, 1 | 4 | 0x10)" in WORLD
+        and "aura->destAlphaMode = D3DBLEND_ONE" in WORLD
+        and "actor->m_assumptioAuraTextures[layer]" in WORLD
+        and "layer < 5" in WORLD,
+        "Assumptio aura pulse/render operation diverges from Ref actor sprite path")
+require("m_assumptioAuraTextures" in ACTOR
+        and "DrawPlayerLayer(*(*auraLayers)[0]" in ACTOR
+        and "DrawAttachedAccessoryMotion(*(*auraLayers)[4]" in ACTOR,
+        "Assumptio layer textures do not reuse the canonical player layers 0-4")
+require("actor->m_BeZero = 1" in WORLD,
+        "billboard renderer does not reset frame-transient actor-light state like Ref Pc::Render")
+require("float topLeft, float topRight, float bottomLeft, float bottomRight" in WORLD,
+        "aura depth and inverse depth must not be truncated to integers")
+require("m_rpAlphaOPSortedList.push_back({sortKey, face})" in RENDERER
+        and "m_rpAlphaOPSortedList" in RENDERER
+        and "SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);" in RENDERER
+        and "SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);" in RENDERER
+        and re.search(r"FlushEffectDepthLists\(\);\s*// The actor-bound Assumptio[\s\S]*?"
+                      r"SetRenderState\(D3DRENDERSTATE_ZENABLE, D3DZB_TRUE\);[\s\S]*?"
+                      r"SetRenderState\(D3DRENDERSTATE_ZWRITEENABLE, FALSE\);[\s\S]*?"
+                      r"SetRenderState\(D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL\);", RENDERER)
+        and "blendedFaces.push_back({ pair.first, pair.second, D3DBLEND_SRCALPHA, D3DBLEND_ONE })" in RENDERER,
+        "Assumptio needs its AlphaOP blend in the depth-sorted translucent scene pass")
+replay_status = re.search(r"void ReplayPersistedStatusVisuals\(CGameMode& mode\)\s*\{([\s\S]*?)\n\}", GAME_MODE)
+require(replay_status is not None
+        and "icon.statusType == 110" in replay_status.group(1)
+        and "assumptioStateActive" in replay_status.group(1)
+        and "actor->LaunchEffect(375" in replay_status.group(1),
+        "map-load status replay does not restore Ref GameModeShowEFST Assumptio effect375")
 pe_379 = re.search(
     r"case 379:\s*v110 = this->m_stateCnt;\s*"
     r"if \( v110 <= 0xC8 \)\s*"

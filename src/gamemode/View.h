@@ -45,6 +45,7 @@ public:
     const matrix& GetViewMatrix() const { return m_viewMatrix; }
     float GetCameraLongitude() const { return m_cur.longitude; }
     float GetCameraLatitude() const { return m_cur.latitude; }
+    float GetCameraDistance() const { return m_cur.distance; }
     float GetTargetCameraLatitude() const { return m_dest.latitude; }
     float GetTargetCameraDistance() const { return m_dest.distance; }
     u64 BillboardFrameCacheSnapTag() const;

@@ -162,6 +162,7 @@ public:
     void AddRawRP(RPRaw* face, int renderFlag);
     
     void FlushRenderList();
+    void DiscardRenderList();
     
     void SetLookAt(struct vector3d& eye, struct vector3d& at, struct vector3d& up);
     void SetLight(struct vector3d* dir, struct vector3d* diffuse, struct vector3d* ambient);
@@ -219,6 +220,7 @@ public:
     std::vector<std::pair<float, RPFace*>> m_rpAlphaNoDepthList;
     std::vector<std::pair<float, RPFace*>> m_rpEmissiveDepthList;
     std::vector<std::pair<float, RPFace*>> m_rpEmissiveList;
+    std::vector<std::pair<float, RPFace*>> m_rpAlphaOPSortedList;
     std::vector<std::pair<float, RPFace*>> m_rpEmissiveNoDepthList;
     std::vector<RPRaw*> m_rpRawList;
     std::vector<RPRaw*> m_rpRawAlphaList;

@@ -21020,7 +21020,10 @@ bool CRagEffect::ProcessEffect440()
         CGameMode* mode = g_modeMgr.GetCurrentGameMode();
         CRenderObject* player = mode != nullptr && mode->m_world != nullptr ? mode->m_world->m_player : nullptr;
         if (player != nullptr) {
-            PlayWave("effect\\", m_effectPos.x - player->m_pos.x, 0.0f,
+            // The call's aEffect_124 symbol is truncated in the decomp, but
+            // the executable contains this full Assumptio path at VA 0x71A3D4.
+            PlayWave("effect\\\xBE\xC6\xBC\xFB\xC7\xC1\xC6\xBC\xBF\xC0.wav",
+                m_effectPos.x - player->m_pos.x, 0.0f,
                 m_effectPos.z - player->m_pos.z, 250, 40, 1.0f);
         }
     }

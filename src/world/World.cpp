@@ -4,6 +4,8 @@
 #include "world/MsgEffect.h"
 #include "world/3dActor.h"
 #include "world/RagEffect.h"
+#include "gamemode/GameMode.h"
+#include "gamemode/View.h"
 #include "DebugLog.h"
 #include "render/Prim.h"
 #include "render/Renderer.h"
@@ -2768,10 +2770,128 @@ bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
 
     face->alphaSortKey = entry.depthKey;
 
+    // Ref/Pc.cpp:7376-7408 expands each eligible sprite layer 0..4 for
+    // m_BodyLight bit 0x8 and suppresses this pass for bits 0x10000/0x20000.
+    if ((actor->m_BodyLight & 8) == 8
+        && (actor->m_BodyLight & 0x10000) != 0x10000
+        && (actor->m_BodyLight & 0x20000) != 0x20000) {
+        float cameraDistance = 0.0f;
+        if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+            if (mode->m_view != nullptr) {
+                cameraDistance = mode->m_view->GetTargetCameraDistance();
+            }
+        }
+        if (cameraDistance > 0.0f) {
+            const tagRECT& actorBounds = actor->m_billboardOpaqueBounds;
+            const float actorWidth = static_cast<float>((std::max)(1L, actorBounds.right - actorBounds.left));
+            const float actorHeight = static_cast<float>((std::max)(1L, actorBounds.bottom - actorBounds.top));
+            for (int layer = 0; layer < 5; ++layer) {
+                CTexture* texture = actor->m_assumptioAuraTextures[layer];
+                const tagRECT& bounds = actor->m_assumptioAuraBounds[layer];
+                if (!texture || bounds.right <= bounds.left || bounds.bottom <= bounds.top) {
+                    continue;
+                }
+
+                // Ref/Pc.cpp:7376-7408 advances the pulse once per eligible layer.
+                actor->m_BodySin = static_cast<u8>(actor->m_BodySin + 1);
+                if (actor->m_BodySin > 0xB4u) {
+                    actor->m_BodySin = 0;
+                }
+                const float pulse = g_sinTable[actor->m_BodySin];
+                const float expansion = 400.0f / cameraDistance * (pulse * 1.5f + 5.0f);
+
+                const float leftRatio = (static_cast<float>(bounds.left) - static_cast<float>(actorBounds.left)) / actorWidth;
+                const float rightRatio = (static_cast<float>(bounds.right) - static_cast<float>(actorBounds.left)) / actorWidth;
+                const float topRatio = (static_cast<float>(bounds.top) - static_cast<float>(actorBounds.top)) / actorHeight;
+                const float bottomRatio = (static_cast<float>(bounds.bottom) - static_cast<float>(actorBounds.top)) / actorHeight;
+                // TEST_BODY_BEGIN assumptio_interpolate
+                const auto interpolate = [&](float topLeft, float topRight, float bottomLeft, float bottomRight, float x, float y) {
+                    const float topValue = topLeft + (topRight - topLeft) * x;
+                    const float bottomValue = bottomLeft + (bottomRight - bottomLeft) * x;
+                    return topValue + (bottomValue - topValue) * y;
+                };
+                // TEST_BODY_END assumptio_interpolate
+                const float x[4] = {
+                    interpolate(entry.renderX[0], entry.renderX[1], entry.renderX[2], entry.renderX[3], leftRatio, topRatio),
+                    interpolate(entry.renderX[0], entry.renderX[1], entry.renderX[2], entry.renderX[3], rightRatio, topRatio),
+                    interpolate(entry.renderX[0], entry.renderX[1], entry.renderX[2], entry.renderX[3], leftRatio, bottomRatio),
+                    interpolate(entry.renderX[0], entry.renderX[1], entry.renderX[2], entry.renderX[3], rightRatio, bottomRatio),
+                };
+                const float y[4] = {
+                    interpolate(entry.renderY[0], entry.renderY[1], entry.renderY[2], entry.renderY[3], leftRatio, topRatio),
+                    interpolate(entry.renderY[0], entry.renderY[1], entry.renderY[2], entry.renderY[3], rightRatio, topRatio),
+                    interpolate(entry.renderY[0], entry.renderY[1], entry.renderY[2], entry.renderY[3], leftRatio, bottomRatio),
+                    interpolate(entry.renderY[0], entry.renderY[1], entry.renderY[2], entry.renderY[3], rightRatio, bottomRatio),
+                };
+                if (RPFace* aura = g_renderer.BorrowNullRP()) {
+                    aura->primType = D3DPT_TRIANGLESTRIP;
+                    aura->verts = aura->m_verts;
+                    aura->numVerts = 4;
+                    aura->indices = nullptr;
+                    aura->numIndices = 0;
+                    aura->tex = texture;
+                    aura->mtPreset = kSpriteTextureMode;
+                    aura->cullMode = D3DCULL_NONE;
+                    aura->srcAlphaMode = D3DBLEND_SRCALPHA;
+                    aura->destAlphaMode = D3DBLEND_ONE;
+                    aura->alphaSortKey = entry.depthKey;
+                    const float widthScale = texture->m_w > 0 && texture->m_surfaceUpdateWidth > 0
+                        ? static_cast<float>(texture->m_surfaceUpdateWidth) / static_cast<float>(texture->m_w)
+                            / static_cast<float>((std::max)(1, actor->m_assumptioAuraWidth))
+                        : 0.0f;
+                    const float heightScale = texture->m_h > 0 && texture->m_surfaceUpdateHeight > 0
+                        ? static_cast<float>(texture->m_surfaceUpdateHeight) / static_cast<float>(texture->m_h)
+                            / static_cast<float>((std::max)(1, actor->m_assumptioAuraHeight))
+                        : 0.0f;
+                    const float u[4] = { bounds.left * widthScale, bounds.right * widthScale, bounds.left * widthScale, bounds.right * widthScale };
+                    const float v[4] = { bounds.top * heightScale, bounds.top * heightScale, bounds.bottom * heightScale, bounds.bottom * heightScale };
+                    // TEST_BODY_BEGIN assumptio_vertices
+                    for (int index = 0; index < 4; ++index) {
+                        tlvertex3d& auraVert = aura->m_verts[index];
+                        const float layerX = (index % 2) ? rightRatio : leftRatio;
+                        const float layerY = (index < 2) ? topRatio : bottomRatio;
+                        auraVert.x = x[index] + ((index % 2) ? expansion : -expansion);
+                        auraVert.y = y[index] + ((index < 2) ? -expansion : expansion);
+                        // This backend has a single cached billboard depth for
+                        // the player layers. Match that depth exactly so the
+                        // aura passes LEQUAL over its own sprite while still
+                        // failing against nearer scene depth.
+                        // Expansion changes screen Y: evaluate the player's
+                        // depth plane at the expanded position, rather than
+                        // stretching its depth gradient with the aura texture.
+                        const float screenHeight = entry.renderY[2] - entry.renderY[0];
+                        const float depthY = std::fabs(screenHeight) > 0.0001f
+                            ? (auraVert.y - entry.renderY[0]) / screenHeight : layerY;
+                        auraVert.oow = interpolate(entry.renderOow[0], entry.renderOow[1], entry.renderOow[2], entry.renderOow[3], layerX, depthY);
+                        const float playerDepth = (std::max)(0.0f,
+                            interpolate(entry.renderZ[0], entry.renderZ[1], entry.renderZ[2], entry.renderZ[3], layerX, depthY)
+                                - kBillboardDepthBias);
+                        // One representable step avoids equality roundoff on
+                        // the player's own pixels without a scene-scale bias.
+                        auraVert.z = std::nextafter(playerDepth, 0.0f);
+                        auraVert.color = billboardColor;
+                        auraVert.specular = 0xFF000000u;
+                        auraVert.tu = u[index];
+                        auraVert.tv = v[index];
+                    }
+                    // TEST_BODY_END assumptio_vertices
+                    // Keep the Ref AlphaOP blend, but interleave this actor-bound
+                    // glow with depth-sorted translucent scene sprites. The late
+                    // global AlphaOP pass paints it over foreground alpha geometry
+                    // that does not write depth.
+                    g_renderer.AddRP(aura, 1 | 4 | 0x10);
+                }
+            }
+        }
+    }
+
     // RF_SPRITE (RF_ALPHA | RF_DEPTHWRITE). The body is drawn into the depth
     // buffer before RF_EFFECT primitives, so the far side of an aura ring
     // fails the depth test where it passes behind the character.
     g_renderer.AddRP(face, 1 | 0x100);
+    // Ref/Pc.cpp sets m_BeZero after finishing its sprite layers; the next
+    // effect step clears frame-transient m_BodyLight bits before replaying effects.
+    actor->m_BeZero = 1;
     return true;
 }
 

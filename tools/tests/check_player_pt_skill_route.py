@@ -104,6 +104,7 @@ input_route = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "bool TryRe
 pump_route = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "void PumpSkillChaseRequest(")
 targeted_pump_route = pump_route[pump_route.index("const u16 skillId = static_cast<u16>(mode.m_skillChaseSkillId") :]
 begin_chase = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "void BeginSkillChase(")
+mode_sendmsg = extract_definition(ROOT / "src/gamemode/GameMode.cpp", "msgresult_t CGameMode::SendMsg(")
 assert "BeginSkillChase(mode, targetGid, skillId, skillLevel, skillRange);" in input_route
 assert "const PLAYER_SKILL_INFO* skillInfo = g_session.GetSkillItemBySkillId(static_cast<int>(skillId))" in input_route
 assert "const int skillRange = skillInfo ? skillInfo->attackRange : 0" in input_route
@@ -128,7 +129,7 @@ ordered_current = (
     "const float distanceSquared = static_cast<float>(horizontalDistance * horizontalDistance + dy * dy)",
     "double distance = std::sqrt(static_cast<double>(distanceSquared))",
     "distance -= 20.0f",
-    "5 * skillRange) + 5.5 || destinationIsPlayerCell",
+    "if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell)",
     "const bool sent = SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid)",
     "player->m_destCellX == chaseTileX && player->m_destCellZ == chaseTileY",
     "player->m_stateId == 2",
@@ -147,6 +148,11 @@ assert "IsAttackTargetWithinRange" not in targeted_pump_route
 assert "ResolveAttackChaseCell" not in targeted_pump_route
 assert "m_isLeftButtonHeld" not in targeted_pump_route and "m_hasHeldMoveTarget" not in targeted_pump_route
 assert "normalizedDirectionZ" not in targeted_pump_route
+assert "serverInRange" not in targeted_pump_route
+assert "IsServerCellWithinSkillRange" not in targeted_pump_route
+left_button_up = mode_sendmsg[mode_sendmsg.index("case GameMsg_LButtonUp:") :]
+left_button_up = left_button_up[: left_button_up.index("case GameMsg_MouseMove:")]
+assert "ClearSkillChase" not in left_button_up, "mouse release must not cancel the source PT_SKILL proceed state"
 assert "const float normalizedDirectionX = static_cast<float>(inverseLength * deltaX)" in targeted_pump_route
 assert "const float projectedOffsetX = static_cast<float>(static_cast<double>(5 * skillRange) * normalizedDirectionX)" in targeted_pump_route
 assert "const float projectedOffsetZ = static_cast<float>(static_cast<double>(5 * skillRange) * (inverseLength * deltaZ))" in targeted_pump_route

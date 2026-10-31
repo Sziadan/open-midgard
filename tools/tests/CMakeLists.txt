@@ -518,6 +518,15 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/TeiHit1GeometryBody.inc" "${tei_hit1_geo
 extract_test_region(cloud_render_geometry "${effect_source}" cloud_render_family)
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CloudRenderGeometryBody.inc" "${cloud_render_geometry}")
 file(READ "../../src/render/Renderer.cpp" renderer_source)
+extract_test_region(draw_scene_frame "${renderer_source}" draw_scene_frame)
+extract_test_region(discard_render_frame "${renderer_source}" discard_render_frame)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/RendererFrameBodies.inc" "${draw_scene_frame}\n${discard_render_frame}")
+add_executable(renderer_frame_checks RendererFrameTests.cpp)
+target_compile_features(renderer_frame_checks PRIVATE cxx_std_17)
+target_include_directories(renderer_frame_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME renderer_frame_checks COMMAND renderer_frame_checks)
+add_test(NAME frame_submission_source_check
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/check_frame_submission.py")
 extract_test_region(reference_triangle_queue "${renderer_source}" reference_triangle_queue)
 string(REPLACE "CRenderer::" "SilentRenderer::" reference_triangle_queue "${reference_triangle_queue}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ReferenceTriangleQueueBodies.inc" "${reference_triangle_queue}")
@@ -595,6 +604,13 @@ extract_test_region(beginasura1_variants468_473_handler "${effect_source}" begin
 extract_test_region(bottom_vertical_handler "${effect_source}" bottom_vertical_family)
 extract_test_region(bottom_music_handler "${effect_source}" bottom_music_family)
 file(READ "../../src/world/World.cpp" world_source)
+extract_test_region(assumptio_interpolate "${world_source}" assumptio_interpolate)
+extract_test_region(assumptio_vertices "${world_source}" assumptio_vertices)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/AssumptioVertices.inc" "${assumptio_interpolate}\n${assumptio_vertices}")
+add_executable(assumptio_depth_checks AssumptioDepthTests.cpp)
+target_compile_features(assumptio_depth_checks PRIVATE cxx_std_17)
+target_include_directories(assumptio_depth_checks PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME assumptio_depth_checks COMMAND assumptio_depth_checks)
 extract_body(primitive_init "${effect_source}" "void CEffectPrim::Init(" "static_assert(offsetof(EffectGi, height)")
 extract_test_region(primitive_update_family "${effect_source}" primitive_update_family)
 extract_body(cylinder_update "${effect_source}" "bool UpdateCylinderPrimitive(CEffectPrim* prim)" "bool UpdateParticleOrbitPrimitive(")
@@ -1928,6 +1944,8 @@ add_test(NAME msg_effect_state_lifecycle_source_check
         "${CMAKE_CURRENT_SOURCE_DIR}/../../src/world/GameActor.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/GameActor.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../Ref/Npc.cpp")
+add_test(NAME falcon_equip_parity_check
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_falcon_equip.py")
 add_test(NAME recovery_number_receiver_source_check
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_recovery_number_receiver.py"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../src/world/GameActor.cpp"

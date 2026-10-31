@@ -3420,6 +3420,22 @@ From STATUS.md: Latest WP7 combo-delay checkpoint: deterministic 0x01D2 AID42 du
 
 From STATUS.md: Latest WP7 Blade Stop checkpoint: 0x01D1 now flows through the production handler and forced-motion state machine under a deterministic clock, checking self pose frames/deadline, target freeze/tint, and release for both actors. Rendered pose and visual acceptance remain unverified.
 
+## WP2 — Falcon type18 — 2026-10-31
+
+Implemented missing Falcon type18 owner-follow and target-flight handling in `CMsgEffect`, including MakeMsgEffect speed4, message29 target delta, distance-based owner tracking, ground height placement and directional attack action. Expanded `check_blitzbeat_caller.py` with Falcon assertions. The check passes. The MinGW Qt preset Release client builds successfully after configuring with `-DRO_ENABLE_DEV_DEPLOY=OFF`; runtime acceptance remained open.
+
+## WP2 — Falcon login and equipment release — 2026-10-31
+
+Fixed the actor bootstrap omission: the modern packet path assigns `m_effectState` directly and refreshes presentation without passing through `SetAttrState`, so an initially present Falcon bit did not create message101. `RefreshActorEffectStatePresentation` now reconciles Falcon creation/removal using the reference bit and visibility gates. Added “Release Falcon” beneath the equipment preview, visible while the Falcon bit is active; clicking sends the existing `CZ_REQ_CARTOFF` request, whose reference server handler clears `OPTION_FALCON` (and cart/riding) and subsequently reports the off state. `check_falcon_equip.py` passes. MinGW Qt build and runtime replay still need completion for this checkpoint.
+
+### Follow-up — login state and Qt visibility
+
+User runtime feedback showed the earlier fixes were insufficient. The actor-spawn decoders were selecting `option` or `opt3` rather than combining them, so any state bits carried only in `opt3` were dropped; spawn decoding now preserves both fields. In the Qt equipment window, the player preview panel was painted over the Falcon button and extended through its row; the preview height now reserves a separate button strip beneath the sprite. The focused Falcon comparator covers both regressions. Rebuilt with `mingw-qt-x64` and copied the executable to `D:\Spel\OldRO\open-midgard.exe`; live login acceptance remains open.
+
+### Follow-up — login bootstrap, animation, facing and return after Blitz Beat
+
+Ref `CGameMode::EnsureBootstrapSelfActor` data was being copied from the selected character record without creating its Falcon effect. Bootstrap now sends message101 when the saved Falcon option is active and visible. Type18 now starts in the Ref idle-animation state (`m_isAnimation=1`), uses the source `CalcDir` Z-axis sign when facing the owner/target, resets the animation cadence counter as Ref does at speed4, and survives the attack disappear phase through state35 before clearing attack/disappear and resuming owner-follow. `check_falcon_equip.py` and `check_blitzbeat_caller.py` cover the bootstrap and type18 corrections; live acceptance remains open.
+
 
 ## Checkpoint sections moved from the end of the plan — 2026-10-29 review
 
@@ -3487,3 +3503,95 @@ Original row (STATUS.md line 14): | WP10 corrective work | in progress | WP10.1,
 
 | F8 | `CEffectPrim`: the dispatcher inventory audit covers all 129 ids, and many `Prim*`/`Render*` bodies have comparators, but the current `CEffectPrim` keeps `src`-specific shapes (`UsesReference*` predicates, `m_bands` vs `m_gi`, missing `m_isVisible`). Acceptable as long as every `Prim*`/`Render*` method has its branch comparison recorded; the remaining ones are listed by `tools/audit_prim_onprocess_inventory.py`. `PP_HITLINE3` rendering is checked by `tools/tests/check_hitline3_render.py`; alphaT==1 RGB matches PE/Ref. `PP_AIRTEXTURE`, `PP_ELECTRIC`, and `PP_ELECTRIC2` are checked by render comparators, including PE float-table byte-offset interpretation; Electric path helpers use the matching degree-table elements. `PP_SMA`'s GI0 selector/cadence/effect/message branches are checked by `tools/tests/check_sma_render.py`; `PP_SMA2` is checked by `tools/tests/check_sma2_render.py`, including the shared `basicAngle==0` loop edge for nonnegative fullDisplayAngle below 20 (recorded without executing a hanging fixture). PP_STIN/STIN2/STIN4's grouped `RenderSTIN` routes and corner/tint/submission branches are checked by `tools/tests/check_stin_render.py`; PP_STIN5's rotated RenderSTIN5 geometry, RotStart byte-offset interpretation and fixed tint/submission are checked by `tools/tests/check_stin5_render.py`. PP_WIND's `RenderWind` source branch map is in `tools/tests/check_wind_render.py`; it records the canonical nonprogressing loop for positive fullDisplayAngle 1..20 and the current local skip, without executing the source loop. PP_COLORPAPER's normalized PE/primary Ref body and route plus local corner/submission map are in `tools/tests/check_colorpaper_render.py`; source p_z-relative color/position offsets are preserved but not assigned height indices because available Ref headers lack the GI layout. PP_MAGNUM2's comparator is in `tools/tests/check_magnum2_render.py`; it records the 0..19 zero-step source loop/local safety exit and verifies the corrected source A-B-C-D strip-corner order. PP_3DAURA's five-kind Render3DAura route and source palette/UV/blend/geometry mapping are checked by `tools/tests/check_aura_render.py`. PP_3DAURA_2/PP_WATERFALLPARTICLE Render3DAura_2 routes, four center groups, alpha/palette/visibility branches, and PE image-zero coefficients are checked by `tools/tests/check_aura2_render.py`; its secondary Ref fixed 45-degree square discrepancy is recorded in `docs/skill/MISMATCHES.md`. PP_3DCROSSTEXTURE's canonical PE and primary Ref bodies, geometry/UV/winding/color/texture/fixed render flag, and all nine effect caller routes are checked by `tools/tests/check_cross_texture_render.py`; this exposed and fixed omitted local route ids9 and456. PP_3DTEXTURE's normalized PE/primary-Ref body, PP_3DTEXTURE primitive dispatch, projected four-corner matrix transform, exact triangle/UV order, packed color/current texture/raw render flags, pattern0x80/0x8 geometry, and all 16 dispatched effect caller routes are checked by `tools/tests/check_3dtexture_render.py`; this exposed missing local route ids13,116,118,159,160 and the absent pattern0x80 upper-edge extension. `PP_3DTEXTURE_NOMASTER` is checked by `tools/tests/check_prim3dtexturebillboard.py`, including canonical projection/GetPixelRatio scaling, masterless routing, two-face order, full UV/color/depth/blend/cull state and the production helper fixture. Orphan PE helper definitions TetraVoltex and CurseAttack have no invocation sites and are excluded from the caller gate. | Continue under WP5A; compare the remaining primitive methods listed by the inventory audit. |
 
+
+### Follow-up — animation cadence and direction bins
+
+The previous frame-count animation still advanced on every rendered actor update. Ref's Falcon type18 cadence is four world updates; the local world tick is 24 ms, so motion now advances every 4 x 24 ms regardless of render FPS. Ref calls `Get8Dir2(..., true)`, which rounds to the nearest direction; Falcon idle and attack action selection now use the same rounded bins. Follow facing is calculated after the owner approach step. Focused source comparators and documentation hygiene pass; runtime visual acceptance is still open.
+
+
+## WP2 Merchant cart follow parity review — 2026-10-31
+
+Compared local attached cart state updates with Ref `CMsgEffect::ProcessPosition` case3 and `CGameMode::MakeMsgEffect`. Cart movement already used the same five-world-unit tether clamp and accumulated distance only while following, but motion indexing omitted Ref's division by `m_motionSpeed`; MakeMsgEffect's default `SetAction(..., 4, 1)` supplies the factor 4. The cart now divides its distance-based cadence by 4. Facing now uses the effect's plain rounded 8-direction bins, matching `Get8Dir2(..., true)` independently of actor/job rounding. Follow geometry, travel-distance accumulation and movement-only cadence remain unchanged. Rebuilt with the MinGW Qt x64 preset; live runtime acceptance remains open.
+
+## WP2 cart/player render-order correction — 2026-10-31
+
+Cart/player overlap already selected a before/after pass from projected screen Y, and assigned an owner-relative alpha sort key. The player sprite writes depth first, however, so the cart's independent world-projected depth could still reject the cart even in its after-owner pass. The cart's world-billboard and projected fallback paths now clamp depth toward the owner when that pass marks the cart in front; behind-owner depth remains unchanged. MinGW Qt x64 Release rebuild passed. Runtime visual acceptance remains open.
+
+## WP2 cart/player render-order follow-up — 2026-10-31
+
+User confirmed the prior owner-anchor depth clamp did not overcome the depth written across the player's full billboard. In the cart after-owner pass, the cart sprite now uses a near-plane depth while retaining its owner-relative alpha sort key; the before-owner pass keeps projected world depth. The projected fallback applies the matching near depth before its standard bias. MinGW Qt x64 Release rebuild passed; this pass now deliberately resolves cart/player overlap using screen classification plus alpha order instead of the cart's stale/world-depth overlap. Awaiting runtime visual confirmation.
+
+## WP2 targeted actor-skill chase dispatch — 2026-10-31
+
+Compared `CPlayer::ProcessProceed` PT_SKILL in `Ref/Player.cpp` and `HighPriest.exe.c`; normalized full bodies and PT_SKILL branch are identical. The source dispatches message 42 when 3D distance is `<= 5 * m_skillAttackRange + 5.5` or `m_destCellX/Z` equal the current server cell. Local `PumpSkillChaseRequest` had added an `IsServerCellWithinSkillRange` condition after this source predicate, suppressing dispatch while the visible player entered range ahead of server position state. Removed that extra condition. Tightened `check_player_pt_skill_route.py`; focused check passes. MinGW Qt x64 Release build succeeded; runtime acceptance remains open.
+
+## WP2 targeted actor-skill chase lifecycle — 2026-10-31
+
+Follow-up runtime report showed the prior range-gate correction was insufficient. Ref `CPlayer::SendMsg` message41 arms `PT_SKILL`; `CPlayer::ProcessProceed` retains it while moving and clears it only after message42 dispatch followed by message13. Local `CGameMode::SendMsg(GameMsg_LButtonUp)` incorrectly called `ClearSkillChase`, so releasing the target click could cancel the pending skill while the already-issued move continued to its endpoint. Removed that mouse-release cancellation. Extended `check_player_pt_skill_route.py` to assert LButtonUp preserves the PT_SKILL intent. The focused Ref/EXE/current source check passes; MinGW Qt x64 Release rebuild succeeded. Runtime acceptance remains open.
+
+## Assumptio aura follow-up — 2026-10-31
+
+Compared `Ref/GameModePacket.cpp::GameModeShowEFST` and canonical `HighPriest.exe.c` with the local actor packet path. The reference's PC branch launches effect 375 when `showEFST & 0x800` (`OPT3_ASSUMPTIO`); the local `0x011A` Assumptio skill effect tree already matches the reference's effects 375 and 440, but runtime actor bootstrap/state refresh never reconciled the persistent Assumptio state. Added that same bit-gated, non-hidden PC effect reconciliation. Also registered the reference's `0x028A` / `ZC_NPC_SHOWEFST_UPDATE` packet (18 bytes, `id.L@2`, effect state `.L@6`, level `.L@10`, `showEFST.L@14`) and ported the Assumptio branch. The existing effect375 PE/local source comparator passes; the MinGW Qt x64 Release build succeeded and its executable was copied to `D:\Spel\OldRO\open-midgard.exe`. Live runtime acceptance remains open.
+
+## Assumptio cast target and canonical audio follow-up — 2026-10-31
+
+The earlier aura-state patch did not resolve cast presentation. ResolveSkillPacketActor mapped only g_session.m_aid to the local player; it now also maps g_session.m_gid and the active player's m_gid so skill361 can resolve its self-target and launch effects375/440. The sound path is recovered from canonical PE bytes: the effect440-specific aEffect_124 symbol is truncated, but the full CP949 filename effect\아숨프티오.wav is present at VA 0x71A3D4 and playwave_callsites.tsv maps it to CRagEffect::OnProcess3 callsite 0x5ECE6A. The local effect440 uses these exact bytes at state zero. This supersedes the earlier dhxj fallback effect\assumptio2.wav. Focused effect440/effect375 source checks pass; MinGW Qt x64 Release build succeeded and the executable was copied to D:\Spel\OldRO\open-midgard.exe with a matching hash. Live runtime confirmation remains open.
+
+## WP10 — Assumptio actor-light billboard rendering — 2026-10-31
+
+Ref `GameActor.cpp:7068-7090` and `Pc.cpp:7376-7408` show actor-light bit `0x8` pulsing `m_BodySin` through 0..180 and drawing an expanded copy of the actor sprite with expansion `400 / view distance * (sinTable[m_BodySin] * 1.5 + 5)` using `RenderSprite(..., 5)`. Effect375 already set the bit, but the local billboard renderer did not consume it. `RenderCachedBillboard` now emits the pulsing expanded copy with the actor's composited billboard texture and UVs through `AddRP(..., 5)` before the existing depth-writing body, while requiring effect375 to still be attached so its aura cannot linger after removal. The compositor has already combined the character's sprite layers; the expansion is therefore applied to the completed billboard. The focused effect375 comparator and effect440 comparator pass, and the MinGW Qt x64 Release build succeeds and deploys to `D:\Spel\OldRO\open-midgard.exe` with a matching SHA-256. Live runtime visual acceptance remains open.
+
+## WP10 — Assumptio aura render parity correction — 2026-10-31
+
+Follow-up Ref comparison found the earlier renderer adaptation used normal alpha blending, included weapon/shield layers, and omitted the `0x10000`/`0x20000` suppression conditions. Ref `RenderSprite(..., 5)` uses `srcAlphaMode=5` and `destAlphaMode=2` (`ONE`), and the PC caller renders only layers 0–4. The port now generates a separate composited texture from body/head/accessory layers 0–4, uses additive blending, honors both suppression bits, and advances `m_BodySin` by the number of present aura layers before computing the exact reference expansion. Focused effect375/effect440 checks pass; MinGW Qt x64 build succeeds and deploys to OldRO with a matching hash. Runtime visual acceptance remains open.
+
+## WP10 — Assumptio aura visibility regression follow-up — 2026-10-31
+
+The user reported the aura disappeared after the layer/blend parity correction. Ref `ApplyBodyLight445` sets `0x10000` only after state35 and `ApplyBodyLight446` sets `0x20000`; these flags are frame-transient in Ref, but the local client does not clear them each frame. The stale bits were suppressing aura texture creation. Replaced the raw-bit suppression checks with active effect445/state>35 and active effect446 checks in both composition and draw paths. Focused effect375/effect440 comparators pass; the MinGW Qt x64 build succeeds and deploys to `D:\Spel\OldRO\open-midgard.exe` with a matching hash. Runtime visual acceptance remains open.
+
+## WP10 — Assumptio aura visibility restore — 2026-10-31
+
+The aura remained invisible after removing the stale-bit suppression. Reverted the separate aura texture composition, which was the regression, and restored the already visible existing-billboard submission route. The route still requires effect375 and actor-light bit8 and keeps the source pulse wrap and expansion formula. Focused effect375/effect440 checks pass; MinGW Qt x64 build succeeds and deploys to OldRO with matching hash. The source's layer-specific blend/filter parity remains open; runtime visual acceptance is pending.
+
+## WP10 — Assumptio per-layer render parity — 2026-10-31
+
+Replaced the flattened full-character pulse with isolated body/head/accessory layer textures (layers 0–4) sourced through the existing player layer and palette resolver. `RenderCachedBillboard` now follows the Ref guard, per-layer body-sine advancement/wrap, expansion formula, and alpha-operation draw (`SRCALPHA` + `ONE`, flag 5). It skips layers 5–7 and honors Ref suppression bits `0x10000`/`0x20000`. No Korean filename is used for an Assumptio aura asset; the aura reuses normal character resources resolved by the existing CP949 resource pipeline. The modern billboard path maps each layer's opaque bounds to the actor billboard quad instead of submitting original `RPSprite` clips. Focused effect375/effect440 checks pass; MinGW Qt x64 build succeeds. Runtime visual acceptance remains open.
+
+Follow-up lifecycle fix: ported Ref `Pc::Render`'s end-of-render `m_BeZero = 1` signal into `RenderCachedBillboard`. The existing effect-state step then clears frame-local actor-light bits before effects replay, preserving Ref suppression behavior without stale masks. Added this lifecycle expectation to the focused effect375 comparator.
+
+## WP10 — Assumptio aura head/accessory depth — 2026-10-31
+
+Applied Ref's `-0.00005` expanded-sprite depth offset to the local depth-tested z coordinate, matching its reduced `oow`/`oowup`. This addresses the user's report that opaque head/headgear pixels hid the aura while torso pixels did not. Focused effect375 check now asserts this offset; MinGW Qt rebuild and deployment follow.
+
+## WP10 — Assumptio login and head depth correction — 2026-10-31
+
+Per-layer aura vertices now interpolate depth at the layer's actual billboard pixel bounds before applying Ref's `-0.00005` nearer depth adjustment. During map load, replayed status message110 removes effect375; a Ref `GameModeShowEFST`-equivalent reconciliation now restores effect375 from the persistent Assumptio bit or status icon110 after icon replay. Focused effect375/effect440 checks and the MinGW Qt build are rerun for this correction.
+
+## WP10 — Assumptio scene occlusion — 2026-10-31
+
+Kept Z testing enabled and reduced the local aura depth push from `0.00005` projected units to one float ULP ahead of the actor's interpolated, biased depth. This preserves self-sprite visibility without pushing the aura in front of nearby trees, buildings, map objects, or NPCs. Ref `oow/oowup - 0.00005` remains for its perspective values. Focused checks and MinGW Qt build follow.
+
+## WP10 — Assumptio AlphaOP scene depth state — 2026-10-31
+
+Made AlphaOP depth state explicit: Z test enabled, Z writes disabled, and comparison `LESSEQUAL`. This uses existing scene/player depth without mutating it and prevents inheritance from an earlier pass from making the aura visible through foreground geometry. Focused effect375/effect440 checks and the MinGW Qt build are rerun.
+## WP7 — Assumptio scene occlusion — 2026-10-31
+
+Moved only the Assumptio actor glow from the renderer's late global AlphaOP queue into an actor-aura-only depth-sorted additive queue. This keeps Ref's `SRCALPHA, ONE` blend while allowing nearer translucent scene sprites to composite after it. Updated `check_effect375_actor_light.py`; focused effect375/effect440 comparators pass. `cmake --build --preset build-mingw-qt-x64` succeeds, and the executable was copied to `D:\Spel\OldRO\open-midgard.exe` (matching SHA-256 verified). User runtime acceptance remains required.
+## WP7 — Assumptio aura depth conversion — 2026-10-31
+
+Corrected the Assumptio aura's transformed vertex depth to match Ref's `GetZFromOow` conversion after the `-0.00005` aura inverse-depth bias. This resolves the earlier mismatch where RHW was shifted but Z was copied from the unshifted player layer, which could place aura pixels too near scene occluders. The source comparator pins the formula; focused effect375/effect440 checks pass and the MinGW Qt preset build succeeds. Runtime acceptance remains open.
+## WP7 — Assumptio own-sprite depth — 2026-10-31
+
+Restored the aura vertex Z to the player's exact cached billboard depth after the Ref `oow` conversion made it fail against the player's own depth-writing sprite. It retains the actor-only sorted additive queue for foreground translucent sprites and the scene depth test for walls/opaque actors. Focused comparator and MinGW Qt preset build are rerun; in-game confirmation remains open.
+## WP7 — Assumptio sorted-pass state — 2026-10-31
+
+The prior explicit depth state affected the old late AlphaOP loop, not the Assumptio-only sorted queue. Added explicit depth testing, disabled depth writes, and `LESSEQUAL` at the sorted translucent pass boundary, immediately after depth-writing sprites. Comparator now checks this exact state setup. Focused Assumptio source checks and the MinGW Qt preset build pass; the updated exe is copied to OldRO with matching hash. Runtime confirmation remains open.
+## WP7 — Assumptio scene submission order — 2026-10-31
+
+Moved the actor-only additive aura out of the regular translucent depth sort and into a dedicated pass after depth-writing sprites but before translucent scene geometry. This preserves scene-depth rejection for opaque walls/actors and ensures translucent foreground geometry can cover the aura. Comparator, MinGW Qt build, and OldRO hash verification pass; user visual acceptance remains open.
+## WP7 — Assumptio fractional depth root cause — 2026-10-31
+
+Fixed integer truncation in the aura's production interpolation helper: fractional scene Z/oow had become zero, forcing the aura in front of all scene geometry. Aura expansion now follows the player's actual depth plane and uses a one-ULP self-depth allowance; its additive faces again interleave with depth-sorted translucent scene geometry. Added a regression extracting the actual production interpolation and vertex loop. Demonstrated failure before the fix and passing foreground/background, head/body plane, inverse-depth and expansion fixtures after it. Focused effect375/effect440 checks pass. Broader parity CMake configure is blocked by the existing `ResolveSkillPacketActor` body-extraction failure, so the numeric regression was compiled and run directly with MinGW. Client rebuilt with `build-mingw-qt-x64` and copied to `D:\Spel\OldRO\open-midgard.exe` with matching hash; live visual acceptance remains pending.
+## WP7 — Assumptio click-time frame consistency — 2026-10-31
+
+Moved world sprite submission after Qt overlay event processing: mouse hit testing can rebuild mutable player/aura textures and must finish before deferred faces capture their geometry/UVs. Added failed-BeginScene queue discard to prevent replay of additive aura faces and stale texture pointers. Production-body renderer recovery regression fails without discard and passes with it; frame-order guard and existing effect375/effect440 source checks pass. Dense aura depth sweep also passes without changing the depth implementation. Standalone tests use MinGW because the broader parity CMake project has the previously recorded packet extraction blocker. MinGW Qt client build succeeds and the executable is copied to OldRO with matching hash; live visual acceptance remains open.

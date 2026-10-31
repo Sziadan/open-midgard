@@ -824,9 +824,14 @@ void CRenderer::ClearBackground() {
     GetRenderDevice().ClearColor(m_nClearColor);
 }
 
+// TEST_BODY_BEGIN draw_scene_frame
 bool CRenderer::DrawScene() {
-    if (!m_renderDevice || !m_renderDevice->BeginScene())
+    if (!m_renderDevice || !m_renderDevice->BeginScene()) {
+        // A failed frame must not accumulate additive faces into the next
+        // frame (which doubles auras without changing the actor's pose).
+        DiscardRenderList();
         return false;
+    }
 
     ApplyFogState();
 
@@ -835,6 +840,33 @@ bool CRenderer::DrawScene() {
     m_renderDevice->EndScene();
     return true;
 }
+// TEST_BODY_END draw_scene_frame
+
+// TEST_BODY_BEGIN discard_render_frame
+void CRenderer::DiscardRenderList()
+{
+    m_rpFaceList.clear();
+    m_rpLMGroundList.clear();
+    m_rpLMLightList.clear();
+    m_rpRawList.clear();
+    m_rpAlphaDepthList.clear();
+    m_rpAlphaList.clear();
+    m_rpAlphaNoDepthList.clear();
+    m_rpEmissiveDepthList.clear();
+    m_rpEmissiveList.clear();
+    m_rpEmissiveNoDepthList.clear();
+    m_rpAlphaOPSortedList.clear();
+    m_rpRawAlphaList.clear();
+    m_rpRawEmissiveList.clear();
+    m_rpLmList.clear();
+    m_rpAlphaOPList.clear();
+    m_rpAlphaOPNoDepthList.clear();
+    m_vertBuffer.clear();
+    m_rpNullFaceListIter = m_rpNullFaceList.begin();
+    m_rpQuadFaceListIter = m_rpQuadFaceList.begin();
+    m_rpLmQuadFaceListIter = m_rpLmQuadFaceList.begin();
+}
+// TEST_BODY_END discard_render_frame
 
 void WaitForFrameLimit(int frameLimit)
 {
@@ -906,6 +938,8 @@ void CRenderer::AddRP(RPFace* face, int renderFlag) {
             : sortKey;
         if ((renderFlag & 8) && (renderFlag & 4)) {
             m_rpAlphaOPNoDepthList.push_back({sortKey, face});
+        } else if ((renderFlag & 4) && (renderFlag & 0x10)) {
+            m_rpAlphaOPSortedList.push_back({sortKey, face});
         } else if (renderFlag & 4) {
             m_rpAlphaOPList.push_back(face);
         } else if (renderFlag & 2) { // Emissive
@@ -1345,7 +1379,13 @@ void CRenderer::FlushRenderList() {
     m_renderDevice->SetRenderState(D3DRENDERSTATE_ALPHATESTENABLE, FALSE);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_COLORKEYENABLE, FALSE);
     FlushEffectDepthLists();
+    // The actor-bound Assumptio AlphaOP faces share this depth-sorted scene
+    // pass. Establish depth state here rather than relying on the preceding
+    // opaque/depth-writing pass to leave it enabled.
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ZENABLE, D3DZB_TRUE);
     m_renderDevice->SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, FALSE);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
+
     
     struct BlendedFaceEntry {
         float sortKey;
@@ -1355,12 +1395,15 @@ void CRenderer::FlushRenderList() {
     };
 
     std::vector<BlendedFaceEntry> blendedFaces;
-    blendedFaces.reserve(m_rpAlphaList.size() + m_rpEmissiveList.size());
+    blendedFaces.reserve(m_rpAlphaList.size() + m_rpEmissiveList.size() + m_rpAlphaOPSortedList.size());
     for (auto& pair : m_rpAlphaList) {
         blendedFaces.push_back({ pair.first, pair.second, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA });
     }
     for (auto& pair : m_rpEmissiveList) {
         blendedFaces.push_back({ pair.first, pair.second, D3DBLEND_ONE, D3DBLEND_ONE });
+    }
+    for (auto& pair : m_rpAlphaOPSortedList) {
+        blendedFaces.push_back({ pair.first, pair.second, D3DBLEND_SRCALPHA, D3DBLEND_ONE });
     }
     std::stable_sort(blendedFaces.begin(), blendedFaces.end(), [](const BlendedFaceEntry& a, const BlendedFaceEntry& b) {
         return a.sortKey < b.sortKey; // Sort back-to-front using oow: smaller is farther.
@@ -1429,6 +1472,12 @@ void CRenderer::FlushRenderList() {
         return a.first < b.first;
     });
 
+    // AlphaOP is a late color pass, but it must still test against the scene
+    // depth written by opaque geometry and the actor's own sprite.
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ZENABLE, D3DZB_TRUE);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, FALSE);
+    m_renderDevice->SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
+
     int activeAlphaOpMtPreset = 0;
     for (const auto& pair : alphaOpFaces) {
         RPFace* face = pair.second;
@@ -1472,6 +1521,7 @@ void CRenderer::FlushRenderList() {
         m_rpAlphaList.clear();
         m_rpAlphaNoDepthList.clear();
         m_rpEmissiveList.clear();
+        m_rpAlphaOPSortedList.clear();
         m_rpEmissiveNoDepthList.clear();
         m_rpRawAlphaList.clear();
         m_rpLmList.clear();
@@ -1546,6 +1596,7 @@ void CRenderer::FlushRenderList() {
     m_rpAlphaList.clear();
     m_rpAlphaNoDepthList.clear();
     m_rpEmissiveList.clear();
+    m_rpAlphaOPSortedList.clear();
     m_rpRawAlphaList.clear();
     m_rpLmList.clear();
     m_rpAlphaOPList.clear();

@@ -20,6 +20,8 @@ pe = (ROOT / "HighPriest.exe.c").read_text(encoding="latin-1")
 ref = (ROOT / "Ref/RagEffect.cpp").read_text(encoding="latin-1")
 local = (ROOT / "src/world/RagEffect.cpp").read_text(encoding="utf-8")
 header = (ROOT / "src/world/RagEffect.h").read_text(encoding="utf-8")
+msg_effect = (ROOT / "src/world/MsgEffect.cpp").read_text(encoding="utf-8")
+ref_msg_effect = (ROOT / "Ref/Skill.cpp").read_text(encoding="latin-1")
 dispatch = (ROOT / "src/world/RagEffectOnProcessCases.generated.inc").read_text(encoding="utf-8")
 sig = "void __thiscall CRagEffect::BlitzBeat(CRagEffect *this)"
 if compact(function(pe, sig)) != compact(function(ref, sig)): raise SystemExit("Ref/PE BlitzBeat helper mismatch")
@@ -38,6 +40,28 @@ for token in ('"effect\\\\hunter_blitzbeat_1st.wav"', '"effect\\\\hunter_blitzbe
               "effect\\\\magic_green.tga", "++g_blitzBeatEmissionCount"):
     if token not in handler: raise SystemExit(f"BlitzBeat payload missing {token}")
 if handler.count("rand()") != 5: raise SystemExit("expected 20 state-zero RNG draws plus 3 later draws")
+on_process = function(msg_effect, "u8 CMsgEffect::OnProcess()")
+falcon = on_process[on_process.index("case 18:"):on_process.index("case 5:", on_process.index("case 18:"))]
+for token in ("m_falconIsAttackTarget", "m_falconStateCnt <= 10 || m_falconStateCnt >= 25",
+              "m_pos.x += m_destPos2.x", "m_falconStateCnt >= 25", "m_falconMotionSpeed",
+              "m_masterActor->m_pos", "GetHeight(m_pos.x, m_pos.z) - 25.0f",
+              "std::atan2(dx, -dz)", "Get8Dir(m_falconRotation - 22.5f)",
+              "m_falconLastMotionTick"):
+    if token not in falcon: raise SystemExit(f"Falcon type18 processing missing {token}")
+if "m_falconMotionSpeed(4.0f)" not in msg_effect or "m_falconIsAnimation(1)" not in msg_effect:
+    raise SystemExit("Falcon source SetAction speed 4 was not preserved")
+if "constexpr u32 kFalconAnimationStepMs = 24;" not in msg_effect:
+    raise SystemExit("Falcon motion cadence must use the 24ms world simulation tick")
+if "if (m_falconStateCnt > 35)" not in on_process or "m_falconIsAttackTarget = 0;" not in on_process:
+    raise SystemExit("Falcon attack recovery does not resume owner follow")
+if "Get8Dir2(this, this->m_roty, 1)" not in ref_msg_effect:
+    raise SystemExit("Ref Falcon direction no longer uses rounded real-eight-direction mapping")
+if "m_falconRotation - 202.5f" not in falcon:
+    raise SystemExit("Falcon attack direction is not rounded after its 180-degree turn")
+if "case 29: {" not in msg_effect or "m_falconIsAttackTarget = 1" not in msg_effect:
+    raise SystemExit("Blitz Beat message29 target transition missing")
+if "std::sin(radians) * 5.0f" not in msg_effect or "std::cos(radians) * 5.0f" not in msg_effect:
+    raise SystemExit("Falcon owner-follow start offset missing")
 for name, signature, token in (("cross-texture", "bool CEffectPrim::UsesReferenceCrossTexture() const", "115"),
                                ("cylinder", "bool CEffectPrim::UsesReferenceCylinder() const", "case 115")):
     family = function(local, signature)
@@ -55,4 +79,4 @@ for va, expected in ((0x71BA98, b"effect\\hunter_blitzbeat_1st.wav"),
     actual = image.read_cstring_at(va)
     if actual is None or actual.raw != expected:
         raise SystemExit(f"canonical BlitzBeat resource bytes differ at VA 0x{va:X}")
-print("BlitzBeat115 parity: Ref/PE helper, PE caller, route, executable resource bytes, RNG/cadence, and two render families passed")
+print("BlitzBeat115/Falcon parity: Ref/PE helper, target message, owner follow, speed, route, resources, RNG/cadence, and render families passed")

@@ -73,6 +73,58 @@
 
 void NoteLocalHideSkillRequest(u16 skillId, u32 targetGid);
 
+constexpr int kPlayerVitalsBarWidth = 56;
+constexpr int kPlayerVitalsBarHeight = 4;
+constexpr int kPlayerVitalsBorderThickness = 1;
+constexpr int kPlayerVitalsNameTopPadding = 3;
+constexpr int kPlayerVitalsFeetGap = 22;
+constexpr float kPlayerVitalsMinZoomScale = 0.2f;
+constexpr float kPlayerVitalsMaxZoomScale = 5.0f;
+constexpr float kRefAverageCameraDistance = 500.0f;
+
+int ScaleVitalsPixels(int pixels, float scale)
+{
+    return (std::max)(1, static_cast<int>(std::lround(static_cast<float>(pixels) * scale)));
+}
+
+PlayerVitalsScreenMetrics ResolvePlayerVitalsScreenMetrics(const CView* view)
+{
+    PlayerVitalsScreenMetrics metrics;
+    metrics.barWidth = kPlayerVitalsBarWidth;
+    metrics.barHeight = kPlayerVitalsBarHeight;
+    metrics.border = kPlayerVitalsBorderThickness;
+    metrics.namePadding = kPlayerVitalsNameTopPadding;
+    const int baseTotalHeight = kPlayerVitalsBarHeight * 2 + kPlayerVitalsBorderThickness * 3;
+    metrics.totalHeight = baseTotalHeight;
+    metrics.hoverNameExtra = baseTotalHeight + kPlayerVitalsNameTopPadding - 10;
+
+    float distance = kRefAverageCameraDistance;
+    if (view) {
+        distance = view->GetCameraDistance();
+    }
+    if (!(distance > 1.0f)) {
+        return metrics;
+    }
+
+    float scale = kRefAverageCameraDistance / distance;
+    if (scale < kPlayerVitalsMinZoomScale) {
+        scale = kPlayerVitalsMinZoomScale;
+    } else if (scale > kPlayerVitalsMaxZoomScale) {
+        scale = kPlayerVitalsMaxZoomScale;
+    }
+
+    metrics.barWidth = ScaleVitalsPixels(kPlayerVitalsBarWidth, scale);
+    metrics.barHeight = ScaleVitalsPixels(kPlayerVitalsBarHeight, scale);
+    metrics.border = ScaleVitalsPixels(kPlayerVitalsBorderThickness, scale);
+    metrics.namePadding = (std::max)(0, static_cast<int>(std::lround(static_cast<float>(kPlayerVitalsNameTopPadding) * scale)));
+    metrics.totalHeight = metrics.barHeight * 2 + metrics.border * 3;
+    // GetPlayerScreenLabel already includes the unscaled gap under the feet.
+    metrics.topDelta = static_cast<int>(std::lround(static_cast<float>(kPlayerVitalsFeetGap) * scale)) - kPlayerVitalsFeetGap;
+    metrics.hoverNameExtra = metrics.totalHeight + metrics.namePadding + metrics.topDelta - 10;
+    metrics.qtNameExtra = metrics.topDelta + (metrics.totalHeight - baseTotalHeight);
+    return metrics;
+}
+
 namespace {
 CGameModePacketRouter g_gameModePacketRouter;
 
@@ -106,10 +158,6 @@ constexpr unsigned char kHoverNameFontBold = 1;
 constexpr int kHoverNameTextPadding = 4;
 constexpr int kHoverNameVerticalOffset = 26;
 constexpr u32 kPickupRetryIntervalMs = 250;
-constexpr int kPlayerVitalsBarWidth = 56;
-constexpr int kPlayerVitalsBarHeight = 4;
-constexpr int kPlayerVitalsBorderThickness = 1;
-constexpr int kPlayerVitalsNameTopPadding = 3;
 constexpr int kPlayerVitalsVerticalOffset = 10;
 constexpr float kPlayerVitalsOverlaySortKey = 0.95f;
 constexpr char kLockedTargetArrowBitmapName[] = "scroll0down.bmp";
@@ -134,7 +182,6 @@ constexpr int kEnemyCursorMagnetDeadzone = 4;
 constexpr size_t kNearbyBackgroundLogCount = 12;
 constexpr float kRefCloseCameraDistance = 150.0f;
 constexpr float kRefIndoorCameraDistance = 420.0f;
-constexpr float kRefAverageCameraDistance = 500.0f;
 constexpr float kRefFarCameraDistance = 700.0f;
 constexpr float kRefIndoorLatitudeMin = -55.0f;
 constexpr float kRefIndoorLatitudeMax = -35.0f;
@@ -1892,7 +1939,7 @@ bool QueueHoverLabelsOverlayQuad(CGameMode& mode)
         drawX = labelX - (textSize.cx / 2);
         drawY = labelY + kHoverNameTextPadding + kHoverNameVerticalOffset;
         if (hoveredActor == mode.m_world->m_player || hoveredActor->m_gid == g_session.m_gid) {
-            drawY += kPlayerVitalsBarHeight * 2 + kPlayerVitalsBorderThickness * 3 + kPlayerVitalsNameTopPadding - 10;
+            drawY += ResolvePlayerVitalsScreenMetrics(mode.m_view).hoverNameExtra;
         }
         textColor = ResolveHoverNameColor(hoveredActor);
     }
@@ -2016,13 +2063,16 @@ bool QueuePlayerVitalsOverlayQuad(CGameMode& mode)
         return false;
     }
 
-    const int totalHeight = kPlayerVitalsBarHeight * 2 + kPlayerVitalsBorderThickness * 3;
-    const int outerLeft = labelX - ((kPlayerVitalsBarWidth + kPlayerVitalsBorderThickness * 2) / 2);
+    const PlayerVitalsScreenMetrics metrics = ResolvePlayerVitalsScreenMetrics(mode.m_view);
+    const int totalHeight = metrics.totalHeight;
+    const int outerWidth = metrics.barWidth + metrics.border * 2;
+    const int outerLeft = labelX - (outerWidth / 2);
+    const int barTop = labelY + metrics.topDelta;
     RECT vitalsRect{
         outerLeft,
-        labelY,
-        outerLeft + kPlayerVitalsBarWidth + kPlayerVitalsBorderThickness * 2,
-        labelY + totalHeight,
+        barTop,
+        outerLeft + outerWidth,
+        barTop + totalHeight,
     };
 
     RECT clientRect{};
@@ -2069,37 +2119,39 @@ bool QueuePlayerVitalsOverlayQuad(CGameMode& mode)
     HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_Sp)));
     HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(player->m_MaxSp)));
     HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(labelX)));
-    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(labelY)));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(barTop)));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(metrics.barWidth)));
+    HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(metrics.barHeight)));
     HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(width)));
     HashTokenValue(&vitalsStateToken, static_cast<std::uint64_t>(static_cast<std::uint32_t>(height)));
 
     if (!s_vitalsTextureValid || vitalsStateToken != s_vitalsStateToken) {
         std::fill(s_vitalsComposePixels.begin(), s_vitalsComposePixels.end(), 0u);
     const int localOuterLeft = outerLeft - clippedRect.left;
-    const int localOuterTop = labelY - clippedRect.top;
+    const int localOuterTop = barTop - clippedRect.top;
     RECT outerRect{
         localOuterLeft,
         localOuterTop,
-        localOuterLeft + kPlayerVitalsBarWidth + kPlayerVitalsBorderThickness * 2,
+        localOuterLeft + outerWidth,
         localOuterTop + totalHeight,
     };
     FillSolidRectArgb(s_vitalsComposePixels.data(), width, height, outerRect, RGB(0, 0, 0));
 
-    const int innerLeft = outerRect.left + kPlayerVitalsBorderThickness;
-    const int innerTop = outerRect.top + kPlayerVitalsBorderThickness;
-    RECT hpRect{ innerLeft, innerTop, innerLeft + kPlayerVitalsBarWidth, innerTop + kPlayerVitalsBarHeight };
+    const int innerLeft = outerRect.left + metrics.border;
+    const int innerTop = outerRect.top + metrics.border;
+    RECT hpRect{ innerLeft, innerTop, innerLeft + metrics.barWidth, innerTop + metrics.barHeight };
     RECT spRect{
         innerLeft,
-        hpRect.bottom + kPlayerVitalsBorderThickness,
-        innerLeft + kPlayerVitalsBarWidth,
-        hpRect.bottom + kPlayerVitalsBorderThickness + kPlayerVitalsBarHeight,
+        hpRect.bottom + metrics.border,
+        innerLeft + metrics.barWidth,
+        hpRect.bottom + metrics.border + metrics.barHeight,
     };
     FillSolidRectArgb(s_vitalsComposePixels.data(), width, height, hpRect, RGB(255, 255, 255));
     FillSolidRectArgb(s_vitalsComposePixels.data(), width, height, spRect, RGB(255, 255, 255));
 
     if (maxHp > 0) {
         const int hp = (std::max)(0, (std::min)(static_cast<int>(player->m_Hp), maxHp));
-        const int hpFillWidth = kPlayerVitalsBarWidth * hp / maxHp;
+        const int hpFillWidth = metrics.barWidth * hp / maxHp;
         if (hpFillWidth > 0) {
             RECT hpFillRect{ hpRect.left, hpRect.top, hpRect.left + hpFillWidth, hpRect.bottom };
             const bool lowHp = hp * 4 < maxHp;
@@ -2114,7 +2166,7 @@ bool QueuePlayerVitalsOverlayQuad(CGameMode& mode)
 
     if (maxSp > 0) {
         const int sp = (std::max)(0, (std::min)(static_cast<int>(player->m_Sp), maxSp));
-        const int spFillWidth = kPlayerVitalsBarWidth * sp / maxSp;
+        const int spFillWidth = metrics.barWidth * sp / maxSp;
         if (spFillWidth > 0) {
             RECT spFillRect{ spRect.left, spRect.top, spRect.left + spFillWidth, spRect.bottom };
             FillSolidRectArgb(s_vitalsComposePixels.data(), width, height, spFillRect, RGB(48, 96, 220));
@@ -3511,7 +3563,7 @@ void DrawHoveredActorName(CGameMode& mode, HDC hdc)
     const int drawX = labelX - (textWidth / 2);
         int drawY = labelY + kHoverNameTextPadding + kHoverNameVerticalOffset;
     if (hoveredActor == mode.m_world->m_player || hoveredActor->m_gid == g_session.m_gid) {
-            drawY += kPlayerVitalsBarHeight * 2 + kPlayerVitalsBorderThickness * 3 + kPlayerVitalsNameTopPadding - 10;
+            drawY += ResolvePlayerVitalsScreenMetrics(mode.m_view).hoverNameExtra;
     }
     DrawOutlinedScreenText(hdc, drawX, drawY, label.c_str(), ResolveHoverNameColor(hoveredActor));
 }
@@ -3906,25 +3958,27 @@ void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc)
         return;
     }
 
-    const int totalHeight = kPlayerVitalsBarHeight * 2 + kPlayerVitalsBorderThickness * 3;
-    const int outerLeft = labelX - ((kPlayerVitalsBarWidth + kPlayerVitalsBorderThickness * 2) / 2);
-    const int outerTop = labelY;
+    const PlayerVitalsScreenMetrics metrics = ResolvePlayerVitalsScreenMetrics(mode.m_view);
+    const int totalHeight = metrics.totalHeight;
+    const int outerWidth = metrics.barWidth + metrics.border * 2;
+    const int outerLeft = labelX - (outerWidth / 2);
+    const int outerTop = labelY + metrics.topDelta;
     RECT outerRect{
         outerLeft,
         outerTop,
-        outerLeft + kPlayerVitalsBarWidth + kPlayerVitalsBorderThickness * 2,
+        outerLeft + outerWidth,
         outerTop + totalHeight,
     };
     FillSolidRect(hdc, outerRect, RGB(0, 0, 0));
 
-    const int innerLeft = outerRect.left + kPlayerVitalsBorderThickness;
-    const int innerTop = outerRect.top + kPlayerVitalsBorderThickness;
-    RECT hpRect{ innerLeft, innerTop, innerLeft + kPlayerVitalsBarWidth, innerTop + kPlayerVitalsBarHeight };
+    const int innerLeft = outerRect.left + metrics.border;
+    const int innerTop = outerRect.top + metrics.border;
+    RECT hpRect{ innerLeft, innerTop, innerLeft + metrics.barWidth, innerTop + metrics.barHeight };
     RECT spRect{
         innerLeft,
-        hpRect.bottom + kPlayerVitalsBorderThickness,
-        innerLeft + kPlayerVitalsBarWidth,
-        hpRect.bottom + kPlayerVitalsBorderThickness + kPlayerVitalsBarHeight,
+        hpRect.bottom + metrics.border,
+        innerLeft + metrics.barWidth,
+        hpRect.bottom + metrics.border + metrics.barHeight,
     };
 
     FillSolidRect(hdc, hpRect, RGB(255, 255, 255));
@@ -3932,7 +3986,7 @@ void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc)
 
     if (maxHp > 0) {
         const int hp = (std::max)(0, (std::min)(static_cast<int>(player->m_Hp), maxHp));
-        const int hpFillWidth = kPlayerVitalsBarWidth * hp / maxHp;
+        const int hpFillWidth = metrics.barWidth * hp / maxHp;
         if (hpFillWidth > 0) {
             RECT hpFillRect{ hpRect.left, hpRect.top, hpRect.left + hpFillWidth, hpRect.bottom };
             const bool lowHp = hp * 4 < maxHp;
@@ -3942,7 +3996,7 @@ void DrawPlayerVitalsOverlay(CGameMode& mode, HDC hdc)
 
     if (maxSp > 0) {
         const int sp = (std::max)(0, (std::min)(static_cast<int>(player->m_Sp), maxSp));
-        const int spFillWidth = kPlayerVitalsBarWidth * sp / maxSp;
+        const int spFillWidth = metrics.barWidth * sp / maxSp;
         if (spFillWidth > 0) {
             RECT spFillRect{ spRect.left, spRect.top, spRect.left + spFillWidth, spRect.bottom };
             FillSolidRect(hdc, spFillRect, RGB(48, 96, 220));
@@ -4061,6 +4115,19 @@ void ReplayPersistedStatusVisuals(CGameMode& mode)
         icons.size());
     for (const ACTIVE_STATUS_ICON& icon : icons) {
         actor->SendMsg(actor, 110, icon.statusType, 1, 0);
+    }
+
+    // Ref GameModeShowEFST starts effect375 from OPT3_ASSUMPTIO after the
+    // status-message pass. Message110 removes the previous effect instance,
+    // so replay the persistent login status after those icon messages.
+    const bool assumptioIconActive = std::any_of(icons.begin(), icons.end(),
+        [](const ACTIVE_STATUS_ICON& icon) { return icon.statusType == 110; });
+    const bool assumptioStateActive = (actor->m_effectState & 0x00000800) != 0;
+    const bool actorHidden = (actor->m_effectState & (0x00000002 | 0x00000004)) != 0;
+    const bool hasAssumptioEffect = std::any_of(actor->m_effectList.begin(), actor->m_effectList.end(),
+        [](const CRagEffect* effect) { return effect != nullptr && effect->GetEffectType() == 375; });
+    if (actor->m_isPc && !actorHidden && (assumptioStateActive || assumptioIconActive) && !hasAssumptioEffect) {
+        actor->LaunchEffect(375, vector3d{}, 0.0f);
     }
 
     // The same cleanup deletes the level 99 rag effects. Message 126 refuses
@@ -7159,11 +7226,7 @@ void PumpSkillChaseRequest(CGameMode& mode)
 
     const bool destinationIsPlayerCell = player->m_destCellX == sourceTileX
         && player->m_destCellZ == sourceTileY;
-    int targetTileX = -1;
-    int targetTileY = -1;
-    const bool serverInRange = !WorldToAttrCell(mode.m_world, target->m_pos.x, target->m_pos.z, &targetTileX, &targetTileY)
-        || IsServerCellWithinSkillRange(targetTileX, targetTileY, skillRange);
-    if ((distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) && serverInRange) {
+    if (distance <= static_cast<double>(5 * skillRange) + 5.5 || destinationIsPlayerCell) {
         // Ref message 42 dispatches mode message 76, then message 13 clears
         // the proceed state even when the packet send cannot be completed.
         const bool sent = SendUseSkillToIdPacket(skillId, skillLevel, mode.m_skillChaseTargetGid);
@@ -7560,6 +7623,12 @@ void EnsureBootstrapSelfActor(CGameMode& mode)
             actor->m_healthState = info->healthstate;
             actor->m_effectState = info->effectstate;
             PrimeLocalCartStateFromEffectState(info->effectstate);
+            constexpr int kFalconOption = 0x0010;
+            constexpr int kFalconSuppressedState = 0x0002 | 0x0004 | 0x0040;
+            if ((info->effectstate & kFalconOption) != 0
+                && (info->effectstate & kFalconSuppressedState) == 0) {
+                actor->SendMsg(actor, 101, 0, 0, 0);
+            }
             DbgLog("[GameMode] bootstrap self selected-char states gid=%u body=%d health=%d effect=0x%X\n",
                 g_session.m_gid,
                 info->bodystate,
@@ -10043,11 +10112,8 @@ int  CGameMode::OnRun() {
     g_renderer.Clear(0);
     static u32 s_gameplayRenderFrame = 0;
     ++s_gameplayRenderFrame;
-    const DWORD renderPrepStart = GetTickCount();
-    m_view->OnRender();
-    const DWORD renderPrepEnd = GetTickCount();
-    DWORD uiDrawStart = renderPrepEnd;
-    DWORD uiDrawEnd = renderPrepEnd;
+    DWORD uiDrawStart = GetTickCount();
+    DWORD uiDrawEnd = uiDrawStart;
     bool queuedModernOverlayFrame = false;
     bool queuedCursorOverlayFrame = false;
     if (!hasLegacyDevice) {
@@ -10085,6 +10151,12 @@ int  CGameMode::OnRun() {
         }
         uiDrawEnd = GetTickCount();
     }
+    // Qt overlay rendering pumps input events. Ground-click hit testing can
+    // rebuild the player's billboard/aura textures, so submit world geometry
+    // only after that work has finished. Render queues still put UI last.
+    const DWORD renderPrepStart = GetTickCount();
+    m_view->OnRender();
+    const DWORD renderPrepEnd = GetTickCount();
     const DWORD drawSceneStart = GetTickCount();
     g_renderer.DrawScene();
     const DWORD drawSceneEnd = GetTickCount();
@@ -10694,7 +10766,6 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
         m_lastMoveRequestTick = 0;
         m_lastAttackRequestTick = 0;
         ClearAttackChaseHint(*this);
-        ClearSkillChase(*this);
         return 1;
 
     case GameMsg_MouseMove: {

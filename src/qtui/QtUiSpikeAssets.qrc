@@ -5,6 +5,7 @@
         <file>qml/RoTheme.qml</file>
         <file>qml/RoFrame.qml</file>
         <file>qml/RoChromeButton.qml</file>
+        <file>qml/RoBasicMenuIcon.qml</file>
         <file>qml/RoTextButton.qml</file>
         <file>qml/RoScrollBar.qml</file>
         <file>qml/RoField.qml</file>

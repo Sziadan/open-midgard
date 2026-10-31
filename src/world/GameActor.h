@@ -368,6 +368,12 @@ public:
     int m_spriteActionIndex;
     int m_spriteMotionIndex;
     int m_lastProcessedSpriteMotionIndex;
+    int m_falconStateCnt;
+    int m_falconIsAttackTarget;
+    int m_falconIsAnimation;
+    float m_falconRotation;
+    float m_falconMotionSpeed;
+    u32 m_falconLastMotionTick;
     int m_alpha;
     u32 m_masterGid;
     u32 m_colorArgb;
@@ -485,6 +491,12 @@ public:
     int m_billboardAnchorX;
     int m_billboardAnchorY;
     tagRECT m_billboardOpaqueBounds;
+    CTexture* m_assumptioAuraTextures[5]{};
+    tagRECT m_assumptioAuraBounds[5]{};
+    int m_assumptioAuraWidth = 0;
+    int m_assumptioAuraHeight = 0;
+    int m_assumptioAuraBodyAction = -1;
+    int m_assumptioAuraHeadMotion = -1;
     int m_cachedBillboardBodyAction;
     int m_cachedBillboardHeadMotion;
     int m_cachedBillboardJob;

@@ -1162,6 +1162,8 @@ Item {
                 height: modelData.height || 0
                 visible: modelData.visible || false
                 label: modelData.label || ""
+                hovered: modelData.hovered || false
+                pressed: modelData.pressed || false
             }
         }
 
@@ -1406,7 +1408,10 @@ Item {
                 width: modelData.width || 0
                 height: modelData.height || 0
                 visible: modelData.visible || false
-                label: modelData.label || ""
+                label: modelData.icon ? "" : (modelData.label || "")
+                icon: modelData.icon || ""
+                hovered: modelData.hovered || false
+                pressed: modelData.pressed || false
             }
         }
     }
@@ -2801,7 +2806,8 @@ Item {
                 x: 98
                 y: 15
                 width: Math.max(1, 182 - 98)
-                height: Math.max(1, parent.height - y - 12)
+                // Reserve the bottom strip for the Falcon release control.
+                height: Math.max(1, parent.height - y - 49)
                 color: theme.rowAlt
                 border.width: 1
                 border.color: theme.buttonBorder

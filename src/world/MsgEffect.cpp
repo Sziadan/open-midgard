@@ -26,6 +26,7 @@ namespace {
 
 constexpr float kMsgEffectNearPlane = 10.0f;
 constexpr float kMsgEffectSubmitNearPlane = 80.0f;
+constexpr u32 kFalconAnimationStepMs = 24;
 constexpr const char* kDamageNumberSpritePath = "data\\sprite\\\xC0\xCC\xC6\xD1\xC6\xAE\\\xBC\xFD\xC0\xDA.spr";
 constexpr const char* kDamageNumberActPath = "data\\sprite\\\xC0\xCC\xC6\xD1\xC6\xAE\\\xBC\xFD\xC0\xDA.act";
 constexpr const char* kMissEffectSpritePath = "data\\sprite\\\xC0\xCC\xC6\xD1\xC6\xAE\\msg.spr";
@@ -1320,7 +1321,7 @@ float ResolveActorFacingRotationForMsgEffect(const CGameActor& actor, u32 now)
     return actor.m_roty;
 }
 
-int ResolveAttachedActorFacingAction(const CMsgEffect& effect,
+int ResolveAttachedActorFacingAction(CMsgEffect& effect,
     const vector3d& effectPos,
     const vector3d& targetPos,
     float ownerRotationDegrees)
@@ -1332,12 +1333,12 @@ int ResolveAttachedActorFacingAction(const CMsgEffect& effect,
     const float deltaX = targetPos.x - effectPos.x;
     const float deltaZ = targetPos.z - effectPos.z;
     if (std::fabs(deltaX) <= 0.0001f && std::fabs(deltaZ) <= 0.0001f) {
-        return effect.m_masterActor->Get8Dir(ownerRotationDegrees);
+        return effect.Get8Dir(ownerRotationDegrees - 22.5f);
     }
 
     const float radians = std::atan2(deltaX, -deltaZ);
     const float degrees = radians * (180.0f / 3.14159265f);
-    return effect.m_masterActor->Get8Dir(degrees);
+    return effect.Get8Dir(degrees - 22.5f);
 }
 
 void InitializeAttachedActorTrailPosition(CMsgEffect& effect)
@@ -1431,7 +1432,7 @@ bool ProcessAttachedActorSpriteState(CMsgEffect& effect)
         const float traveledX = effect.m_pos.x - previousPos.x;
         const float traveledZ = effect.m_pos.z - previousPos.z;
         effect.m_followTravelDistance += std::sqrt(traveledX * traveledX + traveledZ * traveledZ);
-        effect.m_spriteMotionIndex = static_cast<int>(effect.m_followTravelDistance * 0.92f) % motionCount;
+        effect.m_spriteMotionIndex = static_cast<int>(effect.m_followTravelDistance * 0.92f / 4.0f) % motionCount;
     } else if (effect.m_spriteMotionIndex >= motionCount) {
         effect.m_spriteMotionIndex = 0;
     }
@@ -1448,7 +1449,8 @@ bool UpdateAttachedActorSpritePose(CMsgEffect& effect);
 
 bool RenderAttachedActorSpriteWorldBillboard(const CMsgEffect& effect,
     const matrix& viewMatrix,
-    float alphaSortBase)
+    float alphaSortBase,
+    bool afterOwner)
 {
     CSprRes* sprite = nullptr;
     CActRes* act = nullptr;
@@ -1608,13 +1610,21 @@ bool RenderAttachedActorSpriteWorldBillboard(const CMsgEffect& effect,
         face->srcAlphaMode = D3DBLEND_SRCALPHA;
         face->destAlphaMode = D3DBLEND_INVSRCALPHA;
 
-        projectedVerts[0].z = (std::max)(0.0f, projectedDepthTop.z - kAttachedActorSpriteDepthBias);
+        projectedVerts[0].z = afterOwner
+            ? 0.0f
+            : (std::max)(0.0f, projectedDepthTop.z - kAttachedActorSpriteDepthBias);
         projectedVerts[0].oow = projectedDepthTop.oow;
-        projectedVerts[1].z = (std::max)(0.0f, projectedDepthTop.z - kAttachedActorSpriteDepthBias);
+        projectedVerts[1].z = afterOwner
+            ? 0.0f
+            : (std::max)(0.0f, projectedDepthTop.z - kAttachedActorSpriteDepthBias);
         projectedVerts[1].oow = projectedDepthTop.oow;
-        projectedVerts[2].z = (std::max)(0.0f, projectedDepthBottom.z - kAttachedActorSpriteDepthBias);
+        projectedVerts[2].z = afterOwner
+            ? 0.0f
+            : (std::max)(0.0f, projectedDepthBottom.z - kAttachedActorSpriteDepthBias);
         projectedVerts[2].oow = projectedDepthBottom.oow;
-        projectedVerts[3].z = (std::max)(0.0f, projectedDepthBottom.z - kAttachedActorSpriteDepthBias);
+        projectedVerts[3].z = afterOwner
+            ? 0.0f
+            : (std::max)(0.0f, projectedDepthBottom.z - kAttachedActorSpriteDepthBias);
         projectedVerts[3].oow = projectedDepthBottom.oow;
         for (int index = 0; index < 4; ++index) {
             projectedVerts[index].color = color;
@@ -1645,7 +1655,8 @@ bool RenderAttachedActorSpriteWorldBillboard(const CMsgEffect& effect,
 
 bool QueueAttachedActorSpriteProjectedFallback(const CMsgEffect& effect,
     const matrix& viewMatrix,
-    float alphaSortBase)
+    float alphaSortBase,
+    bool afterOwner)
 {
     CSprRes* sprite = nullptr;
     CActRes* act = nullptr;
@@ -1678,7 +1689,9 @@ bool QueueAttachedActorSpriteProjectedFallback(const CMsgEffect& effect,
     draw.alpha = effect.m_alpha;
     draw.zoom = effect.m_zoom;
     draw.alphaSortBase = alphaSortBase;
-    draw.projectedZ = projectedBase.z;
+    // QueueMsgSpriteQuad subtracts kAttachedActorSpriteDepthBias, so this
+    // value makes the after-owner fallback pass depth-test in front too.
+    draw.projectedZ = afterOwner ? kAttachedActorSpriteDepthBias : projectedBase.z;
     draw.projectedOow = projectedBase.oow;
     draw.useProjectedDepth = true;
     draw.usePerspectiveScale = true;
@@ -1732,7 +1745,7 @@ bool RenderAttachedActorEffectInternal(CMsgEffect& effect,
 
     const float relativeDepthBias = afterOwner ? 0.0002f : -0.0002f;
     const float alphaSortBase = ownerDepthKey + relativeDepthBias;
-    if (RenderAttachedActorSpriteWorldBillboard(effect, viewMatrix, alphaSortBase)) {
+    if (RenderAttachedActorSpriteWorldBillboard(effect, viewMatrix, alphaSortBase, afterOwner)) {
         static std::map<u32, int> s_cartRenderSuccessLogs;
         if (ShouldTraceAttachedCartEffect(effect) && s_cartRenderSuccessLogs[effect.m_masterActor->m_gid] < 8) {
             ++s_cartRenderSuccessLogs[effect.m_masterActor->m_gid];
@@ -1750,7 +1763,7 @@ bool RenderAttachedActorEffectInternal(CMsgEffect& effect,
         return true;
     }
 
-    const bool queuedFallback = QueueAttachedActorSpriteProjectedFallback(effect, viewMatrix, alphaSortBase);
+    const bool queuedFallback = QueueAttachedActorSpriteProjectedFallback(effect, viewMatrix, alphaSortBase, afterOwner);
     static std::map<u32, int> s_cartRenderFallbackLogs;
     if (ShouldTraceAttachedCartEffect(effect) && s_cartRenderFallbackLogs[effect.m_masterActor->m_gid] < 8) {
         ++s_cartRenderFallbackLogs[effect.m_masterActor->m_gid];
@@ -1807,6 +1820,12 @@ CMsgEffect::CMsgEffect()
     , m_spriteActionIndex(0)
     , m_spriteMotionIndex(0)
     , m_lastProcessedSpriteMotionIndex(-1)
+    , m_falconStateCnt(0)
+    , m_falconIsAttackTarget(0)
+    , m_falconIsAnimation(1)
+    , m_falconRotation(0.0f)
+    , m_falconMotionSpeed(4.0f)
+    , m_falconLastMotionTick(0)
     , m_alpha(255)
     , m_masterGid(0)
     , m_colorArgb(0xFFFFFFFFu)
@@ -1851,11 +1870,21 @@ void CMsgEffect::OnActorDeleted(const CGameActor* actor)
 u8 CMsgEffect::OnProcess()
 {
     if (m_isDisappear) {
-        if (!m_removedFromOwner && m_masterActor) {
-            m_masterActor->DeleteMatchingEffect(this);
-            m_removedFromOwner = 1;
+        if (m_msgEffectType == 18 && m_falconIsAttackTarget) {
+            // Ref keeps the Falcon alive through its attack recovery, then
+            // clears both flags and resumes the owner-follow state.
+            if (m_falconStateCnt > 35) {
+                m_falconIsAttackTarget = 0;
+                m_isDisappear = 0;
+                return 1;
+            }
+        } else {
+            if (!m_removedFromOwner && m_masterActor) {
+                m_masterActor->DeleteMatchingEffect(this);
+                m_removedFromOwner = 1;
+            }
+            return 0;
         }
-        return 0;
     }
 
     const float stateCount = static_cast<float>(timeGetTime() - m_stateStartTick) * 0.041666668f;
@@ -2004,13 +2033,79 @@ u8 CMsgEffect::OnProcess()
         }
         break;
     }
+    case 18: {
+        if (m_falconIsAttackTarget && m_masterActor) {
+            const float dx = m_masterActor->m_pos.x - m_pos.x;
+            const float dz = m_masterActor->m_pos.z - m_pos.z;
+            m_falconRotation = std::atan2(dx, -dz) * 57.29577951308232f;
+            if (m_falconRotation < 0.0f) m_falconRotation += 360.0f;
+            // Ref uses Get8Dir2(..., true), which rounds to the nearest
+            // direction instead of flooring into the previous 45-degree bin.
+            m_spriteActionIndex = Get8Dir(m_falconRotation - 202.5f) + 8;
+            m_pos.x += m_destPos2.x;
+            if (m_falconStateCnt <= 10 || m_falconStateCnt >= 25) {
+                m_pos.y += m_destPos2.y;
+            }
+            m_pos.z += m_destPos2.z;
+            if (m_falconStateCnt >= 25) {
+                m_isDisappear = 1;
+                m_destPos2.y *= -1.9f;
+            }
+            ++m_falconStateCnt;
+            m_spriteMotionIndex = 0;
+        } else {
+            if (m_masterActor) {
+                const float dx = m_masterActor->m_pos.x - m_pos.x;
+                const float dz = m_masterActor->m_pos.z - m_pos.z;
+                const float distance = std::sqrt(dx * dx + dz * dz);
+                // Ref: Skill.cpp:3953-4035. The source moves the falcon toward
+                // its owner by 4%/5% per process step depending on range.
+                if (!m_falconIsAnimation && distance <= 25.0f) {
+                    m_falconIsAnimation = 1;
+                    m_spriteMotionIndex = 8;
+                    m_pos.x += dx * 0.039999999f;
+                    m_pos.z += dz * 0.039999999f;
+                } else if (!m_falconIsAnimation && distance > 25.0f) {
+                    m_spriteMotionIndex = 8;
+                    m_pos.x += dx * 0.039999999f;
+                    m_pos.z += dz * 0.039999999f;
+                } else if (distance > 3.0f) {
+                    const float factor = (distance <= 12.0f || m_falconIsAttackTarget) ? 0.050000001f : 1.0f / distance;
+                    m_pos.x += dx * factor;
+                    m_pos.z += dz * factor;
+                }
+                m_falconRotation = std::atan2(dx, -dz) * 57.29577951308232f;
+                if (m_falconRotation < 0.0f) m_falconRotation += 360.0f;
+                m_spriteActionIndex = Get8Dir(m_falconRotation - 22.5f);
+                if (CGameMode* mode = g_modeMgr.GetCurrentGameMode()) {
+                    if (mode->m_world && mode->m_world->m_attr) {
+                        m_pos.y = mode->m_world->m_attr->GetHeight(m_pos.x, m_pos.z) - 25.0f;
+                    }
+                }
+            }
+            const int motionCount = ResolveMsgSpriteMotionCountForEffect(*this, m_spriteActionIndex);
+            const int animationSpeed = (std::max)(1, static_cast<int>(m_falconMotionSpeed));
+            const u32 now = timeGetTime();
+            const u32 animationIntervalMs = static_cast<u32>(animationSpeed) * kFalconAnimationStepMs;
+            const u32 elapsedMs = now - m_falconLastMotionTick;
+            if (animationIntervalMs > 0 && elapsedMs >= animationIntervalMs) {
+                const u32 animationSteps = elapsedMs / animationIntervalMs;
+                m_falconLastMotionTick += animationSteps * animationIntervalMs;
+                if (m_falconIsAnimation && motionCount > 0) {
+                    m_spriteMotionIndex = static_cast<int>(
+                        (static_cast<u32>(m_spriteMotionIndex) + animationSteps) % static_cast<u32>(motionCount));
+                }
+            }
+            ++m_falconStateCnt;
+        }
+        break;
+    }
     case 5:
     case 7:
     case 8:
     case 9:
     case 10:
     case 11:
-    case 18:
         if (m_masterActor) {
             m_pos = m_masterActor->m_pos;
             m_orgPos = m_pos;
@@ -2071,11 +2166,12 @@ u8 CMsgEffect::OnProcess()
         break;
     }
 
-    if (m_isDisappear && !m_removedFromOwner && m_masterActor) {
+    const bool falconAttackRecovery = m_msgEffectType == 18 && m_falconIsAttackTarget;
+    if (m_isDisappear && !falconAttackRecovery && !m_removedFromOwner && m_masterActor) {
         m_masterActor->DeleteMatchingEffect(this);
         m_removedFromOwner = 1;
     }
-    return m_isDisappear ? 0 : 1;
+    return m_isDisappear && !falconAttackRecovery ? 0 : 1;
 }
 
 bool CMsgEffect::ProcessOwnerMessage(CGameObject* sender, int msg)
@@ -2089,6 +2185,16 @@ bool CMsgEffect::ProcessOwnerMessage(CGameObject* sender, int msg)
         if (m_masterActor && m_msgEffectType == 114) {
             m_pos.x = m_masterActor->m_pos.x;
             m_pos.z = m_masterActor->m_pos.z;
+        }
+        if (m_masterActor && m_msgEffectType == 18) {
+            const float radians = m_masterActor->m_roty * 0.017453292519943295f;
+            m_falconRotation = m_masterActor->m_roty;
+            m_pos.x = m_masterActor->m_pos.x - std::sin(radians) * 5.0f;
+            m_pos.z = m_masterActor->m_pos.z + std::cos(radians) * 5.0f;
+            m_falconStateCnt = 0;
+            m_falconIsAttackTarget = 0;
+            m_falconIsAnimation = 1;
+            m_falconLastMotionTick = timeGetTime();
         }
         if (m_masterActor && m_msgEffectType == kAttachedActorSpriteMsgEffectType) {
             InitializeAttachedActorTrailPosition(*this);
@@ -2136,6 +2242,17 @@ void CMsgEffect::SendMsg(CGameObject* sender, int msg, msgparam_t par1, msgparam
             m_pos.x = static_cast<float>(static_cast<double>(rand() % 11 - 5) * 0.1 + m_masterActor->m_pos.x);
             m_pos.z = static_cast<float>(static_cast<double>(rand() % 11 - 5) * 0.1 + m_masterActor->m_pos.z);
         }
+        return;
+    }
+    case 29: {
+        if (m_msgEffectType != 18) return;
+        const vector3d* target = reinterpret_cast<const vector3d*>(par1);
+        if (!target) return;
+        m_destPos2.x = (target->x - m_pos.x) * 0.1f;
+        m_destPos2.y = (target->y - m_pos.y) * 0.1f;
+        m_destPos2.z = (target->z - m_pos.z) * 0.1f;
+        m_falconIsAttackTarget = 1;
+        m_falconIsAnimation = 0;
         return;
     }
     case 64: {

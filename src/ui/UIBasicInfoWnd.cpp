@@ -390,7 +390,10 @@ UIBasicInfoWnd::UIBasicInfoWnd()
       m_blueMid(),
       m_blueRight(),
       m_lastDrawStateToken(0ull),
-      m_hasDrawStateToken(false)
+      m_hasDrawStateToken(false),
+      m_hotButtonId(0),
+      m_armedButtonId(0),
+      m_pressedButtonId(0)
 {
     Create(kFullWidth, kFullHeight);
     Move(0, 0);
@@ -628,9 +631,11 @@ void UIBasicInfoWnd::OnDraw()
 void UIBasicInfoWnd::OnLBtnDown(int x, int y)
 {
     if (IsQtUiRuntimeEnabled()) {
-        const RECT baseRect = MakeBasicInfoRect(m_x, m_y, kBaseButtonX, kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
-        const RECT miniRect = MakeBasicInfoRect(m_x, m_y, kMiniButtonX, kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
-        if (IsPointInRect(baseRect, x, y) || IsPointInRect(miniRect, x, y)) {
+        const int hitButton = HitQtButton(x, y);
+        if (hitButton != 0) {
+            m_armedButtonId = hitButton;
+            m_hotButtonId = hitButton;
+            m_pressedButtonId = hitButton;
             UIWindow::OnLBtnDown(x, y);
             return;
         }
@@ -643,7 +648,10 @@ void UIBasicInfoWnd::OnLBtnUp(int x, int y)
 {
     if (IsQtUiRuntimeEnabled()) {
         const bool wasDragging = m_isDragging != 0;
+        m_armedButtonId = 0;
+        m_pressedButtonId = 0;
         UIFrameWnd::OnLBtnUp(x, y);
+        UpdateQtButtonInteraction(x, y);
         if (wasDragging) {
             return;
         }
@@ -690,9 +698,60 @@ void UIBasicInfoWnd::OnLBtnDblClk(int x, int y)
     UIFrameWnd::OnLBtnDblClk(x, y);
 }
 
+void UIBasicInfoWnd::OnMouseMove(int x, int y)
+{
+    UIFrameWnd::OnMouseMove(x, y);
+    if (IsQtUiRuntimeEnabled()) {
+        UpdateQtButtonInteraction(x, y);
+    }
+}
+
 void UIBasicInfoWnd::OnMouseHover(int x, int y)
 {
-    UIFrameWnd::OnMouseHover(x, y);
+    if (IsQtUiRuntimeEnabled()) {
+        UpdateQtButtonInteraction(x, y);
+        return;
+    }
+    UIWindow::OnMouseHover(x, y);
+}
+
+int UIBasicInfoWnd::HitQtButton(int x, int y) const
+{
+    if (m_show == 0 || m_isDragging != 0) {
+        return 0;
+    }
+
+    if (m_h == kMiniHeight) {
+        const RECT baseRect = MakeBasicInfoRect(m_x, m_y, kBaseButtonX, kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
+        return IsPointInRect(baseRect, x, y) ? kButtonIdBase : 0;
+    }
+
+    const RECT miniRect = MakeBasicInfoRect(m_x, m_y, kMiniButtonX, kTopButtonY, kQtTopButtonWidth, kQtTopButtonHeight);
+    if (IsPointInRect(miniRect, x, y)) {
+        return kButtonIdMini;
+    }
+
+    for (size_t index = 0; index < kMenuButtonIds.size(); ++index) {
+        const RECT buttonRect = MakeBasicInfoRect(
+            m_x,
+            m_y,
+            207 + static_cast<int>(36 * (index % 2)),
+            22 + static_cast<int>(24 * (index / 2)),
+            kQtMenuButtonWidth,
+            kQtMenuButtonHeight);
+        if (IsPointInRect(buttonRect, x, y)) {
+            return kMenuButtonIds[index];
+        }
+    }
+    return 0;
+}
+
+void UIBasicInfoWnd::UpdateQtButtonInteraction(int x, int y)
+{
+    const int hotButton = (m_isDragging != 0 || x < 0 || y < 0) ? 0 : HitQtButton(x, y);
+    const int pressedButton = (m_armedButtonId != 0 && hotButton == m_armedButtonId) ? m_armedButtonId : 0;
+    m_hotButtonId = hotButton;
+    m_pressedButtonId = pressedButton;
 }
 
 void UIBasicInfoWnd::StoreInfo()
@@ -741,6 +800,8 @@ bool UIBasicInfoWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* o
         out->height = kQtTopButtonHeight;
         out->label = "B";
         out->visible = IsMiniMode();
+        out->hovered = out->visible && m_hotButtonId == out->id;
+        out->pressed = out->visible && m_pressedButtonId == out->id;
         return true;
     case 1:
         out->id = kButtonIdMini;
@@ -750,6 +811,8 @@ bool UIBasicInfoWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* o
         out->height = kQtTopButtonHeight;
         out->label = "_";
         out->visible = !IsMiniMode();
+        out->hovered = out->visible && m_hotButtonId == out->id;
+        out->pressed = out->visible && m_pressedButtonId == out->id;
         return true;
     default:
         return false;
@@ -777,7 +840,10 @@ bool UIBasicInfoWnd::GetQtMenuButtonDisplayForQt(int index, QtButtonDisplay* out
     out->width = kQtMenuButtonWidth;
     out->height = kQtMenuButtonHeight;
     out->label = kMenuLabels[static_cast<size_t>(index)];
+    out->icon = kMenuButtonNames[static_cast<size_t>(index)];
     out->visible = !IsMiniMode();
+    out->hovered = out->visible && m_hotButtonId == out->id;
+    out->pressed = out->visible && m_pressedButtonId == out->id;
     return true;
 }
 

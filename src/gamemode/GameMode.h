@@ -327,4 +327,17 @@ public:
     std::vector<CGameActor*> m_deferredActorDeletes;
 };
 
+struct PlayerVitalsScreenMetrics {
+    int barWidth = 0;
+    int barHeight = 0;
+    int border = 0;
+    int namePadding = 0;
+    int totalHeight = 0;
+    int topDelta = 0;
+    int hoverNameExtra = 0;
+    int qtNameExtra = 0;
+};
+
+PlayerVitalsScreenMetrics ResolvePlayerVitalsScreenMetrics(const CView* view);
+
 bool ArmPendingSkillUseFromSkillList(int skillId);

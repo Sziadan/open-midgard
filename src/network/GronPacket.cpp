@@ -294,6 +294,7 @@ void FillPacketSizeTable(PacketSizeTable& packetSizeTable)
     SetPacketSize(0x0235, kVariablePacketSize);
     SetPacketSize(0x0239, 11);
     SetPacketSize(0x0283, 6);
+    SetPacketSize(0x028A, 18);              // ZC_NPC_SHOWEFST_UPDATE
     SetPacketSize(0x02EA, kVariablePacketSize);
     SetPacketSize(0x02EB, 13);
     SetPacketSize(0x02EC, 67);

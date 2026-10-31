@@ -314,6 +314,23 @@ QString FormatBasicInfoMiniHeaderText(int level, const QString& jobName, int exp
         .arg(expPercent);
 }
 
+QString FormatGroupedNumber(int value)
+{
+    const bool negative = value < 0;
+    const QString digits = QString::number(negative ? -value : value);
+    QString grouped;
+    for (int index = 0; index < digits.size(); ++index) {
+        if (index != 0 && (digits.size() - index) % 3 == 0) {
+            grouped += QLatin1Char(',');
+        }
+        grouped += digits.at(index);
+    }
+    if (negative) {
+        grouped.prepend(QLatin1Char('-'));
+    }
+    return grouped;
+}
+
 QString FormatBasicInfoMiniStatusText(int hp, int maxHp, int sp, int maxSp, int money)
 {
     return QStringLiteral("HP %1 / %2  |  SP %3 / %4  |  %5 Z")
@@ -321,7 +338,7 @@ QString FormatBasicInfoMiniStatusText(int hp, int maxHp, int sp, int maxSp, int 
         .arg(maxHp)
         .arg(sp)
         .arg(maxSp)
-        .arg(money);
+        .arg(FormatGroupedNumber(money));
 }
 
 QString FormatCharacterSlotLevelText(int level)
@@ -1636,7 +1653,7 @@ void PopulateBasicInfoState(QtUiState* state)
         data.insert(QStringLiteral("weightText"),
             QStringLiteral("Weight : %1 / %2").arg(display.weight).arg(display.maxWeight));
         data.insert(QStringLiteral("moneyText"),
-            QStringLiteral("Zeny : %1").arg(display.money));
+            QStringLiteral("Zeny : %1").arg(FormatGroupedNumber(display.money)));
 
         QVariantList systemButtons;
         systemButtons.reserve(basicInfoWnd->GetQtSystemButtonCount());
@@ -1653,6 +1670,8 @@ void PopulateBasicInfoState(QtUiState* state)
             button.insert(QStringLiteral("width"), buttonDisplay.width);
             button.insert(QStringLiteral("height"), buttonDisplay.height);
             button.insert(QStringLiteral("label"), ToQString(buttonDisplay.label));
+            button.insert(QStringLiteral("hovered"), buttonDisplay.hovered);
+            button.insert(QStringLiteral("pressed"), buttonDisplay.pressed);
             button.insert(QStringLiteral("visible"), buttonDisplay.visible);
             systemButtons.push_back(button);
         }
@@ -1673,6 +1692,9 @@ void PopulateBasicInfoState(QtUiState* state)
             button.insert(QStringLiteral("width"), buttonDisplay.width);
             button.insert(QStringLiteral("height"), buttonDisplay.height);
             button.insert(QStringLiteral("label"), ToQString(buttonDisplay.label));
+            button.insert(QStringLiteral("icon"), ToQString(buttonDisplay.icon));
+            button.insert(QStringLiteral("hovered"), buttonDisplay.hovered);
+            button.insert(QStringLiteral("pressed"), buttonDisplay.pressed);
             button.insert(QStringLiteral("visible"), buttonDisplay.visible);
             menuButtons.push_back(button);
         }
@@ -3851,7 +3873,7 @@ bool QtUiStateAdapter::syncGameplay(CGameMode& mode,
                 int anchorY = labelY + kQtActorLabelVerticalOffset;
                 if (hoveredActor == mode.m_world->m_player || hoveredActor->m_gid == g_session.m_gid) {
                     mode.m_world->GetPlayerScreenLabel(viewMatrix, cameraLongitude, &anchorX, &anchorY);
-                    anchorY += kQtActorLabelVerticalOffset;
+                    anchorY += kQtActorLabelVerticalOffset + ResolvePlayerVitalsScreenMetrics(mode.m_view).qtNameExtra;
                 } else {
                     mode.m_world->GetActorScreenMarker(viewMatrix, cameraLongitude, hoveredActor->m_gid, &anchorX, nullptr, &anchorY);
                     anchorY += kQtActorLabelVerticalOffset;

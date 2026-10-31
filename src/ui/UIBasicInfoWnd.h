@@ -17,6 +17,9 @@ public:
         int width = 0;
         int height = 0;
         std::string label;
+        std::string icon;
+        bool hovered = false;
+        bool pressed = false;
         bool visible = true;
     };
 
@@ -48,6 +51,7 @@ public:
     void OnLBtnDown(int x, int y) override;
     void OnLBtnUp(int x, int y) override;
     void OnLBtnDblClk(int x, int y) override;
+    void OnMouseMove(int x, int y) override;
     void OnMouseHover(int x, int y) override;
     void StoreInfo() override;
 
@@ -76,6 +80,8 @@ private:
     void EnsureCreated();
     void LayoutChildren();
     void SetMiniMode(bool miniMode);
+    int HitQtButton(int x, int y) const;
+    void UpdateQtButtonInteraction(int x, int y);
     DisplayData BuildDisplayData() const;
     unsigned long long BuildDisplayStateToken() const;
     void DrawCachedBitmap(HDC hdc, const shopui::BitmapPixels& bitmap, int x, int y) const;
@@ -101,4 +107,7 @@ private:
     shopui::BitmapPixels m_blueRight;
     unsigned long long m_lastDrawStateToken;
     bool m_hasDrawStateToken;
+    int m_hotButtonId;
+    int m_armedButtonId;
+    int m_pressedButtonId;
 };
