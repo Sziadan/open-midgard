@@ -1,4 +1,5 @@
 #include "MsgEffect.h"
+#include "ActorSpriteDepth.h"
 
 #include "World.h"
 #include "audio/Audio.h"
@@ -87,6 +88,11 @@ struct QueuedMsgSpriteEffectDraw {
     bool useReferencePixelRatio = false;
     float referencePixelRatio = 1.0f;
     bool bypassZoomClamp = false;
+    bool useOwnerDepth = false;
+    float ownerTopY = 0.0f;
+    float ownerBottomY = 0.0f;
+    float ownerTopZ = 0.0f;
+    float ownerBottomZ = 0.0f;
 };
 
 std::vector<QueuedMsgEffectDraw> g_queuedMsgEffects;
@@ -1016,8 +1022,17 @@ bool QueueMsgSpriteQuad(const QueuedMsgSpriteEffectDraw& draw)
         face->m_verts[1] = { drawRight, drawTop,    depth, oow, color, 0xFF000000u, flipX ? 0.0f : maxU, 0.0f };
         face->m_verts[2] = { drawLeft,  drawBottom, depth, oow, color, 0xFF000000u, flipX ? maxU : 0.0f, maxV };
         face->m_verts[3] = { drawRight, drawBottom, depth, oow, color, 0xFF000000u, flipX ? 0.0f : maxU, maxV };
+        if (draw.useOwnerDepth) {
+            for (int index = 0; index < 4; ++index) {
+                auto& vertex = face->m_verts[index];
+                vertex.z = SampleActorShellDepth(vertex.y, draw.ownerTopY, draw.ownerBottomY,
+                    draw.ownerTopZ, draw.ownerBottomZ);
+            }
+        }
         g_renderer.AddRP(face, draw.useProjectedDepth ? 1 : (1 | 8));
-        clipSortOffset += 0.0001f;
+        if (!draw.useOwnerDepth) {
+            clipSortOffset += 0.0001f;
+        }
         queuedAny = true;
     }
 
@@ -2302,7 +2317,8 @@ void CMsgEffect::Render(matrix* viewMatrix)
         return;
     }
 
-    if (m_msgEffectType == kAttachedActorSpriteMsgEffectType) {
+    if (m_msgEffectType == kAttachedActorSpriteMsgEffectType
+        || (m_msgEffectType == 5 && m_masterActor)) {
         return;
     }
 
@@ -2377,6 +2393,43 @@ void CMsgEffect::Render(matrix* viewMatrix)
         g_queuedMsgEffects.push_back(draw);
         currentLeft += digitWidths[index] + digitGap;
     }
+}
+
+void RenderFrozenActorEffectPass(CMsgEffect& effect, matrix* viewMatrix,
+    const CWorld::BillboardScreenEntry& owner)
+{
+    if (!effect.m_isVisible || effect.m_msgEffectType != 5
+        || effect.m_masterActor != owner.actor || !viewMatrix) {
+        return;
+    }
+    tlvertex3d projected{};
+    if (!ProjectMsgEffectPoint(*viewMatrix, effect.m_pos, &projected)) {
+        return;
+    }
+    QueuedMsgSpriteEffectDraw draw{};
+    draw.screenX = static_cast<int>(std::lround(projected.x));
+    draw.screenY = static_cast<int>(std::lround(projected.y));
+    draw.actionIndex = effect.m_spriteActionIndex;
+    draw.motionIndex = effect.m_spriteMotionIndex;
+    draw.spritePath = effect.m_customSpritePath;
+    draw.actPath = effect.m_customActPath;
+    draw.colorArgb = effect.m_colorArgb;
+    draw.alpha = effect.m_alpha;
+    draw.zoom = effect.m_zoom;
+    draw.useReferencePixelRatio = true;
+    draw.referencePixelRatio = projected.oow * g_renderer.m_hpc * 0.14285715f;
+    draw.projectedZ = projected.z;
+    draw.projectedOow = projected.oow;
+    draw.useProjectedDepth = true;
+    // Ref CMsgEffect::SendMsg(22), type 5: world depth, offsetOow=5.
+    // Use the owner's billboard plane in our renderer rather than its foot depth.
+    draw.alphaSortBase = std::nextafter(owner.depthKey, INFINITY);
+    draw.useOwnerDepth = true;
+    draw.ownerTopY = owner.renderY[0];
+    draw.ownerBottomY = owner.renderY[2];
+    draw.ownerTopZ = owner.renderZ[0];
+    draw.ownerBottomZ = owner.renderZ[2];
+    g_queuedMsgSpriteEffects.push_back(draw);
 }
 
 bool QueueQueuedMsgEffectsQuads()

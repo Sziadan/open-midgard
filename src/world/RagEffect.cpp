@@ -1201,6 +1201,11 @@ bool UpdateWeatherCloudPrimitive(CEffectPrim* prim)
         if (latitudeAngle >= 360) latitudeAngle = static_cast<short>(latitudeAngle - 360);
         second.alphaT = latitudeAngle;
     }
+    // Ref PrimCloud copies its parent effect position before updating bands.
+    // GI coordinates are world-space; this origin is used only when respawning.
+    if (prim->m_master) {
+        prim->m_pos = prim->m_master->EffectPosition();
+    }
     for (EffectGi& gi : prim->m_gi) {
         if (gi.life != 1) continue;
         if (gi.height[7] < 99.0f) {

@@ -147,9 +147,19 @@ int main(){
     // Stackable list: usable equipment location is independent of current wear state.
     std::array<u8,22> entry{};
     entry[0]=7;entry[2]=0xd6;entry[3]=6;entry[4]=10;entry[5]=1;entry[6]=100;
+    entry[9]=0x80; // Server lists EQP_AMMO even for unequipped arrow stacks.
     ITEM_INFO ammo;
     assert(BuildNormalInventoryItem({entry.data(),22,0x1ee},entry.data(),ammo));
     assert(ammo.m_location==0x8000&&ammo.m_wearLocation==0);
+    // A Wizard carrying Fire Arrows gets no ammunition-equipped acknowledgement.
+    ITEM_INFO wizardAmmo=ammo;wizardAmmo.SetItemId(1752);
+    g_session.m_playerJob=9;g_session.items={wizardAmmo};
+    UIEquipWnd wizardEquipment;
+    assert(wizardEquipment.BuildSlotAssignments()[10]==nullptr);
+    inventory_view::UIItemWnd wizardInventory;
+    const auto carriedArrows=wizardInventory.GetFilteredItems();
+    assert(carriedArrows.size()==1&&carriedArrows[0]->GetItemId()==1752);
+    g_session.m_playerJob=11;
     g_session.items={ammo};
     auto* connection=CRagConnection::instance();
     assert(RequestUseInventoryItem(7));

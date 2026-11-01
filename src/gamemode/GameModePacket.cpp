@@ -961,6 +961,10 @@ void HandleSkillCastCancel(CGameMode& mode, const PacketView& packet)
     actor->SendMsg(actor, 84, 0, 0, 0);
     actor->SendMsg(actor, 87, 0, 0, 0);
     actor->SendMsg(actor, 83, 0, 0, 0);
+    if (actor->m_stateId == kGameActorCastingStateId || actor->m_stateId == kGameActorCastingLoopStateId) {
+        actor->m_isMotionFreezed = 0;
+        actor->SetState(0);
+    }
 }
 
 // Ref/GameModePacket.cpp:25976-26125 (0x5A85D0), clif.c:7976.
@@ -1833,7 +1837,10 @@ bool BuildNormalInventoryItem(const PacketView& packet, const u8* entry, ITEM_IN
     outItem.m_itemType = entry[4];
     outItem.m_isIdentified = entry[5];
     outItem.m_num = ReadLE16(entry + 6);
-    outItem.m_wearLocation = ReadLE16(entry + 8);
+    // clif_item_normal sends item_data::equip here (allowed slot), not the
+    // item's actual equipped state. Ref tracks equipped ammo via 0x013C.
+    outItem.m_location = ReadLE16(entry + 8);
+    outItem.m_wearLocation = 0;
     // Stackable ammunition still has an equipment destination (EQP_AMMO).
     if (outItem.m_itemType == 10 || outItem.m_itemType == 16 || outItem.m_itemType == 17) {
         outItem.m_location = 0x8000;

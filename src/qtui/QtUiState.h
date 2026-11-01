@@ -159,7 +159,6 @@ class QtUiState : public QObject {
     Q_PROPERTY(int statusWidth READ statusWidth NOTIFY statusGeometryChanged)
     Q_PROPERTY(int statusHeight READ statusHeight NOTIFY statusGeometryChanged)
     Q_PROPERTY(bool statusMini READ statusMini NOTIFY statusMiniChanged)
-    Q_PROPERTY(int statusPage READ statusPage NOTIFY statusPageChanged)
     Q_PROPERTY(QVariantMap statusData READ statusData NOTIFY statusDataChanged)
     Q_PROPERTY(bool chatWindowVisible READ chatWindowVisible NOTIFY chatWindowVisibleChanged)
     Q_PROPERTY(int chatWindowX READ chatWindowX NOTIFY chatWindowGeometryChanged)
@@ -445,7 +444,6 @@ public:
     int statusWidth() const { return m_statusWidth; }
     int statusHeight() const { return m_statusHeight; }
     bool statusMini() const { return m_statusMini; }
-    int statusPage() const { return m_statusPage; }
     const QVariantMap& statusData() const { return m_statusData; }
     bool chatWindowVisible() const { return m_chatWindowVisible; }
     int chatWindowX() const { return m_chatWindowX; }
@@ -1369,14 +1367,6 @@ public:
         emit statusMiniChanged();
     }
 
-    void setStatusPage(int value) {
-        if (m_statusPage == value) {
-            return;
-        }
-        m_statusPage = value;
-        emit statusPageChanged();
-    }
-
     void setStatusData(const QVariantMap& value) {
         m_statusData = value;
         emit statusDataChanged();
@@ -2078,7 +2068,6 @@ signals:
     void statusVisibleChanged();
     void statusGeometryChanged();
     void statusMiniChanged();
-    void statusPageChanged();
     void statusDataChanged();
     void chatWindowVisibleChanged();
     void chatWindowGeometryChanged();
@@ -2303,7 +2292,6 @@ private:
     int m_statusWidth = 0;
     int m_statusHeight = 0;
     bool m_statusMini = false;
-    int m_statusPage = 0;
     QVariantMap m_statusData;
     bool m_chatWindowVisible = false;
     int m_chatWindowX = 0;

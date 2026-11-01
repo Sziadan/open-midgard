@@ -5887,14 +5887,14 @@ int main()
     check(!UpdateWeatherCloudPrimitive(nullptr), "PrimCloud null guard returns false");
     {
         CRenderObject actor;actor.m_pos={100,20,200};
-        auto masterStorage=std::make_unique<CRagEffect>();CRagEffect& master=*masterStorage;master.m_master=&actor;
+        auto masterStorage=std::make_unique<CRagEffect>();CRagEffect& master=*masterStorage;master.m_master=&actor;master.m_effectPos=actor.m_pos;
         auto primStorage=std::make_unique<CEffectPrim>();CEffectPrim& prim=*primStorage;prim.m_master=&master;prim.m_stateCnt=12;prim.m_duration=4;
         EffectGi& gi=prim.m_gi[0];gi.life=1;gi.height[7]=2;gi.alphaB=0;gi.process=0;gi.rotStart=100;
         gi.sparkX=1;gi.sparkY=2;gi.sparkZ=3;gi.height[0]=10;gi.height[1]=40;gi.height[2]=20;gi.height[3]=10;gi.height[8]=359;
         testView.longitude=15.5f;
-        check(UpdateWeatherCloudPrimitive(&prim)&&prim.m_pos.x==0&&prim.m_pos.y==0&&prim.m_pos.z==0
+        check(UpdateWeatherCloudPrimitive(&prim)&&prim.m_pos.x==100&&prim.m_pos.y==20&&prim.m_pos.z==200
             &&gi.alphaT==345&&prim.m_gi[1].alphaT==135,
-            "PrimCloud keeps its source origin and wraps the source camera latitude while storing longitude");
+            "PrimCloud refreshes its parent respawn origin and wraps the source camera latitude while storing longitude");
         check(gi.process==1&&gi.alphaB==2&&gi.height[0]==11&&gi.height[2]==19&&gi.height[8]==0,
             "PrimCloud mode two rises alpha by two, advances both bounded oscillators, wraps phase, and survives expiry");
         check(std::fabs(gi.sparkX-(1.0f+g_sinTable[11]*0.05f))<0.00001f

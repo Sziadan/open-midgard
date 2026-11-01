@@ -1,8 +1,11 @@
 #include "../../src/qtui/QtUiState.h"
 #include "../../src/ui/BasicInfoLayout.h"
+#include "../../src/ui/StatusLayout.h"
+#include "../../src/qtui/EquipmentLayoutForQt.h"
 #include "../../src/qtui/SkillTreeGeometry.h"
 #include <QGuiApplication>
 #include <QQuickView>
+#include <QQuickItem>
 #include <QQmlContext>
 #include <QQmlComponent>
 #include "../../src/ui/UiMetrics.h"
@@ -21,6 +24,11 @@
 #include <cstdio>
 #include <QFontDatabase>
 static int qmlErrors = 0;
+QQuickItem* FindVisualItem(QQuickItem* item,const QString& name) {
+    if(item->objectName()==name)return item;
+    for(auto* child:item->childItems())if(auto* found=FindVisualItem(child,name))return found;
+    return nullptr;
+}
 int main(int argc, char** argv) {
     qputenv("QT_QUICK_BACKEND", "software");
     qputenv("QT_QPA_PLATFORM", "offscreen");
@@ -36,8 +44,14 @@ int main(int argc, char** argv) {
     QFontDatabase::addApplicationFont("C:/Windows/Fonts/segoeuib.ttf");
     const double scale=argc>1?QString(argv[1]).toDouble():1;
     const bool gatedTree=argc>2&&QString(argv[2])=="tree-gated";
-    const bool extreme=argc>2&&QString(argv[2])=="extreme";
-    const bool mini=argc>2&&QString(argv[2])=="mini";
+    const bool statusCase=argc>2&&QString(argv[2]).startsWith("status");
+    const bool equipCase=argc>2&&QString(argv[2]).startsWith("equipment");
+    const bool equipCompact=equipCase&&QString(argv[2]).startsWith("equipment-compact");
+    const bool equipExtreme=equipCase&&QString(argv[2])=="equipment-extreme";
+    const bool equipEmpty=equipCase&&QString(argv[2]).endsWith("empty");
+    const bool statusDisabled=argc>2&&QString(argv[2])=="status-disabled";
+    const bool extreme=argc>2&&(QString(argv[2])=="extreme"||QString(argv[2])=="status-extreme");
+    const bool mini=argc>2&&(QString(argv[2])=="mini"||QString(argv[2])=="status-mini"||(equipCase&&QString(argv[2]).endsWith("mini")));
     const bool small=argc>3&&QString(argv[3])=="small";
     const bool large=argc>3&&QString(argv[3])=="large";
     const int basicX=small?0:24, basicY=small?0:24;
@@ -80,14 +94,60 @@ int main(int argc, char** argv) {
     QVariantList shortcuts;
     for(int i=0;i<27;++i)shortcuts.append(QVariantMap{{"row",i/9},{"column",i%9},{"occupied",false},{"isSkill",false},{"hover",i==4},{"count",0}});
     state.setShortCutSlots(shortcuts);
-    state.setStatusVisible(true);state.setStatusGeometry(24,246,280,118);state.setStatusPage(0);
+    const int statusX=statusCase?12:24, statusY=statusCase?16:232;
+    state.setStatusVisible(true);state.setStatusMini(mini);
+    state.setStatusGeometry(statusX,statusY,statusLayout::width,mini?statusLayout::miniHeight:statusLayout::height);
     QVariantList stats;
     const QStringList statNames{"STR","AGI","VIT","INT","DEX","LUK"};
-    for(int i=0;i<6;++i)stats.append(QVariantMap{{"label",statNames[i]},{"value",QString::number(30+i*10)},{"canIncrease",false},{"cost",0}});
-    state.setStatusData(QVariantMap{{"title","Status"},{"stats",stats},{"attackText","180"},{"matkText","35"},{"hit",165},{"critical",8},{"itemDefText","42"},{"itemMdefText","18"},{"fleeText","185"},{"aspdText","174"},{"statusPoint",12}});
+    for(int i=0;i<6;++i)stats.append(QVariantMap{{"label",statNames[i]},
+        {"base",extreme?9999:30+i*10},{"bonus",extreme?(i==2?-999:999):2+i*3},
+        {"rowY",statusLayout::rowY(i)},{"canIncrease",!statusDisabled&&i<4},{"cost",i<4?2+i:0},
+        {"increaseX",statusX+statusLayout::increaseX},{"increaseY",statusY+statusLayout::rowY(i)+1},
+        {"increaseWidth",statusLayout::increaseSize},{"increaseHeight",statusLayout::increaseSize}});
+    state.setStatusData(QVariantMap{{"title","Status"},{"stats",stats},
+        {"attackText",extreme?"999999 + 999999":"224 + 30"},{"matkText",extreme?"999999~999999":"302~480"},
+        {"hit",165},{"critical",8},{"itemDefText",extreme?"999999 + 999999":"13 + 2"},
+        {"itemMdefText","0 + 94"},{"fleeText","102 + 9"},{"aspdText","147"},{"statusPoint",statusDisabled?0:172},
+        {"miniPointsText",statusDisabled?"Points 0":"Points 172"},
+        {"systemButtons",QVariantList{
+            QVariantMap{{"x",statusX+statusLayout::width-28},{"y",statusY+3},{"width",12},{"height",11},{"visible",true},{"label",mini?"B":"_"}},
+            QVariantMap{{"x",statusX+statusLayout::width-14},{"y",statusY+3},{"width",12},{"height",11},{"visible",true},{"label","X"}}}}});
     state.setAnchors(QVariantList{QVariantMap{{"x",24*scale},{"y",390*scale},{"text","Inventory - Alt+E"},{"kind","uiTooltip"},{"background","#f0363b42"},{"foreground","#ffffff"},{"showBubble",true}}});
     if(small) {
         state.setOptionVisible(false);state.setStatusVisible(false);state.setShortCutVisible(false);state.setAnchors({});
+    }
+    if(statusCase){state.setBasicInfoVisible(false);state.setOptionVisible(false);state.setShortCutVisible(false);state.setAnchors({});}
+    equipmentLayout::Layout equipLayout;
+    if(equipCase) {
+        state.setBasicInfoVisible(false);state.setOptionVisible(false);state.setShortCutVisible(false);state.setStatusVisible(false);state.setAnchors({});
+        const QStringList names{"+7 Apple of Archer", "Gangster Scarf", "+7 Immune Muffler [1]", "Clip of Muscle [1]",
+            "Elven Ears", "+8 Pantie of Ares [1]", "+7 Cranial Buckler [1]", "+7 Green Boots [1]",
+            "Glove of Dexterity [1]", "+10 Quadruple Bloody Composite Bow [4]", "Silver Arrow"};
+        std::array<int,11> heights{};
+        for(int i=0;i<11;++i) heights[i]=equipmentLayout::NameHeightForQt(equipExtreme
+            ?QString("+10 Quadruple Very Long Prefix %1 of Extremely Long Card Suffix [4]").arg(names[i]):names[i]);
+        equipLayout=equipmentLayout::Build(heights,equipCompact);
+        const int x=12,y=12;
+        state.setEquipVisible(true);state.setEquipMini(mini);
+        state.setEquipGeometry(x,y,equipLayout.width,mini?equipmentLayout::miniHeight:equipLayout.height);
+        QVariantList equipmentSlots;
+        for(int i=0;i<11;++i) {
+            const auto icon=equipLayout.icons[i],card=equipLayout.cards[i],name=equipLayout.names[i];
+            equipmentSlots.append(QVariantMap{{"x",x+icon.x},{"y",y+icon.y},{"width",icon.width},{"height",icon.height},
+                {"cardX",x+card.x},{"cardY",y+card.y},{"cardWidth",card.width},{"cardHeight",card.height},
+                {"nameX",x+name.x},{"nameY",y+name.y},{"nameWidth",name.width},{"nameHeight",name.height},
+                {"slotName",equipmentLayout::labels[i]},{"occupied",!equipEmpty},{"hovered",i==9},{"itemId",1750+i},
+                {"label",equipExtreme?QString("+10 Quadruple Very Long Prefix %1 of Extremely Long Card Suffix [4]").arg(names[i]):names[i]}});
+        }
+        state.setEquipData(QVariantMap{{"title","Equipment"},{"compact",equipCompact},{"slots",equipmentSlots},{"previewRevision","1"},
+            {"previewX",equipLayout.preview.x},{"previewY",equipLayout.preview.y},{"previewWidth",equipLayout.preview.width},{"previewHeight",equipLayout.preview.height},
+            {"systemButtons",QVariantList{
+                QVariantMap{{"id",136},{"x",x+equipLayout.width-28},{"y",y+3},{"width",12},{"height",11},{"visible",true},{"label",mini?"B":"_"}},
+                QVariantMap{{"id",135},{"x",x+equipLayout.width-14},{"y",y+3},{"width",12},{"height",11},{"visible",true},{"label","X"}},
+                QVariantMap{{"id",145},{"x",x+equipLayout.width-42},{"y",y+3},{"width",12},{"height",11},{"visible",!mini},{"label","C"},{"icon",equipCompact?"details":"compact"}},
+                QVariantMap{{"id",138},{"x",x+equipLayout.removeOption.x},{"y",y+equipLayout.removeOption.y},
+                    {"width",equipLayout.removeOption.width},{"height",equipLayout.removeOption.height},
+                    {"visible",!mini&&!equipEmpty},{"label",equipExtreme?"Remove cart":"Release Falcon"}}}}});
     }
     if (treeCase) {
         state.setBasicInfoVisible(false);state.setOptionVisible(false);state.setStatusVisible(false);state.setShortCutVisible(false);state.setAnchors({});
@@ -149,12 +209,25 @@ int main(int argc, char** argv) {
     QQuickView view;
     view.setColor(QColor("#b9c5cd"));view.resize(small?640:large?1920:qRound(710*scale),small?480:large?1080:qRound(550*scale));
     if(treeCase)view.resize(qRound(828*scale),qRound(628*scale));
+    if(statusCase)view.resize(qRound(456*scale),qRound((mini?50:284)*scale));
+    if(equipCase)view.resize(qRound((equipLayout.width+24)*scale),qRound((mini?42:equipLayout.height+24)*scale));
     view.setResizeMode(QQuickView::SizeRootObjectToView);
     view.rootContext()->setContextProperty("uiState", &state);
-    if(treeCase) {
+    if(treeCase||equipCase) {
         class Icons : public QQuickImageProvider {
         public: Icons():QQuickImageProvider(QQuickImageProvider::Image){}
             QImage requestImage(const QString& id,QSize* size,const QSize&)override {
+                if(id.startsWith("equippreview")) {
+                    QImage image(72,154,QImage::Format_ARGB32);image.fill(Qt::transparent);
+                    QPainter p(&image);p.setPen(QColor("#47596a"));
+                    p.setBrush(QColor("#725970"));p.drawEllipse(22,6,28,24);
+                    p.setBrush(QColor("#e3b8a0"));p.drawEllipse(25,15,22,24);
+                    p.setBrush(QColor("#58768a"));p.drawRoundedRect(17,43,38,59,6,6);
+                    p.setBrush(QColor("#8d6d56"));p.drawRect(10,58,10,39);p.drawRect(52,58,10,39);
+                    p.setBrush(QColor("#47596a"));p.drawRect(22,100,11,36);p.drawRect(40,100,11,36);
+                    p.setBrush(QColor("#73563e"));p.drawRect(17,134,17,12);p.drawRect(39,134,17,12);
+                    if(size)*size=image.size();return image;
+                }
                 QImage image(32,32,QImage::Format_ARGB32);image.fill(id.contains("grey=1")?QColor("#adb4ba"):QColor("#7b9dca"));
                 QPainter p(&image);p.setPen(Qt::white);p.drawText(image.rect(),Qt::AlignCenter,id.section('/',1).section('?',0,0));
                 if(size)*size=image.size();return image;
@@ -169,8 +242,47 @@ int main(int argc, char** argv) {
     if (!themeObject || themeObject->property("titleHeight").toInt() != uiMetrics::titleHeight) return 7;
     view.show();
     QTimer::singleShot(600,[&]{
+        if (statusCase && !mini) {
+            // Inspect the actual QML items against the native click rectangles.
+            for (int i=0;i<6;++i) {
+                auto* button=FindVisualItem(view.rootObject(),QString("statusIncrease%1").arg(i));
+                if (!button) { app.exit(12); return; }
+                const QPointF position=button->mapToScene(QPointF(0,0));
+                if (std::abs(position.x()-(statusX+statusLayout::increaseX)*scale)>0.1
+                    ||std::abs(position.y()-(statusY+statusLayout::rowY(i)+1)*scale)>0.1
+                    ||button->width()!=statusLayout::increaseSize||button->height()!=statusLayout::increaseSize) {
+                    qCritical()<<"Status button differs from native hit rectangle"<<i<<position;
+                    app.exit(13);return;
+                }
+            }
+            for (int i=0;i<8;++i) {
+                auto* value=FindVisualItem(view.rootObject(),QString("statusCombatValue%1").arg(i));
+                if (!value||value->property("truncated").toBool()
+                    ||value->property("paintedWidth").toDouble()>value->width()+0.5) {
+                    qCritical()<<"Status combat value clipped"<<i;
+                    app.exit(14);return;
+                }
+            }
+        }
+        if(equipCase&&!mini) {
+            for(int i=0;i<11;++i) {
+                auto* name=FindVisualItem(view.rootObject(),QString("equipmentName%1").arg(i));
+                auto* card=FindVisualItem(view.rootObject(),QString("equipmentCard%1").arg(i));
+                if(!name||!card||(!equipCompact&&(name->property("paintedHeight").toDouble()>name->height()+0.5
+                    ||name->property("paintedWidth").toDouble()>name->width()+0.5))
+                    ||(equipCompact&&name->isVisible())) {
+                    qCritical()<<"Equipment full name clipped"<<i;app.exit(15);return;
+                }
+                const auto pos=card->mapToScene(QPointF(0,0));
+                const auto expected=equipLayout.cards[i];
+                if(std::abs(pos.x()-(12+expected.x)*scale)>0.1||std::abs(pos.y()-(12+expected.y)*scale)>0.1
+                    ||card->width()!=expected.width||card->height()!=expected.height) {
+                    qCritical()<<"Equipment card differs from native hit rectangle"<<i;app.exit(16);return;
+                }
+            }
+        }
         QDir().mkpath("build-qt-preview/renders");
-        const QString out=QString("build-qt-preview/renders/gui-%1-%2.png").arg(scale).arg(gatedTree?"tree-gated":treeCase?"tree":small?"small":large?"large":mini?"mini":extreme?"extreme":"normal");
+        const QString out=QString("build-qt-preview/renders/gui-%1-%2.png").arg(scale).arg((statusCase||equipCase)?QString(argv[2]):gatedTree?"tree-gated":treeCase?"tree":small?"small":large?"large":mini?"mini":extreme?"extreme":"normal");
         QImage image=view.grabWindow();
         if(image.isNull()||!image.save(out)){qCritical()<<"Unable to render";app.exit(3);return;}
         qInfo()<<"Saved"<<out;app.exit(qmlErrors ? 5 : 0);

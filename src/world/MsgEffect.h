@@ -1,6 +1,10 @@
 #pragma once
 
 #include "GameActor.h"
+#include "World.h"
+
+void RenderFrozenActorEffectPass(CMsgEffect& effect, matrix* viewMatrix,
+    const CWorld::BillboardScreenEntry& owner);
 
 bool QueueQueuedMsgEffectsQuads();
 bool GetQueuedMsgEffectsBounds(RECT* outRect);

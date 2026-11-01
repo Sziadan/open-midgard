@@ -27,8 +27,11 @@
 #include <windows.h>
 
 #if RO_ENABLE_QT6_UI
+#include "qtui/EquipmentLayoutForQt.h"
 #include <QFont>
 #include <QFontMetrics>
+#include <QTextLayout>
+#include <QTextOption>
 #include <QImage>
 #include <QPainter>
 #include <QString>
@@ -37,6 +40,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <list>
@@ -49,9 +53,9 @@
 
 namespace {
 
-constexpr int kWindowWidth = 280;
-constexpr int kWindowHeight = 269;
-constexpr int kMiniHeight = 34;
+constexpr int kWindowWidth = equipmentLayout::width;
+const int kWindowHeight = equipmentLayout::Build().height;
+constexpr int kMiniHeight = equipmentLayout::miniHeight;
 constexpr int kTitleBarHeight = uiMetrics::titleHeight;
 constexpr int kQtButtonWidth = 12;
 constexpr int kQtButtonHeight = 11;
@@ -59,20 +63,13 @@ constexpr int kButtonIdBase = 134;
 constexpr int kButtonIdClose = 135;
 constexpr int kButtonIdMini = 136;
 constexpr int kButtonIdRemoveOption = 138;
+constexpr int kButtonIdCompact = 145;
 constexpr const char* kUiKorPrefix =
     "texture\\"
     "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA"
     "\\";
 
-constexpr int kSlotIconSize = 32;
-constexpr int kSlotVerticalSpacing = 5;
-constexpr int kEquipSlotRowCount = 6;
-constexpr int kEquipSlotBaseY = 19;
-constexpr int kEquipSlotLegacyStep = 32;
-constexpr int kCenterPanelLeft = 98;
-constexpr int kCenterPanelRight = 182;
-constexpr int kCenterPanelTop = 32;
-constexpr int kCenterPanelBottom = 204;
+constexpr int kSlotIconSize = equipmentLayout::iconSize;
 
 struct EquipSlotDefLocal {
     int wearMask;
@@ -91,36 +88,12 @@ constexpr std::array<EquipSlotDefLocal, 11> kEquipSlots = {{
     { 64, 240, 115 },  // shoes
     { 128, 240, 147 }, // accessory right
     { 2, 8, 83 },      // weapon
-    { 0x8000, 8, 179 }, // ammunition
+    { 0x8000, 240, 179 }, // ammunition
 }};
 
 bool IsLeftEquipSlot(const EquipSlotDefLocal& slot)
 {
-    return slot.iconX < kCenterPanelLeft;
-}
-
-int GetEquipSlotX(const EquipSlotDefLocal& slot, int windowWidth)
-{
-    if (IsLeftEquipSlot(slot)) {
-        return (std::max)(0, (kCenterPanelLeft - kSlotIconSize) / 2);
-    }
-
-    const int rightGutterWidth = (std::max)(0, windowWidth - kCenterPanelRight);
-    return kCenterPanelRight + (std::max)(0, (rightGutterWidth - kSlotIconSize) / 2);
-}
-
-int GetEquipSlotRow(const EquipSlotDefLocal& slot)
-{
-    return (std::max)(0, (slot.iconY - kEquipSlotBaseY) / kEquipSlotLegacyStep);
-}
-
-int GetEquipSlotY(const EquipSlotDefLocal& slot, int windowHeight)
-{
-    const int contentHeight = (std::max)(0, windowHeight - kTitleBarHeight);
-    const int totalSlotHeight = (kEquipSlotRowCount * kSlotIconSize)
-        + ((kEquipSlotRowCount - 1) * kSlotVerticalSpacing);
-    const int topOffset = kTitleBarHeight + (std::max)(0, (contentHeight - totalSlotHeight) / 2);
-    return topOffset + (GetEquipSlotRow(slot) * (kSlotIconSize + kSlotVerticalSpacing));
+    return slot.iconX == 8;
 }
 
 std::string ToLowerAscii(std::string value)
@@ -195,11 +168,6 @@ const char* GetLocalPlayerRemoveOptionLabel()
     if (player && (player->m_effectState & kFalconOption) != 0) return "Release Falcon";
     if (IsLocalPlayerPushCartEquipped()) return "Remove cart";
     return nullptr;
-}
-
-RECT GetRemoveOptionButtonRect(int x, int y, int height)
-{
-    return MakeEquipRect(x, y, 101, height - 46, 78, 14);
 }
 
 void AddUniqueCandidate(std::vector<std::string>& out, const std::string& raw)
@@ -1105,6 +1073,7 @@ void UIEquipWnd::SetShow(int show)
     }
     if (show != 0) {
         EnsureCreated();
+        RefreshLayout();
         LayoutChildren();
     }
 }
@@ -1144,6 +1113,11 @@ msgresult_t UIEquipWnd::SendMsg(UIWindow* sender, int msg, msgparam_t wparam, ms
         return 1;
     case kButtonIdMini:
         SetMiniMode(true);
+        return 1;
+    case kButtonIdCompact:
+        m_compactMode = !m_compactMode;
+        RefreshLayout();
+        Invalidate();
         return 1;
     case kButtonIdRemoveOption:
         return g_modeMgr.SendMsg(CGameMode::GameMsg_RequestCartOff, 0, 0, 0);
@@ -1217,6 +1191,7 @@ void UIEquipWnd::OnDraw()
     }
 
     EnsureCreated();
+    RefreshLayout();
     const std::vector<const ITEM_INFO*> slotItems = BuildSlotAssignments();
     if (m_h > kMiniHeight) {
         for (const ITEM_INFO* item : slotItems) {
@@ -1293,10 +1268,10 @@ void UIEquipWnd::OnDraw()
             && gameMode->m_dragInfo.source == static_cast<int>(DragSource::EquipmentWindow)
             && gameMode->m_dragInfo.itemIndex != 0;
         RECT centerPanel{
-            m_x + kCenterPanelLeft,
-            m_y + kCenterPanelTop,
-            m_x + (std::min)(kCenterPanelRight, m_w - 98),
-            m_y + (std::min)(kCenterPanelBottom, m_h - 10)
+            m_x + m_layout.preview.x,
+            m_y + m_layout.preview.y,
+            m_x + m_layout.preview.x + m_layout.preview.width,
+            m_y + m_layout.preview.y + m_layout.preview.height
         };
 
         if (!DrawEquipPreviewPlayerSpriteFitted(hdc, centerPanel)) {
@@ -1304,15 +1279,15 @@ void UIEquipWnd::OnDraw()
         }
 
         if (GetLocalPlayerRemoveOptionLabel()) {
-            const RECT removeOptionRect = GetRemoveOptionButtonRect(m_x, m_y, m_h);
+            const RECT removeOptionRect = MakeEquipRect(m_x, m_y, m_layout.removeOption.x, m_layout.removeOption.y, m_layout.removeOption.width, m_layout.removeOption.height);
             FillRectColor(hdc, removeOptionRect, RGB(170, 76, 58));
             FrameRectColor(hdc, removeOptionRect, RGB(88, 34, 26));
             DrawWindowTextRect(hdc, removeOptionRect, GetLocalPlayerRemoveOptionLabel(), RGB(255, 250, 236), DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         }
 
         for (size_t i = 0; i < kEquipSlots.size(); ++i) {
-            const int slotX = GetEquipSlotX(kEquipSlots[i], m_w);
-            const int slotY = GetEquipSlotY(kEquipSlots[i], m_h);
+            const int slotX = m_layout.icons[i].x;
+            const int slotY = m_layout.icons[i].y;
             RECT slotRect{
                 m_x + slotX,
                 m_y + slotY,
@@ -1330,21 +1305,13 @@ void UIEquipWnd::OnDraw()
                     shopui::DrawBitmapPixelsTransparent(hdc, *icon, slotRect);
                 }
 
-                const bool leftColumn = IsLeftEquipSlot(kEquipSlots[i]);
-                RECT textRect{};
-                if (leftColumn) {
-                    textRect.left = slotRect.right + 4;
-                    textRect.right = m_x + kCenterPanelLeft + 24;
-                } else {
-                    textRect.left = m_x + kCenterPanelRight - 24;
-                    textRect.right = slotRect.left - 4;
+                if (!m_compactMode) {
+                    const auto& name = m_layout.names[i];
+                    const RECT textRect = MakeEquipRect(m_x,m_y,name.x,name.y,name.width,name.height);
+                    const std::string itemText = shopui::BuildItemHoverNameText(*drawItem);
+                    const UINT textFormat = DT_LEFT | DT_WORDBREAK;
+                    DrawWindowTextRect(hdc, textRect, itemText, RGB(0, 0, 0), textFormat);
                 }
-                textRect.top = slotRect.top + 2;
-                textRect.bottom = slotRect.bottom;
-
-                const std::string itemText = drawItem->GetEquipDisplayName();
-                const UINT textFormat = (leftColumn ? DT_LEFT : DT_RIGHT) | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS;
-                DrawWindowTextRect(hdc, textRect, itemText, RGB(0, 0, 0), textFormat);
             }
         }
     }
@@ -1365,13 +1332,15 @@ void UIEquipWnd::OnLBtnDown(int x, int y)
     m_dragItemEquipLocation = 0;
 
     if (IsQtUiRuntimeEnabled()) {
-        const RECT baseRect = MakeEquipRect(m_x, m_y, 3, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT miniRect = MakeEquipRect(m_x, m_y, 247, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT removeOptionRect = GetRemoveOptionButtonRect(m_x, m_y, m_h);
-        const RECT closeRect = MakeEquipRect(m_x, m_y, 265, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT baseRect = MakeEquipRect(m_x, m_y, m_w - 28, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT miniRect = MakeEquipRect(m_x, m_y, m_w - 28, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT removeOptionRect = MakeEquipRect(m_x, m_y, m_layout.removeOption.x, m_layout.removeOption.y, m_layout.removeOption.width, m_layout.removeOption.height);
+        const RECT closeRect = MakeEquipRect(m_x, m_y, m_w - 14, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT compactRect = MakeEquipRect(m_x, m_y, m_w - 42, 3, kQtButtonWidth, kQtButtonHeight);
         if (IsPointInRect(baseRect, x, y)
             || IsPointInRect(miniRect, x, y)
             || (GetLocalPlayerRemoveOptionLabel() && IsPointInRect(removeOptionRect, x, y))
+            || (!IsMiniMode() && IsPointInRect(compactRect, x, y))
             || IsPointInRect(closeRect, x, y)) {
             UIWindow::OnLBtnDown(x, y);
             return;
@@ -1379,7 +1348,7 @@ void UIEquipWnd::OnLBtnDown(int x, int y)
     }
 
     if (m_h > kMiniHeight && GetLocalPlayerRemoveOptionLabel()
-        && IsPointInRect(GetRemoveOptionButtonRect(m_x, m_y, m_h), x, y)) {
+        && IsPointInRect(MakeEquipRect(m_x, m_y, m_layout.removeOption.x, m_layout.removeOption.y, m_layout.removeOption.width, m_layout.removeOption.height), x, y)) {
         return;
     }
 
@@ -1400,10 +1369,10 @@ void UIEquipWnd::OnLBtnDown(int x, int y)
         }
 
         RECT slotRect{
-            m_x + GetEquipSlotX(kEquipSlots[i], m_w),
-            m_y + GetEquipSlotY(kEquipSlots[i], m_h),
-            m_x + GetEquipSlotX(kEquipSlots[i], m_w) + kSlotIconSize,
-            m_y + GetEquipSlotY(kEquipSlots[i], m_h) + kSlotIconSize
+            m_x + m_layout.cards[i].x,
+            m_y + m_layout.cards[i].y,
+            m_x + m_layout.cards[i].x + m_layout.cards[i].width,
+            m_y + m_layout.cards[i].y + m_layout.cards[i].height
         };
         if (x >= slotRect.left && x < slotRect.right && y >= slotRect.top && y < slotRect.bottom) {
             m_dragArmed = true;
@@ -1430,11 +1399,16 @@ void UIEquipWnd::OnLBtnUp(int x, int y)
             return;
         }
 
-        const RECT baseRect = MakeEquipRect(m_x, m_y, 3, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT miniRect = MakeEquipRect(m_x, m_y, 247, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT removeOptionRect = GetRemoveOptionButtonRect(m_x, m_y, m_h);
-        const RECT closeRect = MakeEquipRect(m_x, m_y, 265, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT baseRect = MakeEquipRect(m_x, m_y, m_w - 28, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT miniRect = MakeEquipRect(m_x, m_y, m_w - 28, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT removeOptionRect = MakeEquipRect(m_x, m_y, m_layout.removeOption.x, m_layout.removeOption.y, m_layout.removeOption.width, m_layout.removeOption.height);
+        const RECT closeRect = MakeEquipRect(m_x, m_y, m_w - 14, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT compactRect = MakeEquipRect(m_x, m_y, m_w - 42, 3, kQtButtonWidth, kQtButtonHeight);
 
+        if (!IsMiniMode() && IsPointInRect(compactRect, x, y)) {
+            SendMsg(this, 6, kButtonIdCompact, 0, 0);
+            return;
+        }
         if (m_h == kMiniHeight && IsPointInRect(baseRect, x, y)) {
             SendMsg(this, 6, kButtonIdBase, 0, 0);
             return;
@@ -1458,7 +1432,7 @@ void UIEquipWnd::OnLBtnUp(int x, int y)
     const bool wasDragging = m_isDragging != 0;
     UIFrameWnd::OnLBtnUp(x, y);
     if (!wasDragging && m_h > kMiniHeight && GetLocalPlayerRemoveOptionLabel()
-        && IsPointInRect(GetRemoveOptionButtonRect(m_x, m_y, m_h), x, y)) {
+        && IsPointInRect(MakeEquipRect(m_x, m_y, m_layout.removeOption.x, m_layout.removeOption.y, m_layout.removeOption.width, m_layout.removeOption.height), x, y)) {
         SendMsg(this, 6, kButtonIdRemoveOption, 0, 0);
     }
 }
@@ -1477,10 +1451,10 @@ void UIEquipWnd::OnRBtnDown(int x, int y)
         }
 
         const RECT slotRect{
-            m_x + GetEquipSlotX(kEquipSlots[i], m_w),
-            m_y + GetEquipSlotY(kEquipSlots[i], m_h),
-            m_x + GetEquipSlotX(kEquipSlots[i], m_w) + kSlotIconSize,
-            m_y + GetEquipSlotY(kEquipSlots[i], m_h) + kSlotIconSize
+            m_x + m_layout.cards[i].x,
+            m_y + m_layout.cards[i].y,
+            m_x + m_layout.cards[i].x + m_layout.cards[i].width,
+            m_y + m_layout.cards[i].y + m_layout.cards[i].height
         };
         if (x >= slotRect.left && x < slotRect.right && y >= slotRect.top && y < slotRect.bottom) {
             g_windowMgr.ShowItemInfoWindow(*item, x + 12, y + 12);
@@ -1542,13 +1516,13 @@ void UIEquipWnd::OnLBtnDblClk(int x, int y)
                 continue;
             }
 
-            const int slotX = GetEquipSlotX(kEquipSlots[i], m_w);
-            const int slotY = GetEquipSlotY(kEquipSlots[i], m_h);
+            const int slotX = m_layout.cards[i].x;
+            const int slotY = m_layout.cards[i].y;
             RECT slotRect{
                 m_x + slotX,
                 m_y + slotY,
-                m_x + slotX + kSlotIconSize,
-                m_y + slotY + kSlotIconSize
+                m_x + slotX + m_layout.cards[i].width,
+                m_y + slotY + m_layout.cards[i].height
             };
             if (x >= slotRect.left && x < slotRect.right && y >= slotRect.top && y < slotRect.bottom) {
                 if (g_modeMgr.SendMsg(
@@ -1610,6 +1584,7 @@ bool UIEquipWnd::GetDisplayDataForQt(DisplayData* outData) const
     }
 
     DisplayData data{};
+    data.preview = m_layout.preview;
     if (m_h > kMiniHeight) {
         const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode();
         const bool hideDraggedItem = gameMode
@@ -1619,14 +1594,17 @@ bool UIEquipWnd::GetDisplayDataForQt(DisplayData* outData) const
         const std::vector<const ITEM_INFO*> slotItems = BuildSlotAssignments();
         data.displaySlots.reserve(kEquipSlots.size());
         for (size_t i = 0; i < kEquipSlots.size(); ++i) {
-            const int slotX = GetEquipSlotX(kEquipSlots[i], m_w);
-            const int slotY = GetEquipSlotY(kEquipSlots[i], m_h);
+            const int slotX = m_layout.icons[i].x;
+            const int slotY = m_layout.icons[i].y;
             DisplaySlot slot{};
             slot.x = m_x + slotX;
             slot.y = m_y + slotY;
             slot.width = kSlotIconSize;
             slot.height = kSlotIconSize;
             slot.leftColumn = IsLeftEquipSlot(kEquipSlots[i]);
+            slot.slotName = equipmentLayout::labels[i];
+            slot.card = m_layout.cards[i];
+            slot.name = m_layout.names[i];
 
             const ITEM_INFO* drawItem = slotItems[i];
             if (drawItem
@@ -1638,7 +1616,7 @@ bool UIEquipWnd::GetDisplayDataForQt(DisplayData* outData) const
                 slot.occupied = true;
                 slot.hovered = static_cast<int>(i) == m_hoveredSlot;
                 slot.itemId = drawItem->GetItemId();
-                slot.label = drawItem->GetEquipDisplayName();
+                slot.label = shopui::BuildItemHoverNameText(*drawItem);
             }
             data.displaySlots.push_back(slot);
         }
@@ -1661,10 +1639,10 @@ bool UIEquipWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
     }
 
     outData->anchorRect = RECT{
-        m_x + GetEquipSlotX(kEquipSlots[static_cast<size_t>(m_hoveredSlot)], m_w),
-        m_y + GetEquipSlotY(kEquipSlots[static_cast<size_t>(m_hoveredSlot)], m_h),
-        m_x + GetEquipSlotX(kEquipSlots[static_cast<size_t>(m_hoveredSlot)], m_w) + kSlotIconSize,
-        m_y + GetEquipSlotY(kEquipSlots[static_cast<size_t>(m_hoveredSlot)], m_h) + kSlotIconSize,
+        m_x + m_layout.icons[static_cast<size_t>(m_hoveredSlot)].x,
+        m_y + m_layout.icons[static_cast<size_t>(m_hoveredSlot)].y,
+        m_x + m_layout.icons[static_cast<size_t>(m_hoveredSlot)].x + kSlotIconSize,
+        m_y + m_layout.icons[static_cast<size_t>(m_hoveredSlot)].y + kSlotIconSize,
     };
     outData->text = shopui::BuildItemHoverText(*item);
     outData->itemId = item->GetItemId();
@@ -1674,7 +1652,7 @@ bool UIEquipWnd::GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const
 
 int UIEquipWnd::GetQtSystemButtonCount() const
 {
-    return 4;
+    return 5;
 }
 
 bool UIEquipWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outData) const
@@ -1686,7 +1664,7 @@ bool UIEquipWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outDa
     switch (index) {
     case 0:
         outData->id = kButtonIdBase;
-        outData->x = m_x + 247;
+        outData->x = m_x + m_w - 28;
         outData->y = m_y + 3;
         outData->width = kQtButtonWidth;
         outData->height = kQtButtonHeight;
@@ -1695,7 +1673,7 @@ bool UIEquipWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outDa
         return true;
     case 1:
         outData->id = kButtonIdMini;
-        outData->x = m_x + 247;
+        outData->x = m_x + m_w - 28;
         outData->y = m_y + 3;
         outData->width = kQtButtonWidth;
         outData->height = kQtButtonHeight;
@@ -1704,7 +1682,7 @@ bool UIEquipWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outDa
         return true;
     case 2:
         outData->id = kButtonIdClose;
-        outData->x = m_x + 265;
+        outData->x = m_x + m_w - 14;
         outData->y = m_y + 3;
         outData->width = kQtButtonWidth;
         outData->height = kQtButtonHeight;
@@ -1713,7 +1691,7 @@ bool UIEquipWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outDa
         return true;
     case 3:
     {
-        const RECT rect = GetRemoveOptionButtonRect(m_x, m_y, m_h);
+        const RECT rect = MakeEquipRect(m_x, m_y, m_layout.removeOption.x, m_layout.removeOption.y, m_layout.removeOption.width, m_layout.removeOption.height);
         outData->id = kButtonIdRemoveOption;
         outData->x = rect.left;
         outData->y = rect.top;
@@ -1724,6 +1702,16 @@ bool UIEquipWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* outDa
         outData->visible = m_h > kMiniHeight && label;
         return true;
     }
+    case 4:
+        outData->id = kButtonIdCompact;
+        outData->x = m_x + m_w - 42;
+        outData->y = m_y + 3;
+        outData->width = kQtButtonWidth;
+        outData->height = kQtButtonHeight;
+        outData->label = "C";
+        outData->icon = m_compactMode ? "details" : "compact";
+        outData->visible = !IsMiniMode();
+        return true;
     default:
         return false;
     }
@@ -1808,6 +1796,31 @@ unsigned long long UIEquipWnd::GetQtPreviewRevision() const
     return BuildVisualStateToken();
 }
 
+void UIEquipWnd::RefreshLayout()
+{
+    const auto token = BuildVisualStateToken();
+    if (m_hasLayoutStateToken && token == m_layoutStateToken) return;
+    std::array<int,11> heights{};
+#if RO_ENABLE_QT6_UI
+    const auto items = BuildSlotAssignments();
+    for (int i=0; i<11; ++i) {
+        if (m_compactMode || !items[i]) continue;
+        const std::string name = shopui::BuildItemHoverNameText(*items[i]);
+        heights[i]=equipmentLayout::NameHeightForQt(QString::fromStdString(name));
+    }
+#endif
+    m_layout = equipmentLayout::Build(heights,m_compactMode);
+    m_fullHeight = m_layout.height;
+    if (m_w != m_layout.width || (!IsMiniMode() && m_h != m_fullHeight))
+        Resize(m_layout.width,IsMiniMode()?kMiniHeight:m_fullHeight);
+    int clampedX=m_x, clampedY=m_y;
+    g_windowMgr.ClampWindowToClient(&clampedX,&clampedY,m_w,m_h);
+    if (clampedX != m_x || clampedY != m_y) Move(clampedX,clampedY);
+    LayoutChildren();
+    m_layoutStateToken = BuildVisualStateToken();
+    m_hasLayoutStateToken = true;
+}
+
 void UIEquipWnd::EnsureCreated()
 {
     if (!m_controlsCreated) {
@@ -1822,15 +1835,15 @@ void UIEquipWnd::LayoutChildren()
     }
 
     if (m_systemButtons[0]) {
-        m_systemButtons[0]->Move(m_x + 247, m_y + 3);
+        m_systemButtons[0]->Move(m_x + m_w - 28, m_y + 3);
         m_systemButtons[0]->SetShow(m_h == kMiniHeight ? 1 : 0);
     }
     if (m_systemButtons[1]) {
-        m_systemButtons[1]->Move(m_x + 247, m_y + 3);
+        m_systemButtons[1]->Move(m_x + m_w - 28, m_y + 3);
         m_systemButtons[1]->SetShow(m_h != kMiniHeight ? 1 : 0);
     }
     if (m_systemButtons[2]) {
-        m_systemButtons[2]->Move(m_x + 265, m_y + 3);
+        m_systemButtons[2]->Move(m_x + m_w - 14, m_y + 3);
         m_systemButtons[2]->SetShow(1);
     }
 }
@@ -1860,7 +1873,7 @@ void UIEquipWnd::ReleaseAssets()
 
 void UIEquipWnd::SetMiniMode(bool miniMode)
 {
-    Resize(kWindowWidth, miniMode ? kMiniHeight : m_fullHeight);
+    Resize(m_layout.width, miniMode ? kMiniHeight : m_fullHeight);
     LayoutChildren();
 }
 
@@ -1876,13 +1889,13 @@ void UIEquipWnd::UpdateHoveredSlot(int globalX, int globalY)
     }
 
     for (size_t i = 0; i < kEquipSlots.size(); ++i) {
-        const int slotX = GetEquipSlotX(kEquipSlots[i], m_w);
-        const int slotY = GetEquipSlotY(kEquipSlots[i], m_h);
+        const int slotX = m_layout.cards[i].x;
+        const int slotY = m_layout.cards[i].y;
         const RECT slotRect{
             m_x + slotX,
             m_y + slotY,
-            m_x + slotX + kSlotIconSize,
-            m_y + slotY + kSlotIconSize
+            m_x + slotX + m_layout.cards[i].width,
+            m_y + slotY + m_layout.cards[i].height
         };
         if (globalX >= slotRect.left && globalX < slotRect.right && globalY >= slotRect.top && globalY < slotRect.bottom) {
             m_hoveredSlot = static_cast<int>(i);
@@ -1995,6 +2008,7 @@ unsigned long long UIEquipWnd::BuildVisualStateToken() const
     HashTokenValue(&hash, static_cast<unsigned long long>(m_y));
     HashTokenValue(&hash, static_cast<unsigned long long>(m_w));
     HashTokenValue(&hash, static_cast<unsigned long long>(m_h));
+    HashTokenValue(&hash, static_cast<unsigned long long>(m_compactMode));
     HashTokenValue(&hash, static_cast<unsigned long long>(static_cast<unsigned int>(m_hoveredSlot + 1)));
     if (const CGameMode* gameMode = g_modeMgr.GetCurrentGameMode()) {
         HashTokenValue(&hash, static_cast<unsigned long long>(gameMode->m_dragType));

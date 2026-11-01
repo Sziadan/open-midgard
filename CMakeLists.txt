@@ -116,11 +116,10 @@ if(RO_ENABLE_QT6_UI)
     # UI headers include Qt types. Those headers are reachable from libraries
     # that do not themselves link Qt, so the kit include paths are global.
     include_directories(
-        "${RO_QT_ROOT}/include"
-        "${RO_QT_ROOT}/include/QtCore"
-        "${RO_QT_ROOT}/include/QtGui"
-        "${RO_QT_ROOT}/include/QtQml"
-        "${RO_QT_ROOT}/include/QtQuick"
+        $<TARGET_PROPERTY:Qt6::Core,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:Qt6::Gui,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:Qt6::Qml,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:Qt6::Quick,INTERFACE_INCLUDE_DIRECTORIES>
     )
 endif()
 

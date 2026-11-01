@@ -10,6 +10,8 @@ Item {
         close: '<path d="m4 4 8 8M12 4l-8 8"/>',
         minimize: '<path d="M3 9h10"/>',
         expand: '<path d="m3 5 5 5 5-5"/>',
+        compact: '<rect x="2" y="2" width="4" height="4" rx=".5"/><rect x="10" y="2" width="4" height="4" rx=".5"/><rect x="2" y="10" width="4" height="4" rx=".5"/><rect x="10" y="10" width="4" height="4" rx=".5"/>',
+        details: '<path d="M6 3h8M6 8h8M6 13h8M2 3h1M2 8h1M2 13h1"/>',
         status: '<rect x="1" y="2" width="14" height="12" rx="1.5"/><circle cx="5" cy="6" r="1.5"/><path d="M3 12v-1a2 2 0 0 1 4 0v1M10 5h3M10 8h3M10 11h2"/>',
         option: '<path d="m6.5 1-.4 1.8-1.5.9-1.8-.6-1.5 2.6 1.4 1.2v1.9l-1.4 1.3 1.5 2.6 1.8-.6 1.5.9.4 1.8h3l.4-1.8 1.5-.9 1.8.6 1.5-2.6-1.4-1.3V6.9l1.4-1.2-1.5-2.6-1.8.6-1.5-.9L9.5 1z"/><circle cx="8" cy="8" r="2.3"/>',
         items: '<path d="M5 3V1.5h6V3M3 14V6c0-4 10-4 10 0v8zM3 6l5 2 5-2"/><rect x="5" y="10" width="6" height="3" rx=".5"/>',

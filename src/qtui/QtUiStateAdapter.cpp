@@ -1,3 +1,4 @@
+#include "ui/StatusLayout.h"
 #include "QtUiStateAdapter.h"
 
 #include "QtUiState.h"
@@ -165,7 +166,6 @@ void ClearGameplayUiState(QtUiState* state)
     state->setStatusVisible(false);
     state->setStatusGeometry(0, 0, 0, 0);
     state->setStatusMini(false);
-    state->setStatusPage(0);
     state->setStatusData(QVariantMap{});
 
     state->setChatWindowVisible(false);
@@ -1729,14 +1729,12 @@ void PopulateStatusState(QtUiState* state)
     if (!visible) {
         state->setStatusGeometry(0, 0, 0, 0);
         state->setStatusMini(false);
-        state->setStatusPage(0);
         state->setStatusData(QVariantMap{});
         return;
     }
 
     state->setStatusGeometry(statusWnd->m_x, statusWnd->m_y, statusWnd->m_w, statusWnd->m_h);
     state->setStatusMini(statusWnd->IsMiniMode());
-    state->setStatusPage(statusWnd->GetPageForQt());
 
     UIStatusWnd::DisplayData display{};
     QVariantMap data;
@@ -1750,9 +1748,12 @@ void PopulateStatusState(QtUiState* state)
             row.insert(QStringLiteral("label"), QString::fromLatin1(kLabels[index]));
             row.insert(QStringLiteral("value"), FormatBaseStatusText(display.baseStats[index], display.plusStats[index]));
             row.insert(QStringLiteral("cost"), display.statCosts[index]);
+            row.insert(QStringLiteral("base"), display.baseStats[index]);
+            row.insert(QStringLiteral("bonus"), display.plusStats[index]);
+            row.insert(QStringLiteral("rowY"), statusLayout::rowY(index));
             UIStatusWnd::QtButtonDisplay incrementButton{};
             const bool hasIncrementButton = statusWnd->GetQtIncrementButtonDisplayForQt(index, &incrementButton);
-            row.insert(QStringLiteral("canIncrease"), hasIncrementButton && incrementButton.visible);
+            row.insert(QStringLiteral("canIncrease"), hasIncrementButton && incrementButton.visible && incrementButton.active);
             if (hasIncrementButton) {
                 row.insert(QStringLiteral("increaseX"), incrementButton.x);
                 row.insert(QStringLiteral("increaseY"), incrementButton.y);
@@ -1785,27 +1786,6 @@ void PopulateStatusState(QtUiState* state)
             systemButtons.push_back(button);
         }
         data.insert(QStringLiteral("systemButtons"), systemButtons);
-
-        QVariantList pageTabs;
-        pageTabs.reserve(statusWnd->GetQtPageTabCount());
-        for (int index = 0; index < statusWnd->GetQtPageTabCount(); ++index) {
-            UIStatusWnd::QtButtonDisplay buttonDisplay{};
-            if (!statusWnd->GetQtPageTabDisplayForQt(index, &buttonDisplay)) {
-                continue;
-            }
-
-            QVariantMap button;
-            button.insert(QStringLiteral("id"), buttonDisplay.id);
-            button.insert(QStringLiteral("x"), buttonDisplay.x);
-            button.insert(QStringLiteral("y"), buttonDisplay.y);
-            button.insert(QStringLiteral("width"), buttonDisplay.width);
-            button.insert(QStringLiteral("height"), buttonDisplay.height);
-            button.insert(QStringLiteral("label"), ToQString(buttonDisplay.label));
-            button.insert(QStringLiteral("visible"), buttonDisplay.visible);
-            button.insert(QStringLiteral("active"), buttonDisplay.active);
-            pageTabs.push_back(button);
-        }
-        data.insert(QStringLiteral("pageTabs"), pageTabs);
 
         data.insert(QStringLiteral("title"), QStringLiteral("Status"));
         data.insert(QStringLiteral("attackText"), FormatCompositeStatusText(display.attack, display.refineAttack));
@@ -2441,7 +2421,7 @@ void PopulateEquipState(QtUiState* state)
         return;
     }
 
-    const UIEquipWnd* const equipWnd = g_windowMgr.m_equipWnd;
+    UIEquipWnd* const equipWnd = g_windowMgr.m_equipWnd;
     const bool visible = IsGameplayWindowVisible(state, equipWnd);
     state->setEquipVisible(visible);
     if (!visible) {
@@ -2451,6 +2431,7 @@ void PopulateEquipState(QtUiState* state)
         return;
     }
 
+    equipWnd->RefreshLayout();
     state->setEquipGeometry(equipWnd->m_x, equipWnd->m_y, equipWnd->m_w, equipWnd->m_h);
     state->setEquipMini(equipWnd->IsMiniMode());
 
@@ -2458,6 +2439,7 @@ void PopulateEquipState(QtUiState* state)
     QVariantMap data;
     if (equipWnd->GetDisplayDataForQt(&display)) {
         data.insert(QStringLiteral("title"), QStringLiteral("Equipment"));
+        data.insert(QStringLiteral("compact"), equipWnd->IsCompactMode());
         data.insert(
             QStringLiteral("previewRevision"),
             QString::number(static_cast<qulonglong>(equipWnd->GetQtPreviewRevision())));
@@ -2476,11 +2458,16 @@ void PopulateEquipState(QtUiState* state)
             button.insert(QStringLiteral("width"), buttonDisplay.width);
             button.insert(QStringLiteral("height"), buttonDisplay.height);
             button.insert(QStringLiteral("label"), ToQString(buttonDisplay.label));
+            button.insert(QStringLiteral("icon"), ToQString(buttonDisplay.icon));
             button.insert(QStringLiteral("visible"), buttonDisplay.visible);
             systemButtons.push_back(button);
         }
         data.insert(QStringLiteral("systemButtons"), systemButtons);
 
+        data.insert(QStringLiteral("previewX"), display.preview.x);
+        data.insert(QStringLiteral("previewY"), display.preview.y);
+        data.insert(QStringLiteral("previewWidth"), display.preview.width);
+        data.insert(QStringLiteral("previewHeight"), display.preview.height);
         QVariantList equipSlots;
         equipSlots.reserve(static_cast<qsizetype>(display.displaySlots.size()));
         for (const UIEquipWnd::DisplaySlot& slot : display.displaySlots) {
@@ -2494,6 +2481,15 @@ void PopulateEquipState(QtUiState* state)
             entry.insert(QStringLiteral("leftColumn"), slot.leftColumn);
             entry.insert(QStringLiteral("itemId"), static_cast<uint>(slot.itemId));
             entry.insert(QStringLiteral("label"), ToQString(slot.label));
+            entry.insert(QStringLiteral("slotName"), ToQString(slot.slotName));
+            entry.insert(QStringLiteral("cardX"), equipWnd->m_x + slot.card.x);
+            entry.insert(QStringLiteral("cardY"), equipWnd->m_y + slot.card.y);
+            entry.insert(QStringLiteral("cardWidth"), slot.card.width);
+            entry.insert(QStringLiteral("cardHeight"), slot.card.height);
+            entry.insert(QStringLiteral("nameX"), equipWnd->m_x + slot.name.x);
+            entry.insert(QStringLiteral("nameY"), equipWnd->m_y + slot.name.y);
+            entry.insert(QStringLiteral("nameWidth"), slot.name.width);
+            entry.insert(QStringLiteral("nameHeight"), slot.name.height);
             equipSlots.push_back(entry);
         }
         data.insert(QStringLiteral("slots"), equipSlots);

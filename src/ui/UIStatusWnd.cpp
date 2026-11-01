@@ -1,4 +1,5 @@
 #include "UiMetrics.h"
+#include "StatusLayout.h"
 #include "UIStatusWnd.h"
 
 #include "render/DC.h"
@@ -35,11 +36,10 @@
 
 namespace {
 
-constexpr int kWindowWidth = 280;
-constexpr int kWindowHeight = 120;
-constexpr int kMiniHeight = 17;
+constexpr int kWindowWidth = statusLayout::width;
+constexpr int kWindowHeight = statusLayout::height;
+constexpr int kMiniHeight = statusLayout::miniHeight;
 constexpr int kTitleBarHeight = uiMetrics::titleHeight;
-constexpr int kBodyHeight = 103;
 constexpr int kButtonIdBase = 134;
 constexpr int kButtonIdClose = 135;
 constexpr int kButtonIdMini = 136;
@@ -68,9 +68,6 @@ constexpr std::array<u16, 6> kStatusIds = {
     18,
 };
 
-constexpr std::array<int, 6> kStatRows = { 6, 22, 38, 54, 70, 86 };
-constexpr std::array<int, 6> kRightLeftRows = { 21, 37, 53, 69, 85, 101 };
-constexpr std::array<int, 4> kRightRightRows = { 21, 37, 53, 69 };
 constexpr const char* kExternalSkinDir = "D:\\Spel\\OldRO\\skin\\default\\basic_interface\\";
 constexpr int kQtButtonWidth = 12;
 constexpr int kQtButtonHeight = 11;
@@ -294,26 +291,13 @@ std::string FormatMatkValue(int minValue, int maxValue)
     return text;
 }
 
-std::string FormatStatValue(int baseValue, int plusValue)
-{
-    char text[64] = {};
-    if (plusValue > 0) {
-        std::snprintf(text, sizeof(text), "%d+%d", baseValue, plusValue);
-    } else {
-        std::snprintf(text, sizeof(text), "%d", baseValue);
-    }
-    return text;
-}
-
 } // namespace
 
 UIStatusWnd::UIStatusWnd()
     : m_controlsCreated(false),
-      m_page(0),
       m_systemButtons{ nullptr, nullptr, nullptr },
       m_incrementButtons{ nullptr, nullptr, nullptr, nullptr, nullptr, nullptr },
       m_titleBarBitmap(),
-      m_pageBackgrounds{},
       m_lastDrawStateToken(0ull),
       m_hasDrawStateToken(false)
 {
@@ -459,58 +443,47 @@ void UIStatusWnd::OnCreate(int x, int y)
 
 void UIStatusWnd::OnDraw()
 {
-    if (IsQtUiRuntimeEnabled()) {
-        m_lastDrawStateToken = BuildDisplayStateToken();
-        m_hasDrawStateToken = true;
-        m_isDirty = 0;
-        return;
-    }
-
-    if (m_show == 0) {
-        return;
-    }
-
+    if (m_show == 0) return;
     EnsureCreated();
     RefreshIncrementButtons();
-
-    HDC hdc = AcquireDrawTarget();
-    if (!hdc) {
-        return;
-    }
-
-    RECT titleRect{ m_x, m_y, m_x + m_w, m_y + kTitleBarHeight };
-    shopui::DrawBitmapPixelsTransparent(hdc, m_titleBarBitmap, titleRect);
-    DrawWindowText(hdc, m_x + 18, m_y + 3, "Status", RGB(255, 255, 255));
-    DrawWindowText(hdc, m_x + 17, m_y + 2, "Status", RGB(0, 0, 0));
-
-    if (m_h > kMiniHeight) {
-        RECT bodyRect{ m_x, m_y + kTitleBarHeight, m_x + m_w, m_y + kTitleBarHeight + kBodyHeight };
-        shopui::DrawBitmapPixelsTransparent(hdc, m_pageBackgrounds[m_page == 0 ? 0 : 1], bodyRect);
-
-        if (m_page == 0) {
+    if (!IsQtUiRuntimeEnabled()) {
+        HDC hdc = AcquireDrawTarget();
+        if (!hdc) return;
+        RECT titleRect{m_x, m_y, m_x + m_w, m_y + kTitleBarHeight};
+        shopui::DrawBitmapPixelsTransparent(hdc, m_titleBarBitmap, titleRect);
+        DrawWindowText(hdc, m_x + 12, m_y + 2, "Status", RGB(255,255,255));
+        if (!IsMiniMode()) {
+            RECT body{m_x, m_y + kTitleBarHeight, m_x + m_w, m_y + m_h};
+            HBRUSH brush = CreateSolidBrush(RGB(247,246,242));
+            FillRect(hdc, &body, brush);
+            DeleteObject(brush);
             const DisplayData data = BuildDisplayData();
-            for (size_t index = 0; index < data.baseStats.size(); ++index) {
-                const int rowY = m_y + kStatRows[index] + 16;
-                const std::string statText = FormatStatValue(data.baseStats[index], data.plusStats[index]);
-                DrawWindowText(hdc, m_x + 54, rowY, statText.c_str(), RGB(0, 0, 0));
+            constexpr const char* names[] = {"STR", "AGI", "VIT", "INT", "DEX", "LUK"};
+            for (int index=0; index<6; ++index) {
+                const int y = m_y + statusLayout::rowY(index) + 4;
+                DrawWindowText(hdc, m_x + 12, y, names[index], RGB(37,49,60));
+                DrawRightAlignedValue(hdc, m_x + 78, y, std::to_string(data.baseStats[index]));
+                DrawWindowText(hdc, m_x + 82, y, "+", RGB(98,110,120));
+                DrawRightAlignedValue(hdc, m_x + 132, y, std::to_string(data.plusStats[index]));
+                DrawRightAlignedValue(hdc, m_x + 204, y, std::to_string(data.statCosts[index]));
             }
-
-            DrawRightAlignedValue(hdc, m_x + 192, m_y + kRightLeftRows[0], FormatCompositeValue(data.attack, data.refineAttack));
-            DrawRightAlignedValue(hdc, m_x + 192, m_y + kRightLeftRows[1], FormatMatkValue(data.matkMin, data.matkMax));
-            DrawRightAlignedValue(hdc, m_x + 192, m_y + kRightLeftRows[2], std::to_string(data.hit));
-            DrawRightAlignedValue(hdc, m_x + 192, m_y + kRightLeftRows[3], std::to_string(data.critical));
-            DrawRightAlignedValue(hdc, m_x + 273, m_y + kRightLeftRows[4], std::to_string(data.statusPoint));
-
-            DrawRightAlignedValue(hdc, m_x + 273, m_y + kRightRightRows[0], FormatCompositeValue(data.itemDef, data.plusDef));
-            DrawRightAlignedValue(hdc, m_x + 273, m_y + kRightRightRows[1], FormatCompositeValue(data.itemMdef, data.plusMdef));
-            DrawRightAlignedValue(hdc, m_x + 273, m_y + kRightRightRows[2], FormatCompositeValue(data.flee, data.plusFlee));
-            DrawRightAlignedValue(hdc, m_x + 273, m_y + kRightRightRows[3], FormatCompositeValue(data.aspd, data.plusAspd));
+            const char* labels[] = {"Atk", "Def", "Matk", "Mdef", "Hit", "Flee", "Crit", "Aspd"};
+            const std::array<std::string,8> values{{FormatCompositeValue(data.attack,data.refineAttack),
+                FormatCompositeValue(data.itemDef,data.plusDef), FormatMatkValue(data.matkMin,data.matkMax),
+                FormatCompositeValue(data.itemMdef,data.plusMdef), std::to_string(data.hit),
+                FormatCompositeValue(data.flee,data.plusFlee),std::to_string(data.critical),
+                FormatCompositeValue(data.aspd,data.plusAspd)}};
+            for (int index=0;index<8;++index) {
+                const int x=m_x+238+(index%2)*99, y=m_y+54+(index/2)*42;
+                DrawWindowText(hdc,x,y,labels[index],RGB(98,110,120));
+                DrawWindowText(hdc,x,y+16,values[index].c_str(),RGB(37,49,60));
+            }
+            DrawWindowText(hdc,m_x+12,m_y+230,"Status points",RGB(98,110,120));
+            DrawRightAlignedValue(hdc,m_x+m_w-12,m_y+230,std::to_string(data.statusPoint));
         }
+        DrawChildrenToHdc(hdc);
+        ReleaseDrawTarget(hdc);
     }
-
-    DrawChildrenToHdc(hdc);
-    ReleaseDrawTarget(hdc);
-
     m_lastDrawStateToken = BuildDisplayStateToken();
     m_hasDrawStateToken = true;
     m_isDirty = 0;
@@ -528,20 +501,12 @@ void UIStatusWnd::OnLBtnDblClk(int x, int y)
 void UIStatusWnd::OnLBtnDown(int x, int y)
 {
     if (IsQtUiRuntimeEnabled()) {
-        const RECT baseRect = MakeStatusRect(m_x, m_y, 3, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT miniRect = MakeStatusRect(m_x, m_y, 252, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT closeRect = MakeStatusRect(m_x, m_y, 266, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT baseRect = MakeStatusRect(m_x, m_y, m_w - 28, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT miniRect = MakeStatusRect(m_x, m_y, m_w - 28, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT closeRect = MakeStatusRect(m_x, m_y, m_w - 14, 3, kQtButtonWidth, kQtButtonHeight);
         if (IsPointInRect(baseRect, x, y) || IsPointInRect(miniRect, x, y) || IsPointInRect(closeRect, x, y)) {
             UIWindow::OnLBtnDown(x, y);
             return;
-        }
-    }
-
-    if (m_h > kMiniHeight && x >= m_x && x < m_x + 20 && y >= m_y + kTitleBarHeight) {
-        if (y < m_y + 43) {
-            SetPage(0);
-        } else if (y < m_y + 67) {
-            SetPage(1);
         }
     }
 
@@ -561,9 +526,9 @@ void UIStatusWnd::OnLBtnUp(int x, int y)
             return;
         }
 
-        const RECT baseRect = MakeStatusRect(m_x, m_y, 3, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT miniRect = MakeStatusRect(m_x, m_y, 252, 3, kQtButtonWidth, kQtButtonHeight);
-        const RECT closeRect = MakeStatusRect(m_x, m_y, 266, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT baseRect = MakeStatusRect(m_x, m_y, m_w - 28, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT miniRect = MakeStatusRect(m_x, m_y, m_w - 28, 3, kQtButtonWidth, kQtButtonHeight);
+        const RECT closeRect = MakeStatusRect(m_x, m_y, m_w - 14, 3, kQtButtonWidth, kQtButtonHeight);
 
         if (m_h == kMiniHeight && IsPointInRect(baseRect, x, y)) {
             SendMsg(this, 6, kButtonIdBase, 0, 0);
@@ -578,7 +543,7 @@ void UIStatusWnd::OnLBtnUp(int x, int y)
             return;
         }
 
-        if (m_h > kMiniHeight && m_page == 0) {
+        if (m_h > kMiniHeight) {
             const DisplayData data = BuildDisplayData();
             for (size_t index = 0; index < kIncrementButtonIds.size(); ++index) {
                 if (data.statCosts[index] <= 0
@@ -590,10 +555,10 @@ void UIStatusWnd::OnLBtnUp(int x, int y)
                 const RECT incrementRect = MakeStatusRect(
                     m_x,
                     m_y,
-                    92,
-                    23 + static_cast<int>(index) * 16,
-                    kQtButtonWidth,
-                    kQtButtonHeight);
+                    statusLayout::increaseX,
+                    statusLayout::rowY(static_cast<int>(index)) + 1,
+                    statusLayout::increaseSize,
+                    statusLayout::increaseSize);
                 if (IsPointInRect(incrementRect, x, y)) {
                     SendMsg(this, 6, kIncrementButtonIds[index], 0, 0);
                     return;
@@ -621,11 +586,6 @@ bool UIStatusWnd::IsMiniMode() const
     return m_h == kMiniHeight;
 }
 
-int UIStatusWnd::GetPageForQt() const
-{
-    return m_page;
-}
-
 bool UIStatusWnd::GetDisplayDataForQt(DisplayData* outData) const
 {
     if (!outData) {
@@ -650,7 +610,7 @@ bool UIStatusWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* out)
     switch (index) {
     case 0:
         out->id = kButtonIdBase;
-        out->x = m_x + 3;
+        out->x = m_x + m_w - 28;
         out->y = m_y + 3;
         out->width = kQtButtonWidth;
         out->height = kQtButtonHeight;
@@ -660,7 +620,7 @@ bool UIStatusWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* out)
         return true;
     case 1:
         out->id = kButtonIdMini;
-        out->x = m_x + 252;
+        out->x = m_x + m_w - 28;
         out->y = m_y + 3;
         out->width = kQtButtonWidth;
         out->height = kQtButtonHeight;
@@ -670,7 +630,7 @@ bool UIStatusWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* out)
         return true;
     case 2:
         out->id = kButtonIdClose;
-        out->x = m_x + 266;
+        out->x = m_x + m_w - 14;
         out->y = m_y + 3;
         out->width = kQtButtonWidth;
         out->height = kQtButtonHeight;
@@ -681,28 +641,6 @@ bool UIStatusWnd::GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* out)
     default:
         return false;
     }
-}
-
-int UIStatusWnd::GetQtPageTabCount() const
-{
-    return 2;
-}
-
-bool UIStatusWnd::GetQtPageTabDisplayForQt(int index, QtButtonDisplay* out) const
-{
-    if (!out || index < 0 || index >= GetQtPageTabCount()) {
-        return false;
-    }
-
-    out->id = index;
-    out->x = m_x;
-    out->y = m_y + kTitleBarHeight + (index == 0 ? 0 : 26);
-    out->width = 20;
-    out->height = index == 0 ? 26 : 24;
-    out->label = index == 0 ? "1" : "2";
-    out->visible = !IsMiniMode();
-    out->active = m_page == index;
-    return true;
 }
 
 int UIStatusWnd::GetQtIncrementButtonCount() const
@@ -718,18 +656,17 @@ bool UIStatusWnd::GetQtIncrementButtonDisplayForQt(int index, QtButtonDisplay* o
 
     const DisplayData data = BuildDisplayData();
     out->id = kIncrementButtonIds[static_cast<size_t>(index)];
-    out->x = m_x + 88;
-    out->y = m_y + 17 + kStatRows[static_cast<size_t>(index)];
-    out->width = kQtButtonWidth;
-    out->height = kQtButtonHeight;
-    out->label = ">";
-    out->visible =
+    out->x = m_x + statusLayout::increaseX;
+    out->y = m_y + statusLayout::rowY(index) + 1;
+    out->width = statusLayout::increaseSize;
+    out->height = statusLayout::increaseSize;
+    out->label = "+";
+    out->visible = !IsMiniMode();
+    out->active =
         !IsMiniMode()
-        && m_page == 0
         && data.statCosts[static_cast<size_t>(index)] > 0
         && data.baseStats[static_cast<size_t>(index)] < 99
         && data.statCosts[static_cast<size_t>(index)] <= data.statusPoint;
-    out->active = false;
     return true;
 }
 
@@ -747,15 +684,15 @@ void UIStatusWnd::LayoutChildren()
     }
 
     if (m_systemButtons[0]) {
-        m_systemButtons[0]->Move(m_x + 3, m_y + 3);
+        m_systemButtons[0]->Move(m_x + m_w - 28, m_y + 3);
         m_systemButtons[0]->SetShow(m_h == kMiniHeight ? 1 : 0);
     }
     if (m_systemButtons[1]) {
-        m_systemButtons[1]->Move(m_x + 252, m_y + 3);
+        m_systemButtons[1]->Move(m_x + m_w - 28, m_y + 3);
         m_systemButtons[1]->SetShow(m_h == kMiniHeight ? 0 : 1);
     }
     if (m_systemButtons[2]) {
-        m_systemButtons[2]->Move(m_x + 266, m_y + 3);
+        m_systemButtons[2]->Move(m_x + m_w - 14, m_y + 3);
         m_systemButtons[2]->SetShow(1);
     }
 
@@ -763,7 +700,7 @@ void UIStatusWnd::LayoutChildren()
         if (!m_incrementButtons[index]) {
             continue;
         }
-        m_incrementButtons[index]->Move(m_x + 88, m_y + 17 + kStatRows[index]);
+        m_incrementButtons[index]->Move(m_x + statusLayout::increaseX, m_y + statusLayout::rowY(static_cast<int>(index)) + 1);
     }
 }
 
@@ -783,7 +720,6 @@ void UIStatusWnd::RefreshIncrementButtons()
         const bool canIncrease =
             m_show != 0 &&
             m_h > kMiniHeight &&
-            m_page == 0 &&
             data.statCosts[index] > 0 &&
             data.baseStats[index] < 99 &&
             data.statCosts[index] <= data.statusPoint;
@@ -795,17 +731,6 @@ void UIStatusWnd::SetMiniMode(bool miniMode)
 {
     Resize(kWindowWidth, miniMode ? kMiniHeight : kWindowHeight);
     LayoutChildren();
-    RefreshIncrementButtons();
-    Invalidate();
-}
-
-void UIStatusWnd::SetPage(int page)
-{
-    const int normalizedPage = page == 0 ? 0 : 1;
-    if (m_page == normalizedPage) {
-        return;
-    }
-    m_page = normalizedPage;
     RefreshIncrementButtons();
     Invalidate();
 }
@@ -887,7 +812,6 @@ unsigned long long UIStatusWnd::BuildDisplayStateToken() const
     HashValue(&hash, static_cast<unsigned long long>(m_y));
     HashValue(&hash, static_cast<unsigned long long>(m_w));
     HashValue(&hash, static_cast<unsigned long long>(m_h));
-    HashValue(&hash, static_cast<unsigned long long>(m_page));
 
     for (int value : data.baseStats) {
         HashValue(&hash, static_cast<unsigned long long>(value));
@@ -950,17 +874,9 @@ void UIStatusWnd::LoadAssets()
     if (!m_titleBarBitmap.IsValid()) {
         m_titleBarBitmap = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("titlebar_fix.bmp"));
     }
-    if (!m_pageBackgrounds[0].IsValid()) {
-        m_pageBackgrounds[0] = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("statwin0_bg.bmp"));
-    }
-    if (!m_pageBackgrounds[1].IsValid()) {
-        m_pageBackgrounds[1] = LoadBitmapPixelsFromGameData(ResolveUiAssetPath("statwin1_bg.bmp"));
-    }
 }
 
 void UIStatusWnd::ReleaseAssets()
 {
     m_titleBarBitmap.Clear();
-    m_pageBackgrounds[0].Clear();
-    m_pageBackgrounds[1].Clear();
 }

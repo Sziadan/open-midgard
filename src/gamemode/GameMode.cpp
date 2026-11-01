@@ -10660,6 +10660,21 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             ClearSkillChase(*this);
             return 1;
         }
+        // A targeting cursor owns the click, including an invalid target.
+        // Holding a shortcut modifier must not turn, move or attack instead.
+        if (HasPendingSkillUse(*this)) {
+            TryRequestPendingSkillFromScreenPoint(*this, mouseX, mouseY);
+            m_isLeftButtonHeld = 0;
+            m_hasHeldMoveTarget = 0;
+            m_lastMoveRequestCellX = -1;
+            m_lastMoveRequestCellY = -1;
+            m_lastMoveRequestTick = 0;
+            m_lastAttackRequestTick = 0;
+            ClearPickupIntent(*this);
+            ClearAttackChaseHint(*this);
+            return 1;
+        }
+
         if (m_world && m_world->m_player) {
             if (ShouldUseTurnOnlyGroundClick(*this)) {
                 ClearPickupIntent(*this);
@@ -10676,18 +10691,6 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
                 TryRequestChangeDirFromScreenPoint(*this, mouseX, mouseY);
                 return 1;
             }
-        }
-
-        if (TryRequestPendingSkillFromScreenPoint(*this, mouseX, mouseY)) {
-            m_isLeftButtonHeld = 0;
-            m_hasHeldMoveTarget = 0;
-            m_lastMoveRequestCellX = -1;
-            m_lastMoveRequestCellY = -1;
-            m_lastMoveRequestTick = 0;
-            m_lastAttackRequestTick = 0;
-            ClearPickupIntent(*this);
-            ClearAttackChaseHint(*this);
-            return 1;
         }
 
         if (TryRequestGroundItemFromScreenPoint(*this, mouseX, mouseY)) {
@@ -10759,7 +10762,8 @@ msgresult_t CGameMode::SendMsg(int msg, msgparam_t wparam, msgparam_t lparam, ms
             if (mouseX != m_oldMouseX || mouseY != m_oldMouseY) {
                 m_rButtonDragged = 1;
             }
-            m_view->RotateByDrag(mouseX - m_oldMouseX, mouseY - m_oldMouseY);
+            const bool shiftHeld = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+            m_view->RotateByDrag(mouseX - m_oldMouseX, shiftHeld ? mouseY - m_oldMouseY : 0);
             m_view->ClearHoverCell();
         }
         m_oldMouseX = mouseX;

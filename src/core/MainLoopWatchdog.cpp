@@ -3,6 +3,13 @@
 
 #include <atomic>
 #include <windows.h>
+#ifndef _WIN32
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <system_error>
+#include <thread>
+#endif
 
 namespace {
 
@@ -16,8 +23,25 @@ std::atomic<DWORD> g_lastFrameTick{0};
 std::atomic<int> g_modeType{-1};
 std::atomic<const char*> g_stage{"startup"};
 std::atomic<bool> g_running{false};
+#ifdef _WIN32
 HANDLE g_thread = nullptr;
 HANDLE g_stopEvent = nullptr;
+#else
+std::thread g_thread;
+std::mutex g_stopMutex;
+std::condition_variable g_stopCondition;
+#endif
+
+bool WaitForNextPoll()
+{
+#ifdef _WIN32
+    return WaitForSingleObject(g_stopEvent, kPollIntervalMs) == WAIT_TIMEOUT;
+#else
+    std::unique_lock<std::mutex> lock(g_stopMutex);
+    return !g_stopCondition.wait_for(lock, std::chrono::milliseconds(kPollIntervalMs),
+        [] { return !g_running.load(); });
+#endif
+}
 
 DWORD WINAPI WatchdogThreadMain(LPVOID)
 {
@@ -26,7 +50,7 @@ DWORD WINAPI WatchdogThreadMain(LPVOID)
     unsigned long long lastSeenFrames = g_frameCount.load();
     bool stalled = false;
 
-    while (WaitForSingleObject(g_stopEvent, kPollIntervalMs) == WAIT_TIMEOUT) {
+    while (WaitForNextPoll()) {
         const DWORD now = GetTickCount();
         const unsigned long long frames = g_frameCount.load();
         const DWORD lastFrameTick = g_lastFrameTick.load();
@@ -63,6 +87,7 @@ void MainLoopWatchdogStart()
     if (g_running.exchange(true)) {
         return;
     }
+#ifdef _WIN32
     g_stopEvent = CreateEventA(nullptr, TRUE, FALSE, nullptr);
     if (!g_stopEvent) {
         g_running = false;
@@ -76,6 +101,16 @@ void MainLoopWatchdogStart()
         g_running = false;
         return;
     }
+#else
+    g_lastFrameTick = GetTickCount();
+    try {
+        g_thread = std::thread([] { WatchdogThreadMain(nullptr); });
+    } catch (const std::system_error& error) {
+        g_running = false;
+        DbgLog("[Watchdog] failed to start: %s\n", error.what());
+        return;
+    }
+#endif
     DbgLog("[Watchdog] started (stall threshold %lu ms, heartbeat every %lu ms)\n",
         static_cast<unsigned long>(kStallThresholdMs), static_cast<unsigned long>(kHeartbeatIntervalMs));
 }
@@ -85,6 +120,7 @@ void MainLoopWatchdogStop()
     if (!g_running.exchange(false)) {
         return;
     }
+#ifdef _WIN32
     if (g_stopEvent) {
         SetEvent(g_stopEvent);
     }
@@ -97,6 +133,15 @@ void MainLoopWatchdogStop()
         CloseHandle(g_stopEvent);
         g_stopEvent = nullptr;
     }
+#else
+    {
+        std::lock_guard<std::mutex> lock(g_stopMutex);
+        g_stopCondition.notify_all();
+    }
+    if (g_thread.joinable()) {
+        g_thread.join();
+    }
+#endif
     DbgLog("[Watchdog] stopped after %llu frames\n", g_frameCount.load());
 }
 

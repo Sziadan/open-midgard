@@ -116,3 +116,8 @@ if(RO_ENABLE_QT6_UI)
         Qt6::Gui
     )
 endif()
+
+if(NOT WIN32)
+    find_package(Iconv REQUIRED)
+    target_link_libraries(ro_ui PRIVATE Iconv::Iconv)
+endif()

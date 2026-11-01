@@ -2,6 +2,7 @@
 
 #include "UIFrameWnd.h"
 #include "UIShopCommon.h"
+#include "EquipmentLayout.h"
 
 #include <array>
 #include <string>
@@ -21,6 +22,7 @@ public:
         int width = 0;
         int height = 0;
         std::string label;
+        std::string icon;
         bool visible = true;
     };
 
@@ -34,10 +36,13 @@ public:
         bool leftColumn = false;
         unsigned int itemId = 0;
         std::string label;
+        std::string slotName;
+        equipmentLayout::Rect card, name;
     };
 
     struct DisplayData {
         std::vector<DisplaySlot> displaySlots;
+        equipmentLayout::Rect preview;
     };
 
     UIEquipWnd();
@@ -59,6 +64,8 @@ public:
     void DragAndDrop(int x, int y, const DRAG_INFO* const info) override;
     void StoreInfo() override;
     bool IsMiniMode() const;
+    bool IsCompactMode() const { return m_compactMode; }
+    void RefreshLayout();
     bool GetDisplayDataForQt(DisplayData* outData) const;
     bool GetHoveredItemForQt(shopui::ItemHoverInfo* outData) const;
     int GetQtSystemButtonCount() const;
@@ -96,4 +103,8 @@ private:
     int m_dragItemEquipLocation;
     unsigned long long m_lastVisualStateToken;
     bool m_hasVisualStateToken;
+    equipmentLayout::Layout m_layout = equipmentLayout::Build();
+    unsigned long long m_layoutStateToken = 0;
+    bool m_hasLayoutStateToken = false;
+    bool m_compactMode = false;
 };

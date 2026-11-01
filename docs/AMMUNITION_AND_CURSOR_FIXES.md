@@ -2,7 +2,7 @@
 
 ## Findings and changes
 
-Stackable-item entries carry current wear state, but the rebuilt inventory left their usable equipment location at zero. Pickup handling also incorrectly marked newly acquired ammunition as already worn. Ammunition now has EQP_AMMO (0x8000) as its equipment destination, independently of current wear state. Picked-up stacks start unequipped; adding to an existing equipped stack preserves that stack's state through the existing session merge.
+Stackable-item entries carry the allowed equipment slot, but the rebuilt inventory originally left their usable equipment location at zero. Pickup handling also incorrectly marked newly acquired ammunition as already worn. Ammunition has EQP_AMMO (0x8000) as its equipment destination, independently of current wear state. Picked-up stacks start unequipped; adding to an existing equipped stack preserves that stack's state through the existing session merge.
 
 Inventory double-click and dragging to Equipment use the equipment request. Item shortcuts now route equipment, including ammunition, through that same request instead of sending a consumable-use packet. Already-equipped shortcut items are a harmless no-op. Equipment has an ammunition slot using the shared slot display, hover, drag, and unequip behavior; dragging from Equipment back to Inventory sends the existing takeoff request. State changes wait for server acknowledgement.
 
@@ -32,3 +32,13 @@ The next login log, `debug_hp_11372.log`, shows normal inventory packet 0x02E8, 
 Equipment uses one control below the preview for falcons, carts and Peco mounts. Labels are Release Falcon, Remove cart and Unmount; it is hidden when none is active. The former separate header OFF control is removed. All draw and mouse paths share one rectangle, positioned relative to the full window height and above the Qt body layer.
 
 Canonical `HighPriest.exe.c:133578` / `135221` expose one option-off button for cart, bird or chicken. Canonical mode cases 0x58/0x91/0x92 (`HighPriest.exe.c:352669`) all send opcode 298 (0x012A). The existing two-byte removal request therefore serves all three states. The supplied rAthena `clif_parse_RemoveOption` confirms the behavior and removes riding/falcon before a cart if states coexist; the label follows that priority. Flags are OPTION_FALCON=0x10 and OPTION_RIDING=0x20. Focused production-body checks cover both labels, every existing cart flag, tracked cart fallback and mount priority.
+
+## Unequipped arrows incorrectly shown on Wizard login
+
+The supplied server's clif_item_normal writes item_data::equip into NORMALITEM_INFO::WearState (clif.cpp:3001). Unlike clif_item_equip's current item equip mask, this is an allowed slot, so every carried arrow stack advertises 0x8000 even when unequipped. The previous decoder interpreted that capability as current wear state. Normal stackable decoding now stores it as m_location and starts m_wearLocation at zero. Actual ammunition state comes from 0x013C / successful equip acknowledgement, as Ref's separate m_equipArrowIndex does. The normal-list -> ammo-ack -> equipment-refresh order still preserves legitimately equipped arrows on relogin.
+
+The regression fixture now sends the real nonzero 0x8000 capability field. It verifies a Wizard carrying Fire Arrows sees them in ETC but not Equipment without an equip acknowledgement, and retains the existing equipped-arrow relogin test. No job-specific rendering filter is used to conceal incorrect item state.
+
+## Shift-bound skill targeting
+
+World left-click dispatch now handles an active skill-target cursor before Shift/seated turn-only handling. Targeting consumes the click even when the clicked target is invalid, retaining the pending skill without falling through to turn, walk, pickup, talk or normal attack. Ordinary Shift-click turning is unchanged when no skill is armed; NPC modal handling remains first. SkillTargetClickTests.cpp compiles the production left-click case, HasPendingSkillUse and ShouldUseTurnOnlyGroundClick bodies. It verifies actor/ground skill clicks with and without Shift, invalid-target retention, ordinary Shift/seated turning, normal movement and NPC gating. The focused regression script runs these checks alongside the existing ammunition/cursor checks.

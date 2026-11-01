@@ -1,158 +1,104 @@
 # OpenMidgard
 
-OpenMidgard is an open source recreation of the Ragnarok Online client.
+An open source recreation of the Ragnarok Online client, focused on the classic pre-Renewal, 2008-era experience.
 
-The current direction of the project is intentionally biased toward the pre-Renewal 2008-era client experience: classic presentation, classic game flow, and packet behavior aligned to that period rather than later Renewal-era client behavior.
+OpenMidgard combines classic gameplay and packet behavior with modern rendering backends and a Qt 6 / QML interface. The goal is to preserve how the game plays while improving how the client looks, builds, and runs on modern systems.
 
-This repository is focused on rebuilding the client as source code, modernizing the renderer and platform layer where needed, and keeping the gameplay/client feel anchored to the classic 2008 style.
+## Progress showcase
 
-## Status
+[![Watch the latest OpenMidgard progress showcase](https://img.youtube.com/vi/WLjiZiYqHPY/hqdefault.jpg)](https://www.youtube.com/watch?v=WLjiZiYqHPY)
 
-- Open source Ragnarok Online client recreation in active development.
-- Current work includes the world renderer, UI systems, networking, effects, and modern rendering backends.
-- The project currently prefers the 2008 pre-Renewal client style and behavior.
+[Watch the latest showcase on YouTube](https://www.youtube.com/watch?v=WLjiZiYqHPY) · [Previous showcase](https://www.youtube.com/watch?v=ApS1wgUmgzE)
 
-## Packet Version Target
+## Current status
 
-The current packet target is:
+The client is in active development. Current work includes:
 
-- `packet_ver 23`
-- `2008-09-10aSakexe`
+- **Classic gameplay:** character selection, world navigation, combat, NPC conversations and shops, inventory, equipment, and storage.
+- **Modern Qt interface:** a shared window theme, redesigned Basic Info and Status windows, and an equipment window with full item names and a compact mode.
+- **Skill tree:** job skill trees with prerequisite highlighting, pending point assignments, Apply/Reset controls, and selectable shortcut skill levels.
+- **Shortcut bars:** up to three rows of nine slots, configurable keybindings, and item/skill drag and drop.
+- **Combat presentation:** skill effects, projectiles, damage/healing numbers, status effects, and companion animations, with ongoing work against the original client behavior.
+- **Rendering and platform work:** Vulkan and Windows Direct3D backends, plus Linux and macOS build paths.
 
-More specifically, this is the intended target for client-originating map-server packets.
+Feature coverage and compatibility are still evolving; this is not yet a complete replacement for the original client. Windows with MinGW and Qt is the main day-to-day development workflow. Linux and macOS integration is less exercised.
 
-## Progress Video
+For detailed skill/effect implementation status and remaining work, see the [skill status tracker](docs/skill/STATUS.md).
 
-Current progress showcase:
+## Protocol target
 
-- https://www.youtube.com/watch?v=ApS1wgUmgzE
+The default client-originating map-server packet target is **`packet_ver 23` (`2008-09-10aSakexe`)**. Receive-side parsing also needs to match the packets actually sent by the server; this does not imply compatibility with every server configuration.
 
-## Repository Layout
+See [Packet Version Alignment](PACKET_VERSION_ALIGNMENT.md) for the profile, scope, and runtime overrides.
 
-- `src/` — client source code
-- `cmake/` — CMake helpers and deployment scripts
-- `docs/` — project notes and focused implementation docs
-- `third_party/` — third-party notices and bundled support files
+## Requirements
 
-## Prerequisites
+- CMake 3.21 or newer for the checked-in presets (manual configurations require at least 3.20).
+- A C++17 compiler and Git.
+- A compiler-compatible Qt 6 desktop kit with Core, Gui, Qml, and Quick for the Qt interface.
+- Vulkan development files for Linux, and Vulkan with MoltenVK for macOS. On Windows, set `VULKAN_SDK` to enable compilation of the Vulkan backend.
+- Ragnarok Online client data and a compatible server for in-game testing. Supply your own legally obtained game assets; building the source does not supply a runtime data installation.
 
-At a minimum you will need:
+## Build on Windows
 
-- CMake 3.20 or newer
-- A C++17 compiler
-- Git
-- A legally obtained Ragnarok Online data/runtime setup for testing
+### MinGW + Qt 6
 
-For runtime asset discovery, the client looks for things like `data.grf`, `data/clientinfo.xml`, and `data/` near the executable or current working directory. You can also point it at a custom runtime root with:
+The checked-in development preset uses these installation paths:
 
-- `OPEN_MIDGARD_DATA_DIR=/path/to/runtime`
+- Qt: `C:/Qt/6.11.0/mingw_64`
+- MinGW: `C:/Qt/Tools/mingw1310_64`
 
-## Building On Windows
-
-Windows currently has the most complete build flow.
-
-### Option 1: Visual Studio 2022
-
-Available presets:
-
-- `vs2022-win32`
-- `vs2022-x64`
-
-Configure and build:
+From the repository root:
 
 ```powershell
-cmake --preset vs2022-win32
-cmake --build --preset build-release --config Release
+cmake --preset mingw-qt-x64 -DRO_ENABLE_DEV_DEPLOY=OFF
+cmake --build --preset build-mingw-qt-x64 --parallel 6
 ```
 
-Or for x64:
+The executable is written to `build-mingw-preset/open-midgard.exe`. Matching Qt libraries, plugins, QML modules, and notices are deployed into the build output automatically.
+
+For a debug build:
 
 ```powershell
-cmake --preset vs2022-x64
-cmake --build --preset build-release-x64 --config Release
+cmake --preset mingw-qt-x64-debug -DRO_ENABLE_DEV_DEPLOY=OFF
+cmake --build --preset build-mingw-qt-x64-debug --parallel 6
 ```
 
-Notes:
+The debug output is in `build-mingw-preset-debug/`.
 
-- Native Direct3D 11 and Direct3D 12 backends are only enabled on Windows MSVC builds.
-- If you do not want the executable copied to `D:/Spel/OldRO`, configure with `-DRO_ENABLE_DEV_DEPLOY=OFF`.
+If your Qt or compiler installation differs, use a local `CMakeUserPresets.json` or a manual configuration with your own paths. The development presets set the compiler, make program, and `PATH` as well as `RO_QT_ROOT`; changing only the Qt root does not change the compiler installation. The `mingw-qt-x64-ci` preset is also available for environments that already select their toolchain.
 
-### Option 2: MinGW + Qt 6
+**Local deployment:** the MinGW development presets enable `RO_ENABLE_DEV_DEPLOY` by default, which copies the executable and Qt runtime to the developer-specific `D:/Spel/OldRO` directory. The commands above turn this off. Enable it only when using that local runtime layout.
 
-The repository includes a ready-made preset for the current Qt-based runtime path:
+### Visual Studio 2022
 
-- `mingw-qt-x64`
-
-Configure and build:
+The repository also provides Win32 and x64 MSVC presets:
 
 ```powershell
-cmake --preset mingw-qt-x64
-cmake --build --preset build-mingw-qt-x64
+cmake --preset vs2022-x64 -DRO_ENABLE_DEV_DEPLOY=OFF
+cmake --build --preset build-release-x64 --config Release --parallel
 ```
 
-Debug build:
+For Win32, use `vs2022-win32` and `build-release`. The corresponding output directories are `build64/Release/` and `build/Release/`.
 
-```powershell
-cmake --preset mingw-qt-x64-debug
-cmake --build --preset build-mingw-qt-x64-debug
-```
+The Visual Studio presets do not enable the Qt interface by default. To include it, configure with `-DRO_ENABLE_QT6_UI=ON -DRO_QT_UI_DEFAULT_ENABLED=ON` and set `RO_QT_ROOT` to a matching MSVC Qt kit. Native Direct3D 11 and Direct3D 12 backends are available only in Windows MSVC builds.
 
-Expected environment:
+## Build on Linux
 
-- Qt 6 desktop kit compatible with the chosen compiler
-- For the included preset, the project expects a Qt/MinGW layout similar to:
-  - `C:/Qt/6.11.0/mingw_64`
-  - `C:/Qt/Tools/mingw1310_64`
-
-Notes:
-
-- On Windows, the Qt-enabled MinGW build is one of the main day-to-day workflows in this repo.
-- If Qt is installed elsewhere, set `RO_QT_ROOT` to the matching kit root.
-- Qt deployment is handled automatically for Windows Qt builds.
-
-## Building On Linux
-
-Linux has an included preset for the non-Windows Qt/Vulkan path:
-
-- `linux-qt-vulkan`
-
-Configure and build:
+Install CMake, Ninja, a C++17 compiler, Qt 6 development packages including QML/Quick, and Vulkan development packages. Ensure the Qt QML runtime modules are installed too; some distributions package `QtQml.WorkerScript` separately.
 
 ```bash
 cmake --preset linux-qt-vulkan
-cmake --build --preset build-linux-qt-vulkan -j
+cmake --build --preset build-linux-qt-vulkan --parallel
 ```
 
-What this means in practice:
+The executable is written to `build-linux-qt-vulkan/open-midgard`. Set `CMAKE_PREFIX_PATH` during configuration if Qt is installed outside the toolchain's search paths.
 
-- Non-Windows builds force the Qt 6 UI path on.
-- Native Direct3D 11 and Direct3D 12 backends are disabled automatically.
-- The Linux path is Vulkan-oriented.
+Non-Windows builds enable the Qt interface and disable native Direct3D backends and local Windows deployment automatically.
 
-Recommended dependencies:
+## Build on macOS
 
-- `cmake`
-- `ninja`
-- `g++` or `clang++` with C++17 support
-- Qt 6 development packages, including QML/Quick
-- Vulkan development packages / SDK
-
-Practical note:
-
-- On Ubuntu-like systems, the Qt runtime may also need the `QtQml.WorkerScript` module package installed separately for the QML UI to start correctly.
-
-## Building On macOS
-
-macOS does not currently have a checked-in preset, but the project does have a non-Windows CMake path you can configure manually.
-
-Recommended tools:
-
-- Xcode Command Line Tools or Apple Clang with C++17 support
-- `cmake`
-- `ninja`
-- Qt 6
-
-Example configure and build:
+There is no checked-in macOS preset. Use Xcode Command Line Tools, CMake, Ninja, Qt 6, and a Vulkan SDK with MoltenVK available to CMake:
 
 ```bash
 cmake -S . -B build-macos \
@@ -161,31 +107,44 @@ cmake -S . -B build-macos \
   -DRO_ENABLE_DEV_DEPLOY=OFF \
   -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x/macos
 
-cmake --build build-macos -j
+cmake --build build-macos --parallel
 ```
 
-Notes:
+The executable is written to `build-macos/open-midgard`. This path may require additional platform integration work.
 
-- On non-Windows platforms, the project enables the Qt 6 UI path automatically.
-- Native Direct3D backends are disabled automatically.
-- The macOS path is less exercised than the Windows build flow, so expect some platform-specific integration work.
+## Run the client
 
-## Running The Client
+Provide a compatible runtime data directory containing the required GRF files or extracted `data/` files, together with the server connection configuration such as `data/clientinfo.xml`.
 
-After building, run:
+On Windows, the client resolves relative asset paths from the executable's directory. Place the built executable and its deployed runtime dependencies in your client data installation, keeping `qt.conf` and the deployed Qt directories together.
 
-- Windows: `open-midgard.exe`
-- Linux/macOS: `open-midgard`
+On Linux/macOS, you can select the runtime data root explicitly:
 
-Make sure your runtime directory contains the client data/GRF files and configuration files the client expects, or set `OPEN_MIDGARD_DATA_DIR` to point at them.
+```bash
+OPEN_MIDGARD_DATA_DIR=/path/to/runtime ./build-linux-qt-vulkan/open-midgard
+```
 
-## Project Goals
+For macOS, substitute `./build-macos/open-midgard`. `OPEN_MIDGARD_DATA_DIR` also selects the settings directory; it does not redirect Windows asset loading away from the executable directory.
 
-- Recreate the Ragnarok Online client as open source code
-- Preserve the feel and behavior of the classic pre-Renewal client
-- Modernize the renderer and platform layer where it makes the project easier to build, debug, and maintain
-- Keep packet behavior aligned to the chosen 2008-era target profile
+## Development and bug reports
+
+Useful starting points:
+
+- [Qt GUI modernization plan](docs/QT_GUI_MODERNIZATION_PLAN.md)
+- [Skill implementation plan](docs/SKILL_SYSTEM_1TO1_IMPLEMENTATION_PLAN.md) and [current status](docs/skill/STATUS.md)
+- [Qt build and deployment notes](docs/qt_build_and_compliance.md)
+- [Standalone Qt UI preview tool](tools/qtui_preview/README.md)
+
+When reporting a bug, include the build/platform, renderer backend, steps to reproduce, and expected versus actual behavior. For gameplay issues, include the character's job, relevant skill/equipment, and server packet configuration when known. Windows builds write `debug_hp_<pid>.log`; if a crash produces files in `crash-dumps/`, include those alongside the matching log. Review logs and dumps for private information before sharing them.
+
+## Repository layout
+
+- `src/` — client source, including gameplay, networking, rendering, and Qt UI.
+- `cmake/` — build configuration and deployment helpers.
+- `docs/` — implementation plans, validation notes, and progress tracking.
+- `tools/` — regression checks, audits, replay tooling, and UI previews.
+- `third_party/` — third-party notices and bundled support files.
 
 ## License
 
-See `LICENSE` for the project license.
+See [LICENSE](LICENSE) for the GNU General Public License v3 text. Third-party components have their own notices; Qt build outputs include the notice bundle under `licenses/qt/`.

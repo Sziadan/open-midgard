@@ -1,4 +1,5 @@
 #include "World.h"
+#include "ActorSpriteDepth.h"
 #include "world/CursorSnap.h"
 #include "world/GameActor.h"
 #include "world/ActorTint.h"
@@ -2701,7 +2702,7 @@ u32 ResolveBackgroundActorUpdateInterval(const C3dActor& actor,
 
 bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
 {
-    constexpr float kBillboardDepthBias = 0.0005f;
+    constexpr float kBillboardDepthBias = kActorBillboardDepthBias;
 
     CPc* actor = entry.actor;
     const u32 now = timeGetTime();
@@ -2791,8 +2792,8 @@ bool RenderCachedBillboard(const CWorld::BillboardScreenEntry& entry)
         }
         if (cameraDistance > 0.0f) {
             const tagRECT& actorBounds = actor->m_billboardOpaqueBounds;
-            const float actorWidth = static_cast<float>((std::max)(1L, actorBounds.right - actorBounds.left));
-            const float actorHeight = static_cast<float>((std::max)(1L, actorBounds.bottom - actorBounds.top));
+            const float actorWidth = static_cast<float>((std::max<LONG>)(1, actorBounds.right - actorBounds.left));
+            const float actorHeight = static_cast<float>((std::max<LONG>)(1, actorBounds.bottom - actorBounds.top));
             for (int layer = 0; layer < 5; ++layer) {
                 CTexture* texture = actor->m_assumptioAuraTextures[layer];
                 const tagRECT& bounds = actor->m_assumptioAuraBounds[layer];
@@ -5759,6 +5760,12 @@ void CWorld::ClearFixedObjects(bool preserveAttachedActorEffects)
 {
     std::list<CGameObject*> preservedObjects;
 
+    // Skills are owned by m_gameObjectList; this list is only their lookup index.
+    // Neither full teardown nor attached-effect preservation retains skills.
+    // Drop the index before deleting objects so a later map/character cannot
+    // expose freed skill actors to packet lookups or Qt speech-bubble queries.
+    m_skillList.clear();
+
     for (CGameObject* object : m_gameObjectList) {
         if (!object) {
             continue;
@@ -6762,6 +6769,10 @@ void CWorld::RenderActors(const matrix& viewMatrix, float cameraLongitude)
                 s_attachedActorRenderFrame);
         }
         RenderCachedBillboard(entry);
+        if (entry.actor && entry.actor->m_iceEffect) {
+            RenderFrozenActorEffectPass(*entry.actor->m_iceEffect,
+                const_cast<matrix*>(&viewMatrix), entry);
+        }
         if (entry.actor && entry.actor->m_cartEffect) {
             RenderAttachedActorEffectPass(*entry.actor->m_cartEffect,
                 const_cast<matrix*>(&viewMatrix),

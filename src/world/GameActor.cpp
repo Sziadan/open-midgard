@@ -1710,6 +1710,12 @@ bool IsTransientActionActive(const CGameActor& actor, CActRes* actRes, int actio
         return false;
     }
 
+    // Ref CPc::SetState(8) holds action 96; ProcessState(8) does not end it
+    // when the clip finishes. Keep that pose until a server state transition.
+    if (actor.m_stateId == kGameActorCastingStateId) {
+        return true;
+    }
+
     const int motionCount = (std::max)(1, actRes->GetMotionCount(resolvedAction));
     const float actionDelay = actRes->GetDelay(resolvedAction);
     const bool useScaledAttackTiming = (actor.m_stateId == kAttackStateId || actor.m_stateId == kSecondAttackStateId)
@@ -2188,7 +2194,7 @@ constexpr const char* kWeaponTokenSword = "\xB0\xCB";
 constexpr const char* kWeaponTokenAxe = "\xB5\xB5\xB3\xA2";
 constexpr const char* kWeaponTokenSpear = "\xC3\xA2";
 constexpr const char* kWeaponTokenClub = "\xC5\xAC\xB7\xB4";
-constexpr const char* kWeaponTokenRod = "\xB7\xCE\xB5\xE5";
+constexpr const char* kWeaponTokenRod = "\xB7\xD4\xB5\xE5";
 constexpr const char* kWeaponTokenBow = "\xC8\xB0";
 constexpr const char* kWeaponTokenBook = "\xC3\xA5";
 constexpr const char* kWeaponTokenKnuckle = "\xB3\xCA\xC5\xAC";
@@ -6890,9 +6896,8 @@ void CGameActor::ProcessSkillRechargeGageOverlay(int screenCenterX, int screenTo
         m_skillRechargeGage->SetAmount(elapsed, total);
     } else {
         SendMsg(this, 83, 0, 0, 0);
-        if (m_stateId == kGameActorCastingStateId) {
-            SetState(0);
-        }
+        // The progress estimate finishing is not a skill result. The server's
+        // completion/cancel/failure packet owns the casting pose transition.
     }
 }
 

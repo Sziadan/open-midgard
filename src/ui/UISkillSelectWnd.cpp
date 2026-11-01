@@ -9,6 +9,9 @@
 #include "UIWindowMgr.h"
 
 #include <windows.h>
+#ifndef _WIN32
+#include <iconv.h>
+#endif
 
 #include <algorithm>
 #include <cctype>
@@ -90,6 +93,7 @@ std::string DecodeMapLabel(const std::string& raw)
         return raw;
     }
 
+#ifdef _WIN32
     const int wideLength = MultiByteToWideChar(949, 0, raw.data(), static_cast<int>(raw.size()), nullptr, 0);
     if (wideLength <= 0) {
         return raw;
@@ -103,6 +107,24 @@ std::string DecodeMapLabel(const std::string& raw)
     std::string utf8(static_cast<size_t>(utf8Length), '\0');
     WideCharToMultiByte(CP_UTF8, 0, wide.data(), wideLength, utf8.data(), utf8Length, nullptr, nullptr);
     return utf8;
+#else
+    iconv_t converter = iconv_open("UTF-8", "CP949");
+    if (converter == reinterpret_cast<iconv_t>(-1)) {
+        return raw;
+    }
+    std::string utf8(raw.size() * 4, '\0');
+    char* input = const_cast<char*>(raw.data());
+    size_t inputLeft = raw.size();
+    char* output = utf8.data();
+    size_t outputLeft = utf8.size();
+    const size_t converted = iconv(converter, &input, &inputLeft, &output, &outputLeft);
+    iconv_close(converter);
+    if (converted == static_cast<size_t>(-1)) {
+        return raw;
+    }
+    utf8.resize(utf8.size() - outputLeft);
+    return utf8;
+#endif
 }
 
 const std::unordered_map<std::string, std::string>& MapDisplayNames()

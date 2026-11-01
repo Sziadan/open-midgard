@@ -12,8 +12,10 @@ Rectangle {
     property int labelSize: 8
     property bool labelBold: true
     property string labelFont: theme.fontFamily
-    readonly property bool isSystemControl: width <= 20 && height <= 20
+    property bool titleControl: false
+    readonly property bool isSystemControl: titleControl || (width <= 20 && height <= 20
         && (label === "X" || label === "x" || label === "_" || label === "B")
+    )
     readonly property string effectiveIcon: icon !== "" ? icon
         : (isSystemControl ? (label === "_" ? "minimize" : (label === "B" ? "expand" : "close")) : "")
 

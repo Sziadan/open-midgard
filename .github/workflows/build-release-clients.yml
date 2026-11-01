@@ -7,16 +7,23 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-clients-${{ github.event.release.tag_name || github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build-windows-qt:
     name: Build Windows Qt x64
-    runs-on: windows-latest
+    runs-on: windows-2022
+    timeout-minutes: 60
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Set up Python for Qt install
         uses: actions/setup-python@v6
@@ -29,18 +36,17 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "aqtinstall==3.3.*" "py7zr==1.0.*"
           python -m aqt install-qt windows desktop 6.8.3 win64_mingw --outputdir C:\Qt
-          python -m aqt install-tool windows desktop tools_mingw90 qt.tools.win64_mingw900 --outputdir C:\Qt
+          python -m aqt install-tool windows desktop tools_mingw1310 qt.tools.win64_mingw1310 --outputdir C:\Qt
 
           $qtRoot = Join-Path "C:\Qt" "6.8.3\mingw_64"
-          $mingwBin = Get-ChildItem -Path (Join-Path "C:\Qt" "Tools") -Filter g++.exe -Recurse -File |
-            Select-Object -First 1 -ExpandProperty DirectoryName
+          $mingwBin = "C:\Qt\Tools\mingw1310_64\bin"
 
-          if (-not $mingwBin) {
-            throw "Failed to locate MinGW bin directory under C:\Qt\Tools"
+          if (-not (Test-Path -LiteralPath (Join-Path $mingwBin "g++.exe"))) {
+            throw "Failed to locate the Qt-compatible MinGW 13.1 compiler"
           }
 
           "QT_ROOT_DIR=$qtRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          $qtRoot | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "MINGW_BIN=$mingwBin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           (Join-Path $qtRoot "bin") | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           $mingwBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
@@ -65,12 +71,30 @@ jobs:
           (Join-Path $vulkanRoot "Bin") | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Configure Windows Qt release
-        shell: bash
-        run: cmake --preset mingw-qt-x64-ci -DRO_QT_ROOT="$QT_ROOT_DIR"
+        shell: pwsh
+        run: |
+          cmake --preset mingw-qt-x64-ci `
+            -DCMAKE_BUILD_TYPE=Release `
+            "-DRO_QT_ROOT=$env:QT_ROOT_DIR" `
+            "-DCMAKE_C_COMPILER=$env:MINGW_BIN/gcc.exe" `
+            "-DCMAKE_CXX_COMPILER=$env:MINGW_BIN/g++.exe" `
+            "-DCMAKE_MAKE_PROGRAM=$env:MINGW_BIN/mingw32-make.exe"
 
       - name: Build Windows Qt release
-        shell: bash
+        shell: pwsh
         run: cmake --build --preset build-mingw-qt-x64-ci --parallel 4
+
+      - name: Check world cleanup regression
+        shell: pwsh
+        run: python tools/tests/check_world_cleanup.py --cxx "$env:MINGW_BIN/g++.exe"
+
+      - name: Check watchdog lifecycle
+        shell: pwsh
+        run: python tools/tests/check_watchdog.py --cxx "$env:MINGW_BIN/g++.exe"
+
+      - name: Check map-label encoding
+        shell: pwsh
+        run: python tools/tests/check_map_label_encoding.py --cxx "$env:MINGW_BIN/g++.exe"
 
       - name: Package Windows Qt release
         shell: pwsh
@@ -80,15 +104,17 @@ jobs:
           $stagingDir = Join-Path $env:RUNNER_TEMP $assetName
           $zipPath = Join-Path $env:RUNNER_TEMP "$assetName.zip"
 
-          if (Test-Path $stagingDir) {
-            Remove-Item $stagingDir -Recurse -Force
-          }
-          if (Test-Path $zipPath) {
-            Remove-Item $zipPath -Force
+          foreach ($required in @("open-midgard.exe", "qt.conf", "Qt6Core.dll", "Qt6Quick.dll",
+              "libgcc_s_seh-1.dll", "libstdc++-6.dll", "libwinpthread-1.dll",
+              "thirdparty/qt/platforms/qwindows.dll", "thirdparty/qt/qml/QtQuick/qmldir", "licenses/qt")) {
+            if (-not (Test-Path -LiteralPath (Join-Path $buildDir $required))) {
+              throw "Release runtime is incomplete: $required"
+            }
           }
 
           New-Item -ItemType Directory -Path $stagingDir | Out-Null
           Copy-Item (Join-Path $buildDir "open-midgard.exe") $stagingDir
+          Copy-Item -LiteralPath LICENSE,README.md -Destination $stagingDir
 
           Get-ChildItem -Path $buildDir -Filter "*.dll" -File | Copy-Item -Destination $stagingDir
 
@@ -114,11 +140,14 @@ jobs:
 
   build-linux-qt-vulkan:
     name: Build Linux Qt Vulkan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Install Linux build dependencies
         shell: bash
@@ -133,6 +162,11 @@ jobs:
             qt6-base-dev-tools \
             qt6-declarative-dev \
             qt6-declarative-dev-tools \
+            qml6-module-qtquick \
+            qml6-module-qtquick-window \
+            qml6-module-qtqml \
+            qml6-module-qtqml-models \
+            qml6-module-qtqml-workerscript \
             libegl1-mesa-dev \
             libgl1-mesa-dev \
             libvulkan-dev \
@@ -147,6 +181,18 @@ jobs:
         shell: bash
         run: cmake --build --preset build-linux-qt-vulkan --parallel "$(nproc)"
 
+      - name: Check world cleanup regression
+        shell: bash
+        run: python3 tools/tests/check_world_cleanup.py --cxx g++
+
+      - name: Check watchdog lifecycle
+        shell: bash
+        run: python3 tools/tests/check_watchdog.py --cxx g++
+
+      - name: Check map-label encoding
+        shell: bash
+        run: python3 tools/tests/check_map_label_encoding.py --cxx g++
+
       - name: Package Linux Qt Vulkan release
         shell: bash
         run: |
@@ -157,11 +203,11 @@ jobs:
           staging_dir="$RUNNER_TEMP/$asset_name"
           tar_path="$RUNNER_TEMP/$asset_name.tar.gz"
 
-          rm -rf "$staging_dir" "$tar_path"
           mkdir -p "$staging_dir/lib" "$staging_dir/plugins" "$staging_dir/qml" "$staging_dir/translations" "$staging_dir/licenses"
 
           cp "$build_dir/open-midgard" "$staging_dir/open-midgard-bin"
           cp -a "$GITHUB_WORKSPACE/third_party/qt" "$staging_dir/licenses/qt"
+          cp "$GITHUB_WORKSPACE/LICENSE" "$GITHUB_WORKSPACE/README.md" "$staging_dir/"
 
           cat > "$staging_dir/open-midgard" <<'EOF'
           #!/usr/bin/env bash
@@ -169,6 +215,7 @@ jobs:
           export LD_LIBRARY_PATH="$SCRIPT_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           export QT_PLUGIN_PATH="$SCRIPT_DIR/plugins"
           export QML2_IMPORT_PATH="$SCRIPT_DIR/qml"
+          export QML_IMPORT_PATH="$SCRIPT_DIR/qml"
           exec "$SCRIPT_DIR/open-midgard-bin" "$@"
           EOF
           chmod +x "$staging_dir/open-midgard" "$staging_dir/open-midgard-bin"
@@ -217,7 +264,13 @@ jobs:
 
           copy_runtime_deps() {
             local target="$1"
-            ldd "$target" | awk '/=> \// { print $3 } /^\// { print $1 }' | while read -r dep_path; do
+            local dependencies
+            dependencies="$(ldd "$target")"
+            if grep -q '=> not found' <<< "$dependencies"; then
+              printf 'Unresolved runtime dependencies in %s:\n%s\n' "$target" "$dependencies" >&2
+              return 1
+            fi
+            awk '/=> \// { print $3 } /^\// { print $1 }' <<< "$dependencies" | while read -r dep_path; do
               if [ -z "$dep_path" ] || [ ! -f "$dep_path" ]; then
                 continue
               fi
@@ -237,6 +290,15 @@ jobs:
 
           find "$qt_lib_dir" -maxdepth 1 -type f \( -name 'libQt6*.so*' -o -name 'libicu*.so*' \) -exec cp -aL {} "$staging_dir/lib/" \;
 
+          test -s "$staging_dir/plugins/platforms/libqxcb.so"
+          test -s "$staging_dir/qml/QtQuick/qmldir"
+          test -s "$staging_dir/qml/QtQml/WorkerScript/qmldir"
+          LD_LIBRARY_PATH="$staging_dir/lib" ldd "$staging_dir/open-midgard-bin" > "$RUNNER_TEMP/linux-release-ldd.txt"
+          if grep -q '=> not found' "$RUNNER_TEMP/linux-release-ldd.txt"; then
+            cat "$RUNNER_TEMP/linux-release-ldd.txt" >&2
+            exit 1
+          fi
+
           tar -C "$RUNNER_TEMP" -czf "$tar_path" "$asset_name"
 
       - name: Upload packaged artifact
@@ -252,7 +314,8 @@ jobs:
     needs:
       - build-windows-qt
       - build-linux-qt-vulkan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: write
 
@@ -261,15 +324,21 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           path: release-assets
+          pattern: open-midgard-*
+          merge-multiple: true
 
       - name: Upload assets to GitHub release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           set -euo pipefail
-          gh release upload "${{ github.event.release.tag_name }}" \
-            release-assets/open-midgard-windows-qt-x64/open-midgard-windows-qt-x64.zip \
-            release-assets/open-midgard-linux-qt-vulkan/open-midgard-linux-qt-vulkan.tar.gz \
+          cd release-assets
+          sha256sum open-midgard-windows-qt-x64.zip open-midgard-linux-qt-vulkan.tar.gz > SHA256SUMS
+          gh release upload "$RELEASE_TAG" \
+            open-midgard-windows-qt-x64.zip \
+            open-midgard-linux-qt-vulkan.tar.gz \
+            SHA256SUMS \
             --clobber

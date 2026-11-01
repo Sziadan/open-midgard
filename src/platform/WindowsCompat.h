@@ -80,6 +80,7 @@ using COLORREF = DWORD;
 using UINT = unsigned int;
 using ULONG = std::uint32_t;
 using LONG = std::int32_t;
+using LONGLONG = std::int64_t;
 using ULONG_PTR = std::uintptr_t;
 using UINT_PTR = std::uintptr_t;
 using LONG_PTR = std::intptr_t;
@@ -212,6 +213,17 @@ struct MSG {
 struct LARGE_INTEGER {
     long long QuadPart;
 };
+
+#pragma pack(push, 2)
+struct BITMAPFILEHEADER {
+    WORD bfType;
+    DWORD bfSize;
+    WORD bfReserved1;
+    WORD bfReserved2;
+    DWORD bfOffBits;
+};
+#pragma pack(pop)
+static_assert(sizeof(BITMAPFILEHEADER) == 14, "BMP file headers must be 14 bytes");
 
 struct BITMAPINFOHEADER {
     DWORD biSize;
@@ -834,6 +846,15 @@ constexpr int VK_ESCAPE = 0x1B;
 constexpr int VK_MENU = 0x12;
 constexpr int VK_CONTROL = 0x11;
 constexpr int VK_SHIFT = 0x10;
+constexpr int VK_LSHIFT = 0xA0;
+constexpr int VK_RSHIFT = 0xA1;
+constexpr int VK_LCONTROL = 0xA2;
+constexpr int VK_RCONTROL = 0xA3;
+constexpr int VK_LMENU = 0xA4;
+constexpr int VK_RMENU = 0xA5;
+constexpr int VK_SPACE = 0x20;
+constexpr int VK_END = 0x23;
+constexpr int VK_HOME = 0x24;
 constexpr int VK_PRIOR = 0x21;
 constexpr int VK_NEXT = 0x22;
 constexpr int VK_LEFT = 0x25;
@@ -841,12 +862,15 @@ constexpr int VK_UP = 0x26;
 constexpr int VK_RIGHT = 0x27;
 constexpr int VK_DOWN = 0x28;
 constexpr int VK_ADD = 0x6B;
+constexpr int VK_NUMPAD0 = 0x60;
+constexpr int VK_NUMPAD9 = 0x69;
 constexpr int VK_SUBTRACT = 0x6D;
 constexpr int VK_F1 = 0x70;
 constexpr int VK_F9 = 0x78;
 constexpr int VK_F10 = 0x79;
 constexpr int VK_F11 = 0x7A;
 constexpr int VK_F12 = 0x7B;
+constexpr int VK_F24 = 0x87;
 constexpr int VK_INSERT = 0x2D;
 constexpr int VK_OEM_MINUS = 0xBD;
 constexpr int VK_OEM_PLUS = 0xBB;

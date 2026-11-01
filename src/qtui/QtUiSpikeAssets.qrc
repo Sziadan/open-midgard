@@ -9,6 +9,8 @@
         <file>qml/RoHeader.qml</file>
         <file>qml/RoGauge.qml</file>
         <file>qml/RoBasicInfo.qml</file>
+        <file>qml/RoStatus.qml</file>
+        <file>qml/RoEquipment.qml</file>
         <file>qml/RoChromeButton.qml</file>
         <file>qml/RoBasicMenuIcon.qml</file>
         <file>qml/RoTextButton.qml</file>

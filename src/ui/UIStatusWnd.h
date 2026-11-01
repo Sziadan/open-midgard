@@ -58,12 +58,9 @@ public:
     void OnMouseHover(int x, int y) override;
     void StoreInfo() override;
     bool IsMiniMode() const;
-    int GetPageForQt() const;
     bool GetDisplayDataForQt(DisplayData* outData) const;
     int GetQtSystemButtonCount() const;
     bool GetQtSystemButtonDisplayForQt(int index, QtButtonDisplay* out) const;
-    int GetQtPageTabCount() const;
-    bool GetQtPageTabDisplayForQt(int index, QtButtonDisplay* out) const;
     int GetQtIncrementButtonCount() const;
     bool GetQtIncrementButtonDisplayForQt(int index, QtButtonDisplay* out) const;
 
@@ -72,7 +69,6 @@ private:
     void LayoutChildren();
     void RefreshIncrementButtons();
     void SetMiniMode(bool miniMode);
-    void SetPage(int page);
     DisplayData BuildDisplayData() const;
     unsigned long long BuildDisplayStateToken() const;
     void DrawWindowText(HDC hdc, int x, int y, const char* text, COLORREF color, UINT format = DT_LEFT | DT_TOP | DT_SINGLELINE) const;
@@ -81,11 +77,9 @@ private:
     void ReleaseAssets();
 
     bool m_controlsCreated;
-    int m_page;
     std::array<UIBitmapButton*, 3> m_systemButtons;
     std::array<UIBitmapButton*, 6> m_incrementButtons;
     shopui::BitmapPixels m_titleBarBitmap;
-    std::array<shopui::BitmapPixels, 2> m_pageBackgrounds;
     unsigned long long m_lastDrawStateToken;
     bool m_hasDrawStateToken;
 };
